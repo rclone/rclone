@@ -23,6 +23,7 @@ import (
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
@@ -35,7 +36,7 @@ import (
 
 const (
 	rcloneClientID              = "115505059"
-	rcloneEncryptedClientSecret = "3effe4596fb0874e3a982e1b4237143aea206fed826dab4db45c2dc6210a70be"
+	rcloneEncryptedClientSecret = "EHQ1exJbwabjEMrIYc81zcWaSXg6n_SA_vzeiC34_Dfyfwys2RoNBbuDGwlNFbBFCrb_RYdU_DMLtaI5NnM9F9FriQAVHeRaN1oROHFZtCU"
 	minSleep                    = 10 * time.Millisecond
 	maxSleep                    = 2 * time.Second
 	decayConstant               = 2 // bigger for slower decay, exponential
@@ -56,11 +57,11 @@ var oauthConfig = &oauthutil.Config{
 	AuthURL:      "https://oauth-login.cloud.huawei.com/oauth2/v3/authorize",
 	TokenURL:     "https://oauth-login.cloud.huawei.com/oauth2/v3/token",
 	ClientID:     rcloneClientID,
-	ClientSecret: rcloneEncryptedClientSecret,
+	ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 	RedirectURL:  oauthutil.RedirectURL,
-	AuthStyle:    oauth2.AuthStyleInParams, // Send client credentials in request body
+	AuthStyle:    oauth2.AuthStyleInParams,
 	EndpointParams: url.Values{
-		"access_type": {"offline"}, // Request refresh token as per Huawei docs
+		"access_type": {"offline"},
 	},
 }
 
@@ -132,35 +133,16 @@ System metadata includes standard file information such as:
 Custom metadata keys can be any string and will be stored in the file's properties.`,
 		},
 		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
-			// Parse config into Options struct
-			opt := new(Options)
-			err := configstruct.Set(m, opt)
-			if err != nil {
-				return nil, fmt.Errorf("couldn't parse config into struct: %w", err)
-			}
-
-			// Update OAuth2 config with user provided client credentials
-			clientID, _ := m.Get("client_id")
-			clientSecret, _ := m.Get("client_secret")
-
-			if clientID != "" {
-				oauthConfig.ClientID = clientID
-			}
-			if clientSecret != "" {
-				oauthConfig.ClientSecret = clientSecret
-			}
-
-			// Check if we have an access token
-			accessToken, ok := m.Get("token")
-			if accessToken == "" || !ok {
-				// If no token, start OAuth2 flow
-				return oauthutil.ConfigOut("", &oauthutil.Options{
-					OAuth2Config: oauthConfig,
-				})
-			}
-			return nil, nil
+			return oauthutil.ConfigOut("", &oauthutil.Options{
+				OAuth2Config: oauthConfig,
+			})
 		},
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
+			Name:     "root_folder_id",
+			Help:     "ID of the root folder.\n\nNormally this is auto-detected, but if it fails or you want to speed up startup,\nyou can set it manually.\n\nLeave blank normally.",
+			Default:  "",
+			Advanced: true,
+		}, {
 			Name:     "chunk_size",
 			Help:     "Upload chunk size.\n\nMust be a power of 2 >= 256k and <= 64MB.",
 			Default:  defaultChunkSize,
@@ -205,6 +187,7 @@ Custom metadata keys can be any string and will be stored in the file's properti
 
 // Options defines the configuration for this backend
 type Options struct {
+	RootFolderID string               `config:"root_folder_id"`
 	ChunkSize    fs.SizeSuffix        `config:"chunk_size"`
 	ListChunk    int                  `config:"list_chunk"`
 	UploadCutoff fs.SizeSuffix        `config:"upload_cutoff"`
@@ -222,9 +205,9 @@ type Fs struct {
 	pacer    *fs.Pacer          // pacer for API calls
 	dirCache *dircache.DirCache // Map of directory path to directory id
 
-	// Cache for root directory ID to avoid repeated API calls
-	rootDirID     string // cached root directory ID
-	rootDirIDOnce bool   // whether root directory ID has been detected
+	rootFolderID string // ID of the root folder (detected at runtime)
+	domainURL    string // regional domain URL from About:get
+	uploadURL    string // upload URL (may be updated after domain detection)
 }
 
 // Object describes a Huawei Drive object
@@ -320,12 +303,120 @@ func parsePath(path string) (root string) {
 	return
 }
 
-// rootParentID returns the ID of the parent of the root directory
-func (f *Fs) rootParentID() string {
-	// For Huawei Drive, we use a special marker for root parent
-	// The actual root directory ID will be determined during runtime
-	// This avoids making network calls during Fs construction
-	return "HUAWEI_DRIVE_ROOT_PARENT"
+// nonexistentDirName is the virtual flag directory created by Huawei Drive API.
+// Its parentFolder points to the actual root directory ID.
+const nonexistentDirName = "nonexistent_dir"
+
+// detectRootID discovers the root folder ID by listing files.
+// It first looks for the "nonexistent_dir" virtual flag whose parentFolder
+// points directly to the root. If that is not found, it falls back to
+// a heuristic: the parentFolder value that is not itself a file ID.
+func (f *Fs) detectRootID(ctx context.Context) error {
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/files",
+		Parameters: url.Values{
+			"fields":     []string{"*"},
+			"containers": []string{"drive"},
+			"pageSize":   []string{"100"},
+		},
+	}
+
+	var result api.FileList
+	err := f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(ctx, &opts, nil, &result)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return fmt.Errorf("failed to list files for root detection: %w", err)
+	}
+
+	if len(result.Files) == 0 {
+		fs.Debugf(f, "Could not detect root folder ID - no files found")
+		return nil
+	}
+
+	// Primary: look for the "nonexistent_dir" virtual flag.
+	// Its parentFolder contains the root directory ID.
+	for _, file := range result.Files {
+		if file.FileName == nonexistentDirName && len(file.ParentFolder) > 0 {
+			f.rootFolderID = file.ParentFolder[0]
+			fs.Debugf(f, "Detected root folder ID from %s marker: %s", nonexistentDirName, f.rootFolderID)
+			return nil
+		}
+	}
+
+	// Fallback heuristic: collect all file IDs and all parent IDs
+	fileIDs := make(map[string]bool, len(result.Files))
+	parentCounts := make(map[string]int)
+	for _, file := range result.Files {
+		fileIDs[file.ID] = true
+		for _, parent := range file.ParentFolder {
+			parentCounts[parent]++
+		}
+	}
+
+	// The root folder ID is a parentFolder value that is NOT itself a file ID.
+	var bestID string
+	var bestCount int
+	for id, count := range parentCounts {
+		if !fileIDs[id] && count > bestCount {
+			bestID = id
+			bestCount = count
+		}
+	}
+
+	// If all parents are also file IDs (deep nesting), use most common parent
+	if bestID == "" {
+		for id, count := range parentCounts {
+			if count > bestCount {
+				bestID = id
+				bestCount = count
+			}
+		}
+	}
+
+	if bestID != "" {
+		f.rootFolderID = bestID
+		fs.Debugf(f, "Detected root folder ID: %s (from %d files, heuristic)", bestID, bestCount)
+	}
+
+	return nil
+}
+
+// detectDomain calls About:get to discover the regional domain for better performance.
+func (f *Fs) detectDomain(ctx context.Context) {
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/about",
+		Parameters: url.Values{
+			"fields": []string{"domain"},
+		},
+	}
+
+	var about api.About
+	err := f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(ctx, &opts, nil, &about)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		fs.Debugf(f, "Failed to detect regional domain: %v", err)
+		return
+	}
+
+	if about.Domain != "" {
+		if api.GlobalDomains[about.Domain] {
+			// Already using the global domain, no switch needed
+			fs.Debugf(f, "Using global domain %q", about.Domain)
+		} else if regional, ok := api.DomainToRootURL[about.Domain]; ok {
+			f.domainURL = regional
+			f.srv.SetRoot(regional + "/drive/v1")
+			f.uploadURL = regional + "/upload/drive/v1"
+			fs.Debugf(f, "Switched to regional domain %q -> %s", about.Domain, regional)
+		} else {
+			fs.Debugf(f, "Unknown domain %q, keeping global domain", about.Domain)
+		}
+	}
 }
 
 // NewFs constructs an Fs from the path, container:path
@@ -339,21 +430,22 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	root = parsePath(root)
 
-	// Create OAuth2 client
+	// Create OAuth2 client - oauthutil.NewClient handles credential overrides automatically
 	client, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to configure Huawei Drive OAuth: %w", err)
 	}
 
-	// Create REST client
+	// Create REST client with global domain initially
 	srv := rest.NewClient(client).SetRoot(rootURL)
 
 	f := &Fs{
-		name:  name,
-		root:  root,
-		opt:   *opt,
-		srv:   srv,
-		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		name:      name,
+		root:      root,
+		opt:       *opt,
+		srv:       srv,
+		pacer:     fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		uploadURL: uploadURL,
 	}
 
 	f.features = (&fs.Features{
@@ -362,81 +454,48 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		ReadMimeType:            true,
 		WriteMimeType:           true,
 		CanHaveEmptyDirectories: true,
-		BucketBased:             false,
-		// 新增的特性支持
-		FilterAware:      true,  // 支持过滤器
-		ReadMetadata:     true,  // 读取元数据 - 华为云盘支持 properties 字段
-		WriteMetadata:    true,  // 写入元数据 - 华为云盘支持 properties 字段
-		UserMetadata:     true,  // 用户自定义元数据
-		ReadDirMetadata:  false, // 目录元数据读取（暂时禁用，需要额外实现）
-		WriteDirMetadata: false, // 目录元数据写入（暂时禁用，需要额外实现）
-		PartialUploads:   false, // 部分上传（华为云盘不支持断点续传的部分上传）
-		NoMultiThreading: false, // 支持多线程
-		SlowModTime:      false, // modTime 获取不慢
-		SlowHash:         false, // 哈希计算不慢
+		ReadMetadata:            true,
+		WriteMetadata:           true,
+		UserMetadata:            true,
 	}).Fill(ctx, f)
 
-	// Create directory cache
-	f.dirCache = dircache.New(root, f.rootParentID(), f)
+	// Set root folder ID
+	if f.opt.RootFolderID != "" {
+		f.rootFolderID = f.opt.RootFolderID
+	} else {
+		// Detect root folder ID by listing files
+		err = f.detectRootID(ctx)
+		if err != nil {
+			fs.Debugf(f, "Failed to detect root folder ID: %v", err)
+		}
+		if f.rootFolderID != "" {
+			fs.Debugf(f, "'root_folder_id = %s' - save this in the config to speed up startup", f.rootFolderID)
+		}
+	}
+
+	// Detect regional domain via About:get
+	f.detectDomain(ctx)
+
+	// Create directory cache with detected root folder ID
+	f.dirCache = dircache.New(root, f.rootFolderID, f)
 
 	// Find the current root
 	err = f.dirCache.FindRoot(ctx, false)
 	if err != nil {
-		// Assume it is a file (following Google Drive pattern)
+		// Assume it is a file
 		newRoot, remote := dircache.SplitPath(root)
-
-		// Create a temporary Fs pointing to parent directory
 		tempF := *f
-		tempF.dirCache = dircache.New(newRoot, f.rootParentID(), &tempF)
+		tempF.dirCache = dircache.New(newRoot, f.rootFolderID, &tempF)
 		tempF.root = newRoot
-
-		// Try to verify parent directory exists, but don't fail if it doesn't work
-		// due to special character encoding issues with Huawei Drive
 		_ = tempF.dirCache.FindRoot(ctx, false)
 
-		// Check if the file exists in the parent directory (try even if FindRoot failed)
 		_, fileErr := tempF.NewObject(ctx, remote)
-
 		if fileErr == nil {
-			// Found the file! Update the original f object and return it with ErrorIsFile
-			// Note: Update original f instead of returning tempF to maintain feature consistency
 			f.dirCache = tempF.dirCache
 			f.root = tempF.root
 			return f, fs.ErrorIsFile
 		}
-
-		// If both parent directory and file access failed, return original f
 		return f, nil
-	}
-
-	// Check if the root path is actually pointing to a file (following S3 pattern)
-	if f.root != "" && !strings.HasSuffix(root, "/") {
-		// Check to see if the root path is actually an existing file
-		oldRoot := f.root
-		newRoot, leaf := path.Split(oldRoot)
-		if leaf != "" {
-			// Remove trailing slash from newRoot if present
-			newRoot = strings.TrimSuffix(newRoot, "/")
-
-			// Temporarily change root to parent directory
-			f.root = newRoot
-			f.dirCache = dircache.New(newRoot, f.rootParentID(), f)
-
-			// Try to find the parent directory first
-			err = f.dirCache.FindRoot(ctx, false)
-			if err == nil {
-				// Parent directory exists, now check if leaf is a file
-				_, err := f.NewObject(ctx, leaf)
-				if err == nil {
-					// It's a file! Return ErrorIsFile with f pointing to parent
-					return f, fs.ErrorIsFile
-				}
-			}
-
-			// Not a file or parent not found, restore original root
-			f.root = oldRoot
-			f.dirCache = dircache.New(oldRoot, f.rootParentID(), f)
-		}
 	}
 
 	return f, nil
@@ -471,9 +530,11 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
+	// Encode the leaf name to match the stored (encoded) name in the API
+	encodedLeaf := f.opt.Enc.FromStandardName(leaf)
 	// Find the leaf in pathID
 	found, err = f.listAll(ctx, pathID, func(item *api.File) bool {
-		if strings.EqualFold(item.FileName, leaf) && item.IsDir() {
+		if strings.EqualFold(item.FileName, encodedLeaf) && item.IsDir() {
 			pathIDOut = item.ID
 			return true
 		}
@@ -497,13 +558,10 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 		Description: "folder",
 	}
 
-	// For Huawei Drive, set parent folder if pathID is provided and not the root parent ID
-	if pathID != "" && pathID != f.rootParentID() {
-		// Use the provided pathID as parent
+	// Set parent folder for the new directory
+	if pathID != "" {
 		req.ParentFolder = []string{pathID}
 	}
-	// If pathID is empty or is the root parent ID, don't set parentFolder
-	// The API will create the folder in the drive root by default
 
 	opts := rest.Opts{
 		Method: "POST",
@@ -542,11 +600,16 @@ type listAllFn func(*api.File) bool
 // If the user fn ever returns true then it early exits with found = true
 func (f *Fs) listAll(ctx context.Context, dirID string, fn listAllFn) (found bool, err error) {
 	// For non-root directories, we can directly query with parentFolder filter
-	if dirID != "" && dirID != f.rootParentID() {
+	if dirID != "" {
 		return f.listDirectory(ctx, dirID, fn)
 	}
 
-	// For root directory, we need to detect the root directory ID first
+	// For root directory (empty dirID), use detected root folder ID
+	if f.rootFolderID != "" {
+		return f.listDirectory(ctx, f.rootFolderID, fn)
+	}
+
+	// Fallback: list without parentFolder filter
 	return f.listRootDirectory(ctx, fn)
 }
 
@@ -586,7 +649,7 @@ func (f *Fs) listDirectoryWithFilter(ctx context.Context, dirID string, extraFil
 		opts.Parameters.Set("pageSize", strconv.Itoa(f.opt.ListChunk))
 	}
 
-	fs.Debugf(f, "Listing directory %q with filter: %q", dirID, queryParam)
+	fs.Debugf(f, "Listing directory %q", dirID)
 
 	for {
 		var result api.FileList
@@ -598,12 +661,15 @@ func (f *Fs) listDirectoryWithFilter(ctx context.Context, dirID string, extraFil
 			return false, fmt.Errorf("couldn't list directory %q: %w", dirID, err)
 		}
 
-		fs.Debugf(f, "Directory API call returned %d files, NextPageToken: %q", len(result.Files), result.NextPageToken)
-
 		// Process files directly - no need for further filtering since API does it for us
 		for _, item := range result.Files {
+			// Skip the nonexistent_dir virtual flag created by Huawei Drive API
+			if item.FileName == nonexistentDirName {
+				continue
+			}
 			if fn(&item) {
 				found = true
+				return found, nil
 			}
 		}
 
@@ -617,14 +683,9 @@ func (f *Fs) listDirectoryWithFilter(ctx context.Context, dirID string, extraFil
 	return found, nil
 }
 
-// listRootDirectory lists files in the root directory by first detecting the root directory ID
+// listRootDirectory lists files at the root level when rootFolderID is not known.
+// It lists all files and returns those that appear to be at the top level.
 func (f *Fs) listRootDirectory(ctx context.Context, fn listAllFn) (found bool, err error) {
-	// Check if we already have cached root directory ID
-	if f.rootDirIDOnce && f.rootDirID != "" {
-		fs.Debugf(f, "Using cached root directory ID: %s", f.rootDirID)
-		return f.listDirectory(ctx, f.rootDirID, fn)
-	}
-
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   "/files",
@@ -634,18 +695,14 @@ func (f *Fs) listRootDirectory(ctx context.Context, fn listAllFn) (found bool, e
 		},
 	}
 
-	// Set page size if specified
 	if f.opt.ListChunk > 0 && f.opt.ListChunk <= 1000 {
 		opts.Parameters.Set("pageSize", strconv.Itoa(f.opt.ListChunk))
 	}
 
-	// First, collect all files to analyze and find root directory ID
+	// Collect all files to detect root folder ID from parentFolder values
 	var allFiles []api.File
-	var result api.FileList
-
-	fs.Debugf(f, "Listing root directory - collecting all files first to detect root ID")
-
 	for {
+		var result api.FileList
 		err = f.pacer.Call(func() (bool, error) {
 			resp, err := f.srv.CallJSON(ctx, &opts, nil, &result)
 			return shouldRetry(ctx, resp, err)
@@ -653,54 +710,79 @@ func (f *Fs) listRootDirectory(ctx context.Context, fn listAllFn) (found bool, e
 		if err != nil {
 			return false, fmt.Errorf("couldn't list root directory: %w", err)
 		}
-
-		fs.Debugf(f, "Root detection API call returned %d files, NextPageToken: %q", len(result.Files), result.NextPageToken)
 		allFiles = append(allFiles, result.Files...)
-
-		// Check for more pages
 		if result.NextPageToken == "" {
 			break
 		}
 		opts.Parameters.Set("pageToken", result.NextPageToken)
 	}
 
-	// Detect the root directory ID using nonexistent_dir virtual flag
-	// nonexistent_dir is a virtual directory created by Huawei Drive API as a positioning flag
-	// Its parentFolder field points to the actual root directory ID
-	// This is Huawei Drive's design to help developers identify the root directory ID
-	// since the root directory itself has no parent
-	var rootDirectoryID string
-	for _, item := range allFiles {
-		if item.FileName == "nonexistent_dir" && len(item.ParentFolder) > 0 {
-			rootDirectoryID = item.ParentFolder[0]
-			fs.Debugf(f, "Found root directory ID from nonexistent_dir virtual flag: %s", rootDirectoryID)
+	// Primary: detect root folder ID from "nonexistent_dir" marker
+	var rootID string
+	for _, file := range allFiles {
+		if file.FileName == nonexistentDirName && len(file.ParentFolder) > 0 {
+			rootID = file.ParentFolder[0]
+			fs.Debugf(f, "Detected root folder ID from %s marker in listing: %s", nonexistentDirName, rootID)
 			break
 		}
 	}
 
-	// Cache the detected root directory ID and make a targeted API call
-	if rootDirectoryID != "" {
-		f.rootDirID = rootDirectoryID
-		f.rootDirIDOnce = true
-		fs.Debugf(f, "Cached and making targeted API call for root directory: %s", rootDirectoryID)
-		return f.listDirectory(ctx, rootDirectoryID, fn)
+	// Fallback heuristic: the parentFolder value that is NOT a file ID
+	if rootID == "" {
+		fileIDs := make(map[string]bool, len(allFiles))
+		parentCounts := make(map[string]int)
+		for _, file := range allFiles {
+			fileIDs[file.ID] = true
+			for _, parent := range file.ParentFolder {
+				parentCounts[parent]++
+			}
+		}
+		var maxCount int
+		for id, count := range parentCounts {
+			if !fileIDs[id] && count > maxCount {
+				rootID = id
+				maxCount = count
+			}
+		}
+		// If all parents are file IDs
+		if rootID == "" {
+			for id, count := range parentCounts {
+				if count > maxCount {
+					rootID = id
+					maxCount = count
+				}
+			}
+		}
 	}
 
-	// Mark that we've attempted root detection (even if failed) to avoid repeated attempts
-	f.rootDirIDOnce = true
-
-	// Fallback: if we couldn't detect root directory ID, process all files without parentFolder
-	// Files in root directory typically have empty ParentFolder or specific root ID
-	fs.Debugf(f, "Could not detect root directory ID, processing all files and filtering for root files")
-	for _, item := range allFiles {
-		// Skip the nonexistent_dir virtual flag from results
-		if item.FileName == "nonexistent_dir" {
-			continue
+	if rootID != "" {
+		f.rootFolderID = rootID
+		fs.Debugf(f, "Detected root folder ID from listing: %s", rootID)
+		// Now filter to only root-level files
+		for i := range allFiles {
+			// Skip the nonexistent_dir virtual flag
+			if allFiles[i].FileName == nonexistentDirName {
+				continue
+			}
+			for _, parent := range allFiles[i].ParentFolder {
+				if parent == rootID {
+					if fn(&allFiles[i]) {
+						found = true
+					}
+					break
+				}
+			}
 		}
-		// For root directory files, we process all files that aren't in subdirectories
-		// This is a fallback approach when root detection fails
-		if fn(&item) {
-			found = true
+	} else {
+		// No parentFolder info available, return all files
+		for i := range allFiles {
+			// Skip the nonexistent_dir virtual flag
+			if allFiles[i].FileName == nonexistentDirName {
+				continue
+			}
+			if fn(&allFiles[i]) {
+				found = true
+			}
 		}
 	}
 
@@ -1017,24 +1099,34 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		FileName: f.opt.Enc.FromStandardName(leaf),
 	}
 
-	// Set parent folder - this should be in the request body, not as query parameter
-	if directoryID != "" && directoryID != f.rootParentID() {
+	// Set parent folder for the copy destination
+	if directoryID != "" {
 		copyReq.ParentFolder = []string{directoryID}
 	}
 
-	// Copy metadata from source object if available
-	var srcMetadata fs.Metadata
-	var hasMetadata bool
-	if metadata, err := srcObj.Metadata(ctx); err == nil && len(metadata) > 0 {
+	// Copy user metadata: merge source metadata with MetadataSet overrides
+	mergedMeta, err := fs.GetMetadataOptions(ctx, f, src, fs.MetadataAsOpenOptions(ctx))
+	if err != nil {
+		fs.Debugf(f, "Copy: failed to get metadata options: %v", err)
+	}
+	if len(mergedMeta) > 0 {
 		copyReq.Properties = make(map[string]interface{})
-		for key, value := range metadata {
-			copyReq.Properties[key] = value
+		for key, value := range mergedMeta {
+			switch key {
+			case "content-type", "sha256", "btime", "mtime", "utime",
+				"recycled", "has-thumbnail":
+				// Skip read-only system metadata
+			case "description":
+				// Description is a top-level field, not a property
+			case "favorite":
+				// Favorite is not part of CopyFileRequest
+			default:
+				copyReq.Properties[key] = value
+			}
 		}
-		srcMetadata = metadata
-		hasMetadata = true
-		fs.Debugf(f, "Copy: copying metadata %+v to %s", metadata, remote)
-	} else {
-		fs.Debugf(f, "Copy: no metadata to copy for %s (err=%v)", srcObj.remote, err)
+		if len(copyReq.Properties) == 0 {
+			copyReq.Properties = nil
+		}
 	}
 	// If directoryID is empty or is the root parent ID, don't set parentFolder
 	// The API will copy the file to the drive root by default
@@ -1055,24 +1147,22 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	// If metadata was requested but not properly preserved, set it manually
-	if hasMetadata {
+	if len(mergedMeta) > 0 {
 		if huaweiObj, ok := dstObj.(*Object); ok {
 			if dstMetadata, err := huaweiObj.Metadata(ctx); err == nil {
-				// Check if all source metadata was preserved
-				allMatched := len(srcMetadata) == len(dstMetadata)
-				if allMatched {
-					for key, expectedValue := range srcMetadata {
-						if actualValue, exists := dstMetadata[key]; !exists || actualValue != expectedValue {
-							allMatched = false
-							break
-						}
+				// Check if all merged metadata was preserved
+				allMatched := true
+				for key, expectedValue := range mergedMeta {
+					if actualValue, exists := dstMetadata[key]; !exists || actualValue != expectedValue {
+						allMatched = false
+						break
 					}
 				}
 
 				// If metadata doesn't match exactly, set it manually
 				if !allMatched {
-					fs.Debugf(f, "Copy: metadata not preserved by API (src=%v, dst=%v), setting manually", srcMetadata, dstMetadata)
-					if err := huaweiObj.SetMetadata(ctx, srcMetadata); err != nil {
+					fs.Debugf(f, "Copy: metadata not preserved by API, setting manually")
+					if err := huaweiObj.SetMetadata(ctx, mergedMeta); err != nil {
 						fs.Errorf(f, "Copy: failed to set metadata on copied file: %v", err)
 					}
 				}
@@ -1113,17 +1203,20 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	// Get current parent folders
 	currentParents := srcObj.getParentIDs()
-	fs.Debugf(f, "Move: src=%q -> dst=%q (leaf=%q, dirID=%q, currentParents=%v)",
-		src.Remote(), remote, dstLeaf, dstDirectoryID, currentParents)
 
 	// Check what type of operation we need
 	needsDirMove := len(currentParents) == 0 || currentParents[0] != dstDirectoryID
-	needsRename := srcObj.remote != dstLeaf
+	srcLeaf := path.Base(srcObj.remote)
+	needsRename := srcLeaf != dstLeaf
 
 	// If no changes needed, return the existing object
 	if !needsDirMove && !needsRename {
 		return src, nil
 	}
+
+	// Get merged metadata BEFORE the move, because after renaming/moving
+	// the source path will no longer be valid for metadata reads
+	mergedMeta, _ := fs.GetMetadataOptions(ctx, f, src, fs.MetadataAsOpenOptions(ctx))
 
 	// Prepare the API request
 	opts := rest.Opts{
@@ -1141,29 +1234,12 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		moveReq.FileName = f.opt.Enc.FromStandardName(dstLeaf)
 	}
 
-	// Set parent folders if we need to move directories
-	// Based on Huawei API docs: addParentFolder和removeParentFolder要么都为空，要么都不为空
-	// These are request body parameters, not query parameters
+	// Set parent folders as URL query parameters (not in JSON body)
+	// Per Huawei API docs: addParentFolder and removeParentFolder are query parameters
 	if needsDirMove && len(currentParents) > 0 {
-		// Only set these if both source and destination are not root
-		if dstDirectoryID != f.rootParentID() {
-			moveReq.AddParentFolder = []string{dstDirectoryID}
-		}
-
-		// Remove old parent folders that are not root
-		var parentsToRemove []string
-		for _, parent := range currentParents {
-			if parent != f.rootParentID() && parent != "" {
-				parentsToRemove = append(parentsToRemove, parent)
-			}
-		}
-		if len(parentsToRemove) > 0 {
-			moveReq.RemoveParentFolder = parentsToRemove
-		}
+		opts.Parameters.Set("addParentFolder", dstDirectoryID)
+		opts.Parameters.Set("removeParentFolder", currentParents[0])
 	}
-
-	fs.Debugf(f, "Move request: needsDirMove=%v, needsRename=%v, req=%+v",
-		needsDirMove, needsRename, moveReq)
 
 	// Execute the API call
 	var info *api.File
@@ -1175,48 +1251,31 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, fmt.Errorf("move operation failed: %w", err)
 	}
 
-	fs.Debugf(f, "Move response: fileName=%q, parentFolder=%v", info.FileName, info.ParentFolder)
-
 	// Verify cross-directory moves actually worked
-	// Huawei Drive API has a known issue where it returns success but doesn't actually move the file
-	// Only check for cross-directory move failures when we actually requested a directory move
 	if needsDirMove && len(info.ParentFolder) > 0 {
 		actualParent := info.ParentFolder[0]
-		expectedParent := dstDirectoryID
+		if actualParent != dstDirectoryID {
+			fs.Debugf(f, "Cross-directory move failed: expected parent=%q, got=%q. Falling back to copy+delete.",
+				dstDirectoryID, actualParent)
+			return nil, fs.ErrorCantMove
+		}
+	}
 
-		// Verify cross-directory moves actually worked
-		// For same-directory renames, the actual parent should remain the same as current parent
-		if len(currentParents) > 0 && actualParent == currentParents[0] {
-			// File is still in the same directory as before
-			// Check if this was supposed to be a cross-directory move
-			srcDir := currentParents[0]
-			expectedDstDir := expectedParent
+	dstObj, err := f.newObjectWithInfo(ctx, remote, info)
+	if err != nil {
+		return nil, err
+	}
 
-			// Handle root directory case: if expectedParent is empty, it means root directory
-			// and we should compare with the actual root directory ID from currentParents
-			if expectedDstDir == "" {
-				expectedDstDir = srcDir // For root moves, expected dir should be same as current
-			}
-
-			if srcDir != expectedDstDir {
-				// This was supposed to be a cross-directory move but file stayed in old location
-				fs.Debugf(f, "Cross-directory move failed: API returned success but file remained in old location. Expected parent=%q, got=%q. Falling back to copy+delete.",
-					expectedDstDir, actualParent)
-				return nil, fs.ErrorCantMove
-			}
-			// This was just a same-directory rename, which worked correctly
-			fs.Debugf(f, "Same-directory rename completed successfully")
-		} else if actualParent != expectedParent {
-			// File moved to a different directory, verify it's the expected one
-			if actualParent != expectedParent {
-				fs.Debugf(f, "Cross-directory move failed: API returned success but file moved to wrong location. Expected parent=%q, got=%q. Falling back to copy+delete.",
-					expectedParent, actualParent)
-				return nil, fs.ErrorCantMove
+	// Apply metadata overrides if any (using pre-move merged metadata)
+	if len(mergedMeta) > 0 {
+		if huaweiObj, ok := dstObj.(*Object); ok {
+			if err := huaweiObj.SetMetadata(ctx, mergedMeta); err != nil {
+				fs.Debugf(f, "Move: failed to set metadata: %v", err)
 			}
 		}
 	}
 
-	return f.newObjectWithInfo(ctx, remote, info)
+	return dstObj, nil
 }
 
 // DirMove moves src, srcRemote to this remote at dstRemote
@@ -1240,6 +1299,8 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 	_ = srcLeaf // not used in this implementation
 
+	fs.Debugf(f, "DirMove: srcID=%q srcDirectoryID=%q srcLeaf=%q dstDirectoryID=%q dstLeaf=%q", srcID, srcDirectoryID, srcLeaf, dstDirectoryID, dstLeaf)
+
 	// Move the directory by updating parent folders
 	opts := rest.Opts{
 		Method: "PATCH",
@@ -1253,51 +1314,25 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		FileName: f.opt.Enc.FromStandardName(dstLeaf),
 	}
 
-	// Add new parent and remove old parent if they're different
-	// According to API docs, addParentFolder and removeParentFolder must appear together and both must be non-empty
+	// Set parent folders as URL query parameters if they're different
+	// Per Huawei API docs: addParentFolder and removeParentFolder are query parameters
 	if dstDirectoryID != srcDirectoryID {
-		// Huawei Drive API has strict requirements for parent folder operations
-		// Let's handle different scenarios based on source and destination
-
-		srcIsRoot := (srcDirectoryID == f.rootParentID() || srcDirectoryID == "")
-		dstIsRoot := (dstDirectoryID == f.rootParentID() || dstDirectoryID == "")
-
-		if !srcIsRoot && !dstIsRoot {
-			// Both are non-root directories - this should work
-			opts.Parameters.Set("addParentFolder", dstDirectoryID)
-			opts.Parameters.Set("removeParentFolder", srcDirectoryID)
-		} else if srcIsRoot && !dstIsRoot {
-			// Moving from root to a directory
-			// We need a valid removeParentFolder - use the cached root directory ID
-			if f.rootDirIDOnce && f.rootDirID != "" {
-				opts.Parameters.Set("addParentFolder", dstDirectoryID)
-				opts.Parameters.Set("removeParentFolder", f.rootDirID)
-			} else {
-				fs.Debugf(f, "DirMove: Cannot move from root - root directory ID not available")
-				return fs.ErrorCantDirMove
-			}
-		} else if !srcIsRoot && dstIsRoot {
-			// Moving from a directory to root
-			// We need a valid addParentFolder - use the cached root directory ID
-			if f.rootDirIDOnce && f.rootDirID != "" {
-				opts.Parameters.Set("addParentFolder", f.rootDirID)
-				opts.Parameters.Set("removeParentFolder", srcDirectoryID)
-			} else {
-				fs.Debugf(f, "DirMove: Cannot move to root - root directory ID not available")
-				return fs.ErrorCantDirMove
-			}
-		} else {
-			// Both are root - this should be a simple rename, no parent change needed
-			fs.Debugf(f, "DirMove: Root to root move, no parent folder changes needed")
-		}
+		opts.Parameters.Set("addParentFolder", dstDirectoryID)
+		opts.Parameters.Set("removeParentFolder", srcDirectoryID)
 	}
 
+	var info *api.File
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err := f.srv.CallJSON(ctx, &opts, &moveReq, nil)
+		resp, err := f.srv.CallJSON(ctx, &opts, &moveReq, &info)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return err
+	}
+
+	// Verify the move worked
+	if info != nil {
+		fs.Debugf(f, "DirMove result: id=%q fileName=%q parentFolder=%v", info.ID, info.FileName, info.ParentFolder)
 	}
 
 	// Clear the directory cache for both source and destination
@@ -1382,7 +1417,7 @@ func (f *Fs) listRRecursive(ctx context.Context, dir string, directoryID string,
 				entries = append(entries, o)
 			}
 		}
-		return true
+		return false
 	})
 
 	if err != nil {
@@ -1470,22 +1505,12 @@ func (o *Object) setMetaData(info *api.File) (err error) {
 
 // getParentIDs returns the parent folder IDs for this object
 func (o *Object) getParentIDs() []string {
-	if !o.hasMetaData {
-		// Try to read metadata if we don't have it
-		if err := o.readMetaData(context.TODO()); err != nil {
-			fs.Debugf(o, "Failed to read metadata for parent IDs: %v", err)
-			return nil
-		}
-	}
-
-	// We need to get the parent IDs from the stored metadata
-	// This requires making an API call since we only store basic info
+	// We need to get the parent IDs from the API
 	info, err := o.fs.readMetaDataForPath(context.TODO(), o.remote)
 	if err != nil {
-		fs.Debugf(o, "Failed to read full metadata for parent IDs: %v", err)
+		fs.Debugf(o, "Failed to read metadata for parent IDs: %v", err)
 		return nil
 	}
-
 	return info.ParentFolder
 }
 
@@ -1651,30 +1676,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		// Get metadata from the source ObjectInfo and merge with options metadata
 		metadata, metaErr := fs.GetMetadataOptions(ctx, o.fs, src, options)
 		if metaErr != nil {
-			fs.Debugf(o, "Update: Error getting metadata options: %v", metaErr)
+			fs.Debugf(o, "Failed to get metadata options: %v", metaErr)
 		} else if len(metadata) > 0 {
-			fs.Debugf(o, "Update: File size before metadata: %d", o.size)
-			fs.Debugf(o, "Update: Setting metadata after upload: %v", metadata)
-
-			// Read the file info before setting metadata to compare
-			beforeObj, beforeErr := o.fs.NewObject(ctx, o.Remote())
-			if beforeErr == nil {
-				fs.Debugf(o, "Update: File size before SetMetadata (from API): %d", beforeObj.Size())
-			}
-
-			setMetaErr := o.SetMetadata(ctx, metadata)
-			if setMetaErr != nil {
-				fs.Debugf(o, "Update: Failed to set metadata: %v", setMetaErr)
-				// Don't fail the upload just because metadata setting failed
-			} else {
-				// Check file size after setting metadata
-				afterObj, afterErr := o.fs.NewObject(ctx, o.Remote())
-				if afterErr == nil {
-					fs.Debugf(o, "Update: File size after SetMetadata (from API): %d", afterObj.Size())
-					if afterObj.Size() != beforeObj.Size() {
-						fs.Errorf(o, "Update: WARNING - File size changed from %d to %d after SetMetadata!", beforeObj.Size(), afterObj.Size())
-					}
-				}
+			if setMetaErr := o.SetMetadata(ctx, metadata); setMetaErr != nil {
+				fs.Debugf(o, "Failed to set metadata after upload: %v", setMetaErr)
 			}
 		}
 	}
@@ -1725,12 +1730,10 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, leaf, direct
 	// Note: We don't set editedTime/createdTime here because
 	// Huawei Drive API ignores these parameters and always uses server time
 
-	// Set parent folder if directoryID is provided and not the root parent ID
-	if directoryID != "" && directoryID != o.fs.rootParentID() {
+	// Set parent folder
+	if directoryID != "" {
 		metadata["parentFolder"] = []string{directoryID}
 	}
-	// If directoryID is empty or is the root parent ID, don't set parentFolder
-	// The API will upload the file to the drive root by default
 
 	// Create multipart form
 	var buf bytes.Buffer
@@ -1781,7 +1784,7 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, leaf, direct
 		},
 		Body:        bytes.NewReader(buf.Bytes()),
 		ContentType: fmt.Sprintf("multipart/related; boundary=%s", writer.Boundary()),
-		RootURL:     uploadURL,
+		RootURL:     o.fs.uploadURL,
 	}
 
 	if o.id != "" {
@@ -1824,7 +1827,7 @@ func (o *Object) uploadResume(ctx context.Context, in io.Reader, leaf, directory
 		ExtraHeaders: map[string]string{
 			"X-Upload-Content-Length": strconv.FormatInt(size, 10),
 		},
-		RootURL: uploadURL,
+		RootURL: o.fs.uploadURL,
 	}
 
 	// Try to get MIME type from source object first, then fall back to extension detection
@@ -1862,11 +1865,9 @@ func (o *Object) uploadResume(ctx context.Context, in io.Reader, leaf, directory
 	// Note: We don't set editedTime/createdTime here because
 	// Huawei Drive API ignores these parameters and always uses server time
 
-	if directoryID != "" && directoryID != o.fs.rootParentID() {
+	if directoryID != "" {
 		metadata["parentFolder"] = []string{directoryID}
 	}
-	// If directoryID is empty or is the root parent ID, don't set parentFolder
-	// The API will upload the file to the drive root by default
 
 	var resp *http.Response
 	var initResp api.ResumeUploadInitResponse
@@ -2081,11 +2082,13 @@ func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
 			// Standard description field
 			updateReq.Description = value
 		case "favorite":
-			// Convert string boolean to actual boolean
 			if favorite, err := strconv.ParseBool(value); err == nil {
-				updateReq.Favorite = favorite
+				updateReq.Favorite = api.BoolPtr(favorite)
 			}
-		// Note: Other metadata like btime, mtime, content-type, sha256 are read-only
+		case "content-type":
+			// Allow setting/overriding MIME type
+			updateReq.MimeType = value
+		// Note: Other metadata like btime, mtime, sha256 are read-only
 		// and cannot be directly set via the update API
 		default:
 			// All other user metadata goes into Properties by default
@@ -2096,33 +2099,23 @@ func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
 
 	// Only proceed if we have something to update
 	if len(updateReq.Properties) == 0 && len(updateReq.AppSettings) == 0 &&
-		updateReq.Description == "" {
-		// No updateable metadata provided
-		fs.Debugf(o, "SetMetadata: No updateable metadata provided")
+		updateReq.Description == "" && updateReq.Favorite == nil &&
+		updateReq.MimeType == "" {
 		return nil
 	}
-
-	fs.Debugf(o, "SetMetadata: Updating %d properties, %d app settings, description=%q",
-		len(updateReq.Properties), len(updateReq.AppSettings), updateReq.Description)
 
 	// Make the API call to update the file metadata
 	opts := rest.Opts{
 		Method: "PATCH",
 		Path:   "/files/" + o.id,
+		Parameters: url.Values{
+			"fields": []string{"*"},
+		},
 	}
 
 	var info *api.File
-
-	fs.Debugf(o, "SetMetadata: Making PATCH request to %s with payload: %+v", opts.Path, updateReq)
-
 	err := o.fs.pacer.Call(func() (bool, error) {
 		resp, err := o.fs.srv.CallJSON(ctx, &opts, &updateReq, &info)
-		if resp != nil {
-			fs.Debugf(o, "SetMetadata: HTTP response status: %d", resp.StatusCode)
-		}
-		if info != nil {
-			fs.Debugf(o, "SetMetadata: Response file info - size: %d, version: %d", info.Size, info.Version)
-		}
 		return shouldRetry(ctx, resp, err)
 	})
 
@@ -2130,23 +2123,16 @@ func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
 		return fmt.Errorf("failed to set metadata: %w", err)
 	}
 
-	fs.Debugf(o, "SetMetadata: API response file size: %d (may be incorrect)", info.Size)
-
-	// The API response sometimes returns incorrect file information (size=0, version=0)
-	// So we need to refresh the object info by querying the API again
+	// The API response sometimes returns incomplete file info after PATCH
+	// Refresh from the API if needed
 	if info.Size == 0 && info.Version == 0 {
-		fs.Debugf(o, "SetMetadata: API response has zero size/version, refreshing object info")
 		freshInfo, err := o.fs.readMetaDataForPath(ctx, o.Remote())
 		if err != nil {
-			fs.Debugf(o, "SetMetadata: Failed to refresh object info: %v", err)
-			// Fall back to using the original API response
 			return o.setMetaData(info)
 		}
-		fs.Debugf(o, "SetMetadata: Refreshed file size: %d", freshInfo.Size)
 		return o.setMetaData(freshInfo)
 	}
 
-	// Update the object's cached metadata
 	return o.setMetaData(info)
 }
 
@@ -2165,71 +2151,58 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 	}
 
 	// Handle specific Huawei Drive error responses
-	if resp != nil {
+	if resp != nil && err != nil {
+		errMsg := err.Error()
 		switch resp.StatusCode {
 		case 400:
-			// Handle specific 400 error codes from Huawei Drive API
-			if strings.Contains(err.Error(), "21004001") || strings.Contains(err.Error(), "LACK_OF_PARAM") {
+			if strings.Contains(errMsg, "21004001") || strings.Contains(errMsg, "LACK_OF_PARAM") {
 				return false, fserrors.NoRetryError(fmt.Errorf("missing required parameters: %w", err))
 			}
-			if strings.Contains(err.Error(), "21004002") || strings.Contains(err.Error(), "PARAM_INVALID") {
+			if strings.Contains(errMsg, "21004002") || strings.Contains(errMsg, "PARAM_INVALID") {
 				return false, fserrors.NoRetryError(fmt.Errorf("invalid parameters: %w", err))
 			}
-			if strings.Contains(err.Error(), "21004009") || strings.Contains(err.Error(), "PARENTFOLDER_NOT_FOUND") {
+			if strings.Contains(errMsg, "21004009") || strings.Contains(errMsg, "PARENTFOLDER_NOT_FOUND") {
 				return false, fs.ErrorDirNotFound
 			}
-			// For other 400 errors, don't retry
 			return false, fserrors.NoRetryError(fmt.Errorf("bad request: %w", err))
 		case 401:
-			// For 401 errors, allow OAuth library to handle token refresh
-			// Error 22044011 typically means Access Token expired - let OAuth handle refresh
-			if strings.Contains(err.Error(), "22044011") {
-				fs.Debugf(nil, "Access token expired (error 22044011) - OAuth will attempt refresh")
-				return true, err // Allow retry so OAuth can refresh the token
+			if strings.Contains(errMsg, "22044011") {
+				return true, err
 			}
-			// For other 401 errors, don't retry to avoid infinite loops
 			return false, fserrors.NoRetryError(fmt.Errorf("unauthorized: %w", err))
 		case 403:
-			// Handle specific 403 error codes
-			if strings.Contains(err.Error(), "21004032") || strings.Contains(err.Error(), "SERVICE_NOT_SUPPORT") {
+			if strings.Contains(errMsg, "21004032") || strings.Contains(errMsg, "SERVICE_NOT_SUPPORT") {
 				return false, fserrors.NoRetryError(fmt.Errorf("service not supported: %w", err))
 			}
-			if strings.Contains(err.Error(), "21004035") || strings.Contains(err.Error(), "INSUFFICIENT_SCOPE") {
+			if strings.Contains(errMsg, "21004035") || strings.Contains(errMsg, "INSUFFICIENT_SCOPE") {
 				return false, fserrors.NoRetryError(fmt.Errorf("insufficient OAuth scope: %w", err))
 			}
-			if strings.Contains(err.Error(), "21004036") || strings.Contains(err.Error(), "INSUFFICIENT_PERMISSION") {
+			if strings.Contains(errMsg, "21004036") || strings.Contains(errMsg, "INSUFFICIENT_PERMISSION") {
 				return false, fserrors.NoRetryError(fmt.Errorf("insufficient permissions: %w", err))
 			}
-			if strings.Contains(err.Error(), "21074033") || strings.Contains(err.Error(), "AGREEMENT_NOT_SIGNED") {
+			if strings.Contains(errMsg, "21074033") || strings.Contains(errMsg, "AGREEMENT_NOT_SIGNED") {
 				return false, fserrors.NoRetryError(fmt.Errorf("user agreement not signed: %w", err))
 			}
-			if strings.Contains(err.Error(), "21084031") || strings.Contains(err.Error(), "DATA_MIGRATING") {
-				// Data migration in progress - this might be temporary, allow retry
-				fs.Debugf(nil, "Data migration in progress, will retry")
+			if strings.Contains(errMsg, "21084031") || strings.Contains(errMsg, "DATA_MIGRATING") {
 				return true, err
 			}
 			return false, fserrors.NoRetryError(fmt.Errorf("forbidden: %w", err))
 		case 404:
-			// For 404 errors (like invalid upload endpoints), don't retry
-			return false, fserrors.NoRetryError(fmt.Errorf("not found - check API endpoint: %w", err))
+			return false, fserrors.NoRetryError(fmt.Errorf("not found: %w", err))
 		case 409:
 			return false, fs.ErrorDirExists
 		case 410:
-			// Handle 410 errors - cursor expired or temp data cleared
-			if strings.Contains(err.Error(), "21084100") || strings.Contains(err.Error(), "CURSOR_EXPIRED") {
-				return false, fserrors.NoRetryError(fmt.Errorf("cursor expired, restart listing: %w", err))
+			if strings.Contains(errMsg, "21084100") || strings.Contains(errMsg, "CURSOR_EXPIRED") {
+				return false, fserrors.NoRetryError(fmt.Errorf("cursor expired: %w", err))
 			}
-			if strings.Contains(err.Error(), "21084101") || strings.Contains(err.Error(), "TEMP_DATA_CLEARED") {
-				return false, fserrors.NoRetryError(fmt.Errorf("temporary data cleared, restart operation: %w", err))
+			if strings.Contains(errMsg, "21084101") || strings.Contains(errMsg, "TEMP_DATA_CLEARED") {
+				return false, fserrors.NoRetryError(fmt.Errorf("temporary data cleared: %w", err))
 			}
 			return false, fserrors.NoRetryError(fmt.Errorf("gone: %w", err))
 		case 500:
-			// Handle specific 500 error codes
-			if strings.Contains(err.Error(), "21005006") || strings.Contains(err.Error(), "SERVER_TEMP_ERROR") ||
-				strings.Contains(err.Error(), "21085002") || strings.Contains(err.Error(), "OUTER_SERVICE_UNAVAILABLE") ||
-				strings.Contains(err.Error(), "21085006") {
-				// These are temporary server errors, allow retry
-				fs.Debugf(nil, "Temporary server error, will retry: %v", err)
+			if strings.Contains(errMsg, "21005006") || strings.Contains(errMsg, "SERVER_TEMP_ERROR") ||
+				strings.Contains(errMsg, "21085002") || strings.Contains(errMsg, "OUTER_SERVICE_UNAVAILABLE") ||
+				strings.Contains(errMsg, "21085006") {
 				return true, err
 			}
 		}
@@ -2248,6 +2221,45 @@ var retryErrorCodes = []int{
 	509, // Bandwidth Limit Exceeded
 }
 
+// DirCacheFlush resets the directory cache - used in testing as an optional interface
+func (f *Fs) DirCacheFlush() {
+	f.dirCache.ResetRoot()
+}
+
+// UserInfo returns info about the connected user
+func (f *Fs) UserInfo(ctx context.Context) (map[string]string, error) {
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/about",
+		Parameters: url.Values{
+			"fields": []string{"user"},
+		},
+	}
+
+	var about api.About
+	err := f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(ctx, &opts, nil, &about)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user info: %w", err)
+	}
+
+	info := map[string]string{
+		"Name": about.User.DisplayName,
+	}
+	if about.User.PermissionID != "" {
+		info["Id"] = about.User.PermissionID
+	}
+	return info, nil
+}
+
+// Disconnect the current user by removing stored token
+func (f *Fs) Disconnect(ctx context.Context) error {
+	config.FileDeleteKey(f.name, config.ConfigToken)
+	return nil
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs              = (*Fs)(nil)
@@ -2258,7 +2270,11 @@ var (
 	_ fs.ListRer         = (*Fs)(nil)
 	_ fs.CleanUpper      = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
+	_ fs.UserInfoer      = (*Fs)(nil)
+	_ fs.Disconnecter    = (*Fs)(nil)
+	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
+	_ fs.MimeTyper       = (*Object)(nil)
 	_ fs.Metadataer      = (*Object)(nil)
 	_ dircache.DirCacher = (*Fs)(nil)
 )

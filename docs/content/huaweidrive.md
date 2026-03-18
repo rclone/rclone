@@ -283,6 +283,23 @@ Properties:
 - Type:        string
 - Required:    false
 
+#### --huaweidrive-root-folder-id
+
+ID of the root folder.
+
+Normally this is auto-detected, but if it fails or you want to speed up startup,
+you can set it manually.
+
+Leave blank normally. Rclone will print the detected root folder ID in debug output
+which you can then save to the config.
+
+Properties:
+
+- Config:      root_folder_id
+- Env Var:     RCLONE_HUAWEIDRIVE_ROOT_FOLDER_ID
+- Type:        string
+- Required:    false
+
 #### --huaweidrive-chunk-size
 
 Upload chunk size.
@@ -370,11 +387,17 @@ Huawei Drive imposes API rate limits. Rclone automatically handles these by back
 - Resumable uploads support automatic retry on network errors
 - SHA256 hash verification is supported for uploaded files
 
+### Server-side operations
+
+- Server-side copy: Files can be copied within Huawei Drive without downloading and re-uploading
+- Server-side move: Files and directories can be moved/renamed on the server side
+- Directory move: Entire directories can be moved with a single API call
+
 ### Directory operations
 
 - Huawei Drive supports creating empty directories
-- Directory modification times are not preserved
-- Recursive directory operations may be slow for large directory trees due to API limitations
+- Directory modification times can be set (DirSetModTime)
+- Recursive listing is supported via `--fast-list` for efficient directory traversal
 - Huawei Drive has a special "applicationData" folder for app-specific data (not accessible via rclone's default configuration)
 
 ## Error handling
@@ -393,7 +416,7 @@ For better performance:
 
 - Increase `--transfers` for concurrent operations (default is 4)
 - Adjust `chunk_size` based on your network speed and file sizes
-- Use `--fast-list` for operations on directories with many files (currently not implemented)
+- Use `--fast-list` for operations on directories with many files to reduce API calls
 
 ## Making backups
 
@@ -403,6 +426,21 @@ Huawei Drive is suitable for backups with some considerations:
 - Consider using `--backup-dir` to preserve deleted files
 - Verify transfers with `--checksum` flag for critical data
 - Be aware of the 50 GiB file size limit for individual files
+
+## Supported features
+
+Huawei Drive supports the following rclone features:
+
+- `Copy` - Server-side copy of files
+- `Move` - Server-side move/rename of files
+- `DirMove` - Server-side move of directories
+- `ListR` - Recursive listing for `--fast-list`
+- `About` - Storage quota information
+- `Purge` - Delete directory and all contents
+- `CleanUp` - Empty the trash
+- `UserInfo` - Get user account information
+- `DirSetModTime` - Set directory modification times
+- `Metadata` - Read and write file metadata/properties
 
 ## Integration with other services
 

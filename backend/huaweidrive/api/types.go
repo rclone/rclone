@@ -139,11 +139,11 @@ type UpdateFileRequest struct {
 	FileName                  string                 `json:"fileName,omitempty"`
 	Description               string                 `json:"description,omitempty"`
 	MimeType                  string                 `json:"mimeType,omitempty"`
-	Favorite                  bool                   `json:"favorite,omitempty"`
-	Recycled                  bool                   `json:"recycled,omitempty"`
+	Favorite                  *bool                  `json:"favorite,omitempty"`
+	Recycled                  *bool                  `json:"recycled,omitempty"`
 	OriginalFilename          string                 `json:"originalFilename,omitempty"`
-	WriterHasCopyPermission   bool                   `json:"writerHasCopyPermission,omitempty"`
-	WritersHasSharePermission bool                   `json:"writersHasSharePermission,omitempty"`
+	WriterHasCopyPermission   *bool                  `json:"writerHasCopyPermission,omitempty"`
+	WritersHasSharePermission *bool                  `json:"writersHasSharePermission,omitempty"`
 	Properties                map[string]interface{} `json:"properties,omitempty"`
 	AppSettings               map[string]interface{} `json:"appSettings,omitempty"`
 	AddParentFolder           []string               `json:"addParentFolder,omitempty"`
@@ -196,4 +196,34 @@ const (
 	CategoryDriveFileList = "drive#fileList"
 	CategoryDriveAbout    = "drive#about"
 	CategoryDriveUser     = "drive#user"
+
+	// Global API domain (always available)
+	GlobalDriveAPI  = "https://driveapis.cloud.huawei.com.cn"
+	GlobalUploadAPI = "https://driveapis.cloud.huawei.com.cn"
 )
+
+// DomainToRootURL maps the domain field from About:get to the regional API root URL.
+// The API returns the full domain name (e.g., "driveapis.cloud.huawei.com.cn").
+// If the domain matches the global API, no switch is needed.
+// See: https://developer.huawei.com/consumer/cn/doc/HMSCore-References/server-public-info-0000001050159641
+var DomainToRootURL = map[string]string{
+	"china":                          "https://drive-drcn.cloud.dbankcloud.cn",
+	"europe":                         "https://drive-dre.cloud.dbankcloud.cn",
+	"aala":                           "https://drive-dra.cloud.dbankcloud.cn",
+	"russia":                         "https://drive-drru.cloud.dbankcloud.cn",
+	"drive-drcn.cloud.dbankcloud.cn": "https://drive-drcn.cloud.dbankcloud.cn",
+	"drive-dre.cloud.dbankcloud.cn":  "https://drive-dre.cloud.dbankcloud.cn",
+	"drive-dra.cloud.dbankcloud.cn":  "https://drive-dra.cloud.dbankcloud.cn",
+	"drive-drru.cloud.dbankcloud.cn": "https://drive-drru.cloud.dbankcloud.cn",
+}
+
+// GlobalDomains lists domain values that indicate the global API endpoint (no switch needed)
+var GlobalDomains = map[string]bool{
+	"driveapis.cloud.huawei.com.cn": true,
+	"drive.cloud.hicloud.com":       true,
+}
+
+// BoolPtr returns a pointer to a bool value (helper for UpdateFileRequest)
+func BoolPtr(b bool) *bool {
+	return &b
+}

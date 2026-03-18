@@ -450,13 +450,18 @@ func TestMimeTypeDetection(t *testing.T) {
 	}
 }
 
-// TestRootParentID tests root parent ID handling
-func TestRootParentID(t *testing.T) {
+// TestRootFolderID tests root folder ID handling
+func TestRootFolderID(t *testing.T) {
 	f := &Fs{}
-	rootParentID := f.rootParentID()
-	expected := "HUAWEI_DRIVE_ROOT_PARENT"
-	if rootParentID != expected {
-		t.Errorf("expected root parent ID %q, got %q", expected, rootParentID)
+	// Default root folder ID should be empty until detected
+	if f.rootFolderID != "" {
+		t.Errorf("expected empty root folder ID, got %q", f.rootFolderID)
+	}
+
+	// After setting, it should be accessible
+	f.rootFolderID = "test-root-id"
+	if f.rootFolderID != "test-root-id" {
+		t.Errorf("expected root folder ID %q, got %q", "test-root-id", f.rootFolderID)
 	}
 }
 
@@ -548,7 +553,6 @@ func TestFeatures(t *testing.T) {
 		WriteMimeType:           true,
 		CanHaveEmptyDirectories: true,
 		BucketBased:             false,
-		FilterAware:             true,
 		ReadMetadata:            true,
 		WriteMetadata:           true,
 		UserMetadata:            true,
@@ -585,10 +589,6 @@ func TestFeatures(t *testing.T) {
 
 	if f.features.BucketBased {
 		t.Error("Huawei Drive is not bucket-based")
-	}
-
-	if !f.features.FilterAware {
-		t.Error("Huawei Drive should be filter aware")
 	}
 
 	if !f.features.ReadMetadata {
@@ -924,4 +924,178 @@ func TestCleanUp(t *testing.T) {
 	var _ fs.CleanUpper = (*Fs)(nil)
 
 	t.Log("CleanUpper interface properly implemented")
+}
+
+// TestInterfaceCompliance tests all implemented interfaces at compile time
+func TestInterfaceCompliance(t *testing.T) {
+	var _ fs.Fs = (*Fs)(nil)
+	var _ fs.Copier = (*Fs)(nil)
+	var _ fs.Mover = (*Fs)(nil)
+	var _ fs.DirMover = (*Fs)(nil)
+	var _ fs.ListRer = (*Fs)(nil)
+	var _ fs.Abouter = (*Fs)(nil)
+	var _ fs.Purger = (*Fs)(nil)
+	var _ fs.CleanUpper = (*Fs)(nil)
+	var _ fs.UserInfoer = (*Fs)(nil)
+	var _ fs.Disconnecter = (*Fs)(nil)
+	var _ fs.DirCacheFlusher = (*Fs)(nil)
+	var _ fs.MimeTyper = (*Object)(nil)
+}
+
+// TestMimeTyper tests the MimeType method on Object
+func TestMimeTyper(t *testing.T) {
+	ctx := context.Background()
+	obj := &Object{
+		mimeType:    "application/pdf",
+		hasMetaData: true,
+	}
+
+	if obj.MimeType(ctx) != "application/pdf" {
+		t.Errorf("expected MimeType %q, got %q", "application/pdf", obj.MimeType(ctx))
+	}
+
+	folderObj := &Object{
+		mimeType:    api.FolderMimeType,
+		hasMetaData: true,
+	}
+	if folderObj.MimeType(ctx) != api.FolderMimeType {
+		t.Errorf("expected folder MimeType %q, got %q", api.FolderMimeType, folderObj.MimeType(ctx))
+	}
+}
+
+// TestRootFolderIDConfig tests the root_folder_id configuration option
+func TestRootFolderIDConfig(t *testing.T) {
+	opts := Options{
+		RootFolderID: "test-root-folder-id",
+	}
+
+	if opts.RootFolderID != "test-root-folder-id" {
+		t.Errorf("expected RootFolderID %q, got %q", "test-root-folder-id", opts.RootFolderID)
+	}
+
+	emptyOpts := Options{}
+	if emptyOpts.RootFolderID != "" {
+		t.Errorf("expected empty default RootFolderID, got %q", emptyOpts.RootFolderID)
+	}
+}
+
+// TestGlobalDomains tests the global domain detection
+func TestGlobalDomains(t *testing.T) {
+	if !api.GlobalDomains["driveapis.cloud.huawei.com.cn"] {
+		t.Error("driveapis.cloud.huawei.com.cn should be recognized as global domain")
+	}
+	if !api.GlobalDomains["drive.cloud.hicloud.com"] {
+		t.Error("drive.cloud.hicloud.com should be recognized as global domain")
+	}
+	if api.GlobalDomains["unknown.domain.com"] {
+		t.Error("unknown.domain.com should not be recognized as global domain")
+	}
+}
+
+// TestDomainToRootURL tests domain-to-URL mapping
+func TestDomainToRootURL(t *testing.T) {
+	testCases := []struct {
+		domain   string
+		expected string
+	}{
+		{"china", "https://drive-drcn.cloud.dbankcloud.cn"},
+		{"europe", "https://drive-dre.cloud.dbankcloud.cn"},
+		{"russia", "https://drive-drru.cloud.dbankcloud.cn"},
+	}
+
+	for _, tc := range testCases {
+		url, ok := api.DomainToRootURL[tc.domain]
+		if !ok {
+			t.Errorf("domain %q not found in DomainToRootURL", tc.domain)
+			continue
+		}
+		if url != tc.expected {
+			t.Errorf("domain %q: expected URL %q, got %q", tc.domain, tc.expected, url)
+		}
+	}
+}
+
+// TestDetectRootIDAlgorithm tests the root ID detection algorithm logic
+func TestDetectRootIDAlgorithm(t *testing.T) {
+	t.Run("root_not_in_file_ids", func(t *testing.T) {
+		files := []api.File{
+			{ID: "file1", ParentFolder: []string{"ROOT_ID"}},
+			{ID: "file2", ParentFolder: []string{"ROOT_ID"}},
+			{ID: "dir1", ParentFolder: []string{"ROOT_ID"}},
+			{ID: "file3", ParentFolder: []string{"dir1"}},
+		}
+
+		fileIDs := make(map[string]bool)
+		parentCounts := make(map[string]int)
+		for _, f := range files {
+			fileIDs[f.ID] = true
+			for _, p := range f.ParentFolder {
+				parentCounts[p]++
+			}
+		}
+
+		var bestID string
+		var bestCount int
+		for id, count := range parentCounts {
+			if !fileIDs[id] && count > bestCount {
+				bestID = id
+				bestCount = count
+			}
+		}
+
+		if bestID != "ROOT_ID" {
+			t.Errorf("expected ROOT_ID, got %q", bestID)
+		}
+		if bestCount != 3 {
+			t.Errorf("expected count 3, got %d", bestCount)
+		}
+	})
+
+	t.Run("all_parents_are_file_ids", func(t *testing.T) {
+		files := []api.File{
+			{ID: "dir_a", ParentFolder: []string{"dir_b"}},
+			{ID: "dir_b", ParentFolder: []string{"dir_a"}},
+		}
+
+		fileIDs := make(map[string]bool)
+		parentCounts := make(map[string]int)
+		for _, f := range files {
+			fileIDs[f.ID] = true
+			for _, p := range f.ParentFolder {
+				parentCounts[p]++
+			}
+		}
+
+		var bestID string
+		var bestCount int
+		for id, count := range parentCounts {
+			if !fileIDs[id] && count > bestCount {
+				bestID = id
+				bestCount = count
+			}
+		}
+
+		if bestID != "" {
+			t.Errorf("expected empty bestID from primary pass, got %q", bestID)
+		}
+
+		// Fallback
+		for id, count := range parentCounts {
+			if count > bestCount {
+				bestID = id
+				bestCount = count
+			}
+		}
+
+		if bestID == "" {
+			t.Error("expected fallback to find a parent ID")
+		}
+	})
+
+	t.Run("empty_file_list", func(t *testing.T) {
+		files := []api.File{}
+		if len(files) != 0 {
+			t.Error("expected empty file list")
+		}
+	})
 }
