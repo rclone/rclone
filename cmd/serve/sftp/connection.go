@@ -58,10 +58,10 @@ type conn struct {
 // interoperate with the rclone sftp backend
 func (c *conn) execCommand(ctx context.Context, out io.Writer, command string) (err error) {
 	binary, args := command, ""
-	space := strings.Index(command, " ")
-	if space >= 0 {
-		binary = command[:space]
-		args = strings.TrimLeft(command[space+1:], " ")
+	before, after, ok := strings.Cut(command, " ")
+	if ok {
+		binary = before
+		args = strings.TrimLeft(after, " ")
 	}
 	args = shellUnEscape(args)
 	fs.Debugf(c.what, "exec command: binary = %q, args = %q", binary, args)
@@ -291,7 +291,7 @@ func (c *conn) handleChannel(newChannel ssh.NewChannel) {
 				}
 			}
 			fs.Debugf(c.what, " - accepted: %v\n", ok)
-			err = req.Reply(ok, reply)
+			err := req.Reply(ok, reply)
 			if err != nil {
 				fs.Errorf(c.what, "Failed to Reply to request: %v", err)
 				return

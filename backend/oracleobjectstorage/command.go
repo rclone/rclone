@@ -30,20 +30,25 @@ const (
 
 var commandHelp = []fs.CommandHelp{{
 	Name:  operationRename,
-	Short: "change the name of an object",
+	Short: "change the name of an object.",
 	Long: `This command can be used to rename a object.
 
-Usage Examples:
+Usage example:
 
-    rclone backend rename oos:bucket relative-object-path-under-bucket object-new-name
-`,
+` + "```console" + `
+rclone backend rename oos:bucket relative-object-path-under-bucket object-new-name
+` + "```",
 	Opts: nil,
 }, {
 	Name:  operationListMultiPart,
-	Short: "List the unfinished multipart uploads",
+	Short: "List the unfinished multipart uploads.",
 	Long: `This command lists the unfinished multipart uploads in JSON format.
 
-    rclone backend list-multipart-uploads oos:bucket/path/to/object
+Usage example:
+
+` + "```console" + `
+rclone backend list-multipart-uploads oos:bucket/path/to/object
+` + "```" + `
 
 It returns a dictionary of buckets with values as lists of unfinished
 multipart uploads.
@@ -51,70 +56,82 @@ multipart uploads.
 You can call it with no bucket in which case it lists all bucket, with
 a bucket or with a bucket and path.
 
-    {
-      "test-bucket": [
-                {
-                        "namespace": "test-namespace",
-                        "bucket": "test-bucket",
-                        "object": "600m.bin",
-                        "uploadId": "51dd8114-52a4-b2f2-c42f-5291f05eb3c8",
-                        "timeCreated": "2022-07-29T06:21:16.595Z",
-                        "storageTier": "Standard"
-                }
-        ]
-`,
+` + "```json" + `
+{
+    "test-bucket": [
+        {
+            "namespace": "test-namespace",
+            "bucket": "test-bucket",
+            "object": "600m.bin",
+            "uploadId": "51dd8114-52a4-b2f2-c42f-5291f05eb3c8",
+            "timeCreated": "2022-07-29T06:21:16.595Z",
+            "storageTier": "Standard"
+        }
+    ]
+}`,
 }, {
 	Name:  operationCleanup,
 	Short: "Remove unfinished multipart uploads.",
 	Long: `This command removes unfinished multipart uploads of age greater than
 max-age which defaults to 24 hours.
 
-Note that you can use --interactive/-i or --dry-run with this command to see what
-it would do.
+Note that you can use --interactive/-i or --dry-run with this command to see
+what it would do.
 
-    rclone backend cleanup oos:bucket/path/to/object
-    rclone backend cleanup -o max-age=7w oos:bucket/path/to/object
+Usage examples:
 
-Durations are parsed as per the rest of rclone, 2h, 7d, 7w etc.
-`,
+` + "```console" + `
+rclone backend cleanup oos:bucket/path/to/object
+rclone backend cleanup -o max-age=7w oos:bucket/path/to/object
+` + "```" + `
+
+Durations are parsed as per the rest of rclone, 2h, 7d, 7w etc.`,
 	Opts: map[string]string{
-		"max-age": "Max age of upload to delete",
+		"max-age": "Max age of upload to delete.",
 	},
 }, {
 	Name:  operationRestore,
-	Short: "Restore objects from Archive to Standard storage",
-	Long: `This command can be used to restore one or more objects from Archive to Standard storage.
+	Short: "Restore objects from Archive to Standard storage.",
+	Long: `This command can be used to restore one or more objects from Archive to
+Standard storage.
 
-	Usage Examples:
+Usage examples:
 
-    rclone backend restore oos:bucket/path/to/directory -o hours=HOURS
-    rclone backend restore oos:bucket -o hours=HOURS
+` + "```console" + `
+rclone backend restore oos:bucket/path/to/directory -o hours=HOURS
+rclone backend restore oos:bucket -o hours=HOURS
+` + "```" + `
 
 This flag also obeys the filters. Test first with --interactive/-i or --dry-run flags
 
-	rclone --interactive backend restore --include "*.txt" oos:bucket/path -o hours=72
+` + "```console" + `
+rclone --interactive backend restore --include "*.txt" oos:bucket/path -o hours=72
+` + "```" + `
 
-All the objects shown will be marked for restore, then
+All the objects shown will be marked for restore, then:
 
-	rclone backend restore --include "*.txt" oos:bucket/path -o hours=72
+` + "```console" + `
+rclone backend restore --include "*.txt" oos:bucket/path -o hours=72
+` + "```" + `
 
-	It returns a list of status dictionaries with Object Name and Status
-	keys. The Status will be "RESTORED"" if it was successful or an error message
-	if not.
+It returns a list of status dictionaries with Object Name and Status keys.
+The Status will be "RESTORED"" if it was successful or an error message if not.
 
-	[
-		{
-			"Object": "test.txt"
-			"Status": "RESTORED",
-		},
-		{
-			"Object": "test/file4.txt"
-			"Status": "RESTORED",
-		}
-	]
-`,
+` + "```json" + `
+[
+    {
+        "Object": "test.txt"
+        "Status": "RESTORED",
+    },
+    {
+        "Object": "test/file4.txt"
+        "Status": "RESTORED",
+    }
+]
+` + "```",
 	Opts: map[string]string{
-		"hours": "The number of hours for which this object will be restored. Default is 24 hrs.",
+		"hours": `The number of hours for which this object will be restored.
+Default is 24 hrs.`,
 	},
 },
 }

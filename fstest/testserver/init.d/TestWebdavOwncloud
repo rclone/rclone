@@ -11,7 +11,7 @@ PORT=38081
 
 start() {
     docker run --rm -d --name $NAME \
-           -e "OWNCLOUD_DOMAIN=${OWNCLOUD_DOMAIN}" \
+           -e "OWNCLOUD_DOMAIN=localhost:8080" \
            -e "OWNCLOUD_DB_TYPE=sqlite" \
            -e "OWNCLOUD_DB_NAME=owncloud.db" \
            -e "OWNCLOUD_ADMIN_USERNAME=$USER" \

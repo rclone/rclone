@@ -35,7 +35,7 @@ like the [move](/commands/rclone_move/) command.
 
 So
 
-` + "```sh" + `
+` + "```console" + `
 rclone moveto src dst
 ` + "```" + `
 

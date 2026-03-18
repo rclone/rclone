@@ -16,7 +16,8 @@ three ways of doing it, described below.
 ## Configuring using rclone authorize
 
 On the headless machine run [rclone config](/commands/rclone_config), but
-answer `N` to the question `Use web browser to automatically authenticate rclone with remote?`.
+answer `N` to the question `Use web browser to automatically authenticate
+rclone with remote?`.
 
 ```text
 Use web browser to automatically authenticate rclone with remote?
@@ -81,13 +82,13 @@ sure).
 Start by running [rclone config](/commands/rclone_config) to create the
 configuration file on your desktop machine.
 
-```sh
+```console
 rclone config
 ```
 
 Then locate the file by running [rclone config file](/commands/rclone_config_file).
 
-```sh
+```console
 $ rclone config file
 Configuration file is stored at:
 /home/user/.rclone.conf
@@ -103,12 +104,13 @@ If you have an SSH client installed on your local machine, you can set up an
 SSH tunnel to redirect the port 53682 into the headless machine by using the
 following command:
 
-```sh
+```console
 ssh -L localhost:53682:localhost:53682 username@remote_server
 ```
 
 Then on the headless machine run [rclone config](/commands/rclone_config) and
-answer `Y` to the question `Use web browser to automatically authenticate rclone with remote?`.
+answer `Y` to the question `Use web browser to automatically authenticate rclone
+with remote?`.
 
 ```text
 Use web browser to automatically authenticate rclone with remote?

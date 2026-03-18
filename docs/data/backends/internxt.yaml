@@ -1,0 +1,19 @@
+backend: internxt
+name: Internxt
+tier: Tier 2
+maintainers: External
+features_score: 0
+integration_tests: Passing
+data_integrity: Other
+performance: High
+adoption: Some use
+docs: Full
+security: High
+virtual: false
+remote: 'TestInternxt:'
+features:
+- About
+- CanHaveEmptyDirectories
+- Shutdown
+hashes: []
+precision: 3153600000000000000

@@ -16,13 +16,17 @@ should be passed in pairs of `key` `value` or as `key=value`.
 For example, to make a swift remote of name myremote using auto config
 you would do:
 
-    rclone config create myremote swift env_auth true
-    rclone config create myremote swift env_auth=true
+```sh
+rclone config create myremote swift env_auth true
+rclone config create myremote swift env_auth=true
+```
 
 So for example if you wanted to configure a Google Drive remote but
 using remote authorization you would do this:
 
-    rclone config create mydrive drive config_is_local=false
+```sh
+rclone config create mydrive drive config_is_local=false
+```
 
 Note that if the config process would normally ask a question the
 default is taken (unless `--non-interactive` is used).  Each time
@@ -50,29 +54,29 @@ it.
 
 This will look something like (some irrelevant detail removed):
 
-```
+```json
 {
-    "State": "*oauth-islocal,teamdrive,,",
-    "Option": {
-        "Name": "config_is_local",
-        "Help": "Use web browser to automatically authenticate rclone with remote?\n * Say Y if the machine running rclone has a web browser you can use\n * Say N if running rclone on a (remote) machine without web browser access\nIf not sure try Y. If Y failed, try N.\n",
-        "Default": true,
-        "Examples": [
-            {
-                "Value": "true",
-                "Help": "Yes"
-            },
-            {
-                "Value": "false",
-                "Help": "No"
-            }
-        ],
-        "Required": false,
-        "IsPassword": false,
-        "Type": "bool",
-        "Exclusive": true,
-    },
-    "Error": "",
+  "State": "*oauth-islocal,teamdrive,,",
+  "Option": {
+    "Name": "config_is_local",
+    "Help": "Use web browser to automatically authenticate rclone with remote?\n * Say Y if the machine running rclone has a web browser you can use\n * Say N if running rclone on a (remote) machine without web browser access\nIf not sure try Y. If Y failed, try N.\n",
+    "Default": true,
+    "Examples": [
+      {
+        "Value": "true",
+        "Help": "Yes"
+      },
+      {
+        "Value": "false",
+        "Help": "No"
+      }
+    ],
+    "Required": false,
+    "IsPassword": false,
+    "Type": "bool",
+    "Exclusive": true,
+  },
+  "Error": "",
 }
 ```
 
@@ -95,7 +99,9 @@ The keys of `Option` are used as follows:
 If `Error` is set then it should be shown to the user at the same
 time as the question.
 
-    rclone config update name --continue --state "*oauth-islocal,teamdrive,," --result "true"
+```sh
+rclone config update name --continue --state "*oauth-islocal,teamdrive,," --result "true"
+```
 
 Note that when using `--continue` all passwords should be passed in
 the clear (not obscured). Any default config values should be passed
@@ -110,7 +116,6 @@ defaults for questions as usual.
 
 Note that `bin/config.py` in the rclone source implements this protocol
 as a readable demonstration.
-
 
 ```
 rclone config create name type [key value]* [flags]
@@ -134,5 +139,10 @@ See the [global flags page](/flags/) for global options not listed here.
 
 ## See Also
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->
+
 * [rclone config](/commands/rclone_config/)	 - Enter an interactive configuration session.
 
+
+<!-- markdownlint-restore -->

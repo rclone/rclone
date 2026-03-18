@@ -10,7 +10,6 @@ List all the remotes in the config file and defined in environment variables.
 
 ## Synopsis
 
-
 Lists all the available remotes from the config file, or the remotes matching
 an optional filter.
 
@@ -23,7 +22,6 @@ the source (file or environment).
 Result can be filtered by a filter argument which applies to all attributes,
 and/or filter flags specific for each attribute. The values must be specified
 according to regular rclone filtering pattern syntax.
-
 
 ```
 rclone listremotes [<filter>] [flags]
@@ -46,5 +44,10 @@ See the [global flags page](/flags/) for global options not listed here.
 
 ## See Also
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->
+
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 
+
+<!-- markdownlint-restore -->

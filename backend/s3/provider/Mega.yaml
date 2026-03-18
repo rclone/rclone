@@ -1,0 +1,15 @@
+name: Mega
+description: MEGA S4 Object Storage
+endpoint:
+  s3.eu-central-1.s4.mega.io: Mega S4 eu-central-1 (Amsterdam)
+  s3.eu-central-2.s4.mega.io: Mega S4 eu-central-2 (Bettembourg)
+  s3.ca-central-1.s4.mega.io: Mega S4 ca-central-1 (Montreal)
+  s3.ca-west-1.s4.mega.io: Mega S4 ca-west-1 (Vancouver)
+bucket_acl: true
+quirks:
+  list_version: 2
+  force_path_style: true
+  list_url_encode: true
+  use_multipart_etag: false
+  use_already_exists: false
+  copy_cutoff: 9223372036854775807

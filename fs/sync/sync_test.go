@@ -806,7 +806,7 @@ func TestSyncBasedOnCheckSum(t *testing.T) {
 
 // Create a file and sync it. Change the last modified date and the
 // file contents but not the size.  If we're only doing sync by size
-// only, we expect nothing to to be transferred on the second sync.
+// only, we expect nothing to be transferred on the second sync.
 func TestSyncSizeOnly(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
@@ -843,7 +843,7 @@ func TestSyncSizeOnly(t *testing.T) {
 }
 
 // Create a file and sync it. Keep the last modified date but change
-// the size.  With --ignore-size we expect nothing to to be
+// the size.  With --ignore-size we expect nothing to be
 // transferred on the second sync.
 func TestSyncIgnoreSize(t *testing.T) {
 	ctx := context.Background()
@@ -1301,6 +1301,7 @@ func TestSyncAfterRemovingAFileAndAddingAFileSubDirWithErrors(t *testing.T) {
 	err := Sync(ctx, r.Fremote, r.Flocal, false)
 	assert.Equal(t, fs.ErrorNotDeleting, err)
 	testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
+	accounting.GlobalStats().ResetCounters()
 
 	r.CheckLocalListing(
 		t,

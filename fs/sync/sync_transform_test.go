@@ -13,6 +13,7 @@ import (
 
 	_ "github.com/rclone/rclone/backend/all"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
@@ -507,6 +508,7 @@ func TestError(t *testing.T) {
 	err = Sync(ctx, r.Fremote, r.Flocal, true)
 	// testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
 	assert.Error(t, err)
+	accounting.GlobalStats().ResetCounters()
 
 	r.CheckLocalListing(t, []fstest.Item{file1}, []string{"toe", "toe/toe"})
 	r.CheckRemoteListing(t, []fstest.Item{file1}, []string{"toe", "toe/toe"})

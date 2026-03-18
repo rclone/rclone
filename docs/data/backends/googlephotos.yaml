@@ -1,0 +1,20 @@
+backend: googlephotos
+name: Google Photos
+tier: Tier 5
+maintainers: None
+features_score: 0
+integration_tests: Failing
+data_integrity: Other
+performance: Low
+adoption: Some use
+docs: Full
+security: High
+virtual: false
+remote: 'TestGooglePhotos:'
+features:
+- Disconnect
+- ReadMimeType
+- Shutdown
+- UserInfo
+hashes: []
+precision: 3153600000000000000

@@ -47,7 +47,6 @@ you what happened to it. These are reminiscent of diff files.
 The default number of parallel checks is 8. See the [--checkers](/docs/#checkers-int)
 option for more information.
 
-
 ```
 rclone checksum <hash> sumfile dst:path [flags]
 ```
@@ -73,7 +72,7 @@ See the [global flags page](/flags/) for global options not listed here.
 
 Flags for filtering directory listings
 
-```
+```text
       --delete-excluded                     Delete files on dest excluded from sync
       --exclude stringArray                 Exclude files matching pattern
       --exclude-from stringArray            Read file exclude patterns from file (use - to read from stdin)
@@ -103,12 +102,17 @@ Flags for filtering directory listings
 
 Flags for listing directories
 
-```
+```text
       --default-time Time   Time to show if modtime is unknown for files and directories (default 2000-01-01T00:00:00Z)
       --fast-list           Use recursive list if available; uses more memory but fewer transactions
 ```
 
 ## See Also
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->
+
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 
+
+<!-- markdownlint-restore -->

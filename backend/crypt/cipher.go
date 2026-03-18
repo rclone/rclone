@@ -403,14 +403,14 @@ func (c *Cipher) deobfuscateSegment(ciphertext string) (string, error) {
 	if ciphertext == "" {
 		return "", nil
 	}
-	pos := strings.Index(ciphertext, ".")
-	if pos == -1 {
+	before, after, ok := strings.Cut(ciphertext, ".")
+	if !ok {
 		return "", ErrorNotAnEncryptedFile
 	} // No .
-	num := ciphertext[:pos]
+	num := before
 	if num == "!" {
 		// No rotation; probably original was not valid unicode
-		return ciphertext[pos+1:], nil
+		return after, nil
 	}
 	dir, err := strconv.Atoi(num)
 	if err != nil {
@@ -425,7 +425,7 @@ func (c *Cipher) deobfuscateSegment(ciphertext string) (string, error) {
 	var result bytes.Buffer
 
 	inQuote := false
-	for _, runeValue := range ciphertext[pos+1:] {
+	for _, runeValue := range after {
 		switch {
 		case inQuote:
 			_, _ = result.WriteRune(runeValue)

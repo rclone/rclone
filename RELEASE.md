@@ -21,6 +21,7 @@ This file describes how to make the various kinds of releases
 - make doc
 - git status - to check for new man pages - git add them
 - git commit -a -v -m "Version v1.XX.0"
+- make check
 - make retag
 - git push origin # without --follow-tags so it doesn't push the tag if it fails
 - git push --follow-tags origin
@@ -31,10 +32,11 @@ This file describes how to make the various kinds of releases
 - make sign_upload
 - make check_sign
 - make upload
+- make upload_test_website # check sponsors are correct/unchanged
 - make upload_website
 - make upload_github
 - make startdev # make startstable for stable branch
-- \# announce with forum post, twitter post, patreon post
+- \# announce with forum post, twitter post, and post to annoucements list
 
 ## Update dependencies
 
@@ -60,7 +62,7 @@ If `make updatedirect` added a `toolchain` directive then remove it.
 We don't want to force a toolchain on our users. Linux packagers are
 often using a version of Go that is a few versions out of date.
 
-```sh
+```console
 go list -m -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' all > /tmp/potential-upgrades
 go get -d $(cat /tmp/potential-upgrades)
 go mod tidy -go=1.22 -compat=1.22
@@ -70,7 +72,7 @@ If the `go mod tidy` fails use the output from it to remove the
 package which can't be upgraded from `/tmp/potential-upgrades` when
 done
 
-```sh
+```console
 git co go.mod go.sum
 ```
 
@@ -102,17 +104,70 @@ The above procedure will not upgrade major versions, so v2 to v3.
 However this tool can show which major versions might need to be
 upgraded:
 
-```sh
+```console
 go run github.com/icholy/gomajor@latest list -major
 ```
 
 Expect API breakage when updating major versions.
 
+## Updating Go
+
+When a new Go stable is released update to it. We support the current
+stable Go and the previous release which is in line with the rest of
+the Go ecosystem.
+
+These files will need editing:
+
+- `.github/workflows/build.yml` - change current and previous Go versions
+- `docs/content/install.md` - change minimum Go version required
+- `fs/versioncheck.go` - update minimum Go version required
+- `go.mod` - update minimum Go version required
+
+Check it builds
+
+- `make GOTAGS=cmount`
+- `make compiletest`
+
+Assuming `go1.XX` is current and `go1.YY` is previous version:
+
+Use `git grep go1.YY` and `git grep go1.YY` to look for opportunities
+to remove build tags we no longer need.
+
+Commit with message like this:
+
+```text
+build: update to go1.YY and make go1.YY the minimum required version
+```
+
+Send to CI and if it passes, merge.
+
+### gofix
+
+Updating the minimum required version of Go is a good opportunity to
+run the `go fix` command to modernize Go usage.
+
+This needs to be run for all architectures.
+
+```console
+GOOS=linux go fix -tags cmount ./...
+GOOS=freebsd go fix -tags cmount ./...
+GOOS=windows go fix -tags cmount ./...
+GOOS=darwin go fix -tags cmount ./...
+```
+
+Examine the diff carefully.
+
+Commit with message
+
+```text
+build: modernize Go code with go fix for go1.YY
+```
+
 ## Tidy beta
 
 At some point after the release run
 
-```sh
+```console
 bin/tidy-beta v1.55
 ```
 
@@ -159,7 +214,7 @@ which is a private repo containing artwork from sponsors.
 
 Create an update website branch based off the last release
 
-```sh
+```console
 git co -b update-website
 ```
 
@@ -167,19 +222,19 @@ If the branch already exists, double check there are no commits that need saving
 
 Now reset the branch to the last release
 
-```sh
+```console
 git reset --hard v1.64.0
 ```
 
 Create the changes, check them in, test with `make serve` then
 
-```sh
+```console
 make upload_test_website
 ```
 
 Check out <https://test.rclone.org> and when happy
 
-```sh
+```console
 make upload_website
 ```
 
@@ -189,14 +244,14 @@ Cherry pick any changes back to master and the stable branch if it is active.
 
 To do a basic build of rclone's docker image to debug builds locally:
 
-```sh
+```console
 docker buildx build --load -t rclone/rclone:testing --progress=plain .
 docker run --rm rclone/rclone:testing version
 ```
 
 To test the multipatform build
 
-```sh
+```console
 docker buildx build -t rclone/rclone:testing --progress=plain --platform linux/amd64,linux/386,linux/arm64,linux/arm/v7,linux/arm/v6 .
 ```
 
@@ -204,6 +259,6 @@ To make a full build then set the tags correctly and add `--push`
 
 Note that you can't only build one architecture - you need to build them all.
 
-```sh
+```console
 docker buildx build --platform linux/amd64,linux/386,linux/arm64,linux/arm/v7,linux/arm/v6 -t rclone/rclone:1.54.1 -t rclone/rclone:1.54 -t rclone/rclone:1 -t rclone/rclone:latest --push .
 ```

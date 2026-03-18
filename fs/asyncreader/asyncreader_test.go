@@ -150,13 +150,13 @@ func TestAsyncReaderSizes(t *testing.T) {
 
 	var texts [31]string
 	str := ""
-	all := ""
+	var all strings.Builder
 	for i := range len(texts) - 1 {
 		texts[i] = str + "\n"
-		all += texts[i]
+		all.WriteString(texts[i])
 		str += string(rune(i)%26 + 'a')
 	}
-	texts[len(texts)-1] = all
+	texts[len(texts)-1] = all.String()
 
 	for h := range len(texts) {
 		text := texts[h]
@@ -191,13 +191,13 @@ func TestAsyncReaderWriteTo(t *testing.T) {
 
 	var texts [31]string
 	str := ""
-	all := ""
+	var all strings.Builder
 	for i := range len(texts) - 1 {
 		texts[i] = str + "\n"
-		all += texts[i]
+		all.WriteString(texts[i])
 		str += string(rune(i)%26 + 'a')
 	}
-	texts[len(texts)-1] = all
+	texts[len(texts)-1] = all.String()
 
 	for h := range len(texts) {
 		text := texts[h]
@@ -265,9 +265,7 @@ func testAsyncReaderClose(t *testing.T, writeto bool) {
 	var copyErr error
 	var wg sync.WaitGroup
 	started := make(chan struct{})
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		close(started)
 		if writeto {
 			// exercise the WriteTo path
@@ -284,7 +282,7 @@ func testAsyncReaderClose(t *testing.T, writeto bool) {
 				}
 			}
 		}
-	}()
+	})
 	// Do some copying
 	<-started
 	time.Sleep(100 * time.Millisecond)

@@ -133,6 +133,9 @@ backends:
  - backend:  "compress"
    remote:   "TestCompress:"
    fastlist: false
+ - backend:  "compress"
+   remote:   "TestCompressZstd:"
+   fastlist: false
  # - backend:  "compress"
  #   remote:   "TestCompressSwift:"
  #   fastlist: false
@@ -161,6 +164,9 @@ backends:
  - backend:  "gofile"
    remote:   "TestGoFile:"
    fastlist: true
+ - backend: "filen"
+   remote:   "TestFilen:"
+   fastlist: false
  - backend:  "filescom"
    remote:   "TestFilesCom:"
    fastlist: false
@@ -417,14 +423,14 @@ backends:
    fastlist: true
    ignore:
      # It just isn't possible to preserve the existing file with azure blob
-     # and make sure we don't leak uncomitted blocks.
+     # and make sure we don't leak uncommitted blocks.
      - TestMultithreadCopyAbort
  - backend:  "azureblob"
    remote:   "TestAzureBlob,directory_markers:"
    fastlist: true
    ignore:
      # It just isn't possible to preserve the existing file with azure blob
-     # and make sure we don't leak uncomitted blocks.
+     # and make sure we don't leak uncommitted blocks.
      - TestMultithreadCopyAbort
  - backend:  "azurefiles"
    remote:   "TestAzureFiles:"
@@ -621,11 +627,6 @@ backends:
      - TestSyncUTFNorm
    ignoretests:
      - cmd/gitannex
- # - backend: "uptobox"
- #   remote: "TestUptobox:"
- #   fastlist: false
- #   ignore:
- #     - TestRWFileHandleWriteNoWrite
  - backend: "oracleobjectstorage"
    remote: "TestOracleObjectStorage:"
    fastlist: true
@@ -662,3 +663,31 @@ backends:
  - backend: "huaweidrive"
    remote: "TestHuaweiDrive:"
    fastlist: true
+ - backend: "shade"
+   remote: "TestShade:"
+   fastlist: false
+
+ - backend: "archive"
+   remote: "TestArchive:"
+   fastlist: false
+   ignoretests:
+     - cmd/bisync
+     - cmd/gitannex
+   ignore:
+     # These are caused by the archive backend returning the underlying objects
+     # with the parent backend having a different precision.
+     - TestServerSideCopyOverSelf
+     - TestServerSideMoveOverSelf
+ - backend: "internxt"
+   remote: "TestInternxt:"
+   fastlist: false
+   listretries: 5
+   ignore:
+     - TestRWFileHandleWriteNoWrite
+ - backend:  "drime"
+   remote:   "TestDrime:"
+   ignoretests:
+     # The TestBisyncRemoteLocal/check_access_filters tests fail due to duplicated objects
+     - cmd/bisync
+   fastlist: false
+   extratime: 2.0

@@ -60,7 +60,7 @@ var systemMetadataInfo = map[string]fs.MetadataHelp{
 		ReadOnly: true,
 	},
 	"description": {
-		Help:    "A short description of the file. Max 1024 characters. Only supported for OneDrive Personal.",
+		Help:    "A short description of the file. Max 1024 characters. No longer supported by Microsoft.",
 		Type:    "string",
 		Example: "Contract for signing",
 	},
@@ -259,12 +259,8 @@ func (m *Metadata) Set(ctx context.Context, metadata fs.Metadata) (numSet int, e
 			m.btime = t
 			numSet++
 		case "description":
-			if m.fs.driveType != driveTypePersonal {
-				fs.Debugf(m.remote, "metadata description is only supported for OneDrive Personal -- skipping: %s", v)
-				continue
-			}
-			m.description = v
-			numSet++
+			fs.Debugf(m.remote, "metadata description is no longer supported -- skipping: %s", v)
+			continue
 		case "permissions":
 			if !m.fs.opt.MetadataPermissions.IsSet(rwWrite) {
 				continue
@@ -291,9 +287,6 @@ func (m *Metadata) Set(ctx context.Context, metadata fs.Metadata) (numSet int, e
 func (m *Metadata) toAPIMetadata() api.Metadata {
 	update := api.Metadata{
 		FileSystemInfo: &api.FileSystemInfoFacet{},
-	}
-	if m.description != "" && m.fs.driveType == driveTypePersonal {
-		update.Description = m.description
 	}
 	if !m.mtime.IsZero() {
 		update.FileSystemInfo.LastModifiedDateTime = api.Timestamp(m.mtime)
@@ -603,12 +596,10 @@ func (m *Metadata) addPermission(ctx context.Context, p *api.PermissionsType) (n
 
 	req := &api.AddPermissionsRequest{
 		Recipients:    fillRecipients(p, m.fs.driveType),
-		RequireSignIn: m.fs.driveType != driveTypePersonal, // personal and business have conflicting requirements
+		RequireSignIn: true,
 		Roles:         p.Roles,
 	}
-	if m.fs.driveType != driveTypePersonal {
-		req.RetainInheritedPermissions = false // not supported for personal
-	}
+	req.RetainInheritedPermissions = false
 
 	if p.Link != nil && p.Link.Scope == api.AnonymousScope {
 		link, err := m.fs.PublicLink(ctx, m.remote, fs.DurationOff, false)
@@ -816,15 +807,13 @@ func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata
 		if err != nil {
 			return nil, err
 		}
-		info, meta, err = f.createDir(ctx, parentID, dir, leaf, metadata)
+		_, meta, err = f.createDir(ctx, parentID, dir, leaf, metadata)
 		if err != nil {
 			return nil, err
 		}
-		if f.driveType != driveTypePersonal {
-			// for some reason, OneDrive Business needs this extra step to set modtime, while Personal does not. Seems like a bug...
-			fs.Debugf(dir, "setting time %v", meta.mtime)
-			info, err = meta.Write(ctx, false)
-		}
+		// for some reason, OneDrive Business and Personal needs this extra step to set modtime. Seems like a bug...
+		fs.Debugf(dir, "setting time %v", meta.mtime)
+		info, err = meta.Write(ctx, false)
 	} else if err == nil {
 		// Directory exists and needs updating
 		info, meta, err = f.updateDir(ctx, dirID, dir, metadata)

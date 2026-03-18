@@ -56,13 +56,13 @@ signatures on the release.
 
 To install rclone on Linux/macOS/BSD systems, run:
 
-```sh
+```console
 sudo -v ; curl https://rclone.org/install.sh | sudo bash
 ```
 
 For beta installation, run:
 
-```sh
+```console
 sudo -v ; curl https://rclone.org/install.sh | sudo bash -s beta
 ```
 

@@ -24,41 +24,45 @@ structure as it goes along.
 You can interact with the user interface using key presses,
 press '?' to toggle the help on and off. The supported keys are:
 
-     ↑,↓ or k,j to Move
-     →,l to enter
-     ←,h to return
-     g toggle graph
-     c toggle counts
-     a toggle average size in directory
-     m toggle modified time
-     u toggle human-readable format
-     n,s,C,A,M sort by name,size,count,asize,mtime
-     d delete file/directory
-     v select file/directory
-     V enter visual select mode
-     D delete selected files/directories
-     y copy current path to clipboard
-     Y display current path
-     ^L refresh screen (fix screen corruption)
-     r recalculate file sizes
-     ? to toggle help on and off
-     ESC to close the menu box
-     q/^c to quit
+```text
+ ↑,↓ or k,j to Move
+ →,l to enter
+ ←,h to return
+ g toggle graph
+ c toggle counts
+ a toggle average size in directory
+ m toggle modified time
+ u toggle human-readable format
+ n,s,C,A,M sort by name,size,count,asize,mtime
+ d delete file/directory
+ v select file/directory
+ V enter visual select mode
+ D delete selected files/directories
+ y copy current path to clipboard
+ Y display current path
+ ^L refresh screen (fix screen corruption)
+ r recalculate file sizes
+ ? to toggle help on and off
+ ESC to close the menu box
+ q/^c to quit
+```
 
 Listed files/directories may be prefixed by a one-character flag,
 some of them combined with a description in brackets at end of line.
 These flags have the following meaning:
 
-    e means this is an empty directory, i.e. contains no files (but
-      may contain empty subdirectories)
-    ~ means this is a directory where some of the files (possibly in
-      subdirectories) have unknown size, and therefore the directory
-      size may be underestimated (and average size inaccurate, as it
-      is average of the files with known sizes).
-    . means an error occurred while reading a subdirectory, and
-      therefore the directory size may be underestimated (and average
-      size inaccurate)
-    ! means an error occurred while reading this directory
+```text
+e means this is an empty directory, i.e. contains no files (but
+  may contain empty subdirectories)
+~ means this is a directory where some of the files (possibly in
+  subdirectories) have unknown size, and therefore the directory
+  size may be underestimated (and average size inaccurate, as it
+  is average of the files with known sizes).
+. means an error occurred while reading a subdirectory, and
+  therefore the directory size may be underestimated (and average
+  size inaccurate)
+! means an error occurred while reading this directory
+```
 
 This an homage to the [ncdu tool](https://dev.yorhel.nl/ncdu) but for
 rclone remotes.  It is missing lots of features at the moment
@@ -70,7 +74,6 @@ UI won't respond in the meantime since the deletion is done synchronously.
 For a non-interactive listing of the remote, see the
 [tree](/commands/rclone_tree/) command. To just get the total size of
 the remote you can also use the [size](/commands/rclone_size/) command.
-
 
 ```
 rclone ncdu remote:path [flags]
@@ -89,7 +92,7 @@ See the [global flags page](/flags/) for global options not listed here.
 
 Flags for filtering directory listings
 
-```
+```text
       --delete-excluded                     Delete files on dest excluded from sync
       --exclude stringArray                 Exclude files matching pattern
       --exclude-from stringArray            Read file exclude patterns from file (use - to read from stdin)
@@ -119,12 +122,17 @@ Flags for filtering directory listings
 
 Flags for listing directories
 
-```
+```text
       --default-time Time   Time to show if modtime is unknown for files and directories (default 2000-01-01T00:00:00Z)
       --fast-list           Use recursive list if available; uses more memory but fewer transactions
 ```
 
 ## See Also
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->
+
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 
+
+<!-- markdownlint-restore -->

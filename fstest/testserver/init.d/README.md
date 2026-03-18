@@ -1,11 +1,12 @@
 This directory contains scripts to start and stop servers for testing.
 
-The commands are named after the remotes in use.  They should be
-executable files with the following parameters:
+The commands are named after the remotes in use. They are executable
+files with the following parameters:
 
-    start  - starts the server
-    stop   - stops the server
+    start  - starts the server if not running
+    stop   - stops the server if nothing is using it
     status - returns non-zero exit code if the server is not running
+    reset  - stops the server and resets any reference counts
 
 These will be called automatically by test_all if that remote is
 required.
@@ -21,16 +22,27 @@ after the connection succeeds rclone will wait `5s` before continuing.
 This is for servers that aren't quite ready even though they have
 opened their TCP ports.
 
+## Writing new scripts
+
+A docker based server or an `rclone serve` based server should be easy
+to write. Look at one of the examples.
+
 `run.bash` contains boilerplate to be included in a bash script for
-interpreting the command line parameters.
+interpreting the command line parameters. This does reference counting
+to ensure multiple copies of the server aren't running at once.
+Including this is mandatory. It will call your `start()`, `stop()` and
+`status()` functions.
 
 `docker.bash` contains library functions to help with docker
-implementations.
+implementations. It contains implementations of `stop()` and
+`status()` so all you have to do is write a `start()` function.
 
-## TODO
+`rclone-serve.bash` contains functions to help with `rclone serve`
+based implementations. It contains implementations of `stop()` and
+`status()` so all you have to do is write a `start()` function which
+should call the `run()` function provided.
 
-- sftpd - https://github.com/panubo/docker-sshd ?
-- openstack swift - https://github.com/bouncestorage/docker-swift
-- ceph - https://github.com/ceph/cn
-- other ftp servers
-
+Any external TCP or UDP ports used should be unique as any of the
+servers might be running together. So please create a new line in the
+[PORTS](PORTS.md) file to allocate your server a port. Bind any ports
+to localhost so they aren't accessible externally.

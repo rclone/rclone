@@ -11,6 +11,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/lib/transferaccounter"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/asyncreader"
@@ -82,7 +83,7 @@ type accountValues struct {
 	max     int64      // if >=0 the max number of bytes to transfer
 	start   time.Time  // Start time of first read
 	lpTime  time.Time  // Time of last average measurement
-	lpBytes int        // Number of bytes read since last measurement
+	lpBytes int64      // Number of bytes read since last measurement
 	avg     float64    // Moving average of last few measurements in Byte/s
 }
 
@@ -312,6 +313,15 @@ func (acc *Account) serverSideEnd(n int64) {
 	}
 }
 
+// NewServerSideCopyAccounter returns a TransferAccounter for a server
+// side copy and a new ctx with it embedded
+func (acc *Account) NewServerSideCopyAccounter(ctx context.Context) (context.Context, *transferaccounter.TransferAccounter) {
+	return transferaccounter.New(ctx, func(n int64) {
+		acc.stats.AddServerSideCopyBytes(n)
+		acc.accountReadNoNetwork(n)
+	})
+}
+
 // ServerSideCopyEnd accounts for a read of n bytes in a server-side copy
 func (acc *Account) ServerSideCopyEnd(n int64) {
 	acc.stats.AddServerSideCopy(n)
@@ -344,18 +354,34 @@ func (acc *Account) limitPerFileBandwidth(n int) {
 	}
 }
 
-// Account the read and limit bandwidth
-func (acc *Account) accountRead(n int) {
+// Account the read
+func (acc *Account) accountReadN(n int64) {
 	// Update Stats
 	acc.values.mu.Lock()
 	acc.values.lpBytes += n
-	acc.values.bytes += int64(n)
+	acc.values.bytes += n
 	acc.values.mu.Unlock()
 
-	acc.stats.Bytes(int64(n))
+	acc.stats.Bytes(n)
+}
+
+// Account the read and limit bandwidth
+func (acc *Account) accountRead(n int) {
+	acc.accountReadN(int64(n))
 
 	TokenBucket.LimitBandwidth(TokenBucketSlotAccounting, n)
 	acc.limitPerFileBandwidth(n)
+}
+
+// Account the read if not using network (eg for server side copies)
+func (acc *Account) accountReadNoNetwork(n int64) {
+	// Update Stats
+	acc.values.mu.Lock()
+	acc.values.lpBytes += n
+	acc.values.bytes += n
+	acc.values.mu.Unlock()
+
+	acc.stats.BytesNoNetwork(n)
 }
 
 // read bytes from the io.Reader passed in and account them
@@ -374,6 +400,39 @@ func (acc *Account) Read(p []byte) (n int, err error) {
 	acc.mu.Lock()
 	defer acc.mu.Unlock()
 	return acc.read(acc.in, p)
+}
+
+// Seek to position in the object - see io.Seeker
+//
+// May return an error if not implemented by the underlying reader.
+func (acc *Account) Seek(offset int64, whence int) (int64, error) {
+	acc.mu.Lock()
+	defer acc.mu.Unlock()
+	do, ok := acc.in.(io.Seeker)
+	if !ok {
+		return 0, fmt.Errorf("internal error: Seek not implemented for %T", acc.in)
+	}
+	return do.Seek(offset, whence)
+}
+
+// ReadAt from off into p - see io.ReaderAt
+//
+// May return an error if not implemented by the underlying reader.
+func (acc *Account) ReadAt(p []byte, off int64) (n int, err error) {
+	acc.mu.Lock()
+	defer acc.mu.Unlock()
+	do, ok := acc.in.(io.ReaderAt)
+	if !ok {
+		return 0, fmt.Errorf("internal error: ReadAt not implemented for %T", acc.in)
+	}
+	bytesUntilLimit, err := acc.checkReadBefore()
+	if err == nil {
+		n, err = do.ReadAt(p, off)
+		acc.accountRead(n)
+		n, err = acc.checkReadAfter(bytesUntilLimit, n, err)
+	}
+	return n, err
+
 }
 
 // Thin wrapper for w
@@ -425,6 +484,15 @@ func (acc *Account) AccountRead(n int) (err error) {
 		acc.accountRead(n)
 	}
 	return err
+}
+
+// AccountReadN account having read n bytes
+//
+// Does not obey any transfer limits, bandwidth limits, etc.
+func (acc *Account) AccountReadN(n int64) {
+	acc.mu.Lock()
+	defer acc.mu.Unlock()
+	acc.accountReadN(n)
 }
 
 // Close the object
@@ -528,8 +596,11 @@ func (acc *Account) String() string {
 		}
 	}
 
+	var displaySpeedString string
 	if acc.ci.DataRateUnit == "bits" {
-		cur *= 8
+		displaySpeedString = fs.SizeSuffix(cur * 8).BitRateUnit()
+	} else {
+		displaySpeedString = fs.SizeSuffix(cur).ByteRateUnit()
 	}
 
 	percentageDone := 0
@@ -537,12 +608,12 @@ func (acc *Account) String() string {
 		percentageDone = int(100 * float64(a) / float64(b))
 	}
 
-	return fmt.Sprintf("%*s:%3d%% /%s, %s/s, %s",
+	return fmt.Sprintf("%*s:%3d%% / %s, %s, %s",
 		acc.ci.StatsFileNameLength,
 		shortenName(acc.name, acc.ci.StatsFileNameLength),
 		percentageDone,
-		fs.SizeSuffix(b),
-		fs.SizeSuffix(cur),
+		fs.SizeSuffix(b).ByteUnit(),
+		displaySpeedString,
 		etas,
 	)
 }

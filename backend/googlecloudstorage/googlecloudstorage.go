@@ -346,9 +346,26 @@ can't check the size and hash but the file contents will be decompressed.
 			Advanced: true,
 			Default:  false,
 		}, {
-			Name:     "endpoint",
-			Help:     "Endpoint for the service.\n\nLeave blank normally.",
+			Name: "endpoint",
+			Help: `Custom endpoint for the storage API. Leave blank to use the provider default.
+
+When using a custom endpoint that includes a subpath (e.g. example.org/custom/endpoint),
+the subpath will be ignored during upload operations due to a limitation in the
+underlying Google API Go client library.
+Download and listing operations will work correctly with the full endpoint path.
+If you require subpath support for uploads, avoid using subpaths in your custom
+endpoint configuration.`,
 			Advanced: true,
+			Examples: []fs.OptionExample{{
+				Value: "storage.example.org",
+				Help:  "Specify a custom endpoint",
+			}, {
+				Value: "storage.example.org:4443",
+				Help:  "Specifying a custom endpoint with port",
+			}, {
+				Value: "storage.example.org:4443/gcs/api",
+				Help:  "Specifying a subpath, see the note, uploads won't use the custom path!",
+			}},
 		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
@@ -1134,7 +1151,15 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		remote: remote,
 	}
 
-	rewriteRequest := f.svc.Objects.Rewrite(srcBucket, srcPath, dstBucket, dstPath, nil)
+	// Set the storage class for the destination object if configured
+	var dstObject *storage.Object
+	if f.opt.StorageClass != "" {
+		dstObject = &storage.Object{
+			StorageClass: f.opt.StorageClass,
+		}
+	}
+
+	rewriteRequest := f.svc.Objects.Rewrite(srcBucket, srcPath, dstBucket, dstPath, dstObject)
 	if !f.opt.BucketPolicyOnly {
 		rewriteRequest.DestinationPredefinedAcl(f.opt.ObjectACL)
 	}
@@ -1421,6 +1446,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		Name:        bucketPath,
 		ContentType: fs.MimeType(ctx, src),
 		Metadata:    metadataFromModTime(modTime),
+	}
+	// Set the storage class from config if configured
+	if o.fs.opt.StorageClass != "" {
+		object.StorageClass = o.fs.opt.StorageClass
 	}
 	// Apply upload options
 	for _, option := range options {

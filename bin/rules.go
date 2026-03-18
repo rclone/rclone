@@ -13,7 +13,6 @@
 // https://github.com/quasilyte/go-ruleguard?tab=readme-ov-file#troubleshooting
 
 //go:build ruleguard
-// +build ruleguard
 
 // Package gorules implementing custom linting rules using ruleguard
 package gorules

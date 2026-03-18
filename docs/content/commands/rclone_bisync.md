@@ -16,17 +16,18 @@ Perform bidirectional synchronization between two paths.
 bidirectional cloud sync solution in rclone.
 It retains the Path1 and Path2 filesystem listings from the prior run.
 On each successive run it will:
+
 - list files on Path1 and Path2, and check for changes on each side.
   Changes include `New`, `Newer`, `Older`, and `Deleted` files.
 - Propagate changes on Path1 to Path2, and vice-versa.
 
 Bisync is considered an **advanced command**, so use with care.
 Make sure you have read and understood the entire [manual](https://rclone.org/bisync)
-(especially the [Limitations](https://rclone.org/bisync/#limitations) section) before using,
-or data loss can result. Questions can be asked in the [Rclone Forum](https://forum.rclone.org/).
+(especially the [Limitations](https://rclone.org/bisync/#limitations) section)
+before using, or data loss can result. Questions can be asked in the
+[Rclone Forum](https://forum.rclone.org/).
 
 See [full bisync description](https://rclone.org/bisync/) for details.
-
 
 ```
 rclone bisync remote1:path1 remote2:path2 [flags]
@@ -69,7 +70,7 @@ See the [global flags page](/flags/) for global options not listed here.
 
 Flags for anything which can copy a file
 
-```
+```text
       --check-first                                 Do all the checks before starting transfers
   -c, --checksum                                    Check for changes with size & checksum (if available, or fallback to size only)
       --compare-dest stringArray                    Include additional server-side paths during comparison
@@ -110,7 +111,7 @@ Flags for anything which can copy a file
 
 Important flags useful for most commands
 
-```
+```text
   -n, --dry-run         Do a trial run with no permanent changes
   -i, --interactive     Enable interactive mode
   -v, --verbose count   Print lots more stuff (repeat for more)
@@ -120,7 +121,7 @@ Important flags useful for most commands
 
 Flags for filtering directory listings
 
-```
+```text
       --delete-excluded                     Delete files on dest excluded from sync
       --exclude stringArray                 Exclude files matching pattern
       --exclude-from stringArray            Read file exclude patterns from file (use - to read from stdin)
@@ -148,5 +149,10 @@ Flags for filtering directory listings
 
 ## See Also
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->
+
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 
+
+<!-- markdownlint-restore -->

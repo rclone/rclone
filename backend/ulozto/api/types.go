@@ -104,6 +104,19 @@ type File struct {
 	} `json:"processing"`
 }
 
+// FolderSize represents the API object describing the sizes of a files and subfolders of a folder.
+type FolderSize struct {
+	FilesSize    int64 `json:"files_size"`
+	FilesCount   int64 `json:"files_count"`
+	FoldersCount int64 `json:"folders_count"`
+}
+
+// FolderSizes describes the subfolder sizes of a single folder.
+type FolderSizes struct {
+	Direct    FolderSize `json:"direct"`
+	Recursive FolderSize `json:"recursive"`
+}
+
 // CreateFolderRequest represents the JSON API object
 // that's sent to the create folder API endpoint.
 type CreateFolderRequest struct {
@@ -125,6 +138,9 @@ type ListFilesResponse struct {
 	Metadata ListResponseMetadata `json:"metadata"`
 	Items    []File               `json:"items"`
 }
+
+// FolderSizesResponse represents the response from the folder-sizes endpoint.
+type FolderSizesResponse map[string]FolderSizes
 
 // DeleteFoldersRequest represents the JSON API object
 // that's sent to the delete folders API endpoint.

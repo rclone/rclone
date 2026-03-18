@@ -51,6 +51,8 @@ inserts leading and trailing "/" on `--rc-baseurl`, so `--rc-baseurl "rclone"`,
 `--rc-baseurl "/rclone"` and `--rc-baseurl "/rclone/"` are all treated
 identically.
 
+`--rc-disable-zip` may be set to disable the zipping download option.
+
 ### TLS (SSL)
 
 By default this will serve over http.  If you want you can serve over
@@ -76,41 +78,42 @@ by `--rc-addr`).
 
 This allows rclone to be a socket-activated service.
 It can be configured with .socket and .service unit files as described in
-https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html
+<https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html>.
 
 Socket activation can be tested ad-hoc with the `systemd-socket-activate`command
 
-       systemd-socket-activate -l 8000 -- rclone serve
+```console
+systemd-socket-activate -l 8000 -- rclone serve
+```
 
 This will socket-activate rclone on the first connection to port 8000 over TCP.
+
 ### Template
 
 `--rc-template` allows a user to specify a custom markup template for HTTP
 and WebDAV serve functions.  The server exports the following markup
 to be used within the template to server pages:
 
-| Parameter   | Description |
-| :---------- | :---------- |
-| .Name       | The full path of a file/directory. |
-| .Title      | Directory listing of .Name |
-| .Sort       | The current sort used.  This is changeable via ?sort= parameter |
-|             | Sort Options: namedirfirst,name,size,time (default namedirfirst) |
-| .Order      | The current ordering used.  This is changeable via ?order= parameter |
-|             | Order Options: asc,desc (default asc) |
-| .Query      | Currently unused. |
-| .Breadcrumb | Allows for creating a relative navigation |
-|-- .Link     | The relative to the root link of the Text. |
-|-- .Text     | The Name of the directory. |
-| .Entries    | Information about a specific file/directory. |
-|-- .URL      | The 'url' of an entry.  |
-|-- .Leaf     | Currently same as 'URL' but intended to be 'just' the name. |
-|-- .IsDir    | Boolean for if an entry is a directory or not. |
-|-- .Size     | Size in Bytes of the entry. |
-|-- .ModTime  | The UTC timestamp of an entry. |
+| Parameter   | Subparameter | Description |
+| :---------- | :----------- | :---------- |
+| .Name       |              | The full path of a file/directory. |
+| .Title      |              | Directory listing of '.Name'. |
+| .Sort       |              | The current sort used. This is changeable via '?sort=' parameter. Possible values: namedirfirst, name, size, time (default namedirfirst). |
+| .Order      |              | The current ordering used. This is changeable via '?order=' parameter. Possible values: asc, desc (default asc). |
+| .Query      |              | Currently unused. |
+| .Breadcrumb |              | Allows for creating a relative navigation. |
+|             | .Link        | The link of the Text relative to the root. |
+|             | .Text        | The Name of the directory. |
+| .Entries    |              | Information about a specific file/directory. |
+|             | .URL         | The url of an entry. |
+|             | .Leaf        | Currently same as '.URL' but intended to be just the name. |
+|             | .IsDir       | Boolean for if an entry is a directory or not. |
+|             | .Size        | Size in bytes of the entry. |
+|             | .ModTime     | The UTC timestamp of an entry. |
 
-The server also makes the following functions available so that they can be used within the
-template. These functions help extend the options for dynamic rendering of HTML. They can
-be used to render HTML based on specific conditions.
+The server also makes the following functions available so that they can be used
+within the template. These functions help extend the options for dynamic
+rendering of HTML. They can be used to render HTML based on specific conditions.
 
 | Function   | Description |
 | :---------- | :---------- |
@@ -127,8 +130,9 @@ You can either use an htpasswd file which can take lots of users, or
 set a single username and password with the `--rc-user` and `--rc-pass` flags.
 
 Alternatively, you can have the reverse proxy manage authentication and use the
-username provided in the configured header with `--user-from-header`  (e.g., `--rc---user-from-header=x-remote-user`).
-Ensure the proxy is trusted and headers cannot be spoofed, as misconfiguration may lead to unauthorized access.
+username provided in the configured header with `--user-from-header`  (e.g., `--rc-user-from-header=x-remote-user`).
+Ensure the proxy is trusted and headers cannot be spoofed, as misconfiguration
+may lead to unauthorized access.
 
 If either of the above authentication methods is not configured and client
 certificates are required by the `--client-ca` flag passed to the server, the
@@ -140,17 +144,17 @@ authentication.  Bcrypt is recommended.
 
 To create an htpasswd file:
 
-    touch htpasswd
-    htpasswd -B htpasswd user
-    htpasswd -B htpasswd anotherUser
+```console
+touch htpasswd
+htpasswd -B htpasswd user
+htpasswd -B htpasswd anotherUser
+```
 
 The password file can be updated while rclone is running.
 
 Use `--rc-realm` to set the authentication realm.
 
 Use `--rc-salt` to change the password hashing salt from the default.
-
-
 
 ```
 rclone rcd <path to files to serve>* [flags]
@@ -169,7 +173,7 @@ See the [global flags page](/flags/) for global options not listed here.
 
 Flags to control the Remote Control API
 
-```
+```text
       --rc                                 Enable the remote control server
       --rc-addr stringArray                IPaddress:Port or :Port to bind server to (default localhost:5572)
       --rc-allow-origin string             Origin which cross-domain request (CORS) can be executed from
@@ -204,5 +208,10 @@ Flags to control the Remote Control API
 
 ## See Also
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->
+
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 
+
+<!-- markdownlint-restore -->

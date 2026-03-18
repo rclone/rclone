@@ -1,0 +1,11 @@
+name: Cubbit
+description: Cubbit DS3 Object Storage
+region:
+  eu-west-1: Europe West
+endpoint:
+  s3.cubbit.eu: Cubbit DS3 Object Storage endpoint
+  s3.{tenant_name}.cubbit.eu: Multi-tenant endpoint - replace {tenant_name} with your actual tenant name. Do not select this directly
+acl: {}
+bucket_acl: true
+quirks:
+  use_multipart_etag: false

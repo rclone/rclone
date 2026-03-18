@@ -23,7 +23,7 @@ readable format with size and path. Recurses by default.
 
 E.g.
 
-` + "```sh" + `
+` + "```console" + `
 $ rclone ls swift:bucket
     60295 bevajer5jef
     90613 canole

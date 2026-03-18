@@ -1,0 +1,25 @@
+backend: koofr
+name: Koofr
+tier: Tier 2
+maintainers: Core
+features_score: 5
+integration_tests: Passing
+data_integrity: Hash
+performance: High
+adoption: Widely used
+docs: Full
+security: High
+virtual: false
+remote: 'TestKoofr:'
+features:
+- About
+- CanHaveEmptyDirectories
+- CaseInsensitive
+- Copy
+- DirMove
+- Move
+- PublicLink
+- PutStream
+hashes:
+- md5
+precision: 1000000

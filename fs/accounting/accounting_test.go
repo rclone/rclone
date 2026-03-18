@@ -100,7 +100,7 @@ func TestAccountRead(t *testing.T) {
 
 	assert.True(t, acc.values.start.IsZero())
 	acc.values.mu.Lock()
-	assert.Equal(t, 0, acc.values.lpBytes)
+	assert.Equal(t, int64(0), acc.values.lpBytes)
 	assert.Equal(t, int64(0), acc.values.bytes)
 	acc.values.mu.Unlock()
 	assert.Equal(t, int64(0), stats.bytes)
@@ -113,7 +113,7 @@ func TestAccountRead(t *testing.T) {
 
 	assert.False(t, acc.values.start.IsZero())
 	acc.values.mu.Lock()
-	assert.Equal(t, 2, acc.values.lpBytes)
+	assert.Equal(t, int64(2), acc.values.lpBytes)
 	assert.Equal(t, int64(2), acc.values.bytes)
 	acc.values.mu.Unlock()
 	assert.Equal(t, int64(2), stats.bytes)
@@ -145,7 +145,7 @@ func testAccountWriteTo(t *testing.T, withBuffer bool) {
 
 	assert.True(t, acc.values.start.IsZero())
 	acc.values.mu.Lock()
-	assert.Equal(t, 0, acc.values.lpBytes)
+	assert.Equal(t, int64(0), acc.values.lpBytes)
 	assert.Equal(t, int64(0), acc.values.bytes)
 	acc.values.mu.Unlock()
 	assert.Equal(t, int64(0), stats.bytes)
@@ -159,7 +159,7 @@ func testAccountWriteTo(t *testing.T, withBuffer bool) {
 
 	assert.False(t, acc.values.start.IsZero())
 	acc.values.mu.Lock()
-	assert.Equal(t, len(buf), acc.values.lpBytes)
+	assert.Equal(t, int64(len(buf)), acc.values.lpBytes)
 	assert.Equal(t, int64(len(buf)), acc.values.bytes)
 	acc.values.mu.Unlock()
 	assert.Equal(t, int64(len(buf)), stats.bytes)
@@ -183,14 +183,14 @@ func TestAccountString(t *testing.T) {
 
 	// FIXME not an exhaustive test!
 
-	assert.Equal(t, "test:  0% /3, 0/s, -", strings.TrimSpace(acc.String()))
+	assert.Equal(t, "test:  0% / 3 B, 0 B/s, -", strings.TrimSpace(acc.String()))
 
 	var buf = make([]byte, 2)
 	n, err := acc.Read(buf)
 	assert.NoError(t, err)
 	assert.Equal(t, 2, n)
 
-	assert.Equal(t, "test: 66% /3, 0/s, -", strings.TrimSpace(acc.String()))
+	assert.Equal(t, "test: 66% / 3 B, 0 B/s, -", strings.TrimSpace(acc.String()))
 
 	assert.NoError(t, acc.Close())
 }

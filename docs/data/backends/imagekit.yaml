@@ -1,0 +1,23 @@
+backend: imagekit
+name: Imagekit
+tier: Tier 1
+maintainers: External
+features_score: 0
+integration_tests: Passing
+data_integrity: Other
+performance: High
+adoption: Some use
+docs: Full
+security: High
+virtual: false
+remote: 'TestImageKit:'
+features:
+- CanHaveEmptyDirectories
+- FilterAware
+- PublicLink
+- Purge
+- ReadMetadata
+- ReadMimeType
+- SlowHash
+hashes: []
+precision: 3153600000000000000

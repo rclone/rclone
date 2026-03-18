@@ -1,0 +1,47 @@
+backend: union
+name: Union
+tier: Tier 1
+maintainers: Core
+features_score: 7
+integration_tests: Passing
+data_integrity: Hash
+performance: High
+adoption: Often used
+docs: Full
+security: High
+virtual: true
+remote: 'TestUnion:'
+features:
+- About
+- CanHaveEmptyDirectories
+- DirModTimeUpdatesOnWrite
+- DirMove
+- DirSetModTime
+- MkdirMetadata
+- Move
+- Overlay
+- PartialUploads
+- PutStream
+- ReadDirMetadata
+- ReadMetadata
+- SlowHash
+- UserDirMetadata
+- UserMetadata
+- WriteDirMetadata
+- WriteDirSetModTime
+- WriteMetadata
+hashes:
+- md5
+- sha1
+- whirlpool
+- crc32
+- sha256
+- sha512
+- blake3
+- xxh3
+- xxh128
+- dropbox
+- hidrive
+- mailru
+- quickxor
+precision: 1

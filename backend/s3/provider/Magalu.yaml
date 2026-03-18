@@ -1,0 +1,16 @@
+name: Magalu
+description: Magalu Object Storage
+endpoint:
+  br-se1.magaluobjects.com: São Paulo, SP (BR), br-se1
+  br-ne1.magaluobjects.com: Fortaleza, CE (BR), br-ne1
+acl: {}
+storage_class:
+  STANDARD: Standard storage class
+  GLACIER_IR: Glacier Instant Retrieval storage class
+bucket_acl: true
+quirks:
+  list_version: 1
+  force_path_style: true
+  list_url_encode: false
+  use_multipart_etag: false
+  use_already_exists: false

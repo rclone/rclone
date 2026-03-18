@@ -18,7 +18,6 @@ If decryption fails it will return a non-zero exit code if using
 
 If the config file is not encrypted it will return a non zero exit code.
 
-
 ```
 rclone config encryption check [flags]
 ```
@@ -33,5 +32,10 @@ See the [global flags page](/flags/) for global options not listed here.
 
 ## See Also
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->
+
 * [rclone config encryption](/commands/rclone_config_encryption/)	 - set, remove and check the encryption for the config file
 
+
+<!-- markdownlint-restore -->

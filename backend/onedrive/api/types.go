@@ -50,12 +50,12 @@ type Identity struct {
 // to represent a set of identities associated with various events for
 // an item, such as created by or last modified by.
 type IdentitySet struct {
-	User        Identity `json:"user,omitempty"`
-	Application Identity `json:"application,omitempty"`
-	Device      Identity `json:"device,omitempty"`
-	Group       Identity `json:"group,omitempty"`
-	SiteGroup   Identity `json:"siteGroup,omitempty"` // The SharePoint group associated with this action. Optional.
-	SiteUser    Identity `json:"siteUser,omitempty"`  // The SharePoint user associated with this action. Optional.
+	User        Identity `json:"user"`
+	Application Identity `json:"application"`
+	Device      Identity `json:"device"`
+	Group       Identity `json:"group"`
+	SiteGroup   Identity `json:"siteGroup"` // The SharePoint group associated with this action. Optional.
+	SiteUser    Identity `json:"siteUser"`  // The SharePoint user associated with this action. Optional.
 }
 
 // Quota groups storage space quota-related information on OneDrive into a single structure.
@@ -133,7 +133,7 @@ type RemoteItemFacet struct {
 
 // FolderFacet groups folder-related data on OneDrive into a single structure
 type FolderFacet struct {
-	ChildCount int64 `json:"childCount"` // Number of children contained immediately within this container.
+	ChildCount int64 `json:"childCount,omitempty"` // Number of children contained immediately within this container.
 }
 
 // HashesType groups different types of hashes into a single structure, for an item on OneDrive.
@@ -155,8 +155,8 @@ type FileFacet struct {
 // facet can be used to specify the last modified date or created date
 // of the item as it was on the local device.
 type FileSystemInfoFacet struct {
-	CreatedDateTime      Timestamp `json:"createdDateTime,omitempty"`      // The UTC date and time the file was created on a client.
-	LastModifiedDateTime Timestamp `json:"lastModifiedDateTime,omitempty"` // The UTC date and time the file was last modified on a client.
+	CreatedDateTime      Timestamp `json:"createdDateTime"`      // The UTC date and time the file was created on a client.
+	LastModifiedDateTime Timestamp `json:"lastModifiedDateTime"` // The UTC date and time the file was last modified on a client.
 }
 
 // DeletedFacet indicates that the item on OneDrive has been
@@ -175,10 +175,10 @@ type PackageFacet struct {
 // SharedType indicates a DriveItem has been shared with others. The resource includes information about how the item is shared.
 // If a Driveitem has a non-null shared facet, the item has been shared.
 type SharedType struct {
-	Owner          IdentitySet `json:"owner,omitempty"`          // The identity of the owner of the shared item. Read-only.
-	Scope          string      `json:"scope,omitempty"`          // Indicates the scope of how the item is shared: anonymous, organization, or users. Read-only.
-	SharedBy       IdentitySet `json:"sharedBy,omitempty"`       // The identity of the user who shared the item. Read-only.
-	SharedDateTime Timestamp   `json:"sharedDateTime,omitempty"` // The UTC date and time when the item was shared. Read-only.
+	Owner          IdentitySet `json:"owner"`           // The identity of the owner of the shared item. Read-only.
+	Scope          string      `json:"scope,omitempty"` // Indicates the scope of how the item is shared: anonymous, organization, or users. Read-only.
+	SharedBy       IdentitySet `json:"sharedBy"`        // The identity of the user who shared the item. Read-only.
+	SharedDateTime Timestamp   `json:"sharedDateTime"`  // The UTC date and time when the item was shared. Read-only.
 }
 
 // SharingInvitationType groups invitation-related data items into a single structure.

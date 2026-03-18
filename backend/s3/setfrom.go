@@ -70,6 +70,7 @@ func setFrom_s3ListObjectsV2Output_s3ListObjectVersionsOutput(a *s3.ListObjectsV
 // setFrom_typesObject_typesObjectVersion copies matching elements from a to b
 func setFrom_typesObject_typesObjectVersion(a *types.Object, b *types.ObjectVersion) {
 	a.ChecksumAlgorithm = b.ChecksumAlgorithm
+	a.ChecksumType = b.ChecksumType
 	a.ETag = b.ETag
 	a.Key = b.Key
 	a.LastModified = b.LastModified
@@ -82,6 +83,7 @@ func setFrom_typesObject_typesObjectVersion(a *types.Object, b *types.ObjectVers
 func setFrom_s3CreateMultipartUploadInput_s3HeadObjectOutput(a *s3.CreateMultipartUploadInput, b *s3.HeadObjectOutput) {
 	a.BucketKeyEnabled = b.BucketKeyEnabled
 	a.CacheControl = b.CacheControl
+	a.ChecksumType = b.ChecksumType
 	a.ContentDisposition = b.ContentDisposition
 	a.ContentEncoding = b.ContentEncoding
 	a.ContentLanguage = b.ContentLanguage
@@ -160,12 +162,15 @@ func setFrom_s3HeadObjectOutput_s3GetObjectOutput(a *s3.HeadObjectOutput, b *s3.
 	a.CacheControl = b.CacheControl
 	a.ChecksumCRC32 = b.ChecksumCRC32
 	a.ChecksumCRC32C = b.ChecksumCRC32C
+	a.ChecksumCRC64NVME = b.ChecksumCRC64NVME
 	a.ChecksumSHA1 = b.ChecksumSHA1
 	a.ChecksumSHA256 = b.ChecksumSHA256
+	a.ChecksumType = b.ChecksumType
 	a.ContentDisposition = b.ContentDisposition
 	a.ContentEncoding = b.ContentEncoding
 	a.ContentLanguage = b.ContentLanguage
 	a.ContentLength = b.ContentLength
+	a.ContentRange = b.ContentRange
 	a.ContentType = b.ContentType
 	a.DeleteMarker = b.DeleteMarker
 	a.ETag = b.ETag
@@ -187,6 +192,7 @@ func setFrom_s3HeadObjectOutput_s3GetObjectOutput(a *s3.HeadObjectOutput, b *s3.
 	a.SSEKMSKeyId = b.SSEKMSKeyId
 	a.ServerSideEncryption = b.ServerSideEncryption
 	a.StorageClass = b.StorageClass
+	a.TagCount = b.TagCount
 	a.VersionId = b.VersionId
 	a.WebsiteRedirectLocation = b.WebsiteRedirectLocation
 	a.ResultMetadata = b.ResultMetadata
@@ -232,6 +238,7 @@ func setFrom_s3HeadObjectOutput_s3PutObjectInput(a *s3.HeadObjectOutput, b *s3.P
 	a.CacheControl = b.CacheControl
 	a.ChecksumCRC32 = b.ChecksumCRC32
 	a.ChecksumCRC32C = b.ChecksumCRC32C
+	a.ChecksumCRC64NVME = b.ChecksumCRC64NVME
 	a.ChecksumSHA1 = b.ChecksumSHA1
 	a.ChecksumSHA256 = b.ChecksumSHA256
 	a.ContentDisposition = b.ContentDisposition
@@ -270,6 +277,8 @@ func setFrom_s3CopyObjectInput_s3PutObjectInput(a *s3.CopyObjectInput, b *s3.Put
 	a.GrantRead = b.GrantRead
 	a.GrantReadACP = b.GrantReadACP
 	a.GrantWriteACP = b.GrantWriteACP
+	a.IfMatch = b.IfMatch
+	a.IfNoneMatch = b.IfNoneMatch
 	a.Metadata = b.Metadata
 	a.ObjectLockLegalHoldStatus = b.ObjectLockLegalHoldStatus
 	a.ObjectLockMode = b.ObjectLockMode

@@ -1,0 +1,37 @@
+name: Alibaba
+description: Alibaba Cloud Object Storage System (OSS) formerly Aliyun
+endpoint:
+  oss-accelerate.aliyuncs.com: Global Accelerate
+  oss-accelerate-overseas.aliyuncs.com: Global Accelerate (outside mainland China)
+  oss-cn-hangzhou.aliyuncs.com: East China 1 (Hangzhou)
+  oss-cn-shanghai.aliyuncs.com: East China 2 (Shanghai)
+  oss-cn-qingdao.aliyuncs.com: North China 1 (Qingdao)
+  oss-cn-beijing.aliyuncs.com: North China 2 (Beijing)
+  oss-cn-zhangjiakou.aliyuncs.com: North China 3 (Zhangjiakou)
+  oss-cn-huhehaote.aliyuncs.com: North China 5 (Hohhot)
+  oss-cn-wulanchabu.aliyuncs.com: North China 6 (Ulanqab)
+  oss-cn-shenzhen.aliyuncs.com: South China 1 (Shenzhen)
+  oss-cn-heyuan.aliyuncs.com: South China 2 (Heyuan)
+  oss-cn-guangzhou.aliyuncs.com: South China 3 (Guangzhou)
+  oss-cn-chengdu.aliyuncs.com: West China 1 (Chengdu)
+  oss-cn-hongkong.aliyuncs.com: Hong Kong (Hong Kong)
+  oss-us-west-1.aliyuncs.com: US West 1 (Silicon Valley)
+  oss-us-east-1.aliyuncs.com: US East 1 (Virginia)
+  oss-ap-southeast-1.aliyuncs.com: Southeast Asia Southeast 1 (Singapore)
+  oss-ap-southeast-2.aliyuncs.com: Asia Pacific Southeast 2 (Sydney)
+  oss-ap-southeast-3.aliyuncs.com: Southeast Asia Southeast 3 (Kuala Lumpur)
+  oss-ap-southeast-5.aliyuncs.com: Asia Pacific Southeast 5 (Jakarta)
+  oss-ap-northeast-1.aliyuncs.com: Asia Pacific Northeast 1 (Japan)
+  oss-ap-south-1.aliyuncs.com: Asia Pacific South 1 (Mumbai)
+  oss-eu-central-1.aliyuncs.com: Central Europe 1 (Frankfurt)
+  oss-eu-west-1.aliyuncs.com: West Europe (London)
+  oss-me-east-1.aliyuncs.com: Middle East 1 (Dubai)
+acl: {}
+storage_class:
+  '': Default
+  STANDARD: Standard storage class
+  GLACIER: Archive storage mode
+  STANDARD_IA: Infrequent access storage mode
+bucket_acl: true
+quirks:
+  use_multipart_etag: false # multipar ETags differ from AWS

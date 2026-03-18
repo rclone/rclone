@@ -68,7 +68,7 @@ Here is an example run.
 
 Before - with duplicates
 
-` + "```sh" + `
+` + "```console" + `
 $ rclone lsl drive:dupes
   6048320 2016-03-05 16:23:16.798000000 one.txt
   6048320 2016-03-05 16:23:11.775000000 one.txt
@@ -81,7 +81,7 @@ $ rclone lsl drive:dupes
 
 Now the ` + "`dedupe`" + ` session
 
-` + "```sh" + `
+` + "```console" + `
 $ rclone dedupe drive:dupes
 2016/03/05 16:24:37 Google drive root 'dupes': Looking for duplicates using interactive mode.
 one.txt: Found 4 files with duplicate names
@@ -111,7 +111,7 @@ two-3.txt: renamed from: two.txt
 
 The result being
 
-` + "```sh" + `
+` + "```console" + `
 $ rclone lsl drive:dupes
   6048320 2016-03-05 16:23:16.798000000 one.txt
    564374 2016-03-05 16:22:52.118000000 two-1.txt
@@ -135,13 +135,13 @@ or by using an extra parameter with the same value
 For example, to rename all the identically named photos in your Google Photos
 directory, do
 
-` + "```sh" + `
+` + "```console" + `
 rclone dedupe --dedupe-mode rename "drive:Google Photos"
 ` + "```" + `
 
 Or
 
-` + "```sh" + `
+` + "```console" + `
 rclone dedupe rename "drive:Google Photos"
 ` + "```",
 	Annotations: map[string]string{

@@ -16,10 +16,11 @@ This contains the following files
 
 ## Compiling
 
-This can be compiled by using `make` or alternatively `GOARCH=wasm GOOS=js go build -o rclone.wasm`
+This can be compiled by using `make` or alternatively
+`GOARCH=wasm GOOS=js go build -o rclone.wasm`.
 
 ## Running
 
 Run the test server with `make serve` and examine the page at
-http://localhost:3000/ - look at the javascript console and look at
+<http://localhost:3000/> - look at the javascript console and look at
 the end of `loader.js` for how that works.

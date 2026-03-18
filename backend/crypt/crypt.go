@@ -923,28 +923,30 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 var commandHelp = []fs.CommandHelp{
 	{
 		Name:  "encode",
-		Short: "Encode the given filename(s)",
+		Short: "Encode the given filename(s).",
 		Long: `This encodes the filenames given as arguments returning a list of
 strings of the encoded results.
 
-Usage Example:
+Usage examples:
 
-    rclone backend encode crypt: file1 [file2...]
-    rclone rc backend/command command=encode fs=crypt: file1 [file2...]
-`,
+` + "```console" + `
+rclone backend encode crypt: file1 [file2...]
+rclone rc backend/command command=encode fs=crypt: file1 [file2...]
+` + "```",
 	},
 	{
 		Name:  "decode",
-		Short: "Decode the given filename(s)",
+		Short: "Decode the given filename(s).",
 		Long: `This decodes the filenames given as arguments returning a list of
 strings of the decoded results. It will return an error if any of the
 inputs are invalid.
 
-Usage Example:
+Usage examples:
 
-    rclone backend decode crypt: encryptedfile1 [encryptedfile2...]
-    rclone rc backend/command command=decode fs=crypt: encryptedfile1 [encryptedfile2...]
-`,
+` + "```console" + `
+rclone backend decode crypt: encryptedfile1 [encryptedfile2...]
+rclone rc backend/command command=decode fs=crypt: encryptedfile1 [encryptedfile2...]
+` + "```",
 	},
 }
 

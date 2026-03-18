@@ -1,0 +1,15 @@
+name: BizflyCloud
+description: Bizfly Cloud Simple Storage
+region:
+  hn: Ha Noi
+  hcm: Ho Chi Minh
+endpoint:
+  hn.ss.bfcplatform.vn: Hanoi endpoint
+  hcm.ss.bfcplatform.vn: Ho Chi Minh endpoint
+acl: {}
+bucket_acl: true
+quirks:
+  force_path_style: true
+  list_url_encode: false
+  use_multipart_etag: false
+  use_already_exists: false

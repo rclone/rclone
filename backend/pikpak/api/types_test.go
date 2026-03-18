@@ -75,7 +75,7 @@ func TestLinkValid(t *testing.T) {
 				Expire: Time(time.Now().Add(time.Hour)),
 			},
 			expected: true,
-			desc:     "should fallback to Expire field when URL expire parameter is unparseable",
+			desc:     "should fallback to Expire field when URL expire parameter is unparsable",
 		},
 		{
 			name: "invalid when both URL expire and Expire field are expired",

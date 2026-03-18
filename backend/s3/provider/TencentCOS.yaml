@@ -1,0 +1,52 @@
+name: TencentCOS
+description: Tencent Cloud Object Storage (COS)
+endpoint:
+  cos.ap-beijing.myqcloud.com: Beijing Region
+  cos.ap-nanjing.myqcloud.com: Nanjing Region
+  cos.ap-shanghai.myqcloud.com: Shanghai Region
+  cos.ap-guangzhou.myqcloud.com: Guangzhou Region
+  cos.ap-chengdu.myqcloud.com: Chengdu Region
+  cos.ap-chongqing.myqcloud.com: Chongqing Region
+  cos.ap-hongkong.myqcloud.com: Hong Kong (China) Region
+  cos.ap-singapore.myqcloud.com: Singapore Region
+  cos.ap-mumbai.myqcloud.com: Mumbai Region
+  cos.ap-seoul.myqcloud.com: Seoul Region
+  cos.ap-bangkok.myqcloud.com: Bangkok Region
+  cos.ap-tokyo.myqcloud.com: Tokyo Region
+  cos.na-siliconvalley.myqcloud.com: Silicon Valley Region
+  cos.na-ashburn.myqcloud.com: Virginia Region
+  cos.na-toronto.myqcloud.com: Toronto Region
+  cos.eu-frankfurt.myqcloud.com: Frankfurt Region
+  cos.eu-moscow.myqcloud.com: Moscow Region
+  cos.accelerate.myqcloud.com: Use Tencent COS Accelerate Endpoint
+acl:
+  default: |-
+    Owner gets Full_CONTROL.
+    No one else has access rights (default).
+  public-read: |-
+    Owner gets FULL_CONTROL.
+    The AllUsers group gets READ access.
+  public-read-write: |-
+    Owner gets FULL_CONTROL.
+    The AllUsers group gets READ and WRITE access.
+    Granting this on a bucket is generally not recommended.
+  authenticated-read: |-
+    Owner gets FULL_CONTROL.
+    The AuthenticatedUsers group gets READ access.
+  bucket-owner-read: |-
+    Object owner gets FULL_CONTROL.
+    Bucket owner gets READ access.
+    If you specify this canned ACL when creating a bucket, Amazon S3 ignores it.
+  bucket-owner-full-control: |-
+    Both the object owner and the bucket owner get FULL_CONTROL over the object.
+    If you specify this canned ACL when creating a bucket, Amazon S3 ignores it.
+storage_class:
+  '': Default
+  STANDARD: Standard storage class
+  ARCHIVE: Archive storage mode
+  STANDARD_IA: Infrequent access storage mode
+bucket_acl: true
+quirks:
+  list_version: 1
+  use_multipart_etag: false
+  use_already_exists: false

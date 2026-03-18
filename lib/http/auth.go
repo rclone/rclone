@@ -34,7 +34,7 @@ authentication.  Bcrypt is recommended.
 
 To create an htpasswd file:
 
-` + "```sh" + `
+` + "```console" + `
 touch htpasswd
 htpasswd -B htpasswd user
 htpasswd -B htpasswd anotherUser

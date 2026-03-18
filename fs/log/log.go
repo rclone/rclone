@@ -79,7 +79,7 @@ type Options struct {
 	File                 string        `config:"log_file"`             // Log everything to this file
 	MaxSize              fs.SizeSuffix `config:"log_file_max_size"`    // Max size of log file
 	MaxBackups           int           `config:"log_file_max_backups"` // Max backups of log file
-	MaxAge               fs.Duration   `config:"log_file_max_age"`     // Max age of of log file
+	MaxAge               fs.Duration   `config:"log_file_max_age"`     // Max age of log file
 	Compress             bool          `config:"log_file_compress"`    // Set to compress log file
 	Format               logFormat     `config:"log_format"`           // Comma separated list of log format options
 	UseSyslog            bool          `config:"syslog"`               // Use Syslog for logging
@@ -156,7 +156,7 @@ func Trace(o any, format string, a ...any) func(string, ...any) {
 		for i := range a {
 			// read the values of the pointed to items
 			typ := reflect.TypeOf(a[i])
-			if typ.Kind() == reflect.Ptr {
+			if typ.Kind() == reflect.Pointer {
 				value := reflect.ValueOf(a[i])
 				if value.IsNil() {
 					a[i] = nil
@@ -209,16 +209,12 @@ func InitLogging() {
 	// Log file output
 	if Opt.File != "" {
 		var w io.Writer
-		if Opt.MaxSize == 0 {
+		if Opt.MaxSize < 0 {
 			// No log rotation - just open the file as normal
 			// We'll capture tracebacks like this too.
 			f, err := os.OpenFile(Opt.File, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)
 			if err != nil {
 				fs.Fatalf(nil, "Failed to open log file: %v", err)
-			}
-			_, err = f.Seek(0, io.SeekEnd)
-			if err != nil {
-				fs.Errorf(nil, "Failed to seek log file to end: %v", err)
 			}
 			redirectStderr(f)
 			w = f

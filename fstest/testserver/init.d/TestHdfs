@@ -25,14 +25,7 @@ start() {
     echo type=hdfs
     echo namenode=127.0.0.1:8020
     echo username=root
-    echo _connect=${namenode}
-}
-stop() {
-    if status ; then
-        docker logs $NAME > .stdout.log 2> .stderr.log
-        docker kill $NAME
-        echo "$NAME stopped"
-    fi
+    echo _connect=127.0.0.1:8020
 }
 
 . $(dirname "$0")/run.bash

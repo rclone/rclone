@@ -5,7 +5,7 @@ set -e
 NAME=infinitescale
 USER=admin
 PASS=admin
-PORT=9200
+PORT=28639
 CONF_DIR=/tmp/ocis-config
 mkdir -p ${CONF_DIR}
 chmod 777 ${CONF_DIR} || true
@@ -13,7 +13,6 @@ chmod 777 ${CONF_DIR} || true
 . $(dirname "$0")/docker.bash
 
 start() {
-
     docker run --rm --name $NAME \
            -v ${CONF_DIR}:/etc/ocis \
            -e "OCIS_INSECURE=true" \
@@ -42,12 +41,6 @@ start() {
     echo vendor=infinitescale
     echo _connect=127.0.0.1:${PORT}
     echo _connect_delay=5s
-}
-
-stop() {
-    # Clean up the mess
-    docker stop infinitescale
-    rm -f ./ocis.yaml
 }
 
 . $(dirname "$0")/run.bash

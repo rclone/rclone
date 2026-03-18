@@ -53,6 +53,8 @@ inserts leading and trailing "/" on `--baseurl`, so `--baseurl "rclone"`,
 `--baseurl "/rclone"` and `--baseurl "/rclone/"` are all treated
 identically.
 
+`--disable-zip` may be set to disable the zipping download option.
+
 ### TLS (SSL)
 
 By default this will serve over http.  If you want you can serve over
@@ -78,41 +80,42 @@ by `--addr`).
 
 This allows rclone to be a socket-activated service.
 It can be configured with .socket and .service unit files as described in
-https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html
+<https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html>.
 
 Socket activation can be tested ad-hoc with the `systemd-socket-activate`command
 
-       systemd-socket-activate -l 8000 -- rclone serve
+```console
+systemd-socket-activate -l 8000 -- rclone serve
+```
 
 This will socket-activate rclone on the first connection to port 8000 over TCP.
+
 ### Template
 
 `--template` allows a user to specify a custom markup template for HTTP
 and WebDAV serve functions.  The server exports the following markup
 to be used within the template to server pages:
 
-| Parameter   | Description |
-| :---------- | :---------- |
-| .Name       | The full path of a file/directory. |
-| .Title      | Directory listing of .Name |
-| .Sort       | The current sort used.  This is changeable via ?sort= parameter |
-|             | Sort Options: namedirfirst,name,size,time (default namedirfirst) |
-| .Order      | The current ordering used.  This is changeable via ?order= parameter |
-|             | Order Options: asc,desc (default asc) |
-| .Query      | Currently unused. |
-| .Breadcrumb | Allows for creating a relative navigation |
-|-- .Link     | The relative to the root link of the Text. |
-|-- .Text     | The Name of the directory. |
-| .Entries    | Information about a specific file/directory. |
-|-- .URL      | The 'url' of an entry.  |
-|-- .Leaf     | Currently same as 'URL' but intended to be 'just' the name. |
-|-- .IsDir    | Boolean for if an entry is a directory or not. |
-|-- .Size     | Size in Bytes of the entry. |
-|-- .ModTime  | The UTC timestamp of an entry. |
+| Parameter   | Subparameter | Description |
+| :---------- | :----------- | :---------- |
+| .Name       |              | The full path of a file/directory. |
+| .Title      |              | Directory listing of '.Name'. |
+| .Sort       |              | The current sort used. This is changeable via '?sort=' parameter. Possible values: namedirfirst, name, size, time (default namedirfirst). |
+| .Order      |              | The current ordering used. This is changeable via '?order=' parameter. Possible values: asc, desc (default asc). |
+| .Query      |              | Currently unused. |
+| .Breadcrumb |              | Allows for creating a relative navigation. |
+|             | .Link        | The link of the Text relative to the root. |
+|             | .Text        | The Name of the directory. |
+| .Entries    |              | Information about a specific file/directory. |
+|             | .URL         | The url of an entry. |
+|             | .Leaf        | Currently same as '.URL' but intended to be just the name. |
+|             | .IsDir       | Boolean for if an entry is a directory or not. |
+|             | .Size        | Size in bytes of the entry. |
+|             | .ModTime     | The UTC timestamp of an entry. |
 
-The server also makes the following functions available so that they can be used within the
-template. These functions help extend the options for dynamic rendering of HTML. They can
-be used to render HTML based on specific conditions.
+The server also makes the following functions available so that they can be used
+within the template. These functions help extend the options for dynamic
+rendering of HTML. They can be used to render HTML based on specific conditions.
 
 | Function   | Description |
 | :---------- | :---------- |
@@ -129,8 +132,9 @@ You can either use an htpasswd file which can take lots of users, or
 set a single username and password with the `--user` and `--pass` flags.
 
 Alternatively, you can have the reverse proxy manage authentication and use the
-username provided in the configured header with `--user-from-header`  (e.g., `----user-from-header=x-remote-user`).
-Ensure the proxy is trusted and headers cannot be spoofed, as misconfiguration may lead to unauthorized access.
+username provided in the configured header with `--user-from-header`  (e.g., `--user-from-header=x-remote-user`).
+Ensure the proxy is trusted and headers cannot be spoofed, as misconfiguration
+may lead to unauthorized access.
 
 If either of the above authentication methods is not configured and client
 certificates are required by the `--client-ca` flag passed to the server, the
@@ -142,9 +146,11 @@ authentication.  Bcrypt is recommended.
 
 To create an htpasswd file:
 
-    touch htpasswd
-    htpasswd -B htpasswd user
-    htpasswd -B htpasswd anotherUser
+```console
+touch htpasswd
+htpasswd -B htpasswd user
+htpasswd -B htpasswd anotherUser
+```
 
 The password file can be updated while rclone is running.
 
@@ -173,8 +179,10 @@ directory should be considered up to date and not refreshed from the
 backend. Changes made through the VFS will appear immediately or
 invalidate the cache.
 
+```text
     --dir-cache-time duration   Time to cache directory entries for (default 5m0s)
     --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)
+```
 
 However, changes made directly on the cloud storage by the web
 interface or a different copy of rclone will only be picked up once
@@ -186,16 +194,22 @@ You can send a `SIGHUP` signal to rclone for it to flush all
 directory caches, regardless of how old they are.  Assuming only one
 rclone instance is running, you can reset the cache like this:
 
-    kill -SIGHUP $(pidof rclone)
+```console
+kill -SIGHUP $(pidof rclone)
+```
 
 If you configure rclone with a [remote control](/rc) then you can use
 rclone rc to flush the whole directory cache:
 
-    rclone rc vfs/forget
+```console
+rclone rc vfs/forget
+```
 
 Or individual files or directories:
 
-    rclone rc vfs/forget file=path/to/file dir=path/to/dir
+```console
+rclone rc vfs/forget file=path/to/file dir=path/to/dir
+```
 
 ## VFS File Buffering
 
@@ -226,6 +240,7 @@ write simultaneously to a file.  See below for more details.
 Note that the VFS cache is separate from the cache backend and you may
 find that you need one or the other or both.
 
+```text
     --cache-dir string                     Directory rclone will use for caching.
     --vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
     --vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
@@ -233,6 +248,7 @@ find that you need one or the other or both.
     --vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
     --vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
     --vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
+```
 
 If run with `-vv` rclone will print the location of the file cache.  The
 files are stored in the user cache file area which is OS dependent but
@@ -280,13 +296,13 @@ directly to the remote without caching anything on disk.
 
 This will mean some operations are not possible
 
-  * Files can't be opened for both read AND write
-  * Files opened for write can't be seeked
-  * Existing files opened for write must have O_TRUNC set
-  * Files open for read with O_TRUNC will be opened write only
-  * Files open for write only will behave as if O_TRUNC was supplied
-  * Open modes O_APPEND, O_TRUNC are ignored
-  * If an upload fails it can't be retried
+- Files can't be opened for both read AND write
+- Files opened for write can't be seeked
+- Existing files opened for write must have O_TRUNC set
+- Files open for read with O_TRUNC will be opened write only
+- Files open for write only will behave as if O_TRUNC was supplied
+- Open modes O_APPEND, O_TRUNC are ignored
+- If an upload fails it can't be retried
 
 ### --vfs-cache-mode minimal
 
@@ -296,10 +312,10 @@ write will be a lot more compatible, but uses the minimal disk space.
 
 These operations are not possible
 
-  * Files opened for write only can't be seeked
-  * Existing files opened for write must have O_TRUNC set
-  * Files opened for write only will ignore O_APPEND, O_TRUNC
-  * If an upload fails it can't be retried
+- Files opened for write only can't be seeked
+- Existing files opened for write must have O_TRUNC set
+- Files opened for write only will ignore O_APPEND, O_TRUNC
+- If an upload fails it can't be retried
 
 ### --vfs-cache-mode writes
 
@@ -382,9 +398,11 @@ read, at the cost of an increased number of requests.
 
 These flags control the chunking:
 
+```text
     --vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
     --vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
     --vfs-read-chunk-streams int            The number of parallel streams to read at once
+```
 
 The chunking behaves differently depending on the `--vfs-read-chunk-streams` parameter.
 
@@ -398,9 +416,9 @@ value is "off", which is the default, the limit is disabled and the chunk size
 will grow indefinitely.
 
 With `--vfs-read-chunk-size 100M` and `--vfs-read-chunk-size-limit 0`
-the following parts will be downloaded: 0-100M, 100M-200M, 200M-300M, 300M-400M and so on.
-When `--vfs-read-chunk-size-limit 500M` is specified, the result would be
-0-100M, 100M-300M, 300M-700M, 700M-1200M, 1200M-1700M and so on.
+the following parts will be downloaded: 0-100M, 100M-200M, 200M-300M, 300M-400M
+and so on. When `--vfs-read-chunk-size-limit 500M` is specified, the result would
+be 0-100M, 100M-300M, 300M-700M, 700M-1200M, 1200M-1700M and so on.
 
 Setting `--vfs-read-chunk-size` to `0` or "off" disables chunked reading.
 
@@ -438,32 +456,41 @@ In particular S3 and Swift benefit hugely from the `--no-modtime` flag
 (or use `--use-server-modtime` for a slightly different effect) as each
 read of the modification time takes a transaction.
 
+```text
     --no-checksum     Don't compare checksums on up/download.
     --no-modtime      Don't read/write the modification time (can speed things up).
     --no-seek         Don't allow seeking in files.
     --read-only       Only allow read-only access.
+```
 
 Sometimes rclone is delivered reads or writes out of order. Rather
 than seeking rclone will wait a short time for the in sequence read or
 write to come in. These flags only come into effect when not using an
 on disk cache file.
 
+```text
     --vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
     --vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
+```
 
 When using VFS write caching (`--vfs-cache-mode` with value writes or full),
-the global flag `--transfers` can be set to adjust the number of parallel uploads of
-modified files from the cache (the related global flag `--checkers` has no effect on the VFS).
+the global flag `--transfers` can be set to adjust the number of parallel uploads
+of modified files from the cache (the related global flag `--checkers` has no
+effect on the VFS).
 
+```text
     --transfers int  Number of file transfers to run in parallel (default 4)
+```
 
 ## Symlinks
 
 By default the VFS does not support symlinks. However this may be
 enabled with either of the following flags:
 
+```text
     --links      Translate symlinks to/from regular files with a '.rclonelink' extension.
     --vfs-links  Translate symlinks to/from regular files with a '.rclonelink' extension for the VFS
+```
 
 As most cloud storage systems do not support symlinks directly, rclone
 stores the symlink as a normal file with a special extension. So a
@@ -475,7 +502,8 @@ Note that `--links` enables symlink translation globally in rclone -
 this includes any backend which supports the concept (for example the
 local backend). `--vfs-links` just enables it for the VFS layer.
 
-This scheme is compatible with that used by the [local backend with the --local-links flag](/local/#symlinks-junction-points).
+This scheme is compatible with that used by the
+[local backend with the --local-links flag](/local/#symlinks-junction-points).
 
 The `--vfs-links` flag has been designed for `rclone mount`, `rclone
 nfsmount` and `rclone serve nfs`.
@@ -485,7 +513,7 @@ It hasn't been tested with the other `rclone serve` commands yet.
 A limitation of the current implementation is that it expects the
 caller to resolve sub-symlinks. For example given this directory tree
 
-```
+```text
 .
 ├── dir
 │   └── file.txt
@@ -563,7 +591,9 @@ sync`.
 This flag allows you to manually set the statistics about the filing system.
 It can be useful when those statistics cannot be read correctly automatically.
 
+```text
     --vfs-disk-space-total-size    Manually set the total disk space size (example: 256G, default: -1)
+```
 
 ## Alternate report of used bytes
 
@@ -574,7 +604,7 @@ With this flag set, instead of relying on the backend to report this
 information, rclone will scan the whole remote similar to `rclone size`
 and compute the total used space itself.
 
-_WARNING._ Contrary to `rclone size`, this flag ignores filters so that the
+**WARNING**: Contrary to `rclone size`, this flag ignores filters so that the
 result is accurate. However, this is very inefficient and may cost lots of API
 calls resulting in extra charges. Use it as a last resort and only with caching.
 
@@ -592,7 +622,7 @@ Note that some backends won't create metadata unless you pass in the
 For example, using `rclone mount` with `--metadata --vfs-metadata-extension .metadata`
 we get
 
-```
+```console
 $ ls -l /mnt/
 total 1048577
 -rw-rw-r-- 1 user user 1073741824 Mar  3 16:03 1G
@@ -640,41 +670,43 @@ options - it is the job of the proxy program to make a complete
 config.
 
 This config generated must have this extra parameter
+
 - `_root` - root to use for the backend
 
 And it may have this parameter
+
 - `_obscure` - comma separated strings for parameters to obscure
 
 If password authentication was used by the client, input to the proxy
 process (on STDIN) would look similar to this:
 
-```
+```json
 {
-	"user": "me",
-	"pass": "mypassword"
+  "user": "me",
+  "pass": "mypassword"
 }
 ```
 
 If public-key authentication was used by the client, input to the
 proxy process (on STDIN) would look similar to this:
 
-```
+```json
 {
-	"user": "me",
-	"public_key": "AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf"
+  "user": "me",
+  "public_key": "AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf"
 }
 ```
 
 And as an example return this on STDOUT
 
-```
+```json
 {
-	"type": "sftp",
-	"_root": "",
-	"_obscure": "pass",
-	"user": "me",
-	"pass": "mypassword",
-	"host": "sftp.example.com"
+  "type": "sftp",
+  "_root": "",
+  "_obscure": "pass",
+  "user": "me",
+  "pass": "mypassword",
+  "host": "sftp.example.com"
 }
 ```
 
@@ -696,9 +728,7 @@ password or public-key is changed the cache will need to expire (which takes 5 m
 before it takes effect.
 
 This can be used to build general purpose proxies to any kind of
-backend that rclone supports.  
-
-
+backend that rclone supports.
 
 ```
 rclone serve http remote:path [flags]
@@ -715,6 +745,7 @@ rclone serve http remote:path [flags]
       --client-ca string                       Client certificate authority to verify clients with
       --dir-cache-time Duration                Time to cache directory entries for (default 5m0s)
       --dir-perms FileMode                     Directory permissions (default 777)
+      --disable-zip                            Disable zip download of directories
       --file-perms FileMode                    File permissions (default 666)
       --gid uint32                             Override the gid field set by the filesystem (not supported on Windows) (default 1000)
   -h, --help                                   help for http
@@ -767,7 +798,7 @@ See the [global flags page](/flags/) for global options not listed here.
 
 Flags for filtering directory listings
 
-```
+```text
       --delete-excluded                     Delete files on dest excluded from sync
       --exclude stringArray                 Exclude files matching pattern
       --exclude-from stringArray            Read file exclude patterns from file (use - to read from stdin)
@@ -795,5 +826,10 @@ Flags for filtering directory listings
 
 ## See Also
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->
+
 * [rclone serve](/commands/rclone_serve/)	 - Serve a remote over a protocol.
 
+
+<!-- markdownlint-restore -->

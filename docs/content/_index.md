@@ -7,6 +7,7 @@ notoc: true
 
 # Rclone syncs your files to cloud storage
 
+<!-- markdownlint-disable-next-line line-length -->
 {{< img width="50%" src="/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" >}}
 
 - [About rclone](#about)
@@ -15,7 +16,7 @@ notoc: true
 - [What providers does rclone support?](#providers)
 - [Download](/downloads/)
 - [Install](/install/)
-{{< rem MAINPAGELINK >}}
+<!-- MAINPAGELINK -->
 
 ## About rclone {#about}
 
@@ -79,8 +80,10 @@ Rclone helps you:
 - Mirror cloud data to other cloud services or locally
 - Migrate data to the cloud, or between cloud storage vendors
 - Mount multiple, encrypted, cached or diverse cloud storage as a disk
-- Analyse and account for data held on cloud storage using [lsf](/commands/rclone_lsf/), [ljson](/commands/rclone_lsjson/), [size](/commands/rclone_size/), [ncdu](/commands/rclone_ncdu/)
-- [Union](/union/) file systems together to present multiple local and/or cloud file systems as one
+- Analyse and account for data held on cloud storage using [lsf](/commands/rclone_lsf/),
+  [ljson](/commands/rclone_lsjson/), [size](/commands/rclone_size/), [ncdu](/commands/rclone_ncdu/)
+- [Union](/union/) file systems together to present multiple local and/or cloud
+  file systems as one
 
 ## Features {#features}
 
@@ -93,7 +96,8 @@ Rclone helps you:
 - [Copy](/commands/rclone_copy/) new or changed files to cloud storage
 - [Sync](/commands/rclone_sync/) (one way) to make a directory identical
 - [Bisync](/bisync/) (two way) to keep two directories in sync bidirectionally
-- [Move](/commands/rclone_move/) files to cloud storage deleting the local after verification
+- [Move](/commands/rclone_move/) files to cloud storage deleting the local after
+  verification
 - [Check](/commands/rclone_check/) hashes and for missing/extra files
 - [Mount](/commands/rclone_mount/) your cloud storage as a network disk
 - [Serve](/commands/rclone_serve/) local or remote files over [HTTP](/commands/rclone_serve_http/)/[WebDav](/commands/rclone_serve_webdav/)/[FTP](/commands/rclone_serve_ftp/)/[SFTP](/commands/rclone_serve_sftp/)/[DLNA](/commands/rclone_serve_dlna/)
@@ -104,11 +108,15 @@ Rclone helps you:
 (There are many others, built on standard protocols such as
 WebDAV or S3, that work out of the box.)
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable line-length no-bare-urls -->
+
 {{< provider_list >}}
 {{< provider name="1Fichier" home="https://1fichier.com/" config="/fichier/" start="true">}}
 {{< provider name="Akamai Netstorage" home="https://www.akamai.com/us/en/products/media-delivery/netstorage.jsp" config="/netstorage/" >}}
 {{< provider name="Alibaba Cloud (Aliyun) Object Storage System (OSS)" home="https://www.alibabacloud.com/product/oss/" config="/s3/#alibaba-oss" >}}
 {{< provider name="Amazon S3" home="https://aws.amazon.com/s3/" config="/s3/" >}}
+{{< provider name="Bizfly Cloud Simple Storage" home="https://bizflycloud.vn/" config="/s3/#bizflycloud" >}}
 {{< provider name="Backblaze B2" home="https://www.backblaze.com/cloud-storage" config="/b2/" >}}
 {{< provider name="Box" home="https://www.box.com/" config="/box/" >}}
 {{< provider name="Ceph" home="http://ceph.com/" config="/s3/#ceph" >}}
@@ -117,15 +125,19 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Citrix ShareFile" home="http://sharefile.com/" config="/sharefile/" >}}
 {{< provider name="Cloudflare R2" home="https://blog.cloudflare.com/r2-open-beta/" config="/s3/#cloudflare-r2" >}}
 {{< provider name="Cloudinary" home="https://cloudinary.com/" config="/cloudinary/" >}}
+{{< provider name="Cubbit DS3" home="https://cubbit.io/ds3-cloud" config="/s3/#Cubbit" >}}
 {{< provider name="DigitalOcean Spaces" home="https://www.digitalocean.com/products/object-storage/" config="/s3/#digitalocean-spaces" >}}
 {{< provider name="Digi Storage" home="https://storage.rcs-rds.ro/" config="/koofr/#digi-storage" >}}
 {{< provider name="Dreamhost" home="https://www.dreamhost.com/cloud/storage/" config="/s3/#dreamhost" >}}
+{{< provider name="Drime" home="https://www.drime.cloud/" config="/drime/" >}}
 {{< provider name="Dropbox" home="https://www.dropbox.com/" config="/dropbox/" >}}
 {{< provider name="Enterprise File Fabric" home="https://storagemadeeasy.com/about/" config="/filefabric/" >}}
 {{< provider name="Exaba" home="https://exaba.com/" config="/s3/#exaba" >}}
+{{< provider name="Fastly Object Storage" home="https://www.fastly.com/products/storage" config="/s3/#fastly" >}}
 {{< provider name="Fastmail Files" home="https://www.fastmail.com/" config="/webdav/#fastmail-files" >}}
 {{< provider name="FileLu Cloud Storage" home="https://filelu.com/" config="/filelu/" >}}
 {{< provider name="FileLu S5 (S3-Compatible Object Storage)" home="https://s5lu.com/" config="/s3/#filelu-s5" >}}
+{{< provider name="Filen" home="https://www.filen.io/" config="/filen/" >}}
 {{< provider name="Files.com" home="https://www.files.com/" config="/filescom/" >}}
 {{< provider name="FlashBlade" home="https://www.purestorage.com/products/unstructured-data-storage.html" config="/s3/#pure-storage-flashblade" >}}
 {{< provider name="FTP" home="https://en.wikipedia.org/wiki/File_Transfer_Protocol" config="/ftp/" >}}
@@ -142,6 +154,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="iCloud Drive" home="https://icloud.com/" config="/iclouddrive/" >}}
 {{< provider name="ImageKit" home="https://imagekit.io" config="/imagekit/" >}}
 {{< provider name="Internet Archive" home="https://archive.org/" config="/internetarchive/" >}}
+{{< provider name="Internxt" home="https://internxt.com/" config="/internxt/" >}}
 {{< provider name="Jottacloud" home="https://www.jottacloud.com/en/" config="/jottacloud/" >}}
 {{< provider name="IBM COS S3" home="http://www.ibm.com/cloud/object-storage" config="/s3/#ibm-cos-s3" >}}
 {{< provider name="IDrive e2" home="https://www.idrive.com/e2/?refer=rclone" config="/s3/#idrive-e2" >}}
@@ -192,30 +205,37 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Seagate Lyve Cloud" home="https://www.seagate.com/gb/en/services/cloud/storage/" config="/s3/#lyve" >}}
 {{< provider name="SeaweedFS" home="https://github.com/chrislusf/seaweedfs/" config="/s3/#seaweedfs" >}}
 {{< provider name="Selectel" home="https://selectel.ru/services/cloud/storage/" config="/s3/#selectel" >}}
+{{< provider name="Servercore Object Storage" home="https://servercore.com/services/object-storage/" config="/s3/#servercore" >}}
 {{< provider name="SFTP" home="https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol" config="/sftp/" >}}
+{{< provider name="Shade" home="https://shade.inc" config="/shade/" >}}
 {{< provider name="Sia" home="https://sia.tech/" config="/sia/" >}}
 {{< provider name="SMB / CIFS" home="https://en.wikipedia.org/wiki/Server_Message_Block" config="/smb/" >}}
 {{< provider name="Spectra Logic" home="https://spectralogic.com/blackpearl-nearline-object-gateway/" config="/s3/#spectralogic" >}}
-{{< provider name="StackPath" home="https://www.stackpath.com/products/object-storage/" config="/s3/#stackpath" >}}
 {{< provider name="Storj" home="https://storj.io/" config="/storj/" >}}
 {{< provider name="Synology" home="https://c2.synology.com/en-global/object-storage/overview" config="/s3/#synology-c2" >}}
 {{< provider name="SugarSync" home="https://sugarsync.com/" config="/sugarsync/" >}}
 {{< provider name="Tencent Cloud Object Storage (COS)" home="https://intl.cloud.tencent.com/product/cos" config="/s3/#tencent-cos" >}}
 {{< provider name="Uloz.to" home="https://uloz.to" config="/ulozto/" >}}
-{{< provider name="Uptobox" home="https://uptobox.com" config="/uptobox/" >}}
 {{< provider name="Wasabi" home="https://wasabi.com/" config="/s3/#wasabi" >}}
 {{< provider name="WebDAV" home="https://en.wikipedia.org/wiki/WebDAV" config="/webdav/" >}}
 {{< provider name="Yandex Disk" home="https://disk.yandex.com/" config="/yandex/" >}}
+{{< provider name="Zadara Object Storage" home="https://www.zadara.com" config="/s3/#zadara" >}}
 {{< provider name="Zoho WorkDrive" home="https://www.zoho.com/workdrive/" config="/zoho/" >}}
 {{< provider name="Zata" home="https://zata.ai/" config="/s3/#Zata" end="true" >}}
 {{< provider name="The local filesystem" home="/local/" config="/local/" end="true">}}
 {{< /provider_list >}}
 
+<!-- markdownlint-restore -->
+
 ## Virtual providers
 
 These backends adapt or modify other storage providers:
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable line-length no-bare-urls -->
+
 {{< provider name="Alias: Rename existing remotes" home="/alias/" config="/alias/" >}}
+{{< provider name="Archive: Read archive files" home="/archive/" config="/archive/" >}}
 {{< provider name="Cache: Cache remotes (DEPRECATED)" home="/cache/" config="/cache/" >}}
 {{< provider name="Chunker: Split large files" home="/chunker/" config="/chunker/" >}}
 {{< provider name="Combine: Combine multiple remotes into a directory tree" home="/combine/" config="/combine/" >}}
@@ -224,9 +244,11 @@ These backends adapt or modify other storage providers:
 {{< provider name="Hasher: Hash files" home="/hasher/" config="/hasher/" >}}
 {{< provider name="Union: Join multiple remotes to work together" home="/union/" config="/union/" >}}
 
+<!-- markdownlint-restore -->
+
 ## Links
 
-- {{< icon "fa fa-home" >}} [Home page](https://rclone.org/)
-- {{< icon "fab fa-github" >}} [GitHub project page for source and bug tracker](https://github.com/rclone/rclone)
-- {{< icon "fa fa-comments" >}} [Rclone Forum](https://forum.rclone.org)
-- {{< icon "fas fa-cloud-download-alt" >}}[Downloads](/downloads/)
+- {{< icon "fa fa-home fa-fw" >}} [Home page](https://rclone.org/)
+- {{< icon "fab fa-github fa-fw" >}} [GitHub project page for source and bug tracker](https://github.com/rclone/rclone)
+- {{< icon "fa fa-comments fa-fw" >}} [Rclone Forum](https://forum.rclone.org)
+- {{< icon "fas fa-cloud-download-alt fa-fw" >}}[Downloads](/downloads/)

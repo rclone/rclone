@@ -204,6 +204,12 @@ Example:
 			Help: `URL for HTTP CONNECT proxy
 
 Set this to a URL for an HTTP proxy which supports the HTTP CONNECT verb.
+
+Supports the format http://user:pass@host:port, http://host:port, http://host.
+
+Example:
+
+    http://myUser:myPass@proxyhostname.example.com:8000
 `,
 			Advanced: true,
 		}, {
@@ -456,9 +462,7 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 			}
 		}()
 		baseDialer := fshttp.NewDialer(ctx)
-		if f.opt.SocksProxy != "" {
-			conn, err = proxy.SOCKS5Dial(network, address, f.opt.SocksProxy, baseDialer)
-		} else if f.proxyURL != nil {
+		if f.opt.SocksProxy != "" || f.proxyURL != nil {
 			// We need to make the onward connection to f.opt.Host. However the FTP
 			// library sets the host to the proxy IP after using EPSV or PASV so we need
 			// to correct that here.
@@ -468,7 +472,11 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 				return nil, err
 			}
 			dialAddress := net.JoinHostPort(f.opt.Host, dialPort)
-			conn, err = proxy.HTTPConnectDial(network, dialAddress, f.proxyURL, baseDialer)
+			if f.opt.SocksProxy != "" {
+				conn, err = proxy.SOCKS5Dial(network, dialAddress, f.opt.SocksProxy, baseDialer)
+			} else {
+				conn, err = proxy.HTTPConnectDial(network, dialAddress, f.proxyURL, baseDialer)
+			}
 		} else {
 			conn, err = baseDialer.Dial(network, address)
 		}
@@ -890,7 +898,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 
 	resultchan := make(chan []*ftp.Entry, 1)
 	errchan := make(chan error, 1)
-	go func() {
+	go func(c *ftp.ServerConn) {
 		result, err := c.List(f.dirFromStandardPath(path.Join(f.root, dir)))
 		f.putFtpConnection(&c, err)
 		if err != nil {
@@ -898,7 +906,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			return
 		}
 		resultchan <- result
-	}()
+	}(c)
 
 	// Wait for List for up to Timeout seconds
 	timer := time.NewTimer(f.ci.TimeoutOrInfinite())
@@ -1290,7 +1298,7 @@ func (f *ftpReadCloser) Close() error {
 	// See: https://github.com/rclone/rclone/issues/3445#issuecomment-521654257
 	if errX := textprotoError(err); errX != nil {
 		switch errX.Code {
-		case ftp.StatusTransfertAborted, ftp.StatusFileUnavailable, ftp.StatusAboutToSend:
+		case ftp.StatusTransfertAborted, ftp.StatusFileUnavailable, ftp.StatusAboutToSend, ftp.StatusRequestedFileActionOK:
 			err = nil
 		}
 	}

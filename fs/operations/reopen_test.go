@@ -18,6 +18,7 @@ import (
 // check interfaces
 var (
 	_ io.ReadSeekCloser      = (*ReOpen)(nil)
+	_ io.ReaderAt            = (*ReOpen)(nil)
 	_ pool.DelayAccountinger = (*ReOpen)(nil)
 )
 
@@ -137,6 +138,16 @@ func TestReOpen(t *testing.T) {
 				return rc, src, err
 			}
 
+			// Reset the start after a seek, taking into account the offset
+			setWantStart := func(src *reOpenTestObject, x int64) {
+				src.wantStart = x
+				if rangeOption != nil {
+					src.wantStart += rangeOption.Start
+				} else if seekOption != nil {
+					src.wantStart += seekOption.Offset
+				}
+			}
+
 			t.Run("Basics", func(t *testing.T) {
 				// open
 				h, _, err := testReOpen(nil, 10)
@@ -215,6 +226,37 @@ func TestReOpen(t *testing.T) {
 				assert.Equal(t, errFileClosed, h.Close())
 			})
 
+			t.Run("ReadAt", func(t *testing.T) {
+				// open
+				h, src, err := testReOpen([]int64{2, 1, 3}, 10)
+				assert.NoError(t, err)
+
+				buf := make([]byte, 5)
+
+				// Read at 0
+				n, err := h.ReadAt(buf, 0)
+				require.NoError(t, err)
+				assert.Equal(t, 5, n)
+				assert.Equal(t, expectedRead[:n], buf[:n])
+
+				// Read at 1
+				setWantStart(src, 1)
+				n, err = h.ReadAt(buf[:3], 1)
+				require.NoError(t, err)
+				assert.Equal(t, 3, n)
+				assert.Equal(t, expectedRead[1:n+1], buf[:n])
+
+				// check position unchanged
+				pos, err := h.Seek(0, io.SeekCurrent)
+				require.NoError(t, err)
+				assert.Equal(t, int64(0), pos)
+
+				// check close
+				assert.NoError(t, h.Close())
+				_, err = h.Seek(0, io.SeekCurrent)
+				assert.Equal(t, errFileClosed, err)
+			})
+
 			t.Run("Seek", func(t *testing.T) {
 				// open
 				h, src, err := testReOpen([]int64{2, 1, 3}, 10)
@@ -267,18 +309,8 @@ func TestReOpen(t *testing.T) {
 				assert.Nil(t, err)
 				assert.Equal(t, 2, int(pos))
 
-				// Reset the start after a seek, taking into account the offset
-				setWantStart := func(x int64) {
-					src.wantStart = x
-					if rangeOption != nil {
-						src.wantStart += rangeOption.Start
-					} else if seekOption != nil {
-						src.wantStart += seekOption.Offset
-					}
-				}
-
 				// check read
-				setWantStart(2)
+				setWantStart(src, 2)
 				n, err = h.Read(dst)
 				assert.Nil(t, err)
 				assert.Equal(t, 5, n)
@@ -305,7 +337,7 @@ func TestReOpen(t *testing.T) {
 
 				// check read
 				dst = make([]byte, 3)
-				setWantStart(int64(len(expectedRead) - 3))
+				setWantStart(src, int64(len(expectedRead)-3))
 				n, err = h.Read(dst)
 				assert.Nil(t, err)
 				assert.Equal(t, 3, n)

@@ -12,9 +12,9 @@ description: "Rclone Authors and Contributors"
 
 ## Contributors
 
-{{< rem `email addresses removed from here need to be added to
+<!-- email addresses removed from here need to be added to
 bin/.ignore-emails to make sure update-authors.py doesn't immediately
-put them back in again.` >}}
+put them back in again. -->
 
 - Alex Couper <amcouper@gmail.com>
 - Leonid Shalupov <leonid@shalupov.com> <shalupov@diverse.org.ru>
@@ -978,7 +978,7 @@ put them back in again.` >}}
 - Nathanael Demacon <7271496+quantumsheep@users.noreply.github.com>
 - ahxxm <ahxxm@users.noreply.github.com>
 - Flora Thiebaut <johann.thiebaut@gmail.com>
-- kingston125 <support@filelu.com>
+- kingston125 <support@filelu.com> <kingston125@github.com>
 - Ser-Bul <30335009+Ser-Bul@users.noreply.github.com>
 - jinjingroad <jinjingroad@sina.com>
 - necaran <55765083+necaran@users.noreply.github.com>
@@ -1021,3 +1021,77 @@ put them back in again.` >}}
 - Andrew Ruthven <andrew@etc.gen.nz>
 - spiffytech <git@spiffy.tech>
 - Dulani Woods <Dulani@gmail.com>
+- Marco Ferretti <mferretti93@gmail.com>
+- hunshcn <hunsh.cn@gmail.com>
+- vastonus <vastonus@outlook.com>
+- Oleksandr Redko <oleksandr.red+github@gmail.com>
+- reddaisyy <reddaisy@outlook.jp>
+- viocha <viocha@qq.com>
+- Aneesh Agrawal <aneesh@anthropic.com>
+- divinity76 <hans@loltek.net>
+- Andrew Gunnerson <accounts+github@chiller3.com>
+- Lakshmi-Surekha <Lakshmi.Kovvuri@ibm.com>
+- dulanting <dulanting@outlook.jp>
+- Adam Dinwoodie <me-and@users.noreply.github.com>
+- Lukas Krejci <metlos@users.noreply.github.com>
+- Riaz Arbi <riazarbi@users.noreply.github.com>
+- Fawzib Rojas <fawzib.rojas@gmail.com>
+- fries1234 <fries1234@protonmail.com>
+- Joseph Brownlee <39440458+JellyJoe198@users.noreply.github.com>
+- Ted Robertson <10043369+tredondo@users.noreply.github.com>
+- SublimePeace <184005903+SublimePeace@users.noreply.github.com>
+- Copilot <198982749+Copilot@users.noreply.github.com>
+- Alex <64072843+A1ex3@users.noreply.github.com>
+- n4n5 <its.just.n4n5@gmail.com>
+- aliaj1 <ali19961@gmail.com>
+- Sean Turner <30396892+seanturner026@users.noreply.github.com>
+- jijamik <30904953+jijamik@users.noreply.github.com>
+- Dominik Sander <git@dsander.de>
+- Nikolay Kiryanov <nikolay@kiryanov.ru>
+- Diana <5275194+DianaNites@users.noreply.github.com>
+- Duncan Smart <duncan.smart@gmail.com>
+- vicerace <vicerace@sohu.com>
+- Cliff Frey <cliff@openai.com>
+- Vladislav Tropnikov <vtr.name@gmail.com>
+- Leo <i@hardrain980.com>
+- Johannes Rothe <mail@johannes-rothe.de>
+- Tingsong Xu <tingsong.xu@rightcapital.com>
+- Jonas Tingeborn <134889+jojje@users.noreply.github.com>
+- jhasse-shade <jacob@shade.inc>
+- vyv03354 <VYV03354@nifty.ne.jp>
+- masrlinu <masrlinu@users.noreply.github.com> <5259918+masrlinu@users.noreply.github.com>
+- vupn0712 <126212736+vupn0712@users.noreply.github.com>
+- darkdragon-001 <darkdragon-001@users.noreply.github.com>
+- sys6101 <csvmen@gmail.com>
+- Nicolas Dessart <nds@outsight.tech>
+- Qingwei Li <332664203@qq.com>
+- yy <yhymmt37@gmail.com>
+- Marc-Philip <marc-philip.werner@sap.com>
+- Mikel Olasagasti Uranga <mikel@olasagasti.info>
+- Nick Owens <mischief@offblast.org>
+- hyusap <paulayush@gmail.com>
+- jzunigax2 <125698953+jzunigax2@users.noreply.github.com>
+- lullius <lullius@users.noreply.github.com>
+- StarHack <StarHack@users.noreply.github.com>
+- Leon Brocard <acme@astray.com>
+- Cohinem <143964778+Cohinem@users.noreply.github.com>
+- Jack Kelly <jack@OpenClimateFix.org>
+- Prakhar Chhalotre <chhalotreprakhar00@gmail.com>
+- Varun Chawla <34209028+veeceey@users.noreply.github.com>
+- Jan-Philipp Reßler <75355263+TabError@users.noreply.github.com>
+- Shlomi Avihou <shlomi@zadarastorage.com>
+- Chris <238498929+chris081519-crypto@users.noreply.github.com>
+- Jan-Philipp Reßler <xodarap@xodarap.de>
+- Dark Dragon <darkdragon-001@web.de>
+- Leon Brocard <lbrocard@fastly.com>
+- a1pcm <a1pcm@users.noreply.github.com>
+- FTCHD <144691102+FTCHD@users.noreply.github.com>
+- Bjoern Franke <bjo+git@schafweide.org>
+- hxnd <callmehxnd@outlook.de>
+- Adam Kasztenny <adamkasztenny@gmail.com>
+- Romāns Potašovs <justgook@gmail.com>
+- Brian Bockelman <bbockelman@morgridge.org>
+- Bjoern Franke <bjo@schafweide.org>
+- razorloves <razorloves@gmail.com>
+- Duncan F <131309315+duncanaf@users.noreply.github.com>
+- Billy Hughes <w.g.h.hughes@gmail.com>

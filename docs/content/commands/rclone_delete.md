@@ -17,26 +17,29 @@ obeys include/exclude filters so can be used to selectively delete files.
 alone. If you want to delete a directory and all of its contents use
 the [purge](/commands/rclone_purge/) command.
 
-If you supply the `--rmdirs` flag, it will remove all empty directories along with it.
-You can also use the separate command [rmdir](/commands/rclone_rmdir/) or
-[rmdirs](/commands/rclone_rmdirs/) to delete empty directories only.
+If you supply the `--rmdirs` flag, it will remove all empty directories along
+with it. You can also use the separate command [rmdir](/commands/rclone_rmdir/)
+or [rmdirs](/commands/rclone_rmdirs/) to delete empty directories only.
 
 For example, to delete all files bigger than 100 MiB, you may first want to
 check what would be deleted (use either):
 
-    rclone --min-size 100M lsl remote:path
-    rclone --dry-run --min-size 100M delete remote:path
+```sh
+rclone --min-size 100M lsl remote:path
+rclone --dry-run --min-size 100M delete remote:path
+```
 
 Then proceed with the actual delete:
 
-    rclone --min-size 100M delete remote:path
+```sh
+rclone --min-size 100M delete remote:path
+```
 
 That reads "delete everything with a minimum size of 100 MiB", hence
 delete all files bigger than 100 MiB.
 
 **Important**: Since this can cause data loss, test first with the
 `--dry-run` or the `--interactive`/`-i` flag.
-
 
 ```
 rclone delete remote:path [flags]
@@ -56,7 +59,7 @@ See the [global flags page](/flags/) for global options not listed here.
 
 Important flags useful for most commands
 
-```
+```text
   -n, --dry-run         Do a trial run with no permanent changes
   -i, --interactive     Enable interactive mode
   -v, --verbose count   Print lots more stuff (repeat for more)
@@ -66,7 +69,7 @@ Important flags useful for most commands
 
 Flags for filtering directory listings
 
-```
+```text
       --delete-excluded                     Delete files on dest excluded from sync
       --exclude stringArray                 Exclude files matching pattern
       --exclude-from stringArray            Read file exclude patterns from file (use - to read from stdin)
@@ -96,12 +99,17 @@ Flags for filtering directory listings
 
 Flags for listing directories
 
-```
+```text
       --default-time Time   Time to show if modtime is unknown for files and directories (default 2000-01-01T00:00:00Z)
       --fast-list           Use recursive list if available; uses more memory but fewer transactions
 ```
 
 ## See Also
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->
+
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 
+
+<!-- markdownlint-restore -->

@@ -13,7 +13,16 @@ Serve a remote over a protocol.
 Serve a remote over a given protocol. Requires the use of a
 subcommand to specify the protocol, e.g.
 
-    rclone serve http remote:
+```console
+rclone serve http remote:
+```
+
+When the "--metadata" flag is enabled, the following metadata fields will be provided as headers:
+- "content-disposition"
+- "cache-control" 
+- "content-language"
+- "content-encoding"
+Note: The availability of these fields depends on whether the remote supports metadata.
 
 Each subcommand has its own options which you can see in their help.
 
@@ -32,6 +41,9 @@ See the [global flags page](/flags/) for global options not listed here.
 
 ## See Also
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->
+
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 * [rclone serve dlna](/commands/rclone_serve_dlna/)	 - Serve remote:path over DLNA
 * [rclone serve docker](/commands/rclone_serve_docker/)	 - Serve any remote on docker's volume plugin API.
@@ -43,3 +55,5 @@ See the [global flags page](/flags/) for global options not listed here.
 * [rclone serve sftp](/commands/rclone_serve_sftp/)	 - Serve the remote over SFTP.
 * [rclone serve webdav](/commands/rclone_serve_webdav/)	 - Serve remote:path over WebDAV.
 
+
+<!-- markdownlint-restore -->
