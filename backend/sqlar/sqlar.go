@@ -98,8 +98,7 @@ type Fs struct {
 	root     string
 	opt      Options
 	features *fs.Features
-	db       *sql.DB
-	mu       sync.Mutex          // serialize SQLite writes (single-writer constraint)
+	sdb      *sharedDB           // reference-counted shared database connection
 	sem      *semaphore.Weighted // bounds concurrent in-memory compression buffers
 }
 
@@ -146,9 +145,9 @@ func (d *Directory) ID() string { return "" }
 
 // SetModTime sets the modification time of the directory
 func (d *Directory) SetModTime(ctx context.Context, t time.Time) error {
-	d.fs.mu.Lock()
-	defer d.fs.mu.Unlock()
-	_, err := d.fs.db.ExecContext(ctx,
+	d.fs.sdb.mu.Lock()
+	defer d.fs.sdb.mu.Unlock()
+	_, err := d.fs.sdb.db.ExecContext(ctx,
 		"UPDATE sqlar SET mtime = ? WHERE name = ? AND mode & 0x4000 != 0",
 		t.Unix(), d.name)
 	if err != nil {
@@ -264,12 +263,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err := configstruct.Set(m, opt); err != nil {
 		return nil, err
 	}
-	db, err := openDB(opt.Path)
+	sdb, err := openDB(opt.Path)
 	if err != nil {
 		return nil, err
 	}
-	if err := initSchema(db); err != nil {
-		_ = db.Close()
+	if err := initSchema(sdb.db); err != nil {
+		_ = closeDB(sdb, opt.Path)
 		return nil, err
 	}
 	root = strings.Trim(root, "/")
@@ -277,7 +276,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		name: name,
 		root: root,
 		opt:  *opt,
-		db:   db,
+		sdb:  sdb,
 		sem:  semaphore.NewWeighted(memBudget),
 	}
 	f.features = (&fs.Features{
@@ -290,7 +289,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	if root != "" {
 		var mode int
-		err := db.QueryRowContext(ctx,
+		err := sdb.db.QueryRowContext(ctx,
 			"SELECT mode FROM sqlar WHERE name = ?", root).Scan(&mode)
 		if err == nil && mode&0o40000 == 0 {
 			// Root is a file, adjust root to parent
@@ -309,7 +308,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	name := f.fullPath(remote)
 	var mode int
 	var mtime, sz int64
-	err := f.db.QueryRowContext(ctx,
+	err := f.sdb.db.QueryRowContext(ctx,
 		"SELECT mode, mtime, sz FROM sqlar WHERE name = ?", name).Scan(&mode, &mtime, &sz)
 	if err == sql.ErrNoRows {
 		return nil, fs.ErrorObjectNotFound
@@ -344,7 +343,7 @@ func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) e
 	// for any dir, check for children)
 	if fullDir != "" {
 		var exists int
-		err := f.db.QueryRowContext(ctx,
+		err := f.sdb.db.QueryRowContext(ctx,
 			"SELECT COUNT(*) FROM sqlar WHERE name = ? OR name GLOB ?",
 			fullDir, fullDir+"/*").Scan(&exists)
 		if err != nil {
@@ -358,7 +357,7 @@ func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) e
 	// match/*  selects all descendants; NOT match/*/* excludes deeper entries,
 	// leaving only direct children.
 	match, exclude := dirGlob(fullDir)
-	rows, err := f.db.QueryContext(ctx,
+	rows, err := f.sdb.db.QueryContext(ctx,
 		"SELECT name, mode, mtime, sz FROM sqlar WHERE name GLOB ? AND name NOT GLOB ?",
 		match, exclude)
 	if err != nil {
@@ -411,7 +410,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) e
 	// Check directory exists for non-root paths.
 	if fullDir != "" {
 		var exists int
-		err := f.db.QueryRowContext(ctx,
+		err := f.sdb.db.QueryRowContext(ctx,
 			"SELECT COUNT(*) FROM sqlar WHERE name = ? OR name GLOB ?",
 			fullDir, fullDir+"/*").Scan(&exists)
 		if err != nil {
@@ -423,7 +422,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) e
 	}
 
 	pattern := treeGlob(fullDir)
-	rows, err := f.db.QueryContext(ctx,
+	rows, err := f.sdb.db.QueryContext(ctx,
 		"SELECT name, mode, mtime, sz FROM sqlar WHERE name GLOB ?", pattern)
 	if err != nil {
 		return fmt.Errorf("sqlar ListR: %w", err)
@@ -483,7 +482,7 @@ func (f *Fs) mkdirAll(ctx context.Context, dir string) error {
 	}
 	// Create from topmost down (ignore conflicts with existing entries)
 	for i := len(dirs) - 1; i >= 0; i-- {
-		_, err := f.db.ExecContext(ctx,
+		_, err := f.sdb.db.ExecContext(ctx,
 			"INSERT OR IGNORE INTO sqlar (name, mode, mtime, sz, data) VALUES (?, ?, ?, 0, NULL)",
 			dirs[i], modeDir, time.Now().Unix())
 		if err != nil {
@@ -535,8 +534,8 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	}
 
 	// Hold the write lock only for the SQLite write (single-writer constraint).
-	f.mu.Lock()
-	defer f.mu.Unlock()
+	f.sdb.mu.Lock()
+	defer f.sdb.mu.Unlock()
 
 	if parent := path.Dir(name); parent != "" && parent != "." {
 		if err := f.mkdirAll(ctx, parent); err != nil {
@@ -544,7 +543,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		}
 	}
 
-	if _, err := insertBlobStreaming(ctx, f.db, name, mode, modTime.Unix(), sz, blobSize, blobReader); err != nil {
+	if _, err := insertBlobStreaming(ctx, f.sdb.db, name, mode, modTime.Unix(), sz, blobSize, blobReader); err != nil {
 		if errors.Is(err, errBlobTooLarge) {
 			return nil, fserrors.NoRetryError(fmt.Errorf("sqlar Put: %w", err))
 		}
@@ -572,8 +571,8 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	if name == "" {
 		return nil // root always exists
 	}
-	f.mu.Lock()
-	defer f.mu.Unlock()
+	f.sdb.mu.Lock()
+	defer f.sdb.mu.Unlock()
 	return f.mkdirAll(ctx, name)
 }
 
@@ -584,11 +583,11 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		return nil
 	}
 
-	f.mu.Lock()
-	defer f.mu.Unlock()
+	f.sdb.mu.Lock()
+	defer f.sdb.mu.Unlock()
 
 	var mode int
-	err := f.db.QueryRowContext(ctx,
+	err := f.sdb.db.QueryRowContext(ctx,
 		"SELECT mode FROM sqlar WHERE name = ?", name).Scan(&mode)
 	if err == sql.ErrNoRows {
 		return fs.ErrorDirNotFound
@@ -603,7 +602,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	// Check for children
 	pattern := name + "/*"
 	var count int
-	err = f.db.QueryRowContext(ctx,
+	err = f.sdb.db.QueryRowContext(ctx,
 		"SELECT COUNT(*) FROM sqlar WHERE name GLOB ?", pattern).Scan(&count)
 	if err != nil {
 		return fmt.Errorf("sqlar Rmdir count: %w", err)
@@ -612,7 +611,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		return fs.ErrorDirectoryNotEmpty
 	}
 
-	result, err := f.db.ExecContext(ctx,
+	result, err := f.sdb.db.ExecContext(ctx,
 		"DELETE FROM sqlar WHERE name = ? AND mode & 0x4000 != 0", name)
 	if err != nil {
 		return fmt.Errorf("sqlar Rmdir: %w", err)
@@ -659,8 +658,8 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	mode, modTime := applyMetadataSet(ctx, srcObj.mode, srcObj.modTime)
 
-	f.mu.Lock()
-	defer f.mu.Unlock()
+	f.sdb.mu.Lock()
+	defer f.sdb.mu.Unlock()
 
 	if parent := path.Dir(dstName); parent != "" && parent != "." {
 		if err := f.mkdirAll(ctx, parent); err != nil {
@@ -668,7 +667,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		}
 	}
 
-	_, err := f.db.ExecContext(ctx,
+	_, err := f.sdb.db.ExecContext(ctx,
 		`INSERT OR REPLACE INTO sqlar (name, mode, mtime, sz, data)
 		 SELECT ?, ?, ?, sz, data FROM sqlar WHERE name = ?`,
 		dstName, mode, modTime.Unix(), srcObj.name)
@@ -688,8 +687,8 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	mode, modTime := applyMetadataSet(ctx, srcObj.mode, srcObj.modTime)
 
-	f.mu.Lock()
-	defer f.mu.Unlock()
+	f.sdb.mu.Lock()
+	defer f.sdb.mu.Unlock()
 
 	if parent := path.Dir(dstName); parent != "" && parent != "." {
 		if err := f.mkdirAll(ctx, parent); err != nil {
@@ -697,7 +696,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		}
 	}
 
-	_, err := f.db.ExecContext(ctx,
+	_, err := f.sdb.db.ExecContext(ctx,
 		"UPDATE sqlar SET name = ?, mode = ?, mtime = ? WHERE name = ?",
 		dstName, mode, modTime.Unix(), srcObj.name)
 	if err != nil {
@@ -721,7 +720,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 	// Check destination doesn't exist
 	var count int
-	err := f.db.QueryRowContext(ctx,
+	err := f.sdb.db.QueryRowContext(ctx,
 		"SELECT COUNT(*) FROM sqlar WHERE name = ? OR name GLOB ?",
 		dstPrefix, dstPrefix+"/*").Scan(&count)
 	if err != nil {
@@ -731,8 +730,8 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fs.ErrorDirExists
 	}
 
-	f.mu.Lock()
-	defer f.mu.Unlock()
+	f.sdb.mu.Lock()
+	defer f.sdb.mu.Unlock()
 
 	if parent := path.Dir(dstPrefix); parent != "" && parent != "." {
 		if err := f.mkdirAll(ctx, parent); err != nil {
@@ -743,7 +742,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	// Rename the directory entry itself and all descendants.
 	// Use SQLite's length() (character count) not Go's len() (byte count)
 	// so that multi-byte Unicode paths are handled correctly.
-	_, err = f.db.ExecContext(ctx,
+	_, err = f.sdb.db.ExecContext(ctx,
 		`UPDATE sqlar SET name = ? || substr(name, length(?) + 1)
 		 WHERE name = ? OR name GLOB ?`,
 		dstPrefix, srcPrefix, srcPrefix, srcPrefix+"/*")
@@ -756,14 +755,14 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 // Purge deletes all files in the directory
 func (f *Fs) Purge(ctx context.Context, dir string) error {
 	prefix := f.fullPath(dir)
-	f.mu.Lock()
-	defer f.mu.Unlock()
+	f.sdb.mu.Lock()
+	defer f.sdb.mu.Unlock()
 	var result sql.Result
 	var err error
 	if prefix == "" {
-		result, err = f.db.ExecContext(ctx, "DELETE FROM sqlar")
+		result, err = f.sdb.db.ExecContext(ctx, "DELETE FROM sqlar")
 	} else {
-		result, err = f.db.ExecContext(ctx,
+		result, err = f.sdb.db.ExecContext(ctx,
 			"DELETE FROM sqlar WHERE name = ? OR name GLOB ?",
 			prefix, prefix+"/*")
 	}
@@ -783,9 +782,9 @@ func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) e
 	if name == "" {
 		return nil // root has no entry
 	}
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	result, err := f.db.ExecContext(ctx,
+	f.sdb.mu.Lock()
+	defer f.sdb.mu.Unlock()
+	result, err := f.sdb.db.ExecContext(ctx,
 		"UPDATE sqlar SET mtime = ? WHERE name = ? AND mode & 0x4000 != 0",
 		modTime.Unix(), name)
 	if err != nil {
@@ -806,7 +805,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	}
 	used := fi.Size()
 	var count int64
-	err = f.db.QueryRowContext(ctx,
+	err = f.sdb.db.QueryRowContext(ctx,
 		"SELECT COUNT(*) FROM sqlar WHERE mode & 0x4000 = 0").Scan(&count)
 	if err != nil {
 		return nil, fmt.Errorf("sqlar About count: %w", err)
@@ -817,33 +816,32 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	}, nil
 }
 
-// Shutdown closes the database connection cleanly, checkpointing the WAL.
+// Shutdown releases this Fs's reference to the shared database connection.
+// The underlying database is closed when the last reference is released.
 func (f *Fs) Shutdown(ctx context.Context) error {
-	f.mu.Lock()
-	db := f.db
-	f.db = nil
-	f.mu.Unlock()
-	if db == nil {
+	sdb := f.sdb
+	f.sdb = nil
+	if sdb == nil {
 		return nil
 	}
-	return closeDB(db)
+	return closeDB(sdb, f.opt.Path)
 }
 
 // Command runs backend-specific commands
 func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (any, error) {
 	switch name {
 	case "vacuum":
-		f.mu.Lock()
-		defer f.mu.Unlock()
+		f.sdb.mu.Lock()
+		defer f.sdb.mu.Unlock()
 		// Checkpoint WAL, vacuum, then checkpoint again to consolidate
 		// everything into a single clean file.
-		if _, err := f.db.ExecContext(ctx, "PRAGMA wal_checkpoint(TRUNCATE)"); err != nil {
+		if _, err := f.sdb.db.ExecContext(ctx, "PRAGMA wal_checkpoint(TRUNCATE)"); err != nil {
 			return nil, fmt.Errorf("sqlar vacuum pre-checkpoint: %w", err)
 		}
-		if _, err := f.db.ExecContext(ctx, "VACUUM"); err != nil {
+		if _, err := f.sdb.db.ExecContext(ctx, "VACUUM"); err != nil {
 			return nil, fmt.Errorf("sqlar vacuum: %w", err)
 		}
-		if _, err := f.db.ExecContext(ctx, "PRAGMA wal_checkpoint(TRUNCATE)"); err != nil {
+		if _, err := f.sdb.db.ExecContext(ctx, "PRAGMA wal_checkpoint(TRUNCATE)"); err != nil {
 			return nil, fmt.Errorf("sqlar vacuum post-checkpoint: %w", err)
 		}
 		return nil, nil
@@ -913,9 +911,9 @@ func (o *Object) Storable() bool { return true }
 
 // SetModTime sets the modification time
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	o.fs.mu.Lock()
-	defer o.fs.mu.Unlock()
-	_, err := o.fs.db.ExecContext(ctx,
+	o.fs.sdb.mu.Lock()
+	defer o.fs.sdb.mu.Unlock()
+	_, err := o.fs.sdb.db.ExecContext(ctx,
 		"UPDATE sqlar SET mtime = ? WHERE name = ?",
 		modTime.Unix(), o.name)
 	if err != nil {
@@ -952,7 +950,7 @@ func (l *limitedRC) Close() error               { return l.r.Close() }
 
 // Open opens the Object for reading
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
-	sz, blobLen, blobRC, err := openBlobReader(ctx, o.fs.db, o.name)
+	sz, blobLen, blobRC, err := openBlobReader(ctx, o.fs.sdb.db, o.name)
 	if err == sql.ErrNoRows {
 		return nil, fs.ErrorObjectNotFound
 	}
@@ -1046,10 +1044,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		blobReader = bytes.NewReader(compressed)
 	}
 
-	o.fs.mu.Lock()
-	defer o.fs.mu.Unlock()
+	o.fs.sdb.mu.Lock()
+	defer o.fs.sdb.mu.Unlock()
 
-	if _, err := insertBlobStreaming(ctx, o.fs.db, o.name, mode, modTime.Unix(), sz, blobSize, blobReader); err != nil {
+	if _, err := insertBlobStreaming(ctx, o.fs.sdb.db, o.name, mode, modTime.Unix(), sz, blobSize, blobReader); err != nil {
 		if errors.Is(err, errBlobTooLarge) {
 			return fserrors.NoRetryError(fmt.Errorf("sqlar Update: %w", err))
 		}
@@ -1093,9 +1091,9 @@ func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
 		modTime = t
 	}
 
-	o.fs.mu.Lock()
-	defer o.fs.mu.Unlock()
-	_, err := o.fs.db.ExecContext(ctx,
+	o.fs.sdb.mu.Lock()
+	defer o.fs.sdb.mu.Unlock()
+	_, err := o.fs.sdb.db.ExecContext(ctx,
 		"UPDATE sqlar SET mode = ?, mtime = ? WHERE name = ?",
 		mode, modTime.Unix(), o.name)
 	if err != nil {
@@ -1108,9 +1106,9 @@ func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
 
 // Remove deletes the object
 func (o *Object) Remove(ctx context.Context) error {
-	o.fs.mu.Lock()
-	defer o.fs.mu.Unlock()
-	_, err := o.fs.db.ExecContext(ctx,
+	o.fs.sdb.mu.Lock()
+	defer o.fs.sdb.mu.Unlock()
+	_, err := o.fs.sdb.db.ExecContext(ctx,
 		"DELETE FROM sqlar WHERE name = ?", o.name)
 	if err != nil {
 		return fmt.Errorf("sqlar Remove: %w", err)

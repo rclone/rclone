@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sync"
 
 	sqlite3 "github.com/ncruces/go-sqlite3"
 	"github.com/ncruces/go-sqlite3/driver"
@@ -27,8 +28,33 @@ const schema = `CREATE TABLE IF NOT EXISTS sqlar(
   data BLOB
 )`
 
-// openDB opens a SQLite database and configures it for use.
-func openDB(filePath string) (*sql.DB, error) {
+// sharedDB is a reference-counted wrapper around a *sql.DB so that multiple
+// Fs instances pointing at the same archive file share one connection pool.
+// This is critical on Windows where SQLite uses mandatory file locks and
+// multiple independent pools competing for the same file causes deadlocks.
+type sharedDB struct {
+	db   *sql.DB
+	mu   sync.Mutex // serializes SQLite writes (single-writer constraint)
+	refs int
+}
+
+var (
+	dbCacheMu sync.Mutex
+	dbCache   = make(map[string]*sharedDB)
+)
+
+// openDB opens (or reuses) a SQLite database for the given file path.
+// Call closeDB when done; the underlying *sql.DB is closed when the last
+// reference is released.
+func openDB(filePath string) (*sharedDB, error) {
+	dbCacheMu.Lock()
+	defer dbCacheMu.Unlock()
+
+	if s, ok := dbCache[filePath]; ok {
+		s.refs++
+		return s, nil
+	}
+
 	const dsn = "?_pragma=busy_timeout(5000)" +
 		"&_pragma=page_size(512)" +
 		"&_pragma=synchronous(NORMAL)"
@@ -40,12 +66,24 @@ func openDB(filePath string) (*sql.DB, error) {
 	// (which hold a *sql.Conn for streaming) don't starve writers.
 	// SQLite's busy_timeout and the Fs.mu mutex handle write serialization.
 	db.SetMaxOpenConns(4)
-	return db, nil
+
+	s := &sharedDB{db: db, refs: 1}
+	dbCache[filePath] = s
+	return s, nil
 }
 
-// closeDB closes the database.
-func closeDB(db *sql.DB) error {
-	return db.Close()
+// closeDB decrements the reference count and closes the underlying database
+// when the last reference is released.
+func closeDB(s *sharedDB, filePath string) error {
+	dbCacheMu.Lock()
+	defer dbCacheMu.Unlock()
+
+	s.refs--
+	if s.refs > 0 {
+		return nil
+	}
+	delete(dbCache, filePath)
+	return s.db.Close()
 }
 
 // initSchema creates the sqlar table if it doesn't exist.
