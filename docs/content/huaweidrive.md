@@ -160,12 +160,12 @@ Key steps summary:
 Rclone uses the following OAuth2 scopes when accessing Huawei Drive:
 
 - `https://www.huawei.com/auth/drive` - Full access to Huawei Drive files (excluding application data folder)
+- `https://www.huawei.com/auth/drive.file` - Access to files created by the application
 - `openid` - OpenID Connect authentication
 - `profile` - Access to basic profile information
 
 Alternative scopes available (not used by rclone by default):
 
-- `https://www.huawei.com/auth/drive.file` - Access only to files created by the application
 - `https://www.huawei.com/auth/drive.appdata` - Access to application data folder
 - `https://www.huawei.com/auth/drive.readonly` - Read-only access to file metadata and content
 - `https://www.huawei.com/auth/drive.metadata` - Read/write access to file metadata only
@@ -175,7 +175,10 @@ The default scopes provide read/write access to all files in your Huawei Drive.
 
 ### Modification times and hashes
 
-Huawei Drive stores modification times accurate to 1 second.
+Huawei Drive does not support setting modification times. The API
+always uses server-side timestamps, so file modification times from
+the source are not preserved during upload. Modification times are
+available as read-only metadata (`mtime`, `btime`).
 
 Hash algorithm SHA256 is supported for file integrity verification.
 
@@ -396,7 +399,6 @@ Huawei Drive imposes API rate limits. Rclone automatically handles these by back
 ### Directory operations
 
 - Huawei Drive supports creating empty directories
-- Directory modification times can be set (DirSetModTime)
 - Recursive listing is supported via `--fast-list` for efficient directory traversal
 - Huawei Drive has a special "applicationData" folder for app-specific data (not accessible via rclone's default configuration)
 
@@ -439,7 +441,6 @@ Huawei Drive supports the following rclone features:
 - `Purge` - Delete directory and all contents
 - `CleanUp` - Empty the trash
 - `UserInfo` - Get user account information
-- `DirSetModTime` - Set directory modification times
 - `Metadata` - Read and write file metadata/properties
 
 ## Integration with other services

@@ -154,7 +154,7 @@ Custom metadata keys can be any string and will be stored in the file's properti
 			Advanced: true,
 		}, {
 			Name:     "upload_cutoff",
-			Help:     "Cutoff for switching to multipart upload.\n\nAny files larger than this will be uploaded in chunks of chunk_size.\nThe minimum is 0 and the maximum is 5 GiB.",
+			Help:     "Cutoff for switching to resumable upload.\n\nAny files larger than this will be uploaded using resumable upload.\nThe minimum is 0 and the maximum is 20 MiB (Huawei Drive API limit for single request uploads).",
 			Default:  20 * fs.Mebi,
 			Advanced: true,
 		}, {
@@ -939,13 +939,13 @@ func (f *Fs) createObject(ctx context.Context, remote string, modTime time.Time,
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	exisitingObj, err := f.newObjectWithInfo(ctx, src.Remote(), nil)
+	existingObj, err := f.newObjectWithInfo(ctx, src.Remote(), nil)
 	if err == nil {
-		err = exisitingObj.Update(ctx, in, src, options...)
+		err = existingObj.Update(ctx, in, src, options...)
 		if err != nil {
 			return nil, err
 		}
-		return exisitingObj, nil
+		return existingObj, nil
 	}
 	if err != fs.ErrorObjectNotFound {
 		return nil, err
@@ -1202,7 +1202,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	// Get current parent folders
-	currentParents := srcObj.getParentIDs()
+	currentParents := srcObj.getParentIDs(ctx)
 
 	// Check what type of operation we need
 	needsDirMove := len(currentParents) == 0 || currentParents[0] != dstDirectoryID
@@ -1504,9 +1504,9 @@ func (o *Object) setMetaData(info *api.File) (err error) {
 }
 
 // getParentIDs returns the parent folder IDs for this object
-func (o *Object) getParentIDs() []string {
+func (o *Object) getParentIDs(ctx context.Context) []string {
 	// We need to get the parent IDs from the API
-	info, err := o.fs.readMetaDataForPath(context.TODO(), o.remote)
+	info, err := o.fs.readMetaDataForPath(ctx, o.remote)
 	if err != nil {
 		fs.Debugf(o, "Failed to read metadata for parent IDs: %v", err)
 		return nil
@@ -1664,8 +1664,24 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	leaf = o.fs.opt.Enc.FromStandardName(leaf)
 
+	// Handle unknown size by buffering the entire content
+	if size < 0 {
+		data, err := io.ReadAll(in)
+		if err != nil {
+			return fmt.Errorf("failed to read content for unknown size upload: %w", err)
+		}
+		size = int64(len(data))
+		in = bytes.NewReader(data)
+	}
+
 	// Determine upload method based on size
-	if size >= 0 && size < int64(o.fs.opt.UploadCutoff) {
+	// Cap multipart upload at 20 MiB (Huawei Drive API limit)
+	cutoff := int64(o.fs.opt.UploadCutoff)
+	const maxMultipartSize = 20 * 1024 * 1024
+	if cutoff > maxMultipartSize {
+		cutoff = maxMultipartSize
+	}
+	if size < cutoff {
 		err = o.uploadSimple(ctx, in, leaf, directoryID, size, src.ModTime(ctx), src)
 	} else {
 		err = o.uploadResume(ctx, in, leaf, directoryID, size, src.ModTime(ctx), src)

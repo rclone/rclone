@@ -127,6 +127,7 @@ func TestEncoding(t *testing.T) {
 	enc := encoder.MultiEncoder( //nolint:unconvert
 		encoder.Display |
 			encoder.EncodeBackSlash |
+			encoder.EncodeSlash |
 			encoder.EncodeInvalidUtf8 |
 			encoder.EncodeRightSpace |
 			encoder.EncodeLeftSpace |
@@ -781,6 +782,7 @@ func TestEncodingConfiguration(t *testing.T) {
 	// This should match the default encoding set in the config
 	expectedEncoding := (encoder.Display |
 		encoder.EncodeBackSlash |
+		encoder.EncodeSlash |
 		encoder.EncodeInvalidUtf8 |
 		encoder.EncodeRightSpace |
 		encoder.EncodeLeftSpace |
@@ -799,6 +801,7 @@ func TestEncodingConfiguration(t *testing.T) {
 	// Test that all required encodings are present
 	requiredEncodings := []encoder.MultiEncoder{
 		encoder.EncodeBackSlash,   // \
+		encoder.EncodeSlash,       // /
 		encoder.EncodeColon,       // :
 		encoder.EncodePipe,        // |
 		encoder.EncodeDoubleQuote, // "
