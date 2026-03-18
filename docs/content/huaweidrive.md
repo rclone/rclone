@@ -442,6 +442,7 @@ Huawei Drive supports the following rclone features:
 - `CleanUp` - Empty the trash
 - `UserInfo` - Get user account information
 - `Metadata` - Read and write file metadata/properties
+- `ChangeNotify` - Poll for remote changes (used by `rclone mount` and `rclone rc vfs/poll-interval`)
 
 ## Integration with other services
 

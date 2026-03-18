@@ -2223,6 +2223,159 @@ func (f *Fs) DirCacheFlush() {
 	f.dirCache.ResetRoot()
 }
 
+// changeNotifyStartCursor gets the start cursor for change notifications
+func (f *Fs) changeNotifyStartCursor(ctx context.Context) (string, error) {
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/changes/getStartCursor",
+		Parameters: url.Values{
+			"fields": []string{"*"},
+		},
+	}
+	var result api.StartCursor
+	err := f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(ctx, &opts, nil, &result)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to get start cursor: %w", err)
+	}
+	return result.StartCursor, nil
+}
+
+// changeNotifyRunner polls for changes and notifies the caller
+func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.EntryType), cursor string) (string, error) {
+	for {
+		opts := rest.Opts{
+			Method: "GET",
+			Path:   "/changes",
+			Parameters: url.Values{
+				"fields": []string{"*"},
+				"cursor": []string{cursor},
+			},
+		}
+		var result api.ChangeList
+		err := f.pacer.Call(func() (bool, error) {
+			resp, err := f.srv.CallJSON(ctx, &opts, nil, &result)
+			return shouldRetry(ctx, resp, err)
+		})
+		if err != nil {
+			return "", err
+		}
+
+		type entryInfo struct {
+			path      string
+			entryType fs.EntryType
+		}
+		var pathsToClear []entryInfo
+
+		fs.Debugf(f, "changeNotifyRunner: got %d changes", len(result.Changes))
+		for _, change := range result.Changes {
+			// Check if we know the old path from dirCache
+			if oldPath, ok := f.dirCache.GetInv(change.FileID); ok {
+				entryType := fs.EntryObject
+				if change.File != nil && change.File.IsDir() {
+					entryType = fs.EntryDirectory
+				}
+				pathsToClear = append(pathsToClear, entryInfo{path: oldPath, entryType: entryType})
+			}
+
+			// Find the new path if the file still exists
+			if change.File != nil && !change.Deleted {
+				entryType := fs.EntryObject
+				if change.File.IsDir() {
+					entryType = fs.EntryDirectory
+				}
+				fileName := f.opt.Enc.ToStandardName(change.File.FileName)
+				if len(change.File.ParentFolder) > 0 {
+					for _, parent := range change.File.ParentFolder {
+						if parentPath, ok := f.dirCache.GetInv(parent); ok {
+							newPath := path.Join(parentPath, fileName)
+							pathsToClear = append(pathsToClear, entryInfo{path: newPath, entryType: entryType})
+						} else {
+							fs.Debugf(f, "Parent %s not in dirCache for file %s", parent, fileName)
+						}
+					}
+				} else {
+					pathsToClear = append(pathsToClear, entryInfo{path: fileName, entryType: entryType})
+				}
+			}
+		}
+
+		// Deduplicate and notify
+		visited := make(map[string]struct{})
+		for _, entry := range pathsToClear {
+			if _, ok := visited[entry.path]; ok {
+				continue
+			}
+			visited[entry.path] = struct{}{}
+			notifyFunc(entry.path, entry.entryType)
+		}
+
+		// Check for next page or completion
+		if result.NextCursor != "" {
+			cursor = result.NextCursor
+			continue
+		}
+		if result.NewStartCursor != "" {
+			// Only advance the cursor if we actually got changes.
+			// The Huawei Drive Changes API has eventual consistency -
+			// some changes may not yet be visible. By keeping the old
+			// cursor when no changes are returned, we can pick up
+			// delayed changes on the next poll.
+			if len(result.Changes) > 0 {
+				return result.NewStartCursor, nil
+			}
+		}
+		return cursor, nil
+	}
+}
+
+// ChangeNotify calls the passed function with a path that has had changes.
+// It polls the Huawei Drive Changes API at the given interval.
+func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryType), pollIntervalChan <-chan time.Duration) {
+	go func() {
+		cursor, err := f.changeNotifyStartCursor(ctx)
+		if err != nil {
+			fs.Infof(f, "Failed to get start cursor: %s", err)
+		}
+		var ticker *time.Ticker
+		var tickerC <-chan time.Time
+		for {
+			select {
+			case pollInterval, ok := <-pollIntervalChan:
+				if !ok {
+					if ticker != nil {
+						ticker.Stop()
+					}
+					return
+				}
+				if ticker != nil {
+					ticker.Stop()
+					ticker, tickerC = nil, nil
+				}
+				if pollInterval != 0 {
+					ticker = time.NewTicker(pollInterval)
+					tickerC = ticker.C
+				}
+			case <-tickerC:
+				if cursor == "" {
+					cursor, err = f.changeNotifyStartCursor(ctx)
+					if err != nil {
+						fs.Infof(f, "Failed to get start cursor: %s", err)
+						continue
+					}
+				}
+				fs.Debugf(f, "Checking for changes on remote")
+				cursor, err = f.changeNotifyRunner(ctx, notifyFunc, cursor)
+				if err != nil {
+					fs.Infof(f, "Change notify listener failure: %s", err)
+				}
+			}
+		}
+	}()
+}
+
 // UserInfo returns info about the connected user
 func (f *Fs) UserInfo(ctx context.Context) (map[string]string, error) {
 	opts := rest.Opts{
@@ -2267,6 +2420,7 @@ var (
 	_ fs.ListRer         = (*Fs)(nil)
 	_ fs.CleanUpper      = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
+	_ fs.ChangeNotifier  = (*Fs)(nil)
 	_ fs.UserInfoer      = (*Fs)(nil)
 	_ fs.Disconnecter    = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)

@@ -227,3 +227,28 @@ var GlobalDomains = map[string]bool{
 func BoolPtr(b bool) *bool {
 	return &b
 }
+
+// StartCursor represents response to Changes.getStartCursor endpoint
+type StartCursor struct {
+	Category    string `json:"category"` // "drive#startCursor"
+	StartCursor string `json:"startCursor"`
+}
+
+// ChangeList represents response to Changes.list endpoint
+type ChangeList struct {
+	Category       string       `json:"category"` // "drive#changeList"
+	NextCursor     string       `json:"nextCursor,omitempty"`
+	NewStartCursor string       `json:"newStartCursor,omitempty"`
+	Changes        []ChangeItem `json:"changes"`
+}
+
+// ChangeItem represents a single change entry
+type ChangeItem struct {
+	Category   string `json:"category"`   // "drive#change"
+	Type       string `json:"type"`       // resource type, e.g. "File"
+	ChangeType string `json:"changeType"` // change type, e.g. "File"
+	Time       string `json:"time"`
+	Deleted    bool   `json:"deleted"`
+	FileID     string `json:"fileId"`
+	File       *File  `json:"file,omitempty"`
+}
