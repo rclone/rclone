@@ -56,16 +56,18 @@ func openDB(filePath string) (*sharedDB, error) {
 	}
 
 	const dsn = "?_pragma=busy_timeout(5000)" +
-		"&_pragma=page_size(512)" +
 		"&_pragma=synchronous(NORMAL)"
 	db, err := driver.Open("file:" + filePath + dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database %q: %w", filePath, err)
 	}
-	// Allow enough pooled connections so that concurrent blob reads
-	// (which hold a *sql.Conn for streaming) don't starve writers.
-	// SQLite's busy_timeout and the Fs.mu mutex handle write serialization.
-	db.SetMaxOpenConns(4)
+	// Each pooled connection spawns its own SQLite WASM instance (via
+	// ncruces/go-sqlite3 + wazero) whose linear memory is a Go []byte
+	// that can grow up to 4 GB. Keep the pool small to avoid OOM on
+	// memory-constrained CI runners. Two connections allow one concurrent
+	// blob read while another connection handles queries or writes.
+	db.SetMaxOpenConns(2)
+	db.SetMaxIdleConns(1)
 
 	s := &sharedDB{db: db, refs: 1}
 	dbCache[filePath] = s
