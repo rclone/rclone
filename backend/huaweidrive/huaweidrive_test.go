@@ -534,11 +534,6 @@ func TestConstants(t *testing.T) {
 	if defaultChunkSize != expectedChunkSize {
 		t.Errorf("expected default chunk size %d, got %d", expectedChunkSize, defaultChunkSize)
 	}
-
-	expectedMaxSize := 50 * fs.Gibi // 50GB
-	if maxFileSize != expectedMaxSize {
-		t.Errorf("expected max file size %d, got %d", expectedMaxSize, maxFileSize)
-	}
 }
 
 // TestFeatures tests the filesystem features configuration
@@ -892,34 +887,13 @@ func TestObjectString(t *testing.T) {
 
 // TestSetModTime tests setting modification time
 func TestSetModTime(t *testing.T) {
-	// Test that we have a proper SetModTime implementation
-	// This is a compile-time test to ensure the method signature is correct
-
-	// Verify the method exists and has the right signature
-	var obj *Object
-	var ctx context.Context
-	var modTime time.Time
-
-	// This should compile without error, proving the method signature is correct
-	_ = obj.SetModTime(ctx, modTime)
-
-	t.Log("SetModTime method signature verified")
-
-	// Test the implementation logic without actually making API calls
-	// We verify that it's no longer returning fs.ErrorCantSetModTime immediately
-	testObj := &Object{id: ""}
-	err := testObj.SetModTime(context.Background(), time.Now())
-
-	// With empty id, should get a specific error about missing id, not fs.ErrorCantSetModTime
-	if err == fs.ErrorCantSetModTime {
-		t.Error("SetModTime should not return fs.ErrorCantSetModTime - it should attempt validation/API call")
+	// Huawei Drive does not support setting modification times
+	// SetModTime should always return fs.ErrorCantSetModTime
+	obj := &Object{id: "test-id"}
+	err := obj.SetModTime(context.Background(), time.Now())
+	if err != fs.ErrorCantSetModTime {
+		t.Errorf("SetModTime should return fs.ErrorCantSetModTime, got: %v", err)
 	}
-
-	if err == nil {
-		t.Error("SetModTime with empty id should return an error")
-	}
-
-	t.Logf("SetModTime with empty id returned expected error: %v", err)
 } // TestCleanUp tests the CleanUp functionality
 func TestCleanUp(t *testing.T) {
 	// Test that the interface is correctly implemented at compile time

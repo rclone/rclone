@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/textproto"
 	"net/url"
+	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -43,7 +44,6 @@ const (
 	rootURL                     = "https://driveapis.cloud.huawei.com.cn/drive/v1"
 	uploadURL                   = "https://driveapis.cloud.huawei.com.cn/upload/drive/v1"
 	defaultChunkSize            = 8 * fs.Mebi
-	maxFileSize                 = 50 * fs.Gibi // Maximum file size for Huawei Drive
 )
 
 // OAuth2 configuration
@@ -1413,7 +1413,10 @@ func (f *Fs) listRRecursive(ctx context.Context, dir string, directoryID string,
 			}{remote, info.ID})
 		} else {
 			// It's a file
-			if o, err := f.newObjectWithInfo(ctx, remote, info); err == nil {
+			o, err := f.newObjectWithInfo(ctx, remote, info)
+			if err != nil {
+				fs.Debugf(remote, "Skipping file in ListR: %v", err)
+			} else {
 				entries = append(entries, o)
 			}
 		}
@@ -1471,6 +1474,9 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 
 // Size returns the size of an object in bytes
 func (o *Object) Size() int64 {
+	if o.hasMetaData {
+		return o.size
+	}
 	err := o.readMetaData(context.TODO())
 	if err != nil {
 		fs.Logf(o, "Failed to read metadata: %v", err)
@@ -1570,47 +1576,12 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 	return o.modTime
 }
 
-// setModTime sets the modification time of the local fs object
-func (o *Object) setModTime(ctx context.Context, modTime time.Time) (*api.File, error) {
-	if o == nil {
-		return nil, errors.New("can't set modification time - object is nil")
-	}
-	if o.id == "" {
-		return nil, errors.New("can't set modification time - no id")
-	}
-
-	opts := rest.Opts{
-		Method: "PATCH",
-		Path:   "/files/" + o.id,
-		Parameters: url.Values{
-			"fields": []string{"*"},
-		},
-	}
-
-	update := api.UpdateFileRequest{
-		EditedTime: &modTime,
-	}
-
-	var info *api.File
-	err := o.fs.pacer.Call(func() (bool, error) {
-		resp, err := o.fs.srv.CallJSON(ctx, &opts, &update, &info)
-		return shouldRetry(ctx, resp, err)
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to set modification time: %w", err)
-	}
-
-	return info, nil
-}
-
 // SetModTime sets the modification time of the local fs object
+//
+// Huawei Drive API does not support setting modification times,
+// so this always returns ErrorCantSetModTime.
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	info, err := o.setModTime(ctx, modTime)
-	if err != nil {
-		return err
-	}
-	return o.setMetaData(info)
+	return fs.ErrorCantSetModTime
 }
 
 // Storable returns a boolean showing whether this object storable
@@ -1664,14 +1635,24 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	leaf = o.fs.opt.Enc.FromStandardName(leaf)
 
-	// Handle unknown size by buffering the entire content
+	// Handle unknown size by spooling to a temp file to determine size
 	if size < 0 {
-		data, err := io.ReadAll(in)
+		tmpFile, err := os.CreateTemp("", "rclone-huaweidrive-upload-")
 		if err != nil {
-			return fmt.Errorf("failed to read content for unknown size upload: %w", err)
+			return fmt.Errorf("failed to create temp file for unknown size upload: %w", err)
 		}
-		size = int64(len(data))
-		in = bytes.NewReader(data)
+		defer func() {
+			_ = tmpFile.Close()
+			_ = os.Remove(tmpFile.Name())
+		}()
+		size, err = io.Copy(tmpFile, in)
+		if err != nil {
+			return fmt.Errorf("failed to spool content for unknown size upload: %w", err)
+		}
+		if _, err = tmpFile.Seek(0, io.SeekStart); err != nil {
+			return fmt.Errorf("failed to seek temp file: %w", err)
+		}
+		in = tmpFile
 	}
 
 	// Determine upload method based on size
