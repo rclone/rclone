@@ -61,13 +61,11 @@ func openDB(filePath string) (*sharedDB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database %q: %w", filePath, err)
 	}
-	// Each pooled connection spawns its own SQLite WASM instance (via
-	// ncruces/go-sqlite3 + wazero) whose linear memory is a Go []byte
-	// that can grow up to 4 GB. Keep the pool small to avoid OOM on
-	// memory-constrained CI runners. Two connections allow one concurrent
-	// blob read while another connection handles queries or writes.
-	db.SetMaxOpenConns(2)
-	db.SetMaxIdleConns(1)
+	// Allow enough pooled connections so that concurrent blob reads
+	// (which hold a *sql.Conn for streaming) don't starve writers.
+	// SQLite's busy_timeout and the sharedDB.mu mutex handle write
+	// serialization.
+	db.SetMaxOpenConns(4)
 
 	s := &sharedDB{db: db, refs: 1}
 	dbCache[filePath] = s
