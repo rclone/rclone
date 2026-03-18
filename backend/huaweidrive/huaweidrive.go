@@ -17,6 +17,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rclone/rclone/backend/huaweidrive/api"
@@ -194,6 +195,14 @@ type Options struct {
 	Enc          encoder.MultiEncoder `config:"encoding"`
 }
 
+// itemMeta stores cached metadata for an item, used to resolve old paths
+// in ChangeNotify events (e.g. when a file is moved/renamed/deleted).
+type itemMeta struct {
+	parentID string // ID of the parent directory
+	name     string // leaf name of the item
+	isDir    bool   // whether this is a directory
+}
+
 // Fs represents a remote Huawei Drive
 type Fs struct {
 	name string // name of this remote
@@ -208,6 +217,9 @@ type Fs struct {
 	rootFolderID string // ID of the root folder (detected at runtime)
 	domainURL    string // regional domain URL from About:get
 	uploadURL    string // upload URL (may be updated after domain detection)
+
+	itemMetaCacheMu sync.Mutex          // protects itemMetaCache
+	itemMetaCache   map[string]itemMeta // map of item ID to metadata for ChangeNotify
 }
 
 // Object describes a Huawei Drive object
@@ -440,12 +452,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	srv := rest.NewClient(client).SetRoot(rootURL)
 
 	f := &Fs{
-		name:      name,
-		root:      root,
-		opt:       *opt,
-		srv:       srv,
-		pacer:     fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
-		uploadURL: uploadURL,
+		name:          name,
+		root:          root,
+		opt:           *opt,
+		srv:           srv,
+		pacer:         fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		uploadURL:     uploadURL,
+		itemMetaCache: make(map[string]itemMeta),
 	}
 
 	f.features = (&fs.Features{
@@ -900,6 +913,14 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			}
 			entries = append(entries, o)
 		}
+		// Cache metadata for ChangeNotify old path resolution
+		f.itemMetaCacheMu.Lock()
+		f.itemMetaCache[info.ID] = itemMeta{
+			parentID: directoryID,
+			name:     info.FileName,
+			isDir:    info.IsDir(),
+		}
+		f.itemMetaCacheMu.Unlock()
 		return false
 	})
 	if err != nil {
@@ -1420,6 +1441,14 @@ func (f *Fs) listRRecursive(ctx context.Context, dir string, directoryID string,
 				entries = append(entries, o)
 			}
 		}
+		// Cache metadata for ChangeNotify old path resolution
+		f.itemMetaCacheMu.Lock()
+		f.itemMetaCache[info.ID] = itemMeta{
+			parentID: directoryID,
+			name:     info.FileName,
+			isDir:    info.IsDir(),
+		}
+		f.itemMetaCacheMu.Unlock()
 		return false
 	})
 
@@ -2271,7 +2300,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 
 		fs.Debugf(f, "changeNotifyRunner: got %d changes", len(result.Changes))
 		for _, change := range result.Changes {
-			// Check if we know the old path from dirCache
+			// Check if we know the old path from dirCache (directories)
 			if oldPath, ok := f.dirCache.GetInv(change.FileID); ok {
 				entryType := fs.EntryObject
 				if change.File != nil && change.File.IsDir() {
@@ -2279,6 +2308,22 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 				}
 				pathsToClear = append(pathsToClear, entryInfo{path: oldPath, entryType: entryType})
 			}
+
+			// Check if we know the old path from itemMetaCache (files and directories)
+			f.itemMetaCacheMu.Lock()
+			if cached, ok := f.itemMetaCache[change.FileID]; ok {
+				entryType := fs.EntryObject
+				if cached.isDir {
+					entryType = fs.EntryDirectory
+				}
+				if parentPath, ok := f.dirCache.GetInv(cached.parentID); ok {
+					oldPath := path.Join(parentPath, f.opt.Enc.ToStandardName(cached.name))
+					pathsToClear = append(pathsToClear, entryInfo{path: oldPath, entryType: entryType})
+				}
+				// Remove stale entry; future List calls will repopulate
+				delete(f.itemMetaCache, change.FileID)
+			}
+			f.itemMetaCacheMu.Unlock()
 
 			// Find the new path if the file still exists
 			if change.File != nil && !change.Deleted {
