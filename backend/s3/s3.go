@@ -4648,6 +4648,14 @@ func (o *Object) uploadSinglepartPutObject(ctx context.Context, req *s3.PutObjec
 	if err != nil {
 		return etag, lastModified, nil, err
 	}
+	// If the reader claims to implement io.Seeker but can't actually seek
+	// (e.g., accounting.Account wrapping asyncreader.AsyncReader), strip the
+	// Seek method so the AWS SDK uses streaming checksums instead of seeking.
+	if seeker, ok := in.(io.Seeker); ok {
+		if _, err := seeker.Seek(0, io.SeekCurrent); err != nil {
+			in = struct{ io.Reader }{in}
+		}
+	}
 	req.Body = in
 	var options = []func(*s3.Options){}
 	if o.fs.opt.UseUnsignedPayload.Value {
@@ -4758,10 +4766,9 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 	modTime := src.ModTime(ctx)
 
 	ui.req = &s3.PutObjectInput{
-		Bucket:            &bucket,
-		ACL:               types.ObjectCannedACL(o.fs.opt.ACL),
-		Key:               &bucketPath,
-		ChecksumAlgorithm: types.ChecksumAlgorithmCrc32c,
+		Bucket: &bucket,
+		ACL:    types.ObjectCannedACL(o.fs.opt.ACL),
+		Key:    &bucketPath,
 	}
 	if tierObj, ok := src.(fs.GetTierer); ok {
 		tier := tierObj.GetTier()
@@ -4773,6 +4780,9 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 	meta, err := fs.GetMetadataOptions(ctx, o.fs, src, options)
 	if err != nil {
 		return ui, fmt.Errorf("failed to read metadata from source object: %w", err)
+	}
+	if meta == nil {
+		meta = fs.Metadata{}
 	}
 	meta["written-from"] = "rclone"
 	ui.req.Metadata = make(map[string]string, len(meta)+2)
