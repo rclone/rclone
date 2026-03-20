@@ -12,7 +12,7 @@ its own datacenters in Norway.
 In addition to the official service at [jottacloud.com](https://www.jottacloud.com/),
 it also provides white-label solutions to different companies. The following
 are currently supported by this backend, using a different authentication setup
-as described [below](#whitelabel-authentication):
+as described [below](#traditional):
 
 - Elkjøp (with subsidiaries):
   - Elkjøp Cloud (cloud.elkjop.no)
