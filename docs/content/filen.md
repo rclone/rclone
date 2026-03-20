@@ -10,6 +10,8 @@ The initial setup for Filen requires that you get an API key for your account,
 currently this is only possible using the [Filen CLI](https://github.com/FilenCloudDienste/filen-cli).
 This means you must first download the CLI, login, and then run the `export-api-key` command.
 
+**Note:** If you change your Filen account password, your API key will change. You will need to re-export it using the CLI and update your rclone configuration.
+
 Here is an example of how to make a remote called `FilenRemote`.  First run:
 
      rclone config
