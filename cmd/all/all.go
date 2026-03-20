@@ -30,6 +30,7 @@ import (
 	_ "github.com/rclone/rclone/cmd/deletefile"
 	_ "github.com/rclone/rclone/cmd/genautocomplete"
 	_ "github.com/rclone/rclone/cmd/gendocs"
+	_ "github.com/rclone/rclone/cmd/gui"
 	_ "github.com/rclone/rclone/cmd/gitannex"
 	_ "github.com/rclone/rclone/cmd/hashsum"
 	_ "github.com/rclone/rclone/cmd/link"

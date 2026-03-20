@@ -45,9 +45,12 @@ LINTTAGS=--build-tags "$(GOTAGS)"
 endif
 LDFLAGS=--ldflags "-s -X github.com/rclone/rclone/fs.Version=$(TAG)"
 
-.PHONY: rclone test_all vars version
+.PHONY: rclone test_all vars version fetch-gui
 
-rclone:
+fetch-gui:
+	bin/fetch-gui-dist.sh
+
+rclone: fetch-gui
 ifeq ($(GO_OS),windows)
 	go run bin/resource_windows.go -version $(TAG) -syso resource_windows_`go env GOARCH`.syso
 endif
