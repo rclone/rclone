@@ -6,6 +6,58 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.73.2 - 2026-03-06
+
+[See commits](https://github.com/rclone/rclone/compare/v1.73.1...v1.73.2)
+
+- Bug Fixes
+  - build
+    - Update to go 1.25.8 to fix CVE-2026-27137 CVE-2026-27138 CVE-2026-25679 CVE-2026-27142 (Nick Craig-Wood)
+    - Update github.com/cloudflare/circl to v1.6.3 to fix CVE-2026-1229 (Nick Craig-Wood)
+    - Update to golang.org/x/net v0.51.0 to fix CVE-2026-27141 (Nick Craig-Wood)
+  - docs fixes:
+    - bisync: Add group Sync to the bisync command (Jan-Philipp Reßler)
+    - Note that --use-server-modtime only works on some backends (Nick Craig-Wood)
+    - Document unsupported S3 object keys with double slashes (Adam Kasztenny)
+    - Fix headers hierarchy for mount.md (Dark Dragon)
+    - Fix new drive flag typo in changelog (razorloves)
+- Archive
+  - Extract: fix extraction with "./" prefix from tar entry paths (Varun Chawla)
+- Drime
+  - Fix chunk-uploaded files ignoring workspace ID (a1pcm)
+- Internxt
+  - Fix Entry doesn't belong in directory errors on windows (jzunigax2)
+- WebDAV
+  - Escape reserved characters in URL path segments (Varun Chawla)
+  - Add missing headers for CORS (Romāns Potašovs)
+
+## v1.73.1 - 2026-02-17
+
+[See commits](https://github.com/rclone/rclone/compare/v1.73.0...v1.73.1)
+
+- Bug Fixes
+  - accounting: Fix missing server side stats from core/stats rc (Nick Craig-Wood)
+  - build
+    - Fix CVE-2025-68121 by updating go to 1.25.7 or later (Nick Craig-Wood)
+    - Bump github.com/go-chi/chi/v5 from 5.2.3 to 5.2.5 to fix GO-2026-4316 (albertony)
+  - docs: Extend copyurl docs with an example of CSV FILENAMEs starting with a path. (Jack Kelly)
+  - march: Fix runtime: program exceeds 10000-thread limit (Nick Craig-Wood)
+  - pacer
+    - Fix deadlock between pacer token and --max-connections (Nick Craig-Wood)
+    - Re-read the sleep time as it may be stale (Nick Craig-Wood)
+- Drime
+  - Fix files and directories being created in the default workspace (Nick Craig-Wood)
+- Filelu
+  - Avoid buffering entire file in memory (kingston125)
+  - Add multipart upload support with configurable cutoff (kingston125)
+- Filen
+  - Fix 32 bit targets not being able to list directories (Enduriel)
+  - Fix potential panic in case of error during upload (Enduriel)
+- Internxt
+  - Implement re-login under refresh logic, improve retry logic (José Zúniga)
+-S3
+  - Set list_version to 2 for FileLu S3 configuration (kingston125)
+
 ## v1.73.0 - 2026-01-30
 
 [See commits](https://github.com/rclone/rclone/compare/v1.72.0...v1.73.0)
@@ -36,7 +88,7 @@ description: "Rclone Changelog"
 - B2
   - Support authentication with new bucket restricted application keys (DianaNites)
 - Drive
-  - Add `--drive-metadata-force-expansive-access` flag (Nick Craig-Wood)
+  - Add `--drive-metadata-enforce-expansive-access` flag (Nick Craig-Wood)
   - Fix crash when trying to creating shortcut to a Google doc (Nick Craig-Wood)
 - FTP
   - Add http proxy authentication support (Nicolas Dessart)

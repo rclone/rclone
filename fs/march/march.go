@@ -16,6 +16,7 @@ import (
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/transform"
+	"golang.org/x/sync/semaphore"
 	"golang.org/x/text/unicode/norm"
 )
 
@@ -41,9 +42,10 @@ type March struct {
 	NoCheckDest            bool            // transfer all objects regardless without checking dst
 	NoUnicodeNormalization bool            // don't normalize unicode characters in filenames
 	// internal state
-	srcListDir listDirFn // function to call to list a directory in the src
-	dstListDir listDirFn // function to call to list a directory in the dst
-	transforms []matchTransformFn
+	srcListDir   listDirFn // function to call to list a directory in the src
+	dstListDir   listDirFn // function to call to list a directory in the dst
+	transforms   []matchTransformFn
+	newObjectSem *semaphore.Weighted // make sure we don't call too many NewObjects simultaneously
 }
 
 // Marcher is called on each match
@@ -78,6 +80,8 @@ func (m *March) init(ctx context.Context) {
 	if m.Fdst.Features().CaseInsensitive || ci.IgnoreCaseSync {
 		m.transforms = append(m.transforms, strings.ToLower)
 	}
+	// Only allow ci.Checkers simultaneous calls to NewObject
+	m.newObjectSem = semaphore.NewWeighted(int64(ci.Checkers))
 }
 
 // srcOrDstKey turns a directory entry into a sort key using the defined transforms.
@@ -201,9 +205,7 @@ func (m *March) Run(ctx context.Context) error {
 	checkers := ci.Checkers
 	in := make(chan listDirJob, checkers)
 	for range checkers {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for {
 				select {
 				case <-m.Ctx.Done():
@@ -240,7 +242,7 @@ func (m *March) Run(ctx context.Context) error {
 					traversing.Done()
 				}
 			}
-		}()
+		})
 	}
 
 	// Start the process
@@ -389,9 +391,7 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 	// List the src and dst directories
 	if !job.noSrc {
 		srcChan := srcChan // duplicate this as we may override it later
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			srcListErr = m.srcListDir(job.srcRemote, func(entries fs.DirEntries) error {
 				for _, entry := range entries {
 					srcChan <- entry
@@ -399,16 +399,14 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 				return nil
 			})
 			close(srcChan)
-		}()
+		})
 	} else {
 		close(srcChan)
 	}
 	startedDst := false
 	if !m.NoTraverse && !job.noDst {
 		startedDst = true
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			dstListErr = m.dstListDir(job.dstRemote, func(entries fs.DirEntries) error {
 				for _, entry := range entries {
 					dstChan <- entry
@@ -416,7 +414,7 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 				return nil
 			})
 			close(dstChan)
-		}()
+		})
 	}
 	// If NoTraverse is set, then try to find a matching object
 	// for each item in the srcList to head dst object
@@ -451,9 +449,7 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 		// Get the tasks from the queue and find a matching object.
 		var workerWg sync.WaitGroup
 		for range workers {
-			workerWg.Add(1)
-			go func() {
-				defer workerWg.Done()
+			workerWg.Go(func() {
 				for t := range matchTasks {
 					// Can't match directories with NewObject
 					if _, ok := t.src.(fs.Object); !ok {
@@ -461,13 +457,18 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 						continue
 					}
 					leaf := path.Base(t.src.Remote())
+					if err := m.newObjectSem.Acquire(m.Ctx, 1); err != nil {
+						t.dstMatch <- nil
+						continue
+					}
 					dst, err := m.Fdst.NewObject(m.Ctx, path.Join(job.dstRemote, leaf))
+					m.newObjectSem.Release(1)
 					if err != nil {
 						dst = nil
 					}
 					t.dstMatch <- dst
 				}
-			}()
+			})
 		}
 
 		// Close dstResults when all the workers have finished
@@ -477,9 +478,7 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 		}()
 
 		// Read the matches in order and send them to dstChan if found.
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for dstMatch := range dstMatches {
 				dst := <-dstMatch
 				// Note that dst may be nil here
@@ -488,7 +487,7 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 			}
 			close(srcChan)
 			close(dstChan)
-		}()
+		})
 	}
 	if !startedDst {
 		close(dstChan)

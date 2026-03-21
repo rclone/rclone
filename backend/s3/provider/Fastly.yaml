@@ -1,13 +1,23 @@
 name: Fastly
 description: Fastly Object Storage
 region:
+  au-east-1: AU East 1
+  eu-central: EU Central
+  eu-south-1: EU South 1
+  jp-central-1: JP Central 1
+  uk-east-1: UK East 1
+  us-central-1: US Central 1
   us-east: US East
   us-west: US West
-  eu-central: EU Central
 endpoint:
+  au-east-1.object.fastlystorage.app: AU East 1
+  eu-central.object.fastlystorage.app: EU Central
+  eu-south-1.object.fastlystorage.app: EU South 1
+  jp-central-1.object.fastlystorage.app: JP Central 1
+  uk-east-1.object.fastlystorage.app: UK East 1
+  us-central-1.object.fastlystorage.app: US Central 1
   us-east.object.fastlystorage.app: US East
   us-west.object.fastlystorage.app: US West
-  eu-central.object.fastlystorage.app: EU Central
 quirks:
   force_path_style: true
   use_already_exists: false

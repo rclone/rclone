@@ -163,7 +163,7 @@ type Item struct {
 // struct, otherwise they will be embedded as they are.
 func Items(opt any) (items []Item, err error) {
 	def := reflect.ValueOf(opt)
-	if def.Kind() != reflect.Ptr {
+	if def.Kind() != reflect.Pointer {
 		return nil, errors.New("argument must be a pointer")
 	}
 	def = def.Elem() // indirect the pointer
