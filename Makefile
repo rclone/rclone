@@ -48,7 +48,7 @@ LDFLAGS=--ldflags "-s -X github.com/rclone/rclone/fs.Version=$(TAG)"
 .PHONY: rclone test_all vars version fetch-gui
 
 fetch-gui:
-	bin/fetch-gui-dist.sh
+	$(SHELL) ./bin/fetch-gui-dist.sh
 
 rclone: fetch-gui
 ifeq ($(GO_OS),windows)
