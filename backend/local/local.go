@@ -1168,7 +1168,7 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 			var fd *os.File
 			fd, err = file.Open(o.path)
 			if fd != nil {
-				in = newFadviseReadCloser(o, fd, 0, 0)
+				in = fd
 			}
 		} else {
 			in, err = o.openTranslatedLink(0, -1)
@@ -1374,7 +1374,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if err != nil {
 		return
 	}
-	wrappedFd := readers.NewLimitedReadCloser(newFadviseReadCloser(o, fd, offset, limit), limit)
+	wrappedFd := readers.NewLimitedReadCloser(fd, limit)
 	if offset != 0 {
 		// seek the object
 		_, err = fd.Seek(offset, io.SeekStart)
