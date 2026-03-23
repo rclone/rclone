@@ -47,9 +47,6 @@ LDFLAGS=--ldflags "-s -X github.com/rclone/rclone/fs.Version=$(TAG)"
 
 .PHONY: rclone test_all vars version fetch-gui
 
-fetch-gui:
-	$(SHELL) ./bin/fetch-gui-dist.sh
-
 rclone: fetch-gui
 ifeq ($(GO_OS),windows)
 	go run bin/resource_windows.go -version $(TAG) -syso resource_windows_`go env GOARCH`.syso
@@ -61,6 +58,9 @@ endif
 	mkdir -p `go env GOPATH`/bin/
 	cp -av rclone`go env GOEXE` `go env GOPATH`/bin/rclone`go env GOEXE`.new
 	mv -v `go env GOPATH`/bin/rclone`go env GOEXE`.new `go env GOPATH`/bin/rclone`go env GOEXE`
+
+fetch-gui:
+	$(SHELL) ./bin/fetch-gui-dist.sh
 
 test_all:
 	go install $(LDFLAGS) $(BUILDTAGS) $(BUILD_ARGS) github.com/rclone/rclone/fstest/test_all
