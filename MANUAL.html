@@ -233,7 +233,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">Mar 06, 2026</p>
+<p class="date">Mar 23, 2026</p>
 </header>
 <h1 id="name">NAME</h1>
 <p>rclone - manage files on cloud storage</p>
@@ -4568,9 +4568,9 @@ SquareBracket</code></pre>
 <pre class="console"><code>rclone convmv &quot;stories/The Quick Brown Fox!.txt&quot; --name-transform &quot;all,command=echo&quot;
 // Output: stories/The Quick Brown Fox!.txt</code></pre>
 <pre class="console"><code>rclone convmv &quot;stories/The Quick Brown Fox!&quot; --name-transform &quot;date=-{YYYYMMDD}&quot;
-// Output: stories/The Quick Brown Fox!-20260306</code></pre>
+// Output: stories/The Quick Brown Fox!-20260323</code></pre>
 <pre class="console"><code>rclone convmv &quot;stories/The Quick Brown Fox!&quot; --name-transform &quot;date=-{macfriendlytime}&quot;
-// Output: stories/The Quick Brown Fox!-2026-03-06 0556PM</code></pre>
+// Output: stories/The Quick Brown Fox!-2026-03-23 0506PM</code></pre>
 <pre class="console"><code>rclone convmv &quot;stories/The Quick Brown Fox!.txt&quot; --name-transform &quot;all,regex=[\\.\\w]/ab&quot;
 // Output: ababababababab/ababab ababababab ababababab ababab!abababab</code></pre>
 <p>The regex command generally accepts Perl-style regular expressions,
@@ -21523,7 +21523,7 @@ split into groups.</p>
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.73.2&quot;)</code></pre>
+      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.73.3&quot;)</code></pre>
 <h2 id="performance">Performance</h2>
 <p>Flags helpful for increasing performance.</p>
 <pre><code>      --buffer-size SizeSuffix   In memory buffer size when reading files for each --transfer (default 16Mi)
@@ -24232,7 +24232,16 @@ investigation:</p>
 <li><a
 href="https://pub.rclone.org/integration-tests/current/dropbox-cmd.bisync-TestDropbox-1.txt"><code>TestBisyncRemoteRemote/normalization</code></a></li>
 </ul></li>
-<li>Updated: 2026-03-06-010015
+<li><code>TestPcloud</code> (<code>pcloud</code>)
+<ul>
+<li><a
+href="https://pub.rclone.org/integration-tests/current/pcloud-cmd.bisync-TestPcloud-1.txt"><code>TestBisyncRemoteLocal/createemptysrcdirs</code></a></li>
+<li><a
+href="https://pub.rclone.org/integration-tests/current/pcloud-cmd.bisync-TestPcloud-1.txt"><code>TestBisyncLocalRemote/resync_modes</code></a></li>
+<li><a
+href="https://pub.rclone.org/integration-tests/current/pcloud-cmd.bisync-TestPcloud-1.txt"><code>TestBisyncRemoteRemote/resolve</code></a></li>
+</ul></li>
+<li>Updated: 2026-03-14-010012
 <!--- end list_failures - DO NOT EDIT THIS SECTION - use make commanddocs ---></li>
 </ul>
 <p>The following backends either have not been tested recently or have
@@ -27847,6 +27856,12 @@ AWS,Alibaba,ArvanCloud,BizflyCloud,Ceph,ChinaMobile,Cloudflare,Cubbit,DigitalOce
 <li>"s3.cubbit.eu"
 <ul>
 <li>Cubbit DS3 Object Storage endpoint</li>
+<li>Provider: Cubbit</li>
+</ul></li>
+<li>"s3.{tenant_name}.cubbit.eu"
+<ul>
+<li>Multi-tenant endpoint - replace {tenant_name} with your actual
+tenant name. Do not select this directly</li>
 <li>Provider: Cubbit</li>
 </ul></li>
 <li>"syd1.digitaloceanspaces.com"
@@ -31779,7 +31794,10 @@ href="https://docs.cubbit.io/getting-started/quickstart#api-keys">guide</a>
 to retrieve these keys. They will be needed when prompted by
 <code>rclone config</code>.</p>
 <p>Default region will correspond to <code>eu-west-1</code> and the
-endpoint has to be specified as <code>s3.cubbit.eu</code>.</p>
+endpoint has to be specified as <code>s3.cubbit.eu</code>. If you set a
+custom tenant endpoint, you must use
+<code>s3.{tenant_name}.cubbit.eu</code>, because the generic
+<code>s3.cubbit.eu</code> endpoint will not work in this case.</p>
 <p>Going through the whole process of creating a new remote by running
 <code>rclone config</code>, each prompt should be answered as shown
 below:</p>
@@ -31790,7 +31808,7 @@ env_auth&gt; false
 access_key_id&gt; YOUR_ACCESS_KEY
 secret_access_key&gt; YOUR_SECRET_KEY
 region&gt; eu-west-1 (or leave empty)
-endpoint&gt; s3.cubbit.eu
+endpoint&gt; s3.cubbit.eu (or s3.{tenant_name}.cubbit.eu)
 acl&gt;</code></pre>
 <p>The resulting configuration file should look like:</p>
 <div class="sourceCode" id="cb1017"><pre
@@ -41142,6 +41160,9 @@ account, currently this is only possible using the <a
 href="https://github.com/FilenCloudDienste/filen-cli">Filen CLI</a>.
 This means you must first download the CLI, login, and then run the
 <code>export-api-key</code> command.</p>
+<p><strong>Note:</strong> If you change your Filen account password, you
+will need to update your rclone configuration with the new password and
+a re-exported API key (via <code>export-api-key</code>).</p>
 <p>Here is an example of how to make a remote called
 <code>FilenRemote</code>. First run:</p>
 <pre><code> rclone config</code></pre>
@@ -47939,7 +47960,7 @@ company, using its own datacenters in Norway.</p>
 href="https://www.jottacloud.com/">jottacloud.com</a>, it also provides
 white-label solutions to different companies. The following are
 currently supported by this backend, using a different authentication
-setup as described <a href="#whitelabel-authentication">below</a>:</p>
+setup as described <a href="#traditional">below</a>:</p>
 <ul>
 <li>Elkjøp (with subsidiaries):
 <ul>
@@ -62730,6 +62751,35 @@ the output.</p>
 <!-- autogenerated options stop -->
 <!-- markdownlint-disable line-length -->
 <h1 id="changelog-1">Changelog</h1>
+<h2 id="v1.73.3---2026-03-23">v1.73.3 - 2026-03-23</h2>
+<p><a
+href="https://github.com/rclone/rclone/compare/v1.73.2...v1.73.3">See
+commits</a></p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>build
+<ul>
+<li>Update to google.golang.org/grpc 1.79.3 to fix CVE-2026-33186
+(dependabot[bot])</li>
+<li>Update to github.com/buger/jsonparser 1.1.2 to fix
+GHSA-6g7g-w4f8-9c9x (dependabot[bot])</li>
+</ul></li>
+<li>doc fixes
+<ul>
+<li>Added text to the label showing version-introduced info (Jan-Philipp
+Reßler)</li>
+<li>Clarify Filen password change requires updating both password and
+API key in rclone config (Jason)</li>
+<li>s3: clarify multi tenant support for Cubbit (Marco Ferretti)</li>
+<li>jottacloud: Fix broken link (albertony)</li>
+</ul></li>
+<li>lib/rest: Fix URLPathEscapeAll breaking WebDAV servers (eg nzbdav)
+with strict path matching (Andrew Furman)</li>
+<li>list: Fix nil pointer panic in Sorter when temp file creation fails
+(Nick Craig-Wood)</li>
+</ul></li>
+</ul>
 <h2 id="v1.73.2---2026-03-06">v1.73.2 - 2026-03-06</h2>
 <p><a
 href="https://github.com/rclone/rclone/compare/v1.73.1...v1.73.2">See

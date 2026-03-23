@@ -15,7 +15,7 @@
 . ftr VB CB
 . ftr VBI CBI
 .\}
-.TH "rclone" "1" "Mar 06, 2026" "User Manual" ""
+.TH "rclone" "1" "Mar 23, 2026" "User Manual" ""
 .hy
 .SH NAME
 .PP
@@ -6313,14 +6313,14 @@ rclone convmv \[dq]stories/The Quick Brown Fox!.txt\[dq] --name-transform \[dq]a
 .nf
 \f[C]
 rclone convmv \[dq]stories/The Quick Brown Fox!\[dq] --name-transform \[dq]date=-{YYYYMMDD}\[dq]
-// Output: stories/The Quick Brown Fox!-20260306
+// Output: stories/The Quick Brown Fox!-20260323
 \f[R]
 .fi
 .IP
 .nf
 \f[C]
 rclone convmv \[dq]stories/The Quick Brown Fox!\[dq] --name-transform \[dq]date=-{macfriendlytime}\[dq]
-// Output: stories/The Quick Brown Fox!-2026-03-06 0556PM
+// Output: stories/The Quick Brown Fox!-2026-03-23 0506PM
 \f[R]
 .fi
 .IP
@@ -29918,7 +29918,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default \[dq]rclone/v1.73.2\[dq])
+      --user-agent string                  Set the user-agent to a specified string (default \[dq]rclone/v1.73.3\[dq])
 \f[R]
 .fi
 .SS Performance
@@ -33187,7 +33187,17 @@ The following backends have known issues that need more investigation:
 \f[V]TestBisyncRemoteRemote/normalization\f[R] (https://pub.rclone.org/integration-tests/current/dropbox-cmd.bisync-TestDropbox-1.txt)
 .RE
 .IP \[bu] 2
-Updated: 2026-03-06-010015
+\f[V]TestPcloud\f[R] (\f[V]pcloud\f[R])
+.RS 2
+.IP \[bu] 2
+\f[V]TestBisyncRemoteLocal/createemptysrcdirs\f[R] (https://pub.rclone.org/integration-tests/current/pcloud-cmd.bisync-TestPcloud-1.txt)
+.IP \[bu] 2
+\f[V]TestBisyncLocalRemote/resync_modes\f[R] (https://pub.rclone.org/integration-tests/current/pcloud-cmd.bisync-TestPcloud-1.txt)
+.IP \[bu] 2
+\f[V]TestBisyncRemoteRemote/resolve\f[R] (https://pub.rclone.org/integration-tests/current/pcloud-cmd.bisync-TestPcloud-1.txt)
+.RE
+.IP \[bu] 2
+Updated: 2026-03-14-010012
 .PP
 The following backends either have not been tested recently or have
 known issues that are deemed unfixable for the time being:
@@ -38216,6 +38226,16 @@ Provider: ChinaMobile
 .RS 2
 .IP \[bu] 2
 Cubbit DS3 Object Storage endpoint
+.IP \[bu] 2
+Provider: Cubbit
+.RE
+.IP \[bu] 2
+\[dq]s3.{tenant_name}.cubbit.eu\[dq]
+.RS 2
+.IP \[bu] 2
+Multi-tenant endpoint - replace {tenant_name} with your actual tenant
+name.
+Do not select this directly
 .IP \[bu] 2
 Provider: Cubbit
 .RE
@@ -44074,6 +44094,9 @@ They will be needed when prompted by \f[V]rclone config\f[R].
 .PP
 Default region will correspond to \f[V]eu-west-1\f[R] and the endpoint
 has to be specified as \f[V]s3.cubbit.eu\f[R].
+If you set a custom tenant endpoint, you must use
+\f[V]s3.{tenant_name}.cubbit.eu\f[R], because the generic
+\f[V]s3.cubbit.eu\f[R] endpoint will not work in this case.
 .PP
 Going through the whole process of creating a new remote by running
 \f[V]rclone config\f[R], each prompt should be answered as shown below:
@@ -44087,7 +44110,7 @@ env_auth> false
 access_key_id> YOUR_ACCESS_KEY
 secret_access_key> YOUR_SECRET_KEY
 region> eu-west-1 (or leave empty)
-endpoint> s3.cubbit.eu
+endpoint> s3.cubbit.eu (or s3.{tenant_name}.cubbit.eu)
 acl>
 \f[R]
 .fi
@@ -56642,6 +56665,10 @@ account, currently this is only possible using the Filen
 CLI (https://github.com/FilenCloudDienste/filen-cli).
 This means you must first download the CLI, login, and then run the
 \f[V]export-api-key\f[R] command.
+.PP
+\f[B]Note:\f[R] If you change your Filen account password, you will need
+to update your rclone configuration with the new password and a
+re-exported API key (via \f[V]export-api-key\f[R]).
 .PP
 Here is an example of how to make a remote called \f[V]FilenRemote\f[R].
 First run:
@@ -86894,6 +86921,43 @@ Options:
 .IP \[bu] 2
 \[dq]error\[dq]: Return an error based on option value.
 .SH Changelog
+.SS v1.73.3 - 2026-03-23
+.PP
+See commits (https://github.com/rclone/rclone/compare/v1.73.2...v1.73.3)
+.IP \[bu] 2
+Bug Fixes
+.RS 2
+.IP \[bu] 2
+build
+.RS 2
+.IP \[bu] 2
+Update to google.golang.org/grpc 1.79.3 to fix CVE-2026-33186
+(dependabot[bot])
+.IP \[bu] 2
+Update to github.com/buger/jsonparser 1.1.2 to fix GHSA-6g7g-w4f8-9c9x
+(dependabot[bot])
+.RE
+.IP \[bu] 2
+doc fixes
+.RS 2
+.IP \[bu] 2
+Added text to the label showing version-introduced info (Jan-Philipp
+Reßler)
+.IP \[bu] 2
+Clarify Filen password change requires updating both password and API
+key in rclone config (Jason)
+.IP \[bu] 2
+s3: clarify multi tenant support for Cubbit (Marco Ferretti)
+.IP \[bu] 2
+jottacloud: Fix broken link (albertony)
+.RE
+.IP \[bu] 2
+lib/rest: Fix URLPathEscapeAll breaking WebDAV servers (eg nzbdav) with
+strict path matching (Andrew Furman)
+.IP \[bu] 2
+list: Fix nil pointer panic in Sorter when temp file creation fails
+(Nick Craig-Wood)
+.RE
 .SS v1.73.2 - 2026-03-06
 .PP
 See commits (https://github.com/rclone/rclone/compare/v1.73.1...v1.73.2)

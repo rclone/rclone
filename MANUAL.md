@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Mar 06, 2026
+% Mar 23, 2026
 
 # NAME
 
@@ -5408,12 +5408,12 @@ rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,command=e
 
 ```console
 rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{YYYYMMDD}"
-// Output: stories/The Quick Brown Fox!-20260306
+// Output: stories/The Quick Brown Fox!-20260323
 ```
 
 ```console
 rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{macfriendlytime}"
-// Output: stories/The Quick Brown Fox!-2026-03-06 0556PM
+// Output: stories/The Quick Brown Fox!-2026-03-23 0506PM
 ```
 
 ```console
@@ -24809,7 +24809,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.73.2")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.73.3")
 ```
 
 
@@ -27563,7 +27563,11 @@ The following backends have known issues that need more investigation:
 <!--- start list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
 - `TestDropbox` (`dropbox`)
   - [`TestBisyncRemoteRemote/normalization`](https://pub.rclone.org/integration-tests/current/dropbox-cmd.bisync-TestDropbox-1.txt)
-- Updated: 2026-03-06-010015
+- `TestPcloud` (`pcloud`)
+  - [`TestBisyncRemoteLocal/createemptysrcdirs`](https://pub.rclone.org/integration-tests/current/pcloud-cmd.bisync-TestPcloud-1.txt)
+  - [`TestBisyncLocalRemote/resync_modes`](https://pub.rclone.org/integration-tests/current/pcloud-cmd.bisync-TestPcloud-1.txt)
+  - [`TestBisyncRemoteRemote/resolve`](https://pub.rclone.org/integration-tests/current/pcloud-cmd.bisync-TestPcloud-1.txt)
+- Updated: 2026-03-14-010012
 <!--- end list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
 
 The following backends either have not been tested recently or have known issues
@@ -30713,6 +30717,9 @@ Properties:
     - Provider: ChinaMobile
   - "s3.cubbit.eu"
     - Cubbit DS3 Object Storage endpoint
+    - Provider: Cubbit
+  - "s3.{tenant_name}.cubbit.eu"
+    - Multi-tenant endpoint - replace {tenant_name} with your actual tenant name. Do not select this directly
     - Provider: Cubbit
   - "syd1.digitaloceanspaces.com"
     - DigitalOcean Spaces Sydney 1
@@ -34110,7 +34117,9 @@ can follow this [guide](https://docs.cubbit.io/getting-started/quickstart#api-ke
 to retrieve these keys. They will be needed when prompted by `rclone config`.
 
 Default region will correspond to `eu-west-1` and the endpoint has to be specified
-as `s3.cubbit.eu`.
+as `s3.cubbit.eu`. If you set a custom tenant endpoint, you must use
+`s3.{tenant_name}.cubbit.eu`, because the generic `s3.cubbit.eu` endpoint will not
+work in this case.
 
 Going through the whole process of creating a new remote by running `rclone config`,
 each prompt should be answered as shown below:
@@ -34123,7 +34132,7 @@ env_auth> false
 access_key_id> YOUR_ACCESS_KEY
 secret_access_key> YOUR_SECRET_KEY
 region> eu-west-1 (or leave empty)
-endpoint> s3.cubbit.eu
+endpoint> s3.cubbit.eu (or s3.{tenant_name}.cubbit.eu)
 acl>
 ```
 
@@ -44801,6 +44810,8 @@ The initial setup for Filen requires that you get an API key for your account,
 currently this is only possible using the [Filen CLI](https://github.com/FilenCloudDienste/filen-cli).
 This means you must first download the CLI, login, and then run the `export-api-key` command.
 
+**Note:** If you change your Filen account password, you will need to update your rclone configuration with the new password and a re-exported API key (via `export-api-key`).
+
 Here is an example of how to make a remote called `FilenRemote`.  First run:
 
      rclone config
@@ -52047,7 +52058,7 @@ its own datacenters in Norway.
 In addition to the official service at [jottacloud.com](https://www.jottacloud.com/),
 it also provides white-label solutions to different companies. The following
 are currently supported by this backend, using a different authentication setup
-as described [below](#whitelabel-authentication):
+as described [below](#traditional):
 
 - Elkjøp (with subsidiaries):
   - Elkjøp Cloud (cloud.elkjop.no)
@@ -68124,6 +68135,22 @@ Options:
 <!-- markdownlint-disable line-length -->
 
 # Changelog
+
+## v1.73.3 - 2026-03-23
+
+[See commits](https://github.com/rclone/rclone/compare/v1.73.2...v1.73.3)
+
+- Bug Fixes
+  - build
+    - Update to google.golang.org/grpc 1.79.3 to fix CVE-2026-33186 (dependabot[bot])
+    - Update to github.com/buger/jsonparser 1.1.2 to fix GHSA-6g7g-w4f8-9c9x (dependabot[bot])
+  - doc fixes
+    - Added text to the label showing version-introduced info (Jan-Philipp Reßler)
+    - Clarify Filen password change requires updating both password and API key in rclone config (Jason)
+    - s3: clarify multi tenant support for Cubbit (Marco Ferretti)
+    - jottacloud: Fix broken link (albertony)
+  - lib/rest: Fix URLPathEscapeAll breaking WebDAV servers (eg nzbdav) with strict path matching (Andrew Furman)
+  - list: Fix nil pointer panic in Sorter when temp file creation fails (Nick Craig-Wood)
 
 ## v1.73.2 - 2026-03-06
 
