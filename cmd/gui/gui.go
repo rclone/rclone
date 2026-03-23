@@ -180,14 +180,14 @@ Use --no-auth to disable authentication entirely:
 				fs.Errorf(nil, "Failed to open GUI in browser: %v", err)
 			}
 		}
-		
+
 		// --- 7. Wait for either server to exit, then shut both down ---
 		defer systemd.Notify()()
 		done := make(chan struct{}, 2)
 		go func() { rcServer.Wait(); done <- struct{}{} }()
 		go func() { guiServer.Wait(); done <- struct{}{} }()
 		<-done
-		rcServer.Shutdown()
+		_ = rcServer.Shutdown()
 		_ = guiServer.Shutdown()
 	},
 }
@@ -198,7 +198,7 @@ func freePort() (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	defer l.Close()
+	defer func() { _ = l.Close() }()
 	return l.Addr().(*net.TCPAddr).Port, nil
 }
 
