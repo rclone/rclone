@@ -5,7 +5,6 @@
 # cmd/gui/dist/. Skips the download if the local tag matches.
 #
 # Requires: curl, unzip
-# Optional: GITHUB_TOKEN (avoids API rate limits)
 
 set -euo pipefail
 
@@ -14,9 +13,6 @@ DEST="cmd/gui/dist"
 TAG_FILE="${DEST}/.tag"
 
 CURL_OPTS=(-fSs --retry 5 --retry-delay 2 --retry-all-errors)
-if [ -n "${GITHUB_TOKEN:-}" ]; then
-    CURL_OPTS+=(-H "Authorization: token ${GITHUB_TOKEN}")
-fi
 
 # Get the latest release info
 echo "Checking latest release of ${REPO}..."
