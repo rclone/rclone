@@ -91,6 +91,11 @@ func (s *Session) Requires2FA() bool {
 
 // SignIn performs SRP-based authentication against Apple's idmsa endpoint.
 func (s *Session) SignIn(ctx context.Context, appleID, password string) error {
+	// Apple's SRP implementation expects a lowercase account name.
+	// The old plaintext flow didn't need this because the server normalized
+	// it, but SRP uses the username in client-side proof computation (M1).
+	appleID = strings.ToLower(appleID)
+
 	// Step 1: Initialize the auth session
 	if err := s.authStart(ctx); err != nil {
 		return fmt.Errorf("authStart: %w", err)
