@@ -76,6 +76,33 @@ func TestAsyncWriteTo(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestAsyncReaderNewSize(t *testing.T) {
+	ctx := context.Background()
+
+	// Test with a custom buffer size
+	data := make([]byte, 256*1024)
+	for i := range data {
+		data[i] = byte(i % 251)
+	}
+	ar, err := NewSize(ctx, io.NopCloser(bytes.NewReader(data)), 4, 64*1024)
+	require.NoError(t, err)
+
+	var dst bytes.Buffer
+	n, err := io.Copy(&dst, ar)
+	require.NoError(t, err)
+	assert.Equal(t, int64(len(data)), n)
+	assert.Equal(t, data, dst.Bytes())
+	err = ar.Close()
+	require.NoError(t, err)
+
+	// Test NewSize with 0 falls back to BufferSize
+	ar, err = NewSize(ctx, io.NopCloser(bytes.NewReader(data)), 4, 0)
+	require.NoError(t, err)
+	assert.Equal(t, BufferSize, ar.bufferSize)
+	err = ar.Close()
+	require.NoError(t, err)
+}
+
 func TestAsyncReaderErrors(t *testing.T) {
 	ctx := context.Background()
 

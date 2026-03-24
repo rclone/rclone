@@ -330,6 +330,39 @@ only useful for reading.
 				Advanced: true,
 				Default:  encoder.OS,
 			},
+			{
+				Name: "io_size",
+				Help: `Set the I/O block size for reads and writes.
+
+This controls how much data is read or written per syscall.
+The default of 1M works well for most cases, but larger values
+(4M-16M) can improve throughput on parallel/network filesystems
+or RAID arrays.
+
+Must be 4K-aligned (e.g., 4K, 1M, 4M, 16M).`,
+				Default:  fs.SizeSuffix(1024 * 1024),
+				Advanced: true,
+			},
+			{
+				Name: "read_io_size",
+				Help: `Override the I/O block size for reads only.
+
+If set to 0, --local-io-size is used.
+
+Must be 4K-aligned.`,
+				Default:  fs.SizeSuffix(0),
+				Advanced: true,
+			},
+			{
+				Name: "write_io_size",
+				Help: `Override the I/O block size for writes only.
+
+If set to 0, --local-io-size is used.
+
+Must be 4K-aligned.`,
+				Default:  fs.SizeSuffix(0),
+				Advanced: true,
+			},
 		},
 	}
 	fs.Register(fsi)
@@ -354,6 +387,25 @@ type Options struct {
 	Hashes            fs.CommaSepList      `config:"hashes"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
 	NoClone           bool                 `config:"no_clone"`
+	IOSize            fs.SizeSuffix        `config:"io_size"`
+	ReadIOSize        fs.SizeSuffix        `config:"read_io_size"`
+	WriteIOSize       fs.SizeSuffix        `config:"write_io_size"`
+}
+
+// readIOSize returns the effective read I/O block size
+func (f *Fs) readIOSize() int {
+	if f.opt.ReadIOSize > 0 {
+		return int(f.opt.ReadIOSize)
+	}
+	return int(f.opt.IOSize)
+}
+
+// writeIOSize returns the effective write I/O block size
+func (f *Fs) writeIOSize() int {
+	if f.opt.WriteIOSize > 0 {
+		return int(f.opt.WriteIOSize)
+	}
+	return int(f.opt.IOSize)
 }
 
 // Fs represents a local filesystem rooted at root
@@ -415,6 +467,24 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	if opt.TranslateSymlinks && opt.FollowSymlinks {
 		return nil, errLinksAndCopyLinks
+	}
+	// Validate I/O size options
+	const ioSizeAlign = 4096
+	const ioSizeDefault = 1024 * 1024
+	if opt.IOSize == 0 {
+		opt.IOSize = ioSizeDefault
+	}
+	if opt.IOSize < ioSizeAlign {
+		return nil, fmt.Errorf("--local-io-size must be at least 4K, got %v", opt.IOSize)
+	}
+	if int(opt.IOSize)%ioSizeAlign != 0 {
+		return nil, fmt.Errorf("--local-io-size %v must be 4K-aligned", opt.IOSize)
+	}
+	if opt.ReadIOSize > 0 && int(opt.ReadIOSize)%ioSizeAlign != 0 {
+		return nil, fmt.Errorf("--local-read-io-size %v must be 4K-aligned", opt.ReadIOSize)
+	}
+	if opt.WriteIOSize > 0 && int(opt.WriteIOSize)%ioSizeAlign != 0 {
+		return nil, fmt.Errorf("--local-write-io-size %v must be 4K-aligned", opt.WriteIOSize)
 	}
 
 	f := &Fs{
@@ -1476,7 +1546,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		in = io.TeeReader(in, hasher)
 	}
 
-	bp := pool.Global()
+	bp := pool.GlobalWithSize(o.fs.writeIOSize())
 	buf := bp.Get()
 	_, err = io.CopyBuffer(out, in, buf)
 	bp.Put(buf)

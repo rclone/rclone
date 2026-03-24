@@ -707,3 +707,73 @@ func TestWriteUsesPool(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, data, got)
 }
+
+func TestIOSizeOptions(t *testing.T) {
+	t.Run("Default", func(t *testing.T) {
+		m := configmap.Simple{}
+		f, err := NewFs(context.Background(), "local", t.TempDir(), m)
+		require.NoError(t, err)
+		lf := f.(*Fs)
+		assert.Equal(t, 1024*1024, lf.readIOSize())
+		assert.Equal(t, 1024*1024, lf.writeIOSize())
+	})
+	t.Run("CustomIOSize", func(t *testing.T) {
+		m := configmap.Simple{
+			"io_size": "4M",
+		}
+		f, err := NewFs(context.Background(), "local", t.TempDir(), m)
+		require.NoError(t, err)
+		lf := f.(*Fs)
+		assert.Equal(t, 4*1024*1024, lf.readIOSize())
+		assert.Equal(t, 4*1024*1024, lf.writeIOSize())
+	})
+	t.Run("ReadWriteOverride", func(t *testing.T) {
+		m := configmap.Simple{
+			"io_size":       "1M",
+			"read_io_size":  "4M",
+			"write_io_size": "8M",
+		}
+		f, err := NewFs(context.Background(), "local", t.TempDir(), m)
+		require.NoError(t, err)
+		lf := f.(*Fs)
+		assert.Equal(t, 4*1024*1024, lf.readIOSize())
+		assert.Equal(t, 8*1024*1024, lf.writeIOSize())
+	})
+	t.Run("MisalignedIOSize", func(t *testing.T) {
+		m := configmap.Simple{
+			"io_size": "5000B",
+		}
+		_, err := NewFs(context.Background(), "local", t.TempDir(), m)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "4K-aligned")
+	})
+	t.Run("TooSmallIOSize", func(t *testing.T) {
+		m := configmap.Simple{
+			"io_size": "1000B",
+		}
+		_, err := NewFs(context.Background(), "local", t.TempDir(), m)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "at least 4K")
+	})
+	t.Run("WriteWithCustomIOSize", func(t *testing.T) {
+		ctx := context.Background()
+		m := configmap.Simple{
+			"write_io_size": "4M",
+		}
+		tmpDir := t.TempDir()
+		f, err := NewFs(ctx, "local", tmpDir, m)
+		require.NoError(t, err)
+		lf := f.(*Fs)
+		assert.Equal(t, 4*1024*1024, lf.writeIOSize())
+
+		// Write a file and verify contents
+		data := bytes.Repeat([]byte("x"), 100000)
+		src := object.NewStaticObjectInfo("testfile.txt", time.Now(), int64(len(data)), true, nil, nil)
+		_, err = f.Put(ctx, io.NopCloser(bytes.NewReader(data)), src)
+		require.NoError(t, err)
+
+		got, err := os.ReadFile(filepath.Join(tmpDir, "testfile.txt"))
+		require.NoError(t, err)
+		assert.Equal(t, data, got)
+	})
+}

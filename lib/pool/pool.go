@@ -338,12 +338,33 @@ func (bp *Pool) PutN(bufs [][]byte) {
 var bufferPool *Pool
 var bufferPoolOnce sync.Once
 
+// sizedPools holds pools keyed by buffer size
+var sizedPools sync.Map // map[int]*Pool
+
 // Global gets a global pool of BufferSize, BufferCacheSize, BufferCacheFlushTime.
 func Global() *Pool {
 	bufferPoolOnce.Do(func() {
 		// Initialise the buffer pool when used
 		ci := fs.GetConfig(context.Background())
 		bufferPool = New(BufferCacheFlushTime, BufferSize, BufferCacheSize, ci.UseMmap)
+		sizedPools.Store(BufferSize, bufferPool)
 	})
 	return bufferPool
+}
+
+// GlobalWithSize returns a pool for the given buffer size. For the
+// default BufferSize this returns the same pool as Global(). For
+// other sizes a new pool is created (once) and cached.
+func GlobalWithSize(size int) *Pool {
+	Global()
+	if size == BufferSize {
+		return bufferPool
+	}
+	if p, ok := sizedPools.Load(size); ok {
+		return p.(*Pool)
+	}
+	ci := fs.GetConfig(context.Background())
+	p := New(BufferCacheFlushTime, size, BufferCacheSize, ci.UseMmap)
+	actual, _ := sizedPools.LoadOrStore(size, p)
+	return actual.(*Pool)
 }
