@@ -22,6 +22,7 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/file"
+	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -676,4 +677,33 @@ func TestCopySymlink(t *testing.T) {
 	require.NotNil(t, dst)
 	want = fstest.NewItem("dst2/file.txt", "hello world", when)
 	fstest.CompareItems(t, []fs.DirEntry{dst}, []fstest.Item{want}, nil, f.precision, "")
+}
+
+func TestWriteUsesPool(t *testing.T) {
+	ctx := context.Background()
+	tmpDir := t.TempDir()
+	m := configmap.Simple{}
+	f, err := NewFs(ctx, "local", tmpDir, m)
+	require.NoError(t, err)
+
+	bp := pool.Global()
+	inUseBefore := bp.InUse()
+
+	// Write a file larger than the pool buffer size
+	data := bytes.Repeat([]byte("x"), 2*1024*1024)
+	src := object.NewStaticObjectInfo("pooltest.txt", time.Now(), int64(len(data)), true, nil, nil)
+	_, err = f.Put(ctx, io.NopCloser(bytes.NewReader(data)), src)
+	require.NoError(t, err)
+
+	// After write completes, the buffer should be returned to the pool
+	inUseAfter := bp.InUse()
+	assert.Equal(t, inUseBefore, inUseAfter, "pool buffer should be returned after write")
+
+	// Verify the pool has been used (alloced > 0)
+	assert.Greater(t, bp.Alloced(), 0, "pool should have allocated buffers")
+
+	// Verify file contents
+	got, err := os.ReadFile(filepath.Join(tmpDir, "pooltest.txt"))
+	require.NoError(t, err)
+	assert.Equal(t, data, got)
 }

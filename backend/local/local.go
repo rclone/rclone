@@ -28,6 +28,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/file"
+	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/readers"
 	"golang.org/x/text/unicode/norm"
 )
@@ -1475,7 +1476,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		in = io.TeeReader(in, hasher)
 	}
 
-	_, err = io.Copy(out, in)
+	bp := pool.Global()
+	buf := bp.Get()
+	_, err = io.CopyBuffer(out, in, buf)
+	bp.Put(buf)
 	closeErr := out.Close()
 	if err == nil {
 		err = closeErr
