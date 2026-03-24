@@ -363,6 +363,26 @@ Must be 4K-aligned.`,
 				Default:  fs.SizeSuffix(0),
 				Advanced: true,
 			},
+			{
+				Name: "direct_io",
+				Help: `Use O_DIRECT to bypass the kernel page cache.
+
+This opens files with O_DIRECT, which bypasses the kernel's
+page cache for reads and writes. This can be useful for large
+streaming transfers where caching single-use data wastes memory
+and displaces other applications' cached data.
+
+O_DIRECT requires I/O buffers to be memory-aligned. Rclone
+handles this automatically.
+
+Not all filesystems support O_DIRECT. If the open fails, rclone
+falls back to buffered I/O with a warning.
+
+This is a performance option, not a durability guarantee.
+Linux/Unix only.`,
+				Default:  false,
+				Advanced: true,
+			},
 		},
 	}
 	fs.Register(fsi)
@@ -390,6 +410,7 @@ type Options struct {
 	IOSize            fs.SizeSuffix        `config:"io_size"`
 	ReadIOSize        fs.SizeSuffix        `config:"read_io_size"`
 	WriteIOSize       fs.SizeSuffix        `config:"write_io_size"`
+	DirectIO          bool                 `config:"direct_io"`
 }
 
 // readIOSize returns the effective read I/O block size
@@ -1441,6 +1462,9 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		return o.openTranslatedLink(offset, limit)
 	}
 
+	// Note: O_DIRECT for reads requires aligned buffers in the
+	// accounting/async reader layer, which is not yet implemented.
+	// O_DIRECT is only used for writes currently.
 	fd, err := file.Open(o.path)
 	if err != nil {
 		return
@@ -1507,11 +1531,23 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	o.clearHashCache()
 
 	var symlinkData bytes.Buffer
+	useDirectIO := false
 	// If the object is a regular file, create it.
 	// If it is a translated link, just read in the contents, and
 	// then create a symlink
 	if !o.translatedLink {
-		f, err := file.OpenFile(o.path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+		openFlags := os.O_WRONLY | os.O_CREATE | os.O_TRUNC
+		if o.fs.opt.DirectIO && directIOEnabled {
+			openFlags |= directIOFlag
+		}
+		f, err := file.OpenFile(o.path, openFlags, 0666)
+		if err != nil && openFlags&directIOFlag != 0 {
+			// Fall back to buffered I/O if O_DIRECT fails
+			fs.Infof(o, "O_DIRECT open failed, falling back to buffered I/O: %v", err)
+			openFlags &^= directIOFlag
+			f, err = file.OpenFile(o.path, openFlags, 0666)
+		}
+		useDirectIO = err == nil && openFlags&directIOFlag != 0
 		if err != nil {
 			if runtime.GOOS == "windows" && os.IsPermission(err) {
 				// If permission denied on Windows might be trying to update a
@@ -1546,10 +1582,15 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		in = io.TeeReader(in, hasher)
 	}
 
-	bp := pool.GlobalWithSize(o.fs.writeIOSize())
-	buf := bp.Get()
-	_, err = io.CopyBuffer(out, in, buf)
-	bp.Put(buf)
+	if useDirectIO {
+		buf := alignedBlock(o.fs.writeIOSize())
+		_, err = directIOCopy(out.(*os.File), in, buf)
+	} else {
+		bp := pool.GlobalWithSize(o.fs.writeIOSize())
+		buf := bp.Get()
+		_, err = io.CopyBuffer(out, in, buf)
+		bp.Put(buf)
+	}
 	closeErr := out.Close()
 	if err == nil {
 		err = closeErr

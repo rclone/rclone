@@ -12,6 +12,7 @@ import (
 	"sort"
 	"testing"
 	"time"
+	"unsafe"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -775,5 +776,60 @@ func TestIOSizeOptions(t *testing.T) {
 		got, err := os.ReadFile(filepath.Join(tmpDir, "testfile.txt"))
 		require.NoError(t, err)
 		assert.Equal(t, data, got)
+	})
+}
+
+func TestDirectIO(t *testing.T) {
+	if !directIOEnabled {
+		t.Skip("O_DIRECT not supported on this platform")
+	}
+	ctx := context.Background()
+
+	t.Run("WriteAndRead", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		m := configmap.Simple{
+			"direct_io": "true",
+		}
+		f, err := NewFs(ctx, "local", tmpDir, m)
+		require.NoError(t, err)
+
+		// Write a file larger than the I/O size to exercise the
+		// aligned buffer path with multiple write syscalls
+		data := bytes.Repeat([]byte("abcdefgh"), 200000) // 1.6MB
+		src := object.NewStaticObjectInfo("directio_test.txt", time.Now(), int64(len(data)), true, nil, nil)
+		_, err = f.Put(ctx, io.NopCloser(bytes.NewReader(data)), src)
+		require.NoError(t, err)
+
+		// Read it back and verify contents
+		got, err := os.ReadFile(filepath.Join(tmpDir, "directio_test.txt"))
+		require.NoError(t, err)
+		assert.Equal(t, data, got)
+	})
+
+	t.Run("SmallFile", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		m := configmap.Simple{
+			"direct_io": "true",
+		}
+		f, err := NewFs(ctx, "local", tmpDir, m)
+		require.NoError(t, err)
+
+		// Small file that's less than one I/O block
+		data := []byte("hello direct io")
+		src := object.NewStaticObjectInfo("small.txt", time.Now(), int64(len(data)), true, nil, nil)
+		_, err = f.Put(ctx, io.NopCloser(bytes.NewReader(data)), src)
+		require.NoError(t, err)
+
+		got, err := os.ReadFile(filepath.Join(tmpDir, "small.txt"))
+		require.NoError(t, err)
+		assert.Equal(t, data, got)
+	})
+
+	t.Run("AlignedBlockAlignment", func(t *testing.T) {
+		block := alignedBlock(4096)
+		assert.Equal(t, 4096, len(block))
+		// Verify alignment
+		addr := uintptr(unsafe.Pointer(&block[0]))
+		assert.Equal(t, uintptr(0), addr%4096, "block should be 4K-aligned")
 	})
 }
