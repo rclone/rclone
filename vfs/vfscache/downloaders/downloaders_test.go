@@ -94,7 +94,7 @@ func TestDownloaders(t *testing.T) {
 			size: size,
 		}
 		opt := vfscommon.Opt
-		dls := New(item, &opt, remote, src)
+		dls := New(ctx, item, &opt, remote, src)
 		return item, dls
 	}
 	cancel := func(dls *Downloaders) {

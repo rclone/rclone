@@ -176,6 +176,7 @@ var (
 // VFS represents the top level filing system
 type VFS struct {
 	f           fs.Fs
+	ctx         context.Context
 	root        *Dir
 	Opt         vfscommon.Options
 	cache       *vfscache.Cache
@@ -201,6 +202,7 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 	ctx, cancel := context.WithCancel(context.Background())
 	vfs := &VFS{
 		f:      f,
+		ctx:    ctx,
 		cancel: cancel,
 	}
 	vfs.inUse.Store(1)
@@ -213,7 +215,7 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 	}
 
 	// Fill out anything else
-	vfs.Opt.Init()
+	vfs.Opt.Init(ctx)
 
 	// Find a VFS with the same name and options and return it if possible
 	activeMu.Lock()
@@ -223,6 +225,7 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 		if vfs.Opt == activeVFS.Opt {
 			fs.Debugf(f, "Reusing VFS from active cache")
 			activeVFS.inUse.Add(1)
+			cancel()
 			return activeVFS
 		}
 	}
@@ -236,7 +239,7 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 	features := vfs.f.Features()
 	if do := features.ChangeNotify; do != nil {
 		vfs.pollChan = make(chan time.Duration)
-		do(context.TODO(), vfs.root.changeNotify, vfs.pollChan)
+		do(vfs.ctx, vfs.root.changeNotify, vfs.pollChan)
 		vfs.pollChan <- time.Duration(vfs.Opt.PollInterval)
 	} else if vfs.Opt.PollInterval > 0 {
 		fs.Infof(f, "poll-interval is not supported by this remote")
@@ -351,8 +354,8 @@ func (vfs *VFS) SetCacheMode(cacheMode vfscommon.CacheMode) {
 	vfs.shutdownCache()
 	vfs.cache = nil
 	if cacheMode > vfscommon.CacheModeOff {
-		ctx, cancel := context.WithCancel(context.Background())
-		cache, err := vfscache.New(ctx, vfs.f, &vfs.Opt, vfs.AddVirtual) // FIXME pass on context or get from Opt?
+		ctx, cancel := context.WithCancel(vfs.ctx)
+		cache, err := vfscache.New(ctx, vfs.f, &vfs.Opt, vfs.AddVirtual)
 		if err != nil {
 			fs.Errorf(nil, "Failed to create vfs cache - disabling: %v", err)
 			vfs.Opt.CacheMode = vfscommon.CacheModeOff
@@ -652,7 +655,7 @@ func (vfs *VFS) Statfs() (total, used, free int64) {
 	doAbout := vfs.f.Features().About
 	if (doAbout != nil || vfs.Opt.UsedIsSize) && (vfs.usageTime.IsZero() || time.Since(vfs.usageTime) >= time.Duration(vfs.Opt.DirCacheTime)) {
 		var err error
-		ctx := context.TODO()
+		ctx := vfs.ctx
 		if doAbout == nil {
 			vfs.usage = &fs.Usage{}
 		} else {
