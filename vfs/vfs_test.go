@@ -138,7 +138,7 @@ func TestVFSNew(t *testing.T) {
 
 	// Check making a VFS with nil options
 	var defaultOpt = vfscommon.Opt
-	defaultOpt.Init()
+	defaultOpt.Init(context.Background())
 
 	checkActiveCacheEntries(1)
 

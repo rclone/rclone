@@ -76,13 +76,13 @@ func (fh *ReadFileHandle) openPending() (err error) {
 	}
 	o := fh.file.getObject()
 	opt := &fh.file.VFS().Opt
-	r, err := chunkedreader.New(context.TODO(), o, int64(opt.ChunkSize), int64(opt.ChunkSizeLimit), opt.ChunkStreams).Open()
+	r, err := chunkedreader.New(fh.file.ctx, o, int64(opt.ChunkSize), int64(opt.ChunkSizeLimit), opt.ChunkStreams).Open()
 	if err != nil {
 		return err
 	}
 	tr := accounting.GlobalStats().NewTransfer(o, nil)
 	fh.done = tr.Done
-	fh.r = tr.Account(context.TODO(), r).WithBuffer() // account the transfer
+	fh.r = tr.Account(fh.file.ctx, r).WithBuffer() // account the transfer
 	fh.opened = true
 
 	return nil
@@ -135,7 +135,7 @@ func (fh *ReadFileHandle) seek(offset int64, reopen bool) (err error) {
 	}
 	if !reopen {
 		fs.Debugf(fh.remote, "ReadFileHandle.seek from %d to %d (fs.RangeSeeker)", fh.offset, offset)
-		_, err = r.RangeSeek(context.TODO(), offset, io.SeekStart, -1)
+		_, err = r.RangeSeek(fh.file.ctx, offset, io.SeekStart, -1)
 		if err != nil {
 			fs.Debugf(fh.remote, "ReadFileHandle.Read fs.RangeSeeker failed: %v", err)
 			return err
@@ -150,7 +150,7 @@ func (fh *ReadFileHandle) seek(offset int64, reopen bool) (err error) {
 		// re-open with a seek
 		o := fh.file.getObject()
 		opt := &fh.file.VFS().Opt
-		r = chunkedreader.New(context.TODO(), o, int64(opt.ChunkSize), int64(opt.ChunkSizeLimit), opt.ChunkStreams)
+		r = chunkedreader.New(fh.file.ctx, o, int64(opt.ChunkSize), int64(opt.ChunkSizeLimit), opt.ChunkStreams)
 		_, err := r.Seek(offset, 0)
 		if err != nil {
 			fs.Debugf(fh.remote, "ReadFileHandle.Read seek failed: %v", err)
@@ -162,7 +162,7 @@ func (fh *ReadFileHandle) seek(offset int64, reopen bool) (err error) {
 			return err
 		}
 	}
-	fh.r.UpdateReader(context.TODO(), r)
+	fh.r.UpdateReader(fh.file.ctx, r)
 	fh.offset = offset
 	return nil
 }
@@ -277,7 +277,7 @@ func (fh *ReadFileHandle) readAt(p []byte, off int64) (n int, err error) {
 	retries := 0
 	reqSize := len(p)
 	doReopen := false
-	lowLevelRetries := fs.GetConfig(context.TODO()).LowLevelRetries
+	lowLevelRetries := fs.GetConfig(fh.file.ctx).LowLevelRetries
 	for {
 		if doSeek {
 			// Are we attempting to seek beyond the end of the
@@ -352,7 +352,7 @@ func (fh *ReadFileHandle) checkHash() error {
 
 	o := fh.file.getObject()
 	for hashType, dstSum := range fh.hash.Sums() {
-		srcSum, err := o.Hash(context.TODO(), hashType)
+		srcSum, err := o.Hash(fh.file.ctx, hashType)
 		if err != nil {
 			if errors.Is(err, os.ErrNotExist) {
 				// if it was file not found then at
@@ -416,7 +416,7 @@ func (fh *ReadFileHandle) close() error {
 	if fh.opened {
 		var err error
 		defer func() {
-			fh.done(context.TODO(), err)
+			fh.done(fh.file.ctx, err)
 		}()
 		// Close first so that we have hashes
 		err = fh.r.Close()

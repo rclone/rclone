@@ -147,7 +147,7 @@ func newRun(useVFS bool, vfsOpt *vfscommon.Options, mountFn mountlib.MountFn) *R
 		useVFS: useVFS,
 		vfsOpt: vfsOpt,
 	}
-	r.vfsOpt.Init()
+	r.vfsOpt.Init(context.Background())
 	fstest.Initialise()
 
 	var err error

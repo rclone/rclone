@@ -496,7 +496,7 @@ func (item *Item) _createFile(osPath string) (err error) {
 // Open the local file from the object passed in.  Wraps open()
 // to provide recovery from out of space error.
 func (item *Item) Open(o fs.Object) (err error) {
-	for range fs.GetConfig(context.TODO()).LowLevelRetries {
+	for range fs.GetConfig(item.c.ctx).LowLevelRetries {
 		item.preAccess()
 		err = item.open(o)
 		item.postAccess()
@@ -595,7 +595,7 @@ func (item *Item) open(o fs.Object) (err error) {
 
 	// Create the downloaders
 	if item.o != nil {
-		item.downloaders = downloaders.New(item, item.c.opt, item.name, item.o)
+		item.downloaders = downloaders.New(item.c.ctx, item, item.c.opt, item.name, item.o)
 	}
 
 	return err
@@ -783,7 +783,7 @@ func (item *Item) _actualClose(storeFn StoreFn, syncWriteBack bool) (err error) 
 	// set the modtime from the object otherwise set it from the info
 	if item._exists() {
 		if !item.info.Dirty && item.o != nil {
-			item._setModTime(item.o.ModTime(context.Background()))
+			item._setModTime(item.o.ModTime(item.c.ctx))
 		} else {
 			item._setModTime(item.info.ModTime)
 		}
@@ -794,7 +794,7 @@ func (item *Item) _actualClose(storeFn StoreFn, syncWriteBack bool) (err error) 
 		fs.Infof(item.name, "vfs cache: queuing for upload in %v", item.c.opt.WriteBack)
 		if syncWriteBack {
 			// do synchronous writeback
-			checkErr(item._store(context.Background(), storeFn))
+			checkErr(item._store(item.c.ctx, storeFn))
 		} else {
 			// asynchronous writeback
 			item.c.writeback.SetID(&item.writeBackID)
@@ -874,7 +874,7 @@ func (item *Item) _checkObject(o fs.Object) error {
 			// OK
 		}
 	} else {
-		remoteFingerprint := fs.Fingerprint(context.TODO(), o, item.c.opt.FastFingerprint)
+		remoteFingerprint := fs.Fingerprint(item.c.ctx, o, item.c.opt.FastFingerprint)
 		fs.Debugf(item.name, "vfs cache: checking remote fingerprint %q against cached fingerprint %q", remoteFingerprint, item.info.Fingerprint)
 		if item.info.Fingerprint != "" {
 			// remote object && local object
@@ -1129,7 +1129,7 @@ func (item *Item) Reset() (rr ResetResult, spaceFreed int64, err error) {
 
 	// Create the downloaders
 	if item.o != nil {
-		item.downloaders = downloaders.New(item, item.c.opt, item.name, item.o)
+		item.downloaders = downloaders.New(item.c.ctx, item, item.c.opt, item.name, item.o)
 	}
 
 	/* The item will stay in the beingReset state if we get an error that prevents us from
@@ -1235,13 +1235,13 @@ func (item *Item) _ensure(offset, size int64) (err error) {
 		// See: https://github.com/rclone/rclone/issues/6190
 		// See: https://github.com/rclone/rclone/issues/6235
 		if item.o == nil {
-			o, err := item.c.fremote.NewObject(context.Background(), item.name)
+			o, err := item.c.fremote.NewObject(item.c.ctx, item.name)
 			if err != nil {
 				return err
 			}
 			item.o = o
 		}
-		item.downloaders = downloaders.New(item, item.c.opt, item.name, item.o)
+		item.downloaders = downloaders.New(item.c.ctx, item, item.c.opt, item.name, item.o)
 	}
 	return item.downloaders.Download(r)
 }
@@ -1269,7 +1269,7 @@ func (item *Item) _updateFingerprint() {
 		return
 	}
 	oldFingerprint := item.info.Fingerprint
-	item.info.Fingerprint = fs.Fingerprint(context.TODO(), item.o, item.c.opt.FastFingerprint)
+	item.info.Fingerprint = fs.Fingerprint(item.c.ctx, item.o, item.c.opt.FastFingerprint)
 	if oldFingerprint != item.info.Fingerprint {
 		fs.Debugf(item.o, "vfs cache: fingerprint now %q", item.info.Fingerprint)
 	}
@@ -1317,7 +1317,7 @@ func (item *Item) GetModTime() (modTime time.Time, err error) {
 func (item *Item) ReadAt(b []byte, off int64) (n int, err error) {
 	n = 0
 	var expBackOff int
-	for retries := range fs.GetConfig(context.TODO()).LowLevelRetries {
+	for retries := range fs.GetConfig(item.c.ctx).LowLevelRetries {
 		item.preAccess()
 		n, err = item.readAt(b, off)
 		item.postAccess()
