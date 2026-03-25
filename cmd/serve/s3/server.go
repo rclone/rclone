@@ -212,11 +212,11 @@ func getAuthSecret(authPair []string) string {
 		return ""
 	}
 
-	splited := strings.Split(authPair[0], ",")
-	if len(splited) != 2 {
+	split := strings.Split(authPair[0], ",")
+	if len(split) != 2 {
 		return ""
 	}
 
-	secret := strings.TrimSpace(splited[1])
+	secret := strings.TrimSpace(split[1])
 	return secret
 }

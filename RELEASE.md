@@ -36,7 +36,7 @@ This file describes how to make the various kinds of releases
 - make upload_website
 - make upload_github
 - make startdev # make startstable for stable branch
-- \# announce with forum post, twitter post, and post to annoucements list
+- \# announce with forum post, twitter post, and post to announcements list
 
 ## Update dependencies
 

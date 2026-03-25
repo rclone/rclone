@@ -18,7 +18,7 @@ import (
 
 var invenioRecordRegex = regexp.MustCompile(`\/records?\/(.+)`)
 
-// Returns true if resolvedURL is likely a DOI hosted on an InvenioRDM intallation
+// Returns true if resolvedURL is likely a DOI hosted on an InvenioRDM installation
 func activateInvenio(ctx context.Context, srv *rest.Client, pacer *fs.Pacer, resolvedURL *url.URL) (isActive bool) {
 	_, _, err := resolveInvenioEndpoint(ctx, srv, pacer, resolvedURL)
 	return err == nil
