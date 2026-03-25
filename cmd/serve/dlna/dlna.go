@@ -203,7 +203,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		waitChan:         make(chan struct{}),
 		httpListenAddr:   opt.ListenAddr,
 		f:                f,
-		vfs:              vfs.New(f, vfsOpt),
+		vfs:              vfs.New(ctx, f, vfsOpt),
 	}
 
 	s.services = map[string]UPnPService{

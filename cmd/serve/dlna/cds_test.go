@@ -16,7 +16,7 @@ func TestMediaWithResources(t *testing.T) {
 	fs, err := localBackend.NewFs(context.Background(), "testdatafiles", "testdata/files", configmap.New())
 	require.NoError(t, err)
 
-	myvfs := vfs.New(fs, nil)
+	myvfs := vfs.New(context.Background(), fs, nil)
 	{
 		rootNode, err := myvfs.Stat("")
 		require.NoError(t, err)

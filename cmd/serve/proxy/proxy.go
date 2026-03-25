@@ -257,7 +257,7 @@ func (p *Proxy) call(user, auth string, isPublicKey bool) (value any, err error)
 		// need to in memory. An attacker would find it easier to go
 		// after the unencrypted password in memory most likely.
 		entry := cacheEntry{
-			vfs:    vfs.New(f, &p.vfsOpt),
+			vfs:    vfs.New(p.ctx, f, &p.vfsOpt),
 			pwHash: sha256.Sum256([]byte(auth)),
 		}
 		return entry, true, nil

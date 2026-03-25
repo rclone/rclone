@@ -36,12 +36,12 @@ func TestCaseSensitivity(t *testing.T) {
 	// Create a case-Sensitive and case-INsensitive VFS
 	optCS := vfscommon.Opt
 	optCS.CaseInsensitive = false
-	vfsCS := New(r.Fremote, &optCS)
+	vfsCS := New(context.Background(), r.Fremote, &optCS)
 	defer cleanupVFS(t, vfsCS)
 
 	optCI := vfscommon.Opt
 	optCI.CaseInsensitive = true
-	vfsCI := New(r.Fremote, &optCI)
+	vfsCI := New(context.Background(), r.Fremote, &optCI)
 	defer cleanupVFS(t, vfsCI)
 
 	// Run basic checks that must pass on VFS of any type.
@@ -180,7 +180,7 @@ func TestUnicodeNormalization(t *testing.T) {
 
 	// Create VFS
 	opt := vfscommon.Opt
-	vfs := New(r.Fremote, &opt)
+	vfs := New(context.Background(), r.Fremote, &opt)
 	defer cleanupVFS(t, vfs)
 
 	// assert that both files are found under NFD-normalized names

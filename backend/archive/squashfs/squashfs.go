@@ -50,7 +50,7 @@ func New(ctx context.Context, wrappedFs fs.Fs, remote, prefix, root string) (fs.
 	fs.Debugf(nil, "Squashfs: New: remote=%q, prefix=%q, root=%q", remote, prefix, root)
 	vfsOpt := vfscommon.Opt
 	vfsOpt.ReadWait = 0
-	VFS := vfs.New(wrappedFs, &vfsOpt)
+	VFS := vfs.New(ctx, wrappedFs, &vfsOpt)
 	node, err := VFS.Stat(remote)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find %q archive: %w", remote, err)

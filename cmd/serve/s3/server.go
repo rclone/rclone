@@ -94,7 +94,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		w.handler = proxyAuthMiddleware(w.handler, w)
 		w.handler = authPairMiddleware(w.handler, w)
 	} else {
-		w._vfs = vfs.New(f, vfsOpt)
+		w._vfs = vfs.New(ctx, f, vfsOpt)
 
 		if len(opt.AuthKey) > 0 {
 			w.faker.AddAuthKeys(authList)
