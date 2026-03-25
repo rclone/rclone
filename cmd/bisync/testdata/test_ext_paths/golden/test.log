@@ -24,7 +24,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}測試Русский  ěáñ/" with Path2 "{path2/}測試Русский  ěáñ/"
+INFO  : Syncing Path1 "{path1/}測試Русский  ěáñ/" with Path2 "{path2/}測試Русский  ěáñ/"
 INFO  : Copying Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
 INFO  : There was nothing to transfer
@@ -53,7 +53,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}測試Русский  ěáñ/" with Path2 "{path2/}測試Русский  ěáñ/"
+INFO  : Syncing Path1 "{path1/}測試Русский  ěáñ/" with Path2 "{path2/}測試Русский  ěáñ/"
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36m測試_file1p1[0m
@@ -83,7 +83,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
 INFO  : There was nothing to transfer
@@ -104,7 +104,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36m測試Русский  ěáñ/測試_check file[0m
@@ -130,7 +130,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
 INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
@@ -148,7 +148,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
@@ -173,7 +173,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}測試_filtersfile.txt
 INFO  : Storing filters file hash to {workdir/}測試_filtersfile.txt.{hashtype}
 INFO  : Copying Path2 files to Path1
@@ -196,7 +196,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}測試_filtersfile.txt
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs

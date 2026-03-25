@@ -42,7 +42,7 @@ Here is a typical run log (with timestamps removed for clarity):
 
 ```console
 rclone bisync /testdir/path1/ /testdir/path2/ --verbose
-INFO  : Synching Path1 "/testdir/path1/" with Path2 "/testdir/path2/"
+INFO  : Syncing Path1 "/testdir/path1/" with Path2 "/testdir/path2/"
 INFO  : Path1 checking for diffs
 INFO  : - Path1    File is new                         - file11.txt
 INFO  : - Path1    File is newer                       - file2.txt
@@ -1385,7 +1385,7 @@ Here are two normal runs. The first one has a newer file on the remote.
 The second has no deltas between local and remote.
 
 ```text
-2021/05/16 00:24:38 INFO  : Synching Path1 "/path/to/local/tree/" with Path2 "dropbox:/"
+2021/05/16 00:24:38 INFO  : Syncing Path1 "/path/to/local/tree/" with Path2 "dropbox:/"
 2021/05/16 00:24:38 INFO  : Path1 checking for diffs
 2021/05/16 00:24:38 INFO  : - Path1    File is new                         - file.txt
 2021/05/16 00:24:38 INFO  : Path1:    1 changes:    1 new,    0 newer,    0 older,    0 deleted
@@ -1397,7 +1397,7 @@ The second has no deltas between local and remote.
 2021/05/16 00:24:38 INFO  : Validating listings for Path1 "/path/to/local/tree/" vs Path2 "dropbox:/"
 2021/05/16 00:24:38 INFO  : Bisync successful
 
-2021/05/16 00:36:52 INFO  : Synching Path1 "/path/to/local/tree/" with Path2 "dropbox:/"
+2021/05/16 00:36:52 INFO  : Syncing Path1 "/path/to/local/tree/" with Path2 "dropbox:/"
 2021/05/16 00:36:52 INFO  : Path1 checking for diffs
 2021/05/16 00:36:52 INFO  : Path2 checking for diffs
 2021/05/16 00:36:52 INFO  : No changes found
@@ -1435,7 +1435,7 @@ Since there are no final error/warning messages on line *7*, rclone has
 recovered from failure after a retry, and the overall sync was successful.
 
 ```text
-1: 2021/05/14 00:44:12 INFO  : Synching Path1 "/path/to/local/tree" with Path2 "dropbox:"
+1: 2021/05/14 00:44:12 INFO  : Syncing Path1 "/path/to/local/tree" with Path2 "dropbox:"
 2: 2021/05/14 00:44:12 INFO  : Path1 checking for diffs
 3: 2021/05/14 00:44:12 INFO  : Path2 checking for diffs
 4: 2021/05/14 00:44:12 INFO  : Path2:  113 changes:   22 new,    0 newer,    0 older,   91 deleted
