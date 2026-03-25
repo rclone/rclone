@@ -358,7 +358,7 @@ func serveStdio(f fs.Fs) error {
 		stdin:  os.Stdin,
 		stdout: os.Stdout,
 	}
-	handlers := newVFSHandler(vfs.New(f, &vfscommon.Opt))
+	handlers := newVFSHandler(vfs.New(context.Background(), f, &vfscommon.Opt))
 	return serveChannel(sshChannel, handlers, "stdio")
 }
 

@@ -40,7 +40,7 @@ func TestMount(t *testing.T) {
 			nfs.Opt.HandleCacheDir = t.TempDir()
 			require.NoError(t, nfs.Opt.HandleCache.Set(cacheType))
 			// Check we can create a handler
-			_, err := nfs.NewHandler(context.Background(), vfs.New(object.MemoryFs, nil), &nfs.Opt)
+			_, err := nfs.NewHandler(context.Background(), vfs.New(context.Background(), object.MemoryFs, nil), &nfs.Opt)
 			if errors.Is(err, nfs.ErrorSymlinkCacheNotSupported) || errors.Is(err, nfs.ErrorSymlinkCacheNoPermission) {
 				t.Skip(err.Error() + ": run with: go test -c && sudo setcap cap_dac_read_search+ep ./nfsmount.test && ./nfsmount.test -test.v")
 			}

@@ -38,6 +38,7 @@ import (
 	"github.com/go-git/go-billy/v5"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
+	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fs/walk"
@@ -196,10 +197,18 @@ var (
 )
 
 // New creates a new VFS and root directory.  If opt is nil, then
-// DefaultOpt will be used
-func New(f fs.Fs, opt *vfscommon.Options) *VFS {
+// DefaultOpt will be used.
+//
+// The ctx passed in is not used for cancellation but is used to find
+// the config in the context (if any) and filter config in the context
+// (if any).
+func New(ctx context.Context, f fs.Fs, opt *vfscommon.Options) *VFS {
 	fsDir := fs.NewDir("", time.Now())
-	ctx, cancel := context.WithCancel(context.Background())
+	// Strip the ctx of any cancellation but copy the config across
+	newCtx := context.Background()
+	newCtx = fs.CopyConfig(newCtx, ctx)
+	newCtx = filter.CopyConfig(newCtx, ctx)
+	ctx, cancel := context.WithCancel(newCtx)
 	vfs := &VFS{
 		f:      f,
 		ctx:    ctx,

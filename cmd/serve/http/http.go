@@ -188,7 +188,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		// override auth
 		s.opt.Auth.CustomAuthFn = s.auth
 	} else {
-		s._vfs = vfs.New(f, vfsOpt)
+		s._vfs = vfs.New(ctx, f, vfsOpt)
 	}
 
 	s.server, err = libhttp.NewServer(ctx,

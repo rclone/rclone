@@ -122,7 +122,7 @@ func TestCache(t *testing.T) {
 	for _, cacheType := range []handleCache{cacheMemory, cacheDisk, cacheSymlink} {
 		t.Run(cacheType.String(), func(t *testing.T) {
 			h := &Handler{
-				vfs:     vfs.New(object.MemoryFs, nil),
+				vfs:     vfs.New(context.Background(), object.MemoryFs, nil),
 				billyFS: billyFS,
 			}
 			h.vfs.Opt.MetadataExtension = ".metadata"

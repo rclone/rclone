@@ -36,7 +36,7 @@ func New(ctx context.Context, wrappedFs fs.Fs, remote, prefix, root string) (*Fs
 	// FIXME vfs cache?
 	// FIXME could factor out ReadFileHandle and just use that rather than the full VFS
 	fs.Debugf(nil, "New: remote=%q, prefix=%q, root=%q", remote, prefix, root)
-	VFS := vfs.New(wrappedFs, nil)
+	VFS := vfs.New(ctx, wrappedFs, nil)
 	node, err := VFS.Stat(remote)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find %q archive: %w", remote, err)

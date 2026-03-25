@@ -202,7 +202,7 @@ func TestFileOpenReadUnknownSize(t *testing.T) {
 	assert.Equal(t, int64(-1), testObj.Size())
 
 	// create a VFS from that mockfs
-	vfs := New(f, nil)
+	vfs := New(context.Background(), f, nil)
 	defer cleanupVFS(t, vfs)
 
 	// find the file

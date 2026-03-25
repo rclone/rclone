@@ -94,7 +94,7 @@ func init() {
 		if err != nil {
 			return nil, err
 		}
-		VFS := vfs.New(f, &vfsOpt)
+		VFS := vfs.New(ctx, f, &vfsOpt)
 		// Read opts
 		var opt = Opt // set default opts
 		err = configstruct.SetAny(in, &opt)
@@ -112,7 +112,7 @@ func Run(command *cobra.Command, args []string) {
 	cmd.CheckArgs(1, 1, command, args)
 	f = cmd.NewFsSrc(args)
 	cmd.Run(false, true, command, func() error {
-		s, err := NewServer(context.Background(), vfs.New(f, &vfscommon.Opt), &Opt)
+		s, err := NewServer(context.Background(), vfs.New(context.Background(), f, &vfscommon.Opt), &Opt)
 		if err != nil {
 			return err
 		}

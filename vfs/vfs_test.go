@@ -47,7 +47,7 @@ func cleanupVFS(t *testing.T, vfs *VFS) {
 // Create a new VFS
 func newTestVFSOpt(t *testing.T, opt *vfscommon.Options) (r *fstest.Run, vfs *VFS) {
 	r = fstest.NewRun(t)
-	vfs = New(r.Fremote, opt)
+	vfs = New(context.Background(), r.Fremote, opt)
 	t.Cleanup(func() {
 		cleanupVFS(t, vfs)
 	})
@@ -144,7 +144,7 @@ func TestVFSNew(t *testing.T) {
 
 	// Check that we get the same VFS if we ask for it again with
 	// the same options
-	vfs2 := New(r.Fremote, nil)
+	vfs2 := New(context.Background(), r.Fremote, nil)
 	assert.Equal(t, fmt.Sprintf("%p", vfs), fmt.Sprintf("%p", vfs2))
 
 	checkActiveCacheEntries(1)

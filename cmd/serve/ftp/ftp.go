@@ -203,7 +203,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		d.proxy = proxy.New(ctx, proxyOpt, vfsOpt)
 		d.userPass = make(map[string]string, 16)
 	} else {
-		d.globalVFS = vfs.New(f, vfsOpt)
+		d.globalVFS = vfs.New(ctx, f, vfsOpt)
 	}
 	d.useTLS = d.opt.TLSKey != ""
 

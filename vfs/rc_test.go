@@ -48,7 +48,7 @@ func TestRcGetVFS(t *testing.T) {
 
 	opt := vfscommon.Opt
 	opt.NoModTime = true
-	vfs3 := New(r.Fremote, &opt)
+	vfs3 := New(context.Background(), r.Fremote, &opt)
 	defer vfs3.Shutdown()
 
 	vfs, err = getVFS(in)
