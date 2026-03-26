@@ -21,9 +21,11 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/pacer"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -47,7 +49,7 @@ func init() {
 			},
 			{
 				Name: "api_key",
-				Help: `API Key for your Filen account 
+				Help: `API Key for your Filen account
 
 Get this using the Filen CLI export-api-key command
 You can download the Filen CLI from https://github.com/FilenCloudDienste/filen-cli`,
@@ -161,6 +163,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		filen:       filen,
 		Enc:         opt.Encoder,
 		concurrency: opt.UploadConcurrency,
+		pacer:       fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 
 	fileSystem.features = (&fs.Features{
@@ -194,6 +197,13 @@ type Options struct {
 	UploadConcurrency int                  `config:"upload_concurrency"`
 }
 
+// defaults copied from box
+const (
+	minSleep      = 10 * time.Millisecond
+	maxSleep      = 2 * time.Second
+	decayConstant = 2 // bigger for slower decay, exponential
+)
+
 // Fs represents a virtual filesystem mounted on a specific root folder
 type Fs struct {
 	name        string
@@ -202,6 +212,7 @@ type Fs struct {
 	Enc         encoder.MultiEncoder
 	features    *fs.Features
 	concurrency int
+	pacer       *fs.Pacer
 }
 
 // Name of the remote (as passed into NewFs)
@@ -351,6 +362,7 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 type chunkWriter struct {
 	sdk.FileUpload
 	filen           *sdk.Filen
+	pacer           *fs.Pacer
 	bucketAndRegion chan client.V3UploadResponse
 	chunkSize       int64
 
@@ -360,6 +372,13 @@ type chunkWriter struct {
 
 	sizeLock sync.Mutex
 	size     int64
+}
+
+func shouldRetry(ctx context.Context, err error) (bool, error) {
+	if fserrors.ContextError(ctx, &err) {
+		return false, err
+	}
+	return fserrors.ShouldRetry(err), err
 }
 
 func (cw *chunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader io.ReadSeeker) (bytesWritten int64, err error) {
@@ -414,7 +433,15 @@ func (cw *chunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader i
 		if err != nil {
 			return totalWritten, err
 		}
-		resp, err := cw.filen.UploadChunk(ctx, &cw.FileUpload, realChunkNumber, chunkReadSlice)
+		var resp *client.V3UploadResponse
+		err = cw.pacer.Call(func() (bool, error) {
+			var err error
+			resp, err = cw.filen.UploadChunk(ctx, &cw.FileUpload, realChunkNumber, chunkReadSlice)
+			if err != nil {
+				return shouldRetry(ctx, err)
+			}
+			return false, nil
+		})
 		if err != nil {
 			return totalWritten, err
 		}
@@ -494,6 +521,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	return info, &chunkWriter{
 		FileUpload:      *fu,
 		filen:           f.filen,
+		pacer:           f.pacer,
 		chunkSize:       chunkSize,
 		bucketAndRegion: make(chan client.V3UploadResponse, 1),
 		knownChunks:     make(map[int64][]byte),
