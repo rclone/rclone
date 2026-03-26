@@ -861,16 +861,6 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	// Check if destination exists and remove it first (kDrive Copy creates versions)
-	existingObj, err := f.NewObject(ctx, remote)
-	if err == nil {
-		err = existingObj.Remove(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to remove existing destination before copy: %w", err)
-		}
-		f.clearNotFoundCache()
-	}
-
 	// https://developer.infomaniak.com/docs/api/post/3/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D/copy/%7Bdestination_directory_id%7D
 	opts := rest.Opts{
 		Method:     "POST",
@@ -878,6 +868,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		Parameters: url.Values{},
 	}
 	opts.Parameters.Set("name", f.opt.Enc.FromStandardName(norm.NFC.String(leaf)))
+	opts.Parameters.Set("conflict", "version")
 	//opts.Parameters.Set("mtime", fmt.Sprintf("%d", uint64(srcObj.modTime.Unix())))
 	var resp *http.Response
 	var result api.FileCopyResponse
