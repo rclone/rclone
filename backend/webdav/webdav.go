@@ -225,6 +225,7 @@ type Fs struct {
 	hasOCMD5           bool          // set if can use owncloud style checksums for MD5
 	hasOCSHA1          bool          // set if can use owncloud style checksums for SHA1
 	hasMESHA1          bool          // set if can use fastmail style checksums for SHA1
+	useStandardProps   bool          // set if should use standard props for PROPFIND
 	ntlmAuthMu         sync.Mutex    // mutex to serialize NTLM auth roundtrips
 	chunksUploadURL    string        // upload URL for nextcloud chunked
 	canChunk           bool          // set if nextcloud and nextcloud_chunk_size is set
@@ -352,7 +353,10 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string, depth string)
 	}
 	if f.hasOCMD5 || f.hasOCSHA1 {
 		opts.Body = bytes.NewBuffer(owncloudProps)
+	} else if f.useStandardProps {
+		opts.Body = bytes.NewBuffer(standardProps)
 	}
+	// Note: According to WebDAV RFC 4918, empty PROPFIND body defaults to allprop
 	var result api.Multistatus
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
@@ -711,6 +715,7 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		f.precision = time.Second
 		f.useOCMtime = true
 	case "other":
+		f.useStandardProps = true
 	default:
 		fs.Debugf(f, "Unknown vendor %q", vendor)
 	}
@@ -759,9 +764,19 @@ var owncloudProps = []byte(`<?xml version="1.0"?>
   <d:getlastmodified />
   <d:getcontentlength />
   <d:resourcetype />
-  <d:getcontenttype />
   <oc:checksums />
   <oc:permissions />
+ </d:prop>
+</d:propfind>
+`)
+
+var standardProps = []byte(`<?xml version="1.0"?>
+<d:propfind xmlns:d="DAV:">
+ <d:prop>
+  <d:displayname/>
+  <d:getlastmodified/>
+  <d:getcontentlength/>
+  <d:resourcetype/>
  </d:prop>
 </d:propfind>
 `)
@@ -787,7 +802,10 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 	}
 	if f.hasOCMD5 || f.hasOCSHA1 {
 		opts.Body = bytes.NewBuffer(owncloudProps)
+	} else if f.useStandardProps {
+		opts.Body = bytes.NewBuffer(standardProps)
 	}
+	// Note: According to WebDAV RFC 4918, empty PROPFIND body defaults to `allprop`
 	var result api.Multistatus
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
