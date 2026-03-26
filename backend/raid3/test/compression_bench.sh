@@ -152,6 +152,8 @@ fi
 if [[ -f "${SCRIPT_DIR}/compare_raid3_env.sh" ]]; then
   # Pass script/data dir so compare_raid3_env.sh can use them (SC2097/SC2098)
   export SCRIPT_DIR DATA_DIR
+  # shellcheck source=compare_raid3_env.sh
+  # shellcheck disable=SC1091
   . "${SCRIPT_DIR}/compare_raid3_env.sh"
 else
   LOCAL_EVEN_DIR="${DATA_DIR}/even_local"

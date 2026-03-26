@@ -69,6 +69,7 @@ done
 
 # Source common script to get ensure_rclone_binary and other helper functions
 # shellcheck source=compare_common.sh
+# shellcheck disable=SC1091
 . "${SCRIPT_DIR}/compare_common.sh"
 
 VERBOSE=0

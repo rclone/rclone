@@ -39,6 +39,7 @@ SCRIPT_NAME=$(basename "$0")
 SCRIPT_DIR=$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 # shellcheck source=compare_common.sh
+# shellcheck disable=SC1091
 . "${SCRIPT_DIR}/compare_common.sh"
 
 # VERBOSE is used by sourced compare_common.sh (print_if_verbose, purge_remote_root)
@@ -85,6 +86,8 @@ parse_args() {
         STORAGE_TYPE="${1#*=}"
         ;;
       -v|--verbose)
+        # VERBOSE is read by sourced compare_common.sh (print_if_verbose, rclone_cmd_raw)
+        # shellcheck disable=SC2034
         VERBOSE=1
         ;;
       -h|--help)

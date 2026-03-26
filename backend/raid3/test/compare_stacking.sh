@@ -43,6 +43,7 @@ SCRIPT_NAME=$(basename "$0")
 SCRIPT_DIR=$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 # shellcheck source=compare_common.sh
+# shellcheck disable=SC1091
 . "${SCRIPT_DIR}/compare_common.sh"
 
 VERBOSE=0

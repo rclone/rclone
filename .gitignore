@@ -23,6 +23,8 @@ resource_windows_*.syso
 backend/raid3/test/_data
 backend/raid3/test/compare_raid3_env.local.sh
 backend/raid3/test/tests.config
+backend/raid3/test/_scaleway.config
+backend/raid3/test/_check_scaleway.sh
 backend/raid3/test/_worktree_*
 backend/raid3/_analysis
 backend/raid3/_analysis.bak

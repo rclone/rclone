@@ -96,6 +96,7 @@ export SCRIPT_DIR
 export SCRIPT_NAME
 export DATA_DIR
 # shellcheck source=compare_common.sh
+# shellcheck disable=SC1091
 . "${SCRIPT_DIR}/compare_common.sh"
 
 # Create _data directory
