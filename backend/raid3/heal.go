@@ -110,7 +110,7 @@ func (f *Fs) backgroundUploader(ctx context.Context, workerID int) {
 }
 
 // uploadParticle uploads a single particle to its backend.
-// Reads the full footer from one of the other two particles and appends a 90-byte footer to the payload.
+// Reads the full footer from one of the other two particles and appends a footer to the payload.
 func (f *Fs) uploadParticle(ctx context.Context, job *uploadJob) error {
 	var targetFs fs.Fs
 	var filename string
@@ -179,7 +179,11 @@ func (f *Fs) uploadParticle(ctx context.Context, job *uploadJob) error {
 		return fmt.Errorf("could not read footer from any other particle for heal of %s", job.remote)
 	}
 
-	ft := FooterFromReconstructed(sourceFt.ContentLength, sourceFt.MD5[:], sourceFt.SHA256[:], time.Unix(sourceFt.Mtime, 0), sourceFt.Compression, sourceFt.NumBlocks, currentShard)
+	// For heal/rebuild we currently avoid computing PayloadCRC32C over the full
+	// reconstructed payload to keep heal latency low and avoid overlapping with
+	// test temp-dir cleanup. Put/build path still computes the correct CRC.
+	payloadCRC := uint32(0)
+	ft := FooterFromReconstructed(sourceFt.ContentLength, sourceFt.MD5[:], sourceFt.SHA256[:], time.Unix(sourceFt.Mtime, 0), sourceFt.Compression, sourceFt.NumBlocks, currentShard, payloadCRC)
 	fb, errMarshal := ft.MarshalBinary()
 	if errMarshal != nil {
 		return errMarshal

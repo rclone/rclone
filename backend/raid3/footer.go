@@ -6,14 +6,21 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"hash/crc32"
 	"time"
 )
 
-// EC footer constants (94-byte footer at tail of each particle)
+// EC footer constants (98-byte footer at tail of each particle)
 const (
 	FooterMagic   = "RCLONE/EC" // 9 bytes
-	FooterVersion = 1
-	FooterSize    = 94
+	FooterVersion = 2
+	// Footer layout:
+	//   - Magic 9, Version 2, ContentLength 8,
+	//   - MD5 16, SHA256 32, Mtime 8,
+	//   - Compression 4, NumBlocks 4,
+	//   - Algorithm 4, DataShards 1, ParityShards 1, CurrentShard 1,
+	//   - StripeSize 4, PayloadCRC32C 4.
+	FooterSize = 98
 )
 
 // Algorithm names (4 bytes ASCII, null-padded)
@@ -46,8 +53,8 @@ func init() {
 	_, _ = hex.Decode(emptyFileSHA256[:], []byte("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"))
 }
 
-// Footer holds the 94-byte EC footer stored at the end of each particle.
-// Layout: Magic 9, Version 1, ContentLength 8, MD5 16, SHA256 32, Mtime 8, Compression 4, NumBlocks 4, Algorithm 4, DataShards 1, ParityShards 1, CurrentShard 1, Reserved 4.
+// Footer holds the 98-byte EC footer stored at the end of each particle.
+// Layout: Magic 9, Version 2, ContentLength 8, MD5 16, SHA256 32, Mtime 8, Compression 4, NumBlocks 4, Algorithm 4, DataShards 1, ParityShards 1, CurrentShard 1, StripeSize 4, PayloadCRC32C 4.
 type Footer struct {
 	ContentLength int64
 	MD5           [16]byte
@@ -59,7 +66,10 @@ type Footer struct {
 	DataShards    uint8
 	ParityShards  uint8
 	CurrentShard  uint8
-	Reserved      [4]byte
+	StripeSize    uint32
+	// PayloadCRC32C is CRC32C over this particle's payload bytes (excluding the footer itself).
+	// For block-based compression it covers compressed block bytes + inventory bytes.
+	PayloadCRC32C uint32
 }
 
 // MarshalBinary encodes the footer to exactly FooterSize bytes (little-endian).
@@ -77,7 +87,8 @@ func (f *Footer) MarshalBinary() ([]byte, error) {
 	b[87] = f.DataShards
 	b[88] = f.ParityShards
 	b[89] = f.CurrentShard
-	copy(b[90:94], f.Reserved[:])
+	binary.LittleEndian.PutUint32(b[90:94], f.StripeSize)
+	binary.LittleEndian.PutUint32(b[94:98], f.PayloadCRC32C)
 	return b, nil
 }
 
@@ -104,14 +115,22 @@ func ParseFooter(buf []byte) (*Footer, error) {
 	f.DataShards = buf[87]
 	f.ParityShards = buf[88]
 	f.CurrentShard = buf[89]
-	copy(f.Reserved[:], buf[90:94])
+	f.StripeSize = binary.LittleEndian.Uint32(buf[90:94])
+	f.PayloadCRC32C = binary.LittleEndian.Uint32(buf[94:98])
 	return f, nil
+}
+
+var crc32cTable = crc32.MakeTable(crc32.Castagnoli)
+
+// crc32cChecksum returns CRC32C (Castagnoli) for data.
+func crc32cChecksum(data []byte) uint32 {
+	return crc32.Checksum(data, crc32cTable)
 }
 
 // FooterFromReconstructed builds a footer for RAID3 (data shards 2, parity 1, algorithm R3).
 // For zero-length content with nil hashes, the standard empty-file MD5 and SHA256 are used.
 // numBlocks is the number of compressed blocks (0 for uncompressed or empty).
-func FooterFromReconstructed(contentLength int64, md5, sha256 []byte, mtime time.Time, compression [4]byte, numBlocks uint32, currentShard int) *Footer {
+func FooterFromReconstructed(contentLength int64, md5, sha256 []byte, mtime time.Time, compression [4]byte, numBlocks uint32, currentShard int, payloadCRC32C uint32) *Footer {
 	var md5Arr [16]byte
 	var sha256Arr [32]byte
 	if len(md5) >= 16 {
@@ -135,6 +154,7 @@ func FooterFromReconstructed(contentLength int64, md5, sha256 []byte, mtime time
 		DataShards:    2,
 		ParityShards:  1,
 		CurrentShard:  uint8(currentShard),
-		Reserved:      [4]byte{0, 0, 0, 0},
+		StripeSize:    1, // RAID3 effectively operates with 1-byte symbols.
+		PayloadCRC32C: payloadCRC32C,
 	}
 }

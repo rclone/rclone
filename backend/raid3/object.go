@@ -200,7 +200,7 @@ func (o *Object) Storable() bool {
 	return true
 }
 
-// updateFooterMtime rewrites the 90-byte footer in each particle so that ModTime() returns t.
+// updateFooterMtime rewrites the footer in each particle so that ModTime() returns t.
 // Used by SetModTime and by SetMetadata when metadata["mtime"] is set.
 func (o *Object) updateFooterMtime(ctx context.Context, t time.Time) error {
 	if err := o.fs.checkAllBackendsAvailable(ctx); err != nil {
@@ -251,7 +251,7 @@ func (o *Object) updateFooterMtime(ctx context.Context, t time.Time) error {
 	return g.Wait()
 }
 
-// SetModTime sets the modification time by rewriting the 90-byte footer in each particle
+// SetModTime sets the modification time by rewriting the footer in each particle
 // so that ModTime() (which reads from the footer) returns the new time.
 func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	return o.updateFooterMtime(ctx, t)
@@ -1296,13 +1296,13 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 	compression, _ := ConfigToFooterCompression(o.fs.opt.Compression) // validated in NewFs
 	if srcSize == 0 {
 		mtime := effectiveModTime(ctx, o.fs, src, options)
-		ft := FooterFromReconstructed(0, nil, nil, mtime, compression, 0, ShardEven)
+		ft := FooterFromReconstructed(0, nil, nil, mtime, compression, 0, ShardEven, crc32cChecksum(nil))
 		fb, _ := ft.MarshalBinary()
 		evenR := bytes.NewReader(fb)
-		ft2 := FooterFromReconstructed(0, nil, nil, mtime, compression, 0, ShardOdd)
+		ft2 := FooterFromReconstructed(0, nil, nil, mtime, compression, 0, ShardOdd, crc32cChecksum(nil))
 		fb2, _ := ft2.MarshalBinary()
 		oddR := bytes.NewReader(fb2)
-		ft3 := FooterFromReconstructed(0, nil, nil, mtime, compression, 0, ShardParity)
+		ft3 := FooterFromReconstructed(0, nil, nil, mtime, compression, 0, ShardParity, crc32cChecksum(nil))
 		fb3, _ := ft3.MarshalBinary()
 		parityR := bytes.NewReader(fb3)
 		evenInfo := createParticleInfo(o.fs, src, "even", FooterSize, false)
@@ -1347,6 +1347,11 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 	oddPipeR, oddPipeW := io.Pipe()
 	parityPipeR, parityPipeW := io.Pipe()
 
+	// Compute per-particle CRC32C over payload bytes (excluding footer bytes).
+	evenPipePayloadW := newCRC32cWriter(evenPipeW)
+	oddPipePayloadW := newCRC32cWriter(oddPipeW)
+	parityPipePayloadW := newCRC32cWriter(parityPipeW)
+
 	// Channel to communicate isOddLength from splitter to parity uploader
 	// Only needed if size is unknown (-1)
 	var isOddLengthCh chan bool
@@ -1380,7 +1385,7 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 	}(splitInput)
 	splitInput = bufio.NewReaderSize(producerPipeR, streamProducerBufferSize)
 
-	splitter := NewStreamSplitter(evenPipeW, oddPipeW, parityPipeW, streamReadChunkSize, isOddLengthCh)
+	splitter := NewStreamSplitter(evenPipePayloadW, oddPipePayloadW, parityPipePayloadW, streamReadChunkSize, isOddLengthCh)
 
 	// Create even/odd particle infos in this goroutine to avoid data race: createParticleInfo
 	// reads src.Remote(), and src may not be safe for concurrent use from multiple goroutines.
@@ -1476,8 +1481,20 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 	md5Sum := hasher.MD5Sum()
 	sha256Sum := hasher.SHA256Sum()
 	mtime := effectiveModTime(gCtx, o.fs, src, options)
+	evenCRC := evenPipePayloadW.Sum32()
+	oddCRC := oddPipePayloadW.Sum32()
+	parityCRC := parityPipePayloadW.Sum32()
 	for shard := 0; shard < 3; shard++ {
-		ft := FooterFromReconstructed(contentLength, md5Sum[:], sha256Sum[:], mtime, compression, 0, shard)
+		var shardPayloadCRC uint32
+		switch shard {
+		case ShardEven:
+			shardPayloadCRC = evenCRC
+		case ShardOdd:
+			shardPayloadCRC = oddCRC
+		case ShardParity:
+			shardPayloadCRC = parityCRC
+		}
+		ft := FooterFromReconstructed(contentLength, md5Sum[:], sha256Sum[:], mtime, compression, 0, shard, shardPayloadCRC)
 		fb, errMarshal := ft.MarshalBinary()
 		if errMarshal != nil {
 			_ = evenPipeW.Close()

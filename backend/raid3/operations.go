@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"hash"
+	"hash/crc32"
 	"io"
 	"os"
 	"path"
@@ -79,7 +80,7 @@ func createParticleInfo(f *Fs, src fs.ObjectInfo, particleType string, size int6
 	return info
 }
 
-// putEmptyFile uploads an empty object (three 90-byte footer-only particles). Used by both stream and spool paths.
+// putEmptyFile uploads an empty object (three footer-only particles). Used by both stream and spool paths.
 func (f *Fs) putEmptyFile(ctx context.Context, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	if err := f.checkAllBackendsAvailable(ctx); err != nil {
 		return nil, formatOperationError("write blocked in degraded mode (RAID 3 policy)", "", err)
@@ -101,7 +102,7 @@ func (f *Fs) putEmptyFile(ctx context.Context, src fs.ObjectInfo, options ...fs.
 	mtime := effectiveModTime(putCtx, f, src, options)
 	compression, _ := ConfigToFooterCompression(f.opt.Compression)
 
-	ft := FooterFromReconstructed(0, nil, nil, mtime, compression, 0, ShardEven)
+	ft := FooterFromReconstructed(0, nil, nil, mtime, compression, 0, ShardEven, crc32cChecksum(nil))
 	fb, _ := ft.MarshalBinary()
 	evenR := bytes.NewReader(fb)
 	evenInfo := createParticleInfo(f, src, "even", FooterSize, false)
@@ -111,7 +112,7 @@ func (f *Fs) putEmptyFile(ctx context.Context, src fs.ObjectInfo, options ...fs.
 	}
 	uploadedParticles = append(uploadedParticles, evenObj)
 
-	ft2 := FooterFromReconstructed(0, nil, nil, mtime, compression, 0, ShardOdd)
+	ft2 := FooterFromReconstructed(0, nil, nil, mtime, compression, 0, ShardOdd, crc32cChecksum(nil))
 	fb2, _ := ft2.MarshalBinary()
 	oddR := bytes.NewReader(fb2)
 	oddInfo := createParticleInfo(f, src, "odd", FooterSize, false)
@@ -121,7 +122,7 @@ func (f *Fs) putEmptyFile(ctx context.Context, src fs.ObjectInfo, options ...fs.
 	}
 	uploadedParticles = append(uploadedParticles, oddObj)
 
-	ft3 := FooterFromReconstructed(0, nil, nil, mtime, compression, 0, ShardParity)
+	ft3 := FooterFromReconstructed(0, nil, nil, mtime, compression, 0, ShardParity, crc32cChecksum(nil))
 	fb3, _ := ft3.MarshalBinary()
 	parityR := bytes.NewReader(fb3)
 	parityInfo := createParticleInfo(f, src, "parity", FooterSize, false)
@@ -166,14 +167,41 @@ func (h *hashingReader) SHA256Sum() [32]byte  { return [32]byte(h.sha256.Sum(nil
 
 // particlesBuildResult holds the outcome of buildParticlesToWriters for use by putStreaming and putSpooling.
 type particlesBuildResult struct {
-	ContentLength int64
-	TotalEven     int64
-	TotalOdd      int64
-	NumBlocks     uint32 // number of compressed blocks (0 for uncompressed)
-	MD5Sum        [16]byte
-	SHA256Sum     [32]byte
-	Mtime         time.Time
-	Compression   [4]byte
+	ContentLength       int64
+	TotalEven           int64
+	TotalOdd            int64
+	NumBlocks           uint32 // number of compressed blocks (0 for uncompressed)
+	MD5Sum              [16]byte
+	SHA256Sum           [32]byte
+	Mtime               time.Time
+	Compression         [4]byte
+	EvenPayloadCRC32C   uint32
+	OddPayloadCRC32C    uint32
+	ParityPayloadCRC32C uint32
+}
+
+type crc32cWriter struct {
+	w io.Writer
+	h hash.Hash32
+}
+
+func newCRC32cWriter(w io.Writer) *crc32cWriter {
+	return &crc32cWriter{
+		w: w,
+		h: crc32.New(crc32cTable),
+	}
+}
+
+func (c *crc32cWriter) Write(p []byte) (int, error) {
+	n, err := c.w.Write(p)
+	if n > 0 {
+		_, _ = c.h.Write(p[:n])
+	}
+	return n, err
+}
+
+func (c *crc32cWriter) Sum32() uint32 {
+	return c.h.Sum32()
 }
 
 // buildParticlesToWriters reads from in, splits into even/odd/parity, writes footer to the three writers.
@@ -188,6 +216,13 @@ func buildParticlesToWriters(ctx context.Context, f *Fs, in io.Reader, src fs.Ob
 	}
 
 	// Uncompressed path: stream through splitter
+	evenBaseW := evenW
+	oddBaseW := oddW
+	parityBaseW := parityW
+	evenPayloadW := newCRC32cWriter(evenW)
+	oddPayloadW := newCRC32cWriter(oddW)
+	parityPayloadW := newCRC32cWriter(parityW)
+
 	hasher := newHashingReader(in)
 	splitInput := io.Reader(hasher)
 
@@ -204,7 +239,7 @@ func buildParticlesToWriters(ctx context.Context, f *Fs, in io.Reader, src fs.Ob
 	}()
 	splitInput = bufio.NewReaderSize(producerPipeR, streamProducerBufferSize)
 
-	splitter := NewStreamSplitter(evenW, oddW, parityW, streamReadChunkSize, isOddLengthCh)
+	splitter := NewStreamSplitter(evenPayloadW, oddPayloadW, parityPayloadW, streamReadChunkSize, isOddLengthCh)
 	if err := splitter.Split(splitInput); err != nil {
 		return nil, err
 	}
@@ -223,20 +258,27 @@ func buildParticlesToWriters(ctx context.Context, f *Fs, in io.Reader, src fs.Ob
 	md5Sum := hasher.MD5Sum()
 	sha256Sum := hasher.SHA256Sum()
 	mtime := effectiveModTime(ctx, f, src, options)
+	evenCRC := evenPayloadW.Sum32()
+	oddCRC := oddPayloadW.Sum32()
+	parityCRC := parityPayloadW.Sum32()
 	for shard := 0; shard < 3; shard++ {
-		ft := FooterFromReconstructed(contentLength, md5Sum[:], sha256Sum[:], mtime, compression, 0, shard)
-		fb, errMarshal := ft.MarshalBinary()
-		if errMarshal != nil {
-			return nil, errMarshal
-		}
+		var shardPayloadCRC uint32
 		var w io.Writer
 		switch shard {
 		case ShardEven:
-			w = evenW
+			shardPayloadCRC = evenCRC
+			w = evenBaseW
 		case ShardOdd:
-			w = oddW
+			shardPayloadCRC = oddCRC
+			w = oddBaseW
 		case ShardParity:
-			w = parityW
+			shardPayloadCRC = parityCRC
+			w = parityBaseW
+		}
+		ft := FooterFromReconstructed(contentLength, md5Sum[:], sha256Sum[:], mtime, compression, 0, shard, shardPayloadCRC)
+		fb, errMarshal := ft.MarshalBinary()
+		if errMarshal != nil {
+			return nil, errMarshal
 		}
 		if _, err := w.Write(fb); err != nil {
 			return nil, err
@@ -244,20 +286,30 @@ func buildParticlesToWriters(ctx context.Context, f *Fs, in io.Reader, src fs.Ob
 	}
 
 	return &particlesBuildResult{
-		ContentLength: contentLength,
-		TotalEven:     totalEven,
-		TotalOdd:      totalOdd,
-		NumBlocks:     0,
-		MD5Sum:        md5Sum,
-		SHA256Sum:     sha256Sum,
-		Mtime:         mtime,
-		Compression:   compression,
+		ContentLength:       contentLength,
+		TotalEven:           totalEven,
+		TotalOdd:            totalOdd,
+		NumBlocks:           0,
+		MD5Sum:              md5Sum,
+		SHA256Sum:           sha256Sum,
+		Mtime:               mtime,
+		Compression:         compression,
+		EvenPayloadCRC32C:   evenCRC,
+		OddPayloadCRC32C:    oddCRC,
+		ParityPayloadCRC32C: parityCRC,
 	}, nil
 }
 
 // buildParticlesToWritersBlock implements block-based compression: read in BlockSize chunks,
 // compress each block, split compressed bytes across even/odd/parity, then write inventory + footer.
 func buildParticlesToWritersBlock(ctx context.Context, f *Fs, in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, srcSize int64, evenW, oddW, parityW io.Writer, isOddLengthCh chan bool, compression [4]byte) (*particlesBuildResult, error) {
+	evenBaseW := evenW
+	oddBaseW := oddW
+	parityBaseW := parityW
+	evenPayloadW := newCRC32cWriter(evenW)
+	oddPayloadW := newCRC32cWriter(oddW)
+	parityPayloadW := newCRC32cWriter(parityW)
+
 	hasher := newHashingReader(in)
 	blockBuf := make([]byte, BlockSize)
 	var totalEven, totalOdd int64
@@ -304,13 +356,13 @@ func buildParticlesToWritersBlock(ctx context.Context, f *Fs, in io.Reader, src 
 			}
 		}
 
-		if err := writeInChunks(evenW, evenData, streamWriteChunkSize); err != nil {
+		if err := writeInChunks(evenPayloadW, evenData, streamWriteChunkSize); err != nil {
 			return nil, fmt.Errorf("write even: %w", err)
 		}
-		if err := writeInChunks(oddW, oddData, streamWriteChunkSize); err != nil {
+		if err := writeInChunks(oddPayloadW, oddData, streamWriteChunkSize); err != nil {
 			return nil, fmt.Errorf("write odd: %w", err)
 		}
-		if err := writeInChunks(parityW, parityData, streamWriteChunkSize); err != nil {
+		if err := writeInChunks(parityPayloadW, parityData, streamWriteChunkSize); err != nil {
 			return nil, fmt.Errorf("write parity: %w", err)
 		}
 	}
@@ -338,7 +390,7 @@ func buildParticlesToWritersBlock(ctx context.Context, f *Fs, in io.Reader, src 
 
 	numBlocks := uint32(len(inventorySizes))
 	inv := buildInventory(inventorySizes)
-	for _, w := range []io.Writer{evenW, oddW, parityW} {
+	for _, w := range []io.Writer{evenPayloadW, oddPayloadW, parityPayloadW} {
 		if _, err := w.Write(inv); err != nil {
 			return nil, err
 		}
@@ -347,20 +399,28 @@ func buildParticlesToWritersBlock(ctx context.Context, f *Fs, in io.Reader, src 
 	md5Sum := hasher.MD5Sum()
 	sha256Sum := hasher.SHA256Sum()
 	mtime := effectiveModTime(ctx, f, src, options)
+	evenCRC := evenPayloadW.Sum32()
+	oddCRC := oddPayloadW.Sum32()
+	parityCRC := parityPayloadW.Sum32()
 	for shard := 0; shard < 3; shard++ {
-		ft := FooterFromReconstructed(contentLength, md5Sum[:], sha256Sum[:], mtime, compression, numBlocks, shard)
-		fb, errMarshal := ft.MarshalBinary()
-		if errMarshal != nil {
-			return nil, errMarshal
-		}
+		var shardPayloadCRC uint32
 		var w io.Writer
 		switch shard {
 		case ShardEven:
-			w = evenW
+			shardPayloadCRC = evenCRC
+			w = evenBaseW
 		case ShardOdd:
-			w = oddW
+			shardPayloadCRC = oddCRC
+			w = oddBaseW
 		case ShardParity:
-			w = parityW
+			shardPayloadCRC = parityCRC
+			w = parityBaseW
+		}
+
+		ft := FooterFromReconstructed(contentLength, md5Sum[:], sha256Sum[:], mtime, compression, numBlocks, shard, shardPayloadCRC)
+		fb, errMarshal := ft.MarshalBinary()
+		if errMarshal != nil {
+			return nil, errMarshal
 		}
 		if _, err := w.Write(fb); err != nil {
 			return nil, err
@@ -368,14 +428,17 @@ func buildParticlesToWritersBlock(ctx context.Context, f *Fs, in io.Reader, src 
 	}
 
 	return &particlesBuildResult{
-		ContentLength: contentLength,
-		TotalEven:     totalEven,
-		TotalOdd:      totalOdd,
-		NumBlocks:     numBlocks,
-		MD5Sum:        md5Sum,
-		SHA256Sum:     sha256Sum,
-		Mtime:         mtime,
-		Compression:   compression,
+		ContentLength:       contentLength,
+		TotalEven:           totalEven,
+		TotalOdd:            totalOdd,
+		NumBlocks:           numBlocks,
+		MD5Sum:              md5Sum,
+		SHA256Sum:           sha256Sum,
+		Mtime:               mtime,
+		Compression:         compression,
+		EvenPayloadCRC32C:   evenCRC,
+		OddPayloadCRC32C:    oddCRC,
+		ParityPayloadCRC32C: parityCRC,
 	}, nil
 }
 

@@ -18,7 +18,8 @@ func TestFooterMarshalParseRoundTrip(t *testing.T) {
 	}
 	mtime := time.Unix(1600000000, 0)
 
-	ft := FooterFromReconstructed(contentLength, md5[:], sha256[:], mtime, CompressionNone, 0, ShardEven)
+	payloadCRC := uint32(0xdecafbad)
+	ft := FooterFromReconstructed(contentLength, md5[:], sha256[:], mtime, CompressionNone, 0, ShardEven, payloadCRC)
 	b, err := ft.MarshalBinary()
 	require.NoError(t, err)
 	assert.Len(t, b, FooterSize)
@@ -33,6 +34,8 @@ func TestFooterMarshalParseRoundTrip(t *testing.T) {
 	assert.Equal(t, uint8(2), parsed.DataShards)
 	assert.Equal(t, uint8(1), parsed.ParityShards)
 	assert.Equal(t, AlgorithmR3, parsed.Algorithm)
+	assert.Equal(t, uint32(1), parsed.StripeSize)
+	assert.Equal(t, payloadCRC, parsed.PayloadCRC32C)
 }
 
 func TestParseFooterInvalidMagic(t *testing.T) {
@@ -46,7 +49,7 @@ func TestParseFooterInvalidMagic(t *testing.T) {
 func TestParseFooterWrongLength(t *testing.T) {
 	_, err := ParseFooter([]byte("short"))
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "94")
+	assert.Contains(t, err.Error(), "98")
 
 	_, err = ParseFooter(make([]byte, 100))
 	assert.Error(t, err)
@@ -65,7 +68,7 @@ func TestParseFooterInvalidVersion(t *testing.T) {
 
 func TestFooterShards(t *testing.T) {
 	for shard := 0; shard < 3; shard++ {
-		ft := FooterFromReconstructed(100, nil, nil, time.Now(), CompressionNone, 0, shard)
+		ft := FooterFromReconstructed(100, nil, nil, time.Now(), CompressionNone, 0, shard, 0)
 		b, err := ft.MarshalBinary()
 		require.NoError(t, err)
 		parsed, err := ParseFooter(b)
@@ -74,22 +77,24 @@ func TestFooterShards(t *testing.T) {
 	}
 }
 
-func TestFooterReservedZeros(t *testing.T) {
-	ft := FooterFromReconstructed(0, nil, nil, time.Time{}, CompressionNone, 0, ShardParity)
+func TestFooterStripeSizeAndCRC(t *testing.T) {
+	payloadCRC := uint32(0x12345678)
+	ft := FooterFromReconstructed(0, nil, nil, time.Time{}, CompressionNone, 0, ShardParity, payloadCRC)
 	b, err := ft.MarshalBinary()
 	require.NoError(t, err)
-	assert.Equal(t, []byte{0, 0, 0, 0}, b[90:94])
+	assert.Equal(t, []byte{1, 0, 0, 0}, b[90:94])             // StripeSize=1 (uint32 little-endian)
+	assert.Equal(t, []byte{0x78, 0x56, 0x34, 0x12}, b[94:98]) // PayloadCRC32C
 }
 
 func TestFooterNumBlocks(t *testing.T) {
-	ft := FooterFromReconstructed(256*1024, nil, nil, time.Now(), CompressionZstd, 2, ShardEven)
+	ft := FooterFromReconstructed(256*1024, nil, nil, time.Now(), CompressionZstd, 2, ShardEven, 0)
 	b, err := ft.MarshalBinary()
 	require.NoError(t, err)
 	parsed, err := ParseFooter(b)
 	require.NoError(t, err)
 	assert.Equal(t, uint32(2), parsed.NumBlocks)
 
-	ftEmpty := FooterFromReconstructed(0, nil, nil, time.Time{}, CompressionNone, 0, ShardEven)
+	ftEmpty := FooterFromReconstructed(0, nil, nil, time.Time{}, CompressionNone, 0, ShardEven, 0)
 	bEmpty, _ := ftEmpty.MarshalBinary()
 	parsedEmpty, _ := ParseFooter(bEmpty)
 	assert.Equal(t, uint32(0), parsedEmpty.NumBlocks)
@@ -102,7 +107,7 @@ func TestFooterAllThreeShardsMarshal(t *testing.T) {
 	sha256 := [32]byte{0xbb}
 
 	for _, shard := range []int{ShardEven, ShardOdd, ShardParity} {
-		ft := FooterFromReconstructed(contentLength, md5[:], sha256[:], mtime, CompressionNone, 0, shard)
+		ft := FooterFromReconstructed(contentLength, md5[:], sha256[:], mtime, CompressionNone, 0, shard, 0)
 		b, err := ft.MarshalBinary()
 		require.NoError(t, err)
 		require.Len(t, b, FooterSize)
@@ -112,9 +117,9 @@ func TestFooterAllThreeShardsMarshal(t *testing.T) {
 		assert.Equal(t, uint8(shard), parsed.CurrentShard)
 	}
 	// Only CurrentShard should differ between the three
-	fe := FooterFromReconstructed(1, nil, nil, mtime, CompressionNone, 0, ShardEven)
-	fo := FooterFromReconstructed(1, nil, nil, mtime, CompressionNone, 0, ShardOdd)
-	fp := FooterFromReconstructed(1, nil, nil, mtime, CompressionNone, 0, ShardParity)
+	fe := FooterFromReconstructed(1, nil, nil, mtime, CompressionNone, 0, ShardEven, 0)
+	fo := FooterFromReconstructed(1, nil, nil, mtime, CompressionNone, 0, ShardOdd, 0)
+	fp := FooterFromReconstructed(1, nil, nil, mtime, CompressionNone, 0, ShardParity, 0)
 	be, _ := fe.MarshalBinary()
 	bo, _ := fo.MarshalBinary()
 	bp, _ := fp.MarshalBinary()

@@ -768,7 +768,7 @@ func (f *Fs) Hashes() hash.Set {
 }
 
 // Precision returns the precision of ModTimes. Raid3 reads ModTime from the
-// 90-byte footer which stores Unix seconds only, so we can never report better
+// footer which stores Unix seconds only, so we can never report better
 // than 1-second precision. In degraded mode (nil backend), treat missing backend as worst precision.
 func (f *Fs) Precision() time.Duration {
 	worst := time.Duration(-1) // no precision

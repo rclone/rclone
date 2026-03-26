@@ -455,7 +455,11 @@ func (f *Fs) rebuildCommand(ctx context.Context, arg []string, opt map[string]st
 			default:
 				currentShard = 0
 			}
-			ft := FooterFromReconstructed(contentLength, sourceFt.MD5[:], sourceFt.SHA256[:], modTime, sourceFt.Compression, sourceFt.NumBlocks, currentShard)
+			// For rebuild we currently avoid computing PayloadCRC32C over the full
+			// reconstructed payload to keep rebuild latency low. Put/build path
+			// still computes PayloadCRC32C over the exact shard payload bytes.
+			payloadCRC := uint32(0)
+			ft := FooterFromReconstructed(contentLength, sourceFt.MD5[:], sourceFt.SHA256[:], modTime, sourceFt.Compression, sourceFt.NumBlocks, currentShard, payloadCRC)
 			fb, errMarshal := ft.MarshalBinary()
 			if errMarshal != nil {
 				fs.Errorf(f, "Failed to marshal footer for %s: %v", remote, errMarshal)
