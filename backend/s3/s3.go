@@ -4648,7 +4648,7 @@ func (o *Object) uploadSinglepartPutObject(ctx context.Context, req *s3.PutObjec
 	if err != nil {
 		return etag, lastModified, nil, err
 	}
-	req.Body = in
+	req.Body = io.NopCloser(in)
 	var options = []func(*s3.Options){}
 	if o.fs.opt.UseUnsignedPayload.Value {
 		options = append(options, s3.WithAPIOptions(
