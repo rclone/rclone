@@ -198,21 +198,18 @@ func NewFilter(opt *Options) (f *Filter, err error) {
 	// Filter flags
 	if f.Opt.MinAge.IsSet() {
 		f.ModTimeTo = time.Now().Add(-time.Duration(f.Opt.MinAge))
-		fs.Debugf(nil, "--min-age %v to %v", f.Opt.MinAge, f.ModTimeTo)
 	}
 	if f.Opt.MaxAge.IsSet() {
 		f.ModTimeFrom = time.Now().Add(-time.Duration(f.Opt.MaxAge))
 		if !f.ModTimeTo.IsZero() && f.ModTimeTo.Before(f.ModTimeFrom) {
 			return nil, fmt.Errorf("filter: --min-age %q can't be larger than --max-age %q", opt.MinAge, opt.MaxAge)
 		}
-		fs.Debugf(nil, "--max-age %v to %v", f.Opt.MaxAge, f.ModTimeFrom)
 	}
 	if f.Opt.HashFilter != "" {
 		f.hashFilterK, f.hashFilterN, err = parseHashFilter(f.Opt.HashFilter)
 		if err != nil {
 			return nil, err
 		}
-		fs.Debugf(nil, "Using --hash-filter %d/%d", f.hashFilterK, f.hashFilterN)
 	}
 
 	err = parseRules(&f.Opt.RulesOpt, f.Add, f.Clear)
