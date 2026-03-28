@@ -37,7 +37,7 @@ type uploadSession struct {
 }
 
 const (
-	maxChunkSize     = 1 * 1024 * 1024 * 1024 // 1 Go (max API)
+	maxChunkSize     = 1 * 1000 * 1000 * 1000 // 1 Go (max API)
 	defaultChunkSize = 20 * 1024 * 1024       // 20 Mo
 	maxChunks        = 10000                  // Limit API
 	mebi             = 1024 * 1024
