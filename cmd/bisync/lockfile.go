@@ -128,9 +128,7 @@ func (b *bisyncRun) startLockRenewal() func() {
 	}
 	stopLockRenewal := make(chan struct{})
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		ticker := time.NewTicker(time.Duration(b.opt.MaxLock) - time.Minute)
 		for {
 			select {
@@ -141,7 +139,7 @@ func (b *bisyncRun) startLockRenewal() func() {
 				return
 			}
 		}
-	}()
+	})
 	return func() {
 		close(stopLockRenewal)
 		wg.Wait()

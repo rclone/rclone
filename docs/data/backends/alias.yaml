@@ -1,0 +1,16 @@
+backend: alias
+name: Alias
+tier: Tier 1
+maintainers: Core
+features_score: 7
+integration_tests: Passing
+data_integrity: Hash
+performance: High
+adoption: Widely used
+docs: Full
+security: High
+virtual: true
+remote: null
+features: null
+hashes: null
+precision: null

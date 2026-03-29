@@ -190,7 +190,7 @@ Properties:
 
 Account ID
 
-Leave this blank normally, rclone will fill it in automatically.
+Leave this blank normally unless you wish to specify a Workspace ID.
 
 
 Properties:
@@ -210,6 +210,81 @@ Properties:
 - Env Var:     RCLONE_DRIME_LIST_CHUNK
 - Type:        int
 - Default:     1000
+
+#### --drime-hard-delete
+
+Delete files permanently rather than putting them into the trash.
+
+Properties:
+
+- Config:      hard_delete
+- Env Var:     RCLONE_DRIME_HARD_DELETE
+- Type:        bool
+- Default:     false
+
+#### --drime-upload-cutoff
+
+Cutoff for switching to chunked upload.
+
+Any files larger than this will be uploaded in chunks of chunk_size.
+The minimum is 0 and the maximum is 5 GiB.
+
+Properties:
+
+- Config:      upload_cutoff
+- Env Var:     RCLONE_DRIME_UPLOAD_CUTOFF
+- Type:        SizeSuffix
+- Default:     200Mi
+
+#### --drime-chunk-size
+
+Chunk size to use for uploading.
+
+When uploading files larger than upload_cutoff or files with unknown
+size (e.g. from "rclone rcat" or uploaded with "rclone mount" or google
+photos or google docs) they will be uploaded as multipart uploads
+using this chunk size.
+
+Note that "--drime-upload-concurrency" chunks of this size are buffered
+in memory per transfer.
+
+If you are transferring large files over high-speed links and you have
+enough memory, then increasing this will speed up the transfers.
+
+Rclone will automatically increase the chunk size when uploading a
+large file of known size to stay below the 10,000 chunks limit.
+
+Files of unknown size are uploaded with the configured
+chunk_size. Since the default chunk size is 5 MiB and there can be at
+most 10,000 chunks, this means that by default the maximum size of
+a file you can stream upload is 48 GiB.  If you wish to stream upload
+larger files then you will need to increase chunk_size.
+
+
+Properties:
+
+- Config:      chunk_size
+- Env Var:     RCLONE_DRIME_CHUNK_SIZE
+- Type:        SizeSuffix
+- Default:     5Mi
+
+#### --drime-upload-concurrency
+
+Concurrency for multipart uploads and copies.
+
+This is the number of chunks of the same file that are uploaded
+concurrently for multipart uploads and copies.
+
+If you are uploading small numbers of large files over high-speed links
+and these uploads do not fully utilize your bandwidth, then increasing
+this may help to speed up the transfers.
+
+Properties:
+
+- Config:      upload_concurrency
+- Env Var:     RCLONE_DRIME_UPLOAD_CONCURRENCY
+- Type:        int
+- Default:     4
 
 #### --drime-encoding
 

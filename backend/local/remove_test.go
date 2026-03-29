@@ -33,12 +33,10 @@ func TestRemove(t *testing.T) {
 	assert.True(t, exists())
 	// close the file in the background
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		time.Sleep(250 * time.Millisecond)
 		require.NoError(t, fd.Close())
-	}()
+	})
 	// delete the open file
 	err = remove(name)
 	require.NoError(t, err)

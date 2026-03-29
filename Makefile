@@ -146,6 +146,7 @@ MANUAL.txt:	MANUAL.md
 
 commanddocs: rclone
 	go generate ./lib/transform
+	go generate ./cmd/bisync
 	-@rmdir -p '$$HOME/.config/rclone'
 	XDG_CACHE_HOME="" XDG_CONFIG_HOME="" HOME="\$$HOME" USER="\$$USER" rclone gendocs --config=/notfound docs/content/
 	@[ ! -e '$$HOME' ] || (echo 'Error: created unwanted directory named $$HOME' && exit 1)
@@ -215,6 +216,12 @@ beta:
 	go run bin/cross-compile.go $(BUILD_FLAGS) $(BUILDTAGS) $(BUILD_ARGS) $(TAG)
 	rclone -v copy build/ pub.rclone.org:/$(TAG)
 	@echo Beta release ready at https://pub.rclone.org/$(TAG)/
+
+privatebeta:
+	go run bin/cross-compile.go $(BUILD_FLAGS) $(BUILDTAGS) $(BUILD_ARGS) -include '^(darwin|windows|linux)/(arm64|amd64)$$' $(TAG)
+	rclone -Pv copy build/ private-downloads:/beta/$(TAG)
+	@echo Private beta release ready at private-downloads:/beta/$(TAG)/
+	rclone link private-downloads:/beta/$(TAG)
 
 log_since_last_release:
 	git log $(LAST_TAG)..

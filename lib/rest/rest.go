@@ -16,7 +16,6 @@ import (
 	"net/http"
 	"net/textproto"
 	"net/url"
-	"strings"
 	"sync"
 
 	"github.com/rclone/rclone/fs"
@@ -216,6 +215,22 @@ func ClientWithNoRedirects(c *http.Client) *http.Client {
 	return &clientCopy
 }
 
+// PreserveMethodRedirectFn is a CheckRedirect function that
+// preserves the original HTTP method on redirects.
+//
+// By default Go's http.Client changes the method to GET on 301, 302,
+// and 303 redirects. This function overrides that behaviour so the
+// original method (e.g. PROPFIND being preserved across a 307) is kept.
+func PreserveMethodRedirectFn(req *http.Request, via []*http.Request) error {
+	if len(via) >= 10 {
+		return errors.New("stopped after 10 redirects")
+	}
+	if len(via) > 0 {
+		req.Method = via[0].Method
+	}
+	return nil
+}
+
 // Do calls the internal http.Client.Do method
 func (api *Client) Do(req *http.Request) (*http.Response, error) {
 	return api.c.Do(req)
@@ -374,26 +389,11 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 	return resp, nil
 }
 
-var quoteEscaper = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")
-
-func escapeQuotes(s string) string {
-	return quoteEscaper.Replace(s)
-}
-
-// multipartFileContentDisposition returns the value of a Content-Disposition header
-// with the provided field name and file name.
-func multipartFileContentDisposition(fieldname, filename string) string {
-	return fmt.Sprintf(`form-data; name="%s"; filename="%s"`,
-		escapeQuotes(fieldname), escapeQuotes(filename))
-}
-
 // CreateFormFile is a convenience wrapper around [Writer.CreatePart]. It creates
 // a new form-data header with the provided field name and file name.
 func CreateFormFile(w *multipart.Writer, fieldname, filename, contentType string) (io.Writer, error) {
 	h := make(textproto.MIMEHeader)
-	// FIXME when go1.24 is no longer supported, change to
-	// multipart.FileContentDisposition and remove definition above
-	h.Set("Content-Disposition", multipartFileContentDisposition(fieldname, filename))
+	h.Set("Content-Disposition", multipart.FileContentDisposition(fieldname, filename))
 	if contentType != "" {
 		h.Set("Content-Type", contentType)
 	}

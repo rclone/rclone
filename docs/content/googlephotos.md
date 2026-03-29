@@ -659,8 +659,14 @@ second that each client_id can do set by Google.
 If there is a problem with this client_id (eg quota too low or the
 client_id stops working) then you can make your own.
 
-Please follow the steps in [the google drive docs](https://rclone.org/drive/#making-your-own-client-id).
-You will need these scopes instead of the drive ones detailed:
+Please follow the steps in [the google drive docs](https://rclone.org/drive/#making-your-own-client-id)
+with the following differences:
+
+- At step 3, instead of enabling the "Google Drive API", search for and
+  enable the "Photos Library API".
+
+- At step 5, you will need to add different scopes. Use these scopes
+  instead of the drive ones:
 
 ```text
 https://www.googleapis.com/auth/photoslibrary.appendonly

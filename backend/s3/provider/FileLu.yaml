@@ -15,7 +15,7 @@ endpoint:
 acl: {}
 bucket_acl: true
 quirks:
-  list_version: 1
+  list_version: 2
   force_path_style: true
   list_url_encode: false
   use_multipart_etag: false

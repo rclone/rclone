@@ -1,0 +1,120 @@
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Tier</th>
+      <th>Hash</th>
+      <th>ModTime</th>
+      <th>Case Insensitive</th>
+      <th>Duplicate Files</th>
+      <th>MIME Type</th>
+      <th>Metadata</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{ range sort site.Data.backends "name" "asc" }}
+    {{ if .virtual }}{{ continue }} {{ end }}
+    <tr>
+      <td style="font-weight: bold;">
+          <a href="/{{ .backend | urlize }}">{{ .name }}</a>
+      </td>
+      
+      {{/* Tier Column */}}
+      <td>
+        {{ partial "tier.html" (dict "name" .backend "align" false) }}
+      </td>
+      
+      {{/* Hash Column */}}
+      <td>
+        {{ $local := in .features "IsLocal" }}
+        {{ if $local }}
+          <b>ALL</b>
+        {{ else }}
+          {{ with .hashes }}
+          {{ delimit . ", " }}
+        {{ else }}
+          -
+        {{ end }}
+        {{ end }}
+      </td>
+
+      {{/* ModTime */}}
+      <td>
+        {{ $d := or (in .features "MkdirMetadata") (in .features "DirSetModTime") }}
+        {{ $r := true }} {{/* FIXME don't have a way of reading this from the features */}}
+        {{ $w := and (isset . "precision") (le .precision 1000000000) }}
+        {{- if $d -}}
+          D
+        {{- end -}}
+        {{ if and $r $w -}}
+          R/W
+        {{- else if $r -}}
+          R
+        {{- else if $w -}}
+          W
+        {{- else -}}
+          -
+        {{- end -}}
+      </td>
+
+      {{/* Case Insensitive */}}
+      <td>
+        {{ partial "bool.html" (in .features "CaseInsensitive") }}
+      </td>
+
+      {{/* Duplicate Files */}}
+      <td>
+        {{ partial "bool.html" (in .features "DuplicateFiles") }}
+      </td>
+
+      {{/* MIME Type Synthesis */}}
+      <td>
+        {{ $r := in .features "ReadMimeType" }}
+        {{ $w := in .features "WriteMimeType" }}
+        {{ if and $r $w }}
+          R/W
+        {{ else if $r }}
+          R
+        {{ else if $w }}
+          W
+        {{ else }}
+          -
+        {{ end }}
+      </td>
+
+      {{/* Metadata Synthesis */}}
+      <td>
+        {{ $meta := "" }}
+        
+        {{/* Check Directory Metadata Support */}}
+        {{ if or (in .features "ReadDirMetadata") (in .features "WriteDirMetadata") }}
+          {{ $meta = "D" }}
+        {{ end }}
+
+        {{/* Check System Metadata Read */}}
+        {{ if in .features "ReadMetadata" }}
+          {{ $meta = print $meta "R" }}
+        {{ end }}
+
+        {{/* Check System Metadata Write */}}
+        {{ if in .features "WriteMetadata" }}
+          {{ $meta = print $meta "W" }}
+        {{ end }}
+
+        {{/* Check User Metadata Support */}}
+        {{ if in .features "UserMetadata" }}
+          {{ $meta = print $meta "U" }}
+        {{ end }}
+
+        {{/* Output result or hyphen if empty */}}
+        {{ if eq $meta "" }}
+          -
+        {{ else }}
+          {{ $meta }}
+        {{ end }}
+      </td>
+
+    </tr>
+    {{ end }}
+  </tbody>
+</table>

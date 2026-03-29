@@ -1,0 +1,26 @@
+backend: googlecloudstorage
+name: Google Cloud Storage
+tier: Tier 1
+maintainers: Core
+features_score: 6
+integration_tests: Passing
+data_integrity: Hash
+performance: High
+adoption: Widely used
+docs: Full
+security: High
+virtual: false
+remote: 'TestGoogleCloudStorage:'
+features:
+- BucketBased
+- BucketBasedRootOK
+- CanHaveEmptyDirectories
+- Copy
+- ListP
+- ListR
+- PutStream
+- ReadMimeType
+- WriteMimeType
+hashes:
+- md5
+precision: 1

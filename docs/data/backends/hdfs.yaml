@@ -1,0 +1,22 @@
+backend: hdfs
+name: HDFS
+tier: Tier 2
+maintainers: Core
+features_score: 4
+integration_tests: Passing
+data_integrity: Modtime
+performance: Medium
+adoption: Some use
+docs: Full
+security: High
+virtual: false
+remote: 'TestHdfs:'
+features:
+- About
+- CanHaveEmptyDirectories
+- DirMove
+- Move
+- Purge
+- PutStream
+hashes: []
+precision: 1000000000

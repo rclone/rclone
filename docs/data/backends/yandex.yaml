@@ -1,0 +1,27 @@
+backend: yandex
+name: Yandex
+tier: Tier 1
+maintainers: External
+features_score: 5
+integration_tests: Passing
+data_integrity: Hash
+performance: High
+adoption: Often used
+docs: Full
+security: High
+virtual: false
+remote: 'TestYandex:'
+features:
+- About
+- CanHaveEmptyDirectories
+- CleanUp
+- Copy
+- DirMove
+- Move
+- PublicLink
+- Purge
+- PutStream
+- ReadMimeType
+hashes:
+- md5
+precision: 1

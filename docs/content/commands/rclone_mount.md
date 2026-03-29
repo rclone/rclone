@@ -78,7 +78,7 @@ at all, then 1 PiB is set as both the total and the free size.
 ## Installing on Windows
 
 To run `rclone mount on Windows`, you will need to
-download and install [WinFsp](http://www.secfs.net/winfsp/).
+download and install [WinFsp](https://winfsp.dev).
 
 [WinFsp](https://github.com/winfsp/winfsp) is an open-source
 Windows File System Proxy which makes it easy to write user space file
@@ -336,7 +336,7 @@ full new copy of the file.
 When mounting with `--read-only`, attempts to write to files will fail *silently*
 as opposed to with a clear warning as in macFUSE.
 
-## Mounting on Linux
+# Mounting on Linux
 
 On newer versions of Ubuntu, you may encounter the following error when running
 `rclone mount`:

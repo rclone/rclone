@@ -1,0 +1,30 @@
+backend: pikpak
+name: Pikpak
+tier: Tier 1
+maintainers: External
+features_score: 5
+integration_tests: Passing
+data_integrity: Hash
+performance: High
+adoption: Often used
+docs: Full
+security: High
+virtual: false
+remote: 'TestPikPak:'
+features:
+- About
+- CanHaveEmptyDirectories
+- CleanUp
+- Command
+- Copy
+- DirCacheFlush
+- DirMove
+- Move
+- NoMultiThreading
+- PublicLink
+- Purge
+- ReadMimeType
+- UserInfo
+hashes:
+- md5
+precision: 3153600000000000000

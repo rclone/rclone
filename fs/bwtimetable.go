@@ -90,14 +90,14 @@ func validateHour(HHMM string) error {
 		return fmt.Errorf("invalid hour in time specification %q: %v", HHMM, err)
 	}
 	if hh < 0 || hh > 23 {
-		return fmt.Errorf("invalid hour (must be between 00 and 23): %q", hh)
+		return fmt.Errorf("invalid hour (must be between 00 and 23): %d", hh)
 	}
 	mm, err := strconv.Atoi(HHMM[3:])
 	if err != nil {
 		return fmt.Errorf("invalid minute in time specification: %q: %v", HHMM, err)
 	}
 	if mm < 0 || mm > 59 {
-		return fmt.Errorf("invalid minute (must be between 00 and 59): %q", hh)
+		return fmt.Errorf("invalid minute (must be between 00 and 59): %d", mm)
 	}
 	return nil
 }

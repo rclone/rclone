@@ -47,6 +47,7 @@ See the following for detailed instructions for
 - [Dropbox](/dropbox/)
 - [Enterprise File Fabric](/filefabric/)
 - [FileLu Cloud Storage](/filelu/)
+- [Filen](/filen/)
 - [Files.com](/filescom/)
 - [FTP](/ftp/)
 - [Gofile](/gofile/)
@@ -60,6 +61,7 @@ See the following for detailed instructions for
 - [HTTP](/http/)
 - [iCloud Drive](/iclouddrive/)
 - [Internet Archive](/internetarchive/)
+- [Internxt](/internxt/)
 - [Jottacloud](/jottacloud/)
 - [Koofr](/koofr/)
 - [Linkbox](/linkbox/)
@@ -90,7 +92,6 @@ See the following for detailed instructions for
 - [SugarSync](/sugarsync/)
 - [Union](/union/)
 - [Uloz.to](/ulozto/)
-- [Uptobox](/uptobox/)
 - [WebDAV](/webdav/)
 - [Yandex Disk](/yandex/)
 - [Zoho WorkDrive](/zoho/)
@@ -2959,6 +2960,10 @@ modified time. In cases such as a local to remote sync using `--update`,
 knowing the local file is newer than the time it was last uploaded to the
 remote is sufficient. In those cases, this flag can speed up the process and
 reduce the number of API calls necessary.
+
+This flag is only supported on certain backends and will be silently
+ignored on unsupported backends. Supported backends include
+`azureblob`, `oracleobjectstorage`, `s3`, `swift`.
 
 Using this flag on a sync operation without also using `--update` would cause
 all files modified at any time other than the last upload time to be uploaded

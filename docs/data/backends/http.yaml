@@ -1,0 +1,20 @@
+backend: http
+name: HTTP
+tier: Tier 3
+maintainers: Core
+features_score: 0
+integration_tests: N/A
+data_integrity: Other
+performance: High
+adoption: Widely used
+docs: Full
+security: Varies
+virtual: false
+remote: ':http,url=''http://downloads.rclone.org'':'
+features:
+- CanHaveEmptyDirectories
+- Command
+- PutStream
+- ReadMetadata
+hashes: []
+precision: 1000000000
