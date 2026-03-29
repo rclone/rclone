@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func newTestBisyncRun(t *testing.T, lockContent string, maxLock fs.Duration) *bisyncRun {
+func newTestLockfileBisyncRun(t *testing.T, lockContent string, maxLock fs.Duration) *bisyncRun {
 	t.Helper()
 	dir := t.TempDir()
 	lockPath := filepath.Join(dir, "test.lck")
@@ -31,17 +31,17 @@ func newTestBisyncRun(t *testing.T, lockContent string, maxLock fs.Duration) *bi
 	}
 }
 
-func TestLockFileIsExpired_GarbledWithMaxLock(t *testing.T) {
-	b := newTestBisyncRun(t, "not json!!!", fs.Duration(5*time.Minute))
-	assert.True(t, b.lockFileIsExpired(), "garbled lockfile with --max-lock set should be treated as expired")
+func TestLockfileIsExpired_UnreadableWithMaxLock(t *testing.T) {
+	b := newTestLockfileBisyncRun(t, "not json!!!", fs.Duration(5*time.Minute))
+	assert.True(t, b.lockFileIsExpired(), "unreadable lockfile with --max-lock set should be treated as expired")
 }
 
-func TestLockFileIsExpired_GarbledWithoutMaxLock(t *testing.T) {
-	b := newTestBisyncRun(t, "not json!!!", basicallyforever)
-	assert.False(t, b.lockFileIsExpired(), "garbled lockfile without --max-lock should not be treated as expired")
+func TestLockfileIsExpired_UnreadableWithoutMaxLock(t *testing.T) {
+	b := newTestLockfileBisyncRun(t, "not json!!!", basicallyforever)
+	assert.False(t, b.lockFileIsExpired(), "unreadable lockfile without --max-lock should not be treated as expired")
 }
 
-func TestLockFileIsExpired_ValidExpired(t *testing.T) {
+func TestLockfileIsExpired_ValidExpired(t *testing.T) {
 	data := struct {
 		Session     string
 		PID         string
@@ -56,11 +56,11 @@ func TestLockFileIsExpired_ValidExpired(t *testing.T) {
 	content, err := json.Marshal(data)
 	require.NoError(t, err)
 
-	b := newTestBisyncRun(t, string(content), fs.Duration(5*time.Minute))
+	b := newTestLockfileBisyncRun(t, string(content), fs.Duration(5*time.Minute))
 	assert.True(t, b.lockFileIsExpired(), "valid lockfile with past expiry should be expired")
 }
 
-func TestLockFileIsExpired_ValidNotExpired(t *testing.T) {
+func TestLockfileIsExpired_ValidNotExpired(t *testing.T) {
 	data := struct {
 		Session     string
 		PID         string
@@ -75,6 +75,6 @@ func TestLockFileIsExpired_ValidNotExpired(t *testing.T) {
 	content, err := json.Marshal(data)
 	require.NoError(t, err)
 
-	b := newTestBisyncRun(t, string(content), fs.Duration(5*time.Minute))
+	b := newTestLockfileBisyncRun(t, string(content), fs.Duration(5*time.Minute))
 	assert.False(t, b.lockFileIsExpired(), "valid lockfile with future expiry should not be expired")
 }

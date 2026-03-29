@@ -110,12 +110,12 @@ func (b *bisyncRun) lockFileIsExpired() bool {
 		b.handleErr(b.lockFile, "error closing file", rdf.Close(), true, true)
 		if decodeErr != nil {
 			if b.opt.MaxLock < basicallyforever {
-				fs.Infof(b.lockFile, Color(terminal.YellowFg, "Lock file is garbled (decode error: %v) and --max-lock is set. Treating as expired."), decodeErr)
+				fs.Infof(b.lockFile, Color(terminal.YellowFg, "Lock file is unreadable (decode error: %v) and --max-lock is set. Treating as expired."), decodeErr)
 				markFailed(b.listing1)
 				markFailed(b.listing2)
 				return true
 			}
-			fs.Errorf(b.lockFile, Color(terminal.RedFg, "Lock file is garbled (decode error: %v). Cannot determine expiration. Manual inspection required."), decodeErr)
+			fs.Errorf(b.lockFile, Color(terminal.RedFg, "Lock file exists, but contents are unreadable. (decode error: %v)"), decodeErr)
 			return false
 		}
 		if !b.lockFileOpt.data.TimeExpires.IsZero() && b.lockFileOpt.data.TimeExpires.Before(time.Now()) {
