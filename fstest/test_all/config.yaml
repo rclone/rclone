@@ -688,3 +688,9 @@ backends:
      - cmd/bisync
    fastlist: false
    extratime: 2.0
+ - backend: "kdrive"
+   remote: "TestKdrive:"
+   fastlist: true
+   ignoretests:
+     - cmd/bisync
+     - cmd/gitannex

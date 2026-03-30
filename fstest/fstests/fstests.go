@@ -2025,6 +2025,11 @@ func Run(t *testing.T, opt *Opt) {
 							t.Log("treating accountUpgradeRequired as success for PublicLink")
 							link, err = "bogus link to "+remote, nil
 						}
+						// For Kdrive, link expiry is a premium feature
+						if fsInfo.Name == "kdrive" && strings.Contains(err.Error(), "forbidden_error") && strings.Contains(err.Error(), "expiration date") {
+							t.Log("treating forbidden on expiration date as success for PublicLink")
+							link, err = "bogus link to "+remote, nil
+						}
 						return
 					}
 				}
