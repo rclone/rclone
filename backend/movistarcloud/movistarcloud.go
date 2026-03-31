@@ -850,59 +850,46 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 		return fmt.Errorf("invalid directory ID %q: %w", directoryID, err)
 	}
 
-	// Read all data first since we need it for the multipart upload
-	// and to determine the actual size for unknown-size uploads
-	data, err := io.ReadAll(in)
-	if err != nil {
-		return fmt.Errorf("failed to read upload data: %w", err)
+	// For unknown-size uploads, we must buffer to determine the actual
+	// size because the API metadata requires the file size up front.
+	if size < 0 {
+		data, err := io.ReadAll(in)
+		if err != nil {
+			return fmt.Errorf("failed to read upload data: %w", err)
+		}
+		size = int64(len(data))
+		in = bytes.NewReader(data)
 	}
-	actualSize := int64(len(data))
 
 	encodedName := o.fs.opt.Enc.FromStandardName(leaf)
 
 	metadata := api.UploadMetadata{
 		Data: api.UploadMetadataData{
 			Name:             encodedName,
-			Size:             actualSize,
+			Size:             size,
 			ModificationDate: api.BasicISO(modTime),
 			ContentType:      "application/octet-stream",
 			FolderID:         folderID,
 		},
 	}
-	metadataJSON, err := json.Marshal(metadata)
-	if err != nil {
-		return fmt.Errorf("failed to marshal upload metadata: %w", err)
+
+	// Use rest.Opts multipart support which streams the file content
+	// through an io.Pipe, avoiding buffering the entire file in memory.
+	contentLength := size
+	opts := rest.Opts{
+		Method:                "POST",
+		Path:                  "/sapi/upload?action=save&acceptasynchronous=true",
+		Body:                  in,
+		ContentLength:         &contentLength,
+		MultipartMetadataName: "data",
+		MultipartContentName:  "file",
+		MultipartFileName:     encodedName,
+		MultipartContentType:  "application/octet-stream",
 	}
 
-	boundary := "----RcloneFormBoundary" + strconv.FormatInt(time.Now().UnixNano(), 36)
-
 	var result api.UploadResponse
-	err = o.fs.pacer.Call(func() (bool, error) {
-		// Build multipart body inside the retry loop so it's fresh each attempt
-		var body bytes.Buffer
-
-		// Metadata part
-		body.WriteString("--" + boundary + "\r\n")
-		body.WriteString("Content-Disposition: form-data; name=\"data\"\r\n\r\n")
-		body.Write(metadataJSON)
-		body.WriteString("\r\n")
-
-		// File part
-		body.WriteString("--" + boundary + "\r\n")
-		body.WriteString(fmt.Sprintf("Content-Disposition: form-data; name=\"file\"; filename=\"%s\"\r\n", encodedName))
-		body.WriteString("Content-Type: application/octet-stream\r\n\r\n")
-		body.Write(data)
-		body.WriteString("\r\n")
-		body.WriteString("--" + boundary + "--\r\n")
-
-		opts := rest.Opts{
-			Method:      "POST",
-			Path:        "/sapi/upload?action=save&acceptasynchronous=true",
-			Body:        &body,
-			ContentType: "multipart/form-data; boundary=" + boundary,
-		}
-
-		resp, err := o.fs.upSrv.CallJSON(ctx, &opts, nil, &result)
+	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
+		resp, err := o.fs.upSrv.CallJSON(ctx, &opts, &metadata, &result)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
@@ -917,7 +904,7 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 
 	// Update the object metadata
 	o.id = result.ID
-	o.size = actualSize
+	o.size = size
 	o.modTime = modTime
 	o.hasMetaData = true
 
@@ -1010,33 +997,31 @@ func (f *Fs) getFileInfoByID(ctx context.Context, fileID int64, fields []string)
 // because the Movistar Cloud API silently refuses to change a file's
 // extension via save-metadata rename.
 func (f *Fs) moveByReupload(ctx context.Context, srcObj *Object, remote, dstLeaf, dstDirectoryID string) (*Object, error) {
-	// Download the file contents
+	// Stream the download directly into the upload to avoid buffering
+	// the entire file in memory.
 	reader, err := srcObj.Open(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("move reupload: failed to download source: %w", err)
 	}
-	data, err := io.ReadAll(reader)
-	_ = reader.Close()
-	if err != nil {
-		return nil, fmt.Errorf("move reupload: failed to read source: %w", err)
-	}
+	defer reader.Close()
 
 	modTime := srcObj.modTime
+	size := srcObj.size
 
-	// Delete the original file
-	err = srcObj.Remove(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("move reupload: failed to delete source: %w", err)
-	}
-
-	// Upload with the new name
+	// Upload with the new name, streaming from the source download
 	dstObj := &Object{
 		fs:     f,
 		remote: remote,
 	}
-	err = dstObj.upload(ctx, bytes.NewReader(data), dstLeaf, dstDirectoryID, int64(len(data)), modTime)
+	err = dstObj.upload(ctx, reader, dstLeaf, dstDirectoryID, size, modTime)
 	if err != nil {
 		return nil, fmt.Errorf("move reupload: failed to upload: %w", err)
+	}
+
+	// Delete the original file after successful upload
+	err = srcObj.Remove(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("move reupload: failed to delete source: %w", err)
 	}
 
 	return dstObj, nil
