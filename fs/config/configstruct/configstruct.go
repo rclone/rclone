@@ -31,7 +31,7 @@ func camelToSnake(in string) string {
 //
 // Builtin types are expected to be encoding as their natural
 // stringificatons as produced by fmt.Sprint except for []string which
-// is expected to be encoded a a CSV with empty array encoded as "".
+// is expected to be encoded as a CSV with empty array encoded as "".
 //
 // Any other types are expected to be encoded by their String()
 // methods and decoded by their `Set(s string) error` methods.
@@ -93,7 +93,7 @@ func StringToInterface(def any, in string) (newValue any, err error) {
 //
 // Builtin types are expected to be encoding as their natural
 // stringificatons as produced by fmt.Sprint except for []string which
-// is expected to be encoded a a CSV with empty array encoded as "".
+// is expected to be encoded as a CSV with empty array encoded as "".
 //
 // Any other types are expected to be encoded by their String()
 // methods and decoded by their `Set(s string) error` methods.
@@ -163,7 +163,7 @@ type Item struct {
 // struct, otherwise they will be embedded as they are.
 func Items(opt any) (items []Item, err error) {
 	def := reflect.ValueOf(opt)
-	if def.Kind() != reflect.Ptr {
+	if def.Kind() != reflect.Pointer {
 		return nil, errors.New("argument must be a pointer")
 	}
 	def = def.Elem() // indirect the pointer

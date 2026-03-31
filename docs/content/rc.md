@@ -1372,7 +1372,7 @@ rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint mountType=m
 rclone rc mount/mount fs=TestDrive: mountPoint=/mnt/tmp vfsOpt='{"CacheMode": 2}' mountOpt='{"AllowOther": true}'
 ```
 
-The vfsOpt are as described in options/get and can be seen in the the
+The vfsOpt are as described in options/get and can be seen in the
 "vfs" section when running and the mountOpt can be seen in the "mount" section:
 
 ```console
@@ -1697,6 +1697,40 @@ Example:
             "v1b_OlWCJO9LtNq3EIKkNQ==  bisect-go-rclone.sh",
             "VHbmHzHh4taXzgag8BAIKQ==  bisect-rclone.sh",
         ]
+    }
+
+See the [hashsum](/commands/rclone_hashsum/) command for more information on the above.
+
+**Authentication is required for this call.**
+
+### operations/hashsumfile: Produces a hash for a single file. {#operations-hashsumfile}
+
+Produces a hash for a single file using the hash named.
+
+This takes the following parameters:
+
+- fs - a remote name string e.g. "drive:"
+- remote - a path within that remote e.g. "file.txt"
+- hashType - type of hash to be used
+- download - check by downloading rather than with hash (boolean)
+- base64 - output the hashes in base64 rather than hex (boolean)
+
+If you supply the download flag, it will download the data from the
+remote and create the hash on the fly. This can be useful for remotes
+that don't support the given hash or if you really want to read all
+the data.
+
+Returns:
+
+- hash - hash for the file
+- hashType - type of hash used
+
+Example:
+
+    $ rclone rc --loopback operations/hashsumfile fs=/ remote=/bin/bash hashType=MD5 download=true base64=true
+    {
+        "hashType": "md5",
+        "hash": "MDMw-fG2YXs7Uz5Nz-H68A=="
     }
 
 See the [hashsum](/commands/rclone_hashsum/) command for more information on the above.

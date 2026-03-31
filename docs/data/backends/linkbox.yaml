@@ -1,0 +1,20 @@
+backend: linkbox
+name: Linkbox
+tier: Tier 5
+maintainers: Core
+features_score: 2
+integration_tests: Failing
+data_integrity: Modtime
+performance: High
+adoption: Often used
+docs: Basic
+security: High
+virtual: false
+remote: 'TestLinkbox:'
+features:
+- CanHaveEmptyDirectories
+- CaseInsensitive
+- DirCacheFlush
+- Purge
+hashes: []
+precision: 3153600000000000000

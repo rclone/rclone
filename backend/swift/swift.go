@@ -54,7 +54,7 @@ var SharedOptions = []fs.Option{{
 	Name: "chunk_size",
 	Help: strings.ReplaceAll(`Above this size files will be chunked.
 
-Above this size files will be chunked into a a |`+segmentsContainerSuffix+`| container
+Above this size files will be chunked into a |`+segmentsContainerSuffix+`| container
 or a |`+segmentsDirectory+`| directory. (See the |use_segments_container| option
 for more info). Default for this is 5 GiB which is its maximum value, which
 means only files above this size will be chunked.

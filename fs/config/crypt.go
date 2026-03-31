@@ -77,8 +77,9 @@ func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 		if strings.HasPrefix(l, "RCLONE_ENCRYPT_V") {
 			return nil, errors.New("unsupported configuration encryption - update rclone for support")
 		}
+		// Restore non-seekable plain-text stream to its original state
 		if _, err := b.Seek(0, io.SeekStart); err != nil {
-			return nil, err
+			return io.MultiReader(strings.NewReader(l+"\n"), r), nil
 		}
 		return b, nil
 	}
@@ -179,7 +180,7 @@ func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 
 // GetPasswordCommand gets the password using the --password-command setting
 //
-// If the the --password-command flag was not in use it returns "", nil
+// If the --password-command flag was not in use it returns "", nil
 func GetPasswordCommand(ctx context.Context) (pass string, err error) {
 	ci := fs.GetConfig(ctx)
 	if len(ci.PasswordCommand) == 0 {

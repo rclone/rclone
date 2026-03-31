@@ -225,7 +225,7 @@ func fromTypes(set Set) (map[Type]hash.Hash, error) {
 // single multiwriter, where one write will update all
 // the hashers.
 func toMultiWriter(h map[Type]hash.Hash) io.Writer {
-	// Convert to to slice
+	// Convert to slice
 	var w = make([]io.Writer, 0, len(h))
 	for _, v := range h {
 		w = append(w, v)

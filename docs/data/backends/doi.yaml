@@ -1,0 +1,16 @@
+backend: doi
+name: Doi
+tier: Tier 2
+maintainers: External
+features_score: 0
+integration_tests: N/A
+data_integrity: Other
+performance: High
+adoption: Some use
+docs: Full
+security: High
+virtual: false
+remote: null
+features: null
+hashes: null
+precision: null

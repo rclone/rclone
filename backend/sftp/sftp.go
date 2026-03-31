@@ -519,6 +519,12 @@ Example:
 			Help: `URL for HTTP CONNECT proxy
 
 Set this to a URL for an HTTP proxy which supports the HTTP CONNECT verb.
+
+Supports the format http://user:pass@host:port, http://host:port, http://host.
+
+Example:
+
+    http://myUser:myPass@proxyhostname.example.com:8000
 `,
 			Advanced: true,
 		}, {
@@ -919,15 +925,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		opt.Port = "22"
 	}
 
-	// get proxy URL if set
-	if opt.HTTPProxy != "" {
-		proxyURL, err := url.Parse(opt.HTTPProxy)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse HTTP Proxy URL: %w", err)
-		}
-		f.proxyURL = proxyURL
-	}
-
+	// Set up sshConfig here from opt
+	// **NB** everything else should be setup in NewFsWithConnection
 	sshConfig := &ssh.ClientConfig{
 		User:            opt.User,
 		Auth:            []ssh.AuthMethod{},
@@ -1175,9 +1174,19 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 	f.mkdirLock = newStringLock()
 	f.pacer = fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant)))
 	f.savedpswd = ""
+
 	// set the pool drainer timer going
 	if f.opt.IdleTimeout > 0 {
 		f.drain = time.AfterFunc(time.Duration(f.opt.IdleTimeout), func() { _ = f.drainPool(ctx) })
+	}
+
+	// get proxy URL if set
+	if opt.HTTPProxy != "" {
+		proxyURL, err := url.Parse(opt.HTTPProxy)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse HTTP Proxy URL: %w", err)
+		}
+		f.proxyURL = proxyURL
 	}
 
 	f.features = (&fs.Features{
@@ -1249,7 +1258,7 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 			fs.Debugf(f, "Failed to resolve path using RealPath: %v", err)
 			cwd, err := c.sftpClient.Getwd()
 			if err != nil {
-				fs.Debugf(f, "Failed to to read current directory - using relative paths: %v", err)
+				fs.Debugf(f, "Failed to read current directory - using relative paths: %v", err)
 			} else {
 				f.absRoot = path.Join(cwd, f.root)
 				fs.Debugf(f, "Relative path joined with current directory to get absolute path %q", f.absRoot)

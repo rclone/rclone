@@ -13,6 +13,26 @@ docs](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html)).
 `--auth-key` is not provided then `serve s3` will allow anonymous
 access.
 
+Like all rclone flags `--auth-key` can be set via environment
+variables, in this case `RCLONE_AUTH_KEY`. Since this flag can be
+repeated, the input to `RCLONE_AUTH_KEY` is CSV encoded. Because the
+`accessKey,secretKey` has a comma in, this means it needs to be in
+quotes.
+
+```console
+export RCLONE_AUTH_KEY='"user,pass"'
+rclone serve s3 ...
+```
+
+Or to supply multiple identities:
+
+```console
+export RCLONE_AUTH_KEY='"user1,pass1","user2,pass2"'
+rclone serve s3 ...
+```
+
+Setting this variable without quotes will produce an error.
+
 Please note that some clients may require HTTPS endpoints. See [the
 SSL docs](#tls-ssl) for more information.
 

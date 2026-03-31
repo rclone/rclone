@@ -316,3 +316,47 @@ back again when transferring to a different storage system where the
 original characters are supported. When the same Unicode characters
 are intentionally used in file names, this replacement strategy leads
 to unwanted renames. Read more under section [caveats](/overview/#restricted-filenames-caveats).
+
+### Why does rclone fail to connect over TLS but another client works?
+
+If you see TLS handshake failures (or packet captures show the server
+rejecting all offered ciphers), the server/proxy may only support
+legacy TLS cipher suites (for example RSA key-exchange ciphers
+such as `RSA_WITH_AES_256_CBC_SHA256`, or old 3DES ciphers). Recent Go
+versions (which rclone is built with) have **removed insecure ciphers
+from the default list**, so rclone may refuse to negotiate them even
+if other tools still do.
+
+If you can't update/reconfigure the server/proxy to support modern TLS
+(TLS 1.2/1.3) and ECDHE-based cipher suites you can re-enable legacy
+ciphers via `GODEBUG`:
+
+- Windows (cmd.exe):
+
+  ```bat
+  set GODEBUG=tlsrsakex=1
+  rclone copy ...
+  ```
+
+- Windows (PowerShell):
+
+  ```powershell
+  $env:GODEBUG="tlsrsakex=1"
+  rclone copy ...
+  ```
+
+- Linux/macOS:
+
+  ```sh
+  GODEBUG=tlsrsakex=1 rclone copy ...
+  ```
+
+If the server only supports 3DES, try:
+
+```sh
+GODEBUG=tls3des=1 rclone ...
+```
+
+This applies to **any rclone feature using TLS** (HTTPS, FTPS, WebDAV
+over TLS, proxies with TLS interception, etc.). Use these workarounds
+only long enough to get the server/proxy updated.

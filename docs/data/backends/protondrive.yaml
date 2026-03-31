@@ -1,0 +1,27 @@
+backend: protondrive
+name: Proton Drive
+tier: Tier 5
+maintainers: None
+features_score: 4
+integration_tests: Failing
+data_integrity: Hash
+performance: High
+adoption: Often used
+docs: Full
+security: High
+virtual: false
+remote: 'TestProtonDrive:'
+features:
+- About
+- CanHaveEmptyDirectories
+- CleanUp
+- DirCacheFlush
+- DirMove
+- Disconnect
+- Move
+- NoMultiThreading
+- Purge
+- ReadMimeType
+hashes:
+- sha1
+precision: 1000000000

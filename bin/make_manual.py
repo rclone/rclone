@@ -23,6 +23,7 @@ docs = [
     "gui.md",
     "rc.md",
     "overview.md",
+    "tiers.md",
     "flags.md",
     "docker.md",
     "bisync.md",
@@ -43,9 +44,11 @@ docs = [
     "compress.md",
     "combine.md",
     "doi.md",
+    "drime.md",
     "dropbox.md",
     "filefabric.md",
     "filelu.md",
+    "filen.md",
     "filescom.md",
     "ftp.md",
     "gofile.md",
@@ -59,6 +62,7 @@ docs = [
     "imagekit.md",
     "iclouddrive.md",
     "internetarchive.md",
+    "internxt.md",
     "jottacloud.md",
     "koofr.md",
     "linkbox.md",
@@ -84,11 +88,11 @@ docs = [
     "protondrive.md",
     "seafile.md",
     "sftp.md",
+    "shade.md",
     "smb.md",
     "storj.md",
     "sugarsync.md",
     "ulozto.md",
-    "uptobox.md",
     "union.md",
     "webdav.md",
     "yandex.md",
@@ -140,7 +144,7 @@ def read_doc(doc):
         contents = fd.read()
     parts = contents.split("---\n", 2)
     if len(parts) != 3:
-        raise ValueError("Couldn't find --- markers: found %d parts" % len(parts))
+        raise ValueError(f"{doc}: Couldn't find --- markers: found {len(parts)} parts")
     contents = parts[2].strip()+"\n\n"
     # Remove icons
     contents = re.sub(r'<i class="fa.*?</i>\s*', "", contents)

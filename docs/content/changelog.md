@@ -6,6 +6,148 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.73.3 - 2026-03-23
+
+[See commits](https://github.com/rclone/rclone/compare/v1.73.2...v1.73.3)
+
+- Bug Fixes
+  - build
+    - Update to google.golang.org/grpc 1.79.3 to fix CVE-2026-33186 (dependabot[bot])
+    - Update to github.com/buger/jsonparser 1.1.2 to fix GHSA-6g7g-w4f8-9c9x (dependabot[bot])
+  - doc fixes
+    - Added text to the label showing version-introduced info (Jan-Philipp Reßler)
+    - Clarify Filen password change requires updating both password and API key in rclone config (Jason)
+    - s3: clarify multi tenant support for Cubbit (Marco Ferretti)
+    - jottacloud: Fix broken link (albertony)
+  - lib/rest: Fix URLPathEscapeAll breaking WebDAV servers (eg nzbdav) with strict path matching (Andrew Furman)
+  - list: Fix nil pointer panic in Sorter when temp file creation fails (Nick Craig-Wood)
+
+## v1.73.2 - 2026-03-06
+
+[See commits](https://github.com/rclone/rclone/compare/v1.73.1...v1.73.2)
+
+- Bug Fixes
+  - build
+    - Update to go 1.25.8 to fix CVE-2026-27137 CVE-2026-27138 CVE-2026-25679 CVE-2026-27142 (Nick Craig-Wood)
+    - Update github.com/cloudflare/circl to v1.6.3 to fix CVE-2026-1229 (Nick Craig-Wood)
+    - Update to golang.org/x/net v0.51.0 to fix CVE-2026-27141 (Nick Craig-Wood)
+  - docs fixes:
+    - bisync: Add group Sync to the bisync command (Jan-Philipp Reßler)
+    - Note that --use-server-modtime only works on some backends (Nick Craig-Wood)
+    - Document unsupported S3 object keys with double slashes (Adam Kasztenny)
+    - Fix headers hierarchy for mount.md (Dark Dragon)
+    - Fix new drive flag typo in changelog (razorloves)
+- Archive
+  - Extract: fix extraction with "./" prefix from tar entry paths (Varun Chawla)
+- Drime
+  - Fix chunk-uploaded files ignoring workspace ID (a1pcm)
+- Internxt
+  - Fix Entry doesn't belong in directory errors on windows (jzunigax2)
+- WebDAV
+  - Escape reserved characters in URL path segments (Varun Chawla)
+  - Add missing headers for CORS (Romāns Potašovs)
+
+## v1.73.1 - 2026-02-17
+
+[See commits](https://github.com/rclone/rclone/compare/v1.73.0...v1.73.1)
+
+- Bug Fixes
+  - accounting: Fix missing server side stats from core/stats rc (Nick Craig-Wood)
+  - build
+    - Fix CVE-2025-68121 by updating go to 1.25.7 or later (Nick Craig-Wood)
+    - Bump github.com/go-chi/chi/v5 from 5.2.3 to 5.2.5 to fix GO-2026-4316 (albertony)
+  - docs: Extend copyurl docs with an example of CSV FILENAMEs starting with a path. (Jack Kelly)
+  - march: Fix runtime: program exceeds 10000-thread limit (Nick Craig-Wood)
+  - pacer
+    - Fix deadlock between pacer token and --max-connections (Nick Craig-Wood)
+    - Re-read the sleep time as it may be stale (Nick Craig-Wood)
+- Drime
+  - Fix files and directories being created in the default workspace (Nick Craig-Wood)
+- Filelu
+  - Avoid buffering entire file in memory (kingston125)
+  - Add multipart upload support with configurable cutoff (kingston125)
+- Filen
+  - Fix 32 bit targets not being able to list directories (Enduriel)
+  - Fix potential panic in case of error during upload (Enduriel)
+- Internxt
+  - Implement re-login under refresh logic, improve retry logic (José Zúniga)
+-S3
+  - Set list_version to 2 for FileLu S3 configuration (kingston125)
+
+## v1.73.0 - 2026-01-30
+
+[See commits](https://github.com/rclone/rclone/compare/v1.72.0...v1.73.0)
+
+- New backends
+  - [Shade](/shade/) (jhasse-shade)
+  - [Drime](/drime/) (dougal)
+  - [Filen](/filen/) (Enduriel)
+  - [Internxt](/internxt/) (jzunigax2)
+  - New S3 providers
+    - [Bizfly Cloud Simple Storage](/s3/#bizflycloud) (vupn0712)
+- New Features
+  - docs: Add [Support Tiers](/tiers/) to the documentation (Nick Craig-Wood)
+  - rc: Add [operations/hashsumfile](/rc/#operations-hashsumfile) to sum a single file only (Nick Craig-Wood)
+  - serve webdav: Implement download directory as Zip (Leo)
+- Bug Fixes
+  - fs: fix bwlimit: correct reporting (Mikel Olasagasti Uranga)
+  - log: fix systemd adding extra newline (dougal)
+  - docs: fixes (albertony, darkdragon-001, Duncan Smart, hyusap, Marc-Philip, Nick Craig-Wood, vicerace, vyv03354, yuval-cloudinary, yy)
+  - serve s3: Make errors in `--s3-auth-key` fatal (Nick Craig-Wood)
+- Mount
+  - Fix OpenBSD mount support. (Nick Owens)
+- Azure Blob
+  - Add metadata and tags support across upload and copy paths (Cliff Frey)
+  - Factor the common auth into a library (Nick Craig-Wood)
+- Azurefiles
+  - Factor the common auth into a library (Nick Craig-Wood)
+- B2
+  - Support authentication with new bucket restricted application keys (DianaNites)
+- Drive
+  - Add `--drive-metadata-enforce-expansive-access` flag (Nick Craig-Wood)
+  - Fix crash when trying to creating shortcut to a Google doc (Nick Craig-Wood)
+- FTP
+  - Add http proxy authentication support (Nicolas Dessart)
+- Mega
+  - Reverts TLS workaround (necaran)
+- Memory
+  - Add `--memory-discard` flag for speed testing (Nick Craig-Wood)
+- OneDrive
+  - Fix cancelling multipart upload (Nick Craig-Wood)
+  - Fix setting modification time on directories for OneDrive Personal (Nick Craig-Wood)
+  - Fix OneDrive Personal no longer supports description (Nick Craig-Wood)
+  - Fix require sign in for OneDrive Personal (Nick Craig-Wood)
+  - Fix permissions on OneDrive Personal (Nick Craig-Wood)
+- Oracle Object Storage
+  - Eliminate unnecessary heap allocation (Qingwei Li)
+- Pcloud
+  - Add support for `ChangeNotify` to enable real-time updates in mount (masrlinu)
+- Protondrive
+  - Update to use forks of upstream modules to unblock development (Nick Craig-Wood)
+- S3
+  - Add ability to specify an IAM role for cross-account interaction (Vladislav Tropnikov)
+  - Linode: updated endpoints to use ISO 3166-1 alpha-2 standard (jbagwell-akamai)
+  - Fix Copy ignoring storage class (vupn0712)
+- SFTP
+  - Add http proxy authentication support (Nicolas Dessart)
+  - Eliminate unnecessary heap allocation (Qingwei Li)
+
+## v1.72.1 - 2025-12-10
+
+[See commits](https://github.com/rclone/rclone/compare/v1.72.0...v1.72.1)
+
+- Bug Fixes
+  - build: update to go1.25.5 to fix [CVE-2025-61729](https://pkg.go.dev/vuln/GO-2025-4155)
+  - doc fixes (Duncan Smart, Nick Craig-Wood)
+  - configfile: Fix piped config support (Jonas Tingeborn)
+  - log
+    - Fix PID not included in JSON log output (Tingsong Xu)
+    - Fix backtrace not going to the --log-file (Nick Craig-Wood)
+- Google Cloud Storage
+  - Improve endpoint parameter docs (Johannes Rothe)
+- S3
+  - Add missing regions for Selectel provider (Nick Craig-Wood)
+
 ## v1.72.0 - 2025-11-21
 
 [See commits](https://github.com/rclone/rclone/compare/v1.71.0...v1.72.0)

@@ -3,6 +3,7 @@ package s3
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"io"
 	"os"
 	"path"
@@ -125,15 +126,14 @@ func rmdirRecursive(p string, VFS *vfs.VFS) {
 	}
 }
 
-func authlistResolver(list []string) map[string]string {
+func authlistResolver(list []string) (map[string]string, error) {
 	authList := make(map[string]string)
 	for _, v := range list {
 		parts := strings.Split(v, ",")
 		if len(parts) != 2 {
-			fs.Infof(nil, "Ignored: invalid auth pair %s", v)
-			continue
+			return nil, errors.New("invalid auth pair: expecting a single comma")
 		}
 		authList[parts[0]] = parts[1]
 	}
-	return authList
+	return authList, nil
 }

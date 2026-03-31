@@ -3,6 +3,7 @@ package http
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 	"io"
@@ -56,6 +57,9 @@ var DefaultOpt = Options{
 
 // Opt is options set by command line flags
 var Opt = DefaultOpt
+
+//go:embed favicon.png
+var faviconData []byte
 
 func init() {
 	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "http", Opt: &Opt, Options: OptionsInfo})
@@ -198,9 +202,11 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 
 	router := s.server.Router()
 	router.Use(
+		middleware.Compress(5),
 		middleware.SetHeader("Accept-Ranges", "bytes"),
 		middleware.SetHeader("Server", "rclone/"+fs.Version),
 	)
+	router.Get("/favicon.ico", s.serveFavicon)
 	router.Get("/*", s.handler)
 	router.Head("/*", s.handler)
 
@@ -223,6 +229,27 @@ func (s *HTTP) Addr() net.Addr {
 // Shutdown the server
 func (s *HTTP) Shutdown() error {
 	return s.server.Shutdown()
+}
+
+// serveFavicon serves the remote's favicon.ico if it exists, otherwise
+// the rclone favicon
+func (s *HTTP) serveFavicon(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	VFS, err := s.getVFS(ctx)
+	if err == nil {
+		node, err := VFS.Stat("favicon.ico")
+		if err == nil && node.IsFile() {
+			// Remote has favicon.ico, serve it as a regular file
+			s.serveFile(w, r, "favicon.ico")
+			return
+		}
+	}
+	// Serve the embedded rclone favicon
+	w.Header().Set("Content-Type", "image/png")
+	w.Header().Set("Cache-Control", "max-age=86400")
+	if _, err := w.Write(faviconData); err != nil {
+		fs.Debugf(nil, "Failed to write favicon: %v", err)
+	}
 }
 
 // handler reads incoming requests and dispatches them

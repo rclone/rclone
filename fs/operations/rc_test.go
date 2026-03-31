@@ -561,7 +561,7 @@ func TestUploadFile(t *testing.T) {
 		assert.NoError(t, currentFile.Close())
 	}()
 
-	formReader, contentType, _, err := rest.MultipartUpload(ctx, currentFile, url.Values{}, "file", testFileName)
+	formReader, contentType, _, err := rest.MultipartUpload(ctx, currentFile, url.Values{}, "file", testFileName, "application/octet-stream")
 	require.NoError(t, err)
 
 	httpReq := httptest.NewRequest("POST", "/", formReader)
@@ -587,7 +587,7 @@ func TestUploadFile(t *testing.T) {
 		assert.NoError(t, currentFile2.Close())
 	}()
 
-	formReader, contentType, _, err = rest.MultipartUpload(ctx, currentFile2, url.Values{}, "file", testFileName)
+	formReader, contentType, _, err = rest.MultipartUpload(ctx, currentFile2, url.Values{}, "file", testFileName, "application/octet-stream")
 	require.NoError(t, err)
 
 	httpReq = httptest.NewRequest("POST", "/", formReader)
@@ -840,7 +840,7 @@ func TestRcHashsum(t *testing.T) {
 }
 
 // operations/hashsum: hashsum a single file
-func TestRcHashsumFile(t *testing.T) {
+func TestRcHashsumSingleFile(t *testing.T) {
 	ctx := context.Background()
 	r, call := rcNewRun(t, "operations/hashsum")
 	r.Mkdir(ctx, r.Fremote)
@@ -865,4 +865,28 @@ func TestRcHashsumFile(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "md5", out["hashType"])
 	assert.Equal(t, []string{"0ef726ce9b1a7692357ff70dd321d595  hashsum-file1"}, out["hashsum"])
+}
+
+// operations/hashsumfile: hashsum a single file
+func TestRcHashsumFile(t *testing.T) {
+	ctx := context.Background()
+	r, call := rcNewRun(t, "operations/hashsumfile")
+	r.Mkdir(ctx, r.Fremote)
+
+	file1Contents := "file1 contents"
+	file1 := r.WriteBoth(ctx, "hashsumfile-file1", file1Contents, t1)
+	r.CheckLocalItems(t, file1)
+	r.CheckRemoteItems(t, file1)
+
+	in := rc.Params{
+		"fs":       r.FremoteName,
+		"remote":   file1.Path,
+		"hashType": "MD5",
+		"download": true,
+	}
+
+	out, err := call.Fn(ctx, in)
+	require.NoError(t, err)
+	assert.Equal(t, "md5", out["hashType"])
+	assert.Equal(t, "0ef726ce9b1a7692357ff70dd321d595", out["hash"])
 }

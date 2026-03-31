@@ -2,7 +2,6 @@
 title: "Chunker"
 description: "Split-chunking overlay remote"
 versionIntroduced: "v1.50"
-status: Beta
 ---
 
 # {{< icon "fa fa-cut" >}} Chunker

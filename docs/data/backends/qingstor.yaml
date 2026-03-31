@@ -1,0 +1,25 @@
+backend: qingstor
+name: Qingstor
+tier: Tier 3
+maintainers: Core
+features_score: 3
+integration_tests: Disabled
+data_integrity: Hash
+performance: High
+adoption: Often used
+docs: Full
+security: High
+virtual: false
+remote: 'TestQingStor:'
+features:
+- BucketBased
+- BucketBasedRootOK
+- CleanUp
+- Copy
+- ListR
+- ReadMimeType
+- SlowModTime
+- WriteMimeType
+hashes:
+- md5
+precision: 3153600000000000000

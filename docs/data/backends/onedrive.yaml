@@ -1,0 +1,38 @@
+backend: onedrive
+name: Onedrive
+tier: Tier 1
+maintainers: Core
+features_score: 6
+integration_tests: Flaky
+data_integrity: Hash
+performance: High
+adoption: Widely used
+docs: Full
+security: High
+virtual: false
+remote: 'TestOneDrive:'
+features:
+- About
+- CanHaveEmptyDirectories
+- CaseInsensitive
+- ChangeNotify
+- CleanUp
+- Copy
+- DirCacheFlush
+- DirMove
+- DirSetModTime
+- ListP
+- MkdirMetadata
+- Move
+- PublicLink
+- Purge
+- ReadDirMetadata
+- ReadMetadata
+- ReadMimeType
+- Shutdown
+- WriteDirMetadata
+- WriteDirSetModTime
+- WriteMetadata
+hashes:
+- quickxor
+precision: 1000000000

@@ -1,0 +1,32 @@
+backend: jottacloud
+name: Jottacloud
+tier: Tier 2
+maintainers: Core
+features_score: 6
+integration_tests: Flaky
+data_integrity: Hash
+performance: High
+adoption: Widely used
+docs: Full
+security: High
+virtual: false
+remote: 'TestJottacloud:'
+features:
+- About
+- CanHaveEmptyDirectories
+- CaseInsensitive
+- CleanUp
+- Copy
+- DirMove
+- ListR
+- Move
+- PublicLink
+- Purge
+- ReadMetadata
+- ReadMimeType
+- Shutdown
+- UserInfo
+- WriteMetadata
+hashes:
+- md5
+precision: 1000000000

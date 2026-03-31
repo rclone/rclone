@@ -1,0 +1,30 @@
+backend: azurefiles
+name: Azure Files
+tier: Tier 2
+maintainers: Core
+features_score: 6
+integration_tests: Passing
+data_integrity: Hash
+performance: High
+adoption: Widely used
+docs: Full
+security: High
+virtual: false
+remote: 'TestAzureFiles:'
+features:
+- About
+- CanHaveEmptyDirectories
+- CaseInsensitive
+- Copy
+- DirMove
+- ListP
+- Move
+- OpenWriterAt
+- PartialUploads
+- PutStream
+- ReadMimeType
+- SlowHash
+- WriteMimeType
+hashes:
+- md5
+precision: 1000000000

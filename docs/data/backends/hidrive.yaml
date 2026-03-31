@@ -1,0 +1,25 @@
+backend: hidrive
+name: Hidrive
+tier: Tier 1
+maintainers: Core
+features_score: 5
+integration_tests: Passing
+data_integrity: Hash
+performance: Medium
+adoption: Often used
+docs: Full
+security: High
+virtual: false
+remote: 'TestHiDrive:'
+features:
+- CanHaveEmptyDirectories
+- Copy
+- DirMove
+- Move
+- Purge
+- PutStream
+- PutUnchecked
+- Shutdown
+hashes:
+- hidrive
+precision: 1000000000
