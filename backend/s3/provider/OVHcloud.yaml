@@ -32,5 +32,15 @@ endpoint:
   s3.us-east-va.io.cloud.ovh.us: OVHcloud Vint Hill, Virginia, USA
   s3.us-west-or.io.cloud.ovh.us: OVHcloud Hillsboro, Oregon, USA
   s3.rbx-archive.io.cloud.ovh.net: OVHcloud Roubaix, France (Cold Archive)
+storage_class:
+  '': Default
+  EXPRESS_ONEZONE: High Performance storage class
+  STANDARD: Standard storage class
+  STANDARD_IA: Standard Infrequent Access storage class
+  ONEZONE_IA: Standard Infrequent Access storage class
+  GLACIER: Active Archive storage class
+  GLACIER_IR: Active Archive storage class
+  DEEP_ARCHIVE: Cold Archive storage class
+  INTELLIGENT_TIERING: Standard storage class
 acl: {}
 bucket_acl: true
