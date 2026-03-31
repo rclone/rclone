@@ -131,7 +131,7 @@ func (f *Fs) Hashes() hash.Set {
 
 // Precision return the precision of this Fs
 func (f *Fs) Precision() time.Duration {
-	return time.Millisecond
+	return time.Second
 }
 
 // parsePath parses a path string

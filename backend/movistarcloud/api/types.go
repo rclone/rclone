@@ -8,7 +8,8 @@ import (
 )
 
 // BasicISO returns time formatted for Movistar Cloud upload API
-// Format: 20060102T150405Z (no dashes, no colons, no fractional seconds)
+// Format: 20060102T150405Z (basic ISO 8601, second precision)
+// The save-metadata endpoint does not accept sub-second values.
 func BasicISO(t time.Time) string {
 	return t.UTC().Format("20060102T150405Z")
 }
@@ -94,12 +95,14 @@ type ItemOrigin struct {
 }
 
 // ModTimeAsTime returns the modification date as a time.Time
+// Truncated to second precision to match what the API accepts on write
+// (the save-metadata endpoint ignores sub-second values).
 func (m *Media) ModTimeAsTime() time.Time {
 	if m.ModificationDate != 0 {
-		return time.Unix(m.ModificationDate/1000, (m.ModificationDate%1000)*int64(time.Millisecond))
+		return time.Unix(m.ModificationDate/1000, 0)
 	}
 	if m.Date != 0 {
-		return time.Unix(m.Date/1000, (m.Date%1000)*int64(time.Millisecond))
+		return time.Unix(m.Date/1000, 0)
 	}
 	return time.Time{}
 }
