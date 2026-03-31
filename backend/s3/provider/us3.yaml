@@ -23,6 +23,7 @@ endpoint:
   s3-uk-london.ufileos.com: United Kingdom (London)
   s3-rus-mosc.ufileos.com: Russia (Moscow)
   s3-cn-guiyang1.ufileos.com: Guiyang 1
+  s3-pk-khi.ufileos.com: Pakistan
 acl:
   private: |-
     Owner gets FULL_CONTROL.
@@ -40,4 +41,4 @@ quirks:
   list_version: 1
   use_multipart_etag: false
   use_already_exists: false
-  list_url_encode: false
+  list_url_encode: true
