@@ -306,6 +306,11 @@ type listFn func(remote string, object *objectstorage.ObjectSummary, isDirectory
 
 const listingCheckpointVersion = 1
 
+// listingCheckpoint stores backend-managed resume state for a specific OCI
+// listing scope. Marker is the OCI pagination resume token; the other fields
+// guard against applying that marker to a different listing. Version is kept
+// advisory so checkpoint loading can remain backward compatible across schema
+// changes as long as the required fields are still present.
 type listingCheckpoint struct {
 	Version   int       `json:"version"`
 	Bucket    string    `json:"bucket"`
@@ -313,6 +318,61 @@ type listingCheckpoint struct {
 	Delimiter string    `json:"delimiter"`
 	Marker    string    `json:"marker"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type listResumeError struct {
+	Code      string `json:"code"`
+	Source    string `json:"source"`
+	Message   string `json:"message"`
+	File      string `json:"file,omitempty"`
+	Option    string `json:"option,omitempty"`
+	Bucket    string `json:"bucket,omitempty"`
+	Prefix    string `json:"prefix,omitempty"`
+	Delimiter string `json:"delimiter,omitempty"`
+	Marker    string `json:"marker,omitempty"`
+	Cause     string `json:"cause,omitempty"`
+}
+
+// Error returns a stable, parseable payload for callers orchestrating resume logic.
+func (e *listResumeError) Error() string {
+	payload, err := json.Marshal(e)
+	if err != nil {
+		return fmt.Sprintf("oos_list_resume_error code=%q source=%q message=%q", e.Code, e.Source, e.Message)
+	}
+	return "oos_list_resume_error " + string(payload)
+}
+
+func newListStartResumeError(code, bucket, marker, message string, cause error) error {
+	err := &listResumeError{
+		Code:    code,
+		Source:  "list_start",
+		Message: message,
+		Option:  "--oos-list-start",
+		Bucket:  bucket,
+		Marker:  marker,
+	}
+	if cause != nil {
+		err.Cause = cause.Error()
+	}
+	return err
+}
+
+func newCheckpointResumeError(code, filePath, bucket, prefix, delimiter, marker, message string, cause error) error {
+	err := &listResumeError{
+		Code:      code,
+		Source:    "checkpoint_file",
+		Message:   message,
+		File:      filePath,
+		Option:    "--oos-list-checkpoint-file",
+		Bucket:    bucket,
+		Prefix:    prefix,
+		Delimiter: delimiter,
+		Marker:    marker,
+	}
+	if cause != nil {
+		err.Cause = cause.Error()
+	}
+	return err
 }
 
 func loadListingCheckpoint(filePath, bucket, prefix, delimiter string) (marker string, found bool, err error) {
@@ -325,22 +385,29 @@ func loadListingCheckpoint(filePath, bucket, prefix, delimiter string) (marker s
 		if errors.Is(err, os.ErrNotExist) {
 			return "", false, nil
 		}
-		return "", false, err
+		return "", false, newCheckpointResumeError("checkpoint_read_failed", filePath, bucket, prefix, delimiter, "", "failed to read checkpoint file", err)
 	}
 
 	state := listingCheckpoint{}
 	if err := json.Unmarshal(data, &state); err != nil {
-		return "", false, err
+		return "", false, newCheckpointResumeError("checkpoint_corrupt", filePath, bucket, prefix, delimiter, "", "checkpoint file is not valid JSON", err)
 	}
 
-	if state.Version != listingCheckpointVersion {
-		fs.Debugf(nil, "Ignoring listing checkpoint at %q due to version mismatch", filePath)
-		return "", false, nil
+	if state.Version != 0 && state.Version != listingCheckpointVersion {
+		fs.Debugf(nil, "Loading listing checkpoint at %q with version mismatch (stored=%d current=%d); attempting compatible load", filePath, state.Version, listingCheckpointVersion)
 	}
 
 	if state.Bucket != bucket || state.Prefix != prefix || state.Delimiter != delimiter {
-		fs.Debugf(nil, "Ignoring listing checkpoint at %q due to scope mismatch", filePath)
-		return "", false, nil
+		return "", false, newCheckpointResumeError(
+			"checkpoint_scope_mismatch",
+			filePath,
+			bucket,
+			prefix,
+			delimiter,
+			state.Marker,
+			fmt.Sprintf("checkpoint scope mismatch: stored bucket=%q prefix=%q delimiter=%q", state.Bucket, state.Prefix, state.Delimiter),
+			nil,
+		)
 	}
 
 	return state.Marker, true, nil
@@ -354,19 +421,19 @@ func saveListingCheckpoint(filePath string, state listingCheckpoint) error {
 	state.UpdatedAt = time.Now().UTC()
 	payload, err := json.MarshalIndent(state, "", "  ")
 	if err != nil {
-		return err
+		return newCheckpointResumeError("checkpoint_save_failed", filePath, state.Bucket, state.Prefix, state.Delimiter, state.Marker, "failed to marshal checkpoint file", err)
 	}
 
 	dir := filepath.Dir(filePath)
 	if dir != "" && dir != "." {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
-			return err
+			return newCheckpointResumeError("checkpoint_save_failed", filePath, state.Bucket, state.Prefix, state.Delimiter, state.Marker, "failed to create checkpoint directory", err)
 		}
 	}
 
 	tmpFile, err := os.CreateTemp(dir, ".rclone-oos-list-checkpoint-*.tmp")
 	if err != nil {
-		return err
+		return newCheckpointResumeError("checkpoint_save_failed", filePath, state.Bucket, state.Prefix, state.Delimiter, state.Marker, "failed to create temporary checkpoint file", err)
 	}
 	tmpPath := tmpFile.Name()
 
@@ -374,19 +441,48 @@ func saveListingCheckpoint(filePath string, state listingCheckpoint) error {
 	closeErr := tmpFile.Close()
 	if writeErr != nil {
 		_ = os.Remove(tmpPath)
-		return writeErr
+		return newCheckpointResumeError("checkpoint_save_failed", filePath, state.Bucket, state.Prefix, state.Delimiter, state.Marker, "failed to write checkpoint file", writeErr)
 	}
 	if closeErr != nil {
 		_ = os.Remove(tmpPath)
-		return closeErr
+		return newCheckpointResumeError("checkpoint_save_failed", filePath, state.Bucket, state.Prefix, state.Delimiter, state.Marker, "failed to close checkpoint file", closeErr)
 	}
 
 	if err := os.Rename(tmpPath, filePath); err != nil {
 		_ = os.Remove(tmpPath)
-		return err
+		return newCheckpointResumeError("checkpoint_save_failed", filePath, state.Bucket, state.Prefix, state.Delimiter, state.Marker, "failed to replace checkpoint file", err)
 	}
 
+	fs.Debugf(nil, "Saved listing checkpoint to %q with marker %q for bucket=%q prefix=%q delimiter=%q", filePath, state.Marker, state.Bucket, state.Prefix, state.Delimiter)
 	return nil
+}
+
+func (f *Fs) listStartExists(ctx context.Context, bucket, start string) (bool, error) {
+	if start == "" {
+		return false, nil
+	}
+
+	req := objectstorage.HeadObjectRequest{
+		NamespaceName: common.String(f.opt.Namespace),
+		BucketName:    common.String(bucket),
+		ObjectName:    common.String(start),
+	}
+	useBYOKHeadObject(f, &req)
+
+	var resp objectstorage.HeadObjectResponse
+	err := f.pacer.Call(func() (bool, error) {
+		var err error
+		resp, err = f.srv.HeadObject(ctx, req)
+		return shouldRetry(ctx, resp.HTTPResponse(), err)
+	})
+	if err != nil {
+		if svcErr, ok := err.(common.ServiceError); ok && svcErr.GetHTTPStatusCode() == http.StatusNotFound {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return true, nil
 }
 
 // list the objects into the function supplied from
@@ -426,29 +522,59 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 		request.Delimiter = common.String(delimiter)
 	}
 
-	if f.opt.ListStart != "" {
-		request.Start = common.String(f.opt.ListStart)
-	}
-
+	// A matching checkpoint file owns resume behavior for this listing scope.
 	checkpointState := listingCheckpoint{
 		Version:   listingCheckpointVersion,
 		Bucket:    bucket,
 		Prefix:    directory,
 		Delimiter: delimiter,
 	}
+	checkpointFound := false
 	if f.opt.ListCheckpointFile != "" {
+		fs.Debugf(f, "Checking list checkpoint file %q for bucket=%q prefix=%q delimiter=%q", f.opt.ListCheckpointFile, checkpointState.Bucket, checkpointState.Prefix, checkpointState.Delimiter)
 		marker, found, err := loadListingCheckpoint(f.opt.ListCheckpointFile, checkpointState.Bucket,
 			checkpointState.Prefix, checkpointState.Delimiter)
 		if err != nil {
-			return fmt.Errorf("failed to load list checkpoint: %w", err)
+			return err
 		}
 		if found {
+			checkpointFound = true
 			if marker == "" {
 				request.Start = nil
 			} else {
-				request.Start = common.String(marker)
+				markerExists, err := f.listStartExists(ctx, bucket, marker)
+				if err != nil {
+					return newCheckpointResumeError("checkpoint_marker_validation_failed", f.opt.ListCheckpointFile, bucket, checkpointState.Prefix, checkpointState.Delimiter, marker, "failed to validate checkpoint marker", err)
+				}
+				if markerExists {
+					request.Start = common.String(marker)
+				} else {
+					return newCheckpointResumeError("checkpoint_marker_not_found", f.opt.ListCheckpointFile, bucket, checkpointState.Prefix, checkpointState.Delimiter, marker, "checkpoint marker object does not exist", nil)
+				}
 			}
-			fs.Infof(f, "Resuming listing from checkpoint marker %q", marker)
+			if request.Start == nil {
+				fs.Infof(f, "Resuming listing from checkpoint file %q from the beginning", f.opt.ListCheckpointFile)
+			} else {
+				fs.Infof(f, "Resuming listing from checkpoint file %q with marker %q", f.opt.ListCheckpointFile, marker)
+			}
+			if f.opt.ListStart != "" {
+				fs.Debugf(f, "Ignoring --oos-list-start %q because the checkpoint file %q takes precedence", f.opt.ListStart, f.opt.ListCheckpointFile)
+			}
+		} else {
+			fs.Debugf(f, "No applicable listing checkpoint found in %q", f.opt.ListCheckpointFile)
+		}
+	}
+
+	// Only honor the manual list-start marker when no checkpoint already applies.
+	if !checkpointFound && f.opt.ListStart != "" {
+		startExists, err := f.listStartExists(ctx, bucket, f.opt.ListStart)
+		if err != nil {
+			return newListStartResumeError("list_start_validation_failed", bucket, f.opt.ListStart, "failed to validate list start marker", err)
+		}
+		if startExists {
+			request.Start = common.String(f.opt.ListStart)
+		} else {
+			return newListStartResumeError("list_start_not_found", bucket, f.opt.ListStart, "list start marker object does not exist", nil)
 		}
 	}
 
@@ -539,7 +665,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 		if f.opt.ListCheckpointFile != "" {
 			checkpointState.Marker = nextMarker
 			if err := saveListingCheckpoint(f.opt.ListCheckpointFile, checkpointState); err != nil {
-				return fmt.Errorf("failed to save list checkpoint: %w", err)
+				return err
 			}
 		}
 
