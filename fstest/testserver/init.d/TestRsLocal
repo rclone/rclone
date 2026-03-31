@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+#
+# TestRsLocal - local-only rs (Reed-Solomon) test environment for fstest/testserver.
+#
+# Provisions four local directories (shard0..shard3) for k=2, m=2 and outputs
+# rclone config for the rs remote "TestRsLocal". No Docker.
+#
+# Does not use run.bash (avoids flock, which is not available on macOS by default).
+#
+set -euo pipefail
+
+RUN_BASE="${STATE_DIR:-${XDG_RUNTIME_DIR:-/tmp}/rclone-test-server}"
+NAME="$(basename "$0")"
+RUN_ROOT="${RUN_BASE}/${NAME}"
+
+start() {
+	mkdir -p "${RUN_ROOT}/shard0" "${RUN_ROOT}/shard1" "${RUN_ROOT}/shard2" "${RUN_ROOT}/shard3"
+	echo type=rs
+	echo remotes="${RUN_ROOT}/shard0,${RUN_ROOT}/shard1,${RUN_ROOT}/shard2,${RUN_ROOT}/shard3"
+	echo data_shards=2
+	echo parity_shards=2
+	echo use_spooling=true
+	echo rollback=true
+	echo max_parallel_uploads=4
+}
+
+status() {
+	[[ -d "${RUN_ROOT}/shard0" && -d "${RUN_ROOT}/shard1" && -d "${RUN_ROOT}/shard2" && -d "${RUN_ROOT}/shard3" ]]
+}
+
+stop() {
+	:
+}
+
+case "${1:-}" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	status)
+		status
+		;;
+	reset)
+		stop
+		rm -rf "${RUN_BASE}"
+		;;
+	*)
+		echo "usage: $0 {start|stop|reset|status}" >&2
+		exit 2
+		;;
+esac
