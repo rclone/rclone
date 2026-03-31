@@ -1,0 +1,44 @@
+name: US3
+description: US3 Object Storage
+endpoint:
+  s3-cn-bj.ufileos.com: North China (Beijing 2)
+  s3-cn-wlcb.ufileos.com: North China (Ulanqab)
+  s3-cn-sh2.ufileos.com: Shanghai
+  s3-cn-gd.ufileos.com: South China (Guangzhou)
+  s3-hk.ufileos.com: Hongkong
+  s3-us-ca.ufileos.com: United States (Los Angeles)
+  s3-sg.ufileos.com: Singapore
+  s3-idn-jakarta.ufileos.com: Indonesia (Jakarta)
+  s3-tw-tp.ufileos.com: Taiwan (Taipei)
+  s3-afr-nigeria.ufileos.com: Nigeria (Lagos)
+  s3-bra-saopaulo.ufileos.com: Brazil (São Paulo)
+  s3-uae-dubai.ufileos.com: United Arab Emirates (Dubai)
+  s3-ge-fra.ufileos.com: Germany (Frankfurt)
+  s3-vn-sng.ufileos.com: Vietnam (Ho Chi Minh City)
+  s3-us-ws.ufileos.com: United States (Washington)
+  s3-ind-mumbai.ufileos.com: India (Mumbai)
+  s3-kr-seoul.ufileos.com: Seoul (South Korea)
+  s3-jpn-tky.ufileos.com: Japan (Tokyo)
+  s3-th-bkk.ufileos.com: Bangkok (Thailand)
+  s3-uk-london.ufileos.com: United Kingdom (London)
+  s3-rus-mosc.ufileos.com: Russia (Moscow)
+  s3-cn-guiyang1.ufileos.com: Guiyang 1
+  s3-pk-khi.ufileos.com: Pakistan
+acl:
+  private: |-
+    Owner gets FULL_CONTROL.
+    No one else has access rights (default).
+  public-read: |-
+    Owner gets FULL_CONTROL.
+    The AllUsers group gets READ access.
+storage_class:
+  '': Default
+  STANDARD: Standard storage class
+  ARCHIVE: Archive storage mode
+  STANDARD_IA: Infrequent access storage mode
+bucket_acl: true
+quirks:
+  list_version: 1
+  use_multipart_etag: false
+  use_already_exists: false
+  list_url_encode: true
