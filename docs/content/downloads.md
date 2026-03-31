@@ -143,6 +143,7 @@ The latest `rclone` version working for:
 | Windows Server 2012 | v1.63.1 |
 | Windows XP | v1.42 |
 | Windows Vista | v1.42 |
+| macOS 10.15 (Catalina) | v1.70.3 |
 | macOS 10.14 (Mojave) | v1.63.1 |
 | macOS 10.13 (High Sierra) | v1.63.1 |
 | macOS 10.12 (Sierra) | v1.56.0 |
