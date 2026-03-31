@@ -96,13 +96,17 @@ func init() {
 			}, {
 				Value: "sharepoint-ntlm",
 				Help:  "Sharepoint with NTLM authentication, usually self-hosted or on-premises",
-			}, {
-				Value: "rclone",
-				Help:  "rclone WebDAV server to serve a remote over HTTP via the WebDAV protocol",
-			}, {
-				Value: "other",
-				Help:  "Other site/service or software",
-			}},
+			},
+				{
+					Value: "filejump",
+					Help:  "FileJump Cloud Storage",
+				}, {
+					Value: "rclone",
+					Help:  "rclone WebDAV server to serve a remote over HTTP via the WebDAV protocol",
+				}, {
+					Value: "other",
+					Help:  "Other site/service or software",
+				}},
 		}, {
 			Name:      "user",
 			Help:      "User name.\n\nIn case NTLM authentication is used, the username should be in the format 'Domain\\User'.",
@@ -225,7 +229,7 @@ type Fs struct {
 	hasOCMD5           bool          // set if can use owncloud style checksums for MD5
 	hasOCSHA1          bool          // set if can use owncloud style checksums for SHA1
 	hasMESHA1          bool          // set if can use fastmail style checksums for SHA1
-	useStandardProps   bool          // set if should use standard props for PROPFIND
+	hasOCSHA256        bool          // set if can use owncloud style checksums for SHA256
 	ntlmAuthMu         sync.Mutex    // mutex to serialize NTLM auth roundtrips
 	chunksUploadURL    string        // upload URL for nextcloud chunked
 	canChunk           bool          // set if nextcloud and nextcloud_chunk_size is set
@@ -243,6 +247,7 @@ type Object struct {
 	modTime     time.Time // modification time of the object
 	sha1        string    // SHA-1 of the object content if known
 	md5         string    // MD5 of the object content if known
+	sha256      string    // SHA-256 of the object content if known
 }
 
 // ------------------------------------------------------------
@@ -351,7 +356,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string, depth string)
 		},
 		CheckRedirect: rest.PreserveMethodRedirectFn,
 	}
-	if f.hasOCMD5 || f.hasOCSHA1 {
+	if f.hasOCMD5 || f.hasOCSHA1 || f.hasOCSHA256 {
 		opts.Body = bytes.NewBuffer(owncloudProps)
 	} else if f.useStandardProps {
 		opts.Body = bytes.NewBuffer(standardProps)
@@ -646,6 +651,11 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		f.propsetMtime = true
 		f.hasOCMD5 = true
 		f.hasOCSHA1 = true
+	case "filejump":
+		f.canStream = true
+		f.precision = time.Second
+		f.useOCMtime = true
+		f.hasOCSHA256 = true
 	case "infinitescale":
 		f.precision = time.Second
 		f.useOCMtime = true
@@ -800,7 +810,7 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 			"Depth": depth,
 		},
 	}
-	if f.hasOCMD5 || f.hasOCSHA1 {
+	if f.hasOCMD5 || f.hasOCSHA1 || f.hasOCSHA256 {
 		opts.Body = bytes.NewBuffer(owncloudProps)
 	} else if f.useStandardProps {
 		opts.Body = bytes.NewBuffer(standardProps)
@@ -1313,6 +1323,9 @@ func (f *Fs) Hashes() hash.Set {
 	if f.hasOCSHA1 || f.hasMESHA1 {
 		hashes.Add(hash.SHA1)
 	}
+	if f.hasOCSHA256 {
+		hashes.Add(hash.SHA256)
+	}
 	return hashes
 }
 
@@ -1384,6 +1397,9 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if t == hash.SHA1 && (o.fs.hasOCSHA1 || o.fs.hasMESHA1) {
 		return o.sha1, nil
 	}
+	if t == hash.SHA256 && o.fs.hasOCSHA256 {
+		return o.sha256, nil
+	}
 	return "", hash.ErrUnsupported
 }
 
@@ -1403,13 +1419,16 @@ func (o *Object) setMetaData(info *api.Prop) (err error) {
 	o.hasMetaData = true
 	o.size = info.Size
 	o.modTime = time.Time(info.Modified)
-	if o.fs.hasOCMD5 || o.fs.hasOCSHA1 || o.fs.hasMESHA1 {
+	if o.fs.hasOCMD5 || o.fs.hasOCSHA1 || o.fs.hasMESHA1 || o.fs.hasOCSHA256 {
 		hashes := info.Hashes()
 		if o.fs.hasOCSHA1 || o.fs.hasMESHA1 {
 			o.sha1 = hashes[hash.SHA1]
 		}
 		if o.fs.hasOCMD5 {
 			o.md5 = hashes[hash.MD5]
+		}
+		if o.fs.hasOCSHA256 {
+			o.sha256 = hashes[hash.SHA256]
 		}
 	}
 	return nil
@@ -1476,8 +1495,9 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 			checksums = "SHA1:" + o.sha1
 		} else if o.fs.hasOCMD5 && o.md5 != "" {
 			checksums = "MD5:" + o.md5
+		} else if o.fs.hasOCSHA256 && o.sha256 != "" {
+			checksums = "SHA256:" + o.sha256
 		}
-
 		opts := rest.Opts{
 			Method:     "PROPPATCH",
 			Path:       o.filePath(),
@@ -1598,7 +1618,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 func (o *Object) extraHeaders(ctx context.Context, src fs.ObjectInfo) map[string]string {
 	extraHeaders := map[string]string{}
-	if o.fs.useOCMtime || o.fs.hasOCMD5 || o.fs.hasOCSHA1 {
+	if o.fs.useOCMtime || o.fs.hasOCMD5 || o.fs.hasOCSHA1 || o.fs.hasOCSHA256 {
 		if o.fs.useOCMtime {
 			extraHeaders["X-OC-Mtime"] = fmt.Sprintf("%d", src.ModTime(ctx).Unix())
 		}
@@ -1613,6 +1633,11 @@ func (o *Object) extraHeaders(ctx context.Context, src fs.ObjectInfo) map[string
 		if o.fs.hasOCMD5 && extraHeaders["OC-Checksum"] == "" {
 			if md5, _ := src.Hash(ctx, hash.MD5); md5 != "" {
 				extraHeaders["OC-Checksum"] = "MD5:" + md5
+			}
+		}
+		if o.fs.hasOCSHA256 && extraHeaders["OC-Checksum"] == "" {
+			if sha256, _ := src.Hash(ctx, hash.SHA256); sha256 != "" {
+				extraHeaders["OC-Checksum"] = "SHA256:" + sha256
 			}
 		}
 	}
