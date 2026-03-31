@@ -820,6 +820,12 @@ running -- and you can therefore be reasonably sure that any *expired* lock
 file you may find was left there by an interrupted run, not one that is still
 running and just taking awhile.
 
+If a lock file exists but its contents are unreadable (for example, due to an
+incomplete write or disk error), it is treated as expired when `--max-lock` is
+set to a value greater than `0`. If `--max-lock` is `0` or not set, an
+unreadable lock file will produce an error and block future runs until removed
+manually.
+
 If `--max-lock` is `0` or not set, the default is that lock files will never
 expire, and will block future runs (of these same two bisync paths)
 indefinitely.
