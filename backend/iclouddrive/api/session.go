@@ -3,15 +3,17 @@ package api
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"io"
 	"maps"
 	"net/http"
 	"net/url"
-	"slices"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/google/uuid"
-	"github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/lib/rest"
@@ -32,6 +34,7 @@ type Session struct {
 	Cookies        []*http.Cookie `json:"cookies"`
 	AccountInfo    AccountInfo    `json:"account_info"`
 
+	mu       sync.Mutex   `json:"-"` // protects session fields during concurrent Request calls
 	srv      *rest.Client `json:"-"`
 	needs2FA bool         `json:"-"` // set when SRP signin returns 409
 }
@@ -45,20 +48,9 @@ type srpInitResponse struct {
 	C         string `json:"c"`
 }
 
-// String returns the session as a string
-// func (s *Session) String() string {
-// 	jsession, _ := json.Marshal(s)
-// 	return string(jsession)
-// }
-
-// Request makes a request
-func (s *Session) Request(ctx context.Context, opts rest.Opts, request any, response any) (*http.Response, error) {
-	resp, err := s.srv.CallJSON(ctx, &opts, &request, &response)
-
-	if err != nil {
-		return resp, err
-	}
-
+// extractHeaders reads Apple session headers from an HTTP response into the session
+// Does NOT acquire s.mu - caller is responsible for locking if needed
+func (s *Session) extractHeaders(resp *http.Response) {
 	if val := resp.Header.Get("X-Apple-ID-Account-Country"); val != "" {
 		s.AccountCountry = val
 	}
@@ -77,7 +69,17 @@ func (s *Session) Request(ctx context.Context, opts rest.Opts, request any, resp
 	if val := resp.Header.Get("X-Apple-Auth-Attributes"); val != "" {
 		s.AuthAttributes = val
 	}
+}
 
+// Request makes a JSON API request and extracts session headers
+func (s *Session) Request(ctx context.Context, opts rest.Opts, request any, response any) (*http.Response, error) {
+	resp, err := s.srv.CallJSON(ctx, &opts, &request, &response)
+	if err != nil {
+		return resp, err
+	}
+	s.mu.Lock()
+	s.extractHeaders(resp)
+	s.mu.Unlock()
 	return resp, nil
 }
 
@@ -89,13 +91,8 @@ func (s *Session) Requires2FA() bool {
 	return s.AccountInfo.DsInfo != nil && s.AccountInfo.DsInfo.HsaVersion == 2 && s.AccountInfo.HsaChallengeRequired
 }
 
-// SignIn performs SRP-based authentication against Apple's idmsa endpoint.
+// SignIn performs SRP-based authentication against Apple's idmsa endpoint
 func (s *Session) SignIn(ctx context.Context, appleID, password string) error {
-	// Apple's SRP implementation expects a lowercase account name.
-	// The old plaintext flow didn't need this because the server normalized
-	// it, but SRP uses the username in client-side proof computation (M1).
-	appleID = strings.ToLower(appleID)
-
 	// Step 1: Initialize the auth session
 	if err := s.authStart(ctx); err != nil {
 		return fmt.Errorf("authStart: %w", err)
@@ -106,8 +103,11 @@ func (s *Session) SignIn(ctx context.Context, appleID, password string) error {
 		return fmt.Errorf("authFederate: %w", err)
 	}
 
-	// Step 3: SRP init — send client public value A, get salt + B
-	client := newSRPClient()
+	// Step 3: SRP init - send client public value A, get salt + B
+	client, err := newSRPClient()
+	if err != nil {
+		return fmt.Errorf("newSRPClient: %w", err)
+	}
 	aBase64 := base64.StdEncoding.EncodeToString(client.getABytes())
 
 	initResp, err := s.authSRPInit(ctx, aBase64, appleID)
@@ -130,9 +130,11 @@ func (s *Session) SignIn(ctx context.Context, appleID, password string) error {
 	if err != nil {
 		return fmt.Errorf("derivePassword: %w", err)
 	}
-	client.processChallenge([]byte(appleID), derivedKey, salt, serverB)
+	if err := client.processChallenge([]byte(appleID), derivedKey, salt, serverB); err != nil {
+		return fmt.Errorf("processChallenge: %w", err)
+	}
 
-	// Step 5: Complete — send M1, M2 proofs
+	// Step 5: Complete - send M1, M2 proofs
 	m1Base64 := base64.StdEncoding.EncodeToString(client.M1)
 	m2Base64 := base64.StdEncoding.EncodeToString(client.M2)
 
@@ -143,7 +145,7 @@ func (s *Session) SignIn(ctx context.Context, appleID, password string) error {
 	return nil
 }
 
-// authStart initializes the SRP auth session by hitting the authorize/signin endpoint.
+// authStart initializes the SRP auth session by hitting the authorize/signin endpoint
 func (s *Session) authStart(ctx context.Context) error {
 	if s.FrameID == "" {
 		s.FrameID = strings.ToLower(uuid.New().String())
@@ -184,20 +186,11 @@ func (s *Session) authStart(ctx context.Context) error {
 		return fmt.Errorf("authStart: unexpected status %s", resp.Status)
 	}
 
-	if val := resp.Header.Get("X-Apple-Auth-Attributes"); val != "" {
-		s.AuthAttributes = val
-	}
-	if val := resp.Header.Get("scnt"); val != "" {
-		s.Scnt = val
-	}
-	if val := resp.Header.Get("X-Apple-ID-Session-Id"); val != "" {
-		s.SessionID = val
-	}
-
+	s.extractHeaders(resp)
 	return nil
 }
 
-// authFederate submits the account name to Apple's federate endpoint.
+// authFederate submits the account name to Apple's federate endpoint
 func (s *Session) authFederate(ctx context.Context, accountName string) error {
 	values := map[string]any{
 		"accountName": accountName,
@@ -224,16 +217,7 @@ func (s *Session) authFederate(ctx context.Context, accountName string) error {
 	}
 	_ = resp.Body.Close()
 
-	if val := resp.Header.Get("X-Apple-Auth-Attributes"); val != "" {
-		s.AuthAttributes = val
-	}
-	if val := resp.Header.Get("scnt"); val != "" {
-		s.Scnt = val
-	}
-	if val := resp.Header.Get("X-Apple-ID-Session-Id"); val != "" {
-		s.SessionID = val
-	}
-
+	s.extractHeaders(resp)
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("authFederate: unexpected status %s", resp.Status)
 	}
@@ -241,7 +225,7 @@ func (s *Session) authFederate(ctx context.Context, accountName string) error {
 }
 
 // authSRPInit sends the client's public value A to the server and retrieves
-// the salt, server public value B, iteration count, protocol, and challenge.
+// the salt, server public value B, iteration count, protocol, and challenge
 func (s *Session) authSRPInit(ctx context.Context, aBase64, accountName string) (*srpInitResponse, error) {
 	values := map[string]any{
 		"a":           aBase64,
@@ -267,18 +251,12 @@ func (s *Session) authSRPInit(ctx context.Context, aBase64, accountName string) 
 		return nil, err
 	}
 
-	if val := resp.Header.Get("scnt"); val != "" {
-		s.Scnt = val
-	}
-	if val := resp.Header.Get("X-Apple-ID-Session-Id"); val != "" {
-		s.SessionID = val
-	}
-
+	s.extractHeaders(resp)
 	return &initResp, nil
 }
 
-// authSRPComplete sends the SRP proofs M1 and M2 to complete authentication.
-// Returns nil on success (200 or 409/2FA needed).
+// authSRPComplete sends the SRP proofs M1 and M2 to complete authentication
+// Returns nil on success (200 or 409/2FA needed)
 func (s *Session) authSRPComplete(ctx context.Context, accountName, m1Base64, m2Base64, c string) error {
 	trustTokens := []string{}
 	if s.TrustToken != "" {
@@ -305,7 +283,6 @@ func (s *Session) authSRPComplete(ctx context.Context, accountName, m1Base64, m2
 		ExtraHeaders: s.getSRPAuthHeaders(),
 		RootURL:      authEndpoint,
 		IgnoreStatus: true,
-		NoResponse:   true,
 		Body:         body,
 	}
 
@@ -313,51 +290,65 @@ func (s *Session) authSRPComplete(ctx context.Context, accountName, m1Base64, m2
 	if err != nil {
 		return err
 	}
+	respBody, _ := io.ReadAll(resp.Body)
 	_ = resp.Body.Close()
 
-	// Extract updated headers
-	if val := resp.Header.Get("X-Apple-Auth-Attributes"); val != "" {
-		s.AuthAttributes = val
-	}
-	if val := resp.Header.Get("X-Apple-Session-Token"); val != "" {
-		s.SessionToken = val
-	}
-	if val := resp.Header.Get("scnt"); val != "" {
-		s.Scnt = val
-	}
-	if val := resp.Header.Get("X-Apple-ID-Session-Id"); val != "" {
-		s.SessionID = val
-	}
-	if val := resp.Header.Get("X-Apple-ID-Account-Country"); val != "" {
-		s.AccountCountry = val
-	}
-	if val := resp.Header.Get("X-Apple-TwoSV-Trust-Token"); val != "" {
-		s.TrustToken = val
-	}
+	s.extractHeaders(resp)
 
 	switch resp.StatusCode {
 	case http.StatusOK:
-		fs.Debugf("icloud", "SRP sign in successful")
+		fs.Debugf(nil, "iclouddrive: SRP sign in successful")
 		return nil
 	case http.StatusConflict:
-		// 409 = 2FA required, this is expected
-		fs.Debugf("icloud", "SRP sign in requires 2FA")
+		// 409 = 2FA required
+		fs.Debugf(nil, "iclouddrive: SRP sign in requires 2FA, response: %s", respBody)
 		s.needs2FA = true
 		return nil
+	case http.StatusPreconditionFailed:
+		// 412 = non-2FA account needs repair/complete step
+		fs.Debugf(nil, "iclouddrive: SRP sign in returned 412, attempting repair/complete")
+		return s.authRepairComplete(ctx)
 	case http.StatusForbidden:
 		return fmt.Errorf("sign in failed: incorrect username or password")
 	default:
-		return fmt.Errorf("sign in failed: %s", resp.Status)
+		return fmt.Errorf("sign in failed: %s: %s", resp.Status, respBody)
 	}
 }
 
-// getAuthOrigin returns the origin URL for auth requests.
-// Supports both global (idmsa.apple.com) and China (idmsa.apple.com.cn) endpoints.
+// authRepairComplete handles the repair flow for non-2FA accounts that return 412
+func (s *Session) authRepairComplete(ctx context.Context) error {
+	body, err := IntoReader(map[string]any{})
+	if err != nil {
+		return err
+	}
+	opts := rest.Opts{
+		Method:       "POST",
+		Path:         "/repair/complete",
+		ExtraHeaders: s.getSRPAuthHeaders(),
+		RootURL:      authEndpoint,
+		IgnoreStatus: true,
+		NoResponse:   true,
+		Body:         body,
+	}
+	resp, err := s.srv.Call(ctx, &opts)
+	if err != nil {
+		return fmt.Errorf("repair/complete failed: %w", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("repair/complete returned %s", resp.Status)
+	}
+	s.extractHeaders(resp)
+	fs.Debugf(nil, "iclouddrive: repair/complete successful")
+	return nil
+}
+
+// getAuthOrigin returns the origin URL for auth requests
+// Supports both global (idmsa.apple.com) and China (idmsa.apple.com.cn) endpoints
 func getAuthOrigin() string {
 	return strings.TrimSuffix(authEndpoint, "/appleauth/auth")
 }
 
-// getSRPAuthHeaders returns headers needed for SRP auth requests.
+// getSRPAuthHeaders returns headers needed for SRP auth requests
 func (s *Session) getSRPAuthHeaders() map[string]string {
 	frameTag := "auth-" + s.FrameID
 	authOrigin := getAuthOrigin()
@@ -414,14 +405,125 @@ func (s *Session) AuthWithToken(ctx context.Context) error {
 	}
 
 	resp, err := s.Request(ctx, opts, nil, &s.AccountInfo)
-	if err == nil {
-		s.Cookies = resp.Cookies()
+	if err != nil {
+		return err
+	}
+	// Log raw Set-Cookie header names from accountLogin for ADP debugging
+	for _, sc := range resp.Header["Set-Cookie"] {
+		if eqIdx := strings.Index(sc, "="); eqIdx > 0 {
+			fs.Debugf(nil, "iclouddrive: accountLogin Set-Cookie: %s", sc[:eqIdx])
+		}
+	}
+	// Merge cookies by name (upsert) rather than replacing
+	// Apple's accountLogin sets some cookies with magic Expires=epoch+1
+	// which Go's resp.Cookies() still returns, but we must preserve
+	// cookies from earlier auth steps (SRP, 2FA) that the PCS flow needs
+	existing := make(map[string]int, len(s.Cookies))
+	for i, c := range s.Cookies {
+		existing[c.Name] = i
+	}
+	for _, c := range resp.Cookies() {
+		if idx, ok := existing[c.Name]; ok {
+			s.Cookies[idx] = c
+		} else {
+			s.Cookies = append(s.Cookies, c)
+			existing[c.Name] = len(s.Cookies) - 1
+		}
+	}
+	// Log cookie names for ADP debugging (values are sensitive, only log names)
+	var cookieNames []string
+	for _, c := range s.Cookies {
+		cookieNames = append(cookieNames, c.Name)
+	}
+	fs.Debugf(nil, "iclouddrive: session cookies after accountLogin: %v", cookieNames)
+
+	// Acquire PCS cookies if Advanced Data Protection is enabled
+	if ws := s.AccountInfo.Webservices["ckdatabasews"]; ws != nil && ws.PcsRequired {
+		fs.Debugf(nil, "iclouddrive: ADP detected (pcsRequired=true)")
+		if s.hasPCSCookies() {
+			fs.Debugf(nil, "iclouddrive: PCS cookies already present, skipping acquisition")
+		} else {
+			if err := s.acquirePCSCookies(ctx); err != nil {
+				return err
+			}
+		}
+	} else {
+		fs.Debugf(nil, "iclouddrive: no ADP (pcsRequired=false)")
 	}
 
-	return err
+	return nil
 }
 
-// Validate2FACode validates the 2FA code
+// hasPCSCookies checks if the required PCS cookies for Photos are already present
+func (s *Session) hasPCSCookies() bool {
+	var hasPhotos, hasSharing bool
+	for _, c := range s.Cookies {
+		switch c.Name {
+		case "X-APPLE-WEBAUTH-PCS-Photos":
+			hasPhotos = true
+		case "X-APPLE-WEBAUTH-PCS-Sharing":
+			hasSharing = true
+		}
+	}
+	return hasPhotos && hasSharing
+}
+
+// acquirePCSCookies requests PCS cookies for ADP-enabled accounts
+// May require user approval on a trusted device (polls every 10s, max 5 min)
+func (s *Session) acquirePCSCookies(ctx context.Context) error {
+	fs.Logf(nil, "iclouddrive: Advanced Data Protection enabled, requesting PCS cookies")
+	const maxAttempts = 30 // 30 * 10s = 5 minutes max
+	for attempt := 0; attempt < maxAttempts; attempt++ {
+		values := map[string]any{
+			"appName":               "photos",
+			"derivedFromUserAction": true,
+		}
+		body, err := IntoReader(values)
+		if err != nil {
+			return fmt.Errorf("requestPCS: %w", err)
+		}
+		opts := rest.Opts{
+			Method:       "POST",
+			Path:         "/requestPCS",
+			ExtraHeaders: s.GetHeaders(map[string]string{}),
+			RootURL:      setupEndpoint,
+		}
+		opts.Body = body
+		var pcsResp struct {
+			Status  string `json:"status"`
+			Message string `json:"message"`
+		}
+		resp, err := s.Request(ctx, opts, nil, &pcsResp)
+		if err != nil {
+			return fmt.Errorf("requestPCS: %w", err)
+		}
+		fs.Debugf(nil, "iclouddrive: requestPCS response: status=%q message=%q cookies=%d",
+			pcsResp.Status, pcsResp.Message, len(resp.Cookies()))
+		if pcsResp.Status == "success" {
+			// Extract PCS cookies from response
+			for _, c := range resp.Cookies() {
+				if strings.HasPrefix(c.Name, "X-APPLE-WEBAUTH-PCS-") {
+					s.Cookies = append(s.Cookies, c)
+				}
+			}
+			if !s.hasPCSCookies() {
+				return fmt.Errorf("requestPCS: server returned success but PCS cookies missing")
+			}
+			fs.Logf(nil, "iclouddrive: PCS cookies acquired")
+			return nil
+		}
+		// Device consent required - poll until approved
+		fs.Logf(nil, "iclouddrive: waiting for device approval for PCS (%s)", pcsResp.Message)
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(10 * time.Second):
+		}
+	}
+	return fmt.Errorf("requestPCS: timed out waiting for device approval after 5 minutes")
+}
+
+// Validate2FACode validates the 2FA code from a trusted device push notification
 func (s *Session) Validate2FACode(ctx context.Context, code string) error {
 	values := map[string]any{"securityCode": map[string]string{"code": code}}
 	body, err := IntoReader(values)
@@ -450,6 +552,131 @@ func (s *Session) Validate2FACode(ctx context.Context, code string) error {
 	return fmt.Errorf("validate2FACode failed: %w", err)
 }
 
+// TrustedPhoneNumber represents a phone number that can receive SMS verification codes
+type TrustedPhoneNumber struct {
+	ID                 int    `json:"id"`
+	NumberWithDialCode string `json:"numberWithDialCode"`
+	ObfuscatedNumber   string `json:"obfuscatedNumber"`
+	PushMode           string `json:"pushMode"`
+	NonFTEU            bool   `json:"nonFTEU"`
+}
+
+// AuthStateResponse is the response from GET /appleauth/auth after sign-in
+// Some accounts return fields at top level, others nest them under phoneNumberVerification
+type AuthStateResponse struct {
+	TrustedPhoneNumbers     []TrustedPhoneNumber `json:"trustedPhoneNumbers"`
+	TrustedPhoneNumber      *TrustedPhoneNumber  `json:"trustedPhoneNumber"`
+	NoTrustedDevices        bool                 `json:"noTrustedDevices"`
+	AuthenticationType      string               `json:"authenticationType"`
+	Hsa2Account             bool                 `json:"hsa2Account"`
+	PhoneNumberVerification *AuthStateResponse   `json:"phoneNumberVerification"`
+}
+
+// GetAuthState retrieves the current auth state including trusted phone numbers for SMS 2FA
+func (s *Session) GetAuthState(ctx context.Context) (*AuthStateResponse, error) {
+	opts := rest.Opts{
+		Method:        "GET",
+		Path:          "",
+		ExtraHeaders:  s.GetAuthHeaders(map[string]string{}),
+		RootURL:       authEndpoint,
+		ContentLength: int64Ptr(0),
+	}
+	// Use srv.Call directly to capture the raw response body for debugging
+	resp, err := s.srv.Call(ctx, &opts)
+	if err != nil {
+		return nil, fmt.Errorf("getAuthState: %w", err)
+	}
+	s.mu.Lock()
+	s.extractHeaders(resp)
+	s.mu.Unlock()
+	body, readErr := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	if readErr != nil {
+		return nil, fmt.Errorf("getAuthState read: %w", readErr)
+	}
+	fs.Debugf(nil, "iclouddrive: auth state response (%d bytes): %s", len(body), body)
+	var state AuthStateResponse
+	if err := json.Unmarshal(body, &state); err != nil {
+		return nil, fmt.Errorf("getAuthState unmarshal: %w", err)
+	}
+	// Some accounts nest auth data under phoneNumberVerification
+	if state.PhoneNumberVerification != nil && state.AuthenticationType == "" {
+		fs.Debugf(nil, "iclouddrive: unwrapping phoneNumberVerification envelope")
+		n := state.PhoneNumberVerification
+		state.TrustedPhoneNumbers = n.TrustedPhoneNumbers
+		state.TrustedPhoneNumber = n.TrustedPhoneNumber
+		state.NoTrustedDevices = n.NoTrustedDevices
+		state.AuthenticationType = n.AuthenticationType
+		state.Hsa2Account = n.Hsa2Account
+		state.PhoneNumberVerification = nil
+	}
+	fs.Debugf(nil, "iclouddrive: auth state: type=%s hsa2=%v noTrustedDevices=%v phones=%d phoneSingular=%v",
+		state.AuthenticationType, state.Hsa2Account, state.NoTrustedDevices,
+		len(state.TrustedPhoneNumbers), state.TrustedPhoneNumber != nil)
+	// Fall back to singular trustedPhoneNumber when plural array is empty
+	// Some accounts return only the singular form (SMS-only, no trusted devices)
+	if len(state.TrustedPhoneNumbers) == 0 && state.TrustedPhoneNumber != nil {
+		fs.Debugf(nil, "iclouddrive: using singular trustedPhoneNumber (id=%d) as fallback",
+			state.TrustedPhoneNumber.ID)
+		state.TrustedPhoneNumbers = []TrustedPhoneNumber{*state.TrustedPhoneNumber}
+	}
+	return &state, nil
+}
+
+// RequestSMSCode triggers SMS code delivery to a trusted phone number
+func (s *Session) RequestSMSCode(ctx context.Context, phoneID int, mode string) error {
+	values := map[string]any{
+		"phoneNumber": map[string]any{"id": phoneID},
+		"mode":        mode,
+	}
+	body, err := IntoReader(values)
+	if err != nil {
+		return err
+	}
+	opts := rest.Opts{
+		Method:       "PUT",
+		Path:         "/verify/phone",
+		ExtraHeaders: s.GetAuthHeaders(map[string]string{}),
+		RootURL:      authEndpoint,
+		Body:         body,
+		NoResponse:   true,
+	}
+	_, err = s.Request(ctx, opts, nil, nil)
+	if err != nil {
+		return fmt.Errorf("requestSMSCode: %w", err)
+	}
+	return nil
+}
+
+// ValidateSMSCode validates a 2FA code received via SMS
+func (s *Session) ValidateSMSCode(ctx context.Context, code string, phoneID int, mode string) error {
+	values := map[string]any{
+		"securityCode": map[string]string{"code": code},
+		"phoneNumber":  map[string]any{"id": phoneID},
+		"mode":         mode,
+	}
+	body, err := IntoReader(values)
+	if err != nil {
+		return err
+	}
+	opts := rest.Opts{
+		Method:       "POST",
+		Path:         "/verify/phone/securitycode",
+		ExtraHeaders: s.GetAuthHeaders(map[string]string{}),
+		RootURL:      authEndpoint,
+		Body:         body,
+		NoResponse:   true,
+	}
+	_, err = s.Request(ctx, opts, nil, nil)
+	if err == nil {
+		if err := s.TrustSession(ctx); err != nil {
+			return err
+		}
+		return nil
+	}
+	return fmt.Errorf("validateSMSCode: %w", err)
+}
+
 // TrustSession trusts the session
 func (s *Session) TrustSession(ctx context.Context) error {
 	opts := rest.Opts{
@@ -458,7 +685,7 @@ func (s *Session) TrustSession(ctx context.Context) error {
 		ExtraHeaders:  s.GetAuthHeaders(map[string]string{}),
 		RootURL:       authEndpoint,
 		NoResponse:    true,
-		ContentLength: common.Int64(0),
+		ContentLength: int64Ptr(0),
 	}
 
 	_, err := s.Request(ctx, opts, nil, nil)
@@ -476,25 +703,26 @@ func (s *Session) ValidateSession(ctx context.Context) error {
 		Path:          "/validate",
 		ExtraHeaders:  s.GetHeaders(map[string]string{}),
 		RootURL:       setupEndpoint,
-		ContentLength: common.Int64(0),
+		ContentLength: int64Ptr(0),
 	}
 	_, err := s.Request(ctx, opts, nil, &s.AccountInfo)
 	if err != nil {
 		return fmt.Errorf("validateSession failed: %w", err)
 	}
 
+	s.needs2FA = false
 	return nil
 }
 
-// GetAuthHeaders returns the authentication headers for the session.
-// Used for 2FA validation and trust requests to idmsa.apple.com.
+// GetAuthHeaders returns the authentication headers for the session
+// Used for 2FA validation and trust requests to idmsa.apple.com
 func (s *Session) GetAuthHeaders(overwrite map[string]string) map[string]string {
 	headers := s.getSRPAuthHeaders()
 	maps.Copy(headers, overwrite)
 	return headers
 }
 
-// GetHeaders Gets the authentication headers required for a request
+// GetHeaders returns the authentication headers required for a request
 func (s *Session) GetHeaders(overwrite map[string]string) map[string]string {
 	headers := GetCommonHeaders(map[string]string{})
 	headers["Cookie"] = s.GetCookieString()
@@ -502,17 +730,17 @@ func (s *Session) GetHeaders(overwrite map[string]string) map[string]string {
 	return headers
 }
 
-// GetCookieString returns the cookie header string for the session.
+// GetCookieString returns the cookie header string for the session
 func (s *Session) GetCookieString() string {
 	cookieHeader := ""
-	// we only care about name and value.
+	// we only care about name and value
 	for _, cookie := range s.Cookies {
 		cookieHeader = cookieHeader + cookie.Name + "=" + cookie.Value + ";"
 	}
 	return cookieHeader
 }
 
-// GetCommonHeaders generates common HTTP headers with optional overwrite.
+// GetCommonHeaders generates common HTTP headers with optional overwrite
 func GetCommonHeaders(overwrite map[string]string) map[string]string {
 	headers := map[string]string{
 		"Content-Type": "application/json",
@@ -524,32 +752,9 @@ func GetCommonHeaders(overwrite map[string]string) map[string]string {
 	return headers
 }
 
-// MergeCookies merges two slices of http.Cookies, ensuring no duplicates are added.
-func MergeCookies(left []*http.Cookie, right []*http.Cookie) ([]*http.Cookie, error) {
-	var hashes []string
-	for _, cookie := range right {
-		hashes = append(hashes, cookie.Raw)
-	}
-	for _, cookie := range left {
-		if !slices.Contains(hashes, cookie.Raw) {
-			right = append(right, cookie)
-		}
-	}
-	return right, nil
-}
+func int64Ptr(v int64) *int64 { return &v }
 
-// GetCookiesForDomain filters the provided cookies based on the domain of the given URL.
-func GetCookiesForDomain(url *url.URL, cookies []*http.Cookie) ([]*http.Cookie, error) {
-	var domainCookies []*http.Cookie
-	for _, cookie := range cookies {
-		if strings.HasSuffix(url.Host, cookie.Domain) {
-			domainCookies = append(domainCookies, cookie)
-		}
-	}
-	return domainCookies, nil
-}
-
-// NewSession creates a new Session instance with default values.
+// NewSession creates a new Session instance with default values
 func NewSession() *Session {
 	session := &Session{
 		FrameID: strings.ToLower(uuid.New().String()),
@@ -564,7 +769,7 @@ func NewSession() *Session {
 	return session
 }
 
-// AccountInfo represents an account info
+// AccountInfo represents account information
 type AccountInfo struct {
 	DsInfo                       *ValidateDataDsInfo    `json:"dsInfo"`
 	HasMinimumDeviceForPhotosWeb bool                   `json:"hasMinimumDeviceForPhotosWeb"`
@@ -607,7 +812,7 @@ type AccountInfo struct {
 	Apps map[string]*ValidateDataApp `json:"apps"`
 }
 
-// ValidateDataDsInfo represents an validation info
+// ValidateDataDsInfo represents validation info
 type ValidateDataDsInfo struct {
 	HsaVersion                         int      `json:"hsaVersion"`
 	LastName                           string   `json:"lastName"`
@@ -674,7 +879,7 @@ type ValidateDataApp struct {
 	IsQualifiedForBeta     bool `json:"isQualifiedForBeta"`
 }
 
-// WebService represents a web service
+// webService represents a web service
 type webService struct {
 	PcsRequired bool   `json:"pcsRequired"`
 	URL         string `json:"url"`
