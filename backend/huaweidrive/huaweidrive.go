@@ -497,9 +497,18 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		// Assume it is a file
 		newRoot, remote := dircache.SplitPath(root)
-		tempF := *f
-		tempF.dirCache = dircache.New(newRoot, f.rootFolderID, &tempF)
-		tempF.root = newRoot
+		tempF := &Fs{
+			name:         f.name,
+			root:         newRoot,
+			opt:          f.opt,
+			features:     f.features,
+			srv:          f.srv,
+			pacer:        f.pacer,
+			rootFolderID: f.rootFolderID,
+			domainURL:    f.domainURL,
+			uploadURL:    f.uploadURL,
+		}
+		tempF.dirCache = dircache.New(newRoot, f.rootFolderID, tempF)
 		_ = tempF.dirCache.FindRoot(ctx, false)
 
 		_, fileErr := tempF.NewObject(ctx, remote)

@@ -630,6 +630,15 @@ func TestAPIResponseParsing(t *testing.T) {
 		if about.Category != api.CategoryDriveAbout {
 			t.Errorf("expected category %q, got %q", api.CategoryDriveAbout, about.Category)
 		}
+		if about.MaxThumbnailSize != 2097152 {
+			t.Errorf("expected max thumbnail size 2097152, got %d", about.MaxThumbnailSize)
+		}
+		if about.MaxFileUploadSize != "53687091200" {
+			t.Errorf("expected max file upload size %q, got %q", "53687091200", about.MaxFileUploadSize)
+		}
+		if about.Domain != "driveapis.cloud.huawei.com.cn" {
+			t.Errorf("expected domain %q, got %q", "driveapis.cloud.huawei.com.cn", about.Domain)
+		}
 	})
 
 	// Test FileList response parsing
@@ -663,6 +672,14 @@ func TestAPIResponseParsing(t *testing.T) {
 			},
 			NextPageToken: "next_page_token",
 			Category:      api.CategoryDriveFileList,
+		}
+
+		// Test file list properties
+		if fileList.NextPageToken != "next_page_token" {
+			t.Errorf("expected next page token %q, got %q", "next_page_token", fileList.NextPageToken)
+		}
+		if fileList.Category != api.CategoryDriveFileList {
+			t.Errorf("expected category %q, got %q", api.CategoryDriveFileList, fileList.Category)
 		}
 
 		// Test file properties
