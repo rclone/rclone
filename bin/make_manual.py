@@ -92,6 +92,7 @@ docs = [
     "smb.md",
     "storj.md",
     "sugarsync.md",
+    "terabox.md",
     "ulozto.md",
     "union.md",
     "webdav.md",
