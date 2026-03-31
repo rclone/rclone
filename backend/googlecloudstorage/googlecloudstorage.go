@@ -91,6 +91,10 @@ func init() {
 				OAuth2Config: storageConfig,
 			})
 		},
+		MetadataInfo: &fs.MetadataInfo{
+			System: systemMetadataInfo,
+			Help:   `Only limited support for system metadata is currently implemented.`,
+		},
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name:      "project_number",
 			Help:      "Project number.\n\nOptional - needed only for list/create/delete buckets - see your developer console.",
@@ -388,6 +392,41 @@ endpoint configuration.`,
 	})
 }
 
+// system metadata keys which this backend owns
+var systemMetadataInfo = map[string]fs.MetadataHelp{
+	"cache-control": {
+		Help:    "Specifies directives for caches along the request/response chain.",
+		Type:    "string",
+		Example: "no-cache",
+	},
+	"content-disposition": {
+		Help:    "Suggests a default filename for downloaded content or indicates how the content should be displayed.",
+		Type:    "string",
+		Example: "inline",
+	},
+	"content-encoding": {
+		Help:    "Informs the recipient how to decode the content to obtain the original data.",
+		Type:    "string",
+		Example: "gzip",
+	},
+	"content-language": {
+		Help:    "Indicate the language of the textual content in the response.",
+		Type:    "string",
+		Example: "en",
+	},
+	"content-type": {
+		Help:    "Indicates the media type or MIME type of the resource in the HTTP message's body.",
+		Type:    "string",
+		Example: "text/plain",
+	},
+	"tier": {
+		Help:     "Storage class of the object.",
+		Type:     "string",
+		Example:  "STANDARD",
+		ReadOnly: true,
+	},
+}
+
 // Options defines the configuration for this backend
 type Options struct {
 	ProjectNumber             string               `config:"project_number"`
@@ -436,6 +475,13 @@ type Object struct {
 	modTime  time.Time // Modified time of the object
 	mimeType string
 	gzipped  bool // set if object has Content-Encoding: gzip
+
+	// System Metadata
+	storageClass       string
+	cacheControl       string
+	contentDisposition string
+	contentEncoding    string
+	contentLanguage    string
 }
 
 // ------------------------------------------------------------
@@ -593,6 +639,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		WriteMimeType:     true,
 		BucketBased:       true,
 		BucketBasedRootOK: true,
+		ReadMetadata:      true,
 	}).Fill(ctx, f)
 	if opt.DirectoryMarkers {
 		f.features.CanHaveEmptyDirectories = true
@@ -1240,6 +1287,13 @@ func (o *Object) setMetaData(info *storage.Object) {
 		o.md5sum = hex.EncodeToString(md5sumData)
 	}
 
+	// Set system metadata
+	o.storageClass = info.StorageClass
+	o.cacheControl = info.CacheControl
+	o.contentDisposition = info.ContentDisposition
+	o.contentEncoding = info.ContentEncoding
+	o.contentLanguage = info.ContentLanguage
+
 	// read mtime out of metadata if available
 	mtimeString, ok := info.Metadata[metaMtime]
 	if ok {
@@ -1333,8 +1387,8 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 }
 
 // Returns metadata for an object
-func metadataFromModTime(modTime time.Time) map[string]string {
-	metadata := make(map[string]string, 1)
+func metadataFromModTime(modTime time.Time) fs.Metadata {
+	metadata := make(fs.Metadata, 1)
 	metadata[metaMtime] = modTime.Format(timeFormat)
 	metadata[metaMtimeGsutil] = strconv.FormatInt(modTime.Unix(), 10)
 	return metadata
@@ -1349,7 +1403,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) (err error) 
 	}
 	// Add the mtime to the existing metadata
 	if object.Metadata == nil {
-		object.Metadata = make(map[string]string, 1)
+		object.Metadata = make(fs.Metadata, 1)
 	}
 	object.Metadata[metaMtime] = modTime.Format(timeFormat)
 	object.Metadata[metaMtimeGsutil] = strconv.FormatInt(modTime.Unix(), 10)
@@ -1518,6 +1572,31 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 // MimeType of an Object if known, "" otherwise
 func (o *Object) MimeType(ctx context.Context) string {
 	return o.mimeType
+}
+
+// Metadata returns metadata for an object
+//
+// It should return nil if there is no Metadata
+func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error) {
+	err = o.readMetaData(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	metadata = make(fs.Metadata, 6)
+	setMetadata := func(k string, v string) {
+		if v == "" {
+			return
+		}
+		metadata[k] = v
+	}
+	setMetadata("content-type", o.mimeType)
+	setMetadata("tier", o.storageClass)
+	setMetadata("cache-control", o.cacheControl)
+	setMetadata("content-disposition", o.contentDisposition)
+	setMetadata("content-encoding", o.contentEncoding)
+	setMetadata("content-language", o.contentLanguage)
+	return metadata, nil
 }
 
 // Check the interfaces are satisfied
