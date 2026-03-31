@@ -98,15 +98,26 @@ func (b *bisyncRun) lockFileIsExpired() bool {
 		rdf, err := os.Open(b.lockFile)
 		b.handleErr(b.lockFile, "error reading lock file", err, true, true)
 		dec := json.NewDecoder(rdf)
+		var decodeErr error
 		for {
 			if err := dec.Decode(&b.lockFileOpt.data); err != nil {
 				if err != io.EOF {
-					fs.Errorf(b.lockFile, "err: %v", err)
+					decodeErr = err
 				}
 				break
 			}
 		}
 		b.handleErr(b.lockFile, "error closing file", rdf.Close(), true, true)
+		if decodeErr != nil {
+			if b.opt.MaxLock < basicallyforever {
+				fs.Infof(b.lockFile, Color(terminal.YellowFg, "Lock file is unreadable (decode error: %v) and --max-lock is set. Treating as expired."), decodeErr)
+				markFailed(b.listing1)
+				markFailed(b.listing2)
+				return true
+			}
+			fs.Errorf(b.lockFile, Color(terminal.RedFg, "Lock file exists, but contents are unreadable. (decode error: %v)"), decodeErr)
+			return false
+		}
 		if !b.lockFileOpt.data.TimeExpires.IsZero() && b.lockFileOpt.data.TimeExpires.Before(time.Now()) {
 			fs.Infof(b.lockFile, Color(terminal.GreenFg, "Lock file found, but it expired at %v. Will delete it and proceed."), b.lockFileOpt.data.TimeExpires)
 			markFailed(b.listing1) // listing is untrusted so force revert to prior (if --recover) or create new ones (if --resync)
