@@ -269,12 +269,15 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 				return triggerSMSFlow(ctx, icloud, authState.TrustedPhoneNumbers, m)
 			}
 			// Explicitly request push to trusted devices - required for iOS 26.4+
-			// where the SRP 409 no longer auto-pushes
+			// where the SRP 409 no longer auto-pushes. GET /appleauth/auth above
+			// may also trigger a push (cosmetic double on pre-26.4, harmless)
 			if err := icloud.Session.RequestPushNotification(ctx); err != nil {
 				fs.Debugf(nil, "iclouddrive: push notification request failed (SMS fallback available): %v", err)
-			} else {
-				fs.Debugf(nil, "iclouddrive: push notification requested to trusted devices")
 			}
+			// Save session state so 2fa_do can validate without re-authenticating
+			// Push codes are account-scoped so session reuse is not strictly required,
+			// but it avoids a redundant SRP roundtrip and a second push on pre-26.4
+			saveSMSSession(m, icloud.Session, nil)
 			return fs.ConfigInput("2fa_do", "config_2fa", "Two-factor authentication: enter your 2FA code or type 'sms' for a text message")
 		}
 		// Auth succeeded without 2FA - save updated credentials and clear stale cache
@@ -288,13 +291,17 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 			return fs.ConfigError("authenticate", "2FA codes can't be blank")
 		}
 
+		// Restore session from initial sign-in instead of re-authenticating
+		// This avoids a redundant SRP roundtrip and extra push on pre-26.4
+		smsState, err := loadSMSSession(m)
+		if err != nil {
+			return nil, fmt.Errorf("session state lost between 2FA steps: %w", err)
+		}
 		icloud, err := api.New(appleid, password, trustToken, clientID, cookies, nil, "_config")
 		if err != nil {
 			return nil, err
 		}
-		if err := icloud.SignIn(ctx); err != nil {
-			return nil, err
-		}
+		restoreSMSSession(icloud, smsState)
 
 		if strings.EqualFold(code, "sms") {
 			authState, err := icloud.Session.GetAuthState(ctx)
@@ -312,6 +319,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		}
 		m.Set(configTrustToken, icloud.Session.TrustToken)
 		m.Set(configCookies, icloud.Session.GetCookieString())
+		m.Set("_sms_session", "")
 		api.ClearCacheDir(name)
 		return nil, nil
 
