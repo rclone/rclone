@@ -523,6 +523,21 @@ func (s *Session) acquirePCSCookies(ctx context.Context) error {
 	return fmt.Errorf("requestPCS: timed out waiting for device approval after 5 minutes")
 }
 
+// RequestPushNotification explicitly requests a push notification to trusted devices
+// Required for iOS 26.4+ where the SRP 409 response no longer auto-pushes
+func (s *Session) RequestPushNotification(ctx context.Context) error {
+	opts := rest.Opts{
+		Method:       "PUT",
+		Path:         "/verify/trusteddevice/securitycode",
+		ExtraHeaders: s.GetAuthHeaders(map[string]string{}),
+		RootURL:      authEndpoint,
+		NoResponse:   true,
+	}
+
+	_, err := s.Request(ctx, opts, nil, nil)
+	return err
+}
+
 // Validate2FACode validates the 2FA code from a trusted device push notification
 func (s *Session) Validate2FACode(ctx context.Context, code string) error {
 	values := map[string]any{"securityCode": map[string]string{"code": code}}
