@@ -268,6 +268,13 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 			if err == nil && authState.NoTrustedDevices && len(authState.TrustedPhoneNumbers) > 0 {
 				return triggerSMSFlow(ctx, icloud, authState.TrustedPhoneNumbers, m)
 			}
+			// Explicitly request push to trusted devices - required for iOS 26.4+
+			// where the SRP 409 no longer auto-pushes
+			if err := icloud.Session.RequestPushNotification(ctx); err != nil {
+				fs.Debugf(nil, "iclouddrive: push notification request failed (SMS fallback available): %v", err)
+			} else {
+				fs.Debugf(nil, "iclouddrive: push notification requested to trusted devices")
+			}
 			return fs.ConfigInput("2fa_do", "config_2fa", "Two-factor authentication: enter your 2FA code or type 'sms' for a text message")
 		}
 		// Auth succeeded without 2FA - save updated credentials and clear stale cache
