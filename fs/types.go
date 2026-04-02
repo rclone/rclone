@@ -113,7 +113,7 @@ type ObjectInfo interface {
 }
 
 // DirEntry provides read only information about the common subset of
-// a Dir or Object.  These are returned from directory listings - type
+// a Directory or Object.  These are returned from directory listings - type
 // assert them into the correct type.
 type DirEntry interface {
 	// Fs returns read only access to the Fs that this object is part of

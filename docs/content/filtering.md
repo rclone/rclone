@@ -357,9 +357,9 @@ are completely excluded from the listing. Only files of suffix
 The `- **` rule prevents listing of any path/files not previously
 matched by the rules above.
 
-Option `exclude-if-present` creates a directory exclude rule based
-on the presence of a file in a directory and takes precedence over
-other rclone directory filter rules.
+Option `exclude-if-present` creates a directory exclude rule
+based on the presence of a file or directory in a directory and
+takes precedence over other rclone directory filter rules.
 
 When using pattern list syntax, if a pattern item contains either
 `/` or `**`, then rclone will not able to imply a directory filter rule
@@ -915,13 +915,13 @@ format.
 
 Useful for debugging.
 
-## Exclude directory based on a file
+## Exclude directory based on a file or directory
 
 The `--exclude-if-present` flag controls whether a directory is
 within the scope of an rclone command based on the presence of a
-named file within it. The flag can be repeated to check for
-multiple file names, presence of any of them will exclude the
-directory.
+named file or a directory within it. The flag can be repeated to
+check for multiple file names or directtories, presence of any
+of them will exclude the directory.
 
 This flag has a priority over other filter flags.
 
@@ -936,6 +936,12 @@ dir1/dir2/dir3/.ignore
 
 The command `rclone ls --exclude-if-present .ignore dir1` does
 not list `dir3`, `file3` or `.ignore`.
+
+To ignore based on directories, append a `/` in the filter flag.
+
+The command `rclone ls --exclude-if-present dir3/ dir1` does
+not list `dir2` and its contents.
+
 
 ## Metadata filters {#metadata}
 
