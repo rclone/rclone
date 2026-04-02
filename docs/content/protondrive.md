@@ -4,7 +4,7 @@ description: "Rclone docs for Proton Drive"
 versionIntroduced: "v1.64.0"
 ---
 
-# {{< icon "fa fa-folder" >}} Proton Drive
+# Proton Drive
 
 [Proton Drive](https://proton.me/drive) is an end-to-end encrypted Swiss vault
  for your files that protects your data.

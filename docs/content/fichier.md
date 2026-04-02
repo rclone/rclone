@@ -4,7 +4,7 @@ description: "Rclone docs for 1Fichier"
 versionIntroduced: "v1.49"
 ---
 
-# {{< icon "fa fa-archive" >}} 1Fichier
+# 1Fichier
 
 This is a backend for the [1fichier](https://1fichier.com) cloud
 storage service. Note that a Premium subscription is required to use

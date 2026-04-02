@@ -4,7 +4,7 @@ description: "Rclone docs for the local filesystem"
 versionIntroduced: "v0.91"
 ---
 
-# {{< icon "fas fa-hdd" >}} Local Filesystem
+# Local Filesystem
 
 Local paths are specified as normal filesystem paths, e.g. `/path/to/wherever`, so
 
