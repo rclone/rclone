@@ -503,14 +503,6 @@ func (o *PhotosObject) Open(ctx context.Context, options ...fs.OpenOption) (io.R
 
 	fs.FixRangeOption(options, o.size)
 
-	var rangeOption *fs.RangeOption
-	for _, option := range options {
-		if ro, ok := option.(*fs.RangeOption); ok {
-			rangeOption = ro
-			break
-		}
-	}
-
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
 		if resp != nil {
@@ -521,11 +513,7 @@ func (o *PhotosObject) Open(ctx context.Context, options ...fs.OpenOption) (io.R
 		if err != nil {
 			return false, fmt.Errorf("failed to create request: %w", err)
 		}
-
-		if rangeOption != nil {
-			key, value := rangeOption.Header()
-			req.Header.Set(key, value)
-		}
+		fs.OpenOptionAddHTTPHeaders(req.Header, options)
 
 		resp, err = o.fs.httpClient.Do(req)
 		return shouldRetry(ctx, resp, err)
@@ -733,6 +721,9 @@ func (f *PhotosFs) ListR(ctx context.Context, dir string, callback fs.ListRCallb
 	}
 
 	// Fan out album photo listing across goroutines
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	jobCh := make(chan listRAlbumJob, len(jobs))
 	for _, job := range jobs {
 		jobCh <- job
@@ -751,6 +742,7 @@ func (f *PhotosFs) ListR(ctx context.Context, dir string, callback fs.ListRCallb
 				photos, err := job.album.GetPhotos(ctx)
 				if err != nil {
 					errs <- err
+					cancel()
 					return
 				}
 				for _, photo := range photos {
@@ -761,6 +753,7 @@ func (f *PhotosFs) ListR(ctx context.Context, dir string, callback fs.ListRCallb
 					o := f.newPhotosObject(remotePath, photo, job.album.Zone)
 					if err := addEntry(o); err != nil {
 						errs <- err
+						cancel()
 						return
 					}
 				}

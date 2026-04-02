@@ -85,15 +85,9 @@ func (c *Client) Request(ctx context.Context, opts rest.Opts, request any, respo
 			if c.Session.Requires2FA() {
 				return nil, errors.New("trust token expired, please reauth")
 			}
-			return c.RequestNoReAuth(ctx, opts, request, response)
+			return c.Session.Request(ctx, opts, request, response)
 		}
 	}
-	return resp, err
-}
-
-// RequestNoReAuth makes a request without re-authenticating on failure
-func (c *Client) RequestNoReAuth(ctx context.Context, opts rest.Opts, request any, response any) (resp *http.Response, err error) {
-	resp, err = c.Session.Request(ctx, opts, request, response)
 	return resp, err
 }
 
@@ -178,11 +172,6 @@ func ClearCacheDir(remoteName string) {
 	if err := os.RemoveAll(dir); err != nil {
 		fs.Debugf(nil, "iclouddrive: failed to clear cache: %v", err)
 	}
-}
-
-// SignIn signs in the client using SRP authentication
-func (c *Client) SignIn(ctx context.Context) error {
-	return c.Session.SignIn(ctx, c.appleID, c.password)
 }
 
 // IntoReader marshals the provided values into a JSON encoded reader

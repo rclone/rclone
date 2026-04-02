@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -22,10 +23,11 @@ import (
 	"github.com/rclone/rclone/lib/encoder"
 )
 
-// smsAuthState holds session fields needed to validate an SMS code
-// SMS codes are session-scoped (unlike trusted device push codes),
-// so we must preserve the session that triggered the SMS
-type smsAuthState struct {
+const configAuthSession = "_auth_session"
+
+// configAuthState holds session fields that must be preserved across
+// Config() state machine steps (push 2FA and SMS both need it)
+type configAuthState struct {
 	Scnt           string     `json:"s"`
 	SessionID      string     `json:"i"`
 	AuthAttributes string     `json:"a"`
@@ -42,8 +44,8 @@ type smsPhone struct {
 	Mode string `json:"m"`
 }
 
-func saveSMSSession(m configmap.Mapper, s *api.Session, phones []smsPhone) {
-	st := smsAuthState{
+func saveAuthSession(m configmap.Mapper, s *api.Session, phones []smsPhone) {
+	st := configAuthState{
 		Scnt:           s.Scnt,
 		SessionID:      s.SessionID,
 		AuthAttributes: s.AuthAttributes,
@@ -55,29 +57,29 @@ func saveSMSSession(m configmap.Mapper, s *api.Session, phones []smsPhone) {
 	}
 	data, err := json.Marshal(st)
 	if err != nil {
-		fs.Debugf(nil, "iclouddrive: failed to marshal SMS session: %v", err)
+		fs.Debugf(nil, "iclouddrive: failed to marshal auth session: %v", err)
 		return
 	}
-	m.Set("_sms_session", base64.StdEncoding.EncodeToString(data))
+	m.Set(configAuthSession, base64.StdEncoding.EncodeToString(data))
 }
 
-func loadSMSSession(m configmap.Mapper) (*smsAuthState, error) {
-	raw, _ := m.Get("_sms_session")
+func loadAuthSession(m configmap.Mapper) (*configAuthState, error) {
+	raw, _ := m.Get(configAuthSession)
 	if raw == "" {
-		return nil, errors.New("SMS session state lost, please reconfigure")
+		return nil, errors.New("auth session state lost, please reconfigure")
 	}
 	data, err := base64.StdEncoding.DecodeString(raw)
 	if err != nil {
-		return nil, fmt.Errorf("corrupt SMS session state: %w", err)
+		return nil, fmt.Errorf("corrupt auth session state: %w", err)
 	}
-	var st smsAuthState
+	var st configAuthState
 	if err := json.Unmarshal(data, &st); err != nil {
-		return nil, fmt.Errorf("invalid SMS session state: %w", err)
+		return nil, fmt.Errorf("invalid auth session state: %w", err)
 	}
 	return &st, nil
 }
 
-func restoreSMSSession(icloud *api.Client, st *smsAuthState) {
+func restoreAuthSession(icloud *api.Client, st *configAuthState) {
 	icloud.Session.Scnt = st.Scnt
 	icloud.Session.SessionID = st.SessionID
 	icloud.Session.AuthAttributes = st.AuthAttributes
@@ -85,6 +87,30 @@ func restoreSMSSession(icloud *api.Client, st *smsAuthState) {
 	icloud.Session.SessionToken = st.SessionToken
 	icloud.Session.ClientID = st.ClientID
 	icloud.Session.AccountCountry = st.AccountCountry
+}
+
+// resumeConfigClient recreates an API client and restores session state saved
+// from a previous Config() step. Used across 2FA states to avoid re-authenticating
+func resumeConfigClient(m configmap.Mapper, appleid, password, trustToken, clientID string, cookies []*http.Cookie) (*api.Client, *configAuthState, error) {
+	st, err := loadAuthSession(m)
+	if err != nil {
+		return nil, nil, err
+	}
+	icloud, err := api.New(appleid, password, trustToken, clientID, cookies, nil, "_config")
+	if err != nil {
+		return nil, nil, err
+	}
+	restoreAuthSession(icloud, st)
+	return icloud, st, nil
+}
+
+// saveAuthCredentials persists trust token, cookies, and clears session state
+// after successful 2FA validation
+func saveAuthCredentials(m configmap.Mapper, icloud *api.Client, name string) {
+	m.Set(configTrustToken, icloud.Session.TrustToken)
+	m.Set(configCookies, icloud.Session.GetCookieString())
+	m.Set(configAuthSession, "")
+	api.ClearCacheDir(name)
 }
 
 // triggerSMSFlow handles phone selection and SMS triggering
@@ -105,13 +131,13 @@ func triggerSMSFlow(ctx context.Context, icloud *api.Client, phones []api.Truste
 		if err := icloud.Session.RequestSMSCode(ctx, p.ID, p.Mode); err != nil {
 			return nil, fmt.Errorf("failed to send SMS code: %w", err)
 		}
-		saveSMSSession(m, icloud.Session, nil)
+		saveAuthSession(m, icloud.Session, nil)
 		nextState := fmt.Sprintf("2fa_sms_%d_%s", p.ID, p.Mode)
 		return fs.ConfigInput(nextState, "config_2fa_sms", fmt.Sprintf("Enter the verification code sent to %s", p.Num))
 	}
 
 	// Multiple phones - save session and present picker
-	saveSMSSession(m, icloud.Session, smsPhones)
+	saveAuthSession(m, icloud.Session, smsPhones)
 	items := make([]fs.OptionExample, len(smsPhones))
 	for i, p := range smsPhones {
 		items[i] = fs.OptionExample{
@@ -253,7 +279,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 	case config.State == "":
 		// Force fresh SRP authentication - ignore stale trust token and cookies
 		// so that reconnect always prompts for 2FA
-		m.Set("_sms_session", "")
+		m.Set(configAuthSession, "")
 		icloud, err := api.New(appleid, password, "", clientID, nil, nil, "_config")
 		if err != nil {
 			return nil, err
@@ -273,11 +299,13 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 			// may also trigger a push (cosmetic double on pre-26.4, harmless)
 			if err := icloud.Session.RequestPushNotification(ctx); err != nil {
 				fs.Debugf(nil, "iclouddrive: push notification request failed (SMS fallback available): %v", err)
+			} else {
+				fs.Debugf(nil, "iclouddrive: push notification requested to trusted devices")
 			}
 			// Save session state so 2fa_do can validate without re-authenticating
 			// Push codes are account-scoped so session reuse is not strictly required,
 			// but it avoids a redundant SRP roundtrip and a second push on pre-26.4
-			saveSMSSession(m, icloud.Session, nil)
+			saveAuthSession(m, icloud.Session, nil)
 			return fs.ConfigInput("2fa_do", "config_2fa", "Two-factor authentication: enter your 2FA code or type 'sms' for a text message")
 		}
 		// Auth succeeded without 2FA - save updated credentials and clear stale cache
@@ -293,15 +321,10 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 
 		// Restore session from initial sign-in instead of re-authenticating
 		// This avoids a redundant SRP roundtrip and extra push on pre-26.4
-		smsState, err := loadSMSSession(m)
-		if err != nil {
-			return nil, fmt.Errorf("session state lost between 2FA steps: %w", err)
-		}
-		icloud, err := api.New(appleid, password, trustToken, clientID, cookies, nil, "_config")
+		icloud, _, err := resumeConfigClient(m, appleid, password, trustToken, clientID, cookies)
 		if err != nil {
 			return nil, err
 		}
-		restoreSMSSession(icloud, smsState)
 
 		if strings.EqualFold(code, "sms") {
 			authState, err := icloud.Session.GetAuthState(ctx)
@@ -317,10 +340,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		if err := icloud.Session.Validate2FACode(ctx, code); err != nil {
 			return nil, err
 		}
-		m.Set(configTrustToken, icloud.Session.TrustToken)
-		m.Set(configCookies, icloud.Session.GetCookieString())
-		m.Set("_sms_session", "")
-		api.ClearCacheDir(name)
+		saveAuthCredentials(m, icloud, name)
 		return nil, nil
 
 	case config.State == "2fa_sms_select":
@@ -328,13 +348,13 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		idStr, mode, _ := strings.Cut(config.Result, "_")
 		phoneID, err := strconv.Atoi(idStr)
 		if err != nil {
-			m.Set("_sms_session", "")
+			m.Set(configAuthSession, "")
 			return nil, fmt.Errorf("invalid phone selection %q", config.Result)
 		}
 		if mode == "" {
 			mode = "sms"
 		}
-		smsState, err := loadSMSSession(m)
+		icloud, smsState, err := resumeConfigClient(m, appleid, password, trustToken, clientID, cookies)
 		if err != nil {
 			return nil, err
 		}
@@ -347,17 +367,11 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 			}
 		}
 
-		icloud, err := api.New(appleid, password, trustToken, clientID, cookies, nil, "_config")
-		if err != nil {
-			return nil, err
-		}
-		restoreSMSSession(icloud, smsState)
-
 		if err := icloud.Session.RequestSMSCode(ctx, phoneID, mode); err != nil {
-			m.Set("_sms_session", "")
+			m.Set(configAuthSession, "")
 			return nil, fmt.Errorf("failed to send SMS code: %w", err)
 		}
-		saveSMSSession(m, icloud.Session, nil)
+		saveAuthSession(m, icloud.Session, nil)
 		nextState := fmt.Sprintf("2fa_sms_%d_%s", phoneID, mode)
 		return fs.ConfigInput(nextState, "config_2fa_sms", fmt.Sprintf("Enter the verification code sent to %s", phoneNum))
 
@@ -377,24 +391,16 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 			mode = "sms"
 		}
 
-		smsState, err := loadSMSSession(m)
+		icloud, _, err := resumeConfigClient(m, appleid, password, trustToken, clientID, cookies)
 		if err != nil {
 			return nil, err
 		}
-		icloud, err := api.New(appleid, password, trustToken, clientID, cookies, nil, "_config")
-		if err != nil {
-			return nil, err
-		}
-		restoreSMSSession(icloud, smsState)
 
 		if err := icloud.Session.ValidateSMSCode(ctx, code, phoneID, mode); err != nil {
-			m.Set("_sms_session", "")
+			m.Set(configAuthSession, "")
 			return nil, err
 		}
-		m.Set(configTrustToken, icloud.Session.TrustToken)
-		m.Set(configCookies, icloud.Session.GetCookieString())
-		m.Set("_sms_session", "")
-		api.ClearCacheDir(name)
+		saveAuthCredentials(m, icloud, name)
 		return nil, nil
 
 	default:
@@ -457,7 +463,7 @@ func newICloudClient(ctx context.Context, name string, m configmap.Mapper) (*api
 func disconnectClient(m configmap.Mapper, icloud *api.Client) error {
 	m.Set(configTrustToken, "")
 	m.Set(configCookies, "")
-	m.Set("_sms_session", "")
+	m.Set(configAuthSession, "")
 	return os.RemoveAll(icloud.CacheDir())
 }
 
