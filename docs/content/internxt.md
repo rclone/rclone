@@ -4,7 +4,7 @@ description: "Rclone docs for Internxt Drive"
 versionIntroduced: "v1.73"
 ---
 
-# {{< icon "fas fa-cloud" >}} Internxt Drive
+# Internxt Drive
 
 [Internxt Drive](https://internxt.com) is a zero-knowledge encrypted cloud storage service.
 

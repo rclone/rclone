@@ -4,7 +4,7 @@ description: "Rclone docs for WebDAV"
 versionIntroduced: "v1.39"
 ---
 
-# {{< icon "fa fa-globe" >}} WebDAV
+# WebDAV
 
 Paths are specified as `remote:path`
 

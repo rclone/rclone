@@ -4,7 +4,7 @@ description: "Rclone docs for OpenDrive"
 versionIntroduced: "v1.42"
 ---
 
-# {{< icon "fa fa-file" >}} OpenDrive
+# OpenDrive
 
 Paths are specified as `remote:path`
 

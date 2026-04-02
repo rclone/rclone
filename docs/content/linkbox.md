@@ -4,7 +4,7 @@ description: "Rclone docs for Linkbox"
 versionIntroduced: "v1.65"
 ---
 
-# {{< icon "fa fa-infinity" >}} Linkbox
+# Linkbox
 
 Linkbox is [a private cloud drive](https://linkbox.to/).
 

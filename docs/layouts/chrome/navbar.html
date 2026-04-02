@@ -14,19 +14,19 @@
           Docs
         </a>
         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-          <a class="dropdown-item" href="/install/"><i class="fa fa-book fa-fw"></i> Installation</a>
-          <a class="dropdown-item" href="/docs/"><i class="fa fa-book fa-fw"></i> Usage</a>
-          <a class="dropdown-item" href="/filtering/"><i class="fa fa-book fa-fw"></i> Filtering</a>
-          <a class="dropdown-item" href="/gui/"><i class="fa fa-book fa-fw"></i> GUI</a>
-          <a class="dropdown-item" href="/rc/"><i class="fa fa-book fa-fw"></i> Remote Control</a>
-          <a class="dropdown-item" href="/remote_setup/"><i class="fa fa-book fa-fw"></i> Remote Setup</a>
-          <a class="dropdown-item" href="/changelog/"><i class="fa fa-book fa-fw"></i> Changelog</a>
-          <a class="dropdown-item" href="/bugs/"><i class="fa fa-book fa-fw"></i> Bugs</a>
-          <a class="dropdown-item" href="/faq/"><i class="fa fa-book fa-fw"></i> FAQ</a>
-          <a class="dropdown-item" href="/flags/"><i class="fa fa-book fa-fw"></i> Flags</a>
-          <a class="dropdown-item" href="/licence/"><i class="fa fa-book fa-fw"></i> Licence</a>
-          <a class="dropdown-item" href="/authors/"><i class="fa fa-book fa-fw"></i> Authors</a>
-          <a class="dropdown-item" href="/privacy/"><i class="fa fa-book fa-fw"></i> Privacy Policy</a>
+          <a class="dropdown-item" href="/install/">Installation</a>
+          <a class="dropdown-item" href="/docs/">Usage</a>
+          <a class="dropdown-item" href="/filtering/">Filtering</a>
+          <a class="dropdown-item" href="/gui/">GUI</a>
+          <a class="dropdown-item" href="/rc/">Remote Control</a>
+          <a class="dropdown-item" href="/remote_setup/">Remote Setup</a>
+          <a class="dropdown-item" href="/changelog/">Changelog</a>
+          <a class="dropdown-item" href="/bugs/">Bugs</a>
+          <a class="dropdown-item" href="/faq/">FAQ</a>
+          <a class="dropdown-item" href="/flags/">Flags</a>
+          <a class="dropdown-item" href="/licence/">Licence</a>
+          <a class="dropdown-item" href="/authors/">Authors</a>
+          <a class="dropdown-item" href="/privacy/">Privacy Policy</a>
         </div>
       </li>
       <li class="nav-item active dropdown">
@@ -34,12 +34,12 @@
           Commands
         </a>
         <div class="dropdown-menu pre-scrollable" aria-labelledby="navbarDropdown">
-          <a class="dropdown-item" href="/commands/"><i class="fas fa-map fa-fw"></i> Overview</a>
+          <a class="dropdown-item" href="/commands/">Overview</a>
           <div class="dropdown-divider"></div>
           {{ with .Site.GetPage "/commands" }}
             {{ range .Data.Pages }}
               {{ if lt (countwords .Title) 3 }}
-                <a class="dropdown-item" href="{{ .RelPermalink }}"><i class="fa fa-book fa-fw"></i> {{ .Title | markdownify }}</a>
+                <a class="dropdown-item" href="{{ .RelPermalink }}">{{ .Title | markdownify }}</a>
               {{ end }}
             {{ end }}
           {{ end }}
@@ -50,8 +50,8 @@
           Storage Systems
         </a>
         <div class="dropdown-menu pre-scrollable" aria-labelledby="navbarDropdown">
-          <a class="dropdown-item" href="/overview/"><i class="fas fa-map fa-fw"></i> Overview</a>
-          <a class="dropdown-item" href="/tiers/"><i class="fas fa-map fa-fw"></i> Support Tiers</a>
+          <a class="dropdown-item" href="/overview/">Overview</a>
+          <a class="dropdown-item" href="/tiers/">Support Tiers</a>
           <div class="dropdown-divider"></div>
           <a class="dropdown-item" href="/fichier/"><i class="fa fa-archive fa-fw"></i> 1Fichier</a>
           <a class="dropdown-item" href="/netstorage/"><i class="fas fa-database fa-fw"></i> Akamai NetStorage</a>
@@ -121,20 +121,94 @@
           <a class="dropdown-item" href="/webdav/"><i class="fa fa-server fa-fw"></i> WebDAV</a>
           <a class="dropdown-item" href="/yandex/"><i class="fa fa-space-shuttle fa-fw"></i> Yandex Disk</a>
           <a class="dropdown-item" href="/zoho/"><i class="fas fa-folder fa-fw"></i> Zoho WorkDrive</a>
+          <span class="dropdown-letter-heading">1 &ndash; A</span>
+          <a class="dropdown-item" href="/fichier/">1Fichier</a>
+          <a class="dropdown-item" href="/netstorage/">Akamai NetStorage</a>
+          <a class="dropdown-item" href="/alias/">Alias</a>
+          <a class="dropdown-item" href="/s3/">Amazon S3 Storage Providers</a>
+          <a class="dropdown-item" href="/archive/">Archive</a>
+          <span class="dropdown-letter-heading">B &ndash; C</span>
+          <a class="dropdown-item" href="/b2/">Backblaze B2</a>
+          <a class="dropdown-item" href="/box/">Box</a>
+          <a class="dropdown-item" href="/chunker/">Chunker (splits large files)</a>
+          <a class="dropdown-item" href="/cloudinary/">Cloudinary</a>
+          <a class="dropdown-item" href="/compress/">Compress (transparent gzip compression)</a>
+          <a class="dropdown-item" href="/combine/">Combine (remotes into a directory tree)</a>
+          <a class="dropdown-item" href="/sharefile/">Citrix ShareFile</a>
+          <a class="dropdown-item" href="/crypt/">Crypt (encrypts the others)</a>
+          <span class="dropdown-letter-heading">D &ndash; F</span>
+          <a class="dropdown-item" href="/koofr/#digi-storage">Digi Storage</a>
+          <a class="dropdown-item" href="/drime/">Drime</a>
+          <a class="dropdown-item" href="/dropbox/">Dropbox</a>
+          <a class="dropdown-item" href="/filefabric/">Enterprise File Fabric</a>
+          <a class="dropdown-item" href="/filelu/">FileLu Cloud Storage</a>
+          <a class="dropdown-item" href="/s3/#filelu-s5">FileLu S5 (S3-Compatible)</a>
+          <a class="dropdown-item" href="/filen/">Filen</a>
+          <a class="dropdown-item" href="/filescom/">Files.com</a>
+          <a class="dropdown-item" href="/ftp/">FTP</a>
+          <span class="dropdown-letter-heading">G &ndash; I</span>
+          <a class="dropdown-item" href="/gofile/">Gofile</a>
+          <a class="dropdown-item" href="/googlecloudstorage/">Google Cloud Storage</a>
+          <a class="dropdown-item" href="/drive/">Google Drive</a>
+          <a class="dropdown-item" href="/googlephotos/">Google Photos</a>
+          <a class="dropdown-item" href="/hasher/">Hasher (better checksums for others)</a>
+          <a class="dropdown-item" href="/hdfs/">HDFS (Hadoop Distributed Filesystem)</a>
+          <a class="dropdown-item" href="/hidrive/">HiDrive</a>
+          <a class="dropdown-item" href="/http/">HTTP</a>
+          <a class="dropdown-item" href="/iclouddrive/">iCloud Drive</a>
+          <a class="dropdown-item" href="/imagekit/">ImageKit</a>
+          <a class="dropdown-item" href="/internetarchive/">Internet Archive</a>
+          <a class="dropdown-item" href="/internxt/">Internxt</a>
+          <span class="dropdown-letter-heading">J &ndash; M</span>
+          <a class="dropdown-item" href="/jottacloud/">Jottacloud</a>
+          <a class="dropdown-item" href="/koofr/">Koofr</a>
+          <a class="dropdown-item" href="/linkbox/">Linkbox</a>
+          <a class="dropdown-item" href="/mailru/">Mail.ru Cloud</a>
+          <a class="dropdown-item" href="/mega/">Mega</a>
+          <a class="dropdown-item" href="/s3/#mega">Mega S4 (S3-Compatible)</a>
+          <a class="dropdown-item" href="/memory/">Memory</a>
+          <a class="dropdown-item" href="/azureblob/">Microsoft Azure Blob Storage</a>
+          <a class="dropdown-item" href="/azurefiles/">Microsoft Azure Files Storage</a>
+          <a class="dropdown-item" href="/onedrive/">Microsoft OneDrive</a>
+          <span class="dropdown-letter-heading">O &ndash; Q</span>
+          <a class="dropdown-item" href="/opendrive/">OpenDrive</a>
+          <a class="dropdown-item" href="/swift/">Openstack Swift</a>
+          <a class="dropdown-item" href="/oracleobjectstorage/">Oracle Object Storage</a>
+          <a class="dropdown-item" href="/pcloud/">pCloud</a>
+          <a class="dropdown-item" href="/pikpak/">PikPak</a>
+          <a class="dropdown-item" href="/pixeldrain/">Pixeldrain</a>
+          <a class="dropdown-item" href="/premiumizeme/">premiumize.me</a>
+          <a class="dropdown-item" href="/protondrive/">Proton Drive</a>
+          <a class="dropdown-item" href="/putio/">put.io</a>
+          <a class="dropdown-item" href="/quatrix/">Quatrix</a>
+          <a class="dropdown-item" href="/qingstor/">QingStor</a>
+          <span class="dropdown-letter-heading">S &ndash; Z</span>
+          <a class="dropdown-item" href="/seafile/">Seafile</a>
+          <a class="dropdown-item" href="/sftp/">SFTP</a>
+          <a class="dropdown-item" href="/shade/">Shade</a>
+          <a class="dropdown-item" href="/sia/">Sia</a>
+          <a class="dropdown-item" href="/smb/">SMB / CIFS</a>
+          <a class="dropdown-item" href="/storj/">Storj</a>
+          <a class="dropdown-item" href="/sugarsync/">SugarSync</a>
+          <a class="dropdown-item" href="/ulozto/">Uloz.to</a>
+          <a class="dropdown-item" href="/union/">Union (merge backends)</a>
+          <a class="dropdown-item" href="/webdav/">WebDAV</a>
+          <a class="dropdown-item" href="/yandex/">Yandex Disk</a>
+          <a class="dropdown-item" href="/zoho/">Zoho WorkDrive</a>
           <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="/local/"><i class="fas fa-hdd fa-fw"></i> The local filesystem</a>
+          <a class="dropdown-item" href="/local/">The local filesystem</a>
         </div>
       </li>
       <li class="nav-item active">
-        <a class="nav-link" href="/contact/"><i class="fa fa-envelope fa-fw"></i> Contact</a>
+        <a class="nav-link" href="/contact/"><svg class="icon icon-fw"><use href="#icon-envelope"/></svg> Contact</a>
       </li>
       <li class="nav-item active">
-        <a class="nav-link" href="/sponsor/"><i class="fa fa-heart heart fa-fw"></i> Sponsor</a>
+        <a class="nav-link" href="/sponsor/"><svg class="icon icon-fw heart"><use href="#icon-heart"/></svg> Sponsor</a>
       </li>
     </ul>
     <ul class="navbar-nav mr-auto">
       <li class="nav-item active">
-        <a href="https://rclone.com/" target="_blank" rel="noopener" class="nav-link bizbutton" title="Click here for support and advertising contracts"><i class="fa fa-briefcase"></i> For Business</a>
+        <a href="https://rclone.com/" target="_blank" rel="noopener" class="nav-link bizbutton" title="Click here for support and advertising contracts"><svg class="icon"><use href="#icon-briefcase"/></svg> For Business</a>
       </li>
     </ul>
     <form class="form-inline" name="search_form" action="https://google.com/search" target="_blank" rel="noopener" onsubmit="on_search();">

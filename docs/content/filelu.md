@@ -4,7 +4,7 @@ description: "Rclone docs for FileLu"
 versionIntroduced: "v1.70"
 ---
 
-# {{< icon "fa fa-folder" >}} FileLu
+# FileLu
 
 [FileLu](https://filelu.com/) is a reliable cloud storage provider
 offering features like secure file uploads, downloads, flexible

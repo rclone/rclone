@@ -4,7 +4,7 @@ description: "Rclone docs for the Enterprise File Fabric backend"
 versionIntroduced: "v1.54"
 ---
 
-# {{< icon "fa fa-cloud" >}} Enterprise File Fabric
+# Enterprise File Fabric
 
 This backend supports [Storage Made Easy's Enterprise File
 Fabric™](https://storagemadeeasy.com/about/) which provides a software

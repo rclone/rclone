@@ -4,7 +4,7 @@ description: "SFTP"
 versionIntroduced: "v1.36"
 ---
 
-# {{< icon "fa fa-server" >}} SFTP
+# SFTP
 
 SFTP is the [Secure (or SSH) File Transfer
 Protocol](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol).
