@@ -62,7 +62,7 @@ handling file names.
 | /         | 0x2F  | ／           |
 
 When running on Windows the following characters are replaced. This
-list is based on the [Windows file naming conventions](https://docs.microsoft.com/de-de/windows/desktop/FileIO/naming-a-file#naming-conventions).
+list is based on the [Windows file naming conventions](https://docs.microsoft.com/windows/desktop/FileIO/naming-a-file#naming-conventions).
 
 | Character | Value | Replacement |
 | --------- |:-----:|:-----------:|
