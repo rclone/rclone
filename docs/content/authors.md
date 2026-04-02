@@ -1106,3 +1106,4 @@ put them back in again. -->
 - jinkeyuu <44105232+jinkeyuu@users.noreply.github.com>
 - jinyu.han <jinyu.han@ucloud.cn>
 - Claude Opus 4.6 <noreply@anthropic.com>
+- Andriy Senyshyn <andriy.senyshyn@kiteworks.com>
