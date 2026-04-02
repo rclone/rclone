@@ -295,3 +295,9 @@ type UserGeneric struct {
 type LoginStartResponse struct {
 	AuthorizationURL string `json:"authorizationurl"`
 }
+
+// Session holds the authentication state for a Movistar Cloud session
+type Session struct {
+	AccessToken string `json:"access_token"`
+	JSessionID  string `json:"jsessionid"`
+}

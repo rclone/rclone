@@ -12,6 +12,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rclone/rclone/backend/movistarcloud/api"
@@ -44,10 +45,21 @@ func init() {
 		Name:        "movistarcloud",
 		Description: "Movistar Cloud",
 		NewFs:       NewFs,
+		Config:      Config,
 		Options: []fs.Option{{
-			Name:      "jsessionid",
-			Help:      "JSESSIONID cookie for authentication.\n\nYou can obtain this by logging in to micloud.movistar.es and extracting the JSESSIONID cookie from your browser.",
+			Name:      configPhoneNumber,
+			Help:      "Phone number associated with your Movistar Cloud account (e.g. 34612345678).",
 			Required:  true,
+			Sensitive: true,
+		}, {
+			Name:      configAccessToken,
+			Help:      "Access token for Movistar Cloud (set automatically during config).",
+			Advanced:  true,
+			Sensitive: true,
+		}, {
+			Name:      configJSessionID,
+			Help:      "Session ID for Movistar Cloud (set automatically during config).",
+			Advanced:  true,
 			Sensitive: true,
 		}, {
 			Name:     "list_limit",
@@ -75,21 +87,27 @@ func init() {
 
 // Options defines the configuration for this backend
 type Options struct {
-	JSessionID string               `config:"jsessionid"`
-	ListLimit  int                  `config:"list_limit"`
-	Enc        encoder.MultiEncoder `config:"encoding"`
+	PhoneNumber string               `config:"phone_number"`
+	AccessToken string               `config:"access_token"`
+	JSessionID  string               `config:"jsessionid"`
+	ListLimit   int                  `config:"list_limit"`
+	Enc         encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote Movistar Cloud filesystem
 type Fs struct {
-	name     string             // name of this remote
-	root     string             // the path we are working on
-	opt      Options            // parsed options
-	features *fs.Features       // optional features
-	srv      *rest.Client       // the connection to the main server
-	upSrv    *rest.Client       // the connection to the upload server
-	dirCache *dircache.DirCache // Map of directory path to directory id
-	pacer    *fs.Pacer          // pacer for API calls
+	name       string             // name of this remote
+	root       string             // the path we are working on
+	opt        Options            // parsed options
+	features   *fs.Features       // optional features
+	srv        *rest.Client       // the connection to the main server
+	upSrv      *rest.Client       // the connection to the upload server
+	dirCache   *dircache.DirCache // Map of directory path to directory id
+	pacer      *fs.Pacer          // pacer for API calls
+	m          configmap.Mapper   // config mapper for persisting token refreshes
+	session    *api.Session       // current auth session
+	sessionMu  sync.Mutex         // protects session and header updates
+	httpClient *http.Client       // http client for token refresh
 }
 
 // Object describes a Movistar Cloud file object
@@ -150,10 +168,14 @@ var retryErrorCodes = []int{
 }
 
 // shouldRetry returns a boolean as to whether this resp and err
-// deserve to be retried. It returns the err as a convenience
-func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
+// deserve to be retried. It returns the err as a convenience.
+// On 401 responses, it attempts to refresh the session token.
+func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
 	if fserrors.ContextError(ctx, &err) {
 		return false, err
+	}
+	if resp != nil && resp.StatusCode == 401 && f.refreshAndRetry(resp) {
+		return true, err
 	}
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
@@ -193,7 +215,7 @@ func (f *Fs) apiGet(ctx context.Context, apiPath string, result interface{}) err
 	var respWrapper api.GetResponse
 	err := f.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.CallJSON(ctx, &opts, nil, &respWrapper)
-		return shouldRetry(ctx, resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return err
@@ -213,7 +235,7 @@ func (f *Fs) apiPost(ctx context.Context, apiPath string, request, result interf
 	}
 	err := f.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.CallJSON(ctx, &opts, request, result)
-		return shouldRetry(ctx, resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	return err
 }
@@ -228,7 +250,7 @@ func (f *Fs) apiPostGet(ctx context.Context, apiPath string, request, result int
 	var respWrapper api.GetResponse
 	err := f.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.CallJSON(ctx, &opts, request, &respWrapper)
-		return shouldRetry(ctx, resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return err
@@ -252,6 +274,45 @@ func (f *Fs) getRootFolderID(ctx context.Context) (string, error) {
 	return strconv.FormatInt(result.Folders[0].ID, 10), nil
 }
 
+// setAuthHeaders updates the Cookie and Authorization headers on both REST clients
+func (f *Fs) setAuthHeaders() {
+	cookie := "JSESSIONID=" + f.session.JSessionID
+	f.srv.SetHeader("Cookie", cookie)
+	f.upSrv.SetHeader("Cookie", cookie)
+	if f.session.AccessToken != "" {
+		auth := "oauth " + f.session.AccessToken
+		f.srv.SetHeader("Authorization", auth)
+		f.upSrv.SetHeader("Authorization", auth)
+	}
+}
+
+// refreshAndRetry attempts to refresh the session token when a 401 is received.
+// Returns true if the token was refreshed and the request should be retried.
+func (f *Fs) refreshAndRetry(resp *http.Response) bool {
+	if resp == nil || resp.StatusCode != 401 {
+		return false
+	}
+	f.sessionMu.Lock()
+	defer f.sessionMu.Unlock()
+
+	if f.session.AccessToken == "" {
+		fs.Debugf(f, "401 received but no access token available for refresh")
+		return false
+	}
+
+	newSession, err := refreshSession(context.Background(), f.httpClient, f.session)
+	if err != nil {
+		fs.Debugf(f, "Session refresh failed: %v", err)
+		return false
+	}
+
+	f.session = newSession
+	f.setAuthHeaders()
+	saveSession(f.m, newSession)
+	fs.Debugf(f, "Session refreshed successfully")
+	return true
+}
+
 // NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
@@ -261,17 +322,29 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
+	if opt.JSessionID == "" {
+		return nil, errors.New("movistarcloud: not configured - run \"rclone config\" first")
+	}
+
 	root = parsePath(root)
 
 	client := fshttp.NewClient(ctx)
 
+	session := &api.Session{
+		AccessToken: opt.AccessToken,
+		JSessionID:  opt.JSessionID,
+	}
+
 	f := &Fs{
-		name:  name,
-		root:  root,
-		opt:   *opt,
-		srv:   rest.NewClient(client).SetRoot(rootURL),
-		upSrv: rest.NewClient(client).SetRoot(uploadURL),
-		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		name:       name,
+		root:       root,
+		opt:        *opt,
+		srv:        rest.NewClient(client).SetRoot(rootURL),
+		upSrv:      rest.NewClient(client).SetRoot(uploadURL),
+		pacer:      fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		m:          m,
+		session:    session,
+		httpClient: client,
 	}
 	f.features = (&fs.Features{
 		CaseInsensitive:         false,
@@ -286,10 +359,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	// Set common headers
 	f.srv.SetHeader("Accept", "application/json")
-	f.srv.SetHeader("Cookie", "JSESSIONID="+opt.JSessionID)
-
 	f.upSrv.SetHeader("Accept", "application/json")
-	f.upSrv.SetHeader("Cookie", "JSESSIONID="+opt.JSessionID)
+	f.setAuthHeaders()
 
 	// Get the root folder ID from the API
 	rootFolderID, err := f.getRootFolderID(ctx)
@@ -305,9 +376,19 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		// Assume it is a file
 		newRoot, remote := dircache.SplitPath(root)
-		tempF := *f
-		tempF.dirCache = dircache.New(newRoot, rootFolderID, &tempF)
-		tempF.root = newRoot
+		tempF := &Fs{
+			name:       f.name,
+			root:       newRoot,
+			opt:        f.opt,
+			features:   f.features,
+			srv:        f.srv,
+			upSrv:      f.upSrv,
+			pacer:      f.pacer,
+			m:          f.m,
+			session:    f.session,
+			httpClient: f.httpClient,
+		}
+		tempF.dirCache = dircache.New(newRoot, rootFolderID, tempF)
 		// Make new Fs which is the parent
 		err = tempF.dirCache.FindRoot(ctx, false)
 		if err != nil {
@@ -322,7 +403,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			}
 			return nil, err
 		}
-		f.features.Fill(ctx, &tempF)
+		f.features.Fill(ctx, tempF)
 		f.dirCache = tempF.dirCache
 		f.root = tempF.root
 		return f, fs.ErrorIsFile
@@ -769,7 +850,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
-		return shouldRetry(ctx, resp, err)
+		return o.fs.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, err
@@ -890,7 +971,7 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 	var result api.UploadResponse
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		resp, err := o.fs.upSrv.CallJSON(ctx, &opts, &metadata, &result)
-		return shouldRetry(ctx, resp, err)
+		return o.fs.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return err
