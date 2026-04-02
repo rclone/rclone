@@ -996,14 +996,14 @@ func (f *Fs) getFileInfoByID(ctx context.Context, fileID int64, fields []string)
 // and re-uploading to the destination with the new name. This is needed
 // because the Movistar Cloud API silently refuses to change a file's
 // extension via save-metadata rename.
-func (f *Fs) moveByReupload(ctx context.Context, srcObj *Object, remote, dstLeaf, dstDirectoryID string) (*Object, error) {
+func (f *Fs) moveByReupload(ctx context.Context, srcObj *Object, remote, dstLeaf, dstDirectoryID string) (obj *Object, err error) {
 	// Stream the download directly into the upload to avoid buffering
 	// the entire file in memory.
 	reader, err := srcObj.Open(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("move reupload: failed to download source: %w", err)
 	}
-	defer reader.Close()
+	defer fs.CheckClose(reader, &err)
 
 	modTime := srcObj.modTime
 	size := srcObj.size
