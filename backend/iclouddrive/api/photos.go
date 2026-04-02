@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -18,7 +17,7 @@ import (
 	"sync/atomic"
 
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config"
+
 	"github.com/rclone/rclone/lib/rest"
 )
 
@@ -48,6 +47,17 @@ const (
 	// CPLAsset.adjustmentRenderType bitmask values
 	adjustPortrait     = 2
 	adjustLongExposure = 4
+
+	// CloudKit record type names
+	recordTypeAlbum      = "CPLAlbumByPositionLive"
+	recordTypeCountIndex = "HyperionIndexCountLookup"
+
+	// CloudKit endpoint area names
+	areaPrivate = "private"
+	areaShared  = "shared"
+
+	// Slo-mo adjustment type (metadata-only edit, no separate rendered resource)
+	adjustSloMo = "com.apple.video.slomo"
 )
 
 // utiExtensions maps common Apple UTI descriptors to file extensions
@@ -165,7 +175,7 @@ func (ps *PhotosService) FlushCaches() {
 	}
 	ps.libraries = make(map[string]*Library)
 	// Also remove the libraries cache file
-	_ = os.Remove(filepath.Join(config.GetCacheDir(), cacheSubdir, ps.client.remoteName, "libraries.json"))
+	_ = os.Remove(filepath.Join(ps.client.CacheDir(), "libraries.json"))
 }
 
 // deltaPayload holds a buffered changes/zone response waiting to be applied
@@ -252,7 +262,7 @@ func (lib *Library) newUserAlbum(name, recordName string) *Album {
 		Direction:  "ASCENDING",
 		RecordName: recordName,
 		Zone:       lib.zoneID,
-		service:    lib.service,
+		lib:        lib,
 		Filters: []Filter{{
 			FieldName:  "parentId",
 			Comparator: "EQUALS",
@@ -263,18 +273,18 @@ func (lib *Library) newUserAlbum(name, recordName string) *Album {
 
 // Album represents a photo album with its metadata and query configuration
 type Album struct {
-	Name       string
-	ObjectType string
-	ListType   string
-	Direction  string
-	Filters    []Filter
-	RecordName string
-	Zone       string
-	IsFolder   bool              // albumType=3 means folder containing child albums
-	Children   map[string]*Album // child albums for folders, keyed by name
-	service    *PhotosService
-	mu         sync.Mutex
-	photoCache map[string]*Photo // keyed by filename
+	Name       string            `json:"name"`
+	ObjectType string            `json:"objectType"`
+	ListType   string            `json:"listType"`
+	Direction  string            `json:"direction"`
+	Filters    []Filter          `json:"filters,omitempty"`
+	RecordName string            `json:"recordName,omitempty"`
+	Zone       string            `json:"zone"`
+	IsFolder   bool              `json:"isFolder,omitempty"`
+	Children   map[string]*Album `json:"children,omitempty"`
+	lib        *Library          `json:"-"`
+	mu         sync.Mutex        `json:"-"`
+	photoCache map[string]*Photo `json:"-"`
 }
 
 // Photo represents a photo or video with its metadata
@@ -398,11 +408,11 @@ func NewTestPhotosService(libs map[string]map[string]*Album) *PhotosService {
 		lib := &Library{
 			service: ps,
 			zoneID:  zoneName,
-			area:    "private",
+			area:    areaPrivate,
 			albums:  make(map[string]*Album),
 		}
 		for name, album := range albums {
-			// service intentionally left nil - GetPhotos uses test fast path
+			// lib intentionally left nil - GetPhotos uses test fast path
 			if album.Zone == "" {
 				album.Zone = zoneName
 			}
@@ -472,10 +482,10 @@ func (ps *PhotosService) GetLibraries(ctx context.Context) (map[string]*Library,
 		} `json:"zones"`
 	}
 
-	for _, area := range []string{"private", "shared"} {
+	for _, area := range []string{areaPrivate, areaShared} {
 		var response zoneResponse
 		if err := ps.requestForArea(ctx, area, "changes/database", map[string]any{}, &response); err != nil {
-			if area == "shared" {
+			if area == areaShared {
 				// Shared database may not exist for all accounts
 				fs.Debugf(nil, "iclouddrive photos: shared zone discovery failed (expected if no shared library): %v", err)
 				continue
@@ -506,6 +516,23 @@ func (ps *PhotosService) GetLibraries(ctx context.Context) (map[string]*Library,
 	return ps.libraries, nil
 }
 
+// albumRecord represents a CPLAlbum record from CloudKit
+type albumRecord struct {
+	RecordName string `json:"recordName"`
+	Fields     struct {
+		AlbumNameEnc *ckStringField `json:"albumNameEnc,omitempty"`
+		AlbumType    *ckIntField    `json:"albumType,omitempty"`
+		ParentID     *ckStringField `json:"parentId,omitempty"`
+		IsDeleted    *ckBoolField   `json:"isDeleted,omitempty"`
+	} `json:"fields"`
+}
+
+// albumQueryResponse wraps a paginated list of album records
+type albumQueryResponse struct {
+	Records            []albumRecord `json:"records"`
+	ContinuationMarker string        `json:"continuationMarker"`
+}
+
 // cachedLibraryEntry stores zone metadata for disk cache persistence
 type cachedLibraryEntry struct {
 	ZoneName        string `json:"zoneName"`
@@ -516,7 +543,7 @@ type cachedLibraryEntry struct {
 
 // loadCachedLibraries loads zone metadata from disk cache
 func (ps *PhotosService) loadCachedLibraries() map[string]*Library {
-	cacheFile := filepath.Join(config.GetCacheDir(), cacheSubdir, ps.client.remoteName, "libraries.json")
+	cacheFile := filepath.Join(ps.client.CacheDir(), "libraries.json")
 	data, err := os.ReadFile(cacheFile)
 	if err != nil {
 		return nil
@@ -530,7 +557,7 @@ func (ps *PhotosService) loadCachedLibraries() map[string]*Library {
 			return nil
 		}
 		for _, name := range zoneNames {
-			entries = append(entries, cachedLibraryEntry{ZoneName: name, Area: "private"})
+			entries = append(entries, cachedLibraryEntry{ZoneName: name, Area: areaPrivate})
 		}
 	}
 
@@ -538,7 +565,7 @@ func (ps *PhotosService) loadCachedLibraries() map[string]*Library {
 	for _, entry := range entries {
 		area := entry.Area
 		if area == "" {
-			area = "private"
+			area = areaPrivate
 		}
 		libs[entry.ZoneName] = &Library{
 			service:         ps,
@@ -563,7 +590,7 @@ func (ps *PhotosService) saveCachedLibraries() {
 			ZoneType:        lib.zoneType,
 		})
 	}
-	saveJSONCache(filepath.Join(config.GetCacheDir(), cacheSubdir, ps.client.remoteName), "libraries.json", entries)
+	saveJSONCache(ps.client.CacheDir(), "libraries.json", entries)
 }
 
 // GetAlbums returns all albums for this library
@@ -599,27 +626,17 @@ func (lib *Library) GetAlbums(ctx context.Context) (map[string]*Album, error) {
 			Filters:    append([]Filter{}, template.Filters...),
 			RecordName: template.RecordName,
 			Zone:       lib.zoneID,
-			service:    lib.service,
+			lib:        lib,
 		}
 	}
 
 	// Add user albums and folders (paginated - CloudKit caps at 200 per page)
-	type albumRecord struct {
-		RecordName string `json:"recordName"`
-		Fields     struct {
-			AlbumNameEnc *ckStringField `json:"albumNameEnc,omitempty"`
-			AlbumType    *ckIntField    `json:"albumType,omitempty"`
-			ParentID     *ckStringField `json:"parentId,omitempty"`
-			IsDeleted    *ckBoolField   `json:"isDeleted,omitempty"`
-		} `json:"fields"`
-	}
-
 	var allRecords []albumRecord
 	var continuationMarker string
 
 	for {
 		query := map[string]any{
-			"query":       map[string]any{"recordType": "CPLAlbumByPositionLive"},
+			"query":       map[string]any{"recordType": recordTypeAlbum},
 			"zoneID":      lib.zoneIDMap(),
 			"desiredKeys": []string{"albumNameEnc", "albumType", "parentId", "isDeleted"},
 		}
@@ -627,10 +644,7 @@ func (lib *Library) GetAlbums(ctx context.Context) (map[string]*Album, error) {
 			query["continuationMarker"] = continuationMarker
 		}
 
-		var response struct {
-			Records            []albumRecord `json:"records"`
-			ContinuationMarker string        `json:"continuationMarker"`
-		}
+		var response albumQueryResponse
 
 		if err := lib.request(ctx, "records/query", query, &response); err != nil {
 			// User album index may not exist in all zones (e.g. shared libraries)
@@ -679,7 +693,7 @@ func (lib *Library) GetAlbums(ctx context.Context) (map[string]*Album, error) {
 				Name:       albumName,
 				RecordName: record.RecordName,
 				Zone:       lib.zoneID,
-				service:    lib.service,
+				lib:        lib,
 				IsFolder:   true,
 				Children:   make(map[string]*Album),
 			}
@@ -697,51 +711,6 @@ func (lib *Library) GetAlbums(ctx context.Context) (map[string]*Album, error) {
 	return lib.albums, nil
 }
 
-// cachedAlbum is the disk-serializable subset of Album
-type cachedAlbum struct {
-	Name       string                  `json:"name"`
-	ObjectType string                  `json:"objectType"`
-	ListType   string                  `json:"listType"`
-	Direction  string                  `json:"direction"`
-	Filters    []Filter                `json:"filters,omitempty"`
-	RecordName string                  `json:"recordName,omitempty"`
-	Zone       string                  `json:"zone"`
-	IsFolder   bool                    `json:"isFolder,omitempty"`
-	Children   map[string]*cachedAlbum `json:"children,omitempty"`
-}
-
-// albumToCached converts an Album to its disk-serializable form
-func albumToCached(a *Album) *cachedAlbum {
-	c := &cachedAlbum{
-		Name: a.Name, ObjectType: a.ObjectType, ListType: a.ListType,
-		Direction: a.Direction, Filters: a.Filters, RecordName: a.RecordName,
-		Zone: a.Zone, IsFolder: a.IsFolder,
-	}
-	if len(a.Children) > 0 {
-		c.Children = make(map[string]*cachedAlbum, len(a.Children))
-		for k, v := range a.Children {
-			c.Children[k] = albumToCached(v)
-		}
-	}
-	return c
-}
-
-// cachedToAlbum restores an Album from its cached form
-func (lib *Library) cachedToAlbum(c *cachedAlbum) *Album {
-	a := &Album{
-		Name: c.Name, ObjectType: c.ObjectType, ListType: c.ListType,
-		Direction: c.Direction, Filters: c.Filters, RecordName: c.RecordName,
-		Zone: c.Zone, IsFolder: c.IsFolder, service: lib.service,
-	}
-	if len(c.Children) > 0 {
-		a.Children = make(map[string]*Album, len(c.Children))
-		for k, v := range c.Children {
-			a.Children[k] = lib.cachedToAlbum(v)
-		}
-	}
-	return a
-}
-
 // loadCachedAlbums loads album metadata from disk cache
 func (lib *Library) loadCachedAlbums() map[string]*Album {
 	cacheFile := filepath.Join(lib.zoneCacheDir(), "albums.json")
@@ -749,31 +718,36 @@ func (lib *Library) loadCachedAlbums() map[string]*Album {
 	if err != nil {
 		return nil
 	}
-	var cached map[string]*cachedAlbum
-	if err := json.Unmarshal(data, &cached); err != nil {
+	var albums map[string]*Album
+	if err := json.Unmarshal(data, &albums); err != nil {
 		return nil
 	}
-	albums := make(map[string]*Album, len(cached))
-	for k, v := range cached {
-		albums[k] = lib.cachedToAlbum(v)
+	// Restore runtime-only fields after deserialization
+	for _, a := range albums {
+		lib.restoreAlbumLinks(a)
 	}
 	return albums
 }
 
+// restoreAlbumLinks sets runtime-only fields (lib pointer) on an album
+// and its children after deserialization from disk cache
+func (lib *Library) restoreAlbumLinks(a *Album) {
+	a.lib = lib
+	for _, child := range a.Children {
+		lib.restoreAlbumLinks(child)
+	}
+}
+
 // saveCachedAlbums persists album metadata to disk via atomic rename
 func (lib *Library) saveCachedAlbums() {
-	cached := make(map[string]*cachedAlbum, len(lib.albums))
-	for k, v := range lib.albums {
-		cached[k] = albumToCached(v)
-	}
-	saveJSONCache(lib.zoneCacheDir(), "albums.json", cached)
+	saveJSONCache(lib.zoneCacheDir(), "albums.json", lib.albums)
 }
 
 // fetchFolderChildren queries child albums inside a folder by parentId
 func (lib *Library) fetchFolderChildren(ctx context.Context, folder *Album) error {
 	query := map[string]any{
 		"query": map[string]any{
-			"recordType": "CPLAlbumByPositionLive",
+			"recordType": recordTypeAlbum,
 			"filterBy": []map[string]any{{
 				"fieldName":  "parentId",
 				"comparator": "EQUALS",
@@ -790,17 +764,7 @@ func (lib *Library) fetchFolderChildren(ctx context.Context, folder *Album) erro
 			query["continuationMarker"] = continuationMarker
 		}
 
-		var response struct {
-			Records []struct {
-				RecordName string `json:"recordName"`
-				Fields     struct {
-					AlbumNameEnc *ckStringField `json:"albumNameEnc,omitempty"`
-					AlbumType    *ckIntField    `json:"albumType,omitempty"`
-					IsDeleted    *ckBoolField   `json:"isDeleted,omitempty"`
-				} `json:"fields"`
-			} `json:"records"`
-			ContinuationMarker string `json:"continuationMarker"`
-		}
+		var response albumQueryResponse
 
 		if err := lib.request(ctx, "records/query", query, &response); err != nil {
 			return err
@@ -825,7 +789,7 @@ func (lib *Library) fetchFolderChildren(ctx context.Context, folder *Album) erro
 					Name:       childName,
 					RecordName: record.RecordName,
 					Zone:       lib.zoneID,
-					service:    lib.service,
+					lib:        lib,
 					IsFolder:   true,
 					Children:   make(map[string]*Album),
 				}
@@ -856,7 +820,7 @@ func albumCacheKey(objectType string) string {
 // zoneCacheDir returns the disk cache directory for this zone
 // Path follows rclone convention: <cacheDir>/<backend>/<remoteName>/<zone>/
 func (lib *Library) zoneCacheDir() string {
-	return filepath.Join(config.GetCacheDir(), cacheSubdir, lib.service.client.remoteName, lib.zoneID)
+	return filepath.Join(lib.service.client.CacheDir(), lib.zoneID)
 }
 
 // checkForChanges detects whether the zone has been modified since the last
@@ -902,14 +866,27 @@ func (lib *Library) checkForChanges(ctx context.Context) {
 	lib.bufferDelta(zone.Records, zone.SyncToken, zone.MoreComing)
 }
 
+// zoneEntry pairs a changes/zone request body with its library for batched zone operations
+type zoneEntry struct {
+	zone map[string]any
+	lib  *Library
+}
+
+// flattenZoneEntries extracts the zone request bodies and builds a zoneID→Library lookup
+func flattenZoneEntries(entries []zoneEntry) ([]map[string]any, map[string]*Library) {
+	zones := make([]map[string]any, len(entries))
+	libByZone := make(map[string]*Library, len(entries))
+	for i, e := range entries {
+		zones[i] = e.zone
+		libByZone[e.lib.zoneID] = e.lib
+	}
+	return zones, libByZone
+}
+
 // batchCheckForChanges checks all zones for changes in a single API call
 // Each zone with a syncToken gets checked; zones without tokens are skipped
 func (ps *PhotosService) batchCheckForChanges(ctx context.Context, libs map[string]*Library) {
 	// Group zones by area for separate API calls (private and shared use different endpoints)
-	type zoneEntry struct {
-		zone map[string]any
-		lib  *Library
-	}
 	byArea := make(map[string][]zoneEntry)
 	for _, lib := range libs {
 		lib.deltaMu.Lock()
@@ -930,13 +907,8 @@ func (ps *PhotosService) batchCheckForChanges(ctx context.Context, libs map[stri
 		byArea[lib.area] = append(byArea[lib.area], zoneEntry{zone: zone, lib: lib})
 	}
 
-	libByZone := make(map[string]*Library)
 	for area, entries := range byArea {
-		var zones []map[string]any
-		for _, e := range entries {
-			zones = append(zones, e.zone)
-			libByZone[e.lib.zoneID] = e.lib
-		}
+		zones, libByZone := flattenZoneEntries(entries)
 		var response changesZoneResponse
 		if err := ps.requestForArea(ctx, area, "changes/zone", map[string]any{"zones": zones}, &response); err != nil {
 			fs.Debugf(nil, "iclouddrive photos: batch delta check (%s) failed: %v", area, err)
@@ -972,10 +944,6 @@ func (ps *PhotosService) PollForChanges(ctx context.Context) []string {
 	ps.mu.Unlock()
 
 	// Group zones by area for separate API calls
-	type zoneEntry struct {
-		zone map[string]any
-		lib  *Library
-	}
 	byArea := make(map[string][]zoneEntry)
 	for _, lib := range libs {
 		lib.deltaMu.Lock()
@@ -999,13 +967,7 @@ func (ps *PhotosService) PollForChanges(ctx context.Context) []string {
 
 	var changed []string
 	for area, entries := range byArea {
-		var zones []map[string]any
-		libByZone := make(map[string]*Library)
-		for _, e := range entries {
-			zones = append(zones, e.zone)
-			libByZone[e.lib.zoneID] = e.lib
-		}
-
+		zones, libByZone := flattenZoneEntries(entries)
 		var response changesZoneResponse
 		if err := ps.requestForArea(ctx, area, "changes/zone", map[string]any{"zones": zones}, &response); err != nil {
 			continue
@@ -1115,6 +1077,13 @@ type deltaParseResult struct {
 	changedAlbumRecords  map[string]bool
 	albumMetadataChanged bool
 	hasAssetOnlyUpdates  bool
+}
+
+// shouldInvalidate returns true if an album's cache should be invalidated
+// rather than incrementally updated from this delta
+func (r *deltaParseResult) shouldInvalidate(recordName string, isSmart bool) bool {
+	return (!isSmart && r.changedAlbumRecords[recordName]) ||
+		(isSmart && r.hasAssetOnlyUpdates)
 }
 
 // parseDeltaRecords classifies raw delta records from changes/zone into
@@ -1253,7 +1222,7 @@ func (lib *Library) applyPendingDelta(ctx context.Context) bool {
 		lib.zoneID, len(result.deletedIDs), len(addedPhotos), len(result.changedAlbumRecords), len(allRecords))
 
 	// Apply delta to each album's disk cache
-	// Pre-resolve cache dir from lib to avoid getLibrary() → ps.mu acquisition
+	// Pre-resolve cache dir from lib to avoid re-acquiring ps.mu
 	// under deltaMu (lock ordering: deltaMu must not precede ps.mu)
 	cacheDir := lib.zoneCacheDir()
 	lib.mu.Lock()
@@ -1273,12 +1242,9 @@ func (lib *Library) applyPendingDelta(ctx context.Context) bool {
 
 		_, isSmart := SmartAlbums[album.Name]
 
-		// Check if this album will be invalidated below - if so, skip save
-		// and in-memory update (avoids stale-data window for concurrent
-		// readers between save and invalidation, and avoids wasted disk I/O)
-		willInvalidate := (!isSmart && result.changedAlbumRecords[album.RecordName]) ||
-			(isSmart && result.hasAssetOnlyUpdates)
-		if willInvalidate {
+		// Skip albums that will be invalidated below (avoids stale-data
+		// window for concurrent readers and wasted disk I/O)
+		if result.shouldInvalidate(album.RecordName, isSmart) {
 			continue
 		}
 
@@ -1304,18 +1270,17 @@ func (lib *Library) applyPendingDelta(ctx context.Context) bool {
 
 		album.saveDiskCacheTo(cacheDir, filtered)
 
-		// Deep copy before dedup so shared *Photo pointers across albums
-		// don't get cross-contaminated by filename suffix mutations
-		deduped := make([]*Photo, len(filtered))
-		for i, p := range filtered {
-			cp := *p
-			deduped[i] = &cp
-		}
-		deduplicateFilenames(deduped)
-
-		// Update in-memory cache too
+		// Update in-memory cache if populated
 		album.mu.Lock()
 		if album.photoCache != nil {
+			// Deep copy before dedup so shared *Photo pointers across albums
+			// don't get cross-contaminated by filename suffix mutations
+			deduped := make([]*Photo, len(filtered))
+			for i, p := range filtered {
+				cp := *p
+				deduped[i] = &cp
+			}
+			deduplicateFilenames(deduped)
 			album.photoCache = buildPhotoCache(deduped)
 		}
 		album.mu.Unlock()
@@ -1327,8 +1292,7 @@ func (lib *Library) applyPendingDelta(ctx context.Context) bool {
 		var invalidated []*Album
 		for _, album := range lib.albums {
 			_, isSmart := SmartAlbums[album.Name]
-			if (!isSmart && result.changedAlbumRecords[album.RecordName]) ||
-				(isSmart && result.hasAssetOnlyUpdates) {
+			if result.shouldInvalidate(album.RecordName, isSmart) {
 				invalidated = append(invalidated, album)
 			}
 		}
@@ -1382,44 +1346,22 @@ func (lib *Library) clearDiskCache() {
 
 // request makes an API call routed through the album's library area
 func (album *Album) request(ctx context.Context, endpoint string, data, response any) error {
-	if lib := album.getLibrary(); lib != nil {
-		return lib.request(ctx, endpoint, data, response)
+	if album.lib != nil {
+		return album.lib.request(ctx, endpoint, data, response)
 	}
-	return album.service.requestForArea(ctx, "private", endpoint, data, response)
+	return fmt.Errorf("album %q has no library", album.Name)
 }
 
 // zoneIDMap returns the full zoneID for this album's zone
 func (album *Album) zoneIDMap() map[string]any {
-	if lib := album.getLibrary(); lib != nil {
-		return lib.zoneIDMap()
+	if album.lib != nil {
+		return album.lib.zoneIDMap()
 	}
+	// Fallback for safety - all production callers have lib set
 	return map[string]any{"zoneName": album.Zone}
 }
 
-// getLibrary returns the Library this album belongs to
-func (album *Album) getLibrary() *Library {
-	if album.service == nil {
-		return nil
-	}
-	album.service.mu.Lock()
-	defer album.service.mu.Unlock()
-	return album.service.libraries[album.Zone]
-}
-
-// loadDiskCache loads cached photo data from disk
-func (album *Album) loadDiskCache() ([]*Photo, bool) {
-	if album.ObjectType == "" {
-		return nil, false
-	}
-	lib := album.getLibrary()
-	if lib == nil {
-		return nil, false
-	}
-	return album.loadDiskCacheFrom(lib.zoneCacheDir())
-}
-
 // loadDiskCacheFrom loads cached photo data from a specific cache directory
-// Use this variant when the caller already has the cache dir (avoids ps.mu)
 func (album *Album) loadDiskCacheFrom(cacheDir string) ([]*Photo, bool) {
 	cacheFile := filepath.Join(cacheDir, albumCacheKey(album.ObjectType)+".json")
 	data, err := os.ReadFile(cacheFile)
@@ -1435,31 +1377,56 @@ func (album *Album) loadDiskCacheFrom(cacheDir string) ([]*Photo, bool) {
 
 // saveDiskCache persists photo data to disk for delta sync via atomic rename
 func (album *Album) saveDiskCache(photos []*Photo) {
-	if album.ObjectType == "" {
+	if album.ObjectType == "" || album.lib == nil {
 		return
 	}
-	lib := album.getLibrary()
-	if lib == nil {
-		return
-	}
-	album.saveDiskCacheTo(lib.zoneCacheDir(), photos)
+	album.saveDiskCacheTo(album.lib.zoneCacheDir(), photos)
 }
 
 // saveDiskCacheTo persists photo data to a specific cache directory
-// Use this variant when the caller already has the cache dir (avoids ps.mu)
 func (album *Album) saveDiskCacheTo(dir string, photos []*Photo) {
-	if err := os.MkdirAll(dir, 0700); err != nil {
-		fs.Debugf(nil, "iclouddrive photos: failed to create cache dir: %v", err)
-		return
+	saveJSONCache(dir, albumCacheKey(album.ObjectType)+".json", photos)
+}
+
+// countQuery builds a HyperionIndexCountLookup query for a single object type
+func countQuery(objectType string, zoneID map[string]any) map[string]any {
+	return map[string]any{
+		"resultsLimit": 1,
+		"query": map[string]any{
+			"filterBy": map[string]any{
+				"fieldName":  "indexCountID",
+				"fieldValue": map[string]any{"type": "STRING_LIST", "value": []string{objectType}},
+				"comparator": "IN",
+			},
+			"recordType": recordTypeCountIndex,
+		},
+		"zoneWide": true,
+		"zoneID":   zoneID,
 	}
-	data, err := json.Marshal(photos)
-	if err != nil {
-		fs.Debugf(nil, "iclouddrive photos: failed to marshal photo cache for %q: %v", album.Name, err)
-		return
+}
+
+// countBatchResponse is the response shape for batched count queries
+type countBatchResponse struct {
+	Batch []struct {
+		Records []struct {
+			Fields struct {
+				ItemCount struct {
+					Value int64 `json:"value"`
+				} `json:"itemCount"`
+			} `json:"fields"`
+		} `json:"records"`
+	} `json:"batch"`
+}
+
+// toCounts maps an ordered list of names to their counts from the batch response
+func (r *countBatchResponse) toCounts(names []string) map[string]int64 {
+	counts := make(map[string]int64, len(names))
+	for i, name := range names {
+		if i < len(r.Batch) && len(r.Batch[i].Records) > 0 {
+			counts[name] = r.Batch[i].Records[0].Fields.ItemCount.Value
+		}
 	}
-	if err := atomicWriteFile(filepath.Join(dir, albumCacheKey(album.ObjectType)+".json"), data); err != nil {
-		fs.Debugf(nil, "iclouddrive photos: failed to write cache for %q: %v", album.Name, err)
-	}
+	return counts
 }
 
 // GetLibraryAlbumCounts returns the album count for each library in a single
@@ -1482,50 +1449,19 @@ func (ps *PhotosService) GetLibraryAlbumCounts(ctx context.Context) (map[string]
 		var order []string
 		for _, e := range entries {
 			order = append(order, e.name)
-			zoneID := e.lib.zoneIDMap()
-			batch = append(batch, map[string]any{
-				"resultsLimit": 1,
-				"query": map[string]any{
-					"filterBy": map[string]any{
-						"fieldName": "indexCountID",
-						"fieldValue": map[string]any{
-							"type":  "STRING_LIST",
-							"value": []string{"CPLAlbumByPositionLive"},
-						},
-						"comparator": "IN",
-					},
-					"recordType": "HyperionIndexCountLookup",
-				},
-				"zoneWide": true,
-				"zoneID":   zoneID,
-			})
+			batch = append(batch, countQuery(recordTypeAlbum, e.lib.zoneIDMap()))
 		}
-
-		var response struct {
-			Batch []struct {
-				Records []struct {
-					Fields struct {
-						ItemCount struct {
-							Value int64 `json:"value"`
-						} `json:"itemCount"`
-					} `json:"fields"`
-				} `json:"records"`
-			} `json:"batch"`
-		}
-
+		var response countBatchResponse
 		if err := ps.requestForArea(ctx, area, "internal/records/query/batch", map[string]any{"batch": batch}, &response); err != nil {
 			return nil, fmt.Errorf("failed to get library album counts: %w", err)
 		}
-		for i, name := range order {
-			if i < len(response.Batch) && len(response.Batch[i].Records) > 0 {
-				counts[name] = response.Batch[i].Records[0].Fields.ItemCount.Value
-			}
+		for k, v := range response.toCounts(order) {
+			counts[k] = v
 		}
 	}
 	return counts, nil
 }
 
-// photoRecord represents a CloudKit record (CPLAsset or CPLMaster) returned by the photos query
 // CloudKit field types for record deserialization
 type ckStringField struct {
 	Value string `json:"value"`
@@ -1557,6 +1493,7 @@ type ckReferenceField struct {
 	} `json:"value"`
 }
 
+// photoRecord represents a CloudKit record (CPLAsset or CPLMaster)
 type photoRecord struct {
 	RecordName string `json:"recordName"`
 	RecordType string `json:"recordType"`
@@ -1760,7 +1697,7 @@ func buildPhotos(master *photoRecord, asset *photoRecord) []*Photo {
 	// Slo-mo edits are metadata-only (playback speed) with no separate rendered resource
 	if asset != nil && asset.Fields.AdjustmentType != nil &&
 		asset.Fields.AdjustmentType.Value != "" &&
-		asset.Fields.AdjustmentType.Value != "com.apple.video.slomo" {
+		asset.Fields.AdjustmentType.Value != adjustSloMo {
 		if asset.Fields.ResJPEGFullRes != nil && asset.Fields.ResJPEGFullRes.Value.DownloadURL != "" {
 			editExt := extFromUTI(asset.Fields.ResJPEGFullFileType, ext)
 			result = append(result, photo.companion(asset.RecordName, stem+"-edited"+editExt, "resJPEGFullRes", asset.Fields.ResJPEGFullRes.Value.Size))
@@ -1803,19 +1740,6 @@ func (album *Album) fetchPhotoCount(ctx context.Context) (int64, error) {
 	if album.ObjectType == "" {
 		return 0, nil
 	}
-	query := map[string]any{
-		"resultsLimit": 1,
-		"query": map[string]any{
-			"filterBy": map[string]any{
-				"fieldName":  "indexCountID",
-				"fieldValue": map[string]any{"type": "STRING_LIST", "value": []string{album.ObjectType}},
-				"comparator": "IN",
-			},
-			"recordType": "HyperionIndexCountLookup",
-		},
-		"zoneWide": true,
-		"zoneID":   album.zoneIDMap(),
-	}
 	var response struct {
 		Records []struct {
 			Fields struct {
@@ -1825,7 +1749,7 @@ func (album *Album) fetchPhotoCount(ctx context.Context) (int64, error) {
 			} `json:"fields"`
 		} `json:"records"`
 	}
-	if err := album.request(ctx, "records/query", query, &response); err != nil {
+	if err := album.request(ctx, "records/query", countQuery(album.ObjectType, album.zoneIDMap()), &response); err != nil {
 		return 0, err
 	}
 	if len(response.Records) > 0 {
@@ -1836,8 +1760,12 @@ func (album *Album) fetchPhotoCount(ctx context.Context) (int64, error) {
 
 // parsePhotoRecords extracts Photo entries from a batch of CloudKit records
 func parsePhotoRecords(records []photoRecord) []*Photo {
-	assetMap := make(map[string]*photoRecord)
-	var masters []*photoRecord
+	if len(records) == 0 {
+		return nil
+	}
+	half := len(records)/2 + 1
+	assetMap := make(map[string]*photoRecord, half)
+	masters := make([]*photoRecord, 0, half)
 	for i := range records {
 		record := &records[i]
 		switch record.RecordType {
@@ -1849,7 +1777,7 @@ func parsePhotoRecords(records []photoRecord) []*Photo {
 			masters = append(masters, record)
 		}
 	}
-	var photos []*Photo
+	photos := make([]*Photo, 0, len(masters))
 	for _, master := range masters {
 		built := buildPhotos(master, assetMap[master.RecordName])
 		photos = append(photos, built...)
@@ -1997,8 +1925,8 @@ func (album *Album) fetchPhotosParallel(ctx context.Context, totalPhotos int64) 
 
 // GetPhotos retrieves photos from this album using parallel partitions with disk cache
 func (album *Album) GetPhotos(ctx context.Context) ([]*Photo, error) {
-	// No service configured - return pre-populated cache (test path)
-	if album.service == nil {
+	// No library configured - return pre-populated cache (test path)
+	if album.lib == nil {
 		album.mu.Lock()
 		defer album.mu.Unlock()
 		result := make([]*Photo, 0, len(album.photoCache))
@@ -2008,20 +1936,30 @@ func (album *Album) GetPhotos(ctx context.Context) ([]*Photo, error) {
 		return result, nil
 	}
 
-	// Check for changes, apply any buffered delta, serve from disk cache
+	// Check for changes, apply any buffered delta, serve from cache
 	if album.ObjectType != "" {
-		if lib := album.getLibrary(); lib != nil {
-			lib.checkForChanges(ctx)
-			lib.applyPendingDelta(ctx)
-			if lib.cacheValid.Load() {
-				if cached, ok := album.loadDiskCache(); ok {
-					deduplicateFilenames(cached)
-					album.mu.Lock()
-					album.photoCache = buildPhotoCache(cached)
-					album.mu.Unlock()
-					fs.Debugf(nil, "iclouddrive photos: %d items from cache for %q", len(cached), album.Name)
-					return cached, nil
+		album.lib.checkForChanges(ctx)
+		album.lib.applyPendingDelta(ctx)
+		if album.lib.cacheValid.Load() {
+			// Serve from in-memory cache if populated (avoids disk I/O + JSON parse + dedup)
+			album.mu.Lock()
+			if album.photoCache != nil {
+				result := make([]*Photo, 0, len(album.photoCache))
+				for _, p := range album.photoCache {
+					result = append(result, p)
 				}
+				album.mu.Unlock()
+				return result, nil
+			}
+			album.mu.Unlock()
+			// Fall back to disk cache
+			if cached, ok := album.loadDiskCacheFrom(album.lib.zoneCacheDir()); ok {
+				deduplicateFilenames(cached)
+				album.mu.Lock()
+				album.photoCache = buildPhotoCache(cached)
+				album.mu.Unlock()
+				fs.Debugf(nil, "iclouddrive photos: %d items from cache for %q", len(cached), album.Name)
+				return cached, nil
 			}
 		}
 	}
@@ -2046,10 +1984,8 @@ func (album *Album) GetPhotos(ctx context.Context) ([]*Photo, error) {
 	album.mu.Lock()
 	album.photoCache = buildPhotoCache(photos)
 	album.mu.Unlock()
-	if lastSyncToken != "" {
-		if lib := album.getLibrary(); lib != nil {
-			lib.saveSyncToken(lastSyncToken)
-		}
+	if lastSyncToken != "" && album.lib != nil {
+		album.lib.saveSyncToken(lastSyncToken)
 	}
 
 	return photos, nil
@@ -2113,47 +2049,13 @@ func (lib *Library) GetAlbumCounts(ctx context.Context) (map[string]int64, error
 	var albumOrder []string
 	for _, entry := range entries {
 		albumOrder = append(albumOrder, entry.name)
-		batch = append(batch, map[string]any{
-			"resultsLimit": 1,
-			"query": map[string]any{
-				"filterBy": map[string]any{
-					"fieldName": "indexCountID",
-					"fieldValue": map[string]any{
-						"type":  "STRING_LIST",
-						"value": []string{entry.objectType},
-					},
-					"comparator": "IN",
-				},
-				"recordType": "HyperionIndexCountLookup",
-			},
-			"zoneWide": true,
-			"zoneID":   zoneIDAny,
-		})
+		batch = append(batch, countQuery(entry.objectType, zoneIDAny))
 	}
-
-	var response struct {
-		Batch []struct {
-			Records []struct {
-				Fields struct {
-					ItemCount struct {
-						Value int64 `json:"value"`
-					} `json:"itemCount"`
-				} `json:"fields"`
-			} `json:"records"`
-		} `json:"batch"`
-	}
-
+	var response countBatchResponse
 	if err := lib.request(ctx, "internal/records/query/batch", map[string]any{"batch": batch}, &response); err != nil {
 		return nil, err
 	}
-
-	counts := make(map[string]int64, len(entries))
-	for i, name := range albumOrder {
-		if i < len(response.Batch) && len(response.Batch[i].Records) > 0 {
-			counts[name] = response.Batch[i].Records[0].Fields.ItemCount.Value
-		}
-	}
-	return counts, nil
+	return response.toCounts(albumOrder), nil
 }
 
 // resolveZone returns the area and full zoneID for a zone name,
@@ -2165,7 +2067,7 @@ func (ps *PhotosService) resolveZone(zoneName string) (area string, zoneID map[s
 	if lib != nil {
 		return lib.area, lib.zoneIDMap()
 	}
-	return "private", map[string]any{"zoneName": zoneName}
+	return areaPrivate, map[string]any{"zoneName": zoneName}
 }
 
 // LookupDownloadURL fetches a fresh download URL for a record
@@ -2272,10 +2174,7 @@ func (ps *PhotosService) requestWithReauth(ctx context.Context, makeOpts func() 
 
 // requestForArea makes a request to the given area (private or shared) endpoint
 func (ps *PhotosService) requestForArea(ctx context.Context, area, endpoint string, data, response any) error {
-	rootURL := fmt.Sprintf("%s/%s/%s?%s", ps.endpoint, area, endpoint, url.Values{
-		"remapEnums":          {"true"},
-		"getCurrentSyncToken": {"true"},
-	}.Encode())
+	rootURL := fmt.Sprintf("%s/%s/%s?remapEnums=true&getCurrentSyncToken=true", ps.endpoint, area, endpoint)
 
 	return ps.requestWithReauth(ctx, func() rest.Opts {
 		return rest.Opts{
