@@ -19,7 +19,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
 INFO  : There was nothing to transfer
@@ -46,7 +46,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
 INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
@@ -72,7 +72,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
 INFO  : file1.txt: Path2 is larger. Path1: 33, Path2: 42, Difference: 9
@@ -99,7 +99,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
 INFO  : file1.txt: Path2 is older. Path1: 2003-09-04 00:00:00 +0000 UTC, Path2: 2003-07-23 00:00:00 +0000 UTC, Difference: 1032h0m0s
@@ -126,7 +126,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
 INFO  : file1.txt: Path1 is smaller. Path1: 33, Path2: 42, Difference: 9
@@ -157,7 +157,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
 INFO  : There was nothing to transfer
@@ -186,7 +186,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
 INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m

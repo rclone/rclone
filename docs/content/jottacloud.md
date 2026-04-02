@@ -53,7 +53,7 @@ also refresh token, and invalidates the existing refresh token, the one that
 was supplied. It keeps track of the history of refresh tokens, sometimes
 referred to as a token family, descending from the original refresh token that
 was issued after the initial authentication. This is used to detect any
-attempts at reusing old refresh tokens, and trigger an immedate invalidation of
+attempts at reusing old refresh tokens, and trigger an immediate invalidation of
 the current refresh token, and effectively the entire refresh token family.
 
 When the current refresh token has been invalidated, next time rclone tries to
