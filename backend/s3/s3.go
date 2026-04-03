@@ -3783,7 +3783,9 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 	if bucket == "" {
 		return errors.New("can't purge from root")
 	}
-	versioned := f.isVersioned(ctx)
+	// If the user explicitly set --s3-versions, trust that the bucket is
+	// versioned even if GetBucketVersioning fails (e.g. missing permission).
+	versioned := f.opt.Versions || f.isVersioned(ctx)
 	if !versioned && oldOnly {
 		fs.Infof(f, "bucket is not versioned so not removing old versions")
 		return nil
