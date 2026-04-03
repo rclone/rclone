@@ -1108,3 +1108,4 @@ put them back in again. -->
 - Claude Opus 4.6 <noreply@anthropic.com>
 - Andriy Senyshyn <andriy.senyshyn@kiteworks.com>
 - Mike GIllan <mike.gillan@gmail.com>
+- Xiangzhe <xiangzhedev@gmail.com>
