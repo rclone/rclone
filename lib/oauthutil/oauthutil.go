@@ -30,6 +30,13 @@ import (
 var (
 	// templateString is the template used in the authorization webserver
 	templateString string
+
+	// BindHost controls which host/interface the local OAuth
+	// webserver binds to. If left empty, 127.0.0.1 will be used.
+	//
+	// This is intended to be set from CLI flags, e.g.:
+	//   oauthutil.BindHost = *authHostFlag
+	BindHost string
 )
 
 const (
@@ -41,8 +48,14 @@ const (
 	// bindPort is the port that we bind the local webserver to
 	bindPort = "53682"
 
-	// bindAddress is binding for local webserver when active
-	bindAddress = "127.0.0.1:" + bindPort
+	// defaultBindHost is the host we bind the local webserver to if
+	// BindHost is not set.
+	defaultBindHost = "127.0.0.1"
+
+	// bindAddress is the default binding for the local webserver when active.
+	// This is also baked into RedirectURL and must remain stable for
+	// backends which register this as the OAuth redirect URI.
+	bindAddress = defaultBindHost + ":" + bindPort
 
 	// RedirectURL is redirect to local webserver when active
 	RedirectURL = "http://" + bindAddress + "/"
@@ -779,6 +792,11 @@ func noWebserverNeeded(oauthConfig *Config) bool {
 func getAuthURL(name string, m configmap.Mapper, oauthConfig *Config, opt *Options) (authURL string, state string, err error) {
 	oauthConfig, _ = OverrideCredentials(name, m, oauthConfig)
 
+	// If a custom BindHost is configured, adjust the RedirectURL so that
+	// the OAuth provider redirects back to the same host that the local
+	// auth webserver is listening on.
+	oauthConfig.RedirectURL = authRedirectURL(oauthConfig.RedirectURL)
+
 	// Make random state
 	state, err = random.Password(128)
 	if err != nil {
@@ -807,7 +825,50 @@ func fixRedirect(oauthConfig *Config) *Config {
 		oauthConfig = &configCopy
 		oauthConfig.RedirectURL = RedirectURL
 	}
+	// Ensure any custom BindHost is reflected in the redirect URL too.
+	oauthConfig.RedirectURL = authRedirectURL(oauthConfig.RedirectURL)
 	return oauthConfig
+}
+
+// authBindAddress returns the host:port the local OAuth webserver
+// should bind to, using BindHost if set, otherwise defaultBindHost.
+func authBindAddress() string {
+	host := BindHost
+	if host == "" {
+		host = defaultBindHost
+	}
+	return net.JoinHostPort(host, bindPort)
+}
+
+// authRedirectURL rewrites a redirect URL so that its host matches the
+// BindHost (if set) while preserving scheme and port. This keeps the
+// OAuth provider's redirect target in sync with the local auth
+// webserver listening address.
+func authRedirectURL(redirect string) string {
+	if BindHost == "" {
+		return redirect
+	}
+	u, err := url.Parse(redirect)
+	if err != nil {
+		return redirect
+	}
+	// Only adjust local HTTP redirects; leave HTTPS and remote helpers
+	// like oauth.rclone.org alone.
+	if u.Scheme != "http" {
+		return redirect
+	}
+	host := u.Hostname()
+	switch host {
+	case "127.0.0.1", "localhost", "localhost.rclone.org":
+	default:
+		return redirect
+	}
+	port := u.Port()
+	if port == "" {
+		port = bindPort
+	}
+	u.Host = net.JoinHostPort(BindHost, port)
+	return u.String()
 }
 
 // configSetup does the initial creation of the token for the client credentials flow
@@ -849,14 +910,15 @@ func configSetup(ctx context.Context, id, name string, m configmap.Mapper, oauth
 	}
 
 	// Prepare webserver
-	server := newAuthServer(opt, bindAddress, state, authURL)
+	bindAddr := authBindAddress()
+	server := newAuthServer(opt, bindAddr, state, authURL)
 	err = server.Init()
 	if err != nil {
 		return "", fmt.Errorf("failed to start auth webserver: %w", err)
 	}
 	go server.Serve()
 	defer server.Stop()
-	authURL = "http://" + bindAddress + "/auth?state=" + state
+	authURL = "http://" + bindAddr + "/auth?state=" + state
 
 	if !authorizeNoAutoBrowser {
 		// Open the URL for the user to visit
