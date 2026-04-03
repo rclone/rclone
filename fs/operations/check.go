@@ -83,7 +83,7 @@ func (c *checkMarch) DstOnly(dst fs.DirEntry) (recurse bool) {
 			return false
 		}
 		err := fmt.Errorf("file not in %v", c.opt.Fsrc)
-		fs.ErrorfCtx(context.Background(), dst, "%v", err)
+		fs.ErrorfCtx(c.ctx, dst, "%v", err)
 		_ = fs.CountError(c.ctx, err)
 		c.differences.Add(1)
 		c.srcFilesMissing.Add(1)
@@ -105,7 +105,7 @@ func (c *checkMarch) SrcOnly(src fs.DirEntry) (recurse bool) {
 	switch src.(type) {
 	case fs.Object:
 		err := fmt.Errorf("file not in %v", c.opt.Fdst)
-		fs.ErrorfCtx(context.Background(), src, "%v", err)
+		fs.ErrorfCtx(c.ctx, src, "%v", err)
 		_ = fs.CountError(c.ctx, err)
 		c.differences.Add(1)
 		c.dstFilesMissing.Add(1)

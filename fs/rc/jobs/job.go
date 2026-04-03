@@ -277,6 +277,27 @@ func getFilter(ctx context.Context, in rc.Params) (context.Context, error) {
 	return ctx, nil
 }
 
+// See if _logtag is set and if so use it as the log tag on the context.
+// If _logtag is not provided, group is used as the default tag so that every
+// log line emitted by the job carries the group name as a prefix.
+// Pass _logtag with an empty string "" to disable log tagging entirely.
+func getLogTag(ctx context.Context, in rc.Params, group string) (context.Context, error) {
+	tag, err := in.GetString("_logtag")
+	if rc.IsErrParamNotFound(err) {
+		// _logtag not supplied — use group as the default tag
+		return fs.WithLogTag(ctx, group), nil
+	}
+	if err != nil {
+		return ctx, err
+	}
+	delete(in, "_logtag")
+	// _logtag explicitly supplied: empty string disables tagging, non-empty sets it
+	if tag == "" {
+		return ctx, nil
+	}
+	return fs.WithLogTag(ctx, tag), nil
+}
+
 type jobKeyType struct{}
 
 // Key for adding jobs to ctx
@@ -303,6 +324,11 @@ func (jobs *Jobs) NewJob(ctx context.Context, fn rc.Func, in rc.Params) (job *Jo
 	}
 
 	ctx, group, err := getGroup(ctx, in, id)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	ctx, err = getLogTag(ctx, in, group)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -606,7 +632,8 @@ This takes the following parameters:
 }
 |||
 
-The inputs may use |_async|, |_group|, |_config| and |_filter| as normal when using the rc.
+The inputs may use |_async|, |_group|, |_config|, |_filter| and |_logtag| as normal when using the rc.
+|_logtag| sets the log tag prepended to every log line of the job (defaults to the group name; pass |""| to disable).
 
 Returns:
 
