@@ -55,7 +55,7 @@ func (dh *diskHandler) makeSymlinkCache() error {
 
 	// Create a symlink
 	newFh, err := dh.symlinkCacheWrite(fh, path, fullPath)
-	fs.DebugfCtx(ctx, nil, "newFh = %q", newFh)
+	fs.Debugf(nil, "newFh = %q", newFh)
 	if err != nil {
 		return fmt.Errorf("symlink cache write test failed: %w", err)
 	}
@@ -65,7 +65,7 @@ func (dh *diskHandler) makeSymlinkCache() error {
 
 	// Read it back
 	newFullPath, err := dh.symlinkCacheRead(newFh, path)
-	fs.DebugfCtx(ctx, nil, "newFullPath = %q", newFullPath)
+	fs.Debugf(nil, "newFullPath = %q", newFullPath)
 	if err != nil {
 		if errors.Is(err, syscall.EPERM) {
 			return ErrorSymlinkCacheNoPermission

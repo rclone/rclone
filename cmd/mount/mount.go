@@ -38,7 +38,7 @@ func mountOptions(VFS *vfs.VFS, device string, opt *mountlib.Options) (options [
 	}
 	if opt.AllowRoot {
 		// options = append(options, fuse.AllowRoot())
-		fs.ErrorfCtx(ctx, nil, "Ignoring --allow-root. Support has been removed upstream - see https://github.com/bazil/fuse/issues/144 for more info")
+		fs.Errorf(nil, "Ignoring --allow-root. Support has been removed upstream - see https://github.com/bazil/fuse/issues/144 for more info")
 	}
 	if opt.DefaultPermissions {
 		options = append(options, fuse.DefaultPermissions())
@@ -53,10 +53,10 @@ func mountOptions(VFS *vfs.VFS, device string, opt *mountlib.Options) (options [
 		options = append(options, fuse.DaemonTimeout(fmt.Sprint(int(time.Duration(opt.DaemonTimeout).Seconds()))))
 	}
 	if len(opt.ExtraOptions) > 0 {
-		fs.ErrorfCtx(ctx, nil, "-o/--option not supported with this FUSE backend")
+		fs.Errorf(nil, "-o/--option not supported with this FUSE backend")
 	}
 	if len(opt.ExtraFlags) > 0 {
-		fs.ErrorfCtx(ctx, nil, "--fuse-flag not supported with this FUSE backend")
+		fs.Errorf(nil, "--fuse-flag not supported with this FUSE backend")
 	}
 	return options
 }
@@ -75,11 +75,11 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error
 	if err := mountlib.CheckAllowNonEmpty(mountpoint, opt); err != nil {
 		return nil, nil, err
 	}
-	fs.DebugfCtx(ctx, f, "Mounting on %q", mountpoint)
+	fs.Debugf(f, "Mounting on %q", mountpoint)
 
 	if opt.DebugFUSE {
 		fuse.Debug = func(msg any) {
-			fs.DebugfCtx(ctx, "fuse", "%v", msg)
+			fs.Debugf("fuse", "%v", msg)
 		}
 	}
 

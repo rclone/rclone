@@ -192,7 +192,7 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error
 	if err := mountlib.CheckAllowNonEmpty(mountpoint, opt); err != nil {
 		return nil, nil, err
 	}
-	fs.DebugfCtx(ctx, f, "Mounting on %q", mountpoint)
+	fs.Debugf(f, "Mounting on %q", mountpoint)
 
 	fsys := NewFS(VFS, opt)
 
@@ -255,12 +255,12 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error
 		errs <- nil
 	}()
 
-	fs.DebugfCtx(ctx, f, "Waiting for the mount to start...")
+	fs.Debugf(f, "Waiting for the mount to start...")
 	err = server.WaitMount()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	fs.DebugfCtx(ctx, f, "Mount started")
+	fs.Debugf(f, "Mount started")
 	return errs, umount, nil
 }

@@ -47,7 +47,7 @@ func PreAllocate(size int64, out *os.File) (err error) {
 			// Try the next flags combination
 			index++
 			fallocFlagsIndex.Store(index)
-			fs.DebugfCtx(ctx, nil, "preAllocate: got error on fallocate, trying combination %d/%d: %v", index, len(fallocFlags), err)
+			fs.Debugf(nil, "preAllocate: got error on fallocate, trying combination %d/%d: %v", index, len(fallocFlags), err)
 			goto again
 
 		}

@@ -192,10 +192,10 @@ func (d *Dir) Remove(ctx context.Context, req *fuse.RemoveRequest) (err error) {
 
 // Invalidate a leaf in a directory
 func (d *Dir) invalidateEntry(dirNode fusefs.Node, leaf string) {
-	fs.DebugfCtx(ctx, dirNode, "Invalidating %q", leaf)
+	fs.Debugf(dirNode, "Invalidating %q", leaf)
 	err := d.fsys.server.InvalidateEntry(dirNode, leaf)
 	if err != nil {
-		fs.DebugfCtx(ctx, dirNode, "Failed to invalidate %q: %v", leaf, err)
+		fs.Debugf(dirNode, "Failed to invalidate %q: %v", leaf, err)
 	}
 }
 
@@ -274,7 +274,7 @@ var _ fusefs.NodeMknoder = (*Dir)(nil)
 func (d *Dir) Mknod(ctx context.Context, req *fuse.MknodRequest) (node fusefs.Node, err error) {
 	defer log.Trace(d, "name=%v, mode=%d, rdev=%d", req.Name, req.Mode, req.Rdev)("node=%v, err=%v", &node, &err)
 	if req.Rdev != 0 {
-		fs.ErrorfCtx(ctx, d, "Can't create device node %q", req.Name)
+		fs.Errorf(d, "Can't create device node %q", req.Name)
 		return nil, fuse.Errno(syscall.EIO)
 	}
 	var cReq = fuse.CreateRequest{

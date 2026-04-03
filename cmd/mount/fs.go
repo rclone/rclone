@@ -103,6 +103,6 @@ func translateError(err error) error {
 	case vfs.ELOOP:
 		return fuse.Errno(syscall.ELOOP)
 	}
-	fs.ErrorfCtx(ctx, nil, "IO error: %v", err)
+	fs.Errorf(nil, "IO error: %v", err)
 	return err
 }
