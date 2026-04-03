@@ -131,7 +131,7 @@ func mount(VFS *vfs.VFS, mountPath string, opt *mountlib.Options) (<-chan error,
 	if err != nil {
 		return nil, nil, err
 	}
-	fs.DebugfCtx(ctx, nil, "Mounting on %q (%q)", mountpoint, opt.VolumeName)
+	fs.Debugf(nil, "Mounting on %q (%q)", mountpoint, opt.VolumeName)
 
 	// Create underlying FS
 	fsys := NewFS(VFS, opt)
@@ -145,7 +145,7 @@ func mount(VFS *vfs.VFS, mountPath string, opt *mountlib.Options) (<-chan error,
 
 	// Create options
 	options := mountOptions(VFS, opt.DeviceName, mountpoint, opt)
-	fs.DebugfCtx(ctx, f, "Mounting with options: %q", options)
+	fs.Debugf(f, "Mounting with options: %q", options)
 
 	// Serve the mount point in the background returning error to errChan
 	errChan := make(chan error, 1)
@@ -163,7 +163,7 @@ func mount(VFS *vfs.VFS, mountPath string, opt *mountlib.Options) (<-chan error,
 		ok := host.Mount(mountpoint, options)
 		if !ok {
 			err = errors.New("mount failed")
-			fs.ErrorfCtx(ctx, f, "Mount failed")
+			fs.Errorf(f, "Mount failed")
 		}
 		errChan <- err
 	}()
@@ -174,29 +174,29 @@ func mount(VFS *vfs.VFS, mountPath string, opt *mountlib.Options) (<-chan error,
 		fsys.VFS.Shutdown()
 		var umountOK bool
 		if fsys.destroyed.Load() != 0 {
-			fs.DebugfCtx(ctx, nil, "Not calling host.Unmount as mount already Destroyed")
+			fs.Debugf(nil, "Not calling host.Unmount as mount already Destroyed")
 			umountOK = true
 		} else if atexit.Signalled() {
 			// If we have received a signal then FUSE will be shutting down already
-			fs.DebugfCtx(ctx, nil, "Not calling host.Unmount as signal received")
+			fs.Debugf(nil, "Not calling host.Unmount as signal received")
 			umountOK = true
 		} else {
-			fs.DebugfCtx(ctx, nil, "Calling host.Unmount")
+			fs.Debugf(nil, "Calling host.Unmount")
 			umountOK = host.Unmount()
 		}
 		if umountOK {
-			fs.DebugfCtx(ctx, nil, "Unmounted successfully")
+			fs.Debugf(nil, "Unmounted successfully")
 			if runtime.GOOS == "windows" {
 				if !waitFor(func() bool {
 					_, err := os.Stat(mountpoint)
 					return err != nil
 				}) {
-					fs.ErrorfCtx(ctx, nil, "mountpoint %q didn't disappear after unmount - continuing anyway", mountpoint)
+					fs.Errorf(nil, "mountpoint %q didn't disappear after unmount - continuing anyway", mountpoint)
 				}
 			}
 			return nil
 		}
-		fs.DebugfCtx(ctx, nil, "host.Unmount failed")
+		fs.Debugf(nil, "host.Unmount failed")
 		return errors.New("host unmount failed")
 	}
 
@@ -216,7 +216,7 @@ func mount(VFS *vfs.VFS, mountPath string, opt *mountlib.Options) (<-chan error,
 			_, err := os.Stat(mountpoint)
 			return err == nil
 		}) {
-			fs.ErrorfCtx(ctx, nil, "mountpoint %q didn't became available on mount - continuing anyway", mountpoint)
+			fs.Errorf(nil, "mountpoint %q didn't became available on mount - continuing anyway", mountpoint)
 		}
 	}
 

@@ -65,13 +65,13 @@ found:
 // get the handle for fh, call with the lock held
 func (fsys *FS) _getHandle(fh uint64) (i int, handle vfs.Handle, errc int) {
 	if fh > uint64(len(fsys.handles)) {
-		fs.DebugfCtx(ctx, nil, "Bad file handle: too big: 0x%X", fh)
+		fs.Debugf(nil, "Bad file handle: too big: 0x%X", fh)
 		return i, nil, -fuse.EBADF
 	}
 	i = int(fh)
 	handle = fsys.handles[i]
 	if handle == nil {
-		fs.DebugfCtx(ctx, nil, "Bad file handle: nil handle: 0x%X", fh)
+		fs.Debugf(nil, "Bad file handle: nil handle: 0x%X", fh)
 		return i, nil, -fuse.EBADF
 	}
 	return i, handle, 0
@@ -243,7 +243,7 @@ func (fsys *FS) Readdir(dirPath string,
 	for _, node := range nodes {
 		name := node.Name()
 		if len(name) > mountlib.MaxLeafSize {
-			fs.ErrorfCtx(ctx, dirPath, "Name too long (%d bytes) for FUSE, skipping: %s", len(name), name)
+			fs.Errorf(dirPath, "Name too long (%d bytes) for FUSE, skipping: %s", len(name), name)
 			continue
 		}
 		// We have called host.SetCapReaddirPlus() so supply the stat information
@@ -464,15 +464,15 @@ func (fsys *FS) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
 		return errc
 	}
 	if tmsp == nil || len(tmsp) < 2 {
-		fs.DebugfCtx(ctx, path, "Utimens: Not setting time as timespec isn't complete: %v", tmsp)
+		fs.Debugf(path, "Utimens: Not setting time as timespec isn't complete: %v", tmsp)
 		return 0
 	}
 	t := tmsp[1].Time()
 	if t.Before(invalidDateCutoff) {
-		fs.DebugfCtx(ctx, path, "Utimens: Not setting out of range time: %v", t)
+		fs.Debugf(path, "Utimens: Not setting out of range time: %v", t)
 		return 0
 	}
-	fs.DebugfCtx(ctx, path, "Utimens: SetModTime: %v", t)
+	fs.Debugf(path, "Utimens: SetModTime: %v", t)
 	return translateError(node.SetModTime(t))
 }
 
@@ -607,7 +607,7 @@ func translateError(err error) (errc int) {
 	case vfs.ELOOP:
 		return -fuse.ELOOP
 	}
-	fs.ErrorfCtx(ctx, nil, "IO error: %v", err)
+	fs.Errorf(nil, "IO error: %v", err)
 	return -fuse.EIO
 }
 

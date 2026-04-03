@@ -64,7 +64,7 @@ func getUnusedDrive() (string, error) {
 		return "", errors.New("could not find unused drive letter")
 	}
 	mountpoint := string(driveLetter) + ":" // Drive letter with volume separator only, no trailing backslash, which is what cgofuse/winfsp expects
-	fs.LogfCtx(ctx, nil, "Assigning drive letter %q", mountpoint)
+	fs.Logf(nil, "Assigning drive letter %q", mountpoint)
 	return mountpoint, nil
 }
 
@@ -82,7 +82,7 @@ func handleNetworkShareMountpath(mountpath string, opt *mountlib.Options) (strin
 	// Find an unused drive letter to use as mountpoint, the supplied path can
 	// be used as volume prefix (network share path) instead of mountpoint.
 	if !opt.NetworkMode {
-		fs.DebugfCtx(ctx, nil, "Forcing --network-mode because mountpoint path is network share UNC format")
+		fs.Debugf(nil, "Forcing --network-mode because mountpoint path is network share UNC format")
 		opt.NetworkMode = true
 	}
 	mountpoint, err := getUnusedDrive()
@@ -110,7 +110,7 @@ func handleLocalMountpath(f fs.Fs, mountpath string, opt *mountlib.Options) (str
 		// Drive letter string can be used as is, since we have already checked it does not exist,
 		// but directory path needs more checks.
 		if opt.NetworkMode {
-			fs.ErrorfCtx(ctx, nil, "Ignoring --network-mode as it is not supported with directory mountpoint")
+			fs.Errorf(nil, "Ignoring --network-mode as it is not supported with directory mountpoint")
 			opt.NetworkMode = false
 		}
 		var err error
@@ -145,7 +145,7 @@ func handleVolumeName(opt *mountlib.Options, volumeName string) {
 			opt.VolumeName = opt.VolumeName[1:] // WinFsp requires volume prefix as UNC-like path but with only a single backslash
 			if !opt.NetworkMode {
 				// Specified volume name is network share UNC path, force network mode and use it as volume prefix
-				fs.DebugfCtx(ctx, nil, "Forcing network mode due to network share (UNC) volume name")
+				fs.Debugf(nil, "Forcing network mode due to network share (UNC) volume name")
 				opt.NetworkMode = true
 			}
 		} else if opt.NetworkMode {
@@ -163,13 +163,13 @@ func handleVolumeName(opt *mountlib.Options, volumeName string) {
 func getMountpoint(f fs.Fs, mountpath string, opt *mountlib.Options) (mountpoint string, err error) {
 	// Inform about some options not relevant in this mode
 	if opt.AllowNonEmpty {
-		fs.LogfCtx(ctx, nil, "--allow-non-empty flag does nothing on Windows")
+		fs.Logf(nil, "--allow-non-empty flag does nothing on Windows")
 	}
 	if opt.AllowRoot {
-		fs.LogfCtx(ctx, nil, "--allow-root flag does nothing on Windows")
+		fs.Logf(nil, "--allow-root flag does nothing on Windows")
 	}
 	if opt.AllowOther {
-		fs.LogfCtx(ctx, nil, "--allow-other flag does nothing on Windows")
+		fs.Logf(nil, "--allow-other flag does nothing on Windows")
 	}
 
 	// Handle mountpath
@@ -192,9 +192,9 @@ func getMountpoint(f fs.Fs, mountpath string, opt *mountlib.Options) (mountpoint
 
 	// Done, return mountpoint to be used, together with updated mount options.
 	if opt.NetworkMode {
-		fs.DebugfCtx(ctx, nil, "Network mode mounting is enabled")
+		fs.Debugf(nil, "Network mode mounting is enabled")
 	} else {
-		fs.DebugfCtx(ctx, nil, "Network mode mounting is disabled")
+		fs.Debugf(nil, "Network mode mounting is disabled")
 	}
 	return
 }
