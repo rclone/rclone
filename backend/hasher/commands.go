@@ -112,6 +112,9 @@ func (f *Fs) dbDump(ctx context.Context, full bool, root string) error {
 }
 
 func (f *Fs) dbImport(ctx context.Context, hashName, sumRemote string, sticky bool) error {
+	if f.isReadOnly() {
+		return errors.New("cannot import: database is read-only (set db_mode=off to import)")
+	}
 	var hashType hash.Type
 	if err := hashType.Set(hashName); err != nil {
 		return err

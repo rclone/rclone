@@ -51,6 +51,22 @@ func init() {
 			Advanced: true,
 			Default:  fs.SizeSuffix(0),
 			Help:     "Auto-update checksum for files smaller than this size (disabled by default).",
+		}, {
+			Name:      "db_mode",
+			Default:   "off",
+			Advanced:  true,
+			Help:      "How to use the hash database.",
+			Exclusive: true,
+			Examples: []fs.OptionExample{{
+				Value: "off",
+				Help:  "Read and write hashes without verifying downloads.",
+			}, {
+				Value: "verify",
+				Help:  "Verify full downloads and add missing hashes.",
+			}, {
+				Value: "readonly",
+				Help:  "Verify full downloads without updating the database.",
+			}},
 		}},
 	})
 }
@@ -61,6 +77,7 @@ type Options struct {
 	Hashes   fs.CommaSepList `config:"hashes"`
 	AutoSize fs.SizeSuffix   `config:"auto_size"`
 	MaxAge   fs.Duration     `config:"max_age"`
+	DBMode   string          `config:"db_mode"`
 }
 
 // Fs represents a wrapped fs.Fs
@@ -98,6 +115,12 @@ func NewFs(ctx context.Context, fsname, rpath string, cmap configmap.Mapper) (fs
 	err := configstruct.Set(cmap, opt)
 	if err != nil {
 		return nil, err
+	}
+
+	switch opt.DBMode {
+	case "off", "verify", "readonly":
+	default:
+		return nil, fmt.Errorf("invalid db_mode %q: must be off, verify, or readonly", opt.DBMode)
 	}
 
 	if strings.HasPrefix(opt.Remote, fsname+":") {
@@ -221,6 +244,16 @@ func (f *Fs) WrapFs() fs.Fs { return f.wrapper }
 // SetWrapper sets the Fs that is wrapping this Fs
 func (f *Fs) SetWrapper(wrapper fs.Fs) { f.wrapper = wrapper }
 
+// isVerifyMode returns true if download hash verification is enabled (verify or readonly mode).
+func (f *Fs) isVerifyMode() bool {
+	return f.opt.DBMode == "verify" || f.opt.DBMode == "readonly"
+}
+
+// isReadOnly returns true if the database is fully read-only (readonly mode).
+func (f *Fs) isReadOnly() bool {
+	return f.opt.DBMode == "readonly"
+}
+
 // Wrap base entries into hasher entries.
 func (f *Fs) wrapEntries(baseEntries fs.DirEntries) (hashEntries fs.DirEntries, err error) {
 	hashEntries = baseEntries[:0] // work inplace
@@ -293,11 +326,13 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 		if err := do(ctx, dir); err != nil {
 			return err
 		}
-		err := f.db.Do(true, &kvPurge{
-			dir: path.Join(f.Fs.Root(), dir),
-		})
-		if err != nil {
-			fs.Errorf(f, "Failed to purge some hashes: %v", err)
+		if !f.isReadOnly() {
+			err := f.db.Do(true, &kvPurge{
+				dir: path.Join(f.Fs.Root(), dir),
+			})
+			if err != nil {
+				fs.Errorf(f, "Failed to purge some hashes: %v", err)
+			}
 		}
 		return nil
 	}
@@ -326,6 +361,9 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 
 // pruneHash deletes hash for a path
 func (f *Fs) pruneHash(remote string) error {
+	if f.isReadOnly() {
+		return nil
+	}
 	return f.db.Do(true, &kvPrune{
 		key: path.Join(f.Fs.Root(), remote),
 	})
@@ -439,12 +477,14 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, err
 	}
-	_ = f.db.Do(true, &kvMove{
-		src: path.Join(f.Fs.Root(), src.Remote()),
-		dst: path.Join(f.Fs.Root(), remote),
-		dir: false,
-		fs:  f,
-	})
+	if !f.isReadOnly() {
+		_ = f.db.Do(true, &kvMove{
+			src: path.Join(f.Fs.Root(), src.Remote()),
+			dst: path.Join(f.Fs.Root(), remote),
+			dir: false,
+			fs:  f,
+		})
+	}
 	return f.wrapObject(oResult, nil)
 }
 
@@ -459,7 +499,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fs.ErrorCantDirMove
 	}
 	err := do(ctx, srcFs.Fs, srcRemote, dstRemote)
-	if err == nil {
+	if err == nil && !f.isReadOnly() {
 		_ = f.db.Do(true, &kvMove{
 			src: path.Join(srcFs.Fs.Root(), srcRemote),
 			dst: path.Join(f.Fs.Root(), dstRemote),
