@@ -4,14 +4,13 @@ This is a very simple test/demo program for librclone's C interface
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dlfcn.h>
 #include "librclone.h"
 
 void testRPC(char *method, char *in) {
     struct RcloneRPCResult out = RcloneRPC(method, in);
     printf("status: %d\n", out.Status);
     printf("output: %s\n", out.Output);
-    free(out.Output);
+    RcloneFreeString(out.Output);
 }
 
 // noop command
@@ -44,7 +43,7 @@ void testNoOp() {
         fprintf(stderr, "Wrong status: want: %d: got: %d\n", 200, out.Status);
         exit(EXIT_FAILURE);
     }
-    free(out.Output);
+    RcloneFreeString(out.Output);
 }
 
 // error command
@@ -83,7 +82,7 @@ void testError() {
         fprintf(stderr, "Wrong status: want: %d: got: %d\n", 500, out.Status);
         exit(EXIT_FAILURE);
     }
-    free(out.Output);
+    RcloneFreeString(out.Output);
 }
 
 // copy file using "operations/copyfile" command

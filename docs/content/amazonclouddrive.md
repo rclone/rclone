@@ -5,7 +5,7 @@ versionIntroduced: "v1.20"
 status: Removed
 ---
 
-# {{< icon "fab fa-amazon" >}} Amazon Drive
+# Amazon Drive
 
 Amazon Drive, formerly known as Amazon Cloud Drive, was a cloud storage
 service run by Amazon for consumers.

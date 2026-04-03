@@ -627,10 +627,9 @@ See the [testing](#testing) section for more information on integration tests.
 
 ### Backend documentation
 
-Add your backend to the docs - you'll need to pick an icon for it from
-[fontawesome](http://fontawesome.io/icons/).  Keep lists of remotes in
-alphabetical order of full name of remote (e.g. `drive` is ordered as
-`Google Drive`) but with the local file system last.
+Add your backend to the docs.  Keep lists of remotes in alphabetical
+order of full name of remote (e.g. `drive` is ordered as `Google
+Drive`) but with the local file system last.
 
 First add a data file about your backend in
 `docs/data/backends/remote.yaml` - this is used to build the overview

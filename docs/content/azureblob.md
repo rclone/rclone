@@ -4,7 +4,7 @@ description: "Rclone docs for Microsoft Azure Blob Storage"
 versionIntroduced: "v1.38"
 ---
 
-# {{< icon "fab fa-windows" >}} Microsoft Azure Blob Storage
+# Microsoft Azure Blob Storage
 
 Paths are specified as `remote:container` (or `remote:` for the `lsd`
 command.)  You may put subdirectories in too, e.g.

@@ -4,7 +4,7 @@ description: "Rclone docs for the local filesystem"
 versionIntroduced: "v0.91"
 ---
 
-# {{< icon "fas fa-hdd" >}} Local Filesystem
+# Local Filesystem
 
 Local paths are specified as normal filesystem paths, e.g. `/path/to/wherever`, so
 
@@ -62,7 +62,7 @@ handling file names.
 | /         | 0x2F  | ／           |
 
 When running on Windows the following characters are replaced. This
-list is based on the [Windows file naming conventions](https://docs.microsoft.com/de-de/windows/desktop/FileIO/naming-a-file#naming-conventions).
+list is based on the [Windows file naming conventions](https://docs.microsoft.com/windows/desktop/FileIO/naming-a-file#naming-conventions).
 
 | Character | Value | Replacement |
 | --------- |:-----:|:-----------:|

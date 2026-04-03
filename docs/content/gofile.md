@@ -4,7 +4,7 @@ description: "Rclone docs for Gofile"
 versionIntroduced: "v1.68"
 ---
 
-# {{< icon "fa fa-folder" >}} Gofile
+# Gofile
 
 [Gofile](https://gofile.io) is a content storage and distribution
 platform. Its aim is to provide as much service as possible for free

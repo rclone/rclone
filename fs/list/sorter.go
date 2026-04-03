@@ -50,6 +50,7 @@ type Sorter struct {
 	errChan    <-chan error          // for getting errors from the ext sort
 	sorter     *extsort.StringSorter // external string sort
 	errs       *errcount.ErrCount    // accumulate errors
+	tempDir    string                // directory for temp files (empty for default)
 }
 
 // KeyFn turns an entry into a sort key
@@ -144,6 +145,7 @@ func (ls *Sorter) startExtSort() (err error) {
 		ChanBuffSize:       1024,      // small effect
 		SortedChanBuffSize: 1024,      // makes a lot of difference
 		ChunkSize:          32 * 1024, // tuned for 50 char records (UUID sized)
+		TempFilesDir:       ls.tempDir,
 		// Defaults
 		// ChunkSize:          int(1e6),	// amount of records to store in each chunk which will be written to disk
 		// NumWorkers:         2,		// maximum number of workers to use for parallel sorting
@@ -152,6 +154,17 @@ func (ls *Sorter) startExtSort() (err error) {
 		// TempFilesDir:       "",		// empty for use OS default ex: /tmp
 	}
 	ls.sorter, ls.outputChan, ls.errChan = extsort.Strings(ls.inputChan, &opt)
+	if ls.sorter == nil {
+		// extsort.Strings returns nil when it can't create temp
+		// files (e.g. due to permissions or apparmor restrictions).
+		// The error will be on errChan.
+		select {
+		case err = <-ls.errChan:
+		default:
+			err = errors.New("failed to initialise on-disk sort")
+		}
+		return fmt.Errorf("sorter: %w", err)
+	}
 	go ls.sorter.Sort(ls.ctx)
 
 	// Show we are extsorting now

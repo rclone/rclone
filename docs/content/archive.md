@@ -4,7 +4,7 @@ description: "Archive Remote"
 versionIntroduced: "v1.72"
 ---
 
-# {{< icon "fas fa-archive" >}} Archive
+# Archive
 
 The Archive backend allows read only access to the content of archive
 files on cloud storage without downloading the complete archive. This
