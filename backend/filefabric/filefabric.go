@@ -557,7 +557,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
-	//fs.DebugfCtx(context.Background(), f, "CreateDir(%q, %q)\n", pathID, leaf)
+	//fs.Debugf(f, "CreateDir(%q, %q)\n", pathID, leaf)
 	var info api.DoCreateNewFolderResponse
 	_, err = f.rpc(ctx, "doCreateNewFolder", params{
 		"fi_pid":  pathID,
@@ -774,7 +774,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 //
 // Returns an error if it isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	//fs.DebugfCtx(context.Background(), f, "CreateDir(%q, %q)\n", pathID, leaf)
+	//fs.Debugf(f, "CreateDir(%q, %q)\n", pathID, leaf)
 	return f.purgeCheck(ctx, dir, true)
 }
 
@@ -1084,7 +1084,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 func (o *Object) Size() int64 {
 	err := o.readMetaData(context.TODO())
 	if err != nil {
-		fs.LogfCtx(context.Background(), o, "Failed to read metadata: %v", err)
+		fs.Logf(o, "Failed to read metadata: %v", err)
 		return 0
 	}
 	if o.contentType == emptyMimeType {

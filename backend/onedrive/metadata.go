@@ -446,28 +446,28 @@ func (m *Metadata) sortPermissions() (add, update, remove []*api.PermissionsType
 			if !slices.ContainsFunc(old, func(o *api.PermissionsType) bool {
 				return o.ID == n.ID && slices.Compare(o.Roles, n.Roles) != 0 && len(o.Roles) > 0 && len(n.Roles) > 0 && !slices.Contains(o.Roles, api.OwnerRole)
 			}) {
-				fs.DebugfCtx(context.Background(), m.remote, "skipping update for invalid roles: %v (perm ID: %v)", n.Roles, n.ID)
+				fs.Debugf(m.remote, "skipping update for invalid roles: %v (perm ID: %v)", n.Roles, n.ID)
 				continue
 			}
 			if m.fs.driveType != driveTypePersonal && n.Link != nil && n.Link.WebURL != "" {
 				// special case to work around API limitation -- can't update a sharing link perm so need to remove + add instead
 				// https://learn.microsoft.com/en-us/answers/questions/986279/why-is-update-permission-graph-api-for-files-not-w
 				// https://github.com/microsoftgraph/msgraph-sdk-dotnet/issues/1135
-				fs.DebugfCtx(context.Background(), m.remote, "sortPermissions: can't update due to API limitation, will remove + add instead: %v", n.Roles)
+				fs.Debugf(m.remote, "sortPermissions: can't update due to API limitation, will remove + add instead: %v", n.Roles)
 				remove = append(remove, n)
 				add = append(add, n)
 				continue
 			}
-			fs.DebugfCtx(context.Background(), m.remote, "sortPermissions: will update role to %v", n.Roles)
+			fs.Debugf(m.remote, "sortPermissions: will update role to %v", n.Roles)
 			update = append(update, n)
 		} else {
-			fs.DebugfCtx(context.Background(), m.remote, "sortPermissions: will add permission: %v %v", n, n.Roles)
+			fs.Debugf(m.remote, "sortPermissions: will add permission: %v %v", n, n.Roles)
 			add = append(add, n)
 		}
 	}
 	for _, o := range old {
 		if slices.Contains(o.Roles, api.OwnerRole) {
-			fs.DebugfCtx(context.Background(), m.remote, "skipping remove permission -- can't remove 'owner' role")
+			fs.Debugf(m.remote, "skipping remove permission -- can't remove 'owner' role")
 			continue
 		}
 		newHasOld := slices.ContainsFunc(new, func(n *api.PermissionsType) bool {
@@ -477,7 +477,7 @@ func (m *Metadata) sortPermissions() (add, update, remove []*api.PermissionsType
 			return n.ID == o.ID
 		})
 		if !newHasOld && o.ID != "" && !slices.Contains(add, o) && !slices.Contains(update, o) {
-			fs.DebugfCtx(context.Background(), m.remote, "sortPermissions: will remove permission: %v %v  (perm ID: %v)", o, o.Roles, o.ID)
+			fs.Debugf(m.remote, "sortPermissions: will remove permission: %v %v  (perm ID: %v)", o, o.Roles, o.ID)
 			remove = append(remove, o)
 		}
 	}
@@ -845,7 +845,7 @@ func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata
 
 // createDir makes a directory with pathID as parent and name leaf with optional metadata
 func (f *Fs) createDir(ctx context.Context, pathID, dirWithLeaf, leaf string, metadata fs.Metadata) (info *api.Item, meta *Metadata, err error) {
-	// fs.DebugfCtx(context.Background(), f, "CreateDir(%q, %q)\n", dirID, leaf)
+	// fs.Debugf(f, "CreateDir(%q, %q)\n", dirID, leaf)
 	var resp *http.Response
 	opts := f.newOptsCall(pathID, "POST", "/children")
 

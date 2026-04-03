@@ -252,7 +252,7 @@ func (vol *Volume) clearCache() error {
 func (vol *Volume) mount(id string) error {
 	drv := vol.drv
 	count := len(vol.mountReqs)
-	fs.DebugfCtx(context.Background(), nil, "Mount volume %q for id %q at path %s (count %d)",
+	fs.Debugf(nil, "Mount volume %q for id %q at path %s (count %d)",
 		vol.Name, id, vol.MountPoint, count)
 
 	if _, found := vol.mountReqs[id]; found {
@@ -282,7 +282,7 @@ func (vol *Volume) mount(id string) error {
 // unmount volume
 func (vol *Volume) unmount(id string) error {
 	count := len(vol.mountReqs)
-	fs.DebugfCtx(context.Background(), nil, "Unmount volume %q from id %q at path %s (count %d)",
+	fs.Debugf(nil, "Unmount volume %q from id %q at path %s (count %d)",
 		vol.Name, id, vol.MountPoint, count)
 
 	if count == 0 {

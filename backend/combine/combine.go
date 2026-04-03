@@ -1103,7 +1103,7 @@ func (o *Object) String() string {
 func (o *Object) Remote() string {
 	newPath, err := o.u.pathAdjustment.do(o.Object.String())
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), o.Object, "Bad object: %v", err)
+		fs.Errorf(o.Object, "Bad object: %v", err)
 		return err.Error()
 	}
 	return newPath

@@ -116,7 +116,7 @@ func (rs Runs) Less(i, j int) bool {
 // dumpOutput prints the error output
 func (r *Run) dumpOutput() {
 	fs.Log(nil, "------------------------------------------------------------")
-	fs.LogfCtx(context.Background(), nil, "---- %q ----", r.CmdString)
+	fs.Logf(nil, "---- %q ----", r.CmdString)
 	fs.Log(nil, string(r.output))
 	fs.Log(nil, "------------------------------------------------------------")
 }
@@ -201,7 +201,7 @@ func (r *Run) findFailures() {
 	}
 	r.FailedTests = newTests
 	if len(r.FailedTests) == 0 && ignored > 0 {
-		fs.LogfCtx(context.Background(), nil, "%q - Found %d ignored errors only - marking as good", r.CmdString, ignored)
+		fs.Logf(nil, "%q - Found %d ignored errors only - marking as good", r.CmdString, ignored)
 		r.err = nil
 		r.dumpOutput()
 		return
@@ -212,10 +212,10 @@ func (r *Run) findFailures() {
 		r.RunFlag = ""
 	}
 	if r.passed() && len(r.FailedTests) != 0 {
-		fs.LogfCtx(context.Background(), nil, "%q - Expecting no errors but got: %v", r.CmdString, r.FailedTests)
+		fs.Logf(nil, "%q - Expecting no errors but got: %v", r.CmdString, r.FailedTests)
 		r.dumpOutput()
 	} else if !r.passed() && len(r.FailedTests) == 0 {
-		fs.LogfCtx(context.Background(), nil, "%q - Expecting errors but got none: %v", r.CmdString, r.FailedTests)
+		fs.Logf(nil, "%q - Expecting errors but got none: %v", r.CmdString, r.FailedTests)
 		r.dumpOutput()
 		r.FailedTests = oldFailedTests
 	}
@@ -251,7 +251,7 @@ func (r *Run) trial(Opt RunOpt) {
 
 	// Early exit if --try-run
 	if Opt.DryRun {
-		fs.LogfCtx(context.Background(), nil, "Not executing as --dry-run: %v", CmdLine)
+		fs.Logf(nil, "Not executing as --dry-run: %v", CmdLine)
 		_, _ = fmt.Fprintln(out, "--dry-run is set - not running")
 		return
 	}
@@ -259,7 +259,7 @@ func (r *Run) trial(Opt RunOpt) {
 	// Start the test server if required
 	finish, err := testserver.Start(r.Remote)
 	if err != nil {
-		fs.LogfCtx(context.Background(), nil, "%s: Failed to start test server: %v", r.Remote, err)
+		fs.Logf(nil, "%s: Failed to start test server: %v", r.Remote, err)
 		_, _ = fmt.Fprintf(out, "%s: Failed to start test server: %v\n", r.Remote, err)
 		r.err = err
 		return
@@ -326,13 +326,13 @@ func (r *Run) PackagePath() string {
 func (r *Run) MakeTestBinary(Opt RunOpt) {
 	binary := r.BinaryPath()
 	binaryName := r.BinaryName()
-	fs.LogfCtx(context.Background(), nil, "%s: Making test binary %q", r.Path, binaryName)
+	fs.Logf(nil, "%s: Making test binary %q", r.Path, binaryName)
 	CmdLine := []string{"go", "test", "-c"}
 	if Opt.Race {
 		CmdLine = append(CmdLine, "-race")
 	}
 	if Opt.DryRun {
-		fs.LogfCtx(context.Background(), nil, "Not executing: %v", CmdLine)
+		fs.Logf(nil, "Not executing: %v", CmdLine)
 		return
 	}
 	cmd := exec.Command(CmdLine[0], CmdLine[1:]...)
@@ -354,7 +354,7 @@ func (r *Run) RemoveTestBinary(Opt RunOpt) {
 	binary := r.BinaryPath()
 	err := os.Remove(binary) // Delete the binary when finished
 	if err != nil {
-		fs.LogfCtx(context.Background(), nil, "Error removing test binary %q: %v", binary, err)
+		fs.Logf(nil, "Error removing test binary %q: %v", binary, err)
 	}
 }
 
@@ -450,7 +450,7 @@ func (r *Run) Run(Opt RunOpt, LogDir string, result chan<- *Run) {
 	for r.Try = 1; r.Try <= Opt.MaxTries; r.Try++ {
 		r.TrialName = r.Name() + ".txt"
 		r.TrialNames = append(r.TrialNames, r.TrialName)
-		fs.LogfCtx(context.Background(), nil, "Starting run with log %q", r.TrialName)
+		fs.Logf(nil, "Starting run with log %q", r.TrialName)
 		r.trial(Opt)
 		if r.passed() || r.NoRetries {
 			break

@@ -107,7 +107,7 @@ func (r *Handle) startReadWorkers() {
 		if !r.cacheFs().plexConnector.isConnected() {
 			err := r.cacheFs().plexConnector.authenticate()
 			if err != nil {
-				fs.ErrorfCtx(context.Background(), r, "failed to authenticate to Plex: %v", err)
+				fs.Errorf(r, "failed to authenticate to Plex: %v", err)
 			}
 		}
 		if r.cacheFs().plexConnector.isConnected() {
@@ -145,7 +145,7 @@ func (r *Handle) scaleWorkers(desired int) {
 	}
 	// ignore first scale out from 0
 	if current != 0 {
-		fs.DebugfCtx(context.Background(), r, "scale workers to %v", desired)
+		fs.Debugf(r, "scale workers to %v", desired)
 	}
 }
 
@@ -159,7 +159,7 @@ func (r *Handle) confirmExternalReading() {
 	if !r.cacheFs().plexConnector.isPlaying(r.cachedObject) {
 		return
 	}
-	fs.InfofCtx(context.Background(), r, "confirmed reading by external reader")
+	fs.Infof(r, "confirmed reading by external reader")
 	r.scaleWorkers(r.cacheFs().opt.TotalWorkers)
 }
 
@@ -229,7 +229,7 @@ func (r *Handle) getChunk(chunkStart int64) ([]byte, error) {
 				break
 			}
 
-			fs.DebugfCtx(context.Background(), r, "%v: chunk retry storage: %v", chunkStart, i)
+			fs.Debugf(r, "%v: chunk retry storage: %v", chunkStart, i)
 			time.Sleep(time.Millisecond * 500)
 		}
 	}
@@ -238,7 +238,7 @@ func (r *Handle) getChunk(chunkStart int64) ([]byte, error) {
 	// the worker didn't managed to download the chunk in time so we abort and close the stream
 	if err != nil || len(data) == 0 || !found {
 		if r.workers == 0 {
-			fs.ErrorfCtx(context.Background(), r, "out of workers")
+			fs.Errorf(r, "out of workers")
 			return nil, io.ErrUnexpectedEOF
 		}
 
@@ -248,7 +248,7 @@ func (r *Handle) getChunk(chunkStart int64) ([]byte, error) {
 	// first chunk will be aligned with the start
 	if offset > 0 {
 		if offset > int64(len(data)) {
-			fs.ErrorfCtx(context.Background(), r, "unexpected conditions during reading. current position: %v, current chunk position: %v, current chunk size: %v, offset: %v, chunk size: %v, file size: %v",
+			fs.Errorf(r, "unexpected conditions during reading. current position: %v, current chunk position: %v, current chunk size: %v, offset: %v, chunk size: %v, file size: %v",
 				r.offset, chunkStart, len(data), offset, r.cacheFs().opt.ChunkSize, r.cachedObject.Size())
 			return nil, io.ErrUnexpectedEOF
 		}
@@ -275,7 +275,7 @@ func (r *Handle) Read(p []byte) (n int, err error) {
 	currentOffset := r.offset
 	buf, err = r.getChunk(currentOffset)
 	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
-		fs.ErrorfCtx(context.Background(), r, "(%v/%v) error (%v) response", currentOffset, r.cachedObject.Size(), err)
+		fs.Errorf(r, "(%v/%v) error (%v) response", currentOffset, r.cachedObject.Size(), err)
 	}
 	if len(buf) == 0 && err != io.ErrUnexpectedEOF {
 		return 0, io.EOF
@@ -301,7 +301,7 @@ func (r *Handle) Close() error {
 	r.workersWg.Wait()
 	r.memory.db.Flush()
 
-	fs.DebugfCtx(context.Background(), r, "cache reader closed %v", r.offset)
+	fs.Debugf(r, "cache reader closed %v", r.offset)
 	return nil
 }
 
@@ -313,13 +313,13 @@ func (r *Handle) Seek(offset int64, whence int) (int64, error) {
 	var err error
 	switch whence {
 	case io.SeekStart:
-		fs.DebugfCtx(context.Background(), r, "moving offset set from %v to %v", r.offset, offset)
+		fs.Debugf(r, "moving offset set from %v to %v", r.offset, offset)
 		r.offset = offset
 	case io.SeekCurrent:
-		fs.DebugfCtx(context.Background(), r, "moving offset cur from %v to %v", r.offset, r.offset+offset)
+		fs.Debugf(r, "moving offset cur from %v to %v", r.offset, r.offset+offset)
 		r.offset += offset
 	case io.SeekEnd:
-		fs.DebugfCtx(context.Background(), r, "moving offset end (%v) from %v to %v", r.cachedObject.Size(), r.offset, r.cachedObject.Size()+offset)
+		fs.Debugf(r, "moving offset end (%v) from %v to %v", r.cachedObject.Size(), r.offset, r.cachedObject.Size()+offset)
 		r.offset = r.cachedObject.Size() + offset
 	default:
 		err = fmt.Errorf("cache: unimplemented seek whence %v", whence)
@@ -410,7 +410,7 @@ func (w *worker) run() {
 			if err == nil {
 				err = w.r.memory.AddChunk(w.r.cachedObject.abs(), data, chunkStart)
 				if err != nil {
-					fs.ErrorfCtx(context.Background(), w, "failed caching chunk in ram %v: %v", chunkStart, err)
+					fs.Errorf(w, "failed caching chunk in ram %v: %v", chunkStart, err)
 				} else {
 					continue
 				}
@@ -449,10 +449,10 @@ func (w *worker) download(chunkStart, chunkEnd int64, retry int) {
 	w.rc, err = w.reader(chunkStart, chunkEnd, closeOpen)
 	// we seem to be getting only errors so we abort
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), w, "object open failed %v: %v", chunkStart, err)
+		fs.Errorf(w, "object open failed %v: %v", chunkStart, err)
 		err = w.r.cachedObject.refreshFromSource(w.r.ctx, true)
 		if err != nil {
-			fs.ErrorfCtx(context.Background(), w, "%v", err)
+			fs.Errorf(w, "%v", err)
 		}
 		w.download(chunkStart, chunkEnd, retry+1)
 		return
@@ -462,31 +462,31 @@ func (w *worker) download(chunkStart, chunkEnd int64, retry int) {
 	var sourceRead int
 	sourceRead, err = io.ReadFull(w.rc, data)
 	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
-		fs.ErrorfCtx(context.Background(), w, "failed to read chunk %v: %v", chunkStart, err)
+		fs.Errorf(w, "failed to read chunk %v: %v", chunkStart, err)
 		err = w.r.cachedObject.refreshFromSource(w.r.ctx, true)
 		if err != nil {
-			fs.ErrorfCtx(context.Background(), w, "%v", err)
+			fs.Errorf(w, "%v", err)
 		}
 		w.download(chunkStart, chunkEnd, retry+1)
 		return
 	}
 	data = data[:sourceRead] // reslice to remove extra garbage
 	if err == io.ErrUnexpectedEOF {
-		fs.DebugfCtx(context.Background(), w, "partial downloaded chunk %v", fs.SizeSuffix(chunkStart))
+		fs.Debugf(w, "partial downloaded chunk %v", fs.SizeSuffix(chunkStart))
 	} else {
-		fs.DebugfCtx(context.Background(), w, "downloaded chunk %v", chunkStart)
+		fs.Debugf(w, "downloaded chunk %v", chunkStart)
 	}
 
 	if w.r.UseMemory {
 		err = w.r.memory.AddChunk(w.r.cachedObject.abs(), data, chunkStart)
 		if err != nil {
-			fs.ErrorfCtx(context.Background(), w, "failed caching chunk in ram %v: %v", chunkStart, err)
+			fs.Errorf(w, "failed caching chunk in ram %v: %v", chunkStart, err)
 		}
 	}
 
 	err = w.r.storage().AddChunk(w.r.cachedObject.abs(), data, chunkStart)
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), w, "failed caching chunk in storage %v: %v", chunkStart, err)
+		fs.Errorf(w, "failed caching chunk in storage %v: %v", chunkStart, err)
 	}
 }
 
@@ -554,7 +554,7 @@ func (b *backgroundWriter) notify(remote string, status int, err error) {
 	}
 	select {
 	case b.notifyCh <- state:
-		fs.DebugfCtx(context.Background(), remote, "notified background upload state: %v", state.Status)
+		fs.Debugf(remote, "notified background upload state: %v", state.Status)
 	default:
 	}
 }
@@ -588,12 +588,12 @@ func (b *backgroundWriter) run() {
 
 		remote := b.fs.cleanRootFromPath(absPath)
 		b.notify(remote, BackgroundUploadStarted, nil)
-		fs.InfofCtx(context.Background(), remote, "background upload: started upload")
+		fs.Infof(remote, "background upload: started upload")
 		err = operations.MoveFile(context.TODO(), b.fs.UnWrap(), b.fs.tempFs, remote, remote)
 		if err != nil {
 			b.notify(remote, BackgroundUploadError, err)
 			_ = b.fs.cache.rollbackPendingUpload(absPath)
-			fs.ErrorfCtx(context.Background(), remote, "background upload: %v", err)
+			fs.Errorf(remote, "background upload: %v", err)
 			continue
 		}
 		// clean empty dirs up to root
@@ -607,24 +607,24 @@ func (b *backgroundWriter) run() {
 				break
 			}
 			err = b.fs.tempFs.Rmdir(context.TODO(), thisDir)
-			fs.DebugfCtx(context.Background(), thisDir, "cleaned from temp path")
+			fs.Debugf(thisDir, "cleaned from temp path")
 			if err != nil {
 				break
 			}
 			thisDir = cleanPath(path.Dir(thisDir))
 		}
-		fs.InfofCtx(context.Background(), remote, "background upload: uploaded entry")
+		fs.Infof(remote, "background upload: uploaded entry")
 		err = b.fs.cache.removePendingUpload(absPath)
 		if err != nil && !strings.Contains(err.Error(), "pending upload not found") {
-			fs.ErrorfCtx(context.Background(), remote, "background upload: %v", err)
+			fs.Errorf(remote, "background upload: %v", err)
 		}
 		parentCd := NewDirectory(b.fs, cleanPath(path.Dir(remote)))
 		err = b.fs.cache.ExpireDir(parentCd)
 		if err != nil {
-			fs.ErrorfCtx(context.Background(), parentCd, "background upload: cache expire error: %v", err)
+			fs.Errorf(parentCd, "background upload: cache expire error: %v", err)
 		}
 		b.fs.notifyChangeUpstream(remote, fs.EntryObject)
-		fs.InfofCtx(context.Background(), remote, "finished background upload")
+		fs.Infof(remote, "finished background upload")
 		b.notify(remote, BackgroundUploadCompleted, nil)
 	}
 }

@@ -1012,7 +1012,7 @@ func errorHandler(resp *http.Response) error {
 	err := rest.DecodeJSON(resp, &errResponse)
 	// Redirects have no body so don't report an error
 	if err != nil && resp.Header.Get("Location") == "" {
-		fs.DebugfCtx(context.Background(), nil, "Couldn't decode error response: %v", err)
+		fs.Debugf(nil, "Couldn't decode error response: %v", err)
 	}
 	if errResponse.ErrorInfo.Code == "" {
 		errResponse.ErrorInfo.Code = resp.Status
@@ -1224,7 +1224,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
-	// fs.DebugfCtx(context.Background(), f, "FindLeaf(%q, %q)", pathID, leaf)
+	// fs.Debugf(f, "FindLeaf(%q, %q)", pathID, leaf)
 	_, ok := f.dirCache.GetInv(pathID)
 	if !ok {
 		return "", false, errors.New("couldn't find parent ID")
@@ -1247,7 +1247,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, dirID, leaf string) (newID string, err error) {
-	// fs.DebugfCtx(context.Background(), f, "CreateDir(%q, %q)\n", dirID, leaf)
+	// fs.Debugf(f, "CreateDir(%q, %q)\n", dirID, leaf)
 	var resp *http.Response
 	var info *api.Item
 	opts := f.newOptsCall(dirID, "POST", "/children")
@@ -2215,7 +2215,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 func (o *Object) Size() int64 {
 	err := o.readMetaData(context.TODO())
 	if err != nil {
-		fs.LogfCtx(context.Background(), o, "Failed to read metadata: %v", err)
+		fs.Logf(o, "Failed to read metadata: %v", err)
 		return 0
 	}
 	return o.size
@@ -2244,7 +2244,7 @@ func (o *Object) setMetaData(info *api.Item) (err error) {
 			if file.Hashes.QuickXorHash != "" {
 				h, err := base64.StdEncoding.DecodeString(file.Hashes.QuickXorHash)
 				if err != nil {
-					fs.ErrorfCtx(context.Background(), o, "Failed to decode QuickXorHash %q: %v", file.Hashes.QuickXorHash, err)
+					fs.Errorf(o, "Failed to decode QuickXorHash %q: %v", file.Hashes.QuickXorHash, err)
 				} else {
 					o.hash = hex.EncodeToString(h)
 				}
@@ -2277,7 +2277,7 @@ func (f *Fs) setSystemMetadata(info *api.Item, meta *Metadata, remote string, mi
 	meta.remote = remote
 	meta.mimeType = mimeType
 	if info == nil {
-		fs.ErrorfCtx(context.Background(), "setSystemMetadata", "internal error: info is nil")
+		fs.Errorf("setSystemMetadata", "internal error: info is nil")
 	}
 	fileSystemInfo := info.GetFileSystemInfo()
 	if fileSystemInfo != nil {

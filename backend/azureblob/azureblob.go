@@ -1378,7 +1378,7 @@ func (f *Fs) listContainersToFn(fn listContainerFn) error {
 
 		for _, cnt := range response.ContainerItems {
 			if cnt == nil || cnt.Name == nil || cnt.Properties == nil || cnt.Properties.LastModified == nil {
-				fs.DebugfCtx(context.Background(), f, "nil returned in container info")
+				fs.Debugf(f, "nil returned in container info")
 			}
 			err = fn(*cnt.Name, *cnt.Properties.LastModified)
 			if err != nil {
@@ -2035,7 +2035,7 @@ func (o *Object) setMetadata(metadata map[string]*string) {
 		if modTime, ok := o.meta[modTimeKey]; !o.fs.ci.UseServerModTime && ok {
 			when, err := time.Parse(timeFormatIn, modTime)
 			if err != nil {
-				fs.DebugfCtx(context.Background(), o, "Couldn't parse %v = %q: %v", modTimeKey, modTime, err)
+				fs.Debugf(o, "Couldn't parse %v = %q: %v", modTimeKey, modTime, err)
 			}
 			o.modTime = when
 		}
@@ -2172,10 +2172,10 @@ func (o *Object) decodeMetaDataFromDownloadResponse(info *blob.DownloadStreamRes
 			if err == nil {
 				o.size = i
 			} else {
-				fs.DebugfCtx(context.Background(), o, "Failed to find parse integer from in %q: %v", contentRange, err)
+				fs.Debugf(o, "Failed to find parse integer from in %q: %v", contentRange, err)
 			}
 		} else {
-			fs.DebugfCtx(context.Background(), o, "Failed to find length in %q", contentRange)
+			fs.Debugf(o, "Failed to find length in %q", contentRange)
 		}
 	}
 
@@ -2861,7 +2861,7 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 // uploadSinglepart uploads a short blob using a single part upload
 func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, size int64, ui uploadInfo) (err error) {
 	chunkSize := int64(o.fs.opt.ChunkSize)
-	// fs.DebugfCtx(context.Background(), o, "Single part upload starting of object %d bytes", size)
+	// fs.Debugf(o, "Single part upload starting of object %d bytes", size)
 	if size > chunkSize || size < 0 {
 		return fmt.Errorf("internal error: single part upload size too big %d > %d", size, chunkSize)
 	}
@@ -3092,7 +3092,7 @@ func (o *Object) SetTier(tier string) error {
 	// Set access tier on local object also, this typically
 	// gets updated on get blob properties
 	o.accessTier = desiredAccessTier
-	fs.DebugfCtx(context.Background(), o, "Successfully changed object tier to %s", tier)
+	fs.DebugfCtx(ctx, o, "Successfully changed object tier to %s", tier)
 
 	return nil
 }

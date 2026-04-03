@@ -40,7 +40,7 @@ var commandDefinition = &cobra.Command{
 			pollChan := make(chan time.Duration)
 			do(ctx, changeNotify, pollChan)
 			pollChan <- time.Duration(pollInterval)
-			fs.LogfCtx(context.Background(), nil, "Waiting for changes, polling every %v", pollInterval)
+			fs.LogfCtx(ctx, nil, "Waiting for changes, polling every %v", pollInterval)
 		} else {
 			return errors.New("poll-interval is not supported by this remote")
 		}
@@ -53,5 +53,5 @@ var commandDefinition = &cobra.Command{
 //
 // if entryType is a directory it invalidates the parent of the directory too.
 func changeNotify(relativePath string, entryType fs.EntryType) {
-	fs.LogfCtx(context.Background(), nil, "%q: %v", relativePath, entryType)
+	fs.Logf(nil, "%q: %v", relativePath, entryType)
 }

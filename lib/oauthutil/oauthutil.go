@@ -216,7 +216,7 @@ func PutToken(name string, m configmap.Mapper, token *oauth2.Token, newSection b
 	old, ok := m.Get(config.ConfigToken)
 	if !ok || tokenString != old {
 		m.Set(config.ConfigToken, tokenString)
-		fs.DebugfCtx(context.Background(), name, "Saved new token in config file")
+		fs.Debugf(name, "Saved new token in config file")
 	}
 	return nil
 }
@@ -240,22 +240,22 @@ type TokenSource struct {
 func (ts *TokenSource) reReadToken() (changed bool) {
 	tokenString, found := ts.m.Get(config.ConfigToken)
 	if !found || tokenString == "" {
-		fs.DebugfCtx(context.Background(), ts.name, "Failed to read token out of config file")
+		fs.Debugf(ts.name, "Failed to read token out of config file")
 		return false
 	}
 	newToken := new(oauth2.Token)
 	err := json.Unmarshal([]byte(tokenString), newToken)
 	if err != nil {
-		fs.DebugfCtx(context.Background(), ts.name, "Failed to parse token out of config file: %v", err)
+		fs.Debugf(ts.name, "Failed to parse token out of config file: %v", err)
 		return false
 	}
 
 	if newToken.Valid() {
-		fs.DebugfCtx(context.Background(), ts.name, "Loaded fresh token from config file")
+		fs.Debugf(ts.name, "Loaded fresh token from config file")
 		changed = true
 	}
 	if newToken.RefreshToken != "" && newToken.RefreshToken != ts.token.RefreshToken {
-		fs.DebugfCtx(context.Background(), ts.name, "Loaded new refresh token from config file")
+		fs.Debugf(ts.name, "Loaded new refresh token from config file")
 		changed = true
 	}
 
@@ -263,7 +263,7 @@ func (ts *TokenSource) reReadToken() (changed bool) {
 		ts.token = newToken
 		ts.tokenSource = nil // invalidate since we changed the token
 	} else {
-		fs.DebugfCtx(context.Background(), ts.name, "No updated token found in the config file")
+		fs.Debugf(ts.name, "No updated token found in the config file")
 	}
 	return changed
 }
@@ -278,7 +278,7 @@ func maybeWrapOAuthError(err error, remoteName string) (newErr error) {
 	newErr = err
 	if rErr, ok := err.(*oauth2.RetrieveError); ok {
 		if rErr.Response.StatusCode == 400 || rErr.Response.StatusCode == 401 {
-			fs.DebugfCtx(context.Background(), remoteName, "got fatal oauth error: %v", rErr)
+			fs.Debugf(remoteName, "got fatal oauth error: %v", rErr)
 			var resp retrieveErrResponse
 			if err = json.Unmarshal(rErr.Body, &resp); err != nil {
 				newErr = fmt.Errorf("(can't decode error info) - try refreshing token with \"rclone config reconnect %s:\"", remoteName)
@@ -353,7 +353,7 @@ func (ts *TokenSource) Token() (*oauth2.Token, error) {
 			err = newErr // Fatal OAuth error
 			break
 		}
-		fs.DebugfCtx(context.Background(), ts.name, "Token refresh failed try %d/%d: %v", i, maxTries, err)
+		fs.Debugf(ts.name, "Token refresh failed try %d/%d: %v", i, maxTries, err)
 		time.Sleep(1 * time.Second)
 	}
 	if err != nil {
@@ -467,7 +467,7 @@ func OverrideCredentials(name string, m configmap.Mapper, origConfig *Config) (n
 	if ok && ClientCredentialStr != "" {
 		ClientCredential, err := strconv.ParseBool(ClientCredentialStr)
 		if err != nil {
-			fs.ErrorfCtx(context.Background(), nil, "Invalid setting for %q: %v", config.ConfigClientCredentials, err)
+			fs.Errorf(nil, "Invalid setting for %q: %v", config.ConfigClientCredentials, err)
 		} else {
 			newConfig.ClientCredentialFlow = ClientCredential
 		}
@@ -926,11 +926,11 @@ func newAuthServer(opt *Options, bindAddress, state, authURL string) *authServer
 // Receive the auth request
 func (s *authServer) handleAuth(w http.ResponseWriter, req *http.Request) {
 	if req.URL.Path != "/" {
-		fs.DebugfCtx(context.Background(), nil, "Ignoring %s request on auth server to %q", req.Method, req.URL.Path)
+		fs.Debugf(nil, "Ignoring %s request on auth server to %q", req.Method, req.URL.Path)
 		http.NotFound(w, req)
 		return
 	}
-	fs.DebugfCtx(context.Background(), nil, "Received %s request on auth server to %q", req.Method, req.URL.Path)
+	fs.Debugf(nil, "Received %s request on auth server to %q", req.Method, req.URL.Path)
 
 	// Reply with the response to the user and to the channel
 	reply := func(status int, res *AuthResult) {
@@ -938,7 +938,7 @@ func (s *authServer) handleAuth(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		var t = template.Must(template.New("authResponse").Parse(templateString))
 		if err := t.Execute(w, res); err != nil {
-			fs.DebugfCtx(context.Background(), nil, "Could not execute template for web response.")
+			fs.Debugf(nil, "Could not execute template for web response.")
 		}
 		s.result <- res
 	}
@@ -990,7 +990,7 @@ func (s *authServer) handleAuth(w http.ResponseWriter, req *http.Request) {
 
 // Init gets the internal web server ready to receive config details
 func (s *authServer) Init() error {
-	fs.DebugfCtx(context.Background(), nil, "Starting auth server on %s", s.bindAddress)
+	fs.Debugf(nil, "Starting auth server on %s", s.bindAddress)
 	mux := http.NewServeMux()
 	s.server = &http.Server{
 		Addr:    s.bindAddress,
@@ -1001,11 +1001,11 @@ func (s *authServer) Init() error {
 	mux.HandleFunc("/auth", func(w http.ResponseWriter, req *http.Request) {
 		state := req.FormValue("state")
 		if state != s.state {
-			fs.DebugfCtx(context.Background(), nil, "State did not match: want %q got %q", s.state, state)
+			fs.Debugf(nil, "State did not match: want %q got %q", s.state, state)
 			http.Error(w, "State did not match - please try again", http.StatusForbidden)
 			return
 		}
-		fs.DebugfCtx(context.Background(), nil, "Redirecting browser to: %s", s.authURL)
+		fs.Debugf(nil, "Redirecting browser to: %s", s.authURL)
 		http.Redirect(w, req, s.authURL, http.StatusTemporaryRedirect)
 	})
 	mux.HandleFunc("/", s.handleAuth)
@@ -1021,12 +1021,12 @@ func (s *authServer) Init() error {
 // Serve the auth server, doesn't return
 func (s *authServer) Serve() {
 	err := s.server.Serve(s.listener)
-	fs.DebugfCtx(context.Background(), nil, "Closed auth server with error: %v", err)
+	fs.Debugf(nil, "Closed auth server with error: %v", err)
 }
 
 // Stop the auth server by closing its socket
 func (s *authServer) Stop() {
-	fs.DebugfCtx(context.Background(), nil, "Closing auth server")
+	fs.Debugf(nil, "Closing auth server")
 	close(s.result)
 	_ = s.listener.Close()
 

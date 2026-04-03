@@ -344,14 +344,14 @@ func (w *WebDAV) postprocess(r *http.Request, remote string) {
 	case "COPY", "MOVE", "PUT":
 		VFS, err := w.getVFS(r.Context())
 		if err != nil {
-			fs.ErrorfCtx(context.Background(), nil, "Failed to get VFS: %v", err)
+			fs.ErrorfCtx(w.ctx, nil, "Failed to get VFS: %v", err)
 			return
 		}
 
 		// Get the node
 		node, err := VFS.Stat(remote)
 		if err != nil {
-			fs.ErrorfCtx(context.Background(), nil, "Failed to stat node: %v", err)
+			fs.ErrorfCtx(w.ctx, nil, "Failed to stat node: %v", err)
 			return
 		}
 
@@ -361,10 +361,10 @@ func (w *WebDAV) postprocess(r *http.Request, remote string) {
 			if err == nil {
 				err = node.SetModTime(time.Unix(modtimeUnix, 0))
 				if err != nil {
-					fs.ErrorfCtx(context.Background(), nil, "Failed to set modtime: %v", err)
+					fs.ErrorfCtx(w.ctx, nil, "Failed to set modtime: %v", err)
 				}
 			} else {
-				fs.ErrorfCtx(context.Background(), nil, "Failed to parse modtime: %v", err)
+				fs.ErrorfCtx(w.ctx, nil, "Failed to parse modtime: %v", err)
 			}
 		}
 	}
@@ -396,7 +396,7 @@ func (w *WebDAV) serveDir(rw http.ResponseWriter, r *http.Request, dirRemote str
 	VFS, err := w.getVFS(r.Context())
 	if err != nil {
 		http.Error(rw, "Root directory not found", http.StatusNotFound)
-		fs.ErrorfCtx(context.Background(), nil, "Failed to serve directory: %v", err)
+		fs.ErrorfCtx(w.ctx, nil, "Failed to serve directory: %v", err)
 		return
 	}
 	// List the directory
@@ -415,7 +415,7 @@ func (w *WebDAV) serveDir(rw http.ResponseWriter, r *http.Request, dirRemote str
 	dir := node.(*vfs.Dir)
 
 	if r.URL.Query().Get("download") == "zip" && !w.opt.DisableZip {
-		fs.InfofCtx(context.Background(), dirRemote, "%s: Zipping directory", r.RemoteAddr)
+		fs.InfofCtx(w.ctx, dirRemote, "%s: Zipping directory", r.RemoteAddr)
 		zipName := path.Base(dirRemote)
 		if dirRemote == "" {
 			zipName = "root"
@@ -461,7 +461,7 @@ func (w *WebDAV) serveDir(rw http.ResponseWriter, r *http.Request, dirRemote str
 // Use s.Close() and s.Wait() to shutdown server
 func (w *WebDAV) Serve() error {
 	w.server.Serve()
-	fs.LogfCtx(context.Background(), w.f, "WebDav Server started on %s", w.server.URLs())
+	fs.LogfCtx(w.ctx, w.f, "WebDav Server started on %s", w.server.URLs())
 	w.server.Wait()
 	return nil
 }
@@ -478,7 +478,7 @@ func (w *WebDAV) Shutdown() error {
 
 // logRequest is called by the webdav module on every request
 func (w *WebDAV) logRequest(r *http.Request, err error) {
-	fs.InfofCtx(context.Background(), r.URL.Path, "%s from %s", r.Method, r.RemoteAddr)
+	fs.InfofCtx(w.ctx, r.URL.Path, "%s from %s", r.Method, r.RemoteAddr)
 }
 
 // Mkdir creates a directory
@@ -603,7 +603,7 @@ func (h Handle) DeadProps() (map[xml.Name]webdav.Property, error) {
 				property.InnerXML = append(property.InnerXML, "</checksum>"...)
 				properties[xmlName] = property
 			} else {
-				fs.ErrorfCtx(context.Background(), nil, "failed to calculate hash: %v", err)
+				fs.ErrorfCtx(h.w.ctx, nil, "failed to calculate hash: %v", err)
 			}
 		}
 	}

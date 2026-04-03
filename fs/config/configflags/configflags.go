@@ -83,11 +83,11 @@ func SetFlags(ci *fs.ConfigInfo) {
 	// Process obsolete --dump-headers and --dump-bodies flags
 	if dumpHeaders {
 		ci.Dump |= fs.DumpHeaders
-		fs.LogfCtx(context.Background(), nil, "--dump-headers is obsolete - please use --dump headers instead")
+		fs.Logf(nil, "--dump-headers is obsolete - please use --dump headers instead")
 	}
 	if dumpBodies {
 		ci.Dump |= fs.DumpBodies
-		fs.LogfCtx(context.Background(), nil, "--dump-bodies is obsolete - please use --dump bodies instead")
+		fs.Logf(nil, "--dump-bodies is obsolete - please use --dump bodies instead")
 	}
 
 	// Process -v flag
@@ -172,7 +172,7 @@ func SetFlags(ci *fs.ConfigInfo) {
 			}
 			ci.MetadataSet[strings.ToLower(kv[:equal])] = kv[equal+1:]
 		}
-		fs.DebugfCtx(context.Background(), nil, "MetadataUpload %v", ci.MetadataSet)
+		fs.Debugf(nil, "MetadataUpload %v", ci.MetadataSet)
 	}
 
 	// Process --dscp

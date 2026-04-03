@@ -378,12 +378,12 @@ func (b *bisyncRun) saveQueue(files bilib.Names, jobName string) error {
 
 func naptime(totalWait fs.Duration) {
 	expireTime := time.Now().Add(time.Duration(totalWait))
-	fs.LogfCtx(context.Background(), nil, "will retry in %v at %v", totalWait, expireTime.Format("2006-01-02 15:04:05 MST"))
+	fs.Logf(nil, "will retry in %v at %v", totalWait, expireTime.Format("2006-01-02 15:04:05 MST"))
 	for i := 0; time.Until(expireTime) > 0; i++ {
 		if i > 0 && i%10 == 0 {
-			fs.InfofCtx(context.Background(), nil, Color(terminal.Dim, "retrying in %v..."), time.Until(expireTime).Round(1*time.Second))
+			fs.Infof(nil, Color(terminal.Dim, "retrying in %v..."), time.Until(expireTime).Round(1*time.Second))
 		} else {
-			fs.DebugfCtx(context.Background(), nil, Color(terminal.Dim, "retrying in %v..."), time.Until(expireTime).Round(1*time.Second))
+			fs.Debugf(nil, Color(terminal.Dim, "retrying in %v..."), time.Until(expireTime).Round(1*time.Second))
 		}
 		time.Sleep(1 * time.Second)
 	}

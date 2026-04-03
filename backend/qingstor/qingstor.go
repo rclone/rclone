@@ -452,7 +452,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	srcBucket, srcPath := srcObj.split()
 	source := path.Join("/", srcBucket, srcPath)
 
-	// fs.DebugfCtx(context.Background(), f, "Copied, source key is: %s, and dst key is: %s", source, key)
+	// fs.Debugf(f, "Copied, source key is: %s, and dst key is: %s", source, key)
 	req := qs.PutObjectInput{
 		XQSCopySource: &source,
 	}
@@ -463,7 +463,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	_, err = bucketInit.PutObject(dstPath, &req)
 	if err != nil {
-		// fs.DebugfCtx(context.Background(), f, "Copy Failed, API Error: %v", err)
+		// fs.Debugf(f, "Copy Failed, API Error: %v", err)
 		return nil, err
 	}
 	return f.NewObject(ctx, remote)
@@ -493,7 +493,7 @@ func (f *Fs) newObjectWithInfo(remote string, info *qs.KeyType) (fs.Object, erro
 			o.etag = qs.StringValue(info.Etag)
 		}
 		if info.Modified == nil {
-			fs.LogfCtx(context.Background(), o, "Failed to read last modified")
+			fs.Logf(o, "Failed to read last modified")
 			o.lastModified = time.Now()
 		} else {
 			o.lastModified = timestampToTime(int64(*info.Modified))
@@ -826,11 +826,11 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		return err
 	}
 	if !isEmpty {
-		// fs.DebugfCtx(context.Background(), f, "The bucket %s you tried to delete not empty.", bucket)
+		// fs.Debugf(f, "The bucket %s you tried to delete not empty.", bucket)
 		return errors.New("BucketNotEmpty: The bucket you tried to delete is not empty")
 	}
 	return f.cache.Remove(bucket, func() error {
-		// fs.DebugfCtx(context.Background(), f, "Deleting the bucket %s", bucket)
+		// fs.Debugf(f, "Deleting the bucket %s", bucket)
 		bucketInit, err := f.svc.Bucket(bucket, f.zone)
 		if err != nil {
 			return err
@@ -941,10 +941,10 @@ func (o *Object) readMetaData() (err error) {
 	if err != nil {
 		return err
 	}
-	// fs.DebugfCtx(context.Background(), o, "Read metadata of key: %s", key)
+	// fs.Debugf(o, "Read metadata of key: %s", key)
 	resp, err := bucketInit.HeadObject(bucketPath, &qs.HeadObjectInput{})
 	if err != nil {
-		// fs.DebugfCtx(context.Background(), o, "Read metadata failed, API Error: %v", err)
+		// fs.Debugf(o, "Read metadata failed, API Error: %v", err)
 		if e, ok := err.(*qsErr.QingStorError); ok {
 			if e.StatusCode == http.StatusNotFound {
 				return fs.ErrorObjectNotFound
@@ -962,7 +962,7 @@ func (o *Object) readMetaData() (err error) {
 	}
 
 	if resp.LastModified == nil {
-		fs.LogfCtx(context.Background(), o, "Failed to read last modified from HEAD: %v", err)
+		fs.Logf(o, "Failed to read last modified from HEAD: %v", err)
 		o.lastModified = time.Now()
 	} else {
 		o.lastModified = *resp.LastModified

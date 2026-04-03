@@ -141,7 +141,7 @@ func transformPathSegment(s string, t transform) (string, error) {
 		}
 		b, err := base64.URLEncoding.DecodeString(s)
 		if err != nil {
-			fs.ErrorfCtx(context.Background(), s, "base64 error")
+			fs.Errorf(s, "base64 error")
 		}
 		return string(b), err
 	case ConvFindReplace:

@@ -264,7 +264,7 @@ func (bp *Pool) GetN(n int) [][]byte {
 		if acquired {
 			bp.release(int64(bp.bufferSize) * int64(n))
 		}
-		fs.LogfCtx(context.Background(), nil, "Failed to get memory for buffer, waiting for %v: %v", waitTime, err)
+		fs.Logf(nil, "Failed to get memory for buffer, waiting for %v: %v", waitTime, err)
 		bp.mu.Unlock()
 		time.Sleep(waitTime)
 		bp.mu.Lock()
@@ -282,7 +282,7 @@ func (bp *Pool) GetN(n int) [][]byte {
 func (bp *Pool) freeBuffer(mem []byte) {
 	err := bp.free(mem)
 	if err != nil {
-		fs.LogfCtx(context.Background(), nil, "Failed to free memory: %v", err)
+		fs.Logf(nil, "Failed to free memory: %v", err)
 	}
 	bp.alloced--
 }

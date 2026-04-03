@@ -220,7 +220,7 @@ func (s instance) serve(wg *sync.WaitGroup) {
 	defer wg.Done()
 	err := s.httpServer.Serve(s.listener)
 	if err != http.ErrServerClosed && err != nil {
-		fs.LogfCtx(context.Background(), nil, "%s: unexpected error: %s", s.listener.Addr(), err.Error())
+		fs.Logf(nil, "%s: unexpected error: %s", s.listener.Addr(), err.Error())
 	}
 }
 
@@ -559,7 +559,7 @@ func (s *Server) Shutdown() error {
 		expiry := time.Now().Add(gracefulShutdownTime)
 		ctx, cancel := context.WithDeadline(context.Background(), expiry)
 		if err := ii.httpServer.Shutdown(ctx); err != nil {
-			fs.LogfCtx(context.Background(), nil, "error shutting down server: %s", err)
+			fs.Logf(nil, "error shutting down server: %s", err)
 		}
 		cancel()
 	}

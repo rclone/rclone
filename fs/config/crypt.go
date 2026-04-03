@@ -107,9 +107,9 @@ func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 				usingEnvPassword = true
 				err := SetConfigPassword(envPassword)
 				if err != nil {
-					fs.ErrorfCtx(context.Background(), nil, "Using RCLONE_CONFIG_PASS returned: %v", err)
+					fs.Errorf(nil, "Using RCLONE_CONFIG_PASS returned: %v", err)
 				} else {
-					fs.DebugfCtx(context.Background(), nil, "Using RCLONE_CONFIG_PASS password.")
+					fs.Debugf(nil, "Using RCLONE_CONFIG_PASS password.")
 				}
 			} else {
 				usingEnvPassword = false
@@ -130,7 +130,7 @@ func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 	var out []byte
 	for {
 		if envKeyFile := os.Getenv("_RCLONE_CONFIG_KEY_FILE"); len(envKeyFile) > 0 {
-			fs.DebugfCtx(context.Background(), nil, "attempting to obtain configKey from temp file %s", envKeyFile)
+			fs.Debugf(nil, "attempting to obtain configKey from temp file %s", envKeyFile)
 			obscuredKey, err := os.ReadFile(envKeyFile)
 			if err != nil {
 				errRemove := os.Remove(envKeyFile)
@@ -144,7 +144,7 @@ func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 				return nil, fmt.Errorf("unable to delete temp file with configKey: %w", errRemove)
 			}
 			configKey = []byte(obscure.MustReveal(string(obscuredKey)))
-			fs.DebugfCtx(context.Background(), nil, "using _RCLONE_CONFIG_KEY_FILE for configKey")
+			fs.Debugf(nil, "using _RCLONE_CONFIG_KEY_FILE for configKey")
 		} else if len(configKey) == 0 {
 			if usingPasswordCommand {
 				return nil, errors.New("using --password-command derived password, unable to decrypt configuration")
@@ -172,7 +172,7 @@ func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 		}
 
 		// Retry
-		fs.ErrorfCtx(context.Background(), nil, "Couldn't decrypt configuration, most likely wrong password.")
+		fs.Errorf(nil, "Couldn't decrypt configuration, most likely wrong password.")
 		configKey = nil
 	}
 	return bytes.NewReader(out), nil
@@ -302,7 +302,7 @@ func SetConfigPassword(password string) error {
 			}
 			return fmt.Errorf("error closing temp file with configKey: %w", err)
 		}
-		fs.DebugfCtx(context.Background(), nil, "saving configKey to temp file")
+		fs.Debugf(nil, "saving configKey to temp file")
 		err = os.Setenv("_RCLONE_CONFIG_KEY_FILE", tempFile.Name())
 		if err != nil {
 			errRemove := os.Remove(tempFile.Name())

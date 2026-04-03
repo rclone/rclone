@@ -159,7 +159,7 @@ rclone dedupe rename "drive:Google Photos"
 		}
 		fdst := cmd.NewFsSrc(args)
 		if !byHash && !fdst.Features().DuplicateFiles {
-			fs.LogfCtx(context.Background(), fdst, "Can't have duplicate names here. Perhaps you wanted --by-hash ? Continuing anyway.")
+			fs.Logf(fdst, "Can't have duplicate names here. Perhaps you wanted --by-hash ? Continuing anyway.")
 		}
 		cmd.Run(false, false, command, func() error {
 			return operations.Deduplicate(context.Background(), fdst, dedupeMode, byHash)

@@ -3,7 +3,6 @@ package gendocs
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"os"
 	"path"
@@ -175,13 +174,13 @@ rclone.org website.`,
 					case "rclone_mount.md":
 						switch runtime.GOOS {
 						case "darwin", "windows":
-							fs.LogfCtx(context.Background(), nil, "Skipping docs for command not available without the cmount build tag: %v", name)
+							fs.Logf(nil, "Skipping docs for command not available without the cmount build tag: %v", name)
 							return nil
 						}
 					case "rclone_nfsmount.md", "rclone_serve_nfs.md":
 						switch runtime.GOOS {
 						case "windows":
-							fs.LogfCtx(context.Background(), nil, "Skipping docs for command not supported on %v: %v", runtime.GOOS, name)
+							fs.Logf(nil, "Skipping docs for command not supported on %v: %v", runtime.GOOS, name)
 							return nil
 						}
 					}

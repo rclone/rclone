@@ -1,7 +1,6 @@
 package bisync
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"runtime"
@@ -104,11 +103,11 @@ func encode(s string) string {
 func prettyprint(in any, label string, level fs.LogLevel) {
 	inBytes, err := json.MarshalIndent(in, "", "\t")
 	if err != nil {
-		fs.DebugfCtx(context.Background(), nil, "failed to marshal input: %v", err)
+		fs.Debugf(nil, "failed to marshal input: %v", err)
 	}
 	if level == fs.LogLevelDebug {
-		fs.DebugfCtx(context.Background(), nil, "%s: \n%s\n", label, string(inBytes))
+		fs.Debugf(nil, "%s: \n%s\n", label, string(inBytes))
 	} else if level == fs.LogLevelInfo {
-		fs.InfofCtx(context.Background(), nil, "%s: \n%s\n", label, string(inBytes))
+		fs.Infof(nil, "%s: \n%s\n", label, string(inBytes))
 	}
 }

@@ -1425,9 +1425,9 @@ func (s3logger) Logf(classification logging.Classification, format string, v ...
 	switch classification {
 	default:
 	case logging.Debug:
-		fs.DebugfCtx(context.Background(), "S3 SDK", format, v...)
+		fs.Debugf("S3 SDK", format, v...)
 	case logging.Warn:
-		fs.InfofCtx(context.Background(), "S3 SDK", format, v...)
+		fs.Infof("S3 SDK", format, v...)
 	}
 }
 
@@ -4019,16 +4019,16 @@ func (o *Object) setMetaData(resp *s3.HeadObjectOutput) {
 	if md5sumBase64, ok := o.meta[metaMD5Hash]; ok {
 		md5sumBytes, err := base64.StdEncoding.DecodeString(md5sumBase64)
 		if err != nil {
-			fs.DebugfCtx(context.Background(), o, "Failed to read md5sum from metadata %q: %v", md5sumBase64, err)
+			fs.Debugf(o, "Failed to read md5sum from metadata %q: %v", md5sumBase64, err)
 		} else if len(md5sumBytes) != 16 {
-			fs.DebugfCtx(context.Background(), o, "Failed to read md5sum from metadata %q: wrong length", md5sumBase64)
+			fs.Debugf(o, "Failed to read md5sum from metadata %q: wrong length", md5sumBase64)
 		} else {
 			o.md5 = hex.EncodeToString(md5sumBytes)
 		}
 	}
 	if resp.LastModified == nil {
 		o.lastModified = time.Now()
-		fs.LogfCtx(context.Background(), o, "Failed to read last modified")
+		fs.Logf(o, "Failed to read last modified")
 	} else {
 		// Try to keep the maximum precision in lastModified. If we read
 		// it from listings then it may have millisecond precision, but
@@ -4085,7 +4085,7 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 	// read mtime out of metadata if available
 	d, ok := o.meta[metaMtime]
 	if !ok {
-		// fs.DebugfCtx(context.Background(), o, "No metadata")
+		// fs.Debugf(o, "No metadata")
 		return o.lastModified
 	}
 	modTime, err := swift.FloatStringToTime(d)

@@ -289,7 +289,7 @@ func (s *server) rootDescHandler(w http.ResponseWriter, r *http.Request) {
 	_, err = buffer.WriteTo(w)
 	if err != nil {
 		// Network error
-		fs.DebugfCtx(context.Background(), s, "Error writing rootDesc: %v", err)
+		fs.Debugf(s, "Error writing rootDesc: %v", err)
 	}
 }
 
@@ -313,7 +313,7 @@ func (s *server) serviceControlHandler(w http.ResponseWriter, r *http.Request) {
 	soapRespXML, code := func() ([]byte, int) {
 		respArgs, err := s.soapActionResponse(soapAction, env.Body.Action, r)
 		if err != nil {
-			fs.ErrorfCtx(context.Background(), s, "Error invoking %v: %v", soapAction, err)
+			fs.Errorf(s, "Error invoking %v: %v", soapAction, err)
 			upnpErr := upnp.ConvertError(err)
 			return mustMarshalXML(soap.NewFault("UPnPError", upnpErr)), http.StatusInternalServerError
 		}
@@ -322,7 +322,7 @@ func (s *server) serviceControlHandler(w http.ResponseWriter, r *http.Request) {
 	bodyStr := fmt.Sprintf(`<?xml version="1.0" encoding="utf-8" standalone="yes"?><s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"><s:Body>%s</s:Body></s:Envelope>`, soapRespXML)
 	w.WriteHeader(code)
 	if _, err := w.Write([]byte(bodyStr)); err != nil {
-		fs.InfofCtx(context.Background(), s, "Error writing response: %v", err)
+		fs.Infof(s, "Error writing response: %v", err)
 	}
 }
 
@@ -375,11 +375,11 @@ func (s *server) Serve() (err error) {
 	}()
 
 	go func() {
-		fs.LogfCtx(context.Background(), s.f, "Serving HTTP on %s", s.HTTPConn.Addr().String())
+		fs.Logf(s.f, "Serving HTTP on %s", s.HTTPConn.Addr().String())
 
 		err := s.serveHTTP()
 		if err != nil {
-			fs.LogfCtx(context.Background(), s.f, "Error on serving HTTP server: %v", err)
+			fs.Logf(s.f, "Error on serving HTTP server: %v", err)
 		}
 	}()
 
@@ -469,7 +469,7 @@ func (s *server) ssdpInterface(intf net.Interface) {
 	if err != nil {
 		panic(err)
 	}
-	fs.LogfCtx(context.Background(), s, "Started SSDP on %v", intf.Name)
+	fs.Logf(s, "Started SSDP on %v", intf.Name)
 
 	// Note that the devices and services advertised here via SSDP should be
 	// in agreement with the rootDesc XML descriptor that is defined above.
@@ -503,16 +503,16 @@ func (s *server) ssdpInterface(intf net.Interface) {
 			// good.
 			return
 		}
-		fs.ErrorfCtx(context.Background(), s, "Error creating ssdp server on %s: %s", intf.Name, err)
+		fs.Errorf(s, "Error creating ssdp server on %s: %s", intf.Name, err)
 		return
 	}
 	defer ssdpServer.Close()
-	fs.InfofCtx(context.Background(), s, "Started SSDP on %v", intf.Name)
+	fs.Infof(s, "Started SSDP on %v", intf.Name)
 	stopped := make(chan struct{})
 	go func() {
 		defer close(stopped)
 		if err := ssdpServer.Serve(); err != nil {
-			fs.ErrorfCtx(context.Background(), s, "%q: %q\n", intf.Name, err)
+			fs.Errorf(s, "%q: %q\n", intf.Name, err)
 		}
 	}()
 	select {

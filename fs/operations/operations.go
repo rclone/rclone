@@ -59,7 +59,7 @@ import (
 // If an error is returned it will return equal as false
 func CheckHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object) (equal bool, ht hash.Type, err error) {
 	common := src.Fs().Hashes().Overlap(dst.Fs().Hashes())
-	// fs.DebugfCtx(context.Background(), nil, "Shared hashes: %v", common)
+	// fs.Debugf(nil, "Shared hashes: %v", common)
 	if common.Count() == 0 {
 		return true, hash.None, nil
 	}
@@ -226,7 +226,7 @@ var modTimeUploadOnce sync.Once
 // emit a log if we are about to upload a file to set its modification time
 func logModTimeUpload(dst fs.Object) {
 	modTimeUploadOnce.Do(func() {
-		fs.LogfCtx(context.Background(), dst.Fs(), "Forced to upload files to set modification times on this backend.")
+		fs.Logf(dst.Fs(), "Forced to upload files to set modification times on this backend.")
 	})
 }
 
@@ -997,7 +997,7 @@ func HashSumStream(ht hash.Type, outputBase64 bool, in io.ReadCloser, w io.Write
 		return fmt.Errorf("hash unsupported: %w", err)
 	}
 	written, err := io.Copy(hasher, in)
-	fs.DebugfCtx(context.Background(), nil, "Creating %s hash of %d bytes read from input stream", ht, written)
+	fs.Debugf(nil, "Creating %s hash of %d bytes read from input stream", ht, written)
 	if err != nil {
 		return fmt.Errorf("failed to copy input to hasher: %w", err)
 	}

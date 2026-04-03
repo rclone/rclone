@@ -75,7 +75,7 @@ func RunTests(t *testing.T, useVFS bool, minimumRequiredCacheMode vfscommon.Cach
 		if test.links {
 			what += fmt.Sprintf(",Links=%v", test.links)
 		}
-		fs.LogfCtx(context.Background(), nil, "Starting test run with %s", what)
+		fs.Logf(nil, "Starting test run with %s", what)
 		ok := t.Run(what, func(t *testing.T) {
 			t.Run("TestTouchAndDelete", TestTouchAndDelete)
 			t.Run("TestRenameOpenHandle", TestRenameOpenHandle)
@@ -107,7 +107,7 @@ func RunTests(t *testing.T, useVFS bool, minimumRequiredCacheMode vfscommon.Cach
 			t.Run("TestWriteFileAppend", TestWriteFileAppend)
 			t.Run("TestSymlinks", TestSymlinks)
 		})
-		fs.LogfCtx(context.Background(), nil, "Finished test run with %s (ok=%v)", what, ok)
+		fs.Logf(nil, "Finished test run with %s (ok=%v)", what, ok)
 		run.Finalise()
 		if !ok {
 			break
@@ -190,7 +190,7 @@ func (r *Run) Finalise() {
 	if !r.useVFS {
 		err := os.RemoveAll(r.mountPath)
 		if err != nil {
-			fs.LogfCtx(context.Background(), nil, "Failed to clean mountPath %q: %v", r.mountPath, err)
+			fs.Logf(nil, "Failed to clean mountPath %q: %v", r.mountPath, err)
 		}
 	}
 }

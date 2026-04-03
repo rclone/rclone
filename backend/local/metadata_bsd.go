@@ -3,7 +3,6 @@
 package local
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"syscall"
@@ -16,7 +15,7 @@ import (
 func readTime(t timeType, fi os.FileInfo) time.Time {
 	stat, ok := fi.Sys().(*syscall.Stat_t)
 	if !ok {
-		fs.DebugfCtx(context.Background(), nil, "didn't return Stat_t as expected")
+		fs.Debugf(nil, "didn't return Stat_t as expected")
 		return fi.ModTime()
 	}
 	switch t {
@@ -38,7 +37,7 @@ func (o *Object) readMetadataFromFile(m *fs.Metadata) (err error) {
 	}
 	stat, ok := info.Sys().(*syscall.Stat_t)
 	if !ok {
-		fs.DebugfCtx(context.Background(), o, "didn't return Stat_t as expected")
+		fs.Debugf(o, "didn't return Stat_t as expected")
 		return nil
 	}
 	m.Set("mode", fmt.Sprintf("%0o", stat.Mode))

@@ -288,7 +288,7 @@ func errorHandler(resp *http.Response) error {
 	errResponse := new(api.Error)
 	err := rest.DecodeJSON(resp, &errResponse)
 	if err != nil {
-		fs.DebugfCtx(context.Background(), nil, "Couldn't decode error response: %v", err)
+		fs.Debugf(nil, "Couldn't decode error response: %v", err)
 	}
 	if errResponse.ErrorString == "" {
 		errResponse.ErrorString = resp.Status
@@ -480,7 +480,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
-	// fs.DebugfCtx(context.Background(), f, "CreateDir(%q, %q)\n", pathID, leaf)
+	// fs.Debugf(f, "CreateDir(%q, %q)\n", pathID, leaf)
 	var resp *http.Response
 	var result api.ItemResult
 	opts := rest.Opts{
@@ -509,7 +509,7 @@ func dirIDtoNumber(dirID string) string {
 	if len(dirID) > 0 && dirID[0] == 'd' {
 		return dirID[1:]
 	}
-	fs.DebugfCtx(context.Background(), nil, "Invalid directory id %q", dirID)
+	fs.Debugf(nil, "Invalid directory id %q", dirID)
 	return dirID
 }
 
@@ -519,7 +519,7 @@ func fileIDtoNumber(fileID string) string {
 	if len(fileID) > 0 && fileID[0] == 'f' {
 		return fileID[1:]
 	}
-	fs.DebugfCtx(context.Background(), nil, "Invalid file id %q", fileID)
+	fs.Debugf(nil, "Invalid file id %q", fileID)
 	return fileID
 }
 
@@ -1245,7 +1245,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 func (o *Object) Size() int64 {
 	err := o.readMetaData(context.TODO())
 	if err != nil {
-		fs.LogfCtx(context.Background(), o, "Failed to read metadata: %v", err)
+		fs.Logf(o, "Failed to read metadata: %v", err)
 		return 0
 	}
 	return o.size

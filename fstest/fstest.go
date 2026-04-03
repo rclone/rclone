@@ -472,7 +472,7 @@ func RandomRemote() (fs.Fs, string, func(), error) {
 		if parentRemote != nil {
 			Purge(parentRemote)
 			if err != nil {
-				fs.LogfCtx(context.Background(), nil, "Failed to purge %v: %v", parentRemote, err)
+				fs.Logf(nil, "Failed to purge %v: %v", parentRemote, err)
 			}
 		}
 	}
@@ -492,7 +492,7 @@ func Purge(f fs.Fs) {
 	doFallbackPurge := true
 	if doPurge := f.Features().Purge; doPurge != nil {
 		doFallbackPurge = false
-		fs.DebugfCtx(context.Background(), f, "Purge remote")
+		fs.Debugf(f, "Purge remote")
 		err = doPurge(ctx, "")
 		if err == fs.ErrorCantPurge {
 			doFallbackPurge = true
@@ -503,10 +503,10 @@ func Purge(f fs.Fs) {
 		err = walk.ListR(ctx, f, "", true, -1, walk.ListAll, func(entries fs.DirEntries) error {
 			var err error
 			entries.ForObject(func(obj fs.Object) {
-				fs.DebugfCtx(context.Background(), f, "Purge object %q", obj.Remote())
+				fs.Debugf(f, "Purge object %q", obj.Remote())
 				err = obj.Remove(ctx)
 				if err != nil {
-					fs.LogfCtx(context.Background(), nil, "purge failed to remove %q: %v", obj.Remote(), err)
+					fs.Logf(nil, "purge failed to remove %q: %v", obj.Remote(), err)
 				}
 			})
 			entries.ForDir(func(dir fs.Directory) {
@@ -517,15 +517,15 @@ func Purge(f fs.Fs) {
 		sort.Strings(dirs)
 		for i := len(dirs) - 1; i >= 0; i-- {
 			dir := dirs[i]
-			fs.DebugfCtx(context.Background(), f, "Purge dir %q", dir)
+			fs.Debugf(f, "Purge dir %q", dir)
 			err := f.Rmdir(ctx, dir)
 			if err != nil {
-				fs.LogfCtx(context.Background(), nil, "purge failed to rmdir %q: %v", dir, err)
+				fs.Logf(nil, "purge failed to rmdir %q: %v", dir, err)
 			}
 		}
 	}
 	if err != nil {
-		fs.LogfCtx(context.Background(), nil, "purge failed: %v", err)
+		fs.Logf(nil, "purge failed: %v", err)
 	}
 }
 

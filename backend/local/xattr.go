@@ -3,7 +3,6 @@
 package local
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"syscall"
@@ -28,7 +27,7 @@ func (f *Fs) xattrIsNotSupported(err error) bool {
 	if xattrErr.Err == syscall.EINVAL || xattrErr.Err == syscall.ENOTSUP || xattrErr.Err == xattr.ENOATTR {
 		// Show xattrs not supported
 		if f.xattrSupported.CompareAndSwap(1, 0) {
-			fs.ErrorfCtx(context.Background(), f, "xattrs not supported - disabling: %v", err)
+			fs.Errorf(f, "xattrs not supported - disabling: %v", err)
 		}
 		return true
 	}

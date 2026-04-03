@@ -368,10 +368,10 @@ func (dl *debugLog) Write(p []byte) (n int, err error) {
 	}
 	for _, line := range lines {
 		if !dl.auth && strings.HasPrefix(line, "PASS") {
-			fs.DebugfCtx(context.Background(), direction, "PASS *****")
+			fs.Debugf(direction, "PASS *****")
 			continue
 		}
-		fs.DebugfCtx(context.Background(), direction, "%q", line)
+		fs.Debugf(direction, "%q", line)
 	}
 	return len(p), nil
 }
@@ -603,7 +603,7 @@ func (f *Fs) putFtpConnection(pc **ftp.ServerConn, err error) {
 		if tpErr := textprotoError(err); tpErr != nil {
 			nopErr := c.NoOp()
 			if nopErr != nil {
-				fs.DebugfCtx(context.Background(), f, "Connection failed, closing: %v", nopErr)
+				fs.Debugf(f, "Connection failed, closing: %v", nopErr)
 				_ = c.Quit()
 				return
 			}
@@ -990,7 +990,7 @@ func (f *Fs) Precision() time.Duration {
 // will return the object and the error, otherwise will return
 // nil and the error
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	// fs.DebugfCtx(context.Background(), f, "Trying to put file %s", src.Remote())
+	// fs.Debugf(f, "Trying to put file %s", src.Remote())
 	err := f.mkParentDir(ctx, src.Remote())
 	if err != nil {
 		return nil, fmt.Errorf("Put mkParentDir failed: %w", err)
@@ -1282,7 +1282,7 @@ func (f *ftpReadCloser) Close() error {
 		timer.Stop()
 	case <-timer.C:
 		// if timer fired assume no error but connection dead
-		fs.ErrorfCtx(context.Background(), f.f, "Timeout when waiting for connection Close")
+		fs.Errorf(f.f, "Timeout when waiting for connection Close")
 		f.f.putFtpConnection(nil, nil)
 		return nil
 	}

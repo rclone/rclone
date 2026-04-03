@@ -198,7 +198,7 @@ func errorHandler(resp *http.Response) error {
 	errResponse := new(api.Error)
 	err := rest.DecodeJSON(resp, &errResponse)
 	if err != nil {
-		fs.DebugfCtx(context.Background(), nil, "Couldn't decode error response: %v", err)
+		fs.Debugf(nil, "Couldn't decode error response: %v", err)
 	}
 	if errResponse.StatusCode == 0 {
 		errResponse.StatusCode = resp.StatusCode
@@ -1113,7 +1113,7 @@ func (o *Object) setMetaData(info *api.File) (err error) {
 	o.remoteFsMtime = info.LastUserModified
 	o.encodedMetadata, err = decodeDescriptionMetadata(info.Description)
 	if err != nil {
-		fs.DebugfCtx(context.Background(), o, "Couldn't decode metadata: %v", err)
+		fs.Debugf(o, "Couldn't decode metadata: %v", err)
 	}
 	o.slug = info.Slug
 	return nil

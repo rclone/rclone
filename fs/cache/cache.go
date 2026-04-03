@@ -46,7 +46,7 @@ func Canonicalize(fsString string) string {
 	if !ok {
 		return fsString
 	}
-	fs.DebugfCtx(context.Background(), nil, "fs cache: switching user supplied name %q for canonical name %q", fsString, canonicalName)
+	fs.Debugf(nil, "fs cache: switching user supplied name %q for canonical name %q", fsString, canonicalName)
 	return canonicalName
 }
 
@@ -187,10 +187,10 @@ func Get(ctx context.Context, fsString string) (f fs.Fs, err error) {
 	// If this is part of an rc job then pin the backend until it finishes
 	if JobOnFinish != nil && JobGetJobID != nil {
 		if jobID, ok := JobGetJobID(ctx); ok {
-			// fs.DebugfCtx(context.Background(), f, "Pin for job %d", jobID)
+			// fs.Debugf(f, "Pin for job %d", jobID)
 			Pin(f)
 			_, _ = JobOnFinish(jobID, func() {
-				// fs.DebugfCtx(context.Background(), f, "Unpin for job %d", jobID)
+				// fs.Debugf(f, "Unpin for job %d", jobID)
 				Unpin(f)
 			})
 		}

@@ -685,7 +685,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
-	//fs.DebugfCtx(context.Background(), f, "CreateDir(%q, %q)\n", pathID, leaf)
+	//fs.Debugf(f, "CreateDir(%q, %q)\n", pathID, leaf)
 	var resp *http.Response
 	var info *api.ItemInfo
 	opts := rest.Opts{
@@ -1278,7 +1278,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 // Size returns the size of an object in bytes
 func (o *Object) Size() int64 {
 	if err := o.readMetaData(context.TODO()); err != nil {
-		fs.LogfCtx(context.Background(), o, "Failed to read metadata: %v", err)
+		fs.Logf(o, "Failed to read metadata: %v", err)
 		return 0
 	}
 	return o.size

@@ -412,7 +412,7 @@ func parseExpiry(expiryString string) time.Time {
 	}
 	expiry, err := time.Parse(time.RFC3339, expiryString)
 	if err != nil {
-		fs.DebugfCtx(context.Background(), "sugarsync", "Invalid expiry time %q read from config", expiryString)
+		fs.Debugf("sugarsync", "Invalid expiry time %q read from config", expiryString)
 		return time.Time{}
 	}
 	return expiry
@@ -552,7 +552,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
-	// fs.DebugfCtx(context.Background(), f, "FindLeaf(%q, %q)", pathID, leaf)
+	// fs.Debugf(f, "FindLeaf(%q, %q)", pathID, leaf)
 	// Find the leaf in pathID
 	found, err = f.listAll(ctx, pathID, nil, func(item *api.Collection) bool {
 		if strings.EqualFold(item.Name, leaf) {
@@ -561,13 +561,13 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 		}
 		return false
 	})
-	// fs.DebugfCtx(context.Background(), f, ">FindLeaf %q, %v, %v", pathIDOut, found, err)
+	// fs.Debugf(f, ">FindLeaf %q, %v, %v", pathIDOut, found, err)
 	return pathIDOut, found, err
 }
 
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
-	// fs.DebugfCtx(context.Background(), f, "CreateDir(%q, %q)\n", pathID, leaf)
+	// fs.Debugf(f, "CreateDir(%q, %q)\n", pathID, leaf)
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:     "POST",
@@ -1132,7 +1132,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 func (o *Object) Size() int64 {
 	err := o.readMetaData(context.TODO())
 	if err != nil {
-		fs.LogfCtx(context.Background(), o, "Failed to read metadata: %v", err)
+		fs.Logf(o, "Failed to read metadata: %v", err)
 		return 0
 	}
 	return o.size

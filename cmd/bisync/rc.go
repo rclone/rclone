@@ -200,7 +200,7 @@ func setEnum(in rc.Params, name string, defaultVal string, set func(s string) er
 	v, err := in.GetString(name)
 	if rc.NotErrParamNotFound(err) || v == "" {
 		v = defaultVal
-		fs.DebugfCtx(context.Background(), name, "optional parameter is missing. using default value: %v", v)
+		fs.Debugf(name, "optional parameter is missing. using default value: %v", v)
 	}
 	if err := set(v); err != nil {
 		return err

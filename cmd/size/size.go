@@ -62,7 +62,7 @@ of the size command.`,
 				return err
 			}
 			if results.Sizeless > 0 {
-				fs.LogfCtx(context.Background(), fsrc, "Size may be underestimated due to %d objects with unknown size", results.Sizeless)
+				fs.Logf(fsrc, "Size may be underestimated due to %d objects with unknown size", results.Sizeless)
 			}
 			if jsonOutput {
 				return json.NewEncoder(os.Stdout).Encode(results)

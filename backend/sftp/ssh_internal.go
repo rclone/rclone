@@ -57,7 +57,7 @@ func (s sshClientInternal) Wait() error {
 func (s sshClientInternal) SendKeepAlive() {
 	_, _, err := s.srv.SendRequest("keepalive@openssh.com", true, nil)
 	if err != nil {
-		fs.DebugfCtx(context.Background(), nil, "Failed to send keep alive: %v", err)
+		fs.Debugf(nil, "Failed to send keep alive: %v", err)
 	}
 }
 

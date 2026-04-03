@@ -249,7 +249,7 @@ func (item *Item) _truncate(size int64) (err error) {
 		if err != nil && os.IsNotExist(err) {
 			// If the metadata has info but the file doesn't
 			// not exist then it has been externally removed
-			fs.ErrorfCtx(context.Background(), item.name, "vfs cache: detected external removal of cache file")
+			fs.Errorf(item.name, "vfs cache: detected external removal of cache file")
 			item.info.Rs = nil      // show we have no blocks cached
 			item.info.Dirty = false // file can't be dirty if it doesn't exist
 			item._removeMeta("cache file externally deleted")
@@ -263,7 +263,7 @@ func (item *Item) _truncate(size int64) (err error) {
 
 		err = file.SetSparse(fd)
 		if err != nil {
-			fs.ErrorfCtx(context.Background(), item.name, "vfs cache: truncate: failed to set as a sparse file: %v", err)
+			fs.Errorf(item.name, "vfs cache: truncate: failed to set as a sparse file: %v", err)
 		}
 	}
 
@@ -278,9 +278,9 @@ func (item *Item) _truncate(size int64) (err error) {
 	// properties on an executable.
 	fi, err := fd.Stat()
 	if err == nil && fi.Size() == size {
-		fs.DebugfCtx(context.Background(), item.name, "vfs cache: truncate to size=%d (not needed as size correct)", size)
+		fs.Debugf(item.name, "vfs cache: truncate to size=%d (not needed as size correct)", size)
 	} else {
-		fs.DebugfCtx(context.Background(), item.name, "vfs cache: truncate to size=%d", size)
+		fs.Debugf(item.name, "vfs cache: truncate to size=%d", size)
 
 		err = fd.Truncate(size)
 		if err != nil {
@@ -441,7 +441,7 @@ func (item *Item) _dirty() {
 		item.info.Dirty = true
 		err := item._save()
 		if err != nil {
-			fs.ErrorfCtx(context.Background(), item.name, "vfs cache: failed to save item info: %v", err)
+			fs.Errorf(item.name, "vfs cache: failed to save item info: %v", err)
 		}
 	}
 }
@@ -471,13 +471,13 @@ func (item *Item) _createFile(osPath string) (err error) {
 	item.modified = false
 	// t0 := time.Now()
 	fd, err := file.OpenFile(osPath, os.O_RDWR, 0600)
-	// fs.DebugfCtx(context.Background(), item.name, "OpenFile took %v", time.Since(t0))
+	// fs.Debugf(item.name, "OpenFile took %v", time.Since(t0))
 	if err != nil {
 		return fmt.Errorf("vfs cache item: open failed: %w", err)
 	}
 	err = file.SetSparse(fd)
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), item.name, "vfs cache: failed to set as a sparse file: %v", err)
+		fs.Errorf(item.name, "vfs cache: failed to set as a sparse file: %v", err)
 	}
 	item.fd = fd
 
@@ -485,7 +485,7 @@ func (item *Item) _createFile(osPath string) (err error) {
 	if err != nil {
 		closeErr := item.fd.Close()
 		if closeErr != nil {
-			fs.ErrorfCtx(context.Background(), item.name, "vfs cache: item.fd.Close: closeErr: %v", err)
+			fs.Errorf(item.name, "vfs cache: item.fd.Close: closeErr: %v", err)
 		}
 		item.fd = nil
 		return fmt.Errorf("vfs cache item: _save failed: %w", err)
@@ -503,9 +503,9 @@ func (item *Item) Open(o fs.Object) (err error) {
 		if err == nil {
 			break
 		}
-		fs.ErrorfCtx(context.Background(), item.name, "vfs cache: failed to open item: %v", err)
+		fs.Errorf(item.name, "vfs cache: failed to open item: %v", err)
 		if !fserrors.IsErrNoSpace(err) && err.Error() != "no space left on device" {
-			fs.ErrorfCtx(context.Background(), item.name, "Non-out-of-space error encountered during open")
+			fs.Errorf(item.name, "Non-out-of-space error encountered during open")
 			break
 		}
 		item.c.KickCleaner()
@@ -728,7 +728,7 @@ func (item *Item) _actualClose(storeFn StoreFn, syncWriteBack bool) (err error) 
 	// Accumulate and log errors
 	checkErr := func(e error) {
 		if e != nil {
-			fs.ErrorfCtx(context.Background(), item.o, "vfs cache: item close failed: %v", e)
+			fs.Errorf(item.o, "vfs cache: item close failed: %v", e)
 			if err == nil {
 				err = e
 			}
@@ -774,7 +774,7 @@ func (item *Item) _actualClose(storeFn StoreFn, syncWriteBack bool) (err error) 
 
 	// upload the file to backing store if changed
 	if item.info.Dirty {
-		fs.InfofCtx(context.Background(), item.name, "vfs cache: queuing for upload in %v", item.c.opt.WriteBack)
+		fs.Infof(item.name, "vfs cache: queuing for upload in %v", item.c.opt.WriteBack)
 		if syncWriteBack {
 			// do synchronous writeback
 			checkErr(item._store(context.Background(), storeFn))
@@ -850,7 +850,7 @@ func (item *Item) _checkObject(o fs.Object) error {
 			if !item.info.Dirty {
 				item._remove("stale (remote deleted)")
 			} else {
-				fs.DebugfCtx(context.Background(), item.name, "vfs cache: remote object has gone but local object modified - keeping it")
+				fs.Debugf(item.name, "vfs cache: remote object has gone but local object modified - keeping it")
 			}
 			//} else {
 			// no remote object && no local object
@@ -858,16 +858,16 @@ func (item *Item) _checkObject(o fs.Object) error {
 		}
 	} else {
 		remoteFingerprint := fs.Fingerprint(context.TODO(), o, item.c.opt.FastFingerprint)
-		fs.DebugfCtx(context.Background(), item.name, "vfs cache: checking remote fingerprint %q against cached fingerprint %q", remoteFingerprint, item.info.Fingerprint)
+		fs.Debugf(item.name, "vfs cache: checking remote fingerprint %q against cached fingerprint %q", remoteFingerprint, item.info.Fingerprint)
 		if item.info.Fingerprint != "" {
 			// remote object && local object
 			if remoteFingerprint != item.info.Fingerprint {
 				if !item.info.Dirty {
-					fs.DebugfCtx(context.Background(), item.name, "vfs cache: removing cached entry as stale (remote fingerprint %q != cached fingerprint %q)", remoteFingerprint, item.info.Fingerprint)
+					fs.Debugf(item.name, "vfs cache: removing cached entry as stale (remote fingerprint %q != cached fingerprint %q)", remoteFingerprint, item.info.Fingerprint)
 					item._remove("stale (remote is different)")
 					item.info.Fingerprint = remoteFingerprint
 				} else {
-					fs.DebugfCtx(context.Background(), item.name, "vfs cache: remote object has changed but local object modified - keeping it (remote fingerprint %q != cached fingerprint %q)", remoteFingerprint, item.info.Fingerprint)
+					fs.Debugf(item.name, "vfs cache: remote object has changed but local object modified - keeping it (remote fingerprint %q != cached fingerprint %q)", remoteFingerprint, item.info.Fingerprint)
 				}
 			}
 		} else {
@@ -902,10 +902,10 @@ func (item *Item) _removeFile(reason string) {
 	err := os.Remove(osPath)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			fs.ErrorfCtx(context.Background(), item.name, "vfs cache: failed to remove cache file as %s: %v", reason, err)
+			fs.Errorf(item.name, "vfs cache: failed to remove cache file as %s: %v", reason, err)
 		}
 	} else {
-		fs.InfofCtx(context.Background(), item.name, "vfs cache: removed cache file as %s", reason)
+		fs.Infof(item.name, "vfs cache: removed cache file as %s", reason)
 	}
 }
 
@@ -917,10 +917,10 @@ func (item *Item) _removeMeta(reason string) {
 	err := os.Remove(osPathMeta)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			fs.ErrorfCtx(context.Background(), item.name, "vfs cache: failed to remove metadata from cache as %s: %v", reason, err)
+			fs.Errorf(item.name, "vfs cache: failed to remove metadata from cache as %s: %v", reason, err)
 		}
 	} else {
-		fs.DebugfCtx(context.Background(), item.name, "vfs cache: removed metadata from cache as %s", reason)
+		fs.Debugf(item.name, "vfs cache: removed metadata from cache as %s", reason)
 	}
 }
 
@@ -982,7 +982,7 @@ func (item *Item) RemoveNotInUse(maxAge time.Duration, emptyOnly bool) (removed 
 			spaceFreed = spaceUsed
 			removed = true
 			if item._remove("Removing old cache file not in use") {
-				fs.ErrorfCtx(context.Background(), item.name, "item removed when it was writing/uploaded")
+				fs.Errorf(item.name, "item removed when it was writing/uploaded")
 			}
 		}
 	}
@@ -1001,7 +1001,7 @@ func (item *Item) Reset() (rr ResetResult, spaceFreed int64, err error) {
 	if item.opens == 0 && !item.info.Dirty && item.graceTimer == nil {
 		spaceFreed = item.info.Rs.Size()
 		if item._remove("Removing old cache file not in use") {
-			fs.ErrorfCtx(context.Background(), item.name, "item removed when it was writing/uploaded")
+			fs.Errorf(item.name, "item removed when it was writing/uploaded")
 		}
 		return RemovedNotInUse, spaceFreed, nil
 	}
@@ -1048,7 +1048,7 @@ func (item *Item) Reset() (rr ResetResult, spaceFreed int64, err error) {
 	// Accumulate and log errors
 	checkErr := func(e error) {
 		if e != nil {
-			fs.ErrorfCtx(context.Background(), item.o, "vfs cache: item reset failed: %v", e)
+			fs.Errorf(item.o, "vfs cache: item reset failed: %v", e)
 			if err == nil {
 				err = e
 			}
@@ -1086,7 +1086,7 @@ func (item *Item) Reset() (rr ResetResult, spaceFreed int64, err error) {
 
 	// This should not be possible.  We get here only if cache data is not dirty.
 	if item._remove("cache out of space, item is clean") {
-		fs.ErrorfCtx(context.Background(), item.o, "vfs cache item removed when it was writing/uploaded")
+		fs.Errorf(item.o, "vfs cache item removed when it was writing/uploaded")
 	}
 
 	// can we have an item with no dirty data (so that we can get here) and nil item.o at the same time?
@@ -1198,7 +1198,7 @@ func (item *Item) _ensure(offset, size int64) (err error) {
 	/* if present != true && item.info.Rs.Size() > 32*1024*1024 {
 		return errors.New("no space left on device")
 	} */
-	fs.DebugfCtx(context.Background(), nil, "vfs cache: looking for range=%+v in %+v - present %v", r, item.info.Rs, present)
+	fs.Debugf(nil, "vfs cache: looking for range=%+v in %+v - present %v", r, item.info.Rs, present)
 	item.mu.Unlock()
 	defer item.mu.Lock()
 	if present {
@@ -1254,7 +1254,7 @@ func (item *Item) _updateFingerprint() {
 	oldFingerprint := item.info.Fingerprint
 	item.info.Fingerprint = fs.Fingerprint(context.TODO(), item.o, item.c.opt.FastFingerprint)
 	if oldFingerprint != item.info.Fingerprint {
-		fs.DebugfCtx(context.Background(), item.o, "vfs cache: fingerprint now %q", item.info.Fingerprint)
+		fs.Debugf(item.o, "vfs cache: fingerprint now %q", item.info.Fingerprint)
 	}
 }
 
@@ -1262,11 +1262,11 @@ func (item *Item) _updateFingerprint() {
 //
 // call with lock held
 func (item *Item) _setModTime(modTime time.Time) {
-	fs.DebugfCtx(context.Background(), item.name, "vfs cache: setting modification time to %v", modTime)
+	fs.Debugf(item.name, "vfs cache: setting modification time to %v", modTime)
 	osPath := item.c.toOSPath(item.name) // No locking in Cache
 	err := os.Chtimes(osPath, modTime, modTime)
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), item.name, "vfs cache: failed to set modification time of cached file: %v", err)
+		fs.Errorf(item.name, "vfs cache: failed to set modification time of cached file: %v", err)
 	}
 }
 
@@ -1279,7 +1279,7 @@ func (item *Item) setModTime(modTime time.Time) {
 	item.info.ModTime = modTime
 	err := item._save()
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), item.name, "vfs cache: setModTime: failed to save item info: %v", err)
+		fs.Errorf(item.name, "vfs cache: setModTime: failed to save item info: %v", err)
 	}
 	item.mu.Unlock()
 }
@@ -1307,9 +1307,9 @@ func (item *Item) ReadAt(b []byte, off int64) (n int, err error) {
 		if err == nil || err == io.EOF {
 			break
 		}
-		fs.ErrorfCtx(context.Background(), item.name, "vfs cache: failed to _ensure cache %v", err)
+		fs.Errorf(item.name, "vfs cache: failed to _ensure cache %v", err)
 		if !fserrors.IsErrNoSpace(err) && err.Error() != "no space left on device" {
-			fs.DebugfCtx(context.Background(), item.name, "vfs cache: failed to _ensure cache %v is not out of space", err)
+			fs.Debugf(item.name, "vfs cache: failed to _ensure cache %v is not out of space", err)
 			break
 		}
 		item.c.KickCleaner()
@@ -1318,7 +1318,7 @@ func (item *Item) ReadAt(b []byte, off int64) (n int, err error) {
 	}
 
 	if fserrors.IsErrNoSpace(err) {
-		fs.ErrorfCtx(context.Background(), item.name, "vfs cache: failed to _ensure cache after retries %v", err)
+		fs.Errorf(item.name, "vfs cache: failed to _ensure cache after retries %v", err)
 	}
 
 	return n, err
@@ -1344,7 +1344,7 @@ func (item *Item) readAt(b []byte, off int64) (n int, err error) {
 
 	// Check to see if object has shrunk - if so don't read too much.
 	if item.o != nil && !item.info.Dirty && item.o.Size() != item.info.Size {
-		fs.DebugfCtx(context.Background(), item.o, "Size has changed from %d to %d", item.info.Size, item.o.Size())
+		fs.Debugf(item.o, "Size has changed from %d to %d", item.info.Size, item.o.Size())
 		err = item._truncate(item.o.Size())
 		if err != nil {
 			return 0, err
@@ -1413,10 +1413,10 @@ func (item *Item) WriteAtNoOverwrite(b []byte, off int64) (n int, skipped int, e
 	)
 
 	// Write the range out ignoring already written chunks
-	// fs.DebugfCtx(context.Background(), item.name, "Ranges = %v", item.info.Rs)
+	// fs.Debugf(item.name, "Ranges = %v", item.info.Rs)
 	for i := range foundRanges {
 		foundRange := &foundRanges[i]
-		// fs.DebugfCtx(context.Background(), item.name, "foundRange[%d] = %v", i, foundRange)
+		// fs.Debugf(item.name, "foundRange[%d] = %v", i, foundRange)
 		if foundRange.R.Pos != off {
 			err = errors.New("internal error: offset of range is wrong")
 			break
@@ -1424,12 +1424,12 @@ func (item *Item) WriteAtNoOverwrite(b []byte, off int64) (n int, skipped int, e
 		size := int(foundRange.R.Size)
 		if foundRange.Present {
 			// if present want to skip this range
-			// fs.DebugfCtx(context.Background(), item.name, "skip chunk offset=%d size=%d", off, size)
+			// fs.Debugf(item.name, "skip chunk offset=%d size=%d", off, size)
 			nn = size
 			skipped += size
 		} else {
 			// if range not present then we want to write it
-			// fs.DebugfCtx(context.Background(), item.name, "write chunk offset=%d size=%d", off, size)
+			// fs.Debugf(item.name, "write chunk offset=%d size=%d", off, size)
 			nn, err = item.fd.WriteAt(b[:size], off)
 			if err == nil && nn != size {
 				err = fmt.Errorf("downloader: short write: tried to write %d but only %d written", size, nn)

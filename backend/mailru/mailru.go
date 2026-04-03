@@ -308,7 +308,7 @@ type Fs struct {
 
 // NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
-	// fs.DebugfCtx(context.Background(), nil, ">>> NewFs %q %q", name, root)
+	// fs.Debugf(nil, ">>> NewFs %q %q", name, root)
 
 	// Parse config into Options struct
 	opt := new(Options)
@@ -483,7 +483,7 @@ func (f *Fs) reAuthorize(opts *rest.Opts, origErr error) error {
 	}
 	ctx := context.Background() // Note: reAuthorize is called by ShouldRetry, no context!
 
-	fs.DebugfCtx(context.Background(), f, "re-authorize with new password")
+	fs.Debugf(f, "re-authorize with new password")
 	if err := f.authorize(ctx, true); err != nil {
 		f.passFailed = true
 		return err
@@ -682,12 +682,12 @@ func (f *Fs) isDir(kind, path string) (bool, error) {
 	case "folder":
 		// fall thru
 	case "camera-upload", "mounted", "shared":
-		fs.DebugfCtx(context.Background(), f, "[%s]: folder has type %q", path, kind)
+		fs.Debugf(f, "[%s]: folder has type %q", path, kind)
 	default:
 		if !f.quirks.unknowndirs {
 			return false, fmt.Errorf("unknown resource type %q", kind)
 		}
-		fs.ErrorfCtx(context.Background(), f, "[%s]: folder has unknown type %q", path, kind)
+		fs.Errorf(f, "[%s]: folder has unknown type %q", path, kind)
 	}
 	return true, nil
 }
@@ -697,7 +697,7 @@ func (f *Fs) isDir(kind, path string) (bool, error) {
 // dir should be "" to list the root, and should not have trailing slashes.
 // This should return ErrDirNotFound if the directory isn't found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	// fs.DebugfCtx(context.Background(), f, ">>> List: %q", dir)
+	// fs.Debugf(f, ">>> List: %q", dir)
 
 	if f.quirks.binlist {
 		entries, err = f.listBin(ctx, f.absPath(dir), 1)
@@ -711,7 +711,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			names = append(names, entry.Remote())
 		}
 		sort.Strings(names)
-		// fs.DebugfCtx(context.Background(), f, "List(%q): %v", dir, names)
+		// fs.Debugf(f, "List(%q): %v", dir, names)
 	}
 
 	return
@@ -971,7 +971,7 @@ func (t *treeState) NextRecord() (fs.DirEntry, error) {
 
 	if t.f.ci.LogLevel >= fs.LogLevelDebug {
 		ctime, _ := modTime.MarshalJSON()
-		fs.DebugfCtx(context.Background(), t.f, "binDir %d.%d %q %q (%d) %s", t.level, itemType, t.currDir, name, size, ctime)
+		fs.Debugf(t.f, "binDir %d.%d %q %q (%d) %s", t.level, itemType, t.currDir, name, size, ctime)
 	}
 
 	if t.level != 1 {
@@ -1052,7 +1052,7 @@ func (rev *treeRevision) Read(data *api.BinReader) error {
 
 // CreateDir makes a directory (parent must exist)
 func (f *Fs) CreateDir(ctx context.Context, path string) error {
-	// fs.DebugfCtx(context.Background(), f, ">>> CreateDir %q", path)
+	// fs.Debugf(f, ">>> CreateDir %q", path)
 
 	req := api.NewBinWriter()
 	req.WritePu16(api.OperationCreateFolder)
@@ -1114,7 +1114,7 @@ func (f *Fs) CreateDir(ctx context.Context, path string) error {
 // already exists. As a workaround, users can add string "atomicmkdir" in the
 // hidden `quirks` parameter or in the `--mailru-quirks` command-line option.
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	// fs.DebugfCtx(context.Background(), f, ">>> Mkdir %q", dir)
+	// fs.Debugf(f, ">>> Mkdir %q", dir)
 	err := f.mkDirs(ctx, f.absPath(dir))
 	if err == ErrorDirAlreadyExists && !f.quirks.atomicmkdir {
 		return nil
@@ -1175,7 +1175,7 @@ func (f *Fs) mkParentDirs(ctx context.Context, path string) error {
 // Rmdir deletes a directory.
 // Returns an error if it isn't empty.
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	// fs.DebugfCtx(context.Background(), f, ">>> Rmdir %q", dir)
+	// fs.Debugf(f, ">>> Rmdir %q", dir)
 	return f.purgeWithCheck(ctx, dir, true, "rmdir")
 }
 
@@ -1183,7 +1183,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 // Optional interface: Only implement this if you have a way of deleting
 // all the files quicker than just running Remove() on the result of List()
 func (f *Fs) Purge(ctx context.Context, dir string) error {
-	// fs.DebugfCtx(context.Background(), f, ">>> Purge")
+	// fs.Debugf(f, ">>> Purge")
 	return f.purgeWithCheck(ctx, dir, false, "purge")
 }
 
@@ -1245,7 +1245,7 @@ func (f *Fs) delete(ctx context.Context, path string, hardDelete bool) error {
 // Will only be called if src.Fs().Name() == f.Name()
 // If it isn't possible then return fs.ErrorCantCopy
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-	// fs.DebugfCtx(context.Background(), f, ">>> Copy %q %q", src.Remote(), remote)
+	// fs.Debugf(f, ">>> Copy %q %q", src.Remote(), remote)
 
 	srcObj, ok := src.(*Object)
 	if !ok {
@@ -1261,7 +1261,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	srcPath := srcObj.absPath()
 	dstPath := f.absPath(remote)
 	overwrite := false
-	// fs.DebugfCtx(context.Background(), f, "copy %q -> %q\n", srcPath, dstPath)
+	// fs.Debugf(f, "copy %q -> %q\n", srcPath, dstPath)
 
 	err := f.mkParentDirs(ctx, dstPath)
 	if err != nil {
@@ -1310,7 +1310,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	tmpPath := f.opt.Enc.ToStandardPath(response.Body)
 	if tmpPath != dstPath {
-		// fs.DebugfCtx(context.Background(), f, "rename temporary file %q -> %q\n", tmpPath, dstPath)
+		// fs.Debugf(f, "rename temporary file %q -> %q\n", tmpPath, dstPath)
 		err = f.moveItemBin(ctx, tmpPath, dstPath, "rename temporary file")
 		if err != nil {
 			_ = f.delete(ctx, tmpPath, false) // ignore error
@@ -1340,7 +1340,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 // Will only be called if src.Fs().Name() == f.Name()
 // If it isn't possible then return fs.ErrorCantMove
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-	// fs.DebugfCtx(context.Background(), f, ">>> Move %q %q", src.Remote(), remote)
+	// fs.Debugf(f, ">>> Move %q %q", src.Remote(), remote)
 
 	srcObj, ok := src.(*Object)
 	if !ok {
@@ -1426,7 +1426,7 @@ func (f *Fs) moveItemBin(ctx context.Context, srcPath, dstPath, opName string) e
 // If it isn't possible then return fs.ErrorCantDirMove
 // If destination exists then return fs.ErrorDirExists
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
-	// fs.DebugfCtx(context.Background(), f, ">>> DirMove %q %q", srcRemote, dstRemote)
+	// fs.Debugf(f, ">>> DirMove %q %q", srcRemote, dstRemote)
 
 	srcFs, ok := src.(*Fs)
 	if !ok {
@@ -1440,7 +1440,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 	srcPath := srcFs.absPath(srcRemote)
 	dstPath := f.absPath(dstRemote)
-	// fs.DebugfCtx(context.Background(), srcFs, "DirMove [%s]%q --> [%s]%q\n", srcRemote, srcPath, dstRemote, dstPath)
+	// fs.Debugf(srcFs, "DirMove [%s]%q --> [%s]%q\n", srcRemote, srcPath, dstRemote, dstPath)
 
 	// Refuse to move to or from the root
 	if len(srcPath) <= len(srcFs.root) || len(dstPath) <= len(f.root) {
@@ -1468,7 +1468,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 // PublicLink generates a public link to the remote path (usually readable by anyone)
 func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (link string, err error) {
-	// fs.DebugfCtx(context.Background(), f, ">>> PublicLink %q", remote)
+	// fs.Debugf(f, ">>> PublicLink %q", remote)
 
 	token, err := f.accessToken()
 	if err != nil {
@@ -1510,7 +1510,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 
 // CleanUp permanently deletes all trashed files/folders
 func (f *Fs) CleanUp(ctx context.Context) error {
-	// fs.DebugfCtx(context.Background(), f, ">>> CleanUp")
+	// fs.Debugf(f, ">>> CleanUp")
 
 	token, err := f.accessToken()
 	if err != nil {
@@ -1550,7 +1550,7 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 
 // About gets quota information
 func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
-	// fs.DebugfCtx(context.Background(), f, ">>> About")
+	// fs.Debugf(f, ">>> About")
 
 	token, err := f.accessToken()
 	if err != nil {
@@ -1594,7 +1594,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		size:    src.Size(),
 		modTime: src.ModTime(ctx),
 	}
-	// fs.DebugfCtx(context.Background(), f, ">>> Put: %q %d '%v'", o.remote, o.size, o.modTime)
+	// fs.Debugf(f, ">>> Put: %q %d '%v'", o.remote, o.size, o.modTime)
 	return o, o.Update(ctx, in, src, options...)
 }
 
@@ -1936,7 +1936,7 @@ type Object struct {
 // NewObject finds an Object at the remote.
 // If object can't be found it fails with fs.ErrorObjectNotFound
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	// fs.DebugfCtx(context.Background(), f, ">>> NewObject %q", remote)
+	// fs.Debugf(f, ">>> NewObject %q", remote)
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -2012,7 +2012,7 @@ func (o *Object) Size() int64 {
 	ctx := context.Background() // Note: Object.Size does not pass context!
 	err := o.readMetaData(ctx, false)
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), o, "%v", err)
+		fs.Errorf(o, "%v", err)
 	}
 	return o.size
 }
@@ -2035,7 +2035,7 @@ func (o *Object) Storable() bool {
 //
 // Commits the datastore
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	// fs.DebugfCtx(context.Background(), o, ">>> SetModTime [%v]", modTime)
+	// fs.Debugf(o, ">>> SetModTime [%v]", modTime)
 	o.modTime = modTime
 	return o.addFileMetaData(ctx, true)
 }
@@ -2108,7 +2108,7 @@ func (o *Object) addFileMetaData(ctx context.Context, overwrite bool) error {
 
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
-	// fs.DebugfCtx(context.Background(), o, ">>> Remove")
+	// fs.Debugf(o, ">>> Remove")
 	return o.fs.delete(ctx, o.absPath(), false)
 }
 
@@ -2124,7 +2124,7 @@ func getTransferRange(size int64, options ...fs.OpenOption) (start int64, end in
 			offset, limit = opt.Decode(size)
 		default:
 			if option.Mandatory() {
-				fs.ErrorfCtx(context.Background(), nil, "Unsupported mandatory option: %v", option)
+				fs.Errorf(nil, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}
@@ -2138,7 +2138,7 @@ func getTransferRange(size int64, options ...fs.OpenOption) (start int64, end in
 
 // Open an object for read and download its content
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	// fs.DebugfCtx(context.Background(), o, ">>> Open")
+	// fs.Debugf(o, ">>> Open")
 
 	token, err := o.fs.accessToken()
 	if err != nil {
@@ -2267,7 +2267,7 @@ func (e *endHandler) handle(err error) error {
 	if o.fs.opt.CheckHash {
 		return mrhash.ErrorInvalidHash
 	}
-	fs.InfofCtx(context.Background(), o, "hash mismatch on download: expected %x received %x", o.mrHash, newHash)
+	fs.Infof(o, "hash mismatch on download: expected %x received %x", o.mrHash, newHash)
 	return io.EOF
 }
 
@@ -2338,7 +2338,7 @@ func (p *serverPool) Free(url string) {
 
 	if srv.locks <= 0 {
 		// Getting here indicates possible race
-		fs.InfofCtx(context.Background(), p.fs, "Purge file server:  locks -, url %s", url)
+		fs.Infof(p.fs, "Purge file server:  locks -, url %s", url)
 		delete(p.pool, url)
 		return
 	}
@@ -2346,10 +2346,10 @@ func (p *serverPool) Free(url string) {
 	srv.locks--
 	if srv.locks == 0 && time.Now().After(srv.expiry) {
 		delete(p.pool, url)
-		fs.DebugfCtx(context.Background(), p.fs, "Free file server:   locks 0, url %s", url)
+		fs.Debugf(p.fs, "Free file server:   locks 0, url %s", url)
 		return
 	}
-	fs.DebugfCtx(context.Background(), p.fs, "Unlock file server: locks %d, url %s", srv.locks, url)
+	fs.Debugf(p.fs, "Unlock file server: locks %d, url %s", srv.locks, url)
 }
 
 // Find an underlocked server
@@ -2372,7 +2372,7 @@ func (p *serverPool) getServer(current string, now time.Time) string {
 		}
 
 		srv.locks++
-		fs.DebugfCtx(context.Background(), p.fs, "Lock file server:   locks %d, url %s", srv.locks, url)
+		fs.Debugf(p.fs, "Lock file server:   locks %d, url %s", srv.locks, url)
 		return url
 	}
 
@@ -2395,13 +2395,13 @@ func (p *serverPool) addServer(url string, now time.Time) {
 	if srv != nil {
 		srv.locks++
 		srv.expiry = expiry
-		fs.DebugfCtx(context.Background(), p.fs, "Reuse file server:  locks %d, url %s, expiry %s", srv.locks, url, expiryStr)
+		fs.Debugf(p.fs, "Reuse file server:  locks %d, url %s, expiry %s", srv.locks, url, expiryStr)
 		return
 	}
 
 	// Add new server
 	p.pool[url] = &pendingServer{locks: 1, expiry: expiry}
-	fs.DebugfCtx(context.Background(), p.fs, "Switch file server: locks 1, url %s, expiry %s", url, expiryStr)
+	fs.Debugf(p.fs, "Switch file server: locks 1, url %s, expiry %s", url, expiryStr)
 }
 
 // Name of the remote (as passed into NewFs)

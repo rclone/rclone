@@ -1,7 +1,6 @@
 package systemd
 
 import (
-	"context"
 	"fmt"
 	"sync"
 
@@ -19,13 +18,13 @@ import (
 // It should not be called as a result of rc commands. See #7540.
 func Notify() func() {
 	if _, err := daemon.SdNotify(false, daemon.SdNotifyReady); err != nil {
-		fs.LogfCtx(context.Background(), nil, "failed to notify ready to systemd: %v", err)
+		fs.Logf(nil, "failed to notify ready to systemd: %v", err)
 	}
 	var finaliseOnce sync.Once
 	finalise := func() {
 		finaliseOnce.Do(func() {
 			if _, err := daemon.SdNotify(false, daemon.SdNotifyStopping); err != nil {
-				fs.LogfCtx(context.Background(), nil, "failed to notify stopping to systemd: %v", err)
+				fs.Logf(nil, "failed to notify stopping to systemd: %v", err)
 			}
 		})
 	}

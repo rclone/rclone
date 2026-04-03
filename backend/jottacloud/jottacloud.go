@@ -843,7 +843,7 @@ func errorHandler(resp *http.Response) error {
 	errResponse := new(api.Error)
 	err := rest.DecodeXML(resp, &errResponse)
 	if err != nil {
-		fs.DebugfCtx(context.Background(), nil, "Couldn't decode error response: %v", err)
+		fs.Debugf(nil, "Couldn't decode error response: %v", err)
 	}
 	if errResponse.Message == "" {
 		errResponse.Message = resp.Status
@@ -1078,7 +1078,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 // CreateDir makes a directory
 func (f *Fs) CreateDir(ctx context.Context, path string) (jf *api.JottaFolder, err error) {
-	// fs.DebugfCtx(context.Background(), f, "CreateDir(%q, %q)\n", pathID, leaf)
+	// fs.Debugf(f, "CreateDir(%q, %q)\n", pathID, leaf)
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:     "POST",
@@ -1768,7 +1768,7 @@ func (o *Object) Size() int64 {
 	ctx := context.TODO()
 	err := o.readMetaData(ctx, false)
 	if err != nil {
-		fs.LogfCtx(context.Background(), o, "Failed to read metadata: %v", err)
+		fs.Logf(o, "Failed to read metadata: %v", err)
 		return 0
 	}
 	return o.size
@@ -1832,7 +1832,7 @@ func (o *Object) parseFsMetadataTime(m fs.Metadata, key string) (t time.Time, ok
 		var err error
 		t, err = time.Parse(time.RFC3339Nano, value) // metadata stores RFC3339Nano timestamps
 		if err != nil {
-			fs.DebugfCtx(context.Background(), o, "failed to parse metadata %s: %q: %v", key, value, err)
+			fs.Debugf(o, "failed to parse metadata %s: %q: %v", key, value, err)
 			ok = false
 		}
 	}

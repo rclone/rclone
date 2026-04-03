@@ -273,7 +273,7 @@ func (f *Fs) readMetaDataForID(ctx context.Context, id string) (info *api.Item, 
 func errorHandler(resp *http.Response) error {
 	body, err := rest.ReadBody(resp)
 	if err != nil {
-		fs.DebugfCtx(context.Background(), nil, "Couldn't read error out of body: %v", err)
+		fs.Debugf(nil, "Couldn't read error out of body: %v", err)
 		body = nil
 	}
 	// Decode error response if there was one - they can be blank
@@ -281,7 +281,7 @@ func errorHandler(resp *http.Response) error {
 	if len(body) > 0 {
 		err = json.Unmarshal(body, &errResponse)
 		if err != nil {
-			fs.DebugfCtx(context.Background(), nil, "Couldn't decode error response: %v", err)
+			fs.Debugf(nil, "Couldn't decode error response: %v", err)
 		}
 	}
 	if errResponse.Status == "" {
@@ -500,7 +500,7 @@ func (f *Fs) createDir(ctx context.Context, pathID, leaf string, modTime time.Ti
 
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
-	// fs.DebugfCtx(context.Background(), f, "CreateDir(%q, %q)\n", pathID, leaf)
+	// fs.Debugf(f, "CreateDir(%q, %q)\n", pathID, leaf)
 	item, err := f.createDir(ctx, pathID, leaf, time.Now())
 	if err != nil {
 		return "", err

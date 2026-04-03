@@ -298,7 +298,7 @@ func unmountAll(_ context.Context, in rc.Params) (out rc.Params, err error) {
 	defer mountMu.Unlock()
 	for mountPoint, mountInfo := range liveMounts {
 		if err = mountInfo.Unmount(); err != nil {
-			fs.DebugfCtx(context.Background(), nil, "Couldn't unmount : %s", mountPoint)
+			fs.Debugf(nil, "Couldn't unmount : %s", mountPoint)
 			return nil, err
 		}
 		delete(liveMounts, mountPoint)

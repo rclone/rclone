@@ -3,7 +3,6 @@ package jwtutil
 
 import (
 	"bytes"
-	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"encoding/hex"
@@ -67,7 +66,7 @@ func Config(id, name, url string, claims jwt.Claims, headerParams map[string]any
 
 	s, err := bodyToString(resp.Body)
 	if err != nil {
-		fs.DebugfCtx(context.Background(), nil, "jwtutil: failed to get response body")
+		fs.Debugf(nil, "jwtutil: failed to get response body")
 	}
 	if resp.StatusCode != 200 {
 		err = errors.New(resp.Status)
@@ -105,7 +104,7 @@ func bodyToString(responseBody io.Reader) (bodyString string, err error) {
 		return "", err
 	}
 	bodyString = string(bodyBytes)
-	fs.DebugfCtx(context.Background(), nil, "jwtutil: Response Body: %q", bodyString)
+	fs.Debugf(nil, "jwtutil: Response Body: %q", bodyString)
 	return bodyString, nil
 }
 

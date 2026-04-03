@@ -51,7 +51,7 @@ func NewObject(f *Fs, remote string) *Object {
 		if err == nil { // queued for upload
 			cacheType = objectPendingUpload
 			parentFs = f.tempFs
-			fs.DebugfCtx(context.Background(), fullRemote, "pending upload found")
+			fs.Debugf(fullRemote, "pending upload found")
 		}
 	}
 
@@ -348,7 +348,7 @@ func (o *Object) Hash(ctx context.Context, ht hash.Type) (string, error) {
 func (o *Object) persist() *Object {
 	err := o.CacheFs.cache.AddObject(o)
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), o, "failed to cache object: %v", err)
+		fs.Errorf(o, "failed to cache object: %v", err)
 	}
 	return o
 }

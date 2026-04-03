@@ -2,7 +2,6 @@
 package serve
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -43,7 +42,7 @@ func Object(w http.ResponseWriter, r *http.Request, o fs.Object) {
 	// Set metadata headers if present
 	metadata, err := fs.GetMetadata(r.Context(), o)
 	if err != nil {
-		fs.DebugfCtx(context.Background(), o, "Request get metadata error: %v", err)
+		fs.Debugf(o, "Request get metadata error: %v", err)
 	}
 	if metadata != nil {
 		if metadata["content-disposition"] != "" {
@@ -69,10 +68,10 @@ func Object(w http.ResponseWriter, r *http.Request, o fs.Object) {
 	size := o.Size()
 	var options []fs.OpenOption
 	if rangeRequest := r.Header.Get("Range"); rangeRequest != "" {
-		//fs.DebugfCtx(context.Background(), nil, "Range: request %q", rangeRequest)
+		//fs.Debugf(nil, "Range: request %q", rangeRequest)
 		option, err := fs.ParseRangeOption(rangeRequest)
 		if err != nil {
-			fs.DebugfCtx(context.Background(), o, "Get request parse range request error: %v", err)
+			fs.Debugf(o, "Get request parse range request error: %v", err)
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
 		}
@@ -86,17 +85,17 @@ func Object(w http.ResponseWriter, r *http.Request, o fs.Object) {
 			end = o.Size()
 		}
 		size = end - offset
-		// fs.DebugfCtx(context.Background(), nil, "Range: offset=%d, limit=%d, end=%d, size=%d (object size %d)", offset, limit, end, size, o.Size())
+		// fs.Debugf(nil, "Range: offset=%d, limit=%d, end=%d, size=%d (object size %d)", offset, limit, end, size, o.Size())
 		// Content-Range: bytes 0-1023/146515
 		w.Header().Set("Content-Range", fmt.Sprintf("bytes %d-%d/%d", offset, end-1, o.Size()))
-		// fs.DebugfCtx(context.Background(), nil, "Range: Content-Range: %q", w.Header().Get("Content-Range"))
+		// fs.Debugf(nil, "Range: Content-Range: %q", w.Header().Get("Content-Range"))
 		code = http.StatusPartialContent
 	}
 	w.Header().Set("Content-Length", strconv.FormatInt(size, 10))
 
 	file, err := o.Open(r.Context(), options...)
 	if err != nil {
-		fs.DebugfCtx(context.Background(), o, "Get request open error: %v", err)
+		fs.Debugf(o, "Get request open error: %v", err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
@@ -110,7 +109,7 @@ func Object(w http.ResponseWriter, r *http.Request, o fs.Object) {
 
 	n, err := io.Copy(w, in)
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), o, "Didn't finish writing GET request (wrote %d/%d bytes): %v", n, size, err)
+		fs.Errorf(o, "Didn't finish writing GET request (wrote %d/%d bytes): %v", n, size, err)
 		return
 	}
 }

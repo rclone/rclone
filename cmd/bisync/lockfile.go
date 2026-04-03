@@ -1,7 +1,6 @@
 package bisync
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -45,7 +44,7 @@ func (b *bisyncRun) setLockFile() (err error) {
 		if err = os.WriteFile(b.lockFile, pidStr, bilib.PermSecure); err != nil {
 			return fmt.Errorf(Color(terminal.RedFg, "cannot create lock file: %s: %w"), b.lockFile, err)
 		}
-		fs.DebugfCtx(context.Background(), nil, "Lock file created: %s", b.lockFile)
+		fs.Debugf(nil, "Lock file created: %s", b.lockFile)
 		b.renewLockFile()
 		b.lockFileOpt.stopRenewal = b.startLockRenewal()
 	}
@@ -57,9 +56,9 @@ func (b *bisyncRun) removeLockFile() (err error) {
 		b.lockFileOpt.stopRenewal()
 		err = os.Remove(b.lockFile)
 		if err == nil {
-			fs.DebugfCtx(context.Background(), nil, "Lock file removed: %s", b.lockFile)
+			fs.Debugf(nil, "Lock file removed: %s", b.lockFile)
 		} else {
-			fs.ErrorfCtx(context.Background(), nil, "cannot remove lockfile %s: %v", b.lockFile, err)
+			fs.Errorf(nil, "cannot remove lockfile %s: %v", b.lockFile, err)
 		}
 		b.lockFile = "" // block removing it again
 	}
@@ -68,7 +67,7 @@ func (b *bisyncRun) removeLockFile() (err error) {
 
 func (b *bisyncRun) setLockFileExpiration() {
 	if b.opt.MaxLock > 0 && b.opt.MaxLock < fs.Duration(2*time.Minute) {
-		fs.LogfCtx(context.Background(), nil, Color(terminal.YellowFg, "--max-lock cannot be shorter than 2 minutes (unless 0.) Changing --max-lock from %v to %v"), b.opt.MaxLock, 2*time.Minute)
+		fs.Logf(nil, Color(terminal.YellowFg, "--max-lock cannot be shorter than 2 minutes (unless 0.) Changing --max-lock from %v to %v"), b.opt.MaxLock, 2*time.Minute)
 		b.opt.MaxLock = fs.Duration(2 * time.Minute)
 	} else if b.opt.MaxLock <= 0 {
 		b.opt.MaxLock = basicallyforever
@@ -89,7 +88,7 @@ func (b *bisyncRun) renewLockFile() {
 		b.handleErr(b.lockFile, "error encoding JSON to lock file", json.NewEncoder(df).Encode(b.lockFileOpt.data), true, true)
 		b.handleErr(b.lockFile, "error closing lock file", df.Close(), true, true)
 		if b.opt.MaxLock < basicallyforever {
-			fs.InfofCtx(context.Background(), nil, Color(terminal.HiBlueFg, "lock file renewed for %v. New expiration: %v"), b.opt.MaxLock, b.lockFileOpt.data.TimeExpires)
+			fs.Infof(nil, Color(terminal.HiBlueFg, "lock file renewed for %v. New expiration: %v"), b.opt.MaxLock, b.lockFileOpt.data.TimeExpires)
 		}
 	}
 }
@@ -120,12 +119,12 @@ func (b *bisyncRun) lockFileIsExpired() bool {
 			return false
 		}
 		if !b.lockFileOpt.data.TimeExpires.IsZero() && b.lockFileOpt.data.TimeExpires.Before(time.Now()) {
-			fs.InfofCtx(context.Background(), b.lockFile, Color(terminal.GreenFg, "Lock file found, but it expired at %v. Will delete it and proceed."), b.lockFileOpt.data.TimeExpires)
+			fs.Infof(b.lockFile, Color(terminal.GreenFg, "Lock file found, but it expired at %v. Will delete it and proceed."), b.lockFileOpt.data.TimeExpires)
 			markFailed(b.listing1) // listing is untrusted so force revert to prior (if --recover) or create new ones (if --resync)
 			markFailed(b.listing2)
 			return true
 		}
-		fs.InfofCtx(context.Background(), b.lockFile, Color(terminal.RedFg, "Valid lock file found. Expires at %v. (%v from now)"), b.lockFileOpt.data.TimeExpires, time.Since(b.lockFileOpt.data.TimeExpires).Abs().Round(time.Second))
+		fs.Infof(b.lockFile, Color(terminal.RedFg, "Valid lock file found. Expires at %v. (%v from now)"), b.lockFileOpt.data.TimeExpires, time.Since(b.lockFileOpt.data.TimeExpires).Abs().Round(time.Second))
 		prettyprint(b.lockFileOpt.data, "Lockfile info", fs.LogLevelInfo)
 	}
 	return false

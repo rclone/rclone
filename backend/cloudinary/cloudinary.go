@@ -229,7 +229,7 @@ func (f *Fs) FromStandardName(s string) string {
 		parsedURL, err := url.Parse(s)
 		ext := ""
 		if err != nil {
-			fs.LogfCtx(context.Background(), nil, "Error parsing URL: %v", err)
+			fs.Logf(nil, "Error parsing URL: %v", err)
 		} else {
 			ext = path.Ext(parsedURL.Path)
 			if slices.Contains(f.opt.MediaExtensions, strings.ToLower(strings.TrimPrefix(ext, "."))) {
@@ -251,7 +251,7 @@ func (f *Fs) ToStandardName(s string, assetURL string) string {
 	if f.opt.AdjustMediaFilesExtensions {
 		parsedURL, err := url.Parse(assetURL)
 		if err != nil {
-			fs.LogfCtx(context.Background(), nil, "Error parsing URL: %v", err)
+			fs.Logf(nil, "Error parsing URL: %v", err)
 		} else {
 			ext = path.Ext(parsedURL.Path)
 			if !slices.Contains(f.opt.MediaExtensions, strings.ToLower(strings.TrimPrefix(ext, "."))) {

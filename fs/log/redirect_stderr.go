@@ -12,5 +12,5 @@ import (
 
 // redirectStderr to the file passed in
 func redirectStderr(f *os.File) {
-	fs.ErrorfCtx(ctx, nil, "Can't redirect stderr to file")
+	fs.Errorf(nil, "Can't redirect stderr to file")
 }

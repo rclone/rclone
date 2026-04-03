@@ -2,7 +2,6 @@
 package api
 
 import (
-	"context"
 	"encoding/xml"
 	"regexp"
 	"strconv"
@@ -227,7 +226,7 @@ func (t *Time) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	}
 	if err != nil {
 		oneTimeError.Do(func() {
-			fs.ErrorfCtx(context.Background(), nil, "Failed to parse time %q - using the epoch", v)
+			fs.Errorf(nil, "Failed to parse time %q - using the epoch", v)
 		})
 		// Return the epoch instead
 		*t = Time(time.Unix(0, 0))

@@ -70,7 +70,7 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (asyncerrors 
 	cmd = append(cmd, "mount")
 	cmd = append(cmd, options...)
 	cmd = append(cmd, "localhost:"+opt.VolumeName, mountpoint)
-	fs.DebugfCtx(context.Background(), nil, "Running mount command: %q", cmd)
+	fs.Debugf(nil, "Running mount command: %q", cmd)
 
 	out, err := exec.Command(cmd[0], cmd[1:]...).CombinedOutput()
 	if err != nil {

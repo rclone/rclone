@@ -440,7 +440,7 @@ func errorHandler(resp *http.Response) error {
 	errResponse := new(api.Error)
 	err := rest.DecodeJSON(resp, &errResponse)
 	if err != nil {
-		fs.DebugfCtx(context.Background(), nil, "Couldn't decode error response: %v", err)
+		fs.Debugf(nil, "Couldn't decode error response: %v", err)
 	}
 	if errResponse.Code == "" {
 		errResponse.Code = resp.Status
@@ -616,7 +616,7 @@ func fieldsValue() url.Values {
 
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
-	// fs.DebugfCtx(context.Background(), f, "CreateDir(%q, %q)\n", pathID, leaf)
+	// fs.Debugf(f, "CreateDir(%q, %q)\n", pathID, leaf)
 	var resp *http.Response
 	var info *api.Item
 	opts := rest.Opts{
@@ -1579,7 +1579,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 func (o *Object) Size() int64 {
 	err := o.readMetaData(context.TODO())
 	if err != nil {
-		fs.LogfCtx(context.Background(), o, "Failed to read metadata: %v", err)
+		fs.Logf(o, "Failed to read metadata: %v", err)
 		return 0
 	}
 	return o.size

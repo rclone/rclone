@@ -282,7 +282,7 @@ func NewMountCommand(commandName string, hidden bool, mount MountFn) *cobra.Comm
 			cmd.CheckArgs(2, 2, command, args)
 
 			if fs.GetConfig(context.Background()).UseListR {
-				fs.LogfCtx(context.Background(), nil, "--fast-list does nothing on a mount")
+				fs.Logf(nil, "--fast-list does nothing on a mount")
 			}
 
 			if Opt.Daemon {
@@ -291,7 +291,7 @@ func NewMountCommand(commandName string, hidden bool, mount MountFn) *cobra.Comm
 
 			if os.Getenv("PATH") == "" && runtime.GOOS != "windows" {
 				// PATH can be unset when running under Autofs or Systemd mount
-				fs.DebugfCtx(context.Background(), nil, "Using fallback PATH to run fusermount")
+				fs.Debugf(nil, "Using fallback PATH to run fusermount")
 				_ = os.Setenv("PATH", "/bin:/usr/bin")
 			}
 
@@ -320,10 +320,10 @@ func NewMountCommand(commandName string, hidden bool, mount MountFn) *cobra.Comm
 			killDaemon := func(reason string) {
 				killOnce.Do(func() {
 					if err := mountDaemon.Signal(os.Interrupt); err != nil {
-						fs.ErrorfCtx(context.Background(), nil, "%s. Failed to terminate daemon pid %d: %v", reason, mountDaemon.Pid, err)
+						fs.Errorf(nil, "%s. Failed to terminate daemon pid %d: %v", reason, mountDaemon.Pid, err)
 						return
 					}
-					fs.DebugfCtx(context.Background(), nil, "%s. Terminating daemon pid %d", reason, mountDaemon.Pid)
+					fs.Debugf(nil, "%s. Terminating daemon pid %d", reason, mountDaemon.Pid)
 				})
 			}
 
@@ -390,13 +390,13 @@ func (m *MountPoint) Wait() error {
 		finaliseOnce.Do(func() {
 			// Unmount only if directory was mounted by rclone, e.g. don't unmount autofs hooks.
 			if err := CheckMountReady(m.MountPoint); err != nil {
-				fs.DebugfCtx(context.Background(), m.MountPoint, "Unmounted externally. Just exit now.")
+				fs.Debugf(m.MountPoint, "Unmounted externally. Just exit now.")
 				return
 			}
 			if err := m.Unmount(); err != nil {
-				fs.ErrorfCtx(context.Background(), m.MountPoint, "Failed to unmount: %v", err)
+				fs.Errorf(m.MountPoint, "Failed to unmount: %v", err)
 			} else {
-				fs.LogfCtx(context.Background(), m.MountPoint, "Unmounted rclone mount")
+				fs.Logf(m.MountPoint, "Unmounted rclone mount")
 			}
 		})
 	}

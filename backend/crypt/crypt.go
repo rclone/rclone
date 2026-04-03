@@ -355,11 +355,11 @@ func (f *Fs) add(entries *fs.DirEntries, obj fs.Object) error {
 		if f.opt.StrictNames {
 			return fmt.Errorf("%s: undecryptable file name detected: %v", remote, err)
 		}
-		fs.LogfCtx(context.Background(), remote, "Skipping undecryptable file name: %v", err)
+		fs.Logf(remote, "Skipping undecryptable file name: %v", err)
 		return nil
 	}
 	if f.opt.ShowMapping {
-		fs.LogfCtx(context.Background(), decryptedRemote, "Encrypts to %q", remote)
+		fs.Logf(decryptedRemote, "Encrypts to %q", remote)
 	}
 	*entries = append(*entries, f.newObject(obj))
 	return nil
@@ -829,7 +829,7 @@ func (f *Fs) ComputeHash(ctx context.Context, o *Object, src fs.Object, hashType
 		return "", fmt.Errorf("failed to open object to read nonce: %w", err)
 	}
 	nonce := d.nonce
-	// fs.DebugfCtx(context.Background(), o, "Read nonce % 2x", nonce)
+	// fs.Debugf(o, "Read nonce % 2x", nonce)
 
 	// Check nonce isn't all zeros
 	isZero := true
@@ -897,7 +897,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 		return
 	}
 	wrappedNotifyFunc := func(path string, entryType fs.EntryType) {
-		// fs.DebugfCtx(context.Background(), f, "ChangeNotify: path %q entryType %d", path, entryType)
+		// fs.Debugf(f, "ChangeNotify: path %q entryType %d", path, entryType)
 		var (
 			err       error
 			decrypted string
@@ -1016,7 +1016,7 @@ func (o *Object) Remote() string {
 	remote := o.Object.Remote()
 	decryptedName, err := o.f.cipher.DecryptFileName(remote)
 	if err != nil {
-		fs.DebugfCtx(context.Background(), remote, "Undecryptable file name: %v", err)
+		fs.Debugf(remote, "Undecryptable file name: %v", err)
 		return remote
 	}
 	return decryptedName
@@ -1029,7 +1029,7 @@ func (o *Object) Size() int64 {
 		var err error
 		size, err = o.f.cipher.DecryptedSize(size)
 		if err != nil {
-			fs.DebugfCtx(context.Background(), o, "Bad size for decrypt: %v", err)
+			fs.Debugf(o, "Bad size for decrypt: %v", err)
 		}
 	}
 	return size

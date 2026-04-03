@@ -774,7 +774,7 @@ See: https://developers.google.com/workspace/drive/api/guides/limited-expansive-
 	} {
 		for mimeType, extension := range m {
 			if err := mime.AddExtensionType(extension, mimeType); err != nil {
-				fs.ErrorfCtx(context.Background(), "Failed to register MIME type %q: %v", mimeType, err)
+				fs.Errorf("Failed to register MIME type %q: %v", mimeType, err)
 			}
 		}
 	}
@@ -1090,7 +1090,7 @@ func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directorie
 	queryString := strings.Join(query, " and ")
 	if queryString != "" {
 		list.Q(queryString)
-		// fs.DebugfCtx(context.Background(), f, "list query: %q", queryString)
+		// fs.Debugf(f, "list query: %q", queryString)
 	}
 	f.lastQuery = queryString // for unit tests
 
@@ -4298,7 +4298,7 @@ func (file *openDocumentFile) Read(p []byte) (n int, err error) {
 func (file *openDocumentFile) Close() (err error) {
 	// If end of file, update bytes read
 	if file.eof && !file.errored {
-		fs.DebugfCtx(context.Background(), file.o, "Updating size of doc after download to %v", file.bytes)
+		fs.Debugf(file.o, "Updating size of doc after download to %v", file.bytes)
 		file.o.bytes = file.bytes
 	}
 	return file.in.Close()

@@ -88,7 +88,7 @@ func NewDriver(ctx context.Context, root string, mntOpt *mountlib.Options, vfsOp
 
 // Exit will unmount all currently mounted volumes
 func (drv *Driver) Exit() {
-	fs.DebugfCtx(context.Background(), nil, "Unmount all volumes")
+	fs.Debugf(nil, "Unmount all volumes")
 	drv.mu.Lock()
 	defer drv.mu.Unlock()
 
@@ -133,12 +133,12 @@ func (drv *Driver) monitor() {
 		}
 		drv.mu.Unlock()
 
-		fs.DebugfCtx(context.Background(), nil, "Monitoring %d volumes", len(sources)-2)
+		fs.Debugf(nil, "Monitoring %d volumes", len(sources)-2)
 		idx, val, _ := reflect.Select(sources)
 		switch idx {
 		case 0:
 			if val.Bool() {
-				fs.DebugfCtx(context.Background(), nil, "Monitoring stopped")
+				fs.Debugf(nil, "Monitoring stopped")
 				return
 			}
 		case 1:
@@ -147,9 +147,9 @@ func (drv *Driver) monitor() {
 		default:
 			vol := volumes[idx]
 			if err := val.Interface(); err != nil {
-				fs.LogfCtx(context.Background(), nil, "Volume %q unmounted externally: %v", vol.Name, err)
+				fs.Logf(nil, "Volume %q unmounted externally: %v", vol.Name, err)
 			} else {
-				fs.InfofCtx(context.Background(), nil, "Volume %q unmounted externally", vol.Name)
+				fs.Infof(nil, "Volume %q unmounted externally", vol.Name)
 			}
 			drv.mu.Lock()
 			reportErr(vol.unmountAll())
@@ -160,7 +160,7 @@ func (drv *Driver) monitor() {
 
 // clearCache will clear cache of all volumes
 func (drv *Driver) clearCache() {
-	fs.DebugfCtx(context.Background(), nil, "Clear all caches")
+	fs.Debugf(nil, "Clear all caches")
 	drv.mu.Lock()
 	defer drv.mu.Unlock()
 
@@ -171,7 +171,7 @@ func (drv *Driver) clearCache() {
 
 func reportErr(err error) {
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), "docker plugin", "%v", err)
+		fs.Errorf("docker plugin", "%v", err)
 	}
 }
 
@@ -183,7 +183,7 @@ func (drv *Driver) Create(req *CreateRequest) error {
 	defer drv.mu.Unlock()
 
 	name := req.Name
-	fs.DebugfCtx(context.Background(), nil, "Create volume %q", name)
+	fs.Debugf(nil, "Create volume %q", name)
 
 	if vol, _ := drv.getVolume(name); vol != nil {
 		return ErrVolumeExists
@@ -219,7 +219,7 @@ func (drv *Driver) List() (*ListResponse, error) {
 	defer drv.mu.Unlock()
 
 	volumeList := drv.listVolumes()
-	fs.DebugfCtx(context.Background(), nil, "List: %v", volumeList)
+	fs.Debugf(nil, "List: %v", volumeList)
 
 	res := &ListResponse{
 		Volumes: []*VolInfo{},
@@ -306,7 +306,7 @@ func (drv *Driver) listVolumes() []string {
 // saveState saves volumes handled by driver to persistent store
 func (drv *Driver) saveState() error {
 	volumeList := drv.listVolumes()
-	fs.DebugfCtx(context.Background(), nil, "Save state %v to %s", volumeList, drv.statePath)
+	fs.Debugf(nil, "Save state %v to %s", volumeList, drv.statePath)
 
 	state := []*Volume{}
 	for _, key := range volumeList {

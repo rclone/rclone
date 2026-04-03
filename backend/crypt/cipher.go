@@ -209,7 +209,7 @@ func (c *Cipher) setEncryptedSuffix(suffix string) {
 		return
 	}
 	if !strings.HasPrefix(suffix, ".") {
-		fs.ErrorfCtx(context.Background(), nil, "crypt: bad suffix: %v", ErrorSuffixMissingDot)
+		fs.Errorf(nil, "crypt: bad suffix: %v", ErrorSuffixMissingDot)
 		suffix = "." + suffix
 	}
 	c.encryptedSuffix = suffix
@@ -885,7 +885,7 @@ func (fh *decrypter) fillBuffer() (err error) {
 		if !fh.c.passBadBlocks {
 			return ErrorEncryptedBadBlock
 		}
-		fs.ErrorfCtx(context.Background(), nil, "crypt: ignoring: %v", ErrorEncryptedBadBlock)
+		fs.Errorf(nil, "crypt: ignoring: %v", ErrorEncryptedBadBlock)
 		// Zero out the bad block and continue
 		for i := range (*fh.buf)[:n] {
 			fh.buf[i] = 0

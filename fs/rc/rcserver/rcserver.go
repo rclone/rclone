@@ -141,7 +141,7 @@ func (s *Server) Serve() error {
 	s.server.Serve()
 
 	for _, URL := range s.server.URLs() {
-		fs.LogfCtx(context.Background(), nil, "Serving remote control on %s", URL)
+		fs.Logf(nil, "Serving remote control on %s", URL)
 		// Open the files in the browser if set
 		if s.files != nil {
 			openURL, err := url.Parse(URL)
@@ -157,7 +157,7 @@ func (s *Server) Serve() error {
 				loginToken := user + ":" + pass
 				parameters := url.Values{}
 				encodedToken := base64.URLEncoding.EncodeToString([]byte(loginToken))
-				fs.DebugfCtx(context.Background(), nil, "login_token %q", encodedToken)
+				fs.Debugf(nil, "login_token %q", encodedToken)
 				parameters.Add("login_token", encodedToken)
 				openURL.RawQuery = parameters.Encode()
 				openURL.RawPath = "/#/login"
@@ -165,10 +165,10 @@ func (s *Server) Serve() error {
 			// Don't open browser if serving in testing environment or required not to do so.
 			if flag.Lookup("test.v") == nil && !s.opt.WebGUINoOpenBrowser {
 				if err := open.Start(openURL.String()); err != nil {
-					fs.ErrorfCtx(context.Background(), nil, "Failed to open Web GUI in browser: %v. Manually access it at: %s", err, openURL.String())
+					fs.Errorf(nil, "Failed to open Web GUI in browser: %v. Manually access it at: %s", err, openURL.String())
 				}
 			} else {
-				fs.LogfCtx(context.Background(), nil, "Web GUI is not automatically opening browser. Navigate to %s to use.", openURL.String())
+				fs.Logf(nil, "Web GUI is not automatically opening browser. Navigate to %s to use.", openURL.String())
 			}
 		}
 	}
@@ -177,14 +177,14 @@ func (s *Server) Serve() error {
 
 // writeError writes a formatted error to the output
 func writeError(path string, in rc.Params, w http.ResponseWriter, err error, status int) {
-	fs.ErrorfCtx(context.Background(), nil, "rc: %q: error: %v", path, err)
+	fs.Errorf(nil, "rc: %q: error: %v", path, err)
 	params, status := rc.Error(path, in, err, status)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	err = rc.WriteJSON(w, params)
 	if err != nil {
 		// can't return the error at this point
-		fs.ErrorfCtx(context.Background(), nil, "rc: writeError: failed to write JSON output from %#v: %v", in, err)
+		fs.Errorf(nil, "rc: writeError: failed to write JSON output from %#v: %v", in, err)
 	}
 }
 

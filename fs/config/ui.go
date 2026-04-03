@@ -269,7 +269,7 @@ func ChoosePassword(defaultValue string, required bool) string {
 	case 'n':
 		return defaultValue
 	default:
-		fs.ErrorfCtx(context.Background(), nil, "Bad choice %c", i)
+		fs.Errorf(nil, "Bad choice %c", i)
 	}
 	return obscure.MustObscure(password)
 }
@@ -398,7 +398,7 @@ func OkRemote(name string) bool {
 		LoadedData().DeleteSection(name)
 		return true
 	default:
-		fs.ErrorfCtx(context.Background(), nil, "Bad choice %c", i)
+		fs.Errorf(nil, "Bad choice %c", i)
 	}
 	return false
 }

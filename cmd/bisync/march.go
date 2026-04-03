@@ -70,14 +70,14 @@ func (b *bisyncRun) makeMarchListing(ctx context.Context) (*fileList, *fileList,
 
 // SrcOnly have an object which is on path1 only
 func (b *bisyncRun) SrcOnly(o fs.DirEntry) (recurse bool) {
-	fs.DebugfCtx(context.Background(), o, "path1 only")
+	fs.Debugf(o, "path1 only")
 	b.parse(o, true)
 	return isDir(o)
 }
 
 // DstOnly have an object which is on path2 only
 func (b *bisyncRun) DstOnly(o fs.DirEntry) (recurse bool) {
-	fs.DebugfCtx(context.Background(), o, "path2 only")
+	fs.Debugf(o, "path2 only")
 	b.parse(o, false)
 	return isDir(o)
 }
@@ -96,13 +96,13 @@ func (b *bisyncRun) Match(ctx context.Context, o2, o1 fs.DirEntry) (recurse bool
 func isDir(e fs.DirEntry) bool {
 	switch x := e.(type) {
 	case fs.Object:
-		fs.DebugfCtx(context.Background(), x, "is Object")
+		fs.Debugf(x, "is Object")
 		return false
 	case fs.Directory:
-		fs.DebugfCtx(context.Background(), x, "is Dir")
+		fs.Debugf(x, "is Dir")
 		return true
 	default:
-		fs.DebugfCtx(context.Background(), e, "is unknown")
+		fs.Debugf(e, "is unknown")
 	}
 	return false
 }
@@ -116,7 +116,7 @@ func (b *bisyncRun) parse(e fs.DirEntry, isPath1 bool) {
 			b.ForDir(x, isPath1)
 		}
 	default:
-		fs.DebugfCtx(context.Background(), e, "is unknown")
+		fs.Debugf(e, "is unknown")
 	}
 }
 

@@ -116,7 +116,7 @@ func (o *Options) Limit() int {
 var OnUnmountFunc func()
 
 func onUnmount() {
-	fs.InfofCtx(context.Background(), nil, "unmount detected")
+	fs.Infof(nil, "unmount detected")
 	if OnUnmountFunc != nil {
 		OnUnmountFunc()
 	}

@@ -168,7 +168,7 @@ func (p *Proxy) run(in map[string]string) (config configmap.Simple, err error) {
 	cmd.Stderr = &stderr
 	start := time.Now()
 	err = cmd.Run()
-	fs.DebugfCtx(context.Background(), nil, "Calling proxy %v", p.cmdLine)
+	fs.Debugf(nil, "Calling proxy %v", p.cmdLine)
 	duration := time.Since(start)
 	if err != nil {
 		return nil, fmt.Errorf("proxy: failed on %v: %q: %w", p.cmdLine, strings.TrimSpace(stderr.String()), err)
@@ -177,7 +177,7 @@ func (p *Proxy) run(in map[string]string) (config configmap.Simple, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("proxy: failed to read output: %q: %w", stdout.String(), err)
 	}
-	fs.DebugfCtx(context.Background(), nil, "Proxy returned in %v", duration)
+	fs.Debugf(nil, "Proxy returned in %v", duration)
 
 	// Obscure any values in the config map that need it
 	obscureFields, ok := config.Get("_obscure")

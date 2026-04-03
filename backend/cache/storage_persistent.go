@@ -99,7 +99,7 @@ func newPersistent(dbPath, chunkPath string, f *Features) (*Persistent, error) {
 
 	err := b.connect()
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), dbPath, "Error opening storage cache. Is there another rclone running on the same remote? %v", err)
+		fs.Errorf(dbPath, "Error opening storage cache. Is there another rclone running on the same remote? %v", err)
 		return nil, err
 	}
 
@@ -275,7 +275,7 @@ func (b *Persistent) GetDirEntries(cachedDir *Directory) (fs.DirEntries, error) 
 				if metaKey != nil { //if we don't find it, we create an empty dir
 					err := json.Unmarshal(metaKey, d)
 					if err != nil { // if even this fails, we fallback to an empty dir
-						fs.DebugfCtx(context.Background(), string(k), "error during unmarshalling obj: %v", err)
+						fs.Debugf(string(k), "error during unmarshalling obj: %v", err)
 					}
 				}
 
@@ -284,7 +284,7 @@ func (b *Persistent) GetDirEntries(cachedDir *Directory) (fs.DirEntries, error) 
 				o := NewObject(cachedDir.CacheFs, entryPath)
 				err := json.Unmarshal(v, o)
 				if err != nil {
-					fs.DebugfCtx(context.Background(), string(k), "error during unmarshalling obj: %v", err)
+					fs.Debugf(string(k), "error during unmarshalling obj: %v", err)
 					continue
 				}
 
@@ -306,7 +306,7 @@ func (b *Persistent) RemoveDir(fp string) error {
 		err = b.db.Update(func(tx *bolt.Tx) error {
 			err := tx.DeleteBucket([]byte(RootBucket))
 			if err != nil {
-				fs.DebugfCtx(context.Background(), fp, "couldn't delete from cache: %v", err)
+				fs.Debugf(fp, "couldn't delete from cache: %v", err)
 				return err
 			}
 			_, _ = tx.CreateBucketIfNotExists([]byte(RootBucket))
@@ -321,7 +321,7 @@ func (b *Persistent) RemoveDir(fp string) error {
 			// delete the cached dir
 			err := bucket.DeleteBucket([]byte(cleanPath(dirName)))
 			if err != nil {
-				fs.DebugfCtx(context.Background(), fp, "couldn't delete from cache: %v", err)
+				fs.Debugf(fp, "couldn't delete from cache: %v", err)
 			}
 			return nil
 		})
@@ -355,7 +355,7 @@ func (b *Persistent) ExpireDir(cd *Directory) error {
 					cd2 := &Directory{CacheFs: cd.CacheFs}
 					err := json.Unmarshal(val, cd2)
 					if err == nil {
-						fs.DebugfCtx(context.Background(), cd, "cache: expired %v", currentDir)
+						fs.Debugf(cd, "cache: expired %v", currentDir)
 						cd2.CacheTs = &t
 						enc2, _ := json.Marshal(cd2)
 						_ = bucket.Put([]byte("."), enc2)
@@ -416,7 +416,7 @@ func (b *Persistent) RemoveObject(fp string) error {
 		}
 		err := bucket.Delete([]byte(cleanPath(objName)))
 		if err != nil {
-			fs.DebugfCtx(context.Background(), fp, "couldn't delete obj from storage: %v", err)
+			fs.Debugf(fp, "couldn't delete obj from storage: %v", err)
 		}
 		// delete chunks on disk
 		// safe to ignore as the file might not have been open
@@ -510,7 +510,7 @@ func (b *Persistent) AddChunk(fp string, data []byte, offset int64) error {
 				}
 				err := c.Delete()
 				if err != nil {
-					fs.DebugfCtx(context.Background(), fp, "failed to clean chunk: %v", err)
+					fs.Debugf(fp, "failed to clean chunk: %v", err)
 				}
 			}
 		}
@@ -520,11 +520,11 @@ func (b *Persistent) AddChunk(fp string, data []byte, offset int64) error {
 		}
 		enc, err := json.Marshal(chunkInfo{Path: fp, Offset: offset, Size: int64(len(data))})
 		if err != nil {
-			fs.DebugfCtx(context.Background(), fp, "failed to timestamp chunk: %v", err)
+			fs.Debugf(fp, "failed to timestamp chunk: %v", err)
 		}
 		err = tsBucket.Put(itob(ts.UnixNano()), enc)
 		if err != nil {
-			fs.DebugfCtx(context.Background(), fp, "failed to timestamp chunk: %v", err)
+			fs.Debugf(fp, "failed to timestamp chunk: %v", err)
 		}
 		return nil
 	})
@@ -577,7 +577,7 @@ func (b *Persistent) CleanChunksBySize(maxSize int64) {
 				// delete this ts entry
 				err = c.Delete()
 				if err != nil {
-					fs.ErrorfCtx(context.Background(), ci.Path, "failed deleting chunk ts during cleanup (%v): %v", ci.Offset, err)
+					fs.Errorf(ci.Path, "failed deleting chunk ts during cleanup (%v): %v", ci.Offset, err)
 					continue
 				}
 				err = os.Remove(path.Join(b.dataPath, ci.Path, strconv.FormatInt(ci.Offset, 10)))
@@ -591,7 +591,7 @@ func (b *Persistent) CleanChunksBySize(maxSize int64) {
 			}
 		}
 		if cntChunks > 0 {
-			fs.InfofCtx(context.Background(), "cache-cleanup", "chunks %v, est. size: %v", cntChunks, roughlyCleaned.String())
+			fs.Infof("cache-cleanup", "chunks %v, est. size: %v", cntChunks, roughlyCleaned.String())
 
 		}
 		return nil
@@ -602,7 +602,7 @@ func (b *Persistent) CleanChunksBySize(maxSize int64) {
 			// we're likely a late janitor and we need to end quietly as there's no guarantee of what exists anymore
 			return
 		}
-		fs.ErrorfCtx(context.Background(), "cache", "cleanup failed: %v", err)
+		fs.Errorf("cache", "cleanup failed: %v", err)
 	}
 }
 
@@ -702,11 +702,11 @@ func (b *Persistent) Purge() {
 
 	err := os.RemoveAll(b.dataPath)
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), b, "issue removing data folder: %v", err)
+		fs.Errorf(b, "issue removing data folder: %v", err)
 	}
 	err = os.MkdirAll(b.dataPath, os.ModePerm)
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), b, "issue removing data folder: %v", err)
+		fs.Errorf(b, "issue removing data folder: %v", err)
 	}
 }
 
@@ -807,7 +807,7 @@ func (b *Persistent) getPendingUpload(inRoot string, waitTime time.Duration) (de
 			var tempObj = &tempUploadInfo{}
 			err = json.Unmarshal(v, tempObj)
 			if err != nil {
-				fs.ErrorfCtx(context.Background(), b, "failed to read pending upload: %v", err)
+				fs.Errorf(b, "failed to read pending upload: %v", err)
 				continue
 			}
 			// skip over started uploads
@@ -818,12 +818,12 @@ func (b *Persistent) getPendingUpload(inRoot string, waitTime time.Duration) (de
 			tempObj.Started = true
 			v2, err := json.Marshal(tempObj)
 			if err != nil {
-				fs.ErrorfCtx(context.Background(), b, "failed to update pending upload: %v", err)
+				fs.Errorf(b, "failed to update pending upload: %v", err)
 				continue
 			}
 			err = bucket.Put(k, v2)
 			if err != nil {
-				fs.ErrorfCtx(context.Background(), b, "failed to update pending upload: %v", err)
+				fs.Errorf(b, "failed to update pending upload: %v", err)
 				continue
 			}
 
@@ -872,7 +872,7 @@ func (b *Persistent) searchPendingUploadFromDir(dir string) (remotes []string, e
 			var tempObj = &tempUploadInfo{}
 			err = json.Unmarshal(v, tempObj)
 			if err != nil {
-				fs.ErrorfCtx(context.Background(), b, "failed to read pending upload: %v", err)
+				fs.Errorf(b, "failed to read pending upload: %v", err)
 				continue
 			}
 			parentDir := cleanPath(path.Dir(tempObj.DestPath))
@@ -1030,7 +1030,7 @@ func (b *Persistent) Close() {
 
 	err := b.db.Close()
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), b, "closing handle: %v", err)
+		fs.Errorf(b, "closing handle: %v", err)
 	}
 	b.open = false
 }

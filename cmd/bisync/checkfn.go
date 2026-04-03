@@ -137,13 +137,13 @@ func DownloadCheckFn(ctx context.Context, dst, src fs.Object) (equal bool, noHas
 func (b *bisyncRun) checkconflicts(ctxCheck context.Context, filterCheck *filter.Filter, fs1, fs2 fs.Fs) (bilib.Names, error) {
 	matches := bilib.Names{}
 	if filterCheck.HaveFilesFrom() {
-		fs.DebugfCtx(context.Background(), nil, "There are potential conflicts to check.")
+		fs.Debugf(nil, "There are potential conflicts to check.")
 
 		opt, close, checkopterr := check.GetCheckOpt(fs1, fs2)
 		if checkopterr != nil {
 			b.critical = true
 			b.retryable = true
-			fs.DebugfCtx(context.Background(), nil, "GetCheckOpt error: %v", checkopterr)
+			fs.Debugf(nil, "GetCheckOpt error: %v", checkopterr)
 			return matches, checkopterr
 		}
 		defer close()
@@ -152,9 +152,9 @@ func (b *bisyncRun) checkconflicts(ctxCheck context.Context, filterCheck *filter
 
 		opt = b.WhichCheck(ctxCheck, opt)
 
-		fs.InfofCtx(context.Background(), nil, "Checking potential conflicts...")
+		fs.Infof(nil, "Checking potential conflicts...")
 		check := operations.CheckFn(ctxCheck, opt)
-		fs.InfofCtx(context.Background(), nil, "Finished checking the potential conflicts. %s", check)
+		fs.Infof(nil, "Finished checking the potential conflicts. %s", check)
 
 		// reset error count, because we don't want to count check errors as bisync errors
 		accounting.Stats(ctxCheck).ResetErrors()
@@ -164,9 +164,9 @@ func (b *bisyncRun) checkconflicts(ctxCheck context.Context, filterCheck *filter
 			matches = bilib.ToNames(strings.Split(fmt.Sprint(opt.Match), "\n"))
 		}
 		if matches.NotEmpty() {
-			fs.DebugfCtx(context.Background(), nil, "The following potential conflicts were determined to be identical. %v", matches)
+			fs.Debugf(nil, "The following potential conflicts were determined to be identical. %v", matches)
 		} else {
-			fs.DebugfCtx(context.Background(), nil, "None of the conflicts were determined to be identical.")
+			fs.Debugf(nil, "None of the conflicts were determined to be identical.")
 		}
 
 	}

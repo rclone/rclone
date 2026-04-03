@@ -210,7 +210,7 @@ func (wb *WriteBack) _stopTimer() {
 		return
 	}
 	wb.expiry = time.Time{}
-	// fs.DebugfCtx(context.Background(), nil, "resetTimer STOP")
+	// fs.Debugf(nil, "resetTimer STOP")
 	if wb.timer != nil {
 		wb.timer.Stop()
 		wb.timer = nil
@@ -228,7 +228,7 @@ func (wb *WriteBack) _resetTimer() {
 		}
 		wb.expiry = wbItem.expiry
 		dt := max(time.Until(wbItem.expiry), 0)
-		// fs.DebugfCtx(context.Background(), nil, "resetTimer dt=%v", dt)
+		// fs.Debugf(nil, "resetTimer dt=%v", dt)
 		if wb.timer != nil {
 			wb.timer.Stop()
 		}
@@ -285,7 +285,7 @@ func (wb *WriteBack) Add(id Handle, name string, size int64, modified bool, putF
 func (wb *WriteBack) _remove(id Handle) (found bool) {
 	wbItem, found := wb.lookup[id]
 	if found {
-		fs.DebugfCtx(context.Background(), wbItem.name, "vfs cache: cancelling writeback (uploading %v) %p item %d", wbItem.uploading, wbItem, wbItem.id)
+		fs.DebugfCtx(wb.ctx, wbItem.name, "vfs cache: cancelling writeback (uploading %v) %p item %d", wbItem.uploading, wbItem, wbItem.id)
 		if wbItem.uploading {
 			// We are uploading already so cancel the upload
 			wb._cancelUpload(wbItem)
@@ -392,7 +392,7 @@ func (wb *WriteBack) _cancelUpload(wbItem *writeBackItem) {
 	if !wbItem.uploading {
 		return
 	}
-	fs.DebugfCtx(context.Background(), wbItem.name, "vfs cache: cancelling upload")
+	fs.DebugfCtx(wb.ctx, wbItem.name, "vfs cache: cancelling upload")
 	if wbItem.cancel != nil {
 		// Cancel the upload - this may or may not be effective
 		wbItem.cancel()
@@ -406,7 +406,7 @@ func (wb *WriteBack) _cancelUpload(wbItem *writeBackItem) {
 	}
 	// uploading items are not on the heap so add them back
 	wb._pushItem(wbItem)
-	fs.DebugfCtx(context.Background(), wbItem.name, "vfs cache: cancelled upload")
+	fs.DebugfCtx(wb.ctx, wbItem.name, "vfs cache: cancelled upload")
 }
 
 // cancelUpload cancels the upload of the item if there is one in progress
@@ -442,7 +442,7 @@ func (wb *WriteBack) processItems(ctx context.Context) {
 		}
 		// Pop the item, mark as uploading and start the uploader
 		wbItem = wb._popItem()
-		//fs.DebugfCtx(context.Background(), wbItem.name, "uploading = true %p item %p", wbItem, wbItem.item)
+		//fs.DebugfCtx(ctx, wbItem.name, "uploading = true %p item %p", wbItem, wbItem.item)
 		wbItem.uploading = true
 		wb.uploads++
 		newCtx, cancel := context.WithCancel(ctx)

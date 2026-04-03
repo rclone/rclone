@@ -819,12 +819,12 @@ func (f *Fs) receiveChangeNotify(forgetPath string, entryType fs.EntryType) {
 	if crypt, yes := f.isWrappedByCrypt(); yes {
 		decryptedPath, err := crypt.DecryptFileName(forgetPath)
 		if err == nil {
-			fs.InfofCtx(context.Background(), decryptedPath, "received cache expiry notification")
+			fs.Infof(decryptedPath, "received cache expiry notification")
 		} else {
-			fs.InfofCtx(context.Background(), forgetPath, "received cache expiry notification")
+			fs.Infof(forgetPath, "received cache expiry notification")
 		}
 	} else {
-		fs.InfofCtx(context.Background(), forgetPath, "received cache expiry notification")
+		fs.Infof(forgetPath, "received cache expiry notification")
 	}
 	// notify upstreams too (vfs)
 	f.notifyChangeUpstream(forgetPath, entryType)
@@ -834,11 +834,11 @@ func (f *Fs) receiveChangeNotify(forgetPath string, entryType fs.EntryType) {
 		co := NewObject(f, forgetPath)
 		err := f.cache.GetObject(co)
 		if err != nil {
-			fs.DebugfCtx(context.Background(), f, "got change notification for non cached entry %v", co)
+			fs.Debugf(f, "got change notification for non cached entry %v", co)
 		}
 		err = f.cache.ExpireObject(co, true)
 		if err != nil {
-			fs.DebugfCtx(context.Background(), forgetPath, "notify: error expiring '%v': %v", co, err)
+			fs.Debugf(forgetPath, "notify: error expiring '%v': %v", co, err)
 		}
 		cd = NewDirectory(f, cleanPath(path.Dir(co.Remote())))
 	} else {
@@ -847,9 +847,9 @@ func (f *Fs) receiveChangeNotify(forgetPath string, entryType fs.EntryType) {
 	// we expire the dir
 	err := f.cache.ExpireDir(cd)
 	if err != nil {
-		fs.DebugfCtx(context.Background(), forgetPath, "notify: error expiring '%v': %v", cd, err)
+		fs.Debugf(forgetPath, "notify: error expiring '%v': %v", cd, err)
 	} else {
-		fs.DebugfCtx(context.Background(), forgetPath, "notify: expired '%v'", cd)
+		fs.Debugf(forgetPath, "notify: expired '%v'", cd)
 	}
 
 	f.notifiedMu.Lock()
@@ -1402,7 +1402,7 @@ func (f *Fs) cacheReader(u io.Reader, src fs.ObjectInfo, originalRead func(inn i
 			// 3. ErrClosedPipe - source remote reader was closed (usually means it reached the end) and we need to stop too
 			// if we have a different error: we're going to error out the original reading too and stop this
 			if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF && err != io.ErrClosedPipe {
-				fs.ErrorfCtx(context.Background(), src, "error saving new data in cache. offset: %v, err: %v", offset, err)
+				fs.Errorf(src, "error saving new data in cache. offset: %v, err: %v", offset, err)
 				_ = pr.CloseWithError(err)
 				break
 			}
@@ -1411,7 +1411,7 @@ func (f *Fs) cacheReader(u io.Reader, src fs.ObjectInfo, originalRead func(inn i
 				chunk = chunk[:readSize]
 				err2 := f.cache.AddChunk(cleanPath(path.Join(f.root, src.Remote())), chunk, offset)
 				if err2 != nil {
-					fs.ErrorfCtx(context.Background(), src, "error saving new data in cache '%v'", err2)
+					fs.Errorf(src, "error saving new data in cache '%v'", err2)
 					_ = pr.CloseWithError(err2)
 					break
 				}
@@ -1771,7 +1771,7 @@ func (f *Fs) openRateLimited(fn func() (io.ReadCloser, error)) (io.ReadCloser, e
 
 	elapsed := time.Since(start)
 	if elapsed > time.Second*2 {
-		fs.DebugfCtx(context.Background(), f, "rate limited: %s", elapsed)
+		fs.Debugf(f, "rate limited: %s", elapsed)
 	}
 	return fn()
 }
@@ -1795,7 +1795,7 @@ func (f *Fs) StopBackgroundRunners() {
 		f.backgroundRunner.close()
 	}
 	f.cache.Close()
-	fs.DebugfCtx(context.Background(), f, "Services stopped")
+	fs.Debugf(f, "Services stopped")
 }
 
 // UnWrap returns the Fs that this Fs is wrapping

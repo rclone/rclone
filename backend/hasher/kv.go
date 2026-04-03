@@ -32,7 +32,7 @@ type hashRecord struct {
 func (r *hashRecord) encode(key string) ([]byte, error) {
 	var buf bytes.Buffer
 	if err := gob.NewEncoder(&buf).Encode(r); err != nil {
-		fs.DebugfCtx(context.Background(), key, "hasher encoding %v: %v", r, err)
+		fs.Debugf(key, "hasher encoding %v: %v", r, err)
 		return nil, err
 	}
 	return buf.Bytes(), nil
@@ -40,7 +40,7 @@ func (r *hashRecord) encode(key string) ([]byte, error) {
 
 func (r *hashRecord) decode(key string, data []byte) error {
 	if err := gob.NewDecoder(bytes.NewBuffer(data)).Decode(r); err != nil {
-		fs.DebugfCtx(context.Background(), key, "hasher decoding %q failed: %v", data, err)
+		fs.Debugf(key, "hasher decoding %q failed: %v", data, err)
 		return err
 	}
 	return nil

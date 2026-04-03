@@ -284,7 +284,7 @@ func errorHandler(resp *http.Response) error {
 	errResponse := new(Error)
 	err := rest.DecodeJSON(resp, &errResponse)
 	if err != nil {
-		fs.DebugfCtx(context.Background(), nil, "Couldn't decode error response: %v", err)
+		fs.Debugf(nil, "Couldn't decode error response: %v", err)
 	}
 	if errResponse.Info.Code == 0 {
 		errResponse.Info.Code = resp.StatusCode
@@ -297,7 +297,7 @@ func errorHandler(resp *http.Response) error {
 
 // Mkdir creates the folder if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	// fs.DebugfCtx(context.Background(), nil, "Mkdir(\"%s\")", dir)
+	// fs.Debugf(nil, "Mkdir(\"%s\")", dir)
 	_, err := f.dirCache.FindDir(ctx, dir, true)
 	return err
 }
@@ -347,7 +347,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 //
 // Returns an error if it isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	// fs.DebugfCtx(context.Background(), nil, "Rmdir(\"%s\")", path.Join(f.root, dir))
+	// fs.Debugf(nil, "Rmdir(\"%s\")", path.Join(f.root, dir))
 	return f.purgeCheck(ctx, dir, true)
 }
 
@@ -366,7 +366,7 @@ func (f *Fs) Precision() time.Duration {
 //
 // If it isn't possible then return fs.ErrorCantCopy
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-	// fs.DebugfCtx(context.Background(), nil, "Copy(%v)", remote)
+	// fs.Debugf(nil, "Copy(%v)", remote)
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
@@ -388,7 +388,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, err
 	}
-	// fs.DebugfCtx(context.Background(), nil, "...%#v\n...%#v", remote, directoryID)
+	// fs.Debugf(nil, "...%#v\n...%#v", remote, directoryID)
 
 	// Copy the object
 	var resp *http.Response
@@ -456,7 +456,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 //
 // If it isn't possible then return fs.ErrorCantMove
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-	// fs.DebugfCtx(context.Background(), nil, "Move(%v)", remote)
+	// fs.Debugf(nil, "Move(%v)", remote)
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
@@ -607,7 +607,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 //
 // If it can't be found it returns the error fs.ErrorObjectNotFound.
 func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, file *File, parent string) (fs.Object, error) {
-	// fs.DebugfCtx(context.Background(), nil, "newObjectWithInfo(%s, %v)", remote, file)
+	// fs.Debugf(nil, "newObjectWithInfo(%s, %v)", remote, file)
 
 	var o *Object
 	if nil != file {
@@ -637,7 +637,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, file *File, p
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error fs.ErrorObjectNotFound.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	// fs.DebugfCtx(context.Background(), nil, "NewObject(\"%s\")", remote)
+	// fs.Debugf(nil, "NewObject(\"%s\")", remote)
 	return f.newObjectWithInfo(ctx, remote, nil, "")
 }
 
@@ -653,7 +653,7 @@ func (f *Fs) createObject(ctx context.Context, remote string, modTime time.Time,
 	if err != nil {
 		return nil, leaf, directoryID, err
 	}
-	// fs.DebugfCtx(context.Background(), nil, "\n...leaf %#v\n...id %#v", leaf, directoryID)
+	// fs.Debugf(nil, "\n...leaf %#v\n...id %#v", leaf, directoryID)
 	// Temporary Object under construction
 	o = &Object{
 		fs:     f,
@@ -689,7 +689,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	size := src.Size()
 	modTime := src.ModTime(ctx)
 
-	// fs.DebugfCtx(context.Background(), nil, "Put(%s)", remote)
+	// fs.Debugf(nil, "Put(%s)", remote)
 
 	o, leaf, directoryID, err := f.createObject(ctx, remote, modTime, size)
 	if err != nil {
@@ -763,7 +763,7 @@ func getAccessLevel(access string) int64 {
 		accessLevel = 2
 	default:
 		accessLevel = 0
-		fs.ErrorfCtx(context.Background(), nil, "Invalid access: %s, defaulting to private", access)
+		fs.Errorf(nil, "Invalid access: %s, defaulting to private", access)
 	}
 	return accessLevel
 }
@@ -772,7 +772,7 @@ func getAccessLevel(access string) int64 {
 
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
-	// fs.DebugfCtx(context.Background(), f, "CreateDir(%q, %q)\n", pathID, replaceReservedChars(leaf))
+	// fs.Debugf(f, "CreateDir(%q, %q)\n", pathID, replaceReservedChars(leaf))
 	var resp *http.Response
 	response := createFolderResponse{}
 	err = f.pacer.Call(func() (bool, error) {
@@ -801,10 +801,10 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
-	// fs.DebugfCtx(context.Background(), nil, "FindLeaf(\"%s\", \"%s\")", pathID, leaf)
+	// fs.Debugf(nil, "FindLeaf(\"%s\", \"%s\")", pathID, leaf)
 
 	if pathID == "0" && leaf == "" {
-		// fs.DebugfCtx(context.Background(), nil, "Found OpenDrive root")
+		// fs.Debugf(nil, "Found OpenDrive root")
 		// that's the root directory
 		return pathID, true, nil
 	}
@@ -826,7 +826,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 
 	leaf = f.opt.Enc.FromStandardName(leaf)
 	for _, folder := range folderList.Folders {
-		// fs.DebugfCtx(context.Background(), nil, "Folder: %s (%s)", folder.Name, folder.FolderID)
+		// fs.Debugf(nil, "Folder: %s (%s)", folder.Name, folder.FolderID)
 
 		if strings.EqualFold(leaf, folder.Name) {
 			// found
@@ -847,7 +847,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	// fs.DebugfCtx(context.Background(), nil, "List(%v)", dir)
+	// fs.Debugf(nil, "List(%v)", dir)
 	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
 		return nil, err
@@ -880,7 +880,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 
 	for _, folder := range folderList.Folders {
 		folder.Name = f.opt.Enc.ToStandardName(folder.Name)
-		// fs.DebugfCtx(context.Background(), nil, "Folder: %s (%s)", folder.Name, folder.FolderID)
+		// fs.Debugf(nil, "Folder: %s (%s)", folder.Name, folder.FolderID)
 		remote := path.Join(dir, folder.Name)
 		// cache the directory ID for later lookups
 		f.dirCache.Put(remote, folder.FolderID)
@@ -892,7 +892,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 
 	for _, file := range folderList.Files {
 		file.Name = f.opt.Enc.ToStandardName(file.Name)
-		// fs.DebugfCtx(context.Background(), nil, "File: %s (%s)", file.Name, file.FileID)
+		// fs.Debugf(nil, "File: %s (%s)", file.Name, file.FileID)
 		remote := path.Join(dir, file.Name)
 		o, err := f.newObjectWithInfo(ctx, remote, &file, directoryID)
 		if err != nil {
@@ -947,7 +947,7 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	// fs.DebugfCtx(context.Background(), nil, "SetModTime(%v)", modTime.String())
+	// fs.Debugf(nil, "SetModTime(%v)", modTime.String())
 	opts := rest.Opts{
 		Method:     "PUT",
 		NoResponse: true,
@@ -970,7 +970,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	// fs.DebugfCtx(context.Background(), nil, "Open(\"%v\")", o.remote)
+	// fs.Debugf(nil, "Open(\"%v\")", o.remote)
 	fs.FixRangeOption(options, o.size)
 	opts := rest.Opts{
 		Method:  "GET",
@@ -991,7 +991,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
-	// fs.DebugfCtx(context.Background(), nil, "Remove(\"%s\")", o.id)
+	// fs.Debugf(nil, "Remove(\"%s\")", o.id)
 	return o.fs.pacer.Call(func() (bool, error) {
 		opts := rest.Opts{
 			Method:     "DELETE",
@@ -1014,14 +1014,14 @@ func (o *Object) Storable() bool {
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	size := src.Size()
 	modTime := src.ModTime(ctx)
-	// fs.DebugfCtx(context.Background(), nil, "Update(\"%s\", \"%s\")", o.id, o.remote)
+	// fs.Debugf(nil, "Update(\"%s\", \"%s\")", o.id, o.remote)
 
 	// Open file for upload
 	var resp *http.Response
 	openResponse := openUploadResponse{}
 	err := o.fs.pacer.Call(func() (bool, error) {
 		openUploadData := openUpload{SessionID: o.fs.session.SessionID, FileID: o.id, Size: size}
-		// fs.DebugfCtx(context.Background(), nil, "PreOpen: %#v", openUploadData)
+		// fs.Debugf(nil, "PreOpen: %#v", openUploadData)
 		opts := rest.Opts{
 			Method:  "POST",
 			Options: options,
@@ -1034,7 +1034,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return fmt.Errorf("failed to create file: %w", err)
 	}
 	// resp.Body.Close()
-	// fs.DebugfCtx(context.Background(), nil, "PostOpen: %#v", openResponse)
+	// fs.Debugf(nil, "PostOpen: %#v", openResponse)
 
 	buf := make([]byte, o.fs.opt.ChunkSize)
 	chunkOffset := int64(0)
@@ -1086,7 +1086,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	closeResponse := closeUploadResponse{}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		closeUploadData := closeUpload{SessionID: o.fs.session.SessionID, FileID: o.id, Size: size, TempLocation: openResponse.TempLocation}
-		// fs.DebugfCtx(context.Background(), nil, "PreClose: %#v", closeUploadData)
+		// fs.Debugf(nil, "PreClose: %#v", closeUploadData)
 		opts := rest.Opts{
 			Method: "POST",
 			Path:   "/upload/close_file_upload.json",
@@ -1097,7 +1097,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		return fmt.Errorf("failed to create file: %w", err)
 	}
-	// fs.DebugfCtx(context.Background(), nil, "PostClose: %#v", closeResponse)
+	// fs.Debugf(nil, "PostClose: %#v", closeResponse)
 
 	o.id = closeResponse.FileID
 	o.size = closeResponse.Size
@@ -1111,7 +1111,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// Set permissions
 	err = o.fs.pacer.Call(func() (bool, error) {
 		update := permissions{SessionID: o.fs.session.SessionID, FileID: o.id, FileIsPublic: getAccessLevel(o.fs.opt.Access)}
-		// fs.DebugfCtx(context.Background(), nil, "Permissions : %#v", update)
+		// fs.Debugf(nil, "Permissions : %#v", update)
 		opts := rest.Opts{
 			Method:     "POST",
 			NoResponse: true,

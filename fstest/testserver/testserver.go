@@ -3,7 +3,6 @@ package testserver
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -71,7 +70,7 @@ var matchLine = regexp.MustCompile(`^([a-zA-Z_]+)=(.*)$`)
 
 // Start the server and env vars so rclone can use it
 func start(name string) error {
-	fs.LogfCtx(context.Background(), name, "Starting server")
+	fs.Logf(name, "Starting server")
 	out, err := run(name, "start")
 	if err != nil {
 		return err
@@ -95,7 +94,7 @@ func start(name string) error {
 				continue
 			}
 
-			// fs.DebugfCtx(context.Background(), name, "key = %q, envKey = %q, value = %q", key, envKey(name, string(key)), value)
+			// fs.Debugf(name, "key = %q, envKey = %q, value = %q", key, envKey(name, string(key)), value)
 			err = os.Setenv(envKey(name, string(key)), string(value))
 			if err != nil {
 				return err
@@ -103,7 +102,7 @@ func start(name string) error {
 		}
 	}
 	if connect == "" {
-		fs.LogfCtx(context.Background(), name, "Started server")
+		fs.Logf(name, "Started server")
 		return nil
 	}
 	// If we got a _connect value then try to connect to it
@@ -113,10 +112,10 @@ func start(name string) error {
 		if i != 0 {
 			time.Sleep(time.Second)
 		}
-		fs.LogfCtx(context.Background(), name, "Attempting to connect to %q try %d/%d", connect, i, maxTries)
+		fs.Logf(name, "Attempting to connect to %q try %d/%d", connect, i, maxTries)
 		conn, err := net.DialTimeout("tcp", connect, time.Second)
 		if err != nil {
-			fs.DebugfCtx(context.Background(), name, "Connection to %q failed try %d/%d: %v", connect, i, maxTries, err)
+			fs.Debugf(name, "Connection to %q failed try %d/%d: %v", connect, i, maxTries, err)
 			continue
 		}
 
@@ -126,16 +125,16 @@ func start(name string) error {
 		}
 		n, err := conn.Read(rdBuf)
 		_ = conn.Close()
-		fs.DebugfCtx(context.Background(), name, "Read %d, error: %v", n, err)
+		fs.Debugf(name, "Read %d, error: %v", n, err)
 		if err != nil && !errors.Is(err, os.ErrDeadlineExceeded) {
 			// Try again
 			continue
 		}
 		if connectDelay > 0 {
-			fs.LogfCtx(context.Background(), name, "Connect delay %v", connectDelay)
+			fs.Logf(name, "Connect delay %v", connectDelay)
 			time.Sleep(connectDelay)
 		}
-		fs.LogfCtx(context.Background(), name, "Started server and connected to %q", connect)
+		fs.Logf(name, "Started server and connected to %q", connect)
 		return nil
 	}
 	return fmt.Errorf("failed to connect to %q on %q", name, connect)
@@ -143,10 +142,10 @@ func start(name string) error {
 
 // Stops the named test server
 func stop(name string) {
-	fs.LogfCtx(context.Background(), name, "Stopping server")
+	fs.Logf(name, "Stopping server")
 	_, err := run(name, "stop")
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), name, "Failed to stop server: %v", err)
+		fs.Errorf(name, "Failed to stop server: %v", err)
 	}
 }
 

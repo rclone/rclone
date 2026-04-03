@@ -738,7 +738,7 @@ func (f *Fs) setEnv(s sshSession) error {
 		if equal < 0 {
 			return fmt.Errorf("no = found in env var %q", env)
 		}
-		// fs.DebugfCtx(context.Background(), f, "Setting env %q = %q", env[:equal], env[equal+1:])
+		// fs.Debugf(f, "Setting env %q = %q", env[:equal], env[equal+1:])
 		err := s.Setenv(env[:equal], env[equal+1:])
 		if err != nil {
 			return fmt.Errorf("failed to set env var %q: %w", env[:equal], err)
@@ -853,11 +853,11 @@ func (f *Fs) putSftpConnection(pc **conn, err error) {
 		if !isRegularError {
 			_, nopErr := c.sftpClient.Getwd()
 			if nopErr != nil {
-				fs.DebugfCtx(context.Background(), f, "Connection failed, closing: %v", nopErr)
+				fs.Debugf(f, "Connection failed, closing: %v", nopErr)
 				_ = c.close()
 				return
 			}
-			fs.DebugfCtx(context.Background(), f, "Connection OK after error: %v", err)
+			fs.Debugf(f, "Connection OK after error: %v", err)
 		}
 	}
 	f.poolMu.Lock()
@@ -1136,7 +1136,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 //
 // Just send the password back for all questions
 func (f *Fs) keyboardInteractiveReponse(user, instruction string, questions []string, echos []bool, pass string) ([]string, error) {
-	fs.DebugfCtx(context.Background(), f, "Keyboard interactive auth requested")
+	fs.Debugf(f, "Keyboard interactive auth requested")
 	answers := make([]string, len(questions))
 	for i := range answers {
 		answers[i] = pass
@@ -1705,7 +1705,7 @@ func (f *Fs) Hashes() hash.Set {
 		for _, hashName := range f.opt.Hashes {
 			var hashType hash.Type
 			if err := hashType.Set(hashName); err != nil {
-				fs.InfofCtx(context.Background(), nil, "Invalid token %q in hash string %q", hashName, f.opt.Hashes.String())
+				fs.Infof(nil, "Invalid token %q in hash string %q", hashName, f.opt.Hashes.String())
 			}
 			hashTypes.Add(hashType)
 		}
@@ -1806,21 +1806,21 @@ func (f *Fs) Hashes() hash.Set {
 		if *hashCommand != "" {
 			return true
 		}
-		fs.DebugfCtx(context.Background(), f, "Checking default %v hash commands", hashType)
+		fs.Debugf(f, "Checking default %v hash commands", hashType)
 		*changed = true
 		for _, command := range commands {
 			output, err := f.run(ctx, command.hashEmpty)
 			if err != nil {
-				fs.DebugfCtx(context.Background(), f, "Hash command skipped: %v", err)
+				fs.Debugf(f, "Hash command skipped: %v", err)
 				continue
 			}
 			output = bytes.TrimSpace(output)
 			if parseHash(output) == expected {
 				*hashCommand = command.hashFile
-				fs.DebugfCtx(context.Background(), f, "Hash command accepted")
+				fs.Debugf(f, "Hash command accepted")
 				return true
 			}
-			fs.DebugfCtx(context.Background(), f, "Hash command skipped: Wrong output")
+			fs.Debugf(f, "Hash command skipped: Wrong output")
 		}
 		*hashCommand = hashCommandNotSupported
 		return false
@@ -1839,7 +1839,7 @@ func (f *Fs) Hashes() hash.Set {
 		// Save permanently in config to avoid the extra work next time
 		for _, hashType := range hashTypes.Array() {
 			if entry, ok := hashCommands[hashType]; ok {
-				fs.DebugfCtx(context.Background(), f, "Setting hash command for %v to %q (set %vsum_command to override)", hashType, *entry.option, hashType)
+				fs.Debugf(f, "Setting hash command for %v to %q (set %vsum_command to override)", hashType, *entry.option, hashType)
 				f.m.Set(fmt.Sprintf("%vsum_command", hashType), *entry.option)
 			}
 		}
@@ -2088,7 +2088,7 @@ func (f *Fs) remoteShellPath(remote string) string {
 		if f.opt.PathOverride[0] == '@' {
 			shellPath = path.Join(strings.TrimPrefix(f.opt.PathOverride, "@"), f.absRoot, remote)
 		}
-		fs.DebugfCtx(context.Background(), f, "Shell path redirected to %q with option path_override", shellPath)
+		fs.Debugf(f, "Shell path redirected to %q with option path_override", shellPath)
 		return shellPath
 	}
 	shellPath := path.Join(f.absRoot, remote)
@@ -2103,11 +2103,11 @@ func (f *Fs) remoteShellPath(remote string) string {
 		// and option path_override can always be used to work around corner cases.
 		if posixWinAbsPathRegex.MatchString(shellPath) {
 			shellPath = strings.TrimPrefix(shellPath, "/")
-			fs.DebugfCtx(context.Background(), f, "Shell path adjusted to %q (set option path_override to override)", shellPath)
+			fs.Debugf(f, "Shell path adjusted to %q (set option path_override to override)", shellPath)
 			return shellPath
 		}
 	}
-	fs.DebugfCtx(context.Background(), f, "Shell path %q", shellPath)
+	fs.Debugf(f, "Shell path %q", shellPath)
 	return shellPath
 }
 

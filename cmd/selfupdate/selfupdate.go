@@ -289,7 +289,7 @@ func replaceExecutable(targetFile, newFile, savedFile string) error {
 			// This usually means that the running executable has a name with ".old".
 			// This can happen in very rare cases, but we ought to handle it.
 			// Try inserting a randomness in the name to mitigate it.
-			fs.DebugfCtx(context.Background(), nil, "%s: cannot replace old file, randomizing name", savedFile)
+			fs.Debugf(nil, "%s: cannot replace old file, randomizing name", savedFile)
 
 			savedFile, saveErr = makeRandomExeName(targetFile, "old")
 			if saveErr == nil {
@@ -302,7 +302,7 @@ func replaceExecutable(targetFile, newFile, savedFile string) error {
 			}
 		}
 		if saveErr == nil {
-			fs.InfofCtx(context.Background(), nil, "The old executable was saved as %s", savedFile)
+			fs.Infof(nil, "The old executable was saved as %s", savedFile)
 			err = nil
 		}
 	}
@@ -312,7 +312,7 @@ func replaceExecutable(targetFile, newFile, savedFile string) error {
 	}
 	if err != nil {
 		if rmErr := os.Remove(newFile); rmErr != nil {
-			fs.ErrorfCtx(context.Background(), nil, "%s: could not remove temporary file: %v", newFile, rmErr)
+			fs.Errorf(nil, "%s: could not remove temporary file: %v", newFile, rmErr)
 		}
 		return err
 	}
@@ -481,7 +481,7 @@ func extractZipToFile(buf []byte, entryName, newFile string) error {
 	_ = writer.Close()
 	if err != nil {
 		if rmErr := os.Remove(newFile); rmErr != nil {
-			fs.ErrorfCtx(context.Background(), nil, "%s: could not remove temporary file: %v", newFile, rmErr)
+			fs.Errorf(nil, "%s: could not remove temporary file: %v", newFile, rmErr)
 		}
 	}
 	return err

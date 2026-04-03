@@ -203,11 +203,11 @@ func (f *Fs) putConnection(pc **conn, err error) {
 		if !(errors.Is(err, os.ErrNotExist) || errors.Is(err, os.ErrExist) || errors.Is(err, os.ErrPermission)) {
 			echoErr := c.smbSession.Echo()
 			if echoErr != nil {
-				fs.DebugfCtx(context.Background(), f, "Connection failed, closing: %v", echoErr)
+				fs.Debugf(f, "Connection failed, closing: %v", echoErr)
 				_ = c.close()
 				return
 			}
-			fs.DebugfCtx(context.Background(), f, "Connection OK after error: %v", err)
+			fs.Debugf(f, "Connection OK after error: %v", err)
 		}
 	}
 

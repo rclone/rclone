@@ -747,7 +747,7 @@ func (f *Fs) cleanRemote(dir, filename string) (remote string) {
 	if !utf8.ValidString(filename) {
 		f.warnedMu.Lock()
 		if _, ok := f.warned[remote]; !ok {
-			fs.LogfCtx(context.Background(), f, "Replacing invalid UTF-8 characters in %q", remote)
+			fs.Logf(f, "Replacing invalid UTF-8 characters in %q", remote)
 			f.warned[remote] = struct{}{}
 		}
 		f.warnedMu.Unlock()
@@ -1058,7 +1058,7 @@ func (f *Fs) Hashes() hash.Set {
 		for _, hashName := range f.opt.Hashes {
 			var ht hash.Type
 			if err := ht.Set(hashName); err != nil {
-				fs.InfofCtx(context.Background(), nil, "Invalid token %q in hash string %q", hashName, f.opt.Hashes.String())
+				fs.Infof(nil, "Invalid token %q in hash string %q", hashName, f.opt.Hashes.String())
 			}
 			supported.Add(ht)
 		}
@@ -1253,16 +1253,16 @@ func (o *Object) Storable() bool {
 	}
 	if mode&symlinkFlag != 0 && !o.fs.opt.TranslateSymlinks {
 		if !o.fs.opt.SkipSymlinks {
-			fs.LogfCtx(context.Background(), o, "Can't follow symlink without -L/--copy-links")
+			fs.Logf(o, "Can't follow symlink without -L/--copy-links")
 		}
 		return false
 	} else if mode&(os.ModeNamedPipe|os.ModeSocket|os.ModeDevice) != 0 {
 		if !o.fs.opt.SkipSpecials {
-			fs.LogfCtx(context.Background(), o, "Can't transfer non file/directory")
+			fs.Logf(o, "Can't transfer non file/directory")
 		}
 		return false
 	} else if mode&os.ModeDir != 0 {
-		// fs.DebugfCtx(context.Background(), o, "Skipping directory")
+		// fs.Debugf(o, "Skipping directory")
 		return false
 	}
 	return true
@@ -1600,7 +1600,7 @@ func (o *Object) setMetadata(info os.FileInfo) {
 	if o.translatedLink {
 		linkdst, err := os.Readlink(o.path)
 		if err != nil {
-			fs.ErrorfCtx(context.Background(), o, "Failed to read link size: %v", err)
+			fs.Errorf(o, "Failed to read link size: %v", err)
 		} else {
 			o.size = int64(len(linkdst))
 		}

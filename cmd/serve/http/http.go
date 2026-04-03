@@ -216,7 +216,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 // Serve HTTP until the server is shutdown
 func (s *HTTP) Serve() error {
 	s.server.Serve()
-	fs.LogfCtx(context.Background(), s.f, "HTTP Server started on %s", s.server.URLs())
+	fs.Logf(s.f, "HTTP Server started on %s", s.server.URLs())
 	s.server.Wait()
 	return nil
 }
@@ -248,7 +248,7 @@ func (s *HTTP) serveFavicon(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "image/png")
 	w.Header().Set("Cache-Control", "max-age=86400")
 	if _, err := w.Write(faviconData); err != nil {
-		fs.DebugfCtx(context.Background(), nil, "Failed to write favicon: %v", err)
+		fs.Debugf(nil, "Failed to write favicon: %v", err)
 	}
 }
 
@@ -269,7 +269,7 @@ func (s *HTTP) serveDir(w http.ResponseWriter, r *http.Request, dirRemote string
 	VFS, err := s.getVFS(r.Context())
 	if err != nil {
 		http.Error(w, "Root directory not found", http.StatusNotFound)
-		fs.ErrorfCtx(context.Background(), nil, "Failed to serve directory: %v", err)
+		fs.Errorf(nil, "Failed to serve directory: %v", err)
 		return
 	}
 	// List the directory
@@ -288,7 +288,7 @@ func (s *HTTP) serveDir(w http.ResponseWriter, r *http.Request, dirRemote string
 	dir := node.(*vfs.Dir)
 
 	if r.URL.Query().Get("download") == "zip" && !s.opt.DisableZip {
-		fs.InfofCtx(context.Background(), dirRemote, "%s: Zipping directory", r.RemoteAddr)
+		fs.Infof(dirRemote, "%s: Zipping directory", r.RemoteAddr)
 		zipName := path.Base(dirRemote)
 		if dirRemote == "" {
 			zipName = "root"
@@ -338,13 +338,13 @@ func (s *HTTP) serveFile(w http.ResponseWriter, r *http.Request, remote string) 
 	VFS, err := s.getVFS(r.Context())
 	if err != nil {
 		http.Error(w, "File not found", http.StatusNotFound)
-		fs.ErrorfCtx(context.Background(), nil, "Failed to serve file: %v", err)
+		fs.Errorf(nil, "Failed to serve file: %v", err)
 		return
 	}
 
 	node, err := VFS.Stat(remote)
 	if err == vfs.ENOENT {
-		fs.InfofCtx(context.Background(), remote, "%s: File not found", r.RemoteAddr)
+		fs.Infof(remote, "%s: File not found", r.RemoteAddr)
 		http.Error(w, "File not found", http.StatusNotFound)
 		return
 	} else if err != nil {
@@ -394,7 +394,7 @@ func (s *HTTP) serveFile(w http.ResponseWriter, r *http.Request, remote string) 
 	defer func() {
 		err := in.Close()
 		if err != nil {
-			fs.ErrorfCtx(context.Background(), remote, "Failed to close file: %v", err)
+			fs.Errorf(remote, "Failed to close file: %v", err)
 		}
 	}()
 
@@ -414,7 +414,7 @@ func (s *HTTP) serveFile(w http.ResponseWriter, r *http.Request, remote string) 
 		}
 		n, err := io.Copy(w, in)
 		if err != nil {
-			fs.ErrorfCtx(context.Background(), obj, "Didn't finish writing GET request (wrote %d/unknown bytes): %v", n, err)
+			fs.Errorf(obj, "Didn't finish writing GET request (wrote %d/unknown bytes): %v", n, err)
 			return
 		}
 	}

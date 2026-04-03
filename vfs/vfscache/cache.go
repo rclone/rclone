@@ -430,7 +430,7 @@ func (c *Cache) Rename(name string, newName string, newObj fs.Object) (err error
 	}
 	c.mu.Unlock()
 
-	fs.InfofCtx(context.Background(), name, "vfs cache: renamed in cache to %q", newName)
+	fs.Infof(name, "vfs cache: renamed in cache to %q", newName)
 	return nil
 }
 
@@ -473,7 +473,7 @@ func (c *Cache) DirRename(oldDirName string, newDirName string) (err error) {
 	// Old path should be empty now so remove it
 	c.purgeEmptyDirs(oldDirName[:len(oldDirName)-1], false)
 
-	fs.InfofCtx(context.Background(), oldDirName, "vfs cache: renamed dir in cache to %q", newDirName)
+	fs.Infof(oldDirName, "vfs cache: renamed dir in cache to %q", newDirName)
 	return err
 }
 
@@ -564,14 +564,14 @@ func (c *Cache) KickCleaner() {
 	/* Use a separate kicker mutex for the kick to go through without waiting for the
 	   cache mutex to avoid letting a thread kick again after the clearer just
 	   finished cleaning and unlock the cache mutex. */
-	fs.DebugfCtx(context.Background(), c.fremote, "vfs cache: at the beginning of KickCleaner")
+	fs.Debugf(c.fremote, "vfs cache: at the beginning of KickCleaner")
 	c.kickerMu.Lock()
 	if !c.cleanerKicked {
 		c.cleanerKicked = true
-		fs.DebugfCtx(context.Background(), c.fremote, "vfs cache: in KickCleaner, ready to lock cache mutex")
+		fs.Debugf(c.fremote, "vfs cache: in KickCleaner, ready to lock cache mutex")
 		c.mu.Lock()
 		c.outOfSpace = true
-		fs.LogfCtx(context.Background(), c.fremote, "vfs cache: in KickCleaner, ready to kick cleaner")
+		fs.Logf(c.fremote, "vfs cache: in KickCleaner, ready to kick cleaner")
 		c.kick <- struct{}{}
 		c.mu.Unlock()
 	}
@@ -579,10 +579,10 @@ func (c *Cache) KickCleaner() {
 
 	c.mu.Lock()
 	for c.outOfSpace {
-		fs.DebugfCtx(context.Background(), c.fremote, "vfs cache: in KickCleaner, looping on c.outOfSpace")
+		fs.Debugf(c.fremote, "vfs cache: in KickCleaner, looping on c.outOfSpace")
 		c.cond.Wait()
 	}
-	fs.DebugfCtx(context.Background(), c.fremote, "vfs cache: in KickCleaner, leaving c.outOfSpace loop")
+	fs.Debugf(c.fremote, "vfs cache: in KickCleaner, leaving c.outOfSpace loop")
 	c.mu.Unlock()
 }
 
@@ -594,11 +594,11 @@ func (c *Cache) removeNotInUse(item *Item, maxAge time.Duration, emptyOnly bool)
 	// The item will not be removed or reset the cache data is dirty (DataDirty)
 	c.used -= spaceFreed
 	if removed {
-		fs.InfofCtx(context.Background(), c.fremote, "vfs cache RemoveNotInUse (maxAge=%d, emptyOnly=%v): item %s was removed, freed %d bytes", maxAge, emptyOnly, item.GetName(), spaceFreed)
+		fs.Infof(c.fremote, "vfs cache RemoveNotInUse (maxAge=%d, emptyOnly=%v): item %s was removed, freed %d bytes", maxAge, emptyOnly, item.GetName(), spaceFreed)
 		// Remove the entry
 		delete(c.item, item.name)
 	} else {
-		fs.DebugfCtx(context.Background(), c.fremote, "vfs cache RemoveNotInUse (maxAge=%d, emptyOnly=%v): item %s not removed, freed %d bytes", maxAge, emptyOnly, item.GetName(), spaceFreed)
+		fs.Debugf(c.fremote, "vfs cache RemoveNotInUse (maxAge=%d, emptyOnly=%v): item %s not removed, freed %d bytes", maxAge, emptyOnly, item.GetName(), spaceFreed)
 	}
 }
 
@@ -608,7 +608,7 @@ func (c *Cache) retryFailedResets() {
 	// for saving the cache item's metadata.  Redo the Reset()'s here now that
 	// we may have some available space.
 	if len(c.errItems) != 0 {
-		fs.DebugfCtx(context.Background(), c.fremote, "vfs cache reset: before redoing reset errItems = %v", c.errItems)
+		fs.Debugf(c.fremote, "vfs cache reset: before redoing reset errItems = %v", c.errItems)
 		for itemName := range c.errItems {
 			if retryItem, ok := c.item[itemName]; ok {
 				_, _, err := retryItem.Reset()
@@ -622,7 +622,7 @@ func (c *Cache) retryFailedResets() {
 				delete(c.errItems, itemName)
 			}
 		}
-		fs.DebugfCtx(context.Background(), c.fremote, "vfs cache reset: after redoing reset errItems = %v", c.errItems)
+		fs.Debugf(c.fremote, "vfs cache reset: after redoing reset errItems = %v", c.errItems)
 	}
 }
 
@@ -655,12 +655,12 @@ func (c *Cache) purgeClean() {
 		// The item space might be freed even if we get an error after the cache file is removed
 		// The item will not be removed or reset if the cache data is dirty (DataDirty)
 		c.used -= spaceFreed
-		fs.InfofCtx(context.Background(), c.fremote, "vfs cache purgeClean item.Reset %s: %s, freed %d bytes", item.GetName(), resetResult.String(), spaceFreed)
+		fs.Infof(c.fremote, "vfs cache purgeClean item.Reset %s: %s, freed %d bytes", item.GetName(), resetResult.String(), spaceFreed)
 		if resetResult == RemovedNotInUse {
 			delete(c.item, item.name)
 		}
 		if err != nil {
-			fs.ErrorfCtx(context.Background(), c.fremote, "vfs cache purgeClean item.Reset %s reset failed, err = %v, freed %d bytes", item.GetName(), err, spaceFreed)
+			fs.Errorf(c.fremote, "vfs cache purgeClean item.Reset %s reset failed, err = %v, freed %d bytes", item.GetName(), err, spaceFreed)
 			c.errItems[item.name] = err
 		}
 	}
@@ -692,11 +692,11 @@ func (c *Cache) purgeEmptyDirs(dir string, leaveRoot bool) {
 	ctx := context.Background()
 	err := operations.Rmdirs(ctx, c.fcache, dir, leaveRoot)
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), c.fcache, "vfs cache: failed to remove empty directories from cache path %q: %v", dir, err)
+		fs.Errorf(c.fcache, "vfs cache: failed to remove empty directories from cache path %q: %v", dir, err)
 	}
 	err = operations.Rmdirs(ctx, c.fcacheMeta, dir, leaveRoot)
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), c.fcache, "vfs cache: failed to remove empty directories from metadata cache path %q: %v", dir, err)
+		fs.Errorf(c.fcache, "vfs cache: failed to remove empty directories from metadata cache path %q: %v", dir, err)
 	}
 }
 
@@ -723,7 +723,7 @@ func (c *Cache) minFreeSpaceQuotaOK() bool {
 		return true
 	}
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), c.fremote, "disk usage returned error: %v", err)
+		fs.Errorf(c.fremote, "disk usage returned error: %v", err)
 		return true
 	}
 	return du.Available >= uint64(c.opt.CacheMinFreeSpace)
@@ -831,9 +831,9 @@ func (c *Cache) clean(kicked bool) {
 
 	stats := fmt.Sprintf("objects %d (was %d) in use %d, to upload %d, uploading %d, total size %v (was %v)",
 		newItems, oldItems, totalInUse, uploadsQueued, uploadsInProgress, newUsed, oldUsed)
-	fs.InfofCtx(context.Background(), c.fremote, "vfs cache: cleaned: %s", stats)
+	fs.Infof(c.fremote, "vfs cache: cleaned: %s", stats)
 	if err = systemd.UpdateStatus(fmt.Sprintf("[%s] vfs cache: %s", time.Now().Format("15:04"), stats)); err != nil {
-		fs.ErrorfCtx(context.Background(), c.fremote, "vfs cache: updating systemd status with current stats failed: %s", err)
+		fs.Errorf(c.fremote, "vfs cache: updating systemd status with current stats failed: %s", err)
 	}
 }
 

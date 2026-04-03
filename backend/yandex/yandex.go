@@ -178,7 +178,7 @@ func errorHandler(resp *http.Response) error {
 	errResponse := new(api.ErrorResponse)
 	err := rest.DecodeJSON(resp, &errResponse)
 	if err != nil {
-		fs.DebugfCtx(context.Background(), nil, "Couldn't decode error response: %v", err)
+		fs.Debugf(nil, "Couldn't decode error response: %v", err)
 	}
 	if errResponse.Message == "" {
 		errResponse.Message = resp.Status
@@ -996,7 +996,7 @@ func (o *Object) Size() int64 {
 	ctx := context.TODO()
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.LogfCtx(context.Background(), o, "Failed to read metadata: %v", err)
+		fs.Logf(o, "Failed to read metadata: %v", err)
 		return 0
 	}
 	return o.size

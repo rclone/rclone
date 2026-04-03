@@ -219,9 +219,9 @@ func (f *File) applyPendingRename() {
 	if fun == nil || writing {
 		return
 	}
-	fs.DebugfCtx(context.Background(), f.Path(), "Running delayed rename now")
+	fs.Debugf(f.Path(), "Running delayed rename now")
 	if err := fun(context.TODO()); err != nil {
-		fs.ErrorfCtx(context.Background(), f.Path(), "delayed File.Rename error: %v", err)
+		fs.Errorf(f.Path(), "delayed File.Rename error: %v", err)
 	}
 }
 
@@ -348,7 +348,7 @@ func (f *File) delWriter(h Handle) {
 		f.writers = slices.Delete(f.writers, found, found+1)
 		f.nwriters.Add(-1)
 	} else {
-		fs.DebugfCtx(context.Background(), f._path(), "File.delWriter couldn't find handle")
+		fs.Debugf(f._path(), "File.delWriter couldn't find handle")
 	}
 }
 
@@ -387,7 +387,7 @@ func (f *File) ModTime() (modTime time.Time) {
 	defer func() {
 		if f.d.f.Precision() == fs.ModTimeNotSupported && (virtualModTime == nil || !virtualModTime.Equal(modTime)) {
 			f.virtualModTime = &modTime
-			fs.DebugfCtx(context.Background(), f._path(), "Set virtual modtime to %v", f.virtualModTime)
+			fs.Debugf(f._path(), "Set virtual modtime to %v", f.virtualModTime)
 		}
 	}()
 
@@ -399,7 +399,7 @@ func (f *File) ModTime() (modTime time.Time) {
 		if item := f.d.vfs.cache.DirtyItem(f._cachePath()); item != nil {
 			modTime, err := item.GetModTime()
 			if err != nil {
-				fs.ErrorfCtx(context.Background(), f._path(), "ModTime: Item GetModTime failed: %v", err)
+				fs.Errorf(f._path(), "ModTime: Item GetModTime failed: %v", err)
 			} else {
 				return f._roundModTime(modTime)
 			}
@@ -409,7 +409,7 @@ func (f *File) ModTime() (modTime time.Time) {
 		return f._roundModTime(pendingModTime)
 	}
 	if virtualModTime != nil && !virtualModTime.IsZero() {
-		fs.DebugfCtx(context.Background(), f._path(), "Returning virtual modtime %v", f.virtualModTime)
+		fs.Debugf(f._path(), "Returning virtual modtime %v", f.virtualModTime)
 		return f._roundModTime(*virtualModTime)
 	}
 	if o == nil {
@@ -436,7 +436,7 @@ func (f *File) Size() int64 {
 		if item := f.d.vfs.cache.DirtyItem(f._cachePath()); item != nil {
 			size, err := item.GetSize()
 			if err != nil {
-				fs.ErrorfCtx(context.Background(), f._path(), "Size: Item GetSize failed: %v", err)
+				fs.Errorf(f._path(), "Size: Item GetSize failed: %v", err)
 			} else {
 				return size
 			}
@@ -494,7 +494,7 @@ func (f *File) _applyPendingModTime() error {
 	dt := f.pendingModTime.Sub(f.o.ModTime(context.Background()))
 	modifyWindow := f.o.Fs().Precision()
 	if dt < modifyWindow && dt > -modifyWindow {
-		fs.DebugfCtx(context.Background(), f.o, "Not setting pending mod time %v as it is already set", f.pendingModTime)
+		fs.Debugf(f.o, "Not setting pending mod time %v as it is already set", f.pendingModTime)
 		return nil
 	}
 
@@ -502,11 +502,11 @@ func (f *File) _applyPendingModTime() error {
 	err := f.o.SetModTime(context.TODO(), f.pendingModTime)
 	switch err {
 	case nil:
-		fs.DebugfCtx(context.Background(), f.o, "Applied pending mod time %v OK", f.pendingModTime)
+		fs.Debugf(f.o, "Applied pending mod time %v OK", f.pendingModTime)
 	case fs.ErrorCantSetModTime, fs.ErrorCantSetModTimeWithoutDelete:
 		// do nothing, in order to not break "touch somefile" if it exists already
 	default:
-		fs.ErrorfCtx(context.Background(), f.o, "Failed to apply pending mod time %v: %v", f.pendingModTime, err)
+		fs.Errorf(f.o, "Failed to apply pending mod time %v: %v", f.pendingModTime, err)
 		return err
 	}
 
@@ -558,7 +558,7 @@ func (f *File) setObjectNoUpdate(o fs.Object) {
 	f.o = o
 	f._setIsLink()
 	f.virtualModTime = nil
-	fs.DebugfCtx(context.Background(), f._path(), "Reset virtual modtime")
+	fs.Debugf(f._path(), "Reset virtual modtime")
 	f.mu.Unlock()
 }
 
@@ -604,11 +604,11 @@ func (f *File) openRead() (fh *ReadFileHandle, err error) {
 	if err != nil {
 		return nil, err
 	}
-	// fs.DebugfCtx(context.Background(), f.Path(), "File.openRead")
+	// fs.Debugf(f.Path(), "File.openRead")
 
 	fh, err = newReadFileHandle(f)
 	if err != nil {
-		fs.DebugfCtx(context.Background(), f.Path(), "File.openRead failed: %v", err)
+		fs.Debugf(f.Path(), "File.openRead failed: %v", err)
 		return nil, err
 	}
 	return fh, nil
@@ -623,11 +623,11 @@ func (f *File) openWrite(flags int) (fh *WriteFileHandle, err error) {
 	if d.vfs.Opt.ReadOnly {
 		return nil, EROFS
 	}
-	// fs.DebugfCtx(context.Background(), f.Path(), "File.openWrite")
+	// fs.Debugf(f.Path(), "File.openWrite")
 
 	fh, err = newWriteFileHandle(d, f, f.Path(), flags)
 	if err != nil {
-		fs.DebugfCtx(context.Background(), f.Path(), "File.openWrite failed: %v", err)
+		fs.Debugf(f.Path(), "File.openWrite failed: %v", err)
 		return nil, err
 	}
 	return fh, nil
@@ -645,11 +645,11 @@ func (f *File) openRW(flags int) (fh *RWFileHandle, err error) {
 	if flags&accessModeMask != os.O_RDONLY && d.vfs.Opt.ReadOnly {
 		return nil, EROFS
 	}
-	// fs.DebugfCtx(context.Background(), f.Path(), "File.openRW")
+	// fs.Debugf(f.Path(), "File.openRW")
 
 	fh, err = newRWFileHandle(d, f, flags)
 	if err != nil {
-		fs.DebugfCtx(context.Background(), f.Path(), "File.openRW failed: %v", err)
+		fs.Debugf(f.Path(), "File.openRW failed: %v", err)
 		return nil, err
 	}
 	return fh, nil
@@ -690,9 +690,9 @@ func (f *File) Remove() (err error) {
 		if wasWriting {
 			// Ignore error deleting file if was writing it as it may not be uploaded yet
 			err = nil
-			fs.DebugfCtx(context.Background(), f._path(), "Ignoring File.Remove file error as uploading: %v", err)
+			fs.Debugf(f._path(), "Ignoring File.Remove file error as uploading: %v", err)
 		} else {
-			fs.DebugfCtx(context.Background(), f._path(), "File.Remove file error: %v", err)
+			fs.Debugf(f._path(), "File.Remove file error: %v", err)
 		}
 	}
 
@@ -864,7 +864,7 @@ func (f *File) Open(flags int) (fd Handle, err error) {
 		read = true
 		write = true
 	default:
-		fs.DebugfCtx(context.Background(), f.Path(), "Can't figure out how to open with flags: 0x%X", flags)
+		fs.Debugf(f.Path(), "Can't figure out how to open with flags: 0x%X", flags)
 		return nil, EPERM
 	}
 
@@ -915,7 +915,7 @@ func (f *File) Open(flags int) (fd Handle, err error) {
 			fd, err = f.openRead()
 		}
 	} else {
-		fs.DebugfCtx(context.Background(), f.Path(), "Can't figure out how to open with flags: 0x%X", flags)
+		fs.Debugf(f.Path(), "Can't figure out how to open with flags: 0x%X", flags)
 		return nil, EPERM
 	}
 	// if creating a file, add the file to the directory
@@ -938,7 +938,7 @@ func (f *File) Truncate(size int64) (err error) {
 	// If have writers then call truncate for each writer
 	if len(writers) != 0 {
 		var openWriters = len(writers)
-		fs.DebugfCtx(context.Background(), f.Path(), "Truncating %d file handles", len(writers))
+		fs.Debugf(f.Path(), "Truncating %d file handles", len(writers))
 		for _, h := range writers {
 			truncateErr := h.Truncate(size)
 			if truncateErr == ECLOSED {
@@ -965,7 +965,7 @@ func (f *File) Truncate(size int64) (err error) {
 		return nil
 	}
 
-	fs.DebugfCtx(context.Background(), f.Path(), "Truncating file")
+	fs.Debugf(f.Path(), "Truncating file")
 
 	// Otherwise if no writers then truncate the file by opening
 	// the file and truncating it.

@@ -1235,7 +1235,7 @@ func (o *Object) setMetaData(info *storage.Object) {
 	// Read md5sum
 	md5sumData, err := base64.StdEncoding.DecodeString(info.Md5Hash)
 	if err != nil {
-		fs.LogfCtx(context.Background(), o, "Bad MD5 decode: %v", err)
+		fs.Logf(o, "Bad MD5 decode: %v", err)
 	} else {
 		o.md5sum = hex.EncodeToString(md5sumData)
 	}
@@ -1248,7 +1248,7 @@ func (o *Object) setMetaData(info *storage.Object) {
 			o.modTime = modTime
 			return
 		}
-		fs.DebugfCtx(context.Background(), o, "Failed to read mtime from metadata: %s", err)
+		fs.Debugf(o, "Failed to read mtime from metadata: %s", err)
 	}
 
 	// Fallback to GSUtil mtime
@@ -1259,13 +1259,13 @@ func (o *Object) setMetaData(info *storage.Object) {
 			o.modTime = time.Unix(unixTimeSec, 0)
 			return
 		}
-		fs.DebugfCtx(context.Background(), o, "Failed to read GSUtil mtime from metadata: %s", err)
+		fs.Debugf(o, "Failed to read GSUtil mtime from metadata: %s", err)
 	}
 
 	// Fallback to the Updated time
 	modTime, err := time.Parse(timeFormat, info.Updated)
 	if err != nil {
-		fs.LogfCtx(context.Background(), o, "Bad time decode: %v", err)
+		fs.Logf(o, "Bad time decode: %v", err)
 	} else {
 		o.modTime = modTime
 	}
@@ -1326,7 +1326,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 func (o *Object) ModTime(ctx context.Context) time.Time {
 	err := o.readMetaData(ctx)
 	if err != nil {
-		// fs.LogfCtx(context.Background(), o, "Failed to read metadata: %v", err)
+		// fs.Logf(o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	return o.modTime

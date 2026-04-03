@@ -215,7 +215,7 @@ with a path of ` + "`/<username>/`" + `.
 				httpSrv.ServeConn(conn, opts)
 				return nil
 			}
-			fs.LogfCtx(context.Background(), s.f, "Serving restic REST API on %s", s.server.URLs())
+			fs.Logf(s.f, "Serving restic REST API on %s", s.server.URLs())
 
 			defer systemd.Notify()()
 			return s.Serve()
@@ -392,7 +392,7 @@ func (s *server) serveObject(w http.ResponseWriter, r *http.Request) {
 	}
 	o, err := s.newObject(r.Context(), remote)
 	if err != nil {
-		fs.DebugfCtx(context.Background(), remote, "%s request error: %v", r.Method, err)
+		fs.Debugf(remote, "%s request error: %v", r.Method, err)
 		if errors.Is(err, fs.ErrorObjectNotFound) {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		} else {
@@ -414,7 +414,7 @@ func (s *server) postObject(w http.ResponseWriter, r *http.Request) {
 		// make sure the file does not exist yet
 		_, err := s.newObject(r.Context(), remote)
 		if err == nil {
-			fs.ErrorfCtx(context.Background(), remote, "Post request: file already exists, refusing to overwrite in append-only mode")
+			fs.Errorf(remote, "Post request: file already exists, refusing to overwrite in append-only mode")
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 
 			return
@@ -424,7 +424,7 @@ func (s *server) postObject(w http.ResponseWriter, r *http.Request) {
 	o, err := operations.RcatSize(r.Context(), s.f, remote, r.Body, r.ContentLength, time.Now(), nil)
 	if err != nil {
 		err = accounting.Stats(r.Context()).Error(err)
-		fs.ErrorfCtx(context.Background(), remote, "Post request rcat error: %v", err)
+		fs.Errorf(remote, "Post request rcat error: %v", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 
 		return
@@ -453,13 +453,13 @@ func (s *server) deleteObject(w http.ResponseWriter, r *http.Request) {
 
 	o, err := s.newObject(r.Context(), remote)
 	if err != nil {
-		fs.DebugfCtx(context.Background(), remote, "Delete request error: %v", err)
+		fs.Debugf(remote, "Delete request error: %v", err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
 
 	if err := o.Remove(r.Context()); err != nil {
-		fs.ErrorfCtx(context.Background(), remote, "Delete request remove error: %v", err)
+		fs.Errorf(remote, "Delete request remove error: %v", err)
 		if errors.Is(err, fs.ErrorObjectNotFound) {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		} else {
@@ -497,11 +497,11 @@ func (s *server) listObjects(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.Header.Get("Accept") != resticAPIV2 {
-		fs.ErrorfCtx(context.Background(), remote, "Restic v2 API required for List Objects")
+		fs.Errorf(remote, "Restic v2 API required for List Objects")
 		http.Error(w, "Restic v2 API required for List Objects", http.StatusBadRequest)
 		return
 	}
-	fs.DebugfCtx(context.Background(), remote, "list request")
+	fs.Debugf(remote, "list request")
 
 	// make sure an empty list is returned, and not a 'nil' value
 	ls := listItems{}
@@ -521,7 +521,7 @@ func (s *server) listObjects(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		if !errors.Is(err, fs.ErrorDirNotFound) {
-			fs.ErrorfCtx(context.Background(), remote, "list failed: %#v %T", err, err)
+			fs.Errorf(remote, "list failed: %#v %T", err, err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
@@ -531,7 +531,7 @@ func (s *server) listObjects(w http.ResponseWriter, r *http.Request) {
 	enc := json.NewEncoder(w)
 	err = enc.Encode(ls)
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), remote, "failed to write list: %v", err)
+		fs.Errorf(remote, "failed to write list: %v", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -546,7 +546,7 @@ func (s *server) createRepo(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
-	fs.InfofCtx(context.Background(), remote, "Creating repository")
+	fs.Infof(remote, "Creating repository")
 
 	if r.URL.Query().Get("create") != "true" {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
@@ -555,7 +555,7 @@ func (s *server) createRepo(w http.ResponseWriter, r *http.Request) {
 
 	err := s.f.Mkdir(r.Context(), remote)
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), remote, "Create repo failed to Mkdir: %v", err)
+		fs.Errorf(remote, "Create repo failed to Mkdir: %v", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -564,7 +564,7 @@ func (s *server) createRepo(w http.ResponseWriter, r *http.Request) {
 		dirRemote := path.Join(remote, name)
 		err := s.f.Mkdir(r.Context(), dirRemote)
 		if err != nil {
-			fs.ErrorfCtx(context.Background(), dirRemote, "Create repo failed to Mkdir: %v", err)
+			fs.Errorf(dirRemote, "Create repo failed to Mkdir: %v", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}

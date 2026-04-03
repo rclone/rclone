@@ -2,7 +2,6 @@ package filter
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -226,7 +225,7 @@ func parseRules(opt *RulesOpt, add addFn, clear clearFn) (err error) {
 	}
 
 	if addImplicitExclude && foundExcludeRule {
-		fs.ErrorfCtx(context.Background(), nil, "Using --filter is recommended instead of both --include and --exclude as the order they are parsed in is indeterminate")
+		fs.Errorf(nil, "Using --filter is recommended instead of both --include and --exclude as the order they are parsed in is indeterminate")
 	}
 
 	for _, rule := range opt.FilterRule {

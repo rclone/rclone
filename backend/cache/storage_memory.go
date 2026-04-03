@@ -3,7 +3,6 @@
 package cache
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -24,7 +23,7 @@ func NewMemory(defaultExpiration time.Duration) *Memory {
 	mem := &Memory{}
 	err := mem.Connect(defaultExpiration)
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), "cache", "can't open ram connection: %v", err)
+		fs.Errorf("cache", "can't open ram connection: %v", err)
 	}
 
 	return mem
@@ -80,7 +79,7 @@ func (m *Memory) CleanChunksByNeed(offset int64) {
 		sepIdx := strings.LastIndex(key, "-")
 		keyOffset, err := strconv.ParseInt(key[sepIdx+1:], 10, 64)
 		if err != nil {
-			fs.ErrorfCtx(context.Background(), "cache", "couldn't parse offset entry %v", key)
+			fs.Errorf("cache", "couldn't parse offset entry %v", key)
 			continue
 		}
 

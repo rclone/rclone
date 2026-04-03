@@ -1,7 +1,6 @@
 package oauthutil
 
 import (
-	"context"
 	"sync"
 	"sync/atomic"
 
@@ -48,14 +47,14 @@ func (r *Renew) renewOnExpiry() {
 		}
 		uploads := r.uploads.Load()
 		if uploads != 0 {
-			fs.DebugfCtx(context.Background(), r.name, "Background refresher detected expired token - %d uploads in progress - refreshing", uploads)
+			fs.Debugf(r.name, "Background refresher detected expired token - %d uploads in progress - refreshing", uploads)
 			// Do a transaction
 			err := r.run()
 			if err != nil {
-				fs.ErrorfCtx(context.Background(), r.name, "Background token refresher failed: %v", err)
+				fs.Errorf(r.name, "Background token refresher failed: %v", err)
 			}
 		} else {
-			fs.DebugfCtx(context.Background(), r.name, "Background refresher detected expired token but no uploads in progress - doing nothing")
+			fs.Debugf(r.name, "Background refresher detected expired token but no uploads in progress - doing nothing")
 		}
 	}
 }

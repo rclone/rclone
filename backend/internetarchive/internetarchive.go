@@ -919,11 +919,11 @@ func (o *Object) appendItemMetadataHeaders(headers map[string]string, options Op
 		headers["x-archive-queue-derive"] = "0"
 	}
 
-	fs.DebugfCtx(context.Background(), o, "Setting IA item derive: %t", o.fs.opt.ItemDerive)
+	fs.Debugf(o, "Setting IA item derive: %t", o.fs.opt.ItemDerive)
 
 	for k, v := range headers {
 		if strings.HasPrefix(k, "x-archive-meta") {
-			fs.DebugfCtx(context.Background(), o, "Setting IA item metadata: %s=%s", k, v)
+			fs.Debugf(o, "Setting IA item metadata: %s=%s", k, v)
 		}
 	}
 

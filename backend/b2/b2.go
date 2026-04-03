@@ -462,7 +462,7 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 func errorHandler(resp *http.Response) error {
 	body, err := rest.ReadBody(resp)
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), nil, "Couldn't read error out of body: %v", err)
+		fs.Errorf(nil, "Couldn't read error out of body: %v", err)
 		body = nil
 	}
 	// Decode error response if there was one - they can be blank
@@ -470,7 +470,7 @@ func errorHandler(resp *http.Response) error {
 	if len(body) > 0 {
 		err = json.Unmarshal(body, errResponse)
 		if err != nil {
-			fs.ErrorfCtx(context.Background(), nil, "Couldn't decode error response: %v", err)
+			fs.Errorf(nil, "Couldn't decode error response: %v", err)
 		}
 	}
 	if errResponse.Code == "" {
@@ -1901,7 +1901,7 @@ func (o *Object) parseTimeString(timeString string) (err error) {
 	}
 	modTime, err := parseTimeStringHelper(timeString)
 	if err != nil {
-		fs.DebugfCtx(context.Background(), o, "Failed to parse mod time string %q: %v", timeString, err)
+		fs.Debugf(o, "Failed to parse mod time string %q: %v", timeString, err)
 		return nil
 	}
 	o.modTime = modTime

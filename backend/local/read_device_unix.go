@@ -5,7 +5,6 @@
 package local
 
 import (
-	"context"
 	"os"
 	"syscall"
 
@@ -20,7 +19,7 @@ func readDevice(fi os.FileInfo, oneFileSystem bool) uint64 {
 	}
 	statT, ok := fi.Sys().(*syscall.Stat_t)
 	if !ok {
-		fs.DebugfCtx(context.Background(), fi.Name(), "Type assertion fi.Sys().(*syscall.Stat_t) failed from: %#v", fi.Sys())
+		fs.Debugf(fi.Name(), "Type assertion fi.Sys().(*syscall.Stat_t) failed from: %#v", fi.Sys())
 		return devUnset
 	}
 	return uint64(statT.Dev) // nolint: unconvert

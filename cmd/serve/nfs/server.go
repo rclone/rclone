@@ -60,6 +60,6 @@ func (s *Server) Shutdown() error {
 
 // Serve starts the server
 func (s *Server) Serve() (err error) {
-	fs.LogfCtx(context.Background(), nil, "NFS Server running at %s\n", s.listener.Addr())
+	fs.Logf(nil, "NFS Server running at %s\n", s.listener.Addr())
 	return nfs.Serve(s.listener, s.handler)
 }

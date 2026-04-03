@@ -43,13 +43,13 @@ func getConfigurationProvider(opt *Options) (common.ConfigurationProvider, error
 	case userPrincipal:
 		expandConfigFilePath := expandPath(opt.ConfigFile)
 		if expandConfigFilePath != "" && !fileExists(expandConfigFilePath) {
-			fs.ErrorfCtx(context.Background(), userPrincipal, "oci config file doesn't exist at %v", expandConfigFilePath)
+			fs.Errorf(userPrincipal, "oci config file doesn't exist at %v", expandConfigFilePath)
 		}
 		return common.CustomProfileConfigProvider(expandConfigFilePath, opt.ConfigProfile), nil
 	case resourcePrincipal:
 		return auth.ResourcePrincipalConfigurationProvider()
 	case noAuth:
-		fs.InfofCtx(context.Background(), "client", "using no auth provider")
+		fs.Infof("client", "using no auth provider")
 		return getNoAuthConfiguration()
 	case workloadIdentity:
 		return auth.OkeWorkloadIdentityConfigurationProvider()

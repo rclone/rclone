@@ -52,7 +52,7 @@ func paramToValue(in rc.Params) (out js.Value) {
 
 // errorValue turns an error into a js.Value
 func errorValue(method string, in js.Value, err error) js.Value {
-	fs.ErrorfCtx(ctx, nil, "rc: %q: error: %v", method, err)
+	fs.Errorf(nil, "rc: %q: error: %v", method, err)
 	// Adjust the error return for some well known errors
 	status := http.StatusInternalServerError
 	switch {

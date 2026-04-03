@@ -260,29 +260,29 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 		}
 		if !Retry || !accounting.GlobalStats().Errored() {
 			if try > 1 {
-				fs.ErrorfCtx(context.Background(), nil, "Attempt %d/%d succeeded", try, ci.Retries)
+				fs.Errorf(nil, "Attempt %d/%d succeeded", try, ci.Retries)
 			}
 			break
 		}
 		if accounting.GlobalStats().HadFatalError() {
-			fs.ErrorfCtx(context.Background(), nil, "Fatal error received - not attempting retries")
+			fs.Errorf(nil, "Fatal error received - not attempting retries")
 			break
 		}
 		if accounting.GlobalStats().Errored() && !accounting.GlobalStats().HadRetryError() {
-			fs.ErrorfCtx(context.Background(), nil, "Can't retry any of the errors - not attempting retries")
+			fs.Errorf(nil, "Can't retry any of the errors - not attempting retries")
 			break
 		}
 		if retryAfter := accounting.GlobalStats().RetryAfter(); !retryAfter.IsZero() {
 			d := time.Until(retryAfter)
 			if d > 0 {
-				fs.LogfCtx(context.Background(), nil, "Received retry after error - sleeping until %s (%v)", retryAfter.Format(time.RFC3339Nano), d)
+				fs.Logf(nil, "Received retry after error - sleeping until %s (%v)", retryAfter.Format(time.RFC3339Nano), d)
 				time.Sleep(d)
 			}
 		}
 		if lastErr != nil {
-			fs.ErrorfCtx(context.Background(), nil, "Attempt %d/%d failed with %d errors and: %v", try, ci.Retries, accounting.GlobalStats().GetErrors(), lastErr)
+			fs.Errorf(nil, "Attempt %d/%d failed with %d errors and: %v", try, ci.Retries, accounting.GlobalStats().GetErrors(), lastErr)
 		} else {
-			fs.ErrorfCtx(context.Background(), nil, "Attempt %d/%d failed with %d errors", try, ci.Retries, accounting.GlobalStats().GetErrors())
+			fs.Errorf(nil, "Attempt %d/%d failed with %d errors", try, ci.Retries, accounting.GlobalStats().GetErrors())
 		}
 		if try < ci.Retries {
 			accounting.GlobalStats().ResetErrors()
@@ -295,7 +295,7 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 	if showStats && (accounting.GlobalStats().Errored() || *statsInterval > 0) {
 		accounting.GlobalStats().Log()
 	}
-	fs.DebugfCtx(context.Background(), nil, "%d go routines active\n", runtime.NumGoroutine())
+	fs.Debugf(nil, "%d go routines active\n", runtime.NumGoroutine())
 
 	if ci.Progress && ci.ProgressTerminalTitle {
 		// Clear terminal title
@@ -306,7 +306,7 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 	if ci.Dump&fs.DumpGoRoutines != 0 {
 		err := pprof.Lookup("goroutine").WriteTo(os.Stdout, 1)
 		if err != nil {
-			fs.ErrorfCtx(context.Background(), nil, "Failed to dump goroutines: %v", err)
+			fs.Errorf(nil, "Failed to dump goroutines: %v", err)
 		}
 	}
 
@@ -317,7 +317,7 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 		c.Stderr = os.Stderr
 		err := c.Run()
 		if err != nil {
-			fs.ErrorfCtx(context.Background(), nil, "Failed to list open files: %v", err)
+			fs.Errorf(nil, "Failed to list open files: %v", err)
 		}
 	}
 
@@ -331,9 +331,9 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 	if cmdErr != nil {
 		nerrs := accounting.GlobalStats().GetErrors()
 		if nerrs <= 1 {
-			fs.LogfCtx(context.Background(), nil, "Failed to %s: %v", cmd.Name(), cmdErr)
+			fs.Logf(nil, "Failed to %s: %v", cmd.Name(), cmdErr)
 		} else {
-			fs.LogfCtx(context.Background(), nil, "Failed to %s with %d errors: last error was: %v", cmd.Name(), nerrs, cmdErr)
+			fs.Logf(nil, "Failed to %s with %d errors: last error was: %v", cmd.Name(), nerrs, cmdErr)
 		}
 	}
 	resolveExitCode(cmdErr)
@@ -414,11 +414,11 @@ func initConfig() {
 	}
 
 	// Write the args for debug purposes
-	fs.DebugfCtx(context.Background(), "rclone", "Version %q starting with parameters %q", fs.Version, os.Args)
+	fs.Debugf("rclone", "Version %q starting with parameters %q", fs.Version, os.Args)
 
 	// Inform user about systemd log support now that we have a logger
 	if fslog.Opt.LogSystemdSupport {
-		fs.DebugfCtx(context.Background(), "rclone", "systemd logging support activated")
+		fs.Debugf("rclone", "systemd logging support activated")
 	}
 
 	// Start the remote control server if configured
@@ -437,7 +437,7 @@ func initConfig() {
 
 	// Setup CPU profiling if desired
 	if *cpuProfile != "" {
-		fs.InfofCtx(context.Background(), nil, "Creating CPU profile %q\n", *cpuProfile)
+		fs.Infof(nil, "Creating CPU profile %q\n", *cpuProfile)
 		f, err := os.Create(*cpuProfile)
 		if err != nil {
 			err = fs.CountError(ctx, err)
@@ -461,7 +461,7 @@ func initConfig() {
 	// Setup memory profiling if desired
 	if *memProfile != "" {
 		atexit.Register(func() {
-			fs.InfofCtx(context.Background(), nil, "Saving Memory profile %q\n", *memProfile)
+			fs.Infof(nil, "Saving Memory profile %q\n", *memProfile)
 			f, err := os.Create(*memProfile)
 			if err != nil {
 				err = fs.CountError(ctx, err)
@@ -540,7 +540,7 @@ func Main() {
 		if strings.HasPrefix(err.Error(), "unknown command") && selfupdateEnabled {
 			Root.PrintErrf("You could use '%s selfupdate' to get latest features.\n\n", Root.CommandPath())
 		}
-		fs.LogfCtx(context.Background(), nil, "Fatal error: %v", err)
+		fs.Logf(nil, "Fatal error: %v", err)
 		os.Exit(exitcode.UsageError)
 	}
 }

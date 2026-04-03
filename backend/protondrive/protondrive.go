@@ -319,12 +319,12 @@ func clearConfigMap(m configmap.Mapper) {
 }
 
 func authHandler(auth proton.Auth) {
-	// fs.DebugfCtx(context.Background(), "authHandler called")
+	// fs.Debugf("authHandler called")
 	setConfigMap(_mapper, auth.UID, auth.AccessToken, auth.RefreshToken, _saltedKeyPass)
 }
 
 func deAuthHandler() {
-	// fs.DebugfCtx(context.Background(), "deAuthHandler called")
+	// fs.Debugf("deAuthHandler called")
 	clearConfigMap(_mapper)
 }
 
@@ -879,7 +879,7 @@ func (o *Object) Size() int64 {
 			return *o.originalSize
 		}
 
-		fs.DebugfCtx(context.Background(), o, "Original file size missing")
+		fs.Debugf(o, "Original file size missing")
 	}
 	return o.size
 }

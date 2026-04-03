@@ -105,14 +105,14 @@ func (b *bisyncRun) setResolveDefaults() error {
 
 	// checks and warnings
 	if (b.opt.ConflictResolve == PreferNewer || b.opt.ConflictResolve == PreferOlder) && (b.fs1.Precision() == fs.ModTimeNotSupported || b.fs2.Precision() == fs.ModTimeNotSupported) {
-		fs.LogfCtx(context.Background(), nil, Color(terminal.YellowFg, "WARNING: ignoring --conflict-resolve %s as at least one remote does not support modtimes."), b.opt.ConflictResolve.String())
+		fs.Logf(nil, Color(terminal.YellowFg, "WARNING: ignoring --conflict-resolve %s as at least one remote does not support modtimes."), b.opt.ConflictResolve.String())
 		b.opt.ConflictResolve = PreferNone
 	} else if (b.opt.ConflictResolve == PreferNewer || b.opt.ConflictResolve == PreferOlder) && !b.opt.Compare.Modtime {
-		fs.LogfCtx(context.Background(), nil, Color(terminal.YellowFg, "WARNING: ignoring --conflict-resolve %s as --compare does not include modtime."), b.opt.ConflictResolve.String())
+		fs.Logf(nil, Color(terminal.YellowFg, "WARNING: ignoring --conflict-resolve %s as --compare does not include modtime."), b.opt.ConflictResolve.String())
 		b.opt.ConflictResolve = PreferNone
 	}
 	if (b.opt.ConflictResolve == PreferLarger || b.opt.ConflictResolve == PreferSmaller) && !b.opt.Compare.Size {
-		fs.LogfCtx(context.Background(), nil, Color(terminal.YellowFg, "WARNING: ignoring --conflict-resolve %s as --compare does not include size."), b.opt.ConflictResolve.String())
+		fs.Logf(nil, Color(terminal.YellowFg, "WARNING: ignoring --conflict-resolve %s as --compare does not include size."), b.opt.ConflictResolve.String())
 		b.opt.ConflictResolve = PreferNone
 	}
 
@@ -140,7 +140,7 @@ func (b *bisyncRun) resolve(ctxMove context.Context, path1, path2, file, alias s
 	if b.opt.ConflictResolve != PreferNone {
 		winningPath = b.conflictWinner(ds1, ds2, file, alias)
 		if winningPath > 0 {
-			fs.InfofCtx(context.Background(), file, Color(terminal.GreenFg, "The winner is: Path%d"), winningPath)
+			fs.Infof(file, Color(terminal.GreenFg, "The winner is: Path%d"), winningPath)
 		} else {
 			fs.Infoc(file, Color(terminal.RedFg, "A winner could not be determined."))
 		}
@@ -371,65 +371,65 @@ func (b *bisyncRun) conflictWinner(ds1, ds2 *deltaSet, remote1, remote2 string) 
 // returns the winning path number, or 0 if winner can't be determined
 func (b *bisyncRun) resolveNewerOlder(t1, t2 time.Time, remote1 string, prefer Prefer) int {
 	if fs.GetModifyWindow(b.octx, b.fs1, b.fs2) == fs.ModTimeNotSupported {
-		fs.InfofCtx(context.Background(), remote1, "Winner cannot be determined as at least one path lacks modtime support.")
+		fs.Infof(remote1, "Winner cannot be determined as at least one path lacks modtime support.")
 		return 0
 	}
 	if t1.IsZero() || t2.IsZero() {
-		fs.InfofCtx(context.Background(), remote1, "Winner cannot be determined as at least one modtime is missing. Path1: %v, Path2: %v", t1, t2)
+		fs.Infof(remote1, "Winner cannot be determined as at least one modtime is missing. Path1: %v, Path2: %v", t1, t2)
 		return 0
 	}
 	if t1.After(t2) {
 		if prefer == PreferNewer {
-			fs.InfofCtx(context.Background(), remote1, "Path1 is newer. Path1: %v, Path2: %v, Difference: %s", t1.In(LogTZ), t2.In(LogTZ), t1.Sub(t2))
+			fs.Infof(remote1, "Path1 is newer. Path1: %v, Path2: %v, Difference: %s", t1.In(LogTZ), t2.In(LogTZ), t1.Sub(t2))
 			return 1
 		} else if prefer == PreferOlder {
-			fs.InfofCtx(context.Background(), remote1, "Path2 is older. Path1: %v, Path2: %v, Difference: %s", t1.In(LogTZ), t2.In(LogTZ), t1.Sub(t2))
+			fs.Infof(remote1, "Path2 is older. Path1: %v, Path2: %v, Difference: %s", t1.In(LogTZ), t2.In(LogTZ), t1.Sub(t2))
 			return 2
 		}
 	} else if t1.Before(t2) {
 		if prefer == PreferNewer {
-			fs.InfofCtx(context.Background(), remote1, "Path2 is newer. Path1: %v, Path2: %v, Difference: %s", t1.In(LogTZ), t2.In(LogTZ), t2.Sub(t1))
+			fs.Infof(remote1, "Path2 is newer. Path1: %v, Path2: %v, Difference: %s", t1.In(LogTZ), t2.In(LogTZ), t2.Sub(t1))
 			return 2
 		} else if prefer == PreferOlder {
-			fs.InfofCtx(context.Background(), remote1, "Path1 is older. Path1: %v, Path2: %v, Difference: %s", t1.In(LogTZ), t2.In(LogTZ), t2.Sub(t1))
+			fs.Infof(remote1, "Path1 is older. Path1: %v, Path2: %v, Difference: %s", t1.In(LogTZ), t2.In(LogTZ), t2.Sub(t1))
 			return 1
 		}
 	}
 	if t1.Equal(t2) {
-		fs.InfofCtx(context.Background(), remote1, "Winner cannot be determined as times are equal. Path1: %v, Path2: %v, Difference: %s", t1.In(LogTZ), t2.In(LogTZ), t2.Sub(t1))
+		fs.Infof(remote1, "Winner cannot be determined as times are equal. Path1: %v, Path2: %v, Difference: %s", t1.In(LogTZ), t2.In(LogTZ), t2.Sub(t1))
 		return 0
 	}
-	fs.ErrorfCtx(context.Background(), remote1, "Winner cannot be determined. Path1: %v, Path2: %v", t1.In(LogTZ), t2.In(LogTZ)) // shouldn't happen unless prefer is of wrong type
+	fs.Errorf(remote1, "Winner cannot be determined. Path1: %v, Path2: %v", t1.In(LogTZ), t2.In(LogTZ)) // shouldn't happen unless prefer is of wrong type
 	return 0
 }
 
 // returns the winning path number, or 0 if winner can't be determined
 func (b *bisyncRun) resolveLargerSmaller(s1, s2 int64, remote1 string, prefer Prefer) int {
 	if s1 < 0 || s2 < 0 {
-		fs.InfofCtx(context.Background(), remote1, "Winner cannot be determined as at least one size is unknown. Path1: %v, Path2: %v", s1, s2)
+		fs.Infof(remote1, "Winner cannot be determined as at least one size is unknown. Path1: %v, Path2: %v", s1, s2)
 		return 0
 	}
 	if s1 > s2 {
 		if prefer == PreferLarger {
-			fs.InfofCtx(context.Background(), remote1, "Path1 is larger. Path1: %v, Path2: %v, Difference: %v", s1, s2, s1-s2)
+			fs.Infof(remote1, "Path1 is larger. Path1: %v, Path2: %v, Difference: %v", s1, s2, s1-s2)
 			return 1
 		} else if prefer == PreferSmaller {
-			fs.InfofCtx(context.Background(), remote1, "Path2 is smaller. Path1: %v, Path2: %v, Difference: %v", s1, s2, s1-s2)
+			fs.Infof(remote1, "Path2 is smaller. Path1: %v, Path2: %v, Difference: %v", s1, s2, s1-s2)
 			return 2
 		}
 	} else if s1 < s2 {
 		if prefer == PreferLarger {
-			fs.InfofCtx(context.Background(), remote1, "Path2 is larger. Path1: %v, Path2: %v, Difference: %v", s1, s2, s2-s1)
+			fs.Infof(remote1, "Path2 is larger. Path1: %v, Path2: %v, Difference: %v", s1, s2, s2-s1)
 			return 2
 		} else if prefer == PreferSmaller {
-			fs.InfofCtx(context.Background(), remote1, "Path1 is smaller. Path1: %v, Path2: %v, Difference: %v", s1, s2, s2-s1)
+			fs.Infof(remote1, "Path1 is smaller. Path1: %v, Path2: %v, Difference: %v", s1, s2, s2-s1)
 			return 1
 		}
 	}
 	if s1 == s2 {
-		fs.InfofCtx(context.Background(), remote1, "Winner cannot be determined as sizes are equal. Path1: %v, Path2: %v, Difference: %v", s1, s2, s1-s2)
+		fs.Infof(remote1, "Winner cannot be determined as sizes are equal. Path1: %v, Path2: %v, Difference: %v", s1, s2, s1-s2)
 		return 0
 	}
-	fs.ErrorfCtx(context.Background(), remote1, "Winner cannot be determined. Path1: %v, Path2: %v", s1, s2) // shouldn't happen unless prefer is of wrong type
+	fs.Errorf(remote1, "Winner cannot be determined. Path1: %v, Path2: %v", s1, s2) // shouldn't happen unless prefer is of wrong type
 	return 0
 }

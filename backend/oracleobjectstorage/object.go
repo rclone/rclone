@@ -156,7 +156,7 @@ func (o *Object) setMetaData(
 	}
 	if lastModified == nil {
 		o.lastModified = time.Now()
-		fs.LogfCtx(context.Background(), o, "Failed to read last modified")
+		fs.Logf(o, "Failed to read last modified")
 	} else {
 		o.lastModified = lastModified.Time
 	}
@@ -175,10 +175,10 @@ func (o *Object) setMetaData(
 func (o *Object) base64ToMd5(md5sumBase64 string) (md5 string, err error) {
 	md5sumBytes, err := base64.StdEncoding.DecodeString(md5sumBase64)
 	if err != nil {
-		fs.DebugfCtx(context.Background(), o, "Failed to read md5sum from metadata %q: %v", md5sumBase64, err)
+		fs.Debugf(o, "Failed to read md5sum from metadata %q: %v", md5sumBase64, err)
 		return "", err
 	} else if len(md5sumBytes) != 16 {
-		fs.DebugfCtx(context.Background(), o, "failed to read md5sum from metadata %q: wrong length", md5sumBase64)
+		fs.Debugf(o, "failed to read md5sum from metadata %q: wrong length", md5sumBase64)
 		return "", fmt.Errorf("failed to read md5sum from metadata %q: wrong length", md5sumBase64)
 	}
 	return hex.EncodeToString(md5sumBytes), nil
@@ -447,7 +447,7 @@ func (o *Object) applyPutOptions(req *objectstorage.PutObjectRequest, options ..
 			if strings.HasPrefix(lowerKey, ociMetaPrefix) {
 				req.OpcMeta[lowerKey] = value
 			} else {
-				fs.ErrorfCtx(context.Background(), o, "Don't know how to set key %q on upload", key)
+				fs.Errorf(o, "Don't know how to set key %q on upload", key)
 			}
 		}
 	}
@@ -462,7 +462,7 @@ func (o *Object) applyGetObjectOptions(req *objectstorage.GetObjectRequest, opti
 			req.Range = &value
 		default:
 			if option.Mandatory() {
-				fs.LogfCtx(context.Background(), o, "Unsupported mandatory option: %v", option)
+				fs.Logf(o, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}
@@ -486,7 +486,7 @@ func (o *Object) applyGetObjectOptions(req *objectstorage.GetObjectRequest, opti
 		case "range":
 			// do nothing
 		default:
-			fs.ErrorfCtx(context.Background(), o, "Don't know how to set key %q on upload", key)
+			fs.Errorf(o, "Don't know how to set key %q on upload", key)
 		}
 	}
 }

@@ -1,7 +1,6 @@
 package vfstest
 
 import (
-	"context"
 	"os"
 	"runtime"
 	"testing"
@@ -86,7 +85,7 @@ func TestSymlinks(t *testing.T) {
 		t.Skip("Skipping test on Windows")
 	}
 
-	fs.LogfCtx(context.Background(), nil, "Links: %v, useVFS: %v, suffix: %v", run.vfsOpt.Links, run.useVFS, fs.LinkSuffix)
+	fs.Logf(nil, "Links: %v, useVFS: %v, suffix: %v", run.vfsOpt.Links, run.useVFS, fs.LinkSuffix)
 
 	// Create initial setup of test files and directories we will create links to
 	run.mkdir(t, "dir1")

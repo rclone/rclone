@@ -139,7 +139,7 @@ func (acc *Account) WithBuffer() *Account {
 	if buffers > 0 {
 		rc, err := asyncreader.New(acc.ctx, acc.origIn, buffers)
 		if err != nil {
-			fs.ErrorfCtx(context.Background(), acc.name, "Failed to make buffer: %v", err)
+			fs.Errorf(acc.name, "Failed to make buffer: %v", err)
 		} else {
 			acc.in = rc
 			acc.close = rc
@@ -349,7 +349,7 @@ func (acc *Account) limitPerFileBandwidth(n int) {
 	if tokenBucket != nil {
 		err := tokenBucket.WaitN(context.Background(), n)
 		if err != nil {
-			fs.ErrorfCtx(context.Background(), nil, "Token bucket error: %v", err)
+			fs.Errorf(nil, "Token bucket error: %v", err)
 		}
 	}
 }

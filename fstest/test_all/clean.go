@@ -75,11 +75,11 @@ func cleanRemotes(conf *runs.Config, Opt runs.RunOpt) error {
 	var lastError error
 	for _, backend := range conf.Backends {
 		remote := backend.Remote
-		fs.LogfCtx(context.Background(), nil, "%q - Cleaning", remote)
+		fs.Logf(nil, "%q - Cleaning", remote)
 		err := cleanFs(context.Background(), remote, backend.CleanUp, Opt)
 		if err != nil {
 			lastError = err
-			fs.LogfCtx(context.Background(), nil, "Failed to purge %q: %v", remote, err)
+			fs.Logf(nil, "Failed to purge %q: %v", remote, err)
 		}
 	}
 	return lastError

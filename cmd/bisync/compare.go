@@ -123,13 +123,13 @@ func sizeDiffers(a, b int64) bool {
 func (b *bisyncRun) hashDiffers(stringA, stringB string, ht1, ht2 hash.Type, size1, size2 int64) bool {
 	if stringA == "" || stringB == "" {
 		if ht1 != hash.None && ht2 != hash.None && !(size1 <= 0 || size2 <= 0) {
-			fs.LogfCtx(context.Background(), nil, Color(terminal.YellowFg, "WARNING: hash unexpectedly blank despite Fs support (%s, %s) (you may need to --resync!)"), stringA, stringB)
+			fs.Logf(nil, Color(terminal.YellowFg, "WARNING: hash unexpectedly blank despite Fs support (%s, %s) (you may need to --resync!)"), stringA, stringB)
 		}
 		return false
 	}
 	if ht1 != ht2 {
 		if !(b.downloadHashOpt.downloadHash && ((ht1 == hash.MD5 && ht2 == hash.None) || (ht1 == hash.None && ht2 == hash.MD5))) {
-			fs.InfofCtx(context.Background(), nil, Color(terminal.YellowFg, "WARNING: Can't compare hashes of different types (%s, %s)"), ht1.String(), ht2.String())
+			fs.Infof(nil, Color(terminal.YellowFg, "WARNING: Can't compare hashes of different types (%s, %s)"), ht1.String(), ht2.String())
 			return false
 		}
 	}
@@ -140,7 +140,7 @@ func (b *bisyncRun) hashDiffers(stringA, stringB string, ht1, ht2 hash.Type, siz
 func (b *bisyncRun) setHashType(ci *fs.ConfigInfo) {
 	b.downloadHashOpt.downloadHash = b.opt.Compare.DownloadHash
 	if b.opt.Compare.NoSlowHash && b.opt.Compare.SlowHashDetected {
-		fs.InfofCtx(context.Background(), nil, "Not checking for common hash as at least one slow hash detected.")
+		fs.Infof(nil, "Not checking for common hash as at least one slow hash detected.")
 	} else {
 		common := b.fs1.Hashes().Overlap(b.fs2.Hashes())
 		if common.Count() > 0 && common.GetOne() != hash.None {
@@ -160,8 +160,8 @@ func (b *bisyncRun) setHashType(ci *fs.ConfigInfo) {
 
 	if !b.opt.Compare.DownloadHash && !b.opt.Compare.SlowHashSyncOnly {
 		fs.Log(b.fs2, Color(terminal.YellowFg, "--checksum is in use but Path1 and Path2 have no hashes in common; falling back to --compare modtime,size for sync. (Use --compare size or --size-only to ignore modtime)"))
-		fs.InfofCtx(context.Background(), "Path1 hashes", "%v", b.fs1.Hashes().String())
-		fs.InfofCtx(context.Background(), "Path2 hashes", "%v", b.fs2.Hashes().String())
+		fs.Infof("Path1 hashes", "%v", b.fs1.Hashes().String())
+		fs.Infof("Path2 hashes", "%v", b.fs2.Hashes().String())
 		b.opt.Compare.Modtime = true
 		b.opt.Compare.Size = true
 		ci.CheckSum = false
@@ -172,7 +172,7 @@ func (b *bisyncRun) setHashType(ci *fs.ConfigInfo) {
 	} else {
 		b.opt.Compare.HashType1 = b.fs1.Hashes().GetOne()
 		if b.opt.Compare.HashType1 != hash.None {
-			fs.LogfCtx(context.Background(), b.fs1, Color(terminal.YellowFg, "will use %s for same-side diffs on Path1 only"), b.opt.Compare.HashType1)
+			fs.Logf(b.fs1, Color(terminal.YellowFg, "will use %s for same-side diffs on Path1 only"), b.opt.Compare.HashType1)
 		}
 	}
 	if (b.opt.Compare.NoSlowHash || b.opt.Compare.SlowHashSyncOnly) && b.fs2.Features().SlowHash {
@@ -181,7 +181,7 @@ func (b *bisyncRun) setHashType(ci *fs.ConfigInfo) {
 	} else {
 		b.opt.Compare.HashType2 = b.fs2.Hashes().GetOne()
 		if b.opt.Compare.HashType2 != hash.None {
-			fs.LogfCtx(context.Background(), b.fs2, Color(terminal.YellowFg, "will use %s for same-side diffs on Path2 only"), b.opt.Compare.HashType2)
+			fs.Logf(b.fs2, Color(terminal.YellowFg, "will use %s for same-side diffs on Path2 only"), b.opt.Compare.HashType2)
 		}
 	}
 	if b.opt.Compare.HashType1 == hash.None && b.opt.Compare.HashType2 == hash.None && !b.opt.Compare.DownloadHash {

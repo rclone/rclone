@@ -606,7 +606,7 @@ func (f *Fs) parseChunkName(filePath string) (parentPath string, chunkNo int, ct
 			chunkNo = -1
 		}
 		if chunkNo -= f.opt.StartFrom; chunkNo < 0 {
-			fs.InfofCtx(context.Background(), f, "invalid data chunk number in file %q", name)
+			fs.Infof(f, "invalid data chunk number in file %q", name)
 			return "", -1, "", ""
 		}
 	}
@@ -618,7 +618,7 @@ func (f *Fs) parseChunkName(filePath string) (parentPath string, chunkNo int, ct
 		// old-style temporary suffix
 		number, err := strconv.ParseInt(match[5], 10, 64)
 		if err != nil || number < 0 {
-			fs.InfofCtx(context.Background(), f, "invalid old-style transaction number in file %q", name)
+			fs.Infof(f, "invalid old-style transaction number in file %q", name)
 			return "", -1, "", ""
 		}
 		// convert old-style transaction number to base-36 transaction ID
@@ -639,7 +639,7 @@ func (f *Fs) forbidChunk(o any, filePath string) error {
 			return fmt.Errorf("chunk overlap with %q", parentPath)
 		}
 		if boolVal, isBool := o.(bool); !isBool || boolVal {
-			fs.ErrorfCtx(context.Background(), o, "chunk overlap with %q", parentPath)
+			fs.Errorf(o, "chunk overlap with %q", parentPath)
 		}
 	}
 	return nil
@@ -982,7 +982,7 @@ func (f *Fs) scanObject(ctx context.Context, remote string, quickScan bool) (fs.
 			}
 			continue
 		}
-		// fs.DebugfCtx(context.Background(), f, "%q belongs to %q as chunk %d", entryRemote, mainRemote, chunkNo)
+		// fs.Debugf(f, "%q belongs to %q as chunk %d", entryRemote, mainRemote, chunkNo)
 		if err := o.addChunk(entry, chunkNo); err != nil {
 			return nil, err
 		}
@@ -1962,7 +1962,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 		return
 	}
 	wrappedNotifyFunc := func(path string, entryType fs.EntryType) {
-		// fs.DebugfCtx(context.Background(), f, "ChangeNotify: path %q entryType %d", path, entryType)
+		// fs.Debugf(f, "ChangeNotify: path %q entryType %d", path, entryType)
 		if entryType == fs.EntryObject {
 			mainPath, _, _, xactID := f.parseChunkName(path)
 			metaXactID := ""

@@ -79,11 +79,11 @@ func Clone(src, dst string) error {
 	state := apfs.CopyFileStateAlloc()
 	defer func() {
 		if err := apfs.CopyFileStateFree(state); err != nil {
-			fs.ErrorfCtx(context.Background(), dst, "free state error: %v", err)
+			fs.Errorf(dst, "free state error: %v", err)
 		}
 	}()
 	cloned, err := apfs.CopyFile(src, dst, state, apfs.COPYFILE_CLONE)
-	fs.DebugfCtx(context.Background(), dst, "isCloned: %v, error: %v", cloned, err)
+	fs.Debugf(dst, "isCloned: %v, error: %v", cloned, err)
 	return err
 }
 

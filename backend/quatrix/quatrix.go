@@ -496,12 +496,12 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.Fil
 // setMetaData sets the metadata from info
 func (o *Object) setMetaData(info *api.File) (err error) {
 	if info.IsDir() {
-		fs.DebugfCtx(context.Background(), o, "%q is %q", o.remote, info.Type)
+		fs.Debugf(o, "%q is %q", o.remote, info.Type)
 		return fs.ErrorIsDir
 	}
 
 	if !info.IsFile() {
-		fs.DebugfCtx(context.Background(), o, "%q is %q", o.remote, info.Type)
+		fs.Debugf(o, "%q is %q", o.remote, info.Type)
 		return fmt.Errorf("%q is %q: %w", o.remote, info.Type, fs.ErrorNotAFile)
 	}
 
@@ -963,7 +963,7 @@ func (o *Object) rootPath() string {
 func (o *Object) Size() int64 {
 	err := o.readMetaData(context.TODO())
 	if err != nil {
-		fs.LogfCtx(context.Background(), o, "Failed to read metadata: %v", err)
+		fs.Logf(o, "Failed to read metadata: %v", err)
 		return 0
 	}
 

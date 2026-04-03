@@ -6,7 +6,6 @@
 package accounting
 
 import (
-	"context"
 	"os"
 	"os/signal"
 	"syscall"
@@ -30,7 +29,7 @@ func (tb *tokenBucket) startSignalHandler() {
 
 				// if there's no bandwidth limit configured now, do nothing
 				if !tb.currLimit.Bandwidth.IsSet() {
-					fs.DebugfCtx(context.Background(), nil, "SIGUSR2 received but no bandwidth limit configured right now, ignoring")
+					fs.Debugf(nil, "SIGUSR2 received but no bandwidth limit configured right now, ignoring")
 					return
 				}
 
@@ -42,7 +41,7 @@ func (tb *tokenBucket) startSignalHandler() {
 					limit = tb.currLimit.Bandwidth.String()
 				}
 
-				fs.LogfCtx(context.Background(), nil, "Bandwidth limit %s by user (now %s)", s, limit)
+				fs.Logf(nil, "Bandwidth limit %s by user (now %s)", s, limit)
 			}()
 		}
 	}()

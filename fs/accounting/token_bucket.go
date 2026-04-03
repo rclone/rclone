@@ -66,13 +66,13 @@ func newEmptyTokenBucket(bandwidth fs.SizeSuffix) *rate.Limiter {
 	// 4M gives 2.5 Gb/s on Windows
 	// Use defaultMaxBurstSize up to 2GBit/s (256MiB/s) then scale
 	maxBurstSize := max((bandwidth*defaultMaxBurstSize)/(256*1024*1024), defaultMaxBurstSize)
-	// fs.DebugfCtx(context.Background(), nil, "bandwidth=%v maxBurstSize=%v", bandwidth, maxBurstSize)
+	// fs.Debugf(nil, "bandwidth=%v maxBurstSize=%v", bandwidth, maxBurstSize)
 	tb := rate.NewLimiter(rate.Limit(bandwidth), int(maxBurstSize))
 	if tb != nil {
 		// empty the bucket
 		err := tb.WaitN(context.Background(), int(maxBurstSize))
 		if err != nil {
-			fs.ErrorfCtx(context.Background(), nil, "Failed to empty token bucket: %v", err)
+			fs.Errorf(nil, "Failed to empty token bucket: %v", err)
 		}
 	}
 	return tb
@@ -171,7 +171,7 @@ func (tb *tokenBucket) LimitBandwidth(i TokenBucketSlot, n int) {
 	if tb.curr[i] != nil {
 		err := tb.curr[i].WaitN(context.Background(), n)
 		if err != nil {
-			fs.ErrorfCtx(context.Background(), nil, "Token bucket error: %v", err)
+			fs.Errorf(nil, "Token bucket error: %v", err)
 		}
 	}
 
@@ -184,10 +184,10 @@ func (tb *tokenBucket) SetBwLimit(bandwidth fs.BwPair) {
 	defer tb.mu.Unlock()
 	if bandwidth.IsSet() {
 		tb.curr = newTokenBucket(bandwidth)
-		fs.LogfCtx(context.Background(), nil, "Bandwidth limit set to %v", bandwidth)
+		fs.Logf(nil, "Bandwidth limit set to %v", bandwidth)
 	} else {
 		tb.curr._setOff()
-		fs.LogfCtx(context.Background(), nil, "Bandwidth limit reset to unlimited")
+		fs.Logf(nil, "Bandwidth limit reset to unlimited")
 	}
 }
 

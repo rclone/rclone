@@ -6,7 +6,6 @@
 package configfile
 
 import (
-	"context"
 	"os"
 	"os/user"
 	"strconv"
@@ -32,7 +31,7 @@ func attemptCopyGroup(fromPath, toPath string) {
 			}
 		}
 		if err = os.Chown(toPath, uid, int(stat.Gid)); err != nil {
-			fs.DebugfCtx(context.Background(), nil, "Failed to keep previous owner of config file: %v", err)
+			fs.Debugf(nil, "Failed to keep previous owner of config file: %v", err)
 		}
 	}
 }

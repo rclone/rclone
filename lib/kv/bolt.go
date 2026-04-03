@@ -181,7 +181,7 @@ func (db *DB) close() (err error) {
 		_ = db.idleTimer.Stop()
 		err = db.bolt.Close()
 		db.bolt = nil
-		fs.DebugfCtx(context.Background(), db.name, "released")
+		fs.Debugf(db.name, "released")
 	}
 	return
 }

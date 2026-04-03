@@ -44,7 +44,7 @@ func (a *LoggedBasicAuth) CheckAuth(r *http.Request) string {
 	username := a.BasicAuth.CheckAuth(r)
 	if username == "" {
 		user, _, _ := parseAuthorization(r)
-		fs.InfofCtx(context.Background(), r.URL.Path, "%s: Unauthorized request from %s", r.RemoteAddr, user)
+		fs.InfofCtx(r.Context(), r.URL.Path, "%s: Unauthorized request from %s", r.RemoteAddr, user)
 	}
 	return username
 }
@@ -95,7 +95,7 @@ func MiddlewareAuthCertificateUser() Middleware {
 
 // MiddlewareAuthHtpasswd instantiates middleware that authenticates against the passed htpasswd file
 func MiddlewareAuthHtpasswd(path, realm string) Middleware {
-	fs.InfofCtx(context.Background(), nil, "Using %q as htpasswd storage", path)
+	fs.Infof(nil, "Using %q as htpasswd storage", path)
 	secretProvider := goauth.HtpasswdFileProvider(path)
 	authenticator := NewLoggedBasicAuthenticator(realm, secretProvider)
 	return basicAuth(authenticator)
@@ -103,7 +103,7 @@ func MiddlewareAuthHtpasswd(path, realm string) Middleware {
 
 // MiddlewareAuthBasic instantiates middleware that authenticates for a single user
 func MiddlewareAuthBasic(user, pass, realm, salt string) Middleware {
-	fs.InfofCtx(context.Background(), nil, "Using --user %s --pass XXXX as authenticated user", user)
+	fs.Infof(nil, "Using --user %s --pass XXXX as authenticated user", user)
 	pass = string(goauth.MD5Crypt([]byte(pass), []byte(salt), []byte("$1$")))
 	secretProvider := func(u, r string) string {
 		if user == u {
@@ -140,7 +140,7 @@ func MiddlewareAuthCustom(fn CustomAuthFn, realm string, userFromContext bool) M
 
 			value, err := fn(user, pass)
 			if err != nil {
-				fs.InfofCtx(context.Background(), r.URL.Path, "%s: Auth failed from %s: %v", r.RemoteAddr, user, err)
+				fs.InfofCtx(r.Context(), r.URL.Path, "%s: Auth failed from %s: %v", r.RemoteAddr, user, err)
 				goauth.NewBasicAuthenticator(realm, func(user, realm string) string { return "" }).RequireAuth(w, r) //Reuse BasicAuth error reporting
 				return
 			}
@@ -180,7 +180,7 @@ var onlyOnceWarningAllowOrigin sync.Once
 func MiddlewareCORS(allowOrigin string) Middleware {
 	onlyOnceWarningAllowOrigin.Do(func() {
 		if allowOrigin == "*" {
-			fs.LogfCtx(context.Background(), nil, "Warning: Allow origin set to *. This can cause serious security problems.")
+			fs.Logf(nil, "Warning: Allow origin set to *. This can cause serious security problems.")
 		}
 	})
 

@@ -334,7 +334,7 @@ func (f *Fs) getItem(ctx context.Context, id string, dirID string, leaf string) 
 func errorHandler(resp *http.Response) error {
 	body, err := rest.ReadBody(resp)
 	if err != nil {
-		fs.DebugfCtx(context.Background(), nil, "Couldn't read error out of body: %v", err)
+		fs.Debugf(nil, "Couldn't read error out of body: %v", err)
 		body = nil
 	}
 	// Decode error response if there was one - they can be blank
@@ -342,7 +342,7 @@ func errorHandler(resp *http.Response) error {
 	if len(body) > 0 {
 		err = json.Unmarshal(body, &errResponse)
 		if err != nil {
-			fs.DebugfCtx(context.Background(), nil, "Couldn't decode error response: %v", err)
+			fs.Debugf(nil, "Couldn't decode error response: %v", err)
 		}
 	}
 	if errResponse.Message == "" {

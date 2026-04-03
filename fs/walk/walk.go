@@ -113,7 +113,7 @@ func (l ListType) Filter(in *fs.DirEntries) {
 				out = append(out, entry)
 			}
 		default:
-			fs.ErrorfCtx(context.Background(), nil, "Unknown object type %T", entry)
+			fs.Errorf(nil, "Unknown object type %T", entry)
 		}
 	}
 	*in = out

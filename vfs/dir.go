@@ -227,7 +227,7 @@ func (d *Dir) ForgetAll() (hasVirtual bool) {
 
 	d.mu.RLock()
 
-	fs.DebugfCtx(context.Background(), d.path, "forgetting directory cache")
+	fs.Debugf(d.path, "forgetting directory cache")
 	for _, node := range d.items {
 		if dir, ok := node.(*Dir); ok {
 			dir.ForgetAll()
@@ -277,7 +277,7 @@ func (d *Dir) invalidateDir(absPath string) {
 	if dir, ok := node.(*Dir); ok {
 		dir.mu.Lock()
 		if !dir.read.IsZero() {
-			fs.DebugfCtx(context.Background(), dir.path, "invalidating directory cache")
+			fs.Debugf(dir.path, "invalidating directory cache")
 			dir.read = time.Time{}
 		}
 		dir.mu.Unlock()
@@ -339,13 +339,13 @@ func (d *Dir) walk(fun func(*Dir)) {
 func (d *Dir) countActiveWriters() (writers int) {
 	d.walk(func(d *Dir) {
 		// NB d.mu is held by walk() here
-		fs.DebugfCtx(context.Background(), d.path, "Looking for writers")
+		fs.Debugf(d.path, "Looking for writers")
 		for leaf, item := range d.items {
-			fs.DebugfCtx(context.Background(), leaf, "reading active writers")
+			fs.Debugf(leaf, "reading active writers")
 			if file, ok := item.(*File); ok {
 				n := file.activeWriters()
 				if n != 0 {
-					fs.DebugfCtx(context.Background(), file, "active writers %d", n)
+					fs.Debugf(file, "active writers %d", n)
 				}
 				writers += n
 			}
@@ -376,7 +376,7 @@ func (d *Dir) renameTree(dirPath string) {
 
 	// Make sure the path is correct for each node
 	if d.path != dirPath {
-		fs.DebugfCtx(context.Background(), d.path, "Renaming to %q", dirPath)
+		fs.Debugf(d.path, "Renaming to %q", dirPath)
 		delete(d.parent.items, name(d.path))
 		d.path = dirPath
 		d.parent.items[name(d.path)] = d
@@ -423,7 +423,7 @@ func (d *Dir) rename(newParent *Dir, fsDir fs.Directory) {
 	// Rename in the cache
 	if d.vfs.cache != nil && d.vfs.cache.DirExists(oldPath) {
 		if err := d.vfs.cache.DirRename(oldPath, newPath); err != nil {
-			fs.InfofCtx(context.Background(), d, "Dir.Rename failed in Cache: %v", err)
+			fs.Infof(d, "Dir.Rename failed in Cache: %v", err)
 		}
 	}
 }
@@ -458,7 +458,7 @@ func (d *Dir) addObject(node Node) {
 		d.addVirtual(1)
 	}
 	d.virtual[leaf] = vAdd
-	fs.DebugfCtx(context.Background(), d.path, "Added virtual directory entry %v: %q", vAdd, leaf)
+	fs.Debugf(d.path, "Added virtual directory entry %v: %q", vAdd, leaf)
 	d.mu.Unlock()
 }
 
@@ -514,7 +514,7 @@ func (d *Dir) delObject(leaf string) {
 		d.addVirtual(1)
 	}
 	d.virtual[leaf] = vDel
-	fs.DebugfCtx(context.Background(), d.path, "Added virtual directory entry %v: %q", vDel, leaf)
+	fs.Debugf(d.path, "Added virtual directory entry %v: %q", vDel, leaf)
 	d.mu.Unlock()
 }
 
@@ -534,7 +534,7 @@ func (d *Dir) _readDir() error {
 	when := time.Now()
 	if age, stale := d._age(when); stale {
 		if age != 0 {
-			fs.DebugfCtx(context.Background(), d.path, "Re-reading directory (%v old)", age)
+			fs.Debugf(d.path, "Re-reading directory (%v old)", age)
 		}
 	} else {
 		return nil
@@ -567,7 +567,7 @@ func (d *Dir) _readDir() error {
 			normName := fmt.Sprintf("%s-%T", operations.ToNormal(e.Remote(), !ci.NoUnicodeNormalization, (ci.IgnoreCaseSync || d.vfs.Opt.CaseInsensitive)), e) // include type to track objects and dirs separately
 			_, found := normalizedNames[normName]
 			if found {
-				fs.ErrorfCtx(context.Background(), e.Remote(), "duplicate normalized names detected - skipping")
+				fs.Errorf(e.Remote(), "duplicate normalized names detected - skipping")
 				continue
 			}
 			normalizedNames[normName] = struct{}{}
@@ -604,7 +604,7 @@ func (d *Dir) _deleteVirtual(name string) {
 	if len(d.virtual) == 0 {
 		d.virtual = nil
 	}
-	fs.DebugfCtx(context.Background(), d.path, "Removed virtual directory entry %v: %q", virtualState, name)
+	fs.Debugf(d.path, "Removed virtual directory entry %v: %q", virtualState, name)
 }
 
 // Purge virtual entries assuming the directory has just been re-read
@@ -778,7 +778,7 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 			}
 		default:
 			err = fmt.Errorf("unknown type %T", item)
-			fs.ErrorfCtx(context.Background(), d, "readDir error: %v", err)
+			fs.Errorf(d, "readDir error: %v", err)
 			return err
 		}
 		d.items[name] = node
@@ -793,7 +793,7 @@ func (d *Dir) readDirTree() error {
 	f, path := d.f, d.path
 	d.mu.RUnlock()
 	when := time.Now()
-	fs.DebugfCtx(context.Background(), path, "Reading directory tree")
+	fs.Debugf(path, "Reading directory tree")
 	dt, err := walk.NewDirTree(context.TODO(), f, path, false, -1)
 	if err != nil {
 		return err
@@ -805,7 +805,7 @@ func (d *Dir) readDirTree() error {
 	if err != nil {
 		return err
 	}
-	fs.DebugfCtx(context.Background(), d.path, "Reading directory tree done in %s", time.Since(when))
+	fs.Debugf(d.path, "Reading directory tree done in %s", time.Since(when))
 	d.read = when
 	d.cleanupTimer.Reset(time.Duration(d.vfs.Opt.DirCacheTime * 2))
 	return nil
@@ -934,7 +934,7 @@ func (d *Dir) isEmpty() (bool, error) {
 func (d *Dir) ModTime() time.Time {
 	d.modTimeMu.Lock()
 	defer d.modTimeMu.Unlock()
-	// fs.DebugfCtx(context.Background(), d.path, "Dir.ModTime %v", d.modTime)
+	// fs.Debugf(d.path, "Dir.ModTime %v", d.modTime)
 	return d.modTime
 }
 
@@ -988,25 +988,25 @@ func (d *Dir) cachedNode(relativePath string) Node {
 //
 // Stat need not to handle the names "." and "..".
 func (d *Dir) Stat(name string) (node Node, err error) {
-	// fs.DebugfCtx(context.Background(), path, "Dir.Stat")
+	// fs.Debugf(path, "Dir.Stat")
 	node, err = d.stat(name)
 	if err != nil {
 		if err != ENOENT {
-			fs.ErrorfCtx(context.Background(), d, "Dir.Stat error: %v", err)
+			fs.Errorf(d, "Dir.Stat error: %v", err)
 		}
 		return nil, err
 	}
-	// fs.DebugfCtx(context.Background(), path, "Dir.Stat OK")
+	// fs.Debugf(path, "Dir.Stat OK")
 	return node, nil
 }
 
 // ReadDirAll reads the contents of the directory sorted
 func (d *Dir) ReadDirAll() (items Nodes, err error) {
-	// fs.DebugfCtx(context.Background(), d.path, "Dir.ReadDirAll")
+	// fs.Debugf(d.path, "Dir.ReadDirAll")
 	d.mu.Lock()
 	err = d._readDir()
 	if err != nil {
-		fs.DebugfCtx(context.Background(), d.path, "Dir.ReadDirAll error: %v", err)
+		fs.Debugf(d.path, "Dir.ReadDirAll error: %v", err)
 		d.mu.Unlock()
 		return nil, err
 	}
@@ -1015,7 +1015,7 @@ func (d *Dir) ReadDirAll() (items Nodes, err error) {
 	}
 	d.mu.Unlock()
 	sort.Sort(items)
-	// fs.DebugfCtx(context.Background(), d.path, "Dir.ReadDirAll OK with %d entries", len(items))
+	// fs.Debugf(d.path, "Dir.ReadDirAll OK with %d entries", len(items))
 	return items, nil
 }
 
@@ -1026,7 +1026,7 @@ const accessModeMask = (os.O_RDONLY | os.O_WRONLY | os.O_RDWR)
 func (d *Dir) Open(flags int) (fd Handle, err error) {
 	rdwrMode := flags & accessModeMask
 	if rdwrMode != os.O_RDONLY {
-		fs.ErrorfCtx(context.Background(), d, "Can only open directories read only")
+		fs.Errorf(d, "Can only open directories read only")
 		return nil, EPERM
 	}
 	return newDirHandle(d), nil
@@ -1034,7 +1034,7 @@ func (d *Dir) Open(flags int) (fd Handle, err error) {
 
 // Create makes a new file node
 func (d *Dir) Create(name string, flags int) (*File, error) {
-	// fs.DebugfCtx(context.Background(), path, "Dir.Create")
+	// fs.Debugf(path, "Dir.Create")
 	// Return existing node if one exists
 	node, err := d.stat(name)
 	switch err {
@@ -1048,7 +1048,7 @@ func (d *Dir) Create(name string, flags int) (*File, error) {
 		return nil, EEXIST // EISDIR would be better but we don't have that
 	default:
 		// a different error - report
-		fs.ErrorfCtx(context.Background(), d, "Dir.Create stat failed: %v", err)
+		fs.Errorf(d, "Dir.Create stat failed: %v", err)
 		return nil, err
 	}
 	// node doesn't exist so create it
@@ -1056,7 +1056,7 @@ func (d *Dir) Create(name string, flags int) (*File, error) {
 		return nil, EROFS
 	}
 	if err = d.SetModTime(time.Now()); err != nil {
-		fs.ErrorfCtx(context.Background(), d, "Dir.Create failed to set modtime on parent dir: %v", err)
+		fs.Errorf(d, "Dir.Create failed to set modtime on parent dir: %v", err)
 		return nil, err
 	}
 	// This gets added to the directory when the file is opened for write
@@ -1081,23 +1081,23 @@ func (d *Dir) Mkdir(name string) (*Dir, error) {
 		return nil, EEXIST
 	default:
 		// a different error - report
-		fs.ErrorfCtx(context.Background(), d, "Dir.Mkdir failed to read directory: %v", err)
+		fs.Errorf(d, "Dir.Mkdir failed to read directory: %v", err)
 		return nil, err
 	}
-	// fs.DebugfCtx(context.Background(), path, "Dir.Mkdir")
+	// fs.Debugf(path, "Dir.Mkdir")
 	err = d.f.Mkdir(context.TODO(), path)
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), d, "Dir.Mkdir failed to create directory: %v", err)
+		fs.Errorf(d, "Dir.Mkdir failed to create directory: %v", err)
 		return nil, err
 	}
 	fsDir := fs.NewDir(path, time.Now())
 	dir := newDir(d.vfs, d.f, d, fsDir)
 	d.addObject(dir)
 	if err = d.SetModTime(time.Now()); err != nil {
-		fs.ErrorfCtx(context.Background(), d, "Dir.Mkdir failed to set modtime on parent dir: %v", err)
+		fs.Errorf(d, "Dir.Mkdir failed to set modtime on parent dir: %v", err)
 		return nil, err
 	}
-	// fs.DebugfCtx(context.Background(), path, "Dir.Mkdir OK")
+	// fs.Debugf(path, "Dir.Mkdir OK")
 	return dir, nil
 }
 
@@ -1109,17 +1109,17 @@ func (d *Dir) Remove() error {
 	// Check directory is empty first
 	empty, err := d.isEmpty()
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), d, "Dir.Remove dir error: %v", err)
+		fs.Errorf(d, "Dir.Remove dir error: %v", err)
 		return err
 	}
 	if !empty {
-		fs.ErrorfCtx(context.Background(), d, "Dir.Remove not empty")
+		fs.Errorf(d, "Dir.Remove not empty")
 		return ENOTEMPTY
 	}
 	// remove directory
 	err = d.f.Rmdir(context.TODO(), d.path)
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), d, "Dir.Remove failed to remove directory: %v", err)
+		fs.Errorf(d, "Dir.Remove failed to remove directory: %v", err)
 		return err
 	}
 	// Remove the item from the parent directory listing
@@ -1137,13 +1137,13 @@ func (d *Dir) RemoveAll() error {
 	// Remove contents of the directory
 	nodes, err := d.ReadDirAll()
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), d, "Dir.RemoveAll failed to read directory: %v", err)
+		fs.Errorf(d, "Dir.RemoveAll failed to read directory: %v", err)
 		return err
 	}
 	for _, node := range nodes {
 		err = node.RemoveAll()
 		if err != nil {
-			fs.ErrorfCtx(context.Background(), node.Path(), "Dir.RemoveAll failed to remove: %v", err)
+			fs.Errorf(node.Path(), "Dir.RemoveAll failed to remove: %v", err)
 			return err
 		}
 	}
@@ -1162,14 +1162,14 @@ func (d *Dir) RemoveName(name string) error {
 	if d.vfs.Opt.ReadOnly {
 		return EROFS
 	}
-	// fs.DebugfCtx(context.Background(), path, "Dir.Remove")
+	// fs.Debugf(path, "Dir.Remove")
 	node, err := d.stat(name)
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), d, "Dir.Remove error: %v", err)
+		fs.Errorf(d, "Dir.Remove error: %v", err)
 		return err
 	}
 	if err = d.SetModTime(time.Now()); err != nil {
-		fs.ErrorfCtx(context.Background(), d, "Dir.Remove failed to set modtime on parent dir: %v", err)
+		fs.Errorf(d, "Dir.Remove failed to set modtime on parent dir: %v", err)
 		return err
 	}
 	return node.Remove()
@@ -1177,65 +1177,65 @@ func (d *Dir) RemoveName(name string) error {
 
 // Rename the file
 func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
-	// fs.DebugfCtx(context.Background(), d, "BEFORE\n%s", d.dump())
+	// fs.Debugf(d, "BEFORE\n%s", d.dump())
 	if d.vfs.Opt.ReadOnly {
 		return EROFS
 	}
 	oldPath := path.Join(d.path, oldName)
 	newPath := path.Join(destDir.path, newName)
-	// fs.DebugfCtx(context.Background(), oldPath, "Dir.Rename to %q", newPath)
+	// fs.Debugf(oldPath, "Dir.Rename to %q", newPath)
 	oldNode, err := d.stat(oldName)
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), oldPath, "Dir.Rename error: %v", err)
+		fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 		return err
 	}
 	switch x := oldNode.DirEntry().(type) {
 	case nil:
 		if oldFile, ok := oldNode.(*File); ok {
 			if err = oldFile.rename(context.TODO(), destDir, newName); err != nil {
-				fs.ErrorfCtx(context.Background(), oldPath, "Dir.Rename error: %v", err)
+				fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 				return err
 			}
 		} else {
-			fs.ErrorfCtx(context.Background(), oldPath, "Dir.Rename can't rename open file that is not a vfs.File")
+			fs.Errorf(oldPath, "Dir.Rename can't rename open file that is not a vfs.File")
 			return EPERM
 		}
 	case fs.Object:
 		if oldFile, ok := oldNode.(*File); ok {
 			if err = oldFile.rename(context.TODO(), destDir, newName); err != nil {
-				fs.ErrorfCtx(context.Background(), oldPath, "Dir.Rename error: %v", err)
+				fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 				return err
 			}
 		} else {
 			err := fmt.Errorf("Fs %q can't rename file that is not a vfs.File", d.f)
-			fs.ErrorfCtx(context.Background(), oldPath, "Dir.Rename error: %v", err)
+			fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 			return err
 		}
 	case fs.Directory:
 		features := d.f.Features()
 		if features.DirMove == nil && features.Move == nil && features.Copy == nil {
 			err := fmt.Errorf("Fs %q can't rename directories (no DirMove, Move or Copy)", d.f)
-			fs.ErrorfCtx(context.Background(), oldPath, "Dir.Rename error: %v", err)
+			fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 			return err
 		}
 		srcRemote := x.Remote()
 		dstRemote := newPath
 		err = operations.DirMove(context.TODO(), d.f, srcRemote, dstRemote)
 		if err != nil {
-			fs.ErrorfCtx(context.Background(), oldPath, "Dir.Rename error: %v", err)
+			fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 			return err
 		}
 		newDir := fs.NewDirCopy(context.TODO(), x).SetRemote(newPath)
 		// Update the node with the new details
 		if oldNode != nil {
 			if oldDir, ok := oldNode.(*Dir); ok {
-				fs.DebugfCtx(context.Background(), x, "Updating dir with %v %p", newDir, oldDir)
+				fs.Debugf(x, "Updating dir with %v %p", newDir, oldDir)
 				oldDir.rename(destDir, newDir)
 			}
 		}
 	default:
 		err = fmt.Errorf("unknown type %T", oldNode)
-		fs.ErrorfCtx(context.Background(), d.path, "Dir.Rename error: %v", err)
+		fs.Errorf(d.path, "Dir.Rename error: %v", err)
 		return err
 	}
 
@@ -1243,12 +1243,12 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 	d.delObject(oldName)
 	destDir.addObject(oldNode)
 	if err = d.SetModTime(time.Now()); err != nil {
-		fs.ErrorfCtx(context.Background(), d, "Dir.Rename failed to set modtime on parent dir: %v", err)
+		fs.Errorf(d, "Dir.Rename failed to set modtime on parent dir: %v", err)
 		return err
 	}
 
-	// fs.DebugfCtx(context.Background(), newPath, "Dir.Rename renamed from %q", oldPath)
-	// fs.DebugfCtx(context.Background(), d, "AFTER\n%s", d.dump())
+	// fs.Debugf(newPath, "Dir.Rename renamed from %q", oldPath)
+	// fs.Debugf(d, "AFTER\n%s", d.dump())
 	return nil
 }
 

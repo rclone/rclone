@@ -73,7 +73,7 @@ func init() {
 				return nil, fmt.Errorf("couldn't parse config into struct: %w", err)
 			}
 
-			//fs.DebugfCtx(context.Background(), nil, "hidrive: configuring oauth-token.")
+			//fs.Debugf(nil, "hidrive: configuring oauth-token.")
 			oauthConfig.Scopes = createHiDriveScopes(opt.ScopeRole, opt.ScopeAccess)
 			return oauthutil.ConfigOut("", &oauthutil.Options{
 				OAuth2Config: oauthConfig,
@@ -272,7 +272,7 @@ func errorHandler(resp *http.Response) error {
 	errResponse := new(api.Error)
 	err := rest.DecodeJSON(resp, &errResponse)
 	if err != nil {
-		fs.DebugfCtx(context.Background(), nil, "Couldn't decode error response: %v", err)
+		fs.Debugf(nil, "Couldn't decode error response: %v", err)
 	}
 	_, err = errResponse.Code.Int64()
 	if err != nil {
@@ -283,7 +283,7 @@ func errorHandler(resp *http.Response) error {
 
 // NewFs creates a new file system from the path.
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
-	//fs.DebugfCtx(context.Background(), nil, "hidrive: creating new Fs.")
+	//fs.Debugf(nil, "hidrive: creating new Fs.")
 	// Parse config into Options struct.
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
@@ -399,7 +399,7 @@ func (f *Fs) newObjectFromHiDriveObject(remote string, info *api.HiDriveObject) 
 // If remote points to a directory then it returns fs.ErrorIsDir.
 // If it can not be found it returns the error fs.ErrorObjectNotFound.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	//fs.DebugfCtx(context.Background(), f, "executing NewObject(%s).", remote)
+	//fs.Debugf(f, "executing NewObject(%s).", remote)
 	metaFiller := func(o *Object) error {
 		return o.readMetadata(ctx)
 	}
@@ -414,7 +414,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 //
 // This returns fs.ErrorDirNotFound if the directory is not found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	//fs.DebugfCtx(context.Background(), f, "executing List(%s).", dir)
+	//fs.Debugf(f, "executing List(%s).", dir)
 	var iErr error
 	addEntry := func(info *api.HiDriveObject) bool {
 		fs.DebugfCtx(ctx, f, "found directory-element with name %s", info.Name)
@@ -466,7 +466,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // in which case both the object and the error will be returned.
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	remote := src.Remote()
-	//fs.DebugfCtx(context.Background(), f, "executing Put(%s, %v).", remote, options)
+	//fs.Debugf(f, "executing Put(%s, %v).", remote, options)
 
 	existingObj, err := f.NewObject(ctx, remote)
 	switch err {
@@ -487,7 +487,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 // an existing one accessed even if an error is returned,
 // in which case both the object and the error will be returned.
 func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	//fs.DebugfCtx(context.Background(), f, "executing PutStream(%s, %v).", src.Remote(), options)
+	//fs.Debugf(f, "executing PutStream(%s, %v).", src.Remote(), options)
 
 	return f.Put(ctx, in, src, options...)
 }
@@ -506,7 +506,7 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	remote := src.Remote()
 	modTime := src.ModTime(ctx)
-	//fs.DebugfCtx(context.Background(), f, "executing PutUnchecked(%s, %v).", remote, options)
+	//fs.Debugf(f, "executing PutUnchecked(%s, %v).", remote, options)
 	resolvedPath := f.resolvePath(remote)
 
 	// NOTE: The file creation operation is a single atomic operation.
@@ -584,7 +584,7 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 // NOTE: If an error occurs while the parent directories are being created,
 // any directories already created will NOT be deleted again.
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	//fs.DebugfCtx(context.Background(), f, "executing Mkdir(%s).", dir)
+	//fs.Debugf(f, "executing Mkdir(%s).", dir)
 	resolvedDir := f.resolvePath(dir)
 	_, err := f.createDirectories(ctx, resolvedDir, IgnoreOnExist)
 
@@ -602,7 +602,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 // This returns fs.ErrorDirNotFound if the directory is not found.
 // This returns fs.ErrorDirectoryNotEmpty if the directory is not empty.
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	//fs.DebugfCtx(context.Background(), f, "executing Rmdir(%s).", dir)
+	//fs.Debugf(f, "executing Rmdir(%s).", dir)
 	resolvedDir := f.resolvePath(dir)
 	return f.deleteDirectory(ctx, resolvedDir, false)
 }
@@ -611,7 +611,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 //
 // This returns fs.ErrorDirectoryNotEmpty if the directory is not empty.
 func (f *Fs) Purge(ctx context.Context, dir string) error {
-	//fs.DebugfCtx(context.Background(), f, "executing Purge(%s).", dir)
+	//fs.Debugf(f, "executing Purge(%s).", dir)
 	resolvedDir := f.resolvePath(dir)
 	return f.deleteDirectory(ctx, resolvedDir, true)
 }
@@ -664,7 +664,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	// Get the absolute path to the source.
 	srcPath := srcObj.fs.resolvePath(srcObj.Remote())
-	//fs.DebugfCtx(context.Background(), f, "executing Copy(%s, %s).", srcPath, remote)
+	//fs.Debugf(f, "executing Copy(%s, %s).", srcPath, remote)
 	dstPath := f.resolvePath(remote)
 
 	var info *api.HiDriveObject
@@ -703,7 +703,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	// Get the absolute path to the source.
 	srcPath := srcObj.fs.resolvePath(srcObj.Remote())
-	//fs.DebugfCtx(context.Background(), f, "executing Move(%s, %s).", srcPath, remote)
+	//fs.Debugf(f, "executing Move(%s, %s).", srcPath, remote)
 	dstPath := f.resolvePath(remote)
 
 	var info *api.HiDriveObject
@@ -741,7 +741,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 	// Get the absolute path to the source.
 	srcPath := srcFs.resolvePath(srcRemote)
-	//fs.DebugfCtx(context.Background(), f, "executing DirMove(%s, %s).", srcPath, dstRemote)
+	//fs.Debugf(f, "executing DirMove(%s, %s).", srcPath, dstRemote)
 	dstPath := f.resolvePath(dstRemote)
 
 	err := f.retryOnce.Call(func() (bool, error) {
@@ -789,7 +789,7 @@ func (o *Object) Remote() string {
 func (o *Object) ID() string {
 	err := o.readMetadata(context.TODO())
 	if err != nil {
-		fs.LogfCtx(context.Background(), o, "Failed to read metadata: %v", err)
+		fs.Logf(o, "Failed to read metadata: %v", err)
 		return ""
 	}
 	return o.id
@@ -814,7 +814,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 func (o *Object) Size() int64 {
 	err := o.readMetadata(context.TODO())
 	if err != nil {
-		fs.LogfCtx(context.Background(), o, "Failed to read metadata: %v", err)
+		fs.Logf(o, "Failed to read metadata: %v", err)
 		return -1
 	}
 	return o.size
@@ -928,7 +928,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 // For unknown-sized contents (indicated by src.Size() == -1)
 // this will try to properly upload it in multiple chunks.
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	//fs.DebugfCtx(context.Background(), o.fs, "executing Update(%s, %v).", o.remote, options)
+	//fs.Debugf(o.fs, "executing Update(%s, %v).", o.remote, options)
 	modTime := src.ModTime(ctx)
 	resolvedPath := o.fs.resolvePath(o.remote)
 

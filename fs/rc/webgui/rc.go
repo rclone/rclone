@@ -164,10 +164,10 @@ func rcAddPlugin(_ context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 	err = os.RemoveAll(extractPath)
 	if err != nil {
-		fs.LogfCtx(context.Background(), nil, "No previous downloads to remove")
+		fs.Logf(nil, "No previous downloads to remove")
 	}
 
-	fs.LogfCtx(context.Background(), nil, "Unzipping plugin binary")
+	fs.Logf(nil, "Unzipping plugin binary")
 
 	err = Unzip(zipPath, extractPath)
 	if err != nil {

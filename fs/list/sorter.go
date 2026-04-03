@@ -137,7 +137,7 @@ func (ls *Sorter) sendEntriesToExtSort(entries fs.DirEntries) (err error) {
 }
 
 func (ls *Sorter) startExtSort() (err error) {
-	fs.LogfCtx(context.Background(), ls.f, "Switching to on disk sorting as more than %d entries in one directory detected", ls.cutoff)
+	fs.LogfCtx(ls.ctx, ls.f, "Switching to on disk sorting as more than %d entries in one directory detected", ls.cutoff)
 	ls.inputChan = make(chan string, 100)
 	// Options to control the extsort
 	opt := extsort.Config{
@@ -171,9 +171,9 @@ func (ls *Sorter) startExtSort() (err error) {
 	ls.extSort = true
 
 	// Send the accumulated entries to the sorter
-	fs.DebugfCtx(context.Background(), ls.f, "Sending accumulated directory entries to disk")
+	fs.DebugfCtx(ls.ctx, ls.f, "Sending accumulated directory entries to disk")
 	err = ls.sendEntriesToExtSort(ls.entries)
-	fs.DebugfCtx(context.Background(), ls.f, "Done sending accumulated directory entries to disk")
+	fs.DebugfCtx(ls.ctx, ls.f, "Done sending accumulated directory entries to disk")
 	clear(ls.entries)
 	ls.entries = nil
 	return err

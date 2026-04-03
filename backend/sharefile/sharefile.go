@@ -548,7 +548,7 @@ func (f *Fs) getUploadBlock() []byte {
 	if buf == nil {
 		buf = make([]byte, f.opt.ChunkSize)
 	}
-	// fs.DebugfCtx(context.Background(), f, "Getting upload block %p", buf)
+	// fs.Debugf(f, "Getting upload block %p", buf)
 	return buf
 }
 
@@ -558,7 +558,7 @@ func (f *Fs) putUploadBlock(buf []byte) {
 	if len(buf) != int(f.opt.ChunkSize) {
 		panic("bad blocksize returned to pool")
 	}
-	// fs.DebugfCtx(context.Background(), f, "Returning upload block %p", buf)
+	// fs.Debugf(f, "Returning upload block %p", buf)
 	f.bufferTokens <- buf
 }
 
@@ -1220,7 +1220,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 func (o *Object) Size() int64 {
 	err := o.readMetaData(context.TODO())
 	if err != nil {
-		fs.LogfCtx(context.Background(), o, "Failed to read metadata: %v", err)
+		fs.Logf(o, "Failed to read metadata: %v", err)
 		return 0
 	}
 	return o.size

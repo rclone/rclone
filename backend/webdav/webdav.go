@@ -323,7 +323,7 @@ func itemIsDir(item *api.Response) bool {
 		if t.Space == "DAV:" && t.Local == "collection" {
 			return true
 		}
-		fs.DebugfCtx(context.Background(), nil, "Unknown resource type %q/%q on %q", t.Space, t.Local, item.Props.Name)
+		fs.Debugf(nil, "Unknown resource type %q/%q on %q", t.Space, t.Local, item.Props.Name)
 	}
 	// the iscollection prop is a Microsoft extension, but if present it is a reliable indicator
 	// if the above check failed - see #2716. This can be an integer or a boolean - see #2964
@@ -334,7 +334,7 @@ func itemIsDir(item *api.Response) bool {
 		case "1", "true":
 			return true
 		default:
-			fs.DebugfCtx(context.Background(), nil, "Unknown value %q for IsCollection", x)
+			fs.Debugf(nil, "Unknown value %q for IsCollection", x)
 		}
 	}
 	return false
@@ -1392,7 +1392,7 @@ func (o *Object) Size() int64 {
 	ctx := context.TODO()
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.InfofCtx(context.Background(), o, "Failed to read metadata: %v", err)
+		fs.Infof(o, "Failed to read metadata: %v", err)
 		return 0
 	}
 	return o.size

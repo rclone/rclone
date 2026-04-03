@@ -72,7 +72,7 @@ is desired for all URLs then a file with only URLs and no filename can be used.
 
 Each FILENAME in the CSV file can start with a relative path which will be appended
 to the destination path provided at the command line. For example, running the command
-shown above with the following CSV file will write two files to the destination: 
+shown above with the following CSV file will write two files to the destination:
 |remote:dir/local/path/bar.json| and |remote:dir/another/local/directory/qux.json|
 |||csv
 https://example.org/foo/bar.json,local/path/bar.json
@@ -146,7 +146,7 @@ func runURLS(args []string) (err error) {
 			}
 			_, err := copyURL(gCtx, dstFs, filename, url, filename == "", headerFilename, noClobber)
 			if err != nil {
-				fs.ErrorfCtx(context.Background(), filename, "failed to copy URL %q: %v", url, err)
+				fs.ErrorfCtx(gCtx, filename, "failed to copy URL %q: %v", url, err)
 				ec.Add(err)
 			}
 			return nil

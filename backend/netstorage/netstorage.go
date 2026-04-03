@@ -419,7 +419,7 @@ func (f *Fs) getFileName(file *File) string {
 		if err == nil {
 			return string(decoded)
 		}
-		fs.ErrorfCtx(context.Background(), nil, "Failed to base64 decode object %s: %v", file.NameBase64, err)
+		fs.Errorf(nil, "Failed to base64 decode object %s: %v", file.NameBase64, err)
 	}
 	return ""
 }
@@ -835,7 +835,7 @@ func (f *Fs) getAuth(req *http.Request) error {
 	//lint:ignore SA1008 false positive when running staticcheck, the header name is according to docs even if not canonical
 	//nolint:staticcheck // Don't include staticcheck when running golangci-lint to avoid SA1008
 	actionHeader := req.Header["X-Akamai-ACS-Action"][0]
-	fs.DebugfCtx(context.Background(), nil, "NetStorage API %s call %s for path %q", req.Method, actionHeader, path)
+	fs.Debugf(nil, "NetStorage API %s call %s for path %q", req.Method, actionHeader, path)
 	req.Header.Set("X-Akamai-ACS-Auth-Data", dataHeader)
 	req.Header.Set("X-Akamai-ACS-Auth-Sign", generateSignHeader(f, dataHeader, path, actionHeader))
 	return nil
@@ -1211,7 +1211,7 @@ func (f *Fs) getStatCache(URL string) (files []File) {
 	files = f.statcache[URL]
 	f.statcacheMutex.RUnlock()
 	if files != nil {
-		fs.DebugfCtx(context.Background(), nil, "NetStorage stat cache hit for %q", URL)
+		fs.Debugf(nil, "NetStorage stat cache hit for %q", URL)
 	}
 	return
 }

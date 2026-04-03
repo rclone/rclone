@@ -121,9 +121,9 @@ func (ds *deltaSet) printStats() {
 		}
 	}
 	if nAll != nNew+nMod+nDeleted {
-		fs.ErrorfCtx(context.Background(), nil, "something doesn't add up! %4d != %4d + %4d + %4d", nAll, nNew, nMod, nDeleted)
+		fs.Errorf(nil, "something doesn't add up! %4d != %4d + %4d + %4d", nAll, nNew, nMod, nDeleted)
 	}
-	fs.InfofCtx(context.Background(), nil, "%s: %4d changes: "+Color(terminal.GreenFg, "%4d new")+", "+Color(terminal.YellowFg, "%4d modified")+", "+Color(terminal.RedFg, "%4d deleted"),
+	fs.Infof(nil, "%s: %4d changes: "+Color(terminal.GreenFg, "%4d new")+", "+Color(terminal.YellowFg, "%4d modified")+", "+Color(terminal.RedFg, "%4d deleted"),
 		ds.msg, nAll, nNew, nMod, nDeleted)
 	if nMod > 0 {
 		details := []string{}
@@ -139,10 +139,10 @@ func (ds *deltaSet) printStats() {
 			details = append(details, fmt.Sprintf(Color(terminal.CyanFg, "%4d hash differs"), nHash))
 		}
 		if (nNewer+nOlder != nTime) || (nLarger+nSmaller != nSize) || (nMod > nTime+nSize+nHash) {
-			fs.ErrorfCtx(context.Background(), nil, "something doesn't add up!")
+			fs.Errorf(nil, "something doesn't add up!")
 		}
 
-		fs.InfofCtx(context.Background(), nil, "(%s: %s)", Color(terminal.YellowFg, "Modified"), strings.Join(details, ", "))
+		fs.Infof(nil, "(%s: %s)", Color(terminal.YellowFg, "Modified"), strings.Join(details, ", "))
 	}
 }
 
@@ -153,7 +153,7 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 
 	old, err = b.loadListing(oldListing)
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), nil, "Failed loading prior %s listing: %s", msg, oldListing)
+		fs.Errorf(nil, "Failed loading prior %s listing: %s", msg, oldListing)
 		b.abort = true
 		return
 	}
@@ -193,7 +193,7 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 			whatchanged := []string{}
 			if b.opt.Compare.Size {
 				if sizeDiffers(old.getSize(file), now.getSize(file)) {
-					fs.DebugfCtx(context.Background(), file, "(old: %v current: %v)", old.getSize(file), now.getSize(file))
+					fs.Debugf(file, "(old: %v current: %v)", old.getSize(file), now.getSize(file))
 					if now.getSize(file) > old.getSize(file) {
 						whatchanged = append(whatchanged, Color(terminal.MagentaFg, "size (larger)"))
 						d |= deltaLarger
@@ -207,11 +207,11 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 			if b.opt.Compare.Modtime {
 				if timeDiffers(fctx, old.getTime(file), now.getTime(file), f, f) {
 					if old.beforeOther(now, file) {
-						fs.DebugfCtx(context.Background(), file, "(old: %v current: %v)", old.getTime(file), now.getTime(file))
+						fs.Debugf(file, "(old: %v current: %v)", old.getTime(file), now.getTime(file))
 						whatchanged = append(whatchanged, Color(terminal.MagentaFg, "time (newer)"))
 						d |= deltaNewer
 					} else { // Current version is older than prior sync.
-						fs.DebugfCtx(context.Background(), file, "(old: %v current: %v)", old.getTime(file), now.getTime(file))
+						fs.Debugf(file, "(old: %v current: %v)", old.getTime(file), now.getTime(file))
 						whatchanged = append(whatchanged, Color(terminal.MagentaFg, "time (older)"))
 						d |= deltaOlder
 					}
@@ -220,7 +220,7 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 			}
 			if b.opt.Compare.Checksum {
 				if b.hashDiffers(old.getHash(file), now.getHash(file), old.hash, now.hash, old.getSize(file), now.getSize(file)) {
-					fs.DebugfCtx(context.Background(), file, "(old: %v current: %v)", old.getHash(file), now.getHash(file))
+					fs.Debugf(file, "(old: %v current: %v)", old.getHash(file), now.getHash(file))
 					whatchanged = append(whatchanged, Color(terminal.MagentaFg, "hash"))
 					d |= deltaHash
 					h = now.getHash(file)
@@ -554,7 +554,7 @@ func (ds *deltaSet) excessDeletes() bool {
 		return false
 	}
 
-	fs.ErrorfCtx(context.Background(), "Safety abort",
+	fs.Errorf("Safety abort",
 		"too many deletes (>%d%%, %d of %d) on %s %s. Run with --force if desired.",
 		maxDelete, ds.deleted, ds.oldCount, ds.msg, quotePath(bilib.FsPath(ds.fs)))
 	return true

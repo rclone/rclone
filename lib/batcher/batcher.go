@@ -41,7 +41,7 @@ type CommitBatchFn[Item, Result any] func(ctx context.Context, items []Item, res
 // Batcher holds info about the current items waiting to be acted on.
 type Batcher[Item, Result any] struct {
 	opt      Options                     // options for configuring the batcher
-	f        any                         // logging identity for fs.DebugfCtx(context.Background(), f, ...)
+	f        any                         // logging identity for fs.Debugf(f, ...)
 	commit   CommitBatchFn[Item, Result] // User defined function to commit the batch
 	async    bool                        // whether we are using async batching
 	in       chan request[Item, Result]  // incoming items to batch
@@ -68,7 +68,7 @@ type response[Result any] struct {
 
 // New creates a Batcher for Item and Result calling commit to do the actual committing.
 func New[Item, Result any](ctx context.Context, f any, commit CommitBatchFn[Item, Result], opt Options) (*Batcher[Item, Result], error) {
-	// fs.DebugfCtx(context.Background(), f, "Creating batcher with mode %q, size %d, timeout %v", mode, size, timeout)
+	// fs.Debugf(f, "Creating batcher with mode %q, size %d, timeout %v", mode, size, timeout)
 	if opt.Size > opt.MaxBatchSize || opt.Size < 0 {
 		return nil, fmt.Errorf("batcher: batch size must be < %d and >= 0 - it is currently %d", opt.MaxBatchSize, opt.Size)
 	}
@@ -238,7 +238,7 @@ func (b *Batcher[Item, Result]) Shutdown() {
 	}
 	b.shutOnce.Do(func() {
 		atexit.Unregister(b.atexit)
-		fs.InfofCtx(context.Background(), b.f, "Committing uploads - please wait...")
+		fs.Infof(b.f, "Committing uploads - please wait...")
 		// show that batcher is shutting down
 		close(b.closed)
 		// quit the commitLoop by sending a quitRequest message

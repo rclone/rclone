@@ -324,7 +324,7 @@ func (s *syncCopyMove) processError(err error) {
 		err = fserrors.NoRetryError(err)
 	} else if err == accounting.ErrorMaxTransferLimitReachedGraceful {
 		if s.inCtx.Err() == nil {
-			fs.LogfCtx(context.Background(), nil, "%v - stopping transfers", err)
+			fs.Logf(nil, "%v - stopping transfers", err)
 			// Cancel the march and stop the pipes
 			s.inCancel()
 		}
@@ -337,7 +337,7 @@ func (s *syncCopyMove) processError(err error) {
 	switch {
 	case fserrors.IsFatalError(err):
 		if !s.aborting() {
-			fs.ErrorfCtx(context.Background(), nil, "Cancelling sync due to fatal error: %v", err)
+			fs.Errorf(nil, "Cancelling sync due to fatal error: %v", err)
 			s.cancel()
 		}
 		s.fatalErr = err
@@ -394,10 +394,10 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 			// Fix case for case insensitive filesystems
 			if s.ci.FixCase && !s.ci.Immutable && src.Remote() != pair.Dst.Remote() {
 				if newDst, err := operations.Move(s.ctx, s.fdst, nil, src.Remote(), pair.Dst); err != nil {
-					fs.ErrorfCtx(context.Background(), pair.Dst, "Error while attempting to rename to %s: %v", src.Remote(), err)
+					fs.Errorf(pair.Dst, "Error while attempting to rename to %s: %v", src.Remote(), err)
 					s.processError(err)
 				} else {
-					fs.InfofCtx(context.Background(), pair.Dst, "Fixed case by renaming to: %s", src.Remote())
+					fs.Infof(pair.Dst, "Fixed case by renaming to: %s", src.Remote())
 					pair.Dst = newDst
 				}
 			}
@@ -405,7 +405,7 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 				// If files are treated as immutable, fail if destination exists and does not match
 				if s.ci.Immutable && pair.Dst != nil {
 					err := fs.CountError(s.ctx, fserrors.NoRetryError(fs.ErrorImmutableModified))
-					fs.ErrorfCtx(context.Background(), pair.Dst, "Source and destination exist but do not match: %v", err)
+					fs.Errorf(pair.Dst, "Source and destination exist but do not match: %v", err)
 					s.processError(err)
 				} else {
 					if pair.Dst != nil {
@@ -439,9 +439,9 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 				if s.DoMove {
 					// Delete src if no error on copy
 					if operations.SameObject(src, pair.Dst) {
-						fs.LogfCtx(context.Background(), src, "Not removing source file as it is the same file as the destination")
+						fs.Logf(src, "Not removing source file as it is the same file as the destination")
 					} else if s.ci.IgnoreExisting {
-						fs.DebugfCtx(context.Background(), src, "Not removing source file as destination file exists and --ignore-existing is set")
+						fs.Debugf(src, "Not removing source file as destination file exists and --ignore-existing is set")
 					} else if s.checkFirst && s.ci.OrderBy != "" {
 						// If we want perfect ordering then use the transfers to delete the file
 						//
@@ -474,7 +474,7 @@ func (s *syncCopyMove) pairRenamer(in *pipe, out *pipe, fraction int, wg *sync.W
 		src := pair.Src
 		if !s.tryRename(src) {
 			// pass on if not renamed
-			fs.DebugfCtx(context.Background(), src, "Need to transfer - No matching file found at Destination")
+			fs.Debugf(src, "Need to transfer - No matching file found at Destination")
 			ok = out.Put(s.inCtx, pair)
 			if !ok {
 				return
@@ -523,7 +523,7 @@ func (s *syncCopyMove) startCheckers() {
 // This stops the background checkers
 func (s *syncCopyMove) stopCheckers() {
 	s.toBeChecked.Close()
-	fs.DebugfCtx(context.Background(), s.fdst, "Waiting for checks to finish")
+	fs.Debugf(s.fdst, "Waiting for checks to finish")
 	s.checkerWg.Wait()
 }
 
@@ -539,7 +539,7 @@ func (s *syncCopyMove) startTransfers() {
 // This stops the background transfers
 func (s *syncCopyMove) stopTransfers() {
 	s.toBeUploaded.Close()
-	fs.DebugfCtx(context.Background(), s.fdst, "Waiting for transfers to finish")
+	fs.Debugf(s.fdst, "Waiting for transfers to finish")
 	s.transfersWg.Wait()
 }
 
@@ -561,7 +561,7 @@ func (s *syncCopyMove) stopRenamers() {
 		return
 	}
 	s.toBeRenamed.Close()
-	fs.DebugfCtx(context.Background(), s.fdst, "Waiting for renames to finish")
+	fs.Debugf(s.fdst, "Waiting for renames to finish")
 	s.renamerWg.Wait()
 }
 
@@ -613,7 +613,7 @@ func (s *syncCopyMove) stopDeleters() {
 // have been found have been removed from dstFiles already.
 func (s *syncCopyMove) deleteFiles(checkSrcMap bool) error {
 	if accounting.Stats(s.ctx).Errored() && !s.ci.IgnoreErrors {
-		fs.ErrorfCtx(context.Background(), s.fdst, "%v", fs.ErrorNotDeleting)
+		fs.Errorf(s.fdst, "%v", fs.ErrorNotDeleting)
 		// log all deletes as errors
 		for remote, o := range s.dstFiles {
 			if checkSrcMap {
@@ -768,7 +768,7 @@ func (s *syncCopyMove) renameID(obj fs.Object, renamesStrategy trackRenamesStrat
 		var err error
 		hash, err := obj.Hash(s.ctx, s.commonHash)
 		if err != nil {
-			fs.DebugfCtx(context.Background(), obj, "Hash failed: %v", err)
+			fs.Debugf(obj, "Hash failed: %v", err)
 			return ""
 		}
 		if hash == "" {
@@ -840,7 +840,7 @@ func (s *syncCopyMove) popRenameMap(hash string, src fs.Object) (dst fs.Object) 
 // makeRenameMap builds a map of the destination files by hash that
 // match sizes in the slice of objects in s.renameCheck
 func (s *syncCopyMove) makeRenameMap() {
-	fs.InfofCtx(context.Background(), s.fdst, "Making map for --track-renames")
+	fs.Infof(s.fdst, "Making map for --track-renames")
 
 	// first make a map of possible sizes we need to check
 	possibleSizes := map[int64]struct{}{}
@@ -875,7 +875,7 @@ func (s *syncCopyMove) makeRenameMap() {
 		}()
 	}
 	wg.Wait()
-	fs.InfofCtx(context.Background(), s.fdst, "Finished making map for --track-renames")
+	fs.Infof(s.fdst, "Finished making map for --track-renames")
 }
 
 // tryRename renames an src object when doing track renames if
@@ -900,7 +900,7 @@ func (s *syncCopyMove) tryRename(src fs.Object) bool {
 	// Rename dst to have name src.Remote()
 	_, err := operations.Move(s.ctx, s.fdst, dstOverwritten, src.Remote(), dst)
 	if err != nil {
-		fs.DebugfCtx(context.Background(), src, "Failed to rename to %q: %v", dst.Remote(), err)
+		fs.Debugf(src, "Failed to rename to %q: %v", dst.Remote(), err)
 		return false
 	}
 
@@ -909,7 +909,7 @@ func (s *syncCopyMove) tryRename(src fs.Object) bool {
 	delete(s.dstFiles, dst.Remote())
 	s.dstFilesMu.Unlock()
 
-	fs.InfofCtx(context.Background(), src, "Renamed from %q", dst.Remote())
+	fs.Infof(src, "Renamed from %q", dst.Remote())
 	return true
 }
 
@@ -922,7 +922,7 @@ func (s *syncCopyMove) tryRename(src fs.Object) bool {
 // dir is the start directory, "" for root
 func (s *syncCopyMove) run() error {
 	if operations.Same(s.fdst, s.fsrc) && !s.allowOverlap {
-		fs.ErrorfCtx(context.Background(), s.fdst, "Nothing to do as source and destination are the same")
+		fs.Errorf(s.fdst, "Nothing to do as source and destination are the same")
 		return nil
 	}
 
@@ -967,7 +967,7 @@ func (s *syncCopyMove) run() error {
 	// Stop background checking and transferring pipeline
 	s.stopCheckers()
 	if s.checkFirst {
-		fs.InfofCtx(context.Background(), s.fdst, "Checks finished, now starting transfers")
+		fs.Infof(s.fdst, "Checks finished, now starting transfers")
 		s.startTransfers()
 	}
 	s.stopRenamers()
@@ -977,7 +977,7 @@ func (s *syncCopyMove) run() error {
 	// Delete files after
 	if s.deleteMode == fs.DeleteModeAfter {
 		if s.currentError() != nil && !s.ci.IgnoreErrors {
-			fs.ErrorfCtx(context.Background(), s.fdst, "%v", fs.ErrorNotDeleting)
+			fs.Errorf(s.fdst, "%v", fs.ErrorNotDeleting)
 		} else {
 			s.processError(s.deleteFiles(false))
 		}
@@ -991,7 +991,7 @@ func (s *syncCopyMove) run() error {
 	// Prune empty directories
 	if s.deleteMode != fs.DeleteModeOff {
 		if s.currentError() != nil && !s.ci.IgnoreErrors {
-			fs.ErrorfCtx(context.Background(), s.fdst, "%v", fs.ErrorNotDeletingDirs)
+			fs.Errorf(s.fdst, "%v", fs.ErrorNotDeletingDirs)
 		} else {
 			s.processError(s.deleteEmptyDirectories(s.ctx, s.fdst, s.dstEmptyDirs))
 		}
@@ -1010,13 +1010,13 @@ func (s *syncCopyMove) run() error {
 
 	// If the duration was exceeded then add a Fatal Error so we don't retry
 	if !s.maxDurationEndTime.IsZero() && time.Since(s.maxDurationEndTime) > 0 {
-		fs.ErrorfCtx(context.Background(), s.fdst, "%v", ErrorMaxDurationReachedFatal)
+		fs.Errorf(s.fdst, "%v", ErrorMaxDurationReachedFatal)
 		s.processError(ErrorMaxDurationReachedFatal)
 	}
 
 	// Print nothing to transfer message if there were no transfers and no errors
 	if s.deleteMode != fs.DeleteModeOnly && accounting.Stats(s.ctx).GetTransfers() == 0 && s.currentError() == nil {
-		fs.InfofCtx(context.Background(), nil, "There was nothing to transfer")
+		fs.Infof(nil, "There was nothing to transfer")
 	}
 
 	// cancel the contexts to free resources
@@ -1245,7 +1245,7 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 			}
 			if !NoNeedTransfer {
 				// No need to check since doesn't exist
-				fs.DebugfCtx(context.Background(), src, "Need to transfer - File not found at Destination")
+				fs.Debugf(src, "Need to transfer - File not found at Destination")
 				s.markDirModifiedObject(x)
 				ok := s.toBeUploaded.Put(s.inCtx, fs.ObjectPair{Src: x, Dst: nil})
 				if !ok {

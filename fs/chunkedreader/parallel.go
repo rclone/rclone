@@ -101,7 +101,7 @@ func (s *stream) read(p []byte) (n int, err error) {
 	for {
 		var nn int
 		nn, err = s.rw.Read(p[n:])
-		fs.DebugfCtx(context.Background(), s.cr.o, "%s: rw.Read nn=%d, err=%v", s.name, nn, err)
+		fs.Debugf(s.cr.o, "%s: rw.Read nn=%d, err=%v", s.name, nn, err)
 		s.readBytes += int64(nn)
 		n += nn
 		if err != nil && err != io.EOF {
@@ -291,7 +291,7 @@ func (cr *parallel) Seek(offset int64, whence int) (int64, error) {
 	cr.mu.Lock()
 	defer cr.mu.Unlock()
 
-	fs.DebugfCtx(context.Background(), cr.o, "parallel chunked reader: seek from %d to %d whence %d", cr.offset, offset, whence)
+	fs.Debugf(cr.o, "parallel chunked reader: seek from %d to %d whence %d", cr.offset, offset, whence)
 
 	if cr.closed {
 		return 0, ErrorFileClosed
@@ -313,7 +313,7 @@ func (cr *parallel) Seek(offset int64, whence int) (int64, error) {
 
 	// If seek pointer didn't move, return now
 	if newOffset == cr.offset {
-		fs.DebugfCtx(context.Background(), cr.o, "parallel chunked reader: seek pointer didn't move")
+		fs.Debugf(cr.o, "parallel chunked reader: seek pointer didn't move")
 		return cr.offset, nil
 	}
 
@@ -331,7 +331,7 @@ func (cr *parallel) Seek(offset int64, whence int) (int64, error) {
 
 	// If no streams remain we can just restart
 	if len(cr.streams) == 0 {
-		fs.DebugfCtx(context.Background(), cr.o, "parallel chunked reader: no streams remain")
+		fs.Debugf(cr.o, "parallel chunked reader: no streams remain")
 		cr.endStream = cr.offset
 		return cr.offset, nil
 	}
@@ -342,7 +342,7 @@ func (cr *parallel) Seek(offset int64, whence int) (int64, error) {
 	// If new offset is before current stream then ditch all the streams
 	if newOffset < stream.offset {
 		_ = cr._popStreams()
-		fs.DebugfCtx(context.Background(), cr.o, "parallel chunked reader: new offset is before current stream - ditch all")
+		fs.Debugf(cr.o, "parallel chunked reader: new offset is before current stream - ditch all")
 		cr.endStream = cr.offset
 		return cr.offset, nil
 	}
@@ -350,7 +350,7 @@ func (cr *parallel) Seek(offset int64, whence int) (int64, error) {
 	// Seek the current stream
 	streamOffset := newOffset - stream.offset
 	stream.readBytes = streamOffset // correct read value
-	fs.DebugfCtx(context.Background(), cr.o, "parallel chunked reader: seek the current stream to %d", streamOffset)
+	fs.Debugf(cr.o, "parallel chunked reader: seek the current stream to %d", streamOffset)
 	// Wait for the read to the correct part of the data
 	for stream.rw.Size() < streamOffset {
 		stream.rw.WaitWrite(cr.ctx)

@@ -1,7 +1,6 @@
 package local
 
 import (
-	"context"
 	"fmt"
 	"math"
 	"os"
@@ -62,7 +61,7 @@ func (o *Object) parseMetadataTime(m fs.Metadata, key string) (t time.Time, ok b
 		var err error
 		t, err = time.Parse(metadataTimeFormat, value)
 		if err != nil {
-			fs.DebugfCtx(context.Background(), o, "failed to parse metadata %s: %q: %v", key, value, err)
+			fs.Debugf(o, "failed to parse metadata %s: %q: %v", key, value, err)
 			ok = false
 		}
 	}
@@ -76,7 +75,7 @@ func (o *Object) parseMetadataInt(m fs.Metadata, key string, base int) (result i
 		var err error
 		parsed, err := strconv.ParseInt(value, base, 0)
 		if err != nil {
-			fs.DebugfCtx(context.Background(), o, "failed to parse metadata %s: %q: %v", key, value, err)
+			fs.Debugf(o, "failed to parse metadata %s: %q: %v", key, value, err)
 			ok = false
 		}
 		result = int(parsed)
@@ -124,7 +123,7 @@ func (o *Object) writeMetadataToFile(m fs.Metadata) (outErr error) {
 			gid = uid
 		}
 		if runtime.GOOS == "windows" || runtime.GOOS == "plan9" {
-			fs.DebugfCtx(context.Background(), o, "Ignoring request to set ownership %o.%o on this OS", gid, uid)
+			fs.Debugf(o, "Ignoring request to set ownership %o.%o on this OS", gid, uid)
 		} else {
 			if o.translatedLink {
 				err = os.Lchown(o.path, uid, gid)
@@ -145,7 +144,7 @@ func (o *Object) writeMetadataToFile(m fs.Metadata) (outErr error) {
 					if haveLChmod {
 						err = lChmod(o.path, os.FileMode(umode))
 					} else {
-						fs.DebugfCtx(context.Background(), o, "Unable to set mode %v on a symlink on this OS", os.FileMode(umode))
+						fs.Debugf(o, "Unable to set mode %v on a symlink on this OS", os.FileMode(umode))
 						err = nil
 					}
 				} else {

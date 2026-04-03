@@ -381,7 +381,7 @@ func (f *Fs) dataName(remote string, size int64, compressed bool) (name string) 
 func (f *Fs) addData(entries *fs.DirEntries, o fs.Object) {
 	origFileName, _, size, err := processFileName(o.Remote(), f.modeHandler)
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), o, "Error on parsing file name: %v", err)
+		fs.Errorf(o, "Error on parsing file name: %v", err)
 		return
 	}
 	if size == -2 { // File is uncompressed
@@ -1242,7 +1242,7 @@ func (o *Object) String() string {
 func (o *Object) Remote() string {
 	origFileName, _, _, err := processFileName(o.Object.Remote(), o.f.modeHandler)
 	if err != nil {
-		fs.ErrorfCtx(context.Background(), o.f, "Could not get remote path for: %s", o.Object.Remote())
+		fs.Errorf(o.f, "Could not get remote path for: %s", o.Object.Remote())
 		return o.Object.Remote()
 	}
 	return origFileName

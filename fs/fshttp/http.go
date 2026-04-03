@@ -113,7 +113,7 @@ func LoadKeyPair(certFile, keyFile, password string) (cert tls.Certificate, err 
 		return cert, errors.New("no PEM block in key")
 	}
 	if len(rest) != 0 {
-		fs.DebugfCtx(context.Background(), nil, "Trailing data (%d bytes) in key PEM loaded from %q", len(rest), keyFile)
+		fs.Debugf(nil, "Trailing data (%d bytes) in key PEM loaded from %q", len(rest), keyFile)
 	}
 
 	var privKey any
@@ -386,13 +386,13 @@ func checkServerTime(req *http.Request, resp *http.Response) {
 	}
 	date, err := http.ParseTime(dateString)
 	if err != nil {
-		fs.DebugfCtx(context.Background(), nil, "Couldn't parse Date: from server %s: %q: %v", host, dateString, err)
+		fs.Debugf(nil, "Couldn't parse Date: from server %s: %q: %v", host, dateString, err)
 		return
 	}
 	dt := time.Since(date)
 	const window = 5 * 60 * time.Second
 	if dt > window || dt < -window {
-		fs.LogfCtx(context.Background(), nil, "Time may be set wrong - time from %q is %v different from this computer", host, dt)
+		fs.Logf(nil, "Time may be set wrong - time from %q is %v different from this computer", host, dt)
 	}
 	checkedHostMu.Lock()
 	checkedHost[host] = struct{}{}
@@ -486,10 +486,10 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 			buf = cleanAuths(buf)
 		}
 		logMutex.Lock()
-		fs.DebugfCtx(context.Background(), nil, "%s", separatorReq)
-		fs.DebugfCtx(context.Background(), nil, "%s (req %p)", "HTTP REQUEST", req)
-		fs.DebugfCtx(context.Background(), nil, "%s", string(buf))
-		fs.DebugfCtx(context.Background(), nil, "%s", separatorReq)
+		fs.Debugf(nil, "%s", separatorReq)
+		fs.Debugf(nil, "%s (req %p)", "HTTP REQUEST", req)
+		fs.Debugf(nil, "%s", string(buf))
+		fs.Debugf(nil, "%s", separatorReq)
 		logMutex.Unlock()
 	}
 	// Do round trip
@@ -497,15 +497,15 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	// Logf response
 	if t.dump&(fs.DumpHeaders|fs.DumpBodies|fs.DumpAuth|fs.DumpRequests|fs.DumpResponses) != 0 {
 		logMutex.Lock()
-		fs.DebugfCtx(context.Background(), nil, "%s", separatorResp)
-		fs.DebugfCtx(context.Background(), nil, "%s (req %p)", "HTTP RESPONSE", req)
+		fs.Debugf(nil, "%s", separatorResp)
+		fs.Debugf(nil, "%s (req %p)", "HTTP RESPONSE", req)
 		if err != nil {
-			fs.DebugfCtx(context.Background(), nil, "Error: %v", err)
+			fs.Debugf(nil, "Error: %v", err)
 		} else {
 			buf, _ := httputil.DumpResponse(resp, t.dump&(fs.DumpBodies|fs.DumpResponses) != 0)
-			fs.DebugfCtx(context.Background(), nil, "%s", string(buf))
+			fs.Debugf(nil, "%s", string(buf))
 		}
-		fs.DebugfCtx(context.Background(), nil, "%s", separatorResp)
+		fs.Debugf(nil, "%s", separatorResp)
 		logMutex.Unlock()
 	}
 	// Update metrics
