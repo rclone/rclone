@@ -41,6 +41,7 @@ type Server struct {
 	ctx          context.Context // for global config
 	s3Secret     string
 	etagHashType hash.Type
+	backend      *s3Backend
 }
 
 // Make a new S3 Server to serve the remote
@@ -75,9 +76,15 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		return nil, fmt.Errorf("parsing auth list failed: %q", err)
 	}
 
+	backend, err := newBackend(w, opt.MetaDB)
+	if err != nil {
+		return nil, err
+	}
+	w.backend = backend
+
 	var newLogger logger
 	w.faker = gofakes3.New(
-		newBackend(w),
+		backend,
 		gofakes3.WithHostBucket(!opt.ForcePathStyle),
 		gofakes3.WithLogger(newLogger),
 		gofakes3.WithRequestID(rand.Uint64()),
@@ -161,7 +168,13 @@ func (w *Server) Addr() net.Addr {
 
 // Shutdown the server
 func (w *Server) Shutdown() error {
-	return w.server.Shutdown()
+	err := w.server.Shutdown()
+	if w.backend != nil {
+		if cerr := w.backend.Close(); cerr != nil && err == nil {
+			err = cerr
+		}
+	}
+	return err
 }
 
 func authPairMiddleware(next http.Handler, ws *Server) http.Handler {
