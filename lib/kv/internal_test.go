@@ -50,6 +50,55 @@ func TestKvConcurrency(t *testing.T) {
 	assert.ErrorIs(t, err, ErrInactive, "missing expected stop indication")
 }
 
+type testWriteOp struct {
+	key string
+	val string
+}
+
+func (op *testWriteOp) Do(_ context.Context, b Bucket) error {
+	return b.Put([]byte(op.key), []byte(op.val))
+}
+
+type testReadOp struct {
+	key string
+	val string
+}
+
+func (op *testReadOp) Do(_ context.Context, b Bucket) error {
+	op.val = string(b.Get([]byte(op.key)))
+	return nil
+}
+
+func TestKvReadOnly(t *testing.T) {
+	require.Equal(t, 0, len(dbMap), "no databases can be started initially")
+
+	ctx := context.Background()
+	db, err := Start(ctx, "test", nil)
+	require.NoError(t, err)
+	defer func() { _ = db.Stop(true) }()
+
+	// Write succeeds when not read-only
+	err = db.Do(true, &testWriteOp{key: "k1", val: "v1"})
+	assert.NoError(t, err)
+
+	db.SetReadOnly(true)
+
+	// Write returns ErrReadOnly
+	err = db.Do(true, &testWriteOp{key: "k2", val: "v2"})
+	assert.ErrorIs(t, err, ErrReadOnly)
+
+	// Read still works
+	readOp := &testReadOp{key: "k1"}
+	err = db.Do(false, readOp)
+	assert.NoError(t, err)
+	assert.Equal(t, "v1", readOp.val)
+
+	// Unset read-only, write succeeds again
+	db.SetReadOnly(false)
+	err = db.Do(true, &testWriteOp{key: "k3", val: "v3"})
+	assert.NoError(t, err)
+}
+
 func TestKvExit(t *testing.T) {
 	require.Equal(t, 0, len(dbMap), "no databases can be started initially")
 	const dbNum = 5

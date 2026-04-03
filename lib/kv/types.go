@@ -9,6 +9,7 @@ import (
 var (
 	ErrEmpty       = errors.New("database empty")
 	ErrInactive    = errors.New("database stopped")
+	ErrReadOnly    = errors.New("database is read-only")
 	ErrUnsupported = errors.New("unsupported on this OS")
 )
 

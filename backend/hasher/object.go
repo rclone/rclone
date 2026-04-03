@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 )
@@ -58,6 +59,10 @@ func (o *Object) putHashes(ctx context.Context, rawHashes hashMap) error {
 
 // set hashes for a path without any validation
 func (f *Fs) putRawHashes(ctx context.Context, key, fp string, hashes operations.HashSums) error {
+	if f.isReadOnly() {
+		fs.Debugf(f, "db is read-only, skipping hash write for %s", key)
+		return nil
+	}
 	return f.db.Do(true, &kvPut{
 		key:    key,
 		fp:     fp,
@@ -154,6 +159,31 @@ func (o *Object) SetModTime(ctx context.Context, mtime time.Time) error {
 	return o.Object.SetModTime(ctx, mtime)
 }
 
+// If a cached hash exists and differs, it returns a retriable error.
+// If no cached hash exists, it stores the hash (in verify mode) or skips (in readonly mode).
+func (o *Object) verifyOrStoreHashes(ctx context.Context, newHashes hashMap) error {
+	f := o.f
+	if f.opt.MaxAge <= 0 {
+		return nil
+	}
+	for hashType, newHash := range newHashes {
+		if !f.keepHashes.Contains(hashType) {
+			continue
+		}
+		existingHash, err := o.getHash(ctx, hashType)
+		if err != nil || existingHash == "" {
+			continue
+		}
+		if existingHash != newHash {
+			return fserrors.RetryError(fserrors.NoLowLevelRetryError(
+				fmt.Errorf("corrupted on transfer: cached %v hash differs %q vs downloaded %q",
+					hashType, existingHash, newHash),
+			))
+		}
+	}
+	return o.putHashes(ctx, newHashes)
+}
+
 // Open opens the file for read.
 // Full reads will also update object hashes.
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (r io.ReadCloser, err error) {
@@ -180,10 +210,16 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (r io.ReadC
 		// It's a partial read
 		return r, err
 	}
-	return o.f.newHashingReader(ctx, r, func(sums hashMap) {
+	if o.f.isVerifyMode() {
+		return o.f.newHashingReader(ctx, r, func(sums hashMap) error {
+			return o.verifyOrStoreHashes(ctx, sums)
+		})
+	}
+	return o.f.newHashingReader(ctx, r, func(sums hashMap) error {
 		if err := o.putHashes(ctx, sums); err != nil {
 			fs.Infof(o, "auto hashing error: %v", err)
 		}
+		return nil
 	})
 }
 
@@ -203,8 +239,9 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 	wrapIn := in
 	if rehash {
-		r, err := f.newHashingReader(ctx, in, func(sums hashMap) {
+		r, err := f.newHashingReader(ctx, in, func(sums hashMap) error {
 			hashes = sums
+			return nil
 		})
 		fs.Debugf(src, "Rehash in-fly due to incomplete or slow source set %v (err: %v)", common, err)
 		if err == nil {
@@ -239,10 +276,10 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 type hashingReader struct {
 	rd     io.Reader
 	hasher *hash.MultiHasher
-	fun    func(hashMap)
+	fun    func(hashMap) error
 }
 
-func (f *Fs) newHashingReader(ctx context.Context, rd io.Reader, fun func(hashMap)) (*hashingReader, error) {
+func (f *Fs) newHashingReader(ctx context.Context, rd io.Reader, fun func(hashMap) error) (*hashingReader, error) {
 	hasher, err := hash.NewMultiHasherTypes(f.keepHashes)
 	if err != nil {
 		return nil, err
@@ -267,7 +304,10 @@ func (r *hashingReader) Read(p []byte) (n int, err error) {
 		}
 	}
 	if err == io.EOF && r.hasher != nil {
-		r.fun(r.hasher.Sums())
+		if callbackErr := r.fun(r.hasher.Sums()); callbackErr != nil {
+			r.hasher = nil
+			return n, callbackErr
+		}
 		r.hasher = nil
 	}
 	return
