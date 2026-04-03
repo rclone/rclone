@@ -4,7 +4,7 @@ description: "Rclone docs for Pixeldrain"
 versionIntroduced: "v1.68"
 ---
 
-# {{< icon "fa fa-circle" >}} Pixeldrain
+# Pixeldrain
 
 This is the backend for Pixeldrain's premium filesystem feature. This is not the
 same as pixeldrain's free file sharing product. The filesystem requires either a

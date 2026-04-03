@@ -4,7 +4,7 @@ description: "Rclone docs for Box"
 versionIntroduced: "v1.38"
 ---
 
-# {{< icon "fa fa-archive" >}} Box
+# Box
 
 Paths are specified as `remote:path`
 

@@ -6,6 +6,22 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.73.3 - 2026-03-23
+
+[See commits](https://github.com/rclone/rclone/compare/v1.73.2...v1.73.3)
+
+- Bug Fixes
+  - build
+    - Update to google.golang.org/grpc 1.79.3 to fix CVE-2026-33186 (dependabot[bot])
+    - Update to github.com/buger/jsonparser 1.1.2 to fix GHSA-6g7g-w4f8-9c9x (dependabot[bot])
+  - doc fixes
+    - Added text to the label showing version-introduced info (Jan-Philipp Reßler)
+    - Clarify Filen password change requires updating both password and API key in rclone config (Jason)
+    - s3: clarify multi tenant support for Cubbit (Marco Ferretti)
+    - jottacloud: Fix broken link (albertony)
+  - lib/rest: Fix URLPathEscapeAll breaking WebDAV servers (eg nzbdav) with strict path matching (Andrew Furman)
+  - list: Fix nil pointer panic in Sorter when temp file creation fails (Nick Craig-Wood)
+
 ## v1.73.2 - 2026-03-06
 
 [See commits](https://github.com/rclone/rclone/compare/v1.73.1...v1.73.2)

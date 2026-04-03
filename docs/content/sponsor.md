@@ -6,14 +6,13 @@ aliases:
 - donate
 ---
 
-# {{< icon "fa fa-heart heart" >}} Sponsor the rclone project
+# Sponsor the rclone project
 
 Thank you to our sponsors:
 
 <!-- markdownlint-capture -->
 <!-- markdownlint-disable line-length no-bare-urls -->
 
-{{< sponsor src="/img/logos/rabata.svg" width="300" height="200" title="Visit our sponsor Rabata.io" link="https://rabata.io/?utm_source=banner&utm_medium=rclone&utm_content=general">}}
 {{< sponsor src="/img/logos/idrive_e2.svg" width="300" height="200" title="Visit our sponsor IDrive e2" link="https://www.idrive.com/e2/?refer=rclone">}}
 {{< sponsor src="/img/logos/filescom-enterprise-grade-workflows.png" width="300" height="200" title="Start Your Free Trial Today" link="https://files.com/?utm_source=rclone&utm_medium=referral&utm_campaign=banner&utm_term=rclone">}}
 {{< sponsor src="/img/logos/internxt.jpg" width="300" height="200" title="Visit rclone's sponsor Internxt" link="https://internxt.com/specialoffer/rclone">}}
@@ -66,7 +65,7 @@ details.
 
 If you are a personal user and you would like to support the project
 with sponsorship as a way of saying thank you that would be most
-appreciated. {{< icon "fa fa-heart heart" >}}
+appreciated. 
 
 {{< monthly_donations >}}
 
