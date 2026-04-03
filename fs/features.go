@@ -739,6 +739,7 @@ type ChunkWriterInfo struct {
 	ChunkSize         int64 // preferred chunk size
 	Concurrency       int   // how many chunks to write at once
 	LeavePartsOnError bool  // if set don't delete parts uploaded so far on error
+	MinFileSize       int64 // minimum file size for multipart uploads, 0 means no minimum
 }
 
 // OpenChunkWriter is an option interface for Fs to implement chunked writing

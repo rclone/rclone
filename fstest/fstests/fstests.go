@@ -820,18 +820,22 @@ func Run(t *testing.T, opt *Opt) {
 				t.Skip("FS has no OpenChunkWriter interface")
 			}
 			size5MBs := 5 * 1024 * 1024
-			contents1 := random.String(size5MBs)
-			contents2 := random.String(size5MBs)
-
 			size1MB := 1 * 1024 * 1024
-			contents3 := random.String(size1MB)
+			totalSize := int64(size5MBs*2 + size1MB)
 
 			path := "writer-at-subdir/writer-at-file"
-			objSrc := object.NewStaticObjectInfo(path+"-WRONG-REMOTE", file1.ModTime, -1, true, nil, nil)
-			_, out, err := openChunkWriter(ctx, path, objSrc, &fs.ChunkOption{
+			objSrc := object.NewStaticObjectInfo(path+"-WRONG-REMOTE", file1.ModTime, totalSize, true, nil, nil)
+			info, out, err := openChunkWriter(ctx, path, objSrc, &fs.ChunkOption{
 				ChunkSize: int64(size5MBs),
 			})
+			if info.MinFileSize > 0 && totalSize < info.MinFileSize {
+				t.Skipf("file size %d is below backend minimum %d for multipart uploads", totalSize, info.MinFileSize)
+			}
 			require.NoError(t, err)
+
+			contents1 := random.String(size5MBs)
+			contents2 := random.String(size5MBs)
+			contents3 := random.String(size1MB)
 
 			var n int64
 			n, err = out.WriteChunk(ctx, 1, strings.NewReader(contents2))
