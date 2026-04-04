@@ -688,3 +688,7 @@ backends:
      - cmd/bisync
    fastlist: false
    extratime: 2.0
+ - backend:  "sqlar"
+   remote:   "TestSqlar:"
+   fastlist: true
+   oneonly:  true

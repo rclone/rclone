@@ -90,6 +90,7 @@ docs = [
     "sftp.md",
     "shade.md",
     "smb.md",
+    "sqlar.md",
     "storj.md",
     "sugarsync.md",
     "ulozto.md",
