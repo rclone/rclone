@@ -36,11 +36,17 @@ func defaultHandler() *OutputHandler {
 	// Create our handler
 	h := NewOutputHandler(os.Stderr, opts, logFormatDate|logFormatTime)
 
-	// Set the slog default handler
-	slog.SetDefault(slog.New(h))
+	// Always set rclone's internal logger so rclone logging works
+	fs.SetLogger(h)
 
-	// Make log.Printf logs at level Notice
-	slog.SetLogLoggerLevel(fs.SlogLevelNotice)
+	// Optionally set the process-wide default logger so that
+	// log.Print/log.Fatal and slog.Default() also use rclone's handler.
+	// Library consumers can set fs.InitialiseDefaultLogger = false to
+	// prevent this.
+	if fs.InitialiseDefaultLogger {
+		slog.SetDefault(slog.New(h))
+		slog.SetLogLoggerLevel(fs.SlogLevelNotice)
+	}
 
 	return h
 }
