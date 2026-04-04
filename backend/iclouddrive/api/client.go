@@ -32,7 +32,8 @@ type Client struct {
 	Session             *Session
 	sessionSaveCallback sessionSave
 
-	drive *DriveService
+	drive  *DriveService
+	photos *PhotosService
 }
 
 // New creates a new Client instance with the provided Apple ID, password, trust token, cookies, and session save callback.
@@ -69,6 +70,18 @@ func (c *Client) DriveService() (*DriveService, error) {
 		}
 	}
 	return c.drive, nil
+}
+
+// PhotosService returns the PhotosService instance associated with the Client.
+func (c *Client) PhotosService() (*PhotosService, error) {
+	var err error
+	if c.photos == nil {
+		c.photos, err = NewPhotosService(c)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.photos, nil
 }
 
 // Request makes a request and retries it if the session is invalid.
