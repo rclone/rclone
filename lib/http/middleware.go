@@ -199,6 +199,18 @@ func MiddlewareCORS(allowOrigin string) Middleware {
 	}
 }
 
+// MiddlewareResponseHeaders instantiates middleware that apply custom headers to every response
+func MiddlewareResponseHeaders(headers []*fs.HTTPOption) Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			for _, header := range headers {
+				w.Header().Set(header.Key, header.Value)
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
 // MiddlewareStripPrefix instantiates middleware that removes the BaseURL from the path
 func MiddlewareStripPrefix(prefix string) Middleware {
 	return func(next http.Handler) http.Handler {
