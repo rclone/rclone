@@ -258,15 +258,15 @@ func newTestPhotosService() *api.PhotosService {
 		"PrimarySync": {
 			"All Photos": {Name: "All Photos", ObjectType: "CPLAssetByAssetDateWithoutHiddenOrDeleted", Zone: "PrimarySync"},
 			"Videos":     {Name: "Videos", ObjectType: "CPLAssetInSmartAlbumByAssetDate:Video", Zone: "PrimarySync"},
-			"MyAlbum":    {Name: "MyAlbum", ObjectType: "CPLContainerRelationNotDeletedByAssetDate:rec1", Zone: "PrimarySync", RecordName: "rec1"},
-			"Darkroom": {
-				Name: "Darkroom", Zone: "PrimarySync", RecordName: "folder1", IsFolder: true,
+			"UserAlbum":  {Name: "UserAlbum", ObjectType: "CPLContainerRelationNotDeletedByAssetDate:rec1", Zone: "PrimarySync", RecordName: "rec1"},
+			"Folder": {
+				Name: "Folder", Zone: "PrimarySync", RecordName: "folder1", IsFolder: true,
 				Children: map[string]*api.Album{
-					"Rejected": {Name: "Rejected", ObjectType: "CPLContainerRelationNotDeletedByAssetDate:rec2", Zone: "PrimarySync", RecordName: "rec2"},
-					"Nested": {
-						Name: "Nested", Zone: "PrimarySync", RecordName: "folder2", IsFolder: true,
+					"ChildAlbum": {Name: "ChildAlbum", ObjectType: "CPLContainerRelationNotDeletedByAssetDate:rec2", Zone: "PrimarySync", RecordName: "rec2"},
+					"NestedFolder": {
+						Name: "NestedFolder", Zone: "PrimarySync", RecordName: "folder2", IsFolder: true,
 						Children: map[string]*api.Album{
-							"Deep": {Name: "Deep", ObjectType: "CPLContainerRelationNotDeletedByAssetDate:rec3", Zone: "PrimarySync", RecordName: "rec3"},
+							"LeafAlbum": {Name: "LeafAlbum", ObjectType: "CPLContainerRelationNotDeletedByAssetDate:rec3", Zone: "PrimarySync", RecordName: "rec3"},
 						},
 					},
 				},
@@ -287,19 +287,19 @@ func TestResolveAlbum(t *testing.T) {
 	})
 
 	t.Run("nested folder child", func(t *testing.T) {
-		album, err := f.resolveAlbum(ctx, f.photos, "PrimarySync", "Darkroom/Rejected")
+		album, err := f.resolveAlbum(ctx, f.photos, "PrimarySync", "Folder/ChildAlbum")
 		require.NoError(t, err)
-		assert.Equal(t, "Rejected", album.Name)
+		assert.Equal(t, "ChildAlbum", album.Name)
 	})
 
 	t.Run("two-level nesting", func(t *testing.T) {
-		album, err := f.resolveAlbum(ctx, f.photos, "PrimarySync", "Darkroom/Nested/Deep")
+		album, err := f.resolveAlbum(ctx, f.photos, "PrimarySync", "Folder/NestedFolder/LeafAlbum")
 		require.NoError(t, err)
-		assert.Equal(t, "Deep", album.Name)
+		assert.Equal(t, "LeafAlbum", album.Name)
 	})
 
 	t.Run("folder itself", func(t *testing.T) {
-		album, err := f.resolveAlbum(ctx, f.photos, "PrimarySync", "Darkroom")
+		album, err := f.resolveAlbum(ctx, f.photos, "PrimarySync", "Folder")
 		require.NoError(t, err)
 		assert.True(t, album.IsFolder)
 	})
@@ -357,10 +357,10 @@ func TestFindLeaf(t *testing.T) {
 	})
 
 	t.Run("folder to child album", func(t *testing.T) {
-		id, found, err := f.FindLeaf(ctx, "album:PrimarySync:Darkroom", "Rejected")
+		id, found, err := f.FindLeaf(ctx, "album:PrimarySync:Folder", "ChildAlbum")
 		require.NoError(t, err)
 		assert.True(t, found)
-		assert.Equal(t, "album:PrimarySync:Darkroom/Rejected", id)
+		assert.Equal(t, "album:PrimarySync:Folder/ChildAlbum", id)
 	})
 
 	t.Run("non-folder album returns not found", func(t *testing.T) {
@@ -405,9 +405,9 @@ func TestNewObject_ErrorPaths(t *testing.T) {
 	// Test the reachable paths through resolveAlbum and GetPhotoByName
 
 	// Test resolveAlbum → folder → GetPhotoByName on folder (should fail)
-	album, err := f.resolveAlbum(ctx, f.photos, "PrimarySync", "Darkroom")
+	album, err := f.resolveAlbum(ctx, f.photos, "PrimarySync", "Folder")
 	require.NoError(t, err)
-	assert.True(t, album.IsFolder, "Darkroom should be a folder")
+	assert.True(t, album.IsFolder, "Folder should be a folder")
 	// NewObject would return ErrorObjectNotFound for a folder path
 
 	// Test GetPhotoByName on album with populated cache
@@ -502,22 +502,22 @@ func TestListR_NestedFolderRecursion(t *testing.T) {
 	assert.Contains(t, dirs, "PrimarySync")
 	assert.Contains(t, dirs, "PrimarySync/All Photos")
 	assert.Contains(t, dirs, "PrimarySync/Videos")
-	assert.Contains(t, dirs, "PrimarySync/Darkroom")
-	assert.Contains(t, dirs, "PrimarySync/Darkroom/Rejected")
-	assert.Contains(t, dirs, "PrimarySync/Darkroom/Nested")
-	assert.Contains(t, dirs, "PrimarySync/Darkroom/Nested/Deep")
+	assert.Contains(t, dirs, "PrimarySync/Folder")
+	assert.Contains(t, dirs, "PrimarySync/Folder/ChildAlbum")
+	assert.Contains(t, dirs, "PrimarySync/Folder/NestedFolder")
+	assert.Contains(t, dirs, "PrimarySync/Folder/NestedFolder/LeafAlbum")
 }
 
 func TestListR_FolderLevel(t *testing.T) {
 	f := &PhotosFs{
 		name:      "test",
-		root:      "PrimarySync/Darkroom",
+		root:      "PrimarySync/Folder",
 		opt:       Options{},
 		startTime: time.Now(),
 	}
 	f.features = (&fs.Features{}).Fill(context.Background(), f)
 	f.photos = newTestPhotosService()
-	f.dirCache = dircache.New("PrimarySync/Darkroom", rootID, f)
+	f.dirCache = dircache.New("PrimarySync/Folder", rootID, f)
 	ctx := context.Background()
 
 	err := f.dirCache.FindRoot(ctx, false)
@@ -540,8 +540,81 @@ func TestListR_FolderLevel(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// When rooted at Darkroom folder, should see children recursively
-	assert.Contains(t, dirs, "Rejected")
-	assert.Contains(t, dirs, "Nested")
-	assert.Contains(t, dirs, "Nested/Deep")
+	// When rooted at a folder, should see children recursively
+	assert.Contains(t, dirs, "ChildAlbum")
+	assert.Contains(t, dirs, "NestedFolder")
+	assert.Contains(t, dirs, "NestedFolder/LeafAlbum")
+}
+
+func TestNotifyZoneChange(t *testing.T) {
+	ctx := context.Background()
+	ps := newTestPhotosService()
+
+	tests := []struct {
+		name string
+		root string
+		zone string
+		want []string
+	}{
+		{
+			name: "top level root",
+			root: "",
+			zone: "PrimarySync",
+			want: []string{"PrimarySync"},
+		},
+		{
+			name: "library root",
+			root: "PrimarySync",
+			zone: "PrimarySync",
+			want: []string{"", "All Photos", "Folder", "Folder/ChildAlbum", "Folder/NestedFolder", "Folder/NestedFolder/LeafAlbum", "UserAlbum", "Videos"},
+		},
+		{
+			name: "folder root",
+			root: "PrimarySync/Folder",
+			zone: "PrimarySync",
+			want: []string{"", "ChildAlbum", "NestedFolder", "NestedFolder/LeafAlbum"},
+		},
+		{
+			name: "nested folder root",
+			root: "PrimarySync/Folder/NestedFolder",
+			zone: "PrimarySync",
+			want: []string{"", "LeafAlbum"},
+		},
+		{
+			name: "leaf album root",
+			root: "PrimarySync/Folder/NestedFolder/LeafAlbum",
+			zone: "PrimarySync",
+			want: []string{""},
+		},
+		{
+			name: "missing nested album still invalidates root",
+			root: "PrimarySync/Folder/NoSuchAlbum",
+			zone: "PrimarySync",
+			want: []string{""},
+		},
+		{
+			name: "different zone ignored",
+			root: "PrimarySync/Folder/NestedFolder",
+			zone: "SharedSync",
+			want: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newTestPhotosFs()
+			f.root = tt.root
+
+			var got []string
+			f.notifyZoneChange(ctx, ps, tt.zone, func(remote string, entryType fs.EntryType) {
+				assert.Equal(t, fs.EntryDirectory, entryType)
+				got = append(got, remote)
+			})
+
+			sort.Strings(got)
+			want := append([]string(nil), tt.want...)
+			sort.Strings(want)
+			assert.Equal(t, want, got)
+		})
+	}
 }

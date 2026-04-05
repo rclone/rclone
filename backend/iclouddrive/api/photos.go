@@ -738,6 +738,16 @@ func (lib *Library) restoreAlbumLinks(a *Album) {
 	}
 }
 
+func flattenAlbumTree(dst []*Album, albums map[string]*Album) []*Album {
+	for _, album := range albums {
+		dst = append(dst, album)
+		if album.IsFolder {
+			dst = flattenAlbumTree(dst, album.Children)
+		}
+	}
+	return dst
+}
+
 // saveCachedAlbums persists album metadata to disk via atomic rename
 func (lib *Library) saveCachedAlbums() {
 	saveJSONCache(lib.zoneCacheDir(), "albums.json", lib.albums)
@@ -1054,7 +1064,7 @@ var changesZoneDesiredKeys = []string{
 	"adjustmentType", "resJPEGFullRes", "resJPEGFullFileType",
 	"resVidFullRes", "resVidFullFileType",
 	// CPLContainerRelation field for user album membership invalidation
-	"parentId",
+	"containerId",
 }
 
 // changesZoneBody builds the request body for a changes/zone call
@@ -1077,6 +1087,14 @@ type deltaParseResult struct {
 	changedAlbumRecords  map[string]bool
 	albumMetadataChanged bool
 	hasAssetOnlyUpdates  bool
+}
+
+func relationAlbumRecordFromRecordName(recordName string) (string, bool) {
+	parts := strings.SplitN(recordName, "-IN-", 2)
+	if len(parts) != 2 || parts[1] == "" {
+		return "", false
+	}
+	return parts[1], true
 }
 
 // shouldInvalidate returns true if an album's cache should be invalidated
@@ -1104,6 +1122,12 @@ func parseDeltaRecords(records []json.RawMessage) *deltaParseResult {
 		}
 		if err := json.Unmarshal(raw, &header); err != nil {
 			continue
+		}
+		if header.Deleted && header.RecordType == "" {
+			if albumRecord, ok := relationAlbumRecordFromRecordName(header.RecordName); ok {
+				r.changedAlbumRecords[albumRecord] = true
+				continue
+			}
 		}
 		switch header.RecordType {
 		case "CPLMaster":
@@ -1134,25 +1158,25 @@ func parseDeltaRecords(records []json.RawMessage) *deltaParseResult {
 		case "CPLAlbum":
 			r.albumMetadataChanged = true
 		case "CPLContainerRelation":
-			if header.Deleted {
-				// Deleted relations lack fields; extract album from recordName
-				// Format: "assetID-IN-albumRecordName" (deterministic, used in relation lookups)
-				if parts := strings.SplitN(header.RecordName, "-IN-", 2); len(parts) == 2 {
-					r.changedAlbumRecords[parts[1]] = true
-				} else {
-					fs.Debugf(nil, "iclouddrive photos: deleted CPLContainerRelation %q has unexpected recordName format", header.RecordName)
+			var rel struct {
+				Fields struct {
+					ContainerID *struct {
+						Value string `json:"value"`
+					} `json:"containerId"`
+				} `json:"fields"`
+			}
+			if err := json.Unmarshal(raw, &rel); err == nil {
+				if rel.Fields.ContainerID != nil && rel.Fields.ContainerID.Value != "" {
+					r.changedAlbumRecords[rel.Fields.ContainerID.Value] = true
+					continue
 				}
-			} else {
-				var rel struct {
-					Fields struct {
-						ParentID *struct {
-							Value string `json:"value"`
-						} `json:"parentId"`
-					} `json:"fields"`
-				}
-				if err := json.Unmarshal(raw, &rel); err == nil && rel.Fields.ParentID != nil && rel.Fields.ParentID.Value != "" {
-					r.changedAlbumRecords[rel.Fields.ParentID.Value] = true
-				}
+			}
+			// Deleted relation records and some changes/zone entries omit fields,
+			// the deterministic recordName still encodes the target album record
+			if albumRecord, ok := relationAlbumRecordFromRecordName(header.RecordName); ok {
+				r.changedAlbumRecords[albumRecord] = true
+			} else if header.Deleted {
+				fs.Debugf(nil, "iclouddrive photos: deleted CPLContainerRelation %q has unexpected recordName format", header.RecordName)
 			}
 		}
 	}
@@ -1227,7 +1251,7 @@ func (lib *Library) applyPendingDelta(ctx context.Context) bool {
 	cacheDir := lib.zoneCacheDir()
 	lib.mu.Lock()
 	albums := make([]*Album, 0, len(lib.albums))
-	for _, album := range lib.albums {
+	for _, album := range flattenAlbumTree(nil, lib.albums) {
 		if album.ObjectType != "" {
 			albums = append(albums, album)
 		}
@@ -1290,7 +1314,7 @@ func (lib *Library) applyPendingDelta(ctx context.Context) bool {
 	if len(result.changedAlbumRecords) > 0 || result.hasAssetOnlyUpdates {
 		lib.mu.Lock()
 		var invalidated []*Album
-		for _, album := range lib.albums {
+		for _, album := range flattenAlbumTree(nil, lib.albums) {
 			_, isSmart := SmartAlbums[album.Name]
 			if result.shouldInvalidate(album.RecordName, isSmart) {
 				invalidated = append(invalidated, album)
