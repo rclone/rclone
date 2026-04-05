@@ -167,7 +167,7 @@ func initiateLogin(ctx context.Context, client *http.Client, phoneNumber string)
 	}
 
 	// Step 2: Start login process
-	formData := "platform=web&msisdn=" + url.QueryEscape(phoneNumber)
+	formData := "platform=macos&msisdn=" + url.QueryEscape(phoneNumber)
 	resp, err = fetchWithCookies(ctx, client, "POST",
 		"https://"+baseMvcDomain+"/sapi/login/mobileconnect?action=start",
 		micloudCookies,
@@ -463,21 +463,21 @@ func finishAuthentication(ctx context.Context, client *http.Client, state *login
 	}, nil
 }
 
-// refreshSession refreshes an existing session using the access token
+// refreshSession refreshes an existing session using the access token.
+// It POSTs the access token to the login endpoint to get fresh credentials.
 func refreshSession(ctx context.Context, client *http.Client, session *api.Session) (newSession *api.Session, err error) {
 	if session.AccessToken == "" {
 		return nil, fmt.Errorf("cannot refresh session without an access token")
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST",
-		"https://"+baseMvcDomain+"/sapi/login?action=login&responsetime=true", nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Authorization", "oauth "+session.AccessToken)
-	req.Header.Set("Cookie", "JSESSIONID="+session.JSessionID)
-
-	resp, err := client.Do(req)
+	cookies := cookieMap{}
+	resp, err := fetchWithCookies(ctx, client, "POST",
+		"https://"+baseMvcDomain+"/sapi/login?action=login&responsetime=true",
+		cookies,
+		nil,
+		map[string]string{"Authorization": "oauth " + session.AccessToken},
+		true,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to refresh session: %w", err)
 	}
@@ -491,8 +491,16 @@ func refreshSession(ctx context.Context, client *http.Client, session *api.Sessi
 		AccessToken string `json:"access_token"`
 		JSessionID  string `json:"jsessionid"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+	var wrapper api.GetResponse
+	if err := json.NewDecoder(resp.Body).Decode(&wrapper); err != nil {
 		return nil, fmt.Errorf("failed to parse refresh response: %w", err)
+	}
+	if err := json.Unmarshal(wrapper.Data, &result); err != nil {
+		return nil, fmt.Errorf("failed to parse refresh response data: %w", err)
+	}
+
+	if result.AccessToken == "" || result.JSessionID == "" {
+		return nil, fmt.Errorf("refresh returned empty credentials")
 	}
 
 	return &api.Session{
