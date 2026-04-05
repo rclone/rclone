@@ -2,6 +2,7 @@
 package obscure
 
 import (
+	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
@@ -48,6 +49,10 @@ func crypt(out, in, iv []byte) error {
 //
 // This is done by encrypting with AES-CTR
 func Obscure(x string) (string, error) {
+	ci := fs.GetConfig(context.Background())
+	if ci.PlaintextPasswords {
+		return x, nil
+	}
 	plaintext := []byte(x)
 	if math.MaxInt32-aes.BlockSize < len(plaintext) {
 		return "", fmt.Errorf("value too large")
@@ -74,6 +79,10 @@ func MustObscure(x string) string {
 
 // Reveal an obscured value
 func Reveal(x string) (string, error) {
+	ci := fs.GetConfig(context.Background())
+	if ci.PlaintextPasswords {
+		return x, nil
+	}
 	ciphertext, err := base64.RawURLEncoding.DecodeString(x)
 	if err != nil {
 		return "", fmt.Errorf("base64 decode failed when revealing password - is it obscured?: %w", err)
