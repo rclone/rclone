@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"path"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -110,17 +111,46 @@ func findArchive(remote string) *archive {
 	return nil
 }
 
-// Find an archive buried in remote
-func subArchive(remote string) *archive {
-	archive := findArchive(remote)
-	if archive != nil {
-		return archive
+// findAllArchives returns all valid archive matches in remote, ordered from
+// longest match (most of path) to shortest match (least of path).
+func findAllArchives(remote string) []*archive {
+	type candidate struct {
+		end int
+		a   archiver.Archiver
 	}
-	parent := path.Dir(remote)
-	if parent == "/" || parent == "." {
-		return nil
+	var candidates []candidate
+	for _, ar := range archiver.Archivers {
+		ext := ar.Extension
+		idx := strings.Index(remote, ext)
+		for idx >= 0 {
+			end := idx + len(ext)
+			if end == len(remote) || remote[end] == '/' {
+				candidates = append(candidates, candidate{end: end, a: ar})
+			}
+			if end >= len(remote) {
+				break
+			}
+			next := strings.Index(remote[idx+1:], ext)
+			if next < 0 {
+				break
+			}
+			idx = idx + 1 + next
+		}
 	}
-	return subArchive(parent)
+	sort.Slice(candidates, func(i, j int) bool {
+		return candidates[i].end > candidates[j].end
+	})
+	var results []*archive
+	for _, c := range candidates {
+		archiveRemote := remote[:c.end]
+		results = append(results, &archive{
+			archiver: c.a,
+			remote:   archiveRemote,
+			prefix:   archiveRemote,
+			root:     "",
+		})
+	}
+	return results
 }
 
 // If remote is an archive then return it otherwise return nil
@@ -182,7 +212,23 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 
 	_ = isDirectory
 
-	foundArchive := subArchive(remote)
+	// Try archive candidates from longest (greediest) to shortest match.
+	// Probe each with cache.Get to find which path actually exists as a file.
+	var foundArchive *archive
+	allCandidates := findAllArchives(remote)
+	if len(allCandidates) > 0 {
+		fs.Debugf(nil, "Probing %d archive candidate(s) in %q", len(allCandidates), remote)
+	}
+	for i, candidate := range allCandidates {
+		fs.Debugf(nil, "Probing candidate %d/%d: %q (extension %q)", i+1, len(allCandidates), candidate.remote, candidate.archiver.Extension)
+		_, probeErr := cache.Get(ctx, candidate.remote)
+		if probeErr == fs.ErrorIsFile {
+			fs.Debugf(nil, "Candidate %d/%d %q exists as a file - selected", i+1, len(allCandidates), candidate.remote)
+			foundArchive = candidate
+			break
+		}
+		fs.Debugf(nil, "Candidate %d/%d %q is not a file (%v), trying next", i+1, len(allCandidates), candidate.remote, probeErr)
+	}
 	if foundArchive != nil {
 		fs.Debugf(nil, "Found archiver for %q remote %q", foundArchive.archiver.Extension, foundArchive.remote)
 		// Archive path
