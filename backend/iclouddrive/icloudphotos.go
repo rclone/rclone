@@ -558,6 +558,11 @@ func (f *PhotosFs) resolveAlbum(ctx context.Context, ps *api.PhotosService, libr
 		return nil, err
 	}
 
+	return resolveAlbumPath(albums, albumPath)
+}
+
+// resolveAlbumPath finds an album inside an album tree by slash-separated path
+func resolveAlbumPath(albums map[string]*api.Album, albumPath string) (*api.Album, error) {
 	parts := strings.Split(albumPath, "/")
 	current := albums
 	for i, part := range parts {
@@ -774,6 +779,59 @@ func (f *PhotosFs) ListR(ctx context.Context, dir string, callback fs.ListRCallb
 	return helper.Flush()
 }
 
+func notifyAlbumTree(albums map[string]*api.Album, base string, notifyFunc func(string, fs.EntryType)) {
+	for name, album := range albums {
+		albumPath := name
+		if base != "" {
+			albumPath = path.Join(base, name)
+		}
+		notifyFunc(albumPath, fs.EntryDirectory)
+		if album.IsFolder {
+			notifyAlbumTree(album.Children, albumPath, notifyFunc)
+		}
+	}
+}
+
+func (f *PhotosFs) notifyZoneChange(ctx context.Context, ps *api.PhotosService, zone string, notifyFunc func(string, fs.EntryType)) {
+	if f.root == "" {
+		notifyFunc(zone, fs.EntryDirectory)
+		return
+	}
+
+	libraryName, albumPath, _ := strings.Cut(f.root, "/")
+	if libraryName != zone {
+		return
+	}
+
+	// Always invalidate the mounted root when its backing zone changes
+	notifyFunc("", fs.EntryDirectory)
+
+	libraries, err := ps.GetLibraries(ctx)
+	if err != nil {
+		return
+	}
+	library, ok := libraries[zone]
+	if !ok {
+		return
+	}
+	albums, err := library.GetAlbums(ctx)
+	if err != nil {
+		return
+	}
+	if albumPath == "" {
+		notifyAlbumTree(albums, "", notifyFunc)
+		return
+	}
+
+	album, err := resolveAlbumPath(albums, albumPath)
+	if err != nil {
+		return
+	}
+	if album.IsFolder {
+		notifyAlbumTree(album.Children, "", notifyFunc)
+	}
+}
+
 // ChangeNotify polls for changes and notifies the VFS when directories are modified
 func (f *PhotosFs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryType), pollIntervalChan <-chan time.Duration) {
 	go func() {
@@ -804,51 +862,7 @@ func (f *PhotosFs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.
 				}
 				changedZones := ps.PollForChanges(ctx)
 				for _, zone := range changedZones {
-					// Notify all album directories in the affected zone
-					// so VFS invalidates their photo listings
-					rootParts := strings.SplitN(f.root, "/", 2)
-					if f.root == "" {
-						// Mounted at top level - notify the library dir
-						notifyFunc(zone, fs.EntryDirectory)
-					} else if rootParts[0] == zone {
-						// Mounted at library or album level - notify root + all albums
-						notifyFunc("", fs.EntryDirectory)
-						libs, _ := ps.GetLibraries(ctx)
-						if lib, ok := libs[zone]; ok {
-							albums, _ := lib.GetAlbums(ctx)
-							// notifyAlbumTree recursively notifies albums
-							// inside folders (e.g. "Folder/Album")
-							var notifyAlbumTree func(map[string]*api.Album, string)
-							notifyAlbumTree = func(items map[string]*api.Album, base string) {
-								for n, a := range items {
-									p := n
-									if base != "" {
-										p = base + "/" + n
-									}
-									notifyFunc(p, fs.EntryDirectory)
-									if a.IsFolder {
-										notifyAlbumTree(a.Children, p)
-									}
-								}
-							}
-							for name, album := range albums {
-								if len(rootParts) > 1 {
-									// Mounted at album level - only notify if this album matches
-									if name == rootParts[1] {
-										notifyFunc("", fs.EntryDirectory)
-										if album.IsFolder {
-											notifyAlbumTree(album.Children, "")
-										}
-									}
-								} else {
-									notifyFunc(name, fs.EntryDirectory)
-									if album.IsFolder {
-										notifyAlbumTree(album.Children, name)
-									}
-								}
-							}
-						}
-					}
+					f.notifyZoneChange(ctx, ps, zone, notifyFunc)
 				}
 			case <-ctx.Done():
 				if ticker != nil {

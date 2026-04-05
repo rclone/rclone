@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/rclone/rclone/fs/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -613,13 +614,31 @@ func TestParseDeltaRecords(t *testing.T) {
 		assert.True(t, r.changedAlbumRecords["album-uuid-456"], "album extracted from deleted relation recordName")
 	})
 
-	t.Run("non-deleted CPLContainerRelation uses parentId STRING field", func(t *testing.T) {
-		// parentId is STRING type (not REFERENCE); was bug before session 18
+	t.Run("deleted relation without recordType still extracts album from recordName", func(t *testing.T) {
+		// changes/zone omits recordType for deleted CPLContainerRelation records
 		records := []json.RawMessage{
-			json.RawMessage(`{"recordName":"rel1","recordType":"CPLContainerRelation","fields":{"parentId":{"value":"album-uuid-789"}}}`),
+			json.RawMessage(`{"recordName":"assetXYZ-IN-album-uuid-654","deleted":true}`),
 		}
 		r := parseDeltaRecords(records)
-		assert.True(t, r.changedAlbumRecords["album-uuid-789"], "album extracted from parentId STRING field")
+		assert.True(t, r.changedAlbumRecords["album-uuid-654"], "album extracted from deleted relation with missing recordType")
+	})
+
+	t.Run("non-deleted CPLContainerRelation uses containerId STRING field", func(t *testing.T) {
+		// CloudKit relation records expose containerId as the canonical album field
+		records := []json.RawMessage{
+			json.RawMessage(`{"recordName":"rel1","recordType":"CPLContainerRelation","fields":{"containerId":{"value":"album-uuid-789"}}}`),
+		}
+		r := parseDeltaRecords(records)
+		assert.True(t, r.changedAlbumRecords["album-uuid-789"], "album extracted from containerId STRING field")
+	})
+
+	t.Run("non-deleted CPLContainerRelation falls back to recordName when fields missing", func(t *testing.T) {
+		// changes/zone can return live relation records with empty fields
+		records := []json.RawMessage{
+			json.RawMessage(`{"recordName":"assetXYZ-IN-album-uuid-987","recordType":"CPLContainerRelation","fields":{},"deleted":false}`),
+		}
+		r := parseDeltaRecords(records)
+		assert.True(t, r.changedAlbumRecords["album-uuid-987"], "album extracted from live relation recordName fallback")
 	})
 
 	t.Run("deleted relation with unexpected recordName format is safe", func(t *testing.T) {
@@ -703,6 +722,60 @@ func TestApplyPendingDelta_EmptyAlbumsClearsPending(t *testing.T) {
 	result := lib.applyPendingDelta(context.Background())
 	assert.False(t, result, "must return false when albums empty")
 	assert.Nil(t, lib.pendingDelta, "must clear pendingDelta to avoid permanent stuck state")
+}
+
+func TestApplyPendingDelta_InvalidatesNestedAlbum(t *testing.T) {
+	oldCacheDir := config.GetCacheDir()
+	t.Cleanup(func() {
+		_ = config.SetCacheDir(oldCacheDir)
+	})
+	require.NoError(t, config.SetCacheDir(t.TempDir()))
+
+	ps := &PhotosService{client: &Client{remoteName: "delta-nested-test"}}
+	lib := &Library{
+		service: ps,
+		zoneID:  "PrimarySync",
+		area:    areaPrivate,
+		albums:  make(map[string]*Album),
+	}
+	child := lib.newUserAlbum("Child", "child-record")
+	child.SetTestPhotoCache(map[string]*Photo{
+		"one.jpg": {ID: "master1", Filename: "one.jpg"},
+	})
+	child.saveDiskCache([]*Photo{{ID: "master1", Filename: "one.jpg"}})
+
+	folder := &Album{
+		Name:       "Folder",
+		RecordName: "folder-record",
+		Zone:       lib.zoneID,
+		lib:        lib,
+		IsFolder:   true,
+		Children: map[string]*Album{
+			"Child": child,
+		},
+	}
+	lib.albums[folder.Name] = folder
+	lib.pendingDelta = &deltaPayload{
+		records:   []json.RawMessage{json.RawMessage(`{"recordName":"asset123-IN-child-record","deleted":true}`)},
+		syncToken: "next-token",
+	}
+
+	cacheFile := filepath.Join(lib.zoneCacheDir(), albumCacheKey(child.ObjectType)+".json")
+	_, err := os.Stat(cacheFile)
+	require.NoError(t, err, "nested child album cache file should exist before invalidation")
+
+	result := lib.applyPendingDelta(context.Background())
+	assert.True(t, result)
+	assert.Nil(t, lib.pendingDelta)
+
+	child.mu.Lock()
+	assert.Nil(t, child.photoCache, "nested child album memory cache should be invalidated")
+	child.mu.Unlock()
+	_, err = os.Stat(cacheFile)
+	assert.ErrorIs(t, err, os.ErrNotExist, "nested child album disk cache should be removed")
+	data, err := os.ReadFile(filepath.Join(lib.zoneCacheDir(), "syncToken"))
+	require.NoError(t, err)
+	assert.Equal(t, "next-token", string(data))
 }
 
 func TestBuildSmartAlbums(t *testing.T) {
