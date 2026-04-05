@@ -1861,6 +1861,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.Provider == "Rabata" {
 		f.features.Copy = nil
 	}
+	if opt.Provider == "TencentCOS" && strings.Contains(opt.Endpoint, "cos.accelerate.myqcloud.com") {
+		// Global Acceleration endpoint does not support bucket creation.
+		f.opt.NoCheckBucket = true
+	}
 	if opt.DirectoryMarkers {
 		f.features.CanHaveEmptyDirectories = true
 	}
