@@ -156,7 +156,7 @@ require (
 	github.com/cloudsoda/sddl v0.0.0-20250224235906-926454e91efc // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
 	github.com/creasty/defaults v1.8.0 // indirect
-	github.com/cronokirby/saferith v0.33.0 // indirect
+	github.com/cronokirby/saferith v0.33.1-0.20250226174546-1f11f94ce488 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dromara/dongle v1.0.1 // indirect
 	github.com/dsnet/compress v0.0.2-0.20230904184137-39efe44ab707 // indirect
