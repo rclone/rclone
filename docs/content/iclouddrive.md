@@ -1,19 +1,24 @@
 ---
-title: "iCloud Drive"
-description: "Rclone docs for iCloud Drive"
+title: "iCloud Drive and Photos"
+description: "Rclone docs for iCloud Drive and Photos"
 versionIntroduced: "v1.69"
 ---
 
-# iCloud Drive
+# {{< icon "fa fa-cloud" >}} iCloud Drive and Photos
 
 ## Configuration
 
-The initial setup for an iCloud Drive backend involves getting a trust token/session.
-This can be done by simply using the regular iCloud password, and accepting the code
-prompt on another iCloud connected device.
+The initial setup for an iCloud backend involves getting a trust token/session.
+This uses your regular Apple ID password plus 2FA, either from a trusted
+device prompt or an SMS code sent to a trusted phone number.
 
 **IMPORTANT**: App-specific passwords are not accepted. Only use your
 regular Apple ID password and 2FA.
+
+This backend serves two Apple services:
+
+- `drive` - iCloud Drive (default)
+- `photos` - iCloud Photos
 
 `rclone config` walks you through the token creation. The trust token is valid
 for 30 days. After which you will have to reauthenticate with `rclone reconnect`
@@ -30,10 +35,12 @@ The authentication flow is:
 
 1. rclone initiates a session with Apple's identity service
 2. An SRP key exchange takes place (your password is used locally to derive a key)
-3. Apple sends a 2FA prompt to your trusted devices
+3. Apple sends a 2FA prompt to your trusted devices, or lets you request an
+   SMS code
 4. After you enter the 2FA code, rclone receives a trust token for future sessions
 
-Here is an example of how to make a remote called `iclouddrive`.  First run:
+Here is an example of how to make a Photos remote called `icloudphotos`.
+For iCloud Drive, leave `service` at its default `drive` value. First run:
 
 ```console
 rclone config
@@ -47,7 +54,7 @@ n) New remote
 s) Set configuration password
 q) Quit config
 n/s/q> n
-name> iclouddrive
+name> icloudphotos
 Option Storage.
 Type of storage to configure.
 Choose a number from below, or type in your own value.
@@ -56,6 +63,15 @@ XX / iCloud Drive
    \ (iclouddrive)
 [snip]
 Storage> iclouddrive
+Option service.
+iCloud service to use.
+Choose a number from below, or type in your own value of type string.
+Press Enter for the default (drive).
+ 1 / iCloud Drive
+   \ (drive)
+ 2 / iCloud Photos
+   \ (photos)
+service> 2
 Option apple_id.
 Apple ID.
 Enter a value.
@@ -75,13 +91,14 @@ y) Yes
 n) No (default)
 y/n> n
 Option config_2fa.
-Two-factor authentication: please enter your 2FA code
+Two-factor authentication: enter your 2FA code or type 'sms' for a text message
 Enter a value.
 config_2fa> 2FACODE
 Remote config
 --------------------
-[iclouddrive]
+[icloudphotos]
 - type: iclouddrive
+- service: photos
 - apple_id: APPLEID
 - password: *** ENCRYPTED ***
 - cookies: ****************************
@@ -93,30 +110,124 @@ d) Delete this remote
 y/e/d> y
 ```
 
+## iCloud Photos
+
+The iCloud Drive backend also supports accessing iCloud Photos by setting the
+`service` option to `photos`:
+
+```console
+rclone lsd iclouddrive: --iclouddrive-service photos
+```
+
+This presents a read-only hierarchy rooted at photo libraries:
+
+- **Level 1**: Photo libraries — your personal library (`PrimarySync`) and
+  any Shared Photo Library (`SharedSync-XXXX`)
+- **Level 2+**: Albums and folders within a library, nested recursively as in
+  Apple Photos
+- **Leaf level**: Photos/videos within an album, including Live Photo `.MOV`
+  companions
+
+Examples:
+
+```console
+# List libraries
+rclone lsd iclouddrive: --iclouddrive-service photos
+
+# List albums in your primary library
+rclone lsd iclouddrive:PrimarySync/ --iclouddrive-service photos
+
+# List photos in an album
+rclone ls iclouddrive:PrimarySync/All\ Photos/ --iclouddrive-service photos
+
+# Download a photo
+rclone copy iclouddrive:PrimarySync/Favorites/IMG_0001.HEIC /tmp/ --iclouddrive-service photos
+```
+
+You can either:
+
+- set `service = photos` in `rclone config` for a dedicated Photos remote
+- keep `service = drive` and pass `--iclouddrive-service photos` when needed
+
+### Metadata
+
+With `--metadata`, Photos entries expose these read-only metadata keys:
+
+- `width`
+- `height`
+- `added-time`
+- `favorite`
+- `hidden`
+
+These metadata keys are only available when `service = photos`.
+
+### Caching
+
+iCloud Photos caches album listings to disk for fast subsequent access.
+On the first run, listing a large album uses parallel `startRank`
+partitions to fetch pages concurrently. After that, a lightweight change
+check (~200ms) determines whether the cache is still valid.
+
+Cache location: `~/.cache/rclone/iclouddrive-photos/<remote>/<zone>/`
+
+To clear the cache: delete that directory or run `rclone config reconnect`.
+
+### FUSE mounts
+
+For mounting iCloud Photos via `rclone mount`, the following flags
+are recommended:
+
+    rclone mount remote: /mnt/photos \
+        --iclouddrive-service photos \
+        --vfs-refresh \
+        --dir-cache-time 1h \
+        --vfs-cache-mode full \
+        --attr-timeout 1m \
+        --read-only
+
+- `--vfs-refresh` pre-warms directory caches in the background on mount
+  start so that albums are ready when you browse them
+- `--dir-cache-time 1h` extends the in-memory cache lifetime beyond the
+  default 5 minutes (change detection is fast, so this is safe)
+- `--vfs-cache-mode full` caches downloaded photos and videos to local
+  disk for fast repeated access
+- `--attr-timeout 1m` reduces kernel attribute lookups (safe because
+  the backend is read-only)
+- `--read-only` prevents confusing write errors
+
+The first listing of a very large album (e.g. 75,000 items in "All
+Photos") can take several minutes due to API pagination limits. This
+happens once — subsequent listings use the disk cache.
+
+### Limitations
+
+iCloud Photos is read-only. Upload, delete, rename, and move operations
+are not supported.
+
 ## Advanced Data Protection
 
-ADP is currently unsupported and need to be disabled
+Advanced Data Protection is supported.
 
 On iPhone, Settings `>` Apple Account `>` iCloud `>` 'Access iCloud Data on the Web'
-must be ON, and 'Advanced Data Protection' OFF.
+must be ON.
+
+If ADP is enabled on your account, rclone requests PCS cookies after 2FA.
+Apple may require approval on a trusted device before those cookies are issued.
 
 ## Troubleshooting
 
-### Missing PCS cookies from the request
+### PCS cookie errors with ADP
 
-This means you have Advanced Data Protection (ADP) turned on. This is not supported
-at the moment. If you want to use rclone you will have to turn it off. See above
-for how to turn it off.
+If you see `Missing PCS cookies from the request` or a `requestPCS:` error,
+the ADP approval flow did not complete successfully.
 
-You will need to clear the `cookies` and the `trust_token` fields in the config.
-Or you can delete the remote config and start again.
+Check that 'Access iCloud Data on the Web' is enabled and approve any prompt
+on your trusted device.
 
-You should then run `rclone reconnect remote:`.
+Then run `rclone reconnect remote:`.
 
-Note that changing the ADP setting may not take effect immediately - you may
-need to wait a few hours or a day before you can get rclone to work - keep
-clearing the config entry and running `rclone reconnect remote:` until rclone
-functions properly.
+If the remote still has stale auth state, clear the `cookies` and
+`trust_token` fields in the config, or delete and recreate the remote.
 
 <!-- autogenerated options start - DO NOT EDIT - instead edit fs.RegInfo in backend/iclouddrive/iclouddrive.go and run make backenddocs to verify --> <!-- markdownlint-disable-line line-length -->
 ### Standard options

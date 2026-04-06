@@ -1,4 +1,4 @@
-// Package api provides functionality for interacting with the iCloud API.
+// Package api provides functionality for interacting with the iCloud API
 package api
 
 import (
@@ -8,16 +8,19 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/lib/rest"
 )
 
 const (
 	baseEndpoint  = "https://www.icloud.com"
-	homeEndpoint  = "https://www.icloud.com"
 	setupEndpoint = "https://setup.icloud.com/setup/ws/1"
 	authEndpoint  = "https://idmsa.apple.com/appleauth/auth"
 )
@@ -28,26 +31,21 @@ type sessionSave func(*Session)
 type Client struct {
 	appleID             string
 	password            string
+	remoteName          string // rclone remote name, used for cache namespacing
 	srv                 *rest.Client
 	Session             *Session
 	sessionSaveCallback sessionSave
 
 	drive *DriveService
+	mu    sync.Mutex // protects drive and Authenticate
 }
 
-// New creates a new Client instance with the provided Apple ID, password, trust token, cookies, and session save callback.
-//
-// Parameters:
-// - appleID: the Apple ID of the user.
-// - password: the password of the user.
-// - trustToken: the trust token for the session.
-// - clientID: the client id for the session.
-// - cookies: the cookies for the session.
-// - sessionSaveCallback: the callback function to save the session.
-func New(appleID, password, trustToken string, clientID string, cookies []*http.Cookie, sessionSaveCallback sessionSave) (*Client, error) {
+// New creates a new iCloud API client and initializes its HTTP session
+func New(appleID, password, trustToken string, clientID string, cookies []*http.Cookie, sessionSaveCallback sessionSave, remoteName string) (*Client, error) {
 	icloud := &Client{
-		appleID:             appleID,
+		appleID:             strings.ToLower(appleID), // Apple SRP requires lowercase in client-side proof
 		password:            password,
+		remoteName:          filepath.Base(remoteName),
 		srv:                 rest.NewClient(fshttp.NewClient(context.Background())),
 		Session:             NewSession(),
 		sessionSaveCallback: sessionSaveCallback,
@@ -59,10 +57,12 @@ func New(appleID, password, trustToken string, clientID string, cookies []*http.
 	return icloud, nil
 }
 
-// DriveService returns the DriveService instance associated with the Client.
+// DriveService returns the DriveService instance, creating it on first call
 func (c *Client) DriveService() (*DriveService, error) {
-	var err error
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	if c.drive == nil {
+		var err error
 		c.drive, err = NewDriveService(c)
 		if err != nil {
 			return nil, err
@@ -71,11 +71,7 @@ func (c *Client) DriveService() (*DriveService, error) {
 	return c.drive, nil
 }
 
-// Request makes a request and retries it if the session is invalid.
-//
-// This function is the main entry point for making requests to the iCloud
-// API. If the initial request returns a 401 (Unauthorized), it will try to
-// reauthenticate and retry the request.
+// Request makes a request to the iCloud API, re-authenticating on 401/421
 func (c *Client) Request(ctx context.Context, opts rest.Opts, request any, response any) (resp *http.Response, err error) {
 	resp, err = c.Session.Request(ctx, opts, request, response)
 	if err != nil && resp != nil {
@@ -89,55 +85,93 @@ func (c *Client) Request(ctx context.Context, opts rest.Opts, request any, respo
 			if c.Session.Requires2FA() {
 				return nil, errors.New("trust token expired, please reauth")
 			}
-			return c.RequestNoReAuth(ctx, opts, request, response)
+			return c.Session.Request(ctx, opts, request, response)
 		}
 	}
 	return resp, err
 }
 
-// RequestNoReAuth makes a request without re-authenticating.
-//
-// This function is useful when you have a session that is already
-// authenticated, but you need to make a request without triggering
-// a re-authentication.
-func (c *Client) RequestNoReAuth(ctx context.Context, opts rest.Opts, request any, response any) (resp *http.Response, err error) {
-	// Make the request without re-authenticating
-	resp, err = c.Session.Request(ctx, opts, request, response)
-	return resp, err
-}
-
-// Authenticate authenticates the client with the iCloud API.
+// Authenticate authenticates the client, reusing existing session if valid
 func (c *Client) Authenticate(ctx context.Context) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	// Skip /validate round-trip when saved session has cookies + service endpoints
+	// Native client behavior: use cached session, reauth lazily on 401/421
+	if c.Session.Cookies != nil && len(c.Session.AccountInfo.Webservices) > 0 {
+		fs.Debugf(nil, "iclouddrive: reusing saved session")
+		return nil
+	}
+	// Try loading cached service endpoints to avoid /validate round-trip (~5s)
+	if c.Session.Cookies != nil && c.loadCachedWebservices() {
+		fs.Debugf(nil, "iclouddrive: reusing session with cached endpoints")
+		return nil
+	}
 	if c.Session.Cookies != nil {
 		if err := c.Session.ValidateSession(ctx); err == nil {
-			fs.Debugf("icloud", "Valid session, no need to reauth")
+			fs.Debugf(nil, "iclouddrive: valid session, no need to reauth")
+			c.saveCachedWebservices()
 			return nil
 		}
 		c.Session.Cookies = nil
 	}
 
-	fs.Debugf("icloud", "Authenticating as %s\n", c.appleID)
+	fs.Debugf(nil, "iclouddrive: authenticating")
 	err := c.Session.SignIn(ctx, c.appleID, c.password)
 	if err != nil {
 		return err
 	}
 
-	// If 2FA is required, don't try AuthWithToken yet — the caller
-	// must complete 2FA first, then call AuthWithToken.
+	// If 2FA is required, skip AuthWithToken - caller must complete 2FA first
 	if c.Session.Requires2FA() {
 		return nil
 	}
 
 	err = c.Session.AuthWithToken(ctx)
-	if err == nil && c.sessionSaveCallback != nil {
-		c.sessionSaveCallback(c.Session)
+	if err == nil {
+		c.saveCachedWebservices()
+		if c.sessionSaveCallback != nil {
+			c.sessionSaveCallback(c.Session)
+		}
 	}
 	return err
 }
 
-// SignIn signs in the client using the provided context and credentials.
-func (c *Client) SignIn(ctx context.Context) error {
-	return c.Session.SignIn(ctx, c.appleID, c.password)
+// loadCachedWebservices loads service endpoints from disk cache
+func (c *Client) loadCachedWebservices() bool {
+	data, err := os.ReadFile(filepath.Join(config.GetCacheDir(), cacheSubdir, c.remoteName, "webservices.json"))
+	if err != nil {
+		return false
+	}
+	var ws map[string]*webService
+	if err := json.Unmarshal(data, &ws); err != nil {
+		return false
+	}
+	if len(ws) == 0 {
+		return false
+	}
+	c.Session.AccountInfo.Webservices = ws
+	return true
+}
+
+// saveCachedWebservices persists service endpoints to disk
+func (c *Client) saveCachedWebservices() {
+	if len(c.Session.AccountInfo.Webservices) == 0 {
+		return
+	}
+	saveJSONCache(filepath.Join(config.GetCacheDir(), cacheSubdir, c.remoteName), "webservices.json", c.Session.AccountInfo.Webservices)
+}
+
+// CacheDir returns the disk cache directory for this remote
+func (c *Client) CacheDir() string {
+	return filepath.Join(config.GetCacheDir(), cacheSubdir, c.remoteName)
+}
+
+// ClearCacheDir removes all disk cache files for a remote
+func ClearCacheDir(remoteName string) {
+	dir := filepath.Join(config.GetCacheDir(), cacheSubdir, filepath.Base(remoteName))
+	if err := os.RemoveAll(dir); err != nil {
+		fs.Debugf(nil, "iclouddrive: failed to clear cache: %v", err)
+	}
 }
 
 // IntoReader marshals the provided values into a JSON encoded reader
@@ -155,19 +189,19 @@ type RequestError struct {
 	Text   string
 }
 
-// Error satisfy the error interface.
+// Error satisfies the error interface
 func (e *RequestError) Error() string {
 	return fmt.Sprintf("%s: %s", e.Text, e.Status)
 }
 
-func newRequestError(Status string, Text string) *RequestError {
+func newRequestError(status string, text string) *RequestError {
 	return &RequestError{
-		Status: strings.ToLower(Status),
-		Text:   Text,
+		Status: strings.ToLower(status),
+		Text:   text,
 	}
 }
 
-// newErr orf makes a new error from sprintf parameters.
-func newRequestErrorf(Status string, Text string, Parameters ...any) *RequestError {
-	return newRequestError(strings.ToLower(Status), fmt.Sprintf(Text, Parameters...))
+// newRequestErrorf makes a new error from sprintf parameters
+func newRequestErrorf(status string, text string, params ...any) *RequestError {
+	return newRequestError(status, fmt.Sprintf(text, params...))
 }
