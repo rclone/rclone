@@ -660,6 +660,9 @@ backends:
    ignoretests:
      - cmd/bisync
      - cmd/gitannex
+ - backend: "huaweidrive"
+   remote: "TestHuaweiDrive:"
+   fastlist: true
  - backend: "shade"
    remote: "TestShade:"
    fastlist: false
