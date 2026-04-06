@@ -2,13 +2,16 @@ package api
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"maps"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -48,9 +51,117 @@ type srpInitResponse struct {
 	C         string `json:"c"`
 }
 
+func cookieValueFingerprint(value string) string {
+	if value == "" {
+		return ""
+	}
+	sum := sha256.Sum256([]byte(value))
+	return hex.EncodeToString(sum[:6])
+}
+
+func authStateBodySummary(body []byte) string {
+	summary := []string{fmt.Sprintf("bytes=%d", len(body)), "hash=" + cookieValueFingerprint(string(body))}
+	var top map[string]json.RawMessage
+	if err := json.Unmarshal(body, &top); err != nil {
+		return strings.Join(summary, " ")
+	}
+	keys := make([]string, 0, len(top))
+	for key := range top {
+		keys = append(keys, key)
+	}
+	slices.Sort(keys)
+	summary = append(summary, fmt.Sprintf("keys=%v", keys))
+	if _, ok := top["phoneNumberVerification"]; ok {
+		summary = append(summary, "wrapped=true")
+	}
+	return strings.Join(summary, " ")
+}
+
+func cookieDebugSummary(c *http.Cookie) string {
+	parts := []string{c.Name}
+	if c.Value == "" {
+		parts = append(parts, "empty", "len=0")
+	} else {
+		parts = append(parts, "set", fmt.Sprintf("len=%d", len(c.Value)), "hash="+cookieValueFingerprint(c.Value))
+	}
+	if c.Path != "" {
+		parts = append(parts, "path="+c.Path)
+	}
+	if c.Domain != "" {
+		parts = append(parts, "domain="+c.Domain)
+	}
+	if c.MaxAge != 0 {
+		parts = append(parts, fmt.Sprintf("maxAge=%d", c.MaxAge))
+	}
+	if !c.Expires.IsZero() {
+		parts = append(parts, "expires")
+	}
+	return strings.Join(parts, ",")
+}
+
+func cookieDebugSummaries(cookies []*http.Cookie) []string {
+	if len(cookies) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(cookies))
+	for _, c := range cookies {
+		out = append(out, cookieDebugSummary(c))
+	}
+	return out
+}
+
+func cookieJarDebugSummaries(cookies []*http.Cookie) []string {
+	if len(cookies) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(cookies))
+	for _, c := range cookies {
+		summary := c.Name
+		if c.Value == "" {
+			summary += ",empty,len=0"
+		} else {
+			summary += fmt.Sprintf(",len=%d,hash=%s", len(c.Value), cookieValueFingerprint(c.Value))
+		}
+		out = append(out, summary)
+	}
+	return out
+}
+
+func (s *Session) mergeCookies(cookies []*http.Cookie) {
+	if len(cookies) == 0 {
+		return
+	}
+	existing := make(map[string]int, len(s.Cookies))
+	for i, c := range s.Cookies {
+		existing[c.Name] = i
+	}
+	for _, c := range cookies {
+		if c.Value == "" {
+			if idx, ok := existing[c.Name]; ok {
+				fs.Debugf(nil, "iclouddrive: deleting empty auth cookie: %s", cookieDebugSummary(c))
+				s.Cookies = append(s.Cookies[:idx], s.Cookies[idx+1:]...)
+				delete(existing, c.Name)
+				for j := idx; j < len(s.Cookies); j++ {
+					existing[s.Cookies[j].Name] = j
+				}
+			} else {
+				fs.Debugf(nil, "iclouddrive: ignoring empty auth cookie tombstone for missing cookie: %s", cookieDebugSummary(c))
+			}
+			continue
+		}
+		if idx, ok := existing[c.Name]; ok {
+			s.Cookies[idx] = c
+		} else {
+			s.Cookies = append(s.Cookies, c)
+			existing[c.Name] = len(s.Cookies) - 1
+		}
+	}
+}
+
 // extractHeaders reads Apple session headers from an HTTP response into the session
 // Does NOT acquire s.mu - caller is responsible for locking if needed
 func (s *Session) extractHeaders(resp *http.Response) {
+	s.mergeCookies(resp.Cookies())
 	if val := resp.Header.Get("X-Apple-ID-Account-Country"); val != "" {
 		s.AccountCountry = val
 	}
@@ -408,34 +519,8 @@ func (s *Session) AuthWithToken(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	// Log raw Set-Cookie header names from accountLogin for ADP debugging
-	for _, sc := range resp.Header["Set-Cookie"] {
-		if eqIdx := strings.Index(sc, "="); eqIdx > 0 {
-			fs.Debugf(nil, "iclouddrive: accountLogin Set-Cookie: %s", sc[:eqIdx])
-		}
-	}
-	// Merge cookies by name (upsert) rather than replacing
-	// Apple's accountLogin sets some cookies with magic Expires=epoch+1
-	// which Go's resp.Cookies() still returns, but we must preserve
-	// cookies from earlier auth steps (SRP, 2FA) that the PCS flow needs
-	existing := make(map[string]int, len(s.Cookies))
-	for i, c := range s.Cookies {
-		existing[c.Name] = i
-	}
-	for _, c := range resp.Cookies() {
-		if idx, ok := existing[c.Name]; ok {
-			s.Cookies[idx] = c
-		} else {
-			s.Cookies = append(s.Cookies, c)
-			existing[c.Name] = len(s.Cookies) - 1
-		}
-	}
-	// Log cookie names for ADP debugging (values are sensitive, only log names)
-	var cookieNames []string
-	for _, c := range s.Cookies {
-		cookieNames = append(cookieNames, c.Name)
-	}
-	fs.Debugf(nil, "iclouddrive: session cookies after accountLogin: %v", cookieNames)
+	fs.Debugf(nil, "iclouddrive: accountLogin response cookies: %v", cookieDebugSummaries(resp.Cookies()))
+	fs.Debugf(nil, "iclouddrive: session cookie jar after accountLogin: %v", cookieJarDebugSummaries(s.Cookies))
 
 	// Acquire PCS cookies if Advanced Data Protection is enabled
 	if ws := s.AccountInfo.Webservices["ckdatabasews"]; ws != nil && ws.PcsRequired {
@@ -474,6 +559,7 @@ func (s *Session) acquirePCSCookies(ctx context.Context) error {
 	fs.Logf(nil, "iclouddrive: Advanced Data Protection enabled, requesting PCS cookies")
 	const maxAttempts = 30 // 30 * 10s = 5 minutes max
 	for attempt := 0; attempt < maxAttempts; attempt++ {
+		fs.Debugf(nil, "iclouddrive: requestPCS outgoing cookies: %v", cookieJarDebugSummaries(s.Cookies))
 		values := map[string]any{
 			"appName":               "photos",
 			"derivedFromUserAction": true,
@@ -497,15 +583,10 @@ func (s *Session) acquirePCSCookies(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("requestPCS: %w", err)
 		}
+		fs.Debugf(nil, "iclouddrive: requestPCS response cookies: %v", cookieDebugSummaries(resp.Cookies()))
 		fs.Debugf(nil, "iclouddrive: requestPCS response: status=%q message=%q cookies=%d",
 			pcsResp.Status, pcsResp.Message, len(resp.Cookies()))
 		if pcsResp.Status == "success" {
-			// Extract PCS cookies from response
-			for _, c := range resp.Cookies() {
-				if strings.HasPrefix(c.Name, "X-APPLE-WEBAUTH-PCS-") {
-					s.Cookies = append(s.Cookies, c)
-				}
-			}
 			if !s.hasPCSCookies() {
 				return fmt.Errorf("requestPCS: server returned success but PCS cookies missing")
 			}
@@ -609,9 +690,10 @@ func (s *Session) GetAuthState(ctx context.Context) (*AuthStateResponse, error) 
 	if readErr != nil {
 		return nil, fmt.Errorf("getAuthState read: %w", readErr)
 	}
-	fs.Debugf(nil, "iclouddrive: auth state response (%d bytes): %s", len(body), body)
+	fs.Debugf(nil, "iclouddrive: auth state response summary: %s", authStateBodySummary(body))
 	var state AuthStateResponse
 	if err := json.Unmarshal(body, &state); err != nil {
+		fs.Debugf(nil, "iclouddrive: auth state parse failed: %s", authStateBodySummary(body))
 		return nil, fmt.Errorf("getAuthState unmarshal: %w", err)
 	}
 	// Some accounts nest auth data under phoneNumberVerification
@@ -748,10 +830,15 @@ func (s *Session) GetHeaders(overwrite map[string]string) map[string]string {
 // GetCookieString returns the cookie header string for the session
 func (s *Session) GetCookieString() string {
 	var b strings.Builder
-	for i, cookie := range s.Cookies {
-		if i > 0 {
+	first := true
+	for _, cookie := range s.Cookies {
+		if cookie.Value == "" {
+			continue
+		}
+		if !first {
 			b.WriteString("; ")
 		}
+		first = false
 		b.WriteString(cookie.Name)
 		b.WriteByte('=')
 		b.WriteString(cookie.Value)

@@ -256,17 +256,17 @@ func TestPhotosObject_MetadataZeroDimensions(t *testing.T) {
 func newTestPhotosService() *api.PhotosService {
 	return api.NewTestPhotosService(map[string]map[string]*api.Album{
 		"PrimarySync": {
-			"All Photos": {Name: "All Photos", ObjectType: "CPLAssetByAssetDateWithoutHiddenOrDeleted", Zone: "PrimarySync"},
-			"Videos":     {Name: "Videos", ObjectType: "CPLAssetInSmartAlbumByAssetDate:Video", Zone: "PrimarySync"},
-			"UserAlbum":  {Name: "UserAlbum", ObjectType: "CPLContainerRelationNotDeletedByAssetDate:rec1", Zone: "PrimarySync", RecordName: "rec1"},
+			"All Photos": {Name: "All Photos", ObjectType: "CPLAssetByAssetDateWithoutHiddenOrDeleted"},
+			"Videos":     {Name: "Videos", ObjectType: "CPLAssetInSmartAlbumByAssetDate:Video"},
+			"UserAlbum":  {Name: "UserAlbum", ObjectType: "CPLContainerRelationNotDeletedByAssetDate:rec1", RecordName: "rec1"},
 			"Folder": {
-				Name: "Folder", Zone: "PrimarySync", RecordName: "folder1", IsFolder: true,
+				Name: "Folder", RecordName: "folder1", IsFolder: true,
 				Children: map[string]*api.Album{
-					"ChildAlbum": {Name: "ChildAlbum", ObjectType: "CPLContainerRelationNotDeletedByAssetDate:rec2", Zone: "PrimarySync", RecordName: "rec2"},
+					"ChildAlbum": {Name: "ChildAlbum", ObjectType: "CPLContainerRelationNotDeletedByAssetDate:rec2", RecordName: "rec2"},
 					"NestedFolder": {
-						Name: "NestedFolder", Zone: "PrimarySync", RecordName: "folder2", IsFolder: true,
+						Name: "NestedFolder", RecordName: "folder2", IsFolder: true,
 						Children: map[string]*api.Album{
-							"LeafAlbum": {Name: "LeafAlbum", ObjectType: "CPLContainerRelationNotDeletedByAssetDate:rec3", Zone: "PrimarySync", RecordName: "rec3"},
+							"LeafAlbum": {Name: "LeafAlbum", ObjectType: "CPLContainerRelationNotDeletedByAssetDate:rec3", RecordName: "rec3"},
 						},
 					},
 				},

@@ -845,7 +845,6 @@ func TestGetPhotoByName_CacheHit(t *testing.T) {
 	album := &Album{
 		Name:       "Videos",
 		ObjectType: "CPLAssetInSmartAlbumByAssetDate:Video",
-		Zone:       "PrimarySync",
 	}
 	album.photoCache = map[string]*Photo{
 		"IMG_0001.JPG": {ID: "m1", Filename: "IMG_0001.JPG", Size: 1024},
@@ -1162,7 +1161,6 @@ func TestApplyPendingDelta_InvalidatesNestedAlbum(t *testing.T) {
 	folder := &Album{
 		Name:       "Folder",
 		RecordName: "folder-record",
-		Zone:       lib.zoneID,
 		lib:        lib,
 		IsFolder:   true,
 		Children: map[string]*Album{
