@@ -4,14 +4,429 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"sync/atomic"
 	"testing"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/rest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func setTestCacheDir(t *testing.T) string {
+	t.Helper()
+	oldCacheDir := config.GetCacheDir()
+	cacheDir := t.TempDir()
+	require.NoError(t, config.SetCacheDir(cacheDir))
+	t.Cleanup(func() {
+		_ = config.SetCacheDir(oldCacheDir)
+	})
+	return cacheDir
+}
+
+func newHTTPTestPhotosService(t *testing.T, remoteName string, handler http.HandlerFunc) *PhotosService {
+	t.Helper()
+	server := httptest.NewServer(handler)
+	t.Cleanup(server.Close)
+
+	session := NewSession()
+	session.srv = rest.NewClient(server.Client())
+
+	return &PhotosService{
+		client: &Client{
+			remoteName: remoteName,
+			Session:    session,
+		},
+		endpoint:    server.URL + "/database/1/com.apple.photos.cloud/production",
+		pacer:       fs.NewPacer(context.Background(), pacer.NewDefault()),
+		shouldRetry: func(ctx context.Context, resp *http.Response, err error) (bool, error) { return false, err },
+		libraries:   make(map[string]*Library),
+	}
+}
+
+func writeJSON(t *testing.T, w http.ResponseWriter, v any) {
+	t.Helper()
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		panic(err)
+	}
+}
+
+func readJSONBody(r *http.Request, out any) error {
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(data, out)
+}
+
+func testAlbumRecordJSON(name, recordName string, albumType int, parentID string) map[string]any {
+	fields := map[string]any{
+		"albumNameEnc": map[string]any{"value": base64.StdEncoding.EncodeToString([]byte(name))},
+	}
+	if albumType != 0 {
+		fields["albumType"] = map[string]any{"value": albumType}
+	}
+	if parentID != "" {
+		fields["parentId"] = map[string]any{"value": parentID}
+	}
+	return map[string]any{
+		"recordName": recordName,
+		"fields":     fields,
+	}
+}
+
+func newUserAlbumForTest(lib *Library, name, recordName string) *Album {
+	album := lib.newUserAlbum(name, recordName)
+	album.lib = lib
+	return album
+}
+
+func TestGetPhotos_DoesNotServeStaleCacheOnPagedDeltaFailure(t *testing.T) {
+	setTestCacheDir(t)
+	ctx := context.Background()
+	var changesZoneCalls atomic.Int32
+
+	ps := newHTTPTestPhotosService(t, "paged-delta-failure", func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/database/1/com.apple.photos.cloud/production/private/changes/zone":
+			if changesZoneCalls.Add(1) > 1 {
+				http.Error(w, "paged delta failure", http.StatusInternalServerError)
+				return
+			}
+			writeJSON(t, w, map[string]any{
+				"zones": []map[string]any{{
+					"zoneID":     map[string]any{"zoneName": "PrimarySync"},
+					"records":    []map[string]any{{"recordName": "asset1-IN-album-record", "deleted": true}},
+					"syncToken":  "mid-token",
+					"moreComing": true,
+				}},
+			})
+		default:
+			http.Error(w, "unexpected request", http.StatusInternalServerError)
+		}
+	})
+
+	lib := &Library{service: ps, zoneID: "PrimarySync", area: areaPrivate, albums: map[string]*Album{}}
+	album := newUserAlbumForTest(lib, "Exported", "album-record")
+	lib.albums[album.Name] = album
+	album.saveDiskCache([]*Photo{{ID: "stale-id", Filename: "stale.jpg"}})
+	require.NoError(t, os.WriteFile(filepath.Join(lib.zoneCacheDir(), "syncToken"), []byte("old-token"), 0600))
+
+	photos, err := album.GetPhotos(ctx)
+	assert.Error(t, err)
+	assert.Nil(t, photos)
+	assert.Nil(t, lib.pendingDelta, "failed delta apply must not leave pendingDelta stuck forever")
+}
+
+func TestGetLibraries_RediscoversZonesWhenCacheExists(t *testing.T) {
+	setTestCacheDir(t)
+	ctx := context.Background()
+	var changesDatabaseCalls atomic.Int32
+
+	ps := newHTTPTestPhotosService(t, "library-rediscovery", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/database/1/com.apple.photos.cloud/production/private/changes/database" {
+			changesDatabaseCalls.Add(1)
+			writeJSON(t, w, map[string]any{"zones": []map[string]any{{"zoneID": map[string]any{"zoneName": "PrimarySync", "ownerRecordName": "owner", "zoneType": "REGULAR_CUSTOM_ZONE"}}}})
+			return
+		}
+		if r.URL.Path == "/database/1/com.apple.photos.cloud/production/shared/changes/database" {
+			changesDatabaseCalls.Add(1)
+			writeJSON(t, w, map[string]any{"zones": []map[string]any{{"zoneID": map[string]any{"zoneName": "SharedSync-test", "ownerRecordName": "other", "zoneType": "REGULAR_CUSTOM_ZONE"}}}})
+			return
+		}
+		http.Error(w, "unexpected request", http.StatusInternalServerError)
+	})
+
+	saveJSONCache(ps.client.CacheDir(), "libraries.json", []cachedLibraryEntry{{ZoneName: "PrimarySync", Area: areaPrivate}})
+
+	libs, err := ps.GetLibraries(ctx)
+	require.NoError(t, err)
+	assert.Contains(t, libs, "PrimarySync")
+	assert.Contains(t, libs, "SharedSync-test")
+	assert.GreaterOrEqual(t, changesDatabaseCalls.Load(), int32(2), "must rediscover zones even when cache exists")
+}
+
+func TestGetLibraries_RediscoveryPreservesBufferedDelta(t *testing.T) {
+	setTestCacheDir(t)
+	ctx := context.Background()
+
+	ps := newHTTPTestPhotosService(t, "library-merge", func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/database/1/com.apple.photos.cloud/production/private/changes/zone":
+			writeJSON(t, w, map[string]any{
+				"zones": []map[string]any{{
+					"zoneID":     map[string]any{"zoneName": "PrimarySync"},
+					"records":    []map[string]any{{"recordName": "asset123-IN-album-uuid", "deleted": true}},
+					"syncToken":  "new-token",
+					"moreComing": false,
+				}},
+			})
+		case "/database/1/com.apple.photos.cloud/production/private/changes/database":
+			writeJSON(t, w, map[string]any{"zones": []map[string]any{{"zoneID": map[string]any{"zoneName": "PrimarySync", "ownerRecordName": "owner", "zoneType": "REGULAR_CUSTOM_ZONE"}}}})
+		case "/database/1/com.apple.photos.cloud/production/shared/changes/database":
+			writeJSON(t, w, map[string]any{"zones": []map[string]any{{"zoneID": map[string]any{"zoneName": "SharedSync-test", "ownerRecordName": "other", "zoneType": "REGULAR_CUSTOM_ZONE"}}}})
+		default:
+			http.Error(w, "unexpected request", http.StatusInternalServerError)
+		}
+	})
+
+	saveJSONCache(ps.client.CacheDir(), "libraries.json", []cachedLibraryEntry{{ZoneName: "PrimarySync", Area: areaPrivate}})
+	require.NoError(t, os.MkdirAll(filepath.Join(ps.client.CacheDir(), "PrimarySync"), 0700))
+	require.NoError(t, os.WriteFile(filepath.Join(ps.client.CacheDir(), "PrimarySync", "syncToken"), []byte("cached-token"), 0600))
+
+	libs, err := ps.GetLibraries(ctx)
+	require.NoError(t, err)
+	primary := libs["PrimarySync"]
+	require.NotNil(t, primary)
+	require.NotNil(t, primary.pendingDelta, "rediscovery must not discard pending delta buffered from cached zone state")
+	assert.Contains(t, libs, "SharedSync-test")
+}
+
+func TestGetLibraries_RefreshesInMemoryLibraries(t *testing.T) {
+	setTestCacheDir(t)
+	ctx := context.Background()
+	var changesDatabaseCalls atomic.Int32
+
+	ps := newHTTPTestPhotosService(t, "library-refresh-memory", func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/database/1/com.apple.photos.cloud/production/private/changes/database":
+			changesDatabaseCalls.Add(1)
+			writeJSON(t, w, map[string]any{"zones": []map[string]any{{"zoneID": map[string]any{"zoneName": "PrimarySync", "ownerRecordName": "owner", "zoneType": "REGULAR_CUSTOM_ZONE"}}}})
+		case "/database/1/com.apple.photos.cloud/production/shared/changes/database":
+			changesDatabaseCalls.Add(1)
+			writeJSON(t, w, map[string]any{"zones": []map[string]any{{"zoneID": map[string]any{"zoneName": "SharedSync-live", "ownerRecordName": "other", "zoneType": "REGULAR_CUSTOM_ZONE"}}}})
+		default:
+			http.Error(w, "unexpected request", http.StatusInternalServerError)
+		}
+	})
+
+	ps.libraries = map[string]*Library{
+		"PrimarySync": {service: ps, zoneID: "PrimarySync", area: areaPrivate, albums: make(map[string]*Album)},
+	}
+
+	libs, err := ps.GetLibraries(ctx)
+	require.NoError(t, err)
+	assert.Contains(t, libs, "PrimarySync")
+	assert.Contains(t, libs, "SharedSync-live")
+	assert.GreaterOrEqual(t, changesDatabaseCalls.Load(), int32(2), "in-memory libraries must still rediscover zones")
+}
+
+func TestGetLibraries_KeepsCachedSharedZonesOnTransientSharedRediscoveryFailure(t *testing.T) {
+	setTestCacheDir(t)
+	ctx := context.Background()
+
+	ps := newHTTPTestPhotosService(t, "library-shared-preserve", func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/database/1/com.apple.photos.cloud/production/private/changes/database":
+			writeJSON(t, w, map[string]any{"zones": []map[string]any{{"zoneID": map[string]any{"zoneName": "PrimarySync", "ownerRecordName": "owner", "zoneType": "REGULAR_CUSTOM_ZONE"}}}})
+		case "/database/1/com.apple.photos.cloud/production/shared/changes/database":
+			http.Error(w, "transient shared discovery failure", http.StatusInternalServerError)
+		case "/database/1/com.apple.photos.cloud/production/shared/records/query":
+			http.Error(w, "transient per-zone probe failure", http.StatusInternalServerError)
+		default:
+			http.Error(w, "unexpected request", http.StatusInternalServerError)
+		}
+	})
+
+	saveJSONCache(ps.client.CacheDir(), "libraries.json", []cachedLibraryEntry{{ZoneName: "PrimarySync", Area: areaPrivate}, {ZoneName: "SharedSync-cached", Area: areaShared}})
+
+	libs, err := ps.GetLibraries(ctx)
+	require.NoError(t, err)
+	assert.Contains(t, libs, "PrimarySync")
+	assert.Contains(t, libs, "SharedSync-cached")
+
+	data, err := os.ReadFile(filepath.Join(ps.client.CacheDir(), "libraries.json"))
+	require.NoError(t, err)
+	assert.Contains(t, string(data), "SharedSync-cached")
+}
+
+func TestGetLibraries_DropsCachedSharedZoneOnZoneNotFoundProbe(t *testing.T) {
+	setTestCacheDir(t)
+	ctx := context.Background()
+
+	ps := newHTTPTestPhotosService(t, "library-shared-drop", func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/database/1/com.apple.photos.cloud/production/private/changes/database":
+			writeJSON(t, w, map[string]any{"zones": []map[string]any{{"zoneID": map[string]any{"zoneName": "PrimarySync", "ownerRecordName": "owner", "zoneType": "REGULAR_CUSTOM_ZONE"}}}})
+		case "/database/1/com.apple.photos.cloud/production/shared/changes/database":
+			http.Error(w, "transient shared discovery failure", http.StatusInternalServerError)
+		case "/database/1/com.apple.photos.cloud/production/shared/records/query":
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = w.Write([]byte(`{
+				"serverErrorCode": "ZONE_NOT_FOUND",
+				"reason": "Zone does not exist",
+				"errorClass": "ZONE_NOT_FOUND",
+				"error": "ZONE_NOT_FOUND"
+			}`))
+		default:
+			http.Error(w, "unexpected request", http.StatusInternalServerError)
+		}
+	})
+
+	saveJSONCache(ps.client.CacheDir(), "libraries.json", []cachedLibraryEntry{{ZoneName: "PrimarySync", Area: areaPrivate}, {ZoneName: "SharedSync-cached", Area: areaShared, OwnerRecordName: "owner", ZoneType: "REGULAR_CUSTOM_ZONE"}})
+
+	libs, err := ps.GetLibraries(ctx)
+	require.NoError(t, err)
+	assert.Contains(t, libs, "PrimarySync")
+	assert.NotContains(t, libs, "SharedSync-cached")
+
+	data, err := os.ReadFile(filepath.Join(ps.client.CacheDir(), "libraries.json"))
+	require.NoError(t, err)
+	assert.NotContains(t, string(data), "SharedSync-cached")
+}
+
+func TestGetAlbums_RetriesAfterTransientUserAlbumQueryFailure(t *testing.T) {
+	setTestCacheDir(t)
+	ctx := context.Background()
+	var topQueries atomic.Int32
+
+	ps := newHTTPTestPhotosService(t, "albums-retry-top", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/database/1/com.apple.photos.cloud/production/private/records/query" {
+			http.Error(w, "unexpected request", http.StatusInternalServerError)
+			return
+		}
+		var body struct {
+			Query struct {
+				FilterBy []struct {
+					FieldName  string `json:"fieldName"`
+					Comparator string `json:"comparator"`
+					FieldValue struct {
+						Value string `json:"value"`
+					} `json:"fieldValue"`
+				} `json:"filterBy"`
+			} `json:"query"`
+		}
+		if err := readJSONBody(r, &body); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if len(body.Query.FilterBy) != 0 {
+			http.Error(w, "unexpected child query", http.StatusInternalServerError)
+			return
+		}
+		if topQueries.Add(1) == 1 {
+			http.Error(w, "transient top-level album failure", http.StatusInternalServerError)
+			return
+		}
+		writeJSON(t, w, map[string]any{
+			"records": []map[string]any{testAlbumRecordJSON("User Album", "user-record", 0, "")},
+		})
+	})
+
+	lib := &Library{service: ps, zoneID: "PrimarySync", area: areaPrivate, albums: map[string]*Album{}}
+	_, err := lib.GetAlbums(ctx)
+	assert.Error(t, err, "private library failure should surface as error")
+	albums, err := lib.GetAlbums(ctx)
+	require.NoError(t, err)
+	assert.Contains(t, albums, "User Album")
+	assert.GreaterOrEqual(t, topQueries.Load(), int32(2), "second GetAlbums call must retry transient top-level failures")
+}
+
+func TestGetAlbums_SharedSyncQueryFailureReturnsSmartAlbumsOnly(t *testing.T) {
+	setTestCacheDir(t)
+	ctx := context.Background()
+
+	ps := newHTTPTestPhotosService(t, "albums-shared-fallback", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{
+			"serverErrorCode": "BAD_REQUEST",
+			"reason": "Index has invalid data",
+			"errorClass": "BAD_REQUEST",
+			"error": "BAD_REQUEST"
+		}`))
+	})
+
+	lib := &Library{service: ps, zoneID: "SharedSync-test", area: areaPrivate, albums: map[string]*Album{}}
+	albums, err := lib.GetAlbums(ctx)
+	require.NoError(t, err)
+	assert.Contains(t, albums, "All Photos")
+	assert.NotContains(t, albums, "User Album")
+	assert.Empty(t, lib.albums, "SharedSync fallback should not cache partial album results")
+}
+
+func TestGetAlbums_SharedSyncUnexpectedFailureReturnsError(t *testing.T) {
+	setTestCacheDir(t)
+	ctx := context.Background()
+
+	ps := newHTTPTestPhotosService(t, "albums-shared-error", func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "unexpected shared failure", http.StatusInternalServerError)
+	})
+
+	lib := &Library{service: ps, zoneID: "SharedSync-test", area: areaPrivate, albums: map[string]*Album{}}
+	_, err := lib.GetAlbums(ctx)
+	assert.Error(t, err)
+	assert.Empty(t, lib.albums, "SharedSync unexpected failures must not cache partial album results")
+}
+
+func TestGetAlbums_RetriesAfterTransientFolderChildQueryFailure(t *testing.T) {
+	setTestCacheDir(t)
+	ctx := context.Background()
+	var childQueries atomic.Int32
+
+	ps := newHTTPTestPhotosService(t, "albums-retry-folder", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/database/1/com.apple.photos.cloud/production/private/records/query" {
+			http.Error(w, "unexpected request", http.StatusInternalServerError)
+			return
+		}
+		var body struct {
+			Query struct {
+				FilterBy []struct {
+					FieldName  string `json:"fieldName"`
+					Comparator string `json:"comparator"`
+					FieldValue struct {
+						Value string `json:"value"`
+					} `json:"fieldValue"`
+				} `json:"filterBy"`
+			} `json:"query"`
+		}
+		if err := readJSONBody(r, &body); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		parentID := ""
+		for _, filter := range body.Query.FilterBy {
+			if filter.FieldName == "parentId" {
+				parentID = filter.FieldValue.Value
+			}
+		}
+		switch parentID {
+		case "":
+			writeJSON(t, w, map[string]any{
+				"records": []map[string]any{testAlbumRecordJSON("Folder", "folder-record", albumTypeFolder, "")},
+			})
+		case "folder-record":
+			if childQueries.Add(1) == 1 {
+				http.Error(w, "transient child query failure", http.StatusInternalServerError)
+				return
+			}
+			writeJSON(t, w, map[string]any{
+				"records": []map[string]any{testAlbumRecordJSON("Child", "child-record", 0, "folder-record")},
+			})
+		default:
+			http.Error(w, "unexpected parentId", http.StatusInternalServerError)
+		}
+	})
+
+	lib := &Library{service: ps, zoneID: "PrimarySync", area: areaPrivate, albums: map[string]*Album{}}
+	_, _ = lib.GetAlbums(ctx)
+	albums, err := lib.GetAlbums(ctx)
+	require.NoError(t, err)
+	folder, ok := albums["Folder"]
+	require.True(t, ok)
+	require.True(t, folder.IsFolder)
+	assert.Contains(t, folder.Children, "Child")
+	assert.GreaterOrEqual(t, childQueries.Load(), int32(2), "second GetAlbums call must retry transient child query failures")
+}
 
 func TestBuildPhotos(t *testing.T) {
 	filename := base64.StdEncoding.EncodeToString([]byte("IMG_0001.JPG"))

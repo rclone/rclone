@@ -119,13 +119,13 @@ The iCloud Drive backend also supports accessing iCloud Photos by setting the
 rclone lsd iclouddrive: --iclouddrive-service photos
 ```
 
-This presents a read-only, 3-level hierarchy:
+This presents a read-only hierarchy rooted at photo libraries:
 
 - **Level 1**: Photo libraries — your personal library (`PrimarySync`) and
   any Shared Photo Library (`SharedSync-XXXX`)
-- **Level 2**: Albums within a library (14 smart albums + user-created albums
-  and folders)
-- **Level 3**: Photos/videos within an album, including Live Photo `.MOV`
+- **Level 2+**: Albums and folders within a library, nested recursively as in
+  Apple Photos
+- **Leaf level**: Photos/videos within an album, including Live Photo `.MOV`
   companions
 
 Examples:
@@ -164,8 +164,8 @@ These metadata keys are only available when `service = photos`.
 ### Caching
 
 iCloud Photos caches album listings to disk for fast subsequent access.
-On the first run, listing a large album requires sequential API calls
-(roughly 1 second per 200 photos). After that, a lightweight change
+On the first run, listing a large album uses parallel `startRank`
+partitions to fetch pages concurrently. After that, a lightweight change
 check (~200ms) determines whether the cache is still valid.
 
 Cache location: `~/.cache/rclone/iclouddrive-photos/<remote>/<zone>/`
