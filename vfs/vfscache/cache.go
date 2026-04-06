@@ -85,7 +85,7 @@ func New(ctx context.Context, fremote fs.Fs, opt *vfscommon.Options, avFn AddVir
 	// drive letter is not encoded (e.g. into unicode fullwidth colon).
 	var err error
 	parentOSPath := config.GetCacheDir() // Assuming string contains a local absolute path in OS encoding
-	fs.Debugf(fremote, "vfs cache: root is %q", parentOSPath)
+	fs.DebugfCtx(ctx, fremote, "vfs cache: root is %q", parentOSPath)
 	parentPath := fromOSPath(parentOSPath)
 
 	// Get a relative cache path representing the remote.
@@ -103,8 +103,8 @@ func New(ctx context.Context, fremote fs.Fs, opt *vfscommon.Options, avFn AddVir
 	if dataOSPath, metaOSPath, err = createRootDirs(parentOSPath, relativeDirOSPath); err != nil {
 		return nil, err
 	}
-	fs.Debugf(fremote, "vfs cache: data root is %q", dataOSPath)
-	fs.Debugf(fremote, "vfs cache: metadata root is %q", metaOSPath)
+	fs.DebugfCtx(ctx, fremote, "vfs cache: data root is %q", dataOSPath)
+	fs.DebugfCtx(ctx, fremote, "vfs cache: metadata root is %q", metaOSPath)
 
 	// Get (create) cache backends
 	var fdata, fmeta fs.Fs
@@ -547,7 +547,7 @@ func (c *Cache) reload(ctx context.Context) error {
 			if !found {
 				err := item.reload(ctx)
 				if err != nil {
-					fs.Errorf(name, "vfs cache: failed to reload item: %v", err)
+					fs.ErrorfCtx(ctx, name, "vfs cache: failed to reload item: %v", err)
 				}
 			}
 			return nil
@@ -842,7 +842,7 @@ func (c *Cache) clean(kicked bool) {
 // doesn't return until context is cancelled
 func (c *Cache) cleaner(ctx context.Context) {
 	if c.opt.CachePollInterval <= 0 {
-		fs.Debugf(c.fremote, "vfs cache: cleaning thread disabled because poll interval <= 0")
+		fs.DebugfCtx(ctx, c.fremote, "vfs cache: cleaning thread disabled because poll interval <= 0")
 		return
 	}
 	// Start cleaning the cache immediately
@@ -857,7 +857,7 @@ func (c *Cache) cleaner(ctx context.Context) {
 		case <-timer.C:
 			c.clean(false) // timer driven cache poll, kicked is false
 		case <-ctx.Done():
-			fs.Debugf(c.fremote, "vfs cache: cleaner exiting")
+			fs.DebugfCtx(ctx, c.fremote, "vfs cache: cleaner exiting")
 			return
 		}
 	}

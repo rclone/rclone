@@ -301,7 +301,7 @@ func splitDirAndName(remote string) (dir string, name string) {
 		name = remote[lastSlashPosition+1:]
 	}
 
-	// fs.Debugf(nil, "splitDirAndName remote = {%s}, dir = {%s}, name = {%s}", remote, dir, name)
+	// fs.DebugfCtx(ctx, nil, "splitDirAndName remote = {%s}, dir = {%s}, name = {%s}", remote, dir, name)
 
 	return dir, name
 }
@@ -329,7 +329,7 @@ type folderCreateRes struct {
 
 // CreateDir makes a directory with dirID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, dirID, leaf string) (newID string, err error) {
-	// fs.Debugf(f, "CreateDir(%q, %q)\n", dirID, leaf)
+	// fs.DebugfCtx(ctx, f, "CreateDir(%q, %q)\n", dirID, leaf)
 	opts := &rest.Opts{
 		Method:  "GET",
 		RootURL: linkboxAPIURL,
@@ -372,7 +372,7 @@ func (f *Fs) CreateDir(ctx context.Context, dirID, leaf string) (newID string, e
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	// fs.Debugf(f, "List method dir = {%s}", dir)
+	// fs.DebugfCtx(ctx, f, "List method dir = {%s}", dir)
 	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
 		return nil, err
@@ -408,7 +408,7 @@ func getEntity(ctx context.Context, f *Fs, leaf string, directoryID string, toke
 	var resultErr = fs.ErrorObjectNotFound
 	_, err := f.listAll(ctx, directoryID, leaf, func(entity *entity) bool {
 		if strings.EqualFold(entity.Name, leaf) {
-			// fs.Debugf(f, "getObject found entity.Name {%s} name {%s}", entity.Name, name)
+			// fs.DebugfCtx(ctx, f, "getObject found entity.Name {%s} name {%s}", entity.Name, name)
 			if entity.isDir() {
 				result = nil
 				resultErr = fs.ErrorIsDir
@@ -523,7 +523,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			return nil, err
 		}
 		if newObject == nil {
-			// fs.Debugf(o.fs, "Open entity is empty: name = {%s}", name)
+			// fs.DebugfCtx(ctx, o.fs, "Open entity is empty: name = {%s}", name)
 			return nil, fs.ErrorObjectNotFound
 		}
 
@@ -566,19 +566,19 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// remove the file if it exists
 	if o.itemID != "" {
-		fs.Debugf(o, "Update: removing old file")
+		fs.DebugfCtx(ctx, o, "Update: removing old file")
 		err = o.Remove(ctx)
 		if err != nil {
-			fs.Errorf(o, "Update: failed to remove existing file: %v", err)
+			fs.ErrorfCtx(ctx, o, "Update: failed to remove existing file: %v", err)
 		}
 		o.itemID = ""
 	} else {
 		tmpObject, err := o.fs.NewObject(ctx, remote)
 		if err == nil {
-			fs.Debugf(o, "Update: removing old file")
+			fs.DebugfCtx(ctx, o, "Update: removing old file")
 			err = tmpObject.Remove(ctx)
 			if err != nil {
-				fs.Errorf(o, "Update: failed to remove existing file: %v", err)
+				fs.ErrorfCtx(ctx, o, "Update: failed to remove existing file: %v", err)
 			}
 		}
 	}
@@ -704,7 +704,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		if err != fs.ErrorObjectNotFound {
 			return fmt.Errorf("Update failed to read object: %w", err)
 		}
-		fs.Debugf(o, "Trying to read object after upload: try again in %v (%d/%d)", sleepTime, try, maxTries)
+		fs.DebugfCtx(ctx, o, "Trying to read object after upload: try again in %v (%d/%d)", sleepTime, try, maxTries)
 		time.Sleep(sleepTime)
 		sleepTime *= 2
 	}

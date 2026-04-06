@@ -314,7 +314,7 @@ func rcSingleCommand(ctx context.Context, in rc.Params, name string, noRemote bo
 					if err != nil {
 						return nil, err
 					}
-					fs.Debugf(obj, "Upload Succeeded")
+					fs.DebugfCtx(ctx, obj, "Upload Succeeded")
 				}
 			}
 		}

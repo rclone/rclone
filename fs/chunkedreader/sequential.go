@@ -126,7 +126,7 @@ func (cr *sequential) RangeSeek(ctx context.Context, offset int64, whence int, l
 	cr.mu.Lock()
 	defer cr.mu.Unlock()
 
-	fs.Debugf(cr.o, "ChunkedReader.RangeSeek from %d to %d length %d", cr.offset, offset, length)
+	fs.DebugfCtx(ctx, cr.o, "ChunkedReader.RangeSeek from %d to %d length %d", cr.offset, offset, length)
 
 	if cr.closed {
 		return 0, ErrorFileClosed

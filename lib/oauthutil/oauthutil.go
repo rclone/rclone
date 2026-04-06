@@ -672,7 +672,7 @@ version recommended):
 		inM := ri.Options.NonDefault(m)
 		delete(inM, fs.ConfigToken) // delete token as we are refreshing it
 		for k, v := range inM {
-			fs.Debugf(nil, "sending %s = %q", k, v)
+			fs.DebugfCtx(ctx, nil, "sending %s = %q", k, v)
 		}
 		// Encode them into a string
 		mCopyString, err := inM.Encode()
@@ -705,7 +705,7 @@ version recommended):
 		if newFormat {
 			for k, v := range outM {
 				m.Set(k, v)
-				fs.Debugf(nil, "received %s = %q", k, v)
+				fs.DebugfCtx(ctx, nil, "received %s = %q", k, v)
 			}
 		} else {
 			m.Set(fs.ConfigToken, code)
@@ -736,7 +736,7 @@ version recommended):
 		}
 		oauthConfig, changed := OverrideCredentials(name, m, opt.OAuth2Config)
 		if changed {
-			fs.Logf(nil, "Make sure your Redirect URL is set to %q in your custom config.\n", oauthConfig.RedirectURL)
+			fs.LogfCtx(ctx, nil, "Make sure your Redirect URL is set to %q in your custom config.\n", oauthConfig.RedirectURL)
 		}
 		if oauthConfig.ClientCredentialFlow {
 			err = clientCredentialsFlowGetToken(ctx, name, m, oauthConfig, opt)
@@ -818,7 +818,7 @@ func clientCredentialsFlowGetToken(ctx context.Context, name string, m configmap
 		opt = &Options{}
 	}
 	_ = opt // not currently using the Options
-	fs.Debugf(nil, "Getting token for client credentials flow")
+	fs.DebugfCtx(ctx, nil, "Getting token for client credentials flow")
 	_, tokenSource, err := NewClientCredentialsClient(ctx, name, m, oauthConfig, fshttp.NewClient(ctx))
 	if err != nil {
 		return fmt.Errorf("client credentials flow: failed to make client: %w", err)
@@ -862,22 +862,22 @@ func configSetup(ctx context.Context, id, name string, m configmap.Mapper, oauth
 		// Open the URL for the user to visit
 		err := OpenURL(authURL)
 		if err != nil {
-			fs.Errorf(nil, "Failed to open browser automatically (%v) - please go to the following link: %s\n", err, authURL)
+			fs.ErrorfCtx(ctx, nil, "Failed to open browser automatically (%v) - please go to the following link: %s\n", err, authURL)
 		} else {
-			fs.Logf(nil, "If your browser doesn't open automatically go to the following link: %s\n", authURL)
+			fs.LogfCtx(ctx, nil, "If your browser doesn't open automatically go to the following link: %s\n", authURL)
 		}
 	} else {
-		fs.Logf(nil, "Please go to the following link: %s\n", authURL)
+		fs.LogfCtx(ctx, nil, "Please go to the following link: %s\n", authURL)
 	}
-	fs.Logf(nil, "Log in and authorize rclone for access\n")
+	fs.LogfCtx(ctx, nil, "Log in and authorize rclone for access\n")
 
 	// Read the code via the webserver
-	fs.Logf(nil, "Waiting for code...\n")
+	fs.LogfCtx(ctx, nil, "Waiting for code...\n")
 	auth := <-server.result
 	if !auth.OK || auth.Code == "" {
 		return "", auth
 	}
-	fs.Logf(nil, "Got code\n")
+	fs.LogfCtx(ctx, nil, "Got code\n")
 	if opt.CheckAuth != nil {
 		err = opt.CheckAuth(oauthConfig, auth)
 		if err != nil {

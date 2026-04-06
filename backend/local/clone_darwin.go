@@ -28,7 +28,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't clone - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't clone - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 	if f.opt.TranslateSymlinks && srcObj.translatedLink { // in --links mode, use cloning only for regular files

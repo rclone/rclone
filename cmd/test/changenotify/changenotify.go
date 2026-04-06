@@ -40,7 +40,7 @@ var commandDefinition = &cobra.Command{
 			pollChan := make(chan time.Duration)
 			do(ctx, changeNotify, pollChan)
 			pollChan <- time.Duration(pollInterval)
-			fs.Logf(nil, "Waiting for changes, polling every %v", pollInterval)
+			fs.LogfCtx(ctx, nil, "Waiting for changes, polling every %v", pollInterval)
 		} else {
 			return errors.New("poll-interval is not supported by this remote")
 		}

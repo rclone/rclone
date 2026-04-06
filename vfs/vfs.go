@@ -221,7 +221,7 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 	configName := fs.ConfigString(f)
 	for _, activeVFS := range active[configName] {
 		if vfs.Opt == activeVFS.Opt {
-			fs.Debugf(f, "Reusing VFS from active cache")
+			fs.DebugfCtx(ctx, f, "Reusing VFS from active cache")
 			activeVFS.inUse.Add(1)
 			return activeVFS
 		}
@@ -239,17 +239,17 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 		do(context.TODO(), vfs.root.changeNotify, vfs.pollChan)
 		vfs.pollChan <- time.Duration(vfs.Opt.PollInterval)
 	} else if vfs.Opt.PollInterval > 0 {
-		fs.Infof(f, "poll-interval is not supported by this remote")
+		fs.InfofCtx(ctx, f, "poll-interval is not supported by this remote")
 	}
 
 	// Warn if can't stream
 	if !vfs.Opt.ReadOnly && vfs.Opt.CacheMode < vfscommon.CacheModeWrites && features.PutStream == nil {
-		fs.Logf(f, "--vfs-cache-mode writes or full is recommended for this remote as it can't stream")
+		fs.LogfCtx(ctx, f, "--vfs-cache-mode writes or full is recommended for this remote as it can't stream")
 	}
 
 	// Warn if we handle symlinks
 	if vfs.Opt.Links {
-		fs.Logf(f, "Symlinks support enabled")
+		fs.LogfCtx(ctx, f, "Symlinks support enabled")
 	}
 
 	// Pin the Fs into the cache so that when we use cache.NewFs
@@ -293,7 +293,7 @@ func (vfs *VFS) signalHandler(ctx context.Context) {
 		case <-sigHup:
 			root, err := vfs.Root()
 			if err != nil {
-				fs.Errorf(vfs.Fs(), "Error reading root: %v", err)
+				fs.ErrorfCtx(ctx, vfs.Fs(), "Error reading root: %v", err)
 			} else {
 				root.ForgetAll()
 			}

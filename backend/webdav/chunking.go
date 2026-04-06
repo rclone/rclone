@@ -34,7 +34,7 @@ func (f *Fs) shouldRetryChunkMerge(ctx context.Context, resp *http.Response, err
 	// 423 LOCKED
 	if resp != nil && resp.StatusCode == 423 {
 		*wasLocked = true
-		fs.Logf(f, "Sleeping for %v to wait for chunks to be merged after 423 error", *sleepTime)
+		fs.LogfCtx(ctx, f, "Sleeping for %v to wait for chunks to be merged after 423 error", *sleepTime)
 		time.Sleep(*sleepTime)
 		*sleepTime *= 2
 		return true, fmt.Errorf("merging the uploaded chunks failed with 423 LOCKED. This usually happens when the chunks merging is still in progress on NextCloud, but it may also indicate a failed transfer: %w", err)

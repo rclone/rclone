@@ -82,7 +82,7 @@ func ObjectFromOriginal(ctx context.Context, f *Fs, o fs.Object) *Object {
 		if err == nil { // queued for upload
 			cacheType = objectPendingUpload
 			parentFs = f.tempFs
-			fs.Debugf(fullRemote, "pending upload found")
+			fs.DebugfCtx(ctx, fullRemote, "pending upload found")
 		}
 	}
 
@@ -187,7 +187,7 @@ func (o *Object) refreshFromSource(ctx context.Context, force bool) error {
 		}
 	}
 	if err != nil {
-		fs.Errorf(o, "error refreshing object in : %v", err)
+		fs.ErrorfCtx(ctx, o, "error refreshing object in : %v", err)
 		return err
 	}
 	o.updateData(ctx, liveObject)
@@ -209,7 +209,7 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 
 	o.CacheModTime = t.UnixNano()
 	o.persist()
-	fs.Debugf(o, "updated ModTime: %v", t)
+	fs.DebugfCtx(ctx, o, "updated ModTime: %v", t)
 
 	return nil
 }
@@ -259,12 +259,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			return fmt.Errorf("%v is currently uploading, can't update", o)
 		}
 	}
-	fs.Debugf(o, "updating object contents with size %v", src.Size())
+	fs.DebugfCtx(ctx, o, "updating object contents with size %v", src.Size())
 
 	// FIXME use reliable upload
 	err := o.Object.Update(ctx, in, src, options...)
 	if err != nil {
-		fs.Errorf(o, "error updating source: %v", err)
+		fs.ErrorfCtx(ctx, o, "error updating source: %v", err)
 		return err
 	}
 
@@ -303,7 +303,7 @@ func (o *Object) Remove(ctx context.Context) error {
 		return err
 	}
 
-	fs.Debugf(o, "removing object")
+	fs.DebugfCtx(ctx, o, "removing object")
 	_ = o.CacheFs.cache.RemoveObject(o.abs())
 	_ = o.CacheFs.cache.removePendingUpload(o.abs())
 	parentCd := NewDirectory(o.CacheFs, cleanPath(path.Dir(o.Remote())))
@@ -339,7 +339,7 @@ func (o *Object) Hash(ctx context.Context, ht hash.Type) (string, error) {
 	o.cacheHashesMu.Unlock()
 
 	o.persist()
-	fs.Debugf(o, "object hash cached: %v", liveHash)
+	fs.DebugfCtx(ctx, o, "object hash cached: %v", liveHash)
 
 	return liveHash, nil
 }

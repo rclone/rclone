@@ -404,7 +404,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	// note: so many calls its only just faster then a reupload for big files.
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 
@@ -607,7 +607,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (string, error)
 		// check if it went oke
 		if requestError, ok := err.(*api.RequestError); ok {
 			if requestError.Status == "unknown" {
-				fs.Debugf(requestError, " checking if dir is created with separate call.")
+				fs.DebugfCtx(ctx, requestError, " checking if dir is created with separate call.")
 				time.Sleep(1 * time.Second) // sleep to give icloud time to clear up its mind
 				item, found, err = f.findLeafItem(ctx, pathID, leaf)
 				if err != nil {
@@ -643,7 +643,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (string, error)
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 
@@ -701,7 +701,7 @@ func (f *Fs) move(ctx context.Context, ID, srcDirectoryID, srcLeaf, srcEtag, dst
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
@@ -775,7 +775,7 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 func ignoreResultUnknown(ctx context.Context, resp *http.Response, err error) (bool, error) {
 	if requestError, ok := err.(*api.RequestError); ok {
 		if requestError.Status == "unknown" {
-			fs.Debugf(requestError, " ignoring.")
+			fs.DebugfCtx(ctx, requestError, " ignoring.")
 			return false, nil
 		}
 	}
@@ -785,7 +785,7 @@ func ignoreResultUnknown(ctx context.Context, resp *http.Response, err error) (b
 func retryResultUnknown(ctx context.Context, resp *http.Response, err error) (bool, error) {
 	if requestError, ok := err.(*api.RequestError); ok {
 		if requestError.Status == "unknown" {
-			fs.Debugf(requestError, " retrying.")
+			fs.DebugfCtx(ctx, requestError, " retrying.")
 			return true, err
 		}
 	}

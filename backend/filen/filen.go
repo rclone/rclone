@@ -314,7 +314,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	for _, option := range options {
 		if option.Mandatory() {
-			fs.Logf(option, "Unsupported mandatory option: %v", option)
+			fs.LogfCtx(ctx, option, "Unsupported mandatory option: %v", option)
 		}
 	}
 	path := f.Enc.FromStandardPath(src.Remote())
@@ -466,7 +466,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 			chunkSize = x.ChunkSize
 		default:
 			if option.Mandatory() {
-				fs.Logf(option, "Unsupported mandatory option: %v", option)
+				fs.LogfCtx(ctx, option, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}
@@ -703,7 +703,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			offset = opt.Offset
 		default:
 			if option.Mandatory() {
-				fs.Logf(option, "Unsupported mandatory option: %v", option)
+				fs.LogfCtx(ctx, option, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}
@@ -721,7 +721,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	for _, option := range options {
 		if option.Mandatory() {
-			fs.Logf(option, "Unsupported mandatory option: %v", option)
+			fs.LogfCtx(ctx, option, "Unsupported mandatory option: %v", option)
 		}
 	}
 	newModTime := src.ModTime(ctx)

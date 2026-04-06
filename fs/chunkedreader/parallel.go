@@ -68,7 +68,7 @@ func (cr *parallel) newStream(ctx context.Context, offset, size int64) (s *strea
 // read the file into the buffer
 func (s *stream) readFrom(ctx context.Context) {
 	// Open the object at the correct range
-	fs.Debugf(s.cr.o, "%s: open", s.name)
+	fs.DebugfCtx(ctx, s.cr.o, "%s: open", s.name)
 	rc, err := operations.Open(ctx, s.cr.o,
 		&fs.HashesOption{Hashes: hash.Set(hash.None)},
 		&fs.RangeOption{Start: s.offset, End: s.offset + s.size - 1})
@@ -78,9 +78,9 @@ func (s *stream) readFrom(ctx context.Context) {
 	}
 	s.rc = rc
 
-	fs.Debugf(s.cr.o, "%s: readfrom started", s.name)
+	fs.DebugfCtx(ctx, s.cr.o, "%s: readfrom started", s.name)
 	_, err = s.rw.ReadFrom(s.rc)
-	fs.Debugf(s.cr.o, "%s: readfrom finished (%d bytes): %v", s.name, s.rw.Size(), err)
+	fs.DebugfCtx(ctx, s.cr.o, "%s: readfrom finished (%d bytes): %v", s.name, s.rw.Size(), err)
 	s.err <- err
 }
 
@@ -155,7 +155,7 @@ func newParallel(ctx context.Context, o fs.Object, chunkSize int64, streams int)
 		newChunkSize += multipart.BufferSize
 	}
 
-	fs.Debugf(o, "newParallel chunkSize=%d, streams=%d", chunkSize, streams)
+	fs.DebugfCtx(ctx, o, "newParallel chunkSize=%d, streams=%d", chunkSize, streams)
 
 	return &parallel{
 		ctx:       ctx,

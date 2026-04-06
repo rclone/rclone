@@ -44,7 +44,7 @@ func (a *LoggedBasicAuth) CheckAuth(r *http.Request) string {
 	username := a.BasicAuth.CheckAuth(r)
 	if username == "" {
 		user, _, _ := parseAuthorization(r)
-		fs.Infof(r.URL.Path, "%s: Unauthorized request from %s", r.RemoteAddr, user)
+		fs.InfofCtx(r.Context(), r.URL.Path, "%s: Unauthorized request from %s", r.RemoteAddr, user)
 	}
 	return username
 }
@@ -140,7 +140,7 @@ func MiddlewareAuthCustom(fn CustomAuthFn, realm string, userFromContext bool) M
 
 			value, err := fn(user, pass)
 			if err != nil {
-				fs.Infof(r.URL.Path, "%s: Auth failed from %s: %v", r.RemoteAddr, user, err)
+				fs.InfofCtx(r.Context(), r.URL.Path, "%s: Auth failed from %s: %v", r.RemoteAddr, user, err)
 				goauth.NewBasicAuthenticator(realm, func(user, realm string) string { return "" }).RequireAuth(w, r) //Reuse BasicAuth error reporting
 				return
 			}

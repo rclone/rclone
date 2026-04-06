@@ -52,10 +52,10 @@ func UploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.Reader, opt U
 		if info.LeavePartsOnError {
 			return
 		}
-		fs.Debugf(src, "Cancelling multipart upload")
+		fs.DebugfCtx(ctx, src, "Cancelling multipart upload")
 		errCancel := chunkWriter.Abort(ctx)
 		if errCancel != nil {
-			fs.Debugf(src, "Failed to cancel multipart upload: %v", errCancel)
+			fs.DebugfCtx(ctx, src, "Failed to cancel multipart upload: %v", errCancel)
 		}
 	})()
 
@@ -110,7 +110,7 @@ func UploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.Reader, opt U
 		off += n
 		g.Go(func() (err error) {
 			defer free()
-			fs.Debugf(src, "multipart upload: starting chunk %d size %v offset %v/%v", partNum, fs.SizeSuffix(n), fs.SizeSuffix(partOff), fs.SizeSuffix(size))
+			fs.DebugfCtx(ctx, src, "multipart upload: starting chunk %d size %v offset %v/%v", partNum, fs.SizeSuffix(n), fs.SizeSuffix(partOff), fs.SizeSuffix(size))
 			_, err = chunkWriter.WriteChunk(gCtx, int(partNum), rw)
 			return err
 		})

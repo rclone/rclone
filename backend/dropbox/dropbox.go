@@ -416,7 +416,7 @@ func shouldRetry(ctx context.Context, err error) (bool, error) {
 	switch e := err.(type) {
 	case auth.RateLimitAPIError:
 		if e.RateLimitError.RetryAfter > 0 {
-			fs.Logf(nil, "Error %v. Too many requests or write operations. Trying again in %d seconds.", err, e.RateLimitError.RetryAfter)
+			fs.LogfCtx(ctx, nil, "Error %v. Too many requests or write operations. Trying again in %d seconds.", err, e.RateLimitError.RetryAfter)
 			err = pacer.RetryAfterError(err, time.Duration(e.RateLimitError.RetryAfter)*time.Second)
 		}
 		return true, err
@@ -466,7 +466,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	oldToken, ok := m.Get(config.ConfigToken)
 	oldToken = strings.TrimSpace(oldToken)
 	if ok && oldToken != "" && oldToken[0] != '{' {
-		fs.Infof(name, "Converting token to new format")
+		fs.InfofCtx(ctx, name, "Converting token to new format")
 		newToken := fmt.Sprintf(`{"access_token":%q,"token_type":"bearer","expiry":"0001-01-01T00:00:00Z"}`, oldToken)
 		err := config.SetValueAndSave(name, config.ConfigToken, newToken)
 		if err != nil {
@@ -602,7 +602,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	if f.opt.RootNsid != "" {
 		f.ns = f.opt.RootNsid
-		fs.Debugf(f, "Overriding root namespace to %q", f.ns)
+		fs.DebugfCtx(ctx, f, "Overriding root namespace to %q", f.ns)
 	} else if strings.HasPrefix(root, "/") {
 		// If root starts with / then use the actual root
 		var acc *users.FullAccount
@@ -621,7 +621,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		default:
 			return nil, fmt.Errorf("unknown RootInfo type %v %T", acc.RootInfo, acc.RootInfo)
 		}
-		fs.Debugf(f, "Using root namespace %q", f.ns)
+		fs.DebugfCtx(ctx, f, "Using root namespace %q", f.ns)
 	}
 	f.setRoot(root)
 
@@ -1079,7 +1079,7 @@ func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) (
 				fileInfo = info
 				metadata = &info.Metadata
 			default:
-				fs.Errorf(f, "Unknown type %T", entry)
+				fs.ErrorfCtx(ctx, f, "Unknown type %T", entry)
 				continue
 			}
 
@@ -1242,7 +1242,7 @@ func (f *Fs) Precision() time.Duration {
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Object, err error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 
@@ -1309,7 +1309,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) (err error) {
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
@@ -1336,7 +1336,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 			// fail on just created objects
 			// See: https://github.com/rclone/rclone/issues/8881
 			if e.EndpointError != nil && e.EndpointError.FromLookup != nil && e.EndpointError.FromLookup.Tag == files.LookupErrorNotFound {
-				fs.Debugf(srcObj, "Retrying move on %v error", err)
+				fs.DebugfCtx(ctx, srcObj, "Retrying move on %v error", err)
 				return true, err
 			}
 		}
@@ -1361,7 +1361,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.
 func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (link string, err error) {
 	absPath := f.opt.Enc.FromStandardPath(path.Join(f.slashRoot, remote))
-	fs.Debugf(f, "attempting to share '%s' (absolute path: %s)", remote, absPath)
+	fs.DebugfCtx(ctx, f, "attempting to share '%s' (absolute path: %s)", remote, absPath)
 	createArg := sharing.CreateSharedLinkWithSettingsArg{
 		Path: absPath,
 		Settings: &sharing.SharedLinkSettings{
@@ -1389,7 +1389,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 
 	if err != nil && createArg.Settings.Expires != nil && strings.Contains(err.Error(), sharing.SharedLinkSettingsErrorNotAuthorized) {
 		// Some plans can't create links with expiry
-		fs.Debugf(absPath, "can't create link with expiry, trying without")
+		fs.DebugfCtx(ctx, absPath, "can't create link with expiry, trying without")
 		createArg.Settings.Expires = nil
 		err = f.pacer.Call(func() (bool, error) {
 			linkRes, err = f.sharing.CreateSharedLinkWithSettings(&createArg)
@@ -1399,7 +1399,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 
 	if err != nil && strings.Contains(err.Error(),
 		sharing.CreateSharedLinkWithSettingsErrorSharedLinkAlreadyExists) {
-		fs.Debugf(absPath, "has a public link already, attempting to retrieve it")
+		fs.DebugfCtx(ctx, absPath, "has a public link already, attempting to retrieve it")
 		listArg := sharing.ListSharedLinksArg{
 			Path:       absPath,
 			DirectOnly: true,
@@ -1442,7 +1442,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 	srcPath := path.Join(srcFs.slashRoot, srcRemote)
@@ -1518,7 +1518,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 		// get the StartCursor early so all changes from now on get processed
 		startCursor, err := f.changeNotifyCursor(ctx)
 		if err != nil {
-			fs.Infof(f, "Failed to get StartCursor: %s", err)
+			fs.InfofCtx(ctx, f, "Failed to get StartCursor: %s", err)
 		}
 		var ticker *time.Ticker
 		var tickerC <-chan time.Time
@@ -1543,14 +1543,14 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 				if startCursor == "" {
 					startCursor, err = f.changeNotifyCursor(ctx)
 					if err != nil {
-						fs.Infof(f, "Failed to get StartCursor: %s", err)
+						fs.InfofCtx(ctx, f, "Failed to get StartCursor: %s", err)
 						continue
 					}
 				}
-				fs.Debugf(f, "Checking for changes on remote")
+				fs.DebugfCtx(ctx, f, "Checking for changes on remote")
 				startCursor, err = f.changeNotifyRunner(ctx, notifyFunc, startCursor)
 				if err != nil {
-					fs.Infof(f, "Change notify listener failure: %s", err)
+					fs.InfofCtx(ctx, f, "Change notify listener failure: %s", err)
 				}
 			}
 		}
@@ -1587,12 +1587,12 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 
 	if timeout < 30 {
 		timeout = 30
-		fs.Debugf(f, "Increasing poll interval to minimum 30s")
+		fs.DebugfCtx(ctx, f, "Increasing poll interval to minimum 30s")
 	}
 
 	if timeout > 480 {
 		timeout = 480
-		fs.Debugf(f, "Decreasing poll interval to maximum 480s")
+		fs.DebugfCtx(ctx, f, "Decreasing poll interval to maximum 480s")
 	}
 
 	err = f.pacer.Call(func() (bool, error) {
@@ -1613,7 +1613,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 	}
 
 	if res.Backoff != 0 {
-		fs.Debugf(f, "Waiting to poll for %d seconds", res.Backoff)
+		fs.DebugfCtx(ctx, f, "Waiting to poll for %d seconds", res.Backoff)
 		time.Sleep(time.Duration(res.Backoff) * time.Second)
 	}
 
@@ -1645,7 +1645,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 				entryType = fs.EntryObject
 				entryPath = strings.TrimPrefix(info.PathDisplay, f.slashRootSlash)
 			default:
-				fs.Errorf(entry, "dropbox ChangeNotify: ignoring unknown EntryType %T", entry)
+				fs.ErrorfCtx(ctx, entry, "dropbox ChangeNotify: ignoring unknown EntryType %T", entry)
 				continue
 			}
 
@@ -1839,7 +1839,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 func (o *Object) ModTime(ctx context.Context) time.Time {
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.Debugf(o, "Failed to read metadata: %v", err)
+		fs.DebugfCtx(ctx, o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	return o.modTime
@@ -1862,7 +1862,7 @@ func (o *Object) Storable() bool {
 
 func (o *Object) export(ctx context.Context) (in io.ReadCloser, err error) {
 	if o.exportType == exportListOnly || o.exportAPIFormat == "" {
-		fs.Debugf(o.remote, "No export format found")
+		fs.DebugfCtx(ctx, o.remote, "No export format found")
 		return nil, fs.ErrorObjectNotFound
 	}
 
@@ -1960,9 +1960,9 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 		cursor.Offset = in.BytesRead()
 
 		if chunks < 0 {
-			fs.Debugf(o, "Streaming chunk %d/unknown", currentChunk)
+			fs.DebugfCtx(ctx, o, "Streaming chunk %d/unknown", currentChunk)
 		} else {
-			fs.Debugf(o, "Uploading chunk %d/%d", currentChunk, chunks)
+			fs.DebugfCtx(ctx, o, "Uploading chunk %d/%d", currentChunk, chunks)
 		}
 
 		chunk := readers.NewRepeatableLimitReaderBuffer(in, buf, chunkSize)
@@ -1985,7 +1985,7 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 						if skip < 0 {
 							return false, fmt.Errorf("can't seek backwards to correct offset: %s", what)
 						} else if skip == chunkSize {
-							fs.Debugf(o, "%s: chunk received OK - continuing", what)
+							fs.DebugfCtx(ctx, o, "%s: chunk received OK - continuing", what)
 							return false, nil
 						} else if skip > chunkSize {
 							// This error should never happen
@@ -1993,7 +1993,7 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 						}
 						// Skip the sent data on next retry
 						cursor.Offset = uint64(int64(cursor.Offset) + delta)
-						fs.Debugf(o, "%s: skipping bytes on retry to fix offset", what)
+						fs.DebugfCtx(ctx, o, "%s: skipping bytes on retry to fix offset", what)
 					}
 				}
 			}

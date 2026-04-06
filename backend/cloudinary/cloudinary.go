@@ -597,7 +597,7 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 			}
 		}
 
-		fs.Debugf(nil, "Retrying API error %v", err)
+		fs.DebugfCtx(ctx, nil, "Retrying API error %v", err)
 		return true, err
 	}
 
@@ -679,7 +679,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			key, value = option.Header()
 		default:
 			if option.Mandatory() {
-				fs.Logf(o, "Unsupported mandatory option: %v", option)
+				fs.LogfCtx(ctx, o, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}

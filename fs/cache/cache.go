@@ -117,7 +117,7 @@ func GetFn(ctx context.Context, fsString string, create func(ctx context.Context
 		canonicalName := fs.ConfigString(f)
 		if canonicalName != canonicalFsString {
 			if err == nil { // it's a dir
-				fs.Debugf(nil, "fs cache: renaming cache item %q to be canonical %q", canonicalFsString, canonicalName)
+				fs.DebugfCtx(ctx, nil, "fs cache: renaming cache item %q to be canonical %q", canonicalFsString, canonicalName)
 				value, found := c.Rename(canonicalFsString, canonicalName)
 				if found {
 					f = value.(fs.Fs)
@@ -126,7 +126,7 @@ func GetFn(ctx context.Context, fsString string, create func(ctx context.Context
 			} else { // it's a file
 				// the fs we cache is always the file's parent, never the file,
 				// but we use the childParentMap to return the correct error status based on the fsString passed in.
-				fs.Debugf(nil, "fs cache: renaming child cache item %q to be canonical for parent %q", canonicalFsString, canonicalName)
+				fs.DebugfCtx(ctx, nil, "fs cache: renaming child cache item %q to be canonical for parent %q", canonicalFsString, canonicalName)
 				value, found := c.Rename(canonicalFsString, canonicalName) // rename the file entry to parent
 				if found {
 					f = value.(fs.Fs) // if parent already exists, use it

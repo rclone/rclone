@@ -334,7 +334,7 @@ func (drv *Driver) saveState() error {
 
 // restoreState recreates volumes from saved driver state
 func (drv *Driver) restoreState(ctx context.Context) error {
-	fs.Debugf(nil, "Restore state from %s", drv.statePath)
+	fs.DebugfCtx(ctx, nil, "Restore state from %s", drv.statePath)
 
 	data, err := os.ReadFile(drv.statePath)
 	if os.IsNotExist(err) {
@@ -346,13 +346,13 @@ func (drv *Driver) restoreState(ctx context.Context) error {
 		err = json.Unmarshal(data, &state)
 	}
 	if err != nil {
-		fs.Logf(nil, "Failed to restore plugin state: %v", err)
+		fs.LogfCtx(ctx, nil, "Failed to restore plugin state: %v", err)
 		return nil
 	}
 
 	for _, vol := range state {
 		if err := vol.restoreState(ctx, drv); err != nil {
-			fs.Logf(nil, "Failed to restore volume %q: %v", vol.Name, err)
+			fs.LogfCtx(ctx, nil, "Failed to restore volume %q: %v", vol.Name, err)
 			continue
 		}
 		drv.volumes[vol.Name] = vol

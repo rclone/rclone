@@ -464,7 +464,7 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 		direction = "1to2"
 	}
 
-	fs.Debugf(nil, "updating %s", direction)
+	fs.DebugfCtx(ctx, nil, "updating %s", direction)
 	prettyprint(results, "results", fs.LogLevelDebug)
 	prettyprint(queue, "queue", fs.LogLevelDebug)
 
@@ -534,7 +534,7 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 		if result.Err != nil || result.Winner.Err != nil {
 			errors.put(result.Name, result.Size, result.Modtime, result.Hash, "-", result.Flags)
 			if err := filterRecheck.AddFile(result.Name); err != nil {
-				fs.Debugf(result.Name, "error adding file to recheck filter: %v", err)
+				fs.DebugfCtx(ctx, result.Name, "error adding file to recheck filter: %v", err)
 			}
 		}
 	}
@@ -545,7 +545,7 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 			if !winners.has(queueFile) && list.has(queueFile) && !errors.has(queueFile) {
 				// removals from side
 				list.remove(queueFile)
-				fs.Debugf(nil, "decision: removed from %s: %v", side, queueFile)
+				fs.DebugfCtx(ctx, nil, "decision: removed from %s: %v", side, queueFile)
 			} else if winners.has(queueFile) {
 				// copies to side
 				new := winners.get(queueFile)
@@ -556,21 +556,21 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 					if alias != queueFile {
 						// use the (non-identical) existing name, unless --fix-case
 						if ci.FixCase {
-							fs.Debugf(direction, "removing %s and adding %s as --fix-case was specified", alias, queueFile)
+							fs.DebugfCtx(ctx, direction, "removing %s and adding %s as --fix-case was specified", alias, queueFile)
 							list.remove(alias)
 						} else {
-							fs.Debugf(direction, "casing/unicode difference detected. using %s instead of %s", alias, queueFile)
+							fs.DebugfCtx(ctx, direction, "casing/unicode difference detected. using %s instead of %s", alias, queueFile)
 							queueFile = alias
 						}
 					}
 				}
 
 				list.put(queueFile, new.size, new.time, new.hash, new.id, new.flags)
-				fs.Debugf(nil, "decision: copied to %s: %v", side, queueFile)
+				fs.DebugfCtx(ctx, nil, "decision: copied to %s: %v", side, queueFile)
 			} else {
-				fs.Debugf(queueFile, "file in queue but missing from %s transfers", side)
+				fs.DebugfCtx(ctx, queueFile, "file in queue but missing from %s transfers", side)
 				if err := filterRecheck.AddFile(queueFile); err != nil {
-					fs.Debugf(queueFile, "error adding file to recheck filter: %v", err)
+					fs.DebugfCtx(ctx, queueFile, "error adding file to recheck filter: %v", err)
 				}
 			}
 		}
@@ -589,7 +589,7 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 		// renamed on src and copied to dst
 		for _, rename := range b.renames {
 			srcOldName, srcNewName, dstOldName, dstNewName := rename.getNames(is1to2)
-			fs.Debugf(nil, "%s: srcOldName: %v srcNewName: %v dstOldName: %v dstNewName: %v", direction, srcOldName, srcNewName, dstOldName, dstNewName)
+			fs.DebugfCtx(ctx, nil, "%s: srcOldName: %v srcNewName: %v dstOldName: %v dstNewName: %v", direction, srcOldName, srcNewName, dstOldName, dstNewName)
 			// we'll handle the other side when we go the other direction
 			var new *fileInfo
 			// we prefer to get the info from the newNamed versions
@@ -605,7 +605,7 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 			} else {
 				// something's odd, so let's recheck
 				if err := filterRecheck.AddFile(srcOldName); err != nil {
-					fs.Debugf(srcOldName, "error adding file to recheck filter: %v", err)
+					fs.DebugfCtx(ctx, srcOldName, "error adding file to recheck filter: %v", err)
 				}
 			}
 			if srcNewName != "" { // if it was renamed and not deleted
@@ -633,7 +633,7 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 		skippedList := queues.renameSkipped.ToList()
 		for _, file := range skippedList {
 			if err := filterRecheck.AddFile(file); err != nil {
-				fs.Debugf(file, "error adding file to recheck filter: %v", err)
+				fs.DebugfCtx(ctx, file, "error adding file to recheck filter: %v", err)
 			}
 		}
 	}
@@ -659,7 +659,7 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 			alias := b.aliases.Alias(recheckFile)
 			if recheckFile != alias {
 				if err := filterRecheck.AddFile(alias); err != nil {
-					fs.Debugf(alias, "error adding file to recheck filter: %v", err)
+					fs.DebugfCtx(ctx, alias, "error adding file to recheck filter: %v", err)
 				}
 			}
 		}
@@ -669,7 +669,7 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 	if b.InGracefulShutdown {
 		var toKeep []string
 		var toRollback []string
-		fs.Debugf(direction, "stats for %s", direction)
+		fs.DebugfCtx(ctx, direction, "stats for %s", direction)
 		trs := accounting.Stats(ctx).Transferred()
 		for _, tr := range trs {
 			b.debugFn(tr.Name, func() {
@@ -685,7 +685,7 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 			if r.Origin == "syncEmptyDirs" {
 				if srcWinners.has(r.Name) || dstWinners.has(r.Name) {
 					toKeep = append(toKeep, r.Name)
-					fs.Infof(r.Name, "keeping empty dir")
+					fs.InfofCtx(ctx, r.Name, "keeping empty dir")
 				}
 			}
 		}

@@ -446,7 +446,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 	srcBucket, srcPath := srcObj.split()
@@ -560,13 +560,13 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 		if !recurse {
 			for _, commonPrefix := range resp.CommonPrefixes {
 				if commonPrefix == nil {
-					fs.Logf(f, "Nil common prefix received")
+					fs.LogfCtx(ctx, f, "Nil common prefix received")
 					continue
 				}
 				remote := *commonPrefix
 				remote = f.opt.Enc.ToStandardPath(remote)
 				if !strings.HasPrefix(remote, prefix) {
-					fs.Logf(f, "Odd name received %q", remote)
+					fs.LogfCtx(ctx, f, "Odd name received %q", remote)
 					continue
 				}
 				remote = remote[len(prefix):]
@@ -585,7 +585,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 			remote := qs.StringValue(object.Key)
 			remote = f.opt.Enc.ToStandardPath(remote)
 			if !strings.HasPrefix(remote, prefix) {
-				fs.Logf(f, "Odd name received %q", remote)
+				fs.LogfCtx(ctx, f, "Odd name received %q", remote)
 				continue
 			}
 			remote = remote[len(prefix):]
@@ -602,7 +602,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 		}
 		// Use NextMarker if set, otherwise use last Key
 		if resp.NextMarker == nil || *resp.NextMarker == "" {
-			fs.Errorf(f, "Expecting NextMarker but didn't find one")
+			fs.ErrorfCtx(ctx, f, "Expecting NextMarker but didn't find one")
 			break
 		} else {
 			marker = resp.NextMarker
@@ -768,7 +768,7 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 			}
 			switch *statistics.Status {
 			case "deleted":
-				fs.Debugf(f, "Wait for qingstor bucket to be deleted, retries: %d", retries)
+				fs.DebugfCtx(ctx, f, "Wait for qingstor bucket to be deleted, retries: %d", retries)
 				time.Sleep(time.Second * 1)
 				retries++
 				wasDeleted = true
@@ -783,7 +783,7 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 			if e, ok := err.(*qsErr.QingStorError); ok {
 				if e.StatusCode == http.StatusConflict {
 					if wasDeleted {
-						fs.Debugf(f, "Wait for qingstor bucket to be creatable, retries: %d", retries)
+						fs.DebugfCtx(ctx, f, "Wait for qingstor bucket to be creatable, retries: %d", retries)
 						time.Sleep(time.Second * 1)
 						retries++
 						continue
@@ -844,7 +844,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 					// The status of "lease" takes a few seconds to "ready" when creating a new bucket
 					// wait for lease status ready
 					case "lease_not_ready":
-						fs.Debugf(f, "QingStor bucket lease not ready, retries: %d", retries)
+						fs.DebugfCtx(ctx, f, "QingStor bucket lease not ready, retries: %d", retries)
 						retries++
 						time.Sleep(time.Second * 1)
 						continue
@@ -863,7 +863,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 
 // cleanUpBucket removes all pending multipart uploads for a given bucket
 func (f *Fs) cleanUpBucket(ctx context.Context, bucket string) (err error) {
-	fs.Infof(f, "cleaning bucket %q of pending multipart uploads older than 24 hours", bucket)
+	fs.InfofCtx(ctx, f, "cleaning bucket %q of pending multipart uploads older than 24 hours", bucket)
 	bucketInit, err := f.svc.Bucket(bucket, f.zone)
 	if err != nil {
 		return err
@@ -885,17 +885,17 @@ func (f *Fs) cleanUpBucket(ctx context.Context, bucket string) (err error) {
 			if upload.Created != nil && upload.Key != nil && upload.UploadID != nil {
 				age := time.Since(*upload.Created)
 				if age > 24*time.Hour {
-					fs.Infof(f, "removing pending multipart upload for %q dated %v (%v ago)", *upload.Key, upload.Created, age)
+					fs.InfofCtx(ctx, f, "removing pending multipart upload for %q dated %v (%v ago)", *upload.Key, upload.Created, age)
 					req := qs.AbortMultipartUploadInput{
 						UploadID: upload.UploadID,
 					}
 					_, abortErr := bucketInit.AbortMultipartUpload(*upload.Key, &req)
 					if abortErr != nil {
 						err = fmt.Errorf("failed to remove multipart upload for %q: %w", *upload.Key, abortErr)
-						fs.Errorf(f, "%v", err)
+						fs.ErrorfCtx(ctx, f, "%v", err)
 					}
 				} else {
-					fs.Debugf(f, "ignoring pending multipart upload for %q dated %v (%v ago)", *upload.Key, upload.Created, age)
+					fs.DebugfCtx(ctx, f, "ignoring pending multipart upload for %q dated %v (%v ago)", *upload.Key, upload.Created, age)
 				}
 			}
 		}
@@ -904,7 +904,7 @@ func (f *Fs) cleanUpBucket(ctx context.Context, bucket string) (err error) {
 		}
 		// Use NextMarker if set, otherwise use last Key
 		if resp.NextKeyMarker == nil || *resp.NextKeyMarker == "" {
-			fs.Errorf(f, "Expecting NextKeyMarker but didn't find one")
+			fs.ErrorfCtx(ctx, f, "Expecting NextKeyMarker but didn't find one")
 			break
 		} else {
 			marker = resp.NextKeyMarker
@@ -925,7 +925,7 @@ func (f *Fs) CleanUp(ctx context.Context) (err error) {
 	for _, entry := range entries {
 		cleanErr := f.cleanUpBucket(ctx, f.opt.Enc.FromStandardName(entry.Remote()))
 		if cleanErr != nil {
-			fs.Errorf(f, "Failed to cleanup bucket: %q", cleanErr)
+			fs.ErrorfCtx(ctx, f, "Failed to cleanup bucket: %q", cleanErr)
 			err = cleanErr
 		}
 	}
@@ -985,7 +985,7 @@ func (o *Object) readMetaData() (err error) {
 func (o *Object) ModTime(ctx context.Context) time.Time {
 	err := o.readMetaData()
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata, %v", err)
+		fs.LogfCtx(ctx, o, "Failed to read metadata, %v", err)
 		return time.Now()
 	}
 	modTime := o.lastModified
@@ -1002,7 +1002,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	mimeType := fs.MimeType(ctx, o)
 
 	if o.size >= maxSizeForCopy {
-		fs.Debugf(o, "SetModTime is unsupported for objects bigger than %v bytes", fs.SizeSuffix(maxSizeForCopy))
+		fs.DebugfCtx(ctx, o, "SetModTime is unsupported for objects bigger than %v bytes", fs.SizeSuffix(maxSizeForCopy))
 		return nil
 	}
 	// Copy the object to itself to update the metadata
@@ -1040,7 +1040,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			req.Range = &value
 		default:
 			if option.Mandatory() {
-				fs.Logf(o, "Unsupported mandatory option: %v", option)
+				fs.LogfCtx(ctx, o, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}
@@ -1117,7 +1117,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	etag := strings.Trim(strings.ToLower(o.etag), `"`)
 	// Check the etag is a valid md5sum
 	if !matchMd5.MatchString(etag) {
-		fs.Debugf(o, "Invalid md5sum (probably multipart uploaded) - ignoring: %q", etag)
+		fs.DebugfCtx(ctx, o, "Invalid md5sum (probably multipart uploaded) - ignoring: %q", etag)
 		return "", nil
 	}
 	return etag, nil
@@ -1150,7 +1150,7 @@ func (o *Object) Size() int64 {
 func (o *Object) MimeType(ctx context.Context) string {
 	err := o.readMetaData()
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.LogfCtx(ctx, o, "Failed to read metadata: %v", err)
 		return ""
 	}
 	return o.mimeType

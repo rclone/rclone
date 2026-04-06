@@ -1281,7 +1281,7 @@ func (f *Fs) shouldRetry(ctx context.Context, err error) (bool, error) {
 			if httpStatusCode == http.StatusMovedPermanently {
 				urfbErr := f.updateRegionForBucket(ctx, f.rootBucket)
 				if urfbErr != nil {
-					fs.Errorf(f, "Failed to update region for bucket: %v", urfbErr)
+					fs.ErrorfCtx(ctx, f, "Failed to update region for bucket: %v", urfbErr)
 					return false, err
 				}
 				return true, err
@@ -1464,11 +1464,11 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 		switch {
 		case opt.Provider == "IBMCOS" && opt.V2Auth:
 			awsConfig.Credentials = &NoOpCredentialsProvider{}
-			fs.Debugf(nil, "Using IBM IAM")
+			fs.DebugfCtx(ctx, nil, "Using IBM IAM")
 		case opt.AccessKeyID == "" && opt.SecretAccessKey == "":
 			// if no access key/secret and iam is explicitly disabled then fall back to anon interaction
 			awsConfig.Credentials = aws.AnonymousCredentials{}
-			fs.Debugf(nil, "Using anonymous credentials - did you mean to set env_auth=true?")
+			fs.DebugfCtx(ctx, nil, "Using anonymous credentials - did you mean to set env_auth=true?")
 		case opt.AccessKeyID == "":
 			return nil, nil, errors.New("access_key_id not found")
 		case opt.SecretAccessKey == "":
@@ -1484,7 +1484,7 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 
 	// Handle assume role if RoleARN is specified
 	if opt.RoleARN != "" {
-		fs.Debugf(nil, "Using assume role with ARN: %s", opt.RoleARN)
+		fs.DebugfCtx(ctx, nil, "Using assume role with ARN: %s", opt.RoleARN)
 
 		// Set region for the config before creating STS client
 		awsConfig.Region = opt.Region
@@ -1512,7 +1512,7 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 
 	provider = loadProvider(opt.Provider)
 	if provider == nil {
-		fs.Logf("s3", "s3 provider %q not known - please set correctly", opt.Provider)
+		fs.LogfCtx(ctx, "s3", "s3 provider %q not known - please set correctly", opt.Provider)
 		provider = loadProvider("Other")
 	}
 
@@ -1557,7 +1557,7 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 	}
 
 	if opt.V2Auth || opt.Region == "other-v2-signature" {
-		fs.Debugf(nil, "Using v2 auth")
+		fs.DebugfCtx(ctx, nil, "Using v2 auth")
 		if opt.Provider == "IBMCOS" && opt.IBMAPIKey != "" && opt.IBMInstanceID != "" {
 			options = append(options, func(s3Opt *s3.Options) {
 				s3Opt.HTTPSignerV4 = &IbmIamSigner{APIKey: opt.IBMAPIKey, InstanceID: opt.IBMInstanceID, IAMEndpoint: opt.IBMIAMEndpoint}
@@ -1866,7 +1866,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	// f.listMultipartUploads()
 	if !opt.UseMultipartUploads.Value {
-		fs.Debugf(f, "Disabling multipart uploads")
+		fs.DebugfCtx(ctx, f, "Disabling multipart uploads")
 		f.features.OpenChunkWriter = nil
 	}
 
@@ -1977,7 +1977,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *types.O
 	if info != nil {
 		// Set info but not meta
 		if info.LastModified == nil {
-			fs.Logf(o, "Failed to read last modified")
+			fs.LogfCtx(ctx, o, "Failed to read last modified")
 			o.lastModified = time.Now()
 		} else {
 			o.lastModified = *info.LastModified
@@ -2037,7 +2037,7 @@ func (f *Fs) updateRegionForBucket(ctx context.Context, bucket string) error {
 	}
 	f.c = c
 
-	fs.Logf(f, "Switched region to %q from %q", region, oldRegion)
+	fs.LogfCtx(ctx, f, "Switched region to %q from %q", region, oldRegion)
 	return nil
 }
 
@@ -2394,7 +2394,7 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 				if errors.As(err, &xmlErr) {
 					// Retry the listing with URL encoding as there were characters that XML can't encode
 					urlEncodeListings = true
-					fs.Debugf(f, "Retrying listing because of characters which can't be XML encoded")
+					fs.DebugfCtx(ctx, f, "Retrying listing because of characters which can't be XML encoded")
 					return true, err
 				}
 			}
@@ -2409,7 +2409,7 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 				// empty directory
 				// 301 if wrong region for bucket
 				if getHTTPStatusCode(err) == http.StatusMovedPermanently {
-					fs.Errorf(f, "Can't change region for bucket %q with no bucket specified", opt.bucket)
+					fs.ErrorfCtx(ctx, f, "Can't change region for bucket %q with no bucket specified", opt.bucket)
 					return nil
 				}
 			}
@@ -2419,20 +2419,20 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 			foundItems += len(resp.CommonPrefixes)
 			for _, commonPrefix := range resp.CommonPrefixes {
 				if commonPrefix.Prefix == nil {
-					fs.Logf(f, "Nil common prefix received")
+					fs.LogfCtx(ctx, f, "Nil common prefix received")
 					continue
 				}
 				remote := *commonPrefix.Prefix
 				if urlEncodeListings {
 					remote, err = url.QueryUnescape(remote)
 					if err != nil {
-						fs.Logf(f, "failed to URL decode %q in listing common prefix: %v", *commonPrefix.Prefix, err)
+						fs.LogfCtx(ctx, f, "failed to URL decode %q in listing common prefix: %v", *commonPrefix.Prefix, err)
 						continue
 					}
 				}
 				remote = f.opt.Enc.ToStandardPath(remote)
 				if !strings.HasPrefix(remote, opt.prefix) {
-					fs.Logf(f, "Odd directory name received %q", remote)
+					fs.LogfCtx(ctx, f, "Odd directory name received %q", remote)
 					continue
 				}
 				remote = remote[len(opt.prefix):]
@@ -2459,13 +2459,13 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 			if urlEncodeListings {
 				remote, err = url.QueryUnescape(remote)
 				if err != nil {
-					fs.Logf(f, "failed to URL decode %q in listing: %v", deref(object.Key), err)
+					fs.LogfCtx(ctx, f, "failed to URL decode %q in listing: %v", deref(object.Key), err)
 					continue
 				}
 			}
 			remote = f.opt.Enc.ToStandardPath(remote)
 			if !strings.HasPrefix(remote, opt.prefix) {
-				fs.Logf(f, "Odd name received %q", remote)
+				fs.LogfCtx(ctx, f, "Odd name received %q", remote)
 				continue
 			}
 			isDirectory := (remote == "" || strings.HasSuffix(remote, "/")) && object.Size != nil && *object.Size == 0
@@ -2768,7 +2768,7 @@ func (f *Fs) createDirectoryMarker(ctx context.Context, bucket, dir string) erro
 		}
 
 		// Upload it if not
-		fs.Debugf(o, "Creating directory marker")
+		fs.DebugfCtx(ctx, o, "Creating directory marker")
 		content := io.Reader(strings.NewReader(""))
 		err = o.Update(ctx, content, o)
 		if err != nil {
@@ -2826,7 +2826,7 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 			return f.shouldRetry(ctx, err)
 		})
 		if err == nil {
-			fs.Infof(f, "Bucket %q created with ACL %q", bucket, f.opt.BucketACL)
+			fs.InfofCtx(ctx, f, "Bucket %q created with ACL %q", bucket, f.opt.BucketACL)
 		}
 		var awsErr smithy.APIError
 		if errors.As(err, &awsErr) {
@@ -2860,7 +2860,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 			fs:     f,
 			remote: dir + "/",
 		}
-		fs.Debugf(o, "Removing directory marker")
+		fs.DebugfCtx(ctx, o, "Removing directory marker")
 		err := o.Remove(ctx)
 		if err != nil {
 			return fmt.Errorf("removing directory marker failed: %w", err)
@@ -2878,7 +2878,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 			return f.shouldRetry(ctx, err)
 		})
 		if err == nil {
-			fs.Infof(f, "Bucket %q deleted", bucket)
+			fs.InfofCtx(ctx, f, "Bucket %q deleted", bucket)
 		}
 		return err
 	})
@@ -3010,7 +3010,7 @@ func (f *Fs) copyMultipart(ctx context.Context, copyReq *s3.CopyObjectInput, dst
 
 	defer atexit.OnError(&err, func() {
 		// Try to abort the upload, but ignore the error.
-		fs.Debugf(src, "Cancelling multipart copy")
+		fs.DebugfCtx(ctx, src, "Cancelling multipart copy")
 		_ = f.pacer.Call(func() (bool, error) {
 			_, err := f.c.AbortMultipartUpload(context.Background(), &s3.AbortMultipartUploadInput{
 				Bucket:       &dstBucket,
@@ -3026,7 +3026,7 @@ func (f *Fs) copyMultipart(ctx context.Context, copyReq *s3.CopyObjectInput, dst
 	partSize := int64(f.opt.CopyCutoff)
 	numParts := (srcSize-1)/partSize + 1
 
-	fs.Debugf(src, "Starting  multipart copy with %d parts", numParts)
+	fs.DebugfCtx(ctx, src, "Starting  multipart copy with %d parts", numParts)
 	account := transferaccounter.Get(ctx)
 	account.Start()
 
@@ -3116,7 +3116,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 
@@ -3189,7 +3189,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	}
 	o := obj.(*Object)
 	if expire > maxExpireDuration {
-		fs.Logf(f, "Public Link: Reducing expiry to %v as %v is greater than the max time allowed", maxExpireDuration, expire)
+		fs.LogfCtx(ctx, f, "Public Link: Reducing expiry to %v as %v is greater than the max time allowed", maxExpireDuration, expire)
 		expire = maxExpireDuration
 	}
 	bucket, bucketPath := f.split(remote)
@@ -3536,7 +3536,7 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		for k := range opt {
 			keys = append(keys, k)
 		}
-		fs.Logf(f, "Updated config values: %s", strings.Join(keys, ", "))
+		fs.LogfCtx(ctx, f, "Updated config values: %s", strings.Join(keys, ", "))
 		return nil, nil
 	default:
 		return nil, fs.ErrorCommandNotFound
@@ -3553,7 +3553,7 @@ type restoreStatusOut struct {
 
 // Recursively enumerate the current fs to find objects with a restore status
 func (f *Fs) restoreStatus(ctx context.Context, all bool) (out []restoreStatusOut, err error) {
-	fs.Debugf(f, "all = %v", all)
+	fs.DebugfCtx(ctx, f, "all = %v", all)
 	bucket, directory := f.split("")
 	out = []restoreStatusOut{}
 	err = f.list(ctx, listOpt{
@@ -3648,7 +3648,7 @@ func (f *Fs) listMultipartUploadsAll(ctx context.Context) (uploadsMap map[string
 		uploads, listErr := f.listMultipartUploads(ctx, bucket, "")
 		if listErr != nil {
 			err = listErr
-			fs.Errorf(f, "%v", err)
+			fs.ErrorfCtx(ctx, f, "%v", err)
 		}
 		uploadsMap[bucket] = uploads
 	}
@@ -3657,13 +3657,13 @@ func (f *Fs) listMultipartUploadsAll(ctx context.Context) (uploadsMap map[string
 
 // cleanUpBucket removes all pending multipart uploads for a given bucket over the age of maxAge
 func (f *Fs) cleanUpBucket(ctx context.Context, bucket string, maxAge time.Duration, uploads []types.MultipartUpload) (err error) {
-	fs.Infof(f, "cleaning bucket %q of pending multipart uploads older than %v", bucket, maxAge)
+	fs.InfofCtx(ctx, f, "cleaning bucket %q of pending multipart uploads older than %v", bucket, maxAge)
 	for _, upload := range uploads {
 		if upload.Initiated != nil && upload.Key != nil && upload.UploadId != nil {
 			age := time.Since(*upload.Initiated)
 			what := fmt.Sprintf("pending multipart upload for bucket %q key %q dated %v (%v ago)", bucket, *upload.Key, upload.Initiated, age)
 			if age > maxAge {
-				fs.Infof(f, "removing %s", what)
+				fs.InfofCtx(ctx, f, "removing %s", what)
 				if operations.SkipDestructive(ctx, what, "remove pending upload") {
 					continue
 				}
@@ -3675,10 +3675,10 @@ func (f *Fs) cleanUpBucket(ctx context.Context, bucket string, maxAge time.Durat
 				_, abortErr := f.c.AbortMultipartUpload(ctx, &req)
 				if abortErr != nil {
 					err = fmt.Errorf("failed to remove %s: %w", what, abortErr)
-					fs.Errorf(f, "%v", err)
+					fs.ErrorfCtx(ctx, f, "%v", err)
 				}
 			} else {
-				fs.Debugf(f, "ignoring %s", what)
+				fs.DebugfCtx(ctx, f, "ignoring %s", what)
 			}
 		}
 	}
@@ -3694,7 +3694,7 @@ func (f *Fs) cleanUp(ctx context.Context, maxAge time.Duration) (err error) {
 	for bucket, uploads := range uploadsMap {
 		cleanErr := f.cleanUpBucket(ctx, bucket, maxAge, uploads)
 		if err != nil {
-			fs.Errorf(f, "Failed to cleanup bucket %q: %v", bucket, cleanErr)
+			fs.ErrorfCtx(ctx, f, "Failed to cleanup bucket %q: %v", bucket, cleanErr)
 			err = cleanErr
 		}
 	}
@@ -3707,7 +3707,7 @@ func (f *Fs) isVersioned(ctx context.Context) bool {
 	defer f.versioningMu.Unlock()
 	if !f.versioning.Valid {
 		_, _ = f.setGetVersioning(ctx)
-		fs.Debugf(f, "bucket is versioned: %v", f.versioning.Value)
+		fs.DebugfCtx(ctx, f, "bucket is versioned: %v", f.versioning.Value)
 	}
 	return f.versioning.Value
 }
@@ -3755,7 +3755,7 @@ func (f *Fs) setGetVersioning(ctx context.Context, arg ...string) (status types.
 	f.versioning.Valid = true
 	f.versioning.Value = false
 	if err != nil {
-		fs.Errorf(f, "Failed to read versioning status, assuming unversioned: %v", err)
+		fs.ErrorfCtx(ctx, f, "Failed to read versioning status, assuming unversioned: %v", err)
 		return "", err
 	}
 	if len(resp.Status) == 0 {
@@ -3785,7 +3785,7 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 	}
 	versioned := f.isVersioned(ctx)
 	if !versioned && oldOnly {
-		fs.Infof(f, "bucket is not versioned so not removing old versions")
+		fs.InfofCtx(ctx, f, "bucket is not versioned so not removing old versions")
 		return nil
 	}
 	var errReturn error
@@ -3826,26 +3826,26 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 		}
 		oi, err := f.newObjectWithInfo(ctx, remote, object, versionID)
 		if err != nil {
-			fs.Errorf(object, "Can't create object %+v", err)
+			fs.ErrorfCtx(ctx, object, "Can't create object %+v", err)
 			return nil
 		}
 		tr := accounting.Stats(ctx).NewCheckingTransfer(oi, "checking")
 		// Work out whether the file is the current version or not
 		isCurrentVersion := !versioned || !version.Match(remote)
-		fs.Debugf(nil, "%q version %v", remote, version.Match(remote))
+		fs.DebugfCtx(ctx, nil, "%q version %v", remote, version.Match(remote))
 		if oldOnly && isCurrentVersion {
 			// Check current version of the file
 			if object.Size == isDeleteMarker {
-				fs.Debugf(remote, "Deleting current version (id %q) as it is a delete marker", deref(versionID))
+				fs.DebugfCtx(ctx, remote, "Deleting current version (id %q) as it is a delete marker", deref(versionID))
 				delChan <- oi
 			} else {
-				fs.Debugf(remote, "Not deleting current version %q", deref(versionID))
+				fs.DebugfCtx(ctx, remote, "Not deleting current version %q", deref(versionID))
 			}
 		} else {
 			if object.Size == isDeleteMarker {
-				fs.Debugf(remote, "Deleting delete marker (id %q)", deref(versionID))
+				fs.DebugfCtx(ctx, remote, "Deleting delete marker (id %q)", deref(versionID))
 			} else {
-				fs.Debugf(remote, "Deleting (id %q)", deref(versionID))
+				fs.DebugfCtx(ctx, remote, "Deleting (id %q)", deref(versionID))
 			}
 			delChan <- oi
 		}
@@ -4079,7 +4079,7 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 	}
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.LogfCtx(ctx, o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	// read mtime out of metadata if available
@@ -4090,7 +4090,7 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 	}
 	modTime, err := swift.FloatStringToTime(d)
 	if err != nil {
-		fs.Logf(o, "Failed to read mtime from object: %v", err)
+		fs.LogfCtx(ctx, o, "Failed to read mtime from object: %v", err)
 		return o.lastModified
 	}
 	return modTime
@@ -4179,12 +4179,12 @@ func (o *Object) downloadFromURL(ctx context.Context, bucketPath string, options
 
 	contentLength := rest.ParseSizeFromHeaders(resp.Header)
 	if contentLength < 0 {
-		fs.Debugf(o, "Failed to parse file size from headers")
+		fs.DebugfCtx(ctx, o, "Failed to parse file size from headers")
 	}
 
 	lastModified, err := http.ParseTime(resp.Header.Get("Last-Modified"))
 	if err != nil {
-		fs.Debugf(o, "Failed to parse last modified from string %s, %v", resp.Header.Get("Last-Modified"), err)
+		fs.DebugfCtx(ctx, o, "Failed to parse last modified from string %s, %v", resp.Header.Get("Last-Modified"), err)
 	}
 
 	metaData := make(map[string]string)
@@ -4285,7 +4285,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			APIOptions = append(APIOptions, smithyhttp.AddHeaderValue(key, value))
 		default:
 			if option.Mandatory() {
-				fs.Logf(o, "Unsupported mandatory option: %v", option)
+				fs.LogfCtx(ctx, o, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}
@@ -4316,10 +4316,10 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			if err == nil {
 				size = &i
 			} else {
-				fs.Debugf(o, "Failed to find parse integer from in %q: %v", contentRange, err)
+				fs.DebugfCtx(ctx, o, "Failed to find parse integer from in %q: %v", contentRange, err)
 			}
 		} else {
-			fs.Debugf(o, "Failed to find length in %q", contentRange)
+			fs.DebugfCtx(ctx, o, "Failed to find length in %q", contentRange)
 		}
 	}
 	var head s3.HeadObjectOutput
@@ -4334,7 +4334,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			return readers.NewGzipReader(resp.Body)
 		}
 		o.fs.warnCompressed.Do(func() {
-			fs.Logf(o, "Not decompressing 'Content-Encoding: gzip' compressed file. Use --s3-decompress to override")
+			fs.LogfCtx(ctx, o, "Not decompressing 'Content-Encoding: gzip' compressed file. Use --s3-decompress to override")
 		})
 	}
 
@@ -4397,7 +4397,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	// 48 GiB which seems like a not too unreasonable limit.
 	if size == -1 {
 		warnStreamUpload.Do(func() {
-			fs.Logf(f, "Streaming uploads using chunk size %v will have maximum file size of %v",
+			fs.LogfCtx(ctx, f, "Streaming uploads using chunk size %v will have maximum file size of %v",
 				f.opt.ChunkSize, fs.SizeSuffix(int64(chunkSize)*int64(uploadParts)))
 		})
 	} else {
@@ -4437,7 +4437,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		Concurrency:       o.fs.opt.UploadConcurrency,
 		LeavePartsOnError: o.fs.opt.LeavePartsOnError,
 	}
-	fs.Debugf(o, "open chunk writer: started multipart upload: %v", *mOut.UploadId)
+	fs.DebugfCtx(ctx, o, "open chunk writer: started multipart upload: %v", *mOut.UploadId)
 	return info, chunkWriter, err
 }
 
@@ -4543,7 +4543,7 @@ func (w *s3ChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 
 	w.addCompletedPart(s3PartNumber, uout.ETag)
 
-	fs.Debugf(w.o, "multipart upload wrote chunk %d with %v bytes and etag %v", chunkNumber+1, currentChunkSize, *uout.ETag)
+	fs.DebugfCtx(ctx, w.o, "multipart upload wrote chunk %d with %v bytes and etag %v", chunkNumber+1, currentChunkSize, *uout.ETag)
 	return currentChunkSize, err
 }
 
@@ -4561,7 +4561,7 @@ func (w *s3ChunkWriter) Abort(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to abort multipart upload %q: %w", *w.uploadID, err)
 	}
-	fs.Debugf(w.o, "multipart upload %q aborted", *w.uploadID)
+	fs.DebugfCtx(ctx, w.o, "multipart upload %q aborted", *w.uploadID)
 	return err
 }
 
@@ -4600,7 +4600,7 @@ func (w *s3ChunkWriter) Close(ctx context.Context) (err error) {
 			w.versionID = *resp.VersionId
 		}
 	}
-	fs.Debugf(w.o, "multipart upload %q finished", *w.uploadID)
+	fs.DebugfCtx(ctx, w.o, "multipart upload %q finished", *w.uploadID)
 	return err
 }
 
@@ -4801,7 +4801,7 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 			// mtime in meta overrides source ModTime
 			metaModTime, err := time.Parse(time.RFC3339Nano, v)
 			if err != nil {
-				fs.Debugf(o, "failed to parse metadata %s: %q: %v", k, v, err)
+				fs.DebugfCtx(ctx, o, "failed to parse metadata %s: %q: %v", k, v, err)
 			} else {
 				modTime = metaModTime
 			}
@@ -4818,7 +4818,7 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 			if strings.EqualFold(o.fs.opt.ObjectLockRetainUntilDate, "copy") && !o.fs.opt.ObjectLockSetAfterUpload {
 				retainDate, err := time.Parse(time.RFC3339, v)
 				if err != nil {
-					fs.Debugf(o, "failed to parse object-lock-retain-until-date %q: %v", v, err)
+					fs.DebugfCtx(ctx, o, "failed to parse object-lock-retain-until-date %q: %v", v, err)
 				} else {
 					ui.req.ObjectLockRetainUntilDate = &retainDate
 				}
@@ -4941,7 +4941,7 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 				metaKey := lowerKey[len(amzMetaPrefix):]
 				ui.req.Metadata[metaKey] = value
 			} else {
-				fs.Errorf(o, "Don't know how to set key %q on upload", key)
+				fs.ErrorfCtx(ctx, o, "Don't know how to set key %q on upload", key)
 			}
 		}
 	}
@@ -4949,10 +4949,10 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 	// Check metadata keys and values are valid
 	for key, value := range ui.req.Metadata {
 		if !httpguts.ValidHeaderFieldName(key) {
-			fs.Errorf(o, "Dropping invalid metadata key %q", key)
+			fs.ErrorfCtx(ctx, o, "Dropping invalid metadata key %q", key)
 			delete(ui.req.Metadata, key)
 		} else if !httpguts.ValidHeaderFieldValue(value) {
-			fs.Errorf(o, "Dropping invalid metadata value %q for key %q", value, key)
+			fs.ErrorfCtx(ctx, o, "Dropping invalid metadata value %q for key %q", value, key)
 			delete(ui.req.Metadata, key)
 		}
 	}
@@ -5033,7 +5033,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		if wantETag != gotETag {
 			return fmt.Errorf("multipart upload corrupted: Etag differ: expecting %s but got %s", wantETag, gotETag)
 		}
-		fs.Debugf(o, "Multipart upload Etag: %s OK", wantETag)
+		fs.DebugfCtx(ctx, o, "Multipart upload Etag: %s OK", wantETag)
 	}
 
 	// Set Object Lock via separate API calls if requested
@@ -5188,7 +5188,7 @@ func (o *Object) setObjectLockAfterUpload(ctx context.Context, src fs.ObjectInfo
 func (o *Object) MimeType(ctx context.Context) string {
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.LogfCtx(ctx, o, "Failed to read metadata: %v", err)
 		return ""
 	}
 	return o.mimeType

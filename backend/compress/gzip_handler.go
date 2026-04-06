@@ -153,7 +153,7 @@ func (g *gzipModeHandler) putCompress(
 	if err != nil {
 		if o != nil {
 			if removeErr := o.Remove(ctx); removeErr != nil {
-				fs.Errorf(o, "Failed to remove partially transferred object: %v", removeErr)
+				fs.ErrorfCtx(ctx, o, "Failed to remove partially transferred object: %v", removeErr)
 			}
 		}
 		return nil, nil, err
@@ -163,7 +163,7 @@ func (g *gzipModeHandler) putCompress(
 	if result.err != nil {
 		if o != nil {
 			if removeErr := o.Remove(ctx); removeErr != nil {
-				fs.Errorf(o, "Failed to remove partially compressed object: %v", removeErr)
+				fs.ErrorfCtx(ctx, o, "Failed to remove partially compressed object: %v", removeErr)
 			}
 		}
 		return nil, nil, result.err

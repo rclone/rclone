@@ -283,7 +283,7 @@ machines.`)
 			}
 			m.Set(configClientID, deviceRegistration.ClientID)
 			m.Set(configClientSecret, obscure.MustObscure(deviceRegistration.ClientSecret))
-			fs.Debugf(nil, "Got clientID %q and clientSecret %q", deviceRegistration.ClientID, deviceRegistration.ClientSecret)
+			fs.DebugfCtx(ctx, nil, "Got clientID %q and clientSecret %q", deviceRegistration.ClientID, deviceRegistration.ClientSecret)
 		}
 		return fs.ConfigInput("legacy_username", "config_username", "Username (e-mail address) of your account.")
 	case "legacy_username":
@@ -410,7 +410,7 @@ a new by entering a unique name.`, defaultDevice)
 		}
 		var dev *api.JottaDevice
 		if isNew {
-			fs.Debugf(nil, "Creating new device: %s", device)
+			fs.DebugfCtx(ctx, nil, "Creating new device: %s", device)
 			dev, err = createDevice(ctx, jfsSrv, path.Join(cust.Username, device))
 			if err != nil {
 				return nil, err
@@ -475,7 +475,7 @@ You may create a new by entering a unique name.`, device)
 			if device == defaultDevice {
 				return nil, fmt.Errorf("custom mountpoints not supported on built-in %s device", defaultDevice)
 			}
-			fs.Debugf(nil, "Creating new mountpoint: %s", mountpoint)
+			fs.DebugfCtx(ctx, nil, "Creating new mountpoint: %s", mountpoint)
 			_, err := createMountPoint(ctx, jfsSrv, path.Join(cust.Username, device, mountpoint))
 			if err != nil {
 				return nil, err
@@ -602,7 +602,7 @@ func registerDevice(ctx context.Context, srv *rest.Client) (reg *api.DeviceRegis
 		randomDeviceNamePart[i] = charset[seededRand.Intn(len(charset))]
 	}
 	randomDeviceName := "rclone-" + string(randomDeviceNamePart)
-	fs.Debugf(nil, "Trying to register device '%s'", randomDeviceName)
+	fs.DebugfCtx(ctx, nil, "Trying to register device '%s'", randomDeviceName)
 
 	values := url.Values{}
 	values.Set("device_id", randomDeviceName)
@@ -959,7 +959,7 @@ func getOAuthClient(ctx context.Context, name string, m configmap.Mapper) (oAuth
 		}); ok {
 			do.SetRequestFilter(grantTypeFilter)
 		} else {
-			fs.Debugf(name+":", "Couldn't add request filter - uploads will fail")
+			fs.DebugfCtx(ctx, name+":", "Couldn't add request filter - uploads will fail")
 		}
 	}
 
@@ -1483,7 +1483,7 @@ func (f *Fs) copyOrMove(ctx context.Context, method, src, dest string) (info *ap
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
@@ -1514,7 +1514,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		}
 		if bool(info.Deleted) && !f.opt.TrashedOnly && info.State == "COMPLETED" {
 			// Workaround necessary when destination was a trashed file, to avoid the copied file also being in trash (bug in api?)
-			fs.Debugf(src, "Server-side copied to trashed destination, restoring")
+			fs.DebugfCtx(ctx, src, "Server-side copied to trashed destination, restoring")
 			info, err = f.createOrUpdate(ctx, remote, createTime, modTime, info.Size, info.MD5)
 		} else if createTimeMeta || modTimeMeta {
 			info, err = f.createOrUpdate(ctx, remote, createTime, modTime, info.Size, info.MD5)
@@ -1541,7 +1541,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
@@ -1588,7 +1588,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 	srcPath := path.Join(srcFs.root, srcRemote)
@@ -1596,7 +1596,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 	// Refuse to move to or from the root
 	if srcPath == "" || dstPath == "" {
-		fs.Debugf(src, "DirMove error: Can't move root")
+		fs.DebugfCtx(ctx, src, "DirMove error: Can't move root")
 		return errors.New("can't move root directory")
 	}
 	//fmt.Printf("Move src: %s (FullPath %s), dst: %s (FullPath: %s)\n", srcRemote, srcPath, dstRemote, dstPath)
@@ -1663,12 +1663,12 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	}
 	if result.PublicSharePath != "" {
 		webLink := joinPath(wwwURL, result.PublicSharePath)
-		fs.Debugf(nil, "Web link: %s", webLink)
+		fs.DebugfCtx(ctx, nil, "Web link: %s", webLink)
 	} else {
-		fs.Debugf(nil, "No web link received")
+		fs.DebugfCtx(ctx, nil, "No web link received")
 	}
 	directLink := joinPath(wwwURL, fmt.Sprintf("opin/io/downloadPublic/%s/%s", f.user, result.PublicURI))
-	fs.Debugf(nil, "Direct link: %s", directLink)
+	fs.DebugfCtx(ctx, nil, "Direct link: %s", directLink)
 	return directLink, nil
 }
 
@@ -1847,7 +1847,7 @@ func (o *Object) parseFsMetadataTime(m fs.Metadata, key string) (t time.Time, ok
 func (o *Object) ModTime(ctx context.Context) time.Time {
 	err := o.readMetaData(ctx, false)
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.LogfCtx(ctx, o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	return o.modTime
@@ -1858,7 +1858,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	// make sure metadata is available, we need its current size and md5
 	err := o.readMetaData(ctx, false)
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.LogfCtx(ctx, o, "Failed to read metadata: %v", err)
 		return err
 	}
 
@@ -2132,7 +2132,7 @@ func (o *Object) Remove(ctx context.Context) error {
 func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error) {
 	err = o.readMetaData(ctx, false)
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.LogfCtx(ctx, o, "Failed to read metadata: %v", err)
 		return nil, err
 	}
 	metadata.Set("btime", o.createTime.Format(time.RFC3339Nano)) // metadata timestamps should be RFC3339Nano

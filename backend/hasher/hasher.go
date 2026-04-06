@@ -91,7 +91,7 @@ func NewFs(ctx context.Context, fsname, rpath string, cmap configmap.Mapper) (fs
 		return nil, errors.New("hasher is not supported on this OS")
 	}
 	warnExperimental.Do(func() {
-		fs.Infof(nil, "Hasher is EXPERIMENTAL!")
+		fs.InfofCtx(ctx, nil, "Hasher is EXPERIMENTAL!")
 	})
 
 	opt := &Options{}
@@ -147,7 +147,7 @@ func NewFs(ctx context.Context, fsname, rpath string, cmap configmap.Mapper) (fs
 		f.suppHashes.Add(ht)
 	}
 
-	fs.Debugf(f, "Groups by usage: cached %s, passed %s, auto %s, slow %s, supported %s",
+	fs.DebugfCtx(ctx, f, "Groups by usage: cached %s, passed %s, auto %s, slow %s, supported %s",
 		f.keepHashes, f.passHashes, f.autoHashes, f.slowHashes, f.suppHashes)
 
 	var nilSet hash.Set
@@ -297,7 +297,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 			dir: path.Join(f.Fs.Root(), dir),
 		})
 		if err != nil {
-			fs.Errorf(f, "Failed to purge some hashes: %v", err)
+			fs.ErrorfCtx(ctx, f, "Failed to purge some hashes: %v", err)
 		}
 		return nil
 	}

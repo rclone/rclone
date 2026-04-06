@@ -475,7 +475,7 @@ func (f *Fs) Disconnect(ctx context.Context) (err error) {
 	if err != nil {
 		return fmt.Errorf("couldn't revoke token: %w", err)
 	}
-	fs.Infof(f, "res = %+v", res)
+	fs.InfofCtx(ctx, f, "res = %+v", res)
 	return nil
 }
 
@@ -888,7 +888,7 @@ func (o *Object) Size() int64 {
 	ctx := context.TODO()
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.Debugf(o, "Size: Failed to read metadata: %v", err)
+		fs.DebugfCtx(ctx, o, "Size: Failed to read metadata: %v", err)
 		return -1
 	}
 	var resp *http.Response
@@ -901,12 +901,12 @@ func (o *Object) Size() int64 {
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		fs.Debugf(o, "Reading size failed: %v", err)
+		fs.DebugfCtx(ctx, o, "Reading size failed: %v", err)
 	} else {
 		lengthStr := resp.Header.Get("Content-Length")
 		length, err := strconv.ParseInt(lengthStr, 10, 64)
 		if err != nil {
-			fs.Debugf(o, "Reading size failed to parse Content_length %q: %v", lengthStr, err)
+			fs.DebugfCtx(ctx, o, "Reading size failed to parse Content_length %q: %v", lengthStr, err)
 		} else {
 			o.bytes = length
 		}
@@ -985,7 +985,7 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 	// defer log.Trace(o, "")("")
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.Debugf(o, "ModTime: Failed to read metadata: %v", err)
+		fs.DebugfCtx(ctx, o, "ModTime: Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	return o.modTime
@@ -1015,7 +1015,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	// defer log.Trace(o, "")("")
 	err = o.readMetaData(ctx)
 	if err != nil {
-		fs.Debugf(o, "Open: Failed to read metadata: %v", err)
+		fs.DebugfCtx(ctx, o, "Open: Failed to read metadata: %v", err)
 		return nil, err
 	}
 	url := o.downloadURL()

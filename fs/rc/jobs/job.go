@@ -277,6 +277,27 @@ func getFilter(ctx context.Context, in rc.Params) (context.Context, error) {
 	return ctx, nil
 }
 
+// See if _logtag is set and if so use it as the log tag on the context.
+// If _logtag is not provided, group is used as the default tag so that every
+// log line emitted by the job carries the group name as a prefix.
+// Pass _logtag with an empty string "" to disable log tagging entirely.
+func getLogTag(ctx context.Context, in rc.Params, group string) (context.Context, error) {
+	tag, err := in.GetString("_logtag")
+	if rc.IsErrParamNotFound(err) {
+		// _logtag not supplied — use group as the default tag
+		return fs.WithLogTag(ctx, group), nil
+	}
+	if err != nil {
+		return ctx, err
+	}
+	delete(in, "_logtag")
+	// _logtag explicitly supplied: empty string disables tagging, non-empty sets it
+	if tag == "" {
+		return ctx, nil
+	}
+	return fs.WithLogTag(ctx, tag), nil
+}
+
 type jobKeyType struct{}
 
 // Key for adding jobs to ctx
@@ -303,6 +324,11 @@ func (jobs *Jobs) NewJob(ctx context.Context, fn rc.Func, in rc.Params) (job *Jo
 	}
 
 	ctx, group, err := getGroup(ctx, in, id)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	ctx, err = getLogTag(ctx, in, group)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -517,7 +543,7 @@ func NewJobFromParams(ctx context.Context, in rc.Params) (out rc.Params) {
 
 	// Return an rc error blob
 	rcError := func(err error, status int) rc.Params {
-		fs.Errorf(nil, "rc: %q: error: %v", path, err)
+		fs.ErrorfCtx(ctx, nil, "rc: %q: error: %v", path, err)
 		out, _ = rc.Error(path, in, err, status)
 		return out
 	}
@@ -547,7 +573,7 @@ func NewJobFromParams(ctx context.Context, in rc.Params) (out rc.Params) {
 		}
 	}
 
-	fs.Debugf(nil, "rc: %q: with parameters %+v", path, in)
+	fs.DebugfCtx(ctx, nil, "rc: %q: with parameters %+v", path, in)
 	_, out, err = NewJob(ctx, call.Fn, in)
 	if err != nil {
 		return rcError(err, http.StatusInternalServerError)
@@ -556,7 +582,7 @@ func NewJobFromParams(ctx context.Context, in rc.Params) (out rc.Params) {
 		out = make(rc.Params)
 	}
 
-	fs.Debugf(nil, "rc: %q: reply %+v: %v", path, out, err)
+	fs.DebugfCtx(ctx, nil, "rc: %q: reply %+v: %v", path, out, err)
 	return out
 }
 
@@ -580,7 +606,7 @@ func NewJobFromBytes(ctx context.Context, inBuf []byte) (outBuf []byte) {
 	var w bytes.Buffer
 	err = rc.WriteJSON(&w, out)
 	if err != nil {
-		fs.Errorf(nil, "rc: NewJobFromBytes: failed to write JSON output: %v", err)
+		fs.ErrorfCtx(ctx, nil, "rc: NewJobFromBytes: failed to write JSON output: %v", err)
 		return []byte(`{"error":"failed to write JSON output"}`)
 	}
 	return w.Bytes()
@@ -606,7 +632,8 @@ This takes the following parameters:
 }
 |||
 
-The inputs may use |_async|, |_group|, |_config| and |_filter| as normal when using the rc.
+The inputs may use |_async|, |_group|, |_config|, |_filter| and |_logtag| as normal when using the rc.
+|_logtag| sets the log tag prepended to every log line of the job (defaults to the group name; pass |""| to disable).
 
 Returns:
 

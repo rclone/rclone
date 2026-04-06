@@ -94,7 +94,7 @@ func (f *Fs) OpenChunkWriter(
 	// 48 GiB which seems like a not too unreasonable limit.
 	if size == -1 {
 		warnStreamUpload.Do(func() {
-			fs.Logf(f, "Streaming uploads using chunk size %v will have maximum file size of %v",
+			fs.LogfCtx(ctx, f, "Streaming uploads using chunk size %v will have maximum file size of %v",
 				f.opt.ChunkSize, fs.SizeSuffix(int64(chunkSize)*int64(uploadParts)))
 		})
 	} else {
@@ -122,7 +122,7 @@ func (f *Fs) OpenChunkWriter(
 		Concurrency:       o.fs.opt.UploadConcurrency,
 		LeavePartsOnError: o.fs.opt.LeavePartsOnError,
 	}
-	fs.Debugf(o, "open chunk writer: started multipart upload: %v", uploadID)
+	fs.DebugfCtx(ctx, o, "open chunk writer: started multipart upload: %v", uploadID)
 	return info, chunkWriter, err
 }
 
@@ -155,7 +155,7 @@ func (w *objectChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, rea
 	ossPartNumber := chunkNumber + 1
 	if existing, ok := w.existingParts[ossPartNumber]; ok {
 		if md5sum == *existing.Md5 {
-			fs.Debugf(w.o, "matched uploaded part found, part num %d, skipping part, md5=%v", *existing.PartNumber, md5sum)
+			fs.DebugfCtx(ctx, w.o, "matched uploaded part found, part num %d, skipping part, md5=%v", *existing.PartNumber, md5sum)
 			w.addCompletedPart(existing.PartNumber, existing.Etag)
 			return currentChunkSize, nil
 		}
@@ -193,7 +193,7 @@ func (w *objectChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, rea
 		return false, err
 	})
 	if err != nil {
-		fs.Errorf(w.o, "multipart upload failed to upload part:%d err: %v", ossPartNumber, err)
+		fs.ErrorfCtx(ctx, w.o, "multipart upload failed to upload part:%d err: %v", ossPartNumber, err)
 		return -1, fmt.Errorf("multipart upload failed to upload part: %w", err)
 	}
 	w.addCompletedPart(&ossPartNumber, resp.ETag)
@@ -224,7 +224,7 @@ func (w *objectChunkWriter) Close(ctx context.Context) (err error) {
 		resp, err = w.f.srv.CommitMultipartUpload(ctx, req)
 		// if multipart is corrupted, we will abort the uploadId
 		if isMultiPartUploadCorrupted(err) {
-			fs.Debugf(w.o, "multipart uploadId %v is corrupted, aborting...", *w.uploadID)
+			fs.DebugfCtx(ctx, w.o, "multipart uploadId %v is corrupted, aborting...", *w.uploadID)
 			_ = w.Abort(ctx)
 			return false, err
 		}
@@ -238,10 +238,10 @@ func (w *objectChunkWriter) Close(ctx context.Context) (err error) {
 	wantMultipartMd5 := fmt.Sprintf("%s-%d", base64.StdEncoding.EncodeToString(hashOfHashes[:]), len(w.partsToCommit))
 	gotMultipartMd5 := *resp.OpcMultipartMd5
 	if wantMultipartMd5 != gotMultipartMd5 {
-		fs.Errorf(w.o, "multipart upload corrupted: multipart md5 differ: expecting %s but got %s", wantMultipartMd5, gotMultipartMd5)
+		fs.ErrorfCtx(ctx, w.o, "multipart upload corrupted: multipart md5 differ: expecting %s but got %s", wantMultipartMd5, gotMultipartMd5)
 		return fmt.Errorf("multipart upload corrupted: md5 differ: expecting %s but got %s", wantMultipartMd5, gotMultipartMd5)
 	}
-	fs.Debugf(w.o, "multipart upload %v md5 matched: expecting %s and got %s", *w.uploadID, wantMultipartMd5, gotMultipartMd5)
+	fs.DebugfCtx(ctx, w.o, "multipart upload %v md5 matched: expecting %s and got %s", *w.uploadID, wantMultipartMd5, gotMultipartMd5)
 	return nil
 }
 
@@ -260,16 +260,16 @@ func isMultiPartUploadCorrupted(err error) bool {
 }
 
 func (w *objectChunkWriter) Abort(ctx context.Context) error {
-	fs.Debugf(w.o, "Cancelling multipart upload")
+	fs.DebugfCtx(ctx, w.o, "Cancelling multipart upload")
 	err := w.o.fs.abortMultiPartUpload(
 		ctx,
 		w.bucket,
 		w.key,
 		w.uploadID)
 	if err != nil {
-		fs.Debugf(w.o, "Failed to cancel multipart upload: %v", err)
+		fs.DebugfCtx(ctx, w.o, "Failed to cancel multipart upload: %v", err)
 	} else {
-		fs.Debugf(w.o, "canceled and aborted multipart upload: %v", *w.uploadID)
+		fs.DebugfCtx(ctx, w.o, "canceled and aborted multipart upload: %v", *w.uploadID)
 	}
 	return err
 }
@@ -324,7 +324,7 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 			// mtime in meta overrides source ModTime
 			metaModTime, err := time.Parse(time.RFC3339Nano, v)
 			if err != nil {
-				fs.Debugf(o, "failed to parse metadata %s: %q: %v", k, v, err)
+				fs.DebugfCtx(ctx, o, "failed to parse metadata %s: %q: %v", k, v, err)
 			} else {
 				modTime = metaModTime
 			}
@@ -386,13 +386,13 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 	// Check metadata keys and values are valid
 	for key, value := range ui.req.OpcMeta {
 		if !httpguts.ValidHeaderFieldName(key) {
-			fs.Errorf(o, "Dropping invalid metadata key %q", key)
+			fs.ErrorfCtx(ctx, o, "Dropping invalid metadata key %q", key)
 			delete(ui.req.OpcMeta, key)
 		} else if value == "" {
-			fs.Errorf(o, "Dropping nil metadata value for key %q", key)
+			fs.ErrorfCtx(ctx, o, "Dropping nil metadata value for key %q", key)
 			delete(ui.req.OpcMeta, key)
 		} else if !httpguts.ValidHeaderFieldValue(value) {
-			fs.Errorf(o, "Dropping invalid metadata value %q for key %q", value, key)
+			fs.ErrorfCtx(ctx, o, "Dropping invalid metadata value %q for key %q", value, key)
 			delete(ui.req.OpcMeta, key)
 		}
 	}
@@ -404,17 +404,17 @@ func (o *Object) createMultipartUpload(ctx context.Context, putReq *objectstorag
 	bucketName, bucketPath := o.split()
 	err = o.fs.makeBucket(ctx, bucketName)
 	if err != nil {
-		fs.Errorf(o, "failed to create bucket: %v, err: %v", bucketName, err)
+		fs.ErrorfCtx(ctx, o, "failed to create bucket: %v, err: %v", bucketName, err)
 		return uploadID, existingParts, err
 	}
 	if o.fs.opt.AttemptResumeUpload {
-		fs.Debugf(o, "attempting to resume upload for %v (if any)", o.remote)
+		fs.DebugfCtx(ctx, o, "attempting to resume upload for %v (if any)", o.remote)
 		resumeUploads, err := o.fs.findLatestMultipartUpload(ctx, bucketName, bucketPath)
 		if err == nil && len(resumeUploads) > 0 {
 			uploadID = *resumeUploads[0].UploadId
 			existingParts, err = o.fs.listMultipartUploadParts(ctx, bucketName, bucketPath, uploadID)
 			if err == nil {
-				fs.Debugf(o, "resuming with existing upload id: %v", uploadID)
+				fs.DebugfCtx(ctx, o, "resuming with existing upload id: %v", uploadID)
 				return uploadID, existingParts, err
 			}
 		}
@@ -443,6 +443,6 @@ func (o *Object) createMultipartUpload(ctx context.Context, putReq *objectstorag
 	}
 	existingParts = make(map[int]objectstorage.MultipartUploadPartSummary)
 	uploadID = *resp.UploadId
-	fs.Debugf(o, "created new upload id: %v", uploadID)
+	fs.DebugfCtx(ctx, o, "created new upload id: %v", uploadID)
 	return uploadID, existingParts, err
 }

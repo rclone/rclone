@@ -76,7 +76,7 @@ func cryptCheck(ctx context.Context, fdst, fsrc fs.Fs) error {
 	if hashType == hash.None {
 		return fmt.Errorf("%s:%s does not support any hashes", funderlying.Name(), funderlying.Root())
 	}
-	fs.Infof(nil, "Using %v for hash comparisons", hashType)
+	fs.InfofCtx(ctx, nil, "Using %v for hash comparisons", hashType)
 
 	opt, close, err := check.GetCheckOpt(fsrc, fcrypt)
 	if err != nil {
@@ -107,7 +107,7 @@ func cryptCheck(ctx context.Context, fdst, fsrc fs.Fs) error {
 		}
 		if cryptHash != underlyingHash {
 			err = fmt.Errorf("hashes differ (%s:%s) %q vs (%s:%s) %q", fdst.Name(), fdst.Root(), cryptHash, fsrc.Name(), fsrc.Root(), underlyingHash)
-			fs.Errorf(src, "%s", err.Error())
+			fs.ErrorfCtx(ctx, src, "%s", err.Error())
 			return true, false, nil
 		}
 		return false, false, nil

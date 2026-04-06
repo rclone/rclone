@@ -127,7 +127,7 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 		return false, err
 	}
 	if resp != nil && (resp.StatusCode == 401 || isHTTPError(err, 401)) && len(resp.Header["Www-Authenticate"]) > 0 {
-		fs.Debugf(f, "Token might be invalid: %v", err)
+		fs.DebugfCtx(ctx, f, "Token might be invalid: %v", err)
 		if f.tokenRenewer != nil {
 			iErr := f.tokenRenewer.Expire()
 			if iErr == nil {
@@ -654,9 +654,9 @@ func (f *Fs) updateFileChunked(ctx context.Context, path string, content io.Read
 				okChunksMu.Lock()
 				okChunks = append(okChunks, ranges.Range{Pos: int64(chunkOffset), Size: int64(bytesRead)})
 				okChunksMu.Unlock()
-				fs.Debugf(f, "Done uploading chunk of size %v at offset %v.", bytesRead, chunkOffset)
+				fs.DebugfCtx(ctx, f, "Done uploading chunk of size %v at offset %v.", bytesRead, chunkOffset)
 			} else {
-				fs.Infof(f, "Error while uploading chunk at offset %v. Error is %v.", chunkOffset, uploadErr)
+				fs.InfofCtx(ctx, f, "Error while uploading chunk at offset %v. Error is %v.", chunkOffset, uploadErr)
 			}
 			return uploadErr
 		})
@@ -664,7 +664,7 @@ func (f *Fs) updateFileChunked(ctx context.Context, path string, content io.Read
 
 	if readErr != nil {
 		// Log the error in case it is later ignored because of an upload-error.
-		fs.Infof(f, "Error while reading/preparing to upload a chunk. Error is %v.", readErr)
+		fs.InfofCtx(ctx, f, "Error while reading/preparing to upload a chunk. Error is %v.", readErr)
 	}
 
 	err = g.Wait()

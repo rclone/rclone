@@ -18,7 +18,7 @@ func StartLimitTPS(ctx context.Context) {
 	if ci.TPSLimit > 0 {
 		tpsBurst := max(ci.TPSLimitBurst, 1)
 		tpsBucket = rate.NewLimiter(rate.Limit(ci.TPSLimit), tpsBurst)
-		fs.Infof(nil, "Starting transaction limiter: max %g transactions/s with burst %d", ci.TPSLimit, tpsBurst)
+		fs.InfofCtx(ctx, nil, "Starting transaction limiter: max %g transactions/s with burst %d", ci.TPSLimit, tpsBurst)
 	}
 }
 
@@ -28,7 +28,7 @@ func LimitTPS(ctx context.Context) {
 	if tpsBucket != nil {
 		tbErr := tpsBucket.Wait(ctx)
 		if tbErr != nil && tbErr != context.Canceled {
-			fs.Errorf(nil, "HTTP token bucket error: %v", tbErr)
+			fs.ErrorfCtx(ctx, nil, "HTTP token bucket error: %v", tbErr)
 		}
 	}
 }

@@ -285,7 +285,7 @@ func (wb *WriteBack) Add(id Handle, name string, size int64, modified bool, putF
 func (wb *WriteBack) _remove(id Handle) (found bool) {
 	wbItem, found := wb.lookup[id]
 	if found {
-		fs.Debugf(wbItem.name, "vfs cache: cancelling writeback (uploading %v) %p item %d", wbItem.uploading, wbItem, wbItem.id)
+		fs.DebugfCtx(wb.ctx, wbItem.name, "vfs cache: cancelling writeback (uploading %v) %p item %d", wbItem.uploading, wbItem, wbItem.id)
 		if wbItem.uploading {
 			// We are uploading already so cancel the upload
 			wb._cancelUpload(wbItem)
@@ -349,7 +349,7 @@ func (wb *WriteBack) upload(ctx context.Context, wbItem *writeBackItem) {
 	putFn := wbItem.putFn
 	wbItem.tries++
 
-	fs.Debugf(wbItem.name, "vfs cache: starting upload")
+	fs.DebugfCtx(ctx, wbItem.name, "vfs cache: starting upload")
 
 	wb.mu.Unlock()
 	err := putFn(ctx)
@@ -367,17 +367,17 @@ func (wb *WriteBack) upload(ctx context.Context, wbItem *writeBackItem) {
 			wbItem.delay = maxUploadDelay
 		}
 		if errors.Is(err, context.Canceled) {
-			fs.Infof(wbItem.name, "vfs cache: upload canceled")
+			fs.InfofCtx(ctx, wbItem.name, "vfs cache: upload canceled")
 			// Upload was cancelled so reset timer
 			wbItem.delay = time.Duration(wb.opt.WriteBack)
 		} else {
-			fs.Errorf(wbItem.name, "vfs cache: failed to upload try #%d, will retry in %v: %v", wbItem.tries, wbItem.delay, err)
+			fs.ErrorfCtx(ctx, wbItem.name, "vfs cache: failed to upload try #%d, will retry in %v: %v", wbItem.tries, wbItem.delay, err)
 		}
 		// push the item back on the queue for retry
 		wb._pushItem(wbItem)
 		wb.items._update(wbItem, time.Now().Add(wbItem.delay))
 	} else {
-		fs.Infof(wbItem.name, "vfs cache: upload succeeded try #%d", wbItem.tries)
+		fs.InfofCtx(ctx, wbItem.name, "vfs cache: upload succeeded try #%d", wbItem.tries)
 		// show that we are done with the item
 		wb._delItem(wbItem)
 	}
@@ -392,7 +392,7 @@ func (wb *WriteBack) _cancelUpload(wbItem *writeBackItem) {
 	if !wbItem.uploading {
 		return
 	}
-	fs.Debugf(wbItem.name, "vfs cache: cancelling upload")
+	fs.DebugfCtx(wb.ctx, wbItem.name, "vfs cache: cancelling upload")
 	if wbItem.cancel != nil {
 		// Cancel the upload - this may or may not be effective
 		wbItem.cancel()
@@ -406,7 +406,7 @@ func (wb *WriteBack) _cancelUpload(wbItem *writeBackItem) {
 	}
 	// uploading items are not on the heap so add them back
 	wb._pushItem(wbItem)
-	fs.Debugf(wbItem.name, "vfs cache: cancelled upload")
+	fs.DebugfCtx(wb.ctx, wbItem.name, "vfs cache: cancelled upload")
 }
 
 // cancelUpload cancels the upload of the item if there is one in progress
@@ -436,13 +436,13 @@ func (wb *WriteBack) processItems(ctx context.Context) {
 	for wbItem := wb._peekItem(); wbItem != nil && time.Until(wbItem.expiry) <= 0; wbItem = wb._peekItem() {
 		// If reached transfer limit don't restart the timer
 		if wb.uploads >= fs.GetConfig(context.TODO()).Transfers {
-			fs.Debugf(wbItem.name, "vfs cache: delaying writeback as --transfers exceeded")
+			fs.DebugfCtx(ctx, wbItem.name, "vfs cache: delaying writeback as --transfers exceeded")
 			resetTimer = false
 			break
 		}
 		// Pop the item, mark as uploading and start the uploader
 		wbItem = wb._popItem()
-		//fs.Debugf(wbItem.name, "uploading = true %p item %p", wbItem, wbItem.item)
+		//fs.DebugfCtx(ctx, wbItem.name, "uploading = true %p item %p", wbItem, wbItem.item)
 		wbItem.uploading = true
 		wb.uploads++
 		newCtx, cancel := context.WithCancel(ctx)

@@ -114,7 +114,7 @@ func (f *Fs) getPermission(ctx context.Context, fileID, permissionID string, use
 			return perm, false, nil
 		}
 	}
-	fs.Debugf(f, "Fetching permission %q", permissionID)
+	fs.DebugfCtx(ctx, f, "Fetching permission %q", permissionID)
 	err = f.pacer.Call(func() (bool, error) {
 		perm, err = f.svc.Permissions.Get(fileID, permissionID).
 			Fields(permissionsFields).
@@ -154,7 +154,7 @@ func (f *Fs) setPermissions(ctx context.Context, info *drive.File, permissions [
 			return f.shouldRetry(ctx, err)
 		})
 		if err != nil {
-			fs.Errorf(f, "Failed to set permission %s for %q: %v", perm.Role, perm.EmailAddress, err)
+			fs.ErrorfCtx(ctx, f, "Failed to set permission %s for %q: %v", perm.Role, perm.EmailAddress, err)
 			errs.Add(err)
 		}
 	}
@@ -221,7 +221,7 @@ var labelsFields = googleapi.Field(strings.Join([]string{
 
 // getLabels returns labels for the fileID passed in
 func (f *Fs) getLabels(ctx context.Context, fileID string) (labels []*drive.Label, err error) {
-	fs.Debugf(f, "Fetching labels for %q", fileID)
+	fs.DebugfCtx(ctx, f, "Fetching labels for %q", fileID)
 	listLabels := f.svc.Files.ListLabels(fileID).
 		Fields(labelsFields).
 		Context(ctx)
@@ -340,7 +340,7 @@ func (o *baseObject) parseMetadata(ctx context.Context, info *drive.File) (err e
 	if o.fs.opt.MetadataOwner.IsSet(rwRead) && len(info.Owners) > 0 {
 		user := info.Owners[0]
 		if len(info.Owners) > 1 {
-			fs.Logf(o, "Ignoring more than 1 owner")
+			fs.LogfCtx(ctx, o, "Ignoring more than 1 owner")
 		}
 		if user != nil {
 			id := user.EmailAddress
@@ -372,7 +372,7 @@ func (o *baseObject) parseMetadata(ctx context.Context, info *drive.File) (err e
 		// shared drives.
 		if o.fs.isTeamDrive && !info.HasAugmentedPermissions {
 			// Don't process permissions if there aren't any specifically set
-			fs.Debugf(o, "Ignoring %d permissions and %d permissionIds as is shared drive with hasAugmentedPermissions false", len(info.Permissions), len(info.PermissionIds))
+			fs.DebugfCtx(ctx, o, "Ignoring %d permissions and %d permissionIds as is shared drive with hasAugmentedPermissions false", len(info.Permissions), len(info.PermissionIds))
 			info.Permissions = nil
 			info.PermissionIds = nil
 		}
@@ -533,7 +533,7 @@ func (f *Fs) updateMetadata(ctx context.Context, updateInfo *drive.File, meta fs
 		switch k {
 		case "copy-requires-writer-permission":
 			if isFolder {
-				fs.Debugf(f, "Ignoring %s=%s as can't set on folders", k, v)
+				fs.DebugfCtx(ctx, f, "Ignoring %s=%s as can't set on folders", k, v)
 			} else if err := parseBool(&updateInfo.CopyRequiresWriterPermission); err != nil {
 				return nil, err
 			}
@@ -543,7 +543,7 @@ func (f *Fs) updateMetadata(ctx context.Context, updateInfo *drive.File, meta fs
 					return nil, err
 				}
 			} else {
-				fs.Debugf(f, "Ignoring %s=%s as can't set on shared drives", k, v)
+				fs.DebugfCtx(ctx, f, "Ignoring %s=%s as can't set on shared drives", k, v)
 			}
 		case "viewed-by-me":
 			// Can't write this
@@ -557,7 +557,7 @@ func (f *Fs) updateMetadata(ctx context.Context, updateInfo *drive.File, meta fs
 			callbackFns = append(callbackFns, func(ctx context.Context, info *drive.File) error {
 				err := f.setOwner(ctx, info, v)
 				if err != nil && f.opt.MetadataOwner.IsSet(rwFailOK) {
-					fs.Errorf(f, "Ignoring error as failok is set: %v", err)
+					fs.ErrorfCtx(ctx, f, "Ignoring error as failok is set: %v", err)
 					return nil
 				}
 				return err
@@ -576,7 +576,7 @@ func (f *Fs) updateMetadata(ctx context.Context, updateInfo *drive.File, meta fs
 				err := f.setPermissions(ctx, info, perms)
 				if err != nil && f.opt.MetadataPermissions.IsSet(rwFailOK) {
 					// We've already logged the permissions errors individually here
-					fs.Debugf(f, "Ignoring error as failok is set: %v", err)
+					fs.DebugfCtx(ctx, f, "Ignoring error as failok is set: %v", err)
 					return nil
 				}
 				return err
@@ -594,7 +594,7 @@ func (f *Fs) updateMetadata(ctx context.Context, updateInfo *drive.File, meta fs
 			callbackFns = append(callbackFns, func(ctx context.Context, info *drive.File) error {
 				err := f.setLabels(ctx, info, labels)
 				if err != nil && f.opt.MetadataLabels.IsSet(rwFailOK) {
-					fs.Errorf(f, "Ignoring error as failok is set: %v", err)
+					fs.ErrorfCtx(ctx, f, "Ignoring error as failok is set: %v", err)
 					return nil
 				}
 				return err
@@ -609,7 +609,7 @@ func (f *Fs) updateMetadata(ctx context.Context, updateInfo *drive.File, meta fs
 			}
 		case "btime":
 			if update {
-				fs.Debugf(f, "Skipping btime metadata as can't update it on an existing file: %v", v)
+				fs.DebugfCtx(ctx, f, "Skipping btime metadata as can't update it on an existing file: %v", v)
 			} else {
 				updateInfo.CreatedTime = v
 			}

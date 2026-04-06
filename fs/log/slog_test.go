@@ -95,7 +95,7 @@ func TestFormatStdLogHeader(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			h := NewOutputHandler(&bytes.Buffer{}, nil, tc.format)
 			buf := &bytes.Buffer{}
-			h.formatStdLogHeader(buf, tc.format, slog.LevelInfo, t0, tc.object, tc.lineInfo)
+			h.formatStdLogHeader(buf, tc.format, slog.LevelInfo, t0, tc.object, tc.lineInfo, "", "")
 			if !strings.HasPrefix(buf.String(), tc.wantPrefix) {
 				t.Errorf("%s: got %q; want prefix %q", tc.name, buf.String(), tc.wantPrefix)
 			}

@@ -67,7 +67,7 @@ func (o *Object) split() (bucket, bucketPath string) {
 
 // readMetaData gets the metadata if it hasn't already been fetched
 func (o *Object) readMetaData(ctx context.Context) (err error) {
-	fs.Debugf(o, "trying to read metadata %v", o.remote)
+	fs.DebugfCtx(ctx, o, "trying to read metadata %v", o.remote)
 	if o.meta != nil {
 		return nil
 	}
@@ -99,7 +99,7 @@ func (o *Object) headObject(ctx context.Context) (info *objectstorage.HeadObject
 				return nil, fs.ErrorObjectNotFound
 			}
 		}
-		fs.Errorf(o, "Failed to head object: %v", err)
+		fs.ErrorfCtx(ctx, o, "Failed to head object: %v", err)
 		return nil, err
 	}
 	o.fs.cache.MarkOK(bucketName)
@@ -245,7 +245,7 @@ func (o *Object) SetTier(tier string) (err error) {
 func (o *Object) MimeType(ctx context.Context) string {
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.LogfCtx(ctx, o, "Failed to read metadata: %v", err)
 		return ""
 	}
 	return o.mimeType
@@ -276,7 +276,7 @@ func (o *Object) ModTime(ctx context.Context) (result time.Time) {
 	}
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.LogfCtx(ctx, o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	// read mtime out of metadata if available
@@ -286,7 +286,7 @@ func (o *Object) ModTime(ctx context.Context) (result time.Time) {
 	}
 	modTime, err := swift.FloatStringToTime(d)
 	if err != nil {
-		fs.Logf(o, "Failed to read mtime from object: %v", err)
+		fs.LogfCtx(ctx, o, "Failed to read mtime from object: %v", err)
 		return o.lastModified
 	}
 	return modTime
@@ -352,10 +352,10 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			if err == nil {
 				bytes = &i
 			} else {
-				fs.Debugf(o, "Failed to find parse integer from in %q: %v", contentRange, err)
+				fs.DebugfCtx(ctx, o, "Failed to find parse integer from in %q: %v", contentRange, err)
 			}
 		} else {
-			fs.Debugf(o, "Failed to find length in %q", contentRange)
+			fs.DebugfCtx(ctx, o, "Failed to find length in %q", contentRange)
 		}
 	}
 	err = o.decodeMetaDataObject(&resp)
@@ -416,7 +416,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			return shouldRetry(ctx, resp.HTTPResponse(), err)
 		})
 		if err != nil {
-			fs.Errorf(o, "put object failed %v", err)
+			fs.ErrorfCtx(ctx, o, "put object failed %v", err)
 			return err
 		}
 	}

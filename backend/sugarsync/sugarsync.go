@@ -325,7 +325,7 @@ func (f *Fs) readMetaDataForID(ctx context.Context, ID string) (info *api.File, 
 
 // getAuthToken gets an Auth token from the refresh token
 func (f *Fs) getAuthToken(ctx context.Context) error {
-	fs.Debugf(f, "Renewing token")
+	fs.DebugfCtx(ctx, f, "Renewing token")
 
 	authRequest := api.TokenAuthRequest{
 		AccessKeyID:      withDefault(f.opt.AccessKeyID, accessKeyID),
@@ -871,7 +871,7 @@ func (f *Fs) Precision() time.Duration {
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Object, err error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 	err = srcObj.readMetaData(ctx)
@@ -1011,7 +1011,7 @@ func (f *Fs) moveDir(ctx context.Context, id, leaf, directoryID string) (err err
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
@@ -1045,7 +1045,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 
@@ -1177,7 +1177,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 func (o *Object) ModTime(ctx context.Context) time.Time {
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.LogfCtx(ctx, o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	return o.modTime
@@ -1272,7 +1272,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			if err != nil {
 				delErr := o.fs.delete(ctx, true, o.id, remote, o.fs.opt.HardDelete)
 				if delErr != nil {
-					fs.Errorf(o, "failed to remove failed upload: %v", delErr)
+					fs.ErrorfCtx(ctx, o, "failed to remove failed upload: %v", delErr)
 				}
 			}
 		}()

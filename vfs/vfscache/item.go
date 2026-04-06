@@ -614,7 +614,7 @@ func (item *Item) _store(ctx context.Context, storeFn StoreFn) (err error) {
 		})
 		if err != nil {
 			if errors.Is(err, fs.ErrorCantUploadEmptyFiles) {
-				fs.Errorf(name, "Writeback failed: %v", err)
+				fs.ErrorfCtx(ctx, name, "Writeback failed: %v", err)
 				return nil
 			}
 			return fmt.Errorf("vfs cache: failed to transfer file from cache to remote: %w", err)
@@ -627,7 +627,7 @@ func (item *Item) _store(ctx context.Context, storeFn StoreFn) (err error) {
 	// clean, otherwise it will become eligible for removal which
 	// can cause a deadlock
 	if storeFn != nil && item.o != nil {
-		fs.Debugf(item.name, "vfs cache: writeback object to VFS layer")
+		fs.DebugfCtx(ctx, item.name, "vfs cache: writeback object to VFS layer")
 		// Write the object back to the VFS layer last with mutex unlocked
 		o := item.o
 		item.mu.Unlock()
@@ -639,7 +639,7 @@ func (item *Item) _store(ctx context.Context, storeFn StoreFn) (err error) {
 	item.info.Dirty = false
 	err = item._save()
 	if err != nil {
-		fs.Errorf(item.name, "vfs cache: failed to write metadata file: %v", err)
+		fs.ErrorfCtx(ctx, item.name, "vfs cache: failed to write metadata file: %v", err)
 	}
 
 	return nil

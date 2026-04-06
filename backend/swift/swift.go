@@ -435,12 +435,12 @@ func shouldRetryHeaders(ctx context.Context, headers swift.Headers, err error) (
 		if value := headers["Retry-After"]; value != "" {
 			retryAfter, parseErr := strconv.Atoi(value)
 			if parseErr != nil {
-				fs.Errorf(nil, "Failed to parse Retry-After: %q: %v", value, parseErr)
+				fs.ErrorfCtx(ctx, nil, "Failed to parse Retry-After: %q: %v", value, parseErr)
 			} else {
 				duration := time.Second * time.Duration(retryAfter)
 				if duration <= 60*time.Second {
 					// Do a short sleep immediately
-					fs.Debugf(nil, "Sleeping for %v to obey Retry-After", duration)
+					fs.DebugfCtx(ctx, nil, "Sleeping for %v to obey Retry-After", duration)
 					time.Sleep(duration)
 					return true, err
 				}
@@ -569,7 +569,7 @@ func (f *Fs) fetchStoragePolicy(ctx context.Context, container string) (fs.Fs, e
 		_, rxHeaders, err := f.c.Container(ctx, container)
 
 		f.opt.StoragePolicy = rxHeaders["X-Storage-Policy"]
-		fs.Debugf(f, "Auto set StoragePolicy to %s", f.opt.StoragePolicy)
+		fs.DebugfCtx(ctx, f, "Auto set StoragePolicy to %s", f.opt.StoragePolicy)
 
 		return shouldRetryHeaders(ctx, rxHeaders, err)
 	})
@@ -603,7 +603,7 @@ func NewFsWithConnection(ctx context.Context, opt *Options, name, root string, c
 	if !f.opt.UseSegmentsContainer.Valid {
 		f.opt.UseSegmentsContainer.Value = !needFileSegmentsDirectory.MatchString(opt.Auth)
 		f.opt.UseSegmentsContainer.Valid = true
-		fs.Debugf(f, "Auto set use_segments_container to %v", f.opt.UseSegmentsContainer.Value)
+		fs.DebugfCtx(ctx, f, "Auto set use_segments_container to %v", f.opt.UseSegmentsContainer.Value)
 	}
 
 	if f.rootContainer != "" && f.rootDirectory != "" {
@@ -665,7 +665,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *swift.O
 		err := o.readMetaData(ctx) // reads info and headers, returning an error
 		if err == fs.ErrorObjectNotFound {
 			// We have a dangling large object here so just return the original metadata
-			fs.Errorf(o, "dangling large object with no contents")
+			fs.ErrorfCtx(ctx, o, "dangling large object with no contents")
 		} else if err != nil {
 			return nil, err
 		} else {
@@ -737,7 +737,7 @@ func (f *Fs) listContainerRoot(ctx context.Context, container, directory, prefix
 				}
 				remote := f.opt.Enc.ToStandardPath(object.Name)
 				if !strings.HasPrefix(remote, prefix) {
-					fs.Logf(f, "Odd name received %q", remote)
+					fs.LogfCtx(ctx, f, "Odd name received %q", remote)
 					continue
 				}
 				if !includeDirMarkers && remote == prefix {
@@ -1031,7 +1031,7 @@ func (f *Fs) makeContainer(ctx context.Context, container string) error {
 				return shouldRetry(ctx, err)
 			})
 			if err == nil {
-				fs.Infof(f, "Container %q created", container)
+				fs.InfofCtx(ctx, f, "Container %q created", container)
 			}
 		}
 		return err
@@ -1052,7 +1052,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 			return shouldRetry(ctx, err)
 		})
 		if err == nil {
-			fs.Infof(f, "Container %q removed", container)
+			fs.InfofCtx(ctx, f, "Container %q removed", container)
 		}
 		return err
 	})
@@ -1112,7 +1112,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 	isLargeObject, err := srcObj.isLargeObject(ctx)
@@ -1204,18 +1204,18 @@ func (su *segmentedUpload) onFail() {
 		return
 	}
 	ctx := context.Background()
-	fs.Debugf(f, "Segment operation failed: bulk deleting failed segments")
+	fs.DebugfCtx(ctx, f, "Segment operation failed: bulk deleting failed segments")
 	if len(su.container) == 0 {
-		fs.Debugf(f, "Invalid segments container")
+		fs.DebugfCtx(ctx, f, "Invalid segments container")
 		return
 	}
 	if len(su.segments) == 0 {
-		fs.Debugf(f, "No segments to delete")
+		fs.DebugfCtx(ctx, f, "No segments to delete")
 		return
 	}
 	_, err := f.c.BulkDelete(ctx, su.container, su.segments)
 	if err != nil {
-		fs.Errorf(f, "Failed to bulk delete failed segments: %v", err)
+		fs.ErrorfCtx(ctx, f, "Failed to bulk delete failed segments: %v", err)
 	}
 }
 
@@ -1225,7 +1225,7 @@ func (su *segmentedUpload) uploadManifest(ctx context.Context, contentType strin
 	headers["X-Object-Manifest"] = urlEncode(su.fullPath())
 	headers["Content-Length"] = "0" // set Content-Length as we know it
 	emptyReader := bytes.NewReader(nil)
-	fs.Debugf(su.f, "uploading manifest %q to %q", su.dstPath, su.dstContainer)
+	fs.DebugfCtx(ctx, su.f, "uploading manifest %q to %q", su.dstPath, su.dstContainer)
 	err = su.f.pacer.Call(func() (bool, error) {
 		var rxHeaders swift.Headers
 		rxHeaders, err = su.f.c.ObjectPut(ctx, su.dstContainer, su.dstPath, emptyReader, true, "", contentType, headers)
@@ -1302,7 +1302,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 		return "", err
 	}
 	if isDynamicLargeObject || isStaticLargeObject {
-		fs.Debugf(o, "Returning empty Md5sum for swift large object")
+		fs.DebugfCtx(ctx, o, "Returning empty Md5sum for swift large object")
 		return "", nil
 	}
 	return strings.ToLower(o.md5), nil
@@ -1426,12 +1426,12 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 	}
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.Debugf(o, "Failed to read metadata: %s", err)
+		fs.DebugfCtx(ctx, o, "Failed to read metadata: %s", err)
 		return o.lastModified
 	}
 	modTime, err := o.headers.ObjectMetadata().GetModTime()
 	if err != nil {
-		// fs.Logf(o, "Failed to read mtime from object: %v", err)
+		// fs.LogfCtx(ctx, o, "Failed to read mtime from object: %v", err)
 		return o.lastModified
 	}
 	return modTime
@@ -1546,7 +1546,7 @@ func (o *Object) updateChunks(ctx context.Context, in0 io.Reader, headers swift.
 			if left > 0 {
 				return err // read less than expected
 			}
-			fs.Debugf(o, "Uploading segments into %q seems done (%v)", su.container, err)
+			fs.DebugfCtx(ctx, o, "Uploading segments into %q seems done (%v)", su.container, err)
 			break
 		}
 		n := int64(o.fs.opt.ChunkSize)
@@ -1557,7 +1557,7 @@ func (o *Object) updateChunks(ctx context.Context, in0 io.Reader, headers swift.
 		}
 		segmentReader := io.LimitReader(in, n)
 		segmentPath := su.segmentPath(i)
-		fs.Debugf(o, "Uploading segment file %q into %q", segmentPath, su.container)
+		fs.DebugfCtx(ctx, o, "Uploading segment file %q into %q", segmentPath, su.container)
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 			var rxHeaders swift.Headers
 			rxHeaders, err = o.fs.c.ObjectPut(ctx, su.container, segmentPath, segmentReader, true, "", "", headers)
@@ -1648,7 +1648,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		if !isInContainerVersioning {
 			err := o.removeSegmentsLargeObject(ctx, segmentsContainer, segments)
 			if err != nil {
-				fs.Logf(o, "Failed to remove old segments - carrying on with upload: %v", err)
+				fs.LogfCtx(ctx, o, "Failed to remove old segments - carrying on with upload: %v", err)
 			}
 		}
 	}
@@ -1687,7 +1687,7 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 	err = o.fs.pacer.Call(func() (bool, error) {
 		err = o.fs.c.ObjectDelete(ctx, container, containerPath)
 		if err == swift.ObjectNotFound {
-			fs.Errorf(o, "Dangling object - ignoring: %v", err)
+			fs.ErrorfCtx(ctx, o, "Dangling object - ignoring: %v", err)
 			err = nil
 		}
 		return shouldRetry(ctx, err)

@@ -82,7 +82,7 @@ func (op *kvPurge) Do(ctx context.Context, b kv.Bucket) error {
 			nerr++
 		}
 	}
-	fs.Debugf(dir, "%d hashes purged, %d failed", len(items)-nerr, nerr)
+	fs.DebugfCtx(ctx, dir, "%d hashes purged, %d failed", len(items)-nerr, nerr)
 	return nil
 }
 
@@ -98,7 +98,7 @@ func (op *kvMove) Do(ctx context.Context, b kv.Bucket) error {
 	src, dst := op.src, op.dst
 	if !op.dir {
 		err := moveHash(b, src, dst)
-		fs.Debugf(op.fs, "moving cached hash %s to %s (err: %v)", src, dst, err)
+		fs.DebugfCtx(ctx, op.fs, "moving cached hash %s to %s (err: %v)", src, dst, err)
 		return err
 	}
 
@@ -125,12 +125,12 @@ func (op *kvMove) Do(ctx context.Context, b kv.Bucket) error {
 	for _, suffix := range items {
 		srcKey, dstKey := src+suffix, dst+suffix
 		err := moveHash(b, srcKey, dstKey)
-		fs.Debugf(op.fs, "Rename cache record %s -> %s (err: %v)", srcKey, dstKey, err)
+		fs.DebugfCtx(ctx, op.fs, "Rename cache record %s -> %s (err: %v)", srcKey, dstKey, err)
 		if err != nil {
 			nerr++
 		}
 	}
-	fs.Debugf(op.fs, "%d hashes moved, %d failed", len(items)-nerr, nerr)
+	fs.DebugfCtx(ctx, op.fs, "%d hashes moved, %d failed", len(items)-nerr, nerr)
 	return nil
 }
 
@@ -229,7 +229,7 @@ func (op *kvDump) Do(ctx context.Context, b kv.Bucket) error {
 			include := (baseRoot == "" || key == baseRoot || strings.HasPrefix(key, baseRoot+"/"))
 			var r hashRecord
 			if err := r.decode(key, data); err != nil {
-				fs.Errorf(nil, "%s: invalid record: %v", key, err)
+				fs.ErrorfCtx(ctx, nil, "%s: invalid record: %v", key, err)
 				return nil
 			}
 			fmt.Println(f.dumpLine(&r, key, include, nil))
@@ -238,7 +238,7 @@ func (op *kvDump) Do(ctx context.Context, b kv.Bucket) error {
 			}
 			return nil
 		})
-		fs.Infof(dbPath, "%d records out of %d", num, total)
+		fs.InfofCtx(ctx, dbPath, "%d records out of %d", num, total)
 		op.num, op.total = num, total // for unit tests
 		return nil
 	}
@@ -258,7 +258,7 @@ func (op *kvDump) Do(ctx context.Context, b kv.Bucket) error {
 		}
 		var r hashRecord
 		if err := r.decode(key, data); err != nil {
-			fs.Errorf(nil, "%s: invalid record: %v", key, err)
+			fs.ErrorfCtx(ctx, nil, "%s: invalid record: %v", key, err)
 			continue
 		}
 		if key = strings.TrimPrefix(key[len(baseRoot):], "/"); key == "" {
@@ -268,7 +268,7 @@ func (op *kvDump) Do(ctx context.Context, b kv.Bucket) error {
 		num++
 		bkey, data = cur.Next()
 	}
-	fs.Infof(dbPath, "%d records", num)
+	fs.InfofCtx(ctx, dbPath, "%d records", num)
 	op.num = num // for unit tests
 	return nil
 }

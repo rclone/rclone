@@ -801,7 +801,7 @@ func (f *Fs) getSftpConnection(ctx context.Context) (c *conn, err error) {
 		if err == nil {
 			break
 		}
-		fs.Errorf(f, "Discarding closed SSH connection: %v", err)
+		fs.ErrorfCtx(ctx, f, "Discarding closed SSH connection: %v", err)
 		c = nil
 	}
 	f.poolMu.Unlock()
@@ -873,7 +873,7 @@ func (f *Fs) drainPool(ctx context.Context) (err error) {
 	f.poolMu.Lock()
 	defer f.poolMu.Unlock()
 	if sessions := f.getSessions(); sessions != 0 {
-		fs.Debugf(f, "Not closing %d unused connections as %d sessions active", len(f.pool), sessions)
+		fs.DebugfCtx(ctx, f, "Not closing %d unused connections as %d sessions active", len(f.pool), sessions)
 		if f.opt.IdleTimeout > 0 {
 			f.drain.Reset(time.Duration(f.opt.IdleTimeout)) // nudge on the pool emptying timer
 		}
@@ -883,13 +883,13 @@ func (f *Fs) drainPool(ctx context.Context) (err error) {
 		f.drain.Stop()
 	}
 	if len(f.pool) != 0 {
-		fs.Debugf(f, "Closing %d unused connections", len(f.pool))
+		fs.DebugfCtx(ctx, f, "Closing %d unused connections", len(f.pool))
 	}
 	for i, c := range f.pool {
 		if cErr := c.closed(); cErr == nil {
 			cErr = c.close()
 			if cErr != nil {
-				fs.Debugf(f, "Ignoring error closing connection: %v", cErr)
+				fs.DebugfCtx(ctx, f, "Ignoring error closing connection: %v", cErr)
 			}
 		}
 		f.pool[i] = nil
@@ -914,7 +914,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 	if len(opt.SSH) != 0 && ((opt.User != currentUser && opt.User != "") || opt.Host != "" || (opt.Port != "22" && opt.Port != "")) {
-		fs.Logf(name, "--sftp-ssh is in use - ignoring user/host/port from config - set in the parameters to --sftp-ssh (remove them from the config to silence this warning)")
+		fs.LogfCtx(ctx, name, "--sftp-ssh is in use - ignoring user/host/port from config - set in the parameters to --sftp-ssh (remove them from the config to silence this warning)")
 	}
 	f.tokens = pacer.NewTokenDispenser(opt.Connections)
 
@@ -1207,26 +1207,26 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 	// Check remote shell type, try to auto-detect if not configured and save to config for later
 	if f.opt.ShellType != "" {
 		f.shellType = f.opt.ShellType
-		fs.Debugf(f, "Shell type %q from config", f.shellType)
+		fs.DebugfCtx(ctx, f, "Shell type %q from config", f.shellType)
 	} else {
 		session, err := c.sshClient.NewSession()
 		if err != nil {
 			f.shellType = shellTypeNotSupported
-			fs.Debugf(f, "Failed to get shell session for shell type detection command: %v", err)
+			fs.DebugfCtx(ctx, f, "Failed to get shell session for shell type detection command: %v", err)
 		} else {
 			var stdout, stderr bytes.Buffer
 			session.SetStdout(&stdout)
 			session.SetStderr(&stderr)
 			shellCmd := "echo ${ShellId}%ComSpec%"
-			fs.Debugf(f, "Running shell type detection remote command: %s", shellCmd)
+			fs.DebugfCtx(ctx, f, "Running shell type detection remote command: %s", shellCmd)
 			err = session.Run(shellCmd)
 			_ = session.Close()
 			f.shellType = defaultShellType
 			if err != nil {
-				fs.Debugf(f, "Remote command failed: %v (stdout=%v) (stderr=%v)", err, bytes.TrimSpace(stdout.Bytes()), bytes.TrimSpace(stderr.Bytes()))
+				fs.DebugfCtx(ctx, f, "Remote command failed: %v (stdout=%v) (stderr=%v)", err, bytes.TrimSpace(stdout.Bytes()), bytes.TrimSpace(stderr.Bytes()))
 			} else {
 				outBytes := stdout.Bytes()
-				fs.Debugf(f, "Remote command result: %s", outBytes)
+				fs.DebugfCtx(ctx, f, "Remote command result: %s", outBytes)
 				outString := string(bytes.TrimSpace(stdout.Bytes()))
 				if outString != "" {
 					if strings.HasPrefix(outString, "Microsoft.PowerShell") { // PowerShell: "Microsoft.PowerShell%ComSpec%"
@@ -1242,7 +1242,7 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 			}
 		}
 		// Save permanently in config to avoid the extra work next time
-		fs.Debugf(f, "Shell type %q detected (set option shell_type to override)", f.shellType)
+		fs.DebugfCtx(ctx, f, "Shell type %q detected (set option shell_type to override)", f.shellType)
 		f.m.Set("shell_type", f.shellType)
 	}
 	// Ensure we have absolute path to root
@@ -1255,17 +1255,17 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 		// on WS FTP, even though it is also based on RealPath).
 		absRoot, err := c.sftpClient.RealPath(f.root)
 		if err != nil {
-			fs.Debugf(f, "Failed to resolve path using RealPath: %v", err)
+			fs.DebugfCtx(ctx, f, "Failed to resolve path using RealPath: %v", err)
 			cwd, err := c.sftpClient.Getwd()
 			if err != nil {
-				fs.Debugf(f, "Failed to read current directory - using relative paths: %v", err)
+				fs.DebugfCtx(ctx, f, "Failed to read current directory - using relative paths: %v", err)
 			} else {
 				f.absRoot = path.Join(cwd, f.root)
-				fs.Debugf(f, "Relative path joined with current directory to get absolute path %q", f.absRoot)
+				fs.DebugfCtx(ctx, f, "Relative path joined with current directory to get absolute path %q", f.absRoot)
 			}
 		} else {
 			f.absRoot = absRoot
-			fs.Debugf(f, "Relative path resolved to %q", f.absRoot)
+			fs.DebugfCtx(ctx, f, "Relative path resolved to %q", f.absRoot)
 		}
 	}
 	f.putSftpConnection(&c, err)
@@ -1295,7 +1295,7 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 	} else {
 		err = nil
 	}
-	fs.Debugf(f, "Using root directory %q", f.absRoot)
+	fs.DebugfCtx(ctx, f, "Using root directory %q", f.absRoot)
 	return f, err
 }
 
@@ -1401,7 +1401,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			info, err = f.stat(ctx, remote)
 			if err != nil {
 				if !os.IsNotExist(err) {
-					fs.Errorf(remote, "stat of non-regular file failed: %v", err)
+					fs.ErrorfCtx(ctx, remote, "stat of non-regular file failed: %v", err)
 				}
 				info = oldInfo
 			}
@@ -1478,7 +1478,7 @@ func (f *Fs) mkdir(ctx context.Context, dirPath string) error {
 	f.putSftpConnection(&c, err)
 	if err != nil {
 		if os.IsExist(err) {
-			fs.Debugf(f, "directory %q exists after Mkdir is attempted", dirPath)
+			fs.DebugfCtx(ctx, f, "directory %q exists after Mkdir is attempted", dirPath)
 			return nil
 		}
 		return fmt.Errorf("mkdir %q failed: %w", dirPath, err)
@@ -1527,7 +1527,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 	err := f.mkParentDir(ctx, remote)
@@ -1545,7 +1545,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		// If haven't got PosixRename then remove source first before renaming
 		err = c.sftpClient.Remove(dstPath)
 		if err != nil && !errors.Is(err, iofs.ErrNotExist) {
-			fs.Errorf(f, "Move: Failed to remove existing file %q: %v", dstPath, err)
+			fs.ErrorfCtx(ctx, f, "Move: Failed to remove existing file %q: %v", dstPath, err)
 		}
 		err = c.sftpClient.Rename(srcPath, dstPath)
 	}
@@ -1567,7 +1567,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 	err := f.mkParentDir(ctx, remote)
@@ -1608,7 +1608,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 	srcPath := path.Join(srcFs.absRoot, srcRemote)
@@ -1675,12 +1675,12 @@ func (f *Fs) run(ctx context.Context, cmd string) ([]byte, error) {
 	session.SetStdout(&stdout)
 	session.SetStderr(&stderr)
 
-	fs.Debugf(f, "Running remote command: %s", cmd)
+	fs.DebugfCtx(ctx, f, "Running remote command: %s", cmd)
 	err = session.Run(cmd)
 	if err != nil {
 		return nil, fmt.Errorf("failed to run %q: %s: %w", cmd, bytes.TrimSpace(stderr.Bytes()), err)
 	}
-	fs.Debugf(f, "Remote command result: %s", bytes.TrimSpace(stdout.Bytes()))
+	fs.DebugfCtx(ctx, f, "Remote command result: %s", bytes.TrimSpace(stdout.Bytes()))
 
 	return stdout.Bytes(), nil
 }
@@ -1858,12 +1858,12 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	}
 	var vfsStats *sftp.StatVFS
 	if _, found := c.sftpClient.HasExtension("statvfs@openssh.com"); found {
-		fs.Debugf(f, "Server has VFS statistics extension")
+		fs.DebugfCtx(ctx, f, "Server has VFS statistics extension")
 		aboutPath := f.absRoot
 		if aboutPath == "" {
 			aboutPath = "/"
 		}
-		fs.Debugf(f, "About path %q", aboutPath)
+		fs.DebugfCtx(ctx, f, "About path %q", aboutPath)
 		vfsStats, err = c.sftpClient.StatVFS(aboutPath)
 	}
 	f.putSftpConnection(&c, err) // Return to pool asap, if running shell command below it will be reused
@@ -1880,21 +1880,21 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 		if errors.Is(err, os.ErrNotExist) {
 			return nil, err
 		}
-		fs.Debugf(f, "Failed to retrieve VFS statistics, trying shell command instead: %v", err)
+		fs.DebugfCtx(ctx, f, "Failed to retrieve VFS statistics, trying shell command instead: %v", err)
 	} else {
-		fs.Debugf(f, "Server does not have the VFS statistics extension, trying shell command instead")
+		fs.DebugfCtx(ctx, f, "Server does not have the VFS statistics extension, trying shell command instead")
 	}
 
 	// Fall back to shell command method if possible
 	if f.shellType == shellTypeNotSupported || f.shellType == "cmd" {
-		fs.Debugf(f, "About shell command is not available for shell type %q (set option shell_type to override)", f.shellType)
+		fs.DebugfCtx(ctx, f, "About shell command is not available for shell type %q (set option shell_type to override)", f.shellType)
 		return nil, fmt.Errorf("not supported with shell type %q", f.shellType)
 	}
 	aboutShellPath := f.remoteShellPath("")
 	if aboutShellPath == "" {
 		aboutShellPath = "/"
 	}
-	fs.Debugf(f, "About path %q", aboutShellPath)
+	fs.DebugfCtx(ctx, f, "About path %q", aboutShellPath)
 	aboutShellPathArg, err := f.quoteOrEscapeShellPath(aboutShellPath)
 	if err != nil {
 		return nil, err
@@ -1902,10 +1902,10 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	// PowerShell
 	if f.shellType == "powershell" {
 		shellCmd := "Get-Item " + aboutShellPathArg + " -ErrorAction Stop|Select-Object -First 1 -ExpandProperty PSDrive|ForEach-Object{\"$($_.Used) $($_.Free)\"}"
-		fs.Debugf(f, "About using shell command for shell type %q", f.shellType)
+		fs.DebugfCtx(ctx, f, "About using shell command for shell type %q", f.shellType)
 		stdout, err := f.run(ctx, shellCmd)
 		if err != nil {
-			fs.Debugf(f, "About shell command for shell type %q failed (set option shell_type to override): %v", f.shellType, err)
+			fs.DebugfCtx(ctx, f, "About shell command for shell type %q failed (set option shell_type to override): %v", f.shellType, err)
 			return nil, fmt.Errorf("powershell command failed: %w", err)
 		}
 		split := strings.Fields(string(stdout))
@@ -1927,10 +1927,10 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	}
 	// Unix/default shell
 	shellCmd := "df -k " + aboutShellPathArg
-	fs.Debugf(f, "About using shell command for shell type %q", f.shellType)
+	fs.DebugfCtx(ctx, f, "About using shell command for shell type %q", f.shellType)
 	stdout, err := f.run(ctx, shellCmd)
 	if err != nil {
-		fs.Debugf(f, "About shell command for shell type %q failed (set option shell_type to override): %v", f.shellType, err)
+		fs.DebugfCtx(ctx, f, "About shell command for shell type %q failed (set option shell_type to override): %v", f.shellType, err)
 		return nil, fmt.Errorf("your remote may not have the required df utility: %w", err)
 	}
 	usageTotal, usageUsed, usageAvail := parseUsage(stdout)
@@ -2032,7 +2032,7 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 		return "", fmt.Errorf("failed to calculate %v hash: %w", r, err)
 	}
 	hashString := parseHash(outBytes)
-	fs.Debugf(o, "Parsed hash: %s", hashString)
+	fs.DebugfCtx(ctx, o, "Parsed hash: %s", hashString)
 	switch r {
 	case hash.MD5:
 		o.md5sum = &hashString
@@ -2298,7 +2298,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			offset, limit = x.Decode(o.Size())
 		default:
 			if option.Mandatory() {
-				fs.Logf(o, "Unsupported mandatory option: %v", option)
+				fs.LogfCtx(ctx, o, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}
@@ -2360,15 +2360,15 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	remove := func() {
 		c, removeErr := o.fs.getSftpConnection(ctx)
 		if removeErr != nil {
-			fs.Debugf(src, "Failed to open new SSH connection for delete: %v", removeErr)
+			fs.DebugfCtx(ctx, src, "Failed to open new SSH connection for delete: %v", removeErr)
 			return
 		}
 		removeErr = c.sftpClient.Remove(o.path())
 		o.fs.putSftpConnection(&c, removeErr)
 		if removeErr != nil {
-			fs.Debugf(src, "Failed to remove: %v", removeErr)
+			fs.DebugfCtx(ctx, src, "Failed to remove: %v", removeErr)
 		} else {
-			fs.Debugf(src, "Removed after failed upload: %v", err)
+			fs.DebugfCtx(ctx, src, "Removed after failed upload: %v", err)
 		}
 	}
 	_, err = file.ReadFrom(&sizeReader{Reader: in, size: src.Size()})
@@ -2398,7 +2398,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		if err == fs.ErrorObjectNotFound {
 			// In the specific case of o.fs.opt.SetModTime == false
 			// if the object wasn't found then don't return an error
-			fs.Debugf(o, "Not found after upload with set_modtime=false so returning best guess")
+			fs.DebugfCtx(ctx, o, "Not found after upload with set_modtime=false so returning best guess")
 			o.modTime = uint32(src.ModTime(ctx).Unix())
 			o.size = src.Size()
 			o.mode = os.FileMode(0666) // regular file

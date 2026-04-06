@@ -605,7 +605,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			partialContent = true
 		default:
 			if option.Mandatory() {
-				fs.Logf(o, "Unsupported mandatory option: %v", option)
+				fs.LogfCtx(ctx, o, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}

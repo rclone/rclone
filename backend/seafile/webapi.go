@@ -235,7 +235,7 @@ func (f *Fs) decryptLibrary(ctx context.Context, libraryID, password string) err
 				return errors.New("incorrect password")
 			}
 			if resp.StatusCode == 409 {
-				fs.Debugf(nil, "library is not encrypted")
+				fs.DebugfCtx(ctx, nil, "library is not encrypted")
 				return nil
 			}
 		}
@@ -599,7 +599,7 @@ func (f *Fs) download(ctx context.Context, downloadLink string, size int64, opti
 			partialContent = true
 		default:
 			if option.Mandatory() {
-				fs.Logf(nil, "Unsupported mandatory option: %v", option)
+				fs.LogfCtx(ctx, nil, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}
@@ -635,7 +635,7 @@ func (f *Fs) download(ctx context.Context, downloadLink string, size int64, opti
 	if partialContent && resp.StatusCode == 200 {
 		// Partial content was requested through a Range header, but a full content was sent instead
 		rangeDownloadNotice.Do(func() {
-			fs.Logf(nil, "%s ignored our request of partial content. This is probably because encrypted libraries are not accepting range requests. Loading this file might be slow!", f.String())
+			fs.LogfCtx(ctx, nil, "%s ignored our request of partial content. This is probably because encrypted libraries are not accepting range requests. Loading this file might be slow!", f.String())
 		})
 		if start > 0 {
 			// We need to read and discard the beginning of the data...
@@ -840,7 +840,7 @@ func (f *Fs) copyFile(ctx context.Context, srcLibraryID, srcPath, dstLibraryID, 
 				return nil, fs.ErrorPermissionDenied
 			}
 			if resp.StatusCode == 404 {
-				fs.Debugf(nil, "Copy: %s", err)
+				fs.DebugfCtx(ctx, nil, "Copy: %s", err)
 				return nil, fs.ErrorObjectNotFound
 			}
 		}
@@ -882,7 +882,7 @@ func (f *Fs) moveFile(ctx context.Context, srcLibraryID, srcPath, dstLibraryID, 
 				return nil, fs.ErrorPermissionDenied
 			}
 			if resp.StatusCode == 404 {
-				fs.Debugf(nil, "Move: %s", err)
+				fs.DebugfCtx(ctx, nil, "Move: %s", err)
 				return nil, fs.ErrorObjectNotFound
 			}
 		}
@@ -922,7 +922,7 @@ func (f *Fs) renameFile(ctx context.Context, libraryID, filePath, newname string
 				return nil, fs.ErrorPermissionDenied
 			}
 			if resp.StatusCode == 404 {
-				fs.Debugf(nil, "Rename: %s", err)
+				fs.DebugfCtx(ctx, nil, "Rename: %s", err)
 				return nil, fs.ErrorObjectNotFound
 			}
 		}

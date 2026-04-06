@@ -177,7 +177,7 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 
 	backlog := ci.MaxBacklog
 	if s.checkFirst {
-		fs.Infof(s.fdst, "Running all checks before starting transfers")
+		fs.InfofCtx(ctx, s.fdst, "Running all checks before starting transfers")
 		backlog = -1
 	}
 	var err error
@@ -195,7 +195,7 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 	}
 	if ci.MaxDuration > 0 {
 		s.maxDurationEndTime = time.Now().Add(time.Duration(ci.MaxDuration))
-		fs.Infof(s.fdst, "Transfer session %v deadline: %s", ci.CutoffMode, s.maxDurationEndTime.Format("2006/01/02 15:04:05"))
+		fs.InfofCtx(ctx, s.fdst, "Transfer session %v deadline: %s", ci.CutoffMode, s.maxDurationEndTime.Format("2006/01/02 15:04:05"))
 	}
 	// If a max session duration has been defined add a deadline
 	// to the main context if cutoff mode is hard. This will cut
@@ -218,7 +218,7 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 	}
 	if s.noTraverse && s.deleteMode != fs.DeleteModeOff {
 		if !fi.HaveFilesFrom() {
-			fs.Errorf(nil, "Ignoring --no-traverse with sync")
+			fs.ErrorfCtx(ctx, nil, "Ignoring --no-traverse with sync")
 		}
 		s.noTraverse = false
 	}
@@ -240,21 +240,21 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 	if s.trackRenames {
 		// Don't track renames for remotes without server-side move support.
 		if !operations.CanServerSideMove(fdst) {
-			fs.Errorf(fdst, "Ignoring --track-renames as the destination does not support server-side move or copy")
+			fs.ErrorfCtx(ctx, fdst, "Ignoring --track-renames as the destination does not support server-side move or copy")
 			s.trackRenames = false
 		}
 		if s.trackRenamesStrategy.hash() && s.commonHash == hash.None {
-			fs.Errorf(fdst, "Ignoring --track-renames as the source and destination do not have a common hash")
+			fs.ErrorfCtx(ctx, fdst, "Ignoring --track-renames as the source and destination do not have a common hash")
 			s.trackRenames = false
 		}
 
 		if s.trackRenamesStrategy.modTime() && s.modifyWindow == fs.ModTimeNotSupported {
-			fs.Errorf(fdst, "Ignoring --track-renames as either the source or destination do not support modtime")
+			fs.ErrorfCtx(ctx, fdst, "Ignoring --track-renames as either the source or destination do not support modtime")
 			s.trackRenames = false
 		}
 
 		if s.deleteMode == fs.DeleteModeOff {
-			fs.Errorf(fdst, "Ignoring --track-renames as it doesn't work with copy or move, only sync")
+			fs.ErrorfCtx(ctx, fdst, "Ignoring --track-renames as it doesn't work with copy or move, only sync")
 			s.trackRenames = false
 		}
 	}
@@ -264,7 +264,7 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 			s.deleteMode = fs.DeleteModeAfter
 		}
 		if s.noTraverse {
-			fs.Errorf(nil, "Ignoring --no-traverse with --track-renames")
+			fs.ErrorfCtx(ctx, nil, "Ignoring --no-traverse with --track-renames")
 			s.noTraverse = false
 		}
 	}
@@ -659,7 +659,7 @@ func (s *syncCopyMove) deleteEmptyDirectories(ctx context.Context, f fs.Fs, entr
 		return nil
 	}
 	if accounting.Stats(ctx).Errored() && !s.ci.IgnoreErrors {
-		fs.Errorf(f, "%v", fs.ErrorNotDeletingDirs)
+		fs.ErrorfCtx(ctx, f, "%v", fs.ErrorNotDeletingDirs)
 		return fs.ErrorNotDeletingDirs
 	}
 
@@ -678,20 +678,20 @@ func (s *syncCopyMove) deleteEmptyDirectories(ctx context.Context, f fs.Fs, entr
 			// TryRmdir only deletes empty directories
 			err := operations.TryRmdir(ctx, f, dir.Remote())
 			if err != nil {
-				fs.Debugf(fs.LogDirName(f, dir.Remote()), "Failed to Rmdir: %v", err)
+				fs.DebugfCtx(ctx, fs.LogDirName(f, dir.Remote()), "Failed to Rmdir: %v", err)
 				errorCount++
 			} else {
 				okCount++
 			}
 		} else {
-			fs.Errorf(f, "Not a directory: %v", entry)
+			fs.ErrorfCtx(ctx, f, "Not a directory: %v", entry)
 		}
 	}
 	if errorCount > 0 {
-		fs.Debugf(f, "failed to delete %d directories", errorCount)
+		fs.DebugfCtx(ctx, f, "failed to delete %d directories", errorCount)
 	}
 	if okCount > 0 {
-		fs.Debugf(f, "deleted %d directories", okCount)
+		fs.DebugfCtx(ctx, f, "deleted %d directories", okCount)
 	}
 	return nil
 }
@@ -1151,7 +1151,7 @@ func (s *syncCopyMove) copyDirMetadata(ctx context.Context, f fs.Fs, dst fs.Dire
 		}
 		s.setDirModTimes = append(s.setDirModTimes, set)
 		s.setDirModTimeMu.Unlock()
-		fs.Debugf(nil, "Added delayed dir = %q, newDst=%v", dir, newDst)
+		fs.DebugfCtx(ctx, nil, "Added delayed dir = %q, newDst=%v", dir, newDst)
 	}
 	s.processError(err)
 	if err != nil {
@@ -1205,7 +1205,7 @@ func (s *syncCopyMove) setDelayedDirModTimes(ctx context.Context) error {
 				}
 				if err != nil {
 					err = fs.CountError(ctx, err)
-					fs.Errorf(item.dir, "Failed to update directory timestamp or metadata: %v", err)
+					fs.ErrorfCtx(ctx, item.dir, "Failed to update directory timestamp or metadata: %v", err)
 					errCount.Add(err)
 				}
 				return nil // don't return errors, just count them
@@ -1287,7 +1287,7 @@ func (s *syncCopyMove) Match(ctx context.Context, dst, src fs.DirEntry) (recurse
 		} else {
 			// FIXME src is file, dst is directory
 			err := errors.New("can't overwrite directory with file")
-			fs.Errorf(dst, "%v", err)
+			fs.ErrorfCtx(ctx, dst, "%v", err)
 			s.processError(err)
 			s.logger(ctx, operations.TransferError, srcX, dstX, err)
 		}
@@ -1309,10 +1309,10 @@ func (s *syncCopyMove) Match(ctx context.Context, dst, src fs.DirEntry) (recurse
 				// Fix each dir before recursing into subdirs and files
 				err := operations.DirMoveCaseInsensitive(s.ctx, s.fdst, dst.Remote(), src.Remote())
 				if err != nil {
-					fs.Errorf(dst, "Error while attempting to rename to %s: %v", src.Remote(), err)
+					fs.ErrorfCtx(ctx, dst, "Error while attempting to rename to %s: %v", src.Remote(), err)
 					s.processError(err)
 				} else {
-					fs.Infof(dst, "Fixed case by renaming to: %s", src.Remote())
+					fs.InfofCtx(ctx, dst, "Fixed case by renaming to: %s", src.Remote())
 				}
 			}
 
@@ -1320,7 +1320,7 @@ func (s *syncCopyMove) Match(ctx context.Context, dst, src fs.DirEntry) (recurse
 		}
 		// FIXME src is dir, dst is file
 		err := errors.New("can't overwrite file with directory")
-		fs.Errorf(dst, "%v", err)
+		fs.ErrorfCtx(ctx, dst, "%v", err)
 		s.processError(err)
 		s.logger(ctx, operations.TransferError, src.(fs.ObjectInfo), dst.(fs.ObjectInfo), err)
 	default:
@@ -1390,7 +1390,7 @@ func Transform(ctx context.Context, fdst fs.Fs, deleteEmptySrcDirs bool, copyEmp
 func MoveDir(ctx context.Context, fdst, fsrc fs.Fs, deleteEmptySrcDirs bool, copyEmptySrcDirs bool) error {
 	fi := filter.GetConfig(ctx)
 	if operations.Same(fdst, fsrc) {
-		fs.Errorf(fdst, "Nothing to do as source and destination are the same")
+		fs.ErrorfCtx(ctx, fdst, "Nothing to do as source and destination are the same")
 		return nil
 	}
 
@@ -1399,17 +1399,17 @@ func MoveDir(ctx context.Context, fdst, fsrc fs.Fs, deleteEmptySrcDirs bool, cop
 		if operations.SkipDestructive(ctx, fdst, "server-side directory move") {
 			return nil
 		}
-		fs.Debugf(fdst, "Using server-side directory move")
+		fs.DebugfCtx(ctx, fdst, "Using server-side directory move")
 		err := fdstDirMove(ctx, fsrc, "", "")
 		switch err {
 		case fs.ErrorCantDirMove, fs.ErrorDirExists:
-			fs.Infof(fdst, "Server side directory move failed - fallback to file moves: %v", err)
+			fs.InfofCtx(ctx, fdst, "Server side directory move failed - fallback to file moves: %v", err)
 		case nil:
-			fs.Infof(fdst, "Server side directory move succeeded")
+			fs.InfofCtx(ctx, fdst, "Server side directory move succeeded")
 			return nil
 		default:
 			err = fs.CountError(ctx, err)
-			fs.Errorf(fdst, "Server side directory move failed: %v", err)
+			fs.ErrorfCtx(ctx, fdst, "Server side directory move failed: %v", err)
 			return err
 		}
 	}

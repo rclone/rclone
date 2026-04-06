@@ -352,7 +352,7 @@ func albumsToEntries(ctx context.Context, f lister, shared bool, prefix string, 
 			if ok {
 				count, err := strconv.ParseInt(album.MediaItemsCount, 10, 64)
 				if err != nil {
-					fs.Debugf(f, "Error reading media count: %v", err)
+					fs.DebugfCtx(ctx, f, "Error reading media count: %v", err)
 				}
 				d.SetID(album.ID).SetItems(count)
 			}

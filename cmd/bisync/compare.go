@@ -74,7 +74,7 @@ func (b *bisyncRun) setCompareDefaults(ctx context.Context) (err error) {
 	}
 	if (ci.CheckSum || b.opt.Compare.Checksum) && b.opt.IgnoreListingChecksum {
 		if (b.opt.Compare.HashType1 == hash.None || b.opt.Compare.HashType2 == hash.None) && !b.opt.Compare.DownloadHash {
-			fs.Logf(nil, Color(terminal.YellowFg, `WARNING: Checksum compare was requested but at least one remote does not support checksums (or checksums are being ignored) and --ignore-listing-checksum is set.
+			fs.LogfCtx(ctx, nil, Color(terminal.YellowFg, `WARNING: Checksum compare was requested but at least one remote does not support checksums (or checksums are being ignored) and --ignore-listing-checksum is set.
 			 Ignoring Checksums globally and falling back to --compare modtime,size for sync. (Use --compare size or --size-only to ignore modtime). Path1 (%s): %s, Path2 (%s): %s`),
 				b.fs1.String(), b.opt.Compare.HashType1.String(), b.fs2.String(), b.opt.Compare.HashType2.String())
 			b.opt.Compare.Modtime = true
@@ -96,7 +96,7 @@ func (b *bisyncRun) setCompareDefaults(ctx context.Context) (err error) {
 
 	notSupported := func(label string, value bool, opt *bool) {
 		if value {
-			fs.Logf(nil, Color(terminal.YellowFg, "WARNING: %s is set but bisync does not support it. It will be ignored."), label)
+			fs.LogfCtx(ctx, nil, Color(terminal.YellowFg, "WARNING: %s is set but bisync does not support it. It will be ignored."), label)
 			*opt = false
 		}
 	}
@@ -201,16 +201,16 @@ func timeDiffers(ctx context.Context, a, b time.Time, fsA, fsB fs.Info) bool {
 		return false
 	}
 	if a.IsZero() || b.IsZero() {
-		fs.Logf(fsA, "Fs supports modtime, but modtime is missing")
+		fs.LogfCtx(ctx, fsA, "Fs supports modtime, but modtime is missing")
 		return false
 	}
 	dt := b.Sub(a)
 	if dt < modifyWindow && dt > -modifyWindow {
-		fs.Debugf(a, "modification time the same (differ by %s, within tolerance %s)", dt, modifyWindow)
+		fs.DebugfCtx(ctx, a, "modification time the same (differ by %s, within tolerance %s)", dt, modifyWindow)
 		return false
 	}
 
-	fs.Debugf(a, "Modification times differ by %s: %v, %v", dt, a, b)
+	fs.DebugfCtx(ctx, a, "Modification times differ by %s: %v, %v", dt, a, b)
 	return true
 }
 
@@ -281,14 +281,14 @@ func (b *bisyncRun) tryDownloadHash(ctx context.Context, o fs.DirEntry, hashVal 
 	}
 	obj, ok := o.(fs.Object)
 	if !ok {
-		fs.Infof(o, "failed to download hash -- not an fs.Object")
+		fs.InfofCtx(ctx, o, "failed to download hash -- not an fs.Object")
 		return hashVal, fs.ErrorObjectNotFound
 	}
 	if o.Size() < 0 {
 		b.downloadHashOpt.downloadHashWarn.Do(func() {
 			fs.Log(o, Color(terminal.YellowFg, "Skipping hash download as checksum not reliable with files of unknown length."))
 		})
-		fs.Debugf(o, "Skipping hash download as checksum not reliable with files of unknown length.")
+		fs.DebugfCtx(ctx, o, "Skipping hash download as checksum not reliable with files of unknown length.")
 		return hashVal, hash.ErrUnsupported
 	}
 
@@ -302,9 +302,9 @@ func (b *bisyncRun) tryDownloadHash(ctx context.Context, o fs.DirEntry, hashVal 
 
 	sum, err := operations.HashSum(ctx, hash.MD5, false, true, obj)
 	if err != nil {
-		fs.Infof(o, "DownloadHash -- hash: %v, err: %v", sum, err)
+		fs.InfofCtx(ctx, o, "DownloadHash -- hash: %v, err: %v", sum, err)
 	} else {
-		fs.Debugf(o, "DownloadHash -- hash: %v", sum)
+		fs.DebugfCtx(ctx, o, "DownloadHash -- hash: %v", sum)
 	}
 	return sum, err
 }

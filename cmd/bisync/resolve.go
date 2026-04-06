@@ -270,7 +270,7 @@ func (b *bisyncRun) numerate(ctx context.Context, startnum int, file, alias stri
 				!b.march.ls1.has(SuffixName(ctx, alias, b.opt.ConflictSuffix2+iStr)) &&
 				!b.march.ls2.has(SuffixName(ctx, file, b.opt.ConflictSuffix1+iStr)) &&
 				!b.march.ls2.has(SuffixName(ctx, alias, b.opt.ConflictSuffix1+iStr)) {
-				fs.Debugf(file, "The first available suffix is: %s", iStr)
+				fs.DebugfCtx(ctx, file, "The first available suffix is: %s", iStr)
 				return i
 			}
 		}
@@ -292,7 +292,7 @@ func (b *bisyncRun) numerateSingle(ctx context.Context, startnum int, file, alia
 			!lsA.has(SuffixName(ctx, alias, suffix+iStr)) &&
 			!lsB.has(SuffixName(ctx, file, suffix+iStr)) &&
 			!lsB.has(SuffixName(ctx, alias, suffix+iStr)) {
-			fs.Debugf(file, "The first available suffix is: %s", iStr)
+			fs.DebugfCtx(ctx, file, "The first available suffix is: %s", iStr)
 			return i
 		}
 	}

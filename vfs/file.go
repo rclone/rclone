@@ -238,7 +238,7 @@ func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 
 	if features := d.Fs().Features(); features.Move == nil && features.Copy == nil {
 		err := fmt.Errorf("Fs %q can't rename files (no server-side Move or Copy)", d.Fs())
-		fs.Errorf(f.Path(), "Dir.Rename error: %v", err)
+		fs.ErrorfCtx(ctx, f.Path(), "Dir.Rename error: %v", err)
 		return err
 	}
 
@@ -269,25 +269,25 @@ func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 			dstOverwritten, _ := d.Fs().NewObject(ctx, newPath)
 			newObject, err = operations.Move(ctx, d.Fs(), dstOverwritten, newPath, o)
 			if err != nil {
-				fs.Errorf(f.Path(), "File.Rename error: %v", err)
+				fs.ErrorfCtx(ctx, f.Path(), "File.Rename error: %v", err)
 				return err
 			}
 
 			// newObject can be nil here for example if --dry-run
 			if newObject == nil {
 				err = errors.New("rename failed: nil object returned")
-				fs.Errorf(f.Path(), "File.Rename %v", err)
+				fs.ErrorfCtx(ctx, f.Path(), "File.Rename %v", err)
 				return err
 			}
 		}
 		// Rename in the cache
 		if d.vfs.cache != nil && d.vfs.cache.Exists(oldPath) {
 			if err := d.vfs.cache.Rename(oldPath, newPath, newObject); err != nil {
-				fs.Infof(f.Path(), "File.Rename failed in Cache: %v", err)
+				fs.InfofCtx(ctx, f.Path(), "File.Rename failed in Cache: %v", err)
 			}
 		}
 		// Update the node with the new details
-		fs.Debugf(f.Path(), "Updating file with %v %p", newObject, f)
+		fs.DebugfCtx(ctx, f.Path(), "Updating file with %v %p", newObject, f)
 		// f.rename(destDir, newObject)
 		f.mu.Lock()
 		if newObject != nil {
@@ -314,7 +314,7 @@ func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 	if writing &&
 		(CacheMode < vfscommon.CacheModeMinimal ||
 			(CacheMode == vfscommon.CacheModeMinimal && !destDir.vfs.cache.Exists(oldPath))) {
-		fs.Debugf(oldPath, "File is currently open, delaying rename %p", f)
+		fs.DebugfCtx(ctx, oldPath, "File is currently open, delaying rename %p", f)
 		f.mu.Lock()
 		f.pendingRenameFun = renameCall
 		f.mu.Unlock()

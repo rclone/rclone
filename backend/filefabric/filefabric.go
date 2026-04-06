@@ -250,7 +250,7 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error, st
 					if retryCode.sleep > 0 {
 						// make this thread only sleep exponentially increasing extra time
 						sleepTime := retryCode.sleep << (try - 1)
-						fs.Debugf(f, "Sleeping for %v to wait for %q error to clear", sleepTime, retryCode.code)
+						fs.DebugfCtx(ctx, f, "Sleeping for %v to wait for %q error to clear", sleepTime, retryCode.code)
 						time.Sleep(sleepTime)
 					}
 					return true, err
@@ -330,15 +330,15 @@ func (f *Fs) getToken(ctx context.Context) (token string, err error) {
 
 	expired := f.tokenExpired.Load() != 0
 	if expired {
-		fs.Debugf(f, "Token invalid - refreshing")
+		fs.DebugfCtx(ctx, f, "Token invalid - refreshing")
 	}
 	if f.token == "" {
-		fs.Debugf(f, "Empty token - refreshing")
+		fs.DebugfCtx(ctx, f, "Empty token - refreshing")
 		expired = true
 	}
 	now := time.Now()
 	if f.tokenExpiry.IsZero() || now.After(f.tokenExpiry) {
-		fs.Debugf(f, "Token expired - refreshing")
+		fs.DebugfCtx(ctx, f, "Token expired - refreshing")
 		expired = true
 	}
 	if !expired {
@@ -463,7 +463,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.TokenExpiry != "" {
 		tokenExpiry, err := time.Parse(time.RFC3339, opt.TokenExpiry)
 		if err != nil {
-			fs.Errorf(nil, "Failed to parse token_expiry option: %v", err)
+			fs.ErrorfCtx(ctx, nil, "Failed to parse token_expiry option: %v", err)
 		} else {
 			f.tokenExpiry = tokenExpiry
 		}
@@ -610,7 +610,7 @@ OUTER:
 					continue
 				}
 			} else {
-				fs.Debugf(f, "Ignoring %q - unknown type %q", item.Name, item.Type)
+				fs.DebugfCtx(ctx, f, "Ignoring %q - unknown type %q", item.Name, item.Type)
 				continue
 			}
 			if item.Trash {
@@ -748,7 +748,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 
 	if check {
 		found, err := f.listAll(ctx, rootID, false, false, func(item *api.Item) bool {
-			fs.Debugf(dir, "Rmdir: contains file: %q", item.Name)
+			fs.DebugfCtx(ctx, dir, "Rmdir: contains file: %q", item.Name)
 			return true
 		})
 		if err != nil {
@@ -795,7 +795,7 @@ func (f *Fs) Precision() time.Duration {
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 	err := srcObj.readMetaData(ctx)
@@ -810,7 +810,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	if !f.canCopyWithName && leaf != path.Base(srcObj.remote) {
-		fs.Debugf(src, "Can't copy - can't change the name of files")
+		fs.DebugfCtx(ctx, src, "Can't copy - can't change the name of files")
 		return nil, fs.ErrorCantCopy
 	}
 
@@ -866,7 +866,7 @@ func (f *Fs) waitForBackgroundTask(ctx context.Context, taskID api.String) (err 
 			break
 		}
 		if len(info.Tasks) > 1 {
-			fs.Errorf(f, "Unexpected number of tasks returned %d", len(info.Tasks))
+			fs.ErrorfCtx(ctx, f, "Unexpected number of tasks returned %d", len(info.Tasks))
 		}
 		task := info.Tasks[0]
 		if task.BtStatus == "c" {
@@ -874,7 +874,7 @@ func (f *Fs) waitForBackgroundTask(ctx context.Context, taskID api.String) (err 
 			break
 		}
 		dt := time.Since(start)
-		fs.Debugf(f, "Waiting for task ID %s: %s: to completed for %v - waited %v already", task.BtID, task.BtTitle, sleepTime, dt)
+		fs.DebugfCtx(ctx, f, "Waiting for task ID %s: %s: to completed for %v - waited %v already", task.BtID, task.BtTitle, sleepTime, dt)
 		time.Sleep(sleepTime)
 	}
 	return nil
@@ -968,7 +968,7 @@ func (f *Fs) move(ctx context.Context, isDir bool, id, oldLeaf, newLeaf, oldDire
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
@@ -1016,7 +1016,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 
@@ -1142,7 +1142,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 func (o *Object) ModTime(ctx context.Context) time.Time {
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.LogfCtx(ctx, o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	return o.modTime
@@ -1257,13 +1257,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		if finalized {
 			return
 		}
-		fs.Debugf(o, "Cancelling upload %s", upload.UploadCode)
+		fs.DebugfCtx(ctx, o, "Cancelling upload %s", upload.UploadCode)
 		var cancel api.EmptyResponse
 		_, fErr := o.fs.rpc(ctx, "doAbortUpload", params{
 			"uploadcode": upload.UploadCode,
 		}, &cancel, nil)
 		if fErr != nil {
-			fs.Errorf(o, "failed to cancel upload: %v", fErr)
+			fs.ErrorfCtx(ctx, o, "failed to cancel upload: %v", fErr)
 		}
 	})()
 
@@ -1320,7 +1320,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// Make sure content type is correct
 	if o.contentType != contentType {
-		fs.Debugf(o, "Correcting mime type from %q to %q", o.contentType, contentType)
+		fs.DebugfCtx(ctx, o, "Correcting mime type from %q to %q", o.contentType, contentType)
 		return o.modifyFile(ctx, [][2]string{
 			{"fi_contenttype", contentType},
 		})

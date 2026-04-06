@@ -305,7 +305,7 @@ func (b *s3Backend) PutObject(
 	objectDir := path.Dir(fp)
 	// _, err = db.fs.Stat(objectDir)
 	// if err == vfs.ENOENT {
-	// 	fs.Errorf(objectDir, "PutObject failed: path not found")
+	// 	fs.ErrorfCtx(ctx, objectDir, "PutObject failed: path not found")
 	// 	return result, gofakes3.KeyNotFound(objectName)
 	// }
 
@@ -362,7 +362,7 @@ func (b *s3Backend) PutObject(
 func (b *s3Backend) DeleteMulti(ctx context.Context, bucketName string, objects ...string) (result gofakes3.MultiDeleteResult, rerr error) {
 	for _, object := range objects {
 		if err := b.deleteObject(ctx, bucketName, object); err != nil {
-			fs.Errorf("serve s3", "delete object failed: %v", err)
+			fs.ErrorfCtx(ctx, "serve s3", "delete object failed: %v", err)
 			result.Error = append(result.Error, gofakes3.ErrorResult{
 				Code:    gofakes3.ErrInternal,
 				Message: gofakes3.ErrInternal.Message(),

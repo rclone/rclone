@@ -40,7 +40,7 @@ func (d *Dir) Attr(ctx context.Context, a *fuse.Attr) (err error) {
 	a.Mtime = modTime
 	a.Ctime = modTime
 	// FIXME include Valid so get some caching?
-	// FIXME fs.Debugf(d.path, "Dir.Attr %+v", a)
+	// FIXME fs.DebugfCtx(ctx, d.path, "Dir.Attr %+v", a)
 	return nil
 }
 
@@ -119,7 +119,7 @@ func (d *Dir) ReadDirAll(ctx context.Context) (dirents []fuse.Dirent, err error)
 	for _, node := range items {
 		name := node.Name()
 		if len(name) > mountlib.MaxLeafSize {
-			fs.Errorf(d, "Name too long (%d bytes) for FUSE, skipping: %s", len(name), name)
+			fs.ErrorfCtx(ctx, d, "Name too long (%d bytes) for FUSE, skipping: %s", len(name), name)
 			continue
 		}
 		var dirent = fuse.Dirent{

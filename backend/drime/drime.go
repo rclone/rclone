@@ -890,7 +890,7 @@ func (f *Fs) moveTo(ctx context.Context, id, srcLeaf, dstLeaf, srcDirectoryID, d
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
@@ -930,7 +930,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 
@@ -1007,7 +1007,7 @@ func (f *Fs) copyTo(ctx context.Context, srcID, srcLeaf, dstLeaf, dstDirectoryID
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Object, err error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 	srcLeaf := path.Base(srcObj.remote)
@@ -1026,7 +1026,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 			if err != nil {
 				return
 			}
-			fs.Debugf(existingObj, "Server side copy: removing existing object after successful copy")
+			fs.DebugfCtx(ctx, existingObj, "Server side copy: removing existing object after successful copy")
 			err = existingObj.Remove(ctx)
 		}()
 	}
@@ -1113,7 +1113,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	// 48 GB.
 	if size == -1 {
 		warnStreamUpload.Do(func() {
-			fs.Logf(f, "Streaming uploads using chunk size %v will have maximum file size of %v",
+			fs.LogfCtx(ctx, f, "Streaming uploads using chunk size %v will have maximum file size of %v",
 				chunkSize, fs.SizeSuffix(int64(chunkSize)*int64(maxUploadParts)))
 		})
 	} else {
@@ -1527,7 +1527,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			if err != nil {
 				return
 			}
-			fs.Debugf(o, "Removing old object on successful upload")
+			fs.DebugfCtx(ctx, o, "Removing old object on successful upload")
 			deleteErr := o.fs.deleteObject(ctx, id)
 			if deleteErr != nil {
 				err = fmt.Errorf("failed to delete existing object: %w", deleteErr)

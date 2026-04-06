@@ -33,7 +33,7 @@ func DirSorted(ctx context.Context, f fs.Fs, includeAll bool, dir string) (entri
 	// called.
 	fi := filter.GetConfig(ctx)
 	if !includeAll && fi.ListContainsExcludeFile(entries) {
-		fs.Debugf(dir, "Excluded")
+		fs.DebugfCtx(ctx, dir, "Excluded")
 		return nil, nil
 	}
 	return filterAndSortDir(ctx, entries, includeAll, dir, fi.IncludeObject, fi.IncludeDirectory(ctx, f))
@@ -79,7 +79,7 @@ func DirSortedFn(ctx context.Context, f fs.Fs, includeAll bool, dir string, call
 		// starting directory, otherwise ListDirSorted should not be
 		// called.
 		if !includeAll && fi.ListContainsExcludeFile(entries) {
-			fs.Debugf(dir, "Excluded")
+			fs.DebugfCtx(ctx, dir, "Excluded")
 			return nil
 		}
 
@@ -115,7 +115,7 @@ func filterDir(ctx context.Context, entries fs.DirEntries, includeAll bool, dir 
 			// Make sure we don't delete excluded files if not required
 			if !includeAll && !IncludeObject(ctx, x) {
 				ok = false
-				fs.Debugf(x, "Excluded")
+				fs.DebugfCtx(ctx, x, "Excluded")
 			}
 		case fs.Directory:
 			if !includeAll {
@@ -125,7 +125,7 @@ func filterDir(ctx context.Context, entries fs.DirEntries, includeAll bool, dir 
 				}
 				if !include {
 					ok = false
-					fs.Debugf(x, "Excluded")
+					fs.DebugfCtx(ctx, x, "Excluded")
 				}
 			}
 		default:
@@ -138,13 +138,13 @@ func filterDir(ctx context.Context, entries fs.DirEntries, includeAll bool, dir 
 			// ignore
 		case !strings.HasPrefix(remote, prefix):
 			ok = false
-			fs.Errorf(entry, "Entry doesn't belong in directory %q (too short) - ignoring", dir)
+			fs.ErrorfCtx(ctx, entry, "Entry doesn't belong in directory %q (too short) - ignoring", dir)
 		case remote == dir:
 			ok = false
-			fs.Errorf(entry, "Entry doesn't belong in directory %q (same as directory) - ignoring", dir)
+			fs.ErrorfCtx(ctx, entry, "Entry doesn't belong in directory %q (same as directory) - ignoring", dir)
 		case strings.ContainsRune(remote[len(prefix):], '/') && !bucket.IsAllSlashes(remote[len(prefix):]):
 			ok = false
-			fs.Errorf(entry, "Entry doesn't belong in directory %q (contains subdir) - ignoring", dir)
+			fs.ErrorfCtx(ctx, entry, "Entry doesn't belong in directory %q (contains subdir) - ignoring", dir)
 		default:
 			// ok
 		}

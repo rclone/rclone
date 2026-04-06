@@ -65,7 +65,7 @@ func newObjectStorageClient(ctx context.Context, opt *Options) (*objectstorage.O
 	}
 	client, err := objectstorage.NewObjectStorageClientWithConfigurationProvider(p)
 	if err != nil {
-		fs.Errorf(opt.Provider, "failed to create object storage client, %v", err)
+		fs.ErrorfCtx(ctx, opt.Provider, "failed to create object storage client, %v", err)
 		return nil, err
 	}
 	if opt.Region != "" {

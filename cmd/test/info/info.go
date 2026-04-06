@@ -184,17 +184,17 @@ func (r *results) WriteJSON() {
 	}
 
 	if f, err := os.Create(writeJSON); err != nil {
-		fs.Errorf(r.f, "Creating JSON file failed: %s", err)
+		fs.ErrorfCtx(r.ctx, r.f, "Creating JSON file failed: %s", err)
 	} else {
 		defer fs.CheckClose(f, &err)
 		enc := json.NewEncoder(f)
 		enc.SetIndent("", "  ")
 		err := enc.Encode(report)
 		if err != nil {
-			fs.Errorf(r.f, "Writing JSON file failed: %s", err)
+			fs.ErrorfCtx(r.ctx, r.f, "Writing JSON file failed: %s", err)
 		}
 	}
-	fs.Infof(r.f, "Wrote JSON file: %s", writeJSON)
+	fs.InfofCtx(r.ctx, r.f, "Wrote JSON file: %s", writeJSON)
 }
 
 // writeFile writes a file with some random contents
@@ -230,7 +230,7 @@ func (r *results) checkUTF8Normalization() {
 }
 
 func (r *results) checkStringPositions(k, s string) {
-	fs.Infof(r.f, "Writing position file 0x%0X", s)
+	fs.InfofCtx(r.ctx, r.f, "Writing position file 0x%0X", s)
 	positionError := internal.PositionNone
 	res := internal.ControlResult{
 		WriteError: make(map[internal.Position]string, 3),
@@ -253,20 +253,20 @@ func (r *results) checkStringPositions(k, s string) {
 		_, writeError := r.writeFile(path)
 		if writeError != nil {
 			res.WriteError[pos] = writeError.Error()
-			fs.Infof(r.f, "Writing %s position file 0x%0X Error: %s", pos.String(), s, writeError)
+			fs.InfofCtx(r.ctx, r.f, "Writing %s position file 0x%0X Error: %s", pos.String(), s, writeError)
 		} else {
-			fs.Infof(r.f, "Writing %s position file 0x%0X OK", pos.String(), s)
+			fs.InfofCtx(r.ctx, r.f, "Writing %s position file 0x%0X OK", pos.String(), s)
 		}
 		obj, getErr := r.f.NewObject(r.ctx, path)
 		if getErr != nil {
 			res.GetError[pos] = getErr.Error()
-			fs.Infof(r.f, "Getting %s position file 0x%0X Error: %s", pos.String(), s, getErr)
+			fs.InfofCtx(r.ctx, r.f, "Getting %s position file 0x%0X Error: %s", pos.String(), s, getErr)
 		} else {
 			if obj.Size() != 50 {
 				res.GetError[pos] = fmt.Sprintf("invalid size %d", obj.Size())
-				fs.Infof(r.f, "Getting %s position file 0x%0X Invalid Size: %d", pos.String(), s, obj.Size())
+				fs.InfofCtx(r.ctx, r.f, "Getting %s position file 0x%0X Invalid Size: %d", pos.String(), s, obj.Size())
 			} else {
-				fs.Infof(r.f, "Getting %s position file 0x%0X OK", pos.String(), s)
+				fs.InfofCtx(r.ctx, r.f, "Getting %s position file 0x%0X OK", pos.String(), s)
 			}
 		}
 		if writeError != nil || getErr != nil {
@@ -282,7 +282,7 @@ func (r *results) checkStringPositions(k, s string) {
 
 // check we can write a file with the control chars
 func (r *results) checkControls() {
-	fs.Infof(r.f, "Trying to create control character file names")
+	fs.InfofCtx(r.ctx, r.f, "Trying to create control character file names")
 	ci := fs.GetConfig(context.Background())
 
 	// Concurrency control
@@ -319,13 +319,13 @@ func (r *results) checkControls() {
 	}
 	wg.Wait()
 	r.checkControlsList()
-	fs.Infof(r.f, "Done trying to create control character file names")
+	fs.InfofCtx(r.ctx, r.f, "Done trying to create control character file names")
 }
 
 func (r *results) checkControlsList() {
 	l, err := r.f.List(context.TODO(), "")
 	if err != nil {
-		fs.Errorf(r.f, "Listing control character file names failed: %s", err)
+		fs.ErrorfCtx(r.ctx, r.f, "Listing control character file names failed: %s", err)
 		return
 	}
 
@@ -344,20 +344,20 @@ func (r *results) checkControlsList() {
 		} else if g := positionRightRe.FindStringSubmatch(path); g != nil {
 			pos, hex, value = internal.PositionRight, g[1], g[2]
 		} else {
-			fs.Infof(r.f, "Unknown path %q", path)
+			fs.InfofCtx(r.ctx, r.f, "Unknown path %q", path)
 			continue
 		}
 		var hexValue []byte
 		for ; len(hex) >= 2; hex = hex[2:] {
 			if b, err := strconv.ParseUint(hex[:2], 16, 8); err != nil {
-				fs.Infof(r.f, "Invalid path %q: %s", path, err)
+				fs.InfofCtx(r.ctx, r.f, "Invalid path %q: %s", path, err)
 				continue
 			} else {
 				hexValue = append(hexValue, byte(b))
 			}
 		}
 		if hex != "" {
-			fs.Infof(r.f, "Invalid path %q", path)
+			fs.InfofCtx(r.ctx, r.f, "Invalid path %q", path)
 			continue
 		}
 
@@ -379,9 +379,9 @@ func (r *results) checkControlsList() {
 	}
 
 	if len(namesMap) > 0 {
-		fs.Infof(r.f, "Found additional control character file names:")
+		fs.InfofCtx(r.ctx, r.f, "Found additional control character file names:")
 		for name := range namesMap {
-			fs.Infof(r.f, "%q", name)
+			fs.InfofCtx(r.ctx, r.f, "%q", name)
 		}
 	}
 }
@@ -413,7 +413,7 @@ func (r *results) findMaxLength(characterLength int) {
 	i := sort.Search(len(name), func(i int) (fail bool) {
 		defer func() {
 			if err := recover(); err != nil {
-				fs.Infof(r.f, "Couldn't write file with name length %d: %v", i, err)
+				fs.InfofCtx(r.ctx, r.f, "Couldn't write file with name length %d: %v", i, err)
 				fail = true
 			}
 		}()
@@ -421,24 +421,24 @@ func (r *results) findMaxLength(characterLength int) {
 		path := string(name[:i])
 		o, err := r.writeFile(path)
 		if err != nil {
-			fs.Infof(r.f, "Couldn't write file with name length %d: %v", i, err)
+			fs.InfofCtx(r.ctx, r.f, "Couldn't write file with name length %d: %v", i, err)
 			return true
 		}
-		fs.Infof(r.f, "Wrote file with name length %d", i)
+		fs.InfofCtx(r.ctx, r.f, "Wrote file with name length %d", i)
 		err = o.Remove(context.Background())
 		if err != nil {
-			fs.Errorf(o, "Failed to remove test file")
+			fs.ErrorfCtx(r.ctx, o, "Failed to remove test file")
 		}
 		return false
 	})
 	r.maxFileLength[characterLength-1] = i - 1
-	fs.Infof(r.f, "Max file length is %d when writing %d byte characters %q", r.maxFileLength[characterLength-1], characterLength, character)
+	fs.InfofCtx(r.ctx, r.f, "Max file length is %d when writing %d byte characters %q", r.maxFileLength[characterLength-1], characterLength, character)
 }
 
 func (r *results) checkStreaming() {
 	putter := r.f.Put
 	if r.f.Features().PutStream != nil {
-		fs.Infof(r.f, "Given remote has specialized streaming function. Using that to test streaming.")
+		fs.InfofCtx(r.ctx, r.f, "Given remote has specialized streaming function. Using that to test streaming.")
 		putter = r.f.Features().PutStream
 	}
 
@@ -450,7 +450,7 @@ func (r *results) checkStreaming() {
 	objIn := object.NewStaticObjectInfo("checkStreamingTest", time.Now(), -1, true, nil, r.f)
 	objR, err := putter(r.ctx, in, objIn)
 	if err != nil {
-		fs.Infof(r.f, "Streamed file failed to upload (%v)", err)
+		fs.InfofCtx(r.ctx, r.f, "Streamed file failed to upload (%v)", err)
 		r.canStream = false
 		return
 	}
@@ -460,18 +460,18 @@ func (r *results) checkStreaming() {
 	for _, Hash := range types {
 		sum, err := objR.Hash(r.ctx, Hash)
 		if err != nil {
-			fs.Infof(r.f, "Streamed file failed when getting hash %v (%v)", Hash, err)
+			fs.InfofCtx(r.ctx, r.f, "Streamed file failed when getting hash %v (%v)", Hash, err)
 			r.canStream = false
 			return
 		}
 		if !hash.Equals(hashes[Hash], sum) {
-			fs.Infof(r.f, "Streamed file has incorrect hash %v: expecting %q got %q", Hash, hashes[Hash], sum)
+			fs.InfofCtx(r.ctx, r.f, "Streamed file has incorrect hash %v: expecting %q got %q", Hash, hashes[Hash], sum)
 			r.canStream = false
 			return
 		}
 	}
 	if int64(len(contents)) != objR.Size() {
-		fs.Infof(r.f, "Streamed file has incorrect file size: expecting %d got %d", len(contents), objR.Size())
+		fs.InfofCtx(r.ctx, r.f, "Streamed file has incorrect file size: expecting %d got %d", len(contents), objR.Size())
 		r.canStream = false
 		return
 	}
@@ -484,9 +484,9 @@ func readInfo(ctx context.Context, f fs.Fs) error {
 		defer func() {
 			err := operations.Purge(ctx, f, "")
 			if err != nil {
-				fs.Errorf(f, "Failed to purge temporary directory: %v", err)
+				fs.ErrorfCtx(ctx, f, "Failed to purge temporary directory: %v", err)
 			} else {
-				fs.Infof(f, "Removed temporary directory for test files: %s", f.Root())
+				fs.InfofCtx(ctx, f, "Removed temporary directory for test files: %s", f.Root())
 			}
 		}()
 	}

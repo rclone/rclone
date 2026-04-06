@@ -268,8 +268,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (_ fs.Fs,
 
 // connect opens a connection to Storj.
 func (f *Fs) connect(ctx context.Context) (project *uplink.Project, err error) {
-	fs.Debugf(f, "connecting...")
-	defer fs.Debugf(f, "connected: %+v", err)
+	fs.DebugfCtx(ctx, f, "connecting...")
+	defer fs.DebugfCtx(ctx, f, "connected: %+v", err)
 
 	cfg := uplink.Config{
 		UserAgent: "rclone",
@@ -334,7 +334,7 @@ func (f *Fs) Features() *fs.Features {
 //
 // This should return fs.ErrDirNotFound if the directory isn't found.
 func (f *Fs) List(ctx context.Context, relative string) (entries fs.DirEntries, err error) {
-	fs.Debugf(f, "ls ./%s", relative)
+	fs.DebugfCtx(ctx, f, "ls ./%s", relative)
 
 	bucketName, bucketPath := f.absolute(relative)
 
@@ -356,7 +356,7 @@ func (f *Fs) List(ctx context.Context, relative string) (entries fs.DirEntries, 
 }
 
 func (f *Fs) listBuckets(ctx context.Context) (entries fs.DirEntries, err error) {
-	fs.Debugf(f, "BKT ls")
+	fs.DebugfCtx(ctx, f, "BKT ls")
 
 	buckets := f.project.ListBuckets(ctx, nil)
 
@@ -393,7 +393,7 @@ func (f *Fs) newDirEntry(relative, prefix string, object *uplink.Object) fs.DirE
 }
 
 func (f *Fs) listObjects(ctx context.Context, relative, bucketName, bucketPath string) (entries fs.DirEntries, err error) {
-	fs.Debugf(f, "OBJ ls ./%s (%q, %q)", relative, bucketName, bucketPath)
+	fs.DebugfCtx(ctx, f, "OBJ ls ./%s (%q, %q)", relative, bucketName, bucketPath)
 
 	opts := &uplink.ListObjectsOptions{
 		Prefix: newPrefix(bucketPath),
@@ -401,7 +401,7 @@ func (f *Fs) listObjects(ctx context.Context, relative, bucketName, bucketPath s
 		System: true,
 		Custom: true,
 	}
-	fs.Debugf(f, "opts %+v", opts)
+	fs.DebugfCtx(ctx, f, "opts %+v", opts)
 
 	objects := f.project.ListObjects(ctx, bucketName, opts)
 
@@ -432,7 +432,7 @@ func (f *Fs) listObjects(ctx context.Context, relative, bucketName, bucketPath s
 // Don't implement this unless you have a more efficient way of listing
 // recursively that doing a directory traversal.
 func (f *Fs) ListR(ctx context.Context, relative string, callback fs.ListRCallback) (err error) {
-	fs.Debugf(f, "ls -R ./%s", relative)
+	fs.DebugfCtx(ctx, f, "ls -R ./%s", relative)
 
 	bucketName, bucketPath := f.absolute(relative)
 
@@ -454,7 +454,7 @@ func (f *Fs) ListR(ctx context.Context, relative string, callback fs.ListRCallba
 }
 
 func (f *Fs) listBucketsR(ctx context.Context, callback fs.ListRCallback) (err error) {
-	fs.Debugf(f, "BKT ls -R")
+	fs.DebugfCtx(ctx, f, "BKT ls -R")
 
 	buckets := f.project.ListBuckets(ctx, nil)
 
@@ -471,7 +471,7 @@ func (f *Fs) listBucketsR(ctx context.Context, callback fs.ListRCallback) (err e
 }
 
 func (f *Fs) listObjectsR(ctx context.Context, relative, bucketName, bucketPath string, callback fs.ListRCallback) (err error) {
-	fs.Debugf(f, "OBJ ls -R ./%s (%q, %q)", relative, bucketName, bucketPath)
+	fs.DebugfCtx(ctx, f, "OBJ ls -R ./%s (%q, %q)", relative, bucketName, bucketPath)
 
 	opts := &uplink.ListObjectsOptions{
 		Prefix:    newPrefix(bucketPath),
@@ -503,13 +503,13 @@ func (f *Fs) listObjectsR(ctx context.Context, relative, bucketName, bucketPath 
 // NewObject finds the Object at relative. If it can't be found it returns the
 // error ErrorObjectNotFound.
 func (f *Fs) NewObject(ctx context.Context, relative string) (_ fs.Object, err error) {
-	fs.Debugf(f, "stat ./%s", relative)
+	fs.DebugfCtx(ctx, f, "stat ./%s", relative)
 
 	bucketName, bucketPath := f.absolute(relative)
 
 	object, err := f.project.StatObject(ctx, bucketName, bucketPath)
 	if err != nil {
-		fs.Debugf(f, "err: %+v", err)
+		fs.DebugfCtx(ctx, f, "err: %+v", err)
 
 		if errors.Is(err, uplink.ErrObjectNotFound) {
 			return nil, fs.ErrorObjectNotFound
@@ -534,12 +534,12 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 }
 
 func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, remote string, options ...fs.OpenOption) (_ fs.Object, err error) {
-	fs.Debugf(f, "cp input ./%s # %+v %d", remote, options, src.Size())
+	fs.DebugfCtx(ctx, f, "cp input ./%s # %+v %d", remote, options, src.Size())
 
 	// Reject options we don't support.
 	for _, option := range options {
 		if option.Mandatory() {
-			fs.Errorf(f, "Unsupported mandatory option: %v", option)
+			fs.ErrorfCtx(ctx, f, "Unsupported mandatory option: %v", option)
 
 			return nil, errors.New("unsupported mandatory option")
 		}
@@ -555,7 +555,7 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, remote st
 		if err != nil {
 			aerr := upload.Abort()
 			if aerr != nil && !errors.Is(aerr, uplink.ErrUploadDone) {
-				fs.Errorf(f, "cp input ./%s %+v: %+v", remote, options, aerr)
+				fs.ErrorfCtx(ctx, f, "cp input ./%s %+v: %+v", remote, options, aerr)
 			}
 		}
 	}()
@@ -580,7 +580,7 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, remote st
 		}
 
 		err = fserrors.RetryError(err)
-		fs.Errorf(f, "cp input ./%s %+v: %+v\n", remote, options, err)
+		fs.ErrorfCtx(ctx, f, "cp input ./%s %+v: %+v\n", remote, options, err)
 
 		return nil, err
 	}
@@ -600,7 +600,7 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, remote st
 			// This produces ErrTooManyRequests here, so we wait 1 second and retry.
 			//
 			// See: https://github.com/storj/uplink/issues/149
-			fs.Debugf(f, "uploading too fast - sleeping for 1 second: %v", err)
+			fs.DebugfCtx(ctx, f, "uploading too fast - sleeping for 1 second: %v", err)
 			time.Sleep(time.Second)
 			err = fserrors.RetryError(err)
 		}
@@ -623,7 +623,7 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 //
 // Shouldn't return an error if it already exists
 func (f *Fs) Mkdir(ctx context.Context, relative string) (err error) {
-	fs.Debugf(f, "mkdir -p ./%s", relative)
+	fs.DebugfCtx(ctx, f, "mkdir -p ./%s", relative)
 
 	bucketName, _ := f.absolute(relative)
 
@@ -637,7 +637,7 @@ func (f *Fs) Mkdir(ctx context.Context, relative string) (err error) {
 // NOTE: Despite code documentation to the contrary, this method should not
 // return an error if the directory does not exist.
 func (f *Fs) Rmdir(ctx context.Context, relative string) (err error) {
-	fs.Debugf(f, "rmdir ./%s", relative)
+	fs.DebugfCtx(ctx, f, "rmdir ./%s", relative)
 
 	bucketName, bucketPath := f.absolute(relative)
 
@@ -721,7 +721,7 @@ func newPrefix(prefix string) string {
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
@@ -761,7 +761,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 
@@ -809,7 +809,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 		return err
 	}
 
-	fs.Infof(directory, "Quick delete is available only for entire bucket. Falling back to list and delete.")
+	fs.InfofCtx(ctx, directory, "Quick delete is available only for entire bucket. Falling back to list and delete.")
 	objects := f.project.ListObjects(ctx, bucket,
 		&uplink.ListObjectsOptions{
 			Prefix:    directory + "/",
@@ -827,7 +827,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 		if err != nil {
 			return err
 		}
-		fs.Infof(objects.Item().Key, "Deleted")
+		fs.InfofCtx(ctx, objects.Item().Key, "Deleted")
 	}
 
 	if empty {

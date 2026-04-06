@@ -187,7 +187,7 @@ var commandDefinition = &cobra.Command{
 		if commonHashes == hash.Set(0) && (isDropbox1 || isDropbox2) {
 			ci := fs.GetConfig(ctx)
 			if !ci.DryRun && !ci.RefreshTimes {
-				fs.Debugf(nil, "Using flag --refresh-times is recommended")
+				fs.DebugfCtx(ctx, nil, "Using flag --refresh-times is recommended")
 			}
 		}
 
@@ -237,7 +237,7 @@ func (opt *Options) applyFilters(ctx context.Context) (context.Context, error) {
 		return ctx, fmt.Errorf("specified filters file does not exist: %s", filtersFile)
 	}
 
-	fs.Infof(nil, "Using filters file %s", filtersFile)
+	fs.InfofCtx(ctx, nil, "Using filters file %s", filtersFile)
 	hasher := md5.New()
 	if _, err := io.Copy(hasher, f); err != nil {
 		_ = f.Close()
@@ -258,9 +258,9 @@ func (opt *Options) applyFilters(ctx context.Context) (context.Context, error) {
 
 	if opt.Resync {
 		if opt.DryRun {
-			fs.Infof(nil, "Skipped storing filters file hash to %s as --dry-run is set", hashFile)
+			fs.InfofCtx(ctx, nil, "Skipped storing filters file hash to %s as --dry-run is set", hashFile)
 		} else {
-			fs.Infof(nil, "Storing filters file hash to %s", hashFile)
+			fs.InfofCtx(ctx, nil, "Storing filters file hash to %s", hashFile)
 			if err := os.WriteFile(hashFile, []byte(gotHash), bilib.PermSecure); err != nil {
 				return ctx, err
 			}

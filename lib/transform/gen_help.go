@@ -88,7 +88,7 @@ func (e example) output() string {
 	ctx := context.Background()
 	err := transform.SetOptions(ctx, e.flags...)
 	if err != nil {
-		fs.Errorf(nil, "error generating help text: %v", err)
+		fs.ErrorfCtx(ctx, nil, "error generating help text: %v", err)
 	}
 	return transform.Path(ctx, e.path, false)
 }

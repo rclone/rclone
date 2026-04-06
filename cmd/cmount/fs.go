@@ -157,7 +157,7 @@ func (fsys *FS) stat(node vfs.Node, stat *fuse.Stat_t) (errc int) {
 	stat.Blksize = 512
 	stat.Blocks = int64(Blocks)
 	stat.Birthtim = t
-	// fs.Debugf(nil, "stat = %+v", *stat)
+	// fs.DebugfCtx(ctx, nil, "stat = %+v", *stat)
 	return 0
 }
 

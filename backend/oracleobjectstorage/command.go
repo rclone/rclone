@@ -149,7 +149,7 @@ otherwise it will be JSON encoded and shown to the user like that
 */
 func (f *Fs) Command(ctx context.Context, commandName string, args []string,
 	opt map[string]string) (result any, err error) {
-	// fs.Debugf(f, "command %v, args: %v, opts:%v", commandName, args, opt)
+	// fs.DebugfCtx(ctx, f, "command %v, args: %v, opts:%v", commandName, args, opt)
 	switch commandName {
 	case operationRename:
 		if len(args) < 2 {
@@ -190,9 +190,9 @@ func (f *Fs) rename(ctx context.Context, remote, newName string) (any, error) {
 	bucketName, objectPath := o.split()
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.Errorf(f, "failed to read object:%v %v ", objectPath, err)
+		fs.ErrorfCtx(ctx, f, "failed to read object:%v %v ", objectPath, err)
 		if strings.HasPrefix(objectPath, bucketName) {
-			fs.Errorf(f, "warn: ensure object path: %v is relative to bucket:%v and doesn't include the bucket name",
+			fs.ErrorfCtx(ctx, f, "warn: ensure object path: %v is relative to bucket:%v and doesn't include the bucket name",
 				objectPath, bucketName)
 		}
 		return nil, fs.ErrorNotAFile
@@ -216,7 +216,7 @@ func (f *Fs) rename(ctx context.Context, remote, newName string) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	fs.Infof(f, "success: renamed object-path: %v to %v", objectPath, newName)
+	fs.InfofCtx(ctx, f, "success: renamed object-path: %v to %v", objectPath, newName)
 	return "renamed successfully", nil
 }
 
@@ -241,7 +241,7 @@ func (f *Fs) listMultipartUploadsAll(ctx context.Context) (uploadsMap map[string
 		uploads, listErr := f.listMultipartUploads(ctx, bucket, "")
 		if listErr != nil {
 			err = listErr
-			fs.Errorf(f, "%v", err)
+			fs.ErrorfCtx(ctx, f, "%v", err)
 		}
 		uploadsMap[bucket] = uploads
 	}
@@ -295,7 +295,7 @@ func (f *Fs) listMultipartUploadsObject(ctx context.Context, bucketName, directo
 			return shouldRetry(ctx, response.HTTPResponse(), err)
 		})
 		if err != nil {
-			// fs.Debugf(f, "failed to list multi part uploads %v", err)
+			// fs.DebugfCtx(ctx, f, "failed to list multi part uploads %v", err)
 			return uploads, err
 		}
 		for index, item := range response.Items {

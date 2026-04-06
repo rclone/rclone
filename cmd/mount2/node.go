@@ -365,7 +365,7 @@ func (n *Node) Create(ctx context.Context, name string, flags uint32, mode uint3
 	}
 	n.fsys.setEntryOut(vfsNode, out)
 	newNode := newNode(n.fsys, vfsNode)
-	fs.Debugf(nil, "attr=%#v", out.Attr)
+	fs.DebugfCtx(ctx, nil, "attr=%#v", out.Attr)
 	newInode := n.NewInode(ctx, newNode, fusefs.StableAttr{Mode: out.Attr.Mode})
 	return newInode, fh, 0, 0
 }
@@ -410,7 +410,7 @@ func (n *Node) Rename(ctx context.Context, oldName string, newParent fusefs.Inod
 	}
 	newParentNode, ok := newParent.(*Node)
 	if !ok {
-		fs.Errorf(n, "newParent was not a *Node")
+		fs.ErrorfCtx(ctx, n, "newParent was not a *Node")
 		return syscall.EIO
 	}
 	newDir, ok := newParentNode.node.(*vfs.Dir)

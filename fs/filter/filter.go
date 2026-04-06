@@ -567,7 +567,7 @@ func (f *Filter) IncludeObject(ctx context.Context, o fs.Object) bool {
 		var err error
 		metadata, err = fs.GetMetadata(ctx, o)
 		if err != nil {
-			fs.Errorf(o, "Failed to read metadata: %v", err)
+			fs.ErrorfCtx(ctx, o, "Failed to read metadata: %v", err)
 			metadata = nil
 		}
 

@@ -280,7 +280,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		if err != nil {
 			return nil, fmt.Errorf("couldn't save OAuth token: %w", err)
 		}
-		fs.Logf(nil, "Automatically upgraded OAuth config.")
+		fs.LogfCtx(ctx, nil, "Automatically upgraded OAuth config.")
 	}
 	oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
 	if err != nil {
@@ -337,7 +337,7 @@ func (f *Fs) itemToDirEntry(ctx context.Context, remote string, object *api.Reso
 		}
 		return o, nil
 	default:
-		fs.Debugf(f, "Unknown resource type %q", object.ResourceType)
+		fs.DebugfCtx(ctx, f, "Unknown resource type %q", object.ResourceType)
 	}
 	return nil, nil
 }
@@ -715,7 +715,7 @@ func (f *Fs) copyOrMove(ctx context.Context, method, src, dst string, overwrite 
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Object, err error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 
@@ -754,7 +754,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
@@ -783,7 +783,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 	srcPath := path.Join(srcFs.diskRoot, srcRemote)
@@ -793,7 +793,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 	// Refuse to move to or from the root
 	if srcPath == "disk:/" || dstPath == "disk:/" {
-		fs.Debugf(src, "DirMove error: Can't move root")
+		fs.DebugfCtx(ctx, src, "DirMove error: Can't move root")
 		return errors.New("can't move root directory")
 	}
 
@@ -985,7 +985,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 func (o *Object) ModTime(ctx context.Context) time.Time {
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.LogfCtx(ctx, o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	return o.modTime

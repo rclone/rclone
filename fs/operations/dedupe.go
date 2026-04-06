@@ -33,11 +33,11 @@ outer:
 		for ; err != fs.ErrorObjectNotFound; suffix++ {
 			if err != nil {
 				err = fs.CountError(ctx, err)
-				fs.Errorf(o, "Failed to check for existing object: %v", err)
+				fs.ErrorfCtx(ctx, o, "Failed to check for existing object: %v", err)
 				continue outer
 			}
 			if suffix > 100 {
-				fs.Errorf(o, "Could not find an available new name")
+				fs.ErrorfCtx(ctx, o, "Could not find an available new name")
 				continue outer
 			}
 			newName = fmt.Sprintf("%s-%d%s", base, i+suffix, ext)
@@ -47,10 +47,10 @@ outer:
 			newObj, err := doMove(ctx, o, newName)
 			if err != nil {
 				err = fs.CountError(ctx, err)
-				fs.Errorf(o, "Failed to rename: %v", err)
+				fs.ErrorfCtx(ctx, o, "Failed to rename: %v", err)
 				continue
 			}
-			fs.Infof(newObj, "renamed from: %v", o)
+			fs.InfofCtx(ctx, newObj, "renamed from: %v", o)
 		}
 	}
 }
@@ -68,7 +68,7 @@ func dedupeDeleteAllButOne(ctx context.Context, keep int, remote string, objs []
 		}
 	}
 	if count > 0 {
-		fs.Logf(remote, "Deleted %d extra copies", count)
+		fs.LogfCtx(ctx, remote, "Deleted %d extra copies", count)
 	}
 }
 
@@ -94,7 +94,7 @@ func dedupeDeleteIdentical(ctx context.Context, ht hash.Type, remote string, obj
 				if IDs[ID] <= 1 {
 					newObjs = append(newObjs, o)
 				} else {
-					fs.Logf(o, "Ignoring as it appears %d times in the listing and deleting would lead to data loss", IDs[ID])
+					fs.LogfCtx(ctx, o, "Ignoring as it appears %d times in the listing and deleting would lead to data loss", IDs[ID])
 				}
 			}
 		}
@@ -124,7 +124,7 @@ func dedupeDeleteIdentical(ctx context.Context, ht hash.Type, remote string, obj
 	for ID, dupes := range dupesByID {
 		remainingObjs = append(remainingObjs, dupes[0])
 		if len(dupes) > 1 {
-			fs.Logf(remote, "Deleting %d/%d identical duplicates (%s)", len(dupes)-1, len(dupes), ID)
+			fs.LogfCtx(ctx, remote, "Deleting %d/%d identical duplicates (%s)", len(dupes)-1, len(dupes), ID)
 			for _, o := range dupes[1:] {
 				err := DeleteFile(ctx, o)
 				if err != nil {
@@ -371,11 +371,11 @@ func dedupeMergeDuplicateDirs(ctx context.Context, f fs.Fs, duplicateDirs [][]*d
 		}
 		fsDirs[largestIdx], fsDirs[0] = fsDirs[0], fsDirs[largestIdx]
 
-		fs.Infof(fsDirs[0], "Merging contents of duplicate directories")
+		fs.InfofCtx(ctx, fsDirs[0], "Merging contents of duplicate directories")
 		err := mergeDirs(ctx, fsDirs)
 		if err != nil {
 			err = fs.CountError(ctx, err)
-			fs.Errorf(nil, "merge duplicate dirs: %v", err)
+			fs.ErrorfCtx(ctx, nil, "merge duplicate dirs: %v", err)
 		}
 	}
 	dirCacheFlush()
@@ -410,7 +410,7 @@ func Deduplicate(ctx context.Context, f fs.Fs, mode DeduplicateMode, byHash bool
 		}
 		what = ht.String() + " hashes"
 	}
-	fs.Infof(f, "Looking for duplicate %s using %v mode.", what, mode)
+	fs.InfofCtx(ctx, f, "Looking for duplicate %s using %v mode.", what, mode)
 
 	// Find duplicate directories first and fix them
 	if !byHash {
@@ -445,7 +445,7 @@ func Deduplicate(ctx context.Context, f fs.Fs, mode DeduplicateMode, byHash bool
 			if byHash {
 				remote, err = o.Hash(ctx, ht)
 				if err != nil {
-					fs.Errorf(o, "Failed to hash: %v", err)
+					fs.ErrorfCtx(ctx, o, "Failed to hash: %v", err)
 					remote = ""
 				}
 			} else {
@@ -465,11 +465,11 @@ func Deduplicate(ctx context.Context, f fs.Fs, mode DeduplicateMode, byHash bool
 		if len(objs) <= 1 {
 			continue
 		}
-		fs.Logf(remote, "Found %d files with duplicate %s", len(objs), what)
+		fs.LogfCtx(ctx, remote, "Found %d files with duplicate %s", len(objs), what)
 		if !byHash && mode != DeduplicateList {
 			objs = dedupeDeleteIdentical(ctx, ht, remote, objs)
 			if len(objs) <= 1 {
-				fs.Logf(remote, "All duplicates removed")
+				fs.LogfCtx(ctx, remote, "All duplicates removed")
 				continue
 			}
 		}
@@ -495,7 +495,7 @@ func Deduplicate(ctx context.Context, f fs.Fs, mode DeduplicateMode, byHash bool
 			sortSmallestFirst(objs)
 			dedupeDeleteAllButOne(ctx, 0, remote, objs)
 		case DeduplicateSkip:
-			fs.Logf(remote, "Skipping %d files with duplicate %s", len(objs), what)
+			fs.LogfCtx(ctx, remote, "Skipping %d files with duplicate %s", len(objs), what)
 		case DeduplicateList:
 			dedupeList(ctx, f, ht, remote, objs, byHash)
 		default:

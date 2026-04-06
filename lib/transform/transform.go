@@ -49,7 +49,7 @@ func Path(ctx context.Context, s string, isDir bool) string {
 	opt, err := getOptions(ctx)
 	if err != nil {
 		err = fs.CountError(ctx, err)
-		fs.Errorf(s, "Failed to parse transform flags: %v", err)
+		fs.ErrorfCtx(ctx, s, "Failed to parse transform flags: %v", err)
 	}
 	for _, t := range opt {
 		if isDir && t.tag == file {
@@ -63,15 +63,15 @@ func Path(ctx context.Context, s string, isDir bool) string {
 		}
 		if err != nil {
 			err = fs.CountError(ctx, fserrors.NoRetryError(err))
-			fs.Errorf(s, "Failed to transform: %v", err)
+			fs.ErrorfCtx(ctx, s, "Failed to transform: %v", err)
 		}
 	}
 	if old != s {
-		fs.Debugf(old, "transformed to: %v", s)
+		fs.DebugfCtx(ctx, old, "transformed to: %v", s)
 	}
 	if strings.Count(old, "/") != strings.Count(s, "/") {
 		err = fs.CountError(ctx, fserrors.NoRetryError(fmt.Errorf("number of path segments must match: %v (%v), %v (%v)", old, strings.Count(old, "/"), s, strings.Count(s, "/"))))
-		fs.Errorf(old, "%v", err)
+		fs.ErrorfCtx(ctx, old, "%v", err)
 		return old
 	}
 	return s

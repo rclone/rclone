@@ -230,7 +230,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, fmt.Errorf("failed to create session: %w", err)
 	}
-	fs.Debugf(nil, "Starting OpenDrive session with ID: %s", f.session.SessionID)
+	fs.DebugfCtx(ctx, nil, "Starting OpenDrive session with ID: %s", f.session.SessionID)
 
 	f.features = (&fs.Features{
 		CaseInsensitive:         true,
@@ -369,7 +369,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	// fs.Debugf(nil, "Copy(%v)", remote)
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 	err := srcObj.readMetaData(ctx)
@@ -459,7 +459,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	// fs.Debugf(nil, "Move(%v)", remote)
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 	err := srcObj.readMetaData(ctx)
@@ -475,7 +475,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	// move_copy will silently truncate new filenames
 	if len(leaf) > 255 {
-		fs.Debugf(src, "Can't move file: name (%q) exceeds 255 char", leaf)
+		fs.DebugfCtx(ctx, src, "Can't move file: name (%q) exceeds 255 char", leaf)
 		return nil, fs.ErrorFileNameTooLong
 	}
 
@@ -499,7 +499,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 	if srcDirID == directoryID {
-		fs.Debugf(src, "same parent dir (%v) - using file/rename instead of move_copy for %s", directoryID, remote)
+		fs.DebugfCtx(ctx, src, "same parent dir (%v) - using file/rename instead of move_copy for %s", directoryID, remote)
 		renameFileData := renameFile{
 			SessionID:   f.session.SessionID,
 			FileID:      srcObj.id,
@@ -538,7 +538,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) (err error) {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 
@@ -549,7 +549,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 	// move_copy will silently truncate new filenames
 	if len(dstLeaf) > 255 {
-		fs.Debugf(src, "Can't move folder: name (%q) exceeds 255 char", dstLeaf)
+		fs.DebugfCtx(ctx, src, "Can't move folder: name (%q) exceeds 255 char", dstLeaf)
 		return fs.ErrorFileNameTooLong
 	}
 
@@ -568,7 +568,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 	// use /folder/rename.json if moving within the same parent directory
 	if srcDirectoryID == dstDirectoryID {
-		fs.Debugf(dstRemote, "same parent dir (%v) - using folder/rename instead of move_copy", srcDirectoryID)
+		fs.DebugfCtx(ctx, dstRemote, "same parent dir (%v) - using folder/rename instead of move_copy", srcDirectoryID)
 		renameFolderData := renameFolder{
 			SessionID:  f.session.SessionID,
 			FolderID:   srcID,
@@ -586,7 +586,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		fs.Debugf(src, "DirMove error %v", err)
+		fs.DebugfCtx(ctx, src, "DirMove error %v", err)
 		return err
 	}
 
@@ -1044,7 +1044,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	for remainingBytes > 0 {
 		currentChunkSize := min(int64(o.fs.opt.ChunkSize), remainingBytes)
 		remainingBytes -= currentChunkSize
-		fs.Debugf(o, "Uploading chunk %d, size=%d, remain=%d", chunkCounter, currentChunkSize, remainingBytes)
+		fs.DebugfCtx(ctx, o, "Uploading chunk %d, size=%d, remain=%d", chunkCounter, currentChunkSize, remainingBytes)
 
 		chunk := readers.NewRepeatableLimitReaderBuffer(in, buf, currentChunkSize)
 		var reply uploadFileChunkReply
