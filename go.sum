@@ -467,6 +467,8 @@ github.com/klauspost/crc32 v1.3.0 h1:sSmTt3gUt81RP655XGZPElI0PelVTZ6YwCRnPSupoFM
 github.com/klauspost/crc32 v1.3.0/go.mod h1:D7kQaZhnkX/Y0tstFGf8VUzv2UofNGqCjnC3zdHB0Hw=
 github.com/klauspost/pgzip v1.2.6 h1:8RXeL5crjEUFnR2/Sn6GJNWtSQ3Dk8pq4CL3jvdDyjU=
 github.com/klauspost/pgzip v1.2.6/go.mod h1:Ch1tH69qFZu15pkjo5kYi6mth2Zzwzt50oCQKQE9RUs=
+github.com/klauspost/reedsolomon v1.13.3 h1:01GwnO2xoCSaM0ShP4qwl+FsHg3csFShC6Tu/RS1ji0=
+github.com/klauspost/reedsolomon v1.13.3/go.mod h1:yjqqjgMTQkBUHSG97/rm4zipffCNbCiZcB3kTqr++sQ=
 github.com/koofr/go-httpclient v0.0.0-20240520111329-e20f8f203988 h1:CjEMN21Xkr9+zwPmZPaJJw+apzVbjGL5uK/6g9Q2jGU=
 github.com/koofr/go-httpclient v0.0.0-20240520111329-e20f8f203988/go.mod h1:/agobYum3uo/8V6yPVnq+R82pyVGCeuWW5arT4Txn8A=
 github.com/koofr/go-koofrclient v0.0.0-20221207135200-cbd7fc9ad6a6 h1:FHVoZMOVRA+6/y4yRlbiR3WvsrOcKBd/f64H7YiWR2U=

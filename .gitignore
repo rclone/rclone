@@ -2,6 +2,7 @@
 _junk/
 rclone
 rclone.exe
+/rsverify
 build
 /docs/public/
 /docs/.hugo_build.lock
@@ -20,3 +21,14 @@ __pycache__
 .DS_Store
 resource_windows_*.syso
 .devcontainer
+backend/raid3/test/_data
+backend/raid3/test/compare_raid3_env.local.sh
+backend/raid3/test/tests.config
+backend/rs/test/_data
+backend/rs/test/compare_rs_env.local.sh
+backend/rs/test/tests.config
+backend/rs/_local/
+backend/raid3/test/_worktree_*
+backend/raid3/_analysis
+backend/raid3/_analysis.bak
+.cursor/
