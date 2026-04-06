@@ -81,6 +81,10 @@ func (o *Object) getXattr() (metadata fs.Metadata, err error) {
 		}
 		metadata[k] = string(v)
 	}
+	// Return nil if all xattrs were filtered out (e.g. com.apple.provenance on macOS)
+	if len(metadata) == 0 {
+		return nil, nil
+	}
 	return metadata, nil
 }
 
