@@ -1805,6 +1805,23 @@ They are added to the log line in the order above.
 
 The default log format is `"date,time"`.
 
+### --log-prefix string
+
+Sets a static string that is prepended to every log line, after the
+date/time and before the log level. This is useful when running multiple
+rclone instances simultaneously and you need to distinguish which instance
+produced a given log message, e.g.
+
+```
+rclone sync src: dst: --log-prefix "[worker-1]"
+```
+
+In JSON log mode (`--use-json-log`) the prefix is emitted as the
+`log_prefix` field rather than being prepended inline.
+
+The prefix can also be changed at runtime via the [RC
+API](/rc/#options-set) by setting the `log/log_prefix` option.
+
 ### --log-level LogLevel
 
 This sets the log level for rclone.  The default log level is `NOTICE`.
@@ -1877,6 +1894,10 @@ here for clarity.
 Completed data transfer logs will have extra `size` information. Logs
 which are about a particular object will have `object` and
 `objectType` fields also.
+
+When `--log-prefix` is set, a `log_prefix` field is included in each
+JSON log object. When a per-RPC log tag has been attached via the Go
+`fs.WithLogTag(ctx, tag)` API, a `log_tag` field is included as well.
 
 ```json
 {

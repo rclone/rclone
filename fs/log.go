@@ -143,8 +143,16 @@ type logTagContextKeyType struct{}
 var logTagContextKey = logTagContextKeyType{}
 
 // WithLogTag returns a new context carrying the given log tag string.
-// The tag will be prepended to every log line emitted via the context-aware
-// logging functions (DebugfCtx, ErrorfCtx, etc.) and visible in OutputHandler.
+//
+// The tag is prepended to every log line produced by the context-aware
+// logging functions (DebugfCtx, InfofCtx, LogfCtx, ErrorfCtx, LogPrintCtx,
+// LogPrintfCtx, LogLevelPrintCtx, LogLevelPrintfCtx).  In JSON log mode the
+// tag is emitted as the "log_tag" field.
+//
+// Typical usage:
+//
+//	ctx = fs.WithLogTag(ctx, "[jobID=42]")
+//	fs.InfofCtx(ctx, nil, "starting transfer")
 func WithLogTag(ctx context.Context, tag string) context.Context {
 	return context.WithValue(ctx, logTagContextKey, tag)
 }

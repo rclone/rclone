@@ -372,3 +372,107 @@ func TestHandleFormatFlags(t *testing.T) {
 		}
 	}
 }
+
+// Test that setPrefix/getPrefix work and are reflected in text log output.
+func TestPrefixInTextLog(t *testing.T) {
+	buf := &bytes.Buffer{}
+	h := NewOutputHandler(buf, nil, logFormatDate|logFormatTime)
+	h.setPrefix("[myprefix]")
+	assert.Equal(t, "[myprefix]", h.getPrefix())
+
+	r := slog.NewRecord(t0, slog.LevelInfo, "hello prefix", 0)
+	require.NoError(t, h.Handle(context.Background(), r))
+	assert.Contains(t, buf.String(), "[myprefix]")
+	assert.Contains(t, buf.String(), "hello prefix")
+}
+
+// Test that setPrefix is reflected in JSON log output as log_prefix field.
+func TestPrefixInJSONLog(t *testing.T) {
+	buf := &bytes.Buffer{}
+	h := NewOutputHandler(buf, nil, logFormatJSON)
+	h.setPrefix("[jsonprefix]")
+
+	r := slog.NewRecord(t0, slog.LevelInfo, "json prefix test", 0)
+	require.NoError(t, h.Handle(context.Background(), r))
+	assert.Contains(t, buf.String(), `"log_prefix":"[jsonprefix]"`)
+}
+
+// Test that a log tag from context appears in text log output.
+func TestLogTagInTextLog(t *testing.T) {
+	buf := &bytes.Buffer{}
+	h := NewOutputHandler(buf, nil, logFormatDate|logFormatTime)
+
+	ctx := fs.WithLogTag(context.Background(), "[req-42]")
+	assert.Equal(t, "[req-42]", fs.LogTagFromContext(ctx))
+
+	r := slog.NewRecord(t0, slog.LevelInfo, "tagged message", 0)
+	require.NoError(t, h.Handle(ctx, r))
+	assert.Contains(t, buf.String(), "[req-42]")
+	assert.Contains(t, buf.String(), "tagged message")
+}
+
+// Test that a log tag from context appears in JSON log output as log_tag field.
+func TestLogTagInJSONLog(t *testing.T) {
+	buf := &bytes.Buffer{}
+	h := NewOutputHandler(buf, nil, logFormatJSON)
+
+	ctx := fs.WithLogTag(context.Background(), "[req-99]")
+
+	r := slog.NewRecord(t0, slog.LevelInfo, "json tag test", 0)
+	require.NoError(t, h.Handle(ctx, r))
+	assert.Contains(t, buf.String(), `"log_tag":"[req-99]"`)
+}
+
+// Test that prefix and log tag are both emitted together in text mode.
+func TestPrefixAndTagTogetherInTextLog(t *testing.T) {
+	buf := &bytes.Buffer{}
+	h := NewOutputHandler(buf, nil, 0)
+	h.setPrefix("[inst-A]")
+
+	ctx := fs.WithLogTag(context.Background(), "[op-123]")
+	r := slog.NewRecord(t0, slog.LevelInfo, "combined", 0)
+	require.NoError(t, h.Handle(ctx, r))
+	line := buf.String()
+	assert.Contains(t, line, "[inst-A]")
+	assert.Contains(t, line, "[op-123]")
+	assert.Contains(t, line, "combined")
+	// prefix must appear before tag
+	assert.Less(t, strings.Index(line, "[inst-A]"), strings.Index(line, "[op-123]"))
+}
+
+// Test that no context tag produces no log_tag field in JSON.
+func TestNoLogTagProducesNoField(t *testing.T) {
+	buf := &bytes.Buffer{}
+	h := NewOutputHandler(buf, nil, logFormatJSON)
+
+	r := slog.NewRecord(t0, slog.LevelInfo, "no tag", 0)
+	require.NoError(t, h.Handle(context.Background(), r))
+	assert.NotContains(t, buf.String(), "log_tag")
+}
+
+// Test setPrefix/getPrefix thread safety under concurrent access.
+func TestSetPrefixConcurrency(t *testing.T) {
+	h := NewOutputHandler(io.Discard, nil, logFormatDate|logFormatTime)
+	const goroutines = 8
+	const iterations = 200
+	var wg sync.WaitGroup
+	for i := 0; i < goroutines; i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			for j := 0; j < iterations; j++ {
+				h.setPrefix(fmt.Sprintf("[worker-%d]", id))
+				_ = h.getPrefix()
+				r := slog.NewRecord(t0, slog.LevelInfo, "concurrent prefix", 0)
+				_ = h.Handle(context.Background(), r)
+			}
+		}(i)
+	}
+	done := make(chan struct{})
+	go func() { wg.Wait(); close(done) }()
+	select {
+	case <-done:
+	case <-time.After(15 * time.Second):
+		t.Fatal("timeout — probable deadlock in setPrefix/getPrefix")
+	}
+}

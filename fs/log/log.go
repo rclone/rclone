@@ -266,6 +266,9 @@ func InitLogging() {
 	// Set the format to the configured format
 	Handler.setFormat(Opt.Format)
 
+	// Set the log prefix to the configured prefix
+	Handler.setPrefix(Opt.Prefix)
+
 	// Syslog output
 	if Opt.UseSyslog {
 		if Opt.File != "" {
