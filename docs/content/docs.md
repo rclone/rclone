@@ -1812,7 +1812,7 @@ date/time and before the log level. This is useful when running multiple
 rclone instances simultaneously and you need to distinguish which instance
 produced a given log message, e.g.
 
-```
+```console
 rclone sync src: dst: --log-prefix "[worker-1]"
 ```
 
