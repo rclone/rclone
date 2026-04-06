@@ -1,0 +1,1200 @@
+// Package movistarcloud implements the Movistar Cloud backend.
+package movistarcloud
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"path"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/rclone/rclone/backend/movistarcloud/api"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/fshttp"
+	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/list"
+	"github.com/rclone/rclone/lib/dircache"
+	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/rest"
+)
+
+const (
+	minSleep      = 100 * time.Millisecond
+	maxSleep      = 2 * time.Second
+	decayConstant = 2 // bigger for slower decay, exponential
+	rootURL       = "https://micloud.movistar.es"
+	uploadURL     = "https://upload.micloud.movistar.es"
+	defaultLimit  = 200
+)
+
+// Register with Fs
+func init() {
+	fs.Register(&fs.RegInfo{
+		Name:        "movistarcloud",
+		Description: "Movistar Cloud",
+		NewFs:       NewFs,
+		Config:      Config,
+		Options: []fs.Option{{
+			Name:      configPhoneNumber,
+			Help:      "Phone number associated with your Movistar Cloud account (e.g. 34612345678).",
+			Required:  true,
+			Sensitive: true,
+		}, {
+			Name:      configAccessToken,
+			Help:      "Access token for Movistar Cloud (set automatically during config).",
+			Advanced:  true,
+			Sensitive: true,
+		}, {
+			Name:      configJSessionID,
+			Help:      "Session ID for Movistar Cloud (set automatically during config).",
+			Advanced:  true,
+			Sensitive: true,
+		}, {
+			Name:     "list_limit",
+			Help:     "Maximum number of items to list per request.",
+			Default:  defaultLimit,
+			Advanced: true,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			Default: (encoder.Display |
+				encoder.EncodeBackSlash |
+				encoder.EncodeInvalidUtf8 |
+				encoder.EncodeLeftSpace |
+				encoder.EncodeRightSpace |
+				encoder.EncodeLeftPeriod |
+				encoder.EncodeRightPeriod |
+				encoder.EncodeLeftTilde |
+				encoder.EncodeLeftCrLfHtVt |
+				encoder.EncodeRightCrLfHtVt |
+				encoder.EncodeHashPercent),
+		}},
+	})
+}
+
+// Options defines the configuration for this backend
+type Options struct {
+	PhoneNumber string               `config:"phone_number"`
+	AccessToken string               `config:"access_token"`
+	JSessionID  string               `config:"jsessionid"`
+	ListLimit   int                  `config:"list_limit"`
+	Enc         encoder.MultiEncoder `config:"encoding"`
+}
+
+// Fs represents a remote Movistar Cloud filesystem
+type Fs struct {
+	name       string             // name of this remote
+	root       string             // the path we are working on
+	opt        Options            // parsed options
+	features   *fs.Features       // optional features
+	srv        *rest.Client       // the connection to the main server
+	upSrv      *rest.Client       // the connection to the upload server
+	dirCache   *dircache.DirCache // Map of directory path to directory id
+	pacer      *fs.Pacer          // pacer for API calls
+	m          configmap.Mapper   // config mapper for persisting token refreshes
+	session    *api.Session       // current auth session
+	sessionMu  sync.Mutex         // protects session and header updates
+	httpClient *http.Client       // http client for token refresh
+}
+
+// Object describes a Movistar Cloud file object
+type Object struct {
+	fs          *Fs       // what this object is part of
+	remote      string    // The remote path
+	hasMetaData bool      // whether info below has been set
+	size        int64     // size of the object
+	modTime     time.Time // modification time of the object
+	id          string    // ID of the object (string representation of int64)
+}
+
+// ------------------------------------------------------------
+
+// Name of the remote (as passed into NewFs)
+func (f *Fs) Name() string {
+	return f.name
+}
+
+// Root of the remote (as passed into NewFs)
+func (f *Fs) Root() string {
+	return f.root
+}
+
+// String converts this Fs to a string
+func (f *Fs) String() string {
+	return fmt.Sprintf("Movistar Cloud root '%s'", f.root)
+}
+
+// Features returns the optional features of this Fs
+func (f *Fs) Features() *fs.Features {
+	return f.features
+}
+
+// Hashes returns the supported hash sets.
+func (f *Fs) Hashes() hash.Set {
+	return hash.Set(hash.None)
+}
+
+// Precision return the precision of this Fs
+func (f *Fs) Precision() time.Duration {
+	return time.Second
+}
+
+// parsePath parses a path string
+func parsePath(path string) (root string) {
+	root = strings.Trim(path, "/")
+	return
+}
+
+// retryErrorCodes is a slice of error codes that we will retry
+var retryErrorCodes = []int{
+	429, // Too Many Requests
+	500, // Internal Server Error
+	502, // Bad Gateway
+	503, // Service Unavailable
+	504, // Gateway Timeout
+}
+
+// shouldRetry returns a boolean as to whether this resp and err
+// deserve to be retried. It returns the err as a convenience.
+// On 401 responses, it attempts to refresh the session token.
+func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
+	if fserrors.ContextError(ctx, &err) {
+		return false, err
+	}
+	if resp != nil && resp.StatusCode == 401 && f.refreshAndRetry(resp) {
+		return true, err
+	}
+	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
+}
+
+// errorHandler parses a non 2xx error response into an error
+func errorHandler(resp *http.Response) error {
+	body, err := rest.ReadBody(resp)
+	if err != nil {
+		return fmt.Errorf("error reading error response: %w", err)
+	}
+	errResponse := &api.Error{
+		Status: resp.StatusCode,
+		Code:   resp.Status,
+	}
+	// Try to decode JSON error
+	var jsonErr struct {
+		Error *api.Error `json:"error"`
+	}
+	if json.Unmarshal(body, &jsonErr) == nil && jsonErr.Error != nil {
+		errResponse = jsonErr.Error
+		if errResponse.Status == 0 {
+			errResponse.Status = resp.StatusCode
+		}
+	} else {
+		errResponse.Message = string(body)
+	}
+	return errResponse
+}
+
+// apiGet makes a GET request to the Movistar Cloud API and decodes
+// the "data" field of the response into result.
+func (f *Fs) apiGet(ctx context.Context, apiPath string, result interface{}) error {
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   apiPath,
+	}
+	var respWrapper api.GetResponse
+	err := f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(ctx, &opts, nil, &respWrapper)
+		return f.shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return err
+	}
+	if result != nil {
+		return json.Unmarshal(respWrapper.Data, result)
+	}
+	return nil
+}
+
+// apiPost makes a POST request to the Movistar Cloud API with a JSON body
+// and decodes the response.
+func (f *Fs) apiPost(ctx context.Context, apiPath string, request, result interface{}) error {
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   apiPath,
+	}
+	err := f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(ctx, &opts, request, result)
+		return f.shouldRetry(ctx, resp, err)
+	})
+	return err
+}
+
+// apiPostGet makes a POST request to the Movistar Cloud API with a JSON body
+// and decodes the "data" field of the response into result.
+func (f *Fs) apiPostGet(ctx context.Context, apiPath string, request, result interface{}) error {
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   apiPath,
+	}
+	var respWrapper api.GetResponse
+	err := f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(ctx, &opts, request, &respWrapper)
+		return f.shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return err
+	}
+	if result != nil {
+		return json.Unmarshal(respWrapper.Data, result)
+	}
+	return nil
+}
+
+// getRootFolderID gets the root folder ID from the API
+func (f *Fs) getRootFolderID(ctx context.Context) (string, error) {
+	var result api.RootResponse
+	err := f.apiGet(ctx, "/sapi/media/folder/root?action=get", &result)
+	if err != nil {
+		return "", fmt.Errorf("failed to get root folder: %w", err)
+	}
+	if len(result.Folders) == 0 {
+		return "", errors.New("no root folder found")
+	}
+	return strconv.FormatInt(result.Folders[0].ID, 10), nil
+}
+
+// setAuthHeaders updates the Cookie and Authorization headers on both REST clients
+func (f *Fs) setAuthHeaders() {
+	cookie := "JSESSIONID=" + f.session.JSessionID
+	f.srv.SetHeader("Cookie", cookie)
+	f.upSrv.SetHeader("Cookie", cookie)
+	if f.session.AccessToken != "" {
+		auth := "oauth " + f.session.AccessToken
+		f.srv.SetHeader("Authorization", auth)
+		f.upSrv.SetHeader("Authorization", auth)
+	}
+}
+
+// refreshAndRetry attempts to refresh the session token when a 401 is received.
+// Returns true if the token was refreshed and the request should be retried.
+func (f *Fs) refreshAndRetry(resp *http.Response) bool {
+	if resp == nil || resp.StatusCode != 401 {
+		return false
+	}
+	f.sessionMu.Lock()
+	defer f.sessionMu.Unlock()
+
+	if f.session.AccessToken == "" {
+		fs.Debugf(f, "401 received but no access token available for refresh")
+		return false
+	}
+
+	newSession, err := refreshSession(context.Background(), f.httpClient, f.session)
+	if err != nil {
+		fs.Debugf(f, "Session refresh failed: %v", err)
+		return false
+	}
+
+	f.session = newSession
+	f.setAuthHeaders()
+	saveSession(f.m, newSession)
+	fs.Debugf(f, "Session refreshed successfully")
+	return true
+}
+
+// NewFs constructs an Fs from the path, container:path
+func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
+	// Parse config into Options struct
+	opt := new(Options)
+	err := configstruct.Set(m, opt)
+	if err != nil {
+		return nil, err
+	}
+
+	if opt.JSessionID == "" {
+		return nil, errors.New("movistarcloud: not configured - run \"rclone config\" first")
+	}
+
+	root = parsePath(root)
+
+	client := fshttp.NewClient(ctx)
+
+	session := &api.Session{
+		AccessToken: opt.AccessToken,
+		JSessionID:  opt.JSessionID,
+	}
+
+	f := &Fs{
+		name:       name,
+		root:       root,
+		opt:        *opt,
+		srv:        rest.NewClient(client).SetRoot(rootURL),
+		upSrv:      rest.NewClient(client).SetRoot(uploadURL),
+		pacer:      fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		m:          m,
+		session:    session,
+		httpClient: client,
+	}
+	f.features = (&fs.Features{
+		CaseInsensitive:         false,
+		CanHaveEmptyDirectories: true,
+		ReadMimeType:            false,
+		WriteMimeType:           false,
+	}).Fill(ctx, f)
+
+	// Set error handler for the main API client
+	f.srv.SetErrorHandler(errorHandler)
+	f.upSrv.SetErrorHandler(errorHandler)
+
+	// Set common headers
+	f.srv.SetHeader("Accept", "application/json")
+	f.upSrv.SetHeader("Accept", "application/json")
+	f.setAuthHeaders()
+
+	// Get the root folder ID from the API
+	rootFolderID, err := f.getRootFolderID(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("movistarcloud: couldn't get root folder ID: %w", err)
+	}
+
+	// Set up directory cache
+	f.dirCache = dircache.New(root, rootFolderID, f)
+
+	// Find the current root
+	err = f.dirCache.FindRoot(ctx, false)
+	if err != nil {
+		// Assume it is a file
+		newRoot, remote := dircache.SplitPath(root)
+		tempF := &Fs{
+			name:       f.name,
+			root:       newRoot,
+			opt:        f.opt,
+			features:   f.features,
+			srv:        f.srv,
+			upSrv:      f.upSrv,
+			pacer:      f.pacer,
+			m:          f.m,
+			session:    f.session,
+			httpClient: f.httpClient,
+		}
+		tempF.dirCache = dircache.New(newRoot, rootFolderID, tempF)
+		// Make new Fs which is the parent
+		err = tempF.dirCache.FindRoot(ctx, false)
+		if err != nil {
+			// No root so return old f
+			return f, nil
+		}
+		_, err := tempF.newObjectWithInfo(ctx, remote, nil)
+		if err != nil {
+			if err == fs.ErrorObjectNotFound {
+				// File doesn't exist so return old f
+				return f, nil
+			}
+			return nil, err
+		}
+		f.features.Fill(ctx, tempF)
+		f.dirCache = tempF.dirCache
+		f.root = tempF.root
+		return f, fs.ErrorIsFile
+	}
+	return f, nil
+}
+
+// FindLeaf finds a directory of name leaf in the folder with ID pathID
+func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
+	parentID, err := strconv.ParseInt(pathID, 10, 64)
+	if err != nil {
+		return "", false, fmt.Errorf("invalid parent ID %q: %w", pathID, err)
+	}
+
+	var result api.ListFoldersResponse
+	err = f.apiGet(ctx, fmt.Sprintf("/sapi/media/folder?action=list&parentid=%d&limit=%d", parentID, f.opt.ListLimit), &result)
+	if err != nil {
+		return "", false, err
+	}
+
+	for _, folder := range result.Folders {
+		if f.opt.Enc.ToStandardName(folder.Name) == leaf {
+			return strconv.FormatInt(folder.ID, 10), true, nil
+		}
+	}
+	return "", false, nil
+}
+
+// CreateDir makes a directory with pathID as parent and name leaf
+func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
+	parentID, err := strconv.ParseInt(pathID, 10, 64)
+	if err != nil {
+		return "", fmt.Errorf("invalid parent ID %q: %w", pathID, err)
+	}
+
+	request := api.CreateFolderRequest{
+		Data: api.CreateFolderRequestData{
+			Magic:    false,
+			Offline:  false,
+			Name:     f.opt.Enc.FromStandardName(leaf),
+			ParentID: parentID,
+		},
+	}
+
+	var result api.CreateFolderResponse
+	err = f.apiPost(ctx, "/sapi/media/folder?action=save", &request, &result)
+	if err != nil {
+		return "", err
+	}
+	return strconv.FormatInt(result.ID, 10), nil
+}
+
+// listFiles lists the files in a directory, handling pagination
+func (f *Fs) listFiles(ctx context.Context, dirID string) ([]api.Media, error) {
+	folderID, err := strconv.ParseInt(dirID, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid directory ID %q: %w", dirID, err)
+	}
+
+	request := api.ListFilesRequest{
+		Data: api.ListFilesRequestData{
+			Fields: []string{"name", "size", "modificationdate", "creationdate", "etag", "url"},
+		},
+	}
+
+	var allMedia []api.Media
+	limit := f.opt.ListLimit
+	offset := 0
+
+	for {
+		apiPath := fmt.Sprintf("/sapi/media?action=get&folderid=%d&limit=%d&offset=%d", folderID, limit, offset)
+
+		var result api.ListFilesResponse
+		err = f.apiPostGet(ctx, apiPath, &request, &result)
+		if err != nil {
+			return nil, err
+		}
+		allMedia = append(allMedia, result.Media...)
+
+		if !result.More {
+			break
+		}
+		offset += len(result.Media)
+	}
+
+	return allMedia, nil
+}
+
+// listFolders lists the subfolders in a directory
+func (f *Fs) listFolders(ctx context.Context, dirID string) ([]api.FolderWithParent, error) {
+	parentID, err := strconv.ParseInt(dirID, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid directory ID %q: %w", dirID, err)
+	}
+
+	var result api.ListFoldersResponse
+	err = f.apiGet(ctx, fmt.Sprintf("/sapi/media/folder?action=list&parentid=%d&limit=%d", parentID, f.opt.ListLimit), &result)
+	if err != nil {
+		return nil, err
+	}
+	return result.Folders, nil
+}
+
+// readMetaDataForPath reads the metadata from the path
+func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Media, err error) {
+	leaf, directoryID, err := f.dirCache.FindPath(ctx, path, false)
+	if err != nil {
+		if err == fs.ErrorDirNotFound {
+			return nil, fs.ErrorObjectNotFound
+		}
+		return nil, err
+	}
+
+	// List files in the directory and find the one with the matching name
+	files, err := f.listFiles(ctx, directoryID)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range files {
+		if f.opt.Enc.ToStandardName(files[i].Name) == leaf {
+			return &files[i], nil
+		}
+	}
+	return nil, fs.ErrorObjectNotFound
+}
+
+// Return an Object from a path
+//
+// If it can't be found it returns the error fs.ErrorObjectNotFound.
+func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.Media) (fs.Object, error) {
+	o := &Object{
+		fs:     f,
+		remote: remote,
+	}
+	var err error
+	if info != nil {
+		err = o.setMetaData(info)
+	} else {
+		err = o.readMetaData(ctx)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return o, nil
+}
+
+// NewObject finds the Object at remote. If it can't be found
+// it returns the error fs.ErrorObjectNotFound.
+func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
+	return f.newObjectWithInfo(ctx, remote, nil)
+}
+
+// List the objects and directories in dir into entries. The
+// entries can be returned in any order but should be for a
+// complete directory.
+//
+// dir should be "" to list the root, and should not have
+// trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	return list.WithListP(ctx, dir, f)
+}
+
+// ListP lists the objects and directories of the Fs starting
+// from dir non recursively into out.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	lh := list.NewHelper(callback)
+	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
+	if err != nil {
+		return err
+	}
+
+	// List subfolders
+	folders, err := f.listFolders(ctx, directoryID)
+	if err != nil {
+		return fmt.Errorf("couldn't list folders: %w", err)
+	}
+	for _, folder := range folders {
+		folderName := f.opt.Enc.ToStandardName(folder.Name)
+		remote := path.Join(dir, folderName)
+		folderID := strconv.FormatInt(folder.ID, 10)
+		f.dirCache.Put(remote, folderID)
+		modTime := time.Unix(folder.Date/1000, (folder.Date%1000)*int64(time.Millisecond))
+		d := fs.NewDir(remote, modTime).SetID(folderID)
+		if err := lh.Add(d); err != nil {
+			return err
+		}
+	}
+
+	// List files
+	files, err := f.listFiles(ctx, directoryID)
+	if err != nil {
+		return fmt.Errorf("couldn't list files: %w", err)
+	}
+	for i := range files {
+		file := &files[i]
+		fileName := f.opt.Enc.ToStandardName(file.Name)
+		remote := path.Join(dir, fileName)
+		o, err := f.newObjectWithInfo(ctx, remote, file)
+		if err != nil {
+			return err
+		}
+		if err := lh.Add(o); err != nil {
+			return err
+		}
+	}
+
+	return lh.Flush()
+}
+
+// Creates from the parameters passed in a half finished Object which
+// must have setMetaData called on it
+//
+// Returns the object, leaf, directoryID and error.
+//
+// Used to create new objects
+func (f *Fs) createObject(ctx context.Context, remote string, modTime time.Time, size int64) (o *Object, leaf string, directoryID string, err error) {
+	// Create the directory for the object if it doesn't exist
+	leaf, directoryID, err = f.dirCache.FindPath(ctx, remote, true)
+	if err != nil {
+		return
+	}
+	// Temporary Object under construction
+	o = &Object{
+		fs:     f,
+		remote: remote,
+	}
+	return o, leaf, directoryID, nil
+}
+
+// Put the object
+//
+// Copy the reader in to the new object which is returned.
+//
+// The new object may have been created if an error is returned
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	remote := src.Remote()
+	size := src.Size()
+	modTime := src.ModTime(ctx)
+
+	// Check for existing file and delete it first to avoid auto-rename
+	existingObj, err := f.NewObject(ctx, remote)
+	if err == nil {
+		err = existingObj.(*Object).Remove(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to remove existing file before put: %w", err)
+		}
+	}
+
+	o, leaf, directoryID, err := f.createObject(ctx, remote, modTime, size)
+	if err != nil {
+		return nil, err
+	}
+	return o, o.upload(ctx, in, leaf, directoryID, size, modTime, options...)
+}
+
+// Mkdir creates the container if it doesn't exist
+func (f *Fs) Mkdir(ctx context.Context, dir string) error {
+	_, err := f.dirCache.FindDir(ctx, dir, true)
+	return err
+}
+
+// Rmdir deletes the root folder
+//
+// Returns an error if it isn't empty
+func (f *Fs) Rmdir(ctx context.Context, dir string) error {
+	dirID, err := f.dirCache.FindDir(ctx, dir, false)
+	if err != nil {
+		return err
+	}
+
+	folderID, err := strconv.ParseInt(dirID, 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid directory ID %q: %w", dirID, err)
+	}
+
+	// Check if the directory is empty
+	folders, err := f.listFolders(ctx, dirID)
+	if err != nil {
+		return err
+	}
+	if len(folders) > 0 {
+		return fs.ErrorDirectoryNotEmpty
+	}
+	files, err := f.listFiles(ctx, dirID)
+	if err != nil {
+		return err
+	}
+	if len(files) > 0 {
+		return fs.ErrorDirectoryNotEmpty
+	}
+
+	// Delete the folder
+	request := api.DeleteFoldersRequest{
+		Data: api.DeleteFoldersRequestData{
+			IDs: []int64{folderID},
+		},
+	}
+	var result api.PostResponse
+	err = f.apiPost(ctx, "/sapi/media/folder?action=softdelete", &request, &result)
+	if err != nil {
+		return fmt.Errorf("rmdir failed: %w", err)
+	}
+	f.dirCache.FlushDir(dir)
+	return nil
+}
+
+// DirCacheFlush resets the directory cache - used in testing as an
+// optional interface
+func (f *Fs) DirCacheFlush() {
+	f.dirCache.ResetRoot()
+}
+
+// ------------------------------------------------------------
+
+// Fs returns the parent Fs
+func (o *Object) Fs() fs.Info {
+	return o.fs
+}
+
+// Return a string version
+func (o *Object) String() string {
+	if o == nil {
+		return "<nil>"
+	}
+	return o.remote
+}
+
+// Remote returns the remote path
+func (o *Object) Remote() string {
+	return o.remote
+}
+
+// Hash returns the hash of an object - not supported
+func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
+	return "", hash.ErrUnsupported
+}
+
+// Size returns the size of an object in bytes
+func (o *Object) Size() int64 {
+	return o.size
+}
+
+// setMetaData sets the metadata from info
+func (o *Object) setMetaData(info *api.Media) error {
+	o.hasMetaData = true
+	o.size = info.Size
+	o.modTime = info.ModTimeAsTime()
+	o.id = info.ID
+	return nil
+}
+
+// readMetaData gets the metadata if it hasn't already been fetched
+func (o *Object) readMetaData(ctx context.Context) (err error) {
+	if o.hasMetaData {
+		return nil
+	}
+	info, err := o.fs.readMetaDataForPath(ctx, o.remote)
+	if err != nil {
+		return err
+	}
+	return o.setMetaData(info)
+}
+
+// ModTime returns the modification time of the object
+func (o *Object) ModTime(ctx context.Context) time.Time {
+	err := o.readMetaData(ctx)
+	if err != nil {
+		fs.Logf(o, "Failed to read metadata: %v", err)
+		return time.Now()
+	}
+	return o.modTime
+}
+
+// SetModTime sets the modification time of the local fs object
+//
+// Uses the save-metadata API endpoint to update the modification date.
+func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
+	fileID, err := strconv.ParseInt(o.id, 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid file ID %q: %w", o.id, err)
+	}
+
+	request := api.SaveMetadataRequest{
+		Data: api.SaveMetadataRequestData{
+			ID:               fileID,
+			ModificationDate: api.BasicISO(modTime),
+		},
+	}
+
+	var result api.PostResponse
+	err = o.fs.apiPost(ctx, "/sapi/upload/file?action=save-metadata", &request, &result)
+	if err != nil {
+		return fmt.Errorf("failed to set modification time: %w", err)
+	}
+	o.modTime = modTime
+	return nil
+}
+
+// Storable returns a boolean showing whether this object storable
+func (o *Object) Storable() bool {
+	return true
+}
+
+// Open an object for read
+func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	if o.id == "" {
+		return nil, errors.New("can't download - no id")
+	}
+
+	// First, get the download URL for this file
+	fileID, err := strconv.ParseInt(o.id, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid file ID %q: %w", o.id, err)
+	}
+
+	request := api.GetFileInfoRequest{
+		Data: api.GetFileInfoRequestData{
+			IDs:    []int64{fileID},
+			Fields: []string{"url"},
+		},
+	}
+	var result api.GetFileInfoResponse
+	err = o.fs.apiPostGet(ctx, "/sapi/media?action=get&origin=omh,dropbox", &request, &result)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get download URL: %w", err)
+	}
+	if len(result.Media) == 0 || result.Media[0].URL == "" {
+		return nil, errors.New("no download URL available")
+	}
+
+	downloadURL := result.Media[0].URL
+
+	// Now download from the URL
+	fs.FixRangeOption(options, o.size)
+	var resp *http.Response
+	opts := rest.Opts{
+		Method:  "GET",
+		RootURL: downloadURL,
+		Options: options,
+	}
+	err = o.fs.pacer.Call(func() (bool, error) {
+		resp, err = o.fs.srv.Call(ctx, &opts)
+		return o.fs.shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return resp.Body, nil
+}
+
+// waitForUpload polls the validation-status endpoint until the uploaded
+// file finishes processing (status changes from "V" = validating).
+// Then fetches and returns the full Media record.
+func (f *Fs) waitForUpload(ctx context.Context, id string) (*api.Media, error) {
+	fileID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid file ID %q: %w", id, err)
+	}
+
+	// Poll validation status until no longer "V" (validating)
+	// Use exponential backoff: 500ms, 1s, 2s, 4s, 8s, 8s, 8s...
+	statusReq := api.ValidationStatusRequest{
+		Data: api.ValidationStatusRequestData{
+			IDs: []api.ValidationStatusID{{ID: fileID}},
+		},
+	}
+	delay := 500 * time.Millisecond
+	const maxDelay = 8 * time.Second
+	const maxAttempts = 15
+	validated := false
+	for range maxAttempts {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-time.After(delay):
+		}
+		var statusResp api.ValidationStatusResponse
+		err = f.apiPostGet(ctx, "/sapi/media?action=get-validation-status", &statusReq, &statusResp)
+		if err != nil {
+			fs.Debugf(nil, "waiting for upload %s validation status: %v", id, err)
+			// Increase delay and continue
+		} else if len(statusResp.IDs) > 0 && statusResp.IDs[0].Status != "V" {
+			validated = true
+			break
+		} else {
+			fs.Debugf(nil, "waiting for upload %s to finish validation...", id)
+		}
+		if delay < maxDelay {
+			delay *= 2
+			if delay > maxDelay {
+				delay = maxDelay
+			}
+		}
+	}
+	if !validated {
+		return nil, fmt.Errorf("upload %s still validating after %d attempts", id, maxAttempts)
+	}
+
+	// Now fetch the full metadata
+	infoReq := api.GetFileInfoRequest{
+		Data: api.GetFileInfoRequestData{
+			IDs:    []int64{fileID},
+			Fields: []string{"name", "size", "modificationdate", "url"},
+		},
+	}
+	var infoResp api.GetFileInfoResponse
+	err = f.apiPostGet(ctx, "/sapi/media?action=get&origin=omh,dropbox", &infoReq, &infoResp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get file info after upload: %w", err)
+	}
+	if len(infoResp.Media) == 0 {
+		return nil, fmt.Errorf("file %s not found after upload", id)
+	}
+	return &infoResp.Media[0], nil
+}
+
+// upload uploads the object
+func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID string, size int64, modTime time.Time, options ...fs.OpenOption) error {
+	folderID, err := strconv.ParseInt(directoryID, 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid directory ID %q: %w", directoryID, err)
+	}
+
+	// For unknown-size uploads, we must buffer to determine the actual
+	// size because the API metadata requires the file size up front.
+	if size < 0 {
+		data, err := io.ReadAll(in)
+		if err != nil {
+			return fmt.Errorf("failed to read upload data: %w", err)
+		}
+		size = int64(len(data))
+		in = bytes.NewReader(data)
+	}
+
+	encodedName := o.fs.opt.Enc.FromStandardName(leaf)
+
+	metadata := api.UploadMetadata{
+		Data: api.UploadMetadataData{
+			Name:             encodedName,
+			Size:             size,
+			ModificationDate: api.BasicISO(modTime),
+			ContentType:      "application/octet-stream",
+			FolderID:         folderID,
+		},
+	}
+
+	// Use rest.Opts multipart support which streams the file content
+	// through an io.Pipe, avoiding buffering the entire file in memory.
+	contentLength := size
+	opts := rest.Opts{
+		Method:                "POST",
+		Path:                  "/sapi/upload?action=save&acceptasynchronous=true",
+		Body:                  in,
+		ContentLength:         &contentLength,
+		MultipartMetadataName: "data",
+		MultipartContentName:  "file",
+		MultipartFileName:     encodedName,
+		MultipartContentType:  "application/octet-stream",
+	}
+
+	var result api.UploadResponse
+	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
+		resp, err := o.fs.upSrv.CallJSON(ctx, &opts, &metadata, &result)
+		return o.fs.shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return err
+	}
+
+	// Wait for the file to be indexed/available for listing
+	info, err := o.fs.waitForUpload(ctx, result.ID)
+	if err != nil {
+		fs.Logf(o, "upload succeeded (id=%s) but file not yet indexed: %v", result.ID, err)
+	}
+
+	// Update the object metadata
+	o.id = result.ID
+	o.size = size
+	o.modTime = modTime
+	o.hasMetaData = true
+
+	// Use server-returned metadata if available
+	if info != nil {
+		_ = o.setMetaData(info)
+
+		// Preserve the modTime we intended — the server may report
+		// a different value until the modificationdate propagates.
+		o.modTime = modTime
+	}
+
+	return nil
+}
+
+// Update the object with the contents of the io.Reader, modTime and size
+//
+// The new object may have been created if an error is returned
+func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	size := src.Size()
+	modTime := src.ModTime(ctx)
+	remote := o.Remote()
+
+	// Create the directory for the object if it doesn't exist
+	leaf, directoryID, err := o.fs.dirCache.FindPath(ctx, remote, true)
+	if err != nil {
+		return err
+	}
+
+	// If file already exists, delete it first
+	if o.id != "" {
+		err = o.Remove(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to remove existing file before update: %w", err)
+		}
+	}
+
+	return o.upload(ctx, in, leaf, directoryID, size, modTime, options...)
+}
+
+// deleteFileByID deletes a file by its ID using hard delete to ensure
+// the filename slot is freed immediately (no auto-rename on re-upload).
+func (f *Fs) deleteFileByID(ctx context.Context, id string) error {
+	fileID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid file ID %q: %w", id, err)
+	}
+
+	request := api.DeleteFilesRequest{
+		Data: api.DeleteFilesRequestData{
+			Files: []int64{fileID},
+		},
+	}
+
+	var result api.PostResponse
+	return f.apiPost(ctx, "/sapi/media/file?action=delete&softdelete=false", &request, &result)
+}
+
+// Remove an object
+func (o *Object) Remove(ctx context.Context) error {
+	return o.fs.deleteFileByID(ctx, o.id)
+}
+
+// ID returns the ID of the Object if known, or "" if not
+func (o *Object) ID() string {
+	return o.id
+}
+
+// getFileInfoByID fetches media metadata for a file by its numeric ID.
+func (f *Fs) getFileInfoByID(ctx context.Context, fileID int64, fields []string) (*api.Media, error) {
+	request := api.GetFileInfoRequest{
+		Data: api.GetFileInfoRequestData{
+			IDs:    []int64{fileID},
+			Fields: fields,
+		},
+	}
+	var result api.GetFileInfoResponse
+	err := f.apiPostGet(ctx, "/sapi/media?action=get&origin=omh,dropbox", &request, &result)
+	if err != nil {
+		return nil, err
+	}
+	if len(result.Media) == 0 {
+		return nil, fs.ErrorObjectNotFound
+	}
+	return &result.Media[0], nil
+}
+
+// moveByReupload moves a file by downloading its contents, deleting it,
+// and re-uploading to the destination with the new name. This is needed
+// because the Movistar Cloud API silently refuses to change a file's
+// extension via save-metadata rename.
+func (f *Fs) moveByReupload(ctx context.Context, srcObj *Object, remote, dstLeaf, dstDirectoryID string) (obj *Object, err error) {
+	// Stream the download directly into the upload to avoid buffering
+	// the entire file in memory.
+	reader, err := srcObj.Open(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("move reupload: failed to download source: %w", err)
+	}
+	defer fs.CheckClose(reader, &err)
+
+	modTime := srcObj.modTime
+	size := srcObj.size
+
+	// Upload with the new name, streaming from the source download
+	dstObj := &Object{
+		fs:     f,
+		remote: remote,
+	}
+	err = dstObj.upload(ctx, reader, dstLeaf, dstDirectoryID, size, modTime)
+	if err != nil {
+		return nil, fmt.Errorf("move reupload: failed to upload: %w", err)
+	}
+
+	// Delete the original file after successful upload
+	err = srcObj.Remove(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("move reupload: failed to delete source: %w", err)
+	}
+
+	return dstObj, nil
+}
+
+// Move src to this remote using server-side move operations.
+//
+// This is stored with the remote path given.
+//
+// It returns the destination Object and a possible error.
+//
+// Will only be called if DstRemote is the same as the source Fs.
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debugf(src, "Can't move - not same remote type")
+		return nil, fs.ErrorCantMove
+	}
+
+	srcLeaf := path.Base(srcObj.remote)
+	dstLeaf, dstDirectoryID, err := f.dirCache.FindPath(ctx, remote, true)
+	if err != nil {
+		return nil, err
+	}
+
+	fileID, err := strconv.ParseInt(srcObj.id, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid file ID %q: %w", srcObj.id, err)
+	}
+
+	folderID, err := strconv.ParseInt(dstDirectoryID, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid directory ID %q: %w", dstDirectoryID, err)
+	}
+
+	encodedDstLeaf := f.opt.Enc.FromStandardName(dstLeaf)
+	encodedSrcLeaf := f.opt.Enc.FromStandardName(srcLeaf)
+	nameChanged := encodedDstLeaf != encodedSrcLeaf
+
+	// Always send the destination folder ID. We cannot reliably compare
+	// source vs destination directory IDs because Move may be called
+	// across different Fs instances with different dirCaches (e.g.
+	// moving from a dst/ Fs to a backup/ Fs).
+	reqData := api.SaveMetadataRequestData{
+		ID:       fileID,
+		FolderID: &folderID,
+	}
+	if nameChanged {
+		reqData.Name = encodedDstLeaf
+	}
+
+	request := api.SaveMetadataRequest{Data: reqData}
+	var result api.PostResponse
+	err = f.apiPost(ctx, "/sapi/upload/file?action=save-metadata", &request, &result)
+	if err != nil {
+		return nil, fmt.Errorf("move failed: %w", err)
+	}
+
+	// If we attempted a rename, verify it actually took effect.
+	// The Movistar Cloud API silently refuses to change a file's
+	// extension — it keeps the original extension based on content type.
+	// In that case we must fall back to download + delete + re-upload.
+	if nameChanged {
+		info, err := f.getFileInfoByID(ctx, fileID, []string{"name"})
+		if err != nil {
+			return nil, fmt.Errorf("move: failed to verify rename: %w", err)
+		}
+		if info.Name != encodedDstLeaf {
+			fs.Debugf(src, "Move: API refused rename to %q (got %q), falling back to re-upload", encodedDstLeaf, info.Name)
+			return f.moveByReupload(ctx, srcObj, remote, dstLeaf, dstDirectoryID)
+		}
+	}
+
+	// Create the destination object with updated metadata
+	dstObj := &Object{
+		fs:          f,
+		remote:      remote,
+		id:          srcObj.id,
+		size:        srcObj.size,
+		modTime:     srcObj.modTime,
+		hasMetaData: true,
+	}
+
+	return dstObj, nil
+}
+
+// Check the interfaces are satisfied
+var (
+	_ fs.Fs              = (*Fs)(nil)
+	_ fs.Mover           = (*Fs)(nil)
+	_ fs.DirCacheFlusher = (*Fs)(nil)
+	_ fs.ListPer         = (*Fs)(nil)
+	_ fs.Object          = (*Object)(nil)
+	_ fs.IDer            = (*Object)(nil)
+)
