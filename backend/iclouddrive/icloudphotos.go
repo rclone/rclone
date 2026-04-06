@@ -270,7 +270,7 @@ func (f *PhotosFs) List(ctx context.Context, dir string) (entries fs.DirEntries,
 			if dir != "" {
 				remotePath = path.Join(dir, encodedName)
 			}
-			o := f.newPhotosObject(remotePath, photo, album.Zone)
+			o := f.newPhotosObject(remotePath, photo, libraryName)
 			entries = append(entries, o)
 		}
 
@@ -319,7 +319,7 @@ func (f *PhotosFs) NewObject(ctx context.Context, remote string) (fs.Object, err
 		return nil, fs.ErrorObjectNotFound
 	}
 
-	return f.newPhotosObject(remote, photo, album.Zone), nil
+	return f.newPhotosObject(remote, photo, libraryName), nil
 }
 
 // newPhotosObject creates a PhotosObject from a Photo and zone
@@ -607,6 +607,7 @@ func (f *PhotosFs) DirCacheFlush() {
 // listRAlbumJob represents an album to be listed by a ListR worker
 type listRAlbumJob struct {
 	album   *api.Album
+	zone    string
 	dirPath string // path relative to Fs root (e.g. "Videos" when f.root="PrimarySync")
 }
 
@@ -640,19 +641,19 @@ func (f *PhotosFs) ListR(ctx context.Context, dir string, callback fs.ListRCallb
 	// collectAlbumJobs emits directory entries for albums/folders under basePath
 	// and collects leaf albums as jobs for parallel photo listing
 	// Recurses into folders to handle arbitrary nesting depth
-	var collectAlbumJobs func(albums map[string]*api.Album, basePath string) error
-	collectAlbumJobs = func(albums map[string]*api.Album, basePath string) error {
+	var collectAlbumJobs func(albums map[string]*api.Album, zone, basePath string) error
+	collectAlbumJobs = func(albums map[string]*api.Album, zone, basePath string) error {
 		for albumName, album := range albums {
 			albumPath := path.Join(basePath, f.opt.Enc.ToStandardName(albumName))
 			if err := addEntry(fs.NewDir(albumPath, f.startTime)); err != nil {
 				return err
 			}
 			if album.IsFolder {
-				if err := collectAlbumJobs(album.Children, albumPath); err != nil {
+				if err := collectAlbumJobs(album.Children, zone, albumPath); err != nil {
 					return err
 				}
 			} else {
-				jobs = append(jobs, listRAlbumJob{album: album, dirPath: albumPath})
+				jobs = append(jobs, listRAlbumJob{album: album, zone: zone, dirPath: albumPath})
 			}
 		}
 		return nil
@@ -674,7 +675,7 @@ func (f *PhotosFs) ListR(ctx context.Context, dir string, callback fs.ListRCallb
 			if err != nil {
 				return err
 			}
-			if err := collectAlbumJobs(albums, libPath); err != nil {
+			if err := collectAlbumJobs(albums, libName, libPath); err != nil {
 				return err
 			}
 		}
@@ -694,7 +695,7 @@ func (f *PhotosFs) ListR(ctx context.Context, dir string, callback fs.ListRCallb
 		if err != nil {
 			return err
 		}
-		if err := collectAlbumJobs(albums, dir); err != nil {
+		if err := collectAlbumJobs(albums, libraryName, dir); err != nil {
 			return err
 		}
 
@@ -709,12 +710,12 @@ func (f *PhotosFs) ListR(ctx context.Context, dir string, callback fs.ListRCallb
 			return err
 		}
 		if album.IsFolder {
-			if err := collectAlbumJobs(album.Children, dir); err != nil {
+			if err := collectAlbumJobs(album.Children, libraryName, dir); err != nil {
 				return err
 			}
 		} else {
 			// Single album - just list its photos
-			jobs = append(jobs, listRAlbumJob{album: album, dirPath: dir})
+			jobs = append(jobs, listRAlbumJob{album: album, zone: libraryName, dirPath: dir})
 		}
 
 	default:
@@ -755,7 +756,7 @@ func (f *PhotosFs) ListR(ctx context.Context, dir string, callback fs.ListRCallb
 						continue
 					}
 					remotePath := path.Join(job.dirPath, f.opt.Enc.ToStandardName(photo.Filename))
-					o := f.newPhotosObject(remotePath, photo, job.album.Zone)
+					o := f.newPhotosObject(remotePath, photo, job.zone)
 					if err := addEntry(o); err != nil {
 						errs <- err
 						cancel()

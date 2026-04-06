@@ -115,7 +115,7 @@ func (c *Client) Authenticate(ctx context.Context) error {
 		c.Session.Cookies = nil
 	}
 
-	fs.Debugf(nil, "iclouddrive: authenticating as %s", c.appleID)
+	fs.Debugf(nil, "iclouddrive: authenticating")
 	err := c.Session.SignIn(ctx, c.appleID, c.password)
 	if err != nil {
 		return err

@@ -324,7 +324,6 @@ func (lib *Library) newUserAlbum(name, recordName string) *Album {
 		ListType:   "CPLContainerRelationLiveByAssetDate",
 		Direction:  "ASCENDING",
 		RecordName: recordName,
-		Zone:       lib.zoneID,
 		lib:        lib,
 		Filters: []Filter{{
 			FieldName:  "parentId",
@@ -342,7 +341,6 @@ type Album struct {
 	Direction  string            `json:"direction"`
 	Filters    []Filter          `json:"filters,omitempty"`
 	RecordName string            `json:"recordName,omitempty"`
-	Zone       string            `json:"zone"`
 	IsFolder   bool              `json:"isFolder,omitempty"`
 	Children   map[string]*Album `json:"children,omitempty"`
 	lib        *Library          `json:"-"`
@@ -489,11 +487,9 @@ func NewTestPhotosService(libs map[string]map[string]*Album) *PhotosService {
 			area:    areaPrivate,
 			albums:  make(map[string]*Album),
 		}
+		lib.cacheValid.Store(true)
 		for name, album := range albums {
-			// lib intentionally left nil - GetPhotos uses test fast path
-			if album.Zone == "" {
-				album.Zone = zoneName
-			}
+			lib.restoreAlbumLinks(album)
 			lib.albums[name] = album
 		}
 		ps.libraries[zoneName] = lib
@@ -685,16 +681,9 @@ func (ps *PhotosService) loadCachedLibraries() map[string]*Library {
 		return nil
 	}
 
-	// Try new format (array of objects) first, fall back to old format (array of strings)
 	var entries []cachedLibraryEntry
 	if err := json.Unmarshal(data, &entries); err != nil {
-		var zoneNames []string
-		if err := json.Unmarshal(data, &zoneNames); err != nil {
-			return nil
-		}
-		for _, name := range zoneNames {
-			entries = append(entries, cachedLibraryEntry{ZoneName: name, Area: areaPrivate})
-		}
+		return nil
 	}
 
 	libs := make(map[string]*Library, len(entries))
@@ -761,7 +750,6 @@ func (lib *Library) GetAlbums(ctx context.Context) (map[string]*Album, error) {
 			Direction:  template.Direction,
 			Filters:    append([]Filter{}, template.Filters...),
 			RecordName: template.RecordName,
-			Zone:       lib.zoneID,
 			lib:        lib,
 		}
 	}
@@ -830,7 +818,6 @@ func (lib *Library) GetAlbums(ctx context.Context) (map[string]*Album, error) {
 			folder := &Album{
 				Name:       albumName,
 				RecordName: record.RecordName,
-				Zone:       lib.zoneID,
 				lib:        lib,
 				IsFolder:   true,
 				Children:   make(map[string]*Album),
@@ -936,7 +923,6 @@ func (lib *Library) fetchFolderChildren(ctx context.Context, folder *Album) erro
 				childFolder := &Album{
 					Name:       childName,
 					RecordName: record.RecordName,
-					Zone:       lib.zoneID,
 					lib:        lib,
 					IsFolder:   true,
 					Children:   make(map[string]*Album),
@@ -1521,11 +1507,10 @@ func (album *Album) request(ctx context.Context, endpoint string, data, response
 
 // zoneIDMap returns the full zoneID for this album's zone
 func (album *Album) zoneIDMap() map[string]any {
-	if album.lib != nil {
-		return album.lib.zoneIDMap()
+	if album.lib == nil {
+		return map[string]any{}
 	}
-	// Fallback for safety - all production callers have lib set
-	return map[string]any{"zoneName": album.Zone}
+	return album.lib.zoneIDMap()
 }
 
 // loadDiskCacheFrom loads cached photo data from a specific cache directory
@@ -2193,7 +2178,6 @@ func (lib *Library) GetAlbumCounts(ctx context.Context) (map[string]int64, error
 	type albumEntry struct {
 		name       string
 		objectType string
-		zone       string
 	}
 	lib.mu.Lock()
 	entries := make([]albumEntry, 0, len(lib.albums))
@@ -2201,7 +2185,7 @@ func (lib *Library) GetAlbumCounts(ctx context.Context) (map[string]int64, error
 		if album.ObjectType == "" {
 			continue // skip folders (albumType=3), they have no photo count
 		}
-		entries = append(entries, albumEntry{name: name, objectType: album.ObjectType, zone: album.Zone})
+		entries = append(entries, albumEntry{name: name, objectType: album.ObjectType})
 	}
 	lib.mu.Unlock()
 
