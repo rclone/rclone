@@ -1,6 +1,8 @@
 SHELL = bash
 # Branch we are working on
 BRANCH := $(or $(BUILD_SOURCEBRANCHNAME),$(lastword $(subst /, ,$(GITHUB_REF))),$(shell git rev-parse --abbrev-ref HEAD))
+# Branch identifier sanitized for semver pre-release metadata
+TAG_BRANCH_NAME := $(shell printf '%s' '$(BRANCH)' | tr -cs '[:alnum:]-' '-')
 # Tag of the current commit, if any.  If this is not "" then we are building a release
 RELEASE_TAG := $(shell git tag -l --points-at HEAD)
 # Version of last release (may not be on this branch)
@@ -15,7 +17,7 @@ ifdef RELEASE_TAG
 	BRANCH := master
 	LAST_TAG := $(shell git describe --abbrev=0 --tags $(VERSION)^)
 endif
-TAG_BRANCH := .$(BRANCH)
+TAG_BRANCH := .$(TAG_BRANCH_NAME)
 BRANCH_PATH := branch/$(BRANCH)/
 # If building HEAD or master then unset TAG_BRANCH and BRANCH_PATH
 ifeq ($(subst HEAD,,$(subst master,,$(BRANCH))),)
