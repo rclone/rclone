@@ -12,6 +12,7 @@ import (
 	"sort"
 	"testing"
 	"time"
+	"unsafe"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -22,6 +23,7 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/file"
+	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -676,4 +678,158 @@ func TestCopySymlink(t *testing.T) {
 	require.NotNil(t, dst)
 	want = fstest.NewItem("dst2/file.txt", "hello world", when)
 	fstest.CompareItems(t, []fs.DirEntry{dst}, []fstest.Item{want}, nil, f.precision, "")
+}
+
+func TestWriteUsesPool(t *testing.T) {
+	ctx := context.Background()
+	tmpDir := t.TempDir()
+	m := configmap.Simple{}
+	f, err := NewFs(ctx, "local", tmpDir, m)
+	require.NoError(t, err)
+
+	bp := pool.Global()
+	inUseBefore := bp.InUse()
+
+	// Write a file larger than the pool buffer size
+	data := bytes.Repeat([]byte("x"), 2*1024*1024)
+	src := object.NewStaticObjectInfo("pooltest.txt", time.Now(), int64(len(data)), true, nil, nil)
+	_, err = f.Put(ctx, io.NopCloser(bytes.NewReader(data)), src)
+	require.NoError(t, err)
+
+	// After write completes, the buffer should be returned to the pool
+	inUseAfter := bp.InUse()
+	assert.Equal(t, inUseBefore, inUseAfter, "pool buffer should be returned after write")
+
+	// Verify the pool has been used (alloced > 0)
+	assert.Greater(t, bp.Alloced(), 0, "pool should have allocated buffers")
+
+	// Verify file contents
+	got, err := os.ReadFile(filepath.Join(tmpDir, "pooltest.txt"))
+	require.NoError(t, err)
+	assert.Equal(t, data, got)
+}
+
+func TestIOSizeOptions(t *testing.T) {
+	t.Run("Default", func(t *testing.T) {
+		m := configmap.Simple{}
+		f, err := NewFs(context.Background(), "local", t.TempDir(), m)
+		require.NoError(t, err)
+		lf := f.(*Fs)
+		assert.Equal(t, 1024*1024, lf.readIOSize())
+		assert.Equal(t, 1024*1024, lf.writeIOSize())
+	})
+	t.Run("CustomIOSize", func(t *testing.T) {
+		m := configmap.Simple{
+			"io_size": "4M",
+		}
+		f, err := NewFs(context.Background(), "local", t.TempDir(), m)
+		require.NoError(t, err)
+		lf := f.(*Fs)
+		assert.Equal(t, 4*1024*1024, lf.readIOSize())
+		assert.Equal(t, 4*1024*1024, lf.writeIOSize())
+	})
+	t.Run("ReadWriteOverride", func(t *testing.T) {
+		m := configmap.Simple{
+			"io_size":       "1M",
+			"read_io_size":  "4M",
+			"write_io_size": "8M",
+		}
+		f, err := NewFs(context.Background(), "local", t.TempDir(), m)
+		require.NoError(t, err)
+		lf := f.(*Fs)
+		assert.Equal(t, 4*1024*1024, lf.readIOSize())
+		assert.Equal(t, 8*1024*1024, lf.writeIOSize())
+	})
+	t.Run("MisalignedIOSize", func(t *testing.T) {
+		m := configmap.Simple{
+			"io_size": "5000B",
+		}
+		_, err := NewFs(context.Background(), "local", t.TempDir(), m)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "4K-aligned")
+	})
+	t.Run("TooSmallIOSize", func(t *testing.T) {
+		m := configmap.Simple{
+			"io_size": "1000B",
+		}
+		_, err := NewFs(context.Background(), "local", t.TempDir(), m)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "at least 4K")
+	})
+	t.Run("WriteWithCustomIOSize", func(t *testing.T) {
+		ctx := context.Background()
+		m := configmap.Simple{
+			"write_io_size": "4M",
+		}
+		tmpDir := t.TempDir()
+		f, err := NewFs(ctx, "local", tmpDir, m)
+		require.NoError(t, err)
+		lf := f.(*Fs)
+		assert.Equal(t, 4*1024*1024, lf.writeIOSize())
+
+		// Write a file and verify contents
+		data := bytes.Repeat([]byte("x"), 100000)
+		src := object.NewStaticObjectInfo("testfile.txt", time.Now(), int64(len(data)), true, nil, nil)
+		_, err = f.Put(ctx, io.NopCloser(bytes.NewReader(data)), src)
+		require.NoError(t, err)
+
+		got, err := os.ReadFile(filepath.Join(tmpDir, "testfile.txt"))
+		require.NoError(t, err)
+		assert.Equal(t, data, got)
+	})
+}
+
+func TestDirectIO(t *testing.T) {
+	if !directIOEnabled {
+		t.Skip("O_DIRECT not supported on this platform")
+	}
+	ctx := context.Background()
+
+	t.Run("WriteAndRead", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		m := configmap.Simple{
+			"direct_io": "true",
+		}
+		f, err := NewFs(ctx, "local", tmpDir, m)
+		require.NoError(t, err)
+
+		// Write a file larger than the I/O size to exercise the
+		// aligned buffer path with multiple write syscalls
+		data := bytes.Repeat([]byte("abcdefgh"), 200000) // 1.6MB
+		src := object.NewStaticObjectInfo("directio_test.txt", time.Now(), int64(len(data)), true, nil, nil)
+		_, err = f.Put(ctx, io.NopCloser(bytes.NewReader(data)), src)
+		require.NoError(t, err)
+
+		// Read it back and verify contents
+		got, err := os.ReadFile(filepath.Join(tmpDir, "directio_test.txt"))
+		require.NoError(t, err)
+		assert.Equal(t, data, got)
+	})
+
+	t.Run("SmallFile", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		m := configmap.Simple{
+			"direct_io": "true",
+		}
+		f, err := NewFs(ctx, "local", tmpDir, m)
+		require.NoError(t, err)
+
+		// Small file that's less than one I/O block
+		data := []byte("hello direct io")
+		src := object.NewStaticObjectInfo("small.txt", time.Now(), int64(len(data)), true, nil, nil)
+		_, err = f.Put(ctx, io.NopCloser(bytes.NewReader(data)), src)
+		require.NoError(t, err)
+
+		got, err := os.ReadFile(filepath.Join(tmpDir, "small.txt"))
+		require.NoError(t, err)
+		assert.Equal(t, data, got)
+	})
+
+	t.Run("AlignedBlockAlignment", func(t *testing.T) {
+		block := alignedBlock(4096)
+		assert.Equal(t, 4096, len(block))
+		// Verify alignment
+		addr := uintptr(unsafe.Pointer(&block[0]))
+		assert.Equal(t, uintptr(0), addr%4096, "block should be 4K-aligned")
+	})
 }
