@@ -18,6 +18,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/lib/atexit"
@@ -273,11 +275,18 @@ func newInstance(ctx context.Context, s *Server, listener net.Listener, tlsCfg *
 		listener = tls.NewListener(listener, tlsCfg)
 	}
 
+	handler := s.mux
+	// Enable h2c (HTTP/2 cleartext) for non-TLS listeners
+	if tlsClg == nil {
+		h2s := &http2.Server{}
+		handler = h2c.NewHandler(s.mux, h2s)
+	}
+
 	return &instance{
 		url:      url,
 		listener: listener,
 		httpServer: &http.Server{
-			Handler:           s.mux,
+			Handler:           handler,
 			ReadTimeout:       time.Duration(s.cfg.ServerReadTimeout),
 			WriteTimeout:      time.Duration(s.cfg.ServerWriteTimeout),
 			MaxHeaderBytes:    s.cfg.MaxHeaderBytes,
