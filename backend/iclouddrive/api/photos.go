@@ -18,6 +18,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 
+	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 )
 
@@ -156,6 +157,11 @@ type PhotosService struct {
 	libraries   map[string]*Library
 }
 
+type libraryDiscovery struct {
+	libraries      map[string]*Library
+	refreshedAreas map[string]bool
+}
+
 // FlushCaches clears all cached libraries, albums, and photos
 func (ps *PhotosService) FlushCaches() {
 	ps.mu.Lock()
@@ -251,6 +257,63 @@ func (lib *Library) bufferDelta(records []json.RawMessage, syncToken string, mor
 // request makes an API call routed to this library's area (private or shared)
 func (lib *Library) request(ctx context.Context, endpoint string, data, response any) error {
 	return lib.service.requestForArea(ctx, lib.area, endpoint, data, response)
+}
+
+func (lib *Library) isSharedLibrary() bool {
+	return strings.HasPrefix(lib.zoneID, "SharedSync")
+}
+
+func isSharedAlbumIndexError(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "HTTP error 400") &&
+		strings.Contains(msg, "BAD_REQUEST") &&
+		strings.Contains(msg, "Index has invalid data")
+}
+
+func isZoneNotFoundError(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "HTTP error 404") &&
+		strings.Contains(msg, "ZONE_NOT_FOUND") &&
+		strings.Contains(msg, "Zone does not exist")
+}
+
+func (lib *Library) probeZoneExists(ctx context.Context) (bool, error) {
+	query := map[string]any{
+		"query": map[string]any{
+			"recordType": "CPLAssetAndMasterByAssetDateWithoutHiddenOrDeleted",
+			"filterBy": []map[string]any{
+				{
+					"fieldName":  "startRank",
+					"comparator": "EQUALS",
+					"fieldValue": map[string]any{"type": "INT64", "value": 0},
+				},
+				{
+					"fieldName":  "direction",
+					"comparator": "EQUALS",
+					"fieldValue": map[string]any{"type": "STRING", "value": "ASCENDING"},
+				},
+			},
+		},
+		"resultsLimit": 1,
+		"desiredKeys":  []string{"masterRef"},
+		"zoneID":       lib.zoneIDMap(),
+	}
+	var response struct {
+		Records []json.RawMessage `json:"records"`
+	}
+	if err := lib.request(ctx, "records/query", query, &response); err != nil {
+		if isZoneNotFoundError(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }
 
 // newUserAlbum creates a standard user album with CPLContainerRelation query config
@@ -399,10 +462,25 @@ func buildSmartAlbums() map[string]*Album {
 	return albums
 }
 
+type errorRoundTripper struct{}
+
+func (errorRoundTripper) RoundTrip(*http.Request) (*http.Response, error) {
+	return nil, errors.New("test photos service has no network transport")
+}
+
 // NewTestPhotosService creates a PhotosService with pre-populated libraries for testing
 func NewTestPhotosService(libs map[string]map[string]*Album) *PhotosService {
+	httpClient := &http.Client{Transport: errorRoundTripper{}}
+	session := &Session{srv: rest.NewClient(httpClient)}
 	ps := &PhotosService{
-		libraries: make(map[string]*Library),
+		client: &Client{
+			remoteName: "_test",
+			Session:    session,
+		},
+		endpoint:    "http://test.invalid/database/1/com.apple.photos.cloud/production",
+		pacer:       fs.NewPacer(context.Background(), pacer.NewDefault()),
+		shouldRetry: func(ctx context.Context, resp *http.Response, err error) (bool, error) { return false, err },
+		libraries:   make(map[string]*Library),
 	}
 	for zoneName, albums := range libs {
 		lib := &Library{
@@ -457,6 +535,13 @@ func (ps *PhotosService) GetLibraries(ctx context.Context) (map[string]*Library,
 	defer ps.mu.Unlock()
 
 	if len(ps.libraries) > 0 {
+		if discovered, err := ps.discoverLibraries(ctx); err == nil {
+			ps.libraries = mergeDiscoveredLibraries(ctx, ps.libraries, discovered)
+			ps.saveCachedLibraries()
+			fs.Debugf(nil, "iclouddrive photos: refreshed %d in-memory libraries from API", len(ps.libraries))
+		} else {
+			fs.Debugf(nil, "iclouddrive photos: in-memory library rediscovery failed, using cached state: %v", err)
+		}
 		return ps.libraries, nil
 	}
 
@@ -464,8 +549,30 @@ func (ps *PhotosService) GetLibraries(ctx context.Context) (map[string]*Library,
 	if cached := ps.loadCachedLibraries(); cached != nil {
 		ps.batchCheckForChanges(ctx, cached)
 		ps.libraries = cached
-		fs.Debugf(nil, "iclouddrive photos: %d libraries from cache", len(cached))
+		if discovered, err := ps.discoverLibraries(ctx); err == nil {
+			ps.libraries = mergeDiscoveredLibraries(ctx, cached, discovered)
+			ps.saveCachedLibraries()
+			fs.Debugf(nil, "iclouddrive photos: refreshed %d libraries from API", len(ps.libraries))
+		} else {
+			fs.Debugf(nil, "iclouddrive photos: library rediscovery failed, using cached zones: %v", err)
+			fs.Debugf(nil, "iclouddrive photos: %d libraries from cache", len(cached))
+		}
 		return ps.libraries, nil
+	}
+
+	discovered, err := ps.discoverLibraries(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ps.libraries = discovered.libraries
+	ps.saveCachedLibraries()
+	return ps.libraries, nil
+}
+
+func (ps *PhotosService) discoverLibraries(ctx context.Context) (*libraryDiscovery, error) {
+	result := &libraryDiscovery{
+		libraries:      make(map[string]*Library),
+		refreshedAreas: make(map[string]bool),
 	}
 
 	// Discover zones from API - probe both private and shared databases
@@ -492,16 +599,17 @@ func (ps *PhotosService) GetLibraries(ctx context.Context) (map[string]*Library,
 			}
 			return nil, fmt.Errorf("failed to discover zones: %w", err)
 		}
+		result.refreshedAreas[area] = true
 		for _, zone := range response.Zones {
 			if zone.Deleted {
 				continue
 			}
 			name := zone.ZoneID.ZoneName
 			// SharedSync-* found in private takes precedence over shared
-			if _, exists := ps.libraries[name]; exists {
+			if _, exists := result.libraries[name]; exists {
 				continue
 			}
-			ps.libraries[name] = &Library{
+			result.libraries[name] = &Library{
 				service:         ps,
 				zoneID:          name,
 				area:            area,
@@ -511,9 +619,37 @@ func (ps *PhotosService) GetLibraries(ctx context.Context) (map[string]*Library,
 			}
 		}
 	}
+	return result, nil
+}
 
-	ps.saveCachedLibraries()
-	return ps.libraries, nil
+func mergeDiscoveredLibraries(ctx context.Context, existing map[string]*Library, discovered *libraryDiscovery) map[string]*Library {
+	merged := make(map[string]*Library, len(existing)+len(discovered.libraries))
+	for name, cached := range existing {
+		if !discovered.refreshedAreas[cached.area] {
+			if cached.area == areaShared {
+				exists, err := cached.probeZoneExists(ctx)
+				if err != nil {
+					fs.Debugf(nil, "iclouddrive photos: shared zone probe failed for %q, keeping cached zone: %v", cached.zoneID, err)
+				} else if !exists {
+					fs.Debugf(nil, "iclouddrive photos: dropping cached shared zone %q after authoritative ZONE_NOT_FOUND probe", cached.zoneID)
+					continue
+				}
+			}
+			merged[name] = cached
+		}
+	}
+	for name, fresh := range discovered.libraries {
+		if cached, ok := existing[name]; ok {
+			cached.service = fresh.service
+			cached.area = fresh.area
+			cached.ownerRecordName = fresh.ownerRecordName
+			cached.zoneType = fresh.zoneType
+			merged[name] = cached
+			continue
+		}
+		merged[name] = fresh
+	}
+	return merged
 }
 
 // albumRecord represents a CPLAlbum record from CloudKit
@@ -647,12 +783,14 @@ func (lib *Library) GetAlbums(ctx context.Context) (map[string]*Album, error) {
 		var response albumQueryResponse
 
 		if err := lib.request(ctx, "records/query", query, &response); err != nil {
-			// User album index may not exist in all zones (e.g. shared libraries)
-			// Commit smart albums only rather than failing entirely
+			// SharedSync libraries return BAD_REQUEST / "Index has invalid data"
+			// on CPLAlbumByPositionLive in live probes, so fall back to smart
+			// albums there while surfacing PrimarySync failures directly
 			fs.Debugf(nil, "iclouddrive photos: user album query failed for zone %q: %v", lib.zoneID, err)
-			lib.albums = albums
-			lib.saveCachedAlbums()
-			return lib.albums, nil
+			if lib.isSharedLibrary() && isSharedAlbumIndexError(err) {
+				return albums, nil
+			}
+			return nil, fmt.Errorf("query user albums for zone %q: %w", lib.zoneID, err)
 		}
 
 		allRecords = append(allRecords, response.Records...)
@@ -698,7 +836,7 @@ func (lib *Library) GetAlbums(ctx context.Context) (map[string]*Album, error) {
 				Children:   make(map[string]*Album),
 			}
 			if err := lib.fetchFolderChildren(ctx, folder); err != nil {
-				fs.Debugf(nil, "iclouddrive photos: failed to fetch children of folder %q: %v", albumName, err)
+				return nil, fmt.Errorf("fetch children of folder %q: %w", albumName, err)
 			}
 			albums[albumName] = folder
 		} else {
@@ -804,7 +942,7 @@ func (lib *Library) fetchFolderChildren(ctx context.Context, folder *Album) erro
 					Children:   make(map[string]*Album),
 				}
 				if err := lib.fetchFolderChildren(ctx, childFolder); err != nil {
-					fs.Debugf(nil, "iclouddrive photos: nested folder %q: %v", childName, err)
+					return err
 				}
 				folder.Children[childName] = childFolder
 			} else {
@@ -1203,6 +1341,11 @@ func (lib *Library) applyPendingDelta(ctx context.Context) bool {
 	if pending == nil {
 		return true // nothing pending, cache is current
 	}
+	failPendingDelta := func() bool {
+		lib.pendingDelta = nil
+		lib.cacheValid.Store(false)
+		return false
+	}
 
 	// Verify albums are populated - if not (e.g. eager album invalidation
 	// cleared the map before GetAlbums ran), clear pendingDelta so
@@ -1223,10 +1366,10 @@ func (lib *Library) applyPendingDelta(ctx context.Context) bool {
 	for moreComing {
 		var response changesZoneResponse
 		if err := lib.request(ctx, "changes/zone", lib.changesZoneBody(syncToken), &response); err != nil {
-			return false
+			return failPendingDelta()
 		}
 		if len(response.Zones) == 0 {
-			return false
+			return failPendingDelta()
 		}
 		allRecords = append(allRecords, response.Zones[0].Records...)
 		syncToken = response.Zones[0].SyncToken
@@ -1963,8 +2106,7 @@ func (album *Album) GetPhotos(ctx context.Context) ([]*Photo, error) {
 	// Check for changes, apply any buffered delta, serve from cache
 	if album.ObjectType != "" {
 		album.lib.checkForChanges(ctx)
-		album.lib.applyPendingDelta(ctx)
-		if album.lib.cacheValid.Load() {
+		if album.lib.applyPendingDelta(ctx) && album.lib.cacheValid.Load() {
 			// Serve from in-memory cache if populated (avoids disk I/O + JSON parse + dedup)
 			album.mu.Lock()
 			if album.photoCache != nil {
