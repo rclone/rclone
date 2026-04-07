@@ -723,6 +723,7 @@ func TestRWCacheUpdate(t *testing.T) {
 	opt.CacheMode = vfscommon.CacheModeFull
 	opt.WriteBack = writeBackDelay
 	opt.DirCacheTime = fs.Duration(100 * time.Millisecond)
+	opt.HandleCaching = 0
 	r, vfs := newTestVFSOpt(t, &opt)
 
 	if r.Fremote.Precision() == fs.ModTimeNotSupported {
