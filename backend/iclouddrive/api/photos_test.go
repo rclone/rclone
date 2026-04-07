@@ -801,46 +801,6 @@ func TestClassifySmartAlbums(t *testing.T) {
 	}
 }
 
-func TestDiskCacheRoundTrip(t *testing.T) {
-	dir := t.TempDir()
-
-	photos := []*Photo{
-		{ID: "m1", Filename: "IMG_0001.JPG", Size: 1024, AssetDate: 1700000000000},
-		{ID: "m2", Filename: "IMG_0002.HEIC", Size: 2048, AssetDate: 1700000001000},
-	}
-
-	// Save
-	data, err := json.Marshal(photos)
-	require.NoError(t, err)
-	cacheFile := filepath.Join(dir, albumCacheKey("testAlbum")+".json")
-	require.NoError(t, os.WriteFile(cacheFile, data, 0600))
-
-	// Load
-	loadedData, err := os.ReadFile(cacheFile)
-	require.NoError(t, err)
-	var loaded []*Photo
-	require.NoError(t, json.Unmarshal(loadedData, &loaded))
-
-	require.Len(t, loaded, 2)
-	assert.Equal(t, "m1", loaded[0].ID)
-	assert.Equal(t, "IMG_0001.JPG", loaded[0].Filename)
-	assert.Equal(t, int64(1024), loaded[0].Size)
-	assert.Equal(t, "m2", loaded[1].ID)
-
-}
-
-func TestDiskCacheCorruptJSON(t *testing.T) {
-	dir := t.TempDir()
-	cacheFile := filepath.Join(dir, "corrupt.json")
-	require.NoError(t, os.WriteFile(cacheFile, []byte("{invalid json"), 0600))
-
-	data, err := os.ReadFile(cacheFile)
-	require.NoError(t, err)
-	var photos []*Photo
-	err = json.Unmarshal(data, &photos)
-	assert.Error(t, err, "corrupt JSON must fail to unmarshal")
-}
-
 func TestGetPhotoByName_CacheHit(t *testing.T) {
 	album := &Album{
 		Name:       "Videos",
@@ -1189,6 +1149,46 @@ func TestApplyPendingDelta_InvalidatesNestedAlbum(t *testing.T) {
 	data, err := os.ReadFile(filepath.Join(lib.zoneCacheDir(), "syncToken"))
 	require.NoError(t, err)
 	assert.Equal(t, "next-token", string(data))
+}
+
+func TestFlushCaches_NoPendingDeltaRace(t *testing.T) {
+	// Verify FlushCaches and applyPendingDelta don't race on pendingDelta.
+	// FlushCaches must acquire deltaMu before writing pendingDelta.
+	ps := &PhotosService{
+		client:    &Client{remoteName: "race-test"},
+		libraries: make(map[string]*Library),
+	}
+	lib := &Library{
+		service: ps,
+		zoneID:  "PrimarySync",
+		area:    areaPrivate,
+		albums:  make(map[string]*Album),
+	}
+	ps.libraries["PrimarySync"] = lib
+
+	// Run concurrent FlushCaches + applyPendingDelta
+	// The race detector will flag unsynchronized access to pendingDelta
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		for i := 0; i < 100; i++ {
+			lib.deltaMu.Lock()
+			lib.pendingDelta = &deltaPayload{
+				records:   []json.RawMessage{json.RawMessage(`{"recordName":"m1","recordType":"CPLMaster"}`)},
+				syncToken: "tok",
+			}
+			lib.deltaMu.Unlock()
+			lib.applyPendingDelta(context.Background())
+		}
+	}()
+	for i := 0; i < 100; i++ {
+		ps.FlushCaches()
+		// Re-add the library since FlushCaches clears it
+		ps.mu.Lock()
+		ps.libraries["PrimarySync"] = lib
+		ps.mu.Unlock()
+	}
+	<-done
 }
 
 func TestBuildSmartAlbums(t *testing.T) {

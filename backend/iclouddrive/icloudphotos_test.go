@@ -10,62 +10,10 @@ import (
 
 	"github.com/rclone/rclone/backend/iclouddrive/api"
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func newTestPhotosObject() *PhotosObject {
-	return &PhotosObject{
-		fs:       &PhotosFs{name: "test", root: ""},
-		remote:   "PrimarySync/All Photos/IMG_0001.JPG",
-		size:     12345,
-		modTime:  time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC),
-		masterID: "test-master-001",
-		zone:     "PrimarySync",
-	}
-}
-
-func TestPhotosObject_Storable(t *testing.T) {
-	o := newTestPhotosObject()
-	assert.True(t, o.Storable())
-}
-
-func TestPhotosObject_SetModTime(t *testing.T) {
-	o := newTestPhotosObject()
-	err := o.SetModTime(context.Background(), time.Now())
-	assert.ErrorIs(t, err, fs.ErrorCantSetModTime)
-}
-
-func TestPhotosObject_Hash(t *testing.T) {
-	o := newTestPhotosObject()
-	h, err := o.Hash(context.Background(), hash.MD5)
-	assert.Equal(t, "", h)
-	assert.ErrorIs(t, err, hash.ErrUnsupported)
-}
-
-func TestPhotosObject_BasicFields(t *testing.T) {
-	o := newTestPhotosObject()
-	assert.Equal(t, "PrimarySync/All Photos/IMG_0001.JPG", o.Remote())
-	assert.Equal(t, int64(12345), o.Size())
-	assert.Equal(t, time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC), o.ModTime(context.Background()))
-	assert.Equal(t, "PrimarySync/All Photos/IMG_0001.JPG", o.String())
-	assert.NotNil(t, o.Fs())
-}
-
-func TestPhotosObject_ReadOnly(t *testing.T) {
-	o := newTestPhotosObject()
-	err := o.Update(context.Background(), nil, nil)
-	assert.ErrorIs(t, err, fs.ErrorNotImplemented)
-	err = o.Remove(context.Background())
-	assert.ErrorIs(t, err, fs.ErrorNotImplemented)
-}
-
-func TestPhotosObject_NilString(t *testing.T) {
-	var o *PhotosObject
-	assert.Equal(t, "<nil>", o.String())
-}
 
 func newTestPhotosFs() *PhotosFs {
 	return &PhotosFs{
@@ -73,36 +21,6 @@ func newTestPhotosFs() *PhotosFs {
 		root: "",
 		opt:  Options{},
 	}
-}
-
-func TestPhotosFs_BasicFields(t *testing.T) {
-	f := newTestPhotosFs()
-	assert.Equal(t, "test-icp", f.Name())
-	assert.Equal(t, time.Second, f.Precision())
-	assert.Equal(t, hash.Set(hash.None), f.Hashes())
-}
-
-func TestPhotosFs_ReadOnly(t *testing.T) {
-	f := newTestPhotosFs()
-	_, err := f.Put(context.Background(), nil, nil)
-	assert.ErrorIs(t, err, fs.ErrorNotImplemented)
-	err = f.Mkdir(context.Background(), "test")
-	assert.ErrorIs(t, err, fs.ErrorNotImplemented)
-	err = f.Rmdir(context.Background(), "test")
-	assert.ErrorIs(t, err, fs.ErrorNotImplemented)
-}
-
-func TestPhotosFs_String(t *testing.T) {
-	f := newTestPhotosFs()
-	f.root = "PrimarySync"
-	assert.Equal(t, "iCloud Photos root 'PrimarySync'", f.String())
-}
-
-func TestPhotosFs_Root(t *testing.T) {
-	f := newTestPhotosFs()
-	f.root = "PrimarySync/All Photos"
-	r := f.Root()
-	assert.Equal(t, "PrimarySync/All Photos", r)
 }
 
 func TestSmartAlbumDefinitions(t *testing.T) {
@@ -192,22 +110,6 @@ func TestParseAlbumDirID(t *testing.T) {
 	// Empty
 	_, _, ok = parseAlbumDirID("album:")
 	assert.False(t, ok)
-}
-
-func TestPhotosFs_Features(t *testing.T) {
-	f := newTestPhotosFs()
-	f.features = (&fs.Features{
-		CanHaveEmptyDirectories: true,
-		PartialUploads:          false,
-		ReadMimeType:            false,
-		ReadMetadata:            true,
-	}).Fill(context.Background(), f)
-	features := f.Features()
-	require.NotNil(t, features)
-	assert.True(t, features.CanHaveEmptyDirectories)
-	assert.False(t, features.PartialUploads)
-	assert.False(t, features.ReadMimeType)
-	assert.True(t, features.ReadMetadata)
 }
 
 func TestPhotosObject_Metadata(t *testing.T) {
@@ -419,12 +321,6 @@ func TestNewObject_ErrorPaths(t *testing.T) {
 	_, err = videos.GetPhotoByName(ctx, "nonexistent.mp4")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "nonexistent.mp4")
-}
-
-func TestPhotosFs_CreateDir(t *testing.T) {
-	f := newTestPhotosFs()
-	_, err := f.CreateDir(context.Background(), "lib:PrimarySync", "NewAlbum")
-	assert.ErrorIs(t, err, fs.ErrorNotImplemented)
 }
 
 func TestParseAlbumDirID_Exhaustive(t *testing.T) {

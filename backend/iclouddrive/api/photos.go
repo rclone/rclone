@@ -167,6 +167,7 @@ func (ps *PhotosService) FlushCaches() {
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
 	for _, lib := range ps.libraries {
+		lib.deltaMu.Lock()
 		lib.mu.Lock()
 		lib.cacheValid.Store(false)
 		lib.pendingDelta = nil
@@ -178,6 +179,7 @@ func (ps *PhotosService) FlushCaches() {
 		}
 		lib.albums = make(map[string]*Album)
 		lib.mu.Unlock()
+		lib.deltaMu.Unlock()
 	}
 	ps.libraries = make(map[string]*Library)
 	// Also remove the libraries cache file
