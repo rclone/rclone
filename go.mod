@@ -62,6 +62,7 @@ require (
 	github.com/moby/sys/mountinfo v0.7.2
 	github.com/muesli/reflow v0.3.0
 	github.com/ncw/swift/v2 v2.0.5
+	github.com/nickball/go-aes-key-wrap v0.0.0-20170929221519-1c3aa3e4dfc5
 	github.com/oracle/oci-go-sdk/v65 v65.108.2
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/peterh/liner v1.2.2
@@ -78,6 +79,7 @@ require (
 	github.com/rogpeppe/go-internal v1.14.1
 	github.com/shirou/gopsutil/v4 v4.26.1
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
+	github.com/spatialcurrent/go-lazy v0.0.0-20211115014721-47315cc003d1
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
@@ -113,6 +115,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.11.2 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.6.0 // indirect
+	github.com/NickBall/go-aes-key-wrap v0.0.0-20170929221519-1c3aa3e4dfc5 // indirect
 	github.com/ProtonMail/bcrypt v0.0.0-20211005172633-e235017c1baf // indirect
 	github.com/ProtonMail/gluon v0.17.1-0.20230724134000-308be39be96e // indirect
 	github.com/ProtonMail/go-mime v0.0.0-20230322103455-7d82a3887f2f // indirect

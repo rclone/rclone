@@ -306,6 +306,26 @@ func (o *ChunkOption) String() string {
 	return fmt.Sprintf("ChunkOption(%v)", o.ChunkSize)
 }
 
+// CekOption allows to provide custom CEK to decrypter
+type CekOption struct {
+	Cek [32]byte
+}
+
+// Header formats the option as an http header
+func (o *CekOption) Header() (key string, value string) {
+	return "", ""
+}
+
+// String formats the option into human-readable form
+func (o *CekOption) String() string {
+	return fmt.Sprintf("CekOption(%v)", o.Cek)
+}
+
+// Mandatory returns whether the option must be parsed or can be ignored
+func (o *CekOption) Mandatory() bool {
+	return false
+}
+
 // OpenOptionAddHeaders adds each header found in options to the
 // headers map provided the key was non empty.
 func OpenOptionAddHeaders(options []OpenOption, headers map[string]string) {
