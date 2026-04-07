@@ -744,13 +744,27 @@ rclone check remote:crypt remote2:crypt
 Files are encrypted 1:1 source file to destination object.  The file
 has a header and is divided into chunks.
 
-#### Header
+#### Header (V2)
 
-- 8 bytes magic string `RCLONE\x00\x00`
-- 24 bytes Nonce (IV)
+  * 8 bytes magic string `RCLONE\x00\x01`
+  * 23 bytes Nonce (IV)
+  * 40 bytes AES-KW RFC3394 wrapped CEK (Content Encryption Key),
+  * 4 reserved bytes,
 
 The initial nonce is generated from the operating systems crypto
-strong random number generator.  The nonce is incremented for each
+strong random number generator. The nonce is incremented for each
+chunk read making sure each nonce is unique for each block written.
+
+Internally, 24 bytes nonce is used, but last byte is always set to
+`\x00` except the last block which uses: `\x01`. This mechanism serves
+as a protection against ciphertext truncation.
+
+#### Header (V1)
+* 8 bytes magic string `RCLONE\x00\x00`
+* 24 bytes Nonce (IV)
+
+The initial nonce is generated from the operating systems crypto
+strong random number generator. The nonce is incremented for each
 chunk read making sure each nonce is unique for each block written.
 The chance of a nonce being reused is minuscule.  If you wrote an
 exabyte of data (10¹⁸ bytes) you would have a probability of
@@ -773,10 +787,44 @@ authenticator takes too much time below this and the performance drops
 off due to cache effects above this).  Note that these chunks are
 buffered in memory so they can't be too big.
 
-This uses a 32 byte (256 bit key) key derived from the user password.
+Chunk is encrypted using 32 byte (256 bit key) CEK (Content Encryption Key)
 
-#### Examples
+In V2 cipher version, this key is random for every file. It is stored in the 
+file header, wrapped (AES-KW RFC3394) using master data key.
 
+V1 cipher version uses master data key directly to encrypt file contents.
+
+Master data key is derived from the user password. See: "Master key derivation".
+
+#### Footer (V2 only)
+
+* 1 byte hash type
+* 16 bytes XSalsa20 encrypted MD5 plaintext hash,
+* 16 bytes of Poly1305 authenticator
+
+Footer was introduced in V2 to implement hash support for `crypt` back-end.
+
+#### Example ciphertext layout 
+
+##### V2
+1 byte file will encrypt to
+
+* 75 bytes header
+* 17 bytes data chunk
+* 33 bytes footer
+
+125 bytes total
+
+1 MiB (1048576 bytes) file will encrypt to
+
+* 75 bytes header
+* 16 chunks of 65568 bytes
+* 33 bytes footer
+
+1049196 bytes total (a 0.06% overhead). This is the overhead for big
+files.
+
+##### V1
 1 byte file will encrypt to
 
 - 32 bytes header
@@ -789,8 +837,7 @@ This uses a 32 byte (256 bit key) key derived from the user password.
 - 32 bytes header
 - 16 chunks of 65568 bytes
 
-1049120 bytes total (a 0.05% overhead). This is the overhead for big
-files.
+1049120 bytes total (a 0.05% overhead).
 
 ### Name encryption
 
@@ -826,11 +873,11 @@ encoding is modified in two ways:
 `base32` is used rather than the more efficient `base64` so rclone can be
 used on case insensitive remotes (e.g. Windows, Box, Dropbox, Onedrive etc).
 
-### Key derivation
+### Master key derivation
 
 Rclone uses `scrypt` with parameters `N=16384, r=8, p=1` with an
-optional user supplied salt (password2) to derive the 32+32+16 = 80
-bytes of key material required.  If the user doesn't supply a salt
+optional user supplied salt (password2) to derive the 32 (data key)+32 (name key)+16 (name tweak) = 80
+bytes of key material required. If the user doesn't supply a salt
 then rclone uses an internal one.
 
 `scrypt` makes it impractical to mount a dictionary attack on rclone
@@ -838,6 +885,38 @@ encrypted data.  For full protection against this you should always use
 a salt.
 
 ## See Also
+### V2 cipher
+In `v1.75.0` Rclone introduced new cipher version (V2) which supports secure file sharing,
+protection against file truncation and support for MD5 hashes which are now calculated 
+and stored encrypted in the file footer.
+
+#### Migration
+Using two versions simultaneously in a single location isn't supported
+and may lead to unintended consequences.
+
+It is recommended to migrate data to a different remote, so in case something goes wrong, source remote
+remains unaffected and acts as a backup.
+
+Before V2 cipher is enabled in the config (`cipher_version` flag), user should migrate all of their
+existing V1 encrypted data.
+
+##### In-place migration (experimental)
+It should only be used for data that's already backed up or as a last resort. There isn't much room
+for error and if something goes wrong, data loss may happen.
+
+In order to migrate objects from V1 to V2 within a same `crypt` back-end (e.g. `cryptA`):
+- clone configuration of your `cryptA` to `cryptA_clone`,
+- set `cipher_version = 2` in your `cryptA_clone`,
+- run `copy --no-check-dest --crypt-exact-size cryptA: cryptA_clone:`
+
+Command: `--no-check-dest` will make sure that file gets copied even if it's seemingly the same.
+
+Command: `--crypt-exact-size` issues calculates size based on object's cipher version detection.
+It shouldn't be used on a daily basis as it requires additional HTTP call for every single object.
+Normally cipher version is assumed from the config, but this isn't reliable during migration which 
+may already have mixed cipher versions temporarily.
+
+## SEE ALSO
 
 - [rclone cryptdecode](/commands/rclone_cryptdecode/) - Show forward/reverse
 mapping of encrypted filenames.
