@@ -37,13 +37,17 @@ implemented, but behavior and options may still change. See
 - **Parameters**: `data_shards` = **k**, `parity_shards` = **m**. Configure
   exactly **k+m** entries in `remotes`, in **shard index order** (shard `0` …
   shard `k+m-1`).
-- **Encoding**: Content is split into stripes and Reed–Solomon encoded; each
-  shard receives its **particle** (that shard’s payload bytes).
-- **Footer**: Each particle ends with the same **98-byte EC footer layout**
-  (`RCLONE/EC`). Fields such as logical **size**, **mtime**, **MD5/SHA256**,
-  **k**, **m**, **algorithm**, and **stripe size** are **the same across shards**.
-  **Per-shard fields differ**, notably **`CurrentShard`** (fragment index) and
-  **`PayloadCRC32C`** (CRC of that shard’s payload), so footers are **not
+- **Encoding**: Content is read in logical chunks of up to **k × S** bytes (see
+  **`stripe_fragment_size`** = **S**). Each chunk is zero-padded to **k × S**,
+  Reed–Solomon split/encoded, and **S** bytes per stripe are appended to each
+  shard’s payload. **`NumStripes`** in the footer is the stripe count; empty
+  objects use **0** stripes.
+- **Footer**: Each particle ends with the same **102-byte EC footer** (version
+  **3**, magic **`RCLONE/EC`**). Fields such as logical **size**, **mtime**,
+  **MD5/SHA256**, **k**, **m**, **algorithm**, **`StripeSize` (S)**,
+  **`NumStripes`**, and **`NumBlocks`** (reserved, 0 today) are **the same across
+  shards**. **Per-shard fields differ**, notably **`CurrentShard`** and
+  **`PayloadCRC32C`** (CRC of that shard’s full payload), so footers are **not
   byte-identical** copies.
 - **Upload (`use_spooling=true`, default)**: Encoded shards are written to local
   disk (see `staging_dir` / system temp), then **uploaded in parallel** to each
@@ -230,6 +234,17 @@ Properties:
 - Env Var:     RCLONE_RS_MAX_PARALLEL_UPLOADS
 - Type:        int
 - Default:     4
+
+#### --rs-stripe-fragment-size
+
+RS stripe fragment size S in bytes (bytes appended per shard per stripe). If <= 0, defaults to 256KiB.
+
+Properties:
+
+- Config:      stripe_fragment_size
+- Env Var:     RCLONE_RS_STRIPE_FRAGMENT_SIZE
+- Type:        int
+- Default:     262144
 
 #### --rs-description
 

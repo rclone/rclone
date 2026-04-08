@@ -6,6 +6,8 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"hash"
+	"hash/crc32"
 	"io"
 	"os"
 	"path/filepath"
@@ -20,12 +22,37 @@ import (
 
 const putOperationTimeout = 5 * time.Minute
 
+// DefaultStripeFragmentSize is S: bytes per shard per RS stripe (fragment size).
+// Erasure-coded systems commonly use 64KiB–1MiB unit sizes (e.g. Tahoe-LAFS default
+// 128KiB segments; HDFS EC often 64KiB+). 256KiB balances memory (k·S per stripe),
+// reconstruct work, and remote API round-trips.
+const DefaultStripeFragmentSize = 256 * 1024
+
+// NumStripesForContent returns the stripe count for a logical size, k, and fragment size S.
+// For non-empty content it is ceil(ContentLength / (k*S)). Empty content yields 0.
+func NumStripesForContent(contentLength int64, k, S int) int {
+	if contentLength == 0 || k < 1 || S < 1 {
+		return 0
+	}
+	capacity := int64(k) * int64(S)
+	return int((contentLength + capacity - 1) / capacity)
+}
+
+func normalizeStripeFragmentSize(n int) int {
+	if n <= 0 {
+		return DefaultStripeFragmentSize
+	}
+	return n
+}
+
 // BuildResult is the outcome of BuildRSShardsToWriters (content hashes and length).
 type BuildResult struct {
 	ContentLength int64
 	Mtime         time.Time
 	MD5           [16]byte
 	SHA256        [32]byte
+	StripeSize    uint32
+	NumStripes    uint32
 }
 
 type uploadedShard struct {
@@ -82,7 +109,7 @@ func (f *Fs) putSpooling(ctx context.Context, in io.Reader, src fs.ObjectInfo, o
 		for i := range shardFiles {
 			writers[i] = shardFiles[i]
 		}
-		bres, buildErr = BuildRSShardsToWriters(ctx, in, src, f.opt.DataShards, f.opt.ParityShards, writers, true)
+		bres, buildErr = BuildRSShardsToWriters(ctx, in, src, f.opt.DataShards, f.opt.ParityShards, f.opt.StripeFragmentSize, writers, true)
 	}()
 	wg.Wait()
 	for _, fh := range shardFiles {
@@ -156,6 +183,11 @@ func (f *Fs) putSpooling(ctx context.Context, in io.Reader, src fs.ObjectInfo, o
 		MD5:           bres.MD5,
 		SHA256:        bres.SHA256,
 		Mtime:         bres.Mtime.Unix(),
+		StripeSize:    bres.StripeSize,
+		NumStripes:    bres.NumStripes,
+		DataShards:    uint8(f.opt.DataShards),
+		ParityShards:  uint8(f.opt.ParityShards),
+		Algorithm:     AlgorithmRS,
 	}}, nil
 }
 
@@ -198,7 +230,7 @@ func (f *Fs) checkWriteQuorumAvailable(ctx context.Context) error {
 	return nil
 }
 
-// buildZeroLengthShards writes empty logical files (reedsolomon.Split requires at least 1 byte).
+// buildZeroLengthShards writes empty logical files (no payload; footer only).
 func buildZeroLengthShards(ctx context.Context, src fs.ObjectInfo, dataShards, parityShards int, writers []io.Writer, withFooter bool) (*BuildResult, error) {
 	if len(writers) != dataShards+parityShards {
 		return nil, fmt.Errorf("rs: writers count mismatch: got %d want %d", len(writers), dataShards+parityShards)
@@ -206,7 +238,7 @@ func buildZeroLengthShards(ctx context.Context, src fs.ObjectInfo, dataShards, p
 	mtime := src.ModTime(ctx)
 	for i := range writers {
 		if withFooter {
-			ft := NewRSFooter(0, emptyFileMD5[:], emptyFileSHA256[:], mtime, dataShards, parityShards, i, 0, crc32cChecksum(nil))
+			ft := NewRSFooter(0, emptyFileMD5[:], emptyFileSHA256[:], mtime, dataShards, parityShards, i, 0, 0, crc32cChecksum(nil))
 			fb, err := ft.MarshalBinary()
 			if err != nil {
 				return nil, err
@@ -221,6 +253,8 @@ func buildZeroLengthShards(ctx context.Context, src fs.ObjectInfo, dataShards, p
 		Mtime:         mtime,
 		MD5:           emptyFileMD5,
 		SHA256:        emptyFileSHA256,
+		StripeSize:    0,
+		NumStripes:    0,
 	}, nil
 }
 
@@ -234,9 +268,10 @@ func (f *Fs) rollbackPut(ctx context.Context, uploaded []uploadedShard) error {
 	return firstErr
 }
 
-// BuildRSShardsToWriters reads object bytes from in, Reed-Solomon encodes into writers.
-// If withFooter is true, each writer receives payload plus EC v2 footer (rclone particle format).
-func BuildRSShardsToWriters(ctx context.Context, in io.Reader, src fs.ObjectInfo, dataShards, parityShards int, writers []io.Writer, withFooter bool) (*BuildResult, error) {
+// BuildRSShardsToWriters reads object bytes from in, Reed-Solomon encodes in stripes into writers.
+// stripeFragmentSize is S (bytes per shard per stripe); if <= 0, DefaultStripeFragmentSize is used.
+// If withFooter is true, each writer receives payload plus EC footer (rclone particle format).
+func BuildRSShardsToWriters(ctx context.Context, in io.Reader, src fs.ObjectInfo, dataShards, parityShards int, stripeFragmentSize int, writers []io.Writer, withFooter bool) (*BuildResult, error) {
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
@@ -245,6 +280,8 @@ func BuildRSShardsToWriters(ctx context.Context, in io.Reader, src fs.ObjectInfo
 	if len(writers) != dataShards+parityShards {
 		return nil, fmt.Errorf("rs: writers count mismatch: got %d want %d", len(writers), dataShards+parityShards)
 	}
+	S := normalizeStripeFragmentSize(stripeFragmentSize)
+	k := dataShards
 	payload, err := io.ReadAll(in)
 	if err != nil {
 		return nil, fmt.Errorf("rs: read source: %w", err)
@@ -254,33 +291,71 @@ func BuildRSShardsToWriters(ctx context.Context, in io.Reader, src fs.ObjectInfo
 	}
 	md5Arr := md5.Sum(payload)
 	shaArr := sha256.Sum256(payload)
+	mtime := src.ModTime(ctx)
+	contentLength := int64(len(payload))
+
 	enc, err := reedsolomon.New(dataShards, parityShards)
 	if err != nil {
 		return nil, fmt.Errorf("rs: create encoder: %w", err)
 	}
-	dataPieces, err := enc.Split(payload)
-	if err != nil {
-		return nil, fmt.Errorf("rs: split payload: %w", err)
+
+	numStripes := NumStripesForContent(contentLength, k, S)
+	stripeBuf := make([]byte, k*S)
+	shards := make([][]byte, k+parityShards)
+	crcH := make([]hash.Hash32, len(writers))
+	for i := range crcH {
+		crcH[i] = crc32.New(crc32cTable)
 	}
-	shards := make([][]byte, dataShards+parityShards)
-	copy(shards, dataPieces)
-	for i := dataShards; i < len(shards); i++ {
-		shards[i] = make([]byte, len(shards[0]))
-	}
-	if err := enc.Encode(shards); err != nil {
-		return nil, fmt.Errorf("rs: encode shards: %w", err)
-	}
-	stripeSize := uint32(0)
-	if len(shards) > 0 {
-		stripeSize = uint32(len(shards[0]))
-	}
-	mtime := src.ModTime(ctx)
-	for i := range shards {
-		if _, err := writers[i].Write(shards[i]); err != nil {
-			return nil, fmt.Errorf("rs: write shard payload %d: %w", i, err)
+
+	var pos int64
+	for stripe := 0; stripe < numStripes; stripe++ {
+		if err := ctx.Err(); err != nil {
+			return nil, err
 		}
+		logicalRemaining := contentLength - pos
+		if logicalRemaining <= 0 {
+			break
+		}
+		logicalThis := int64(k * S)
+		if logicalThis > logicalRemaining {
+			logicalThis = logicalRemaining
+		}
+		clear(stripeBuf)
+		copy(stripeBuf, payload[pos:pos+logicalThis])
+		pos += logicalThis
+
+		dataPieces, err := enc.Split(stripeBuf)
+		if err != nil {
+			return nil, fmt.Errorf("rs: split stripe %d: %w", stripe, err)
+		}
+		for i := range shards {
+			shards[i] = nil
+		}
+		copy(shards, dataPieces)
+		for i := dataShards; i < len(shards); i++ {
+			shards[i] = make([]byte, len(shards[0]))
+		}
+		if err := enc.Encode(shards); err != nil {
+			return nil, fmt.Errorf("rs: encode stripe %d: %w", stripe, err)
+		}
+		for i := range writers {
+			frag := shards[i]
+			if _, err := writers[i].Write(frag); err != nil {
+				return nil, fmt.Errorf("rs: write shard %d stripe %d: %w", i, stripe, err)
+			}
+			_, _ = crcH[i].Write(frag)
+		}
+	}
+
+	if pos != contentLength {
+		return nil, fmt.Errorf("rs: internal error: encoded %d of %d bytes", pos, contentLength)
+	}
+
+	stripeU32 := uint32(S)
+	numStripesU32 := uint32(numStripes)
+	for i := range writers {
 		if withFooter {
-			ft := NewRSFooter(int64(len(payload)), md5Arr[:], shaArr[:], mtime, dataShards, parityShards, i, stripeSize, crc32cChecksum(shards[i]))
+			ft := NewRSFooter(contentLength, md5Arr[:], shaArr[:], mtime, dataShards, parityShards, i, stripeU32, numStripesU32, crcH[i].Sum32())
 			fb, err := ft.MarshalBinary()
 			if err != nil {
 				return nil, err
@@ -291,9 +366,11 @@ func BuildRSShardsToWriters(ctx context.Context, in io.Reader, src fs.ObjectInfo
 		}
 	}
 	return &BuildResult{
-		ContentLength: int64(len(payload)),
+		ContentLength: contentLength,
 		Mtime:         mtime,
 		MD5:           md5Arr,
 		SHA256:        shaArr,
+		StripeSize:    stripeU32,
+		NumStripes:    numStripesU32,
 	}, nil
 }

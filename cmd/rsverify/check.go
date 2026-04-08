@@ -45,7 +45,7 @@ func runCheck(_ *cobra.Command, args []string) error {
 	if err := countShardsOK(shards, k); err != nil {
 		return err
 	}
-	out, err := rs.ReconstructDataFromShards(shards, k, m, contentLen)
+	out, err := rs.ReconstructDataFromShards(shards, k, m, contentLen, refFooter.StripeSize, refFooter.NumStripes)
 	if err != nil {
 		return fmt.Errorf("reconstruct: %w", err)
 	}

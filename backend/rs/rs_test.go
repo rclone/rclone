@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/md5"
+	"encoding/binary"
 	"encoding/hex"
 	"io"
 	"math/rand"
@@ -35,6 +36,10 @@ func TestValidateOptions(t *testing.T) {
 	}
 	require.NoError(t, validateOptions(opt))
 	require.Equal(t, 1, opt.MaxParallelUploads)
+	require.Equal(t, DefaultStripeFragmentSize, opt.StripeFragmentSize)
+
+	opt2 := &Options{Remotes: "a:,b:,c:", DataShards: 2, ParityShards: 1, StripeFragmentSize: 32}
+	require.Error(t, validateOptions(opt2))
 }
 
 func TestBuildRSShardsToWriters(t *testing.T) {
@@ -49,20 +54,26 @@ func TestBuildRSShardsToWriters(t *testing.T) {
 		ios[i] = writers[i]
 	}
 
-	res, err := BuildRSShardsToWriters(ctx, bytes.NewReader(data), src, 2, 2, ios, true)
+	res, err := BuildRSShardsToWriters(ctx, bytes.NewReader(data), src, 2, 2, 0, ios, true)
 	require.NoError(t, err)
 	require.Equal(t, int64(len(data)), res.ContentLength)
+	require.Equal(t, uint32(DefaultStripeFragmentSize), res.StripeSize)
+	require.Equal(t, 1, NumStripesForContent(res.ContentLength, 2, int(res.StripeSize)))
 
 	for i := range writers {
 		raw := writers[i].Bytes()
 		require.GreaterOrEqual(t, len(raw), FooterSize)
 		payload := raw[:len(raw)-FooterSize]
-		ft, err := ParseFooter(raw[len(raw)-FooterSize:])
+		tail := raw[len(raw)-FooterSize:]
+		ft, err := ParseFooter(tail)
 		require.NoError(t, err)
+		require.Equal(t, FooterVersion, int(binary.LittleEndian.Uint16(tail[9:11])))
 		require.Equal(t, uint8(2), ft.DataShards)
 		require.Equal(t, uint8(2), ft.ParityShards)
 		require.Equal(t, uint8(i), ft.CurrentShard)
 		require.Equal(t, AlgorithmRS, ft.Algorithm)
+		require.Equal(t, uint32(1), ft.NumStripes)
+		require.Equal(t, res.StripeSize, ft.StripeSize)
 		require.Equal(t, crc32cChecksum(payload), ft.PayloadCRC32C)
 	}
 }
@@ -102,7 +113,7 @@ func TestWriteQuorum(t *testing.T) {
 
 func TestExtractShardPayloadRejectsCorruption(t *testing.T) {
 	payload := []byte("hello shard")
-	ft := NewRSFooter(int64(len(payload)), nil, nil, time.Unix(1700000000, 0), 2, 1, 0, 64, crc32cChecksum(payload))
+	ft := NewRSFooter(int64(len(payload)), nil, nil, time.Unix(1700000000, 0), 2, 1, 0, 64, 1, crc32cChecksum(payload))
 	fb, err := ft.MarshalBinary()
 	require.NoError(t, err)
 
@@ -125,25 +136,27 @@ func TestReconstructDataFromShards(t *testing.T) {
 		writers[i] = &bytes.Buffer{}
 		ios[i] = writers[i]
 	}
-	_, err := BuildRSShardsToWriters(context.Background(), bytes.NewReader(data), src, 2, 2, ios, true)
+	_, err := BuildRSShardsToWriters(context.Background(), bytes.NewReader(data), src, 2, 2, 0, ios, true)
 	require.NoError(t, err)
 
 	shards := make([][]byte, 4)
+	var ref *Footer
 	for i := range writers {
 		raw := writers[i].Bytes()
-		payload, _, err := ExtractParticlePayload(raw, i)
+		payload, ft, err := ExtractParticlePayload(raw, i)
 		require.NoError(t, err)
 		shards[i] = payload
+		ref = ft
 	}
 	shards[1] = nil // one missing shard should still reconstruct
-	out, err := ReconstructDataFromShards(shards, 2, 2, int64(len(data)))
+	out, err := ReconstructDataFromShards(shards, 2, 2, int64(len(data)), ref.StripeSize, ref.NumStripes)
 	require.NoError(t, err)
 	require.Equal(t, data, out)
 
 	shards[0] = nil
 	shards[2] = nil
 	shards[3] = nil
-	_, err = ReconstructDataFromShards(shards, 2, 2, int64(len(data)))
+	_, err = ReconstructDataFromShards(shards, 2, 2, int64(len(data)), ref.StripeSize, ref.NumStripes)
 	require.Error(t, err)
 }
 
@@ -173,17 +186,19 @@ func TestReconstructMissingShardsHelper(t *testing.T) {
 		writers[i] = &bytes.Buffer{}
 		ios[i] = writers[i]
 	}
-	_, err := BuildRSShardsToWriters(context.Background(), bytes.NewReader(data), src, 2, 2, ios, true)
+	_, err := BuildRSShardsToWriters(context.Background(), bytes.NewReader(data), src, 2, 2, 0, ios, true)
 	require.NoError(t, err)
 
 	shards := make([][]byte, 4)
+	var ref *Footer
 	for i := range writers {
-		payload, _, err := ExtractParticlePayload(writers[i].Bytes(), i)
+		payload, ft, err := ExtractParticlePayload(writers[i].Bytes(), i)
 		require.NoError(t, err)
 		shards[i] = payload
+		ref = ft
 	}
 	shards[1] = nil
-	out, err := reconstructMissingShards(shards, 2, 2)
+	out, err := reconstructMissingShards(shards, 2, 2, ref.StripeSize, ref.NumStripes)
 	require.NoError(t, err)
 	require.NotNil(t, out[1])
 }
@@ -218,7 +233,7 @@ func TestRebuildMissingShardsForObjectEndToEnd(t *testing.T) {
 		writers[i] = &bytes.Buffer{}
 		ios[i] = writers[i]
 	}
-	_, err := BuildRSShardsToWriters(ctx, bytes.NewReader(data), srcInfo, 2, 2, ios, true)
+	_, err := BuildRSShardsToWriters(ctx, bytes.NewReader(data), srcInfo, 2, 2, 0, ios, true)
 	require.NoError(t, err)
 
 	for i := range backends {
@@ -277,7 +292,7 @@ func TestRebuildMissingShardsForObjectDryRun(t *testing.T) {
 		writers[i] = &bytes.Buffer{}
 		ios[i] = writers[i]
 	}
-	_, err := BuildRSShardsToWriters(ctx, bytes.NewReader(data), srcInfo, 2, 2, ios, true)
+	_, err := BuildRSShardsToWriters(ctx, bytes.NewReader(data), srcInfo, 2, 2, 0, ios, true)
 	require.NoError(t, err)
 
 	for i := range backends {
@@ -423,7 +438,7 @@ func TestSetModTimeUpdatesFooters(t *testing.T) {
 		writers[i] = &bytes.Buffer{}
 		ios[i] = writers[i]
 	}
-	_, err := BuildRSShardsToWriters(ctx, bytes.NewReader(data), srcInfo, 2, 2, ios, true)
+	_, err := BuildRSShardsToWriters(ctx, bytes.NewReader(data), srcInfo, 2, 2, 0, ios, true)
 	require.NoError(t, err)
 
 	for i := range backends {
@@ -558,7 +573,7 @@ func writeObjectShardsForTest(ctx context.Context, t *testing.T, backends []fs.F
 		writers[i] = &bytes.Buffer{}
 		ios[i] = writers[i]
 	}
-	_, err := BuildRSShardsToWriters(ctx, bytes.NewReader(data), src, 2, 2, ios, true)
+	_, err := BuildRSShardsToWriters(ctx, bytes.NewReader(data), src, 2, 2, 0, ios, true)
 	require.NoError(t, err)
 	for i := range backends {
 		blob := writers[i].Bytes()
@@ -653,6 +668,34 @@ func TestNewFsHealIntegration(t *testing.T) {
 	_ = rc.Close()
 	require.NoError(t, err)
 	require.Equal(t, payload, got)
+}
+
+func TestMultiStripeEncodeDecode(t *testing.T) {
+	ctx := context.Background()
+	const stripeS = 32 // k=2 => 64 logical bytes per stripe; forces multiple stripes for small payloads
+	data := bytes.Repeat([]byte("M"), 100)
+	src := object.NewStaticObjectInfo("multi.bin", time.Unix(1700000000, 0), int64(len(data)), true, nil, nil)
+	writers := make([]*bytes.Buffer, 4)
+	ios := make([]io.Writer, 4)
+	for i := range writers {
+		writers[i] = &bytes.Buffer{}
+		ios[i] = writers[i]
+	}
+	res, err := BuildRSShardsToWriters(ctx, bytes.NewReader(data), src, 2, 2, stripeS, ios, true)
+	require.NoError(t, err)
+	require.Greater(t, res.NumStripes, uint32(1))
+
+	shards := make([][]byte, 4)
+	var ref *Footer
+	for i := range writers {
+		payload, ft, err := ExtractParticlePayload(writers[i].Bytes(), i)
+		require.NoError(t, err)
+		shards[i] = payload
+		ref = ft
+	}
+	out, err := ReconstructDataFromShards(shards, 2, 2, int64(len(data)), ref.StripeSize, ref.NumStripes)
+	require.NoError(t, err)
+	require.Equal(t, data, out)
 }
 
 func TestNewFsValidatesRemoteCount(t *testing.T) {
