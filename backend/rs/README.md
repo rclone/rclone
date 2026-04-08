@@ -50,4 +50,4 @@ The standalone helper `rsverify` lives under `cmd/rsverify`. Build with:
 
 `go build -o rsverify ./cmd/rsverify`
 
-Subcommands: `encode`, `decode`, `check`, `footer` (see `rsverify --help`). Defaults match rclone particle layout (EC v2 footer unless `encode --footer=false`).
+Subcommands: `encode`, `decode`, `check`, `footer` (see `rsverify --help`). Defaults match rclone particle layout (EC footer v3 unless `encode --footer=false`). Use `encode --stripe-size` / rs `stripe_fragment_size` to control the RS fragment size **S**.

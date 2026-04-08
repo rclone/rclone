@@ -42,14 +42,14 @@ func runDecode(_ *cobra.Command, args []string) error {
 }
 
 func decodeWithFooters(paths []string, outPath string) error {
-	shards, k, m, contentLen, _, err := loadShardsFromParticles(paths)
+	shards, k, m, contentLen, refFooter, err := loadShardsFromParticles(paths)
 	if err != nil {
 		return err
 	}
 	if err := countShardsOK(shards, k); err != nil {
 		return err
 	}
-	out, err := rs.ReconstructDataFromShards(shards, k, m, contentLen)
+	out, err := rs.ReconstructDataFromShards(shards, k, m, contentLen, refFooter.StripeSize, refFooter.NumStripes)
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func decodeRawShards(paths []string, outPath string) error {
 		}
 		shards[i] = b
 	}
-	out, err := rs.ReconstructDataFromShards(shards, decodeK, decodeM, decodeLength)
+	out, err := rs.ReconstructDataFromShardsFlat(shards, decodeK, decodeM, decodeLength)
 	if err != nil {
 		return err
 	}

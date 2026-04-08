@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"time"
@@ -63,8 +64,8 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		return io.NopCloser(bytes.NewReader(b)), nil
 	}
 
-	if o.footer.StripeSize > 0 {
-		rc, used, err := o.openViaDataShardsOnly(ctx, int64(o.footer.StripeSize), cl, options)
+	if o.footer.StripeSize > 0 && o.footer.NumStripes > 0 {
+		rc, used, err := o.openViaDataShardsOnly(ctx, options)
 		if used {
 			return rc, err
 		}
@@ -72,12 +73,38 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	return o.openFullReconstruct(ctx, options...)
 }
 
+// stripeLogicalLen returns how many logical bytes are in stripe stripeIdx (0-based).
+func stripeLogicalLen(k int, S, contentLength int64, stripeIdx int) int64 {
+	kS := int64(k) * S
+	var pos int64
+	for s := 0; s < stripeIdx; s++ {
+		chunk := min(kS, contentLength-pos)
+		if chunk <= 0 {
+			return 0
+		}
+		pos += chunk
+	}
+	return min(kS, contentLength-pos)
+}
+
+// stripeLogicalBase returns the logical byte offset where stripe stripeIdx starts.
+func stripeLogicalBase(k int, S, contentLength int64, stripeIdx int) int64 {
+	var base int64
+	for s := 0; s < stripeIdx; s++ {
+		base += stripeLogicalLen(k, S, contentLength, s)
+	}
+	return base
+}
+
 // openViaDataShardsOnly returns (reader, true, err) when all k data shards are present and
-// the logical range is served by sequential split layout (klauspost Split / Join).
+// the object uses stripe-wise layout (NumStripes, StripeSize).
 // Returns (nil, false, nil) to fall back to full Reed–Solomon reconstruction.
-func (o *Object) openViaDataShardsOnly(ctx context.Context, stripeSize int64, contentLength int64, options []fs.OpenOption) (io.ReadCloser, bool, error) {
+func (o *Object) openViaDataShardsOnly(ctx context.Context, options []fs.OpenOption) (io.ReadCloser, bool, error) {
 	k := o.fs.opt.DataShards
-	if stripeSize <= 0 {
+	S := int64(o.footer.StripeSize)
+	N := int(o.footer.NumStripes)
+	cl := o.footer.ContentLength
+	if S <= 0 || N <= 0 {
 		return nil, false, nil
 	}
 	for i := 0; i < k; i++ {
@@ -89,59 +116,76 @@ func (o *Object) openViaDataShardsOnly(ctx context.Context, stripeSize int64, co
 		if err != nil {
 			return nil, false, nil
 		}
-		if !footerCompatibleForSequentialRead(o.footer, ft, i) {
+		if !footerCompatibleForStripeRead(o.footer, ft, i) {
+			return nil, false, nil
+		}
+		if obj.Size() != int64(N)*S+FooterSize {
 			return nil, false, nil
 		}
 	}
 
-	start, endExclusive, ok := logicalSliceAfterOptions(contentLength, options...)
+	start, endExclusive, ok := logicalSliceAfterOptions(cl, options...)
 	if !ok || start >= endExclusive {
 		return io.NopCloser(bytes.NewReader(nil)), true, nil
 	}
 
+	enc, err := reedsolomon.New(k, o.fs.opt.ParityShards)
+	if err != nil {
+		return nil, false, nil
+	}
+
 	var buf bytes.Buffer
-	pos := start
-	for pos < endExclusive {
-		shardIdx := pos / stripeSize
-		if int(shardIdx) >= k {
+	for t := 0; t < N; t++ {
+		base := stripeLogicalBase(k, S, cl, t)
+		logLen := stripeLogicalLen(k, S, cl, t)
+		if logLen <= 0 {
+			continue
+		}
+		stripeEnd := base + logLen
+		segStart := max(start, base)
+		segEnd := min(endExclusive, stripeEnd)
+		if segStart >= segEnd {
+			continue
+		}
+		row := make([][]byte, k)
+		off := int64(t) * S
+		for i := 0; i < k; i++ {
+			obj, err := o.fs.backends[i].NewObject(ctx, o.remote)
+			if err != nil {
+				return nil, false, nil
+			}
+			rd, err := obj.Open(ctx, &fs.RangeOption{Start: off, End: off + S - 1})
+			if err != nil {
+				return nil, false, nil
+			}
+			frag := make([]byte, S)
+			if _, err := io.ReadFull(rd, frag); err != nil {
+				_ = rd.Close()
+				return nil, false, nil
+			}
+			_ = rd.Close()
+			row[i] = frag
+		}
+		var stripeOut bytes.Buffer
+		joinN := k * int(S)
+		if err := enc.Join(&stripeOut, row, joinN); err != nil {
 			return nil, false, nil
 		}
-		localOff := pos % stripeSize
-		shardLogicalEnd := (shardIdx + 1) * stripeSize
-		if shardLogicalEnd > contentLength {
-			shardLogicalEnd = contentLength
-		}
-		readEnd := endExclusive
-		if readEnd > shardLogicalEnd {
-			readEnd = shardLogicalEnd
-		}
-		n := readEnd - pos
-		if n <= 0 {
+		joined := stripeOut.Bytes()
+		if int64(len(joined)) < logLen {
 			return nil, false, nil
 		}
-		localReadEnd := localOff + n
-		if localReadEnd > stripeSize {
-			return nil, false, nil
+		joined = joined[:logLen]
+		offInStripe := segStart - base
+		slice := joined[offInStripe : offInStripe+(segEnd-segStart)]
+		if _, err := buf.Write(slice); err != nil {
+			return nil, false, err
 		}
-		obj, err := o.fs.backends[shardIdx].NewObject(ctx, o.remote)
-		if err != nil {
-			return nil, false, nil
-		}
-		rd, err := obj.Open(ctx, &fs.RangeOption{Start: localOff, End: localReadEnd - 1})
-		if err != nil {
-			return nil, false, nil
-		}
-		_, err = io.Copy(&buf, rd)
-		_ = rd.Close()
-		if err != nil {
-			return nil, false, nil
-		}
-		pos += n
 	}
 	return io.NopCloser(bytes.NewReader(buf.Bytes())), true, nil
 }
 
-func footerCompatibleForSequentialRead(ref *Footer, ft *Footer, shardIndex int) bool {
+func footerCompatibleForStripeRead(ref *Footer, ft *Footer, shardIndex int) bool {
 	if ft == nil || ref == nil {
 		return false
 	}
@@ -151,7 +195,7 @@ func footerCompatibleForSequentialRead(ref *Footer, ft *Footer, shardIndex int) 
 	if ft.DataShards != ref.DataShards || ft.ParityShards != ref.ParityShards {
 		return false
 	}
-	if ft.StripeSize != ref.StripeSize {
+	if ft.StripeSize != ref.StripeSize || ft.NumStripes != ref.NumStripes {
 		return false
 	}
 	if int(ft.CurrentShard) != shardIndex {
@@ -237,7 +281,7 @@ func (o *Object) openFullReconstruct(ctx context.Context, options ...fs.OpenOpti
 	if available < k {
 		return nil, fmt.Errorf("rs: not enough shards to reconstruct %q: have %d need %d", o.remote, available, k)
 	}
-	out, err := ReconstructDataFromShards(shards, k, m, o.footer.ContentLength)
+	out, err := ReconstructDataFromShards(shards, k, m, o.footer.ContentLength, o.footer.StripeSize, o.footer.NumStripes)
 	if err != nil {
 		return nil, err
 	}
@@ -387,8 +431,73 @@ func ExtractParticlePayload(particle []byte, wantShardIndex int) ([]byte, *Foote
 	return payload, ft, nil
 }
 
-// ReconstructDataFromShards runs Reed-Solomon reconstruct + join to the original content length.
-func ReconstructDataFromShards(shards [][]byte, dataShards, parityShards int, contentLength int64) ([]byte, error) {
+// ReconstructDataFromShards decodes stripe-wise RS particles (footer v3) into logical content.
+func ReconstructDataFromShards(shards [][]byte, dataShards, parityShards int, contentLength int64, stripeSize, numStripes uint32) ([]byte, error) {
+	k, m := dataShards, parityShards
+	S := int(stripeSize)
+	N := int(numStripes)
+	if contentLength == 0 {
+		return []byte{}, nil
+	}
+	if S <= 0 || N <= 0 {
+		return nil, errors.New("rs: invalid stripe metadata (StripeSize/NumStripes)")
+	}
+	for i, s := range shards {
+		if s != nil && len(s) != N*S {
+			return nil, fmt.Errorf("rs: shard %d payload length %d, want %d", i, len(s), N*S)
+		}
+	}
+	enc, err := reedsolomon.New(k, m)
+	if err != nil {
+		return nil, err
+	}
+	var out bytes.Buffer
+	var logicalPos int64
+	for t := 0; t < N; t++ {
+		logicalLen := stripeLogicalLen(k, int64(S), contentLength, t)
+		if logicalLen <= 0 {
+			break
+		}
+		row := make([][]byte, k+m)
+		for i := 0; i < k+m; i++ {
+			if shards[i] != nil {
+				row[i] = shards[i][t*S : (t+1)*S]
+			}
+		}
+		available := 0
+		for _, r := range row {
+			if r != nil {
+				available++
+			}
+		}
+		if available < k {
+			return nil, fmt.Errorf("rs: stripe %d: insufficient shards (have %d need %d)", t, available, k)
+		}
+		if err := enc.Reconstruct(row); err != nil {
+			return nil, fmt.Errorf("rs: stripe %d: %w", t, err)
+		}
+		var stripeBuf bytes.Buffer
+		if err := enc.Join(&stripeBuf, row[:k], k*S); err != nil {
+			return nil, err
+		}
+		b := stripeBuf.Bytes()
+		if int64(len(b)) < logicalLen {
+			return nil, fmt.Errorf("rs: stripe %d: join shorter than logical length", t)
+		}
+		if _, err := out.Write(b[:logicalLen]); err != nil {
+			return nil, err
+		}
+		logicalPos += logicalLen
+	}
+	if logicalPos != contentLength {
+		return nil, fmt.Errorf("rs: decoded length %d want %d", logicalPos, contentLength)
+	}
+	return out.Bytes(), nil
+}
+
+// ReconstructDataFromShardsFlat performs a single whole-buffer Split/Join decode (legacy layout).
+// It is used by rsverify --raw where shards are raw RS pieces without stripe metadata.
+func ReconstructDataFromShardsFlat(shards [][]byte, dataShards, parityShards int, contentLength int64) ([]byte, error) {
 	available := 0
 	for _, s := range shards {
 		if s != nil {
@@ -402,14 +511,16 @@ func ReconstructDataFromShards(shards [][]byte, dataShards, parityShards int, co
 	if err != nil {
 		return nil, err
 	}
-	if err := enc.Reconstruct(shards); err != nil {
+	cp := make([][]byte, len(shards))
+	copy(cp, shards)
+	if err := enc.Reconstruct(cp); err != nil {
 		return nil, err
 	}
 	if contentLength > int64(^uint(0)>>1) {
 		return nil, fmt.Errorf("rs: object too large to join in memory")
 	}
 	var buf bytes.Buffer
-	if err := enc.Join(&buf, shards, int(contentLength)); err != nil {
+	if err := enc.Join(&buf, cp[:dataShards], int(contentLength)); err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil

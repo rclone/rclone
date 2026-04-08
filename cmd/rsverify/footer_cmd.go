@@ -38,6 +38,7 @@ func runFooter(_ *cobra.Command, args []string) error {
 	fmt.Printf("ContentLength: %d\n", ft.ContentLength)
 	fmt.Printf("DataShards: %d  ParityShards: %d  CurrentShard: %d\n", ft.DataShards, ft.ParityShards, ft.CurrentShard)
 	fmt.Printf("StripeSize: %d\n", ft.StripeSize)
+	fmt.Printf("NumStripes: %d\n", ft.NumStripes)
 	fmt.Printf("PayloadCRC32C: 0x%08x\n", ft.PayloadCRC32C)
 	fmt.Printf("MD5: %x\n", ft.MD5)
 	fmt.Printf("SHA256: %x\n", ft.SHA256)
@@ -51,6 +52,7 @@ type footerDump struct {
 	ParityShards  int    `json:"parity_shards"`
 	CurrentShard  int    `json:"current_shard"`
 	StripeSize    uint32 `json:"stripe_size"`
+	NumStripes    uint32 `json:"num_stripes"`
 	PayloadCRC32C uint32 `json:"payload_crc32c"`
 	MD5           string `json:"md5"`
 	SHA256        string `json:"sha256"`
@@ -64,6 +66,7 @@ func printFooterJSON(ft *rs.Footer, payloadLen int) error {
 		ParityShards:  int(ft.ParityShards),
 		CurrentShard:  int(ft.CurrentShard),
 		StripeSize:    ft.StripeSize,
+		NumStripes:    ft.NumStripes,
 		PayloadCRC32C: ft.PayloadCRC32C,
 		MD5:           fmt.Sprintf("%x", ft.MD5),
 		SHA256:        fmt.Sprintf("%x", ft.SHA256),

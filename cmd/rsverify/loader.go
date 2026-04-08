@@ -36,7 +36,8 @@ func loadShardsFromParticles(paths []string) ([][]byte, int, int, int64, *rs.Foo
 			ref = ft
 			first = false
 		} else {
-			if int(ft.DataShards) != k || int(ft.ParityShards) != m || ft.ContentLength != contentLen {
+			if int(ft.DataShards) != k || int(ft.ParityShards) != m || ft.ContentLength != contentLen ||
+				ft.StripeSize != ref.StripeSize || ft.NumStripes != ref.NumStripes {
 				return nil, 0, 0, 0, nil, fmt.Errorf("%s: footer metadata mismatch with other shards", p)
 			}
 		}

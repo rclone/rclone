@@ -12,8 +12,9 @@ import (
 // EC footer layout and algorithm identifiers for Reed-Solomon particles.
 const (
 	FooterMagic   = "RCLONE/EC"
-	FooterVersion = 2
-	FooterSize    = 98
+	FooterVersion = 3
+	// FooterSize is the trailing EC metadata size per shard particle (v3 adds NumStripes).
+	FooterSize = 102
 )
 
 // AlgorithmRS is the footer algorithm tag for Reed-Solomon encoding.
@@ -41,13 +42,17 @@ type Footer struct {
 	SHA256        [32]byte
 	Mtime         int64
 	Compression   [4]byte
-	NumBlocks     uint32
-	Algorithm     [4]byte
-	DataShards    uint8
-	ParityShards  uint8
-	CurrentShard  uint8
+	// NumBlocks is reserved for a future compression layer (same role as RAID3).
+	NumBlocks    uint32
+	Algorithm    [4]byte
+	DataShards   uint8
+	ParityShards uint8
+	CurrentShard uint8
+	// StripeSize is the per-shard fragment size S in bytes (one RS stripe appends S bytes per shard).
 	StripeSize    uint32
 	PayloadCRC32C uint32
+	// NumStripes is the number of RS stripes in the shard payload (payload length = NumStripes * StripeSize).
+	NumStripes uint32
 }
 
 // MarshalBinary encodes the footer to its on-disk layout.
@@ -67,6 +72,7 @@ func (f *Footer) MarshalBinary() ([]byte, error) {
 	b[89] = f.CurrentShard
 	binary.LittleEndian.PutUint32(b[90:94], f.StripeSize)
 	binary.LittleEndian.PutUint32(b[94:98], f.PayloadCRC32C)
+	binary.LittleEndian.PutUint32(b[98:102], f.NumStripes)
 	return b, nil
 }
 
@@ -78,8 +84,9 @@ func ParseFooter(buf []byte) (*Footer, error) {
 	if string(buf[0:9]) != FooterMagic {
 		return nil, errors.New("footer: invalid magic")
 	}
-	if binary.LittleEndian.Uint16(buf[9:11]) != FooterVersion {
-		return nil, errors.New("footer: unsupported version")
+	ver := binary.LittleEndian.Uint16(buf[9:11])
+	if ver != FooterVersion {
+		return nil, fmt.Errorf("footer: unsupported version %d (want %d)", ver, FooterVersion)
 	}
 	f := &Footer{}
 	f.ContentLength = int64(binary.LittleEndian.Uint64(buf[11:19]))
@@ -94,6 +101,7 @@ func ParseFooter(buf []byte) (*Footer, error) {
 	f.CurrentShard = buf[89]
 	f.StripeSize = binary.LittleEndian.Uint32(buf[90:94])
 	f.PayloadCRC32C = binary.LittleEndian.Uint32(buf[94:98])
+	f.NumStripes = binary.LittleEndian.Uint32(buf[98:102])
 	return f, nil
 }
 
@@ -109,7 +117,7 @@ func CRC32C(data []byte) uint32 {
 }
 
 // NewRSFooter builds a Footer for shard shardIndex with the given logical object metadata.
-func NewRSFooter(contentLength int64, md5Sum, sha256Sum []byte, mtime time.Time, dataShards, parityShards, shardIndex int, stripeSize uint32, payloadCRC uint32) *Footer {
+func NewRSFooter(contentLength int64, md5Sum, sha256Sum []byte, mtime time.Time, dataShards, parityShards, shardIndex int, stripeSize, numStripes uint32, payloadCRC uint32) *Footer {
 	var md5Arr [16]byte
 	var sha256Arr [32]byte
 	if len(md5Sum) >= 16 {
@@ -134,6 +142,7 @@ func NewRSFooter(contentLength int64, md5Sum, sha256Sum []byte, mtime time.Time,
 		ParityShards:  uint8(parityShards),
 		CurrentShard:  uint8(shardIndex),
 		StripeSize:    stripeSize,
+		NumStripes:    numStripes,
 		PayloadCRC32C: payloadCRC,
 	}
 }
