@@ -6,6 +6,7 @@ import (
 	"crypto/md5"
 	"encoding/binary"
 	"encoding/hex"
+	"errors"
 	"io"
 	"math/rand"
 	"strconv"
@@ -108,7 +109,79 @@ func TestLogicalSliceAfterOptionsMatchesApplyRead(t *testing.T) {
 
 func TestWriteQuorum(t *testing.T) {
 	f := &Fs{opt: Options{DataShards: 4, ParityShards: 2}}
-	require.Equal(t, 5, f.writeQuorum())
+	// Default is set by validateOptions; raw Fs opt is not normalized.
+	require.Equal(t, 0, f.writeQuorum())
+
+	opt := &Options{Remotes: "a:,b:,c:,d:,e:,f:", DataShards: 4, ParityShards: 2}
+	require.NoError(t, validateOptions(opt))
+	require.Equal(t, 5, opt.WriteQuorum)
+
+	opt2 := &Options{Remotes: "a:,b:,c:,d:,e:,f:", DataShards: 4, ParityShards: 2, WriteQuorum: 6}
+	require.NoError(t, validateOptions(opt2))
+	require.Equal(t, 6, opt2.WriteQuorum)
+}
+
+type failPutFs struct {
+	fs.Fs
+	fail bool
+}
+
+func (f failPutFs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	if f.fail {
+		return nil, errors.New("failPutFs: injected Put failure")
+	}
+	return f.Fs.Put(ctx, in, src, options...)
+}
+
+type failListFs struct {
+	fs.Fs
+	fail bool
+}
+
+func (f failListFs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
+	if f.fail {
+		return nil, errors.New("failListFs: injected List failure")
+	}
+	return f.Fs.List(ctx, dir)
+}
+
+func TestPutFailsWhenWriteQuorumNotMet(t *testing.T) {
+	ctx := context.Background()
+	backends := make([]fs.Fs, 7) // k=4, m=3
+	for i := range backends {
+		b, err := cache.Get(ctx, ":memory:rs-quorum-"+time.Now().Format("150405")+"-"+string(rune('a'+i)))
+		require.NoError(t, err)
+		backends[i] = b
+	}
+	// Make one backend unavailable for the preflight check.
+	backends[6] = failListFs{Fs: backends[6], fail: true}
+
+	f := &Fs{
+		name:     "rs",
+		root:     "",
+		backends: backends,
+		opt: Options{
+			DataShards:         4,
+			ParityShards:       3,
+			WriteQuorum:        7, // require all
+			MaxParallelUploads: 4,
+			Rollback:           true,
+			UseSpooling:        true,
+			StripeFragmentSize: 64,
+		},
+		features: (&fs.Features{}),
+	}
+
+	data := []byte("quorum-test")
+	srcInfo := object.NewStaticObjectInfo("q.bin", time.Unix(1700000000, 0), int64(len(data)), true, nil, nil)
+	_, err := f.Put(ctx, bytes.NewReader(data), srcInfo)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "insufficient writable remotes for quorum")
+
+	// With quorum 6, the same single unavailable backend should still allow Put to proceed.
+	f.opt.WriteQuorum = 6
+	_, err = f.Put(ctx, bytes.NewReader(data), srcInfo)
+	require.NoError(t, err)
 }
 
 func TestExtractShardPayloadRejectsCorruption(t *testing.T) {
