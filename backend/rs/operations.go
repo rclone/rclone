@@ -192,7 +192,7 @@ func (f *Fs) putSpooling(ctx context.Context, in io.Reader, src fs.ObjectInfo, o
 }
 
 func (f *Fs) writeQuorum() int {
-	return f.opt.DataShards + 1
+	return f.opt.WriteQuorum
 }
 
 func (f *Fs) checkWriteQuorumAvailable(ctx context.Context) error {

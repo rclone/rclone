@@ -58,6 +58,11 @@ func init() {
 			Default:  4,
 			Advanced: true,
 		}, {
+			Name:     "write_quorum",
+			Help:     "Minimum number of successful shard uploads required for Put to succeed. Must be between data_shards (k) and data_shards+parity_shards (k+m). Default is k+1.",
+			Default:  0,
+			Advanced: true,
+		}, {
 			Name:     "stripe_fragment_size",
 			Help:     "RS stripe fragment size S in bytes (bytes appended per shard per stripe). If <= 0, defaults to 256KiB.",
 			Default:  262144,
@@ -112,6 +117,7 @@ type Options struct {
 	StagingDir         string `config:"staging_dir"`
 	Rollback           bool   `config:"rollback"`
 	MaxParallelUploads int    `config:"max_parallel_uploads"`
+	WriteQuorum        int    `config:"write_quorum"`
 	StripeFragmentSize int    `config:"stripe_fragment_size"`
 }
 
@@ -202,6 +208,16 @@ func validateOptions(opt *Options) error {
 	}
 	if opt.MaxParallelUploads < 1 {
 		opt.MaxParallelUploads = 1
+	}
+	if opt.WriteQuorum < 0 {
+		return errors.New("rs: write_quorum must be >= 0")
+	}
+	if opt.WriteQuorum == 0 {
+		opt.WriteQuorum = opt.DataShards + 1
+	}
+	total := opt.DataShards + opt.ParityShards
+	if opt.WriteQuorum < opt.DataShards || opt.WriteQuorum > total {
+		return fmt.Errorf("rs: write_quorum must be between data_shards and data_shards+parity_shards (%d..%d), got %d", opt.DataShards, total, opt.WriteQuorum)
 	}
 	if opt.StripeFragmentSize < 0 {
 		return errors.New("rs: stripe_fragment_size must be >= 0")

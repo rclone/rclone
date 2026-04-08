@@ -70,6 +70,7 @@ for data to be reconstructable.
   commit path keeps **more than the bare minimum** of fragments before
   accepting the write. Preflight also checks that enough shard remotes look
   usable before starting the upload.
+  This is configurable via **`write_quorum`** (range **k..k+m**, default **k+1**).
 
 ## Listing and shard 0 (alpha)
 
