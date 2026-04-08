@@ -57,6 +57,11 @@ func init() {
 			Help:     "Maximum concurrent shard uploads during Put.",
 			Default:  4,
 			Advanced: true,
+		}, {
+			Name:     "stripe_fragment_size",
+			Help:     "RS stripe fragment size S in bytes (bytes appended per shard per stripe). If <= 0, defaults to 256KiB.",
+			Default:  262144,
+			Advanced: true,
 		}},
 	})
 }
@@ -107,6 +112,7 @@ type Options struct {
 	StagingDir         string `config:"staging_dir"`
 	Rollback           bool   `config:"rollback"`
 	MaxParallelUploads int    `config:"max_parallel_uploads"`
+	StripeFragmentSize int    `config:"stripe_fragment_size"`
 }
 
 // Fs represents an rs backend.
@@ -196,6 +202,15 @@ func validateOptions(opt *Options) error {
 	}
 	if opt.MaxParallelUploads < 1 {
 		opt.MaxParallelUploads = 1
+	}
+	if opt.StripeFragmentSize < 0 {
+		return errors.New("rs: stripe_fragment_size must be >= 0")
+	}
+	if opt.StripeFragmentSize == 0 {
+		opt.StripeFragmentSize = DefaultStripeFragmentSize
+	}
+	if opt.StripeFragmentSize < 64 {
+		return errors.New("rs: stripe_fragment_size must be >= 64")
 	}
 	return nil
 }

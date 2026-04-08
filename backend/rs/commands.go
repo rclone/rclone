@@ -174,7 +174,7 @@ func (f *Fs) rebuildMissingShardsForObject(ctx context.Context, remote string, d
 	if metaFooter == nil {
 		return 0, fmt.Errorf("rs: no valid shards found for %q", remote)
 	}
-	reconstructed, err := reconstructMissingShards(shards, k, m)
+	reconstructed, err := reconstructMissingShards(shards, k, m, metaFooter.StripeSize, metaFooter.NumStripes)
 	if err != nil {
 		return 0, fmt.Errorf("rs: cannot reconstruct %q: %w", remote, err)
 	}
@@ -187,7 +187,7 @@ func (f *Fs) rebuildMissingShardsForObject(ctx context.Context, remote string, d
 	mtime := time.Unix(metaFooter.Mtime, 0)
 	for _, idx := range missingIdx {
 		payload := reconstructed[idx]
-		ft := NewRSFooter(metaFooter.ContentLength, metaFooter.MD5[:], metaFooter.SHA256[:], mtime, k, m, idx, metaFooter.StripeSize, crc32cChecksum(payload))
+		ft := NewRSFooter(metaFooter.ContentLength, metaFooter.MD5[:], metaFooter.SHA256[:], mtime, k, m, idx, metaFooter.StripeSize, metaFooter.NumStripes, crc32cChecksum(payload))
 		fb, err := ft.MarshalBinary()
 		if err != nil {
 			return restored, err
@@ -204,14 +204,36 @@ func (f *Fs) rebuildMissingShardsForObject(ctx context.Context, remote string, d
 	return restored, nil
 }
 
-func reconstructMissingShards(shards [][]byte, dataShards, parityShards int) ([][]byte, error) {
-	cp := make([][]byte, len(shards))
-	copy(cp, shards)
-	returned, err := reconstructInto(cp, dataShards, parityShards)
-	if err != nil {
-		return nil, err
+func reconstructMissingShards(shards [][]byte, dataShards, parityShards int, stripeSize, numStripes uint32) ([][]byte, error) {
+	k, m := dataShards, parityShards
+	S := int(stripeSize)
+	N := int(numStripes)
+	if N == 0 {
+		out := make([][]byte, k+m)
+		return out, nil
 	}
-	return returned, nil
+	out := make([][]byte, k+m)
+	for i := range out {
+		out[i] = make([]byte, N*S)
+	}
+	for t := 0; t < N; t++ {
+		row := make([][]byte, k+m)
+		for i := 0; i < k+m; i++ {
+			if shards[i] != nil {
+				row[i] = shards[i][t*S : (t+1)*S]
+			}
+		}
+		cp := make([][]byte, k+m)
+		copy(cp, row)
+		fixed, err := reconstructInto(cp, k, m)
+		if err != nil {
+			return nil, err
+		}
+		for i := 0; i < k+m; i++ {
+			copy(out[i][t*S:(t+1)*S], fixed[i])
+		}
+	}
+	return out, nil
 }
 
 func reconstructInto(shards [][]byte, dataShards, parityShards int) ([][]byte, error) {

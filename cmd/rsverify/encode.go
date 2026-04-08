@@ -19,6 +19,7 @@ var (
 	encodeOutDir     string
 	encodeWithFooter = true
 	encodeObjectName string
+	encodeStripeSize int
 )
 
 var cmdEncode = &cobra.Command{
@@ -32,8 +33,9 @@ func init() {
 	cmdEncode.Flags().IntVarP(&encodeK, "data-shards", "k", 0, "number of data shards (required)")
 	cmdEncode.Flags().IntVarP(&encodeM, "parity-shards", "m", 0, "number of parity shards (required)")
 	cmdEncode.Flags().StringVarP(&encodeOutDir, "out-dir", "o", ".", "output directory for shard files")
-	cmdEncode.Flags().BoolVar(&encodeWithFooter, "footer", true, "append RCLONE/EC v2 footer to each shard (rclone particle format)")
+	cmdEncode.Flags().BoolVar(&encodeWithFooter, "footer", true, "append RCLONE/EC footer to each shard (rclone particle format)")
 	cmdEncode.Flags().StringVar(&encodeObjectName, "name", "", "logical object name in footers (default: input basename; unused if --footer=false)")
+	cmdEncode.Flags().IntVar(&encodeStripeSize, "stripe-size", 0, "RS stripe fragment size S in bytes (0 = rs backend default, 256KiB)")
 	_ = cmdEncode.MarkFlagRequired("data-shards")
 	_ = cmdEncode.MarkFlagRequired("parity-shards")
 }
@@ -70,7 +72,7 @@ func runEncode(_ *cobra.Command, args []string) error {
 	}
 
 	ctx := context.Background()
-	_, err = rs.BuildRSShardsToWriters(ctx, bytes.NewReader(data), src, encodeK, encodeM, writers, encodeWithFooter)
+	_, err = rs.BuildRSShardsToWriters(ctx, bytes.NewReader(data), src, encodeK, encodeM, encodeStripeSize, writers, encodeWithFooter)
 	if err != nil {
 		return err
 	}
