@@ -6,8 +6,10 @@
 # Use --storage-type to run only one backend.
 #
 # Per storage type, runs (in order):
-#   1. compare.sh test verify   (smoke + rsverify)
-#   2. compare.sh test heal     (smoke + drop shard + heal (single-object) + rsverify)
+#   1. compare.sh test verify       (smoke + rsverify)
+#   2. compare.sh test heal         (smoke + drop shard + heal (single-object) + rsverify)
+#   3. compare.sh test quorum_dirs  (mkdir/lsd/rmdir + backend degraded summary)
+#   4. compare.sh test move_copy    (same-remote copyto, moveto, directory move)
 #
 # Usage:
 #   ./compare_all.sh [-v] [--storage-type=local|minio]
@@ -34,7 +36,7 @@ usage() {
 Usage: ${SCRIPT_NAME} [-v] [--storage-type=local|minio]
        ${SCRIPT_NAME} test [options]   (optional "test" is ignored)
 
-By default runs verify + heal (single-object repair) for each storage type: local, then minio.
+By default runs verify + heal + quorum_dirs + move_copy for each storage type: local, then minio.
 Pass --storage-type to run only that backend.
 
   -v, --verbose              Show rclone output from compare.sh
@@ -116,7 +118,7 @@ main() {
   if [[ -n "${STORAGE_TYPE_FILTER}" ]]; then
     log_info "${SCRIPT_NAME}" "Storage filter: ${STORAGE_TYPE_FILTER} only"
   else
-    log_info "${SCRIPT_NAME}" "Storage types: ${storage_types[*]} (verify + heal (single-object repair) each)"
+    log_info "${SCRIPT_NAME}" "Storage types: ${storage_types[*]} (verify + heal + quorum_dirs + move_copy each)"
   fi
   if [[ "${SLEEP_BETWEEN}" != "0" ]]; then
     log_info "${SCRIPT_NAME}" "Sleep between steps: ${SLEEP_BETWEEN}s (set COMPARE_ALL_SLEEP_BETWEEN_TESTS=0 to disable)"
@@ -141,6 +143,18 @@ main() {
     if [[ "${SLEEP_BETWEEN}" != "0" ]]; then
       sleep "${SLEEP_BETWEEN}"
     fi
+    if ! run_compare "${st}" test quorum_dirs; then
+      failed+=("quorum_dirs (${st})")
+    fi
+    if [[ "${SLEEP_BETWEEN}" != "0" ]]; then
+      sleep "${SLEEP_BETWEEN}"
+    fi
+    if ! run_compare "${st}" test move_copy; then
+      failed+=("move_copy (${st})")
+    fi
+    if [[ "${SLEEP_BETWEEN}" != "0" ]]; then
+      sleep "${SLEEP_BETWEEN}"
+    fi
     echo ""
   done
 
@@ -157,7 +171,7 @@ main() {
     exit 1
   fi
 
-  log_pass "${SCRIPT_NAME}" "All suites passed (${#storage_types[@]} storage type(s) × verify + heal (single-object repair))"
+  log_pass "${SCRIPT_NAME}" "All suites passed (${#storage_types[@]} storage type(s) × verify + heal + quorum_dirs + move_copy)"
 }
 
 main "$@"

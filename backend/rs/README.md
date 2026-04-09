@@ -6,11 +6,13 @@ This backend implements a virtual Reed-Solomon layout over multiple remotes.
 
 - Implemented:
   - Config parsing and validation (`k`, `m`, ordered shard remotes)
+  - Enforced topology rule: `k > m` (`data_shards > parity_shards`)
   - Footer v2 (`RCLONE/EC`) with `Algorithm=RS`, `StripeSize`, `PayloadCRC32C`
   - Upload path with `use_spooling=true`
-  - Write quorum policy: `k+1`
+  - Quorum policy for writes/metadata/namespace ops (`write_quorum`, default `k+1`)
+  - Two-phase operation retries (full pass + one fast retry for failing shards)
   - Read/reconstruct path from available shards
-  - Basic `status` and `heal` command plumbing
+  - `status`, `heal`, and `degraded` backend command plumbing
 - Not yet complete:
   - `use_spooling=false` streaming write path
   - Full production-ready heal orchestration and integration coverage
@@ -19,7 +21,7 @@ Open design questions and follow-ups are tracked in [`docs/OPEN_QUESTIONS.md`](d
 
 ## fstest / CI (`TestRsLocal`)
 
-The integration suite uses `fstest/testserver/init.d/TestRsLocal` (four local shard directories, `k=2`, `m=2`).
+The integration suite uses `fstest/testserver/init.d/TestRsLocal` (four local shard directories, `k=3`, `m=1`).
 
 ```bash
 go test ./backend/rs/... -run '^TestStandard$' -count=1
@@ -42,7 +44,8 @@ max_parallel_uploads = 4
 
 Notes:
 - In v1, `len(remotes)` must equal `data_shards + parity_shards`.
-- Write commit requires at least `k+1` successful shard uploads.
+- In v1, `data_shards` must be greater than `parity_shards` (`k > m`).
+- Write commit requires at least `write_quorum` successful shard uploads (default `k+1`).
 
 ## rsverify (developer tool)
 

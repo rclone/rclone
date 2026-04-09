@@ -30,6 +30,8 @@ For each `--storage-type`, in order:
 
 1. **`test verify`** — `smoke` (rcat, cat, shard checks) plus **`rsverify check`** on all particles.
 2. **`test heal`** — `smoke`, delete the **last-shard** particle, **`rclone cat`** (degraded read), **`rclone backend heal`** (single-object), then **`rsverify check`**.
+3. **`test quorum_dirs`** — `mkdir` / `lsd` / `rmdir` happy path and **`rclone backend degraded ... summary`**.
+4. **`test move_copy`** — same-remote `copyto`, `moveto`, and directory move checks.
 
 Optional pause between steps: `COMPARE_ALL_SLEEP_BETWEEN_TESTS=1` (default; set to `0` to disable).
 
@@ -43,6 +45,10 @@ Optional pause between steps: `COMPARE_ALL_SLEEP_BETWEEN_TESTS=1` (default; set 
 | `./compare.sh --storage-type=minio test verify` | Smoke + download particles to temp + **`rsverify check`**. |
 | `./compare.sh --storage-type=local test heal` | Smoke + drop last shard + heal (single-object) + **`rsverify`**. |
 | `./compare.sh --storage-type=minio test heal` | Same via **`rclone deletefile`** on last shard + heal (single-object) + **`rsverify`**. |
+| `./compare.sh --storage-type=local test quorum_dirs` | `mkdir` / `lsd` / `rmdir` empty dir and **`backend degraded summary`**. |
+| `./compare.sh --storage-type=minio test quorum_dirs` | Same checks against MinIO-backed shards. |
+| `./compare.sh --storage-type=local test move_copy` | Same-remote `copyto`, `moveto`, and directory move behavior. |
+| `./compare.sh --storage-type=minio test move_copy` | Same checks against MinIO-backed shards. |
 | `./compare_heal.sh -v --storage-type=local` | Same as **`test heal`** (wrapper for parity with raid3 naming). |
 
 ## Configuration

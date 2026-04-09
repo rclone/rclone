@@ -117,6 +117,8 @@ Available tests:
   smoke        Upload via rs, cat back, verify each shard has the object on disk.
   verify       Same as smoke, then rsverify check on all shard particles (build: go build -o rsverify ./cmd/rsverify).
   heal         smoke, delete last-shard particle, cat (degraded), backend heal (single-object), rsverify check.
+  quorum_dirs  mkdir/lsd/rmdir happy path + backend degraded summary.
+  move_copy    same-remote copyto, moveto, and directory move flow.
 EOF
 }
 
@@ -415,6 +417,156 @@ run_heal_test() {
   return 0
 }
 
+run_quorum_dirs_test() {
+  local test_case="quorum_dirs"
+  local dir_name="shell-quorum-empty-dir"
+  local dir_remote="${RS_REMOTE}:${dir_name}"
+  local out err rc
+
+  log_info "test:${test_case}" "Ensure clean state"
+  rs_rclone rmdir "${dir_remote}" 2>/dev/null || true
+
+  log_info "test:${test_case}" "mkdir ${dir_remote}"
+  out=$(mktemp)
+  err=$(mktemp)
+  set +e
+  rs_rclone mkdir "${dir_remote}" >"${out}" 2>"${err}"
+  rc=$?
+  set -e
+  print_if_verbose "mkdir" "${out}" "${err}"
+  rm -f "${out}" "${err}"
+  if [[ "${rc}" -ne 0 ]]; then
+    log_fail "test:${test_case}" "mkdir failed (status ${rc})"
+    return 1
+  fi
+
+  log_info "test:${test_case}" "lsd ${RS_REMOTE}:"
+  out=$(mktemp)
+  err=$(mktemp)
+  set +e
+  rs_rclone lsd "${RS_REMOTE}:" >"${out}" 2>"${err}"
+  rc=$?
+  set -e
+  print_if_verbose "lsd" "${out}" "${err}"
+  if [[ "${rc}" -ne 0 ]]; then
+    rm -f "${out}" "${err}"
+    log_fail "test:${test_case}" "lsd failed (status ${rc})"
+    return 1
+  fi
+  if ! grep -q "${dir_name}" "${out}"; then
+    if [[ "${STORAGE_TYPE}" == "minio" ]]; then
+      # S3-style backends may not materialize empty directory markers in lsd output.
+      log_info "test:${test_case}" "lsd did not show empty dir on MinIO (accepted)"
+    else
+      rm -f "${out}" "${err}"
+      log_fail "test:${test_case}" "lsd output missing ${dir_name}"
+      return 1
+    fi
+  fi
+  rm -f "${out}" "${err}"
+
+  log_info "test:${test_case}" "rmdir ${dir_remote}"
+  out=$(mktemp)
+  err=$(mktemp)
+  set +e
+  rs_rclone rmdir "${dir_remote}" >"${out}" 2>"${err}"
+  rc=$?
+  set -e
+  print_if_verbose "rmdir" "${out}" "${err}"
+  rm -f "${out}" "${err}"
+  if [[ "${rc}" -ne 0 ]]; then
+    log_fail "test:${test_case}" "rmdir failed (status ${rc})"
+    return 1
+  fi
+
+  log_info "test:${test_case}" "backend degraded summary"
+  out=$(mktemp)
+  err=$(mktemp)
+  set +e
+  rs_rclone backend degraded "${RS_REMOTE}:" summary >"${out}" 2>"${err}"
+  rc=$?
+  set -e
+  print_if_verbose "backend degraded summary" "${out}" "${err}"
+  if [[ "${rc}" -ne 0 ]]; then
+    rm -f "${out}" "${err}"
+    log_fail "test:${test_case}" "backend degraded summary failed (status ${rc})"
+    return 1
+  fi
+  if ! grep -q "RS Degraded Summary" "${out}"; then
+    rm -f "${out}" "${err}"
+    log_fail "test:${test_case}" "backend degraded summary output mismatch"
+    return 1
+  fi
+  rm -f "${out}" "${err}"
+
+  log_pass "test:${test_case}" "OK (mkdir/lsd/rmdir + degraded summary)"
+  return 0
+}
+
+run_move_copy_test() {
+  local test_case="move_copy"
+  local src_file="shell-move-src.txt"
+  local copy_file="shell-move-copy.txt"
+  local moved_file="shell-move-dst.txt"
+  local src_dir="shell-dirmove-src"
+  local dst_dir="shell-dirmove-dst"
+  local payload="rs-shell-move-copy-payload"
+  local out err rc got
+
+  log_info "test:${test_case}" "cleanup previous paths"
+  rs_rclone deletefile "${RS_REMOTE}:${src_file}" 2>/dev/null || true
+  rs_rclone deletefile "${RS_REMOTE}:${copy_file}" 2>/dev/null || true
+  rs_rclone deletefile "${RS_REMOTE}:${moved_file}" 2>/dev/null || true
+  rs_rclone purge "${RS_REMOTE}:${src_dir}" 2>/dev/null || true
+  rs_rclone purge "${RS_REMOTE}:${dst_dir}" 2>/dev/null || true
+
+  log_info "test:${test_case}" "create ${src_file}"
+  printf '%s' "${payload}" | rs_rclone rcat "${RS_REMOTE}:${src_file}"
+
+  log_info "test:${test_case}" "copyto ${src_file} -> ${copy_file}"
+  rs_rclone copyto "${RS_REMOTE}:${src_file}" "${RS_REMOTE}:${copy_file}"
+  got=$(rs_rclone cat "${RS_REMOTE}:${copy_file}")
+  if [[ "${got}" != "${payload}" ]]; then
+    log_fail "test:${test_case}" "copyto content mismatch"
+    return 1
+  fi
+
+  log_info "test:${test_case}" "moveto ${src_file} -> ${moved_file}"
+  rs_rclone moveto "${RS_REMOTE}:${src_file}" "${RS_REMOTE}:${moved_file}"
+  out=$(mktemp)
+  err=$(mktemp)
+  set +e
+  rs_rclone cat "${RS_REMOTE}:${src_file}" >"${out}" 2>"${err}"
+  rc=$?
+  set -e
+  rm -f "${out}" "${err}"
+  if [[ "${rc}" -eq 0 ]]; then
+    if [[ "${STORAGE_TYPE}" == "minio" ]]; then
+      log_info "test:${test_case}" "source still readable after moveto on MinIO (accepted under quorum semantics)"
+    else
+      log_fail "test:${test_case}" "source still present after moveto"
+      return 1
+    fi
+  fi
+  got=$(rs_rclone cat "${RS_REMOTE}:${moved_file}")
+  if [[ "${got}" != "${payload}" ]]; then
+    log_fail "test:${test_case}" "moveto content mismatch"
+    return 1
+  fi
+
+  log_info "test:${test_case}" "directory move ${src_dir} -> ${dst_dir}"
+  printf '%s' "dirmove-content" | rs_rclone rcat "${RS_REMOTE}:${src_dir}/a.txt"
+  rs_rclone moveto "${RS_REMOTE}:${src_dir}" "${RS_REMOTE}:${dst_dir}"
+  got=$(rs_rclone cat "${RS_REMOTE}:${dst_dir}/a.txt")
+  if [[ "${got}" != "dirmove-content" ]]; then
+    log_fail "test:${test_case}" "directory move content mismatch"
+    return 1
+  fi
+
+  log_pass "test:${test_case}" "OK (copyto/moveto/directory move)"
+  return 0
+}
+
 main() {
   parse_args "$@"
   ensure_workdir
@@ -453,6 +605,18 @@ main() {
           ;;
         heal)
           if run_heal_test; then
+            exit 0
+          fi
+          exit 1
+          ;;
+        quorum_dirs)
+          if run_quorum_dirs_test; then
+            exit 0
+          fi
+          exit 1
+          ;;
+        move_copy)
+          if run_move_copy_test; then
             exit 0
           fi
           exit 1
