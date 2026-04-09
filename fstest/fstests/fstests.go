@@ -825,11 +825,11 @@ func Run(t *testing.T, opt *Opt) {
 
 			path := "writer-at-subdir/writer-at-file"
 			objSrc := object.NewStaticObjectInfo(path+"-WRONG-REMOTE", file1.ModTime, totalSize, true, nil, nil)
-			info, out, err := openChunkWriter(ctx, path, objSrc, &fs.ChunkOption{
+			_, out, err := openChunkWriter(ctx, path, objSrc, &fs.ChunkOption{
 				ChunkSize: int64(size5MBs),
 			})
-			if info.MinFileSize > 0 && totalSize < info.MinFileSize {
-				t.Skipf("file size %d is below backend minimum %d for multipart uploads", totalSize, info.MinFileSize)
+			if errors.Is(err, fs.ErrorFileTooSmall) {
+				t.Skipf("file too small for multipart upload: %v", err)
 			}
 			require.NoError(t, err)
 

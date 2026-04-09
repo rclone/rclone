@@ -21,7 +21,6 @@ import (
 	"github.com/internxt/rclone-adapter/folders"
 	"github.com/internxt/rclone-adapter/users"
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/chunksize"
 	rclone_config "github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
@@ -38,12 +37,14 @@ import (
 )
 
 const (
-	minSleep         = 10 * time.Millisecond
-	maxSleep         = 2 * time.Second
-	decayConstant    = 2
-	maxUploadParts   = 10000
-	minMultipartSize = 100 * 1024 * 1024
-	minChunkSize     = fs.SizeSuffix(5 * 1024 * 1024)
+	minSleep            = 10 * time.Millisecond
+	maxSleep            = 2 * time.Second
+	decayConstant       = 2
+	maxUploadParts      = 10000
+	minChunkSize        = fs.SizeSuffix(5 * 1024 * 1024)
+	minUploadCutoff     = fs.SizeSuffix(100 * 1024 * 1024)
+	defaultUploadCutoff = fs.SizeSuffix(100 * 1024 * 1024)
+	maxUploadCutoff     = fs.SizeSuffix(5 * 1024 * 1024 * 1024)
 )
 
 // shouldRetry determines if an error should be retried.
@@ -107,14 +108,19 @@ func init() {
 			Advanced: true,
 			Help:     "Skip hash validation when downloading files.\n\nBy default, hash validation is disabled. Set this to false to enable validation.",
 		}, {
-			Name:     "chunk_size",
-			Help:     "Chunk size for multipart uploads.\n\nLarge files will be uploaded in chunks of this size.\n\nMemory usage is approximately chunk_size * upload_concurrency.",
-			Default:  fs.SizeSuffix(30 * 1024 * 1024),
-			Advanced: true,
-		}, {
 			Name:     "upload_concurrency",
 			Help:     "Concurrency for multipart uploads.\n\nThis is the number of chunks of the same file that are uploaded concurrently.\n\nNote that each chunk is buffered in memory.",
 			Default:  4,
+			Advanced: true,
+		}, {
+			Name:     "upload_cutoff",
+			Help:     "Cutoff for switching to multipart upload.\n\nAny files larger than this will be uploaded in chunks of chunk_size.\nThe minimum is 100 MiB and the maximum is 5 GiB.",
+			Default:  defaultUploadCutoff,
+			Advanced: true,
+		}, {
+			Name:     "chunk_size",
+			Help:     "Chunk size for multipart uploads.\n\nFiles larger than upload_cutoff will be uploaded in chunks of this size.\n\nMemory usage is approximately chunk_size * upload_concurrency.",
+			Default:  fs.SizeSuffix(30 * 1024 * 1024),
 			Advanced: true,
 		}, {
 			Name:     rclone_config.ConfigEncoding,
@@ -209,6 +215,7 @@ type Options struct {
 	TwoFA              string               `config:"2fa"`
 	Mnemonic           string               `config:"mnemonic"`
 	SkipHashValidation bool                 `config:"skip_hash_validation"`
+	UploadCutoff       fs.SizeSuffix        `config:"upload_cutoff"`
 	ChunkSize          fs.SizeSuffix        `config:"chunk_size"`
 	UploadConcurrency  int                  `config:"upload_concurrency"`
 	Encoding           encoder.MultiEncoder `config:"encoding"`
@@ -255,6 +262,11 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
+// DirCacheFlush resets the directory cache
+func (f *Fs) DirCacheFlush() {
+	f.dirCache.ResetRoot()
+}
+
 // Hashes returns type of hashes supported by Internxt
 func (f *Fs) Hashes() hash.Set {
 	return hash.NewHashSet()
@@ -274,6 +286,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	if err := checkUploadChunkSize(opt.ChunkSize); err != nil {
 		return nil, fmt.Errorf("internxt: chunk size: %w", err)
+	}
+	if err := checkUploadCutoff(opt.UploadCutoff); err != nil {
+		return nil, fmt.Errorf("internxt: upload cutoff: %w", err)
 	}
 
 	if opt.Mnemonic == "" {
@@ -908,17 +923,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	size := src.Size()
 
 	var meta *buckets.CreateMetaResponse
-	if size >= minMultipartSize {
-		ci := fs.GetConfig(ctx)
-		chunkSize := chunksize.Calculator(src, size, maxUploadParts, o.f.opt.ChunkSize)
-		if ci.MaxBufferMemory > 0 {
-			perTransfer := int64(ci.BufferSize) + int64(chunkSize)*int64(o.f.opt.UploadConcurrency)
-			needed := perTransfer * int64(ci.Transfers)
-			if int64(ci.MaxBufferMemory) < needed {
-				return fmt.Errorf("--max-buffer-memory %v is too small for multipart upload: need at least %v (%d transfers * (--buffer-size %v + chunk_size %v * upload_concurrency %d)); increase --max-buffer-memory or reduce transfers/chunk_size/upload_concurrency/buffer-size",
-					ci.MaxBufferMemory, fs.SizeSuffix(needed), ci.Transfers, ci.BufferSize, chunkSize, o.f.opt.UploadConcurrency)
-			}
-		}
+	if size < 0 || size >= int64(o.f.opt.UploadCutoff) {
 		chunkWriter, uploadErr := multipart.UploadMultipart(ctx, src, in, multipart.UploadMultipartOptions{
 			Open:        o.f,
 			OpenOptions: options,
