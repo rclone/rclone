@@ -541,9 +541,26 @@ func (item *Item) open(o fs.Object) (err error) {
 	if item.graceTimer != nil {
 		item.graceTimer.Stop()
 		item.graceTimer = nil
-		// fd and downloaders still alive - reuse them
-		// _checkObject already called above
-		return nil
+		// If the cache file still exists, reuse fd and downloaders.
+		// _checkObject (called above) may have removed the cache
+		// file if the remote fingerprint changed (e.g. modtime
+		// changed during a rename/move). In that case we must
+		// close the stale fd and fall through to _createFile.
+		if item._exists() {
+			return nil
+		}
+		fs.Debugf(item.name, "vfs cache: cache file vanished during grace period, recreating")
+		if item.fd != nil {
+			_ = item.fd.Close()
+			item.fd = nil
+		}
+		if item.downloaders != nil {
+			dls := item.downloaders
+			item.downloaders = nil
+			item.mu.Unlock()
+			_ = dls.Close(nil)
+			item.mu.Lock()
+		}
 	}
 
 	err = item._createFile(osPath)
@@ -1486,6 +1503,7 @@ func (item *Item) rename(name string, newName string, newObj fs.Object) (err err
 	// Set internal state
 	item.name = newName
 	item.o = newObj
+	item._updateFingerprint()
 
 	// Rename cache file if it exists
 	err = rename(item.c.toOSPath(name), item.c.toOSPath(newName)) // No locking in Cache
