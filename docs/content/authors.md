@@ -1110,3 +1110,4 @@ put them back in again. -->
 - Mike GIllan <mike.gillan@gmail.com>
 - Xiangzhe <xiangzhedev@gmail.com>
 - Suyun <suyun@aosc.io>
+- TheBabu <ariq.haqq@gmail.com>
