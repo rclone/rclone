@@ -13,7 +13,6 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
-	"golang.org/x/sync/errgroup"
 )
 
 // Object is the logical file backed by Reed-Solomon shards.
@@ -307,36 +306,44 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	return nil
 }
 
-// Remove deletes the object from all shards that hold it.
+// Remove deletes the object from quorum shards in two phases.
 func (o *Object) Remove(ctx context.Context) error {
-	var errs int
-	for _, b := range o.fs.backends {
+	targets := make([]int, 0, len(o.fs.backends))
+	for i, b := range o.fs.backends {
 		obj, err := b.NewObject(ctx, o.remote)
 		if err != nil {
 			continue
 		}
-		if err := obj.Remove(ctx); err != nil {
-			errs++
-		}
+		_ = obj
+		targets = append(targets, i)
 	}
-	if errs > 0 {
-		return fmt.Errorf("rs: failed removing one or more shards for %q", o.remote)
+	if len(targets) == 0 {
+		return fs.ErrorObjectNotFound
+	}
+	result := o.fs.runTwoPhaseQuorumOp(ctx, "remove", o.remote, targets, func(opCtx context.Context, shard int) error {
+		obj, err := o.fs.backends[shard].NewObject(opCtx, o.remote)
+		if err != nil {
+			return nil
+		}
+		return obj.Remove(opCtx)
+	})
+	if result.Successes < o.fs.writeQuorum() {
+		return fmt.Errorf("rs: remove quorum not met for %q: successes=%d required=%d", o.remote, result.Successes, o.fs.writeQuorum())
 	}
 	return nil
 }
 
-// SetModTime updates the EC footer mtime on every shard; payload bytes are unchanged.
+// SetModTime updates EC footer mtimes with quorum semantics.
 func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
-	g, gCtx := errgroup.WithContext(ctx)
+	targets := make([]int, 0, len(o.fs.backends))
 	for i := range o.fs.backends {
-		i := i
-		b := o.fs.backends[i]
-		g.Go(func() error {
-			return o.updateShardFooterMtime(gCtx, b, i, t)
-		})
+		targets = append(targets, i)
 	}
-	if err := g.Wait(); err != nil {
-		return err
+	result := o.fs.runTwoPhaseQuorumOp(ctx, "setmodtime", o.remote, targets, func(opCtx context.Context, shard int) error {
+		return o.updateShardFooterMtime(opCtx, o.fs.backends[shard], shard, t)
+	})
+	if result.Successes < o.fs.writeQuorum() {
+		return fmt.Errorf("rs: setmodtime quorum not met for %q: successes=%d required=%d", o.remote, result.Successes, o.fs.writeQuorum())
 	}
 	o.footer.Mtime = t.Unix()
 	return nil

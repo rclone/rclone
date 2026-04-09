@@ -9,6 +9,7 @@ import (
 	"errors"
 	"io"
 	"math/rand"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -41,6 +42,14 @@ func TestValidateOptions(t *testing.T) {
 
 	opt2 := &Options{Remotes: "a:,b:,c:", DataShards: 2, ParityShards: 1, StripeFragmentSize: 32}
 	require.Error(t, validateOptions(opt2))
+
+	opt3 := &Options{Remotes: "a:,b:,c:,d:", DataShards: 2, ParityShards: 2}
+	require.Error(t, validateOptions(opt3))
+	require.Contains(t, validateOptions(opt3).Error(), "k > m")
+
+	opt4 := &Options{Remotes: "a:,b:,c:", DataShards: 1, ParityShards: 2}
+	require.Error(t, validateOptions(opt4))
+	require.Contains(t, validateOptions(opt4).Error(), "k > m")
 }
 
 func TestBuildRSShardsToWriters(t *testing.T) {
@@ -143,6 +152,90 @@ func (f failListFs) List(ctx context.Context, dir string) (fs.DirEntries, error)
 		return nil, errors.New("failListFs: injected List failure")
 	}
 	return f.Fs.List(ctx, dir)
+}
+
+type failMkdirFs struct {
+	fs.Fs
+	fail bool
+}
+
+func (f failMkdirFs) Mkdir(ctx context.Context, dir string) error {
+	if f.fail {
+		return errors.New("failMkdirFs: injected Mkdir failure")
+	}
+	return f.Fs.Mkdir(ctx, dir)
+}
+
+func makeMemoryBackends(t *testing.T, n int, prefix string) []fs.Fs {
+	t.Helper()
+	ctx := context.Background()
+	backends := make([]fs.Fs, n)
+	for i := range backends {
+		b, err := cache.Get(ctx, ":memory:"+prefix+"-"+time.Now().Format("150405")+"-"+string(rune('a'+i)))
+		require.NoError(t, err)
+		backends[i] = b
+	}
+	return backends
+}
+
+func makeLocalBackends(t *testing.T, n int, prefix string) []fs.Fs {
+	t.Helper()
+	ctx := context.Background()
+	root := t.TempDir()
+	backends := make([]fs.Fs, n)
+	for i := range backends {
+		p := filepath.Join(root, prefix+"-"+strconv.Itoa(i))
+		b, err := cache.Get(ctx, p)
+		require.NoError(t, err)
+		backends[i] = b
+	}
+	return backends
+}
+
+func TestMkdirQuorum(t *testing.T) {
+	ctx := context.Background()
+	backends := makeMemoryBackends(t, 7, "rs-mkdir-quorum")
+	backends[6] = failMkdirFs{Fs: backends[6], fail: true}
+	f := &Fs{
+		name:     "rs",
+		root:     "",
+		backends: backends,
+		opt: Options{
+			DataShards:   4,
+			ParityShards: 3,
+			WriteQuorum:  6,
+		},
+		features: (&fs.Features{}),
+	}
+	require.NoError(t, f.Mkdir(ctx, "qdir"))
+	f.opt.WriteQuorum = 7
+	require.Error(t, f.Mkdir(ctx, "qdir-all"))
+}
+
+func TestRmdirPragmaticAndEmptyChecks(t *testing.T) {
+	ctx := context.Background()
+	backends := makeMemoryBackends(t, 4, "rs-rmdir-pragmatic")
+	f := &Fs{
+		name:     "rs",
+		root:     "",
+		backends: backends,
+		opt: Options{
+			DataShards:   3,
+			ParityShards: 1,
+			WriteQuorum:  3,
+		},
+		features: (&fs.Features{}),
+	}
+	require.NoError(t, backends[0].Mkdir(ctx, "d1"))
+	require.NoError(t, backends[1].Mkdir(ctx, "d1"))
+	require.NoError(t, f.Rmdir(ctx, "d1"))
+
+	require.NoError(t, backends[0].Mkdir(ctx, "nonempty"))
+	_, err := backends[0].Put(ctx, bytes.NewReader([]byte("x")), object.NewStaticObjectInfo("nonempty/a.txt", time.Now(), 1, true, nil, nil))
+	require.NoError(t, err)
+	err = f.Rmdir(ctx, "nonempty")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), fs.ErrorDirectoryNotEmpty.Error())
 }
 
 func TestPutFailsWhenWriteQuorumNotMet(t *testing.T) {
@@ -667,8 +760,8 @@ func TestNewFsPutOpenIntegration(t *testing.T) {
 	}
 	cfg := configmap.Simple{
 		"remotes":              strings.Join(remotes, ","),
-		"data_shards":          "2",
-		"parity_shards":        "2",
+		"data_shards":          "3",
+		"parity_shards":        "1",
 		"use_spooling":         "true",
 		"rollback":             "true",
 		"max_parallel_uploads": "2",
@@ -709,8 +802,8 @@ func TestNewFsHealIntegration(t *testing.T) {
 	}
 	cfg := configmap.Simple{
 		"remotes":              strings.Join(remotes, ","),
-		"data_shards":          "2",
-		"parity_shards":        "2",
+		"data_shards":          "3",
+		"parity_shards":        "1",
 		"use_spooling":         "true",
 		"rollback":             "true",
 		"max_parallel_uploads": "2",
@@ -774,11 +867,254 @@ func TestMultiStripeEncodeDecode(t *testing.T) {
 func TestNewFsValidatesRemoteCount(t *testing.T) {
 	ctx := context.Background()
 	cfg := configmap.Simple{
-		"remotes":       ":memory:a,:memory:b,:memory:c",
+		"remotes":       ":memory:a,:memory:b",
 		"data_shards":   "2",
-		"parity_shards": "2",
+		"parity_shards": "1",
 	}
 	_, err := NewFs(ctx, "rs-bad", "", cfg)
 	require.Error(t, err)
 	require.True(t, strings.Contains(err.Error(), "remotes count must equal"))
+}
+
+func TestListDirectoryQuorumMerge(t *testing.T) {
+	ctx := context.Background()
+	backends := makeMemoryBackends(t, 4, "rs-list-quorum")
+	f := &Fs{
+		name:     "rs",
+		root:     "",
+		backends: backends,
+		opt: Options{
+			DataShards:         3,
+			ParityShards:       1,
+			WriteQuorum:        3,
+			UseSpooling:        true,
+			MaxParallelUploads: 4,
+			StripeFragmentSize: 64,
+		},
+		features: (&fs.Features{}),
+	}
+	keep := object.NewStaticObjectInfo("keep.bin", time.Unix(1700000000, 0), int64(len("keep")), true, nil, nil)
+	_, err := f.Put(ctx, bytes.NewReader([]byte("keep")), keep)
+	require.NoError(t, err)
+	drop := object.NewStaticObjectInfo("drop.bin", time.Unix(1700000001, 0), int64(len("drop")), true, nil, nil)
+	_, err = f.Put(ctx, bytes.NewReader([]byte("drop")), drop)
+	require.NoError(t, err)
+	o, err := backends[3].NewObject(ctx, "keep.bin")
+	require.NoError(t, err)
+	require.NoError(t, o.Remove(ctx))
+	o, err = backends[2].NewObject(ctx, "drop.bin")
+	require.NoError(t, err)
+	require.NoError(t, o.Remove(ctx))
+	o, err = backends[3].NewObject(ctx, "drop.bin")
+	require.NoError(t, err)
+	require.NoError(t, o.Remove(ctx))
+	entries, err := f.List(ctx, "")
+	require.NoError(t, err)
+	names := make([]string, 0, len(entries))
+	for _, e := range entries {
+		names = append(names, e.Remote())
+	}
+	require.Equal(t, []string{"keep.bin"}, names)
+}
+
+func TestRemoveAndSetModTimeQuorum(t *testing.T) {
+	ctx := context.Background()
+	backends := makeMemoryBackends(t, 4, "rs-remove-modtime")
+	f := &Fs{
+		name:     "rs",
+		root:     "",
+		backends: backends,
+		opt: Options{
+			DataShards:         3,
+			ParityShards:       1,
+			WriteQuorum:        3,
+			UseSpooling:        true,
+			Rollback:           true,
+			MaxParallelUploads: 4,
+			StripeFragmentSize: 64,
+		},
+		features: (&fs.Features{}),
+	}
+	data := []byte("hello quorum")
+	info := object.NewStaticObjectInfo("x.bin", time.Unix(1700004000, 0), int64(len(data)), true, nil, nil)
+	_, err := f.Put(ctx, bytes.NewReader(data), info)
+	require.NoError(t, err)
+
+	// Remove one shard object to force degraded-but-quorum behavior.
+	missingObj, err := backends[3].NewObject(ctx, "x.bin")
+	require.NoError(t, err)
+	require.NoError(t, missingObj.Remove(ctx))
+
+	o, err := f.NewObject(ctx, "x.bin")
+	require.NoError(t, err)
+	require.NoError(t, o.SetModTime(ctx, time.Unix(1700005000, 0)))
+	require.NoError(t, o.Remove(ctx))
+
+	f.opt.WriteQuorum = 4
+	_, err = f.Put(ctx, bytes.NewReader(data), info)
+	require.NoError(t, err)
+	o2, err := f.NewObject(ctx, "x.bin")
+	require.NoError(t, err)
+	missingObj2, err := backends[3].NewObject(ctx, "x.bin")
+	require.NoError(t, err)
+	require.NoError(t, missingObj2.Remove(ctx))
+	require.Error(t, o2.SetModTime(ctx, time.Unix(1700006000, 0)))
+	require.Error(t, o2.Remove(ctx))
+}
+
+func TestDegradedCommand(t *testing.T) {
+	ctx := context.Background()
+	backends := makeMemoryBackends(t, 4, "rs-degraded-cmd")
+	f := &Fs{
+		name:     "rs",
+		root:     "",
+		backends: backends,
+		opt: Options{
+			DataShards:         3,
+			ParityShards:       1,
+			WriteQuorum:        3,
+			UseSpooling:        true,
+			Rollback:           true,
+			MaxParallelUploads: 4,
+			StripeFragmentSize: 64,
+		},
+		features: (&fs.Features{}),
+	}
+	data := []byte("degraded")
+	info := object.NewStaticObjectInfo("d.bin", time.Unix(1700004000, 0), int64(len(data)), true, nil, nil)
+	_, err := f.Put(ctx, bytes.NewReader(data), info)
+	require.NoError(t, err)
+	one, err := backends[3].NewObject(ctx, "d.bin")
+	require.NoError(t, err)
+	require.NoError(t, one.Remove(ctx))
+	two, err := backends[2].NewObject(ctx, "d.bin")
+	require.NoError(t, err)
+	require.NoError(t, two.Remove(ctx))
+
+	out, err := f.Command(ctx, "degraded", []string{"summary"}, nil)
+	require.NoError(t, err)
+	require.Contains(t, out.(string), "Degraded: 1")
+
+	out, err = f.Command(ctx, "degraded", []string{"ls"}, nil)
+	require.NoError(t, err)
+	require.Contains(t, out.(string), "DEGRADED d.bin")
+
+	out, err = f.Command(ctx, "degraded", []string{"lsd"}, nil)
+	require.NoError(t, err)
+	require.Contains(t, out.(string), "not implemented")
+}
+
+func TestCopyMoveServerSide(t *testing.T) {
+	ctx := context.Background()
+	backends := makeMemoryBackends(t, 4, "rs-copy-move")
+	f := &Fs{
+		name:     "rs",
+		root:     "",
+		backends: backends,
+		opt: Options{
+			DataShards:         3,
+			ParityShards:       1,
+			WriteQuorum:        3,
+			UseSpooling:        true,
+			Rollback:           true,
+			MaxParallelUploads: 4,
+			StripeFragmentSize: 64,
+		},
+		features: (&fs.Features{}),
+	}
+	data := []byte("copy-move-data")
+	info := object.NewStaticObjectInfo("src.bin", time.Unix(1700004000, 0), int64(len(data)), true, nil, nil)
+	_, err := f.Put(ctx, bytes.NewReader(data), info)
+	require.NoError(t, err)
+
+	srcObj, err := f.NewObject(ctx, "src.bin")
+	require.NoError(t, err)
+
+	// Degrade one shard of source object and ensure copy still succeeds at quorum.
+	degradedShardObj, err := backends[3].NewObject(ctx, "src.bin")
+	require.NoError(t, err)
+	require.NoError(t, degradedShardObj.Remove(ctx))
+
+	copied, err := f.Copy(ctx, srcObj, "copy.bin")
+	require.NoError(t, err)
+	require.Equal(t, "copy.bin", copied.Remote())
+
+	moved, err := f.Move(ctx, srcObj, "moved.bin")
+	require.NoError(t, err)
+	require.Equal(t, "moved.bin", moved.Remote())
+	_, err = f.NewObject(ctx, "src.bin")
+	require.Error(t, err)
+}
+
+func TestCopyMoveRejectIncompatibleSource(t *testing.T) {
+	ctx := context.Background()
+	backends := makeMemoryBackends(t, 4, "rs-copy-incompatible")
+	f := &Fs{
+		name:     "rs",
+		root:     "",
+		backends: backends,
+		opt: Options{
+			DataShards:   3,
+			ParityShards: 1,
+			WriteQuorum:  3,
+		},
+		features: (&fs.Features{}),
+	}
+	mem, err := cache.Get(ctx, ":memory:rs-foreign-"+strconv.FormatInt(time.Now().UnixNano(), 10))
+	require.NoError(t, err)
+	foreignInfo := object.NewStaticObjectInfo("foreign.bin", time.Unix(1700004000, 0), 1, true, nil, nil)
+	foreignObj, err := mem.Put(ctx, bytes.NewReader([]byte("x")), foreignInfo)
+	require.NoError(t, err)
+	_, err = f.Copy(ctx, foreignObj, "dst.bin")
+	require.ErrorIs(t, err, fs.ErrorCantCopy)
+	_, err = f.Move(ctx, foreignObj, "dst.bin")
+	require.ErrorIs(t, err, fs.ErrorCantMove)
+}
+
+func TestDirMoveServerSide(t *testing.T) {
+	ctx := context.Background()
+	srcBackends := makeLocalBackends(t, 4, "rs-dirmove-src")
+	dstBackends := makeLocalBackends(t, 4, "rs-dirmove-dst")
+	src := &Fs{
+		name:     "rs-src",
+		root:     "",
+		backends: srcBackends,
+		opt: Options{
+			DataShards:         3,
+			ParityShards:       1,
+			WriteQuorum:        3,
+			UseSpooling:        true,
+			Rollback:           true,
+			MaxParallelUploads: 4,
+			StripeFragmentSize: 64,
+		},
+		features: (&fs.Features{}),
+	}
+	dst := &Fs{
+		name:     "rs-dst",
+		root:     "",
+		backends: dstBackends,
+		opt: Options{
+			DataShards:         3,
+			ParityShards:       1,
+			WriteQuorum:        3,
+			UseSpooling:        true,
+			Rollback:           true,
+			MaxParallelUploads: 4,
+			StripeFragmentSize: 64,
+		},
+		features: (&fs.Features{}),
+	}
+
+	data := []byte("dir-move-data")
+	info := object.NewStaticObjectInfo("srcdir/a.txt", time.Unix(1700004000, 0), int64(len(data)), true, nil, nil)
+	_, err := src.Put(ctx, bytes.NewReader(data), info)
+	require.NoError(t, err)
+
+	err = dst.DirMove(ctx, src, "srcdir", "dstdir")
+	require.NoError(t, err)
+	_, err = dst.NewObject(ctx, "dstdir/a.txt")
+	require.NoError(t, err)
+	_, err = src.NewObject(ctx, "srcdir/a.txt")
+	require.Error(t, err)
 }

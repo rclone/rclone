@@ -1,6 +1,22 @@
 # Open Questions — rs Backend
 
-This document tracks design gaps, limitations, and follow-up work for the Reed-Solomon (`rs`) virtual backend. When a topic is resolved, note the decision here or in code. **Last reviewed**: 2026-03-28. User-facing overview: [`README.md`](../README.md).
+This document tracks design gaps, limitations, and follow-up work for the Reed-Solomon (`rs`) virtual backend. When a topic is resolved, note the decision here or in code. **Last reviewed**: 2026-04-09. User-facing overview: [`README.md`](../README.md).
+
+---
+
+## Decisions (record)
+
+- **Quorum model**: directory and object metadata operations now follow quorum-style success semantics (with partial-failure logging), not strict all-shards success.
+- **Two-phase retries**: operations use one parallel pass plus one bounded retry pass for failing shards.
+- **Backend commands**: keep both `heal` (repair) and `degraded` (inspection/reporting).
+- **Topology requirement**: `data_shards` must be strictly greater than `parity_shards` (**k > m**).
+- **Interim directory delete safety**: only empty directories are removable; if any shard still has entries the operation fails.
+
+## Risks / operational caveats
+
+- **List merge complexity**: quorum listing can hide or delay visibility of minority-shard state; type conflicts (file vs directory) are especially risky.
+- **Strict empty-dir rule**: requiring emptiness checks across shard remotes can fail in skewed namespaces and may require `degraded` + `heal` before cleanup.
+- **Minority lag after quorum success**: reads can still observe stale shard state until healed (notably around delete/recreate races and footer divergence).
 
 ---
 
@@ -37,13 +53,33 @@ This document tracks design gaps, limitations, and follow-up work for the Reed-S
 
 ### Q6: `SetModTime` when shards are missing or backends disagree
 
-**Status**: Partially addressed — implementation requires every shard object  
-**Notes**: `SetModTime` updates each shard in parallel via `Object.Update`. If a shard is missing or `NewObject` fails on one backend, the whole operation fails. Alternatives: allow degraded update (document inconsistency), or queue repair after a successful subset (risky).
+**Status**: Partially addressed — quorum updates implemented, semantics still evolving  
+**Notes**: `SetModTime` now succeeds at quorum with retries/logging, but cross-shard metadata convergence guarantees (and interaction with `heal`) still need explicit policy and docs.
 
 ### Q7: Backend-specific commands (`rclone backend …` on shard remotes)
 
 **Status**: Active — not coordinated  
-**Notes**: Only `status` and `heal` exist on the `rs` remote. Propagating tag/lifecycle/versioning commands to all shards in lockstep is undefined (compare community discussion for similar composite backends).
+**Notes**: `status`, `heal`, and `degraded` exist on the `rs` remote. Propagating tag/lifecycle/versioning commands to all shards in lockstep is undefined (compare community discussion for similar composite backends).
+
+### Q10: `rmdirs` / non-empty directory behavior under quorum listing
+
+**Status**: Active — policy still open  
+**Notes**: Backends may disagree on directory emptiness. Interim policy is conservative (fail if any shard still has entries), but long-term semantics for recursive removal under quorum visibility need design.
+
+### Q11: Ordering and race semantics
+
+**Status**: Active — not finalized  
+**Notes**: Quorum-success writes/deletes can race with recreate/move patterns and concurrent writers. Decide whether to add explicit versioning/serialization or rely on eventual consistency + heal workflow.
+
+### Q12: `degraded` / `heal` command detail level and scan costs
+
+**Status**: Active — initial implementation only  
+**Notes**: Need detailed design for output taxonomy, directory skew reporting (`lsd`), machine-readable output, prefix scoping, and large namespace scan behavior.
+
+### Q13: Rollback strategy beyond `Put`
+
+**Status**: Active — deferred  
+**Notes**: `Put` has rollback support when quorum is not met. For directory/metadata/delete quorum paths, decide whether to add compensating rollback or keep `degraded` + `heal` as the primary convergence path.
 
 ---
 

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"path"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -106,6 +107,22 @@ Objects with fewer than k good shards cannot be reconstructed and are reported a
 	Opts: map[string]string{
 		"dry-run": `If "true", only analyze and print "WOULD_HEAL" lines; no shard uploads.`,
 	},
+}, {
+	Name:  "degraded",
+	Short: "Inspect degraded object/directory state across shard remotes",
+	Long: `Reports objects and directories that are not aligned across shard remotes.
+
+Subcommands:
+    summary   Show aggregate counts of degraded objects
+    ls        List degraded logical objects
+    lsd       List degraded directories (placeholder in current version)
+
+Examples:
+
+    rclone backend degraded rs:
+    rclone backend degraded rs: summary
+    rclone backend degraded rs: ls
+`,
 }}
 
 // Options defines backend configuration.
@@ -203,6 +220,9 @@ func validateOptions(opt *Options) error {
 	if opt.ParityShards < 1 {
 		return errors.New("rs: parity_shards must be >= 1")
 	}
+	if opt.DataShards <= opt.ParityShards {
+		return errors.New("rs: data_shards must be > parity_shards (k > m)")
+	}
 	if opt.DataShards+opt.ParityShards > 255 {
 		return errors.New("rs: data_shards + parity_shards must be <= 255")
 	}
@@ -260,22 +280,107 @@ func (f *Fs) Precision() time.Duration { return time.Second }
 // Hashes returns hash types supported for logical objects.
 func (f *Fs) Hashes() hash.Set { return f.hashSet }
 
-// Mkdir creates the directory on every shard backend.
+// Mkdir creates the directory on shard backends and succeeds when quorum is reached.
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	for _, b := range f.backends {
-		if err := b.Mkdir(ctx, dir); err != nil {
-			return err
-		}
+	indexes := make([]int, len(f.backends))
+	for i := range f.backends {
+		indexes[i] = i
+	}
+	result := f.runTwoPhaseQuorumOp(ctx, "mkdir", dir, indexes, func(opCtx context.Context, shard int) error {
+		return f.backends[shard].Mkdir(opCtx, dir)
+	})
+	if result.Successes < f.writeQuorum() {
+		return fmt.Errorf("rs: mkdir quorum not met for %q: successes=%d required=%d", dir, result.Successes, f.writeQuorum())
 	}
 	return nil
 }
 
-// Rmdir removes the directory from every shard backend.
+// Rmdir removes the directory with quorum semantics and strict empty-dir checks.
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	for _, b := range f.backends {
-		if err := b.Rmdir(ctx, dir); err != nil {
-			return err
+	hadDir := make([]int, 0, len(f.backends))
+	for i, b := range f.backends {
+		entries, err := b.List(ctx, dir)
+		if err != nil {
+			if errors.Is(err, fs.ErrorDirNotFound) {
+				continue
+			}
+			return fmt.Errorf("rs: shard %d: failed to verify dir state for %q: %w", i, dir, err)
 		}
+		if len(entries) > 0 {
+			return fmt.Errorf("rs: shard %d: %w for %q", i, fs.ErrorDirectoryNotEmpty, dir)
+		}
+		hadDir = append(hadDir, i)
+	}
+	if len(hadDir) == 0 {
+		return fs.ErrorDirNotFound
+	}
+	result := f.runTwoPhaseQuorumOp(ctx, "rmdir", dir, hadDir, func(opCtx context.Context, shard int) error {
+		return f.backends[shard].Rmdir(opCtx, dir)
+	})
+	if result.Successes < len(hadDir) {
+		return fmt.Errorf("rs: rmdir incomplete for %q: removed=%d expected=%d", dir, result.Successes, len(hadDir))
+	}
+	if len(hadDir) < f.writeQuorum() {
+		fs.Logf(f, "rs: rmdir %q succeeded on all existing shard directories (%d), but this is below quorum=%d; heal/degraded may still report namespace skew", dir, len(hadDir), f.writeQuorum())
 	}
 	return nil
+}
+
+const quorumRetryTimeout = 3 * time.Second
+
+type shardFailure struct {
+	err   error
+	phase int
+}
+
+type quorumOpResult struct {
+	Successes int
+	Failures  map[int]shardFailure
+}
+
+func (f *Fs) runTwoPhaseQuorumOp(ctx context.Context, opName, remote string, shards []int, op func(context.Context, int) error) quorumOpResult {
+	failures := runQuorumPhase(ctx, shards, op)
+	if len(failures) > 0 {
+		retryShards := make([]int, 0, len(failures))
+		for shard := range failures {
+			retryShards = append(retryShards, shard)
+		}
+		retryCtx, cancel := context.WithTimeout(ctx, quorumRetryTimeout)
+		retryFailures := runQuorumPhase(retryCtx, retryShards, op)
+		cancel()
+		for shard := range failures {
+			if retryErr, ok := retryFailures[shard]; ok {
+				failures[shard] = shardFailure{err: retryErr.err, phase: 2}
+			} else {
+				delete(failures, shard)
+			}
+		}
+	}
+	for shard, failure := range failures {
+		fs.Logf(f, "rs: %s %q shard=%d phase=%d failed: %v", opName, remote, shard, failure.phase, failure.err)
+	}
+	return quorumOpResult{
+		Successes: len(shards) - len(failures),
+		Failures:  failures,
+	}
+}
+
+func runQuorumPhase(ctx context.Context, shards []int, op func(context.Context, int) error) map[int]shardFailure {
+	failures := make(map[int]shardFailure)
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	for _, shard := range shards {
+		shard := shard
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := op(ctx, shard); err != nil {
+				mu.Lock()
+				failures[shard] = shardFailure{err: err, phase: 1}
+				mu.Unlock()
+			}
+		}()
+	}
+	wg.Wait()
+	return failures
 }
