@@ -20,6 +20,8 @@ import (
 
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
+
+	"golang.org/x/text/unicode/norm"
 )
 
 const (
@@ -806,7 +808,7 @@ func (lib *Library) GetAlbums(ctx context.Context) (map[string]*Album, error) {
 		}
 
 		isFolder := record.Fields.AlbumType != nil && record.Fields.AlbumType.Value == albumTypeFolder
-		albumName := string(nameBytes)
+		albumName := norm.NFC.String(string(nameBytes))
 
 		// User album with same name as a smart album - smart album has special
 		// server-side query semantics that can't be replicated by the user album,
@@ -915,10 +917,11 @@ func (lib *Library) fetchFolderChildren(ctx context.Context, folder *Album) erro
 
 			nameBytes, err := base64.StdEncoding.DecodeString(record.Fields.AlbumNameEnc.Value)
 			if err != nil {
+				fs.Debugf(nil, "iclouddrive photos: skipping child album %q: base64 decode: %v", record.RecordName, err)
 				continue
 			}
 
-			childName := string(nameBytes)
+			childName := norm.NFC.String(string(nameBytes))
 			isFolder := record.Fields.AlbumType != nil && record.Fields.AlbumType.Value == albumTypeFolder
 
 			if isFolder {
@@ -1789,9 +1792,9 @@ func buildPhotos(master *photoRecord, asset *photoRecord) []*Photo {
 
 	if master.Fields.FilenameEnc != nil {
 		if master.Fields.FilenameEnc.Type == "STRING" {
-			photo.Filename = master.Fields.FilenameEnc.Value
+			photo.Filename = norm.NFC.String(master.Fields.FilenameEnc.Value)
 		} else if decoded, err := base64.StdEncoding.DecodeString(master.Fields.FilenameEnc.Value); err == nil {
-			photo.Filename = string(decoded)
+			photo.Filename = norm.NFC.String(string(decoded))
 		}
 	}
 	// Fallback: synthesize filename from recordName + itemType UTI when filenameEnc is missing

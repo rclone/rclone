@@ -517,6 +517,26 @@ func TestBuildPhotos(t *testing.T) {
 		assert.Equal(t, "plain_photo.heic", photos[0].Filename)
 	})
 
+	t.Run("NFD filename normalized to NFC", func(t *testing.T) {
+		// "Café.heic" in NFD: e + combining acute accent (U+0301)
+		nfd := "Cafe\u0301.heic"
+		nfc := "Caf\u00e9.heic"
+
+		rec := &photoRecord{RecordName: "nfd-enc"}
+		rec.Fields.FilenameEnc = &ckStringField{Value: base64.StdEncoding.EncodeToString([]byte(nfd)), Type: "ENCRYPTED_BYTES"}
+		rec.Fields.ResOriginalRes = master.Fields.ResOriginalRes
+		photos := buildPhotos(rec, nil)
+		require.Len(t, photos, 1)
+		assert.Equal(t, nfc, photos[0].Filename)
+
+		rec2 := &photoRecord{RecordName: "nfd-str"}
+		rec2.Fields.FilenameEnc = &ckStringField{Value: nfd, Type: "STRING"}
+		rec2.Fields.ResOriginalRes = master.Fields.ResOriginalRes
+		photos2 := buildPhotos(rec2, nil)
+		require.Len(t, photos2, 1)
+		assert.Equal(t, nfc, photos2[0].Filename)
+	})
+
 	t.Run("itemType fallback when filenameEnc missing", func(t *testing.T) {
 		rec := &photoRecord{RecordName: "AaBbCcDd1234"}
 		rec.Fields.ItemType = &ckStringField{Value: "public.heic"}
