@@ -175,6 +175,19 @@ rclone --webdav-unix-socket /tmp/my.socket --webdav-url http://localhost lsf :we
 Note that there is no authentication on http protocol - this is expected to be
 done by the permissions on the socket.
 
+### Symlinks / Junction points
+
+The webdav protocol does not support symlinks or junction points and
+by default rclone will skip them completely.
+
+You can use ` + "`-L`" + ` to get rclone to follow symlinks or you can
+use ` + "`--local-links`" + ` to make rclone show ` + "`.rclonelink`" + `
+files in place of the symlinks.
+
+**NB** Do not use ` + "`--links`" + ` as since v1.69 this applies to
+the VFS layer too, use ` + "`--local-links`" + ` which only applies to
+the local backend only.
+
 ` + strings.TrimSpace(libhttp.Help(flagPrefix)+libhttp.TemplateHelp(flagPrefix)+libhttp.AuthHelp(flagPrefix)+vfs.Help()+proxy.Help),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.39",

@@ -18,6 +18,10 @@ on:
         type: boolean
         default: true
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build-image:
     if: inputs.manual || (github.repository == 'rclone/rclone' && github.event_name != 'pull_request')

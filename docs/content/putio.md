@@ -4,7 +4,7 @@ description: "Rclone docs for put.io"
 versionIntroduced: "v1.49"
 ---
 
-# {{< icon "fas fa-parking" >}} put.io
+# put.io
 
 Paths are specified as `remote:path`
 

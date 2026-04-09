@@ -2059,7 +2059,7 @@ This is the default.
 `CAUTIOUS` will try to prevent rclone from reaching the limit. Only applicable
 for `--max-transfer`.
 
-## -M, --metadata
+### -M, --metadata
 
 Setting this flag enables rclone to copy the metadata from the source
 to the destination. For local backends this is ownership, permissions,

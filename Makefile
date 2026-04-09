@@ -121,6 +121,25 @@ updatedirect:
 	go get $$(go list -m -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' all)
 	go mod tidy
 
+# Update direct dependencies only but won't update the `go` line in go.mod
+updatedirectnoupgrade:
+	@GO_VERSION=$$(awk '/^go /{print $$2}' go.mod) && \
+	for mod in $$(go list -m -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' all); do \
+		cp go.mod go.mod.bak && \
+		cp go.sum go.sum.bak && \
+		go get $$mod && \
+		NEW_VERSION=$$(awk '/^go /{print $$2}' go.mod) && \
+		if [ "$$NEW_VERSION" != "$$GO_VERSION" ]; then \
+			echo "SKIPPING $$mod (requires go $$NEW_VERSION)"; \
+			cp go.mod.bak go.mod; \
+			cp go.sum.bak go.sum; \
+		else \
+			echo "updated $$mod"; \
+		fi; \
+	done && \
+	rm -f go.mod.bak go.sum.bak && \
+	go mod tidy
+
 # Update direct and indirect dependencies and test dependencies
 update:
 	go get -u -t ./...
