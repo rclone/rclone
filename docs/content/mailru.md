@@ -4,7 +4,7 @@ description: "Mail.ru Cloud"
 versionIntroduced: "v1.50"
 ---
 
-# {{< icon "fas fa-at" >}} Mail.ru Cloud
+# Mail.ru Cloud
 
 [Mail.ru Cloud](https://cloud.mail.ru/) is a cloud storage provided by a
 Russian internet company [Mail.Ru Group](https://mail.ru). The official

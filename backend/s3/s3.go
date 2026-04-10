@@ -1861,6 +1861,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.Provider == "Rabata" {
 		f.features.Copy = nil
 	}
+	if opt.Provider == "TencentCOS" && strings.Contains(opt.Endpoint, "cos.accelerate.myqcloud.com") {
+		// Global Acceleration endpoint does not support bucket creation.
+		f.opt.NoCheckBucket = true
+	}
 	if opt.DirectoryMarkers {
 		f.features.CanHaveEmptyDirectories = true
 	}
@@ -3783,7 +3787,9 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 	if bucket == "" {
 		return errors.New("can't purge from root")
 	}
-	versioned := f.isVersioned(ctx)
+	// If the user explicitly set --s3-versions, trust that the bucket is
+	// versioned even if GetBucketVersioning fails (e.g. missing permission).
+	versioned := f.opt.Versions || f.isVersioned(ctx)
 	if !versioned && oldOnly {
 		fs.Infof(f, "bucket is not versioned so not removing old versions")
 		return nil
@@ -4648,7 +4654,7 @@ func (o *Object) uploadSinglepartPutObject(ctx context.Context, req *s3.PutObjec
 	if err != nil {
 		return etag, lastModified, nil, err
 	}
-	req.Body = in
+	req.Body = io.NopCloser(in)
 	var options = []func(*s3.Options){}
 	if o.fs.opt.UseUnsignedPayload.Value {
 		options = append(options, s3.WithAPIOptions(
