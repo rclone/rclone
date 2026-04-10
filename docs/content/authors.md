@@ -1111,3 +1111,4 @@ put them back in again. -->
 - Xiangzhe <xiangzhedev@gmail.com>
 - Suyun <suyun@aosc.io>
 - TheBabu <ariq.haqq@gmail.com>
+- Brais Couce <braiscouce@gmail.com>
