@@ -1,6 +1,6 @@
 # Open Questions — rs Backend
 
-This document tracks design gaps, limitations, and follow-up work for the Reed-Solomon (`rs`) virtual backend. When a topic is resolved, note the decision here or in code. **Last reviewed**: 2026-04-09. User-facing overview: [`README.md`](../README.md).
+This document tracks design gaps, limitations, and follow-up work for the Reed-Solomon (`rs`) virtual backend. When a topic is resolved, note the decision here or in code. **Last reviewed**: 2026-04-10. User-facing overview: [`README.md`](../README.md).
 
 ---
 
@@ -25,7 +25,7 @@ This document tracks design gaps, limitations, and follow-up work for the Reed-S
 ### Q1: `use_spooling=false` write path
 
 **Status**: Active — not implemented  
-**Notes**: `Put` / `PutStream` return an error when `use_spooling` is false (`operations.go`). Streaming encode-and-upload without a full local spool file is still to be designed (memory bounds, stripe buffering, quorum on partial failure).
+**Notes**: `Put` / `PutStream` return an error when `use_spooling` is false (`operations.go`). Forward Reed–Solomon encoding now streams from the logical `io.Reader` stripe-by-stripe in [`encode.go`](../encode.go) (bounded `O(k·S)` buffer); spooling still writes full shard files to disk before upload. Remaining work: pipe encoded output directly to shard `Put`s (memory bounds, backpressure, quorum on partial failure). Declared-size validation when `src.Size() >= 0` matches the chunker pattern (`incorrect upload size`).
 
 ---
 

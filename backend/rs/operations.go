@@ -2,58 +2,20 @@ package rs
 
 import (
 	"context"
-	"crypto/md5"
-	"crypto/sha256"
 	"errors"
 	"fmt"
-	"hash"
-	"hash/crc32"
 	"io"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
 
-	"github.com/klauspost/reedsolomon"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/object"
 	"golang.org/x/sync/errgroup"
 )
 
 const putOperationTimeout = 5 * time.Minute
-
-// DefaultStripeFragmentSize is S: bytes per shard per RS stripe (fragment size).
-// Erasure-coded systems commonly use 64KiB–1MiB unit sizes (e.g. Tahoe-LAFS default
-// 128KiB segments; HDFS EC often 64KiB+). 256KiB balances memory (k·S per stripe),
-// reconstruct work, and remote API round-trips.
-const DefaultStripeFragmentSize = 256 * 1024
-
-// NumStripesForContent returns the stripe count for a logical size, k, and fragment size S.
-// For non-empty content it is ceil(ContentLength / (k*S)). Empty content yields 0.
-func NumStripesForContent(contentLength int64, k, S int) int {
-	if contentLength == 0 || k < 1 || S < 1 {
-		return 0
-	}
-	capacity := int64(k) * int64(S)
-	return int((contentLength + capacity - 1) / capacity)
-}
-
-func normalizeStripeFragmentSize(n int) int {
-	if n <= 0 {
-		return DefaultStripeFragmentSize
-	}
-	return n
-}
-
-// BuildResult is the outcome of BuildRSShardsToWriters (content hashes and length).
-type BuildResult struct {
-	ContentLength int64
-	Mtime         time.Time
-	MD5           [16]byte
-	SHA256        [32]byte
-	StripeSize    uint32
-	NumStripes    uint32
-}
 
 type uploadedShard struct {
 	index int
@@ -125,6 +87,8 @@ func (f *Fs) putSpooling(ctx context.Context, in io.Reader, src fs.ObjectInfo, o
 		return nil, err
 	}
 
+	expectedParticle := ShardParticleFileSize(bres.ContentLength, f.opt.DataShards, f.opt.StripeFragmentSize, true)
+
 	uploadCtx, cancel := context.WithTimeout(ctx, putOperationTimeout)
 	defer cancel()
 
@@ -148,6 +112,9 @@ func (f *Fs) putSpooling(ctx context.Context, in io.Reader, src fs.ObjectInfo, o
 			st, err := r.Stat()
 			if err != nil {
 				return fmt.Errorf("stat shard %d: %w", i, err)
+			}
+			if st.Size() != expectedParticle {
+				return fmt.Errorf("rs: shard %d: incorrect upload size %d != %d", i, st.Size(), expectedParticle)
 			}
 			info := object.NewStaticObjectInfo(src.Remote(), bres.Mtime, st.Size(), true, nil, nil)
 			obj, err := f.backends[i].Put(gctx, r, info, options...)
@@ -177,6 +144,12 @@ func (f *Fs) putSpooling(ctx context.Context, in io.Reader, src fs.ObjectInfo, o
 			_ = f.rollbackPut(uploadCtx, uploaded)
 		}
 		return nil, fmt.Errorf("rs: write quorum not met: successful=%d required=%d", len(uploaded), f.writeQuorum())
+	}
+	if err := validateUploadedShardParticleSizes(uploaded, expectedParticle); err != nil {
+		if f.opt.Rollback {
+			_ = f.rollbackPut(uploadCtx, uploaded)
+		}
+		return nil, err
 	}
 	return &Object{fs: f, remote: src.Remote(), footer: &Footer{
 		ContentLength: bres.ContentLength,
@@ -230,34 +203,6 @@ func (f *Fs) checkWriteQuorumAvailable(ctx context.Context) error {
 	return nil
 }
 
-// buildZeroLengthShards writes empty logical files (no payload; footer only).
-func buildZeroLengthShards(ctx context.Context, src fs.ObjectInfo, dataShards, parityShards int, writers []io.Writer, withFooter bool) (*BuildResult, error) {
-	if len(writers) != dataShards+parityShards {
-		return nil, fmt.Errorf("rs: writers count mismatch: got %d want %d", len(writers), dataShards+parityShards)
-	}
-	mtime := src.ModTime(ctx)
-	for i := range writers {
-		if withFooter {
-			ft := NewRSFooter(0, emptyFileMD5[:], emptyFileSHA256[:], mtime, dataShards, parityShards, i, 0, 0, crc32cChecksum(nil))
-			fb, err := ft.MarshalBinary()
-			if err != nil {
-				return nil, err
-			}
-			if _, err := writers[i].Write(fb); err != nil {
-				return nil, fmt.Errorf("rs: write shard footer %d: %w", i, err)
-			}
-		}
-	}
-	return &BuildResult{
-		ContentLength: 0,
-		Mtime:         mtime,
-		MD5:           emptyFileMD5,
-		SHA256:        emptyFileSHA256,
-		StripeSize:    0,
-		NumStripes:    0,
-	}, nil
-}
-
 func (f *Fs) rollbackPut(ctx context.Context, uploaded []uploadedShard) error {
 	var firstErr error
 	for _, u := range uploaded {
@@ -268,109 +213,17 @@ func (f *Fs) rollbackPut(ctx context.Context, uploaded []uploadedShard) error {
 	return firstErr
 }
 
-// BuildRSShardsToWriters reads object bytes from in, Reed-Solomon encodes in stripes into writers.
-// stripeFragmentSize is S (bytes per shard per stripe); if <= 0, DefaultStripeFragmentSize is used.
-// If withFooter is true, each writer receives payload plus EC footer (rclone particle format).
-func BuildRSShardsToWriters(ctx context.Context, in io.Reader, src fs.ObjectInfo, dataShards, parityShards int, stripeFragmentSize int, writers []io.Writer, withFooter bool) (*BuildResult, error) {
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	default:
-	}
-	if len(writers) != dataShards+parityShards {
-		return nil, fmt.Errorf("rs: writers count mismatch: got %d want %d", len(writers), dataShards+parityShards)
-	}
-	S := normalizeStripeFragmentSize(stripeFragmentSize)
-	k := dataShards
-	payload, err := io.ReadAll(in)
-	if err != nil {
-		return nil, fmt.Errorf("rs: read source: %w", err)
-	}
-	if len(payload) == 0 {
-		return buildZeroLengthShards(ctx, src, dataShards, parityShards, writers, withFooter)
-	}
-	md5Arr := md5.Sum(payload)
-	shaArr := sha256.Sum256(payload)
-	mtime := src.ModTime(ctx)
-	contentLength := int64(len(payload))
-
-	enc, err := reedsolomon.New(dataShards, parityShards)
-	if err != nil {
-		return nil, fmt.Errorf("rs: create encoder: %w", err)
-	}
-
-	numStripes := NumStripesForContent(contentLength, k, S)
-	stripeBuf := make([]byte, k*S)
-	shards := make([][]byte, k+parityShards)
-	crcH := make([]hash.Hash32, len(writers))
-	for i := range crcH {
-		crcH[i] = crc32.New(crc32cTable)
-	}
-
-	var pos int64
-	for stripe := 0; stripe < numStripes; stripe++ {
-		if err := ctx.Err(); err != nil {
-			return nil, err
+// validateUploadedShardParticleSizes checks each returned object size against the expected
+// particle file size when the backend reports a known size (Size() < 0 means unknown; skip).
+func validateUploadedShardParticleSizes(uploaded []uploadedShard, expected int64) error {
+	for _, u := range uploaded {
+		sz := u.obj.Size()
+		if sz < 0 {
+			continue
 		}
-		logicalRemaining := contentLength - pos
-		if logicalRemaining <= 0 {
-			break
-		}
-		logicalThis := int64(k * S)
-		if logicalThis > logicalRemaining {
-			logicalThis = logicalRemaining
-		}
-		clear(stripeBuf)
-		copy(stripeBuf, payload[pos:pos+logicalThis])
-		pos += logicalThis
-
-		dataPieces, err := enc.Split(stripeBuf)
-		if err != nil {
-			return nil, fmt.Errorf("rs: split stripe %d: %w", stripe, err)
-		}
-		for i := range shards {
-			shards[i] = nil
-		}
-		copy(shards, dataPieces)
-		for i := dataShards; i < len(shards); i++ {
-			shards[i] = make([]byte, len(shards[0]))
-		}
-		if err := enc.Encode(shards); err != nil {
-			return nil, fmt.Errorf("rs: encode stripe %d: %w", stripe, err)
-		}
-		for i := range writers {
-			frag := shards[i]
-			if _, err := writers[i].Write(frag); err != nil {
-				return nil, fmt.Errorf("rs: write shard %d stripe %d: %w", i, stripe, err)
-			}
-			_, _ = crcH[i].Write(frag)
+		if sz != expected {
+			return fmt.Errorf("rs: shard %d: incorrect upload size %d != %d", u.index, sz, expected)
 		}
 	}
-
-	if pos != contentLength {
-		return nil, fmt.Errorf("rs: internal error: encoded %d of %d bytes", pos, contentLength)
-	}
-
-	stripeU32 := uint32(S)
-	numStripesU32 := uint32(numStripes)
-	for i := range writers {
-		if withFooter {
-			ft := NewRSFooter(contentLength, md5Arr[:], shaArr[:], mtime, dataShards, parityShards, i, stripeU32, numStripesU32, crcH[i].Sum32())
-			fb, err := ft.MarshalBinary()
-			if err != nil {
-				return nil, err
-			}
-			if _, err := writers[i].Write(fb); err != nil {
-				return nil, fmt.Errorf("rs: write shard footer %d: %w", i, err)
-			}
-		}
-	}
-	return &BuildResult{
-		ContentLength: contentLength,
-		Mtime:         mtime,
-		MD5:           md5Arr,
-		SHA256:        shaArr,
-		StripeSize:    stripeU32,
-		NumStripes:    numStripesU32,
-	}, nil
+	return nil
 }
