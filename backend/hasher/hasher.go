@@ -52,7 +52,7 @@ func init() {
 			Default:  fs.SizeSuffix(0),
 			Help:     "Auto-update checksum for files smaller than this size (disabled by default).",
 		}, {
-			Name:      "db_mode",
+			Name:      "hash_check",
 			Default:   "off",
 			Advanced:  true,
 			Help:      "How to use the hash database.",
@@ -73,11 +73,11 @@ func init() {
 
 // Options defines the configuration for this backend
 type Options struct {
-	Remote   string          `config:"remote"`
-	Hashes   fs.CommaSepList `config:"hashes"`
-	AutoSize fs.SizeSuffix   `config:"auto_size"`
-	MaxAge   fs.Duration     `config:"max_age"`
-	DBMode   string          `config:"db_mode"`
+	Remote    string          `config:"remote"`
+	Hashes    fs.CommaSepList `config:"hashes"`
+	AutoSize  fs.SizeSuffix   `config:"auto_size"`
+	MaxAge    fs.Duration     `config:"max_age"`
+	HashCheck string          `config:"hash_check"`
 }
 
 // Fs represents a wrapped fs.Fs
@@ -117,10 +117,10 @@ func NewFs(ctx context.Context, fsname, rpath string, cmap configmap.Mapper) (fs
 		return nil, err
 	}
 
-	switch opt.DBMode {
+	switch opt.HashCheck {
 	case "off", "verify", "readonly":
 	default:
-		return nil, fmt.Errorf("invalid db_mode %q: must be off, verify, or readonly", opt.DBMode)
+		return nil, fmt.Errorf("invalid hash_check %q: must be off, verify, or readonly", opt.HashCheck)
 	}
 
 	if strings.HasPrefix(opt.Remote, fsname+":") {
@@ -246,12 +246,12 @@ func (f *Fs) SetWrapper(wrapper fs.Fs) { f.wrapper = wrapper }
 
 // isVerifyMode returns true if download hash verification is enabled (verify or readonly mode).
 func (f *Fs) isVerifyMode() bool {
-	return f.opt.DBMode == "verify" || f.opt.DBMode == "readonly"
+	return f.opt.HashCheck == "verify" || f.opt.HashCheck == "readonly"
 }
 
 // isReadOnly returns true if the database is fully read-only (readonly mode).
 func (f *Fs) isReadOnly() bool {
-	return f.opt.DBMode == "readonly"
+	return f.opt.HashCheck == "readonly"
 }
 
 // Wrap base entries into hasher entries.

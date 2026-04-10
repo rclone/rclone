@@ -93,11 +93,11 @@ func readAllErr(ctx context.Context, t *testing.T, o fs.Object) ([]byte, error) 
 	return io.ReadAll(rc)
 }
 
-func (f *Fs) setDBMode(mode string) func() {
-	origMode := f.opt.DBMode
-	f.opt.DBMode = mode
+func (f *Fs) setHashCheck(mode string) func() {
+	origMode := f.opt.HashCheck
+	f.opt.HashCheck = mode
 	return func() {
-		f.opt.DBMode = origMode
+		f.opt.HashCheck = origMode
 	}
 }
 
@@ -107,7 +107,7 @@ func (f *Fs) testVerifyDownload(t *testing.T) {
 
 	_ = putFile(ctx, t, f, fileName, "hello verify")
 
-	defer f.setDBMode("verify")()
+	defer f.setHashCheck("verify")()
 
 	obj, err := f.NewObject(ctx, fileName)
 	require.NoError(t, err)
@@ -132,7 +132,7 @@ func (f *Fs) testVerifyMismatch(t *testing.T) {
 	err := f.putRawHashes(ctx, key, anyFingerprint, operations.HashSums{hashType.String(): "badhash000000"})
 	require.NoError(t, err)
 
-	defer f.setDBMode("verify")()
+	defer f.setHashCheck("verify")()
 
 	obj, err := f.NewObject(ctx, fileName)
 	require.NoError(t, err)
@@ -161,7 +161,7 @@ func (f *Fs) testVerifyFirstTime(t *testing.T) {
 	assert.Error(t, err)
 	assert.Empty(t, hash)
 
-	defer f.setDBMode("verify")()
+	defer f.setHashCheck("verify")()
 
 	obj, err := f.NewObject(ctx, fileName)
 	require.NoError(t, err)
@@ -184,7 +184,7 @@ func (f *Fs) testReadOnlyWrite(t *testing.T) {
 		t.Skip("requires caching (max_age > 0)")
 	}
 
-	defer f.setDBMode("readonly")()
+	defer f.setHashCheck("readonly")()
 
 	_ = putFile(ctx, t, f, fileName, "readonly test")
 
@@ -212,7 +212,7 @@ func (f *Fs) testReadOnlyVerify(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, hash)
 
-	defer f.setDBMode("readonly")()
+	defer f.setHashCheck("readonly")()
 
 	obj, err := f.NewObject(ctx, fileName)
 	require.NoError(t, err)
@@ -232,11 +232,11 @@ func (f *Fs) testReadOnlySibling(t *testing.T) {
 	}
 
 	siblingIface, err := NewFs(ctx, f.name, f.root, configmap.Simple{
-		"remote":    f.opt.Remote,
-		"hashes":    f.opt.Hashes.String(),
-		"auto_size": fmt.Sprint(f.opt.AutoSize),
-		"max_age":   fmt.Sprint(f.opt.MaxAge),
-		"db_mode":   "off",
+		"remote":     f.opt.Remote,
+		"hashes":     f.opt.Hashes.String(),
+		"auto_size":  fmt.Sprint(f.opt.AutoSize),
+		"max_age":    fmt.Sprint(f.opt.MaxAge),
+		"hash_check": "off",
 	})
 	require.NoError(t, err)
 
@@ -249,7 +249,7 @@ func (f *Fs) testReadOnlySibling(t *testing.T) {
 	// Exercise the shared-DB case directly.
 	require.Same(t, f.db, sibling.db)
 
-	defer f.setDBMode("readonly")()
+	defer f.setHashCheck("readonly")()
 
 	_ = putFile(ctx, t, sibling, fileName, "sibling data")
 

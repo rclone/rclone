@@ -21,6 +21,9 @@ const (
 	anyFingerprint = "*"
 )
 
+// errInvalidRecord indicates a corrupt or undecodable cache entry.
+var errInvalidRecord = errors.New("invalid record")
+
 type hashMap map[hash.Type]string
 
 type hashRecord struct {
@@ -159,7 +162,7 @@ func (op *kvGet) Do(ctx context.Context, b kv.Bucket) error {
 	}
 	var r hashRecord
 	if err := r.decode(op.key, data); err != nil {
-		return errors.New("invalid record")
+		return errInvalidRecord
 	}
 	if !(r.Fp == anyFingerprint || op.fp == anyFingerprint || r.Fp == op.fp) {
 		return errors.New("fingerprint changed")

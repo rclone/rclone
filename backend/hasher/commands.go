@@ -27,6 +27,9 @@ import (
 func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out any, err error) {
 	switch name {
 	case "drop":
+		if f.isReadOnly() {
+			return nil, errors.New("cannot drop: database is read-only")
+		}
 		return nil, f.db.Stop(true)
 	case "dump", "fulldump":
 		return nil, f.dbDump(ctx, name == "fulldump", "")
@@ -113,7 +116,7 @@ func (f *Fs) dbDump(ctx context.Context, full bool, root string) error {
 
 func (f *Fs) dbImport(ctx context.Context, hashName, sumRemote string, sticky bool) error {
 	if f.isReadOnly() {
-		return errors.New("cannot import: database is read-only (set db_mode=off to import)")
+		return errors.New("cannot import: database is read-only (set hash_check to off or verify to import)")
 	}
 	var hashType hash.Type
 	if err := hashType.Set(hashName); err != nil {

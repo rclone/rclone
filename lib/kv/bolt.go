@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -35,7 +34,6 @@ type DB struct {
 	bolt      *bbolt.DB
 	mu        sync.Mutex
 	canWrite  bool
-	readOnly  atomic.Bool
 	queue     chan *request
 	lockTime  time.Duration
 	idleTime  time.Duration
@@ -43,10 +41,6 @@ type DB struct {
 	idleTimer *time.Timer
 	lockTimer *time.Timer
 }
-
-// SetReadOnly sets or clears the read-only flag on the database.
-// When set, all write operations will return ErrReadOnly.
-func (db *DB) SetReadOnly(v bool) { db.readOnly.Store(v) }
 
 var (
 	dbMap  = map[string]*DB{}
@@ -139,9 +133,6 @@ func (db *DB) Path() string { return db.path }
 var modeNames = map[bool]string{false: "reading", true: "writing"}
 
 func (db *DB) open(ctx context.Context, forWrite bool) (err error) {
-	if forWrite && db.readOnly.Load() {
-		return ErrReadOnly
-	}
 	if db.bolt != nil && (db.canWrite || !forWrite) {
 		return nil
 	}

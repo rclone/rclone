@@ -171,7 +171,13 @@ func (o *Object) verifyOrStoreHashes(ctx context.Context, newHashes hashMap) err
 			continue
 		}
 		existingHash, err := o.getHash(ctx, hashType)
-		if err != nil || existingHash == "" {
+		if err != nil {
+			if errors.Is(err, errInvalidRecord) {
+				return fmt.Errorf("verify: corrupted cached %v hash record: %w", hashType, err)
+			}
+			continue
+		}
+		if existingHash == "" {
 			continue
 		}
 		if existingHash != newHash {
