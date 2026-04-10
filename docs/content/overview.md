@@ -39,7 +39,7 @@ size by default, though can be configured to check the file hash
 change the timestamp of an existing file without having to re-upload it.
 
 | Key | Explanation |
-|-----|-------------|
+| --- | ----------- |
 | `-` | ModTimes not supported - times likely the upload time |
 | `R` | ModTimes supported on files but can't be changed without re-upload |
 | `R/W` | Read and Write ModTimes fully supported on files |
@@ -186,8 +186,8 @@ will be escaped with the `‛` character to avoid ambiguous file names.
 Each cloud storage backend can use a different set of characters,
 which will be specified in the documentation for each backend.
 
-| Character | Value | Replacement |
-| --------- |:-----:|:-----------:|
+| Character | Value | Replacement  |
+| --------- | :---: | :---------- :|
 | NUL       | 0x00  | ␀           |
 | SOH       | 0x01  | ␁           |
 | STX       | 0x02  | ␂           |
@@ -227,9 +227,9 @@ The default encoding will also encode these file names as they are
 problematic with many cloud storage systems.
 
 | File name | Replacement |
-| --------- |:-----------:|
+| --------- | :--------- :|
 | .         | ．          |
-| ..        | ．．         |
+| ..        | ．．        |
 
 #### Invalid UTF-8 bytes {#invalid-utf8}
 
@@ -269,8 +269,8 @@ list of all possible values by passing an invalid value to this
 flag, e.g. `--local-encoding "help"`. The command `rclone help flags encoding`
 will show you the defaults for the backends.
 
-| Encoding  | Characters | Encoded as |
-| --------- | ---------- | ---------- |
+| Encoding | Characters | Encoded as |
+| -------- | ---------- | ---------- |
 | Asterisk | `*` | `＊` |
 | BackQuote | `` ` `` | `｀` |
 | BackSlash | `\` | `＼` |
@@ -395,12 +395,12 @@ that backend) and/or user metadata (general purpose metadata).
 The levels of metadata support are
 
 | Key | Explanation |
-|-----|-------------|
-| `R` | Read only System Metadata on files only|
-| `RW` | Read and write System Metadata on files only|
-| `RWU` | Read and write System Metadata and read and write User Metadata on files only|
+| --- | ----------- |
+| `R` | Read only System Metadata on files only |
+| `RW` | Read and write System Metadata on files only |
+| `RWU` | Read and write System Metadata and read and write User Metadata on files only |
 | `DR` | Read only System Metadata on files and directories |
-| `DRW` | Read and write System Metadata on files and directories|
+| `DRW` | Read and write System Metadata on files and directories |
 | `DRWU` | Read and write System Metadata and read and write User Metadata on files and directories |
 
 See [the metadata docs](/docs/#metadata) for more info.
