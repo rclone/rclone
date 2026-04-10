@@ -11,6 +11,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -734,6 +735,30 @@ two accounts.
 			Default:  rwOff,
 			Examples: rwExamples,
 		}, {
+			Name: "static_label",
+			Help: `Apply a label to every file uploaded, copied, or moved.
+
+The value is a JSON-encoded drive.Label object - the same format as a
+single element from the "labels" metadata key (see metadata_labels).
+The label and its fields must already exist in the Drive label schema -
+rclone will not create them.
+
+This label is applied unconditionally to every file written by rclone
+via Files.ModifyLabels, regardless of whether metadata_labels is set.
+
+To discover the label ID, field ID and selection option ID, apply the
+label manually to a file then read it back with rclone:
+
+    rclone lsjson --metadata --drive-metadata-labels=read remote:file
+
+Take one element from the returned "labels" array and strip out the
+read-only fields (revisionId, valueType, field-level id):
+
+    {"id":"LABEL_ID","fields":{"FIELD_ID":{"selection":["SELECTION_ID"]}}}
+`,
+			Advanced: true,
+			Default:  "",
+		}, {
 			Name: "metadata_enforce_expansive_access",
 			Help: `Whether the request should enforce expansive access rules.
 
@@ -823,6 +848,7 @@ type Options struct {
 	MetadataOwner             rwChoice             `config:"metadata_owner"`
 	MetadataPermissions       rwChoice             `config:"metadata_permissions"`
 	MetadataLabels            rwChoice             `config:"metadata_labels"`
+	StaticLabel               string               `config:"static_label"`
 	EnforceExpansiveAccess    bool                 `config:"metadata_enforce_expansive_access"`
 	Enc                       encoder.MultiEncoder `config:"encoding"`
 	EnvAuth                   bool                 `config:"env_auth"`
@@ -852,6 +878,7 @@ type Fs struct {
 	dirResourceKeys  *sync.Map                    // map directory ID to resource key
 	permissionsMu    *sync.Mutex                  // protect the below
 	permissions      map[string]*drive.Permission // map permission IDs to Permissions
+	staticLabels     []*drive.Label               // parsed from opt.StaticLabel; applied to every written file
 }
 
 type baseObject struct {
@@ -1361,6 +1388,16 @@ func newFs(ctx context.Context, name, path string, m configmap.Mapper) (*Fs, err
 		return nil, fmt.Errorf("drive: chunk size: %w", err)
 	}
 
+	// Parse static_label JSON once at startup
+	var staticLabels []*drive.Label
+	if opt.StaticLabel != "" {
+		var label drive.Label
+		if err := json.Unmarshal([]byte(opt.StaticLabel), &label); err != nil {
+			return nil, fmt.Errorf("drive: static_label: failed to parse JSON: %w", err)
+		}
+		staticLabels = []*drive.Label{&label}
+	}
+
 	oAuthClient, err := createOAuthClient(ctx, opt, name, m)
 	if err != nil {
 		return nil, fmt.Errorf("drive: failed when making oauth client: %w", err)
@@ -1385,6 +1422,7 @@ func newFs(ctx context.Context, name, path string, m configmap.Mapper) (*Fs, err
 		dirResourceKeys: new(sync.Map),
 		permissionsMu:   new(sync.Mutex),
 		permissions:     make(map[string]*drive.Permission),
+		staticLabels:    staticLabels,
 	}
 	f.isTeamDrive = opt.TeamDriveID != ""
 	f.features = (&fs.Features{
