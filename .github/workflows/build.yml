@@ -230,6 +230,9 @@ jobs:
           go-version: '~1.26.0'
           check-latest: true
           cache: false
+          
+      - name: Fetch GUI dist
+        run: make fetch-gui
 
       - name: Cache
         uses: actions/cache@v5
