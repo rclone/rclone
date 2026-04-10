@@ -88,6 +88,96 @@ func TestBuildRSShardsToWriters(t *testing.T) {
 	}
 }
 
+func TestBuildRSShardsDeclaredSizeMismatch(t *testing.T) {
+	ctx := context.Background()
+	data := []byte("hello")
+	tooLarge := object.NewStaticObjectInfo("x.bin", time.Unix(1700000000, 0), 100, true, nil, nil)
+	writers := make([]*bytes.Buffer, 4)
+	ios := make([]io.Writer, 4)
+	for i := range writers {
+		writers[i] = &bytes.Buffer{}
+		ios[i] = writers[i]
+	}
+	_, err := BuildRSShardsToWriters(ctx, bytes.NewReader(data), tooLarge, 2, 2, 0, ios, true)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "incorrect upload size")
+	// Short stream vs large declared size: stripes are encoded before final EOF reveals truncation (chunker-style).
+
+	writers2 := make([]*bytes.Buffer, 4)
+	ios2 := make([]io.Writer, 4)
+	for i := range writers2 {
+		writers2[i] = &bytes.Buffer{}
+		ios2[i] = writers2[i]
+	}
+	tooSmall := object.NewStaticObjectInfo("y.bin", time.Unix(1700000000, 0), 2, true, nil, nil)
+	_, err = BuildRSShardsToWriters(ctx, bytes.NewReader(data), tooSmall, 2, 2, 0, ios2, true)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "incorrect upload size")
+	for i := range writers2 {
+		require.Zero(t, writers2[i].Len(), "oversized stream vs declared should fail before write")
+	}
+}
+
+func TestBuildRSShardsUnknownSizeSkipsDeclaredCheck(t *testing.T) {
+	ctx := context.Background()
+	data := bytes.Repeat([]byte("z"), 50)
+	src := object.NewStaticObjectInfo("u.bin", time.Unix(1700000000, 0), -1, true, nil, nil)
+	writers := make([]*bytes.Buffer, 4)
+	ios := make([]io.Writer, 4)
+	for i := range writers {
+		writers[i] = &bytes.Buffer{}
+		ios[i] = writers[i]
+	}
+	res, err := BuildRSShardsToWriters(ctx, bytes.NewReader(data), src, 2, 2, 0, ios, true)
+	require.NoError(t, err)
+	require.Equal(t, int64(len(data)), res.ContentLength)
+}
+
+func TestShardParticleFileSize(t *testing.T) {
+	const k, stripeS = 2, 32
+	cl := int64(100)
+	// NumStripes = ceil(100 / (2*32)) = 2; payload = 2*32 = 64
+	require.Equal(t, int64(64), ShardPayloadByteLength(cl, k, stripeS))
+	require.Equal(t, int64(64+FooterSize), ShardParticleFileSize(cl, k, stripeS, true))
+	require.Equal(t, int64(64), ShardParticleFileSize(cl, k, stripeS, false))
+}
+
+// strictMaxReadReader fails if a single Read is asked for more than maxBytes (streaming encode uses at most k*S per Read cycle from the underlying reader when ReadFull fills a k*S buffer).
+type strictMaxReadReader struct {
+	data    []byte
+	pos     int
+	maxRead int
+}
+
+func (s *strictMaxReadReader) Read(p []byte) (int, error) {
+	if len(p) > s.maxRead {
+		return 0, errors.New("read exceeds max chunk")
+	}
+	if s.pos >= len(s.data) {
+		return 0, io.EOF
+	}
+	n := copy(p, s.data[s.pos:])
+	s.pos += n
+	return n, nil
+}
+
+func TestBuildRSShardsStreamingReadBound(t *testing.T) {
+	ctx := context.Background()
+	const k, m, stripeS = 2, 2, 64
+	logicalStripe := k * stripeS
+	data := bytes.Repeat([]byte("q"), logicalStripe*3+17)
+	src := object.NewStaticObjectInfo("bound.bin", time.Unix(1700000000, 0), int64(len(data)), true, nil, nil)
+	writers := make([]*bytes.Buffer, k+m)
+	ios := make([]io.Writer, k+m)
+	for i := range writers {
+		writers[i] = &bytes.Buffer{}
+		ios[i] = writers[i]
+	}
+	in := &strictMaxReadReader{data: data, maxRead: logicalStripe}
+	_, err := BuildRSShardsToWriters(ctx, in, src, k, m, stripeS, ios, true)
+	require.NoError(t, err)
+}
+
 func TestApplyReadOptions(t *testing.T) {
 	base := []byte("0123456789")
 	require.Equal(t, []byte("3456789"), applyReadOptions(base, &fs.SeekOption{Offset: 3}))
