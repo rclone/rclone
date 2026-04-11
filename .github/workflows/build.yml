@@ -233,6 +233,8 @@ jobs:
           
       - name: Fetch GUI dist
         run: make fetch-gui
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Cache
         uses: actions/cache@v5
