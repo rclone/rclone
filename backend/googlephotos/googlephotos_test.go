@@ -46,7 +46,7 @@ func TestIntegration(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("CreateAlbum", func(t *testing.T) {
-		albumName := "album/rclone-test-" + random.String(24)
+		albumName := "album/rclone/test-" + random.String(24)
 		err = f.Mkdir(ctx, albumName)
 		require.NoError(t, err)
 		remote := albumName + "/" + fileNameAlbum
@@ -164,6 +164,9 @@ func TestIntegration(t *testing.T) {
 			})
 
 			t.Run("RemoveFileFromAlbum", func(t *testing.T) {
+				f.(*Fs).opt.UseTrash = true
+				defer func() { f.(*Fs).opt.UseTrash = false }()
+
 				err = dstObj.Remove(ctx)
 				require.NoError(t, err)
 
