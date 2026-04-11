@@ -96,13 +96,6 @@ func TestOriginFromURL(t *testing.T) {
 	}
 }
 
-func TestFreePort(t *testing.T) {
-	port, err := freePort()
-	assert.NoError(t, err)
-	assert.Greater(t, port, 0)
-	assert.Less(t, port, 65536)
-}
-
 // newTestHandler returns a guiHandler backed by the embedded GUI
 // bundle, or skips the test if it is not present (i.e. `make fetch-gui`
 // has not been run).

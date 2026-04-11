@@ -8,7 +8,6 @@ import (
 	"flag"
 	"fmt"
 	iofs "io/fs"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -134,11 +133,7 @@ Use --no-auth to disable authentication entirely:
 		if command.Flags().Changed("api-addr") {
 			opt.HTTP.ListenAddr = apiAddr
 		} else {
-			port, err := freePort()
-			if err != nil {
-				return fmt.Errorf("failed to find a free port for RC: %w", err)
-			}
-			opt.HTTP.ListenAddr = []string{fmt.Sprintf("localhost:%d", port)}
+			opt.HTTP.ListenAddr = []string{"localhost:0"}
 		}
 
 		// CORS: allow the GUI origin to make cross-port API requests.
@@ -181,9 +176,9 @@ Use --no-auth to disable authentication entirely:
 			return fmt.Errorf("failed to start RC server: %w", err)
 		}
 
-		// Build the RC URL from the address we configured (rcserver.Server
-		// does not expose URLs, and we know the address we passed in).
-		rcURL := "http://" + opt.HTTP.ListenAddr[0] + "/"
+		// Read the bound RC URL back from rcserver, in case we asked
+		// libhttp to pick a free port (localhost:0).
+		rcURL := rcServer.URLs()[0]
 
 		// Mount the GUI handler and start serving
 		spaHandler, err := guiHandler(srcFS)
@@ -217,16 +212,6 @@ Use --no-auth to disable authentication entirely:
 		_ = guiServer.Shutdown()
 		return nil
 	},
-}
-
-// freePort asks the OS for a free TCP port on localhost.
-func freePort() (int, error) {
-	l, err := net.Listen("tcp", "localhost:0")
-	if err != nil {
-		return 0, err
-	}
-	defer func() { _ = l.Close() }()
-	return l.Addr().(*net.TCPAddr).Port, nil
 }
 
 // originFromURL extracts the origin (scheme://host) from a URL string,
