@@ -163,6 +163,18 @@ you want to read the media.`,
 			Help:     `Year limits the photos to be downloaded to those which are uploaded after the given year.`,
 			Advanced: true,
 		}, {
+			Name:    "use_trash",
+			Default: false,
+			Help: `Copy removed items to the "Rclone Trash" album before removing them from the source album.
+
+This is off by default to preserve the existing delete behavior.`,
+			Advanced: true,
+		}, {
+			Name:     "trash_album_name",
+			Default:  "Rclone Trash",
+			Help:     `Name of the album used when use_trash is enabled.`,
+			Advanced: true,
+		}, {
 			Name:    "include_archived",
 			Default: false,
 			Help: `Also view and download archived media.
@@ -223,6 +235,8 @@ type Options struct {
 	ReadOnly        bool                 `config:"read_only"`
 	ReadSize        bool                 `config:"read_size"`
 	StartYear       int                  `config:"start_year"`
+	UseTrash        bool                 `config:"use_trash"`
+	TrashAlbumName  string               `config:"trash_album_name"`
 	IncludeArchived bool                 `config:"include_archived"`
 	Enc             encoder.MultiEncoder `config:"encoding"`
 	BatchMode       string               `config:"batch_mode"`
@@ -647,7 +661,7 @@ func (f *Fs) list(ctx context.Context, filter api.SearchFilter, fn listFn) (err 
 }
 
 // Convert a list item into a DirEntry
-func (f *Fs) itemToDirEntry(ctx context.Context, remote string, item *api.MediaItem, isDirectory bool) (fs.DirEntry, error) {
+func (f *Fs) itemToDirEntry(_ context.Context, remote string, item *api.MediaItem, isDirectory bool) (fs.DirEntry, error) {
 	if isDirectory {
 		d := fs.NewDir(remote, f.dirTime())
 		return d, nil
@@ -1222,6 +1236,12 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 	if !ok {
 		return fmt.Errorf("couldn't file %q in album %q for delete", fileName, albumTitle)
 	}
+	if o.fs.opt.UseTrash {
+		err = o.moveToTrash(ctx)
+		if err != nil {
+			return fmt.Errorf("couldn't move item to trash: %w", err)
+		}
+	}
 	opts := rest.Opts{
 		Method:     "POST",
 		Path:       "/albums/" + album.ID + ":batchRemoveMediaItems",
@@ -1238,41 +1258,36 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 	if err != nil {
 		return fmt.Errorf("couldn't delete item from album: %w", err)
 	}
-
-	err = o.moveToTrash(ctx, fileName)
-	if err != nil {
-		return fmt.Errorf("couldn't move item to trash: %w", err)
-	}
 	return nil
 }
 
 // MoveToTrash moves the object to the trash album
-func (o *Object) moveToTrash(ctx context.Context, fileName string) (err error) {
-	trashAlbumPath := path.Join("album", trashAlbum)
-	if strings.HasPrefix(o.fs.root, "album") {
-		trashAlbumPath = trashAlbum
+func (o *Object) moveToTrash(ctx context.Context) (err error) {
+	trashAlbumName := o.fs.opt.TrashAlbumName
+	if trashAlbumName == "" {
+		trashAlbumName = trashAlbum
+	}
+	trash, err := o.fs.getOrCreateAlbum(ctx, trashAlbumName)
+	if err != nil {
+		return fmt.Errorf("couldn't get or create trash album %q: %w", trashAlbumName, err)
 	}
 
-	err = o.fs.Mkdir(ctx, trashAlbumPath)
-	if err != nil {
-		return err
+	opts := rest.Opts{
+		Method:     "POST",
+		Path:       "/albums/" + trash.ID + ":batchAddMediaItems",
+		NoResponse: true,
 	}
-
-	remote := path.Join(trashAlbumPath, fileName)
-	in, err := o.Open(ctx)
-	if err != nil {
-		return err
+	request := api.BatchAddItems{
+		AlbumID:      trash.ID,
+		MediaItemIDs: []string{o.id},
 	}
-	defer func() {
-		errClosed := in.Close()
-		if errClosed != nil && err == nil {
-			err = errClosed
-		}
-	}()
-
-	_, err = o.fs.Put(ctx, in, fs.NewOverrideRemote(o, remote))
+	var resp *http.Response
+	err = o.fs.pacer.Call(func() (bool, error) {
+		resp, err = o.fs.srv.CallJSON(ctx, &opts, &request, nil)
+		return shouldRetry(ctx, resp, err)
+	})
 	if err != nil {
-		return err
+		return fmt.Errorf("couldn't add item to trash album: %w", err)
 	}
 	return nil
 }
