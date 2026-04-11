@@ -101,7 +101,7 @@ func ArchiveExtract(ctx context.Context, dst fs.Fs, dstDir string, src fs.Fs, sr
 	ci := fs.GetConfig(ctx)
 	// get source object
 	srcObj, err = src.NewObject(ctx, srcFile)
-	fs.Debugf(nil, "srcFile: %q, src : %v", srcFile, src)
+	fs.DebugfCtx(ctx, nil, "srcFile: %q, src : %v", srcFile, src)
 	if errors.Is(err, fs.ErrorIsDir) {
 		return fmt.Errorf("source can't be a directory: %w", err)
 	} else if errors.Is(err, fs.ErrorObjectNotFound) {
@@ -109,14 +109,14 @@ func ArchiveExtract(ctx context.Context, dst fs.Fs, dstDir string, src fs.Fs, sr
 	} else if err != nil {
 		return fmt.Errorf("unable to access source: %w", err)
 	}
-	fs.Debugf(nil, "Source archive file: %s/%s", src.Root(), srcFile)
+	fs.DebugfCtx(ctx, nil, "Source archive file: %s/%s", src.Root(), srcFile)
 	// Create destination directory
 	err = dst.Mkdir(ctx, dstDir)
 	if err != nil {
 		return fmt.Errorf("unable to access destination: %w", err)
 	}
 
-	fs.Debugf(dst, "Destination for extracted files: %q", dstDir)
+	fs.DebugfCtx(ctx, dst, "Destination for extracted files: %q", dstDir)
 	// start accounting
 	tr := accounting.Stats(ctx).NewTransfer(srcObj, nil)
 	defer tr.Done(ctx, err)
@@ -137,7 +137,7 @@ func ArchiveExtract(ctx context.Context, dst fs.Fs, dstDir string, src fs.Fs, sr
 	if err != nil {
 		return fmt.Errorf("failed to open check file type: %w", err)
 	}
-	fs.Debugf(nil, "Extract %s/%s, format %s to %s", src.Root(), srcFile, strings.TrimPrefix(format.Extension(), "."), dst.Root())
+	fs.DebugfCtx(ctx, nil, "Extract %s/%s, format %s to %s", src.Root(), srcFile, strings.TrimPrefix(format.Extension(), "."), dst.Root())
 
 	// check if extract is supported by format
 	ex, isExtract := format.(archives.Extraction)
@@ -167,7 +167,7 @@ func ArchiveExtract(ctx context.Context, dst fs.Fs, dstDir string, src fs.Fs, sr
 		// process directory
 		if f.IsDir() {
 			// directory
-			fs.Debugf(nil, "mkdir %s", remote)
+			fs.DebugfCtx(ctx, nil, "mkdir %s", remote)
 			// leave if --dry-run set
 			if ci.DryRun {
 				return nil
@@ -176,7 +176,7 @@ func ArchiveExtract(ctx context.Context, dst fs.Fs, dstDir string, src fs.Fs, sr
 			return operations.Mkdir(ctx, dst, remote)
 		}
 		// process file
-		fs.Debugf(nil, "Extract %s", remote)
+		fs.DebugfCtx(ctx, nil, "Extract %s", remote)
 		// leave if --dry-run set
 		if ci.DryRun {
 			filesExtracted++
@@ -195,7 +195,7 @@ func ArchiveExtract(ctx context.Context, dst fs.Fs, dstDir string, src fs.Fs, sr
 		return err
 	})
 
-	fs.Infof(nil, "Total files extracted %d", filesExtracted)
+	fs.InfofCtx(ctx, nil, "Total files extracted %d", filesExtracted)
 
 	return err
 }

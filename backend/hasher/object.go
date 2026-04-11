@@ -70,35 +70,35 @@ func (f *Fs) putRawHashes(ctx context.Context, key, fp string, hashes operations
 func (o *Object) Hash(ctx context.Context, hashType hash.Type) (hashVal string, err error) {
 	f := o.f
 	if f.passHashes.Contains(hashType) {
-		fs.Debugf(o, "pass %s", hashType)
+		fs.DebugfCtx(ctx, o, "pass %s", hashType)
 		hashVal, err = o.Object.Hash(ctx, hashType)
 		if hashVal != "" {
 			return hashVal, err
 		}
 		if err != nil {
-			fs.Debugf(o, "error passing %s: %v", hashType, err)
+			fs.DebugfCtx(ctx, o, "error passing %s: %v", hashType, err)
 		}
-		fs.Debugf(o, "passed %s is blank -- trying other methods", hashType)
+		fs.DebugfCtx(ctx, o, "passed %s is blank -- trying other methods", hashType)
 	}
 	if !f.suppHashes.Contains(hashType) {
-		fs.Debugf(o, "unsupp %s", hashType)
+		fs.DebugfCtx(ctx, o, "unsupp %s", hashType)
 		return "", hash.ErrUnsupported
 	}
 	if hashVal, err = o.getHash(ctx, hashType); err != nil {
-		fs.Debugf(o, "getHash: %v", err)
+		fs.DebugfCtx(ctx, o, "getHash: %v", err)
 		err = nil
 		hashVal = ""
 	}
 	if hashVal != "" {
-		fs.Debugf(o, "cached %s = %q", hashType, hashVal)
+		fs.DebugfCtx(ctx, o, "cached %s = %q", hashType, hashVal)
 		return hashVal, nil
 	}
 	if f.slowHashes.Contains(hashType) {
-		fs.Debugf(o, "slow %s", hashType)
+		fs.DebugfCtx(ctx, o, "slow %s", hashType)
 		hashVal, err = o.Object.Hash(ctx, hashType)
 		if err == nil && hashVal != "" && f.keepHashes.Contains(hashType) {
 			if err = o.putHashes(ctx, hashMap{hashType: hashVal}); err != nil {
-				fs.Debugf(o, "putHashes: %v", err)
+				fs.DebugfCtx(ctx, o, "putHashes: %v", err)
 				err = nil
 			}
 		}
@@ -107,7 +107,7 @@ func (o *Object) Hash(ctx context.Context, hashType hash.Type) (hashVal string, 
 	if f.autoHashes.Contains(hashType) && o.Size() < int64(f.opt.AutoSize) {
 		_ = o.updateHashes(ctx)
 		if hashVal, err = o.getHash(ctx, hashType); err != nil {
-			fs.Debugf(o, "auto %s = %q (%v)", hashType, hashVal, err)
+			fs.DebugfCtx(ctx, o, "auto %s = %q (%v)", hashType, hashVal, err)
 			err = nil
 		}
 	}
@@ -118,14 +118,14 @@ func (o *Object) Hash(ctx context.Context, hashType hash.Type) (hashVal string, 
 func (o *Object) updateHashes(ctx context.Context) error {
 	r, err := o.Open(ctx)
 	if err != nil {
-		fs.Infof(o, "update failed (open): %v", err)
+		fs.InfofCtx(ctx, o, "update failed (open): %v", err)
 		return err
 	}
 	defer func() {
 		_ = r.Close()
 	}()
 	if _, err = io.Copy(io.Discard, r); err != nil {
-		fs.Infof(o, "update failed (copy): %v", err)
+		fs.InfofCtx(ctx, o, "update failed (copy): %v", err)
 		return err
 	}
 	return nil
@@ -182,7 +182,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (r io.ReadC
 	}
 	return o.f.newHashingReader(ctx, r, func(sums hashMap) {
 		if err := o.putHashes(ctx, sums); err != nil {
-			fs.Infof(o, "auto hashing error: %v", err)
+			fs.InfofCtx(ctx, o, "auto hashing error: %v", err)
 		}
 	})
 }
@@ -206,7 +206,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		r, err := f.newHashingReader(ctx, in, func(sums hashMap) {
 			hashes = sums
 		})
-		fs.Debugf(src, "Rehash in-fly due to incomplete or slow source set %v (err: %v)", common, err)
+		fs.DebugfCtx(ctx, src, "Rehash in-fly due to incomplete or slow source set %v (err: %v)", common, err)
 		if err == nil {
 			wrapIn = r
 		} else {
@@ -231,7 +231,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	}
 	if len(hashes) > 0 {
 		err := o.(*Object).putHashes(ctx, hashes)
-		fs.Debugf(o, "Applied %d source hashes, err: %v", len(hashes), err)
+		fs.DebugfCtx(ctx, o, "Applied %d source hashes, err: %v", len(hashes), err)
 	}
 	return o, err
 }

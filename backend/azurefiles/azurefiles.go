@@ -558,7 +558,7 @@ func (o *Object) MimeType(ctx context.Context) string {
 	if o.contentType == "" {
 		err := o.getMetadata(ctx)
 		if err != nil {
-			fs.Errorf(o, "Failed to fetch Content-Type")
+			fs.ErrorfCtx(ctx, o, "Failed to fetch Content-Type")
 		}
 	}
 	return o.contentType
@@ -623,7 +623,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			offset = x.Offset
 		default:
 			if option.Mandatory() {
-				fs.Logf(o, "Unsupported mandatory option: %v", option)
+				fs.LogfCtx(ctx, o, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}
@@ -666,7 +666,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		size = int64(o.fs.opt.MaxStreamSize)
 		sizeUnknown = true
 		warnStreamUpload.Do(func() {
-			fs.Logf(o.fs, "Streaming uploads will have maximum file size of %v - adjust with --azurefiles-max-stream-size", o.fs.opt.MaxStreamSize)
+			fs.LogfCtx(ctx, o.fs, "Streaming uploads will have maximum file size of %v - adjust with --azurefiles-max-stream-size", o.fs.opt.MaxStreamSize)
 		})
 	}
 
@@ -698,7 +698,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		if err == nil {
 			hashUnknown = false
 		} else {
-			fs.Errorf(o, "internal error: decoding hex encoded md5 %q: %v", hashStr, err)
+			fs.ErrorfCtx(ctx, o, "internal error: decoding hex encoded md5 %q: %v", hashStr, err)
 		}
 	}
 
@@ -716,7 +716,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		// Remove partially uploaded file on error
 		if isNewlyCreated {
 			if _, delErr := fc.Delete(ctx, nil); delErr != nil {
-				fs.Errorf(o, "failed to delete partially uploaded file: %v", delErr)
+				fs.ErrorfCtx(ctx, o, "failed to delete partially uploaded file: %v", delErr)
 			}
 		}
 		return fmt.Errorf("update: failed to upload stream: %w", err)
@@ -785,7 +785,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 	err := f.mkParentDir(ctx, remote)
@@ -821,7 +821,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	dstFs := f
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 
@@ -866,7 +866,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 	err := f.mkParentDir(ctx, remote)

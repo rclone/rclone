@@ -274,7 +274,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 	o := srcObj.UnWrapUpstream()
@@ -314,7 +314,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	o, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 	entries, err := f.actionEntries(o.candidates()...)
@@ -395,7 +395,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	sfs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(src, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 	upstreams, err := sfs.action(ctx, srcRemote)
@@ -971,7 +971,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, err
 	}
-	fs.Debugf(f, "actionPolicy = %T, createPolicy = %T, searchPolicy = %T", f.actionPolicy, f.createPolicy, f.searchPolicy)
+	fs.DebugfCtx(ctx, f, "actionPolicy = %T, createPolicy = %T, searchPolicy = %T", f.actionPolicy, f.createPolicy, f.searchPolicy)
 	var features = (&fs.Features{
 		CaseInsensitive:          true,
 		DuplicateFiles:           false,

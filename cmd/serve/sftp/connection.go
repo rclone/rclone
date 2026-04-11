@@ -64,7 +64,7 @@ func (c *conn) execCommand(ctx context.Context, out io.Writer, command string) (
 		args = strings.TrimLeft(after, " ")
 	}
 	args = shellUnEscape(args)
-	fs.Debugf(c.what, "exec command: binary = %q, args = %q", binary, args)
+	fs.DebugfCtx(ctx, c.what, "exec command: binary = %q, args = %q", binary, args)
 	switch binary {
 	case "df":
 		about := c.vfs.Fs().Features().About
@@ -209,7 +209,7 @@ func (c *conn) handleHashsumCommand(ctx context.Context, out io.Writer, ht hash.
 		}
 		o, ok := node.DirEntry().(fs.ObjectInfo)
 		if !ok {
-			fs.Debugf(args, "File uploading - reading hash from VFS cache")
+			fs.DebugfCtx(ctx, args, "File uploading - reading hash from VFS cache")
 			in, err := node.Open(os.O_RDONLY)
 			if err != nil {
 				return fmt.Errorf("hash vfs open failed: %w", err)

@@ -127,7 +127,7 @@ func ConfigureLoggers(ctx context.Context, fdst fs.Fs, command *cobra.Command, o
 		for _, closer := range closers {
 			err := closer.Close()
 			if err != nil {
-				fs.Errorf(nil, "Failed to close report output: %v", err)
+				fs.ErrorfCtx(ctx, nil, "Failed to close report output: %v", err)
 			}
 		}
 	}

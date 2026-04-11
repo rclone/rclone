@@ -94,7 +94,7 @@ func (f *Fs) createFolder(ctx context.Context, dirPath string) (*api.CreateFolde
 		return nil, fmt.Errorf("error: %s", result.Msg)
 	}
 
-	fs.Infof(f, "Successfully created folder %q with ID %v", dirPath, result.Result.FldID)
+	fs.InfofCtx(ctx, f, "Successfully created folder %q with ID %v", dirPath, result.Result.FldID)
 	return &result, nil
 }
 
@@ -171,7 +171,7 @@ func (f *Fs) deleteFolder(ctx context.Context, fullPath string) error {
 		return err
 	}
 
-	fs.Infof(f, "Rmdir: successfully deleted %q", fullPath)
+	fs.InfofCtx(ctx, f, "Rmdir: successfully deleted %q", fullPath)
 	return nil
 }
 

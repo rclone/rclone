@@ -47,7 +47,7 @@ type Fs struct {
 func New(ctx context.Context, wrappedFs fs.Fs, remote, prefix, root string) (fs.Fs, error) {
 	// FIXME vfs cache?
 	// FIXME could factor out ReadFileHandle and just use that rather than the full VFS
-	fs.Debugf(nil, "Squashfs: New: remote=%q, prefix=%q, root=%q", remote, prefix, root)
+	fs.DebugfCtx(ctx, nil, "Squashfs: New: remote=%q, prefix=%q, root=%q", remote, prefix, root)
 	vfsOpt := vfscommon.Opt
 	vfsOpt.ReadWait = 0
 	VFS := vfs.New(wrappedFs, &vfsOpt)
@@ -158,13 +158,13 @@ func (f *Fs) toNative(remote string) (string, error) {
 
 // Turn a (nativeDir, leaf) into a remote
 func (f *Fs) fromNative(nativeDir string, leaf string) string {
-	// fs.Debugf(nil, "nativeDir = %q, leaf = %q, root=%q", nativeDir, leaf, f.root)
+	// fs.DebugfCtx(ctx, nil, "nativeDir = %q, leaf = %q, root=%q", nativeDir, leaf, f.root)
 	dir := nativeDir
 	if f.root != "" {
 		dir = strings.TrimPrefix(dir, "/"+f.root)
 	}
 	remote := f.prefixSlash + strings.Trim(path.Join(dir, leaf), "/")
-	// fs.Debugf(nil, "dir = %q, remote=%q", dir, remote)
+	// fs.DebugfCtx(ctx, nil, "dir = %q, remote=%q", dir, remote)
 	return remote
 }
 
@@ -207,7 +207,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		if !ok {
 			return nil, fmt.Errorf("internal error: unexpected type for %q: %T", fi.Name(), fi)
 		}
-		// fs.Debugf(item.Name(), "entry = %#v", item)
+		// fs.DebugfCtx(ctx, item.Name(), "entry = %#v", item)
 		var entry fs.DirEntry
 		if err != nil {
 			return nil, fmt.Errorf("error reading item %q: %q", item.Name(), err)
@@ -219,14 +219,14 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			if item.Mode().IsRegular() {
 				entry = f.objectFromFileInfo(nativeDir, item)
 			} else {
-				fs.Debugf(item.Name(), "FIXME Not regular file - skipping")
+				fs.DebugfCtx(ctx, item.Name(), "FIXME Not regular file - skipping")
 				continue
 			}
 		}
 		entries = append(entries, entry)
 	}
 
-	// fs.Debugf(f, "dir=%q, entries=%v", dir, entries)
+	// fs.DebugfCtx(ctx, f, "dir=%q, entries=%v", dir, entries)
 	return entries, nil
 }
 
@@ -394,7 +394,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 			offset, limit = x.Decode(o.Size())
 		default:
 			if option.Mandatory() {
-				fs.Logf(o, "Unsupported mandatory option: %v", option)
+				fs.LogfCtx(ctx, o, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}
@@ -404,7 +404,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 		return nil, err
 	}
 
-	fs.Debugf(o, "Opening %q", remote)
+	fs.DebugfCtx(ctx, o, "Opening %q", remote)
 	//fh, err := o.fs.sqfs.OpenFile(remote, os.O_RDONLY)
 	fh, err := o.item.Open()
 	if err != nil {
@@ -420,7 +420,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 	}
 	// If limited then don't return everything
 	if limit >= 0 {
-		fs.Debugf(nil, "limit=%d, offset=%d, options=%v", limit, offset, options)
+		fs.DebugfCtx(ctx, nil, "limit=%d, offset=%d, options=%v", limit, offset, options)
 		return readers.NewLimitedReadCloser(fh, limit), nil
 	}
 

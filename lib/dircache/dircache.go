@@ -405,7 +405,7 @@ func (dc *DirCache) DirMove(
 
 	// Refuse to move to or from the root
 	if srcPath == "" || dstPath == "" {
-		// fs.Debugf(src, "DirMove error: Can't move root")
+		// fs.DebugfCtx(ctx, src, "DirMove error: Can't move root")
 		err = errors.New("can't move root directory")
 		return
 	}

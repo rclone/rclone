@@ -435,7 +435,7 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 				continue
 			}
 		} else {
-			fs.Debugf(f, "Ignoring %q - unknown type %q", item.Name, item.Type)
+			fs.DebugfCtx(ctx, f, "Ignoring %q - unknown type %q", item.Name, item.Type)
 			continue
 		}
 		item.Name = f.opt.Enc.ToStandardName(item.Name)
@@ -702,7 +702,7 @@ func (f *Fs) move(ctx context.Context, isFile bool, id, oldLeaf, newLeaf, oldDir
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
@@ -736,7 +736,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 
@@ -879,7 +879,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 func (o *Object) ModTime(ctx context.Context) time.Time {
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.LogfCtx(ctx, o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	return o.modTime
@@ -976,7 +976,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	var oldID = o.id
 	if o.hasMetaData {
 		newLeaf := leaf + "." + random.String(8)
-		fs.Debugf(o, "Moving old file out the way to %q", newLeaf)
+		fs.DebugfCtx(ctx, o, "Moving old file out the way to %q", newLeaf)
 		err = o.fs.renameLeaf(ctx, true, oldID, newLeaf)
 		if err != nil {
 			return fmt.Errorf("upload rename old file: %w", err)
@@ -984,7 +984,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		defer func() {
 			// on failed upload rename old file back
 			if !uploaded {
-				fs.Debugf(o, "Renaming old file back (from %q to %q) since upload failed", leaf, newLeaf)
+				fs.DebugfCtx(ctx, o, "Renaming old file back (from %q to %q) since upload failed", leaf, newLeaf)
 				newErr := o.fs.renameLeaf(ctx, true, oldID, leaf)
 				if newErr != nil && err == nil {
 					err = fmt.Errorf("upload renaming old file back: %w", newErr)
@@ -1019,7 +1019,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// on successful upload, remove old file if it exists
 	uploaded = true
 	if o.hasMetaData {
-		fs.Debugf(o, "Removing old file")
+		fs.DebugfCtx(ctx, o, "Removing old file")
 		err := o.fs.remove(ctx, oldID)
 		if err != nil {
 			return fmt.Errorf("upload remove old file: %w", err)

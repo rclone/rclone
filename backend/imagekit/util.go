@@ -158,7 +158,7 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 			var err error
 			retryAfter, err = strconv.Atoi(retryAfterString)
 			if err != nil {
-				fs.Errorf(f, "Malformed %s header %q: %v", "X-RateLimit-Reset", retryAfterString, err)
+				fs.ErrorfCtx(ctx, f, "Malformed %s header %q: %v", "X-RateLimit-Reset", retryAfterString, err)
 			}
 		}
 

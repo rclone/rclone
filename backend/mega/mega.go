@@ -258,16 +258,16 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		srv.SetRetries(ci.LowLevelRetries) // let mega do the low level retries
 		srv.SetHTTPS(opt.UseHTTPS)
 		srv.SetLogger(func(format string, v ...any) {
-			fs.Infof("*go-mega*", format, v...)
+			fs.InfofCtx(ctx, "*go-mega*", format, v...)
 		})
 		if opt.Debug {
 			srv.SetDebugger(func(format string, v ...any) {
-				fs.Debugf("*go-mega*", format, v...)
+				fs.DebugfCtx(ctx, "*go-mega*", format, v...)
 			})
 		}
 
 		if opt.SessionID == "" {
-			fs.Debugf(f, "Using username and password to initialize the Mega API")
+			fs.DebugfCtx(ctx, f, "Using username and password to initialize the Mega API")
 			err := srv.MultiFactorLogin(opt.User, opt.Pass, opt.TwoFA)
 			if err != nil {
 				return nil, fmt.Errorf("couldn't login: %w", err)
@@ -277,14 +277,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			encodedMasterKey := base64.StdEncoding.EncodeToString(srv.GetMasterKey())
 			m.Set(masterKeyConfigKey, encodedMasterKey)
 		} else {
-			fs.Debugf(f, "Using previously stored session ID and master key to initialize the Mega API")
+			fs.DebugfCtx(ctx, f, "Using previously stored session ID and master key to initialize the Mega API")
 			decodedMasterKey, err := base64.StdEncoding.DecodeString(opt.MasterKey)
 			if err != nil {
 				return nil, fmt.Errorf("couldn't decode master key: %w", err)
 			}
 			err = srv.LoginWithKeys(opt.SessionID, decodedMasterKey)
 			if err != nil {
-				fs.Debugf(f, "login with previous auth keys failed: %v", err)
+				fs.DebugfCtx(ctx, f, "login with previous auth keys failed: %v", err)
 			}
 		}
 	}
@@ -480,11 +480,11 @@ func (f *Fs) CleanUp(ctx context.Context) (err error) {
 	if err != nil {
 		return fmt.Errorf("CleanUp failed to list items in trash: %w", err)
 	}
-	fs.Infof(f, "Deleting %d items from the trash", len(items))
+	fs.InfofCtx(ctx, f, "Deleting %d items from the trash", len(items))
 	errors := 0
 	// similar to f.deleteNode(trash) but with HardDelete as true
 	for _, item := range items {
-		fs.Debugf(f, "Deleting trash %q", f.opt.Enc.ToStandardName(item.GetName()))
+		fs.DebugfCtx(ctx, f, "Deleting trash %q", f.opt.Enc.ToStandardName(item.GetName()))
 		deleteErr := f.pacer.Call(func() (bool, error) {
 			err := f.srv.Delete(item, true)
 			return shouldRetry(ctx, err)
@@ -494,7 +494,7 @@ func (f *Fs) CleanUp(ctx context.Context) (err error) {
 			errors++
 		}
 	}
-	fs.Infof(f, "Deleted %d items from the trash with %d errors", len(items), errors)
+	fs.InfofCtx(ctx, f, "Deleted %d items from the trash with %d errors", len(items), errors)
 	return err
 }
 
@@ -816,7 +816,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	//log.Printf("Move %q -> %q", src.Remote(), remote)
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
@@ -847,7 +847,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	dstFs := f
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 
@@ -937,7 +937,7 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 		}
 		// move them into place
 		for _, info := range infos {
-			fs.Infof(srcDir, "merging %q", f.opt.Enc.ToStandardName(info.GetName()))
+			fs.InfofCtx(ctx, srcDir, "merging %q", f.opt.Enc.ToStandardName(info.GetName()))
 			err = f.pacer.Call(func() (bool, error) {
 				err = f.srv.Move(info, dstDirNode)
 				return shouldRetry(ctx, err)
@@ -947,7 +947,7 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 			}
 		}
 		// rmdir (into trash) the now empty source directory
-		fs.Infof(srcDir, "removing empty directory")
+		fs.InfofCtx(ctx, srcDir, "removing empty directory")
 		err = f.deleteNode(ctx, srcDirNode)
 		if err != nil {
 			return fmt.Errorf("MergeDirs move failed to rmdir %q: %w", srcDir, err)
@@ -1142,7 +1142,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			offset, limit = x.Decode(o.Size())
 		default:
 			if option.Mandatory() {
-				fs.Logf(o, "Unsupported mandatory option: %v", option)
+				fs.LogfCtx(ctx, o, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}

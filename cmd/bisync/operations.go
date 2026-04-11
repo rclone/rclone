@@ -197,7 +197,7 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 
 	if b.critical {
 		if b.retryable && b.opt.Resilient {
-			fs.Errorf(nil, Color(terminal.RedFg, "Bisync critical error: %v"), err)
+			fs.ErrorfCtx(ctx, nil, Color(terminal.RedFg, "Bisync critical error: %v"), err)
 			fs.Error(nil, Color(terminal.YellowFg, "Bisync aborted. Error is retryable without --resync due to --resilient mode."))
 		} else {
 			if bilib.FileExists(b.listing1) {
@@ -206,7 +206,7 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 			if bilib.FileExists(b.listing2) {
 				_ = os.Rename(b.listing2, b.listing2+"-err")
 			}
-			fs.Errorf(nil, Color(terminal.RedFg, "Bisync critical error: %v"), err)
+			fs.ErrorfCtx(ctx, nil, Color(terminal.RedFg, "Bisync critical error: %v"), err)
 			fs.Error(nil, Color(terminal.RedFg, "Bisync aborted. Must run --resync to recover."))
 		}
 		return ErrBisyncAborted
@@ -560,7 +560,7 @@ func (b *bisyncRun) setBackupDir(ctx context.Context, destPath int) context.Cont
 	if destPath == 2 && b.opt.BackupDir2 != "" {
 		ci.BackupDir = b.opt.BackupDir2
 	}
-	fs.Debugf(ci.BackupDir, "updated backup-dir for Path%d", destPath)
+	fs.DebugfCtx(ctx, ci.BackupDir, "updated backup-dir for Path%d", destPath)
 	return ctx
 }
 

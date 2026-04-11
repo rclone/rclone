@@ -67,20 +67,20 @@ func newServer(ctx context.Context, opt *rc.Options, mux *http.ServeMux) (*Serve
 	// File handling
 	if opt.Files != "" {
 		if opt.WebUI {
-			fs.Logf(nil, "--rc-files overrides --rc-web-gui command\n")
+			fs.LogfCtx(ctx, nil, "--rc-files overrides --rc-web-gui command\n")
 		}
-		fs.Logf(nil, "Serving files from %q", opt.Files)
+		fs.LogfCtx(ctx, nil, "Serving files from %q", opt.Files)
 		fileHandler = http.FileServer(http.Dir(opt.Files))
 	} else if opt.WebUI {
 		if err := webgui.CheckAndDownloadWebGUIRelease(opt.WebGUIUpdate, opt.WebGUIForceUpdate, opt.WebGUIFetchURL, config.GetCacheDir()); err != nil {
-			fs.Errorf(nil, "Error while fetching the latest release of Web GUI: %v", err)
+			fs.ErrorfCtx(ctx, nil, "Error while fetching the latest release of Web GUI: %v", err)
 		}
 		if opt.NoAuth {
-			fs.Logf(nil, "It is recommended to use web gui with auth.")
+			fs.LogfCtx(ctx, nil, "It is recommended to use web gui with auth.")
 		} else {
 			if opt.Auth.BasicUser == "" && opt.Auth.HtPasswd == "" {
 				opt.Auth.BasicUser = "gui"
-				fs.Infof(nil, "No username specified. Using default username: %s \n", rc.Opt.Auth.BasicUser)
+				fs.InfofCtx(ctx, nil, "No username specified. Using default username: %s \n", rc.Opt.Auth.BasicUser)
 			}
 			if opt.Auth.BasicPass == "" && opt.Auth.HtPasswd == "" {
 				randomPass, err := random.Password(128)
@@ -88,12 +88,12 @@ func newServer(ctx context.Context, opt *rc.Options, mux *http.ServeMux) (*Serve
 					fs.Fatalf(nil, "Failed to make password: %v", err)
 				}
 				opt.Auth.BasicPass = randomPass
-				fs.Infof(nil, "No password specified. Using random password: %s \n", randomPass)
+				fs.InfofCtx(ctx, nil, "No password specified. Using random password: %s \n", randomPass)
 			}
 		}
 		opt.Serve = true
 
-		fs.Logf(nil, "Serving Web GUI")
+		fs.LogfCtx(ctx, nil, "Serving Web GUI")
 		fileHandler = http.FileServer(http.Dir(extractPath))
 
 		pluginsHandler = http.FileServer(http.Dir(webgui.PluginsPath))
@@ -279,7 +279,7 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 		in["_response"] = w
 	}
 
-	fs.Debugf(nil, "rc: %q: with parameters %+v", path, in)
+	fs.DebugfCtx(ctx, nil, "rc: %q: with parameters %+v", path, in)
 	job, out, err := jobs.NewJob(ctx, call.Fn, in)
 	if job != nil {
 		w.Header().Add("x-rclone-jobid", fmt.Sprintf("%d", job.ID))
@@ -292,13 +292,13 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 		out = make(rc.Params)
 	}
 
-	fs.Debugf(nil, "rc: %q: reply %+v: %v", path, out, err)
+	fs.DebugfCtx(ctx, nil, "rc: %q: reply %+v: %v", path, out, err)
 	w.Header().Set("Content-Type", "application/json")
 	err = rc.WriteJSON(w, out)
 	if err != nil {
 		// can't return the error at this point - but have a go anyway
 		writeError(path, inOrig, w, err, http.StatusInternalServerError)
-		fs.Errorf(nil, "rc: handlePost: failed to write JSON output: %v", err)
+		fs.ErrorfCtx(ctx, nil, "rc: handlePost: failed to write JSON output: %v", err)
 	}
 }
 

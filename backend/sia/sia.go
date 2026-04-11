@@ -346,7 +346,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 			break
 		}
 		if cleanErr != fs.ErrorObjectNotFound {
-			fs.Logf(f, "%q: cleanup failed upload: %v", src.Remote(), cleanErr)
+			fs.LogfCtx(ctx, f, "%q: cleanup failed upload: %v", src.Remote(), cleanErr)
 			break
 		}
 		time.Sleep(100 * time.Millisecond)

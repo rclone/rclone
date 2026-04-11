@@ -49,7 +49,7 @@ type Fs struct {
 func New(ctx context.Context, wrappedFs fs.Fs, remote, prefix, root string) (fs.Fs, error) {
 	// FIXME vfs cache?
 	// FIXME could factor out ReadFileHandle and just use that rather than the full VFS
-	fs.Debugf(nil, "Zip: New: remote=%q, prefix=%q, root=%q", remote, prefix, root)
+	fs.DebugfCtx(ctx, nil, "Zip: New: remote=%q, prefix=%q, root=%q", remote, prefix, root)
 	vfsOpt := vfscommon.Opt
 	vfsOpt.ReadWait = 0
 	VFS := vfs.New(wrappedFs, &vfsOpt)
@@ -176,7 +176,7 @@ func (f *Fs) readZip() (singleObject bool, err error) {
 	dt.CheckParents("")
 	dt.Sort()
 	f.dt = dt
-	//fs.Debugf(nil, "dt = %v", dt)
+	//fs.DebugfCtx(ctx, nil, "dt = %v", dt)
 	return singleObject, nil
 }
 
@@ -199,7 +199,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if !ok {
 		return nil, fs.ErrorDirNotFound
 	}
-	fs.Debugf(f, "dir=%q, entries=%v", dir, entries)
+	fs.DebugfCtx(ctx, f, "dir=%q, entries=%v", dir, entries)
 	return entries, nil
 }
 
@@ -341,7 +341,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 			offset, limit = x.Decode(o.Size())
 		default:
 			if option.Mandatory() {
-				fs.Logf(o, "Unsupported mandatory option: %v", option)
+				fs.LogfCtx(ctx, o, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}

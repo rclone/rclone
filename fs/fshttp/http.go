@@ -272,7 +272,7 @@ func NewTransportCustom(ctx context.Context, customize func(*http.Transport)) *T
 	t.ExpectContinueTimeout = time.Duration(ci.ExpectContinueTimeout)
 
 	if ci.Dump&(fs.DumpHeaders|fs.DumpBodies|fs.DumpAuth|fs.DumpRequests|fs.DumpResponses) != 0 {
-		fs.Debugf(nil, "You have specified to dump information. Please be noted that the "+
+		fs.DebugfCtx(ctx, nil, "You have specified to dump information. Please be noted that the "+
 			"Accept-Encoding as shown may not be correct in the request and the response may not show "+
 			"Content-Encoding if the go standard libraries auto gzip encoding was in effect. In this case"+
 			" the body of the request will be gunzipped before showing it.")

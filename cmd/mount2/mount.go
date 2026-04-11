@@ -246,7 +246,7 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error
 	}
 
 	// serverSettings := server.KernelSettings()
-	// fs.Debugf(f, "Server settings %+v", serverSettings)
+	// fs.DebugfCtx(ctx, f, "Server settings %+v", serverSettings)
 
 	// Serve the mount point in the background returning error to errChan
 	errs := make(chan error, 1)

@@ -876,9 +876,9 @@ func Run(t *testing.T, opt *Opt) {
 			dirChanges := map[string]struct{}{}
 			objChanges := map[string]struct{}{}
 			doChangeNotify(ctx, func(x string, e fs.EntryType) {
-				fs.Debugf(nil, "doChangeNotify(%q, %+v)", x, e)
+				fs.DebugfCtx(ctx, nil, "doChangeNotify(%q, %+v)", x, e)
 				if strings.HasPrefix(x, file1.Path[:5]) || strings.HasPrefix(x, file2.Path[:5]) {
-					fs.Debugf(nil, "Ignoring notify for file1 or file2: %q, %v", x, e)
+					fs.DebugfCtx(ctx, nil, "Ignoring notify for file1 or file2: %q, %v", x, e)
 					return
 				}
 				if e == fs.EntryDirectory {

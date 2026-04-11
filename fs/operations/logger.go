@@ -136,7 +136,7 @@ func NewDefaultLoggerFn(opt *LoggerOpt) LoggerFn {
 		}
 		if opt.Combined != nil {
 			SyncFprintf(opt.Combined, "%c %s\n", sigil, filename)
-			fs.Debugf(nil, "Sync Logger: %s: %c %s\n", sigil.String(), sigil, filename)
+			fs.DebugfCtx(ctx, nil, "Sync Logger: %s: %c %s\n", sigil.String(), sigil, filename)
 		}
 		if opt.DestAfter != nil {
 			opt.PrintDestAfter(ctx, sigil, src, dst, err)
@@ -298,7 +298,7 @@ func WinningSide(ctx context.Context, sigil Sigil, src, dst fs.DirEntry, err err
 	// should only make it this far if it's TransferError and both src and dst are nil
 	winner.Side = "none"
 	winner.Err = fmt.Errorf("unknown case -- can't determine winner. %v", err)
-	fs.Debugf(winner.Obj, "%v", winner.Err)
+	fs.DebugfCtx(ctx, winner.Obj, "%v", winner.Err)
 	return winner
 }
 
@@ -356,7 +356,7 @@ func (opt *LoggerOpt) SetListFormat(ctx context.Context, cmdFlags *pflag.FlagSet
 			list.AddMetadata()
 			JSONOpt.Metadata = true
 		default:
-			fs.Errorf(nil, "unknown format character %q", char)
+			fs.ErrorfCtx(ctx, nil, "unknown format character %q", char)
 		}
 	}
 	opt.ListFormat = list
@@ -366,7 +366,7 @@ func (opt *LoggerOpt) SetListFormat(ctx context.Context, cmdFlags *pflag.FlagSet
 // NewListJSON makes a new *listJSON for destAfter
 func (opt *LoggerOpt) NewListJSON(ctx context.Context, fdst fs.Fs, remote string) {
 	opt.LJ, _ = newListJSON(ctx, fdst, remote, &opt.JSONOpt)
-	//fs.Debugf(nil, "%v", opt.LJ)
+	//fs.DebugfCtx(ctx, nil, "%v", opt.LJ)
 }
 
 // JSONEntry returns a *ListJSONItem for destAfter

@@ -126,6 +126,7 @@ type OutputHandler struct {
 	output      []outputFn    // log to writer if empty or the last item
 	outputExtra []outputExtra // log to all these additional places
 	format      logFormat     // protected by mu
+	prefix      string        // optional static prefix prepended to every log line; protected by mu
 	jsonBuf     bytes.Buffer
 	jsonHandler *slog.JSONHandler
 }
@@ -227,6 +228,20 @@ func (h *OutputHandler) setFormat(format logFormat) {
 	h.format = format
 }
 
+// setPrefix sets the static prefix string prepended to every log line.
+func (h *OutputHandler) setPrefix(prefix string) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.prefix = prefix
+}
+
+// getPrefix returns the current prefix under the mutex.
+func (h *OutputHandler) getPrefix() string {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return h.prefix
+}
+
 // clear format flags that this output type doesn't want
 func (h *OutputHandler) clearFormatFlags(bitMask logFormat) {
 	h.mu.Lock()
@@ -251,7 +266,8 @@ func (h *OutputHandler) Enabled(_ context.Context, level slog.Level) bool {
 }
 
 // Create a log header in Go standard log format.
-func (h *OutputHandler) formatStdLogHeader(buf *bytes.Buffer, format logFormat, level slog.Level, t time.Time, object string, lineInfo string) {
+// prefix is the static per-instance prefix; tag is the per-RPC tag from context.
+func (h *OutputHandler) formatStdLogHeader(buf *bytes.Buffer, format logFormat, level slog.Level, t time.Time, object string, lineInfo string, prefix string, tag string) {
 	// Add time in Go standard format if requested
 	if format&(logFormatDate|logFormatTime|logFormatMicroseconds) != 0 {
 		if format&logFormatUTC != 0 {
@@ -269,6 +285,16 @@ func (h *OutputHandler) formatStdLogHeader(buf *bytes.Buffer, format logFormat, 
 			}
 			buf.WriteByte(' ')
 		}
+	}
+	// Add static prefix if set
+	if prefix != "" {
+		buf.WriteString(prefix)
+		buf.WriteByte(' ')
+	}
+	// Add per-RPC tag if set
+	if tag != "" {
+		buf.WriteString(tag)
+		buf.WriteByte(' ')
 	}
 	// Add source code filename:line if requested
 	if format&(logFormatShortFile|logFormatLongFile) != 0 && lineInfo != "" {
@@ -309,7 +335,9 @@ func (h *OutputHandler) textLog(ctx context.Context, buf *bytes.Buffer, format l
 		return true
 	})
 
-	h.formatStdLogHeader(buf, format, r.Level, r.Time, object, lineInfo)
+	prefix := h.getPrefix()
+	tag := fs.LogTagFromContext(ctx)
+	h.formatStdLogHeader(buf, format, r.Level, r.Time, object, lineInfo, prefix, tag)
 	buf.WriteString(r.Message)
 	if buf.Len() == 0 || buf.Bytes()[buf.Len()-1] != '\n' { // Ensure newline
 		buf.WriteByte('\n')
@@ -323,6 +351,14 @@ func (h *OutputHandler) jsonLog(ctx context.Context, buf *bytes.Buffer, format l
 	r.AddAttrs(
 		slog.String("source", getCaller(2)),
 	)
+	// Add static prefix if set
+	if prefix := h.getPrefix(); prefix != "" {
+		r.AddAttrs(slog.String("log_prefix", prefix))
+	}
+	// Add per-RPC tag if set
+	if tag := fs.LogTagFromContext(ctx); tag != "" {
+		r.AddAttrs(slog.String("log_tag", tag))
+	}
 	// Add PID if requested
 	if format&logFormatPid != 0 {
 		r.AddAttrs(slog.Int("pid", os.Getpid()))

@@ -707,7 +707,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 				}
 				remote = f.opt.Enc.ToStandardPath(remote)
 				if !strings.HasPrefix(remote, prefix) {
-					fs.Logf(f, "Odd name received %q", remote)
+					fs.LogfCtx(ctx, f, "Odd name received %q", remote)
 					continue
 				}
 				remote = remote[len(prefix) : len(remote)-1]
@@ -724,7 +724,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 		for _, object := range objects.Items {
 			remote := f.opt.Enc.ToStandardPath(object.Name)
 			if !strings.HasPrefix(remote, prefix) {
-				fs.Logf(f, "Odd name received %q", object.Name)
+				fs.LogfCtx(ctx, f, "Odd name received %q", object.Name)
 				continue
 			}
 			isDirectory := remote == "" || strings.HasSuffix(remote, "/")
@@ -985,7 +985,7 @@ func (f *Fs) createDirectoryMarker(ctx context.Context, bucket, dir string) erro
 		}
 
 		// Upload it if not
-		fs.Debugf(o, "Creating directory marker")
+		fs.DebugfCtx(ctx, o, "Creating directory marker")
 		content := io.Reader(strings.NewReader(""))
 		err = o.Update(ctx, content, o)
 		if err != nil {
@@ -1097,7 +1097,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
 			fs:     f,
 			remote: dir + "/",
 		}
-		fs.Debugf(o, "Removing directory marker")
+		fs.DebugfCtx(ctx, o, "Removing directory marker")
 		err := o.Remove(ctx)
 		if err != nil {
 			return fmt.Errorf("removing directory marker failed: %w", err)
@@ -1140,7 +1140,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 	srcBucket, srcPath := srcObj.split()
@@ -1180,7 +1180,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 			break
 		}
 		rewriteRequest.RewriteToken(rewriteResponse.RewriteToken)
-		fs.Debugf(dstObj, "Continuing rewrite %d bytes done", rewriteResponse.TotalBytesRewritten)
+		fs.DebugfCtx(ctx, dstObj, "Continuing rewrite %d bytes done", rewriteResponse.TotalBytesRewritten)
 	}
 	// Set the metadata for the new object while we have it
 	dstObj.setMetaData(rewriteResponse.Resource)
@@ -1401,7 +1401,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		// See: https://cloud.google.com/storage/docs/transcoding
 		req.Header.Set("Accept-Encoding", "gzip")
 		o.fs.warnCompressed.Do(func() {
-			fs.Logf(o, "Not decompressing 'Content-Encoding: gzip' compressed file. Use --gcs-decompress to override")
+			fs.LogfCtx(ctx, o, "Not decompressing 'Content-Encoding: gzip' compressed file. Use --gcs-decompress to override")
 		})
 	}
 	fs.OpenOptionAddHTTPHeaders(req.Header, options)
@@ -1476,7 +1476,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 				metaKey := lowerKey[len(googMetaPrefix):]
 				object.Metadata[metaKey] = value
 			} else {
-				fs.Errorf(o, "Don't know how to set key %q on upload", key)
+				fs.ErrorfCtx(ctx, o, "Don't know how to set key %q on upload", key)
 			}
 		}
 	}

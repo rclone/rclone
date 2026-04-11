@@ -80,13 +80,13 @@ func BasePath(ctx context.Context, workDir string, fs1, fs2 fs.Fs) string {
 	// If not, we carry on with the non-suffixed version.
 	// We should only find a suffixed version if bisync v1.66 or older created it.
 	if HasHexString(suffixedSession) && FileExists(listing1) {
-		fs.Infof(listing1, "renaming to: %s", basePath+".path1.lst")
+		fs.InfofCtx(ctx, listing1, "renaming to: %s", basePath+".path1.lst")
 		if !operations.SkipDestructive(ctx, listing1, "rename to "+basePath+".path1.lst") {
 			_ = os.Rename(listing1, basePath+".path1.lst")
 		}
 	}
 	if HasHexString(suffixedSession) && FileExists(listing2) {
-		fs.Infof(listing2, "renaming to: %s", basePath+".path2.lst")
+		fs.InfofCtx(ctx, listing2, "renaming to: %s", basePath+".path2.lst")
 		if !operations.SkipDestructive(ctx, listing1, "rename to "+basePath+".path2.lst") {
 			_ = os.Rename(listing2, basePath+".path2.lst")
 		} else {

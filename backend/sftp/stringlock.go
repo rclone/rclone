@@ -27,7 +27,7 @@ func (l *stringLock) Lock(ID string) {
 		}
 		// Wait for the channel to be closed
 		l.mu.Unlock()
-		// fs.Logf(nil, "Waiting for stringLock on %q", ID)
+		// fs.LogfCtx(ctx, nil, "Waiting for stringLock on %q", ID)
 		<-ch
 		l.mu.Lock()
 	}

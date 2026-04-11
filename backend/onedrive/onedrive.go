@@ -538,7 +538,7 @@ func chooseDrive(ctx context.Context, name string, m configmap.Mapper, srv *rest
 			}
 			// add the me drive if not found already
 			if !found {
-				fs.Debugf(nil, "Adding %v to drives list from /me/drive", meDrive)
+				fs.DebugfCtx(ctx, nil, "Adding %v to drives list from /me/drive", meDrive)
 				drives.Drives = append(drives.Drives, meDrive)
 			}
 		}
@@ -890,27 +890,27 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 		case 401:
 			if len(resp.Header["Www-Authenticate"]) == 1 && strings.Contains(resp.Header["Www-Authenticate"][0], "expired_token") {
 				retry = true
-				fs.Debugf(nil, "Should retry: %v", err)
+				fs.DebugfCtx(ctx, nil, "Should retry: %v", err)
 			} else if err != nil && strings.Contains(err.Error(), "Unable to initialize RPS") {
 				retry = true
-				fs.Debugf(nil, "HTTP 401: Unable to initialize RPS. Trying again.")
+				fs.DebugfCtx(ctx, nil, "HTTP 401: Unable to initialize RPS. Trying again.")
 			}
 		case 429, 503: // Too Many Requests, Server Too Busy
 			// see https://docs.microsoft.com/en-us/sharepoint/dev/general-development/how-to-avoid-getting-throttled-or-blocked-in-sharepoint-online
 			if values := resp.Header["Retry-After"]; len(values) == 1 && values[0] != "" {
 				retryAfter, parseErr := strconv.Atoi(values[0])
 				if parseErr != nil {
-					fs.Debugf(nil, "Failed to parse Retry-After: %q: %v", values[0], parseErr)
+					fs.DebugfCtx(ctx, nil, "Failed to parse Retry-After: %q: %v", values[0], parseErr)
 				} else {
 					duration := time.Second * time.Duration(retryAfter)
 					retry = true
 					err = pacer.RetryAfterError(err, duration)
-					fs.Debugf(nil, "Too many requests. Trying again in %d seconds.", retryAfter)
+					fs.DebugfCtx(ctx, nil, "Too many requests. Trying again in %d seconds.", retryAfter)
 				}
 			}
 		case 504: // Gateway timeout
 			gatewayTimeoutError.Do(func() {
-				fs.Errorf(nil, "%v: upload chunks may be taking too long - try reducing --onedrive-chunk-size or decreasing --transfers", err)
+				fs.ErrorfCtx(ctx, nil, "%v: upload chunks may be taking too long - try reducing --onedrive-chunk-size or decreasing --transfers", err)
 			})
 		case 507: // Insufficient Storage
 			return false, fserrors.FatalError(err)
@@ -1344,7 +1344,7 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 // Can return nil for an item which should be skipped
 func (f *Fs) itemToDirEntry(ctx context.Context, dir string, info *api.Item) (entry fs.DirEntry, err error) {
 	if !f.opt.ExposeOneNoteFiles && info.GetPackageType() == api.PackageTypeOneNote {
-		fs.Debugf(info.Name, "OneNote file not shown in directory listing")
+		fs.DebugfCtx(ctx, info.Name, "OneNote file not shown in directory listing")
 		return nil, nil
 	}
 	remote := path.Join(dir, info.GetName())
@@ -1515,7 +1515,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		}
 		// If this is a shared folder, we'll need list it too
 		if info.RemoteItem != nil && info.RemoteItem.Folder != nil {
-			fs.Debugf(remote, "Listing shared directory")
+			fs.DebugfCtx(ctx, remote, "Listing shared directory")
 			return listFolder(remote)
 		}
 		return nil
@@ -1709,15 +1709,15 @@ func (f *Fs) waitForJob(ctx context.Context, location string, o *Object) error {
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Object, err error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 
 	if (f.driveType == driveTypePersonal && srcObj.fs.driveType != driveTypePersonal) || (f.driveType != driveTypePersonal && srcObj.fs.driveType == driveTypePersonal) {
-		fs.Debugf(src, "Can't server-side copy - cross-drive between OneDrive Personal and OneDrive for business (SharePoint)")
+		fs.DebugfCtx(ctx, src, "Can't server-side copy - cross-drive between OneDrive Personal and OneDrive for business (SharePoint)")
 		return nil, fs.ErrorCantCopy
 	} else if f.driveType == driveTypeBusiness && srcObj.fs.driveType == driveTypeBusiness && srcObj.fs.driveID != f.driveID {
-		fs.Debugf(src, "Can't server-side copy - cross-drive between difference OneDrive for business (Not SharePoint)")
+		fs.DebugfCtx(ctx, src, "Can't server-side copy - cross-drive between difference OneDrive for business (Not SharePoint)")
 		return nil, fs.ErrorCantCopy
 	}
 
@@ -1782,7 +1782,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 	// Wait for job to finish
 	err = f.waitForJob(ctx, location, dstObj)
 	if err == errAsyncJobAccessDenied {
-		fs.Debugf(src, "Server-side copy failed - file not shared between drives")
+		fs.DebugfCtx(ctx, src, "Server-side copy failed - file not shared between drives")
 		return nil, fs.ErrorCantCopy
 	}
 	if err != nil {
@@ -1830,7 +1830,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
@@ -1846,7 +1846,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if f.canonicalDriveID(dstDriveID) != srcObj.fs.canonicalDriveID(srcObjDriveID) {
 		// https://docs.microsoft.com/en-us/graph/api/driveitem-move?view=graph-rest-1.0
 		// "Items cannot be moved between Drives using this request."
-		fs.Debugf(f, "Can't move files between drives (%q != %q)", dstDriveID, srcObjDriveID)
+		fs.DebugfCtx(ctx, f, "Can't move files between drives (%q != %q)", dstDriveID, srcObjDriveID)
 		return nil, fs.ErrorCantMove
 	}
 
@@ -1902,7 +1902,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 
@@ -1917,7 +1917,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	if f.canonicalDriveID(dstDriveID) != srcFs.canonicalDriveID(srcDriveID) {
 		// https://docs.microsoft.com/en-us/graph/api/driveitem-move?view=graph-rest-1.0
 		// "Items cannot be moved between Drives using this request."
-		fs.Debugf(f, "Can't move directories between drives (%q != %q)", dstDriveID, srcDriveID)
+		fs.DebugfCtx(ctx, f, "Can't move directories between drives (%q != %q)", dstDriveID, srcDriveID)
 		return fs.ErrorCantDirMove
 	}
 
@@ -2035,7 +2035,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		return shareURL, nil
 	}
 	if info.Folder != nil {
-		fs.Debugf(nil, "Can't convert share link for folder to direct link - returning the link as is")
+		fs.DebugfCtx(ctx, nil, "Can't convert share link for folder to direct link - returning the link as is")
 		return shareURL, nil
 	}
 
@@ -2046,7 +2046,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	case driveTypePersonal:
 		// Method: https://stackoverflow.com/questions/37951114/direct-download-link-to-onedrive-file
 		if len(segments) != 5 {
-			fs.Logf(f, cnvFailMsg)
+			fs.LogfCtx(ctx, f, cnvFailMsg)
 			return shareURL, nil
 		}
 		enc := base64.StdEncoding.EncodeToString([]byte(shareURL))
@@ -2061,7 +2061,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		//   --convert to->
 		//   https://{tenant}-my.sharepoint.com/personal/{user_email}/_layouts/15/download.aspx?share={Opaque_String}
 		if len(segments) != 8 {
-			fs.Logf(f, cnvFailMsg)
+			fs.LogfCtx(ctx, f, cnvFailMsg)
 			return shareURL, nil
 		}
 		directURL = fmt.Sprintf("https://%s/%s/%s/_layouts/15/download.aspx?share=%s",
@@ -2081,7 +2081,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		//   --convert to->
 		//   https://{tenant}.sharepoint.com/_layouts/15/download.aspx?share={Opaque_String}
 		if len(segments) < 6 || len(segments) > 7 {
-			fs.Logf(f, cnvFailMsg)
+			fs.LogfCtx(ctx, f, cnvFailMsg)
 			return shareURL, nil
 		}
 		pathPrefix := ""
@@ -2092,7 +2092,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 			pathPrefix = "/teams/" + segments[5]
 		case "g": // Root site
 		default:
-			fs.Logf(f, cnvFailMsg)
+			fs.LogfCtx(ctx, f, cnvFailMsg)
 			return shareURL, nil
 		}
 		directURL = fmt.Sprintf("https://%s%s/_layouts/15/download.aspx?share=%s",
@@ -2108,7 +2108,7 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 	var wg sync.WaitGroup
 	err := walk.Walk(ctx, f, "", true, -1, func(path string, entries fs.DirEntries, err error) error {
 		if err != nil {
-			fs.Errorf(f, "Failed to list %q: %v", path, err)
+			fs.ErrorfCtx(ctx, f, "Failed to list %q: %v", path, err)
 			return nil
 		}
 		err = entries.ForObjectError(func(obj fs.Object) error {
@@ -2125,7 +2125,7 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 				}()
 				err := o.deleteVersions(ctx)
 				if err != nil {
-					fs.Errorf(o, "Failed to remove versions: %v", err)
+					fs.ErrorfCtx(ctx, o, "Failed to remove versions: %v", err)
 				}
 			}()
 			return nil
@@ -2164,7 +2164,7 @@ func (o *Object) deleteVersion(ctx context.Context, ID string) error {
 	if operations.SkipDestructive(ctx, fmt.Sprintf("%s of %s", ID, o.remote), "delete version") {
 		return nil
 	}
-	fs.Infof(o, "removing version %q", ID)
+	fs.InfofCtx(ctx, o, "removing version %q", ID)
 	opts := o.fs.newOptsCall(o.id, "DELETE", "/versions/"+ID)
 	opts.NoResponse = true
 	return o.fs.pacer.Call(func() (bool, error) {
@@ -2324,7 +2324,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 func (o *Object) ModTime(ctx context.Context) time.Time {
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.LogfCtx(ctx, o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	return o.modTime
@@ -2348,7 +2348,7 @@ func (o *Object) setModTime(ctx context.Context, modTime time.Time) (*api.Item, 
 	if o.fs.opt.NoVersions {
 		err := o.deleteVersions(ctx)
 		if err != nil {
-			fs.Errorf(o, "Failed to remove versions: %v", err)
+			fs.ErrorfCtx(ctx, o, "Failed to remove versions: %v", err)
 		}
 	}
 	return info, err
@@ -2504,26 +2504,26 @@ func (o *Object) uploadFragment(ctx context.Context, url string, start int64, to
 		_, _ = chunk.Seek(skip, io.SeekStart)
 		resp, err = o.fs.unAuth.Call(ctx, &opts)
 		if err != nil && resp != nil && resp.StatusCode == http.StatusRequestedRangeNotSatisfiable {
-			fs.Debugf(o, "Received 416 error - reading current position from server: %v", err)
+			fs.DebugfCtx(ctx, o, "Received 416 error - reading current position from server: %v", err)
 			pos, posErr := o.getPosition(ctx, url)
 			if posErr != nil {
-				fs.Debugf(o, "Failed to read position: %v", posErr)
+				fs.DebugfCtx(ctx, o, "Failed to read position: %v", posErr)
 				return false, posErr
 			}
 			skip = pos - start
-			fs.Debugf(o, "Read position %d, chunk is %d..%d, bytes to skip = %d", pos, start, start+chunkSize, skip)
+			fs.DebugfCtx(ctx, o, "Read position %d, chunk is %d..%d, bytes to skip = %d", pos, start, start+chunkSize, skip)
 			switch {
 			case skip < 0:
 				return false, fmt.Errorf("sent block already (skip %d < 0), can't rewind: %w", skip, err)
 			case skip > chunkSize:
 				return false, fmt.Errorf("position is in the future (skip %d > chunkSize %d), can't skip forward: %w", skip, chunkSize, err)
 			case skip == chunkSize:
-				fs.Debugf(o, "Skipping chunk as already sent (skip %d == chunkSize %d)", skip, chunkSize)
+				fs.DebugfCtx(ctx, o, "Skipping chunk as already sent (skip %d == chunkSize %d)", skip, chunkSize)
 				return false, nil
 			}
 			return true, fmt.Errorf("retry this chunk skipping %d bytes: %w", skip, err)
 		} else if err != nil && resp != nil && resp.StatusCode == http.StatusNotFound {
-			fs.Debugf(o, "Received 404 error: assuming eventual consistency problem with session - retrying chunk: %v", err)
+			fs.DebugfCtx(ctx, o, "Received 404 error: assuming eventual consistency problem with session - retrying chunk: %v", err)
 			time.Sleep(5 * time.Second) // a little delay to help things along
 			return true, err
 		}
@@ -2570,7 +2570,7 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 	}
 
 	// Create upload session
-	fs.Debugf(o, "Starting multipart upload")
+	fs.DebugfCtx(ctx, o, "Starting multipart upload")
 	session, metadata, err := o.createUploadSession(ctx, src, modTime)
 	if err != nil {
 		return nil, err
@@ -2579,10 +2579,10 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 
 	// Cancel the session if something went wrong
 	defer atexit.OnError(&err, func() {
-		fs.Debugf(o, "Cancelling multipart upload: %v", err)
+		fs.DebugfCtx(ctx, o, "Cancelling multipart upload: %v", err)
 		cancelErr := o.cancelUploadSession(ctx, uploadURL)
 		if cancelErr != nil {
-			fs.Logf(o, "Failed to cancel multipart upload: %v (upload failed due to: %v)", cancelErr, err)
+			fs.LogfCtx(ctx, o, "Failed to cancel multipart upload: %v (upload failed due to: %v)", cancelErr, err)
 		}
 	})()
 
@@ -2592,7 +2592,7 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 	for remaining > 0 {
 		n := min(remaining, int64(o.fs.opt.ChunkSize))
 		seg := readers.NewRepeatableReader(io.LimitReader(in, n))
-		fs.Debugf(o, "Uploading segment %d/%d size %d", position, size, n)
+		fs.DebugfCtx(ctx, o, "Uploading segment %d/%d size %d", position, size, n)
 		info, err = o.uploadFragment(ctx, uploadURL, position, size, seg, n, options...)
 		if err != nil {
 			return nil, err
@@ -2624,7 +2624,7 @@ func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, src fs.Obje
 		return nil, fmt.Errorf("size passed into uploadSinglepart must be >= 0 and <= %v", maxSinglePartSize)
 	}
 
-	fs.Debugf(o, "Starting singlepart upload")
+	fs.DebugfCtx(ctx, o, "Starting singlepart upload")
 	var resp *http.Response
 	opts := o.fs.newOptsCallWithPath(ctx, o.remote, "PUT", "/content")
 	opts.ContentLength = &size
@@ -2693,7 +2693,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if o.fs.opt.NoVersions && o.hasMetaData {
 		err = o.deleteVersions(ctx)
 		if err != nil {
-			fs.Errorf(o, "Failed to remove versions: %v", err)
+			fs.ErrorfCtx(ctx, o, "Failed to remove versions: %v", err)
 		}
 	}
 	return nil
@@ -2875,11 +2875,11 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 		// get the StartPageToken early so all changes from now on get processed
 		nextDeltaToken, err := f.changeNotifyStartPageToken(ctx)
 		if err != nil {
-			fs.Errorf(f, "Could not get first deltaLink: %s", err)
+			fs.ErrorfCtx(ctx, f, "Could not get first deltaLink: %s", err)
 			return
 		}
 
-		fs.Debugf(f, "Next delta token is: %s", nextDeltaToken)
+		fs.DebugfCtx(ctx, f, "Next delta token is: %s", nextDeltaToken)
 
 		var ticker *time.Ticker
 		var tickerC <-chan time.Time
@@ -2901,10 +2901,10 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 					tickerC = ticker.C
 				}
 			case <-tickerC:
-				fs.Debugf(f, "Checking for changes on remote")
+				fs.DebugfCtx(ctx, f, "Checking for changes on remote")
 				nextDeltaToken, err = f.changeNotifyRunner(ctx, notifyFunc, nextDeltaToken)
 				if err != nil {
-					fs.Infof(f, "Change notify listener failure: %s", err)
+					fs.InfofCtx(ctx, f, "Change notify listener failure: %s", err)
 				}
 			}
 		}
@@ -2962,7 +2962,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 
 		fullPath, err := getItemFullPath(&item)
 		if err != nil {
-			fs.Errorf(f, "Could not get item full path: %s", err)
+			fs.ErrorfCtx(ctx, f, "Could not get item full path: %s", err)
 			continue
 		}
 

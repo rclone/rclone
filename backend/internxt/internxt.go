@@ -55,7 +55,7 @@ func (f *Fs) shouldRetry(ctx context.Context, err error) (bool, error) {
 			if !f.authFailed {
 				authErr := f.reAuthorize(ctx)
 				if authErr != nil {
-					fs.Debugf(f, "Re-authorization failed: %v", authErr)
+					fs.DebugfCtx(ctx, f, "Re-authorization failed: %v", authErr)
 					return false, err
 				}
 				return true, err
@@ -304,7 +304,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 		var httpErr *sdkerrors.HTTPError
 		if errors.As(err, &httpErr) && httpErr.StatusCode() == 401 {
-			fs.Debugf(f, "getUserInfo returned 401, attempting re-auth")
+			fs.DebugfCtx(ctx, f, "getUserInfo returned 401, attempting re-auth")
 			authErr := f.refreshOrReLogin(ctx)
 			if authErr != nil {
 				return nil, fmt.Errorf("failed to fetch user info (re-auth failed): %w", err)
@@ -317,7 +317,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 
 		if fserrors.ShouldRetry(err) && attempt < maxRetries {
-			fs.Debugf(f, "getUserInfo transient error (attempt %d/%d): %v", attempt, maxRetries, err)
+			fs.DebugfCtx(ctx, f, "getUserInfo transient error (attempt %d/%d): %v", attempt, maxRetries, err)
 			time.Sleep(time.Duration(attempt) * time.Second)
 			continue
 		}
@@ -492,7 +492,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (string, error)
 		if strings.Contains(err.Error(), "409") || strings.Contains(err.Error(), "Conflict") {
 			existingID, found, findErr := f.FindLeaf(ctx, pathID, leaf)
 			if findErr == nil && found {
-				fs.Debugf(f, "Folder %q already exists in %q, using existing UUID: %s", leaf, pathID, existingID)
+				fs.DebugfCtx(ctx, f, "Folder %q already exists in %q, using existing UUID: %s", leaf, pathID, existingID)
 				return existingID, nil
 			}
 		}
@@ -881,7 +881,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 		backupUUID = oldUUID
 
-		fs.Debugf(o.f, "Renamed existing file %s to backup %s.%s (UUID: %s)", remote, backupName, backupType, backupUUID)
+		fs.DebugfCtx(ctx, o.f, "Renamed existing file %s to backup %s.%s (UUID: %s)", remote, backupName, backupType, backupUUID)
 	}
 
 	var meta *buckets.CreateMetaResponse
@@ -920,7 +920,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// Step 3: Upload succeeded - delete the backup file
 	if backupUUID != "" {
-		fs.Debugf(o.f, "Upload succeeded, deleting backup file %s.%s (UUID: %s)", backupName, backupType, backupUUID)
+		fs.DebugfCtx(ctx, o.f, "Upload succeeded, deleting backup file %s.%s (UUID: %s)", backupName, backupType, backupUUID)
 		err := o.f.pacer.Call(func() (bool, error) {
 			err := files.DeleteFile(ctx, o.f.cfg, backupUUID)
 			if err != nil {
@@ -936,11 +936,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			return o.f.shouldRetry(ctx, err)
 		})
 		if err != nil {
-			fs.Errorf(o.f, "Failed to delete backup file %s.%s (UUID: %s): %v. This may leave an orphaned backup file.",
+			fs.ErrorfCtx(ctx, o.f, "Failed to delete backup file %s.%s (UUID: %s): %v. This may leave an orphaned backup file.",
 				backupName, backupType, backupUUID, err)
 			// Don't fail the upload just because backup deletion failed
 		} else {
-			fs.Debugf(o.f, "Successfully deleted backup file")
+			fs.DebugfCtx(ctx, o.f, "Successfully deleted backup file")
 		}
 	}
 

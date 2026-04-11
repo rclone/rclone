@@ -998,7 +998,7 @@ func (b *Persistent) ReconcileTempUploads(ctx context.Context, cacheFs *Fs) erro
 			return err
 		}
 
-		fs.Debugf(cacheFs, "reconciling temporary uploads")
+		fs.DebugfCtx(ctx, cacheFs, "reconciling temporary uploads")
 		for _, queuedEntry := range queuedEntries {
 			destPath := path.Join(cacheFs.Root(), queuedEntry.Remote())
 			tempObj := &tempUploadInfo{
@@ -1016,7 +1016,7 @@ func (b *Persistent) ReconcileTempUploads(ctx context.Context, cacheFs *Fs) erro
 			if err != nil {
 				return fmt.Errorf("couldn't cache object (%v) info: %v", destPath, err)
 			}
-			fs.Debugf(cacheFs, "reconciled temporary upload: %v", destPath)
+			fs.DebugfCtx(ctx, cacheFs, "reconciled temporary upload: %v", destPath)
 		}
 
 		return nil

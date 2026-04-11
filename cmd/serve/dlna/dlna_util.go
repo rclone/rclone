@@ -185,7 +185,7 @@ func withHeader(name string, value string, next http.Handler) http.Handler {
 // serveError returns an http.StatusInternalServerError and logs the error
 func serveError(ctx context.Context, what any, w http.ResponseWriter, text string, err error) {
 	err = fs.CountError(ctx, err)
-	fs.Errorf(what, "%s: %v", text, err)
+	fs.ErrorfCtx(ctx, what, "%s: %v", text, err)
 	http.Error(w, text+".", http.StatusInternalServerError)
 }
 

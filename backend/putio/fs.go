@@ -124,7 +124,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (f fs.Fs,
 		p.root = tempF.root
 		return p, fs.ErrorIsFile
 	}
-	// fs.Debugf(p, "Root id: %s", p.dirCache.RootID())
+	// fs.DebugfCtx(ctx, p, "Root id: %s", p.dirCache.RootID())
 	return p, nil
 }
 
@@ -146,7 +146,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	parentID := atoi(pathID)
 	var entry putio.File
 	err = f.pacer.Call(func() (bool, error) {
-		// fs.Debugf(f, "creating folder. part: %s, parentID: %d", leaf, parentID)
+		// fs.DebugfCtx(ctx, f, "creating folder. part: %s, parentID: %d", leaf, parentID)
 		entry, err = f.client.Files.CreateFolder(ctx, f.opt.Enc.FromStandardName(leaf), parentID)
 		return shouldRetry(ctx, err)
 	})
@@ -163,7 +163,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 	fileID := atoi(pathID)
 	var children []putio.File
 	err = f.pacer.Call(func() (bool, error) {
-		// fs.Debugf(f, "listing file: %d", fileID)
+		// fs.DebugfCtx(ctx, f, "listing file: %d", fileID)
 		children, _, err = f.client.Files.List(ctx, fileID)
 		return shouldRetry(ctx, err)
 	})
@@ -204,7 +204,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	parentID := atoi(directoryID)
 	var children []putio.File
 	err = f.pacer.Call(func() (bool, error) {
-		// fs.Debugf(f, "listing files inside List: %d", parentID)
+		// fs.DebugfCtx(ctx, f, "listing files inside List: %d", parentID)
 		children, _, err = f.client.Files.List(ctx, parentID)
 		return shouldRetry(ctx, err)
 	})
@@ -213,7 +213,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 	for _, child := range children {
 		remote := path.Join(dir, f.opt.Enc.ToStandardName(child.Name))
-		// fs.Debugf(f, "child: %s", remote)
+		// fs.DebugfCtx(ctx, f, "child: %s", remote)
 		if child.IsDir() {
 			f.dirCache.Put(remote, itoa(child.ID))
 			d := fs.NewDir(remote, child.UpdatedAt.Time)
@@ -273,7 +273,7 @@ func (f *Fs) putUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	}
 	var entry putio.File
 	err = f.pacer.Call(func() (bool, error) {
-		// fs.Debugf(f, "getting file: %d", fileID)
+		// fs.DebugfCtx(ctx, f, "getting file: %d", fileID)
 		entry, err = f.client.Files.Get(ctx, fileID)
 		return shouldRetry(ctx, err)
 	})
@@ -322,7 +322,7 @@ func (f *Fs) sendUpload(ctx context.Context, location string, size int64, in io.
 	// defer log.Trace(f, "location=%v, size=%v", location, size)("fileID=%v, err=%v", &fileID, &err)
 	if size == 0 {
 		err = f.pacer.Call(func() (bool, error) {
-			fs.Debugf(f, "Sending zero length chunk")
+			fs.DebugfCtx(ctx, f, "Sending zero length chunk")
 			_, fileID, err = f.transferChunk(ctx, location, 0, bytes.NewReader([]byte{}), 0)
 			return shouldRetry(ctx, err)
 		})
@@ -337,7 +337,7 @@ func (f *Fs) sendUpload(ctx context.Context, location string, size int64, in io.
 		chunkStart := clientOffset
 		reqSize := chunkSize
 		transferOffset := clientOffset
-		fs.Debugf(f, "chunkStart: %d, reqSize: %d", chunkStart, reqSize)
+		fs.DebugfCtx(ctx, f, "chunkStart: %d, reqSize: %d", chunkStart, reqSize)
 
 		// Transfer the chunk
 		err = f.pacer.Call(func() (bool, error) {
@@ -348,7 +348,7 @@ func (f *Fs) sendUpload(ctx context.Context, location string, size int64, in io.
 					return shouldRetry(ctx, err)
 				}
 				sentBytes := offset - chunkStart
-				fs.Debugf(f, "sentBytes: %d", sentBytes)
+				fs.DebugfCtx(ctx, f, "sentBytes: %d", sentBytes)
 				_, err = chunk.Seek(sentBytes, io.SeekStart)
 				if err != nil {
 					return shouldRetry(ctx, err)
@@ -357,7 +357,7 @@ func (f *Fs) sendUpload(ctx context.Context, location string, size int64, in io.
 				reqSize = chunkSize - sentBytes
 				offsetMismatch = false
 			}
-			fs.Debugf(f, "Sending chunk. transferOffset: %d length: %d", transferOffset, reqSize)
+			fs.DebugfCtx(ctx, f, "Sending chunk. transferOffset: %d length: %d", transferOffset, reqSize)
 			var serverOffset int64
 			serverOffset, fileID, err = f.transferChunk(ctx, location, transferOffset, chunk, reqSize)
 			if cerr, ok := err.(*statusCodeError); ok && cerr.response.StatusCode == 409 {
@@ -478,7 +478,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 		// check directory empty
 		var children []putio.File
 		err = f.pacer.Call(func() (bool, error) {
-			// fs.Debugf(f, "listing files: %d", dirID)
+			// fs.DebugfCtx(ctx, f, "listing files: %d", dirID)
 			children, _, err = f.client.Files.List(ctx, dirID)
 			return shouldRetry(ctx, err)
 		})
@@ -492,7 +492,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 
 	// remove it
 	err = f.pacer.Call(func() (bool, error) {
-		// fs.Debugf(f, "deleting file: %d", dirID)
+		// fs.DebugfCtx(ctx, f, "deleting file: %d", dirID)
 		err = f.client.Files.Delete(ctx, dirID)
 		return shouldRetry(ctx, err)
 	})
@@ -562,7 +562,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (o fs.Objec
 			return false, err
 		}
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		// fs.Debugf(f, "copying file (%d) to parent_id: %s", srcObj.file.ID, directoryID)
+		// fs.DebugfCtx(ctx, f, "copying file (%d) to parent_id: %s", srcObj.file.ID, directoryID)
 		_, err = f.client.Do(req, &resp)
 		return shouldRetry(ctx, err)
 	})
@@ -637,7 +637,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (o fs.Objec
 			return false, err
 		}
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		// fs.Debugf(f, "moving file (%d) to parent_id: %s", srcObj.file.ID, directoryID)
+		// fs.DebugfCtx(ctx, f, "moving file (%d) to parent_id: %s", srcObj.file.ID, directoryID)
 		_, err = f.client.Do(req, nil)
 		return shouldRetry(ctx, err)
 	})
@@ -685,7 +685,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 			return false, err
 		}
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		// fs.Debugf(f, "moving file (%s) to parent_id: %s", srcID, dstDirectoryID)
+		// fs.DebugfCtx(ctx, f, "moving file (%s) to parent_id: %s", srcID, dstDirectoryID)
 		_, err = f.client.Do(req, nil)
 		return shouldRetry(ctx, err)
 	})
@@ -698,7 +698,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	// defer log.Trace(f, "")("usage=%+v, err=%v", usage, &err)
 	var ai putio.AccountInfo
 	err = f.pacer.Call(func() (bool, error) {
-		// fs.Debugf(f, "getting account info")
+		// fs.DebugfCtx(ctx, f, "getting account info")
 		ai, err = f.client.Account.Info(ctx)
 		return shouldRetry(ctx, err)
 	})
@@ -732,7 +732,7 @@ func (f *Fs) CleanUp(ctx context.Context) (err error) {
 		if err != nil {
 			return false, err
 		}
-		// fs.Debugf(f, "emptying trash")
+		// fs.DebugfCtx(ctx, f, "emptying trash")
 		_, err = f.client.Do(req, nil)
 		return shouldRetry(ctx, err)
 	})

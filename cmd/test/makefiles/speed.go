@@ -170,7 +170,7 @@ func speedTest(ctx context.Context, numberOfFiles int, size fs.SizeSuffix, remot
 	defer atexit.OnError(&aErr, func() {
 		err := operations.Purge(ctx, fremote, "")
 		if err != nil {
-			fs.Debugf(fremote, "Failed to remove temp dir %q: %v", tempDirPath, err)
+			fs.DebugfCtx(ctx, fremote, "Failed to remove temp dir %q: %v", tempDirPath, err)
 		}
 	})()
 

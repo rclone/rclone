@@ -2817,8 +2817,9 @@ func testSyncReplaceDirModTime(t *testing.T, copyEmptySrcDirs bool) {
 	// (this checks log output as DirModtime operations do not yet have stats, and r.CheckDirectoryModTimes also does not tell us what actions were taken)
 	oldLogLevel := fs.GetConfig(context.Background()).LogLevel
 	defer func() { fs.GetConfig(context.Background()).LogLevel = oldLogLevel }() // reset to old val after test
-	// need to do this as fs.Infof only respects the globalConfig
+	// Set on both globalConfig and ctx-local config so InfofCtx(ctx,...) respects the level
 	fs.GetConfig(context.Background()).LogLevel = fs.LogLevelInfo
+	fs.GetConfig(ctx).LogLevel = fs.LogLevelInfo
 
 	// First run
 	accounting.GlobalStats().ResetCounters()
@@ -2889,8 +2890,9 @@ func testNothingToTransfer(t *testing.T, copyEmptySrcDirs bool) {
 	// (this checks log output as DirModtime operations do not yet have stats, and r.CheckDirectoryModTimes also does not tell us what actions were taken)
 	oldLogLevel := fs.GetConfig(context.Background()).LogLevel
 	defer func() { fs.GetConfig(context.Background()).LogLevel = oldLogLevel }() // reset to old val after test
-	// need to do this as fs.Infof only respects the globalConfig
+	// Set on both globalConfig and ctx-local config so InfofCtx(ctx,...) respects the level
 	fs.GetConfig(context.Background()).LogLevel = fs.LogLevelInfo
+	fs.GetConfig(ctx).LogLevel = fs.LogLevelInfo
 
 	accounting.GlobalStats().ResetCounters()
 	ctx = predictDstFromLogger(ctx)

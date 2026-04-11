@@ -368,7 +368,7 @@ func (f *Fs) putUnchecked(ctx context.Context, in io.Reader, remote string, size
 	if len(fileUploadResponse.Links) == 0 {
 		return nil, errors.New("upload response not found")
 	} else if len(fileUploadResponse.Links) > 1 {
-		fs.Debugf(remote, "Multiple upload responses found, using the first")
+		fs.DebugfCtx(ctx, remote, "Multiple upload responses found, using the first")
 	}
 
 	link := fileUploadResponse.Links[0]
@@ -438,7 +438,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 	srcFs := srcObj.fs
@@ -513,7 +513,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 
@@ -547,7 +547,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 

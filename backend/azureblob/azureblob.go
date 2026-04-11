@@ -621,7 +621,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}).Fill(ctx, f)
 	if opt.DirectoryMarkers {
 		f.features.CanHaveEmptyDirectories = true
-		fs.Debugf(f, "Using directory markers")
+		fs.DebugfCtx(ctx, f, "Using directory markers")
 	}
 
 	conf := auth.NewClientOpts[service.Client, service.ClientOptions, service.SharedKeyCredential]{
@@ -882,7 +882,7 @@ func assembleCopyParams(ctx context.Context, f *Fs, src fs.Object, srcProps *blo
 		}
 		if mapped != nil {
 			// Map rclone metadata to Azure shapes
-			mappedHeaders, userMeta, mappedTags, mappedModTime, herr := mapMetadataToAzure(mapped, func(format string, args ...any) { fs.Debugf(f, format, args...) })
+			mappedHeaders, userMeta, mappedTags, mappedModTime, herr := mapMetadataToAzure(mapped, func(format string, args ...any) { fs.DebugfCtx(ctx, f, format, args...) })
 			if herr != nil {
 				return headers, meta, nil, false, fmt.Errorf("metadata mapping: %w", herr)
 			}
@@ -965,7 +965,7 @@ func (o *Object) applyMappedMetadata(ctx context.Context, src fs.ObjectInfo, ui 
 	}
 
 	// Map metadata using common helper
-	headers, userMeta, tags, mappedModTime, err := mapMetadataToAzure(meta, func(format string, args ...any) { fs.Debugf(o, format, args...) })
+	headers, userMeta, tags, mappedModTime, err := mapMetadataToAzure(meta, func(format string, args ...any) { fs.DebugfCtx(ctx, o, format, args...) })
 	if err != nil {
 		return modTime, err
 	}
@@ -1099,12 +1099,12 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 			// 	return nil
 			// }
 			if file.Name == nil {
-				fs.Debugf(f, "Nil name received")
+				fs.DebugfCtx(ctx, f, "Nil name received")
 				continue
 			}
 			remote := f.opt.Enc.ToStandardPath(*file.Name)
 			if !strings.HasPrefix(remote, prefix) {
-				fs.Debugf(f, "Odd name received %q", remote)
+				fs.DebugfCtx(ctx, f, "Odd name received %q", remote)
 				continue
 			}
 			isDirectory := isDirectoryMarker(*file.Properties.ContentLength, file.Metadata, remote)
@@ -1130,12 +1130,12 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 		foundItems += len(response.Segment.BlobPrefixes)
 		for _, blobPrefix := range response.Segment.BlobPrefixes {
 			if blobPrefix.Name == nil {
-				fs.Debugf(f, "Nil prefix received")
+				fs.DebugfCtx(ctx, f, "Nil prefix received")
 				continue
 			}
 			remote := f.opt.Enc.ToStandardPath(*blobPrefix.Name)
 			if !strings.HasPrefix(remote, prefix) {
-				fs.Debugf(f, "Odd directory name received %q", remote)
+				fs.DebugfCtx(ctx, f, "Odd directory name received %q", remote)
 				continue
 			}
 			remote = remote[len(prefix):]
@@ -1439,7 +1439,7 @@ func (f *Fs) createDirectoryMarker(ctx context.Context, container, dir string) e
 		}
 
 		// Upload it if not
-		fs.Debugf(o, "Creating directory marker")
+		fs.DebugfCtx(ctx, o, "Creating directory marker")
 		content := io.Reader(strings.NewReader(""))
 		err = o.Update(ctx, content, o)
 		if err != nil {
@@ -1516,7 +1516,7 @@ func (f *Fs) makeContainer(ctx context.Context, container string) error {
 					case bloberror.AuthorizationFailure:
 						// Assume that the user does not have permission to
 						// create the container and carry on anyway.
-						fs.Debugf(f, "Tried to create container but got %s error - carrying on assuming container exists. Use no_check_container to stop this check..", storageErr.ErrorCode)
+						fs.DebugfCtx(ctx, f, "Tried to create container but got %s error - carrying on assuming container exists. Use no_check_container to stop this check..", storageErr.ErrorCode)
 						return false, nil
 					}
 				}
@@ -1579,7 +1579,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 			fs:     f,
 			remote: dir + "/",
 		}
-		fs.Debugf(o, "Removing directory marker")
+		fs.DebugfCtx(ctx, o, "Removing directory marker")
 		err := o.Remove(ctx)
 		if err != nil {
 			return fmt.Errorf("removing directory marker failed: %w", err)
@@ -1745,7 +1745,7 @@ func (f *Fs) copyMultipart(ctx context.Context, remote, dstContainer, dstPath st
 
 	defer atexit.OnError(&err, func() {
 		// Try to abort the upload, but ignore the error.
-		fs.Debugf(o, "Cancelling multipart copy")
+		fs.DebugfCtx(ctx, o, "Cancelling multipart copy")
 		_ = o.clearUncommittedBlocks(ctx)
 	})()
 
@@ -1760,7 +1760,7 @@ func (f *Fs) copyMultipart(ctx context.Context, remote, dstContainer, dstPath st
 	)
 	g.SetLimit(f.opt.CopyConcurrency)
 
-	fs.Debugf(o, "Starting  multipart copy with %d parts of size %v", numParts, fs.SizeSuffix(partSize))
+	fs.DebugfCtx(ctx, o, "Starting  multipart copy with %d parts of size %v", numParts, fs.SizeSuffix(partSize))
 	account.Start()
 	for partNum := uint64(0); partNum < uint64(numParts); partNum++ {
 		// Fail fast, in case an errgroup managed function returns an error
@@ -1792,7 +1792,7 @@ func (f *Fs) copyMultipart(ctx context.Context, remote, dstContainer, dstPath st
 			if remaining := srcSize - options.Range.Offset; remaining < options.Range.Count {
 				options.Range.Count = remaining
 			}
-			fs.Debugf(o, "multipart copy: starting chunk %d size %v offset %v/%v", partNum, fs.SizeSuffix(options.Range.Count), fs.SizeSuffix(options.Range.Offset), fs.SizeSuffix(srcSize))
+			fs.DebugfCtx(ctx, o, "multipart copy: starting chunk %d size %v offset %v/%v", partNum, fs.SizeSuffix(options.Range.Count), fs.SizeSuffix(options.Range.Offset), fs.SizeSuffix(srcSize))
 			err := f.pacer.Call(func() (bool, error) {
 				checker.start()
 				_, err := dstBlockBlobSVC.StageBlockFromURL(ctx, blockID, srcURL, &options)
@@ -1842,7 +1842,7 @@ func (f *Fs) copyMultipart(ctx context.Context, remote, dstContainer, dstPath st
 		return nil, fmt.Errorf("failed to complete multipart copy: %w", err)
 	}
 
-	fs.Debugf(o, "multipart copy finished")
+	fs.DebugfCtx(ctx, o, "multipart copy finished")
 	return f.NewObject(ctx, remote)
 }
 
@@ -1948,7 +1948,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 
@@ -2358,7 +2358,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			offset = x.Offset
 		default:
 			if option.Mandatory() {
-				fs.Logf(o, "Unsupported mandatory option: %v", option)
+				fs.LogfCtx(ctx, o, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}
@@ -2513,7 +2513,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	// 195GB which seems like a not too unreasonable limit.
 	if size == -1 {
 		warnStreamUpload.Do(func() {
-			fs.Logf(f, "Streaming uploads using chunk size %v will have maximum file size of %v",
+			fs.LogfCtx(ctx, f, "Streaming uploads using chunk size %v will have maximum file size of %v",
 				f.opt.ChunkSize, partSize*fs.SizeSuffix(blockblob.MaxBlocks))
 		})
 	} else {
@@ -2527,7 +2527,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		}
 	}
 
-	fs.Debugf(o, "Multipart upload session started for %d parts of size %v", totalParts, partSize)
+	fs.DebugfCtx(ctx, o, "Multipart upload session started for %d parts of size %v", totalParts, partSize)
 
 	chunkWriter := &azChunkWriter{
 		chunkSize: int64(partSize),
@@ -2546,7 +2546,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	if err != nil {
 		return info, nil, err
 	}
-	fs.Debugf(o, "open chunk writer: started multipart upload")
+	fs.DebugfCtx(ctx, o, "open chunk writer: started multipart upload")
 	return info, chunkWriter, nil
 }
 
@@ -2606,7 +2606,7 @@ func (c *checkForInvalidBlockOrBlob) checkErr(ctx context.Context, err error) (r
 	defer c.startMu.Unlock()
 
 	if c.cleared {
-		fs.Debugf(c.o, "multipart %s: received %s error: already cleared", c.what, bloberror.InvalidBlobOrBlock)
+		fs.DebugfCtx(ctx, c.o, "multipart %s: received %s error: already cleared", c.what, bloberror.InvalidBlobOrBlock)
 		return true
 	}
 
@@ -2614,12 +2614,12 @@ func (c *checkForInvalidBlockOrBlob) checkErr(ctx context.Context, err error) (r
 	c.inFlight.Wait()
 
 	// Clear uncommitted blocks
-	fs.Debugf(c.o, "multipart %s: received %s error: clearing uncommitted blocks and retrying", c.what, bloberror.InvalidBlobOrBlock)
+	fs.DebugfCtx(ctx, c.o, "multipart %s: received %s error: clearing uncommitted blocks and retrying", c.what, bloberror.InvalidBlobOrBlock)
 	clearErr := c.o.clearUncommittedBlocks(ctx)
 	if clearErr != nil {
-		fs.Debugf(c.o, "multipart %s: error fixing %s: %v", c.what, bloberror.InvalidBlobOrBlock, clearErr)
+		fs.DebugfCtx(ctx, c.o, "multipart %s: error fixing %s: %v", c.what, bloberror.InvalidBlobOrBlock, clearErr)
 	}
-	fs.Debugf(c.o, "multipart %s: fixed %s", c.what, bloberror.InvalidBlobOrBlock)
+	fs.DebugfCtx(ctx, c.o, "multipart %s: fixed %s", c.what, bloberror.InvalidBlobOrBlock)
 	c.cleared = true
 
 	return true
@@ -2694,7 +2694,7 @@ func (w *azChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 		return -1, fmt.Errorf("failed to upload chunk %d with %v bytes: %w", chunkNumber+1, currentChunkSize, err)
 	}
 
-	fs.Debugf(w.o, "multipart upload wrote chunk %d with %v bytes", chunkNumber+1, currentChunkSize)
+	fs.DebugfCtx(ctx, w.o, "multipart upload wrote chunk %d with %v bytes", chunkNumber+1, currentChunkSize)
 	return currentChunkSize, err
 }
 
@@ -2718,7 +2718,7 @@ func (w *azChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 // - This will also create a 0 length blob
 // - So delete the 0 length blob
 func (o *Object) clearUncommittedBlocks(ctx context.Context) (err error) {
-	fs.Debugf(o, "Clearing uncommitted blocks")
+	fs.DebugfCtx(ctx, o, "Clearing uncommitted blocks")
 	var (
 		blockBlobSVC = o.getBlockBlobSVC()
 		objectExists = true
@@ -2745,10 +2745,10 @@ func (o *Object) clearUncommittedBlocks(ctx context.Context) (err error) {
 			return fmt.Errorf("clear uncommitted blocks: failed to read uncommitted block list: %w", err)
 		}
 		if len(blockList.UncommittedBlocks) == 0 {
-			fs.Debugf(o, "No uncommitted blocks - exiting")
+			fs.DebugfCtx(ctx, o, "No uncommitted blocks - exiting")
 			return nil
 		}
-		fs.Debugf(o, "%d Uncommitted blocks found", len(blockList.UncommittedBlocks))
+		fs.DebugfCtx(ctx, o, "%d Uncommitted blocks found", len(blockList.UncommittedBlocks))
 		objectExists = true
 		uncommittedBlocks := make(map[string]struct{}, len(blockList.UncommittedBlocks))
 		for _, block := range blockList.UncommittedBlocks {
@@ -2778,7 +2778,7 @@ func (o *Object) clearUncommittedBlocks(ctx context.Context) (err error) {
 	}
 
 	// Commit only the committed blocks
-	fs.Debugf(o, "Committing %d blocks to remove uncommitted blocks", len(blockIDs))
+	fs.DebugfCtx(ctx, o, "Committing %d blocks to remove uncommitted blocks", len(blockIDs))
 	err = o.fs.pacer.Call(func() (bool, error) {
 		_, err := blockBlobSVC.CommitBlockList(ctx, blockIDs, options)
 		return o.fs.shouldRetry(ctx, err)
@@ -2789,7 +2789,7 @@ func (o *Object) clearUncommittedBlocks(ctx context.Context) (err error) {
 
 	// If object didn't exist before, then delete it
 	if !objectExists {
-		fs.Debugf(o, "Removing empty object")
+		fs.DebugfCtx(ctx, o, "Removing empty object")
 		err = o.Remove(ctx)
 		if err != nil {
 			return fmt.Errorf("clear uncommitted blocks: failed to remove empty object: %w", err)
@@ -2838,7 +2838,7 @@ func (w *azChunkWriter) Close(ctx context.Context) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to complete multipart upload: %w", err)
 	}
-	fs.Debugf(w.o, "multipart upload finished")
+	fs.DebugfCtx(ctx, w.o, "multipart upload finished")
 	return err
 }
 
@@ -2945,7 +2945,7 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 			if err == nil {
 				ui.httpHeaders.BlobContentMD5 = sourceMD5bytes
 			} else {
-				fs.Debugf(o, "Failed to decode %q as MD5: %v", sourceMD5, err)
+				fs.DebugfCtx(ctx, o, "Failed to decode %q as MD5: %v", sourceMD5, err)
 			}
 		}
 	}
@@ -2994,7 +2994,7 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	if o.accessTier == blob.AccessTierArchive {
 		if o.fs.opt.ArchiveTierDelete {
-			fs.Debugf(o, "deleting archive tier blob before updating")
+			fs.DebugfCtx(ctx, o, "deleting archive tier blob before updating")
 			err = o.Remove(ctx)
 			if err != nil {
 				return fmt.Errorf("failed to delete archive blob before updating: %w", err)
@@ -3092,7 +3092,7 @@ func (o *Object) SetTier(tier string) error {
 	// Set access tier on local object also, this typically
 	// gets updated on get blob properties
 	o.accessTier = desiredAccessTier
-	fs.Debugf(o, "Successfully changed object tier to %s", tier)
+	fs.DebugfCtx(ctx, o, "Successfully changed object tier to %s", tier)
 
 	return nil
 }

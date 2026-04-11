@@ -209,7 +209,7 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 	}
 	if isAPIErr(err, "error-rateLimit") {
 		// Give an immediate penalty to rate limits
-		fs.Debugf(nil, "Rate limited, sleep for %v", rateLimitSleep)
+		fs.DebugfCtx(ctx, nil, "Rate limited, sleep for %v", rateLimitSleep)
 		time.Sleep(rateLimitSleep)
 		//return true, pacer.RetryAfterError(err, 2*time.Second)
 		return true, err
@@ -559,7 +559,7 @@ OUTER:
 					continue
 				}
 			} else {
-				fs.Debugf(f, "Ignoring %q - unknown type %q", item.Name, item.Type)
+				fs.DebugfCtx(ctx, f, "Ignoring %q - unknown type %q", item.Name, item.Type)
 				continue
 			}
 			item.Name = f.opt.Enc.ToStandardName(item.Name)
@@ -669,7 +669,7 @@ func (f *Fs) listR(ctx context.Context, dir string, list *list.Helper) (err erro
 			}
 			for _, item := range dirItem.Children {
 				if item.Type != api.ItemTypeFolder && item.Type != api.ItemTypeFile {
-					fs.Debugf(f, "Ignoring %q - unknown type %q", item.Name, item.Type)
+					fs.DebugfCtx(ctx, f, "Ignoring %q - unknown type %q", item.Name, item.Type)
 					continue
 				}
 				item.Name = f.opt.Enc.ToStandardName(item.Name)
@@ -1001,7 +1001,7 @@ func (f *Fs) moveTo(ctx context.Context, id, srcLeaf, dstLeaf, srcDirectoryID, d
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
@@ -1041,7 +1041,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 
@@ -1117,7 +1117,7 @@ func (f *Fs) copyTo(ctx context.Context, srcID, srcLeaf, dstLeaf, dstDirectoryID
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Object, err error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 	srcLeaf := path.Base(srcObj.remote)
@@ -1136,7 +1136,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 			if err != nil {
 				return
 			}
-			fs.Debugf(existingObj, "Server side copy: removing existing object after successful copy")
+			fs.DebugfCtx(ctx, existingObj, "Server side copy: removing existing object after successful copy")
 			err = existingObj.Remove(ctx)
 		}()
 	}
@@ -1175,7 +1175,7 @@ func (f *Fs) unLink(ctx context.Context, remote string, id string, info *api.Ite
 		}
 	}
 	for linkID, link := range info.DirectLinks {
-		fs.Debugf(remote, "Removing direct link %s", link.DirectLink)
+		fs.DebugfCtx(ctx, remote, "Removing direct link %s", link.DirectLink)
 		opts := rest.Opts{
 			Method: "DELETE",
 			Path:   "/contents/" + id + "/directlinks/" + linkID,
@@ -1197,9 +1197,9 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	id, err := f.dirCache.FindDir(ctx, remote, false)
 	var info *api.Item
 	if err == nil {
-		fs.Debugf(f, "attempting to share directory '%s'", remote)
+		fs.DebugfCtx(ctx, f, "attempting to share directory '%s'", remote)
 	} else {
-		fs.Debugf(f, "attempting to share single file '%s'", remote)
+		fs.DebugfCtx(ctx, f, "attempting to share single file '%s'", remote)
 		info, err = f.readMetaDataForPath(ctx, remote)
 		if err != nil {
 			return "", err
@@ -1218,7 +1218,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	}
 	if expire != fs.DurationOff {
 		when := time.Now().Add(time.Duration(expire))
-		fs.Debugf(f, "Link expires at %v (duration %v)", when, expire)
+		fs.DebugfCtx(ctx, f, "Link expires at %v (duration %v)", when, expire)
 		request.ExpireTime = api.ToNativeTime(when)
 	}
 	err = f.pacer.Call(func() (bool, error) {
@@ -1261,7 +1261,7 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 		}
 		// move them into place
 		for _, info := range infos {
-			fs.Infof(srcDir, "merging %q", info.Name)
+			fs.InfofCtx(ctx, srcDir, "merging %q", info.Name)
 			// Move the file into the destination
 			_, err = f.move(ctx, info.ID, dstDir.ID())
 			if err != nil {
@@ -1269,7 +1269,7 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 			}
 		}
 		// rmdir the now empty source directory
-		fs.Infof(srcDir, "removing empty directory")
+		fs.InfofCtx(ctx, srcDir, "removing empty directory")
 		err = f.deleteObject(ctx, srcDir.ID())
 		if err != nil {
 			return fmt.Errorf("MergeDirs move failed to rmdir %q: %w", srcDir, err)
@@ -1434,7 +1434,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			if err != nil {
 				return
 			}
-			fs.Debugf(o, "Removing old object on successful upload")
+			fs.DebugfCtx(ctx, o, "Removing old object on successful upload")
 			deleteErr := o.fs.deleteObject(ctx, id)
 			if deleteErr != nil {
 				err = fmt.Errorf("failed to delete existing object: %w", deleteErr)

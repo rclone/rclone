@@ -136,14 +136,14 @@ func GetVersion(ctx context.Context, url string) (v *semver.Version, vs string, 
 func CheckVersion(ctx context.Context) {
 	vCurrent, err := semver.NewVersion(stripV(fs.Version))
 	if err != nil {
-		fs.Errorf(nil, "Failed to parse version: %v", err)
+		fs.ErrorfCtx(ctx, nil, "Failed to parse version: %v", err)
 	}
 	const timeFormat = "2006-01-02"
 
 	printVersion := func(what, url string) {
 		v, vs, t, err := GetVersion(ctx, url+"version.txt")
 		if err != nil {
-			fs.Errorf(nil, "Failed to get rclone %s version: %v", what, err)
+			fs.ErrorfCtx(ctx, nil, "Failed to get rclone %s version: %v", what, err)
 			return
 		}
 		fmt.Printf("%-8s%-40v %20s\n",

@@ -150,7 +150,7 @@ func ArchiveList(ctx context.Context, src fs.Fs, srcFile string, listFn archives
 	if err != nil {
 		return fmt.Errorf("source is not a file, %w", err)
 	}
-	fs.Debugf(nil, "Source archive file: %s/%s", src.Root(), srcFile)
+	fs.DebugfCtx(ctx, nil, "Source archive file: %s/%s", src.Root(), srcFile)
 	// start accounting
 	tr := accounting.Stats(ctx).NewTransfer(srcObj, nil)
 	defer func() {
@@ -174,7 +174,7 @@ func ArchiveList(ctx context.Context, src fs.Fs, srcFile string, listFn archives
 	if err != nil {
 		return fmt.Errorf("failed to open check file type, %w", err)
 	}
-	fs.Debugf(nil, "Listing %s/%s, format %s", src.Root(), srcFile, strings.TrimPrefix(format.Extension(), "."))
+	fs.DebugfCtx(ctx, nil, "Listing %s/%s, format %s", src.Root(), srcFile, strings.TrimPrefix(format.Extension(), "."))
 	// check if extract is supported by format
 	ex, isExtract := format.(archives.Extraction)
 	if !isExtract {

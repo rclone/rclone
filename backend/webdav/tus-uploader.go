@@ -129,14 +129,14 @@ func (u *Uploader) UploadChunk(ctx context.Context, cnt int, options ...fs.OpenO
 	_, err := u.upload.stream.Seek(u.offset, 0)
 
 	if err != nil {
-		fs.Errorf(u.fs, "Chunk %d: Error seek in stream failed: %v", cnt, err)
+		fs.ErrorfCtx(ctx, u.fs, "Chunk %d: Error seek in stream failed: %v", cnt, err)
 		return err
 	}
 
 	size, err := u.upload.stream.Read(data)
 
 	if err != nil {
-		fs.Errorf(u.fs, "Chunk %d: Error: Can not read from data stream: %v", cnt, err)
+		fs.ErrorfCtx(ctx, u.fs, "Chunk %d: Error: Can not read from data stream: %v", cnt, err)
 		return err
 	}
 
@@ -145,9 +145,9 @@ func (u *Uploader) UploadChunk(ctx context.Context, cnt int, options ...fs.OpenO
 	newOffset, err := u.uploadChunk(ctx, body, int64(size), u.offset, options...)
 
 	if err == nil {
-		fs.Debugf(u.fs, "Uploaded chunk no %d ok, range %d -> %d", cnt, u.offset, newOffset)
+		fs.DebugfCtx(ctx, u.fs, "Uploaded chunk no %d ok, range %d -> %d", cnt, u.offset, newOffset)
 	} else {
-		fs.Errorf(u.fs, "Uploaded chunk no %d failed: %v", cnt, err)
+		fs.ErrorfCtx(ctx, u.fs, "Uploaded chunk no %d failed: %v", cnt, err)
 
 		return err
 	}

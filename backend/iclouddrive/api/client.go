@@ -110,13 +110,13 @@ func (c *Client) RequestNoReAuth(ctx context.Context, opts rest.Opts, request an
 func (c *Client) Authenticate(ctx context.Context) error {
 	if c.Session.Cookies != nil {
 		if err := c.Session.ValidateSession(ctx); err == nil {
-			fs.Debugf("icloud", "Valid session, no need to reauth")
+			fs.DebugfCtx(ctx, "icloud", "Valid session, no need to reauth")
 			return nil
 		}
 		c.Session.Cookies = nil
 	}
 
-	fs.Debugf("icloud", "Authenticating as %s\n", c.appleID)
+	fs.DebugfCtx(ctx, "icloud", "Authenticating as %s\n", c.appleID)
 	err := c.Session.SignIn(ctx, c.appleID, c.password)
 	if err != nil {
 		return err

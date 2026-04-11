@@ -620,7 +620,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if err != nil {
 		isPerm := os.IsPermission(err)
 		err = fmt.Errorf("failed to open directory %q: %w", dir, err)
-		fs.Errorf(dir, "%v", err)
+		fs.ErrorfCtx(ctx, dir, "%v", err)
 		if isPerm {
 			_ = accounting.Stats(ctx).Error(fserrors.NoRetryError(err))
 			err = nil // ignore error but fail sync
@@ -668,7 +668,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 							}
 						}
 						fierr = fmt.Errorf("failed to get info about directory entry %q: %w", namepath, fierr)
-						fs.Errorf(dir, "%v", fierr)
+						fs.ErrorfCtx(ctx, dir, "%v", fierr)
 						_ = accounting.Stats(ctx).Error(fserrors.NoRetryError(fierr)) // fail the sync
 						continue
 					}
@@ -699,7 +699,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				if os.IsNotExist(err) || isCircularSymlinkError(err) {
 					// Skip bad symlinks and circular symlinks
 					err = fserrors.NoRetryError(fmt.Errorf("symlink: %w", err))
-					fs.Errorf(newRemote, "Listing error: %v", err)
+					fs.ErrorfCtx(ctx, newRemote, "Listing error: %v", err)
 					err = accounting.Stats(ctx).Error(err)
 					continue
 				}
@@ -939,7 +939,7 @@ func (f *Fs) readPrecision() (precision time.Duration) {
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
@@ -983,7 +983,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	} else if err != nil {
 		// not quite clear, but probably trying to move a file across file system
 		// boundaries. Copying might still work.
-		fs.Debugf(src, "Can't move: %v: trying copy", err)
+		fs.DebugfCtx(ctx, src, "Can't move: %v: trying copy", err)
 		return nil, fs.ErrorCantMove
 	}
 
@@ -1013,7 +1013,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 	srcPath := srcFs.localPath(srcRemote)
@@ -1043,7 +1043,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	} else if err != nil {
 		// not quite clear, but probably trying to move directory across file system
 		// boundaries. Copying might still work.
-		fs.Debugf(src, "Can't move dir: %v: trying copy", err)
+		fs.DebugfCtx(ctx, src, "Can't move dir: %v: trying copy", err)
 		return fs.ErrorCantDirMove
 	}
 	return nil
@@ -1347,7 +1347,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			}
 		default:
 			if option.Mandatory() {
-				fs.Logf(o, "Unsupported mandatory option: %v", option)
+				fs.LogfCtx(ctx, o, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}
@@ -1458,7 +1458,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			// Pre-allocate the file for performance reasons
 			err = file.PreAllocate(src.Size(), f)
 			if err != nil {
-				fs.Debugf(o, "Failed to pre-allocate: %v", err)
+				fs.DebugfCtx(ctx, o, "Failed to pre-allocate: %v", err)
 				if err == file.ErrDiskFull {
 					_ = f.Close()
 					return err
@@ -1486,7 +1486,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			// Remove any current symlink or file, if one exists
 			if _, err := os.Lstat(o.path); err == nil {
 				if removeErr := os.Remove(o.path); removeErr != nil {
-					fs.Errorf(o, "Failed to remove previous file: %v", removeErr)
+					fs.ErrorfCtx(ctx, o, "Failed to remove previous file: %v", removeErr)
 					return removeErr
 				}
 			}
@@ -1501,9 +1501,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	if err != nil {
-		fs.Logf(o, "Removing partially written file on error: %v", err)
+		fs.LogfCtx(ctx, o, "Removing partially written file on error: %v", err)
 		if removeErr := os.Remove(o.path); removeErr != nil {
-			fs.Errorf(o, "Failed to remove partially written file: %v", removeErr)
+			fs.ErrorfCtx(ctx, o, "Failed to remove partially written file: %v", removeErr)
 		}
 		return err
 	}
@@ -1563,17 +1563,17 @@ func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.Wr
 	if !f.opt.NoPreAllocate {
 		err = file.PreAllocate(size, out)
 		if err != nil {
-			fs.Debugf(o, "Failed to pre-allocate: %v", err)
+			fs.DebugfCtx(ctx, o, "Failed to pre-allocate: %v", err)
 		}
 	}
 	if !f.opt.NoSparse && file.SetSparseImplemented {
 		sparseWarning.Do(func() {
-			fs.Infof(nil, "Writing sparse files: use --local-no-sparse or --multi-thread-streams 0 to disable")
+			fs.InfofCtx(ctx, nil, "Writing sparse files: use --local-no-sparse or --multi-thread-streams 0 to disable")
 		})
 		// Set the file to be a sparse file (important on Windows)
 		err = file.SetSparse(out)
 		if err != nil {
-			fs.Errorf(o, "Failed to set sparse: %v", err)
+			fs.ErrorfCtx(ctx, o, "Failed to set sparse: %v", err)
 		}
 	}
 

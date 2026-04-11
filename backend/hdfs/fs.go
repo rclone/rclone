@@ -170,7 +170,7 @@ func (f *Fs) Hashes() hash.Set {
 // NewObject finds file at remote or return fs.ErrorObjectNotFound
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	realpath := f.realpath(remote)
-	fs.Debugf(f, "new [%s]", realpath)
+	fs.DebugfCtx(ctx, f, "new [%s]", realpath)
 
 	info, err := f.ensureFile(realpath)
 	if err != nil {
@@ -188,7 +188,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // List the objects and directories in dir into entries.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	realpath := f.realpath(dir)
-	fs.Debugf(f, "list [%s]", realpath)
+	fs.DebugfCtx(ctx, f, "list [%s]", realpath)
 
 	err = f.ensureDirectory(realpath)
 	if err != nil {
@@ -233,14 +233,14 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 
 // Mkdir makes a directory
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	fs.Debugf(f, "mkdir [%s]", f.realpath(dir))
+	fs.DebugfCtx(ctx, f, "mkdir [%s]", f.realpath(dir))
 	return f.client.MkdirAll(f.realpath(dir), 0755)
 }
 
 // Rmdir deletes the directory
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	realpath := f.realpath(dir)
-	fs.Debugf(f, "rmdir [%s]", realpath)
+	fs.DebugfCtx(ctx, f, "rmdir [%s]", realpath)
 
 	err := f.ensureDirectory(realpath)
 	if err != nil {
@@ -262,7 +262,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 // Purge deletes all the files in the directory
 func (f *Fs) Purge(ctx context.Context, dir string) error {
 	realpath := f.realpath(dir)
-	fs.Debugf(f, "purge [%s]", realpath)
+	fs.DebugfCtx(ctx, f, "purge [%s]", realpath)
 
 	err := f.ensureDirectory(realpath)
 	if err != nil {
@@ -284,14 +284,14 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
 	// Get the real paths from the remote specs:
 	sourcePath := srcObj.fs.realpath(srcObj.remote)
 	targetPath := f.realpath(remote)
-	fs.Debugf(f, "rename [%s] to [%s]", sourcePath, targetPath)
+	fs.DebugfCtx(ctx, f, "rename [%s] to [%s]", sourcePath, targetPath)
 
 	// Make sure the target folder exists:
 	dirname := path.Dir(targetPath)
@@ -339,12 +339,12 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	// Get the real paths from the remote specs:
 	sourcePath := srcFs.realpath(srcRemote)
 	targetPath := f.realpath(dstRemote)
-	fs.Debugf(f, "rename [%s] to [%s]", sourcePath, targetPath)
+	fs.DebugfCtx(ctx, f, "rename [%s] to [%s]", sourcePath, targetPath)
 
 	// Check if the destination exists:
 	info, err := f.client.Stat(targetPath)
 	if err == nil {
-		fs.Debugf(f, "target directory already exits, IsDir = [%t]", info.IsDir())
+		fs.DebugfCtx(ctx, f, "target directory already exits, IsDir = [%t]", info.IsDir())
 		return fs.ErrorDirExists
 	}
 

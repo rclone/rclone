@@ -77,7 +77,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	// 640 GB.
 	if size == -1 {
 		warnStreamUpload.Do(func() {
-			fs.Logf(f, "Streaming uploads using chunk size %v will have maximum file size of %v",
+			fs.LogfCtx(ctx, f, "Streaming uploads using chunk size %v will have maximum file size of %v",
 				chunkSize, fs.SizeSuffix(int64(chunkSize)*int64(uploadParts)))
 		})
 	} else {
@@ -320,11 +320,11 @@ func (s *shadeChunkWriter) Abort(ctx context.Context) error {
 	err = s.f.pacer.Call(func() (bool, error) {
 		res, err := s.f.srv.Call(ctx, &opts)
 		if err != nil {
-			fs.Debugf(s.f, "Failed to abort multipart upload: %v", err)
+			fs.DebugfCtx(ctx, s.f, "Failed to abort multipart upload: %v", err)
 			return false, nil // Don't retry abort
 		}
 		if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
-			fs.Debugf(s.f, "Abort returned status %d", res.StatusCode)
+			fs.DebugfCtx(ctx, s.f, "Abort returned status %d", res.StatusCode)
 		}
 		return false, nil
 	})

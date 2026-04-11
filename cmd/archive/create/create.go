@@ -353,9 +353,9 @@ func ArchiveCreate(ctx context.Context, dst fs.Fs, dstFile string, src fs.Fs, fo
 		counter := files.NewCountWriter(nil)
 		err = compArchive.Archive(ctx, counter, list)
 		// log totals
-		fs.Infof(nil, "Total files added %d", list.Len())
-		fs.Infof(nil, "Total bytes read %d", totalLength)
-		fs.Infof(nil, "Compressed file size %d", counter.Count())
+		fs.InfofCtx(ctx, nil, "Total files added %d", list.Len())
+		fs.InfofCtx(ctx, nil, "Total bytes read %d", totalLength)
+		fs.InfofCtx(ctx, nil, "Compressed file size %d", counter.Count())
 
 		return err
 	} else if dst == nil {
@@ -363,9 +363,9 @@ func ArchiveCreate(ctx context.Context, dst fs.Fs, dstFile string, src fs.Fs, fo
 		counter := files.NewCountWriter(os.Stdout)
 		err = compArchive.Archive(ctx, counter, list)
 		// log totals
-		fs.Infof(nil, "Total files added %d", list.Len())
-		fs.Infof(nil, "Total bytes read %d", totalLength)
-		fs.Infof(nil, "Compressed file size %d", counter.Count())
+		fs.InfofCtx(ctx, nil, "Total files added %d", list.Len())
+		fs.InfofCtx(ctx, nil, "Total bytes read %d", totalLength)
+		fs.InfofCtx(ctx, nil, "Compressed file size %d", counter.Count())
 
 		return err
 	}
@@ -380,9 +380,9 @@ func ArchiveCreate(ctx context.Context, dst fs.Fs, dstFile string, src fs.Fs, fo
 	// rcat to remote from pipereader
 	_, err = operations.Rcat(ctx, dst, dstFile, pipeReader, time.Now(), nil)
 	// log totals
-	fs.Infof(nil, "Total files added %d", list.Len())
-	fs.Infof(nil, "Total bytes read %d", totalLength)
-	fs.Infof(nil, "Compressed file size %d", counter.Count())
+	fs.InfofCtx(ctx, nil, "Total files added %d", list.Len())
+	fs.InfofCtx(ctx, nil, "Total bytes read %d", totalLength)
+	fs.InfofCtx(ctx, nil, "Compressed file size %d", counter.Count())
 
 	return err
 }

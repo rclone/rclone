@@ -27,7 +27,7 @@ func (b *bisyncRun) makeMarchListing(ctx context.Context) (*fileList, *fileList,
 	ci := fs.GetConfig(ctx)
 	b.march.marchCtx = ctx
 	b.setupListing()
-	fs.Debugf(b, "starting to march!")
+	fs.DebugfCtx(ctx, b, "starting to march!")
 
 	// set up a march over fdst (Path2) and fsrc (Path1)
 	m := &march.March{
@@ -43,7 +43,7 @@ func (b *bisyncRun) makeMarchListing(ctx context.Context) (*fileList, *fileList,
 	}
 	b.march.err = m.Run(ctx)
 
-	fs.Debugf(b, "march completed. err: %v", b.march.err)
+	fs.DebugfCtx(ctx, b, "march completed. err: %v", b.march.err)
 	if b.march.err == nil {
 		b.march.err = b.march.firstErr
 	}
@@ -84,7 +84,7 @@ func (b *bisyncRun) DstOnly(o fs.DirEntry) (recurse bool) {
 
 // Match is called when object exists on both path1 and path2 (whether equal or not)
 func (b *bisyncRun) Match(ctx context.Context, o2, o1 fs.DirEntry) (recurse bool) {
-	fs.Debugf(o1, "both path1 and path2")
+	fs.DebugfCtx(ctx, o1, "both path1 and path2")
 	b.march.marchAliasLock.Lock()
 	b.aliases.Add(o1.Remote(), o2.Remote())
 	b.march.marchAliasLock.Unlock()
@@ -211,7 +211,7 @@ func (b *bisyncRun) findCheckFiles(ctx context.Context) (*fileList, *fileList, e
 	b.march.marchCtx = ctxCheckFile
 
 	b.setupListing()
-	fs.Debugf(b, "starting to march!")
+	fs.DebugfCtx(ctx, b, "starting to march!")
 
 	// set up a march over fdst (Path2) and fsrc (Path1)
 	m := &march.March{
@@ -227,7 +227,7 @@ func (b *bisyncRun) findCheckFiles(ctx context.Context) (*fileList, *fileList, e
 	}
 	b.march.err = m.Run(ctxCheckFile)
 
-	fs.Debugf(b, "march completed. err: %v", b.march.err)
+	fs.DebugfCtx(ctx, b, "march completed. err: %v", b.march.err)
 	if b.march.err == nil {
 		b.march.err = b.march.firstErr
 	}

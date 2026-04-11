@@ -197,7 +197,7 @@ func (rx *resumableUpload) Upload(ctx context.Context) (*drive.File, error) {
 
 		// Transfer the chunk
 		err = rx.f.pacer.Call(func() (bool, error) {
-			fs.Debugf(rx.remote, "Sending chunk %d length %d", start, reqSize)
+			fs.DebugfCtx(ctx, rx.remote, "Sending chunk %d length %d", start, reqSize)
 			StatusCode, err = rx.transferChunk(ctx, start, chunk, reqSize)
 			again, err := rx.f.shouldRetry(ctx, err)
 			if StatusCode == statusResumeIncomplete || StatusCode == http.StatusCreated || StatusCode == http.StatusOK {

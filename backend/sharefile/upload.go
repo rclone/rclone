@@ -112,11 +112,11 @@ func (up *largeUpload) transferChunk(ctx context.Context, part int64, offset int
 	}
 	var respBody []byte
 	err := up.f.pacer.Call(func() (bool, error) {
-		fs.Debugf(up.o, "Sending chunk %d length %d", part, len(body))
+		fs.DebugfCtx(ctx, up.o, "Sending chunk %d length %d", part, len(body))
 		opts.Body = up.wrap(bytes.NewReader(body))
 		resp, err := up.f.srv.Call(ctx, &opts)
 		if err != nil {
-			fs.Debugf(up.o, "Error sending chunk %d: %v", part, err)
+			fs.DebugfCtx(ctx, up.o, "Error sending chunk %d: %v", part, err)
 		} else {
 			respBody, err = rest.ReadBody(resp)
 		}
@@ -124,20 +124,20 @@ func (up *largeUpload) transferChunk(ctx context.Context, part int64, offset int
 		return err != nil, err
 	})
 	if err != nil {
-		fs.Debugf(up.o, "Error sending chunk %d: %v", part, err)
+		fs.DebugfCtx(ctx, up.o, "Error sending chunk %d: %v", part, err)
 		return err
 	}
 	// If last chunk and using "streamed" transfer, get the response back now
 	if up.streamed && fileHash != "" {
 		return up.parseUploadFinishResponse(respBody)
 	}
-	fs.Debugf(up.o, "Done sending chunk %d", part)
+	fs.DebugfCtx(ctx, up.o, "Done sending chunk %d", part)
 	return nil
 }
 
 // finish closes off the large upload and reads the metadata
 func (up *largeUpload) finish(ctx context.Context) error {
-	fs.Debugf(up.o, "Finishing large file upload")
+	fs.DebugfCtx(ctx, up.o, "Finishing large file upload")
 	// For a streamed transfer we will already have read the info
 	if up.streamed {
 		return nil
@@ -166,9 +166,9 @@ func (up *largeUpload) finish(ctx context.Context) error {
 // Upload uploads the chunks from the input
 func (up *largeUpload) Upload(ctx context.Context) error {
 	if up.parts >= 0 {
-		fs.Debugf(up.o, "Starting upload of large file in %d chunks", up.parts)
+		fs.DebugfCtx(ctx, up.o, "Starting upload of large file in %d chunks", up.parts)
 	} else {
-		fs.Debugf(up.o, "Starting streaming upload of large file")
+		fs.DebugfCtx(ctx, up.o, "Starting streaming upload of large file")
 	}
 	var (
 		offset        int64

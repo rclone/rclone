@@ -23,10 +23,10 @@ import (
 // Will only be called if src.Fs().Name() == f.Name()
 // If it isn't possible then return fs.ErrorCantCopy
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-	// fs.Debugf(f, "copying %v to %v", src.Remote(), remote)
+	// fs.DebugfCtx(ctx, f, "copying %v to %v", src.Remote(), remote)
 	srcObj, ok := src.(*Object)
 	if !ok {
-		// fs.Debugf(src, "Can't copy - not same remote type")
+		// fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 	// Temporary Object under construction

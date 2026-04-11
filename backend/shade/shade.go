@@ -125,14 +125,14 @@ func (f *Fs) refreshJWTToken(ctx context.Context) (string, error) {
 	err = f.pacer.Call(func() (bool, error) {
 		res, err := f.apiSrv.Call(ctx, &opts)
 		if err != nil {
-			fs.Debugf(f, "Token request failed: %v", err)
+			fs.DebugfCtx(ctx, f, "Token request failed: %v", err)
 			return false, err
 		}
 
 		defer fs.CheckClose(res.Body, &err)
 
 		if res.StatusCode != http.StatusOK {
-			fs.Debugf(f, "Token request failed with code: %d", res.StatusCode)
+			fs.DebugfCtx(ctx, f, "Token request failed with code: %d", res.StatusCode)
 			return res.StatusCode == http.StatusTooManyRequests, fmt.Errorf("failed to get ShadeFS token, status: %d", res.StatusCode)
 		}
 
@@ -292,7 +292,7 @@ func (f *Fs) Precision() time.Duration {
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
@@ -335,7 +335,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		resp, err := f.srv.Call(ctx, &opts)
 
 		if err != nil && resp.StatusCode == http.StatusBadRequest {
-			fs.Debugf(f, "Bad token from server: %v", token)
+			fs.DebugfCtx(ctx, f, "Bad token from server: %v", token)
 		}
 
 		return resp != nil && resp.StatusCode == http.StatusTooManyRequests, err
@@ -357,7 +357,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 	//Need to check if destination exists
@@ -422,7 +422,7 @@ func NewFS(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
-	fs.Debugf(nil, "Creating new ShadeFS backend with drive: %s", opt.Drive)
+	fs.DebugfCtx(ctx, nil, "Creating new ShadeFS backend with drive: %s", opt.Drive)
 
 	f := &Fs{
 		name:        name,
@@ -450,7 +450,7 @@ func NewFS(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.TokenExpiry != "" {
 		tokenExpiry, err := time.Parse(time.RFC3339, opt.TokenExpiry)
 		if err != nil {
-			fs.Errorf(nil, "Failed to parse token_expiry option: %v", err)
+			fs.ErrorfCtx(ctx, nil, "Failed to parse token_expiry option: %v", err)
 		} else {
 			f.tokenExp = tokenExpiry
 		}
@@ -546,12 +546,12 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	var response []api.ListDirResponse
 	res, err := f.callAPI(ctx, "GET", fmt.Sprintf("/%s/fs/listdir?path=%s", f.drive, fullPath), &response)
 	if err != nil {
-		fs.Debugf(f, "Error from List call: %v", err)
+		fs.DebugfCtx(ctx, f, "Error from List call: %v", err)
 		return nil, fs.ErrorDirNotFound
 	}
 
 	if res.StatusCode == http.StatusNotFound {
-		fs.Debugf(f, "Directory not found")
+		fs.DebugfCtx(ctx, f, "Directory not found")
 		return nil, fs.ErrorDirNotFound
 	}
 
@@ -589,7 +589,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			}
 			entries = append(entries, dirEntry)
 		} else {
-			fs.Debugf(f, "Unknown entry type: %s for path: %s", r.Type, entryPath)
+			fs.DebugfCtx(ctx, f, "Unknown entry type: %s for path: %s", r.Type, entryPath)
 		}
 	}
 
@@ -660,7 +660,7 @@ func (f *Fs) ensureDirectoryPath(ctx context.Context, dirPath string) error {
 				f.createdDirs[dir] = true
 				f.createdDirMu.Unlock()
 			} else if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
-				fs.Debugf(f, "Failed to create directory %s: status code %d", dir, res.StatusCode)
+				fs.DebugfCtx(ctx, f, "Failed to create directory %s: status code %d", dir, res.StatusCode)
 			} else {
 				f.createdDirMu.Lock()
 				f.createdDirs[dir] = true
@@ -669,7 +669,7 @@ func (f *Fs) ensureDirectoryPath(ctx context.Context, dirPath string) error {
 
 			fs.CheckClose(res.Body, &err)
 		} else if err != nil {
-			fs.Debugf(f, "Error creating directory %s: %v", dir, err)
+			fs.DebugfCtx(ctx, f, "Error creating directory %s: %v", dir, err)
 			// Continue anyway
 			continue
 		}
@@ -837,7 +837,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	// Create HTTP request manually
 	req, err := http.NewRequestWithContext(ctx, "GET", downloadURL, nil)
 	if err != nil {
-		fs.Debugf(o.fs, "Failed to create request: %v", err)
+		fs.DebugfCtx(ctx, o.fs, "Failed to create request: %v", err)
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 	req.Header.Set("Authorization", "Bearer "+token)

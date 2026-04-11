@@ -38,7 +38,7 @@ import "github.com/quasilyte/go-ruleguard/dsl"
 func useFsLog(m dsl.Matcher) {
 	m.Match(`log.Print($x)`, `log.Println($x)`).Where(m["x"].Type.Is(`string`)).Suggest(`fs.Log(nil, $x)`)
 	m.Match(`log.Print($*args)`, `log.Println($*args)`).Suggest(`fs.Log(nil, fmt.Sprint($args))`)
-	m.Match(`log.Printf($*args)`).Suggest(`fs.Logf(nil, $args)`)
+	m.Match(`log.Printf($*args)`).Suggest(`fs.LogfCtx(ctx, nil, $args)`)
 
 	m.Match(`log.Fatal($x)`, `log.Fatalln($x)`).Where(m["x"].Type.Is(`string`)).Suggest(`fs.Fatal(nil, $x)`)
 	m.Match(`log.Fatal($*args)`, `log.Fatalln($*args)`).Suggest(`fs.Fatal(nil, fmt.Sprint($args))`)

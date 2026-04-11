@@ -273,7 +273,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
 	list := list.NewHelper(callback)
 	bucketName, directory := f.split(dir)
-	fs.Debugf(f, "listing: bucket : %v, directory: %v", bucketName, dir)
+	fs.DebugfCtx(ctx, f, "listing: bucket : %v, directory: %v", bucketName, dir)
 	if bucketName == "" {
 		if directory != "" {
 			return fs.ErrorListBucketRequired
@@ -357,7 +357,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 				if reqErr, ok := err.(common.ServiceError); ok {
 					// 301 if wrong region for bucket
 					if reqErr.GetHTTPStatusCode() == http.StatusMovedPermanently {
-						fs.Errorf(f, "Can't change region for bucket %q with no bucket specified", bucket)
+						fs.ErrorfCtx(ctx, f, "Can't change region for bucket %q with no bucket specified", bucket)
 						return nil
 					}
 				}
@@ -367,13 +367,13 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 		if !recurse {
 			for _, commonPrefix := range resp.ListObjects.Prefixes {
 				if commonPrefix == "" {
-					fs.Logf(f, "Nil common prefix received")
+					fs.LogfCtx(ctx, f, "Nil common prefix received")
 					continue
 				}
 				remote := commonPrefix
 				remote = f.opt.Enc.ToStandardPath(remote)
 				if !strings.HasPrefix(remote, prefix) {
-					fs.Logf(f, "Odd name received %q", remote)
+					fs.LogfCtx(ctx, f, "Odd name received %q", remote)
 					continue
 				}
 				remote = remote[len(prefix):]
@@ -505,7 +505,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *objects
 	if info != nil {
 		// Set info but not meta
 		if info.TimeModified == nil {
-			fs.Logf(o, "Failed to read last modified")
+			fs.LogfCtx(ctx, o, "Failed to read last modified")
 			o.lastModified = time.Now()
 		} else {
 			o.lastModified = info.TimeModified.Time
@@ -576,7 +576,7 @@ func (f *Fs) makeBucket(ctx context.Context, bucketName string) error {
 			return shouldRetry(ctx, resp.HTTPResponse(), err)
 		})
 		if err == nil {
-			fs.Infof(f, "Bucket %q created with accessType %q", bucketName,
+			fs.InfofCtx(ctx, f, "Bucket %q created with accessType %q", bucketName,
 				objectstorage.CreateBucketDetailsPublicAccessTypeNopublicaccess)
 		}
 		if svcErr, ok := err.(common.ServiceError); ok {
@@ -629,7 +629,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 			return shouldRetry(ctx, resp.HTTPResponse(), err)
 		})
 		if err == nil {
-			fs.Infof(f, "Bucket %q deleted", bucketName)
+			fs.InfofCtx(ctx, f, "Bucket %q deleted", bucketName)
 		}
 		return err
 	})
@@ -655,21 +655,21 @@ func (f *Fs) abortMultiPartUpload(ctx context.Context, bucketName, bucketPath, u
 // cleanUpBucket removes all pending multipart uploads for a given bucket over the age of maxAge
 func (f *Fs) cleanUpBucket(ctx context.Context, bucket string, maxAge time.Duration,
 	uploads []*objectstorage.MultipartUpload) (err error) {
-	fs.Infof(f, "cleaning bucket %q of pending multipart uploads older than %v", bucket, maxAge)
+	fs.InfofCtx(ctx, f, "cleaning bucket %q of pending multipart uploads older than %v", bucket, maxAge)
 	for _, upload := range uploads {
 		if upload.TimeCreated != nil && upload.Object != nil && upload.UploadId != nil {
 			age := time.Since(upload.TimeCreated.Time)
 			what := fmt.Sprintf("pending multipart upload for bucket %q key %q dated %v (%v ago)", bucket, *upload.Object,
 				upload.TimeCreated, age)
 			if age > maxAge {
-				fs.Infof(f, "removing %s", what)
+				fs.InfofCtx(ctx, f, "removing %s", what)
 				if operations.SkipDestructive(ctx, what, "remove pending upload") {
 					continue
 				}
 				_ = f.abortMultiPartUpload(ctx, upload.Bucket, upload.Object, upload.UploadId)
 			}
 		} else {
-			fs.Infof(f, "MultipartUpload doesn't have sufficient details to abort.")
+			fs.InfofCtx(ctx, f, "MultipartUpload doesn't have sufficient details to abort.")
 		}
 	}
 	return err
@@ -684,7 +684,7 @@ func (f *Fs) cleanUp(ctx context.Context, maxAge time.Duration) (err error) {
 	for bucketName, uploads := range uploadsMap {
 		cleanErr := f.cleanUpBucket(ctx, bucketName, maxAge, uploads)
 		if err != nil {
-			fs.Errorf(f, "Failed to cleanup bucket %q: %v", bucketName, cleanErr)
+			fs.ErrorfCtx(ctx, f, "Failed to cleanup bucket %q: %v", bucketName, cleanErr)
 			err = cleanErr
 		}
 	}

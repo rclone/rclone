@@ -518,7 +518,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 
@@ -552,7 +552,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
@@ -599,7 +599,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	// defer log.Trace(f, "src=%v, srcRemote=%q, dstRemote=%q", src, srcRemote, dstRemote)("err=%v", &err)
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(src, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 
@@ -618,7 +618,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fs.ErrorCantDirMove
 	}
 
-	fs.Logf(dstU.f, "srcU.f=%v, srcURemote=%q, dstURemote=%q", srcU.f, srcURemote, dstURemote)
+	fs.LogfCtx(ctx, dstU.f, "srcU.f=%v, srcURemote=%q, dstURemote=%q", srcU.f, srcURemote, dstURemote)
 	return do(ctx, srcU.f, srcURemote, dstURemote)
 }
 
@@ -641,10 +641,10 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 			wrappedNotifyFunc := func(path string, entryType fs.EntryType) {
 				newPath, err := u.pathAdjustment.do(path)
 				if err != nil {
-					fs.Logf(f, "ChangeNotify: unable to process %q: %s", path, err)
+					fs.LogfCtx(ctx, f, "ChangeNotify: unable to process %q: %s", path, err)
 					return
 				}
-				fs.Debugf(f, "ChangeNotify: path %q entryType %d", newPath, entryType)
+				fs.DebugfCtx(ctx, f, "ChangeNotify: path %q entryType %d", newPath, entryType)
 				notifyFunc(newPath, entryType)
 			}
 			do(ctx, wrappedNotifyFunc, ch)
@@ -1035,7 +1035,7 @@ func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) e
 		return err
 	}
 	if uDir == "" {
-		fs.Debugf(dir, "Can't set modtime on upstream root. skipping.")
+		fs.DebugfCtx(ctx, dir, "Can't set modtime on upstream root. skipping.")
 		return nil
 	}
 	if do := u.f.Features().DirSetModTime; do != nil {

@@ -170,7 +170,7 @@ func (vol *Volume) checkMountpoint() error {
 
 // setup volume filesystem
 func (vol *Volume) setup(ctx context.Context) error {
-	fs.Debugf(nil, "Setup volume %q as %q at path %s", vol.Name, vol.fsString, vol.MountPoint)
+	fs.DebugfCtx(ctx, nil, "Setup volume %q as %q at path %s", vol.Name, vol.fsString, vol.MountPoint)
 
 	if err := vol.checkMountpoint(); err != nil {
 		return err
@@ -212,7 +212,7 @@ func (vol *Volume) setup(ctx context.Context) error {
 // remove volume filesystem and mounts
 func (vol *Volume) remove(ctx context.Context) error {
 	count := len(vol.mountReqs)
-	fs.Debugf(nil, "Remove volume %q (count %d)", vol.Name, count)
+	fs.DebugfCtx(ctx, nil, "Remove volume %q (count %d)", vol.Name, count)
 
 	if count > 0 {
 		return errors.New("volume is in use")

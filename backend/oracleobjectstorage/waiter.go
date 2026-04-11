@@ -58,7 +58,7 @@ type StateChangeConf struct {
 //
 // Cancellation from the passed in context will cancel the refresh loop
 func (conf *StateChangeConf) WaitForStateContext(ctx context.Context, entityType string) (any, error) {
-	// fs.Debugf(entityType, "Waiting for state to become: %s", conf.Target)
+	// fs.DebugfCtx(ctx, entityType, "Waiting for state to become: %s", conf.Target)
 
 	// Set a default for times to check for not found
 	if conf.NotFoundChecks == 0 {
@@ -199,7 +199,7 @@ func (conf *StateChangeConf) WaitForStateContext(ctx context.Context, entityType
 				}
 			}
 
-			// fs.Debugf(entityType, "[TRACE] Waiting %s before next try", wait)
+			// fs.DebugfCtx(ctx, entityType, "[TRACE] Waiting %s before next try", wait)
 		}
 	}()
 
@@ -226,8 +226,8 @@ func (conf *StateChangeConf) WaitForStateContext(ctx context.Context, entityType
 			close(cancelCh)
 			return nil, ctx.Err()
 		case <-timeout:
-			// fs.Debugf(entityType, "[WARN] WaitForState timeout after %s", conf.Timeout)
-			// fs.Debugf(entityType, "[WARN] WaitForState starting %s refresh grace period", refreshGracePeriod)
+			// fs.DebugfCtx(ctx, entityType, "[WARN] WaitForState timeout after %s", conf.Timeout)
+			// fs.DebugfCtx(ctx, entityType, "[WARN] WaitForState starting %s refresh grace period", refreshGracePeriod)
 
 			// cancel the goroutine and start our grace period timer
 			close(cancelCh)
@@ -254,10 +254,10 @@ func (conf *StateChangeConf) WaitForStateContext(ctx context.Context, entityType
 					// TimeoutError and wait for the channel to close
 					lastResult = r
 				case <-ctx.Done():
-					fs.Errorf(entityType, "Context cancellation detected, abandoning grace period")
+					fs.ErrorfCtx(ctx, entityType, "Context cancellation detected, abandoning grace period")
 					break forSelect
 				case <-timeout:
-					fs.Errorf(entityType, "WaitForState exceeded refresh grace period")
+					fs.ErrorfCtx(ctx, entityType, "WaitForState exceeded refresh grace period")
 					break forSelect
 				}
 			}

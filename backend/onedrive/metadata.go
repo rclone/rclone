@@ -259,7 +259,7 @@ func (m *Metadata) Set(ctx context.Context, metadata fs.Metadata) (numSet int, e
 			m.btime = t
 			numSet++
 		case "description":
-			fs.Debugf(m.remote, "metadata description is no longer supported -- skipping: %s", v)
+			fs.DebugfCtx(ctx, m.remote, "metadata description is no longer supported -- skipping: %s", v)
 			continue
 		case "permissions":
 			if !m.fs.opt.MetadataPermissions.IsSet(rwWrite) {
@@ -273,11 +273,11 @@ func (m *Metadata) Set(ctx context.Context, metadata fs.Metadata) (numSet int, e
 			m.queuedPermissions = perms
 			numSet++
 		default:
-			fs.Debugf(m.remote, "skipping unsupported metadata item: %s: %s", k, v)
+			fs.DebugfCtx(ctx, m.remote, "skipping unsupported metadata item: %s: %s", k, v)
 		}
 	}
 	if numSet == 0 {
-		fs.Infof(m.remote, "no writeable metadata found: %v", metadata)
+		fs.InfofCtx(ctx, m.remote, "no writeable metadata found: %v", metadata)
 	}
 	return numSet, nil
 }
@@ -317,7 +317,7 @@ func (m *Metadata) Write(ctx context.Context, updatePermissions bool) (*api.Item
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		fs.Debugf(m.remote, "errored metadata: %v", m)
+		fs.DebugfCtx(ctx, m.remote, "errored metadata: %v", m)
 		return nil, fmt.Errorf("%v: error updating metadata: %v", m.remote, err)
 	}
 
@@ -325,7 +325,7 @@ func (m *Metadata) Write(ctx context.Context, updatePermissions bool) (*api.Item
 		m.normalizedID = info.GetID()
 		err = m.WritePermissions(ctx)
 		if err != nil {
-			fs.Errorf(m.remote, "error writing permissions: %v", err)
+			fs.ErrorfCtx(ctx, m.remote, "error writing permissions: %v", err)
 			return info, err
 		}
 	}
@@ -364,7 +364,7 @@ func (m *Metadata) WritePermissions(ctx context.Context) (err error) {
 		// If failok is set, allow the permissions setting to fail and only log an ERROR
 		defer func() {
 			if err != nil {
-				fs.Errorf(m.fs, "Ignoring error as failok is set: %v", err)
+				fs.ErrorfCtx(ctx, m.fs, "Ignoring error as failok is set: %v", err)
 				err = nil
 			}
 		}()
@@ -372,14 +372,14 @@ func (m *Metadata) WritePermissions(ctx context.Context) (err error) {
 
 	// compare current to queued and sort into add/update/remove queues
 	add, update, remove := m.sortPermissions()
-	fs.Debugf(m.remote, "metadata permissions: to add: %d to update: %d to remove: %d", len(add), len(update), len(remove))
+	fs.DebugfCtx(ctx, m.remote, "metadata permissions: to add: %d to update: %d to remove: %d", len(add), len(update), len(remove))
 	_, err = m.processPermissions(ctx, add, update, remove)
 	if err != nil {
 		return fmt.Errorf("failed to process permissions: %w", err)
 	}
 
 	err = m.RefreshPermissions(ctx)
-	fs.Debugf(m.remote, "updated permissions (now has %d permissions)", len(m.permissions))
+	fs.DebugfCtx(ctx, m.remote, "updated permissions (now has %d permissions)", len(m.permissions))
 	if err != nil {
 		return fmt.Errorf("failed to get permissions: %w", err)
 	}
@@ -493,7 +493,7 @@ func (m *Metadata) processPermissions(ctx context.Context, add, update, remove [
 	for _, p := range remove { // remove (need to do these first because of remove + add workaround)
 		_, err := m.removePermission(ctx, p)
 		if err != nil {
-			fs.Errorf(m.remote, "Failed to remove permission: %v", err)
+			fs.ErrorfCtx(ctx, m.remote, "Failed to remove permission: %v", err)
 			errs.Add(err)
 		}
 	}
@@ -501,7 +501,7 @@ func (m *Metadata) processPermissions(ctx context.Context, add, update, remove [
 	for _, p := range add { // add
 		newPs, _, err := m.addPermission(ctx, p)
 		if err != nil {
-			fs.Errorf(m.remote, "Failed to add permission: %v", err)
+			fs.ErrorfCtx(ctx, m.remote, "Failed to add permission: %v", err)
 			errs.Add(err)
 			continue
 		}
@@ -511,7 +511,7 @@ func (m *Metadata) processPermissions(ctx context.Context, add, update, remove [
 	for _, p := range update { // update
 		newP, _, err := m.updatePermission(ctx, p)
 		if err != nil {
-			fs.Errorf(m.remote, "Failed to update permission: %v", err)
+			fs.ErrorfCtx(ctx, m.remote, "Failed to update permission: %v", err)
 			errs.Add(err)
 			continue
 		}
@@ -614,14 +614,14 @@ func (m *Metadata) addPermission(ctx context.Context, p *api.PermissionsType) (n
 	}
 
 	if len(req.Recipients) == 0 {
-		fs.Debugf(m.remote, "skipping add permission -- at least one valid recipient is required")
+		fs.DebugfCtx(ctx, m.remote, "skipping add permission -- at least one valid recipient is required")
 		return nil, nil, nil
 	}
 	if len(req.Roles) == 0 {
 		return nil, nil, errors.New("at least one role is required to add a permission (choices: read, write, owner, member)")
 	}
 	if slices.Contains(req.Roles, api.OwnerRole) {
-		fs.Debugf(m.remote, "skipping add permission -- can't invite a user with 'owner' role")
+		fs.DebugfCtx(ctx, m.remote, "skipping add permission -- can't invite a user with 'owner' role")
 		return nil, nil, nil
 	}
 
@@ -812,7 +812,7 @@ func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata
 			return nil, err
 		}
 		// for some reason, OneDrive Business and Personal needs this extra step to set modtime. Seems like a bug...
-		fs.Debugf(dir, "setting time %v", meta.mtime)
+		fs.DebugfCtx(ctx, dir, "setting time %v", meta.mtime)
 		info, err = meta.Write(ctx, false)
 	} else if err == nil {
 		// Directory exists and needs updating
@@ -886,7 +886,7 @@ func (f *Fs) createDir(ctx context.Context, pathID, dirWithLeaf, leaf string, me
 
 		err = m.WritePermissions(ctx)
 		if err != nil {
-			fs.Errorf(m.remote, "error writing permissions: %v", err)
+			fs.ErrorfCtx(ctx, m.remote, "error writing permissions: %v", err)
 			return info, m, err
 		}
 	}
@@ -923,7 +923,7 @@ func (f *Fs) newDir(dirID, remote string) (d *Directory) {
 func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error) {
 	err = o.readMetaData(ctx)
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.LogfCtx(ctx, o, "Failed to read metadata: %v", err)
 		return nil, err
 	}
 	return o.meta.Get(ctx)

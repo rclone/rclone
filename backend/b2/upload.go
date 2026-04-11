@@ -97,7 +97,7 @@ func (f *Fs) newLargeUpload(ctx context.Context, o *Object, in io.Reader, src fs
 	parts := 0
 	chunkSize := defaultChunkSize
 	if size == -1 {
-		fs.Debugf(o, "Streaming upload with --b2-chunk-size %s allows uploads of up to %s and will fail only when that limit is reached.", f.opt.ChunkSize, maxParts*f.opt.ChunkSize)
+		fs.DebugfCtx(ctx, o, "Streaming upload with --b2-chunk-size %s allows uploads of up to %s and will fail only when that limit is reached.", f.opt.ChunkSize, maxParts*f.opt.ChunkSize)
 	} else {
 		chunkSize = chunksize.Calculator(o, size, maxParts, defaultChunkSize)
 		parts = int(size / int64(chunkSize))
@@ -259,7 +259,7 @@ func (up *largeUpload) WriteChunk(ctx context.Context, chunkNumber int, reader i
 			return false, err
 		}
 
-		fs.Debugf(up.o, "Sending chunk %d length %d", chunkNumber, size)
+		fs.DebugfCtx(ctx, up.o, "Sending chunk %d length %d", chunkNumber, size)
 
 		// Get upload URL
 		upload, err := up.getUploadURL(ctx)
@@ -315,11 +315,11 @@ func (up *largeUpload) WriteChunk(ctx context.Context, chunkNumber int, reader i
 		resp, err := up.f.srv.CallJSON(ctx, &opts, nil, &response)
 		retry, err := up.f.shouldRetry(ctx, resp, err)
 		if err != nil {
-			fs.Debugf(up.o, "Error sending chunk %d (retry=%v): %v: %#v", chunkNumber, retry, err, err)
+			fs.DebugfCtx(ctx, up.o, "Error sending chunk %d (retry=%v): %v: %#v", chunkNumber, retry, err, err)
 		}
 		// On retryable error clear PartUploadURL
 		if retry {
-			fs.Debugf(up.o, "Clearing part upload URL because of error: %v", err)
+			fs.DebugfCtx(ctx, up.o, "Clearing part upload URL because of error: %v", err)
 			upload = nil
 		}
 		up.returnUploadURL(upload)
@@ -327,9 +327,9 @@ func (up *largeUpload) WriteChunk(ctx context.Context, chunkNumber int, reader i
 		return retry, err
 	})
 	if err != nil {
-		fs.Debugf(up.o, "Error sending chunk %d: %v", chunkNumber, err)
+		fs.DebugfCtx(ctx, up.o, "Error sending chunk %d: %v", chunkNumber, err)
 	} else {
-		fs.Debugf(up.o, "Done sending chunk %d", chunkNumber)
+		fs.DebugfCtx(ctx, up.o, "Done sending chunk %d", chunkNumber)
 	}
 	return size, err
 }
@@ -337,7 +337,7 @@ func (up *largeUpload) WriteChunk(ctx context.Context, chunkNumber int, reader i
 // Copy a chunk
 func (up *largeUpload) copyChunk(ctx context.Context, part int, partSize int64) error {
 	err := up.f.pacer.Call(func() (bool, error) {
-		fs.Debugf(up.o, "Copying chunk %d length %d", part, partSize)
+		fs.DebugfCtx(ctx, up.o, "Copying chunk %d length %d", part, partSize)
 		opts := rest.Opts{
 			Method: "POST",
 			Path:   "/b2_copy_part",
@@ -364,22 +364,22 @@ func (up *largeUpload) copyChunk(ctx context.Context, part int, partSize int64) 
 		resp, err := up.f.srv.CallJSON(ctx, &opts, &request, &response)
 		retry, err := up.f.shouldRetry(ctx, resp, err)
 		if err != nil {
-			fs.Debugf(up.o, "Error copying chunk %d (retry=%v): %v: %#v", part, retry, err, err)
+			fs.DebugfCtx(ctx, up.o, "Error copying chunk %d (retry=%v): %v: %#v", part, retry, err, err)
 		}
 		up.addSha1(part, response.SHA1)
 		return retry, err
 	})
 	if err != nil {
-		fs.Debugf(up.o, "Error copying chunk %d: %v", part, err)
+		fs.DebugfCtx(ctx, up.o, "Error copying chunk %d: %v", part, err)
 	} else {
-		fs.Debugf(up.o, "Done copying chunk %d", part)
+		fs.DebugfCtx(ctx, up.o, "Done copying chunk %d", part)
 	}
 	return err
 }
 
 // Close closes off the large upload
 func (up *largeUpload) Close(ctx context.Context) error {
-	fs.Debugf(up.o, "Finishing large file %s with %d parts", up.what, up.parts)
+	fs.DebugfCtx(ctx, up.o, "Finishing large file %s with %d parts", up.what, up.parts)
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/b2_finish_large_file",
@@ -402,7 +402,7 @@ func (up *largeUpload) Close(ctx context.Context) error {
 
 // Abort aborts the large upload
 func (up *largeUpload) Abort(ctx context.Context) error {
-	fs.Debugf(up.o, "Cancelling large file %s", up.what)
+	fs.DebugfCtx(ctx, up.o, "Cancelling large file %s", up.what)
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/b2_cancel_large_file",
@@ -416,7 +416,7 @@ func (up *largeUpload) Abort(ctx context.Context) error {
 		return up.f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		fs.Errorf(up.o, "Failed to cancel large file %s: %v", up.what, err)
+		fs.ErrorfCtx(ctx, up.o, "Failed to cancel large file %s: %v", up.what, err)
 	}
 	return err
 }
@@ -428,7 +428,7 @@ func (up *largeUpload) Abort(ctx context.Context) error {
 // Note that initialUploadBlock must be returned to f.putBuf()
 func (up *largeUpload) Stream(ctx context.Context, initialUploadBlock *pool.RW) (err error) {
 	defer atexit.OnError(&err, func() { _ = up.Abort(ctx) })()
-	fs.Debugf(up.o, "Starting streaming of large file (id %q)", up.id)
+	fs.DebugfCtx(ctx, up.o, "Starting streaming of large file (id %q)", up.id)
 	var (
 		g, gCtx      = errgroup.WithContext(ctx)
 		hasMoreParts = true
@@ -459,11 +459,11 @@ func (up *largeUpload) Stream(ctx context.Context, initialUploadBlock *pool.RW) 
 			n, err = io.CopyN(rw, up.in, up.chunkSize)
 			if err == io.EOF {
 				if n == 0 {
-					fs.Debugf(up.o, "Not sending empty chunk after EOF - ending.")
+					fs.DebugfCtx(ctx, up.o, "Not sending empty chunk after EOF - ending.")
 					up.f.putRW(rw)
 					break
 				} else {
-					fs.Debugf(up.o, "Read less than a full chunk %d, making this the last one.", n)
+					fs.DebugfCtx(ctx, up.o, "Read less than a full chunk %d, making this the last one.", n)
 				}
 				hasMoreParts = false
 			} else if err != nil {
@@ -498,7 +498,7 @@ func (up *largeUpload) Stream(ctx context.Context, initialUploadBlock *pool.RW) 
 // Copy the chunks from the source to the destination
 func (up *largeUpload) Copy(ctx context.Context) (err error) {
 	defer atexit.OnError(&err, func() { _ = up.Abort(ctx) })()
-	fs.Debugf(up.o, "Starting %s of large file in %d chunks (id %q)", up.what, up.parts, up.id)
+	fs.DebugfCtx(ctx, up.o, "Starting %s of large file in %d chunks (id %q)", up.what, up.parts, up.id)
 	var (
 		account   = transferaccounter.Get(ctx)
 		g, gCtx   = errgroup.WithContext(ctx)

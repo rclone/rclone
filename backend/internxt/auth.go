@@ -63,7 +63,7 @@ func getUserInfo(ctx context.Context, cfg *userInfoConfig) (*userInfo, error) {
 		UserID:       resp.User.UserID,
 	}
 
-	fs.Debugf(nil, "User info: rootFolderId=%s, bucket=%s",
+	fs.DebugfCtx(ctx, nil, "User info: rootFolderId=%s, bucket=%s",
 		info.RootFolderID, info.Bucket)
 
 	return info, nil
@@ -144,7 +144,7 @@ func refreshJWTToken(ctx context.Context, name string, m configmap.Mapper) error
 		m.Set("bucket", resp.User.Bucket)
 	}
 
-	fs.Debugf(name, "Token refreshed successfully, new expiry: %v", token.Expiry)
+	fs.DebugfCtx(ctx, name, "Token refreshed successfully, new expiry: %v", token.Expiry)
 	return nil
 }
 
@@ -187,7 +187,7 @@ func (f *Fs) refreshOrReLogin(ctx context.Context) error {
 		}
 		f.cfg.Token = newToken.AccessToken
 		f.cfg.BasicAuthHeader = computeBasicAuthHeader(f.bridgeUser, f.userID)
-		fs.Debugf(f, "Token refresh succeeded")
+		fs.DebugfCtx(ctx, f, "Token refresh succeeded")
 		return nil
 	}
 
@@ -199,7 +199,7 @@ func (f *Fs) refreshOrReLogin(ctx context.Context) error {
 		return refreshErr
 	}
 
-	fs.Debugf(f, "Token refresh returned 401, attempting re-login with stored credentials")
+	fs.DebugfCtx(ctx, f, "Token refresh returned 401, attempting re-login with stored credentials")
 
 	resp, err := f.reLogin(ctx)
 	if err != nil {
@@ -222,7 +222,7 @@ func (f *Fs) refreshOrReLogin(ctx context.Context) error {
 	f.cfg.Bucket = resp.User.Bucket
 	f.cfg.RootFolderID = resp.User.RootFolderID
 
-	fs.Debugf(f, "Re-login succeeded, new token expiry: %v", oauthToken.Expiry)
+	fs.DebugfCtx(ctx, f, "Re-login succeeded, new token expiry: %v", oauthToken.Expiry)
 	return nil
 }
 

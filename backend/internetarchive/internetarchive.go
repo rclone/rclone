@@ -606,14 +606,14 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (_ fs.Objec
 	dstBucket, dstPath := f.split(remote)
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 	srcBucket, srcPath := srcObj.split()
 
 	if dstBucket == srcBucket && dstPath == srcPath {
 		// https://github.com/jjjake/internetarchive/blob/2456376533251df9d05e0a14d796ec1ced4959f5/internetarchive/cli/ia_copy.py#L68
-		fs.Debugf(src, "Can't copy - the source and destination files cannot be the same!")
+		fs.DebugfCtx(ctx, src, "Can't copy - the source and destination files cannot be the same!")
 		return nil, fs.ErrorCantCopy
 	}
 

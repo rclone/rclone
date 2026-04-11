@@ -621,7 +621,7 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		for k := range opt {
 			keys = append(keys, k)
 		}
-		fs.Logf(f, "Updated config values: %s", strings.Join(keys, ", "))
+		fs.LogfCtx(ctx, f, "Updated config values: %s", strings.Join(keys, ", "))
 		return nil, nil
 	default:
 		return nil, fs.ErrorCommandNotFound

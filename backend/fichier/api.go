@@ -62,7 +62,7 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 		case 186:
 			return false, err // IP blocked?
 		case 374, 412: // Flood detected seems to be #412 now
-			fs.Debugf(nil, "Sleeping for 30 seconds due to: %v", err)
+			fs.DebugfCtx(ctx, nil, "Sleeping for 30 seconds due to: %v", err)
 			time.Sleep(30 * time.Second)
 		default:
 		}

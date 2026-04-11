@@ -199,9 +199,9 @@ func GetPasswordCommand(ctx context.Context) (pass string, err error) {
 	err = cmd.Run()
 	if err != nil {
 		// One does not always get the stderr returned in the wrapped error.
-		fs.Errorf(nil, "Using --password-command returned: %v", err)
+		fs.ErrorfCtx(ctx, nil, "Using --password-command returned: %v", err)
 		if ers := strings.TrimSpace(stderr.String()); ers != "" {
-			fs.Errorf(nil, "--password-command stderr: %s", ers)
+			fs.ErrorfCtx(ctx, nil, "--password-command stderr: %s", ers)
 		}
 		return pass, fmt.Errorf("password command failed: %w", err)
 	}

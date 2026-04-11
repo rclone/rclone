@@ -165,7 +165,7 @@ func InstallUpdate(ctx context.Context, opt *Options) error {
 
 	oldVersion := fs.Version
 	if newVersion == oldVersion {
-		fs.Logf(nil, "rclone is up to date")
+		fs.LogfCtx(ctx, nil, "rclone is up to date")
 		return nil
 	}
 
@@ -176,7 +176,7 @@ func InstallUpdate(ctx context.Context, opt *Options) error {
 		} else {
 			err := installPackage(ctx, opt.Beta, newVersion, siteURL, opt.Package)
 			if err == nil {
-				fs.Logf(nil, "Successfully updated rclone package from version %s to version %s", oldVersion, newVersion)
+				fs.LogfCtx(ctx, nil, "Successfully updated rclone package from version %s to version %s", oldVersion, newVersion)
 			}
 			return err
 		}
@@ -226,7 +226,7 @@ func InstallUpdate(ctx context.Context, opt *Options) error {
 
 	err = replaceExecutable(targetFile, newFile, savedFile)
 	if err == nil {
-		fs.Logf(nil, "Successfully updated rclone from version %s to version %s", oldVersion, newVersion)
+		fs.LogfCtx(ctx, nil, "Successfully updated rclone from version %s to version %s", oldVersion, newVersion)
 	}
 	return err
 }
@@ -240,7 +240,7 @@ func installPackage(ctx context.Context, beta bool, version, siteURL, packageFor
 	_ = tempFile.Close()
 	defer func() {
 		if rmErr := os.Remove(packageFile); rmErr != nil {
-			fs.Errorf(nil, "%s: could not remove temporary package: %v", packageFile, rmErr)
+			fs.ErrorfCtx(ctx, nil, "%s: could not remove temporary package: %v", packageFile, rmErr)
 		}
 	}()
 	if err := downloadUpdate(ctx, beta, version, siteURL, packageFile, packageFormat); err != nil {
@@ -372,7 +372,7 @@ func downloadUpdate(ctx context.Context, beta bool, version, siteURL, newFile, p
 	}
 	gotHash := sha256.Sum256(archiveBuf)
 	strHash := hex.EncodeToString(gotHash[:])
-	fs.Debugf(nil, "downloaded release archive with hashsum %s from %s", strHash, archiveURL)
+	fs.DebugfCtx(ctx, nil, "downloaded release archive with hashsum %s from %s", strHash, archiveURL)
 
 	// CI/CD does not provide hashsums for beta releases
 	if !beta {
@@ -398,7 +398,7 @@ func downloadUpdate(ctx context.Context, beta bool, version, siteURL, newFile, p
 	if err != nil {
 		return err
 	}
-	fs.Debugf(nil, "extracted %s to %s", entryName, newFile)
+	fs.DebugfCtx(ctx, nil, "extracted %s to %s", entryName, newFile)
 	return nil
 }
 

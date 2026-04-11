@@ -444,7 +444,7 @@ func (f *Fs) tlsConfig() *tls.Config {
 
 // Open a new connection to the FTP server.
 func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
-	fs.Debugf(f, "Connecting to FTP server")
+	fs.DebugfCtx(ctx, f, "Connecting to FTP server")
 
 	// tls.Config for this connection only. Will be used for data
 	// and control connections.
@@ -453,12 +453,12 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 	// Make ftp library dial with fshttp dialer optionally using TLS
 	initialConnection := true
 	dial := func(network, address string) (conn net.Conn, err error) {
-		fs.Debugf(f, "dial(%q,%q)", network, address)
+		fs.DebugfCtx(ctx, f, "dial(%q,%q)", network, address)
 		defer func() {
 			if err != nil {
-				fs.Debugf(f, "> dial: conn=%v, err=%v", conn, err)
+				fs.DebugfCtx(ctx, f, "> dial: conn=%v, err=%v", conn, err)
 			} else {
-				fs.Debugf(f, "> dial: conn=%s->%s, err=%v", conn.LocalAddr(), conn.RemoteAddr(), err)
+				fs.DebugfCtx(ctx, f, "> dial: conn=%s->%s, err=%v", conn.LocalAddr(), conn.RemoteAddr(), err)
 			}
 		}()
 		baseDialer := fshttp.NewDialer(ctx)
@@ -625,7 +625,7 @@ func (f *Fs) drainPool(ctx context.Context) (err error) {
 		f.drain.Stop()
 	}
 	if len(f.pool) != 0 {
-		fs.Debugf(f, "closing %d unused connections", len(f.pool))
+		fs.DebugfCtx(ctx, f, "closing %d unused connections", len(f.pool))
 	}
 	for i, c := range f.pool {
 		if cErr := c.Quit(); cErr != nil {
@@ -918,7 +918,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		timer.Stop()
 	case <-timer.C:
 		// if timer fired assume no error but connection dead
-		fs.Errorf(f, "Timeout when waiting for List")
+		fs.ErrorfCtx(ctx, f, "Timeout when waiting for List")
 		return nil, errors.New("timeout when waiting for List")
 	}
 
@@ -1097,7 +1097,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 	err := f.mkParentDir(ctx, remote)
@@ -1134,7 +1134,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 	srcPath := path.Join(srcFs.root, srcRemote)
@@ -1224,7 +1224,7 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 // SetModTime sets the modification time of the object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	if !o.fs.fSetTime {
-		fs.Debugf(o.fs, "SetModTime is not supported")
+		fs.DebugfCtx(ctx, o.fs, "SetModTime is not supported")
 		return nil
 	}
 	c, err := o.fs.getFtpConnection(ctx)
@@ -1318,7 +1318,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 			offset, limit = x.Decode(o.Size())
 		default:
 			if option.Mandatory() {
-				fs.Logf(o, "Unsupported mandatory option: %v", option)
+				fs.LogfCtx(ctx, o, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}
@@ -1363,9 +1363,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		time.Sleep(1 * time.Second)
 		removeErr := o.Remove(ctx)
 		if removeErr != nil {
-			fs.Debugf(o, "Failed to remove: %v", removeErr)
+			fs.DebugfCtx(ctx, o, "Failed to remove: %v", removeErr)
 		} else {
-			fs.Debugf(o, "Removed after failed upload: %v", err)
+			fs.DebugfCtx(ctx, o, "Removed after failed upload: %v", err)
 		}
 	}
 	c, err := o.fs.getFtpConnection(ctx)

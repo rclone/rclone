@@ -43,7 +43,7 @@ func (f *Fs) newSSHClientInternal(ctx context.Context, network, addr string, ssh
 	if err != nil {
 		return nil, err
 	}
-	fs.Debugf(f, "New connection %s->%s to %q", c.LocalAddr(), c.RemoteAddr(), c.ServerVersion())
+	fs.DebugfCtx(ctx, f, "New connection %s->%s to %q", c.LocalAddr(), c.RemoteAddr(), c.ServerVersion())
 	srv := ssh.NewClient(c, chans, reqs)
 	return sshClientInternal{srv}, nil
 }
