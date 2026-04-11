@@ -1,0 +1,4 @@
+# This directory gets the web gui release which we ignore
+*
+# Except this file which we use to keep the directory available
+!.gitignore

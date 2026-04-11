@@ -94,8 +94,19 @@ func TestFreePort(t *testing.T) {
 	assert.Less(t, port, 65536)
 }
 
+// newTestHandler returns a guiHandler, or skips the test if the embedded
+// GUI bundle is not present (i.e. `make fetch-gui` has not been run).
+func newTestHandler(t *testing.T) http.Handler {
+	t.Helper()
+	h, err := guiHandler()
+	if err != nil {
+		t.Skipf("skipping: GUI dist not embedded (run `make fetch-gui`): %v", err)
+	}
+	return h
+}
+
 func TestHandlerServesIndexHTML(t *testing.T) {
-	h := guiHandler()
+	h := newTestHandler(t)
 	req := httptest.NewRequest("GET", "/", nil)
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, req)
@@ -109,7 +120,7 @@ func TestHandlerServesIndexHTML(t *testing.T) {
 }
 
 func TestHandlerServesStaticAssets(t *testing.T) {
-	h := guiHandler()
+	h := newTestHandler(t)
 	req := httptest.NewRequest("GET", "/icon.svg", nil)
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, req)
@@ -123,7 +134,7 @@ func TestHandlerServesStaticAssets(t *testing.T) {
 }
 
 func TestHandlerSPAFallback(t *testing.T) {
-	h := guiHandler()
+	h := newTestHandler(t)
 
 	// /login is not a real file — it should fall back to index.html
 	req := httptest.NewRequest("GET", "/login", nil)
@@ -140,7 +151,7 @@ func TestHandlerSPAFallback(t *testing.T) {
 }
 
 func TestHandlerSPAFallbackDeepPath(t *testing.T) {
-	h := guiHandler()
+	h := newTestHandler(t)
 
 	req := httptest.NewRequest("GET", "/some/deep/route", nil)
 	w := httptest.NewRecorder()

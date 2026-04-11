@@ -80,11 +80,11 @@ Use --no-auth to disable authentication entirely:
 		"versionIntroduced": "v1.74",
 		"groups":            "RC",
 	},
-	Run: func(command *cobra.Command, args []string) {
+	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(0, 0, command, args)
 		ctx := context.Background()
 
-		// --- 1. Create the GUI server (binds port eagerly, before Serve) ---
+		// Create the GUI server (binds port eagerly, before Serve)
 		guiCfg := libhttp.DefaultCfg()
 		if command.Flags().Changed("addr") {
 			guiCfg.ListenAddr = guiAddr
@@ -93,13 +93,13 @@ Use --no-auth to disable authentication entirely:
 		}
 		guiServer, err := libhttp.NewServer(ctx, libhttp.WithConfig(guiCfg))
 		if err != nil {
-			fs.Fatalf(nil, "Failed to create GUI server: %v", err)
+			return fmt.Errorf("failed to create GUI server: %w", err)
 		}
 
 		// Read the GUI origin from the bound address (available before Serve).
 		guiOrigin := originFromURL(guiServer.URLs()[0])
 
-		// --- 2. Configure the RC API server ---
+		// Configure the RC API server
 		opt := rc.Opt // copy global defaults
 		opt.Enabled = true
 		opt.WebUI = false
@@ -110,7 +110,7 @@ Use --no-auth to disable authentication entirely:
 		} else {
 			port, err := freePort()
 			if err != nil {
-				fs.Fatalf(nil, "Failed to find a free port for RC: %v", err)
+				return fmt.Errorf("failed to find a free port for RC: %w", err)
 			}
 			opt.HTTP.ListenAddr = []string{fmt.Sprintf("localhost:%d", port)}
 		}
@@ -123,7 +123,7 @@ Use --no-auth to disable authentication entirely:
 			opt.EnableMetrics = enableMetrics
 		}
 
-		// --- 3. Generate credentials if needed ---
+		// Generate credentials if needed
 		if command.Flags().Changed("user") {
 			opt.Auth.BasicUser = user
 		}
@@ -142,28 +142,28 @@ Use --no-auth to disable authentication entirely:
 			if opt.Auth.BasicPass == "" {
 				randomPass, err := random.Password(128)
 				if err != nil {
-					fs.Fatalf(nil, "Failed to make password: %v", err)
+					return fmt.Errorf("failed to make password: %w", err)
 				}
 				opt.Auth.BasicPass = randomPass
 				fs.Infof(nil, "No password specified. Using random password: %s", randomPass)
 			}
 		}
 
-		// --- 4. Start the RC server (unchanged rcserver.Start) ---
+		// Start the RC server (unchanged rcserver.Start)
 		rcServer, err := rcserver.Start(ctx, &opt)
-		if err != nil {
-			fs.Fatalf(nil, "Failed to start RC server: %v", err)
-		}
-		if rcServer == nil {
-			fs.Fatal(nil, "RC server not configured")
+		if err != nil || rcServer == nil {
+			return fmt.Errorf("failed to start RC server: %w", err)
 		}
 
 		// Build the RC URL from the address we configured (rcserver.Server
 		// does not expose URLs, and we know the address we passed in).
 		rcURL := "http://" + opt.HTTP.ListenAddr[0] + "/"
 
-		// --- 5. Mount the embedded GUI handler and start serving ---
-		spaHandler := guiHandler()
+		// Mount the embedded GUI handler and start serving
+		spaHandler, err := guiHandler()
+		if err != nil || spaHandler == nil {
+			return fmt.Errorf("failed to start GUI handler: %w", err)
+		}
 		guiServer.Router().Get("/*", spaHandler.ServeHTTP)
 		guiServer.Router().Head("/*", spaHandler.ServeHTTP)
 		guiServer.Serve()
@@ -171,7 +171,7 @@ Use --no-auth to disable authentication entirely:
 		guiURL := guiServer.URLs()[0]
 		fs.Logf(nil, "Serving GUI on %s", guiURL)
 
-		// --- 6. Open browser ---
+		// Open browser
 		loginURL := buildLoginURL(guiURL, rcURL, opt.Auth.BasicUser, opt.Auth.BasicPass, opt.NoAuth)
 
 		fs.Logf(nil, "GUI available at %s", loginURL)
@@ -181,7 +181,7 @@ Use --no-auth to disable authentication entirely:
 			}
 		}
 
-		// --- 7. Wait for either server to exit, then shut both down ---
+		// Wait for either server to exit, then shut both down
 		defer systemd.Notify()()
 		done := make(chan struct{}, 2)
 		go func() { rcServer.Wait(); done <- struct{}{} }()
@@ -189,6 +189,7 @@ Use --no-auth to disable authentication entirely:
 		<-done
 		_ = rcServer.Shutdown()
 		_ = guiServer.Shutdown()
+		return nil
 	},
 }
 
@@ -214,10 +215,14 @@ func originFromURL(rawURL string) string {
 
 // guiHandler returns an http.Handler that serves the embedded GUI bundle
 // with SPA fallback: paths that don't match a real file return index.html.
-func guiHandler() http.Handler {
+func guiHandler() (http.Handler, error) {
 	sub, err := iofs.Sub(assets, "dist")
 	if err != nil {
-		panic("gui: embedded dist missing: " + err.Error())
+		return nil, fmt.Errorf("embedded GUI dir not found: was `make fetch-gui` run before building?: %w", err)
+	}
+	_, err = iofs.Stat(sub, "index.html")
+	if err != nil {
+		return nil, fmt.Errorf("embedded GUI not found: was `make fetch-gui` run before building?: %w", err)
 	}
 	fileServer := http.FileServer(http.FS(sub))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -233,7 +238,7 @@ func guiHandler() http.Handler {
 		// client-side routing (e.g. /login) works.
 		r.URL.Path = "/"
 		fileServer.ServeHTTP(w, r)
-	})
+	}), nil
 }
 
 // guiBaseURL is the GUI server's URL. rcURL is the RC API server's URL.

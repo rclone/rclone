@@ -71,6 +71,10 @@ rm -rf "${DEST}"
 mkdir -p "${DEST}"
 unzip -q "${TMPFILE}" -d "${DEST}"
 
+# Restore marker files
+git checkout "${DEST}"/.gitignore
+git checkout "${DEST}"/README.md
+
 # Write tag for cache comparison
 echo -n "${TAG}" > "${TAG_FILE}"
 
