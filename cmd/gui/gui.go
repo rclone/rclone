@@ -2,6 +2,7 @@
 package gui
 
 import (
+	"archive/zip"
 	"context"
 	"embed"
 	"flag"
@@ -10,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/rclone/rclone/cmd"
@@ -49,16 +51,28 @@ func init() {
 }
 
 var commandDefinition = &cobra.Command{
-	Use:   "gui",
+	Use:   "gui [path]",
 	Short: `Open the web based GUI.`,
 	Long: `This command starts an embedded web GUI for rclone and opens it in
 your default browser.
 
-It starts an RC API server and a GUI server on separate localhost
+This starts an RC API server and a GUI server on separate localhost
 ports, generates login credentials automatically unless --no-auth
 is specified, and opens the browser already authenticated.
 
     rclone gui
+
+By default rclone gui serves the web GUI that was embedded into the
+rclone binary at build time from https://github.com/rclone/rclone-web/
+You can override this by passing a path to either an unpacked GUI
+directory or a dist.zip archive (e.g. one downloaded from the
+rclone-web releases page):
+
+    rclone gui ./my-dist/
+    rclone gui ./dist.zip
+
+This is useful for iterating on the GUI locally without rebuilding
+rclone, or for serving a different GUI release than the one embedded.
 
 Use --no-open-browser to skip opening the browser automatically:
 
@@ -81,8 +95,20 @@ Use --no-auth to disable authentication entirely:
 		"groups":            "RC",
 	},
 	RunE: func(command *cobra.Command, args []string) error {
-		cmd.CheckArgs(0, 0, command, args)
+		cmd.CheckArgs(0, 1, command, args)
 		ctx := context.Background()
+
+		// Resolve the GUI source (embedded, directory, or .zip)
+		// before binding any sockets so errors surface immediately.
+		var srcPath string
+		if len(args) == 1 {
+			srcPath = args[0]
+		}
+		srcFS, cleanupSrc, err := guiSourceFS(srcPath)
+		if err != nil {
+			return err
+		}
+		defer func() { _ = cleanupSrc() }()
 
 		// Create the GUI server (binds port eagerly, before Serve)
 		guiCfg := libhttp.DefaultCfg()
@@ -159,8 +185,8 @@ Use --no-auth to disable authentication entirely:
 		// does not expose URLs, and we know the address we passed in).
 		rcURL := "http://" + opt.HTTP.ListenAddr[0] + "/"
 
-		// Mount the embedded GUI handler and start serving
-		spaHandler, err := guiHandler()
+		// Mount the GUI handler and start serving
+		spaHandler, err := guiHandler(srcFS)
 		if err != nil || spaHandler == nil {
 			return fmt.Errorf("failed to start GUI handler: %w", err)
 		}
@@ -213,24 +239,53 @@ func originFromURL(rawURL string) string {
 	return u.Scheme + "://" + u.Host
 }
 
-// guiHandler returns an http.Handler that serves the embedded GUI bundle
-// with SPA fallback: paths that don't match a real file return index.html.
-func guiHandler() (http.Handler, error) {
-	sub, err := iofs.Sub(assets, "dist")
-	if err != nil {
-		return nil, fmt.Errorf("embedded GUI dir not found: was `make fetch-gui` run before building?: %w", err)
+// guiSourceFS opens the GUI bundle at the given path. An empty path
+// returns the embedded bundle. The returned cleanup func must be
+// called on shutdown (no-op for embedded/DirFS, Close for the zip
+// reader).
+func guiSourceFS(path string) (iofs.FS, func() error, error) {
+	noop := func() error { return nil }
+	if path == "" {
+		sub, err := iofs.Sub(assets, "dist")
+		if err != nil {
+			return nil, nil, fmt.Errorf("embedded GUI dir not found: was `make fetch-gui` run before building?: %w", err)
+		}
+		if _, err := iofs.Stat(sub, "index.html"); err != nil {
+			return nil, nil, fmt.Errorf("embedded GUI not found: was `make fetch-gui` run before building?: %w", err)
+		}
+		return sub, noop, nil
 	}
-	_, err = iofs.Stat(sub, "index.html")
+	info, err := os.Stat(path)
 	if err != nil {
-		return nil, fmt.Errorf("embedded GUI not found: was `make fetch-gui` run before building?: %w", err)
+		return nil, nil, fmt.Errorf("failed to stat GUI source %q: %w", path, err)
 	}
-	fileServer := http.FileServer(http.FS(sub))
+	if info.IsDir() {
+		return os.DirFS(path), noop, nil
+	}
+	if info.Mode().IsRegular() && strings.HasSuffix(strings.ToLower(path), ".zip") {
+		zr, err := zip.OpenReader(path)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to open GUI zip %q: %w", path, err)
+		}
+		return zr, zr.Close, nil
+	}
+	return nil, nil, fmt.Errorf("GUI source must be a directory or a .zip file: %q", path)
+}
+
+// guiHandler returns an http.Handler that serves the GUI bundle from
+// srcFS with SPA fallback: paths that don't match a real file return
+// index.html.
+func guiHandler(srcFS iofs.FS) (http.Handler, error) {
+	if _, err := iofs.Stat(srcFS, "index.html"); err != nil {
+		return nil, fmt.Errorf("GUI bundle has no index.html: %w", err)
+	}
+	fileServer := http.FileServer(http.FS(srcFS))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := strings.TrimPrefix(r.URL.Path, "/")
 		if path == "" {
 			path = "index.html"
 		}
-		if _, err := iofs.Stat(sub, path); err == nil {
+		if _, err := iofs.Stat(srcFS, path); err == nil {
 			fileServer.ServeHTTP(w, r)
 			return
 		}
