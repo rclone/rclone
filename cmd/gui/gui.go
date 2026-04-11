@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
@@ -201,14 +202,18 @@ Use --no-auth to disable authentication entirely:
 			}
 		}
 
-		// Wait for either server to exit, then shut both down
+		// Wait for either server to exit, then shut both down and
+		// join the second goroutine before returning.
 		defer systemd.Notify()()
+		var wg sync.WaitGroup
 		done := make(chan struct{}, 2)
-		go func() { rcServer.Wait(); done <- struct{}{} }()
-		go func() { guiServer.Wait(); done <- struct{}{} }()
+		wg.Add(2)
+		go func() { defer wg.Done(); rcServer.Wait(); done <- struct{}{} }()
+		go func() { defer wg.Done(); guiServer.Wait(); done <- struct{}{} }()
 		<-done
 		_ = rcServer.Shutdown()
 		_ = guiServer.Shutdown()
+		wg.Wait()
 		return nil
 	},
 }
