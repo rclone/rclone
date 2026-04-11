@@ -5,7 +5,6 @@ import (
 	"archive/zip"
 	"context"
 	"embed"
-	"flag"
 	"fmt"
 	iofs "io/fs"
 	"net/http"
@@ -196,9 +195,9 @@ Use --no-auth to disable authentication entirely:
 		loginURL := buildLoginURL(guiURL, rcURL, opt.Auth.BasicUser, opt.Auth.BasicPass, opt.NoAuth)
 
 		fs.Logf(nil, "GUI available at %s", loginURL)
-		if flag.Lookup("test.v") == nil && !noOpenBrowser {
+		if !noOpenBrowser {
 			if err := open.Start(loginURL); err != nil {
-				fs.Errorf(nil, "Failed to open GUI in browser: %v", err)
+				fs.Errorf(nil, "failed to open GUI in browser: %v", err)
 			}
 		}
 
