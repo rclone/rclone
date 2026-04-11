@@ -13,10 +13,18 @@ DEST="cmd/gui/dist"
 TAG_FILE="${DEST}/.tag"
 
 CURL_OPTS=(-fSs --retry 5 --retry-delay 2 --retry-all-errors)
+API_HEADERS=(-H "Accept: application/vnd.github+json")
+
+# Use token auth in CI to avoid GitHub API rate limits.
+TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
+if [[ -n "${TOKEN}" ]]; then
+    API_HEADERS+=(-H "Authorization: Bearer ${TOKEN}")
+fi
 
 # Get the latest release info
 echo "Checking latest release of ${REPO}..."
 RELEASE_JSON=$(curl "${CURL_OPTS[@]}" \
+    "${API_HEADERS[@]}" \
     "https://api.github.com/repos/${REPO}/releases/latest") || {
     echo "Error: failed to fetch release info from GitHub API" >&2
     exit 1

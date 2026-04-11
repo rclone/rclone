@@ -95,6 +95,8 @@ jobs:
     name: ${{ matrix.job_name }}
 
     runs-on: ${{ matrix.os }}
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
 
     steps:
       - name: Checkout
@@ -210,6 +212,8 @@ jobs:
     timeout-minutes: 30
     name: "lint"
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
 
     steps:
       - name: Get runner parameters
@@ -310,6 +314,8 @@ jobs:
     timeout-minutes: 30
     name: "android-all"
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
 
     steps:
       - name: Checkout
