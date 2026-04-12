@@ -284,7 +284,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			}
 			err = srv.LoginWithKeys(opt.SessionID, decodedMasterKey)
 			if err != nil {
-				fs.Debugf(f, "login with previous auth keys failed: %v", err)
+				return nil, fmt.Errorf("login with previous auth keys failed: %w", err)
 			}
 		}
 	}
