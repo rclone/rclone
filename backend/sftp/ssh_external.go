@@ -49,7 +49,10 @@ func (s *sshClientExternal) Close() error {
 
 // NewSession makes a new external SSH connection
 func (s *sshClientExternal) NewSession() (sshSession, error) {
-	session := s.f.newSSHSessionExternal()
+	session, err := s.f.newSSHSessionExternal()
+	if err != nil {
+		return nil, err
+	}
 	if s.session == nil {
 		// Store the first session so Wait() and Close() can use it
 		s.session = session
@@ -84,7 +87,7 @@ type sshSessionExternal struct {
 	waitErr     error     // result of the Wait() call
 }
 
-func (f *Fs) newSSHSessionExternal() *sshSessionExternal {
+func (f *Fs) newSSHSessionExternal() (*sshSessionExternal, error) {
 	s := &sshSessionExternal{
 		f: f,
 	}
@@ -97,12 +100,19 @@ func (f *Fs) newSSHSessionExternal() *sshSessionExternal {
 	// the 'ssh' command. This assumes that passwordless login is
 	// correctly configured.
 	ssh := slices.Clone(s.f.opt.SSH)
-	s.cmd = exec.CommandContext(ctx, ssh[0], ssh[1:]...)
+
+	// Resolve the SSH binary to an absolute path to prevent command injection
+	sshBin, err := exec.LookPath(ssh[0])
+	if err != nil {
+		cancel()
+		return nil, fmt.Errorf("ssh external: failed to find SSH binary %q: %w", ssh[0], err)
+	}
+	s.cmd = exec.CommandContext(ctx, sshBin, ssh[1:]...) // nosemgrep: go.lang.security.audit.dangerous-exec-command.dangerous-exec-command
 
 	// Allow the command a short time only to shut down
 	s.cmd.WaitDelay = time.Second
 
-	return s
+	return s, nil
 }
 
 // Setenv sets an environment variable that will be applied to any
