@@ -45,7 +45,13 @@
             // Mobile close header
             var header = document.createElement("div");
             header.className = "dropdown-mobile-header";
-            header.innerHTML = '<span>' + label + '</span><span class="dropdown-mobile-close">&times;</span>';
+            var labelSpan = document.createElement("span");
+            labelSpan.textContent = label;
+            var closeSpan = document.createElement("span");
+            closeSpan.className = "dropdown-mobile-close";
+            closeSpan.innerHTML = "&times;";
+            header.appendChild(labelSpan);
+            header.appendChild(closeSpan);
             menu.insertBefore(header, menu.firstChild);
             header.addEventListener("click", function() {
                 menu.classList.remove("show");

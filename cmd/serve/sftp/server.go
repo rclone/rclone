@@ -55,7 +55,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 	if proxy.Opt.AuthProxy != "" {
 		s.proxy = proxy.New(ctx, proxyOpt, vfsOpt)
 	} else {
-		s.vfs = vfs.New(f, vfsOpt)
+		s.vfs = vfs.New(ctx, f, vfsOpt)
 	}
 	err := s.configure()
 	if err != nil {

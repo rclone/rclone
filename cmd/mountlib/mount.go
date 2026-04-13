@@ -369,7 +369,7 @@ func (m *MountPoint) Mount() (mountDaemon *os.Process, err error) {
 		}
 	}
 
-	m.VFS = vfs.New(m.Fs, &m.VFSOpt)
+	m.VFS = vfs.New(context.Background(), m.Fs, &m.VFSOpt)
 
 	m.ErrChan, m.UnmountFn, err = m.MountFn(m.VFS, m.MountPoint, &m.MountOpt)
 	if err != nil {

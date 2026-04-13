@@ -14,19 +14,21 @@ import (
 	"bytes"
 	"context"
 	"crypto/md5"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"path"
-	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
@@ -41,6 +43,7 @@ const (
 	maxSleep           = 2 * time.Second
 	pacerBurst         = 1
 	linkboxAPIURL      = "https://www.linkbox.to/api/open/"
+	linkboxWebAPIURL   = "https://www.linkbox.to/api/"
 	rootID             = "0" // ID of root directory
 )
 
@@ -54,6 +57,20 @@ func init() {
 			Help:      "Token from https://www.linkbox.to/admin/account",
 			Sensitive: true,
 			Required:  true,
+		}, {
+			Name:      "email",
+			Help:      "Email for login",
+			Sensitive: true,
+			Required:  true,
+		}, {
+			Name:       "password",
+			Help:       "Password for login",
+			IsPassword: true,
+			Required:   true,
+		}, {
+			Name: "web_token",
+			Help: "Web API login token - set automatically.",
+			Hide: fs.OptionHideBoth,
 		}},
 	}
 	fs.Register(fsi)
@@ -61,19 +78,26 @@ func init() {
 
 // Options defines the configuration for this backend
 type Options struct {
-	Token string `config:"token"`
+	Token    string `config:"token"`
+	Email    string `config:"email"`
+	Password string `config:"password"`
+	WebToken string `config:"web_token"`
 }
 
 // Fs stores the interface to the remote Linkbox files
 type Fs struct {
-	name     string
-	root     string
-	opt      Options            // options for this backend
-	features *fs.Features       // optional features
-	ci       *fs.ConfigInfo     // global config
-	srv      *rest.Client       // the connection to the server
-	dirCache *dircache.DirCache // Map of directory path to directory id
-	pacer    *fs.Pacer
+	name       string
+	root       string
+	opt        Options            // options for this backend
+	features   *fs.Features       // optional features
+	ci         *fs.ConfigInfo     // global config
+	srv        *rest.Client       // the connection to the server
+	cdnSrv     *rest.Client       // HTTP client for CDN downloads (HTTP/2 disabled)
+	dirCache   *dircache.DirCache // Map of directory path to directory id
+	pacer      *fs.Pacer
+	m          configmap.Mapper // config mapper for saving tokens
+	webToken   string           // token from web API login
+	webTokenMu sync.Mutex       // protects webToken
 }
 
 // Object is a remote object that has been stat'd (so it exists, but is not necessarily open for reading)
@@ -104,14 +128,27 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	ci := fs.GetConfig(ctx)
 
-	f := &Fs{
-		name: name,
-		opt:  *opt,
-		root: root,
-		ci:   ci,
-		srv:  rest.NewClient(fshttp.NewClient(ctx)),
+	// Create a separate HTTP client for CDN downloads with HTTP/2 disabled.
+	// The Linkbox CDN intermittently blocks Go's HTTP/2 fingerprint and
+	// non-browser User-Agents.
+	cdnClient := fshttp.NewClientCustom(ctx, func(t *http.Transport) {
+		t.TLSNextProto = map[string]func(string, *tls.Conn) http.RoundTripper{}
+	})
+	if tr, ok := cdnClient.Transport.(*fshttp.Transport); ok {
+		tr.SetRequestFilter(func(req *http.Request) {
+			req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+		})
+	}
 
-		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep))),
+	f := &Fs{
+		name:   name,
+		opt:    *opt,
+		root:   root,
+		ci:     ci,
+		srv:    rest.NewClient(fshttp.NewClient(ctx)),
+		cdnSrv: rest.NewClient(cdnClient),
+		pacer:  fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep))),
+		m:      m,
 	}
 	f.dirCache = dircache.New(root, rootID, f)
 
@@ -120,12 +157,27 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		CaseInsensitive:         true,
 	}).Fill(ctx, f)
 
+	if f.opt.Email == "" || f.opt.Password == "" {
+		return nil, fmt.Errorf("email and password are required - run `rclone config`")
+	}
+
+	// Load cached web token or login to get a new one
+	if opt.WebToken != "" {
+		f.webToken = opt.WebToken
+		fs.Debugf(f, "Using cached web token")
+	} else {
+		err = f.login(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// Find the current root
 	err = f.dirCache.FindRoot(ctx, false)
 	if err != nil {
 		// Assume it is a file
 		newRoot, remote := dircache.SplitPath(root)
-		tempF := *f
+		tempF := *f //nolint:govet // copying mutex is OK here as it is a new Fs
 		tempF.dirCache = dircache.New(newRoot, rootID, &tempF)
 		tempF.root = newRoot
 		// Make new Fs which is the parent
@@ -152,6 +204,78 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return f, fs.ErrorIsFile
 	}
 	return f, nil
+}
+
+// loginResponse is the response from the web API login
+type loginResponse struct {
+	response
+	Data struct {
+		Token string `json:"token"`
+	} `json:"data"`
+}
+
+// login authenticates with the web API using email and password
+// and saves the token in the config for reuse.
+func (f *Fs) login(ctx context.Context) error {
+	password, err := obscure.Reveal(f.opt.Password)
+	if err != nil {
+		return fmt.Errorf("failed to decrypt password: %w", err)
+	}
+	opts := &rest.Opts{
+		Method:  "GET",
+		RootURL: linkboxWebAPIURL,
+		Path:    "user/login_email",
+		Parameters: url.Values{
+			"email":    {f.opt.Email},
+			"pwd":      {password},
+			"platform": {"web"},
+			"pf":       {"web"},
+			"lan":      {"en"},
+		},
+	}
+	var result loginResponse
+	err = getUnmarshaledResponse(ctx, f, opts, &result)
+	if err != nil {
+		return fmt.Errorf("login failed: %w", err)
+	}
+	if result.Data.Token == "" {
+		return fmt.Errorf("login returned empty token")
+	}
+	f.webTokenMu.Lock()
+	f.webToken = result.Data.Token
+	f.webTokenMu.Unlock()
+	// Save token to config for reuse across invocations
+	f.m.Set("web_token", f.webToken)
+	fs.Debugf(f, "Login successful")
+	return nil
+}
+
+// shouldRetryWeb determines whether a web API error should be retried.
+//
+// If the API returns an error it may be because the token has expired,
+// so this refreshes the token and updates the request parameters for
+// the retry.
+func (f *Fs) shouldRetryWeb(ctx context.Context, resp *http.Response, err error, result responser, opts *rest.Opts) (bool, error) {
+	if fserrors.ContextError(ctx, &err) {
+		return false, err
+	}
+	if fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes) {
+		return true, err
+	}
+	// If the web API returned an error, it may be due to an expired token.
+	// Refresh the token and retry.
+	if result.IsError() {
+		fs.Debugf(f, "Web API returned error %q - refreshing token", result.Error())
+		loginErr := f.login(ctx)
+		if loginErr != nil {
+			return false, loginErr
+		}
+		f.webTokenMu.Lock()
+		opts.Parameters.Set("token", f.webToken)
+		f.webTokenMu.Unlock()
+		return true, nil
+	}
+	return false, nil
 }
 
 type entity struct {
@@ -216,40 +340,28 @@ func getUnmarshaledResponse(ctx context.Context, f *Fs, opts *rest.Opts, result 
 // Should return true to finish processing
 type listAllFn func(*entity) bool
 
-// Search is a bit fussy about which characters match
-//
-// If the name doesn't match this then do an dir list instead
-// N.B.: Linkbox doesn't support search by name that is longer than 50 chars
-var searchOK = regexp.MustCompile(`^[a-zA-Z0-9_ -.]{1,50}$`)
-
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
-//
-// If you set name then search ignores dirID. name is a substring
-// search also so name="dir" matches "sub dir" also. This filters it
-// down so it only returns items in dirID
 func (f *Fs) listAll(ctx context.Context, dirID string, name string, fn listAllFn) (found bool, err error) {
+	_ = name // name parameter kept for call-site compatibility but unused with web API
 	var (
 		pageNumber       = 0
 		numberOfEntities = maxEntitiesPerPage
 	)
-	name = strings.TrimSpace(name) // search doesn't like spaces
-	if !searchOK.MatchString(name) {
-		// If name isn't good then do an unbounded search
-		name = ""
-	}
 
 OUTER:
 	for numberOfEntities == maxEntitiesPerPage {
 		pageNumber++
+		f.webTokenMu.Lock()
+		webToken := f.webToken
+		f.webTokenMu.Unlock()
 		opts := &rest.Opts{
 			Method:  "GET",
-			RootURL: linkboxAPIURL,
-			Path:    "file_search",
+			RootURL: linkboxWebAPIURL,
+			Path:    "file/my_file_list/web",
 			Parameters: url.Values{
-				"token":    {f.opt.Token},
-				"name":     {name},
+				"token":    {webToken},
 				"pid":      {dirID},
 				"pageNo":   {itoa(pageNumber)},
 				"pageSize": {itoa64(maxEntitiesPerPage)},
@@ -257,7 +369,10 @@ OUTER:
 		}
 
 		var responseResult fileSearchRes
-		err = getUnmarshaledResponse(ctx, f, opts, &responseResult)
+		err = f.pacer.Call(func() (bool, error) {
+			resp, err := f.srv.CallJSON(ctx, opts, nil, &responseResult)
+			return f.shouldRetryWeb(ctx, resp, err, &responseResult, opts)
+		})
 		if err != nil {
 			return false, fmt.Errorf("getting files failed: %w", err)
 		}
@@ -403,7 +518,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 }
 
 // get an entity with leaf from dirID
-func getEntity(ctx context.Context, f *Fs, leaf string, directoryID string, token string) (*entity, error) {
+func getEntity(ctx context.Context, f *Fs, leaf string, directoryID string) (*entity, error) {
 	var result *entity
 	var resultErr = fs.ErrorObjectNotFound
 	_, err := f.listAll(ctx, directoryID, leaf, func(entity *entity) bool {
@@ -441,7 +556,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		return nil, err
 	}
 
-	entity, err := getEntity(ctx, f, leaf, dirID, f.opt.Token)
+	entity, err := getEntity(ctx, f, leaf, dirID)
 	if err != nil {
 		return nil, err
 	}
@@ -518,7 +633,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	downloadURL := o.fullURL
 	if downloadURL == "" {
 		_, name := splitDirAndName(o.Remote())
-		newObject, err := getEntity(ctx, o.fs, name, itoa64(o.dirID), o.fs.opt.Token)
+		newObject, err := getEntity(ctx, o.fs, name, itoa64(o.dirID))
 		if err != nil {
 			return nil, err
 		}
@@ -530,6 +645,10 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		downloadURL = newObject.URL
 	}
 
+	if downloadURL == "" {
+		return nil, fmt.Errorf("no download URL for %q - try re-running `rclone config reconnect`", o.Remote())
+	}
+
 	opts := &rest.Opts{
 		Method:  "GET",
 		RootURL: downloadURL,
@@ -538,7 +657,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 
 	err := o.fs.pacer.Call(func() (bool, error) {
 		var err error
-		res, err = o.fs.srv.Call(ctx, opts)
+		res, err = o.fs.cdnSrv.Call(ctx, opts)
 		return o.fs.shouldRetry(ctx, res, err)
 	})
 
@@ -697,7 +816,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	var sleepTime = 100 * time.Millisecond
 	var entity *entity
 	for try := 1; try <= maxTries; try++ {
-		entity, err = getEntity(ctx, o.fs, leaf, dirID, o.fs.opt.Token)
+		entity, err = getEntity(ctx, o.fs, leaf, dirID)
 		if err == nil {
 			break
 		}
