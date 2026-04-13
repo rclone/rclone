@@ -830,6 +830,80 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	return usage, nil
 }
 
+// Move moves a file to a new location
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
+	if !ok {
+		return nil, fs.ErrorCantMove
+	}
+
+	if srcObj.uuid == "" {
+		return nil, fs.ErrorCantMove
+	}
+
+	leaf, directoryID, err := f.dirCache.FindPath(ctx, remote, true)
+	if err != nil {
+		return nil, err
+	}
+
+	// Parse name and extension from the leaf
+	baseName := f.opt.Encoding.FromStandardName(leaf)
+	newName := strings.TrimSuffix(baseName, path.Ext(baseName))
+	newType := strings.TrimPrefix(path.Ext(baseName), ".")
+
+	// Move the file server-side
+	err = f.pacer.Call(func() (bool, error) {
+		err := files.MoveFile(ctx, f.cfg, srcObj.uuid, directoryID, newName, newType)
+		return f.shouldRetry(ctx, err)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	dstObj := &Object{
+		f:       f,
+		remote:  remote,
+		id:      srcObj.id,
+		uuid:    srcObj.uuid,
+		size:    srcObj.size,
+		modTime: srcObj.modTime,
+	}
+
+	return dstObj, nil
+}
+
+// DirMove moves src, srcRemote to this remote at dstRemote
+// using server-side move operations.
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantDirMove
+//
+// If destination exists then return fs.ErrorDirExists
+func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
+	srcFs, ok := src.(*Fs)
+	if !ok {
+		return fs.ErrorCantDirMove
+	}
+
+	srcID, _, _, dstDirectoryID, dstLeaf, err := f.dirCache.DirMove(ctx, srcFs.dirCache, srcFs.root, srcRemote, f.root, dstRemote)
+	if err != nil {
+		return err
+	}
+
+	encodedLeaf := f.opt.Encoding.FromStandardName(dstLeaf)
+	err = f.pacer.Call(func() (bool, error) {
+		err := folders.MoveFolder(ctx, f.cfg, srcID, dstDirectoryID, encodedLeaf)
+		return f.shouldRetry(ctx, err)
+	})
+	if err != nil {
+		return err
+	}
+
+	srcFs.dirCache.FlushDir(srcRemote)
+	return nil
+}
+
 // Shutdown the backend, closing any background tasks and any cached
 // connections.
 func (f *Fs) Shutdown(ctx context.Context) error {
