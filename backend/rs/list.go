@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"golang.org/x/sync/errgroup"
 )
 
 type mergedEntryVotes struct {
@@ -15,16 +16,40 @@ type mergedEntryVotes struct {
 	dirVotes  int
 }
 
+type listShardResult struct {
+	entries fs.DirEntries
+	err     error
+}
+
 // List returns directory entries using quorum voting across shard backends.
 func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	if len(f.backends) == 0 {
 		return nil, fs.ErrorDirNotFound
 	}
+	n := len(f.backends)
+	shardOut := make([]listShardResult, n)
+	g, gctx := errgroup.WithContext(ctx)
+	for i := range f.backends {
+		i := i
+		g.Go(func() error {
+			entries, err := f.backends[i].List(gctx, dir)
+			shardOut[i].entries = entries
+			shardOut[i].err = err
+			if err != nil && (errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)) {
+				return err
+			}
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
 	votes := make(map[string]*mergedEntryVotes)
 	healthy := 0
 	notFound := 0
-	for i, b := range f.backends {
-		entries, err := b.List(ctx, dir)
+	for i := 0; i < n; i++ {
+		entries, err := shardOut[i].entries, shardOut[i].err
 		if err != nil {
 			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 				return nil, err
@@ -86,17 +111,38 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 }
 
 // NewObject returns the logical object if any shard has a valid particle for remote.
+// When multiple shards are valid, the lowest shard index wins (same as sequential probe).
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	for i, b := range f.backends {
-		obj, err := b.NewObject(ctx, remote)
-		if err != nil {
-			continue
+	n := len(f.backends)
+	type shardRes struct {
+		footer *Footer
+		ok     bool
+	}
+	out := make([]shardRes, n)
+	g, gctx := errgroup.WithContext(ctx)
+	for i := range f.backends {
+		i := i
+		g.Go(func() error {
+			obj, err := f.backends[i].NewObject(gctx, remote)
+			if err != nil {
+				return nil
+			}
+			ft, err := readFooterFromParticle(gctx, obj)
+			if err != nil {
+				return nil
+			}
+			out[i].footer = ft
+			out[i].ok = true
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+	for i := 0; i < n; i++ {
+		if out[i].ok {
+			return &Object{fs: f, remote: remote, footer: out[i].footer, primaryIndex: i}, nil
 		}
-		ft, err := readFooterFromParticle(ctx, obj)
-		if err != nil {
-			continue
-		}
-		return &Object{fs: f, remote: remote, footer: ft, primaryIndex: i}, nil
 	}
 	return nil, fs.ErrorObjectNotFound
 }
