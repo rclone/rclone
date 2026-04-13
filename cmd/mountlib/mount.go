@@ -195,7 +195,11 @@ type (
 	// UnmountFn is called to unmount the file system
 	UnmountFn func() error
 	// MountFn is called to mount the file system
-	MountFn func(VFS *vfs.VFS, mountpoint string, opt *Options) (<-chan error, func() error, error)
+	//
+	// It returns the errChan, unmount function, the actual mountpoint
+	// (which may differ from the input, e.g. on Windows when "*" is
+	// used to auto-assign a drive letter) and an error.
+	MountFn func(VFS *vfs.VFS, mountpoint string, opt *Options) (<-chan error, func() error, string, error)
 )
 
 // MountPoint represents a mount with options and runtime state
@@ -371,12 +375,16 @@ func (m *MountPoint) Mount() (mountDaemon *os.Process, err error) {
 
 	m.VFS = vfs.New(context.Background(), m.Fs, &m.VFSOpt)
 
-	m.ErrChan, m.UnmountFn, err = m.MountFn(m.VFS, m.MountPoint, &m.MountOpt)
+	var actualMountpoint string
+	m.ErrChan, m.UnmountFn, actualMountpoint, err = m.MountFn(m.VFS, m.MountPoint, &m.MountOpt)
 	if err != nil {
 		if len(os.Args) > 0 && strings.HasPrefix(os.Args[0], "/snap/") {
 			return nil, fmt.Errorf("mounting is not supported when running from snap")
 		}
 		return nil, fmt.Errorf("failed to mount FUSE fs: %w", err)
+	}
+	if actualMountpoint != "" {
+		m.MountPoint = actualMountpoint
 	}
 	m.MountedOn = time.Now()
 	return nil, nil

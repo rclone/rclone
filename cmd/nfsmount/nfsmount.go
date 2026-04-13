@@ -35,7 +35,7 @@ func init() {
 	nfs.AddFlags(cmdFlags)
 }
 
-func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (asyncerrors <-chan error, unmount func() error, err error) {
+func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (asyncerrors <-chan error, unmount func() error, actualMountpoint string, err error) {
 	s, err := nfs.NewServer(context.Background(), VFS, &nfs.Opt)
 	if err != nil {
 		return
@@ -112,5 +112,6 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (asyncerrors 
 		VFS.Shutdown()
 	}
 
+	actualMountpoint = mountpoint
 	return
 }

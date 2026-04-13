@@ -184,13 +184,13 @@ func mountOptions(fsys *FS, f fs.Fs, opt *mountlib.Options) (mountOpts *fuse.Mou
 //
 // returns an error, and an error channel for the serve process to
 // report an error when fusermount is called.
-func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error, func() error, error) {
+func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error, func() error, string, error) {
 	f := VFS.Fs()
 	if err := mountlib.CheckOverlap(f, mountpoint); err != nil {
-		return nil, nil, err
+		return nil, nil, "", err
 	}
 	if err := mountlib.CheckAllowNonEmpty(mountpoint, opt); err != nil {
-		return nil, nil, err
+		return nil, nil, "", err
 	}
 	fs.Debugf(f, "Mounting on %q", mountpoint)
 
@@ -223,20 +223,20 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error
 
 	root, err := fsys.Root()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, "", err
 	}
 
 	rawFS := fusefs.NewNodeFS(root, &opts)
 	server, err := fuse.NewServer(rawFS, mountpoint, &opts.MountOptions)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, "", err
 	}
 
 	//mountOpts := &fuse.MountOptions{}
 	//server, err := fusefs.Mount(mountpoint, fsys, &opts)
 	// server, err := fusefs.Mount(mountpoint, root, &opts)
 	// if err != nil {
-	// 	return nil, nil, err
+	// 	return nil, nil, "", err
 	// }
 
 	umount := func() error {
@@ -258,9 +258,9 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error
 	fs.Debugf(f, "Waiting for the mount to start...")
 	err = server.WaitMount()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, "", err
 	}
 
 	fs.Debugf(f, "Mount started")
-	return errs, umount, nil
+	return errs, umount, mountpoint, nil
 }
