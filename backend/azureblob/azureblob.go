@@ -47,6 +47,7 @@ import (
 	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/pool"
+	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/transferaccounter"
 	"golang.org/x/sync/errgroup"
 )
@@ -66,6 +67,16 @@ const (
 	defaultAccessTier     = blob.AccessTier("") // FIXME AccessTierNone
 	sasCopyValidity       = time.Hour           // how long SAS should last when doing server side copy
 )
+
+// setAcceptEncodingGzip is a per-call policy that sets Accept-Encoding: gzip
+// on every request. This prevents the Go HTTP transport from automatically
+// decompressing gzip-encoded blobs on download.
+type setAcceptEncodingGzip struct{}
+
+func (p setAcceptEncodingGzip) Do(req *policy.Request) (*http.Response, error) {
+	req.Raw().Header.Set("Accept-Encoding", "gzip")
+	return req.Next()
+}
 
 var (
 	errCantUpdateArchiveTierBlobs = fserrors.NoRetryError(errors.New("can't update archive tier blob without --azureblob-archive-tier-delete"))
@@ -350,6 +361,19 @@ rclone does if you know the container exists already.
 			Default:   "",
 			Exclusive: true,
 			Advanced:  true,
+		}, {
+			Name: "decompress",
+			Help: `If set this will decompress gzip encoded objects.
+
+It is possible to upload objects to Azure Blob Storage with "Content-Encoding: gzip"
+set. Normally rclone will download these files as compressed objects.
+
+If this flag is set then rclone will decompress these files with
+"Content-Encoding: gzip" as they are received. This means that rclone
+can't check the size and hash but the file contents will be decompressed.
+`,
+			Advanced: true,
+			Default:  false,
 		}}),
 	})
 }
@@ -373,6 +397,7 @@ type Options struct {
 	NoCheckContainer     bool                 `config:"no_check_container"`
 	NoHeadObject         bool                 `config:"no_head_object"`
 	DeleteSnapshots      string               `config:"delete_snapshots"`
+	Decompress           bool                 `config:"decompress"`
 }
 
 // Fs represents a remote azure server
@@ -397,6 +422,8 @@ type Fs struct {
 	copyToken          *pacer.TokenDispenser        // global multipart copy concurrency limiter
 	publicAccess       container.PublicAccessType   // Container Public Access Level
 
+	warnCompressed sync.Once // warn once about compressed files
+
 	// user delegation cache
 	userDelegationMu     sync.Mutex
 	userDelegation       *service.UserDelegationCredential
@@ -405,15 +432,16 @@ type Fs struct {
 
 // Object describes an azure object
 type Object struct {
-	fs         *Fs               // what this object is part of
-	remote     string            // The remote path
-	modTime    time.Time         // The modified time of the object if known
-	md5        string            // MD5 hash if known
-	size       int64             // Size of the object
-	mimeType   string            // Content-Type of the object
-	accessTier blob.AccessTier   // Blob Access Tier
-	meta       map[string]string // blob metadata - take metadataMu when accessing
-	tags       map[string]string // blob tags
+	fs              *Fs               // what this object is part of
+	remote          string            // The remote path
+	modTime         time.Time         // The modified time of the object if known
+	md5             string            // MD5 hash if known
+	size            int64             // Size of the object
+	mimeType        string            // Content-Type of the object
+	accessTier      blob.AccessTier   // Blob Access Tier
+	meta            map[string]string // blob metadata - take metadataMu when accessing
+	tags            map[string]string // blob tags
+	contentEncoding *string           // Content-Encoding of the object
 }
 
 // ------------------------------------------------------------
@@ -634,6 +662,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		NewClientWithSharedKeyCredential: service.NewClientWithSharedKeyCredential,
 		NewSharedKeyCredential:           service.NewSharedKeyCredential,
 		SetClientOptions: func(options *service.ClientOptions, policyClientOptions policy.ClientOptions) {
+			// Override the automatic decompression in the transport
+			// to download compressed files as-is
+			policyClientOptions.PerCallPolicies = append(policyClientOptions.PerCallPolicies, setAcceptEncodingGzip{})
 			options.ClientOptions = policyClientOptions
 		},
 	}
@@ -2001,6 +2032,10 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if t != hash.MD5 {
 		return "", hash.ErrUnsupported
 	}
+	// If decompressing, erase the hash
+	if o.size < 0 {
+		return "", nil
+	}
 	// Convert base64 encoded md5 into lower case hex
 	if o.md5 == "" {
 		return "", nil
@@ -2126,6 +2161,13 @@ func (o *Object) decodeMetaDataFromPropertiesResponse(info *blob.GetPropertiesRe
 		o.accessTier = blob.AccessTier(*info.AccessTier)
 	}
 	o.setMetadata(metadata)
+	o.contentEncoding = info.ContentEncoding
+
+	// If decompressing then size and md5sum are unknown
+	if o.fs.opt.Decompress && o.contentEncoding != nil && *o.contentEncoding == "gzip" {
+		o.size = -1
+		o.md5 = ""
+	}
 
 	return nil
 }
@@ -2178,6 +2220,13 @@ func (o *Object) decodeMetaDataFromDownloadResponse(info *blob.DownloadStreamRes
 			fs.Debugf(o, "Failed to find length in %q", contentRange)
 		}
 	}
+	o.contentEncoding = info.ContentEncoding
+
+	// If decompressing then size and md5sum are unknown
+	if o.fs.opt.Decompress && o.contentEncoding != nil && *o.contentEncoding == "gzip" {
+		o.size = -1
+		o.md5 = ""
+	}
 
 	return nil
 }
@@ -2216,6 +2265,13 @@ func (o *Object) decodeMetaDataFromBlob(info *container.BlobItem) (err error) {
 		o.accessTier = *info.Properties.AccessTier
 	}
 	o.setMetadata(metadata)
+	o.contentEncoding = info.Properties.ContentEncoding
+
+	// If decompressing then size and md5sum are unknown
+	if o.fs.opt.Decompress && o.contentEncoding != nil && *o.contentEncoding == "gzip" {
+		o.size = -1
+		o.md5 = ""
+	}
 
 	return nil
 }
@@ -2391,6 +2447,17 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode metadata for download: %w", err)
 	}
+
+	// Decompress body if necessary
+	if downloadResponse.ContentEncoding != nil && *downloadResponse.ContentEncoding == "gzip" {
+		if o.fs.opt.Decompress {
+			return readers.NewGzipReader(downloadResponse.Body)
+		}
+		o.fs.warnCompressed.Do(func() {
+			fs.Logf(o, "Not decompressing 'Content-Encoding: gzip' compressed file. Use --azureblob-decompress to override")
+		})
+	}
+
 	return downloadResponse.Body, nil
 }
 
