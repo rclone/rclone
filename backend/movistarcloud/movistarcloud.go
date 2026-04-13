@@ -2,7 +2,6 @@
 package movistarcloud
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -929,17 +928,6 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 	folderID, err := strconv.ParseInt(directoryID, 10, 64)
 	if err != nil {
 		return fmt.Errorf("invalid directory ID %q: %w", directoryID, err)
-	}
-
-	// For unknown-size uploads, we must buffer to determine the actual
-	// size because the API metadata requires the file size up front.
-	if size < 0 {
-		data, err := io.ReadAll(in)
-		if err != nil {
-			return fmt.Errorf("failed to read upload data: %w", err)
-		}
-		size = int64(len(data))
-		in = bytes.NewReader(data)
 	}
 
 	encodedName := o.fs.opt.Enc.FromStandardName(leaf)
