@@ -164,6 +164,11 @@ jobs:
           printf "\n\nSystem environment:\n\n"
           env
 
+      - name: Fetch GUI
+        run: make fetch-gui
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build rclone
         run: |
           make
@@ -231,11 +236,6 @@ jobs:
           check-latest: true
           cache: false
           
-      - name: Fetch GUI dist
-        run: make fetch-gui
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Cache
         uses: actions/cache@v5
         with:
