@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/http2"
 )
 
 func testEmptyHandler() http.Handler {
@@ -548,6 +549,49 @@ func TestNewServerTLS(t *testing.T) {
 			testExpectRespBody(t, resp, expected)
 		})
 	}
+}
+
+func TestH2CServer(t *testing.T) {
+	ctx := context.Background()
+
+	cfg := DefaultCfg()
+	cfg.ListenAddr = []string{"127.0.0.1:0"}
+
+	s, err := NewServer(ctx, WithConfig(cfg))
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, s.Shutdown())
+	}()
+
+	expected := []byte("h2c-test-response")
+	s.Router().Mount("/", testEchoHandler(expected))
+	s.Serve()
+
+	url := testGetServerURL(t, s)
+	require.True(t, strings.HasPrefix(url, "http://"), "url should have http scheme (no TLS)")
+
+	// Create an HTTP/2 cleartext client
+	client := &http.Client{
+		Transport: &http2.Transport{
+			AllowHTTP: true,
+			DialTLSContext: func(ctx context.Context, network, addr string, _ *tls.Config) (net.Conn, error) {
+				return net.Dial(network, addr)
+			},
+		},
+	}
+
+	req, err := http.NewRequest("GET", url, nil)
+	require.NoError(t, err)
+
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+	require.Equal(t, 2, resp.ProtoMajor, "response should be HTTP/2")
+	testExpectRespBody(t, resp, expected)
 }
 
 func TestHelpPrefixServer(t *testing.T) {

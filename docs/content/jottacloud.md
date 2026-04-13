@@ -371,6 +371,7 @@ the following characters are also replaced:
 | >         | 0x3E  | ＞          |
 | ?         | 0x3F  | ？          |
 | \|        | 0x7C  | ｜          |
+| %         | 0x25  | ％          |
 
 Invalid UTF-8 bytes will also be [replaced](/overview/#invalid-utf8),
 as they can't be used in XML strings.
