@@ -34,10 +34,8 @@ func TestValidateOptions(t *testing.T) {
 		Remotes:            "a:,b:,c:",
 		DataShards:         2,
 		ParityShards:       1,
-		MaxParallelUploads: 0,
 	}
 	require.NoError(t, validateOptions(opt))
-	require.Equal(t, 1, opt.MaxParallelUploads)
 	require.Equal(t, DefaultStripeFragmentSize, opt.StripeFragmentSize)
 
 	opt2 := &Options{Remotes: "a:,b:,c:", DataShards: 2, ParityShards: 1, StripeFragmentSize: 32}
@@ -347,7 +345,6 @@ func TestPutFailsWhenWriteQuorumNotMet(t *testing.T) {
 			DataShards:         4,
 			ParityShards:       3,
 			WriteQuorum:        7, // require all
-			MaxParallelUploads: 4,
 			Rollback:           true,
 			UseSpooling:        true,
 			StripeFragmentSize: 64,
@@ -365,6 +362,133 @@ func TestPutFailsWhenWriteQuorumNotMet(t *testing.T) {
 	f.opt.WriteQuorum = 6
 	_, err = f.Put(ctx, bytes.NewReader(data), srcInfo)
 	require.NoError(t, err)
+}
+
+func TestPutStreamingKnownSize(t *testing.T) {
+	ctx := context.Background()
+	backends := makeMemoryBackends(t, 4, "rs-put-streaming")
+	f := &Fs{
+		name:     "rs",
+		root:     "",
+		backends: backends,
+		opt: Options{
+			DataShards:         2,
+			ParityShards:       2,
+			WriteQuorum:        3,
+			Rollback:           true,
+			UseSpooling:        false,
+			StripeFragmentSize: 64,
+		},
+		features: (&fs.Features{}),
+	}
+
+	payload := bytes.Repeat([]byte("streaming-put"), 64)
+	info := object.NewStaticObjectInfo("stream.bin", time.Unix(1700001234, 0), int64(len(payload)), true, nil, nil)
+	obj, err := f.Put(ctx, bytes.NewReader(payload), info)
+	require.NoError(t, err)
+	require.Equal(t, int64(len(payload)), obj.Size())
+
+	rc, err := obj.Open(ctx)
+	require.NoError(t, err)
+	got, err := io.ReadAll(rc)
+	_ = rc.Close()
+	require.NoError(t, err)
+	require.Equal(t, payload, got)
+}
+
+func TestPutStreamingCompletesWithinTimeout(t *testing.T) {
+	ctx := context.Background()
+	backends := makeMemoryBackends(t, 4, "rs-put-streaming-par")
+	f := &Fs{
+		name:     "rs",
+		root:     "",
+		backends: backends,
+		opt: Options{
+			DataShards:         2,
+			ParityShards:       2,
+			WriteQuorum:        3,
+			Rollback:           true,
+			UseSpooling:        false,
+			StripeFragmentSize: 64,
+		},
+		features: (&fs.Features{}),
+	}
+
+	payload := bytes.Repeat([]byte("par-put"), 64)
+	info := object.NewStaticObjectInfo("par.bin", time.Unix(1700001234, 0), int64(len(payload)), true, nil, nil)
+	errCh := make(chan error, 1)
+	go func() {
+		_, err := f.Put(ctx, bytes.NewReader(payload), info)
+		errCh <- err
+	}()
+	select {
+	case err := <-errCh:
+		require.NoError(t, err)
+	case <-time.After(30 * time.Second):
+		t.Fatal("Put timed out (streaming Put should complete without deadlock)")
+	}
+}
+
+func TestPutStreamingUnknownSizeFallsBackToSpooling(t *testing.T) {
+	ctx := context.Background()
+	backends := makeMemoryBackends(t, 4, "rs-put-streaming-unknown")
+	f := &Fs{
+		name:     "rs",
+		root:     "",
+		backends: backends,
+		opt: Options{
+			DataShards:         2,
+			ParityShards:       2,
+			WriteQuorum:        3,
+			Rollback:           true,
+			UseSpooling:        false,
+			StripeFragmentSize: 64,
+		},
+		features: (&fs.Features{}),
+	}
+
+	payload := bytes.Repeat([]byte("unknown"), 32)
+	info := object.NewStaticObjectInfo("unknown.bin", time.Unix(1700001235, 0), -1, true, nil, nil)
+	obj, err := f.Put(ctx, bytes.NewReader(payload), info)
+	require.NoError(t, err)
+	require.Equal(t, int64(len(payload)), obj.Size())
+
+	rc, err := obj.Open(ctx)
+	require.NoError(t, err)
+	got, err := io.ReadAll(rc)
+	_ = rc.Close()
+	require.NoError(t, err)
+	require.Equal(t, payload, got)
+}
+
+func TestPutStreamingRollbackOnShardFailure(t *testing.T) {
+	ctx := context.Background()
+	backends := makeMemoryBackends(t, 4, "rs-put-streaming-rollback")
+	backends[3] = failPutFs{Fs: backends[3], fail: true}
+	f := &Fs{
+		name:     "rs",
+		root:     "",
+		backends: backends,
+		opt: Options{
+			DataShards:         2,
+			ParityShards:       2,
+			WriteQuorum:        3,
+			Rollback:           true,
+			UseSpooling:        false,
+			StripeFragmentSize: 64,
+		},
+		features: (&fs.Features{}),
+	}
+
+	payload := bytes.Repeat([]byte("rollback"), 64)
+	info := object.NewStaticObjectInfo("rollback.bin", time.Unix(1700001236, 0), int64(len(payload)), true, nil, nil)
+	_, err := f.Put(ctx, bytes.NewReader(payload), info)
+	require.Error(t, err)
+
+	for i := 0; i < len(backends)-1; i++ {
+		_, err := backends[i].NewObject(ctx, "rollback.bin")
+		require.Error(t, err, "rollback should remove uploaded object from shard %d", i)
+	}
 }
 
 func TestExtractShardPayloadRejectsCorruption(t *testing.T) {
@@ -459,6 +583,41 @@ func TestReconstructMissingShardsHelper(t *testing.T) {
 	require.NotNil(t, out[1])
 }
 
+func TestHealStripeWiseMatchesReconstructMissingShards(t *testing.T) {
+	ctx := context.Background()
+	data := bytes.Repeat([]byte("equiv-heal-"), 120)
+	src := object.NewStaticObjectInfo("equiv.bin", time.Unix(1700006000, 0), int64(len(data)), true, nil, nil)
+	writers := make([]*bytes.Buffer, 4)
+	ios := make([]io.Writer, 4)
+	for i := range writers {
+		writers[i] = &bytes.Buffer{}
+		ios[i] = writers[i]
+	}
+	_, err := BuildRSShardsToWriters(ctx, bytes.NewReader(data), src, 2, 2, 0, ios, true)
+	require.NoError(t, err)
+
+	shards := make([][]byte, 4)
+	var ref *Footer
+	for i := range writers {
+		payload, ft, err := ExtractParticlePayload(writers[i].Bytes(), i)
+		require.NoError(t, err)
+		shards[i] = payload
+		ref = ft
+	}
+
+	shardsCopy := make([][]byte, 4)
+	copy(shardsCopy, shards)
+	golden1 := append([]byte(nil), shards[1]...)
+	golden3 := append([]byte(nil), shards[3]...)
+	shardsCopy[1] = nil
+	shardsCopy[3] = nil
+
+	outBuf, err := ReconstructMissingShardPayloadsStripeWiseForTest(shardsCopy, 2, 2, ref.StripeSize, ref.NumStripes, []int{1, 3})
+	require.NoError(t, err)
+	require.Equal(t, golden1, outBuf[1], "shard 1 payload mismatch")
+	require.Equal(t, golden3, outBuf[3], "shard 3 payload mismatch")
+}
+
 func TestRebuildMissingShardsForObjectEndToEnd(t *testing.T) {
 	ctx := context.Background()
 	backends := make([]fs.Fs, 4)
@@ -474,7 +633,6 @@ func TestRebuildMissingShardsForObjectEndToEnd(t *testing.T) {
 		opt: Options{
 			DataShards:         2,
 			ParityShards:       2,
-			MaxParallelUploads: 2,
 			Rollback:           true,
 			UseSpooling:        true,
 		},
@@ -533,7 +691,6 @@ func TestRebuildMissingShardsForObjectDryRun(t *testing.T) {
 		opt: Options{
 			DataShards:         2,
 			ParityShards:       2,
-			MaxParallelUploads: 2,
 			Rollback:           true,
 			UseSpooling:        true,
 		},
@@ -617,7 +774,6 @@ func TestLargeObjectPutOpen1GiB(t *testing.T) {
 		opt: Options{
 			DataShards:         2,
 			ParityShards:       2,
-			MaxParallelUploads: 2,
 			Rollback:           true,
 			UseSpooling:        true,
 		},
@@ -678,7 +834,6 @@ func TestSetModTimeUpdatesFooters(t *testing.T) {
 		opt: Options{
 			DataShards:         2,
 			ParityShards:       2,
-			MaxParallelUploads: 2,
 			Rollback:           true,
 			UseSpooling:        true,
 		},
@@ -750,7 +905,6 @@ func TestHealCommandSummaryCounts(t *testing.T) {
 		opt: Options{
 			DataShards:         2,
 			ParityShards:       2,
-			MaxParallelUploads: 2,
 			Rollback:           true,
 			UseSpooling:        true,
 		},
@@ -854,7 +1008,6 @@ func TestNewFsPutOpenIntegration(t *testing.T) {
 		"parity_shards":        "1",
 		"use_spooling":         "true",
 		"rollback":             "true",
-		"max_parallel_uploads": "2",
 	}
 	fsi, err := NewFs(ctx, "rs-integration", "", cfg)
 	require.NoError(t, err)
@@ -881,6 +1034,176 @@ func TestNewFsPutOpenIntegration(t *testing.T) {
 	require.Equal(t, payload[100:200], gotRange)
 }
 
+// TestOpenStripeStreamingSmallReads exercises stripe-wise Open with tiny Read buffers (data-shard path).
+func TestOpenStripeStreamingSmallReads(t *testing.T) {
+	ctx := context.Background()
+	unique := strconv.FormatInt(time.Now().UnixNano(), 10)
+	remotes := []string{
+		":memory:rs-stream-" + unique + "-a",
+		":memory:rs-stream-" + unique + "-b",
+		":memory:rs-stream-" + unique + "-c",
+		":memory:rs-stream-" + unique + "-d",
+	}
+	cfg := configmap.Simple{
+		"remotes":              strings.Join(remotes, ","),
+		"data_shards":          "3",
+		"parity_shards":        "1",
+		"use_spooling":         "true",
+		"rollback":             "true",
+	}
+	fsi, err := NewFs(ctx, "rs-stream-small", "", cfg)
+	require.NoError(t, err)
+
+	payload := bytes.Repeat([]byte("stream-chunk-"), 40)
+	info := object.NewStaticObjectInfo("stream.bin", time.Unix(1700005000, 0), int64(len(payload)), true, nil, nil)
+	_, err = fsi.Put(ctx, bytes.NewReader(payload), info)
+	require.NoError(t, err)
+
+	obj, err := fsi.NewObject(ctx, "stream.bin")
+	require.NoError(t, err)
+	rc, err := obj.Open(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = rc.Close() })
+
+	var got bytes.Buffer
+	buf := make([]byte, 7)
+	for {
+		n, err := rc.Read(buf)
+		got.Write(buf[:n])
+		if err != nil {
+			require.Equal(t, io.EOF, err)
+			break
+		}
+	}
+	require.Equal(t, payload, got.Bytes())
+}
+
+// TestOpenFullReconstructStreamingSmallReads drops one data shard and reads logical content in small chunks.
+func TestOpenFullReconstructStreamingSmallReads(t *testing.T) {
+	ctx := context.Background()
+	unique := strconv.FormatInt(time.Now().UnixNano(), 10)
+	remotes := []string{
+		":memory:rs-degraded-" + unique + "-a",
+		":memory:rs-degraded-" + unique + "-b",
+		":memory:rs-degraded-" + unique + "-c",
+		":memory:rs-degraded-" + unique + "-d",
+	}
+	cfg := configmap.Simple{
+		"remotes":              strings.Join(remotes, ","),
+		"data_shards":          "3",
+		"parity_shards":        "1",
+		"use_spooling":         "true",
+		"rollback":             "true",
+	}
+	fsi, err := NewFs(ctx, "rs-degraded-stream", "", cfg)
+	require.NoError(t, err)
+	f := fsi.(*Fs)
+
+	payload := bytes.Repeat([]byte("degraded-stream-"), 35)
+	info := object.NewStaticObjectInfo("deg.bin", time.Unix(1700005100, 0), int64(len(payload)), true, nil, nil)
+	_, err = fsi.Put(ctx, bytes.NewReader(payload), info)
+	require.NoError(t, err)
+
+	// Remove data shard 0 — Open must use full stripe reconstruction, not data-shards-only join.
+	o0, err := f.backends[0].NewObject(ctx, "deg.bin")
+	require.NoError(t, err)
+	require.NoError(t, o0.Remove(ctx))
+
+	obj, err := fsi.NewObject(ctx, "deg.bin")
+	require.NoError(t, err)
+	rc, err := obj.Open(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = rc.Close() })
+
+	var got bytes.Buffer
+	buf := make([]byte, 11)
+	for {
+		n, err := rc.Read(buf)
+		got.Write(buf[:n])
+		if err != nil {
+			require.Equal(t, io.EOF, err)
+			break
+		}
+	}
+	require.Equal(t, payload, got.Bytes())
+}
+
+// TestOpenRangeDegradedStripePath checks RangeOption on the full-reconstruct streaming path.
+func TestOpenRangeDegradedStripePath(t *testing.T) {
+	ctx := context.Background()
+	unique := strconv.FormatInt(time.Now().UnixNano(), 10)
+	remotes := []string{
+		":memory:rs-deg-rng-" + unique + "-a",
+		":memory:rs-deg-rng-" + unique + "-b",
+		":memory:rs-deg-rng-" + unique + "-c",
+		":memory:rs-deg-rng-" + unique + "-d",
+	}
+	cfg := configmap.Simple{
+		"remotes":              strings.Join(remotes, ","),
+		"data_shards":          "3",
+		"parity_shards":        "1",
+		"use_spooling":         "true",
+		"rollback":             "true",
+	}
+	fsi, err := NewFs(ctx, "rs-deg-range", "", cfg)
+	require.NoError(t, err)
+	f := fsi.(*Fs)
+
+	payload := bytes.Repeat([]byte("range-deg-"), 50)
+	info := object.NewStaticObjectInfo("deg-range.bin", time.Unix(1700005200, 0), int64(len(payload)), true, nil, nil)
+	_, err = fsi.Put(ctx, bytes.NewReader(payload), info)
+	require.NoError(t, err)
+
+	o0, err := f.backends[0].NewObject(ctx, "deg-range.bin")
+	require.NoError(t, err)
+	require.NoError(t, o0.Remove(ctx))
+
+	obj, err := fsi.NewObject(ctx, "deg-range.bin")
+	require.NoError(t, err)
+	rc, err := obj.Open(ctx, &fs.RangeOption{Start: 40, End: 99})
+	require.NoError(t, err)
+	gotRange, err := io.ReadAll(rc)
+	_ = rc.Close()
+	require.NoError(t, err)
+	require.Equal(t, payload[40:100], gotRange)
+}
+
+func TestNewFsUnknownSizeDefaultNoSpoolingFallsBack(t *testing.T) {
+	ctx := context.Background()
+	unique := strconv.FormatInt(time.Now().UnixNano(), 10)
+	remotes := []string{
+		":memory:rs-int-unk-" + unique + "-a",
+		":memory:rs-int-unk-" + unique + "-b",
+		":memory:rs-int-unk-" + unique + "-c",
+		":memory:rs-int-unk-" + unique + "-d",
+	}
+	cfg := configmap.Simple{
+		"remotes":              strings.Join(remotes, ","),
+		"data_shards":          "3",
+		"parity_shards":        "1",
+		"rollback":             "true",
+	}
+	fsi, err := NewFs(ctx, "rs-int-unk", "", cfg)
+	require.NoError(t, err)
+	rf := fsi.(*Fs)
+	require.False(t, rf.opt.UseSpooling, "use_spooling should default false")
+
+	payload := bytes.Repeat([]byte("unk-default"), 120)
+	info := object.NewStaticObjectInfo("unk.bin", time.Unix(1700004100, 0), -1, true, nil, nil)
+	_, err = fsi.Put(ctx, bytes.NewReader(payload), info)
+	require.NoError(t, err)
+
+	obj, err := fsi.NewObject(ctx, "unk.bin")
+	require.NoError(t, err)
+	rc, err := obj.Open(ctx)
+	require.NoError(t, err)
+	got, err := io.ReadAll(rc)
+	_ = rc.Close()
+	require.NoError(t, err)
+	require.Equal(t, payload, got)
+	require.Equal(t, int64(len(payload)), obj.Size())
+}
+
 func TestNewFsHealIntegration(t *testing.T) {
 	ctx := context.Background()
 	unique := strconv.FormatInt(time.Now().UnixNano(), 10)
@@ -896,7 +1219,6 @@ func TestNewFsHealIntegration(t *testing.T) {
 		"parity_shards":        "1",
 		"use_spooling":         "true",
 		"rollback":             "true",
-		"max_parallel_uploads": "2",
 	}
 	fsi, err := NewFs(ctx, "rs-rebuild", "", cfg)
 	require.NoError(t, err)
@@ -978,7 +1300,6 @@ func TestListDirectoryQuorumMerge(t *testing.T) {
 			ParityShards:       1,
 			WriteQuorum:        3,
 			UseSpooling:        true,
-			MaxParallelUploads: 4,
 			StripeFragmentSize: 64,
 		},
 		features: (&fs.Features{}),
@@ -1020,7 +1341,6 @@ func TestRemoveAndSetModTimeQuorum(t *testing.T) {
 			WriteQuorum:        3,
 			UseSpooling:        true,
 			Rollback:           true,
-			MaxParallelUploads: 4,
 			StripeFragmentSize: 64,
 		},
 		features: (&fs.Features{}),
@@ -1065,7 +1385,6 @@ func TestDegradedCommand(t *testing.T) {
 			WriteQuorum:        3,
 			UseSpooling:        true,
 			Rollback:           true,
-			MaxParallelUploads: 4,
 			StripeFragmentSize: 64,
 		},
 		features: (&fs.Features{}),
@@ -1107,7 +1426,6 @@ func TestCopyMoveServerSide(t *testing.T) {
 			WriteQuorum:        3,
 			UseSpooling:        true,
 			Rollback:           true,
-			MaxParallelUploads: 4,
 			StripeFragmentSize: 64,
 		},
 		features: (&fs.Features{}),
@@ -1175,7 +1493,6 @@ func TestDirMoveServerSide(t *testing.T) {
 			WriteQuorum:        3,
 			UseSpooling:        true,
 			Rollback:           true,
-			MaxParallelUploads: 4,
 			StripeFragmentSize: 64,
 		},
 		features: (&fs.Features{}),
@@ -1190,7 +1507,6 @@ func TestDirMoveServerSide(t *testing.T) {
 			WriteQuorum:        3,
 			UseSpooling:        true,
 			Rollback:           true,
-			MaxParallelUploads: 4,
 			StripeFragmentSize: 64,
 		},
 		features: (&fs.Features{}),

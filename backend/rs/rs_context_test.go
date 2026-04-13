@@ -43,11 +43,10 @@ func TestPutCancelsDuringSourceRead(t *testing.T) {
 		root:     "",
 		backends: backends,
 		opt: Options{
-			DataShards:         2,
-			ParityShards:       2,
-			MaxParallelUploads: 2,
-			Rollback:           true,
-			UseSpooling:        true,
+			DataShards:   2,
+			ParityShards: 2,
+			Rollback:     true,
+			UseSpooling:  true,
 		},
 		features: (&fs.Features{}),
 	}
@@ -78,11 +77,10 @@ func TestPutCancelsDuringUpload(t *testing.T) {
 		root:     "",
 		backends: backends,
 		opt: Options{
-			DataShards:         2,
-			ParityShards:       2,
-			MaxParallelUploads: 4,
-			Rollback:           true,
-			UseSpooling:        true,
+			DataShards:   2,
+			ParityShards: 2,
+			Rollback:     true,
+			UseSpooling:  true,
 		},
 		features: (&fs.Features{}),
 	}

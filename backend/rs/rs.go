@@ -16,6 +16,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
+	"golang.org/x/sync/errgroup"
 )
 
 func init() {
@@ -40,8 +41,8 @@ func init() {
 			Required: true,
 		}, {
 			Name:     "use_spooling",
-			Help:     "Spool shards to local disk before upload.",
-			Default:  true,
+			Help:     "Spool shards to local disk before upload. Default false streams encoded particles directly when the source size is known; unknown-size uploads (e.g. rcat) automatically use spooling for that transfer only.",
+			Default:  false,
 			Advanced: true,
 		}, {
 			Name:     "staging_dir",
@@ -54,13 +55,8 @@ func init() {
 			Default:  true,
 			Advanced: true,
 		}, {
-			Name:     "max_parallel_uploads",
-			Help:     "Maximum concurrent shard uploads during Put.",
-			Default:  4,
-			Advanced: true,
-		}, {
 			Name:     "write_quorum",
-			Help:     "Minimum number of successful shard uploads required for Put to succeed. Must be between data_shards (k) and data_shards+parity_shards (k+m). Default is k+1.",
+			Help:     "Minimum shard successes required for quorum operations (Put, List merge, mkdir/rmdir, Copy/Move/DirMove when used, etc.). Must be between data_shards (k) and data_shards+parity_shards (k+m). Default is k+1.",
 			Default:  0,
 			Advanced: true,
 		}, {
@@ -133,7 +129,6 @@ type Options struct {
 	UseSpooling        bool   `config:"use_spooling"`
 	StagingDir         string `config:"staging_dir"`
 	Rollback           bool   `config:"rollback"`
-	MaxParallelUploads int    `config:"max_parallel_uploads"`
 	WriteQuorum        int    `config:"write_quorum"`
 	StripeFragmentSize int    `config:"stripe_fragment_size"`
 }
@@ -226,9 +221,6 @@ func validateOptions(opt *Options) error {
 	if opt.DataShards+opt.ParityShards > 255 {
 		return errors.New("rs: data_shards + parity_shards must be <= 255")
 	}
-	if opt.MaxParallelUploads < 1 {
-		opt.MaxParallelUploads = 1
-	}
 	if opt.WriteQuorum < 0 {
 		return errors.New("rs: write_quorum must be >= 0")
 	}
@@ -297,14 +289,36 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 
 // Rmdir removes the directory with quorum semantics and strict empty-dir checks.
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	hadDir := make([]int, 0, len(f.backends))
-	for i, b := range f.backends {
-		entries, err := b.List(ctx, dir)
+	n := len(f.backends)
+	type listDirRes struct {
+		entries fs.DirEntries
+		err     error
+	}
+	shardOut := make([]listDirRes, n)
+	g, gctx := errgroup.WithContext(ctx)
+	for i := range f.backends {
+		i := i
+		g.Go(func() error {
+			entries, err := f.backends[i].List(gctx, dir)
+			shardOut[i].entries = entries
+			shardOut[i].err = err
+			if err != nil && !errors.Is(err, fs.ErrorDirNotFound) {
+				return fmt.Errorf("rs: shard %d: failed to verify dir state for %q: %w", i, dir, err)
+			}
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return err
+	}
+	hadDir := make([]int, 0, n)
+	for i := 0; i < n; i++ {
+		entries, err := shardOut[i].entries, shardOut[i].err
 		if err != nil {
 			if errors.Is(err, fs.ErrorDirNotFound) {
 				continue
 			}
-			return fmt.Errorf("rs: shard %d: failed to verify dir state for %q: %w", i, dir, err)
+			return err
 		}
 		if len(entries) > 0 {
 			return fmt.Errorf("rs: shard %d: %w for %q", i, fs.ErrorDirectoryNotEmpty, dir)

@@ -28,8 +28,9 @@ Like [union](/union/) you combine several remotes.
 ## Status: Alpha / experimental
 
 The backend is intended for testing and feedback. Core paths (list, get, put,
-delete, reconstruction when enough shards survive, and explicit `heal`) are
-implemented, but behavior and options may still change. See
+delete, reconstruction when enough shards survive, explicit `heal`, and
+same-layout server-side `Copy` / `Move` / `DirMove` where shard remotes support them)
+are implemented, but behavior and options may still change. See
 `backend/rs/docs/OPEN_QUESTIONS.md` in the source tree.
 
 ## How it works
@@ -49,10 +50,13 @@ implemented, but behavior and options may still change. See
   shards**. **Per-shard fields differ**, notably **`CurrentShard`** and
   **`PayloadCRC32C`** (CRC of that shard’s full payload), so footers are **not
   byte-identical** copies.
-- **Upload (`use_spooling=true`, default)**: Encoded shards are written to local
-  disk (see `staging_dir` / system temp), then **uploaded in parallel** to each
-  backend, with concurrency limited by **`max_parallel_uploads`** (they are not
-  strictly sequential).
+- **Upload**: Encoded shards are written to local disk when `use_spooling=true`
+  (see `staging_dir` / system temp), or streamed directly when `use_spooling=false`
+  and the source size is known. In both cases the backend runs **one concurrent
+  `Put` per shard** (see `backend/rs/operations.go`).
+- **Download / `Open`**: Stripe-wise reads use **parallel range reads** across
+  shards for each stripe. Reconstruct mode probes **all shards in parallel once**
+  to see which particles are present before streaming.
 - **Rollback**: If `rollback=true` (default) and the operation fails before the
   write quorum is satisfied, shards already uploaded for that attempt are
   removed where possible.
@@ -64,9 +68,10 @@ for data to be reconstructable.
 
 - **Read / reconstruct:** Standard Reed–Solomon needs **any k** healthy shards
   out of **k+m** to reconstruct the logical object.
-- **Write / metadata / namespace (rclone `rs`):** Quorum-based operations
-  (`Put`, metadata updates, and namespace operations such as `mkdir`/`rmdir`)
-  succeed when enough shard remotes complete the operation.
+- **Write / metadata / namespace / listing (rclone `rs`):** Quorum-based
+  operations—including **`Put`**, **`List`** (per-name merge), metadata updates,
+  **`mkdir`/`rmdir`**, and same-layout **`Copy`/`Move`/`DirMove`** when
+  used—succeed when enough shard remotes agree per the configured threshold.
   This is configurable via **`write_quorum`** (range **k..k+m**, default **k+1**).
   Operations run in two phases: a full parallel pass, then one bounded retry
   pass for remaining failing shards. Partial failures are logged.
@@ -74,9 +79,15 @@ for data to be reconstructable.
 ## Listing (quorum merge)
 
 Directory listing is merged from shard remotes using quorum voting.
-Entries that do not meet quorum are omitted from normal listings and can be
-inspected with backend diagnostics. Type conflicts across shards (file vs
-directory for same name) are logged and treated as degraded state.
+Shard `List` calls run **in parallel**; each name is included only if enough
+shards report it as a **file** or as a **directory** under **`write_quorum`**
+(and enough shards participate in the directory listing overall). Resulting
+names are **sorted alphabetically**. Entries that do not meet quorum are omitted
+from normal listings and can be inspected with backend diagnostics. Type
+conflicts across shards (file vs directory for the same name) are logged and
+treated as degraded state (the name is omitted unless one side reaches quorum).
+
+**`NewObject`** probes shards **in parallel** and picks the **lowest shard index** with a valid footer (same as the previous sequential winner). **`backend heal`** uses parallel discovery and parallel stripe fragment reads (and parallel legacy reads / healed `Put`s where applicable).
 
 ## Topology constraints
 
@@ -112,10 +123,10 @@ Enter a string value.
 remotes> remote1:rs,remote2:rs,remote3:rs,remote4:rs
 Number of data shards (k).
 Enter a signed integer.
-data_shards> 2
+data_shards> 3
 Number of parity shards (m).
 Enter a signed integer.
-parity_shards> 2
+parity_shards> 1
 [snip]
 ```
 
@@ -125,13 +136,11 @@ Here `remote1` … `remote4` are remotes you defined earlier; the path segment
 ### Advanced options
 
 - **`use_spooling`**: Spool encoded shards to disk before upload (default
-  `true`). **`use_spooling=false` is not implemented yet** and currently
-  returns an error; streaming encode-and-upload may be added later (see
-  `OPEN_QUESTIONS.md`).
+  `false` streams encoded particles when the source size is known; unknown-size
+  uploads use spooling for that transfer only).
 - **`staging_dir`**: Directory for spooled data (empty = system temp).
 - **`rollback`**: Remove successfully uploaded shards if the operation fails
   before write quorum (default `true`).
-- **`max_parallel_uploads`**: Maximum concurrent shard uploads during `Put`.
 
 ## Basic usage
 
@@ -140,7 +149,7 @@ rclone lsd myrs:
 rclone copy /path/to/files myrs:backup
 ```
 
-## Backend commands
+### `rclone backend` (status, heal, degraded)
 
 ```console
 rclone backend COMMAND myrs:
@@ -154,6 +163,8 @@ See [rclone backend](/commands/rclone_backend/) for options and arguments.
   only that single logical object. `-o dry-run=true` reports only.
 - **`degraded`** — Inspect degraded state (`summary`, `ls`, `lsd`) without
   mutating data.
+
+The section below is generated from `rclone help backend rs` and `rclone backend help rs` (run `make backenddocs` after changing `backend/rs/rs.go`).
 
 <!-- autogenerated options start - DO NOT EDIT - instead edit fs.RegInfo in backend/rs/rs.go and run make backenddocs to verify --> <!-- markdownlint-disable-line line-length -->
 ### Standard options
@@ -199,14 +210,14 @@ Here are the Advanced options specific to rs (Reed-Solomon virtual backend).
 
 #### --rs-use-spooling
 
-Spool shards to local disk before upload.
+Spool shards to local disk before upload. Default false streams encoded particles directly when the source size is known; unknown-size uploads (e.g. rcat) automatically use spooling for that transfer only.
 
 Properties:
 
 - Config:      use_spooling
 - Env Var:     RCLONE_RS_USE_SPOOLING
 - Type:        bool
-- Default:     true
+- Default:     false
 
 #### --rs-staging-dir
 
@@ -230,16 +241,16 @@ Properties:
 - Type:        bool
 - Default:     true
 
-#### --rs-max-parallel-uploads
+#### --rs-write-quorum
 
-Maximum concurrent shard uploads during Put.
+Minimum shard successes required for quorum operations (Put, List merge, mkdir/rmdir, Copy/Move/DirMove when used, etc.). Must be between data_shards (k) and data_shards+parity_shards (k+m). Default is k+1.
 
 Properties:
 
-- Config:      max_parallel_uploads
-- Env Var:     RCLONE_RS_MAX_PARALLEL_UPLOADS
+- Config:      write_quorum
+- Env Var:     RCLONE_RS_WRITE_QUORUM
 - Type:        int
-- Default:     4
+- Default:     0
 
 #### --rs-stripe-fragment-size
 
@@ -328,6 +339,28 @@ Options:
 
 - "dry-run": If "true", only analyze and print "WOULD_HEAL" lines; no shard uploads.
 
+### degraded
+
+Inspect degraded object/directory state across shard remotes
+
+```console
+rclone backend degraded remote: [options] [<arguments>+]
+```
+
+Reports objects and directories that are not aligned across shard remotes.
+
+Subcommands:
+    summary   Show aggregate counts of degraded objects
+    ls        List degraded logical objects
+    lsd       List degraded directories (placeholder in current version)
+
+Examples:
+
+    rclone backend degraded rs:
+    rclone backend degraded rs: summary
+    rclone backend degraded rs: ls
+
+
 <!-- autogenerated options stop -->
 
 ## Metadata (alpha)
@@ -345,13 +378,15 @@ Range reads are supported on logical objects: `Object.Open` honors `fs.RangeOpti
 
 ## Semantic guarantees (short)
 
-- `rs` uses quorum semantics for write-like operations; success means quorum reached, not necessarily all shards converged immediately.
+- `rs` uses quorum semantics for writes, namespace operations, **listing**, and
+  same-layout server-side **`Copy`/`Move`/`DirMove`**; success means quorum
+  reached, not necessarily all shards converged immediately.
 - For `Move`/`Copy`/`DirMove` on quorum, temporary skew can exist (for example source remnants on minority shards) until repaired.
 - Use `rclone backend degraded` to inspect skew and `rclone backend heal` to converge shard state.
 
 ## Known limitations (short)
 
-- **`use_spooling=false`** not implemented yet.
+- **`Copy` / `Move` / `DirMove`** on `rs` only use fast server-side paths when the source is an **`rs` object** on an **`rs` remote with the same k/m and shard count** as the destination; otherwise rclone uses ordinary transfers (or returns “can’t copy/move”). Partial failures do not currently run **`Put`-style rollback** on shards that already succeeded—use **`degraded`** / **`heal`** if needed.
 - Large namespaces: full **`heal`** without a path may be heavy.
 - Some server-side operations can expose eventual-consistency effects under degraded shards (documented above).
 
