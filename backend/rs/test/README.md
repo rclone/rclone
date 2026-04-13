@@ -50,6 +50,7 @@ Optional pause between steps: `COMPARE_ALL_SLEEP_BETWEEN_TESTS=1` (default; set 
 | `./compare.sh --storage-type=local test move_copy` | Same-remote `copyto`, `moveto`, and directory move behavior. |
 | `./compare.sh --storage-type=minio test move_copy` | Same checks against MinIO-backed shards. |
 | `./compare_heal.sh -v --storage-type=local` | Same as **`test heal`** (wrapper for parity with raid3 naming). |
+| `./compare_sequential.sh` | Runs **`smoke` → `verify` → `heal` → `quorum_dirs` → `move_copy`** in order (`--storage-type` / `-v` supported); continues after failures and prints which steps failed. |
 
 ## Configuration
 
@@ -71,6 +72,8 @@ RCLONE_BINARY=/path/to/rclone RSVERIFY_BINARY=/path/to/rsverify ./compare_all.sh
 `compare.sh` starts containers automatically if they are missing; **`manage.sh`** is for explicit start/stop/recreate.
 
 Optional overrides: create `compare_rs_env.local.sh` to adjust paths, `RS_DATA_SHARDS` / `RS_PARITY_SHARDS` (regenerate **`tests.config`** after changes), or **`MINIO_IMAGE`** (same idea as `backend/raid3/test`). If you still have an old **`tests.minio.config`**, you can remove it; MinIO remotes now live in **`tests.config`**.
+
+After changing the config template in **`compare_common.sh`**, delete **`tests.config`** and run **`./setup.sh`** again (`setup.sh` skips writing when the file already exists).
 
 ## Environment variables
 

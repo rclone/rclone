@@ -22,10 +22,14 @@ type uploadedShard struct {
 	obj   fs.Object
 }
 
-// Put writes a logical object by encoding and uploading shards (spooling path).
+// Put writes a logical object by encoding and uploading shard particles.
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	if !f.opt.UseSpooling {
-		return nil, errors.New("rs: use_spooling=false is not implemented yet")
+		if src.Size() < 0 {
+			fs.Infof(f, "rs: unknown source size with use_spooling=false; using spooling for this transfer")
+			return f.putSpooling(ctx, in, src, options...)
+		}
+		return f.putStreaming(ctx, in, src, options...)
 	}
 	return f.putSpooling(ctx, in, src, options...)
 }
@@ -96,14 +100,11 @@ func (f *Fs) putSpooling(ctx context.Context, in io.Reader, src fs.ObjectInfo, o
 	var uploaded []uploadedShard
 	var uploadMu sync.Mutex
 
+	// One concurrent Put per shard backend.
 	g, gctx := errgroup.WithContext(uploadCtx)
-	sem := make(chan struct{}, f.opt.MaxParallelUploads)
 	for i := range f.backends {
 		i := i
 		g.Go(func() error {
-			sem <- struct{}{}
-			defer func() { <-sem }()
-
 			r, err := os.Open(shardPaths[i])
 			if err != nil {
 				return fmt.Errorf("open shard %d: %w", i, err)
@@ -132,6 +133,133 @@ func (f *Fs) putSpooling(ctx context.Context, in io.Reader, src fs.ObjectInfo, o
 		uploadMu.Lock()
 		uploaded = append(uploaded, u)
 		uploadMu.Unlock()
+	}
+	if uploadErr != nil {
+		if f.opt.Rollback {
+			_ = f.rollbackPut(uploadCtx, uploaded)
+		}
+		return nil, uploadErr
+	}
+	if len(uploaded) < f.writeQuorum() {
+		if f.opt.Rollback {
+			_ = f.rollbackPut(uploadCtx, uploaded)
+		}
+		return nil, fmt.Errorf("rs: write quorum not met: successful=%d required=%d", len(uploaded), f.writeQuorum())
+	}
+	if err := validateUploadedShardParticleSizes(uploaded, expectedParticle); err != nil {
+		if f.opt.Rollback {
+			_ = f.rollbackPut(uploadCtx, uploaded)
+		}
+		return nil, err
+	}
+	return &Object{fs: f, remote: src.Remote(), footer: &Footer{
+		ContentLength: bres.ContentLength,
+		MD5:           bres.MD5,
+		SHA256:        bres.SHA256,
+		Mtime:         bres.Mtime.Unix(),
+		StripeSize:    bres.StripeSize,
+		NumStripes:    bres.NumStripes,
+		DataShards:    uint8(f.opt.DataShards),
+		ParityShards:  uint8(f.opt.ParityShards),
+		Algorithm:     AlgorithmRS,
+	}}, nil
+}
+
+func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	if src.Size() < 0 {
+		return nil, errors.New("rs: internal error: putStreaming requires known source size")
+	}
+	expectedParticle := ShardParticleFileSize(src.Size(), f.opt.DataShards, f.opt.StripeFragmentSize, true)
+
+	uploadCtx, cancel := context.WithTimeout(ctx, putOperationTimeout)
+	defer cancel()
+
+	pipeReaders := make([]*io.PipeReader, len(f.backends))
+	pipeWriters := make([]*io.PipeWriter, len(f.backends))
+	encodeWriters := make([]io.Writer, len(f.backends))
+	for i := range f.backends {
+		pr, pw := io.Pipe()
+		pipeReaders[i], pipeWriters[i] = pr, pw
+		encodeWriters[i] = pw
+	}
+
+	successCh := make(chan uploadedShard, len(f.backends))
+	var uploaded []uploadedShard
+	var uploadMu sync.Mutex
+
+	g, gctx := errgroup.WithContext(uploadCtx)
+	// One errgroup goroutine per backend: each shard Put runs concurrently. For
+	// streaming, every pipe must have a reader before the encoder writes the next
+	// stripe fragment (otherwise io.Pipe Write blocks).
+	for i := range f.backends {
+		i := i
+		g.Go(func() error {
+			defer func() { _ = pipeReaders[i].Close() }()
+
+			info := object.NewStaticObjectInfo(src.Remote(), src.ModTime(ctx), expectedParticle, true, nil, nil)
+			obj, err := f.backends[i].Put(gctx, pipeReaders[i], info, options...)
+			if err != nil {
+				return err
+			}
+			successCh <- uploadedShard{index: i, obj: obj}
+			return nil
+		})
+	}
+
+	var preflightErr error
+	var bres *BuildResult
+	var buildErr error
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		preflightErr = f.checkWriteQuorumAvailable(uploadCtx)
+	}()
+	go func() {
+		defer wg.Done()
+		bres, buildErr = BuildRSShardsToWriters(uploadCtx, in, src, f.opt.DataShards, f.opt.ParityShards, f.opt.StripeFragmentSize, encodeWriters, true)
+		closeErr := buildErr
+		if closeErr == nil {
+			for _, pw := range pipeWriters {
+				_ = pw.Close()
+			}
+			return
+		}
+		for _, pw := range pipeWriters {
+			_ = pw.CloseWithError(closeErr)
+		}
+	}()
+	wg.Wait()
+
+	if preflightErr != nil || buildErr != nil {
+		cancel()
+	}
+
+	uploadErr := g.Wait()
+	close(successCh)
+	for u := range successCh {
+		uploadMu.Lock()
+		uploaded = append(uploaded, u)
+		uploadMu.Unlock()
+	}
+
+	if buildErr != nil {
+		if f.opt.Rollback {
+			_ = f.rollbackPut(uploadCtx, uploaded)
+		}
+		return nil, buildErr
+	}
+	if preflightErr != nil {
+		if f.opt.Rollback {
+			_ = f.rollbackPut(uploadCtx, uploaded)
+		}
+		return nil, preflightErr
+	}
+	if err := uploadCtx.Err(); err != nil && !errors.Is(err, context.Canceled) {
+		if f.opt.Rollback {
+			_ = f.rollbackPut(uploadCtx, uploaded)
+		}
+		return nil, err
 	}
 	if uploadErr != nil {
 		if f.opt.Rollback {

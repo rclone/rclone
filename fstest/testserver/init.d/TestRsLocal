@@ -19,9 +19,8 @@ start() {
 	echo remotes="${RUN_ROOT}/shard0,${RUN_ROOT}/shard1,${RUN_ROOT}/shard2,${RUN_ROOT}/shard3"
 	echo data_shards=3
 	echo parity_shards=1
-	echo use_spooling=true
+	echo use_spooling=false
 	echo rollback=true
-	echo max_parallel_uploads=4
 }
 
 status() {
