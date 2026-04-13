@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
@@ -283,6 +284,9 @@ type transporter struct {
 
 // Make a new transporter
 func newTransporter(ctx context.Context) transporter {
+	// Set the User-Agent to include the Microsoft Partner Network prefix
+	ctx, ci := fs.AddConfig(ctx)
+	ci.UserAgent = "APN/1.0 rclone/1.0 rclone/" + strings.TrimPrefix(fs.Version, "v")
 	return transporter{
 		RoundTripper: fshttp.NewTransport(ctx),
 	}
