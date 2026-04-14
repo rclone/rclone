@@ -133,10 +133,9 @@ func GetFsAndRemote(ctx context.Context, in Params) (f fs.Fs, remote string, err
 
 func init() {
 	Add(Call{
-		Path:         "fscache/clear",
-		Fn:           rcCacheClear,
-		Title:        "Clear the Fs cache.",
-		AuthRequired: true,
+		Path:  "fscache/clear",
+		Fn:    rcCacheClear,
+		Title: "Clear the Fs cache.",
 		Help: `
 This clears the fs cache. This is where remotes created from backends
 are cached for a short while to make repeated rc calls more efficient.
@@ -156,10 +155,9 @@ func rcCacheClear(ctx context.Context, in Params) (out Params, err error) {
 
 func init() {
 	Add(Call{
-		Path:         "fscache/entries",
-		Fn:           rcCacheEntries,
-		Title:        "Returns the number of entries in the fs cache.",
-		AuthRequired: true,
+		Path:  "fscache/entries",
+		Fn:    rcCacheEntries,
+		Title: "Returns the number of entries in the fs cache.",
 		Help: `
 This returns the number of entries in the fs cache.
 

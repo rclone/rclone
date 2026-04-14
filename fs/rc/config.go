@@ -146,10 +146,9 @@ func rcOptionsLocal(ctx context.Context, in Params) (out Params, err error) {
 
 func init() {
 	Add(Call{
-		Path:         "options/set",
-		AuthRequired: true,
-		Fn:           rcOptionsSet,
-		Title:        "Set an option",
+		Path:  "options/set",
+		Fn:    rcOptionsSet,
+		Title: "Set an option",
 		Help: `Parameters:
 
 - option block name containing an object with

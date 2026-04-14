@@ -29,9 +29,10 @@ func rcListStats(ctx context.Context, in rc.Params) (rc.Params, error) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:  "core/group-list",
-		Fn:    rcListStats,
-		Title: "Returns list of stats.",
+		Path:   "core/group-list",
+		NoAuth: true,
+		Fn:     rcListStats,
+		Title:  "Returns list of stats.",
 		Help: `
 This returns list of stats groups currently in memory. 
 
@@ -67,9 +68,10 @@ func rcRemoteStats(ctx context.Context, in rc.Params) (rc.Params, error) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:  "core/stats",
-		Fn:    rcRemoteStats,
-		Title: "Returns stats about current transfers.",
+		Path:   "core/stats",
+		NoAuth: true,
+		Fn:     rcRemoteStats,
+		Title:  "Returns stats about current transfers.",
 		Help: `
 This returns all available stats:
 
@@ -150,9 +152,10 @@ func rcTransferredStats(ctx context.Context, in rc.Params) (rc.Params, error) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:  "core/transferred",
-		Fn:    rcTransferredStats,
-		Title: "Returns stats about completed transfers.",
+		Path:   "core/transferred",
+		NoAuth: true,
+		Fn:     rcTransferredStats,
+		Title:  "Returns stats about completed transfers.",
 		Help: `
 This returns stats about completed transfers:
 

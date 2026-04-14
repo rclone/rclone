@@ -110,7 +110,7 @@ type Options struct {
 	Files               string                 `config:"rc_files"`                   // set to enable serving files locally
 	Serve               bool                   `config:"rc_serve"`                   // set to serve files from remotes
 	ServeNoModTime      bool                   `config:"rc_serve_no_modtime"`        // don't read the modification time
-	NoAuth              bool                   `config:"rc_no_auth"`                 // set to disable auth checks on AuthRequired methods
+	NoAuth              bool                   `config:"rc_no_auth"`                 // set to disable auth checks on methods which require it
 	WebUI               bool                   `config:"rc_web_gui"`                 // set to launch the web ui
 	WebGUIUpdate        bool                   `config:"rc_web_gui_update"`          // set to check new update
 	WebGUIForceUpdate   bool                   `config:"rc_web_gui_force_update"`    // set to force download new update

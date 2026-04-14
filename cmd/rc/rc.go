@@ -334,10 +334,8 @@ func list(ctx context.Context) error {
 		}
 		fmt.Printf("### %s: %s {#%s}\n\n", info["Path"], info["Title"], strings.ReplaceAll(info["Path"].(string), "/", "-"))
 		fmt.Printf("%s\n\n", info["Help"])
-		if authRequired := info["AuthRequired"]; authRequired != nil {
-			if authRequired.(bool) {
-				fmt.Printf("**Authentication is required for this call.**\n\n")
-			}
+		if noAuth, ok := info["NoAuth"]; ok && noAuth.(bool) {
+			fmt.Printf("**Authentication is not required for this call.**\n\n")
 		}
 	}
 	return nil

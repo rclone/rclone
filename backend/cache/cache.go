@@ -563,9 +563,10 @@ Eg
 	})
 
 	rc.Add(rc.Call{
-		Path:  "cache/stats",
-		Fn:    f.httpStats,
-		Title: "Get cache stats",
+		Path:   "cache/stats",
+		NoAuth: true,
+		Fn:     f.httpStats,
+		Title:  "Get cache stats",
 		Help: `
 Show statistics for the cache remote.
 `,

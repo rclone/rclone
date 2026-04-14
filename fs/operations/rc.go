@@ -21,10 +21,9 @@ import (
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "operations/list",
-		AuthRequired: true,
-		Fn:           rcList,
-		Title:        "List the given remote and path in JSON format",
+		Path:  "operations/list",
+		Fn:    rcList,
+		Title: "List the given remote and path in JSON format",
 		Help: `This takes the following parameters:
 
 - fs - a remote name string e.g. "drive:"
@@ -77,10 +76,9 @@ func rcList(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "operations/stat",
-		AuthRequired: true,
-		Fn:           rcStat,
-		Title:        "Give information about the supplied file or directory",
+		Path:  "operations/stat",
+		Fn:    rcStat,
+		Title: "Give information about the supplied file or directory",
 		Help: `This takes the following parameters
 
 - fs - a remote name string eg "drive:"
@@ -122,10 +120,9 @@ func rcStat(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "operations/about",
-		AuthRequired: true,
-		Fn:           rcAbout,
-		Title:        "Return the space used on the remote",
+		Path:  "operations/about",
+		Fn:    rcAbout,
+		Title: "Return the space used on the remote",
 		Help: `This takes the following parameters:
 
 - fs - a remote name string e.g. "drive:"
@@ -165,8 +162,7 @@ func init() {
 			name = "Copy"
 		}
 		rc.Add(rc.Call{
-			Path:         "operations/" + strings.ToLower(name) + "file",
-			AuthRequired: true,
+			Path: "operations/" + strings.ToLower(name) + "file",
 			Fn: func(ctx context.Context, in rc.Params) (rc.Params, error) {
 				return rcMoveOrCopyFile(ctx, in, copy)
 			},
@@ -225,7 +221,6 @@ func init() {
 		}
 		rc.Add(rc.Call{
 			Path:         "operations/" + op.name,
-			AuthRequired: true,
 			NeedsRequest: op.needsRequest,
 			Fn: func(ctx context.Context, in rc.Params) (rc.Params, error) {
 				return rcSingleCommand(ctx, in, op.name, op.noRemote)
@@ -349,10 +344,9 @@ func rcSingleCommand(ctx context.Context, in rc.Params, name string, noRemote bo
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "operations/size",
-		AuthRequired: true,
-		Fn:           rcSize,
-		Title:        "Count the number of bytes and files in remote",
+		Path:  "operations/size",
+		Fn:    rcSize,
+		Title: "Count the number of bytes and files in remote",
 		Help: `This takes the following parameters:
 
 - fs - a remote name string e.g. "drive:path/to/dir"
@@ -386,10 +380,9 @@ func rcSize(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "operations/publiclink",
-		AuthRequired: true,
-		Fn:           rcPublicLink,
-		Title:        "Create or retrieve a public link to the given file or folder.",
+		Path:  "operations/publiclink",
+		Fn:    rcPublicLink,
+		Title: "Create or retrieve a public link to the given file or folder.",
 		Help: `This takes the following parameters:
 
 - fs - a remote name string e.g. "drive:"
@@ -430,10 +423,9 @@ func rcPublicLink(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "operations/fsinfo",
-		AuthRequired: true,
-		Fn:           rcFsInfo,
-		Title:        "Return information about the remote",
+		Path:  "operations/fsinfo",
+		Fn:    rcFsInfo,
+		Title: "Return information about the remote",
 		Help: `This takes the following parameters:
 
 - fs - a remote name string e.g. "drive:"
@@ -566,10 +558,9 @@ func rcFsInfo(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "backend/command",
-		AuthRequired: true,
-		Fn:           rcBackend,
-		Title:        "Runs a backend command.",
+		Path:  "backend/command",
+		Fn:    rcBackend,
+		Title: "Runs a backend command.",
 		Help: `This takes the following parameters:
 
 - command - a string with the command name
@@ -652,9 +643,10 @@ func rcBackend(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 // to a circular dependency on config.
 func init() {
 	rc.Add(rc.Call{
-		Path:  "core/du",
-		Fn:    rcDu,
-		Title: "Returns disk usage of a locally attached disk.",
+		Path:   "core/du",
+		NoAuth: true,
+		Fn:     rcDu,
+		Title:  "Returns disk usage of a locally attached disk.",
 		Help: `
 This returns the disk usage for the local directory passed in as dir.
 
@@ -700,10 +692,9 @@ func rcDu(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "operations/check",
-		AuthRequired: true,
-		Fn:           rcCheck,
-		Title:        "check the source and destination are the same",
+		Path:  "operations/check",
+		Fn:    rcCheck,
+		Title: "check the source and destination are the same",
 		Help: `Checks the files in the source and destination match.  It compares
 sizes and hashes and logs a report of files that don't
 match.  It doesn't alter the source or destination.
@@ -875,10 +866,9 @@ func rcCheck(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "operations/hashsum",
-		AuthRequired: true,
-		Fn:           rcHashsum,
-		Title:        "Produces a hashsum file for all the objects in the path.",
+		Path:  "operations/hashsum",
+		Fn:    rcHashsum,
+		Title: "Produces a hashsum file for all the objects in the path.",
 		Help: `Produces a hash file for all the objects in the path using the hash
 named.  The output is in the same format as the standard
 md5sum/sha1sum tool.
@@ -957,10 +947,9 @@ func rcHashsum(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "operations/hashsumfile",
-		AuthRequired: true,
-		Fn:           rcHashsumFile,
-		Title:        "Produces a hash for a single file.",
+		Path:  "operations/hashsumfile",
+		Fn:    rcHashsumFile,
+		Title: "Produces a hash for a single file.",
 		Help: `Produces a hash for a single file using the hash named.
 
 This takes the following parameters:

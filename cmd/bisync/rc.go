@@ -18,11 +18,10 @@ import (
 
 func addRC() {
 	rc.Add(rc.Call{
-		Path:         "sync/bisync",
-		AuthRequired: true,
-		Fn:           rcBisync,
-		Title:        shortHelp,
-		Help:         rcHelp,
+		Path:  "sync/bisync",
+		Fn:    rcBisync,
+		Title: shortHelp,
+		Help:  rcHelp,
 	})
 }
 

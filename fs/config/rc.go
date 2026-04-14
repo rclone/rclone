@@ -11,10 +11,9 @@ import (
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "config/unlock",
-		Fn:           rcConfigPassword,
-		Title:        "Unlock the config file.",
-		AuthRequired: true,
+		Path:  "config/unlock",
+		Fn:    rcConfigPassword,
+		Title: "Unlock the config file.",
 		Help: `
 Unlocks the config file if it is locked.
 
@@ -46,10 +45,9 @@ func rcConfigPassword(ctx context.Context, in rc.Params) (out rc.Params, err err
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "config/dump",
-		Fn:           rcDump,
-		Title:        "Dumps the config file.",
-		AuthRequired: true,
+		Path:  "config/dump",
+		Fn:    rcDump,
+		Title: "Dumps the config file.",
 		Help: `
 Returns a JSON object:
 - key: value
@@ -68,10 +66,9 @@ func rcDump(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "config/get",
-		Fn:           rcGet,
-		Title:        "Get a remote in the config file.",
-		AuthRequired: true,
+		Path:  "config/get",
+		Fn:    rcGet,
+		Title: "Get a remote in the config file.",
 		Help: `
 Parameters:
 
@@ -93,10 +90,9 @@ func rcGet(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "config/listremotes",
-		Fn:           rcListRemotes,
-		Title:        "Lists the remotes in the config file and defined in environment variables.",
-		AuthRequired: true,
+		Path:  "config/listremotes",
+		Fn:    rcListRemotes,
+		Title: "Lists the remotes in the config file and defined in environment variables.",
 		Help: `
 Returns
 - remotes - array of remote names
@@ -121,10 +117,9 @@ func rcListRemotes(ctx context.Context, in rc.Params) (out rc.Params, err error)
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "config/providers",
-		Fn:           rcProviders,
-		Title:        "Shows how providers are configured in the config file.",
-		AuthRequired: true,
+		Path:  "config/providers",
+		Fn:    rcProviders,
+		Title: "Shows how providers are configured in the config file.",
 		Help: `
 Returns a JSON object:
 - providers - array of objects
@@ -166,8 +161,7 @@ func init() {
 `
 		}
 		rc.Add(rc.Call{
-			Path:         "config/" + name,
-			AuthRequired: true,
+			Path: "config/" + name,
 			Fn: func(ctx context.Context, in rc.Params) (rc.Params, error) {
 				return rcConfig(ctx, in, name)
 			},
@@ -239,10 +233,9 @@ func rcConfig(ctx context.Context, in rc.Params, what string) (out rc.Params, er
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "config/delete",
-		Fn:           rcDelete,
-		Title:        "Delete a remote in the config file.",
-		AuthRequired: true,
+		Path:  "config/delete",
+		Fn:    rcDelete,
+		Title: "Delete a remote in the config file.",
 		Help: `
 Parameters:
 
@@ -265,10 +258,9 @@ func rcDelete(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "config/setpath",
-		Fn:           rcSetPath,
-		Title:        "Set the path of the config file",
-		AuthRequired: true,
+		Path:  "config/setpath",
+		Fn:    rcSetPath,
+		Title: "Set the path of the config file",
 		Help: `
 Parameters:
 
@@ -289,10 +281,9 @@ func rcSetPath(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "config/paths",
-		Fn:           rcPaths,
-		Title:        "Reads the config file path and other important paths.",
-		AuthRequired: true,
+		Path:  "config/paths",
+		Fn:    rcPaths,
+		Title: "Reads the config file path and other important paths.",
 		Help: `
 Returns a JSON object with the following keys:
 
