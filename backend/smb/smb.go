@@ -13,6 +13,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	smb2 "github.com/cloudsoda/go-smb2"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -439,7 +440,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	defer f.putConnection(&cn, err)
 
 	_, err = cn.smbShare.Stat(dstPath)
-	if os.IsNotExist(err) {
+	if isNotFoundError(err) {
 		err = cn.smbShare.Rename(f.toSambaPath(srcPath), f.toSambaPath(dstPath))
 		return translateError(err, true)
 	}
@@ -944,8 +945,17 @@ func (r *boundReadCloser) Close() error {
 	return err2
 }
 
+// NT status codes that indicate "not found" conditions.
+// These are from [MS-ERREF] and should map to fs.ErrorObjectNotFound/fs.ErrorDirNotFound.
+// The go-smb2 client library only maps STATUS_OBJECT_NAME_NOT_FOUND and
+// STATUS_OBJECT_PATH_NOT_FOUND to os.ErrNotExist. Some SMB servers also
+// return STATUS_NO_SUCH_FILE for missing files.
+const (
+	statusNoSuchFile = 0xC000000F // STATUS_NO_SUCH_FILE
+)
+
 func translateError(e error, dir bool) error {
-	if os.IsNotExist(e) {
+	if isNotFoundError(e) {
 		if dir {
 			return fs.ErrorDirNotFound
 		}
@@ -953,6 +963,19 @@ func translateError(e error, dir bool) error {
 	}
 
 	return e
+}
+
+// isNotFoundError checks whether the error indicates a "not found" condition,
+// including SMB-specific ResponseError codes that os.IsNotExist doesn't cover.
+func isNotFoundError(e error) bool {
+	if os.IsNotExist(e) {
+		return true
+	}
+	var re *smb2.ResponseError
+	if errors.As(e, &re) {
+		return re.Code == statusNoSuchFile
+	}
+	return false
 }
 
 var (
