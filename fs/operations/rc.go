@@ -430,9 +430,10 @@ func rcPublicLink(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 
 func init() {
 	rc.Add(rc.Call{
-		Path:  "operations/fsinfo",
-		Fn:    rcFsInfo,
-		Title: "Return information about the remote",
+		Path:         "operations/fsinfo",
+		AuthRequired: true,
+		Fn:           rcFsInfo,
+		Title:        "Return information about the remote",
 		Help: `This takes the following parameters:
 
 - fs - a remote name string e.g. "drive:"
