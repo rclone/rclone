@@ -102,11 +102,11 @@ type downloader struct {
 }
 
 // New makes a downloader for item
-func New(item Item, opt *vfscommon.Options, remote string, src fs.Object) (dls *Downloaders) {
+func New(ctx context.Context, item Item, opt *vfscommon.Options, remote string, src fs.Object) (dls *Downloaders) {
 	if src == nil {
 		panic("internal error: newDownloaders called with nil src object")
 	}
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(ctx)
 	dls = &Downloaders{
 		ctx:    ctx,
 		cancel: cancel,
@@ -284,7 +284,7 @@ func (dls *Downloaders) _ensureDownloader(r ranges.Range) (err error) {
 	// defer log.Trace(dls.src, "r=%v", r)("err=%v", &err)
 
 	// The window includes potentially unread data in the buffer
-	window := int64(fs.GetConfig(context.TODO()).BufferSize)
+	window := int64(fs.GetConfig(dls.ctx).BufferSize)
 
 	// Increase the read range by the read ahead if set
 	if dls.opt.ReadAhead > 0 {
@@ -536,7 +536,7 @@ func (dl *downloader) open(offset int64) (err error) {
 	// }
 	// in0, err := operations.NewReOpen(dl.dls.ctx, dl.dls.src, ci.LowLevelRetries, dl.dls.item.c.hashOption, rangeOption)
 
-	in0 := chunkedreader.New(context.TODO(), dl.dls.src, int64(dl.dls.opt.ChunkSize), int64(dl.dls.opt.ChunkSizeLimit), dl.dls.opt.ChunkStreams)
+	in0 := chunkedreader.New(dl.dls.ctx, dl.dls.src, int64(dl.dls.opt.ChunkSize), int64(dl.dls.opt.ChunkSizeLimit), dl.dls.opt.ChunkStreams)
 	_, err = in0.Seek(offset, 0)
 	if err != nil {
 		return fmt.Errorf("vfs reader: failed to open source file: %w", err)

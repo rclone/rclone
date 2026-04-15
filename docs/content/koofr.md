@@ -4,7 +4,7 @@ description: "Rclone docs for Koofr"
 versionIntroduced: "v1.47"
 ---
 
-# {{< icon "fa fa-suitcase" >}} Koofr
+# Koofr
 
 Paths are specified as `remote:path`
 

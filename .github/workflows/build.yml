@@ -19,6 +19,9 @@ on:
         type: boolean
         default: true
 
+permissions:
+  contents: read
+
 jobs:
   build:
     if: inputs.manual || (github.repository == 'rclone/rclone' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name))
@@ -161,6 +164,11 @@ jobs:
           printf "\n\nSystem environment:\n\n"
           env
 
+      - name: Fetch GUI
+        run: make fetch-gui
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build rclone
         run: |
           make
@@ -227,7 +235,7 @@ jobs:
           go-version: '~1.26.0'
           check-latest: true
           cache: false
-
+          
       - name: Cache
         uses: actions/cache@v5
         with:

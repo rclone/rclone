@@ -27,6 +27,8 @@ import (
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
+
+	"golang.org/x/text/unicode/norm"
 )
 
 /*
@@ -225,7 +227,8 @@ func (f *Fs) findLeafItem(ctx context.Context, pathID string, leaf string) (item
 		return nil, false, err
 	}
 	for _, item := range items {
-		if strings.EqualFold(item.FullName(), leaf) {
+		// iCloud returns file names in NFD Unicode normalization, so normalized to NFC for consistent comparison
+		if strings.EqualFold(norm.NFC.String(item.FullName()), leaf) {
 			return item, true, nil
 		}
 	}

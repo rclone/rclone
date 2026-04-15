@@ -4,7 +4,7 @@ description: "Rclone docs for HiDrive"
 versionIntroduced: "v1.59"
 ---
 
-# {{< icon "fa fa-cloud" >}} HiDrive
+# HiDrive
 
 Paths are specified as `remote:path`
 
