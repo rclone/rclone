@@ -21,7 +21,7 @@ type User struct {
 	Avatar           string      `json:"avatar"`
 	ModelType        string      `json:"model_type"`
 	OwnsEntry        bool        `json:"owns_entry"`
-	EntryPermissions []any       `json:"entry_permissions"`
+	EntryPermissions any         `json:"entry_permissions"`
 	DisplayName      string      `json:"display_name"`
 }
 

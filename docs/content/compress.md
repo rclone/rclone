@@ -4,7 +4,7 @@ description: "Compression Remote"
 versionIntroduced: "v1.54"
 ---
 
-# {{< icon "fas fa-compress" >}} Compress
+# Compress
 
 ## Warning
 

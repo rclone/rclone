@@ -4,7 +4,7 @@ description: "Rclone docs for Quatrix"
 versionIntroduced: "v1.63.2"
 ---
 
-# {{< icon "fas fa-shield-alt" >}} Quatrix
+# Quatrix
 
 Quatrix by Maytech is [Quatrix Secure Compliant File Sharing | Maytech](https://www.maytech.net/products/quatrix-business).
 
