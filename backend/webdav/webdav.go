@@ -341,13 +341,13 @@ func itemIsDir(item *api.Response) bool {
 }
 
 // readMetaDataForPath reads the metadata from the path
-func (f *Fs) readMetaDataForPath(ctx context.Context, path string, depth string) (info *api.Prop, err error) {
+func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Prop, err error) {
 	// FIXME how do we read back additional properties?
 	opts := rest.Opts{
 		Method: "PROPFIND",
 		Path:   f.filePath(path),
 		ExtraHeaders: map[string]string{
-			"Depth": depth,
+			"Depth": "0",
 		},
 		CheckRedirect: rest.PreserveMethodRedirectFn,
 	}
@@ -367,9 +367,6 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string, depth string)
 		// does not exist
 		switch apiErr.StatusCode {
 		case http.StatusNotFound:
-			if f.retryWithZeroDepth && depth != "0" {
-				return f.readMetaDataForPath(ctx, path, "0")
-			}
 			return nil, fs.ErrorObjectNotFound
 		case http.StatusMovedPermanently, http.StatusFound, http.StatusSeeOther:
 			// Some sort of redirect - go doesn't deal with these properly (it resets
@@ -1109,11 +1106,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 		// does not really exist so we perform an extra check here.
 		// Only the existence is checked, all other errors must be
 		// ignored here to make the rclone test suite pass.
-		depth := defaultDepth
-		if f.retryWithZeroDepth {
-			depth = "0"
-		}
-		_, err := f.readMetaDataForPath(ctx, dir, depth)
+		_, err := f.readMetaDataForPath(ctx, dir)
 		if err == fs.ErrorObjectNotFound {
 			return fs.ErrorDirNotFound
 		}
@@ -1422,7 +1415,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	if o.hasMetaData {
 		return nil
 	}
-	info, err := o.fs.readMetaDataForPath(ctx, o.remote, defaultDepth)
+	info, err := o.fs.readMetaDataForPath(ctx, o.remote)
 	if err != nil {
 		return err
 	}
