@@ -3,6 +3,7 @@
 package onedrive
 
 import (
+	"bytes"
 	"context"
 	_ "embed"
 	"encoding/base64"
@@ -13,6 +14,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os/exec"
 	"path"
 	"regexp"
 	"strconv"
@@ -41,6 +43,7 @@ import (
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
+	"golang.org/x/sync/singleflight"
 )
 
 const (
@@ -422,6 +425,10 @@ isn't always desirable to set the permissions from the metadata.
 			Default:  rwOff,
 			Examples: rwExamples,
 		}, {
+			Name:     "bearer_token_command",
+			Help:     "Command to run to get a bearer token.",
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -782,6 +789,7 @@ type Options struct {
 	HashType                string               `config:"hash_type"`
 	AVOverride              bool                 `config:"av_override"`
 	Delta                   bool                 `config:"delta"`
+	BearerTokenCommand      fs.SpaceSepList      `config:"bearer_token_command"`
 	Enc                     encoder.MultiEncoder `config:"encoding"`
 	MetadataPermissions     rwChoice             `config:"metadata_permissions"`
 }
@@ -871,6 +879,105 @@ var (
 	gatewayTimeoutError     sync.Once
 	errAsyncJobAccessDenied = errors.New("async job failed - access denied")
 )
+
+// bearerTokenTransport is an http.RoundTripper that adds a Bearer token
+// obtained from an external command. On 401 responses it re-fetches the
+// token and retries the request once.
+type bearerTokenTransport struct {
+	cmd   fs.SpaceSepList
+	mu    sync.Mutex
+	token string
+	wrap  http.RoundTripper
+	sf    singleflight.Group
+}
+
+// newBearerTokenTransport creates a transport that fetches a bearer token
+// from cmd and injects it into every request. It fetches an initial token
+// before returning.
+func newBearerTokenTransport(cmd fs.SpaceSepList, wrap http.RoundTripper) (*bearerTokenTransport, error) {
+	t := &bearerTokenTransport{
+		cmd:  cmd,
+		wrap: wrap,
+	}
+	token, err := t.fetchToken()
+	if err != nil {
+		return nil, err
+	}
+	t.token = token
+	return t, nil
+}
+
+// fetchToken runs the bearer_token_command and returns the token string.
+func (t *bearerTokenTransport) fetchToken() (string, error) {
+	var (
+		stdout bytes.Buffer
+		stderr bytes.Buffer
+		c      = exec.Command(t.cmd[0], t.cmd[1:]...)
+	)
+	c.Stdout = &stdout
+	c.Stderr = &stderr
+	var (
+		err          = c.Run()
+		stdoutString = strings.TrimSpace(stdout.String())
+		stderrString = strings.TrimSpace(stderr.String())
+	)
+	if err != nil {
+		if stderrString == "" {
+			stderrString = stdoutString
+		}
+		return "", fmt.Errorf("failed to get bearer token using %q: %s: %w", t.cmd, stderrString, err)
+	}
+	return stdoutString, nil
+}
+
+// refreshToken re-fetches the token using singleflight to prevent
+// concurrent refreshes.
+func (t *bearerTokenTransport) refreshToken() (string, error) {
+	v, err, _ := t.sf.Do("refresh", func() (any, error) {
+		token, err := t.fetchToken()
+		if err != nil {
+			return nil, err
+		}
+		t.mu.Lock()
+		t.token = token
+		t.mu.Unlock()
+		return token, nil
+	})
+	if err != nil {
+		return "", err
+	}
+	return v.(string), nil
+}
+
+// RoundTrip implements http.RoundTripper. It sets the Authorization header,
+// and on 401 re-fetches the token and retries once.
+func (t *bearerTokenTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	t.mu.Lock()
+	token := t.token
+	t.mu.Unlock()
+
+	// Clone the request so we can safely modify headers
+	req2 := req.Clone(req.Context())
+	req2.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := t.wrap.RoundTrip(req2)
+	if err != nil || resp.StatusCode != 401 {
+		return resp, err
+	}
+
+	// Got 401 — try to refresh and retry once
+	fs.Debugf(nil, "Bearer token expired, refreshing")
+	_ = resp.Body.Close()
+
+	newToken, refreshErr := t.refreshToken()
+	if refreshErr != nil {
+		return resp, refreshErr
+	}
+
+	req3 := req.Clone(req.Context())
+	req3.Header.Set("Authorization", "Bearer "+newToken)
+	return t.wrap.RoundTrip(req3)
+}
 
 // shouldRetry returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
@@ -1070,16 +1177,27 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	rootURL := graphAPIEndpoint[opt.Region] + "/v1.0" + "/drives/" + opt.DriveID
 
-	oauthConfig, err := makeOauthConfig(ctx, opt)
-	if err != nil {
-		return nil, err
-	}
-
 	client := fshttp.NewClient(ctx)
 	root = parsePath(root)
-	oAuthClient, ts, err := oauthutil.NewClientWithBaseClient(ctx, name, m, oauthConfig, client)
-	if err != nil {
-		return nil, fmt.Errorf("failed to configure OneDrive: %w", err)
+
+	var oAuthClient *http.Client
+	var ts *oauthutil.TokenSource
+	if len(opt.BearerTokenCommand) != 0 {
+		// Use a bearer token transport that fetches tokens from the external command
+		bt, err := newBearerTokenTransport(opt.BearerTokenCommand, client.Transport)
+		if err != nil {
+			return nil, err
+		}
+		oAuthClient = &http.Client{Transport: bt}
+	} else {
+		oauthConfig, err := makeOauthConfig(ctx, opt)
+		if err != nil {
+			return nil, err
+		}
+		oAuthClient, ts, err = oauthutil.NewClientWithBaseClient(ctx, name, m, oauthConfig, client)
+		if err != nil {
+			return nil, fmt.Errorf("failed to configure OneDrive: %w", err)
+		}
 	}
 
 	ci := fs.GetConfig(ctx)
@@ -1127,11 +1245,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.features.ChangeNotify = nil
 	}
 
-	// Renew the token in the background
-	f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
-		_, _, err := f.readMetaDataForPath(ctx, "")
-		return err
-	})
+	if ts != nil {
+		// Renew the token in the background (not used with bearer_token_command)
+		f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
+			_, _, err := f.readMetaDataForPath(ctx, "")
+			return err
+		})
+	}
 
 	// Get rootID
 	rootID := opt.RootFolderID
@@ -1541,7 +1661,9 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 
 // Shutdown shutdown the fs
 func (f *Fs) Shutdown(ctx context.Context) error {
-	f.tokenRenewer.Shutdown()
+	if f.tokenRenewer != nil {
+		f.tokenRenewer.Shutdown()
+	}
 	return nil
 }
 
