@@ -346,7 +346,7 @@ jobs:
 
       - name: Run GUI tests
         run: |
-          rclone gui --user test --pass test --addr :5572 --api-addr :5573 --no-open-browser &
+          rclone gui --user test --pass test --addr localhost:5572 --api-addr localhost:5573 --no-open-browser &
           sleep 2
           cd rclone-web
           npx playwright test
