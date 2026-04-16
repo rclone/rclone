@@ -44,6 +44,7 @@ func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fi
 	if fileInfo.IsDir() {
 		obj.Class = "object.container.storageFolder"
 		obj.Title = fileInfo.Name()
+		obj.Date = upnpav.Timestamp{Time: fileInfo.ModTime()}
 		childCount, err := cds.countChildren(cdsObject.Path)
 		if err != nil {
 			fs.Debugf(cds, "error counting children of %s: %v", cdsObject.Path, err)
