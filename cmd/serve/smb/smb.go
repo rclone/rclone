@@ -1,4 +1,4 @@
-//go:build !windows && !plan9 && !(linux && (386 || arm || mips || mipsle))
+//go:build !windows && !plan9
 
 // Package smb implements an SMB server to serve an rclone VFS
 package smb
