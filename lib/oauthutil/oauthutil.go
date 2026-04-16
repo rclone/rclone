@@ -157,6 +157,10 @@ var SharedOptions = []fs.Option{{
 	Default:  false,
 	Help:     "Use client credentials OAuth flow.\n\nThis will use the OAUTH2 client Credentials Flow as described in RFC 6749.\n\nNote that this option is NOT supported by all backends.",
 	Advanced: true,
+}, {
+	Name:     config.ConfigBearerTokenCommand,
+	Help:     "Command to run to get a bearer token.\n\nWhen set, the normal OAuth flow is skipped. Instead, the command is run to obtain a bearer token which is used for all API requests. If the token expires (HTTP 401), the command is re-run to fetch a fresh token.",
+	Advanced: true,
 }}
 
 // oldToken contains an end-user's tokens.
@@ -403,10 +407,7 @@ func (ts *TokenSource) Expire() error {
 // Call with the lock held
 func (ts *TokenSource) timeToExpiry() time.Duration {
 	t := ts.token
-	if t == nil {
-		return 0
-	}
-	if t.Expiry.IsZero() {
+	if t == nil || t.Expiry.IsZero() {
 		return 3e9 * time.Second // ~95 years
 	}
 	return time.Until(t.Expiry)
@@ -481,6 +482,27 @@ func OverrideCredentials(name string, m configmap.Mapper, origConfig *Config) (n
 // TokenSource which Invalidate may need to be called on.  It uses the
 // httpClient passed in as the base client.
 func NewClientWithBaseClient(ctx context.Context, name string, m configmap.Mapper, config *Config, baseClient *http.Client) (*http.Client, *TokenSource, error) {
+	// Check for bearer_token_command — if set, skip OAuth entirely
+	if cmdStr, ok := m.Get("bearer_token_command"); ok && cmdStr != "" {
+		cmd := fs.SpaceSepList{}
+		if err := cmd.Set(cmdStr); err != nil {
+			return nil, nil, fmt.Errorf("failed to parse bearer_token_command: %w", err)
+		}
+		bt, err := newBearerTokenTransport(cmd, baseClient.Transport)
+		if err != nil {
+			return nil, nil, err
+		}
+		fs.Debugf(name, "Using bearer token from external command")
+		// Return an inert TokenSource — token lifecycle is managed by the
+		// bearer token transport, but callers get a non-nil TokenSource
+		// they can safely pass to NewRenew etc.
+		ts := &TokenSource{
+			name: name,
+			m:    m,
+		}
+		return &http.Client{Transport: bt}, ts, nil
+	}
+
 	config, _ = OverrideCredentials(name, m, config)
 	token, err := GetToken(name, m)
 	if err != nil && !config.ClientCredentialFlow {

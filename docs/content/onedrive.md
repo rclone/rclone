@@ -244,11 +244,13 @@ access tokens (for example, Azure CLI, a managed identity helper, or
 an OIDC token agent), you can use `bearer_token_command` to supply
 the token to rclone instead of using the built-in OAuth flow.
 
+This is a shared option available on all OAuth-based backends.
+
 When `bearer_token_command` is set, rclone will skip its normal OAuth
 authentication entirely. Instead, it will run the specified command to
-obtain a bearer token and use it for all Microsoft Graph API requests.
-If the token expires (HTTP 401), rclone will automatically re-run the
-command to fetch a fresh token and retry the request.
+obtain a bearer token and use it for all API requests. If the token
+expires (HTTP 401), rclone will automatically re-run the command to
+fetch a fresh token and retry the request.
 
 You still need to configure `drive_id` and `drive_type` in the rclone
 config. You can obtain these by first configuring the remote normally
@@ -869,17 +871,6 @@ Properties:
     - Read and Write the value.
   - "failok"
     - If writing fails log errors only, don't fail the transfer
-
-#### --onedrive-bearer-token-command
-
-Command to run to get a bearer token.
-
-Properties:
-
-- Config:      bearer_token_command
-- Env Var:     RCLONE_ONEDRIVE_BEARER_TOKEN_COMMAND
-- Type:        string
-- Required:    false
 
 #### --onedrive-encoding
 

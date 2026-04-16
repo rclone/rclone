@@ -49,6 +49,10 @@ const (
 	// ConfigClientCredentials - use OAUTH2 client credentials
 	ConfigClientCredentials = "client_credentials"
 
+	// ConfigBearerTokenCommand is the config key for an external command
+	// that provides a bearer token, bypassing the normal OAuth flow.
+	ConfigBearerTokenCommand = "bearer_token_command"
+
 	// ConfigEncoding is the config key to change the encoding for a backend
 	ConfigEncoding = "encoding"
 
