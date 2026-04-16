@@ -495,8 +495,8 @@ github.com/lucasb-eyer/go-colorful v1.3.0 h1:2/yBRLdWBZKrf7gB40FoiKfAWYQ0lqNcbuQ
 github.com/lucasb-eyer/go-colorful v1.3.0/go.mod h1:R4dSotOR9KMtayYi1e77YzuveK+i7ruzyGqttikkLy0=
 github.com/lufia/plan9stats v0.0.0-20260216142805-b3301c5f2a88 h1:PTw+yKnXcOFCR6+8hHTyWBeQ/P4Nb7dd4/0ohEcWQuM=
 github.com/lufia/plan9stats v0.0.0-20260216142805-b3301c5f2a88/go.mod h1:autxFIvghDt3jPTLoqZ9OZ7s9qTGNAWmYCjVFWPX/zg=
-github.com/macos-fuse-t/go-smb2 v0.0.0-20260415210427-68ce51f6f833 h1:HlhbBNR8LXsXBvPXZHypu90uakAb8ulkAdunABeY9ac=
-github.com/macos-fuse-t/go-smb2 v0.0.0-20260415210427-68ce51f6f833/go.mod h1:uuaCnBNqDHH0WcjKjxYbZaO65a9rxUk0k1YyTOGP8gs=
+github.com/macos-fuse-t/go-smb2 v0.0.0-20260416124843-4b60f37d6b85 h1:vkThYVS9QBOVKJwW0EesLYdveINdRB37WDy9N9FsJ2U=
+github.com/macos-fuse-t/go-smb2 v0.0.0-20260416124843-4b60f37d6b85/go.mod h1:uuaCnBNqDHH0WcjKjxYbZaO65a9rxUk0k1YyTOGP8gs=
 github.com/mailru/easyjson v0.9.1 h1:LbtsOm5WAswyWbvTEOqhypdPeZzHavpZx96/n553mR8=
 github.com/mailru/easyjson v0.9.1/go.mod h1:1+xMtQp2MRNVL/V1bOzuP3aP8VNwRW55fQUto+XFtTU=
 github.com/mattn/go-colorable v0.1.14 h1:9A9LHSqF/7dyVVX6g0U9cwm9pG3kP9gSzcuIPHPsaIE=
