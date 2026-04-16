@@ -15,6 +15,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -762,4 +763,293 @@ func TestDirMetadataExtension(t *testing.T) {
 	if features.ReadDirMetadata {
 		assert.Equal(t, modTime.Format(time.RFC3339Nano), metadata["mtime"])
 	}
+}
+
+// TestDirStatLazy verifies that --vfs-lazy-dir-read uses NewObject (HeadObject
+// for S3) instead of a full directory listing when stat-ing a single file.
+func TestDirStatLazy(t *testing.T) {
+	opt := vfscommon.Opt
+	opt.LazyDirRead = true
+	opt.CaseInsensitive = false // default is true on macOS/Windows; must be false for lazy stat to activate
+
+	// Unicode normalization (NoUnicodeNormalization=false by default) also
+	// triggers a full listing fallback. Disable it so the lazy path is active.
+	ci := fs.GetConfig(context.Background())
+	oldNorm := ci.NoUnicodeNormalization
+	ci.NoUnicodeNormalization = true
+	t.Cleanup(func() { ci.NoUnicodeNormalization = oldNorm })
+	r, vfs := newTestVFSOpt(t, &opt)
+
+	// Write a test file directly to the remote.
+	file1 := r.WriteObject(context.Background(), "file1", "hello lazy", t1)
+	r.CheckRemoteItems(t, file1)
+
+	// stat the root — this stat triggers lazy lookup, not full listing.
+	root, err := vfs.Root()
+	require.NoError(t, err)
+
+	// The directory cache is empty at this point (no full listing has run).
+	root.mu.Lock()
+	cacheEmpty := root.read.IsZero()
+	root.mu.Unlock()
+	assert.True(t, cacheEmpty, "directory cache should be empty before lazy stat")
+
+	// Stat the single file — should use NewObject, not List.
+	node, err := root.Stat("file1")
+	require.NoError(t, err)
+	_, ok := node.(*File)
+	assert.True(t, ok)
+	assert.Equal(t, "file1", node.Name())
+	assert.Equal(t, int64(10), node.Size())
+
+	// After lazy stat, the item should be in cache but d.read should still be
+	// zero (no full listing has been done yet).
+	root.mu.Lock()
+	_, inCache := root.items["file1"]
+	stillNoFullRead := root.read.IsZero()
+	root.mu.Unlock()
+	assert.True(t, inCache, "lazily fetched item should be in dir cache")
+	assert.True(t, stillNoFullRead, "full dir listing should not have been triggered")
+
+	// A second stat of the same file should be a pure cache hit.
+	node2, err := root.Stat("file1")
+	require.NoError(t, err)
+	assert.Equal(t, node, node2, "second stat should return the cached node")
+
+	// Stat of a non-existent file should return ENOENT.
+	_, err = root.Stat("does-not-exist")
+	assert.Equal(t, ENOENT, err)
+}
+
+// TestDirStatLazyCacheHit verifies that when a full listing has already been
+// performed, a subsequent lazy stat returns the cached value without a network
+// round-trip (the cache mechanism works the same in lazy mode).
+func TestDirStatLazyCacheHit(t *testing.T) {
+	opt := vfscommon.Opt
+	opt.LazyDirRead = true
+	opt.CaseInsensitive = false
+
+	ci := fs.GetConfig(context.Background())
+	oldNorm := ci.NoUnicodeNormalization
+	ci.NoUnicodeNormalization = true
+	t.Cleanup(func() { ci.NoUnicodeNormalization = oldNorm })
+	r, vfs := newTestVFSOpt(t, &opt)
+
+	file1 := r.WriteObject(context.Background(), "file1", "hello", t1)
+	r.CheckRemoteItems(t, file1)
+
+	root, err := vfs.Root()
+	require.NoError(t, err)
+
+	// Trigger a full listing via ReadDirAll.
+	_, err = root.ReadDirAll()
+	require.NoError(t, err)
+
+	root.mu.Lock()
+	fullyRead := !root.read.IsZero()
+	root.mu.Unlock()
+	assert.True(t, fullyRead, "ReadDirAll should mark dir as fully read")
+
+	// Now stat should return the cached result.
+	node, err := root.Stat("file1")
+	require.NoError(t, err)
+	assert.Equal(t, "file1", node.Name())
+}
+
+// TestDirStatLazyCaseInsensitiveFallback verifies that lazy stat is disabled
+// when --vfs-case-insensitive is set OR when --ignore-case-sync is set,
+// because case folding requires the full directory listing.
+func TestDirStatLazyCaseInsensitiveFallback(t *testing.T) {
+	opt := vfscommon.Opt
+	opt.LazyDirRead = true
+	opt.CaseInsensitive = true
+
+	// Disable unicode normalization to isolate the CaseInsensitive check.
+	ci := fs.GetConfig(context.Background())
+	oldNorm := ci.NoUnicodeNormalization
+	ci.NoUnicodeNormalization = true
+	t.Cleanup(func() { ci.NoUnicodeNormalization = oldNorm })
+	r, vfs := newTestVFSOpt(t, &opt)
+
+	file1 := r.WriteObject(context.Background(), "file1", "hello ci", t1)
+	r.CheckRemoteItems(t, file1)
+
+	root, err := vfs.Root()
+	require.NoError(t, err)
+
+	// With CaseInsensitive, stat() should fall back to full _readDir().
+	node, err := root.Stat("FILE1")
+	require.NoError(t, err)
+	assert.Equal(t, "file1", node.Name(), "case-insensitive match should work via full listing")
+
+	// A full read must have been done.
+	root.mu.Lock()
+	fullyRead := !root.read.IsZero()
+	root.mu.Unlock()
+	assert.True(t, fullyRead, "case-insensitive stat should have triggered a full directory listing")
+}
+
+// TestDirStatLazyUnicodeNormFallback verifies that lazy stat is disabled when
+// unicode normalization is active (i.e. --no-unicode-normalization is NOT set),
+// because normalization matching requires the full directory listing.
+func TestDirStatLazyUnicodeNormFallback(t *testing.T) {
+	opt := vfscommon.Opt
+	opt.LazyDirRead = true
+	opt.CaseInsensitive = false // isolate unicode normalization check
+
+	// Ensure unicode normalization is active (NoUnicodeNormalization = false).
+	ci := fs.GetConfig(context.Background())
+	oldNorm := ci.NoUnicodeNormalization
+	ci.NoUnicodeNormalization = false // normalization ON → lazy stat must fall back
+	t.Cleanup(func() { ci.NoUnicodeNormalization = oldNorm })
+
+	r, vfs := newTestVFSOpt(t, &opt)
+
+	file1 := r.WriteObject(context.Background(), "file1", "hello norm", t1)
+	r.CheckRemoteItems(t, file1)
+
+	root, err := vfs.Root()
+	require.NoError(t, err)
+
+	// stat() should fall back to full _readDir() because unicode normalization
+	// is active (NoUnicodeNormalization == false).
+	node, err := root.Stat("file1")
+	require.NoError(t, err)
+	assert.Equal(t, "file1", node.Name())
+
+	root.mu.Lock()
+	fullyRead := !root.read.IsZero()
+	root.mu.Unlock()
+	assert.True(t, fullyRead, "unicode-normalization stat should have triggered a full directory listing")
+}
+
+// statLazySetup creates a VFS with LazyDirRead=true and all normalization
+// disabled, so statLazy() is guaranteed to be the active code path.
+// It returns the root Dir ready for statLazy tests.
+func statLazySetup(t *testing.T) (r *fstest.Run, root *Dir) {
+t.Helper()
+opt := vfscommon.Opt
+opt.LazyDirRead = true
+opt.CaseInsensitive = false
+r2, vfs := newTestVFSOpt(t, &opt)
+
+ci := fs.GetConfig(context.Background())
+oldNorm := ci.NoUnicodeNormalization
+ci.NoUnicodeNormalization = true
+t.Cleanup(func() { ci.NoUnicodeNormalization = oldNorm })
+
+rootDir, err := vfs.Root()
+if err != nil {
+t.Fatal(err)
+}
+return r2, rootDir
+}
+
+// TestStatLazyFileFound verifies that statLazy returns a *File node when the
+// object exists, caches it in d.items, and does NOT update d.read.
+func TestStatLazyFileFound(t *testing.T) {
+r, root := statLazySetup(t)
+
+r.WriteObject(context.Background(), "lazyme", "contents", t1)
+
+node, err := root.statLazy("lazyme")
+require.NoError(t, err)
+
+_, isFile := node.(*File)
+assert.True(t, isFile, "expected *File node")
+assert.Equal(t, "lazyme", node.Name())
+assert.Equal(t, int64(8), node.Size())
+
+root.mu.Lock()
+_, inCache := root.items["lazyme"]
+readIsZero := root.read.IsZero()
+root.mu.Unlock()
+assert.True(t, inCache, "node should be in d.items after lazy lookup")
+assert.True(t, readIsZero, "d.read must stay zero — no full listing should have occurred")
+}
+
+// TestStatLazyFileNotFound verifies that statLazy returns ENOENT for a key
+// that does not exist as a file or as a virtual directory prefix.
+func TestStatLazyFileNotFound(t *testing.T) {
+r, root := statLazySetup(t)
+_ = r
+
+_, err := root.statLazy("does-not-exist")
+assert.Equal(t, ENOENT, err)
+}
+
+// TestStatLazyDir verifies that statLazy returns a *Dir node when the leaf
+// does not exist as a plain object but has children (i.e. it is a virtual
+// directory prefix in a flat-namespace remote).
+func TestStatLazyDir(t *testing.T) {
+r, root := statLazySetup(t)
+
+// Create a file inside a "subdirectory" so the prefix "subdir/" exists.
+r.WriteObject(context.Background(), "subdir/child.txt", "hi", t1)
+
+node, err := root.statLazy("subdir")
+require.NoError(t, err)
+
+_, isDir := node.(*Dir)
+assert.True(t, isDir, "expected *Dir node for virtual directory prefix")
+assert.Equal(t, "subdir", node.Name())
+
+root.mu.Lock()
+_, inCache := root.items["subdir"]
+readIsZero := root.read.IsZero()
+root.mu.Unlock()
+assert.True(t, inCache, "Dir node should be cached in d.items")
+assert.True(t, readIsZero, "d.read must stay zero — only a bounded List was issued")
+}
+
+// TestStatLazyCacheHitNoop verifies that a second call to statLazy for the
+// same leaf is a pure cache hit — the node is returned from d.items with no
+// additional network round-trip (d.read stays zero throughout).
+func TestStatLazyCacheHitNoop(t *testing.T) {
+r, root := statLazySetup(t)
+
+r.WriteObject(context.Background(), "once", "data", t1)
+
+// First call: populates the cache.
+node1, err := root.statLazy("once")
+require.NoError(t, err)
+
+// Second call: must return the exact same node from cache.
+node2, err := root.statLazy("once")
+require.NoError(t, err)
+assert.Equal(t, node1, node2, "second statLazy call should return the cached node")
+
+root.mu.Lock()
+readIsZero := root.read.IsZero()
+root.mu.Unlock()
+assert.True(t, readIsZero, "d.read must remain zero after two statLazy calls")
+}
+
+// TestStatLazySubdirFile verifies that statLazy resolves files nested inside a
+// sub-directory. The VFS path join must be correct for both root-level and
+// nested directories.
+func TestStatLazySubdirFile(t *testing.T) {
+r, root := statLazySetup(t)
+
+r.WriteObject(context.Background(), "a/b/deep.txt", "deep", t1)
+
+// Stat "a" from root — should be a Dir.
+aNode, err := root.statLazy("a")
+require.NoError(t, err)
+aDir, ok := aNode.(*Dir)
+assert.True(t, ok, "expected *Dir for 'a'")
+
+// From aDir, stat "b" — should also be a Dir.
+bNode, err := aDir.statLazy("b")
+require.NoError(t, err)
+_, ok = bNode.(*Dir)
+assert.True(t, ok, "expected *Dir for 'a/b'")
+
+// From bDir, stat "deep.txt" — should be a File.
+bDir := bNode.(*Dir)
+fileNode, err := bDir.statLazy("deep.txt")
+require.NoError(t, err)
+_, ok = fileNode.(*File)
+assert.True(t, ok, "expected *File for 'a/b/deep.txt'")
+assert.Equal(t, "deep.txt", fileNode.Name())
 }

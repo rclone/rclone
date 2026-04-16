@@ -937,6 +937,57 @@ norm-dupes` prevents this confusion by detecting this scenario, hiding the
 duplicates, and logging an error, similar to how this is handled in `rclone
 sync`.
 
+## VFS Lazy Directory Read
+
+By default, whenever rclone needs to look up a single file (e.g. when the
+kernel issues a `stat` or `Lookup` call), it fetches and caches the **entire**
+listing of the parent directory. On remotes with millions of objects in a flat
+hierarchy (such as a large S3 bucket), this triggers a full `ListObjectsV2` of
+the entire "directory" for every single file access — which can be very slow.
+
+The `--vfs-lazy-dir-read` flag changes this behaviour: instead of listing the
+whole directory, rclone uses a direct object lookup (e.g. `HeadObject` for S3)
+to answer the question "does this specific file exist?". The lookup order is:
+
+1. **Cache hit** — if the item is already in the VFS directory cache, return it
+   immediately with no network call.
+2. **Direct object lookup** — one `HeadObject` (S3) / `stat` (SFTP) / `PROPFIND`
+   (WebDAV) for the specific key. If found, the result is stored in the VFS
+   cache without marking the directory as fully read.
+3. **Virtual directory probe** — if the direct lookup fails, a bounded
+   `ListObjectsV2` with `prefix="leaf/"` and at most one page is issued to
+   check whether the name is a virtual directory prefix. This is O(1) in the
+   common case.
+
+`ReadDirAll` (triggered by `ls`, `find`, etc.) still performs a full directory
+listing — only single-file stat lookups are affected.
+
+**Incompatible flags:** `--vfs-lazy-dir-read` is automatically disabled (falls
+back to full listing) when any of the following are active, because they all
+require scanning the full directory to work correctly:
+
+- `--vfs-case-insensitive` (or the platform default: `true` on Windows and macOS)
+- `--ignore-case-sync` (global flag for case-insensitive sync)
+- unicode normalization is active (i.e. `--no-unicode-normalization` is **not** set —
+  the default on all platforms)
+- `--vfs-block-norm-dupes`
+
+**Important for macOS and Windows users:** both `--vfs-case-insensitive` and
+unicode normalization default to `true` on these platforms. You must explicitly
+disable both to activate lazy stat:
+
+```
+rclone mount s3:my-huge-bucket /mnt/data \
+  --vfs-lazy-dir-read \
+  --vfs-case-insensitive=false \
+  --no-unicode-normalization \
+  --read-only
+```
+
+This is safe when the object keys in the remote are stored in a canonical form
+(e.g. hex hashes or ASCII-only names) and you do not need case-folding or
+unicode equivalence matching.
+
 ## VFS Disk Options
 
 This flag allows you to manually set the statistics about the filing system.
@@ -1047,6 +1098,7 @@ rclone mount remote:path /path/to/mountpoint [flags]
       --vfs-disk-space-total-size SizeSuffix   Specify the total space of disk (default off)
       --vfs-fast-fingerprint                   Use fast (less accurate) fingerprints for change detection
       --vfs-handle-caching Duration            Time to keep file handle and downloaders alive after last close (default 5s)
+      --vfs-lazy-dir-read                      Use direct object lookup (e.g. HeadObject) instead of a full directory listing for single-file stat operations; automatically disabled when --vfs-case-insensitive, --ignore-case-sync, unicode normalization (default), or --vfs-block-norm-dupes are active
       --vfs-links                              Translate symlinks to/from regular files with a '.rclonelink' extension for the VFS
       --vfs-metadata-extension string          Set the extension to read metadata from
       --vfs-read-ahead SizeSuffix              Extra read ahead over --buffer-size when using cache-mode full
