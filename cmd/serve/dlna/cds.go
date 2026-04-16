@@ -42,12 +42,16 @@ func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fi
 	}
 
 	if fileInfo.IsDir() {
-		defaultChildCount := 1
 		obj.Class = "object.container.storageFolder"
 		obj.Title = fileInfo.Name()
+		childCount, err := cds.countChildren(cdsObject.Path)
+		if err != nil {
+			fs.Debugf(cds, "error counting children of %s: %v", cdsObject.Path, err)
+			childCount = 0
+		}
 		return upnpav.Container{
 			Object:     obj,
-			ChildCount: &defaultChildCount,
+			ChildCount: &childCount,
 		}, nil
 	}
 
@@ -264,6 +268,23 @@ func (cds *contentDirectoryService) objectFromID(id string) (o object, err error
 		return
 	}
 	return
+}
+
+// countChildren returns the number of child items in a directory.
+func (cds *contentDirectoryService) countChildren(dirPath string) (int, error) {
+	node, err := cds.vfs.Stat(dirPath)
+	if err != nil {
+		return 0, err
+	}
+	dir, ok := node.(*vfs.Dir)
+	if !ok {
+		return 0, nil
+	}
+	entries, err := dir.ReadDirAll()
+	if err != nil {
+		return 0, err
+	}
+	return len(entries), nil
 }
 
 func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *http.Request) ([]soapArg, error) {
