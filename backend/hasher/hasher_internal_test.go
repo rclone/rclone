@@ -69,12 +69,66 @@ func (f *Fs) testUploadFromCrypt(t *testing.T) {
 	_ = operations.Purge(ctx, f, dirName)
 }
 
+func (f *Fs) testUpdateStoresHash(t *testing.T) {
+	// make a temporary local remote
+	tempRoot, err := fstest.LocalRemote()
+	require.NoError(t, err)
+	defer func() {
+		_ = os.RemoveAll(tempRoot)
+	}()
+
+	// make a temporary crypt remote as source
+	ctx := context.Background()
+	pass := obscure.MustObscure("crypt")
+	remote := fmt.Sprintf(`:crypt,remote="%s",password="%s":`, tempRoot, pass)
+	cryptFs, err := fs.NewFs(ctx, remote)
+	require.NoError(t, err)
+
+	const dirName = "update_hash_1"
+	const fileName = dirName + "/file_update_1"
+	const longTime = fs.ModTimeNotSupported
+	hashType := f.keepHashes.GetOne()
+
+	// upload initial file to hasher via Put
+	src1 := putFile(ctx, t, cryptFs, fileName, "initial content")
+	in1, err := src1.Open(ctx)
+	require.NoError(t, err)
+	dst, err := f.Put(ctx, in1, src1)
+	require.NoError(t, err)
+	require.NotNil(t, dst)
+
+	// verify hash was stored after Put
+	var hash1 string
+	if f.opt.MaxAge > 0 {
+		hash1, err = f.getRawHash(ctx, hashType, fileName, anyFingerprint, longTime)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, hash1)
+	}
+
+	// update the file with new content via Update (this is what sync does for replacements)
+	src2 := putFile(ctx, t, cryptFs, fileName, "updated content")
+	in2, err := src2.Open(ctx)
+	require.NoError(t, err)
+	err = dst.Update(ctx, in2, src2)
+	require.NoError(t, err)
+
+	// verify hash was stored after Update and is different from the original
+	if f.opt.MaxAge > 0 {
+		hash2, err := f.getRawHash(ctx, hashType, fileName, anyFingerprint, longTime)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, hash2, "hash should be stored after Update")
+		assert.NotEqual(t, hash1, hash2, "hash should change after Update with different content")
+	}
+	_ = operations.Purge(ctx, f, dirName)
+}
+
 // InternalTest dispatches all internal tests
 func (f *Fs) InternalTest(t *testing.T) {
 	if !kv.Supported() {
 		t.Skip("hasher is not supported on this OS")
 	}
 	t.Run("UploadFromCrypt", f.testUploadFromCrypt)
+	t.Run("UpdateStoresHash", f.testUpdateStoresHash)
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)
