@@ -1,4 +1,4 @@
-//go:build !windows && !plan9
+//go:build !windows && !plan9 && !(linux && (386 || arm || mips || mipsle))
 
 package smb
 

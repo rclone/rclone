@@ -1,7 +1,7 @@
-// For unsupported platforms (windows, plan9)
-//go:build windows || plan9
+// For unsupported platforms (windows, plan9, 32-bit linux)
+//go:build windows || plan9 || (linux && (386 || arm || mips || mipsle))
 
-// Package smb is not supported on Windows or Plan 9
+// Package smb is not supported on Windows, Plan 9, or 32-bit Linux
 package smb
 
 import (

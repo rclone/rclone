@@ -1,4 +1,4 @@
-//go:build !windows && !plan9
+//go:build !windows && !plan9 && !(linux && (386 || arm || mips || mipsle))
 
 // Package smb implements a server to serve a VFS remote over SMB
 package smb
