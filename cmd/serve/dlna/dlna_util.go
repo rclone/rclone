@@ -77,17 +77,42 @@ func mustMarshalXML(value any) []byte {
 	return ret
 }
 
+// soapArg is an ordered SOAP response argument.
+type soapArg struct {
+	name  string
+	value string
+}
+
+// soapArgs creates a list of soapArg from pairs of name, value strings.
+// Panics if an odd number of strings is provided.
+func soapArgs(nameValuePairs ...string) []soapArg {
+	if len(nameValuePairs)%2 != 0 {
+		fs.Panicf(nil, "soapArgs: odd number of arguments")
+	}
+	args := make([]soapArg, len(nameValuePairs)/2)
+	for i := range args {
+		args[i] = soapArg{
+			name:  nameValuePairs[i*2],
+			value: nameValuePairs[i*2+1],
+		}
+	}
+	return args
+}
+
 // Marshal SOAP response arguments into a response XML snippet.
-func marshalSOAPResponse(sa upnp.SoapAction, args map[string]string) []byte {
-	soapArgs := make([]soap.Arg, 0, len(args))
-	for argName, value := range args {
-		soapArgs = append(soapArgs, soap.Arg{
-			XMLName: xml.Name{Local: argName},
-			Value:   value,
-		})
+// Argument order is preserved from the input slice, which is important
+// for compatibility with strict DLNA clients like Samsung TVs that
+// expect arguments in the order defined by the service SCPD.
+func marshalSOAPResponse(sa upnp.SoapAction, args []soapArg) []byte {
+	xmlArgs := make([]soap.Arg, len(args))
+	for i, arg := range args {
+		xmlArgs[i] = soap.Arg{
+			XMLName: xml.Name{Local: arg.name},
+			Value:   arg.value,
+		}
 	}
 	return fmt.Appendf(nil, `<u:%[1]sResponse xmlns:u="%[2]s">%[3]s</u:%[1]sResponse>`,
-		sa.Action, sa.ServiceURN.String(), mustMarshalXML(soapArgs))
+		sa.Action, sa.ServiceURN.String(), mustMarshalXML(xmlArgs))
 }
 
 type loggingResponseWriter struct {

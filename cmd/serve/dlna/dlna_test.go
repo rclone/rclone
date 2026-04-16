@@ -136,6 +136,51 @@ func TestContentDirectoryBrowseMetadata(t *testing.T) {
 	require.Contains(t, string(body), html.EscapeString("<dc:date>"))
 }
 
+// Check that Browse response arguments are in the SCPD-defined order.
+// Samsung TVs require this specific ordering to work correctly.
+// See: https://github.com/rclone/rclone/issues/9346
+func TestContentDirectoryBrowseResponseOrder(t *testing.T) {
+	req, err := http.NewRequest("POST", baseURL+serviceControlURL, strings.NewReader(`
+<?xml version="1.0" encoding="utf-8"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"
+            s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+    <s:Body>
+        <u:Browse xmlns:u="urn:schemas-upnp-org:service:ContentDirectory:1">
+            <ObjectID>0</ObjectID>
+            <BrowseFlag>BrowseMetadata</BrowseFlag>
+            <Filter>*</Filter>
+            <StartingIndex>0</StartingIndex>
+            <RequestedCount>0</RequestedCount>
+            <SortCriteria></SortCriteria>
+        </u:Browse>
+    </s:Body>
+</s:Envelope>`))
+	require.NoError(t, err)
+	req.Header.Set("SOAPACTION", `"urn:schemas-upnp-org:service:ContentDirectory:1#Browse"`)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	bodyStr := string(body)
+
+	// Verify that the response arguments appear in SCPD-defined order:
+	// Result, NumberReturned, TotalMatches, UpdateID
+	resultIdx := strings.Index(bodyStr, "<Result>")
+	numberReturnedIdx := strings.Index(bodyStr, "<NumberReturned>")
+	totalMatchesIdx := strings.Index(bodyStr, "<TotalMatches>")
+	updateIDIdx := strings.Index(bodyStr, "<UpdateID>")
+
+	require.NotEqual(t, -1, resultIdx, "Result element not found")
+	require.NotEqual(t, -1, numberReturnedIdx, "NumberReturned element not found")
+	require.NotEqual(t, -1, totalMatchesIdx, "TotalMatches element not found")
+	require.NotEqual(t, -1, updateIDIdx, "UpdateID element not found")
+
+	assert.Less(t, resultIdx, numberReturnedIdx, "Result should come before NumberReturned")
+	assert.Less(t, numberReturnedIdx, totalMatchesIdx, "NumberReturned should come before TotalMatches")
+	assert.Less(t, totalMatchesIdx, updateIDIdx, "TotalMatches should come before UpdateID")
+}
+
 // Check that the X_MS_MediaReceiverRegistrar is faked out properly.
 func TestMediaReceiverRegistrarService(t *testing.T) {
 	env := soap.Envelope{

@@ -266,18 +266,18 @@ func (cds *contentDirectoryService) objectFromID(id string) (o object, err error
 	return
 }
 
-func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *http.Request) (map[string]string, error) {
+func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *http.Request) ([]soapArg, error) {
 	host := r.Host
 
 	switch action {
 	case "GetSystemUpdateID":
-		return map[string]string{
-			"Id": cds.updateIDString(),
-		}, nil
+		return soapArgs(
+			"Id", cds.updateIDString(),
+		), nil
 	case "GetSortCapabilities":
-		return map[string]string{
-			"SortCaps": "dc:title",
-		}, nil
+		return soapArgs(
+			"SortCaps", "dc:title",
+		), nil
 	case "Browse":
 		var browse browse
 		if err := xml.Unmarshal(argsXML, &browse); err != nil {
@@ -305,12 +305,13 @@ func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *htt
 			if err != nil {
 				return nil, err
 			}
-			return map[string]string{
-				"TotalMatches":   fmt.Sprint(totalMatches),
-				"NumberReturned": fmt.Sprint(len(objs)),
-				"Result":         didlLite(string(result)),
-				"UpdateID":       cds.updateIDString(),
-			}, nil
+			// Argument order must match SCPD definition in ContentDirectory.xml
+			return soapArgs(
+				"Result", didlLite(string(result)),
+				"NumberReturned", fmt.Sprint(len(objs)),
+				"TotalMatches", fmt.Sprint(totalMatches),
+				"UpdateID", cds.updateIDString(),
+			), nil
 		case "BrowseMetadata":
 			node, err := cds.vfs.Stat(obj.Path)
 			if err != nil {
@@ -325,32 +326,34 @@ func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *htt
 			if err != nil {
 				return nil, err
 			}
-			return map[string]string{
-				"TotalMatches":   "1",
-				"NumberReturned": "1",
-				"Result":         didlLite(string(result)),
-				"UpdateID":       cds.updateIDString(),
-			}, nil
+			// Argument order must match SCPD definition in ContentDirectory.xml
+			return soapArgs(
+				"Result", didlLite(string(result)),
+				"NumberReturned", "1",
+				"TotalMatches", "1",
+				"UpdateID", cds.updateIDString(),
+			), nil
 		default:
 			return nil, upnp.Errorf(upnp.ArgumentValueInvalidErrorCode, "unhandled browse flag: %v", browse.BrowseFlag)
 		}
 	case "GetSearchCapabilities":
-		return map[string]string{
-			"SearchCaps": "",
-		}, nil
+		return soapArgs(
+			"SearchCaps", "",
+		), nil
 	// Samsung Extensions
 	case "X_GetFeatureList":
-		return map[string]string{
-			"FeatureList": `<Features xmlns="urn:schemas-upnp-org:av:avs" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:schemas-upnp-org:av:avs http://www.upnp.org/schemas/av/avs.xsd">
+		return soapArgs(
+			"FeatureList", `<Features xmlns="urn:schemas-upnp-org:av:avs" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:schemas-upnp-org:av:avs http://www.upnp.org/schemas/av/avs.xsd">
 	<Feature name="samsung.com_BASICVIEW" version="1">
 		<container id="0" type="object.item.imageItem"/>
 		<container id="0" type="object.item.audioItem"/>
 		<container id="0" type="object.item.videoItem"/>
 	</Feature>
-</Features>`}, nil
+</Features>`,
+		), nil
 	case "X_SetBookmark":
 		// just ignore
-		return map[string]string{}, nil
+		return nil, nil
 	default:
 		return nil, upnp.InvalidActionError
 	}
