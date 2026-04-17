@@ -545,8 +545,12 @@ func SuffixName(ctx context.Context, remote string) string {
 // DeleteFileWithBackupDir deletes a single file respecting --dry-run
 // and accumulating stats and errors.
 //
-// If backupDir is set then it moves the file to there instead of
-// deleting
+// If backupDir is non-nil the file is moved there instead of being
+// deleted. Callers pass in the backupDir [fs.Fs] (usually obtained
+// via [BackupDir]) rather than having it looked up here: [BackupDir]
+// is a relatively expensive operation, so when deleting many files
+// in a loop you should resolve the backup directory once before the
+// loop and pass it in on each iteration.
 func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs) (err error) {
 	tr := accounting.Stats(ctx).NewCheckingTransfer(dst, "deleting")
 	defer func() {
@@ -577,10 +581,13 @@ func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs
 	return err
 }
 
-// DeleteFile deletes a single file respecting --dry-run and accumulating stats and errors.
+// DeleteFile deletes a single file respecting --dry-run and
+// accumulating stats and errors.
 //
-// If useBackupDir is set and --backup-dir is in effect then it moves
-// the file to there instead of deleting
+// DeleteFile does NOT honour --backup-dir — it always deletes the
+// file outright. If the caller needs --backup-dir support, use
+// [DeleteFileWithBackupDir] instead, after resolving the backup
+// directory once via [BackupDir].
 func DeleteFile(ctx context.Context, dst fs.Object) (err error) {
 	return DeleteFileWithBackupDir(ctx, dst, nil)
 }
