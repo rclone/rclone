@@ -238,6 +238,10 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 
 	// Check if it is an api.Error
 	if apiErr, ok := err.(*api.Error); ok {
+		// Handle error 1101 specifically - don't retry as it's a permanent API restriction
+		if apiErr.Result == 1101 {
+			return false, err
+		}
 		// See https://docs.pcloud.com/errors/ for error treatment
 		// Errors are classified as 1xxx, 2xxx, etc.
 		switch apiErr.Result / 1000 {
@@ -531,10 +535,63 @@ func fileIDtoNumber(fileID string) string {
 // Should return true to finish processing
 type listAllFn func(*api.Item) bool
 
+// listAllRootRecursive handles recursive listing for root directory (folderid=0)
+// using a two-step approach to work around pCloud API limitation
+func (f *Fs) listAllRootRecursive(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
+	// List root directory non-recursively to get immediate contents
+	var rootSubdirs []*api.Item
+	found, err = f.listAll(ctx, dirID, false, false, false, func(item *api.Item) bool {
+		if item.IsFolder {
+			// Store subdirectories for recursive list later
+			rootSubdirs = append(rootSubdirs, item)
+			// Handle directories immediately if not filesOnly
+			if !filesOnly {
+				if fn(item) {
+					return true // stop iteration
+				}
+			}
+		} else if !directoriesOnly {
+			// Handle files immediately if not directoriesOnly
+			if fn(item) {
+				return true // stop iteration
+			}
+		}
+		return false // continue iteration
+	})
+	if err != nil || found {
+		return found, err
+	}
+
+	// Recursively list each subdirectory
+	for _, subdir := range rootSubdirs {
+		subdirName := f.opt.Enc.ToStandardName(subdir.Name)
+		found, err = f.listAll(ctx, subdir.ID, directoriesOnly, filesOnly, true, func(item *api.Item) bool {
+			// Prepend the subdirectory name to create correct relative path
+			origItemName := item.Name
+			item.Name = subdirName + "/" + item.Name
+			result := fn(item)
+			item.Name = origItemName
+			return result
+		})
+		if err != nil || found {
+			return found, err
+		}
+	}
+
+	return found, nil
+}
+
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
 func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, recursive bool, fn listAllFn) (found bool, err error) {
+	// Special case: root directory with recursive listing
+	// pCloud API rejects folderid=0 with recursive=1 (error 1101)
+	// See: https://github.com/rclone/rclone/issues/9315
+	if recursive && dirIDtoNumber(dirID) == "0" {
+		return f.listAllRootRecursive(ctx, dirID, directoriesOnly, filesOnly, fn)
+	}
+
 	opts := rest.Opts{
 		Method:     "GET",
 		Path:       "/listfolder",
