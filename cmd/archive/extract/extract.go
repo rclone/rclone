@@ -131,7 +131,11 @@ func ArchiveExtract(ctx context.Context, dst fs.Fs, dstDir string, src fs.Fs, sr
 	}
 	// account and buffer the transfer
 	// in = tr.Account(ctx, in).WithBuffer()
-	in := tr.Account(ctx, in0)
+	acc := tr.Account(ctx, in0)
+	in, err := acc.WithReadAtSeeker()
+	if err != nil {
+		return err
+	}
 	// identify format
 	format, _, err := archives.Identify(ctx, "", in)
 	if err != nil {
