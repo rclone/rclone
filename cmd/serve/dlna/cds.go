@@ -305,6 +305,10 @@ func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *htt
 		if err := xml.Unmarshal(argsXML, &browse); err != nil {
 			return nil, err
 		}
+		// Samsung TVs sometimes send empty ObjectID, default to root container
+		if browse.ObjectID == "" {
+			browse.ObjectID = "0"
+		}
 		obj, err := cds.objectFromID(browse.ObjectID)
 		if err != nil {
 			return nil, upnp.Errorf(upnpav.NoSuchObjectErrorCode, "%s", err.Error())
