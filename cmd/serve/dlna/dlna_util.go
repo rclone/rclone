@@ -64,7 +64,8 @@ func didlLite(chardata string) string {
 		` xmlns:dc="http://purl.org/dc/elements/1.1/"` +
 		` xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/"` +
 		` xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"` +
-		` xmlns:dlna="urn:schemas-dlna-org:metadata-1-0/">` +
+		` xmlns:dlna="urn:schemas-dlna-org:metadata-1-0/"` +
+		` xmlns:sec="http://www.sec.co.kr/">` +
 		chardata +
 		`</DIDL-Lite>`
 }
