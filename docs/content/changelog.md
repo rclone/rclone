@@ -6,6 +6,26 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.73.5 - 2026-04-19
+
+[See commits](https://github.com/rclone/rclone/compare/v1.73.4...v1.73.5)
+
+- Bug Fixes
+  - operations: Add AuthRequired to operations/fsinfo to prevent backend creation CVE-2026-41179 (Nick Craig-Wood)
+  - rc
+    - Add AuthRequired to options/set to prevent auth bypass CVE-2026-41176 (Nick Craig-Wood)
+    - Snapshot NoAuth at startup to prevent runtime auth bypass CVE-2026-41176 (Nick Craig-Wood)
+  - filter: Fix debug logs that fire before logger is configured (Nick Craig-Wood)
+- Azureblob
+  - Add Microsoft Partner Network User-Agent prefix (Nick Craig-Wood)
+- Drime
+  - Fix User.EntryPermissions JSON unmarshalling (a1pcm)
+- Iclouddrive
+  - Fix 'directory not found' error when the directory contains accent marks (Brais Couce)
+- S3
+  - Fix TencentCOS CDN endpoint failing on bucket check (Mozi)
+  - Fix empty delimiter parameter rejected by Archiware P5 server (Nick Craig-Wood)
+
 ## v1.73.4 - 2026-04-08
 
 [See commits](https://github.com/rclone/rclone/compare/v1.73.3...v1.73.4)
