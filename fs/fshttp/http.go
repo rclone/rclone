@@ -15,6 +15,8 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -24,6 +26,7 @@ import (
 	"github.com/rclone/rclone/lib/structs"
 	"github.com/youmark/pkcs8"
 	"golang.org/x/net/publicsuffix"
+	"moul.io/http2curl/v2"
 )
 
 const (
@@ -439,6 +442,18 @@ func cleanAuths(buf []byte) []byte {
 	return buf
 }
 
+// cleanCurl gets rid of Auth headers in a curl command
+func cleanCurl(cmd *http2curl.CurlCommand) {
+	for _, authBuf := range authBufs {
+		auth := "'" + string(authBuf)
+		for i, arg := range *cmd {
+			if strings.HasPrefix(arg, auth) {
+				(*cmd)[i] = auth + "XXXX'"
+			}
+		}
+	}
+}
+
 var expireWindow = 30 * time.Second
 
 func isCertificateExpired(cc *tls.Config) bool {
@@ -491,6 +506,26 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 		fs.Debugf(nil, "%s", string(buf))
 		fs.Debugf(nil, "%s", separatorReq)
 		logMutex.Unlock()
+	}
+	// Dump curl request
+	if t.dump&(fs.DumpCurl) != 0 {
+		cmd, err := http2curl.GetCurlCommand(req)
+		if err != nil {
+			fs.Debugf(nil, "Failed to create curl command: %v", err)
+		} else {
+			// Patch -X HEAD into --head
+			for i := range len(*cmd) - 1 {
+				if (*cmd)[i] == "-X" && (*cmd)[i+1] == "'HEAD'" {
+					(*cmd)[i] = "--head"
+					*cmd = slices.Delete(*cmd, i+1, i+2)
+					break
+				}
+			}
+			if t.dump&fs.DumpAuth == 0 {
+				cleanCurl(cmd)
+			}
+			fs.Debugf(nil, "HTTP REQUEST: %v", cmd)
+		}
 	}
 	// Do round trip
 	resp, err = t.Transport.RoundTrip(req)

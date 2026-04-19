@@ -83,7 +83,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/t3rm1n4l/go-mega v0.0.0-20251120131202-6845944c051c
 	github.com/unknwon/goconfig v1.0.0
-	github.com/willscott/go-nfs v0.0.3
+	github.com/willscott/go-nfs v0.0.4
 	github.com/winfsp/cgofuse v1.6.1-0.20260126094232-f2c4fccdb286
 	github.com/wk8/go-ordered-map/v2 v2.1.8
 	github.com/xanzy/ssh-agent v0.3.3

@@ -41,7 +41,7 @@ func (r *Run) startMountSubProcess() {
 	// If testing the VFS we don't start a subprocess, we just use
 	// the VFS directly
 	if r.useVFS {
-		vfs := vfs.New(r.fremote, r.vfsOpt)
+		vfs := vfs.New(context.Background(), r.fremote, r.vfsOpt)
 		r.os = vfsOs{vfs}
 		return
 	}
