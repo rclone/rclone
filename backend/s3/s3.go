@@ -2343,9 +2343,11 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 			opt.directory += "/"
 		}
 	}
-	delimiter := ""
+	// Use nil delimiter for recursive listings to omit the parameter
+	// entirely. Some S3-compatible servers reject an empty delimiter.
+	var delimiter *string
 	if !opt.recurse {
-		delimiter = "/"
+		delimiter = aws.String("/")
 	}
 	// URL encode the listings so we can use control characters in object names
 	// See: https://github.com/aws/aws-sdk-go/issues/1914
@@ -2365,7 +2367,7 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 	urlEncodeListings := f.opt.ListURLEncode.Value
 	req := s3.ListObjectsV2Input{
 		Bucket:    &opt.bucket,
-		Delimiter: &delimiter,
+		Delimiter: delimiter,
 		Prefix:    &opt.directory,
 		MaxKeys:   &f.opt.ListChunk,
 	}

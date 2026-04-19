@@ -2,15 +2,16 @@
 package gui
 
 import (
+	"archive/zip"
 	"context"
 	"embed"
-	"flag"
 	"fmt"
 	iofs "io/fs"
-	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
+	"sync"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
@@ -49,16 +50,28 @@ func init() {
 }
 
 var commandDefinition = &cobra.Command{
-	Use:   "gui",
+	Use:   "gui [path]",
 	Short: `Open the web based GUI.`,
 	Long: `This command starts an embedded web GUI for rclone and opens it in
 your default browser.
 
-It starts an RC API server and a GUI server on separate localhost
+This starts an RC API server and a GUI server on separate localhost
 ports, generates login credentials automatically unless --no-auth
 is specified, and opens the browser already authenticated.
 
     rclone gui
+
+By default rclone gui serves the web GUI that was embedded into the
+rclone binary at build time from https://github.com/rclone/rclone-web/
+You can override this by passing a path to either an unpacked GUI
+directory or a dist.zip archive (e.g. one downloaded from the
+rclone-web releases page):
+
+    rclone gui ./my-dist/
+    rclone gui ./dist.zip
+
+This is useful for iterating on the GUI locally without rebuilding
+rclone, or for serving a different GUI release than the one embedded.
 
 Use --no-open-browser to skip opening the browser automatically:
 
@@ -80,11 +93,23 @@ Use --no-auth to disable authentication entirely:
 		"versionIntroduced": "v1.74",
 		"groups":            "RC",
 	},
-	Run: func(command *cobra.Command, args []string) {
-		cmd.CheckArgs(0, 0, command, args)
+	RunE: func(command *cobra.Command, args []string) error {
+		cmd.CheckArgs(0, 1, command, args)
 		ctx := context.Background()
 
-		// --- 1. Create the GUI server (binds port eagerly, before Serve) ---
+		// Resolve the GUI source (embedded, directory, or .zip)
+		// before binding any sockets so errors surface immediately.
+		var srcPath string
+		if len(args) == 1 {
+			srcPath = args[0]
+		}
+		srcFS, cleanupSrc, err := guiSourceFS(srcPath)
+		if err != nil {
+			return err
+		}
+		defer func() { _ = cleanupSrc() }()
+
+		// Create the GUI server (binds port eagerly, before Serve)
 		guiCfg := libhttp.DefaultCfg()
 		if command.Flags().Changed("addr") {
 			guiCfg.ListenAddr = guiAddr
@@ -93,13 +118,13 @@ Use --no-auth to disable authentication entirely:
 		}
 		guiServer, err := libhttp.NewServer(ctx, libhttp.WithConfig(guiCfg))
 		if err != nil {
-			fs.Fatalf(nil, "Failed to create GUI server: %v", err)
+			return fmt.Errorf("failed to create GUI server: %w", err)
 		}
 
 		// Read the GUI origin from the bound address (available before Serve).
 		guiOrigin := originFromURL(guiServer.URLs()[0])
 
-		// --- 2. Configure the RC API server ---
+		// Configure the RC API server
 		opt := rc.Opt // copy global defaults
 		opt.Enabled = true
 		opt.WebUI = false
@@ -108,11 +133,7 @@ Use --no-auth to disable authentication entirely:
 		if command.Flags().Changed("api-addr") {
 			opt.HTTP.ListenAddr = apiAddr
 		} else {
-			port, err := freePort()
-			if err != nil {
-				fs.Fatalf(nil, "Failed to find a free port for RC: %v", err)
-			}
-			opt.HTTP.ListenAddr = []string{fmt.Sprintf("localhost:%d", port)}
+			opt.HTTP.ListenAddr = []string{"localhost:0"}
 		}
 
 		// CORS: allow the GUI origin to make cross-port API requests.
@@ -123,7 +144,7 @@ Use --no-auth to disable authentication entirely:
 			opt.EnableMetrics = enableMetrics
 		}
 
-		// --- 3. Generate credentials if needed ---
+		// Generate credentials if needed
 		if command.Flags().Changed("user") {
 			opt.Auth.BasicUser = user
 		}
@@ -142,28 +163,28 @@ Use --no-auth to disable authentication entirely:
 			if opt.Auth.BasicPass == "" {
 				randomPass, err := random.Password(128)
 				if err != nil {
-					fs.Fatalf(nil, "Failed to make password: %v", err)
+					return fmt.Errorf("failed to make password: %w", err)
 				}
 				opt.Auth.BasicPass = randomPass
 				fs.Infof(nil, "No password specified. Using random password: %s", randomPass)
 			}
 		}
 
-		// --- 4. Start the RC server (unchanged rcserver.Start) ---
+		// Start the RC server (unchanged rcserver.Start)
 		rcServer, err := rcserver.Start(ctx, &opt)
-		if err != nil {
-			fs.Fatalf(nil, "Failed to start RC server: %v", err)
-		}
-		if rcServer == nil {
-			fs.Fatal(nil, "RC server not configured")
+		if err != nil || rcServer == nil {
+			return fmt.Errorf("failed to start RC server: %w", err)
 		}
 
-		// Build the RC URL from the address we configured (rcserver.Server
-		// does not expose URLs, and we know the address we passed in).
-		rcURL := "http://" + opt.HTTP.ListenAddr[0] + "/"
+		// Read the bound RC URL back from rcserver, in case we asked
+		// libhttp to pick a free port (localhost:0).
+		rcURL := rcServer.URLs()[0]
 
-		// --- 5. Mount the embedded GUI handler and start serving ---
-		spaHandler := guiHandler()
+		// Mount the GUI handler and start serving
+		spaHandler, err := guiHandler(srcFS)
+		if err != nil || spaHandler == nil {
+			return fmt.Errorf("failed to start GUI handler: %w", err)
+		}
 		guiServer.Router().Get("/*", spaHandler.ServeHTTP)
 		guiServer.Router().Head("/*", spaHandler.ServeHTTP)
 		guiServer.Serve()
@@ -171,35 +192,30 @@ Use --no-auth to disable authentication entirely:
 		guiURL := guiServer.URLs()[0]
 		fs.Logf(nil, "Serving GUI on %s", guiURL)
 
-		// --- 6. Open browser ---
+		// Open browser
 		loginURL := buildLoginURL(guiURL, rcURL, opt.Auth.BasicUser, opt.Auth.BasicPass, opt.NoAuth)
 
 		fs.Logf(nil, "GUI available at %s", loginURL)
-		if flag.Lookup("test.v") == nil && !noOpenBrowser {
+		if !noOpenBrowser {
 			if err := open.Start(loginURL); err != nil {
-				fs.Errorf(nil, "Failed to open GUI in browser: %v", err)
+				fs.Errorf(nil, "failed to open GUI in browser: %v", err)
 			}
 		}
 
-		// --- 7. Wait for either server to exit, then shut both down ---
+		// Wait for either server to exit, then shut both down and
+		// join the second goroutine before returning.
 		defer systemd.Notify()()
+		var wg sync.WaitGroup
 		done := make(chan struct{}, 2)
-		go func() { rcServer.Wait(); done <- struct{}{} }()
-		go func() { guiServer.Wait(); done <- struct{}{} }()
+		wg.Add(2)
+		go func() { defer wg.Done(); rcServer.Wait(); done <- struct{}{} }()
+		go func() { defer wg.Done(); guiServer.Wait(); done <- struct{}{} }()
 		<-done
 		_ = rcServer.Shutdown()
 		_ = guiServer.Shutdown()
+		wg.Wait()
+		return nil
 	},
-}
-
-// freePort asks the OS for a free TCP port on localhost.
-func freePort() (int, error) {
-	l, err := net.Listen("tcp", "localhost:0")
-	if err != nil {
-		return 0, err
-	}
-	defer func() { _ = l.Close() }()
-	return l.Addr().(*net.TCPAddr).Port, nil
 }
 
 // originFromURL extracts the origin (scheme://host) from a URL string,
@@ -212,20 +228,53 @@ func originFromURL(rawURL string) string {
 	return u.Scheme + "://" + u.Host
 }
 
-// guiHandler returns an http.Handler that serves the embedded GUI bundle
-// with SPA fallback: paths that don't match a real file return index.html.
-func guiHandler() http.Handler {
-	sub, err := iofs.Sub(assets, "dist")
-	if err != nil {
-		panic("gui: embedded dist missing: " + err.Error())
+// guiSourceFS opens the GUI bundle at the given path. An empty path
+// returns the embedded bundle. The returned cleanup func must be
+// called on shutdown (no-op for embedded/DirFS, Close for the zip
+// reader).
+func guiSourceFS(path string) (iofs.FS, func() error, error) {
+	noop := func() error { return nil }
+	if path == "" {
+		sub, err := iofs.Sub(assets, "dist")
+		if err != nil {
+			return nil, nil, fmt.Errorf("embedded GUI dir not found: was `make fetch-gui` run before building?: %w", err)
+		}
+		if _, err := iofs.Stat(sub, "index.html"); err != nil {
+			return nil, nil, fmt.Errorf("embedded GUI not found: was `make fetch-gui` run before building?: %w", err)
+		}
+		return sub, noop, nil
 	}
-	fileServer := http.FileServer(http.FS(sub))
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to stat GUI source %q: %w", path, err)
+	}
+	if info.IsDir() {
+		return os.DirFS(path), noop, nil
+	}
+	if info.Mode().IsRegular() && strings.HasSuffix(strings.ToLower(path), ".zip") {
+		zr, err := zip.OpenReader(path)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to open GUI zip %q: %w", path, err)
+		}
+		return zr, zr.Close, nil
+	}
+	return nil, nil, fmt.Errorf("GUI source must be a directory or a .zip file: %q", path)
+}
+
+// guiHandler returns an http.Handler that serves the GUI bundle from
+// srcFS with SPA fallback: paths that don't match a real file return
+// index.html.
+func guiHandler(srcFS iofs.FS) (http.Handler, error) {
+	if _, err := iofs.Stat(srcFS, "index.html"); err != nil {
+		return nil, fmt.Errorf("GUI bundle has no index.html: %w", err)
+	}
+	fileServer := http.FileServer(http.FS(srcFS))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := strings.TrimPrefix(r.URL.Path, "/")
 		if path == "" {
 			path = "index.html"
 		}
-		if _, err := iofs.Stat(sub, path); err == nil {
+		if _, err := iofs.Stat(srcFS, path); err == nil {
 			fileServer.ServeHTTP(w, r)
 			return
 		}
@@ -233,7 +282,7 @@ func guiHandler() http.Handler {
 		// client-side routing (e.g. /login) works.
 		r.URL.Path = "/"
 		fileServer.ServeHTTP(w, r)
-	})
+	}), nil
 }
 
 // guiBaseURL is the GUI server's URL. rcURL is the RC API server's URL.

@@ -20,5 +20,3 @@ __pycache__
 .DS_Store
 resource_windows_*.syso
 .devcontainer
-# GUI dist is fetched at build time via `make fetch-gui`
-cmd/gui/dist/
