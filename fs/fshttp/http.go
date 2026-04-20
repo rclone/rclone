@@ -402,14 +402,14 @@ func checkServerTime(req *http.Request, resp *http.Response) {
 	checkedHostMu.Unlock()
 }
 
-// cleanAuth gets rid of one authBuf header within the first 4k
-func cleanAuth(buf, authBuf []byte) []byte {
+// cleanAuth gets rid of one authBuf header within the first 4k.
+func cleanAuth(buf, authBuf []byte) (_ []byte, changed bool) {
 	// Find how much buffer to check
 	n := min(len(buf), 4096)
 	// See if there is an Authorization: header
 	i := bytes.Index(buf[:n], authBuf)
 	if i < 0 {
-		return buf
+		return buf, false
 	}
 	i += len(authBuf)
 	// Overwrite the next 4 chars with 'X'
@@ -423,10 +423,10 @@ func cleanAuth(buf, authBuf []byte) []byte {
 	// Snip out to the next '\n'
 	j := bytes.IndexByte(buf[i:], '\n')
 	if j < 0 {
-		return buf[:i]
+		return buf[:i], true
 	}
 	n = copy(buf[i:], buf[i+j:])
-	return buf[:i+n]
+	return buf[:i+n], true
 }
 
 var authBufs = [][]byte{
@@ -437,7 +437,13 @@ var authBufs = [][]byte{
 // cleanAuths gets rid of all the possible Auth headers
 func cleanAuths(buf []byte) []byte {
 	for _, authBuf := range authBufs {
-		buf = cleanAuth(buf, authBuf)
+		for {
+			var changed bool
+			buf, changed = cleanAuth(buf, authBuf)
+			if !changed {
+				break
+			}
+		}
 	}
 	return buf
 }

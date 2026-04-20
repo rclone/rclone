@@ -41,8 +41,8 @@ func TestCleanAuth(t *testing.T) {
 		{"Authorization: AAAAAAAAA\nPotato: Help\n", "Authorization: XXXX\nPotato: Help\n"},
 		{"Sausage: 1\nAuthorization: AAAAAAAAA\nPotato: Help\n", "Sausage: 1\nAuthorization: XXXX\nPotato: Help\n"},
 	} {
-		got := string(cleanAuth([]byte(test.in), authBufs[0]))
-		assert.Equal(t, test.want, got, test.in)
+		got, _ := cleanAuth([]byte(test.in), authBufs[0])
+		assert.Equal(t, test.want, string(got), test.in)
 	}
 }
 
@@ -56,6 +56,8 @@ func TestCleanAuths(t *testing.T) {
 		{"Authorization: AAAAAAAAA\nPotato: Help\n", "Authorization: XXXX\nPotato: Help\n"},
 		{"X-Auth-Token: AAAAAAAAA\nPotato: Help\n", "X-Auth-Token: XXXX\nPotato: Help\n"},
 		{"X-Auth-Token: AAAAAAAAA\nAuthorization: AAAAAAAAA\nPotato: Help\n", "X-Auth-Token: XXXX\nAuthorization: XXXX\nPotato: Help\n"},
+		{"Authorization: first\nAuthorization: second\n", "Authorization: XXXX\nAuthorization: XXXX\n"},
+		{"X-Auth-Token: first\nPotato: Help\nX-Auth-Token: second\n", "X-Auth-Token: XXXX\nPotato: Help\nX-Auth-Token: XXXX\n"},
 	} {
 		got := string(cleanAuths([]byte(test.in)))
 		assert.Equal(t, test.want, got, test.in)
