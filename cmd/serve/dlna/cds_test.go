@@ -2,9 +2,11 @@ package dlna
 
 import (
 	"context"
+	"encoding/xml"
 	"sort"
 	"testing"
 
+	"github.com/anacrolix/dms/soap"
 	localBackend "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/vfs"
@@ -145,4 +147,67 @@ func TestMediaWithResources(t *testing.T) {
 		assert.Equal(t, []string{"video.idx", "video.sub"}, assocVideoResourceNames)
 	}
 
+}
+
+func TestSOAPResponseQuoteEscaping(t *testing.T) {
+	// Test that demonstrates the double-escaping problem in SOAP responses
+	// This test should initially fail, showing &#34; instead of &quot; in the final output
+
+	// Simulate a DLNA Browse response with quotes in the content
+	didlContent := `<container id="0"><dc:title>Folder "with quotes"</dc:title></container>`
+	didlWrapped := didlLite(didlContent)
+
+	// Test just the mustMarshalXML function first to see the escaping
+	args := soapArgs("Result", didlWrapped)
+
+	// This simulates what marshalSOAPResponse does internally
+	xmlArgs := make([]soap.Arg, len(args))
+	for i, arg := range args {
+		xmlArgs[i] = soap.Arg{
+			XMLName: xml.Name{Local: arg.name},
+			Value:   arg.value,
+		}
+	}
+	result := mustMarshalXML(xmlArgs)
+	resultStr := string(result)
+
+	// This should pass after the fix - quotes should be &quot; not &#34;
+	assert.NotContains(t, resultStr, "&#34;", "SOAP arguments should not contain &#34; entities")
+	assert.Contains(t, resultStr, "&quot;", "SOAP arguments should contain &quot; entities")
+}
+
+func TestAdjustXMLApostrophes(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []byte
+		expected string
+	}{
+		{
+			name:     "apostrophes in filename",
+			input:    []byte(`<dc:title>Testin&#39; it.jpg</dc:title>`),
+			expected: `<dc:title>Testin&apos; it.jpg</dc:title>`,
+		},
+		{
+			name:     "mixed quotes and apostrophes",
+			input:    []byte(`<dc:title>File &#34;name&#34; &amp; Testin&#39; it</dc:title>`),
+			expected: `<dc:title>File &quot;name&quot; &amp; Testin&apos; it</dc:title>`,
+		},
+		{
+			name:     "already correct apostrophe entities",
+			input:    []byte(`<dc:title>File &apos;already correct&apos;</dc:title>`),
+			expected: `<dc:title>File &apos;already correct&apos;</dc:title>`,
+		},
+		{
+			name:     "all Big 5 XML entities",
+			input:    []byte(`<dc:title>Test &#34; &#39; &#38; &#60; &#62;</dc:title>`),
+			expected: `<dc:title>Test &quot; &apos; &amp; &lt; &gt;</dc:title>`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := adjustXML(tt.input)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
 }

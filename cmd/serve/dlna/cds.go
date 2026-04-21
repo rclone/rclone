@@ -331,9 +331,11 @@ func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *htt
 			if err != nil {
 				return nil, err
 			}
+			// Apply compatibility adjustments for strict DLNA clients
+			resultStr := adjustXML(result)
 			// Argument order must match SCPD definition in ContentDirectory.xml
 			return soapArgs(
-				"Result", didlLite(string(result)),
+				"Result", didlLite(resultStr),
 				"NumberReturned", fmt.Sprint(len(objs)),
 				"TotalMatches", fmt.Sprint(totalMatches),
 				"UpdateID", cds.updateIDString(),
@@ -352,9 +354,11 @@ func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *htt
 			if err != nil {
 				return nil, err
 			}
+			// Apply compatibility adjustments for strict DLNA clients
+			resultStr := adjustXML(result)
 			// Argument order must match SCPD definition in ContentDirectory.xml
 			return soapArgs(
-				"Result", didlLite(string(result)),
+				"Result", didlLite(resultStr),
 				"NumberReturned", "1",
 				"TotalMatches", "1",
 				"UpdateID", cds.updateIDString(),

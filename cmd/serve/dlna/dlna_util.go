@@ -12,6 +12,7 @@ import (
 	"net/http/httptest"
 	"net/http/httputil"
 	"os"
+	"strings"
 
 	"github.com/anacrolix/dms/soap"
 	"github.com/anacrolix/dms/upnp"
@@ -70,12 +71,29 @@ func didlLite(chardata string) string {
 		`</DIDL-Lite>`
 }
 
+// adjustXML applies compatibility fixes to marshaled XML for DLNA clients
+// that have strict or non-standard XML parsing requirements.
+func adjustXML(xmlData []byte) string {
+	xmlStr := string(xmlData)
+	// Samsung TV compatibility: replace numeric entities with named entities.
+	// Samsung TVs have strict XML parsers that fail on numeric entities but accept named ones.
+	// Convert the "Big 5" XML entities to ensure maximum compatibility.
+	xmlStr = strings.ReplaceAll(xmlStr, "&#34;", "&quot;") // double quotes
+	xmlStr = strings.ReplaceAll(xmlStr, "&#39;", "&apos;") // apostrophes
+	xmlStr = strings.ReplaceAll(xmlStr, "&#38;", "&amp;")  // ampersands (rarely used by Go, but just in case)
+	xmlStr = strings.ReplaceAll(xmlStr, "&#60;", "&lt;")   // less than (rarely used by Go, but just in case)
+	xmlStr = strings.ReplaceAll(xmlStr, "&#62;", "&gt;")   // greater than (rarely used by Go, but just in case)
+	return xmlStr
+}
+
 func mustMarshalXML(value any) []byte {
 	ret, err := xml.MarshalIndent(value, "", "  ")
 	if err != nil {
 		fs.Panicf(nil, "mustMarshalXML failed to marshal %v: %s", value, err)
 	}
-	return ret
+	// Apply XML compatibility fixes for DLNA clients
+	adjustedXML := adjustXML(ret)
+	return []byte(adjustedXML)
 }
 
 // soapArg is an ordered SOAP response argument.
