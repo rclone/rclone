@@ -344,6 +344,27 @@ Set to 0 to keep connections indefinitely.
 `,
 			Advanced: true,
 		}, {
+			Name:    "keep_alive",
+			Default: fs.Duration(0),
+			Help: `Interval between SSH keepalive packets.
+
+Sends a keepalive packet on the SSH connection at the specified
+interval to prevent firewalls, NAT devices, or the SSH server
+from dropping idle connections.
+
+This is especially useful when using rclone mount, where
+connections may sit idle in the connection pool for long periods
+between filesystem operations.
+
+Set to 0 to disable (default). A reasonable value is 15s or 30s.
+
+Note: this applies only to rclone's internal SSH client. When
+using an external ssh binary via the --sftp-ssh option,
+configure keepalives on the ssh command instead (e.g.
+-o ServerAliveInterval=15).
+`,
+			Advanced: true,
+		}, {
 			Name: "chunk_size",
 			Help: `Upload and download chunk size.
 
@@ -586,6 +607,7 @@ type Options struct {
 	DisableConcurrentReads  bool            `config:"disable_concurrent_reads"`
 	DisableConcurrentWrites bool            `config:"disable_concurrent_writes"`
 	IdleTimeout             fs.Duration     `config:"idle_timeout"`
+	KeepAlive               fs.Duration     `config:"keep_alive"`
 	ChunkSize               fs.SizeSuffix   `config:"chunk_size"`
 	Concurrency             int             `config:"concurrency"`
 	Connections             int             `config:"connections"`
@@ -643,9 +665,10 @@ type Object struct {
 
 // conn encapsulates an ssh client and corresponding sftp client
 type conn struct {
-	sshClient  sshClient
-	sftpClient *sftp.Client
-	err        chan error
+	sshClient      sshClient
+	sftpClient     *sftp.Client
+	err            chan error
+	keepAliveTimer *time.Timer // fires keepalives while conn is idle in the pool, nil if disabled
 }
 
 // Wait for connection to close
@@ -673,6 +696,9 @@ func (c *conn) sendKeepAlives(interval time.Duration) (done chan struct{}) {
 
 // Closes the connection
 func (c *conn) close() error {
+	if c.keepAliveTimer != nil {
+		c.keepAliveTimer.Stop()
+	}
 	sftpErr := c.sftpClient.Close()
 	sshErr := c.sshClient.Close()
 	if sftpErr != nil {
@@ -726,6 +752,17 @@ func (f *Fs) sftpConnection(ctx context.Context) (c *conn, err error) {
 	if err != nil {
 		_ = c.sshClient.Close()
 		return nil, fmt.Errorf("couldn't initialise SFTP: %w", err)
+	}
+	// Set up the keepalive timer if configured. It is created stopped; it
+	// is armed while the connection is idle in the pool and stopped while
+	// the connection is in use (active traffic keeps the connection alive).
+	if f.opt.KeepAlive > 0 {
+		interval := time.Duration(f.opt.KeepAlive)
+		c.keepAliveTimer = time.AfterFunc(interval, func() {
+			c.sshClient.SendKeepAlive()
+			c.keepAliveTimer.Reset(interval)
+		})
+		c.keepAliveTimer.Stop()
 	}
 	go c.wait()
 	return c, nil
@@ -806,6 +843,10 @@ func (f *Fs) getSftpConnection(ctx context.Context) (c *conn, err error) {
 	}
 	f.poolMu.Unlock()
 	if c != nil {
+		// Stop keepalives while the connection is in use
+		if c.keepAliveTimer != nil {
+			c.keepAliveTimer.Stop()
+		}
 		return c, nil
 	}
 	err = f.pacer.Call(func() (bool, error) {
@@ -864,6 +905,10 @@ func (f *Fs) putSftpConnection(pc **conn, err error) {
 	f.pool = append(f.pool, c)
 	if f.opt.IdleTimeout > 0 {
 		f.drain.Reset(time.Duration(f.opt.IdleTimeout)) // nudge on the pool emptying timer
+	}
+	// Arm the keepalive timer while the connection is idle in the pool
+	if c.keepAliveTimer != nil {
+		c.keepAliveTimer.Reset(time.Duration(f.opt.KeepAlive))
 	}
 	f.poolMu.Unlock()
 }
