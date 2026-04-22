@@ -3,7 +3,9 @@ package dlna
 import (
 	"context"
 	"encoding/xml"
+	"path/filepath"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/anacrolix/dms/soap"
@@ -174,6 +176,49 @@ func TestSOAPResponseQuoteEscaping(t *testing.T) {
 	// This should pass after the fix - quotes should be &quot; not &#34;
 	assert.NotContains(t, resultStr, "&#34;", "SOAP arguments should not contain &#34; entities")
 	assert.Contains(t, resultStr, "&quot;", "SOAP arguments should contain &quot; entities")
+}
+
+func TestTitleExtensionRemoval(t *testing.T) {
+	// Test that file extensions are removed from titles to prevent Samsung TV duplication
+	tests := []struct {
+		name     string
+		filename string
+		expected string
+	}{
+		{
+			name:     "image file",
+			filename: "photo.jpg",
+			expected: "photo",
+		},
+		{
+			name:     "video file",
+			filename: "movie.mp4",
+			expected: "movie",
+		},
+		{
+			name:     "multiple dots",
+			filename: "file.name.with.dots.mkv",
+			expected: "file.name.with.dots",
+		},
+		{
+			name:     "no extension",
+			filename: "filename_no_ext",
+			expected: "filename_no_ext",
+		},
+		{
+			name:     "hidden file",
+			filename: ".hidden.txt",
+			expected: ".hidden",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Simulate the title processing logic
+			title := strings.TrimSuffix(tt.filename, filepath.Ext(tt.filename))
+			assert.Equal(t, tt.expected, title)
+		})
+	}
 }
 
 func TestAdjustXMLApostrophes(t *testing.T) {

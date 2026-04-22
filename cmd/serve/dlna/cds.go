@@ -80,7 +80,9 @@ func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fi
 	}
 
 	obj.Class = "object.item." + mediaType[1] + "Item"
-	obj.Title = fileInfo.Name()
+	// Remove file extension from title to prevent Samsung TVs from duplicating it
+	// File type is already provided via MIME type in protocolInfo
+	obj.Title = strings.TrimSuffix(fileInfo.Name(), filepath.Ext(fileInfo.Name()))
 	obj.Date = upnpav.Timestamp{Time: fileInfo.ModTime()}
 
 	item := upnpav.Item{
