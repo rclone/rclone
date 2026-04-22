@@ -8,7 +8,7 @@ notoc: true
 # Rclone syncs your files to cloud storage
 
 <!-- markdownlint-disable-next-line line-length -->
-{{< img width="50%" src="/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" >}}
+{{< img width="50%" src="/img/logo_on_light__horizontal_color.svg" dark-src="/img/logo_on_dark__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" class="hide-mobile" >}}
 
 - [About rclone](#about)
 - [What can rclone do for you?](#what)
@@ -149,6 +149,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Hetzner Object Storage" home="https://www.hetzner.com/storage/object-storage/" config="/s3/#hetzner" >}}
 {{< provider name="Hetzner Storage Box" home="https://www.hetzner.com/storage/storage-box" config="/sftp/#hetzner-storage-box" >}}
 {{< provider name="HiDrive" home="https://www.strato.de/cloud-speicher/" config="/hidrive/" >}}
+{{< provider name="Hitachi Content Platform (HCP)" home="https://www.hitachivantara.com/en-us/products/storage/content-platform.html" config="/s3/#hcp" >}}
 {{< provider name="HTTP" home="https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol" config="/http/" >}}
 {{< provider name="Huawei OBS" home="https://www.huaweicloud.com/intl/en-us/product/obs.html" config="/s3/#huawei-obs" >}}
 {{< provider name="iCloud Drive" home="https://icloud.com/" config="/iclouddrive/" >}}
@@ -216,6 +217,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="SugarSync" home="https://sugarsync.com/" config="/sugarsync/" >}}
 {{< provider name="Tencent Cloud Object Storage (COS)" home="https://intl.cloud.tencent.com/product/cos" config="/s3/#tencent-cos" >}}
 {{< provider name="Uloz.to" home="https://uloz.to" config="/ulozto/" >}}
+{{< provider name="US3" home="https://www.ucloud.cn/site/product/ufile.html" config="/s3/#us3" >}}
 {{< provider name="Wasabi" home="https://wasabi.com/" config="/s3/#wasabi" >}}
 {{< provider name="WebDAV" home="https://en.wikipedia.org/wiki/WebDAV" config="/webdav/" >}}
 {{< provider name="Yandex Disk" home="https://disk.yandex.com/" config="/yandex/" >}}
@@ -248,7 +250,7 @@ These backends adapt or modify other storage providers:
 
 ## Links
 
-- {{< icon "fa fa-home fa-fw" >}} [Home page](https://rclone.org/)
-- {{< icon "fab fa-github fa-fw" >}} [GitHub project page for source and bug tracker](https://github.com/rclone/rclone)
-- {{< icon "fa fa-comments fa-fw" >}} [Rclone Forum](https://forum.rclone.org)
-- {{< icon "fas fa-cloud-download-alt fa-fw" >}}[Downloads](/downloads/)
+- [Home page](https://rclone.org/)
+- [GitHub project page for source and bug tracker](https://github.com/rclone/rclone)
+- [Rclone Forum](https://forum.rclone.org)
+- [Downloads](/downloads/)

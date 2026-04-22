@@ -94,7 +94,7 @@ func TestDownloaders(t *testing.T) {
 			size: size,
 		}
 		opt := vfscommon.Opt
-		dls := New(item, &opt, remote, src)
+		dls := New(ctx, item, &opt, remote, src)
 		return item, dls
 	}
 	cancel := func(dls *Downloaders) {
@@ -122,9 +122,8 @@ func TestDownloaders(t *testing.T) {
 		r := ranges.Range{Pos: 40 * 1024 * 1024, Size: 250}
 		err := dls.EnsureDownloader(r)
 		require.NoError(t, err)
-		// FIXME racy test
-		assert.False(t, item.HasRange(r))
-		time.Sleep(time.Second)
-		assert.True(t, item.HasRange(r))
+		assert.Eventually(t, func() bool {
+			return item.HasRange(r)
+		}, 10*time.Second, 10*time.Millisecond)
 	})
 }

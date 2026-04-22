@@ -32,6 +32,9 @@ func newItemTestCache(t *testing.T) (r *fstest.Run, c *Cache) {
 	// Disable synchronous write
 	opt.WriteBack = 0
 
+	// Disable handle caching so existing tests get immediate close behavior
+	opt.HandleCaching = 0
+
 	return newTestCacheOpt(t, opt)
 }
 
@@ -579,4 +582,120 @@ func TestItemReadWrite(t *testing.T) {
 		require.NoError(t, item.Close(nil))
 		assert.False(t, item.remove(fileName))
 	})
+}
+
+func newItemTestCacheHandleCaching(t *testing.T, handleCaching time.Duration) (r *fstest.Run, c *Cache) {
+	opt := vfscommon.Opt
+
+	// Disable the cache cleaner as it interferes with these tests
+	opt.CachePollInterval = 0
+
+	// Disable synchronous write
+	opt.WriteBack = 0
+
+	// Set handle caching grace period
+	opt.HandleCaching = fs.Duration(handleCaching)
+
+	return newTestCacheOpt(t, opt)
+}
+
+func TestItemHandleCaching(t *testing.T) {
+	r, c := newItemTestCacheHandleCaching(t, 1*time.Second)
+
+	contents, obj, item := newFile(t, r, c, "existing")
+
+	// Open, read, and close the item
+	require.NoError(t, item.Open(obj))
+
+	buf := make([]byte, 10)
+	n, err := item.ReadAt(buf, 0)
+	assert.Equal(t, 10, n)
+	require.NoError(t, err)
+	assert.Equal(t, contents[:10], string(buf[:n]))
+
+	require.NoError(t, item.Close(nil))
+
+	// After close, grace period should keep fd and downloaders alive
+	item.mu.Lock()
+	assert.NotNil(t, item.fd, "fd should still be open during grace period")
+	assert.NotNil(t, item.downloaders, "downloaders should still be alive during grace period")
+	assert.NotNil(t, item.graceTimer, "grace timer should be set")
+	item.mu.Unlock()
+
+	// Re-open the item - should reuse existing fd and downloaders
+	require.NoError(t, item.Open(obj))
+
+	// Read data to verify it works
+	n, err = item.ReadAt(buf, 10)
+	assert.Equal(t, 10, n)
+	require.NoError(t, err)
+	assert.Equal(t, contents[10:20], string(buf[:n]))
+
+	// Close again
+	require.NoError(t, item.Close(nil))
+
+	// Wait for grace period to expire
+	time.Sleep(1500 * time.Millisecond)
+
+	// After grace period, fd and downloaders should be cleaned up
+	item.mu.Lock()
+	assert.Nil(t, item.fd, "fd should be closed after grace period")
+	assert.Nil(t, item.downloaders, "downloaders should be closed after grace period")
+	assert.Nil(t, item.graceTimer, "grace timer should be nil after expiry")
+	item.mu.Unlock()
+}
+
+func TestItemHandleCachingDisabled(t *testing.T) {
+	r, c := newItemTestCacheHandleCaching(t, 0)
+
+	contents, obj, item := newFile(t, r, c, "existing")
+	_ = contents
+
+	// Open and close the item
+	require.NoError(t, item.Open(obj))
+	require.NoError(t, item.Close(nil))
+
+	// With handle caching disabled, fd and downloaders should be immediately closed
+	item.mu.Lock()
+	assert.Nil(t, item.fd, "fd should be closed immediately when handle caching disabled")
+	assert.Nil(t, item.downloaders, "downloaders should be closed immediately when handle caching disabled")
+	assert.Nil(t, item.graceTimer, "grace timer should not be set when handle caching disabled")
+	item.mu.Unlock()
+}
+
+func TestItemHandleCachingReset(t *testing.T) {
+	r, c := newItemTestCacheHandleCaching(t, 1*time.Second)
+
+	_, obj, item := newFile(t, r, c, "existing")
+
+	// Open, read (to instantiate cache), and close the item
+	require.NoError(t, item.Open(obj))
+
+	buf := make([]byte, 10)
+	_, err := item.ReadAt(buf, 0)
+	require.NoError(t, err)
+
+	require.NoError(t, item.Close(nil))
+
+	// Grace timer should be active
+	item.mu.Lock()
+	assert.NotNil(t, item.graceTimer, "grace timer should be set")
+	item.mu.Unlock()
+
+	// Reset should skip the item during grace period
+	rr, _, err := item.Reset()
+	require.NoError(t, err)
+	assert.Equal(t, SkippedGrace, rr)
+
+	// Grace timer should still be active
+	item.mu.Lock()
+	assert.NotNil(t, item.graceTimer, "grace timer should still be set after skipped reset")
+	item.mu.Unlock()
+
+	// Wait for grace period to expire then reset should remove the item
+	time.Sleep(1500 * time.Millisecond)
+
+	rr, _, err = item.Reset()
+	require.NoError(t, err)
+	assert.Equal(t, RemovedNotInUse, rr)
 }

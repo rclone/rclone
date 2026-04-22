@@ -403,11 +403,17 @@ func TestRC(t *testing.T) {
 }
 `,
 	}, {
-		Name:     "core-gc",
-		URL:      "core/gc", // returns nil, nil so check it is made into {}
-		Method:   "POST",
-		Status:   http.StatusOK,
-		Expected: "{}\n",
+		Name:   "core-gc",
+		URL:    "core/gc", // now requires auth
+		Method: "POST",
+		Status: http.StatusForbidden,
+		Expected: `{
+	"error": "authentication must be set up on the rc server to use \"core/gc\" or the --rc-no-auth flag must be in use",
+	"input": {},
+	"path": "core/gc",
+	"status": 403
+}
+`,
 	}, {
 		Name:   "url-params",
 		URL:    "rc/noop?param1=potato&param2=sausage",

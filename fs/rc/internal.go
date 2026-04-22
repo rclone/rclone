@@ -23,19 +23,19 @@ import (
 
 func init() {
 	Add(Call{
-		Path:         "rc/noopauth",
-		AuthRequired: true,
-		Fn:           rcNoop,
-		Title:        "Echo the input to the output parameters requiring auth",
+		Path:  "rc/noopauth",
+		Fn:    rcNoop,
+		Title: "Echo the input to the output parameters requiring auth",
 		Help: `
 This echoes the input parameters to the output parameters for testing
 purposes.  It can be used to check that rclone is still alive and to
 check that parameter passing is working properly.`,
 	})
 	Add(Call{
-		Path:  "rc/noop",
-		Fn:    rcNoop,
-		Title: "Echo the input to the output parameters",
+		Path:   "rc/noop",
+		NoAuth: true,
+		Fn:     rcNoop,
+		Title:  "Echo the input to the output parameters",
 		Help: `
 This echoes the input parameters to the output parameters for testing
 purposes.  It can be used to check that rclone is still alive and to
@@ -50,9 +50,10 @@ func rcNoop(ctx context.Context, in Params) (out Params, err error) {
 
 func init() {
 	Add(Call{
-		Path:  "rc/error",
-		Fn:    rcError,
-		Title: "This returns an error",
+		Path:   "rc/error",
+		NoAuth: true,
+		Fn:     rcError,
+		Title:  "This returns an error",
 		Help: `
 This returns an error with the input as part of its error string.
 Useful for testing error handling.`,
@@ -99,9 +100,10 @@ func rcFatal(ctx context.Context, in Params) (out Params, err error) {
 
 func init() {
 	Add(Call{
-		Path:  "rc/list",
-		Fn:    rcList,
-		Title: "List all the registered remote control commands",
+		Path:   "rc/list",
+		NoAuth: true,
+		Fn:     rcList,
+		Title:  "List all the registered remote control commands",
 		Help: `
 This lists all the registered remote control commands as a JSON map in
 the commands response.`,
@@ -201,9 +203,10 @@ func rcGc(ctx context.Context, in Params) (out Params, err error) {
 
 func init() {
 	Add(Call{
-		Path:  "core/version",
-		Fn:    rcVersion,
-		Title: "Shows the current version of rclone, Go and the OS.",
+		Path:   "core/version",
+		NoAuth: true,
+		Fn:     rcVersion,
+		Title:  "Shows the current version of rclone, Go and the OS.",
 		Help: `
 This shows the current versions of rclone, Go and the OS:
 
@@ -480,7 +483,6 @@ func rcSetGCPercent(ctx context.Context, in Params) (out Params, err error) {
 func init() {
 	Add(Call{
 		Path:          "core/command",
-		AuthRequired:  true,
 		Fn:            rcRunCommand,
 		NeedsRequest:  true,
 		NeedsResponse: true,

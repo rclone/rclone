@@ -41,6 +41,7 @@ import (
 // Cache opened files
 type Cache struct {
 	// read only - no locking needed to read these
+	ctx        context.Context      // context for cache lifetime
 	fremote    fs.Fs                // fs for the remote we are caching
 	fcache     fs.Fs                // fs for the cache directory
 	fcacheMeta fs.Fs                // fs for the cache metadata directory
@@ -115,6 +116,7 @@ func New(ctx context.Context, fremote fs.Fs, opt *vfscommon.Options, avFn AddVir
 
 	// Create the cache object
 	c := &Cache{
+		ctx:        ctx,
 		fremote:    fremote,
 		fcache:     fdata,
 		fcacheMeta: fmeta,
@@ -689,7 +691,7 @@ func (c *Cache) purgeOld(maxAge time.Duration) {
 
 // Purge any empty directories
 func (c *Cache) purgeEmptyDirs(dir string, leaveRoot bool) {
-	ctx := context.Background()
+	ctx := c.ctx
 	err := operations.Rmdirs(ctx, c.fcache, dir, leaveRoot)
 	if err != nil {
 		fs.Errorf(c.fcache, "vfs cache: failed to remove empty directories from cache path %q: %v", dir, err)

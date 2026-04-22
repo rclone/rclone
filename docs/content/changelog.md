@@ -6,6 +6,69 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.73.5 - 2026-04-19
+
+[See commits](https://github.com/rclone/rclone/compare/v1.73.4...v1.73.5)
+
+- Bug Fixes
+  - operations: Add AuthRequired to operations/fsinfo to prevent backend creation CVE-2026-41179 (Nick Craig-Wood)
+  - rc
+    - Add AuthRequired to options/set to prevent auth bypass CVE-2026-41176 (Nick Craig-Wood)
+    - Snapshot NoAuth at startup to prevent runtime auth bypass CVE-2026-41176 (Nick Craig-Wood)
+  - filter: Fix debug logs that fire before logger is configured (Nick Craig-Wood)
+- Azureblob
+  - Add Microsoft Partner Network User-Agent prefix (Nick Craig-Wood)
+- Drime
+  - Fix User.EntryPermissions JSON unmarshalling (a1pcm)
+- Iclouddrive
+  - Fix 'directory not found' error when the directory contains accent marks (Brais Couce)
+- S3
+  - Fix TencentCOS CDN endpoint failing on bucket check (Mozi)
+  - Fix empty delimiter parameter rejected by Archiware P5 server (Nick Craig-Wood)
+
+## v1.73.4 - 2026-04-08
+
+[See commits](https://github.com/rclone/rclone/compare/v1.73.3...v1.73.4)
+
+- Bug Fixes
+  - build
+    - Update to go 1.25.9 to fix multiple CVEs (Nick Craig-Wood)
+      - CVE-2026-32282: os: Root.Chmod can follow symlinks out of the root on Linux
+      - CVE-2026-32289: html/template: JS template literal context incorrectly tracked
+      - CVE-2026-33810: crypto/x509: excluded DNS constraints not properly applied to wildcard domains
+      - CVE-2026-27144: cmd/compile: no-op interface conversion bypasses overlap checking
+      - CVE-2026-27143: cmd/compile: possible memory corruption after bound check elimination
+      - CVE-2026-32288: archive/tar: unbounded allocation when parsing old format GNU sparse map
+      - CVE-2026-32283: crypto/tls: multiple key update handshake messages can cause connection to deadlock
+      - CVE-2026-27140: cmd/go: trust layer bypass when using cgo and SWIG
+      - CVE-2026-32280: crypto/x509: unexpected work during chain building
+      - CVE-2026-32281: crypto/x509: inefficient policy validation
+    - Fix Denial of Service due to Panic in AWS SDK for Go v2 SDK EventStream Decoder (dependabot[bot])
+    - Update golang.org/x/image to 0.38.0 to fix CVE-2026-33809  (dependabot[bot])
+  - docs
+    - Fix header level for metadata option (Clément Notin)
+    - Fix markdown issues in mount docs (albertony)
+    - Fix link to not be language specific (Ross Smith II)
+    - Note macOS 10.15 (Catalina) support with version v1.70.3 (kapitainsky)
+- Filen
+  - Update SDK version (Enduriel)
+
+## v1.73.3 - 2026-03-23
+
+[See commits](https://github.com/rclone/rclone/compare/v1.73.2...v1.73.3)
+
+- Bug Fixes
+  - build
+    - Update to google.golang.org/grpc 1.79.3 to fix CVE-2026-33186 (dependabot[bot])
+    - Update to github.com/buger/jsonparser 1.1.2 to fix GHSA-6g7g-w4f8-9c9x (dependabot[bot])
+  - doc fixes
+    - Added text to the label showing version-introduced info (Jan-Philipp Reßler)
+    - Clarify Filen password change requires updating both password and API key in rclone config (Jason)
+    - s3: clarify multi tenant support for Cubbit (Marco Ferretti)
+    - jottacloud: Fix broken link (albertony)
+  - lib/rest: Fix URLPathEscapeAll breaking WebDAV servers (eg nzbdav) with strict path matching (Andrew Furman)
+  - list: Fix nil pointer panic in Sorter when temp file creation fails (Nick Craig-Wood)
+
 ## v1.73.2 - 2026-03-06
 
 [See commits](https://github.com/rclone/rclone/compare/v1.73.1...v1.73.2)

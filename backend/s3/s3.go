@@ -748,6 +748,21 @@ knows about - please make a bug report if not.
 			Default:  fs.Tristate{},
 			Advanced: true,
 		}, {
+			Name: "list_versions_oldest_first",
+			Help: `Set if the backend returns object versions oldest first.
+
+The S3 standard returns object versions newest first. Some backends
+(e.g. Hitachi HCP) return them oldest first instead.
+
+Set this quirk if --s3-version-at or --s3-versions produce incorrect
+results with your backend.
+
+This should be automatically set correctly for all providers rclone
+knows about - please make a bug report if not.
+`,
+			Default:  fs.Tristate{},
+			Advanced: true,
+		}, {
 			Name: "use_x_id",
 			Help: `Set if rclone should add x-id URL parameters.
 
@@ -1125,6 +1140,7 @@ type Options struct {
 	IBMAPIKey                   string               `config:"ibm_api_key"`
 	IBMInstanceID               string               `config:"ibm_resource_instance_id"`
 	IBMIAMEndpoint              string               `config:"ibm_iam_endpoint"`
+	ListVersionsOldestFirst     fs.Tristate          `config:"list_versions_oldest_first"`
 	UseXID                      fs.Tristate          `config:"use_x_id"`
 	SignAcceptEncoding          fs.Tristate          `config:"sign_accept_encoding"`
 	ObjectLockMode              string               `config:"object_lock_mode"`
@@ -1741,6 +1757,7 @@ func setQuirks(opt *Options, provider *Provider) {
 	set(&opt.UseXID, true, provider.Quirks.UseXID)
 	set(&opt.SignAcceptEncoding, true, provider.Quirks.SignAcceptEncoding)
 	set(&opt.ObjectLockSupported, true, provider.Quirks.ObjectLockSupported)
+	set(&opt.ListVersionsOldestFirst, false, provider.Quirks.ListVersionsOldestFirst)
 }
 
 // setRoot changes the root of the Fs
@@ -1860,6 +1877,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	if opt.Provider == "Rabata" {
 		f.features.Copy = nil
+	}
+	if opt.Provider == "TencentCOS" && strings.Contains(opt.Endpoint, "cos.accelerate.myqcloud.com") {
+		// Global Acceleration endpoint does not support bucket creation.
+		f.opt.NoCheckBucket = true
 	}
 	if opt.DirectoryMarkers {
 		f.features.CanHaveEmptyDirectories = true
@@ -2254,6 +2275,13 @@ func (ls *versionsList) List(ctx context.Context) (resp *s3.ListObjectsV2Output,
 	//structs.SetFrom(resp, respVersions)
 	setFrom_s3ListObjectsV2Output_s3ListObjectVersionsOutput(resp, respVersions)
 
+	// Some backends (e.g. Hitachi HCP) return versions oldest first instead
+	// of newest first. Reverse both lists so mergeDeleteMarkers works correctly.
+	if ls.f.opt.ListVersionsOldestFirst.Value {
+		slices.Reverse(respVersions.Versions)
+		slices.Reverse(respVersions.DeleteMarkers)
+	}
+
 	// Merge in delete Markers as types.ObjectVersion if we need them
 	if ls.hidden || ls.usingVersionAt {
 		respVersions.Versions = mergeDeleteMarkers(respVersions.Versions, respVersions.DeleteMarkers)
@@ -2339,9 +2367,11 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 			opt.directory += "/"
 		}
 	}
-	delimiter := ""
+	// Use nil delimiter for recursive listings to omit the parameter
+	// entirely. Some S3-compatible servers reject an empty delimiter.
+	var delimiter *string
 	if !opt.recurse {
-		delimiter = "/"
+		delimiter = aws.String("/")
 	}
 	// URL encode the listings so we can use control characters in object names
 	// See: https://github.com/aws/aws-sdk-go/issues/1914
@@ -2361,7 +2391,7 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 	urlEncodeListings := f.opt.ListURLEncode.Value
 	req := s3.ListObjectsV2Input{
 		Bucket:    &opt.bucket,
-		Delimiter: &delimiter,
+		Delimiter: delimiter,
 		Prefix:    &opt.directory,
 		MaxKeys:   &f.opt.ListChunk,
 	}
@@ -3783,7 +3813,9 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 	if bucket == "" {
 		return errors.New("can't purge from root")
 	}
-	versioned := f.isVersioned(ctx)
+	// If the user explicitly set --s3-versions, trust that the bucket is
+	// versioned even if GetBucketVersioning fails (e.g. missing permission).
+	versioned := f.opt.Versions || f.isVersioned(ctx)
 	if !versioned && oldOnly {
 		fs.Infof(f, "bucket is not versioned so not removing old versions")
 		return nil
@@ -4648,7 +4680,7 @@ func (o *Object) uploadSinglepartPutObject(ctx context.Context, req *s3.PutObjec
 	if err != nil {
 		return etag, lastModified, nil, err
 	}
-	req.Body = in
+	req.Body = io.NopCloser(in)
 	var options = []func(*s3.Options){}
 	if o.fs.opt.UseUnsignedPayload.Value {
 		options = append(options, s3.WithAPIOptions(

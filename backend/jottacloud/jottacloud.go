@@ -166,7 +166,8 @@ func init() {
 			// Also: '*', '/', ':', '<', '>', '?', '\"', '\x00', '|'
 			Default: (encoder.Display |
 				encoder.EncodeWin | // :?"*<>|
-				encoder.EncodeInvalidUtf8),
+				encoder.EncodeInvalidUtf8 |
+				encoder.EncodePercent),
 		}}...),
 	})
 }
