@@ -50,6 +50,7 @@ var (
 	ErrorNotImplemented              = errors.New("optional feature not implemented")
 	ErrorCommandNotFound             = errors.New("command not found")
 	ErrorFileNameTooLong             = errors.New("file name too long")
+	ErrorCantListRoot                = errors.New("can't list root")
 )
 
 // CheckClose is a utility function used to check the return from

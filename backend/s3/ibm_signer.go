@@ -16,11 +16,12 @@ type Authenticator interface {
 }
 
 // IbmIamSigner is a structure for signing requests using IBM IAM.
-// Requeres APIKey and Resource InstanceID
+// Requires APIKey and Resource InstanceID
 type IbmIamSigner struct {
-	APIKey     string
-	InstanceID string
-	Auth       Authenticator
+	APIKey      string
+	InstanceID  string
+	IAMEndpoint string
+	Auth        Authenticator
 }
 
 // SignHTTP signs requests using IBM IAM token.
@@ -29,7 +30,7 @@ func (signer *IbmIamSigner) SignHTTP(ctx context.Context, credentials aws.Creden
 	if signer.Auth != nil {
 		authenticator = signer.Auth
 	} else {
-		authenticator = &core.IamAuthenticator{ApiKey: signer.APIKey}
+		authenticator = &core.IamAuthenticator{ApiKey: signer.APIKey, URL: signer.IAMEndpoint}
 	}
 	token, err := authenticator.GetToken()
 	if err != nil {

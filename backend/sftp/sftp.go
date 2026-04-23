@@ -925,21 +925,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		opt.Port = "22"
 	}
 
-	// get proxy URL if set
-	if opt.HTTPProxy != "" {
-		proxyURL, err := url.Parse(opt.HTTPProxy)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse HTTP Proxy URL: %w", err)
-		}
-		f.proxyURL = proxyURL
-	}
-
+	// Set up sshConfig here from opt
+	// **NB** everything else should be setup in NewFsWithConnection
 	sshConfig := &ssh.ClientConfig{
-		User:            opt.User,
-		Auth:            []ssh.AuthMethod{},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		Timeout:         time.Duration(f.ci.ConnectTimeout),
-		ClientVersion:   "SSH-2.0-" + f.ci.UserAgent,
+		User:          opt.User,
+		Auth:          []ssh.AuthMethod{},
+		Timeout:       time.Duration(f.ci.ConnectTimeout),
+		ClientVersion: "SSH-2.0-" + f.ci.UserAgent,
 	}
 
 	if len(opt.HostKeyAlgorithms) != 0 {
@@ -952,6 +944,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			return nil, fmt.Errorf("couldn't parse known_hosts_file: %w", err)
 		}
 		sshConfig.HostKeyCallback = hostcallback
+	} else {
+		// Set insecure HostKeyCallback if no known_hosts_file is
+		// configured. Rclone has no mechanism to manage
+		// known_hosts files so we can't enable host key
+		// validation by default. Users can enable it by setting
+		// known_hosts_file. See: https://rclone.org/sftp/#host-key-validation
+		sshConfig.HostKeyCallback = ssh.InsecureIgnoreHostKey()
+		fs.Logf(name, "No host key validation is being performed. Set known_hosts_file to enable it. See: https://rclone.org/sftp/#host-key-validation")
 	}
 
 	if opt.UseInsecureCipher && (opt.Ciphers != nil || opt.KeyExchange != nil) {
@@ -1181,9 +1181,19 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 	f.mkdirLock = newStringLock()
 	f.pacer = fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant)))
 	f.savedpswd = ""
+
 	// set the pool drainer timer going
 	if f.opt.IdleTimeout > 0 {
 		f.drain = time.AfterFunc(time.Duration(f.opt.IdleTimeout), func() { _ = f.drainPool(ctx) })
+	}
+
+	// get proxy URL if set
+	if opt.HTTPProxy != "" {
+		proxyURL, err := url.Parse(opt.HTTPProxy)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse HTTP Proxy URL: %w", err)
+		}
+		f.proxyURL = proxyURL
 	}
 
 	f.features = (&fs.Features{
@@ -1255,7 +1265,7 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 			fs.Debugf(f, "Failed to resolve path using RealPath: %v", err)
 			cwd, err := c.sftpClient.Getwd()
 			if err != nil {
-				fs.Debugf(f, "Failed to to read current directory - using relative paths: %v", err)
+				fs.Debugf(f, "Failed to read current directory - using relative paths: %v", err)
 			} else {
 				f.absRoot = path.Join(cwd, f.root)
 				fs.Debugf(f, "Relative path joined with current directory to get absolute path %q", f.absRoot)

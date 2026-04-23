@@ -1,0 +1,29 @@
+backend: filen
+name: Filen
+tier: Tier 1
+maintainers: External
+features_score: 6
+integration_tests: Passing
+data_integrity: Hash
+performance: High
+adoption: Some use
+docs: Full
+security: High
+virtual: false
+remote: 'TestFilen:'
+features:
+- About
+- CanHaveEmptyDirectories
+- ChunkWriterDoesntSeek
+- CleanUp
+- DirMove
+- ListR
+- Move
+- OpenChunkWriter
+- Purge
+- PutStream
+- ReadMimeType
+- WriteMimeType
+hashes:
+- blake3
+precision: 1000000

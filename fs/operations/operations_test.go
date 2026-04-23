@@ -894,6 +894,29 @@ func TestCopyURL(t *testing.T) {
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1, file2, fstest.NewItem(urlFileName, contents, t1), fstest.NewItem(headerFilename, contents, t1)}, nil, fs.ModTimeNotSupported)
 }
 
+func TestCopyURLDownloadHeaders(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+
+	contents := "file contents\n"
+	var gotHeader string
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotHeader = r.Header.Get("X-Custom-Header")
+		_, err := w.Write([]byte(contents))
+		assert.NoError(t, err)
+	})
+	ts := httptest.NewServer(handler)
+	defer ts.Close()
+
+	ci.DownloadHeaders = []*fs.HTTPOption{{Key: "X-Custom-Header", Value: "test-value"}}
+
+	o, err := operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, false, false, false)
+	require.NoError(t, err)
+	assert.Equal(t, int64(len(contents)), o.Size())
+	assert.Equal(t, "test-value", gotHeader, "DownloadHeaders should be sent in the HTTP request")
+}
+
 func TestCopyURLToWriter(t *testing.T) {
 	ctx := context.Background()
 	contents := "file contents\n"
@@ -1663,6 +1686,45 @@ func TestRcatSizeMetadata(t *testing.T) {
 		assert.Equal(t, "value", gotMeta["key"])
 		assert.Equal(t, "potato", gotMeta["sausage"])
 	}
+}
+
+// putOptionSpy wraps an fs.Fs, capturing the options passed to Put.
+type putOptionSpy struct {
+	fs.Fs
+	gotOptions []fs.OpenOption
+}
+
+func (f *putOptionSpy) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	f.gotOptions = options
+	return f.Fs.Put(ctx, in, src, options...)
+}
+
+func TestRcatSizeUploadHeaders(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+
+	ci.UploadHeaders = []*fs.HTTPOption{{Key: "X-Upload-Header", Value: "upload-value"}}
+
+	spy := &putOptionSpy{Fs: r.Fremote}
+
+	const body = "------------------------------------------------------------"
+	bodyReader := io.NopCloser(strings.NewReader(body))
+	obj, err := operations.RcatSize(ctx, spy, "potato1", bodyReader, int64(len(body)), t1, nil)
+	require.NoError(t, err)
+	assert.Equal(t, int64(len(body)), obj.Size())
+
+	// Verify the upload header was actually passed through to Put
+	require.NotEmpty(t, spy.gotOptions, "expected options to be passed to Put")
+	var found bool
+	for _, opt := range spy.gotOptions {
+		if httpOpt, ok := opt.(*fs.HTTPOption); ok {
+			if httpOpt.Key == "X-Upload-Header" && httpOpt.Value == "upload-value" {
+				found = true
+			}
+		}
+	}
+	assert.True(t, found, "X-Upload-Header not found in options passed to Put")
 }
 
 func TestTouchDir(t *testing.T) {

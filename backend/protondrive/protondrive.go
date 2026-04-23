@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	protonDriveAPI "github.com/henrybear327/Proton-API-Bridge"
-	"github.com/henrybear327/go-proton-api"
+	protonDriveAPI "github.com/rclone/Proton-API-Bridge"
+	"github.com/rclone/go-proton-api"
 
 	"github.com/pquerna/otp/totp"
 

@@ -53,6 +53,7 @@ type Server struct {
 	files          http.Handler
 	pluginsHandler http.Handler
 	opt            *rc.Options
+	noAuth         bool // snapshot of opt.NoAuth at startup to prevent runtime mutation
 }
 
 func newServer(ctx context.Context, opt *rc.Options, mux *http.ServeMux) (*Server, error) {
@@ -104,6 +105,7 @@ func newServer(ctx context.Context, opt *rc.Options, mux *http.ServeMux) (*Serve
 		opt:            opt,
 		files:          fileHandler,
 		pluginsHandler: pluginsHandler,
+		noAuth:         opt.NoAuth,
 	}
 
 	var err error
@@ -263,7 +265,7 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 	}
 
 	// Check to see if it requires authorisation
-	if !s.opt.NoAuth && call.AuthRequired && !s.server.UsingAuth() {
+	if !s.noAuth && !call.NoAuth && !s.server.UsingAuth() {
 		writeError(path, in, w, fmt.Errorf("authentication must be set up on the rc server to use %q or the --rc-no-auth flag must be in use", path), http.StatusForbidden)
 		return
 	}
@@ -407,6 +409,12 @@ func (s *Server) handleGet(w http.ResponseWriter, r *http.Request, path string) 
 		return
 	}
 	http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+}
+
+// URLs returns the URLs the server is listening on. Only valid after
+// Serve has been called (which Start does internally before returning).
+func (s *Server) URLs() []string {
+	return s.server.URLs()
 }
 
 // Wait blocks while the server is serving requests

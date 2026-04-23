@@ -254,7 +254,7 @@ func (wb *WriteBack) SetID(pid *Handle) {
 //
 // Use SetID to create Handles in advance of calling Add.
 //
-// If modified is false then it it doesn't cancel a pending upload if
+// If modified is false then it doesn't cancel a pending upload if
 // there is one as there is no need.
 func (wb *WriteBack) Add(id Handle, name string, size int64, modified bool, putFn PutFn) Handle {
 	wb.mu.Lock()
@@ -435,7 +435,7 @@ func (wb *WriteBack) processItems(ctx context.Context) {
 	resetTimer := true
 	for wbItem := wb._peekItem(); wbItem != nil && time.Until(wbItem.expiry) <= 0; wbItem = wb._peekItem() {
 		// If reached transfer limit don't restart the timer
-		if wb.uploads >= fs.GetConfig(context.TODO()).Transfers {
+		if wb.uploads >= fs.GetConfig(wb.ctx).Transfers {
 			fs.Debugf(wbItem.name, "vfs cache: delaying writeback as --transfers exceeded")
 			resetTimer = false
 			break

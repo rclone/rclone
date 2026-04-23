@@ -4,7 +4,7 @@ description: "Rclone docs for pCloud"
 versionIntroduced: "v1.39"
 ---
 
-# {{< icon "fa fa-cloud" >}} pCloud
+# pCloud
 
 Paths are specified as `remote:path`
 

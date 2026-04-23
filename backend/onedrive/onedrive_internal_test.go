@@ -136,11 +136,6 @@ func (f *Fs) TestReadPermissions(t *testing.T, r *fstest.Run) {
 	_, expectedMeta := f.putWithMeta(ctx, t, &file1, []*api.PermissionsType{}) // return var intentionally switched here
 	permissions := defaultPermissions(f.driveType)
 	_, actualMeta := f.putWithMeta(ctx, t, &file1, permissions)
-	if f.driveType == driveTypePersonal {
-		perms, ok := actualMeta["permissions"]
-		assert.False(t, ok, fmt.Sprintf("permissions metadata key was unexpectedly found: %v", perms))
-		return
-	}
 	assert.JSONEq(t, expectedMeta["permissions"], actualMeta["permissions"])
 }
 
@@ -159,7 +154,7 @@ func (f *Fs) TestReadMetadata(t *testing.T, r *fstest.Run) {
 		if slices.Contains(optionals, k) {
 			continue
 		}
-		if k == "description" && f.driveType != driveTypePersonal {
+		if k == "description" {
 			continue // not supported
 		}
 		gotV, ok := actualMeta[k]
@@ -196,7 +191,7 @@ func (f *Fs) TestDirectoryMetadata(t *testing.T, r *fstest.Run) {
 			if slices.Contains(optionals, k) {
 				continue
 			}
-			if k == "description" && f.driveType != driveTypePersonal {
+			if k == "description" {
 				continue // not supported
 			}
 			gotV, ok := actualMeta[k]
@@ -417,9 +412,7 @@ func (f *Fs) compareMeta(t *testing.T, expectedMeta, actualMeta fs.Metadata, ign
 			compareTimeStrings(t, k, v, gotV, time.Second)
 			continue
 		case "description":
-			if f.driveType != driveTypePersonal {
-				continue // not supported
-			}
+			continue // not supported
 		}
 		assert.True(t, ok, fmt.Sprintf("expected metadata key is missing: %v", k))
 		assert.Equal(t, v, gotV, actualMeta)

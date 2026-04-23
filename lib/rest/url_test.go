@@ -66,7 +66,10 @@ func TestURLPathEscapeAll(t *testing.T) {
 		want string
 	}{
 		{"", ""},
-		{"/hello.txt", "/hello%2Etxt"},
+		// RFC 3986 unreserved characters must not be encoded
+		{"/hello.txt", "/hello.txt"},
+		{"file-name_v2.~bak", "file-name_v2.~bak"},
+		// Reserved and other characters must be encoded
 		{"With Space", "With%20Space"},
 		{"With Colon:", "With%20Colon%3A"},
 		{"With Percent%", "With%20Percent%25"},

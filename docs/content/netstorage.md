@@ -4,7 +4,7 @@ description: "Rclone docs for Akamai NetStorage"
 versionIntroduced: "v1.58"
 ---
 
-# {{< icon "fas fa-database" >}} Akamai NetStorage
+# Akamai NetStorage
 
 Paths are specified as `remote:`
 You may put subdirectories in too, e.g. `remote:/path/to/dir`.

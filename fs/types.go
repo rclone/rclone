@@ -328,7 +328,7 @@ type Flagger interface {
 // satisfy as non-pointers
 //
 // These are from pflag.Value and need to be tested against
-// non-pointer value due the the way the backend flags are inserted
+// non-pointer value due to the way the backend flags are inserted
 // into the flags.
 type FlaggerNP interface {
 	String() string

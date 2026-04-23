@@ -42,6 +42,10 @@ Note that `ls` and `lsl` recurse by default - use `--max-depth 1` to stop the re
 The other list commands `lsd`,`lsf`,`lsjson` do not recurse by default -
 use `-R` to make them recurse.
 
+List commands prefer a recursive method that uses more memory but fewer
+transactions by default. Use `--disable ListR` to suppress the behavior.
+See [`--fast-list`](/docs/#fast-list) for more details.
+
 Listing a nonexistent directory will produce an error except for
 remotes which can't have empty directories (e.g. s3, swift, or gcs -
 the bucket-based remotes).

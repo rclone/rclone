@@ -46,10 +46,9 @@ func AddRc(mountUtilName string, mountFunction MountFn) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "mount/mount",
-		AuthRequired: true,
-		Fn:           mountRc,
-		Title:        "Create a new mount point",
+		Path:  "mount/mount",
+		Fn:    mountRc,
+		Title: "Create a new mount point",
 		Help: `rclone allows Linux, FreeBSD, macOS and Windows to mount any of
 Rclone's cloud storage systems as a file system with FUSE.
 
@@ -71,7 +70,7 @@ rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint mountType=m
 rclone rc mount/mount fs=TestDrive: mountPoint=/mnt/tmp vfsOpt='{"CacheMode": 2}' mountOpt='{"AllowOther": true}'
 ` + "```" + `
 
-The vfsOpt are as described in options/get and can be seen in the the
+The vfsOpt are as described in options/get and can be seen in the
 "vfs" section when running and the mountOpt can be seen in the "mount" section:
 
 ` + "```console" + `
@@ -147,10 +146,9 @@ func mountRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "mount/unmount",
-		AuthRequired: true,
-		Fn:           unMountRc,
-		Title:        "Unmount selected active mount",
+		Path:  "mount/unmount",
+		Fn:    unMountRc,
+		Title: "Unmount selected active mount",
 		Help: `
 rclone allows Linux, FreeBSD, macOS and Windows to
 mount any of Rclone's cloud storage systems as a file system with
@@ -188,10 +186,9 @@ func unMountRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "mount/types",
-		AuthRequired: true,
-		Fn:           mountTypesRc,
-		Title:        "Show all possible mount types",
+		Path:  "mount/types",
+		Fn:    mountTypesRc,
+		Title: "Show all possible mount types",
 		Help: `This shows all possible mount types and returns them as a list.
 
 This takes no parameters and returns
@@ -224,10 +221,9 @@ func mountTypesRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "mount/listmounts",
-		AuthRequired: true,
-		Fn:           listMountsRc,
-		Title:        "Show current mount points",
+		Path:  "mount/listmounts",
+		Fn:    listMountsRc,
+		Title: "Show current mount points",
 		Help: `This shows currently mounted points, which can be used for performing an unmount.
 
 This takes no parameters and returns
@@ -274,10 +270,9 @@ func listMountsRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "mount/unmountall",
-		AuthRequired: true,
-		Fn:           unmountAll,
-		Title:        "Unmount all active mounts",
+		Path:  "mount/unmountall",
+		Fn:    unmountAll,
+		Title: "Unmount all active mounts",
 		Help: `
 rclone allows Linux, FreeBSD, macOS and Windows to
 mount any of Rclone's cloud storage systems as a file system with

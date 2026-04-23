@@ -47,6 +47,7 @@ See the following for detailed instructions for
 - [Dropbox](/dropbox/)
 - [Enterprise File Fabric](/filefabric/)
 - [FileLu Cloud Storage](/filelu/)
+- [Filen](/filen/)
 - [Files.com](/filescom/)
 - [FTP](/ftp/)
 - [Gofile](/gofile/)
@@ -60,6 +61,7 @@ See the following for detailed instructions for
 - [HTTP](/http/)
 - [iCloud Drive](/iclouddrive/)
 - [Internet Archive](/internetarchive/)
+- [Internxt](/internxt/)
 - [Jottacloud](/jottacloud/)
 - [Koofr](/koofr/)
 - [Linkbox](/linkbox/)
@@ -90,7 +92,6 @@ See the following for detailed instructions for
 - [SugarSync](/sugarsync/)
 - [Union](/union/)
 - [Uloz.to](/ulozto/)
-- [Uptobox](/uptobox/)
 - [WebDAV](/webdav/)
 - [Yandex Disk](/yandex/)
 - [Zoho WorkDrive](/zoho/)
@@ -2058,7 +2059,7 @@ This is the default.
 `CAUTIOUS` will try to prevent rclone from reaching the limit. Only applicable
 for `--max-transfer`.
 
-## -M, --metadata
+### -M, --metadata
 
 Setting this flag enables rclone to copy the metadata from the source
 to the destination. For local backends this is ownership, permissions,
@@ -2960,6 +2961,10 @@ knowing the local file is newer than the time it was last uploaded to the
 remote is sufficient. In those cases, this flag can speed up the process and
 reduce the number of API calls necessary.
 
+This flag is only supported on certain backends and will be silently
+ignored on unsupported backends. Supported backends include
+`azureblob`, `oracleobjectstorage`, `s3`, `swift`.
+
 Using this flag on a sync operation without also using `--update` would cause
 all files modified at any time other than the last upload time to be uploaded
 again, which is probably not what you want.
@@ -3279,6 +3284,10 @@ The available flags are:
 - `mapper` dumps the JSON blobs being sent to the program supplied with
   `--metadata-mapper` and received from it. It can be useful for debugging
   the metadata mapper interface.
+- `curl` dumps the HTTP request as a `curl` command. Can be used with
+  the other HTTP debugging flags (e.g. `requests`, `bodies`). By
+  default the auth will be masked - use with `auth` to have the curl
+  commands with authentication too.
 
 ## Filtering
 

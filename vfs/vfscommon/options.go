@@ -166,6 +166,11 @@ var OptionsInfo = fs.Options{{
 	Help:    "Override the gid field set by the filesystem (not supported on Windows)",
 	Groups:  "VFS",
 }, {
+	Name:    "vfs_handle_caching",
+	Default: fs.Duration(5 * time.Second),
+	Help:    "Time to keep file handle and downloaders alive after last close",
+	Groups:  "VFS",
+}, {
 	Name:    "vfs_metadata_extension",
 	Default: "",
 	Help:    "Set the extension to read metadata from.",
@@ -209,6 +214,7 @@ type Options struct {
 	UsedIsSize         bool          `config:"vfs_used_is_size"`     // if true, use the `rclone size` algorithm for Used size
 	FastFingerprint    bool          `config:"vfs_fast_fingerprint"` // if set use fast fingerprints
 	DiskSpaceTotalSize fs.SizeSuffix `config:"vfs_disk_space_total_size"`
+	HandleCaching      fs.Duration   `config:"vfs_handle_caching"`     // time to keep handle alive after last close
 	MetadataExtension  string        `config:"vfs_metadata_extension"` // if set respond to files with this extension with metadata
 }
 
@@ -216,8 +222,8 @@ type Options struct {
 var Opt Options
 
 // Init the options, making sure everything is within range
-func (opt *Options) Init() {
-	ci := fs.GetConfig(context.Background())
+func (opt *Options) Init(ctx context.Context) {
+	ci := fs.GetConfig(ctx)
 
 	// Override --vfs-links with --links if set
 	if ci.Links {

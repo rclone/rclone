@@ -583,9 +583,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		entriesMu.Unlock()
 	}
 	for range checkers {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for remote := range in {
 				file := &Object{
 					fs:     f,
@@ -601,7 +599,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 					fs.Debugf(remote, "skipping because of error: %v", err)
 				}
 			}
-		}()
+		})
 	}
 	for _, name := range names {
 		isDir := name[len(name)-1] == '/'

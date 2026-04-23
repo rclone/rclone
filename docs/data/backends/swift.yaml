@@ -1,0 +1,28 @@
+backend: swift
+name: Swift
+tier: Tier 1
+maintainers: Core
+features_score: 4
+integration_tests: Passing
+data_integrity: Hash
+performance: High
+adoption: Widely used
+docs: Full
+security: High
+virtual: false
+remote: 'TestSwiftAIO:'
+features:
+- About
+- BucketBased
+- BucketBasedRootOK
+- Copy
+- ListP
+- ListR
+- Purge
+- PutStream
+- ReadMimeType
+- SlowModTime
+- WriteMimeType
+hashes:
+- md5
+precision: 1

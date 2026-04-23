@@ -97,7 +97,7 @@ with the following options:
 - If ` + "`--files-only`" + ` is specified then files will be returned only,
   no directories.
 
-If ` + "`--stat`" + ` is set then the the output is not an array of items,
+If ` + "`--stat`" + ` is set then the output is not an array of items,
 but instead a single JSON blob will be returned about the item pointed to.
 This will return an error if the item isn't found, however on bucket based
 backends (like s3, gcs, b2, azureblob etc) if the item isn't found it will

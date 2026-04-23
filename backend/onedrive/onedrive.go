@@ -403,7 +403,7 @@ This is why this flag is not set as the default.
 
 As a rule of thumb if nearly all of your data is under rclone's root
 directory (the |root/directory| in |onedrive:root/directory|) then
-using this flag will be be a big performance win. If your data is
+using this flag will be a big performance win. If your data is
 mostly not under the root then using this flag will be a big
 performance loss.
 
@@ -2554,7 +2554,7 @@ func (o *Object) cancelUploadSession(ctx context.Context, url string) (err error
 	}
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.Call(ctx, &opts)
+		resp, err = o.fs.unAuth.Call(ctx, &opts)
 		return shouldRetry(ctx, resp, err)
 	})
 	return

@@ -1,0 +1,24 @@
+backend: storj
+name: Storj
+tier: Tier 1
+maintainers: Core
+features_score: 4
+integration_tests: Passing
+data_integrity: Modtime
+performance: High
+adoption: Widely used
+docs: Full
+security: High
+virtual: false
+remote: 'TestStorj:'
+features:
+- BucketBased
+- BucketBasedRootOK
+- Copy
+- ListR
+- Move
+- PublicLink
+- Purge
+- PutStream
+hashes: []
+precision: 1

@@ -8,7 +8,7 @@ notoc: true
 # Rclone syncs your files to cloud storage
 
 <!-- markdownlint-disable-next-line line-length -->
-{{< img width="50%" src="/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" >}}
+{{< img width="50%" src="/img/logo_on_light__horizontal_color.svg" dark-src="/img/logo_on_dark__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" class="hide-mobile" >}}
 
 - [About rclone](#about)
 - [What can rclone do for you?](#what)
@@ -133,9 +133,11 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Dropbox" home="https://www.dropbox.com/" config="/dropbox/" >}}
 {{< provider name="Enterprise File Fabric" home="https://storagemadeeasy.com/about/" config="/filefabric/" >}}
 {{< provider name="Exaba" home="https://exaba.com/" config="/s3/#exaba" >}}
+{{< provider name="Fastly Object Storage" home="https://www.fastly.com/products/storage" config="/s3/#fastly" >}}
 {{< provider name="Fastmail Files" home="https://www.fastmail.com/" config="/webdav/#fastmail-files" >}}
 {{< provider name="FileLu Cloud Storage" home="https://filelu.com/" config="/filelu/" >}}
 {{< provider name="FileLu S5 (S3-Compatible Object Storage)" home="https://s5lu.com/" config="/s3/#filelu-s5" >}}
+{{< provider name="Filen" home="https://www.filen.io/" config="/filen/" >}}
 {{< provider name="Files.com" home="https://www.files.com/" config="/filescom/" >}}
 {{< provider name="FlashBlade" home="https://www.purestorage.com/products/unstructured-data-storage.html" config="/s3/#pure-storage-flashblade" >}}
 {{< provider name="FTP" home="https://en.wikipedia.org/wiki/File_Transfer_Protocol" config="/ftp/" >}}
@@ -147,11 +149,13 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Hetzner Object Storage" home="https://www.hetzner.com/storage/object-storage/" config="/s3/#hetzner" >}}
 {{< provider name="Hetzner Storage Box" home="https://www.hetzner.com/storage/storage-box" config="/sftp/#hetzner-storage-box" >}}
 {{< provider name="HiDrive" home="https://www.strato.de/cloud-speicher/" config="/hidrive/" >}}
+{{< provider name="Hitachi Content Platform (HCP)" home="https://www.hitachivantara.com/en-us/products/storage/content-platform.html" config="/s3/#hcp" >}}
 {{< provider name="HTTP" home="https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol" config="/http/" >}}
 {{< provider name="Huawei OBS" home="https://www.huaweicloud.com/intl/en-us/product/obs.html" config="/s3/#huawei-obs" >}}
 {{< provider name="iCloud Drive" home="https://icloud.com/" config="/iclouddrive/" >}}
 {{< provider name="ImageKit" home="https://imagekit.io" config="/imagekit/" >}}
 {{< provider name="Internet Archive" home="https://archive.org/" config="/internetarchive/" >}}
+{{< provider name="Internxt" home="https://internxt.com/" config="/internxt/" >}}
 {{< provider name="Jottacloud" home="https://www.jottacloud.com/en/" config="/jottacloud/" >}}
 {{< provider name="IBM COS S3" home="http://www.ibm.com/cloud/object-storage" config="/s3/#ibm-cos-s3" >}}
 {{< provider name="IDrive e2" home="https://www.idrive.com/e2/?refer=rclone" config="/s3/#idrive-e2" >}}
@@ -208,16 +212,16 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Sia" home="https://sia.tech/" config="/sia/" >}}
 {{< provider name="SMB / CIFS" home="https://en.wikipedia.org/wiki/Server_Message_Block" config="/smb/" >}}
 {{< provider name="Spectra Logic" home="https://spectralogic.com/blackpearl-nearline-object-gateway/" config="/s3/#spectralogic" >}}
-{{< provider name="StackPath" home="https://www.stackpath.com/products/object-storage/" config="/s3/#stackpath" >}}
 {{< provider name="Storj" home="https://storj.io/" config="/storj/" >}}
 {{< provider name="Synology" home="https://c2.synology.com/en-global/object-storage/overview" config="/s3/#synology-c2" >}}
 {{< provider name="SugarSync" home="https://sugarsync.com/" config="/sugarsync/" >}}
 {{< provider name="Tencent Cloud Object Storage (COS)" home="https://intl.cloud.tencent.com/product/cos" config="/s3/#tencent-cos" >}}
 {{< provider name="Uloz.to" home="https://uloz.to" config="/ulozto/" >}}
-{{< provider name="Uptobox" home="https://uptobox.com" config="/uptobox/" >}}
+{{< provider name="US3" home="https://www.ucloud.cn/site/product/ufile.html" config="/s3/#us3" >}}
 {{< provider name="Wasabi" home="https://wasabi.com/" config="/s3/#wasabi" >}}
 {{< provider name="WebDAV" home="https://en.wikipedia.org/wiki/WebDAV" config="/webdav/" >}}
 {{< provider name="Yandex Disk" home="https://disk.yandex.com/" config="/yandex/" >}}
+{{< provider name="Zadara Object Storage" home="https://www.zadara.com" config="/s3/#zadara" >}}
 {{< provider name="Zoho WorkDrive" home="https://www.zoho.com/workdrive/" config="/zoho/" >}}
 {{< provider name="Zata" home="https://zata.ai/" config="/s3/#Zata" end="true" >}}
 {{< provider name="The local filesystem" home="/local/" config="/local/" end="true">}}
@@ -246,7 +250,7 @@ These backends adapt or modify other storage providers:
 
 ## Links
 
-- {{< icon "fa fa-home" >}} [Home page](https://rclone.org/)
-- {{< icon "fab fa-github" >}} [GitHub project page for source and bug tracker](https://github.com/rclone/rclone)
-- {{< icon "fa fa-comments" >}} [Rclone Forum](https://forum.rclone.org)
-- {{< icon "fas fa-cloud-download-alt" >}}[Downloads](/downloads/)
+- [Home page](https://rclone.org/)
+- [GitHub project page for source and bug tracker](https://github.com/rclone/rclone)
+- [Rclone Forum](https://forum.rclone.org)
+- [Downloads](/downloads/)

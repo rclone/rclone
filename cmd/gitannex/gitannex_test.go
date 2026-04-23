@@ -341,7 +341,7 @@ func (h *testState) preconfigureServer() {
 // The `\\?\` prefix tells Windows APIs to pass strings unmodified to the
 // filesystem without additional parsing [1]. Our workaround is roughly to add
 // the prefix to whichever parameter doesn't have it (when the OS is Windows).
-// I'm not sure this generalizes, but it works for the the kinds of inputs we're
+// I'm not sure this generalizes, but it works for the kinds of inputs we're
 // throwing at it.
 //
 // [1]: https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file?redirectedfrom=MSDN#win32-file-namespaces

@@ -1,0 +1,23 @@
+backend: zoho
+name: Zoho
+tier: Tier 3
+maintainers: External
+features_score: 2
+integration_tests: Failing
+data_integrity: Other
+performance: Medium
+adoption: Often used
+docs: Full
+security: High
+virtual: false
+remote: 'TestZoho:'
+features:
+- About
+- CanHaveEmptyDirectories
+- Copy
+- DirCacheFlush
+- DirMove
+- Move
+- Purge
+hashes: []
+precision: 3153600000000000000

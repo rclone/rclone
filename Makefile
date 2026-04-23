@@ -45,7 +45,7 @@ LINTTAGS=--build-tags "$(GOTAGS)"
 endif
 LDFLAGS=--ldflags "-s -X github.com/rclone/rclone/fs.Version=$(TAG)"
 
-.PHONY: rclone test_all vars version
+.PHONY: rclone test_all vars version fetch-gui
 
 rclone:
 ifeq ($(GO_OS),windows)
@@ -58,6 +58,9 @@ endif
 	mkdir -p `go env GOPATH`/bin/
 	cp -av rclone`go env GOEXE` `go env GOPATH`/bin/rclone`go env GOEXE`.new
 	mv -v `go env GOPATH`/bin/rclone`go env GOEXE`.new `go env GOPATH`/bin/rclone`go env GOEXE`
+
+fetch-gui:
+	$(SHELL) ./bin/fetch-gui-dist.sh
 
 test_all:
 	go install $(LDFLAGS) $(BUILDTAGS) $(BUILD_ARGS) github.com/rclone/rclone/fstest/test_all
@@ -121,6 +124,25 @@ updatedirect:
 	go get $$(go list -m -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' all)
 	go mod tidy
 
+# Update direct dependencies only but won't update the `go` line in go.mod
+updatedirectnoupgrade:
+	@GO_VERSION=$$(awk '/^go /{print $$2}' go.mod) && \
+	for mod in $$(go list -m -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' all); do \
+		cp go.mod go.mod.bak && \
+		cp go.sum go.sum.bak && \
+		go get $$mod && \
+		NEW_VERSION=$$(awk '/^go /{print $$2}' go.mod) && \
+		if [ "$$NEW_VERSION" != "$$GO_VERSION" ]; then \
+			echo "SKIPPING $$mod (requires go $$NEW_VERSION)"; \
+			cp go.mod.bak go.mod; \
+			cp go.sum.bak go.sum; \
+		else \
+			echo "updated $$mod"; \
+		fi; \
+	done && \
+	rm -f go.mod.bak go.sum.bak && \
+	go mod tidy
+
 # Update direct and indirect dependencies and test dependencies
 update:
 	go get -u -t ./...
@@ -146,6 +168,7 @@ MANUAL.txt:	MANUAL.md
 
 commanddocs: rclone
 	go generate ./lib/transform
+	go generate ./cmd/bisync
 	-@rmdir -p '$$HOME/.config/rclone'
 	XDG_CACHE_HOME="" XDG_CONFIG_HOME="" HOME="\$$HOME" USER="\$$USER" rclone gendocs --config=/notfound docs/content/
 	@[ ! -e '$$HOME' ] || (echo 'Error: created unwanted directory named $$HOME' && exit 1)
@@ -215,6 +238,12 @@ beta:
 	go run bin/cross-compile.go $(BUILD_FLAGS) $(BUILDTAGS) $(BUILD_ARGS) $(TAG)
 	rclone -v copy build/ pub.rclone.org:/$(TAG)
 	@echo Beta release ready at https://pub.rclone.org/$(TAG)/
+
+privatebeta:
+	go run bin/cross-compile.go $(BUILD_FLAGS) $(BUILDTAGS) $(BUILD_ARGS) -include '^(darwin|windows|linux)/(arm64|amd64)$$' $(TAG)
+	rclone -Pv copy build/ private-downloads:/beta/$(TAG)
+	@echo Private beta release ready at private-downloads:/beta/$(TAG)/
+	rclone link private-downloads:/beta/$(TAG)
 
 log_since_last_release:
 	git log $(LAST_TAG)..

@@ -1,0 +1,9 @@
+name: Zadara
+description: Zadara Object Storage
+region:
+  us-east-1: |-
+    The default region.
+    Leave location constraint empty.
+endpoint: {}
+quirks:
+  force_path_style: true

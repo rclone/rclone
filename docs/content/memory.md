@@ -4,7 +4,7 @@ description: "Rclone docs for Memory backend"
 versionIntroduced: "v1.51"
 ---
 
-# {{< icon "fas fa-memory" >}} Memory
+# Memory
 
 The memory backend is an in RAM backend. It does not persist its
 data - use the local backend for that.
@@ -69,6 +69,30 @@ set](/overview/#restricted-characters).
 ### Advanced options
 
 Here are the Advanced options specific to memory (In memory object storage system.).
+
+#### --memory-discard
+
+If set all writes will be discarded and reads will return an error
+
+If set then when files are uploaded the contents not be saved. The
+files will appear to have been uploaded but will give an error on
+read. Files will have their MD5 sum calculated on upload which takes
+very little CPU time and allows the transfers to be checked.
+
+This can be useful for testing performance.
+
+Probably most easily used by using the connection string syntax:
+
+    :memory,discard:bucket
+
+
+
+Properties:
+
+- Config:      discard
+- Env Var:     RCLONE_MEMORY_DISCARD
+- Type:        bool
+- Default:     false
 
 #### --memory-description
 

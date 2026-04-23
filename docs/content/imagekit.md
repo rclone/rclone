@@ -4,7 +4,7 @@ description: "Rclone docs for ImageKit backend."
 versionIntroduced: "v1.63"
 ---
 
-# {{< icon "fa fa-cloud" >}} ImageKit
+# ImageKit
 
 This is a backend for the [ImageKit.io](https://imagekit.io/) storage service.
 

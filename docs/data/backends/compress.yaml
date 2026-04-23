@@ -1,0 +1,39 @@
+backend: compress
+name: Compress
+tier: Tier 4
+maintainers: Core
+features_score: 5
+integration_tests: Failing
+data_integrity: Hash
+performance: Medium
+adoption: Some use
+docs: Full
+security: High
+virtual: true
+remote: 'TestCompress:'
+features:
+- About
+- CanHaveEmptyDirectories
+- DirModTimeUpdatesOnWrite
+- DirMove
+- DirSetModTime
+- ListP
+- MkdirMetadata
+- Move
+- Overlay
+- PartialUploads
+- PutStream
+- ReadDirMetadata
+- ReadMetadata
+- ReadMimeType
+- SetWrapper
+- UnWrap
+- UserDirMetadata
+- UserMetadata
+- WrapFs
+- WriteDirMetadata
+- WriteDirSetModTime
+- WriteMetadata
+hashes:
+- md5
+precision: 1

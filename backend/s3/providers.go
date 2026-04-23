@@ -30,8 +30,11 @@ type Quirks struct {
 	MightGzip                   *bool  `yaml:"might_gzip,omitempty"`
 	UseMultipartUploads         *bool  `yaml:"use_multipart_uploads,omitempty"`
 	UseUnsignedPayload          *bool  `yaml:"use_unsigned_payload,omitempty"`
+	ListVersionsOldestFirst     *bool  `yaml:"list_versions_oldest_first,omitempty"`
 	UseXID                      *bool  `yaml:"use_x_id,omitempty"`
 	SignAcceptEncoding          *bool  `yaml:"sign_accept_encoding,omitempty"`
+	EtagIsNotMD5                *bool  `yaml:"etag_is_not_md5,omitempty"`
+	ObjectLockSupported         *bool  `yaml:"object_lock_supported,omitempty"`
 	CopyCutoff                  *int64 `yaml:"copy_cutoff,omitempty"`
 	MaxUploadParts              *int   `yaml:"max_upload_parts,omitempty"`
 	MinChunkSize                *int64 `yaml:"min_chunk_size,omitempty"`
@@ -51,6 +54,7 @@ type Provider struct {
 	// other
 	IBMApiKey             bool `yaml:"ibm_api_key,omitempty"`
 	IBMResourceInstanceID bool `yaml:"ibm_resource_instance_id,omitempty"`
+	IBMIAMEndpoint        bool `yaml:"ibm_iam_endpoint,omitempty"`
 
 	// advanced
 	BucketACL             bool `yaml:"bucket_acl,omitempty"`
@@ -223,6 +227,8 @@ func constructProviders(options fs.Options, providerMap map[string]*Provider) st
 				addBool(opt, p, p.IBMApiKey)
 			case "ibm_resource_instance_id":
 				addBool(opt, p, p.IBMResourceInstanceID)
+			case "ibm_iam_endpoint":
+				addBool(opt, p, p.IBMIAMEndpoint)
 			case "leave_parts_on_error":
 				addBool(opt, p, p.LeavePartsOnError)
 			case "sts_endpoint":

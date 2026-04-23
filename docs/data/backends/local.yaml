@@ -1,0 +1,50 @@
+backend: local
+name: Local
+tier: Tier 1
+maintainers: Core
+features_score: 7
+integration_tests: Passing
+data_integrity: Hash
+performance: High
+adoption: Widely used
+docs: Full
+security: High
+virtual: false
+remote: .
+features:
+- About
+- CanHaveEmptyDirectories
+- Command
+- DirModTimeUpdatesOnWrite
+- DirMove
+- DirSetModTime
+- FilterAware
+- IsLocal
+- MkdirMetadata
+- Move
+- OpenWriterAt
+- PartialUploads
+- PutStream
+- ReadDirMetadata
+- ReadMetadata
+- SlowHash
+- UserDirMetadata
+- UserMetadata
+- WriteDirMetadata
+- WriteDirSetModTime
+- WriteMetadata
+hashes:
+- md5
+- sha1
+- whirlpool
+- crc32
+- sha256
+- sha512
+- blake3
+- xxh3
+- xxh128
+- dropbox
+- hidrive
+- mailru
+- quickxor
+precision: 1

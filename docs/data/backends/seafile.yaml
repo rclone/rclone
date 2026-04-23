@@ -1,0 +1,28 @@
+backend: seafile
+name: Seafile
+tier: Tier 3
+maintainers: Core
+features_score: 3
+integration_tests: Failing
+data_integrity: Other
+performance: Medium
+adoption: Some use
+docs: Basic
+security: High
+virtual: false
+remote: 'TestSeafile:'
+features:
+- About
+- CanHaveEmptyDirectories
+- CleanUp
+- Copy
+- DirMove
+- ListR
+- Move
+- PublicLink
+- Purge
+- PutStream
+- Shutdown
+- UserInfo
+hashes: []
+precision: 3153600000000000000

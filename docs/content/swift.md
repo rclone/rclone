@@ -4,7 +4,7 @@ description: "Swift"
 versionIntroduced: "v0.91"
 ---
 
-# {{< icon "fa fa-space-shuttle" >}} Swift
+# Swift
 
 Swift refers to [OpenStack Object Storage](https://docs.openstack.org/swift/latest/).
 Commercial implementations of that being:
@@ -564,7 +564,7 @@ Properties:
 
 Above this size files will be chunked.
 
-Above this size files will be chunked into a a `_segments` container
+Above this size files will be chunked into a `_segments` container
 or a `.file-segments` directory. (See the `use_segments_container` option
 for more info). Default for this is 5 GiB which is its maximum value, which
 means only files above this size will be chunked.

@@ -367,6 +367,39 @@ func TestCallMaxConnectionsRecursiveDeadlock(t *testing.T) {
 	assert.Equal(t, errFoo, err)
 }
 
+func TestCallMaxConnectionsRecursiveDeadlock2(t *testing.T) {
+	p := New(CalculatorOption(NewDefault(MinSleep(1*time.Millisecond), MaxSleep(2*time.Millisecond))))
+	p.SetMaxConnections(1)
+	dp := &dummyPaced{retry: false}
+	wg := new(sync.WaitGroup)
+
+	// Normal
+	for range 100 {
+		wg.Go(func() {
+			err := p.Call(func() (bool, error) {
+				// check we have taken the connection token
+				assert.Equal(t, 0, len(p.connTokens))
+				return false, nil
+			})
+			assert.NoError(t, err)
+		})
+
+		// Now attempt a recursive call
+		wg.Go(func() {
+			err := p.Call(func() (bool, error) {
+				// check we have taken the connection token
+				assert.Equal(t, 0, len(p.connTokens))
+				// Do recursive call
+				return false, p.Call(dp.fn)
+			})
+			assert.Equal(t, errFoo, err)
+		})
+	}
+
+	// Tidy up
+	wg.Wait()
+}
+
 func TestRetryAfterError_NonNilErr(t *testing.T) {
 	orig := errors.New("test failure")
 	dur := 2 * time.Second
