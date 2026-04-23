@@ -173,6 +173,10 @@ func newFsFromOptions(ctx context.Context, name, root string, opt *Options) (fs.
 		NewSharedKeyCredential:           service.NewSharedKeyCredential,
 		SetClientOptions: func(options *service.ClientOptions, policyClientOptions policy.ClientOptions) {
 			options.ClientOptions = policyClientOptions
+			// FileRequestIntent is required for TokenCredential (OAuth)
+			// auth; the SDK omits it for shared-key / SAS.
+			backup := service.ShareTokenIntentBackup
+			options.FileRequestIntent = &backup
 		},
 	}
 	res, err := auth.NewClient(ctx, conf, &opt.Options)
