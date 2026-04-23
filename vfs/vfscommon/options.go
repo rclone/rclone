@@ -91,6 +91,11 @@ var OptionsInfo = fs.Options{{
 	Help:    "The number of parallel streams to read at once",
 	Groups:  "VFS",
 }, {
+	Name:    "vfs_downloaders_max",
+	Default: 0,
+	Help:    "Max concurrent download streams per open file (0 = unlimited)",
+	Groups:  "VFS",
+}, {
 	Name:    "dir_perms",
 	Default: FileMode(0777),
 	Help:    "Directory permissions",
@@ -200,6 +205,7 @@ type Options struct {
 	ChunkSize          fs.SizeSuffix `config:"vfs_read_chunk_size"`       // if > 0 read files in chunks
 	ChunkSizeLimit     fs.SizeSuffix `config:"vfs_read_chunk_size_limit"` // if > ChunkSize double the chunk size after each chunk until reached
 	ChunkStreams       int           `config:"vfs_read_chunk_streams"`    // Number of download streams to use
+	DownloadersMax     int           `config:"vfs_downloaders_max"`       // Cap on concurrent downloaders per open file; 0 = unlimited
 	CacheMode          CacheMode     `config:"vfs_cache_mode"`
 	CacheMaxAge        fs.Duration   `config:"vfs_cache_max_age"`
 	CacheMaxSize       fs.SizeSuffix `config:"vfs_cache_max_size"`

@@ -17,8 +17,6 @@ import (
 	"github.com/rclone/rclone/vfs/vfscommon"
 )
 
-// FIXME implement max downloaders
-
 const (
 	// max time a downloader can be idle before closing itself
 	maxDownloaderIdleTime = 5 * time.Second
@@ -357,6 +355,14 @@ func (dls *Downloaders) _ensureDownloader(r ranges.Range) (err error) {
 	}
 	// Size can be 0 here if file shrinks - no need to download
 	if r.Size == 0 {
+		return nil
+	}
+	// If at the configured cap, don't spawn another downloader. The caller
+	// will still enqueue a waiter for r; kickWaiters() re-runs
+	// _ensureDownloader for every pending waiter as soon as an existing
+	// downloader closes (or idles out after maxDownloaderIdleTime), so
+	// progress resumes automatically once a slot frees.
+	if max := dls.opt.DownloadersMax; max > 0 && len(dls.dls) >= max {
 		return nil
 	}
 	// Downloader not found so start a new one
