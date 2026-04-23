@@ -614,3 +614,53 @@ func rcRunCommand(ctx context.Context, in Params) (out Params, err error) {
 	err = cmd.Run()
 	return nil, err
 }
+
+func init() {
+	Add(Call{
+		Path:  "core/disks",
+		Fn:    rcDisks,
+		Title: "List the local disks",
+		Help: `This does not take any parameters
+
+This call is for rclone GUI programs to enumerate local disks and
+important directories for doing transfers to and from. The list
+returned will include the root directory and the user's home directory
+and any mounted disks. The returned items should be usable directly as
+remotes.
+
+Returns:
+
+- disks
+    - This is an array of strings of local disk names
+`,
+	})
+}
+
+// Disks returns likely local disks and some other useful positions
+func rcDisks(ctx context.Context, in Params) (out Params, err error) {
+	disks := []string{}
+	home, err := os.UserHomeDir()
+	tidy := func(s string) string {
+		if s != "/" {
+			s, _ = strings.CutSuffix(s, "/")
+		}
+		return s
+	}
+	if err == nil {
+		disks = append(disks, tidy(home))
+	}
+	for _, mount := range getMounts() {
+		mount = tidy(mount)
+		if runtime.GOOS == "linux" {
+			if strings.HasPrefix(mount, "/snap/") || strings.HasPrefix(mount, "/var/snap/") || strings.HasPrefix(mount, "/boot/") || mount == "/boot" {
+				// ignore boring mounts
+				continue
+			}
+		}
+		disks = append(disks, mount)
+	}
+	out = Params{
+		"disks": disks,
+	}
+	return out, nil
+}
