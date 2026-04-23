@@ -8,6 +8,7 @@ import (
 	"time"
 
 	_ "github.com/rclone/rclone/backend/local"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/ranges"
@@ -125,5 +126,105 @@ func TestDownloaders(t *testing.T) {
 		assert.Eventually(t, func() bool {
 			return item.HasRange(r)
 		}, 10*time.Second, 10*time.Millisecond)
+	})
+
+	// poolSize returns len(dls.dls) under the mutex. Same-package test
+	// only; external callers should not peek at the pool directly.
+	poolSize := func(dls *Downloaders) int {
+		dls.mu.Lock()
+		defer dls.mu.Unlock()
+		return len(dls.dls)
+	}
+
+	// observePeakPool fires N concurrent Download() calls for far-apart
+	// ranges and returns the peak observed pool size. The stride is
+	// deliberately larger than minWindow (1 MiB) so range-reuse never
+	// folds two requests onto the same downloader.
+	observePeakPool := func(t *testing.T, dls *Downloaders, n int, stride int64, window time.Duration) int {
+		var wg sync.WaitGroup
+		for i := 0; i < n; i++ {
+			r := ranges.Range{Pos: int64(i) * stride, Size: 1024}
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				_ = dls.Download(r)
+			}()
+		}
+
+		peak := 0
+		deadline := time.Now().Add(window)
+		for time.Now().Before(deadline) {
+			if cur := poolSize(dls); cur > peak {
+				peak = cur
+			}
+			time.Sleep(5 * time.Millisecond)
+		}
+		// Don't wg.Wait here — cancel(dls) in the outer defer is what
+		// unblocks Download() callers via _closeWaiters.
+		t.Cleanup(wg.Wait)
+		return peak
+	}
+
+	// newCapCtx returns a ctx with BufferSize pinned to 0 so the
+	// reuse-window in _ensureDownloader collapses to minWindow (1 MiB).
+	// Without this override the window is the global --buffer-size
+	// (default 16 MiB) and our 2 MiB stride gets absorbed into a
+	// single downloader, masking the pool size we want to measure.
+	newCapCtx := func(parent context.Context) context.Context {
+		capCtx, ci := fs.AddConfig(parent)
+		ci.BufferSize = 0
+		return capCtx
+	}
+
+	// Max: with DownloadersMax=4 and 32 concurrent far-apart requests,
+	// the pool must never exceed 4. This is the entire behavioural
+	// guarantee of the fix.
+	t.Run("Max", func(t *testing.T) {
+		capCtx := newCapCtx(ctx)
+		item := &testItem{t: t, size: size}
+		opt := vfscommon.Opt
+		opt.DownloadersMax = 4
+		dls := New(capCtx, item, &opt, remote, src)
+		defer cancel(dls)
+
+		peak := observePeakPool(t, dls, 32, 2*1024*1024, 2*time.Second)
+
+		assert.LessOrEqual(t, peak, opt.DownloadersMax,
+			"pool exceeded DownloadersMax=%d: observed peak %d",
+			opt.DownloadersMax, peak)
+		assert.Equal(t, opt.DownloadersMax, peak,
+			"pool never reached DownloadersMax=%d (peak %d) — cap not stressed by this workload",
+			opt.DownloadersMax, peak)
+	})
+
+	// Unlimited: with DownloadersMax=0 the cap is off; the pool must be
+	// able to exceed the cap's value. This is the control: if this one
+	// also plateaus at 4, the Max test is measuring something other
+	// than the cap (e.g. range-reuse).
+	//
+	// Uses a blocking item so downloaders cannot advance their offset
+	// and absorb follow-up requests via the reuse-window path in
+	// _ensureDownloader — otherwise a fast testItem lets a few
+	// downloaders race through the whole file and the pool never grows.
+	t.Run("Unlimited", func(t *testing.T) {
+		capCtx := newCapCtx(ctx)
+		item := &testItem{t: t, size: size}
+		opt := vfscommon.Opt
+		opt.DownloadersMax = 0
+		dls := New(capCtx, item, &opt, remote, src)
+		defer cancel(dls)
+
+		peak := observePeakPool(t, dls, 32, 2*1024*1024, 2*time.Second)
+
+		// Clear daylight above any cap=4 value anyone might mistakenly
+		// introduce later. With window=1 MiB (from BufferSize=0) and
+		// a 2 MiB stride, every valid-range request spawns its own
+		// downloader. On a 50 MiB file that's up to ~25 live
+		// downloaders; the 5 s idle timeout keeps them all alive for
+		// the 2 s observation window.
+		const threshold = 5
+		assert.Greater(t, peak, threshold,
+			"with DownloadersMax=0 (unlimited), pool peak was expected to exceed %d, got %d",
+			threshold, peak)
 	})
 }
