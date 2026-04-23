@@ -136,11 +136,17 @@ func TestDownloaders(t *testing.T) {
 		return len(dls.dls)
 	}
 
-	// observePeakPool fires N concurrent Download() calls for far-apart
+	// observePeakPool fires n concurrent Download() calls for far-apart
 	// ranges and returns the peak observed pool size. The stride is
 	// deliberately larger than minWindow (1 MiB) so range-reuse never
 	// folds two requests onto the same downloader.
-	observePeakPool := func(t *testing.T, dls *Downloaders, n int, stride int64, window time.Duration) int {
+	//
+	// window bounds the worst-case wall time. target is an optimistic
+	// early-exit: once peak >= target the loop waits briefly (to catch
+	// a cap violation that appears just above target) and then returns
+	// without burning the full window. Pass target=0 to always observe
+	// for the full window.
+	observePeakPool := func(t *testing.T, dls *Downloaders, n int, stride int64, window time.Duration, target int) int {
 		var wg sync.WaitGroup
 		for i := 0; i < n; i++ {
 			r := ranges.Range{Pos: int64(i) * stride, Size: 1024}
@@ -156,6 +162,16 @@ func TestDownloaders(t *testing.T) {
 		for time.Now().Before(deadline) {
 			if cur := poolSize(dls); cur > peak {
 				peak = cur
+			}
+			if target > 0 && peak >= target {
+				// Guard window: if the cap is leaky, a violation
+				// typically shows up within a few polls of first
+				// hitting target. Sample once more before returning.
+				time.Sleep(50 * time.Millisecond)
+				if cur := poolSize(dls); cur > peak {
+					peak = cur
+				}
+				break
 			}
 			time.Sleep(5 * time.Millisecond)
 		}
@@ -187,7 +203,7 @@ func TestDownloaders(t *testing.T) {
 		dls := New(capCtx, item, &opt, remote, src)
 		defer cancel(dls)
 
-		peak := observePeakPool(t, dls, 32, 2*1024*1024, 2*time.Second)
+		peak := observePeakPool(t, dls, 32, 2*1024*1024, 2*time.Second, opt.DownloadersMax)
 
 		assert.LessOrEqual(t, peak, opt.DownloadersMax,
 			"pool exceeded DownloadersMax=%d: observed peak %d",
@@ -202,10 +218,10 @@ func TestDownloaders(t *testing.T) {
 	// also plateaus at 4, the Max test is measuring something other
 	// than the cap (e.g. range-reuse).
 	//
-	// Uses a blocking item so downloaders cannot advance their offset
-	// and absorb follow-up requests via the reuse-window path in
-	// _ensureDownloader — otherwise a fast testItem lets a few
-	// downloaders race through the whole file and the pool never grows.
+	// Relies on newCapCtx's BufferSize=0 to collapse the reuse-window to
+	// minWindow (1 MiB); with a 2 MiB stride every valid-range request
+	// then spawns its own downloader, and the 5 s idle timeout keeps
+	// them alive for the observation window so the pool can grow.
 	t.Run("Unlimited", func(t *testing.T) {
 		capCtx := newCapCtx(ctx)
 		item := &testItem{t: t, size: size}
@@ -214,15 +230,12 @@ func TestDownloaders(t *testing.T) {
 		dls := New(capCtx, item, &opt, remote, src)
 		defer cancel(dls)
 
-		peak := observePeakPool(t, dls, 32, 2*1024*1024, 2*time.Second)
+		const threshold = 5
+		peak := observePeakPool(t, dls, 32, 2*1024*1024, 2*time.Second, threshold+1)
 
 		// Clear daylight above any cap=4 value anyone might mistakenly
-		// introduce later. With window=1 MiB (from BufferSize=0) and
-		// a 2 MiB stride, every valid-range request spawns its own
-		// downloader. On a 50 MiB file that's up to ~25 live
-		// downloaders; the 5 s idle timeout keeps them all alive for
-		// the 2 s observation window.
-		const threshold = 5
+		// introduce later. On a 50 MiB file with a 2 MiB stride that's
+		// up to ~25 live downloaders — plenty of headroom above 5.
 		assert.Greater(t, peak, threshold,
 			"with DownloadersMax=0 (unlimited), pool peak was expected to exceed %d, got %d",
 			threshold, peak)
