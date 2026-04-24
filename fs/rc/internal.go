@@ -23,19 +23,19 @@ import (
 
 func init() {
 	Add(Call{
-		Path:         "rc/noopauth",
-		AuthRequired: true,
-		Fn:           rcNoop,
-		Title:        "Echo the input to the output parameters requiring auth",
+		Path:  "rc/noopauth",
+		Fn:    rcNoop,
+		Title: "Echo the input to the output parameters requiring auth",
 		Help: `
 This echoes the input parameters to the output parameters for testing
 purposes.  It can be used to check that rclone is still alive and to
 check that parameter passing is working properly.`,
 	})
 	Add(Call{
-		Path:  "rc/noop",
-		Fn:    rcNoop,
-		Title: "Echo the input to the output parameters",
+		Path:   "rc/noop",
+		NoAuth: true,
+		Fn:     rcNoop,
+		Title:  "Echo the input to the output parameters",
 		Help: `
 This echoes the input parameters to the output parameters for testing
 purposes.  It can be used to check that rclone is still alive and to
@@ -50,9 +50,10 @@ func rcNoop(ctx context.Context, in Params) (out Params, err error) {
 
 func init() {
 	Add(Call{
-		Path:  "rc/error",
-		Fn:    rcError,
-		Title: "This returns an error",
+		Path:   "rc/error",
+		NoAuth: true,
+		Fn:     rcError,
+		Title:  "This returns an error",
 		Help: `
 This returns an error with the input as part of its error string.
 Useful for testing error handling.`,
@@ -99,9 +100,10 @@ func rcFatal(ctx context.Context, in Params) (out Params, err error) {
 
 func init() {
 	Add(Call{
-		Path:  "rc/list",
-		Fn:    rcList,
-		Title: "List all the registered remote control commands",
+		Path:   "rc/list",
+		NoAuth: true,
+		Fn:     rcList,
+		Title:  "List all the registered remote control commands",
 		Help: `
 This lists all the registered remote control commands as a JSON map in
 the commands response.`,
@@ -201,9 +203,10 @@ func rcGc(ctx context.Context, in Params) (out Params, err error) {
 
 func init() {
 	Add(Call{
-		Path:  "core/version",
-		Fn:    rcVersion,
-		Title: "Shows the current version of rclone, Go and the OS.",
+		Path:   "core/version",
+		NoAuth: true,
+		Fn:     rcVersion,
+		Title:  "Shows the current version of rclone, Go and the OS.",
 		Help: `
 This shows the current versions of rclone, Go and the OS:
 
@@ -480,7 +483,6 @@ func rcSetGCPercent(ctx context.Context, in Params) (out Params, err error) {
 func init() {
 	Add(Call{
 		Path:          "core/command",
-		AuthRequired:  true,
 		Fn:            rcRunCommand,
 		NeedsRequest:  true,
 		NeedsResponse: true,
@@ -611,4 +613,54 @@ func rcRunCommand(ctx context.Context, in Params) (out Params, err error) {
 
 	err = cmd.Run()
 	return nil, err
+}
+
+func init() {
+	Add(Call{
+		Path:  "core/disks",
+		Fn:    rcDisks,
+		Title: "List the local disks",
+		Help: `This does not take any parameters
+
+This call is for rclone GUI programs to enumerate local disks and
+important directories for doing transfers to and from. The list
+returned will include the root directory and the user's home directory
+and any mounted disks. The returned items should be usable directly as
+remotes.
+
+Returns:
+
+- disks
+    - This is an array of strings of local disk names
+`,
+	})
+}
+
+// Disks returns likely local disks and some other useful positions
+func rcDisks(ctx context.Context, in Params) (out Params, err error) {
+	disks := []string{}
+	home, err := os.UserHomeDir()
+	tidy := func(s string) string {
+		if s != "/" {
+			s, _ = strings.CutSuffix(s, "/")
+		}
+		return s
+	}
+	if err == nil {
+		disks = append(disks, tidy(home))
+	}
+	for _, mount := range getMounts() {
+		mount = tidy(mount)
+		if runtime.GOOS == "linux" {
+			if strings.HasPrefix(mount, "/snap/") || strings.HasPrefix(mount, "/var/snap/") || strings.HasPrefix(mount, "/boot/") || mount == "/boot" {
+				// ignore boring mounts
+				continue
+			}
+		}
+		disks = append(disks, mount)
+	}
+	out = Params{
+		"disks": disks,
+	}
+	return out, nil
 }

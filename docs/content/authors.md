@@ -1113,3 +1113,4 @@ put them back in again. -->
 - TheBabu <ariq.haqq@gmail.com>
 - Brais Couce <braiscouce@gmail.com>
 - Mozi <29089388+pzhlkj6612@users.noreply.github.com>
+- SyoBoN <syobon@syobon.net>
