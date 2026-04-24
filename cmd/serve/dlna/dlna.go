@@ -252,7 +252,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 
 // UPnPService is the interface for the SOAP service.
 type UPnPService interface {
-	Handle(action string, argsXML []byte, r *http.Request) (respArgs map[string]string, err error)
+	Handle(action string, argsXML []byte, r *http.Request) (respArgs []soapArg, err error)
 	Subscribe(callback []*url.URL, timeoutSeconds int) (sid string, actualTimeout int, err error)
 	Unsubscribe(sid string) error
 }
@@ -327,7 +327,7 @@ func (s *server) serviceControlHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Handle a SOAP request and return the response arguments or UPnP error.
-func (s *server) soapActionResponse(sa upnp.SoapAction, actionRequestXML []byte, r *http.Request) (map[string]string, error) {
+func (s *server) soapActionResponse(sa upnp.SoapAction, actionRequestXML []byte, r *http.Request) ([]soapArg, error) {
 	service, ok := s.services[sa.Type]
 	if !ok {
 		// TODO: What's the invalid service error?

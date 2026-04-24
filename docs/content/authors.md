@@ -1113,3 +1113,7 @@ put them back in again. -->
 - TheBabu <ariq.haqq@gmail.com>
 - Brais Couce <braiscouce@gmail.com>
 - Mozi <29089388+pzhlkj6612@users.noreply.github.com>
+- SyoBoN <syobon@syobon.net>
+- Jan Heylen <heyleke@gmail.com>
+- tdawe <90407556+tdawe1@users.noreply.github.com>
+- Anton Bordwine <54022438+antonchuvashow@users.noreply.github.com>

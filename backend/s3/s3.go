@@ -748,6 +748,21 @@ knows about - please make a bug report if not.
 			Default:  fs.Tristate{},
 			Advanced: true,
 		}, {
+			Name: "list_versions_oldest_first",
+			Help: `Set if the backend returns object versions oldest first.
+
+The S3 standard returns object versions newest first. Some backends
+(e.g. Hitachi HCP) return them oldest first instead.
+
+Set this quirk if --s3-version-at or --s3-versions produce incorrect
+results with your backend.
+
+This should be automatically set correctly for all providers rclone
+knows about - please make a bug report if not.
+`,
+			Default:  fs.Tristate{},
+			Advanced: true,
+		}, {
 			Name: "use_x_id",
 			Help: `Set if rclone should add x-id URL parameters.
 
@@ -1125,6 +1140,7 @@ type Options struct {
 	IBMAPIKey                   string               `config:"ibm_api_key"`
 	IBMInstanceID               string               `config:"ibm_resource_instance_id"`
 	IBMIAMEndpoint              string               `config:"ibm_iam_endpoint"`
+	ListVersionsOldestFirst     fs.Tristate          `config:"list_versions_oldest_first"`
 	UseXID                      fs.Tristate          `config:"use_x_id"`
 	SignAcceptEncoding          fs.Tristate          `config:"sign_accept_encoding"`
 	ObjectLockMode              string               `config:"object_lock_mode"`
@@ -1741,6 +1757,7 @@ func setQuirks(opt *Options, provider *Provider) {
 	set(&opt.UseXID, true, provider.Quirks.UseXID)
 	set(&opt.SignAcceptEncoding, true, provider.Quirks.SignAcceptEncoding)
 	set(&opt.ObjectLockSupported, true, provider.Quirks.ObjectLockSupported)
+	set(&opt.ListVersionsOldestFirst, false, provider.Quirks.ListVersionsOldestFirst)
 }
 
 // setRoot changes the root of the Fs
@@ -2257,6 +2274,13 @@ func (ls *versionsList) List(ctx context.Context) (resp *s3.ListObjectsV2Output,
 	resp = new(s3.ListObjectsV2Output)
 	//structs.SetFrom(resp, respVersions)
 	setFrom_s3ListObjectsV2Output_s3ListObjectVersionsOutput(resp, respVersions)
+
+	// Some backends (e.g. Hitachi HCP) return versions oldest first instead
+	// of newest first. Reverse both lists so mergeDeleteMarkers works correctly.
+	if ls.f.opt.ListVersionsOldestFirst.Value {
+		slices.Reverse(respVersions.Versions)
+		slices.Reverse(respVersions.DeleteMarkers)
+	}
 
 	// Merge in delete Markers as types.ObjectVersion if we need them
 	if ls.hidden || ls.usingVersionAt {
