@@ -20,6 +20,7 @@ import (
 var (
 	listLong          bool
 	jsonOutput        bool
+	exactMatch        bool
 	filterName        string
 	filterType        string
 	filterSource      string
@@ -35,12 +36,65 @@ func init() {
 	flags.StringVarP(cmdFlags, &filterType, "type", "", "", "Filter remotes by type", "")
 	flags.StringVarP(cmdFlags, &filterSource, "source", "", "", "Filter remotes by source, e.g. 'file' or 'environment'", "")
 	flags.StringVarP(cmdFlags, &filterDescription, "description", "", "", "Filter remotes by description", "")
+	flags.BoolVarP(cmdFlags, &exactMatch, "exact", "", false, "Match filter strings exactly instead of using non-anchored glob matching", "")
 	flags.StringVarP(cmdFlags, &orderBy, "order-by", "", "", "Instructions on how to order the result, e.g. 'type,name=descending'", "")
 	flags.BoolVarP(cmdFlags, &jsonOutput, "json", "", false, "Format output as JSON", "")
 }
 
-// lessFn compares to remotes for order by
+// lessFn compares two remotes for order by.
 type lessFn func(a, b config.Remote) bool
+
+// compileFilters compiles all configured filters into regexps.
+func compileFilters(filterAll string, exact bool) (map[string]*regexp.Regexp, error) {
+	filters := make(map[string]*regexp.Regexp)
+	for k, v := range map[string]string{
+		"all":         filterAll,
+		"name":        filterName,
+		"type":        filterType,
+		"source":      filterSource,
+		"description": filterDescription,
+	} {
+		if v == "" {
+			continue
+		}
+		filterRe, err := filter.GlobStringToRegexp(v, exact, true)
+		if err != nil {
+			return nil, fmt.Errorf("invalid %s filter argument: %w", k, err)
+		}
+		fs.Debugf(nil, "Filter for %s: %s", k, filterRe.String())
+		filters[k] = filterRe
+	}
+	return filters, nil
+}
+
+// includeRemote returns true if remote matches all configured filters.
+func includeRemote(remote config.Remote, filters map[string]*regexp.Regexp) bool {
+	for k, v := range filters {
+		switch k {
+		case "all":
+			if !(v.MatchString(remote.Name) || v.MatchString(remote.Type) || v.MatchString(remote.Source) || v.MatchString(remote.Description)) {
+				return false
+			}
+		case "name":
+			if !v.MatchString(remote.Name) {
+				return false
+			}
+		case "type":
+			if !v.MatchString(remote.Type) {
+				return false
+			}
+		case "source":
+			if !v.MatchString(remote.Source) {
+				return false
+			}
+		case "description":
+			if !v.MatchString(remote.Description) {
+				return false
+			}
+		}
+	}
+	return true
+}
 
 // newLess returns a function for comparing remotes based on an order by string
 func newLess(orderBy string) (less lessFn, err error) {
@@ -125,53 +179,29 @@ the source (file or environment).
 
 Result can be filtered by a filter argument which applies to all attributes,
 and/or filter flags specific for each attribute. The values must be specified
-according to regular rclone filtering pattern syntax.`,
+according to regular rclone filtering pattern syntax.
+
+By default filtering uses non-anchored matching, so ` + "`--type box`" + ` also
+matches ` + "`dropbox`" + `. Use ` + "`--exact`" + ` to match complete values only.`,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.34",
 	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(0, 1, command, args)
-		var filterDefault string
+		var filterAll string
 		if len(args) > 0 {
-			filterDefault = args[0]
+			filterAll = args[0]
 		}
-		filters := make(map[string]*regexp.Regexp)
-		for k, v := range map[string]string{
-			"all":         filterDefault,
-			"name":        filterName,
-			"type":        filterType,
-			"source":      filterSource,
-			"description": filterDescription,
-		} {
-			if v != "" {
-				filterRe, err := filter.GlobStringToRegexp(v, false, true)
-				if err != nil {
-					return fmt.Errorf("invalid %s filter argument: %w", k, err)
-				}
-				fs.Debugf(nil, "Filter for %s: %s", k, filterRe.String())
-				filters[k] = filterRe
-			}
+		filters, err := compileFilters(filterAll, exactMatch)
+		if err != nil {
+			return err
 		}
 		remotes := config.GetRemotes()
 		maxName := 0
 		maxType := 0
 		i := 0
 		for _, remote := range remotes {
-			include := true
-			for k, v := range filters {
-				if k == "all" && !(v.MatchString(remote.Name) || v.MatchString(remote.Type) || v.MatchString(remote.Source) || v.MatchString(remote.Description)) {
-					include = false
-				} else if k == "name" && !v.MatchString(remote.Name) {
-					include = false
-				} else if k == "type" && !v.MatchString(remote.Type) {
-					include = false
-				} else if k == "source" && !v.MatchString(remote.Source) {
-					include = false
-				} else if k == "description" && !v.MatchString(remote.Description) {
-					include = false
-				}
-			}
-			if include {
+			if includeRemote(remote, filters) {
 				if len(remote.Name) > maxName {
 					maxName = len(remote.Name)
 				}
