@@ -2008,6 +2008,9 @@ Scroll down and click "+ Add users". Add yourself as a test user and press save.
 
 10. Provide the noted client ID and client secret to rclone.
 
+11. Run the web-based authorization flow from within `rclone config`, by answering
+    "Y" when it asks "Already have a token - refresh?".
+
 Be aware that, due to the "enhanced security" recently introduced by
 Google, you are theoretically expected to "submit your app for verification"
 and then wait a few weeks(!) for their response; in practice, you can go right
