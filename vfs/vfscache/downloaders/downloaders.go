@@ -117,16 +117,18 @@ func New(ctx context.Context, item Item, opt *vfscommon.Options, remote string, 
 	}
 	dls.wg.Go(func() {
 		ticker := time.NewTicker(backgroundKickerInterval)
-		select {
-		case <-ticker.C:
-			err := dls.kickWaiters()
-			if err != nil {
-				fs.Errorf(dls.src, "vfs cache: failed to kick waiters: %v", err)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				err := dls.kickWaiters()
+				if err != nil {
+					fs.Errorf(dls.src, "vfs cache: failed to kick waiters: %v", err)
+				}
+			case <-ctx.Done():
+				return
 			}
-		case <-ctx.Done():
-			break
 		}
-		ticker.Stop()
 	})
 
 	return dls
