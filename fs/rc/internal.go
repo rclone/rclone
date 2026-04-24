@@ -9,9 +9,11 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"slices"
 	"strings"
 	"time"
 
+	"github.com/adrg/xdg"
 	"github.com/coreos/go-semver/semver"
 
 	"github.com/rclone/rclone/fs"
@@ -636,29 +638,68 @@ Returns:
 	})
 }
 
+func mountOK(path string) bool {
+	if runtime.GOOS == "darwin" {
+		if strings.HasPrefix(path, "/Volumes/") {
+			return true
+		}
+	} else if runtime.GOOS == "windows" {
+		return true
+	} else { // Linux and all other unices
+		// Fedora/Arch/openSUSE standard
+		if strings.HasPrefix(path, "/run/media/") {
+			return true
+		}
+		// Ubuntu/Debian standard
+		if strings.HasPrefix(path, "/media/") {
+			return true
+		}
+		// Traditional unix standard
+		if strings.HasPrefix(path, "/mnt/") {
+			return true
+		}
+	}
+	return false
+}
+
 // Disks returns likely local disks and some other useful positions
 func rcDisks(ctx context.Context, in Params) (out Params, err error) {
 	disks := []string{}
-	home, err := os.UserHomeDir()
-	tidy := func(s string) string {
+	add := func(s string) {
 		if s != "/" {
 			s, _ = strings.CutSuffix(s, "/")
 		}
-		return s
-	}
-	if err == nil {
-		disks = append(disks, tidy(home))
-	}
-	for _, mount := range getMounts() {
-		mount = tidy(mount)
-		if runtime.GOOS == "linux" {
-			if strings.HasPrefix(mount, "/snap/") || strings.HasPrefix(mount, "/var/snap/") || strings.HasPrefix(mount, "/boot/") || mount == "/boot" {
-				// ignore boring mounts
-				continue
-			}
+		if !slices.Contains(disks, s) {
+			disks = append(disks, s)
 		}
-		disks = append(disks, mount)
 	}
+
+	// Add home directory
+	home, err := os.UserHomeDir()
+	if err == nil {
+		add(home)
+	}
+
+	// Add root directory
+	if runtime.GOOS != "windows" {
+		add("/")
+	}
+
+	// Add mount points
+	for _, mount := range getMounts() {
+		if mountOK(mount) {
+			add(mount)
+		}
+	}
+
+	// Add user directories
+	add(xdg.UserDirs.Desktop)
+	add(xdg.UserDirs.Download)
+	add(xdg.UserDirs.Documents)
+	add(xdg.UserDirs.Music)
+	add(xdg.UserDirs.Pictures)
+	add(xdg.UserDirs.Videos)
+
 	out = Params{
 		"disks": disks,
 	}
