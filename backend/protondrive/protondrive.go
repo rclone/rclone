@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"io"
 	"path"
+	"regexp"
 	"strings"
 	"time"
 
+	"github.com/coreos/go-semver/semver"
 	protonDriveAPI "github.com/rclone/Proton-API-Bridge"
 	"github.com/rclone/go-proton-api"
 
@@ -49,6 +51,7 @@ const (
 var (
 	errCanNotUploadFileWithUnknownSize = errors.New("proton Drive can't upload files with unknown size")
 	errCanNotPurgeRootDirectory        = errors.New("can't purge root directory")
+	protonDriveInvalidVersionChars     = regexp.MustCompile(`[^0-9A-Za-z.+-]+`)
 
 	// for the auth/deauth handler
 	_mapper        configmap.Mapper
@@ -151,11 +154,12 @@ size, will fail to operate properly`,
 			Name: "app_version",
 			Help: `The app version string 
 
-The app version string indicates the client that is currently performing 
-the API request. This information is required and will be sent with every 
-API request.`,
+			The app version string identifies the client that is currently performing
+			the API request. Third-party Proton Drive integrations should use the form
+			external-drive-<project>@<version>. If this option is left empty, rclone
+			derives a compliant value from its own version. This value is sent with
+			every API request; the option itself is optional.`,
 			Advanced: true,
-			Default:  "macos-drive@1.0.0-alpha.1+rclone",
 		}, {
 			Name: "replace_existing_draft",
 			Help: `Create a new revision when filename conflict is detected
@@ -328,9 +332,100 @@ func deAuthHandler() {
 	clearConfigMap(_mapper)
 }
 
+func protonDriveAppVersionFromRcloneVersion(version string) string {
+	const fallback = "external-drive-rclone@1.0.0-stable"
+
+	version = strings.TrimSpace(strings.TrimPrefix(version, "v"))
+	version = protonDriveInvalidVersionChars.ReplaceAllString(version, "-")
+	if version == "" {
+		return fallback
+	}
+
+	parsedVersion, err := semver.NewVersion(version)
+	if err != nil {
+		return fallback
+	}
+
+	appVersion := fmt.Sprintf(
+		"external-drive-rclone@%d.%d.%d",
+		parsedVersion.Major,
+		parsedVersion.Minor,
+		parsedVersion.Patch,
+	)
+
+	metadataParts := protonDriveMetadataParts(parsedVersion.Metadata)
+	preRelease := strings.ToLower(string(parsedVersion.PreRelease))
+
+	switch {
+	case preRelease == "":
+		return protonDriveJoinAppVersion(appVersion, "-stable", metadataParts)
+	case preRelease == "dev":
+		return protonDriveJoinAppVersion(appVersion, "-dev", metadataParts)
+	case preRelease == "beta" || strings.HasPrefix(preRelease, "beta."):
+		betaSuffix, betaMetadataParts := protonDriveBetaSuffixAndMetadata(preRelease)
+		return protonDriveJoinAppVersion(appVersion, betaSuffix, append(betaMetadataParts, metadataParts...))
+	default:
+		return fallback
+	}
+}
+
+func protonDriveMetadataParts(metadata string) []string {
+	if metadata == "" {
+		return nil
+	}
+
+	parts := strings.Split(metadata, ".")
+	out := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if part != "" {
+			out = append(out, part)
+		}
+	}
+	return out
+}
+
+func protonDriveBetaSuffixAndMetadata(preRelease string) (suffix string, metadata []string) {
+	suffix = "-beta"
+	remainder := strings.TrimPrefix(strings.TrimPrefix(preRelease, "beta"), ".")
+	if remainder == "" {
+		return suffix, nil
+	}
+
+	parts := protonDriveMetadataParts(remainder)
+	i := 0
+	for i < len(parts) && isDecimalString(parts[i]) {
+		suffix += "." + parts[i]
+		i++
+	}
+	return suffix, parts[i:]
+}
+
+func protonDriveJoinAppVersion(appVersion, suffix string, metadata []string) string {
+	version := appVersion + suffix
+	if len(metadata) != 0 {
+		version += "+" + strings.Join(metadata, ".")
+	}
+	return version
+}
+
+func isDecimalString(value string) bool {
+	if value == "" {
+		return false
+	}
+	for _, r := range value {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
+}
+
 func newProtonDrive(ctx context.Context, f *Fs, opt *Options, m configmap.Mapper) (*protonDriveAPI.ProtonDrive, error) {
 	config := protonDriveAPI.NewDefaultConfig()
 	config.AppVersion = opt.AppVersion
+	if config.AppVersion == "" {
+		config.AppVersion = protonDriveAppVersionFromRcloneVersion(fs.Version)
+	}
 	config.UserAgent = f.ci.UserAgent // opt.UserAgent
 
 	config.ReplaceExistingDraft = opt.ReplaceExistingDraft
