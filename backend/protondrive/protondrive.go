@@ -22,6 +22,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
@@ -250,7 +251,39 @@ type Object struct {
 // shouldRetry returns a boolean as to whether this err deserves to be
 // retried.  It returns the err as a convenience
 func shouldRetry(ctx context.Context, err error) (bool, error) {
-	return false, err
+	if fserrors.ContextError(ctx, &err) {
+		return false, err
+	}
+
+	if err == nil {
+		return false, nil
+	}
+
+	// Unwrap typed Proton API errors for precise matching.
+	// Note: go-proton-api already retries 429/503 internally via resty's
+	// catchRetryAfter/catchTooManyRequests, so we don't need to handle those.
+	var apiErr *proton.APIError
+	if errors.As(err, &apiErr) {
+		switch {
+		case apiErr.Code == 200501:
+			// Transient storage-block error: "Operation failed: Please retry"
+			fs.Debugf(nil, "Retrying transient Proton API error: %v", err)
+			return true, err
+		case apiErr.Status >= 500:
+			// Generic server-side errors (500, 502, 504, …)
+			return true, err
+		}
+		return false, err
+	}
+
+	// Unwrap network-level errors from go-proton-api (dial failures, etc.)
+	var netErr *proton.NetError
+	if errors.As(err, &netErr) {
+		return true, err
+	}
+
+	// Fall back to rclone's generic retry logic (Temporary(), Timeout(), …)
+	return fserrors.ShouldRetry(err), err
 }
 
 //------------------------------------------------------------------------------

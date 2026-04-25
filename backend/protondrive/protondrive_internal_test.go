@@ -1,8 +1,13 @@
 package protondrive
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"regexp"
 	"testing"
+
+	proton "github.com/rclone/go-proton-api"
 )
 
 // TestObjectOpenNilOriginalSizePanic demonstrates the before/after of issue #9117.
@@ -77,6 +82,82 @@ func TestObjectSize(t *testing.T) {
 			o := &Object{fs: f, size: tc.size, originalSize: tc.originalSize}
 			if got := o.Size(); got != tc.want {
 				t.Fatalf("Size() = %d, want %d", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestShouldRetry(t *testing.T) {
+	// A *proton.APIError to use across cases.
+	apiErr200501 := &proton.APIError{Code: 200501, Status: 422, Message: "Operation failed: Please retry"}
+	apiErr500 := &proton.APIError{Code: 0, Status: 500, Message: "Internal Server Error"}
+	apiErrClient := &proton.APIError{Code: 2500, Status: 422, Message: "A file with that name already exists"}
+
+	// A *proton.NetError wrapping a dial failure.
+	netErr := &proton.NetError{Message: "dial failed", Cause: errors.New("connection refused")}
+
+	cancelledCtx, cancel := context.WithCancel(context.Background())
+	cancel() // cancel immediately so ctx.Err() == context.Canceled
+
+	for _, tc := range []struct {
+		name        string
+		ctx         context.Context
+		err         error
+		wantRetry   bool
+	}{
+		{
+			name:      "nil error is not retried",
+			ctx:       context.Background(),
+			err:       nil,
+			wantRetry: false,
+		},
+		{
+			name:      "cancelled context is not retried",
+			ctx:       cancelledCtx,
+			err:       context.Canceled,
+			wantRetry: false,
+		},
+		{
+			name:      "APIError Code=200501 is retried",
+			ctx:       context.Background(),
+			err:       apiErr200501,
+			wantRetry: true,
+		},
+		{
+			name:      "APIError Code=200501 wrapped in fmt.Errorf is retried",
+			ctx:       context.Background(),
+			err:       fmt.Errorf("422 POST /storage/blocks: %w", apiErr200501),
+			wantRetry: true,
+		},
+		{
+			name:      "APIError Status=500 is retried",
+			ctx:       context.Background(),
+			err:       apiErr500,
+			wantRetry: true,
+		},
+		{
+			name:      "APIError Status=422 non-retryable code is not retried",
+			ctx:       context.Background(),
+			err:       apiErrClient,
+			wantRetry: false,
+		},
+		{
+			name:      "NetError is retried",
+			ctx:       context.Background(),
+			err:       netErr,
+			wantRetry: true,
+		},
+		{
+			name:      "generic error is not retried",
+			ctx:       context.Background(),
+			err:       errors.New("some unknown error"),
+			wantRetry: false,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			gotRetry, gotErr := shouldRetry(tc.ctx, tc.err)
+			if gotRetry != tc.wantRetry {
+				t.Errorf("shouldRetry() retry = %v, want %v (err: %v)", gotRetry, tc.wantRetry, gotErr)
 			}
 		})
 	}
