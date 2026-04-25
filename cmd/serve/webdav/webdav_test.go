@@ -8,6 +8,7 @@
 package webdav
 
 import (
+	"compress/gzip"
 	"context"
 	"flag"
 	"io"
@@ -263,6 +264,168 @@ func HelpTestGET(t *testing.T, testURL string) {
 
 		checkGolden(t, test.Golden, body)
 	}
+}
+
+func TestCompressedTextFile(t *testing.T) {
+	f, err := fs.NewFs(context.Background(), "../http/testdata/files")
+	require.NoError(t, err)
+
+	opt := Opt
+	opt.HTTP.ListenAddr = []string{testBindAddress}
+	opt.Template.Path = testTemplate
+	opt.Auth.BasicUser = testUser
+	opt.Auth.BasicPass = testPass
+
+	w, err := newWebDAV(context.Background(), f, &opt, &vfscommon.Opt, &proxy.Opt)
+	require.NoError(t, err)
+	go func() {
+		require.NoError(t, w.Serve())
+	}()
+	defer func() {
+		assert.NoError(t, w.Shutdown())
+	}()
+
+	testURL := w.server.URLs()[0]
+	pause := time.Millisecond
+	for range 10 {
+		req, err := http.NewRequest("HEAD", testURL, nil)
+		require.NoError(t, err)
+		req.SetBasicAuth(testUser, testPass)
+		resp, err := http.DefaultClient.Do(req)
+		if err == nil {
+			_ = resp.Body.Close()
+			break
+		}
+		time.Sleep(pause)
+		pause *= 2
+	}
+
+	req, err := http.NewRequest("GET", testURL+"two.txt", nil)
+	require.NoError(t, err)
+	req.SetBasicAuth(testUser, testPass)
+	req.Header.Set("Accept-Encoding", "gzip")
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer func() { _ = resp.Body.Close() }()
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, "gzip", resp.Header.Get("Content-Encoding"))
+
+	gr, err := gzip.NewReader(resp.Body)
+	require.NoError(t, err)
+	defer func() { _ = gr.Close() }()
+
+	body, err := io.ReadAll(gr)
+	require.NoError(t, err)
+	assert.Equal(t, "0123456789\n", string(body))
+}
+
+func TestCompressedPROPFIND(t *testing.T) {
+	f, err := fs.NewFs(context.Background(), "../http/testdata/files")
+	require.NoError(t, err)
+
+	opt := Opt
+	opt.HTTP.ListenAddr = []string{testBindAddress}
+	opt.Template.Path = testTemplate
+	opt.Auth.BasicUser = testUser
+	opt.Auth.BasicPass = testPass
+
+	w, err := newWebDAV(context.Background(), f, &opt, &vfscommon.Opt, &proxy.Opt)
+	require.NoError(t, err)
+	go func() {
+		require.NoError(t, w.Serve())
+	}()
+	defer func() {
+		assert.NoError(t, w.Shutdown())
+	}()
+
+	testURL := w.server.URLs()[0]
+	pause := time.Millisecond
+	for range 10 {
+		req, err := http.NewRequest("HEAD", testURL, nil)
+		require.NoError(t, err)
+		req.SetBasicAuth(testUser, testPass)
+		resp, err := http.DefaultClient.Do(req)
+		if err == nil {
+			_ = resp.Body.Close()
+			break
+		}
+		time.Sleep(pause)
+		pause *= 2
+	}
+
+	req, err := http.NewRequest("PROPFIND", testURL, nil)
+	require.NoError(t, err)
+	req.SetBasicAuth(testUser, testPass)
+	req.Header.Set("Depth", "1")
+	req.Header.Set("Accept-Encoding", "gzip")
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer func() { _ = resp.Body.Close() }()
+
+	assert.Equal(t, http.StatusMultiStatus, resp.StatusCode)
+	assert.Equal(t, "gzip", resp.Header.Get("Content-Encoding"))
+
+	gr, err := gzip.NewReader(resp.Body)
+	require.NoError(t, err)
+	defer func() { _ = gr.Close() }()
+
+	body, err := io.ReadAll(gr)
+	require.NoError(t, err)
+	assert.Contains(t, string(body), "<multistatus")
+}
+
+func TestRangeRequestNotCompressed(t *testing.T) {
+	f, err := fs.NewFs(context.Background(), "../http/testdata/files")
+	require.NoError(t, err)
+
+	opt := Opt
+	opt.HTTP.ListenAddr = []string{testBindAddress}
+	opt.Template.Path = testTemplate
+	opt.Auth.BasicUser = testUser
+	opt.Auth.BasicPass = testPass
+
+	w, err := newWebDAV(context.Background(), f, &opt, &vfscommon.Opt, &proxy.Opt)
+	require.NoError(t, err)
+	go func() {
+		require.NoError(t, w.Serve())
+	}()
+	defer func() {
+		assert.NoError(t, w.Shutdown())
+	}()
+
+	testURL := w.server.URLs()[0]
+	pause := time.Millisecond
+	for range 10 {
+		req, err := http.NewRequest("HEAD", testURL, nil)
+		require.NoError(t, err)
+		req.SetBasicAuth(testUser, testPass)
+		resp, err := http.DefaultClient.Do(req)
+		if err == nil {
+			_ = resp.Body.Close()
+			break
+		}
+		time.Sleep(pause)
+		pause *= 2
+	}
+
+	req, err := http.NewRequest("GET", testURL+"two.txt", nil)
+	require.NoError(t, err)
+	req.SetBasicAuth(testUser, testPass)
+	req.Header.Set("Accept-Encoding", "gzip")
+	req.Header.Set("Range", "bytes=2-5")
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer func() { _ = resp.Body.Close() }()
+
+	assert.Equal(t, http.StatusPartialContent, resp.StatusCode)
+	assert.Empty(t, resp.Header.Get("Content-Encoding"))
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	assert.Equal(t, "2345", string(body))
 }
 
 func TestRc(t *testing.T) {
