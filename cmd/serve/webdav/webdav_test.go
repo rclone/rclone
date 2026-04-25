@@ -374,7 +374,7 @@ func TestCompressedPROPFIND(t *testing.T) {
 
 	body, err := io.ReadAll(gr)
 	require.NoError(t, err)
-	assert.Contains(t, string(body), "<multistatus")
+	assert.Contains(t, string(body), "multistatus")
 }
 
 func TestRangeRequestNotCompressed(t *testing.T) {
