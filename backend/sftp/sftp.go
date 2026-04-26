@@ -668,7 +668,8 @@ type conn struct {
 	sshClient      sshClient
 	sftpClient     *sftp.Client
 	err            chan error
-	keepAliveTimer *time.Timer // fires keepalives while conn is idle in the pool, nil if disabled
+	keepAliveMu    sync.Mutex
+	keepAliveTimer *time.Timer // fires keepalives while conn is idle in the pool; nil after close or if disabled
 }
 
 // Wait for connection to close
@@ -696,9 +697,15 @@ func (c *conn) sendKeepAlives(interval time.Duration) (done chan struct{}) {
 
 // Closes the connection
 func (c *conn) close() error {
+	// Permanently stop keepalives. Setting the timer to nil under the
+	// mutex prevents any callback that may already be running from
+	// rescheduling itself or sending a keepalive on the closed client.
+	c.keepAliveMu.Lock()
 	if c.keepAliveTimer != nil {
 		c.keepAliveTimer.Stop()
+		c.keepAliveTimer = nil
 	}
+	c.keepAliveMu.Unlock()
 	sftpErr := c.sftpClient.Close()
 	sshErr := c.sshClient.Close()
 	if sftpErr != nil {
@@ -756,13 +763,23 @@ func (f *Fs) sftpConnection(ctx context.Context) (c *conn, err error) {
 	// Set up the keepalive timer if configured. It is created stopped; it
 	// is armed while the connection is idle in the pool and stopped while
 	// the connection is in use (active traffic keeps the connection alive).
+	// All timer operations and the callback body are guarded by
+	// c.keepAliveMu to avoid races between the callback, pool transitions,
+	// and close().
 	if f.opt.KeepAlive > 0 {
 		interval := time.Duration(f.opt.KeepAlive)
 		c.keepAliveTimer = time.AfterFunc(interval, func() {
+			c.keepAliveMu.Lock()
+			defer c.keepAliveMu.Unlock()
+			if c.keepAliveTimer == nil {
+				return // close() ran while the callback was waiting
+			}
 			c.sshClient.SendKeepAlive()
 			c.keepAliveTimer.Reset(interval)
 		})
+		c.keepAliveMu.Lock()
 		c.keepAliveTimer.Stop()
+		c.keepAliveMu.Unlock()
 	}
 	go c.wait()
 	return c, nil
@@ -844,9 +861,11 @@ func (f *Fs) getSftpConnection(ctx context.Context) (c *conn, err error) {
 	f.poolMu.Unlock()
 	if c != nil {
 		// Stop keepalives while the connection is in use
+		c.keepAliveMu.Lock()
 		if c.keepAliveTimer != nil {
 			c.keepAliveTimer.Stop()
 		}
+		c.keepAliveMu.Unlock()
 		return c, nil
 	}
 	err = f.pacer.Call(func() (bool, error) {
@@ -906,11 +925,13 @@ func (f *Fs) putSftpConnection(pc **conn, err error) {
 	if f.opt.IdleTimeout > 0 {
 		f.drain.Reset(time.Duration(f.opt.IdleTimeout)) // nudge on the pool emptying timer
 	}
+	f.poolMu.Unlock()
 	// Arm the keepalive timer while the connection is idle in the pool
+	c.keepAliveMu.Lock()
 	if c.keepAliveTimer != nil {
 		c.keepAliveTimer.Reset(time.Duration(f.opt.KeepAlive))
 	}
-	f.poolMu.Unlock()
+	c.keepAliveMu.Unlock()
 }
 
 // Drain the pool of any connections
