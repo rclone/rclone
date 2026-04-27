@@ -1052,6 +1052,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	var fileSystemAttrs *protonDriveAPI.FileSystemAttrs
 	var sizeOnServer int64
 	var err error
+
 	if err = o.fs.pacer.Call(func() (bool, error) {
 		reader, sizeOnServer, fileSystemAttrs, err = o.fs.protonDrive.DownloadFileByID(ctx, o.id, offset)
 		return shouldRetry(ctx, err)
