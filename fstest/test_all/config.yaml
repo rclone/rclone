@@ -511,6 +511,9 @@ backends:
      - TestFileRename
    ignoretests:
      - cmd/bisync
+ - backend:  "netexplorer"
+   remote:   "TestNetExplorer:"
+   fastlist: false
  - backend:  "opendrive"
    remote:   "TestOpenDrive:"
    fastlist: false
