@@ -18,6 +18,7 @@ require (
 	github.com/a8m/tree v0.0.0-20240104212747-2c8764a5f17e
 	github.com/aalpar/deheap v1.1.2
 	github.com/abbot/go-http-auth v0.4.0
+	github.com/adrg/xdg v0.5.3
 	github.com/anacrolix/dms v1.7.2
 	github.com/anacrolix/log v0.17.0
 	github.com/atotto/clipboard v0.1.4
@@ -71,7 +72,7 @@ require (
 	github.com/putdotio/go-putio/putio v0.0.0-20200123120452-16d982cac2b8
 	github.com/quasilyte/go-ruleguard/dsl v0.3.23
 	github.com/rclone/Proton-API-Bridge v1.0.1-0.20260127174007-77f974840d11
-	github.com/rclone/go-proton-api v1.0.1-0.20260127173028-eb465cac3b18
+	github.com/rclone/go-proton-api v1.0.1-0.20260218123427-1a63a293e3a2
 	github.com/rclone/gofakes3 v0.0.4
 	github.com/rfjakob/eme v1.2.0
 	github.com/rivo/uniseg v0.4.7

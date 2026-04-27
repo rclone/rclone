@@ -67,13 +67,13 @@ func mountOptions(VFS *vfs.VFS, device string, opt *mountlib.Options) (options [
 //
 // returns an error, and an error channel for the serve process to
 // report an error when fusermount is called.
-func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error, func() error, error) {
+func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error, func() error, string, error) {
 	f := VFS.Fs()
 	if err := mountlib.CheckOverlap(f, mountpoint); err != nil {
-		return nil, nil, err
+		return nil, nil, "", err
 	}
 	if err := mountlib.CheckAllowNonEmpty(mountpoint, opt); err != nil {
-		return nil, nil, err
+		return nil, nil, "", err
 	}
 	fs.Debugf(f, "Mounting on %q", mountpoint)
 
@@ -85,7 +85,7 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error
 
 	c, err := fuse.Mount(mountpoint, mountOptions(VFS, opt.DeviceName, opt)...)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, "", err
 	}
 
 	filesys := NewFS(VFS, opt)
@@ -108,5 +108,5 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error
 		return fuse.Unmount(mountpoint)
 	}
 
-	return errChan, unmount, nil
+	return errChan, unmount, mountpoint, nil
 }
