@@ -130,6 +130,9 @@ backends:
  - backend:  "combine"
    remote:   "TestCombine:dir1"
    fastlist: false
+ - backend:  "databricks"
+   remote:   "TestDatabricks:"
+   fastlist: false
  ## begin compress
  - backend:  "compress"
    remote:   "TestCompress:"
