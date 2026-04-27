@@ -84,6 +84,19 @@ build.
 Once it compiles locally, push it on a test branch and commit fixes
 until the tests pass.
 
+### Pseudo versions
+
+Go makes pseudo versions for untagged repos and repos not at a tag.
+The pseudo versions on repos that have been tagged before do not get
+updated automatically so need manually checking. These can be found with
+
+```console
+grep -E '[0-9]{14}-[0-9a-f]{12}' go.mod | grep -v indirect | grep -v 'v0\.0\.0'
+```
+
+These will need to be updated manually using the `go get ...@branch`
+syntax.
+
 ### Major versions
 
 The above procedure will not upgrade major versions, so v2 to v3.
