@@ -27,7 +27,7 @@ func TestPadToN(t *testing.T) {
 	})
 
 	t.Run("preserves value that fills N", func(t *testing.T) {
-		// Use N itself — already 256 bytes
+		// Use N itself - already 256 bytes
 		result := padToN(srpN)
 		assert.Equal(t, srpNLenBytes, len(result))
 		assert.Equal(t, srpN.Bytes(), result)
@@ -52,7 +52,7 @@ func TestGetMultiplier(t *testing.T) {
 	k2 := getMultiplier()
 	assert.Equal(t, 0, k.Cmp(k2), "multiplier must be deterministic")
 
-	// k = H(N | pad(g)) — verify by manual computation
+	// k = H(N | pad(g)) - verify by manual computation
 	h := srpHashFunc()
 	nBytes := srpN.Bytes()
 	gBytes := srpG.Bytes()
@@ -122,6 +122,12 @@ func TestDerivePassword(t *testing.T) {
 		key, err := derivePassword("hello", salt, 10, "s2k_fo")
 		require.NoError(t, err)
 		assert.Equal(t, 32, len(key))
+	})
+
+	t.Run("unknown protocol returns error", func(t *testing.T) {
+		_, err := derivePassword(password, salt, 1000, "unknown")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "unsupported SRP protocol")
 	})
 }
 
@@ -256,7 +262,8 @@ func TestCalculateM2(t *testing.T) {
 }
 
 func TestNewSRPClient(t *testing.T) {
-	client := newSRPClient()
+	client, err := newSRPClient()
+	require.NoError(t, err)
 
 	// A must be non-zero and in range [1, N-1]
 	assert.True(t, client.A.Sign() > 0, "A must be positive")
@@ -273,7 +280,8 @@ func TestNewSRPClient(t *testing.T) {
 	assert.Equal(t, 0, client.A.Cmp(recoveredA))
 
 	// Two clients should have different secrets (probabilistic, but 2^256 collision chance)
-	client2 := newSRPClient()
+	client2, err := newSRPClient()
+	require.NoError(t, err)
 	assert.NotEqual(t, 0, client.a.Cmp(client2.a), "two clients must have different secrets")
 }
 
@@ -315,7 +323,8 @@ func TestProcessChallenge(t *testing.T) {
 
 	serverB := padToN(B)
 
-	client.processChallenge(username, derivedKey, salt, serverB)
+	err := client.processChallenge(username, derivedKey, salt, serverB)
+	require.NoError(t, err)
 
 	// M1, M2, K must be populated
 	assert.NotNil(t, client.M1)
@@ -328,13 +337,14 @@ func TestProcessChallenge(t *testing.T) {
 	// M1 and M2 must be different
 	assert.NotEqual(t, client.M1, client.M2)
 
-	// Results must be deterministic — run again with same inputs
+	// Results must be deterministic - run again with same inputs
 	client2 := &srpClient{
 		a: new(big.Int).Set(a),
 		A: new(big.Int).Set(A),
 		k: new(big.Int).Set(k),
 	}
-	client2.processChallenge(username, derivedKey, salt, serverB)
+	err = client2.processChallenge(username, derivedKey, salt, serverB)
+	require.NoError(t, err)
 
 	assert.Equal(t, client.M1, client2.M1, "M1 must be deterministic")
 	assert.Equal(t, client.M2, client2.M2, "M2 must be deterministic")
@@ -350,6 +360,28 @@ func TestProcessChallenge(t *testing.T) {
 	sServer.Mod(sServer, srpN)
 	kServer := calculateK(padToN(sServer))
 	assert.Equal(t, client.K, kServer, "client and server must derive the same session key")
+}
+
+func TestProcessChallenge_InvalidB(t *testing.T) {
+	k := getMultiplier()
+	client := &srpClient{
+		a: big.NewInt(42),
+		A: new(big.Int).Exp(srpG, big.NewInt(42), srpN),
+		k: k,
+	}
+	username := []byte("test@apple.com")
+	derivedKey := make([]byte, 32)
+	salt := []byte("salt")
+
+	t.Run("B=0 rejected", func(t *testing.T) {
+		err := client.processChallenge(username, derivedKey, salt, padToN(big.NewInt(0)))
+		assert.Error(t, err)
+	})
+
+	t.Run("B=N rejected", func(t *testing.T) {
+		err := client.processChallenge(username, derivedKey, salt, padToN(srpN))
+		assert.Error(t, err)
+	})
 }
 
 func TestSRPGroupParameters(t *testing.T) {

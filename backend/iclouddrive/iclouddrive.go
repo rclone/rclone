@@ -9,17 +9,13 @@ import (
 	"path"
 
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
-	"github.com/rclone/rclone/fs/config/configstruct"
-	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
 
 	"github.com/rclone/rclone/backend/iclouddrive/api"
@@ -51,61 +47,10 @@ const (
 	decayConstant = 2
 )
 
-// Register with Fs
-func init() {
-	fs.Register(&fs.RegInfo{
-		Name:        "iclouddrive",
-		Description: "iCloud Drive",
-		Config:      Config,
-		NewFs:       NewFs,
-		Options: []fs.Option{{
-			Name:      configAppleID,
-			Help:      "Apple ID.",
-			Required:  true,
-			Sensitive: true,
-		}, {
-			Name:       configPassword,
-			Help:       "Password.",
-			Required:   true,
-			IsPassword: true,
-			Sensitive:  true,
-		}, {
-			Name:       configTrustToken,
-			Help:       "Trust token (internal use)",
-			IsPassword: false,
-			Required:   false,
-			Sensitive:  true,
-			Hide:       fs.OptionHideBoth,
-		}, {
-			Name:      configCookies,
-			Help:      "cookies (internal use only)",
-			Required:  false,
-			Advanced:  false,
-			Sensitive: true,
-			Hide:      fs.OptionHideBoth,
-		}, {
-			Name:     configClientID,
-			Help:     "Client id",
-			Required: false,
-			Advanced: true,
-			Default:  "d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d",
-		}, {
-			Name:     config.ConfigEncoding,
-			Help:     config.ConfigEncodingHelp,
-			Advanced: true,
-			Default: (encoder.Display |
-				//encoder.EncodeDot |
-				encoder.EncodeBackSlash |
-				encoder.EncodeInvalidUtf8),
-		}},
-	})
-}
-
 // Options defines the configuration for this backend
 type Options struct {
 	AppleID    string               `config:"apple_id"`
 	Password   string               `config:"password"`
-	Photos     bool                 `config:"photos"`
 	TrustToken string               `config:"trust_token"`
 	Cookies    string               `config:"cookies"`
 	ClientID   string               `config:"client_id"`
@@ -118,6 +63,7 @@ type Fs struct {
 	root     string // the path we are working on.
 	rootID   string
 	opt      Options            // parsed config options
+	m        configmap.Mapper   // config map for persisting auth state
 	features *fs.Features       // optional features
 	dirCache *dircache.DirCache // Map of directory path to directory id
 	icloud   *api.Client
@@ -137,72 +83,6 @@ type Object struct {
 	itemID      string    // item ID of the object
 	etag        string
 	downloadURL string
-}
-
-// Config configures the iCloud remote.
-func Config(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
-	var err error
-	appleid, _ := m.Get(configAppleID)
-	if appleid == "" {
-		return nil, errors.New("a apple ID is required")
-	}
-
-	password, _ := m.Get(configPassword)
-	if password != "" {
-		password, err = obscure.Reveal(password)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	trustToken, _ := m.Get(configTrustToken)
-	cookieRaw, _ := m.Get(configCookies)
-	clientID, _ := m.Get(configClientID)
-	cookies := ReadCookies(cookieRaw)
-
-	switch config.State {
-	case "":
-		icloud, err := api.New(appleid, password, trustToken, clientID, cookies, nil)
-		if err != nil {
-			return nil, err
-		}
-		if err := icloud.Authenticate(ctx); err != nil {
-			return nil, err
-		}
-		m.Set(configCookies, icloud.Session.GetCookieString())
-		if icloud.Session.Requires2FA() {
-			return fs.ConfigInput("2fa_do", "config_2fa", "Two-factor authentication: please enter your 2FA code")
-		}
-		return nil, nil
-	case "2fa_do":
-		code := config.Result
-		if code == "" {
-			return fs.ConfigError("authenticate", "2FA codes can't be blank")
-		}
-
-		icloud, err := api.New(appleid, password, trustToken, clientID, cookies, nil)
-		if err != nil {
-			return nil, err
-		}
-		if err := icloud.SignIn(ctx); err != nil {
-			return nil, err
-		}
-
-		if err := icloud.Session.Validate2FACode(ctx, code); err != nil {
-			return nil, err
-		}
-
-		m.Set(configTrustToken, icloud.Session.TrustToken)
-		m.Set(configCookies, icloud.Session.GetCookieString())
-		return nil, nil
-
-	case "2fa_error":
-		if config.Result == "true" {
-			return fs.ConfigGoto("2fa")
-		}
-		return nil, errors.New("2fa authentication failed")
-	}
-	return nil, fmt.Errorf("unknown state %q", config.State)
 }
 
 // find item by path. Will not return any children for the item
@@ -797,49 +677,9 @@ func retryResultUnknown(ctx context.Context, resp *http.Response, err error) (bo
 
 // NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
-	// Parse config into Options struct
-	opt := new(Options)
-	err := configstruct.Set(m, opt)
+	icloud, opt, err := newICloudClient(ctx, name, m)
 	if err != nil {
 		return nil, err
-	}
-
-	if opt.Password != "" {
-		var err error
-		opt.Password, err = obscure.Reveal(opt.Password)
-		if err != nil {
-			return nil, fmt.Errorf("couldn't decrypt user password: %w", err)
-		}
-	}
-
-	if opt.TrustToken == "" {
-		return nil, fmt.Errorf("missing icloud trust token: try refreshing it with \"rclone config reconnect %s:\"", name)
-	}
-
-	cookies := ReadCookies(opt.Cookies)
-
-	callback := func(session *api.Session) {
-		m.Set(configCookies, session.GetCookieString())
-	}
-
-	icloud, err := api.New(
-		opt.AppleID,
-		opt.Password,
-		opt.TrustToken,
-		opt.ClientID,
-		cookies,
-		callback,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := icloud.Authenticate(ctx); err != nil {
-		return nil, err
-	}
-
-	if icloud.Session.Requires2FA() {
-		return nil, errors.New("trust token expired, please reauth")
 	}
 
 	root = strings.Trim(root, "/")
@@ -850,6 +690,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		icloud: icloud,
 		rootID: "FOLDER::com.apple.CloudDocs::root",
 		opt:    *opt,
+		m:      m,
 		pacer:  fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.features = (&fs.Features{
@@ -1164,9 +1005,15 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	return nil
 }
 
+// Disconnect clears authentication state and removes disk caches
+func (f *Fs) Disconnect(ctx context.Context) error {
+	return disconnectClient(f.m, f.icloud)
+}
+
 // Check interfaces are satisfied
 var (
 	_ fs.Fs              = &Fs{}
+	_ fs.Disconnecter    = (*Fs)(nil)
 	_ fs.Mover           = (*Fs)(nil)
 	_ fs.Purger          = (*Fs)(nil)
 	_ fs.DirMover        = (*Fs)(nil)
