@@ -78,8 +78,8 @@ func init() {
 			Name: "mailbox_password",
 			Help: `The mailbox password of your two-password proton account.
 
-For more information regarding the mailbox password, please check the 
-following official knowledge base article: 
+For more information regarding the mailbox password, please check the
+following official knowledge base article:
 https://proton.me/support/the-difference-between-the-mailbox-password-and-login-password
 `,
 			IsPassword: true,
@@ -90,7 +90,7 @@ https://proton.me/support/the-difference-between-the-mailbox-password-and-login-
 
 The value can also be provided with --protondrive-2fa=000000
 
-The 2FA code of your proton drive account if the account is set up with 
+The 2FA code of your proton drive account if the account is set up with
 two-factor authentication`,
 			Required: false,
 		}, {
@@ -99,7 +99,7 @@ two-factor authentication`,
 
 The value can also be provided with --protondrive-otp-secret-key=ABCDEFGHIJKLMNOPQRSTUVWXYZ234567
 
-The OTP secret key of your proton drive account if the account is set up with 
+The OTP secret key of your proton drive account if the account is set up with
 two-factor authentication`,
 			Required:   false,
 			Sensitive:  true,
@@ -143,17 +143,17 @@ two-factor authentication`,
 		}, {
 			Name: "original_file_size",
 			Help: `Return the file size before encryption
-			
-The size of the encrypted file will be different from (bigger than) the 
-original file size. Unless there is a reason to return the file size 
-after encryption is performed, otherwise, set this option to true, as 
-features like Open() which will need to be supplied with original content 
+
+The size of the encrypted file will be different from (bigger than) the
+original file size. Unless there is a reason to return the file size
+after encryption is performed, otherwise, set this option to true, as
+features like Open() which will need to be supplied with original content
 size, will fail to operate properly`,
 			Advanced: true,
 			Default:  true,
 		}, {
 			Name: "app_version",
-			Help: `The app version string 
+			Help: `The app version string
 
 			The app version string identifies the client that is currently performing
 			the API request. Third-party Proton Drive integrations should use the form
@@ -165,18 +165,18 @@ size, will fail to operate properly`,
 			Name: "replace_existing_draft",
 			Help: `Create a new revision when filename conflict is detected
 
-When a file upload is cancelled or failed before completion, a draft will be 
-created and the subsequent upload of the same file to the same location will be 
+When a file upload is cancelled or failed before completion, a draft will be
+created and the subsequent upload of the same file to the same location will be
 reported as a conflict.
 
 The value can also be set by --protondrive-replace-existing-draft=true
 
-If the option is set to true, the draft will be replaced and then the upload 
-operation will restart. If there are other clients also uploading at the same 
-file location at the same time, the behavior is currently unknown. Need to set 
+If the option is set to true, the draft will be replaced and then the upload
+operation will restart. If there are other clients also uploading at the same
+file location at the same time, the behavior is currently unknown. Need to set
 to true for integration tests.
-If the option is set to false, an error "a draft exist - usually this means a 
-file is being uploaded at another client, or, there was a failed upload attempt" 
+If the option is set to false, an error "a draft exist - usually this means a
+file is being uploaded at another client, or, there was a failed upload attempt"
 will be returned, and no upload will happen.`,
 			Advanced: true,
 			Default:  false,
@@ -184,18 +184,18 @@ will be returned, and no upload will happen.`,
 			Name: "enable_caching",
 			Help: `Caches the files and folders metadata to reduce API calls
 
-Notice: If you are mounting ProtonDrive as a VFS, please disable this feature, 
-as the current implementation doesn't update or clear the cache when there are 
-external changes. 
+Notice: If you are mounting ProtonDrive as a VFS, please disable this feature,
+as the current implementation doesn't update or clear the cache when there are
+external changes.
 
-The files and folders on ProtonDrive are represented as links with keyrings, 
+The files and folders on ProtonDrive are represented as links with keyrings,
 which can be cached to improve performance and be friendly to the API server.
 
-The cache is currently built for the case when the rclone is the only instance 
+The cache is currently built for the case when the rclone is the only instance
 performing operations to the mount point. The event system, which is the proton
-API system that provides visibility of what has changed on the drive, is yet 
-to be implemented, so updates from other clients won’t be reflected in the 
-cache. Thus, if there are concurrent clients accessing the same mount point, 
+API system that provides visibility of what has changed on the drive, is yet
+to be implemented, so updates from other clients won’t be reflected in the
+cache. Thus, if there are concurrent clients accessing the same mount point,
 then we might have a problem with caching the stale data.`,
 			Advanced: true,
 			Default:  true,
