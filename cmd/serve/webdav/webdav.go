@@ -9,6 +9,7 @@ import (
 	"mime"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"strconv"
@@ -355,6 +356,11 @@ func (w *WebDAV) postprocess(r *http.Request, remote string) {
 	// set modtime from requests, don't write to client because status is already written
 	switch r.Method {
 	case "COPY", "MOVE", "PUT":
+		mh := r.Header.Get("X-OC-Mtime")
+		if mh == "" {
+			return
+		}
+
 		VFS, err := w.getVFS(r.Context())
 		if err != nil {
 			fs.Errorf(nil, "Failed to get VFS: %v", err)
@@ -362,25 +368,58 @@ func (w *WebDAV) postprocess(r *http.Request, remote string) {
 		}
 
 		// Get the node
+		if r.Method == "COPY" || r.Method == "MOVE" {
+			if destinationRemote, ok := w.destinationRemote(r); ok {
+				remote = destinationRemote
+			}
+		}
 		node, err := VFS.Stat(remote)
 		if err != nil {
 			fs.Errorf(nil, "Failed to stat node: %v", err)
 			return
 		}
 
-		mh := r.Header.Get("X-OC-Mtime")
-		if mh != "" {
-			modtimeUnix, err := strconv.ParseInt(mh, 10, 64)
-			if err == nil {
-				err = node.SetModTime(time.Unix(modtimeUnix, 0))
-				if err != nil {
-					fs.Errorf(nil, "Failed to set modtime: %v", err)
-				}
-			} else {
-				fs.Errorf(nil, "Failed to parse modtime: %v", err)
+		modtimeUnix, err := strconv.ParseInt(mh, 10, 64)
+		if err == nil {
+			err = node.SetModTime(time.Unix(modtimeUnix, 0))
+			if err != nil {
+				fs.Errorf(nil, "Failed to set modtime: %v", err)
 			}
+		} else {
+			fs.Errorf(nil, "Failed to parse modtime: %v", err)
 		}
 	}
+}
+
+func (w *WebDAV) destinationRemote(r *http.Request) (string, bool) {
+	destination := r.Header.Get("Destination")
+	if destination == "" {
+		return "", false
+	}
+	u, err := url.Parse(destination)
+	if err != nil {
+		return "", false
+	}
+	destinationPath, err := url.PathUnescape(u.EscapedPath())
+	if err != nil {
+		destinationPath = u.Path
+	}
+
+	baseURL := w.opt.HTTP.BaseURL
+	if baseURL == "" {
+		baseURL = "/"
+	}
+	if baseURL != "/" {
+		if destinationPath == baseURL {
+			destinationPath = ""
+		} else if strings.HasPrefix(destinationPath, baseURL+"/") {
+			destinationPath = strings.TrimPrefix(destinationPath, baseURL)
+		} else {
+			return "", false
+		}
+	}
+
+	return strings.Trim(destinationPath, "/"), true
 }
 
 func (w *WebDAV) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
