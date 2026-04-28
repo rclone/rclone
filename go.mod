@@ -48,7 +48,7 @@ require (
 	github.com/hanwen/go-fuse/v2 v2.9.0
 	github.com/internxt/rclone-adapter v0.0.0-20260331173834-036f908d0160
 	github.com/jcmturner/gokrb5/v8 v8.4.4
-	github.com/jlaffaye/ftp v0.2.1-0.20240918233326-1b970516f5d3
+	github.com/jlaffaye/ftp v0.2.1-0.20251026020404-6602e981a1bb
 	github.com/josephspurrier/goversioninfo v1.5.0
 	github.com/jzelinskie/whirlpool v0.0.0-20201016144138-0675e54bb004
 	github.com/klauspost/compress v1.18.5

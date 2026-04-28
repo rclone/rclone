@@ -440,8 +440,8 @@ github.com/jcmturner/gokrb5/v8 v8.4.4 h1:x1Sv4HaTpepFkXbt2IkL29DXRf8sOfZXo8eRKh6
 github.com/jcmturner/gokrb5/v8 v8.4.4/go.mod h1:1btQEpgT6k+unzCwX1KdWMEwPPkkgBtP+F6aCACiMrs=
 github.com/jcmturner/rpc/v2 v2.0.3 h1:7FXXj8Ti1IaVFpSAziCZWNzbNuZmnvw/i6CqLNdWfZY=
 github.com/jcmturner/rpc/v2 v2.0.3/go.mod h1:VUJYCIDm3PVOEHw8sgt091/20OJjskO/YJki3ELg/Hc=
-github.com/jlaffaye/ftp v0.2.1-0.20240918233326-1b970516f5d3 h1:ZxO6Qr2GOXPdcW80Mcn3nemvilMPvpWqxrNfK2ZnNNs=
-github.com/jlaffaye/ftp v0.2.1-0.20240918233326-1b970516f5d3/go.mod h1:dvLUr/8Fs9a2OBrEnCC5duphbkz/k/mSy5OkXg3PAgI=
+github.com/jlaffaye/ftp v0.2.1-0.20251026020404-6602e981a1bb h1:6vkM8gO+zFV2m21QzGYyUSq5TP0VQgP2Xz3UQyCN2kI=
+github.com/jlaffaye/ftp v0.2.1-0.20251026020404-6602e981a1bb/go.mod h1:H1+whwD0Qe3YOunlXIWhh3rlvzW5cZfkMDYGQPg+KAM=
 github.com/josephspurrier/goversioninfo v1.5.0 h1:9TJtORoyf4YMoWSOo/cXFN9A/lB3PniJ91OxIH6e7Zg=
 github.com/josephspurrier/goversioninfo v1.5.0/go.mod h1:6MoTvFZ6GKJkzcdLnU5T/RGYUbHQbKpYeNP0AgQLd2o=
 github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=
