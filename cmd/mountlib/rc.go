@@ -62,12 +62,24 @@ This takes the following parameters:
 - mountOpt: a JSON object with Mount options in.
 - vfsOpt: a JSON object with VFS options in.
 
+On Windows mountPoint may be set to "*" to assign the next available
+drive letter automatically, or a network share UNC path (e.g.
+"\\server\share") to mount as a network drive. In these cases the
+actual drive letter is chosen at mount time.
+
+This returns the following values:
+
+- mountPoint: the actual mount point that was used (this may differ
+  from the input, e.g. on Windows when "*" is passed the allocated
+  drive letter is returned)
+
 Example:
 
 ` + "```console" + `
 rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint
 rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint mountType=mount
 rclone rc mount/mount fs=TestDrive: mountPoint=/mnt/tmp vfsOpt='{"CacheMode": 2}' mountOpt='{"AllowOther": true}'
+rclone rc mount/mount fs=mydrive: mountPoint=* mountType=cmount
 ` + "```" + `
 
 The vfsOpt are as described in options/get and can be seen in the
@@ -128,6 +140,9 @@ func mountRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		fs.Logf(nil, "mount FAILED: %v", err)
 		return nil, err
 	}
+	// mnt.MountPoint may have been updated by MountFn (e.g. on
+	// Windows when "*" is resolved to an actual drive letter)
+	actualMountPoint := mnt.MountPoint
 	go func() {
 		if err = mnt.Wait(); err != nil {
 			fs.Logf(nil, "unmount FAILED: %v", err)
@@ -135,13 +150,15 @@ func mountRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		}
 		mountMu.Lock()
 		defer mountMu.Unlock()
-		delete(liveMounts, mountPoint)
+		delete(liveMounts, actualMountPoint)
 	}()
 	// Add mount to list if mount point was successfully created
-	liveMounts[mountPoint] = mnt
+	liveMounts[actualMountPoint] = mnt
 
-	fs.Debugf(nil, "Mount for %s created at %s using %s", fdst.String(), mountPoint, mountType)
-	return nil, nil
+	fs.Debugf(nil, "Mount for %s created at %s using %s", fdst.String(), actualMountPoint, mountType)
+	return rc.Params{
+		"mountPoint": actualMountPoint,
+	}, nil
 }
 
 func init() {
