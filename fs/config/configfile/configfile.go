@@ -160,8 +160,7 @@ func (s *Storage) Save() error {
 	if err != nil {
 		fs.Debugf(nil, "Using default permissions for config file: %v", fileMode)
 	} else if info.Mode() != fileMode {
-		fs.Debugf(nil, "Keeping previous permissions for config file: %v", info.Mode())
-		fileMode = info.Mode()
+		fs.Debugf(nil, "Enforcing secure permissions on config file (was %v, now %v)", info.Mode(), fileMode)
 	}
 
 	attemptCopyGroup(configPath, f.Name())
