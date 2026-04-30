@@ -4,7 +4,7 @@ description: "Rclone docs for iCloud Drive and Photos"
 versionIntroduced: "v1.69"
 ---
 
-# {{< icon "fa fa-cloud" >}} iCloud Drive and Photos
+# iCloud Drive and Photos
 
 ## Configuration
 
