@@ -11,6 +11,7 @@ This file describes how to make the various kinds of releases
 
 - git checkout master # see below for stable branch
 - git pull # IMPORTANT
+- make fetch-gui-and-commit # bump the embedded GUI if rclone-web has a newer release
 - git status - make sure everything is checked in
 - Check GitHub actions build for master is Green
 - make test # see integration test server or run locally

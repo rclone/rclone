@@ -18,6 +18,14 @@ DEST_DIR="cmd/gui"
 ZIP_FILE="${DEST_DIR}/dist.zip"
 TAG_FILE="${DEST_DIR}/dist.tag"
 
+COMMIT=0
+for arg in "$@"; do
+    case "$arg" in
+        --commit) COMMIT=1 ;;
+        *) echo "Unknown argument: $arg" >&2; exit 1 ;;
+    esac
+done
+
 CURL_OPTS=(-fSs --retry 5 --retry-delay 2 --retry-all-errors)
 
 # Use GITHUB_TOKEN (or GH_TOKEN) if present so that GitHub API calls are
@@ -78,3 +86,12 @@ chmod 644 "${ZIP_FILE}"
 echo -n "${TAG}" > "${TAG_FILE}"
 
 echo "Done. ${ZIP_FILE} updated to ${TAG}"
+
+if [ "${COMMIT}" -eq 1 ]; then
+    git add "${ZIP_FILE}" "${TAG_FILE}"
+    if git diff --cached --quiet -- "${ZIP_FILE}" "${TAG_FILE}"; then
+        echo "No changes to commit (zip and tag are identical to HEAD)"
+    else
+        git commit -m "gui: update embedded release to ${TAG}" -- "${ZIP_FILE}" "${TAG_FILE}"
+    fi
+fi

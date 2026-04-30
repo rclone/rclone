@@ -45,7 +45,7 @@ LINTTAGS=--build-tags "$(GOTAGS)"
 endif
 LDFLAGS=--ldflags "-s -X github.com/rclone/rclone/fs.Version=$(TAG)"
 
-.PHONY: rclone test_all vars version fetch-gui
+.PHONY: rclone test_all vars version fetch-gui fetch-gui-and-commit
 
 rclone:
 ifeq ($(GO_OS),windows)
@@ -61,6 +61,9 @@ endif
 
 fetch-gui:
 	$(SHELL) ./bin/fetch-gui-dist.sh
+
+fetch-gui-and-commit:
+	$(SHELL) ./bin/fetch-gui-dist.sh --commit
 
 test_all:
 	go install $(LDFLAGS) $(BUILDTAGS) $(BUILD_ARGS) github.com/rclone/rclone/fstest/test_all
