@@ -88,6 +88,8 @@ Use --user and --pass to set specific credentials:
 Use --no-auth to disable authentication entirely:
 
     rclone gui --no-auth
+
+For more help see [the GUI docs](/gui/).
 `,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.74",
