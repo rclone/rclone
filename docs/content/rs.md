@@ -76,6 +76,224 @@ for data to be reconstructable.
   Operations run in two phases: a full parallel pass, then one bounded retry
   pass for remaining failing shards. Partial failures are logged.
 
+## File formats
+
+RS stores one **particle object per shard** at the same logical path on each
+configured shard remote. The particle format is implementation-oriented and
+versioned through a fixed trailing EC footer.
+
+### Particle format overview
+
+For non-empty logical objects, each shard particle is:
+
+- **payload**: `NumStripes × StripeSize` bytes
+- **footer**: fixed 102-byte EC footer (version 3)
+
+For empty logical objects, payload is length `0` and only the 102-byte footer
+is stored.
+
+High-level structure:
+
+```text
++------------------------------+--------------------+
+| shard payload (N * S bytes)  | EC footer (102 B)  |
++------------------------------+--------------------+
+```
+
+Where:
+
+- `N = NumStripes`
+- `S = StripeSize` (fragment size per shard per stripe)
+
+### Terminology
+
+- **Logical object**: The file seen on the `rs` remote.
+- **Particle**: One shard object stored on one backing remote.
+- **Stripe**: One RS encoding cycle over up to `k × S` logical bytes.
+- **k / m**: Data shard count / parity shard count.
+- **S (`StripeSize`)**: Bytes appended per shard for each stripe.
+- **N (`NumStripes`)**: Stripe count for the logical object.
+
+### Shard naming and object mapping
+
+- A logical path maps to the **same relative object path** on every shard
+  remote.
+- Shard identity is not encoded in the object name; it is encoded in footer
+  field `CurrentShard`.
+- Shard remotes are ordered by configuration (`remotes` list). Index domain is
+  `0..(k+m-1)`.
+
+### Binary layout
+
+The footer is the final 102 bytes of every particle.
+
+```text
+Offset  Size  Field
+0       9     Magic "RCLONE/EC"
+9       2     Version (little-endian uint16) = 3
+11      8     ContentLength (little-endian uint64)
+19      16    MD5 (logical object)
+35      32    SHA256 (logical object)
+67      8     Mtime (little-endian uint64, unix seconds)
+75      4     Compression tag ([4]byte, currently zero)
+79      4     NumBlocks (little-endian uint32, reserved; currently 0)
+83      4     Algorithm tag ([4]byte, currently "RS\\x00\\x00")
+87      1     DataShards (k)
+88      1     ParityShards (m)
+89      1     CurrentShard (this particle's shard index)
+90      4     StripeSize (little-endian uint32)
+94      4     PayloadCRC32C (little-endian uint32, over full payload)
+98      4     NumStripes (little-endian uint32)
+```
+
+### Field definitions and invariants
+
+- `Magic` must be exactly `RCLONE/EC`.
+- `Version` must be `3`; other versions are currently rejected.
+- `ContentLength`, `MD5`, `SHA256`, `Mtime`, `Algorithm`, `DataShards`,
+  `ParityShards`, `StripeSize`, and `NumStripes` are expected to be consistent
+  across shard particles for the same logical object.
+- `CurrentShard` must match the shard index of the backing remote where that
+  particle is stored.
+- `PayloadCRC32C` is per-shard and computed over the full particle payload
+  (everything before the footer).
+- Empty logical objects use `StripeSize=0` and `NumStripes=0`.
+
+### Padding and stripe rules
+
+- RS encoding reads logical content in chunks of at most `k × S` bytes.
+- Each stripe is zero-padded to `k × S` for RS split/encode.
+- `NumStripes` is `ceil(ContentLength / (k × S))` for non-empty objects and `0`
+  for empty objects.
+- Each shard receives exactly `S` bytes per stripe, so particle payload length
+  is always `N × S`.
+- During reconstruction/join, decoded output is trimmed back to logical stripe
+  length, and total decoded length must equal `ContentLength`.
+
+### Reconstruction rules
+
+- Reconstruction requires at least `k` readable shard fragments per stripe.
+- Stripe-wise reconstruction is used for footer v3 particles (`StripeSize>0` and
+  `NumStripes>0`).
+- If all `k` data shards are present and footer-compatible, read path can join
+  data shards directly stripe-by-stripe.
+- If data-shard-only path is unavailable, full RS reconstruction is used.
+- If any stripe has fewer than `k` available fragments, reconstruction fails.
+
+### Validation rules
+
+- Footer parse fails if:
+  - particle length is `< 102` bytes
+  - magic is invalid
+  - version is not supported
+- Particle payload extraction fails if:
+  - `CurrentShard` mismatches expected shard index
+  - payload CRC32C does not match `PayloadCRC32C`
+- Stripe reconstruction fails if:
+  - `StripeSize <= 0` or `NumStripes <= 0` for non-empty decode
+  - present shard payload length differs from `NumStripes × StripeSize`
+  - reconstructed logical byte count differs from `ContentLength`
+
+### Compatibility and versioning
+
+- Current format version is fixed at footer version `3`.
+- Current parser behavior is strict: unknown footer versions are rejected.
+- No extension block is defined yet in v3; future compatibility changes should
+  use a new footer version and explicit decode rules.
+
+### Future compression layout (design placeholder)
+
+This subsection is a design placeholder and is **not implemented** in the
+current `rs` backend.
+
+If RS later adds block compression (Snappy or Zstandard), particle payloads can
+follow a block-indexed structure compatible with efficient range reads.
+
+Planned compression algorithms:
+
+- `snappy`
+- `zstd`
+
+Proposed footer semantics:
+
+- `Compression` (`[4]byte`): compression algorithm tag (`none`, `snappy`,
+  `zstd`)
+- `NumBlocks` (`uint32`): number of compressed blocks used in the payload
+
+Proposed compressed particle shape:
+
+```text
++-------------------------------+---------------------------+-----------------+
+| shard payload from compressed | block inv. (NumBlocks*4)  | EC footer (vN)  |
+| stream (stripe/shard encoded) | LE uint32 compressed len  | incl. tag/count |
++-------------------------------+---------------------------+-----------------+
+```
+
+Where:
+
+- Logical input is split into fixed uncompressed blocks (for example 128 KiB).
+- Each block is compressed independently with the selected algorithm.
+- Inventory stores compressed byte length of each block (`uint32`
+  little-endian), in block order, and is appended to each shard payload.
+- `NumBlocks` equals the number of inventory entries.
+- `PayloadCRC32C` covers the full shard payload before the footer (compressed
+  shard bytes plus inventory bytes).
+
+Uncompressed (`Compression=none`) behavior can remain the current layout
+(payload + footer, `NumBlocks=0`), with no inventory trailer.
+
+### Worked examples
+
+Example A: tiny non-empty file (`k=2`, `m=2`, `S=32`, `ContentLength=1`)
+
+- `k × S = 64`
+- `NumStripes = ceil(1/64) = 1`
+- per-shard payload = `1 × 32 = 32` bytes
+- particle size = `32 + 102 = 134` bytes
+
+Example B: exact numbers used in tests (`k=2`, `m=2`, `S=32`, `ContentLength=100`)
+
+- `k × S = 64`
+- `NumStripes = ceil(100/64) = 2`
+- per-shard payload = `2 × 32 = 64` bytes
+- particle size = `64 + 102 = 166` bytes
+- first stripe contributes 64 logical bytes; second stripe contributes 36
+  logical bytes after trimming padding.
+
+Example C: empty logical object (`ContentLength=0`)
+
+- `NumStripes = 0`
+- payload length = `0`
+- particle size = `102` bytes (footer only)
+
+Example D: ASCII payload view (`"Hello Black Forest"`, `k=2`, `m=1`, `S=16`)
+
+- `ContentLength = 18`
+- `k × S = 32`
+- `NumStripes = ceil(18/32) = 1`
+- per-shard payload = `1 × 16 = 16` bytes
+- particle size = `16 + 102 = 118` bytes
+
+Payload bytes by shard (ASCII; `\0` means NUL byte):
+
+- shard 0 (data): `"Hello Black Fore"`
+- shard 1 (data): `"st\0\0\0\0\0\0\0\0\0\0\0\0\0\0"`
+- shard 2 (parity): `";\x11llo Black Fore"`
+
+Notes on Example D:
+
+- The logical content is zero-padded to 32 bytes before RS encode.
+- Because `m=1`, the parity payload is computed bytewise from the two data
+  shards and may include non-printable bytes (for this input byte 1 is `0x11`).
+
+### Implementation references
+
+- Format constants and footer encoding: `backend/rs/footer.go`
+- Stripe math and particle size formulas: `backend/rs/encode.go`
+- Payload extraction, CRC checks, and reconstruction: `backend/rs/object.go`
+- Heal reconstruction path: `backend/rs/commands.go`
+- Format-oriented tests: `backend/rs/rs_test.go`
+
 ## Listing (quorum merge)
 
 Directory listing is merged from shard remotes using quorum voting.
