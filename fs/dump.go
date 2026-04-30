@@ -14,6 +14,7 @@ const (
 	DumpGoRoutines
 	DumpOpenFiles
 	DumpMapper
+	DumpCurl
 )
 
 type dumpChoices struct{}
@@ -29,6 +30,7 @@ func (dumpChoices) Choices() []BitsChoicesInfo {
 		{uint64(DumpGoRoutines), "goroutines"},
 		{uint64(DumpOpenFiles), "openfiles"},
 		{uint64(DumpMapper), "mapper"},
+		{uint64(DumpCurl), "curl"},
 	}
 }
 

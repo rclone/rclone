@@ -1111,3 +1111,12 @@ put them back in again. -->
 - Xiangzhe <xiangzhedev@gmail.com>
 - Suyun <suyun@aosc.io>
 - TheBabu <ariq.haqq@gmail.com>
+- Brais Couce <braiscouce@gmail.com>
+- Mozi <29089388+pzhlkj6612@users.noreply.github.com>
+- SyoBoN <syobon@syobon.net>
+- Jan Heylen <heyleke@gmail.com>
+- tdawe <90407556+tdawe1@users.noreply.github.com>
+- Anton Bordwine <54022438+antonchuvashow@users.noreply.github.com>
+- mathieulongtin <617359+mathieulongtin@users.noreply.github.com>
+- Luke Cyca <me@lukecyca.com>
+- dlaumen <262192488+dlaumen@users.noreply.github.com>

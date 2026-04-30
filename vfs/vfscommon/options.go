@@ -222,8 +222,8 @@ type Options struct {
 var Opt Options
 
 // Init the options, making sure everything is within range
-func (opt *Options) Init() {
-	ci := fs.GetConfig(context.Background())
+func (opt *Options) Init(ctx context.Context) {
+	ci := fs.GetConfig(ctx)
 
 	// Override --vfs-links with --links if set
 	if ci.Links {
