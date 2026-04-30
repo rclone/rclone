@@ -79,6 +79,10 @@ type conn struct {
 	smbShare   *smb2.Share
 	shareName  string
 	pooledAt   time.Time // when this connection was returned to the pool
+
+	// closedOverrideFn overrides the default liveness check (Echo) when set.
+	// Used only in tests.
+	closedOverrideFn func() bool
 }
 
 // Closes the connection
@@ -86,15 +90,21 @@ func (c *conn) close() (err error) {
 	if c.smbShare != nil {
 		err = c.smbShare.Umount()
 	}
-	sessionLogoffErr := c.smbSession.Logoff()
-	if err != nil {
-		return err
+	if c.smbSession != nil {
+		sessionLogoffErr := c.smbSession.Logoff()
+		if err != nil {
+			return err
+		}
+		return sessionLogoffErr
 	}
-	return sessionLogoffErr
+	return err
 }
 
 // True if it's closed
 func (c *conn) closed() bool {
+	if c.closedOverrideFn != nil {
+		return c.closedOverrideFn()
+	}
 	return c.smbSession.Echo() != nil
 }
 
@@ -169,11 +179,11 @@ func (f *Fs) getConnection(ctx context.Context, share string) (c *conn, err erro
 		// enough to be at risk — skip the check for recently pooled
 		// connections to avoid a needless network round-trip.
 		if !c.pooledAt.IsZero() && time.Since(c.pooledAt) > time.Duration(f.opt.IdleTimeout) {
-		if c.closed() {
-			fs.Debugf(f, "Discarding dead pooled SMB connection")
-			_ = c.close()
-			c = nil
-			continue
+			if c.closed() {
+				fs.Debugf(f, "Discarding dead pooled SMB connection")
+				_ = c.close()
+				c = nil
+				continue
 			}
 		}
 		err = c.mountShare(share)
