@@ -17,17 +17,17 @@ import (
 // in the pool long enough to trigger the liveness check.
 func newDeadConn(share string) *conn {
 	return &conn{
-		shareName: share,
-		pooledAt:  time.Now().Add(-10 * time.Minute), // old enough to be checked
-		closedOverrideFn:  func() bool { return true },
+		shareName:        share,
+		pooledAt:         time.Now().Add(-10 * time.Minute), // old enough to be checked
+		closedOverrideFn: func() bool { return true },
 	}
 }
 
 // newAliveConn creates a conn that reports itself as alive.
 func newAliveConn(share string) *conn {
 	return &conn{
-		shareName: share,
-		closedOverrideFn:  func() bool { return false },
+		shareName:        share,
+		closedOverrideFn: func() bool { return false },
 	}
 }
 
@@ -141,9 +141,9 @@ func TestGetConnectionRecentNotChecked(t *testing.T) {
 	// This connection would fail an Echo check, but it was pooled just now
 	// so the liveness check should be skipped.
 	recentDead := &conn{
-		shareName: "myshare",
-		pooledAt:  time.Now(), // just now — within IdleTimeout
-		closedOverrideFn:  func() bool { return true },
+		shareName:        "myshare",
+		pooledAt:         time.Now(), // just now — within IdleTimeout
+		closedOverrideFn: func() bool { return true },
 	}
 	f.pool = []*conn{recentDead}
 
@@ -226,12 +226,9 @@ func TestConcurrentGetConnectionWithDeadPool(t *testing.T) {
 	f := newTestFs(nil)
 
 	// Fill pool with a mix of dead and alive connections.
-	var aliveConns []*conn
 	for i := 0; i < 5; i++ {
 		f.pool = append(f.pool, newDeadConn("myshare"))
-		c := newAliveConn("myshare")
-		aliveConns = append(aliveConns, c)
-		f.pool = append(f.pool, c)
+		f.pool = append(f.pool, newAliveConn("myshare"))
 	}
 
 	// Grab connections concurrently.
