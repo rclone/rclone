@@ -164,11 +164,6 @@ jobs:
           printf "\n\nSystem environment:\n\n"
           env
 
-      - name: Fetch GUI
-        run: make fetch-gui
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Build rclone
         run: |
           make

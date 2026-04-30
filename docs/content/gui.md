@@ -120,4 +120,6 @@ Tailscale (all free).
 
 ## History
 
-In v1.74 the GUI was redone and embedded within rclone for ease of use.
+In v1.74 the GUI was redone and embedded within rclone for ease of
+use. The GUI bundle ships as a compressed zip embedded in the rclone
+binary and is served from the zip at runtime.

@@ -3,8 +3,9 @@ package gui
 
 import (
 	"archive/zip"
+	"bytes"
 	"context"
-	"embed"
+	_ "embed"
 	"fmt"
 	iofs "io/fs"
 	"net/http"
@@ -24,8 +25,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//go:embed dist
-var assets embed.FS
+//go:embed dist.zip
+var distZip []byte
+
+//go:embed dist.tag
+var distTag string
 
 var (
 	guiAddr       []string
@@ -192,7 +196,11 @@ For more help see [the GUI docs](/gui/).
 		guiServer.Serve()
 
 		guiURL := guiServer.URLs()[0]
-		fs.Logf(nil, "Serving GUI on %s", guiURL)
+		guiSource := fmt.Sprintf("version %s", strings.TrimSpace(distTag))
+		if srcPath != "" {
+			guiSource = fmt.Sprintf("from %s", srcPath)
+		}
+		fs.Logf(nil, "Serving GUI %s on %s", guiSource, guiURL)
 
 		// Open browser
 		loginURL := buildLoginURL(guiURL, rcURL, opt.Auth.BasicUser, opt.Auth.BasicPass, opt.NoAuth)
@@ -231,20 +239,20 @@ func originFromURL(rawURL string) string {
 }
 
 // guiSourceFS opens the GUI bundle at the given path. An empty path
-// returns the embedded bundle. The returned cleanup func must be
-// called on shutdown (no-op for embedded/DirFS, Close for the zip
-// reader).
+// returns the embedded bundle (read from the zip embedded in the binary).
+// The returned cleanup func must be called on shutdown (no-op for the
+// embedded bundle and DirFS, Close for an external zip reader).
 func guiSourceFS(path string) (iofs.FS, func() error, error) {
 	noop := func() error { return nil }
 	if path == "" {
-		sub, err := iofs.Sub(assets, "dist")
+		zr, err := zip.NewReader(bytes.NewReader(distZip), int64(len(distZip)))
 		if err != nil {
-			return nil, nil, fmt.Errorf("embedded GUI dir not found: was `make fetch-gui` run before building?: %w", err)
+			return nil, nil, fmt.Errorf("failed to read embedded GUI zip: was `make fetch-gui` run before building?: %w", err)
 		}
-		if _, err := iofs.Stat(sub, "index.html"); err != nil {
-			return nil, nil, fmt.Errorf("embedded GUI not found: was `make fetch-gui` run before building?: %w", err)
+		if _, err := iofs.Stat(zr, "index.html"); err != nil {
+			return nil, nil, fmt.Errorf("embedded GUI has no index.html: was `make fetch-gui` run before building?: %w", err)
 		}
-		return sub, noop, nil
+		return zr, noop, nil
 	}
 	info, err := os.Stat(path)
 	if err != nil {

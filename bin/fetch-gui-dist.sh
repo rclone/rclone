@@ -1,16 +1,22 @@
 #!/bin/bash
-# Fetch the latest GUI dist from rclone/rclone-web GitHub releases.
+# Fetch the latest GUI dist.zip from rclone/rclone-web GitHub releases.
 #
-# Downloads dist.zip from the latest release and extracts it to
-# cmd/gui/dist/. Skips the download if the local tag matches.
+# Downloads dist.zip from the latest release to cmd/gui/dist.zip and
+# records the tag in cmd/gui/dist.tag. Both files are committed to the
+# repo so that builds are reproducible and `go build` works on a fresh
+# clone without needing to fetch anything.
 #
-# Requires: curl, unzip
+# Skips the download when both dist.zip and dist.tag exist and the tag
+# matches the latest release.
+#
+# Requires: curl
 
 set -euo pipefail
 
 REPO="rclone/rclone-web"
-DEST="cmd/gui/dist"
-TAG_FILE="${DEST}/.tag"
+DEST_DIR="cmd/gui"
+ZIP_FILE="${DEST_DIR}/dist.zip"
+TAG_FILE="${DEST_DIR}/dist.tag"
 
 CURL_OPTS=(-fSs --retry 5 --retry-delay 2 --retry-all-errors)
 
@@ -49,14 +55,16 @@ sys.exit(1)
 
 echo "Latest release: ${TAG}"
 
-# Check if we already have this version
-if [ -f "${TAG_FILE}" ] && [ "$(cat "${TAG_FILE}")" = "${TAG}" ]; then
+# Skip only when both the zip and the tag are present and the tag matches.
+# If only the tag exists (e.g. someone deleted the zip), force a re-download.
+if [ -f "${ZIP_FILE}" ] && [ -f "${TAG_FILE}" ] && [ "$(cat "${TAG_FILE}")" = "${TAG}" ]; then
     echo "Already up to date (${TAG})"
     exit 0
 fi
 
-# Download dist.zip
-TMPFILE=$(mktemp /tmp/rclone-gui-dist.XXXXXX.zip)
+# Download dist.zip directly to its final location, via a temp file so a
+# failed download doesn't leave a partial file behind.
+TMPFILE=$(mktemp "${DEST_DIR}/.dist.zip.XXXXXX")
 trap 'rm -f "${TMPFILE}"' EXIT
 
 echo "Downloading dist.zip from ${TAG}..."
@@ -65,17 +73,8 @@ curl -L "${CURL_OPTS[@]}" "${AUTH_HEADER[@]}" -o "${TMPFILE}" "${ASSET_URL}" || 
     exit 1
 }
 
-# Extract
-echo "Extracting to ${DEST}/..."
-rm -rf "${DEST}"
-mkdir -p "${DEST}"
-unzip -q "${TMPFILE}" -d "${DEST}"
-
-# Restore marker files
-git checkout "${DEST}"/.gitignore
-git checkout "${DEST}"/README.md
-
-# Write tag for cache comparison
+mv "${TMPFILE}" "${ZIP_FILE}"
+chmod 644 "${ZIP_FILE}"
 echo -n "${TAG}" > "${TAG_FILE}"
 
-echo "Done. GUI dist updated to ${TAG}"
+echo "Done. ${ZIP_FILE} updated to ${TAG}"
