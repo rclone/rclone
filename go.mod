@@ -48,7 +48,7 @@ require (
 	github.com/hanwen/go-fuse/v2 v2.9.0
 	github.com/internxt/rclone-adapter v0.0.0-20260331173834-036f908d0160
 	github.com/jcmturner/gokrb5/v8 v8.4.4
-	github.com/jlaffaye/ftp v0.2.1-0.20240918233326-1b970516f5d3
+	github.com/jlaffaye/ftp v0.2.1-0.20251026020404-6602e981a1bb
 	github.com/josephspurrier/goversioninfo v1.5.0
 	github.com/jzelinskie/whirlpool v0.0.0-20201016144138-0675e54bb004
 	github.com/klauspost/compress v1.18.5
@@ -71,8 +71,8 @@ require (
 	github.com/prometheus/client_golang v1.23.2
 	github.com/putdotio/go-putio/putio v0.0.0-20200123120452-16d982cac2b8
 	github.com/quasilyte/go-ruleguard/dsl v0.3.23
-	github.com/rclone/Proton-API-Bridge v1.0.1-0.20260127174007-77f974840d11
-	github.com/rclone/go-proton-api v1.0.1-0.20260218123427-1a63a293e3a2
+	github.com/rclone/Proton-API-Bridge v1.0.1
+	github.com/rclone/go-proton-api v1.0.1
 	github.com/rclone/gofakes3 v0.0.4
 	github.com/rfjakob/eme v1.2.0
 	github.com/rivo/uniseg v0.4.7
