@@ -105,7 +105,7 @@ Or instead of htpasswd if you just want a single user and password:
 
 ## Project
 
-The GUI is being developed in the: [rclone/rclone-webui-react repository](https://github.com/rclone/rclone-webui-react).
+The Web GUI source code and release artifacts are hosted in the [rclone/rclone-webui-react repository](https://github.com/rclone/rclone-webui-react).
 
 Bug reports and contributions are very welcome :-)
 
