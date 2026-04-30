@@ -78,6 +78,7 @@ type conn struct {
 	smbSession *smb2.Session
 	smbShare   *smb2.Share
 	shareName  string
+	pooledAt   time.Time // when this connection was returned to the pool
 }
 
 // Closes the connection
@@ -162,6 +163,19 @@ func (f *Fs) getConnection(ctx context.Context, share string) (c *conn, err erro
 	for len(f.pool) > 0 {
 		c = f.pool[0]
 		f.pool = f.pool[1:]
+		// Connections that have been idle in the pool for a long time
+		// may have died (TCP deadline expired). Check liveness via Echo
+		// before reuse, but only if the connection has been pooled long
+		// enough to be at risk — skip the check for recently pooled
+		// connections to avoid a needless network round-trip.
+		if !c.pooledAt.IsZero() && time.Since(c.pooledAt) > time.Duration(f.opt.IdleTimeout) {
+		if c.closed() {
+			fs.Debugf(f, "Discarding dead pooled SMB connection")
+			_ = c.close()
+			c = nil
+			continue
+			}
+		}
 		err = c.mountShare(share)
 		if err == nil {
 			break
@@ -201,9 +215,8 @@ func (f *Fs) putConnection(pc **conn, err error) {
 	if err != nil {
 		// If not a regular SMB error then check the connection
 		if !(errors.Is(err, os.ErrNotExist) || errors.Is(err, os.ErrExist) || errors.Is(err, os.ErrPermission)) {
-			echoErr := c.smbSession.Echo()
-			if echoErr != nil {
-				fs.Debugf(f, "Connection failed, closing: %v", echoErr)
+			if c.closed() {
+				fs.Debugf(f, "Connection failed, closing: %v", err)
 				_ = c.close()
 				return
 			}
@@ -211,6 +224,7 @@ func (f *Fs) putConnection(pc **conn, err error) {
 		}
 	}
 
+	c.pooledAt = time.Now()
 	f.poolMu.Lock()
 	f.pool = append(f.pool, c)
 	if f.opt.IdleTimeout > 0 {
