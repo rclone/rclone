@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/cloudsoda/go-smb2"
+	"github.com/rclone/rclone/fs"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -90,6 +91,20 @@ func (p *filePool) drain() error {
 	g, _ := errgroup.WithContext(p.ctx)
 	for _, f := range files {
 		g.Go(func() error {
+			// During long multi-thread transfers, connections that
+			// finished their last chunk early sit idle in the pool.
+			// Their TCP deadline (--timeout) can expire, killing the
+			// connection. When we try to Close the SMB file handle
+			// over a dead connection it fails with "i/o timeout",
+			// even though all data was written successfully.
+			//
+			// If the connection is dead, skip the Close — the server
+			// will clean up the file handle when the TCP session ends.
+			if f.c != nil && f.c.closed() {
+				fs.Debugf(nil, "Skipping close on dead connection for %s", p.path)
+				p.fs.putConnection(&f.c, nil)
+				return nil
+			}
 			err := f.Close()
 			p.fs.putConnection(&f.c, err)
 			return err
