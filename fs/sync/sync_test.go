@@ -3,7 +3,6 @@
 package sync
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"errors"
@@ -1402,65 +1401,11 @@ func testSyncWithSnapshot(ctx context.Context, t *testing.T, useLockedFile, expe
 	}
 
 	// Spawn a process that attempts to lock the file of interest.
-	// This only works on Windows because of how UNIX handles file locking.
-	var lockCmd *exec.Cmd
-	var lockStdin io.WriteCloser
+	// This may only work on Windows because of how UNIX handles file locking.
 	var cleanupLockHelper func()
-	if runtime.GOOS == "windows" && useLockedFile {
+	if useLockedFile {
 		filePath := filepath.Join(r.LocalName, file1.Path)
-
-		// Re-exec the same binary
-		lockCmd = exec.Command(os.Args[0], "-test.run=^TestLockFileHelper$", "-test.v")
-		lockCmd.Env = append(os.Environ(), "IS_LOCK_HOLDER=1", "FILE_TO_LOCK="+filePath)
-
-		// Set up pipes for communicating with the helper proc
-		stdout, err := lockCmd.StdoutPipe()
-		require.NoError(t, err, "failed to capture helper stdout")
-		lockStdin, err = lockCmd.StdinPipe()
-		require.NoError(t, err, "failed to create helper stdin pipe")
-
-		err = lockCmd.Start()
-		require.NoError(t, err, "failed to start lock holder process")
-		cleanupLockHelper = func() {
-			// Signal to the helper to release the lock, then wait for it to exit
-			if lockStdin != nil {
-				_, _ = lockStdin.Write([]byte("release\n"))
-				_ = lockStdin.Close()
-				lockStdin = nil // don't try to clean up twice
-			}
-			if lockCmd != nil && lockCmd.Process != nil {
-				_ = lockCmd.Wait()
-				lockCmd = nil // don't try to clean up twice
-			}
-		}
-		t.Cleanup(cleanupLockHelper)
-
-		// Wait for lock to be acquired with timeout
-		lockReady := make(chan error, 1)
-		go func() {
-			reader := bufio.NewReader(stdout)
-			for {
-				line, readErr := reader.ReadString('\n')
-				if readErr != nil {
-					lockReady <- readErr
-					return
-				}
-				if strings.Contains(line, "locked") { // helper has locked the file
-					lockReady <- nil
-					return
-				}
-			}
-		}()
-
-		select {
-		case err := <-lockReady:
-			require.NoError(t, err, "helper failed to acquire lock")
-		case <-time.After(5 * time.Second):
-			require.Fail(t, "timeout waiting for lock to be acquired")
-		}
-
-		_, err = os.OpenFile(filePath, os.O_RDONLY, 0)
-		require.Error(t, err, "file should be locked by helper process")
+		cleanupLockHelper = createExclusiveFileLock(t, filePath)	
 	}
 
 	// Perform the sync (which includes removing the snapshot)
@@ -1470,7 +1415,6 @@ func testSyncWithSnapshot(ctx context.Context, t *testing.T, useLockedFile, expe
 	// Release the lock immediately after sync so files can be cleaned up
 	if cleanupLockHelper != nil {
 		cleanupLockHelper()
-		time.Sleep(100 * time.Millisecond) // give the helper a moment to release the lock
 	}
 
 	if errors.Is(err, os.ErrPermission) {
@@ -1494,7 +1438,7 @@ func testSyncWithSnapshot(ctx context.Context, t *testing.T, useLockedFile, expe
 }
 
 // Helper function that only runs in a separate child process to lock a file for testing purposes
-func TestLockFileHelper(t *testing.T) {
+func TestFileLockHelper(t *testing.T) {
 	if os.Getenv("IS_LOCK_HOLDER") != "1" {
 		return
 	}
@@ -1502,7 +1446,7 @@ func TestLockFileHelper(t *testing.T) {
 	if filePath == "" {
 		return
 	}
-	lockFileExclusive(t, filePath)
+	holdExclusiveFileLock(t, filePath)
 }
 
 // Test syncing files using snapshots

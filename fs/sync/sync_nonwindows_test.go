@@ -3,11 +3,21 @@
 package sync
 
 import (
+	"fmt"
+	"os"
 	"testing"
 )
 
-// Helper function that only runs in a separate child process to lock a file for testing purposes
-func lockFileExclusive(t *testing.T, _ string) {
+// Spawn a new process that holds an exclusive lock on the specified file.
+// Blocks until the lock is acquired, then returns a cleanup function to release the lock (also blocking) when called.
+func createExclusiveFileLock(t *testing.T, _ string) func() {
 	t.Helper()
-	t.Skip("exclusive file locking is only supported on Windows")
+	return nil
+}
+
+// Helper function that only runs in a separate child process to hold an exclusive lock on a file until signaled to release it
+func holdExclusiveFileLock(t *testing.T, _ string) {
+	t.Helper()
+	fmt.Fprint(os.Stderr, "Exclusive file locking is only supported on Windows")
+	os.Exit(1)
 }
