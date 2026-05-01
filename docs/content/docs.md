@@ -59,6 +59,7 @@ See the following for detailed instructions for
 - [Hetzner Storage Box](/sftp/#hetzner-storage-box)
 - [HiDrive](/hidrive/)
 - [HTTP](/http/)
+- [Huawei Drive](/huaweidrive/)
 - [iCloud Drive](/iclouddrive/)
 - [Internet Archive](/internetarchive/)
 - [Internxt](/internxt/)

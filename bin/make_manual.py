@@ -56,6 +56,7 @@ docs = [
     "drive.md",
     "googlephotos.md",
     "hasher.md",
+    "huaweidrive.md",
     "hdfs.md",
     "hidrive.md",
     "http.md",
@@ -135,6 +136,7 @@ ignore_docs = [
     "privacy.md",
     "sponsor.md",
     "amazonclouddrive.md",
+    "backends.md",              # Makes JSON confusingly
 ]
 
 def read_doc(doc):

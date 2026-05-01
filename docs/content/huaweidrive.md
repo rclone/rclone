@@ -4,7 +4,7 @@ description: "Rclone docs for Huawei Drive"
 versionIntroduced: "v1.74"
 ---
 
-# {{< icon "fas fa-cloud" >}} Huawei Drive
+# Huawei Drive
 
 Paths are specified as `huaweidrive:path`
 

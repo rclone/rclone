@@ -62,6 +62,7 @@ directories to and from different cloud storage providers.
 - Hitachi Content Platform (HCP) [:page_facing_up:](https://rclone.org/s3/#hcp)
 - HTTP [:page_facing_up:](https://rclone.org/http/)
 - Huawei Cloud Object Storage Service(OBS) [:page_facing_up:](https://rclone.org/s3/#huawei-obs)
+- Huawei Drive [:page_facing_up:](https://rclone.org/huaweidrive/)
 - iCloud Drive [:page_facing_up:](https://rclone.org/iclouddrive/)
 - ImageKit [:page_facing_up:](https://rclone.org/imagekit/)
 - Internet Archive [:page_facing_up:](https://rclone.org/internetarchive/)
