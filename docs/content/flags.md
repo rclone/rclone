@@ -121,7 +121,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.73.0")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.74.0")
 ```
 
 
@@ -174,7 +174,7 @@ Flags for developers.
 
 ```
       --cpuprofile string   Write cpu profile to file
-      --dump DumpFlags      List of items to dump from: headers, bodies, requests, responses, auth, filters, goroutines, openfiles, mapper
+      --dump DumpFlags      List of items to dump from: headers, bodies, requests, responses, auth, filters, goroutines, openfiles, mapper, curl
       --dump-bodies         Dump HTTP headers and bodies - may contain sensitive info
       --dump-headers        Dump HTTP headers - may contain sensitive info
       --memprofile string   Write memory profile to file
@@ -355,6 +355,8 @@ Backend-only flags (these can be set in the config file also).
       --azureblob-connection-string string                  Storage Connection String
       --azureblob-copy-concurrency int                      Concurrency for multipart copy (default 512)
       --azureblob-copy-cutoff SizeSuffix                    Cutoff for switching to multipart copy (default 8Mi)
+      --azureblob-copy-total-concurrency int                Global concurrency limit for multipart copy chunks
+      --azureblob-decompress                                If set this will decompress gzip encoded objects
       --azureblob-delete-snapshots string                   Set to specify how to deal with snapshots on blob deletion
       --azureblob-description string                        Description of the remote
       --azureblob-directory-markers                         Upload an empty object with a trailing slash when a new directory is created
@@ -605,9 +607,11 @@ Backend-only flags (these can be set in the config file also).
       --filefabric-token-expiry string                      Token expiry time
       --filefabric-url string                               URL of the Enterprise File Fabric to connect to
       --filefabric-version string                           Version read from the file fabric
+      --filelu-chunk-size SizeSuffix                        Chunk size to use for uploading. Used for multipart uploads (default 64Mi)
       --filelu-description string                           Description of the remote
       --filelu-encoding Encoding                            The encoding for the backend (default Slash,LtGt,DoubleQuote,SingleQuote,BackQuote,Dollar,Colon,Question,Asterisk,Pipe,Hash,Percent,BackSlash,CrLf,Del,Ctl,LeftSpace,LeftPeriod,LeftTilde,LeftCrLfHtVt,RightSpace,RightPeriod,RightCrLfHtVt,InvalidUtf8,Dot,SquareBracket,Semicolon,Exclamation)
       --filelu-key string                                   Your FileLu Rclone key from My Account
+      --filelu-upload-cutoff SizeSuffix                     Cutoff for switching to chunked upload. Any files larger than this will be uploaded in chunks of chunk_size (default 500Mi)
       --filen-api-key string                                API Key for your Filen account (obscured)
       --filen-auth-version string                           Authentication Version (internal use only)
       --filen-base-folder-uuid string                       UUID of Account Root Directory (internal use only)
@@ -728,11 +732,24 @@ Backend-only flags (these can be set in the config file also).
       --http-no-head                                        Don't use HEAD requests
       --http-no-slash                                       Set this if the site doesn't end directories with /
       --http-url string                                     URL of HTTP host to connect to
+      --huaweidrive-auth-url string                         Auth server URL
+      --huaweidrive-chunk-size SizeSuffix                   Upload chunk size (default 8Mi)
+      --huaweidrive-client-credentials                      Use client credentials OAuth flow
+      --huaweidrive-client-id string                        OAuth Client Id
+      --huaweidrive-client-secret string                    OAuth Client Secret
+      --huaweidrive-description string                      Description of the remote
+      --huaweidrive-encoding Encoding                       The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Del,Ctl,LeftSpace,LeftPeriod,LeftTilde,RightSpace,RightPeriod,InvalidUtf8,Dot)
+      --huaweidrive-list-chunk int                          Size of listing chunk 1-1000 (default 1000)
+      --huaweidrive-root-folder-id string                   ID of the root folder
+      --huaweidrive-token string                            OAuth Access Token as a JSON blob
+      --huaweidrive-token-url string                        Token server url
+      --huaweidrive-upload-cutoff SizeSuffix                Cutoff for switching to resumable upload (default 20Mi)
       --iclouddrive-apple-id string                         Apple ID
-      --iclouddrive-client-id string                        Client id (default "d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d")
+      --iclouddrive-client-id string                        Client ID for iCloud API access (default "d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d")
       --iclouddrive-description string                      Description of the remote
       --iclouddrive-encoding Encoding                       The encoding for the backend (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --iclouddrive-password string                         Password (obscured)
+      --iclouddrive-service string                          iCloud service to use (default "drive")
       --imagekit-description string                         Description of the remote
       --imagekit-encoding Encoding                          The encoding for the backend (default Slash,LtGt,DoubleQuote,Dollar,Question,Hash,Percent,BackSlash,Del,Ctl,InvalidUtf8,Dot,SquareBracket)
       --imagekit-endpoint string                            You can find your ImageKit.io URL endpoint in your [dashboard](https://imagekit.io/dashboard/developer/api-keys)
@@ -751,17 +768,20 @@ Backend-only flags (these can be set in the config file also).
       --internetarchive-item-metadata stringArray           Metadata to be set on the IA item, this is different from file-level metadata that can be set using --metadata-set
       --internetarchive-secret-access-key string            IAS3 Secret Key (password)
       --internetarchive-wait-archive Duration               Timeout for waiting the server's processing tasks (specifically archive and book_op) to finish (default 0s)
+      --internxt-chunk-size SizeSuffix                      Chunk size for multipart uploads (default 30Mi)
       --internxt-description string                         Description of the remote
       --internxt-email string                               Email of your Internxt account
       --internxt-encoding Encoding                          The encoding for the backend (default Slash,BackSlash,CrLf,RightPeriod,InvalidUtf8,Dot)
       --internxt-pass string                                Password (obscured)
       --internxt-skip-hash-validation                       Skip hash validation when downloading files (default true)
+      --internxt-upload-concurrency int                     Concurrency for multipart uploads (default 4)
+      --internxt-upload-cutoff SizeSuffix                   Cutoff for switching to multipart upload (default 100Mi)
       --jottacloud-auth-url string                          Auth server URL
       --jottacloud-client-credentials                       Use client credentials OAuth flow
       --jottacloud-client-id string                         OAuth Client Id
       --jottacloud-client-secret string                     OAuth Client Secret
       --jottacloud-description string                       Description of the remote
-      --jottacloud-encoding Encoding                        The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,Del,Ctl,InvalidUtf8,Dot)
+      --jottacloud-encoding Encoding                        The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,Percent,Del,Ctl,InvalidUtf8,Dot)
       --jottacloud-hard-delete                              Delete files permanently rather than putting them into the trash
       --jottacloud-md5-memory-limit SizeSuffix              Files bigger than this will be cached on disk to calculate the MD5 if required (default 10Mi)
       --jottacloud-no-versions                              Avoid server side versioning by deleting files and recreating files instead of overwriting them
@@ -778,6 +798,8 @@ Backend-only flags (these can be set in the config file also).
       --koofr-setmtime                                      Does the backend support setting modification time (default true)
       --koofr-user string                                   Your user name
       --linkbox-description string                          Description of the remote
+      --linkbox-email string                                Email for login
+      --linkbox-password string                             Password for login (obscured)
       --linkbox-token string                                Token from https://www.linkbox.to/admin/account
       --local-case-insensitive                              Force the filesystem to report itself as case insensitive
       --local-case-sensitive                                Force the filesystem to report itself as case sensitive
@@ -923,7 +945,7 @@ Backend-only flags (these can be set in the config file also).
       --premiumizeme-token string                           OAuth Access Token as a JSON blob
       --premiumizeme-token-url string                       Token server url
       --protondrive-2fa string                              The 2FA code
-      --protondrive-app-version string                      The app version string (default "macos-drive@1.0.0-alpha.1+rclone")
+      --protondrive-app-version string                      The app version string
       --protondrive-description string                      Description of the remote
       --protondrive-enable-caching                          Caches the files and folders metadata to reduce API calls (default true)
       --protondrive-encoding Encoding                       The encoding for the backend (default Slash,LeftSpace,RightSpace,InvalidUtf8,Dot)
@@ -964,6 +986,8 @@ Backend-only flags (these can be set in the config file also).
       --s3-access-key-id string                             AWS Access Key ID
       --s3-acl string                                       Canned ACL used when creating buckets and storing or copying objects
       --s3-bucket-acl string                                Canned ACL used when creating buckets
+      --s3-bucket-object-lock-enabled                       Enable Object Lock when creating new buckets
+      --s3-bypass-governance-retention                      Allow deleting or modifying objects locked with GOVERNANCE mode
       --s3-chunk-size SizeSuffix                            Chunk size to use for uploading (default 5Mi)
       --s3-copy-cutoff SizeSuffix                           Cutoff for switching to multipart copy (default 4.656Gi)
       --s3-decompress                                       If set this will decompress gzip encoded objects
@@ -978,11 +1002,13 @@ Backend-only flags (these can be set in the config file also).
       --s3-env-auth                                         Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars)
       --s3-force-path-style                                 If true use path style access if false use virtual hosted style (default true)
       --s3-ibm-api-key string                               IBM API Key to be used to obtain IAM token
+      --s3-ibm-iam-endpoint string                          IBM IAM Endpoint to use for authentication
       --s3-ibm-resource-instance-id string                  IBM service instance id
       --s3-leave-parts-on-error                             If true avoid calling abort upload on a failure, leaving all successfully uploaded parts on S3 for manual recovery
       --s3-list-chunk int                                   Size of listing chunk (response list for each ListObject S3 request) (default 1000)
       --s3-list-url-encode Tristate                         Whether to url encode listings: true/false/unset (default unset)
       --s3-list-version int                                 Version of ListObjects to use: 1,2 or 0 for auto
+      --s3-list-versions-oldest-first Tristate              Set if the backend returns object versions oldest first (default unset)
       --s3-location-constraint string                       Location constraint - must be set to match the Region
       --s3-max-upload-parts int                             Maximum number of parts in a multipart upload (default 10000)
       --s3-might-gzip Tristate                              Set this if the backend might gzip objects (default unset)
@@ -990,6 +1016,11 @@ Backend-only flags (these can be set in the config file also).
       --s3-no-head                                          If set, don't HEAD uploaded objects to check integrity
       --s3-no-head-object                                   If set, do not do HEAD before GET when getting objects
       --s3-no-system-metadata                               Suppress setting and reading of system metadata
+      --s3-object-lock-legal-hold-status string             Object Lock legal hold status to apply when uploading or copying objects
+      --s3-object-lock-mode string                          Object Lock mode to apply when uploading or copying objects
+      --s3-object-lock-retain-until-date string             Object Lock retention until date to apply when uploading or copying objects
+      --s3-object-lock-set-after-upload                     Set Object Lock via separate API calls after upload
+      --s3-object-lock-supported Tristate                   Whether the provider supports S3 Object Lock (default unset)
       --s3-profile string                                   Profile to use in the shared credentials file
       --s3-provider string                                  Choose your S3 provider
       --s3-region string                                    Region to connect to

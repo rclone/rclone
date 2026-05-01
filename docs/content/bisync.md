@@ -1055,11 +1055,7 @@ The following backends have known issues that need more investigation:
 <!--- start list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
 - `TestDropbox` (`dropbox`)
   - [`TestBisyncRemoteRemote/normalization`](https://pub.rclone.org/integration-tests/current/dropbox-cmd.bisync-TestDropbox-1.txt)
-- `TestSeafile` (`seafile`)
-  - [`TestBisyncLocalRemote/volatile`](https://pub.rclone.org/integration-tests/current/seafile-cmd.bisync-TestSeafile-1.txt)
-- `TestSeafileV6` (`seafile`)
-  - [`TestBisyncLocalRemote/volatile`](https://pub.rclone.org/integration-tests/current/seafile-cmd.bisync-TestSeafileV6-1.txt)
-- Updated: 2026-01-30-010015
+- Updated: 2026-05-01-010013
 <!--- end list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
 
 The following backends either have not been tested recently or have known issues

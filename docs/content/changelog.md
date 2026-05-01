@@ -6,6 +6,135 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.74.0 - 2026-05-01
+
+[See commits](https://github.com/rclone/rclone/compare/v1.73.0...v1.74.0)
+
+- New backends
+  - [Huawei Drive](/huaweidrive/) (王一赫)
+  - [iCloud Photos](/iclouddrive/#icloud-photos) (read only) (Yakov Till)
+  - New S3 providers
+    - [Fastly Object Storage](/s3/#fastly) (Leon Brocard)
+    - [HCP](/s3/#hcp) (Chris)
+    - [Impossible Cloud](/s3/#impossible-cloud) (Nick Craig-Wood)
+    - [UCloud US3](/s3/#us3) (jinkeyuu)
+    - [Zadara](/s3/#zadara) (Shlomi Avihou)
+- New commands
+  - [gui](/gui/): launch new embedded web based GUI for basic rclone operations (FTCHD, Nick Craig-Wood)
+- New Features
+  - build
+    - Update `golang.org/x/image/webp` to v0.39.0 to fix CVE-2026-33813 (Nick Craig-Wood)
+    - Bump `github.com/Azure/go-ntlmssp` to 0.1.1 to fix CVE-2026-32952 (dependabot[bot])
+    - Update to go1.26 and make go1.25 the minimum required version (Nick Craig-Wood)
+    - Update all dependencies (Nick Craig-Wood)
+    - Modernize Go code with go fix for go1.25 (Nick Craig-Wood)
+    - Fix `loong64` and `s390x` build (Suyun)
+  - docs
+    - Modernize rclone.org site design (Nick Craig-Wood)
+    - fixes (albertony, Enduriel, Jason, Luke Cyca, mathieulongtin, Nick Craig-Wood, SyoBoN)
+  - fshttp: Add `--dump curl` for dumping HTTP requests as curl commands (Nick Craig-Wood)
+  - graphics: Optimise images losslessly with ImageOptim (Leon Brocard)
+  - listremotes: Add `--exact` flag for filtering (Anton Bordwine)
+  - rc
+    - Flip auth default so all endpoints require auth unless opted out (Nick Craig-Wood)
+    - Add `core/disks` to enumerate attached disks (Nick Craig-Wood)
+    - Add `deletedDirs` stat to `core/stats` help output (Billy Hughes)
+  - serve http
+    - Add fallback embedded favicon (Leon Brocard)
+    - Add gzip compression for text responses (Leon Brocard)
+    - Dark mode for file browser (FTCHD)
+    - Add HTTP/2 cleartext support for all http servers (TheBabu)
+  - touch: Add metadata when using `--metadata-set` (Prakhar Chhalotre)
+- Bug Fixes
+  - accounting
+    - Update String method output format for clarity in transfer rate representation (Prakhar Chhalotre)
+    - Fix `rcat`/`copyurl` for `files.com` (Nick Craig-Wood)
+  - bisync
+    - Add missing rc params (nielash)
+    - Add more structured info to rc output (nielash)
+    - Auto-generate rc help docs (nielash)
+    - Fix handling of unreadable lockfiles (lif)
+    - Fix flaky TestBisyncConcurrent by increasing random name entropy (Nick Craig-Wood)
+    - Fix integration tests after sftp log changes (Nick Craig-Wood)
+  - copyurl: Fix ignored `--upload-headers` and `--download-headers` (Andriy Senyshyn)
+  - librclone/ctest: Add Windows support and fix memory management (BizaNator)
+  - log: Fix data race on OutputHandler.format field (Nick Craig-Wood)
+  - operations
+    - Multithread copy: grab memory before making go routines (Nick Craig-Wood)
+  - serve dlna: Fix Samsung TV compatibility (Nick Craig-Wood)
+  - serve nfs: Fix EOF flag in READ response not being set when read reaches end of file (Nick Craig-Wood)
+- Mount
+  - rc: fix mounts created with mountPoint "*" overwriting each other (Nick Craig-Wood)
+- VFS
+  - Fix slow `nfs serve` by adding `--vfs-handle-caching` (Nick Craig-Wood)
+  - Add context parameter to New() for config propagation (Nick Craig-Wood)
+  - Replace `context.TODO`/`Background` with stored VFS context (Nick Craig-Wood)
+- Local
+  - Remove fadvise calls that cause spinlock contention (Patrick Farrell)
+- Azure Blob
+  - Add `--azureblob-copy-total-concurrency` to limit total multipart copy concurrency (Duncan F)
+  - Add server side copy real time accounting (Nick Craig-Wood)
+  - Add `--azureblob-decompress` flag to download gzip-encoded files (Nick Craig-Wood)
+- Azurefiles
+  - Fix missing `x-ms-file-request-intent` header with OAuth (Nick Craig-Wood)
+- B2
+  - Add server side copy real time accounting (Nick Craig-Wood)
+- Drime
+  - Implement About (Cohinem)
+  - Fix listings of large directories (John Volk)
+- Drive
+  - Add integration test for handling folder names with single quotes (Prakhar Chhalotre)
+- Filelu
+  - Add multipart init response type (kingston125)
+  - Migrate API calls to `lib/rest` (kingston125)
+- Filen
+  - Make multi-threaded upload chunks individually retryable (Enduriel)
+- Iclouddrive
+  - Replace plaintext signin with SRP authentication (Mike GIllan)
+  - Use dynamic origin for SRP auth headers (Xiangzhe)
+  - Lowercase Apple ID for SRP authentication (Mike GIllan)
+  - Add read only  iCloud Photos support and SRP authentication (Yakov Till)
+- Internxt
+  - Implement multi-part uploads (José Zúniga)
+- Jottacloud
+  - Add encoding of percent character to default backend encoding (albertony)
+- Linkbox
+  - Fix downloading files by using web API (Nick Craig-Wood)
+- Mega
+  - Fix crash when logging in with previous auth keys fails (Andrew Gunnerson)
+- Pcloud
+  - Fix recursive listing from the root (Nick Craig-Wood)
+- Pikpak
+  - Support custom filenames for addurl backend command (wiserain)
+- Protondrive
+  - Align backend with newer Proton SDK stack (tdawe)
+  - Update to latest go-proton-api to use new host (dlaumen)
+  - Fix server-side moveto and DirMove against current API (Nick Craig-Wood)
+- S3
+  - Add Fastly Object Storage provider (Leon Brocard)
+  - Add HCP provider and `list_versions_oldest_first` quirk (Chris)
+  - Add Impossible Cloud as a new S3 provider (Nick Craig-Wood)
+  - Add UCloud Object Storage provider (#9230) (jinkeyuu)
+  - Add Zadara Object Storage provider (Shlomi Avihou)
+  - Remove StackPath Object Storage provider (Leon Brocard)
+  - Add server side copy real time accounting (Nick Craig-Wood)
+  - Add OVHcloud storage classes (Bjoern Franke)
+  - Add Object Lock support (Chris)
+  - Add new Fastly Object Storage regions (Leon Brocard)
+  - Scaleway: ONEZONE_IA is available in all zones, GLACIER only in FR-PAR (Bjoern Franke)
+  - Ionos: updated regions & endpoints (hxnd)
+  - IBM COS: provide ibm_iam_endpoint as a configurable param for IBM IAM-based auth (Bhagyashreek8)
+  - Fix Content-MD5 for Object Lock uploads and add GCS quirk (Chris)
+  - Fix regression where PutObject fails with non-seekable readers (Chris)
+  - Fix `--s3-versions` flag ignored by cleanup-hidden when GetBucketVersioning fails (Chris)
+  - Fix bucket creation failing on Ceph/radosgw (Jan Heylen)
+- SFTP
+  - Warn the user if no host key validation is configured (Nick Craig-Wood)
+- WebDAV
+  - Permit redirects on PROPFIND for metadata (Brian Bockelman)
+  - Request only required properties in listAll to improve performance (ZRHan)
+  - Optimize performance by using `Depth=0` for metadata requests (ZRHan)
+
 ## v1.73.5 - 2026-04-19
 
 [See commits](https://github.com/rclone/rclone/compare/v1.73.4...v1.73.5)

@@ -93,6 +93,41 @@ Properties:
 - Type:        string
 - Required:    true
 
+#### --linkbox-email
+
+Email for login
+
+Properties:
+
+- Config:      email
+- Env Var:     RCLONE_LINKBOX_EMAIL
+- Type:        string
+- Required:    true
+
+#### --linkbox-password
+
+Password for login
+
+**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
+
+Properties:
+
+- Config:      password
+- Env Var:     RCLONE_LINKBOX_PASSWORD
+- Type:        string
+- Required:    true
+
+#### --linkbox-web-token
+
+Web API login token - set automatically.
+
+Properties:
+
+- Config:      web_token
+- Env Var:     RCLONE_LINKBOX_WEB_TOKEN
+- Type:        string
+- Required:    false
+
 ### Advanced options
 
 Here are the Advanced options specific to linkbox (Linkbox).
