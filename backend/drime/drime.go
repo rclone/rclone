@@ -565,10 +565,10 @@ OUTER:
 				break OUTER
 			}
 		}
-		if result.NextPage == 0 {
+		if result.CurrentPage == result.LastPage {
 			break
 		}
-		page = result.NextPage
+		page = result.CurrentPage + 1
 	}
 	return found, err
 }
