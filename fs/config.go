@@ -566,6 +566,26 @@ var ConfigOptionsInfo = Options{{
 	Default: "",
 	Help:    "HTTP proxy URL.",
 	Groups:  "Networking",
+}, {
+	Name:    "fronting_enable",
+	Default: false,
+	Help:    "Enable HTTP domain fronting in shared transport.",
+	Groups:  "Networking",
+}, {
+	Name:    "fronting_target",
+	Default: "",
+	Help:    "Fronting target hostname used for network dial (required with --fronting-enable).",
+	Groups:  "Networking",
+}, {
+	Name:    "fronting_domains",
+	Default: []string{},
+	Help:    "Comma-separated hostname patterns eligible for fronting (exact host or wildcard like *.example.com) (required with --fronting-enable).",
+	Groups:  "Networking",
+}, {
+	Name:    "fronting_sni",
+	Default: "",
+	Help:    "TLS SNI override for fronted requests (defaults to --fronting-target).",
+	Groups:  "Networking",
 }}
 
 // ConfigInfo is filesystem config options
@@ -680,6 +700,10 @@ type ConfigInfo struct {
 	MaxConnections             int               `config:"max_connections"`
 	NameTransform              []string          `config:"name_transform"`
 	HTTPProxy                  string            `config:"http_proxy"`
+	FrontingEnable             bool              `config:"fronting_enable"`
+	FrontingTarget             string            `config:"fronting_target"`
+	FrontingDomains            []string          `config:"fronting_domains"`
+	FrontingSNI                string            `config:"fronting_sni"`
 }
 
 func init() {
@@ -730,6 +754,27 @@ func (ci *ConfigInfo) Reload(ctx context.Context) error {
 		return fmt.Errorf("--partial-suffix: Expecting suffix length not greater than %d but got %d", 16, len(ci.PartialSuffix))
 	}
 
+	// Check domain fronting config
+	if ci.FrontingEnable {
+		if strings.TrimSpace(ci.FrontingTarget) == "" {
+			return fmt.Errorf("--fronting-target is required when --fronting-enable is set")
+		}
+		if len(ci.FrontingDomains) == 0 {
+			return fmt.Errorf("--fronting-domains is required when --fronting-enable is set")
+		}
+		if strings.Contains(strings.TrimSpace(ci.FrontingTarget), ":") {
+			return fmt.Errorf("--fronting-target must be a hostname only (no :port)")
+		}
+		if strings.Contains(strings.TrimSpace(ci.FrontingSNI), ":") {
+			return fmt.Errorf("--fronting-sni must be a hostname only (no :port)")
+		}
+		if err := validateFrontingDomainRules(ci.FrontingDomains); err != nil {
+			return err
+		}
+	} else if strings.TrimSpace(ci.FrontingTarget) != "" || len(ci.FrontingDomains) > 0 || strings.TrimSpace(ci.FrontingSNI) != "" {
+		return fmt.Errorf("--fronting-target/--fronting-domains/--fronting-sni require --fronting-enable")
+	}
+
 	// Make sure some values are > 0
 	nonZero := func(pi *int) {
 		if *pi <= 0 {
@@ -750,6 +795,30 @@ func (ci *ConfigInfo) Reload(ctx context.Context) error {
 	nonZero(&ci.Checkers)
 
 	return LogReload(ci)
+}
+
+func validateFrontingDomainRules(domains []string) error {
+	raw := strings.Join(domains, ",")
+	for _, part := range strings.Split(raw, ",") {
+		rule := strings.ToLower(strings.TrimSpace(part))
+		if rule == "" {
+			continue
+		}
+		if rule == "*" || (strings.Contains(rule, "*") && !strings.HasPrefix(rule, "*.")) {
+			return fmt.Errorf("--fronting-domains has unsupported wildcard rule %q (use exact host or wildcard like *.example.com)", part)
+		}
+		if strings.HasPrefix(rule, "*.") {
+			suffix := rule[1:]
+			if suffix == "." || len(suffix) < 3 {
+				return fmt.Errorf("--fronting-domains has invalid wildcard rule %q", part)
+			}
+			continue
+		}
+		if strings.Contains(rule, "*") {
+			return fmt.Errorf("--fronting-domains has invalid rule %q", part)
+		}
+	}
+	return nil
 }
 
 // InitialLogLevel performs a simple check for debug flags to enable
