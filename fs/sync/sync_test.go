@@ -11,7 +11,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 	"runtime"
 	"sort"
 	"strings"
@@ -1407,7 +1407,7 @@ func testSyncWithSnapshot(ctx context.Context, t *testing.T, useLockedFile, expe
 	var lockStdin io.WriteCloser
 	var cleanupLockHelper func()
 	if runtime.GOOS == "windows" && useLockedFile {
-		filePath := path.Join(r.LocalName, "potato")
+		filePath := filepath.Join(r.LocalName, file1.Path)
 
 		// Re-exec the same binary
 		lockCmd = exec.Command(os.Args[0], "-test.run=^TestLockFileHelper$", "-test.v")
@@ -1527,6 +1527,8 @@ func TestSyncWithSnapshot(t *testing.T) {
 			require.NoError(t, err, "failed to clean up initial snapshot")
 		}
 	}
+	// Clean up the preliminary Run immediately to avoid potential interference with the real tests
+	r.Finalise()
 
 	for _, test := range []struct {
 		name          string

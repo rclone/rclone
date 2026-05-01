@@ -1587,7 +1587,6 @@ func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata
 	return nil, fs.ErrorNotImplemented
 }
 
-
 // CreateSnapshot creates a point-in-time snapshot of a directory, if possible
 func (f *Fs) CreateSnapshot(ctx context.Context) (fs.Fs, func(ctx context.Context) error, error) {
 	if do := f.base.Features().CreateSnapshot; do != nil {

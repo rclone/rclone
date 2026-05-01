@@ -372,7 +372,6 @@ func (f *Fs) CreateSnapshot(ctx context.Context) (fs.Fs, func(ctx context.Contex
 	return do(ctx)
 }
 
-
 // ChangeNotify calls the passed function with a path
 // that has had changes. If the implementation
 // uses polling, it should adhere to the given interval.
