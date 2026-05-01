@@ -2219,6 +2219,11 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 				return false, fserrors.NoRetryError(fmt.Errorf("temporary data cleared: %w", err))
 			}
 			return false, fserrors.NoRetryError(fmt.Errorf("gone: %w", err))
+		case 429:
+			if strings.Contains(errMsg, "22074292") || strings.Contains(errMsg, "APP_REQUEST_TOO_MANY") {
+				fs.Debugf(nil, "Downloaded too frequently, sleeping 60s before retry")
+				return true, pacer.RetryAfterError(err, 60*time.Second)
+			}
 		case 500:
 			if strings.Contains(errMsg, "21005006") || strings.Contains(errMsg, "SERVER_TEMP_ERROR") ||
 				strings.Contains(errMsg, "21085002") || strings.Contains(errMsg, "OUTER_SERVICE_UNAVAILABLE") ||
