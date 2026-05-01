@@ -27,28 +27,26 @@ func createExclusiveFileLock(t *testing.T, filePath string) func() {
 	// Set up pipes for communicating with the helper proc
 	stdout, err := lockCmd.StdoutPipe()
 	require.NoError(t, err, "failed to create helper stdout pipe")
-	lockStdout, err := lockCmd.StdinPipe()
+	lockStdin, err := lockCmd.StdinPipe()
 	require.NoError(t, err, "failed to create helper stdin pipe")
 
 	err = lockCmd.Start()
 	require.NoError(t, err, "failed to start lock holder process")
 	cleanupLockHelper := func() {
 		// Signal to the helper to release the lock, then wait for it to exit
-		if lockStdout != nil {
-			_, _ = lockStdout.Write([]byte("release\n"))
-			_ = lockStdout.Close()
-			lockStdout = nil // don't try to clean up twice
-		}
-		if lockCmd != nil && lockCmd.Process != nil {
-			_ = lockCmd.Wait()
-			lockCmd = nil // don't try to clean up twice
+		if lockStdin != nil {
+			_, _ = lockStdin.Write([]byte("release\n"))
+			_ = lockStdin.Close()
+			lockStdin = nil // don't try to clean up twice
 		}
 		// Wait for the helper to signal that it has released the lock
 		// todo(maxgreen) comment out these logs
 		t.Log("Waiting for file lock to be released...")
 		awaitChildOutput(t, stdout, "finished")
-		_ = lockStdout.Close()
-		lockStdout = nil // don't try to clean up twice
+		if lockCmd != nil && lockCmd.Process != nil {
+			_ = lockCmd.Wait()
+			lockCmd = nil // don't try to clean up twice
+		}
 	}
 
 	// Wait for lock to be acquired with timeout
@@ -133,7 +131,6 @@ func holdExclusiveFileLock(t *testing.T, filePath string) {
 			break
 		}
 	}
-	
 	// Release the lock and exit
 	if err := syscall.CloseHandle(handle); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while releasing file lock: %v\n", err)

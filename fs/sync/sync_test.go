@@ -1405,7 +1405,7 @@ func testSyncWithSnapshot(ctx context.Context, t *testing.T, useLockedFile, expe
 	var cleanupLockHelper func()
 	if useLockedFile {
 		filePath := filepath.Join(r.LocalName, file1.Path)
-		cleanupLockHelper = createExclusiveFileLock(t, filePath)	
+		cleanupLockHelper = createExclusiveFileLock(t, filePath)
 	}
 
 	// Perform the sync (which includes removing the snapshot)
