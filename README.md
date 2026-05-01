@@ -68,6 +68,7 @@ directories to and from different cloud storage providers.
 - Internxt [:page_facing_up:](https://rclone.org/internxt/)
 - Jottacloud [:page_facing_up:](https://rclone.org/jottacloud/)
 - IBM COS S3 [:page_facing_up:](https://rclone.org/s3/#ibm-cos-s3)
+- Impossible Cloud [:page_facing_up:](https://rclone.org/s3/#impossible-cloud)
 - Intercolo Object Storage [:page_facing_up:](https://rclone.org/s3/#intercolo)
 - IONOS Cloud [:page_facing_up:](https://rclone.org/s3/#ionos)
 - Koofr [:page_facing_up:](https://rclone.org/koofr/)
