@@ -1587,6 +1587,15 @@ func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata
 	return nil, fs.ErrorNotImplemented
 }
 
+
+// CreateSnapshot creates a point-in-time snapshot of a directory, if possible
+func (f *Fs) CreateSnapshot(ctx context.Context) (fs.Fs, func(ctx context.Context) error, error) {
+	if do := f.base.Features().CreateSnapshot; do != nil {
+		return do(ctx)
+	}
+	return nil, nil, fs.ErrorNotImplemented
+}
+
 // Rmdir removes the directory (container, bucket) if empty
 //
 // Return an error if it doesn't exist or isn't empty
@@ -2569,24 +2578,25 @@ func (f *Fs) CanQuickRename() bool {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs              = (*Fs)(nil)
-	_ fs.Purger          = (*Fs)(nil)
-	_ fs.Copier          = (*Fs)(nil)
-	_ fs.Mover           = (*Fs)(nil)
-	_ fs.DirMover        = (*Fs)(nil)
-	_ fs.DirSetModTimer  = (*Fs)(nil)
-	_ fs.MkdirMetadataer = (*Fs)(nil)
-	_ fs.PutUncheckeder  = (*Fs)(nil)
-	_ fs.PutStreamer     = (*Fs)(nil)
-	_ fs.CleanUpper      = (*Fs)(nil)
-	_ fs.UnWrapper       = (*Fs)(nil)
-	_ fs.ListRer         = (*Fs)(nil)
-	_ fs.Abouter         = (*Fs)(nil)
-	_ fs.Wrapper         = (*Fs)(nil)
-	_ fs.ChangeNotifier  = (*Fs)(nil)
-	_ fs.Shutdowner      = (*Fs)(nil)
-	_ fs.ObjectInfo      = (*ObjectInfo)(nil)
-	_ fs.Object          = (*Object)(nil)
-	_ fs.ObjectUnWrapper = (*Object)(nil)
-	_ fs.IDer            = (*Object)(nil)
+	_ fs.Fs                = (*Fs)(nil)
+	_ fs.Purger            = (*Fs)(nil)
+	_ fs.Copier            = (*Fs)(nil)
+	_ fs.Mover             = (*Fs)(nil)
+	_ fs.DirMover          = (*Fs)(nil)
+	_ fs.DirSetModTimer    = (*Fs)(nil)
+	_ fs.MkdirMetadataer   = (*Fs)(nil)
+	_ fs.CreateSnapshotter = (*Fs)(nil)
+	_ fs.PutUncheckeder    = (*Fs)(nil)
+	_ fs.PutStreamer       = (*Fs)(nil)
+	_ fs.CleanUpper        = (*Fs)(nil)
+	_ fs.UnWrapper         = (*Fs)(nil)
+	_ fs.ListRer           = (*Fs)(nil)
+	_ fs.Abouter           = (*Fs)(nil)
+	_ fs.Wrapper           = (*Fs)(nil)
+	_ fs.ChangeNotifier    = (*Fs)(nil)
+	_ fs.Shutdowner        = (*Fs)(nil)
+	_ fs.ObjectInfo        = (*ObjectInfo)(nil)
+	_ fs.Object            = (*Object)(nil)
+	_ fs.ObjectUnWrapper   = (*Object)(nil)
+	_ fs.IDer              = (*Object)(nil)
 )

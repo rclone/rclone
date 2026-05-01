@@ -395,6 +395,14 @@ func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata
 	return nil, fs.ErrorNotImplemented
 }
 
+// CreateSnapshot creates a point-in-time snapshot of a directory, if possible
+func (f *Fs) CreateSnapshot(ctx context.Context) (fs.Fs, func(ctx context.Context) error, error) {
+	if do := f.Fs.Features().CreateSnapshot; do != nil {
+		return do(ctx)
+	}
+	return nil, nil, fs.ErrorNotImplemented
+}
+
 // DirCacheFlush resets the directory cache - used in testing
 // as an optional interface
 func (f *Fs) DirCacheFlush() {
@@ -581,27 +589,28 @@ func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs              = (*Fs)(nil)
-	_ fs.Purger          = (*Fs)(nil)
-	_ fs.Copier          = (*Fs)(nil)
-	_ fs.Mover           = (*Fs)(nil)
-	_ fs.DirMover        = (*Fs)(nil)
-	_ fs.Commander       = (*Fs)(nil)
-	_ fs.PutUncheckeder  = (*Fs)(nil)
-	_ fs.PutStreamer     = (*Fs)(nil)
-	_ fs.CleanUpper      = (*Fs)(nil)
-	_ fs.UnWrapper       = (*Fs)(nil)
-	_ fs.ListRer         = (*Fs)(nil)
-	_ fs.Abouter         = (*Fs)(nil)
-	_ fs.Wrapper         = (*Fs)(nil)
-	_ fs.MergeDirser     = (*Fs)(nil)
-	_ fs.DirSetModTimer  = (*Fs)(nil)
-	_ fs.MkdirMetadataer = (*Fs)(nil)
-	_ fs.DirCacheFlusher = (*Fs)(nil)
-	_ fs.ChangeNotifier  = (*Fs)(nil)
-	_ fs.PublicLinker    = (*Fs)(nil)
-	_ fs.UserInfoer      = (*Fs)(nil)
-	_ fs.Disconnecter    = (*Fs)(nil)
-	_ fs.Shutdowner      = (*Fs)(nil)
-	_ fs.FullObject      = (*Object)(nil)
+	_ fs.Fs                = (*Fs)(nil)
+	_ fs.Purger            = (*Fs)(nil)
+	_ fs.Copier            = (*Fs)(nil)
+	_ fs.Mover             = (*Fs)(nil)
+	_ fs.DirMover          = (*Fs)(nil)
+	_ fs.Commander         = (*Fs)(nil)
+	_ fs.PutUncheckeder    = (*Fs)(nil)
+	_ fs.PutStreamer       = (*Fs)(nil)
+	_ fs.CleanUpper        = (*Fs)(nil)
+	_ fs.UnWrapper         = (*Fs)(nil)
+	_ fs.ListRer           = (*Fs)(nil)
+	_ fs.Abouter           = (*Fs)(nil)
+	_ fs.Wrapper           = (*Fs)(nil)
+	_ fs.MergeDirser       = (*Fs)(nil)
+	_ fs.DirSetModTimer    = (*Fs)(nil)
+	_ fs.MkdirMetadataer   = (*Fs)(nil)
+	_ fs.CreateSnapshotter = (*Fs)(nil)
+	_ fs.DirCacheFlusher   = (*Fs)(nil)
+	_ fs.ChangeNotifier    = (*Fs)(nil)
+	_ fs.PublicLinker      = (*Fs)(nil)
+	_ fs.UserInfoer        = (*Fs)(nil)
+	_ fs.Disconnecter      = (*Fs)(nil)
+	_ fs.Shutdowner        = (*Fs)(nil)
+	_ fs.FullObject        = (*Object)(nil)
 )

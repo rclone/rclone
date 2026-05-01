@@ -566,8 +566,7 @@ var ConfigOptionsInfo = Options{{
 	Default: "",
 	Help:    "HTTP proxy URL.",
 	Groups:  "Networking",
-},
-{
+}, {
 	Name:    "use_snapshot",
 	Default: UseSnapshotMode(0),
 	Help:    "When to use backend-specific point-in-time snapshots when copying NEVER|ATTEMPT|ALWAYS",

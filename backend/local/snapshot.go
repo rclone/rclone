@@ -4,7 +4,7 @@ package local
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
 	"github.com/rclone/rclone/fs"
 )
@@ -16,5 +16,5 @@ import (
 func (f *Fs) createSnapshot(_ context.Context) (fs.Fs, func(ctx context.Context) error, error) {
 	return nil, func(ctx context.Context) error {
 		return nil
-	}, errors.New("creating snapshots is not supported on this platform")
+	}, fmt.Errorf("creating snapshots is not supported on this platform: %w", fs.ErrorNotImplemented)
 }

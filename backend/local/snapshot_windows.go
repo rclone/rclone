@@ -79,14 +79,18 @@ func (f *Fs) createSnapshot(ctx context.Context) (fs.Fs, func(ctx context.Contex
 	// Create a new Fs object based on the snapshot
 	sc, err := vss.Get(id)
 	if err != nil {
-		cleanup(ctx)
+		if err := cleanup(ctx); err != nil {
+			fs.Errorf(f, "Error while cleaning up snapshot: %v", err)
+		}
 		return nil, nil, err
 	}
 
 	newPath := filepath.Join(sc.DeviceObject, rel)
 	snapshotFs, err := fs.NewFs(ctx, newPath)
 	if err != nil {
-		cleanup(ctx)
+		if err := cleanup(ctx); err != nil {
+			fs.Errorf(f, "Error while cleaning up snapshot: %v", err)
+		}
 		return nil, nil, err
 	}
 

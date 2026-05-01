@@ -1387,9 +1387,12 @@ func testSyncWithSnapshot(ctx context.Context, t *testing.T, useLockedFile, expe
 	r := fstest.NewRun(t)
 	file1 := r.WriteFile("potato", "Potato Content", t1)
 	r.CheckLocalItems(t, file1)
+	r.Mkdir(ctx, r.Fremote)
 
 	createSnap := r.Flocal.Features().CreateSnapshot
 	if createSnap == nil {
+		// Note: some platforms (e.g. local Linux) will have CreateSnapshot defined but not actually support snapshots,
+		// so this check doesn't catch everything
 		t.Skip("snapshots not supported on this platform")
 	}
 	snapshots := 0
@@ -1504,16 +1507,24 @@ func TestLockFileHelper(t *testing.T) {
 
 // Test syncing files using snapshots
 func TestSyncWithSnapshot(t *testing.T) {
-	// Check for snapshot permission error before continuing
+	// Do a preliminary check to make sure snapshots are implemented and
+	// the necessary permissions are available before running the
 	ctx := context.Background()
 	r := fstest.NewRun(t)
+	r.Mkdir(ctx, r.Fremote)
 	createSnap := r.Flocal.Features().CreateSnapshot
 	if createSnap != nil {
 		_, cleanupSnap, err := createSnap(ctx)
-		if errors.Is(err, os.ErrPermission) {
+		switch {
+		case errors.Is(err, fs.ErrorNotImplemented):
+			t.Skip("snapshots not supported on this platform")
+		case errors.Is(err, os.ErrPermission):
 			t.Skip("insufficient permissions to use snapshots")
-		} else if err == nil {
-			cleanupSnap(ctx)
+		}
+
+		if cleanupSnap != nil {
+			err := cleanupSnap(ctx)
+			require.NoError(t, err, "failed to clean up initial snapshot")
 		}
 	}
 
@@ -1557,6 +1568,7 @@ func TestMoveWithSnapshot(t *testing.T) {
 	r := fstest.NewRun(t)
 	file1 := r.WriteFile("potato", "Potato Content", t1)
 	r.CheckLocalItems(t, file1)
+	r.Mkdir(ctx, r.Fremote)
 
 	createSnap := r.Flocal.Features().CreateSnapshot
 	if createSnap == nil {
@@ -1565,6 +1577,9 @@ func TestMoveWithSnapshot(t *testing.T) {
 	r.Fremote.Features().Disable("DirMove") // force one-by-one file move
 
 	err := MoveDir(ctx, r.Fremote, r.Flocal, false, false)
+	if errors.Is(err, fs.ErrorNotImplemented) {
+		t.Skip("snapshots not supported on this platform")
+	}
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "snapshot")
 }
@@ -1578,6 +1593,7 @@ func TestSyncWithSnapshotsAndDeleteMode(t *testing.T) {
 	r := fstest.NewRun(t)
 	file1 := r.WriteFile("potato", "Potato Content", t1)
 	r.CheckLocalItems(t, file1)
+	r.Mkdir(ctx, r.Fremote)
 
 	createSnap := r.Flocal.Features().CreateSnapshot
 	if createSnap == nil {
@@ -1585,6 +1601,9 @@ func TestSyncWithSnapshotsAndDeleteMode(t *testing.T) {
 	}
 
 	err := Sync(ctx, r.Fremote, r.Flocal, false)
+	if errors.Is(err, fs.ErrorNotImplemented) {
+		t.Skip("snapshots not supported on this platform")
+	}
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "snapshot")
 }

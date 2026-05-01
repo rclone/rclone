@@ -1350,11 +1350,10 @@ func runSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		do := fsrc.Features().CreateSnapshot
 		if do == nil {
 			if ci.UseSnapshotMode == fs.UseSnapshotModeAlways {
-				return fserrors.FatalError(errors.New("creating snapshots is not supported on this platform"))
-			} else {
-				fs.Printf(fsrc, "Creating snapshots is not supported on this platform. Continuing without snapshot")
-				break
+				return fserrors.FatalError(fmt.Errorf("creating snapshots is not supported on this platform: %w", fs.ErrorNotImplemented))
 			}
+			fs.Printf(fsrc, "Creating snapshots is not supported on this platform. Continuing without snapshot")
+			break
 		}
 
 		// Can't use snapshots when the operation will delete source data
@@ -1370,7 +1369,11 @@ func runSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		// Create the snapshot and replace fsrc with it
 		switch snapshot, cleanup, err := do(ctx); {
 		case err == nil: // success
-			defer cleanup(ctx)
+			defer func() {
+				if err := cleanup(ctx); err != nil {
+					fs.Errorf(fsrc, "Error while cleaning up snapshot: %v", err)
+				}
+			}()
 			fsrc = snapshot
 
 		case mode == fs.UseSnapshotModeAttempt: // error
