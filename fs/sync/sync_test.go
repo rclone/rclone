@@ -3,6 +3,7 @@
 package sync
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"errors"
@@ -10,6 +11,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path"
 	"runtime"
 	"sort"
 	"strings"
@@ -1378,6 +1380,213 @@ func TestCopyDeleteBefore(t *testing.T) {
 
 	r.CheckRemoteItems(t, file1, file2)
 	r.CheckLocalItems(t, file2)
+}
+
+// Test syncing a file using snapshots
+func testSyncWithSnapshot(ctx context.Context, t *testing.T, useLockedFile, expectErr bool) {
+	r := fstest.NewRun(t)
+	file1 := r.WriteFile("potato", "Potato Content", t1)
+	r.CheckLocalItems(t, file1)
+
+	createSnap := r.Flocal.Features().CreateSnapshot
+	if createSnap == nil {
+		t.Skip("snapshots not supported on this platform")
+	}
+	snapshots := 0
+	r.Flocal.Features().CreateSnapshot = func(ctx context.Context) (fs.Fs, func(ctx context.Context) error, error) {
+		snapshots++
+		return createSnap(ctx)
+	}
+
+	// Spawn a process that attempts to lock the file of interest.
+	// This only works on Windows because of how UNIX handles file locking.
+	var lockCmd *exec.Cmd
+	var lockStdin io.WriteCloser
+	var cleanupLockHelper func()
+	if runtime.GOOS == "windows" && useLockedFile {
+		filePath := path.Join(r.LocalName, "potato")
+
+		// Re-exec the same binary
+		lockCmd = exec.Command(os.Args[0], "-test.run=^TestLockFileHelper$", "-test.v")
+		lockCmd.Env = append(os.Environ(), "IS_LOCK_HOLDER=1", "FILE_TO_LOCK="+filePath)
+
+		// Set up pipes for communicating with the helper proc
+		stdout, err := lockCmd.StdoutPipe()
+		require.NoError(t, err, "failed to capture helper stdout")
+		lockStdin, err = lockCmd.StdinPipe()
+		require.NoError(t, err, "failed to create helper stdin pipe")
+
+		err = lockCmd.Start()
+		require.NoError(t, err, "failed to start lock holder process")
+		cleanupLockHelper = func() {
+			// Signal to the helper to release the lock, then wait for it to exit
+			if lockStdin != nil {
+				_, _ = lockStdin.Write([]byte("release\n"))
+				_ = lockStdin.Close()
+				lockStdin = nil // don't try to clean up twice
+			}
+			if lockCmd != nil && lockCmd.Process != nil {
+				_ = lockCmd.Wait()
+				lockCmd = nil // don't try to clean up twice
+			}
+		}
+		t.Cleanup(cleanupLockHelper)
+
+		// Wait for lock to be acquired with timeout
+		lockReady := make(chan error, 1)
+		go func() {
+			reader := bufio.NewReader(stdout)
+			for {
+				line, readErr := reader.ReadString('\n')
+				if readErr != nil {
+					lockReady <- readErr
+					return
+				}
+				if strings.Contains(line, "locked") { // helper has locked the file
+					lockReady <- nil
+					return
+				}
+			}
+		}()
+
+		select {
+		case err := <-lockReady:
+			require.NoError(t, err, "helper failed to acquire lock")
+		case <-time.After(5 * time.Second):
+			require.Fail(t, "timeout waiting for lock to be acquired")
+		}
+
+		_, err = os.OpenFile(filePath, os.O_RDONLY, 0)
+		require.Error(t, err, "file should be locked by helper process")
+	}
+
+	// Perform the sync (which includes removing the snapshot)
+	ctx = predictDstFromLogger(ctx)
+	err := Sync(ctx, r.Fremote, r.Flocal, false)
+
+	// Release the lock immediately after sync so files can be cleaned up
+	if cleanupLockHelper != nil {
+		cleanupLockHelper()
+		time.Sleep(100 * time.Millisecond) // give the helper a moment to release the lock
+	}
+
+	if errors.Is(err, os.ErrPermission) {
+		t.Skip("insufficient permissions to use snapshots")
+	} else if expectErr {
+		require.Error(t, err)
+
+	} else {
+		require.NoError(t, err)
+
+		switch fs.GetConfig(ctx).UseSnapshotMode {
+		case fs.UseSnapshotModeNever:
+			require.Equal(t, snapshots, 0)
+		case fs.UseSnapshotModeAttempt, fs.UseSnapshotModeAlways:
+			require.Equal(t, snapshots, 1)
+		}
+
+		testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
+		r.CheckRemoteItems(t, file1)
+	}
+}
+
+// Helper function that only runs in a separate child process to lock a file for testing purposes
+func TestLockFileHelper(t *testing.T) {
+	if os.Getenv("IS_LOCK_HOLDER") != "1" {
+		return
+	}
+	filePath := os.Getenv("FILE_TO_LOCK")
+	if filePath == "" {
+		return
+	}
+	lockFileExclusive(t, filePath)
+}
+
+// Test syncing files using snapshots
+func TestSyncWithSnapshot(t *testing.T) {
+	// Check for snapshot permission error before continuing
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	createSnap := r.Flocal.Features().CreateSnapshot
+	if createSnap != nil {
+		_, cleanupSnap, err := createSnap(ctx)
+		if errors.Is(err, os.ErrPermission) {
+			t.Skip("insufficient permissions to use snapshots")
+		} else if err == nil {
+			cleanupSnap(ctx)
+		}
+	}
+
+	for _, test := range []struct {
+		name          string
+		mode          fs.UseSnapshotMode
+		useLockedFile bool
+		expectErr     bool
+	}{
+		// regular behavior -- should always pass
+		{name: "No Lock Snapshot Never", mode: fs.UseSnapshotModeNever, expectErr: false},
+		{name: "No Lock Snapshot Attempt", mode: fs.UseSnapshotModeAttempt, expectErr: false},
+		{name: "No Lock Snapshot Always", mode: fs.UseSnapshotModeAlways, expectErr: false},
+
+		// syncing locked files should succeed when using snapshots, but fail without them
+		{name: "Yes Lock Snapshot Never", mode: fs.UseSnapshotModeNever, useLockedFile: true, expectErr: true},
+		{name: "Yes Lock Snapshot Attempt", mode: fs.UseSnapshotModeAttempt, useLockedFile: true, expectErr: false},
+		{name: "Yes Lock Snapshot Always", mode: fs.UseSnapshotModeAlways, useLockedFile: true, expectErr: false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			// Skip locked file tests if VSS isn't available (no admin privileges)
+			// if test.useLockedFile && !vssWorks {
+			// 	t.Skip("VSS snapshots not available (requires admin privileges)")
+			// }
+
+			ctx := context.Background()
+			ctx, ci := fs.AddConfig(ctx)
+			ci.UseSnapshotMode = test.mode
+			ci.DeleteMode = fs.DeleteModeOff
+
+			testSyncWithSnapshot(ctx, t, test.useLockedFile, test.expectErr)
+		})
+	}
+}
+
+// Test that file-by-file Move isn't compatible with snapshot
+func TestMoveWithSnapshot(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	ci.UseSnapshotMode = fs.UseSnapshotModeAlways
+	r := fstest.NewRun(t)
+	file1 := r.WriteFile("potato", "Potato Content", t1)
+	r.CheckLocalItems(t, file1)
+
+	createSnap := r.Flocal.Features().CreateSnapshot
+	if createSnap == nil {
+		t.Skip("snapshots not supported on this platform")
+	}
+	r.Fremote.Features().Disable("DirMove") // force one-by-one file move
+
+	err := MoveDir(ctx, r.Fremote, r.Flocal, false, false)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "snapshot")
+}
+
+// Test that delete-based operations aren't compatible with snapshots
+func TestSyncWithSnapshotsAndDeleteMode(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	ci.UseSnapshotMode = fs.UseSnapshotModeAlways
+	ci.DeleteMode = fs.DeleteModeBefore
+	r := fstest.NewRun(t)
+	file1 := r.WriteFile("potato", "Potato Content", t1)
+	r.CheckLocalItems(t, file1)
+
+	createSnap := r.Flocal.Features().CreateSnapshot
+	if createSnap == nil {
+		t.Skip("snapshots not supported on this platform")
+	}
+
+	err := Sync(ctx, r.Fremote, r.Flocal, false)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "snapshot")
 }
 
 // Test with exclude

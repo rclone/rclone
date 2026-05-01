@@ -863,6 +863,11 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	return err
 }
 
+// CreateSnapshot creates a point-in-time snapshot of a directory, if possible
+func (f *Fs) CreateSnapshot(ctx context.Context) (fs.Fs, func(ctx context.Context) error, error) {
+	return f.createSnapshot(ctx)
+}
+
 // Precision of the file system
 func (f *Fs) Precision() (precision time.Duration) {
 	if f.opt.NoSetModTime {
@@ -1748,18 +1753,19 @@ func (d *Directory) Hash() {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs              = &Fs{}
-	_ fs.PutStreamer     = &Fs{}
-	_ fs.Mover           = &Fs{}
-	_ fs.DirMover        = &Fs{}
-	_ fs.Commander       = &Fs{}
-	_ fs.OpenWriterAter  = &Fs{}
-	_ fs.DirSetModTimer  = &Fs{}
-	_ fs.MkdirMetadataer = &Fs{}
-	_ fs.Object          = &Object{}
-	_ fs.Metadataer      = &Object{}
-	_ fs.SetMetadataer   = &Object{}
-	_ fs.Directory       = &Directory{}
-	_ fs.SetModTimer     = &Directory{}
-	_ fs.SetMetadataer   = &Directory{}
+	_ fs.Fs                = &Fs{}
+	_ fs.PutStreamer       = &Fs{}
+	_ fs.Mover             = &Fs{}
+	_ fs.DirMover          = &Fs{}
+	_ fs.Commander         = &Fs{}
+	_ fs.OpenWriterAter    = &Fs{}
+	_ fs.DirSetModTimer    = &Fs{}
+	_ fs.MkdirMetadataer   = &Fs{}
+	_ fs.CreateSnapshotter = &Fs{}
+	_ fs.Object            = &Object{}
+	_ fs.Metadataer        = &Object{}
+	_ fs.SetMetadataer     = &Object{}
+	_ fs.Directory         = &Directory{}
+	_ fs.SetModTimer       = &Directory{}
+	_ fs.SetMetadataer     = &Directory{}
 )

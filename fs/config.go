@@ -566,6 +566,12 @@ var ConfigOptionsInfo = Options{{
 	Default: "",
 	Help:    "HTTP proxy URL.",
 	Groups:  "Networking",
+},
+{
+	Name:    "use_snapshot",
+	Default: UseSnapshotMode(0),
+	Help:    "When to use backend-specific point-in-time snapshots when copying NEVER|ATTEMPT|ALWAYS",
+	Groups:  "Copy",
 }}
 
 // ConfigInfo is filesystem config options
@@ -680,6 +686,7 @@ type ConfigInfo struct {
 	MaxConnections             int               `config:"max_connections"`
 	NameTransform              []string          `config:"name_transform"`
 	HTTPProxy                  string            `config:"http_proxy"`
+	UseSnapshotMode            UseSnapshotMode   `config:"use_snapshot"`
 }
 
 func init() {
