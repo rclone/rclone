@@ -157,6 +157,9 @@ backends:
  - backend:  "dropbox"
    remote:   "TestDropbox:"
    fastlist: false
+ - backend:  "enteio"
+   remote:   "TestEnteio:"
+   fastlist: false
  # - backend:  "filefabric"
  #   remote:   "TestFileFabric:"
  #   fastlist: false
