@@ -73,7 +73,7 @@ func newMockFs() *mockFs {
 func newMockFile() *file {
 	return &file{
 		File: &smb2.File{},
-		c:    &conn{},
+		c:    &conn{closedOverrideFn: func() bool { return false }},
 	}
 }
 
