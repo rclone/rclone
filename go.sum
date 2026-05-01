@@ -440,8 +440,8 @@ github.com/jcmturner/gokrb5/v8 v8.4.4 h1:x1Sv4HaTpepFkXbt2IkL29DXRf8sOfZXo8eRKh6
 github.com/jcmturner/gokrb5/v8 v8.4.4/go.mod h1:1btQEpgT6k+unzCwX1KdWMEwPPkkgBtP+F6aCACiMrs=
 github.com/jcmturner/rpc/v2 v2.0.3 h1:7FXXj8Ti1IaVFpSAziCZWNzbNuZmnvw/i6CqLNdWfZY=
 github.com/jcmturner/rpc/v2 v2.0.3/go.mod h1:VUJYCIDm3PVOEHw8sgt091/20OJjskO/YJki3ELg/Hc=
-github.com/jlaffaye/ftp v0.2.1-0.20240918233326-1b970516f5d3 h1:ZxO6Qr2GOXPdcW80Mcn3nemvilMPvpWqxrNfK2ZnNNs=
-github.com/jlaffaye/ftp v0.2.1-0.20240918233326-1b970516f5d3/go.mod h1:dvLUr/8Fs9a2OBrEnCC5duphbkz/k/mSy5OkXg3PAgI=
+github.com/jlaffaye/ftp v0.2.1-0.20251026020404-6602e981a1bb h1:6vkM8gO+zFV2m21QzGYyUSq5TP0VQgP2Xz3UQyCN2kI=
+github.com/jlaffaye/ftp v0.2.1-0.20251026020404-6602e981a1bb/go.mod h1:H1+whwD0Qe3YOunlXIWhh3rlvzW5cZfkMDYGQPg+KAM=
 github.com/josephspurrier/goversioninfo v1.5.0 h1:9TJtORoyf4YMoWSOo/cXFN9A/lB3PniJ91OxIH6e7Zg=
 github.com/josephspurrier/goversioninfo v1.5.0/go.mod h1:6MoTvFZ6GKJkzcdLnU5T/RGYUbHQbKpYeNP0AgQLd2o=
 github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=
@@ -594,10 +594,10 @@ github.com/quic-go/quic-go v0.59.0 h1:OLJkp1Mlm/aS7dpKgTc6cnpynnD2Xg7C1pwL6vy/SA
 github.com/quic-go/quic-go v0.59.0/go.mod h1:upnsH4Ju1YkqpLXC305eW3yDZ4NfnNbmQRCMWS58IKU=
 github.com/rasky/go-xdr v0.0.0-20170124162913-1a41d1a06c93 h1:UVArwN/wkKjMVhh2EQGC0tEc1+FqiLlvYXY5mQ2f8Wg=
 github.com/rasky/go-xdr v0.0.0-20170124162913-1a41d1a06c93/go.mod h1:Nfe4efndBz4TibWycNE+lqyJZiMX4ycx+QKV8Ta0f/o=
-github.com/rclone/Proton-API-Bridge v1.0.1-0.20260127174007-77f974840d11 h1:4MI2alxM/Ye2gIRBlYf28JGWTipZ4Zz7yAziPKrttjs=
-github.com/rclone/Proton-API-Bridge v1.0.1-0.20260127174007-77f974840d11/go.mod h1:3HLX7dwZgvB7nt+Yl/xdzVPcargQ1yBmJEUg3n+jMKM=
-github.com/rclone/go-proton-api v1.0.1-0.20260218123427-1a63a293e3a2 h1:QR87vlRq+z0JwJsUteEhsXcSrXGJ2yte5MocMSfajM4=
-github.com/rclone/go-proton-api v1.0.1-0.20260218123427-1a63a293e3a2/go.mod h1:LB2kCEaZMzNn3ocdz+qYfxXmuLxxN0ka62KJd2x53Bc=
+github.com/rclone/Proton-API-Bridge v1.0.1 h1:iLSWfK4SSKRrM1t8DtvMSTUrVOAnkfJ+zdU9hIwgu4s=
+github.com/rclone/Proton-API-Bridge v1.0.1/go.mod h1:26RAest751Ofk+F/d8xtl4UyWXrZvMQwn39U8rm/WKM=
+github.com/rclone/go-proton-api v1.0.1 h1:Nb7E1d0kPpniupBTqvf0JCmAfRdmuQx0IVjfo5T1/jg=
+github.com/rclone/go-proton-api v1.0.1/go.mod h1:LB2kCEaZMzNn3ocdz+qYfxXmuLxxN0ka62KJd2x53Bc=
 github.com/rclone/gofakes3 v0.0.4 h1:LswpC49VY/UJ1zucoL5ktnOEX6lq3qK7e1aFIAfqCbk=
 github.com/rclone/gofakes3 v0.0.4/go.mod h1:j/UoS+2/Mr7xAlfKhyVC58YyFQmh9uoQA5YZQXQUqmg=
 github.com/relvacode/iso8601 v1.7.0 h1:BXy+V60stMP6cpswc+a93Mq3e65PfXCgDFfhvNNGrdo=
