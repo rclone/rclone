@@ -16,7 +16,6 @@ import (
 	"os"
 	"strings"
 	"testing"
-	"time"
 
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/cmd/serve/proxy"
@@ -116,22 +115,6 @@ func TestHTTPFunction(t *testing.T) {
 		assert.NoError(t, w.Shutdown())
 	}()
 	testURL := w.server.URLs()[0]
-	pause := time.Millisecond
-	i := 0
-	for ; i < 10; i++ {
-		resp, err := http.Head(testURL)
-		if err == nil {
-			_ = resp.Body.Close()
-			break
-		}
-		// t.Logf("couldn't connect, sleeping for %v: %v", pause, err)
-		time.Sleep(pause)
-		pause *= 2
-	}
-	if i >= 10 {
-		t.Fatal("couldn't connect to server")
-	}
-
 	HelpTestGET(t, testURL)
 }
 
@@ -291,20 +274,6 @@ func startAuthenticatedServer(t *testing.T) string {
 	})
 
 	testURL := w.server.URLs()[0]
-	pause := time.Millisecond
-	for range 10 {
-		req, err := http.NewRequest("HEAD", testURL, nil)
-		require.NoError(t, err)
-		req.SetBasicAuth(testUser, testPass)
-		resp, err := http.DefaultClient.Do(req)
-		if err == nil {
-			_ = resp.Body.Close()
-			break
-		}
-		time.Sleep(pause)
-		pause *= 2
-	}
-
 	return testURL
 }
 
