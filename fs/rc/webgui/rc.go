@@ -12,10 +12,9 @@ import (
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "pluginsctl/listTestPlugins",
-		AuthRequired: true,
-		Fn:           rcListTestPlugins,
-		Title:        "Show currently loaded test plugins",
+		Path:  "pluginsctl/listTestPlugins",
+		Fn:    rcListTestPlugins,
+		Title: "Show currently loaded test plugins",
 		Help: `Allows listing of test plugins with the rclone.test set to true in package.json of the plugin.
 
 This takes no parameters and returns:
@@ -41,10 +40,9 @@ func rcListTestPlugins(_ context.Context, _ rc.Params) (out rc.Params, err error
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "pluginsctl/removeTestPlugin",
-		AuthRequired: true,
-		Fn:           rcRemoveTestPlugin,
-		Title:        "Remove  a test plugin",
+		Path:  "pluginsctl/removeTestPlugin",
+		Fn:    rcRemoveTestPlugin,
+		Title: "Remove  a test plugin",
 		Help: `This allows you to remove a plugin using it's name.
 
 This takes the following parameters:
@@ -75,10 +73,9 @@ func rcRemoveTestPlugin(_ context.Context, in rc.Params) (out rc.Params, err err
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "pluginsctl/addPlugin",
-		AuthRequired: true,
-		Fn:           rcAddPlugin,
-		Title:        "Add a plugin using url",
+		Path:  "pluginsctl/addPlugin",
+		Fn:    rcAddPlugin,
+		Title: "Add a plugin using url",
 		Help: `Used for adding a plugin to the webgui.
 
 This takes the following parameters:
@@ -185,10 +182,9 @@ func rcAddPlugin(_ context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "pluginsctl/listPlugins",
-		AuthRequired: true,
-		Fn:           rcGetPlugins,
-		Title:        "Get the list of currently loaded plugins",
+		Path:  "pluginsctl/listPlugins",
+		Fn:    rcGetPlugins,
+		Title: "Get the list of currently loaded plugins",
 		Help: `This allows you to get the currently enabled plugins and their details.
 
 This takes no parameters and returns:
@@ -220,10 +216,9 @@ func rcGetPlugins(_ context.Context, _ rc.Params) (out rc.Params, err error) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "pluginsctl/removePlugin",
-		AuthRequired: true,
-		Fn:           rcRemovePlugin,
-		Title:        "Remove a loaded plugin",
+		Path:  "pluginsctl/removePlugin",
+		Fn:    rcRemovePlugin,
+		Title: "Remove a loaded plugin",
 		Help: `This allows you to remove a plugin using it's name.
 
 This takes parameters:
@@ -256,10 +251,9 @@ func rcRemovePlugin(_ context.Context, in rc.Params) (out rc.Params, err error) 
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "pluginsctl/getPluginsForType",
-		AuthRequired: true,
-		Fn:           rcGetPluginsForType,
-		Title:        "Get plugins with type criteria",
+		Path:  "pluginsctl/getPluginsForType",
+		Fn:    rcGetPluginsForType,
+		Title: "Get plugins with type criteria",
 		Help: `This shows all possible plugins by a mime type.
 
 This takes the following parameters:

@@ -183,7 +183,12 @@ func newFile(ctx context.Context, obj fs.Object, fi stdfs.FileInfo) (stdfs.File,
 		return nil, f.err
 	}
 	// Account the transfer
-	f.reader = f.transfer.Account(ctx, f.reader)
+	acc := f.transfer.Account(ctx, f.reader)
+	h, err := acc.WithReadAtSeeker()
+	if err != nil {
+		return nil, err
+	}
+	f.reader = h
 
 	return f, f.err
 }

@@ -59,6 +59,7 @@ See the following for detailed instructions for
 - [Hetzner Storage Box](/sftp/#hetzner-storage-box)
 - [HiDrive](/hidrive/)
 - [HTTP](/http/)
+- [Huawei Drive](/huaweidrive/)
 - [iCloud Drive](/iclouddrive/)
 - [Internet Archive](/internetarchive/)
 - [Internxt](/internxt/)
@@ -3285,6 +3286,10 @@ The available flags are:
 - `mapper` dumps the JSON blobs being sent to the program supplied with
   `--metadata-mapper` and received from it. It can be useful for debugging
   the metadata mapper interface.
+- `curl` dumps the HTTP request as a `curl` command. Can be used with
+  the other HTTP debugging flags (e.g. `requests`, `bodies`). By
+  default the auth will be masked - use with `auth` to have the curl
+  commands with authentication too.
 
 ## Filtering
 

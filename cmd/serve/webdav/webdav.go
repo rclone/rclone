@@ -263,7 +263,7 @@ func newWebDAV(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		// override auth
 		w.opt.Auth.CustomAuthFn = w.auth
 	} else {
-		w._vfs = vfs.New(f, vfsOpt)
+		w._vfs = vfs.New(ctx, f, vfsOpt)
 	}
 
 	w.server, err = libhttp.NewServer(ctx,

@@ -54,7 +54,7 @@ none for no resync.)
 - slowHashSyncOnly - (bool) Ignore slow checksums for listings and deltas, but
 still consider them during sync calls.  
 - workdir - (string) Use custom working dir - useful for testing. (default:
-~/.cache/rclone/bisync)  
+/home/ncw/.cache/rclone/bisync)  
 
 See [bisync command help](https://rclone.org/commands/rclone_bisync/)
 and [full bisync description](https://rclone.org/bisync/)
