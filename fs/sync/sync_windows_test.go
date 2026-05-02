@@ -24,6 +24,11 @@ import (
 func createExclusiveFileLock(t *testing.T, filePath string) func() {
 	// Re-exec the same binary
 	lockCmd := exec.Command(os.Args[0], "-test.run=^TestFileLockHelper$", "-test.v")
+	for _, e := range os.Environ() {
+		if strings.HasPrefix(e, "IS_LOCK_HOLDER=") || strings.HasPrefix(e, "FILE_TO_LOCK=") {
+			t.Fatalf("Environment variable %q should not be set in parent process", e)
+		}
+	}
 	lockCmd.Env = append(os.Environ(), "IS_LOCK_HOLDER=1", "FILE_TO_LOCK="+filePath)
 
 	// Set up pipes and buffers for communicating with the helper proc
@@ -62,12 +67,8 @@ func createExclusiveFileLock(t *testing.T, filePath string) func() {
 
 			t.Log("lock should have been released")
 			// Make sure the file is actually accessible again
-			f, err := os.OpenFile(filePath, os.O_RDONLY, 0)
+			err := os.Rename(filePath, filePath)
 			assert.NoError(t, err, "file should not be locked by helper process anymore")
-			if f != nil {
-				err = f.Close()
-				assert.NoError(t, err, "closing file handle for now-unlocked file")
-			}
 		})
 	}
 	// Run cleanup in case of failure, even if it's already called manually later
@@ -79,14 +80,9 @@ func createExclusiveFileLock(t *testing.T, filePath string) func() {
 	t.Log("lock should be acquired...")
 
 	// Make sure the file is actually locked and the helper process is still alive
-	f, err := os.OpenFile(filePath, os.O_RDONLY, 0)
+	err = os.Rename(filePath, filePath)
 	assert.Error(t, err, "file should be locked by helper process")
 	assert.Nil(t, lockCmd.ProcessState, "lock helper process should still be running")
-	if f != nil {
-		// This shouldn't be run because we expect the file to fail opening
-		err = f.Close()
-		assert.NoError(t, err, "closing file handle for locked file")
-	}
 
 	return cleanupLockHelper
 }
@@ -110,7 +106,7 @@ func awaitChildOutput(t *testing.T, stdoutReader *bufio.Reader, signal string) {
 				}
 				return
 			}
-			if strings.TrimRight(line, "\n") == signal { // helper has sent the signal string
+			if strings.TrimSpace(line) == signal { // helper has sent the signal string
 				outputChan <- nil
 				return
 			}
@@ -124,7 +120,7 @@ func awaitChildOutput(t *testing.T, stdoutReader *bufio.Reader, signal string) {
 	case <-time.After(3 * time.Second):
 		t.Fatalf("timeout waiting for file locking process to send signal %q", signal)
 	}
-	time.Sleep(1 * time.Second) // make sure its done
+	// time.Sleep(1 * time.Second) // make sure its done //todo(maxgreen01) remove
 }
 
 // Helper function that only runs in a separate child process to hold an exclusive lock on a file until signaled to release it
