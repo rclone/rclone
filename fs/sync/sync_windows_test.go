@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+	"sync"
 	"syscall"
 	"testing"
 	"time"
@@ -25,7 +26,7 @@ func createExclusiveFileLock(t *testing.T, filePath string) func() {
 	lockCmd := exec.Command(os.Args[0], "-test.run=^TestFileLockHelper$", "-test.v")
 	lockCmd.Env = append(os.Environ(), "IS_LOCK_HOLDER=1", "FILE_TO_LOCK="+filePath)
 
-	// Set up pipes for communicating with the helper proc
+	// Set up pipes and buffers for communicating with the helper proc
 	stdout, err := lockCmd.StdoutPipe()
 	require.NoError(t, err, "failed to create helper stdout pipe")
 	stdoutReader := bufio.NewReader(stdout)
@@ -34,30 +35,36 @@ func createExclusiveFileLock(t *testing.T, filePath string) func() {
 
 	err = lockCmd.Start()
 	require.NoError(t, err, "failed to start lock holder process")
+
+	var once sync.Once
 	cleanupLockHelper := func() {
-		// Signal to the helper to release the lock
-		if lockStdin != nil {
-			_, _ = lockStdin.Write([]byte("release\n"))
-			_ = lockStdin.Close()
-			lockStdin = nil // don't try to clean up twice
-		}
+		once.Do(func() {
+			// Signal to the helper to release the lock and exit
+			if lockStdin != nil {
+				_, _ = lockStdin.Write([]byte("release\n"))
+				_ = lockStdin.Close()
+			}
 
-		// Wait for the helper to signal that it has released the lock
-		// todo(maxgreen) comment out these logs
-		t.Log("Waiting for file lock to be released...")
-		awaitChildOutput(t, stdoutReader, "finished")
-		stdoutReader = nil // don't try to clean up twice
+			// Wait for the helper to signal that it has released the lock
+			// todo(maxgreen) comment out these logs
+			t.Log("Waiting for file lock to be released...")
+			awaitChildOutput(t, stdoutReader, "finished")
 
-		// Wait for the helper process to exit
-		if lockCmd != nil && lockCmd.Process != nil {
-			_ = lockCmd.Wait()
-			lockCmd = nil // don't try to clean up twice
-		}
+			// Wait for the helper process to exit
+			err = lockCmd.Wait()
+			if err != nil {
+				if exitErr, ok := err.(*exec.ExitError); ok {
+					assert.Failf(t, "lock helper process exited with error: %s", string(exitErr.Stderr))
+				} else {
+					assert.Fail(t, "lock helper process should exit cleanly")
+				}
+			}
 
-		t.Log("lock should have been released")
-		// Make sure the file is actually accessible again
-		_, err = os.OpenFile(filePath, os.O_RDONLY, 0)
-		assert.NoError(t, err, "file should not be locked by helper process anymore")
+			t.Log("lock should have been released")
+			// Make sure the file is actually accessible again
+			_, err = os.OpenFile(filePath, os.O_RDONLY, 0)
+			assert.NoError(t, err, "file should not be locked by helper process anymore")
+		})
 	}
 	// Run cleanup in case of failure, even if it's already called manually later
 	t.Cleanup(cleanupLockHelper)
@@ -67,9 +74,10 @@ func createExclusiveFileLock(t *testing.T, filePath string) func() {
 	awaitChildOutput(t, stdoutReader, "locked")
 	t.Log("lock should be acquired...")
 
-	// Make sure the file is actually locked
+	// Make sure the file is actually locked and the helper process is still alive
 	_, err = os.OpenFile(filePath, os.O_RDONLY, 0)
 	assert.Error(t, err, "file should be locked by helper process")
+	assert.Nil(t, lockCmd.ProcessState, "lock helper process should still be running")
 
 	return cleanupLockHelper
 }
@@ -93,7 +101,7 @@ func awaitChildOutput(t *testing.T, stdoutReader *bufio.Reader, signal string) {
 				}
 				return
 			}
-			if strings.Contains(line, signal) { // helper has sent the signal string
+			if strings.TrimRight(line, "\n") == signal { // helper has sent the signal string
 				outputChan <- nil
 				return
 			}
@@ -114,7 +122,7 @@ func awaitChildOutput(t *testing.T, stdoutReader *bufio.Reader, signal string) {
 func holdExclusiveFileLock(t *testing.T, filePath string) {
 	t.Helper()
 	if runtime.GOOS != "windows" {
-		fmt.Fprint(os.Stderr, "Exclusive file locking is only supported on Windows")
+		fmt.Fprintln(os.Stderr, "Exclusive file locking is only supported on Windows")
 		os.Exit(1)
 	}
 
@@ -150,6 +158,7 @@ func holdExclusiveFileLock(t *testing.T, filePath string) {
 	// Release the lock and exit
 	if err := syscall.CloseHandle(handle); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while releasing file lock: %v\n", err)
+		os.Exit(1)
 	}
 	fmt.Println("finished") // signal to the parent that lock is released
 }
