@@ -1406,21 +1406,32 @@ func testSyncWithSnapshot(ctx context.Context, t *testing.T, useLockedFile, expe
 	if useLockedFile {
 		filePath := filepath.Join(r.LocalName, file1.Path)
 		cleanupLockHelper = createExclusiveFileLock(t, filePath)
+		
 	}
-
+	
+	
 	// Perform the sync (which includes removing the snapshot)
 	ctx = predictDstFromLogger(ctx)
+	
+	if useLockedFile {
+		// todo(maxgreen01) remove
+		filePath := filepath.Join(r.LocalName, file1.Path)
+		err := os.Rename(filePath, filePath)
+		assert.Error(t, err, "file should not be locked by helper process anymore")
+	}
+	ci := fs.GetConfig(ctx)
+	t.Logf("config: snap=%v delete=%v", ci.UseSnapshotMode, ci.DeleteMode)
+	t.Logf("config: %+v", ci)
+
 	err := Sync(ctx, r.Fremote, r.Flocal, false)
 
 	if errors.Is(err, os.ErrPermission) {
 		t.Skip("insufficient permissions to use snapshots")
+		
 	} else if expectErr {
 		assert.Error(t, err)
 		assert.Equal(t, snapshots, 0)
-		// todo(maxgreen01) remove
-		filePath := filepath.Join(r.LocalName, file1.Path)
-		err := os.Rename(filePath, filePath) 
-		assert.Error(t, err, "file should not be locked by helper process anymore")
+		r.CheckRemoteItems(t)
 
 	} else {
 		assert.NoError(t, err)
