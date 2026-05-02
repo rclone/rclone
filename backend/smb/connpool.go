@@ -69,7 +69,22 @@ func (f *Fs) dial(ctx context.Context, network, addr string) (*conn, error) {
 	return &conn{
 		smbSession: session,
 		conn:       &tconn,
+		closeder:   &sessionCloseder{session: session},
 	}, nil
+}
+
+// closeder checks whether a connection is still alive.
+type closeder interface {
+	closed() bool
+}
+
+// sessionCloseder checks liveness by sending an SMB Echo request.
+type sessionCloseder struct {
+	session *smb2.Session
+}
+
+func (s *sessionCloseder) closed() bool {
+	return s.session.Echo() != nil
 }
 
 // conn encapsulates a SMB client and corresponding SMB client
@@ -79,10 +94,7 @@ type conn struct {
 	smbShare   *smb2.Share
 	shareName  string
 	pooledAt   time.Time // when this connection was returned to the pool
-
-	// closedOverrideFn overrides the default liveness check (Echo) when set.
-	// Used only in tests.
-	closedOverrideFn func() bool
+	closeder   closeder  // liveness checker; defaults to smbSession Echo
 }
 
 // Closes the connection
@@ -90,22 +102,16 @@ func (c *conn) close() (err error) {
 	if c.smbShare != nil {
 		err = c.smbShare.Umount()
 	}
-	if c.smbSession != nil {
-		sessionLogoffErr := c.smbSession.Logoff()
-		if err != nil {
-			return err
-		}
-		return sessionLogoffErr
+	sessionLogoffErr := c.smbSession.Logoff()
+	if err != nil {
+		return err
 	}
-	return err
+	return sessionLogoffErr
 }
 
 // True if it's closed
 func (c *conn) closed() bool {
-	if c.closedOverrideFn != nil {
-		return c.closedOverrideFn()
-	}
-	return c.smbSession.Echo() != nil
+	return c.closeder.closed()
 }
 
 // Show that we are using a SMB session
@@ -173,19 +179,6 @@ func (f *Fs) getConnection(ctx context.Context, share string) (c *conn, err erro
 	for len(f.pool) > 0 {
 		c = f.pool[0]
 		f.pool = f.pool[1:]
-		// Connections that have been idle in the pool for a long time
-		// may have died (TCP deadline expired). Check liveness via Echo
-		// before reuse, but only if the connection has been pooled long
-		// enough to be at risk — skip the check for recently pooled
-		// connections to avoid a needless network round-trip.
-		if !c.pooledAt.IsZero() && time.Since(c.pooledAt) > time.Duration(f.opt.IdleTimeout) {
-			if c.closed() {
-				fs.Debugf(f, "Discarding dead pooled SMB connection")
-				_ = c.close()
-				c = nil
-				continue
-			}
-		}
 		err = c.mountShare(share)
 		if err == nil {
 			break
@@ -195,6 +188,14 @@ func (f *Fs) getConnection(ctx context.Context, share string) (c *conn, err erro
 	}
 	f.poolMu.Unlock()
 	if c != nil {
+		// Connections that have been idle in the pool for a long time
+		// may have died (TCP deadline expired). Check liveness via Echo
+		// outside the mutex to avoid serializing concurrent callers
+		// behind a network round-trip. If dead, discard and try again.
+		if !c.pooledAt.IsZero() && time.Since(c.pooledAt) > time.Duration(f.opt.IdleTimeout) && c.closed() {
+			fs.Debugf(f, "Discarding dead pooled SMB connection")
+			return f.getConnection(ctx, share)
+		}
 		return c, nil
 	}
 	err = f.pacer.Call(func() (bool, error) {
@@ -226,8 +227,7 @@ func (f *Fs) putConnection(pc **conn, err error) {
 		// If not a regular SMB error then check the connection
 		if !(errors.Is(err, os.ErrNotExist) || errors.Is(err, os.ErrExist) || errors.Is(err, os.ErrPermission)) {
 			if c.closed() {
-				fs.Debugf(f, "Connection failed, closing: %v", err)
-				_ = c.close()
+				fs.Debugf(f, "Connection failed, discarding: %v", err)
 				return
 			}
 			fs.Debugf(f, "Connection OK after error: %v", err)
