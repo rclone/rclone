@@ -151,6 +151,28 @@ func (f *Fs) Precision() time.Duration {
 	return time.Second
 }
 
+// UserInfo returns info about the connected user
+func (f *Fs) UserInfo(ctx context.Context) (map[string]string, error) {
+	var result api.UserInfo
+	err := f.apiGet(ctx, "/sapi/profile?action=get", &result)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user info: %w", err)
+	}
+	g := result.User.Generic
+	info := map[string]string{
+		"FirstName": g.FirstName,
+		"LastName":  g.LastName,
+		"Email":     g.Email,
+		"UserID":    g.UserID,
+		"Timezone":  g.Timezone,
+		"Active":    strconv.FormatBool(g.Active),
+	}
+	if len(result.User.Phones) > 0 {
+		info["PhoneNumber"] = result.User.Phones[0].PhoneNumber
+	}
+	return info, nil
+}
+
 // parsePath parses a path string
 func parsePath(path string) (root string) {
 	root = strings.Trim(path, "/")

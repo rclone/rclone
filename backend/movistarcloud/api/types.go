@@ -279,6 +279,7 @@ type UserInfo struct {
 // UserDetails contains user information
 type UserDetails struct {
 	Generic UserGeneric `json:"generic"`
+	Phones  []UserPhone `json:"phones"`
 }
 
 // UserGeneric contains generic user fields
@@ -289,6 +290,13 @@ type UserGeneric struct {
 	Timezone  string `json:"timezone"`
 	Active    bool   `json:"active"`
 	UserID    string `json:"userid"`
+}
+
+// UserPhone contains a phone associated with the user
+type UserPhone struct {
+	PhoneNumber string `json:"phonenumber"`
+	CountryA2   string `json:"countrya2"`
+	Active      bool   `json:"active"`
 }
 
 // LoginStartResponse is the response for initiating login
