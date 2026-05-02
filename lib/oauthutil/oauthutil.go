@@ -624,7 +624,7 @@ func ConfigOAuth(ctx context.Context, name string, m configmap.Mapper, ri *fs.Re
 		// See if already have a token
 		tokenString, ok := m.Get("token")
 		if ok && tokenString != "" {
-			return fs.ConfigConfirm(newState("*oauth-confirm"), true, "config_refresh_token", "Already have a token - refresh?")
+			return fs.ConfigConfirm(newState("*oauth-confirm"), true, "config_refresh_token", "Token already configured - replace it?")
 		}
 		return fs.ConfigGoto(newState("*oauth-confirm"))
 	case "*oauth-confirm":
