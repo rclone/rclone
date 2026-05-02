@@ -1406,28 +1406,29 @@ func testSyncWithSnapshot(ctx context.Context, t *testing.T, useLockedFile, expe
 	if useLockedFile {
 		filePath := filepath.Join(r.LocalName, file1.Path)
 		cleanupLockHelper = createExclusiveFileLock(t, filePath)
-		
 	}
-	
-	
+
 	// Perform the sync (which includes removing the snapshot)
 	ctx = predictDstFromLogger(ctx)
-	
+
 	if useLockedFile {
 		// todo(maxgreen01) remove
+		t.Log("making sure the file is still locked...")
 		filePath := filepath.Join(r.LocalName, file1.Path)
 		err := os.Rename(filePath, filePath)
 		assert.Error(t, err, "file should not be locked by helper process anymore")
 	}
-	ci := fs.GetConfig(ctx)
-	t.Logf("config: snap=%v delete=%v", ci.UseSnapshotMode, ci.DeleteMode)
-	t.Logf("config: %+v", ci)
 
 	err := Sync(ctx, r.Fremote, r.Flocal, false)
 
+	// Release the lock immediately after sync so files can be cleaned up
+	if cleanupLockHelper != nil {
+		cleanupLockHelper()
+	}
+
 	if errors.Is(err, os.ErrPermission) {
 		t.Skip("insufficient permissions to use snapshots")
-		
+
 	} else if expectErr {
 		assert.Error(t, err)
 		assert.Equal(t, snapshots, 0)
@@ -1447,11 +1448,6 @@ func testSyncWithSnapshot(ctx context.Context, t *testing.T, useLockedFile, expe
 		r.CheckRemoteItems(t, file1)
 	}
 
-	// todo(maxgreen01) move back up
-	// Release the lock immediately after sync so files can be cleaned up
-	if cleanupLockHelper != nil {
-		cleanupLockHelper()
-	}
 }
 
 // Entry point only used in starting a separate child process to lock a file for testing purposes

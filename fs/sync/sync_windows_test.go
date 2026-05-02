@@ -44,6 +44,13 @@ func createExclusiveFileLock(t *testing.T, filePath string) func() {
 	var once sync.Once
 	cleanupLockHelper := func() {
 		once.Do(func() {
+			// todo(maxgreen01) remove
+			// check if the helper terminated unexpectedly before we signal??
+			if lockCmd.ProcessState != nil && lockCmd.ProcessState.Exited() {
+				assert.Fail(t, "lock helper process should still be running when cleanup is called")
+				return
+			}
+			
 			// Signal to the helper to release the lock and exit
 			if lockStdin != nil {
 				_, _ = lockStdin.Write([]byte("release\n"))
