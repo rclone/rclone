@@ -196,7 +196,7 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 	}
 
 	if b.critical {
-		if b.retryable && b.opt.Resilient {
+		if b.retryable && b.opt.Resilient && !b.opt.Resync {
 			fs.Errorf(nil, Color(terminal.RedFg, "Bisync critical error: %v"), err)
 			fs.Error(nil, Color(terminal.YellowFg, "Bisync aborted. Error is retryable without --resync due to --resilient mode."))
 		} else {
