@@ -23,6 +23,9 @@ Result can be filtered by a filter argument which applies to all attributes,
 and/or filter flags specific for each attribute. The values must be specified
 according to regular rclone filtering pattern syntax.
 
+By default filtering uses non-anchored matching, so `--type box` also
+matches `dropbox`. Use `--exact` to match complete values only.
+
 ```
 rclone listremotes [<filter>] [flags]
 ```
@@ -31,6 +34,7 @@ rclone listremotes [<filter>] [flags]
 
 ```
       --description string   Filter remotes by description
+      --exact                Match filter strings exactly instead of using non-anchored glob matching
   -h, --help                 help for listremotes
       --json                 Format output as JSON
       --long                 Show type and description in addition to name

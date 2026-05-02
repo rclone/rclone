@@ -31,6 +31,10 @@ time instead of the current time. Times may be specified as one of:
 Note that value of `--timestamp` is in UTC. If you want local time
 then add the `--localtime` flag.
 
+Metadata can be added when creating a new file with `--metadata-set`.
+For example:
+  rclone touch remote:path -M --metadata-set key=value
+
 ```
 rclone touch remote:path [flags]
 ```

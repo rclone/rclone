@@ -77,9 +77,9 @@ type Listing struct {
 	Data        []Item `json:"data"`
 	From        int    `json:"from"`
 	LastPage    int    `json:"last_page"`
-	NextPage    int    `json:"next_page"`
+	NextPageURL string `json:"next_page_url"`
 	PerPage     int    `json:"per_page"`
-	PrevPage    int    `json:"prev_page"`
+	PrevPageURL string `json:"prev_page_url"`
 	To          int    `json:"to"`
 	Total       int    `json:"total"`
 }
