@@ -845,6 +845,22 @@ Properties:
 - Type:        int
 - Default:     512
 
+#### --azureblob-copy-total-concurrency
+
+Global concurrency limit for multipart copy chunks.
+
+This limits the total number of multipart copy chunks running at once
+across all files.
+
+Set to 0 to disable this limiter.
+
+Properties:
+
+- Config:      copy_total_concurrency
+- Env Var:     RCLONE_AZUREBLOB_COPY_TOTAL_CONCURRENCY
+- Type:        int
+- Default:     0
+
 #### --azureblob-use-copy-blob
 
 Whether to use the Copy Blob API when copying to the same storage account.
@@ -1062,6 +1078,25 @@ Properties:
     - Specify 'include' to remove the root blob and all its snapshots
   - "only"
     - Specify 'only' to remove only the snapshots but keep the root blob.
+
+#### --azureblob-decompress
+
+If set this will decompress gzip encoded objects.
+
+It is possible to upload objects to Azure Blob Storage with "Content-Encoding: gzip"
+set. Normally rclone will download these files as compressed objects.
+
+If this flag is set then rclone will decompress these files with
+"Content-Encoding: gzip" as they are received. This means that rclone
+can't check the size and hash but the file contents will be decompressed.
+
+
+Properties:
+
+- Config:      decompress
+- Env Var:     RCLONE_AZUREBLOB_DECOMPRESS
+- Type:        bool
+- Default:     false
 
 #### --azureblob-description
 

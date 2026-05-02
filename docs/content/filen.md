@@ -124,7 +124,7 @@ Properties:
 
 #### --filen-api-key
 
-API Key for your Filen account 
+API Key for your Filen account
 
 Get this using the Filen CLI export-api-key command
 You can download the Filen CLI from https://github.com/FilenCloudDienste/filen-cli

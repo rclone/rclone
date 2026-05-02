@@ -44,6 +44,13 @@ func md5sum(t *testing.T, s string) string {
 }
 
 func (f *Fs) InternalTestMetadata(t *testing.T) {
+	// Impossible Cloud silently drops cache-control,
+	// content-disposition, content-encoding and content-language
+	// system metadata on retrieval (and thus also breaks the
+	// Content-Encoding response header that --s3-decompress relies on).
+	if f.opt.Provider == "ImpossibleCloud" {
+		t.Skip("Impossible Cloud does not preserve all S3 system metadata")
+	}
 	ctx := context.Background()
 	original := random.String(1000)
 	contents := gz(t, original)
