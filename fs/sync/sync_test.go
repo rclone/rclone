@@ -1412,32 +1412,38 @@ func testSyncWithSnapshot(ctx context.Context, t *testing.T, useLockedFile, expe
 	ctx = predictDstFromLogger(ctx)
 	err := Sync(ctx, r.Fremote, r.Flocal, false)
 
-	// Release the lock immediately after sync so files can be cleaned up
-	if cleanupLockHelper != nil {
-		cleanupLockHelper()
-	}
-
 	if errors.Is(err, os.ErrPermission) {
 		t.Skip("insufficient permissions to use snapshots")
 	} else if expectErr {
-		require.Error(t, err)
+		assert.Error(t, err)
+		assert.Equal(t, snapshots, 0)
+		// todo(maxgreen01) remove
+		filePath := filepath.Join(r.LocalName, file1.Path)
+		err := os.Rename(filePath, filePath) 
+		assert.Error(t, err, "file should not be locked by helper process anymore")
 
 	} else {
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
 		switch fs.GetConfig(ctx).UseSnapshotMode {
 		case fs.UseSnapshotModeNever:
-			require.Equal(t, snapshots, 0)
+			assert.Equal(t, snapshots, 0)
 		case fs.UseSnapshotModeAttempt, fs.UseSnapshotModeAlways:
-			require.Equal(t, snapshots, 1)
+			assert.Equal(t, snapshots, 1)
 		}
 
 		testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
 		r.CheckRemoteItems(t, file1)
 	}
+
+	// todo(maxgreen01) move back up
+	// Release the lock immediately after sync so files can be cleaned up
+	if cleanupLockHelper != nil {
+		cleanupLockHelper()
+	}
 }
 
-// Helper function that only runs in a separate child process to lock a file for testing purposes
+// Entry point only used in starting a separate child process to lock a file for testing purposes
 func TestFileLockHelper(t *testing.T) {
 	if os.Getenv("IS_LOCK_HOLDER") != "1" {
 		return
