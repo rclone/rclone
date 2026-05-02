@@ -2989,7 +2989,11 @@ snapshot creation fails.
 `ALWAYS` always creates snapshots, and ends the operation if snapshot creation
 fails.
 
-On Windows, rclone uses [VSS](https://learn.microsoft.com/en-us/windows-server/storage/file-server/volume-shadow-copy-service) to create and manage snapshots. This option serves as a replacement for [using rclone with an external script](https://github.com/rclone/rclone/wiki/How-to-enable-VSS-for-rclone) to achieve the same behavior. To use VSS, rclone must be run with administrator privileges.
+On Windows, rclone uses [VSS](https://learn.microsoft.com/en-us/windows-server/storage/file-server/volume-shadow-copy-service)
+to create and manage snapshots. This option serves as a replacement for
+[using rclone with an external script](https://github.com/rclone/rclone/wiki/How-to-enable-VSS-for-rclone)
+to achieve the same behavior. To use VSS, rclone must be run with administrator
+privileges.
 
 Other platforms are not currently supported.
 

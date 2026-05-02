@@ -47,11 +47,17 @@ func createExclusiveFileLock(t *testing.T, filePath string) func() {
 			_ = lockCmd.Wait()
 			lockCmd = nil // don't try to clean up twice
 		}
+
+		t.Log("lock should have been released")
+		// Make sure the file is actually accessible again
+		_, err = os.OpenFile(filePath, os.O_RDONLY, 0)
+		require.NoError(t, err, "file should not be locked by helper process anymore")
 	}
 
 	// Wait for lock to be acquired with timeout
 	t.Log("Waiting for file lock to be acquired...")
 	awaitChildOutput(t, stdout, "locked")
+	t.Log("lock should be acquired...")
 
 	// Make sure the file is actually locked
 	_, err = os.OpenFile(filePath, os.O_RDONLY, 0)
@@ -66,6 +72,7 @@ func awaitChildOutput(t *testing.T, stdout io.Reader, signal string) {
 	if stdout == nil {
 		return
 	}
+	// Receive the signal from a separate goroutine
 	outputChan := make(chan error, 1)
 	go func() {
 		reader := bufio.NewReader(stdout)
@@ -86,12 +93,14 @@ func awaitChildOutput(t *testing.T, stdout io.Reader, signal string) {
 		}
 	}()
 
+	// Wait for the signal
 	select {
 	case err := <-outputChan:
 		require.NoError(t, err)
 	case <-time.After(3 * time.Second):
 		t.Fatalf("timeout waiting for file locking process to send signal %q", signal)
 	}
+	time.Sleep(1 * time.Second) // make sure its done
 }
 
 // Helper function that only runs in a separate child process to hold an exclusive lock on a file until signaled to release it
