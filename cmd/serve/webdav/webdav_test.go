@@ -266,7 +266,12 @@ func HelpTestGET(t *testing.T, testURL string) {
 	}
 }
 
-func TestCompressedTextFile(t *testing.T) {
+// startAuthenticatedServer creates a webdav server with basic auth against
+// the test files directory, starts it, waits for it to be ready, and returns
+// the base URL. It registers cleanup to shut the server down.
+func startAuthenticatedServer(t *testing.T) string {
+	t.Helper()
+
 	f, err := fs.NewFs(context.Background(), "../http/testdata/files")
 	require.NoError(t, err)
 
@@ -281,9 +286,9 @@ func TestCompressedTextFile(t *testing.T) {
 	go func() {
 		require.NoError(t, w.Serve())
 	}()
-	defer func() {
+	t.Cleanup(func() {
 		assert.NoError(t, w.Shutdown())
-	}()
+	})
 
 	testURL := w.server.URLs()[0]
 	pause := time.Millisecond
@@ -299,6 +304,12 @@ func TestCompressedTextFile(t *testing.T) {
 		time.Sleep(pause)
 		pause *= 2
 	}
+
+	return testURL
+}
+
+func TestCompressedTextFile(t *testing.T) {
+	testURL := startAuthenticatedServer(t)
 
 	req, err := http.NewRequest("GET", testURL+"two.txt", nil)
 	require.NoError(t, err)
@@ -322,38 +333,7 @@ func TestCompressedTextFile(t *testing.T) {
 }
 
 func TestCompressedPROPFIND(t *testing.T) {
-	f, err := fs.NewFs(context.Background(), "../http/testdata/files")
-	require.NoError(t, err)
-
-	opt := Opt
-	opt.HTTP.ListenAddr = []string{testBindAddress}
-	opt.Template.Path = testTemplate
-	opt.Auth.BasicUser = testUser
-	opt.Auth.BasicPass = testPass
-
-	w, err := newWebDAV(context.Background(), f, &opt, &vfscommon.Opt, &proxy.Opt)
-	require.NoError(t, err)
-	go func() {
-		require.NoError(t, w.Serve())
-	}()
-	defer func() {
-		assert.NoError(t, w.Shutdown())
-	}()
-
-	testURL := w.server.URLs()[0]
-	pause := time.Millisecond
-	for range 10 {
-		req, err := http.NewRequest("HEAD", testURL, nil)
-		require.NoError(t, err)
-		req.SetBasicAuth(testUser, testPass)
-		resp, err := http.DefaultClient.Do(req)
-		if err == nil {
-			_ = resp.Body.Close()
-			break
-		}
-		time.Sleep(pause)
-		pause *= 2
-	}
+	testURL := startAuthenticatedServer(t)
 
 	req, err := http.NewRequest("PROPFIND", testURL, nil)
 	require.NoError(t, err)
@@ -378,38 +358,7 @@ func TestCompressedPROPFIND(t *testing.T) {
 }
 
 func TestRangeRequestNotCompressed(t *testing.T) {
-	f, err := fs.NewFs(context.Background(), "../http/testdata/files")
-	require.NoError(t, err)
-
-	opt := Opt
-	opt.HTTP.ListenAddr = []string{testBindAddress}
-	opt.Template.Path = testTemplate
-	opt.Auth.BasicUser = testUser
-	opt.Auth.BasicPass = testPass
-
-	w, err := newWebDAV(context.Background(), f, &opt, &vfscommon.Opt, &proxy.Opt)
-	require.NoError(t, err)
-	go func() {
-		require.NoError(t, w.Serve())
-	}()
-	defer func() {
-		assert.NoError(t, w.Shutdown())
-	}()
-
-	testURL := w.server.URLs()[0]
-	pause := time.Millisecond
-	for range 10 {
-		req, err := http.NewRequest("HEAD", testURL, nil)
-		require.NoError(t, err)
-		req.SetBasicAuth(testUser, testPass)
-		resp, err := http.DefaultClient.Do(req)
-		if err == nil {
-			_ = resp.Body.Close()
-			break
-		}
-		time.Sleep(pause)
-		pause *= 2
-	}
+	testURL := startAuthenticatedServer(t)
 
 	req, err := http.NewRequest("GET", testURL+"two.txt", nil)
 	require.NoError(t, err)
