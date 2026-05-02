@@ -20,7 +20,8 @@ type FsInterface interface {
 
 type file struct {
 	*smb2.File
-	c *conn
+	c        *conn
+	closeder closeder // liveness checker; normally c itself, overridable in tests
 }
 
 type filePool struct {
@@ -45,8 +46,11 @@ func newFilePool(ctx context.Context, fs FsInterface, share, path string) *fileP
 func (p *filePool) get() (*file, error) {
 	p.mu.Lock()
 	if len(p.pool) > 0 {
-		f := p.pool[len(p.pool)-1]
-		p.pool = p.pool[:len(p.pool)-1]
+		// FIFO order: take the oldest connection so that all pooled
+		// connections get used in rotation and none sit idle long
+		// enough for the TCP deadline (--timeout) to expire.
+		f := p.pool[0]
+		p.pool = p.pool[1:]
 		p.mu.Unlock()
 		return f, nil
 	}
@@ -63,7 +67,7 @@ func (p *filePool) get() (*file, error) {
 		return nil, fmt.Errorf("failed to open: %w", err)
 	}
 
-	return &file{File: fl, c: c}, nil
+	return &file{File: fl, c: c, closeder: c}, nil
 }
 
 func (p *filePool) put(f *file, err error) {
@@ -100,9 +104,8 @@ func (p *filePool) drain() error {
 			//
 			// If the connection is dead, skip the Close — the server
 			// will clean up the file handle when the TCP session ends.
-			if f.c != nil && f.c.closed() {
+			if f.closeder.closed() {
 				fs.Debugf(nil, "Skipping close on dead connection for %s", p.path)
-				p.fs.putConnection(&f.c, nil)
 				return nil
 			}
 			err := f.Close()
