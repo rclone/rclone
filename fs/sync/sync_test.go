@@ -1383,7 +1383,7 @@ func TestCopyDeleteBefore(t *testing.T) {
 
 // Test syncing a file using snapshots
 func testSyncWithSnapshot(ctx context.Context, t *testing.T, useLockedFile, expectErr bool) {
-	r := fstest.NewRun(t)
+	r := fstest.NewRunIndividual(t)
 	file1 := r.WriteFile("potato", "Potato Content", t1)
 	r.CheckLocalItems(t, file1)
 	r.Mkdir(ctx, r.Fremote)
@@ -1454,7 +1454,7 @@ func TestSyncWithSnapshot(t *testing.T) {
 	// Do a preliminary check to make sure snapshots are implemented and
 	// the necessary permissions are available before running the
 	ctx := context.Background()
-	r := fstest.NewRun(t)
+	r := fstest.NewRunIndividual(t)
 	r.Mkdir(ctx, r.Fremote)
 	createSnap := r.Flocal.Features().CreateSnapshot
 	if createSnap != nil {
