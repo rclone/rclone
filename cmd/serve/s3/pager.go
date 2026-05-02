@@ -13,9 +13,9 @@ func (db *s3Backend) pager(list *gofakes3.ObjectList, page gofakes3.ListBucketPa
 	sort.Slice(list.CommonPrefixes, func(i, j int) bool {
 		return list.CommonPrefixes[i].Prefix < list.CommonPrefixes[j].Prefix
 	})
-	// sort by modtime
+	// sort by key name
 	sort.Slice(list.Contents, func(i, j int) bool {
-		return list.Contents[i].LastModified.Before(list.Contents[j].LastModified.Time)
+		return list.Contents[i].Key < list.Contents[j].Key
 	})
 	tokens := page.MaxKeys
 	if tokens == 0 {
