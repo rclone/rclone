@@ -1383,7 +1383,7 @@ func TestCopyDeleteBefore(t *testing.T) {
 
 // Test syncing a file using snapshots
 func testSyncWithSnapshot(ctx context.Context, t *testing.T, useLockedFile, expectErr bool) {
-	r := fstest.NewRunIndividual(t)
+	r := fstest.NewRun(t)
 	file1 := r.WriteFile("potato", "Potato Content", t1)
 	r.CheckLocalItems(t, file1)
 	r.Mkdir(ctx, r.Fremote)
@@ -1454,7 +1454,7 @@ func TestSyncWithSnapshot(t *testing.T) {
 	// Do a preliminary check to make sure snapshots are implemented and
 	// the necessary permissions are available before running the
 	ctx := context.Background()
-	r := fstest.NewRunIndividual(t)
+	r := fstest.NewRun(t)
 	r.Mkdir(ctx, r.Fremote)
 	createSnap := r.Flocal.Features().CreateSnapshot
 	if createSnap != nil {
@@ -1491,11 +1491,6 @@ func TestSyncWithSnapshot(t *testing.T) {
 		{name: "Yes Lock Snapshot Always", mode: fs.UseSnapshotModeAlways, useLockedFile: true, expectErr: false},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			// Skip locked file tests if VSS isn't available (no admin privileges)
-			// if test.useLockedFile && !vssWorks {
-			// 	t.Skip("VSS snapshots not available (requires admin privileges)")
-			// }
-
 			ctx := context.Background()
 			ctx, ci := fs.AddConfig(ctx)
 			ci.UseSnapshotMode = test.mode
@@ -1531,7 +1526,7 @@ func TestMoveWithSnapshot(t *testing.T) {
 }
 
 // Test that delete-based operations aren't compatible with snapshots
-func TestSyncWithSnapshotsAndDeleteMode(t *testing.T) {
+func TestSyncWithSnapshotAndDeleteMode(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
 	ci.UseSnapshotMode = fs.UseSnapshotModeAlways
