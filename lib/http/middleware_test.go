@@ -6,9 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	goauth "github.com/abbot/go-http-auth"
 	"github.com/stretchr/testify/require"
 )
 
@@ -581,5 +585,163 @@ func TestMiddlewareCORSWithAuth(t *testing.T) {
 			}
 			require.Equal(t, expectedOrigin, resp.Header.Get("Access-Control-Allow-Origin"), "allow origin should match")
 		})
+	}
+}
+
+func TestMiddlewareAuthBcryptCache(t *testing.T) {
+	s, err := NewServer(context.Background(),
+		WithConfig(Config{ListenAddr: []string{"127.0.0.1:0"}}),
+		WithAuth(AuthConfig{Realm: "test", HtPasswd: "./testdata/.htpasswd"}),
+	)
+	require.NoError(t, err)
+	defer func() { require.NoError(t, s.Shutdown()) }()
+	s.Router().Mount("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	s.Serve()
+	url := testGetServerURL(t, s)
+	client := &http.Client{}
+
+	sendReq := func(user, pass string) int {
+		req, err := http.NewRequest("GET", url, nil)
+		require.NoError(t, err)
+		if user != "" {
+			req.SetBasicAuth(user, pass)
+		}
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		_ = resp.Body.Close()
+		return resp.StatusCode
+	}
+
+	t.Run("Bcrypt/CacheMiss", func(t *testing.T) {
+		require.Equal(t, http.StatusOK, sendReq("bcrypt", "bcrypt"))
+	})
+	t.Run("Bcrypt/CacheHit", func(t *testing.T) {
+		require.Equal(t, http.StatusOK, sendReq("bcrypt", "bcrypt"))
+	})
+	t.Run("Bcrypt/WrongPasswordFallsThrough", func(t *testing.T) {
+		require.Equal(t, http.StatusUnauthorized, sendReq("bcrypt", "wrongpassword"))
+	})
+	t.Run("Bcrypt/NoCreds", func(t *testing.T) {
+		require.Equal(t, http.StatusUnauthorized, sendReq("", ""))
+	})
+	t.Run("MD5/CachedLikeBcrypt", func(t *testing.T) {
+		require.Equal(t, http.StatusOK, sendReq("md5", "md5"))
+		require.Equal(t, http.StatusOK, sendReq("md5", "md5"))
+		require.Equal(t, http.StatusUnauthorized, sendReq("md5", "wrongpassword"))
+	})
+}
+
+func TestMiddlewareAuthBcryptCachePasswordChange(t *testing.T) {
+	// bcrypt hash of "newpassword" at cost 4 (low cost for test speed)
+	const newHash = "$2a$04$xWq7e2r0F01c5vAQd/pAf.E/28KCJTp4vNZzsPc/eDhBNwUi4FOjO"
+	// original bcrypt hash of "bcrypt" from testdata/.htpasswd
+	const origHash = "$2y$10$K/b3mVXUA6X857TOTYIL9.Lbaeg9oBjMQwUX5NefpVUCcYP0Z5KY2"
+
+	tmpDir, err := os.MkdirTemp("", "htpasswd-test-*")
+	require.NoError(t, err)
+	htpasswd := filepath.Join(tmpDir, ".htpasswd")
+	writeHtpasswd := func(hash string) {
+		require.NoError(t, os.WriteFile(htpasswd, []byte("user:"+hash+"\n"), 0600))
+	}
+
+	writeHtpasswd(origHash)
+	s, err := NewServer(context.Background(),
+		WithConfig(Config{ListenAddr: []string{"127.0.0.1:0"}}),
+		WithAuth(AuthConfig{Realm: "test", HtPasswd: htpasswd}),
+	)
+	require.NoError(t, err)
+	// Shutdown before TempDir cleanup so goauth releases the file handle on Windows.
+	t.Cleanup(func() {
+		require.NoError(t, s.Shutdown())
+		require.NoError(t, os.RemoveAll(tmpDir))
+	})
+	s.Router().Mount("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	s.Serve()
+	url := testGetServerURL(t, s)
+	client := &http.Client{}
+
+	sendReq := func(pass string) int {
+		req, err := http.NewRequest("GET", url, nil)
+		require.NoError(t, err)
+		req.SetBasicAuth("user", pass)
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		_ = resp.Body.Close()
+		return resp.StatusCode
+	}
+
+	require.Equal(t, http.StatusOK, sendReq("bcrypt"), "original password should work")
+	require.Equal(t, http.StatusOK, sendReq("bcrypt"), "cache hit should work")
+
+	writeHtpasswd(newHash)
+
+	require.Equal(t, http.StatusUnauthorized, sendReq("bcrypt"), "old password must be rejected after file change")
+	require.Equal(t, http.StatusOK, sendReq("newpassword"), "new password must work after file change")
+}
+
+func newHandler() http.Handler {
+	secretProvider := goauth.HtpasswdFileProvider("./testdata/.htpasswd")
+	authenticator := NewLoggedBasicAuthenticator("test", secretProvider)
+	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	return basicAuth(authenticator)(next)
+}
+
+func BenchmarkBcryptAuthCacheMiss(b *testing.B) {
+	h := newHandler()
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest("GET", "/", nil)
+		r.SetBasicAuth("bcrypt", fmt.Sprintf("wrongpassword%d", i))
+		h.ServeHTTP(w, r)
+		if w.Code != http.StatusUnauthorized {
+			b.Fatalf("expected 401, got %d", w.Code)
+		}
+	}
+}
+
+func BenchmarkBcryptAuthCacheHit(b *testing.B) {
+	h := newHandler()
+	warmup := httptest.NewRequest("GET", "/", nil)
+	warmup.SetBasicAuth("bcrypt", "bcrypt")
+	h.ServeHTTP(httptest.NewRecorder(), warmup)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest("GET", "/", nil)
+		r.SetBasicAuth("bcrypt", "bcrypt")
+		h.ServeHTTP(w, r)
+		if w.Code != http.StatusOK {
+			b.Fatalf("expected 200, got %d", w.Code)
+		}
+	}
+}
+
+func BenchmarkMD5AuthCacheHit(b *testing.B) {
+	h := newHandler()
+	warmup := httptest.NewRequest("GET", "/", nil)
+	warmup.SetBasicAuth("md5", "md5")
+	h.ServeHTTP(httptest.NewRecorder(), warmup)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest("GET", "/", nil)
+		r.SetBasicAuth("md5", "md5")
+		h.ServeHTTP(w, r)
+		if w.Code != http.StatusOK {
+			b.Fatalf("expected 200, got %d", w.Code)
+		}
 	}
 }

@@ -2,16 +2,25 @@ package http
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 
 	goauth "github.com/abbot/go-http-auth"
 	"github.com/rclone/rclone/fs"
+	libcache "github.com/rclone/rclone/lib/cache"
 )
+
+// authCacheEntry stores a cached authentication result for any hash algorithm.
+type authCacheEntry struct {
+	passwordHash [sha256.Size]byte // sha256(plaintext password) at cache time
+	secret       string            // htpasswd hash string at cache time
+}
 
 // parseAuthorization parses the Authorization header into user, pass
 // it returns a boolean as to whether the parse was successful
@@ -56,6 +65,7 @@ func NewLoggedBasicAuthenticator(realm string, secrets goauth.SecretProvider) *L
 
 // Helper to generate required interface for middleware
 func basicAuth(authenticator *LoggedBasicAuth) func(next http.Handler) http.Handler {
+	cache := libcache.New().SetExpireDuration(5 * time.Minute)
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// skip auth for CORS preflight
@@ -64,11 +74,45 @@ func basicAuth(authenticator *LoggedBasicAuth) func(next http.Handler) http.Hand
 				return
 			}
 
+			user, pass, ok := parseAuthorization(r)
+			if !ok {
+				authenticator.RequireAuth(w, r)
+				return
+			}
+
+			// Fetch the current secret for this user. This also triggers
+			// htpasswd file reload if the file has changed (handled by goauth).
+			secret := authenticator.Secrets(user, authenticator.Realm)
+			if secret == "" {
+				// Unknown user
+				fs.Infof(r.URL.Path, "%s: Unauthorized request from %s", r.RemoteAddr, user)
+				authenticator.RequireAuth(w, r)
+				return
+			}
+
+			providedHash := sha256.Sum256([]byte(pass))
+
+			// Check cache: valid only when secret hasn't changed AND password matches.
+			if cachedValue, found := cache.GetMaybe(user); found {
+				entry, ok := cachedValue.(authCacheEntry)
+				if ok && entry.secret == secret && entry.passwordHash == providedHash {
+					ctx := context.WithValue(r.Context(), ctxKeyUser, user)
+					next.ServeHTTP(w, r.WithContext(ctx))
+					return
+				}
+				// Secret changed or wrong password — fall through to full verification.
+			}
+
+			// Cache miss or stale — perform full verification via goauth.
 			username := authenticator.CheckAuth(r)
 			if username == "" {
 				authenticator.RequireAuth(w, r)
 				return
 			}
+
+			// Store result; next request for same user+password+secret is free.
+			cache.Put(user, authCacheEntry{passwordHash: providedHash, secret: secret})
+
 			ctx := context.WithValue(r.Context(), ctxKeyUser, username)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
