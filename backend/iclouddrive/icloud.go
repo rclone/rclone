@@ -91,12 +91,12 @@ func restoreAuthSession(icloud *api.Client, st *configAuthState) {
 
 // resumeConfigClient recreates an API client and restores session state saved
 // from a previous Config() step. Used across 2FA states to avoid re-authenticating
-func resumeConfigClient(m configmap.Mapper, appleid, password, trustToken, clientID string, cookies []*http.Cookie) (*api.Client, *configAuthState, error) {
+func resumeConfigClient(m configmap.Mapper, appleid, password, trustToken, clientID string, cookies []*http.Cookie, endpoints api.Endpoints) (*api.Client, *configAuthState, error) {
 	st, err := loadAuthSession(m)
 	if err != nil {
 		return nil, nil, err
 	}
-	icloud, err := api.New(appleid, password, trustToken, clientID, cookies, nil, "_config")
+	icloud, err := api.New(appleid, password, trustToken, clientID, cookies, nil, "_config", endpoints)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -212,6 +212,20 @@ func init() {
 				Help:  "iCloud Photos",
 			}},
 		}, {
+			Name:     configRegion,
+			Help:     "Region for iCloud endpoints.",
+			Required: false,
+			Advanced: false,
+			Default:  "global",
+			Examples: []fs.OptionExample{{
+				Value: "global",
+				Help:  "Global (default)",
+			}, {
+				Value: "chinamainland",
+				Help:  "China Mainland",
+			}},
+			Exclusive: true,
+		}, {
 			Name:      configAppleID,
 			Help:      "Apple ID.",
 			Required:  true,
@@ -273,6 +287,8 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 	trustToken, _ := m.Get(configTrustToken)
 	cookieRaw, _ := m.Get(configCookies)
 	clientID, _ := m.Get(configClientID)
+	region, _ := m.Get(configRegion)
+	endpoints := api.EndpointsForRegion(region)
 	cookies := ReadCookies(cookieRaw)
 
 	switch {
@@ -280,7 +296,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		// Force fresh SRP authentication - ignore stale trust token and cookies
 		// so that reconnect always prompts for 2FA
 		m.Set(configAuthSession, "")
-		icloud, err := api.New(appleid, password, "", clientID, nil, nil, "_config")
+		icloud, err := api.New(appleid, password, "", clientID, nil, nil, "_config", endpoints)
 		if err != nil {
 			return nil, err
 		}
@@ -321,7 +337,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 
 		// Restore session from initial sign-in instead of re-authenticating
 		// This avoids a redundant SRP roundtrip and extra push on pre-26.4
-		icloud, _, err := resumeConfigClient(m, appleid, password, trustToken, clientID, cookies)
+		icloud, _, err := resumeConfigClient(m, appleid, password, trustToken, clientID, cookies, endpoints)
 		if err != nil {
 			return nil, err
 		}
@@ -354,7 +370,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		if mode == "" {
 			mode = "sms"
 		}
-		icloud, smsState, err := resumeConfigClient(m, appleid, password, trustToken, clientID, cookies)
+		icloud, smsState, err := resumeConfigClient(m, appleid, password, trustToken, clientID, cookies, endpoints)
 		if err != nil {
 			return nil, err
 		}
@@ -391,7 +407,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 			mode = "sms"
 		}
 
-		icloud, _, err := resumeConfigClient(m, appleid, password, trustToken, clientID, cookies)
+		icloud, _, err := resumeConfigClient(m, appleid, password, trustToken, clientID, cookies, endpoints)
 		if err != nil {
 			return nil, err
 		}
@@ -442,6 +458,7 @@ func newICloudClient(ctx context.Context, name string, m configmap.Mapper) (*api
 		cookies,
 		callback,
 		name,
+		api.EndpointsForRegion(opt.Region),
 	)
 	if err != nil {
 		return nil, nil, err

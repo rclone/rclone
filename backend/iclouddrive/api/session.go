@@ -37,9 +37,10 @@ type Session struct {
 	Cookies        []*http.Cookie `json:"cookies"`
 	AccountInfo    AccountInfo    `json:"account_info"`
 
-	mu       sync.Mutex   `json:"-"` // protects session fields during concurrent Request calls
-	srv      *rest.Client `json:"-"`
-	needs2FA bool         `json:"-"` // set when SRP signin returns 409
+	mu        sync.Mutex   `json:"-"` // protects session fields during concurrent Request calls
+	srv       *rest.Client `json:"-"`
+	needs2FA  bool         `json:"-"` // set when SRP signin returns 409
+	endpoints Endpoints    `json:"-"`
 }
 
 // srpInitResponse is the server response from /auth/signin/init
@@ -283,7 +284,7 @@ func (s *Session) authStart(ctx context.Context) error {
 			"Accept":     "*/*",
 			"User-Agent": iCloudUserAgent,
 		},
-		RootURL:    authEndpoint,
+		RootURL:    s.endpoints.Auth,
 		NoResponse: true,
 	}
 
@@ -317,7 +318,7 @@ func (s *Session) authFederate(ctx context.Context, accountName string) error {
 		Path:         "/federate",
 		Parameters:   url.Values{"isRememberMeEnabled": {"true"}},
 		ExtraHeaders: s.getSRPAuthHeaders(),
-		RootURL:      authEndpoint,
+		RootURL:      s.endpoints.Auth,
 		Body:         body,
 		NoResponse:   true,
 	}
@@ -352,7 +353,7 @@ func (s *Session) authSRPInit(ctx context.Context, aBase64, accountName string) 
 		Method:       "POST",
 		Path:         "/signin/init",
 		ExtraHeaders: s.getSRPAuthHeaders(),
-		RootURL:      authEndpoint,
+		RootURL:      s.endpoints.Auth,
 		Body:         body,
 	}
 
@@ -392,7 +393,7 @@ func (s *Session) authSRPComplete(ctx context.Context, accountName, m1Base64, m2
 		Path:         "/signin/complete",
 		Parameters:   url.Values{"isRememberMeEnabled": {"true"}},
 		ExtraHeaders: s.getSRPAuthHeaders(),
-		RootURL:      authEndpoint,
+		RootURL:      s.endpoints.Auth,
 		IgnoreStatus: true,
 		Body:         body,
 	}
@@ -436,7 +437,7 @@ func (s *Session) authRepairComplete(ctx context.Context) error {
 		Method:       "POST",
 		Path:         "/repair/complete",
 		ExtraHeaders: s.getSRPAuthHeaders(),
-		RootURL:      authEndpoint,
+		RootURL:      s.endpoints.Auth,
 		IgnoreStatus: true,
 		NoResponse:   true,
 		Body:         body,
@@ -455,14 +456,14 @@ func (s *Session) authRepairComplete(ctx context.Context) error {
 
 // getAuthOrigin returns the origin URL for auth requests
 // Supports both global (idmsa.apple.com) and China (idmsa.apple.com.cn) endpoints
-func getAuthOrigin() string {
-	return strings.TrimSuffix(authEndpoint, "/appleauth/auth")
+func (s *Session) getAuthOrigin() string {
+	return strings.TrimSuffix(s.endpoints.Auth, "/appleauth/auth")
 }
 
 // getSRPAuthHeaders returns headers needed for SRP auth requests
 func (s *Session) getSRPAuthHeaders() map[string]string {
 	frameTag := "auth-" + s.FrameID
-	authOrigin := getAuthOrigin()
+	authOrigin := s.getAuthOrigin()
 	headers := map[string]string{
 		"Accept":                           "application/json",
 		"Content-Type":                     "application/json",
@@ -510,8 +511,8 @@ func (s *Session) AuthWithToken(ctx context.Context) error {
 	opts := rest.Opts{
 		Method:       "POST",
 		Path:         "/accountLogin",
-		ExtraHeaders: GetCommonHeaders(map[string]string{}),
-		RootURL:      setupEndpoint,
+		ExtraHeaders: s.getCommonHeaders(map[string]string{}),
+		RootURL:      s.endpoints.Setup,
 		Body:         body,
 	}
 
@@ -572,7 +573,7 @@ func (s *Session) acquirePCSCookies(ctx context.Context) error {
 			Method:       "POST",
 			Path:         "/requestPCS",
 			ExtraHeaders: s.GetHeaders(map[string]string{}),
-			RootURL:      setupEndpoint,
+			RootURL:      s.endpoints.Setup,
 		}
 		opts.Body = body
 		var pcsResp struct {
@@ -611,7 +612,7 @@ func (s *Session) RequestPushNotification(ctx context.Context) error {
 		Method:       "PUT",
 		Path:         "/verify/trusteddevice/securitycode",
 		ExtraHeaders: s.GetAuthHeaders(map[string]string{}),
-		RootURL:      authEndpoint,
+		RootURL:      s.endpoints.Auth,
 		NoResponse:   true,
 	}
 
@@ -631,7 +632,7 @@ func (s *Session) Validate2FACode(ctx context.Context, code string) error {
 		Method:       "POST",
 		Path:         "/verify/trusteddevice/securitycode",
 		ExtraHeaders: s.GetAuthHeaders(map[string]string{}),
-		RootURL:      authEndpoint,
+		RootURL:      s.endpoints.Auth,
 		Body:         body,
 		NoResponse:   true,
 	}
@@ -674,7 +675,7 @@ func (s *Session) GetAuthState(ctx context.Context) (*AuthStateResponse, error) 
 		Method:        "GET",
 		Path:          "",
 		ExtraHeaders:  s.GetAuthHeaders(map[string]string{}),
-		RootURL:       authEndpoint,
+		RootURL:       s.endpoints.Auth,
 		ContentLength: int64Ptr(0),
 	}
 	// Use srv.Call directly to capture the raw response body for debugging
@@ -734,7 +735,7 @@ func (s *Session) RequestSMSCode(ctx context.Context, phoneID int, mode string) 
 		Method:       "PUT",
 		Path:         "/verify/phone",
 		ExtraHeaders: s.GetAuthHeaders(map[string]string{}),
-		RootURL:      authEndpoint,
+		RootURL:      s.endpoints.Auth,
 		Body:         body,
 		NoResponse:   true,
 	}
@@ -760,7 +761,7 @@ func (s *Session) ValidateSMSCode(ctx context.Context, code string, phoneID int,
 		Method:       "POST",
 		Path:         "/verify/phone/securitycode",
 		ExtraHeaders: s.GetAuthHeaders(map[string]string{}),
-		RootURL:      authEndpoint,
+		RootURL:      s.endpoints.Auth,
 		Body:         body,
 		NoResponse:   true,
 	}
@@ -780,7 +781,7 @@ func (s *Session) TrustSession(ctx context.Context) error {
 		Method:        "GET",
 		Path:          "/2sv/trust",
 		ExtraHeaders:  s.GetAuthHeaders(map[string]string{}),
-		RootURL:       authEndpoint,
+		RootURL:       s.endpoints.Auth,
 		NoResponse:    true,
 		ContentLength: int64Ptr(0),
 	}
@@ -799,7 +800,7 @@ func (s *Session) ValidateSession(ctx context.Context) error {
 		Method:        "POST",
 		Path:          "/validate",
 		ExtraHeaders:  s.GetHeaders(map[string]string{}),
-		RootURL:       setupEndpoint,
+		RootURL:       s.endpoints.Setup,
 		ContentLength: int64Ptr(0),
 	}
 	_, err := s.Request(ctx, opts, nil, &s.AccountInfo)
@@ -821,7 +822,7 @@ func (s *Session) GetAuthHeaders(overwrite map[string]string) map[string]string 
 
 // GetHeaders returns the authentication headers required for a request
 func (s *Session) GetHeaders(overwrite map[string]string) map[string]string {
-	headers := GetCommonHeaders(map[string]string{})
+	headers := s.getCommonHeaders(nil)
 	headers["Cookie"] = s.GetCookieString()
 	maps.Copy(headers, overwrite)
 	return headers
@@ -846,12 +847,12 @@ func (s *Session) GetCookieString() string {
 	return b.String()
 }
 
-// GetCommonHeaders generates common HTTP headers with optional overwrite
-func GetCommonHeaders(overwrite map[string]string) map[string]string {
+// getCommonHeaders generates common HTTP headers with optional overwrite
+func (s *Session) getCommonHeaders(overwrite map[string]string) map[string]string {
 	headers := map[string]string{
 		"Content-Type": "application/json",
-		"Origin":       baseEndpoint,
-		"Referer":      fmt.Sprintf("%s/", baseEndpoint),
+		"Origin":       s.endpoints.Base,
+		"Referer":      fmt.Sprintf("%s/", s.endpoints.Base),
 		"User-Agent":   iCloudUserAgent,
 	}
 	maps.Copy(headers, overwrite)
@@ -860,10 +861,11 @@ func GetCommonHeaders(overwrite map[string]string) map[string]string {
 
 func int64Ptr(v int64) *int64 { return &v }
 
-// NewSession creates a new Session instance with default values
-func NewSession() *Session {
+// NewSession creates a new Session instance for the given endpoints
+func NewSession(endpoints Endpoints) *Session {
 	session := &Session{
-		FrameID: strings.ToLower(uuid.New().String()),
+		FrameID:   strings.ToLower(uuid.New().String()),
+		endpoints: endpoints,
 	}
 	httpClient := fshttp.NewClient(context.Background())
 	if tr, ok := httpClient.Transport.(*fshttp.Transport); ok {
@@ -871,7 +873,7 @@ func NewSession() *Session {
 			req.Header.Set("User-Agent", iCloudUserAgent)
 		})
 	}
-	session.srv = rest.NewClient(httpClient).SetRoot(baseEndpoint)
+	session.srv = rest.NewClient(httpClient).SetRoot(endpoints.Base)
 	return session
 }
 

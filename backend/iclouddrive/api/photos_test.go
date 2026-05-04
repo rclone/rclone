@@ -36,7 +36,7 @@ func newHTTPTestPhotosService(t *testing.T, remoteName string, handler http.Hand
 	server := httptest.NewServer(handler)
 	t.Cleanup(server.Close)
 
-	session := NewSession()
+	session := NewSession(DefaultEndpoints())
 	session.srv = rest.NewClient(server.Client())
 
 	return &PhotosService{
