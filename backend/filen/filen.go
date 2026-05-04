@@ -339,7 +339,10 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	if err != nil {
 		return nil, err
 	}
-	uploadedFile, err := f.filen.UploadFile(ctx, incompleteFile, in)
+	if _, err := f.filen.UploadFile(ctx, incompleteFile, in); err != nil {
+		return nil, err
+	}
+	uploadedFile, err := f.readMetadata(ctx, resolvedPath)
 	if err != nil {
 		return nil, err
 	}
@@ -348,6 +351,22 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		path: path,
 		file: uploadedFile,
 	}, nil
+}
+
+// readMetadata re-reads the file's metadata from the server after an
+// upload so the in-memory state reflects what is actually stored
+// (e.g. modtime at the server's precision). Without this, callers
+// would see higher-precision modtimes locally than List would return,
+// breaking layers like the hasher backend that fingerprint by modtime.
+func (f *Fs) readMetadata(ctx context.Context, resolvedPath string) (*types.File, error) {
+	file, err := f.filen.FindFile(ctx, resolvedPath)
+	if err != nil {
+		return nil, err
+	}
+	if file == nil {
+		return nil, fs.ErrorObjectNotFound
+	}
+	return file, nil
 }
 
 // PutStream uploads to the remote path with the modTime given of indeterminate size
@@ -760,7 +779,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	newIncomplete.LastModified = newModTime
 	newIncomplete.Created = newModTime
 	newIncomplete.SetMimeType(fs.MimeType(ctx, src))
-	uploadedFile, err := o.fs.filen.UploadFile(ctx, newIncomplete, in)
+	if _, err := o.fs.filen.UploadFile(ctx, newIncomplete, in); err != nil {
+		return err
+	}
+	uploadedFile, err := o.fs.readMetadata(ctx, o.fs.resolvePath(o.path))
 	if err != nil {
 		return err
 	}
