@@ -238,6 +238,14 @@ type MultiPartAbort struct {
 	Key      string `json:"key"`
 }
 
+// FolderPathResponse is returned by GET /folders/{hash}/path
+//
+// Path is the breadcrumb from the drive root down to the requested folder.
+type FolderPathResponse struct {
+	Status string `json:"status"`
+	Path   []Item `json:"path"`
+}
+
 // SpaceUsageResponse is returned by GET /user/space-usage
 type SpaceUsageResponse struct {
 	Used      int64  `json:"used"`
