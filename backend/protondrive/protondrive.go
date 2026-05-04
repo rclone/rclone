@@ -421,6 +421,16 @@ func isDecimalString(value string) bool {
 	return true
 }
 
+// protonLogger adapts rclone's fs.Debugf/Logf/Errorf into the
+// resty.Logger / common.Logger shape expected by Proton-API-Bridge and
+// go-proton-api so that library output participates in -v / -vv levels
+// and is captured by --log-file.
+type protonLogger struct{ f *Fs }
+
+func (l protonLogger) Errorf(format string, v ...interface{}) { fs.Errorf(l.f, format, v...) }
+func (l protonLogger) Warnf(format string, v ...interface{})  { fs.Logf(l.f, format, v...) }
+func (l protonLogger) Debugf(format string, v ...interface{}) { fs.Debugf(l.f, format, v...) }
+
 func newProtonDrive(ctx context.Context, f *Fs, opt *Options, m configmap.Mapper) (*protonDriveAPI.ProtonDrive, error) {
 	config := protonDriveAPI.NewDefaultConfig()
 	config.AppVersion = opt.AppVersion
@@ -433,6 +443,10 @@ func newProtonDrive(ctx context.Context, f *Fs, opt *Options, m configmap.Mapper
 	// --dump headers, --no-check-certificate, --user-agent, --bind,
 	// --ca-cert and --header all take effect against Proton Drive.
 	config.Transport = fshttp.NewTransport(ctx)
+
+	// Route bridge and go-proton-api log output through rclone's
+	// logging system so it honours -v / -vv and --log-file.
+	config.Logger = protonLogger{f: f}
 
 	config.ReplaceExistingDraft = opt.ReplaceExistingDraft
 	config.EnableCaching = opt.EnableCaching
