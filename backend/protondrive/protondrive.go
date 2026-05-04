@@ -22,6 +22,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
@@ -427,6 +428,11 @@ func newProtonDrive(ctx context.Context, f *Fs, opt *Options, m configmap.Mapper
 		config.AppVersion = protonDriveAppVersionFromRcloneVersion(fs.Version)
 	}
 	config.UserAgent = f.ci.UserAgent // opt.UserAgent
+
+	// Route HTTP through rclone's transport so global flags such as
+	// --dump headers, --no-check-certificate, --user-agent, --bind,
+	// --ca-cert and --header all take effect against Proton Drive.
+	config.Transport = fshttp.NewTransport(ctx)
 
 	config.ReplaceExistingDraft = opt.ReplaceExistingDraft
 	config.EnableCaching = opt.EnableCaching

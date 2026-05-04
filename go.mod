@@ -71,8 +71,8 @@ require (
 	github.com/prometheus/client_golang v1.23.2
 	github.com/putdotio/go-putio/putio v0.0.0-20200123120452-16d982cac2b8
 	github.com/quasilyte/go-ruleguard/dsl v0.3.23
-	github.com/rclone/Proton-API-Bridge v1.0.1
-	github.com/rclone/go-proton-api v1.0.1
+	github.com/rclone/Proton-API-Bridge v1.0.2
+	github.com/rclone/go-proton-api v1.0.2
 	github.com/rclone/gofakes3 v0.0.4
 	github.com/rfjakob/eme v1.2.0
 	github.com/rivo/uniseg v0.4.7
