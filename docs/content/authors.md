@@ -1123,3 +1123,7 @@ put them back in again. -->
 - Yakov Till <37628546+Lyapsus@users.noreply.github.com>
 - Chris Coughlan <chris@coughlan.io>
 - John Volk <volkjohn@users.noreply.github.com>
+- 王一赫 <wyihe5220@gmail.com>
+- Gustavo V. F. <31892323+Gustavo-V-F@users.noreply.github.com>
+- Sven Rebhan <36194019+srebhan@users.noreply.github.com>
+- Copilot <223556219+Copilot@users.noreply.github.com>
