@@ -1507,14 +1507,13 @@ func TestSyncWithSnapshot(t *testing.T) {
 			ctx := context.Background()
 			ctx, ci := fs.AddConfig(ctx)
 			ci.UseSnapshotMode = test.mode
-			ci.DeleteMode = fs.DeleteModeOff
 
 			testSyncWithSnapshot(ctx, t, test.useLockedFile, test.expectErr)
 		})
 	}
 }
 
-// Test that file-by-file Move isn't compatible with snapshot
+// Test that file-by-file Move isn't compatible with snapshot because it modifies source data
 func TestMoveWithSnapshot(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
@@ -1531,30 +1530,6 @@ func TestMoveWithSnapshot(t *testing.T) {
 	r.Fremote.Features().Disable("DirMove") // force one-by-one file move
 
 	err := MoveDir(ctx, r.Fremote, r.Flocal, false, false)
-	if errors.Is(err, fs.ErrorNotImplemented) {
-		t.Skip("snapshots not supported on this platform")
-	}
-	require.Error(t, err)
-	assert.ErrorContains(t, err, "snapshot")
-}
-
-// Test that delete-based operations aren't compatible with snapshots
-func TestSyncWithSnapshotAndDeleteMode(t *testing.T) {
-	ctx := context.Background()
-	ctx, ci := fs.AddConfig(ctx)
-	ci.UseSnapshotMode = fs.UseSnapshotModeAlways
-	ci.DeleteMode = fs.DeleteModeBefore
-	r := fstest.NewRun(t)
-	file1 := r.WriteFile("potato", "Potato Content", t1)
-	r.CheckLocalItems(t, file1)
-	r.Mkdir(ctx, r.Fremote)
-
-	createSnap := r.Flocal.Features().CreateSnapshot
-	if createSnap == nil {
-		t.Skip("snapshots not supported on this platform")
-	}
-
-	err := Sync(ctx, r.Fremote, r.Flocal, false)
 	if errors.Is(err, fs.ErrorNotImplemented) {
 		t.Skip("snapshots not supported on this platform")
 	}

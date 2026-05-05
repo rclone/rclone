@@ -1357,7 +1357,7 @@ func runSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		}
 
 		// Can't use snapshots when the operation will delete source data
-		if deleteMode != fs.DeleteModeOff || DoMove {
+		if DoMove || deleteEmptySrcDirs {
 			if mode == fs.UseSnapshotModeAlways {
 				return fserrors.FatalError(errors.New("can't use snapshots with operations that delete source data"))
 			} else if mode == fs.UseSnapshotModeAttempt {
