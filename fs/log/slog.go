@@ -27,6 +27,12 @@ var Handler = defaultHandler()
 // This will be adjusted by InitLogging to be the configured levels
 // but it is important we have a logger running regardless of whether
 // InitLogging has been called yet or not.
+//
+// Note that this only sets rclone's private logger via fs.SetLogger
+// so that importing this package has no side effects on the
+// process-wide default slog logger. The CLI and other rclone-as-a-
+// program entry points pick up the default logger redirection in
+// InitLogging instead.
 func defaultHandler() *OutputHandler {
 	// Default options for default handler
 	opts := &slog.HandlerOptions{
@@ -36,11 +42,8 @@ func defaultHandler() *OutputHandler {
 	// Create our handler
 	h := NewOutputHandler(os.Stderr, opts, logFormatDate|logFormatTime)
 
-	// Set the slog default handler
-	slog.SetDefault(slog.New(h))
-
-	// Make log.Printf logs at level Notice
-	slog.SetLogLoggerLevel(fs.SlogLevelNotice)
+	// Set rclone's internal logger so rclone logging works
+	fs.SetLogger(h)
 
 	return h
 }
