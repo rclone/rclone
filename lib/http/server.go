@@ -53,8 +53,9 @@ for a transfer.
 ` + "`--{{ .Prefix }}max-header-bytes`" + ` controls the maximum number of bytes the server will
 accept in the HTTP header.
 
-` + "`--{{ .Prefix }}response-header`" + ` can be used to set an HTTP header for all responses. The flag
-may be repeated to add multiple headers. Use the format ` + "`Header-Name: value`" + `.
+` + "`--{{ .Prefix }}response-header`" + ` can be used to set an HTTP header for all responses,
+will overriding existing values. The flag may be repeated to add multiple
+headers. Use the format ` + "`Header-Name: value`" + `.
 
 ` + "`--{{ .Prefix }}baseurl`" + ` controls the URL prefix that rclone serves from.  By default
 rclone will serve from the root.  If you used ` + "`--{{ .Prefix }}baseurl \"/rclone\"`" + ` then
@@ -190,7 +191,7 @@ type Config struct {
 	ClientCA           string      `config:"client_ca"`            // Path to TLS PEM CA file with certificate authorities to verify clients with
 	MinTLSVersion      string      `config:"min_tls_version"`      // MinTLSVersion contains the minimum TLS version that is acceptable
 	AllowOrigin        string      `config:"allow_origin"`         // AllowOrigin sets the Access-Control-Allow-Origin header
-	ResponseHeaders    []string    `config:"response_header"`      // Set HTTP header for all responses
+	ResponseHeaders    []string    `config:"response_header"`      // Set HTTP header for all responses, overriding existing values
 }
 
 // AddFlagsPrefix adds flags for the httplib
@@ -205,7 +206,7 @@ func (cfg *Config) AddFlagsPrefix(flagSet *pflag.FlagSet, prefix string) {
 	flags.StringVarP(flagSet, &cfg.BaseURL, prefix+"baseurl", "", cfg.BaseURL, "Prefix for URLs - leave blank for root", prefix)
 	flags.StringVarP(flagSet, &cfg.MinTLSVersion, prefix+"min-tls-version", "", cfg.MinTLSVersion, "Minimum TLS version that is acceptable", prefix)
 	flags.StringVarP(flagSet, &cfg.AllowOrigin, prefix+"allow-origin", "", cfg.AllowOrigin, "Origin which cross-domain request (CORS) can be executed from", prefix)
-	flags.StringArrayVarP(flagSet, &cfg.ResponseHeaders, prefix+"response-header", "", cfg.ResponseHeaders, "Set HTTP header for all responses", prefix)
+	flags.StringArrayVarP(flagSet, &cfg.ResponseHeaders, prefix+"response-header", "", cfg.ResponseHeaders, "Set HTTP header for all responses, overriding existing values", prefix)
 }
 
 // AddHTTPFlagsPrefix adds flags for the httplib
