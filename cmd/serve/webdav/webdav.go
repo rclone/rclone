@@ -122,6 +122,13 @@ supported hash on the backend or you can use a named hash such as
 "MD5" or "SHA-1". Use the [hashsum](/commands/rclone_hashsum/) command
 to see the full list.
 
+### Gzip compression
+
+The server will compress certain response bodies (text and XML, including
+WebDAV PROPFIND responses) using gzip when the client advertises gzip
+support via the ` + "`Accept-Encoding: gzip`" + ` request header. This reduces
+bandwidth usage.
+
 ### Access WebDAV on Windows
 
 WebDAV shared folder can be mapped as a drive on Windows, however the default
