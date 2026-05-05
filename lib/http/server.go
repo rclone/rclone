@@ -173,7 +173,7 @@ var ConfigInfo = fs.Options{{
 }, {
 	Name:    "response_header",
 	Default: []string{},
-	Help:    "Set HTTP header for all responses",
+	Help:    "Set HTTP header for all responses, overriding existing values",
 }}
 
 // Config contains options for the http Server
@@ -189,7 +189,7 @@ type Config struct {
 	TLSKeyBody         []byte      `config:"-"`                    // TLS PEM private key body, ignores TLSKey
 	ClientCA           string      `config:"client_ca"`            // Path to TLS PEM CA file with certificate authorities to verify clients with
 	MinTLSVersion      string      `config:"min_tls_version"`      // MinTLSVersion contains the minimum TLS version that is acceptable
-	AllowOrigin        string      `config:"allow_origin"`         // AllowOrigin sets the Access-Control-Allow-Origin header+
+	AllowOrigin        string      `config:"allow_origin"`         // AllowOrigin sets the Access-Control-Allow-Origin header
 	ResponseHeaders    []string    `config:"response_header"`      // Set HTTP header for all responses
 }
 
@@ -357,8 +357,13 @@ func NewServer(ctx context.Context, options ...Option) (*Server, error) {
 		return nil, err
 	}
 
+	responseHeaders, err := fs.ParseHeaders(s.cfg.ResponseHeaders)
+	if err != nil {
+		return nil, err
+	}
+
 	s.mux.Use(MiddlewareCORS(s.cfg.AllowOrigin))
-	s.mux.Use(MiddlewareResponseHeaders(fs.ParseHeaders(s.cfg.ResponseHeaders)))
+	s.mux.Use(MiddlewareResponseHeaders(responseHeaders))
 
 	s.initAuth()
 

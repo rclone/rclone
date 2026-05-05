@@ -136,13 +136,13 @@ func SetFlags(ci *fs.ConfigInfo) {
 
 	// Process --headers-upload, --headers-download, --headers
 	if len(uploadHeaders) != 0 {
-		ci.UploadHeaders = fs.ParseHeaders(uploadHeaders)
+		ci.UploadHeaders = fs.MustParseHeaders(uploadHeaders)
 	}
 	if len(downloadHeaders) != 0 {
-		ci.DownloadHeaders = fs.ParseHeaders(downloadHeaders)
+		ci.DownloadHeaders = fs.MustParseHeaders(downloadHeaders)
 	}
 	if len(headers) != 0 {
-		ci.Headers = fs.ParseHeaders(headers)
+		ci.Headers = fs.MustParseHeaders(headers)
 	}
 
 	// Process --metadata-set
