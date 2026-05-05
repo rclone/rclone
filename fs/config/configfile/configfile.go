@@ -28,6 +28,8 @@ type Storage struct {
 	fi os.FileInfo          // stat of the file when last loaded
 }
 
+var insecureConfigPermsWarning sync.Once
+
 // Check to see if we need to reload the config
 //
 // mu must be held when calling this
@@ -159,8 +161,16 @@ func (s *Storage) Save() error {
 	info, err = os.Stat(configPath)
 	if err != nil {
 		fs.Debugf(nil, "Using default permissions for config file: %v", fileMode)
-	} else if info.Mode() != fileMode {
-		fs.Debugf(nil, "Enforcing secure permissions on config file (was %v, now %v)", info.Mode(), fileMode)
+	} else {
+		if info.Mode().Perm()&0077 != 0 {
+			insecureConfigPermsWarning.Do(func() {
+				fs.Logf(nil, "Warning: config file %q has insecure permissions %v; it may contain sensitive tokens. Consider running: chmod 600 %q", configPath, info.Mode().Perm(), configPath)
+			})
+		}
+		if info.Mode() != fileMode {
+			fs.Debugf(nil, "Keeping previous permissions for config file: %v", info.Mode())
+			fileMode = info.Mode()
+		}
 	}
 
 	attemptCopyGroup(configPath, f.Name())
