@@ -55,7 +55,7 @@ const (
 	rootURL             = baseURL + "api/v1"
 	maxUploadParts      = 10000 // maximum allowed number of parts in a multi-part upload
 	minChunkSize        = fs.SizeSuffix(1024 * 1024 * 5)
-	defaultUploadCutoff = fs.SizeSuffix(200 * 1024 * 1024)
+	defaultUploadCutoff = fs.SizeSuffix(5 * 1024 * 1024) // as per https://docs.drime.cloud/uploads-guide
 )
 
 // Register with Fs
