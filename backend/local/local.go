@@ -281,6 +281,17 @@ enabled, rclone will no longer update the modtime after copying a file.`,
 				Advanced: true,
 			},
 			{
+				Name: "fatal_if_no_space",
+				Help: `Make out-of-space errors fatal during transfers.
+
+When enabled, an ENOSPC error during a write returns a fatal error so
+that rclone aborts rather than retrying the operation. Useful for
+backup scripts that should halt loudly on a full disk rather than spin
+retrying.`,
+				Default:  false,
+				Advanced: true,
+			},
+			{
 				Name: "time_type",
 				Help: `Set what kind of time is returned.
 
@@ -349,6 +360,7 @@ type Options struct {
 	NoPreAllocate     bool                 `config:"no_preallocate"`
 	NoSparse          bool                 `config:"no_sparse"`
 	NoSetModTime      bool                 `config:"no_set_modtime"`
+	FatalIfNoSpace    bool                 `config:"fatal_if_no_space"`
 	TimeType          timeType             `config:"time_type"`
 	Hashes            fs.CommaSepList      `config:"hashes"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
@@ -1410,8 +1422,19 @@ func (nwc nopWriterCloser) Close() error {
 	return nil
 }
 
+// isDiskFullError returns true if err indicates the underlying filesystem
+// has run out of space.
+func isDiskFullError(err error) bool {
+	return errors.Is(err, file.ErrDiskFull) || fserrors.IsErrNoSpace(err)
+}
+
 // Update the object from in with modTime and size
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
+	defer func() {
+		if err != nil && o.fs.opt.FatalIfNoSpace && isDiskFullError(err) {
+			err = fserrors.FatalError(err)
+		}
+	}()
 	var out io.WriteCloser
 	var hasher *hash.MultiHasher
 
