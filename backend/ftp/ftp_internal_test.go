@@ -52,13 +52,21 @@ func (f *Fs) testUploadTimeout(t *testing.T) {
 		ci.Timeout = saveTimeout
 	}()
 	ci.LowLevelRetries = 1
-	ci.Timeout = fs.Duration(idleTimeout)
 
 	upload := func(concurrency int, shutTimeout time.Duration) (obj fs.Object, err error) {
+		// Use the saved (long) timeout while NewFs dials the FTP control
+		// connection and reads the welcome banner. On slow CI servers this
+		// can take longer than idleTimeout, which would cause a spurious
+		// i/o timeout before the test can run. The connection's idle
+		// deadline is captured at dial time, so the data connection
+		// dialled later inside Put will still get idleTimeout - which is
+		// what the test is actually trying to exercise.
+		ci.Timeout = saveTimeout
 		fixFs := deriveFs(ctx, t, f, settings{
 			"concurrency":  concurrency,
 			"shut_timeout": shutTimeout,
 		})
+		ci.Timeout = fs.Duration(idleTimeout)
 
 		// Make test object
 		fileTime := fstest.Time("2020-03-08T09:30:00.000000000Z")
