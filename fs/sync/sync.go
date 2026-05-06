@@ -380,6 +380,20 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 		tr := accounting.Stats(s.ctx).NewCheckingTransfer(src, "checking")
 		// Check to see if can store this
 		if src.Storable() {
+			// Fix case for case insensitive filesystems before checking
+			// whether a transfer is needed, since NeedTransfer may delete
+			// the destination (when content matches but modtime can't be
+			// set without re-upload), which would cause the rename below
+			// to fail with a "not found" error.
+			if s.ci.FixCase && !s.ci.Immutable && src.Remote() != pair.Dst.Remote() {
+				if newDst, err := operations.Move(s.ctx, s.fdst, nil, src.Remote(), pair.Dst); err != nil {
+					fs.Errorf(pair.Dst, "Error while attempting to rename to %s: %v", src.Remote(), err)
+					s.processError(err)
+				} else {
+					fs.Infof(pair.Dst, "Fixed case by renaming to: %s", src.Remote())
+					pair.Dst = newDst
+				}
+			}
 			needTransfer := operations.NeedTransfer(s.ctx, pair.Dst, pair.Src)
 			if needTransfer {
 				NoNeedTransfer, err := operations.CompareOrCopyDest(s.ctx, s.fdst, pair.Dst, pair.Src, s.compareCopyDest, s.backupDir)
@@ -389,16 +403,6 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 				}
 				if NoNeedTransfer {
 					needTransfer = false
-				}
-			}
-			// Fix case for case insensitive filesystems
-			if s.ci.FixCase && !s.ci.Immutable && src.Remote() != pair.Dst.Remote() {
-				if newDst, err := operations.Move(s.ctx, s.fdst, nil, src.Remote(), pair.Dst); err != nil {
-					fs.Errorf(pair.Dst, "Error while attempting to rename to %s: %v", src.Remote(), err)
-					s.processError(err)
-				} else {
-					fs.Infof(pair.Dst, "Fixed case by renaming to: %s", src.Remote())
-					pair.Dst = newDst
 				}
 			}
 			if needTransfer {
