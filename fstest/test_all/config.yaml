@@ -685,3 +685,4 @@ backends:
      - cmd/bisync
    fastlist: false
    extratime: 2.0
+   listretries: 5
