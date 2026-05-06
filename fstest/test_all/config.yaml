@@ -111,6 +111,7 @@ backends:
  - backend:  "cloudinary"
    remote:   "TestCloudinary:"
    fastlist: false
+   listretries: 5
    ignore:
      # fs/operations
      - TestCheckSum
