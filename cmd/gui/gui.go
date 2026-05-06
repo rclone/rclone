@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
@@ -191,6 +192,7 @@ For more help see [the GUI docs](/gui/).
 		if err != nil || spaHandler == nil {
 			return fmt.Errorf("failed to start GUI handler: %w", err)
 		}
+		guiServer.Router().Use(middleware.Compress(5))
 		guiServer.Router().Get("/*", spaHandler.ServeHTTP)
 		guiServer.Router().Head("/*", spaHandler.ServeHTTP)
 		guiServer.Serve()

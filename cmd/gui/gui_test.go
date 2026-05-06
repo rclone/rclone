@@ -2,6 +2,7 @@ package gui
 
 import (
 	"archive/zip"
+	"compress/gzip"
 	"io"
 	iofs "io/fs"
 	"net/http"
@@ -11,6 +12,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -301,4 +304,38 @@ func TestHandlerSPAFallbackDeepPath(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Contains(t, string(body), "<div id=\"root\"></div>")
+}
+
+func TestHandlerServesGzip(t *testing.T) {
+	dir := writeTestDir(t)
+	srcFS, cleanup, err := guiSourceFS(dir)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = cleanup() })
+
+	h, err := guiHandler(srcFS)
+	require.NoError(t, err)
+
+	// Build a chi router with Compress middleware, mirroring the
+	// production setup in the gui command.
+	r := chi.NewRouter()
+	r.Use(middleware.Compress(5))
+	r.Get("/*", h.ServeHTTP)
+
+	req := httptest.NewRequest("GET", "/", nil)
+	req.Header.Set("Accept-Encoding", "gzip")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	resp := w.Result()
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, "gzip", resp.Header.Get("Content-Encoding"),
+		"response should be gzip-encoded when client accepts it")
+
+	// Decompress and verify the content is correct.
+	gr, err := gzip.NewReader(resp.Body)
+	require.NoError(t, err)
+	body, err := io.ReadAll(gr)
+	require.NoError(t, err)
+	require.NoError(t, gr.Close())
+	assert.Contains(t, string(body), `<div id="root"></div>`)
 }
