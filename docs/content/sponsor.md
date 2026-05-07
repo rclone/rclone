@@ -2,6 +2,7 @@
 title: "Sponsor"
 description: "Sponsor the rclone project."
 type: page
+notoc: true
 aliases:
 - donate
 ---
@@ -21,12 +22,14 @@ Thank you to our sponsors:
 {{< sponsor src="/img/logos/route4me.svg" width="400" height="200" title="Visit our sponsor Route4Me" link="https://route4me.com/">}}
 {{< sponsor src="/img/logos/rcloneview.svg" width="300" height="200" title="Visit our sponsor RcloneView" link="https://rcloneview.com/">}}
 {{< sponsor src="/img/logos/rcloneui.svg" width="300" height="200" title="Visit our sponsor RcloneUI" link="https://github.com/rclone-ui/rclone-ui">}}
+{{< sponsor src="/img/logos/data-raven.svg" width="300" height="200" title="Data Raven: rclone, managed. Unlimited transfers, no per-GB fees." link="https://dataraven.io/r/rclone">}}
 {{< sponsor src="/img/logos/shade.svg" width="300" height="200" title="Visit our sponsor Shade" link="https://shade.inc">}}
 {{< sponsor src="/img/logos/filelu-rclone.svg" width="300" height="200" title="Visit our sponsor FileLu" link="https://filelu.com/">}}
 {{< sponsor src="/img/logos/torbox.png" width="200" height="200" title="Visit our sponsor TORBOX" link="https://www.torbox.app/">}}
 {{< sponsor src="/img/logos/spectra-logic.svg" width="300" height="200" title="Visit our sponsor Spectra Logic" link="https://spectralogic.com/">}}
 {{< sponsor src="/img/logos/servercore.svg" width="300" height="200" title="Visit our sponsor servercore" link="https://servercore.com/services/object-storage/?utm_source=rclone.org&utm_medium=referral&utm_campaign=cloud-s3_rclone_231025_paid">}}
 {{< sponsor src="/img/logos/exchangerate-api.png" width="300" height="200" title="Visit our sponsor ExchangeRate-API" link="https://www.exchangerate-api.com/">}}
+{{< sponsor src="/img/logos/impossible-cloud.svg" width="300" height="200" title="Visit our sponsor Impossible Cloud" link="https://www.impossiblecloud.com/">}}
 
 <!-- markdownlint-restore -->
 
