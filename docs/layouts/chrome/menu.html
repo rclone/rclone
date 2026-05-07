@@ -20,6 +20,7 @@
 </div>
 
 {{if .IsHome}}
+<div id="silver-sponsors">
 <div class="card">
   <div class="card-header">Silver Sponso⁠r</div>
   <div class="card-body">
@@ -32,6 +33,25 @@
     <a href="https://shade.inc/" target="_blank" rel="noopener" title="Visit rclone's sponsor Shade"><img style="max-width: 100%; height: auto;" src="/img/logos/shade.svg"></a><br />
   </div>
 </div>
+<div class="card">
+  <div class="card-header">Silver Sponso⁠r</div>
+  <div class="card-body">
+    <a href="https://dataraven.io/r/rclone" target="_blank" rel="noopener" title="Data Raven: rclone, managed. Unlimited transfers, no per-GB fees."><img style="max-width: 100%; height: auto;" src="/img/logos/data-raven.svg"></a><br />
+  </div>
+</div>
+</div>
+<script>
+(function() {
+  var container = document.getElementById('silver-sponsors');
+  if (!container) return;
+  var cards = Array.prototype.slice.call(container.children);
+  for (var i = cards.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = cards[i]; cards[i] = cards[j]; cards[j] = tmp;
+  }
+  cards.forEach(function(c) { container.appendChild(c); });
+}());
+</script>
 {{end}}
 
 <div class="card">
