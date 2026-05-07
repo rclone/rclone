@@ -158,6 +158,16 @@ backends:
  - backend:  "dropbox"
    remote:   "TestDropbox:"
    fastlist: false
+   ignore:
+     # The bisync normalization test relies on uploading distinct NFC and NFD
+     # versions of the same filename and on having modtime updates that don't
+     # require a delete+re-upload. Dropbox normalizes unicode server-side
+     # (NFD -> NFC) and can't set modtime in place, so the test takes a
+     # different code path that produces a different log without functional
+     # difference - the file state ends up correct either way.
+     - TestBisyncRemoteLocal/normalization
+     - TestBisyncLocalRemote/normalization
+     - TestBisyncRemoteRemote/normalization
  # - backend:  "filefabric"
  #   remote:   "TestFileFabric:"
  #   fastlist: false
