@@ -1,7 +1,7 @@
 ---
 title: "Databricks Unity Catalog"
 description: "Rclone docs for Databricks Unity Catalog"
-versionIntroduced: "v1.70"
+versionIntroduced: "v1.75"
 ---
 
 # Databricks Unity Catalog
