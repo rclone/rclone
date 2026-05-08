@@ -35,7 +35,7 @@ require (
 	github.com/colinmarc/hdfs/v2 v2.4.0
 	github.com/coreos/go-semver v0.3.1
 	github.com/coreos/go-systemd/v22 v22.6.0
-	github.com/databricks/databricks-sdk-go v0.130.0
+	github.com/databricks/databricks-sdk-go v0.132.0
 	github.com/diskfs/go-diskfs v1.7.0
 	github.com/dop251/scsu v0.0.0-20220106150536-84ac88021d00
 	github.com/dropbox/dropbox-sdk-go-unofficial/v6 v6.0.5
