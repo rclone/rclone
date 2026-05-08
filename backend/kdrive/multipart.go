@@ -259,6 +259,7 @@ func (u *uploadSession) String() string {
 	return fmt.Sprintf("kdrive upload session %s", u.token)
 }
 
+// NewRW gets a pool.RW using the global pool
 func NewRW() *pool.RW {
 	return pool.NewRW(pool.Global())
 }

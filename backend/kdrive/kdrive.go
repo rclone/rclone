@@ -129,6 +129,12 @@ type cacheEntry struct {
 	err  error
 }
 
+type kdriveInitCacheKey int
+
+const (
+	kdriveInitCache kdriveInitCacheKey = iota
+)
+
 // ------------------------------------------------------------
 
 // Name of the remote (as passed into NewFs)
@@ -257,7 +263,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
-	ctx = context.WithValue(ctx, "kdriveInitCache", make(map[string]cacheEntry))
+	ctx = context.WithValue(ctx, kdriveInitCache, make(map[string]cacheEntry))
 
 	f.dirCache = dircache.New(root, rootID, f)
 	// Find the current root
@@ -311,6 +317,11 @@ func (f *Fs) computeRootID() (rootID string, err error) {
 			rootID, _, err = f.FindLeaf(ctx, "1", "Private")
 		default:
 			rootID, _, err = f.FindLeaf(ctx, "1", f.opt.RootFolderID)
+		}
+
+		if err != nil {
+			fs.Debugf(nil, " ** ERROR: %w", err)
+			return rootID, err
 		}
 	}
 
@@ -1051,7 +1062,7 @@ func (f *Fs) getPublicLink(ctx context.Context, fileID int) (string, bool, error
 	}
 
 	// check if the shared link is blocked
-	if result.Data.AccessBlocked == true {
+	if result.Data.AccessBlocked {
 		return "", expired, nil
 	}
 
@@ -1165,7 +1176,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	}
 
 	// Check if link exists
-	link, expired, err := f.getPublicLink(ctx, item.ID)
+	link, expired, _ := f.getPublicLink(ctx, item.ID)
 	if link != "" {
 		// link exist
 		if expire != fs.DurationOff {
@@ -1175,9 +1186,9 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 				return "", err
 			}
 			return link, nil
-		} else if expired == true {
+		} else if expired {
 			// delete and recreate after
-			f.deletePublicLink(ctx, item.ID)
+			_ = f.deletePublicLink(ctx, item.ID)
 		} else {
 			// return link
 			return link, nil
