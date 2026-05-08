@@ -114,7 +114,9 @@ func TestList(t *testing.T) {
 				},
 			}
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(resp)
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				panic(err)
+			}
 			return
 		}
 		// statFile HEAD for root check
@@ -210,7 +212,9 @@ func TestOpen(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
 			w.Header().Set("Content-Type", "text/plain")
-			fmt.Fprint(w, content)
+			if _, err := fmt.Fprint(w, content); err != nil {
+				panic(err)
+			}
 			return
 		}
 		// HEAD for object stat
@@ -228,7 +232,7 @@ func TestOpen(t *testing.T) {
 	o := &Object{fs: f, remote: "file.txt", size: int64(len(content))}
 	rc, err := o.Open(context.Background())
 	require.NoError(t, err)
-	defer rc.Close()
+	defer func() { require.NoError(t, rc.Close()) }()
 
 	got, err := io.ReadAll(rc)
 	require.NoError(t, err)
@@ -245,7 +249,9 @@ func TestOpenWithRange(t *testing.T) {
 			w.Header().Set("Content-Type", "text/plain")
 			// Return bytes 6-10 ("world") to simulate partial content
 			w.WriteHeader(http.StatusPartialContent)
-			fmt.Fprint(w, "world")
+			if _, err := fmt.Fprint(w, "world"); err != nil {
+				panic(err)
+			}
 			return
 		}
 		http.Error(w, "unexpected", http.StatusInternalServerError)
@@ -257,7 +263,7 @@ func TestOpenWithRange(t *testing.T) {
 	o := &Object{fs: f, remote: "file.txt", size: int64(len(content))}
 	rc, err := o.Open(context.Background(), &fs.RangeOption{Start: 6, End: 10})
 	require.NoError(t, err)
-	defer rc.Close()
+	defer func() { require.NoError(t, rc.Close()) }()
 
 	got, err := io.ReadAll(rc)
 	require.NoError(t, err)
@@ -463,7 +469,7 @@ func TestObjectHash(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func defaultEncoding() encoder.MultiEncoder {
-	return encoder.MultiEncoder(encoder.EncodeInvalidUtf8 | encoder.EncodeCtl | encoder.EncodeSlash)
+	return encoder.EncodeInvalidUtf8 | encoder.EncodeCtl | encoder.EncodeSlash
 }
 
 // ---------------------------------------------------------------------------
