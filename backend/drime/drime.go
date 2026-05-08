@@ -765,11 +765,18 @@ func (f *Fs) deleteObject(ctx context.Context, id string) error {
 		DeleteForever: f.opt.HardDelete,
 	}
 	var result api.DeleteResponse
+	var resp *http.Response
 	err := f.pacer.Call(func() (bool, error) {
-		resp, err := f.srv.CallJSON(ctx, &opts, &request, &result)
+		var err error
+		resp, err = f.srv.CallJSON(ctx, &opts, &request, &result)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
+		// If Drime returns 422 with invalid ID, the object is already gone.
+		// Map this to a standard not-found error.
+		if resp != nil && resp.StatusCode == http.StatusUnprocessableEntity {
+			return fs.ErrorObjectNotFound
+		}
 		return fmt.Errorf("failed to delete item: %w", err)
 	}
 	// Check the individual result codes also
@@ -1598,7 +1605,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			fs.Debugf(o, "Removing old object on successful upload")
 			deleteErr := o.fs.deleteObject(ctx, id)
 			if deleteErr != nil {
-				err = fmt.Errorf("failed to delete existing object: %w", deleteErr)
+				if errors.Is(deleteErr, fs.ErrorObjectNotFound) {
+					fs.Debugf(o, "Old object already deleted, safely ignoring")
+				} else {
+					err = fmt.Errorf("failed to delete existing object: %w", deleteErr)
+				}
 			}
 		}()
 	}
