@@ -1078,6 +1078,63 @@ func TestMoveFileBackupDir(t *testing.T) {
 	r.CheckRemoteItems(t, file1old, file1)
 }
 
+// TestDeleteFileDoesNotUseBackupDir locks in the documented behaviour
+// that operations.DeleteFile does NOT honour --backup-dir, even when
+// one is configured. Callers that need backup-dir handling must use
+// operations.DeleteFileWithBackupDir instead. See issue #7566.
+func TestDeleteFileDoesNotUseBackupDir(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	if !operations.CanServerSideMove(r.Fremote) {
+		t.Skip("Skipping test as remote does not support server-side move or copy")
+	}
+
+	ci.BackupDir = r.FremoteName + "/backup"
+
+	file1 := r.WriteObject(ctx, "dst/file1", "file1 contents", t1)
+	r.CheckRemoteItems(t, file1)
+
+	obj, err := r.Fremote.NewObject(ctx, file1.Path)
+	require.NoError(t, err)
+
+	err = operations.DeleteFile(ctx, obj)
+	require.NoError(t, err)
+
+	// File must be gone and nothing must have been written under backup/.
+	r.CheckRemoteItems(t)
+}
+
+// TestDeleteFileWithBackupDir is the contrast to
+// TestDeleteFileDoesNotUseBackupDir: when callers explicitly resolve a
+// backup Fs and pass it to DeleteFileWithBackupDir, the file is moved
+// to backup-dir instead of being deleted.
+func TestDeleteFileWithBackupDir(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	if !operations.CanServerSideMove(r.Fremote) {
+		t.Skip("Skipping test as remote does not support server-side move or copy")
+	}
+
+	ci.BackupDir = r.FremoteName + "/backup"
+
+	file1 := r.WriteObject(ctx, "dst/file1", "file1 contents", t1)
+	r.CheckRemoteItems(t, file1)
+
+	obj, err := r.Fremote.NewObject(ctx, file1.Path)
+	require.NoError(t, err)
+
+	backupDir, err := operations.BackupDir(ctx, r.Fremote, r.Fremote, file1.Path)
+	require.NoError(t, err)
+
+	err = operations.DeleteFileWithBackupDir(ctx, obj, backupDir)
+	require.NoError(t, err)
+
+	file1.Path = "backup/dst/file1"
+	r.CheckRemoteItems(t, file1)
+}
+
 // testFsInfo is for unit testing fs.Info
 type testFsInfo struct {
 	name      string
