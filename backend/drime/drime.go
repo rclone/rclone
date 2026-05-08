@@ -765,16 +765,14 @@ func (f *Fs) deleteObject(ctx context.Context, id string) error {
 		DeleteForever: f.opt.HardDelete,
 	}
 	var result api.DeleteResponse
-	var resp *http.Response
 	err := f.pacer.Call(func() (bool, error) {
-		var err error
-		resp, err = f.srv.CallJSON(ctx, &opts, &request, &result)
+		resp, err := f.srv.CallJSON(ctx, &opts, &request, &result)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		// If Drime returns 422 with invalid ID, the object is already gone.
-		// Map this to a standard not-found error.
-		if resp != nil && resp.StatusCode == http.StatusUnprocessableEntity {
+		// If Drime returns 422 with invalid entry ID, the object is already gone.
+		// Map this to a standard not-found error
+		if strings.Contains(err.Error(), "entry ids is invalid") {
 			return fs.ErrorObjectNotFound
 		}
 		return fmt.Errorf("failed to delete item: %w", err)
