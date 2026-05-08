@@ -108,6 +108,7 @@ type Item struct {
 	Color          string `json:"color"`
 }
 
+// ItemResult is returned when an item is queried
 type ItemResult struct {
 	ResultStatus
 	Data Item `json:"data"`
@@ -169,6 +170,7 @@ type ChecksumFileResult struct {
 	} `json:"data"`
 }
 
+// PubLinkResult is returned from kdrive after a call to public link API
 type PubLinkResult struct {
 	ResultStatus
 	Data struct {
@@ -191,6 +193,7 @@ type PubLinkResult struct {
 	} `json:"data"`
 }
 
+// PubLinkUpdateResult is returned from kdrive after a updating a public link
 type PubLinkUpdateResult struct {
 	ResultStatus
 	Data bool `json:"data"`
@@ -205,6 +208,7 @@ type QuotaInfo struct {
 	} `json:"data"`
 }
 
+// SessionStartResponse is used to start a multichunk upload session
 type SessionStartResponse struct {
 	Result string `json:"result"`
 	Data   struct {
@@ -213,6 +217,7 @@ type SessionStartResponse struct {
 	} `json:"data"`
 }
 
+// ChunkUploadResponse is returned by kdrive after a chunk upload
 type ChunkUploadResponse struct {
 	Result string `json:"result"`
 	Data   struct {
@@ -221,6 +226,7 @@ type ChunkUploadResponse struct {
 	} `json:"data"`
 }
 
+// SessionFinishResponse is used to end a multichunk upload session
 type SessionFinishResponse struct {
 	Result string `json:"result"`
 	Data   struct {
@@ -231,6 +237,7 @@ type SessionFinishResponse struct {
 	} `json:"data"`
 }
 
+// SessionCancelResponse is used to cancel a multichunk upload session
 type SessionCancelResponse struct {
 	Result string `json:"result"`
 	Data   bool   `json:"data"`
