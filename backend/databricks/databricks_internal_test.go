@@ -432,7 +432,7 @@ func TestFsName(t *testing.T) {
 
 func TestFsPrecision(t *testing.T) {
 	f := &Fs{}
-	assert.Equal(t, time.Second, f.Precision())
+	assert.Equal(t, fs.ModTimeNotSupported, f.Precision())
 }
 
 func TestFsHashes(t *testing.T) {

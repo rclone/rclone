@@ -238,9 +238,11 @@ func (f *Fs) String() string {
 func (f *Fs) Features() *fs.Features { return f.features }
 
 // Precision returns the precision of the remote's modification times.
-// The Files API returns last_modified in milliseconds (list) but the HEAD
-// response gives an HTTP date (second precision), so we advertise seconds.
-func (f *Fs) Precision() time.Duration { return time.Second }
+//
+// The Files API does not support setting client-side modTime on upload;
+// it always records the server-side receive time. We therefore return
+// [fs.ModTimeNotSupported] so that callers know modTime is unreliable.
+func (f *Fs) Precision() time.Duration { return fs.ModTimeNotSupported }
 
 // Hashes returns the hash types supported by this remote. The Databricks
 // Files API does not expose file hashes, so we return None.
@@ -425,6 +427,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		return fmt.Errorf("stat after upload %q: %w", o.remote, err)
 	}
+
 	o.size = updated.size
 	o.modTime = updated.modTime
 	o.contentType = updated.contentType
@@ -436,13 +439,9 @@ func (o *Object) Remove(ctx context.Context) error {
 	return o.fs.files.DeleteByFilePath(ctx, o.fs.fullPath(o.remote))
 }
 
-// MimeType returns the MIME type of the object if known.
-func (o *Object) MimeType(_ context.Context) string { return o.contentType }
-
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs          = (*Fs)(nil)
 	_ fs.PutStreamer = (*Fs)(nil)
 	_ fs.Object      = (*Object)(nil)
-	_ fs.MimeTyper   = (*Object)(nil)
 )

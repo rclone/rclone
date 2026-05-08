@@ -131,7 +131,7 @@ backends:
    remote:   "TestCombine:dir1"
    fastlist: false
  - backend:  "databricks"
-   remote:   "TestDatabricks:"
+   remote:   "TestDatabricks:Volumes/workspace/default/rclone"
    fastlist: false
  ## begin compress
  - backend:  "compress"
