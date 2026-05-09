@@ -282,7 +282,11 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // NewObject returns an fs.Object for the given remote path, or
 // fs.ErrorObjectNotFound if it does not exist.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	return f.statFile(ctx, remote)
+	o, err := f.statFile(ctx, remote)
+	if err != nil {
+		return nil, err
+	}
+	return o, nil
 }
 
 // Put uploads src to the remote path described by src.Remote(), replacing any
@@ -352,7 +356,12 @@ func (o *Object) String() string {
 }
 
 // Remote returns the remote path relative to the Fs root.
-func (o *Object) Remote() string { return o.remote }
+func (o *Object) Remote() string {
+	if o == nil {
+		return "<nil>"
+	}
+	return o.remote
+}
 
 // Hash returns "" because the Databricks Files API does not provide file hashes.
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
