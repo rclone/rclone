@@ -114,6 +114,33 @@ rclone sync --interactive remote:directory /home/local/directory
 
 This remote is read only - you can't upload files to an HTTP server.
 
+### Servers without directory listings
+
+Rclone normally needs the HTTP server to return a parseable directory
+listing in order to discover files. However if the path points
+directly at a single file (i.e. it does not end with `/` and the
+initial HEAD request reports it as a file), rclone will skip the
+parent directory listing entirely and access the file directly.
+
+This means rclone can be used to download individual files on HTTP
+servers that have directory listings disabled, as long as you know the
+exact URL of each file. For example, given a server that serves
+`https://example.com/path/file.txt` but returns an error or an
+unparseable response for `https://example.com/path/`:
+
+```console
+rclone copy --http-url https://example.com :http:path/file.txt /tmp/
+```
+
+You can use this as a remote in other rclone commands too:
+
+```console
+rclone hashsum crc32 --http-url "https://getsamplefiles.com" :archive::http:download/zip/sample-1.zip
+```
+
+If you just want to download a file or multiple files by URL then
+using [copyurl](/commands/rclone_copyurl/) is more efficient.
+
 ### Modification times
 
 Most HTTP servers store time accurate to 1 second.
