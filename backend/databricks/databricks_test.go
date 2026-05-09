@@ -1,4 +1,7 @@
 // Test Databricks Unity Catalog filesystem interface
+
+//go:build !plan9
+
 package databricks
 
 import (

@@ -2,6 +2,9 @@
 //
 // All tests use an in-process httptest.Server that simulates the Databricks
 // Files REST API, so no real Databricks credentials are required.
+
+//go:build !plan9
+
 package databricks
 
 import (

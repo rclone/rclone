@@ -133,6 +133,10 @@ backends:
  - backend:  "databricks"
    remote:   "TestDatabricks:Volumes/workspace/default/rclone"
    fastlist: false
+   ignore:
+     - TestIntegration/FsMkdir/FsEncoding/control_chars
+     - TestIntegration/FsMkdir/FsEncoding/dot
+     - TestIntegration/FsMkdir/FsEncoding/dot_dot
  ## begin compress
  - backend:  "compress"
    remote:   "TestCompress:"

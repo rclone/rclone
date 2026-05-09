@@ -1,3 +1,5 @@
+//go:build !plan9
+
 // Package databricks provides an rclone backend for Databricks Unity Catalog
 // volumes via the Databricks Files REST API, using the official Databricks
 // Go SDK for authentication and transport.
@@ -164,10 +166,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		files:     files.NewFiles(apiClient),
 		apiClient: apiClient,
 	}
-	f.features = (&fs.Features{
-		ReadMimeType:            true,
-		CanHaveEmptyDirectories: true,
-	}).Fill(ctx, f)
+	f.features = (&fs.Features{CanHaveEmptyDirectories: true}).Fill(ctx, f)
 
 	// Check whether the root is an existing file. If so, repoint the remote
 	// at the parent directory and signal ErrorIsFile so rclone can handle it.
