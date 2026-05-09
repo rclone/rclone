@@ -38,6 +38,10 @@ var OptionsInfo = fs.Options{{
 	Name:    "disable_zip",
 	Default: false,
 	Help:    "Disable zip download of directories",
+}, {
+	Name:    "disable_dir_list",
+	Default: false,
+	Help:    "Disable HTML directory list on GET request for a directory",
 }}.
 	Add(libhttp.ConfigInfo).
 	Add(libhttp.AuthConfigInfo).
@@ -45,10 +49,11 @@ var OptionsInfo = fs.Options{{
 
 // Options required for http server
 type Options struct {
-	Auth       libhttp.AuthConfig
-	HTTP       libhttp.Config
-	Template   libhttp.TemplateConfig
-	DisableZip bool `config:"disable_zip"`
+	Auth           libhttp.AuthConfig
+	HTTP           libhttp.Config
+	Template       libhttp.TemplateConfig
+	DisableZip     bool `config:"disable_zip"`
+	DisableDirList bool `config:"disable_dir_list"`
 }
 
 // DefaultOpt is the default values used for Options
@@ -259,6 +264,10 @@ func (s *HTTP) handler(w http.ResponseWriter, r *http.Request) {
 	isDir := strings.HasSuffix(r.URL.Path, "/")
 	remote := strings.Trim(r.URL.Path, "/")
 	if isDir {
+		if s.opt.DisableDirList {
+			http.NotFound(w, r)
+			return
+		}
 		s.serveDir(w, r, remote)
 	} else {
 		s.serveFile(w, r, remote)
@@ -347,6 +356,12 @@ func (s *HTTP) serveFile(w http.ResponseWriter, r *http.Request, remote string) 
 	node, err := VFS.Stat(remote)
 	if err == vfs.ENOENT {
 		fs.Infof(remote, "%s: File not found", r.RemoteAddr)
+		if s.opt.DisableDirList {
+			// Return the same response as for a directory URL so
+			// that missing and existing paths are indistinguishable
+			http.NotFound(w, r)
+			return
+		}
 		http.Error(w, "File not found", http.StatusNotFound)
 		return
 	} else if err != nil {
@@ -354,6 +369,13 @@ func (s *HTTP) serveFile(w http.ResponseWriter, r *http.Request, remote string) 
 		return
 	}
 	if !node.IsFile() {
+		if s.opt.DisableDirList {
+			// Return the same response as for a directory URL so
+			// that a directory's existence can't be probed via a
+			// URL without a trailing slash
+			http.NotFound(w, r)
+			return
+		}
 		http.Error(w, "Not a file", http.StatusNotFound)
 		return
 	}
