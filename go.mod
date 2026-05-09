@@ -71,8 +71,8 @@ require (
 	github.com/prometheus/client_golang v1.23.2
 	github.com/putdotio/go-putio/putio v0.0.0-20200123120452-16d982cac2b8
 	github.com/quasilyte/go-ruleguard/dsl v0.3.23
-	github.com/rclone/Proton-API-Bridge v1.0.1
-	github.com/rclone/go-proton-api v1.0.1
+	github.com/rclone/Proton-API-Bridge v1.0.3
+	github.com/rclone/go-proton-api v1.0.2
 	github.com/rclone/gofakes3 v0.0.4
 	github.com/rfjakob/eme v1.2.0
 	github.com/rivo/uniseg v0.4.7
@@ -94,11 +94,11 @@ require (
 	github.com/zeebo/xxh3 v1.1.0
 	go.etcd.io/bbolt v1.4.3
 	goftp.io/server/v2 v2.0.2
-	golang.org/x/crypto v0.49.0
-	golang.org/x/net v0.52.0
+	golang.org/x/crypto v0.50.0
+	golang.org/x/net v0.53.0
 	golang.org/x/oauth2 v0.36.0
 	golang.org/x/sync v0.20.0
-	golang.org/x/sys v0.42.0
+	golang.org/x/sys v0.43.0
 	golang.org/x/text v0.36.0
 	golang.org/x/time v0.15.0
 	google.golang.org/api v0.275.0
@@ -284,5 +284,5 @@ require (
 	github.com/pkg/xattr v0.4.12
 	github.com/pquerna/otp v1.5.0
 	golang.org/x/mobile v0.0.0-20260312152759-81488f6aeb60
-	golang.org/x/term v0.41.0
+	golang.org/x/term v0.42.0
 )

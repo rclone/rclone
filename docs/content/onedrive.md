@@ -1243,7 +1243,7 @@ If you see the error above after enabling multi-factor authentication for your
 account, you can fix it by refreshing your OAuth refresh token. To do that, run
 `rclone config`, and choose to edit your OneDrive backend. Then, you don't need
 to actually make any changes until you reach this question:
-`Already have a token - refresh?`. For this question, answer `y` and go through
+`Token already configured - replace it?`. For this question, answer `y` and go through
 the process to refresh your token, just like the first time the backend is
 configured. After this, rclone should work again for this backend.
 

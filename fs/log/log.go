@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"reflect"
 	"runtime"
@@ -201,7 +202,21 @@ func init() {
 }
 
 // InitLogging start the logging as per the command line flags
+//
+// This is called explicitly from the CLI, the librclone wrapper and
+// the test framework, but not from package init, so that importing
+// rclone as a library has no side effects on the process-wide default
+// slog logger.
 func InitLogging() {
+	// Redirect the process-wide default logger through rclone's
+	// handler so that log.Print/log.Fatal and slog.Default() (used by
+	// some standard library and third party code) end up in rclone's
+	// log output.
+	slog.SetDefault(slog.New(Handler))
+
+	// Make log.Printf logs at level Notice
+	slog.SetLogLoggerLevel(fs.SlogLevelNotice)
+
 	// Note that ci only has the defaults in at this point
 	// We set real values in logReload
 	ci := fs.GetConfig(context.Background())

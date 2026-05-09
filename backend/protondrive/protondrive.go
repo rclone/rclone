@@ -22,6 +22,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
@@ -420,6 +421,16 @@ func isDecimalString(value string) bool {
 	return true
 }
 
+// protonLogger adapts rclone's fs.Debugf/Logf/Errorf into the
+// resty.Logger / common.Logger shape expected by Proton-API-Bridge and
+// go-proton-api so that library output participates in -v / -vv levels
+// and is captured by --log-file.
+type protonLogger struct{ f *Fs }
+
+func (l protonLogger) Errorf(format string, v ...interface{}) { fs.Errorf(l.f, format, v...) }
+func (l protonLogger) Warnf(format string, v ...interface{})  { fs.Logf(l.f, format, v...) }
+func (l protonLogger) Debugf(format string, v ...interface{}) { fs.Debugf(l.f, format, v...) }
+
 func newProtonDrive(ctx context.Context, f *Fs, opt *Options, m configmap.Mapper) (*protonDriveAPI.ProtonDrive, error) {
 	config := protonDriveAPI.NewDefaultConfig()
 	config.AppVersion = opt.AppVersion
@@ -427,6 +438,15 @@ func newProtonDrive(ctx context.Context, f *Fs, opt *Options, m configmap.Mapper
 		config.AppVersion = protonDriveAppVersionFromRcloneVersion(fs.Version)
 	}
 	config.UserAgent = f.ci.UserAgent // opt.UserAgent
+
+	// Route HTTP through rclone's transport so global flags such as
+	// --dump headers, --no-check-certificate, --user-agent, --bind,
+	// --ca-cert and --header all take effect against Proton Drive.
+	config.Transport = fshttp.NewTransport(ctx)
+
+	// Route bridge and go-proton-api log output through rclone's
+	// logging system so it honours -v / -vv and --log-file.
+	config.Logger = protonLogger{f: f}
 
 	config.ReplaceExistingDraft = opt.ReplaceExistingDraft
 	config.EnableCaching = opt.EnableCaching
@@ -999,7 +1019,7 @@ func (o *Object) Storable() bool {
 
 // Open opens the file for read.  Call Close() on the returned io.ReadCloser
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
-	fs.FixRangeOption(options, *o.originalSize)
+	fs.FixRangeOption(options, o.Size())
 	var offset, limit int64 = 0, -1
 	for _, option := range options { // if the caller passes in nil for options, it will become array of nil
 		switch x := option.(type) {
