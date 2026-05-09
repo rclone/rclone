@@ -321,7 +321,8 @@ func hwDecodeRaw(s string) string {
 }
 
 // Fs represents a remote Huawei Drive
-type Fs struct {	name string // name of this remote
+type Fs struct {
+	name string // name of this remote
 	root string // root path in the remote
 
 	opt      Options            // parsed options
