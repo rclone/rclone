@@ -182,6 +182,7 @@ type Fs struct {
 	vipLevel         int                  // VIP level: 0=free, 1=VIP, 2=SVIP, 3=长期VIP
 	qpsLimits        QPSLimits            // current QPS limits
 	apiPacers        map[string]*fs.Pacer // per-API pacers
+	sliceHTTPClient  *http.Client         // reusable HTTP client for slice uploads
 }
 
 // Object describes a 123pan object
@@ -251,9 +252,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			pacer.MaxSleep(maxSleep),
 			pacer.DecayConstant(2),
 		)),
-		tokenMu:   new(sync.Mutex),
-		qpsLimits: freeUserQPS, // default to free user limits
-		apiPacers: make(map[string]*fs.Pacer),
+		tokenMu:        new(sync.Mutex),
+		qpsLimits:      freeUserQPS, // default to free user limits
+		apiPacers:      make(map[string]*fs.Pacer),
+		sliceHTTPClient: &http.Client{Timeout: sliceUploadTimeout},
 	}
 
 	f.features = (&fs.Features{
@@ -321,38 +323,22 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	return f, nil
 }
 
-// listAllFiles fetches all files in a directory
-// Note: No caching is used to ensure consistency across Fs instances.
-// The API rate limits are handled by the pacer.
-func (f *Fs) listAllFiles(ctx context.Context, parentID int64) ([]api.File, error) {
-	// Fetch from API
-	var allFiles []api.File
+// forEachFile iterates over all files in a directory, calling fn for each file.
+// If fn returns true, the iteration stops early.
+// Files are streamed directly from API pages to avoid accumulating all files in memory.
+func (f *Fs) forEachFile(ctx context.Context, parentID int64, fn func(file api.File) (stop bool)) error {
 	lastFileID := int64(0)
 	for lastFileID != -1 {
 		resp, err := f.listFiles(ctx, parentID, 100, lastFileID)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		allFiles = append(allFiles, resp.Data.FileList...)
+		for _, file := range resp.Data.FileList {
+			if fn(file) {
+				return nil
+			}
+		}
 		lastFileID = resp.Data.LastFileID
-	}
-	return allFiles, nil
-}
-
-// forEachFile iterates over all files in a directory, calling fn for each file.
-// If fn returns true, the iteration stops early (useful for search operations).
-// Returns an error if the listing fails.
-// This method uses directory listing cache to reduce API calls.
-func (f *Fs) forEachFile(ctx context.Context, parentID int64, fn func(file api.File) (stop bool)) error {
-	files, err := f.listAllFiles(ctx, parentID)
-	if err != nil {
-		return err
-	}
-
-	for _, file := range files {
-		if fn(file) {
-			return nil
-		}
 	}
 	return nil
 }
@@ -736,7 +722,9 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 }
 
 // purgeCheck removes the directory, if check is set then it
-// refuses to do so if it has anything in (for Rmdir)
+// refuses to do so if it has anything in (for Rmdir).
+// Uses iterative stack-based traversal with batch deletion to avoid
+// collecting all file IDs in memory at once.
 func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
@@ -749,12 +737,11 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 	}
 
 	if check {
-		// Check if directory is empty (for Rmdir)
 		var hasContent bool
 		err = f.forEachFile(ctx, dirID, func(file api.File) bool {
 			if file.Trashed == 0 {
 				hasContent = true
-				return true // stop iteration
+				return true
 			}
 			return false
 		})
@@ -766,29 +753,16 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 		}
 	}
 
-	// 123pan's trash API doesn't reliably support recursive delete for non-empty directories.
-	// It may return success but not actually delete the contents.
-	// So we always delete contents first, then delete the directory itself.
-
-	// Recursively collect all file IDs (deepest first for safe deletion)
-	fileIDs, err := f.collectAllFileIDs(ctx, dirID)
-	if err != nil {
-		return fmt.Errorf("Purge: failed to collect files: %w", err)
+	// 123pan's trash API doesn't reliably support recursive delete.
+	// Use iterative post-order traversal with batch deletion to avoid
+	// unbounded memory from recursive ID collection.
+	// We collect IDs to batch-delete for API efficiency (trashBatchSize per call),
+	// but flush batches frequently to bound memory.
+	if err := f.deleteTree(ctx, dirID); err != nil {
+		return fmt.Errorf("Purge: failed to delete contents: %w", err)
 	}
 
-	// Batch delete files
-	for i := 0; i < len(fileIDs); i += trashBatchSize {
-		end := i + trashBatchSize
-		if end > len(fileIDs) {
-			end = len(fileIDs)
-		}
-		if err := f.trashBatch(ctx, fileIDs[i:end]); err != nil {
-			return fmt.Errorf("Purge: batch delete failed: %w", err)
-		}
-	}
-
-	// Delete the directory itself (unless it's the true root directory)
-	// When dir == "" but dirID != "0", we're deleting a subdirectory that is the root of this Fs
+	// Delete the directory itself (unless it's the true root)
 	if directoryID != rootID {
 		if err := f.trash(ctx, dirID); err != nil {
 			return fmt.Errorf("Purge: failed to delete directory: %w", err)
@@ -799,84 +773,118 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 	return nil
 }
 
-// collectAllFileIDs recursively collects all file and directory IDs under parentID
-// Returns IDs in reverse order (deepest first) for safe deletion
-func (f *Fs) collectAllFileIDs(ctx context.Context, parentID int64) ([]int64, error) {
-	var result []int64
+// deleteTree iteratively deletes the entire file tree under rootID.
+// Uses a queue for directory traversal and flushes deletion batches
+// frequently to bound memory.
+func (f *Fs) deleteTree(ctx context.Context, rootID int64) error {
+	type bfsEntry struct{ id int64 }
+	var dirs []bfsEntry
+	var batchErr error
 
-	err := f.forEachFile(ctx, parentID, func(file api.File) bool {
-		if file.Trashed != 0 {
-			return false
+	batch := make([]int64, 0, trashBatchSize)
+	flushBatch := func() {
+		if batchErr != nil || len(batch) == 0 {
+			return
 		}
-		if file.Type == 1 {
-			// Directory - recurse first, then add directory ID
-			subIDs, err := f.collectAllFileIDs(ctx, file.FileID)
-			if err == nil {
-				result = append(result, subIDs...)
+		if err := f.trashBatch(ctx, batch); err != nil {
+			batchErr = err
+		}
+		batch = batch[:0]
+	}
+
+	queue := []bfsEntry{{id: rootID}}
+	for len(queue) > 0 && batchErr == nil {
+		current := queue[0]
+		queue = queue[1:]
+
+		err := f.forEachFile(ctx, current.id, func(file api.File) bool {
+			if file.Trashed != 0 {
+				return false
 			}
-			result = append(result, file.FileID)
-		} else {
-			// File
-			result = append(result, file.FileID)
+			if file.Type == 1 {
+				queue = append(queue, bfsEntry{id: file.FileID})
+				dirs = append(dirs, bfsEntry{id: file.FileID})
+			} else {
+				batch = append(batch, file.FileID)
+				if len(batch) >= trashBatchSize {
+					flushBatch()
+				}
+			}
+			return batchErr != nil
+		})
+		if err != nil {
+			return err
 		}
-		return false
-	})
-
-	return result, err
-}
-
-// CleanUp empties the trash by permanently deleting all trashed files
-func (f *Fs) CleanUp(ctx context.Context) error {
-	// Collect all trashed file IDs by traversing the entire file tree
-	// Note: 123pan's file list API returns both normal and trashed files
-	trashedIDs, err := f.collectTrashedFileIDs(ctx, 0) // 0 is root
-	if err != nil {
-		return fmt.Errorf("CleanUp: failed to collect trashed files: %w", err)
+		flushBatch()
 	}
 
-	if len(trashedIDs) == 0 {
-		fs.Debugf(f, "CleanUp: no trashed files found")
-		return nil
+	if batchErr != nil {
+		return batchErr
 	}
 
-	fs.Debugf(f, "CleanUp: found %d trashed files to permanently delete", len(trashedIDs))
-
-	// Batch delete (max trashBatchSize per API call)
-	for i := 0; i < len(trashedIDs); i += trashBatchSize {
-		end := i + trashBatchSize
-		if end > len(trashedIDs) {
-			end = len(trashedIDs)
-		}
-		if err := f.deletePermanently(ctx, trashedIDs[i:end]); err != nil {
-			return fmt.Errorf("CleanUp: batch delete failed: %w", err)
+	// Delete directories in reverse order (deepest first)
+	for i := len(dirs) - 1; i >= 0; i-- {
+		if err := f.trash(ctx, dirs[i].id); err != nil {
+			return err
 		}
 	}
 
-	fs.Infof(f, "CleanUp: permanently deleted %d trashed files", len(trashedIDs))
 	return nil
 }
 
-// collectTrashedFileIDs recursively collects all trashed file IDs under parentID
-func (f *Fs) collectTrashedFileIDs(ctx context.Context, parentID int64) ([]int64, error) {
-	var result []int64
+// CleanUp empties the trash by permanently deleting all trashed files.
+// Uses iterative BFS traversal with batch deletion to bound memory.
+func (f *Fs) CleanUp(ctx context.Context) error {
+	batch := make([]int64, 0, trashBatchSize)
+	totalDeleted := 0
+	var batchErr error
 
-	err := f.forEachFile(ctx, parentID, func(file api.File) bool {
-		if file.Trashed != 0 {
-			// This file is in trash - collect it
-			result = append(result, file.FileID)
+	flushBatch := func() {
+		if batchErr != nil || len(batch) == 0 {
+			return
 		}
-		if file.Type == 1 {
-			// Directory - recurse into it (regardless of trashed status)
-			// to find any trashed files inside
-			subIDs, err := f.collectTrashedFileIDs(ctx, file.FileID)
-			if err == nil {
-				result = append(result, subIDs...)
+		if err := f.deletePermanently(ctx, batch); err != nil {
+			batchErr = err
+		}
+		totalDeleted += len(batch)
+		batch = batch[:0]
+	}
+
+	type bfsEntry struct{ id int64 }
+	queue := []bfsEntry{{id: 0}} // 0 = root
+
+	for len(queue) > 0 && batchErr == nil {
+		current := queue[0]
+		queue = queue[1:]
+
+		err := f.forEachFile(ctx, current.id, func(file api.File) bool {
+			if file.Trashed != 0 {
+				batch = append(batch, file.FileID)
+				if len(batch) >= trashBatchSize {
+					flushBatch()
+				}
 			}
+			if file.Type == 1 {
+				queue = append(queue, bfsEntry{id: file.FileID})
+			}
+			return batchErr != nil
+		})
+		if err != nil {
+			return err
 		}
-		return false
-	})
+		flushBatch()
+	}
 
-	return result, err
+	if batchErr != nil {
+		return fmt.Errorf("CleanUp: batch delete failed: %w", batchErr)
+	}
+
+	if totalDeleted > 0 {
+		fs.Infof(f, "CleanUp: permanently deleted %d trashed files", totalDeleted)
+	} else {
+		fs.Debugf(f, "CleanUp: no trashed files found")
+	}
+	return nil
 }
 
 // ------------------------------------------------------------

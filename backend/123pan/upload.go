@@ -11,18 +11,18 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/rclone/rclone/backend/123pan/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
-	"github.com/rclone/rclone/lib/readers"
 )
 
 const (
-	// maxMemoryUploadSize is the maximum file size to load into memory for upload
-	maxMemoryUploadSize   = 100 * 1024 * 1024 // 100MB
+	maxMemoryUploadSize   = 32 * 1024 * 1024  // 32MB: files below this size may be read entirely into memory
+	maxSliceBufferSize    = 16 * 1024 * 1024  // 16MB: upper bound for API-returned sliceSize
 	uploadCompleteMaxWait = 120               // 2 minutes max wait (in seconds)
 	sliceUploadMaxRetries = 5
 	sliceUploadTimeout    = 5 * time.Minute
@@ -44,17 +44,15 @@ func calculateMD5(data []byte) string {
 
 // upload uploads a file to 123pan
 func (f *Fs) upload(ctx context.Context, in io.Reader, parentID int64, filename string, size int64, options ...fs.OpenOption) (*api.File, error) {
-	// For small files, use the simple in-memory approach
 	if size <= maxMemoryUploadSize {
 		return f.uploadSmallFile(ctx, in, parentID, filename, size)
 	}
-	// For large files, use streaming upload
 	return f.uploadLargeFile(ctx, in, parentID, filename, size)
 }
 
-// uploadSmallFile handles uploads for files <= maxMemoryUploadSize
+// uploadSmallFile handles uploads for files <= maxMemoryUploadSize.
+// Uses in-memory buffer for simplicity and speed.
 func (f *Fs) uploadSmallFile(ctx context.Context, in io.Reader, parentID int64, filename string, size int64) (*api.File, error) {
-	// Read the entire file to calculate MD5 (required by 123pan API)
 	data, err := io.ReadAll(in)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file: %w", err)
@@ -65,69 +63,108 @@ func (f *Fs) uploadSmallFile(ctx context.Context, in io.Reader, parentID int64, 
 
 	etag := calculateMD5(data)
 
-	// sliceUploader is called if instant upload fails
 	sliceUploader := func(server, preuploadID string, sliceSize int64) error {
-		return f.uploadSlicesFromMemory(ctx, data, server, preuploadID, sliceSize)
+		return f.uploadSlicesFromMemory(ctx, data, server, preuploadID, clampSliceSize(sliceSize))
 	}
 
 	return f.processUpload(ctx, parentID, filename, etag, size, sliceUploader)
 }
 
-// uploadLargeFile handles uploads for files > maxMemoryUploadSize using streaming
+// uploadLargeFile handles uploads for files > maxMemoryUploadSize using streaming.
+// For seekable readers, MD5 is computed by reading then seeking back.
+// For non-seekable readers, data is buffered to a temp file to avoid OOM.
 func (f *Fs) uploadLargeFile(ctx context.Context, in io.Reader, parentID int64, filename string, size int64) (*api.File, error) {
-	// Calculate MD5 and prepare reader for upload
-	etag, reader, err := f.prepareStreamingUpload(in, filename, size)
+	etag, reader, cleanup, err := f.prepareStreamingUpload(ctx, in, filename, size)
 	if err != nil {
 		return nil, err
 	}
+	if cleanup != nil {
+		defer cleanup()
+	}
 
-	// sliceUploader is called if instant upload fails
 	sliceUploader := func(server, preuploadID string, sliceSize int64) error {
-		return f.uploadSlicesStreaming(ctx, reader, size, server, preuploadID, sliceSize)
+		return f.uploadSlicesStreaming(ctx, reader, size, server, preuploadID, clampSliceSize(sliceSize))
 	}
 
 	return f.processUpload(ctx, parentID, filename, etag, size, sliceUploader)
 }
 
-// prepareStreamingUpload calculates MD5 and prepares reader for streaming upload
-func (f *Fs) prepareStreamingUpload(in io.Reader, filename string, size int64) (string, io.Reader, error) {
-	// Unwrap accounting to check if the underlying reader can seek
-	// We need to check the underlying reader because accounting wrappers
-	// implement io.Seeker but may delegate to readers that don't support Seek
-	// (e.g., asyncreader.AsyncReader)
+// prepareStreamingUpload calculates MD5 and prepares a reader for streaming upload.
+// Returns (etag, reader, cleanup, error). The cleanup function must be called
+// if non-nil, typically via defer.
+//
+// For seekable readers: reads through a hasher, seeks back, re-wraps accounting.
+// For non-seekable readers: writes to a temp file via TeeReader while hashing,
+// then returns the temp file's reader. The temp file is removed on cleanup.
+func (f *Fs) prepareStreamingUpload(ctx context.Context, in io.Reader, filename string, size int64) (etag string, reader io.Reader, cleanup func(), err error) {
 	unwrapped, wrap := accounting.UnWrap(in)
 	if seeker, canSeek := unwrapped.(io.Seeker); canSeek {
-		fs.Debugf(f, "Calculating MD5 for large file %s (streaming)", filename)
+		fs.Debugf(f, "Calculating MD5 for large file %s (seekable)", filename)
 		hasher := md5.New()
-		n, err := io.Copy(hasher, in)
-		if err != nil {
-			return "", nil, fmt.Errorf("failed to calculate MD5: %w", err)
+		n, copyErr := io.Copy(hasher, in)
+		if copyErr != nil {
+			err = fmt.Errorf("failed to calculate MD5: %w", copyErr)
+			return
 		}
 		if n != size {
-			return "", nil, fmt.Errorf("file size mismatch: expected %d, got %d", size, n)
+			err = fmt.Errorf("file size mismatch: expected %d, got %d", size, n)
+			return
 		}
-		if _, err = seeker.Seek(0, io.SeekStart); err != nil {
-			return "", nil, fmt.Errorf("failed to seek: %w", err)
+		if _, seekErr := seeker.Seek(0, io.SeekStart); seekErr != nil {
+			err = fmt.Errorf("failed to seek: %w", seekErr)
+			return
 		}
-		// Re-wrap the reader with accounting if it was wrapped before
-		return hex.EncodeToString(hasher.Sum(nil)), wrap(unwrapped), nil
+		return hex.EncodeToString(hasher.Sum(nil)), wrap(unwrapped), nil, nil
 	}
 
-	// Cannot seek, use RepeatableReader
-	fs.Debugf(f, "Using RepeatableReader for large file %s", filename)
-	repeatableReader := readers.NewRepeatableReader(in)
+	// Non-seekable: buffer to temp file to avoid OOM from in-memory RepeatableReader
+	fs.Debugf(f, "Buffering non-seekable large file %s to temp file", filename)
+	tmpFile, tmpErr := os.CreateTemp("", "rclone-123pan-upload-*")
+	if tmpErr != nil {
+		err = fmt.Errorf("failed to create temp file: %w", tmpErr)
+		return
+	}
+
+	cleanup = func() {
+		name := tmpFile.Name()
+		_ = tmpFile.Close()
+		_ = os.Remove(name)
+	}
+
 	hasher := md5.New()
-	n, err := io.Copy(hasher, repeatableReader)
-	if err != nil {
-		return "", nil, fmt.Errorf("failed to calculate MD5: %w", err)
+	tee := io.TeeReader(in, hasher)
+	n, copyErr := io.Copy(tmpFile, tee)
+	if copyErr != nil {
+		cleanup()
+		err = fmt.Errorf("failed to buffer to temp file: %w", copyErr)
+		cleanup = nil
+		return
 	}
 	if n != size {
-		return "", nil, fmt.Errorf("file size mismatch: expected %d, got %d", size, n)
+		cleanup()
+		err = fmt.Errorf("file size mismatch: expected %d, got %d", size, n)
+		cleanup = nil
+		return
 	}
-	if _, err = repeatableReader.Seek(0, io.SeekStart); err != nil {
-		return "", nil, fmt.Errorf("failed to seek: %w", err)
+	if _, seekErr := tmpFile.Seek(0, io.SeekStart); seekErr != nil {
+		cleanup()
+		err = fmt.Errorf("failed to seek temp file: %w", seekErr)
+		cleanup = nil
+		return
 	}
-	return hex.EncodeToString(hasher.Sum(nil)), repeatableReader, nil
+
+	return hex.EncodeToString(hasher.Sum(nil)), tmpFile, cleanup, nil
+}
+
+// clampSliceSize caps sliceSize at maxSliceBufferSize to bound memory usage.
+func clampSliceSize(sliceSize int64) int64 {
+	if sliceSize > maxSliceBufferSize {
+		return maxSliceBufferSize
+	}
+	if sliceSize <= 0 {
+		return maxSliceBufferSize
+	}
+	return sliceSize
 }
 
 // sliceUploaderFunc is a function type for uploading slices
@@ -135,7 +172,6 @@ type sliceUploaderFunc func(server, preuploadID string, sliceSize int64) error
 
 // processUpload handles the common upload logic after MD5 calculation
 func (f *Fs) processUpload(ctx context.Context, parentID int64, filename, etag string, size int64, uploadSlices sliceUploaderFunc) (*api.File, error) {
-	// Create file (check for instant upload)
 	createResp, err := f.createFile(ctx, parentID, filename, etag, size)
 	if err != nil {
 		return nil, err
@@ -143,7 +179,6 @@ func (f *Fs) processUpload(ctx context.Context, parentID int64, filename, etag s
 
 	fileID := createResp.Data.FileID
 
-	// Check for instant upload (秒传)
 	if createResp.Data.Reuse {
 		fs.Debugf(f, "Instant upload succeeded for %s", filename)
 	} else {
@@ -151,12 +186,10 @@ func (f *Fs) processUpload(ctx context.Context, parentID int64, filename, etag s
 			return nil, errors.New("no upload server returned")
 		}
 
-		// Upload slices
 		if err = uploadSlices(createResp.Data.Servers[0], createResp.Data.PreuploadID, createResp.Data.SliceSize); err != nil {
 			return nil, fmt.Errorf("failed to upload slices: %w", err)
 		}
 
-		// Complete upload with polling
 		fileID, err = f.waitForUploadComplete(ctx, createResp.Data.PreuploadID)
 		if err != nil {
 			return nil, err
@@ -207,9 +240,9 @@ func (f *Fs) uploadSlicesFromMemory(ctx context.Context, data []byte, uploadServ
 	return f.uploadSlices(ctx, size, sliceSize, uploadServer, preuploadID, provider)
 }
 
-// uploadSlicesStreaming uploads file data in slices using streaming
+// uploadSlicesStreaming uploads file data in slices using streaming.
+// Uses a fixed-size buffer per slice to bound memory usage.
 func (f *Fs) uploadSlicesStreaming(ctx context.Context, reader io.Reader, size int64, uploadServer, preuploadID string, sliceSize int64) error {
-	// Unwrap accounting to get the raw reader
 	if unwrapped, _ := accounting.UnWrap(reader); unwrapped != nil {
 		reader = unwrapped
 	}
@@ -277,12 +310,12 @@ func (f *Fs) uploadSliceWithRetry(ctx context.Context, server, preuploadID strin
 	return fmt.Errorf("slice upload failed after %d retries: %w", sliceUploadMaxRetries, lastErr)
 }
 
-// uploadSlice uploads a single slice
+// uploadSlice uploads a single slice.
+// Reuses the shared HTTP client from Fs to avoid per-slice client allocation.
 func (f *Fs) uploadSlice(ctx context.Context, server, preuploadID string, sliceNo int64, sliceMD5 string, data []byte) (err error) {
 	var buf bytes.Buffer
 	w := multipart.NewWriter(&buf)
 
-	// Add form fields
 	if err := w.WriteField("preuploadID", preuploadID); err != nil {
 		return err
 	}
@@ -293,7 +326,6 @@ func (f *Fs) uploadSlice(ctx context.Context, server, preuploadID string, sliceN
 		return err
 	}
 
-	// Add file data
 	fw, err := w.CreateFormFile("slice", fmt.Sprintf("part%d", sliceNo))
 	if err != nil {
 		return err
@@ -305,7 +337,6 @@ func (f *Fs) uploadSlice(ctx context.Context, server, preuploadID string, sliceN
 		return err
 	}
 
-	// Create and send request
 	req, err := http.NewRequestWithContext(ctx, "POST", server+"/upload/v2/file/slice", &buf)
 	if err != nil {
 		return err
@@ -314,8 +345,7 @@ func (f *Fs) uploadSlice(ctx context.Context, server, preuploadID string, sliceN
 	req.Header.Set("Platform", "open_platform")
 	req.Header.Set("Content-Type", w.FormDataContentType())
 
-	client := &http.Client{Timeout: sliceUploadTimeout}
-	resp, err := client.Do(req)
+	resp, err := f.sliceHTTPClient.Do(req)
 	if err != nil {
 		return err
 	}
