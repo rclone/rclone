@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 
@@ -77,6 +78,16 @@ func (s *Storage) _load() (err error) {
 
 	// Update s.fi with the current file info
 	s.fi, _ = os.Stat(configPath)
+
+	// Warn once if the config file has insecure permissions.
+	// Skip on Windows where permissions are synthesised and chmod does not apply.
+	if s.fi != nil && runtime.GOOS != "windows" {
+		if s.fi.Mode().Perm()&0077 != 0 {
+			insecureConfigPermsWarning.Do(func() {
+				fs.Logf(nil, "Warning: config file %q has insecure permissions %v; it may contain sensitive tokens. Consider running: chmod 600 %q", configPath, s.fi.Mode().Perm(), configPath)
+			})
+		}
+	}
 
 	cryptReader, err := config.Decrypt(fd)
 	if err != nil {
@@ -161,16 +172,9 @@ func (s *Storage) Save() error {
 	info, err = os.Stat(configPath)
 	if err != nil {
 		fs.Debugf(nil, "Using default permissions for config file: %v", fileMode)
-	} else {
-		if info.Mode().Perm()&0077 != 0 {
-			insecureConfigPermsWarning.Do(func() {
-				fs.Logf(nil, "Warning: config file %q has insecure permissions %v; it may contain sensitive tokens. Consider running: chmod 600 %q", configPath, info.Mode().Perm(), configPath)
-			})
-		}
-		if info.Mode() != fileMode {
-			fs.Debugf(nil, "Keeping previous permissions for config file: %v", info.Mode())
-			fileMode = info.Mode()
-		}
+	} else if info.Mode() != fileMode {
+		fs.Debugf(nil, "Keeping previous permissions for config file: %v", info.Mode())
+		fileMode = info.Mode()
 	}
 
 	attemptCopyGroup(configPath, f.Name())
