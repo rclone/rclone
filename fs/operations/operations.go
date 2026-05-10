@@ -579,10 +579,18 @@ func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs
 
 // DeleteFile deletes a single file respecting --dry-run and accumulating stats and errors.
 //
-// If useBackupDir is set and --backup-dir is in effect then it moves
-// the file to there instead of deleting
+// If --backup-dir is in effect then it moves the file to there instead
+// of deleting.
 func DeleteFile(ctx context.Context, dst fs.Object) (err error) {
-	return DeleteFileWithBackupDir(ctx, dst, nil)
+	ci := fs.GetConfig(ctx)
+	var backupDir fs.Fs
+	if ci.BackupDir != "" {
+		backupDir, err = cache.Get(ctx, ci.BackupDir)
+		if err != nil {
+			return fserrors.FatalError(fmt.Errorf("failed to make fs for --backup-dir %q: %w", ci.BackupDir, err))
+		}
+	}
+	return DeleteFileWithBackupDir(ctx, dst, backupDir)
 }
 
 // DeleteFilesWithBackupDir removes all the files passed in the
@@ -628,8 +636,20 @@ func DeleteFilesWithBackupDir(ctx context.Context, toBeDeleted fs.ObjectsChan, b
 }
 
 // DeleteFiles removes all the files passed in the channel
+//
+// If --backup-dir is in effect then it moves the files to there
+// instead of deleting.
 func DeleteFiles(ctx context.Context, toBeDeleted fs.ObjectsChan) error {
-	return DeleteFilesWithBackupDir(ctx, toBeDeleted, nil)
+	ci := fs.GetConfig(ctx)
+	var backupDir fs.Fs
+	if ci.BackupDir != "" {
+		var err error
+		backupDir, err = cache.Get(ctx, ci.BackupDir)
+		if err != nil {
+			return fserrors.FatalError(fmt.Errorf("failed to make fs for --backup-dir %q: %w", ci.BackupDir, err))
+		}
+	}
+	return DeleteFilesWithBackupDir(ctx, toBeDeleted, backupDir)
 }
 
 // ReadFile reads the object into memory and accounts it
