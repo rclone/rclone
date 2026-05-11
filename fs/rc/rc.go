@@ -83,11 +83,6 @@ var OptionsInfo = fs.Options{{
 	Default: fs.Duration(10 * time.Second),
 	Help:    "Interval to check for expired async jobs",
 	Groups:  "RC",
-}, {
-	Name:    "metrics_addr",
-	Default: []string{},
-	Help:    "IPaddress:Port or :Port to bind metrics server to",
-	Groups:  "Metrics",
 }}.
 	AddPrefix(libhttp.ConfigInfo, "rc", "RC").
 	AddPrefix(libhttp.AuthConfigInfo, "rc", "RC").
@@ -95,7 +90,8 @@ var OptionsInfo = fs.Options{{
 	AddPrefix(libhttp.ConfigInfo, "metrics", "Metrics").
 	AddPrefix(libhttp.AuthConfigInfo, "metrics", "Metrics").
 	AddPrefix(libhttp.TemplateConfigInfo, "metrics", "Metrics").
-	SetDefault("rc_addr", []string{"localhost:5572"})
+	SetDefault("rc_addr", []string{"localhost:5572"}).
+	SetDefault("metrics_addr", []string{})
 
 func init() {
 	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "rc", Opt: &Opt, Options: OptionsInfo})
