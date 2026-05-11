@@ -165,6 +165,16 @@ func (b *bisyncRun) resolve(ctxMove context.Context, path1, path2, file, alias s
 		},
 	}
 
+	if b.opt.ConflictLoser == ConflictLoserPathname {
+		switch winningPath {
+		case 1: // keep path1, rename path2
+			r.path1.newName = r.path1.oldName
+		case 2: // keep path2, rename path1
+			r.path2.newName = r.path2.oldName
+		}
+		// case 0 keeps default
+	}
+
 	// handle auto-numbering
 	// note that we still queue copies for both files, whether or not we renamed
 	// we also set these for ConflictLoserDelete in case there is no winner.
