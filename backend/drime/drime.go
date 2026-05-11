@@ -770,6 +770,11 @@ func (f *Fs) deleteObject(ctx context.Context, id string) error {
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
+		// If Drime returns 422 with invalid entry ID, the object is already gone.
+		// Map this to a standard not-found error
+		if strings.Contains(err.Error(), "entry ids is invalid") {
+			return fs.ErrorObjectNotFound
+		}
 		return fmt.Errorf("failed to delete item: %w", err)
 	}
 	// Check the individual result codes also
@@ -1598,7 +1603,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			fs.Debugf(o, "Removing old object on successful upload")
 			deleteErr := o.fs.deleteObject(ctx, id)
 			if deleteErr != nil {
-				err = fmt.Errorf("failed to delete existing object: %w", deleteErr)
+				if errors.Is(deleteErr, fs.ErrorObjectNotFound) {
+					fs.Debugf(o, "Old object already deleted, safely ignoring")
+				} else {
+					err = fmt.Errorf("failed to delete existing object: %w", deleteErr)
+				}
 			}
 		}()
 	}
