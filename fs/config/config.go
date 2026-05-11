@@ -644,6 +644,62 @@ func CreateRemote(ctx context.Context, name string, Type string, keyValues rc.Pa
 	return UpdateRemote(ctx, name, keyValues, opts)
 }
 
+// ReconnectRemoteOpt configures the remote reconnect
+type ReconnectRemoteOpt struct {
+	// Don't interact with the user - return questions
+	NonInteractive bool `json:"nonInteractive"`
+	// If set then supply state and result parameters to continue the process
+	Continue bool `json:"continue"`
+	// State to restart with - used with Continue
+	State string `json:"state"`
+	// Result to return - used with Continue
+	Result string `json:"result"`
+}
+
+// ReconnectRemote re-authenticates the remote by re-running the
+// backend's Config state machine from scratch.
+func ReconnectRemote(ctx context.Context, name string, opt ReconnectRemoteOpt) (*fs.ConfigOut, error) {
+	err := fspath.CheckConfigName(name)
+	if err != nil {
+		return nil, err
+	}
+
+	fsType := GetValue(name, "type")
+	if fsType == "" {
+		return nil, errors.New("couldn't find type field in config")
+	}
+
+	ri, err := fs.Find(fsType)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't find backend for type %q", fsType)
+	}
+
+	if ri.Config == nil {
+		return nil, errors.New("backend doesn't support reconnect or authorize")
+	}
+
+	m := fs.ConfigMap(ri.Prefix, ri.Options, name, nil)
+
+	interactive := !(opt.NonInteractive || opt.Continue)
+	if interactive {
+		err = backendConfig(ctx, name, m, ri, configmap.Simple{}, "")
+		return nil, err
+	}
+
+	// Non-interactive: run one step of the state machine
+	in := fs.ConfigIn{
+		State:  opt.State,
+		Result: opt.Result,
+	}
+	out, err := fs.BackendConfig(ctx, name, m, ri, configmap.Simple{}, in)
+	if err != nil {
+		return nil, err
+	}
+	SaveConfig()
+	cache.ClearConfig(name)
+	return out, nil
+}
+
 // PasswordRemote adds the keyValues passed in to the remote of name.
 // keyValues should be key, value pairs.
 func PasswordRemote(ctx context.Context, name string, keyValues rc.Params) error {

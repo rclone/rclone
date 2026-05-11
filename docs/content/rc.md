@@ -780,6 +780,19 @@ Note that the Options blocks are in the same format as returned by
 "options/info". They are described in the
 [option blocks](#option-blocks) section.
 
+### config/reconnect: Reconnect (re-authenticate) a remote. {#config-reconnect}
+
+This takes the following parameters:
+
+- name - name of remote
+- opt - a dictionary of options to control the configuration
+    - nonInteractive - don't interact with a user, return questions
+    - continue - continue the config process with an answer
+    - state - state to restart with - used with continue
+    - result - result to restart with - used with continue
+
+See the [config reconnect](/commands/rclone_config_reconnect/) command for more information on the above.
+
 ### config/setpath: Set the path of the config file {#config-setpath}
 
 Parameters:

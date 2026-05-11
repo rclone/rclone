@@ -238,3 +238,47 @@ func TestRcConfigUnlock(t *testing.T) {
 	assert.ErrorContains(t, err, `Didn't find key "configPassword" in input`)
 	assert.Nil(t, out)
 }
+
+func TestRcReconnect(t *testing.T) {
+	ctx := context.Background()
+	oldConfigFile := config.GetConfigPath()
+	defer func() {
+		require.NoError(t, config.SetConfigPath(oldConfigFile))
+	}()
+	require.NoError(t, config.SetConfigPath(filepath.Join(t.TempDir(), "rclone.conf")))
+	configfile.Install()
+
+	// Create a local remote (local doesn't support reconnect)
+	call := rc.Calls.Get("config/create")
+	require.NotNil(t, call)
+	in := rc.Params{
+		"name":       testName,
+		"type":       "local",
+		"parameters": rc.Params{},
+	}
+	_, err := call.Fn(ctx, in)
+	require.NoError(t, err)
+
+	// Test that reconnect returns an error for backends that don't support it
+	call = rc.Calls.Get("config/reconnect")
+	require.NotNil(t, call)
+	in = rc.Params{
+		"name": testName,
+	}
+	_, err = call.Fn(ctx, in)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "backend doesn't support reconnect")
+
+	// Test nonexistent remote
+	in = rc.Params{
+		"name": "nonexistent",
+	}
+	_, err = call.Fn(ctx, in)
+	require.Error(t, err)
+
+	// Clean up
+	call = rc.Calls.Get("config/delete")
+	require.NotNil(t, call)
+	_, err = call.Fn(ctx, rc.Params{"name": testName})
+	require.NoError(t, err)
+}

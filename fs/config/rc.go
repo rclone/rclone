@@ -233,6 +233,52 @@ func rcConfig(ctx context.Context, in rc.Params, what string) (out rc.Params, er
 
 func init() {
 	rc.Add(rc.Call{
+		Path:  "config/reconnect",
+		Fn:    rcReconnect,
+		Title: "Reconnect (re-authenticate) a remote.",
+		Help: `This takes the following parameters:
+
+- name - name of remote
+- opt - a dictionary of options to control the configuration
+    - nonInteractive - don't interact with a user, return questions
+    - continue - continue the config process with an answer
+    - state - state to restart with - used with continue
+    - result - result to restart with - used with continue
+
+See the [config reconnect](/commands/rclone_config_reconnect/) command for more information on the above.
+`,
+	})
+}
+
+func rcReconnect(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	name, err := in.GetString("name")
+	if err != nil {
+		return nil, err
+	}
+	var opt ReconnectRemoteOpt
+	err = in.GetStruct("opt", &opt)
+	if err != nil && !rc.IsErrParamNotFound(err) {
+		return nil, err
+	}
+	configOut, err := ReconnectRemote(ctx, name, opt)
+	if err != nil {
+		return nil, err
+	}
+	if !opt.NonInteractive {
+		return nil, nil
+	}
+	if configOut == nil {
+		configOut = &fs.ConfigOut{}
+	}
+	err = rc.Reshape(&out, configOut)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func init() {
+	rc.Add(rc.Call{
 		Path:  "config/delete",
 		Fn:    rcDelete,
 		Title: "Delete a remote in the config file.",
