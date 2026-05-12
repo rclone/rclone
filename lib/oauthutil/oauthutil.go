@@ -786,6 +786,26 @@ restarting rclone. If no OAuth authentication is in progress, an error
 is returned.
 `,
 	})
+	rc.Add(rc.Call{
+		Path:  "config/oauthstatus",
+		Fn:    rcOAuthStatus,
+		Title: "Get the status of the OAuth authentication server.",
+		Help: `Returns the current status of the OAuth authentication server.
+
+Returns a JSON object:
+- status - "running" or "stopped"
+`,
+	})
+}
+
+func rcOAuthStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	oauthCancelMu.Lock()
+	defer oauthCancelMu.Unlock()
+	status := "stopped"
+	if oauthCancelFn != nil {
+		status = "running"
+	}
+	return rc.Params{"status": status}, nil
 }
 
 func rcStopOAuth(ctx context.Context, in rc.Params) (out rc.Params, err error) {
