@@ -91,12 +91,13 @@ func TestRun(t *testing.T) {
 		require.NotNil(t, entry.vfs)
 		f := entry.vfs.Fs()
 		require.NotNil(t, f)
-		assert.Equal(t, "proxy-"+testUser, f.Name())
+		cacheKey := generateCacheKey(testUser, testPass)
+		assert.Equal(t, "proxy-"+cacheKey, f.Name())
 		assert.True(t, strings.HasPrefix(f.String(), "Local file system"))
 
 		// check it is in the cache
 		assert.Equal(t, 1, p.vfsCache.Entries())
-		cacheValue, ok := p.vfsCache.GetMaybe(testUser)
+		cacheValue, ok := p.vfsCache.GetMaybe(cacheKey)
 		assert.True(t, ok)
 		assert.Equal(t, value, cacheValue)
 	})
@@ -106,23 +107,24 @@ func TestRun(t *testing.T) {
 		assert.Equal(t, 0, p.vfsCache.Entries())
 		defer p.vfsCache.Clear()
 
+		cacheKey := generateCacheKey(testUser, testPass)
 		vfs, vfsKey, err := p.Call(testUser, testPass, false)
 		require.NoError(t, err)
 		require.NotNil(t, vfs)
-		assert.Equal(t, "proxy-"+testUser, vfs.Fs().Name())
-		assert.Equal(t, testUser, vfsKey)
+		assert.Equal(t, "proxy-"+cacheKey, vfs.Fs().Name())
+		assert.Equal(t, cacheKey, vfsKey)
 
 		// check it is in the cache
 		assert.Equal(t, 1, p.vfsCache.Entries())
-		cacheValue, ok := p.vfsCache.GetMaybe(testUser)
+		cacheValue, ok := p.vfsCache.GetMaybe(cacheKey)
 		assert.True(t, ok)
-		cacheEntry, ok := cacheValue.(cacheEntry)
+		cached, ok := cacheValue.(cacheEntry)
 		assert.True(t, ok)
-		assert.Equal(t, vfs, cacheEntry.vfs)
+		assert.Equal(t, vfs, cached.vfs)
 
 		// Test Get works while we have something in the cache
 		t.Run("Get", func(t *testing.T) {
-			assert.Equal(t, vfs, p.Get(testUser))
+			assert.Equal(t, vfs, p.Get(cacheKey))
 			assert.Nil(t, p.Get("unknown"))
 		})
 
@@ -130,22 +132,36 @@ func TestRun(t *testing.T) {
 		vfs, vfsKey, err = p.Call(testUser, testPass, false)
 		require.NoError(t, err)
 		require.NotNil(t, vfs)
-		assert.Equal(t, "proxy-"+testUser, vfs.Fs().Name())
-		assert.Equal(t, testUser, vfsKey)
+		assert.Equal(t, "proxy-"+cacheKey, vfs.Fs().Name())
+		assert.Equal(t, cacheKey, vfsKey)
 
 		// check cache is at the same level
 		assert.Equal(t, 1, p.vfsCache.Entries())
 
-		// now try again from the cache but with wrong password
-		vfs, vfsKey, err = p.Call(testUser, testPass+"wrong", false)
+		// A different password produces a different cache key, so it
+		// creates a fresh cache entry rather than hitting the existing
+		// one. Authentication itself is the proxy script's job.
+		vfs2, vfsKey2, err := p.Call(testUser, testPass+"different", false)
+		require.NoError(t, err)
+		require.NotNil(t, vfs2)
+		assert.NotEqual(t, cacheKey, vfsKey2)
+		assert.Equal(t, 2, p.vfsCache.Entries())
+
+		// The underlying fs.Fs must also be a fresh instance from fs/cache
+		if vfs.Fs() == vfs2.Fs() {
+			t.Error("fs/cache returned the stale backend after auth change")
+		}
+
+		// If a cached entry's pwHash somehow doesn't match the supplied
+		// auth (eg a hash collision on the cache key), Call must reject
+		// it. Simulate by corrupting the cached pwHash.
+		entry := cacheEntry{vfs: vfs, pwHash: sha256.Sum256([]byte("tampered"))}
+		p.vfsCache.Put(cacheKey, entry)
+		vfs, vfsKey, err = p.Call(testUser, testPass, false)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "incorrect password")
 		require.Nil(t, vfs)
 		require.Equal(t, "", vfsKey)
-
-		// check cache is at the same level
-		assert.Equal(t, 1, p.vfsCache.Entries())
-
 	})
 
 	privateKey, privateKeyErr := rsa.GenerateKey(rand.Reader, 2048)
@@ -174,12 +190,13 @@ func TestRun(t *testing.T) {
 		require.NotNil(t, entry.vfs)
 		f := entry.vfs.Fs()
 		require.NotNil(t, f)
-		assert.Equal(t, "proxy-"+testUser, f.Name())
+		cacheKey := generateCacheKey(testUser, publicKeyString)
+		assert.Equal(t, "proxy-"+cacheKey, f.Name())
 		assert.True(t, strings.HasPrefix(f.String(), "Local file system"))
 
 		// check it is in the cache
 		assert.Equal(t, 1, p.vfsCache.Entries())
-		cacheValue, ok := p.vfsCache.GetMaybe(testUser)
+		cacheValue, ok := p.vfsCache.GetMaybe(cacheKey)
 		assert.True(t, ok)
 		assert.Equal(t, value, cacheValue)
 	})
@@ -189,6 +206,7 @@ func TestRun(t *testing.T) {
 		assert.Equal(t, 0, p.vfsCache.Entries())
 		defer p.vfsCache.Clear()
 
+		cacheKey := generateCacheKey(testUser, publicKeyString)
 		vfs, vfsKey, err := p.Call(
 			testUser,
 			publicKeyString,
@@ -196,20 +214,20 @@ func TestRun(t *testing.T) {
 		)
 		require.NoError(t, err)
 		require.NotNil(t, vfs)
-		assert.Equal(t, "proxy-"+testUser, vfs.Fs().Name())
-		assert.Equal(t, testUser, vfsKey)
+		assert.Equal(t, "proxy-"+cacheKey, vfs.Fs().Name())
+		assert.Equal(t, cacheKey, vfsKey)
 
 		// check it is in the cache
 		assert.Equal(t, 1, p.vfsCache.Entries())
-		cacheValue, ok := p.vfsCache.GetMaybe(testUser)
+		cacheValue, ok := p.vfsCache.GetMaybe(cacheKey)
 		assert.True(t, ok)
-		cacheEntry, ok := cacheValue.(cacheEntry)
+		cached, ok := cacheValue.(cacheEntry)
 		assert.True(t, ok)
-		assert.Equal(t, vfs, cacheEntry.vfs)
+		assert.Equal(t, vfs, cached.vfs)
 
 		// Test Get works while we have something in the cache
 		t.Run("Get", func(t *testing.T) {
-			assert.Equal(t, vfs, p.Get(testUser))
+			assert.Equal(t, vfs, p.Get(cacheKey))
 			assert.Nil(t, p.Get("unknown"))
 		})
 
@@ -217,20 +235,35 @@ func TestRun(t *testing.T) {
 		vfs, vfsKey, err = p.Call(testUser, publicKeyString, true)
 		require.NoError(t, err)
 		require.NotNil(t, vfs)
-		assert.Equal(t, "proxy-"+testUser, vfs.Fs().Name())
-		assert.Equal(t, testUser, vfsKey)
+		assert.Equal(t, "proxy-"+cacheKey, vfs.Fs().Name())
+		assert.Equal(t, cacheKey, vfsKey)
 
 		// check cache is at the same level
 		assert.Equal(t, 1, p.vfsCache.Entries())
 
-		// now try again from the cache but with wrong public key
-		vfs, vfsKey, err = p.Call(testUser, publicKeyString+"wrong", true)
+		// A different public key produces a different cache key, so it
+		// creates a fresh cache entry rather than hitting the existing
+		// one. Authentication itself is the proxy script's job.
+		vfs2, vfsKey2, err := p.Call(testUser, publicKeyString+"different", true)
+		require.NoError(t, err)
+		require.NotNil(t, vfs2)
+		assert.NotEqual(t, cacheKey, vfsKey2)
+		assert.Equal(t, 2, p.vfsCache.Entries())
+
+		// The underlying fs.Fs must be a fresh instance from fs/cache
+		if vfs.Fs() == vfs2.Fs() {
+			t.Error("fs/cache returned the stale backend after public key change")
+		}
+
+		// If a cached entry's pwHash somehow doesn't match the supplied
+		// auth (eg a hash collision on the cache key), Call must reject
+		// it. Simulate by corrupting the cached pwHash.
+		entry := cacheEntry{vfs: vfs, pwHash: sha256.Sum256([]byte("tampered"))}
+		p.vfsCache.Put(cacheKey, entry)
+		vfs, vfsKey, err = p.Call(testUser, publicKeyString, true)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "incorrect public key")
 		require.Nil(t, vfs)
 		require.Equal(t, "", vfsKey)
-
-		// check cache is at the same level
-		assert.Equal(t, 1, p.vfsCache.Entries())
 	})
 }

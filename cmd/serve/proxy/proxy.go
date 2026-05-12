@@ -4,8 +4,11 @@ package proxy
 import (
 	"bytes"
 	"context"
+	"crypto/hmac"
+	"crypto/rand"
 	"crypto/sha256"
 	"crypto/subtle"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -98,10 +101,11 @@ to make proxy to many different sftp backends, you could make the
 in the output and the user to |user|. For security you'd probably want
 to restrict the |host| to a limited list.
 
-Note that an internal cache is keyed on |user| so only use that for
-configuration, don't use |pass| or |public_key|.  This also means that if a user's
-password or public-key is changed the cache will need to expire (which takes 5 mins)
-before it takes effect.
+An internal cache of backends is keyed on the |user| and a hash of the
+|pass| or |public_key|.  This means that if a user's password or
+public-key changes, or the proxy returns different config parameters
+(eg a rotated |api_key|), a fresh backend will be created on the next
+request rather than the cached one being reused.
 
 This can be used to build general purpose proxies to any kind of
 backend that rclone supports.
@@ -196,6 +200,25 @@ func (p *Proxy) run(in map[string]string) (config configmap.Simple, err error) {
 	return config, nil
 }
 
+// cacheKeyHMACKey is a per-process random key used to derive cache keys
+// from auth credentials. Using a keyed hash (HMAC) rather than a bare
+// SHA256 means the hash fragment that appears in logs and backend names
+// cannot be used to brute-force the underlying password offline.
+var cacheKeyHMACKey = func() []byte {
+	key := make([]byte, 32)
+	if _, err := rand.Read(key); err != nil {
+		panic(fmt.Sprintf("proxy: failed to generate cache key: %v", err))
+	}
+	return key
+}()
+
+// generateCacheKey creates a composite cache key from user and auth credentials
+func generateCacheKey(user, auth string) string {
+	mac := hmac.New(sha256.New, cacheKeyHMACKey)
+	mac.Write([]byte(auth))
+	return user + "-" + hex.EncodeToString(mac.Sum(nil)[:8])
+}
+
 // call runs the auth proxy and returns a cacheEntry and an error
 func (p *Proxy) call(user, auth string, isPublicKey bool) (value any, err error) {
 	var config configmap.Simple
@@ -232,12 +255,17 @@ func (p *Proxy) call(user, auth string, isPublicKey bool) (value any, err error)
 		return nil, fmt.Errorf("proxy: couldn't find backend for %q: %w", fsName, err)
 	}
 
-	// base name of config on user name.  This may appear in logs
-	name := "proxy-" + user
+	// Make the cache key include the auth so that changes to the
+	// auth (eg the proxy returning new config) create a fresh
+	// backend rather than reusing the cached one.
+	cacheKey := generateCacheKey(user, auth)
+
+	// base name of config on user name and auth hash.  This may appear in logs
+	name := "proxy-" + cacheKey
 	fsString := name + ":" + root
 
 	// Look for fs in the VFS cache
-	value, err = p.vfsCache.Get(user, func(key string) (value any, ok bool, err error) {
+	value, err = p.vfsCache.Get(cacheKey, func(key string) (value any, ok bool, err error) {
 		// Create the Fs from the cache
 		f, err := cache.GetFn(p.ctx, fsString, func(ctx context.Context, fsString string) (fs.Fs, error) {
 			// Update the config with the default values
@@ -271,8 +299,11 @@ func (p *Proxy) call(user, auth string, isPublicKey bool) (value any, err error)
 // Call runs the auth proxy with the username and password/public key provided
 // returning a *vfs.VFS and the key used in the VFS cache.
 func (p *Proxy) Call(user, auth string, isPublicKey bool) (VFS *vfs.VFS, vfsKey string, err error) {
-	// Look in the cache first
-	value, ok := p.vfsCache.GetMaybe(user)
+	// Cache key includes the auth so credential changes don't hit a stale entry
+	cacheKey := generateCacheKey(user, auth)
+
+	// Look in the cache first with the credential-aware key
+	value, ok := p.vfsCache.GetMaybe(cacheKey)
 
 	// If not found then call the proxy for a fresh answer
 	if !ok {
@@ -288,11 +319,11 @@ func (p *Proxy) Call(user, auth string, isPublicKey bool) (VFS *vfs.VFS, vfsKey 
 		return nil, "", fmt.Errorf("proxy: value is not cache entry: %#v", value)
 	}
 
-	// Check the password / public key is correct in the cached entry.  This
-	// prevents an attack where subsequent requests for the same
-	// user don't have their auth checked. It does mean that if
-	// the password is changed, the user will have to wait for
-	// cache expiry (5m) before trying again.
+	// Check the password / public key matches the cached entry. The
+	// cache key already includes a hash of the auth, so a changed
+	// credential lands on a fresh key rather than this entry; this
+	// check is a final guard against a hash collision on the key
+	// returning a backend created with different auth.
 	authHash := sha256.Sum256([]byte(auth))
 	if subtle.ConstantTimeCompare(authHash[:], entry.pwHash[:]) != 1 {
 		if isPublicKey {
@@ -301,7 +332,7 @@ func (p *Proxy) Call(user, auth string, isPublicKey bool) (VFS *vfs.VFS, vfsKey 
 		return nil, "", errors.New("proxy: incorrect password")
 	}
 
-	return entry.vfs, user, nil
+	return entry.vfs, cacheKey, nil
 }
 
 // Get VFS from the cache using key - returns nil if not found
