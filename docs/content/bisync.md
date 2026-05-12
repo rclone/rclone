@@ -1899,6 +1899,11 @@ about *Unison* and synchronization in general.
 
 ## Changelog
 
+### `v1.74.2`
+
+- Fixed an issue causing `--conflict-loser pathname` to produce unexpected
+behavior if using a non-default `--conflict-resolve` value.
+
 ### `v1.74`
 
 - Added several missing `rc` parameters.
