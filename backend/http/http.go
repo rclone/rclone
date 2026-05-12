@@ -156,6 +156,7 @@ type Fs struct {
 	endpoint    *url.URL
 	endpointURL string // endpoint as a string
 	httpClient  *http.Client
+	fileName    string // set if we are pointing to a file
 }
 
 // Object is a remote object that has been stat'd (so it exists, but is not necessarily open for reading)
@@ -297,6 +298,7 @@ func (f *Fs) httpConnection(ctx context.Context, opt *Options) (isFile bool, err
 
 	if isFile {
 		// Correct root if definitely pointing to a file
+		f.fileName = path.Base(f.root)
 		f.root = path.Dir(f.root)
 		if f.root == "." || f.root == "/" {
 			f.root = ""
@@ -564,6 +566,17 @@ func (f *Fs) readDir(ctx context.Context, dir string) (names []string, err error
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	// pointed at a single file: only that file is visible
+	if f.fileName != "" {
+		if dir != "" {
+			return nil, fs.ErrorDirNotFound
+		}
+		obj, err := f.NewObject(ctx, f.fileName)
+		if err != nil {
+			return nil, err
+		}
+		return fs.DirEntries{obj}, nil
+	}
 	if !strings.HasSuffix(dir, "/") && dir != "" {
 		dir += "/"
 	}
