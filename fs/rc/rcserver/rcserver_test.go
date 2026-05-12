@@ -98,9 +98,10 @@ type testRun struct {
 	Range       string
 	Body        string
 	ContentType string
-	Expected    string
-	Contains    *regexp.Regexp
-	Headers     map[string]string
+	Expected       string
+	Contains       *regexp.Regexp
+	Headers        map[string]string
+	RequestHeaders map[string]string
 }
 
 // Run a suite of tests
@@ -143,6 +144,9 @@ func emulateCalls(t *testing.T, tests []testRun, mux chi.Router, testURL string)
 			}
 			if test.User != "" && test.Pass != "" {
 				req.SetBasicAuth(test.User, test.Pass)
+			}
+			for k, v := range test.RequestHeaders {
+				req.Header.Set(k, v)
 			}
 
 			w := httptest.NewRecorder()
@@ -794,6 +798,15 @@ func TestRCAsync(t *testing.T) {
 		Body:        `{ "_async":true }`,
 		Status:      http.StatusOK,
 		Contains:    regexp.MustCompile(`(?s)\{.*\"jobid\":.*\}`),
+	}, {
+		Name:           "prefer-respond-async",
+		URL:            "rc/noop",
+		Method:         "POST",
+		ContentType:    "application/json",
+		Body:           `{ "_async":true }`,
+		RequestHeaders: map[string]string{"Prefer": "respond-async"},
+		Status:         http.StatusAccepted,
+		Contains:       regexp.MustCompile(`(?s)\{.*\"jobid\":.*\}`),
 	}, {
 		Name:        "bad",
 		URL:         "rc/noop",

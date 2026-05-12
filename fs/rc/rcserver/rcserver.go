@@ -296,6 +296,9 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 
 	fs.Debugf(nil, "rc: %q: reply %+v: %v", path, out, err)
 	w.Header().Set("Content-Type", "application/json")
+	if _, ok := out["jobid"]; ok && r.Header.Get("Prefer") == "respond-async" {
+		w.WriteHeader(http.StatusAccepted)
+	}
 	err = rc.WriteJSON(w, out)
 	if err != nil {
 		// can't return the error at this point - but have a go anyway
