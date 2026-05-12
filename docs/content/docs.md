@@ -1212,7 +1212,7 @@ Windows and `/dev/null` on Unix systems, then rclone will keep the
 configuration file in memory only.
 
 You may see a log message "Config file not found - using defaults" if there is
-no configuration file. This can be supressed, e.g. if you are using rclone
+no configuration file. This can be suppressed, e.g. if you are using rclone
 entirely with [on the fly remotes](/docs/#backend-path-to-dir), by using
 memory-only configuration file or by creating an empty configuration file, as
 described above.
