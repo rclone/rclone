@@ -89,15 +89,15 @@ func TestRcServer(t *testing.T) {
 }
 
 type testRun struct {
-	Name        string
-	URL         string
-	User        string
-	Pass        string
-	Status      int
-	Method      string
-	Range       string
-	Body        string
-	ContentType string
+	Name           string
+	URL            string
+	User           string
+	Pass           string
+	Status         int
+	Method         string
+	Range          string
+	Body           string
+	ContentType    string
 	Expected       string
 	Contains       *regexp.Regexp
 	Headers        map[string]string
