@@ -730,9 +730,15 @@ func (s *StatsInfo) ResetCounters() {
 	s.startedTransfers = nil
 	s.oldDuration = 0
 
+	// Only restart the average loop if it was running. Otherwise
+	// ResetCounters would spawn a goroutine that pins the StatsInfo,
+	// leaking memory when called on stats that never started the loop.
+	wasStarted := s.average.started
 	s._stopAverageLoop()
 	s.average = averageValues{}
-	s._startAverageLoop()
+	if wasStarted {
+		s._startAverageLoop()
+	}
 }
 
 // ResetErrors sets the errors count to 0 and resets lastError, fatalError and retryError
