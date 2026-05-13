@@ -35,6 +35,7 @@ require (
 	github.com/colinmarc/hdfs/v2 v2.4.0
 	github.com/coreos/go-semver v0.3.1
 	github.com/coreos/go-systemd/v22 v22.6.0
+	github.com/databricks/databricks-sdk-go v0.132.0
 	github.com/diskfs/go-diskfs v1.7.0
 	github.com/dop251/scsu v0.0.0-20220106150536-84ac88021d00
 	github.com/dropbox/dropbox-sdk-go-unofficial/v6 v6.0.5
@@ -184,6 +185,7 @@ require (
 	github.com/gofrs/flock v0.13.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/btree v1.1.3 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.14 // indirect
 	github.com/googleapis/gax-go/v2 v2.21.0 // indirect
@@ -263,10 +265,12 @@ require (
 	go4.org v0.0.0-20260112195520-a5071408f32f // indirect
 	golang.org/x/exp v0.0.0-20260212183809-81e46e3db34a // indirect
 	golang.org/x/image v0.39.0 // indirect
+	golang.org/x/mod v0.34.0 // indirect
 	golang.org/x/tools v0.43.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260401024825-9d38bb4040a9 // indirect
 	google.golang.org/grpc v1.80.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
+	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 	storj.io/common v0.0.0-20260225132117-99155641c30a // indirect

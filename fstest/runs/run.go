@@ -363,7 +363,7 @@ func (r *Run) Name() string {
 	ns := []string{
 		r.Backend,
 		strings.ReplaceAll(r.Path, "/", "."),
-		r.Remote,
+		strings.ReplaceAll(r.Remote, "/", "."),
 	}
 	if r.FastList {
 		ns = append(ns, "fastlist")

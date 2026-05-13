@@ -37,6 +37,7 @@ directories to and from different cloud storage providers.
 - Cloudflare R2 [:page_facing_up:](https://rclone.org/s3/#cloudflare-r2)
 - Cloudinary [:page_facing_up:](https://rclone.org/cloudinary/)
 - Cubbit DS3 [:page_facing_up:](https://rclone.org/s3/#Cubbit)
+- Databricks Unity Catalog [:page_facing_up:](https://rclone.org/databricks/)
 - DigitalOcean Spaces [:page_facing_up:](https://rclone.org/s3/#digitalocean-spaces)
 - Digi Storage [:page_facing_up:](https://rclone.org/koofr/#digi-storage)
 - Dreamhost [:page_facing_up:](https://rclone.org/s3/#dreamhost)

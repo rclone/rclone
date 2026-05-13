@@ -43,6 +43,7 @@ docs = [
     "crypt.md",
     "compress.md",
     "combine.md",
+    "databricks.md",
     "doi.md",
     "drime.md",
     "dropbox.md",

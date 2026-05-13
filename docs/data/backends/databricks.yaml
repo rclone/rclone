@@ -1,0 +1,19 @@
+backend: databricks
+name: Databricks Unity Catalog
+tier: Tier 3
+maintainers: Community
+features_score: 2
+integration_tests: Passing
+data_integrity: None
+performance: Medium
+adoption: New
+docs: Full
+security: High
+virtual: false
+remote: 'TestDatabricks:'
+features:
+- CanHaveEmptyDirectories
+- PutStream
+- ReadMimeType
+hashes: []
+precision: 1000000000
