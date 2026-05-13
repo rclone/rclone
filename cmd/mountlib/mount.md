@@ -451,6 +451,7 @@ Description=Mount for /mnt/data
 Type=rclone
 What=sftp1:subdir
 Where=/mnt/data
+SloppyOptions=true # Needed so that systemd doesn't filter out options it doesn't know about
 Options=rw,_netdev,allow_other,args2env,vfs-cache-mode=writes,config=/etc/rclone.conf,cache-dir=/var/rclone
 ```
 
