@@ -23,10 +23,16 @@ var (
 )
 
 // s3Backend implements the gofacess3.Backend interface to make an S3
-// backend for gofakes3
+// backend for gofakes3. It also implements gofakes3.MultipartBackend so that
+// multipart uploads stream straight through to the underlying Fs when the Fs
+// supports OpenChunkWriter or OpenWriterAt.
 type s3Backend struct {
 	s    *Server
 	meta *sync.Map
+
+	// multipartUploads tracks in-flight streaming multipart uploads,
+	// keyed by gofakes3.UploadID.
+	multipartUploads sync.Map
 }
 
 // newBackend creates a new SimpleBucketBackend.

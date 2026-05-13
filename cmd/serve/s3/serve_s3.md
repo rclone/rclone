@@ -86,18 +86,23 @@ provider = Rclone
 endpoint = http://127.0.0.1:8080/
 access_key_id = ACCESS_KEY_ID
 secret_access_key = SECRET_ACCESS_KEY
-use_multipart_uploads = false
 ```
 
-Note that setting `use_multipart_uploads = false` is to work around
-[a bug](#bugs) which will be fixed in due course.
+### Multipart uploads
+
+When the underlying remote supports chunked uploads (most cloud
+backends including `s3`, `b2`, `azureblob`, `oracleobjectstorage`,
+`gcs` via S3-compat) or random-access writes (`local`, `azurefiles`),
+`serve s3` streams each S3 multipart part directly through to the
+backend without buffering the whole file in memory. Memory use stays
+bounded by the size of the parts in flight.
+
+For backends that support neither, multipart parts are still buffered
+in memory (the legacy behaviour). To avoid that case, the example
+config above sets `use_multipart_uploads = false` so the client
+uploads as a single stream.
 
 ### Bugs
-
-When uploading multipart files `serve s3` holds all the parts in
-memory (see [#7453](https://github.com/rclone/rclone/issues/7453)).
-This is a limitaton of the library rclone uses for serving S3 and will
-hopefully be fixed at some point.
 
 Multipart server side copies do not work (see
 [#7454](https://github.com/rclone/rclone/issues/7454)). These take a
