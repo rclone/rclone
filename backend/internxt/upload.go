@@ -114,6 +114,9 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
+		if tooLarge := fileTooLargeError(err); tooLarge != nil {
+			return info, nil, f.tooLargeError(remote, tooLarge)
+		}
 		return info, nil, fmt.Errorf("failed to create upload session: %w", err)
 	}
 
