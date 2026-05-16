@@ -11,6 +11,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/lib/kv"
 )
 
 // obtain hash for an object
@@ -58,12 +59,17 @@ func (o *Object) putHashes(ctx context.Context, rawHashes hashMap) error {
 
 // set hashes for a path without any validation
 func (f *Fs) putRawHashes(ctx context.Context, key, fp string, hashes operations.HashSums) error {
-	return f.db.Do(true, &kvPut{
+	err := f.db.Do(true, &kvPut{
 		key:    key,
 		fp:     fp,
 		hashes: hashes,
 		age:    time.Duration(f.opt.MaxAge),
 	})
+	if f.opt.ReadOnly && errors.Is(err, kv.ErrReadOnly) {
+		fs.Debugf(nil, "database in read only mode")
+		return nil
+	}
+	return err
 }
 
 // Hash returns the selected checksum of the file or "" if unavailable.
