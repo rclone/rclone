@@ -1710,7 +1710,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		return nil, err
 	}
 
-	remote = remote[:len(remote)-len(extension)]
+	remote = strings.TrimSuffix(remote, extension)
 	obj, err := f.newObjectWithExportInfo(ctx, remote, info, extension, exportName, exportMimeType, isDocument)
 	switch {
 	case err != nil:
