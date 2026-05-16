@@ -129,7 +129,7 @@ are stored in full resolution at original quality.  These uploads
 will count towards storage in your Google Account.`)
 
 			case "warning2":
-				// Warn the user that rclone can no longer download photos it didnt upload from google photos
+				// Warn the user that rclone can no longer download photos it didn't upload from google photos
 				return fs.ConfigConfirm("warning_done", true, "config_warning", `Warning
 IMPORTANT: Due to Google policy changes rclone can now only download photos it uploaded.`)
 
