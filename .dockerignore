@@ -1,0 +1,16 @@
+.*
+!.git
+**/*_test.go
+**/testdata
+**/*.txt
+bin
+backend/alias/test
+backend/http/test
+contrib
+docs
+graphics
+*.md
+COPYING
+MANUAL.html
+Dockerfile
+rclone.1
