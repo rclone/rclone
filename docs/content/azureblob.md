@@ -261,14 +261,14 @@ in the `account` and `key` lines and leave the rest blank.
 
 #### SAS URL
 
-This can be an account level SAS URL or container level SAS URL.
+This can be an account level SAS URL, container level SAS URL, or blob level SAS URL.
 
 To use it leave `account` and `key` blank and fill in `sas_url`.
 
-An account level SAS URL or container level SAS URL can be obtained
+An account level SAS URL, container level SAS URL, or blob level SAS URL can be obtained
 from the Azure portal or the Azure Storage Explorer.  To get a
 container level SAS URL right click on a container in the Azure Blob
-explorer in the Azure portal.
+explorer in the Azure portal. For blob level SAS URL, right click on a blob.
 
 If you use a container level SAS URL, rclone operations are permitted
 only on a particular container, e.g.
@@ -284,6 +284,9 @@ show the container specified by the SAS URL.
 $ rclone lsd azureblob:
 container/
 ```
+
+If you use a blob level SAS URL, rclone operations are permitted
+only on a particular blob.
 
 Note that you can't see or access any other containers - this will
 fail

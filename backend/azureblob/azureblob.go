@@ -410,6 +410,9 @@ type Fs struct {
 	cntSVCcacheMu      sync.Mutex                   // mutex to protect cntSVCcache
 	cntSVCcache        map[string]*container.Client // reference to containerClient per container
 	svc                *service.Client              // client to access azblob
+	containerName      string                       // container Name
+	blobClient         *blob.Client                 // reference to blob Client
+	blobBlockClient    *blockblob.Client            // reference to block blob client
 	cred               azcore.TokenCredential       // how to generate tokens (may be nil)
 	usingSharedKeyCred bool                         // set if using shared key credentials
 	anonymous          bool                         // if this is anonymous access
@@ -677,10 +680,24 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.usingSharedKeyCred = res.UsingSharedKeyCred
 	f.anonymous = res.Anonymous
 
-	// if using Container level SAS put the container client into the cache
-	if opt.SASURL != "" && res.Container != "" {
-		_ = f.cntSVC(res.Container)
-		f.isLimited = true
+	// Handle SAS URL scoping
+	if opt.SASURL != "" {
+		if res.BlobName != "" {
+			// Blob level SAS - create blob and block blob clients directly
+			f.containerName = res.Container
+			f.blobClient, err = blob.NewClientWithNoCredential(opt.SASURL, nil)
+			if err != nil {
+				return nil, fmt.Errorf("unable to create SAS URL blob client: %w", err)
+			}
+			f.blobBlockClient, err = blockblob.NewClientWithNoCredential(opt.SASURL, nil)
+			if err != nil {
+				return nil, fmt.Errorf("unable to create SAS URL block blob client: %w", err)
+			}
+		} else if res.Container != "" {
+			// Container level SAS
+			_ = f.cntSVC(res.Container)
+			f.isLimited = true
+		}
 	}
 
 	if f.rootContainer != "" && f.rootDirectory != "" {
@@ -723,6 +740,9 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *contain
 		fs:     f,
 		remote: remote,
 	}
+	if f.containerName != "" {
+		o.remote = f.containerName
+	}
 	if info != nil {
 		err := o.decodeMetaDataFromBlob(info)
 		if err != nil {
@@ -745,12 +765,20 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 // getBlobSVC creates a blob client
 func (f *Fs) getBlobSVC(container, containerPath string) *blob.Client {
-	return f.cntSVC(container).NewBlobClient(containerPath)
+	if f.containerName == "" {
+		return f.cntSVC(container).NewBlobClient(containerPath)
+	} else {
+		return f.blobClient
+	}
 }
 
 // getBlockBlobSVC creates a block blob client
 func (f *Fs) getBlockBlobSVC(container, containerPath string) *blockblob.Client {
-	return f.cntSVC(container).NewBlockBlobClient(containerPath)
+	if f.containerName == "" {
+		return f.cntSVC(container).NewBlockBlobClient(containerPath)
+	} else {
+		return f.blobBlockClient
+	}
 }
 
 // updateMetadataWithModTime adds the modTime passed in to o.meta.
@@ -1432,6 +1460,9 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		fs:     f,
 		remote: src.Remote(),
 	}
+	if f.containerName != "" {
+		fs.remote = f.containerName
+	}
 	return fs, fs.Update(ctx, in, src, options...)
 }
 
@@ -1973,9 +2004,11 @@ func (f *Fs) copySinglepart(ctx context.Context, remote, dstContainer, dstPath s
 // If it isn't possible then return fs.ErrorCantCopy
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	dstContainer, dstPath := f.split(remote)
-	err := f.mkdirParent(ctx, remote)
-	if err != nil {
-		return nil, err
+	if f.containerName == "" {
+		err := f.mkdirParent(ctx, remote)
+		if err != nil {
+			return nil, err
+		}
 	}
 	srcObj, ok := src.(*Object)
 	if !ok {
@@ -2974,8 +3007,10 @@ type uploadInfo struct {
 // Prepare the object for upload
 func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options []fs.OpenOption) (ui uploadInfo, err error) {
 	container, containerPath := o.split()
-	if container == "" || containerPath == "" {
-		return ui, fmt.Errorf("can't upload to root - need a container")
+	if o.fs.containerName == "" {
+		if container == "" || containerPath == "" {
+			return ui, fmt.Errorf("can't upload to root - need a container")
+		}
 	}
 	// Create parent dir/bucket if not saving directory marker
 	metadataMu.Lock()
