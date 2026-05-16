@@ -588,7 +588,7 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 		Parameters: url.Values{},
 	}
 	if dirID != "" {
-		opts.Parameters.Add("parentIds", dirID)
+		opts.Parameters.Add("folderId", dirID)
 	}
 	if directoriesOnly {
 		opts.Parameters.Add("type", api.ItemTypeFolder)

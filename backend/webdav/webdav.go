@@ -796,6 +796,7 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 		ExtraHeaders: map[string]string{
 			"Depth": depth,
 		},
+		AuthRedirect: f.opt.AuthRedirect, // allow redirects to preserve Auth
 	}
 	if f.hasOCMD5 || f.hasOCSHA1 {
 		opts.Body = bytes.NewBuffer(owncloudProps)
