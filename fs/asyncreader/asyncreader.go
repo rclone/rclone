@@ -27,37 +27,48 @@ var ErrorStreamAbandoned = errors.New("stream abandoned")
 // This should be fully transparent, except that once an error
 // has been returned from the Reader, it will not recover.
 type AsyncReader struct {
-	in      io.ReadCloser  // Input reader
-	ready   chan *buffer   // Buffers ready to be handed to the reader
-	token   chan struct{}  // Tokens which allow a buffer to be taken
-	exit    chan struct{}  // Closes when finished
-	buffers int            // Number of buffers
-	err     error          // If an error has occurred it is here
-	cur     *buffer        // Current buffer being served
-	exited  chan struct{}  // Channel is closed been the async reader shuts down
-	size    int            // size of buffer to use
-	closed  bool           // whether we have closed the underlying stream
-	mu      sync.Mutex     // lock for Read/WriteTo/Abandon/Close
-	ci      *fs.ConfigInfo // for reading config
-	pool    *pool.Pool     // pool to get memory from
+	in         io.ReadCloser  // Input reader
+	ready      chan *buffer   // Buffers ready to be handed to the reader
+	token      chan struct{}  // Tokens which allow a buffer to be taken
+	exit       chan struct{}  // Closes when finished
+	buffers    int            // Number of buffers
+	err        error          // If an error has occurred it is here
+	cur        *buffer        // Current buffer being served
+	exited     chan struct{}  // Channel is closed been the async reader shuts down
+	size       int            // size of buffer to use (soft-start)
+	bufferSize int            // target size for each buffer
+	closed     bool           // whether we have closed the underlying stream
+	mu         sync.Mutex     // lock for Read/WriteTo/Abandon/Close
+	ci         *fs.ConfigInfo // for reading config
+	pool       *pool.Pool     // pool to get memory from
 }
 
 // New returns a reader that will asynchronously read from
-// the supplied Reader into a number of buffers each of size BufferSize
+// the supplied Reader into a number of buffers each of size BufferSize.
 // It will start reading from the input at once, maybe even before this
 // function has returned.
 // The input can be read from the returned reader.
 // When done use Close to release the buffers and close the supplied input.
 func New(ctx context.Context, rd io.ReadCloser, buffers int) (*AsyncReader, error) {
+	return NewSize(ctx, rd, buffers, BufferSize)
+}
+
+// NewSize returns a reader like New but with a configurable buffer size.
+// If bufferSize <= 0, BufferSize is used.
+func NewSize(ctx context.Context, rd io.ReadCloser, buffers int, bufferSize int) (*AsyncReader, error) {
 	if buffers <= 0 {
 		return nil, errors.New("number of buffers too small")
 	}
 	if rd == nil {
 		return nil, errors.New("nil reader supplied")
 	}
+	if bufferSize <= 0 {
+		bufferSize = BufferSize
+	}
 	a := &AsyncReader{
-		ci:   fs.GetConfig(ctx),
-		pool: pool.Global(),
+		ci:         fs.GetConfig(ctx),
+		pool:       pool.GlobalWithSize(bufferSize),
+		bufferSize: bufferSize,
 	}
 	a.init(rd, buffers)
 	return a, nil
@@ -87,7 +98,7 @@ func (a *AsyncReader) init(rd io.ReadCloser, buffers int) {
 			select {
 			case <-a.token:
 				b := a.getBuffer()
-				if a.size < BufferSize {
+				if a.size < a.bufferSize {
 					b.buf = b.buf[:a.size]
 					a.size <<= 1
 				}
@@ -217,7 +228,7 @@ func (a *AsyncReader) SkipBytes(skip int) (ok bool) {
 		return false
 	}
 	// early return if skip is past the maximum buffer capacity
-	if skip >= (len(a.ready)+1)*BufferSize {
+	if skip >= (len(a.ready)+1)*a.bufferSize {
 		return false
 	}
 
