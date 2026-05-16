@@ -545,8 +545,8 @@ func SuffixName(ctx context.Context, remote string) string {
 // DeleteFileWithBackupDir deletes a single file respecting --dry-run
 // and accumulating stats and errors.
 //
-// If backupDir is set then it moves the file to there instead of
-// deleting
+// If backupDir is set then it moves the file to there instead of deleting
+// you use BackupDir to find the --backup-dir as it is relatively expensive so don't put it in a loop
 func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs) (err error) {
 	tr := accounting.Stats(ctx).NewCheckingTransfer(dst, "deleting")
 	defer func() {
@@ -579,8 +579,8 @@ func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs
 
 // DeleteFile deletes a single file respecting --dry-run and accumulating stats and errors.
 //
-// If useBackupDir is set and --backup-dir is in effect then it moves
-// the file to there instead of deleting
+// call DeleteFileWithBackupDir if --backup-dir support is required
+// as calling this function with --backup-dir will always returns nil
 func DeleteFile(ctx context.Context, dst fs.Object) (err error) {
 	return DeleteFileWithBackupDir(ctx, dst, nil)
 }
