@@ -237,6 +237,49 @@ credentials.
 anyone with the *Client ID* and *Client Secret* can access your
 OneDrive files. Take care to safeguard these credentials.
 
+### Using an external token command
+
+If you already have a mechanism for obtaining Microsoft Graph API
+access tokens (for example, Azure CLI, a managed identity helper, or
+an OIDC token agent), you can use `bearer_token_command` to supply
+the token to rclone instead of using the built-in OAuth flow.
+
+This is a shared option available on all OAuth-based backends.
+
+When `bearer_token_command` is set, rclone will skip its normal OAuth
+authentication entirely. Instead, it will run the specified command to
+obtain a bearer token and use it for all API requests. If the token
+expires (HTTP 401), rclone will automatically re-run the command to
+fetch a fresh token and retry the request.
+
+You still need to configure `drive_id` and `drive_type` in the rclone
+config. You can obtain these by first configuring the remote normally
+with OAuth, noting the drive ID and type, and then switching to
+`bearer_token_command`.
+
+Example using Azure CLI:
+
+```ini
+[onedrive]
+type = onedrive
+drive_id = b!xxxxxxxxxxxxxxx
+drive_type = business
+bearer_token_command = az account get-access-token --resource https://graph.microsoft.com --query accessToken --output tsv
+```
+
+Example using a custom script:
+
+```ini
+[onedrive]
+type = onedrive
+drive_id = b!xxxxxxxxxxxxxxx
+drive_type = business
+bearer_token_command = /path/to/get-token.sh
+```
+
+The command must print the access token to stdout. If the command
+fails, rclone will report the stderr output in the error message.
+
 ### Modification times and hashes
 
 OneDrive allows modification times to be set on objects accurate to 1
