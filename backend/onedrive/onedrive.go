@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -536,6 +537,10 @@ func chooseDrive(ctx context.Context, name string, m configmap.Mapper, srv *rest
 					break
 				}
 			}
+			// my OneDrive as the first drive
+			sort.SliceStable(drives.Drives, func(i, j int) bool {
+				return drives.Drives[i].DriveID == meDrive.DriveID
+			})
 			// add the me drive if not found already
 			if !found {
 				fs.Debugf(nil, "Adding %v to drives list from /me/drive", meDrive)
