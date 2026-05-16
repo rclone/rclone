@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	_ "github.com/rclone/rclone/backend/local"
+	"github.com/rclone/rclone/backend/archive/archiver"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/filter"
@@ -218,4 +219,118 @@ func TestArchiveSquashfs(t *testing.T) {
 	testArchive(t, "test.sqfs", func(t *testing.T, output, input string) {
 		run(t, "mksquashfs", input, output)
 	})
+}
+
+// Test that findAllArchives returns the correct archive candidates
+// sorted from longest match to shortest match.
+func TestFindAllArchives(t *testing.T) {
+	require.GreaterOrEqual(t, len(archiver.Archivers), 1, "need at least one registered archiver")
+	ext1 := archiver.Archivers[0].Extension
+	var ext2 string
+	if len(archiver.Archivers) >= 2 {
+		ext2 = archiver.Archivers[1].Extension
+	}
+
+	tests := []struct {
+		name   string
+		remote string
+		want   []string // expected .remote values, in order (longest first)
+		skip   bool
+	}{
+		{
+			name:   "Empty",
+			remote: "",
+			want:   nil,
+		},
+		{
+			name:   "NoExtension",
+			remote: "path/to/dir",
+			want:   nil,
+		},
+		{
+			name:   "SingleAtEnd",
+			remote: "dir/test" + ext1,
+			want:   []string{"dir/test" + ext1},
+		},
+		{
+			name:   "SingleMidPath",
+			remote: "dir/test" + ext1 + "/inner",
+			want:   []string{"dir/test" + ext1},
+		},
+		{
+			name:   "NotAtBoundary",
+			remote: "dir/test" + ext1 + "py",
+			want:   nil,
+		},
+		{
+			name:   "BoundaryAndNonBoundary",
+			remote: "test" + ext1 + "py/real" + ext1,
+			want:   []string{"test" + ext1 + "py/real" + ext1},
+		},
+		{
+			name:   "TwoSameExtension",
+			remote: "a" + ext1 + "/b" + ext1,
+			want:   []string{"a" + ext1 + "/b" + ext1, "a" + ext1},
+		},
+		{
+			name:   "TwoDifferentExtensions",
+			remote: "a" + ext2 + "/b" + ext1,
+			want:   []string{"a" + ext2 + "/b" + ext1, "a" + ext2},
+			skip:   ext2 == "",
+		},
+		{
+			name:   "ExtensionOnly",
+			remote: ext1,
+			want:   []string{ext1},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.skip {
+				t.Skip("not enough registered archivers")
+			}
+			got := findAllArchives(tt.remote)
+			require.Equal(t, len(tt.want), len(got), "result count")
+			for i, w := range tt.want {
+				assert.Equal(t, w, got[i].remote, "remote[%d]", i)
+				assert.Equal(t, w, got[i].prefix, "prefix[%d]", i)
+				assert.Equal(t, "", got[i].root, "root[%d]", i)
+			}
+		})
+	}
+}
+
+// Test that the probe loop in NewFs correctly resolves nested archive
+// paths by falling back from the greedy match to a shorter candidate.
+func TestNestedArchivePath(t *testing.T) {
+	fstest.Initialise()
+	skipIfNoExe(t, "zip")
+	ctx := context.Background()
+
+	// Create a file named "inner.zip" to put inside the archive
+	inputDir := t.TempDir()
+	innerContent := []byte("inner archive content")
+	require.NoError(t, os.WriteFile(filepath.Join(inputDir, "inner.zip"), innerContent, 0666))
+
+	// Create outer.zip containing inner.zip using the zip command
+	outputDir := t.TempDir()
+	outerZip := filepath.Join(outputDir, "outer.zip")
+	oldcwd, err := os.Getwd()
+	require.NoError(t, err)
+	require.NoError(t, os.Chdir(inputDir))
+	defer func() { require.NoError(t, os.Chdir(oldcwd)) }()
+	run(t, "zip", "-9r", outerZip, ".")
+
+	// Access the nested path — probe should fall back to outer.zip
+	f, err := cache.Get(ctx, ":archive:"+outerZip+"/inner.zip")
+	if err == fs.ErrorIsFile {
+		err = nil
+	}
+	require.NoError(t, err)
+	require.NotNil(t, f)
+
+	// Verify we can read inner.zip from inside the archive
+	obj, err := f.NewObject(ctx, "inner.zip")
+	require.NoError(t, err)
+	assert.Equal(t, int64(len(innerContent)), obj.Size())
 }
