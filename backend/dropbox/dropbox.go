@@ -1499,10 +1499,14 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 			used = q.Allocation.Team.Used
 		}
 	}
+	free := total - used
+	if total < used {
+		free = 0
+	}
 	usage = &fs.Usage{
-		Total: fs.NewUsageValue(total),        // quota of bytes that can be used
-		Used:  fs.NewUsageValue(used),         // bytes in use
-		Free:  fs.NewUsageValue(total - used), // bytes which can be uploaded before reaching the quota
+		Total: fs.NewUsageValue(total), // quota of bytes that can be used
+		Used:  fs.NewUsageValue(used),  // bytes in use
+		Free:  fs.NewUsageValue(free),  // bytes which can be uploaded before reaching the quota
 	}
 	return usage, nil
 }
