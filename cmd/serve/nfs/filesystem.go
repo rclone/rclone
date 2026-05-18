@@ -44,13 +44,30 @@ func setSys(fi os.FileInfo) {
 
 // FS is our wrapper around the VFS to properly support billy.Filesystem interface
 type FS struct {
-	vfs *vfs.VFS
+	vfs  *vfs.VFS
+	root string // absolute path within the VFS this FS is rooted at; empty means VFS root
+}
+
+// fullPath returns the absolute path within the VFS for name, which is
+// expressed relative to this FS's root.
+func (f *FS) fullPath(name string) string {
+	if f.root == "" {
+		return name
+	}
+	return path.Join(f.root, name)
+}
+
+// subFS returns a new *FS rooted at root within the VFS. root must already
+// be a cleaned absolute path that the caller has validated as a directory.
+func (f *FS) subFS(root string) *FS {
+	return &FS{vfs: f.vfs, root: root}
 }
 
 // ReadDir implements read dir
-func (f *FS) ReadDir(path string) (dir []os.FileInfo, err error) {
-	defer log.Trace(path, "")("items=%d, err=%v", &dir, &err)
-	dir, err = f.vfs.ReadDir(path)
+func (f *FS) ReadDir(p string) (dir []os.FileInfo, err error) {
+	p = f.fullPath(p)
+	defer log.Trace(p, "")("items=%d, err=%v", &dir, &err)
+	dir, err = f.vfs.ReadDir(p)
 	if err != nil {
 		return nil, err
 	}
@@ -62,24 +79,28 @@ func (f *FS) ReadDir(path string) (dir []os.FileInfo, err error) {
 
 // Create implements creating new files
 func (f *FS) Create(filename string) (node billy.File, err error) {
+	filename = f.fullPath(filename)
 	defer log.Trace(filename, "")("%v, err=%v", &node, &err)
 	return f.vfs.Create(filename)
 }
 
 // Open opens a file
 func (f *FS) Open(filename string) (node billy.File, err error) {
+	filename = f.fullPath(filename)
 	defer log.Trace(filename, "")("%v, err=%v", &node, &err)
 	return f.vfs.Open(filename)
 }
 
 // OpenFile opens a file
 func (f *FS) OpenFile(filename string, flag int, perm os.FileMode) (node billy.File, err error) {
+	filename = f.fullPath(filename)
 	defer log.Trace(filename, "flag=0x%X, perm=%v", flag, perm)("%v, err=%v", &node, &err)
 	return f.vfs.OpenFile(filename, flag, perm)
 }
 
 // Stat gets the file stat
 func (f *FS) Stat(filename string) (fi os.FileInfo, err error) {
+	filename = f.fullPath(filename)
 	defer log.Trace(filename, "")("fi=%v, err=%v", &fi, &err)
 	fi, err = f.vfs.Stat(filename)
 	if err != nil {
@@ -91,12 +112,15 @@ func (f *FS) Stat(filename string) (fi os.FileInfo, err error) {
 
 // Rename renames a file
 func (f *FS) Rename(oldpath, newpath string) (err error) {
+	oldpath = f.fullPath(oldpath)
+	newpath = f.fullPath(newpath)
 	defer log.Trace(oldpath, "newpath=%q", newpath)("err=%v", &err)
 	return f.vfs.Rename(oldpath, newpath)
 }
 
 // Remove deletes a file
 func (f *FS) Remove(filename string) (err error) {
+	filename = f.fullPath(filename)
 	defer log.Trace(filename, "")("err=%v", &err)
 	return f.vfs.Remove(filename)
 }
@@ -116,11 +140,12 @@ func (f *FS) TempFile(dir, prefix string) (node billy.File, err error) {
 // it does not redirect to VFS.MkDirAll because that one doesn't
 // honor the permissions
 func (f *FS) MkdirAll(filename string, perm os.FileMode) (err error) {
+	filename = f.fullPath(filename)
 	defer log.Trace(filename, "perm=%v", perm)("err=%v", &err)
 	parts := strings.Split(filename, "/")
 	for i := range parts {
 		current := strings.Join(parts[:i+1], "/")
-		_, err := f.Stat(current)
+		_, err := f.vfs.Stat(current)
 		if err == vfs.ENOENT {
 			err = f.vfs.Mkdir(current, perm)
 			if err != nil {
@@ -133,6 +158,7 @@ func (f *FS) MkdirAll(filename string, perm os.FileMode) (err error) {
 
 // Lstat gets the stats for symlink
 func (f *FS) Lstat(filename string) (fi os.FileInfo, err error) {
+	filename = f.fullPath(filename)
 	defer log.Trace(filename, "")("fi=%v, err=%v", &fi, &err)
 	fi, err = f.vfs.Stat(filename)
 	if err != nil {
@@ -144,18 +170,21 @@ func (f *FS) Lstat(filename string) (fi os.FileInfo, err error) {
 
 // Symlink creates a link pointing to target
 func (f *FS) Symlink(target, link string) (err error) {
+	link = f.fullPath(link)
 	defer log.Trace(target, "link=%q", link)("err=%v", &err)
 	return f.vfs.Symlink(target, link)
 }
 
 // Readlink reads the contents of link
 func (f *FS) Readlink(link string) (result string, err error) {
+	link = f.fullPath(link)
 	defer log.Trace(link, "")("result=%q, err=%v", &result, &err)
 	return f.vfs.Readlink(link)
 }
 
 // Chmod changes the file modes
 func (f *FS) Chmod(name string, mode os.FileMode) (err error) {
+	name = f.fullPath(name)
 	defer log.Trace(name, "mode=%v", mode)("err=%v", &err)
 	file, err := f.vfs.Open(name)
 	if err != nil {
@@ -182,6 +211,7 @@ func (f *FS) Lchown(name string, uid, gid int) (err error) {
 
 // Chown changes owner of the file
 func (f *FS) Chown(name string, uid, gid int) (err error) {
+	name = f.fullPath(name)
 	defer log.Trace(name, "uid=%d, gid=%d", uid, gid)("err=%v", &err)
 	file, err := f.vfs.Open(name)
 	if err != nil {
@@ -197,6 +227,7 @@ func (f *FS) Chown(name string, uid, gid int) (err error) {
 
 // Chtimes changes the access time and modified time
 func (f *FS) Chtimes(name string, atime time.Time, mtime time.Time) (err error) {
+	name = f.fullPath(name)
 	defer log.Trace(name, "atime=%v, mtime=%v", atime, mtime)("err=%v", &err)
 	return f.vfs.Chtimes(name, atime, mtime)
 }
@@ -207,10 +238,13 @@ func (f *FS) Chroot(path string) (FS billy.Filesystem, err error) {
 	return nil, os.ErrInvalid
 }
 
-// Root  returns the root of a VFS
+// Root returns the root of a VFS
 func (f *FS) Root() (root string) {
 	defer log.Trace(nil, "")("root=%q", &root)
-	return f.vfs.Fs().Root()
+	if f.root == "" {
+		return f.vfs.Fs().Root()
+	}
+	return path.Join(f.vfs.Fs().Root(), f.root)
 }
 
 // Capabilities exports the filesystem capabilities

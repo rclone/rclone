@@ -6,6 +6,8 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"os"
+	"path"
 	"strings"
 
 	"github.com/go-git/go-billy/v5"
@@ -54,9 +56,30 @@ func NewHandler(ctx context.Context, vfs *vfs.VFS, opt *Options) (handler nfs.Ha
 }
 
 // Mount backs Mount RPC Requests, allowing for access control policies.
+//
+// The requested Dirpath is interpreted as an absolute path within the VFS.
+// path.Clean is used to normalise it and to neutralise any ".." segments,
+// so the result is always within the VFS root. If the cleaned path is the
+// VFS root the shared root filesystem is returned. Otherwise the path is
+// looked up and must be a plain directory (not a regular file, symlink or
+// other special node).
 func (h *Handler) Mount(ctx context.Context, conn net.Conn, req nfs.MountRequest) (status nfs.MountStatus, hndl billy.Filesystem, auths []nfs.AuthFlavor) {
 	auths = []nfs.AuthFlavor{nfs.AuthFlavorNull}
-	return nfs.MountStatusOk, h.billyFS, auths
+	cleaned := path.Clean("/" + string(req.Dirpath))
+	if cleaned == "/" {
+		return nfs.MountStatusOk, h.billyFS, auths
+	}
+	node, err := h.vfs.Stat(cleaned)
+	if err != nil {
+		fs.Infof("nfs", "Mount of %q rejected: %v", cleaned, err)
+		return nfs.MountStatusErrNoEnt, h.billyFS, auths
+	}
+	if node.Mode().Type() != os.ModeDir {
+		fs.Infof("nfs", "Mount of %q rejected: not a plain directory (mode %v)", cleaned, node.Mode())
+		return nfs.MountStatusErrNotDir, h.billyFS, auths
+	}
+	fs.Infof("nfs", "Mounting subpath %q", cleaned)
+	return nfs.MountStatusOk, h.billyFS.subFS(cleaned), auths
 }
 
 // Change provides an interface for updating file attributes.
