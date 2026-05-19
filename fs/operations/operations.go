@@ -577,10 +577,12 @@ func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs
 	return err
 }
 
-// DeleteFile deletes a single file respecting --dry-run and accumulating stats and errors.
+// DeleteFile deletes a single file respecting --dry-run and accumulating
+// stats and errors.
 //
-// If useBackupDir is set and --backup-dir is in effect then it moves
-// the file to there instead of deleting
+// DeleteFile does not honor --backup-dir; it always removes the file.
+// Callers that need backup-dir semantics should use
+// [DeleteFileWithBackupDir] and pass a non-nil backupDir.
 func DeleteFile(ctx context.Context, dst fs.Object) (err error) {
 	return DeleteFileWithBackupDir(ctx, dst, nil)
 }
