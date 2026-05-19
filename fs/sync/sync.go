@@ -1354,6 +1354,49 @@ func runSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 	if deleteMode != fs.DeleteModeOff && DoMove {
 		return fserrors.FatalError(errors.New("can't delete and move at the same time"))
 	}
+
+	// Use a point-in-time snapshot of fsrc, if requested
+	switch mode := ci.UseSnapshotMode; mode {
+	case fs.UseSnapshotModeNever:
+	case fs.UseSnapshotModeAlways, fs.UseSnapshotModeAttempt:
+		// Check if this backend supports snapshots
+		do := fsrc.Features().CreateSnapshot
+		if do == nil {
+			if ci.UseSnapshotMode == fs.UseSnapshotModeAlways {
+				return fserrors.FatalError(fmt.Errorf("creating snapshots is not supported on this platform: %w", fs.ErrorNotImplemented))
+			}
+			fs.Printf(fsrc, "Creating snapshots is not supported on this platform. Continuing without snapshot")
+			break
+		}
+
+		// Can't use snapshots when the operation will delete source data
+		if DoMove || deleteEmptySrcDirs {
+			if mode == fs.UseSnapshotModeAlways {
+				return fserrors.FatalError(errors.New("can't use snapshots with operations that delete source data"))
+			} else if mode == fs.UseSnapshotModeAttempt {
+				fs.Printf(fsrc, "Can't use snapshots with operations that delete source data. Continuing without snapshot")
+				break
+			}
+		}
+
+		// Create the snapshot and replace fsrc with it
+		switch snapshot, cleanup, err := do(ctx); {
+		case err == nil: // success
+			defer func() {
+				if err := cleanup(ctx); err != nil {
+					fs.Errorf(fsrc, "Error while cleaning up snapshot: %v", err)
+				}
+			}()
+			fsrc = snapshot
+
+		case mode == fs.UseSnapshotModeAttempt: // error
+			fs.Printf(fsrc, "Snapshot creation failed! Continuing without snapshot: %v", err)
+
+		default:
+			return fserrors.FatalError(fmt.Errorf("snapshot creation failed: %w", err))
+		}
+	}
+
 	// Run an extra pass to delete only
 	if deleteMode == fs.DeleteModeBefore {
 		if ci.TrackRenames {

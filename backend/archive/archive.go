@@ -363,6 +363,15 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	return do(ctx, srcFs.f, srcRemote, dstRemote)
 }
 
+// CreateSnapshot creates a point-in-time snapshot of a directory, if possible
+func (f *Fs) CreateSnapshot(ctx context.Context) (fs.Fs, func(ctx context.Context) error, error) {
+	do := f.f.Features().CreateSnapshot
+	if do == nil {
+		return nil, nil, fs.ErrorNotImplemented
+	}
+	return do(ctx)
+}
+
 // ChangeNotify calls the passed function with a path
 // that has had changes. If the implementation
 // uses polling, it should adhere to the given interval.
@@ -657,23 +666,24 @@ func (f *Fs) Disconnect(ctx context.Context) error {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs              = (*Fs)(nil)
-	_ fs.Purger          = (*Fs)(nil)
-	_ fs.PutStreamer     = (*Fs)(nil)
-	_ fs.Copier          = (*Fs)(nil)
-	_ fs.Mover           = (*Fs)(nil)
-	_ fs.DirMover        = (*Fs)(nil)
-	_ fs.DirCacheFlusher = (*Fs)(nil)
-	_ fs.ChangeNotifier  = (*Fs)(nil)
-	_ fs.Abouter         = (*Fs)(nil)
-	_ fs.Shutdowner      = (*Fs)(nil)
-	_ fs.PublicLinker    = (*Fs)(nil)
-	_ fs.PutUncheckeder  = (*Fs)(nil)
-	_ fs.MergeDirser     = (*Fs)(nil)
-	_ fs.CleanUpper      = (*Fs)(nil)
-	_ fs.OpenWriterAter  = (*Fs)(nil)
-	_ fs.OpenChunkWriter = (*Fs)(nil)
-	_ fs.UserInfoer      = (*Fs)(nil)
-	_ fs.Disconnecter    = (*Fs)(nil)
+	_ fs.Fs                = (*Fs)(nil)
+	_ fs.Purger            = (*Fs)(nil)
+	_ fs.PutStreamer       = (*Fs)(nil)
+	_ fs.Copier            = (*Fs)(nil)
+	_ fs.Mover             = (*Fs)(nil)
+	_ fs.DirMover          = (*Fs)(nil)
+	_ fs.DirCacheFlusher   = (*Fs)(nil)
+	_ fs.CreateSnapshotter = (*Fs)(nil)
+	_ fs.ChangeNotifier    = (*Fs)(nil)
+	_ fs.Abouter           = (*Fs)(nil)
+	_ fs.Shutdowner        = (*Fs)(nil)
+	_ fs.PublicLinker      = (*Fs)(nil)
+	_ fs.PutUncheckeder    = (*Fs)(nil)
+	_ fs.MergeDirser       = (*Fs)(nil)
+	_ fs.CleanUpper        = (*Fs)(nil)
+	_ fs.OpenWriterAter    = (*Fs)(nil)
+	_ fs.OpenChunkWriter   = (*Fs)(nil)
+	_ fs.UserInfoer        = (*Fs)(nil)
+	_ fs.Disconnecter      = (*Fs)(nil)
 	// FIXME _ fs.FullObject      = (*Object)(nil)
 )

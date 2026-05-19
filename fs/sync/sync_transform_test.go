@@ -5,6 +5,7 @@ package sync
 import (
 	"cmp"
 	"context"
+	"errors"
 	"fmt"
 	"path"
 	"slices"
@@ -518,4 +519,27 @@ func TestError(t *testing.T) {
 
 	r.CheckLocalListing(t, []fstest.Item{file1}, []string{"toe", "toe/toe"})
 	r.CheckRemoteListing(t, []fstest.Item{file1}, []string{"toe", "toe/toe"})
+}
+
+// Test that Transform isn't compatible with snapshot because it modifies source data
+func TestTransformWithSnapshot(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	ci.UseSnapshotMode = fs.UseSnapshotModeAlways
+	r := fstest.NewRun(t)
+	file1 := r.WriteFile("potato", "Potato Content", t1)
+	r.CheckLocalItems(t, file1)
+	r.Mkdir(ctx, r.Fremote)
+
+	createSnap := r.Flocal.Features().CreateSnapshot
+	if createSnap == nil {
+		t.Skip("snapshots not supported on this platform")
+	}
+
+	err := Transform(ctx, r.Fremote, false, false)
+	if errors.Is(err, fs.ErrorNotImplemented) {
+		t.Skip("snapshots not supported on this platform")
+	}
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "snapshot")
 }

@@ -233,6 +233,12 @@ func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata
 	return newDir, nil
 }
 
+// CreateSnapshot creates a point-in-time snapshot of a directory, if possible
+func (f *Fs) CreateSnapshot(ctx context.Context) (fs.Fs, func(ctx context.Context) error, error) {
+	// Note(maxgreen01): Not sure how to add implement for this backend
+	return nil, nil, fs.ErrorNotImplemented
+}
+
 // Purge all files in the directory
 //
 // Implement this if you have a way of deleting all the files
@@ -1061,18 +1067,19 @@ func multithread(num int, fn func(int)) {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs              = (*Fs)(nil)
-	_ fs.Purger          = (*Fs)(nil)
-	_ fs.PutStreamer     = (*Fs)(nil)
-	_ fs.Copier          = (*Fs)(nil)
-	_ fs.Mover           = (*Fs)(nil)
-	_ fs.DirMover        = (*Fs)(nil)
-	_ fs.DirSetModTimer  = (*Fs)(nil)
-	_ fs.MkdirMetadataer = (*Fs)(nil)
-	_ fs.DirCacheFlusher = (*Fs)(nil)
-	_ fs.ChangeNotifier  = (*Fs)(nil)
-	_ fs.Abouter         = (*Fs)(nil)
-	_ fs.ListRer         = (*Fs)(nil)
-	_ fs.Shutdowner      = (*Fs)(nil)
-	_ fs.CleanUpper      = (*Fs)(nil)
+	_ fs.Fs                = (*Fs)(nil)
+	_ fs.Purger            = (*Fs)(nil)
+	_ fs.PutStreamer       = (*Fs)(nil)
+	_ fs.Copier            = (*Fs)(nil)
+	_ fs.Mover             = (*Fs)(nil)
+	_ fs.DirMover          = (*Fs)(nil)
+	_ fs.DirSetModTimer    = (*Fs)(nil)
+	_ fs.MkdirMetadataer   = (*Fs)(nil)
+	_ fs.CreateSnapshotter = (*Fs)(nil)
+	_ fs.DirCacheFlusher   = (*Fs)(nil)
+	_ fs.ChangeNotifier    = (*Fs)(nil)
+	_ fs.Abouter           = (*Fs)(nil)
+	_ fs.ListRer           = (*Fs)(nil)
+	_ fs.Shutdowner        = (*Fs)(nil)
+	_ fs.CleanUpper        = (*Fs)(nil)
 )
