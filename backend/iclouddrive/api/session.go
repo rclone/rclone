@@ -539,18 +539,35 @@ func (s *Session) AuthWithToken(ctx context.Context) error {
 	return nil
 }
 
-// hasPCSCookies checks if the required PCS cookies for Photos are already present
-func (s *Session) hasPCSCookies() bool {
-	var hasPhotos, hasSharing bool
+var requiredPCSCookieNames = []string{
+	"X-APPLE-WEBAUTH-PCS-Documents",
+	"X-APPLE-WEBAUTH-PCS-Photos",
+	"X-APPLE-WEBAUTH-PCS-Sharing",
+}
+
+var pcsAppNames = []string{"iclouddrive", "photos"}
+
+// missingPCSCookies returns the required PCS cookies that are not already present.
+func (s *Session) missingPCSCookies() []string {
+	present := make(map[string]bool, len(s.Cookies))
 	for _, c := range s.Cookies {
-		switch c.Name {
-		case "X-APPLE-WEBAUTH-PCS-Photos":
-			hasPhotos = true
-		case "X-APPLE-WEBAUTH-PCS-Sharing":
-			hasSharing = true
+		if c.Value != "" {
+			present[c.Name] = true
 		}
 	}
-	return hasPhotos && hasSharing
+
+	var missing []string
+	for _, name := range requiredPCSCookieNames {
+		if !present[name] {
+			missing = append(missing, name)
+		}
+	}
+	return missing
+}
+
+// hasPCSCookies checks if the required PCS cookies for iCloud Drive/Photos are already present.
+func (s *Session) hasPCSCookies() bool {
+	return len(s.missingPCSCookies()) == 0
 }
 
 // acquirePCSCookies requests PCS cookies for ADP-enabled accounts
@@ -560,41 +577,48 @@ func (s *Session) acquirePCSCookies(ctx context.Context) error {
 	const maxAttempts = 30 // 30 * 10s = 5 minutes max
 	for attempt := 0; attempt < maxAttempts; attempt++ {
 		fs.Debugf(nil, "iclouddrive: requestPCS outgoing cookies: %v", cookieJarDebugSummaries(s.Cookies))
-		values := map[string]any{
-			"appName":               "photos",
-			"derivedFromUserAction": true,
-		}
-		body, err := IntoReader(values)
-		if err != nil {
-			return fmt.Errorf("requestPCS: %w", err)
-		}
-		opts := rest.Opts{
-			Method:       "POST",
-			Path:         "/requestPCS",
-			ExtraHeaders: s.GetHeaders(map[string]string{}),
-			RootURL:      setupEndpoint,
-		}
-		opts.Body = body
-		var pcsResp struct {
-			Status  string `json:"status"`
-			Message string `json:"message"`
-		}
-		resp, err := s.Request(ctx, opts, nil, &pcsResp)
-		if err != nil {
-			return fmt.Errorf("requestPCS: %w", err)
-		}
-		fs.Debugf(nil, "iclouddrive: requestPCS response cookies: %v", cookieDebugSummaries(resp.Cookies()))
-		fs.Debugf(nil, "iclouddrive: requestPCS response: status=%q message=%q cookies=%d",
-			pcsResp.Status, pcsResp.Message, len(resp.Cookies()))
-		if pcsResp.Status == "success" {
-			if !s.hasPCSCookies() {
-				return fmt.Errorf("requestPCS: server returned success but PCS cookies missing")
+		waitingForApproval := false
+		for _, appName := range pcsAppNames {
+			values := map[string]any{
+				"appName":               appName,
+				"derivedFromUserAction": true,
 			}
+			body, err := IntoReader(values)
+			if err != nil {
+				return fmt.Errorf("requestPCS %s: %w", appName, err)
+			}
+			opts := rest.Opts{
+				Method:       "POST",
+				Path:         "/requestPCS",
+				ExtraHeaders: s.GetHeaders(map[string]string{}),
+				RootURL:      setupEndpoint,
+			}
+			opts.Body = body
+			var pcsResp struct {
+				Status  string `json:"status"`
+				Message string `json:"message"`
+			}
+			resp, err := s.Request(ctx, opts, nil, &pcsResp)
+			if err != nil {
+				return fmt.Errorf("requestPCS %s: %w", appName, err)
+			}
+			fs.Debugf(nil, "iclouddrive: requestPCS %s response cookies: %v", appName, cookieDebugSummaries(resp.Cookies()))
+			fs.Debugf(nil, "iclouddrive: requestPCS %s response: status=%q message=%q cookies=%d",
+				appName, pcsResp.Status, pcsResp.Message, len(resp.Cookies()))
+			if pcsResp.Status != "success" {
+				// Device consent required - poll until approved
+				fs.Logf(nil, "iclouddrive: waiting for device approval for PCS (%s)", pcsResp.Message)
+				waitingForApproval = true
+				break
+			}
+		}
+		if s.hasPCSCookies() {
 			fs.Logf(nil, "iclouddrive: PCS cookies acquired")
 			return nil
 		}
-		// Device consent required - poll until approved
-		fs.Logf(nil, "iclouddrive: waiting for device approval for PCS (%s)", pcsResp.Message)
+		if !waitingForApproval {
+			fs.Debugf(nil, "iclouddrive: missing PCS cookies after requestPCS: %v", s.missingPCSCookies())
+		}
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
