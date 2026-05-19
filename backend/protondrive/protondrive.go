@@ -969,7 +969,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	}
 
 	if o.digests != nil {
-		return *o.digests, nil
+		return strings.ToLower(*o.digests), nil
 	}
 
 	// sha1 not cached: we fetch and try to obtain the sha1 of the link
