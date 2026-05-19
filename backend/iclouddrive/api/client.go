@@ -19,11 +19,45 @@ import (
 	"github.com/rclone/rclone/lib/rest"
 )
 
-const (
-	baseEndpoint  = "https://www.icloud.com"
-	setupEndpoint = "https://setup.icloud.com/setup/ws/1"
-	authEndpoint  = "https://idmsa.apple.com/appleauth/auth"
+// Endpoints holds the iCloud API endpoints.
+type Endpoints struct {
+	Base  string
+	Setup string
+	Auth  string
+}
+
+var (
+	defaultEndpoints = Endpoints{
+		Base:  "https://www.icloud.com",
+		Setup: "https://setup.icloud.com/setup/ws/1",
+		Auth:  "https://idmsa.apple.com/appleauth/auth",
+	}
+	chinaMainlandEndpoints = Endpoints{
+		Base:  "https://www.icloud.com.cn",
+		Setup: "https://setup.icloud.com.cn/setup/ws/1",
+		Auth:  "https://idmsa.apple.com.cn/appleauth/auth",
+	}
 )
+
+// DefaultEndpoints returns the global iCloud endpoints.
+func DefaultEndpoints() Endpoints {
+	return defaultEndpoints
+}
+
+// ChinaMainlandEndpoints returns the China Mainland iCloud endpoints.
+func ChinaMainlandEndpoints() Endpoints {
+	return chinaMainlandEndpoints
+}
+
+// EndpointsForRegion returns the appropriate API endpoints based on the region option.
+func EndpointsForRegion(region string) Endpoints {
+	switch strings.ToLower(region) {
+	case "chinamainland":
+		return chinaMainlandEndpoints
+	default:
+		return defaultEndpoints
+	}
+}
 
 type sessionSave func(*Session)
 
@@ -41,13 +75,13 @@ type Client struct {
 }
 
 // New creates a new iCloud API client and initializes its HTTP session
-func New(appleID, password, trustToken string, clientID string, cookies []*http.Cookie, sessionSaveCallback sessionSave, remoteName string) (*Client, error) {
+func New(appleID, password, trustToken string, clientID string, cookies []*http.Cookie, sessionSaveCallback sessionSave, remoteName string, endpoints Endpoints) (*Client, error) {
 	icloud := &Client{
 		appleID:             strings.ToLower(appleID), // Apple SRP requires lowercase in client-side proof
 		password:            password,
 		remoteName:          filepath.Base(remoteName),
 		srv:                 rest.NewClient(fshttp.NewClient(context.Background())),
-		Session:             NewSession(),
+		Session:             NewSession(endpoints),
 		sessionSaveCallback: sessionSaveCallback,
 	}
 
