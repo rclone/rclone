@@ -97,6 +97,7 @@ func New(ctx context.Context, fremote fs.Fs, opt *vfscommon.Options, avFn AddVir
 		}
 	}
 	relativeDirPath = fremote.Name() + "/" + relativeDirPath
+	relativeDirPath = clean(relativeDirPath)
 	relativeDirOSPath := toOSPath(relativeDirPath)
 
 	// Create cache root dirs
