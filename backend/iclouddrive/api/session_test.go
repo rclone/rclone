@@ -25,7 +25,6 @@ func TestExtractHeadersMergesCookies(t *testing.T) {
 	assert.Equal(t, "session-token", s.SessionToken)
 }
 
-
 func TestExtractHeadersDeletesEmptyCookies(t *testing.T) {
 	s := NewSession()
 	s.Cookies = []*http.Cookie{{Name: "X-APPLE-WEBAUTH-HSA-LOGIN", Value: "stale"}, {Name: "keep", Value: "value"}}
