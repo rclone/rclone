@@ -207,9 +207,8 @@ func globToRegexp(glob string, pathMode bool, addAnchors bool, ignoreCase bool) 
 
 var (
 	// Can't deal with
-	//   / or ** in {}
 	//   {{ regexp }}
-	tooHardRe = regexp.MustCompile(`({[^{}]*(\*\*|/)[^{}]*})|\{\{|\}\}`)
+	tooHardRe = regexp.MustCompile(`\{\{|\}\}`)
 
 	// Squash all /
 	squashSlash = regexp.MustCompile(`/{2,}`)
@@ -227,31 +226,139 @@ func globToDirGlobs(glob string) (out []string) {
 		return out
 	}
 
-	// Get rid of multiple /s
-	glob = squashSlash.ReplaceAllString(glob, "/")
+	// Expand curly braces first
+	expanded := expandBraces(glob)
 
-	// Split on / or **
-	// (** can contain /)
-	for {
-		i := strings.LastIndex(glob, "/")
-		j := strings.LastIndex(glob, "**")
-		what := ""
-		if j > i {
-			i = j
-			what = "**"
-		}
-		if i < 0 {
-			if len(out) == 0 {
-				out = append(out, "/**")
+	// Process each expanded pattern
+	seen := make(map[string]bool)
+	for _, pattern := range expanded {
+		// Get rid of multiple /s
+		pattern = squashSlash.ReplaceAllString(pattern, "/")
+
+		// Split on / or **
+		// (** can contain /)
+		subGlob := pattern
+		for {
+			i := strings.LastIndex(subGlob, "/")
+			j := strings.LastIndex(subGlob, "**")
+			what := ""
+			if j > i {
+				i = j
+				what = "**"
 			}
-			break
-		}
-		glob = glob[:i]
-		newGlob := glob + what + "/"
-		if len(out) == 0 || out[len(out)-1] != newGlob {
-			out = append(out, newGlob)
+			if i < 0 {
+				if len(out) == 0 {
+					out = append(out, "/**")
+				}
+				break
+			}
+			subGlob = subGlob[:i]
+			newGlob := subGlob + what + "/"
+			if !seen[newGlob] {
+				seen[newGlob] = true
+				out = append(out, newGlob)
+			}
 		}
 	}
 
 	return out
+}
+
+// expandBraces expands curly brace patterns like {a,b,c} into multiple strings
+func expandBraces(pattern string) []string {
+	// Simple case: no braces
+	if !strings.Contains(pattern, "{") || !strings.Contains(pattern, "}") {
+		return []string{pattern}
+	}
+
+	// Find the first complete brace pair, avoiding {{ and }}
+	start := -1
+	for i := 0; i < len(pattern); i++ {
+		if pattern[i] == '{' {
+			// Check if this is NOT a {{ pattern
+			if i >= len(pattern)-1 || pattern[i+1] != '{' {
+				start = i
+				break
+			} else {
+				// Skip the {{ pattern
+				i++
+			}
+		}
+	}
+
+	if start == -1 {
+		return []string{pattern}
+	}
+
+	// Find the matching closing brace
+	depth := 0
+	end := -1
+	for i := start; i < len(pattern); i++ {
+		switch pattern[i] {
+		case '{':
+			// Skip {{ patterns
+			if i < len(pattern)-1 && pattern[i+1] == '{' {
+				i++ // skip both {
+				continue
+			}
+			depth++
+		case '}':
+			// Skip }} patterns
+			if i > 0 && pattern[i-1] == '}' {
+				continue
+			}
+			depth--
+			if depth == 0 {
+				end = i
+				goto found
+			}
+		}
+	}
+found:
+
+	if end == -1 {
+		return []string{pattern}
+	}
+
+	// Extract the options
+	prefix := pattern[:start]
+	braceContent := pattern[start+1:end]
+	suffix := pattern[end+1:]
+
+	// Split on commas, but be careful about nested braces
+	var options []string
+	var current strings.Builder
+	depth = 0
+	for _, char := range braceContent {
+		switch char {
+		case '{':
+			depth++
+			current.WriteRune(char)
+		case '}':
+			depth--
+			current.WriteRune(char)
+		case ',':
+			if depth == 0 {
+				options = append(options, current.String())
+				current.Reset()
+			} else {
+				current.WriteRune(char)
+			}
+		default:
+			current.WriteRune(char)
+		}
+	}
+	if current.Len() > 0 {
+		options = append(options, current.String())
+	}
+
+	var result []string
+	for _, option := range options {
+		expanded := prefix + option + suffix
+		// Recursively expand any remaining braces
+		subExpanded := expandBraces(expanded)
+		result = append(result, subExpanded...)
+	}
+
+	return result
 }
