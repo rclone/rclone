@@ -12,10 +12,14 @@ Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
 ## Configuration
 
-The initial setup for kDrive involves getting a token which you
-need to do in your browser.  `rclone config` walks you through it.
+The initial setup for kDrive involves getting an OAuth2 token which you
+need to do in your browser. `rclone config` walks you through it.
 
-Here is an example of how to make a remote called `remote`.  First run:
+kDrive uses the PKCE OAuth2 flow (RFC 7636), which means no
+`client_secret` is required. The `client_id` is optional and defaults
+to rclone's built-in application credentials.
+
+Here is an example of how to make a remote called `remote`. First run:
 
 ```sh
 rclone config
@@ -38,6 +42,12 @@ XX / Infomaniak kDrive
 [snip]
 Storage> kdrive
 
+Option client_id.
+OAuth Client Id.
+Leave blank normally.
+Enter a value. Press Enter to leave empty.
+client_id> 
+
 Option drive_id.
 Fill the drive ID for this kdrive.
 When showing a folder on kdrive, you can find the drive_id here:
@@ -45,21 +55,19 @@ https://ksuite.infomaniak.com/{account_id}/kdrive/app/drive/{drive_id}/files/...
 Enter a value. Press Enter to leave empty.
 drive_id> 0654321
 
-Option access_token.
-Access token generated in Infomaniak profile manager.
-Enter a value. Press Enter to leave empty.
-access_token> ThisIsAVeryLong-Token
+Use web browser to automatically authenticate rclone with remote?
+ * Say Y if the machine running rclone has a web browser you can use
+ * Say N if running rclone on a (remote) machine without web browser access
+If not sure try Y. If Y failed, try N.
+y/n> y
 
-Edit advanced config?
-y) Yes
-n) No (default)
-y/n> 
+Waiting for code...
+Got code
 
 Configuration complete.
 Options:
 - type: kdrive
 - drive_id: 0654321
-- access_token: ThisIsAVeryLong-Token
 
 Keep this "remote" remote?
 y) Yes this is OK

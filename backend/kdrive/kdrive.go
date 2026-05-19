@@ -29,6 +29,7 @@ import (
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 	"github.com/zeebo/xxh3"
@@ -39,10 +40,25 @@ import (
 var kDriveHashType hash.Type
 
 const (
+	rcloneClientID  = "EB9BE55E-C6EA-43BB-8719-262EE2BAED0E"
 	defaultEndpoint = "https://api.infomaniak.com"
 	minSleep        = 10 * time.Millisecond
 	maxSleep        = 2 * time.Second
 	decayConstant   = 2 // bigger for slower decay, exponential
+)
+
+var (
+	// Base config for how to auth
+	oauthConfig = &oauthutil.Config{
+		Scopes: []string{
+			"drive",
+		},
+		AuthURL:     "https://login.infomaniak.com/authorize",
+		TokenURL:    "https://login.infomaniak.com/token",
+		ClientID:    rcloneClientID,
+		RedirectURL: oauthutil.RedirectLocalhostURL,
+		UsePKCE:     true,
+	}
 )
 
 // Register with Fs
@@ -52,12 +68,16 @@ func init() {
 		Name:        "kdrive",
 		Description: "Infomaniak kDrive",
 		NewFs:       NewFs,
-		Options: []fs.Option{{
+		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+			return oauthutil.ConfigOut("", &oauthutil.Options{
+				OAuth2Config: oauthConfig,
+			})
+		},
+		Options: append(oauthutil.SharedOptionsPKCE, []fs.Option{{
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
-			// Encode invalid UTF-8 bytes as json doesn't handle them properly.
-			Default: encoder.Display | encoder.EncodeLeftSpace | encoder.EncodeRightSpace | encoder.EncodeInvalidUtf8,
+			Default:  encoder.Display | encoder.EncodeLeftSpace | encoder.EncodeRightSpace | encoder.EncodeInvalidUtf8,
 		}, {
 			Name: "root_folder_id",
 			Help: `The folder to use as root.
@@ -78,9 +98,11 @@ When showing a folder on kdrive, you can find the drive_id here:
 https://ksuite.infomaniak.com/{account_id}/kdrive/app/drive/{drive_id}/files/...`,
 			Default: "",
 		}, {
-			Name:       "access_token",
-			Help:       `Access token generated in Infomaniak profile manager.`,
-			Required:   true,
+			Name: "access_token",
+			Help: `[Deprecated] Access token generated in Infomaniak profile manager.
+Use OAuth2 authentication instead.
+This option is deprecated and will be removed in the future.`,
+			Advanced:   true,
 			IsPassword: true,
 			Sensitive:  true,
 		}, {
@@ -89,8 +111,7 @@ https://ksuite.infomaniak.com/{account_id}/kdrive/app/drive/{drive_id}/files/...
 
 Leave blank normally. There is no reason to change the endpoint except for internal use or beta-testing.`,
 			Advanced: true,
-		},
-		},
+		}}...),
 	})
 }
 
@@ -134,12 +155,6 @@ type cacheEntry struct {
 	item *api.Item
 	err  error
 }
-
-type kdriveInitCacheKey int
-
-const (
-	kdriveInitCache kdriveInitCacheKey = iota
-)
 
 // ------------------------------------------------------------
 
@@ -235,9 +250,22 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		opt.Endpoint = defaultEndpoint
 	}
 
-	accessToken, err := obscure.Reveal(opt.AccessToken)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't decrypt access token: %w", err)
+	var client *http.Client
+	var accessToken string
+	if opt.AccessToken != "" {
+		// Legacy token-based auth for backward compatibility
+		var err error
+		accessToken, err = obscure.Reveal(opt.AccessToken)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't decrypt access token: %w", err)
+		}
+		client = fshttp.NewClient(ctx)
+	} else {
+		oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
+		if err != nil {
+			return nil, fmt.Errorf("failed to configure kDrive: %w", err)
+		}
+		client = oAuthClient
 	}
 
 	root = parsePath(root)
@@ -248,14 +276,19 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		name:          name,
 		root:          root,
 		opt:           *opt,
-		srv:           rest.NewClient(fshttp.NewClient(ctx)).SetRoot(opt.Endpoint),
+		srv:           rest.NewClient(client).SetRoot(opt.Endpoint),
 		pacer:         fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 		cacheNotFound: make(map[string]cacheEntry),
 	}
-	f.srv.SetHeader("Authorization", "Bearer "+accessToken)
 
-	f.cleanupSrv = rest.NewClient(fshttp.NewClient(ctx)).SetRoot(opt.Endpoint)
-	f.cleanupSrv.SetHeader("Authorization", "Bearer "+accessToken)
+	if accessToken != "" {
+		f.srv.SetHeader("Authorization", "Bearer "+accessToken)
+	}
+
+	f.cleanupSrv = rest.NewClient(client).SetRoot(opt.Endpoint)
+	if accessToken != "" {
+		f.cleanupSrv.SetHeader("Authorization", "Bearer "+accessToken)
+	}
 
 	f.features = (&fs.Features{
 		CaseInsensitive:         false,
@@ -269,7 +302,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
-	ctx = context.WithValue(ctx, kdriveInitCache, make(map[string]cacheEntry))
+	ctx = context.WithValue(ctx, "kdriveInitCache", make(map[string]cacheEntry))
 
 	f.dirCache = dircache.New(root, rootID, f)
 	// Find the current root
