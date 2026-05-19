@@ -344,6 +344,27 @@ Set to 0 to keep connections indefinitely.
 `,
 			Advanced: true,
 		}, {
+			Name:    "keep_alive",
+			Default: fs.Duration(0),
+			Help: `Interval between SSH keepalive packets.
+
+Sends a keepalive packet on the SSH connection at the specified
+interval to prevent firewalls, NAT devices, or the SSH server
+from dropping idle connections.
+
+This is especially useful when using rclone mount, where
+connections may sit idle in the connection pool for long periods
+between filesystem operations.
+
+Set to 0 to disable (default). A reasonable value is 15s or 30s.
+
+Note: this applies only to rclone's internal SSH client. When
+using an external ssh binary via the --sftp-ssh option,
+configure keepalives on the ssh command instead (e.g.
+-o ServerAliveInterval=15).
+`,
+			Advanced: true,
+		}, {
 			Name: "chunk_size",
 			Help: `Upload and download chunk size.
 
@@ -586,6 +607,7 @@ type Options struct {
 	DisableConcurrentReads  bool            `config:"disable_concurrent_reads"`
 	DisableConcurrentWrites bool            `config:"disable_concurrent_writes"`
 	IdleTimeout             fs.Duration     `config:"idle_timeout"`
+	KeepAlive               fs.Duration     `config:"keep_alive"`
 	ChunkSize               fs.SizeSuffix   `config:"chunk_size"`
 	Concurrency             int             `config:"concurrency"`
 	Connections             int             `config:"connections"`
@@ -643,9 +665,11 @@ type Object struct {
 
 // conn encapsulates an ssh client and corresponding sftp client
 type conn struct {
-	sshClient  sshClient
-	sftpClient *sftp.Client
-	err        chan error
+	sshClient      sshClient
+	sftpClient     *sftp.Client
+	err            chan error
+	keepAliveMu    sync.Mutex
+	keepAliveTimer *time.Timer // fires keepalives while conn is idle in the pool; nil after close or if disabled
 }
 
 // Wait for connection to close
@@ -673,6 +697,15 @@ func (c *conn) sendKeepAlives(interval time.Duration) (done chan struct{}) {
 
 // Closes the connection
 func (c *conn) close() error {
+	// Permanently stop keepalives. Setting the timer to nil under the
+	// mutex prevents any callback that may already be running from
+	// rescheduling itself or sending a keepalive on the closed client.
+	c.keepAliveMu.Lock()
+	if c.keepAliveTimer != nil {
+		c.keepAliveTimer.Stop()
+		c.keepAliveTimer = nil
+	}
+	c.keepAliveMu.Unlock()
 	sftpErr := c.sftpClient.Close()
 	sshErr := c.sshClient.Close()
 	if sftpErr != nil {
@@ -726,6 +759,27 @@ func (f *Fs) sftpConnection(ctx context.Context) (c *conn, err error) {
 	if err != nil {
 		_ = c.sshClient.Close()
 		return nil, fmt.Errorf("couldn't initialise SFTP: %w", err)
+	}
+	// Set up the keepalive timer if configured. It is created stopped; it
+	// is armed while the connection is idle in the pool and stopped while
+	// the connection is in use (active traffic keeps the connection alive).
+	// All timer operations and the callback body are guarded by
+	// c.keepAliveMu to avoid races between the callback, pool transitions,
+	// and close().
+	if f.opt.KeepAlive > 0 {
+		interval := time.Duration(f.opt.KeepAlive)
+		c.keepAliveTimer = time.AfterFunc(interval, func() {
+			c.keepAliveMu.Lock()
+			defer c.keepAliveMu.Unlock()
+			if c.keepAliveTimer == nil {
+				return // close() ran while the callback was waiting
+			}
+			c.sshClient.SendKeepAlive()
+			c.keepAliveTimer.Reset(interval)
+		})
+		c.keepAliveMu.Lock()
+		c.keepAliveTimer.Stop()
+		c.keepAliveMu.Unlock()
 	}
 	go c.wait()
 	return c, nil
@@ -806,6 +860,12 @@ func (f *Fs) getSftpConnection(ctx context.Context) (c *conn, err error) {
 	}
 	f.poolMu.Unlock()
 	if c != nil {
+		// Stop keepalives while the connection is in use
+		c.keepAliveMu.Lock()
+		if c.keepAliveTimer != nil {
+			c.keepAliveTimer.Stop()
+		}
+		c.keepAliveMu.Unlock()
 		return c, nil
 	}
 	err = f.pacer.Call(func() (bool, error) {
@@ -866,6 +926,12 @@ func (f *Fs) putSftpConnection(pc **conn, err error) {
 		f.drain.Reset(time.Duration(f.opt.IdleTimeout)) // nudge on the pool emptying timer
 	}
 	f.poolMu.Unlock()
+	// Arm the keepalive timer while the connection is idle in the pool
+	c.keepAliveMu.Lock()
+	if c.keepAliveTimer != nil {
+		c.keepAliveTimer.Reset(time.Duration(f.opt.KeepAlive))
+	}
+	c.keepAliveMu.Unlock()
 }
 
 // Drain the pool of any connections
