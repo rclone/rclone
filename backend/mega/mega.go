@@ -323,8 +323,16 @@ func (f *Fs) splitNodePath(nodePath string) (parts []string) {
 
 // findNode looks up the node for the path of the name given from the root given
 //
-// It returns mega.ENOENT if it wasn't found
+// It returns mega.ENOENT if it wasn't found, and treats a nil rootNode as
+// "not found" as well, since FS.GetRoot() can legitimately return nil when
+// the account state is in flux (e.g. the Mega trash has just been cleared
+// from the web UI while rclone was mid-sync) and calling PathLookup or
+// GetType on a nil node panics. Returning ENOENT here lets callers hit the
+// normal "not found" code path instead.
 func (f *Fs) findNode(rootNode *mega.Node, nodePath string) (*mega.Node, error) {
+	if rootNode == nil {
+		return nil, mega.ENOENT
+	}
 	parts := f.splitNodePath(nodePath)
 	if parts == nil {
 		return rootNode, nil
@@ -333,7 +341,14 @@ func (f *Fs) findNode(rootNode *mega.Node, nodePath string) (*mega.Node, error) 
 	if err != nil {
 		return nil, err
 	}
-	return nodes[len(nodes)-1], nil
+	if len(nodes) == 0 {
+		return nil, mega.ENOENT
+	}
+	last := nodes[len(nodes)-1]
+	if last == nil {
+		return nil, mega.ENOENT
+	}
+	return last, nil
 }
 
 // findDir finds the directory rooted from the node passed in
@@ -341,8 +356,18 @@ func (f *Fs) findDir(rootNode *mega.Node, dir string) (node *mega.Node, err erro
 	node, err = f.findNode(rootNode, dir)
 	if err == mega.ENOENT {
 		return nil, fs.ErrorDirNotFound
-	} else if err == nil && node.GetType() == mega.FILE {
-		return nil, fs.ErrorIsFile
+	}
+	// findNode's contract is that a nil error implies a non-nil node, but
+	// older versions of this code let a (nil, nil) slip through when the
+	// Mega library returned a slice whose last element was nil, so be
+	// explicit here to keep the GetType call safe.
+	if err == nil {
+		if node == nil {
+			return nil, fs.ErrorDirNotFound
+		}
+		if node.GetType() == mega.FILE {
+			return nil, fs.ErrorIsFile
+		}
 	}
 	return node, err
 }
@@ -352,8 +377,14 @@ func (f *Fs) findObject(rootNode *mega.Node, file string) (node *mega.Node, err 
 	node, err = f.findNode(rootNode, file)
 	if err == mega.ENOENT {
 		return nil, fs.ErrorObjectNotFound
-	} else if err == nil && node.GetType() != mega.FILE {
-		return nil, fs.ErrorIsDir // all other node types are directories
+	}
+	if err == nil {
+		if node == nil {
+			return nil, fs.ErrorObjectNotFound
+		}
+		if node.GetType() != mega.FILE {
+			return nil, fs.ErrorIsDir // all other node types are directories
+		}
 	}
 	return node, err
 }
