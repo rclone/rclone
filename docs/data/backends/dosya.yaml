@@ -1,0 +1,28 @@
+backend: dosya
+name: dosya.dev
+tier: Tier 2
+maintainers: dosya.dev team
+features_score: 4
+integration_tests: Passing
+data_integrity: None
+performance: Medium
+adoption: New
+docs: Full
+security: High
+virtual: false
+remote: 'TestDosya:'
+features:
+- About
+- CanHaveEmptyDirectories
+- Copy
+- DirCacheFlush
+- DirMove
+- DuplicateFiles
+- ListR
+- Move
+- PublicLink
+- Purge
+- PutUnchecked
+- ReadMimeType
+hashes: []
+precision: -1

@@ -689,6 +689,9 @@ backends:
    listretries: 5
    ignore:
      - TestRWFileHandleWriteNoWrite
+ - backend:  "dosya"
+   remote:   "TestDosya:"
+   fastlist: true
  - backend:  "drime"
    remote:   "TestDrime:"
    ignoretests:
