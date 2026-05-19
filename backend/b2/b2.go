@@ -1418,7 +1418,7 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool, deleteHidden b
 			errReturn = err
 		}
 	}
-	var isUnfinishedUploadStale = func(timestamp api.Timestamp) bool {
+	var isUploadStale = func(timestamp api.Timestamp) bool {
 		return time.Since(time.Time(timestamp)) > maxAge
 	}
 
@@ -1446,7 +1446,7 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool, deleteHidden b
 		if deleteHidden && deleteUnfinished {
 			fs.Infof(f, "cleaning bucket %q of all hidden files, and pending multipart uploads older than %v", bucket, maxAge)
 		} else if deleteHidden {
-			fs.Infof(f, "cleaning bucket %q of all hidden files", bucket)
+			fs.Infof(f, "cleaning bucket %q of all hidden files older than %v", bucket, maxAge)
 		} else if deleteUnfinished {
 			fs.Infof(f, "cleaning bucket %q of pending multipart uploads older than %v", bucket, maxAge)
 		} else {
@@ -1467,12 +1467,12 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool, deleteHidden b
 			tr := accounting.Stats(ctx).NewCheckingTransfer(oi, "checking")
 			if oldOnly && last != remote {
 				// Check current version of the file
-				if deleteHidden && object.Action == "hide" {
-					fs.Debugf(remote, "Deleting current version (id %q) as it is a hide marker", object.ID)
+				if deleteHidden && object.Action == "hide" && isUploadStale(object.UploadTimestamp) {
+					fs.Debugf(remote, "Deleting current version (id %q) as it is a hide marker (hidden at %s)", object.ID, time.Time(object.UploadTimestamp).Local())
 					if !operations.SkipDestructive(ctx, object.Name, "remove hide marker") {
 						toBeDeleted <- object
 					}
-				} else if deleteUnfinished && object.Action == "start" && isUnfinishedUploadStale(object.UploadTimestamp) {
+				} else if deleteUnfinished && object.Action == "start" && isUploadStale(object.UploadTimestamp) {
 					fs.Debugf(remote, "Deleting current version (id %q) as it is a start marker (upload started at %s)", object.ID, time.Time(object.UploadTimestamp).Local())
 					if !operations.SkipDestructive(ctx, object.Name, "remove pending upload") {
 						toBeDeleted <- object
@@ -2577,11 +2577,24 @@ it would do.
 
 ` + "```console" + `
 rclone backend cleanup-hidden b2:bucket/path/to/dir
-` + "```",
+rclone backend cleanup-hidden -o max-age=7w b2:bucket/path/to/dir
+` + "```" + `
+
+Durations are parsed as per the rest of rclone, 2h, 7d, 7w etc.`,
+	Opts: map[string]string{
+		"max-age": "Max age of upload to delete.",
+	},
 }
 
 func (f *Fs) cleanupHiddenCommand(ctx context.Context, name string, arg []string, opt map[string]string) (out any, err error) {
-	return nil, f.cleanUp(ctx, true, false, 0)
+	maxAge := defaultMaxAge
+	if opt["max-age"] != "" {
+		maxAge, err = fs.ParseDuration(opt["max-age"])
+		if err != nil {
+			return nil, fmt.Errorf("bad max-age: %w", err)
+		}
+	}
+	return nil, f.cleanUp(ctx, true, false, maxAge)
 }
 
 var commandHelp = []fs.CommandHelp{
