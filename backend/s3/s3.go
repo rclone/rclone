@@ -332,25 +332,25 @@ If empty it will default to the environment variable "AWS_PROFILE" or
 		}, {
 			Name: "role_arn",
 			Help: `ARN of the IAM role to assume.
-
+			
 Leave blank if not using assume role.`,
 			Advanced: true,
 		}, {
 			Name: "role_session_name",
 			Help: `Session name for assumed role.
-
+			
 If empty, a session name will be generated automatically.`,
 			Advanced: true,
 		}, {
 			Name: "role_session_duration",
 			Help: `Session duration for assumed role.
-
+			
 If empty, the default session duration will be used.`,
 			Advanced: true,
 		}, {
 			Name: "role_external_id",
 			Help: `External ID for assumed role.
-
+			
 Leave blank if not using an external ID.`,
 			Advanced: true,
 		}, {
