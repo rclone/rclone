@@ -69,7 +69,22 @@ func (f *Fs) dial(ctx context.Context, network, addr string) (*conn, error) {
 	return &conn{
 		smbSession: session,
 		conn:       &tconn,
+		closeder:   &sessionCloseder{session: session},
 	}, nil
+}
+
+// closeder checks whether a connection is still alive.
+type closeder interface {
+	closed() bool
+}
+
+// sessionCloseder checks liveness by sending an SMB Echo request.
+type sessionCloseder struct {
+	session *smb2.Session
+}
+
+func (s *sessionCloseder) closed() bool {
+	return s.session.Echo() != nil
 }
 
 // conn encapsulates a SMB client and corresponding SMB client
@@ -78,6 +93,8 @@ type conn struct {
 	smbSession *smb2.Session
 	smbShare   *smb2.Share
 	shareName  string
+	pooledAt   time.Time // when this connection was returned to the pool
+	closeder   closeder  // liveness checker; defaults to smbSession Echo
 }
 
 // Closes the connection
@@ -94,7 +111,7 @@ func (c *conn) close() (err error) {
 
 // True if it's closed
 func (c *conn) closed() bool {
-	return c.smbSession.Echo() != nil
+	return c.closeder.closed()
 }
 
 // Show that we are using a SMB session
@@ -171,6 +188,14 @@ func (f *Fs) getConnection(ctx context.Context, share string) (c *conn, err erro
 	}
 	f.poolMu.Unlock()
 	if c != nil {
+		// Connections that have been idle in the pool for a long time
+		// may have died (TCP deadline expired). Check liveness via Echo
+		// outside the mutex to avoid serializing concurrent callers
+		// behind a network round-trip. If dead, discard and try again.
+		if !c.pooledAt.IsZero() && time.Since(c.pooledAt) > time.Duration(f.opt.IdleTimeout) && c.closed() {
+			fs.Debugf(f, "Discarding dead pooled SMB connection")
+			return f.getConnection(ctx, share)
+		}
 		return c, nil
 	}
 	err = f.pacer.Call(func() (bool, error) {
@@ -201,16 +226,15 @@ func (f *Fs) putConnection(pc **conn, err error) {
 	if err != nil {
 		// If not a regular SMB error then check the connection
 		if !(errors.Is(err, os.ErrNotExist) || errors.Is(err, os.ErrExist) || errors.Is(err, os.ErrPermission)) {
-			echoErr := c.smbSession.Echo()
-			if echoErr != nil {
-				fs.Debugf(f, "Connection failed, closing: %v", echoErr)
-				_ = c.close()
+			if c.closed() {
+				fs.Debugf(f, "Connection failed, discarding: %v", err)
 				return
 			}
 			fs.Debugf(f, "Connection OK after error: %v", err)
 		}
 	}
 
+	c.pooledAt = time.Now()
 	f.poolMu.Lock()
 	f.pool = append(f.pool, c)
 	if f.opt.IdleTimeout > 0 {

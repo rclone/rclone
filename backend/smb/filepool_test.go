@@ -69,11 +69,13 @@ func newMockFs() *mockFs {
 	return &mockFs{}
 }
 
-// Helper function to create a mock file
+// Helper function to create a mock file with an alive connection
 func newMockFile() *file {
+	c := &conn{closeder: neverClosed{}}
 	return &file{
-		File: &smb2.File{},
-		c:    &conn{},
+		File:     &smb2.File{},
+		c:        c,
+		closeder: c,
 	}
 }
 
@@ -181,7 +183,9 @@ func TestFilePool_Drain_WithFiles(t *testing.T) {
 	fs := newMockFs()
 	pool := newFilePool(ctx, fs, "testshare", "/test/path")
 
-	// Add mock files to pool
+	// Add mock files to pool — these have nil smbSession so
+	// closed() will report them as dead, and drain will skip
+	// the Close and just discard them.
 	mockFile1 := newMockFile()
 	mockFile2 := newMockFile()
 	pool.pool = append(pool.pool, mockFile1, mockFile2)
