@@ -296,6 +296,11 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 
 	fs.Debugf(nil, "rc: %q: reply %+v: %v", path, out, err)
 	w.Header().Set("Content-Type", "application/json")
+	isAsync, _ := inOrig.GetBool("_async")
+	if isAsync && strings.Contains(strings.ToLower(r.Header.Get("Prefer")), "respond-async") {
+		w.Header().Set("Preference-Applied", "respond-async")
+		w.WriteHeader(http.StatusAccepted)
+	}
 	err = rc.WriteJSON(w, out)
 	if err != nil {
 		// can't return the error at this point - but have a go anyway
