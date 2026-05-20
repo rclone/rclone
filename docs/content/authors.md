@@ -1132,3 +1132,4 @@ put them back in again. -->
 - Tim Schumacher <tim@tschumacher.net>
 - ferrumclaudepilgrim <ferrumclaudepilgrim@users.noreply.github.com>
 - Alvinwylim <31592545+Alvinwylim@users.noreply.github.com>
+- Tore Anderson <tore@fud.no>
