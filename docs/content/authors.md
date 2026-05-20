@@ -1135,3 +1135,4 @@ put them back in again. -->
 - Tore Anderson <tore@fud.no>
 - Sai Asish Y <say.apm35@gmail.com>
 - Lucky945H <1355363613@qq.com>
+- William Tange <github@tan.ge>
