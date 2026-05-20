@@ -143,6 +143,7 @@ Flags for general configuration of rclone.
 ```
       --ask-password                        Allow prompt for password for encrypted configuration (default true)
       --auto-confirm                        If enabled, do not request console confirmation
+      --auth-host string                    Host interface for local OAuth webserver (default 127.0.0.1)
       --cache-dir string                    Directory rclone will use for caching (default "$HOME/.cache/rclone")
       --color AUTO|NEVER|ALWAYS             When to show colors (and other ANSI codes) AUTO|NEVER|ALWAYS (default AUTO)
       --config string                       Config file (default "$HOME/.config/rclone/rclone.conf")
