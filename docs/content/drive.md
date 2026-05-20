@@ -496,7 +496,7 @@ Drive, the size of all files in the Trash and the space used by other
 Google services such as Gmail. This command does not take any path
 arguments.
 
-#### Import/Export of google documents
+### Import/Export of google documents
 
 Google documents can be exported from and uploaded to Google Drive.
 
