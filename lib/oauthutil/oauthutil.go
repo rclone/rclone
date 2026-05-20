@@ -42,7 +42,7 @@ const (
 	bindPort = "53682"
 
 	// bindAddress is binding for local webserver when active
-	bindAddress = "127.0.0.1:" + bindPort
+	bindAddress string = "localhost:" + bindPort
 
 	// RedirectURL is redirect to local webserver when active
 	RedirectURL = "http://" + bindAddress + "/"
@@ -849,14 +849,13 @@ func configSetup(ctx context.Context, id, name string, m configmap.Mapper, oauth
 	}
 
 	// Prepare webserver
-	server := newAuthServer(opt, bindAddress, state, authURL)
+	server := newAuthServer(opt, state, authURL)
 	err = server.Init()
 	if err != nil {
 		return "", fmt.Errorf("failed to start auth webserver: %w", err)
 	}
 	go server.Serve()
 	defer server.Stop()
-	authURL = "http://" + bindAddress + "/auth?state=" + state
 
 	if !authorizeNoAutoBrowser {
 		// Open the URL for the user to visit
@@ -903,23 +902,21 @@ func configExchange(ctx context.Context, name string, m configmap.Mapper, oauthC
 
 // Local web server for collecting auth
 type authServer struct {
-	opt         *Options
-	state       string
-	listener    net.Listener
-	bindAddress string
-	authURL     string
-	server      *http.Server
-	result      chan *AuthResult
+	opt      *Options
+	state    string
+	listener net.Listener
+	authURL  string
+	server   *http.Server
+	result   chan *AuthResult
 }
 
 // newAuthServer makes the webserver for collecting auth
-func newAuthServer(opt *Options, bindAddress, state, authURL string) *authServer {
+func newAuthServer(opt *Options, state, authURL string) *authServer {
 	return &authServer{
-		opt:         opt,
-		state:       state,
-		bindAddress: bindAddress,
-		authURL:     authURL, // http://host/auth redirects to here
-		result:      make(chan *AuthResult, 1),
+		opt:     opt,
+		state:   state,
+		authURL: authURL, // http://host/auth redirects to here
+		result:  make(chan *AuthResult, 1),
 	}
 }
 
@@ -990,10 +987,8 @@ func (s *authServer) handleAuth(w http.ResponseWriter, req *http.Request) {
 
 // Init gets the internal web server ready to receive config details
 func (s *authServer) Init() error {
-	fs.Debugf(nil, "Starting auth server on %s", s.bindAddress)
 	mux := http.NewServeMux()
 	s.server = &http.Server{
-		Addr:    s.bindAddress,
 		Handler: mux,
 	}
 	s.server.SetKeepAlivesEnabled(false)
@@ -1011,10 +1006,12 @@ func (s *authServer) Init() error {
 	mux.HandleFunc("/", s.handleAuth)
 
 	var err error
-	s.listener, err = net.Listen("tcp", s.bindAddress)
+
+	s.listener, err = net.Listen("tcp", ":"+bindPort)
 	if err != nil {
 		return err
 	}
+	fs.Debugf(nil, "Starting auth server on %s \n redirect authURL =  %s", s.listener.Addr().String(), s.authURL)
 	return nil
 }
 
