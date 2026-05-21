@@ -815,6 +815,13 @@ This takes the following parameters:
 
 See the [config update](/commands/rclone_config_update/) command for more information on the above.
 
+**Reconnecting a remote:** Calling `config/update` with empty
+`parameters` runs the post-config / authorize flow, equivalent to
+`rclone config reconnect`. This can be used to re-authenticate a
+remote (e.g. refresh an OAuth token):
+
+    rclone rc config/update name=myremote parameters={} opt={"nonInteractive": true}
+
 ### core/bwlimit: Set the bandwidth limit. {#core-bwlimit}
 
 This sets the bandwidth limit to the string passed in. This should be
