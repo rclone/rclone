@@ -495,7 +495,7 @@ func (s *Session) getSRPAuthHeaders() map[string]string {
 	return headers
 }
 
-// AuthWithToken authenticates the session
+// AuthWithToken authenticates the session with the account login endpoint
 func (s *Session) AuthWithToken(ctx context.Context) error {
 	values := map[string]any{
 		"accountCountryCode": s.AccountCountry,
@@ -522,86 +522,110 @@ func (s *Session) AuthWithToken(ctx context.Context) error {
 	fs.Debugf(nil, "iclouddrive: accountLogin response cookies: %v", cookieDebugSummaries(resp.Cookies()))
 	fs.Debugf(nil, "iclouddrive: session cookie jar after accountLogin: %v", cookieJarDebugSummaries(s.Cookies))
 
-	// Acquire PCS cookies if Advanced Data Protection is enabled
-	if ws := s.AccountInfo.Webservices["ckdatabasews"]; ws != nil && ws.PcsRequired {
-		fs.Debugf(nil, "iclouddrive: ADP detected (pcsRequired=true)")
-		if s.hasPCSCookies() {
-			fs.Debugf(nil, "iclouddrive: PCS cookies already present, skipping acquisition")
-		} else {
-			if err := s.acquirePCSCookies(ctx); err != nil {
-				return err
-			}
-		}
-	} else {
-		fs.Debugf(nil, "iclouddrive: no ADP (pcsRequired=false)")
-	}
-
 	return nil
 }
 
-// hasPCSCookies checks if the required PCS cookies for Photos are already present
-func (s *Session) hasPCSCookies() bool {
-	var hasPhotos, hasSharing bool
-	for _, c := range s.Cookies {
-		switch c.Name {
-		case "X-APPLE-WEBAUTH-PCS-Photos":
-			hasPhotos = true
-		case "X-APPLE-WEBAUTH-PCS-Sharing":
-			hasSharing = true
-		}
-	}
-	return hasPhotos && hasSharing
+type pcsService struct {
+	wsKey   string
+	appName string
+	cookies []string
 }
 
-// acquirePCSCookies requests PCS cookies for ADP-enabled accounts
+// pcsServices lists all services that need PCS cookies
+// appName values from icloud.com JS (Build 2616/19)
+var pcsServices = []pcsService{
+	{WsPhotos, "photos", []string{"X-APPLE-WEBAUTH-PCS-Photos", "X-APPLE-WEBAUTH-PCS-Sharing"}},
+	{WsDrive, "iclouddrive", []string{"X-APPLE-WEBAUTH-PCS-Documents"}},
+}
+
+func (s *Session) hasPCSCookiesFor(names []string) bool {
+	for _, name := range names {
+		if !slices.ContainsFunc(s.Cookies, func(c *http.Cookie) bool { return c.Name == name }) {
+			return false
+		}
+	}
+	return true
+}
+
+// ensurePCSCookies checks whether the session needs PCS cookies for the given
+// webservice and acquires them if missing, returning true if new cookies were acquired
+func (s *Session) ensurePCSCookies(ctx context.Context, pcsWSKey string) (bool, error) {
+	if pcsWSKey == "" {
+		return false, nil
+	}
+	for _, pcs := range pcsServices {
+		if pcs.wsKey != pcsWSKey {
+			continue
+		}
+		ws := s.AccountInfo.Webservices[pcs.wsKey]
+		if ws == nil || !ws.PcsRequired {
+			return false, nil
+		}
+		if s.hasPCSCookiesFor(pcs.cookies) {
+			return false, nil
+		}
+		fs.Debugf(nil, "iclouddrive: ADP detected, acquiring PCS cookies for %s", pcs.appName)
+		if err := s.acquirePCSCookiesFor(ctx, pcs.appName, pcs.cookies); err != nil {
+			return false, err
+		}
+		return true, nil
+	}
+	return false, nil
+}
+
+// acquirePCSCookiesFor requests PCS cookies for a specific service on ADP-enabled accounts
 // May require user approval on a trusted device (polls every 10s, max 5 min)
-func (s *Session) acquirePCSCookies(ctx context.Context) error {
-	fs.Logf(nil, "iclouddrive: Advanced Data Protection enabled, requesting PCS cookies")
-	const maxAttempts = 30 // 30 * 10s = 5 minutes max
-	for attempt := 0; attempt < maxAttempts; attempt++ {
-		fs.Debugf(nil, "iclouddrive: requestPCS outgoing cookies: %v", cookieJarDebugSummaries(s.Cookies))
+func (s *Session) acquirePCSCookiesFor(ctx context.Context, appName string, cookies []string) error {
+	fs.Logf(nil, "iclouddrive: Advanced Data Protection enabled, requesting PCS cookies for %s", appName)
+	const maxAttempts = 30
+	for range maxAttempts {
+		fs.Debugf(nil, "iclouddrive: requestPCS(%s) outgoing cookies: %v", appName, cookieJarDebugSummaries(s.Cookies))
 		values := map[string]any{
-			"appName":               "photos",
+			"appName":               appName,
 			"derivedFromUserAction": true,
 		}
 		body, err := IntoReader(values)
 		if err != nil {
-			return fmt.Errorf("requestPCS: %w", err)
+			return fmt.Errorf("requestPCS(%s): %w", appName, err)
 		}
 		opts := rest.Opts{
 			Method:       "POST",
 			Path:         "/requestPCS",
 			ExtraHeaders: s.GetHeaders(map[string]string{}),
 			RootURL:      setupEndpoint,
+			Body:         body,
 		}
-		opts.Body = body
 		var pcsResp struct {
 			Status  string `json:"status"`
 			Message string `json:"message"`
 		}
 		resp, err := s.Request(ctx, opts, nil, &pcsResp)
 		if err != nil {
-			return fmt.Errorf("requestPCS: %w", err)
+			return fmt.Errorf("requestPCS(%s): %w", appName, err)
 		}
-		fs.Debugf(nil, "iclouddrive: requestPCS response cookies: %v", cookieDebugSummaries(resp.Cookies()))
-		fs.Debugf(nil, "iclouddrive: requestPCS response: status=%q message=%q cookies=%d",
-			pcsResp.Status, pcsResp.Message, len(resp.Cookies()))
+		fs.Debugf(nil, "iclouddrive: requestPCS(%s) response: status=%q message=%q cookies=%d %v",
+			appName, pcsResp.Status, pcsResp.Message, len(resp.Cookies()), cookieDebugSummaries(resp.Cookies()))
 		if pcsResp.Status == "success" {
-			if !s.hasPCSCookies() {
-				return fmt.Errorf("requestPCS: server returned success but PCS cookies missing")
+			if !s.hasPCSCookiesFor(cookies) {
+				var missing []string
+				for _, name := range cookies {
+					if !slices.ContainsFunc(s.Cookies, func(c *http.Cookie) bool { return c.Name == name }) {
+						missing = append(missing, name)
+					}
+				}
+				return fmt.Errorf("requestPCS(%s): server returned success but cookies still missing: %v", appName, missing)
 			}
-			fs.Logf(nil, "iclouddrive: PCS cookies acquired")
+			fs.Logf(nil, "iclouddrive: PCS cookies acquired for %s", appName)
 			return nil
 		}
-		// Device consent required - poll until approved
-		fs.Logf(nil, "iclouddrive: waiting for device approval for PCS (%s)", pcsResp.Message)
+		fs.Logf(nil, "iclouddrive: waiting for device approval for PCS/%s (%s)", appName, pcsResp.Message)
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-time.After(10 * time.Second):
 		}
 	}
-	return fmt.Errorf("requestPCS: timed out waiting for device approval after 5 minutes")
+	return fmt.Errorf("requestPCS(%s): timed out waiting for device approval after 5 minutes", appName)
 }
 
 // RequestPushNotification explicitly requests a push notification to trusted devices

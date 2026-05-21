@@ -96,7 +96,7 @@ func resumeConfigClient(m configmap.Mapper, appleid, password, trustToken, clien
 	if err != nil {
 		return nil, nil, err
 	}
-	icloud, err := api.New(appleid, password, trustToken, clientID, cookies, nil, "_config")
+	icloud, err := api.New(appleid, password, trustToken, clientID, cookies, nil, "_config", "")
 	if err != nil {
 		return nil, nil, err
 	}
@@ -280,7 +280,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		// Force fresh SRP authentication - ignore stale trust token and cookies
 		// so that reconnect always prompts for 2FA
 		m.Set(configAuthSession, "")
-		icloud, err := api.New(appleid, password, "", clientID, nil, nil, "_config")
+		icloud, err := api.New(appleid, password, "", clientID, nil, nil, "_config", "")
 		if err != nil {
 			return nil, err
 		}
@@ -410,7 +410,8 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 
 // newICloudClient parses options, authenticates, and returns a ready client
 // Shared between NewFs (Drive) and NewFsPhotos (Photos) to avoid duplication
-func newICloudClient(ctx context.Context, name string, m configmap.Mapper) (*api.Client, *Options, error) {
+// pcsWSKey scopes PCS cookie acquisition to the caller's service
+func newICloudClient(ctx context.Context, name string, m configmap.Mapper, pcsWSKey string) (*api.Client, *Options, error) {
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
 	if err != nil {
@@ -442,6 +443,7 @@ func newICloudClient(ctx context.Context, name string, m configmap.Mapper) (*api
 		cookies,
 		callback,
 		name,
+		pcsWSKey,
 	)
 	if err != nil {
 		return nil, nil, err

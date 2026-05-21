@@ -59,7 +59,7 @@ type PhotosObject struct {
 
 // NewFsPhotos constructs an Fs for Photos from the path, container:path
 func NewFsPhotos(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
-	icloud, opt, err := newICloudClient(ctx, name, m)
+	icloud, opt, err := newICloudClient(ctx, name, m, api.WsPhotos)
 	if err != nil {
 		return nil, err
 	}

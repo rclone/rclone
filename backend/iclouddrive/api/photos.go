@@ -511,7 +511,7 @@ func (album *Album) SetTestPhotoCache(cache map[string]*Photo) {
 
 // NewPhotosService creates a new PhotosService instance
 func NewPhotosService(ctx context.Context, client *Client, pacer *fs.Pacer, shouldRetry ShouldRetryFunc) (*PhotosService, error) {
-	service, exists := client.Session.AccountInfo.Webservices["ckdatabasews"]
+	service, exists := client.Session.AccountInfo.Webservices[WsPhotos]
 	if !exists || service.Status != "active" {
 		return nil, fmt.Errorf("ckdatabasews service not available")
 	}
@@ -2311,7 +2311,7 @@ func (ps *PhotosService) requestWithReauth(ctx context.Context, makeOpts func() 
 	reauthDone := false
 	return ps.pacer.Call(func() (bool, error) {
 		resp, err := ps.client.Session.Request(ctx, makeOpts(), data, response)
-		if !reauthDone && err != nil && resp != nil && (resp.StatusCode == 401 || resp.StatusCode == 421) {
+		if !reauthDone && err != nil && resp != nil && (resp.StatusCode == 401 || resp.StatusCode == 421 || resp.StatusCode == 423) {
 			reauthDone = true
 			if authErr := ps.client.Authenticate(ctx); authErr != nil {
 				return false, authErr
