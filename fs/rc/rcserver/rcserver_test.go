@@ -814,10 +814,17 @@ func TestRCAsync(t *testing.T) {
 		ContentType:    "application/json",
 		Body:           `{}`,
 		RequestHeaders: map[string]string{"Prefer": "respond-async"},
-		Status:         http.StatusOK,
-		Expected: `{
-}
-`,
+		Status:         http.StatusAccepted,
+		Contains:       regexp.MustCompile(`(?s)\{.*\"jobid\":.*\}`),
+	}, {
+		Name:           "prefer-respond-async-mixed",
+		URL:            "rc/noop",
+		Method:         "POST",
+		ContentType:    "application/json",
+		Body:           `{}`,
+		RequestHeaders: map[string]string{"Prefer": "wait=10, respond-async"},
+		Status:         http.StatusAccepted,
+		Contains:       regexp.MustCompile(`(?s)\{.*\"jobid\":.*\}`),
 	}, {
 		Name:        "bad",
 		URL:         "rc/noop",

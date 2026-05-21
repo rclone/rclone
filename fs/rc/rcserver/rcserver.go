@@ -257,6 +257,17 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 			return
 		}
 	}
+
+	// Check for Prefer: respond-async header (RFC 7240)
+	preferAsync := false
+	for _, pref := range strings.Split(r.Header.Get("Prefer"), ",") {
+		if strings.EqualFold(strings.TrimSpace(pref), "respond-async") {
+			preferAsync = true
+			in["_async"] = true
+			break
+		}
+	}
+
 	// Find the call
 	call := rc.Calls.Get(path)
 	if call == nil {
@@ -296,8 +307,7 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 
 	fs.Debugf(nil, "rc: %q: reply %+v: %v", path, out, err)
 	w.Header().Set("Content-Type", "application/json")
-	isAsync, _ := inOrig.GetBool("_async")
-	if isAsync && strings.Contains(strings.ToLower(r.Header.Get("Prefer")), "respond-async") {
+	if preferAsync {
 		w.Header().Set("Preference-Applied", "respond-async")
 		w.WriteHeader(http.StatusAccepted)
 	}
