@@ -774,10 +774,12 @@ version recommended):
 func init() {
 	// Set the function to avoid circular import
 	fs.ConfigOAuth = ConfigOAuth
+}
 
+func init() {
 	rc.Add(rc.Call{
-		Path:  "config/stopoauth",
-		Fn:    rcStopOAuth,
+		Path:  "config/oauthstop",
+		Fn:    rcOAuthStop,
 		Title: "Stop any running OAuth authentication server.",
 		Help: `Stops the OAuth authentication server if one is running.
 
@@ -786,6 +788,20 @@ restarting rclone. If no OAuth authentication is in progress, an error
 is returned.
 `,
 	})
+}
+
+func rcOAuthStop(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	oauthCancelMu.Lock()
+	defer oauthCancelMu.Unlock()
+	if oauthCancelFn == nil {
+		return nil, errors.New("no oauth authentication is in progress")
+	}
+	oauthCancelFn()
+	oauthCancelFn = nil
+	return nil, nil
+}
+
+func init() {
 	rc.Add(rc.Call{
 		Path:  "config/oauthstatus",
 		Fn:    rcOAuthStatus,
@@ -794,6 +810,12 @@ is returned.
 
 Returns a JSON object:
 - status - "running" or "stopped"
+
+Eg
+
+    {
+        "status": "running"
+    }
 `,
 	})
 }
@@ -806,17 +828,6 @@ func rcOAuthStatus(ctx context.Context, in rc.Params) (out rc.Params, err error)
 		status = "running"
 	}
 	return rc.Params{"status": status}, nil
-}
-
-func rcStopOAuth(ctx context.Context, in rc.Params) (out rc.Params, err error) {
-	oauthCancelMu.Lock()
-	defer oauthCancelMu.Unlock()
-	if oauthCancelFn == nil {
-		return nil, errors.New("no oauth authentication is in progress")
-	}
-	oauthCancelFn()
-	oauthCancelFn = nil
-	return nil, nil
 }
 
 // Return true if can run without a webserver and just entering a code
