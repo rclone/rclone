@@ -94,6 +94,11 @@ var OptionsInfo = fs.Options{{
 	Help:    "Allow access to other users (not supported on Windows)",
 	Groups:  "Mount",
 }, {
+	Name:    "allow_idmap",
+	Default: false,
+	Help:    "Allow id-mapped mounts (Linux 6.12+, mount2 only)",
+	Groups:  "Mount",
+}, {
 	Name:    "async_read",
 	Default: true,
 	Help:    "Use asynchronous reads (not supported on Windows)",
@@ -172,6 +177,7 @@ type Options struct {
 	AllowNonEmpty      bool          `config:"allow_non_empty"`
 	AllowRoot          bool          `config:"allow_root"`
 	AllowOther         bool          `config:"allow_other"`
+	AllowIDMap         bool          `config:"allow_idmap"`
 	DefaultPermissions bool          `config:"default_permissions"`
 	WritebackCache     bool          `config:"write_back_cache"`
 	Daemon             bool          `config:"daemon"`
