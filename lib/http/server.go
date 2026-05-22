@@ -23,8 +23,6 @@ import (
 	"github.com/rclone/rclone/lib/atexit"
 	sdActivation "github.com/rclone/rclone/lib/sdactivation"
 	"github.com/spf13/pflag"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
 )
 
 // Help returns text describing the http server to add to the command
@@ -281,26 +279,29 @@ func newInstance(ctx context.Context, s *Server, listener net.Listener, tlsCfg *
 		listener = tls.NewListener(listener, tlsCfg)
 	}
 
-	var handler http.Handler = s.mux
+	httpServer := &http.Server{
+		Handler:           s.mux,
+		ReadTimeout:       time.Duration(s.cfg.ServerReadTimeout),
+		WriteTimeout:      time.Duration(s.cfg.ServerWriteTimeout),
+		MaxHeaderBytes:    s.cfg.MaxHeaderBytes,
+		ReadHeaderTimeout: 10 * time.Second, // time to send the headers
+		IdleTimeout:       60 * time.Second, // time to keep idle connections open
+		TLSConfig:         tlsCfg,
+		BaseContext:       NewBaseContext(ctx, url),
+	}
+
 	// Enable h2c (HTTP/2 cleartext) for non-TLS listeners
 	if tlsCfg == nil {
-		h2s := &http2.Server{}
-		handler = h2c.NewHandler(s.mux, h2s)
+		protocols := new(http.Protocols)
+		protocols.SetHTTP1(true)
+		protocols.SetUnencryptedHTTP2(true)
+		httpServer.Protocols = protocols
 	}
 
 	return &instance{
-		url:      url,
-		listener: listener,
-		httpServer: &http.Server{
-			Handler:           handler,
-			ReadTimeout:       time.Duration(s.cfg.ServerReadTimeout),
-			WriteTimeout:      time.Duration(s.cfg.ServerWriteTimeout),
-			MaxHeaderBytes:    s.cfg.MaxHeaderBytes,
-			ReadHeaderTimeout: 10 * time.Second, // time to send the headers
-			IdleTimeout:       60 * time.Second, // time to keep idle connections open
-			TLSConfig:         tlsCfg,
-			BaseContext:       NewBaseContext(ctx, url),
-		},
+		url:        url,
+		listener:   listener,
+		httpServer: httpServer,
 	}
 }
 
