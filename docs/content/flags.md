@@ -121,7 +121,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.74.1")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.74.2")
 ```
 
 
@@ -313,7 +313,7 @@ Flags to control the Remote Control API.
 Flags to control the Metrics HTTP endpoint..
 
 ```
-      --metrics-addr stringArray                IPaddress:Port or :Port to bind metrics server to
+      --metrics-addr stringArray                IPaddress:Port or :Port to bind server to
       --metrics-allow-origin string             Origin which cross-domain request (CORS) can be executed from
       --metrics-baseurl string                  Prefix for URLs - leave blank for root
       --metrics-cert string                     TLS PEM key (concatenation of certificate and CA certificate)

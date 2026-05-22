@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% May 08, 2026
+% May 22, 2026
 
 # NAME
 
@@ -5416,12 +5416,12 @@ rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,command=e
 
 ```console
 rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{YYYYMMDD}"
-// Output: stories/The Quick Brown Fox!-20260508
+// Output: stories/The Quick Brown Fox!-20260522
 ```
 
 ```console
 rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{macfriendlytime}"
-// Output: stories/The Quick Brown Fox!-2026-05-08 0311PM
+// Output: stories/The Quick Brown Fox!-2026-05-22 0431PM
 ```
 
 ```console
@@ -18052,7 +18052,7 @@ Windows and `/dev/null` on Unix systems, then rclone will keep the
 configuration file in memory only.
 
 You may see a log message "Config file not found - using defaults" if there is
-no configuration file. This can be supressed, e.g. if you are using rclone
+no configuration file. This can be suppressed, e.g. if you are using rclone
 entirely with [on the fly remotes](https://rclone.org/docs/#backend-path-to-dir), by using
 memory-only configuration file or by creating an empty configuration file, as
 described above.
@@ -24985,7 +24985,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.74.1")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.74.2")
 ```
 
 
@@ -25177,7 +25177,7 @@ Flags to control the Remote Control API.
 Flags to control the Metrics HTTP endpoint..
 
 ```
-      --metrics-addr stringArray                IPaddress:Port or :Port to bind metrics server to
+      --metrics-addr stringArray                IPaddress:Port or :Port to bind server to
       --metrics-allow-origin string             Origin which cross-domain request (CORS) can be executed from
       --metrics-baseurl string                  Prefix for URLs - leave blank for root
       --metrics-cert string                     TLS PEM key (concatenation of certificate and CA certificate)
@@ -27772,18 +27772,16 @@ encodings.)
 The following backends have known issues that need more investigation:
 
 <!--- start list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
-- `TestDropbox` (`dropbox`)
-  - [`TestBisyncRemoteRemote/normalization`](https://pub.rclone.org/integration-tests/current/dropbox-cmd.bisync-TestDropbox-1.txt)
+- `TestGoFile` (`gofile`)
+  - [`TestBisyncRemoteLocal/rclone_args`](https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt)
 - `TestHuaweiDrive` (`huaweidrive`)
   - [`TestBisyncRemoteLocal/ext_paths`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
   - [`TestBisyncRemoteLocal/extended_filenames`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
-  - [`TestBisyncRemoteLocal/normalization`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
   - [`TestBisyncLocalRemote/ext_paths`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
   - [`TestBisyncLocalRemote/extended_filenames`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
-  - [4 more](https://pub.rclone.org/integration-tests/current/)
-- `TestS3R2` (`s3`)
-  - [`TestBisyncRemoteRemote/normalization`](https://pub.rclone.org/integration-tests/current/s3-cmd.bisync-TestS3R2-1.txt)
-- Updated: 2026-05-08-010013
+  - [`TestBisyncRemoteRemote/ext_paths`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
+  - [2 more](https://pub.rclone.org/integration-tests/current/)
+- Updated: 2026-05-22-010013
 <!--- end list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
 
 The following backends either have not been tested recently or have known issues
@@ -28626,6 +28624,11 @@ Also note a number of academic publications by
 about *Unison* and synchronization in general.
 
 ## Changelog
+
+### `v1.74.2`
+
+- Fixed an issue causing `--conflict-loser pathname` to produce unexpected
+behavior if using a non-default `--conflict-resolve` value.
 
 ### `v1.74`
 
@@ -31512,17 +31515,38 @@ Properties:
   - "br-ne1.magaluobjects.com"
     - Fortaleza, CE (BR), br-ne1
     - Provider: Magalu
+  - "s3.eu-amsterdam.megas4.com"
+    - Mega S4 Amsterdam
+    - Provider: Mega
+  - "s3.eu-luxembourg.megas4.com"
+    - Mega S4 Luxembourg
+    - Provider: Mega
+  - "s3.eu-paris.megas4.com"
+    - Mega S4 Paris
+    - Provider: Mega
+  - "s3.eu-barcelona.megas4.com"
+    - Mega S4 Barcelona
+    - Provider: Mega
+  - "s3.ca-montreal.megas4.com"
+    - Mega S4 Montreal
+    - Provider: Mega
+  - "s3.ca-vancouver.megas4.com"
+    - Mega S4 Vancouver
+    - Provider: Mega
+  - "s3.ap-tokyo.megas4.com"
+    - Mega S4 Tokyo
+    - Provider: Mega
   - "s3.eu-central-1.s4.mega.io"
-    - Mega S4 eu-central-1 (Amsterdam)
+    - Mega S4 eu-central-1 (Amsterdam, legacy)
     - Provider: Mega
   - "s3.eu-central-2.s4.mega.io"
-    - Mega S4 eu-central-2 (Bettembourg)
+    - Mega S4 eu-central-2 (Bettembourg, legacy)
     - Provider: Mega
   - "s3.ca-central-1.s4.mega.io"
-    - Mega S4 ca-central-1 (Montreal)
+    - Mega S4 ca-central-1 (Montreal, legacy)
     - Provider: Mega
   - "s3.ca-west-1.s4.mega.io"
-    - Mega S4 ca-west-1 (Vancouver)
+    - Mega S4 ca-west-1 (Vancouver, legacy)
     - Provider: Mega
   - "oos.eu-west-2.outscale.com"
     - Outscale EU West 2 (Paris)
@@ -32878,7 +32902,7 @@ If true use path style access if false use virtual hosted style.
 
 If this is true (the default) then rclone will use path style access,
 if false then rclone will use virtual path style. See [the AWS S3
-docs](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html#access-bucket-intro)
+docs](https://docs.aws.amazon.com/AmazonS3/latest/userguide/VirtualHosting.html)
 for more info.
 
 Some providers (e.g. AWS, Aliyun OSS, Netease COS, or Tencent COS) require this set to
@@ -40231,7 +40255,7 @@ start and finish the upload) and another 2 requests for each chunk:
 /b2api/v1/b2_finish_large_file
 ```
 
-#### Versions
+### Viewing versions with --b2-versions
 
 Versions can be viewed with the `--b2-versions` flag. When it is set
 rclone will show and act on older versions of files.  For example
@@ -48780,7 +48804,7 @@ Drive, the size of all files in the Trash and the space used by other
 Google services such as Gmail. This command does not take any path
 arguments.
 
-#### Import/Export of google documents
+### Import/Export of google documents
 
 Google documents can be exported from and uploaded to Google Drive.
 
@@ -54109,6 +54133,8 @@ as described [below](#traditional):
 - MediaMarkt
   - MediaMarkt Cloud (mediamarkt.jottacloud.com)
   - Let's Go Cloud (letsgo.jotta.cloud)
+- Phonero
+  - Phonero Sky (sky.phonero.no)
 
 Paths are specified as `remote:path`
 
@@ -70272,6 +70298,57 @@ Options:
 
 # Changelog
 
+## v1.74.2 - 2026-05-22
+
+[See commits](https://github.com/rclone/rclone/compare/v1.74.1...v1.74.2)
+
+- Bug Fixes
+  - build
+    - Update golang.org/x/net to v0.55.0 to address:
+      - CVE-2026-42506: html: incorrect handling of namespaced elements in foreign content
+      - CVE-2026-39821: idna: failure to reject ASCII-only Punycode-encoded labels
+      - CVE-2026-42502: html: incorrect handling of HTML elements in foreign content
+      - CVE-2026-25680: html: denial of service when parsing arbitrary HTML
+      - CVE-2026-25681: html: incorrect handling of character references in DOCTYPE nodes
+      - CVE-2026-27136: html: duplicate attributes can cause XSS
+    - Update golang.org/x/crypto to v0.52.0 to address:
+      - CVE-2026-46598: ssh/agent: pathological inputs can lead to client panic
+      - CVE-2026-46597: ssh: byte arithmetic causes underflow and panic
+      - CVE-2026-39828: ssh: bypass of certificate restrictions
+      - CVE-2026-39835: ssh: server panic during CheckHostKey/Authenticate
+      - CVE-2026-39833: ssh/agent: key constraints not enforced
+      - CVE-2026-39832: ssh/agent: agent constraints dropped when forwarding keys
+      - CVE-2026-39827: ssh: memory leak when rejecting channels can lead to DoS
+      - CVE-2026-39830: ssh: client can cause server deadlock on unexpected responses
+      - CVE-2026-39829: ssh: pathological RSA/DSA parameters may cause DoS
+      - CVE-2026-39831: ssh: bypass of FIDO/U2F security keys physical interaction
+      - CVE-2026-39834: ssh: infinite loop on large channel writes
+      - CVE-2026-42508: ssh/knownhosts: auth bypass via unenforced @revoked status
+      - CVE-2026-46595: ssh: VerifiedPublicKeyCallback permissions skip enforcement
+    - Update golang.org/x/image to v0.41.0 to address:
+      - CVE-2026-42500: bmp: panic when reading out of bound palette index
+      - CVE-2026-33809: tiff: excessive resource consumption in PackBits decompression
+    - Update golang.org/x/sys to version v0.45.0 to address:
+      - CVE-2026-39824: windows: integer overflow in NewNTUnicodeString
+    - Update github.com/go-git/go-billy/v5 to 5.9.0 to fix CVE-2026-44740
+    - bisync: Fix --conflict-loser pathname with --conflict-resolve newer (nielash)
+    - gui: Update embedded release to 1.1.8 (Nick Craig-Wood)
+    - lib/http: Replace deprecated h2c.NewHandler with http.Server.Protocols (Nick Craig-Wood)
+    - rc: Remove duplicate metrics_addr option registration (Nick Craig-Wood)
+    - vfs/vfscache: Fix silent write failure when mounting with remote:. (Lucky945H)
+  - doc fixes (FTCHD, Iizuki, Leon Brocard, Nick Craig-Wood)
+- Drime
+  - Fix file doesn't exists error when trying to delete (John Volk)
+  - Fix 500 errors when listing shared folders (Alvinwylim)
+- Jottacloud
+  - Support whitelabel service Phonero Sky (Tore Anderson)
+- Protondrive
+  - Fix corrupted on transfer: sha1 hashes differ (William Tange)
+- S3
+  - Add new MEGA S4 endpoints on megas4.com including Asia-Pacific region (Nick Craig-Wood)
+- WebDAV
+  - Honour auth_redirect on listAll PROPFIND (Sai Asish Y)
+
 ## v1.74.1 - 2026-05-08
 
 [See commits](https://github.com/rclone/rclone/compare/v1.74.0...v1.74.1)
@@ -70806,7 +70883,7 @@ Options:
   - [OVHcloud Object Storage](https://rclone.org/s3/#ovhcloud) (Florent Vennetier)
   - [Zata](https://rclone.org/s3/#Zata) ($@M@RTH_)
 - New Features
-  - Allow [global config to be overriden or set on backend creation](https://rclone.org/docs/#globalconfig) (Nick Craig-Wood)
+  - Allow [global config to be overridden or set on backend creation](https://rclone.org/docs/#globalconfig) (Nick Craig-Wood)
   - bisync: Promoted from beta to stable (nielash)
   - build
     - Update to go1.25 and make go1.24 the minimum required version (Nick Craig-Wood)
@@ -70873,7 +70950,7 @@ Options:
     - This allows `--ca-cert`, `--client-cert` etc to be used.
     - This also allows `override.ca_cert = XXX` to be used in the config file.
 - Googlephotos
-  - Added warning for Google Photos compatability-fixes (raider13209)
+  - Added warning for Google Photos compatibility-fixes (raider13209)
 - Imagekit
   - Return correct error when attempting to upload zero length files (Nick Craig-Wood)
   - Don't low level retry uploads (Nick Craig-Wood)
@@ -72230,7 +72307,7 @@ instead of of `--size-only`, when `check` is not available.
   - Add `--drive-env-auth` to get IAM credentials from runtime (Peter Brunner)
   - Update drive service account guide (Juang, Yi-Lin)
   - Fix change notify picking up files outside the root (Nick Craig-Wood)
-  - Fix trailing slash mis-identificaton of folder as file (Nick Craig-Wood)
+  - Fix trailing slash mis-identification of folder as file (Nick Craig-Wood)
   - Fix incorrect remote after Update on object (Nick Craig-Wood)
 - Dropbox
   - Implement `--dropbox-pacer-min-sleep` flag (Nick Craig-Wood)

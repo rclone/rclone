@@ -624,7 +624,7 @@ rclone [flags]
       --metadata-include-from stringArray                   Read metadata include patterns from file (use - to read from stdin)
       --metadata-mapper SpaceSepList                        Program to run to transforming metadata before upload
       --metadata-set stringArray                            Add metadata key=value when uploading
-      --metrics-addr stringArray                            IPaddress:Port or :Port to bind metrics server to
+      --metrics-addr stringArray                            IPaddress:Port or :Port to bind server to
       --metrics-allow-origin string                         Origin which cross-domain request (CORS) can be executed from
       --metrics-baseurl string                              Prefix for URLs - leave blank for root
       --metrics-cert string                                 TLS PEM key (concatenation of certificate and CA certificate)
@@ -1094,7 +1094,7 @@ rclone [flags]
       --use-json-log                                        Use json log format
       --use-mmap                                            Use mmap allocator (see docs)
       --use-server-modtime                                  Use server modified time instead of object metadata
-      --user-agent string                                   Set the user-agent to a specified string (default "rclone/v1.74.1")
+      --user-agent string                                   Set the user-agent to a specified string (default "rclone/v1.74.2")
   -v, --verbose count                                       Print lots more stuff (repeat for more)
   -V, --version                                             Print the version number
       --webdav-auth-redirect                                Preserve authentication on redirect

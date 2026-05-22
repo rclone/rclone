@@ -5,7 +5,7 @@
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <meta name="author" content="Nick Craig-Wood" />
-  <meta name="dcterms.date" content="2026-05-08" />
+  <meta name="dcterms.date" content="2026-05-22" />
   <title>rclone(1) User Manual</title>
   <style>
     html {
@@ -234,7 +234,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">May 08, 2026</p>
+<p class="date">May 22, 2026</p>
 </header>
 <h1 id="name">NAME</h1>
 <p>rclone - manage files on cloud storage</p>
@@ -4576,9 +4576,9 @@ SquareBracket</code></pre>
 <pre class="console"><code>rclone convmv &quot;stories/The Quick Brown Fox!.txt&quot; --name-transform &quot;all,command=echo&quot;
 // Output: stories/The Quick Brown Fox!.txt</code></pre>
 <pre class="console"><code>rclone convmv &quot;stories/The Quick Brown Fox!&quot; --name-transform &quot;date=-{YYYYMMDD}&quot;
-// Output: stories/The Quick Brown Fox!-20260508</code></pre>
+// Output: stories/The Quick Brown Fox!-20260522</code></pre>
 <pre class="console"><code>rclone convmv &quot;stories/The Quick Brown Fox!&quot; --name-transform &quot;date=-{macfriendlytime}&quot;
-// Output: stories/The Quick Brown Fox!-2026-05-08 0311PM</code></pre>
+// Output: stories/The Quick Brown Fox!-2026-05-22 0431PM</code></pre>
 <pre class="console"><code>rclone convmv &quot;stories/The Quick Brown Fox!.txt&quot; --name-transform &quot;all,regex=[\\.\\w]/ab&quot;
 // Output: ababababababab/ababab ababababab ababababab ababab!abababab</code></pre>
 <p>The regex command generally accepts Perl-style regular expressions,
@@ -15125,7 +15125,7 @@ by value <code>NUL</code> on Windows and <code>/dev/null</code> on Unix
 systems, then rclone will keep the configuration file in memory
 only.</p>
 <p>You may see a log message "Config file not found - using defaults" if
-there is no configuration file. This can be supressed, e.g. if you are
+there is no configuration file. This can be suppressed, e.g. if you are
 using rclone entirely with <a
 href="https://rclone.org/docs/#backend-path-to-dir">on the fly
 remotes</a>, by using memory-only configuration file or by creating an
@@ -21695,7 +21695,7 @@ split into groups.</p>
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.74.1&quot;)</code></pre>
+      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.74.2&quot;)</code></pre>
 <h2 id="performance">Performance</h2>
 <p>Flags helpful for increasing performance.</p>
 <pre><code>      --buffer-size SizeSuffix   In memory buffer size when reading files for each --transfer (default 16Mi)
@@ -21833,7 +21833,7 @@ split into groups.</p>
       --rc-web-gui-update                  Check and update to latest version of web gui</code></pre>
 <h2 id="metrics-1">Metrics</h2>
 <p>Flags to control the Metrics HTTP endpoint..</p>
-<pre><code>      --metrics-addr stringArray                IPaddress:Port or :Port to bind metrics server to
+<pre><code>      --metrics-addr stringArray                IPaddress:Port or :Port to bind server to
       --metrics-allow-origin string             Origin which cross-domain request (CORS) can be executed from
       --metrics-baseurl string                  Prefix for URLs - leave blank for root
       --metrics-cert string                     TLS PEM key (concatenation of certificate and CA certificate)
@@ -24434,10 +24434,10 @@ disallowed special characters and filename encodings.)</p>
 investigation:</p>
 <!--- start list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
 <ul>
-<li><code>TestDropbox</code> (<code>dropbox</code>)
+<li><code>TestGoFile</code> (<code>gofile</code>)
 <ul>
 <li><a
-href="https://pub.rclone.org/integration-tests/current/dropbox-cmd.bisync-TestDropbox-1.txt"><code>TestBisyncRemoteRemote/normalization</code></a></li>
+href="https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt"><code>TestBisyncRemoteLocal/rclone_args</code></a></li>
 </ul></li>
 <li><code>TestHuaweiDrive</code> (<code>huaweidrive</code>)
 <ul>
@@ -24446,20 +24446,15 @@ href="https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-Te
 <li><a
 href="https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt"><code>TestBisyncRemoteLocal/extended_filenames</code></a></li>
 <li><a
-href="https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt"><code>TestBisyncRemoteLocal/normalization</code></a></li>
-<li><a
 href="https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt"><code>TestBisyncLocalRemote/ext_paths</code></a></li>
 <li><a
 href="https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt"><code>TestBisyncLocalRemote/extended_filenames</code></a></li>
-<li><a href="https://pub.rclone.org/integration-tests/current/">4
+<li><a
+href="https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt"><code>TestBisyncRemoteRemote/ext_paths</code></a></li>
+<li><a href="https://pub.rclone.org/integration-tests/current/">2
 more</a></li>
 </ul></li>
-<li><code>TestS3R2</code> (<code>s3</code>)
-<ul>
-<li><a
-href="https://pub.rclone.org/integration-tests/current/s3-cmd.bisync-TestS3R2-1.txt"><code>TestBisyncRemoteRemote/normalization</code></a></li>
-</ul></li>
-<li>Updated: 2026-05-08-010013
+<li>Updated: 2026-05-22-010013
 <!--- end list_failures - DO NOT EDIT THIS SECTION - use make commanddocs ---></li>
 </ul>
 <p>The following backends either have not been tested recently or have
@@ -25363,6 +25358,12 @@ article</a>.</p>
 href="http://www.cis.upenn.edu/%7Ebcpierce/papers/index.shtml#File%20Synchronization">Benjamin
 Pierce</a> about <em>Unison</em> and synchronization in general.</p>
 <h2 id="changelog">Changelog</h2>
+<h3 id="v1.74.2"><code>v1.74.2</code></h3>
+<ul>
+<li>Fixed an issue causing <code>--conflict-loser pathname</code> to
+produce unexpected behavior if using a non-default
+<code>--conflict-resolve</code> value.</li>
+</ul>
 <h3 id="v1.74"><code>v1.74</code></h3>
 <ul>
 <li>Added several missing <code>rc</code> parameters.</li>
@@ -29010,24 +29011,59 @@ tenant name. Do not select this directly</li>
 <li>Fortaleza, CE (BR), br-ne1</li>
 <li>Provider: Magalu</li>
 </ul></li>
+<li>"s3.eu-amsterdam.megas4.com"
+<ul>
+<li>Mega S4 Amsterdam</li>
+<li>Provider: Mega</li>
+</ul></li>
+<li>"s3.eu-luxembourg.megas4.com"
+<ul>
+<li>Mega S4 Luxembourg</li>
+<li>Provider: Mega</li>
+</ul></li>
+<li>"s3.eu-paris.megas4.com"
+<ul>
+<li>Mega S4 Paris</li>
+<li>Provider: Mega</li>
+</ul></li>
+<li>"s3.eu-barcelona.megas4.com"
+<ul>
+<li>Mega S4 Barcelona</li>
+<li>Provider: Mega</li>
+</ul></li>
+<li>"s3.ca-montreal.megas4.com"
+<ul>
+<li>Mega S4 Montreal</li>
+<li>Provider: Mega</li>
+</ul></li>
+<li>"s3.ca-vancouver.megas4.com"
+<ul>
+<li>Mega S4 Vancouver</li>
+<li>Provider: Mega</li>
+</ul></li>
+<li>"s3.ap-tokyo.megas4.com"
+<ul>
+<li>Mega S4 Tokyo</li>
+<li>Provider: Mega</li>
+</ul></li>
 <li>"s3.eu-central-1.s4.mega.io"
 <ul>
-<li>Mega S4 eu-central-1 (Amsterdam)</li>
+<li>Mega S4 eu-central-1 (Amsterdam, legacy)</li>
 <li>Provider: Mega</li>
 </ul></li>
 <li>"s3.eu-central-2.s4.mega.io"
 <ul>
-<li>Mega S4 eu-central-2 (Bettembourg)</li>
+<li>Mega S4 eu-central-2 (Bettembourg, legacy)</li>
 <li>Provider: Mega</li>
 </ul></li>
 <li>"s3.ca-central-1.s4.mega.io"
 <ul>
-<li>Mega S4 ca-central-1 (Montreal)</li>
+<li>Mega S4 ca-central-1 (Montreal, legacy)</li>
 <li>Provider: Mega</li>
 </ul></li>
 <li>"s3.ca-west-1.s4.mega.io"
 <ul>
-<li>Mega S4 ca-west-1 (Vancouver)</li>
+<li>Mega S4 ca-west-1 (Vancouver, legacy)</li>
 <li>Provider: Mega</li>
 </ul></li>
 <li>"oos.eu-west-2.outscale.com"
@@ -30941,7 +30977,7 @@ increasing this may help to speed up the transfers.</p>
 <p>If true use path style access if false use virtual hosted style.</p>
 <p>If this is true (the default) then rclone will use path style access,
 if false then rclone will use virtual path style. See <a
-href="https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html#access-bucket-intro">the
+href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/VirtualHosting.html">the
 AWS S3 docs</a> for more info.</p>
 <p>Some providers (e.g. AWS, Aliyun OSS, Netease COS, or Tencent COS)
 require this set to false - rclone will do this automatically based on
@@ -37464,7 +37500,8 @@ start and finish the upload) and another 2 requests for each chunk:</p>
 /b2api/v1/b2_get_upload_part_url
 /b2api/v1/b2_upload_part/
 /b2api/v1/b2_finish_large_file</code></pre>
-<h4 id="versions-2">Versions</h4>
+<h3 id="viewing-versions-with---b2-versions">Viewing versions with
+--b2-versions</h3>
 <p>Versions can be viewed with the <code>--b2-versions</code> flag. When
 it is set rclone will show and act on older versions of files. For
 example</p>
@@ -45044,8 +45081,8 @@ echoed, so there will be no confirmation even using -v or -vv.</p>
 limit (quota), the usage in Google Drive, the size of all files in the
 Trash and the space used by other Google services such as Gmail. This
 command does not take any path arguments.</p>
-<h4 id="importexport-of-google-documents">Import/Export of google
-documents</h4>
+<h3 id="importexport-of-google-documents">Import/Export of google
+documents</h3>
 <p>Google documents can be exported from and uploaded to Google
 Drive.</p>
 <p>When rclone downloads a Google doc it chooses a format to download
@@ -50201,6 +50238,10 @@ setup as described <a href="#traditional">below</a>:</p>
 <li>MediaMarkt Cloud (mediamarkt.jottacloud.com)</li>
 <li>Let's Go Cloud (letsgo.jotta.cloud)</li>
 </ul></li>
+<li>Phonero
+<ul>
+<li>Phonero Sky (sky.phonero.no)</li>
+</ul></li>
 </ul>
 <p>Paths are specified as <code>remote:path</code></p>
 <p>Paths may be as deep as required, e.g.
@@ -50560,7 +50601,7 @@ or set the equivalent environment variable. Emptying the trash is
 supported by the <a
 href="https://rclone.org/commands/rclone_cleanup/">cleanup</a>
 command.</p>
-<h3 id="versions-3">Versions</h3>
+<h3 id="versions-2">Versions</h3>
 <p>Jottacloud supports file versioning. When rclone uploads a new
 version of a file it creates a new version of it. Currently rclone only
 supports retrieving the current version but older versions can be
@@ -55450,7 +55491,7 @@ info.</p>
 <p>An official document about the limitations for different types of
 OneDrive can be found <a
 href="https://support.office.com/en-us/article/invalid-file-names-and-file-types-in-onedrive-onedrive-for-business-and-sharepoint-64883a5d-228e-48f5-b3d2-eb39e07630fa">here</a>.</p>
-<h2 id="versions-4">Versions</h2>
+<h2 id="versions-3">Versions</h2>
 <p>Every change in a file OneDrive causes the service to create a new
 version of the file. This counts against a users quota. For example
 changing the modification time of a file creates a second version, so
@@ -65058,6 +65099,102 @@ the output.</p>
 <!-- autogenerated options stop -->
 <!-- markdownlint-disable line-length -->
 <h1 id="changelog-1">Changelog</h1>
+<h2 id="v1.74.2---2026-05-22">v1.74.2 - 2026-05-22</h2>
+<p><a
+href="https://github.com/rclone/rclone/compare/v1.74.1...v1.74.2">See
+commits</a></p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>build
+<ul>
+<li>Update golang.org/x/net to v0.55.0 to address:
+<ul>
+<li>CVE-2026-42506: html: incorrect handling of namespaced elements in
+foreign content</li>
+<li>CVE-2026-39821: idna: failure to reject ASCII-only Punycode-encoded
+labels</li>
+<li>CVE-2026-42502: html: incorrect handling of HTML elements in foreign
+content</li>
+<li>CVE-2026-25680: html: denial of service when parsing arbitrary
+HTML</li>
+<li>CVE-2026-25681: html: incorrect handling of character references in
+DOCTYPE nodes</li>
+<li>CVE-2026-27136: html: duplicate attributes can cause XSS</li>
+</ul></li>
+<li>Update golang.org/x/crypto to v0.52.0 to address:
+<ul>
+<li>CVE-2026-46598: ssh/agent: pathological inputs can lead to client
+panic</li>
+<li>CVE-2026-46597: ssh: byte arithmetic causes underflow and panic</li>
+<li>CVE-2026-39828: ssh: bypass of certificate restrictions</li>
+<li>CVE-2026-39835: ssh: server panic during
+CheckHostKey/Authenticate</li>
+<li>CVE-2026-39833: ssh/agent: key constraints not enforced</li>
+<li>CVE-2026-39832: ssh/agent: agent constraints dropped when forwarding
+keys</li>
+<li>CVE-2026-39827: ssh: memory leak when rejecting channels can lead to
+DoS</li>
+<li>CVE-2026-39830: ssh: client can cause server deadlock on unexpected
+responses</li>
+<li>CVE-2026-39829: ssh: pathological RSA/DSA parameters may cause
+DoS</li>
+<li>CVE-2026-39831: ssh: bypass of FIDO/U2F security keys physical
+interaction</li>
+<li>CVE-2026-39834: ssh: infinite loop on large channel writes</li>
+<li>CVE-2026-42508: ssh/knownhosts: auth bypass via unenforced <span
+class="citation" data-cites="revoked">@revoked</span> status</li>
+<li>CVE-2026-46595: ssh: VerifiedPublicKeyCallback permissions skip
+enforcement</li>
+</ul></li>
+<li>Update golang.org/x/image to v0.41.0 to address:
+<ul>
+<li>CVE-2026-42500: bmp: panic when reading out of bound palette
+index</li>
+<li>CVE-2026-33809: tiff: excessive resource consumption in PackBits
+decompression</li>
+</ul></li>
+<li>Update golang.org/x/sys to version v0.45.0 to address:
+<ul>
+<li>CVE-2026-39824: windows: integer overflow in NewNTUnicodeString</li>
+</ul></li>
+<li>Update github.com/go-git/go-billy/v5 to 5.9.0 to fix
+CVE-2026-44740</li>
+<li>bisync: Fix --conflict-loser pathname with --conflict-resolve newer
+(nielash)</li>
+<li>gui: Update embedded release to 1.1.8 (Nick Craig-Wood)</li>
+<li>lib/http: Replace deprecated h2c.NewHandler with
+http.Server.Protocols (Nick Craig-Wood)</li>
+<li>rc: Remove duplicate metrics_addr option registration (Nick
+Craig-Wood)</li>
+<li>vfs/vfscache: Fix silent write failure when mounting with remote:.
+(Lucky945H)</li>
+</ul></li>
+<li>doc fixes (FTCHD, Iizuki, Leon Brocard, Nick Craig-Wood)</li>
+</ul></li>
+<li>Drime
+<ul>
+<li>Fix file doesn't exists error when trying to delete (John Volk)</li>
+<li>Fix 500 errors when listing shared folders (Alvinwylim)</li>
+</ul></li>
+<li>Jottacloud
+<ul>
+<li>Support whitelabel service Phonero Sky (Tore Anderson)</li>
+</ul></li>
+<li>Protondrive
+<ul>
+<li>Fix corrupted on transfer: sha1 hashes differ (William Tange)</li>
+</ul></li>
+<li>S3
+<ul>
+<li>Add new MEGA S4 endpoints on megas4.com including Asia-Pacific
+region (Nick Craig-Wood)</li>
+</ul></li>
+<li>WebDAV
+<ul>
+<li>Honour auth_redirect on listAll PROPFIND (Sai Asish Y)</li>
+</ul></li>
+</ul>
 <h2 id="v1.74.1---2026-05-08">v1.74.1 - 2026-05-08</h2>
 <p><a
 href="https://github.com/rclone/rclone/compare/v1.74.0...v1.74.1">See
@@ -66081,7 +66218,7 @@ data-cites="RTH_">@RTH_</span>)</li>
 <li>New Features
 <ul>
 <li>Allow <a href="https://rclone.org/docs/#globalconfig">global config
-to be overriden or set on backend creation</a> (Nick Craig-Wood)</li>
+to be overridden or set on backend creation</a> (Nick Craig-Wood)</li>
 <li>bisync: Promoted from beta to stable (nielash)</li>
 <li>build
 <ul>
@@ -66216,7 +66353,7 @@ the config file.</li>
 </ul></li>
 <li>Googlephotos
 <ul>
-<li>Added warning for Google Photos compatability-fixes
+<li>Added warning for Google Photos compatibility-fixes
 (raider13209)</li>
 </ul></li>
 <li>Imagekit
@@ -68975,7 +69112,7 @@ runtime (Peter Brunner)</li>
 <li>Update drive service account guide (Juang, Yi-Lin)</li>
 <li>Fix change notify picking up files outside the root (Nick
 Craig-Wood)</li>
-<li>Fix trailing slash mis-identificaton of folder as file (Nick
+<li>Fix trailing slash mis-identification of folder as file (Nick
 Craig-Wood)</li>
 <li>Fix incorrect remote after Update on object (Nick Craig-Wood)</li>
 </ul></li>
