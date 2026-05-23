@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -1417,11 +1418,8 @@ func (lib *Library) applyPendingDelta(ctx context.Context) bool {
 		// Route new photos to smart albums based on classifySmartAlbums()
 		if isSmart {
 			for _, p := range addedPhotos {
-				for _, sa := range p.SmartAlbums {
-					if sa == album.Name {
-						filtered = append(filtered, p)
-						break
-					}
+				if slices.Contains(p.SmartAlbums, album.Name) {
+					filtered = append(filtered, p)
 				}
 			}
 		}
