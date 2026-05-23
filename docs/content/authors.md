@@ -1132,3 +1132,10 @@ put them back in again. -->
 - Tim Schumacher <tim@tschumacher.net>
 - ferrumclaudepilgrim <ferrumclaudepilgrim@users.noreply.github.com>
 - Alvinwylim <31592545+Alvinwylim@users.noreply.github.com>
+- Tore Anderson <tore@fud.no>
+- Sai Asish Y <say.apm35@gmail.com>
+- Lucky945H <1355363613@qq.com>
+- William Tange <github@tan.ge>
+- TaterLi <admin@lijingquan.net>
+- KyokoMiki <161209740+kyokomiki@users.noreply.github.com>
+- Iizuki <36295229+Iizuki@users.noreply.github.com>
