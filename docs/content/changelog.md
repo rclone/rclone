@@ -6,6 +6,57 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.74.2 - 2026-05-22
+
+[See commits](https://github.com/rclone/rclone/compare/v1.74.1...v1.74.2)
+
+- Bug Fixes
+  - build
+    - Update golang.org/x/net to v0.55.0 to address:
+      - CVE-2026-42506: html: incorrect handling of namespaced elements in foreign content
+      - CVE-2026-39821: idna: failure to reject ASCII-only Punycode-encoded labels
+      - CVE-2026-42502: html: incorrect handling of HTML elements in foreign content
+      - CVE-2026-25680: html: denial of service when parsing arbitrary HTML
+      - CVE-2026-25681: html: incorrect handling of character references in DOCTYPE nodes
+      - CVE-2026-27136: html: duplicate attributes can cause XSS
+    - Update golang.org/x/crypto to v0.52.0 to address:
+      - CVE-2026-46598: ssh/agent: pathological inputs can lead to client panic
+      - CVE-2026-46597: ssh: byte arithmetic causes underflow and panic
+      - CVE-2026-39828: ssh: bypass of certificate restrictions
+      - CVE-2026-39835: ssh: server panic during CheckHostKey/Authenticate
+      - CVE-2026-39833: ssh/agent: key constraints not enforced
+      - CVE-2026-39832: ssh/agent: agent constraints dropped when forwarding keys
+      - CVE-2026-39827: ssh: memory leak when rejecting channels can lead to DoS
+      - CVE-2026-39830: ssh: client can cause server deadlock on unexpected responses
+      - CVE-2026-39829: ssh: pathological RSA/DSA parameters may cause DoS
+      - CVE-2026-39831: ssh: bypass of FIDO/U2F security keys physical interaction
+      - CVE-2026-39834: ssh: infinite loop on large channel writes
+      - CVE-2026-42508: ssh/knownhosts: auth bypass via unenforced @revoked status
+      - CVE-2026-46595: ssh: VerifiedPublicKeyCallback permissions skip enforcement
+    - Update golang.org/x/image to v0.41.0 to address:
+      - CVE-2026-42500: bmp: panic when reading out of bound palette index
+      - CVE-2026-33809: tiff: excessive resource consumption in PackBits decompression
+    - Update golang.org/x/sys to version v0.45.0 to address:
+      - CVE-2026-39824: windows: integer overflow in NewNTUnicodeString
+    - Update github.com/go-git/go-billy/v5 to 5.9.0 to fix CVE-2026-44740
+    - bisync: Fix --conflict-loser pathname with --conflict-resolve newer (nielash)
+    - gui: Update embedded release to 1.1.8 (Nick Craig-Wood)
+    - lib/http: Replace deprecated h2c.NewHandler with http.Server.Protocols (Nick Craig-Wood)
+    - rc: Remove duplicate metrics_addr option registration (Nick Craig-Wood)
+    - vfs/vfscache: Fix silent write failure when mounting with remote:. (Lucky945H)
+  - doc fixes (FTCHD, Iizuki, Leon Brocard, Nick Craig-Wood)
+- Drime
+  - Fix file doesn't exists error when trying to delete (John Volk)
+  - Fix 500 errors when listing shared folders (Alvinwylim)
+- Jottacloud
+  - Support whitelabel service Phonero Sky (Tore Anderson)
+- Protondrive
+  - Fix corrupted on transfer: sha1 hashes differ (William Tange)
+- S3
+  - Add new MEGA S4 endpoints on megas4.com including Asia-Pacific region (Nick Craig-Wood)
+- WebDAV
+  - Honour auth_redirect on listAll PROPFIND (Sai Asish Y)
+
 ## v1.74.1 - 2026-05-08
 
 [See commits](https://github.com/rclone/rclone/compare/v1.74.0...v1.74.1)
