@@ -12,6 +12,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/pkg/sftp"
 	_ "github.com/rclone/rclone/backend/local"
@@ -181,6 +182,24 @@ func TestStatVFS(t *testing.T) {
 	assert.Greater(t, st.TotalSpace(), uint64(0), "expected non-zero total space")
 	assert.LessOrEqual(t, st.FreeSpace(), st.TotalSpace(), "free space should not exceed total")
 	assert.Equal(t, uint64(255), st.Namemax)
+}
+
+// Test that a SETSTAT request setting the modification time is honoured, even
+// when the time happens to be the Unix epoch
+func TestSetstatMtime(t *testing.T) {
+	vfsOpt := vfscommon.Opt
+	vfsOpt.CacheMode = vfscommon.CacheModeOff
+	client := startTestServer(t, &vfsOpt)
+
+	const fileName = "file.bin"
+	require.NoError(t, writeFile(client, fileName, "hello"))
+
+	epoch := time.Unix(0, 0)
+	require.NoError(t, client.Chtimes(fileName, epoch, epoch))
+
+	fi, err := client.Stat(fileName)
+	require.NoError(t, err)
+	assert.True(t, fi.ModTime().Equal(epoch), "mtime not applied: got %v want %v", fi.ModTime(), epoch)
 }
 
 // writeFile writes contents to fileName via the client truncating any existing
