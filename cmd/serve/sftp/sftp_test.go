@@ -33,10 +33,11 @@ const (
 
 // check interfaces
 var (
-	_ sftp.FileReader = vfsHandler{}
-	_ sftp.FileWriter = vfsHandler{}
-	_ sftp.FileCmder  = vfsHandler{}
-	_ sftp.FileLister = vfsHandler{}
+	_ sftp.FileReader       = vfsHandler{}
+	_ sftp.FileWriter       = vfsHandler{}
+	_ sftp.FileCmder        = vfsHandler{}
+	_ sftp.FileLister       = vfsHandler{}
+	_ sftp.StatVFSFileCmder = vfsHandler{}
 )
 
 // TestSftp runs the sftp server then runs the unit tests for the

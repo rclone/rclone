@@ -168,6 +168,21 @@ func TestSetstatTruncate(t *testing.T) {
 	assert.Equal(t, strings.Repeat("A", 10), string(got))
 }
 
+// Test that the statvfs@openssh.com extension returns filesystem usage from
+// the VFS rather than an unsupported status.
+func TestStatVFS(t *testing.T) {
+	vfsOpt := vfscommon.Opt
+	vfsOpt.CacheMode = vfscommon.CacheModeWrites
+	client := startTestServer(t, &vfsOpt)
+
+	st, err := client.StatVFS("/")
+	require.NoError(t, err)
+
+	assert.Greater(t, st.TotalSpace(), uint64(0), "expected non-zero total space")
+	assert.LessOrEqual(t, st.FreeSpace(), st.TotalSpace(), "free space should not exceed total")
+	assert.Equal(t, uint64(255), st.Namemax)
+}
+
 // writeFile writes contents to fileName via the client truncating any existing
 // data, the way a normal upload does.
 func writeFile(client *sftp.Client, fileName, contents string) error {
