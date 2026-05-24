@@ -116,6 +116,26 @@ func (v vfsHandler) Filecmd(r *sftp.Request) error {
 	return nil
 }
 
+// StatVFS implements the statvfs@openssh.com extension, returning filesystem
+// usage information from the VFS. It satisfies sftp.StatVFSFileCmder.
+func (v vfsHandler) StatVFS(r *sftp.Request) (*sftp.StatVFS, error) {
+	const blockSize = 4096
+	total, _, free := v.Statfs()
+	blocks := uint64(total) / blockSize
+	bfree := uint64(free) / blockSize
+	return &sftp.StatVFS{
+		Bsize:   blockSize,
+		Frsize:  blockSize,
+		Blocks:  blocks,
+		Bfree:   bfree,
+		Bavail:  bfree,
+		Files:   1e9, // total file inodes - made up as the VFS has no concept of these
+		Ffree:   1e9, // free file inodes
+		Favail:  1e9, // free file inodes for non-root
+		Namemax: 255, // maximum filename length
+	}, nil
+}
+
 type listerat []os.FileInfo
 
 // Modeled after strings.Reader's ReadAt() implementation
