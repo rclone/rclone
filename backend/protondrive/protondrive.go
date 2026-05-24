@@ -22,6 +22,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
@@ -250,8 +251,31 @@ type Object struct {
 
 // shouldRetry returns a boolean as to whether this err deserves to be
 // retried.  It returns the err as a convenience
+//
+// 429 rate-limit and 503 responses are retried inside go-proton-api's resty
+// layer (see catchTooManyRequests / catchRetryAfter) using the Retry-After
+// header, so we do not retry them again here.
 func shouldRetry(ctx context.Context, err error) (bool, error) {
-	return false, err
+	if fserrors.ContextError(ctx, &err) {
+		return false, err
+	}
+	if err == nil {
+		return false, nil
+	}
+	var apiErr *proton.APIError
+	if errors.As(err, &apiErr) {
+		// Transient storage block error ("Please retry").
+		if apiErr.Code == 200501 {
+			fs.Debugf(nil, "Retrying storage block error: %v", err)
+			return true, err
+		}
+		// Server errors. 503 is already handled by the SDK; retry the rest.
+		if apiErr.Status >= 500 && apiErr.Status < 600 && apiErr.Status != 503 {
+			return true, err
+		}
+		return false, err
+	}
+	return fserrors.ShouldRetry(err), err
 }
 
 //------------------------------------------------------------------------------
