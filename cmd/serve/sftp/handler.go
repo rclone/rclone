@@ -76,8 +76,9 @@ func (v vfsHandler) Filecmd(r *sftp.Request) error {
 			}
 		}
 		if flags.Acmodtime {
-			modTime := time.Unix(int64(attr.Mtime), 0)
-			err := v.Chtimes(r.Filepath, modTime, modTime)
+			atime := time.Unix(int64(attr.Atime), 0)
+			mtime := time.Unix(int64(attr.Mtime), 0)
+			err := v.Chtimes(r.Filepath, atime, mtime)
 			if err != nil {
 				return err
 			}
