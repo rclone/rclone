@@ -2977,8 +2977,8 @@ this feature to copy or sync files from a snapshot instead of the live data.
 This is useful when syncing files that could be modified during an operation,
 such as with long-running operations or frequently updated data. Without this
 option, such an operation might fail if relevant files are locked exclusively,
-or could lead to correupted data being saved. Once an operation involving a
-snapshot is completed, the snapshot is immediately removed.
+or could lead to corrupted data being saved. Once an operation involving a
+snapshot is completed, the snapshot is removed automatically.
 
 `NEVER` never creates snapshots, even on a platform that supports them. This
 is the default.

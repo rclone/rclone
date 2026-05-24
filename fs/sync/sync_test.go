@@ -1395,8 +1395,9 @@ func testSyncWithSnapshot(ctx context.Context, t *testing.T, useLockedFile, expe
 		// so this check doesn't catch everything
 		t.Skip("snapshots not supported on this platform")
 	}
+	// Wrap the actual snapshot creation function to add a usage counter
 	snapshots := 0
-	r.Flocal.Features().CreateSnapshot = func(ctx context.Context) (fs.Fs, func(ctx context.Context) error, error) {
+	r.Flocal.Features().CreateSnapshot = func(ctx context.Context) (fs.Fs, error) {
 		snapshots++
 		return createSnap(ctx)
 	}
@@ -1461,11 +1462,11 @@ func testSyncWithSnapshot(ctx context.Context, t *testing.T, useLockedFile, expe
 // Entry point only used in starting a separate child process to lock a file for testing purposes
 func TestFileLockHelper(t *testing.T) {
 	if os.Getenv("IS_LOCK_HOLDER") != "1" {
-		return
+		t.Skip()
 	}
 	filePath := os.Getenv("FILE_TO_LOCK")
 	if filePath == "" {
-		return
+		t.Skip()
 	}
 	holdExclusiveFileLock(t, filePath)
 }
@@ -1479,17 +1480,12 @@ func TestSyncWithSnapshot(t *testing.T) {
 	r.Mkdir(ctx, r.Fremote)
 	createSnap := r.Flocal.Features().CreateSnapshot
 	if createSnap != nil {
-		_, cleanupSnap, err := createSnap(ctx)
+		_, err := createSnap(ctx)
 		switch {
 		case errors.Is(err, fs.ErrorNotImplemented):
 			t.Skip("snapshots not supported on this platform")
 		case errors.Is(err, os.ErrPermission):
 			t.Skip("insufficient permissions to use snapshots")
-		}
-
-		if cleanupSnap != nil {
-			err := cleanupSnap(ctx)
-			require.NoError(t, err, "failed to clean up initial snapshot")
 		}
 	}
 	// Clean up the preliminary Run immediately to avoid potential interference with the real tests

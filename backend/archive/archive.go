@@ -364,10 +364,10 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 }
 
 // CreateSnapshot creates a point-in-time snapshot of a directory, if possible
-func (f *Fs) CreateSnapshot(ctx context.Context) (fs.Fs, func(ctx context.Context) error, error) {
+func (f *Fs) CreateSnapshot(ctx context.Context) (fs.Fs, error) {
 	do := f.f.Features().CreateSnapshot
 	if do == nil {
-		return nil, nil, fs.ErrorNotImplemented
+		return nil, fs.ErrorNotImplemented
 	}
 	return do(ctx)
 }

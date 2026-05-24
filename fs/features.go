@@ -93,8 +93,11 @@ type Features struct {
 	// CreateSnapshot creates a point-in-time snapshot of a Fs,
 	// which may be used for copy operations.
 	//
-	// It returns the Fs snapshot, a cleanup function, and a possible error.
-	CreateSnapshot func(ctx context.Context) (Fs, func(ctx context.Context) error, error)
+	// Any required cleanup function should be saved within each
+	// backend's Fs struct and called in Shutdown().
+	//
+	// It returns the Fs snapshot and a possible error.
+	CreateSnapshot func(ctx context.Context) (Fs, error)
 
 	// ChangeNotify calls the passed function with a path
 	// that has had changes. If the implementation
@@ -583,8 +586,11 @@ type CreateSnapshotter interface {
 	// CreateSnapshot creates a point-in-time snapshot of a Fs,
 	// which may be used for copy operations.
 	//
-	// It returns the Fs snapshot, a cleanup function, and a possible error.
-	CreateSnapshot(ctx context.Context) (Fs, func(ctx context.Context) error, error)
+	// Any required cleanup function should be saved within each
+	// backend's Fs struct and called in Shutdown().
+	//
+	// It returns the Fs snapshot and a possible error.
+	CreateSnapshot(ctx context.Context) (Fs, error)
 }
 
 // ChangeNotifier is an optional interface for Fs

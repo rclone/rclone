@@ -495,3 +495,12 @@ See [rclone about command](https://rclone.org/commands/rclone_about/)
 
 The remote supports empty directories. See [Limitations](/bugs/#limitations)
  for details. Most Object/Bucket-based remotes do not support this.
+
+### CreateSnapshot
+
+The remote supports the creation of point-in-time snapshots of data. This
+allows rclone to copy or sync files from a snapshot instead of the live data,
+as controlled by the `--use-snapshot` option. See the
+[rclone docs](/docs/#use-snapshot%20NEVER|ATTEMPT|ALWAYS) for more details.
+
+The cleanup for any created snapshots must happen

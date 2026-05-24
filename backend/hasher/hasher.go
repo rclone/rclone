@@ -396,11 +396,11 @@ func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata
 }
 
 // CreateSnapshot creates a point-in-time snapshot of a directory, if possible
-func (f *Fs) CreateSnapshot(ctx context.Context) (fs.Fs, func(ctx context.Context) error, error) {
+func (f *Fs) CreateSnapshot(ctx context.Context) (fs.Fs, error) {
 	if do := f.Fs.Features().CreateSnapshot; do != nil {
 		return do(ctx)
 	}
-	return nil, nil, fs.ErrorNotImplemented
+	return nil, fs.ErrorNotImplemented
 }
 
 // DirCacheFlush resets the directory cache - used in testing

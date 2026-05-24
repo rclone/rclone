@@ -622,14 +622,6 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	return do(ctx, srcU.f, srcURemote, dstURemote)
 }
 
-// CreateSnapshot creates a point-in-time snapshot of a directory, if possible
-func (f *Fs) CreateSnapshot(ctx context.Context) (fs.Fs, func(ctx context.Context) error, error) {
-	// Note(maxgreen01): Implementing this might mean creating snapshots based on a given dir,
-	// and it seems difficult to do this without creating duplicate snapshots for each dir if
-	// snapshots are per-volume.
-	return nil, nil, fs.ErrorNotImplemented
-}
-
 // ChangeNotify calls the passed function with a path
 // that has had changes. If the implementation
 // uses polling, it should adhere to the given interval.
@@ -1183,24 +1175,23 @@ func (o *Object) SetTier(tier string) error {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs                = (*Fs)(nil)
-	_ fs.Purger            = (*Fs)(nil)
-	_ fs.PutStreamer       = (*Fs)(nil)
-	_ fs.Copier            = (*Fs)(nil)
-	_ fs.Mover             = (*Fs)(nil)
-	_ fs.DirMover          = (*Fs)(nil)
-	_ fs.DirCacheFlusher   = (*Fs)(nil)
-	_ fs.ChangeNotifier    = (*Fs)(nil)
-	_ fs.Abouter           = (*Fs)(nil)
-	_ fs.ListRer           = (*Fs)(nil)
-	_ fs.Shutdowner        = (*Fs)(nil)
-	_ fs.PublicLinker      = (*Fs)(nil)
-	_ fs.PutUncheckeder    = (*Fs)(nil)
-	_ fs.MergeDirser       = (*Fs)(nil)
-	_ fs.DirSetModTimer    = (*Fs)(nil)
-	_ fs.MkdirMetadataer   = (*Fs)(nil)
-	_ fs.CreateSnapshotter = (*Fs)(nil)
-	_ fs.CleanUpper        = (*Fs)(nil)
-	_ fs.OpenWriterAter    = (*Fs)(nil)
-	_ fs.FullObject        = (*Object)(nil)
+	_ fs.Fs              = (*Fs)(nil)
+	_ fs.Purger          = (*Fs)(nil)
+	_ fs.PutStreamer     = (*Fs)(nil)
+	_ fs.Copier          = (*Fs)(nil)
+	_ fs.Mover           = (*Fs)(nil)
+	_ fs.DirMover        = (*Fs)(nil)
+	_ fs.DirCacheFlusher = (*Fs)(nil)
+	_ fs.ChangeNotifier  = (*Fs)(nil)
+	_ fs.Abouter         = (*Fs)(nil)
+	_ fs.ListRer         = (*Fs)(nil)
+	_ fs.Shutdowner      = (*Fs)(nil)
+	_ fs.PublicLinker    = (*Fs)(nil)
+	_ fs.PutUncheckeder  = (*Fs)(nil)
+	_ fs.MergeDirser     = (*Fs)(nil)
+	_ fs.DirSetModTimer  = (*Fs)(nil)
+	_ fs.MkdirMetadataer = (*Fs)(nil)
+	_ fs.CleanUpper      = (*Fs)(nil)
+	_ fs.OpenWriterAter  = (*Fs)(nil)
+	_ fs.FullObject      = (*Object)(nil)
 )

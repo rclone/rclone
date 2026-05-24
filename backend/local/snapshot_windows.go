@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/mxk/go-vss"
 	"github.com/rclone/rclone/fs"
@@ -16,27 +17,30 @@ import (
 // CreateSnapshot creates a point-in-time snapshot of a Fs,
 // which may be used for copy operations.
 //
-// It returns the Fs snapshot, a cleanup function, and a possible error.
-func (f *Fs) createSnapshot(ctx context.Context) (fs.Fs, func(ctx context.Context) error, error) {
+// Any required cleanup function should be saved within each
+// backend's Fs struct and called in Shutdown().
+//
+// It returns the Fs snapshot and a possible error.
+func (f *Fs) createSnapshot(ctx context.Context) (fs.Fs, error) {
 	// Check if the snapshot already exists
 	rootPath := f.root
 	isSnapshot, err := vss.IsShadowCopy(rootPath)
 	if err != nil {
-		return nil, nil, fmt.Errorf("checking if path is a volume shadow copy during creation: %s (%w)", rootPath, err)
+		return nil, fmt.Errorf("checking if path is a volume shadow copy during creation: %s (%w)", rootPath, err)
 	} else if isSnapshot {
-		return nil, nil, fmt.Errorf("path is already a volume shadow copy (skipping creation): %s", rootPath)
+		return nil, fmt.Errorf("path is already a volume shadow copy (skipping creation): %s", rootPath)
 	}
 
 	if _, err := os.Stat(rootPath); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	// Windows VSS only snapshots volumes at a time
 	vol, rel, err := vss.SplitVolume(rootPath)
-	fs.Infof(f, "Creating snapshot for volume %s with relative path %s", vol, rel)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
+	fs.Infof(f, "Creating snapshot for volume %s with relative path %s", vol, rel)
 
 	// Create the snapshot itself.
 	// Allow retries for "Another shadow copy operation is already in progress" (error code 9), but not for anything else.
@@ -58,22 +62,21 @@ func (f *Fs) createSnapshot(ctx context.Context) (fs.Fs, func(ctx context.Contex
 		return false, nil // success
 	})
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	fs.Infof(f, "Created snapshot volume with ID %s", id)
 
-	alreadyCleaned := false
+	var once sync.Once
+	var cleanupErr error
 	cleanup := func(ctx context.Context) error {
-		if alreadyCleaned {
-			return nil
-		}
-		fs.Infof(f, "Removing snapshot volume with ID %s", id)
-		alreadyCleaned = true
-		if err := vss.Remove(id); err != nil {
-			fs.Errorf(f, "Failed to remove snapshot volume: %v", err)
-			return err
-		}
-		return nil
+		once.Do(func() {
+			fs.Infof(f, "Removing snapshot volume with ID %s", id)
+			if err := vss.Remove(id); err != nil {
+				fs.Errorf(f, "Failed to remove snapshot volume: %v", err)
+				cleanupErr = err
+			}
+		})
+		return cleanupErr
 	}
 
 	// Create a new Fs object based on the snapshot
@@ -82,7 +85,7 @@ func (f *Fs) createSnapshot(ctx context.Context) (fs.Fs, func(ctx context.Contex
 		if err := cleanup(ctx); err != nil {
 			fs.Errorf(f, "Error while cleaning up snapshot: %v", err)
 		}
-		return nil, nil, err
+		return nil, err
 	}
 
 	newPath := filepath.Join(sc.DeviceObject, rel)
@@ -91,11 +94,11 @@ func (f *Fs) createSnapshot(ctx context.Context) (fs.Fs, func(ctx context.Contex
 		if err := cleanup(ctx); err != nil {
 			fs.Errorf(f, "Error while cleaning up snapshot: %v", err)
 		}
-		return nil, nil, err
+		return nil, err
 	}
 
-	// For extra safety with the remote control API, make sure this is cleaned up when the Fs shuts down
-	snapshotFs.Features().Shutdown = cleanup
+	// Make sure this snapshot gets cleaned up when the Fs shuts down
+	f.snapshotCleanup = cleanup
 
-	return snapshotFs, cleanup, nil
+	return snapshotFs, nil
 }

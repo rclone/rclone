@@ -1367,13 +1367,8 @@ func runSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		}
 
 		// Create the snapshot and replace fsrc with it
-		switch snapshot, cleanup, err := do(ctx); {
+		switch snapshot, err := do(ctx); {
 		case err == nil: // success
-			defer func() {
-				if err := cleanup(ctx); err != nil {
-					fs.Errorf(fsrc, "Error while cleaning up snapshot: %v", err)
-				}
-			}()
 			fsrc = snapshot
 
 		case mode == fs.UseSnapshotModeAttempt: // error
