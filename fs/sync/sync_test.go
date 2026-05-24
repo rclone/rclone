@@ -1417,10 +1417,11 @@ func testSyncWithSnapshot(ctx context.Context, t *testing.T, useLockedFile, expe
 		t.Log("making sure the file is still locked...")
 		filePath := filepath.Join(r.LocalName, file1.Path)
 		err := os.Rename(filePath, filePath)
-		assert.Error(t, err, "file should not be locked by helper process anymore")
+		assert.Error(t, err, "file should still be locked by helper process")
 	}
 
 	err := Sync(ctx, r.Fremote, r.Flocal, false)
+	t.Logf("%s sync just finished", time.Now().Format(time.StampNano))
 
 	// Release the lock immediately after sync so files can be cleaned up
 	if cleanupLockHelper != nil {

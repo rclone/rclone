@@ -36,6 +36,9 @@ func createExclusiveFileLock(t *testing.T, filePath string) func() {
 	stdout, err := lockCmd.StdoutPipe()
 	require.NoError(t, err, "failed to create helper stdout pipe")
 	stdoutReader := bufio.NewReader(stdout)
+	stderr, err := lockCmd.StderrPipe()
+	require.NoError(t, err, "failed to create helper stderr pipe")
+	stderrReader := bufio.NewReader(stderr)
 	lockStdin, err := lockCmd.StdinPipe()
 	require.NoError(t, err, "failed to create helper stdin pipe")
 
@@ -45,12 +48,6 @@ func createExclusiveFileLock(t *testing.T, filePath string) func() {
 	var once sync.Once
 	cleanupLockHelper := func() {
 		once.Do(func() {
-			// check if the helper terminated unexpectedly before we signal??
-			if lockCmd.ProcessState != nil && lockCmd.ProcessState.Exited() {
-				assert.Fail(t, "lock helper process should still be running when cleanup is called")
-				return
-			}
-			
 			// Signal to the helper to release the lock and exit
 			if lockStdin != nil {
 				_, _ = lockStdin.Write([]byte("release\n"))
@@ -65,10 +62,11 @@ func createExclusiveFileLock(t *testing.T, filePath string) func() {
 			// Wait for the helper process to exit
 			err = lockCmd.Wait()
 			if err != nil {
-				if exitErr, ok := err.(*exec.ExitError); ok {
-					assert.Failf(t, "lock helper process exited with error: %s", string(exitErr.Stderr))
+				stderrOutput, _ := io.ReadAll(stderrReader)
+				if _, ok := err.(*exec.ExitError); ok {
+					assert.Failf(t, "lock helper process exited with error: %s", string(stderrOutput))
 				} else {
-					assert.Fail(t, "lock helper process should exit cleanly")
+					assert.Failf(t, "lock helper process did not exit cleanly: %s", string(stderrOutput))
 				}
 			}
 
@@ -117,6 +115,7 @@ func awaitChildOutput(t *testing.T, stdoutReader *bufio.Reader, signal string) {
 				outputChan <- nil
 				return
 			}
+			// ignore unexpected output lines, like the "=== RUN TestFileLockHelper" line
 		}
 	}()
 
