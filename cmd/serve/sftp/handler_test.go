@@ -138,6 +138,36 @@ func TestFilewriteTruncate(t *testing.T) {
 	assert.Equal(t, newContents, string(got))
 }
 
+// Test that a SETSTAT request with a size attribute truncates the file, rather
+// than being silently ignored.
+func TestSetstatTruncate(t *testing.T) {
+	vfsOpt := vfscommon.Opt
+	vfsOpt.CacheMode = vfscommon.CacheModeWrites
+	client := startTestServer(t, &vfsOpt)
+
+	const fileName = "file.bin"
+
+	// Write a file and then truncate it via FSETSTAT (a size attribute) on the
+	// open handle, the way a client setting the final size of an upload does.
+	f, err := client.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC)
+	require.NoError(t, err)
+	_, err = f.Write([]byte(strings.Repeat("A", 1024)))
+	require.NoError(t, err)
+	require.NoError(t, f.Truncate(10))
+	require.NoError(t, f.Close())
+
+	fi, err := client.Stat(fileName)
+	require.NoError(t, err)
+	assert.Equal(t, int64(10), fi.Size(), "file not truncated to requested size")
+
+	rd, err := client.Open(fileName)
+	require.NoError(t, err)
+	got, err := io.ReadAll(rd)
+	require.NoError(t, err)
+	require.NoError(t, rd.Close())
+	assert.Equal(t, strings.Repeat("A", 10), string(got))
+}
+
 // writeFile writes contents to fileName via the client truncating any existing
 // data, the way a normal upload does.
 func writeFile(client *sftp.Client, fileName, contents string) error {
