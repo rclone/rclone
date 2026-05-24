@@ -521,7 +521,7 @@ func TestTransformWithSnapshot(t *testing.T) {
 	ctx, ci := fs.AddConfig(ctx)
 	ci.UseSnapshotMode = fs.UseSnapshotModeAlways
 	r := fstest.NewRun(t)
-	file1 := r.WriteFile("potato", "Potato Content", t1)
+	file1 := r.WriteFile("snapshot-potato", "Snapshot Potato Content", t1)
 	r.CheckLocalItems(t, file1)
 	r.Mkdir(ctx, r.Fremote)
 

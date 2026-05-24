@@ -1383,8 +1383,9 @@ func TestCopyDeleteBefore(t *testing.T) {
 
 // Test syncing a file using snapshots
 func testSyncWithSnapshot(ctx context.Context, t *testing.T, useLockedFile, expectErr bool) {
+	accounting.GlobalStats().ResetCounters()
 	r := fstest.NewRun(t)
-	file1 := r.WriteFile("potato", "Potato Content", t1)
+	file1 := r.WriteFile("snapshot-potato", "Snapshot Potato Content", t1)
 	r.CheckLocalItems(t, file1)
 	r.Mkdir(ctx, r.Fremote)
 
@@ -1424,6 +1425,12 @@ func testSyncWithSnapshot(ctx context.Context, t *testing.T, useLockedFile, expe
 	// Release the lock immediately after sync so files can be cleaned up
 	if cleanupLockHelper != nil {
 		cleanupLockHelper()
+	}
+
+	if accounting.Stats(ctx).Errored() {
+		t.Logf("%s sync failed with error: %v", time.Now().Format(time.StampNano), accounting.Stats(ctx).GetLastError())
+	} else {
+		t.Logf("%s sync completed with error: %v", time.Now().Format(time.StampNano), err)
 	}
 
 	if errors.Is(err, os.ErrPermission) {
@@ -1519,7 +1526,7 @@ func TestMoveWithSnapshot(t *testing.T) {
 	ctx, ci := fs.AddConfig(ctx)
 	ci.UseSnapshotMode = fs.UseSnapshotModeAlways
 	r := fstest.NewRun(t)
-	file1 := r.WriteFile("potato", "Potato Content", t1)
+	file1 := r.WriteFile("snapshot-potato", "Snapshot Potato Content", t1)
 	r.CheckLocalItems(t, file1)
 	r.Mkdir(ctx, r.Fremote)
 

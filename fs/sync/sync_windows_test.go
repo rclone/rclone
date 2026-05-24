@@ -23,6 +23,7 @@ import (
 // Blocks until the lock is acquired, then returns a cleanup function to release the lock (also blocking) when called.
 func createExclusiveFileLock(t *testing.T, filePath string) func() {
 	// Re-exec the same binary
+	t.Log(time.Now().Format(time.StampNano), "Starting lock holder process...") // todo remove
 	lockCmd := exec.Command(os.Args[0], "-test.run=^TestFileLockHelper$", "-test.v")
 	for _, e := range os.Environ() {
 		if strings.HasPrefix(e, "IS_LOCK_HOLDER=") || strings.HasPrefix(e, "FILE_TO_LOCK=") {
@@ -44,6 +45,12 @@ func createExclusiveFileLock(t *testing.T, filePath string) func() {
 	var once sync.Once
 	cleanupLockHelper := func() {
 		once.Do(func() {
+			// check if the helper terminated unexpectedly before we signal??
+			if lockCmd.ProcessState != nil && lockCmd.ProcessState.Exited() {
+				assert.Fail(t, "lock helper process should still be running when cleanup is called")
+				return
+			}
+			
 			// Signal to the helper to release the lock and exit
 			if lockStdin != nil {
 				_, _ = lockStdin.Write([]byte("release\n"))
@@ -52,7 +59,7 @@ func createExclusiveFileLock(t *testing.T, filePath string) func() {
 
 			// Wait for the helper to signal that it has released the lock
 			// todo(maxgreen) comment out these logs
-			t.Log("Waiting for file lock to be released...")
+			t.Log(time.Now().Format(time.StampNano), "Waiting for file lock to be released...")
 			awaitChildOutput(t, stdoutReader, "finished")
 
 			// Wait for the helper process to exit
@@ -65,7 +72,7 @@ func createExclusiveFileLock(t *testing.T, filePath string) func() {
 				}
 			}
 
-			t.Log("lock should have been released")
+			t.Log(time.Now().Format(time.StampNano), "lock should have been released")
 			// Make sure the file is actually accessible again
 			err := os.Rename(filePath, filePath)
 			assert.NoError(t, err, "file should not be locked by helper process anymore")
@@ -75,9 +82,9 @@ func createExclusiveFileLock(t *testing.T, filePath string) func() {
 	t.Cleanup(cleanupLockHelper)
 
 	// Wait for lock to be acquired with timeout
-	t.Log("Waiting for file lock to be acquired...")
+	t.Log(time.Now().Format(time.StampNano), "Waiting for file lock to be acquired...")
 	awaitChildOutput(t, stdoutReader, "locked")
-	t.Log("lock should be acquired...")
+	t.Log(time.Now().Format(time.StampNano), "lock should be acquired...")
 
 	// Make sure the file is actually locked and the helper process is still alive
 	err = os.Rename(filePath, filePath)
@@ -120,7 +127,7 @@ func awaitChildOutput(t *testing.T, stdoutReader *bufio.Reader, signal string) {
 	case <-time.After(3 * time.Second):
 		t.Fatalf("timeout waiting for file locking process to send signal %q", signal)
 	}
-	time.Sleep(1 * time.Second) // make sure its done //todo(maxgreen01) remove
+	// time.Sleep(1 * time.Second) // make sure its done //todo(maxgreen01) remove
 }
 
 // Helper function that only runs in a separate child process to hold an exclusive lock on a file until signaled to release it
