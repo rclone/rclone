@@ -64,7 +64,18 @@ func (v vfsHandler) Filecmd(r *sftp.Request) error {
 	switch r.Method {
 	case "Setstat":
 		attr := r.Attributes()
-		if attr.Mtime != 0 {
+		flags := r.AttrFlags()
+		// A size attribute is a request to truncate the file
+		if flags.Size {
+			node, err := v.Stat(r.Filepath)
+			if err != nil {
+				return err
+			}
+			if err := node.Truncate(int64(attr.Size)); err != nil {
+				return err
+			}
+		}
+		if flags.Acmodtime {
 			modTime := time.Unix(int64(attr.Mtime), 0)
 			err := v.Chtimes(r.Filepath, modTime, modTime)
 			if err != nil {
