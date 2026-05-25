@@ -501,7 +501,7 @@ The remote supports empty directories. See [Limitations](/bugs/#limitations)
 The remote supports the creation of point-in-time snapshots of data. This
 allows rclone to copy or sync files from a snapshot instead of the live data,
 as controlled by the `--use-snapshot` option. See the
-[rclone docs](/docs/#use-snapshot%20NEVER|ATTEMPT|ALWAYS) for more details.
+[rclone docs](/docs/#use-snapshot-never-attempt-always) for more details.
 
 Snapshots should each be represented as a new backend instance, and any
 snapshot cleanup must occur within the `Shutdown` method of the corresponding
