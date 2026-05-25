@@ -503,4 +503,6 @@ allows rclone to copy or sync files from a snapshot instead of the live data,
 as controlled by the `--use-snapshot` option. See the
 [rclone docs](/docs/#use-snapshot%20NEVER|ATTEMPT|ALWAYS) for more details.
 
-The cleanup for any created snapshots must happen
+Snapshots should each be represented as a new backend instance, and any
+snapshot cleanup must occur within the `Shutdown` method of the corresponding
+instance.
