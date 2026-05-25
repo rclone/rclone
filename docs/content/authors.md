@@ -1141,3 +1141,4 @@ put them back in again. -->
 - Iizuki <36295229+Iizuki@users.noreply.github.com>
 - tomholford <16504501+tomholford@users.noreply.github.com> <tomholford@users.noreply.github.com>
 - caltechustc <caltechustc@outlook.com>
+- Valerij Fredriksen <freva@users.noreply.github.com>
