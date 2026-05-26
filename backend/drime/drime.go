@@ -147,14 +147,6 @@ this may help to speed up the transfers.`,
 			Default:  4,
 			Advanced: true,
 		}, {
-			Name: "upload_cutoff",
-			Help: `Cutoff for switching to chunked upload.
-
-Any files larger than this will be uploaded in chunks of chunk_size.
-The minimum is 0 and the maximum is 5 GiB.`,
-			Default:  defaultUploadCutoff,
-			Advanced: true,
-		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
