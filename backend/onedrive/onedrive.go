@@ -71,6 +71,7 @@ var (
 	commonPathPrefix = "/common" // prefix for the paths if tenant isn't known
 	authPath         = "/oauth2/v2.0/authorize"
 	tokenPath        = "/oauth2/v2.0/token"
+	devicecodePath   = "/oauth2/v2.0/devicecode"
 
 	scopeAccess             = fs.SpaceSepList{"Files.Read", "Files.ReadWrite", "Files.Read.All", "Files.ReadWrite.All", "Sites.Read.All", "offline_access"}
 	scopeAccessWithoutSites = fs.SpaceSepList{"Files.Read", "Files.ReadWrite", "Files.Read.All", "Files.ReadWrite.All", "offline_access"}
@@ -599,6 +600,7 @@ func makeOauthConfig(ctx context.Context, opt *Options) (*oauthutil.Config, erro
 	}
 	oauthConfig.TokenURL = authEndpoint[opt.Region] + prefix + tokenPath
 	oauthConfig.AuthURL = authEndpoint[opt.Region] + prefix + authPath
+	oauthConfig.DeviceAuthURL = authEndpoint[opt.Region] + prefix + devicecodePath
 
 	// Check to see if we are using client credentials flow
 	if opt.ClientCredentials {
