@@ -282,6 +282,11 @@ var retryErrorCodes = []int{
 	503, // Service Unavailable
 	504, // Gateway Timeout
 	509, // Bandwidth Limit Exceeded
+	520, // Cloudflare: Web server returns an unknown error
+	521, // Cloudflare: Web server is down
+	522, // Cloudflare: Connection timed out
+	523, // Cloudflare: Origin is unreachable
+	524, // Cloudflare: A timeout occurred
 }
 
 // shouldRetry returns a boolean as to whether this resp and err
@@ -848,10 +853,16 @@ func (f *Fs) patch(ctx context.Context, id, attribute string, value string) (ite
 		Name: value,
 	}
 	var result api.UpdateItemResponse
+	// The drime origin returns a malformed response (seen by Cloudflare as
+	// a 520) for a literal PUT to this endpoint, so use a POST with Laravel
+	// method spoofing instead - the API routes it to the same handler.
 	opts := rest.Opts{
-		Method:     "PUT",
+		Method:     "POST",
 		Path:       "/file-entries/" + id,
 		Parameters: url.Values{},
+		ExtraHeaders: map[string]string{
+			"X-HTTP-Method-Override": "PUT",
+		},
 	}
 	if f.opt.WorkspaceID != "" {
 		opts.Parameters.Set("workspaceId", f.opt.WorkspaceID)
