@@ -727,19 +727,6 @@ Properties:
 - Type:        string
 - Required:    false
 
-#### --sftp-encoding
-
-The encoding for the backend.
-
-See the [encoding section in the overview](/overview/#encoding) for more info.
-
-Properties:
-
-- Config:      encoding
-- Env Var:     RCLONE_SFTP_ENCODING
-- Type:        Encoding
-- Default:     Slash,Del,Ctl,Dot
-
 #### --sftp-set-modtime
 
 Set the modified time on the remote if set.
