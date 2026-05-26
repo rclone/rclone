@@ -171,7 +171,7 @@ type MultiPartCreateRequest struct {
 	Mime         string      `json:"mime"`
 	Size         int64       `json:"size"`
 	Extension    string      `json:"extension"`
-	ParentID     json.Number `json:"parent_id"`
+	ParentID     json.Number `json:"parentId"`
 	RelativePath string      `json:"relativePath"`
 	WorkspaceID  string      `json:"workspaceId,omitempty"`
 }
@@ -222,7 +222,7 @@ type MultiPartEntriesRequest struct {
 	Filename        string      `json:"filename"`
 	Size            int64       `json:"size"`
 	ClientExtension string      `json:"clientExtension"`
-	ParentID        json.Number `json:"parent_id"`
+	ParentID        json.Number `json:"parentId"`
 	RelativePath    string      `json:"relativePath"`
 	WorkspaceID     string      `json:"workspaceId,omitempty"`
 }
@@ -236,14 +236,6 @@ type MultiPartEntriesResponse struct {
 type MultiPartAbort struct {
 	UploadID string `json:"uploadId"`
 	Key      string `json:"key"`
-}
-
-// FolderPathResponse is returned by GET /folders/{hash}/path
-//
-// Path is the breadcrumb from the drive root down to the requested folder.
-type FolderPathResponse struct {
-	Status string `json:"status"`
-	Path   []Item `json:"path"`
 }
 
 // SpaceUsageResponse is returned by GET /user/space-usage
