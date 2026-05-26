@@ -57,7 +57,6 @@ type Item struct {
 	FileHash     any         `json:"file_hash"`
 	Public       bool        `json:"public"`
 	Thumbnail    bool        `json:"thumbnail"`
-	MuxStatus    any         `json:"mux_status"`
 	ThumbnailURL any         `json:"thumbnail_url"`
 	WorkspaceID  int         `json:"workspace_id"`
 	IsEncrypted  int         `json:"is_encrypted"`
