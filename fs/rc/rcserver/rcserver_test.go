@@ -476,6 +476,30 @@ func TestServeRemoteWithAuth(t *testing.T) {
 	testServer(t, tests, &opt)
 }
 
+// The serve path must mark backend creation as a remote control (rc) request
+// so a request-supplied remote can't change process-wide config via global.*
+// options.
+func TestServeRemoteMarksRCRequest(t *testing.T) {
+	configfile.Install()
+	opt := newTestOpt()
+	opt.Serve = true
+	opt.NoAuth = true // allow inline remotes so we reach backend creation
+	opt.Template.Path = defaultTestTemplate
+	rcServer, err := newServer(context.Background(), &opt, http.NewServeMux())
+	require.NoError(t, err)
+
+	ctx := context.Background()
+	original := fs.GetConfig(ctx).UserAgent
+	defer func() { fs.GetConfig(ctx).UserAgent = original }()
+
+	// serveRemote uses s.ctx, marked as an rc request, so global.* must not
+	// change the process-wide config.
+	rcServer.serveRemote(httptest.NewRecorder(), httptest.NewRequest("GET", "/file.txt", nil),
+		"file.txt", ":local,global.user_agent=rcservertest:"+testFs)
+	assert.Equal(t, original, fs.GetConfig(ctx).UserAgent,
+		"the serve path must not let global.* change the process-wide config")
+}
+
 func TestRC(t *testing.T) {
 	tests := []testRun{{
 		Name:   "rc-root",

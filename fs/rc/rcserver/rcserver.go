@@ -333,7 +333,7 @@ func (s *Server) serveRoot(w http.ResponseWriter, r *http.Request) {
 // Instantiating a backend from request-supplied configuration can execute
 // commands during initialisation (e.g. webdav bearer_token_command, sftp ssh),
 // read arbitrary local files, or mutate process-wide config via global.*
-// options. See GHSA-qw24-gh76-8rvv.
+// options so shouldn't be done without authentication.
 //
 // authenticated must be true if the request has been authenticated (HTTP auth
 // is configured on the server) or --rc-no-auth was passed to explicitly opt in
@@ -376,7 +376,8 @@ func (s *Server) serveRemote(w http.ResponseWriter, r *http.Request, path string
 		writeError(path, nil, w, err, http.StatusForbidden)
 		return
 	}
-	f, err := cache.Get(s.ctx, fsName)
+	// Mark as an rc request e.g. so NewFs can reject global.* config
+	f, err := cache.Get(fs.WithRCRequest(s.ctx), fsName)
 	if err != nil {
 		writeError(path, nil, w, fmt.Errorf("failed to make Fs: %w", err), http.StatusInternalServerError)
 		return
