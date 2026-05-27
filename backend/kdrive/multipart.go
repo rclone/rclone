@@ -5,15 +5,19 @@ package kdrive
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"hash"
 	"io"
-	"math"
 	"net/url"
 	"path"
+	"strconv"
 	"strings"
 
 	"github.com/rclone/rclone/backend/kdrive/api"
+	"github.com/rclone/rclone/backend/kdrive/chunksize"
+	"github.com/rclone/rclone/backend/kdrive/khash"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/lib/atexit"
@@ -33,59 +37,6 @@ type uploadSession struct {
 	uploadURL  string
 	fileInfo   *api.Item
 	chunkCount int
-	hash       string // Hash from the last chunk upload
-}
-
-const (
-	maxChunkSize     = 1 * 1000 * 1000 * 1000 // 1 Go (max API)
-	defaultChunkSize = 20 * 1024 * 1024       // 20 Mo
-	maxChunks        = 10000                  // Limit API
-	mebi             = 1024 * 1024
-)
-
-func calculateChunkSize(fileSize int64, preferredChunkSize int64) int64 {
-	// Use preferred chunk size
-	chunkSize := preferredChunkSize
-	if chunkSize <= 0 {
-		chunkSize = defaultChunkSize
-	}
-
-	// Round to greater MiB
-	if chunkSize%mebi != 0 {
-		chunkSize += mebi - (chunkSize % mebi)
-	}
-
-	// Limit chunk size to 1 Go
-	if chunkSize > maxChunkSize {
-		chunkSize = maxChunkSize
-	}
-
-	// For large files, use a bigger chunk size
-	requiredChunks := calculateTotalChunks(fileSize, chunkSize)
-	if requiredChunks > maxChunks {
-		chunkSize = fileSize / maxChunks
-		if fileSize%maxChunks != 0 {
-			chunkSize++
-		}
-
-		// Round to greater MiB
-		if chunkSize%mebi != 0 {
-			chunkSize += mebi - (chunkSize % mebi)
-		}
-
-		// Limit chunk size to 1 Go
-		if chunkSize > maxChunkSize {
-			chunkSize = maxChunkSize
-		}
-	}
-
-	return chunkSize
-}
-
-func calculateTotalChunks(fileSize int64, chunkSize int64) int64 {
-	totalChunks := math.Ceil(float64(fileSize) / float64(chunkSize))
-
-	return int64(totalChunks)
 }
 
 // newChunkWriter returns chunk writer info and the upload session
@@ -112,24 +63,24 @@ func (f *Fs) newChunkWriter(ctx context.Context, remote string, src fs.ObjectInf
 		}
 	}
 
-	chunkSize := calculateChunkSize(fileSize, preferredChunkSize)
-	totalChunks := calculateTotalChunks(fileSize, chunkSize)
+	chunkSize := chunksize.CalculateChunkSize(fileSize, preferredChunkSize)
+	totalChunks := chunksize.CalculateTotalChunks(fileSize, chunkSize)
 	lastModifiedAt := fmt.Sprintf("%d", uint64(src.ModTime(ctx).Unix()))
 
 	sessionReq := struct {
-		Conflict       string `json:"conflict"`
-		DirectoryID    string `json:"directory_id"`
-		FileName       string `json:"file_name"`
+		Conflict    string `json:"conflict"`
+		DirectoryID string `json:"directory_id"`
+		FileName    string `json:"file_name"`
 		LastModifiedAt string `json:"last_modified_at"`
-		TotalChunks    int64  `json:"total_chunks"`
-		TotalSize      int64  `json:"total_size"`
+		TotalChunks int64  `json:"total_chunks"`
+		TotalSize   int64  `json:"total_size"`
 	}{
-		Conflict:       "version",
-		DirectoryID:    parentID,
-		FileName:       leaf,
+		Conflict:    "version",
+		DirectoryID: parentID,
+		FileName:    leaf,
 		LastModifiedAt: lastModifiedAt,
-		TotalChunks:    totalChunks,
-		TotalSize:      fileSize,
+		TotalChunks: totalChunks,
+		TotalSize:   fileSize,
 	}
 
 	opts := rest.Opts{
@@ -208,12 +159,11 @@ func (u *uploadSession) WriteChunk(ctx context.Context, chunkNumber int, reader 
 
 	// Verify server returned matching hash (optional but good for debugging)
 	if chunkResp.Data.Hash != "" {
-		serverHash := strings.TrimPrefix(chunkResp.Data.Hash, "xxh3:")
-		clientHash := strings.TrimPrefix(chunkHash, "xxh3:")
+		serverHash, _, _ := khash.ParseHash(chunkResp.Data.Hash)
+		clientHash, _, _ := khash.ParseHash(chunkHash)
 		if serverHash != clientHash {
 			fs.Debugf(u, "chunk %d hash mismatch: client=%s, server=%s", sourceChunkNumber, clientHash, serverHash)
 		}
-		u.hash = serverHash
 	}
 
 	u.chunkCount++
@@ -307,6 +257,11 @@ func (f *Fs) UploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.Reade
 	// Do the accounting manually
 	in, acc := accounting.UnWrapAccounting(in)
 
+	// Calculate hash as we read the input
+	// We must use the same chunk size as the upload so the nested hash matches
+	chunkHasher := khash.NewWithChunkSize(chunkSize)
+	in = io.TeeReader(in, chunkHasher)
+
 	for partNum := int64(0); !finished; partNum++ {
 		// Get a block of memory from the pool and token which limits concurrency.
 		tokens.Get()
@@ -363,5 +318,69 @@ func (f *Fs) UploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.Reade
 		return nil, fmt.Errorf("multipart upload: failed to finalise: %w", err)
 	}
 
+	// Verify the hash
+	if session, ok := chunkWriter.(*uploadSession); ok && session.fileInfo != nil {
+		err = session.CheckHash(ctx, info, chunkHasher)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return chunkWriter, nil
+}
+
+func (u uploadSession) CheckHash(ctx context.Context, info fs.ChunkWriterInfo, chunkHasher hash.Hash) (err error) {
+	remoteHash := u.fileInfo.Hash
+
+	if remoteHash == "" {
+		// Hash might be missing in finish response, try to fetch it
+		obj := &Object{
+			fs: u.f,
+			id: strconv.Itoa(u.fileInfo.ID),
+		}
+
+		var hashErr error
+		remoteHash, hashErr = obj.retrieveHash(ctx)
+		if hashErr != nil {
+			// skip validation
+			fs.Debugf(u, "Failed to retrieve hash for verification: %v", hashErr)
+			return nil
+		}
+	}
+
+	// validate with khash only if it's a nested hash
+	if khash.IsNestedHash(remoteHash) == false {
+		return nil
+	}
+
+	localHash := hex.EncodeToString(chunkHasher.Sum(nil))
+
+	if valid, _ := khash.ValidateHash(localHash, remoteHash); !valid {
+		err = fmt.Errorf(
+			"multipart upload hash mismatch: using chunk size %v, local=%s, remote=%s",
+			fs.SizeSuffix(info.ChunkSize), localHash, remoteHash,
+		)
+		fs.Errorf(u, "%v", err)
+
+		// Attempt to remove the corrupted file
+		// We construct a minimal Object just for removal
+		obj := &Object{
+			fs: u.f,
+			id: strconv.Itoa(u.fileInfo.ID),
+		}
+		delErr := obj.Remove(ctx)
+		if delErr != nil {
+			fs.Errorf(nil, "Failed to remove corrupted file after hash mismatch: %v", delErr)
+		} else {
+			fs.Debugf(nil, "Removed corrupted file after hash mismatch")
+		}
+
+		return err
+	}
+	fs.Debugf(u, "Multipart upload hash verified: %s", localHash)
+
+	// update remote hash with local hash to pass checkHashes
+	u.fileInfo.Hash = localHash
+
+	return nil
 }
