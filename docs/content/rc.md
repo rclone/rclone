@@ -78,6 +78,13 @@ so you can browse to `http://127.0.0.1:5572/` or `http://127.0.0.1:5572/*`
 to see a listing of the remotes.  Objects may be requested from
 remotes using this syntax `http://127.0.0.1:5572/[remote:path]/path/to/object`
 
+Unless the rc server has authentication configured (`--rc-user`/`--rc-pass`
+or `--rc-htpasswd`) or the `--rc-no-auth` flag is set, only remotes already
+present in the config file may be served this way. Inline remotes (e.g.
+`[:webdav,url=...:]`), connection string parameters and bare local paths are
+rejected, since instantiating them from an unauthenticated request could run
+commands or read arbitrary local files.
+
 Default Off.
 
 ### --rc-serve-no-modtime
