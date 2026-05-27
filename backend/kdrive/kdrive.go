@@ -16,6 +16,8 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/backend/kdrive/api"
+	"github.com/rclone/rclone/backend/kdrive/chunksize"
+	"github.com/rclone/rclone/backend/kdrive/khash"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -24,6 +26,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	fsHash "github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
@@ -33,16 +36,19 @@ import (
 	"golang.org/x/text/unicode/norm"
 )
 
+// kDriveHashType is the hash type for kDrive's XXH3 implementation
+var kDriveHashType fsHash.Type
+
 const (
 	defaultEndpoint = "https://api.infomaniak.com"
 	minSleep        = 10 * time.Millisecond
 	maxSleep        = 2 * time.Second
-	decayConstant   = 2                // bigger for slower decay, exponential
-	uploadThreshold = 20 * 1024 * 1024 // 20 Mo
+	decayConstant   = 2 // bigger for slower decay, exponential
 )
 
 // Register with Fs
 func init() {
+	kDriveHashType = hash.RegisterHash("kdrivehash", "khash", 16, khash.New)
 	fs.Register(&fs.RegInfo{
 		Name:        "kdrive",
 		Description: "Infomaniak kDrive",
@@ -122,6 +128,7 @@ type Object struct {
 	modTime     time.Time // modification time of the object
 	id          string    // ID of the object
 	xxh3        string    // XXH3 if known
+	nestedHash  bool      // if XXH3 is a nested hash
 }
 
 type cacheEntry struct {
@@ -1234,8 +1241,7 @@ func (f *Fs) Shutdown(_ context.Context) error {
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
-	// kDrive only supports xxh3
-	return hash.Set(hash.XXH3)
+	return hash.NewHashSet(kDriveHashType)
 }
 
 // ------------------------------------------------------------
@@ -1258,8 +1264,8 @@ func (o *Object) Remote() string {
 	return o.remote
 }
 
-// getHashes fetches the hashes into the object
-func (o *Object) retrieveHash(ctx context.Context) (err error) {
+// get file hash
+func (o *Object) retrieveHash(ctx context.Context) (hash string, err error) {
 	var resp *http.Response
 	var result api.ChecksumFileResult
 
@@ -1274,28 +1280,38 @@ func (o *Object) retrieveHash(ctx context.Context) (err error) {
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return err
+		return "", err
 	}
-	o.setHash(strings.TrimPrefix(result.Data.Hash, "xxh3:"))
-	return nil
+
+	return result.Data.Hash, nil
 }
 
-// Hash returns the XXH3 of an object returning a lowercase hex string
+// Hash returns the kDrive hash of an object as a lowercase hex string.
+// Only kDriveHashType is supported; standard hash.XXH3 is intentionally not
+// handled because the kDrive hash is a nested hash (hash-of-chunk-hashes)
+// and is NOT equivalent to a plain XXH3 of the file content.
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
-	var pHash *string
-	switch t {
-	case hash.XXH3:
-		pHash = &o.xxh3
-	default:
+	if t != kDriveHashType {
 		return "", hash.ErrUnsupported
 	}
+
+	// Rclone generic hasher cannot dynamically adjust to specific file chunk sizes natively.
+	// If the file requires a chunk size different from the default (e.g. > 200GB files
+	// hitting the 10000 chunk limit), we bypass hash checking by returning an empty string.
+	// Rclone will then fallback securely to size and modification time checks.
+	expectedChunkSize := chunksize.CalculateChunkSize(o.Size(), chunksize.ChunkSizeConfig.DefaultChunkSize)
+	if expectedChunkSize != chunksize.ChunkSizeConfig.DefaultChunkSize {
+		return "", nil
+	}
+
 	if o.xxh3 == "" {
-		err := o.retrieveHash(ctx)
+		remoteHash, err := o.retrieveHash(ctx)
 		if err != nil {
 			return "", fmt.Errorf("failed to get hash: %w", err)
 		}
+		o.setHash(remoteHash)
 	}
-	return *pHash, nil
+	return o.xxh3, nil
 }
 
 // Size returns the size of an object in bytes
@@ -1318,14 +1334,20 @@ func (o *Object) setMetaData(info *api.Item) (err error) {
 	o.modTime = info.ModTime()
 	o.id = strconv.Itoa(info.ID)
 	if len(o.xxh3) == 0 && len(info.Hash) > 0 {
-		o.xxh3 = strings.TrimPrefix(info.Hash, "xxh3:")
+		o.setHash(info.Hash)
 	}
 	return nil
 }
 
-// setHash sets the hashes from that passed in
-func (o *Object) setHash(hash string) {
-	o.xxh3 = hash
+// setHash sets the hashes from that passed in.
+// Handles both simple format ("xxh3:...") and nested format ("N:xxh3:...")
+func (o *Object) setHash(hashStr string) {
+	// Use khash.ParseHash to handle both simple and nested formats
+	parsedHash, isNested, err := khash.ParseHash(hashStr)
+	if err == nil && parsedHash != "" {
+		o.xxh3 = parsedHash
+		o.nestedHash = isNested
+	}
 }
 
 // readMetaData gets the metadata if it hasn't already been fetched
@@ -1446,7 +1468,7 @@ func (o *Object) update(ctx context.Context, in io.Reader, src fs.ObjectInfo, di
 	}
 
 	// if file size is less than the threshold, upload direct
-	if size <= uploadThreshold {
+	if size <= chunksize.ChunkSizeConfig.DefaultChunkSize {
 		return o.updateDirect(ctx, in, directoryID, leaf, src, options...)
 	}
 	// else, use multipart upload with parallelism
@@ -1516,7 +1538,7 @@ func (o *Object) updateDirect(ctx context.Context, in io.Reader, directoryID, le
 	}
 
 	o.size = size
-	o.setHash(strings.TrimPrefix(result.Data.Hash, "xxh3:"))
+	o.setHash(result.Data.Hash)
 
 	o.fs.clearNotFoundCache()
 	return o.readMetaData(ctx)
