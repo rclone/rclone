@@ -23,14 +23,16 @@ func TestSignHTTP(t *testing.T) {
 	apiKey := "mock-api-key"
 	instanceID := "mock-instance-id"
 	token := "mock-iam-token"
+	iamEndpoint := "https://iamendpoint.com"
 	mockAuth := &MockAuthenticator{
 		Token: token,
 		Error: nil,
 	}
 	signer := &IbmIamSigner{
-		APIKey:     apiKey,
-		InstanceID: instanceID,
-		Auth:       mockAuth,
+		APIKey:      apiKey,
+		InstanceID:  instanceID,
+		IAMEndpoint: iamEndpoint,
+		Auth:        mockAuth,
 	}
 	req, err := http.NewRequest("GET", "https://example.com", nil)
 	if err != nil {

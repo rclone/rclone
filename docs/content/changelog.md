@@ -6,6 +6,335 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.74.2 - 2026-05-22
+
+[See commits](https://github.com/rclone/rclone/compare/v1.74.1...v1.74.2)
+
+- Bug Fixes
+  - build
+    - Update golang.org/x/net to v0.55.0 to address:
+      - CVE-2026-42506: html: incorrect handling of namespaced elements in foreign content
+      - CVE-2026-39821: idna: failure to reject ASCII-only Punycode-encoded labels
+      - CVE-2026-42502: html: incorrect handling of HTML elements in foreign content
+      - CVE-2026-25680: html: denial of service when parsing arbitrary HTML
+      - CVE-2026-25681: html: incorrect handling of character references in DOCTYPE nodes
+      - CVE-2026-27136: html: duplicate attributes can cause XSS
+    - Update golang.org/x/crypto to v0.52.0 to address:
+      - CVE-2026-46598: ssh/agent: pathological inputs can lead to client panic
+      - CVE-2026-46597: ssh: byte arithmetic causes underflow and panic
+      - CVE-2026-39828: ssh: bypass of certificate restrictions
+      - CVE-2026-39835: ssh: server panic during CheckHostKey/Authenticate
+      - CVE-2026-39833: ssh/agent: key constraints not enforced
+      - CVE-2026-39832: ssh/agent: agent constraints dropped when forwarding keys
+      - CVE-2026-39827: ssh: memory leak when rejecting channels can lead to DoS
+      - CVE-2026-39830: ssh: client can cause server deadlock on unexpected responses
+      - CVE-2026-39829: ssh: pathological RSA/DSA parameters may cause DoS
+      - CVE-2026-39831: ssh: bypass of FIDO/U2F security keys physical interaction
+      - CVE-2026-39834: ssh: infinite loop on large channel writes
+      - CVE-2026-42508: ssh/knownhosts: auth bypass via unenforced @revoked status
+      - CVE-2026-46595: ssh: VerifiedPublicKeyCallback permissions skip enforcement
+    - Update golang.org/x/image to v0.41.0 to address:
+      - CVE-2026-42500: bmp: panic when reading out of bound palette index
+      - CVE-2026-33809: tiff: excessive resource consumption in PackBits decompression
+    - Update golang.org/x/sys to version v0.45.0 to address:
+      - CVE-2026-39824: windows: integer overflow in NewNTUnicodeString
+    - Update github.com/go-git/go-billy/v5 to 5.9.0 to fix CVE-2026-44740
+    - bisync: Fix --conflict-loser pathname with --conflict-resolve newer (nielash)
+    - gui: Update embedded release to 1.1.8 (Nick Craig-Wood)
+    - lib/http: Replace deprecated h2c.NewHandler with http.Server.Protocols (Nick Craig-Wood)
+    - rc: Remove duplicate metrics_addr option registration (Nick Craig-Wood)
+    - vfs/vfscache: Fix silent write failure when mounting with remote:. (Lucky945H)
+  - doc fixes (FTCHD, Iizuki, Leon Brocard, Nick Craig-Wood)
+- Drime
+  - Fix file doesn't exists error when trying to delete (John Volk)
+  - Fix 500 errors when listing shared folders (Alvinwylim)
+- Jottacloud
+  - Support whitelabel service Phonero Sky (Tore Anderson)
+- Protondrive
+  - Fix corrupted on transfer: sha1 hashes differ (William Tange)
+- S3
+  - Add new MEGA S4 endpoints on megas4.com including Asia-Pacific region (Nick Craig-Wood)
+- WebDAV
+  - Honour auth_redirect on listAll PROPFIND (Sai Asish Y)
+
+## v1.74.1 - 2026-05-08
+
+[See commits](https://github.com/rclone/rclone/compare/v1.74.0...v1.74.1)
+
+- Bug Fixes
+  - bisync: Fix retryable without `--resync` error message when `--resync` has a critical failure (Gustavo V. F.)
+  - build
+    - Fix multiple CVEs by upgrading to go1.26.3 (Nick Craig-Wood)
+      - CVE-2026-42501: cmd/go: malicious module proxy can bypass checksum database
+      - CVE-2026-39825: net/http/httputil: ReverseProxy forwards queries with more than urlmaxqueryparams parameters
+      - CVE-2026-39836: net: panic in Dial and LookupPort when handling NUL byte on Windows
+      - CVE-2026-42499: net/mail: quadratic string concatenation in consumePhrase
+      - CVE-2026-39820: net/mail: quadratic string concatentation in consumeComment
+      - CVE-2026-39819: cmd/go: "go bug" follows symlinks in predictable temporary filenames
+      - CVE-2026-39817: cmd/go: "go tool pack" does not sanitize output paths
+      - CVE-2026-33814: net/http: infinite loop in HTTP/2 transport when given bad SETTINGS_MAX_FRAME_SIZE
+      - CVE-2026-39826: html/template: escaper bypass leads to XSS
+      - CVE-2026-33811: net: crash when handling long CNAME response
+      - CVE-2026-39823: html/template: bypass of meta content URL escaping causes XSS
+    - Update golang.org/x/net to v0.53.0 to fix CVE-2026-33814 (Nick Craig-Wood)
+  - cmd/serve/s3: Return object listings in key order (Leon Brocard)
+- Cloudinary
+  - Fix retrying every error and fix pacer sleep units (Nick Craig-Wood)
+- Drime
+  - Fix large file uploads landing in drive root instead of configured folder (Nick Craig-Wood)
+  - Fix uploads of 100..200M files (Nick Craig-Wood)
+- Protondrive
+  - Route HTTP through rclone's transport (Nick Craig-Wood)
+  - Route library logging through rclone's logger (Nick Craig-Wood)
+  - Fix segfault when copying files missing revision metadata (Nick Craig-Wood)
+- S3
+  - Fix STS call per request by caching AssumeRole credentials (Nick Craig-Wood)
+  - Add new Fastly Object Storage regions (Leon Brocard)
+
+## v1.74.0 - 2026-05-01
+
+[See commits](https://github.com/rclone/rclone/compare/v1.73.0...v1.74.0)
+
+- New backends
+  - [Huawei Drive](/huaweidrive/) (王一赫)
+  - [iCloud Photos](/iclouddrive/#icloud-photos) (read only) (Yakov Till)
+  - New S3 providers
+    - [Fastly Object Storage](/s3/#fastly) (Leon Brocard)
+    - [HCP](/s3/#hcp) (Chris)
+    - [Impossible Cloud](/s3/#impossible-cloud) (Nick Craig-Wood)
+    - [UCloud US3](/s3/#us3) (jinkeyuu)
+    - [Zadara](/s3/#zadara) (Shlomi Avihou)
+- New commands
+  - [gui](/gui/): launch new embedded web based GUI for basic rclone operations (FTCHD, Nick Craig-Wood)
+- New Features
+  - build
+    - Update `golang.org/x/image/webp` to v0.39.0 to fix CVE-2026-33813 (Nick Craig-Wood)
+    - Bump `github.com/Azure/go-ntlmssp` to 0.1.1 to fix CVE-2026-32952 (dependabot[bot])
+    - Update to go1.26 and make go1.25 the minimum required version (Nick Craig-Wood)
+    - Update all dependencies (Nick Craig-Wood)
+    - Modernize Go code with go fix for go1.25 (Nick Craig-Wood)
+    - Fix `loong64` and `s390x` build (Suyun)
+  - docs
+    - Modernize rclone.org site design (Nick Craig-Wood)
+    - fixes (albertony, Enduriel, Jason, Luke Cyca, mathieulongtin, Nick Craig-Wood, SyoBoN)
+  - fshttp: Add `--dump curl` for dumping HTTP requests as curl commands (Nick Craig-Wood)
+  - graphics: Optimise images losslessly with ImageOptim (Leon Brocard)
+  - listremotes: Add `--exact` flag for filtering (Anton Bordwine)
+  - rc
+    - Flip auth default so all endpoints require auth unless opted out (Nick Craig-Wood)
+    - Add `core/disks` to enumerate attached disks (Nick Craig-Wood)
+    - Add `deletedDirs` stat to `core/stats` help output (Billy Hughes)
+  - serve http
+    - Add fallback embedded favicon (Leon Brocard)
+    - Add gzip compression for text responses (Leon Brocard)
+    - Dark mode for file browser (FTCHD)
+    - Add HTTP/2 cleartext support for all http servers (TheBabu)
+  - touch: Add metadata when using `--metadata-set` (Prakhar Chhalotre)
+- Bug Fixes
+  - accounting
+    - Update String method output format for clarity in transfer rate representation (Prakhar Chhalotre)
+    - Fix `rcat`/`copyurl` for `files.com` (Nick Craig-Wood)
+  - bisync
+    - Add missing rc params (nielash)
+    - Add more structured info to rc output (nielash)
+    - Auto-generate rc help docs (nielash)
+    - Fix handling of unreadable lockfiles (lif)
+    - Fix flaky TestBisyncConcurrent by increasing random name entropy (Nick Craig-Wood)
+    - Fix integration tests after sftp log changes (Nick Craig-Wood)
+  - copyurl: Fix ignored `--upload-headers` and `--download-headers` (Andriy Senyshyn)
+  - librclone/ctest: Add Windows support and fix memory management (BizaNator)
+  - log: Fix data race on OutputHandler.format field (Nick Craig-Wood)
+  - operations
+    - Multithread copy: grab memory before making go routines (Nick Craig-Wood)
+  - serve dlna: Fix Samsung TV compatibility (Nick Craig-Wood)
+  - serve nfs: Fix EOF flag in READ response not being set when read reaches end of file (Nick Craig-Wood)
+- Mount
+  - rc: fix mounts created with mountPoint "*" overwriting each other (Nick Craig-Wood)
+- VFS
+  - Fix slow `nfs serve` by adding `--vfs-handle-caching` (Nick Craig-Wood)
+  - Add context parameter to New() for config propagation (Nick Craig-Wood)
+  - Replace `context.TODO`/`Background` with stored VFS context (Nick Craig-Wood)
+- Local
+  - Remove fadvise calls that cause spinlock contention (Patrick Farrell)
+- Azure Blob
+  - Add `--azureblob-copy-total-concurrency` to limit total multipart copy concurrency (Duncan F)
+  - Add server side copy real time accounting (Nick Craig-Wood)
+  - Add `--azureblob-decompress` flag to download gzip-encoded files (Nick Craig-Wood)
+- Azurefiles
+  - Fix missing `x-ms-file-request-intent` header with OAuth (Nick Craig-Wood)
+- B2
+  - Add server side copy real time accounting (Nick Craig-Wood)
+- Drime
+  - Implement About (Cohinem)
+  - Fix listings of large directories (John Volk)
+- Drive
+  - Add integration test for handling folder names with single quotes (Prakhar Chhalotre)
+- Filelu
+  - Add multipart init response type (kingston125)
+  - Migrate API calls to `lib/rest` (kingston125)
+- Filen
+  - Make multi-threaded upload chunks individually retryable (Enduriel)
+- Iclouddrive
+  - Replace plaintext signin with SRP authentication (Mike GIllan)
+  - Use dynamic origin for SRP auth headers (Xiangzhe)
+  - Lowercase Apple ID for SRP authentication (Mike GIllan)
+  - Add read only  iCloud Photos support and SRP authentication (Yakov Till)
+- Internxt
+  - Implement multi-part uploads (José Zúniga)
+- Jottacloud
+  - Add encoding of percent character to default backend encoding (albertony)
+- Linkbox
+  - Fix downloading files by using web API (Nick Craig-Wood)
+- Mega
+  - Fix crash when logging in with previous auth keys fails (Andrew Gunnerson)
+- Pcloud
+  - Fix recursive listing from the root (Nick Craig-Wood)
+- Pikpak
+  - Support custom filenames for addurl backend command (wiserain)
+- Protondrive
+  - Align backend with newer Proton SDK stack (tdawe)
+  - Update to latest go-proton-api to use new host (dlaumen)
+  - Fix server-side moveto and DirMove against current API (Nick Craig-Wood)
+- S3
+  - Add Fastly Object Storage provider (Leon Brocard)
+  - Add HCP provider and `list_versions_oldest_first` quirk (Chris)
+  - Add Impossible Cloud as a new S3 provider (Nick Craig-Wood)
+  - Add UCloud Object Storage provider (#9230) (jinkeyuu)
+  - Add Zadara Object Storage provider (Shlomi Avihou)
+  - Remove StackPath Object Storage provider (Leon Brocard)
+  - Add server side copy real time accounting (Nick Craig-Wood)
+  - Add OVHcloud storage classes (Bjoern Franke)
+  - Add Object Lock support (Chris)
+  - Add new Fastly Object Storage regions (Leon Brocard)
+  - Scaleway: ONEZONE_IA is available in all zones, GLACIER only in FR-PAR (Bjoern Franke)
+  - Ionos: updated regions & endpoints (hxnd)
+  - IBM COS: provide ibm_iam_endpoint as a configurable param for IBM IAM-based auth (Bhagyashreek8)
+  - Fix Content-MD5 for Object Lock uploads and add GCS quirk (Chris)
+  - Fix regression where PutObject fails with non-seekable readers (Chris)
+  - Fix `--s3-versions` flag ignored by cleanup-hidden when GetBucketVersioning fails (Chris)
+  - Fix bucket creation failing on Ceph/radosgw (Jan Heylen)
+- SFTP
+  - Warn the user if no host key validation is configured (Nick Craig-Wood)
+- WebDAV
+  - Permit redirects on PROPFIND for metadata (Brian Bockelman)
+  - Request only required properties in listAll to improve performance (ZRHan)
+  - Optimize performance by using `Depth=0` for metadata requests (ZRHan)
+
+## v1.73.5 - 2026-04-19
+
+[See commits](https://github.com/rclone/rclone/compare/v1.73.4...v1.73.5)
+
+- Bug Fixes
+  - operations: Add AuthRequired to operations/fsinfo to prevent backend creation CVE-2026-41179 (Nick Craig-Wood)
+  - rc
+    - Add AuthRequired to options/set to prevent auth bypass CVE-2026-41176 (Nick Craig-Wood)
+    - Snapshot NoAuth at startup to prevent runtime auth bypass CVE-2026-41176 (Nick Craig-Wood)
+  - filter: Fix debug logs that fire before logger is configured (Nick Craig-Wood)
+- Azureblob
+  - Add Microsoft Partner Network User-Agent prefix (Nick Craig-Wood)
+- Drime
+  - Fix User.EntryPermissions JSON unmarshalling (a1pcm)
+- Iclouddrive
+  - Fix 'directory not found' error when the directory contains accent marks (Brais Couce)
+- S3
+  - Fix TencentCOS CDN endpoint failing on bucket check (Mozi)
+  - Fix empty delimiter parameter rejected by Archiware P5 server (Nick Craig-Wood)
+
+## v1.73.4 - 2026-04-08
+
+[See commits](https://github.com/rclone/rclone/compare/v1.73.3...v1.73.4)
+
+- Bug Fixes
+  - build
+    - Update to go 1.25.9 to fix multiple CVEs (Nick Craig-Wood)
+      - CVE-2026-32282: os: Root.Chmod can follow symlinks out of the root on Linux
+      - CVE-2026-32289: html/template: JS template literal context incorrectly tracked
+      - CVE-2026-33810: crypto/x509: excluded DNS constraints not properly applied to wildcard domains
+      - CVE-2026-27144: cmd/compile: no-op interface conversion bypasses overlap checking
+      - CVE-2026-27143: cmd/compile: possible memory corruption after bound check elimination
+      - CVE-2026-32288: archive/tar: unbounded allocation when parsing old format GNU sparse map
+      - CVE-2026-32283: crypto/tls: multiple key update handshake messages can cause connection to deadlock
+      - CVE-2026-27140: cmd/go: trust layer bypass when using cgo and SWIG
+      - CVE-2026-32280: crypto/x509: unexpected work during chain building
+      - CVE-2026-32281: crypto/x509: inefficient policy validation
+    - Fix Denial of Service due to Panic in AWS SDK for Go v2 SDK EventStream Decoder (dependabot[bot])
+    - Update golang.org/x/image to 0.38.0 to fix CVE-2026-33809  (dependabot[bot])
+  - docs
+    - Fix header level for metadata option (Clément Notin)
+    - Fix markdown issues in mount docs (albertony)
+    - Fix link to not be language specific (Ross Smith II)
+    - Note macOS 10.15 (Catalina) support with version v1.70.3 (kapitainsky)
+- Filen
+  - Update SDK version (Enduriel)
+
+## v1.73.3 - 2026-03-23
+
+[See commits](https://github.com/rclone/rclone/compare/v1.73.2...v1.73.3)
+
+- Bug Fixes
+  - build
+    - Update to google.golang.org/grpc 1.79.3 to fix CVE-2026-33186 (dependabot[bot])
+    - Update to github.com/buger/jsonparser 1.1.2 to fix GHSA-6g7g-w4f8-9c9x (dependabot[bot])
+  - doc fixes
+    - Added text to the label showing version-introduced info (Jan-Philipp Reßler)
+    - Clarify Filen password change requires updating both password and API key in rclone config (Jason)
+    - s3: clarify multi tenant support for Cubbit (Marco Ferretti)
+    - jottacloud: Fix broken link (albertony)
+  - lib/rest: Fix URLPathEscapeAll breaking WebDAV servers (eg nzbdav) with strict path matching (Andrew Furman)
+  - list: Fix nil pointer panic in Sorter when temp file creation fails (Nick Craig-Wood)
+
+## v1.73.2 - 2026-03-06
+
+[See commits](https://github.com/rclone/rclone/compare/v1.73.1...v1.73.2)
+
+- Bug Fixes
+  - build
+    - Update to go 1.25.8 to fix CVE-2026-27137 CVE-2026-27138 CVE-2026-25679 CVE-2026-27142 (Nick Craig-Wood)
+    - Update github.com/cloudflare/circl to v1.6.3 to fix CVE-2026-1229 (Nick Craig-Wood)
+    - Update to golang.org/x/net v0.51.0 to fix CVE-2026-27141 (Nick Craig-Wood)
+  - docs fixes:
+    - bisync: Add group Sync to the bisync command (Jan-Philipp Reßler)
+    - Note that --use-server-modtime only works on some backends (Nick Craig-Wood)
+    - Document unsupported S3 object keys with double slashes (Adam Kasztenny)
+    - Fix headers hierarchy for mount.md (Dark Dragon)
+    - Fix new drive flag typo in changelog (razorloves)
+- Archive
+  - Extract: fix extraction with "./" prefix from tar entry paths (Varun Chawla)
+- Drime
+  - Fix chunk-uploaded files ignoring workspace ID (a1pcm)
+- Internxt
+  - Fix Entry doesn't belong in directory errors on windows (jzunigax2)
+- WebDAV
+  - Escape reserved characters in URL path segments (Varun Chawla)
+  - Add missing headers for CORS (Romāns Potašovs)
+
+## v1.73.1 - 2026-02-17
+
+[See commits](https://github.com/rclone/rclone/compare/v1.73.0...v1.73.1)
+
+- Bug Fixes
+  - accounting: Fix missing server side stats from core/stats rc (Nick Craig-Wood)
+  - build
+    - Fix CVE-2025-68121 by updating go to 1.25.7 or later (Nick Craig-Wood)
+    - Bump github.com/go-chi/chi/v5 from 5.2.3 to 5.2.5 to fix GO-2026-4316 (albertony)
+  - docs: Extend copyurl docs with an example of CSV FILENAMEs starting with a path. (Jack Kelly)
+  - march: Fix runtime: program exceeds 10000-thread limit (Nick Craig-Wood)
+  - pacer
+    - Fix deadlock between pacer token and --max-connections (Nick Craig-Wood)
+    - Re-read the sleep time as it may be stale (Nick Craig-Wood)
+- Drime
+  - Fix files and directories being created in the default workspace (Nick Craig-Wood)
+- Filelu
+  - Avoid buffering entire file in memory (kingston125)
+  - Add multipart upload support with configurable cutoff (kingston125)
+- Filen
+  - Fix 32 bit targets not being able to list directories (Enduriel)
+  - Fix potential panic in case of error during upload (Enduriel)
+- Internxt
+  - Implement re-login under refresh logic, improve retry logic (José Zúniga)
+-S3
+  - Set list_version to 2 for FileLu S3 configuration (kingston125)
+
 ## v1.73.0 - 2026-01-30
 
 [See commits](https://github.com/rclone/rclone/compare/v1.72.0...v1.73.0)
@@ -36,7 +365,7 @@ description: "Rclone Changelog"
 - B2
   - Support authentication with new bucket restricted application keys (DianaNites)
 - Drive
-  - Add `--drive-metadata-force-expansive-access` flag (Nick Craig-Wood)
+  - Add `--drive-metadata-enforce-expansive-access` flag (Nick Craig-Wood)
   - Fix crash when trying to creating shortcut to a Google doc (Nick Craig-Wood)
 - FTP
   - Add http proxy authentication support (Nicolas Dessart)
@@ -262,7 +591,7 @@ description: "Rclone Changelog"
   - [OVHcloud Object Storage](/s3/#ovhcloud) (Florent Vennetier)
   - [Zata](/s3/#Zata) ($@M@RTH_)
 - New Features
-  - Allow [global config to be overriden or set on backend creation](/docs/#globalconfig) (Nick Craig-Wood)
+  - Allow [global config to be overridden or set on backend creation](/docs/#globalconfig) (Nick Craig-Wood)
   - bisync: Promoted from beta to stable (nielash)
   - build
     - Update to go1.25 and make go1.24 the minimum required version (Nick Craig-Wood)
@@ -329,7 +658,7 @@ description: "Rclone Changelog"
     - This allows `--ca-cert`, `--client-cert` etc to be used.
     - This also allows `override.ca_cert = XXX` to be used in the config file.
 - Googlephotos
-  - Added warning for Google Photos compatability-fixes (raider13209)
+  - Added warning for Google Photos compatibility-fixes (raider13209)
 - Imagekit
   - Return correct error when attempting to upload zero length files (Nick Craig-Wood)
   - Don't low level retry uploads (Nick Craig-Wood)
@@ -1686,7 +2015,7 @@ instead of of `--size-only`, when `check` is not available.
   - Add `--drive-env-auth` to get IAM credentials from runtime (Peter Brunner)
   - Update drive service account guide (Juang, Yi-Lin)
   - Fix change notify picking up files outside the root (Nick Craig-Wood)
-  - Fix trailing slash mis-identificaton of folder as file (Nick Craig-Wood)
+  - Fix trailing slash mis-identification of folder as file (Nick Craig-Wood)
   - Fix incorrect remote after Update on object (Nick Craig-Wood)
 - Dropbox
   - Implement `--dropbox-pacer-min-sleep` flag (Nick Craig-Wood)

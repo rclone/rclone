@@ -82,10 +82,15 @@ func TestRc(t *testing.T) {
 		require.True(t, os.IsNotExist(err))
 
 		// mount
-		_, err = mount.Fn(ctx, in)
+		out, err := mount.Fn(ctx, in)
 		if err != nil {
 			t.Skipf("Mount failed - skipping test: %v", err)
 		}
+
+		// check the returned mount point matches what we asked for
+		returnedMountPoint, err := out.GetString("mountPoint")
+		require.NoError(t, err)
+		assert.Equal(t, mountPoint, returnedMountPoint)
 
 		// check file.txt is there now
 		fi, err := os.Stat(filePath)

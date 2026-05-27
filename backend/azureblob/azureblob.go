@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"path"
 	"slices"
@@ -46,6 +47,8 @@ import (
 	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/pool"
+	"github.com/rclone/rclone/lib/readers"
+	"github.com/rclone/rclone/lib/transferaccounter"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -64,6 +67,16 @@ const (
 	defaultAccessTier     = blob.AccessTier("") // FIXME AccessTierNone
 	sasCopyValidity       = time.Hour           // how long SAS should last when doing server side copy
 )
+
+// setAcceptEncodingGzip is a per-call policy that sets Accept-Encoding: gzip
+// on every request. This prevents the Go HTTP transport from automatically
+// decompressing gzip-encoded blobs on download.
+type setAcceptEncodingGzip struct{}
+
+func (p setAcceptEncodingGzip) Do(req *policy.Request) (*http.Response, error) {
+	req.Raw().Header.Set("Accept-Encoding", "gzip")
+	return req.Next()
+}
 
 var (
 	errCantUpdateArchiveTierBlobs = fserrors.NoRetryError(errors.New("can't update archive tier blob without --azureblob-archive-tier-delete"))
@@ -183,6 +196,16 @@ https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-optimi
 In tests, copy speed increases almost linearly with copy
 concurrency.`,
 			Default:  512,
+			Advanced: true,
+		}, {
+			Name: "copy_total_concurrency",
+			Help: `Global concurrency limit for multipart copy chunks.
+
+This limits the total number of multipart copy chunks running at once
+across all files.
+
+Set to 0 to disable this limiter.`,
+			Default:  0,
 			Advanced: true,
 		}, {
 			Name: "use_copy_blob",
@@ -338,6 +361,19 @@ rclone does if you know the container exists already.
 			Default:   "",
 			Exclusive: true,
 			Advanced:  true,
+		}, {
+			Name: "decompress",
+			Help: `If set this will decompress gzip encoded objects.
+
+It is possible to upload objects to Azure Blob Storage with "Content-Encoding: gzip"
+set. Normally rclone will download these files as compressed objects.
+
+If this flag is set then rclone will decompress these files with
+"Content-Encoding: gzip" as they are received. This means that rclone
+can't check the size and hash but the file contents will be decompressed.
+`,
+			Advanced: true,
+			Default:  false,
 		}}),
 	})
 }
@@ -345,21 +381,23 @@ rclone does if you know the container exists already.
 // Options defines the configuration for this backend
 type Options struct {
 	auth.Options
-	ChunkSize         fs.SizeSuffix        `config:"chunk_size"`
-	CopyCutoff        fs.SizeSuffix        `config:"copy_cutoff"`
-	CopyConcurrency   int                  `config:"copy_concurrency"`
-	UseCopyBlob       bool                 `config:"use_copy_blob"`
-	UploadConcurrency int                  `config:"upload_concurrency"`
-	ListChunkSize     uint                 `config:"list_chunk"`
-	AccessTier        string               `config:"access_tier"`
-	ArchiveTierDelete bool                 `config:"archive_tier_delete"`
-	DisableCheckSum   bool                 `config:"disable_checksum"`
-	Enc               encoder.MultiEncoder `config:"encoding"`
-	PublicAccess      string               `config:"public_access"`
-	DirectoryMarkers  bool                 `config:"directory_markers"`
-	NoCheckContainer  bool                 `config:"no_check_container"`
-	NoHeadObject      bool                 `config:"no_head_object"`
-	DeleteSnapshots   string               `config:"delete_snapshots"`
+	ChunkSize            fs.SizeSuffix        `config:"chunk_size"`
+	CopyCutoff           fs.SizeSuffix        `config:"copy_cutoff"`
+	CopyConcurrency      int                  `config:"copy_concurrency"`
+	CopyTotalConcurrency int                  `config:"copy_total_concurrency"`
+	UseCopyBlob          bool                 `config:"use_copy_blob"`
+	UploadConcurrency    int                  `config:"upload_concurrency"`
+	ListChunkSize        uint                 `config:"list_chunk"`
+	AccessTier           string               `config:"access_tier"`
+	ArchiveTierDelete    bool                 `config:"archive_tier_delete"`
+	DisableCheckSum      bool                 `config:"disable_checksum"`
+	Enc                  encoder.MultiEncoder `config:"encoding"`
+	PublicAccess         string               `config:"public_access"`
+	DirectoryMarkers     bool                 `config:"directory_markers"`
+	NoCheckContainer     bool                 `config:"no_check_container"`
+	NoHeadObject         bool                 `config:"no_head_object"`
+	DeleteSnapshots      string               `config:"delete_snapshots"`
+	Decompress           bool                 `config:"decompress"`
 }
 
 // Fs represents a remote azure server
@@ -381,7 +419,10 @@ type Fs struct {
 	cache              *bucket.Cache                // cache for container creation status
 	pacer              *fs.Pacer                    // To pace and retry the API calls
 	uploadToken        *pacer.TokenDispenser        // control concurrency
+	copyToken          *pacer.TokenDispenser        // global multipart copy concurrency limiter
 	publicAccess       container.PublicAccessType   // Container Public Access Level
+
+	warnCompressed sync.Once // warn once about compressed files
 
 	// user delegation cache
 	userDelegationMu     sync.Mutex
@@ -391,15 +432,16 @@ type Fs struct {
 
 // Object describes an azure object
 type Object struct {
-	fs         *Fs               // what this object is part of
-	remote     string            // The remote path
-	modTime    time.Time         // The modified time of the object if known
-	md5        string            // MD5 hash if known
-	size       int64             // Size of the object
-	mimeType   string            // Content-Type of the object
-	accessTier blob.AccessTier   // Blob Access Tier
-	meta       map[string]string // blob metadata - take metadataMu when accessing
-	tags       map[string]string // blob tags
+	fs              *Fs               // what this object is part of
+	remote          string            // The remote path
+	modTime         time.Time         // The modified time of the object if known
+	md5             string            // MD5 hash if known
+	size            int64             // Size of the object
+	mimeType        string            // Content-Type of the object
+	accessTier      blob.AccessTier   // Blob Access Tier
+	meta            map[string]string // blob metadata - take metadataMu when accessing
+	tags            map[string]string // blob tags
+	contentEncoding *string           // Content-Encoding of the object
 }
 
 // ------------------------------------------------------------
@@ -586,6 +628,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		ci:          ci,
 		pacer:       fs.NewPacer(ctx, pacer.NewS3(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 		uploadToken: pacer.NewTokenDispenser(ci.Transfers),
+		copyToken:   pacer.NewTokenDispenser(opt.CopyTotalConcurrency),
 		cache:       bucket.NewCache(),
 		cntSVCcache: make(map[string]*container.Client, 1),
 	}
@@ -619,6 +662,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		NewClientWithSharedKeyCredential: service.NewClientWithSharedKeyCredential,
 		NewSharedKeyCredential:           service.NewSharedKeyCredential,
 		SetClientOptions: func(options *service.ClientOptions, policyClientOptions policy.ClientOptions) {
+			// Override the automatic decompression in the transport
+			// to download compressed files as-is
+			policyClientOptions.PerCallPolicies = append(policyClientOptions.PerCallPolicies, setAcceptEncodingGzip{})
 			options.ClientOptions = policyClientOptions
 		},
 	}
@@ -729,8 +775,8 @@ func parseXMsTags(s string) (map[string]string, error) {
 		return map[string]string{}, nil
 	}
 	out := make(map[string]string)
-	parts := strings.Split(s, ",")
-	for _, p := range parts {
+	parts := strings.SplitSeq(s, ",")
+	for p := range parts {
 		p = strings.TrimSpace(p)
 		if p == "" {
 			continue
@@ -893,9 +939,7 @@ func assembleCopyParams(ctx context.Context, f *Fs, src fs.Object, srcProps *blo
 				if meta == nil {
 					meta = make(map[string]*string, len(userMeta))
 				}
-				for k, v := range userMeta {
-					meta[k] = v
-				}
+				maps.Copy(meta, userMeta)
 			}
 			// Apply tags if any
 			if len(mappedTags) > 0 {
@@ -992,9 +1036,7 @@ func (o *Object) applyMappedMetadata(ctx context.Context, src fs.ObjectInfo, ui 
 		if o.tags == nil {
 			o.tags = make(map[string]string, len(tags))
 		}
-		for k, v := range tags {
-			o.tags[k] = v
-		}
+		maps.Copy(o.tags, tags)
 	}
 
 	if mappedModTime != nil {
@@ -1745,18 +1787,26 @@ func (f *Fs) copyMultipart(ctx context.Context, remote, dstContainer, dstPath st
 		blockIDs = make([]string, numParts) // list of blocks for finalize
 		g, gCtx  = errgroup.WithContext(ctx)
 		checker  = newCheckForInvalidBlockOrBlob("copy", o)
+		account  = transferaccounter.Get(ctx)
 	)
 	g.SetLimit(f.opt.CopyConcurrency)
 
 	fs.Debugf(o, "Starting  multipart copy with %d parts of size %v", numParts, fs.SizeSuffix(partSize))
+	account.Start()
 	for partNum := uint64(0); partNum < uint64(numParts); partNum++ {
 		// Fail fast, in case an errgroup managed function returns an error
 		// gCtx is cancelled. There is no point in uploading all the other parts.
 		if gCtx.Err() != nil {
 			break
 		}
+		if f.opt.CopyTotalConcurrency > 0 {
+			f.copyToken.Get()
+		}
 		partNum := partNum // for closure
 		g.Go(func() error {
+			if f.opt.CopyTotalConcurrency > 0 {
+				defer f.copyToken.Put()
+			}
 			blockID := bic.newBlockID(partNum)
 			options := blockblob.StageBlockFromURLOptions{
 				Range: blob.HTTPRange{
@@ -1790,6 +1840,7 @@ func (f *Fs) copyMultipart(ctx context.Context, remote, dstContainer, dstPath st
 				return fmt.Errorf("multipart copy: failed to copy chunk %d with %v bytes: %w", partNum+1, -1, err)
 			}
 			blockIDs[partNum] = blockID
+			account.Add(options.Range.Count)
 			return nil
 		})
 	}
@@ -1859,9 +1910,7 @@ func (f *Fs) copySinglepart(ctx context.Context, remote, dstContainer, dstPath s
 	// Apply tags and post-copy headers only when mapping requested changes
 	if len(tags) > 0 {
 		options.BlobTags = make(map[string]string, len(tags))
-		for k, v := range tags {
-			options.BlobTags[k] = v
-		}
+		maps.Copy(options.BlobTags, tags)
 	}
 	if hadMapping {
 		// Only set metadata explicitly when mapping was requested; otherwise
@@ -1983,6 +2032,10 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if t != hash.MD5 {
 		return "", hash.ErrUnsupported
 	}
+	// If decompressing, erase the hash
+	if o.size < 0 {
+		return "", nil
+	}
 	// Convert base64 encoded md5 into lower case hex
 	if o.md5 == "" {
 		return "", nil
@@ -2062,9 +2115,7 @@ func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
 
 	// Merge user metadata (already lower-cased keys)
 	metadataMu.Lock()
-	for k, v := range o.meta {
-		m[k] = v
-	}
+	maps.Copy(m, o.meta)
 	metadataMu.Unlock()
 
 	return m, nil
@@ -2110,6 +2161,13 @@ func (o *Object) decodeMetaDataFromPropertiesResponse(info *blob.GetPropertiesRe
 		o.accessTier = blob.AccessTier(*info.AccessTier)
 	}
 	o.setMetadata(metadata)
+	o.contentEncoding = info.ContentEncoding
+
+	// If decompressing then size and md5sum are unknown
+	if o.fs.opt.Decompress && o.contentEncoding != nil && *o.contentEncoding == "gzip" {
+		o.size = -1
+		o.md5 = ""
+	}
 
 	return nil
 }
@@ -2162,6 +2220,13 @@ func (o *Object) decodeMetaDataFromDownloadResponse(info *blob.DownloadStreamRes
 			fs.Debugf(o, "Failed to find length in %q", contentRange)
 		}
 	}
+	o.contentEncoding = info.ContentEncoding
+
+	// If decompressing then size and md5sum are unknown
+	if o.fs.opt.Decompress && o.contentEncoding != nil && *o.contentEncoding == "gzip" {
+		o.size = -1
+		o.md5 = ""
+	}
 
 	return nil
 }
@@ -2200,6 +2265,13 @@ func (o *Object) decodeMetaDataFromBlob(info *container.BlobItem) (err error) {
 		o.accessTier = *info.Properties.AccessTier
 	}
 	o.setMetadata(metadata)
+	o.contentEncoding = info.Properties.ContentEncoding
+
+	// If decompressing then size and md5sum are unknown
+	if o.fs.opt.Decompress && o.contentEncoding != nil && *o.contentEncoding == "gzip" {
+		o.size = -1
+		o.md5 = ""
+	}
 
 	return nil
 }
@@ -2375,6 +2447,17 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode metadata for download: %w", err)
 	}
+
+	// Decompress body if necessary
+	if downloadResponse.ContentEncoding != nil && *downloadResponse.ContentEncoding == "gzip" {
+		if o.fs.opt.Decompress {
+			return readers.NewGzipReader(downloadResponse.Body)
+		}
+		o.fs.warnCompressed.Do(func() {
+			fs.Logf(o, "Not decompressing 'Content-Encoding: gzip' compressed file. Use --azureblob-decompress to override")
+		})
+	}
+
 	return downloadResponse.Body, nil
 }
 

@@ -4,7 +4,7 @@ description: "Rclone docs for Citrix ShareFile"
 versionIntroduced: "v1.50"
 ---
 
-# {{< icon "fas fa-share-square" >}} Citrix ShareFile
+# Citrix ShareFile
 
 [Citrix ShareFile](https://sharefile.com) is a secure file sharing and transfer
 service aimed as business.

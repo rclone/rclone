@@ -287,13 +287,13 @@ type StartLargeFileRequest struct {
 
 // StartLargeFileResponse is the response to StartLargeFileRequest
 type StartLargeFileResponse struct {
-	ID              string            `json:"fileId"`                    // The unique identifier for this version of this file. Used with b2_get_file_info, b2_download_file_by_id, and b2_delete_file_version.
-	Name            string            `json:"fileName"`                  // The name of this file, which can be used with b2_download_file_by_name.
-	AccountID       string            `json:"accountId"`                 // The identifier for the account.
-	BucketID        string            `json:"bucketId"`                  // The unique ID of the bucket.
-	ContentType     string            `json:"contentType"`               // The MIME type of the file.
-	Info            map[string]string `json:"fileInfo"`                  // The custom information that was uploaded with the file. This is a JSON object, holding the name/value pairs that were uploaded with the file.
-	UploadTimestamp Timestamp         `json:"uploadTimestamp,omitempty"` // This is a UTC time when this file was uploaded.
+	ID              string            `json:"fileId"`          // The unique identifier for this version of this file. Used with b2_get_file_info, b2_download_file_by_id, and b2_delete_file_version.
+	Name            string            `json:"fileName"`        // The name of this file, which can be used with b2_download_file_by_name.
+	AccountID       string            `json:"accountId"`       // The identifier for the account.
+	BucketID        string            `json:"bucketId"`        // The unique ID of the bucket.
+	ContentType     string            `json:"contentType"`     // The MIME type of the file.
+	Info            map[string]string `json:"fileInfo"`        // The custom information that was uploaded with the file. This is a JSON object, holding the name/value pairs that were uploaded with the file.
+	UploadTimestamp Timestamp         `json:"uploadTimestamp"` // This is a UTC time when this file was uploaded.
 }
 
 // GetUploadPartURLRequest is passed to b2_get_upload_part_url

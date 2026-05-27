@@ -108,7 +108,7 @@ func mountOptions(VFS *vfs.VFS, device string, mountpoint string, opt *mountlib.
 func waitFor(fn func() bool) (ok bool) {
 	const totalWait = 10 * time.Second
 	const individualWait = 10 * time.Millisecond
-	for i := 0; i < int(totalWait/individualWait); i++ {
+	for range int(totalWait / individualWait) {
 		ok = fn()
 		if ok {
 			return ok
@@ -124,12 +124,12 @@ func waitFor(fn func() bool) (ok bool) {
 //
 // returns an error, and an error channel for the serve process to
 // report an error when fusermount is called.
-func mount(VFS *vfs.VFS, mountPath string, opt *mountlib.Options) (<-chan error, func() error, error) {
+func mount(VFS *vfs.VFS, mountPath string, opt *mountlib.Options) (<-chan error, func() error, string, error) {
 	// Get mountpoint using OS specific logic
 	f := VFS.Fs()
 	mountpoint, err := getMountpoint(f, mountPath, opt)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, "", err
 	}
 	fs.Debugf(nil, "Mounting on %q (%q)", mountpoint, opt.VolumeName)
 
@@ -205,7 +205,7 @@ func mount(VFS *vfs.VFS, mountPath string, opt *mountlib.Options) (<-chan error,
 	select {
 	case err := <-errChan:
 		err = fmt.Errorf("mount stopped before calling Init: %w", err)
-		return nil, nil, err
+		return nil, nil, "", err
 	case <-fsys.ready:
 	}
 
@@ -220,5 +220,5 @@ func mount(VFS *vfs.VFS, mountPath string, opt *mountlib.Options) (<-chan error,
 		}
 	}
 
-	return errChan, unmount, nil
+	return errChan, unmount, mountpoint, nil
 }

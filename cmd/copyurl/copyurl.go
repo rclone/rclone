@@ -70,6 +70,15 @@ Note that |--stdout| and |--print-filename| are incompatible with |--urls|.
 This will do |--transfers| copies in parallel. Note that if |--auto-filename|
 is desired for all URLs then a file with only URLs and no filename can be used.
 
+Each FILENAME in the CSV file can start with a relative path which will be appended
+to the destination path provided at the command line. For example, running the command
+shown above with the following CSV file will write two files to the destination: 
+|remote:dir/local/path/bar.json| and |remote:dir/another/local/directory/qux.json|
+|||csv
+https://example.org/foo/bar.json,local/path/bar.json
+https://example.org/qux/baz.json,another/local/directory/qux.json
+|||
+
 ### Troubleshooting
 
 If you can't get |rclone copyurl| to work then here are some things you can try:

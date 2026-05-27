@@ -35,6 +35,15 @@ case "${1:-}" in
 
     rc=$(cat "${RUN_REF_COUNT}" 2>/dev/null || echo 0)
 
+    # If a previous run died without decrementing the refcount, the
+    # container will be gone but the count will still be > 0. Treat
+    # that as rc=0 so future stops actually reach zero and stop the
+    # server.
+    if (( rc > 0 )) && ! _is_running; then
+      echo "stale refcount ${rc} with no running container — resetting to 0" >&2
+      rc=0
+    fi
+
     if (( rc == 0 )); then
       # First client: ensure a clean instance, then start and cache env
       if _is_running; then
@@ -45,15 +54,6 @@ case "${1:-}" in
         exit 1
       fi
       printf "%s\n" "$out" > "${RUN_OUTPUT}"
-    else
-      # Already owned: make sure it’s still up; if not, restart and refresh env
-      if ! _is_running; then
-        if ! out="$(start)"; then
-          echo "failed to restart" >&2
-          exit 1
-        fi
-        printf "%s\n" "$out" > "${RUN_OUTPUT}"
-      fi
     fi
 
     rc=$((rc+1)); echo "${rc}" > "${RUN_REF_COUNT}"
@@ -83,7 +83,23 @@ case "${1:-}" in
     trap '_release_lock' EXIT
 
     stop || true
-    rm -rf "${RUN_BASE}"
+    rm -rf "${RUN_ROOT}"
+
+    trap - EXIT
+    _release_lock
+    ;;
+
+  force-stop)
+    # Unconditionally stop the server and zero the refcount. Used as a
+    # safety-net sweep at the end of a test_all run so a stuck refcount
+    # can't leave a container running.
+    _acquire_lock
+    trap '_release_lock' EXIT
+
+    if _is_running; then
+      stop || true
+    fi
+    echo 0 > "${RUN_REF_COUNT}"
 
     trap - EXIT
     _release_lock
@@ -95,7 +111,7 @@ case "${1:-}" in
     ;;
 
   *)
-    echo "usage: $0 {start|stop|reset|status}" >&2
+    echo "usage: $0 {start|stop|reset|force-stop|status}" >&2
     exit 2
     ;;
 esac

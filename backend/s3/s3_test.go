@@ -5,6 +5,7 @@ import (
 	"context"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/rclone/rclone/fs"
@@ -92,3 +93,87 @@ var (
 	_ fstests.SetUploadCutoffer   = (*Fs)(nil)
 	_ fstests.SetCopyCutoffer     = (*Fs)(nil)
 )
+
+func TestParseRetainUntilDate(t *testing.T) {
+	now := time.Now()
+
+	tests := []struct {
+		name      string
+		input     string
+		wantErr   bool
+		checkFunc func(t *testing.T, result time.Time)
+	}{
+		{
+			name:    "RFC3339 date",
+			input:   "2030-01-15T10:30:00Z",
+			wantErr: false,
+			checkFunc: func(t *testing.T, result time.Time) {
+				expected, _ := time.Parse(time.RFC3339, "2030-01-15T10:30:00Z")
+				assert.Equal(t, expected, result)
+			},
+		},
+		{
+			name:    "RFC3339 date with timezone",
+			input:   "2030-06-15T10:30:00+02:00",
+			wantErr: false,
+			checkFunc: func(t *testing.T, result time.Time) {
+				expected, _ := time.Parse(time.RFC3339, "2030-06-15T10:30:00+02:00")
+				assert.Equal(t, expected, result)
+			},
+		},
+		{
+			name:    "duration days",
+			input:   "365d",
+			wantErr: false,
+			checkFunc: func(t *testing.T, result time.Time) {
+				expected := now.Add(365 * 24 * time.Hour)
+				diff := result.Sub(expected)
+				assert.Less(t, diff.Abs(), 2*time.Second, "result should be ~365 days from now")
+			},
+		},
+		{
+			name:    "duration hours",
+			input:   "24h",
+			wantErr: false,
+			checkFunc: func(t *testing.T, result time.Time) {
+				expected := now.Add(24 * time.Hour)
+				diff := result.Sub(expected)
+				assert.Less(t, diff.Abs(), 2*time.Second, "result should be ~24 hours from now")
+			},
+		},
+		{
+			name:    "duration minutes",
+			input:   "30m",
+			wantErr: false,
+			checkFunc: func(t *testing.T, result time.Time) {
+				expected := now.Add(30 * time.Minute)
+				diff := result.Sub(expected)
+				assert.Less(t, diff.Abs(), 2*time.Second, "result should be ~30 minutes from now")
+			},
+		},
+		{
+			name:    "invalid input",
+			input:   "not-a-date",
+			wantErr: true,
+		},
+		{
+			name:    "empty input",
+			input:   "",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := parseRetainUntilDate(tt.input)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			if tt.checkFunc != nil {
+				tt.checkFunc(t, result)
+			}
+		})
+	}
+}

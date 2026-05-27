@@ -54,7 +54,7 @@ const (
 	rootURL             = baseURL + "api/v1"
 	maxUploadParts      = 10000 // maximum allowed number of parts in a multi-part upload
 	minChunkSize        = fs.SizeSuffix(1024 * 1024 * 5)
-	defaultUploadCutoff = fs.SizeSuffix(200 * 1024 * 1024)
+	defaultUploadCutoff = fs.SizeSuffix(5 * 1024 * 1024) // as per https://docs.drime.cloud/uploads-guide
 )
 
 // Register with Fs
@@ -145,14 +145,6 @@ If you are uploading small numbers of large files over high-speed links
 and these uploads do not fully utilize your bandwidth, then increasing
 this may help to speed up the transfers.`,
 			Default:  4,
-			Advanced: true,
-		}, {
-			Name: "upload_cutoff",
-			Help: `Cutoff for switching to chunked upload.
-
-Any files larger than this will be uploaded in chunks of chunk_size.
-The minimum is 0 and the maximum is 5 GiB.`,
-			Default:  defaultUploadCutoff,
 			Advanced: true,
 		}, {
 			Name:     config.ConfigEncoding,
@@ -278,6 +270,11 @@ var retryErrorCodes = []int{
 	503, // Service Unavailable
 	504, // Gateway Timeout
 	509, // Bandwidth Limit Exceeded
+	520, // Cloudflare: Web server returns an unknown error
+	521, // Cloudflare: Web server is down
+	522, // Cloudflare: Connection timed out
+	523, // Cloudflare: Origin is unreachable
+	524, // Cloudflare: A timeout occurred
 }
 
 // shouldRetry returns a boolean as to whether this resp and err
@@ -476,8 +473,12 @@ func (f *Fs) createDir(ctx context.Context, pathID, leaf string, modTime time.Ti
 	var resp *http.Response
 	var result api.CreateFolderResponse
 	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/folders",
+		Method:     "POST",
+		Path:       "/folders",
+		Parameters: url.Values{},
+	}
+	if f.opt.WorkspaceID != "" {
+		opts.Parameters.Set("workspaceId", f.opt.WorkspaceID)
 	}
 	mkdir := api.CreateFolderRequest{
 		Name:     f.opt.Enc.FromStandardName(leaf),
@@ -523,7 +524,7 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 		Parameters: url.Values{},
 	}
 	if dirID != "" {
-		opts.Parameters.Add("parentIds", dirID)
+		opts.Parameters.Add("folderId", dirID)
 	}
 	if directoriesOnly {
 		opts.Parameters.Add("type", api.ItemTypeFolder)
@@ -561,10 +562,10 @@ OUTER:
 				break OUTER
 			}
 		}
-		if result.NextPage == 0 {
+		if result.CurrentPage == result.LastPage {
 			break
 		}
-		page = result.NextPage
+		page = result.CurrentPage + 1
 	}
 	return found, err
 }
@@ -705,6 +706,11 @@ func (f *Fs) deleteObject(ctx context.Context, id string) error {
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
+		// If Drime returns 422 with invalid entry ID, the object is already gone.
+		// Map this to a standard not-found error
+		if strings.Contains(err.Error(), "entry ids is invalid") {
+			return fs.ErrorObjectNotFound
+		}
 		return fmt.Errorf("failed to delete item: %w", err)
 	}
 	// Check the individual result codes also
@@ -778,9 +784,19 @@ func (f *Fs) patch(ctx context.Context, id, attribute string, value string) (ite
 		Name: value,
 	}
 	var result api.UpdateItemResponse
+	// The drime origin returns a malformed response (seen by Cloudflare as
+	// a 520) for a literal PUT to this endpoint, so use a POST with Laravel
+	// method spoofing instead - the API routes it to the same handler.
 	opts := rest.Opts{
-		Method: "PUT",
-		Path:   "/file-entries/" + id,
+		Method:     "POST",
+		Path:       "/file-entries/" + id,
+		Parameters: url.Values{},
+		ExtraHeaders: map[string]string{
+			"X-HTTP-Method-Override": "PUT",
+		},
+	}
+	if f.opt.WorkspaceID != "" {
+		opts.Parameters.Set("workspaceId", f.opt.WorkspaceID)
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &request, &result)
@@ -807,8 +823,12 @@ func (f *Fs) move(ctx context.Context, id, newDirID string) (err error) {
 	}
 	var result api.MoveResponse
 	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/file-entries/move",
+		Method:     "POST",
+		Path:       "/file-entries/move",
+		Parameters: url.Values{},
+	}
+	if f.opt.WorkspaceID != "" {
+		opts.Parameters.Set("workspaceId", f.opt.WorkspaceID)
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &request, &result)
@@ -945,8 +965,12 @@ func (f *Fs) copy(ctx context.Context, id, newDirID string) (item *api.Item, err
 	}
 	var result api.CopyResponse
 	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/file-entries/duplicate",
+		Method:     "POST",
+		Path:       "/file-entries/duplicate",
+		Parameters: url.Values{},
+	}
+	if f.opt.WorkspaceID != "" {
+		opts.Parameters.Set("workspaceId", f.opt.WorkspaceID)
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &request, &result)
@@ -1080,6 +1104,11 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		return info, nil, err
 	}
 
+	// Send just the leaf as relativePath, matching the single-part /uploads
+	// convention. The file is placed by parentId; sending an absolute path
+	// here makes the server build folders from it and drop "0" path segments.
+	relPath := f.opt.Enc.FromStandardName(leaf)
+
 	// Temporary Object under construction
 	o := &Object{
 		fs:     f,
@@ -1113,7 +1142,8 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		Size:         createSize,
 		Extension:    strings.TrimPrefix(path.Ext(leaf), `.`),
 		ParentID:     json.Number(directoryID),
-		RelativePath: f.opt.Enc.FromStandardPath(path.Join(f.root, remote)),
+		RelativePath: relPath,
+		WorkspaceID:  f.opt.WorkspaceID,
 	}
 
 	var resp api.MultiPartCreateResponse
@@ -1139,8 +1169,6 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	if ext == "" {
 		ext = "bin"
 	}
-	rel := f.opt.Enc.FromStandardPath(path.Join(f.root, remote))
-
 	chunkWriter := &drimeChunkWriter{
 		uploadID:     resp.UploadID,
 		key:          resp.Key,
@@ -1153,7 +1181,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		mime:         mime,
 		extension:    ext,
 		parentID:     json.Number(directoryID),
-		relativePath: rel,
+		relativePath: relPath,
 	}
 	info = fs.ChunkWriterInfo{
 		ChunkSize:         int64(chunkSize),
@@ -1297,6 +1325,7 @@ func (s *drimeChunkWriter) Close(ctx context.Context) error {
 		ClientExtension: s.extension,
 		ParentID:        s.parentID,
 		RelativePath:    s.relativePath,
+		WorkspaceID:     s.f.opt.WorkspaceID,
 	}
 
 	entriesOpts := rest.Opts{
@@ -1342,6 +1371,37 @@ func (s *drimeChunkWriter) Abort(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+// About gets quota information
+func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
+	opts := rest.Opts{
+		Method:     "GET",
+		Path:       "/user/space-usage",
+		Parameters: url.Values{},
+	}
+	if f.opt.WorkspaceID != "" {
+		opts.Parameters.Set("workspaceId", f.opt.WorkspaceID)
+	}
+
+	var resp *http.Response
+	var result api.SpaceUsageResponse
+	var err error
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Drime Quota: %w", err)
+	}
+
+	usage := &fs.Usage{
+		Total: fs.NewUsageValue(result.Available),
+		Used:  fs.NewUsageValue(result.Used),
+		Free:  fs.NewUsageValue(result.Available - result.Used),
+	}
+
+	return usage, nil
 }
 
 // ------------------------------------------------------------
@@ -1481,7 +1541,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			fs.Debugf(o, "Removing old object on successful upload")
 			deleteErr := o.fs.deleteObject(ctx, id)
 			if deleteErr != nil {
-				err = fmt.Errorf("failed to delete existing object: %w", deleteErr)
+				if errors.Is(deleteErr, fs.ErrorObjectNotFound) {
+					fs.Debugf(o, "Old object already deleted, safely ignoring")
+				} else {
+					err = fmt.Errorf("failed to delete existing object: %w", deleteErr)
+				}
 			}
 		}()
 	}
@@ -1509,6 +1573,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		MultipartParams: url.Values{
 			"parentId":     {directoryID},
 			"relativePath": {encodedLeaf},
+			"workspaceId":  {o.fs.opt.WorkspaceID},
 		},
 		MultipartContentName: "file",
 		MultipartFileName:    encodedLeaf,
@@ -1555,6 +1620,7 @@ var (
 	_ fs.Mover           = (*Fs)(nil)
 	_ fs.DirMover        = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
+	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.OpenChunkWriter = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.IDer            = (*Object)(nil)

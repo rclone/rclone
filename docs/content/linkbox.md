@@ -4,13 +4,24 @@ description: "Rclone docs for Linkbox"
 versionIntroduced: "v1.65"
 ---
 
-# {{< icon "fa fa-infinity" >}} Linkbox
+# Linkbox
 
 Linkbox is [a private cloud drive](https://linkbox.to/).
 
 ## Configuration
 
 Here is an example of making a remote for Linkbox.
+
+You will need:
+- An API token from https://www.linkbox.to/admin/account
+- The email and password for your Linkbox account
+
+**Note:** As of v1.74, email and password are required in addition to
+the API token. The API token is used for uploads and modifications,
+while email/password authentication is used for listing and
+downloading files. If you have an existing Linkbox remote, you will
+need to reconfigure it with `rclone config` to edit the remote and add
+the email and password.
 
 First run:
 
@@ -40,12 +51,24 @@ Storage> XX
 Option token.
 Token from https://www.linkbox.to/admin/account
 Enter a value.
-token> testFromCLToken
+token> YOUR_API_TOKEN
+
+Option email.
+Email for login
+Enter a value.
+email> your@email.com
+
+Option password.
+Password for login
+Enter a value.
+password> YOUR_PASSWORD
 
 Configuration complete.
 Options:
 - type: linkbox
 - token: XXXXXXXXXXX
+- email: your@email.com
+- password: *** ENCRYPTED ***
 Keep this "linkbox" remote?
 y) Yes this is OK (default)
 e) Edit this remote
@@ -69,6 +92,41 @@ Properties:
 - Env Var:     RCLONE_LINKBOX_TOKEN
 - Type:        string
 - Required:    true
+
+#### --linkbox-email
+
+Email for login
+
+Properties:
+
+- Config:      email
+- Env Var:     RCLONE_LINKBOX_EMAIL
+- Type:        string
+- Required:    true
+
+#### --linkbox-password
+
+Password for login
+
+**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
+
+Properties:
+
+- Config:      password
+- Env Var:     RCLONE_LINKBOX_PASSWORD
+- Type:        string
+- Required:    true
+
+#### --linkbox-web-token
+
+Web API login token - set automatically.
+
+Properties:
+
+- Config:      web_token
+- Env Var:     RCLONE_LINKBOX_WEB_TOKEN
+- Type:        string
+- Required:    false
 
 ### Advanced options
 

@@ -189,11 +189,23 @@ func MiddlewareCORS(allowOrigin string) Middleware {
 
 			if allowOrigin != "" {
 				w.Header().Add("Access-Control-Allow-Origin", allowOrigin)
-				w.Header().Add("Access-Control-Allow-Headers", "authorization, Content-Type")
+				w.Header().Add("Access-Control-Allow-Headers", "Authorization, Content-Type, Depth, Destination, If, Lock-Token, Overwrite, TimeOut, Translate")
 				w.Header().Add("Access-Control-Allow-Methods", "COPY, DELETE, GET, HEAD, LOCK, MKCOL, MOVE, OPTIONS, POST, PROPFIND, PROPPATCH, PUT, TRACE, UNLOCK")
 				w.Header().Add("Access-Control-Max-Age", "86400")
 			}
 
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// MiddlewareResponseHeaders instantiates middleware that apply custom headers to every response
+func MiddlewareResponseHeaders(headers []*fs.HTTPOption) Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			for _, header := range headers {
+				w.Header().Set(header.Key, header.Value)
+			}
 			next.ServeHTTP(w, r)
 		})
 	}

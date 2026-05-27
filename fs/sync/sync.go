@@ -392,13 +392,26 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 				}
 			}
 			// Fix case for case insensitive filesystems
-			if s.ci.FixCase && !s.ci.Immutable && src.Remote() != pair.Dst.Remote() {
-				if newDst, err := operations.Move(s.ctx, s.fdst, nil, src.Remote(), pair.Dst); err != nil {
-					fs.Errorf(pair.Dst, "Error while attempting to rename to %s: %v", src.Remote(), err)
-					s.processError(err)
-				} else {
-					fs.Infof(pair.Dst, "Fixed case by renaming to: %s", src.Remote())
-					pair.Dst = newDst
+			if s.ci.FixCase && !s.ci.Immutable && pair.Dst != nil && src.Remote() != pair.Dst.Remote() {
+				// NeedTransfer's equality check may have deleted pair.Dst as a precursor
+				// to re-uploading it (the way modtime updates are done on backends like
+				// Dropbox that can't set modtime in place). If so, there is nothing to
+				// rename - nil out pair.Dst so the upload below recreates the file at
+				// src.Remote() (the correctly-cased name).
+				if needTransfer {
+					if _, statErr := s.fdst.NewObject(s.ctx, pair.Dst.Remote()); errors.Is(statErr, fs.ErrorObjectNotFound) {
+						fs.Debugf(pair.Dst, "Skipping fix-case rename: destination removed for re-upload, will recreate at %s", src.Remote())
+						pair.Dst = nil
+					}
+				}
+				if pair.Dst != nil {
+					if newDst, err := operations.Move(s.ctx, s.fdst, nil, src.Remote(), pair.Dst); err != nil {
+						fs.Errorf(pair.Dst, "Error while attempting to rename to %s: %v", src.Remote(), err)
+						s.processError(err)
+					} else {
+						fs.Infof(pair.Dst, "Fixed case by renaming to: %s", src.Remote())
+						pair.Dst = newDst
+					}
 				}
 			}
 			if needTransfer {
@@ -570,13 +583,11 @@ func (s *syncCopyMove) startTrackRenames() {
 	if !s.trackRenames {
 		return
 	}
-	s.trackRenamesWg.Add(1)
-	go func() {
-		defer s.trackRenamesWg.Done()
+	s.trackRenamesWg.Go(func() {
 		for o := range s.trackRenamesCh {
 			s.renameCheck = append(s.renameCheck, o)
 		}
-	}()
+	})
 }
 
 // This stops the background rename collection
@@ -593,12 +604,10 @@ func (s *syncCopyMove) startDeleters() {
 	if s.deleteMode != fs.DeleteModeDuring && s.deleteMode != fs.DeleteModeOnly {
 		return
 	}
-	s.deletersWg.Add(1)
-	go func() {
-		defer s.deletersWg.Done()
+	s.deletersWg.Go(func() {
 		err := operations.DeleteFilesWithBackupDir(s.ctx, s.deleteFilesCh, s.backupDir)
 		s.processError(err)
-	}()
+	})
 }
 
 // This stops the background deleters

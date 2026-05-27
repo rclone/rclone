@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"net/url"
 	"path"
@@ -203,9 +204,7 @@ func (s *shadeChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, read
 	var uploadRes *http.Response
 	if len(partURL.Headers) > 0 {
 		opts.ExtraHeaders = make(map[string]string)
-		for k, v := range partURL.Headers {
-			opts.ExtraHeaders[k] = v
-		}
+		maps.Copy(opts.ExtraHeaders, partURL.Headers)
 	}
 
 	err = s.f.pacer.Call(func() (bool, error) {

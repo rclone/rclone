@@ -4,7 +4,7 @@ description: "Rclone docs for Google drive"
 versionIntroduced: "v0.91"
 ---
 
-# {{< icon "fab fa-google" >}} Google Drive
+# Google Drive
 
 Paths are specified as `drive:path`
 
@@ -496,7 +496,7 @@ Drive, the size of all files in the Trash and the space used by other
 Google services such as Gmail. This command does not take any path
 arguments.
 
-#### Import/Export of google documents
+### Import/Export of google documents
 
 Google documents can be exported from and uploaded to Google Drive.
 
@@ -2007,6 +2007,9 @@ Scroll down and click "+ Add users". Add yourself as a test user and press save.
    Add yourself as a test user if you haven't already.
 
 10. Provide the noted client ID and client secret to rclone.
+
+11. Run the web-based authorization flow from within `rclone config`, by answering
+    "Y" when it asks "Token already configured - replace it?".
 
 Be aware that, due to the "enhanced security" recently introduced by
 Google, you are theoretically expected to "submit your app for verification"

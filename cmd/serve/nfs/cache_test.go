@@ -66,11 +66,9 @@ func testCacheCRUD(t *testing.T, h *Handler, c Cache, fileName string) {
 func testCacheThrashDifferent(t *testing.T, h *Handler, c Cache) {
 	var wg sync.WaitGroup
 	for i := range 100 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			testCacheCRUD(t, h, c, fmt.Sprintf("file-%d", i))
-		}()
+		})
 	}
 	wg.Wait()
 }
@@ -79,9 +77,7 @@ func testCacheThrashDifferent(t *testing.T, h *Handler, c Cache) {
 func testCacheThrashSame(t *testing.T, h *Handler, c Cache) {
 	var wg sync.WaitGroup
 	for range 100 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 
 			// Write a handle
 			splitPath := []string{"file"}
@@ -108,7 +104,7 @@ func testCacheThrashSame(t *testing.T, h *Handler, c Cache) {
 				require.Error(t, err)
 				assert.Equal(t, errStaleHandle, err)
 			}
-		}()
+		})
 	}
 	wg.Wait()
 }
@@ -122,11 +118,11 @@ func TestCache(t *testing.T) {
 	defer func() {
 		ci.LogLevel = oldLogLevel
 	}()
-	billyFS := &FS{nil} // place holder billyFS
+	billyFS := &FS{} // place holder billyFS
 	for _, cacheType := range []handleCache{cacheMemory, cacheDisk, cacheSymlink} {
 		t.Run(cacheType.String(), func(t *testing.T) {
 			h := &Handler{
-				vfs:     vfs.New(object.MemoryFs, nil),
+				vfs:     vfs.New(context.Background(), object.MemoryFs, nil),
 				billyFS: billyFS,
 			}
 			h.vfs.Opt.MetadataExtension = ".metadata"
@@ -171,6 +167,55 @@ func TestCache(t *testing.T) {
 					testCacheCRUD(t, h, c, "file.metadata")
 				})
 			}
+		})
+	}
+}
+
+// Check that a file accessed via a root mount and via a subpath mount
+// returns the same handle for every cache backend.
+func TestPathRewriterHandleStability(t *testing.T) {
+	ci := fs.GetConfig(context.Background())
+	oldLogLevel := ci.LogLevel
+	ci.LogLevel = fs.LogLevelEmergency
+	defer func() {
+		ci.LogLevel = oldLogLevel
+	}()
+	for _, cacheType := range []handleCache{cacheMemory, cacheDisk, cacheSymlink} {
+		t.Run(cacheType.String(), func(t *testing.T) {
+			rootFS := &FS{vfs: vfs.New(context.Background(), object.MemoryFs, nil)}
+			h := &Handler{
+				vfs:     rootFS.vfs,
+				billyFS: rootFS,
+			}
+			h.opt.HandleLimit = 1000
+			h.opt.HandleCache = cacheType
+			h.opt.HandleCacheDir = t.TempDir()
+			c, err := h.getCache()
+			if err == ErrorSymlinkCacheNotSupported {
+				t.Skip(err.Error())
+			}
+			if err == ErrorSymlinkCacheNoPermission {
+				t.Skip("Need more permissions to run symlink cache tests: " + testSymlinkCache)
+			}
+			require.NoError(t, err)
+
+			subFS := rootFS.subFS("/foo")
+
+			rootHandle := c.ToHandle(rootFS, []string{"foo", "bar", "file"})
+			subHandle := c.ToHandle(subFS, []string{"bar", "file"})
+			assert.Equal(t, rootHandle, subHandle, "same file via root mount and subpath mount must yield the same handle")
+
+			// Both handles must resolve to the absolute path on the root FS.
+			gotFS, gotPath, err := c.FromHandle(rootHandle)
+			require.NoError(t, err)
+			assert.Equal(t, rootFS, gotFS)
+			assert.Equal(t, []string{"foo", "bar", "file"}, gotPath)
+
+			// A handle minted under a subpath mount with an empty split (mount root)
+			// must equal the handle minted under the root mount for the subpath itself.
+			mountRootHandle := c.ToHandle(subFS, []string{})
+			absHandle := c.ToHandle(rootFS, []string{"foo"})
+			assert.Equal(t, mountRootHandle, absHandle, "subpath mount root handle must equal the root mount handle for that path")
 		})
 	}
 }

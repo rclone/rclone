@@ -4,7 +4,7 @@ description: "Rclone docs for Google Photos"
 versionIntroduced: "v1.49"
 ---
 
-# {{< icon "fa fa-images" >}} Google Photos
+# Google Photos
 
 The rclone backend for [Google Photos](https://www.google.com/photos/about/) is
 a specialized backend for transferring photos and videos to and from

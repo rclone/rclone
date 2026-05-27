@@ -29,6 +29,7 @@ before using, or data loss can result. Questions can be asked in the
 
 See [full bisync description](https://rclone.org/bisync/) for details.
 
+
 ```
 rclone bisync remote1:path1 remote2:path2 [flags]
 ```
@@ -60,7 +61,7 @@ rclone bisync remote1:path1 remote2:path2 [flags]
   -1, --resync                               Performs the resync run. Equivalent to --resync-mode path1. Consider using --verbose or --dry-run first.
       --resync-mode string                   During resync, prefer the version that is: path1, path2, newer, older, larger, smaller (default: path1 if --resync, otherwise none for no resync.) (default "none")
       --slow-hash-sync-only                  Ignore slow checksums for listings and deltas, but still consider them during sync calls.
-      --workdir string                       Use custom working dir - useful for testing. (default: {WORKDIR})
+      --workdir string                       Use custom working dir - useful for testing. (default: $HOME/.cache/rclone/bisync)
 ```
 
 Options shared with other commands are described next.
@@ -105,6 +106,26 @@ Flags for anything which can copy a file
       --size-only                                   Skip based on size only, not modtime or checksum
       --streaming-upload-cutoff SizeSuffix          Cutoff for switching to chunked upload if file size is unknown, upload starts after reaching cutoff or when file ends (default 100Ki)
   -u, --update                                      Skip files that are newer on the destination
+```
+
+### Sync Options
+
+Flags used for sync commands
+
+```text
+      --backup-dir string               Make backups into hierarchy based in DIR
+      --delete-after                    When synchronizing, delete files on destination after transferring (default)
+      --delete-before                   When synchronizing, delete files on destination before transferring
+      --delete-during                   When synchronizing, delete files during transfer
+      --fix-case                        Force rename of case insensitive dest to match source
+      --ignore-errors                   Delete even if there are I/O errors
+      --list-cutoff int                 To save memory, sort directory listings on disk above this threshold (default 1000000)
+      --max-delete int                  When synchronizing, limit the number of deletes (default -1)
+      --max-delete-size SizeSuffix      When synchronizing, limit the total size of deletes (default off)
+      --suffix string                   Suffix to add to changed files
+      --suffix-keep-extension           Preserve the extension when using --suffix
+      --track-renames                   When synchronizing, track file renames and do a server-side move if possible
+      --track-renames-strategy string   Strategies to use when synchronizing using track-renames hash|modtime|leaf (default "hash")
 ```
 
 ### Important Options

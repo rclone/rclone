@@ -12,7 +12,7 @@
     </tr>
   </thead>
   <tbody>
-    {{ range sort site.Data.backends "name" "asc" }}
+    {{ range sort hugo.Data.backends "name" "asc" }}
     {{ if .virtual }}{{ continue }} {{ end }}
     <tr>
       <td style="font-weight: bold;">

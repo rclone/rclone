@@ -18,3 +18,7 @@ quirks:
   # See: https://issuetracker.google.com/issues/323465186
   # So make cutoff very large which it does seem to support
   copy_cutoff: 9223372036854775807
+  # GCS S3 API doesn't fully support Object Lock:
+  # - Uses x-goog-bypass-governance-retention instead of x-amz-bypass-governance-retention
+  # - PutObjectLegalHold / GetObjectLegalHold not implemented
+  object_lock_supported: false

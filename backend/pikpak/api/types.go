@@ -75,8 +75,8 @@ type ErrorDetails struct {
 	Type         string   `json:"@type,omitempty"`
 	Reason       string   `json:"reason,omitempty"`
 	Domain       string   `json:"domain,omitempty"`
-	Metadata     struct{} `json:"metadata,omitempty"` // TODO: undiscovered yet
-	Locale       string   `json:"locale,omitempty"`   // e.g. "en"
+	Metadata     struct{} `json:"metadata"`         // TODO: undiscovered yet
+	Locale       string   `json:"locale,omitempty"` // e.g. "en"
 	Message      string   `json:"message,omitempty"`
 	StackEntries []any    `json:"stack_entries,omitempty"` // TODO: undiscovered yet
 	Detail       string   `json:"detail,omitempty"`
@@ -189,8 +189,8 @@ type File struct {
 	Apps              []*FileApp  `json:"apps,omitempty"`
 	Audit             *FileAudit  `json:"audit,omitempty"`
 	Collection        string      `json:"collection,omitempty"` // TODO
-	CreatedTime       Time        `json:"created_time,omitempty"`
-	DeleteTime        Time        `json:"delete_time,omitempty"`
+	CreatedTime       Time        `json:"created_time"`
+	DeleteTime        Time        `json:"delete_time"`
 	FileCategory      string      `json:"file_category,omitempty"` // "AUDIO", "VIDEO"
 	FileExtension     string      `json:"file_extension,omitempty"`
 	FolderType        string      `json:"folder_type,omitempty"`
@@ -202,7 +202,7 @@ type File struct {
 	Md5Checksum       string      `json:"md5_checksum,omitempty"`
 	Medias            []*Media    `json:"medias,omitempty"`
 	MimeType          string      `json:"mime_type,omitempty"`
-	ModifiedTime      Time        `json:"modified_time,omitempty"` // updated when renamed or moved
+	ModifiedTime      Time        `json:"modified_time"` // updated when renamed or moved
 	Name              string      `json:"name,omitempty"`
 	OriginalFileIndex int         `json:"original_file_index,omitempty"` // TODO
 	OriginalURL       string      `json:"original_url,omitempty"`
@@ -221,7 +221,7 @@ type File struct {
 	ThumbnailLink     string      `json:"thumbnail_link,omitempty"`
 	Trashed           bool        `json:"trashed,omitempty"`
 	UserID            string      `json:"user_id,omitempty"`
-	UserModifiedTime  Time        `json:"user_modified_time,omitempty"`
+	UserModifiedTime  Time        `json:"user_modified_time"`
 	WebContentLink    string      `json:"web_content_link,omitempty"`
 	Writable          bool        `json:"writable,omitempty"`
 }
@@ -252,7 +252,7 @@ type Media struct {
 		AudioCodec string `json:"audio_codec,omitempty"` // "pcm_bluray", "aac"
 		VideoType  string `json:"video_type,omitempty"`  // "mpegts"
 		HdrType    string `json:"hdr_type,omitempty"`
-	} `json:"video,omitempty"`
+	} `json:"video"`
 	Link           *Link  `json:"link,omitempty"`
 	NeedMoreQuota  bool   `json:"need_more_quota,omitempty"`
 	VipTypes       []any  `json:"vip_types,omitempty"` // TODO maybe list of something?
@@ -290,11 +290,11 @@ type FileApp struct {
 	NeedMoreQuota bool     `json:"need_more_quota,omitempty"`
 	IconLink      string   `json:"icon_link,omitempty"`
 	IsDefault     bool     `json:"is_default,omitempty"`
-	Params        struct{} `json:"params,omitempty"` // TODO
+	Params        struct{} `json:"params"` // TODO
 	CategoryIDs   []any    `json:"category_ids,omitempty"`
 	AdSceneType   int      `json:"ad_scene_type,omitempty"`
 	Space         string   `json:"space,omitempty"`
-	Links         struct{} `json:"links,omitempty"` // TODO
+	Links         struct{} `json:"links"` // TODO
 }
 
 // ------------------------------------------------------------
@@ -320,8 +320,8 @@ type Task struct {
 	FileName          string      `json:"file_name,omitempty"`
 	FileSize          string      `json:"file_size,omitempty"`
 	Message           string      `json:"message,omitempty"` // e.g. "Saving"
-	CreatedTime       Time        `json:"created_time,omitempty"`
-	UpdatedTime       Time        `json:"updated_time,omitempty"`
+	CreatedTime       Time        `json:"created_time"`
+	UpdatedTime       Time        `json:"updated_time"`
 	ThirdTaskID       string      `json:"third_task_id,omitempty"` // TODO
 	Phase             string      `json:"phase,omitempty"`         // e.g. "PHASE_TYPE_RUNNING"
 	Progress          int         `json:"progress,omitempty"`
@@ -368,7 +368,7 @@ type ResumableParams struct {
 	AccessKeySecret string `json:"access_key_secret,omitempty"`
 	Bucket          string `json:"bucket,omitempty"`
 	Endpoint        string `json:"endpoint,omitempty"`
-	Expiration      Time   `json:"expiration,omitempty"`
+	Expiration      Time   `json:"expiration"`
 	Key             string `json:"key,omitempty"`
 	SecurityToken   string `json:"security_token,omitempty"`
 }
@@ -409,7 +409,7 @@ type About struct {
 	Kind      string   `json:"kind,omitempty"` // "drive#about"
 	Quota     *Quota   `json:"quota,omitempty"`
 	ExpiresAt string   `json:"expires_at,omitempty"`
-	Quotas    struct{} `json:"quotas,omitempty"` // maybe []*Quota?
+	Quotas    struct{} `json:"quotas"` // maybe []*Quota?
 }
 
 // Quota informs drive quota
@@ -445,8 +445,8 @@ type User struct {
 	PhoneNumber       string          `json:"phone_number,omitempty"`
 	Password          string          `json:"password,omitempty"` // "SET" if configured
 	Status            string          `json:"status,omitempty"`   // "ACTIVE"
-	CreatedAt         Time            `json:"created_at,omitempty"`
-	PasswordUpdatedAt Time            `json:"password_updated_at,omitempty"`
+	CreatedAt         Time            `json:"created_at"`
+	PasswordUpdatedAt Time            `json:"password_updated_at"`
 }
 
 // UserProvider details third-party authentication
@@ -464,11 +464,11 @@ type VIP struct {
 	Message     string `json:"message,omitempty"`
 	RedirectURI string `json:"redirect_uri,omitempty"`
 	Data        struct {
-		Expire Time   `json:"expire,omitempty"`
+		Expire Time   `json:"expire"`
 		Status string `json:"status,omitempty"`  // "invalid" or "ok"
 		Type   string `json:"type,omitempty"`    // "novip" or "platinum"
 		UserID string `json:"user_id,omitempty"` // same as User.Sub
-	} `json:"data,omitempty"`
+	} `json:"data"`
 }
 
 // DecompressResult is a response to RequestDecompress
@@ -538,7 +538,7 @@ type CaptchaToken struct {
 	CaptchaToken string `json:"captcha_token"`
 	ExpiresIn    int64  `json:"expires_in"` // currently 300s
 	// API doesn't provide Expiry field and thus it should be populated from ExpiresIn on retrieval
-	Expiry time.Time `json:"expiry,omitempty"`
+	Expiry time.Time `json:"expiry"`
 	URL    string    `json:"url,omitempty"` // a link for users to solve captcha
 }
 

@@ -23,6 +23,7 @@ Current active maintainers of rclone are:
 | nielash          | @nielash          | bisync                       |
 | Dan McArdle      | @dmcardle         | gitannex                     |
 | Sam Harrison     | @childish-sambino | filescom                     |
+| Enduriel         | @Enduriel         | filen backend                |
 
 ## This is a work in progress draft
 

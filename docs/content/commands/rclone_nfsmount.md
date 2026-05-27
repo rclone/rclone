@@ -14,7 +14,8 @@ Mount the remote as file system on a mountpoint.
 Rclone nfsmount allows Linux, FreeBSD, macOS and Windows to
 mount any of Rclone's cloud storage systems as a file system with FUSE.
 
-First set up your remote using `rclone config`. Check it works with `rclone ls` etc.
+First set up your remote using `rclone config`. Check it works with `rclone ls`
+etc.
 
 On Linux and macOS, you can run mount in either foreground or background (aka
 daemon) mode. Mount runs in foreground mode by default. Use the `--daemon` flag
@@ -42,8 +43,8 @@ The following examples will mount to an automatically assigned drive,
 to specific drive letter `X:`, to path `C:\path\parent\mount`
 (where parent directory or drive must exist, and mount must **not** exist,
 and is not supported when [mounting as a network drive](#mounting-modes-on-windows)),
-and the last example will mount as network share `\\cloud\remote` and map it to an
-automatically assigned drive:
+and the last example will mount as network share `\\cloud\remote` and map it to
+an automatically assigned drive:
 
 ```console
 rclone nfsmount remote:path/to/files *
@@ -149,8 +150,8 @@ rclone nfsmount remote:path/to/files X: --volname \\server\share
 
 You may also specify the network share UNC path as the mountpoint itself. Then rclone
 will automatically assign a drive letter, same as with `*` and use that as
-mountpoint, and instead use the UNC path specified as the volume name, as if it were
-specified with the `--volname` option. This will also implicitly set
+mountpoint, and instead use the UNC path specified as the volume name, as if it
+were specified with the `--volname` option. This will also implicitly set
 the `--network-mode` option. This means the following two examples have same result:
 
 ```console
@@ -281,7 +282,7 @@ does not suffer from the same limitations.
 
 Mounting on macOS can be done either via [built-in NFS server](/commands/rclone_serve_nfs/),
 [macFUSE](https://osxfuse.github.io/) (also known as osxfuse) or
-[FUSE-T](https://www.fuse-t.org/).macFUSE is a traditional FUSE driver utilizing
+[FUSE-T](https://www.fuse-t.org/). macFUSE is a traditional FUSE driver utilizing
 a macOS kernel extension (kext). FUSE-T is an alternative FUSE system which
 "mounts" via an NFSv4 local server.
 
@@ -324,29 +325,30 @@ current as  of FUSE-T version 1.0.14.
 
 As per the [FUSE-T wiki](https://github.com/macos-fuse-t/fuse-t/wiki#caveats):
 
-> File access and modification times cannot be set separately as it seems to be an
-> issue with the NFS client which always modifies both. Can be reproduced with
-> 'touch -m' and 'touch -a' commands
+> File access and modification times cannot be set separately as it seems to be
+> an issue with the NFS client which always modifies both. Can be reproduced
+> with `touch -m` and `touch -a` commands
 
-This means that viewing files with various tools, notably macOS Finder, will cause
-rlcone to update the modification time of the file. This may make rclone upload a
-full new copy of the file.
+This means that viewing files with various tools, notably macOS Finder, will
+cause rlcone to update the modification time of the file. This may make rclone
+upload a full new copy of the file.
 
 #### Read Only mounts
 
 When mounting with `--read-only`, attempts to write to files will fail *silently*
 as opposed to with a clear warning as in macFUSE.
 
-# Mounting on Linux
+## Mounting on Linux
 
 On newer versions of Ubuntu, you may encounter the following error when running
 `rclone mount`:
 
 > NOTICE: mount helper error: fusermount3: mount failed: Permission denied
 > CRITICAL: Fatal error: failed to mount FUSE fs: fusermount: exit status 1
+
 This may be due to newer [Apparmor](https://wiki.ubuntu.com/AppArmor) restrictions,
-which can be disabled with `sudo aa-disable /usr/bin/fusermount3` (you may need to
-`sudo apt install apparmor-utils` beforehand).
+which can be disabled with `sudo aa-disable /usr/bin/fusermount3` (you may need
+to `sudo apt install apparmor-utils` beforehand).
 
 ## Limitations
 
@@ -1050,6 +1052,7 @@ rclone nfsmount remote:path /path/to/mountpoint [flags]
       --vfs-case-insensitive                   If a file name not found, find a case insensitive match
       --vfs-disk-space-total-size SizeSuffix   Specify the total space of disk (default off)
       --vfs-fast-fingerprint                   Use fast (less accurate) fingerprints for change detection
+      --vfs-handle-caching Duration            Time to keep file handle and downloaders alive after last close (default 5s)
       --vfs-links                              Translate symlinks to/from regular files with a '.rclonelink' extension for the VFS
       --vfs-metadata-extension string          Set the extension to read metadata from
       --vfs-read-ahead SizeSuffix              Extra read ahead over --buffer-size when using cache-mode full

@@ -21,7 +21,7 @@ type User struct {
 	Avatar           string      `json:"avatar"`
 	ModelType        string      `json:"model_type"`
 	OwnsEntry        bool        `json:"owns_entry"`
-	EntryPermissions []any       `json:"entry_permissions"`
+	EntryPermissions any         `json:"entry_permissions"`
 	DisplayName      string      `json:"display_name"`
 }
 
@@ -57,7 +57,6 @@ type Item struct {
 	FileHash     any         `json:"file_hash"`
 	Public       bool        `json:"public"`
 	Thumbnail    bool        `json:"thumbnail"`
-	MuxStatus    any         `json:"mux_status"`
 	ThumbnailURL any         `json:"thumbnail_url"`
 	WorkspaceID  int         `json:"workspace_id"`
 	IsEncrypted  int         `json:"is_encrypted"`
@@ -77,9 +76,9 @@ type Listing struct {
 	Data        []Item `json:"data"`
 	From        int    `json:"from"`
 	LastPage    int    `json:"last_page"`
-	NextPage    int    `json:"next_page"`
+	NextPageURL string `json:"next_page_url"`
 	PerPage     int    `json:"per_page"`
-	PrevPage    int    `json:"prev_page"`
+	PrevPageURL string `json:"prev_page_url"`
 	To          int    `json:"to"`
 	Total       int    `json:"total"`
 }
@@ -171,8 +170,9 @@ type MultiPartCreateRequest struct {
 	Mime         string      `json:"mime"`
 	Size         int64       `json:"size"`
 	Extension    string      `json:"extension"`
-	ParentID     json.Number `json:"parent_id"`
+	ParentID     json.Number `json:"parentId"`
 	RelativePath string      `json:"relativePath"`
+	WorkspaceID  string      `json:"workspaceId,omitempty"`
 }
 
 // MultiPartCreateResponse is returned by POST /s3/multipart/create
@@ -221,8 +221,9 @@ type MultiPartEntriesRequest struct {
 	Filename        string      `json:"filename"`
 	Size            int64       `json:"size"`
 	ClientExtension string      `json:"clientExtension"`
-	ParentID        json.Number `json:"parent_id"`
+	ParentID        json.Number `json:"parentId"`
 	RelativePath    string      `json:"relativePath"`
+	WorkspaceID     string      `json:"workspaceId,omitempty"`
 }
 
 // MultiPartEntriesResponse is the result of POST /s3/entries
@@ -234,4 +235,12 @@ type MultiPartEntriesResponse struct {
 type MultiPartAbort struct {
 	UploadID string `json:"uploadId"`
 	Key      string `json:"key"`
+}
+
+// SpaceUsageResponse is returned by GET /user/space-usage
+type SpaceUsageResponse struct {
+	Used      int64  `json:"used"`
+	Available int64  `json:"available"`
+	Status    string `json:"status"`
+	SEO       any    `json:"seo"`
 }

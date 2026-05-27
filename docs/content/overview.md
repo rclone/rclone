@@ -333,7 +333,7 @@ parameter in the config file.
 
 ##### Encoding example: Windows
 
-As a nother example, take a Windows system where there is a file with
+As another example, take a Windows system where there is a file with
 name `Test：1.jpg`, where `：` is the Unicode fullwidth colon symbol.
 When using rclone to copy this to a remote which supports `:`,
 the regular (halfwidth) colon (such as Google Drive), you will notice

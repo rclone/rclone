@@ -265,9 +265,7 @@ func testAsyncReaderClose(t *testing.T, writeto bool) {
 	var copyErr error
 	var wg sync.WaitGroup
 	started := make(chan struct{})
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		close(started)
 		if writeto {
 			// exercise the WriteTo path
@@ -284,7 +282,7 @@ func testAsyncReaderClose(t *testing.T, writeto bool) {
 				}
 			}
 		}
-	}()
+	})
 	// Do some copying
 	<-started
 	time.Sleep(100 * time.Millisecond)
