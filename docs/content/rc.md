@@ -87,6 +87,17 @@ commands or read arbitrary local files.
 
 Default Off.
 
+### global.* connection string options and the rc
+
+Remotes instantiated by the rc do not let [connection
+string](/docs/#connection-strings) `global.*` options change rclone's
+process-wide configuration. Remotes created directly on the command
+line or defined in the config file are unaffected.
+
+A `global.*` option still takes effect for the individual backend it
+is set on (exactly like an `override.*` option), it just does not leak
+into the global config for the rest of the process.
+
 ### --rc-serve-no-modtime
 
 Set this flag to skip reading the modification time (can speed things up).
