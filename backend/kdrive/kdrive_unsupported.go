@@ -22,7 +22,6 @@ type uploadSession struct {
 	uploadURL  string
 	fileInfo   *api.Item
 	chunkCount int
-	hash       string // Hash from the last chunk upload
 }
 
 // UploadMultipart does a generic multipart upload from src using f as newChunkWriter.
@@ -45,4 +44,3 @@ func (u *uploadSession) Close(ctx context.Context) error {
 func (u *uploadSession) Abort(ctx context.Context) error {
 	return errors.New("kdrive multipart upload not supported on this platform!")
 }
-
