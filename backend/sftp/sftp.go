@@ -6,14 +6,17 @@ package sftp
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
 	iofs "io/fs"
+	"net"
 	"net/url"
 	"os"
 	"path"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -27,6 +30,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/env"
@@ -45,6 +49,7 @@ const (
 	maxSleep                = 2 * time.Second
 	decayConstant           = 2           // bigger for slower decay, exponential
 	keepAliveInterval       = time.Minute // send keepalives every this long while running commands
+	maxHostKeys             = 16          // caps the number of host_keys entries
 )
 
 var (
@@ -121,6 +126,49 @@ Set this value to enable server host key validation.` + env.ShellExpandHelp,
 				Value: "~/.ssh/known_hosts",
 				Help:  "Use OpenSSH's known_hosts file.",
 			}},
+		}, {
+			Name:    "pin_host_key",
+			Default: false,
+			Hide:    fs.OptionHideConfigurator,
+			Help: `Pin the server host key on first connection (Trust On First Use).
+
+Intended for one-time use as the ` + "`--sftp-pin-host-key`" + ` command-line
+flag. Run rclone once with the flag and the server's host key will be
+recorded into the host_keys config option. On subsequent runs (without
+the flag) host_keys is consulted and any mismatch is refused.
+
+Setting this option persistently in the config file is not
+recommended. While it is set, rclone will also accept any new
+host key algorithm the server later presents, which widens the trust
+surface beyond the initial pin. To pin a new key after a legitimate
+key change, re-run with the flag.
+
+The first connection is unauthenticated, so ideally do it over a
+trusted network or cross-check the fingerprint rclone logs against
+one provided out of band.
+
+If known_hosts_file is also set, that takes precedence and this option
+is ignored.`,
+			Advanced: true,
+		}, {
+			Name:    "host_keys",
+			Default: fs.CommaSepList{},
+			Help: `Pinned host keys for this remote, used to verify the server.
+
+Comma-separated list of "algo base64-key" entries (the same format as
+the second and third fields of an OpenSSH known_hosts line). Usually
+populated automatically by running once with --sftp-pin-host-key, but
+can be set by hand to pin a server's public key obtained out of band.
+Note that each entry is the complete public key, not its SHA256
+fingerprint.
+
+When non-empty, the offered host key must match one of the entries or
+the connection is refused. To re-pin after a legitimate key change,
+clear this option and reconnect with --sftp-pin-host-key, or edit the
+value directly.
+
+At most ` + strconv.Itoa(maxHostKeys) + ` entries may be pinned.`,
+			Advanced: true,
 		}, {
 			Name: "key_use_agent",
 			Help: `When set forces the usage of the ssh-agent.
@@ -576,6 +624,8 @@ type Options struct {
 	PubKey                  string               `config:"pubkey"`
 	PubKeyFile              string               `config:"pubkey_file"`
 	KnownHostsFile          string               `config:"known_hosts_file"`
+	PinHostKey              bool                 `config:"pin_host_key"`
+	HostKeys                fs.CommaSepList      `config:"host_keys"`
 	KeyUseAgent             bool                 `config:"key_use_agent"`
 	UseInsecureCipher       bool                 `config:"use_insecure_cipher"`
 	DisableHashCheck        bool                 `config:"disable_hashcheck"`
@@ -636,6 +686,22 @@ type Fs struct {
 	sessions     atomic.Int32 // count in use sessions
 	tokens       *pacer.TokenDispenser
 	proxyURL     *url.URL // address of HTTP proxy read from environment
+
+	hostKeysMu sync.RWMutex
+	hostKeys   map[string][][]byte // algo -> list of trusted marshalled key bytes
+	tofu       bool                // accept and pin unknown host keys on first use
+}
+
+// pendingKey records a host key accepted via --sftp-pin-host-key
+// during the SSH handshake of a single connection but not yet
+// persisted to the config file. We only commit it after that
+// connection's authentication succeeds, so a failed login can't pin a
+// key.
+type pendingKey struct {
+	algo        string
+	marshalled  []byte
+	fingerprint string
+	hostname    string
 }
 
 // Object is a remote SFTP file that has been stat'd (so it exists, but is not necessarily open for reading)
@@ -728,7 +794,22 @@ func (f *Fs) sftpConnection(ctx context.Context) (c *conn, err error) {
 		err: make(chan error, 1),
 	}
 	if len(f.opt.SSH) == 0 {
-		c.sshClient, err = f.newSSHClientInternal(ctx, "tcp", f.opt.Host+":"+f.opt.Port, f.config)
+		sshConfig := f.config
+		var pending *pendingKey
+		if f.tofu {
+			// Give this dial its own host key callback and pending key
+			// slot so a key stashed here can only be committed by this
+			// connection, and only if its own authentication succeeds.
+			configCopy := *f.config
+			configCopy.HostKeyCallback = f.hostKeyCallback(&pending)
+			sshConfig = &configCopy
+		}
+		c.sshClient, err = f.newSSHClientInternal(ctx, "tcp", f.opt.Host+":"+f.opt.Port, sshConfig)
+		if err == nil && pending != nil {
+			// ssh.NewClientConn only returns success once the server is
+			// authenticated, so the stashed key is safe to persist.
+			f.commitHostKey(pending)
+		}
 	} else {
 		c.sshClient, err = f.newSSHClientExternal()
 	}
@@ -911,6 +992,250 @@ func (f *Fs) drainPool(ctx context.Context) (err error) {
 	return nil
 }
 
+// parseHostKeysField parses the host_keys config option, a list of
+// "algo base64-key" entries (the second and third fields of an OpenSSH
+// known_hosts line). Returns a map from algorithm name to the list of
+// marshalled public-key bytes pinned for that algorithm. Empty input
+// yields an empty (non-nil) map.
+//
+// Each entry must be a valid SSH public key (not a certificate) whose
+// key type matches the stated algorithm. Duplicate entries are
+// dropped, and more than maxHostKeys distinct entries is an error.
+func parseHostKeysField(entries fs.CommaSepList) (map[string][][]byte, error) {
+	out := make(map[string][][]byte)
+	total := 0
+entries:
+	for i, entry := range entries {
+		entry = strings.TrimSpace(entry)
+		if entry == "" {
+			continue
+		}
+		fields := strings.Fields(entry)
+		if len(fields) != 2 {
+			return nil, fmt.Errorf("host_keys entry %d: expected \"<algo> <base64>\", got %q", i+1, entry)
+		}
+		algo := fields[0]
+		marshalled, err := base64.StdEncoding.DecodeString(fields[1])
+		if err != nil {
+			return nil, fmt.Errorf("host_keys entry %d (%s): invalid base64: %w", i+1, algo, err)
+		}
+		pk, err := ssh.ParsePublicKey(marshalled)
+		if err != nil {
+			return nil, fmt.Errorf("host_keys entry %d (%s): not a valid SSH public key: %w", i+1, algo, err)
+		}
+		if _, isCert := pk.(*ssh.Certificate); isCert {
+			return nil, fmt.Errorf("host_keys entry %d (%s): SSH certificates cannot be pinned; use known_hosts_file with an @cert-authority entry instead", i+1, algo)
+		}
+		if pk.Type() != algo {
+			hint := ""
+			if pk.Type() == ssh.KeyAlgoRSA && (algo == ssh.KeyAlgoRSASHA256 || algo == ssh.KeyAlgoRSASHA512) {
+				// A common slip: rsa-sha2-* name signature algorithms,
+				// but an RSA public key blob's format is ssh-rsa.
+				hint = fmt.Sprintf(" (%s is a signature algorithm, use %s)", algo, ssh.KeyAlgoRSA)
+			}
+			return nil, fmt.Errorf("host_keys entry %d: stated algorithm %q doesn't match the key's type %q%s", i+1, algo, pk.Type(), hint)
+		}
+		for _, existing := range out[algo] {
+			if bytes.Equal(existing, marshalled) {
+				continue entries
+			}
+		}
+		total++
+		if total > maxHostKeys {
+			return nil, fmt.Errorf("host_keys has more than %d entries; trim it or use known_hosts_file instead", maxHostKeys)
+		}
+		out[algo] = append(out[algo], marshalled)
+	}
+	return out, nil
+}
+
+// formatHostKeysField formats the in-memory pinned host keys back into a
+// CommaSepList of "algo base64" entries in a deterministic order so
+// config-file diffs stay clean.
+func formatHostKeysField(keys map[string][][]byte) fs.CommaSepList {
+	algos := make([]string, 0, len(keys))
+	for algo := range keys {
+		algos = append(algos, algo)
+	}
+	sort.Strings(algos)
+	var parts fs.CommaSepList
+	for _, algo := range algos {
+		// sort the keys within an algorithm for deterministic output
+		list := append([][]byte(nil), keys[algo]...)
+		sort.Slice(list, func(i, j int) bool { return bytes.Compare(list[i], list[j]) < 0 })
+		for _, k := range list {
+			parts = append(parts, algo+" "+base64.StdEncoding.EncodeToString(k))
+		}
+	}
+	return parts
+}
+
+// pinnedHostKeyAlgorithms returns the host-key algorithms to negotiate
+// for the pinned keys, in a deterministic order.
+//
+// RSA public keys report their type as "ssh-rsa" whichever signature
+// algorithm signed the handshake, so a pinned "ssh-rsa" entry is
+// expanded to the rsa-sha2 signature algorithms too. Offering only
+// "ssh-rsa" would restrict the negotiation to SHA-1 signatures, which
+// modern servers (OpenSSH >= 8.8) refuse by default.
+func pinnedHostKeyAlgorithms(keys map[string][][]byte) []string {
+	algos := make([]string, 0, len(keys)+2)
+	for algo := range keys {
+		if algo == ssh.KeyAlgoRSA {
+			algos = append(algos, ssh.KeyAlgoRSASHA512, ssh.KeyAlgoRSASHA256)
+		}
+		algos = append(algos, algo)
+	}
+	sort.Strings(algos)
+	return algos
+}
+
+// formatPinnedFingerprints returns a comma-separated list of SHA256
+// fingerprints for the supplied marshalled public keys, suitable for
+// inclusion in user-facing error messages.
+func formatPinnedFingerprints(algo string, keys [][]byte) string {
+	fps := make([]string, 0, len(keys))
+	for _, k := range keys {
+		pk, err := ssh.ParsePublicKey(k)
+		if err != nil {
+			fps = append(fps, "<unparseable>")
+			continue
+		}
+		fps = append(fps, ssh.FingerprintSHA256(pk))
+	}
+	return strings.Join(fps, ", ")
+}
+
+// hostKeyCallback returns an ssh.HostKeyCallback that validates the offered
+// server key against f.hostKeys.
+//
+// When pin_host_key is set, pending must point at the dialing
+// connection's own pending key slot: if no key is pinned yet for the
+// offered algorithm the offered key is stashed there for the dialer to
+// commit once its authentication succeeds. A nil pending disables
+// accept-on-first-use, making the callback validate-only.
+func (f *Fs) hostKeyCallback(pending **pendingKey) ssh.HostKeyCallback {
+	return func(hostname string, _ net.Addr, key ssh.PublicKey) error {
+		// SSH host certificates cannot be byte-pinned meaningfully: the
+		// certificate changes whenever it's re-signed even though the
+		// underlying CA is unchanged.
+		if _, isCert := key.(*ssh.Certificate); isCert {
+			return fserrors.NoLowLevelRetryError(fmt.Errorf("sftp: server presented an SSH certificate (%s) which pin_host_key cannot validate; use known_hosts_file with an @cert-authority entry instead", key.Type()))
+		}
+		algo := key.Type()
+		marshalled := key.Marshal()
+
+		f.hostKeysMu.RLock()
+		trusted, have := f.hostKeys[algo]
+		f.hostKeysMu.RUnlock()
+
+		if have {
+			for _, t := range trusted {
+				if bytes.Equal(t, marshalled) {
+					return nil
+				}
+			}
+			return fserrors.NoLowLevelRetryError(fmt.Errorf("sftp: host key mismatch for %s: server offered %s key with fingerprint %s; pinned fingerprints for this algorithm: %s -- if the server key has changed legitimately, clear host_keys and re-run with --sftp-pin-host-key",
+				hostname, algo, ssh.FingerprintSHA256(key), formatPinnedFingerprints(algo, trusted)))
+		}
+
+		// No pinned key for this algorithm. Either accept if --sftp-pin-host-key is set or reject.
+		if !f.opt.PinHostKey || pending == nil {
+			return fserrors.NoLowLevelRetryError(fmt.Errorf("sftp: server offered %s key with fingerprint %s but no key is pinned for this algorithm in host_keys; re-run with --sftp-pin-host-key to accept on first use",
+				algo, ssh.FingerprintSHA256(key)))
+		}
+		// Cap the host_keys growth
+		f.hostKeysMu.RLock()
+		total := 0
+		for _, list := range f.hostKeys {
+			total += len(list)
+		}
+		f.hostKeysMu.RUnlock()
+		if total >= maxHostKeys {
+			return fserrors.NoLowLevelRetryError(fmt.Errorf("sftp: host_keys already contains %d entries (cap %d); refusing to pin %s key with fingerprint %s -- clear or trim host_keys and re-run with --sftp-pin-host-key",
+				total, maxHostKeys, algo, ssh.FingerprintSHA256(key)))
+		}
+		// Stash the offered key for this connection's dialer to persist post-auth.
+		*pending = &pendingKey{
+			algo:        algo,
+			marshalled:  marshalled,
+			fingerprint: ssh.FingerprintSHA256(key),
+			hostname:    hostname,
+		}
+		fs.Logf(f, "Accepted %s host key %s for %s on first use", algo, ssh.FingerprintSHA256(key), hostname)
+		return nil
+	}
+}
+
+// commitHostKey records a --sftp-pin-host-key accepted host key into
+// both the durable config file and the in-memory f.hostKeys trust
+// set. The in-memory update is what closes the trust loop after the
+// callback deliberately left f.hostKeys untouched pre-auth.
+func (f *Fs) commitHostKey(pk *pendingKey) {
+	// Hold the lock for the whole read-modify-write so concurrent
+	// commits from parallel dials can't lose each other's key.
+	f.hostKeysMu.Lock()
+	defer f.hostKeysMu.Unlock()
+	// Re-read the current stored value rather than reformatting our in-memory
+	// map. This narrows (but cannot close - the config layer has no locked
+	// read-modify-write) the window for clobbering an update made by a
+	// parallel rclone process.
+	current, _ := f.m.Get("host_keys")
+	var entries fs.CommaSepList
+	if err := entries.Set(current); err != nil {
+		fs.Errorf(f, "Not persisting %s host key %s for %s: existing host_keys value became unsplittable: %v -- fix or clear host_keys in the config and re-run with --sftp-pin-host-key",
+			pk.algo, pk.fingerprint, pk.hostname, err)
+		return
+	}
+	keys, err := parseHostKeysField(entries)
+	if err != nil {
+		// host_keys was parseable at NewFs time but isn't now...
+		snippet := current
+		const max = 120
+		if len(snippet) > max {
+			snippet = snippet[:max] + "..."
+		}
+		fs.Errorf(f, "Not persisting %s host key %s for %s: existing host_keys value became unparseable (%d bytes: %q): %v -- fix or clear host_keys in the config and re-run with --sftp-pin-host-key",
+			pk.algo, pk.fingerprint, pk.hostname, len(current), snippet, err)
+		return
+	}
+	// De-duplicate before appending. Even if already present durably, sync
+	// the in-memory view in case it lagged behind the file.
+	alreadyPresent := false
+	for _, existing := range keys[pk.algo] {
+		if bytes.Equal(existing, pk.marshalled) {
+			alreadyPresent = true
+			break
+		}
+	}
+	if !alreadyPresent {
+		// Re-check the cap against the stored value: it may have grown
+		// since the callback checked it.
+		total := 0
+		for _, list := range keys {
+			total += len(list)
+		}
+		if total >= maxHostKeys {
+			fs.Errorf(f, "Not persisting %s host key %s for %s: host_keys already contains %d entries (cap %d) -- clear or trim host_keys and re-run with --sftp-pin-host-key",
+				pk.algo, pk.fingerprint, pk.hostname, total, maxHostKeys)
+			return
+		}
+		keys[pk.algo] = append(keys[pk.algo], pk.marshalled)
+	}
+
+	f.hostKeys = keys
+
+	if alreadyPresent {
+		return
+	}
+	f.m.Set("host_keys", formatHostKeysField(keys).String())
+	if strings.HasPrefix(f.name, ":") {
+		fs.Logf(f, "%s host key %s captured but not persisted (on-the-fly remote); first-connect protection only", pk.algo, pk.fingerprint)
+	} else {
+		fs.Logf(f, "Pinned %s host key %s for %s in config", pk.algo, pk.fingerprint, pk.hostname)
+	}
+}
+
 // NewFs creates a new Fs object from the name and root. It connects to
 // the host specified in the config file.
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
@@ -947,24 +1272,71 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		ClientVersion: "SSH-2.0-" + f.ci.UserAgent,
 	}
 
-	if len(opt.HostKeyAlgorithms) != 0 {
-		sshConfig.HostKeyAlgorithms = []string(opt.HostKeyAlgorithms)
+	// pin_host_key and host_keys only apply when rclone does the host
+	// key checking itself: known_hosts_file takes precedence and the
+	// external ssh program does its own validation, so in either case
+	// host_keys is ignored entirely, without being parsed.
+	usePinning := (opt.PinHostKey || len(opt.HostKeys) > 0) && opt.KnownHostsFile == "" && len(opt.SSH) == 0
+	var parsedHostKeys map[string][][]byte
+	if usePinning {
+		// Parse pinned host keys early so we can both validate the config
+		// and, when no host_key_algorithms is set, narrow the negotiated
+		// algorithm list to those we already trust.
+		parsed, err := parseHostKeysField(opt.HostKeys)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't parse host_keys: %w", err)
+		}
+		parsedHostKeys = parsed
+		f.hostKeys = parsed
 	}
 
-	if opt.KnownHostsFile != "" {
+	if len(opt.HostKeyAlgorithms) != 0 {
+		sshConfig.HostKeyAlgorithms = []string(opt.HostKeyAlgorithms)
+	} else if len(parsedHostKeys) > 0 && !opt.PinHostKey {
+		// Restrict negotiated host-key algorithms to those we have a
+		// pinned key for, so a server offering an additional unpinned
+		// algorithm doesn't cause a spurious mismatch when we'd happily
+		// accept the same server's pinned algorithm.
+		//
+		// Not done with pin_host_key set: there any algorithm the
+		// server presents can be accepted and pinned on first use, so
+		// the negotiation must stay open to new algorithms.
+		sshConfig.HostKeyAlgorithms = pinnedHostKeyAlgorithms(parsedHostKeys)
+	}
+
+	// When the ssh option is set, the external ssh program makes the
+	// connection and does its own host key validation, so none of the
+	// host key checking configured below takes effect.
+	if len(opt.SSH) > 0 && (opt.PinHostKey || len(opt.HostKeys) > 0) {
+		fs.Logf(name, "pin_host_key and host_keys are ignored when the ssh option is set; the ssh program does its own host key validation")
+	}
+
+	switch {
+	case opt.KnownHostsFile != "":
 		hostcallback, err := knownhosts.New(env.ShellExpand(opt.KnownHostsFile))
 		if err != nil {
 			return nil, fmt.Errorf("couldn't parse known_hosts_file: %w", err)
 		}
 		sshConfig.HostKeyCallback = hostcallback
-	} else {
-		// Set insecure HostKeyCallback if no known_hosts_file is
-		// configured. Rclone has no mechanism to manage
-		// known_hosts files so we can't enable host key
-		// validation by default. Users can enable it by setting
-		// known_hosts_file. See: https://rclone.org/sftp/#host-key-validation
+		if opt.PinHostKey || len(opt.HostKeys) > 0 {
+			fs.Logf(name, "known_hosts_file is set; ignoring pin_host_key and host_keys")
+		}
+	case usePinning:
+		// Pinning mode: validate against host_keys. When pin_host_key
+		// is set, each dial swaps in its own accept-and-stash callback
+		// (see sftpConnection), so the shared config only ever
+		// validates.
+		sshConfig.HostKeyCallback = f.hostKeyCallback(nil)
+		f.tofu = opt.PinHostKey
+		if opt.PinHostKey && len(parsedHostKeys) == 0 {
+			fs.Logf(name, "pin_host_key is set with no pinned host_keys yet; accepting the next server key on first use")
+		}
+		if opt.PinHostKey && strings.HasPrefix(name, ":") {
+			fs.Logf(name, "pin_host_key on an on-the-fly remote cannot persist the pinned key; the server key will be re-accepted on every run")
+		}
+	default:
 		sshConfig.HostKeyCallback = ssh.InsecureIgnoreHostKey()
-		fs.Logf(name, "No host key validation is being performed. Set known_hosts_file to enable it. See: https://rclone.org/sftp/#host-key-validation")
+		fs.Logf(name, "No host key validation is being performed. Set known_hosts_file or use --sftp-pin-host-key to enable it. See: https://rclone.org/sftp/#host-key-validation")
 	}
 
 	if opt.UseInsecureCipher && (opt.Ciphers != nil || opt.KeyExchange != nil) {
