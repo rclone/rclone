@@ -813,13 +813,13 @@ func init() {
 
 Returns a JSON object:
 - status - "running" or "stopped"
-- url - URL for the authorization (only if status is "running")
+- authUrl - URL for the authorization (only if status is "running")
 
 Eg
 
     {
         "status": "running",
-        "url": "http://127.0.0.1:53682/auth?state=..."
+        "authUrl": "http://127.0.0.1:53682/auth?state=..."
     }
 `,
 	})
@@ -833,7 +833,7 @@ func rcOAuthStatus(ctx context.Context, in rc.Params) (out rc.Params, err error)
 	if oauthCancelFn != nil {
 		status = "running"
 		params["status"] = status
-		params["url"] = oauthURL
+		params["authUrl"] = oauthURL
 	}
 	return params, nil
 }

@@ -37,7 +37,7 @@ func TestRcOAuthStatus(t *testing.T) {
 	out, err = call.Fn(ctx2, rc.Params{})
 	require.NoError(t, err)
 	assert.Equal(t, "running", out["status"])
-	assert.Equal(t, "http://127.0.0.1:53682/auth?state=xyz", out["url"])
+	assert.Equal(t, "http://127.0.0.1:53682/auth?state=xyz", out["authUrl"])
 }
 
 func TestRcOAuthStop(t *testing.T) {
