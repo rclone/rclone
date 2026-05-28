@@ -927,6 +927,48 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	return dstObj, nil
 }
 
+// countDirChildren returns the number of direct children of dirID.
+func (f *Fs) countDirChildren(ctx context.Context, dirID string) (int, error) {
+	n := 0
+	_, err := f.listAll(ctx, dirID, false, false, "", func(*api.Item) bool {
+		n++
+		return false
+	})
+	return n, err
+}
+
+// waitForDirChildren polls dirID until it lists at least want direct
+// children, or the timeout elapses. Drime's folder rename has visible
+// eventual-consistency on the children listing - the rename returns
+// success immediately but the renamed folder lists as empty for a
+// short window - so callers that rename a folder use this to wait for
+// the listing to settle before returning (see issue #9450).
+func (f *Fs) waitForDirChildren(ctx context.Context, dirID string, want int) error {
+	const timeout = 30 * time.Second
+	deadline := time.Now().Add(timeout)
+	backoff := 100 * time.Millisecond
+	for {
+		got, err := f.countDirChildren(ctx, dirID)
+		if err != nil {
+			return err
+		}
+		if got >= want {
+			return nil
+		}
+		if time.Now().After(deadline) {
+			return fmt.Errorf("timed out waiting for directory listing to settle: got %d, want %d", got, want)
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(backoff):
+		}
+		if backoff < 2*time.Second {
+			backoff *= 2
+		}
+	}
+}
+
 // DirMove moves src, srcRemote to this remote at dstRemote
 // using server-side move operations.
 //
@@ -947,11 +989,25 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return err
 	}
 
+	// Count children before the move so we can wait for the server's
+	// children listing to reflect the rename - see waitForDirChildren.
+	preCount, err := f.countDirChildren(ctx, srcID)
+	if err != nil {
+		return fmt.Errorf("DirMove: count source children: %w", err)
+	}
+
 	// Do the move
-	_, err = f.moveTo(ctx, srcID, srcLeaf, dstLeaf, srcDirectoryID, dstDirectoryID)
+	info, err := f.moveTo(ctx, srcID, srcLeaf, dstLeaf, srcDirectoryID, dstDirectoryID)
 	if err != nil {
 		return err
 	}
+
+	if preCount > 0 {
+		if err := f.waitForDirChildren(ctx, info.ID.String(), preCount); err != nil {
+			fs.Logf(f, "DirMove: %v (continuing)", err)
+		}
+	}
+
 	srcFs.dirCache.FlushDir(srcRemote)
 	return nil
 }
