@@ -7,6 +7,7 @@ import (
 	"mime"
 	"net/http"
 	"path"
+	"slices"
 	"testing"
 	"time"
 
@@ -433,15 +434,7 @@ func TestMimeTypeDetection(t *testing.T) {
 			}
 
 			// Check if detected MIME type is in the list of expected types
-			found := false
-			for _, expected := range tc.expectedMimes {
-				if detected == expected {
-					found = true
-					break
-				}
-			}
-
-			if !found {
+			if !slices.Contains(tc.expectedMimes, detected) {
 				t.Errorf("expected one of MIME types %v for %q, got %q", tc.expectedMimes, tc.filename, detected)
 			}
 		})

@@ -267,6 +267,13 @@ It is recommended that potentially long running jobs, e.g. `sync/sync`,
 flag to avoid any potential problems with the HTTP request and
 response timing out.
 
+As an alternative to `_async`, you can send the HTTP header
+`Prefer: respond-async` (RFC 7240). This has the same effect as
+`_async = true` but additionally returns HTTP status 202 (Accepted)
+instead of 200, and includes a `Preference-Applied: respond-async`
+response header. The 202 status code makes it easy for clients to distinguish
+an async response from a completed one without inspecting the body.
+
 Starting a job with the `_async` flag:
 
 ```console

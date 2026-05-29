@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -1166,14 +1167,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 			fs.Debugf(f, "Cross-directory move returned no parentFolder. Falling back to copy+delete.")
 			return nil, fs.ErrorCantMove
 		}
-		parentFound := false
-		for _, actualParent := range info.ParentFolder {
-			if actualParent == dstDirectoryID {
-				parentFound = true
-				break
-			}
-		}
-		if !parentFound {
+		if !slices.Contains(info.ParentFolder, dstDirectoryID) {
 			fs.Debugf(f, "Cross-directory move failed: expected parent=%q, got=%v. Falling back to copy+delete.",
 				dstDirectoryID, info.ParentFolder)
 			return nil, fs.ErrorCantMove

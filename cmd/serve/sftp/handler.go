@@ -38,7 +38,22 @@ func (v vfsHandler) Fileread(r *sftp.Request) (io.ReaderAt, error) {
 }
 
 func (v vfsHandler) Filewrite(r *sftp.Request) (io.WriterAt, error) {
-	file, err := v.OpenFile(r.Filepath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
+	// Respect the flags requested in the SFTP OPEN packet
+	p := r.Pflags()
+	flags := os.O_WRONLY
+	if p.Append {
+		flags |= os.O_APPEND
+	}
+	if p.Creat {
+		flags |= os.O_CREATE
+	}
+	if p.Trunc {
+		flags |= os.O_TRUNC
+	}
+	if p.Excl {
+		flags |= os.O_EXCL
+	}
+	file, err := v.OpenFile(r.Filepath, flags, 0777)
 	if err != nil {
 		return nil, err
 	}
@@ -49,9 +64,21 @@ func (v vfsHandler) Filecmd(r *sftp.Request) error {
 	switch r.Method {
 	case "Setstat":
 		attr := r.Attributes()
-		if attr.Mtime != 0 {
-			modTime := time.Unix(int64(attr.Mtime), 0)
-			err := v.Chtimes(r.Filepath, modTime, modTime)
+		flags := r.AttrFlags()
+		// A size attribute is a request to truncate the file
+		if flags.Size {
+			node, err := v.Stat(r.Filepath)
+			if err != nil {
+				return err
+			}
+			if err := node.Truncate(int64(attr.Size)); err != nil {
+				return err
+			}
+		}
+		if flags.Acmodtime {
+			atime := time.Unix(int64(attr.Atime), 0)
+			mtime := time.Unix(int64(attr.Mtime), 0)
+			err := v.Chtimes(r.Filepath, atime, mtime)
 			if err != nil {
 				return err
 			}
@@ -88,6 +115,26 @@ func (v vfsHandler) Filecmd(r *sftp.Request) error {
 		return sftp.ErrSshFxOpUnsupported
 	}
 	return nil
+}
+
+// StatVFS implements the statvfs@openssh.com extension, returning filesystem
+// usage information from the VFS. It satisfies sftp.StatVFSFileCmder.
+func (v vfsHandler) StatVFS(r *sftp.Request) (*sftp.StatVFS, error) {
+	const blockSize = 4096
+	total, _, free := v.Statfs()
+	blocks := uint64(total) / blockSize
+	bfree := uint64(free) / blockSize
+	return &sftp.StatVFS{
+		Bsize:   blockSize,
+		Frsize:  blockSize,
+		Blocks:  blocks,
+		Bfree:   bfree,
+		Bavail:  bfree,
+		Files:   1e9, // total file inodes - made up as the VFS has no concept of these
+		Ffree:   1e9, // free file inodes
+		Favail:  1e9, // free file inodes for non-root
+		Namemax: 255, // maximum filename length
+	}, nil
 }
 
 type listerat []os.FileInfo
