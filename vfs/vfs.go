@@ -190,6 +190,15 @@ type VFS struct {
 	inUse       atomic.Int32 // count of number of opens
 }
 
+type contextKeyType struct{}
+
+var contextKey = contextKeyType{}
+
+// WithTracker returns a new context that tracks created/reused VFSes in a slice pointer.
+func WithTracker(ctx context.Context, tracker *[]*VFS) context.Context {
+	return context.WithValue(ctx, contextKey, tracker)
+}
+
 // Keep track of active VFS keyed on fs.ConfigString(f)
 var (
 	activeMu sync.Mutex
@@ -203,6 +212,7 @@ var (
 // the config in the context (if any) and filter config in the context
 // (if any).
 func New(ctx context.Context, f fs.Fs, opt *vfscommon.Options) *VFS {
+	originalCtx := ctx
 	fsDir := fs.NewDir("", time.Now())
 	// Strip the ctx of any cancellation but copy the config across
 	newCtx := context.Background()
@@ -235,11 +245,19 @@ func New(ctx context.Context, f fs.Fs, opt *vfscommon.Options) *VFS {
 			fs.Debugf(f, "Reusing VFS from active cache")
 			activeVFS.inUse.Add(1)
 			cancel()
+			if tracker, ok := originalCtx.Value(contextKey).(*[]*VFS); ok {
+				*tracker = append(*tracker, activeVFS)
+			}
 			return activeVFS
 		}
 	}
 	// Put the VFS into the active cache
 	active[configName] = append(active[configName], vfs)
+
+	tracker, ok := originalCtx.Value(contextKey).(*[]*VFS)
+	if ok {
+		*tracker = append(*tracker, vfs)
+	}
 
 	// Create root directory
 	vfs.root = newDir(vfs, f, nil, fsDir)
@@ -386,9 +404,11 @@ func (vfs *VFS) shutdownCache() {
 }
 
 // Shutdown stops any background go-routines and removes the VFS from
-// the active ache.
+// the active cache.
 func (vfs *VFS) Shutdown() {
-	if vfs.inUse.Add(-1) > 0 {
+	inUse := vfs.inUse.Add(-1)
+	fs.Debugf(vfs.f, "VFS Shutdown called, new inUse count: %d", inUse)
+	if inUse > 0 {
 		return
 	}
 

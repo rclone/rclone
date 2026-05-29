@@ -98,7 +98,6 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (asyncerrors 
 			out, umountErr = exec.Command(cmd[0], cmd[1:]...).CombinedOutput()
 		}
 		shutdownErr := s.Shutdown()
-		VFS.Shutdown()
 		if umountErr != nil {
 			out = bytes.TrimSpace(out)
 			return fmt.Errorf("%s: failed to umount the NFS volume %e", out, umountErr)
@@ -111,7 +110,6 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (asyncerrors 
 	nfs.OnUnmountFunc = func() {
 		s.UnmountedExternally = true
 		errChan <- nil
-		VFS.Shutdown()
 	}
 
 	actualMountpoint = mountpoint

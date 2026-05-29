@@ -13,6 +13,7 @@ import (
 	_ "github.com/rclone/rclone/cmd/mount"
 	_ "github.com/rclone/rclone/cmd/mount2"
 	"github.com/rclone/rclone/cmd/mountlib"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fstest/testy"
@@ -26,6 +27,11 @@ func TestRc(t *testing.T) {
 		testy.SkipUnreliable(t)
 	}
 	ctx := context.Background()
+	oldConfigPath := config.GetConfigPath()
+	_ = config.SetConfigPath("")
+	t.Cleanup(func() {
+		_ = config.SetConfigPath(oldConfigPath)
+	})
 	configfile.Install()
 	mount := rc.Calls.Get("mount/mount")
 	assert.NotNil(t, mount)
@@ -125,5 +131,83 @@ func TestRc(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, 0, len(checkMountList()))
 		})
+	})
+
+	t.Run("SharedVFS", func(t *testing.T) {
+		if len(mountTypes) == 0 {
+			t.Skip("Can't mount")
+		}
+		mountPoint1 := t.TempDir()
+		mountPoint2 := t.TempDir()
+		if runtime.GOOS == "windows" {
+			require.NoError(t, os.RemoveAll(mountPoint1))
+			require.NoError(t, os.RemoveAll(mountPoint2))
+		}
+
+		in1 := rc.Params{
+			"fs":         localDir,
+			"mountPoint": mountPoint1,
+		}
+		in2 := rc.Params{
+			"fs":         localDir,
+			"mountPoint": mountPoint2,
+		}
+
+		// mount first
+		_, err := mount.Fn(ctx, in1)
+		if err != nil {
+			t.Skipf("Mount 1 failed: %v", err)
+		}
+		defer func() {
+			_, _ = unmount.Fn(ctx, in1)
+		}()
+
+		// mount second (should share VFS)
+		_, err = mount.Fn(ctx, in2)
+		if err != nil {
+			t.Skipf("Mount 2 failed: %v", err)
+		}
+		defer func() {
+			_, _ = unmount.Fn(ctx, in2)
+		}()
+
+		checkMountList := func() []mountlib.MountInfo {
+			listCall := rc.Calls.Get("mount/listmounts")
+			require.NotNil(t, listCall)
+			listReply, err := listCall.Fn(ctx, rc.Params{})
+			require.NoError(t, err)
+			mountPointsReply, err := listReply.Get("mountPoints")
+			require.NoError(t, err)
+			mountPoints, ok := mountPointsReply.([]mountlib.MountInfo)
+			require.True(t, ok)
+			return mountPoints
+		}
+
+		// Verify we have 2 mounts
+		mountPoints := checkMountList()
+		assert.Equal(t, 2, len(mountPoints))
+
+		// Wait a moment
+		time.Sleep(100 * time.Millisecond)
+
+		// Unmount first
+		_, err = unmount.Fn(ctx, in1)
+		require.NoError(t, err)
+
+		// Wait a moment for background goroutines to finish
+		time.Sleep(200 * time.Millisecond)
+
+		// Verify second mount is still active and VFS is still running
+		mountPoints = checkMountList()
+		require.Equal(t, 1, len(mountPoints))
+		assert.Equal(t, mountPoint2, mountPoints[0].MountPoint)
+
+		// Unmount second
+		_, err = unmount.Fn(ctx, in2)
+		require.NoError(t, err)
+
+		// Verify 0 mounts
+		mountPoints = checkMountList()
+		assert.Equal(t, 0, len(mountPoints))
 	})
 }
