@@ -111,6 +111,7 @@ backends:
  - backend:  "cloudinary"
    remote:   "TestCloudinary:"
    fastlist: false
+   listretries: 5
    ignore:
      # fs/operations
      - TestCheckSum
@@ -157,6 +158,16 @@ backends:
  - backend:  "dropbox"
    remote:   "TestDropbox:"
    fastlist: false
+   ignore:
+     # The bisync normalization test relies on uploading distinct NFC and NFD
+     # versions of the same filename and on having modtime updates that don't
+     # require a delete+re-upload. Dropbox normalizes unicode server-side
+     # (NFD -> NFC) and can't set modtime in place, so the test takes a
+     # different code path that produces a different log without functional
+     # difference - the file state ends up correct either way.
+     - TestBisyncRemoteLocal/normalization
+     - TestBisyncLocalRemote/normalization
+     - TestBisyncRemoteRemote/normalization
  # - backend:  "filefabric"
  #   remote:   "TestFileFabric:"
  #   fastlist: false
@@ -479,17 +490,17 @@ backends:
    ignoretests:
      - cmd/bisync
      - cmd/gitannex
- - backend:  "webdav"
-   remote:   "TestWebdavInfiniteScale:"
-   ignore:
-     - TestIntegration/FsMkdir/FsEncoding/punctuation
-     - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
-   env:
-      - RCLONE_NO_CHECK_CERTIFICATE=true
-   fastlist: false
-   ignoretests:
-     - cmd/bisync
-     - cmd/gitannex
+ # - backend:  "webdav"
+ #   remote:   "TestWebdavInfiniteScale:"
+ #   ignore:
+ #     - TestIntegration/FsMkdir/FsEncoding/punctuation
+ #     - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
+ #   env:
+ #      - RCLONE_NO_CHECK_CERTIFICATE=true
+ #   fastlist: false
+ #   ignoretests:
+ #     - cmd/bisync
+ #     - cmd/gitannex
  - backend:  "webdav"
    remote:   "TestWebdavRclone:"
    ignore:
@@ -573,13 +584,6 @@ backends:
    ignoretests:
      - cmd/bisync
  - backend:  "seafile"
-   remote:   "TestSeafileV6:"
-   fastlist: false
-   ignore:
-     - TestIntegration/FsMkdir/FsPutFiles/FsDirMove
-   ignoretests:
-     - cmd/gitannex
- - backend:  "seafile"
    remote:   "TestSeafile:"
    fastlist: true
    ignoretests:
@@ -660,6 +664,10 @@ backends:
    ignoretests:
      - cmd/bisync
      - cmd/gitannex
+ - backend: "huaweidrive"
+   remote: "TestHuaweiDrive:"
+   fastlist: true
+   listretries: 5
  - backend: "shade"
    remote: "TestShade:"
    fastlist: false
@@ -688,3 +696,4 @@ backends:
      - cmd/bisync
    fastlist: false
    extratime: 2.0
+   listretries: 5

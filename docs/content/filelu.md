@@ -4,7 +4,7 @@ description: "Rclone docs for FileLu"
 versionIntroduced: "v1.70"
 ---
 
-# {{< icon "fa fa-folder" >}} FileLu
+# FileLu
 
 [FileLu](https://filelu.com/) is a reliable cloud storage provider
 offering features like secure file uploads, downloads, flexible
@@ -218,6 +218,28 @@ Properties:
 ### Advanced options
 
 Here are the Advanced options specific to filelu (FileLu Cloud Storage).
+
+#### --filelu-upload-cutoff
+
+Cutoff for switching to chunked upload. Any files larger than this will be uploaded in chunks of chunk_size.
+
+Properties:
+
+- Config:      upload_cutoff
+- Env Var:     RCLONE_FILELU_UPLOAD_CUTOFF
+- Type:        SizeSuffix
+- Default:     500Mi
+
+#### --filelu-chunk-size
+
+Chunk size to use for uploading. Used for multipart uploads.
+
+Properties:
+
+- Config:      chunk_size
+- Env Var:     RCLONE_FILELU_CHUNK_SIZE
+- Type:        SizeSuffix
+- Default:     64Mi
 
 #### --filelu-encoding
 

@@ -4,7 +4,7 @@ description: "Rclone docs for Jottacloud"
 versionIntroduced: "v1.43"
 ---
 
-# {{< icon "fa fa-cloud" >}} Jottacloud
+# Jottacloud
 
 Jottacloud is a cloud storage service provider from a Norwegian company, using
 its own datacenters in Norway.
@@ -30,6 +30,8 @@ as described [below](#traditional):
 - MediaMarkt
   - MediaMarkt Cloud (mediamarkt.jottacloud.com)
   - Let's Go Cloud (letsgo.jotta.cloud)
+- Phonero
+  - Phonero Sky (sky.phonero.no)
 
 Paths are specified as `remote:path`
 
@@ -371,6 +373,7 @@ the following characters are also replaced:
 | >         | 0x3E  | ＞          |
 | ?         | 0x3F  | ？          |
 | \|        | 0x7C  | ｜          |
+| %         | 0x25  | ％          |
 
 Invalid UTF-8 bytes will also be [replaced](/overview/#invalid-utf8),
 as they can't be used in XML strings.
@@ -554,7 +557,7 @@ Properties:
 - Config:      encoding
 - Env Var:     RCLONE_JOTTACLOUD_ENCODING
 - Type:        Encoding
-- Default:     Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,Del,Ctl,InvalidUtf8,Dot
+- Default:     Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,Percent,Del,Ctl,InvalidUtf8,Dot
 
 #### --jottacloud-description
 

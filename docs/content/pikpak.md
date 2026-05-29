@@ -4,7 +4,7 @@ description: "Rclone docs for PikPak"
 versionIntroduced: "v1.62"
 ---
 
-# {{< icon "fa fa-cloud" >}} PikPak
+# PikPak
 
 PikPak is [a private cloud drive](https://mypikpak.com/).
 
@@ -317,14 +317,19 @@ rclone backend addurl remote: [options] [<arguments>+]
 
 This command adds offline download task for url.
 
-Usage example:
+Usage examples:
 
 ```console
 rclone backend addurl pikpak:dirpath url
+rclone backend addurl pikpak:dirpath url -o name=custom_filename.zip
 ```
 
 Downloads will be stored in 'dirpath'. If 'dirpath' is invalid,
 download will fallback to default 'My Pack' folder.
+
+Options:
+
+- "name": Custom filename for the downloaded file.
 
 ### decompress
 

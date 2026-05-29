@@ -4,7 +4,7 @@ description: "Rclone docs for Box"
 versionIntroduced: "v1.38"
 ---
 
-# {{< icon "fa fa-archive" >}} Box
+# Box
 
 Paths are specified as `remote:path`
 
@@ -183,7 +183,7 @@ y) Yes
 n) No
 y/n> n
 Remote config
-Already have a token - refresh?
+Token already configured - replace it?
 y) Yes
 n) No
 y/n> y

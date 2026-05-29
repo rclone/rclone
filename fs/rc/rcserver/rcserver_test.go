@@ -89,18 +89,19 @@ func TestRcServer(t *testing.T) {
 }
 
 type testRun struct {
-	Name        string
-	URL         string
-	User        string
-	Pass        string
-	Status      int
-	Method      string
-	Range       string
-	Body        string
-	ContentType string
-	Expected    string
-	Contains    *regexp.Regexp
-	Headers     map[string]string
+	Name           string
+	URL            string
+	User           string
+	Pass           string
+	Status         int
+	Method         string
+	Range          string
+	Body           string
+	ContentType    string
+	Expected       string
+	Contains       *regexp.Regexp
+	Headers        map[string]string
+	RequestHeaders map[string]string
 }
 
 // Run a suite of tests
@@ -143,6 +144,9 @@ func emulateCalls(t *testing.T, tests []testRun, mux chi.Router, testURL string)
 			}
 			if test.User != "" && test.Pass != "" {
 				req.SetBasicAuth(test.User, test.Pass)
+			}
+			for k, v := range test.RequestHeaders {
+				req.Header.Set(k, v)
 			}
 
 			w := httptest.NewRecorder()
@@ -403,11 +407,17 @@ func TestRC(t *testing.T) {
 }
 `,
 	}, {
-		Name:     "core-gc",
-		URL:      "core/gc", // returns nil, nil so check it is made into {}
-		Method:   "POST",
-		Status:   http.StatusOK,
-		Expected: "{}\n",
+		Name:   "core-gc",
+		URL:    "core/gc", // now requires auth
+		Method: "POST",
+		Status: http.StatusForbidden,
+		Expected: `{
+	"error": "authentication must be set up on the rc server to use \"core/gc\" or the --rc-no-auth flag must be in use",
+	"input": {},
+	"path": "core/gc",
+	"status": 403
+}
+`,
 	}, {
 		Name:   "url-params",
 		URL:    "rc/noop?param1=potato&param2=sausage",
@@ -788,6 +798,33 @@ func TestRCAsync(t *testing.T) {
 		Body:        `{ "_async":true }`,
 		Status:      http.StatusOK,
 		Contains:    regexp.MustCompile(`(?s)\{.*\"jobid\":.*\}`),
+	}, {
+		Name:           "prefer-respond-async",
+		URL:            "rc/noop",
+		Method:         "POST",
+		ContentType:    "application/json",
+		Body:           `{ "_async":true }`,
+		RequestHeaders: map[string]string{"Prefer": "respond-async"},
+		Status:         http.StatusAccepted,
+		Contains:       regexp.MustCompile(`(?s)\{.*\"jobid\":.*\}`),
+	}, {
+		Name:           "prefer-without-async",
+		URL:            "rc/noop",
+		Method:         "POST",
+		ContentType:    "application/json",
+		Body:           `{}`,
+		RequestHeaders: map[string]string{"Prefer": "respond-async"},
+		Status:         http.StatusAccepted,
+		Contains:       regexp.MustCompile(`(?s)\{.*\"jobid\":.*\}`),
+	}, {
+		Name:           "prefer-respond-async-mixed",
+		URL:            "rc/noop",
+		Method:         "POST",
+		ContentType:    "application/json",
+		Body:           `{}`,
+		RequestHeaders: map[string]string{"Prefer": "wait=10, respond-async"},
+		Status:         http.StatusAccepted,
+		Contains:       regexp.MustCompile(`(?s)\{.*\"jobid\":.*\}`),
 	}, {
 		Name:        "bad",
 		URL:         "rc/noop",

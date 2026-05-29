@@ -1,0 +1,9 @@
+{{ if and (gt .WordCount 200) (not (.Params.notoc)) }}
+<button class="toc-toggle" aria-label="Toggle table of contents">
+  <svg class="icon toc-toggle-icon" aria-hidden="true"><use href="#icon-chevrons-right"/></svg>
+</button>
+<div class="toc-sidebar">
+  <a href="#" class="toc-title">On this page</a>
+  {{ .TableOfContents }}
+</div>
+{{ end }}

@@ -11,6 +11,7 @@ This file describes how to make the various kinds of releases
 
 - git checkout master # see below for stable branch
 - git pull # IMPORTANT
+- make fetch-gui-and-commit # bump the embedded GUI if rclone-web has a newer release
 - git status - make sure everything is checked in
 - Check GitHub actions build for master is Green
 - make test # see integration test server or run locally
@@ -55,32 +56,18 @@ If the `make updatedirect` upgrades the version of go in the `go.mod`
 go 1.22.0
 ```
 
-then go to manual mode. `go1.22` here is the lowest supported version
-in the `go.mod`.
+then so this instead `make updatedirectnoupgrade`. This will try each
+upgrade individually. Consider making an upstream bug report for any
+`SKIPPING` lines as these only support the latest Go version not the
+previous version too.
 
-If `make updatedirect` added a `toolchain` directive then remove it.
-We don't want to force a toolchain on our users. Linux packagers are
-often using a version of Go that is a few versions out of date.
-
-```console
-go list -m -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' all > /tmp/potential-upgrades
-go get -d $(cat /tmp/potential-upgrades)
-go mod tidy -go=1.22 -compat=1.22
-```
-
-If the `go mod tidy` fails use the output from it to remove the
-package which can't be upgraded from `/tmp/potential-upgrades` when
-done
-
-```console
-git co go.mod go.sum
-```
-
-And try again.
+If `make updatedirect` or `make updatedirectnoupgrade` added a
+`toolchain` directive then remove it. We don't want to force a
+toolchain on our users. Linux packagers are often using a version of
+Go that is a few versions out of date.
 
 Optionally upgrade the direct and indirect dependencies. This is very
-likely to fail if the manual method was used abve - in that case
-ignore it as it is too time consuming to fix.
+likely to fail if `make updatedirectnoupgrade` was used.
 
 - `make update`
 - `make GOTAGS=cmount`
@@ -97,6 +84,19 @@ build.
 
 Once it compiles locally, push it on a test branch and commit fixes
 until the tests pass.
+
+### Pseudo versions
+
+Go makes pseudo versions for untagged repos and repos not at a tag.
+The pseudo versions on repos that have been tagged before do not get
+updated automatically so need manually checking. These can be found with
+
+```console
+grep -E '[0-9]{14}-[0-9a-f]{12}' go.mod | grep -v indirect | grep -v 'v0\.0\.0'
+```
+
+These will need to be updated manually using the `go get ...@branch`
+syntax.
 
 ### Major versions
 

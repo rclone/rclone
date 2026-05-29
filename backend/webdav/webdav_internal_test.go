@@ -12,6 +12,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -79,6 +80,44 @@ func TestHeaders(t *testing.T) {
 	// send an About response since that is all the dummy server can return
 	_, err := f.Features().About(context.Background())
 	require.NoError(t, err)
+}
+
+// TestListAllAuthRedirect checks auth_redirect is honoured on listAll PROPFIND.
+func TestListAllAuthRedirect(t *testing.T) {
+	var targetAuth string
+	var targetHits int
+
+	target := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		targetHits++
+		targetAuth = r.Header.Get("Authorization")
+		_, err := fmt.Fprint(w, `<d:multistatus xmlns:d="DAV:"></d:multistatus>`)
+		require.NoError(t, err)
+	}))
+	defer target.Close()
+
+	// Redirect via a different hostname so net/http strips Authorization on cross-host redirect.
+	targetURL := strings.Replace(target.URL, "127.0.0.1", "localhost", 1)
+	source := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, targetURL+r.URL.Path, http.StatusTemporaryRedirect)
+	}))
+	defer source.Close()
+
+	configfile.Install()
+	m := configmap.Simple{
+		"type":          "webdav",
+		"url":           source.URL,
+		"user":          "alice",
+		"pass":          obscure.MustObscure("secret"),
+		"auth_redirect": "true",
+	}
+
+	f, err := webdav.NewFs(context.Background(), remoteName, "", m)
+	require.NoError(t, err)
+
+	_, _ = f.List(context.Background(), "")
+
+	assert.GreaterOrEqual(t, targetHits, 1, "redirect target should receive the request")
+	assert.NotEmpty(t, targetAuth, "Authorization header should be preserved across redirect")
 }
 
 // TestReservedCharactersInPathAreEscaped verifies that reserved characters

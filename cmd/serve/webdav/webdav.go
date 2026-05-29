@@ -122,6 +122,13 @@ supported hash on the backend or you can use a named hash such as
 "MD5" or "SHA-1". Use the [hashsum](/commands/rclone_hashsum/) command
 to see the full list.
 
+### Gzip compression
+
+The server will compress certain response bodies (text and XML, including
+WebDAV PROPFIND responses) using gzip when the client advertises gzip
+support via the ` + "`Accept-Encoding: gzip`" + ` request header. This reduces
+bandwidth usage.
+
 ### Access WebDAV on Windows
 
 WebDAV shared folder can be mapped as a drive on Windows, however the default
@@ -175,6 +182,19 @@ rclone --webdav-unix-socket /tmp/my.socket --webdav-url http://localhost lsf :we
 Note that there is no authentication on http protocol - this is expected to be
 done by the permissions on the socket.
 
+### Symlinks / Junction points
+
+The webdav protocol does not support symlinks or junction points and
+by default rclone will skip them completely.
+
+You can use ` + "`-L`" + ` to get rclone to follow symlinks or you can
+use ` + "`--local-links`" + ` to make rclone show ` + "`.rclonelink`" + `
+files in place of the symlinks.
+
+**NB** Do not use ` + "`--links`" + ` as since v1.69 this applies to
+the VFS layer too, use ` + "`--local-links`" + ` which only applies to
+the local backend only.
+
 ` + strings.TrimSpace(libhttp.Help(flagPrefix)+libhttp.TemplateHelp(flagPrefix)+libhttp.AuthHelp(flagPrefix)+vfs.Help()+proxy.Help),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.39",
@@ -223,6 +243,20 @@ type WebDAV struct {
 	etagHashType  hash.Type
 }
 
+func webDAVCompressMiddleware() func(http.Handler) http.Handler {
+	compress := middleware.Compress(5, "text/*", "application/xml")
+	return func(next http.Handler) http.Handler {
+		compressedNext := compress(next)
+		return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+			if r.Header.Get("Range") != "" {
+				next.ServeHTTP(rw, r)
+				return
+			}
+			compressedNext.ServeHTTP(rw, r)
+		})
+	}
+}
+
 // check interface
 var _ webdav.FileSystem = (*WebDAV)(nil)
 
@@ -250,7 +284,7 @@ func newWebDAV(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		// override auth
 		w.opt.Auth.CustomAuthFn = w.auth
 	} else {
-		w._vfs = vfs.New(f, vfsOpt)
+		w._vfs = vfs.New(ctx, f, vfsOpt)
 	}
 
 	w.server, err = libhttp.NewServer(ctx,
@@ -275,6 +309,7 @@ func newWebDAV(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 
 	router := w.server.Router()
 	router.Use(
+		webDAVCompressMiddleware(),
 		middleware.SetHeader("Accept-Ranges", "bytes"),
 		middleware.SetHeader("Server", "rclone/"+fs.Version),
 	)
