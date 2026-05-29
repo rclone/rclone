@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -48,9 +49,14 @@ func init() {
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		Options: []fs.Option{{
-			Name:     "doi",
-			Help:     "The DOI or the doi.org URL.",
-			Required: true,
+			Name: "doi",
+			Help: `The DOI or the doi.org URL.
+
+For a Dataverse dataset you can instead set host + dataset_pid (see
+those options) to address it directly, without resolving a DOI through
+doi.org. Direct mode also reaches drafts and restricted datasets that
+have no public DOI.`,
+			Required: false,
 		}, {
 			Name: fs.ConfigProvider,
 			Help: `DOI provider.
@@ -82,6 +88,66 @@ The DOI resolver can be set for testing or for cases when the canonical DOI reso
 Defaults to "https://doi.org/api".`,
 			Required: false,
 			Advanced: true,
+		}, {
+			Name: "host",
+			Help: `Base URL of a Dataverse installation, e.g. https://demo.dataverse.org.
+
+Set host together with dataset_pid to address a Dataverse dataset
+directly, skipping doi.org resolution. Leave empty to resolve a DOI
+instead.`,
+			Advanced: true,
+		}, {
+			Name: "dataset_pid",
+			Help: `Persistent ID of the Dataverse dataset to mount.
+
+This is passed straight to Dataverse, so any persistent ID type the
+installation supports works here — a DOI (doi:10.5072/FK2/ABCD), a
+Handle (hdl:1902.1/12345), a PermaLink (perma:...), and so on — not only
+DOIs. Used together with host for direct addressing (see the host option).`,
+			Advanced: true,
+		}, {
+			Name: "token",
+			Help: `Dataverse API token, sent as X-Dataverse-Key on API and access requests.
+
+Leave empty for guest access — public datasets and published files
+remain readable without a token. A token is only needed for restricted
+files, draft versions, or datasets limited to authenticated readers.
+The token is stripped on the redirect to S3, so it never leaves the
+Dataverse host.`,
+			Advanced:  true,
+			Sensitive: true,
+		}, {
+			Name: "version",
+			Help: `Dataverse dataset version to mount, e.g. :latest, :draft or 1.0.
+
+Defaults to :latest.`,
+			Default:  api.LatestVersion,
+			Advanced: true,
+		}, {
+			Name: "ingest_format",
+			Help: `Which form of a Dataverse tabular-ingest file to surface.
+
+When Dataverse ingests a tabular upload (CSV, SPSS, Stata, …) it stores
+both the original bytes and a normalised archival form (typically
+tab-separated). This option picks which one the mount exposes:
+
+- original (default): fetch with ?format=original, return the original
+  upload bytes and expose their MD5. On the whole-version listing the
+  file also surfaces under its original name (.csv, .sav, …); on the
+  lazy /tree listing it keeps its stored name but still serves the
+  original bytes, size and MD5.
+- archival: return the post-ingest bytes (typically .tab). The size is
+  the archival (.tab) size, so rclone copy still verifies it; only the
+  MD5 is hidden, because Dataverse stores the original upload's checksum,
+  which does not match the archival bytes.
+
+Files that were not ingested are unaffected.`,
+			Default: string(IngestFormatOriginal),
+			Examples: []fs.OptionExample{
+				{Value: string(IngestFormatOriginal), Help: "Original upload bytes (and, on the whole-version listing, name)"},
+				{Value: string(IngestFormatArchival), Help: "Archival (post-ingest) bytes and name"},
+			},
+			Advanced: true,
 		}},
 	}
 	fs.Register(fsi)
@@ -104,6 +170,11 @@ type Options struct {
 	Doi               string `config:"doi"`                  // The DOI, a digital identifier of an object, usually a dataset
 	Provider          string `config:"provider"`             // The DOI provider
 	DoiResolverAPIURL string `config:"doi_resolver_api_url"` // The URL of the DOI resolver API to use.
+	Host              string `config:"host"`                 // Dataverse installation base URL (direct mode)
+	DatasetPID        string `config:"dataset_pid"`          // Dataverse dataset persistent ID (direct mode)
+	Token             string `config:"token"`                // Dataverse API token (X-Dataverse-Key)
+	Version           string `config:"version"`              // Dataverse dataset version (default :latest)
+	IngestFormat      string `config:"ingest_format"`        // Dataverse tabular-ingest form: original | archival
 }
 
 // Fs stores the interface to the remote HTTP files
@@ -120,6 +191,8 @@ type Fs struct {
 	srv         *rest.Client   // the connection to the server
 	pacer       *fs.Pacer      // pacer for API calls
 	cache       *cache.Cache   // a cache for the remote metadata
+	httpClient  *http.Client   // client for byte-stream reads: off the pacer, follows redirects, strips the token cross-host
+	useTree     bool           // Dataverse: lazy /tree listing available (feature-detected)
 }
 
 // Object is a remote object that has been stat'd (so it exists, but is not necessarily open for reading)
@@ -131,6 +204,9 @@ type Object struct {
 	modTime     time.Time // modification time of the object
 	contentType string    // content type of the object
 	md5         string    // MD5 hash of the object content
+	// Dataverse-only (zero for other providers), used to attribute a 403:
+	accessStatus string // /tree access marker: "public" | "restricted" | "embargoed"
+	restricted   bool   // file is access-restricted
 }
 
 // doiProvider is the interface used to list objects in a DOI
@@ -205,6 +281,12 @@ func resolveDoiURL(ctx context.Context, srv *rest.Client, pacer *fs.Pacer, opt *
 
 // Resolve the passed configuration into a provider and enpoint
 func resolveEndpoint(ctx context.Context, srv *rest.Client, pacer *fs.Pacer, opt *Options) (provider Provider, endpoint *url.URL, err error) {
+	// Direct mode: address a Dataverse dataset by host + dataset_pid,
+	// skipping doi.org resolution.
+	if opt.Host != "" && opt.DatasetPID != "" {
+		return resolveDataverseDirectEndpoint(opt)
+	}
+
 	resolvedURL, err := resolveDoiURL(ctx, srv, pacer, opt)
 	if err != nil {
 		return "", nil, err
@@ -247,27 +329,62 @@ func (f *Fs) httpConnection(ctx context.Context, opt *Options) (isFile bool, err
 	f.provider = provider
 	f.opt.Provider = string(provider)
 
+	f.useTree = false
 	switch f.provider {
 	case Dataverse:
+		// Authenticate every Dataverse API/list/tree call. The byte-stream
+		// reads attach the token separately (and strip it on the
+		// cross-host redirect to S3).
+		if opt.Token != "" {
+			f.srv.SetHeader(api.AuthHeader, opt.Token)
+		}
 		f.doiProvider = newDataverseProvider(f)
+		// Feature-detect the lazy /tree listing; on a 404 or any error
+		// useTree stays false and listing uses the whole-version path.
+		pid := opt.DatasetPID
+		if pid == "" {
+			pid = endpoint.Query().Get("persistentId")
+		}
+		f.useTree = treeSupported(ctx, f, pid, opt.Version)
 	case Invenio, Zenodo:
 		f.doiProvider = newInvenioProvider(f)
 	default:
 		return false, fmt.Errorf("provider type '%s' not supported", f.provider)
 	}
 
-	// Determine if the root is a file
+	return f.rootIsFile(ctx)
+}
+
+// rootIsFile reports whether f.root points at a file (rather than a
+// directory or the dataset root). On the non-tree path it also serves as
+// the NewFs-time connection/auth check; tree mode validates the
+// connection during /tree feature detection.
+func (f *Fs) rootIsFile(ctx context.Context) (bool, error) {
+	if f.useTree {
+		if f.root == "" {
+			return false, nil
+		}
+		// Resolve f.root via its parent's /tree level: a hit is a file, a
+		// miss (ErrorObjectNotFound) is a directory.
+		_, err := f.NewObject(ctx, "")
+		if errors.Is(err, fs.ErrorObjectNotFound) {
+			return false, nil
+		}
+		if err != nil {
+			return false, err
+		}
+		return true, nil
+	}
 	entries, err := f.doiProvider.ListEntries(ctx)
 	if err != nil {
 		return false, err
 	}
 	for _, entry := range entries {
 		if entry.remote == f.root {
-			isFile = true
-			break
+			return true, nil
 		}
 	}
-	return isFile, nil
+	return false, nil
 }
 
 // retryErrorCodes is a slice of error codes that we will retry
@@ -300,18 +417,46 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, err
 	}
-	opt.Doi = parseDoi(opt.Doi)
+	// Direct mode: host + dataset_pid address a Dataverse dataset
+	// directly, skipping DOI resolution. Otherwise a DOI is required.
+	switch {
+	case opt.Host != "" && opt.DatasetPID == "",
+		opt.Host == "" && opt.DatasetPID != "":
+		return nil, errors.New("host and dataset_pid must both be set for Dataverse direct mode")
+	}
+	directMode := opt.Host != "" && opt.DatasetPID != ""
+	if directMode && opt.Doi != "" {
+		return nil, errors.New("set either doi or host+dataset_pid, not both")
+	}
+	if !directMode && opt.Doi == "" {
+		return nil, errors.New("doi is required (or set host+dataset_pid for a Dataverse dataset)")
+	}
+	if opt.Doi != "" {
+		opt.Doi = parseDoi(opt.Doi)
+	}
+	if opt.Version == "" {
+		opt.Version = api.LatestVersion
+	}
+	switch IngestFormat(opt.IngestFormat) {
+	case "":
+		opt.IngestFormat = string(IngestFormatOriginal)
+	case IngestFormatOriginal, IngestFormatArchival:
+		// ok
+	default:
+		return nil, fmt.Errorf("invalid ingest_format %q (want %q or %q)", opt.IngestFormat, IngestFormatOriginal, IngestFormatArchival)
+	}
 
 	client := fshttp.NewClient(ctx)
 	ci := fs.GetConfig(ctx)
 	f := &Fs{
-		name:  name,
-		root:  root,
-		opt:   *opt,
-		ci:    ci,
-		srv:   rest.NewClient(client),
-		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
-		cache: cache.New(),
+		name:       name,
+		root:       root,
+		opt:        *opt,
+		ci:         ci,
+		srv:        rest.NewClient(client),
+		pacer:      fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		cache:      cache.New(),
+		httpClient: readClient(client),
 	}
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
@@ -345,9 +490,12 @@ func (f *Fs) Root() string {
 	return f.root
 }
 
-// String returns the URL for the filesystem
+// String returns a description of the filesystem
 func (f *Fs) String() string {
-	return fmt.Sprintf("DOI %s", f.opt.Doi)
+	if f.opt.Doi != "" {
+		return fmt.Sprintf("DOI %s", f.opt.Doi)
+	}
+	return fmt.Sprintf("Dataverse dataset %s on %s", f.opt.DatasetPID, f.opt.Host)
 }
 
 // Features returns the optional features of this Fs
@@ -383,6 +531,9 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 
 // NewObject creates a new remote http file object
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
+	if f.useTree {
+		return f.newObjectTree(ctx, remote)
+	}
 	entries, err := f.doiProvider.ListEntries(ctx)
 	if err != nil {
 		return nil, err
@@ -411,7 +562,36 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 //
 // This should return ErrDirNotFound if the directory isn't
 // found.
+//
+// List is a thin collector over ListP.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	err = f.ListP(ctx, dir, func(e fs.DirEntries) error {
+		entries = append(entries, e...)
+		return nil
+	})
+	return entries, err
+}
+
+// ListP lists the immediate children of dir, calling callback for each
+// tranche. On the Dataverse /tree path each tranche is one endpoint page
+// (lazy: a large folder streams page-by-page); otherwise the level is
+// emitted in a single tranche.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	if f.useTree {
+		return f.listTreeP(ctx, dir, callback)
+	}
+	entries, err := f.listFlat(ctx, dir)
+	if err != nil {
+		return err
+	}
+	if len(entries) == 0 {
+		return nil
+	}
+	return callback(entries)
+}
+
+// listFlat builds one directory level from the whole-version file list.
+func (f *Fs) listFlat(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	fileEntries, err := f.doiProvider.ListEntries(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error listing %q: %w", dir, err)
@@ -513,39 +693,249 @@ func (o *Object) Storable() bool {
 	return true
 }
 
-// Open a remote http file object for reading. Seek is supported
+// maxStreamRefreshes bounds the number of times Open's stream wrapper
+// re-fetches and resumes the byte stream after a mid-read failure. Five
+// gives a comfortable margin for a multi-hour transfer through several
+// presigned-URL TTLs without an unbounded retry loop on a dead backend.
+const maxStreamRefreshes = 5
+
+// readClient returns an HTTP client for byte-stream reads. Reads bypass
+// the pacer: its 10ms floor would cap file opens at ~100/s regardless of
+// --transfers (~100s for a 10k-file copy). Reliability instead comes from
+// the resuming reader below plus fshttp's transport-level retries.
+//
+// In Dataverse S3-direct mode the access endpoint answers with a 302 to a
+// presigned URL on another host; this client follows that redirect but
+// strips the API token on the cross-host hop so it never reaches S3/AWS
+// (Go auto-strips only Authorization/Cookie/WWW-Authenticate, not the
+// custom X-Dataverse-Key). The transport is shared with the API client
+// for connection pooling.
+func readClient(base *http.Client) *http.Client {
+	return &http.Client{
+		Transport: base.Transport,
+		Jar:       base.Jar,
+		Timeout:   base.Timeout,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 10 {
+				return fmt.Errorf("stopped after %d redirects", len(via))
+			}
+			if len(via) > 0 && req.URL.Host != via[0].URL.Host {
+				req.Header.Del(api.AuthHeader)
+			}
+			return nil
+		},
+	}
+}
+
+// Open a remote file object for reading. Seek/Range is supported.
+//
+// A single redirect-following GET resolves both Dataverse serving modes
+// in one shot: proxy mode returns the bytes directly, S3-direct mode
+// returns a 302 followed transparently to the presigned URL (no probe).
+// The body is wrapped in a reader that, on a mid-transfer failure,
+// re-issues the GET from the byte offset already delivered — covering
+// presigned URLs that expire mid-stream. Reads run off the pacer (see
+// readClient).
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	fs.FixRangeOption(options, o.size)
-	opts := rest.Opts{
-		Method:  "GET",
-		RootURL: o.contentURL,
-		Options: options,
+
+	// Pull the byte range out of the options so it can be re-issued on
+	// resume; forward all other headers unchanged.
+	headers := make(http.Header)
+	for k, v := range fs.OpenOptionHeaders(options) {
+		headers.Set(k, v)
 	}
-	var res *http.Response
-	err = o.fs.pacer.Call(func() (bool, error) {
-		res, err = o.fs.srv.Call(ctx, &opts)
-		return shouldRetry(ctx, res, err)
-	})
-	if err != nil {
-		return nil, fmt.Errorf("Open failed: %w", err)
+	startOffset, endOffset := int64(0), int64(-1)
+	if rh := headers.Get("Range"); rh != "" {
+		if s, e, ok := parseByteRange(rh); ok {
+			startOffset, endOffset = s, e
+		}
+		headers.Del("Range")
 	}
 
-	// Handle non-compliant redirects
+	body, err := o.fetchRange(ctx, startOffset, endOffset, headers)
+	if err != nil {
+		return nil, err
+	}
+	return &resumingReader{
+		ctx:         ctx,
+		obj:         o,
+		forwarded:   headers,
+		startOffset: startOffset,
+		endOffset:   endOffset,
+		body:        body,
+		maxRefresh:  maxStreamRefreshes,
+	}, nil
+}
+
+// doGet issues one GET to rawURL for bytes [start,end] (end == -1 means
+// to EOF), forwarding headers. The token is attached only when sendToken
+// is true and one is configured (an empty X-Dataverse-Key makes
+// Dataverse reject the request instead of treating it as guest access).
+func (o *Object) doGet(ctx context.Context, rawURL string, start, end int64, headers http.Header, sendToken bool) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	if sendToken && o.fs.opt.Token != "" {
+		req.Header.Set(api.AuthHeader, o.fs.opt.Token)
+	}
+	for k, vs := range headers {
+		for _, v := range vs {
+			req.Header.Add(k, v)
+		}
+	}
+	if start != 0 || end >= 0 {
+		if end >= 0 {
+			req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", start, end))
+		} else {
+			req.Header.Set("Range", fmt.Sprintf("bytes=%d-", start))
+		}
+	}
+	return o.fs.httpClient.Do(req)
+}
+
+// fetchRange GETs bytes [start,end] of the object. There is no separate
+// access probe: the redirect-following client resolves proxy vs
+// S3-direct in one fetch. As a fallback for a non-compliant response (a
+// 2xx carrying a Location the client did not act on) it follows that
+// Location once, dropping the token if it points to another host. A
+// Dataverse 401/403 is reported as an attributed access error.
+func (o *Object) fetchRange(ctx context.Context, start, end int64, forwardedHeaders http.Header) (io.ReadCloser, error) {
+	res, err := o.doGet(ctx, o.contentURL, start, end, forwardedHeaders, true)
+	if err != nil {
+		return nil, fmt.Errorf("read %s: %w", o.remote, err)
+	}
 	if res.Header.Get("Location") != "" {
-		newURL, err := res.Location()
-		if err == nil {
-			opts.RootURL = newURL.String()
-			err = o.fs.pacer.Call(func() (bool, error) {
-				res, err = o.fs.srv.Call(ctx, &opts)
-				return shouldRetry(ctx, res, err)
-			})
+		if loc, lerr := res.Location(); lerr == nil {
+			_ = res.Body.Close()
+			keepToken := false
+			if cu, perr := url.Parse(o.contentURL); perr == nil {
+				keepToken = loc.Host == cu.Host
+			}
+			res, err = o.doGet(ctx, loc.String(), start, end, forwardedHeaders, keepToken)
 			if err != nil {
-				return nil, fmt.Errorf("Open failed: %w", err)
+				return nil, fmt.Errorf("read %s: %w", o.remote, err)
 			}
 		}
 	}
-
+	if o.fs.provider == Dataverse && (res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden) {
+		_ = res.Body.Close()
+		return nil, o.accessDeniedError(res.StatusCode)
+	}
+	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusPartialContent {
+		msg, _ := io.ReadAll(io.LimitReader(res.Body, 1024))
+		_ = res.Body.Close()
+		readErr := fmt.Errorf("read %s: %s: %s", o.remote, res.Status, strings.TrimSpace(string(msg)))
+		// Byte reads bypass the pacer, so hand a transient server status to
+		// rclone's transfer-level retry (which honours Retry-After).
+		if fserrors.ShouldRetryHTTP(res, retryErrorCodes) {
+			if secs, e := strconv.Atoi(res.Header.Get("Retry-After")); e == nil && secs > 0 {
+				return nil, pacer.RetryAfterError(readErr, time.Duration(secs)*time.Second)
+			}
+			return nil, fserrors.RetryError(readErr)
+		}
+		return nil, readErr
+	}
 	return res.Body, nil
+}
+
+// accessDeniedError turns a Dataverse 401/403 into a message that tells
+// the user why the file couldn't be fetched, so rclone's per-file
+// skip-and-continue surfaces an actionable reason. The /tree access
+// marker distinguishes restricted from embargoed when present; otherwise
+// it falls back to the file's restricted flag.
+func (o *Object) accessDeniedError(status int) error {
+	switch o.accessStatus {
+	case "restricted":
+		return fmt.Errorf("read %s: HTTP %d: file is restricted — your API token does not grant access to it", o.remote, status)
+	case "embargoed":
+		return fmt.Errorf("read %s: HTTP %d: file is under embargo — it is not yet available for download", o.remote, status)
+	}
+	if o.restricted {
+		return fmt.Errorf("read %s: HTTP %d: file is restricted — your API token does not grant access to it", o.remote, status)
+	}
+	return fmt.Errorf("read %s: HTTP %d: access denied — the file is restricted or embargoed, or the API token is missing/invalid", o.remote, status)
+}
+
+// resumingReader wraps the response body so a mid-stream failure
+// (presigned URL expired, S3 dropped the connection, transient blip)
+// transparently re-issues the read from the byte offset already
+// delivered. bytesRead survives across body swaps; maxRefresh bounds the
+// resumes so a dead backend can't trap rclone in a loop.
+type resumingReader struct {
+	ctx         context.Context
+	obj         *Object
+	forwarded   http.Header
+	startOffset int64
+	endOffset   int64
+
+	body         io.ReadCloser
+	bytesRead    int64
+	refreshCount int
+	maxRefresh   int
+}
+
+func (r *resumingReader) Read(p []byte) (int, error) {
+	n, err := r.body.Read(p)
+	r.bytesRead += int64(n)
+
+	if err == nil || err == io.EOF {
+		return n, err
+	}
+	if r.refreshCount >= r.maxRefresh {
+		return n, err
+	}
+	if cerr := r.ctx.Err(); cerr != nil {
+		return n, err
+	}
+
+	// Mid-stream failure: drop the old body, re-fetch from where we left
+	// off, resume.
+	_ = r.body.Close()
+	newBody, fetchErr := r.obj.fetchRange(r.ctx, r.startOffset+r.bytesRead, r.endOffset, r.forwarded)
+	if fetchErr != nil {
+		return n, err
+	}
+	r.body = newBody
+	r.refreshCount++
+
+	if n > 0 {
+		return n, nil
+	}
+	return r.Read(p)
+}
+
+func (r *resumingReader) Close() error {
+	return r.body.Close()
+}
+
+// parseByteRange parses an HTTP byte Range header ("bytes=100-199" or
+// "bytes=100-") into numeric offsets. End is inclusive per RFC 7233;
+// returns -1 for open-ended.
+func parseByteRange(h string) (start, end int64, ok bool) {
+	h = strings.TrimSpace(h)
+	if !strings.HasPrefix(h, "bytes=") {
+		return 0, 0, false
+	}
+	spec := strings.TrimPrefix(h, "bytes=")
+	dash := strings.IndexByte(spec, '-')
+	if dash < 0 {
+		return 0, 0, false
+	}
+	s, err := strconv.ParseInt(spec[:dash], 10, 64)
+	if err != nil {
+		return 0, 0, false
+	}
+	tail := spec[dash+1:]
+	if tail == "" {
+		return s, -1, true
+	}
+	e, err := strconv.ParseInt(tail, 10, 64)
+	if err != nil {
+		return 0, 0, false
+	}
+	return s, e, true
 }
 
 // Update in to the object with the modTime given of the given size
@@ -648,6 +1038,7 @@ var (
 	_ fs.Fs          = (*Fs)(nil)
 	_ fs.PutStreamer = (*Fs)(nil)
 	_ fs.Commander   = (*Fs)(nil)
+	_ fs.ListPer     = (*Fs)(nil)
 	_ fs.Object      = (*Object)(nil)
 	_ fs.MimeTyper   = (*Object)(nil)
 )
