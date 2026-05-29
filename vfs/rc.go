@@ -1,9 +1,11 @@
 package vfs
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -42,10 +44,36 @@ func getVFS(in rc.Params) (vfs *VFS, err error) {
 	}
 	activeMu.Lock()
 	defer activeMu.Unlock()
+
+	// 1. Try to match by ID directly (e.g., "vfs-1")
+	for _, vfses := range active {
+		for _, activeVFS := range vfses {
+			if activeVFS.ID == fsString {
+				delete(in, "fs") // delete the fs parameter
+				return activeVFS, nil
+			}
+		}
+	}
+
+	// 2. Try to match by name with [ID] suffix (e.g., "Google Drive:[vfs-1]")
+	if strings.HasSuffix(fsString, "]") {
+		if openBracket := strings.LastIndex(fsString, "["); openBracket >= 0 {
+			idStr := fsString[openBracket+1 : len(fsString)-1]
+			for _, vfses := range active {
+				for _, activeVFS := range vfses {
+					if activeVFS.ID == idStr {
+						delete(in, "fs") // delete the fs parameter
+						return activeVFS, nil
+					}
+				}
+			}
+		}
+	}
+
 	fsString = cache.Canonicalize(fsString)
 	activeVFS := active[fsString]
 	if len(activeVFS) == 0 {
-		return nil, fmt.Errorf("no VFS found with name %q", fsString)
+		return nil, fmt.Errorf("no VFS found with name or ID %q", fsString)
 	} else if len(activeVFS) > 1 {
 		return nil, fmt.Errorf("more than one VFS active with name %q", fsString)
 	}
@@ -374,21 +402,42 @@ parameter.`,
 	})
 }
 
+// VfsInfo describes an active VFS instance
+type VfsInfo struct {
+	ID string `json:"id"`
+	Fs string `json:"fs"`
+}
+
 func rcList(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	activeMu.Lock()
 	defer activeMu.Unlock()
 	var names = []string{}
+	var list = []VfsInfo{}
+
 	for name, vfses := range active {
 		if len(vfses) == 1 {
 			names = append(names, name)
 		} else {
-			for i := range vfses {
-				names = append(names, fmt.Sprintf("%s[%d]", name, i))
+			for _, activeVFS := range vfses {
+				names = append(names, fmt.Sprintf("%s[%s]", name, activeVFS.ID))
 			}
 		}
+		for _, activeVFS := range vfses {
+			list = append(list, VfsInfo{
+				ID: activeVFS.ID,
+				Fs: name,
+			})
+		}
 	}
+
+	// Sort list by ID for deterministic order
+	slices.SortFunc(list, func(a, b VfsInfo) int {
+		return cmp.Compare(a.ID, b.ID)
+	})
+
 	out = rc.Params{}
 	out["vfses"] = names
+	out["list"] = list
 	return out, nil
 }
 

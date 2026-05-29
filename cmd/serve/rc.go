@@ -17,6 +17,7 @@ import (
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/lib/errcount"
+	"github.com/rclone/rclone/vfs"
 )
 
 // Handle describes what a server can do
@@ -35,9 +36,11 @@ type Handle interface {
 type server struct {
 	ID      string     `json:"id"`     // id of the server
 	Addr    string     `json:"addr"`   // address of the server
+	VfsID   string     `json:"vfsId"`  // id of the VFS used by the server
 	Params  rc.Params  `json:"params"` // Parameters used to start the server
 	h       Handle     `json:"-"`      // control the server
 	errChan chan error `json:"-"`      // receive errors from the server process
+	Vfses   []*vfs.VFS `json:"-"`      // VFSes used by the server
 }
 
 // Fn starts an rclone serve command
@@ -129,9 +132,21 @@ func startRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	newCtx = fs.CopyConfig(newCtx, ctx)
 	newCtx = filter.CopyConfig(newCtx, ctx)
 
+	var createdVFSes []*vfs.VFS
+	newCtx = vfs.WithTracker(newCtx, &createdVFSes)
+
+	vfsID, err := in.GetString("vfsId")
+	if err == nil && vfsID != "" {
+		newCtx = vfs.WithVFSID(newCtx, vfsID)
+		delete(in, "vfsId")
+	}
+
 	// Start the server
 	h, err := serveFn(newCtx, f, in)
 	if err != nil {
+		for _, v := range createdVFSes {
+			v.Shutdown()
+		}
 		return nil, fmt.Errorf("could not start serve %q: %w", serveType, err)
 	}
 
@@ -152,22 +167,32 @@ func startRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		err = nil
 	}
 	if err != nil {
+		for _, v := range createdVFSes {
+			v.Shutdown()
+		}
 		return nil, fmt.Errorf("error when starting serve %q: %w", serveType, err)
 	}
 
 	// Store it for later
+	var resolvedVfsID string
+	if len(createdVFSes) > 0 {
+		resolvedVfsID = createdVFSes[0].ID
+	}
 	runningServer := server{
 		ID:      fmt.Sprintf("%s-%08x", serveType, rand.Uint32()),
 		Params:  in,
 		Addr:    h.Addr().String(),
+		VfsID:   resolvedVfsID,
 		h:       h,
 		errChan: errChan,
+		Vfses:   createdVFSes,
 	}
 	servers[runningServer.ID] = &runningServer
 
 	out = rc.Params{
-		"id":   runningServer.ID,
-		"addr": runningServer.Addr,
+		"id":    runningServer.ID,
+		"addr":  runningServer.Addr,
+		"vfsId": runningServer.VfsID,
 	}
 
 	fs.Debugf(f, "Started serve %s on %s", serveType, runningServer.Addr)
@@ -208,6 +233,9 @@ func stopRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 	err = s.h.Shutdown()
 	<-s.errChan // ignore server return error - likely is "use of closed network connection"
+	for _, v := range s.Vfses {
+		v.Shutdown()
+	}
 	delete(servers, id)
 	return nil, err
 }
@@ -344,6 +372,9 @@ func stopAll(_ context.Context, in rc.Params) (out rc.Params, err error) {
 	for id, s := range servers {
 		ec.Add(s.h.Shutdown())
 		<-s.errChan // ignore server return error - likely is "use of closed network connection"
+		for _, v := range s.Vfses {
+			v.Shutdown()
+		}
 		delete(servers, id)
 	}
 	return nil, ec.Err("error when stopping server")

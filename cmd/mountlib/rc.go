@@ -9,6 +9,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 )
 
@@ -135,6 +136,15 @@ func mountRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 
 	mnt := NewMountPoint(mountFn, mountPoint, fdst, &mountOpt, &vfsOpt)
+	inVfsID, err := in.GetString("vfsId")
+	if err == nil && inVfsID != "" {
+		VFS, err := vfs.GetVFSById(inVfsID)
+		if err != nil {
+			return nil, err
+		}
+		mnt.VFS = VFS
+		delete(in, "vfsId")
+	}
 	_, err = mnt.Mount()
 	if err != nil {
 		fs.Logf(nil, "mount FAILED: %v", err)
@@ -156,8 +166,13 @@ func mountRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	liveMounts[actualMountPoint] = mnt
 
 	fs.Debugf(nil, "Mount for %s created at %s using %s", fdst.String(), actualMountPoint, mountType)
+	var vfsID string
+	if mnt.VFS != nil {
+		vfsID = mnt.VFS.ID
+	}
 	return rc.Params{
 		"mountPoint": actualMountPoint,
+		"vfsId":      vfsID,
 	}, nil
 }
 
@@ -259,6 +274,7 @@ type MountInfo struct {
 	Fs         string    `json:"Fs"`
 	MountPoint string    `json:"MountPoint"`
 	MountedOn  time.Time `json:"MountedOn"`
+	VfsID      string    `json:"vfsId"`
 }
 
 // listMountsRc returns a list of current mounts sorted by mount path
@@ -273,10 +289,15 @@ func listMountsRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 	mountPoints := []MountInfo{}
 	for _, k := range keys {
 		m := liveMounts[k]
+		var vfsID string
+		if m.VFS != nil {
+			vfsID = m.VFS.ID
+		}
 		info := MountInfo{
 			Fs:         fs.ConfigString(m.Fs),
 			MountPoint: m.MountPoint,
 			MountedOn:  m.MountedOn,
+			VfsID:      vfsID,
 		}
 		mountPoints = append(mountPoints, info)
 	}
