@@ -138,7 +138,7 @@ func mountRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	mnt := NewMountPoint(mountFn, mountPoint, fdst, &mountOpt, &vfsOpt)
 	inVfsID, err := in.GetString("vfsId")
 	if err == nil && inVfsID != "" {
-		VFS, err := vfs.GetVFSById(inVfsID)
+		VFS, err := vfs.GetVFSByID(inVfsID)
 		if err != nil {
 			return nil, err
 		}

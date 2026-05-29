@@ -131,7 +131,7 @@ func TestRcList(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, []string{fs.ConfigString(r.Fremote)}, out["vfses"])
-	assert.Equal(t, []VfsInfo{
+	assert.Equal(t, []Info{
 		{ID: vfs2.ID, Fs: fs.ConfigString(r.Fremote)},
 	}, out["list"])
 
@@ -148,10 +148,10 @@ func TestRcList(t *testing.T) {
 	assert.Contains(t, vfses, fs.ConfigString(r.Fremote)+"["+vfs2.ID+"]")
 	assert.Contains(t, vfses, fs.ConfigString(r.Fremote)+"["+vfs3.ID+"]")
 
-	list := out["list"].([]VfsInfo)
+	list := out["list"].([]Info)
 	assert.Len(t, list, 2)
-	assert.Contains(t, list, VfsInfo{ID: vfs2.ID, Fs: fs.ConfigString(r.Fremote)})
-	assert.Contains(t, list, VfsInfo{ID: vfs3.ID, Fs: fs.ConfigString(r.Fremote)})
+	assert.Contains(t, list, Info{ID: vfs2.ID, Fs: fs.ConfigString(r.Fremote)})
+	assert.Contains(t, list, Info{ID: vfs3.ID, Fs: fs.ConfigString(r.Fremote)})
 }
 
 func TestRcStats(t *testing.T) {

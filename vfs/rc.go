@@ -402,8 +402,8 @@ parameter.`,
 	})
 }
 
-// VfsInfo describes an active VFS instance
-type VfsInfo struct {
+// Info describes an active VFS instance
+type Info struct {
 	ID string `json:"id"`
 	Fs string `json:"fs"`
 }
@@ -412,7 +412,7 @@ func rcList(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	activeMu.Lock()
 	defer activeMu.Unlock()
 	var names = []string{}
-	var list = []VfsInfo{}
+	var list = []Info{}
 
 	for name, vfses := range active {
 		if len(vfses) == 1 {
@@ -423,7 +423,7 @@ func rcList(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 			}
 		}
 		for _, activeVFS := range vfses {
-			list = append(list, VfsInfo{
+			list = append(list, Info{
 				ID: activeVFS.ID,
 				Fs: name,
 			})
@@ -431,7 +431,7 @@ func rcList(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 
 	// Sort list by ID for deterministic order
-	slices.SortFunc(list, func(a, b VfsInfo) int {
+	slices.SortFunc(list, func(a, b Info) int {
 		return cmp.Compare(a.ID, b.ID)
 	})
 

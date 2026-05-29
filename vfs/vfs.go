@@ -215,8 +215,8 @@ var (
 	active   = map[string][]*VFS{}
 )
 
-// GetVFSById finds a VFS in the active cache by its ID and increments its use count
-func GetVFSById(id string) (*VFS, error) {
+// GetVFSByID finds a VFS in the active cache by its ID and increments its use count
+func GetVFSByID(id string) (*VFS, error) {
 	activeMu.Lock()
 	defer activeMu.Unlock()
 	for _, vfses := range active {
