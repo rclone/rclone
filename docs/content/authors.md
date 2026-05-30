@@ -1139,3 +1139,8 @@ put them back in again. -->
 - TaterLi <admin@lijingquan.net>
 - KyokoMiki <161209740+kyokomiki@users.noreply.github.com>
 - Iizuki <36295229+Iizuki@users.noreply.github.com>
+- tomholford <16504501+tomholford@users.noreply.github.com> <tomholford@users.noreply.github.com>
+- caltechustc <caltechustc@outlook.com>
+- Valerij Fredriksen <freva@users.noreply.github.com>
+- Hakan İSMAİL <93117749+Hakanbaban53@users.noreply.github.com>
+- Brian King <BrianDKing@gmail.com>

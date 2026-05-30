@@ -21,6 +21,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
+	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/skratchdot/open-golang/open"
 	"golang.org/x/oauth2"
@@ -30,6 +31,13 @@ import (
 var (
 	// templateString is the template used in the authorization webserver
 	templateString string
+
+	// oauthCancelFn stores the cancel function for the currently active OAuth flow
+	oauthCancelFn context.CancelFunc
+	// oauthCancelMu protects oauthCancelFn and oauthURL
+	oauthCancelMu sync.Mutex
+	// oauthURL stores the URL for the currently active OAuth flow
+	oauthURL string
 )
 
 const (
@@ -770,6 +778,66 @@ func init() {
 	fs.ConfigOAuth = ConfigOAuth
 }
 
+func init() {
+	rc.Add(rc.Call{
+		Path:  "config/oauthstop",
+		Fn:    rcOAuthStop,
+		Title: "Stop any running OAuth authentication server.",
+		Help: `Stops the OAuth authentication server if one is running.
+
+This can be used to recover from an interrupted OAuth flow without
+restarting rclone. If no OAuth authentication is in progress, an error
+is returned.
+`,
+	})
+}
+
+func rcOAuthStop(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	oauthCancelMu.Lock()
+	defer oauthCancelMu.Unlock()
+	if oauthCancelFn == nil {
+		return nil, errors.New("no oauth authentication is in progress")
+	}
+	oauthCancelFn()
+	oauthCancelFn = nil
+	oauthURL = ""
+	return nil, nil
+}
+
+func init() {
+	rc.Add(rc.Call{
+		Path:  "config/oauthstatus",
+		Fn:    rcOAuthStatus,
+		Title: "Get the status of the OAuth authentication server.",
+		Help: `Returns the current status of the OAuth authentication server.
+
+Returns a JSON object:
+- status - "running" or "stopped"
+- authUrl - URL for the authorization (only if status is "running")
+
+Eg
+
+    {
+        "status": "running",
+        "authUrl": "http://127.0.0.1:53682/auth?state=..."
+    }
+`,
+	})
+}
+
+func rcOAuthStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	oauthCancelMu.Lock()
+	defer oauthCancelMu.Unlock()
+	status := "stopped"
+	params := rc.Params{"status": status}
+	if oauthCancelFn != nil {
+		status = "running"
+		params["status"] = status
+		params["authUrl"] = oauthURL
+	}
+	return params, nil
+}
+
 // Return true if can run without a webserver and just entering a code
 func noWebserverNeeded(oauthConfig *Config) bool {
 	return oauthConfig.RedirectURL == TitleBarRedirectURL
@@ -854,9 +922,23 @@ func configSetup(ctx context.Context, id, name string, m configmap.Mapper, oauth
 	if err != nil {
 		return "", fmt.Errorf("failed to start auth webserver: %w", err)
 	}
-	go server.Serve()
-	defer server.Stop()
 	authURL = "http://" + bindAddress + "/auth?state=" + state
+
+	oauthCtx, cancel := context.WithCancel(ctx)
+	oauthCancelMu.Lock()
+	oauthCancelFn = cancel
+	oauthURL = authURL
+	oauthCancelMu.Unlock()
+
+	go server.Serve()
+	defer func() {
+		oauthCancelMu.Lock()
+		oauthCancelFn = nil
+		oauthURL = ""
+		oauthCancelMu.Unlock()
+		cancel()
+		server.Stop()
+	}()
 
 	if !authorizeNoAutoBrowser {
 		// Open the URL for the user to visit
@@ -873,7 +955,12 @@ func configSetup(ctx context.Context, id, name string, m configmap.Mapper, oauth
 
 	// Read the code via the webserver
 	fs.Logf(nil, "Waiting for code...\n")
-	auth := <-server.result
+	var auth *AuthResult
+	select {
+	case auth = <-server.result:
+	case <-oauthCtx.Done():
+		return "", errors.New("oauth authentication was cancelled")
+	}
 	if !auth.OK || auth.Code == "" {
 		return "", auth
 	}
