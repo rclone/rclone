@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -59,6 +60,44 @@ func TestShellEscapePowerShell(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, test.escaped, got, fmt.Sprintf("Test %d unescaped = %q", i, test.unescaped))
 	}
+}
+
+func TestRemotePathEncodesRemoteNames(t *testing.T) {
+	f := &Fs{
+		absRoot: "/srv/root",
+		opt: Options{
+			Enc: encoder.Display | encoder.EncodeColon,
+		},
+	}
+
+	assert.Equal(t, "/srv/root/dir/file\uFF1Aname", f.remotePath("dir/file:name"))
+	assert.Equal(t, "/srv/root", f.remotePath(""))
+}
+
+func TestRemoteShellPathEncodesRemoteNames(t *testing.T) {
+	f := &Fs{
+		absRoot: "/srv/root",
+		opt: Options{
+			Enc: encoder.Display | encoder.EncodeColon,
+		},
+	}
+
+	assert.Equal(t, "/srv/root/dir/file\uFF1Aname", f.remoteShellPath("dir/file:name"))
+}
+
+func TestRemoteShellPathEncodesPathOverrideNames(t *testing.T) {
+	f := &Fs{
+		absRoot: "/srv/root",
+		opt: Options{
+			Enc:          encoder.Display | encoder.EncodeColon,
+			PathOverride: "/shell/root",
+		},
+	}
+
+	assert.Equal(t, "/shell/root/dir/file\uFF1Aname", f.remoteShellPath("dir/file:name"))
+
+	f.opt.PathOverride = "@/volume"
+	assert.Equal(t, "/volume/srv/root/dir/file\uFF1Aname", f.remoteShellPath("dir/file:name"))
 }
 
 func TestParseHash(t *testing.T) {
