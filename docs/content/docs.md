@@ -3289,6 +3289,13 @@ The available flags are:
   the other HTTP debugging flags (e.g. `requests`, `bodies`). By
   default the auth will be masked - use with `auth` to have the curl
   commands with authentication too.
+- `errors` only dumps the HTTP transactions which fail with a retryable
+  error - that is a transport error, an HTTP 429 (too many requests) or an
+  HTTP 5xx server error. The other dump flags control what is dumped, so
+  for example use `--dump errors,bodies` to dump the headers and bodies of
+  failed transactions only. On its own `--dump errors` dumps the headers.
+  This lets you capture first-failure diagnostics without the noise of
+  dumping every transaction. May contain sensitive info.
 
 ## Filtering
 
