@@ -160,9 +160,10 @@ doc:	rclone.1 MANUAL.html MANUAL.txt rcdocs commanddocs manpages
 rclone.1:	MANUAL.md
 	pandoc -s --from markdown-smart --to man MANUAL.md -o rclone.1
 
-manpages: rclone
+manpages: rclone rclone.1
 	-@rmdir -p '$$HOME/.config/rclone'
 	XDG_CACHE_HOME="" XDG_CONFIG_HOME="" HOME="\$$HOME" USER="\$$USER" rclone genmanpages --config=/notfound man/
+	cp -a rclone.1 man/rclone.1
 	@[ ! -e '$$HOME' ] || (echo 'Error: created unwanted directory named $$HOME' && exit 1)
 
 MANUAL.md:	bin/make_manual.py docs/content/*.md commanddocs backenddocs rcdocs

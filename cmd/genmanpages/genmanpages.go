@@ -2,10 +2,8 @@
 package genmanpages
 
 import (
-	"bytes"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -84,6 +82,8 @@ rclone-sync.1, etc.) similar to git's man page layout.`,
 		// Generate man pages for all subcommands (not root).
 		// We skip root because it has thousands of backend flags registered
 		// on it via pflag.CommandLine which makes for an unusable man page.
+		// The rclone.1 root man page is generated separately from MANUAL.md
+		// via pandoc (see the `rclone.1` Makefile target).
 		for _, c := range cmd.Root.Commands() {
 			if !c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand() {
 				continue
@@ -98,63 +98,9 @@ rclone-sync.1, etc.) similar to git's man page layout.`,
 			}
 		}
 
-		// Generate a concise root man page using a temporary command
-		// that has only the essential content.
-		err = genRootManPage(out, header)
-		if err != nil {
-			return err
-		}
-
 		fmt.Printf("Generated %d man pages in %s\n", countFiles(out), out)
 		return nil
 	},
-}
-
-// genRootManPage creates a concise rclone.1 man page with shared root help
-// text and SEE ALSO references to all subcommands.
-func genRootManPage(dir string, header *doc.GenManHeader) error {
-	// Build a temporary command tree that mirrors the real one
-	// but without the massive flags list.
-	rootCmd := &cobra.Command{
-		Use:               cmd.Root.Use + " [flags]",
-		Short:             rootManPageShort(cmd.Root),
-		Long:              cmd.Root.Long,
-		DisableAutoGenTag: true,
-	}
-
-	// Add subcommands as stubs for SEE ALSO generation
-	for _, c := range cmd.Root.Commands() {
-		if !c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand() {
-			continue
-		}
-		rootCmd.AddCommand(&cobra.Command{
-			Use:                c.Use,
-			Short:              c.Short,
-			DisableAutoGenTag:  true,
-			DisableFlagParsing: true,
-			Run:                func(_ *cobra.Command, _ []string) {},
-		})
-	}
-
-	var buf bytes.Buffer
-	err := doc.GenMan(rootCmd, header, &buf)
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(filepath.Join(dir, "rclone.1"), buf.Bytes(), 0644)
-}
-
-func rootManPageShort(root *cobra.Command) string {
-	summary := strings.TrimSpace(root.Long)
-	if summary != "" {
-		summary = strings.SplitN(summary, "\n\n", 2)[0]
-		summary = strings.Join(strings.Fields(summary), " ")
-	}
-	if summary == "" {
-		summary = strings.TrimSpace(root.Short)
-	}
-	return summary
 }
 
 // countFiles counts .1 files in a directory.
