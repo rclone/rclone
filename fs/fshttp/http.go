@@ -32,6 +32,9 @@ import (
 const (
 	separatorReq  = ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
 	separatorResp = "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+
+	// dumpReqResp is the set of dump flags which dump the request and response
+	dumpReqResp = fs.DumpHeaders | fs.DumpBodies | fs.DumpAuth | fs.DumpRequests | fs.DumpResponses
 )
 
 var (
@@ -274,7 +277,7 @@ func NewTransportCustom(ctx context.Context, customize func(*http.Transport)) *T
 	t.IdleConnTimeout = 60 * time.Second
 	t.ExpectContinueTimeout = time.Duration(ci.ExpectContinueTimeout)
 
-	if ci.Dump&(fs.DumpHeaders|fs.DumpBodies|fs.DumpAuth|fs.DumpRequests|fs.DumpResponses) != 0 {
+	if ci.Dump&(dumpReqResp|fs.DumpErrors) != 0 {
 		fs.Debugf(nil, "You have specified to dump information. Please be noted that the "+
 			"Accept-Encoding as shown may not be correct in the request and the response may not show "+
 			"Content-Encoding if the go standard libraries auto gzip encoding was in effect. In this case"+
@@ -475,6 +478,18 @@ func (t *Transport) reloadCertificates() {
 	t.TLSClientConfig.Certificates = []tls.Certificate{cert}
 }
 
+// isRetryableResponse reports whether a round trip failed in a way which
+// would trigger a low level retry - a transport error, HTTP 429 or HTTP 5xx.
+func isRetryableResponse(resp *http.Response, err error) bool {
+	if err != nil {
+		return true
+	}
+	if resp == nil {
+		return false
+	}
+	return resp.StatusCode == 429 || resp.StatusCode >= 500
+}
+
 // RoundTrip implements the RoundTripper interface.
 func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
 	// Check if certificates are being used and the certificates are expired
@@ -494,21 +509,36 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	if t.filterRequest != nil {
 		t.filterRequest(req)
 	}
-	// Logf request
-	if t.dump&(fs.DumpHeaders|fs.DumpBodies|fs.DumpAuth|fs.DumpRequests|fs.DumpResponses) != 0 {
-		buf, _ := httputil.DumpRequestOut(req, t.dump&(fs.DumpBodies|fs.DumpRequests) != 0)
-		if t.dump&fs.DumpAuth == 0 {
-			buf = cleanAuths(buf)
-		}
-		logMutex.Lock()
+	// --dump errors only dumps failed transactions; the other flags say what to dump
+	wantDump := t.dump&(dumpReqResp|fs.DumpErrors) != 0
+	onError := t.dump&fs.DumpErrors != 0
+	// reqDump holds the request so it can be logged after the round trip on error
+	var reqDump []byte
+	dumpReq := func() {
 		fs.Debugf(nil, "%s", separatorReq)
 		fs.Debugf(nil, "%s (req %p)", "HTTP REQUEST", req)
-		fs.Debugf(nil, "%s", string(buf))
+		fs.Debugf(nil, "%s", string(reqDump))
 		fs.Debugf(nil, "%s", separatorReq)
-		logMutex.Unlock()
+	}
+	// Dump request
+	if wantDump {
+		reqDump, _ = httputil.DumpRequestOut(req, t.dump&(fs.DumpBodies|fs.DumpRequests) != 0)
+		if t.dump&fs.DumpAuth == 0 {
+			reqDump = cleanAuths(reqDump)
+		}
+		// Log the request now unless we are waiting to see if it errors
+		if !onError {
+			logMutex.Lock()
+			dumpReq()
+			logMutex.Unlock()
+		}
 	}
 	// Dump curl request
-	if t.dump&(fs.DumpCurl) != 0 {
+	var curlCmd *http2curl.CurlCommand
+	dumpCurl := func() {
+		fs.Debugf(nil, "HTTP REQUEST: %v", curlCmd)
+	}
+	if t.dump&fs.DumpCurl != 0 {
 		cmd, err := http2curl.GetCurlCommand(req)
 		if err != nil {
 			fs.Debugf(nil, "Failed to create curl command: %v", err)
@@ -524,14 +554,24 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 			if t.dump&fs.DumpAuth == 0 {
 				cleanCurl(cmd)
 			}
-			fs.Debugf(nil, "HTTP REQUEST: %v", cmd)
+			curlCmd = cmd
+			// Log the curl command now unless we are waiting to see if it errors
+			if !onError {
+				dumpCurl()
+			}
 		}
 	}
 	// Do round trip
 	resp, err = t.Transport.RoundTrip(req)
-	// Logf response
-	if t.dump&(fs.DumpHeaders|fs.DumpBodies|fs.DumpAuth|fs.DumpRequests|fs.DumpResponses) != 0 {
+	// Dump response, and the request too if we deferred it for --dump errors
+	if wantDump && (!onError || isRetryableResponse(resp, err)) {
 		logMutex.Lock()
+		if onError {
+			dumpReq()
+			if curlCmd != nil {
+				dumpCurl()
+			}
+		}
 		fs.Debugf(nil, "%s", separatorResp)
 		fs.Debugf(nil, "%s (req %p)", "HTTP RESPONSE", req)
 		if err != nil {
