@@ -76,7 +76,7 @@ var systemMetadataInfo = map[string]fs.MetadataHelp{
 		Example: "false",
 	},
 	"labels": {
-		Help:    "Labels attached to this file in a JSON dump of Googled drive format. Enable with --drive-metadata-labels.",
+		Help:    "Labels attached to this file in a JSON dump of Google drive format. Enable with --drive-metadata-labels for per-file read/write, or --drive-static-label to apply a fixed label to every written file.",
 		Type:    "JSON",
 		Example: "[]",
 	},
@@ -634,6 +634,18 @@ func (f *Fs) fetchAndUpdateMetadata(ctx context.Context, src fs.ObjectInfo, opti
 	callback, err = f.updateMetadata(ctx, updateInfo, meta, update, false)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update metadata from source object: %w", err)
+	}
+	// Apply static_label to every written file, unconditionally, independent
+	// of --drive-metadata-labels. Wraps the existing callback so both run.
+	if len(f.staticLabels) > 0 {
+		staticLabels := f.staticLabels // capture for closure
+		innerCallback := callback
+		callback = func(ctx context.Context, info *drive.File) error {
+			if err := innerCallback(ctx, info); err != nil {
+				return err
+			}
+			return f.setLabels(ctx, info, staticLabels)
+		}
 	}
 	return callback, nil
 }

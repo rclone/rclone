@@ -17,6 +17,7 @@ import (
 
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
@@ -681,6 +682,107 @@ func (f *Fs) InternalTestSingleQuoteFolder(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// TestInternalStaticLabelParsing verifies that newFs rejects malformed
+// static_label values and accepts valid JSON, without needing credentials.
+// The function will fail later at OAuth (no credentials configured), but
+// must not fail on static_label parsing for valid input.
+func TestInternalStaticLabelParsing(t *testing.T) {
+	const validChunkSize = "256Ki" // 256 KiB — smallest valid power-of-two chunk size
+
+	t.Run("InvalidJSON", func(t *testing.T) {
+		m := configmap.Simple{
+			"chunk_size":   validChunkSize,
+			"static_label": `{not valid json`,
+		}
+		_, err := newFs(context.Background(), "test", "", m)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "static_label")
+	})
+
+	t.Run("ValidJSON", func(t *testing.T) {
+		m := configmap.Simple{
+			"chunk_size":   validChunkSize,
+			"static_label": `{"id":"label-abc","fields":{}}`,
+		}
+		_, err := newFs(context.Background(), "test", "", m)
+		// May fail at OAuth — that is fine. Must NOT fail on label parsing.
+		if err != nil {
+			assert.NotContains(t, err.Error(), "static_label",
+				"expected an OAuth error, not a label-parse error")
+		}
+	})
+
+	t.Run("Empty", func(t *testing.T) {
+		m := configmap.Simple{
+			"chunk_size": validChunkSize,
+		}
+		_, err := newFs(context.Background(), "test", "", m)
+		if err != nil {
+			assert.NotContains(t, err.Error(), "static_label")
+		}
+	})
+}
+
+// TestInternalStaticLabelJSONParse directly tests the JSON decode of a
+// drive.Label and the cleanLabel helper, independently of any Fs or network.
+func TestInternalStaticLabelJSONParse(t *testing.T) {
+	raw := `{"id":"lbl1","fields":{"f1":{"kind":"drive#labelField","valueType":"text","text":["v1","v2"]}}}`
+
+	var label drive.Label
+	require.NoError(t, json.Unmarshal([]byte(raw), &label))
+
+	assert.Equal(t, "lbl1", label.Id)
+	f1, ok := label.Fields["f1"]
+	require.True(t, ok, "expected field f1 to be present")
+	assert.Equal(t, "drive#labelField", f1.Kind)
+	assert.Equal(t, []string{"v1", "v2"}, f1.Text)
+
+	// cleanLabel is called on labels read back from the API; verify it strips Kind.
+	cleanLabel(&label)
+	assert.Equal(t, "", label.Fields["f1"].Kind, "cleanLabel should strip Kind")
+}
+
+// InternalTestStaticLabel verifies that a file uploaded with f.staticLabels
+// set receives the label via ModifyLabels. Skips automatically when no
+// static_label is configured (integration tests only, requires credentials and
+// a pre-provisioned label in the target Drive).
+func (f *Fs) InternalTestStaticLabel(t *testing.T) {
+	ctx := context.Background()
+
+	if len(f.staticLabels) == 0 {
+		t.Skip("no static_label configured; skipping static label integration test")
+	}
+
+	contents := random.String(50)
+	item := fstest.NewItem("staticLabelTest/testfile.txt", contents, fstest.Time("2024-01-01T00:00:00.000000000Z"))
+	obj := fstests.PutTestContents(ctx, t, f, &item, contents, true)
+	require.NotNil(t, obj)
+
+	defer func() {
+		require.NoError(t, obj.Remove(ctx))
+		_ = f.Rmdir(ctx, "staticLabelTest")
+	}()
+
+	// Cast to *Object to access the Drive file ID
+	o, ok := obj.(*Object)
+	require.True(t, ok)
+
+	// Read back labels from the uploaded file
+	labels, err := f.getLabels(ctx, o.id)
+	require.NoError(t, err)
+
+	// Check the expected static label is present
+	expectedID := f.staticLabels[0].Id
+	var found bool
+	for _, lbl := range labels {
+		if lbl.Id == expectedID {
+			found = true
+			break
+		}
+	}
+	assert.True(t, found, "expected label %q to be present on uploaded file, got: %v", expectedID, labels)
+}
+
 func (f *Fs) InternalTest(t *testing.T) {
 	// These tests all depend on each other so run them as nested tests
 	t.Run("DocumentImport", func(t *testing.T) {
@@ -702,6 +804,7 @@ func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("AgeQuery", f.InternalTestAgeQuery)
 	t.Run("SingleQuoteFolder", f.InternalTestSingleQuoteFolder)
 	t.Run("ShouldRetry", f.InternalTestShouldRetry)
+	t.Run("StaticLabel", f.InternalTestStaticLabel)
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)
