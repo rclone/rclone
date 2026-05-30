@@ -261,7 +261,11 @@ func (s *HTTP) serveFavicon(w http.ResponseWriter, r *http.Request) {
 func (s *HTTP) handler(w http.ResponseWriter, r *http.Request) {
 	isDir := strings.HasSuffix(r.URL.Path, "/")
 	remote := strings.Trim(r.URL.Path, "/")
-	if !s.opt.DisableDirList && isDir {
+	if isDir {
+		if s.opt.DisableDirList {
+			http.NotFound(w, r)
+			return
+		}
 		s.serveDir(w, r, remote)
 	} else {
 		s.serveFile(w, r, remote)

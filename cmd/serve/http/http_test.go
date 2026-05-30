@@ -480,6 +480,14 @@ func TestDisableDirList(t *testing.T) {
 		assert.Equal(t, http.StatusNotFound, status)
 	})
 
+	t.Run("disabled - existing and non-existent dirs return identical response", func(t *testing.T) {
+		// Both must return the same body to prevent directory enumeration
+		_, existingBody := do(t, true, "three/")
+		_, nonExistentBody := do(t, true, "doesnotexist/")
+		assert.Equal(t, "404 page not found\n", string(existingBody))
+		assert.Equal(t, "404 page not found\n", string(nonExistentBody))
+	})
+
 	t.Run("disabled - files still served", func(t *testing.T) {
 		status, body := do(t, true, "two.txt")
 		assert.Equal(t, http.StatusOK, status)
