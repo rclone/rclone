@@ -605,6 +605,13 @@ func (ps *PhotosService) discoverLibraries(ctx context.Context) (*libraryDiscove
 				continue
 			}
 			name := zone.ZoneID.ZoneName
+			// Only PrimarySync and SharedSync-* are photo libraries. Other
+			// zones (e.g. CMM-* shared-album zones) appear in changes/database
+			// but have no CPLAlbumByPositionLive index, so querying their
+			// albums returns BAD_REQUEST / "Index has invalid data".
+			if name != "PrimarySync" && !strings.HasPrefix(name, "SharedSync") {
+				continue
+			}
 			// SharedSync-* found in private takes precedence over shared
 			if _, exists := result.libraries[name]; exists {
 				continue
