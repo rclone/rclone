@@ -58,6 +58,7 @@ var osarches = []string{
 	"linux/arm64",
 	"linux/mips",
 	"linux/mipsle",
+	"linux/riscv64",
 	"freebsd/386",
 	"freebsd/amd64",
 	"freebsd/arm",
