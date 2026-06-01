@@ -892,6 +892,26 @@ func DeconstructDriveID(id string) (docType, zone, docid string) {
 	return split[0], split[1], split[2]
 }
 
+// IsSharedFolderChildID reports whether the given drivewsid refers to an item that
+// lives inside a folder shared by another Apple ID (a "participant" share).
+//
+// Such items have a drivewsid of the form FOLDER_IN_SHARED_FOLDER::zone::docwsid (or
+// FILE_IN_SHARED_FOLDER::...) and cannot be addressed by the drivews endpoints
+// (retrieveItemDetailsInFolders etc.), which only operate within the caller's own
+// zone. They must instead be addressed through the docws item endpoints by item_id.
+//
+// An empty drivewsid also counts as a shared child: items discovered via the docws
+// enumerate endpoint only carry an item_id (no drivewsid), so descendants deeper than
+// one level below the share root reach here with an empty drivewsid.
+func IsSharedFolderChildID(drivewsid string) bool {
+	if drivewsid == "" {
+		return true
+	}
+	docType, _, _ := DeconstructDriveID(drivewsid)
+	return strings.HasPrefix(docType, "FOLDER_IN_SHARED_FOLDER") ||
+		strings.HasPrefix(docType, "FILE_IN_SHARED_FOLDER")
+}
+
 // ConstructDriveID constructs a drive ID from the given components.
 func ConstructDriveID(id string, zone string, t string) string {
 	return strings.Join([]string{t, zone, id}, "::")

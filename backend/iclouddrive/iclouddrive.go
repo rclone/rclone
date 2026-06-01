@@ -133,7 +133,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID string, leaf string) (pathIDOu
 		return "", false, fs.ErrorIsFile
 	}
 
-	return f.IDJoin(item.Drivewsid, item.Etag), true, nil
+	return f.folderID(item), true, nil
 }
 
 // Features implements fs.Fs.
@@ -197,18 +197,37 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 }
 
 func (f *Fs) listAll(ctx context.Context, dirID string) (items []*api.DriveItem, err error) {
-	var item *api.DriveItem
 	var resp *http.Response
 
-	if err = f.pacer.Call(func() (bool, error) {
-		id, _ := f.parseNormalizedID(dirID)
-		item, resp, err = f.service.GetItemByDriveID(ctx, id, true)
-		return shouldRetry(ctx, resp, err)
-	}); err != nil {
-		return nil, err
-	}
+	id, _ := f.parseNormalizedID(dirID)
+	itemID := f.parseSharedItemID(dirID)
 
-	items = item.Items
+	// Items inside a folder shared by another Apple ID cannot be listed through the
+	// drivews retrieveItemDetailsInFolders endpoint (it only operates within the
+	// caller's own zone and returns HTTP 400). Use the docws enumerate-by-item_id
+	// endpoint instead. See api.IsSharedFolderChildID.
+	if itemID != "" && api.IsSharedFolderChildID(id) {
+		var raws []*api.DriveItemRaw
+		if err = f.pacer.Call(func() (bool, error) {
+			raws, resp, err = f.service.GetItemsInFolder(ctx, itemID, 5000)
+			return shouldRetry(ctx, resp, err)
+		}); err != nil {
+			return nil, err
+		}
+		items = make([]*api.DriveItem, 0, len(raws))
+		for _, raw := range raws {
+			items = append(items, raw.IntoDriveItem())
+		}
+	} else {
+		var item *api.DriveItem
+		if err = f.pacer.Call(func() (bool, error) {
+			item, resp, err = f.service.GetItemByDriveID(ctx, id, true)
+			return shouldRetry(ctx, resp, err)
+		}); err != nil {
+			return nil, err
+		}
+		items = item.Items
+	}
 
 	for i, item := range items {
 		item.Name = f.opt.Enc.ToStandardName(item.Name)
@@ -234,11 +253,10 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 
 	for _, item := range items {
-		id := item.Drivewsid
 		name := item.FullName()
 		remote := path.Join(dir, name)
 		if item.IsFolder() {
-			jid := f.putFolderCache(id, item.Etag, remote)
+			jid := f.putFolderCache(item, remote)
 			d := fs.NewDir(remote, item.DateModified).SetID(jid).SetSize(item.AssetQuota)
 			entries = append(entries, d)
 		} else {
@@ -422,6 +440,32 @@ func (f *Fs) parseNormalizedID(rid string) (id string, etag string) {
 	return split[0], split[1]
 }
 
+// parseSharedItemID returns the item_id embedded in a normalized ID, if present.
+//
+// For items that live inside a folder shared by another Apple ID we cache the id as
+// `drivewsid#etag#itemID`, because such items can only be addressed through the docws
+// endpoints by item_id (the drivewsid is unusable, and may even be empty). Normal
+// (own-zone) items are cached as `drivewsid#etag` and this returns "".
+func (f *Fs) parseSharedItemID(rid string) string {
+	split := strings.Split(rid, "#")
+	if len(split) >= 3 {
+		return split[2]
+	}
+	return ""
+}
+
+// folderID builds the normalized directory cache id for a DriveItem. For items inside
+// a folder shared by another Apple ID it additionally embeds the item_id (see
+// parseSharedItemID); for normal items it is identical to IDJoin so behaviour is
+// unchanged.
+func (f *Fs) folderID(item *api.DriveItem) string {
+	base := f.IDJoin(item.Drivewsid, item.Etag)
+	if item.Itemid != "" && api.IsSharedFolderChildID(item.Drivewsid) {
+		base += "#" + item.Itemid
+	}
+	return base
+}
+
 // FindPath finds the leaf and directoryID from a normalized path
 func (f *Fs) FindPath(ctx context.Context, remote string, create bool) (leaf, directoryID, etag string, err error) {
 	leaf, jDirectoryID, err := f.dirCache.FindPath(ctx, remote, create)
@@ -453,9 +497,9 @@ func (f *Fs) IDJoin(id string, etag string) string {
 	return strings.Join([]string{id, etag}, "#")
 }
 
-func (f *Fs) putFolderCache(id, etag, remote string) string {
-	jid := f.IDJoin(id, etag)
-	f.dirCache.Put(remote, f.IDJoin(id, etag))
+func (f *Fs) putFolderCache(item *api.DriveItem, remote string) string {
+	jid := f.folderID(item)
+	f.dirCache.Put(remote, jid)
 	return jid
 }
 
@@ -512,7 +556,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (string, error)
 		return "", err
 	}
 
-	return f.IDJoin(item.Drivewsid, item.Etag), err
+	return f.folderID(item), err
 }
 
 // DirMove moves src, srcRemote to this remote at dstRemote
@@ -785,7 +829,11 @@ func (f *Fs) NewObjectFromDriveItem(ctx context.Context, remote string, item *ap
 }
 
 func (f *Fs) readMetaData(ctx context.Context, path string) (item *api.DriveItem, err error) {
-	leaf, ID, _, err := f.FindPath(ctx, path, false)
+	// Use the full normalized directory ID (which, for items inside a shared folder,
+	// carries the item_id needed to list the folder via the docws endpoint). Going
+	// through f.FindPath here would strip it down to drivewsid#etag - see folderID
+	// and parseSharedItemID.
+	leaf, directoryID, err := f.dirCache.FindPath(ctx, path, false)
 
 	if err != nil {
 		if err == fs.ErrorDirNotFound {
@@ -794,7 +842,7 @@ func (f *Fs) readMetaData(ctx context.Context, path string) (item *api.DriveItem
 		return nil, err
 	}
 
-	item, found, err := f.findLeafItem(ctx, ID, leaf)
+	item, found, err := f.findLeafItem(ctx, directoryID, leaf)
 
 	if err != nil {
 		return nil, err
@@ -857,13 +905,19 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	if err = o.fs.pacer.Call(func() (bool, error) {
 		var url string
 
-		//var doc *api.Document
-		//if o.docID == "" {
-		//doc, resp, err = o.fs.service.GetDocByItemID(ctx, o.itemID)
-		//}
-
-		// Can not get the download url on a item to work, so do it the hard way.
-		url, _, err = o.fs.service.GetDownloadURLByDriveID(ctx, o.driveID)
+		// Files inside a folder shared by another Apple ID have no usable drivewsid
+		// (they are addressed by item_id via the docws endpoints), so the by_id
+		// download lookup is not available. The enumerate response gives us a direct
+		// download URL, so use it.
+		if o.driveID == "" && o.downloadURL != "" {
+			url = o.downloadURL
+		} else {
+			// Can not get the download url on a item to work, so do it the hard way.
+			url, _, err = o.fs.service.GetDownloadURLByDriveID(ctx, o.driveID)
+			if err != nil {
+				return shouldRetry(ctx, resp, err)
+			}
+		}
 
 		resp, err = o.fs.service.DownloadFile(ctx, url, options)
 		return shouldRetry(ctx, resp, err)
