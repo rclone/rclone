@@ -12,7 +12,9 @@ import (
 	"net"
 	"net/http"
 	"net/http/cookiejar"
+	"net/http/httptrace"
 	"net/http/httputil"
+	"net/textproto"
 	"net/url"
 	"os"
 	"slices"
@@ -490,6 +492,105 @@ func isRetryableResponse(resp *http.Response, err error) bool {
 	return resp.StatusCode == 429 || resp.StatusCode >= 500
 }
 
+// newClientTrace returns an httptrace.ClientTrace which logs the
+// connection level events for req - DNS resolution, TCP connect, TLS
+// handshake, connection reuse, request write and time to first byte.
+//
+// Each line is tagged with the req pointer so it can be correlated with
+// the HTTP REQUEST/RESPONSE dumps, and prefixed with the time elapsed
+// since the round trip started so the timing of each phase is visible.
+//
+// This is complementary to the other dump flags: it shows how the
+// connection behaved rather than what was sent, so it is useful for
+// debugging connectivity, DNS, TLS, proxy and keep-alive problems.
+func newClientTrace(req *http.Request) *httptrace.ClientTrace {
+	start := time.Now()
+	tracef := func(format string, args ...any) {
+		fs.Debugf(nil, "HTTP TRACE (req %p) %9.3fms: %s", req, float64(time.Since(start))/float64(time.Millisecond), fmt.Sprintf(format, args...))
+	}
+	return &httptrace.ClientTrace{
+		GetConn: func(hostPort string) {
+			tracef("Getting connection for %s", hostPort)
+		},
+		GotConn: func(info httptrace.GotConnInfo) {
+			local, remote := "?", "?"
+			if info.Conn != nil {
+				local = info.Conn.LocalAddr().String()
+				remote = info.Conn.RemoteAddr().String()
+			}
+			tracef("Got connection %s -> %s (reused=%v, wasIdle=%v, idleTime=%v)", local, remote, info.Reused, info.WasIdle, info.IdleTime)
+		},
+		PutIdleConn: func(err error) {
+			if err != nil {
+				tracef("Connection not returned to idle pool: %v", err)
+			} else {
+				tracef("Connection returned to idle pool")
+			}
+		},
+		GotFirstResponseByte: func() {
+			tracef("First response byte")
+		},
+		Got100Continue: func() {
+			tracef("Got 100 Continue")
+		},
+		Got1xxResponse: func(code int, header textproto.MIMEHeader) error {
+			tracef("Got 1xx response %d", code)
+			return nil
+		},
+		DNSStart: func(info httptrace.DNSStartInfo) {
+			tracef("Looking up host %q", info.Host)
+		},
+		DNSDone: func(info httptrace.DNSDoneInfo) {
+			if info.Err != nil {
+				tracef("DNS lookup failed: %v", info.Err)
+				return
+			}
+			addrs := make([]string, len(info.Addrs))
+			for i := range info.Addrs {
+				addrs[i] = info.Addrs[i].String()
+			}
+			tracef("DNS lookup gave %v (coalesced=%v)", addrs, info.Coalesced)
+		},
+		ConnectStart: func(network, addr string) {
+			tracef("Connecting to %s:%s", network, addr)
+		},
+		ConnectDone: func(network, addr string, err error) {
+			if err != nil {
+				tracef("Connect to %s:%s failed: %v", network, addr, err)
+			} else {
+				tracef("Connected to %s:%s", network, addr)
+			}
+		},
+		TLSHandshakeStart: func() {
+			tracef("TLS handshake starting")
+		},
+		TLSHandshakeDone: func(state tls.ConnectionState, err error) {
+			if err != nil {
+				tracef("TLS handshake failed: %v", err)
+				return
+			}
+			tracef("TLS handshake done: %s %s, alpn=%q, serverName=%q", tls.VersionName(state.Version), tls.CipherSuiteName(state.CipherSuite), state.NegotiatedProtocol, state.ServerName)
+			if len(state.PeerCertificates) > 0 {
+				leaf := state.PeerCertificates[0]
+				tracef("TLS peer certificate: subject=%q issuer=%q notAfter=%v dnsNames=%v", leaf.Subject, leaf.Issuer, leaf.NotAfter.Format(time.RFC3339), leaf.DNSNames)
+			}
+		},
+		WroteHeaders: func() {
+			tracef("Wrote request headers")
+		},
+		Wait100Continue: func() {
+			tracef("Waiting for 100 Continue before writing request body")
+		},
+		WroteRequest: func(info httptrace.WroteRequestInfo) {
+			if info.Err != nil {
+				tracef("Writing request failed: %v", info.Err)
+			} else {
+				tracef("Wrote request")
+			}
+		},
+	}
+}
+
 // RoundTrip implements the RoundTripper interface.
 func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
 	// Check if certificates are being used and the certificates are expired
@@ -561,8 +662,17 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 			}
 		}
 	}
+	// Attach an httptrace to log connection level events if required.
+	// This is done here, after the request dump above, so that
+	// DumpRequestOut's internal round trip does not trigger the trace.
+	// The original req is passed to newClientTrace so the trace lines
+	// share the same req pointer as the HTTP REQUEST/RESPONSE dumps.
+	traceReq := req
+	if t.dump&fs.DumpTrace != 0 {
+		traceReq = req.WithContext(httptrace.WithClientTrace(req.Context(), newClientTrace(req)))
+	}
 	// Do round trip
-	resp, err = t.Transport.RoundTrip(req)
+	resp, err = t.Transport.RoundTrip(traceReq)
 	// Dump response, and the request too if we deferred it for --dump errors
 	if wantDump && (!onError || isRetryableResponse(resp, err)) {
 		logMutex.Lock()

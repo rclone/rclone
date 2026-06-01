@@ -3296,6 +3296,15 @@ The available flags are:
   failed transactions only. On its own `--dump errors` dumps the headers.
   This lets you capture first-failure diagnostics without the noise of
   dumping every transaction. May contain sensitive info.
+- `trace` logs connection level events for each HTTP transaction using Go's
+  `net/http/httptrace` - DNS resolution, TCP connect, TLS handshake (including
+  the negotiated TLS version, cipher, ALPN protocol and server certificate),
+  connection reuse, request write and time to first response byte. Each line is
+  tagged with the time elapsed since the start of the transaction so you can see
+  where the time goes. This is complementary to the other dump flags: it shows
+  how the connection behaved rather than what was sent, so it is useful for
+  debugging connectivity, DNS, TLS, proxy and keep-alive problems. It does not
+  dump headers or bodies - combine it with `headers` or `bodies` for that.
 
 ## Filtering
 
