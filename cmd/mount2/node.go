@@ -271,7 +271,20 @@ func (ds *dirStream) Next() (de fuse.DirEntry, errno syscall.Errno) {
 func (ds *dirStream) Close() {
 }
 
+// Seekdir implements fusefs.FileSeekdirer so go-fuse can rewind the directory
+// stream when the kernel calls lseek(fd, 0, SEEK_SET) before a second getdents.
+// Without this, go-fuse returns ENOTSUP and ls returns empty on every call after
+// the first. See: https://github.com/hanwen/go-fuse/issues/549
+func (ds *dirStream) Seekdir(_ context.Context, off uint64) syscall.Errno {
+	if off == 0 {
+		ds.i = 0
+		return 0
+	}
+	return syscall.ENOTSUP
+}
+
 var _ fusefs.DirStream = (*dirStream)(nil)
+var _ fusefs.FileSeekdirer = (*dirStream)(nil)
 
 // Readdir opens a stream of directory entries.
 //
