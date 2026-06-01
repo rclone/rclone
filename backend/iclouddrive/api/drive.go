@@ -33,7 +33,7 @@ type DriveService struct {
 
 // NewDriveService creates a new DriveService instance.
 func NewDriveService(icloud *Client) (*DriveService, error) {
-	return &DriveService{icloud: icloud, RootID: "FOLDER::com.apple.CloudDocs::root", endpoint: icloud.Session.AccountInfo.Webservices["drivews"].URL, docsEndpoint: icloud.Session.AccountInfo.Webservices["docws"].URL}, nil
+	return &DriveService{icloud: icloud, RootID: "FOLDER::com.apple.CloudDocs::root", endpoint: icloud.Session.AccountInfo.Webservices[WsDrive].URL, docsEndpoint: icloud.Session.AccountInfo.Webservices[WsDocs].URL}, nil
 }
 
 // GetItemByDriveID retrieves a DriveItem by its Drive ID.

@@ -677,7 +677,7 @@ func retryResultUnknown(ctx context.Context, resp *http.Response, err error) (bo
 
 // NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
-	icloud, opt, err := newICloudClient(ctx, name, m)
+	icloud, opt, err := newICloudClient(ctx, name, m, api.WsDrive)
 	if err != nil {
 		return nil, err
 	}
