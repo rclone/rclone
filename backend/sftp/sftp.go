@@ -824,7 +824,7 @@ func (f *Fs) getSftpConnection(ctx context.Context) (c *conn, err error) {
 	err = f.pacer.Call(func() (bool, error) {
 		c, err = f.sftpConnection(ctx)
 		if err != nil {
-			return true, err
+			return fserrors.ShouldRetry(err), err
 		}
 		return false, nil
 	})
