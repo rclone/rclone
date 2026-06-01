@@ -41,6 +41,7 @@ import (
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 	"github.com/ncw/swift/v2"
+	"github.com/gabriel-vasile/mimetype"
 
 	"golang.org/x/net/http/httpguts"
 	"golang.org/x/sync/errgroup"
@@ -704,6 +705,11 @@ In this case, you might want to try disabling this option.
 			Advanced: true,
 			Default:  false,
 		}, {
+			Name:	  "guess_mimetype",
+			Help:     "Guess content-type from file's content",
+			Advanced: true,
+			Default:  false,
+		}, {
 			Name:     "sts_endpoint",
 			Help:     "Endpoint for STS (deprecated).\n\nLeave blank if using AWS to use the default endpoint for the region.",
 			Advanced: true,
@@ -1131,6 +1137,7 @@ type Options struct {
 	Decompress                  bool                 `config:"decompress"`
 	MightGzip                   fs.Tristate          `config:"might_gzip"`
 	UseAcceptEncodingGzip       fs.Tristate          `config:"use_accept_encoding_gzip"`
+	GuessMimetype	            bool		 `config:"guess_mimetype"`
 	NoSystemMetadata            bool                 `config:"no_system_metadata"`
 	UseAlreadyExists            fs.Tristate          `config:"use_already_exists"`
 	UseMultipartUploads         fs.Tristate          `config:"use_multipart_uploads"`
@@ -3166,7 +3173,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		uploadOptions = append(uploadOptions, option)
 	}
 
-	ui, err := srcObj.prepareUpload(ctx, src, uploadOptions, true)
+	ui, err := srcObj.prepareUpload(ctx, src, uploadOptions, true, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare upload: %w", err)
 	}
@@ -4149,8 +4156,20 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 
 	// Copy the object to itself to update the metadata
 	bucket, bucketPath := o.split()
+	ctype := fs.MimeType(ctx, o)
+	if ctype == "application/octet-stream" {
+		rd, err := o.Open(context.Background())
+		if err == nil {
+			mimetype.SetLimit(1024*1024)
+			mtype, err := mimetype.DetectReader(rd)
+			if err == nil {
+				ctype = mtype.String()
+			}
+			rd.Close()
+		}
+	}
 	req := s3.CopyObjectInput{
-		ContentType:       aws.String(fs.MimeType(ctx, o)), // Guess the content type
+		ContentType:       aws.String(ctype), // Guess the content type
 		Metadata:          mapToS3Metadata(o.meta),
 		MetadataDirective: types.MetadataDirectiveReplace, // replace metadata with that passed in
 	}
@@ -4406,7 +4425,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		fs:     f,
 		remote: remote,
 	}
-	ui, err := o.prepareUpload(ctx, src, options, false)
+	ui, err := o.prepareUpload(ctx, src, options, false, "")
 	if err != nil {
 		return info, nil, fmt.Errorf("failed to prepare upload: %w", err)
 	}
@@ -4780,7 +4799,7 @@ type uploadInfo struct {
 // Prepare object for being uploaded
 //
 // If noHash is true the md5sum will not be calculated
-func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options []fs.OpenOption, noHash bool) (ui uploadInfo, err error) {
+func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options []fs.OpenOption, noHash bool, guess string) (ui uploadInfo, err error) {
 	bucket, bucketPath := o.split()
 	// Create parent dir/bucket if not saving directory marker
 	if !strings.HasSuffix(o.remote, "/") {
@@ -4900,6 +4919,9 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 	if ui.req.ContentType == nil {
 		ui.req.ContentType = aws.String(fs.MimeType(ctx, src))
 	}
+	if guess != "" {
+		ui.req.ContentType = aws.String(guess)
+	}
 	if size >= 0 {
 		ui.req.ContentLength = &size
 	}
@@ -4996,6 +5018,8 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 
 // Update the Object from in with modTime and size
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	buf, _ := io.ReadAll(in)
+	ir := bytes.NewReader(buf)
 	if o.fs.opt.VersionAt.IsSet() {
 		return errNotWithVersionAt
 	}
@@ -5009,17 +5033,24 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	var err error
 	var ui uploadInfo
 	if multipart {
-		wantETag, gotETag, versionID, ui, err = o.uploadMultipart(ctx, src, in, options...)
+		wantETag, gotETag, versionID, ui, err = o.uploadMultipart(ctx, src, ir, options...)
 	} else {
-		ui, err = o.prepareUpload(ctx, src, options, false)
+		guess := ""
+		if o.fs.opt.GuessMimetype {
+                        mtype := mimetype.Detect(buf)
+                        if err == nil {
+				guess = mtype.String()
+                        }
+		}
+		ui, err = o.prepareUpload(ctx, src, options, false, guess)
 		if err != nil {
 			return fmt.Errorf("failed to prepare upload: %w", err)
 		}
 
 		if o.fs.opt.UsePresignedRequest {
-			gotETag, lastModified, versionID, err = o.uploadSinglepartPresignedRequest(ctx, ui.req, size, in)
+			gotETag, lastModified, versionID, err = o.uploadSinglepartPresignedRequest(ctx, ui.req, size, ir)
 		} else {
-			gotETag, lastModified, versionID, err = o.uploadSinglepartPutObject(ctx, ui.req, size, in)
+			gotETag, lastModified, versionID, err = o.uploadSinglepartPutObject(ctx, ui.req, size, ir)
 		}
 	}
 	if err != nil {
