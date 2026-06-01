@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -69,6 +70,33 @@ func TestGetCaller(t *testing.T) {
 	assert.NotNil(t, match)
 	// Can't test this as it skips the /log/ directory!
 	// assert.Equal(t, "slog_test.go", match[1])
+}
+
+// Test isLogFrame skips logging-machinery frames, including the
+// standard library log/slog frames whose path is trimmed by -trimpath.
+func TestIsLogFrame(t *testing.T) {
+	tests := []struct {
+		name string
+		file string
+		fn   string
+		want bool
+	}{
+		// rclone's own log packages
+		{"fsLog", "github.com/rclone/rclone/fs/log.go", "github.com/rclone/rclone/fs.Debugf", true},
+		{"fsLogSlog", "github.com/rclone/rclone/fs/log/slog.go", "github.com/rclone/rclone/fs/log.(*OutputHandler).Handle", true},
+		// standard library slog with -trimpath: path is "log/slog/logger.go"
+		{"slogTrimpath", "log/slog/logger.go", "log/slog.(*Logger).log", true},
+		// standard library slog without -trimpath: full path contains "/log/"
+		{"slogFullPath", "/usr/local/go/src/log/slog/logger.go", "log/slog.(*Logger).Log", true},
+		// a real caller must not be skipped
+		{"realCaller", "github.com/rclone/rclone/backend/drive/drive.go", "github.com/rclone/rclone/backend/drive.(*Fs).newObjectWithInfo", false},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := isLogFrame(runtime.Frame{File: tc.file, Function: tc.fn})
+			assert.Equal(t, tc.want, got)
+		})
+	}
 }
 
 // Test formatStdLogHeader for various flag combinations.
