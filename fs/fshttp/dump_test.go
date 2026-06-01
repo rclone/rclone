@@ -142,3 +142,67 @@ func TestDumpErrors(t *testing.T) {
 	curl500 := run(t, fs.DumpErrors|fs.DumpCurl, "/500")
 	assert.Contains(t, curl500, "curl")
 }
+
+// TestDumpTrace checks that --dump trace logs the connection level
+// httptrace events without dumping the request or response bodies.
+func TestDumpTrace(t *testing.T) {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("response body\n"))
+	})
+
+	// run makes count requests to srv reusing the same client with the
+	// trace dump flag set and returns the captured log output.
+	run := func(t *testing.T, srv *httptest.Server, count int) string {
+		capture := &captureBuf{}
+		fs.SetLogger(slog.NewTextHandler(capture, &slog.HandlerOptions{Level: slog.LevelDebug}))
+		defer fs.SetLogger(slog.NewTextHandler(io.Discard, nil))
+
+		// The dump logging is emitted at Debug level and filtered
+		// against the global config, so set that up for the test.
+		ci := fs.GetConfig(context.Background())
+		oldDump, oldLevel, oldInsecure := ci.Dump, ci.LogLevel, ci.InsecureSkipVerify
+		ci.Dump = fs.DumpTrace
+		ci.LogLevel = fs.LogLevelDebug
+		ci.InsecureSkipVerify = true
+		defer func() {
+			ci.Dump, ci.LogLevel, ci.InsecureSkipVerify = oldDump, oldLevel, oldInsecure
+		}()
+		ResetTransport()
+		defer ResetTransport()
+
+		client := NewClientCustom(context.Background(), nil)
+		for range count {
+			req, err := http.NewRequest("GET", srv.URL, strings.NewReader("request body\n"))
+			require.NoError(t, err)
+			resp, err := client.Do(req)
+			require.NoError(t, err)
+			_, _ = io.Copy(io.Discard, resp.Body)
+			_ = resp.Body.Close()
+		}
+		return capture.String()
+	}
+
+	t.Run("HTTP", func(t *testing.T) {
+		srv := httptest.NewServer(handler)
+		defer srv.Close()
+		out := run(t, srv, 2)
+		// Connection level events should be traced
+		assert.Contains(t, out, "HTTP TRACE")
+		assert.Contains(t, out, "Connected to")
+		assert.Contains(t, out, "Wrote request")
+		assert.Contains(t, out, "First response byte")
+		// The second request should reuse the keep-alive connection
+		assert.Contains(t, out, "reused=true")
+		// trace on its own does not dump the request/response or bodies
+		assert.NotContains(t, out, "HTTP REQUEST")
+		assert.NotContains(t, out, "response body")
+	})
+
+	t.Run("HTTPS", func(t *testing.T) {
+		srv := httptest.NewTLSServer(handler)
+		defer srv.Close()
+		out := run(t, srv, 1)
+		assert.Contains(t, out, "TLS handshake done")
+	})
+}
