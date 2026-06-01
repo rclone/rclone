@@ -989,6 +989,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
+	// Items whose parent is a folder shared by another Apple ID cannot be written
+	// through the drivews/docws upload endpoints (they only operate in the caller's
+	// own zone and return HTTP 400). Route those through CloudKit instead.
+	if api.IsSharedFolderChildID(dirID) {
+		return o.updateViaCloudDocs(ctx, in, src, leaf, dirID, modTime, size)
+	}
+
 	// Move current file to trash
 	if o.driveID != "" {
 		err = o.Remove(ctx)
@@ -1056,6 +1063,134 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	o.modTime = modTime
 	o.size = src.Size()
 
+	return nil
+}
+
+// lookupSharedFolderRoot returns the drivewsid of the top-level shared folder named
+// shareName (a SHARED_FOLDER at the drive root). This is the destination a document
+// is moved into so it enters the owner's zone with PCS chaining applied.
+func (f *Fs) lookupSharedFolderRoot(ctx context.Context, shareName string) (string, error) {
+	var root *api.DriveItem
+	var resp *http.Response
+	var err error
+	if err = f.pacer.Call(func() (bool, error) {
+		root, resp, err = f.service.GetItemByDriveID(ctx, f.rootID, true)
+		return shouldRetry(ctx, resp, err)
+	}); err != nil {
+		return "", err
+	}
+	want := norm.NFC.String(shareName)
+	for _, it := range root.Items {
+		name := norm.NFC.String(f.opt.Enc.ToStandardName(it.Name))
+		if strings.EqualFold(name, want) && strings.HasPrefix(it.Drivewsid, "SHARED_FOLDER::") {
+			return it.Drivewsid, nil
+		}
+	}
+	return "", errors.New("iclouddrive: could not find shared-folder root " + shareName)
+}
+
+// updateViaCloudDocs writes a document into a folder shared by another Apple ID.
+// drivews/docws cannot do this directly, so it: (1) uploads the document into the
+// caller's own zone root, (2) moves it into the share root (which puts it in the
+// owner's zone with PCS chaining done server-side), then (3) re-parents the record
+// into the target sub-folder via the CloudKit shared database. See api.CloudDocs.
+func (o *Object) updateViaCloudDocs(ctx context.Context, in io.Reader, src fs.ObjectInfo, leaf, dirID string, modTime time.Time, size int64) error {
+	f := o.fs
+	cd := f.icloud.CloudDocsService()
+	if cd == nil {
+		return errors.New("iclouddrive: cannot write into a shared sub-folder: account has no ckdatabasews service")
+	}
+
+	remote := o.Remote()
+	dirRemote := path.Dir(path.Clean(remote))
+	targetDirUUID := api.GetDocIDFromDriveID(dirID)
+
+	// The file must first land in the owner's zone via the share root (an addressable
+	// SHARED_FOLDER at the top of the drive). The share root is the first component of
+	// the absolute path; resolve its drivewsid from the drive root listing.
+	absPath := path.Join(f.root, remote)
+	shareName := absPath
+	if i := strings.IndexByte(absPath, '/'); i >= 0 {
+		shareName = absPath[:i]
+	}
+	shareRootID, err := f.lookupSharedFolderRoot(ctx, shareName)
+	if err != nil {
+		return err
+	}
+
+	name := f.opt.Enc.FromStandardName(leaf)
+	var resp *http.Response
+
+	// (1) Upload into the caller's own zone root.
+	var uploadInfo *api.UploadResponse
+	if err = f.pacer.Call(func() (bool, error) {
+		uploadInfo, resp, err = f.service.CreateUpload(ctx, size, name)
+		return ignoreResultUnknown(ctx, resp, err)
+	}); err != nil {
+		return err
+	}
+	var upload *api.SingleFileResponse
+	if err = f.pacer.Call(func() (bool, error) {
+		upload, resp, err = f.service.Upload(ctx, in, size, name, uploadInfo.URL)
+		return ignoreResultUnknown(ctx, resp, err)
+	}); err != nil {
+		return err
+	}
+	r := api.NewUpdateFileInfo()
+	r.DocumentID = uploadInfo.DocumentID
+	r.Path.Path = name
+	r.Path.StartingDocumentID = api.GetDocIDFromDriveID(f.rootID) // own zone root
+	r.Data.Receipt = upload.SingleFile.Receipt
+	r.Data.Signature = upload.SingleFile.Signature
+	r.Data.ReferenceSignature = upload.SingleFile.ReferenceSignature
+	r.Data.WrappingKey = upload.SingleFile.WrappingKey
+	r.Data.Size = upload.SingleFile.Size
+	r.Mtime = modTime.Unix() * 1000
+	r.Btime = modTime.Unix() * 1000
+	var ownItem *api.DriveItem
+	if err = f.pacer.Call(func() (bool, error) {
+		ownItem, resp, err = f.service.UpdateFile(ctx, &r)
+		return ignoreResultUnknown(ctx, resp, err)
+	}); err != nil {
+		return err
+	}
+
+	// (2) Move it into the share root (lands in the owner's zone, PCS applied).
+	var moved *api.DriveItem
+	if err = f.pacer.Call(func() (bool, error) {
+		moved, resp, err = f.service.MoveItemByDriveID(ctx, ownItem.Drivewsid, ownItem.Etag, shareRootID, true)
+		return ignoreResultUnknown(ctx, resp, err)
+	}); err != nil {
+		return err
+	}
+	uuid := api.GetDocIDFromDriveID(moved.Drivewsid)
+
+	// Overwrite: if a file with the same name already exists in the target folder,
+	// remove its record so we don't leave a duplicate (best-effort).
+	if o.itemID != "" {
+		if oldUUID, qerr := cd.FindFileUUID(ctx, targetDirUUID, leaf); qerr == nil && oldUUID != "" && !strings.EqualFold(oldUUID, uuid) {
+			_ = cd.DeleteFile(ctx, oldUUID)
+		}
+	}
+
+	// (3) Re-parent the record into the target shared sub-folder.
+	if err = f.pacer.Call(func() (bool, error) {
+		err = cd.ReparentStructure(ctx, uuid, targetDirUUID)
+		return shouldRetry(ctx, nil, err)
+	}); err != nil {
+		return err
+	}
+
+	o.size = size
+	o.modTime = modTime
+	o.docID = uuid
+	// Best-effort: refresh metadata (item_id etc.) from the now-placed file.
+	f.dirCache.FlushDir(dirRemote)
+	if item, merr := f.readMetaData(ctx, remote); merr == nil {
+		_ = o.setMetaData(item)
+		o.modTime = modTime
+		o.size = size
+	}
 	return nil
 }
 
