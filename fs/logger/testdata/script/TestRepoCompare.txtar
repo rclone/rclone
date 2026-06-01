@@ -1,14 +1,7 @@
 # tests whether rclone check and rclone sync output exactly the same file lists.
-# uses two different old versions of rclone source code for the src and dst 
-# to produce a more realistic test than makefiles
-# (has lots of files with same name but different content)
-
-# Filling src and dst with two different versions of rclone source!:
-exec rclone copyurl https://github.com/rclone/rclone/archive/refs/tags/v1.49.1.zip $SRC/src.zip
-exec rclone copyurl https://github.com/rclone/rclone/archive/refs/tags/v1.54.1.zip $DST/dst.zip
-exec unzip $SRC/src.zip -d $SRC
-exec unzip $DST/dst.zip -d $DST
-
+# src and dst are filled by the test Setup with two overlapping trees of files
+# (lots of files with the same name but different content) to produce a more
+# realistic test than makefiles.
 
 # running rclone check for baseline test:
 # error is expected here:
