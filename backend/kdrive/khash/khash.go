@@ -152,11 +152,9 @@ func (d *digest) BlockSize() int {
 	return 64
 }
 
+// IsNestedHash checks if the given hash string is in the nested hash format.
 func IsNestedHash(hashStr string) bool {
-	if strings.HasPrefix(hashStr, "N:xxh3:") {
-		return true
-	}
-	return false
+	return strings.HasPrefix(hashStr, "N:xxh3:")
 }
 
 // ParseHash parses a kDrive hash string from the API and returns the hex hash value

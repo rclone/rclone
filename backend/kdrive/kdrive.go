@@ -26,7 +26,6 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
-	fsHash "github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
@@ -37,7 +36,7 @@ import (
 )
 
 // kDriveHashType is the hash type for kDrive's XXH3 implementation
-var kDriveHashType fsHash.Type
+var kDriveHashType hash.Type
 
 const (
 	defaultEndpoint = "https://api.infomaniak.com"
