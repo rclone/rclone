@@ -68,19 +68,19 @@ func (f *Fs) newChunkWriter(ctx context.Context, remote string, src fs.ObjectInf
 	lastModifiedAt := fmt.Sprintf("%d", uint64(src.ModTime(ctx).Unix()))
 
 	sessionReq := struct {
-		Conflict    string `json:"conflict"`
-		DirectoryID string `json:"directory_id"`
-		FileName    string `json:"file_name"`
+		Conflict       string `json:"conflict"`
+		DirectoryID    string `json:"directory_id"`
+		FileName       string `json:"file_name"`
 		LastModifiedAt string `json:"last_modified_at"`
-		TotalChunks int64  `json:"total_chunks"`
-		TotalSize   int64  `json:"total_size"`
+		TotalChunks    int64  `json:"total_chunks"`
+		TotalSize      int64  `json:"total_size"`
 	}{
-		Conflict:    "version",
-		DirectoryID: parentID,
-		FileName:    leaf,
+		Conflict:       "version",
+		DirectoryID:    parentID,
+		FileName:       leaf,
 		LastModifiedAt: lastModifiedAt,
-		TotalChunks: totalChunks,
-		TotalSize:   fileSize,
+		TotalChunks:    totalChunks,
+		TotalSize:      fileSize,
 	}
 
 	opts := rest.Opts{
