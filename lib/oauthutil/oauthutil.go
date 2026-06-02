@@ -1004,7 +1004,7 @@ func configSetup(ctx context.Context, id, name string, m configmap.Mapper, oauth
 	select {
 	case auth = <-server.result:
 	case <-oauthCtx.Done():
-		return "", errors.New("oauth authentication was cancelled")
+		return "", "", errors.New("oauth authentication was cancelled")
 	}
 	if !auth.OK || auth.Code == "" {
 		return "", "", auth
