@@ -1,7 +1,10 @@
+// Package chunksize provides utilities for calculating chunk sizes
+// for kDrive multipart uploads based on file size and API limitations.
 package chunksize
 
 import "math"
 
+// SizeConstants defines the chunk size limits and configuration for kDrive API.
 type SizeConstants struct {
 	MaxChunkSize     int64
 	DefaultChunkSize int64
@@ -9,6 +12,7 @@ type SizeConstants struct {
 	mebi             int64
 }
 
+// ChunkSizeConfig contains the default chunk size configuration for kDrive.
 var ChunkSizeConfig = SizeConstants{
 	MaxChunkSize:     1 * 1000 * 1000 * 1000, // 1 Go (max API limit)
 	DefaultChunkSize: 20 * 1024 * 1024,       // 20 MiB (default chunk size)
@@ -16,6 +20,9 @@ var ChunkSizeConfig = SizeConstants{
 	mebi:             1024 * 1024,            // 1 MiB (rounding unit)
 }
 
+// CalculateChunkSize determines the optimal chunk size for uploading a file.
+// It ensures the chunk size does not exceed the maximum and that the total
+// number of chunks stays within the API limit.
 func CalculateChunkSize(fileSize int64, preferredChunkSize int64) int64 {
 	// Use preferred chunk size
 	chunkSize := preferredChunkSize
@@ -83,6 +90,7 @@ func CalculateChunkSizeFromChunks(fileSize int64, chunkCount int64) int64 {
 	return chunkSize
 }
 
+// CalculateTotalChunks computes the total number of chunks for a given file size and chunk size.
 func CalculateTotalChunks(fileSize int64, chunkSize int64) int64 {
 	totalChunks := math.Ceil(float64(fileSize) / float64(chunkSize))
 

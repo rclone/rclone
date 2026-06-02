@@ -65,7 +65,10 @@ func TestWriteAndSum(t *testing.T) {
 			} else {
 				// Compare with direct xxh3 calculation
 				hasher := xxh3.New()
-				hasher.Write(tt.data)
+				_, err = hasher.Write(tt.data)
+				if err != nil {
+					t.Fatalf("Write failed: %v", err)
+				}
 				expected := hex.EncodeToString(hasher.Sum(nil))
 				if sumHex != expected {
 					t.Errorf("Hash mismatch: got %s, expected %s", sumHex, expected)
@@ -104,7 +107,10 @@ func TestNestedHash(t *testing.T) {
 
 	// Verify single chunk matches direct XXH3
 	directHash := xxh3.New()
-	directHash.Write(data1Chunk)
+	_, err := directHash.Write(data1Chunk)
+	if err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
 	expected1 := hex.EncodeToString(directHash.Sum(nil))
 	if sum1 != expected1 {
 		t.Errorf("Single chunk hash mismatch: got %s, expected %s", sum1, expected1)
@@ -285,7 +291,10 @@ func TestChunkSizeBoundary(t *testing.T) {
 
 	// Verify it matches direct XXH3
 	hasher := xxh3.New()
-	hasher.Write(data)
+	_, err := hasher.Write(data)
+	if err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
 	expected := hasher.Sum(nil)
 
 	if !bytes.Equal(sum, expected) {
