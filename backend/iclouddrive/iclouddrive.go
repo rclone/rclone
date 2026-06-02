@@ -9,9 +9,11 @@ import (
 	"path"
 
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -59,16 +61,24 @@ type Options struct {
 
 // Fs represents a remote icloud drive
 type Fs struct {
-	name     string // name of this remote
-	root     string // the path we are working on.
-	rootID   string
-	opt      Options            // parsed config options
-	m        configmap.Mapper   // config map for persisting auth state
-	features *fs.Features       // optional features
-	dirCache *dircache.DirCache // Map of directory path to directory id
-	icloud   *api.Client
-	service  *api.DriveService
-	pacer    *fs.Pacer // pacer for API calls
+	name       string // name of this remote
+	root       string // the path we are working on.
+	rootID     string
+	opt        Options            // parsed config options
+	m          configmap.Mapper   // config map for persisting auth state
+	features   *fs.Features       // optional features
+	dirCache   *dircache.DirCache // Map of directory path to directory id
+	icloud     *api.Client
+	service    *api.DriveService
+	pacer      *fs.Pacer       // pacer for API calls
+	shareRoots *shareRootCache // cached drivewsids of top-level shared-folder roots (stable)
+}
+
+// shareRootCache memoises the (stable) drivewsid of each top-level shared-folder
+// root by name, so a shared write does not re-list the drive root every time.
+type shareRootCache struct {
+	mu  sync.Mutex
+	ids map[string]string
 }
 
 // Object describes an icloud drive object
@@ -729,13 +739,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	root = strings.Trim(root, "/")
 
 	f := &Fs{
-		name:   name,
-		root:   root,
-		icloud: icloud,
-		rootID: "FOLDER::com.apple.CloudDocs::root",
-		opt:    *opt,
-		m:      m,
-		pacer:  fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		name:       name,
+		root:       root,
+		icloud:     icloud,
+		rootID:     "FOLDER::com.apple.CloudDocs::root",
+		opt:        *opt,
+		m:          m,
+		pacer:      fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		shareRoots: &shareRootCache{ids: map[string]string{}},
 	}
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
@@ -899,33 +910,81 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		return io.NopCloser(bytes.NewBufferString("")), nil
 	}
 
+	// Files inside a folder shared by another Apple ID have no usable drivewsid
+	// (they are addressed by item_id via the docws endpoints), so the by_id download
+	// lookup is not available — the enumerate/item response gives a direct download
+	// URL instead. That URL is short-lived, but an Object can live a long time (e.g.
+	// in a VFS mount cache), so the cached URL may have gone stale: refresh it from
+	// the item lookup and retry on a download failure.
+	shared := o.driveID == ""
+
+	url, err := o.resolveDownloadURL(ctx, shared, false)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := o.downloadURLBody(ctx, url, options)
+	if err != nil && shared {
+		fs.Debugf(o, "iclouddrive: shared download failed (%v), refreshing download URL and retrying", err)
+		var fresh string
+		if fresh, err = o.resolveDownloadURL(ctx, shared, true); err == nil {
+			resp, err = o.downloadURLBody(ctx, fresh, options)
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Body, nil
+}
+
+// resolveDownloadURL returns the download URL for the object. For own-zone items it
+// resolves via the by-id lookup. For files inside a folder shared by another Apple
+// ID it returns the cached URL, re-resolving it via the item lookup when the cache
+// is empty or a refresh is forced (the shared URL is short-lived).
+func (o *Object) resolveDownloadURL(ctx context.Context, shared, refresh bool) (string, error) {
+	if !shared {
+		var url string
+		var resp *http.Response
+		var err error
+		if err = o.fs.pacer.Call(func() (bool, error) {
+			url, resp, err = o.fs.service.GetDownloadURLByDriveID(ctx, o.driveID)
+			return shouldRetry(ctx, resp, err)
+		}); err != nil {
+			return "", err
+		}
+		return url, nil
+	}
+	if o.downloadURL != "" && !refresh {
+		return o.downloadURL, nil
+	}
+	var item *api.DriveItemRaw
 	var resp *http.Response
 	var err error
-
 	if err = o.fs.pacer.Call(func() (bool, error) {
-		var url string
+		item, resp, err = o.fs.service.GetItemRawByItemID(ctx, o.itemID)
+		return shouldRetry(ctx, resp, err)
+	}); err != nil {
+		return "", err
+	}
+	if item == nil || item.ItemInfo == nil || item.ItemInfo.Urls.URLDownload == "" {
+		return "", fmt.Errorf("iclouddrive: could not resolve download URL for %q", o.remote)
+	}
+	o.downloadURL = item.ItemInfo.Urls.URLDownload
+	return o.downloadURL, nil
+}
 
-		// Files inside a folder shared by another Apple ID have no usable drivewsid
-		// (they are addressed by item_id via the docws endpoints), so the by_id
-		// download lookup is not available. The enumerate response gives us a direct
-		// download URL, so use it.
-		if o.driveID == "" && o.downloadURL != "" {
-			url = o.downloadURL
-		} else {
-			// Can not get the download url on a item to work, so do it the hard way.
-			url, _, err = o.fs.service.GetDownloadURLByDriveID(ctx, o.driveID)
-			if err != nil {
-				return shouldRetry(ctx, resp, err)
-			}
-		}
-
+// downloadURLBody fetches the given URL through the pacer and returns the response.
+func (o *Object) downloadURLBody(ctx context.Context, url string, options []fs.OpenOption) (*http.Response, error) {
+	var resp *http.Response
+	var err error
+	if err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.service.DownloadFile(ctx, url, options)
 		return shouldRetry(ctx, resp, err)
 	}); err != nil {
 		return nil, err
 	}
-
-	return resp.Body, err
+	return resp, nil
 }
 
 // Remote implements fs.Object.
@@ -1070,6 +1129,18 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 // shareName (a SHARED_FOLDER at the drive root). This is the destination a document
 // is moved into so it enters the owner's zone with PCS chaining applied.
 func (f *Fs) lookupSharedFolderRoot(ctx context.Context, shareName string) (string, error) {
+	// The share-root drivewsid is stable, so cache it per name to avoid listing the
+	// drive root on every shared write.
+	cache := f.shareRoots
+	if cache != nil {
+		cache.mu.Lock()
+		id, ok := cache.ids[shareName]
+		cache.mu.Unlock()
+		if ok {
+			return id, nil
+		}
+	}
+
 	var root *api.DriveItem
 	var resp *http.Response
 	var err error
@@ -1083,10 +1154,15 @@ func (f *Fs) lookupSharedFolderRoot(ctx context.Context, shareName string) (stri
 	for _, it := range root.Items {
 		name := norm.NFC.String(f.opt.Enc.ToStandardName(it.Name))
 		if strings.EqualFold(name, want) && strings.HasPrefix(it.Drivewsid, "SHARED_FOLDER::") {
+			if cache != nil {
+				cache.mu.Lock()
+				cache.ids[shareName] = it.Drivewsid
+				cache.mu.Unlock()
+			}
 			return it.Drivewsid, nil
 		}
 	}
-	return "", errors.New("iclouddrive: could not find shared-folder root " + shareName)
+	return "", fmt.Errorf("iclouddrive: could not find shared-folder root %q", shareName)
 }
 
 // updateViaCloudDocs writes a document into a folder shared by another Apple ID.
@@ -1096,7 +1172,7 @@ func (f *Fs) lookupSharedFolderRoot(ctx context.Context, shareName string) (stri
 // into the target sub-folder via the CloudKit shared database. See api.CloudDocs.
 func (o *Object) updateViaCloudDocs(ctx context.Context, in io.Reader, src fs.ObjectInfo, leaf, dirID string, modTime time.Time, size int64) error {
 	f := o.fs
-	cd := f.icloud.CloudDocsService()
+	cd := f.icloud.CloudDocsService(f.pacer, shouldRetry)
 	if cd == nil {
 		return errors.New("iclouddrive: cannot write into a shared sub-folder: account has no ckdatabasews service")
 	}
@@ -1166,18 +1242,26 @@ func (o *Object) updateViaCloudDocs(ctx context.Context, in io.Reader, src fs.Ob
 	uuid := api.GetDocIDFromDriveID(moved.Drivewsid)
 
 	// Overwrite: if a file with the same name already exists in the target folder,
-	// remove its record so we don't leave a duplicate (best-effort).
+	// remove its record so we don't leave a duplicate (best-effort). The lookup is
+	// not query-indexable, so a miss is possible; log it so a resulting duplicate is
+	// diagnosable.
 	if o.itemID != "" {
-		if oldUUID, qerr := cd.FindFileUUID(ctx, targetDirUUID, leaf); qerr == nil && oldUUID != "" && !strings.EqualFold(oldUUID, uuid) {
-			_ = cd.DeleteFile(ctx, oldUUID)
+		oldUUID, qerr := cd.FindFileUUID(ctx, targetDirUUID, leaf)
+		switch {
+		case qerr != nil:
+			fs.Debugf(o, "iclouddrive: could not look up existing %q in shared folder to overwrite: %v", leaf, qerr)
+		case oldUUID == "":
+			fs.Debugf(o, "iclouddrive: existing copy of %q not found in shared folder before overwrite; a duplicate may result", leaf)
+		case !strings.EqualFold(oldUUID, uuid):
+			if derr := cd.DeleteFile(ctx, oldUUID); derr != nil {
+				fs.Debugf(o, "iclouddrive: could not delete previous copy of %q (%s): %v", leaf, oldUUID, derr)
+			}
 		}
 	}
 
-	// (3) Re-parent the record into the target shared sub-folder.
-	if err = f.pacer.Call(func() (bool, error) {
-		err = cd.ReparentStructure(ctx, uuid, targetDirUUID)
-		return shouldRetry(ctx, nil, err)
-	}); err != nil {
+	// (3) Re-parent the record into the target shared sub-folder. The CloudDocs
+	// request layer already paces and retries each call, so no extra pacer here.
+	if err = cd.ReparentStructure(ctx, uuid, targetDirUUID); err != nil {
 		return err
 	}
 

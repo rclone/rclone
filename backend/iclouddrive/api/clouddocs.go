@@ -4,10 +4,11 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
+	"errors"
 	"fmt"
-	"net/http"
 	"strings"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/rest"
 )
 
@@ -26,10 +27,15 @@ import (
 //  2. re-parent the resulting record into the target sub-folder via a CloudKit
 //     records/modify "update". The server re-chains PCS itself, because the record
 //     already carries its own PCS key — so no client-side PCS crypto is required.
+//
+// Every request goes through the backend pacer (rate-limit / retry), and re-auths
+// on a 401/421/423 once, exactly like the rest of the api package.
 type CloudDocs struct {
-	icloud *Client
-	url    string
-	zone   *CKZoneID
+	icloud      *Client
+	url         string
+	zone        *CKZoneID
+	pacer       *fs.Pacer
+	shouldRetry ShouldRetryFunc
 }
 
 // CKZoneID identifies a CloudKit zone.
@@ -41,41 +47,70 @@ type CKZoneID struct {
 
 // CloudDocsService returns a CloudDocs client, or nil if the account has no
 // ckdatabasews web service (in which case shared-subfolder writes are unsupported).
-func (c *Client) CloudDocsService() *CloudDocs {
+// The pacer and shouldRetry are threaded through so every ckdatabasews request is
+// rate-limited and retried like the rest of the package.
+func (c *Client) CloudDocsService(pacer *fs.Pacer, shouldRetry ShouldRetryFunc) *CloudDocs {
 	ws := c.Session.AccountInfo.Webservices["ckdatabasews"]
 	if ws == nil || ws.URL == "" {
 		return nil
 	}
-	return &CloudDocs{icloud: c, url: ws.URL}
+	return &CloudDocs{icloud: c, url: ws.URL, pacer: pacer, shouldRetry: shouldRetry}
 }
 
-func (cd *CloudDocs) request(ctx context.Context, sub string, body, response any) (*http.Response, error) {
+// request POSTs body to the shared ckdatabasews endpoint sub (e.g. "records/modify")
+// and decodes the JSON reply into response. The call is rate-limited and retried by
+// the pacer, and re-authenticates once on a 401/421/423.
+func (cd *CloudDocs) request(ctx context.Context, sub string, body, response any) error {
 	rootURL := fmt.Sprintf("%s/database/1/com.apple.clouddocs/production/shared/%s?remapEnums=true&getCurrentSyncToken=true", cd.url, sub)
-	reader, err := IntoReader(body)
-	if err != nil {
-		return nil, err
-	}
-	opts := rest.Opts{
-		Method:       "POST",
-		RootURL:      rootURL,
-		ExtraHeaders: cd.icloud.Session.GetHeaders(map[string]string{"Content-Type": "text/plain"}),
-		Body:         reader,
-	}
-	return cd.icloud.Request(ctx, opts, nil, response)
+	reauthDone := false
+	return cd.pacer.Call(func() (bool, error) {
+		// The body reader is consumed on each attempt, so rebuild it every time.
+		reader, err := IntoReader(body)
+		if err != nil {
+			return false, err
+		}
+		opts := rest.Opts{
+			Method:       "POST",
+			RootURL:      rootURL,
+			ExtraHeaders: cd.icloud.Session.GetHeaders(map[string]string{"Content-Type": "text/plain"}),
+			Body:         reader,
+		}
+		resp, err := cd.icloud.Session.Request(ctx, opts, nil, response)
+		if !reauthDone && err != nil && resp != nil && (resp.StatusCode == 401 || resp.StatusCode == 421 || resp.StatusCode == 423) {
+			reauthDone = true
+			if authErr := cd.icloud.Authenticate(ctx); authErr != nil {
+				return false, authErr
+			}
+			if cd.icloud.Session.Requires2FA() {
+				return false, errors.New("trust token expired, please reauth")
+			}
+			if reader, err = IntoReader(body); err != nil {
+				return false, err
+			}
+			opts.Body = reader
+			resp, err = cd.icloud.Session.Request(ctx, opts, nil, response)
+		}
+		return cd.shouldRetry(ctx, resp, err)
+	})
 }
 
-// Zone returns the (single) shared CloudDocs zone, discovering and caching it on
-// first use via zones/list.
+// ckZonesListResponse is the reply to zones/list.
+type ckZonesListResponse struct {
+	Zones []struct {
+		ZoneID CKZoneID `json:"zoneID"`
+	} `json:"zones"`
+}
+
+// Zone returns the shared CloudDocs zone, discovering and caching it on first use
+// via zones/list. It prefers the zone named defaultZone; if the account
+// participates in several shared zones and none carries that name, it falls back to
+// the first and logs the ambiguity.
 func (cd *CloudDocs) Zone(ctx context.Context) (*CKZoneID, error) {
 	if cd.zone != nil {
 		return cd.zone, nil
 	}
-	var out struct {
-		Zones []struct {
-			ZoneID CKZoneID `json:"zoneID"`
-		} `json:"zones"`
-	}
-	if _, err := cd.request(ctx, "zones/list", map[string]any{}, &out); err != nil {
+	var out ckZonesListResponse
+	if err := cd.request(ctx, "zones/list", struct{}{}, &out); err != nil {
 		return nil, err
 	}
 	for i := range out.Zones {
@@ -84,11 +119,30 @@ func (cd *CloudDocs) Zone(ctx context.Context) (*CKZoneID, error) {
 			return cd.zone, nil
 		}
 	}
-	if len(out.Zones) > 0 {
-		cd.zone = &out.Zones[0].ZoneID
-		return cd.zone, nil
+	if len(out.Zones) == 0 {
+		return nil, errors.New("no shared clouddocs zone found")
 	}
-	return nil, fmt.Errorf("no shared clouddocs zone found")
+	if len(out.Zones) > 1 {
+		names := make([]string, len(out.Zones))
+		for i := range out.Zones {
+			names[i] = out.Zones[i].ZoneID.ZoneName
+		}
+		fs.Logf(nil, "iclouddrive: %d shared CloudDocs zones %v and none named %q; using first (%q)",
+			len(out.Zones), names, defaultZone, out.Zones[0].ZoneID.ZoneName)
+	}
+	cd.zone = &out.Zones[0].ZoneID
+	return cd.zone, nil
+}
+
+// ckRecordRef names a single record, for records/lookup.
+type ckRecordRef struct {
+	RecordName string `json:"recordName"`
+}
+
+// ckLookupRequest is the body of a records/lookup request.
+type ckLookupRequest struct {
+	ZoneID  *CKZoneID     `json:"zoneID"`
+	Records []ckRecordRef `json:"records"`
 }
 
 // ckRecord is the subset of a CloudKit record we read back.
@@ -100,22 +154,62 @@ type ckRecord struct {
 	Deleted         bool   `json:"deleted"`
 }
 
+// ckRecordsResponse is the reply to records/lookup and records/modify.
+type ckRecordsResponse struct {
+	Records []ckRecord `json:"records"`
+}
+
 func (cd *CloudDocs) lookup(ctx context.Context, recordNames ...string) ([]ckRecord, error) {
 	zone, err := cd.Zone(ctx)
 	if err != nil {
 		return nil, err
 	}
-	recs := make([]map[string]any, 0, len(recordNames))
+	refs := make([]ckRecordRef, 0, len(recordNames))
 	for _, rn := range recordNames {
-		recs = append(recs, map[string]any{"recordName": rn})
+		refs = append(refs, ckRecordRef{RecordName: rn})
 	}
-	var out struct {
-		Records []ckRecord `json:"records"`
-	}
-	if _, err := cd.request(ctx, "records/lookup", map[string]any{"zoneID": zone, "records": recs}, &out); err != nil {
+	var out ckRecordsResponse
+	if err := cd.request(ctx, "records/lookup", ckLookupRequest{ZoneID: zone, Records: refs}, &out); err != nil {
 		return nil, err
 	}
 	return out.Records, nil
+}
+
+// ckReference is a CloudKit record reference, used both as a field value (with an
+// action) and as a record's parent pointer (recordName only).
+type ckReference struct {
+	RecordName string    `json:"recordName"`
+	Action     string    `json:"action,omitempty"`
+	ZoneID     *CKZoneID `json:"zoneID,omitempty"`
+}
+
+// ckField is a typed CloudKit field value.
+type ckField struct {
+	Value any    `json:"value"`
+	Type  string `json:"type,omitempty"`
+}
+
+// ckRecordModify is a record carried by a records/modify operation. Only the fields
+// relevant to the operation are populated (delete needs just the name + change tag).
+type ckRecordModify struct {
+	RecordName      string             `json:"recordName"`
+	RecordType      string             `json:"recordType,omitempty"`
+	RecordChangeTag string             `json:"recordChangeTag,omitempty"`
+	Fields          map[string]ckField `json:"fields,omitempty"`
+	Parent          *ckReference       `json:"parent,omitempty"`
+}
+
+// ckOperation is a single operation within a records/modify request.
+type ckOperation struct {
+	OperationType string         `json:"operationType"`
+	Record        ckRecordModify `json:"record"`
+}
+
+// ckModifyRequest is the body of a records/modify request.
+type ckModifyRequest struct {
+	Atomic     bool          `json:"atomic"`
+	ZoneID     *CKZoneID     `json:"zoneID"`
+	Operations []ckOperation `json:"operations"`
 }
 
 // ReparentStructure moves the documentStructure/<uuid> record under a new parent
@@ -142,29 +236,32 @@ func (cd *CloudDocs) ReparentStructure(ctx context.Context, uuid, targetDirUUID 
 		}
 		return fmt.Errorf("clouddocs: could not look up %s: %s", structRec, reason)
 	}
-	dirRef := map[string]any{
-		"recordName": "directory/" + strings.ToUpper(targetDirUUID),
-		"action":     "VALIDATE",
-		"zoneID":     zone,
+	dirRecordName := "directory/" + strings.ToUpper(targetDirUUID)
+	body := ckModifyRequest{
+		Atomic: true,
+		ZoneID: zone,
+		Operations: []ckOperation{{
+			OperationType: "update",
+			Record: ckRecordModify{
+				RecordName:      structRec,
+				RecordType:      "structure",
+				RecordChangeTag: recs[0].RecordChangeTag,
+				Fields: map[string]ckField{
+					"parent": {
+						Type: "REFERENCE",
+						Value: ckReference{
+							RecordName: dirRecordName,
+							Action:     "VALIDATE",
+							ZoneID:     zone,
+						},
+					},
+				},
+				Parent: &ckReference{RecordName: dirRecordName},
+			},
+		}},
 	}
-	record := map[string]any{
-		"recordName":      structRec,
-		"recordType":      "structure",
-		"recordChangeTag": recs[0].RecordChangeTag,
-		"fields": map[string]any{
-			"parent": map[string]any{"value": dirRef, "type": "REFERENCE"},
-		},
-		"parent": map[string]any{"recordName": "directory/" + strings.ToUpper(targetDirUUID)},
-	}
-	body := map[string]any{
-		"atomic":     true,
-		"zoneID":     zone,
-		"operations": []any{map[string]any{"operationType": "update", "record": record}},
-	}
-	var out struct {
-		Records []ckRecord `json:"records"`
-	}
-	if _, err := cd.request(ctx, "records/modify", body, &out); err != nil {
+	var out ckRecordsResponse
+	if err := cd.request(ctx, "records/modify", body, &out); err != nil {
 		return err
 	}
 	for _, r := range out.Records {
@@ -194,19 +291,42 @@ func (cd *CloudDocs) DeleteFile(ctx context.Context, uuid string) error {
 	for _, r := range recs {
 		tags[r.RecordName] = r.RecordChangeTag
 	}
-	ops := []any{}
+	ops := make([]ckOperation, 0, 2)
 	for _, rn := range []string{contentRec, structRec} {
-		rec := map[string]any{"recordName": rn}
-		if t := tags[rn]; t != "" {
-			rec["recordChangeTag"] = t
-		}
-		ops = append(ops, map[string]any{"operationType": "delete", "record": rec})
+		ops = append(ops, ckOperation{
+			OperationType: "delete",
+			Record:        ckRecordModify{RecordName: rn, RecordChangeTag: tags[rn]},
+		})
 	}
-	var out struct {
-		Records []ckRecord `json:"records"`
-	}
-	_, err = cd.request(ctx, "records/modify", map[string]any{"atomic": false, "zoneID": zone, "operations": ops}, &out)
-	return err
+	var out ckRecordsResponse
+	return cd.request(ctx, "records/modify", ckModifyRequest{Atomic: false, ZoneID: zone, Operations: ops}, &out)
+}
+
+// ckZoneChangesRequestZone names a zone (and an optional resume token) in a
+// changes/zone request.
+type ckZoneChangesRequestZone struct {
+	ZoneID    *CKZoneID `json:"zoneID"`
+	SyncToken string    `json:"syncToken,omitempty"`
+}
+
+// ckZoneChangesRequest is the body of a changes/zone request.
+type ckZoneChangesRequest struct {
+	Zones []ckZoneChangesRequestZone `json:"zones"`
+}
+
+// ckZoneChangesResponse is the reply to changes/zone.
+type ckZoneChangesResponse struct {
+	Zones []struct {
+		Records []struct {
+			RecordName string `json:"recordName"`
+			RecordType string `json:"recordType"`
+			Fields     map[string]struct {
+				Value any `json:"value"`
+			} `json:"fields"`
+		} `json:"records"`
+		SyncToken  string `json:"syncToken"`
+		MoreComing bool   `json:"moreComing"`
+	} `json:"zones"`
 }
 
 // FindFileUUID looks up the record UUID of the file named leaf inside the shared
@@ -229,24 +349,9 @@ func (cd *CloudDocs) FindFileUUID(ctx context.Context, dirUUID, leaf string) (st
 
 	syncToken := ""
 	for {
-		zoneReq := map[string]any{"zoneID": zone}
-		if syncToken != "" {
-			zoneReq["syncToken"] = syncToken
-		}
-		var out struct {
-			Zones []struct {
-				Records []struct {
-					RecordName string `json:"recordName"`
-					RecordType string `json:"recordType"`
-					Fields     map[string]struct {
-						Value any `json:"value"`
-					} `json:"fields"`
-				} `json:"records"`
-				SyncToken  string `json:"syncToken"`
-				MoreComing bool   `json:"moreComing"`
-			} `json:"zones"`
-		}
-		if _, err := cd.request(ctx, "changes/zone", map[string]any{"zones": []any{zoneReq}}, &out); err != nil {
+		zoneReq := ckZoneChangesRequestZone{ZoneID: zone, SyncToken: syncToken}
+		var out ckZoneChangesResponse
+		if err := cd.request(ctx, "changes/zone", ckZoneChangesRequest{Zones: []ckZoneChangesRequestZone{zoneReq}}, &out); err != nil {
 			return "", err
 		}
 		if len(out.Zones) == 0 {
@@ -267,7 +372,14 @@ func (cd *CloudDocs) FindFileUUID(ctx context.Context, dirUUID, leaf string) (st
 				}
 			}
 		}
+		// Stop when the server says there is nothing more, or when it claims more is
+		// coming but the resume token did not advance (empty or unchanged) — otherwise
+		// we would re-request the same page forever.
 		if !z.MoreComing {
+			return "", nil
+		}
+		if z.SyncToken == "" || z.SyncToken == syncToken {
+			fs.Debugf(nil, "iclouddrive: clouddocs changes/zone set moreComing but syncToken did not advance; stopping enumeration")
 			return "", nil
 		}
 		syncToken = z.SyncToken
