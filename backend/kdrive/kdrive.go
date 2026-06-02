@@ -156,6 +156,12 @@ type cacheEntry struct {
 	err  error
 }
 
+type kdriveInitCacheKey int
+
+const (
+	kdriveInitCache kdriveInitCacheKey = iota
+)
+
 // ------------------------------------------------------------
 
 // Name of the remote (as passed into NewFs)
@@ -302,7 +308,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
-	ctx = context.WithValue(ctx, "kdriveInitCache", make(map[string]cacheEntry))
+	ctx = context.WithValue(ctx, kdriveInitCache, make(map[string]cacheEntry))
 
 	f.dirCache = dircache.New(root, rootID, f)
 	// Find the current root
