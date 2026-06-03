@@ -25,6 +25,13 @@ const (
 	authEndpoint  = "https://idmsa.apple.com/appleauth/auth"
 )
 
+// Webservice keys in AccountInfo.Webservices map
+const (
+	WsDrive  = "drivews"
+	WsDocs   = "docws"
+	WsPhotos = "ckdatabasews"
+)
+
 type sessionSave func(*Session)
 
 // Client defines the client configuration
@@ -32,6 +39,7 @@ type Client struct {
 	appleID             string
 	password            string
 	remoteName          string // rclone remote name, used for cache namespacing
+	pcsWSKey            string // webservice key for PCS cookie scoping (e.g. WsDrive, WsPhotos)
 	srv                 *rest.Client
 	Session             *Session
 	sessionSaveCallback sessionSave
@@ -41,11 +49,14 @@ type Client struct {
 }
 
 // New creates a new iCloud API client and initializes its HTTP session
-func New(appleID, password, trustToken string, clientID string, cookies []*http.Cookie, sessionSaveCallback sessionSave, remoteName string) (*Client, error) {
+// pcsWSKey scopes PCS cookie acquisition to the caller's webservice (WsDrive, WsPhotos);
+// empty string skips PCS entirely
+func New(appleID, password, trustToken string, clientID string, cookies []*http.Cookie, sessionSaveCallback sessionSave, remoteName string, pcsWSKey string) (*Client, error) {
 	icloud := &Client{
 		appleID:             strings.ToLower(appleID), // Apple SRP requires lowercase in client-side proof
 		password:            password,
 		remoteName:          filepath.Base(remoteName),
+		pcsWSKey:            pcsWSKey,
 		srv:                 rest.NewClient(fshttp.NewClient(context.Background())),
 		Session:             NewSession(),
 		sessionSaveCallback: sessionSaveCallback,
@@ -75,8 +86,8 @@ func (c *Client) DriveService() (*DriveService, error) {
 func (c *Client) Request(ctx context.Context, opts rest.Opts, request any, response any) (resp *http.Response, err error) {
 	resp, err = c.Session.Request(ctx, opts, request, response)
 	if err != nil && resp != nil {
-		// try to reauth
-		if resp.StatusCode == 401 || resp.StatusCode == 421 {
+		// 401/421 = session expired, 423 = missing PCS cookies (ADP)
+		if resp.StatusCode == 401 || resp.StatusCode == 421 || resp.StatusCode == 423 {
 			err = c.Authenticate(ctx)
 			if err != nil {
 				return nil, err
@@ -95,6 +106,24 @@ func (c *Client) Request(ctx context.Context, opts rest.Opts, request any, respo
 func (c *Client) Authenticate(ctx context.Context) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+	if err := c.authenticateSession(ctx); err != nil {
+		return err
+	}
+
+	// Ensure PCS cookies after any successful auth path (ADP accounts)
+	acquired, err := c.Session.ensurePCSCookies(ctx, c.pcsWSKey)
+	if err != nil {
+		return err
+	}
+	if acquired && c.sessionSaveCallback != nil {
+		c.sessionSaveCallback(c.Session)
+	}
+	return nil
+}
+
+// authenticateSession establishes a valid session via the cheapest available path
+func (c *Client) authenticateSession(ctx context.Context) error {
 	// Skip /validate round-trip when saved session has cookies + service endpoints
 	// Native client behavior: use cached session, reauth lazily on 401/421
 	if c.Session.Cookies != nil && len(c.Session.AccountInfo.Webservices) > 0 {

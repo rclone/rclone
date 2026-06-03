@@ -34,8 +34,10 @@ var (
 
 	// oauthCancelFn stores the cancel function for the currently active OAuth flow
 	oauthCancelFn context.CancelFunc
-	// oauthCancelMu protects oauthCancelFn
+	// oauthCancelMu protects oauthCancelFn and oauthURL
 	oauthCancelMu sync.Mutex
+	// oauthURL stores the URL for the currently active OAuth flow
+	oauthURL string
 )
 
 const (
@@ -837,6 +839,7 @@ func rcOAuthStop(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 	oauthCancelFn()
 	oauthCancelFn = nil
+	oauthURL = ""
 	return nil, nil
 }
 
@@ -849,11 +852,13 @@ func init() {
 
 Returns a JSON object:
 - status - "running" or "stopped"
+- authUrl - URL for the authorization (only if status is "running")
 
 Eg
 
     {
-        "status": "running"
+        "status": "running",
+        "authUrl": "http://127.0.0.1:53682/auth?state=..."
     }
 `,
 	})
@@ -863,10 +868,13 @@ func rcOAuthStatus(ctx context.Context, in rc.Params) (out rc.Params, err error)
 	oauthCancelMu.Lock()
 	defer oauthCancelMu.Unlock()
 	status := "stopped"
+	params := rc.Params{"status": status}
 	if oauthCancelFn != nil {
 		status = "running"
+		params["status"] = status
+		params["authUrl"] = oauthURL
 	}
-	return rc.Params{"status": status}, nil
+	return params, nil
 }
 
 // Return true if can run without a webserver and just entering a code
@@ -1037,20 +1045,23 @@ func configSetup(ctx context.Context, id, name string, m configmap.Mapper, oauth
 	if err != nil {
 		return "", fmt.Errorf("failed to start auth webserver: %w", err)
 	}
+	authURL = "http://" + bindAddress + "/auth?state=" + state
+
 	oauthCtx, cancel := context.WithCancel(ctx)
 	oauthCancelMu.Lock()
 	oauthCancelFn = cancel
+	oauthURL = authURL
 	oauthCancelMu.Unlock()
 
 	go server.Serve()
 	defer func() {
 		oauthCancelMu.Lock()
 		oauthCancelFn = nil
+		oauthURL = ""
 		oauthCancelMu.Unlock()
 		cancel()
 		server.Stop()
 	}()
-	authURL = "http://" + bindAddress + "/auth?state=" + state
 
 	if !authorizeNoAutoBrowser {
 		// Open the URL for the user to visit
