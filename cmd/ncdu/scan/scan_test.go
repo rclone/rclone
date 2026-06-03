@@ -142,16 +142,14 @@ func TestAttrIDirLoaded(t *testing.T) {
 	root := newDir(nil, "", fs.DirEntries{mockdir.New("child")}, nil)
 	newDir(root, "child", fs.DirEntries{fileEntry("child/f", "hello")}, nil)
 
-	for i, e := range root.Entries() {
-		if e.Remote() == "child" {
-			attrs, err := root.AttrI(i)
-			assert.NoError(t, err)
-			assert.True(t, attrs.IsDir)
-			assert.True(t, attrs.Readable)
-			assert.Equal(t, int64(5), attrs.Size)
-			assert.Equal(t, int64(1), attrs.Count)
-		}
-	}
+	i := indexByName(root.Entries(), "child")
+	require.NotEqual(t, -1, i, "child not found")
+	attrs, err := root.AttrI(i)
+	assert.NoError(t, err)
+	assert.True(t, attrs.IsDir)
+	assert.True(t, attrs.Readable)
+	assert.Equal(t, int64(5), attrs.Size)
+	assert.Equal(t, int64(1), attrs.Count)
 }
 
 func TestAttrIDirUnloaded(t *testing.T) {
