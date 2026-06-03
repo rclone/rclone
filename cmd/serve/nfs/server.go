@@ -21,6 +21,7 @@ type Server struct {
 	ctx                 context.Context // for global config
 	listener            net.Listener
 	UnmountedExternally bool
+	vfs                 *vfs.VFS
 }
 
 // NewServer creates a new server
@@ -36,6 +37,7 @@ func NewServer(ctx context.Context, vfs *vfs.VFS, opt *Options) (s *Server, err 
 	s = &Server{
 		ctx: ctx,
 		opt: *opt,
+		vfs: vfs,
 	}
 	s.handler, err = NewHandler(ctx, vfs, opt)
 	if err != nil {
@@ -55,7 +57,11 @@ func (s *Server) Addr() net.Addr {
 
 // Shutdown stops the server
 func (s *Server) Shutdown() error {
-	return s.listener.Close()
+	err := s.listener.Close()
+	if s.vfs != nil {
+		s.vfs.Shutdown()
+	}
+	return err
 }
 
 // Serve starts the server

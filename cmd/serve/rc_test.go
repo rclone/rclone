@@ -17,15 +17,23 @@ type dummyServer struct {
 	addr           *net.TCPAddr
 	shutdownCh     chan struct{}
 	shutdownCalled bool
+	isClosed       bool
 }
 
 func (d *dummyServer) Addr() net.Addr {
 	return d.addr
 }
 
+func (d *dummyServer) closeCh() {
+	if !d.isClosed {
+		d.isClosed = true
+		close(d.shutdownCh)
+	}
+}
+
 func (d *dummyServer) Shutdown() error {
 	d.shutdownCalled = true
-	close(d.shutdownCh)
+	d.closeCh()
 	return nil
 }
 
@@ -50,7 +58,7 @@ func newServerError(ctx context.Context, f fs.Fs, in rc.Params) (Handle, error) 
 
 func newServerImmediateStop(ctx context.Context, f fs.Fs, in rc.Params) (Handle, error) {
 	h, _ := newServer(ctx, f, in)
-	close(h.(*dummyServer).shutdownCh)
+	h.(*dummyServer).closeCh()
 	return h, nil
 }
 

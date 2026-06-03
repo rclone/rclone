@@ -209,6 +209,9 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 
 	// Check PassivePorts format since the server library doesn't!
 	if !passivePortsRe.MatchString(opt.PassivePorts) {
+		if d.globalVFS != nil {
+			d.globalVFS.Shutdown()
+		}
 		return nil, fmt.Errorf("invalid format for passive ports %q", opt.PassivePorts)
 	}
 
@@ -230,6 +233,9 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 	}
 	d.srv, err = ftp.NewServer(ftpopt)
 	if err != nil {
+		if d.globalVFS != nil {
+			d.globalVFS.Shutdown()
+		}
 		return nil, fmt.Errorf("failed to create new FTP server: %w", err)
 	}
 	return d, nil
@@ -250,6 +256,12 @@ func (d *driver) Serve() error {
 //lint:ignore U1000 unused when not building linux
 func (d *driver) Shutdown() error {
 	fs.Logf(d.f, "Stopping FTP on %s", d.srv.Hostname+":"+strconv.Itoa(d.srv.Port))
+	if d.globalVFS != nil {
+		d.globalVFS.Shutdown()
+	}
+	if d.proxy != nil {
+		d.proxy.Shutdown()
+	}
 	return d.srv.Shutdown()
 }
 

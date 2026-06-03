@@ -146,13 +146,19 @@ type cacheEntry struct {
 //
 // Any VFS are created with the vfsOpt passed in.
 func New(ctx context.Context, opt *Options, vfsOpt *vfscommon.Options) *Proxy {
-	return &Proxy{
+	p := &Proxy{
 		ctx:      ctx,
 		Opt:      *opt,
 		cmdLine:  strings.Fields(opt.AuthProxy),
 		vfsCache: libcache.New(),
 		vfsOpt:   *vfsOpt,
 	}
+	p.vfsCache.SetFinalizer(func(value any) {
+		if entry, ok := value.(cacheEntry); ok && entry.vfs != nil {
+			entry.vfs.Shutdown()
+		}
+	})
+	return p
 }
 
 // run the proxy command returning a config map
@@ -312,4 +318,9 @@ func (p *Proxy) Get(key string) *vfs.VFS {
 	}
 	entry := value.(cacheEntry)
 	return entry.vfs
+}
+
+// Shutdown clears the VFS cache, shutting down all VFSes in the cache
+func (p *Proxy) Shutdown() {
+	p.vfsCache.Clear()
 }

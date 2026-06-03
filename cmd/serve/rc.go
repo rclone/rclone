@@ -17,7 +17,6 @@ import (
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/lib/errcount"
-	"github.com/rclone/rclone/vfs"
 )
 
 // Handle describes what a server can do
@@ -39,7 +38,6 @@ type server struct {
 	Params  rc.Params  `json:"params"` // Parameters used to start the server
 	h       Handle     `json:"-"`      // control the server
 	errChan chan error `json:"-"`      // receive errors from the server process
-	Vfses   []*vfs.VFS `json:"-"`      // VFSes used by the server
 }
 
 // Fn starts an rclone serve command
@@ -131,15 +129,9 @@ func startRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	newCtx = fs.CopyConfig(newCtx, ctx)
 	newCtx = filter.CopyConfig(newCtx, ctx)
 
-	var createdVFSes []*vfs.VFS
-	newCtx = vfs.WithTracker(newCtx, &createdVFSes)
-
 	// Start the server
 	h, err := serveFn(newCtx, f, in)
 	if err != nil {
-		for _, v := range createdVFSes {
-			v.Shutdown()
-		}
 		return nil, fmt.Errorf("could not start serve %q: %w", serveType, err)
 	}
 
@@ -160,9 +152,7 @@ func startRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		err = nil
 	}
 	if err != nil {
-		for _, v := range createdVFSes {
-			v.Shutdown()
-		}
+		_ = h.Shutdown()
 		return nil, fmt.Errorf("error when starting serve %q: %w", serveType, err)
 	}
 
@@ -173,7 +163,6 @@ func startRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		Addr:    h.Addr().String(),
 		h:       h,
 		errChan: errChan,
-		Vfses:   createdVFSes,
 	}
 	servers[runningServer.ID] = &runningServer
 
@@ -220,9 +209,6 @@ func stopRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 	err = s.h.Shutdown()
 	<-s.errChan // ignore server return error - likely is "use of closed network connection"
-	for _, v := range s.Vfses {
-		v.Shutdown()
-	}
 	delete(servers, id)
 	return nil, err
 }
@@ -359,9 +345,6 @@ func stopAll(_ context.Context, in rc.Params) (out rc.Params, err error) {
 	for id, s := range servers {
 		ec.Add(s.h.Shutdown())
 		<-s.errChan // ignore server return error - likely is "use of closed network connection"
-		for _, v := range s.Vfses {
-			v.Shutdown()
-		}
 		delete(servers, id)
 	}
 	return nil, ec.Err("error when stopping server")

@@ -59,6 +59,12 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 	}
 	err := s.configure()
 	if err != nil {
+		if s.vfs != nil {
+			s.vfs.Shutdown()
+		}
+		if s.proxy != nil {
+			s.proxy.Shutdown()
+		}
 		return nil, fmt.Errorf("sftp configuration failed: %w", err)
 	}
 	return s, nil
@@ -327,6 +333,12 @@ func (s *server) Shutdown() error {
 		err = nil
 	}
 	s.Wait()
+	if s.vfs != nil {
+		s.vfs.Shutdown()
+	}
+	if s.proxy != nil {
+		s.proxy.Shutdown()
+	}
 	return err
 }
 
