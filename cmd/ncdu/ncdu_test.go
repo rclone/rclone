@@ -48,6 +48,12 @@ func setupDir(t *testing.T, u *UI, f fs.Fs) *scan.Dir {
 			root = r
 		case err := <-errChan:
 			require.NoError(t, err)
+			// rootChan and errChan may both be ready simultaneously;
+			// Go's select picks randomly, so drain rootChan if we
+			// haven't received it yet.
+			if root == nil {
+				root = <-rootChan
+			}
 			u.root = root
 			u.listing = false
 			u.setCurrentDir(root)
