@@ -1145,3 +1145,5 @@ put them back in again. -->
 - Hakan İSMAİL <93117749+Hakanbaban53@users.noreply.github.com>
 - Brian King <BrianDKing@gmail.com>
 - Puneet Dixit <puneetdixit4321@gmail.com>
+- Yakov Till <yakov.till@gmail.com>
+- Janne Beate Bakeng <436265+jbbakeng@users.noreply.github.com>
