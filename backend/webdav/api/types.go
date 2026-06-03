@@ -98,10 +98,10 @@ func (p *Prop) Code() int {
 	return code
 }
 
-// Parse a status of the form "HTTP/1.1 200 OK" or "HTTP/1.1 200"
-var parseStatus2XX = regexp.MustCompile(`HTTP/[\d.]+\s+2\d{2}`)
+// Parse a status of the form "HTTP/1.1 2xx"
+var parseStatus2XX = regexp.MustCompile(`^HTTP/[\d.]+\s+2\d{2}`)
 
-// StatusOK examines the Status and returns an OK flag
+// StatusOK returns true if there is at least one 2XX response.
 func (p *Prop) StatusOK() bool {
 	// Assume OK if no statuses received
 	if len(p.Status) == 0 {
