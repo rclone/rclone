@@ -31,7 +31,10 @@ func (o *Object) updateViaTus(ctx context.Context, in io.Reader, contentType str
 	fingerprint := ""
 
 	// create an upload from a file.
-	upload := NewUpload(in, src.Size(), metadata, fingerprint)
+	upload, err := NewUpload(in, src.Size(), metadata, fingerprint)
+	if err != nil {
+		return err
+	}
 
 	// create the uploader.
 	uploader, err := o.CreateUploader(ctx, upload, options...)
