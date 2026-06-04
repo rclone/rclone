@@ -2,14 +2,19 @@
 package s3
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/stretchr/testify/assert"
@@ -127,6 +132,163 @@ func TestClientStopsAfterTenRedirects(t *testing.T) {
 	}
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "stopped after 10 redirects")
+}
+
+// capturedRequest records the headers of a single mock S3 request
+type capturedHeaders struct {
+	mu                sync.Mutex
+	createMultipart   http.Header
+	uploadPart        http.Header
+	completeMultipart bool
+}
+
+// newMockS3Server returns an httptest server that emulates just enough of the
+// S3 multipart upload API (CreateMultipartUpload, UploadPart,
+// CompleteMultipartUpload) to drive the real chunk writer and capture the
+// request headers the SDK sends.
+func newMockS3Server(t *testing.T, c *capturedHeaders) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		q := r.URL.Query()
+		// drain the body so the SDK considers the request fully sent
+		_, _ = io.Copy(io.Discard, r.Body)
+
+		switch {
+		case r.Method == http.MethodPost && q.Has("uploads"):
+			c.mu.Lock()
+			c.createMultipart = r.Header.Clone()
+			c.mu.Unlock()
+			w.Header().Set("Content-Type", "application/xml")
+			_, _ = io.WriteString(w, `<?xml version="1.0" encoding="UTF-8"?>`+
+				`<InitiateMultipartUploadResult><Bucket>test-bucket</Bucket>`+
+				`<Key>dir/file.bin</Key><UploadId>test-upload-id</UploadId>`+
+				`</InitiateMultipartUploadResult>`)
+		case r.Method == http.MethodPut && q.Get("partNumber") != "":
+			c.mu.Lock()
+			c.uploadPart = r.Header.Clone()
+			c.mu.Unlock()
+			// WriteChunk dereferences the returned ETag, so it must be present
+			w.Header().Set("ETag", `"part-etag"`)
+			w.WriteHeader(http.StatusOK)
+		case r.Method == http.MethodPost && q.Get("uploadId") != "":
+			c.mu.Lock()
+			c.completeMultipart = true
+			c.mu.Unlock()
+			w.Header().Set("Content-Type", "application/xml")
+			_, _ = io.WriteString(w, `<?xml version="1.0" encoding="UTF-8"?>`+
+				`<CompleteMultipartUploadResult><Bucket>test-bucket</Bucket>`+
+				`<Key>dir/file.bin</Key><ETag>"final-etag"</ETag>`+
+				`</CompleteMultipartUploadResult>`)
+		default:
+			http.Error(w, "unexpected request: "+r.Method+" "+r.URL.String(), http.StatusBadRequest)
+		}
+	}))
+}
+
+// TestMultipartUploadChecksumHeaders drives the real OpenChunkWriter /
+// WriteChunk / Close path against a mock S3 server and asserts that the
+// x-amz-checksum-algorithm / x-amz-checksum-type upload options end up as the
+// expected headers on the CreateMultipartUpload and UploadPart requests.
+func TestMultipartUploadChecksumHeaders(t *testing.T) {
+	ctx := context.Background()
+	captured := &capturedHeaders{}
+	srv := newMockS3Server(t, captured)
+	defer srv.Close()
+
+	f, err := NewFs(ctx, "TestS3", "test-bucket/dir", configmap.Simple{
+		"type":              "s3",
+		"provider":          "AWS",
+		"access_key_id":     "access-key",
+		"secret_access_key": "secret-key",
+		"region":            "us-east-1",
+		"endpoint":          srv.URL,
+		"force_path_style":  "true",
+		"no_check_bucket":   "true",
+		"no_head_object":    "true",
+		"chunk_size":        "5Mi",
+		"upload_cutoff":     "5Mi",
+		"copy_cutoff":       "5Mi",
+	})
+	require.NoError(t, err)
+
+	data := []byte("hello multipart checksum world")
+	src := object.NewStaticObjectInfo("file.bin", time.Now(), int64(len(data)), true, nil, f)
+
+	options := []fs.OpenOption{
+		&fs.HTTPOption{Key: "x-amz-checksum-algorithm", Value: "CRC32C"},
+		&fs.HTTPOption{Key: "x-amz-checksum-type", Value: "FULL_OBJECT"},
+	}
+
+	_, writer, err := f.(*Fs).OpenChunkWriter(ctx, "file.bin", src, options...)
+	require.NoError(t, err)
+
+	_, err = writer.WriteChunk(ctx, 0, bytes.NewReader(data))
+	require.NoError(t, err)
+	require.NoError(t, writer.Close(ctx))
+
+	captured.mu.Lock()
+	defer captured.mu.Unlock()
+
+	require.NotNil(t, captured.createMultipart, "CreateMultipartUpload was not called")
+	assert.Equal(t, "CRC32C", captured.createMultipart.Get("X-Amz-Checksum-Algorithm"))
+	assert.Equal(t, "FULL_OBJECT", captured.createMultipart.Get("X-Amz-Checksum-Type"))
+
+	require.NotNil(t, captured.uploadPart, "UploadPart was not called")
+	// Our ChecksumAlgorithm is serialized as the SDK checksum algorithm header
+	assert.Equal(t, "CRC32C", captured.uploadPart.Get("X-Amz-Sdk-Checksum-Algorithm"))
+	// The SDK computes and sends the actual CRC32C of the part body
+	assert.NotEmpty(t, captured.uploadPart.Get("X-Amz-Checksum-Crc32c"))
+	// Content-MD5 must be cleared once a checksum algorithm is in use
+	assert.Empty(t, captured.uploadPart.Get("Content-Md5"))
+
+	assert.True(t, captured.completeMultipart, "CompleteMultipartUpload was not called")
+}
+
+// TestMultipartUploadNoChecksumHeaders verifies that without the checksum
+// upload options no checksum headers are sent and Content-MD5 is preserved.
+func TestMultipartUploadNoChecksumHeaders(t *testing.T) {
+	ctx := context.Background()
+	captured := &capturedHeaders{}
+	srv := newMockS3Server(t, captured)
+	defer srv.Close()
+
+	f, err := NewFs(ctx, "TestS3", "test-bucket/dir", configmap.Simple{
+		"type":              "s3",
+		"provider":          "AWS",
+		"access_key_id":     "access-key",
+		"secret_access_key": "secret-key",
+		"region":            "us-east-1",
+		"endpoint":          srv.URL,
+		"force_path_style":  "true",
+		"no_check_bucket":   "true",
+		"no_head_object":    "true",
+		"chunk_size":        "5Mi",
+		"upload_cutoff":     "5Mi",
+		"copy_cutoff":       "5Mi",
+	})
+	require.NoError(t, err)
+
+	data := []byte("hello multipart no checksum world")
+	src := object.NewStaticObjectInfo("file.bin", time.Now(), int64(len(data)), true, nil, f)
+
+	_, writer, err := f.(*Fs).OpenChunkWriter(ctx, "file.bin", src)
+	require.NoError(t, err)
+
+	_, err = writer.WriteChunk(ctx, 0, bytes.NewReader(data))
+	require.NoError(t, err)
+	require.NoError(t, writer.Close(ctx))
+
+	captured.mu.Lock()
+	defer captured.mu.Unlock()
+
+	require.NotNil(t, captured.createMultipart)
+	assert.Empty(t, captured.createMultipart.Get("X-Amz-Checksum-Algorithm"))
+	assert.Empty(t, captured.createMultipart.Get("X-Amz-Checksum-Type"))
+
+	require.NotNil(t, captured.uploadPart)
+	assert.Empty(t, captured.uploadPart.Get("X-Amz-Sdk-Checksum-Algorithm"))
+	// Without a checksum algorithm the integrity check falls back to Content-MD5
+	assert.NotEmpty(t, captured.uploadPart.Get("Content-Md5"))
 }
 
 // TestIntegration runs integration tests against the remote
