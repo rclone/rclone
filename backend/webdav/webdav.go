@@ -1559,7 +1559,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return fmt.Errorf("Update mkParentDir failed: %w", err)
 	}
 
-	if o.fs.canTus { // supports the tus upload protocol, ie. InfiniteScale
+	if o.fs.canTus && src.Size() != 0 { // supports the tus upload protocol, ie. OpenCloud and InfiniteScale
 		fs.Debugf(src, "Update will use the tus protocol to upload")
 		contentType := fs.MimeType(ctx, src)
 		err = o.updateViaTus(ctx, in, contentType, src, options...)
