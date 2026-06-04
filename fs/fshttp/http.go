@@ -274,6 +274,40 @@ func NewTransportCustom(ctx context.Context, customize func(*http.Transport)) *T
 	t.IdleConnTimeout = 60 * time.Second
 	t.ExpectContinueTimeout = time.Duration(ci.ExpectContinueTimeout)
 
+	fronting, err := parseFrontingConfig(ci)
+	if err != nil {
+		fs.Fatalf(nil, "%v", err)
+	}
+
+	if fronting != nil && ci.FrontingSNI != "" {
+		t.DialTLSContext = func(reqCtx context.Context, network, addr string) (net.Conn, error) {
+			dialContext := t.DialContext
+			if dialContext == nil {
+				dialContext = NewDialer(ctx).DialContext
+			}
+			rawConn, err := dialContext(reqCtx, network, addr)
+			if err != nil {
+				return nil, err
+			}
+			host, _, splitErr := net.SplitHostPort(addr)
+			if splitErr != nil {
+				host = addr
+			}
+			serverName := normalizeHost(host)
+			if frontingSNI, ok := frontingSNIFromContext(reqCtx); ok && serverName == fronting.targetHost {
+				serverName = frontingSNI
+			}
+			tlsConfig := t.TLSClientConfig.Clone()
+			tlsConfig.ServerName = serverName
+			tlsConn := tls.Client(rawConn, tlsConfig)
+			if err := tlsConn.HandshakeContext(reqCtx); err != nil {
+				_ = rawConn.Close()
+				return nil, err
+			}
+			return tlsConn, nil
+		}
+	}
+
 	if ci.Dump&(fs.DumpHeaders|fs.DumpBodies|fs.DumpAuth|fs.DumpRequests|fs.DumpResponses) != 0 {
 		fs.Debugf(nil, "You have specified to dump information. Please be noted that the "+
 			"Accept-Encoding as shown may not be correct in the request and the response may not show "+
@@ -291,7 +325,7 @@ func NewTransportCustom(ctx context.Context, customize func(*http.Transport)) *T
 	}
 
 	// Wrap that http.Transport in our own transport
-	return newTransport(ci, t)
+	return newTransport(ci, t, fronting)
 }
 
 // NewTransport returns an http.RoundTripper with the correct timeouts
@@ -343,13 +377,14 @@ type Transport struct {
 	userAgent     string
 	headers       []*fs.HTTPOption
 	metrics       *Metrics
+	fronting      *frontingConfig
 	// Mutex for serializing attempts at reloading the certificates
 	reloadMutex sync.Mutex
 }
 
 // newTransport wraps the http.Transport passed in and logs all
 // roundtrips including the body if logBody is set.
-func newTransport(ci *fs.ConfigInfo, transport *http.Transport) *Transport {
+func newTransport(ci *fs.ConfigInfo, transport *http.Transport, fronting *frontingConfig) *Transport {
 	return &Transport{
 		Transport: transport,
 		ci:        ci,
@@ -357,6 +392,7 @@ func newTransport(ci *fs.ConfigInfo, transport *http.Transport) *Transport {
 		userAgent: ci.UserAgent,
 		headers:   ci.Headers,
 		metrics:   DefaultMetrics,
+		fronting:  fronting,
 	}
 }
 
@@ -494,22 +530,43 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	if t.filterRequest != nil {
 		t.filterRequest(req)
 	}
+
+	reqToSend := req
+	if t.fronting != nil {
+		originalHost := hostOnlyFromRequest(req)
+		if matchedRule := t.fronting.matchRule(originalHost); matchedRule != "" {
+			clonedCtx := req.Context()
+			if t.ci.FrontingSNI != "" {
+				clonedCtx = withFrontingSNI(clonedCtx, t.fronting.sniHost)
+			}
+			cloned := req.Clone(clonedCtx)
+			urlCopy := *req.URL
+			cloned.URL = &urlCopy
+			targetAddr := net.JoinHostPort(t.fronting.targetHost, requestPort(req))
+			cloned.URL.Host = targetAddr
+			if cloned.Host == "" {
+				cloned.Host = req.URL.Host
+			}
+			reqToSend = cloned
+			fs.Debugf(nil, "Domain fronting applied: originalHost=%q matchedRule=%q dialTarget=%q sniTarget=%q", originalHost, matchedRule, targetAddr, t.fronting.sniHost)
+		}
+	}
 	// Logf request
 	if t.dump&(fs.DumpHeaders|fs.DumpBodies|fs.DumpAuth|fs.DumpRequests|fs.DumpResponses) != 0 {
-		buf, _ := httputil.DumpRequestOut(req, t.dump&(fs.DumpBodies|fs.DumpRequests) != 0)
+		buf, _ := httputil.DumpRequestOut(reqToSend, t.dump&(fs.DumpBodies|fs.DumpRequests) != 0)
 		if t.dump&fs.DumpAuth == 0 {
 			buf = cleanAuths(buf)
 		}
 		logMutex.Lock()
 		fs.Debugf(nil, "%s", separatorReq)
-		fs.Debugf(nil, "%s (req %p)", "HTTP REQUEST", req)
+		fs.Debugf(nil, "%s (req %p)", "HTTP REQUEST", reqToSend)
 		fs.Debugf(nil, "%s", string(buf))
 		fs.Debugf(nil, "%s", separatorReq)
 		logMutex.Unlock()
 	}
 	// Dump curl request
 	if t.dump&(fs.DumpCurl) != 0 {
-		cmd, err := http2curl.GetCurlCommand(req)
+		cmd, err := http2curl.GetCurlCommand(reqToSend)
 		if err != nil {
 			fs.Debugf(nil, "Failed to create curl command: %v", err)
 		} else {
@@ -528,12 +585,12 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 		}
 	}
 	// Do round trip
-	resp, err = t.Transport.RoundTrip(req)
+	resp, err = t.Transport.RoundTrip(reqToSend)
 	// Logf response
 	if t.dump&(fs.DumpHeaders|fs.DumpBodies|fs.DumpAuth|fs.DumpRequests|fs.DumpResponses) != 0 {
 		logMutex.Lock()
 		fs.Debugf(nil, "%s", separatorResp)
-		fs.Debugf(nil, "%s (req %p)", "HTTP RESPONSE", req)
+		fs.Debugf(nil, "%s (req %p)", "HTTP RESPONSE", reqToSend)
 		if err != nil {
 			fs.Debugf(nil, "Error: %v", err)
 		} else {
@@ -544,10 +601,10 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 		logMutex.Unlock()
 	}
 	// Update metrics
-	t.metrics.onResponse(req, resp)
+	t.metrics.onResponse(reqToSend, resp)
 
 	if err == nil {
-		checkServerTime(req, resp)
+		checkServerTime(reqToSend, resp)
 	}
 	return resp, err
 }
