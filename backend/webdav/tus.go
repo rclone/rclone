@@ -20,7 +20,7 @@ import (
 
 func (o *Object) updateViaTus(ctx context.Context, in io.Reader, contentType string, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 
-	fn := filepath.Base(src.Remote())
+	fn := filepath.Base(o.Remote())
 	metadata := map[string]string{
 		"filename": fn,
 		"mtime":    strconv.FormatInt(src.ModTime(ctx).Unix(), 10),
