@@ -5,7 +5,6 @@
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <meta name="author" content="Nick Craig-Wood" />
-  <meta name="dcterms.date" content="2026-05-22" />
   <title>rclone(1) User Manual</title>
   <style>
     html {
@@ -234,7 +233,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">May 22, 2026</p>
+<p class="date">Jun 05, 2026</p>
 </header>
 <h1 id="name">NAME</h1>
 <p>rclone - manage files on cloud storage</p>
@@ -4576,9 +4575,9 @@ SquareBracket</code></pre>
 <pre class="console"><code>rclone convmv &quot;stories/The Quick Brown Fox!.txt&quot; --name-transform &quot;all,command=echo&quot;
 // Output: stories/The Quick Brown Fox!.txt</code></pre>
 <pre class="console"><code>rclone convmv &quot;stories/The Quick Brown Fox!&quot; --name-transform &quot;date=-{YYYYMMDD}&quot;
-// Output: stories/The Quick Brown Fox!-20260522</code></pre>
+// Output: stories/The Quick Brown Fox!-20260605</code></pre>
 <pre class="console"><code>rclone convmv &quot;stories/The Quick Brown Fox!&quot; --name-transform &quot;date=-{macfriendlytime}&quot;
-// Output: stories/The Quick Brown Fox!-2026-05-22 0431PM</code></pre>
+// Output: stories/The Quick Brown Fox!-2026-06-05 0414PM</code></pre>
 <pre class="console"><code>rclone convmv &quot;stories/The Quick Brown Fox!.txt&quot; --name-transform &quot;all,regex=[\\.\\w]/ab&quot;
 // Output: ababababababab/ababab ababababab ababababab ababab!abababab</code></pre>
 <p>The regex command generally accepts Perl-style regular expressions,
@@ -18288,7 +18287,26 @@ by default, so you can browse to <code>http://127.0.0.1:5572/</code> or
 <code>http://127.0.0.1:5572/*</code> to see a listing of the remotes.
 Objects may be requested from remotes using this syntax
 <code>http://127.0.0.1:5572/[remote:path]/path/to/object</code></p>
+<p>Unless the rc server has authentication configured
+(<code>--rc-user</code>/<code>--rc-pass</code> or
+<code>--rc-htpasswd</code>) or the <code>--rc-no-auth</code> flag is
+set, only remotes already present in the config file may be served this
+way. Inline remotes (e.g. <code>[:webdav,url=...:]</code>), connection
+string parameters and bare local paths are rejected, since instantiating
+them from an unauthenticated request could run commands or read
+arbitrary local files.</p>
 <p>Default Off.</p>
+<h3 id="global.-connection-string-options-and-the-rc">global.*
+connection string options and the rc</h3>
+<p>Remotes instantiated by the rc do not let <a
+href="https://rclone.org/docs/#connection-strings">connection string</a>
+<code>global.*</code> options change rclone's process-wide
+configuration. Remotes created directly on the command line or defined
+in the config file are unaffected.</p>
+<p>A <code>global.*</code> option still takes effect for the individual
+backend it is set on (exactly like an <code>override.*</code> option),
+it just does not leak into the global config for the rest of the
+process.</p>
 <h3 id="rc-serve-no-modtime">--rc-serve-no-modtime</h3>
 <p>Set this flag to skip reading the modification time (can speed things
 up).</p>
@@ -21695,7 +21713,7 @@ split into groups.</p>
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.74.2&quot;)</code></pre>
+      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.74.3&quot;)</code></pre>
 <h2 id="performance">Performance</h2>
 <p>Flags helpful for increasing performance.</p>
 <pre><code>      --buffer-size SizeSuffix   In memory buffer size when reading files for each --transfer (default 16Mi)
@@ -24434,10 +24452,12 @@ disallowed special characters and filename encodings.)</p>
 investigation:</p>
 <!--- start list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
 <ul>
-<li><code>TestGoFile</code> (<code>gofile</code>)
+<li><code>TestFilen</code> (<code>filen</code>)
 <ul>
 <li><a
-href="https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt"><code>TestBisyncRemoteLocal/rclone_args</code></a></li>
+href="https://pub.rclone.org/integration-tests/current/filen-cmd.bisync-TestFilen-1.txt"><code>TestBisyncRemoteRemote/resync_modes</code></a></li>
+<li><a
+href="https://pub.rclone.org/integration-tests/current/filen-cmd.bisync-TestFilen-1.txt"><code>TestBisyncRemoteRemote/rmdirs</code></a></li>
 </ul></li>
 <li><code>TestHuaweiDrive</code> (<code>huaweidrive</code>)
 <ul>
@@ -24446,15 +24466,20 @@ href="https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-Te
 <li><a
 href="https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt"><code>TestBisyncRemoteLocal/extended_filenames</code></a></li>
 <li><a
+href="https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt"><code>TestBisyncRemoteLocal/normalization</code></a></li>
+<li><a
 href="https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt"><code>TestBisyncLocalRemote/ext_paths</code></a></li>
 <li><a
 href="https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt"><code>TestBisyncLocalRemote/extended_filenames</code></a></li>
-<li><a
-href="https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt"><code>TestBisyncRemoteRemote/ext_paths</code></a></li>
-<li><a href="https://pub.rclone.org/integration-tests/current/">2
+<li><a href="https://pub.rclone.org/integration-tests/current/">4
 more</a></li>
 </ul></li>
-<li>Updated: 2026-05-22-010013
+<li><code>TestSeafile</code> (<code>seafile</code>)
+<ul>
+<li><a
+href="https://pub.rclone.org/integration-tests/current/seafile-cmd.bisync-TestSeafile-1.txt"><code>TestBisyncLocalRemote/rmdirs</code></a></li>
+</ul></li>
+<li>Updated: 2026-06-05-010010
 <!--- end list_failures - DO NOT EDIT THIS SECTION - use make commanddocs ---></li>
 </ul>
 <p>The following backends either have not been tested recently or have
@@ -65099,6 +65124,68 @@ the output.</p>
 <!-- autogenerated options stop -->
 <!-- markdownlint-disable line-length -->
 <h1 id="changelog-1">Changelog</h1>
+<h2 id="v1.74.3---2026-06-05">v1.74.3 - 2026-06-05</h2>
+<p><a
+href="https://github.com/rclone/rclone/compare/v1.74.2...v1.74.3">See
+commits</a></p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>rc
+<ul>
+<li>Fix unauthenticated command execution via <code>--rc-serve</code>
+inline remotes CVE-2026-49980 (Nick Craig-Wood)</li>
+<li>Stop <code>global.*</code> connection string options changing config
+CVE-2026-49980 (Nick Craig-Wood)</li>
+</ul></li>
+<li>build: Fix multiple CVEs by upgrading to go1.26.4 (Nick Craig-Wood)
+<ul>
+<li>CVE-2026-42504: mime: quadratic complexity in
+WordDecoder.DecodeHeader</li>
+<li>CVE-2026-42507: net/textproto: arbitrary input are included in
+errors without any escaping</li>
+<li>CVE-2026-27145: crypto/x509: split candidate hostname only once</li>
+</ul></li>
+<li>log: Fix wrong source <code>file:line</code> in JSON logs from
+release builds (Nick Craig-Wood)</li>
+<li>mount2: Fix empty directory listings on re-read (Janne Beate
+Bakeng)</li>
+<li>serve s3: Fix multipart <code>ListParts</code> pagination returning
+wrong part numbers (Nick Craig-Wood)</li>
+<li>serve sftp
+<ul>
+<li>Fix file corruption when a client resumes an upload (Nick
+Craig-Wood)</li>
+<li>Fix truncate request being silently ignored (Nick Craig-Wood)</li>
+</ul></li>
+</ul></li>
+<li>Local
+<ul>
+<li>Fix <code>getXattr</code> returning empty map instead of nil (Leon
+Brocard)</li>
+</ul></li>
+<li>Drime
+<ul>
+<li>Fix server-side copy and move failing with Cloudflare 520 error
+(Nick Craig-Wood)</li>
+<li>Fix files being uploaded to the wrong directory (Nick
+Craig-Wood)</li>
+<li>Remove duplicate upload_cutoff config option (Nick Craig-Wood)</li>
+<li>Fix directory rename leaving the renamed folder empty in VFS (Nick
+Craig-Wood)</li>
+</ul></li>
+<li>Drive
+<ul>
+<li>Fix server-side move failing on shared drives with duplicate dirs
+(Nick Craig-Wood)</li>
+</ul></li>
+<li>Iclouddrive
+<ul>
+<li>Fix ADP/PCS cookie acquisition for iCloud Drive (Yakov Till)</li>
+<li>Fix "Index has invalid data" error listing iCloud Photos (Nick
+Craig-Wood)</li>
+</ul></li>
+</ul>
 <h2 id="v1.74.2---2026-05-22">v1.74.2 - 2026-05-22</h2>
 <p><a
 href="https://github.com/rclone/rclone/compare/v1.74.1...v1.74.2">See

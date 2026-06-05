@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% May 22, 2026
+% Jun 05, 2026
 
 # NAME
 
@@ -5416,12 +5416,12 @@ rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,command=e
 
 ```console
 rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{YYYYMMDD}"
-// Output: stories/The Quick Brown Fox!-20260522
+// Output: stories/The Quick Brown Fox!-20260605
 ```
 
 ```console
 rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{macfriendlytime}"
-// Output: stories/The Quick Brown Fox!-2026-05-22 0431PM
+// Output: stories/The Quick Brown Fox!-2026-06-05 0414PM
 ```
 
 ```console
@@ -21703,7 +21703,25 @@ so you can browse to `http://127.0.0.1:5572/` or `http://127.0.0.1:5572/*`
 to see a listing of the remotes.  Objects may be requested from
 remotes using this syntax `http://127.0.0.1:5572/[remote:path]/path/to/object`
 
+Unless the rc server has authentication configured (`--rc-user`/`--rc-pass`
+or `--rc-htpasswd`) or the `--rc-no-auth` flag is set, only remotes already
+present in the config file may be served this way. Inline remotes (e.g.
+`[:webdav,url=...:]`), connection string parameters and bare local paths are
+rejected, since instantiating them from an unauthenticated request could run
+commands or read arbitrary local files.
+
 Default Off.
+
+### global.* connection string options and the rc
+
+Remotes instantiated by the rc do not let [connection
+string](https://rclone.org/docs/#connection-strings) `global.*` options change rclone's
+process-wide configuration. Remotes created directly on the command
+line or defined in the config file are unaffected.
+
+A `global.*` option still takes effect for the individual backend it
+is set on (exactly like an `override.*` option), it just does not leak
+into the global config for the rest of the process.
 
 ### --rc-serve-no-modtime
 
@@ -24985,7 +25003,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.74.2")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.74.3")
 ```
 
 
@@ -27772,16 +27790,19 @@ encodings.)
 The following backends have known issues that need more investigation:
 
 <!--- start list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
-- `TestGoFile` (`gofile`)
-  - [`TestBisyncRemoteLocal/rclone_args`](https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt)
+- `TestFilen` (`filen`)
+  - [`TestBisyncRemoteRemote/resync_modes`](https://pub.rclone.org/integration-tests/current/filen-cmd.bisync-TestFilen-1.txt)
+  - [`TestBisyncRemoteRemote/rmdirs`](https://pub.rclone.org/integration-tests/current/filen-cmd.bisync-TestFilen-1.txt)
 - `TestHuaweiDrive` (`huaweidrive`)
   - [`TestBisyncRemoteLocal/ext_paths`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
   - [`TestBisyncRemoteLocal/extended_filenames`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
+  - [`TestBisyncRemoteLocal/normalization`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
   - [`TestBisyncLocalRemote/ext_paths`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
   - [`TestBisyncLocalRemote/extended_filenames`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
-  - [`TestBisyncRemoteRemote/ext_paths`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
-  - [2 more](https://pub.rclone.org/integration-tests/current/)
-- Updated: 2026-05-22-010013
+  - [4 more](https://pub.rclone.org/integration-tests/current/)
+- `TestSeafile` (`seafile`)
+  - [`TestBisyncLocalRemote/rmdirs`](https://pub.rclone.org/integration-tests/current/seafile-cmd.bisync-TestSeafile-1.txt)
+- Updated: 2026-06-05-010010
 <!--- end list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
 
 The following backends either have not been tested recently or have known issues
@@ -70297,6 +70318,37 @@ Options:
 <!-- markdownlint-disable line-length -->
 
 # Changelog
+
+## v1.74.3 - 2026-06-05
+
+[See commits](https://github.com/rclone/rclone/compare/v1.74.2...v1.74.3)
+
+- Bug Fixes
+  - rc
+    - Fix unauthenticated command execution via `--rc-serve` inline remotes CVE-2026-49980 (Nick Craig-Wood)
+    - Stop `global.*` connection string options changing config CVE-2026-49980 (Nick Craig-Wood)
+  - build: Fix multiple CVEs by upgrading to go1.26.4 (Nick Craig-Wood)
+    - CVE-2026-42504: mime: quadratic complexity in WordDecoder.DecodeHeader
+    - CVE-2026-42507: net/textproto: arbitrary input are included in errors without any escaping
+    - CVE-2026-27145: crypto/x509: split candidate hostname only once
+  - log: Fix wrong source `file:line` in JSON logs from release builds (Nick Craig-Wood)
+  - mount2: Fix empty directory listings on re-read (Janne Beate Bakeng)
+  - serve s3: Fix multipart `ListParts` pagination returning wrong part numbers (Nick Craig-Wood)
+  - serve sftp
+    - Fix file corruption when a client resumes an upload (Nick Craig-Wood)
+    - Fix truncate request being silently ignored (Nick Craig-Wood)
+- Local
+  - Fix `getXattr` returning empty map instead of nil (Leon Brocard)
+- Drime
+  - Fix server-side copy and move failing with Cloudflare 520 error (Nick Craig-Wood)
+  - Fix files being uploaded to the wrong directory (Nick Craig-Wood)
+  - Remove duplicate upload_cutoff config option (Nick Craig-Wood)
+  - Fix directory rename leaving the renamed folder empty in VFS (Nick Craig-Wood)
+- Drive
+  - Fix server-side move failing on shared drives with duplicate dirs (Nick Craig-Wood)
+- Iclouddrive
+  - Fix ADP/PCS cookie acquisition for iCloud Drive (Yakov Till)
+  - Fix "Index has invalid data" error listing iCloud Photos (Nick Craig-Wood)
 
 ## v1.74.2 - 2026-05-22
 

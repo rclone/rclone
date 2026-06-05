@@ -15,7 +15,7 @@
 . ftr VB CB
 . ftr VBI CBI
 .\}
-.TH "rclone" "1" "May 22, 2026" "User Manual" ""
+.TH "rclone" "1" "Jun 05, 2026" "User Manual" ""
 .hy
 .SH NAME
 .PP
@@ -6326,14 +6326,14 @@ rclone convmv \[dq]stories/The Quick Brown Fox!.txt\[dq] --name-transform \[dq]a
 .nf
 \f[C]
 rclone convmv \[dq]stories/The Quick Brown Fox!\[dq] --name-transform \[dq]date=-{YYYYMMDD}\[dq]
-// Output: stories/The Quick Brown Fox!-20260522
+// Output: stories/The Quick Brown Fox!-20260605
 \f[R]
 .fi
 .IP
 .nf
 \f[C]
 rclone convmv \[dq]stories/The Quick Brown Fox!\[dq] --name-transform \[dq]date=-{macfriendlytime}\[dq]
-// Output: stories/The Quick Brown Fox!-2026-05-22 0431PM
+// Output: stories/The Quick Brown Fox!-2026-06-05 0414PM
 \f[R]
 .fi
 .IP
@@ -25430,7 +25430,28 @@ see a listing of the remotes.
 Objects may be requested from remotes using this syntax
 \f[V]http://127.0.0.1:5572/[remote:path]/path/to/object\f[R]
 .PP
+Unless the rc server has authentication configured
+(\f[V]--rc-user\f[R]/\f[V]--rc-pass\f[R] or \f[V]--rc-htpasswd\f[R]) or
+the \f[V]--rc-no-auth\f[R] flag is set, only remotes already present in
+the config file may be served this way.
+Inline remotes (e.g.
+\f[V][:webdav,url=...:]\f[R]), connection string parameters and bare
+local paths are rejected, since instantiating them from an
+unauthenticated request could run commands or read arbitrary local
+files.
+.PP
 Default Off.
+.SS global.* connection string options and the rc
+.PP
+Remotes instantiated by the rc do not let connection
+string (https://rclone.org/docs/#connection-strings) \f[V]global.*\f[R]
+options change rclone\[aq]s process-wide configuration.
+Remotes created directly on the command line or defined in the config
+file are unaffected.
+.PP
+A \f[V]global.*\f[R] option still takes effect for the individual
+backend it is set on (exactly like an \f[V]override.*\f[R] option), it
+just does not leak into the global config for the rest of the process.
 .SS --rc-serve-no-modtime
 .PP
 Set this flag to skip reading the modification time (can speed things
@@ -30179,7 +30200,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default \[dq]rclone/v1.74.2\[dq])
+      --user-agent string                  Set the user-agent to a specified string (default \[dq]rclone/v1.74.3\[dq])
 \f[R]
 .fi
 .SS Performance
@@ -33477,10 +33498,12 @@ filename encodings.)
 .PP
 The following backends have known issues that need more investigation:
 .IP \[bu] 2
-\f[V]TestGoFile\f[R] (\f[V]gofile\f[R])
+\f[V]TestFilen\f[R] (\f[V]filen\f[R])
 .RS 2
 .IP \[bu] 2
-\f[V]TestBisyncRemoteLocal/rclone_args\f[R] (https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt)
+\f[V]TestBisyncRemoteRemote/resync_modes\f[R] (https://pub.rclone.org/integration-tests/current/filen-cmd.bisync-TestFilen-1.txt)
+.IP \[bu] 2
+\f[V]TestBisyncRemoteRemote/rmdirs\f[R] (https://pub.rclone.org/integration-tests/current/filen-cmd.bisync-TestFilen-1.txt)
 .RE
 .IP \[bu] 2
 \f[V]TestHuaweiDrive\f[R] (\f[V]huaweidrive\f[R])
@@ -33490,16 +33513,22 @@ The following backends have known issues that need more investigation:
 .IP \[bu] 2
 \f[V]TestBisyncRemoteLocal/extended_filenames\f[R] (https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
 .IP \[bu] 2
+\f[V]TestBisyncRemoteLocal/normalization\f[R] (https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
+.IP \[bu] 2
 \f[V]TestBisyncLocalRemote/ext_paths\f[R] (https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
 .IP \[bu] 2
 \f[V]TestBisyncLocalRemote/extended_filenames\f[R] (https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
 .IP \[bu] 2
-\f[V]TestBisyncRemoteRemote/ext_paths\f[R] (https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
-.IP \[bu] 2
-2 more (https://pub.rclone.org/integration-tests/current/)
+4 more (https://pub.rclone.org/integration-tests/current/)
 .RE
 .IP \[bu] 2
-Updated: 2026-05-22-010013
+\f[V]TestSeafile\f[R] (\f[V]seafile\f[R])
+.RS 2
+.IP \[bu] 2
+\f[V]TestBisyncLocalRemote/rmdirs\f[R] (https://pub.rclone.org/integration-tests/current/seafile-cmd.bisync-TestSeafile-1.txt)
+.RE
+.IP \[bu] 2
+Updated: 2026-06-05-010010
 .PP
 The following backends either have not been tested recently or have
 known issues that are deemed unfixable for the time being:
@@ -90121,6 +90150,86 @@ Options:
 .IP \[bu] 2
 \[dq]error\[dq]: Return an error based on option value.
 .SH Changelog
+.SS v1.74.3 - 2026-06-05
+.PP
+See commits (https://github.com/rclone/rclone/compare/v1.74.2...v1.74.3)
+.IP \[bu] 2
+Bug Fixes
+.RS 2
+.IP \[bu] 2
+rc
+.RS 2
+.IP \[bu] 2
+Fix unauthenticated command execution via \f[V]--rc-serve\f[R] inline
+remotes CVE-2026-49980 (Nick Craig-Wood)
+.IP \[bu] 2
+Stop \f[V]global.*\f[R] connection string options changing config
+CVE-2026-49980 (Nick Craig-Wood)
+.RE
+.IP \[bu] 2
+build: Fix multiple CVEs by upgrading to go1.26.4 (Nick Craig-Wood)
+.RS 2
+.IP \[bu] 2
+CVE-2026-42504: mime: quadratic complexity in WordDecoder.DecodeHeader
+.IP \[bu] 2
+CVE-2026-42507: net/textproto: arbitrary input are included in errors
+without any escaping
+.IP \[bu] 2
+CVE-2026-27145: crypto/x509: split candidate hostname only once
+.RE
+.IP \[bu] 2
+log: Fix wrong source \f[V]file:line\f[R] in JSON logs from release
+builds (Nick Craig-Wood)
+.IP \[bu] 2
+mount2: Fix empty directory listings on re-read (Janne Beate Bakeng)
+.IP \[bu] 2
+serve s3: Fix multipart \f[V]ListParts\f[R] pagination returning wrong
+part numbers (Nick Craig-Wood)
+.IP \[bu] 2
+serve sftp
+.RS 2
+.IP \[bu] 2
+Fix file corruption when a client resumes an upload (Nick Craig-Wood)
+.IP \[bu] 2
+Fix truncate request being silently ignored (Nick Craig-Wood)
+.RE
+.RE
+.IP \[bu] 2
+Local
+.RS 2
+.IP \[bu] 2
+Fix \f[V]getXattr\f[R] returning empty map instead of nil (Leon Brocard)
+.RE
+.IP \[bu] 2
+Drime
+.RS 2
+.IP \[bu] 2
+Fix server-side copy and move failing with Cloudflare 520 error (Nick
+Craig-Wood)
+.IP \[bu] 2
+Fix files being uploaded to the wrong directory (Nick Craig-Wood)
+.IP \[bu] 2
+Remove duplicate upload_cutoff config option (Nick Craig-Wood)
+.IP \[bu] 2
+Fix directory rename leaving the renamed folder empty in VFS (Nick
+Craig-Wood)
+.RE
+.IP \[bu] 2
+Drive
+.RS 2
+.IP \[bu] 2
+Fix server-side move failing on shared drives with duplicate dirs (Nick
+Craig-Wood)
+.RE
+.IP \[bu] 2
+Iclouddrive
+.RS 2
+.IP \[bu] 2
+Fix ADP/PCS cookie acquisition for iCloud Drive (Yakov Till)
+.IP \[bu] 2
+Fix \[dq]Index has invalid data\[dq] error listing iCloud Photos (Nick
+Craig-Wood)
+.RE
 .SS v1.74.2 - 2026-05-22
 .PP
 See commits (https://github.com/rclone/rclone/compare/v1.74.1...v1.74.2)

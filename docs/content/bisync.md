@@ -1053,16 +1053,19 @@ encodings.)
 The following backends have known issues that need more investigation:
 
 <!--- start list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
-- `TestGoFile` (`gofile`)
-  - [`TestBisyncRemoteLocal/rclone_args`](https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt)
+- `TestFilen` (`filen`)
+  - [`TestBisyncRemoteRemote/resync_modes`](https://pub.rclone.org/integration-tests/current/filen-cmd.bisync-TestFilen-1.txt)
+  - [`TestBisyncRemoteRemote/rmdirs`](https://pub.rclone.org/integration-tests/current/filen-cmd.bisync-TestFilen-1.txt)
 - `TestHuaweiDrive` (`huaweidrive`)
   - [`TestBisyncRemoteLocal/ext_paths`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
   - [`TestBisyncRemoteLocal/extended_filenames`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
+  - [`TestBisyncRemoteLocal/normalization`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
   - [`TestBisyncLocalRemote/ext_paths`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
   - [`TestBisyncLocalRemote/extended_filenames`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
-  - [`TestBisyncRemoteRemote/ext_paths`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
-  - [2 more](https://pub.rclone.org/integration-tests/current/)
-- Updated: 2026-05-22-010013
+  - [4 more](https://pub.rclone.org/integration-tests/current/)
+- `TestSeafile` (`seafile`)
+  - [`TestBisyncLocalRemote/rmdirs`](https://pub.rclone.org/integration-tests/current/seafile-cmd.bisync-TestSeafile-1.txt)
+- Updated: 2026-06-05-010010
 <!--- end list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
 
 The following backends either have not been tested recently or have known issues
