@@ -355,6 +355,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Pr
 		opts.Body = bytes.NewBuffer(owncloudProps)
 	} else if f.useStandardProps {
 		opts.Body = bytes.NewBuffer(standardProps)
+		opts.ContentType = "application/xml"
 	}
 	// Note: According to WebDAV RFC 4918, empty PROPFIND body defaults to allprop
 	var result api.Multistatus
@@ -802,6 +803,7 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 		opts.Body = bytes.NewBuffer(owncloudProps)
 	} else if f.useStandardProps {
 		opts.Body = bytes.NewBuffer(standardProps)
+		opts.ContentType = "application/xml"
 	}
 	// Note: According to WebDAV RFC 4918, empty PROPFIND body defaults to `allprop`
 	var result api.Multistatus
