@@ -27,6 +27,12 @@ var Handler = defaultHandler()
 // This will be adjusted by InitLogging to be the configured levels
 // but it is important we have a logger running regardless of whether
 // InitLogging has been called yet or not.
+//
+// Note that this only sets rclone's private logger via fs.SetLogger
+// so that importing this package has no side effects on the
+// process-wide default slog logger. The CLI and other rclone-as-a-
+// program entry points pick up the default logger redirection in
+// InitLogging instead.
 func defaultHandler() *OutputHandler {
 	// Default options for default handler
 	opts := &slog.HandlerOptions{
@@ -36,11 +42,8 @@ func defaultHandler() *OutputHandler {
 	// Create our handler
 	h := NewOutputHandler(os.Stderr, opts, logFormatDate|logFormatTime)
 
-	// Set the slog default handler
-	slog.SetDefault(slog.New(h))
-
-	// Make log.Printf logs at level Notice
-	slog.SetLogLoggerLevel(fs.SlogLevelNotice)
+	// Set rclone's internal logger so rclone logging works
+	fs.SetLogger(h)
 
 	return h
 }
@@ -79,6 +82,19 @@ func mapLogLevelNames(groups []string, a slog.Attr) slog.Attr {
 	return a
 }
 
+// isLogFrame reports whether frame belongs to the logging machinery
+// and so should be skipped when finding the real caller.
+//
+// rclone's own log packages are matched by file path, but the standard
+// library log/slog package is matched by function name: under -trimpath
+// its path is rewritten to "log/slog/logger.go", which neither file
+// check catches.
+func isLogFrame(frame runtime.Frame) bool {
+	file := frame.File
+	return strings.HasPrefix(frame.Function, "log/slog.") ||
+		strings.Contains(file, "/log/") || strings.HasSuffix(file, "log.go")
+}
+
 // get the file and line number of the caller skipping skip levels
 func getCaller(skip int) string {
 	var pc [64]uintptr
@@ -92,10 +108,10 @@ func getCaller(skip int) string {
 	for more {
 		frame, more = frames.Next()
 
-		file := frame.File
-		if strings.Contains(file, "/log/") || strings.HasSuffix(file, "log.go") {
+		if isLogFrame(frame) {
 			continue
 		}
+		file := frame.File
 		line := frame.Line
 
 		// shorten file name

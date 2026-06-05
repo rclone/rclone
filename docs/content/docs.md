@@ -59,6 +59,7 @@ See the following for detailed instructions for
 - [Hetzner Storage Box](/sftp/#hetzner-storage-box)
 - [HiDrive](/hidrive/)
 - [HTTP](/http/)
+- [Huawei Drive](/huaweidrive/)
 - [iCloud Drive](/iclouddrive/)
 - [Internet Archive](/internetarchive/)
 - [Internxt](/internxt/)
@@ -1211,7 +1212,7 @@ Windows and `/dev/null` on Unix systems, then rclone will keep the
 configuration file in memory only.
 
 You may see a log message "Config file not found - using defaults" if there is
-no configuration file. This can be supressed, e.g. if you are using rclone
+no configuration file. This can be suppressed, e.g. if you are using rclone
 entirely with [on the fly remotes](/docs/#backend-path-to-dir), by using
 memory-only configuration file or by creating an empty configuration file, as
 described above.
@@ -3284,6 +3285,10 @@ The available flags are:
 - `mapper` dumps the JSON blobs being sent to the program supplied with
   `--metadata-mapper` and received from it. It can be useful for debugging
   the metadata mapper interface.
+- `curl` dumps the HTTP request as a `curl` command. Can be used with
+  the other HTTP debugging flags (e.g. `requests`, `bodies`). By
+  default the auth will be masked - use with `auth` to have the curl
+  commands with authentication too.
 
 ## Filtering
 

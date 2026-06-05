@@ -53,6 +53,12 @@ identically.
 
 `--rc-disable-zip` may be set to disable the zipping download option.
 
+### Protocol
+
+The server supports HTTP/1.1 and HTTP/2.  HTTP/2 is used automatically
+for TLS connections.  For non-TLS connections, HTTP/2 cleartext (h2c)
+is supported, allowing HTTP/2 without encryption.
+
 ### TLS (SSL)
 
 By default this will serve over http.  If you want you can serve over

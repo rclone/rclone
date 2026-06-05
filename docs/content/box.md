@@ -183,7 +183,7 @@ y) Yes
 n) No
 y/n> n
 Remote config
-Already have a token - refresh?
+Token already configured - replace it?
 y) Yes
 n) No
 y/n> y
