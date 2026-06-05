@@ -192,7 +192,7 @@ this will be done already.
 Now
 
 - git co ${BASE_TAG}-stable
-- git cherry-pick any fixes
+- `git cherry-pick -x` any fixes
 - make startstable
 - Do the steps as above
 - git co master
