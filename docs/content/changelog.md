@@ -6,6 +6,37 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.74.3 - 2026-06-05
+
+[See commits](https://github.com/rclone/rclone/compare/v1.74.2...v1.74.3)
+
+- Bug Fixes
+  - rc
+    - Fix unauthenticated command execution via `--rc-serve` inline remotes CVE-2026-49980 (Nick Craig-Wood)
+    - Stop `global.*` connection string options changing config CVE-2026-49980 (Nick Craig-Wood)
+  - build: Fix multiple CVEs by upgrading to go1.26.4 (Nick Craig-Wood)
+    - CVE-2026-42504: mime: quadratic complexity in WordDecoder.DecodeHeader
+    - CVE-2026-42507: net/textproto: arbitrary input are included in errors without any escaping
+    - CVE-2026-27145: crypto/x509: split candidate hostname only once
+  - log: Fix wrong source `file:line` in JSON logs from release builds (Nick Craig-Wood)
+  - mount2: Fix empty directory listings on re-read (Janne Beate Bakeng)
+  - serve s3: Fix multipart `ListParts` pagination returning wrong part numbers (Nick Craig-Wood)
+  - serve sftp
+    - Fix file corruption when a client resumes an upload (Nick Craig-Wood)
+    - Fix truncate request being silently ignored (Nick Craig-Wood)
+- Local
+  - Fix `getXattr` returning empty map instead of nil (Leon Brocard)
+- Drime
+  - Fix server-side copy and move failing with Cloudflare 520 error (Nick Craig-Wood)
+  - Fix files being uploaded to the wrong directory (Nick Craig-Wood)
+  - Remove duplicate upload_cutoff config option (Nick Craig-Wood)
+  - Fix directory rename leaving the renamed folder empty in VFS (Nick Craig-Wood)
+- Drive
+  - Fix server-side move failing on shared drives with duplicate dirs (Nick Craig-Wood)
+- Iclouddrive
+  - Fix ADP/PCS cookie acquisition for iCloud Drive (Yakov Till)
+  - Fix "Index has invalid data" error listing iCloud Photos (Nick Craig-Wood)
+
 ## v1.74.2 - 2026-05-22
 
 [See commits](https://github.com/rclone/rclone/compare/v1.74.1...v1.74.2)
