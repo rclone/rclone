@@ -639,9 +639,13 @@ Rclone can remove files it uploaded from albums it created only.
 
 ### Deleting files
 
-Rclone can remove files from albums it created, but note that the
-Google Photos API does not allow media to be deleted permanently so
-this media will still remain. See [bug #109759781](https://issuetracker.google.com/issues/109759781).
+The Google Photos Library API does not allow media items to be permanently deleted via the API (see [bug #109759781](https://issuetracker.google.com/issues/109759781)).
+
+To work around this limitation and keep your active albums clean:
+* Rclone implements a "Trash Album" workaround for write operations (`Remove` and `Update`).
+* When a file is deleted or overwritten, rclone automatically discovers or creates an album named `"rclone_Trash"`.
+* The old media item is added to `"rclone_Trash"` and removed from the active album.
+* You can periodically review and permanently delete or empty items from the `"rclone_Trash"` album via the Google Photos web interface.
 
 Rclone cannot delete files anywhere except under `album`.
 
