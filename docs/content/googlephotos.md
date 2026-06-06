@@ -345,6 +345,24 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --gphotos-trash-album-name
+
+Name of the album to use as a trash bin for deleted and overwritten files.
+
+The Google Photos API does not support deleting media permanently.
+Instead rclone moves removed items into this album so they can be
+reviewed and deleted manually from the Google Photos UI.
+
+Set this to an empty string to disable the trash workaround (removed
+items will not be added to any album, but will remain in your library).
+
+Properties:
+
+- Config:      trash_album_name
+- Env Var:     RCLONE_GPHOTOS_TRASH_ALBUM_NAME
+- Type:        string
+- Default:     "rclone_Trash"
+
 #### --gphotos-read-size
 
 Set to read the size of media items.
@@ -643,9 +661,22 @@ The Google Photos Library API does not allow media items to be permanently delet
 
 To work around this limitation and keep your active albums clean:
 * Rclone implements a "Trash Album" workaround for write operations (`Remove` and `Update`).
-* When a file is deleted or overwritten, rclone automatically discovers or creates an album named `"rclone_Trash"`.
-* The old media item is added to `"rclone_Trash"` and removed from the active album.
-* You can periodically review and permanently delete or empty items from the `"rclone_Trash"` album via the Google Photos web interface.
+* When a file is deleted or overwritten, rclone automatically discovers or creates an album named `"rclone_Trash"` (configurable via `--gphotos-trash-album-name`).
+* The old media item is added to the trash album and removed from the active album.
+* You can periodically review and permanently delete or empty items from the trash album via the Google Photos web interface.
+* To customize the trash album name, set `--gphotos-trash-album-name=<name>`.
+* To disable the trash workaround entirely (items will remain in your library but be removed from the album), set `--gphotos-trash-album-name=""`.
+
+> [!WARNING]
+> **Do not use the trash album feature (`--gphotos-trash-album-name`) when syncing to albums that rclone cannot delete from (such as a "Favorites" or shared album)**. If the trash album feature is active, rclone will attempt to "delete" photos from these albums by moving them to the trash album.
+> 
+> To prevent this, you **must** disable the trash album feature by setting `--gphotos-trash-album-name ""` on the command line when performing these syncs.
+
+
+
+
+
+
 
 Rclone cannot delete files anywhere except under `album`.
 

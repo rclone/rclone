@@ -146,6 +146,18 @@ IMPORTANT: Due to Google policy changes rclone can now only download photos it u
 If you choose read only then rclone will only request read only access
 to your photos, otherwise rclone will request full access.`,
 		}, {
+			Name:    "trash_album_name",
+			Default: "rclone_Trash",
+			Help: `Name of the album to use as a trash bin for deleted and overwritten files.
+
+The Google Photos API does not support deleting media permanently.
+Instead rclone moves removed items into this album so they can be
+reviewed and deleted manually from the Google Photos UI.
+
+Set this to an empty string to disable the trash workaround (removed
+items will not be added to any album, but will remain in your library).`,
+			Advanced: true,
+		}, {
 			Name:    "read_size",
 			Default: false,
 			Help: `Set to read the size of media items.
@@ -228,6 +240,7 @@ type Options struct {
 	BatchSize       int                  `config:"batch_size"`
 	BatchTimeout    fs.Duration          `config:"batch_timeout"`
 	Proxy           string               `config:"proxy"`
+	TrashAlbumName  string               `config:"trash_album_name"`
 }
 
 // Fs represents a remote storage server
@@ -786,12 +799,16 @@ func (f *Fs) getOrCreateAlbum(ctx context.Context, albumTitle string) (album *ap
 	return f.createAlbum(ctx, albumTitle)
 }
 
-// findOrCreateTrashAlbum gets the trash album ID or retrieves it/creates it if it hasn't been cached yet
+// findOrCreateTrashAlbum gets the trash album ID or retrieves it/creates it if it hasn't been cached yet.
+// Returns an empty string (no error) when TrashAlbumName is empty, meaning the trash workaround is disabled.
 func (f *Fs) findOrCreateTrashAlbum(ctx context.Context) (string, error) {
+	if f.opt.TrashAlbumName == "" {
+		return "", nil
+	}
 	if f.trashAlbumID != "" {
 		return f.trashAlbumID, nil
 	}
-	album, err := f.getOrCreateAlbum(ctx, "rclone_Trash")
+	album, err := f.getOrCreateAlbum(ctx, f.opt.TrashAlbumName)
 	if err != nil {
 		return "", err
 	}
@@ -799,29 +816,32 @@ func (f *Fs) findOrCreateTrashAlbum(ctx context.Context) (string, error) {
 	return f.trashAlbumID, nil
 }
 
-// trashMediaItem moves a media item to the "rclone_Trash" album and removes it from a specified album
+// trashMediaItem moves a media item to the configured trash album and removes it from a specified album.
 func (f *Fs) trashMediaItem(ctx context.Context, mediaItemID string, currentAlbumID string) error {
 	trashAlbumID, err := f.findOrCreateTrashAlbum(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to find or create trash album: %w", err)
 	}
 
-	// 1. Add to trash album
-	addOpts := rest.Opts{
-		Method:     "POST",
-		Path:       "/albums/" + trashAlbumID + ":batchAddMediaItems",
-		NoResponse: true,
-	}
-	addRequest := api.BatchAddItems{
-		MediaItemIDs: []string{mediaItemID},
-	}
 	var resp *http.Response
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(ctx, &addOpts, &addRequest, nil)
-		return shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		return fmt.Errorf("failed to add item to trash album: %w", err)
+
+	// 1. Add to trash album (skip when trash is disabled)
+	if trashAlbumID != "" {
+		addOpts := rest.Opts{
+			Method:     "POST",
+			Path:       "/albums/" + trashAlbumID + ":batchAddMediaItems",
+			NoResponse: true,
+		}
+		addRequest := api.BatchAddItems{
+			MediaItemIDs: []string{mediaItemID},
+		}
+		err = f.pacer.Call(func() (bool, error) {
+			resp, err = f.srv.CallJSON(ctx, &addOpts, &addRequest, nil)
+			return shouldRetry(ctx, resp, err)
+		})
+		if err != nil {
+			return fmt.Errorf("failed to add item to trash album: %w", err)
+		}
 	}
 
 	// 2. Remove from current album if applicable

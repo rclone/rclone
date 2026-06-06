@@ -141,6 +141,9 @@ func TestRemoveTrashWorkaround(t *testing.T) {
 		srv:    rest.NewClient(http.DefaultClient).SetRoot(ts.URL),
 		pacer:  fs.NewPacer(ctx, pacer.NewGoogleDrive(pacer.MinSleep(10*time.Millisecond))),
 		albums: map[bool]*albums{},
+		opt: Options{
+			TrashAlbumName: "rclone_Trash",
+		},
 	}
 	f.srv.SetErrorHandler(errorHandler)
 
@@ -164,6 +167,141 @@ func TestRemoveTrashWorkaround(t *testing.T) {
 	assert.Equal(t, 1, calls["POST /albums"], "Should create rclone_Trash")
 	assert.Equal(t, 1, calls["POST /albums/trash-album-123:batchAddMediaItems"], "Should add to trash album")
 	assert.Equal(t, 1, calls["POST /albums/album1:batchRemoveMediaItems"], "Should remove from my-album")
+}
+
+// TestCustomTrashAlbumName verifies that a custom TrashAlbumName is used instead of the default "rclone_Trash".
+func TestCustomTrashAlbumName(t *testing.T) {
+	ctx := context.Background()
+	calls := make(map[string]int)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls[r.Method+" "+r.URL.Path]++
+
+		switch {
+		case r.Method == "GET" && r.URL.Path == "/albums":
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(api.ListAlbums{
+				Albums: []api.Album{
+					{ID: "album1", Title: "my-album"},
+				},
+			})
+
+		case r.Method == "POST" && r.URL.Path == "/albums":
+			var req api.CreateAlbum
+			_ = json.NewDecoder(r.Body).Decode(&req)
+			// Should use custom name, not "rclone_Trash"
+			assert.Equal(t, "my_custom_trash", req.Album.Title)
+
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(api.Album{
+				ID:    "custom-trash-456",
+				Title: "my_custom_trash",
+			})
+
+		case r.Method == "POST" && r.URL.Path == "/albums/custom-trash-456:batchAddMediaItems":
+			var req api.BatchAddItems
+			_ = json.NewDecoder(r.Body).Decode(&req)
+			assert.Equal(t, []string{"photo-123"}, req.MediaItemIDs)
+			w.WriteHeader(http.StatusOK)
+
+		case r.Method == "POST" && r.URL.Path == "/albums/album1:batchRemoveMediaItems":
+			w.WriteHeader(http.StatusOK)
+
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer ts.Close()
+
+	f := &Fs{
+		name:   "TestGphotos",
+		root:   "album/my-album",
+		unAuth: rest.NewClient(http.DefaultClient),
+		srv:    rest.NewClient(http.DefaultClient).SetRoot(ts.URL),
+		pacer:  fs.NewPacer(ctx, pacer.NewGoogleDrive(pacer.MinSleep(10*time.Millisecond))),
+		albums: map[bool]*albums{},
+		opt: Options{
+			TrashAlbumName: "my_custom_trash",
+		},
+	}
+	f.srv.SetErrorHandler(errorHandler)
+
+	_, err := f.listAlbums(ctx, false)
+	require.NoError(t, err)
+
+	o := &Object{
+		fs:     f,
+		remote: "photo.jpg",
+		id:     "photo-123",
+	}
+
+	err = o.Remove(ctx)
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, calls["POST /albums"], "Should create custom trash album")
+	assert.Equal(t, 1, calls["POST /albums/custom-trash-456:batchAddMediaItems"], "Should add to custom trash album")
+	assert.Equal(t, 0, calls["POST /albums/trash-album-123:batchAddMediaItems"], "Should NOT use default rclone_Trash album")
+}
+
+// TestDisabledTrashAlbum verifies that setting TrashAlbumName="" disables the trash workaround:
+// items are removed from their current album but not added to any trash album.
+func TestDisabledTrashAlbum(t *testing.T) {
+	ctx := context.Background()
+	calls := make(map[string]int)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls[r.Method+" "+r.URL.Path]++
+
+		switch {
+		case r.Method == "GET" && r.URL.Path == "/albums":
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(api.ListAlbums{
+				Albums: []api.Album{
+					{ID: "album1", Title: "my-album"},
+				},
+			})
+
+		case r.Method == "POST" && r.URL.Path == "/albums/album1:batchRemoveMediaItems":
+			// Should still remove from album even when trash is disabled
+			var req api.BatchRemoveItems
+			_ = json.NewDecoder(r.Body).Decode(&req)
+			assert.Equal(t, []string{"photo-123"}, req.MediaItemIDs)
+			w.WriteHeader(http.StatusOK)
+
+		default:
+			// No POST /albums to create trash, no batchAddMediaItems - should not be called
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer ts.Close()
+
+	f := &Fs{
+		name:   "TestGphotos",
+		root:   "album/my-album",
+		unAuth: rest.NewClient(http.DefaultClient),
+		srv:    rest.NewClient(http.DefaultClient).SetRoot(ts.URL),
+		pacer:  fs.NewPacer(ctx, pacer.NewGoogleDrive(pacer.MinSleep(10*time.Millisecond))),
+		albums: map[bool]*albums{},
+		opt: Options{
+			TrashAlbumName: "", // Disabled
+		},
+	}
+	f.srv.SetErrorHandler(errorHandler)
+
+	_, err := f.listAlbums(ctx, false)
+	require.NoError(t, err)
+
+	o := &Object{
+		fs:     f,
+		remote: "photo.jpg",
+		id:     "photo-123",
+	}
+
+	err = o.Remove(ctx)
+	require.NoError(t, err)
+
+	assert.Equal(t, 0, calls["POST /albums"], "Should NOT create any trash album")
+	assert.Equal(t, 1, calls["POST /albums/album1:batchRemoveMediaItems"], "Should still remove from current album")
 }
 
 func TestUpdateTrashWorkaround(t *testing.T) {
@@ -242,7 +380,8 @@ func TestUpdateTrashWorkaround(t *testing.T) {
 		pacer:  fs.NewPacer(ctx, pacer.NewGoogleDrive(pacer.MinSleep(10*time.Millisecond))),
 		albums: map[bool]*albums{},
 		opt: Options{
-			BatchMode: "sync",
+			BatchMode:      "sync",
+			TrashAlbumName: "rclone_Trash",
 		},
 	}
 	f.srv.SetErrorHandler(errorHandler)
