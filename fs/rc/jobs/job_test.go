@@ -300,6 +300,37 @@ func TestExecuteJobWithConfig(t *testing.T) {
 	assert.NotEqual(t, 42*fs.Mebi, ci.BufferSize)
 }
 
+// NewJob must mark the context as a remote control (rc) request, including for
+// asynchronous jobs whose context is detached
+func TestNewJobMarksRCRequest(t *testing.T) {
+	jobID.Store(0)
+	jobs := newJobs() // local instance so we don't pollute the global registry
+
+	// synchronous job
+	var syncMarked bool
+	_, _, err := jobs.NewJob(context.Background(), func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		syncMarked = fs.IsRCRequest(ctx)
+		return nil, nil
+	}, rc.Params{})
+	require.NoError(t, err)
+	assert.True(t, syncMarked, "sync rc job context must be marked as an rc request")
+
+	// asynchronous job - the context is detached, so the marker must be set
+	// after that detachment to survive
+	done := make(chan bool, 1)
+	_, _, err = jobs.NewJob(context.Background(), func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		done <- fs.IsRCRequest(ctx)
+		return nil, nil
+	}, rc.Params{"_async": true})
+	require.NoError(t, err)
+	select {
+	case asyncMarked := <-done:
+		assert.True(t, asyncMarked, "async rc job context must be marked as an rc request")
+	case <-time.After(5 * time.Second):
+		t.Fatal("async job did not run")
+	}
+}
+
 func TestExecuteJobWithFilter(t *testing.T) {
 	ctx := context.Background()
 	called := false

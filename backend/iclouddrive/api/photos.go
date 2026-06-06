@@ -511,7 +511,7 @@ func (album *Album) SetTestPhotoCache(cache map[string]*Photo) {
 
 // NewPhotosService creates a new PhotosService instance
 func NewPhotosService(ctx context.Context, client *Client, pacer *fs.Pacer, shouldRetry ShouldRetryFunc) (*PhotosService, error) {
-	service, exists := client.Session.AccountInfo.Webservices["ckdatabasews"]
+	service, exists := client.Session.AccountInfo.Webservices[WsPhotos]
 	if !exists || service.Status != "active" {
 		return nil, fmt.Errorf("ckdatabasews service not available")
 	}
@@ -606,6 +606,13 @@ func (ps *PhotosService) discoverLibraries(ctx context.Context) (*libraryDiscove
 				continue
 			}
 			name := zone.ZoneID.ZoneName
+			// Only PrimarySync and SharedSync-* are photo libraries. Other
+			// zones (e.g. CMM-* shared-album zones) appear in changes/database
+			// but have no CPLAlbumByPositionLive index, so querying their
+			// albums returns BAD_REQUEST / "Index has invalid data".
+			if name != "PrimarySync" && !strings.HasPrefix(name, "SharedSync") {
+				continue
+			}
 			// SharedSync-* found in private takes precedence over shared
 			if _, exists := result.libraries[name]; exists {
 				continue
@@ -2311,7 +2318,7 @@ func (ps *PhotosService) requestWithReauth(ctx context.Context, makeOpts func() 
 	reauthDone := false
 	return ps.pacer.Call(func() (bool, error) {
 		resp, err := ps.client.Session.Request(ctx, makeOpts(), data, response)
-		if !reauthDone && err != nil && resp != nil && (resp.StatusCode == 401 || resp.StatusCode == 421) {
+		if !reauthDone && err != nil && resp != nil && (resp.StatusCode == 401 || resp.StatusCode == 421 || resp.StatusCode == 423) {
 			reauthDone = true
 			if authErr := ps.client.Authenticate(ctx); authErr != nil {
 				return false, authErr

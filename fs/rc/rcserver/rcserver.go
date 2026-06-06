@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"mime"
@@ -20,6 +21,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fs/rc/jobs"
@@ -340,8 +342,57 @@ func (s *Server) serveRoot(w http.ResponseWriter, r *http.Request) {
 	directory.Serve(w, r)
 }
 
+// checkServeRemote returns an error if fsName must not be instantiated on the
+// file-serving (--rc-serve) path given the current authentication state.
+//
+// Instantiating a backend from request-supplied configuration can execute
+// commands during initialisation (e.g. webdav bearer_token_command, sftp ssh),
+// read arbitrary local files, or mutate process-wide config via global.*
+// options so shouldn't be done without authentication.
+//
+// authenticated must be true if the request has been authenticated (HTTP auth
+// is configured on the server) or --rc-no-auth was passed to explicitly opt in
+// to running without authentication.
+func checkServeRemote(fsName string, authenticated bool) error {
+	parsed, err := fspath.Parse(fsName)
+	if err != nil {
+		return fmt.Errorf("invalid remote %q: %w", fsName, err)
+	}
+
+	// global.* connection string options mutate process-wide rclone config. Never honour these
+	// from a request-derived remote, even when the request is authenticated
+	for k := range parsed.Config {
+		if strings.HasPrefix(k, "global.") {
+			return fmt.Errorf("setting %q on a served remote is not allowed", k)
+		}
+	}
+
+	if authenticated {
+		return nil
+	}
+
+	// On an unauthenticated server only allow access to pre-configured named remotes. Reject
+	// inline backend definitions, connection string option overrides and bare local paths
+	switch {
+	case parsed.Name == "":
+		return errors.New("serving local paths requires authentication to be set up on the rc server or the --rc-no-auth flag")
+	case strings.HasPrefix(parsed.Name, ":"):
+		return errors.New("serving inline remotes requires authentication to be set up on the rc server or the --rc-no-auth flag")
+	case len(parsed.Config) > 0:
+		return errors.New("serving remotes with connection string parameters requires authentication to be set up on the rc server or the --rc-no-auth flag")
+	}
+	return nil
+}
+
 func (s *Server) serveRemote(w http.ResponseWriter, r *http.Request, path string, fsName string) {
-	f, err := cache.Get(s.ctx, fsName)
+	// Check we are allowed to instantiate this remote
+	authenticated := s.noAuth || s.server.UsingAuth()
+	if err := checkServeRemote(fsName, authenticated); err != nil {
+		writeError(path, nil, w, err, http.StatusForbidden)
+		return
+	}
+	// Mark as an rc request e.g. so NewFs can reject global.* config
+	f, err := cache.Get(fs.WithRCRequest(s.ctx), fsName)
 	if err != nil {
 		writeError(path, nil, w, fmt.Errorf("failed to make Fs: %w", err), http.StatusInternalServerError)
 		return
