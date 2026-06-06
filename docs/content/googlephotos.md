@@ -289,6 +289,17 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --gphotos-read-exif-description
+
+Read EXIF/IPTC/XMP metadata from the file on upload and set it as the Google Photos description.
+
+Properties:
+
+- Config:      read_exif_description
+- Env Var:     RCLONE_GPHOTOS_READ_EXIF_DESCRIPTION
+- Type:        bool
+- Default:     false
+
 ### Advanced options
 
 Here are the Advanced options specific to google photos (Google Photos).
@@ -429,6 +440,17 @@ Properties:
 - Env Var:     RCLONE_GPHOTOS_PROXY
 - Type:        string
 - Required:    false
+
+#### --gphotos-exif-description-fields
+
+EXIF/IPTC/XMP fields to search for description metadata, in priority order.
+
+Properties:
+
+- Config:      exif_description_fields
+- Env Var:     RCLONE_GPHOTOS_EXIF_DESCRIPTION_FIELDS
+- Type:        string
+- Default:     "Description,Caption-Abstract,ImageDescription,Title,ObjectName"
 
 #### --gphotos-encoding
 
@@ -603,6 +625,11 @@ if you uploaded an image to `upload` then uploaded the same image to
 `album/my_album` the filename of the image in `album/my_album` will be
 what it was uploaded with initially, not what you uploaded it with to
 `album`.  In practise this shouldn't cause too many problems.
+
+Because deduplication ignores new metadata, **you cannot update an existing photo's EXIF description** by re-uploading identical file bytes (e.g. by using `--ignore-times`).
+
+The EXIF descriptions (enabled via `--gphotos-read-exif-description`) are only applied when a *new* media item is created. To update a description on Google Photos, you must modify the EXIF tags inside the local file (which changes the file bytes and MD5 hash, triggering a successful overwrite of the old item) or manually edit it in the Google Photos web interface.
+
 
 ### Modification times
 
