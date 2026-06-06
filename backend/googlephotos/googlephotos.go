@@ -232,21 +232,22 @@ type Options struct {
 
 // Fs represents a remote storage server
 type Fs struct {
-	name       string                 // name of this remote
-	root       string                 // the path we are working on if any
-	opt        Options                // parsed options
-	features   *fs.Features           // optional features
-	unAuth     *rest.Client           // unauthenticated http client
-	srv        *rest.Client           // the connection to the server
-	ts         *oauthutil.TokenSource // token source for oauth2
-	pacer      *fs.Pacer              // To pace the API calls
-	startTime  time.Time              // time Fs was started - used for datestamps
-	albumsMu   sync.Mutex             // protect albums (but not contents)
-	albums     map[bool]*albums       // albums, shared or not
-	uploadedMu sync.Mutex             // to protect the below
-	uploaded   dirtree.DirTree        // record of uploaded items
-	createMu   sync.Mutex             // held when creating albums to prevent dupes
-	batcher    *batcher.Batcher[uploadedItem, *api.MediaItem]
+	name         string                 // name of this remote
+	root         string                 // the path we are working on if any
+	opt          Options                // parsed options
+	features     *fs.Features           // optional features
+	unAuth       *rest.Client           // unauthenticated http client
+	srv          *rest.Client           // the connection to the server
+	ts           *oauthutil.TokenSource // token source for oauth2
+	pacer        *fs.Pacer              // To pace the API calls
+	startTime    time.Time              // time Fs was started - used for datestamps
+	albumsMu     sync.Mutex             // protect albums (but not contents)
+	albums       map[bool]*albums       // albums, shared or not
+	uploadedMu   sync.Mutex             // to protect the below
+	uploaded     dirtree.DirTree        // record of uploaded items
+	createMu     sync.Mutex             // held when creating albums to prevent dupes
+	batcher      *batcher.Batcher[uploadedItem, *api.MediaItem]
+	trashAlbumID string // Cache for rclone_Trash album ID
 }
 
 // Object describes a storage object
@@ -785,6 +786,66 @@ func (f *Fs) getOrCreateAlbum(ctx context.Context, albumTitle string) (album *ap
 	return f.createAlbum(ctx, albumTitle)
 }
 
+// findOrCreateTrashAlbum gets the trash album ID or retrieves it/creates it if it hasn't been cached yet
+func (f *Fs) findOrCreateTrashAlbum(ctx context.Context) (string, error) {
+	if f.trashAlbumID != "" {
+		return f.trashAlbumID, nil
+	}
+	album, err := f.getOrCreateAlbum(ctx, "rclone_Trash")
+	if err != nil {
+		return "", err
+	}
+	f.trashAlbumID = album.ID
+	return f.trashAlbumID, nil
+}
+
+// trashMediaItem moves a media item to the "rclone_Trash" album and removes it from a specified album
+func (f *Fs) trashMediaItem(ctx context.Context, mediaItemID string, currentAlbumID string) error {
+	trashAlbumID, err := f.findOrCreateTrashAlbum(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to find or create trash album: %w", err)
+	}
+
+	// 1. Add to trash album
+	addOpts := rest.Opts{
+		Method:     "POST",
+		Path:       "/albums/" + trashAlbumID + ":batchAddMediaItems",
+		NoResponse: true,
+	}
+	addRequest := api.BatchAddItems{
+		MediaItemIDs: []string{mediaItemID},
+	}
+	var resp *http.Response
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallJSON(ctx, &addOpts, &addRequest, nil)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return fmt.Errorf("failed to add item to trash album: %w", err)
+	}
+
+	// 2. Remove from current album if applicable
+	if currentAlbumID != "" && currentAlbumID != trashAlbumID {
+		removeOpts := rest.Opts{
+			Method:     "POST",
+			Path:       "/albums/" + currentAlbumID + ":batchRemoveMediaItems",
+			NoResponse: true,
+		}
+		removeRequest := api.BatchRemoveItems{
+			MediaItemIDs: []string{mediaItemID},
+		}
+		err = f.pacer.Call(func() (bool, error) {
+			resp, err = f.srv.CallJSON(ctx, &removeOpts, &removeRequest, nil)
+			return shouldRetry(ctx, resp, err)
+		})
+		if err != nil {
+			return fmt.Errorf("failed to remove item from current album: %w", err)
+		}
+	}
+
+	return nil
+}
+
 // Mkdir creates the album if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 	// defer log.Trace(f, "dir=%q", dir)("err=%v", &err)
@@ -1129,6 +1190,7 @@ func (f *Fs) commitBatch(ctx context.Context, items []uploadedItem, results []*a
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	// defer log.Trace(o, "src=%+v", src)("err=%v", &err)
+	oldID := o.id
 	match, _, pattern := patterns.match(o.fs.root, o.remote, true)
 	if pattern == nil || !pattern.isFile || !pattern.canUpload {
 		return errCantUpload
@@ -1219,6 +1281,14 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		o.setMetaData(info)
 	}
 
+	// If this was an overwrite (update), trash the old media item
+	if oldID != "" && oldID != o.id {
+		err = o.fs.trashMediaItem(ctx, oldID, albumID)
+		if err != nil {
+			fs.Errorf(o, "Failed to trash old duplicate media item %q: %v", oldID, err)
+		}
+	}
+
 	// Add upload to internal storage
 	if pattern.isUpload {
 		o.fs.uploadedMu.Lock()
@@ -1231,31 +1301,28 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 // Remove an object
 func (o *Object) Remove(ctx context.Context) (err error) {
 	match, _, pattern := patterns.match(o.fs.root, o.remote, true)
-	if pattern == nil || !pattern.isFile || !pattern.canUpload || pattern.isUpload {
+	if pattern == nil || !pattern.isFile {
 		return errRemove
 	}
-	albumTitle, fileName := match[1], match[2]
-	album, ok := o.fs.albums[false].get(albumTitle)
-	if !ok {
-		return fmt.Errorf("couldn't file %q in album %q for delete", fileName, albumTitle)
+
+	var currentAlbumID string
+	if len(match) >= 3 {
+		albumTitle := match[1]
+		if albums := o.fs.albums[false]; albums != nil {
+			if album, ok := albums.get(albumTitle); ok {
+				currentAlbumID = album.ID
+			}
+		}
+		if currentAlbumID == "" {
+			if albums := o.fs.albums[true]; albums != nil {
+				if album, ok := albums.get(albumTitle); ok {
+					currentAlbumID = album.ID
+				}
+			}
+		}
 	}
-	opts := rest.Opts{
-		Method:     "POST",
-		Path:       "/albums/" + album.ID + ":batchRemoveMediaItems",
-		NoResponse: true,
-	}
-	request := api.BatchRemoveItems{
-		MediaItemIDs: []string{o.id},
-	}
-	var resp *http.Response
-	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.CallJSON(ctx, &opts, &request, nil)
-		return shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		return fmt.Errorf("couldn't delete item from album: %w", err)
-	}
-	return nil
+
+	return o.fs.trashMediaItem(ctx, o.id, currentAlbumID)
 }
 
 // MimeType of an Object if known, "" otherwise
