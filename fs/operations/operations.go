@@ -288,19 +288,30 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 		// Sizes the same so check the mtime
 		modifyWindow := fs.GetModifyWindow(ctx, src.Fs(), dst.Fs())
 		if modifyWindow == fs.ModTimeNotSupported {
-			fs.Debugf(src, "Sizes identical")
-			logger(ctx, Match, src, dst, nil)
-			return true
-		}
-		dstModTime := dst.ModTime(ctx)
-		dt := dstModTime.Sub(srcModTime)
-		if dt < modifyWindow && dt > -modifyWindow {
-			fs.Debugf(src, "Size and modification time the same (differ by %s, within tolerance %s)", dt, modifyWindow)
-			logger(ctx, Match, src, dst, nil)
-			return true
-		}
+			// If both sides share a common hash type, use it to detect
+			// content changes even without --checksum. This is important
+			// when wrapping a backend that lacks reliable modtime (e.g.
+			// Google Photos via the hasher backend): without this, a file
+			// that changes content but not size would be silently skipped.
+			common := src.Fs().Hashes().Overlap(dst.Fs().Hashes())
+			if common.Count() == 0 {
+				fs.Debugf(src, "Sizes identical")
+				logger(ctx, Match, src, dst, nil)
+				return true
+			}
+			fs.Debugf(src, "Sizes identical but checking hash since modtime is unsupported")
+			// Fall through to CheckHashes below
+		} else {
+			dstModTime := dst.ModTime(ctx)
+			dt := dstModTime.Sub(srcModTime)
+			if dt < modifyWindow && dt > -modifyWindow {
+				fs.Debugf(src, "Size and modification time the same (differ by %s, within tolerance %s)", dt, modifyWindow)
+				logger(ctx, Match, src, dst, nil)
+				return true
+			}
 
-		fs.Debugf(src, "Modification times differ by %s: %v, %v", dt, srcModTime, dstModTime)
+			fs.Debugf(src, "Modification times differ by %s: %v, %v", dt, srcModTime, dstModTime)
+		}
 	}
 
 	// Check if the hashes are the same
