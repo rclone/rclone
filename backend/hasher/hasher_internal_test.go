@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"testing"
 	"time"
 
@@ -134,7 +135,7 @@ func (f *Fs) testUpdateInFlightHashing(t *testing.T) {
 			opt: &Options{
 				Remote: tempRoot,
 				Hashes: fs.CommaSepList{"md5"},
-				MaxAge: fs.Duration(fs.DurationOff),
+				MaxAge: fs.DurationOff,
 			},
 		}
 		hasherFs.keepHashes.Add(hashType)
@@ -198,7 +199,7 @@ func (f *Fs) testUpdateInFlightHashing(t *testing.T) {
 			opt: &Options{
 				Remote: tempRoot,
 				Hashes: fs.CommaSepList{"md5"},
-				MaxAge: fs.Duration(fs.DurationOff),
+				MaxAge: fs.DurationOff,
 			},
 		}
 		hasherFs.keepHashes.Add(hashType)
@@ -239,6 +240,62 @@ func (f *Fs) testUpdateInFlightHashing(t *testing.T) {
 	})
 }
 
+func (f *Fs) testFingerprintIgnoreSize(t *testing.T) {
+	ctx := context.Background()
+	hashType := hash.MD5
+
+	tempRoot, err := fstest.LocalRemote()
+	require.NoError(t, err)
+	defer func() {
+		_ = os.RemoveAll(tempRoot)
+	}()
+
+	localFs, err := fs.NewFs(ctx, tempRoot)
+	require.NoError(t, err)
+
+	hasherFs := &Fs{
+		Fs:   localFs,
+		name: "TestHasher",
+		root: "",
+		opt: &Options{
+			Remote: tempRoot,
+			Hashes: fs.CommaSepList{"md5"},
+			MaxAge: fs.DurationOff,
+		},
+	}
+	hasherFs.keepHashes.Add(hashType)
+	hasherFs.suppHashes.Add(hashType)
+	hasherFs.autoHashes.Add(hashType)
+
+	db, err := kv.Start(ctx, "hasher", hasherFs.Fs)
+	require.NoError(t, err)
+	hasherFs.db = db
+	defer func() {
+		_ = db.Stop(true)
+	}()
+
+	// Put a hash under fingerprint: "100,-,-" (size 100, no modtime, no hash)
+	fp1 := "100,-,-"
+	remote := "test_ignore_size.txt"
+	dbKey := path.Join(hasherFs.Fs.Root(), remote)
+	err = hasherFs.putRawHashes(ctx, dbKey, fp1, operations.HashSums{"md5": "abc123hash"})
+	require.NoError(t, err)
+
+	// Case 1: Standard lookup with mismatching size (120,-,-) -> should fail
+	_, err = hasherFs.getRawHash(ctx, hashType, remote, "120,-,-", time.Duration(fs.DurationOff))
+	assert.Error(t, err, "standard lookup with different size should fail")
+
+	// Case 2: Enable ignore_size in config map and lookup with mismatching size -> should succeed
+	ci := fs.GetConfig(ctx)
+	ci.IgnoreSize = true
+	h, err := hasherFs.getRawHash(ctx, hashType, remote, "120,-,-", time.Duration(fs.DurationOff))
+	assert.NoError(t, err)
+	assert.Equal(t, "abc123hash", h, "lookup with different size should succeed when IgnoreSize=true")
+
+	// Clean up config change for other tests
+	ci.IgnoreSize = false
+}
+
 // InternalTest dispatches all internal tests
 func (f *Fs) InternalTest(t *testing.T) {
 	if !kv.Supported() {
@@ -248,6 +305,7 @@ func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("UpdateInFlightHashing", func(t *testing.T) {
 		f.testUpdateInFlightHashing(t)
 	})
+	t.Run("FingerprintIgnoreSize", f.testFingerprintIgnoreSize)
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)

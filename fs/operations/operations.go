@@ -300,6 +300,7 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 				return true
 			}
 			fs.Debugf(src, "Sizes identical but checking hash since modtime is unsupported")
+			opt.updateModTime = false
 			// Fall through to CheckHashes below
 		} else {
 			dstModTime := dst.ModTime(ctx)

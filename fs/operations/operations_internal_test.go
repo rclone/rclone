@@ -155,4 +155,16 @@ func TestEqualModTimeNotSupported(t *testing.T) {
 		assert.False(t, equal(ctx, src, dst, opt),
 			"different sizes: must not be equal")
 	})
+
+	// Branch D: ModTimeNotSupported, common hash, same hash, updateModTime=true -> equal (should NOT call SetModTime / return false)
+	t.Run("CommonHash_SameContent_UpdateModTime_Equal", func(t *testing.T) {
+		src := newObj(withMD5, 100, map[hash.Type]string{hash.MD5: "abc123"})
+		dst := newObj(withMD5, 100, map[hash.Type]string{hash.MD5: "abc123"})
+		src.modTime = time.Now()
+		dst.modTime = src.modTime.Add(1 * time.Hour)
+
+		optWithUpdate := equalOpt{checkSum: false, sizeOnly: false, updateModTime: true}
+		assert.True(t, equal(ctx, src, dst, optWithUpdate),
+			"same size + same MD5 even with updateModTime=true: should be equal when modtime is unsupported")
+	})
 }

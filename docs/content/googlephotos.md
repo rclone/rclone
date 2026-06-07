@@ -649,6 +649,46 @@ Rclone cannot delete files anywhere except under `album`.
 
 The Google Photos API does not support deleting albums - see [bug #135714733](https://issuetracker.google.com/issues/135714733).
 
+## Using the Hasher Backend Overlay for Checksum Sync
+
+To overcome the eventual consistency issues, lack of native MD5/checksums, lack of modification times, and munged sizes in Google Photos, you can wrap your googlephotos remote with the `hasher` backend.
+
+Since Google Photos strips metadata and re-encodes files on download, round-trip checksums and sizes will differ from the uploaded originals. The `hasher` backend overlay caches the computed local hash in-flight during upload to bypass these round-trip discrepancies, allowing rclone to sync without re-uploading unmodified files.
+
+This overlay calculates checksums on-the-fly during upload, caches them in a local database (BoltDB), and uses them for transfer verification and future sync checks.
+
+### Configuration
+
+Add the following to your `rclone.conf` file:
+
+```ini
+[gphotos_cache]
+type = hasher
+remote = gphotos:
+hashes = md5
+max_age = off
+```
+
+*(Note: Replace `gphotos:` with your actual Google Photos remote name if it differs.)*
+
+### How to Sync
+
+With the hasher overlay configured, you can perform syncs using the following command structure:
+
+```bash
+rclone sync /path/to/local gphotos_cache:album/MyAlbum \
+  --gphotos-upload-exif-description \
+  --ignore-size \
+  --ignore-checksum
+```
+
+### Explanation of Behavior and Flags
+
+* **`--ignore-checksum` is REQUIRED**: Google Photos server-side processing often strips EXIF metadata or transcodes files (especially on Storage Saver plans), which alters the file content bytes and changes the hash. This flag ensures rclone doesn't flag these byte-level hash changes as upload corruptions.
+* **`--ignore-size` is REQUIRED**: Because Google Photos alters file contents on upload, the resulting file size on their servers can differ slightly from your local file size (often by a few bytes). Using `--ignore-size` prevents rclone from repeatedly uploading the file due to size differences. Hasher's fingerprint lookup will automatically ignore the size component of the fingerprint when this flag is active. Because the size is ignored, you do **not** need to enable `--gphotos-read-size`, which avoids extra HEAD requests and saves massive API quota.
+* **`--gphotos-batch-mode async` (or `batch_mode = async` in config) is RECOMMENDED**: You can safely use async batching to group uploads and improve performance. Hasher will use local source file sizes to cache hashes during upload to prevent 0-size upload loops from eventual consistency.
+
+
 ## Making your own client_id
 
 When you use rclone with Google photos in its default configuration you
