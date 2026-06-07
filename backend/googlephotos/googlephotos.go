@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
@@ -211,9 +212,9 @@ rclone use the proxy.
 `, "|", "`"),
 			Advanced: true,
 		}, {
-			Name:    "read_exif_description",
+			Name:    "upload_exif_description",
 			Default: false,
-			Help:    "Read EXIF/IPTC/XMP metadata from the file on upload and set it as the Google Photos description.",
+			Help:    "Upload EXIF/IPTC/XMP metadata from the file as the Google Photos description.",
 		}, {
 			Name:     "exif_description_fields",
 			Default:  "Description,Caption-Abstract,ImageDescription,Title,ObjectName",
@@ -242,6 +243,7 @@ type Options struct {
 	BatchTimeout          fs.Duration          `config:"batch_timeout"`
 	Proxy                 string               `config:"proxy"`
 	ReadExifDescription   bool                 `config:"read_exif_description"`
+	UploadExifDescription bool                 `config:"upload_exif_description"`
 	ExifDescriptionFields string               `config:"exif_description_fields"`
 }
 
@@ -1121,6 +1123,53 @@ func extractEXIFDescription(in io.Reader, fileName string, fieldsList string) (s
 			}
 			return nil
 		},
+		HandleXMP: func(r io.Reader) error {
+			dec := xml.NewDecoder(r)
+			var currentTag string
+			var inAltLi bool
+			for {
+				tok, err := dec.Token()
+				if err != nil {
+					if err == io.EOF {
+						break
+					}
+					return err
+				}
+				switch se := tok.(type) {
+				case xml.StartElement:
+					name := strings.ToLower(se.Name.Local)
+					if name == "title" || name == "description" {
+						// Only match if namespace is Dublin Core
+						if se.Name.Space == "http://purl.org/dc/elements/1.1/" {
+							currentTag = name
+						}
+					} else if name == "li" && currentTag != "" {
+						inAltLi = true
+					}
+				case xml.CharData:
+					if inAltLi && currentTag != "" {
+						val := strings.TrimSpace(string(se))
+						if val != "" {
+							if currentTag == "title" {
+								tags["Title"] = val
+							} else if currentTag == "description" {
+								tags["Description"] = val
+							}
+						}
+					}
+				case xml.EndElement:
+					name := strings.ToLower(se.Name.Local)
+					if name == "title" || name == "description" {
+						if se.Name.Space == "http://purl.org/dc/elements/1.1/" {
+							currentTag = ""
+						}
+					} else if name == "li" {
+						inAltLi = false
+					}
+				}
+			}
+			return nil
+		},
 	}
 
 	// Decode (ignore error if format decoding fails or is partial)
@@ -1129,7 +1178,7 @@ func extractEXIFDescription(in io.Reader, fileName string, fieldsList string) (s
 	// Prioritize fields in the specified order
 	var description string
 	for _, field := range fields {
-		if val, ok := tags[field]; ok && val != "" {
+		if val, ok := tags[field]; ok && strings.TrimSpace(val) != "" {
 			description = val
 			break
 		}
@@ -1261,7 +1310,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	var description string
-	if o.fs.opt.ReadExifDescription {
+	if o.fs.opt.UploadExifDescription {
 		var extractErr error
 		description, in, extractErr = extractEXIFDescription(in, fileName, o.fs.opt.ExifDescriptionFields)
 		if extractErr != nil {

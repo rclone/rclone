@@ -15,9 +15,10 @@ limitations, so please read the [limitations section](#limitations)
 carefully to make sure it is suitable for your use.
 
 **NB** From March 31, 2025 rclone can only download photos it
-uploaded. This limitation is due to policy changes at Google. You may
-need to run `rclone config reconnect remote:` to make rclone work
-again after upgrading to rclone v1.70.
+uploaded and can only read or modify albums it created. This limitation
+is due to policy changes at Google. You may need to run
+`rclone config reconnect remote:` to make rclone work again after
+upgrading to rclone v1.70.
 
 ## Configuration
 
@@ -289,14 +290,14 @@ Properties:
 - Type:        bool
 - Default:     false
 
-#### --gphotos-read-exif-description
+#### --gphotos-upload-exif-description
 
-Read EXIF/IPTC/XMP metadata from the file on upload and set it as the Google Photos description.
+Upload EXIF/IPTC/XMP metadata from the file as the Google Photos description.
 
 Properties:
 
-- Config:      read_exif_description
-- Env Var:     RCLONE_GPHOTOS_READ_EXIF_DESCRIPTION
+- Config:      upload_exif_description
+- Env Var:     RCLONE_GPHOTOS_UPLOAD_EXIF_DESCRIPTION
 - Type:        bool
 - Default:     false
 
@@ -570,9 +571,10 @@ rclone will upload the file, then Google Photos will give an error
 when it is put turned into a media item.
 
 **NB** From March 31, 2025 rclone can only download photos it
-uploaded. This limitation is due to policy changes at Google. You may
-need to run `rclone config reconnect remote:` to make rclone work
-again after upgrading to rclone v1.70.
+uploaded and can only read or modify albums it created. This limitation
+is due to policy changes at Google. You may need to run
+`rclone config reconnect remote:` to make rclone work again after
+upgrading to rclone v1.70.
 
 Note that all media items uploaded to Google Photos through the API
 are stored in full resolution at "original quality" and **will** count
@@ -596,8 +598,9 @@ is covered by [bug #112096115](https://issuetracker.google.com/issues/112096115)
 **The current google API does not allow photos to be downloaded at original
 resolution. This is very important if you are, for example, relying on
 "Google Photos" as a backup of your photos. You will not be able to use
-rclone to redownload original images.  You could use 'google takeout'
-to recover the original photos as a last resort**
+rclone to redownload original images. This also means that round-trip
+checksums and sizes will differ from the uploaded originals. You could
+use 'google takeout' to recover the original photos as a last resort**
 
 **NB** you **can** use the [--gphotos-proxy](#gphotos-proxy) flag to use a
 headless browser to download images in full resolution.
@@ -628,8 +631,7 @@ what it was uploaded with initially, not what you uploaded it with to
 
 Because deduplication ignores new metadata, **you cannot update an existing photo's EXIF description** by re-uploading identical file bytes (e.g. by using `--ignore-times`).
 
-The EXIF descriptions (enabled via `--gphotos-read-exif-description`) are only applied when a *new* media item is created. To update a description on Google Photos, you must modify the EXIF tags inside the local file (which changes the file bytes and MD5 hash, triggering a successful overwrite of the old item) or manually edit it in the Google Photos web interface.
-
+The EXIF descriptions (enabled via `--gphotos-upload-exif-description`) are only applied when a *new* media item is created. To update a description on Google Photos, you must modify the EXIF tags inside the local file (which changes the file bytes and MD5 hash, triggering a successful overwrite of the old item) or manually edit it in the Google Photos web interface.
 
 ### Modification times
 
@@ -650,7 +652,9 @@ existence check.
 It is possible to read the size of the media, but this needs an extra
 HTTP HEAD request per media item so is **very slow** and uses up a lot of
 transactions.  This can be enabled with the `--gphotos-read-size`
-option or the `read_size = true` config parameter.
+option or the `read_size = true` config parameter. Note that due to Google
+Photos' re-encoding on download, this round-trip size will differ from
+your original local file size.
 
 If you want to use the backend with `rclone mount` you may need to
 enable this flag (depending on your OS and application using the
@@ -659,8 +663,9 @@ You'll need to experiment to see if it works for you without the flag.
 
 ### Albums
 
-Rclone can only upload files to albums it created. This is a
-[limitation of the Google Photos API](https://developers.google.com/photos/library/guides/manage-albums).
+Rclone can only upload files to, list, or modify albums it created. This is a
+[limitation of the Google Photos API](https://developers.google.com/photos/library/guides/manage-albums)
+enforced since March 31, 2025.
 
 Rclone can remove files it uploaded from albums it created only.
 
@@ -670,7 +675,7 @@ Rclone can remove files from albums it created, but note that the
 Google Photos API does not allow media to be deleted permanently so
 this media will still remain. See [bug #109759781](https://issuetracker.google.com/issues/109759781).
 
-Rclone cannot delete files anywhere except under `album`.
+Rclone cannot delete files anywhere except under albums created by the app (it cannot remove photos from Favorites, shared albums, or the general Library).
 
 ### Deleting albums
 
