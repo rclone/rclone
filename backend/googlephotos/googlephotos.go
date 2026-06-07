@@ -1305,7 +1305,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if oldID != "" && oldID != o.id {
 		err = o.fs.trashMediaItem(ctx, oldID, albumID)
 		if err != nil {
-			fs.Errorf(o, "Failed to trash old duplicate media item %q: %v", oldID, err)
+			return fmt.Errorf("failed to trash old duplicate media item %q: %w", oldID, err)
 		}
 	}
 

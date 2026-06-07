@@ -414,3 +414,96 @@ func TestUpdateTrashWorkaround(t *testing.T) {
 	assert.Equal(t, 1, calls["POST /albums/trash-album-123:batchAddMediaItems"], "Should trash old duplicate ID")
 	assert.Equal(t, 1, calls["POST /albums/album1:batchRemoveMediaItems"], "Should remove old duplicate ID from album")
 }
+
+func TestUpdateTrashWorkaroundFailure(t *testing.T) {
+	ctx := context.Background()
+	calls := make(map[string]int)
+
+	ci := fs.GetConfig(ctx)
+	saveLowLevelRetries := ci.LowLevelRetries
+	ci.LowLevelRetries = 1
+	defer func() {
+		ci.LowLevelRetries = saveLowLevelRetries
+	}()
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls[r.Method+" "+r.URL.Path]++
+
+		switch {
+		case r.Method == "GET" && r.URL.Path == "/albums":
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(api.ListAlbums{
+				Albums: []api.Album{
+					{ID: "album1", Title: "my-album", IsWriteable: true},
+					{ID: "trash-album-123", Title: "rclone_Trash", IsWriteable: true},
+				},
+			})
+
+		case r.Method == "POST" && r.URL.Path == "/uploads":
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("upload-token-abc"))
+
+		case r.Method == "POST" && r.URL.Path == "/mediaItems:batchCreate":
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(api.BatchCreateResponse{
+				NewMediaItemResults: []struct {
+					UploadToken string `json:"uploadToken"`
+					Status      struct {
+						Message string `json:"message"`
+						Code    int    `json:"code"`
+					} `json:"status"`
+					MediaItem api.MediaItem `json:"mediaItem"`
+				}{
+					{
+						UploadToken: "upload-token-abc",
+						MediaItem: api.MediaItem{
+							ID:       "new-photo-456",
+							Filename: "photo.jpg",
+						},
+					},
+				},
+			})
+
+		case r.Method == "POST" && r.URL.Path == "/albums/trash-album-123:batchAddMediaItems":
+			w.WriteHeader(http.StatusTooManyRequests)
+			_, _ = w.Write([]byte(`{"error": {"code": 429, "message": "Quota exceeded"}}`))
+
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer ts.Close()
+
+	f := &Fs{
+		name:   "TestGphotos",
+		root:   "album/my-album",
+		unAuth: rest.NewClient(http.DefaultClient),
+		srv:    rest.NewClient(http.DefaultClient).SetRoot(ts.URL),
+		pacer:  fs.NewPacer(ctx, pacer.NewGoogleDrive(pacer.MinSleep(10*time.Millisecond))),
+		albums: map[bool]*albums{},
+		opt: Options{
+			BatchMode:      "sync",
+			TrashAlbumName: "rclone_Trash",
+		},
+	}
+	f.srv.SetErrorHandler(errorHandler)
+
+	var err error
+	batcherOpts := defaultBatcherOptions
+	batcherOpts.Mode = f.opt.BatchMode
+	f.batcher, err = batcher.New(ctx, f, f.commitBatch, batcherOpts)
+	require.NoError(t, err)
+
+	_, err = f.listAlbums(ctx, false)
+	require.NoError(t, err)
+
+	o := &Object{
+		fs:     f,
+		remote: "photo.jpg",
+		id:     "old-photo-123",
+	}
+
+	err = o.Update(ctx, strings.NewReader("new content"), nil)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to trash old duplicate media item")
+}
