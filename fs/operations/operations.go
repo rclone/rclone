@@ -17,6 +17,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -1563,8 +1564,7 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 
 	errCount := errcount.New()
 	// Delete all directories at the same level in parallel
-	for level := len(toDelete) - 1; level >= 0; level-- {
-		dirs := toDelete[level]
+	for level, dirs := range slices.Backward(toDelete) {
 		if len(dirs) == 0 {
 			continue
 		}
@@ -2472,8 +2472,8 @@ func DirMove(ctx context.Context, f fs.Fs, srcRemote, dstRemote string) (err err
 	}
 
 	// Remove the source directories in reverse order
-	for i := len(dirs) - 1; i >= 0; i-- {
-		err := f.Rmdir(ctx, dirs[i])
+	for _, dir := range slices.Backward(dirs) {
+		err := f.Rmdir(ctx, dir)
 		if err != nil {
 			return fmt.Errorf("RenameDir rmdir: %w", err)
 		}
