@@ -507,3 +507,85 @@ func TestUpdateTrashWorkaroundFailure(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to trash old duplicate media item")
 }
+
+func TestUpdateTrashWorkaroundAsync(t *testing.T) {
+	ctx := context.Background()
+	calls := make(map[string]int)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls[r.Method+" "+r.URL.Path]++
+
+		switch {
+		case r.Method == "GET" && r.URL.Path == "/albums":
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(api.ListAlbums{
+				Albums: []api.Album{
+					{ID: "album1", Title: "my-album", IsWriteable: true},
+					{ID: "trash-album-123", Title: "rclone_Trash", IsWriteable: true},
+				},
+			})
+
+		case r.Method == "POST" && r.URL.Path == "/uploads":
+			body, _ := io.ReadAll(r.Body)
+			assert.Equal(t, "new content", string(body))
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("upload-token-abc"))
+
+		case r.Method == "POST" && r.URL.Path == "/albums/trash-album-123:batchAddMediaItems":
+			var req api.BatchAddItems
+			_ = json.NewDecoder(r.Body).Decode(&req)
+			assert.Equal(t, []string{"old-photo-123"}, req.MediaItemIDs)
+			w.WriteHeader(http.StatusOK)
+
+		case r.Method == "POST" && r.URL.Path == "/albums/album1:batchRemoveMediaItems":
+			var req api.BatchRemoveItems
+			_ = json.NewDecoder(r.Body).Decode(&req)
+			assert.Equal(t, []string{"old-photo-123"}, req.MediaItemIDs)
+			w.WriteHeader(http.StatusOK)
+
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer ts.Close()
+
+	f := &Fs{
+		name:   "TestGphotos",
+		root:   "album/my-album",
+		unAuth: rest.NewClient(http.DefaultClient),
+		srv:    rest.NewClient(http.DefaultClient).SetRoot(ts.URL),
+		pacer:  fs.NewPacer(ctx, pacer.NewGoogleDrive(pacer.MinSleep(10*time.Millisecond))),
+		albums: map[bool]*albums{},
+		opt: Options{
+			BatchMode:      "async",
+			TrashAlbumName: "rclone_Trash",
+		},
+	}
+	f.srv.SetErrorHandler(errorHandler)
+
+	var err error
+	batcherOpts := defaultBatcherOptions
+	batcherOpts.Mode = f.opt.BatchMode
+	f.batcher, err = batcher.New(ctx, f, f.commitBatch, batcherOpts)
+	require.NoError(t, err)
+	defer f.batcher.Shutdown()
+
+	_, err = f.listAlbums(ctx, false)
+	require.NoError(t, err)
+
+	o := &Object{
+		fs:     f,
+		remote: "photo.jpg",
+		id:     "old-photo-123",
+	}
+
+	src := mockobject.New("photo.jpg").WithContent([]byte("new content"), mockobject.SeekModeNone)
+	err = o.Update(ctx, strings.NewReader("new content"), src)
+	require.NoError(t, err)
+
+	// In async mode, the upload is queued but trashing old duplicate ID is done immediately.
+	assert.Equal(t, 1, calls["POST /uploads"], "Should upload new photo")
+	assert.Equal(t, 0, calls["POST /mediaItems:batchCreate"], "Should not commit upload batch synchronously")
+	assert.Equal(t, 1, calls["POST /albums/trash-album-123:batchAddMediaItems"], "Should trash old duplicate ID immediately")
+	assert.Equal(t, 1, calls["POST /albums/album1:batchRemoveMediaItems"], "Should remove old duplicate ID from album immediately")
+}

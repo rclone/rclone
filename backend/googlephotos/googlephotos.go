@@ -1304,7 +1304,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	// If this was an overwrite (update), trash the old media item
-	if oldID != "" && oldID != o.id {
+	if oldID != "" {
 		err = o.fs.trashMediaItem(ctx, oldID, albumID)
 		if err != nil {
 			return fmt.Errorf("failed to trash old duplicate media item %q: %w", oldID, err)
