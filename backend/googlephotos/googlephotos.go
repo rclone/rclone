@@ -147,7 +147,7 @@ If you choose read only then rclone will only request read only access
 to your photos, otherwise rclone will request full access.`,
 		}, {
 			Name:    "trash_album_name",
-			Default: "rclone_Trash",
+			Default: "",
 			Help: `Name of the album to use as a trash bin for deleted and overwritten files.
 
 The Google Photos API does not support deleting media permanently.
@@ -827,6 +827,7 @@ func (f *Fs) trashMediaItem(ctx context.Context, mediaItemID string, currentAlbu
 
 	// 1. Add to trash album (skip when trash is disabled)
 	if trashAlbumID != "" {
+		fs.Infof(f, "Adding media item %q to trash album %q", mediaItemID, f.opt.TrashAlbumName)
 		addOpts := rest.Opts{
 			Method:     "POST",
 			Path:       "/albums/" + trashAlbumID + ":batchAddMediaItems",
@@ -846,6 +847,7 @@ func (f *Fs) trashMediaItem(ctx context.Context, mediaItemID string, currentAlbu
 
 	// 2. Remove from current album if applicable
 	if currentAlbumID != "" && currentAlbumID != trashAlbumID {
+		fs.Infof(f, "Removing media item %q from album ID %q", mediaItemID, currentAlbumID)
 		removeOpts := rest.Opts{
 			Method:     "POST",
 			Path:       "/albums/" + currentAlbumID + ":batchRemoveMediaItems",
