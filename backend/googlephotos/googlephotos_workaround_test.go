@@ -11,6 +11,7 @@ import (
 
 	"github.com/rclone/rclone/backend/googlephotos/api"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fstest/mockobject"
 	"github.com/rclone/rclone/lib/batcher"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
@@ -73,7 +74,8 @@ func TestAsyncBatchModePanic(t *testing.T) {
 	// assert.NotPanics documents the expected post-fix behaviour.
 	// Before the fix this panics with: "runtime error: invalid memory address
 	// or nil pointer dereference" inside setMetaData(info) when info is nil.
+	src := mockobject.New("photo.jpg").WithContent([]byte("content"), mockobject.SeekModeNone)
 	assert.NotPanics(t, func() {
-		_, _ = f.Put(ctx, strings.NewReader("content"), nil)
+		_, _ = f.Put(ctx, strings.NewReader("content"), src)
 	})
 }
