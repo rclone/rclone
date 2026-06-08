@@ -1824,7 +1824,7 @@ warnings and significant events.
 
 See also the [logging](#logging) section.
 
-### --windows-event-log LogLevel
+### --windows-event-log-level LogLevel
 
 If this is configured (the default is `OFF`) then logs of this level
 and above will be logged to the Windows event log in **addition** to
@@ -1840,15 +1840,15 @@ and `Error`. If enabled we map rclone levels like this.
 
 Rclone will declare its log source as "rclone" if it is has enough
 permissions to create the registry key needed. If not then logs will
-appear as "Application". You can run `rclone version --windows-event-log DEBUG`
+appear as "Application". You can run `rclone version --windows-event-log-level DEBUG`
 once as administrator to create the registry key in advance.
 
-**Note** that the `--windows-event-log` level must be greater (more
+**Note** that the `--windows-event-log-level` level must be greater (more
 severe) than or equal to the `--log-level`. For example to log DEBUG
 to a log file but ERRORs to the event log you would use
 
 ```text
---log-file rclone.log --log-level DEBUG --windows-event-log ERROR
+--log-file rclone.log --log-level DEBUG --windows-event-log-level ERROR
 ```
 
 This option is only supported Windows platforms.
