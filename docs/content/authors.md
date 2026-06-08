@@ -1148,3 +1148,4 @@ put them back in again. -->
 - Yakov Till <yakov.till@gmail.com>
 - Janne Beate Bakeng <436265+jbbakeng@users.noreply.github.com>
 - IceLocke <lockeice@gmail.com>
+- nako-ruru <nako_ruru@163.com>
