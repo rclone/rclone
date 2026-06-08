@@ -862,7 +862,7 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 		}
 
 		// Check OK
-		if !item.Props.StatusOK() {
+		if !(item.Props.StatusOK() || item.Props.Code() == 425) {
 			fs.Debugf(remote, "Ignoring item with bad status %q", item.Props.Status)
 			continue
 		}
