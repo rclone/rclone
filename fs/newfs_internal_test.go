@@ -53,3 +53,25 @@ func TestAddConfigToContext_GlobalOnly(t *testing.T) {
 	ci := GetConfig(newCtx)
 	assert.Equal(t, "potato2", ci.UserAgent)
 }
+
+// When the ctx is marked as a remote control (rc) request, a global.key must
+// apply to the backend's own ctx but must NOT change the process-wide config.
+func TestAddConfigToContext_GlobalFromRC(t *testing.T) {
+	global := configmap.Simple{
+		"global.user_agent": "potato3",
+	}
+	ctx := WithRCRequest(context.Background())
+	globalCI := GetConfig(ctx)
+	original := globalCI.UserAgent
+	defer func() {
+		globalCI.UserAgent = original
+	}()
+	newCtx, err := addConfigToContext(ctx, "unit-test", global)
+	require.NoError(t, err)
+	assert.NotEqual(t, newCtx, ctx)
+	// The process-wide config must be untouched
+	assert.Equal(t, original, globalCI.UserAgent)
+	// but the backend's own ctx still gets the value
+	ci := GetConfig(newCtx)
+	assert.Equal(t, "potato3", ci.UserAgent)
+}

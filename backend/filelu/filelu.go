@@ -222,38 +222,36 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		return nil, err
 	}
 
-	fldMap := map[string]bool{}
 	for _, folder := range result.Result.Folders {
-		fldMap[folder.FldID.String()] = true
 		if f.root == "" && dir == "" && strings.Contains(folder.Path, "/") {
 			continue
 		}
 
-		paths := strings.Split(folder.Path, fullPath+"/")
-		remote := paths[0]
-		if len(paths) > 1 {
-			remote = paths[1]
+		folderPath := strings.Trim(folder.Path, "/")
+		root := strings.Trim(f.root, "/")
+
+		remotePathWithoutRoot := folderPath
+
+		if root != "" {
+			if remotePathWithoutRoot == root {
+				continue
+			}
+			remotePathWithoutRoot = strings.TrimPrefix(remotePathWithoutRoot, root+"/")
 		}
 
-		if strings.Contains(remote, "/") {
+		remotePathWithoutRoot = strings.TrimPrefix(remotePathWithoutRoot, "/")
+
+		if remotePathWithoutRoot == "" {
 			continue
 		}
 
-		pathsWithoutRoot := strings.Split(folder.Path, "/"+f.root+"/")
-		remotePathWithoutRoot := pathsWithoutRoot[0]
-		if len(pathsWithoutRoot) > 1 {
-			remotePathWithoutRoot = pathsWithoutRoot[1]
-		}
-		remotePathWithoutRoot = strings.TrimPrefix(remotePathWithoutRoot, "/")
 		entries = append(entries, fs.NewDir(remotePathWithoutRoot, time.Now()))
 	}
+
 	for _, file := range result.Result.Files {
-		if _, ok := fldMap[file.FldID.String()]; ok {
-			continue
-		}
 		remote := path.Join(dir, file.Name)
-		// trim leading slashes
 		remote = strings.TrimPrefix(remote, "/")
+
 		obj := &Object{
 			fs:      f,
 			remote:  remote,
