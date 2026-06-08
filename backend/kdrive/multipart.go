@@ -257,10 +257,11 @@ func (f *Fs) UploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.Reade
 	// Do the accounting manually
 	in, acc := accounting.UnWrapAccounting(in)
 
-	// Calculate hash as we read the input
-	// We must use the same chunk size as the upload so the nested hash matches
-	chunkHasher := khash.NewWithChunkSize(chunkSize)
-	in = io.TeeReader(in, chunkHasher)
+	// Calculate both simple and nested hashes so we can validate against
+	// the server's current format (simple) as well as the future format (nested).
+	nestedHasher := khash.NewWithChunkSize(chunkSize)
+	simpleHasher := khash.New()
+	in = io.TeeReader(in, io.MultiWriter(nestedHasher, simpleHasher))
 
 	for partNum := int64(0); !finished; partNum++ {
 		// Get a block of memory from the pool and token which limits concurrency.
@@ -320,7 +321,7 @@ func (f *Fs) UploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.Reade
 
 	// Verify the hash
 	if session, ok := chunkWriter.(*uploadSession); ok && session.fileInfo != nil {
-		err = session.CheckHash(ctx, info, chunkHasher)
+		err = session.CheckHash(ctx, info, nestedHasher, simpleHasher)
 		if err != nil {
 			return nil, err
 		}
@@ -329,7 +330,7 @@ func (f *Fs) UploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.Reade
 	return chunkWriter, nil
 }
 
-func (u uploadSession) CheckHash(ctx context.Context, info fs.ChunkWriterInfo, chunkHasher hash.Hash) (err error) {
+func (u uploadSession) CheckHash(ctx context.Context, info fs.ChunkWriterInfo, nestedHasher hash.Hash, simpleHasher hash.Hash) (err error) {
 	remoteHash := u.fileInfo.Hash
 
 	if remoteHash == "" {
@@ -348,12 +349,15 @@ func (u uploadSession) CheckHash(ctx context.Context, info fs.ChunkWriterInfo, c
 		}
 	}
 
-	// validate with khash only if it's a nested hash
-	if !khash.IsNestedHash(remoteHash) {
-		return nil
+	// Choose the correct local hash depending on the server's hash format.
+	// If the server uses nested hashes we validate against the nested hasher,
+	// otherwise we validate against the simple (global) hasher.
+	var localHash string
+	if khash.IsNestedHash(remoteHash) {
+		localHash = hex.EncodeToString(nestedHasher.Sum(nil))
+	} else {
+		localHash = hex.EncodeToString(simpleHasher.Sum(nil))
 	}
-
-	localHash := hex.EncodeToString(chunkHasher.Sum(nil))
 
 	if valid, _ := khash.ValidateHash(localHash, remoteHash); !valid {
 		err = fmt.Errorf(
@@ -363,7 +367,6 @@ func (u uploadSession) CheckHash(ctx context.Context, info fs.ChunkWriterInfo, c
 		fs.Errorf(u, "%v", err)
 
 		// Attempt to remove the corrupted file
-		// We construct a minimal Object just for removal
 		obj := &Object{
 			fs: u.f,
 			id: strconv.Itoa(u.fileInfo.ID),
@@ -378,9 +381,6 @@ func (u uploadSession) CheckHash(ctx context.Context, info fs.ChunkWriterInfo, c
 		return err
 	}
 	fs.Debugf(u, "Multipart upload hash verified: %s", localHash)
-
-	// update remote hash with local hash to pass checkHashes
-	u.fileInfo.Hash = localHash
 
 	return nil
 }

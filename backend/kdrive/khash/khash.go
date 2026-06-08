@@ -31,10 +31,12 @@ type digest struct {
 	chunkHashes  []byte       // Concatenated 8-byte hashes of completed chunks
 }
 
-// New creates a new hash.Hash with default configuration (20MB clusters).
-// Used by Rclone core for standard checks.
+// New creates a new hash.Hash with no chunking (simple mode).
+// Used by Rclone core for standard local file checks.
 func New() hash.Hash {
-	return NewWithChunkSize(chunksize.ChunkSizeConfig.DefaultChunkSize)
+	d := &digest{}
+	d.Reset()
+	return d
 }
 
 // NewForSize creates a new hash.Hash optimized for the specific file size.
