@@ -30,11 +30,12 @@ func Register() {
 
 // Fs is a minimal mock Fs
 type Fs struct {
-	name     string        // the name of the remote
-	root     string        // The root directory (OS path)
-	features *fs.Features  // optional features
-	rootDir  fs.DirEntries // directory listing of root
-	hashes   hash.Set      // which hashes we support
+	name      string        // the name of the remote
+	root      string        // The root directory (OS path)
+	features  *fs.Features  // optional features
+	rootDir   fs.DirEntries // directory listing of root
+	hashes    hash.Set      // which hashes we support
+	precision time.Duration // precision of modtime
 }
 
 // ErrNotImplemented is returned by unimplemented methods
@@ -43,8 +44,9 @@ var ErrNotImplemented = errors.New("not implemented")
 // NewFs returns a new mock Fs
 func NewFs(ctx context.Context, name string, root string, config configmap.Mapper) (fs.Fs, error) {
 	f := &Fs{
-		name: name,
-		root: root,
+		name:      name,
+		root:      root,
+		precision: time.Second,
 	}
 	f.features = (&fs.Features{}).Fill(ctx, f)
 	return f, nil
@@ -78,7 +80,13 @@ func (f *Fs) String() string {
 
 // Precision of the ModTimes in this Fs
 func (f *Fs) Precision() time.Duration {
-	return time.Second
+	return f.precision
+}
+
+// SetPrecision sets the ModTime precision of this Fs.
+// Use fs.ModTimeNotSupported to simulate a backend that does not support modtime.
+func (f *Fs) SetPrecision(p time.Duration) {
+	f.precision = p
 }
 
 // Hashes returns the supported hash types of the filesystem

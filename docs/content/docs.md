@@ -1133,6 +1133,42 @@ quicker than without the `--checksum` flag.
 When using this flag, rclone won't update mtimes of remote files if
 they are incorrect as it would normally.
 
+### --checksum-no-fallback
+
+Requires `--checksum`. Disables the fallback to size-only comparison when a
+hash cannot be verified. Only the checksum step is affected.
+
+- If a common hash type exists, the source has a hash value, and the
+  destination has no hash value: treat as different and re-upload. The
+  destination computes a hash during the upload and stores it.
+- If the source has no hash value: count an error, skip the file, and exit
+  non-zero. Re-uploading would not help because the source still could not
+  produce a hash on the next run.
+- If source and destination share no common hash type at all: count an error,
+  skip the file, and exit non-zero. Re-uploading would not help because the
+  next run would hit the same problem.
+
+### --checksum-include-modtime
+
+Requires `--checksum`. By default, `--checksum` skips the modtime check
+entirely. This flag adds the modtime check back in, so the comparison
+sequence becomes size, then modtime, then checksum.
+
+- If the remote does not support modtime, the modtime step is skipped.
+
+### --checksum-upload-missing
+
+Requires `--checksum`. Re-uploads any destination file that has no stored
+checksum, so the provider generates one during the upload.
+
+- Useful when files were uploaded outside rclone (desktop client, browser,
+  etc.) and therefore have no checksum recorded.
+- For the hasher backend, this also populates the bolt database.
+- The check only asks whether the destination has a hash recorded. The
+  source does not need to support the same hash type. This means the flag
+  works even when, for example, syncing from a MD5/SHA1 local filesystem
+  to a blake3 hasher backend.
+
 ### --color AUTO|NEVER|ALWAYS
 
 Specify when colors (and other ANSI codes) should be added to the output.

@@ -197,20 +197,24 @@ var checksumWarning sync.Once
 
 // options for equal function()
 type equalOpt struct {
-	sizeOnly          bool // if set only check size
-	checkSum          bool // if set check checksum+size instead of modtime+size
-	updateModTime     bool // if set update the modtime if hashes identical and checking with modtime+size
-	forceModTimeMatch bool // if set assume modtimes match
+	sizeOnly               bool // if set only check size
+	checkSum               bool // if set check checksum+size instead of modtime+size
+	checksumNoFallback     bool // if set treat missing hash as mismatch
+	checksumIncludeModtime bool // if set with checksum, also require modtime to match
+	updateModTime          bool // if set update the modtime if hashes identical and checking with modtime+size
+	forceModTimeMatch      bool // if set assume modtimes match
 }
 
 // default set of options for equal()
 func defaultEqualOpt(ctx context.Context) equalOpt {
 	ci := fs.GetConfig(ctx)
 	return equalOpt{
-		sizeOnly:          ci.SizeOnly,
-		checkSum:          ci.CheckSum,
-		updateModTime:     !ci.NoUpdateModTime,
-		forceModTimeMatch: false,
+		sizeOnly:               ci.SizeOnly,
+		checkSum:               ci.CheckSum,
+		checksumNoFallback:     ci.ChecksumNoFallback,
+		checksumIncludeModtime: ci.ChecksumIncludeModtime,
+		updateModTime:          !ci.NoUpdateModTime,
+		forceModTimeMatch:      false,
 	}
 }
 
@@ -243,6 +247,49 @@ func WithEqualFn(ctx context.Context, equalFn EqualFn) context.Context {
 	return context.WithValue(ctx, equalFnKey, equalFn)
 }
 
+// handleMissingHash is invoked when the no-fallback flag is active and the
+// checksum comparison could not produce a verdict. There are three distinct
+// situations to handle, and they call for different outcomes:
+//
+// 1. Source and destination share no common hash type. Re-uploading would
+//    not help, because the next run would hit the same issue. The file is
+//    skipped and an error is reported so the user knows it was not verified.
+//
+// 2. A common hash type exists but the source has no hash value. Re-uploading
+//    does not fix this: the source would still be unable to produce a hash on
+//    the next run, so verification would remain impossible. The file is
+//    skipped and an error is reported.
+//
+// 3. A common hash type exists and the source has a hash value, but the
+//    destination does not. Re-uploading does fix this: the destination
+//    computes a hash from the bytes as they arrive and stores it. The file
+//    is treated as different and re-uploaded.
+//
+// This function returns a true/false answer that equal() uses to decide what
+// happens to the file: true means leave it alone, false means upload it again.
+func handleMissingHash(ctx context.Context, src fs.ObjectInfo, dst fs.Object, logger LoggerFn) bool {
+	common := src.Fs().Hashes().Overlap(dst.Fs().Hashes())
+	if common.Count() == 0 {
+		countErr := errors.New("common hash type unavailable")
+		_ = fs.CountError(ctx, countErr)
+		fs.Errorf(src, "Checksum verification failed: %v", countErr)
+		logger(ctx, Differ, src, dst, nil)
+		return true
+	}
+	ht := common.GetOne()
+	srcHash, srcErr := src.Hash(ctx, ht)
+	if srcErr != nil || srcHash == "" {
+		countErr := errors.New("source has no hash value")
+		_ = fs.CountError(ctx, countErr)
+		fs.Errorf(src, "Checksum verification failed: %v", countErr)
+		logger(ctx, Differ, src, dst, nil)
+		return true
+	}
+	fs.Debugf(src, "Destination hash unavailable - treated as mismatch")
+	logger(ctx, Differ, src, dst, nil)
+	return false
+}
+
 func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) bool {
 	ci := fs.GetConfig(ctx)
 	logger, _ := GetLogger(ctx)
@@ -261,6 +308,22 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 
 	// If checking checksum and not modtime
 	if opt.checkSum {
+		// Require modtime to match if the flag is present.
+		// Skipped when the remote does not support modtime.
+		if opt.checksumIncludeModtime {
+			modifyWindow := fs.GetModifyWindow(ctx, src.Fs(), dst.Fs())
+			if modifyWindow != fs.ModTimeNotSupported {
+				srcModTime := src.ModTime(ctx)
+				dstModTime := dst.ModTime(ctx)
+				dt := dstModTime.Sub(srcModTime)
+				if dt >= modifyWindow || dt <= -modifyWindow {
+					fs.Debugf(src, "Modification times differ by %s: %v, %v", dt, srcModTime, dstModTime)
+					logger(ctx, Differ, src, dst, nil)
+					return false
+				}
+				fs.Debugf(src, "Modification times match (differ by %s - within tolerance %s)", dt, modifyWindow)
+			}
+		}
 		// Check the hash
 		same, ht, _ := CheckHashes(ctx, src, dst)
 		if !same {
@@ -269,6 +332,9 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 			return false
 		}
 		if ht == hash.None {
+			if opt.checksumNoFallback {
+				return handleMissingHash(ctx, src, dst, logger)
+			}
 			common := src.Fs().Hashes().Overlap(dst.Fs().Hashes())
 			if common.Count() == 0 {
 				checksumWarning.Do(func() {
@@ -1725,6 +1791,20 @@ func CompareOrCopyDest(ctx context.Context, fdst fs.Fs, dst, src fs.Object, Comp
 	return false, nil
 }
 
+// ChecksumMissingDest returns true if the destination supports at least one
+// hash type but has no hash value stored for this file.
+// Only the destination's supported hash types are consulted. The source's
+// supported hash types are ignored. This is deliberate: it lets us detect a
+// missing destination hash even when source cannot produce the same hash type.
+func ChecksumMissingDest(ctx context.Context, src fs.ObjectInfo, dst fs.Object) bool {
+	dstHashes := dst.Fs().Hashes()
+	if dstHashes.Count() == 0 {
+		return false
+	}
+	dstHash, err := dst.Hash(ctx, dstHashes.GetOne())
+	return err == nil && dstHash == ""
+}
+
 // NeedTransfer checks to see if src needs to be copied to dst using
 // the current config.
 //
@@ -1743,6 +1823,19 @@ func NeedTransfer(ctx context.Context, dst, src fs.Object) bool {
 		fs.Debugf(src, "Destination exists, skipping")
 		logger(ctx, Match, src, dst, nil)
 		return false
+	}
+	// If destination has no checksum, reupload to store checksum
+	if ci.CheckSum && ci.ChecksumUploadMissing {
+		if ChecksumMissingDest(ctx, src, dst) {
+			if src.Size() == 0 {
+				// On backends that do not store a hash for empty objects, this fires every run for every empty 0-byte file
+				fs.Debugf(src, "Destination has no checksum and source file is empty - reuploading in attempt to store checksum")
+			} else {
+				fs.Debugf(src, "Destination has no checksum - reuploading to store checksum")
+			}
+			logger(ctx, Differ, src, dst, nil)
+			return true
+		}
 	}
 	// If we should upload unconditionally
 	if ci.IgnoreTimes {

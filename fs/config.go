@@ -73,6 +73,21 @@ var ConfigOptionsInfo = Options{{
 	Help:     "Check for changes with size & checksum (if available, or fallback to size only)",
 	Groups:   "Copy",
 }, {
+	Name:    "checksum_no_fallback",
+	Default: false,
+	Help:    "Do not fall back to other comparison methods; error if checksum cannot be verified (requires --checksum)",
+	Groups:  "Copy",
+}, {
+	Name:    "checksum_upload_missing",
+	Default: false,
+	Help:    "Re-upload any destination file that has no stored checksum (requires --checksum)",
+	Groups:  "Copy",
+}, {
+	Name:    "checksum_include_modtime",
+	Default: false,
+	Help:    "Also check modtime alongside checksum, instead of skipping modtime (requires --checksum)",
+	Groups:  "Copy",
+}, {
 	Name:    "size_only",
 	Default: false,
 	Help:    "Skip based on size only, not modtime or checksum",
@@ -577,6 +592,9 @@ type ConfigInfo struct {
 	Interactive                bool              `config:"interactive"`
 	Links                      bool              `config:"links"`
 	CheckSum                   bool              `config:"checksum"`
+	ChecksumNoFallback         bool              `config:"checksum_no_fallback"`
+	ChecksumUploadMissing      bool              `config:"checksum_upload_missing"`
+	ChecksumIncludeModtime     bool              `config:"checksum_include_modtime"`
 	SizeOnly                   bool              `config:"size_only"`
 	IgnoreTimes                bool              `config:"ignore_times"`
 	IgnoreExisting             bool              `config:"ignore_existing"`
