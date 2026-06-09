@@ -86,18 +86,64 @@ provider = Rclone
 endpoint = http://127.0.0.1:8080/
 access_key_id = ACCESS_KEY_ID
 secret_access_key = SECRET_ACCESS_KEY
-use_multipart_uploads = false
 ```
 
-Note that setting `use_multipart_uploads = false` is to work around
-[a bug](#bugs) which will be fixed in due course.
+### Multipart uploads
+
+By default `serve s3` **streams** each multipart upload, in part-number
+order, into a single `PutStream` upload to the underlying remote, so the
+whole file is never buffered in memory - memory use stays bounded by the
+parts in flight. The remote then performs its own internal upload (for
+example its own multipart upload, still with bounded memory). This works
+for any remote that supports `PutStream`, which is nearly all of them,
+including through `crypt`.
+
+**Advantages**
+
+- The whole object is never buffered in memory; memory use is bounded by
+  the parts in flight, not the upload size.
+- Parts can be any size. Clients that don't produce uniform-sized parts
+  work fine - for example PostgreSQL backup tools such as **pgBarman**
+  and **pgBackRest**, which flush an upload buffer once it grows past
+  the chunk size, so each part is the chunk size plus a variable
+  overshoot.
+- Works through `crypt` for any part size, since the object is encrypted
+  as one continuous stream.
+- Backend-agnostic - it only needs the remote to support `PutStream`.
+
+**Limitations**
+
+- Parts must arrive in ascending, contiguous part-number order
+  (1, 2, 3, ...). Parts the client uploads concurrently or out of order
+  are buffered until their turn, so higher client upload concurrency
+  uses more memory; non-contiguous part numbers are rejected. Configure
+  the client to upload in part order, ideally with low concurrency, for
+  the lowest memory use.
+- No per-part retry. Once a part has been streamed it is committed, so a
+  failure partway through aborts the whole upload and the client must
+  start it again, rather than retrying a single part. (The remote's own
+  upload still retries its internal chunks.)
+- Parts are serialised into one stream, so ingest from the client is
+  effectively single-threaded, although the remote's own upload still
+  runs concurrently.
+
+#### Disabling streaming
+
+If you pass `--disable-multipart-streaming`, or the remote doesn't
+support `PutStream`, multipart uploads are instead **buffered in memory**
+by the underlying S3 library: every part is held in memory and the whole
+object is written out in one go when the upload completes (the previous
+behaviour). This removes the in-order/contiguous-part restriction above,
+so parts can be uploaded in any order, but **memory use grows with the
+size of the upload**, so it is only suitable for small objects. A one-off
+`NOTICE` is logged the first time this happens.
+
+Alternatively, if the client is an rclone `s3` remote (like the
+`[serves3]` example above), you can set `use_multipart_uploads = false`
+on it so it uploads each object as a single stream and skips multipart
+uploads altogether.
 
 ### Bugs
-
-When uploading multipart files `serve s3` holds all the parts in
-memory (see [#7453](https://github.com/rclone/rclone/issues/7453)).
-This is a limitaton of the library rclone uses for serving S3 and will
-hopefully be fixed at some point.
 
 Multipart server side copies do not work (see
 [#7454](https://github.com/rclone/rclone/issues/7454)). These take a

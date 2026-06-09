@@ -18,6 +18,7 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	_ "github.com/rclone/rclone/backend/local"
+	_ "github.com/rclone/rclone/backend/s3" // for TestS3Minio backing remote
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/servetest"
 	"github.com/rclone/rclone/fs"
@@ -52,10 +53,10 @@ func serveS3(t *testing.T, f fs.Fs) (testURL string, keyid string, keysec string
 	return
 }
 
-// TestS3 runs the s3 server then runs the unit tests for the
-// s3 remote against it.
-func TestS3(t *testing.T) {
-	start := func(f fs.Fs) (configmap.Simple, func()) {
+// startS3 builds the start callback that brings up a serve s3 server
+// wrapping f and returns the client config for connecting to it.
+func startS3(t *testing.T) servetest.StartFn {
+	return func(f fs.Fs) (configmap.Simple, func()) {
 		testURL, keyid, keysec, _ := serveS3(t, f)
 		// Config for the backend we'll use to connect to the server
 		config := configmap.Simple{
@@ -65,11 +66,25 @@ func TestS3(t *testing.T) {
 			"access_key_id":     keyid,
 			"secret_access_key": keysec,
 		}
-
 		return config, func() {}
 	}
+}
 
-	servetest.Run(t, "s3", start)
+// TestS3 runs the s3 server backed by a local directory then runs the
+// s3 backend integration tests against it. The local backend only
+// supports OpenWriterAt, so this exercises that streaming path in
+// serve s3.
+func TestS3(t *testing.T) {
+	servetest.Run(t, "s3", startS3(t))
+}
+
+// TestS3Minio runs the s3 server backed by a minio docker container
+// (via fstest/testserver/init.d/TestS3Minio) then runs the s3 backend
+// integration tests against it. Minio supports OpenChunkWriter, so
+// this exercises that streaming path in serve s3 - the path the local
+// backing in TestS3 cannot cover.
+func TestS3Minio(t *testing.T) {
+	servetest.RunWithBackend(t, "s3", startS3(t), "TestS3Minio:")
 }
 
 // tests using the minio client
