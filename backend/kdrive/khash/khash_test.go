@@ -45,7 +45,7 @@ func TestWriteAndSum(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			h := New()
+			h := NewWithChunkSize(chunksize.ChunkSizeConfig.DefaultChunkSize)
 			n, err := h.Write(tt.data)
 			if err != nil {
 				t.Fatalf("Write failed: %v", err)
@@ -73,6 +73,69 @@ func TestWriteAndSum(t *testing.T) {
 				if sumHex != expected {
 					t.Errorf("Hash mismatch: got %s, expected %s", sumHex, expected)
 				}
+			}
+		})
+	}
+}
+
+func TestWriteAndSumSimple(t *testing.T) {
+	// Test that New() creates a simple (non-chunked) hasher
+	tests := []struct {
+		name     string
+		data     []byte
+		expected string
+	}{
+		{
+			name:     "empty data",
+			data:     []byte{},
+			expected: "2d06800538d394c2", // XXH3 of empty data (64-bit)
+		},
+		{
+			name:     "small data",
+			data:     []byte("hello world"),
+			expected: "d447b1ea40e6988b", // XXH3 of "hello world"
+		},
+		{
+			name:     "large data",
+			data:     bytes.Repeat([]byte("a"), 1024*1024),
+			expected: "", // Will validate against direct xxh3
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := New()
+			n, err := h.Write(tt.data)
+			if err != nil {
+				t.Fatalf("Write failed: %v", err)
+			}
+			if n != len(tt.data) {
+				t.Errorf("Write returned %d, expected %d", n, len(tt.data))
+			}
+
+			sum := h.Sum(nil)
+			sumHex := hex.EncodeToString(sum)
+
+			if tt.expected != "" {
+				if sumHex != tt.expected {
+					t.Errorf("Hash mismatch: got %s, expected %s", sumHex, tt.expected)
+				}
+			} else {
+				hasher := xxh3.New()
+				_, err = hasher.Write(tt.data)
+				if err != nil {
+					t.Fatalf("Write failed: %v", err)
+				}
+				expected := hex.EncodeToString(hasher.Sum(nil))
+				if sumHex != expected {
+					t.Errorf("Hash mismatch: got %s, expected %s", sumHex, expected)
+				}
+			}
+
+			// Verify it's a simple hasher (no chunking)
+			d := h.(*digest)
+			if d.chunkSize != nil {
+				t.Error("New() should create a simple hasher with nil chunkSize")
 			}
 		})
 	}
@@ -279,7 +342,7 @@ func TestChunkSizeBoundary(t *testing.T) {
 	// Test exactly at chunk boundary
 	data := bytes.Repeat([]byte("x"), int(chunksize.ChunkSizeConfig.DefaultChunkSize))
 
-	h := New()
+	h := NewWithChunkSize(chunksize.ChunkSizeConfig.DefaultChunkSize)
 	h.Write(data)
 	sum := h.Sum(nil)
 
