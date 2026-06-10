@@ -22,6 +22,13 @@ func TestDocumentRecordNames(t *testing.T) {
 	assert.Equal(t, "documentStructure/DEF-456", structure)
 }
 
+// TestDirectoryRecordName checks that a bare folder UUID maps to the upper-cased
+// directory record name CloudDocs uses for shared-folder child directories.
+func TestDirectoryRecordName(t *testing.T) {
+	assert.Equal(t, "directory/ABC-123", directoryRecordName("abc-123"))
+	assert.Equal(t, "directory/DEF-456", directoryRecordName("DEF-456"))
+}
+
 // TestDeleteRecordOperations checks the records/modify delete operations: one per
 // record, in content-then-structure order, each carrying its current change tag (an
 // unknown tag is sent empty).
@@ -51,6 +58,18 @@ func TestDeleteRecordOperationsMissingTag(t *testing.T) {
 	require.Len(t, ops, 2)
 	assert.Equal(t, "only-content", ops[0].Record.RecordChangeTag)
 	assert.Equal(t, "", ops[1].Record.RecordChangeTag)
+}
+
+// TestDeleteDirectoryRecordOperation checks the single records/modify delete
+// operation used for rmdir of an empty shared sub-directory.
+func TestDeleteDirectoryRecordOperation(t *testing.T) {
+	dir := directoryRecordName("abc-123")
+	ops := deleteDirectoryRecordOperation(dir, map[string]string{dir: "tag-dir"})
+
+	require.Len(t, ops, 1)
+	assert.Equal(t, "delete", ops[0].OperationType)
+	assert.Equal(t, dir, ops[0].Record.RecordName)
+	assert.Equal(t, "tag-dir", ops[0].Record.RecordChangeTag)
 }
 
 // TestDeleteRequestJSON locks the wire format of a shared-zone delete: a
@@ -85,6 +104,63 @@ func TestDeleteRequestJSON(t *testing.T) {
 	assert.False(t, hasFields)
 	_, hasParent := rec0["parent"]
 	assert.False(t, hasParent)
+}
+
+// TestDeleteDirectoryRequestJSON locks the wire format for shared-directory
+// rmdir: a non-atomic records/modify with one delete operation for directory/<uuid>.
+func TestDeleteDirectoryRequestJSON(t *testing.T) {
+	dir := directoryRecordName("abc-123")
+	zone := &CKZoneID{ZoneName: "com.apple.CloudDocs", OwnerRecordName: "_owner", ZoneType: "REGULAR_CUSTOM_ZONE"}
+	body := ckModifyRequest{
+		Atomic:     false,
+		ZoneID:     zone,
+		Operations: deleteDirectoryRecordOperation(dir, map[string]string{dir: "td"}),
+	}
+
+	raw, err := json.Marshal(body)
+	require.NoError(t, err)
+
+	var got map[string]any
+	require.NoError(t, json.Unmarshal(raw, &got))
+
+	assert.Equal(t, false, got["atomic"])
+	ops, ok := got["operations"].([]any)
+	require.True(t, ok)
+	require.Len(t, ops, 1)
+
+	op0 := ops[0].(map[string]any)
+	assert.Equal(t, "delete", op0["operationType"])
+	rec0 := op0["record"].(map[string]any)
+	assert.Equal(t, "directory/ABC-123", rec0["recordName"])
+	assert.Equal(t, "td", rec0["recordChangeTag"])
+	_, hasFields := rec0["fields"]
+	assert.False(t, hasFields)
+	_, hasParent := rec0["parent"]
+	assert.False(t, hasParent)
+}
+
+// TestLookupRecordTags extracts current change tags from lookup results before a
+// delete request. It intentionally keeps unknown records out of the map.
+func TestLookupRecordTags(t *testing.T) {
+	tags := lookupRecordTags([]ckRecord{
+		{RecordName: "directory/A", RecordChangeTag: "ta"},
+		{RecordName: "documentStructure/B", RecordChangeTag: "tb"},
+	})
+	assert.Equal(t, map[string]string{"directory/A": "ta", "documentStructure/B": "tb"}, tags)
+}
+
+// TestCheckRecordErrors documents how CloudKit per-record failures are surfaced
+// from records/modify responses.
+func TestCheckRecordErrors(t *testing.T) {
+	require.NoError(t, checkRecordErrors("op", []ckRecord{{RecordName: "directory/A"}}))
+
+	err := checkRecordErrors("op", []ckRecord{{
+		RecordName:      "directory/A",
+		Reason:          "not allowed",
+		ServerErrorCode: "ACCESS_DENIED",
+	}})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "op failed for directory/A: not allowed (ACCESS_DENIED)")
 }
 
 // TestDocumentBaseHash checks the basehash used to locate a document by name inside

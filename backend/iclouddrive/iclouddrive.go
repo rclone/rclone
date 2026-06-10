@@ -162,9 +162,36 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 		return errors.New("can't purge root directory")
 	}
 
-	directoryID, etag, err := f.FindDir(ctx, dir, false)
+	jDirectoryID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
 		return err
+	}
+	directoryID, etag := f.parseNormalizedID(jDirectoryID)
+
+	if api.IsSharedFolderChildID(directoryID) {
+		if !check {
+			return fs.ErrorCantPurge
+		}
+		items, err := f.listAll(ctx, jDirectoryID)
+		if err != nil {
+			return err
+		}
+		if len(items) > 0 {
+			return fs.ErrorDirectoryNotEmpty
+		}
+		dirUUID := api.GetDocIDFromDriveID(directoryID)
+		if dirUUID == "" {
+			return fmt.Errorf("iclouddrive: cannot remove shared directory %q: missing CloudDocs directory ID", dir)
+		}
+		cd := f.icloud.CloudDocsService(f.pacer, shouldRetry)
+		if cd == nil {
+			return errors.New("iclouddrive: cannot remove shared directory: account has no ckdatabasews service")
+		}
+		if err := cd.DeleteDirectory(ctx, dirUUID); err != nil {
+			return err
+		}
+		f.dirCache.FlushDir(dir)
+		return nil
 	}
 
 	if check {

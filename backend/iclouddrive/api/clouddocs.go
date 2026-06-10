@@ -264,12 +264,7 @@ func (cd *CloudDocs) ReparentStructure(ctx context.Context, uuid, targetDirUUID 
 	if err := cd.request(ctx, "records/modify", body, &out); err != nil {
 		return err
 	}
-	for _, r := range out.Records {
-		if r.ServerErrorCode != "" {
-			return fmt.Errorf("clouddocs re-parent failed for %s: %s (%s)", r.RecordName, r.Reason, r.ServerErrorCode)
-		}
-	}
-	return nil
+	return checkRecordErrors("clouddocs re-parent", out.Records)
 }
 
 // documentRecordNames returns the documentContent and documentStructure record
@@ -278,6 +273,11 @@ func (cd *CloudDocs) ReparentStructure(ctx context.Context, uuid, targetDirUUID 
 func documentRecordNames(uuid string) (content, structure string) {
 	uuid = strings.ToUpper(uuid)
 	return "documentContent/" + uuid, "documentStructure/" + uuid
+}
+
+// directoryRecordName returns the directory record name for a bare folder UUID.
+func directoryRecordName(uuid string) string {
+	return "directory/" + strings.ToUpper(uuid)
 }
 
 // deleteRecordOperations builds the records/modify "delete" operations for a
@@ -294,6 +294,30 @@ func deleteRecordOperations(contentRec, structRec string, tags map[string]string
 	return ops
 }
 
+func deleteDirectoryRecordOperation(directoryRec string, tags map[string]string) []ckOperation {
+	return []ckOperation{{
+		OperationType: "delete",
+		Record:        ckRecordModify{RecordName: directoryRec, RecordChangeTag: tags[directoryRec]},
+	}}
+}
+
+func lookupRecordTags(records []ckRecord) map[string]string {
+	tags := map[string]string{}
+	for _, r := range records {
+		tags[r.RecordName] = r.RecordChangeTag
+	}
+	return tags
+}
+
+func checkRecordErrors(operation string, records []ckRecord) error {
+	for _, r := range records {
+		if r.ServerErrorCode != "" {
+			return fmt.Errorf("%s failed for %s: %s (%s)", operation, r.RecordName, r.Reason, r.ServerErrorCode)
+		}
+	}
+	return nil
+}
+
 // DeleteFile deletes the documentStructure/documentContent pair for the given
 // record UUID from the shared zone. Used to remove or overwrite files that live
 // inside a shared sub-folder, which the drivews trash endpoint cannot touch.
@@ -307,13 +331,33 @@ func (cd *CloudDocs) DeleteFile(ctx context.Context, uuid string) error {
 	if err != nil {
 		return err
 	}
-	tags := map[string]string{}
-	for _, r := range recs {
-		tags[r.RecordName] = r.RecordChangeTag
-	}
-	ops := deleteRecordOperations(contentRec, structRec, tags)
+	ops := deleteRecordOperations(contentRec, structRec, lookupRecordTags(recs))
 	var out ckRecordsResponse
-	return cd.request(ctx, "records/modify", ckModifyRequest{Atomic: false, ZoneID: zone, Operations: ops}, &out)
+	if err := cd.request(ctx, "records/modify", ckModifyRequest{Atomic: false, ZoneID: zone, Operations: ops}, &out); err != nil {
+		return err
+	}
+	return checkRecordErrors("clouddocs delete file", out.Records)
+}
+
+// DeleteDirectory deletes an empty directory/<uuid> record from the shared zone.
+// It is used for rmdir of shared sub-directories; callers must verify emptiness
+// first because this is not a recursive purge operation.
+func (cd *CloudDocs) DeleteDirectory(ctx context.Context, uuid string) error {
+	zone, err := cd.Zone(ctx)
+	if err != nil {
+		return err
+	}
+	dirRec := directoryRecordName(uuid)
+	recs, err := cd.lookup(ctx, dirRec)
+	if err != nil {
+		return err
+	}
+	ops := deleteDirectoryRecordOperation(dirRec, lookupRecordTags(recs))
+	var out ckRecordsResponse
+	if err := cd.request(ctx, "records/modify", ckModifyRequest{Atomic: false, ZoneID: zone, Operations: ops}, &out); err != nil {
+		return err
+	}
+	return checkRecordErrors("clouddocs delete directory", out.Records)
 }
 
 // ckZoneChangesRequestZone names a zone (and an optional resume token) in a
