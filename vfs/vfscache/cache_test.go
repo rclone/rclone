@@ -195,6 +195,60 @@ func TestCacheNew(t *testing.T) {
 	c.clean(false)
 }
 
+func TestCacheReloadManualWriteBack(t *testing.T) {
+	oldCacheDir := config.GetCacheDir()
+	require.NoError(t, config.SetCacheDir(t.TempDir()))
+	t.Cleanup(func() {
+		require.NoError(t, config.SetCacheDir(oldCacheDir))
+	})
+
+	opt := vfscommon.Opt
+	opt.CachePollInterval = 0
+	opt.WriteBack = 0
+	opt.HandleCaching = 0
+	opt.CacheMode = vfscommon.CacheModeWrites
+	opt.ManualWriteBack = true
+
+	r := fstest.NewRun(t)
+	ctx1, cancel1 := context.WithCancel(context.Background())
+	defer cancel1()
+
+	avInfos = nil
+	c1, err := New(ctx1, r.Fremote, &opt, addVirtual)
+	require.NoError(t, err)
+
+	item := c1.Item("potato")
+	require.NoError(t, item.Open(nil))
+	n, err := item.WriteAt([]byte("hello"), 0)
+	require.NoError(t, err)
+	assert.Equal(t, 5, n)
+	require.NoError(t, item.Close(nil))
+	assert.True(t, item.IsDirty())
+	r.CheckRemoteItems(t)
+
+	cancel1()
+
+	ctx2, cancel2 := context.WithCancel(context.Background())
+	defer cancel2()
+
+	avInfos = nil
+	c2, err := New(ctx2, r.Fremote, &opt, addVirtual)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, c2.CleanUp())
+	})
+
+	infos, err := c2.DirtyInfo(context.Background())
+	require.NoError(t, err)
+	require.Len(t, infos, 1)
+	assert.Equal(t, "potato", infos[0].Name)
+	assert.Equal(t, int64(5), infos[0].Size)
+	assert.False(t, infos[0].Open)
+	assert.False(t, infos[0].RemoteExists)
+	assert.Equal(t, []avInfo{{Remote: "potato", Size: 5, IsDir: false}}, avInfos)
+	r.CheckRemoteItems(t)
+}
+
 func TestCacheOpens(t *testing.T) {
 	_, c := newTestCache(t)
 

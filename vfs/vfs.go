@@ -225,6 +225,10 @@ func New(ctx context.Context, f fs.Fs, opt *vfscommon.Options) *VFS {
 
 	// Fill out anything else
 	vfs.Opt.Init(ctx)
+	if vfs.Opt.ManualWriteBack && vfs.Opt.CacheMode < vfscommon.CacheModeWrites {
+		fs.Logf(f, "--vfs-manual-writeback requires --vfs-cache-mode writes or full - using writes")
+		vfs.Opt.CacheMode = vfscommon.CacheModeWrites
+	}
 
 	// Find a VFS with the same name and options and return it if possible
 	activeMu.Lock()
@@ -443,7 +447,11 @@ func (vfs *VFS) WaitForWriters(timeout time.Duration) {
 		writers := vfs.root.countActiveWriters()
 		cacheInUse := 0
 		if vfs.cache != nil {
-			cacheInUse = vfs.cache.TotalInUse()
+			if vfs.Opt.ManualWriteBack {
+				cacheInUse = vfs.cache.TotalActive()
+			} else {
+				cacheInUse = vfs.cache.TotalInUse()
+			}
 		}
 		if writers == 0 && cacheInUse == 0 {
 			return

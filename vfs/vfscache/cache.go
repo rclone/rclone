@@ -9,6 +9,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -186,6 +187,70 @@ func (c *Cache) Queue() (out rc.Params) {
 // otherwise the expiry of the item is used.
 func (c *Cache) QueueSetExpiry(id writeback.Handle, expiry time.Time, relative time.Duration) error {
 	return c.writeback.SetExpiry(id, expiry, relative)
+}
+
+// DirtyItems returns dirty cache items.
+func (c *Cache) DirtyItems() (items []*Item) {
+	c.mu.Lock()
+	for _, item := range c.item {
+		items = append(items, item)
+	}
+	c.mu.Unlock()
+
+	items = slices.DeleteFunc(items, func(item *Item) bool {
+		return !item.IsDirty()
+	})
+	sort.Slice(items, func(i, j int) bool {
+		return items[i].GetName() < items[j].GetName()
+	})
+	return items
+}
+
+// DirtyInfo returns information about dirty cache items.
+func (c *Cache) DirtyInfo(ctx context.Context) (infos []DirtyInfo, err error) {
+	items := c.DirtyItems()
+	infos = make([]DirtyInfo, 0, len(items))
+	for _, item := range items {
+		info, infoErr := item.DirtyInfo(ctx)
+		if infoErr != nil {
+			if errors.Is(infoErr, ErrorNotDirty) {
+				continue
+			}
+			return infos, infoErr
+		}
+		infos = append(infos, info)
+	}
+	return infos, nil
+}
+
+// Push writes a dirty cache item back to the remote.
+func (c *Cache) Push(ctx context.Context, name string, storeFn StoreFn) error {
+	item := c.DirtyItem(name)
+	if item == nil {
+		return ErrorNotDirty
+	}
+	return item.Push(ctx, storeFn)
+}
+
+// Revert removes dirty cache data without writing it back.
+func (c *Cache) Revert(name string) error {
+	name = clean(name)
+	c.mu.Lock()
+	item := c.item[name]
+	c.mu.Unlock()
+	if item == nil || !item.IsDirty() {
+		return ErrorNotDirty
+	}
+	err := item.Revert("manual writeback reverted")
+	if err != nil {
+		return err
+	}
+	c.mu.Lock()
+	if c.item[name] == item {
+		delete(c.item, name)
+	}
+	c.mu.Unlock()
+	return nil
 }
 
 // createDir creates a directory path, along with any necessary parents
@@ -872,6 +937,18 @@ func (c *Cache) TotalInUse() (n int) {
 	defer c.mu.Unlock()
 	for _, item := range c.item {
 		if item.inUse() {
+			n++
+		}
+	}
+	return n
+}
+
+// TotalActive returns the number of items in the cache which are actively open.
+func (c *Cache) TotalActive() (n int) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for _, item := range c.item {
+		if item.active() {
 			n++
 		}
 	}

@@ -81,6 +81,21 @@ type Info struct {
 	Dirty       bool          // set if the backing file has been modified
 }
 
+// DirtyInfo is information about a dirty item in the cache.
+type DirtyInfo struct {
+	Name         string    `json:"name"`
+	Size         int64     `json:"size"`
+	ModTime      time.Time `json:"modTime"`
+	Open         bool      `json:"open"`
+	RemoteExists bool      `json:"remoteExists"`
+}
+
+// Errors returned by manual writeback operations.
+var (
+	ErrorNotDirty  = errors.New("cache item is not dirty")
+	ErrorItemInUse = errors.New("cache item is in use")
+)
+
 // Items are a slice of *Item ordered by ATime
 type Items []*Item
 
@@ -172,6 +187,13 @@ func (item *Item) inUse() bool {
 	item.mu.Lock()
 	defer item.mu.Unlock()
 	return item.opens != 0 || item.info.Dirty
+}
+
+// active returns true if the item is actively open.
+func (item *Item) active() bool {
+	item.mu.Lock()
+	defer item.mu.Unlock()
+	return item.opens != 0 || item.fd != nil
 }
 
 // getDiskSize returns the size on disk (approximately) of the item
@@ -462,6 +484,33 @@ func (item *Item) IsDirty() bool {
 	return item.info.Dirty
 }
 
+// DirtyInfo returns information about a dirty item.
+func (item *Item) DirtyInfo(ctx context.Context) (info DirtyInfo, err error) {
+	item.mu.Lock()
+	if !item.info.Dirty {
+		item.mu.Unlock()
+		return info, ErrorNotDirty
+	}
+	info = DirtyInfo{
+		Name:         item.name,
+		Size:         item.info.Size,
+		ModTime:      item.info.ModTime,
+		Open:         item.opens != 0,
+		RemoteExists: item.o != nil || item.info.Fingerprint != "",
+	}
+	name := item.name
+	item.mu.Unlock()
+	if !info.RemoteExists {
+		_, err = item.c.fremote.NewObject(ctx, name)
+		if err == nil {
+			info.RemoteExists = true
+		} else if errors.Is(err, fs.ErrorObjectNotFound) {
+			err = nil
+		}
+	}
+	return info, err
+}
+
 // Create the cache file and store the metadata on disk
 // Called with item.mu locked
 func (item *Item) _createFile(osPath string) (err error) {
@@ -672,10 +721,15 @@ func (item *Item) store(ctx context.Context, storeFn StoreFn) (err error) {
 
 // Close the cache file
 func (item *Item) Close(storeFn StoreFn) (err error) {
+	return item.close(storeFn, false)
+}
+
+// close the cache file, optionally forcing a synchronous writeback.
+func (item *Item) close(storeFn StoreFn, forceWriteBack bool) (err error) {
 	// defer log.Trace(item.o, "Item.Close")("err=%v", &err)
 	item.preAccess()
 	defer item.postAccess()
-	syncWriteBack := item.c.opt.WriteBack <= 0
+	syncWriteBack := forceWriteBack || (item.c.opt.WriteBack <= 0 && !item.c.opt.ManualWriteBack)
 	item.mu.Lock()
 	defer item.mu.Unlock()
 
@@ -791,11 +845,13 @@ func (item *Item) _actualClose(storeFn StoreFn, syncWriteBack bool) (err error) 
 
 	// upload the file to backing store if changed
 	if item.info.Dirty {
-		fs.Infof(item.name, "vfs cache: queuing for upload in %v", item.c.opt.WriteBack)
 		if syncWriteBack {
 			// do synchronous writeback
 			checkErr(item._store(item.c.ctx, storeFn))
+		} else if item.c.opt.ManualWriteBack {
+			fs.Infof(item.name, "vfs cache: staged for manual upload")
 		} else {
+			fs.Infof(item.name, "vfs cache: queuing for upload in %v", item.c.opt.WriteBack)
 			// asynchronous writeback
 			item.c.writeback.SetID(&item.writeBackID)
 			id := item.writeBackID
@@ -813,9 +869,38 @@ func (item *Item) _actualClose(storeFn StoreFn, syncWriteBack bool) (err error) 
 	return err
 }
 
+// Push writes a dirty cache item back to the remote immediately.
+func (item *Item) Push(ctx context.Context, storeFn StoreFn) error {
+	item.mu.Lock()
+	if !item.info.Dirty {
+		item.mu.Unlock()
+		return ErrorNotDirty
+	}
+	if item.opens != 0 || item.fd != nil {
+		item.mu.Unlock()
+		return ErrorItemInUse
+	}
+	name := item.name
+	item.mu.Unlock()
+
+	obj, err := item.c.fremote.NewObject(ctx, name)
+	if err != nil {
+		if !errors.Is(err, fs.ErrorObjectNotFound) {
+			return err
+		}
+		obj = nil
+	}
+	err = item.Open(obj)
+	if err != nil {
+		return err
+	}
+	return item.close(storeFn, true)
+}
+
 // reload is called with valid items recovered from a cache reload.
 //
-// If they are dirty then it makes sure they get uploaded.
+// If they are dirty then it makes sure they get uploaded unless manual
+// writeback is enabled.
 //
 // it is called before the cache has started so opens will be 0 and
 // metaDirty will be false.
@@ -824,6 +909,18 @@ func (item *Item) reload(ctx context.Context) error {
 	dirty := item.info.Dirty
 	item.mu.Unlock()
 	if !dirty {
+		return nil
+	}
+	if item.c.opt.ManualWriteBack {
+		size, err := item.GetSize()
+		if err != nil {
+			return fmt.Errorf("reload: failed to read size: %w", err)
+		}
+		err = item.c.AddVirtual(item.name, size, false)
+		if err != nil {
+			return fmt.Errorf("reload: failed to add virtual dir entry: %w", err)
+		}
+		fs.Infof(item.name, "vfs cache: staged for manual upload")
 		return nil
 	}
 	// see if the object still exists
@@ -839,7 +936,7 @@ func (item *Item) reload(ctx context.Context) error {
 		return err
 	}
 	// put the file into the directory listings
-	size, err := item._getSize()
+	size, err := item.GetSize()
 	if err != nil {
 		return fmt.Errorf("reload: failed to read size: %w", err)
 	}
@@ -966,6 +1063,20 @@ func (item *Item) remove(reason string) (wasWriting bool) {
 	item.mu.Lock()
 	defer item.mu.Unlock()
 	return item._remove(reason)
+}
+
+// Revert removes dirty cache data without writing it back.
+func (item *Item) Revert(reason string) error {
+	item.mu.Lock()
+	defer item.mu.Unlock()
+	if !item.info.Dirty {
+		return ErrorNotDirty
+	}
+	if item.opens != 0 || item.fd != nil {
+		return ErrorItemInUse
+	}
+	item._remove(reason)
+	return nil
 }
 
 // RemoveNotInUse is called to remove cache file that has not been accessed recently
