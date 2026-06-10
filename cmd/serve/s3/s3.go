@@ -37,6 +37,10 @@ var OptionsInfo = fs.Options{{
 	Name:    "no_cleanup",
 	Default: false,
 	Help:    "Not to cleanup empty folder after object is deleted",
+}, {
+	Name:    "meta_db",
+	Default: "",
+	Help:    "Path to metadata database (bbolt). If empty, metadata is kept in memory only.",
 }}.
 	Add(httplib.ConfigInfo).
 	Add(httplib.AuthConfigInfo)
@@ -48,6 +52,7 @@ type Options struct {
 	EtagHash       string   `config:"etag_hash"`
 	AuthKey        []string `config:"auth_key"`
 	NoCleanup      bool     `config:"no_cleanup"`
+	MetaDB         string   `config:"meta_db"`
 	Auth           httplib.AuthConfig
 	HTTP           httplib.Config
 }
