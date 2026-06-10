@@ -30,7 +30,12 @@ type Object struct {
 // Fs returns the parent rs filesystem.
 func (o *Object) Fs() fs.Info { return o.fs }
 
-func (o *Object) String() string { return o.remote }
+func (o *Object) String() string {
+	if o == nil {
+		return "<nil>"
+	}
+	return o.remote
+}
 
 // Remote returns the path of the logical object.
 func (o *Object) Remote() string { return o.remote }

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	_ "github.com/rclone/rclone/backend/all"
+	rs "github.com/rclone/rclone/backend/rs"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
 )
@@ -28,6 +29,7 @@ func TestIntegration(t *testing.T) {
 	}
 	fstests.Run(t, &fstests.Opt{
 		RemoteName:                   *fstest.RemoteName,
+		NilObject:                    (*rs.Object)(nil),
 		UnimplementableFsMethods:     integrationUnimplementableFsMethods,
 		UnimplementableObjectMethods: integrationUnimplementableObjectMethods,
 	})
@@ -40,6 +42,7 @@ func TestStandard(t *testing.T) {
 	}
 	fstests.Run(t, &fstests.Opt{
 		RemoteName:                   "TestRsLocal:",
+		NilObject:                    (*rs.Object)(nil),
 		UnimplementableFsMethods:     integrationUnimplementableFsMethods,
 		UnimplementableObjectMethods: integrationUnimplementableObjectMethods,
 		QuickTestOK:                  true,
