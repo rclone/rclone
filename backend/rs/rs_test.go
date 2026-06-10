@@ -507,6 +507,8 @@ func TestExtractShardPayloadRejectsCorruption(t *testing.T) {
 	require.Error(t, err)
 }
 
+// TestReconstructDataFromShards documents that reconstruction succeeds when any k
+// compatible shards are present; it fails when fewer than k shards remain.
 func TestReconstructDataFromShards(t *testing.T) {
 	data := bytes.Repeat([]byte("xyz123"), 200)
 	src := object.NewStaticObjectInfo("r.bin", time.Unix(1700001234, 0), int64(len(data)), true, nil, nil)
@@ -1288,6 +1290,8 @@ func TestNewFsValidatesRemoteCount(t *testing.T) {
 	require.True(t, strings.Contains(err.Error(), "remotes count must equal"))
 }
 
+// TestListDirectoryQuorumMerge documents that quorum listing omits names that
+// appear on fewer than write_quorum shards, even when a minority shard still holds the object.
 func TestListDirectoryQuorumMerge(t *testing.T) {
 	ctx := context.Background()
 	backends := makeMemoryBackends(t, 4, "rs-list-quorum")
@@ -1523,4 +1527,97 @@ func TestDirMoveServerSide(t *testing.T) {
 	require.NoError(t, err)
 	_, err = src.NewObject(ctx, "srcdir/a.txt")
 	require.Error(t, err)
+}
+
+// TestDocumentsCorruptPayloadFailsCRCBeforeDecode documents that bit rot in a
+// present shard is caught by PayloadCRC32C in ExtractParticlePayload before decode.
+func TestDocumentsCorruptPayloadFailsCRCBeforeDecode(t *testing.T) {
+	payload := []byte("integrity required")
+	ft := NewRSFooter(int64(len(payload)), nil, nil, time.Unix(1700000000, 0), 2, 1, 0, 64, 1, crc32cChecksum(payload))
+	fb, err := ft.MarshalBinary()
+	require.NoError(t, err)
+
+	particle := append(append([]byte{}, payload...), fb...)
+	_, _, err = ExtractParticlePayload(particle, 0)
+	require.NoError(t, err)
+
+	particle[0] ^= 0xff
+	_, _, err = ExtractParticlePayload(particle, 0)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "crc mismatch")
+}
+
+// TestDocumentsHealDoesNotRunOnQuorumHealthyObject documents that single-object
+// heal returns restored=0 when every shard particle is already present and compatible.
+func TestDocumentsHealDoesNotRunOnQuorumHealthyObject(t *testing.T) {
+	ctx := context.Background()
+	backends := makeMemoryBackends(t, 4, "rs-heal-healthy")
+	f := &Fs{
+		name:     "rs",
+		root:     "",
+		backends: backends,
+		opt: Options{
+			DataShards:   2,
+			ParityShards: 2,
+			UseSpooling:  true,
+		},
+		features: (&fs.Features{}),
+	}
+	data := []byte("healthy-object")
+	writeObjectShardsForTest(ctx, t, backends, "healthy.bin", data)
+
+	outAny, err := f.healCommand(ctx, []string{"healthy.bin"}, nil)
+	require.NoError(t, err)
+	out := outAny.(string)
+	require.Contains(t, out, "restored 0 shard(s)")
+}
+
+// TestDocumentsHealDetectsFooterIncompatibleShard documents that heal discovery
+// treats a shard with a footer incompatible with the reference as missing and restores it.
+func TestDocumentsHealDetectsFooterIncompatibleShard(t *testing.T) {
+	ctx := context.Background()
+	backends := makeMemoryBackends(t, 4, "rs-heal-footer-skew")
+	f := &Fs{
+		name:     "rs",
+		root:     "",
+		backends: backends,
+		opt: Options{
+			DataShards:   2,
+			ParityShards: 2,
+			UseSpooling:  true,
+		},
+		features: (&fs.Features{}),
+	}
+	remote := "skew.bin"
+	data := bytes.Repeat([]byte("footer-skew"), 80)
+	writeObjectShardsForTest(ctx, t, backends, remote, data)
+	tamperShardFooterContentLength(ctx, t, backends, 3, remote, 99999)
+
+	outAny, err := f.healCommand(ctx, []string{remote}, nil)
+	require.NoError(t, err)
+	out := outAny.(string)
+	require.Contains(t, out, "restored 1 shard(s)")
+}
+
+func tamperShardFooterContentLength(ctx context.Context, t *testing.T, backends []fs.Fs, shard int, remote string, newLen int64) {
+	t.Helper()
+	obj, err := backends[shard].NewObject(ctx, remote)
+	require.NoError(t, err)
+	rc, err := obj.Open(ctx)
+	require.NoError(t, err)
+	particle, err := io.ReadAll(rc)
+	require.NoError(t, err)
+	require.NoError(t, rc.Close())
+
+	ft, err := ParseFooter(particle[len(particle)-FooterSize:])
+	require.NoError(t, err)
+	ft.ContentLength = newLen
+	fb, err := ft.MarshalBinary()
+	require.NoError(t, err)
+	copy(particle[len(particle)-FooterSize:], fb)
+
+	require.NoError(t, obj.Remove(ctx))
+	info := object.NewStaticObjectInfo(remote, obj.ModTime(ctx), int64(len(particle)), true, nil, nil)
+	_, err = backends[shard].Put(ctx, bytes.NewReader(particle), info)
+	require.NoError(t, err)
 }
