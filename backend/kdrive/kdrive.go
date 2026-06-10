@@ -82,12 +82,11 @@ func init() {
 			Name: "root_folder_id",
 			Help: `The folder to use as root.
 
-You may use either one of the convenience shortcuts [private|common|shared]
+You may use either one of the convenience shortcuts [private or common]
 or an explicit folder ID.
 
 - private: your user private directory
-- common: the kDrive common directory, shared among users
-- shared: the folder with the files shared with you`,
+- common: the kDrive common directory, shared among users`,
 			Advanced:  true,
 			Sensitive: true,
 		}, {
@@ -356,8 +355,6 @@ func (f *Fs) computeRootID() (rootID string, err error) {
 			rootID, _, err = f.FindLeaf(ctx, "1", "Private")
 		case "common":
 			rootID, _, err = f.FindLeaf(ctx, "1", "Common documents")
-		case "shared":
-			rootID, _, err = f.FindLeaf(ctx, "1", "Shared")
 		case "":
 			rootID, _, err = f.FindLeaf(ctx, "1", "Private")
 		default:
