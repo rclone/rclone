@@ -272,6 +272,28 @@ func (cd *CloudDocs) ReparentStructure(ctx context.Context, uuid, targetDirUUID 
 	return nil
 }
 
+// documentRecordNames returns the documentContent and documentStructure record
+// names for a bare file UUID. CloudDocs reuses the same UUID (upper-cased) for both
+// halves of a document.
+func documentRecordNames(uuid string) (content, structure string) {
+	uuid = strings.ToUpper(uuid)
+	return "documentContent/" + uuid, "documentStructure/" + uuid
+}
+
+// deleteRecordOperations builds the records/modify "delete" operations for a
+// document's content and structure records, attaching each record's current change
+// tag (a missing tag is sent empty, which the server tolerates for a delete).
+func deleteRecordOperations(contentRec, structRec string, tags map[string]string) []ckOperation {
+	ops := make([]ckOperation, 0, 2)
+	for _, rn := range []string{contentRec, structRec} {
+		ops = append(ops, ckOperation{
+			OperationType: "delete",
+			Record:        ckRecordModify{RecordName: rn, RecordChangeTag: tags[rn]},
+		})
+	}
+	return ops
+}
+
 // DeleteFile deletes the documentStructure/documentContent pair for the given
 // record UUID from the shared zone. Used to remove or overwrite files that live
 // inside a shared sub-folder, which the drivews trash endpoint cannot touch.
@@ -280,9 +302,7 @@ func (cd *CloudDocs) DeleteFile(ctx context.Context, uuid string) error {
 	if err != nil {
 		return err
 	}
-	uuid = strings.ToUpper(uuid)
-	contentRec := "documentContent/" + uuid
-	structRec := "documentStructure/" + uuid
+	contentRec, structRec := documentRecordNames(uuid)
 	recs, err := cd.lookup(ctx, contentRec, structRec)
 	if err != nil {
 		return err
@@ -291,13 +311,7 @@ func (cd *CloudDocs) DeleteFile(ctx context.Context, uuid string) error {
 	for _, r := range recs {
 		tags[r.RecordName] = r.RecordChangeTag
 	}
-	ops := make([]ckOperation, 0, 2)
-	for _, rn := range []string{contentRec, structRec} {
-		ops = append(ops, ckOperation{
-			OperationType: "delete",
-			Record:        ckRecordModify{RecordName: rn, RecordChangeTag: tags[rn]},
-		})
-	}
+	ops := deleteRecordOperations(contentRec, structRec, tags)
 	var out ckRecordsResponse
 	return cd.request(ctx, "records/modify", ckModifyRequest{Atomic: false, ZoneID: zone, Operations: ops}, &out)
 }
@@ -329,6 +343,18 @@ type ckZoneChangesResponse struct {
 	} `json:"zones"`
 }
 
+// documentBaseHash returns the CloudKit "basehash" field value for a file: the
+// base64 of SHA256 over the basename with its extension stripped. This is how a
+// documentStructure records the file's name, and how FindFileUUID matches it.
+func documentBaseHash(leaf string) string {
+	basename := leaf
+	if i := strings.LastIndexByte(leaf, '.'); i > 0 {
+		basename = leaf[:i]
+	}
+	sum := sha256.Sum256([]byte(basename))
+	return base64.StdEncoding.EncodeToString(sum[:])
+}
+
 // FindFileUUID looks up the record UUID of the file named leaf inside the shared
 // directory directory/<dirUUID>. CloudDocs record types are not query-indexable, so
 // it enumerates the zone (changes/zone) and matches a documentStructure whose parent
@@ -339,12 +365,7 @@ func (cd *CloudDocs) FindFileUUID(ctx context.Context, dirUUID, leaf string) (st
 	if err != nil {
 		return "", err
 	}
-	basename := leaf
-	if i := strings.LastIndexByte(leaf, '.'); i > 0 {
-		basename = leaf[:i]
-	}
-	sum := sha256.Sum256([]byte(basename))
-	wantHash := base64.StdEncoding.EncodeToString(sum[:])
+	wantHash := documentBaseHash(leaf)
 	wantParent := "directory/" + strings.ToUpper(dirUUID)
 
 	syncToken := ""

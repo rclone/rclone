@@ -652,6 +652,10 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
+	if api.IsSharedFolderChildID(srcDirectoryID) || api.IsSharedFolderChildID(dstDirectoryID) || srcObj.driveID == "" {
+		return nil, fs.ErrorCantMove
+	}
+
 	item, err := f.move(ctx, srcObj.driveID, srcDirectoryID, srcLeaf, srcObj.etag, dstDirectoryID, dstLeaf)
 	if err != nil {
 		return src, err
@@ -998,8 +1002,32 @@ func (o *Object) Remove(ctx context.Context) error {
 		return nil
 	}
 
+	leaf, dirID, err := o.fs.dirCache.FindPath(ctx, o.remote, false)
+	if err == nil {
+		id, _ := o.fs.parseNormalizedID(dirID)
+		if api.IsSharedFolderChildID(id) || o.driveID == "" {
+			cd := o.fs.icloud.CloudDocsService(o.fs.pacer, shouldRetry)
+			if cd == nil {
+				return errors.New("iclouddrive: cannot remove shared file: account has no ckdatabasews service")
+			}
+			uuid, err := cd.FindFileUUID(ctx, api.GetDocIDFromDriveID(id), leaf)
+			if err != nil {
+				return err
+			}
+			if uuid == "" {
+				return fs.ErrorObjectNotFound
+			}
+			if err := cd.DeleteFile(ctx, uuid); err != nil {
+				return err
+			}
+			o.fs.dirCache.FlushDir(path.Dir(o.remote))
+			return nil
+		}
+	} else if err != fs.ErrorDirNotFound {
+		return err
+	}
+
 	var resp *http.Response
-	var err error
 	if err = o.fs.pacer.Call(func() (bool, error) {
 		_, resp, err = o.fs.service.MoveItemToTrashByID(ctx, o.driveID, o.etag, true)
 		return retryResultUnknown(ctx, resp, err)
