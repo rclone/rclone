@@ -11,7 +11,9 @@ import (
 	"fmt"
 	"math/big"
 	"net/http"
+	"net/http/cookiejar"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"testing"
 	"time"
@@ -19,6 +21,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/publicsuffix"
 	"moul.io/http2curl/v2"
 )
 
@@ -201,4 +204,66 @@ func TestCertificates(t *testing.T) {
 	// The new cert should be auto-loaded before we make this request
 	_, err = client.Get(ts.URL)
 	assert.NoError(t, err)
+}
+
+func TestClientWithFreshCookieJar_PreservesFields(t *testing.T) {
+	baseJar, _ := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
+	base := &http.Client{
+		Transport: http.DefaultTransport,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+		Timeout: 5 * time.Second,
+		Jar:     baseJar,
+	}
+
+	result := ClientWithFreshCookieJar(base)
+
+	assert.Same(t, base.Transport, result.Transport)
+	assert.Equal(t, base.Timeout, result.Timeout)
+	assert.NotNil(t, result.CheckRedirect)
+	assert.NotNil(t, result.Jar)
+	assert.NotSame(t, base.Jar, result.Jar)
+}
+
+func TestClientWithFreshCookieJar_NilBaseJar(t *testing.T) {
+	base := &http.Client{Timeout: 3 * time.Second}
+
+	result := ClientWithFreshCookieJar(base)
+
+	assert.NotNil(t, result.Jar)
+	assert.Equal(t, base.Timeout, result.Timeout)
+}
+
+func TestClientWithFreshCookieJar_JarIsolation(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.SetCookie(w, &http.Cookie{Name: "session", Value: "abc123"})
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	baseJar, _ := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
+	base := &http.Client{Jar: baseJar}
+	result := ClientWithFreshCookieJar(base)
+
+	resp, err := result.Get(ts.URL)
+	require.NoError(t, err)
+	resp.Body.Close()
+
+	u, _ := url.Parse(ts.URL)
+	assert.NotEmpty(t, result.Jar.Cookies(u))
+	assert.Empty(t, base.Jar.Cookies(u))
+}
+
+func TestNewClientCustom_CookieJarIsolation(t *testing.T) {
+	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
+	ci.Cookie = true
+
+	c1 := NewClientCustom(ctx, nil)
+	c2 := NewClientCustom(ctx, nil)
+
+	require.NotNil(t, c1.Jar)
+	require.NotNil(t, c2.Jar)
+	assert.NotSame(t, c1.Jar, c2.Jar)
 }

@@ -411,7 +411,7 @@ var ConfigOptionsInfo = Options{{
 }, {
 	Name:    "use_cookies",
 	Default: false,
-	Help:    "Enable session cookiejar",
+	Help:    "Enable session cookiejar. Each client gets its own isolated cookie jar. Cookies are not persisted between rclone runs.",
 	Groups:  "Networking",
 }, {
 	Name:    "use_mmap",
