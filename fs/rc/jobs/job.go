@@ -19,6 +19,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/cache"
+	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/rc"
 	"golang.org/x/sync/errgroup"
@@ -242,38 +243,76 @@ func getAsync(ctx context.Context, in rc.Params) (context.Context, bool, error) 
 	return ctx, isAsync, nil
 }
 
-// See if _config is set and if so adjust ctx to include it
+// hasConfigOption checks if any config options are present in the params
+func hasConfigOption(in rc.Params) bool {
+	if _, ok := in["_config"]; ok {
+		return true
+	}
+	for _, opt := range fs.ConfigOptionsInfo {
+		if _, ok := in[opt.Name]; ok {
+			return true
+		}
+	}
+	return false
+}
+
+// hasFilterOption checks if any filter options are present in the params
+func hasFilterOption(in rc.Params) bool {
+	if _, ok := in["_filter"]; ok {
+		return true
+	}
+	for _, opt := range filter.OptionsInfo {
+		if _, ok := in[opt.Name]; ok {
+			return true
+		}
+	}
+	return false
+}
+
+// See if _config or flat config parameters are set and if so adjust ctx to include it
 func getConfig(ctx context.Context, in rc.Params) (context.Context, error) {
-	if _, ok := in["_config"]; !ok {
+	if !hasConfigOption(in) {
 		return ctx, nil
 	}
 	ctx, ci := fs.AddConfig(ctx)
-	err := in.GetStruct("_config", ci)
+	err := configstruct.SetAny(in, ci)
 	if err != nil {
 		return ctx, err
 	}
-	delete(in, "_config") // remove the parameter
+	if _, ok := in["_config"]; ok {
+		err = in.GetStruct("_config", ci)
+		if err != nil {
+			return ctx, err
+		}
+		delete(in, "_config") // remove the parameter
+	}
 	return ctx, nil
 }
 
-// See if _filter is set and if so adjust ctx to include it
+// See if _filter or flat filter parameters are set and if so adjust ctx to include it
 func getFilter(ctx context.Context, in rc.Params) (context.Context, error) {
-	if _, ok := in["_filter"]; !ok {
+	if !hasFilterOption(in) {
 		return ctx, nil
 	}
 	// Copy of the current filter options
 	opt := filter.GetConfig(ctx).Opt
-	// Update the options from the parameter
-	err := in.GetStruct("_filter", &opt)
+	err := configstruct.SetAny(in, &opt)
 	if err != nil {
 		return ctx, err
+	}
+	if _, ok := in["_filter"]; ok {
+		// Update the options from the parameter
+		err = in.GetStruct("_filter", &opt)
+		if err != nil {
+			return ctx, err
+		}
+		delete(in, "_filter") // remove the parameter
 	}
 	fi, err := filter.NewFilter(&opt)
 	if err != nil {
 		return ctx, err
 	}
 	ctx = filter.ReplaceConfig(ctx, fi)
-	delete(in, "_filter") // remove the parameter
 	return ctx, nil
 }
 
