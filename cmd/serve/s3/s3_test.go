@@ -27,6 +27,7 @@ import (
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/fstest/testy"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
@@ -84,6 +85,7 @@ func TestS3(t *testing.T) {
 // this exercises that streaming path in serve s3 - the path the local
 // backing in TestS3 cannot cover.
 func TestS3Minio(t *testing.T) {
+	testy.SkipUnlessDocker(t)
 	servetest.RunWithBackend(t, "s3", startS3(t), "TestS3Minio:")
 }
 
