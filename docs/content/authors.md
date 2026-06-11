@@ -1147,3 +1147,7 @@ put them back in again. -->
 - Puneet Dixit <puneetdixit4321@gmail.com>
 - Yakov Till <yakov.till@gmail.com>
 - Janne Beate Bakeng <436265+jbbakeng@users.noreply.github.com>
+- IceLocke <lockeice@gmail.com>
+- nako-ruru <nako_ruru@163.com>
+- bright <nako_ruru@sina.com>
+- Filippo <57143294+FilippoMuschera@users.noreply.github.com>
