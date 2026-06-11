@@ -178,6 +178,8 @@ func TestCertificates(t *testing.T) {
 	ctx := context.TODO()
 	ci := fs.GetConfig(ctx)
 	// Create a test certificate and write it to a temp file
+	origCert, origKey := ci.ClientCert, ci.ClientKey
+	t.Cleanup(func() { ci.ClientCert, ci.ClientKey = origCert, origKey })
 	ci.ClientCert = t.TempDir() + "client.cert"
 	ci.ClientKey = t.TempDir() + "client.key"
 	validity := 1 * time.Second
@@ -258,6 +260,7 @@ func TestClientWithFreshCookieJar_JarIsolation(t *testing.T) {
 func TestNewClientCustom_CookieJarIsolation(t *testing.T) {
 	ctx := context.Background()
 	ci := fs.GetConfig(ctx)
+	t.Cleanup(func() { ci.Cookie = false })
 	ci.Cookie = true
 
 	c1 := NewClientCustom(ctx, nil)
