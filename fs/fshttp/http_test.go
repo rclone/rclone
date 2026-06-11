@@ -248,7 +248,7 @@ func TestClientWithFreshCookieJar_JarIsolation(t *testing.T) {
 
 	resp, err := result.Get(ts.URL)
 	require.NoError(t, err)
-	resp.Body.Close()
+	assert.NoError(t, resp.Body.Close())
 
 	u, _ := url.Parse(ts.URL)
 	assert.NotEmpty(t, result.Jar.Cookies(u))
