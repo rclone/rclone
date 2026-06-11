@@ -35,10 +35,9 @@ const (
 )
 
 var (
-	transport    *Transport
-	noTransport  = new(sync.Once)
-	cookieJar, _ = cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
-	logMutex     sync.Mutex
+	transport   *Transport
+	noTransport = new(sync.Once)
+	logMutex    sync.Mutex
 
 	// UnixSocketConfig describes the option to configure the path to a unix domain socket to connect to
 	UnixSocketConfig = fs.Option{
@@ -315,7 +314,8 @@ func NewClientCustom(ctx context.Context, customize func(*http.Transport)) *http
 		Transport: NewTransportCustom(ctx, customize),
 	}
 	if ci.Cookie {
-		client.Jar = cookieJar
+		jar, _ := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
+		client.Jar = jar
 	}
 	return client
 }
@@ -329,6 +329,18 @@ func NewClientWithUnixSocket(ctx context.Context, path string) *http.Client {
 			return NewDialer(ctx).DialContext(reqCtx, "unix", path)
 		}
 	})
+}
+
+// ClientWithFreshCookieJar returns a shallow copy of base with a new empty
+// cookie jar, reusing the same Transport and other settings.
+func ClientWithFreshCookieJar(base *http.Client) *http.Client {
+	jar, _ := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
+	return &http.Client{
+		Transport:     base.Transport,
+		CheckRedirect: base.CheckRedirect,
+		Timeout:       base.Timeout,
+		Jar:           jar,
+	}
 }
 
 // Transport is our http Transport which wraps an http.Transport
