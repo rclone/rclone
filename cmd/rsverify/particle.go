@@ -23,6 +23,6 @@ func tryParticleFooter(raw []byte) (payload []byte, ft *rs.Footer, ok bool) {
 	return payload, ft, true
 }
 
-func algorithmIsRS(ft *rs.Footer) bool {
-	return bytes.Equal(ft.Algorithm[:], rs.AlgorithmRS[:])
+func algorithmIsSYMM(ft *rs.Footer) bool {
+	return bytes.Equal(ft.Algorithm[:], rs.AlgorithmSYMM[:])
 }

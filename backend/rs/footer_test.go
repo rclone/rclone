@@ -1,6 +1,7 @@
 package rs
 
 import (
+	"encoding/binary"
 	"encoding/hex"
 	"strings"
 	"testing"
@@ -11,11 +12,29 @@ import (
 
 func TestNewRSFooterDefaults(t *testing.T) {
 	ft := NewRSFooter(0, nil, nil, time.Unix(1700000000, 0), 3, 1, 0, 256*1024, 0, 0)
-	require.Equal(t, CompressionNone, ft.Compression)
-	require.Equal(t, uint32(0), ft.NumBlocks)
-	require.Equal(t, AlgorithmRS, ft.Algorithm)
+	require.Equal(t, AlgorithmSYMM, ft.Algorithm)
+	require.Equal(t, int64(1700000000)*1e9, ft.Mtime)
 	require.Equal(t, emptyFileMD5, ft.MD5)
 	require.Equal(t, emptyFileSHA256, ft.SHA256)
+}
+
+func TestFooterFieldOffsets(t *testing.T) {
+	require.Equal(t, 0, 0%8)
+	require.Equal(t, footerOffVersion, 8)
+	require.Equal(t, footerOffAlgorithm, 12)
+	require.Equal(t, footerOffContentLength, 16)
+	require.Equal(t, footerOffContentLength%8, 0)
+	require.Equal(t, footerOffMD5, 24)
+	require.Equal(t, footerOffMD5%8, 0)
+	require.Equal(t, footerOffSHA256, 40)
+	require.Equal(t, footerOffSHA256%8, 0)
+	require.Equal(t, footerOffMtime, 72)
+	require.Equal(t, footerOffMtime%8, 0)
+	require.Equal(t, footerOffStripeSize, 80)
+	require.Equal(t, footerOffStripeSize%4, 0)
+	require.Equal(t, footerOffNumStripes, 84)
+	require.Equal(t, footerOffPayloadCRC32C, 88)
+	require.Equal(t, FooterSize%8, 0)
 }
 
 func TestFooterMarshalParseRoundTrip(t *testing.T) {
@@ -26,20 +45,18 @@ func TestFooterMarshalParseRoundTrip(t *testing.T) {
 	_, err = hex.Decode(sha256Sum[:], []byte("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"))
 	require.NoError(t, err)
 
-	snappyTag := [4]byte{'s', 'z', ' ', ' '}
+	subSec := time.Unix(1, 123456789)
 	cases := []Footer{
 		*NewRSFooter(0, nil, nil, time.Unix(1700000000, 0), 3, 1, 0, 256*1024, 0, 0),
 		*NewRSFooter(100, md5Sum[:], sha256Sum[:], time.Unix(1700001234, 0), 2, 2, 0, 64, 2, 0x12345678),
-		*NewRSFooter(1<<20, md5Sum[:], sha256Sum[:], time.Unix(1700005678, 0), 4, 3, 3, 32*1024, 10, 0xabcdef01),
+		*NewRSFooter(1<<20, md5Sum[:], sha256Sum[:], subSec, 4, 3, 3, 32*1024, 10, 0xabcdef01),
 		*NewRSFooter(42, md5Sum[:], sha256Sum[:], time.Unix(1700009999, 0), 3, 1, 6, 128, 1, 0),
 		{
 			ContentLength: 512,
 			MD5:           md5Sum,
 			SHA256:        sha256Sum,
-			Mtime:         1700011111,
-			Compression:   snappyTag,
-			NumBlocks:     7,
-			Algorithm:     AlgorithmRS,
+			Mtime:         subSec.UnixNano(),
+			Algorithm:     AlgorithmSYMM,
 			DataShards:    3,
 			ParityShards:  1,
 			CurrentShard:  2,
@@ -53,6 +70,9 @@ func TestFooterMarshalParseRoundTrip(t *testing.T) {
 		raw, err := want.MarshalBinary()
 		require.NoError(t, err, "case %d marshal", i)
 		require.Len(t, raw, FooterSize)
+		require.Equal(t, FooterMagic[:], raw[0:8])
+		require.Equal(t, uint32(FooterVersion), binary.LittleEndian.Uint32(raw[footerOffVersion:]))
+		require.Equal(t, want.Mtime, int64(binary.LittleEndian.Uint64(raw[footerOffMtime:])), "case %d mtime bytes", i)
 
 		got, err := ParseFooter(raw)
 		require.NoError(t, err, "case %d parse", i)
@@ -83,7 +103,7 @@ func TestParseFooterErrors(t *testing.T) {
 			name: "bad magic",
 			buf: func() []byte {
 				b := append([]byte{}, valid...)
-				copy(b[0:9], "BADMAGIC!")
+				copy(b[0:8], "BADMAGIC")
 				return b
 			}(),
 			want: "invalid magic",
@@ -92,7 +112,7 @@ func TestParseFooterErrors(t *testing.T) {
 			name: "unsupported version",
 			buf: func() []byte {
 				b := append([]byte{}, valid...)
-				b[10] = byte(FooterVersion + 1)
+				binary.LittleEndian.PutUint32(b[footerOffVersion:], FooterVersion+1)
 				return b
 			}(),
 			want: "unsupported version",

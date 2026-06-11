@@ -7,16 +7,18 @@ This backend implements a virtual Reed-Solomon layout over multiple remotes.
 - Implemented:
   - Config parsing and validation (`k`, `m`, ordered shard remotes)
   - Enforced topology rule: `k > m` (`data_shards > parity_shards`)
-  - Footer v3 (`RCLONE/EC`, 102-byte) with `Algorithm=RS`, `StripeSize`, `NumStripes`, `PayloadCRC32C`
+  - Footer v1 (`RCLONERS`, 96-byte) with `Algorithm=SYMM`, `StripeSize`, `NumStripes`, `PayloadCRC32C`
+  - **Virtual padding** on disk: trimmed data-shard payloads per stripe; parity shards full `S` bytes per stripe ([`payloadlayout.go`](payloadlayout.go))
   - Upload path: `use_spooling=false` streams shards by default; unknown-size sources use spooling for that transfer
-  - Default `use_spooling=false`: direct shard streaming for known-size sources; unknown-size `Put` auto-spools for that transfer only
-  - Quorum policy for writes/metadata/namespace ops (`write_quorum`, default `k+1`)
+  - **List metadata fast path**: size/ModTime from shard `List` when possible; coalesced footer read on lowest listing shard ([`docs/LIST_METADATA.md`](docs/LIST_METADATA.md), [`list_metadata.go`](list_metadata.go))
+  - Quorum: **read/list at k**; **writes/metadata/namespace at `write_quorum`** (default `k+1`)
   - Two-phase operation retries (full pass + one fast retry for failing shards)
   - Read/reconstruct path from available shards
   - `status`, `heal`, and `degraded` backend command plumbing
   - Same-layout server-side **`Copy`**, **`Move`**, and **`DirMove`** on the logical remote ([`move_copy.go`](move_copy.go)): per-shard delegated `Features().Copy` / `Move` / `DirMove` under write quorum (see [`docs/OPEN_QUESTIONS.md`](docs/OPEN_QUESTIONS.md) Q2)
+  - Shell integration gate: [`test/compare_all.sh`](test/compare_all.sh) (local + MinIO: smoke, verify, heal, quorum_dirs, move_copy) — see [`test/README.md`](test/README.md)
 - Not yet complete:
-  - Full production-ready heal orchestration and integration coverage
+  - Production-scale heal orchestration (large namespaces, Q5) and broader hardening (Q15)
 
 Open design questions and follow-ups are tracked in [`docs/OPEN_QUESTIONS.md`](docs/OPEN_QUESTIONS.md).
 
@@ -54,4 +56,4 @@ The standalone helper `rsverify` lives under `cmd/rsverify`. Build with:
 
 `go build -o rsverify ./cmd/rsverify`
 
-Subcommands: `encode`, `decode`, `check`, `footer` (see `rsverify --help`). Defaults match rclone particle layout (EC footer v3 unless `encode --footer=false`). Use `encode --stripe-size` / rs `stripe_fragment_size` to control the RS fragment size **S**.
+Subcommands: `encode`, `decode`, `check`, `footer` (see `rsverify --help`). Defaults match rclone particle layout (RCLONERS footer v1 unless `encode --footer=false`). Use `encode --stripe-size` / rs `stripe_fragment_size` to control the RS fragment size **S**. **`check`** validates each particle footer and **virtual-padding** on-disk sizes via [`ValidateShardParticleFile`](payloadlayout.go).

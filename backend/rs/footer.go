@@ -1,6 +1,7 @@
 package rs
 
 import (
+	"bytes"
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
@@ -9,23 +10,32 @@ import (
 	"time"
 )
 
-// EC footer layout and algorithm identifiers for Reed-Solomon particles.
+// RS footer v1 layout for Reed-Solomon shard particles.
 const (
-	FooterMagic   = "RCLONE/EC"
-	FooterVersion = 3
-	// FooterSize is the trailing EC metadata size per shard particle (v3 adds NumStripes).
-	FooterSize = 102
+	FooterVersion = 1
+	// FooterSize is the trailing metadata size per shard particle (v1).
+	FooterSize = 96
+
+	footerOffVersion       = 8
+	footerOffAlgorithm     = 12
+	footerOffContentLength = 16
+	footerOffMD5           = 24
+	footerOffSHA256        = 40
+	footerOffMtime         = 72
+	footerOffStripeSize    = 80
+	footerOffNumStripes    = 84
+	footerOffPayloadCRC32C = 88
+	footerOffDataShards    = 92
+	footerOffParityShards  = 93
+	footerOffCurrentShard  = 94
+	footerOffReserved      = 95
 )
 
-// AlgorithmRS is the footer algorithm tag for Reed-Solomon encoding.
-var (
-	AlgorithmRS = [4]byte{'R', 'S', 0, 0}
-)
+// FooterMagic is the 8-byte particle footer identifier (RCLONE + RS).
+var FooterMagic = [8]byte{'R', 'C', 'L', 'O', 'N', 'E', 'R', 'S'}
 
-// CompressionNone is the footer compression tag for uncompressed payloads.
-var (
-	CompressionNone = [4]byte{0, 0, 0, 0}
-)
+// AlgorithmSYMM is the footer algorithm tag for stripe-wise systematic RS encoding.
+var AlgorithmSYMM = [4]byte{'S', 'Y', 'M', 'M'}
 
 var emptyFileMD5 [16]byte
 var emptyFileSHA256 [32]byte
@@ -35,15 +45,13 @@ func init() {
 	_, _ = hex.Decode(emptyFileSHA256[:], []byte("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"))
 }
 
-// Footer holds metadata from a single RS/EC shard particle.
+// Footer holds metadata from a single RS shard particle.
 type Footer struct {
 	ContentLength int64
 	MD5           [16]byte
 	SHA256        [32]byte
-	Mtime         int64
-	Compression   [4]byte
-	// NumBlocks is reserved for a future compression layer (same role as RAID3).
-	NumBlocks    uint32
+	// Mtime is nanoseconds since the Unix epoch.
+	Mtime        int64
 	Algorithm    [4]byte
 	DataShards   uint8
 	ParityShards uint8
@@ -51,28 +59,27 @@ type Footer struct {
 	// StripeSize is the per-shard fragment size S in bytes (one RS stripe appends S bytes per shard).
 	StripeSize    uint32
 	PayloadCRC32C uint32
-	// NumStripes is the number of RS stripes in the shard payload (payload length = NumStripes * StripeSize).
+	// NumStripes is the number of RS stripes in the shard payload (parity: NumStripes*StripeSize bytes; data shards use virtual padding).
 	NumStripes uint32
 }
 
 // MarshalBinary encodes the footer to its on-disk layout.
 func (f *Footer) MarshalBinary() ([]byte, error) {
 	b := make([]byte, FooterSize)
-	copy(b[0:9], FooterMagic)
-	binary.LittleEndian.PutUint16(b[9:11], FooterVersion)
-	binary.LittleEndian.PutUint64(b[11:19], uint64(f.ContentLength))
-	copy(b[19:35], f.MD5[:])
-	copy(b[35:67], f.SHA256[:])
-	binary.LittleEndian.PutUint64(b[67:75], uint64(f.Mtime))
-	copy(b[75:79], f.Compression[:])
-	binary.LittleEndian.PutUint32(b[79:83], f.NumBlocks)
-	copy(b[83:87], f.Algorithm[:])
-	b[87] = f.DataShards
-	b[88] = f.ParityShards
-	b[89] = f.CurrentShard
-	binary.LittleEndian.PutUint32(b[90:94], f.StripeSize)
-	binary.LittleEndian.PutUint32(b[94:98], f.PayloadCRC32C)
-	binary.LittleEndian.PutUint32(b[98:102], f.NumStripes)
+	copy(b[0:8], FooterMagic[:])
+	binary.LittleEndian.PutUint32(b[footerOffVersion:], FooterVersion)
+	copy(b[footerOffAlgorithm:], f.Algorithm[:])
+	binary.LittleEndian.PutUint64(b[footerOffContentLength:], uint64(f.ContentLength))
+	copy(b[footerOffMD5:], f.MD5[:])
+	copy(b[footerOffSHA256:], f.SHA256[:])
+	binary.LittleEndian.PutUint64(b[footerOffMtime:], uint64(f.Mtime))
+	binary.LittleEndian.PutUint32(b[footerOffStripeSize:], f.StripeSize)
+	binary.LittleEndian.PutUint32(b[footerOffNumStripes:], f.NumStripes)
+	binary.LittleEndian.PutUint32(b[footerOffPayloadCRC32C:], f.PayloadCRC32C)
+	b[footerOffDataShards] = f.DataShards
+	b[footerOffParityShards] = f.ParityShards
+	b[footerOffCurrentShard] = f.CurrentShard
+	b[footerOffReserved] = 0
 	return b, nil
 }
 
@@ -81,27 +88,25 @@ func ParseFooter(buf []byte) (*Footer, error) {
 	if len(buf) != FooterSize {
 		return nil, fmt.Errorf("footer: buffer length must be %d", FooterSize)
 	}
-	if string(buf[0:9]) != FooterMagic {
+	if !bytes.Equal(buf[0:8], FooterMagic[:]) {
 		return nil, errors.New("footer: invalid magic")
 	}
-	ver := binary.LittleEndian.Uint16(buf[9:11])
+	ver := binary.LittleEndian.Uint32(buf[footerOffVersion:])
 	if ver != FooterVersion {
 		return nil, fmt.Errorf("footer: unsupported version %d (want %d)", ver, FooterVersion)
 	}
 	f := &Footer{}
-	f.ContentLength = int64(binary.LittleEndian.Uint64(buf[11:19]))
-	copy(f.MD5[:], buf[19:35])
-	copy(f.SHA256[:], buf[35:67])
-	f.Mtime = int64(binary.LittleEndian.Uint64(buf[67:75]))
-	copy(f.Compression[:], buf[75:79])
-	f.NumBlocks = binary.LittleEndian.Uint32(buf[79:83])
-	copy(f.Algorithm[:], buf[83:87])
-	f.DataShards = buf[87]
-	f.ParityShards = buf[88]
-	f.CurrentShard = buf[89]
-	f.StripeSize = binary.LittleEndian.Uint32(buf[90:94])
-	f.PayloadCRC32C = binary.LittleEndian.Uint32(buf[94:98])
-	f.NumStripes = binary.LittleEndian.Uint32(buf[98:102])
+	f.ContentLength = int64(binary.LittleEndian.Uint64(buf[footerOffContentLength:]))
+	copy(f.MD5[:], buf[footerOffMD5:])
+	copy(f.SHA256[:], buf[footerOffSHA256:])
+	f.Mtime = int64(binary.LittleEndian.Uint64(buf[footerOffMtime:]))
+	copy(f.Algorithm[:], buf[footerOffAlgorithm:])
+	f.DataShards = buf[footerOffDataShards]
+	f.ParityShards = buf[footerOffParityShards]
+	f.CurrentShard = buf[footerOffCurrentShard]
+	f.StripeSize = binary.LittleEndian.Uint32(buf[footerOffStripeSize:])
+	f.PayloadCRC32C = binary.LittleEndian.Uint32(buf[footerOffPayloadCRC32C:])
+	f.NumStripes = binary.LittleEndian.Uint32(buf[footerOffNumStripes:])
 	return f, nil
 }
 
@@ -111,7 +116,7 @@ func crc32cChecksum(data []byte) uint32 {
 	return crc32.Checksum(data, crc32cTable)
 }
 
-// CRC32C returns the Castagnoli CRC32 of data (same as EC footer PayloadCRC32C).
+// CRC32C returns the Castagnoli CRC32 of data (same as footer PayloadCRC32C).
 func CRC32C(data []byte) uint32 {
 	return crc32cChecksum(data)
 }
@@ -134,10 +139,8 @@ func NewRSFooter(contentLength int64, md5Sum, sha256Sum []byte, mtime time.Time,
 		ContentLength: contentLength,
 		MD5:           md5Arr,
 		SHA256:        sha256Arr,
-		Mtime:         mtime.Unix(),
-		Compression:   CompressionNone,
-		NumBlocks:     0,
-		Algorithm:     AlgorithmRS,
+		Mtime:         mtime.UnixNano(),
+		Algorithm:     AlgorithmSYMM,
 		DataShards:    uint8(dataShards),
 		ParityShards:  uint8(parityShards),
 		CurrentShard:  uint8(shardIndex),
