@@ -43,13 +43,13 @@ are implemented, but behavior and options may still change. See
   Reed–Solomon split/encoded, and **S** bytes per stripe are appended to each
   shard’s payload. **`NumStripes`** in the footer is the stripe count; empty
   objects use **0** stripes.
-- **Footer**: Each particle ends with the same **102-byte EC footer** (version
-  **3**, magic **`RCLONE/EC`**). Fields such as logical **size**, **mtime**,
-  **MD5/SHA256**, **k**, **m**, **algorithm**, **`StripeSize` (S)**,
-  **`NumStripes`**, and **`NumBlocks`** (reserved, 0 today) are **the same across
-  shards**. **Per-shard fields differ**, notably **`CurrentShard`** and
-  **`PayloadCRC32C`** (CRC of that shard’s full payload), so footers are **not
-  byte-identical** copies.
+- **Footer**: Each particle ends with the same **96-byte RS footer** (version
+  **1**, magic **`RCLONERS`**). Fields such as logical **size**, **mtime**
+  (nanoseconds), **MD5/SHA256**, **k**, **m**, **`Algorithm`** (`SYMM` =
+  stripe-wise systematic RS), **`StripeSize` (S)**, and **`NumStripes`** are
+  **the same across shards**. **Per-shard fields differ**, notably
+  **`CurrentShard`** and **`PayloadCRC32C`** (CRC of that shard’s full
+  payload), so footers are **not byte-identical** copies.
 - **Upload**: Encoded shards are written to local disk when `use_spooling=true`
   (see `staging_dir` / system temp), or streamed directly when `use_spooling=false`
   and the source size is known. In both cases the backend runs **one concurrent
@@ -68,42 +68,46 @@ for data to be reconstructable.
 
 - **Read / reconstruct:** Standard Reed–Solomon needs **any k** healthy shards
   out of **k+m** to reconstruct the logical object.
-- **Write / metadata / namespace / listing (rclone `rs`):** Quorum-based
-  operations—including **`Put`**, **`List`** (per-name merge), metadata updates,
-  **`mkdir`/`rmdir`**, and same-layout **`Copy`/`Move`/`DirMove`** when
-  used—succeed when enough shard remotes agree per the configured threshold.
-  This is configurable via **`write_quorum`** (range **k..k+m**, default **k+1**).
-  Operations run in two phases: a full parallel pass, then one bounded retry
+- **Read / list merge:** Directory listing and per-name file votes use **k**
+  (`data_shards`) as the floor—the same minimum needed to reconstruct.
+- **Write / metadata / namespace:** **`Put`**, metadata updates, **`mkdir`/`rmdir`**,
+  and same-layout **`Copy`/`Move`/`DirMove`** succeed when enough shard remotes
+  agree per **`write_quorum`** (range **k..k+m**, default **k+1**).
+- **Degraded / healthy:** `backend degraded` treats objects with **`present_shards >= k`**
+  as healthy for inspection.
+- Operations run in two phases: a full parallel pass, then one bounded retry
   pass for remaining failing shards. Partial failures are logged.
 
 ## File formats
 
 RS stores one **particle object per shard** at the same logical path on each
 configured shard remote. The particle format is implementation-oriented and
-versioned through a fixed trailing EC footer.
+versioned through a fixed trailing RS footer.
 
 ### Particle format overview
 
 For non-empty logical objects, each shard particle is:
 
-- **payload**: `NumStripes × StripeSize` bytes
-- **footer**: fixed 102-byte EC footer (version 3)
+- **payload**: variable length per shard (virtual padding; parity shards use
+  `NumStripes × StripeSize`, data shards store trimmed fragments only)
+- **footer**: fixed 96-byte RS footer (version 1)
 
-For empty logical objects, payload is length `0` and only the 102-byte footer
+For empty logical objects, payload is length `0` and only the 96-byte footer
 is stored.
 
 High-level structure:
 
 ```text
 +------------------------------+--------------------+
-| shard payload (N * S bytes)  | EC footer (102 B)  |
+| shard payload (variable)     | RS footer (96 B)   |
 +------------------------------+--------------------+
 ```
 
 Where:
 
-- `N = NumStripes`
-- `S = StripeSize` (fragment size per shard per stripe)
+- Payload length depends on shard index and virtual padding (see below); parity
+  shards use `NumStripes × StripeSize`, data shards store trimmed fragments only.
+- `N = NumStripes`, `S = StripeSize` (fragment size per shard per stripe)
 
 ### Terminology
 
@@ -125,31 +129,34 @@ Where:
 
 ### Binary layout
 
-The footer is the final 102 bytes of every particle.
+The footer is the final 96 bytes of every particle. Fields are little-endian and
+aligned on 4- or 8-byte boundaries for efficient access.
 
 ```text
 Offset  Size  Field
-0       9     Magic "RCLONE/EC"
-9       2     Version (little-endian uint16) = 3
-11      8     ContentLength (little-endian uint64)
-19      16    MD5 (logical object)
-35      32    SHA256 (logical object)
-67      8     Mtime (little-endian uint64, unix seconds)
-75      4     Compression tag ([4]byte, currently zero)
-79      4     NumBlocks (little-endian uint32, reserved; currently 0)
-83      4     Algorithm tag ([4]byte, currently "RS\\x00\\x00")
-87      1     DataShards (k)
-88      1     ParityShards (m)
-89      1     CurrentShard (this particle's shard index)
-90      4     StripeSize (little-endian uint32)
-94      4     PayloadCRC32C (little-endian uint32, over full payload)
-98      4     NumStripes (little-endian uint32)
+0       8     Magic "RCLONERS"
+8       4     Version (uint32) = 1
+12      4     Algorithm ([4]byte) = "SYMM" (stripe-wise systematic RS)
+16      8     ContentLength (int64)
+24      16    MD5 (logical object)
+40      32    SHA256 (logical object)
+72      8     Mtime (int64, nanoseconds since Unix epoch)
+80      4     StripeSize (uint32)
+84      4     NumStripes (uint32)
+88      4     PayloadCRC32C (uint32, over full payload)
+92      1     DataShards (k)
+93      1     ParityShards (m)
+94      1     CurrentShard (this particle's shard index)
+95      1     Reserved (must be 0 on write)
 ```
 
 ### Field definitions and invariants
 
-- `Magic` must be exactly `RCLONE/EC`.
-- `Version` must be `3`; other versions are currently rejected.
+- `Magic` must be exactly `RCLONERS` (Reed–Solomon particle footer).
+- `Version` must be `1`; other versions are currently rejected.
+- `Algorithm` must be `SYMM` for the stripe-wise systematic encoding used by
+  this backend (`Split`/`Encode` per stripe via klauspost/reedsolomon). The
+  magic identifies the RS footer family; `Algorithm` identifies the variant.
 - `ContentLength`, `MD5`, `SHA256`, `Mtime`, `Algorithm`, `DataShards`,
   `ParityShards`, `StripeSize`, and `NumStripes` are expected to be consistent
   across shard particles for the same logical object.
@@ -159,21 +166,25 @@ Offset  Size  Field
   (everything before the footer).
 - Empty logical objects use `StripeSize=0` and `NumStripes=0`.
 
-### Padding and stripe rules
+### Padding and stripe rules (virtual padding)
 
 - RS encoding reads logical content in chunks of at most `k × S` bytes.
 - Each stripe is zero-padded to `k × S` for RS split/encode.
 - `NumStripes` is `ceil(ContentLength / (k × S))` for non-empty objects and `0`
   for empty objects.
-- Each shard receives exactly `S` bytes per stripe, so particle payload length
-  is always `N × S`.
+- **On disk (virtual padding):** data shards store only the non-padding fragment
+  bytes per stripe; **parity shards** store the full **`S`** bytes per stripe.
+- Data shard `i` stripe `t` stores `max(0, min(S, L_t − i·S))` bytes where
+  `L_t` is the logical byte length of stripe `t`.
+- Logical size from list metadata (when all **k** data shards are listed):
+  `ContentLength = Σ(i=0..k−1) (listParticleSize_i − 96)`.
 - During reconstruction/join, decoded output is trimmed back to logical stripe
   length, and total decoded length must equal `ContentLength`.
 
 ### Reconstruction rules
 
 - Reconstruction requires at least `k` readable shard fragments per stripe.
-- Stripe-wise reconstruction is used for footer v3 particles (`StripeSize>0` and
+- Stripe-wise reconstruction is used for footer v1 particles (`StripeSize>0` and
   `NumStripes>0`).
 - If all `k` data shards are present and footer-compatible, read path can join
   data shards directly stripe-by-stripe.
@@ -183,7 +194,7 @@ Offset  Size  Field
 ### Validation rules
 
 - Footer parse fails if:
-  - particle length is `< 102` bytes
+  - particle length is `< 96` bytes
   - magic is invalid
   - version is not supported
 - Particle payload extraction fails if:
@@ -191,56 +202,20 @@ Offset  Size  Field
   - payload CRC32C does not match `PayloadCRC32C`
 - Stripe reconstruction fails if:
   - `StripeSize <= 0` or `NumStripes <= 0` for non-empty decode
-  - present shard payload length differs from `NumStripes × StripeSize`
+  - present shard payload length differs from the virtual-padding expectation for
+    that shard index
   - reconstructed logical byte count differs from `ContentLength`
 
 ### Compatibility and versioning
 
-- Current format version is fixed at footer version `3`.
+- Current format version is fixed at footer version `1`.
 - Current parser behavior is strict: unknown footer versions are rejected.
-- No extension block is defined yet in v3; future compatibility changes should
-  use a new footer version and explicit decode rules.
+- Future compatibility changes should use a new footer version (and usually a
+  new `Algorithm` tag) with explicit decode rules.
 
-### Future compression layout (design placeholder)
-
-This subsection is a design placeholder and is **not implemented** in the
-current `rs` backend.
-
-If RS later adds block compression (Snappy or Zstandard), particle payloads can
-follow a block-indexed structure compatible with efficient range reads.
-
-Planned compression algorithms:
-
-- `snappy`
-- `zstd`
-
-Proposed footer semantics:
-
-- `Compression` (`[4]byte`): compression algorithm tag (`none`, `snappy`,
-  `zstd`)
-- `NumBlocks` (`uint32`): number of compressed blocks used in the payload
-
-Proposed compressed particle shape:
-
-```text
-+-------------------------------+---------------------------+-----------------+
-| shard payload from compressed | block inv. (NumBlocks*4)  | EC footer (vN)  |
-| stream (stripe/shard encoded) | LE uint32 compressed len  | incl. tag/count |
-+-------------------------------+---------------------------+-----------------+
-```
-
-Where:
-
-- Logical input is split into fixed uncompressed blocks (for example 128 KiB).
-- Each block is compressed independently with the selected algorithm.
-- Inventory stores compressed byte length of each block (`uint32`
-  little-endian), in block order, and is appended to each shard payload.
-- `NumBlocks` equals the number of inventory entries.
-- `PayloadCRC32C` covers the full shard payload before the footer (compressed
-  shard bytes plus inventory bytes).
-
-Uncompressed (`Compression=none`) behavior can remain the current layout
-(payload + footer, `NumBlocks=0`), with no inventory trailer.
+Other rclone backends use different metadata schemes: **crypt** prefixes
+encrypted files with `RCLONE\x00\x00`; **chunker** uses filename patterns and
+optional JSON sidecar objects — not a trailing binary footer.
 
 ### Worked examples
 
@@ -248,15 +223,16 @@ Example A: tiny non-empty file (`k=2`, `m=2`, `S=32`, `ContentLength=1`)
 
 - `k × S = 64`
 - `NumStripes = ceil(1/64) = 1`
-- per-shard payload = `1 × 32 = 32` bytes
-- particle size = `32 + 102 = 134` bytes
+- data shard 0 payload = `1` byte; data shard 1 payload = `0` bytes
+- parity shard payloads = `32` bytes each
+- particle sizes: data0 `97`, data1 `96`, parity `128` bytes
 
 Example B: exact numbers used in tests (`k=2`, `m=2`, `S=32`, `ContentLength=100`)
 
 - `k × S = 64`
 - `NumStripes = ceil(100/64) = 2`
-- per-shard payload = `2 × 32 = 64` bytes
-- particle size = `64 + 102 = 166` bytes
+- data shard 0 payload = `64` bytes; data shard 1 payload = `36` bytes
+- parity shard payloads = `64` bytes each
 - first stripe contributes 64 logical bytes; second stripe contributes 36
   logical bytes after trimming padding.
 
@@ -264,48 +240,64 @@ Example C: empty logical object (`ContentLength=0`)
 
 - `NumStripes = 0`
 - payload length = `0`
-- particle size = `102` bytes (footer only)
+- particle size = `96` bytes (footer only)
 
 Example D: ASCII payload view (`"Hello Black Forest"`, `k=2`, `m=1`, `S=16`)
 
 - `ContentLength = 18`
 - `k × S = 32`
 - `NumStripes = ceil(18/32) = 1`
-- per-shard payload = `1 × 16 = 16` bytes
-- particle size = `16 + 102 = 118` bytes
+- data shard 0 payload = `16` bytes; data shard 1 payload = `2` bytes
+- parity shard payload = `16` bytes
+- particle sizes: data0 `112`, data1 `98`, parity `112` bytes
 
-Payload bytes by shard (ASCII; `\0` means NUL byte):
+Payload bytes by shard after RS encode (in-memory stripe columns; `\0` is NUL):
 
-- shard 0 (data): `"Hello Black Fore"`
-- shard 1 (data): `"st\0\0\0\0\0\0\0\0\0\0\0\0\0\0"`
-- shard 2 (parity): `";\x11llo Black Fore"`
+- shard 0 (data, stored): `"Hello Black Fore"`
+- shard 1 (data, stored): `"st"` (only 2 bytes on disk)
+- shard 2 (parity, stored): full 16-byte RS fragment (may include non-printable bytes)
 
 Notes on Example D:
 
 - The logical content is zero-padded to 32 bytes before RS encode.
-- Because `m=1`, the parity payload is computed bytewise from the two data
-  shards and may include non-printable bytes (for this input byte 1 is `0x11`).
+- Virtual padding omits trailing zero columns on data shards only.
 
 ### Implementation references
 
 - Format constants and footer encoding: `backend/rs/footer.go`
-- Stripe math and particle size formulas: `backend/rs/encode.go`
+- Virtual-padding layout helpers: `backend/rs/payloadlayout.go`
+- Stripe math and encode: `backend/rs/encode.go`
+- Listing internals: `backend/rs/docs/LIST_METADATA.md`
+- List metadata fast path: `backend/rs/list_metadata.go`
 - Payload extraction, CRC checks, and reconstruction: `backend/rs/object.go`
 - Heal reconstruction path: `backend/rs/commands.go`
-- Format-oriented tests: `backend/rs/rs_test.go`
+- Format-oriented tests: `backend/rs/rs_test.go`, `backend/rs/payloadlayout_test.go`
 
-## Listing (quorum merge)
+## Listing (quorum merge + metadata fast path)
 
 Directory listing is merged from shard remotes using quorum voting.
 Shard `List` calls run **in parallel**; each name is included only if enough
-shards report it as a **file** or as a **directory** under **`write_quorum`**
+shards report it as a **file** or as a **directory** under **read quorum `k`**
 (and enough shards participate in the directory listing overall). Resulting
-names are **sorted alphabetically**. Entries that do not meet quorum are omitted
-from normal listings and can be inspected with backend diagnostics. Type
-conflicts across shards (file vs directory for the same name) are logged and
-treated as degraded state (the name is omitted unless one side reaches quorum).
+names are **sorted alphabetically**. Objects with **`fileVotes < k`** are omitted
+and logged as broken. Type conflicts across shards (file vs directory for the
+same name) are logged and treated as degraded state (the name is omitted unless
+one side reaches quorum).
 
-**`NewObject`** probes shards **in parallel** and picks the **lowest shard index** with a valid footer (same as the previous sequential winner). **`backend heal`** uses parallel discovery and parallel stripe fragment reads (and parallel legacy reads / healed `Put`s where applicable).
+**List metadata (no footer when possible):** for quorum-listed files, rclone
+derives **size** from all **k** data-shard list sizes when available
+(`Σ(particleSize − footerSize)`). **ModTime** uses the **lowest-index** shard
+list time at **1s** precision when supported; skew beyond 1s is logged. A single
+footer read on the lowest listing shard fills in size or ModTime only when list
+metadata is insufficient. **`Open`** / **`Hash`** load the footer lazily
+(`ensureFooter`).
+
+**`NewObject`** (direct lookup, not list) probes shards **in parallel** and picks
+the **lowest shard index** with a valid footer. **`backend heal`** uses parallel
+discovery with per-shard virtual-padding size checks and parallel stripe fragment
+reads (and parallel legacy reads / healed `Put`s where applicable).
+
+Implementer detail (flow, edge cases, code map): **`backend/rs/docs/LIST_METADATA.md`**.
 
 ## Topology constraints
 
@@ -461,7 +453,7 @@ Properties:
 
 #### --rs-write-quorum
 
-Minimum shard successes required for quorum operations (Put, List merge, mkdir/rmdir, Copy/Move/DirMove when used, etc.). Must be between data_shards (k) and data_shards+parity_shards (k+m). Default is k+1.
+Minimum shard successes required for write operations (Put, mkdir/rmdir, Copy/Move/DirMove when used, Remove, SetModTime, etc.). List merge uses read quorum **k** separately. Must be between data_shards (k) and data_shards+parity_shards (k+m). Default is k+1.
 
 Properties:
 
@@ -583,10 +575,15 @@ Examples:
 
 ## Metadata (alpha)
 
-For logical objects, `rs` surfaces metadata from the **EC footer** stored in every shard particle:
+For logical objects, `rs` surfaces metadata from the **RS footer** stored in every shard particle:
 - logical **content length**
-- logical **modification time** (`Mtime`, used for `ModTime` and footer updates)
+- logical **modification time** (`Mtime` in nanoseconds in the footer; `ModTime` on the
+  logical object is truncated to **1 second** — `Fs.Precision()` is `1s`, and **`Put`**
+  stores the source mtime at 1s resolution)
 - **MD5 / SHA256** hashes of the logical content where supported
+
+**List** may expose provisional size/ModTime from shard list metadata before a footer
+is read; after **`Open`** / **`ensureFooter`**, footer values are authoritative.
 
 This alpha does **not** attempt to preserve or synchronize arbitrary per-remote metadata from the underlying shard remotes.
 

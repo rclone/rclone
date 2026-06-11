@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/rclone/rclone/backend/rs"
 	"github.com/spf13/cobra"
@@ -40,6 +41,7 @@ func runFooter(_ *cobra.Command, args []string) error {
 	fmt.Printf("StripeSize: %d\n", ft.StripeSize)
 	fmt.Printf("NumStripes: %d\n", ft.NumStripes)
 	fmt.Printf("PayloadCRC32C: 0x%08x\n", ft.PayloadCRC32C)
+	fmt.Printf("Mtime: %s (%d ns)\n", time.Unix(0, ft.Mtime).Format(time.RFC3339Nano), ft.Mtime)
 	fmt.Printf("MD5: %x\n", ft.MD5)
 	fmt.Printf("SHA256: %x\n", ft.SHA256)
 	return nil
@@ -54,6 +56,7 @@ type footerDump struct {
 	StripeSize    uint32 `json:"stripe_size"`
 	NumStripes    uint32 `json:"num_stripes"`
 	PayloadCRC32C uint32 `json:"payload_crc32c"`
+	MtimeNS       int64  `json:"mtime_ns"`
 	MD5           string `json:"md5"`
 	SHA256        string `json:"sha256"`
 }
@@ -68,6 +71,7 @@ func printFooterJSON(ft *rs.Footer, payloadLen int) error {
 		StripeSize:    ft.StripeSize,
 		NumStripes:    ft.NumStripes,
 		PayloadCRC32C: ft.PayloadCRC32C,
+		MtimeNS:       ft.Mtime,
 		MD5:           fmt.Sprintf("%x", ft.MD5),
 		SHA256:        fmt.Sprintf("%x", ft.SHA256),
 	}

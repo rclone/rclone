@@ -25,8 +25,8 @@ func loadShardsFromParticles(paths []string) ([][]byte, int, int, int64, *rs.Foo
 		if !ok {
 			return nil, 0, 0, 0, nil, fmt.Errorf("%s: not a valid rclone EC particle (footer/CRC)", p)
 		}
-		if !algorithmIsRS(ft) {
-			return nil, 0, 0, 0, nil, fmt.Errorf("%s: algorithm is not RS", p)
+		if !algorithmIsSYMM(ft) {
+			return nil, 0, 0, 0, nil, fmt.Errorf("%s: algorithm is not SYMM", p)
 		}
 		if first {
 			k = int(ft.DataShards)
@@ -47,6 +47,9 @@ func loadShardsFromParticles(paths []string) ([][]byte, int, int, int64, *rs.Foo
 		}
 		if shards[idx] != nil {
 			return nil, 0, 0, 0, nil, fmt.Errorf("%s: duplicate shard index %d", p, idx)
+		}
+		if err := rs.ValidateShardParticleFile(int64(len(raw)), contentLen, idx, k, m, int(ft.StripeSize)); err != nil {
+			return nil, 0, 0, 0, nil, fmt.Errorf("%s: %w", p, err)
 		}
 		shards[idx] = payload
 	}

@@ -1,12 +1,12 @@
 # Open Questions — rs Backend
 
-This document tracks design gaps, limitations, and follow-up work for the Reed-Solomon (`rs`) virtual backend. When a topic is resolved, note the decision here or in code. **Last reviewed**: 2026-04-13 (questions renumbered Q1–Q16 in order; Q2 + quorum/listing synced with code and `docs/content/rs.md`). User-facing overview: [`README.md`](../README.md).
+This document tracks design gaps, limitations, and follow-up work for the Reed-Solomon (`rs`) virtual backend. When a topic is resolved, note the decision here or in code. **Last reviewed**: 2026-06-11 (quorum/listing, virtual padding, list metadata fast path synced with code and `docs/content/rs.md`). User-facing overview: [`README.md`](../README.md).
 
 ---
 
 ## Decisions (record)
 
-- **Quorum model**: directory **listing** (`List` merge per name), directory/object namespace ops, metadata updates, and writes follow **`write_quorum`** (with partial-failure logging), not strict all-shards success. Listing also requires enough shards to return a successful listing or `ErrorDirNotFound` before merge (`healthy >= write_quorum`).
+- **Quorum model**: **read/list merge** uses **`k`** (`data_shards`) for directory health, per-name file/dir votes, and degraded healthy thresholds. **Writes** and namespace mutations (`Put`, `mkdir`/`rmdir`, `Copy`/`Move`/`DirMove`, `Remove`, `SetModTime`, …) follow **`write_quorum`** (default **k+1**). Operations use two-phase parallel passes with partial-failure logging, not strict all-shards success.
 - **Two-phase retries**: operations use one parallel pass plus one bounded retry pass for failing shards.
 - **Backend commands**: keep both `heal` (repair) and `degraded` (inspection/reporting).
 - **Topology requirement**: `data_shards` must be strictly greater than `parity_shards` (**k > m**).
@@ -44,8 +44,8 @@ This document tracks design gaps, limitations, and follow-up work for the Reed-S
 
 ### Q4: Compression and optional transforms
 
-**Status**: Active — not present  
-**Notes**: Payloads are raw RS stripes with an EC footer. Optional compression (per shard or logical) would interact with `ContentLength`, hashes, and reconstruction; out of scope for the initial layout unless explicitly specified.
+**Status**: Rejected — removed from footer v1 format  
+**Notes**: Footer v1 has no compression fields. Payloads are raw RS stripe bytes plus the `RCLONERS` footer. Any future transform (compression or otherwise) would need a new footer version and explicit design.
 
 ### Q5: Heal and large namespaces
 

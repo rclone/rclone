@@ -75,11 +75,11 @@ func TestBuildRSShardsToWriters(t *testing.T) {
 		tail := raw[len(raw)-FooterSize:]
 		ft, err := ParseFooter(tail)
 		require.NoError(t, err)
-		require.Equal(t, FooterVersion, int(binary.LittleEndian.Uint16(tail[9:11])))
+		require.Equal(t, uint32(FooterVersion), binary.LittleEndian.Uint32(tail[footerOffVersion:]))
 		require.Equal(t, uint8(2), ft.DataShards)
 		require.Equal(t, uint8(2), ft.ParityShards)
 		require.Equal(t, uint8(i), ft.CurrentShard)
-		require.Equal(t, AlgorithmRS, ft.Algorithm)
+		require.Equal(t, AlgorithmSYMM, ft.Algorithm)
 		require.Equal(t, uint32(1), ft.NumStripes)
 		require.Equal(t, res.StripeSize, ft.StripeSize)
 		require.Equal(t, crc32cChecksum(payload), ft.PayloadCRC32C)
@@ -132,12 +132,14 @@ func TestBuildRSShardsUnknownSizeSkipsDeclaredCheck(t *testing.T) {
 }
 
 func TestShardParticleFileSize(t *testing.T) {
-	const k, stripeS = 2, 32
+	const k, m, stripeS = 2, 2, 32
 	cl := int64(100)
-	// NumStripes = ceil(100 / (2*32)) = 2; payload = 2*32 = 64
+	// NumStripes = ceil(100 / (2*32)) = 2; data0=64, data1=36, parity=64
 	require.Equal(t, int64(64), ShardPayloadByteLength(cl, k, stripeS))
-	require.Equal(t, int64(64+FooterSize), ShardParticleFileSize(cl, k, stripeS, true))
-	require.Equal(t, int64(64), ShardParticleFileSize(cl, k, stripeS, false))
+	require.Equal(t, int64(64), DataShardPayloadLen(cl, 0, k, stripeS))
+	require.Equal(t, int64(36), DataShardPayloadLen(cl, 1, k, stripeS))
+	require.Equal(t, int64(64+FooterSize), ExpectedParticleSize(cl, 0, k, m, stripeS, true))
+	require.Equal(t, int64(36+FooterSize), ExpectedParticleSize(cl, 1, k, m, stripeS, true))
 }
 
 // strictMaxReadReader fails if a single Read is asked for more than maxBytes (streaming encode uses at most k*S per Read cycle from the underlying reader when ReadFull fills a k*S buffer).
@@ -202,6 +204,13 @@ func TestLogicalSliceAfterOptionsMatchesApplyRead(t *testing.T) {
 		require.True(t, ok)
 		require.Equal(t, string(want), string(base[s:e]), "opts=%#v", opts)
 	}
+}
+
+func TestReadQuorum(t *testing.T) {
+	f := &Fs{opt: Options{DataShards: 4, ParityShards: 2}}
+	require.Equal(t, 4, f.readQuorum())
+	f.opt.DataShards = 3
+	require.Equal(t, 3, f.readQuorum())
 }
 
 func TestWriteQuorum(t *testing.T) {
@@ -580,7 +589,7 @@ func TestReconstructMissingShardsHelper(t *testing.T) {
 		ref = ft
 	}
 	shards[1] = nil
-	out, err := reconstructMissingShards(shards, 2, 2, ref.StripeSize, ref.NumStripes)
+	out, err := reconstructMissingShards(shards, 2, 2, ref.ContentLength, ref.StripeSize, ref.NumStripes)
 	require.NoError(t, err)
 	require.NotNil(t, out[1])
 }
@@ -609,15 +618,15 @@ func TestHealStripeWiseMatchesReconstructMissingShards(t *testing.T) {
 
 	shardsCopy := make([][]byte, 4)
 	copy(shardsCopy, shards)
-	golden1 := append([]byte(nil), shards[1]...)
-	golden3 := append([]byte(nil), shards[3]...)
 	shardsCopy[1] = nil
 	shardsCopy[3] = nil
 
-	outBuf, err := ReconstructMissingShardPayloadsStripeWiseForTest(shardsCopy, 2, 2, ref.StripeSize, ref.NumStripes, []int{1, 3})
+	golden, err := reconstructMissingShards(shardsCopy, 2, 2, ref.ContentLength, ref.StripeSize, ref.NumStripes)
 	require.NoError(t, err)
-	require.Equal(t, golden1, outBuf[1], "shard 1 payload mismatch")
-	require.Equal(t, golden3, outBuf[3], "shard 3 payload mismatch")
+	outBuf, err := ReconstructMissingShardPayloadsStripeWiseForTest(shardsCopy, 2, 2, ref.ContentLength, ref.StripeSize, ref.NumStripes, []int{1, 3})
+	require.NoError(t, err)
+	require.Equal(t, golden[1], outBuf[1], "shard 1 payload mismatch")
+	require.Equal(t, golden[3], outBuf[3], "shard 3 payload mismatch")
 }
 
 func TestRebuildMissingShardsForObjectEndToEnd(t *testing.T) {
@@ -864,9 +873,9 @@ func TestSetModTimeUpdatesFooters(t *testing.T) {
 	obj, err := f.NewObject(ctx, "mt.bin")
 	require.NoError(t, err)
 
-	newt := time.Unix(1800000000, 0)
+	newt := time.Unix(1800000000, 123456789)
 	require.NoError(t, obj.SetModTime(ctx, newt))
-	require.Equal(t, newt.Unix(), obj.ModTime(ctx).Unix())
+	require.Equal(t, newt.UnixNano(), obj.ModTime(ctx).UnixNano())
 
 	rc, err := obj.Open(ctx)
 	require.NoError(t, err)
@@ -886,7 +895,7 @@ func TestSetModTimeUpdatesFooters(t *testing.T) {
 		require.GreaterOrEqual(t, len(all), FooterSize)
 		ft, err := ParseFooter(all[len(all)-FooterSize:])
 		require.NoError(t, err)
-		require.Equal(t, newt.Unix(), ft.Mtime)
+		require.Equal(t, newt.UnixNano(), ft.Mtime)
 		payload := all[:len(all)-FooterSize]
 		require.Equal(t, crc32cChecksum(payload), ft.PayloadCRC32C)
 	}
@@ -1290,8 +1299,8 @@ func TestNewFsValidatesRemoteCount(t *testing.T) {
 	require.True(t, strings.Contains(err.Error(), "remotes count must equal"))
 }
 
-// TestListDirectoryQuorumMerge documents that quorum listing omits names that
-// appear on fewer than write_quorum shards, even when a minority shard still holds the object.
+// TestListDirectoryQuorumMerge documents read-quorum (k) list merge: names need
+// fileVotes >= k; write_quorum (k+1) does not gate listing.
 func TestListDirectoryQuorumMerge(t *testing.T) {
 	ctx := context.Background()
 	backends := makeMemoryBackends(t, 4, "rs-list-quorum")
@@ -1302,7 +1311,7 @@ func TestListDirectoryQuorumMerge(t *testing.T) {
 		opt: Options{
 			DataShards:         3,
 			ParityShards:       1,
-			WriteQuorum:        3,
+			WriteQuorum:        4, // k+1; object on k shards still lists
 			UseSpooling:        true,
 			StripeFragmentSize: 64,
 		},
@@ -1456,6 +1465,49 @@ func TestCopyMoveServerSide(t *testing.T) {
 	require.Equal(t, "moved.bin", moved.Remote())
 	_, err = f.NewObject(ctx, "src.bin")
 	require.Error(t, err)
+}
+
+func TestCopyOverOrphanDestinationParticles(t *testing.T) {
+	ctx := context.Background()
+	backends := makeLocalBackends(t, 4, "rs-copy-orphan-dst")
+	f := &Fs{
+		name:     "rs",
+		root:     "",
+		backends: backends,
+		opt: Options{
+			DataShards:         3,
+			ParityShards:       1,
+			WriteQuorum:        3,
+			UseSpooling:        true,
+			StripeFragmentSize: 64,
+		},
+		features: (&fs.Features{}),
+	}
+	data := []byte("copy-over-orphan-dst")
+	info := object.NewStaticObjectInfo("src.bin", time.Unix(1700004000, 0), int64(len(data)), true, nil, nil)
+	_, err := f.Put(ctx, bytes.NewReader(data), info)
+	require.NoError(t, err)
+	srcObj, err := f.NewObject(ctx, "src.bin")
+	require.NoError(t, err)
+
+	// Orphan destination particles: present on shards but not a valid rs object.
+	orphan := object.NewStaticObjectInfo("copy.bin", time.Unix(1700004001, 0), 1, true, nil, nil)
+	for _, b := range backends {
+		_, err := b.Put(ctx, bytes.NewReader([]byte("x")), orphan)
+		require.NoError(t, err)
+	}
+	_, err = f.NewObject(ctx, "copy.bin")
+	require.Error(t, err)
+
+	copied, err := f.Copy(ctx, srcObj, "copy.bin")
+	require.NoError(t, err)
+	require.Equal(t, "copy.bin", copied.Remote())
+	rc, err := copied.Open(ctx)
+	require.NoError(t, err)
+	got, err := io.ReadAll(rc)
+	require.NoError(t, err)
+	require.NoError(t, rc.Close())
+	require.Equal(t, data, got)
 }
 
 func TestCopyMoveRejectIncompatibleSource(t *testing.T) {
