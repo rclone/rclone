@@ -2032,6 +2032,23 @@ after a week, which can be annoying to refresh constantly. If, for whatever
 reason, a short grant time is not a problem, then keeping the application in
 testing mode would also be sufficient.
 
+In most cases verification is not actually required. Google [exempts a number of
+app categories](https://support.google.com/cloud/answer/13464323) from mandatory
+verification, including:
+
+- **Personal Use apps**: if the app is for your personal use (fewer than 100
+  users), you and your limited number of users can keep using it without
+  verification - you will just need to click through the "unverified app"
+  warning screen during sign-in. Verification is only required if you want to
+  grow your user base beyond 100 users.
+- **Development/Testing/Staging apps**: apps in development, testing or staging
+  mode are not subject to verification (but are limited to the 100-user cap and
+  the unverified-app warning until verified).
+
+So for typical personal rclone use you can leave the app unverified, accept the
+warning screen, and publish it (rather than leaving it in "Testing") to avoid
+the weekly grant expiry described above.
+
 (Thanks to @balazer on github for these instructions.)
 
 Sometimes, creation of an OAuth consent in Google API Console fails due to an
