@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -137,4 +138,26 @@ func TestDocumentDriveID(t *testing.T) {
 
 	noZone := &Document{Type: "FILE", DocumentID: "D2"}
 	assert.Equal(t, "FILE::com.apple.CloudDocs::D2", noZone.DriveID())
+}
+
+// TestDriveItemShareID checks that drivews shared-root metadata preserves the
+// CloudDocs share record name needed to address files directly in a shared root.
+func TestDriveItemShareID(t *testing.T) {
+	var item DriveItem
+	err := json.Unmarshal([]byte(`{
+		"drivewsid": "SHARED_FOLDER::com.apple.CloudDocs::D1",
+		"shareID": {
+			"shareName": "SHARE-1",
+			"recordName": "SHARE-1",
+			"zoneID": {
+				"zoneName": "com.apple.CloudDocs",
+				"ownerRecordName": "_owner",
+				"zoneType": "REGULAR_CUSTOM_ZONE"
+			}
+		}
+	}`), &item)
+	assert.NoError(t, err)
+	assert.NotNil(t, item.ShareID)
+	assert.Equal(t, "SHARE-1", item.ShareID.RecordName)
+	assert.Equal(t, "_owner", item.ShareID.ZoneID.OwnerRecordName)
 }

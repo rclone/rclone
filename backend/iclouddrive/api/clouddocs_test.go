@@ -194,3 +194,36 @@ func TestDocumentBaseHashEdgeCases(t *testing.T) {
 	// full name and differs from the same text without the leading dot.
 	assert.NotEqual(t, documentBaseHash(".hidden"), documentBaseHash("hidden"))
 }
+
+// TestDocumentNameParts checks the name splitting used when rewriting a
+// temporary shared-root upload to its final CloudDocs name.
+func TestDocumentNameParts(t *testing.T) {
+	for _, tc := range []struct {
+		leaf, base, ext string
+	}{
+		{"report.txt", "report", "txt"},
+		{"archive.tar.gz", "archive.tar", "gz"},
+		{"noext", "noext", ""},
+		{"trailingdot.", "trailingdot.", ""},
+		{".hidden", ".hidden", ""},
+	} {
+		t.Run(tc.leaf, func(t *testing.T) {
+			base, ext := documentNameParts(tc.leaf)
+			assert.Equal(t, tc.base, base)
+			assert.Equal(t, tc.ext, ext)
+		})
+	}
+}
+
+// TestDocumentNameFields checks the CloudDocs structure fields used to rename a
+// temporary shared-root upload during re-parenting.
+func TestDocumentNameFields(t *testing.T) {
+	fields := documentNameFields("report.txt")
+
+	assert.Equal(t, "hF6RgxMZ6JxNZWvbgMJ4rAmnIw1h5d/S4bH7tDasiRc=", fields["basehash"].Value)
+	assert.Equal(t, "BYTES", fields["basehash"].Type)
+	assert.Equal(t, "cmVwb3J0", fields["encryptedBasename"].Value)
+	assert.Equal(t, "ENCRYPTED_BYTES", fields["encryptedBasename"].Type)
+	assert.Equal(t, "txt", fields["extension"].Value)
+	assert.Equal(t, "STRING", fields["extension"].Type)
+}

@@ -107,3 +107,22 @@ func TestFolderIDRoundTrip(t *testing.T) {
 	assert.Equal(t, item.Etag, etag)
 	assert.Equal(t, item.Itemid, f.parseSharedItemID(jid))
 }
+
+// TestIsSharedFolderRootID checks the shared-root classifier used when selecting
+// where a temporary shared-subfolder upload should first land.
+func TestIsSharedFolderRootID(t *testing.T) {
+	assert.True(t, isSharedFolderRootID("SHARED_FOLDER::z::share-root"))
+	assert.False(t, isSharedFolderRootID("FOLDER_IN_SHARED_FOLDER::z::child"))
+	assert.False(t, isSharedFolderRootID("FOLDER::z::own"))
+	assert.False(t, isSharedFolderRootID(""))
+}
+
+// TestSharedUploadTempName verifies that temporary upload names are collision-free
+// at the share root while preserving the final extension for content type handling.
+func TestSharedUploadTempName(t *testing.T) {
+	assert.Equal(t, ".rclone-upload-token.txt", sharedUploadTempName("report.txt", "token"))
+	assert.Equal(t, ".rclone-upload-token.gz", sharedUploadTempName("archive.tar.gz", "token"))
+	assert.Equal(t, ".rclone-upload-token", sharedUploadTempName("noext", "token"))
+	assert.Equal(t, ".rclone-upload-token", sharedUploadTempName("trailingdot.", "token"))
+	assert.Equal(t, ".rclone-upload-token", sharedUploadTempName(".hidden", "token"))
+}

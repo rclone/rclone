@@ -828,6 +828,14 @@ type CreateFoldersResponse struct {
 	Folders []*DriveItem `json:"folders"`
 }
 
+// ShareID identifies a shared CloudDocs root record returned by drivews for
+// SHARED_FOLDER and FILE_IN_SHARED_FOLDER items.
+type ShareID struct {
+	ShareName  string   `json:"shareName"`
+	RecordName string   `json:"recordName"`
+	ZoneID     CKZoneID `json:"zoneID"`
+}
+
 // DriveItem represents an item on iCloud.
 type DriveItem struct {
 	DateCreated         time.Time    `json:"dateCreated"`
@@ -844,6 +852,7 @@ type DriveItem struct {
 	FileCount           int64        `json:"fileCount"`
 	ShareCount          int64        `json:"shareCount"`
 	ShareAliasCount     int64        `json:"shareAliasCount"`
+	ShareID             *ShareID     `json:"shareID"`
 	DirectChildrenCount int64        `json:"directChildrenCount"`
 	Items               []*DriveItem `json:"items"`
 	NumberOfItems       int64        `json:"numberOfItems"`

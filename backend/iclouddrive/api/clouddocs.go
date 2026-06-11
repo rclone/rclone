@@ -213,13 +213,14 @@ type ckModifyRequest struct {
 }
 
 // ReparentStructure moves the documentStructure/<uuid> record under a new parent
-// directory/<targetDirUUID>, within the shared zone. The matching
-// documentContent/<uuid> follows automatically (its parent is the structure).
+// directory/<targetDirUUID>, within the shared zone, and sets its visible leaf
+// name. The matching documentContent/<uuid> follows automatically (its parent is
+// the structure).
 //
 // uuid is the bare record UUID (e.g. the docwsid of the just-uploaded file, which
 // CloudDocs reuses as the structure/content record name). The current
 // recordChangeTag is fetched automatically.
-func (cd *CloudDocs) ReparentStructure(ctx context.Context, uuid, targetDirUUID string) error {
+func (cd *CloudDocs) ReparentStructure(ctx context.Context, uuid, targetDirUUID, leaf string) error {
 	zone, err := cd.Zone(ctx)
 	if err != nil {
 		return err
@@ -237,6 +238,15 @@ func (cd *CloudDocs) ReparentStructure(ctx context.Context, uuid, targetDirUUID 
 		return fmt.Errorf("clouddocs: could not look up %s: %s", structRec, reason)
 	}
 	dirRecordName := "directory/" + strings.ToUpper(targetDirUUID)
+	fields := documentNameFields(leaf)
+	fields["parent"] = ckField{
+		Type: "REFERENCE",
+		Value: ckReference{
+			RecordName: dirRecordName,
+			Action:     "VALIDATE",
+			ZoneID:     zone,
+		},
+	}
 	body := ckModifyRequest{
 		Atomic: true,
 		ZoneID: zone,
@@ -246,17 +256,8 @@ func (cd *CloudDocs) ReparentStructure(ctx context.Context, uuid, targetDirUUID 
 				RecordName:      structRec,
 				RecordType:      "structure",
 				RecordChangeTag: recs[0].RecordChangeTag,
-				Fields: map[string]ckField{
-					"parent": {
-						Type: "REFERENCE",
-						Value: ckReference{
-							RecordName: dirRecordName,
-							Action:     "VALIDATE",
-							ZoneID:     zone,
-						},
-					},
-				},
-				Parent: &ckReference{RecordName: dirRecordName},
+				Fields:          fields,
+				Parent:          &ckReference{RecordName: dirRecordName},
 			},
 		}},
 	}
@@ -391,12 +392,37 @@ type ckZoneChangesResponse struct {
 // base64 of SHA256 over the basename with its extension stripped. This is how a
 // documentStructure records the file's name, and how FindFileUUID matches it.
 func documentBaseHash(leaf string) string {
-	basename := leaf
-	if i := strings.LastIndexByte(leaf, '.'); i > 0 {
-		basename = leaf[:i]
-	}
+	basename, _ := documentNameParts(leaf)
 	sum := sha256.Sum256([]byte(basename))
 	return base64.StdEncoding.EncodeToString(sum[:])
+}
+
+func documentNameParts(leaf string) (basename, extension string) {
+	if strings.HasSuffix(leaf, ".") {
+		return leaf, ""
+	}
+	if i := strings.LastIndexByte(leaf, '.'); i > 0 {
+		return leaf[:i], leaf[i+1:]
+	}
+	return leaf, ""
+}
+
+func documentNameFields(leaf string) map[string]ckField {
+	basename, extension := documentNameParts(leaf)
+	return map[string]ckField{
+		"basehash": {
+			Value: documentBaseHash(leaf),
+			Type:  "BYTES",
+		},
+		"encryptedBasename": {
+			Value: base64.StdEncoding.EncodeToString([]byte(basename)),
+			Type:  "ENCRYPTED_BYTES",
+		},
+		"extension": {
+			Value: extension,
+			Type:  "STRING",
+		},
+	}
 }
 
 // FindFileUUID looks up the record UUID of the file named leaf inside the shared
@@ -405,6 +431,17 @@ func documentBaseHash(leaf string) string {
 // is that directory and whose basehash equals SHA256(basename-without-ext). Returns
 // "" if not found.
 func (cd *CloudDocs) FindFileUUID(ctx context.Context, dirUUID, leaf string) (string, error) {
+	return cd.findChildStructureUUID(ctx, dirUUID, leaf, "documentStructure/", "structure")
+}
+
+// FindDirectoryUUID looks up the record UUID of the directory named leaf inside
+// the shared directory directory/<dirUUID>. It is needed for nested shared
+// directories returned by docws enumerate without a drivewsid.
+func (cd *CloudDocs) FindDirectoryUUID(ctx context.Context, dirUUID, leaf string) (string, error) {
+	return cd.findChildStructureUUID(ctx, dirUUID, leaf, "directory/", "")
+}
+
+func (cd *CloudDocs) findChildStructureUUID(ctx context.Context, dirUUID, leaf, recordPrefix, recordType string) (string, error) {
 	zone, err := cd.Zone(ctx)
 	if err != nil {
 		return "", err
@@ -424,7 +461,10 @@ func (cd *CloudDocs) FindFileUUID(ctx context.Context, dirUUID, leaf string) (st
 		}
 		z := out.Zones[0]
 		for _, r := range z.Records {
-			if r.RecordType != "structure" || !strings.HasPrefix(r.RecordName, "documentStructure/") {
+			if recordType != "" && r.RecordType != recordType {
+				continue
+			}
+			if !strings.HasPrefix(r.RecordName, recordPrefix) {
 				continue
 			}
 			bh, _ := r.Fields["basehash"].Value.(string)
@@ -433,7 +473,7 @@ func (cd *CloudDocs) FindFileUUID(ctx context.Context, dirUUID, leaf string) (st
 			}
 			if pv, ok := r.Fields["parent"].Value.(map[string]any); ok {
 				if rn, _ := pv["recordName"].(string); rn == wantParent {
-					return strings.TrimPrefix(r.RecordName, "documentStructure/"), nil
+					return strings.TrimPrefix(r.RecordName, recordPrefix), nil
 				}
 			}
 		}
