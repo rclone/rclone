@@ -1823,9 +1823,18 @@ func cleanRootPath(s string, noUNC bool, enc encoder.MultiEncoder) string {
 	if runtime.GOOS == "windows" {
 		s = vol + s
 	}
-	s2, err := filepath.Abs(s)
-	if err == nil {
-		s = s2
+	// UNC paths on Windows must be absolute, so make the path absolute
+	// there. On other platforms filepath.Abs would prepend the current
+	// directory, but the resulting absolute string is not guaranteed to
+	// refer to the same directory as the original relative path - for
+	// example when the current directory is shadowed by a mount or has been
+	// removed - so just clean it lexically instead.
+	if runtime.GOOS == "windows" {
+		if s2, err := filepath.Abs(s); err == nil {
+			s = s2
+		}
+	} else {
+		s = filepath.Clean(s)
 	}
 	if !noUNC {
 		// Convert to UNC. It does nothing on non windows platforms.
