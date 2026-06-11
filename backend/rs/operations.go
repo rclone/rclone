@@ -91,8 +91,6 @@ func (f *Fs) putSpooling(ctx context.Context, in io.Reader, src fs.ObjectInfo, o
 		return nil, err
 	}
 
-	expectedParticle := ShardParticleFileSize(bres.ContentLength, f.opt.DataShards, f.opt.StripeFragmentSize, true)
-
 	uploadCtx, cancel := context.WithTimeout(ctx, putOperationTimeout)
 	defer cancel()
 
@@ -114,6 +112,7 @@ func (f *Fs) putSpooling(ctx context.Context, in io.Reader, src fs.ObjectInfo, o
 			if err != nil {
 				return fmt.Errorf("stat shard %d: %w", i, err)
 			}
+			expectedParticle := ExpectedParticleSize(bres.ContentLength, i, f.opt.DataShards, f.opt.ParityShards, f.opt.StripeFragmentSize, true)
 			if st.Size() != expectedParticle {
 				return fmt.Errorf("rs: shard %d: incorrect upload size %d != %d", i, st.Size(), expectedParticle)
 			}
@@ -146,7 +145,7 @@ func (f *Fs) putSpooling(ctx context.Context, in io.Reader, src fs.ObjectInfo, o
 		}
 		return nil, fmt.Errorf("rs: write quorum not met: successful=%d required=%d", len(uploaded), f.writeQuorum())
 	}
-	if err := validateUploadedShardParticleSizes(uploaded, expectedParticle); err != nil {
+	if err := validateUploadedShardParticleSizes(uploaded, bres.ContentLength, f.opt.DataShards, f.opt.ParityShards, f.opt.StripeFragmentSize); err != nil {
 		if f.opt.Rollback {
 			_ = f.rollbackPut(uploadCtx, uploaded)
 		}
@@ -156,12 +155,12 @@ func (f *Fs) putSpooling(ctx context.Context, in io.Reader, src fs.ObjectInfo, o
 		ContentLength: bres.ContentLength,
 		MD5:           bres.MD5,
 		SHA256:        bres.SHA256,
-		Mtime:         bres.Mtime.Unix(),
+		Mtime:         bres.Mtime.UnixNano(),
 		StripeSize:    bres.StripeSize,
 		NumStripes:    bres.NumStripes,
 		DataShards:    uint8(f.opt.DataShards),
 		ParityShards:  uint8(f.opt.ParityShards),
-		Algorithm:     AlgorithmRS,
+		Algorithm:     AlgorithmSYMM,
 	}}, nil
 }
 
@@ -169,8 +168,6 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	if src.Size() < 0 {
 		return nil, errors.New("rs: internal error: putStreaming requires known source size")
 	}
-	expectedParticle := ShardParticleFileSize(src.Size(), f.opt.DataShards, f.opt.StripeFragmentSize, true)
-
 	uploadCtx, cancel := context.WithTimeout(ctx, putOperationTimeout)
 	defer cancel()
 
@@ -196,7 +193,8 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 		g.Go(func() error {
 			defer func() { _ = pipeReaders[i].Close() }()
 
-			info := object.NewStaticObjectInfo(src.Remote(), src.ModTime(ctx), expectedParticle, true, nil, nil)
+			expectedParticle := ExpectedParticleSize(src.Size(), i, f.opt.DataShards, f.opt.ParityShards, f.opt.StripeFragmentSize, true)
+			info := object.NewStaticObjectInfo(src.Remote(), src.ModTime(ctx).Truncate(time.Second), expectedParticle, true, nil, nil)
 			obj, err := f.backends[i].Put(gctx, pipeReaders[i], info, options...)
 			if err != nil {
 				return err
@@ -273,7 +271,7 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 		}
 		return nil, fmt.Errorf("rs: write quorum not met: successful=%d required=%d", len(uploaded), f.writeQuorum())
 	}
-	if err := validateUploadedShardParticleSizes(uploaded, expectedParticle); err != nil {
+	if err := validateUploadedShardParticleSizes(uploaded, bres.ContentLength, f.opt.DataShards, f.opt.ParityShards, f.opt.StripeFragmentSize); err != nil {
 		if f.opt.Rollback {
 			_ = f.rollbackPut(uploadCtx, uploaded)
 		}
@@ -283,17 +281,22 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 		ContentLength: bres.ContentLength,
 		MD5:           bres.MD5,
 		SHA256:        bres.SHA256,
-		Mtime:         bres.Mtime.Unix(),
+		Mtime:         bres.Mtime.UnixNano(),
 		StripeSize:    bres.StripeSize,
 		NumStripes:    bres.NumStripes,
 		DataShards:    uint8(f.opt.DataShards),
 		ParityShards:  uint8(f.opt.ParityShards),
-		Algorithm:     AlgorithmRS,
+		Algorithm:     AlgorithmSYMM,
 	}}, nil
 }
 
 func (f *Fs) writeQuorum() int {
 	return f.opt.WriteQuorum
+}
+
+// readQuorum is the minimum shard agreement for list/read merge (k data shards).
+func (f *Fs) readQuorum() int {
+	return f.opt.DataShards
 }
 
 func (f *Fs) checkWriteQuorumAvailable(ctx context.Context) error {
@@ -342,13 +345,14 @@ func (f *Fs) rollbackPut(ctx context.Context, uploaded []uploadedShard) error {
 }
 
 // validateUploadedShardParticleSizes checks each returned object size against the expected
-// particle file size when the backend reports a known size (Size() < 0 means unknown; skip).
-func validateUploadedShardParticleSizes(uploaded []uploadedShard, expected int64) error {
+// per-shard particle file size when the backend reports a known size (Size() < 0 means unknown; skip).
+func validateUploadedShardParticleSizes(uploaded []uploadedShard, contentLength int64, k, m, stripeFragmentSize int) error {
 	for _, u := range uploaded {
 		sz := u.obj.Size()
 		if sz < 0 {
 			continue
 		}
+		expected := ExpectedParticleSize(contentLength, u.index, k, m, stripeFragmentSize, true)
 		if sz != expected {
 			return fmt.Errorf("rs: shard %d: incorrect upload size %d != %d", u.index, sz, expected)
 		}

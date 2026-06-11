@@ -121,6 +121,28 @@ find_rclone_binary() {
   die "rclone binary not found (build ./rclone in repo root or set RCLONE_BINARY)"
 }
 
+run_rclone_integration() {
+  local storage_type="$1"
+  shift
+  : "${RCLONE_BINARY:=$(find_rclone_binary)}"
+  local -a args=(--config "${RCLONE_CONFIG}" --retries 1)
+  if [[ "${storage_type}" == "minio" ]]; then
+    args+=(--contimeout "${RCLONE_CONTIMEOUT:-15s}" --timeout "${RCLONE_HTTP_TIMEOUT:-90s}")
+  fi
+  "${RCLONE_BINARY}" "${args[@]}" "$@"
+}
+
+# Wipe the logical rs remote before the integration gate (drops legacy uniform-N*S particles).
+purge_rs_integration_root() {
+  local storage_type="$1"
+  local remote="${RS_REMOTE}"
+  if [[ "${storage_type}" == "minio" ]]; then
+    remote="${RS_REMOTE_MINIO}"
+  fi
+  log_info "purge" "Clearing ${remote}: (integration gate)"
+  run_rclone_integration "${storage_type}" purge "${remote}:" 2>/dev/null || true
+}
+
 find_rsverify_binary() {
   if [[ -n "${RSVERIFY_BINARY:-}" ]] && [[ -x "${RSVERIFY_BINARY}" ]]; then
     echo "${RSVERIFY_BINARY}"

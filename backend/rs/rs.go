@@ -56,7 +56,7 @@ func init() {
 			Advanced: true,
 		}, {
 			Name:     "write_quorum",
-			Help:     "Minimum shard successes required for quorum operations (Put, List merge, mkdir/rmdir, Copy/Move/DirMove when used, etc.). Must be between data_shards (k) and data_shards+parity_shards (k+m). Default is k+1.",
+			Help:     "Minimum shard successes required for write operations (Put, mkdir/rmdir, Copy/Move/DirMove when used, Remove, SetModTime, etc.). List merge uses read quorum k. Must be between data_shards (k) and data_shards+parity_shards (k+m). Default is k+1.",
 			Default:  0,
 			Advanced: true,
 		}, {

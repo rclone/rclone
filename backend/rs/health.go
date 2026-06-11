@@ -57,6 +57,7 @@ func (f *Fs) statusText(ctx context.Context) string {
 	out += "========================================\n"
 	out += fmt.Sprintf("Data shards (k):   %d\n", f.opt.DataShards)
 	out += fmt.Sprintf("Parity shards (m): %d\n", f.opt.ParityShards)
+	out += fmt.Sprintf("Read quorum (k):   %d\n", f.readQuorum())
 	out += fmt.Sprintf("Write quorum:      %d\n", f.writeQuorum())
 	out += fmt.Sprintf("Available remotes: %d/%d\n", available, len(f.backends))
 	out += fmt.Sprintf("Overall status:    %s\n\n", status)

@@ -131,6 +131,7 @@ main() {
 
   for st in "${storage_types[@]}"; do
     log_info "${SCRIPT_NAME}" ">>> --storage-type=${st}"
+    purge_rs_integration_root "${st}"
     if ! run_compare "${st}" test verify; then
       failed+=("verify (${st})")
     fi

@@ -140,7 +140,7 @@ func (f *Fs) degradedSummary(ctx context.Context) (any, error) {
 		return nil, err
 	}
 	_ = counts
-	return fmt.Sprintf("RS Degraded Summary\n========================================\nTotal objects: %d\nHealthy: %d\nDegraded: %d\nQuorum: %d of %d\n", stats.totalObjects, stats.healthyObjects, stats.degradedObjects, f.writeQuorum(), len(f.backends)), nil
+	return fmt.Sprintf("RS Degraded Summary\n========================================\nTotal objects: %d\nHealthy: %d\nDegraded: %d\nRead quorum (k): %d\nWrite quorum: %d of %d\n", stats.totalObjects, stats.healthyObjects, stats.degradedObjects, f.readQuorum(), f.writeQuorum(), len(f.backends)), nil
 }
 
 func (f *Fs) degradedListObjects(ctx context.Context) (any, error) {
@@ -150,20 +150,20 @@ func (f *Fs) degradedListObjects(ctx context.Context) (any, error) {
 	}
 	var sb strings.Builder
 	sb.WriteString("RS Degraded Objects\n========================================\n")
-	sb.WriteString(fmt.Sprintf("Quorum: %d of %d\n", f.writeQuorum(), len(f.backends)))
+	sb.WriteString(fmt.Sprintf("Read quorum (k): %d\nWrite quorum: %d of %d\n", f.readQuorum(), f.writeQuorum(), len(f.backends)))
 	if stats.degradedObjects == 0 {
 		sb.WriteString("No degraded objects found.\n")
 		return sb.String(), nil
 	}
 	remotes := make([]string, 0, len(counts))
 	for remote := range counts {
-		if counts[remote] < f.writeQuorum() {
+		if counts[remote] < f.readQuorum() {
 			remotes = append(remotes, remote)
 		}
 	}
 	sort.Strings(remotes)
 	for _, remote := range remotes {
-		sb.WriteString(fmt.Sprintf("DEGRADED %s: present_shards=%d required=%d\n", remote, counts[remote], f.writeQuorum()))
+		sb.WriteString(fmt.Sprintf("DEGRADED %s: present_shards=%d required=%d\n", remote, counts[remote], f.readQuorum()))
 	}
 	return sb.String(), nil
 }
@@ -201,7 +201,7 @@ func (f *Fs) collectObjectPresence(ctx context.Context) (map[string]int, degrade
 	}
 	stats := degradedStats{totalObjects: len(counts)}
 	for _, n := range counts {
-		if n >= f.writeQuorum() {
+		if n >= f.readQuorum() {
 			stats.healthyObjects++
 		} else {
 			stats.degradedObjects++
@@ -354,9 +354,7 @@ func (f *Fs) discoverHealShardPresence(ctx context.Context, remote string, total
 			}
 			continue
 		}
-		N := int64(ft.NumStripes)
-		S := int64(ft.StripeSize)
-		if sz != N*S+int64(FooterSize) {
+		if sz != ExpectedParticleSize(metaFooter.ContentLength, i, f.opt.DataShards, f.opt.ParityShards, int(ft.StripeSize), true) {
 			missing[i] = true
 		}
 	}
@@ -411,7 +409,7 @@ func (f *Fs) rebuildMissingShardsLegacyBuffered(ctx context.Context, remote stri
 	if err := g.Wait(); err != nil {
 		return 0, err
 	}
-	reconstructed, err := reconstructMissingShards(shards, k, m, metaFooter.StripeSize, metaFooter.NumStripes)
+	reconstructed, err := reconstructMissingShards(shards, k, m, metaFooter.ContentLength, metaFooter.StripeSize, metaFooter.NumStripes)
 	if err != nil {
 		return 0, fmt.Errorf("rs: cannot reconstruct %q: %w", remote, err)
 	}
@@ -440,15 +438,16 @@ func (f *Fs) rebuildMissingShardsStripeWise(ctx context.Context, remote string, 
 	}
 
 	if dryRun {
-		if err := f.healStripeDryRunProbe(ctx, remote, k, m, total, S, intS, missing); err != nil {
+		if err := f.healStripeDryRunProbe(ctx, remote, k, m, total, metaFooter.ContentLength, S, intS, missing); err != nil {
 			return 0, fmt.Errorf("rs: cannot reconstruct %q: %w", remote, err)
 		}
 		return len(missingIdx), nil
 	}
 
+	cl := metaFooter.ContentLength
 	out := make([][]byte, total)
 	for _, idx := range missingIdx {
-		out[idx] = make([]byte, N*intS)
+		out[idx] = make([]byte, ShardPayloadLen(cl, idx, k, m, intS))
 	}
 	rowBuf := make([]byte, total*intS)
 	row := make([][]byte, total)
@@ -457,7 +456,7 @@ func (f *Fs) rebuildMissingShardsStripeWise(ctx context.Context, remote string, 
 		if err := ctx.Err(); err != nil {
 			return 0, err
 		}
-		off := int64(t) * S
+		logLen := StripeLogicalLen(k, S, cl, t)
 		for i := 0; i < total; i++ {
 			row[i] = nil
 		}
@@ -467,7 +466,7 @@ func (f *Fs) rebuildMissingShardsStripeWise(ctx context.Context, remote string, 
 			}
 			row[i] = rowBuf[i*intS : (i+1)*intS]
 		}
-		if err := readStripeFragmentsParallel(ctx, f, remote, off, S, row, false); err != nil {
+		if err := readStripeFragmentsParallel(ctx, f, remote, t, k, cl, S, logLen, row, false); err != nil {
 			return 0, fmt.Errorf("rs: heal stripe %d: %w", t, err)
 		}
 		if _, err := reconstructInto(row, k, m); err != nil {
@@ -478,7 +477,7 @@ func (f *Fs) rebuildMissingShardsStripeWise(ctx context.Context, remote string, 
 			if len(frag) != intS {
 				return 0, fmt.Errorf("rs: heal shard %d stripe %d: unexpected fragment length %d", idx, t, len(frag))
 			}
-			copy(out[idx][t*intS:(t+1)*intS], frag)
+			writeShardStripeFragment(out[idx], idx, k, intS, t, cl, logLen, frag)
 		}
 	}
 
@@ -486,10 +485,9 @@ func (f *Fs) rebuildMissingShardsStripeWise(ctx context.Context, remote string, 
 }
 
 // healStripeDryRunProbe runs a single-stripe reconstruct to verify heal would succeed without allocating full outputs.
-func (f *Fs) healStripeDryRunProbe(ctx context.Context, remote string, k, m, total int, S int64, intS int, missing []bool) error {
+func (f *Fs) healStripeDryRunProbe(ctx context.Context, remote string, k, m, total int, contentLength int64, S int64, intS int, missing []bool) error {
 	rowBuf := make([]byte, total*intS)
 	row := make([][]byte, total)
-	off := int64(0)
 	for i := 0; i < total; i++ {
 		row[i] = nil
 	}
@@ -499,7 +497,8 @@ func (f *Fs) healStripeDryRunProbe(ctx context.Context, remote string, k, m, tot
 		}
 		row[i] = rowBuf[i*intS : (i+1)*intS]
 	}
-	if err := readStripeFragmentsParallel(ctx, f, remote, off, S, row, false); err != nil {
+	logLen := StripeLogicalLen(k, S, contentLength, 0)
+	if err := readStripeFragmentsParallel(ctx, f, remote, 0, k, contentLength, S, logLen, row, false); err != nil {
 		return err
 	}
 	_, err := reconstructInto(row, k, m)
@@ -513,7 +512,7 @@ type healPutJob struct {
 }
 
 func (f *Fs) putHealedMissingShards(ctx context.Context, remote string, k, m int, metaFooter *Footer, missingIdx []int, reconstructed [][]byte) (int, error) {
-	mtime := time.Unix(metaFooter.Mtime, 0)
+	mtime := time.Unix(0, metaFooter.Mtime).Truncate(time.Second)
 	jobs := make([]healPutJob, 0, len(missingIdx))
 	for _, idx := range missingIdx {
 		payload := reconstructed[idx]
@@ -547,7 +546,7 @@ func (f *Fs) putHealedMissingShards(ctx context.Context, remote string, k, m int
 	return len(jobs), nil
 }
 
-func reconstructMissingShards(shards [][]byte, dataShards, parityShards int, stripeSize, numStripes uint32) ([][]byte, error) {
+func reconstructMissingShards(shards [][]byte, dataShards, parityShards int, contentLength int64, stripeSize, numStripes uint32) ([][]byte, error) {
 	k, m := dataShards, parityShards
 	S := int(stripeSize)
 	N := int(numStripes)
@@ -557,13 +556,20 @@ func reconstructMissingShards(shards [][]byte, dataShards, parityShards int, str
 	}
 	out := make([][]byte, k+m)
 	for i := range out {
-		out[i] = make([]byte, N*S)
+		out[i] = make([]byte, ShardPayloadLen(contentLength, i, k, m, S))
 	}
 	for t := 0; t < N; t++ {
+		logLen := StripeLogicalLen(k, int64(S), contentLength, t)
 		row := make([][]byte, k+m)
 		for i := 0; i < k+m; i++ {
 			if shards[i] != nil {
-				row[i] = shards[i][t*S : (t+1)*S]
+				frag := shardStripeFragmentFromPayload(shards[i], i, k, S, t, contentLength, logLen)
+				if frag == nil {
+					return nil, fmt.Errorf("rs: shard %d stripe %d: fragment out of range", i, t)
+				}
+				buf := make([]byte, S)
+				copy(buf, frag)
+				row[i] = buf
 			}
 		}
 		cp := make([][]byte, k+m)
@@ -573,7 +579,7 @@ func reconstructMissingShards(shards [][]byte, dataShards, parityShards int, str
 			return nil, err
 		}
 		for i := 0; i < k+m; i++ {
-			copy(out[i][t*S:(t+1)*S], fixed[i])
+			writeShardStripeFragment(out[i], i, k, S, t, contentLength, logLen, fixed[i])
 		}
 	}
 	return out, nil
@@ -601,8 +607,8 @@ func reconstructInto(shards [][]byte, dataShards, parityShards int) ([][]byte, e
 
 // ReconstructMissingShardPayloadsStripeWiseForTest rebuilds payloads only for missingIdx using
 // the same stripe-wise algorithm as heal (sparse output: non-missing entries are nil).
-// Present shards must supply full N·S-byte payloads in shards[i].
-func ReconstructMissingShardPayloadsStripeWiseForTest(shards [][]byte, k, m int, stripeSize, numStripes uint32, missingIdx []int) ([][]byte, error) {
+// Present shards must supply virtual-padding payloads in shards[i].
+func ReconstructMissingShardPayloadsStripeWiseForTest(shards [][]byte, k, m int, contentLength int64, stripeSize, numStripes uint32, missingIdx []int) ([][]byte, error) {
 	total := k + m
 	missing := make([]bool, total)
 	for _, i := range missingIdx {
@@ -615,11 +621,12 @@ func ReconstructMissingShardPayloadsStripeWiseForTest(shards [][]byte, k, m int,
 	}
 	out := make([][]byte, total)
 	for _, idx := range missingIdx {
-		out[idx] = make([]byte, N*intS)
+		out[idx] = make([]byte, ShardPayloadLen(contentLength, idx, k, m, intS))
 	}
 	rowBuf := make([]byte, total*intS)
 	row := make([][]byte, total)
 	for t := 0; t < N; t++ {
+		logLen := StripeLogicalLen(k, int64(intS), contentLength, t)
 		for i := 0; i < total; i++ {
 			row[i] = nil
 		}
@@ -630,8 +637,13 @@ func ReconstructMissingShardPayloadsStripeWiseForTest(shards [][]byte, k, m int,
 			if shards[i] == nil {
 				return nil, fmt.Errorf("present shard %d is nil", i)
 			}
+			frag := shardStripeFragmentFromPayload(shards[i], i, k, intS, t, contentLength, logLen)
+			if frag == nil {
+				return nil, fmt.Errorf("present shard %d stripe %d: fragment out of range", i, t)
+			}
 			row[i] = rowBuf[i*intS : (i+1)*intS]
-			copy(row[i], shards[i][t*intS:(t+1)*intS])
+			clear(row[i])
+			copy(row[i], frag)
 		}
 		if _, err := reconstructInto(row, k, m); err != nil {
 			return nil, err
@@ -641,7 +653,7 @@ func ReconstructMissingShardPayloadsStripeWiseForTest(shards [][]byte, k, m int,
 			if len(frag) != intS {
 				return nil, fmt.Errorf("shard %d stripe %d: fragment length %d", idx, t, len(frag))
 			}
-			copy(out[idx][t*intS:(t+1)*intS], frag)
+			writeShardStripeFragment(out[idx], idx, k, intS, t, contentLength, logLen, frag)
 		}
 	}
 	return out, nil

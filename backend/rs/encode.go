@@ -47,20 +47,16 @@ func normalizeStripeFragmentSize(n int) int {
 	return n
 }
 
-// ShardPayloadByteLength returns the per-shard payload size (NumStripes × S) for the given logical size.
+// ShardPayloadByteLength returns parity-shard payload size (NumStripes × S) for the given logical size.
 func ShardPayloadByteLength(contentLength int64, k, stripeFragmentSize int) int64 {
 	S := normalizeStripeFragmentSize(stripeFragmentSize)
-	n := NumStripesForContent(contentLength, k, S)
-	return int64(n) * int64(S)
+	return ParityShardPayloadLen(contentLength, k, S)
 }
 
-// ShardParticleFileSize returns the on-wire shard object size: payload plus EC footer when withFooter.
+// ShardParticleFileSize returns the on-wire particle size for data shard 0 (largest data shard when uniform).
+// Prefer ExpectedParticleSize per shard index for virtual-padding layout.
 func ShardParticleFileSize(contentLength int64, k, stripeFragmentSize int, withFooter bool) int64 {
-	payload := ShardPayloadByteLength(contentLength, k, stripeFragmentSize)
-	if withFooter {
-		return payload + FooterSize
-	}
-	return payload
+	return ExpectedParticleSize(contentLength, 0, k, 0, stripeFragmentSize, withFooter)
 }
 
 // encodeLogicalToShardWriters streams logical bytes from in, RS-encodes stripe-by-stripe into writers,
@@ -74,7 +70,7 @@ func encodeLogicalToShardWriters(ctx context.Context, in io.Reader, src fs.Objec
 	declared := src.Size()
 
 	stripeBuf := make([]byte, k*S)
-	mtime := src.ModTime(ctx)
+	mtime := src.ModTime(ctx).Truncate(time.Second)
 
 	md5h := md5.New()
 	sha256h := sha256.New()
@@ -139,8 +135,15 @@ func encodeLogicalToShardWriters(ctx context.Context, in io.Reader, src fs.Objec
 		if err := enc.Encode(shards); err != nil {
 			return nil, fmt.Errorf("rs: encode stripe %d: %w", stripeIndex, err)
 		}
+		stripeLogical := n
 		for i := range writers {
-			frag := shards[i]
+			var frag []byte
+			if i < k {
+				flen := DataShardFragLen(i, k, S, stripeLogical)
+				frag = shards[i][:flen]
+			} else {
+				frag = shards[i]
+			}
 			if _, err := writers[i].Write(frag); err != nil {
 				return nil, fmt.Errorf("rs: write shard %d stripe %d: %w", i, stripeIndex, err)
 			}
@@ -194,7 +197,7 @@ func buildZeroLengthShards(ctx context.Context, src fs.ObjectInfo, dataShards, p
 	if len(writers) != dataShards+parityShards {
 		return nil, fmt.Errorf("rs: writers count mismatch: got %d want %d", len(writers), dataShards+parityShards)
 	}
-	mtime := src.ModTime(ctx)
+	mtime := src.ModTime(ctx).Truncate(time.Second)
 	for i := range writers {
 		if withFooter {
 			ft := NewRSFooter(0, emptyFileMD5[:], emptyFileSHA256[:], mtime, dataShards, parityShards, i, 0, 0, crc32cChecksum(nil))

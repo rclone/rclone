@@ -25,6 +25,12 @@ type Object struct {
 	remote       string
 	footer       *Footer
 	primaryIndex int
+
+	// Provisional list metadata (footer loaded lazily via ensureFooter).
+	hasListSize    bool
+	listSize       int64
+	hasListModTime bool
+	listModTime    time.Time
 }
 
 // Fs returns the parent rs filesystem.
@@ -41,16 +47,55 @@ func (o *Object) String() string {
 func (o *Object) Remote() string { return o.remote }
 
 // ModTime returns the logical content modification time.
-func (o *Object) ModTime(ctx context.Context) time.Time { return time.Unix(o.footer.Mtime, 0) }
+func (o *Object) ModTime(ctx context.Context) time.Time {
+	if o.footer != nil {
+		return time.Unix(0, o.footer.Mtime)
+	}
+	if o.hasListModTime {
+		return o.listModTime
+	}
+	return time.Time{}
+}
 
 // Size returns the logical content length in bytes.
-func (o *Object) Size() int64 { return o.footer.ContentLength }
+func (o *Object) Size() int64 {
+	if o.footer != nil {
+		return o.footer.ContentLength
+	}
+	if o.hasListSize {
+		return o.listSize
+	}
+	return 0
+}
 
 // Storable reports whether the object can be stored (always true for rs).
 func (o *Object) Storable() bool { return true }
 
+// ensureFooter loads the EC footer from primaryIndex when list metadata is incomplete.
+func (o *Object) ensureFooter(ctx context.Context) error {
+	if o.footer != nil {
+		return nil
+	}
+	if o.primaryIndex < 0 || o.primaryIndex >= len(o.fs.backends) {
+		return fs.ErrorObjectNotFound
+	}
+	obj, err := o.fs.backends[o.primaryIndex].NewObject(ctx, o.remote)
+	if err != nil {
+		return err
+	}
+	ft, err := readFooterFromParticle(ctx, obj)
+	if err != nil {
+		return err
+	}
+	o.footer = ft
+	return nil
+}
+
 // Hash returns MD5 or SHA256 of the logical content when supported.
 func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
+	if err := o.ensureFooter(ctx); err != nil {
+		return "", err
+	}
 	switch ty {
 	case hash.MD5:
 		return hex.EncodeToString(o.footer.MD5[:]), nil
@@ -63,6 +108,9 @@ func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
 
 // Open reads logical content, using data shards when possible or full reconstruction.
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
+	if err := o.ensureFooter(ctx); err != nil {
+		return nil, err
+	}
 	cl := o.footer.ContentLength
 	if cl == 0 {
 		b := applyReadOptions([]byte{}, options...)
@@ -81,27 +129,12 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	return o.openFullReconstruct(ctx, options...)
 }
 
-// stripeLogicalLen returns how many logical bytes are in stripe stripeIdx (0-based).
 func stripeLogicalLen(k int, S, contentLength int64, stripeIdx int) int64 {
-	kS := int64(k) * S
-	var pos int64
-	for s := 0; s < stripeIdx; s++ {
-		chunk := min(kS, contentLength-pos)
-		if chunk <= 0 {
-			return 0
-		}
-		pos += chunk
-	}
-	return min(kS, contentLength-pos)
+	return StripeLogicalLen(k, S, contentLength, stripeIdx)
 }
 
-// stripeLogicalBase returns the logical byte offset where stripe stripeIdx starts.
 func stripeLogicalBase(k int, S, contentLength int64, stripeIdx int) int64 {
-	var base int64
-	for s := 0; s < stripeIdx; s++ {
-		base += stripeLogicalLen(k, S, contentLength, s)
-	}
-	return base
+	return StripeLogicalBase(k, S, contentLength, stripeIdx)
 }
 
 // openViaDataShardsOnly returns (reader, true, err) when all k data shards are present and
@@ -206,13 +239,12 @@ func (r *dataStripeStreamReader) fill() error {
 			r.t++
 			continue
 		}
-		off := int64(t) * r.S
 		row := make([][]byte, r.k)
 		buf := make([]byte, r.k*intS)
 		for i := 0; i < r.k; i++ {
 			row[i] = buf[i*intS : (i+1)*intS]
 		}
-		if err := readStripeFragmentsParallel(r.ctx, r.fs, r.remote, off, r.S, row, true); err != nil {
+		if err := readStripeFragmentsParallel(r.ctx, r.fs, r.remote, t, r.k, r.cl, r.S, logLen, row, true); err != nil {
 			return err
 		}
 		var stripeOut bytes.Buffer
@@ -272,7 +304,7 @@ func probeReconstructShardsPresent(ctx context.Context, f *Fs, remote string, re
 			if err != nil {
 				return nil
 			}
-			if obj.Size() != int64(N)*S+FooterSize {
+			if obj.Size() != ExpectedParticleSize(ref.ContentLength, i, k, m, int(S), true) {
 				return nil
 			}
 			ft, err := readFooterFromParticle(gctx, obj)
@@ -310,7 +342,7 @@ func probeDataShardsForOpen(ctx context.Context, o *Object, k, N int, S int64) b
 			if !footerCompatibleForStripeRead(o.footer, ft, i) {
 				return nil
 			}
-			if obj.Size() != int64(N)*S+FooterSize {
+			if obj.Size() != ExpectedParticleSize(o.footer.ContentLength, i, k, o.fs.opt.ParityShards, int(S), true) {
 				return nil
 			}
 			out[i].ok = true
@@ -326,13 +358,14 @@ func probeDataShardsForOpen(ctx context.Context, o *Object, k, N int, S int64) b
 	return true
 }
 
-// readStripeFragmentsParallel issues parallel range reads [off, off+S) into each non-nil row[i].
-// dataPath selects error wording ("data shard" vs "shard").
-func readStripeFragmentsParallel(ctx context.Context, f *Fs, remote string, off, S int64, row [][]byte, dataPath bool) error {
+// readStripeFragmentsParallel reads one stripe's RS fragments into row (virtual-padding aware).
+// Each non-nil row[i] must be at least S bytes; unread tail is zeroed for data shards.
+func readStripeFragmentsParallel(ctx context.Context, f *Fs, remote string, stripeIdx, k int, contentLength, S, logLen int64, row [][]byte, dataPath bool) error {
 	shardWord := "shard"
 	if dataPath {
 		shardWord = "data shard"
 	}
+	intS := int(S)
 	g, gctx := errgroup.WithContext(ctx)
 	for i := range row {
 		if row[i] == nil {
@@ -340,15 +373,28 @@ func readStripeFragmentsParallel(ctx context.Context, f *Fs, remote string, off,
 		}
 		i, dst := i, row[i]
 		g.Go(func() error {
+			var off int64
+			var readLen int64
+			if i < k {
+				off = DataShardStripeOffset(i, k, intS, stripeIdx, contentLength)
+				readLen = int64(DataShardFragLen(i, k, intS, int(logLen)))
+				clear(dst)
+			} else {
+				off = int64(stripeIdx) * S
+				readLen = S
+			}
+			if readLen == 0 {
+				return nil
+			}
 			obj, err := f.backends[i].NewObject(gctx, remote)
 			if err != nil {
 				return fmt.Errorf("rs: %s %d: %w", shardWord, i, err)
 			}
-			rd, err := obj.Open(gctx, &fs.RangeOption{Start: off, End: off + S - 1})
+			rd, err := obj.Open(gctx, &fs.RangeOption{Start: off, End: off + readLen - 1})
 			if err != nil {
 				return fmt.Errorf("rs: %s %d: open fragment: %w", shardWord, i, err)
 			}
-			if _, err := io.ReadFull(rd, dst); err != nil {
+			if _, err := io.ReadFull(rd, dst[:readLen]); err != nil {
 				_ = rd.Close()
 				return fmt.Errorf("rs: %s %d: read fragment: %w", shardWord, i, err)
 			}
@@ -568,13 +614,12 @@ func (r *fullReconstructStripeReader) fill() error {
 			continue
 		}
 		t := r.t
-		off := int64(t) * r.S
 		for i := 0; i < r.k+r.m; i++ {
 			if !r.present[i] {
 				r.row[i] = nil
 			}
 		}
-		if err := readStripeFragmentsParallel(r.ctx, r.fs, r.remote, off, r.S, r.row, false); err != nil {
+		if err := readStripeFragmentsParallel(r.ctx, r.fs, r.remote, t, r.k, r.cl, r.S, logicalLen, r.row, false); err != nil {
 			return err
 		}
 		joined, err := reconstructStripeJoined(r.enc, r.row, r.k, r.m, r.intS, logicalLen, t)
@@ -642,6 +687,9 @@ func (o *Object) Remove(ctx context.Context) error {
 
 // SetModTime updates EC footer mtimes with quorum semantics.
 func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
+	if err := o.ensureFooter(ctx); err != nil {
+		return err
+	}
 	targets := make([]int, 0, len(o.fs.backends))
 	for i := range o.fs.backends {
 		targets = append(targets, i)
@@ -652,7 +700,7 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	if result.Successes < o.fs.writeQuorum() {
 		return fmt.Errorf("rs: setmodtime quorum not met for %q: successes=%d required=%d", o.remote, result.Successes, o.fs.writeQuorum())
 	}
-	o.footer.Mtime = t.Unix()
+	o.footer.Mtime = t.UnixNano()
 	return nil
 }
 
@@ -680,7 +728,7 @@ func (o *Object) updateShardFooterMtime(ctx context.Context, b fs.Fs, shardIdx i
 		return fmt.Errorf("rs: shard %d: %w", shardIdx, err)
 	}
 	newFt := *ft
-	newFt.Mtime = t.Unix()
+	newFt.Mtime = t.UnixNano()
 	fb, err := newFt.MarshalBinary()
 	if err != nil {
 		return fmt.Errorf("rs: shard %d: marshal footer: %w", shardIdx, err)
@@ -771,7 +819,7 @@ func reconstructStripeJoined(enc reedsolomon.Encoder, row [][]byte, k, m, S int,
 	return b[:logicalLen], nil
 }
 
-// ReconstructDataFromShards decodes stripe-wise RS particles (footer v3) into logical content.
+// ReconstructDataFromShards decodes stripe-wise RS particles (footer v1) into logical content.
 func ReconstructDataFromShards(shards [][]byte, dataShards, parityShards int, contentLength int64, stripeSize, numStripes uint32) ([]byte, error) {
 	k, m := dataShards, parityShards
 	S := int(stripeSize)
@@ -783,8 +831,12 @@ func ReconstructDataFromShards(shards [][]byte, dataShards, parityShards int, co
 		return nil, errors.New("rs: invalid stripe metadata (StripeSize/NumStripes)")
 	}
 	for i, s := range shards {
-		if s != nil && len(s) != N*S {
-			return nil, fmt.Errorf("rs: shard %d payload length %d, want %d", i, len(s), N*S)
+		if s == nil {
+			continue
+		}
+		want := int(ShardPayloadLen(contentLength, i, k, m, S))
+		if len(s) != want {
+			return nil, fmt.Errorf("rs: shard %d payload length %d, want %d", i, len(s), want)
 		}
 	}
 	enc, err := reedsolomon.New(k, m)
@@ -801,7 +853,13 @@ func ReconstructDataFromShards(shards [][]byte, dataShards, parityShards int, co
 		row := make([][]byte, k+m)
 		for i := 0; i < k+m; i++ {
 			if shards[i] != nil {
-				row[i] = shards[i][t*S : (t+1)*S]
+				frag := shardStripeFragmentFromPayload(shards[i], i, k, S, t, contentLength, logicalLen)
+				if frag == nil {
+					return nil, fmt.Errorf("rs: shard %d stripe %d: fragment out of range", i, t)
+				}
+				buf := make([]byte, S)
+				copy(buf, frag)
+				row[i] = buf
 			}
 		}
 		b, err := reconstructStripeJoined(enc, row, k, m, S, logicalLen, t)

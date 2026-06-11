@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/rclone/rclone/fs"
 )
@@ -18,15 +19,26 @@ func (f *Fs) compatibleLayout(other *Fs) bool {
 	return len(f.backends) == len(other.backends)
 }
 
+// removeDestinationIfExists clears destination particles on every shard before
+// copy/move. Shard backends may still hold a file when rs NewObject cannot
+// assemble a logical object (orphan or corrupt particles); those must be
+// removed so server-side copy (e.g. local COPYFILE_EXCL) can succeed.
 func (f *Fs) removeDestinationIfExists(ctx context.Context, remote string) error {
-	dstObj, err := f.NewObject(ctx, remote)
-	if err != nil {
-		if errors.Is(err, fs.ErrorObjectNotFound) {
-			return nil
-		}
-		return err
+	var wg sync.WaitGroup
+	for i := range f.backends {
+		i := i
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			obj, err := f.backends[i].NewObject(ctx, remote)
+			if err != nil {
+				return
+			}
+			_ = obj.Remove(ctx)
+		}()
 	}
-	return dstObj.Remove(ctx)
+	wg.Wait()
+	return nil
 }
 
 // Copy src to this remote using shard-aligned server-side operations where possible.

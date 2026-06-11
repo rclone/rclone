@@ -11,11 +11,6 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-type mergedEntryVotes struct {
-	fileVotes int
-	dirVotes  int
-}
-
 type listShardResult struct {
 	entries fs.DirEntries
 	err     error
@@ -64,13 +59,15 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		}
 		healthy++
 		for _, e := range entries {
-			v := votes[e.Remote()]
+			remote := e.Remote()
+			v := votes[remote]
 			if v == nil {
-				v = &mergedEntryVotes{}
-				votes[e.Remote()] = v
+				v = newMergedEntryVotes(n)
+				votes[remote] = v
 			}
-			if _, ok := e.(fs.Object); ok {
+			if obj, ok := e.(fs.Object); ok {
 				v.fileVotes++
+				f.recordShardFileEntry(ctx, v, i, obj)
 			} else {
 				v.dirVotes++
 			}
@@ -79,8 +76,8 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	if notFound == len(f.backends) {
 		return nil, fs.ErrorDirNotFound
 	}
-	if healthy < f.writeQuorum() {
-		return nil, fmt.Errorf("rs: insufficient shard listings for quorum on %q: available=%d required=%d", dir, healthy, f.writeQuorum())
+	if healthy < f.readQuorum() {
+		return nil, fmt.Errorf("rs: insufficient shard listings for quorum on %q: available=%d required=%d", dir, healthy, f.readQuorum())
 	}
 	remotes := make([]string, 0, len(votes))
 	for remote := range votes {
@@ -94,8 +91,17 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		if v.fileVotes > 0 && v.dirVotes > 0 {
 			fs.Logf(f, "rs: list %q remote=%q has conflicting types across shards (fileVotes=%d dirVotes=%d)", dir, remote, v.fileVotes, v.dirVotes)
 		}
-		if v.fileVotes >= f.writeQuorum() {
-			o, err := f.NewObject(ctx, remote)
+		if v.fileVotes > 0 && v.fileVotes < f.readQuorum() {
+			fs.Logf(f, "rs: list %q omitting broken object %q: fileVotes=%d required=%d", dir, remote, v.fileVotes, f.readQuorum())
+			continue
+		}
+		if v.fileVotes >= f.readQuorum() {
+			meta, err := f.buildListObjectMeta(ctx, dir, remote, v)
+			if err != nil {
+				fs.Logf(f, "rs: list %q failed to resolve object %q: %v", dir, remote, err)
+				continue
+			}
+			o, err := f.newObjectFromListMetadata(ctx, remote, meta)
 			if err != nil {
 				fs.Logf(f, "rs: list %q failed to resolve object %q: %v", dir, remote, err)
 				continue
@@ -103,7 +109,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 			out = append(out, o)
 			continue
 		}
-		if v.dirVotes >= f.writeQuorum() {
+		if v.dirVotes >= f.readQuorum() {
 			out = append(out, fs.NewDir(remote, time.Time{}))
 		}
 	}
