@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sync"
 	"time"
 
 	"github.com/klauspost/reedsolomon"
@@ -26,7 +27,7 @@ type Object struct {
 	footer       *Footer
 	primaryIndex int
 
-	// Provisional list metadata (footer loaded lazily via ensureFooter).
+	// Provisional list metadata (footer loaded lazily on Size/ModTime/Open/Hash).
 	hasListSize    bool
 	listSize       int64
 	hasListModTime bool
@@ -47,23 +48,37 @@ func (o *Object) String() string {
 func (o *Object) Remote() string { return o.remote }
 
 // ModTime returns the logical content modification time.
+// Shard remote ModTime wins over footer Mtime when backends expose ModTime (Phase 0 policy).
 func (o *Object) ModTime(ctx context.Context) time.Time {
-	if o.footer != nil {
-		return time.Unix(0, o.footer.Mtime)
-	}
 	if o.hasListModTime {
 		return o.listModTime
+	}
+	if mt, ok := o.probeShardModTime(ctx); ok {
+		return mt
+	}
+	if err := o.ensureFooterForModTime(ctx); err != nil {
+		return time.Time{}
+	}
+	if o.footer != nil {
+		return time.Unix(0, o.footer.Mtime)
 	}
 	return time.Time{}
 }
 
 // Size returns the logical content length in bytes.
+// k data-shard remote sizes win over footer ContentLength when derivable (Phase 0 policy).
 func (o *Object) Size() int64 {
-	if o.footer != nil {
-		return o.footer.ContentLength
-	}
 	if o.hasListSize {
 		return o.listSize
+	}
+	if size, ok := o.probeShardListSize(context.Background()); ok {
+		return size
+	}
+	if err := o.ensureFooterForSize(context.Background()); err != nil {
+		return 0
+	}
+	if o.footer != nil {
+		return o.footer.ContentLength
 	}
 	return 0
 }
@@ -71,7 +86,128 @@ func (o *Object) Size() int64 {
 // Storable reports whether the object can be stored (always true for rs).
 func (o *Object) Storable() bool { return true }
 
-// ensureFooter loads the EC footer from primaryIndex when list metadata is incomplete.
+// ensureFooterForSize loads the footer when shard sizes and list metadata did not resolve size.
+func (o *Object) ensureFooterForSize(ctx context.Context) error {
+	if o.hasListSize {
+		return nil
+	}
+	if _, ok := o.probeShardListSize(ctx); ok {
+		return nil
+	}
+	if o.footer != nil {
+		return nil
+	}
+	return o.ensureFooter(ctx)
+}
+
+// ensureFooterForModTime loads the footer when shard ModTime and list metadata did not resolve time.
+func (o *Object) ensureFooterForModTime(ctx context.Context) error {
+	if o.hasListModTime {
+		return nil
+	}
+	if _, ok := o.probeShardModTime(ctx); ok {
+		return nil
+	}
+	if o.footer != nil {
+		return nil
+	}
+	return o.ensureFooter(ctx)
+}
+
+type shardProbeSnapshot struct {
+	shardFile       []bool
+	shardSize       []int64
+	shardHasModTime []bool
+	shardModTime    []time.Time
+}
+
+func (o *Object) collectShardProbeSnapshot(ctx context.Context) shardProbeSnapshot {
+	n := len(o.fs.backends)
+	snap := shardProbeSnapshot{
+		shardFile:       make([]bool, n),
+		shardSize:       make([]int64, n),
+		shardHasModTime: make([]bool, n),
+		shardModTime:    make([]time.Time, n),
+	}
+	var mu sync.Mutex
+	g, gctx := errgroup.WithContext(ctx)
+	for i := range o.fs.backends {
+		i := i
+		g.Go(func() error {
+			obj, err := o.fs.backends[i].NewObject(gctx, o.remote)
+			if err != nil {
+				return nil
+			}
+			mu.Lock()
+			snap.shardFile[i] = true
+			snap.shardSize[i] = obj.Size()
+			if o.fs.backends[i].Precision() != fs.ModTimeNotSupported {
+				snap.shardHasModTime[i] = true
+				snap.shardModTime[i] = obj.ModTime(gctx).Truncate(time.Second)
+			}
+			mu.Unlock()
+			return nil
+		})
+	}
+	_ = g.Wait()
+	return snap
+}
+
+// probeShardListSize derives logical size from k data-shard remote particle sizes.
+func (o *Object) probeShardListSize(ctx context.Context) (int64, bool) {
+	if o.hasListSize {
+		return o.listSize, true
+	}
+	snap := o.collectShardProbeSnapshot(ctx)
+	size, ok := resolveListSize(o.fs.opt.DataShards, snap.shardFile, snap.shardSize)
+	if ok {
+		o.hasListSize = true
+		o.listSize = size
+	}
+	return size, ok
+}
+
+// probeShardModTime returns ModTime from shard remotes when backends support it.
+func (o *Object) probeShardModTime(ctx context.Context) (time.Time, bool) {
+	if o.hasListModTime {
+		return o.listModTime, true
+	}
+	snap := o.collectShardProbeSnapshot(ctx)
+	mt, ok := resolveListModTime(o.fs, "", o.remote, snap.shardFile, snap.shardHasModTime, snap.shardModTime)
+	if ok {
+		o.hasListModTime = true
+		o.listModTime = mt
+	}
+	return mt, ok
+}
+
+// newObjectAfterCopyMove returns a provisional destination object using source logical
+// metadata. Server-side shard copy/move preserves particle bytes and, on ModTime-capable
+// backends, shard ModTimes — avoiding a destination footer read on return.
+func (f *Fs) newObjectAfterCopyMove(ctx context.Context, remote string, src *Object) fs.Object {
+	o := &Object{
+		fs:             f,
+		remote:         remote,
+		primaryIndex:   src.primaryIndex,
+		hasListSize:    src.hasListSize,
+		listSize:       src.listSize,
+		hasListModTime: src.hasListModTime,
+		listModTime:    src.listModTime,
+	}
+	if !o.hasListSize {
+		o.hasListSize = true
+		o.listSize = src.Size()
+	}
+	if !o.hasListModTime {
+		if mt := src.ModTime(ctx); !mt.IsZero() {
+			o.hasListModTime = true
+			o.listModTime = mt.Truncate(time.Second)
+		}
+	}
+	return o
+}
+
+// ensureFooter loads the EC footer from primaryIndex (Open, Hash, or lazy metadata fallback).
 func (o *Object) ensureFooter(ctx context.Context) error {
 	if o.footer != nil {
 		return nil
@@ -655,6 +791,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	ro := newObj.(*Object)
 	o.footer = ro.footer
 	o.primaryIndex = ro.primaryIndex
+	o.hasListSize = ro.hasListSize
+	o.listSize = ro.listSize
+	o.hasListModTime = ro.hasListModTime
+	o.listModTime = ro.listModTime
 	return nil
 }
 
@@ -692,31 +832,90 @@ func (o *Object) Remove(ctx context.Context) error {
 	})
 }
 
-// SetModTime updates EC footer mtimes with quorum semantics.
+// SetModTime updates shard remote ModTime when backends support it; otherwise rewrites footer Mtime.
 // See backend/rs/docs/QUORUM_TRANSACTIONS.md (SetModTime).
 func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
-	if err := o.ensureFooter(ctx); err != nil {
-		return err
-	}
 	if _, err := o.fs.preflightReachableShards(ctx); err != nil {
 		return err
 	}
-	priorMtime := time.Unix(0, o.footer.Mtime)
+	tSec := t.Truncate(time.Second)
+	n := len(o.fs.backends)
+	useRemote := make([]bool, n)
+	priorRemote := make([]time.Time, n)
+	priorFooter := make([]int64, n)
+	snap := o.collectShardProbeSnapshot(ctx)
+	for i := range o.fs.backends {
+		if !snap.shardFile[i] {
+			continue
+		}
+		if o.fs.shardUsesRemoteSetModTime(i) {
+			useRemote[i] = true
+			if snap.shardHasModTime[i] {
+				priorRemote[i] = snap.shardModTime[i]
+			} else {
+				obj, err := o.fs.backends[i].NewObject(ctx, o.remote)
+				if err != nil {
+					return fmt.Errorf("rs: shard %d: %w", i, err)
+				}
+				priorRemote[i] = obj.ModTime(ctx).Truncate(time.Second)
+			}
+			continue
+		}
+		ft, err := o.readShardFooter(ctx, i)
+		if err != nil {
+			return err
+		}
+		priorFooter[i] = ft.Mtime
+	}
 	err := o.fs.runQuorumTransaction(ctx, quorumTransaction{
 		OpName:        "setmodtime",
 		Remote:        o.remote,
 		SkipPreflight: true,
 		Forward: func(opCtx context.Context, shard int) error {
+			if useRemote[shard] {
+				return o.updateShardRemoteModTime(opCtx, shard, tSec)
+			}
 			return o.updateShardFooterMtime(opCtx, o.fs.backends[shard], shard, t)
 		},
 		Rollback: func(opCtx context.Context, shard int) error {
-			return o.updateShardFooterMtime(opCtx, o.fs.backends[shard], shard, priorMtime)
+			if useRemote[shard] {
+				return o.updateShardRemoteModTime(opCtx, shard, priorRemote[shard])
+			}
+			return o.updateShardFooterMtime(opCtx, o.fs.backends[shard], shard, time.Unix(0, priorFooter[shard]))
 		},
 	})
 	if err != nil {
 		return err
 	}
-	o.footer.Mtime = t.UnixNano()
+	o.hasListModTime = true
+	o.listModTime = tSec
+	return nil
+}
+
+func (f *Fs) shardUsesRemoteSetModTime(shard int) bool {
+	return f.backends[shard].Precision() != fs.ModTimeNotSupported
+}
+
+func (o *Object) readShardFooter(ctx context.Context, shard int) (*Footer, error) {
+	obj, err := o.fs.backends[shard].NewObject(ctx, o.remote)
+	if err != nil {
+		return nil, fmt.Errorf("rs: shard %d: %w", shard, err)
+	}
+	ft, err := readFooterFromParticle(ctx, obj)
+	if err != nil {
+		return nil, fmt.Errorf("rs: shard %d: %w", shard, err)
+	}
+	return ft, nil
+}
+
+func (o *Object) updateShardRemoteModTime(ctx context.Context, shardIdx int, t time.Time) error {
+	obj, err := o.fs.backends[shardIdx].NewObject(ctx, o.remote)
+	if err != nil {
+		return fmt.Errorf("rs: shard %d: %w", shardIdx, err)
+	}
+	if err := obj.SetModTime(ctx, t.Truncate(time.Second)); err != nil {
+		return fmt.Errorf("rs: shard %d: set modtime: %w", shardIdx, err)
+	}
 	return nil
 }
 

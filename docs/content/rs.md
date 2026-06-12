@@ -296,10 +296,13 @@ footer read on the lowest listing shard fills in size or ModTime only when list
 metadata is insufficient. **`Open`** / **`Hash`** load the footer lazily
 (`ensureFooter`).
 
-**`NewObject`** (direct lookup, not list) probes shards **in parallel** and picks
-the **lowest shard index** with a valid footer. **`backend heal`** uses parallel
-discovery with per-shard virtual-padding size checks and parallel stripe fragment
-reads (and parallel legacy reads / healed `Put`s where applicable).
+**`NewObject`** (direct lookup, not list) probes shards **in parallel** for particle
+size and ModTime — the same fast path as list when all **k** data sizes and a shard
+ModTime are available (**no footer read**). Otherwise it reads **one** footer on the
+lowest valid shard as fallback. **`backend heal`** uses parallel discovery with
+per-shard virtual-padding size checks and parallel stripe fragment reads (and parallel
+legacy reads / healed `Put`s where applicable). Heal applies **reference ModTime**
+from surviving shard remotes to rebuilt particles.
 
 Implementer detail (flow, edge cases, code map): **`backend/rs/docs/LIST_METADATA.md`**.
 
@@ -579,17 +582,25 @@ Examples:
 
 ## Metadata (alpha)
 
-For logical objects, `rs` surfaces metadata from the **RS footer** stored in every shard particle:
-- logical **content length**
-- logical **modification time** (`Mtime` in nanoseconds in the footer; `ModTime` on the
-  logical object is truncated to **1 second** — `Fs.Precision()` is `1s`, and **`Put`**
-  stores the source mtime at 1s resolution)
-- **MD5 / SHA256** hashes of the logical content where supported
+Logical **`Size()`** and **`ModTime()`** prefer **shard remote** metadata when available:
 
-**List** may expose provisional size/ModTime from shard list metadata before a footer
-is read; after **`Open`** / **`ensureFooter`**, footer values are authoritative.
+- **Size:** derived from all **k** data-shard particle sizes (virtual-padding sum) when
+  every data shard has a valid particle; otherwise one footer `ContentLength` is read
+  lazily.
+- **ModTime:** lowest-index shard remote ModTime at **1s** precision when backends support
+  it; otherwise footer `Mtime` (nanoseconds) is read lazily. `Fs.Precision()` is **1s**;
+  **`Put`** stores the source mtime at 1s resolution on shard remotes and in the footer.
 
-This alpha does **not** attempt to preserve or synchronize arbitrary per-remote metadata from the underlying shard remotes.
+**`Open`** / **`Hash`** load a footer for stripe layout and digests; loaded footer does
+**not** override successful k-data-shard size or shard-remote ModTime.
+
+**`SetModTime`** updates shard remotes via `Object.SetModTime` when supported (no payload
+read); `ModTimeNotSupported` backends use a footer rewrite fallback. **`Copy`** / **`Move`**
+return provisional destination metadata from the source object (no destination footer read).
+
+**MD5 / SHA256** hashes of logical content come from the footer when `Hash` is called.
+
+Implementer detail: **`backend/rs/docs/LIST_METADATA.md`**.
 
 ### Range reads
 
