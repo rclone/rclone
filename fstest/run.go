@@ -118,19 +118,32 @@ func newRun() *Run {
 	return r
 }
 
-// run f(), retrying it until it returns with no error or the limit
-// expires and it calls t.Fatalf
-func retry(t *testing.T, what string, f func() error) {
+// Retry calls f and retries with exponential backoff until it returns
+// nil or *ListRetries attempts have been made. It is intended for tests
+// that need to ride out eventual consistency in the backend (for example
+// when an operation has just modified an asset and a subsequent lookup
+// in another API has not caught up yet).
+//
+// The final error is returned so the caller can decide how to react.
+func Retry(t *testing.T, what string, f func() error) error {
+	t.Helper()
 	var err error
-	for try := 1; try <= *ListRetries; try++ {
+	sleep := time.Second
+	retries := *ListRetries
+	for try := 1; try <= retries; try++ {
 		err = f()
 		if err == nil {
-			return
+			return nil
 		}
-		t.Logf("%s failed - try %d/%d: %v", what, try, *ListRetries, err)
-		time.Sleep(time.Second)
+		if try == retries {
+			break
+		}
+		t.Logf("%s failed - try %d/%d: sleeping %v: %v", what, try, retries, sleep, err)
+		time.Sleep(sleep)
+		sleep = (sleep * 3) / 2
 	}
 	t.Logf("%s failed: %v", what, err)
+	return err
 }
 
 // newRunIndividual initialise the remote and local for testing and
@@ -156,7 +169,7 @@ func newRunIndividual(t *testing.T, individual bool) *Run {
 				for _, entry := range entries {
 					switch x := entry.(type) {
 					case fs.Object:
-						retry(t, fmt.Sprintf("removing file %q", x.Remote()), func() error { return x.Remove(ctx) })
+						_ = Retry(t, fmt.Sprintf("removing file %q", x.Remote()), func() error { return x.Remove(ctx) })
 					case fs.Directory:
 						toDelete = append(toDelete, x.Remote())
 					}
@@ -170,7 +183,7 @@ func newRunIndividual(t *testing.T, individual bool) *Run {
 			sort.Strings(toDelete)
 			for i := len(toDelete) - 1; i >= 0; i-- {
 				dir := toDelete[i]
-				retry(t, fmt.Sprintf("removing dir %q", dir), func() error {
+				_ = Retry(t, fmt.Sprintf("removing dir %q", dir), func() error {
 					return r.Fremote.Rmdir(ctx, dir)
 				})
 			}

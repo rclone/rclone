@@ -4,20 +4,26 @@ region:
   au-east-1: AU East 1
   eu-central: EU Central
   eu-south-1: EU South 1
+  eu-west-1: EU West 1
   jp-central-1: JP Central 1
   uk-east-1: UK East 1
   us-central-1: US Central 1
   us-east: US East
+  us-east-1: US East 1
   us-west: US West
+  us-west-1: US West 1
 endpoint:
   au-east-1.object.fastlystorage.app: AU East 1
   eu-central.object.fastlystorage.app: EU Central
   eu-south-1.object.fastlystorage.app: EU South 1
+  eu-west-1.object.fastlystorage.app: EU West 1
   jp-central-1.object.fastlystorage.app: JP Central 1
   uk-east-1.object.fastlystorage.app: UK East 1
   us-central-1.object.fastlystorage.app: US Central 1
   us-east.object.fastlystorage.app: US East
+  us-east-1.object.fastlystorage.app: US East 1
   us-west.object.fastlystorage.app: US West
+  us-west-1.object.fastlystorage.app: US West 1
 quirks:
   force_path_style: true
   use_already_exists: false

@@ -328,6 +328,9 @@ func (jobs *Jobs) NewJob(ctx context.Context, fn rc.Func, in rc.Params) (job *Jo
 	// Add the job to the context
 	ctx = context.WithValue(ctx, jobKey, job)
 
+	// Mark the context as created from an rc request
+	ctx = fs.WithRCRequest(ctx)
+
 	if isAsync {
 		go job.run(ctx, fn, in)
 		out = make(rc.Params)

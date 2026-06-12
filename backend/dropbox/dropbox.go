@@ -150,14 +150,20 @@ var (
 
 // Gets an oauth config with the right scopes
 func getOauthConfig(m configmap.Mapper) *oauthutil.Config {
+	impersonate, _ := m.Get("impersonate")
+	impersonateAdmin, _ := m.Get("impersonate_admin")
+
 	// If not impersonating, use standard scopes
-	if impersonate, _ := m.Get("impersonate"); impersonate == "" {
+	if impersonate == "" && impersonateAdmin == "" {
 		return dropboxConfig
 	}
 	// Make a copy of the config
 	config := *dropboxConfig
 	// Make a copy of the scopes with extra scopes requires appended
-	config.Scopes = append(config.Scopes, "members.read", "team_data.member")
+	config.Scopes = append(config.Scopes, "team_data.member")
+	if impersonate != "" {
+		config.Scopes = append(config.Scopes, "members.read")
+	}
 	return &config
 }
 
@@ -206,6 +212,29 @@ You will have to use your own App (setting your own client_id and
 client_secret) to use this option as currently rclone's default set of
 permissions doesn't include "members.read". This can be added once
 v1.55 or later is in use everywhere.
+`,
+			Default:   "",
+			Advanced:  true,
+			Sensitive: true,
+		}, {
+			Name: "impersonate_admin",
+			Help: `Team admin ID to use when performing actions as a team administrator.
+
+This sets the Dropbox-API-Select-Admin header with the given team
+member ID (for example "dbmid:...").
+
+This takes a team member ID directly rather than an email address.
+
+Note that if you want to use impersonate_admin, you should make sure this
+flag is set when running "rclone config" as this will cause rclone to
+request the "team_data.member" scope which it won't normally.
+
+Using the "team_data.member" scope will require a Dropbox Team Admin
+to approve during the OAuth flow.
+
+You will have to use your own App (setting your own client_id and
+client_secret) to use this option as currently rclone's default set of
+permissions doesn't include "team_data.member".
 `,
 			Default:   "",
 			Advanced:  true,
@@ -302,20 +331,21 @@ will fail to download them.
 
 // Options defines the configuration for this backend
 type Options struct {
-	ChunkSize      fs.SizeSuffix        `config:"chunk_size"`
-	Impersonate    string               `config:"impersonate"`
-	SharedFiles    bool                 `config:"shared_files"`
-	SharedFolders  bool                 `config:"shared_folders"`
-	BatchMode      string               `config:"batch_mode"`
-	BatchSize      int                  `config:"batch_size"`
-	BatchTimeout   fs.Duration          `config:"batch_timeout"`
-	AsyncBatch     bool                 `config:"async_batch"`
-	PacerMinSleep  fs.Duration          `config:"pacer_min_sleep"`
-	Enc            encoder.MultiEncoder `config:"encoding"`
-	RootNsid       string               `config:"root_namespace"`
-	ExportFormats  fs.CommaSepList      `config:"export_formats"`
-	SkipExports    bool                 `config:"skip_exports"`
-	ShowAllExports bool                 `config:"show_all_exports"`
+	ChunkSize        fs.SizeSuffix        `config:"chunk_size"`
+	Impersonate      string               `config:"impersonate"`
+	ImpersonateAdmin string               `config:"impersonate_admin"`
+	SharedFiles      bool                 `config:"shared_files"`
+	SharedFolders    bool                 `config:"shared_folders"`
+	BatchMode        string               `config:"batch_mode"`
+	BatchSize        int                  `config:"batch_size"`
+	BatchTimeout     fs.Duration          `config:"batch_timeout"`
+	AsyncBatch       bool                 `config:"async_batch"`
+	PacerMinSleep    fs.Duration          `config:"pacer_min_sleep"`
+	Enc              encoder.MultiEncoder `config:"encoding"`
+	RootNsid         string               `config:"root_namespace"`
+	ExportFormats    fs.CommaSepList      `config:"export_formats"`
+	SkipExports      bool                 `config:"skip_exports"`
+	ShowAllExports   bool                 `config:"show_all_exports"`
 }
 
 // Fs represents a remote dropbox server
@@ -535,6 +565,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 
 		cfg.AsMemberID = memberIDs[0].MemberInfo.Profile.MemberProfile.TeamMemberId
+	}
+
+	if opt.ImpersonateAdmin != "" {
+		cfg.AsAdminID = opt.ImpersonateAdmin
 	}
 
 	f.srv = files.New(cfg)
