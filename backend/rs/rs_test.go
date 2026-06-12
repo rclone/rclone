@@ -263,6 +263,81 @@ func (f failMkdirFs) Mkdir(ctx context.Context, dir string) error {
 	return f.Fs.Mkdir(ctx, dir)
 }
 
+type failRmdirFs struct {
+	fs.Fs
+	fail bool
+}
+
+func (f failRmdirFs) Rmdir(ctx context.Context, dir string) error {
+	if f.fail {
+		return errors.New("failRmdirFs: injected Rmdir failure")
+	}
+	return f.Fs.Rmdir(ctx, dir)
+}
+
+type failCopyFs struct {
+	fs.Fs
+	fail bool
+}
+
+func (f failCopyFs) Features() *fs.Features {
+	features := f.Fs.Features()
+	base := *features
+	copyFn := features.Copy
+	base.Copy = func(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+		if f.fail {
+			return nil, errors.New("failCopyFs: injected Copy failure")
+		}
+		if copyFn != nil {
+			return copyFn(ctx, src, remote)
+		}
+		return nil, fs.ErrorCantCopy
+	}
+	return &base
+}
+
+type failMoveFs struct {
+	fs.Fs
+	fail bool
+}
+
+func (f failMoveFs) Features() *fs.Features {
+	features := f.Fs.Features()
+	base := *features
+	moveFn := features.Move
+	base.Move = func(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+		if f.fail {
+			return nil, errors.New("failMoveFs: injected Move failure")
+		}
+		if moveFn != nil {
+			return moveFn(ctx, src, remote)
+		}
+		return nil, fs.ErrorCantMove
+	}
+	return &base
+}
+
+type failDirMoveFs struct {
+	fs.Fs
+	fail bool
+}
+
+func (f failDirMoveFs) Features() *fs.Features {
+	features := f.Fs.Features()
+	base := *features
+	dirMove := features.DirMove
+	base.DirMove = func(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
+		if f.fail {
+			return errors.New("failDirMoveFs: injected DirMove failure")
+		}
+		if dirMove != nil {
+			return dirMove(ctx, src, srcRemote, dstRemote)
+		}
+		return fs.ErrorCantDirMove
+	}
+	return &base
+}
+
 func makeMemoryBackends(t *testing.T, n int, prefix string) []fs.Fs {
 	t.Helper()
 	ctx := context.Background()
@@ -289,6 +364,56 @@ func makeLocalBackends(t *testing.T, n int, prefix string) []fs.Fs {
 	return backends
 }
 
+func TestMkdirQuorumFileConflict(t *testing.T) {
+	ctx := context.Background()
+	backends := makeLocalBackends(t, 4, "rs-mkdir-file")
+	f := &Fs{
+		name:     "rs",
+		root:     "",
+		backends: backends,
+		opt: Options{
+			DataShards:         3,
+			ParityShards:       1,
+			WriteQuorum:        3,
+			Rollback:           true,
+			UseSpooling:        true,
+			StripeFragmentSize: 64,
+		},
+		features: (&fs.Features{}),
+	}
+	data := []byte("file-conflict")
+	info := object.NewStaticObjectInfo("conflict", time.Unix(1700005000, 0), int64(len(data)), true, nil, nil)
+	_, err := f.Put(ctx, bytes.NewReader(data), info)
+	require.NoError(t, err)
+
+	err = f.Mkdir(ctx, "conflict")
+	require.ErrorIs(t, err, fs.ErrorIsFile)
+}
+
+func TestMkdirQuorumPreflightInsufficientReachable(t *testing.T) {
+	ctx := context.Background()
+	backends := makeLocalBackends(t, 4, "rs-mkdir-preflight")
+	backends[2] = failListFs{Fs: backends[2], fail: true}
+	backends[3] = failListFs{Fs: backends[3], fail: true}
+	f := testQuorumFs(t, backends, 3)
+
+	err := f.Mkdir(ctx, "newdir")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "insufficient reachable remotes")
+}
+
+func TestMkdirQuorumUnreachableShardAllowed(t *testing.T) {
+	ctx := context.Background()
+	backends := makeLocalBackends(t, 4, "rs-mkdir-unreach")
+	backends[3] = failListFs{Fs: backends[3], fail: true}
+	f := testQuorumFs(t, backends, 3)
+
+	require.NoError(t, f.Mkdir(ctx, "cohort-dir"))
+	for i := 0; i < 3; i++ {
+		require.True(t, backendRootHasDir(ctx, backends[i], "cohort-dir"))
+	}
+}
+
 func TestMkdirQuorum(t *testing.T) {
 	ctx := context.Background()
 	backends := makeMemoryBackends(t, 7, "rs-mkdir-quorum")
@@ -311,7 +436,7 @@ func TestMkdirQuorum(t *testing.T) {
 
 func TestRmdirPragmaticAndEmptyChecks(t *testing.T) {
 	ctx := context.Background()
-	backends := makeMemoryBackends(t, 4, "rs-rmdir-pragmatic")
+	backends := makeLocalBackends(t, 4, "rs-rmdir-pragmatic")
 	f := &Fs{
 		name:     "rs",
 		root:     "",
@@ -323,8 +448,9 @@ func TestRmdirPragmaticAndEmptyChecks(t *testing.T) {
 		},
 		features: (&fs.Features{}),
 	}
-	require.NoError(t, backends[0].Mkdir(ctx, "d1"))
-	require.NoError(t, backends[1].Mkdir(ctx, "d1"))
+	for i := 0; i < 3; i++ {
+		require.NoError(t, backends[i].Mkdir(ctx, "d1"))
+	}
 	require.NoError(t, f.Rmdir(ctx, "d1"))
 
 	require.NoError(t, backends[0].Mkdir(ctx, "nonempty"))
@@ -365,7 +491,7 @@ func TestPutFailsWhenWriteQuorumNotMet(t *testing.T) {
 	srcInfo := object.NewStaticObjectInfo("q.bin", time.Unix(1700000000, 0), int64(len(data)), true, nil, nil)
 	_, err := f.Put(ctx, bytes.NewReader(data), srcInfo)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "insufficient writable remotes for quorum")
+	require.Contains(t, err.Error(), "insufficient reachable remotes for quorum")
 
 	// With quorum 6, the same single unavailable backend should still allow Put to proceed.
 	f.opt.WriteQuorum = 6
@@ -1415,7 +1541,7 @@ func TestDegradedCommand(t *testing.T) {
 
 	out, err := f.Command(ctx, "degraded", []string{"summary"}, nil)
 	require.NoError(t, err)
-	require.Contains(t, out.(string), "Degraded: 1")
+	require.Contains(t, out.(string), "Degraded objects: 1")
 
 	out, err = f.Command(ctx, "degraded", []string{"ls"}, nil)
 	require.NoError(t, err)
@@ -1423,7 +1549,7 @@ func TestDegradedCommand(t *testing.T) {
 
 	out, err = f.Command(ctx, "degraded", []string{"lsd"}, nil)
 	require.NoError(t, err)
-	require.Contains(t, out.(string), "not implemented")
+	require.Contains(t, out.(string), "No degraded directory skew found")
 }
 
 func TestCopyMoveServerSide(t *testing.T) {
@@ -1533,6 +1659,213 @@ func TestCopyMoveRejectIncompatibleSource(t *testing.T) {
 	require.ErrorIs(t, err, fs.ErrorCantCopy)
 	_, err = f.Move(ctx, foreignObj, "dst.bin")
 	require.ErrorIs(t, err, fs.ErrorCantMove)
+}
+
+func copyMoveTestFs(t *testing.T, backends []fs.Fs) *Fs {
+	t.Helper()
+	return &Fs{
+		name:     "rs",
+		root:     "",
+		backends: backends,
+		opt: Options{
+			DataShards:         3,
+			ParityShards:       1,
+			WriteQuorum:        3,
+			UseSpooling:        true,
+			Rollback:           true,
+			StripeFragmentSize: 64,
+		},
+		features: (&fs.Features{}),
+	}
+}
+
+func TestCopyQuorumRollbackOnFailure(t *testing.T) {
+	ctx := context.Background()
+	backends := makeLocalBackends(t, 4, "rs-copy-rb")
+	backends[2] = failCopyFs{Fs: backends[2], fail: true}
+	backends[3] = failCopyFs{Fs: backends[3], fail: true}
+	f := copyMoveTestFs(t, backends)
+
+	data := []byte("copy-rollback")
+	info := object.NewStaticObjectInfo("src.bin", time.Unix(1700007000, 0), int64(len(data)), true, nil, nil)
+	_, err := f.Put(ctx, bytes.NewReader(data), info)
+	require.NoError(t, err)
+	srcObj, err := f.NewObject(ctx, "src.bin")
+	require.NoError(t, err)
+
+	_, err = f.Copy(ctx, srcObj, "dst.bin")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "copy quorum not met")
+
+	_, err = backends[0].NewObject(ctx, "dst.bin")
+	require.Error(t, err, "rollback should remove destination copy on successful shards")
+	_, err = f.NewObject(ctx, "src.bin")
+	require.NoError(t, err)
+}
+
+func TestMoveQuorumRollbackOnFailure(t *testing.T) {
+	ctx := context.Background()
+	backends := makeLocalBackends(t, 4, "rs-move-rb")
+	backends[2] = failMoveFs{Fs: backends[2], fail: true}
+	backends[3] = failMoveFs{Fs: backends[3], fail: true}
+	f := copyMoveTestFs(t, backends)
+
+	data := []byte("move-rollback")
+	info := object.NewStaticObjectInfo("src.bin", time.Unix(1700007100, 0), int64(len(data)), true, nil, nil)
+	_, err := f.Put(ctx, bytes.NewReader(data), info)
+	require.NoError(t, err)
+	srcObj, err := f.NewObject(ctx, "src.bin")
+	require.NoError(t, err)
+
+	_, err = f.Move(ctx, srcObj, "dst.bin")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "move quorum not met")
+
+	_, err = f.NewObject(ctx, "dst.bin")
+	require.Error(t, err)
+	_, err = f.NewObject(ctx, "src.bin")
+	require.NoError(t, err, "rollback should restore source after partial move")
+}
+
+func TestCopyQuorumPreflightInsufficientReachable(t *testing.T) {
+	ctx := context.Background()
+	backends := makeLocalBackends(t, 4, "rs-copy-preflight")
+	f := copyMoveTestFs(t, backends)
+
+	data := []byte("x")
+	info := object.NewStaticObjectInfo("src.bin", time.Unix(1700007200, 0), 1, true, nil, nil)
+	_, err := f.Put(ctx, bytes.NewReader(data), info)
+	require.NoError(t, err)
+	srcObj, err := f.NewObject(ctx, "src.bin")
+	require.NoError(t, err)
+
+	backends[2] = failListFs{Fs: backends[2], fail: true}
+	backends[3] = failListFs{Fs: backends[3], fail: true}
+	_, err = f.Copy(ctx, srcObj, "dst.bin")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "insufficient reachable remotes")
+}
+
+func TestRemoveQuorumPreflightInsufficientReachable(t *testing.T) {
+	ctx := context.Background()
+	backends := makeLocalBackends(t, 4, "rs-remove-preflight")
+	f := copyMoveTestFs(t, backends)
+
+	data := []byte("remove-me")
+	info := object.NewStaticObjectInfo("gone.bin", time.Unix(1700007300, 0), int64(len(data)), true, nil, nil)
+	_, err := f.Put(ctx, bytes.NewReader(data), info)
+	require.NoError(t, err)
+	obj, err := f.NewObject(ctx, "gone.bin")
+	require.NoError(t, err)
+
+	backends[2] = failListFs{Fs: backends[2], fail: true}
+	backends[3] = failListFs{Fs: backends[3], fail: true}
+	err = obj.Remove(ctx)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "insufficient reachable remotes")
+	_, err = f.NewObject(ctx, "gone.bin")
+	require.NoError(t, err, "preflight failure should not delete particles")
+}
+
+func TestSetModTimeQuorumRollbackOnFailure(t *testing.T) {
+	ctx := context.Background()
+	backends := makeLocalBackends(t, 4, "rs-mtime-rb")
+	f := copyMoveTestFs(t, backends)
+
+	old := time.Unix(1700007400, 0)
+	data := []byte("mtime-rollback")
+	info := object.NewStaticObjectInfo("mt.bin", old, int64(len(data)), true, nil, nil)
+	_, err := f.Put(ctx, bytes.NewReader(data), info)
+	require.NoError(t, err)
+	obj, err := f.NewObject(ctx, "mt.bin")
+	require.NoError(t, err)
+
+	// Drop particles on two shards so forward setmodtime cannot reach write_quorum.
+	for i := 2; i < 4; i++ {
+		shardObj, err := backends[i].NewObject(ctx, "mt.bin")
+		require.NoError(t, err)
+		require.NoError(t, shardObj.Remove(ctx))
+	}
+
+	newt := time.Unix(1900000000, 0)
+	err = obj.SetModTime(ctx, newt)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "setmodtime quorum not met")
+	require.Equal(t, old.UnixNano(), obj.ModTime(ctx).UnixNano())
+}
+
+func TestDirMoveQuorumPreflightInsufficientReachable(t *testing.T) {
+	ctx := context.Background()
+	srcBackends := makeLocalBackends(t, 4, "rs-dm-pref-src")
+	dstBackends := makeLocalBackends(t, 4, "rs-dm-pref-dst")
+	dstBackends[2] = failListFs{Fs: dstBackends[2], fail: true}
+	dstBackends[3] = failListFs{Fs: dstBackends[3], fail: true}
+	src, dst := dirmoveTestPair(t, srcBackends, dstBackends)
+
+	data := []byte("dm-pref")
+	info := object.NewStaticObjectInfo("srcdir/a.txt", time.Unix(1700006000, 0), int64(len(data)), true, nil, nil)
+	_, err := src.Put(ctx, bytes.NewReader(data), info)
+	require.NoError(t, err)
+
+	err = dst.DirMove(ctx, src, "srcdir", "dstdir")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "insufficient reachable remotes")
+}
+
+func TestDirMoveQuorumPreflightDstExists(t *testing.T) {
+	ctx := context.Background()
+	srcBackends := makeLocalBackends(t, 4, "rs-dm-dst-exists-src")
+	dstBackends := makeLocalBackends(t, 4, "rs-dm-dst-exists-dst")
+	src, dst := dirmoveTestPair(t, srcBackends, dstBackends)
+
+	data := []byte("dm-dst")
+	info := object.NewStaticObjectInfo("srcdir/a.txt", time.Unix(1700006100, 0), int64(len(data)), true, nil, nil)
+	_, err := src.Put(ctx, bytes.NewReader(data), info)
+	require.NoError(t, err)
+	for i := 0; i < 3; i++ {
+		require.NoError(t, dstBackends[i].Mkdir(ctx, "dstdir"))
+	}
+
+	err = dst.DirMove(ctx, src, "srcdir", "dstdir")
+	require.ErrorIs(t, err, fs.ErrorDirExists)
+}
+
+func TestDirMoveQuorumRollbackOnFailure(t *testing.T) {
+	ctx := context.Background()
+	srcBackends := makeLocalBackends(t, 4, "rs-dm-rb-src")
+	dstBackends := makeLocalBackends(t, 4, "rs-dm-rb-dst")
+	dstBackends[2] = failDirMoveFs{Fs: dstBackends[2], fail: true}
+	dstBackends[3] = failDirMoveFs{Fs: dstBackends[3], fail: true}
+	src, dst := dirmoveTestPair(t, srcBackends, dstBackends)
+
+	data := []byte("dm-rollback")
+	info := object.NewStaticObjectInfo("srcdir/a.txt", time.Unix(1700006200, 0), int64(len(data)), true, nil, nil)
+	_, err := src.Put(ctx, bytes.NewReader(data), info)
+	require.NoError(t, err)
+
+	err = dst.DirMove(ctx, src, "srcdir", "dstdir")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "dirmove quorum not met")
+
+	_, err = dst.NewObject(ctx, "dstdir/a.txt")
+	require.Error(t, err)
+	_, err = src.NewObject(ctx, "srcdir/a.txt")
+	require.NoError(t, err)
+}
+
+func dirmoveTestPair(t *testing.T, srcBackends, dstBackends []fs.Fs) (*Fs, *Fs) {
+	t.Helper()
+	opt := Options{
+		DataShards:         3,
+		ParityShards:       1,
+		WriteQuorum:        3,
+		UseSpooling:        true,
+		Rollback:           true,
+		StripeFragmentSize: 64,
+	}
+	src := &Fs{name: "rs-src", root: "", backends: srcBackends, opt: opt, features: (&fs.Features{})}
+	dst := &Fs{name: "rs-dst", root: "", backends: dstBackends, opt: opt, features: (&fs.Features{})}
+	return src, dst
 }
 
 func TestDirMoveServerSide(t *testing.T) {

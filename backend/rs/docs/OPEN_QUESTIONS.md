@@ -1,22 +1,23 @@
 # Open Questions — rs Backend
 
-This document tracks design gaps, limitations, and follow-up work for the Reed-Solomon (`rs`) virtual backend. When a topic is resolved, note the decision here or in code. **Last reviewed**: 2026-06-11 (quorum/listing, virtual padding, list metadata fast path synced with code and `docs/content/rs.md`). User-facing overview: [`README.md`](../README.md).
+This document tracks design gaps, limitations, and follow-up work for the Reed-Solomon (`rs`) virtual backend. When a topic is resolved, note the decision here or in code. **Last reviewed**: 2026-06-11 (quorum transactions spec; listing, virtual padding). User-facing overview: [`README.md`](../README.md). Normative write/namespace policy: [`QUORUM_TRANSACTIONS.md`](QUORUM_TRANSACTIONS.md).
 
 ---
 
 ## Decisions (record)
 
-- **Quorum model**: **read/list merge** uses **`k`** (`data_shards`) for directory health, per-name file/dir votes, and degraded healthy thresholds. **Writes** and namespace mutations (`Put`, `mkdir`/`rmdir`, `Copy`/`Move`/`DirMove`, `Remove`, `SetModTime`, …) follow **`write_quorum`** (default **k+1**). Operations use two-phase parallel passes with partial-failure logging, not strict all-shards success.
+- **Quorum model**: **read/list merge** uses **`k`** (`data_shards`) for directory health, per-name file/dir votes, and degraded healthy thresholds. **Writes** and namespace mutations (`Put`, `mkdir`/`rmdir`, `Copy`/`Move`/`DirMove`, `Remove`, `SetModTime`, …) follow **`write_quorum`** (default **k+1**). **Execute** all shards in the op set (no early exit); **commit** when `successes >= write_quorum`; laggards converged by **async heal**. See [`QUORUM_TRANSACTIONS.md`](QUORUM_TRANSACTIONS.md).
+- **Namespace transactions**: preflight → execute → commit/rollback; **no separate metadata records** (rejected inode/dirent objects). Per-shard backing remotes remain authoritative; implementation Phases 1–3 pending.
 - **Two-phase retries**: operations use one parallel pass plus one bounded retry pass for failing shards.
 - **Backend commands**: keep both `heal` (repair) and `degraded` (inspection/reporting).
-- **Topology requirement**: `data_shards` must be strictly greater than `parity_shards` (**k > m**).
-- **Interim directory delete safety**: only empty directories are removable; if any shard still has entries the operation fails.
-- **Server-side `Copy` / `Move` / `DirMove` on `rs`**: Implemented in [`move_copy.go`](../move_copy.go). Each shard uses the wrapped remote’s `Features().Copy`, `Move` (or `Copy`+`Remove` if `Move` is nil), or `DirMove`, under [`runTwoPhaseQuorumOp`](../rs.go) and **`write_quorum`**. The source object must be `*rs.Object` from an `*rs.Fs` whose **`data_shards`**, **`parity_shards`**, and shard count match** the destination `*rs.Fs` (`compatibleLayout`); otherwise rclone gets `fs.ErrorCantCopy` / `fs.ErrorCantMove` / `fs.ErrorCantDirMove`. There is **no** `Put`-style rollback if a copy/move succeeds on a quorum of shards but leaves others inconsistent—see Q13 and operational notes in [`docs/content/rs.md`](../../../docs/content/rs.md).
+- **Topology requirement**: `data_shards` must be strictly greater than `parity_shards` (**k > m**). Reed–Solomon does not require this; it is v1 policy. With **k ≤ m**, two **disjoint** sets of **k** shards can each meet list/read quorum for the same path (e.g. `k=m=2`: particles for “v1” on shards 0–1 and “v2” on 2–3) while `List` still returns one name—reads follow lowest-index / data-shard join, so versions are ambiguous. **k > m** implies `2k > k+m`, so any two k-subsets overlap and cannot form fully separate version partitions.
+- **Directory delete (target spec)**: `Rmdir` preflight requires `reachable >= write_quorum`; among **reachable** shards that have the dir, each must list **no children**; commit at `write_quorum` with rollback on failure. Minority unreachable shards or orphans may still hold data until **heal** (see [`QUORUM_TRANSACTIONS.md`](QUORUM_TRANSACTIONS.md)). *Code today is stricter on availability and weaker on commit bar—Phase 2.*
+- **Server-side `Copy` / `Move` / `DirMove` on `rs`**: Implemented in [`move_copy.go`](../move_copy.go) via [`runQuorumTransaction`](../quorum_op.go) (preflight, commit at **`write_quorum`**, compensating rollback when **`rollback`** is enabled). The source object must be `*rs.Object` from a compatible `*rs.Fs` (`compatibleLayout`: same **k**, **m**, shard count); otherwise `fs.ErrorCantCopy` / `fs.ErrorCantMove` / `fs.ErrorCantDirMove`. **`Remove`** / **`SetModTime`** use the same framework; delete rollback is irreversible per spec.
 
 ## Risks / operational caveats
 
 - **List merge complexity**: quorum listing can hide or delay visibility of minority-shard state; type conflicts (file vs directory) are especially risky.
-- **Strict empty-dir rule**: requiring emptiness checks across shard remotes can fail in skewed namespaces and may require `degraded` + `heal` before cleanup.
+- **Empty-dir under skew**: preflight emptiness is on the **reachable cohort**; orphans on laggard shards may not block logical `rmdir` after spec alignment—use `degraded` + `heal`.
 - **Minority lag after quorum success**: reads can still observe stale shard state until healed (notably around delete/recreate races and footer divergence).
 
 ---
@@ -35,7 +36,7 @@ This document tracks design gaps, limitations, and follow-up work for the Reed-S
 ### Q2: `Fs.Move` / `Fs.Copy` / `DirMove`
 
 **Status**: Addressed — shard-aligned server-side implementation  
-**Notes**: [`move_copy.go`](../move_copy.go) implements `(*Fs).Copy`, `Move`, and `DirMove` as described in **Decisions** above. **Remaining gaps** (not “missing feature” but follow-up): (1) **partial quorum / rollback**—unlike `Put`, these paths do not remove successful shard side-effects when quorum fails mid-flight (Q13). (2) **Backend coverage**—if any shard lacks `Copy`/`Move`/`DirMove`, the whole operation fails that capability check for that path. (3) **S3/MinIO**—see Q14 (`DirMove` notices, post-`moveto` visibility). (4) **Cross-remote `rs` → `rs`**—only works when both sides are compatible `*Fs` layouts; arbitrary remotes still use normal rclone copy (re-encode), not `Fs.Copy`.
+**Notes**: [`move_copy.go`](../move_copy.go) implements `(*Fs).Copy`, `Move`, and `DirMove` as described in **Decisions** above. **Remaining gaps** (not “missing feature” but follow-up): (1) **Backend coverage**—if any shard lacks `Copy`/`Move`/`DirMove`, the whole operation fails that capability check for that path. (3) **S3/MinIO**—see Q14 (`DirMove` notices, post-`moveto` visibility). (4) **Cross-remote `rs` → `rs`**—only works when both sides are compatible `*Fs` layouts; arbitrary remotes still use normal rclone copy (re-encode), not `Fs.Copy`.
 
 ### Q3: Per-operation timeouts and `timeout_mode`
 
@@ -70,6 +71,21 @@ This document tracks design gaps, limitations, and follow-up work for the Reed-S
 
 **Blockers**: `rs` only sees generic `fs.Fs` / `fs.Object`; not every backend offers server-side byte-range copy or append; any fast path needs **capability checks** and a **safe fallback**.
 
+### Q17: `SetModTime` — shard remote mtime only vs footer rewrite
+
+**Status**: Active — design alternative to current path and [`QUORUM_TRANSACTIONS.md`](QUORUM_TRANSACTIONS.md) SetModTime table  
+**Notes**: Today [`SetModTime`](../object.go) / [`updateShardFooterMtime`](../object.go) updates **`Mtime` in the RS footer** on each shard, which requires reading the payload (often full `ReadAll`) and **`Object.Update`** / re-`Put` of the whole particle per shard (see Q7).
+
+**Proposal under consideration:** update only the **backing remote’s object ModTime** (via `Object.SetModTime` where supported) and **leave the footer `Mtime` unchanged**, to avoid read–update–put of every shard file on each metadata touch.
+
+**Trade-offs to decide:**
+
+- **Pros:** much cheaper on large particles and S3; no O(payload) client transfer per shard.
+- **Cons:** logical `ModTime()` / `Open` / `Hash` / heal use **footer ns mtime** as authoritative today; list fast path can use shard list times at 1s—**footer vs remote mtime skew** if only remotes are updated.
+- **Policy:** if adopted, need rules for which source wins on read, whether `heal` rewrites footers to match remotes (or the reverse), and interaction with [`QUORUM_TRANSACTIONS.md`](QUORUM_TRANSACTIONS.md) rollback/heal for `SetModTime`.
+
+Related: Q6 (quorum semantics), Q7 (footer rewrite cost).
+
 ### Q8: Parallel `Write`s to shard writers after each RS stripe (`encode.go`)
 
 **Status**: Active — optional optimization / investigation  
@@ -82,8 +98,8 @@ This document tracks design gaps, limitations, and follow-up work for the Reed-S
 
 ### Q10: `rmdirs` / non-empty directory behavior under quorum listing
 
-**Status**: Active — policy still open  
-**Notes**: Backends may disagree on directory emptiness. Interim policy is conservative (fail if any shard still has entries), but long-term semantics for recursive removal under quorum visibility need design.
+**Status**: Specified — implementation Phase 2  
+**Notes**: Policy in [`QUORUM_TRANSACTIONS.md`](QUORUM_TRANSACTIONS.md): emptiness on **preflight cohort** (reachable shards that have the dir), `write_quorum` commit, compensating rollback. Recursive `rmdirs` inherits per-step `Rmdir` rules. Post-commit namespace convergence via **`backend heal`** (orphan purge, extra `Rmdir`, laggard `Mkdir`) and **`backend degraded lsd`** — see [`namespace_heal.go`](../namespace_heal.go).
 
 ### Q11: Ordering and race semantics
 
@@ -97,8 +113,8 @@ This document tracks design gaps, limitations, and follow-up work for the Reed-S
 
 ### Q13: Rollback strategy beyond `Put`
 
-**Status**: Active — deferred  
-**Notes**: `Put` has rollback support when quorum is not met. For directory/metadata/delete quorum paths, decide whether to add compensating rollback or keep `degraded` + `heal` as the primary convergence path.
+**Status**: Implemented (Phases 1–4a)  
+**Notes**: [`QUORUM_TRANSACTIONS.md`](QUORUM_TRANSACTIONS.md): **`rollback`** config applies to namespace and object ops (`Mkdir`↔`Rmdir`, inverse `DirMove`, copy dst remove, move inverse, `SetModTime` footer restore). **Successful** quorum commits still rely on **async heal** for laggards. `Remove` is irreversible once shard deletes succeed (preflight only before execute).
 
 ### Q14: MinIO / S3 shell-test observations (`compare.sh` + `compare_sequential.sh`)
 
