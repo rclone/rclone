@@ -239,6 +239,14 @@ func (f failPutFs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	return f.Fs.Put(ctx, in, src, options...)
 }
 
+type noModTimeFs struct {
+	fs.Fs
+}
+
+func (f noModTimeFs) Precision() time.Duration {
+	return fs.ModTimeNotSupported
+}
+
 type failListFs struct {
 	fs.Fs
 	fail bool
@@ -956,7 +964,7 @@ func TestLargeObjectPutOpen1GiB(t *testing.T) {
 	require.Equal(t, expMD5Hex, gotMD5Hex)
 }
 
-func TestSetModTimeUpdatesFooters(t *testing.T) {
+func TestSetModTimeUpdatesShardRemotes(t *testing.T) {
 	ctx := context.Background()
 	backends := make([]fs.Fs, 4)
 	for i := range backends {
@@ -989,11 +997,15 @@ func TestSetModTimeUpdatesFooters(t *testing.T) {
 	_, err := BuildRSShardsToWriters(ctx, bytes.NewReader(data), srcInfo, 2, 2, 0, ios, true)
 	require.NoError(t, err)
 
+	oldFooterMtime := make([]int64, 4)
 	for i := range backends {
 		blob := writers[i].Bytes()
 		info := object.NewStaticObjectInfo("mt.bin", old, int64(len(blob)), true, nil, nil)
 		_, err := backends[i].Put(ctx, bytes.NewReader(blob), info)
 		require.NoError(t, err)
+		ft, err := ParseFooter(blob[len(blob)-FooterSize:])
+		require.NoError(t, err)
+		oldFooterMtime[i] = ft.Mtime
 	}
 
 	obj, err := f.NewObject(ctx, "mt.bin")
@@ -1001,7 +1013,7 @@ func TestSetModTimeUpdatesFooters(t *testing.T) {
 
 	newt := time.Unix(1800000000, 123456789)
 	require.NoError(t, obj.SetModTime(ctx, newt))
-	require.Equal(t, newt.UnixNano(), obj.ModTime(ctx).UnixNano())
+	require.Equal(t, newt.Truncate(time.Second), obj.ModTime(ctx))
 
 	rc, err := obj.Open(ctx)
 	require.NoError(t, err)
@@ -1013,6 +1025,7 @@ func TestSetModTimeUpdatesFooters(t *testing.T) {
 	for i := range backends {
 		sobj, err := backends[i].NewObject(ctx, "mt.bin")
 		require.NoError(t, err)
+		require.Equal(t, newt.Truncate(time.Second), sobj.ModTime(ctx))
 		raw, err := sobj.Open(ctx)
 		require.NoError(t, err)
 		all, err := io.ReadAll(raw)
@@ -1021,9 +1034,147 @@ func TestSetModTimeUpdatesFooters(t *testing.T) {
 		require.GreaterOrEqual(t, len(all), FooterSize)
 		ft, err := ParseFooter(all[len(all)-FooterSize:])
 		require.NoError(t, err)
-		require.Equal(t, newt.UnixNano(), ft.Mtime)
+		require.Equal(t, oldFooterMtime[i], ft.Mtime, "shard %d footer mtime unchanged on remote SetModTime path", i)
 		payload := all[:len(all)-FooterSize]
 		require.Equal(t, crc32cChecksum(payload), ft.PayloadCRC32C)
+	}
+}
+
+func TestSetModTimeFooterFallback(t *testing.T) {
+	ctx := context.Background()
+	raw := make([]fs.Fs, 4)
+	for i := range raw {
+		b, err := cache.Get(ctx, ":memory:rs-mtime-fb-"+time.Now().Format("150405")+"-"+string(rune('a'+i)))
+		require.NoError(t, err)
+		raw[i] = b
+	}
+	backends := make([]fs.Fs, 4)
+	for i := range backends {
+		backends[i] = noModTimeFs{Fs: raw[i]}
+	}
+	f := &Fs{
+		name:     "rs",
+		root:     "",
+		backends: backends,
+		opt: Options{
+			DataShards:         2,
+			ParityShards:       2,
+			Rollback:           true,
+			UseSpooling:        true,
+		},
+		features: (&fs.Features{}),
+	}
+
+	data := bytes.Repeat([]byte("mtime-fb"), 200)
+	old := time.Unix(1700005000, 0)
+	srcInfo := object.NewStaticObjectInfo("mt-fb.bin", old, int64(len(data)), true, nil, nil)
+	writers := make([]*bytes.Buffer, 4)
+	ios := make([]io.Writer, 4)
+	for i := range writers {
+		writers[i] = &bytes.Buffer{}
+		ios[i] = writers[i]
+	}
+	_, err := BuildRSShardsToWriters(ctx, bytes.NewReader(data), srcInfo, 2, 2, 0, ios, true)
+	require.NoError(t, err)
+
+	for i := range backends {
+		blob := writers[i].Bytes()
+		info := object.NewStaticObjectInfo("mt-fb.bin", old, int64(len(blob)), true, nil, nil)
+		_, err := raw[i].Put(ctx, bytes.NewReader(blob), info)
+		require.NoError(t, err)
+	}
+
+	obj, err := f.NewObject(ctx, "mt-fb.bin")
+	require.NoError(t, err)
+
+	newt := time.Unix(1800000000, 123456789)
+	require.NoError(t, obj.SetModTime(ctx, newt))
+	require.Equal(t, newt.Truncate(time.Second), obj.ModTime(ctx))
+
+	for i := range backends {
+		sobj, err := raw[i].NewObject(ctx, "mt-fb.bin")
+		require.NoError(t, err)
+		rawBlob, err := sobj.Open(ctx)
+		require.NoError(t, err)
+		all, err := io.ReadAll(rawBlob)
+		_ = rawBlob.Close()
+		require.NoError(t, err)
+		ft, err := ParseFooter(all[len(all)-FooterSize:])
+		require.NoError(t, err)
+		require.Equal(t, newt.UnixNano(), ft.Mtime)
+	}
+}
+
+func TestHealUsesReferenceShardModTime(t *testing.T) {
+	ctx := context.Background()
+	backends := makeMemoryBackends(t, 4, "rs-heal-mtime")
+	f := &Fs{
+		name:     "rs",
+		root:     "",
+		backends: backends,
+		opt: Options{
+			DataShards:   2,
+			ParityShards: 2,
+			UseSpooling:  true,
+		},
+		features: (&fs.Features{}),
+	}
+	remote := "heal-mtime.bin"
+	data := bytes.Repeat([]byte("heal-mtime"), 120)
+	writeObjectShardsForTest(ctx, t, backends, remote, data)
+
+	obj, err := f.NewObject(ctx, remote)
+	require.NoError(t, err)
+	oldFooterMtime := make([]int64, 4)
+	for i := range backends {
+		sobj, err := backends[i].NewObject(ctx, remote)
+		require.NoError(t, err)
+		raw, err := sobj.Open(ctx)
+		require.NoError(t, err)
+		all, err := io.ReadAll(raw)
+		_ = raw.Close()
+		require.NoError(t, err)
+		ft, err := ParseFooter(all[len(all)-FooterSize:])
+		require.NoError(t, err)
+		oldFooterMtime[i] = ft.Mtime
+	}
+	newt := time.Unix(1900000000, 0)
+	require.NoError(t, obj.SetModTime(ctx, newt))
+
+	missingObj, err := backends[2].NewObject(ctx, remote)
+	require.NoError(t, err)
+	require.NoError(t, missingObj.Remove(ctx))
+
+	outAny, err := f.healCommand(ctx, []string{remote}, nil)
+	require.NoError(t, err)
+	require.Contains(t, outAny.(string), "restored 1 shard(s)")
+
+	healed, err := backends[2].NewObject(ctx, remote)
+	require.NoError(t, err)
+	require.Equal(t, newt.Truncate(time.Second), healed.ModTime(ctx))
+	raw, err := healed.Open(ctx)
+	require.NoError(t, err)
+	all, err := io.ReadAll(raw)
+	_ = raw.Close()
+	require.NoError(t, err)
+	ft, err := ParseFooter(all[len(all)-FooterSize:])
+	require.NoError(t, err)
+	require.Equal(t, newt.UnixNano(), ft.Mtime)
+	require.NotEqual(t, oldFooterMtime[2], ft.Mtime)
+	for i := range backends {
+		if i == 2 {
+			continue
+		}
+		sobj, err := backends[i].NewObject(ctx, remote)
+		require.NoError(t, err)
+		sraw, err := sobj.Open(ctx)
+		require.NoError(t, err)
+		sall, err := io.ReadAll(sraw)
+		_ = sraw.Close()
+		require.NoError(t, err)
+		sft, err := ParseFooter(sall[len(sall)-FooterSize:])
+		require.NoError(t, err)
+		require.Equal(t, oldFooterMtime[i], sft.Mtime, "unchanged shard %d footer still has encode-time mtime", i)
 	}
 }
 
@@ -1585,12 +1736,64 @@ func TestCopyMoveServerSide(t *testing.T) {
 	copied, err := f.Copy(ctx, srcObj, "copy.bin")
 	require.NoError(t, err)
 	require.Equal(t, "copy.bin", copied.Remote())
+	copiedObj, ok := copied.(*Object)
+	require.True(t, ok)
+	require.Nil(t, copiedObj.footer, "Copy should return provisional object without footer read")
+	require.Equal(t, int64(len(data)), copiedObj.Size())
+	require.Equal(t, info.ModTime(ctx).Truncate(time.Second), copiedObj.ModTime(ctx))
 
 	moved, err := f.Move(ctx, srcObj, "moved.bin")
 	require.NoError(t, err)
 	require.Equal(t, "moved.bin", moved.Remote())
+	movedObj, ok := moved.(*Object)
+	require.True(t, ok)
+	require.Nil(t, movedObj.footer, "Move should return provisional object without footer read")
+	require.Equal(t, int64(len(data)), movedObj.Size())
+	require.Equal(t, info.ModTime(ctx).Truncate(time.Second), movedObj.ModTime(ctx))
 	_, err = f.NewObject(ctx, "src.bin")
 	require.Error(t, err)
+}
+
+func TestCopyMoveReturnsProvisionalObjectAfterSetModTime(t *testing.T) {
+	ctx := context.Background()
+	backends := makeMemoryBackends(t, 4, "rs-copy-prov")
+	f := &Fs{
+		name:     "rs",
+		root:     "",
+		backends: backends,
+		opt: Options{
+			DataShards:         2,
+			ParityShards:       2,
+			WriteQuorum:        3,
+			UseSpooling:        true,
+			Rollback:           true,
+			StripeFragmentSize: 64,
+		},
+		features: (&fs.Features{}),
+	}
+	data := []byte("copy-provisional-metadata")
+	old := time.Unix(1700004000, 0)
+	info := object.NewStaticObjectInfo("src.bin", old, int64(len(data)), true, nil, nil)
+	_, err := f.Put(ctx, bytes.NewReader(data), info)
+	require.NoError(t, err)
+	srcObj, err := f.NewObject(ctx, "src.bin")
+	require.NoError(t, err)
+	newt := time.Unix(1900000000, 0)
+	require.NoError(t, srcObj.SetModTime(ctx, newt))
+
+	copied, err := f.Copy(ctx, srcObj, "copy.bin")
+	require.NoError(t, err)
+	copiedObj := copied.(*Object)
+	require.Nil(t, copiedObj.footer)
+	require.Equal(t, newt.Truncate(time.Second), copiedObj.ModTime(ctx))
+	require.Equal(t, int64(len(data)), copiedObj.Size())
+
+	rc, err := copiedObj.Open(ctx)
+	require.NoError(t, err)
+	got, err := io.ReadAll(rc)
+	require.NoError(t, err)
+	require.NoError(t, rc.Close())
+	require.Equal(t, data, got)
 }
 
 func TestCopyOverOrphanDestinationParticles(t *testing.T) {
@@ -1791,7 +1994,7 @@ func TestSetModTimeQuorumRollbackOnFailure(t *testing.T) {
 	err = obj.SetModTime(ctx, newt)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "setmodtime quorum not met")
-	require.Equal(t, old.UnixNano(), obj.ModTime(ctx).UnixNano())
+	require.Equal(t, old.Truncate(time.Second), obj.ModTime(ctx))
 }
 
 func TestDirMoveQuorumPreflightInsufficientReachable(t *testing.T) {

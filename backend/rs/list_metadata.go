@@ -28,12 +28,13 @@ func newMergedEntryVotes(n int) *mergedEntryVotes {
 }
 
 type listObjectMeta struct {
-	lowestShard    int
-	hasListSize    bool
-	listSize       int64
-	hasListModTime bool
-	listModTime    time.Time
-	needFooter     bool
+	lowestShard          int
+	hasListSize          bool
+	listSize             int64
+	hasListModTime       bool
+	listModTime          time.Time
+	needFooterForSize    bool
+	needFooterForModTime bool
 }
 
 func (f *Fs) recordShardFileEntry(ctx context.Context, v *mergedEntryVotes, shard int, obj fs.Object) {
@@ -63,6 +64,47 @@ func resolveListSize(k int, shardFile []bool, shardSize []int64) (int64, bool) {
 		dataSizes[i] = shardSize[i]
 	}
 	return ContentLengthFromDataShardPayloads(dataSizes, k)
+}
+
+// resolveHealReferenceModTime picks ModTime from surviving shard remotes (lowest index);
+// footer Mtime on a present shard is used only when backends do not expose ModTime.
+func (f *Fs) resolveHealReferenceModTime(ctx context.Context, remote string, missing []bool) (time.Time, error) {
+	n := len(missing)
+	shardFile := make([]bool, n)
+	shardHasModTime := make([]bool, n)
+	shardModTime := make([]time.Time, n)
+	for i := 0; i < n; i++ {
+		if missing[i] {
+			continue
+		}
+		obj, err := f.backends[i].NewObject(ctx, remote)
+		if err != nil {
+			continue
+		}
+		shardFile[i] = true
+		if f.shardUsesRemoteSetModTime(i) {
+			shardHasModTime[i] = true
+			shardModTime[i] = obj.ModTime(ctx).Truncate(time.Second)
+		}
+	}
+	if mt, ok := resolveListModTime(f, "", remote, shardFile, shardHasModTime, shardModTime); ok {
+		return mt, nil
+	}
+	for i := 0; i < n; i++ {
+		if missing[i] {
+			continue
+		}
+		obj, err := f.backends[i].NewObject(ctx, remote)
+		if err != nil {
+			continue
+		}
+		ft, err := readFooterFromParticle(ctx, obj)
+		if err != nil {
+			continue
+		}
+		return time.Unix(0, ft.Mtime).Truncate(time.Second), nil
+	}
+	return time.Time{}, fmt.Errorf("rs: no reference mtime for %q", remote)
 }
 
 func resolveListModTime(f *Fs, dir, remote string, shardFile, shardHasModTime []bool, shardModTime []time.Time) (time.Time, bool) {
@@ -99,32 +141,27 @@ func (f *Fs) buildListObjectMeta(ctx context.Context, dir, remote string, v *mer
 		meta.hasListSize = true
 		meta.listSize = size
 	} else {
-		meta.needFooter = true
+		meta.needFooterForSize = true
 	}
 	if mt, ok := resolveListModTime(f, dir, remote, v.shardFile, v.shardHasModTime, v.shardModTime); ok {
 		meta.hasListModTime = true
 		meta.listModTime = mt
 	} else {
-		meta.needFooter = true
+		meta.needFooterForModTime = true
 	}
 	_ = ctx
 	return meta, nil
 }
 
 func (f *Fs) newObjectFromListMetadata(ctx context.Context, remote string, meta listObjectMeta) (*Object, error) {
-	o := &Object{
-		fs:           f,
-		remote:       remote,
-		primaryIndex: meta.lowestShard,
-		hasListSize:  meta.hasListSize,
-		listSize:     meta.listSize,
+	_ = ctx
+	return &Object{
+		fs:             f,
+		remote:         remote,
+		primaryIndex:   meta.lowestShard,
+		hasListSize:    meta.hasListSize,
+		listSize:       meta.listSize,
 		hasListModTime: meta.hasListModTime,
-		listModTime:  meta.listModTime,
-	}
-	if meta.needFooter {
-		if err := o.ensureFooter(ctx); err != nil {
-			return nil, err
-		}
-	}
-	return o, nil
+		listModTime:    meta.listModTime,
+	}, nil
 }

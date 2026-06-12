@@ -116,15 +116,17 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	return out, nil
 }
 
-// NewObject returns the logical object if any shard has a valid particle for remote.
-// When multiple shards are valid, the lowest shard index wins (same as sequential probe).
+// NewObject returns the logical object if any shard has a particle for remote.
+// Uses shard sizes and ModTimes when sufficient; reads one footer only as fallback.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	n := len(f.backends)
-	type shardRes struct {
-		footer *Footer
-		ok     bool
+	type shardHit struct {
+		ok   bool
+		size int64
+		hasMT bool
+		mt   time.Time
 	}
-	out := make([]shardRes, n)
+	hits := make([]shardHit, n)
 	g, gctx := errgroup.WithContext(ctx)
 	for i := range f.backends {
 		i := i
@@ -133,22 +135,74 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 			if err != nil {
 				return nil
 			}
-			ft, err := readFooterFromParticle(gctx, obj)
-			if err != nil {
-				return nil
+			hits[i].ok = true
+			hits[i].size = obj.Size()
+			if f.backends[i].Precision() != fs.ModTimeNotSupported {
+				hits[i].hasMT = true
+				hits[i].mt = obj.ModTime(gctx).Truncate(time.Second)
 			}
-			out[i].footer = ft
-			out[i].ok = true
 			return nil
 		})
 	}
 	if err := g.Wait(); err != nil {
 		return nil, err
 	}
-	for i := 0; i < n; i++ {
-		if out[i].ok {
-			return &Object{fs: f, remote: remote, footer: out[i].footer, primaryIndex: i}, nil
+
+	shardFile := make([]bool, n)
+	shardSize := make([]int64, n)
+	shardHasModTime := make([]bool, n)
+	shardModTime := make([]time.Time, n)
+	for i := range hits {
+		if hits[i].ok {
+			shardFile[i] = true
+			shardSize[i] = hits[i].size
+			shardHasModTime[i] = hits[i].hasMT
+			shardModTime[i] = hits[i].mt
 		}
+	}
+
+	lowest := lowestListingShard(shardFile)
+	if lowest < 0 {
+		return nil, fs.ErrorObjectNotFound
+	}
+
+	k := f.opt.DataShards
+	listSize, hasListSize := resolveListSize(k, shardFile, shardSize)
+	listModTime, hasListModTime := resolveListModTime(f, "", remote, shardFile, shardHasModTime, shardModTime)
+
+	o := &Object{
+		fs:             f,
+		remote:         remote,
+		primaryIndex:   lowest,
+		hasListSize:    hasListSize,
+		listSize:       listSize,
+		hasListModTime: hasListModTime,
+		listModTime:    listModTime,
+	}
+
+	if hasListSize && hasListModTime {
+		return o, nil
+	}
+
+	for i := 0; i < n; i++ {
+		if !hits[i].ok || hits[i].size < int64(FooterSize) {
+			continue
+		}
+		obj, err := f.backends[i].NewObject(ctx, remote)
+		if err != nil {
+			continue
+		}
+		ft, err := readFooterFromParticle(ctx, obj)
+		if err != nil {
+			continue
+		}
+		o.primaryIndex = i
+		o.footer = ft
+		return o, nil
+	}
+
+	if hasListSize {
+		return o, nil
 	}
 	return nil, fs.ErrorObjectNotFound
 }
