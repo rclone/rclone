@@ -462,7 +462,7 @@ func (f *Fs) rebuildMissingShardsLegacyBuffered(ctx context.Context, remote stri
 	if dryRun {
 		return len(missingIdx), nil
 	}
-	return f.putHealedMissingShards(ctx, remote, k, m, metaFooter, missingIdx, reconstructed)
+	return f.putHealedMissingShards(ctx, remote, k, m, metaFooter, missing, missingIdx, reconstructed)
 }
 
 // rebuildMissingShardsStripeWise reconstructs only missing shard payloads using per-stripe range reads.
@@ -527,7 +527,7 @@ func (f *Fs) rebuildMissingShardsStripeWise(ctx context.Context, remote string, 
 		}
 	}
 
-	return f.putHealedMissingShards(ctx, remote, k, m, metaFooter, missingIdx, out)
+	return f.putHealedMissingShards(ctx, remote, k, m, metaFooter, missing, missingIdx, out)
 }
 
 // healStripeDryRunProbe runs a single-stripe reconstruct to verify heal would succeed without allocating full outputs.
@@ -557,8 +557,11 @@ type healPutJob struct {
 	info fs.ObjectInfo
 }
 
-func (f *Fs) putHealedMissingShards(ctx context.Context, remote string, k, m int, metaFooter *Footer, missingIdx []int, reconstructed [][]byte) (int, error) {
-	mtime := time.Unix(0, metaFooter.Mtime).Truncate(time.Second)
+func (f *Fs) putHealedMissingShards(ctx context.Context, remote string, k, m int, metaFooter *Footer, missing []bool, missingIdx []int, reconstructed [][]byte) (int, error) {
+	mtime, err := f.resolveHealReferenceModTime(ctx, remote, missing)
+	if err != nil {
+		mtime = time.Unix(0, metaFooter.Mtime).Truncate(time.Second)
+	}
 	jobs := make([]healPutJob, 0, len(missingIdx))
 	for _, idx := range missingIdx {
 		payload := reconstructed[idx]

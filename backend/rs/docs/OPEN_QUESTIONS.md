@@ -1,6 +1,6 @@
 # Open Questions — rs Backend
 
-This document tracks design gaps, limitations, and follow-up work for the Reed-Solomon (`rs`) virtual backend. When a topic is resolved, note the decision here or in code. **Last reviewed**: 2026-06-11 (quorum transactions spec; listing, virtual padding). User-facing overview: [`README.md`](../README.md). Normative write/namespace policy: [`QUORUM_TRANSACTIONS.md`](QUORUM_TRANSACTIONS.md).
+This document tracks design gaps, limitations, and follow-up work for the Reed-Solomon (`rs`) virtual backend. When a topic is resolved, note the decision here or in code. **Last reviewed**: 2026-06-10 (metadata authority, SetModTime hybrid, lazy list/NewObject). User-facing overview: [`README.md`](../README.md). Normative metadata policy: [`LIST_METADATA.md`](LIST_METADATA.md). Normative write/namespace policy: [`QUORUM_TRANSACTIONS.md`](QUORUM_TRANSACTIONS.md).
 
 ---
 
@@ -55,36 +55,24 @@ This document tracks design gaps, limitations, and follow-up work for the Reed-S
 
 ### Q6: `SetModTime` when shards are missing or backends disagree
 
-**Status**: Partially addressed — quorum updates implemented, semantics still evolving  
-**Notes**: `SetModTime` now succeeds at quorum with retries/logging, but cross-shard metadata convergence guarantees (and interaction with `heal`) still need explicit policy and docs.
+**Status**: Addressed — policy documented  
+**Notes**: [`SetModTime`](../object.go) commits at **`write_quorum`** with per-shard strategy: shard `Object.SetModTime` (1s) on ModTime-capable backends; [`updateShardFooterMtime`](../object.go) only on `ModTimeNotSupported` shards. Rollback restores prior remote or footer mtime per shard. Logical **`ModTime()`** reads shard remotes when supported (footer not authoritative on those backends). **Heal** converges rebuilt shards to [`resolveHealReferenceModTime`](../list_metadata.go) from surviving remotes. Laggards after quorum success still need **`backend heal`**. Normative detail: [`LIST_METADATA.md`](LIST_METADATA.md), [`QUORUM_TRANSACTIONS.md`](QUORUM_TRANSACTIONS.md).
 
 ### Q7: `SetModTime` / `updateShardFooterMtime` — avoid loading full shard payload into memory
 
-**Status**: Active — future optimization  
-**Notes**: Today [`updateShardFooterMtime`](../object.go) range-opens the payload then **`ReadAll`s it into a `[]byte`** before `MultiReader` + `Object.Update`, so large shard payloads use **O(payload)** RAM in the rclone process per shard update.
+**Status**: Active — footer-fallback optimization only  
+**Notes**: Primary `SetModTime` path uses shard `Object.SetModTime` (no payload I/O). The **footer fallback** for `ModTimeNotSupported` backends still [`ReadAll`s](../object.go) the payload before `Object.Update` — **O(payload)** RAM per affected shard.
 
-**Possible directions** (may combine with Q6 docs once designed):
+**Possible directions** (footer fallback only):
 
-- **Stream the payload**: pipe `Open(RangeOption{… payload only})` through to `Update` without materializing the full payload in one buffer (still one logical `Update` per shard if the backend accepts streaming `Put`/`Update`).
-- **Rename + server-side range copy + footer** (where the wrapped `Fs` supports it): e.g. rename original → temp, server-side copy payload bytes into a new object under the original name, append or write new footer — avoids client-side download of the payload on rich remotes (S3-style multipart copy, etc.).
-- **Portable fallback**: keep or simplify the current path when optional interfaces / `Features` do not expose server-side copy or atomic rename semantics.
-
-**Blockers**: `rs` only sees generic `fs.Fs` / `fs.Object`; not every backend offers server-side byte-range copy or append; any fast path needs **capability checks** and a **safe fallback**.
+- **Stream the payload**: pipe range-opened payload through to `Update` without `ReadAll`.
+- **Server-side range copy + footer** where the wrapped `Fs` supports it.
+- **Portable fallback**: keep current path when capabilities are missing.
 
 ### Q17: `SetModTime` — shard remote mtime only vs footer rewrite
 
-**Status**: Active — design alternative to current path and [`QUORUM_TRANSACTIONS.md`](QUORUM_TRANSACTIONS.md) SetModTime table  
-**Notes**: Today [`SetModTime`](../object.go) / [`updateShardFooterMtime`](../object.go) updates **`Mtime` in the RS footer** on each shard, which requires reading the payload (often full `ReadAll`) and **`Object.Update`** / re-`Put` of the whole particle per shard (see Q7).
-
-**Proposal under consideration:** update only the **backing remote’s object ModTime** (via `Object.SetModTime` where supported) and **leave the footer `Mtime` unchanged**, to avoid read–update–put of every shard file on each metadata touch.
-
-**Trade-offs to decide:**
-
-- **Pros:** much cheaper on large particles and S3; no O(payload) client transfer per shard.
-- **Cons:** logical `ModTime()` / `Open` / `Hash` / heal use **footer ns mtime** as authoritative today; list fast path can use shard list times at 1s—**footer vs remote mtime skew** if only remotes are updated.
-- **Policy:** if adopted, need rules for which source wins on read, whether `heal` rewrites footers to match remotes (or the reverse), and interaction with [`QUORUM_TRANSACTIONS.md`](QUORUM_TRANSACTIONS.md) rollback/heal for `SetModTime`.
-
-Related: Q6 (quorum semantics), Q7 (footer rewrite cost).
+**Status**: Resolved — hybrid policy implemented  
+**Decision**: ModTime-capable shards use **remote `SetModTime` only** (footer `Mtime` may lag). `ModTimeNotSupported` shards use **footer rewrite**. Read/list authority: shard remote wins over footer when supported; heal writes matching remote + footer on rebuilt particles. See [`LIST_METADATA.md`](LIST_METADATA.md) and [`QUORUM_TRANSACTIONS.md`](QUORUM_TRANSACTIONS.md) SetModTime table. Remaining cost: footer fallback path (Q7).
 
 ### Q8: Parallel `Write`s to shard writers after each RS stripe (`encode.go`)
 
@@ -124,6 +112,7 @@ Related: Q6 (quorum semantics), Q7 (footer rewrite cost).
 - **`quorum_dirs` / `lsd`**: After `mkdir` of a new empty directory, `lsd` on the `rs` remote did not list that directory on MinIO; the test treats this as **accepted** today. Follow up: quorum listing vs. S3 empty-prefix / eventual visibility, or tighten the test if this is a bug.
 - **`moveto`**: On MinIO, the **source object can still be readable** after a successful `moveto` under current quorum semantics; the test logs this as **accepted**. Follow up: document expected client-visible semantics or align shards so post-move source reads fail consistently.
 - **`DirMove`**: Phase 2 logs **`NOTICE`** lines such as `can't move directory - incompatible remotes` per shard while the overall `move_copy` test still **passes**. Follow up: whether `DirMove` should use a different strategy for S3 shard backends (server-side move limitations), reduce noisy notices, or document as expected.
+- **`Copy` / `Move` return metadata**: [`newObjectAfterCopyMove`](../object.go) returns provisional size/ModTime from the source object (no destination footer read). Correct when shard backends preserve ModTime on server-side copy/move (local, MinIO). If S3 copy does not preserve shard ModTime, returned ModTime may not match destination remotes until `Open`/`NewObject` refresh — acceptable for sync paths that re-probe; document or tighten if integration tests show drift.
 
 ---
 
@@ -137,4 +126,4 @@ Related: Q6 (quorum semantics), Q7 (footer rewrite cost).
 ### Q16: Hash / size surface vs. shard footers
 
 **Status**: Monitoring  
-**Notes**: Logical `Size()` and hashes come from the footer of a readable shard. If footers diverge across shards (corruption or buggy partial writes), behavior may be undefined; may warrant explicit cross-shard footer checks in `NewObject` or `status`.
+**Notes**: Logical `Size()` prefers k data-shard remote sizes; footer `ContentLength` is fallback. **`Hash`** still requires a footer. Footer vs remote mtime skew after cheap `SetModTime` is benign for `ModTime()` on capable backends; heal converges missing shards. Cross-shard footer divergence (corruption) may still be undefined; may warrant explicit checks in `NewObject` or `status`.

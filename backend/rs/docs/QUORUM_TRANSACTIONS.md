@@ -177,7 +177,10 @@ Columns: **Preflight** → **Execute (op set)** → **Commit** → **Rollback** 
 | Execute | Per-shard `Copy` / `Move` on all k+m shards |
 | Commit | `successes >= write_quorum` |
 | Rollback | `Remove` dst on copy successes; inverse move (or copy-back+remove dst) on move successes (**implemented**) |
+| Return | Provisional `*Object` with source logical size/ModTime metadata — no destination footer read ([`newObjectAfterCopyMove`](../object.go)) |
 | Heal | Particle + path skew via object heal |
+
+On ModTime-capable shard backends (local, MinIO), server-side copy/move preserves shard ModTime; returned metadata matches destination shards. S3 may not preserve ModTime on copy — see [`OPEN_QUESTIONS.md`](OPEN_QUESTIONS.md) Q14.
 
 ### Remove (object)
 
@@ -193,13 +196,13 @@ Columns: **Preflight** → **Execute (op set)** → **Commit** → **Rollback** 
 
 | Phase | Spec |
 |-------|------|
-| Preflight | Footer loadable at k (or write_quorum reachable) |
-| Execute | Footer mtime update on all shards with object (**current implementation**; see Q17) |
-| Commit | `successes >= write_quorum` |
-| Rollback | Restore prior footer mtime on successes (**implemented**) |
-| Heal | Converge footer mtime on laggards |
+| Preflight | `reachable >= write_quorum` |
+| Execute | Per shard with object: `Object.SetModTime` (1s) when backend exposes ModTime; else footer `Mtime` rewrite via `updateShardFooterMtime` (fallback) |
+| Commit | `successes >= write_quorum`; update in-memory `listModTime` on logical object |
+| Rollback | Inverse per shard: prior remote ModTime or prior footer `Mtime` (**implemented**) |
+| Heal | Converge remote ModTime and/or footer mtime on laggards (see Phase 5 heal policy) |
 
-**Open (Q17):** alternative policy—update **backing remote ModTime only** (no footer rewrite) to avoid read/update/put of full shard particles; requires a decision on authoritative mtime for read/list/heal. See [`OPEN_QUESTIONS.md`](OPEN_QUESTIONS.md) Q17.
+Logical `ModTime()` reads shard remote ModTime when backends support it; footer `Mtime` is authoritative only on `ModTimeNotSupported` backends. See [`LIST_METADATA.md`](LIST_METADATA.md) and [`OPEN_QUESTIONS.md`](OPEN_QUESTIONS.md) Q17.
 
 ---
 

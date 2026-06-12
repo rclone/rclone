@@ -138,7 +138,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, err
 	}
-	return f.NewObject(ctx, remote)
+	return f.newObjectAfterCopyMove(ctx, remote, srcObj), nil
 }
 
 // Move src to this remote using shard-aligned server-side operations where possible.
@@ -174,7 +174,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, err
 	}
-	return f.NewObject(ctx, remote)
+	return f.newObjectAfterCopyMove(ctx, remote, srcObj), nil
 }
 
 // DirMove moves srcRemote from src to dstRemote with shard-aligned server-side operations.
