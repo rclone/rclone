@@ -11,7 +11,7 @@ This backend implements a virtual Reed-Solomon layout over multiple remotes.
   - **Virtual padding** on disk: trimmed data-shard payloads per stripe; parity shards full `S` bytes per stripe ([`payloadlayout.go`](payloadlayout.go))
   - Upload path: `use_spooling=false` streams shards by default; unknown-size sources use spooling for that transfer
   - **List metadata fast path**: size/ModTime from shard `List` when possible; coalesced footer read on lowest listing shard ([`docs/LIST_METADATA.md`](docs/LIST_METADATA.md), [`list_metadata.go`](list_metadata.go))
-  - Quorum: **read/list at k**; **writes/metadata/namespace at `write_quorum`** (default `k+1`)
+  - Quorum: **read/list at k**; **writes/metadata/namespace at `write_quorum`** (default `k+1`); transaction spec [`docs/QUORUM_TRANSACTIONS.md`](docs/QUORUM_TRANSACTIONS.md)
   - Two-phase operation retries (full pass + one fast retry for failing shards)
   - Read/reconstruct path from available shards
   - `status`, `heal`, and `degraded` backend command plumbing

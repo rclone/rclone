@@ -88,7 +88,7 @@ func testInternalDegraded(t *testing.T, f *Fs) {
 
 	out, err := f.Command(ctx, "degraded", []string{"summary"}, nil)
 	require.NoError(t, err)
-	require.Contains(t, out.(string), "Degraded: 1")
+	require.Contains(t, out.(string), "Degraded objects: 1")
 
 	out, err = f.Command(ctx, "degraded", []string{"ls"}, nil)
 	require.NoError(t, err)
