@@ -76,7 +76,11 @@ for data to be reconstructable.
 - **Degraded / healthy:** `backend degraded` treats objects with **`present_shards >= k`**
   as healthy for inspection.
 - Operations run in two phases: a full parallel pass, then one bounded retry
-  pass for remaining failing shards. Partial failures are logged.
+  pass for remaining failing shards. The backend attempts **every** shard in the
+  op set (no early exit when `write_quorum` is reached); **commit** is when
+  `successes >= write_quorum` after all attempts finish. Partial failures are
+  logged; minority laggards are converged by **`backend heal`** (async). See
+  **`backend/rs/docs/QUORUM_TRANSACTIONS.md`** for the full write/namespace policy.
 
 ## File formats
 
@@ -601,7 +605,7 @@ Range reads are supported on logical objects: `Object.Open` honors `fs.RangeOpti
 
 ## Known limitations (short)
 
-- **`Copy` / `Move` / `DirMove`** on `rs` only use fast server-side paths when the source is an **`rs` object** on an **`rs` remote with the same k/m and shard count** as the destination; otherwise rclone uses ordinary transfers (or returns “can’t copy/move”). Partial failures do not currently run **`Put`-style rollback** on shards that already succeeded—use **`degraded`** / **`heal`** if needed.
+- **`Copy` / `Move` / `DirMove`** on `rs` only use fast server-side paths when the source is an **`rs` object** on an **`rs` remote with the same k/m and shard count** as the destination; otherwise rclone uses ordinary transfers (or returns “can’t copy/move”). Failed server-side copy/move runs compensating rollback when **`rollback`** is enabled (like `Put`). **`Remove`** cannot restore deleted shard bytes after a partial delete—use **`degraded`** / **`heal`** if needed.
 - Large namespaces: full **`heal`** without a path may be heavy.
 - Some server-side operations can expose eventual-consistency effects under degraded shards (documented above).
 

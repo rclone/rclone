@@ -300,38 +300,8 @@ func (f *Fs) readQuorum() int {
 }
 
 func (f *Fs) checkWriteQuorumAvailable(ctx context.Context) error {
-	g, gctx := errgroup.WithContext(ctx)
-	okCh := make(chan bool, len(f.backends))
-	for _, b := range f.backends {
-		b := b
-		g.Go(func() error {
-			_, err := b.List(gctx, "")
-			if err != nil {
-				if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-					return err
-				}
-				okCh <- errors.Is(err, fs.ErrorDirNotFound)
-				return nil
-			}
-			okCh <- true
-			return nil
-		})
-	}
-	if err := g.Wait(); err != nil {
-		close(okCh)
-		return err
-	}
-	close(okCh)
-	available := 0
-	for ok := range okCh {
-		if ok {
-			available++
-		}
-	}
-	if available < f.writeQuorum() {
-		return fmt.Errorf("rs: insufficient writable remotes for quorum: available=%d required=%d", available, f.writeQuorum())
-	}
-	return nil
+	_, err := f.preflightReachableShards(ctx)
+	return err
 }
 
 func (f *Fs) rollbackPut(ctx context.Context, uploaded []uploadedShard) error {

@@ -659,7 +659,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 }
 
 // Remove deletes the object from quorum shards in two phases.
+// Delete is irreversible once a shard Remove succeeds; no compensating rollback.
+// See backend/rs/docs/QUORUM_TRANSACTIONS.md (Remove).
 func (o *Object) Remove(ctx context.Context) error {
+	if _, err := o.fs.preflightReachableShards(ctx); err != nil {
+		return err
+	}
 	targets := make([]int, 0, len(o.fs.backends))
 	for i, b := range o.fs.backends {
 		obj, err := b.NewObject(ctx, o.remote)
@@ -672,33 +677,44 @@ func (o *Object) Remove(ctx context.Context) error {
 	if len(targets) == 0 {
 		return fs.ErrorObjectNotFound
 	}
-	result := o.fs.runTwoPhaseQuorumOp(ctx, "remove", o.remote, targets, func(opCtx context.Context, shard int) error {
-		obj, err := o.fs.backends[shard].NewObject(opCtx, o.remote)
-		if err != nil {
-			return nil
-		}
-		return obj.Remove(opCtx)
+	return o.fs.runQuorumTransaction(ctx, quorumTransaction{
+		OpName:        "remove",
+		Remote:        o.remote,
+		Shards:        targets,
+		SkipPreflight: true,
+		Forward: func(opCtx context.Context, shard int) error {
+			obj, err := o.fs.backends[shard].NewObject(opCtx, o.remote)
+			if err != nil {
+				return nil
+			}
+			return obj.Remove(opCtx)
+		},
 	})
-	if result.Successes < o.fs.writeQuorum() {
-		return fmt.Errorf("rs: remove quorum not met for %q: successes=%d required=%d", o.remote, result.Successes, o.fs.writeQuorum())
-	}
-	return nil
 }
 
 // SetModTime updates EC footer mtimes with quorum semantics.
+// See backend/rs/docs/QUORUM_TRANSACTIONS.md (SetModTime).
 func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	if err := o.ensureFooter(ctx); err != nil {
 		return err
 	}
-	targets := make([]int, 0, len(o.fs.backends))
-	for i := range o.fs.backends {
-		targets = append(targets, i)
+	if _, err := o.fs.preflightReachableShards(ctx); err != nil {
+		return err
 	}
-	result := o.fs.runTwoPhaseQuorumOp(ctx, "setmodtime", o.remote, targets, func(opCtx context.Context, shard int) error {
-		return o.updateShardFooterMtime(opCtx, o.fs.backends[shard], shard, t)
+	priorMtime := time.Unix(0, o.footer.Mtime)
+	err := o.fs.runQuorumTransaction(ctx, quorumTransaction{
+		OpName:        "setmodtime",
+		Remote:        o.remote,
+		SkipPreflight: true,
+		Forward: func(opCtx context.Context, shard int) error {
+			return o.updateShardFooterMtime(opCtx, o.fs.backends[shard], shard, t)
+		},
+		Rollback: func(opCtx context.Context, shard int) error {
+			return o.updateShardFooterMtime(opCtx, o.fs.backends[shard], shard, priorMtime)
+		},
 	})
-	if result.Successes < o.fs.writeQuorum() {
-		return fmt.Errorf("rs: setmodtime quorum not met for %q: successes=%d required=%d", o.remote, result.Successes, o.fs.writeQuorum())
+	if err != nil {
+		return err
 	}
 	o.footer.Mtime = t.UnixNano()
 	return nil

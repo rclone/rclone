@@ -47,14 +47,26 @@ func (f *Fs) healCommand(ctx context.Context, arg []string, opt map[string]strin
 	// argument, repair only that object (no full-namespace scan).
 	if len(arg) > 0 && strings.TrimSpace(arg[0]) != "" {
 		remote := strings.TrimSpace(arg[0])
+		var sb strings.Builder
 		missing, err := f.rebuildMissingShardsForObject(ctx, remote, dryRun)
 		if err != nil {
 			return nil, err
 		}
 		if dryRun {
-			return fmt.Sprintf("RS heal dry-run for %s: would restore %d shard(s)", remote, missing), nil
+			sb.WriteString(fmt.Sprintf("RS heal dry-run for %s: would restore %d shard(s)\n", remote, missing))
+		} else {
+			sb.WriteString(fmt.Sprintf("RS heal completed for %s: restored %d shard(s)\n", remote, missing))
 		}
-		return fmt.Sprintf("RS heal completed for %s: restored %d shard(s)", remote, missing), nil
+		nsStats, nsDetails, err := f.healNamespace(ctx, remote, dryRun)
+		if err != nil {
+			return nil, err
+		}
+		sb.WriteString(formatNamespaceHealSummary(nsStats, dryRun))
+		if nsDetails != "" {
+			sb.WriteString("\nNamespace details:\n")
+			sb.WriteString(nsDetails)
+		}
+		return strings.TrimRight(sb.String(), "\n"), nil
 	}
 
 	remotes, err := f.listAllObjectRemotes(ctx)
@@ -108,7 +120,25 @@ func (f *Fs) healCommand(ctx context.Context, arg []string, opt map[string]strin
 			report += fmt.Sprintf("  - %s\n", r)
 		}
 	}
+	nsStats, nsDetails, err := f.healNamespace(ctx, "", dryRun)
+	if err != nil {
+		return nil, err
+	}
+	report += "\nNamespace convergence:\n"
+	report += formatNamespaceHealSummary(nsStats, dryRun)
+	if nsDetails != "" {
+		report += "\nNamespace details:\n" + nsDetails
+	}
 	return report, nil
+}
+
+func formatNamespaceHealSummary(stats namespaceHealStats, dryRun bool) string {
+	if dryRun {
+		return fmt.Sprintf("Orphans would purge: %d\nDirs would mkdir: %d\nDirs would rmdir: %d\nFailed: %d\n",
+			stats.orphansPurged, stats.mkdirs, stats.rmdirs, stats.failed)
+	}
+	return fmt.Sprintf("Orphans purged: %d\nDirs mkdir: %d\nDirs rmdir: %d\nFailed: %d\n",
+		stats.orphansPurged, stats.mkdirs, stats.rmdirs, stats.failed)
 }
 
 type degradedStats struct {
@@ -128,7 +158,7 @@ func (f *Fs) degradedCommand(ctx context.Context, arg []string, opt map[string]s
 	case "ls":
 		return f.degradedListObjects(ctx)
 	case "lsd":
-		return "RS degraded lsd: directory skew reporting is not implemented yet", nil
+		return f.degradedListDirectories(ctx)
 	default:
 		return nil, fmt.Errorf("rs: unknown degraded subcommand %q (supported: summary, ls, lsd)", sub)
 	}
@@ -140,7 +170,23 @@ func (f *Fs) degradedSummary(ctx context.Context) (any, error) {
 		return nil, err
 	}
 	_ = counts
-	return fmt.Sprintf("RS Degraded Summary\n========================================\nTotal objects: %d\nHealthy: %d\nDegraded: %d\nRead quorum (k): %d\nWrite quorum: %d of %d\n", stats.totalObjects, stats.healthyObjects, stats.degradedObjects, f.readQuorum(), f.writeQuorum(), len(f.backends)), nil
+	ns, err := f.collectNamespaceVotes(ctx)
+	if err != nil {
+		return nil, err
+	}
+	k := f.readQuorum()
+	total := len(f.backends)
+	var dirSkew, dirExtra int
+	for _, v := range ns.dirVotes {
+		switch classifyDirectory(v, k, total) {
+		case dirClassSkew:
+			dirSkew++
+		case dirClassExtra:
+			dirExtra++
+		}
+	}
+	return fmt.Sprintf("RS Degraded Summary\n========================================\nTotal objects: %d\nHealthy objects: %d\nDegraded objects: %d\nDirectory skew: %d\nExtra directories: %d\nRead quorum (k): %d\nWrite quorum: %d of %d\n",
+		stats.totalObjects, stats.healthyObjects, stats.degradedObjects, dirSkew, dirExtra, k, f.writeQuorum(), total), nil
 }
 
 func (f *Fs) degradedListObjects(ctx context.Context) (any, error) {

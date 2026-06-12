@@ -16,7 +16,6 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
-	"golang.org/x/sync/errgroup"
 )
 
 func init() {
@@ -78,8 +77,12 @@ var commandHelp = []fs.CommandHelp{{
 that is missing one or more shards but still has enough shards to reconstruct (>= data_shards),
 reconstructs missing shard payloads and uploads them.
 
-Without a path argument, all known objects are considered. With a path, only that logical
-object is repaired (single-object repair).
+After object repair, runs namespace convergence: purge orphan particles (fileVotes < k),
+remove extra directory markers (dirVotes < k), and mkdir missing markers where the logical
+directory exists (dirVotes >= k).
+
+Without a path argument, all known objects and namespace paths are considered. With a path,
+repairs that object (if present) and converges namespace under the path's directory scope.
 
 This is an explicit, admin-driven repair. It does not run automatically on read.
 
@@ -111,7 +114,7 @@ Objects with fewer than k good shards cannot be reconstructed and are reported a
 Subcommands:
     summary   Show aggregate counts of degraded objects
     ls        List degraded logical objects
-    lsd       List degraded directories (placeholder in current version)
+    lsd       List directory skew (SKEW: logical dir not on all shards; EXTRA: minority-only markers)
 
 Examples:
 
@@ -273,71 +276,54 @@ func (f *Fs) Precision() time.Duration { return time.Second }
 func (f *Fs) Hashes() hash.Set { return f.hashSet }
 
 // Mkdir creates the directory on shard backends and succeeds when quorum is reached.
+// See backend/rs/docs/QUORUM_TRANSACTIONS.md (Mkdir).
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	indexes := make([]int, len(f.backends))
-	for i := range f.backends {
-		indexes[i] = i
+	reachable, err := f.preflightReachableShards(ctx)
+	if err != nil {
+		return err
 	}
-	result := f.runTwoPhaseQuorumOp(ctx, "mkdir", dir, indexes, func(opCtx context.Context, shard int) error {
-		return f.backends[shard].Mkdir(opCtx, dir)
+	if err := f.mkdirPreflight(ctx, dir, reachable); err != nil {
+		return err
+	}
+	return f.runQuorumTransaction(ctx, quorumTransaction{
+		OpName:        "mkdir",
+		Remote:        dir,
+		SkipPreflight: true,
+		Forward: func(opCtx context.Context, shard int) error {
+			return f.backends[shard].Mkdir(opCtx, dir)
+		},
+		Rollback: func(opCtx context.Context, shard int) error {
+			return f.backends[shard].Rmdir(opCtx, dir)
+		},
 	})
-	if result.Successes < f.writeQuorum() {
-		return fmt.Errorf("rs: mkdir quorum not met for %q: successes=%d required=%d", dir, result.Successes, f.writeQuorum())
-	}
-	return nil
 }
 
 // Rmdir removes the directory with quorum semantics and strict empty-dir checks.
+// See backend/rs/docs/QUORUM_TRANSACTIONS.md (Rmdir).
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	n := len(f.backends)
-	type listDirRes struct {
-		entries fs.DirEntries
-		err     error
-	}
-	shardOut := make([]listDirRes, n)
-	g, gctx := errgroup.WithContext(ctx)
-	for i := range f.backends {
-		i := i
-		g.Go(func() error {
-			entries, err := f.backends[i].List(gctx, dir)
-			shardOut[i].entries = entries
-			shardOut[i].err = err
-			if err != nil && !errors.Is(err, fs.ErrorDirNotFound) {
-				return fmt.Errorf("rs: shard %d: failed to verify dir state for %q: %w", i, dir, err)
-			}
-			return nil
-		})
-	}
-	if err := g.Wait(); err != nil {
+	reachable, err := f.preflightReachableShards(ctx)
+	if err != nil {
 		return err
 	}
-	hadDir := make([]int, 0, n)
-	for i := 0; i < n; i++ {
-		entries, err := shardOut[i].entries, shardOut[i].err
-		if err != nil {
-			if errors.Is(err, fs.ErrorDirNotFound) {
-				continue
-			}
-			return err
-		}
-		if len(entries) > 0 {
-			return fmt.Errorf("rs: shard %d: %w for %q", i, fs.ErrorDirectoryNotEmpty, dir)
-		}
-		hadDir = append(hadDir, i)
+	hadDir, err := f.rmdirPreflightHadDir(ctx, dir, reachable)
+	if err != nil {
+		return err
 	}
 	if len(hadDir) == 0 {
 		return fs.ErrorDirNotFound
 	}
-	result := f.runTwoPhaseQuorumOp(ctx, "rmdir", dir, hadDir, func(opCtx context.Context, shard int) error {
-		return f.backends[shard].Rmdir(opCtx, dir)
+	return f.runQuorumTransaction(ctx, quorumTransaction{
+		OpName:        "rmdir",
+		Remote:        dir,
+		Shards:        hadDir,
+		SkipPreflight: true,
+		Forward: func(opCtx context.Context, shard int) error {
+			return f.backends[shard].Rmdir(opCtx, dir)
+		},
+		Rollback: func(opCtx context.Context, shard int) error {
+			return f.backends[shard].Mkdir(opCtx, dir)
+		},
 	})
-	if result.Successes < len(hadDir) {
-		return fmt.Errorf("rs: rmdir incomplete for %q: removed=%d expected=%d", dir, result.Successes, len(hadDir))
-	}
-	if len(hadDir) < f.writeQuorum() {
-		fs.Logf(f, "rs: rmdir %q succeeded on all existing shard directories (%d), but this is below quorum=%d; heal/degraded may still report namespace skew", dir, len(hadDir), f.writeQuorum())
-	}
-	return nil
 }
 
 const quorumRetryTimeout = 3 * time.Second
