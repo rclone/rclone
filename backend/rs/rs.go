@@ -204,11 +204,44 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		backends: backends,
 		hashSet:  hash.NewHashSet(hash.MD5, hash.SHA256),
 	}
-	f.features = (&fs.Features{}).Fill(ctx, f)
+	f.initFeatures(ctx)
 	if returnErrorIsFile {
 		return f, fs.ErrorIsFile
 	}
 	return f, nil
+}
+
+// initFeatures seeds eligible capability flags, intersects with every shard via Mask,
+// then applies rs-specific semantic overrides.
+func (f *Fs) initFeatures(ctx context.Context) {
+	f.features = (&fs.Features{
+		CanHaveEmptyDirectories: true, // seed; Mask ANDs down to the shard intersection
+	}).Fill(ctx, f)
+	for _, b := range f.backends {
+		f.features = f.features.Mask(ctx, b) // full intersection: keep a flag iff ALL shards have it
+	}
+	applyRsFeatureOverrides(f.features)
+}
+
+// applyRsFeatureOverrides clears flags whose semantics differ on the logical rs namespace.
+func applyRsFeatureOverrides(ft *fs.Features) {
+	// rs exposes a unified filesystem path space, not an object-store bucket API.
+	ft.BucketBased = false
+	ft.BucketBasedRootOK = false
+	// SlowHash: rclone treats Hash() as expensive when this is set (see fs/fingerprint.go).
+	// rs Object.Hash() reads MD5/SHA256 from the EC footer via ensureFooter() — one ranged
+	// read on a shard particle per object, not a zero-cost shard Object.Hash(). Set true
+	// here after Mask (not seeded): Mask ANDs with shard features and local shards report
+	// SlowHash=false, which would wrongly advertise fast hashing on --checksum sync.
+	ft.SlowHash = true
+	// Logical rs objects do not surface arbitrary backing-store object metadata.
+	ft.ReadMetadata = false
+	ft.WriteMetadata = false
+	// Storage tiers apply to shard particles only; logical rs paths have no tier API.
+	ft.SetTier = false
+	ft.GetTier = false
+	ft.DuplicateFiles = false
+	ft.IsLocal = false
 }
 
 func validateOptions(opt *Options) error {
