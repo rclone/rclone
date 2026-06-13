@@ -201,6 +201,9 @@ into albums.
 There are two writable parts of the tree, the `upload` directory and
 sub directories of the `album` directory.
 
+The `feature/favorites` directory allows you to view and download
+your starred/favorited photos, but it is read-only.
+
 The `upload` directory is for uploading files you don't want to put
 into albums. This will be empty to start with and will contain the
 files you've uploaded for one rclone session only, becoming empty
@@ -588,6 +591,13 @@ web interface. This is covered by [bug #113672044](https://issuetracker.google.c
 
 **NB** you **can** use the [--gphotos-proxy](#gphotos-proxy) flag to use a
 headless browser to download images in full resolution.
+
+### Marking Favorites
+
+The Google Photos API does not allow third-party applications to mark
+photos as favorites (star them) or write to the `feature/favorites`
+directory. This is an API limitation and is covered by
+[issue #264602929](https://issuetracker.google.com/issues/264602929).
 
 ### Duplicates
 
