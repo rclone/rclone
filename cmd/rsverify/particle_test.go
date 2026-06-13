@@ -9,7 +9,7 @@ import (
 
 func TestTryParticleFooter(t *testing.T) {
 	payload := []byte("hello-world-payload")
-	ft := rs.NewRSFooter(42, nil, nil, time.Unix(1700000000, 0), 4, 3, 2, 9, 1, rs.CRC32C(payload))
+	ft := rs.NewRSFooter(42, nil, nil, time.Unix(1700000000, 0), 4, 3, 2, 9, 1, rs.CRC32C(payload), 99)
 	fb, err := ft.MarshalBinary()
 	if err != nil {
 		t.Fatal(err)

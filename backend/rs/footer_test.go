@@ -11,11 +11,12 @@ import (
 )
 
 func TestNewRSFooterDefaults(t *testing.T) {
-	ft := NewRSFooter(0, nil, nil, time.Unix(1700000000, 0), 3, 1, 0, 256*1024, 0, 0)
+	ft := NewRSFooter(0, nil, nil, time.Unix(1700000000, 0), 3, 1, 0, 256*1024, 0, 0, 0xdeadbeef)
 	require.Equal(t, AlgorithmSYMM, ft.Algorithm)
 	require.Equal(t, int64(1700000000)*1e9, ft.Mtime)
 	require.Equal(t, emptyFileMD5, ft.MD5)
 	require.Equal(t, emptyFileSHA256, ft.SHA256)
+	require.Equal(t, uint64(0xdeadbeef), ft.WriteID)
 }
 
 func TestFooterFieldOffsets(t *testing.T) {
@@ -34,6 +35,8 @@ func TestFooterFieldOffsets(t *testing.T) {
 	require.Equal(t, footerOffStripeSize%4, 0)
 	require.Equal(t, footerOffNumStripes, 84)
 	require.Equal(t, footerOffPayloadCRC32C, 88)
+	require.Equal(t, footerOffWriteID, 96)
+	require.Equal(t, footerOffWriteID%8, 0)
 	require.Equal(t, FooterSize%8, 0)
 }
 
@@ -47,10 +50,10 @@ func TestFooterMarshalParseRoundTrip(t *testing.T) {
 
 	subSec := time.Unix(1, 123456789)
 	cases := []Footer{
-		*NewRSFooter(0, nil, nil, time.Unix(1700000000, 0), 3, 1, 0, 256*1024, 0, 0),
-		*NewRSFooter(100, md5Sum[:], sha256Sum[:], time.Unix(1700001234, 0), 2, 2, 0, 64, 2, 0x12345678),
-		*NewRSFooter(1<<20, md5Sum[:], sha256Sum[:], subSec, 4, 3, 3, 32*1024, 10, 0xabcdef01),
-		*NewRSFooter(42, md5Sum[:], sha256Sum[:], time.Unix(1700009999, 0), 3, 1, 6, 128, 1, 0),
+		*NewRSFooter(0, nil, nil, time.Unix(1700000000, 0), 3, 1, 0, 256*1024, 0, 0, 1),
+		*NewRSFooter(100, md5Sum[:], sha256Sum[:], time.Unix(1700001234, 0), 2, 2, 0, 64, 2, 0x12345678, 2),
+		*NewRSFooter(1<<20, md5Sum[:], sha256Sum[:], subSec, 4, 3, 3, 32*1024, 10, 0xabcdef01, 3),
+		*NewRSFooter(42, md5Sum[:], sha256Sum[:], time.Unix(1700009999, 0), 3, 1, 6, 128, 1, 0, 4),
 		{
 			ContentLength: 512,
 			MD5:           md5Sum,
@@ -63,6 +66,7 @@ func TestFooterMarshalParseRoundTrip(t *testing.T) {
 			StripeSize:    65536,
 			PayloadCRC32C: 0xdeadbeef,
 			NumStripes:    3,
+			WriteID:       0xcafebabe,
 		},
 	}
 
@@ -73,6 +77,7 @@ func TestFooterMarshalParseRoundTrip(t *testing.T) {
 		require.Equal(t, FooterMagic[:], raw[0:8])
 		require.Equal(t, uint32(FooterVersion), binary.LittleEndian.Uint32(raw[footerOffVersion:]))
 		require.Equal(t, want.Mtime, int64(binary.LittleEndian.Uint64(raw[footerOffMtime:])), "case %d mtime bytes", i)
+		require.Equal(t, want.WriteID, binary.LittleEndian.Uint64(raw[footerOffWriteID:]), "case %d WriteID bytes", i)
 
 		got, err := ParseFooter(raw)
 		require.NoError(t, err, "case %d parse", i)
@@ -81,7 +86,7 @@ func TestFooterMarshalParseRoundTrip(t *testing.T) {
 }
 
 func TestParseFooterErrors(t *testing.T) {
-	valid, err := NewRSFooter(10, nil, nil, time.Unix(0, 0), 2, 1, 0, 64, 1, 0).MarshalBinary()
+	valid, err := NewRSFooter(10, nil, nil, time.Unix(0, 0), 2, 1, 0, 64, 1, 0, 42).MarshalBinary()
 	require.NoError(t, err)
 
 	cases := []struct {
@@ -97,6 +102,11 @@ func TestParseFooterErrors(t *testing.T) {
 		{
 			name: "long buffer",
 			buf:  append(append([]byte{}, valid...), 0),
+			want: "buffer length must be",
+		},
+		{
+			name: "old 96-byte v1 footer rejected",
+			buf:  valid[:96],
 			want: "buffer length must be",
 		},
 		{

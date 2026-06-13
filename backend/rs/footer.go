@@ -14,7 +14,7 @@ import (
 const (
 	FooterVersion = 1
 	// FooterSize is the trailing metadata size per shard particle (v1).
-	FooterSize = 96
+	FooterSize = 104
 
 	footerOffVersion       = 8
 	footerOffAlgorithm     = 12
@@ -29,6 +29,7 @@ const (
 	footerOffParityShards  = 93
 	footerOffCurrentShard  = 94
 	footerOffReserved      = 95
+	footerOffWriteID       = 96
 )
 
 // FooterMagic is the 8-byte particle footer identifier (RCLONE + RS).
@@ -61,6 +62,8 @@ type Footer struct {
 	PayloadCRC32C uint32
 	// NumStripes is the number of RS stripes in the shard payload (parity: NumStripes*StripeSize bytes; data shards use virtual padding).
 	NumStripes uint32
+	// WriteID is a random nonce shared by every shard particle of one Put (guards against torn/mixed-write reads).
+	WriteID uint64
 }
 
 // MarshalBinary encodes the footer to its on-disk layout.
@@ -80,6 +83,7 @@ func (f *Footer) MarshalBinary() ([]byte, error) {
 	b[footerOffParityShards] = f.ParityShards
 	b[footerOffCurrentShard] = f.CurrentShard
 	b[footerOffReserved] = 0
+	binary.LittleEndian.PutUint64(b[footerOffWriteID:], f.WriteID)
 	return b, nil
 }
 
@@ -107,6 +111,7 @@ func ParseFooter(buf []byte) (*Footer, error) {
 	f.StripeSize = binary.LittleEndian.Uint32(buf[footerOffStripeSize:])
 	f.PayloadCRC32C = binary.LittleEndian.Uint32(buf[footerOffPayloadCRC32C:])
 	f.NumStripes = binary.LittleEndian.Uint32(buf[footerOffNumStripes:])
+	f.WriteID = binary.LittleEndian.Uint64(buf[footerOffWriteID:])
 	return f, nil
 }
 
@@ -122,7 +127,7 @@ func CRC32C(data []byte) uint32 {
 }
 
 // NewRSFooter builds a Footer for shard shardIndex with the given logical object metadata.
-func NewRSFooter(contentLength int64, md5Sum, sha256Sum []byte, mtime time.Time, dataShards, parityShards, shardIndex int, stripeSize, numStripes uint32, payloadCRC uint32) *Footer {
+func NewRSFooter(contentLength int64, md5Sum, sha256Sum []byte, mtime time.Time, dataShards, parityShards, shardIndex int, stripeSize, numStripes uint32, payloadCRC uint32, writeID uint64) *Footer {
 	var md5Arr [16]byte
 	var sha256Arr [32]byte
 	if len(md5Sum) >= 16 {
@@ -147,5 +152,6 @@ func NewRSFooter(contentLength int64, md5Sum, sha256Sum []byte, mtime time.Time,
 		StripeSize:    stripeSize,
 		NumStripes:    numStripes,
 		PayloadCRC32C: payloadCRC,
+		WriteID:       writeID,
 	}
 }

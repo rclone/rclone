@@ -636,7 +636,7 @@ func TestPutStreamingRollbackOnShardFailure(t *testing.T) {
 
 func TestExtractShardPayloadRejectsCorruption(t *testing.T) {
 	payload := []byte("hello shard")
-	ft := NewRSFooter(int64(len(payload)), nil, nil, time.Unix(1700000000, 0), 2, 1, 0, 64, 1, crc32cChecksum(payload))
+	ft := NewRSFooter(int64(len(payload)), nil, nil, time.Unix(1700000000, 0), 2, 1, 0, 64, 1, crc32cChecksum(payload), 0)
 	fb, err := ft.MarshalBinary()
 	require.NoError(t, err)
 
@@ -2121,7 +2121,7 @@ func TestDirMoveServerSide(t *testing.T) {
 // present shard is caught by PayloadCRC32C in ExtractParticlePayload before decode.
 func TestDocumentsCorruptPayloadFailsCRCBeforeDecode(t *testing.T) {
 	payload := []byte("integrity required")
-	ft := NewRSFooter(int64(len(payload)), nil, nil, time.Unix(1700000000, 0), 2, 1, 0, 64, 1, crc32cChecksum(payload))
+	ft := NewRSFooter(int64(len(payload)), nil, nil, time.Unix(1700000000, 0), 2, 1, 0, 64, 1, crc32cChecksum(payload), 0)
 	fb, err := ft.MarshalBinary()
 	require.NoError(t, err)
 

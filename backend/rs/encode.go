@@ -3,7 +3,9 @@ package rs
 import (
 	"context"
 	"crypto/md5"
+	"crypto/rand"
 	"crypto/sha256"
+	"encoding/binary"
 	"fmt"
 	"hash"
 	"hash/crc32"
@@ -28,6 +30,7 @@ type BuildResult struct {
 	SHA256        [32]byte
 	StripeSize    uint32
 	NumStripes    uint32
+	WriteID       uint64
 }
 
 // NumStripesForContent returns the stripe count for a logical size, k, and fragment size S.
@@ -45,6 +48,14 @@ func normalizeStripeFragmentSize(n int) int {
 		return DefaultStripeFragmentSize
 	}
 	return n
+}
+
+func newWriteID() (uint64, error) {
+	var b [8]byte
+	if _, err := rand.Read(b[:]); err != nil {
+		return 0, fmt.Errorf("rs: generate WriteID: %w", err)
+	}
+	return binary.LittleEndian.Uint64(b[:]), nil
 }
 
 // ShardPayloadByteLength returns parity-shard payload size (NumStripes × S) for the given logical size.
@@ -68,6 +79,11 @@ func encodeLogicalToShardWriters(ctx context.Context, in io.Reader, src fs.Objec
 	S := normalizeStripeFragmentSize(stripeFragmentSize)
 	k := dataShards
 	declared := src.Size()
+
+	writeID, err := newWriteID()
+	if err != nil {
+		return nil, err
+	}
 
 	stripeBuf := make([]byte, k*S)
 	mtime := src.ModTime(ctx).Truncate(time.Second)
@@ -96,7 +112,7 @@ func encodeLogicalToShardWriters(ctx context.Context, in io.Reader, src fs.Objec
 			if declared >= 0 && declared != 0 {
 				return nil, fmt.Errorf("incorrect upload size %d != %d", 0, declared)
 			}
-			return buildZeroLengthShards(ctx, src, dataShards, parityShards, writers, withFooter)
+			return buildZeroLengthShards(ctx, src, dataShards, parityShards, writers, withFooter, writeID)
 		}
 		if readErr == io.ErrUnexpectedEOF {
 			readErr = nil
@@ -171,7 +187,7 @@ func encodeLogicalToShardWriters(ctx context.Context, in io.Reader, src fs.Objec
 	numStripesU32 := uint32(numStripes)
 	for i := range writers {
 		if withFooter {
-			ft := NewRSFooter(contentLength, md5Arr[:], sha256Arr[:], mtime, dataShards, parityShards, i, stripeU32, numStripesU32, crcH[i].Sum32())
+			ft := NewRSFooter(contentLength, md5Arr[:], sha256Arr[:], mtime, dataShards, parityShards, i, stripeU32, numStripesU32, crcH[i].Sum32(), writeID)
 			fb, err := ft.MarshalBinary()
 			if err != nil {
 				return nil, err
@@ -189,18 +205,19 @@ func encodeLogicalToShardWriters(ctx context.Context, in io.Reader, src fs.Objec
 		SHA256:        sha256Arr,
 		StripeSize:    stripeU32,
 		NumStripes:    numStripesU32,
+		WriteID:       writeID,
 	}, nil
 }
 
 // buildZeroLengthShards writes empty logical files (no payload; footer only).
-func buildZeroLengthShards(ctx context.Context, src fs.ObjectInfo, dataShards, parityShards int, writers []io.Writer, withFooter bool) (*BuildResult, error) {
+func buildZeroLengthShards(ctx context.Context, src fs.ObjectInfo, dataShards, parityShards int, writers []io.Writer, withFooter bool, writeID uint64) (*BuildResult, error) {
 	if len(writers) != dataShards+parityShards {
 		return nil, fmt.Errorf("rs: writers count mismatch: got %d want %d", len(writers), dataShards+parityShards)
 	}
 	mtime := src.ModTime(ctx).Truncate(time.Second)
 	for i := range writers {
 		if withFooter {
-			ft := NewRSFooter(0, emptyFileMD5[:], emptyFileSHA256[:], mtime, dataShards, parityShards, i, 0, 0, crc32cChecksum(nil))
+			ft := NewRSFooter(0, emptyFileMD5[:], emptyFileSHA256[:], mtime, dataShards, parityShards, i, 0, 0, crc32cChecksum(nil), writeID)
 			fb, err := ft.MarshalBinary()
 			if err != nil {
 				return nil, err
@@ -217,6 +234,7 @@ func buildZeroLengthShards(ctx context.Context, src fs.ObjectInfo, dataShards, p
 		SHA256:        emptyFileSHA256,
 		StripeSize:    0,
 		NumStripes:    0,
+		WriteID:       writeID,
 	}, nil
 }
 

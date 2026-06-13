@@ -338,76 +338,20 @@ func (f *Fs) rebuildMissingShardsForObject(ctx context.Context, remote string, d
 	return f.rebuildMissingShardsStripeWise(ctx, remote, dryRun, k, m, total, metaFooter, missing, missingIdx)
 }
 
-// healShardGather holds per-shard probe data for discoverHealShardPresence (parallel gather, index-ordered reduce).
-type healShardGather struct {
-	skip   bool // unusable shard for reduce (same cases as sequential continue before metaFooter logic)
-	sz     int64
-	footer *Footer
-}
-
-// discoverHealShardPresence returns a reference footer from the first readable shard and a
-// missing[] slice (true = shard cannot be used for reconstruction). Footer-only reads do not
-// verify PayloadCRC32C over the full payload.
+// discoverHealShardPresence uses probeAndSelectWriteIDGroup to pick the winning WriteID group and
+// returns missing[] true for every shard outside that group (including skewed WriteIDs).
 func (f *Fs) discoverHealShardPresence(ctx context.Context, remote string, total int) (*Footer, []bool, error) {
-	gather := make([]healShardGather, total)
-	g, gctx := errgroup.WithContext(ctx)
-	for i := 0; i < total; i++ {
-		i := i
-		g.Go(func() error {
-			obj, err := f.backends[i].NewObject(gctx, remote)
-			if err != nil {
-				gather[i].skip = true
-				return nil
-			}
-			sz := obj.Size()
-			if sz < FooterSize {
-				gather[i].skip = true
-				return nil
-			}
-			ft, err := readFooterFromParticle(gctx, obj)
-			if err != nil {
-				gather[i].skip = true
-				return nil
-			}
-			gather[i].sz = sz
-			gather[i].footer = ft
-			return nil
-		})
-	}
-	if err := g.Wait(); err != nil {
+	k := f.opt.DataShards
+	m := f.opt.ParityShards
+	sel, err := probeAndSelectWriteIDGroup(ctx, f, remote, nil, k, m)
+	if err != nil {
 		return nil, nil, err
 	}
-
 	missing := make([]bool, total)
-	var metaFooter *Footer
 	for i := 0; i < total; i++ {
-		g := gather[i]
-		if g.skip {
-			missing[i] = true
-			continue
-		}
-		sz := g.sz
-		ft := g.footer
-		if metaFooter == nil {
-			metaFooter = ft
-		} else if !footerCompatibleForStripeRead(metaFooter, ft, i) {
-			missing[i] = true
-			continue
-		}
-		if ft.NumStripes == 0 || ft.StripeSize == 0 {
-			if sz != int64(FooterSize) {
-				missing[i] = true
-			}
-			continue
-		}
-		if sz != ExpectedParticleSize(metaFooter.ContentLength, i, f.opt.DataShards, f.opt.ParityShards, int(ft.StripeSize), true) {
-			missing[i] = true
-		}
+		missing[i] = !sel.present[i]
 	}
-	if metaFooter == nil {
-		return nil, nil, fmt.Errorf("rs: no valid shards found for %q", remote)
-	}
-	return metaFooter, missing, nil
+	return sel.refFooter, missing, nil
 }
 
 func indicesWhereTrue(flags []bool) []int {
@@ -565,7 +509,7 @@ func (f *Fs) putHealedMissingShards(ctx context.Context, remote string, k, m int
 	jobs := make([]healPutJob, 0, len(missingIdx))
 	for _, idx := range missingIdx {
 		payload := reconstructed[idx]
-		ft := NewRSFooter(metaFooter.ContentLength, metaFooter.MD5[:], metaFooter.SHA256[:], mtime, k, m, idx, metaFooter.StripeSize, metaFooter.NumStripes, crc32cChecksum(payload))
+		ft := NewRSFooter(metaFooter.ContentLength, metaFooter.MD5[:], metaFooter.SHA256[:], mtime, k, m, idx, metaFooter.StripeSize, metaFooter.NumStripes, crc32cChecksum(payload), metaFooter.WriteID)
 		fb, err := ft.MarshalBinary()
 		if err != nil {
 			return len(jobs), err
