@@ -128,3 +128,8 @@ This document tracks design gaps, limitations, and follow-up work for the Reed-S
 
 **Status**: Monitoring  
 **Notes**: Logical `Size()` prefers k data-shard remote sizes; footer `ContentLength` is fallback. **`Hash`** still requires a footer. Footer vs remote mtime skew after cheap `SetModTime` is benign for `ModTime()` on capable backends; heal converges missing shards. Cross-shard footer divergence (corruption) may still be undefined; may warrant explicit checks in `NewObject` or `status`.
+
+### Q18: Range-read integrity (bitrot detection on partial reads)
+
+**Status**: Proposed — not implemented  
+**Notes**: The data-shard-only path (`Open` with `Range`/`SeekOption`, VFS) joins data fragments **without** a checksum check; the only at-rest checksum is the whole-payload `PayloadCRC32C`, which a partial read cannot evaluate. So bitrot served via a range read is undetected while whole-object reads are protected. A per-stripe CRC **table stored inside data shards is rejected**: it adds a variable, `NumStripes`-dependent region to data-shard particles and breaks the footer-free List size identity `contentLength = Σ(size − FooterSize)` ([`payloadlayout.go`](../payloadlayout.go), [`LIST_METADATA.md`](LIST_METADATA.md)). **Proposed direction**: verify range reads against **parity** (recompute/`Verify` the touched stripes; reconstruct on mismatch) — stores nothing extra, preserves the size fast-path, opt-in due to read amplification (`(k+m)·S` per touched stripe). Alternative: store the CRC table in **parity** particles only. Full design: [`RANGE_READ_VERIFICATION.md`](RANGE_READ_VERIFICATION.md).
