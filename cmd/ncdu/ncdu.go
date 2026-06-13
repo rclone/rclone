@@ -578,7 +578,8 @@ func (u *UI) deleteSingle() {
 			if o != 1 {
 				return "Aborted!", nil
 			}
-			err := operations.DeleteFile(ctx, obj)
+			backupDir := operations.GetBackupDir(ctx, f)
+			err := operations.DeleteFileWithBackupDir(ctx, obj, backupDir)
 			if err != nil {
 				return "", err
 			}
@@ -633,7 +634,8 @@ func (u *UI) deleteSelected() {
 			var err error
 
 			if obj, isFile := dirEntry.(fs.Object); isFile {
-				err = operations.DeleteFile(ctx, obj)
+				backupDir := operations.GetBackupDir(ctx, f)
+				err = operations.DeleteFileWithBackupDir(ctx, obj, backupDir)
 			} else {
 				err = operations.Purge(ctx, f, dirEntry.String())
 			}

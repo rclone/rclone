@@ -546,7 +546,11 @@ func SuffixName(ctx context.Context, remote string) string {
 // and accumulating stats and errors.
 //
 // If backupDir is set then it moves the file to there instead of
-// deleting
+// deleting.
+//
+// Note that BackupDir is expensive because it needs to create the
+// directory structure for the backup. This should be called outside
+// loops if possible.
 func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs) (err error) {
 	tr := accounting.Stats(ctx).NewCheckingTransfer(dst, "deleting")
 	defer func() {
@@ -579,8 +583,8 @@ func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs
 
 // DeleteFile deletes a single file respecting --dry-run and accumulating stats and errors.
 //
-// If useBackupDir is set and --backup-dir is in effect then it moves
-// the file to there instead of deleting
+// Note that this does NOT use the --backup-dir flag. If you want to
+// use --backup-dir then call DeleteFileWithBackupDir instead.
 func DeleteFile(ctx context.Context, dst fs.Object) (err error) {
 	return DeleteFileWithBackupDir(ctx, dst, nil)
 }
@@ -1911,6 +1915,23 @@ func CopyURLToWriter(ctx context.Context, url string, out io.Writer) (err error)
 		_, err = io.Copy(out, in)
 		return err
 	})
+}
+
+// GetBackupDir returns a backupDir fs if --backup-dir or --suffix is
+// configured, otherwise nil. Errors are logged and nil is returned.
+// This is a convenience wrapper for callers that want to conditionally
+// use backup.
+func GetBackupDir(ctx context.Context, f fs.Fs) fs.Fs {
+	ci := fs.GetConfig(ctx)
+	if ci.BackupDir == "" && ci.Suffix == "" {
+		return nil
+	}
+	backupDir, err := BackupDir(ctx, f, f, "")
+	if err != nil {
+		fs.Errorf(f, "Failed to create backup dir: %v", err)
+		return nil
+	}
+	return backupDir
 }
 
 // BackupDir returns the correctly configured --backup-dir

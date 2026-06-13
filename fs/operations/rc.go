@@ -268,7 +268,8 @@ func rcSingleCommand(ctx context.Context, in rc.Params, name string, noRemote bo
 		if err != nil {
 			return nil, err
 		}
-		return nil, DeleteFile(ctx, o)
+		backupDir := GetBackupDir(ctx, f)
+		return nil, DeleteFileWithBackupDir(ctx, o, backupDir)
 	case "copyurl":
 		url, err := in.GetString("url")
 		if err != nil {

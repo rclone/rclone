@@ -36,7 +36,8 @@ specified file exists, it will always be removed.`,
 			if err != nil {
 				return err
 			}
-			return operations.DeleteFile(context.Background(), fileObj)
+			backupDir := operations.GetBackupDir(context.Background(), f)
+			return operations.DeleteFileWithBackupDir(context.Background(), fileObj, backupDir)
 		})
 	},
 }
