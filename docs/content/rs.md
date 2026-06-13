@@ -311,6 +311,23 @@ Implementer detail (flow, edge cases, code map): **`backend/rs/docs/LIST_METADAT
 For this backend, configuration requires **`data_shards > parity_shards`**
 (`k > m`).
 
+## Capabilities (`Features`)
+
+Reported capabilities are the **full intersection** across **all** configured
+shard remotes: rs advertises a feature only if **every** shard backend supports
+it (`Features().Mask` per shard). There is no “≥ k shards” relaxation.
+
+**`CanHaveEmptyDirectories`** follows the same rule: it is `true` only when
+every shard can persist empty directories (for example all-local shards), and
+`false` when any shard lacks that support (for example a bucket backend).
+
+rs then clears flags whose semantics differ on the logical namespace:
+**`BucketBased`**, **`ReadMetadata`/`WriteMetadata`**, and **`SetTier`/`GetTier`**
+stay off. **`SlowHash`** is set **`true`** after masking (not taken from shards):
+logical **`Hash()`** loads digests from the EC footer on one shard — an extra read
+per object — so rclone should not treat hashing as free during sync/checksum.
+**`DuplicateFiles`** is always `false`; **`IsLocal`** is `false`.
+
 ## Configuration
 
 Configure **k+m** backing remotes first, then add `rs` with `rclone config`.
