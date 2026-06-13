@@ -161,6 +161,7 @@ func (f *Fs) putSpooling(ctx context.Context, in io.Reader, src fs.ObjectInfo, o
 		DataShards:    uint8(f.opt.DataShards),
 		ParityShards:  uint8(f.opt.ParityShards),
 		Algorithm:     AlgorithmSYMM,
+		WriteID:       bres.WriteID,
 	}}, nil
 }
 
@@ -287,6 +288,7 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 		DataShards:    uint8(f.opt.DataShards),
 		ParityShards:  uint8(f.opt.ParityShards),
 		Algorithm:     AlgorithmSYMM,
+		WriteID:       bres.WriteID,
 	}}, nil
 }
 

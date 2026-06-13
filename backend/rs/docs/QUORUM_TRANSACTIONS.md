@@ -4,7 +4,7 @@
 **Audience:** implementers and reviewers.  
 **User-facing summary:** [`docs/content/rs.md`](../../../docs/content/rs.md) (Quorum section).  
 **Related:** [`LIST_METADATA.md`](LIST_METADATA.md) (list/read at **k**), [`OPEN_QUESTIONS.md`](OPEN_QUESTIONS.md), plan `rs_quorum_transactions_89147247.plan.md`.  
-**Last updated:** 2026-06-11
+**Last updated:** 2026-06-13
 
 ## Overview
 
@@ -44,6 +44,18 @@ External precedent (MinIO, Swift, Tahoe): quorum commit + background repair. HDF
 | Write / namespace | **write_quorum** (default **k+1**) | `Put`, `Remove`, `SetModTime`, `Mkdir`, `Rmdir`, `Copy`, `Move`, `DirMove` |
 
 **Topology:** **k > m** required (v1 policy)—prevents two disjoint k-subsets holding forked versions of the same path. See [`OPEN_QUESTIONS.md`](OPEN_QUESTIONS.md).
+
+### WriteID guard (torn / mixed-write reads)
+
+Each successful `Put` generates one random 64-bit **`WriteID`** (`crypto/rand`) and writes it to every shard footer for that encode. **Read** and **`backend heal`** share [`probeAndSelectWriteIDGroup`](../object.go):
+
+1. Probe all **k+m** shards; keep layout-compatible particles (matching `ContentLength`, k, m, `StripeSize`, `NumStripes`, `Algorithm`, `CurrentShard`).
+2. Group survivors by **`WriteID`**.
+3. Select the **unique** group with **≥ k** members (unambiguous because **k > m** ⇒ at most one group can reach k).
+4. **Read:** join data shards only when the winning group holds all **k** data shards; otherwise RS-reconstruct from any k shards in that group (parity participates). If no group reaches k → `errWriteIDSkew` (needs heal), never cross-group join.
+5. **Heal:** rewrite every shard **outside** the winning group with reconstructed payload + the winner's **`WriteID`**.
+
+Footer v1 was redefined in place (`FooterSize` 96 → 104); pre-production particles without **`WriteID`** fail parse.
 
 ---
 
@@ -114,7 +126,7 @@ If rollback partially fails, return error and treat namespace as **degraded**—
 
 **Authority:** physical state on each backing remote at the same logical path prefix.
 
-- **Files:** RS particles + 96-byte footer per shard ([`footer.go`](../footer.go)).
+- **Files:** RS particles + 104-byte footer per shard ([`footer.go`](../footer.go)). Each `Put` stamps every shard with a shared random **`WriteID`** nonce (v1 layout) so reads and heal never join particles from different writes.
 - **Directories:** directory markers / prefixes on each shard via `Mkdir` (not a separate rs metadata object).
 
 **List** merges shard `List` results at **k** ([`LIST_METADATA.md`](LIST_METADATA.md)).

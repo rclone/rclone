@@ -20,6 +20,9 @@ import (
 // errClosedStripeReader is returned from Read after Close on streaming logical readers.
 var errClosedStripeReader = errors.New("rs: reader closed")
 
+// errWriteIDSkew is returned when no WriteID group has >= k compatible shards (object needs heal).
+var errWriteIDSkew = errors.New("rs: inconsistent WriteID across shards (needs heal)")
+
 // Object is the logical file backed by Reed-Solomon shards.
 type Object struct {
 	fs           *Fs
@@ -408,7 +411,7 @@ func (r *dataStripeStreamReader) Close() error {
 	return nil
 }
 
-func footerCompatibleForStripeRead(ref *Footer, ft *Footer, shardIndex int) bool {
+func footerLayoutCompatible(ref *Footer, ft *Footer, shardIndex int) bool {
 	if ft == nil || ref == nil {
 		return false
 	}
@@ -427,11 +430,42 @@ func footerCompatibleForStripeRead(ref *Footer, ft *Footer, shardIndex int) bool
 	return ft.Algorithm == ref.Algorithm
 }
 
-// probeReconstructShardsPresent returns present[i]==true for each shard that has a readable
-// particle matching the logical footer. Per-shard failures are ignored (same as sequential probe).
-func probeReconstructShardsPresent(ctx context.Context, f *Fs, remote string, ref *Footer, k, m, N int, S int64) []bool {
+func footerCompatibleForStripeRead(ref *Footer, ft *Footer, shardIndex int) bool {
+	if !footerLayoutCompatible(ref, ft, shardIndex) {
+		return false
+	}
+	return ft.WriteID == ref.WriteID
+}
+
+func shardParticleValidForSelection(f *Fs, layoutRef *Footer, ft *Footer, shardIndex int, sz int64) bool {
+	if !footerLayoutCompatible(layoutRef, ft, shardIndex) {
+		return false
+	}
+	if ft.NumStripes == 0 || ft.StripeSize == 0 {
+		return sz == int64(FooterSize)
+	}
+	want := ExpectedParticleSize(layoutRef.ContentLength, shardIndex, f.opt.DataShards, f.opt.ParityShards, int(ft.StripeSize), true)
+	return sz == want
+}
+
+// writeIDGroupSelection is the unique WriteID group with >= k compatible shards (shared by read and heal).
+type writeIDGroupSelection struct {
+	writeID       uint64
+	present       []bool
+	refFooter     *Footer
+	allDataShards bool
+}
+
+// probeAndSelectWriteIDGroup probes all k+m shards, groups by WriteID, and returns the unique group
+// with >= k layout-compatible shards. See plan (a) selection algorithm.
+func probeAndSelectWriteIDGroup(ctx context.Context, f *Fs, remote string, layoutRef *Footer, k, m int) (*writeIDGroupSelection, error) {
 	total := k + m
-	present := make([]bool, total)
+	type probeResult struct {
+		footer *Footer
+		sz     int64
+		ok     bool
+	}
+	results := make([]probeResult, total)
 	g, gctx := errgroup.WithContext(ctx)
 	for i := 0; i < total; i++ {
 		i := i
@@ -440,58 +474,101 @@ func probeReconstructShardsPresent(ctx context.Context, f *Fs, remote string, re
 			if err != nil {
 				return nil
 			}
-			if obj.Size() != ExpectedParticleSize(ref.ContentLength, i, k, m, int(S), true) {
+			sz := obj.Size()
+			if sz < int64(FooterSize) {
 				return nil
 			}
 			ft, err := readFooterFromParticle(gctx, obj)
 			if err != nil {
 				return nil
 			}
-			if !footerCompatibleForStripeRead(ref, ft, i) {
-				return nil
-			}
-			present[i] = true
+			results[i] = probeResult{footer: ft, sz: sz, ok: true}
 			return nil
 		})
 	}
-	_ = g.Wait()
-	return present
-}
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
 
-// probeDataShardsForOpen returns true iff all k data shards have a readable particle matching
-// o.footer for stripe layout (same checks as sequential openViaDataShardsOnly probe).
-func probeDataShardsForOpen(ctx context.Context, o *Object, k, N int, S int64) bool {
-	type okOne struct{ ok bool }
-	out := make([]okOne, k)
-	g, gctx := errgroup.WithContext(ctx)
-	for i := 0; i < k; i++ {
-		i := i
-		g.Go(func() error {
-			obj, err := o.fs.backends[i].NewObject(gctx, o.remote)
-			if err != nil {
-				return nil
+	if layoutRef == nil {
+		for i := 0; i < total; i++ {
+			if results[i].ok {
+				layoutRef = results[i].footer
+				break
 			}
-			ft, err := readFooterFromParticle(gctx, obj)
-			if err != nil {
-				return nil
-			}
-			if !footerCompatibleForStripeRead(o.footer, ft, i) {
-				return nil
-			}
-			if obj.Size() != ExpectedParticleSize(o.footer.ContentLength, i, k, o.fs.opt.ParityShards, int(S), true) {
-				return nil
-			}
-			out[i].ok = true
-			return nil
-		})
-	}
-	_ = g.Wait()
-	for i := 0; i < k; i++ {
-		if !out[i].ok {
-			return false
 		}
 	}
-	return true
+	if layoutRef == nil {
+		return nil, fmt.Errorf("rs: no valid shards found for %q", remote)
+	}
+
+	groups := map[uint64][]int{}
+	refByWriteID := map[uint64]*Footer{}
+	for i := 0; i < total; i++ {
+		r := results[i]
+		if !r.ok || !shardParticleValidForSelection(f, layoutRef, r.footer, i, r.sz) {
+			continue
+		}
+		wid := r.footer.WriteID
+		groups[wid] = append(groups[wid], i)
+		if refByWriteID[wid] == nil {
+			refByWriteID[wid] = r.footer
+		}
+	}
+
+	var winnerID uint64
+	var winnerIndices []int
+	winners := 0
+	for wid, indices := range groups {
+		if len(indices) < k {
+			continue
+		}
+		winners++
+		winnerID = wid
+		winnerIndices = indices
+	}
+	if winners == 0 {
+		return nil, errWriteIDSkew
+	}
+	if winners > 1 {
+		return nil, errWriteIDSkew
+	}
+
+	present := make([]bool, total)
+	for _, i := range winnerIndices {
+		present[i] = true
+	}
+	allData := true
+	for i := 0; i < k; i++ {
+		if !present[i] {
+			allData = false
+			break
+		}
+	}
+	return &writeIDGroupSelection{
+		writeID:       winnerID,
+		present:       present,
+		refFooter:     refByWriteID[winnerID],
+		allDataShards: allData,
+	}, nil
+}
+
+// probeReconstructShardsPresent returns present[i]==true for each shard in the winning WriteID group.
+func probeReconstructShardsPresent(ctx context.Context, f *Fs, remote string, ref *Footer, k, m, N int, S int64) []bool {
+	sel, err := probeAndSelectWriteIDGroup(ctx, f, remote, ref, k, m)
+	if err != nil {
+		return make([]bool, k+m)
+	}
+	return sel.present
+}
+
+// probeDataShardsForOpen returns true iff the winning WriteID group contains all k data shards.
+func probeDataShardsForOpen(ctx context.Context, o *Object, k, N int, S int64) bool {
+	sel, err := probeAndSelectWriteIDGroup(ctx, o.fs, o.remote, o.footer, k, o.fs.opt.ParityShards)
+	if err != nil {
+		return false
+	}
+	return sel.allDataShards
 }
 
 // readStripeFragmentsParallel reads one stripe's RS fragments into row (virtual-padding aware).
@@ -611,6 +688,9 @@ func (o *Object) openFullReconstruct(ctx context.Context, options ...fs.OpenOpti
 			}
 		}
 		if available < k {
+			if _, err := probeAndSelectWriteIDGroup(ctx, o.fs, o.remote, o.footer, k, m); errors.Is(err, errWriteIDSkew) {
+				return nil, err
+			}
 			return nil, fmt.Errorf("rs: not enough shards to reconstruct %q: have %d need %d", o.remote, available, k)
 		}
 		enc, err := reedsolomon.New(k, m)
