@@ -718,7 +718,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	if api.IsSharedFolderChildID(srcDirectoryID) || api.IsSharedFolderChildID(dstDirectoryID) || srcObj.driveID == "" {
+	if isSharedWriteDirID(srcDirectoryID) || isSharedWriteDirID(dstDirectoryID) || api.IsSharedFolderChildID(srcObj.driveID) {
 		return nil, fs.ErrorCantMove
 	}
 
@@ -985,7 +985,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	// URL instead. That URL is short-lived, but an Object can live a long time (e.g.
 	// in a VFS mount cache), so the cached URL may have gone stale: refresh it from
 	// the item lookup and retry on a download failure.
-	shared := o.driveID == ""
+	shared := api.IsSharedFolderChildID(o.driveID)
 
 	url, err := o.resolveDownloadURL(ctx, shared, false)
 	if err != nil {
@@ -1148,7 +1148,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// Items whose parent is a folder shared by another Apple ID cannot be written
 	// through the drivews/docws upload endpoints (they only operate in the caller's
 	// own zone and return HTTP 400). Route those through CloudKit instead.
-	if api.IsSharedFolderChildID(dirID) {
+	if isSharedWriteDirID(dirID) {
 		return o.updateViaCloudDocs(ctx, in, src, leaf, dirID, modTime, size)
 	}
 
@@ -1224,6 +1224,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 func isSharedFolderRootID(id string) bool {
 	return strings.HasPrefix(id, "SHARED_FOLDER::")
+}
+
+func isSharedWriteDirID(id string) bool {
+	return isSharedFolderRootID(id) || api.IsSharedFolderChildID(id)
 }
 
 func sharedUploadTempName(leaf, token string) string {

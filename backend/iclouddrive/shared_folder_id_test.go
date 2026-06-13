@@ -117,6 +117,15 @@ func TestIsSharedFolderRootID(t *testing.T) {
 	assert.False(t, isSharedFolderRootID(""))
 }
 
+// TestIsSharedWriteDirID checks the directory classifier used to route writes
+// either into a shared root or below a shared root through CloudDocs.
+func TestIsSharedWriteDirID(t *testing.T) {
+	assert.True(t, isSharedWriteDirID("SHARED_FOLDER::z::share-root"))
+	assert.True(t, isSharedWriteDirID("FOLDER_IN_SHARED_FOLDER::z::child"))
+	assert.True(t, isSharedWriteDirID(""))
+	assert.False(t, isSharedWriteDirID("FOLDER::z::own"))
+}
+
 // TestSharedUploadTempName verifies that temporary upload names are collision-free
 // at the share root while preserving the final extension for content type handling.
 func TestSharedUploadTempName(t *testing.T) {
