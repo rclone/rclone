@@ -69,6 +69,7 @@ See the following for detailed instructions for
 - [Koofr](/koofr/)
 - [Linkbox](/linkbox/)
 - [Mail.ru Cloud](/mailru/)
+- [MCP](/mcp/)
 - [Mega](/mega/)
 - [Memory](/memory/)
 - [Microsoft Azure Blob Storage](/azureblob/)

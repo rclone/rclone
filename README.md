@@ -81,6 +81,7 @@ directories to and from different cloud storage providers.
 - Linode Object Storage [:page_facing_up:](https://rclone.org/s3/#linode)
 - Magalu Object Storage [:page_facing_up:](https://rclone.org/s3/#magalu)
 - Mail.ru Cloud [:page_facing_up:](https://rclone.org/mailru/)
+- MCP [:page_facing_up:](https://rclone.org/mcp/)
 - Memset Memstore [:page_facing_up:](https://rclone.org/swift/)
 - MEGA [:page_facing_up:](https://rclone.org/mega/)
 - MEGA S4 Object Storage [:page_facing_up:](https://rclone.org/s3/#mega)
