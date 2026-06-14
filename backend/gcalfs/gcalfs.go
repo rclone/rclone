@@ -358,6 +358,7 @@ func (f *Fs) listCalendars(ctx context.Context, prefix string) (fs.DirEntries, e
 		if seen[c.Summary] > 1 {
 			name = c.Summary + " " + c.ID[:8]
 		}
+		name = sanitizeName(name)
 		cp := c
 		f.calendars[name] = &cp
 		entries = append(entries, fs.NewDir(prefix+name, f.dirTime()))
@@ -432,7 +433,7 @@ func (f *Fs) listEvents(ctx context.Context, prefix, calendarID, year, month, da
 			return nil, err
 		}
 		for _, evt := range result.Items {
-			name := evt.ID + " — " + evt.Summary + ".ics"
+			name := evt.ID + " — " + sanitizeName(evt.Summary) + ".ics"
 			evtCopy := evt
 			o := &Object{
 				fs:         f,
@@ -563,6 +564,16 @@ func (o *Object) Remove(ctx context.Context) error { return fs.ErrorPermissionDe
 // MimeType returns MIME type
 func (o *Object) MimeType(ctx context.Context) string {
 	return "text/calendar"
+}
+
+const slashSubstitute = '∕' // U+2215 DIVISION SLASH
+
+func sanitizeName(s string) string {
+	return strings.ReplaceAll(s, "/", string(slashSubstitute))
+}
+
+func unsanitizeName(s string) string {
+	return strings.ReplaceAll(s, string(slashSubstitute), "/")
 }
 
 // shouldRetry returns whether to retry
