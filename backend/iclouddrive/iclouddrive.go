@@ -543,21 +543,21 @@ func (f *Fs) cloudDocsDirectoryRecordID(ctx context.Context, cd *api.CloudDocs, 
 }
 
 func (f *Fs) cloudDocsDirectoryRecordIDAbs(ctx context.Context, cd *api.CloudDocs, absDir, dirID string) (string, error) {
-	if api.IsSharedFolderChildID(dirID) {
-		if dirID == "" {
-			parent, leaf := dircache.SplitPath(absDir)
-			dc := dircache.New("", f.rootID, f)
-			parentJID, err := dc.FindDir(ctx, parent, false)
-			if err != nil {
-				return "", err
-			}
-			parentID, _ := f.parseNormalizedID(parentJID)
-			parentRecordID, err := f.cloudDocsDirectoryRecordIDAbs(ctx, cd, parent, parentID)
-			if err != nil {
-				return "", err
-			}
-			return cd.FindDirectoryUUID(ctx, parentRecordID, leaf)
+	if dirID == "" {
+		parent, leaf := dircache.SplitPath(absDir)
+		dc := dircache.New("", f.rootID, f)
+		parentJID, err := dc.FindDir(ctx, parent, false)
+		if err != nil {
+			return "", err
 		}
+		parentID, _ := f.parseNormalizedID(parentJID)
+		parentRecordID, err := f.cloudDocsDirectoryRecordIDAbs(ctx, cd, parent, parentID)
+		if err != nil {
+			return "", err
+		}
+		return cd.FindDirectoryUUID(ctx, parentRecordID, leaf)
+	}
+	if api.IsSharedFolderChildID(dirID) {
 		return api.GetDocIDFromDriveID(dirID), nil
 	}
 	if isSharedFolderRootID(dirID) {
@@ -664,6 +664,14 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 	srcDirectoryID, srcEtag := f.parseNormalizedID(jsrcDirectoryID)
 	dstDirectoryID, _ := f.parseNormalizedID(jdstDirectoryID)
+	if f.isSharedWriteJID(srcID) || f.isSharedWriteJID(jsrcDirectoryID) || f.isSharedWriteJID(jdstDirectoryID) {
+		if err := f.dirMoveViaCloudDocs(ctx, srcFs, srcID, jdstDirectoryID, dstLeaf, srcRemote, dstRemote); err != nil {
+			return err
+		}
+		srcFs.dirCache.FlushDir(srcRemote)
+		f.dirCache.FlushDir(dstRemote)
+		return nil
+	}
 
 	_, err = f.move(ctx, srcID, srcDirectoryID, srcLeaf, srcEtag, dstDirectoryID, dstLeaf)
 	if err != nil {
@@ -673,6 +681,47 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	srcFs.dirCache.FlushDir(srcRemote)
 
 	return nil
+}
+
+// dirMoveViaCloudDocs moves or renames an existing directory inside a folder shared
+// by another Apple ID. The drivews directory move endpoint cannot address the
+// owner's shared zone, but the directory record can be re-parented/renamed through
+// the shared CloudDocs database.
+func (f *Fs) dirMoveViaCloudDocs(ctx context.Context, srcFs *Fs, srcJID, dstParentJID, dstLeaf, srcRemote, dstRemote string) error {
+	srcID, _ := f.parseNormalizedID(srcJID)
+	if !api.IsSharedFolderChildID(srcID) && f.parseSharedItemID(srcJID) == "" {
+		return fs.ErrorCantDirMove
+	}
+	dstParentID, _ := f.parseNormalizedID(dstParentJID)
+
+	cd := f.icloud.CloudDocsService(f.pacer, shouldRetry)
+	if cd == nil {
+		return errors.New("iclouddrive: cannot move a directory in a shared folder: account has no ckdatabasews service")
+	}
+
+	srcAbs := path.Join(srcFs.root, srcRemote)
+	srcUUID, err := srcFs.cloudDocsDirectoryRecordIDAbs(ctx, cd, srcAbs, srcID)
+	if err != nil {
+		return err
+	}
+	if srcUUID == "" {
+		return fmt.Errorf("iclouddrive: cannot move shared directory %q: missing source CloudDocs directory ID", srcAbs)
+	}
+
+	dstAbs := path.Join(f.root, dstRemote)
+	dstParentAbs := path.Dir(path.Clean(dstAbs))
+	if dstParentAbs == "." {
+		dstParentAbs = ""
+	}
+	dstParentUUID, err := f.cloudDocsDirectoryRecordIDAbs(ctx, cd, dstParentAbs, dstParentID)
+	if err != nil {
+		return err
+	}
+	if dstParentUUID == "" {
+		return fmt.Errorf("iclouddrive: cannot move shared directory %q: missing target CloudDocs directory ID", dstAbs)
+	}
+
+	return cd.ReparentDirectory(ctx, srcUUID, dstParentUUID, f.opt.Enc.FromStandardName(dstLeaf))
 }
 
 func (f *Fs) move(ctx context.Context, ID, srcDirectoryID, srcLeaf, srcEtag, dstDirectoryID, dstLeaf string) (*api.DriveItem, error) {
