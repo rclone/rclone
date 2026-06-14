@@ -392,6 +392,11 @@ func (f *Fs) listThread(ctx context.Context, prefix, threadDir string) (fs.DirEn
 			internalDate: parseInternalDate(msg.InternalDate),
 			bytes:        -1,
 		}
+		// Payload is already in memory (format=full); compute eml size so
+		// macFUSE can report a non-zero size in stat() and the kernel issues reads.
+		if emlData, err2 := f.emlBytes(ctx, msg); err2 == nil {
+			o.bytes = int64(len(emlData))
+		}
 		entries = append(entries, o)
 		if hasAttachmentParts(msg.Payload) {
 			hasAttachments = true
