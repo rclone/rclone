@@ -594,6 +594,232 @@ func TestReadOnly_SetModTimeDenied(t *testing.T) {
 // Config respected
 // ----------------------------------------------------------------------------
 
+// ----------------------------------------------------------------------------
+// S3-01 — slash encoding (U+2215 DIVISION SLASH)
+//
+// Gmail subjects and attachment filenames may contain "/" (U+002F), which is a
+// path separator. Every name segment derived from such a field must replace "/"
+// with "∕" (U+2215) so the segment stays a single path component. The substitute
+// is U+2215 specifically — not the standard slash and not the fullwidth pipe
+// "｜" (U+FF5C).
+// ----------------------------------------------------------------------------
+
+const (
+	rawSlash    = "/" // U+002F SOLIDUS
+	subSlash    = "∕" // U+2215 DIVISION SLASH
+	fullPipe    = "｜" // U+FF5C FULLWIDTH VERTICAL LINE
+	slashDayDir = "2024/2024-01/2024-01-15"
+	slashSubj   = "SMIG, Tuesday, June 23, 2-3 pm EST/1-2 pm CST/11 am PST"
+	slashFile   = "report 1/2.pdf"
+	slashThread = "18c0slashthread"
+	slashMsg    = "18c0slashmsg01"
+)
+
+// afterSep returns the substring of s after the last " — " thread/message
+// separator, i.e. the subject or filename segment of the leaf entry (the path
+// prefix may carry its own " — " from an enclosing thread dir).
+func afterSep(s string) string {
+	i := strings.LastIndex(s, " — ")
+	if i < 0 {
+		return ""
+	}
+	return s[i+len(" — "):]
+}
+
+// findEntry returns the first entry whose Remote() contains substr, or "".
+func findEntry(entries fs.DirEntries, substr string) string {
+	for _, e := range entries {
+		if strings.Contains(e.Remote(), substr) {
+			return e.Remote()
+		}
+	}
+	return ""
+}
+
+// T01 — sanitizeName helper
+
+func TestSanitizeName_ReplacesSlash(t *testing.T) {
+	require.Equal(t, "a"+subSlash+"b"+subSlash+"c", sanitizeName("a/b/c"),
+		"every \"/\" must be replaced with U+2215")
+}
+
+func TestSanitizeName_LeavesPlainUnchanged(t *testing.T) {
+	const plain = "Subject no slash"
+	// Anchor: a slash-bearing input MUST be transformed, so the identity shim
+	// fails here instead of passing the no-op assertion trivially.
+	require.NotEqual(t, slashSubj, sanitizeName(slashSubj),
+		"a \"/\"-bearing name must be transformed (guards against identity shim)")
+	require.Equal(t, plain, sanitizeName(plain),
+		"a name with no \"/\" must be returned unchanged")
+}
+
+func TestSanitizeName_UsesU2215NotPipe(t *testing.T) {
+	got := sanitizeName(slashSubj)
+	require.Contains(t, got, subSlash, "sanitized name must contain U+2215")
+	require.NotContains(t, got, fullPipe, "sanitized name must NOT use U+FF5C (｜)")
+	require.NotContains(t, got, rawSlash, "sanitized name must contain no raw \"/\"")
+}
+
+func TestUnsanitizeName_RoundTrip(t *testing.T) {
+	san := sanitizeName(slashSubj)
+	// Anchor: sanitize must actually change the input (else the round-trip is a
+	// trivial identity); the shim fails here instead of passing trivially.
+	require.NotEqual(t, slashSubj, san,
+		"sanitizeName must transform a \"/\"-bearing name (guards against identity shim)")
+	require.Equal(t, slashSubj, unsanitizeName(san),
+		"unsanitizeName(sanitizeName(s)) must round-trip back to s")
+}
+
+// T02 — thread-dir site (day-level List)
+
+func TestListThreads_SlashSubjectNoRawSlash(t *testing.T) {
+	ctx := context.Background()
+	f := newTestFs(t, 2020)
+	entries, err := f.List(ctx, slashDayDir)
+	require.NoError(t, err)
+	remote := findEntry(entries, slashThread)
+	require.NotEmpty(t, remote, "the \"/\"-subject thread must appear as a dir entry")
+	require.NotContains(t, afterSep(remote), rawSlash,
+		"the subject segment must contain no raw \"/\" after the \" — \" separator")
+}
+
+func TestListThreads_SlashSubjectContainsSubstitute(t *testing.T) {
+	ctx := context.Background()
+	f := newTestFs(t, 2020)
+	entries, err := f.List(ctx, slashDayDir)
+	require.NoError(t, err)
+	remote := findEntry(entries, slashThread)
+	require.NotEmpty(t, remote, "the \"/\"-subject thread must appear as a dir entry")
+	require.Contains(t, afterSep(remote), subSlash,
+		"the subject segment must contain U+2215 in place of each \"/\"")
+}
+
+func TestListThreads_IDPrefixUnchanged(t *testing.T) {
+	ctx := context.Background()
+	f := newTestFs(t, 2020)
+	entries, err := f.List(ctx, slashDayDir)
+	require.NoError(t, err)
+	remote := findEntry(entries, slashThread)
+	require.NotEmpty(t, remote, "the \"/\"-subject thread must appear as a dir entry")
+	require.True(t, strings.HasPrefix(remote, slashDayDir+"/"+slashThread+" — "),
+		"the entry must still begin with \"<threadId> — \" (ID prefix byte-identical)")
+}
+
+// T03 — .eml site (thread-level List)
+
+func TestListThread_EmlSlashSubjectSanitized(t *testing.T) {
+	ctx := context.Background()
+	f := newTestFs(t, 2020)
+	threadDir := slashDayDir + "/" + slashThread + " — sanitized"
+	entries, err := f.List(ctx, threadDir)
+	require.NoError(t, err)
+	remote := findEntry(entries, ".eml")
+	require.NotEmpty(t, remote, "thread List must yield one .eml per message")
+	require.True(t, strings.HasSuffix(remote, ".eml"), "the message entry must end in .eml")
+	seg := afterSep(remote)
+	require.Contains(t, seg, subSlash, "the .eml subject segment must contain U+2215")
+	require.NotContains(t, seg, rawSlash, "the .eml subject segment must contain no raw \"/\"")
+}
+
+func TestListThread_EmlNewObjectResolves(t *testing.T) {
+	ctx := context.Background()
+	f := newTestFs(t, 2020)
+	threadDir := slashDayDir + "/" + slashThread + " — sanitized"
+	entries, err := f.List(ctx, threadDir)
+	require.NoError(t, err)
+	remote := findEntry(entries, ".eml")
+	require.NotEmpty(t, remote, "thread List must yield one .eml per message")
+
+	obj, err := f.NewObject(ctx, remote)
+	require.NoError(t, err, "NewObject on the sanitized .eml remote must resolve")
+	o, ok := obj.(*Object)
+	require.True(t, ok, "resolved object must be *gmailfs.Object")
+	require.Equal(t, slashMsg, o.messageID,
+		"messageID must survive sanitization and equal the mocked message ID")
+}
+
+// T04 — attachment site
+
+func TestListAttachments_SlashFilenameSanitized(t *testing.T) {
+	ctx := context.Background()
+	f := newTestFs(t, 2020)
+	attachDir := slashDayDir + "/" + slashThread + " — sanitized/attachments"
+	entries, err := f.List(ctx, attachDir)
+	require.NoError(t, err)
+	remote := findEntry(entries, slashMsg)
+	require.NotEmpty(t, remote, "attachments List must yield the slash-filename part")
+	seg := afterSep(remote)
+	require.Contains(t, seg, subSlash, "the attachment filename segment must contain U+2215")
+	require.NotContains(t, seg, rawSlash, "the attachment filename segment must contain no raw \"/\"")
+}
+
+func TestListAttachments_NewObjectResolvesAttachment(t *testing.T) {
+	ctx := context.Background()
+	f := newTestFs(t, 2020)
+	attachDir := slashDayDir + "/" + slashThread + " — sanitized/attachments"
+	entries, err := f.List(ctx, attachDir)
+	require.NoError(t, err)
+	remote := findEntry(entries, slashMsg)
+	require.NotEmpty(t, remote, "attachments List must yield the slash-filename part")
+
+	obj, err := f.NewObject(ctx, remote)
+	require.NoError(t, err, "NewObject on the sanitized attachment remote must resolve")
+	o, ok := obj.(*Object)
+	require.True(t, ok, "resolved object must be *gmailfs.Object")
+	require.True(t, o.isAttachment, "the resolved object must be an attachment")
+	require.Equal(t, slashMsg, o.messageID,
+		"messageID must survive sanitization and equal the mocked message ID")
+}
+
+// T05 — round-trip / no-regression identity
+
+func TestSlash_ListThenNewObjectIdentity_Eml(t *testing.T) {
+	ctx := context.Background()
+	f := newTestFs(t, 2020)
+	threadDir := slashDayDir + "/" + slashThread + " — sanitized"
+	entries, err := f.List(ctx, threadDir)
+	require.NoError(t, err)
+	remote := findEntry(entries, ".eml")
+	require.NotEmpty(t, remote, "thread List must yield one .eml per message")
+
+	obj, err := f.NewObject(ctx, remote)
+	require.NoError(t, err, "List→NewObject identity: the produced .eml remote must resolve")
+	o := obj.(*Object)
+	require.Equal(t, slashThread, o.threadID, "threadID must round-trip through List→NewObject")
+	require.Equal(t, slashMsg, o.messageID, "messageID must round-trip through List→NewObject")
+}
+
+func TestSlash_ListThenNewObjectIdentity_Attachment(t *testing.T) {
+	ctx := context.Background()
+	f := newTestFs(t, 2020)
+	attachDir := slashDayDir + "/" + slashThread + " — sanitized/attachments"
+	entries, err := f.List(ctx, attachDir)
+	require.NoError(t, err)
+	remote := findEntry(entries, slashMsg)
+	require.NotEmpty(t, remote, "attachments List must yield the slash-filename part")
+
+	obj, err := f.NewObject(ctx, remote)
+	require.NoError(t, err, "List→NewObject identity: the produced attachment remote must resolve")
+	o := obj.(*Object)
+	require.True(t, o.isAttachment, "the resolved object must be an attachment")
+	require.Equal(t, slashThread, o.threadID, "threadID must round-trip through List→NewObject")
+	require.Equal(t, slashMsg, o.messageID, "messageID must round-trip through List→NewObject")
+}
+
+// T06 — read-only guard (unchanged by the slash fix)
+
+func TestReadOnly_StillDenied_AfterSlashFix(t *testing.T) {
+	ctx := context.Background()
+	f := newTestFs(t, 2020)
+	o := &Object{fs: f, remote: slashThread + " — " + slashSubj + ".eml"}
+	require.ErrorIs(t, func() error { _, e := f.Put(ctx, strings.NewReader("x"), nil); return e }(),
+		fs.ErrorPermissionDenied, "Put must still be denied")
+	require.ErrorIs(t, f.Mkdir(ctx, "anything"), fs.ErrorPermissionDenied, "Mkdir must still be denied")
+	require.ErrorIs(t, f.Rmdir(ctx, "anything"), fs.ErrorPermissionDenied, "Rmdir must still be denied")
+	require.ErrorIs(t, o.Remove(ctx), fs.ErrorPermissionDenied, "Object.Remove must still be denied")
+	require.ErrorIs(t, o.SetModTime(ctx, time.Now()), fs.ErrorPermissionDenied, "Object.SetModTime must still be denied")
+}
+
 func TestStartYear_RootHonorsStartYear(t *testing.T) {
 	ctx := context.Background()
 	f := newTestFs(t, 2020)

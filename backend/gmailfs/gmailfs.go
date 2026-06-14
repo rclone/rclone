@@ -334,7 +334,7 @@ func (f *Fs) listThreadsForRange(ctx context.Context, prefix string, start, end 
 			return nil, fmt.Errorf("threads.list: %w", err)
 		}
 		for _, t := range result.Threads {
-			subject := f.threadSubject(ctx, t.ID)
+			subject := sanitizeName(f.threadSubject(ctx, t.ID))
 			entries = append(entries, fs.NewDir(prefix+t.ID+" — "+subject, f.dirTime()))
 		}
 		if result.NextPageToken == "" {
@@ -440,7 +440,7 @@ func (f *Fs) listThread(ctx context.Context, prefix, threadDir string) (fs.DirEn
 		msg := &thread.Messages[i]
 		subject := ""
 		if msg.Payload != nil {
-			subject = headerValue(msg.Payload.Headers, "Subject")
+			subject = sanitizeName(headerValue(msg.Payload.Headers, "Subject"))
 		}
 		o := &Object{
 			fs:           f,
@@ -479,7 +479,7 @@ func (f *Fs) listAttachments(ctx context.Context, prefix, threadDir string) (fs.
 		walkAttachments(msg.Payload, func(p *api.Part) {
 			o := &Object{
 				fs:           f,
-				remote:       prefix + msg.ID + " — " + p.Filename,
+				remote:       prefix + msg.ID + " — " + sanitizeName(p.Filename),
 				threadID:     thread.ID,
 				messageID:    msg.ID,
 				internalDate: parseInternalDate(msg.InternalDate),
@@ -747,6 +747,16 @@ func encodeBody(raw []byte, cte string) []byte {
 func parseInternalDate(s string) int64 {
 	ms, _ := strconv.ParseInt(s, 10, 64)
 	return ms
+}
+
+const slashSubstitute = '∕' // U+2215 DIVISION SLASH
+
+func sanitizeName(s string) string {
+	return strings.ReplaceAll(s, "/", string(slashSubstitute))
+}
+
+func unsanitizeName(s string) string {
+	return strings.ReplaceAll(s, string(slashSubstitute), "/")
 }
 
 // shouldRetry returns whether to retry
