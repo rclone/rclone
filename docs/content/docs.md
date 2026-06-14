@@ -51,6 +51,8 @@ See the following for detailed instructions for
 - [Files.com](/filescom/)
 - [FTP](/ftp/)
 - [Gofile](/gofile/)
+- [Gmail](/gmailfs/)
+- [Google Calendar](/gcalfs/)
 - [Google Cloud Storage](/googlecloudstorage/)
 - [Google Drive](/drive/)
 - [Google Photos](/googlephotos/)

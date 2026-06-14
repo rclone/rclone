@@ -142,6 +142,8 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="FlashBlade" home="https://www.purestorage.com/products/unstructured-data-storage.html" config="/s3/#pure-storage-flashblade" >}}
 {{< provider name="FTP" home="https://en.wikipedia.org/wiki/File_Transfer_Protocol" config="/ftp/" >}}
 {{< provider name="Gofile" home="https://gofile.io/" config="/gofile/" >}}
+{{< provider name="Gmail" home="https://mail.google.com/" config="/gmailfs/" >}}
+{{< provider name="Google Calendar" home="https://calendar.google.com/" config="/gcalfs/" >}}
 {{< provider name="Google Cloud Storage" home="https://cloud.google.com/storage/" config="/googlecloudstorage/" >}}
 {{< provider name="Google Drive" home="https://www.google.com/drive/" config="/drive/" >}}
 {{< provider name="Google Photos" home="https://www.google.com/photos/about/" config="/googlephotos/" >}}

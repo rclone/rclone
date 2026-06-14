@@ -52,6 +52,8 @@ directories to and from different cloud storage providers.
 - FlashBlade [:page_facing_up:](https://rclone.org/s3/#pure-storage-flashblade)
 - FTP [:page_facing_up:](https://rclone.org/ftp/)
 - GoFile [:page_facing_up:](https://rclone.org/gofile/)
+- Gmail [:page_facing_up:](https://rclone.org/gmailfs/)
+- Google Calendar [:page_facing_up:](https://rclone.org/gcalfs/)
 - Google Cloud Storage [:page_facing_up:](https://rclone.org/googlecloudstorage/)
 - Google Drive [:page_facing_up:](https://rclone.org/drive/)
 - Google Photos [:page_facing_up:](https://rclone.org/googlephotos/)

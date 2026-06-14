@@ -51,6 +51,8 @@ docs = [
     "filen.md",
     "filescom.md",
     "ftp.md",
+    "gcalfs.md",
+    "gmailfs.md",
     "gofile.md",
     "googlecloudstorage.md",
     "drive.md",

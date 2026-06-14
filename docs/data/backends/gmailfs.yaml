@@ -1,0 +1,17 @@
+backend: gmailfs
+name: Gmail
+tier: Tier 5
+maintainers: None
+features_score: 0
+integration_tests: Failing
+data_integrity: Other
+performance: Low
+adoption: None
+docs: Full
+security: High
+virtual: true
+remote: 'TestGmailFs:'
+features:
+- ReadMimeType
+hashes: []
+precision: -1

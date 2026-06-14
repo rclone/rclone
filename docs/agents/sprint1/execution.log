@@ -13,3 +13,8 @@
 2026-06-14T00:30:00Z wave-1 merge S1-01 complete backend/gmailfs
 2026-06-14T00:30:00Z wave-1 merge S1-02 complete backend/gcalfs
 2026-06-14T00:40:00Z wave-2 red S1-03 start
+2026-06-14T00:50:00Z wave-2 red S1-03 complete
+2026-06-14T00:52:00Z wave-2 scaffold S1-03 noop
+2026-06-14T00:53:00Z wave-2 green S1-03 start
+2026-06-14T01:34:20Z wave-2 green S1-03 complete
+2026-06-14T01:34:20Z wave-2 green S1-03 complete
