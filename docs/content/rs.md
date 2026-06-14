@@ -3,7 +3,7 @@ title: "RS"
 description: "Reed–Solomon virtual backend that stripes objects across multiple remotes with parity for degraded reads and repair via backend heal"
 ---
 
-# {{< icon "fa fa-th" >}} RS (Reed–Solomon)
+# RS (Reed–Solomon)
 
 The `rs` backend is a **virtual** remote: it does not store data by itself. It
 presents a single filesystem while splitting each logical object across several
@@ -43,10 +43,11 @@ are implemented, but behavior and options may still change. See
   Reed–Solomon split/encoded, and **S** bytes per stripe are appended to each
   shard’s payload. **`NumStripes`** in the footer is the stripe count; empty
   objects use **0** stripes.
-- **Footer**: Each particle ends with the same **96-byte RS footer** (version
+- **Footer**: Each particle ends with the same **104-byte RS footer** (version
   **1**, magic **`RCLONERS`**). Fields such as logical **size**, **mtime**
   (nanoseconds), **MD5/SHA256**, **k**, **m**, **`Algorithm`** (`SYMM` =
-  stripe-wise systematic RS), **`StripeSize` (S)**, and **`NumStripes`** are
+  stripe-wise systematic RS), **`StripeSize` (S)**, **`NumStripes`**, and
+  **`WriteID`** (a random per-`Put` nonce shared by all shards of one write) are
   **the same across shards**. **Per-shard fields differ**, notably
   **`CurrentShard`** and **`PayloadCRC32C`** (CRC of that shard’s full
   payload), so footers are **not byte-identical** copies.
@@ -94,16 +95,16 @@ For non-empty logical objects, each shard particle is:
 
 - **payload**: variable length per shard (virtual padding; parity shards use
   `NumStripes × StripeSize`, data shards store trimmed fragments only)
-- **footer**: fixed 96-byte RS footer (version 1)
+- **footer**: fixed 104-byte RS footer (version 1)
 
-For empty logical objects, payload is length `0` and only the 96-byte footer
+For empty logical objects, payload is length `0` and only the 104-byte footer
 is stored.
 
 High-level structure:
 
 ```text
 +------------------------------+--------------------+
-| shard payload (variable)     | RS footer (96 B)   |
+| shard payload (variable)     | RS footer (104 B)  |
 +------------------------------+--------------------+
 ```
 
@@ -133,7 +134,7 @@ Where:
 
 ### Binary layout
 
-The footer is the final 96 bytes of every particle. Fields are little-endian and
+The footer is the final 104 bytes of every particle. Fields are little-endian and
 aligned on 4- or 8-byte boundaries for efficient access.
 
 ```text
@@ -152,6 +153,7 @@ Offset  Size  Field
 93      1     ParityShards (m)
 94      1     CurrentShard (this particle's shard index)
 95      1     Reserved (must be 0 on write)
+96      8     WriteID (uint64, random per-Put nonce shared by all shards)
 ```
 
 ### Field definitions and invariants
@@ -162,8 +164,13 @@ Offset  Size  Field
   this backend (`Split`/`Encode` per stripe via klauspost/reedsolomon). The
   magic identifies the RS footer family; `Algorithm` identifies the variant.
 - `ContentLength`, `MD5`, `SHA256`, `Mtime`, `Algorithm`, `DataShards`,
-  `ParityShards`, `StripeSize`, and `NumStripes` are expected to be consistent
-  across shard particles for the same logical object.
+  `ParityShards`, `StripeSize`, `NumStripes`, and `WriteID` are expected to be
+  consistent across shard particles for the same logical object.
+- `WriteID` is a random 64-bit nonce generated per `Put` and stamped identically
+  on every shard of that write. Reads and `heal` select the unique `WriteID`
+  group present on at least **k** shards, so a torn or mixed overwrite never
+  joins fragments from different writes (uniqueness relies on `k > m`). See
+  **`backend/rs/docs/QUORUM_TRANSACTIONS.md`**.
 - `CurrentShard` must match the shard index of the backing remote where that
   particle is stored.
 - `PayloadCRC32C` is per-shard and computed over the full particle payload
@@ -181,7 +188,7 @@ Offset  Size  Field
 - Data shard `i` stripe `t` stores `max(0, min(S, L_t − i·S))` bytes where
   `L_t` is the logical byte length of stripe `t`.
 - Logical size from list metadata (when all **k** data shards are listed):
-  `ContentLength = Σ(i=0..k−1) (listParticleSize_i − 96)`.
+  `ContentLength = Σ(i=0..k−1) (listParticleSize_i − 104)`.
 - During reconstruction/join, decoded output is trimmed back to logical stripe
   length, and total decoded length must equal `ContentLength`.
 
@@ -198,7 +205,7 @@ Offset  Size  Field
 ### Validation rules
 
 - Footer parse fails if:
-  - particle length is `< 96` bytes
+  - particle length is `< 104` bytes
   - magic is invalid
   - version is not supported
 - Particle payload extraction fails if:
@@ -229,7 +236,7 @@ Example A: tiny non-empty file (`k=2`, `m=2`, `S=32`, `ContentLength=1`)
 - `NumStripes = ceil(1/64) = 1`
 - data shard 0 payload = `1` byte; data shard 1 payload = `0` bytes
 - parity shard payloads = `32` bytes each
-- particle sizes: data0 `97`, data1 `96`, parity `128` bytes
+- particle sizes: data0 `105`, data1 `104`, parity `136` bytes
 
 Example B: exact numbers used in tests (`k=2`, `m=2`, `S=32`, `ContentLength=100`)
 
@@ -244,7 +251,7 @@ Example C: empty logical object (`ContentLength=0`)
 
 - `NumStripes = 0`
 - payload length = `0`
-- particle size = `96` bytes (footer only)
+- particle size = `104` bytes (footer only)
 
 Example D: ASCII payload view (`"Hello Black Forest"`, `k=2`, `m=1`, `S=16`)
 
@@ -253,7 +260,7 @@ Example D: ASCII payload view (`"Hello Black Forest"`, `k=2`, `m=1`, `S=16`)
 - `NumStripes = ceil(18/32) = 1`
 - data shard 0 payload = `16` bytes; data shard 1 payload = `2` bytes
 - parity shard payload = `16` bytes
-- particle sizes: data0 `112`, data1 `98`, parity `112` bytes
+- particle sizes: data0 `120`, data1 `106`, parity `120` bytes
 
 Payload bytes by shard after RS encode (in-memory stripe columns; `\0` is NUL):
 
@@ -616,6 +623,12 @@ read); `ModTimeNotSupported` backends use a footer rewrite fallback. **`Copy`** 
 return provisional destination metadata from the source object (no destination footer read).
 
 **MD5 / SHA256** hashes of logical content come from the footer when `Hash` is called.
+
+**`About`** (`rclone about`) reports **derived logical** quota, not the physical sum across shards:
+**free** and **total** are **k × the most-limited (fullest) shard**, because each shard stores
+≈ `1/k` of every logical object, so the fullest shard gates how much more you can store. It requires
+**every** shard remote to support `about` (reported only when all shards do). Small objects carry a
+fixed ~`(k+m) × footer` overhead, so for many tiny files the figure is an approximation.
 
 Implementer detail: **`backend/rs/docs/LIST_METADATA.md`**.
 
