@@ -259,16 +259,22 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		remote: remote,
 		bytes:  -1,
 	}
-	// match[4] = thread dir ("<threadID> — <Subject>"), match[5] = file name.
-	threadID := strings.SplitN(match[4], " — ", 2)[0]
-	o.threadID = threadID
-	if strings.Contains(remote, "/attachments/") {
-		// "<msgID> — <filename>"
-		o.isAttachment = true
-		o.messageID = strings.SplitN(match[5], " — ", 2)[0]
+	// Year patterns produce 6 captures: [full, year, month, day, threadDir, file].
+	// Period patterns produce 4 captures: [full, period, threadDir, file].
+	var threadDir, fileName string
+	if len(match) >= 6 {
+		threadDir = match[4]
+		fileName = match[5]
 	} else {
-		// "<msgID> — <Subject>.eml"
-		name := strings.TrimSuffix(match[5], ".eml")
+		threadDir = match[2]
+		fileName = match[3]
+	}
+	o.threadID = strings.SplitN(threadDir, " — ", 2)[0]
+	if strings.Contains(remote, "/attachments/") {
+		o.isAttachment = true
+		o.messageID = strings.SplitN(fileName, " — ", 2)[0]
+	} else {
+		name := strings.TrimSuffix(fileName, ".eml")
 		o.messageID = strings.SplitN(name, " — ", 2)[0]
 	}
 	return o, nil
@@ -296,17 +302,19 @@ func gmailDate(year, month, day string) string {
 	return fmt.Sprintf("%s/%s/%s", year, strings.TrimPrefix(month, "0"), strings.TrimPrefix(day, "0"))
 }
 
-// listThreads lists threads for a day
-func (f *Fs) listThreads(ctx context.Context, prefix, year, month, day string) (fs.DirEntries, error) {
-	start, err := time.Parse("2006-01-02", fmt.Sprintf("%s-%s-%s", year, month, day))
-	if err != nil {
-		return nil, err
-	}
-	end := start.AddDate(0, 0, 1)
-	q := fmt.Sprintf("after:%s before:%s",
-		gmailDate(year, month, day),
-		gmailDate(fmt.Sprintf("%04d", end.Year()), fmt.Sprintf("%02d", int(end.Month())), fmt.Sprintf("%02d", end.Day())))
+// gmailDateFromTime formats a time.Time as a Gmail query date (YYYY/M/D).
+func gmailDateFromTime(t time.Time) string {
+	return gmailDate(
+		fmt.Sprintf("%04d", t.Year()),
+		fmt.Sprintf("%02d", int(t.Month())),
+		fmt.Sprintf("%02d", t.Day()),
+	)
+}
 
+// listThreadsForRange queries Gmail for threads in [start, end) and returns
+// thread dirs under prefix.
+func (f *Fs) listThreadsForRange(ctx context.Context, prefix string, start, end time.Time) (fs.DirEntries, error) {
+	q := fmt.Sprintf("after:%s before:%s", gmailDateFromTime(start), gmailDateFromTime(end))
 	var entries fs.DirEntries
 	pageToken := ""
 	for {
@@ -335,6 +343,56 @@ func (f *Fs) listThreads(ctx context.Context, prefix, year, month, day string) (
 		pageToken = result.NextPageToken
 	}
 	return entries, nil
+}
+
+// listThreads lists threads for a single day.
+func (f *Fs) listThreads(ctx context.Context, prefix, year, month, day string) (fs.DirEntries, error) {
+	start, err := time.Parse("2006-01-02", fmt.Sprintf("%s-%s-%s", year, month, day))
+	if err != nil {
+		return nil, err
+	}
+	return f.listThreadsForRange(ctx, prefix, start, start.AddDate(0, 0, 1))
+}
+
+// periodRange returns the [start, end) time range for the named period.
+func periodRange(now time.Time, period string) (start, end time.Time, err error) {
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	switch period {
+	case "today":
+		return today, today.AddDate(0, 0, 1), nil
+	case "this-week":
+		// ISO week: Monday is the first day of the week.
+		offset := int(today.Weekday()) - 1
+		if offset < 0 {
+			offset = 6 // Sunday
+		}
+		monday := today.AddDate(0, 0, -offset)
+		return monday, monday.AddDate(0, 0, 7), nil
+	case "last-week":
+		offset := int(today.Weekday()) - 1
+		if offset < 0 {
+			offset = 6
+		}
+		thisMonday := today.AddDate(0, 0, -offset)
+		lastMonday := thisMonday.AddDate(0, 0, -7)
+		return lastMonday, thisMonday, nil
+	case "this-month":
+		first := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+		return first, first.AddDate(0, 1, 0), nil
+	case "this-year":
+		first := time.Date(now.Year(), 1, 1, 0, 0, 0, 0, time.UTC)
+		return first, first.AddDate(1, 0, 0), nil
+	}
+	return time.Time{}, time.Time{}, fmt.Errorf("unknown period: %s", period)
+}
+
+// listPeriodThreads lists all threads in the named time period.
+func (f *Fs) listPeriodThreads(ctx context.Context, prefix, period string) (fs.DirEntries, error) {
+	start, end, err := periodRange(time.Now(), period)
+	if err != nil {
+		return nil, err
+	}
+	return f.listThreadsForRange(ctx, prefix, start, end)
 }
 
 // threadSubject fetches a thread's first-message Subject header; on error it

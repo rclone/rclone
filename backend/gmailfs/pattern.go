@@ -17,6 +17,7 @@ import (
 // file pattern parsing
 type lister interface {
 	listThreads(ctx context.Context, prefix, year, month, day string) (fs.DirEntries, error)
+	listPeriodThreads(ctx context.Context, prefix, period string) (fs.DirEntries, error)
 	listThread(ctx context.Context, prefix, threadDir string) (fs.DirEntries, error)
 	listAttachments(ctx context.Context, prefix, threadDir string) (fs.DirEntries, error)
 	dirTime() time.Time
@@ -64,8 +65,14 @@ func (ds dirPatterns) match(root string, itemPath string, isFile bool) (match []
 	return nil, "", nil
 }
 
-// listYears returns one dir per year from startYear to the current year.
+// periods are the virtual time-range shortcut dirs shown at the root.
+var periods = []string{"today", "this-week", "last-week", "this-month", "this-year"}
+
+// listYears returns the virtual period dirs followed by one dir per year.
 func listYears(ctx context.Context, f lister, prefix string, match []string) (entries fs.DirEntries, err error) {
+	for _, p := range periods {
+		entries = append(entries, fs.NewDir(prefix+p, f.dirTime()))
+	}
 	currentYear := f.dirTime().Year()
 	for year := f.startYear(); year <= currentYear; year++ {
 		entries = append(entries, fs.NewDir(prefix+fmt.Sprint(year), f.dirTime()))
@@ -97,14 +104,44 @@ func listDays(ctx context.Context, f lister, prefix string, match []string) (ent
 	return entries, nil
 }
 
+// periodRE matches the five virtual shortcut names.
+const periodRE = `today|this-week|last-week|this-month|this-year`
+
 // patterns describes the layout of the gmail backend file system.
 //
 // NB no trailing / on paths. More-specific (attachments) patterns come before
 // the generic thread-dir pattern so they are not shadowed.
+// Period patterns (today/this-week/…) appear before the year patterns.
 var patterns = dirPatterns{
-	{ // root → years
+	{ // root → period dirs + years
 		re:        `^$`,
 		toEntries: listYears,
+	},
+	{ // period root → threads for that period
+		re: `^(` + periodRE + `)$`,
+		toEntries: func(ctx context.Context, f lister, prefix string, match []string) (fs.DirEntries, error) {
+			return f.listPeriodThreads(ctx, prefix, match[1])
+		},
+	},
+	{ // period attachments dir (before period thread dir)
+		re: `^(` + periodRE + `)/(.+)/attachments$`,
+		toEntries: func(ctx context.Context, f lister, prefix string, match []string) (fs.DirEntries, error) {
+			return f.listAttachments(ctx, prefix, match[2])
+		},
+	},
+	{ // period attachment file — match[1]=period, match[2]=threadDir, match[3]=filename
+		re:     `^(` + periodRE + `)/([^/]+)/attachments/([^/]+)$`,
+		isFile: true,
+	},
+	{ // period eml file — match[1]=period, match[2]=threadDir, match[3]=filename
+		re:     `^(` + periodRE + `)/([^/]+)/([^/]+\.eml)$`,
+		isFile: true,
+	},
+	{ // period thread dir → messages + attachments dir
+		re: `^(` + periodRE + `)/(.+)$`,
+		toEntries: func(ctx context.Context, f lister, prefix string, match []string) (fs.DirEntries, error) {
+			return f.listThread(ctx, prefix, match[2])
+		},
 	},
 	{ // year → months
 		re:        `^(\d{4})$`,
