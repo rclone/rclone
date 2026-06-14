@@ -172,6 +172,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Linode Object Storage" home="https://www.linode.com/products/object-storage/" config="/s3/#linode" >}}
 {{< provider name="Magalu" home="https://magalu.cloud/object-storage/" config="/s3/#magalu" >}}
 {{< provider name="Mail.ru Cloud" home="https://cloud.mail.ru/" config="/mailru/" >}}
+{{< provider name="MCP" home="https://modelcontextprotocol.io/" config="/mcp/" >}}
 {{< provider name="Memset Memstore" home="https://www.memset.com/cloud/storage/" config="/swift/" >}}
 {{< provider name="MEGA" home="https://mega.nz/" config="/mega/" >}}
 {{< provider name="MEGA S4" home="https://mega.io/objectstorage" config="/s3/#mega" >}}

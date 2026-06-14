@@ -70,6 +70,7 @@ docs = [
     "koofr.md",
     "linkbox.md",
     "mailru.md",
+    "mcp.md",
     "mega.md",
     "memory.md",
     "netstorage.md",
