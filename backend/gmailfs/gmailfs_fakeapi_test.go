@@ -80,7 +80,7 @@ func writeThreadGet(w http.ResponseWriter, threadID string) {
 			Messages: []api.Message{{
 				ID:           "18c0msg01",
 				ThreadID:     "18c0e1abcd1234ef",
-				InternalDate: 1705276800000,
+				InternalDate: "1705276800000",
 				Payload: &api.Part{
 					MimeType: "multipart/mixed",
 					Headers:  headers("Hello there", "18c0msg01"),
@@ -97,7 +97,7 @@ func writeThreadGet(w http.ResponseWriter, threadID string) {
 			Messages: []api.Message{{
 				ID:           "18c0noattach01",
 				ThreadID:     "18c0noattach",
-				InternalDate: 1705276800000,
+				InternalDate: "1705276800000",
 				Payload: &api.Part{
 					MimeType: "text/plain",
 					Headers:  headers("Plain", "noattach"),
@@ -113,7 +113,7 @@ func writeThreadGet(w http.ResponseWriter, threadID string) {
 func writeMessageGet(w http.ResponseWriter, messageID string) {
 	_ = json.NewEncoder(w).Encode(api.Message{
 		ID:           messageID,
-		InternalDate: 1705276800000,
+		InternalDate: "1705276800000",
 		Payload: &api.Part{
 			MimeType: "text/plain",
 			Headers: []api.Header{

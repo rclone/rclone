@@ -21,7 +21,7 @@ type Thread struct {
 type Message struct {
 	ID           string `json:"id"`
 	ThreadID     string `json:"threadId"`
-	InternalDate int64  `json:"internalDate"`
+	InternalDate string `json:"internalDate"` // epoch ms, returned as a JSON string by the Gmail API
 	Snippet      string `json:"snippet"`
 	Payload      *Part  `json:"payload"`
 }

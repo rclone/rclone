@@ -10,6 +10,8 @@ import (
 	"mime"
 	"net/http"
 	"net/url"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -21,9 +23,11 @@ import (
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/env"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
+	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
 
@@ -56,14 +60,32 @@ func init() {
 			Name:    "encoding",
 			Help:    "The encoding for the backend.",
 			Default: enc,
+		}, {
+			Name: "service_account_file",
+			Help: "Service Account Credentials JSON file path.\n\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login." + env.ShellExpandHelp,
+		}, {
+			Name:      "service_account_credentials",
+			Help:      "Service Account Credentials JSON blob.\n\nLeave blank normally. Needed only if you want use SA instead of interactive login.",
+			Sensitive: true,
+		}, {
+			Name: "impersonate",
+			Help: "Impersonate this user when using a service account.\n\nRequires domain-wide delegation.",
+		}, {
+			Name:    "env_auth",
+			Help:    "Get IAM credentials from runtime (environment variables or instance meta data if no env vars).\n\nOnly applies if service_account_file and service_account_credentials is blank.",
+			Default: false,
 		}}...),
 	})
 }
 
 // Options for the gmailfs backend
 type Options struct {
-	StartYear int                  `config:"start_year"`
-	Enc       encoder.MultiEncoder `config:"encoding"`
+	StartYear                 int                  `config:"start_year"`
+	Enc                       encoder.MultiEncoder `config:"encoding"`
+	ServiceAccountFile        string               `config:"service_account_file"`
+	ServiceAccountCredentials string               `config:"service_account_credentials"`
+	Impersonate               string               `config:"impersonate"`
+	EnvAuth                   bool                 `config:"env_auth"`
 }
 
 // Fs represents a remote Gmail filesystem
@@ -101,6 +123,50 @@ var oauthConfig = &oauthutil.Config{
 	ClientSecret: "",
 }
 
+// getServiceAccountClient creates an HTTP client from a service account credentials blob.
+func getServiceAccountClient(ctx context.Context, opt *Options, credentialsData []byte) (*http.Client, error) {
+	conf, err := google.JWTConfigFromJSON(credentialsData, oauthConfig.Scopes...)
+	if err != nil {
+		return nil, fmt.Errorf("error processing credentials: %w", err)
+	}
+	if opt.Impersonate != "" {
+		conf.Subject = opt.Impersonate
+	}
+	ctxWithClient := oauthutil.Context(ctx, fshttp.NewClient(ctx))
+	return oauth2.NewClient(ctxWithClient, conf.TokenSource(ctxWithClient)), nil
+}
+
+// createOAuthClient selects auth: service account → env → OAuth2 user flow.
+func createOAuthClient(ctx context.Context, opt *Options, name string, m configmap.Mapper) (*http.Client, error) {
+	if opt.ServiceAccountCredentials == "" && opt.ServiceAccountFile != "" {
+		loadedCreds, err := os.ReadFile(env.ShellExpand(opt.ServiceAccountFile))
+		if err != nil {
+			return nil, fmt.Errorf("error opening service account credentials file: %w", err)
+		}
+		opt.ServiceAccountCredentials = string(loadedCreds)
+	}
+	if opt.ServiceAccountCredentials != "" {
+		return getServiceAccountClient(ctx, opt, []byte(opt.ServiceAccountCredentials))
+	}
+	if opt.EnvAuth {
+		client, err := google.DefaultClient(ctx, oauthConfig.Scopes...)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create client from environment: %w", err)
+		}
+		return client, nil
+	}
+	// OAuth2 user flow — requires client_id.
+	clientID, _ := m.Get("client_id")
+	if clientID == "" {
+		return nil, fmt.Errorf("gmail: client_id is required when not using service_account_file or env_auth")
+	}
+	oAuthClient, _, err := oauthutil.NewClientWithBaseClient(ctx, name, m, oauthConfig, fshttp.NewClient(ctx))
+	if err != nil {
+		return nil, fmt.Errorf("gmail: failed to configure OAuth: %w", err)
+	}
+	return oAuthClient, nil
+}
+
 // NewFs constructs an Fs from the path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	opt := new(Options)
@@ -108,16 +174,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
-	// Require user-supplied OAuth credentials — there are no bundled defaults.
-	clientID, _ := m.Get("client_id")
-	if clientID == "" {
-		return nil, fmt.Errorf("gmail: client_id is required; supply your own OAuth2 credentials")
-	}
-
-	baseClient := fshttp.NewClient(ctx)
-	oAuthClient, _, err := oauthutil.NewClientWithBaseClient(ctx, name, m, oauthConfig, baseClient)
+	oAuthClient, err := createOAuthClient(ctx, opt, name, m)
 	if err != nil {
-		return nil, fmt.Errorf("gmail: failed to configure OAuth: %w", err)
+		return nil, err
 	}
 
 	f := &Fs{
@@ -330,7 +389,7 @@ func (f *Fs) listThread(ctx context.Context, prefix, threadDir string) (fs.DirEn
 			remote:       prefix + msg.ID + " — " + subject + ".eml",
 			threadID:     thread.ID,
 			messageID:    msg.ID,
-			internalDate: msg.InternalDate,
+			internalDate: parseInternalDate(msg.InternalDate),
 			bytes:        -1,
 		}
 		entries = append(entries, o)
@@ -360,7 +419,7 @@ func (f *Fs) listAttachments(ctx context.Context, prefix, threadDir string) (fs.
 				remote:       prefix + msg.ID + " — " + p.Filename,
 				threadID:     thread.ID,
 				messageID:    msg.ID,
-				internalDate: msg.InternalDate,
+				internalDate: parseInternalDate(msg.InternalDate),
 				isAttachment: true,
 				mimeType:     p.MimeType,
 			}
@@ -619,6 +678,12 @@ func encodeBody(raw []byte, cte string) []byte {
 		return out.Bytes()
 	}
 	return raw
+}
+
+// parseInternalDate converts a Gmail internalDate string (epoch ms) to int64.
+func parseInternalDate(s string) int64 {
+	ms, _ := strconv.ParseInt(s, 10, 64)
+	return ms
 }
 
 // shouldRetry returns whether to retry

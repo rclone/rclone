@@ -325,7 +325,7 @@ func sampleMessage() *api.Message {
 	return &api.Message{
 		ID:           "18c0msg01",
 		ThreadID:     "18c0e1abcd1234ef",
-		InternalDate: 1705276800000, // 2024-01-15T00:00:00Z in ms
+		InternalDate: "1705276800000", // 2024-01-15T00:00:00Z in ms
 		Payload: &api.Part{
 			MimeType: "multipart/mixed",
 			Headers: []api.Header{
