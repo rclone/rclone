@@ -227,3 +227,17 @@ func TestDocumentNameFields(t *testing.T) {
 	assert.Equal(t, "txt", fields["extension"].Value)
 	assert.Equal(t, "STRING", fields["extension"].Type)
 }
+
+// TestDirectoryNameFields checks the CloudDocs structure fields used to rename a
+// directory record. Directories store the full leaf as encryptedBasename and do
+// not split an extension from dotted names.
+func TestDirectoryNameFields(t *testing.T) {
+	fields := directoryNameFields("folder.with.dots")
+
+	assert.Equal(t, "bGIwGmiW/8Lo4S6RFBn4jVMGnKD/ML/SVJ1bQrpDI8Y=", fields["basehash"].Value)
+	assert.Equal(t, "BYTES", fields["basehash"].Type)
+	assert.Equal(t, "Zm9sZGVyLndpdGguZG90cw==", fields["encryptedBasename"].Value)
+	assert.Equal(t, "ENCRYPTED_BYTES", fields["encryptedBasename"].Type)
+	_, ok := fields["extension"]
+	assert.False(t, ok)
+}

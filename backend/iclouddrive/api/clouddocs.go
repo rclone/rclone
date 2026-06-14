@@ -221,12 +221,31 @@ type ckModifyRequest struct {
 // CloudDocs reuses as the structure/content record name). The current
 // recordChangeTag is fetched automatically.
 func (cd *CloudDocs) ReparentStructure(ctx context.Context, uuid, targetDirUUID, leaf string) error {
+	return cd.reparent(ctx, "documentStructure/"+strings.ToUpper(uuid), targetDirUUID, documentNameFields(leaf))
+}
+
+// ReparentDirectory moves the directory/<uuid> record under a new parent
+// directory/<targetDirUUID>, within the shared zone, and sets its visible leaf
+// name. It is the folder counterpart of ReparentStructure: a fresh directory
+// record cannot be created inside a shared sub-folder (the server rejects it for
+// lacking a PCS key), so a folder is first placed in the share root the normal way
+// which gives it a PCS key, and then re-parented here. The server re-chains PCS
+// itself because the record already carries its own key.
+func (cd *CloudDocs) ReparentDirectory(ctx context.Context, uuid, targetDirUUID, leaf string) error {
+	return cd.reparent(ctx, directoryRecordName(uuid), targetDirUUID, directoryNameFields(leaf))
+}
+
+// reparent issues the records/modify "update" that moves recordName under
+// directory/<targetDirUUID> and sets its name fields. The record must already
+// carry a PCS key (i.e. already live in the owner's zone); the server re-chains
+// PCS to the new parent. Both document-structure and directory records are
+// CloudKit recordType "structure".
+func (cd *CloudDocs) reparent(ctx context.Context, recordName, targetDirUUID string, fields map[string]ckField) error {
 	zone, err := cd.Zone(ctx)
 	if err != nil {
 		return err
 	}
-	structRec := "documentStructure/" + strings.ToUpper(uuid)
-	recs, err := cd.lookup(ctx, structRec)
+	recs, err := cd.lookup(ctx, recordName)
 	if err != nil {
 		return err
 	}
@@ -235,10 +254,9 @@ func (cd *CloudDocs) ReparentStructure(ctx context.Context, uuid, targetDirUUID,
 		if len(recs) > 0 && recs[0].Reason != "" {
 			reason = recs[0].Reason
 		}
-		return fmt.Errorf("clouddocs: could not look up %s: %s", structRec, reason)
+		return fmt.Errorf("clouddocs: could not look up %s: %s", recordName, reason)
 	}
-	dirRecordName := "directory/" + strings.ToUpper(targetDirUUID)
-	fields := documentNameFields(leaf)
+	dirRecordName := directoryRecordName(targetDirUUID)
 	fields["parent"] = ckField{
 		Type: "REFERENCE",
 		Value: ckReference{
@@ -253,7 +271,7 @@ func (cd *CloudDocs) ReparentStructure(ctx context.Context, uuid, targetDirUUID,
 		Operations: []ckOperation{{
 			OperationType: "update",
 			Record: ckRecordModify{
-				RecordName:      structRec,
+				RecordName:      recordName,
 				RecordType:      "structure",
 				RecordChangeTag: recs[0].RecordChangeTag,
 				Fields:          fields,
@@ -393,7 +411,15 @@ type ckZoneChangesResponse struct {
 // documentStructure records the file's name, and how FindFileUUID matches it.
 func documentBaseHash(leaf string) string {
 	basename, _ := documentNameParts(leaf)
-	sum := sha256.Sum256([]byte(basename))
+	return nameBaseHash(basename)
+}
+
+func directoryBaseHash(leaf string) string {
+	return nameBaseHash(leaf)
+}
+
+func nameBaseHash(name string) string {
+	sum := sha256.Sum256([]byte(name))
 	return base64.StdEncoding.EncodeToString(sum[:])
 }
 
@@ -425,6 +451,19 @@ func documentNameFields(leaf string) map[string]ckField {
 	}
 }
 
+func directoryNameFields(leaf string) map[string]ckField {
+	return map[string]ckField{
+		"basehash": {
+			Value: directoryBaseHash(leaf),
+			Type:  "BYTES",
+		},
+		"encryptedBasename": {
+			Value: base64.StdEncoding.EncodeToString([]byte(leaf)),
+			Type:  "ENCRYPTED_BYTES",
+		},
+	}
+}
+
 // FindFileUUID looks up the record UUID of the file named leaf inside the shared
 // directory directory/<dirUUID>. CloudDocs record types are not query-indexable, so
 // it enumerates the zone (changes/zone) and matches a documentStructure whose parent
@@ -447,6 +486,9 @@ func (cd *CloudDocs) findChildStructureUUID(ctx context.Context, dirUUID, leaf, 
 		return "", err
 	}
 	wantHash := documentBaseHash(leaf)
+	if recordPrefix == "directory/" {
+		wantHash = directoryBaseHash(leaf)
+	}
 	wantParent := "directory/" + strings.ToUpper(dirUUID)
 
 	syncToken := ""
