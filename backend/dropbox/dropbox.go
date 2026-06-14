@@ -268,6 +268,16 @@ folders.`,
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name: "skip_shared_folders",
+			Help: `Instructs rclone to skip all shared folders.
+
+When set, any folder that is a shared folder mount point will be
+excluded from directory listings, regardless of ownership.
+This is useful if you prefer to back up shared folders separately
+using a separate remote configured with the shared folder namespace.`,
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name: "skip_unowned_folders",
 			Help: `Instructs rclone to skip shared folders not owned by the current user.
 
@@ -354,6 +364,7 @@ type Options struct {
 	ImpersonateAdmin   string               `config:"impersonate_admin"`
 	SharedFiles        bool                 `config:"shared_files"`
 	SharedFolders      bool                 `config:"shared_folders"`
+	SkipSharedFolders  bool                 `config:"skip_shared_folders"`
 	SkipUnownedFolders bool                 `config:"skip_unowned_folders"`
 	BatchMode          string               `config:"batch_mode"`
 	BatchSize          int                  `config:"batch_size"`
@@ -1141,18 +1152,24 @@ func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) (
 			leaf := f.opt.Enc.ToStandardName(path.Base(entryPath))
 			remote := path.Join(dir, leaf)
 			if folderInfo != nil {
-				if f.opt.SkipUnownedFolders && folderInfo.SharingInfo != nil && folderInfo.SharingInfo.SharedFolderId != "" {
-					var sfMeta *sharing.SharedFolderMetadata
-					err = f.pacer.Call(func() (bool, error) {
-						var apiErr error
-						sfMeta, apiErr = f.sharing.GetFolderMetadata(sharing.NewGetMetadataArgs(folderInfo.SharingInfo.SharedFolderId))
-						return shouldRetry(ctx, apiErr)
-					})
-					if err != nil {
-						fs.Errorf(remote, "Failed to get shared folder metadata (defaulting to include): %v", err)
-					} else if sfMeta != nil && sfMeta.AccessType != nil && sfMeta.AccessType.Tag != sharing.AccessLevelOwner {
-						fs.Debugf(remote, "Skipping unowned shared folder")
+				if folderInfo.SharingInfo != nil && folderInfo.SharingInfo.SharedFolderId != "" {
+					if f.opt.SkipSharedFolders {
+						fs.Debugf(remote, "Skipping shared folder")
 						continue
+					}
+					if f.opt.SkipUnownedFolders {
+						var sfMeta *sharing.SharedFolderMetadata
+						err = f.pacer.Call(func() (bool, error) {
+							var apiErr error
+							sfMeta, apiErr = f.sharing.GetFolderMetadata(sharing.NewGetMetadataArgs(folderInfo.SharingInfo.SharedFolderId))
+							return shouldRetry(ctx, apiErr)
+						})
+						if err != nil {
+							fs.Errorf(remote, "Failed to get shared folder metadata (defaulting to include): %v", err)
+						} else if sfMeta != nil && sfMeta.AccessType != nil && sfMeta.AccessType.Tag != sharing.AccessLevelOwner {
+							fs.Debugf(remote, "Skipping unowned shared folder")
+							continue
+						}
 					}
 				}
 				d := fs.NewDir(remote, time.Time{}).SetID(folderInfo.Id)
