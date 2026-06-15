@@ -25,7 +25,6 @@ import (
 	"github.com/rclone/rclone/fs/driveletter"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/lib/terminal"
-	"golang.org/x/text/unicode/norm"
 )
 
 var (
@@ -778,7 +777,11 @@ func suppressConfirm(ctx context.Context) context.Context {
 	return newCtx
 }
 
-// checkPassword normalises and validates the password
+// checkPassword validates the password.
+//
+// It deliberately does not alter the password (e.g. by Unicode
+// normalization) - the password is stored verbatim so that what the
+// user typed is exactly what is obscured and later sent to the backend.
 func checkPassword(password string) (string, error) {
 	if !utf8.ValidString(password) {
 		return "", errors.New("password contains invalid utf8 characters")
@@ -789,8 +792,6 @@ func checkPassword(password string) (string, error) {
 	if len(password) != len(trimmedPassword) {
 		_, _ = fmt.Fprintln(os.Stderr, "Your password contains leading/trailing whitespace - in previous versions of rclone this was stripped")
 	}
-	// Normalize to reduce weird variations.
-	password = norm.NFKC.String(password)
 	if len(password) == 0 || len(trimmedPassword) == 0 {
 		return "", errors.New("no characters in password")
 	}
