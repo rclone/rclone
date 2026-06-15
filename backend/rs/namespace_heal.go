@@ -265,6 +265,16 @@ func (f *Fs) healNamespace(ctx context.Context, scope string, dryRun bool) (name
 	stats := namespaceHealStats{}
 	var details strings.Builder
 
+	cmStats, cmDetails, err := f.healCopyMoveArtifacts(ctx, scope, objSets, dryRun)
+	if err != nil {
+		return namespaceHealStats{}, "", err
+	}
+	mergeNamespaceHealStats(&stats, cmStats)
+	if cmDetails != "" {
+		details.WriteString(cmDetails)
+		details.WriteString("\n")
+	}
+
 	orphans := make([]string, 0)
 	for remote, n := range votes.objectVotes {
 		if !remoteMatchesScope(remote, scope) {
