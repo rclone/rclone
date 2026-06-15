@@ -1180,10 +1180,18 @@ func Purge(ctx context.Context, f fs.Fs, dir string) (err error) {
 // obeys includes and excludes.
 func Delete(ctx context.Context, f fs.Fs) error {
 	ci := fs.GetConfig(ctx)
+	var backupDir fs.Fs
+	if ci.BackupDir != "" || ci.Suffix != "" {
+		var err error
+		backupDir, err = BackupDir(ctx, f, f, "")
+		if err != nil {
+			return err
+		}
+	}
 	delChan := make(fs.ObjectsChan, ci.Checkers)
 	delErr := make(chan error, 1)
 	go func() {
-		delErr <- DeleteFiles(ctx, delChan)
+		delErr <- DeleteFilesWithBackupDir(ctx, delChan, backupDir)
 	}()
 	err := ListFn(ctx, f, func(o fs.Object) {
 		delChan <- o

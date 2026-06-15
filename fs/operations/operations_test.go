@@ -36,6 +36,7 @@ import (
 	_ "github.com/rclone/rclone/backend/all" // import all backends
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
@@ -421,6 +422,34 @@ func TestDelete(t *testing.T) {
 	err = operations.Delete(ctx, r.Fremote)
 	require.NoError(t, err)
 	r.CheckRemoteItems(t, file3)
+}
+
+func TestDeleteBackupDir(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	fi, err := filter.NewFilter(nil)
+	require.NoError(t, err)
+	fi.Opt.MaxSize = 60
+	ctx = filter.ReplaceConfig(ctx, fi)
+	r := fstest.NewRun(t)
+	if !operations.CanServerSideMove(r.Fremote) {
+		t.Skip("Skipping test as remote does not support server-side move or copy")
+	}
+
+	fDelete, err := cache.Get(ctx, r.FremoteName+"/delete")
+	require.NoError(t, err)
+	ci.BackupDir = r.FremoteName + "/backup"
+
+	file1 := r.WriteObject(ctx, "delete/small", "1234567890", t2)
+	file2 := r.WriteObject(ctx, "delete/medium", strings.Repeat("-", 60), t1)
+	file3 := r.WriteObject(ctx, "delete/large", strings.Repeat("A", 100), t1)
+	r.CheckRemoteItems(t, file1, file2, file3)
+
+	err = operations.Delete(ctx, fDelete)
+	require.NoError(t, err)
+	file1.Path = "backup/small"
+	file2.Path = "backup/medium"
+	r.CheckRemoteItems(t, file1, file2, file3)
 }
 
 func isChunker(f fs.Fs) bool {
