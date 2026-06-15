@@ -183,14 +183,20 @@ Columns: **Preflight** → **Execute (op set)** → **Commit** → **Rollback** 
 
 ### Copy / Move (server-side)
 
+Overwrite uses a **two-phase temp + backup + swap** so a pre-existing destination is not destroyed before new data is committed ([`move_copy.go`](../move_copy.go), [`move_copy_swap.go`](../move_copy_swap.go)):
+
+1. **Phase 1 — temps (dst untouched):** per-shard server-side `Copy` of `src → {remote}.rs-tmp-{nonce}`. **Move** uses copy-to-temp only (source particles remain until commit).
+2. **Phase 2 — swap:** per shard, back up old dst to `{remote}.rs-bak-{nonce}` when present, then install temp → dst (local: rename; S3/MinIO: `CopyObject` overwrite + delete temp). Per-shard install failure restores from backup inline; quorum rollback restores successful shards from backup.
+3. **Commit:** delete `.rs-bak-*` / `.rs-tmp-*` staging paths; for **Move**, quorum-`Remove` source particles.
+
 | Phase | Spec |
 |-------|------|
-| Preflight | Compatible `*rs.Fs` layout; destination clear (existing orphan cleanup per shard) |
-| Execute | Per-shard `Copy` / `Move` on all k+m shards |
-| Commit | `successes >= write_quorum` |
-| Rollback | `Remove` dst on copy successes; inverse move (or copy-back+remove dst) on move successes (**implemented**) |
+| Preflight | Compatible `*rs.Fs` layout; `reachable >= write_quorum` |
+| Phase 1 | Per-shard `Copy` to `.rs-tmp-*`; rollback removes temps only |
+| Phase 2 | Backup dst → `.rs-bak-*`, install temp → dst; rollback restores dst from backup |
+| Commit | `successes >= write_quorum` on each phase; staging cleanup; Move removes src |
 | Return | Provisional `*Object` with source logical size/ModTime metadata — no destination footer read ([`newObjectAfterCopyMove`](../object.go)) |
-| Heal | Particle + path skew via object heal |
+| Heal | Object heal for particle skew; [`healCopyMoveArtifacts`](../move_copy_heal.go) purges `.rs-tmp-*` and restores or purges `.rs-bak-*` after a crash mid-swap (no central transaction log — in-process rollback covers normal failures) |
 
 On ModTime-capable shard backends (local, MinIO), server-side copy/move preserves shard ModTime; returned metadata matches destination shards. S3 may not preserve ModTime on copy — see [`OPEN_QUESTIONS.md`](OPEN_QUESTIONS.md) Q14.
 
