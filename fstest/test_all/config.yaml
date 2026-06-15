@@ -172,6 +172,12 @@ backends:
  #   remote:   "TestFileFabric:"
  #   fastlist: false
  #   extratime: 2.0
+ - backend:  "gcalfs"
+   remote:   "TestGcalFs:"
+   fastlist: false
+ - backend:  "gmailfs"
+   remote:   "TestGmailFs:"
+   fastlist: false
  - backend:  "gofile"
    remote:   "TestGoFile:"
    fastlist: true

@@ -142,6 +142,8 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="FlashBlade" home="https://www.purestorage.com/products/unstructured-data-storage.html" config="/s3/#pure-storage-flashblade" >}}
 {{< provider name="FTP" home="https://en.wikipedia.org/wiki/File_Transfer_Protocol" config="/ftp/" >}}
 {{< provider name="Gofile" home="https://gofile.io/" config="/gofile/" >}}
+{{< provider name="Gmail" home="https://mail.google.com/" config="/gmailfs/" >}}
+{{< provider name="Google Calendar" home="https://calendar.google.com/" config="/gcalfs/" >}}
 {{< provider name="Google Cloud Storage" home="https://cloud.google.com/storage/" config="/googlecloudstorage/" >}}
 {{< provider name="Google Drive" home="https://www.google.com/drive/" config="/drive/" >}}
 {{< provider name="Google Photos" home="https://www.google.com/photos/about/" config="/googlephotos/" >}}
@@ -170,6 +172,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Linode Object Storage" home="https://www.linode.com/products/object-storage/" config="/s3/#linode" >}}
 {{< provider name="Magalu" home="https://magalu.cloud/object-storage/" config="/s3/#magalu" >}}
 {{< provider name="Mail.ru Cloud" home="https://cloud.mail.ru/" config="/mailru/" >}}
+{{< provider name="MCP" home="https://modelcontextprotocol.io/" config="/mcp/" >}}
 {{< provider name="Memset Memstore" home="https://www.memset.com/cloud/storage/" config="/swift/" >}}
 {{< provider name="MEGA" home="https://mega.nz/" config="/mega/" >}}
 {{< provider name="MEGA S4" home="https://mega.io/objectstorage" config="/s3/#mega" >}}
