@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 
 	"github.com/rclone/rclone/fs"
 )
@@ -17,28 +16,6 @@ func (f *Fs) compatibleLayout(other *Fs) bool {
 		return false
 	}
 	return len(f.backends) == len(other.backends)
-}
-
-// removeDestinationIfExists clears destination particles on every shard before
-// copy/move. Shard backends may still hold a file when rs NewObject cannot
-// assemble a logical object (orphan or corrupt particles); those must be
-// removed so server-side copy (e.g. local COPYFILE_EXCL) can succeed.
-func (f *Fs) removeDestinationIfExists(ctx context.Context, remote string) error {
-	var wg sync.WaitGroup
-	for i := range f.backends {
-		i := i
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			obj, err := f.backends[i].NewObject(ctx, remote)
-			if err != nil {
-				return
-			}
-			_ = obj.Remove(ctx)
-		}()
-	}
-	wg.Wait()
-	return nil
 }
 
 func copyShard(ctx context.Context, dstFs, srcFs *Fs, srcRemote, dstRemote string, shard int) error {
@@ -105,6 +82,91 @@ func rollbackMoveShard(ctx context.Context, dstFs, srcFs *Fs, srcRemote, dstRemo
 	return dstShardObj.Remove(ctx)
 }
 
+// copyMoveAtomic runs two-phase copy-to-temp + backup + swap for destination overwrite safety.
+func (f *Fs) copyMoveAtomic(ctx context.Context, op string, srcObj *Object, remote string, isMove bool) (fs.Object, error) {
+	srcFs := srcObj.fs
+	nonce, err := newCopyMoveNonce()
+	if err != nil {
+		if isMove {
+			return nil, fs.ErrorCantMove
+		}
+		return nil, fs.ErrorCantCopy
+	}
+	paths := copyMoveArtifactPaths(remote, nonce)
+
+	// Phase 1: write temps (never touch dst). Move uses copy-to-temp so src survives until commit.
+	err = f.runQuorumTransaction(ctx, quorumTransaction{
+		OpName:        op + "-temp",
+		Remote:        remote,
+		SkipPreflight: true,
+		Forward: func(opCtx context.Context, shard int) error {
+			return copyShard(opCtx, f, srcFs, srcObj.remote, paths.tmp, shard)
+		},
+		Rollback: func(opCtx context.Context, shard int) error {
+			return removeShardObject(opCtx, f.backends[shard], paths.tmp)
+		},
+		CommitError: func(result quorumOpResult, required int) error {
+			return copyMoveQuorumNotMetErr(op, remote, result, required)
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Phase 2: backup old dst, install temp -> dst.
+	err = f.runQuorumTransaction(ctx, quorumTransaction{
+		OpName:        op + "-swap",
+		Remote:        remote,
+		SkipPreflight: true,
+		Forward: func(opCtx context.Context, shard int) error {
+			return swapShardForward(opCtx, f, paths, shard)
+		},
+		Rollback: func(opCtx context.Context, shard int) error {
+			return swapShardRollback(opCtx, f, paths, shard)
+		},
+		CommitError: func(result quorumOpResult, required int) error {
+			return copyMoveQuorumNotMetErr(op, remote, result, required)
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Commit: remove staging artifacts; for Move, quorum-remove src.
+	if err := f.copyMoveCommitCleanup(ctx, paths); err != nil {
+		fs.Logf(f, "rs: %s %q commit cleanup incomplete: %v", op, remote, err)
+	}
+	if isMove {
+		err = f.runQuorumTransaction(ctx, quorumTransaction{
+			OpName:        op + "-src-remove",
+			Remote:        srcObj.remote,
+			SkipPreflight: true,
+			Forward: func(opCtx context.Context, shard int) error {
+				return removeShardObject(opCtx, srcFs.backends[shard], srcObj.remote)
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+	return f.newObjectAfterCopyMove(ctx, remote, srcObj), nil
+}
+
+func (f *Fs) copyMoveCommitCleanup(ctx context.Context, paths copyMovePaths) error {
+	return f.runQuorumTransaction(ctx, quorumTransaction{
+		OpName:        "copymove-cleanup",
+		Remote:        paths.remote,
+		SkipPreflight: true,
+		Forward: func(opCtx context.Context, shard int) error {
+			b := f.backends[shard]
+			if err := removeShardObject(opCtx, b, paths.bak); err != nil {
+				return err
+			}
+			return removeShardObject(opCtx, b, paths.tmp)
+		},
+	})
+}
+
 // Copy src to this remote using shard-aligned server-side operations where possible.
 //
 // If it isn't possible then return fs.ErrorCantCopy.
@@ -121,24 +183,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if _, err := f.preflightReachableShards(ctx); err != nil {
 		return nil, err
 	}
-	if err := f.removeDestinationIfExists(ctx, remote); err != nil {
-		return nil, err
-	}
-	err := f.runQuorumTransaction(ctx, quorumTransaction{
-		OpName:        "copy",
-		Remote:        remote,
-		SkipPreflight: true,
-		Forward: func(opCtx context.Context, shard int) error {
-			return copyShard(opCtx, f, srcFs, srcObj.remote, remote, shard)
-		},
-		Rollback: func(opCtx context.Context, shard int) error {
-			return removeShardObject(opCtx, f.backends[shard], remote)
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-	return f.newObjectAfterCopyMove(ctx, remote, srcObj), nil
+	return f.copyMoveAtomic(ctx, "copy", srcObj, remote, false)
 }
 
 // Move src to this remote using shard-aligned server-side operations where possible.
@@ -157,24 +202,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if _, err := f.preflightReachableShards(ctx); err != nil {
 		return nil, err
 	}
-	if err := f.removeDestinationIfExists(ctx, remote); err != nil {
-		return nil, err
-	}
-	err := f.runQuorumTransaction(ctx, quorumTransaction{
-		OpName:        "move",
-		Remote:        remote,
-		SkipPreflight: true,
-		Forward: func(opCtx context.Context, shard int) error {
-			return moveShard(opCtx, f, srcFs, srcObj.remote, remote, shard)
-		},
-		Rollback: func(opCtx context.Context, shard int) error {
-			return rollbackMoveShard(opCtx, f, srcFs, srcObj.remote, remote, shard)
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-	return f.newObjectAfterCopyMove(ctx, remote, srcObj), nil
+	return f.copyMoveAtomic(ctx, "move", srcObj, remote, true)
 }
 
 // DirMove moves srcRemote from src to dstRemote with shard-aligned server-side operations.

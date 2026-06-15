@@ -642,6 +642,7 @@ Range reads are supported on logical objects: `Object.Open` honors `fs.RangeOpti
   same-layout server-side **`Copy`/`Move`/`DirMove`**; success means quorum
   reached, not necessarily all shards converged immediately.
 - For `Move`/`Copy`/`DirMove` on quorum, temporary skew can exist (for example source remnants on minority shards) until repaired.
+- **Copy/Move overwrite** uses per-shard staging (`.rs-tmp-*` / `.rs-bak-*`) so an existing destination is not deleted before new particles exist; in-process rollback restores from backup on failure. A **process crash mid-swap** is converged by **`backend heal`** (no central transaction log).
 - Use `rclone backend degraded` to inspect skew and `rclone backend heal` to converge shard state.
 
 ## Known limitations (short)

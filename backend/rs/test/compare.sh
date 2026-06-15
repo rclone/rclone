@@ -519,6 +519,12 @@ run_move_copy_test() {
   rs_rclone deletefile "${RS_REMOTE}:${moved_file}" 2>/dev/null || true
   rs_rclone purge "${RS_REMOTE}:${src_dir}" 2>/dev/null || true
   rs_rclone purge "${RS_REMOTE}:${dst_dir}" 2>/dev/null || true
+  local existing_file="shell-existing-dst.txt"
+  local overwrite_src="shell-overwrite-src.txt"
+  local payload_a="rs-shell-existing-payload"
+  local payload_b="rs-shell-overwrite-payload"
+  rs_rclone deletefile "${RS_REMOTE}:${existing_file}" 2>/dev/null || true
+  rs_rclone deletefile "${RS_REMOTE}:${overwrite_src}" 2>/dev/null || true
 
   log_info "test:${test_case}" "create ${src_file}"
   printf '%s' "${payload}" | rs_rclone rcat "${RS_REMOTE}:${src_file}"
@@ -552,6 +558,38 @@ run_move_copy_test() {
   if [[ "${got}" != "${payload}" ]]; then
     log_fail "test:${test_case}" "moveto content mismatch"
     return 1
+  fi
+
+  log_info "test:${test_case}" "copyto overwrite ${overwrite_src} -> ${existing_file}"
+  printf '%s' "${payload_a}" | rs_rclone rcat "${RS_REMOTE}:${existing_file}"
+  printf '%s' "${payload_b}" | rs_rclone rcat "${RS_REMOTE}:${overwrite_src}"
+  rs_rclone copyto "${RS_REMOTE}:${overwrite_src}" "${RS_REMOTE}:${existing_file}"
+  got=$(rs_rclone cat "${RS_REMOTE}:${existing_file}")
+  if [[ "${got}" != "${payload_b}" ]]; then
+    log_fail "test:${test_case}" "copyto overwrite content mismatch"
+    return 1
+  fi
+
+  log_info "test:${test_case}" "moveto overwrite ${overwrite_src} -> ${existing_file}"
+  printf '%s' "${payload_a}" | rs_rclone rcat "${RS_REMOTE}:${existing_file}"
+  printf '%s' "${payload_b}" | rs_rclone rcat "${RS_REMOTE}:${overwrite_src}"
+  rs_rclone moveto "${RS_REMOTE}:${overwrite_src}" "${RS_REMOTE}:${existing_file}"
+  got=$(rs_rclone cat "${RS_REMOTE}:${existing_file}")
+  if [[ "${got}" != "${payload_b}" ]]; then
+    log_fail "test:${test_case}" "moveto overwrite content mismatch"
+    return 1
+  fi
+  set +e
+  rs_rclone cat "${RS_REMOTE}:${overwrite_src}" >/dev/null 2>&1
+  rc=$?
+  set -e
+  if [[ "${rc}" -eq 0 ]]; then
+    if [[ "${STORAGE_TYPE}" == "minio" ]]; then
+      log_info "test:${test_case}" "overwrite source still readable on MinIO (accepted under quorum semantics)"
+    else
+      log_fail "test:${test_case}" "overwrite source still present after moveto"
+      return 1
+    fi
   fi
 
   log_info "test:${test_case}" "directory move ${src_dir} -> ${dst_dir}"
