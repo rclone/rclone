@@ -257,7 +257,8 @@ func TestClientWithFreshCookieJar_JarIsolation(t *testing.T) {
 	assert.Empty(t, base.Jar.Cookies(u))
 }
 
-func TestNewClientCustom_CookieJarIsolation(t *testing.T) {
+func TestNewClientCustom_CookieJarSharedByDefault(t *testing.T) {
+	t.Cleanup(ResetCookieJars)
 	ctx := context.Background()
 	ci := fs.GetConfig(ctx)
 	t.Cleanup(func() { ci.Cookie = false })
@@ -268,5 +269,45 @@ func TestNewClientCustom_CookieJarIsolation(t *testing.T) {
 
 	require.NotNil(t, c1.Jar)
 	require.NotNil(t, c2.Jar)
-	assert.NotSame(t, c1.Jar, c2.Jar)
+	assert.Same(t, c1.Jar, c2.Jar)
+}
+
+func TestNewClientCustom_NamedJarShared(t *testing.T) {
+	t.Cleanup(ResetCookieJars)
+	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
+	t.Cleanup(func() { ci.Cookie = false; ci.CookieJarName = "" })
+	ci.Cookie = true
+	ci.CookieJarName = "test-shared"
+
+	c1 := NewClientCustom(ctx, nil)
+	c2 := NewClientCustom(ctx, nil)
+
+	require.NotNil(t, c1.Jar)
+	assert.Same(t, c1.Jar, c2.Jar)
+}
+
+func TestNewClientCustom_NamedJarIsolated(t *testing.T) {
+	t.Cleanup(ResetCookieJars)
+	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
+	t.Cleanup(func() { ci.Cookie = false; ci.CookieJarName = "" })
+	ci.Cookie = true
+
+	// default (unnamed) jar
+	ci.CookieJarName = ""
+	c0 := NewClientCustom(ctx, nil)
+
+	ci.CookieJarName = "jar-a"
+	ca := NewClientCustom(ctx, nil)
+
+	ci.CookieJarName = "jar-b"
+	cb := NewClientCustom(ctx, nil)
+
+	require.NotNil(t, c0.Jar)
+	require.NotNil(t, ca.Jar)
+	require.NotNil(t, cb.Jar)
+	assert.NotSame(t, c0.Jar, ca.Jar)
+	assert.NotSame(t, c0.Jar, cb.Jar)
+	assert.NotSame(t, ca.Jar, cb.Jar)
 }

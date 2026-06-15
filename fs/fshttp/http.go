@@ -39,6 +39,9 @@ var (
 	noTransport = new(sync.Once)
 	logMutex    sync.Mutex
 
+	cookieJarsMu sync.RWMutex
+	cookieJars   = map[string]http.CookieJar{}
+
 	// UnixSocketConfig describes the option to configure the path to a unix domain socket to connect to
 	UnixSocketConfig = fs.Option{
 		Name:     "unix_socket",
@@ -52,6 +55,32 @@ var (
 // Should only be used for testing.
 func ResetTransport() {
 	noTransport = new(sync.Once)
+}
+
+// ResetCookieJars clears the named cookie jar registry.
+// Should only be used for testing.
+func ResetCookieJars() {
+	cookieJarsMu.Lock()
+	cookieJars = map[string]http.CookieJar{}
+	cookieJarsMu.Unlock()
+}
+
+// getOrCreateNamedJar returns the shared cookie jar for the given name,
+// creating it if it does not yet exist.
+func getOrCreateNamedJar(name string) http.CookieJar {
+	cookieJarsMu.RLock()
+	jar, ok := cookieJars[name]
+	cookieJarsMu.RUnlock()
+	if ok {
+		return jar
+	}
+	cookieJarsMu.Lock()
+	defer cookieJarsMu.Unlock()
+	if jar, ok = cookieJars[name]; !ok {
+		jar, _ = cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
+		cookieJars[name] = jar
+	}
+	return jar
 }
 
 // LoadKeyPair loads a TLS certificate and private key from PEM-encoded files,
@@ -314,8 +343,7 @@ func NewClientCustom(ctx context.Context, customize func(*http.Transport)) *http
 		Transport: NewTransportCustom(ctx, customize),
 	}
 	if ci.Cookie {
-		jar, _ := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
-		client.Jar = jar
+		client.Jar = getOrCreateNamedJar(ci.CookieJarName)
 	}
 	return client
 }

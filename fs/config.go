@@ -411,7 +411,12 @@ var ConfigOptionsInfo = Options{{
 }, {
 	Name:    "use_cookies",
 	Default: false,
-	Help:    "Enable session cookiejar. Each client gets its own isolated cookie jar. Cookies are not persisted between rclone runs.",
+	Help:    "Enable session cookiejar. All connections share a single cookie jar by default. Use --cookie-jar-name to create separate named jars. Cookies are not persisted between rclone runs.",
+	Groups:  "Networking",
+}, {
+	Name:    "cookie_jar_name",
+	Default: "",
+	Help:    "Share a cookie jar with all other connections using the same name. Requires --use-cookies.",
 	Groups:  "Networking",
 }, {
 	Name:    "use_mmap",
@@ -645,6 +650,7 @@ type ConfigInfo struct {
 	Progress                   bool              `config:"progress"`
 	ProgressTerminalTitle      bool              `config:"progress_terminal_title"`
 	Cookie                     bool              `config:"use_cookies"`
+	CookieJarName              string            `config:"cookie_jar_name"`
 	UseMmap                    bool              `config:"use_mmap"`
 	MaxBufferMemory            SizeSuffix        `config:"max_buffer_memory"`
 	CaCert                     []string          `config:"ca_cert"`     // Client Side CA
