@@ -2993,7 +2993,11 @@ On Windows, rclone uses [VSS](https://learn.microsoft.com/en-us/windows-server/s
 to create and manage snapshots. This option serves as a replacement for
 [using rclone with an external script](https://github.com/rclone/rclone/wiki/How-to-enable-VSS-for-rclone)
 to achieve the same behavior. To use VSS, rclone must be run with administrator
-privileges.
+privileges. In case rclone cannot clean up snapshots after use (e.g. if the
+operation is stopped early or crashes), the user should remove them manually to
+avoid accumulating unused snapshots. For more information and examples on
+managing VSS snapshots, see the `vssadmin delete shadows` [documentation](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/vssadmin-delete-shadows)
+and the `vssadmin list shadows` [documentation](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/vssadmin-list-shadows).
 
 Other platforms are not currently supported.
 
