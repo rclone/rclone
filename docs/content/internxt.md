@@ -62,7 +62,7 @@ d) Delete this remote
 y/e/d> y
 ```
 
-If you have two-factor authentication enabled on your Internxt account, you will be prompted to enter the code during login.
+If you have two-factor authentication enabled on your Internxt account, you will be prompted to enter the secret (for automatic code generation) during login. If not provided, you will be prompted to enter the code for a one time login.
 
 ### Security Considerations
 

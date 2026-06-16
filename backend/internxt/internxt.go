@@ -20,6 +20,7 @@ import (
 	"github.com/internxt/rclone-adapter/files"
 	"github.com/internxt/rclone-adapter/folders"
 	"github.com/internxt/rclone-adapter/users"
+	"github.com/pquerna/otp/totp"
 	"github.com/rclone/rclone/fs"
 	rclone_config "github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -164,10 +165,18 @@ func Config(ctx context.Context, name string, m configmap.Mapper, configIn fs.Co
 		}
 
 		if loginResp.TFA {
-			return fs.ConfigInput("2fa", "config_2fa", "Two-factor authentication code")
+			return fs.ConfigInputOptional("2fa_secret", "config_2fa_secret", "Two-factor authentication secret (TOTP seed, also known as authenticator key).\n\nCaution: this is the secret key used to generate your 2FA codes.")
 		}
 
 		// No 2FA required, do login directly
+		return fs.ConfigGoto("login")
+
+	case "2fa_secret":
+		twoFASecret := configIn.Result
+		if twoFASecret == "" {
+			return fs.ConfigInput("2fa", "config_2fa", "Two-factor authentication code")
+		}
+		m.Set("2fa_secret", obscure.MustObscure(twoFASecret))
 		return fs.ConfigGoto("login")
 
 	case "2fa":
@@ -180,6 +189,12 @@ func Config(ctx context.Context, name string, m configmap.Mapper, configIn fs.Co
 
 	case "login":
 		twoFA, _ := m.Get("2fa_code")
+		twoFAObsecuredSecret, _ := m.Get("2fa_secret")
+		twoFASecret, _ := obscure.Reveal(twoFAObsecuredSecret)
+
+		if twoFASecret != "" {
+			twoFA, _ = totp.GenerateCode(twoFASecret, time.Now())
+		}
 
 		loginResp, err := auth.DoLogin(ctx, cfg, email, pass, twoFA)
 		if err != nil {
@@ -213,6 +228,7 @@ type Options struct {
 	Email              string               `config:"email"`
 	Pass               string               `config:"pass"`
 	TwoFA              string               `config:"2fa"`
+	TwoFASecret        string               `config:"2fa_secret"` // The TOTP seed/secret
 	Mnemonic           string               `config:"mnemonic"`
 	SkipHashValidation bool                 `config:"skip_hash_validation"`
 	UploadCutoff       fs.SizeSuffix        `config:"upload_cutoff"`

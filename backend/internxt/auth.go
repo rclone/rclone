@@ -14,6 +14,7 @@ import (
 	internxtauth "github.com/internxt/rclone-adapter/auth"
 	internxtconfig "github.com/internxt/rclone-adapter/config"
 	sdkerrors "github.com/internxt/rclone-adapter/errors"
+	"github.com/pquerna/otp/totp"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
@@ -152,6 +153,8 @@ func refreshJWTToken(ctx context.Context, name string, m configmap.Mapper) error
 // Returns the AccessResponse on success, or an error if 2FA is required or login fails.
 func (f *Fs) reLogin(ctx context.Context) (*internxtauth.AccessResponse, error) {
 	password, err := obscure.Reveal(f.opt.Pass)
+	twoFASecret, _ := obscure.Reveal(f.opt.TwoFASecret)
+
 	if err != nil {
 		return nil, fmt.Errorf("couldn't decrypt password: %w", err)
 	}
@@ -164,11 +167,17 @@ func (f *Fs) reLogin(ctx context.Context) (*internxtauth.AccessResponse, error) 
 		return nil, fmt.Errorf("re-login check failed: %w", err)
 	}
 
-	if loginResp.TFA {
+	if loginResp.TFA && twoFASecret == "" {
 		return nil, errors.New("account requires 2FA - please run: rclone config reconnect " + f.name + ":")
 	}
 
-	resp, err := internxtauth.DoLogin(ctx, cfg, f.opt.Email, password, "")
+	otpCode := ""
+	if loginResp.TFA && twoFASecret != "" {
+		tfa, _ := totp.GenerateCode(twoFASecret, time.Now())
+		otpCode = tfa
+	}
+
+	resp, err := internxtauth.DoLogin(ctx, cfg, f.opt.Email, password, otpCode)
 	if err != nil {
 		return nil, fmt.Errorf("re-login failed: %w", err)
 	}
