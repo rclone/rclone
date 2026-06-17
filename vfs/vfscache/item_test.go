@@ -4,11 +4,13 @@ package vfscache
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
 	"os"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -698,4 +700,99 @@ func TestItemHandleCachingReset(t *testing.T) {
 	rr, _, err = item.Reset()
 	require.NoError(t, err)
 	assert.Equal(t, RemovedNotInUse, rr)
+}
+
+// errNewObjectFs wraps an fs.Fs and, once armed, makes NewObject return a fixed
+// error. Used to drive the unconfirmed-remote branch of _checkObject. The arm
+// flag is atomic so the cache's background goroutines (which may call through
+// fremote) don't race with the test arming it; the wrapper is installed at
+// construction so c.fremote is never reassigned.
+type errNewObjectFs struct {
+	fs.Fs
+	armed atomic.Bool
+	err   error
+}
+
+func (f *errNewObjectFs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
+	if f.armed.Load() {
+		return nil, f.err
+	}
+	return f.Fs.NewObject(ctx, remote)
+}
+
+// newErrFsItemTestCache builds a cache whose remote is wrapped so NewObject can
+// be made to return lookupErr on demand (after rfs.armed is set).
+func newErrFsItemTestCache(t *testing.T, lookupErr error) (r *fstest.Run, c *Cache, rfs *errNewObjectFs) {
+	opt := vfscommon.Opt
+	opt.CachePollInterval = 0
+	opt.WriteBack = 0
+	opt.HandleCaching = 0
+
+	r = fstest.NewRun(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	rfs = &errNewObjectFs{Fs: r.Fremote, err: lookupErr}
+	avInfos = nil
+	c, err := New(ctx, rfs, &opt, addVirtual)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		rfs.armed.Store(false)
+		require.NoError(t, c.CleanUp())
+		cancel()
+	})
+	return r, c, rfs
+}
+
+// populate writes a clean cached item from the real remote (Open(obj) uses the
+// passed object, so it does not route through the wrapper's NewObject).
+func populateCleanItem(t *testing.T, r *fstest.Run, c *Cache) (contents string, item *Item) {
+	contents, obj, item := newFile(t, r, c, "existing")
+	require.NoError(t, item.Open(obj))
+	buf := make([]byte, 10)
+	_, err := item.ReadAt(buf, 10)
+	require.NoError(t, err)
+	require.NoError(t, item.Close(nil))
+	return contents, item
+}
+
+// TestItemCheckObjectUnconfirmedKept: when the remote lookup fails with a
+// transient (non-NotFound) error, a clean cached file must be kept, not
+// discarded - the data is still readable and its fingerprint matched when
+// written.
+func TestItemCheckObjectUnconfirmedKept(t *testing.T) {
+	r, c, rfs := newErrFsItemTestCache(t, errors.New("connection refused"))
+	contents, item := populateCleanItem(t, r, c)
+
+	rfs.armed.Store(true) // NewObject now returns a transient error
+
+	require.NoError(t, item.Open(nil))
+	size, err := item.GetSize()
+	require.NoError(t, err)
+	assert.Equal(t, int64(len(contents)), size) // kept, not truncated to 0
+
+	fi, err := os.Stat(item.c.toOSPath(item.name))
+	require.NoError(t, err)
+	assert.Greater(t, fi.Size(), int64(0)) // cache file kept
+
+	require.NoError(t, item.Close(nil))
+}
+
+// TestItemCheckObjectConfirmedDeleted: when the remote confirms the object is
+// gone (ErrorObjectNotFound), the clean cached file is still discarded -
+// deletion propagation is preserved.
+func TestItemCheckObjectConfirmedDeleted(t *testing.T) {
+	r, c, rfs := newErrFsItemTestCache(t, fs.ErrorObjectNotFound)
+	_, item := populateCleanItem(t, r, c)
+
+	rfs.armed.Store(true) // NewObject now returns ErrorObjectNotFound
+
+	require.NoError(t, item.Open(nil))
+	size, err := item.GetSize()
+	require.NoError(t, err)
+	assert.Equal(t, int64(0), size) // discarded
+
+	fi, err := os.Stat(item.c.toOSPath(item.name))
+	require.NoError(t, err)
+	assert.Equal(t, int64(0), fi.Size())
+
+	require.NoError(t, item.Close(nil))
 }
