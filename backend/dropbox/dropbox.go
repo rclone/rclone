@@ -292,6 +292,8 @@ For standard team members, these folders evaluate as 'unowned'
 Team Folders, do not use this flag or run the backup using a Team Admin
 account.
 
+If --dropbox-skip-shared-folders is also enabled, this flag has no effect.
+
 This makes an extra API call per shared folder mount point.`,
 			Default:  false,
 			Advanced: true,
