@@ -657,19 +657,48 @@ func (s *Session) Validate2FACode(ctx context.Context, code string) error {
 		ExtraHeaders: s.GetAuthHeaders(map[string]string{}),
 		RootURL:      authEndpoint,
 		Body:         body,
-		NoResponse:   true,
+		IgnoreStatus: true,
 	}
 
-	_, err = s.Request(ctx, opts, nil, nil)
-	if err == nil {
+	resp, err := s.srv.Call(ctx, &opts)
+	if err != nil {
+		return fmt.Errorf("validate2FACode failed: %w", err)
+	}
+	s.mu.Lock()
+	s.extractHeaders(resp)
+	s.mu.Unlock()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("validate2FACode read response: %w", err)
+	}
+
+	if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
 		if err := s.TrustSession(ctx); err != nil {
 			return err
 		}
-
 		return nil
 	}
 
-	return fmt.Errorf("validate2FACode failed: %w", err)
+	if resp.StatusCode == http.StatusConflict {
+		var result struct {
+			SecurityCode struct {
+				Code  string `json:"code"`
+				Valid bool   `json:"valid"`
+			} `json:"securityCode"`
+		}
+		if err := json.Unmarshal(respBody, &result); err == nil && result.SecurityCode.Valid {
+			if err := s.TrustSession(ctx); err != nil {
+				return err
+			}
+			return nil
+		}
+	}
+
+	return fmt.Errorf("validate2FACode failed: %s: %s", resp.Status, respBody)
 }
 
 // TrustedPhoneNumber represents a phone number that can receive SMS verification codes
@@ -786,16 +815,47 @@ func (s *Session) ValidateSMSCode(ctx context.Context, code string, phoneID int,
 		ExtraHeaders: s.GetAuthHeaders(map[string]string{}),
 		RootURL:      authEndpoint,
 		Body:         body,
-		NoResponse:   true,
+		IgnoreStatus: true,
 	}
-	_, err = s.Request(ctx, opts, nil, nil)
-	if err == nil {
+	resp, err := s.srv.Call(ctx, &opts)
+	if err != nil {
+		return fmt.Errorf("validateSMSCode: %w", err)
+	}
+	s.mu.Lock()
+	s.extractHeaders(resp)
+	s.mu.Unlock()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("validateSMSCode read response: %w", err)
+	}
+
+	if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
 		if err := s.TrustSession(ctx); err != nil {
 			return err
 		}
 		return nil
 	}
-	return fmt.Errorf("validateSMSCode: %w", err)
+
+	if resp.StatusCode == http.StatusConflict {
+		var result struct {
+			SecurityCode struct {
+				Code  string `json:"code"`
+				Valid bool   `json:"valid"`
+			} `json:"securityCode"`
+		}
+		if err := json.Unmarshal(respBody, &result); err == nil && result.SecurityCode.Valid {
+			if err := s.TrustSession(ctx); err != nil {
+				return err
+			}
+			return nil
+		}
+	}
+
+	return fmt.Errorf("validateSMSCode: %s: %s", resp.Status, respBody)
 }
 
 // TrustSession trusts the session
