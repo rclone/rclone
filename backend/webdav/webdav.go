@@ -513,6 +513,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	f.srv = rest.NewClient(client).SetRoot(u.String())
 
+	f.srv.SetHeader("Content-Type", `application/xml; charset="utf-8"`)
+
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
 	}).Fill(ctx, f)
