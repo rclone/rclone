@@ -6,9 +6,11 @@ import (
 	"context"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"syscall"
 	"testing"
 
+	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/assert"
@@ -37,4 +39,42 @@ func TestRmdirWindows(t *testing.T) {
 
 	err = operations.Rmdir(context.Background(), r.Flocal, "testdir")
 	assert.NoError(t, err)
+}
+
+func TestWrapWindowsLongPathErrorWithNoUNC(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skipf("windows only")
+	}
+	ctx := context.Background()
+	fInterface, err := NewFs(ctx, "local", t.TempDir(), configmap.Simple{
+		"nounc": "true",
+	})
+	require.NoError(t, err)
+	f := fInterface.(*Fs)
+
+	remote := strings.Repeat("longdir/", 40) + "file.txt"
+	localPath := f.localPath(remote)
+	require.GreaterOrEqual(t, windowsPathLength(localPath), windowsMaxPath)
+
+	err = f.wrapPathLengthError(localPath, syscall.ERROR_PATH_NOT_FOUND)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, errWindowsLongPath)
+	assert.ErrorIs(t, err, syscall.ERROR_PATH_NOT_FOUND)
+	assert.Contains(t, err.Error(), "--local-nounc")
+}
+
+func TestWrapWindowsLongPathErrorIgnoresShortPath(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skipf("windows only")
+	}
+	ctx := context.Background()
+	fInterface, err := NewFs(ctx, "local", t.TempDir(), configmap.Simple{
+		"nounc": "true",
+	})
+	require.NoError(t, err)
+	f := fInterface.(*Fs)
+
+	err = f.wrapPathLengthError(f.localPath("missing.txt"), syscall.ERROR_PATH_NOT_FOUND)
+	require.Error(t, err)
+	assert.NotErrorIs(t, err, errWindowsLongPath)
 }
