@@ -1,29 +1,53 @@
 <!--
-Thank you very much for contributing code or documentation to rclone! Please
-fill out the following questions to make it easier for us to review your
-changes.
+Thank you for contributing to rclone!
 
-You do not need to check all the boxes below all at once, feel free to take
-your time and add more commits. If you're done and ready for review, please
-check the last box.
+Please discuss anything more than a trivial fix in an issue FIRST - see the
+"Linked issue" section below. Then fill in the questions to help us review.
 -->
 
-#### What is the purpose of this change?
+#### What does this change do?
+
+<!-- Describe the change here. -->
+
+#### Linked issue
 
 <!--
-Describe the changes here
+Put `Fixes #1234` here if this closes an issue, or `#1234` to link without closing.
+
+IMPORTANT: Anything beyond a trivial fix (typo, doc tweak, small obvious bug fix)
+should be discussed and agreed in an issue BEFORE you open a pull request.
+Pull requests for larger changes that have not been discussed in an issue first
+may be closed. This saves everyone's time if the change needs a different approach
+or isn't a good fit.
 -->
 
-#### Was the change discussed in an issue or in the forum before?
+Fixes #
+
+#### For new or changed backends
 
 <!--
-Link issues and relevant forum posts here.
+Backend pull requests are often sent without the integration tests having been run.
+We cannot merge a backend change until it passes the integration tests.
+
+To be merged, a backend change REQUIRES:
+  1. A clean run of `go run ./fstest/test_all -backends <remote>` (summarise the
+     result below or paste a screenshot of the test_all output in the web browser).
+  2. A test account so the maintainers can run the integration tests daily against
+     the backend on the integration test server.
+
+If the tests aren't quite passing yet and you need help getting them
+to pass, then submit the PR and we can help getting you over the line.
+
+See https://github.com/rclone/rclone/blob/master/CONTRIBUTING.md#writing-a-new-backend
+and https://github.com/rclone/rclone/blob/master/CONTRIBUTING.md#integration-tests
 -->
 
 #### Checklist
 
+- [ ] This change is trivial **OR** it has been discussed and agreed in the linked issue.
 - [ ] I have read the [contribution guidelines](https://github.com/rclone/rclone/blob/master/CONTRIBUTING.md#submitting-a-new-feature-or-bug-fix).
 - [ ] I have added tests for all changes in this PR if appropriate.
 - [ ] I have added documentation for the changes if appropriate.
 - [ ] All commit messages are in [house style](https://github.com/rclone/rclone/blob/master/CONTRIBUTING.md#commit-messages).
-- [ ] I'm done, this Pull Request is ready for review :-)
+- [ ] **(Backend changes only)** `test_all` passes for this backend and I can provide a test account for the integration tester - see [CONTRIBUTING.md](https://github.com/rclone/rclone/blob/master/CONTRIBUTING.md#integration-tests).
+- [ ] This Pull Request is ready for review.
