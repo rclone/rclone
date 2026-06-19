@@ -1,0 +1,68 @@
+name: Feature request
+description: Suggest a new feature or enhancement for rclone
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        So you've got an idea to improve rclone? We love that - we've already
+        incorporated hundreds of ideas from contributors!
+
+        Please **search first**: your idea may already exist in the latest
+        [beta or stable](https://rclone.org/commands/rclone_selfupdate/), or already
+        be requested. It is often worth [discussing on the forum](https://forum.rclone.org/)
+        to refine the idea or checking to see if rclone can do it already before filing it here.
+  - type: checkboxes
+    id: acknowledgements
+    attributes:
+      label: Before you start
+      options:
+        - label: I have searched the [forum](https://forum.rclone.org/) and the existing issues and this hasn't already been requested.
+          required: true
+        - label: I have checked the latest beta and this feature doesn't already exist.
+          required: true
+  - type: input
+    id: forum-url
+    attributes:
+      label: Associated forum post URL
+      description: If you discussed this on the forum first (encouraged), paste the link here.
+      placeholder: https://forum.rclone.org/t/...
+    validations:
+      required: false
+  - type: textarea
+    id: version
+    attributes:
+      label: rclone version
+      description: The full output of `rclone version`, not just the version number.
+      placeholder: |
+        rclone v1.75.0
+        - os/version: ubuntu 24.04 (64 bit)
+        - os/kernel: 6.8.0-111-generic (x86_64)
+        - os/type: linux
+        - os/arch: amd64
+        - go/version: go1.26.4
+        - go/linking: dynamic
+        - go/tags: none
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: Describe the use case and what is difficult or impossible today.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: How do you think rclone should be changed to solve that?
+    validations:
+      required: true
+  - type: checkboxes
+    id: involvement
+    attributes:
+      label: Getting involved
+      description: Features are much more likely to happen if someone helps make them.
+      options:
+        - label: I'm willing to help implement, test or fund this feature.
+          required: false
