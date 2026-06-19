@@ -352,6 +352,81 @@ func TestExecuteJobWithFilter(t *testing.T) {
 	assert.Equal(t, true, called)
 }
 
+func TestExecuteJobWithFlatConfig(t *testing.T) {
+	ctx := context.Background()
+	jobID.Store(0)
+	called := false
+	jobFn := func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		ci := fs.GetConfig(ctx)
+		assert.Equal(t, 42*fs.Mebi, ci.BufferSize)
+		called = true
+		return nil, nil
+	}
+	_, _, err := NewJob(ctx, jobFn, rc.Params{
+		"buffer_size": "42M",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, true, called)
+
+	// Test that legacy _config overrides flat parameter
+	jobID.Store(0)
+	called = false
+	jobFn2 := func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		ci := fs.GetConfig(ctx)
+		assert.Equal(t, 10*fs.Mebi, ci.BufferSize)
+		called = true
+		return nil, nil
+	}
+	_, _, err = NewJob(ctx, jobFn2, rc.Params{
+		"buffer_size": "42M",
+		"_config": rc.Params{
+			"BufferSize": "10M",
+		},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, true, called)
+}
+
+func TestExecuteJobWithFlatFilter(t *testing.T) {
+	ctx := context.Background()
+	called := false
+	jobID.Store(0)
+	jobFn := func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		fi := filter.GetConfig(ctx)
+		assert.Equal(t, fs.SizeSuffix(1024), fi.Opt.MaxSize)
+		assert.Equal(t, []string{"a", "b", "c"}, fi.Opt.IncludeRule)
+		called = true
+		return nil, nil
+	}
+	_, _, err := NewJob(ctx, jobFn, rc.Params{
+		"include":  []string{"a", "b", "c"},
+		"max_size": "1k",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, true, called)
+
+	// Test that legacy _filter overrides flat parameter
+	called = false
+	jobID.Store(0)
+	jobFn2 := func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		fi := filter.GetConfig(ctx)
+		assert.Equal(t, fs.SizeSuffix(2048), fi.Opt.MaxSize)
+		assert.Equal(t, []string{"x", "y"}, fi.Opt.IncludeRule)
+		called = true
+		return nil, nil
+	}
+	_, _, err = NewJob(ctx, jobFn2, rc.Params{
+		"include":  []string{"a", "b", "c"},
+		"max_size": "1k",
+		"_filter": rc.Params{
+			"IncludeRule": []string{"x", "y"},
+			"MaxSize":     "2k",
+		},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, true, called)
+}
+
 func TestExecuteJobWithGroup(t *testing.T) {
 	ctx := context.Background()
 	jobID.Store(0)
