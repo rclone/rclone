@@ -51,6 +51,7 @@ directories to and from different cloud storage providers.
 - Files.com [:page_facing_up:](https://rclone.org/filescom/)
 - FlashBlade [:page_facing_up:](https://rclone.org/s3/#pure-storage-flashblade)
 - FTP [:page_facing_up:](https://rclone.org/ftp/)
+- Funambol / OneMediaHub [:page_facing_up:](https://rclone.org/funambol/)
 - GoFile [:page_facing_up:](https://rclone.org/gofile/)
 - Google Cloud Storage [:page_facing_up:](https://rclone.org/googlecloudstorage/)
 - Google Drive [:page_facing_up:](https://rclone.org/drive/)
