@@ -89,18 +89,19 @@ func TestRcServer(t *testing.T) {
 }
 
 type testRun struct {
-	Name        string
-	URL         string
-	User        string
-	Pass        string
-	Status      int
-	Method      string
-	Range       string
-	Body        string
-	ContentType string
-	Expected    string
-	Contains    *regexp.Regexp
-	Headers     map[string]string
+	Name           string
+	URL            string
+	User           string
+	Pass           string
+	Status         int
+	Method         string
+	Range          string
+	Body           string
+	ContentType    string
+	Expected       string
+	Contains       *regexp.Regexp
+	Headers        map[string]string
+	RequestHeaders map[string]string
 }
 
 // Run a suite of tests
@@ -143,6 +144,9 @@ func emulateCalls(t *testing.T, tests []testRun, mux chi.Router, testURL string)
 			}
 			if test.User != "" && test.Pass != "" {
 				req.SetBasicAuth(test.User, test.Pass)
+			}
+			for k, v := range test.RequestHeaders {
+				req.Header.Set(k, v)
 			}
 
 			w := httptest.NewRecorder()
@@ -368,7 +372,136 @@ func TestRemoteServing(t *testing.T) {
 	opt := newTestOpt()
 	opt.Serve = true
 	opt.Files = testFs
+	opt.NoAuth = true
 	testServer(t, tests, &opt)
+}
+
+// checkServeRemote must reject request-derived backend instantiation on the
+// unauthenticated file-serving path, and global.* config mutation.
+func TestCheckServeRemote(t *testing.T) {
+	for _, test := range []struct {
+		name          string
+		fsName        string
+		authenticated bool
+		wantErr       string // substring of expected error, "" means no error
+	}{
+		// Plain named remotes are always allowed
+		{name: "named remote unauth", fsName: "remote:path", wantErr: ""},
+		{name: "named remote auth", fsName: "remote:path", authenticated: true, wantErr: ""},
+		// Inline backend definitions can run commands (webdav bearer_token_command, sftp ssh)
+		{name: "inline webdav unauth", fsName: ":webdav,url=http://localhost,bearer_token_command=id:", wantErr: "inline remotes"},
+		{name: "inline sftp unauth", fsName: ":sftp,ssh=id:", wantErr: "inline remotes"},
+		{name: "inline local unauth", fsName: ":local:/etc", wantErr: "inline remotes"},
+		{name: "inline allowed when authed", fsName: ":local:/etc", authenticated: true, wantErr: ""},
+		// Bare local paths allow arbitrary local file access
+		{name: "bare path unauth", fsName: "/etc/passwd", wantErr: "local paths"},
+		{name: "bare path allowed when authed", fsName: "/etc/passwd", authenticated: true, wantErr: ""},
+		// Connection string overrides can set command-executing options
+		{name: "connection string unauth", fsName: "remote,vendor=other:path", wantErr: "connection string"},
+		{name: "connection string allowed when authed", fsName: "remote,vendor=other:path", authenticated: true, wantErr: ""},
+		// global.* mutates process-wide config and is never allowed
+		{name: "global config unauth", fsName: "remote,global.http_proxy=x:path", wantErr: "global.http_proxy"},
+		{name: "global config blocked even when authed", fsName: "remote,global.http_proxy=x:path", authenticated: true, wantErr: "global.http_proxy"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			err := checkServeRemote(test.fsName, test.authenticated)
+			if test.wantErr == "" {
+				assert.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), test.wantErr)
+			}
+		})
+	}
+}
+
+// On an unauthenticated server the serve path must not instantiate
+// attacker-supplied inline remotes or local paths, but must still allow
+// configured named remotes.
+func TestServeRemoteUnauthenticated(t *testing.T) {
+	forbidden := regexp.MustCompile(`"status": 403`)
+	tests := []testRun{{
+		// An inline remote could run a command during initialisation
+		Name:     "inline-remote-rejected",
+		URL:      "[:local:" + testFs + "]/file.txt",
+		Status:   http.StatusForbidden,
+		Contains: forbidden,
+	}, {
+		Name:     "bare-local-path-rejected",
+		URL:      remoteURL + "file.txt",
+		Status:   http.StatusForbidden,
+		Contains: forbidden,
+	}, {
+		// A configured (here non-existent) named remote is allowed through to
+		// the backend, which then reports it isn't in the config file
+		Name:     "named-remote-allowed-through",
+		URL:      "[notfoundremote:]/",
+		Status:   http.StatusInternalServerError,
+		Contains: regexp.MustCompile(`didn't find section in config file`),
+	}}
+	opt := newTestOpt()
+	opt.Serve = true
+	testServer(t, tests, &opt)
+}
+
+// With authentication configured the serve path may instantiate inline remotes
+// (the request is authenticated) but must still refuse to mutate process-wide
+// config via global.* options.
+func TestServeRemoteWithAuth(t *testing.T) {
+	const user, pass = "user", "pass"
+	tests := []testRun{{
+		// Authenticated requests can serve bare local paths again
+		Name:     "bare-local-path-served-when-authenticated",
+		URL:      remoteURL + "file.txt",
+		User:     user,
+		Pass:     pass,
+		Status:   http.StatusOK,
+		Expected: "this is file1.txt\n",
+	}, {
+		// global.* is blocked even for an authenticated request
+		Name:     "global-config-blocked-when-authenticated",
+		URL:      "[notfoundremote,global.http_proxy=x:]/",
+		User:     user,
+		Pass:     pass,
+		Status:   http.StatusForbidden,
+		Contains: regexp.MustCompile(`global\.http_proxy`),
+	}, {
+		// A request without credentials is rejected before reaching the handler
+		Name:     "unauthenticated-request-rejected",
+		URL:      remoteURL + "file.txt",
+		Status:   http.StatusUnauthorized,
+		Contains: regexp.MustCompile(``),
+	}}
+	opt := newTestOpt()
+	opt.Serve = true
+	opt.Files = testFs
+	opt.Auth.BasicUser = user
+	opt.Auth.BasicPass = pass
+	testServer(t, tests, &opt)
+}
+
+// The serve path must mark backend creation as a remote control (rc) request
+// so a request-supplied remote can't change process-wide config via global.*
+// options.
+func TestServeRemoteMarksRCRequest(t *testing.T) {
+	configfile.Install()
+	opt := newTestOpt()
+	opt.Serve = true
+	opt.NoAuth = true // allow inline remotes so we reach backend creation
+	opt.Template.Path = defaultTestTemplate
+	rcServer, err := newServer(context.Background(), &opt, http.NewServeMux())
+	require.NoError(t, err)
+
+	ctx := context.Background()
+	original := fs.GetConfig(ctx).UserAgent
+	defer func() { fs.GetConfig(ctx).UserAgent = original }()
+
+	// serveRemote uses s.ctx, marked as an rc request, so global.* must not
+	// change the process-wide config.
+	rcServer.serveRemote(httptest.NewRecorder(), httptest.NewRequest("GET", "/file.txt", nil),
+		"file.txt", ":local,global.user_agent=rcservertest:"+testFs)
+	assert.Equal(t, original, fs.GetConfig(ctx).UserAgent,
+		"the serve path must not let global.* change the process-wide config")
 }
 
 func TestRC(t *testing.T) {
@@ -403,11 +536,17 @@ func TestRC(t *testing.T) {
 }
 `,
 	}, {
-		Name:     "core-gc",
-		URL:      "core/gc", // returns nil, nil so check it is made into {}
-		Method:   "POST",
-		Status:   http.StatusOK,
-		Expected: "{}\n",
+		Name:   "core-gc",
+		URL:    "core/gc", // now requires auth
+		Method: "POST",
+		Status: http.StatusForbidden,
+		Expected: `{
+	"error": "authentication must be set up on the rc server to use \"core/gc\" or the --rc-no-auth flag must be in use",
+	"input": {},
+	"path": "core/gc",
+	"status": 403
+}
+`,
 	}, {
 		Name:   "url-params",
 		URL:    "rc/noop?param1=potato&param2=sausage",
@@ -789,6 +928,33 @@ func TestRCAsync(t *testing.T) {
 		Status:      http.StatusOK,
 		Contains:    regexp.MustCompile(`(?s)\{.*\"jobid\":.*\}`),
 	}, {
+		Name:           "prefer-respond-async",
+		URL:            "rc/noop",
+		Method:         "POST",
+		ContentType:    "application/json",
+		Body:           `{ "_async":true }`,
+		RequestHeaders: map[string]string{"Prefer": "respond-async"},
+		Status:         http.StatusAccepted,
+		Contains:       regexp.MustCompile(`(?s)\{.*\"jobid\":.*\}`),
+	}, {
+		Name:           "prefer-without-async",
+		URL:            "rc/noop",
+		Method:         "POST",
+		ContentType:    "application/json",
+		Body:           `{}`,
+		RequestHeaders: map[string]string{"Prefer": "respond-async"},
+		Status:         http.StatusAccepted,
+		Contains:       regexp.MustCompile(`(?s)\{.*\"jobid\":.*\}`),
+	}, {
+		Name:           "prefer-respond-async-mixed",
+		URL:            "rc/noop",
+		Method:         "POST",
+		ContentType:    "application/json",
+		Body:           `{}`,
+		RequestHeaders: map[string]string{"Prefer": "wait=10, respond-async"},
+		Status:         http.StatusAccepted,
+		Contains:       regexp.MustCompile(`(?s)\{.*\"jobid\":.*\}`),
+	}, {
 		Name:        "bad",
 		URL:         "rc/noop",
 		Method:      "POST",
@@ -847,6 +1013,7 @@ func TestServeModTime(t *testing.T) {
 	opt := newTestOpt()
 	opt.Serve = true
 	opt.Template.Path = "testdata/golden/testmodtime.html"
+	opt.NoAuth = true
 
 	tests := []testRun{{
 		Name:     "modtime",

@@ -4,7 +4,7 @@ description: "Rclone docs for Cloudinary backend"
 versionIntroduced: "v1.69"
 
 ---
-# {{< icon "fa fa-cloud" >}} Cloudinary
+# Cloudinary
 
 This is a backend for the [Cloudinary](https://cloudinary.com/) platform
 

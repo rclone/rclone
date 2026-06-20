@@ -198,6 +198,32 @@ func (o *SeekOption) Mandatory() bool {
 	return true
 }
 
+// ParseHeaders converts the strings passed in via the header flags into HTTPOptions
+func ParseHeaders(headers []string) ([]*HTTPOption, error) {
+	opts := []*HTTPOption{}
+	for _, header := range headers {
+		parts := strings.SplitN(header, ":", 2)
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("failed to parse %q as an HTTP header. Expecting a string like: 'Cache-Control: no-store'", header)
+		}
+		option := &HTTPOption{
+			Key:   strings.TrimSpace(parts[0]),
+			Value: strings.TrimSpace(parts[1]),
+		}
+		opts = append(opts, option)
+	}
+	return opts, nil
+}
+
+// MustParseHeaders converts the strings passed in via the header flags into HTTPOptions or exits.
+func MustParseHeaders(headers []string) []*HTTPOption {
+	opts, err := ParseHeaders(headers)
+	if err != nil {
+		Fatalf(nil, "%v", err)
+	}
+	return opts
+}
+
 // HTTPOption defines a general purpose HTTP option
 type HTTPOption struct {
 	Key   string

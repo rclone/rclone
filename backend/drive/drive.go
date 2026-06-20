@@ -144,6 +144,7 @@ var (
 	_importFormats   map[string][]string           // allowed import MIME type conversions
 	templatesOnce    sync.Once                     // parse link templates only once
 	_linkTemplates   map[string]*template.Template // available link types
+	gdocsWarnOnce    sync.Once                     // warn once about skipped non-exportable Google documents
 )
 
 // rwChoices type for fs.Bits
@@ -1686,6 +1687,9 @@ func (f *Fs) newObjectWithExportInfo(
 		// If item MimeType is in the ExportFormats then it is a google doc
 		if !isDocument {
 			fs.Debugf(remote, "Ignoring unknown document type %q", info.MimeType)
+			gdocsWarnOnce.Do(func() {
+				fs.Logf(remote, "Skipping unexportable google documents. Use --drive-show-all-gdocs to include them in server side copy and move", info.MimeType)
+			})
 			return nil, fs.ErrorObjectNotFound
 		}
 		if extension == "" {
@@ -3034,11 +3038,18 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		remote = remote[:len(remote)-len(ext)]
 	}
 
-	_, srcParentID, err := srcObj.fs.dirCache.FindPath(ctx, src.Remote(), false)
-	if err != nil {
-		return nil, err
+	// Find the ID of the parent to remove the file from.
+	var srcParentID string
+	if len(srcObj.parents) == 1 {
+		srcParentID = srcObj.parents[0]
+	} else {
+		var err error
+		_, srcParentID, err = srcObj.fs.dirCache.FindPath(ctx, src.Remote(), false)
+		if err != nil {
+			return nil, err
+		}
+		srcParentID = actualID(srcParentID)
 	}
-	srcParentID = actualID(srcParentID)
 
 	// Temporary Object under construction
 	dstInfo, err := f.createFileInfo(ctx, remote, src.ModTime(ctx))

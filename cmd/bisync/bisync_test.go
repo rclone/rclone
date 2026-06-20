@@ -85,6 +85,8 @@ var logReplacements = []string{
 	`^NOTICE: .*?: Replacing invalid UTF-8 characters in "[^"]*"$`, dropMe,
 	// ignore rclone debug messages
 	`^DEBUG : .*$`, dropMe,
+	// ignore SFTP host key messages
+	`^NOTICE: .*?No host key validation is being performed.*$`, dropMe,
 	// ignore dropbox info messages
 	`^NOTICE: too_many_(requests|write_operations)/\.*: Too many requests or write operations.*$`, dropMe,
 	`^NOTICE: .*?: Forced to upload files to set modification times on this backend.$`, dropMe,
@@ -329,7 +331,7 @@ func testBisync(ctx context.Context, t *testing.T, path1, path2 string) {
 
 	baseDir, err := os.Getwd()
 	require.NoError(t, err, "get current directory")
-	randName := time.Now().Format("150405") + random.String(2) // some bucket backends don't like dots, keep this short to avoid linux errors
+	randName := time.Now().Format("150405") + random.String(8) // some bucket backends don't like dots, keep this short to avoid linux errors
 	tempDir := filepath.Join(os.TempDir(), randName)
 	workDir := filepath.Join(tempDir, "workdir")
 

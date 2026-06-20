@@ -18,7 +18,7 @@ type Call struct {
 	Path          string // path to activate this RC
 	Fn            Func   `json:"-"` // function to call
 	Title         string // help for the function
-	AuthRequired  bool   // if set then this call requires authorisation to be set
+	NoAuth        bool   // if set then this call does not require authentication
 	Help          string // multi-line markdown formatted help
 	NeedsRequest  bool   // if set then this call will be passed the original request object as _request
 	NeedsResponse bool   // if set then this call will be passed the original response object as _response

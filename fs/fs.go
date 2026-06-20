@@ -4,6 +4,7 @@ package fs
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"math"
 	"time"
@@ -51,7 +52,25 @@ var (
 	ErrorCommandNotFound             = errors.New("command not found")
 	ErrorFileNameTooLong             = errors.New("file name too long")
 	ErrorCantListRoot                = errors.New("can't list root")
+	ErrorFileTooSmall                = errors.New("file too small for multipart upload")
 )
+
+// FileTooSmallError is returned by OpenChunkWriter when a file is below the
+// backend's minimum size for multipart uploads. It wraps ErrorFileTooSmall
+// and carries the minimum size so callers can retry with a larger file.
+type FileTooSmallError struct {
+	MinSize int64
+}
+
+// Error implements the error interface.
+func (e *FileTooSmallError) Error() string {
+	return fmt.Sprintf("file too small for multipart upload (minimum %d bytes)", e.MinSize)
+}
+
+// Unwrap returns ErrorFileTooSmall so errors.Is works.
+func (e *FileTooSmallError) Unwrap() error {
+	return ErrorFileTooSmall
+}
 
 // CheckClose is a utility function used to check the return from
 // Close in a defer statement.

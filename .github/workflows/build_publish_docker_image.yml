@@ -18,6 +18,10 @@ on:
         type: boolean
         default: true
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build-image:
     if: inputs.manual || (github.repository == 'rclone/rclone' && github.event_name != 'pull_request')
@@ -92,7 +96,7 @@ jobs:
         # There's no way around this, because "ImageOS" is only available to
         # processes, but the setup-go action uses it in its key.
         id: imageos
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           result-encoding: string
           script: |

@@ -94,7 +94,7 @@ func init() {
 		if err != nil {
 			return nil, err
 		}
-		VFS := vfs.New(f, &vfsOpt)
+		VFS := vfs.New(ctx, f, &vfsOpt)
 		// Read opts
 		var opt = Opt // set default opts
 		err = configstruct.SetAny(in, &opt)
@@ -112,7 +112,7 @@ func Run(command *cobra.Command, args []string) {
 	cmd.CheckArgs(1, 1, command, args)
 	f = cmd.NewFsSrc(args)
 	cmd.Run(false, true, command, func() error {
-		s, err := NewServer(context.Background(), vfs.New(f, &vfscommon.Opt), &Opt)
+		s, err := NewServer(context.Background(), vfs.New(context.Background(), f, &vfscommon.Opt), &Opt)
 		if err != nil {
 			return err
 		}
@@ -193,6 +193,21 @@ mount -t nfs -o port=$PORT,mountport=$PORT,tcp $HOSTNAME:/ path/to/mountpoint
 Where |$PORT| is the same port number used in the |serve nfs| command
 and |$HOSTNAME| is the network address of the machine that |serve nfs|
 was run on.
+
+NFS clients can also mount a subdirectory of the served remote by
+including it in the mount path. For example to mount only the
+|photos/2024| subdirectory:
+
+|||sh
+mount -t nfs -o port=$PORT,mountport=$PORT,tcp $HOSTNAME:/photos/2024 path/to/mountpoint
+|||
+
+The subpath is resolved within the served remote and must refer to an
+existing directory (not a file or a symlink). Subpath mounts are a
+convenience equivalent to mounting |/| and changing directory: they
+share access to the same underlying VFS and the same file handles, so
+they do not isolate the client from siblings or parents of the mounted
+subdirectory.
 
 If |--vfs-metadata-extension| is in use then for the |--nfs-cache-type disk|
 and |--nfs-cache-type cache| the metadata files will have the file

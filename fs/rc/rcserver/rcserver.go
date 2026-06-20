@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"mime"
@@ -20,6 +21,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fs/rc/jobs"
@@ -53,6 +55,7 @@ type Server struct {
 	files          http.Handler
 	pluginsHandler http.Handler
 	opt            *rc.Options
+	noAuth         bool // snapshot of opt.NoAuth at startup to prevent runtime mutation
 }
 
 func newServer(ctx context.Context, opt *rc.Options, mux *http.ServeMux) (*Server, error) {
@@ -104,6 +107,7 @@ func newServer(ctx context.Context, opt *rc.Options, mux *http.ServeMux) (*Serve
 		opt:            opt,
 		files:          fileHandler,
 		pluginsHandler: pluginsHandler,
+		noAuth:         opt.NoAuth,
 	}
 
 	var err error
@@ -255,6 +259,17 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 			return
 		}
 	}
+
+	// Check for Prefer: respond-async header (RFC 7240)
+	preferAsync := false
+	for _, pref := range strings.Split(r.Header.Get("Prefer"), ",") {
+		if strings.EqualFold(strings.TrimSpace(pref), "respond-async") {
+			preferAsync = true
+			in["_async"] = true
+			break
+		}
+	}
+
 	// Find the call
 	call := rc.Calls.Get(path)
 	if call == nil {
@@ -263,7 +278,7 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 	}
 
 	// Check to see if it requires authorisation
-	if !s.opt.NoAuth && call.AuthRequired && !s.server.UsingAuth() {
+	if !s.noAuth && !call.NoAuth && !s.server.UsingAuth() {
 		writeError(path, in, w, fmt.Errorf("authentication must be set up on the rc server to use %q or the --rc-no-auth flag must be in use", path), http.StatusForbidden)
 		return
 	}
@@ -294,6 +309,10 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 
 	fs.Debugf(nil, "rc: %q: reply %+v: %v", path, out, err)
 	w.Header().Set("Content-Type", "application/json")
+	if preferAsync {
+		w.Header().Set("Preference-Applied", "respond-async")
+		w.WriteHeader(http.StatusAccepted)
+	}
 	err = rc.WriteJSON(w, out)
 	if err != nil {
 		// can't return the error at this point - but have a go anyway
@@ -323,8 +342,57 @@ func (s *Server) serveRoot(w http.ResponseWriter, r *http.Request) {
 	directory.Serve(w, r)
 }
 
+// checkServeRemote returns an error if fsName must not be instantiated on the
+// file-serving (--rc-serve) path given the current authentication state.
+//
+// Instantiating a backend from request-supplied configuration can execute
+// commands during initialisation (e.g. webdav bearer_token_command, sftp ssh),
+// read arbitrary local files, or mutate process-wide config via global.*
+// options so shouldn't be done without authentication.
+//
+// authenticated must be true if the request has been authenticated (HTTP auth
+// is configured on the server) or --rc-no-auth was passed to explicitly opt in
+// to running without authentication.
+func checkServeRemote(fsName string, authenticated bool) error {
+	parsed, err := fspath.Parse(fsName)
+	if err != nil {
+		return fmt.Errorf("invalid remote %q: %w", fsName, err)
+	}
+
+	// global.* connection string options mutate process-wide rclone config. Never honour these
+	// from a request-derived remote, even when the request is authenticated
+	for k := range parsed.Config {
+		if strings.HasPrefix(k, "global.") {
+			return fmt.Errorf("setting %q on a served remote is not allowed", k)
+		}
+	}
+
+	if authenticated {
+		return nil
+	}
+
+	// On an unauthenticated server only allow access to pre-configured named remotes. Reject
+	// inline backend definitions, connection string option overrides and bare local paths
+	switch {
+	case parsed.Name == "":
+		return errors.New("serving local paths requires authentication to be set up on the rc server or the --rc-no-auth flag")
+	case strings.HasPrefix(parsed.Name, ":"):
+		return errors.New("serving inline remotes requires authentication to be set up on the rc server or the --rc-no-auth flag")
+	case len(parsed.Config) > 0:
+		return errors.New("serving remotes with connection string parameters requires authentication to be set up on the rc server or the --rc-no-auth flag")
+	}
+	return nil
+}
+
 func (s *Server) serveRemote(w http.ResponseWriter, r *http.Request, path string, fsName string) {
-	f, err := cache.Get(s.ctx, fsName)
+	// Check we are allowed to instantiate this remote
+	authenticated := s.noAuth || s.server.UsingAuth()
+	if err := checkServeRemote(fsName, authenticated); err != nil {
+		writeError(path, nil, w, err, http.StatusForbidden)
+		return
+	}
+	// Mark as an rc request e.g. so NewFs can reject global.* config
+	f, err := cache.Get(fs.WithRCRequest(s.ctx), fsName)
 	if err != nil {
 		writeError(path, nil, w, fmt.Errorf("failed to make Fs: %w", err), http.StatusInternalServerError)
 		return
@@ -407,6 +475,12 @@ func (s *Server) handleGet(w http.ResponseWriter, r *http.Request, path string) 
 		return
 	}
 	http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+}
+
+// URLs returns the URLs the server is listening on. Only valid after
+// Serve has been called (which Start does internally before returning).
+func (s *Server) URLs() []string {
+	return s.server.URLs()
 }
 
 // Wait blocks while the server is serving requests

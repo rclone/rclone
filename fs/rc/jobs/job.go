@@ -328,6 +328,9 @@ func (jobs *Jobs) NewJob(ctx context.Context, fn rc.Func, in rc.Params) (job *Jo
 	// Add the job to the context
 	ctx = context.WithValue(ctx, jobKey, job)
 
+	// Mark the context as created from an rc request
+	ctx = fs.WithRCRequest(ctx)
+
 	if isAsync {
 		go job.run(ctx, fn, in)
 		out = make(rc.Params)
@@ -375,9 +378,10 @@ func GetJobID(ctx context.Context) (jobID int64, ok bool) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:  "job/status",
-		Fn:    rcJobStatus,
-		Title: "Reads the status of the job ID",
+		Path:   "job/status",
+		NoAuth: true,
+		Fn:     rcJobStatus,
+		Title:  "Reads the status of the job ID",
 		Help: `Parameters:
 
 - jobid - id of the job (integer).
@@ -421,9 +425,10 @@ func rcJobStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:  "job/list",
-		Fn:    rcJobList,
-		Title: "Lists the IDs of the running jobs",
+		Path:   "job/list",
+		NoAuth: true,
+		Fn:     rcJobList,
+		Title:  "Lists the IDs of the running jobs",
 		Help: `Parameters: None.
 
 Results:
@@ -588,10 +593,9 @@ func NewJobFromBytes(ctx context.Context, inBuf []byte) (outBuf []byte) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "job/batch",
-		AuthRequired: true, // require auth always since sub commands may require it
-		Fn:           rcBatch,
-		Title:        "Run a batch of rclone rc commands concurrently.",
+		Path:  "job/batch",
+		Fn:    rcBatch,
+		Title: "Run a batch of rclone rc commands concurrently.",
 		Help: strings.ReplaceAll(`
 This takes the following parameters:
 

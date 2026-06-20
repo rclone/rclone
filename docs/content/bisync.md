@@ -477,9 +477,9 @@ their checksums would change from run to run (due to small variances in the
 internals of the generated export file.) Therefore, bisync automatically skips
 `--download-hash` for files with a size less than 0.
 
-See also: [`Hasher`](https://rclone.org/hasher/) backend,
-[`cryptcheck`](/commands/rclone_cryptcheck/) command, [`rclone check
---download`](/commands/rclone_check/) option,
+See also: [`Hasher`](/hasher/) backend,
+[`cryptcheck`](/commands/rclone_cryptcheck/) command,
+[`rclone check --download`](/commands/rclone_check/) option,
 [`md5sum`](/commands/rclone_md5sum/) command
 
 ### --max-delete
@@ -820,6 +820,12 @@ running -- and you can therefore be reasonably sure that any *expired* lock
 file you may find was left there by an interrupted run, not one that is still
 running and just taking awhile.
 
+If a lock file exists but its contents are unreadable (for example, due to an
+incomplete write or disk error), it is treated as expired when `--max-lock` is
+set to a value greater than `0`. If `--max-lock` is `0` or not set, an
+unreadable lock file will produce an error and block future runs until removed
+manually.
+
 If `--max-lock` is `0` or not set, the default is that lock files will never
 expire, and will block future runs (of these same two bisync paths)
 indefinitely.
@@ -1049,11 +1055,7 @@ The following backends have known issues that need more investigation:
 <!--- start list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
 - `TestDropbox` (`dropbox`)
   - [`TestBisyncRemoteRemote/normalization`](https://pub.rclone.org/integration-tests/current/dropbox-cmd.bisync-TestDropbox-1.txt)
-- `TestSeafile` (`seafile`)
-  - [`TestBisyncLocalRemote/volatile`](https://pub.rclone.org/integration-tests/current/seafile-cmd.bisync-TestSeafile-1.txt)
-- `TestSeafileV6` (`seafile`)
-  - [`TestBisyncLocalRemote/volatile`](https://pub.rclone.org/integration-tests/current/seafile-cmd.bisync-TestSeafileV6-1.txt)
-- Updated: 2026-01-30-010015
+- Updated: 2026-05-01-010013
 <!--- end list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
 
 The following backends either have not been tested recently or have known issues
@@ -1118,8 +1120,8 @@ a mechanism to mark files as needing to be internally rechecked next time, for
 added safety. It should therefore no longer be necessary to sync only at quiet
 times -- however, note that an error can still occur if a file happens to change
 at the exact moment it's being read/written by bisync (same as would happen in
-`rclone sync`.) (See also: [`--ignore-checksum`](https://rclone.org/docs/#ignore-checksum),
-[`--local-no-check-updated`](https://rclone.org/local/#local-no-check-updated))
+`rclone sync`.) (See also: [`--ignore-checksum`](/docs/#ignore-checksum),
+[`--local-no-check-updated`](/local/#local-no-check-updated))
 
 ### Empty directories
 
@@ -1158,6 +1160,11 @@ Otherwise, the most effective and efficient method of renaming a directory
 is to rename it to the same name on both sides. (As of `rclone v1.64`,
 a `--resync` is no longer required after doing so, as bisync will automatically
 detect that Path1 and Path2 are in agreement.)
+
+Note that although the flag --track-renames ensures that renamed/moved files won't
+be deleted and uploaded again, they are still counted as deleted files for purposes
+of the --max-delete flag (as this check happens before the rename detection
+operation). See [this issue](https://github.com/rclone/rclone/issues/8685).
 
 ### `--fast-list` used by default
 
@@ -1492,7 +1499,7 @@ and in most cases it's probably not what you want!
 
 To bisync Google Docs as URL shortcut links (in a manner similar to "Drive for
 Desktop"), use: `--drive-export-formats url` (or
-[alternatives](https://rclone.org/drive/#exportformats:~:text=available%20Google%20Documents.-,Extension,macOS,-Standard%20options).)
+[alternatives](/drive/#exportformats:~:text=available%20Google%20Documents.-,Extension,macOS,-Standard%20options).)
 
 Note that these link files cannot be edited on the non-drive side -- you will
 get errors if you try to sync an edited link file back to drive. They CAN be
@@ -1896,6 +1903,11 @@ Also note a number of academic publications by
 about *Unison* and synchronization in general.
 
 ## Changelog
+
+### `v1.74.2`
+
+- Fixed an issue causing `--conflict-loser pathname` to produce unexpected
+behavior if using a non-default `--conflict-resolve` value.
 
 ### `v1.74`
 

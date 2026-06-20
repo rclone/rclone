@@ -21,7 +21,8 @@ import (
 )
 
 var (
-	sudo = false
+	sudo      = false
+	mountPath = "/"
 )
 
 func init() {
@@ -32,10 +33,11 @@ func init() {
 	mountlib.AddRc(name, mount)
 	cmdFlags := cmd.Flags()
 	flags.BoolVarP(cmdFlags, &sudo, "sudo", "", sudo, "Use sudo to run the mount/umount commands as root.", "")
+	flags.StringVarP(cmdFlags, &mountPath, "nfs-mount-path", "", mountPath, "Subpath of the remote to mount via NFS (must be an existing directory).", "")
 	nfs.AddFlags(cmdFlags)
 }
 
-func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (asyncerrors <-chan error, unmount func() error, err error) {
+func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (asyncerrors <-chan error, unmount func() error, actualMountpoint string, err error) {
 	s, err := nfs.NewServer(context.Background(), VFS, &nfs.Opt)
 	if err != nil {
 		return
@@ -69,7 +71,7 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (asyncerrors 
 	}
 	cmd = append(cmd, "mount")
 	cmd = append(cmd, options...)
-	cmd = append(cmd, "localhost:"+opt.VolumeName, mountpoint)
+	cmd = append(cmd, "localhost:"+mountPath, mountpoint)
 	fs.Debugf(nil, "Running mount command: %q", cmd)
 
 	out, err := exec.Command(cmd[0], cmd[1:]...).CombinedOutput()
@@ -112,5 +114,6 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (asyncerrors 
 		VFS.Shutdown()
 	}
 
+	actualMountpoint = mountpoint
 	return
 }

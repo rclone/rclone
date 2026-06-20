@@ -4,7 +4,7 @@ description: "Rclone docs for SMB backend"
 versionIntroduced: "v1.60"
 ---
 
-# {{< icon "fa fa-server" >}} SMB
+# SMB
 
 SMB is [a communication protocol to share files over network](https://en.wikipedia.org/wiki/Server_Message_Block).
 
