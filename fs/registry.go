@@ -229,6 +229,7 @@ type Option struct {
 	Provider   string           `json:",omitempty"` // set to filter on provider
 	Default    any              // default value, nil => "", if set (and not to nil or "") then Required does nothing
 	Value      any              // value to be set by flags
+	set        bool             // true once Set has been called, so an explicit value equal to Default is still honoured over the config file
 	Examples   OptionExamples   `json:",omitempty"` // predefined values that can be selected from list (multiple-choice option)
 	ShortOpt   string           `json:",omitempty"` // the short option for this if required
 	Hide       OptionVisibility // set this to hide the config from the configurator or the command line
@@ -327,6 +328,7 @@ func (o *Option) Set(s string) (err error) {
 			stringArray = []string{}
 		}
 		o.Value = append(stringArray, s)
+		o.set = true
 		return nil
 	}
 	newValue, err := configstruct.StringToInterface(v, s)
@@ -334,7 +336,25 @@ func (o *Option) Set(s string) (err error) {
 		return err
 	}
 	o.Value = newValue
+	o.set = true
 	return nil
+}
+
+// IsSet returns true if Set has been called on the option, for example
+// when its flag was provided on the command line. Unlike IsDefault this
+// is true even when the value supplied is equal to the default.
+func (o *Option) IsSet() bool {
+	return o.set
+}
+
+// MarkUnset marks the option as not having been set explicitly.
+//
+// It is used after a value has been loaded from the environment as a
+// flag default, so that the value is treated like a default rather than
+// an explicit command line flag and more specific configuration sources
+// still take precedence over it.
+func (o *Option) MarkUnset() {
+	o.set = false
 }
 
 type typer interface {
