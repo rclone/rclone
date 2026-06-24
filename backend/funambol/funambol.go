@@ -212,6 +212,20 @@ func isReauthCode(code string) bool {
 	return false
 }
 
+// isTransientCode reports SAPI error codes that signal a temporary server-side
+// fault rather than a definitive failure, so the call is worth retrying with
+// backoff.  These come back as HTTP 200 + an error envelope, so the HTTP-level
+// shouldRetry never sees them.
+func isTransientCode(code string) bool {
+	switch code {
+	// "Unknown exception in folder handling" — an internal server hiccup, seen
+	// when several transfers create/list the same folder tree concurrently.
+	case "FOL-1000":
+		return true
+	}
+	return false
+}
+
 // ensureSession makes sure we have something to authenticate with: either a
 // live validation key or the persistent login cookie that can mint one.
 // Logging in from scratch needs the emailed verification code, so it can only
@@ -247,7 +261,21 @@ func (f *Fs) callJSON(ctx context.Context, opts *rest.Opts, request, response an
 		err := f.pacer.Call(func() (bool, error) {
 			var err error
 			resp, err = f.srv.CallJSON(ctx, opts, request, response)
-			return shouldRetry(ctx, resp, err)
+			if retry, rErr := shouldRetry(ctx, resp, err); retry || err != nil {
+				return retry, rErr
+			}
+			// HTTP succeeded: retry transient SAPI exceptions (HTTP 200 +
+			// error envelope) with the pacer's backoff. SEC-1003 and other
+			// envelope errors are left for the outer loop to handle.
+			if er, ok := response.(interface{ AsErr() error }); ok {
+				if aErr := er.AsErr(); aErr != nil {
+					var ae *api.Error
+					if errors.As(aErr, &ae) && isTransientCode(ae.Code) {
+						return true, aErr
+					}
+				}
+			}
+			return false, nil
 		})
 		if err != nil {
 			if f.refreshOnError(err) && attempt < 2 {
