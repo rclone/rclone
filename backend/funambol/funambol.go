@@ -322,45 +322,24 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 
 // ---- listing ----
 
-// listFolders returns every sub-folder of dirID.  The endpoint honours "limit"
-// (so a single page silently truncates at listChunk) but, unlike the media
-// listing, carries no "more" flag, so we page on "offset" and stop on a short
-// page.  The seen-id guard means a server that ignores "offset" returns the
-// first page once instead of looping forever.
+// listFolders returns every sub-folder of dirID in a single request.
+//
+// Unlike the media listing, the folder-list endpoint takes only "parentid":
+// the official client sends no "limit" or "offset", and the server returns the
+// full set in one response.  Passing "offset" makes the server reject the call
+// with COM-1021 ("Invalid parameter value"), so we deliberately don't paginate
+// here — matching the app's behaviour.
 func (f *Fs) listFolders(ctx context.Context, dirID string) ([]api.Folder, error) {
-	var folders []api.Folder
-	seen := make(map[string]struct{})
-	offset := 0
-	for {
-		var res api.FoldersResponse
-		opts := rest.Opts{
-			Method: "GET",
-			Path:   "/sapi/media/folder",
-			Parameters: url.Values{
-				"action":   {"list"},
-				"parentid": {dirID},
-				"limit":    {strconv.Itoa(listChunk)},
-				"offset":   {strconv.Itoa(offset)},
-			},
-		}
-		if err := f.callJSON(ctx, &opts, nil, &res); err != nil {
-			return nil, fmt.Errorf("list folders: %w", err)
-		}
-		page := res.Data.Folders
-		added := 0
-		for _, fl := range page {
-			if _, ok := seen[fl.ID.String()]; ok {
-				continue
-			}
-			seen[fl.ID.String()] = struct{}{}
-			folders = append(folders, fl)
-			added++
-		}
-		if len(page) < listChunk || added == 0 {
-			return folders, nil
-		}
-		offset += len(page)
+	var res api.FoldersResponse
+	opts := rest.Opts{
+		Method:     "GET",
+		Path:       "/sapi/media/folder",
+		Parameters: url.Values{"action": {"list"}, "parentid": {dirID}},
 	}
+	if err := f.callJSON(ctx, &opts, nil, &res); err != nil {
+		return nil, fmt.Errorf("list folders: %w", err)
+	}
+	return res.Data.Folders, nil
 }
 
 func (f *Fs) listMedia(ctx context.Context, dirID string, fn func(*api.Item)) error {
