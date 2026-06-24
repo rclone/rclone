@@ -322,17 +322,45 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 
 // ---- listing ----
 
+// listFolders returns every sub-folder of dirID.  The endpoint honours "limit"
+// (so a single page silently truncates at listChunk) but, unlike the media
+// listing, carries no "more" flag, so we page on "offset" and stop on a short
+// page.  The seen-id guard means a server that ignores "offset" returns the
+// first page once instead of looping forever.
 func (f *Fs) listFolders(ctx context.Context, dirID string) ([]api.Folder, error) {
-	var res api.FoldersResponse
-	opts := rest.Opts{
-		Method:     "GET",
-		Path:       "/sapi/media/folder",
-		Parameters: url.Values{"action": {"list"}, "parentid": {dirID}, "limit": {strconv.Itoa(listChunk)}},
+	var folders []api.Folder
+	seen := make(map[string]struct{})
+	offset := 0
+	for {
+		var res api.FoldersResponse
+		opts := rest.Opts{
+			Method: "GET",
+			Path:   "/sapi/media/folder",
+			Parameters: url.Values{
+				"action":   {"list"},
+				"parentid": {dirID},
+				"limit":    {strconv.Itoa(listChunk)},
+				"offset":   {strconv.Itoa(offset)},
+			},
+		}
+		if err := f.callJSON(ctx, &opts, nil, &res); err != nil {
+			return nil, fmt.Errorf("list folders: %w", err)
+		}
+		page := res.Data.Folders
+		added := 0
+		for _, fl := range page {
+			if _, ok := seen[fl.ID.String()]; ok {
+				continue
+			}
+			seen[fl.ID.String()] = struct{}{}
+			folders = append(folders, fl)
+			added++
+		}
+		if len(page) < listChunk || added == 0 {
+			return folders, nil
+		}
+		offset += len(page)
 	}
-	if err := f.callJSON(ctx, &opts, nil, &res); err != nil {
-		return nil, fmt.Errorf("list folders: %w", err)
-	}
-	return res.Data.Folders, nil
 }
 
 func (f *Fs) listMedia(ctx context.Context, dirID string, fn func(*api.Item)) error {
@@ -660,16 +688,26 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	}
 	fs.FixRangeOption(options, o.size)
 	opts := rest.Opts{Method: "GET", RootURL: o.url, Options: options}
-	var resp *http.Response
-	err := o.fs.pacer.Call(func() (bool, error) {
-		var err error
-		resp, err = o.fs.srv.Call(ctx, &opts)
-		return shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
+	// The download streams from a direct URL and so bypasses callJSON's
+	// SEC-1003 handling.  Replicate it: if the validation key has rotated,
+	// adopt the fresh one the server returns, persist the renewed cookies and
+	// retry once.  Retrying is safe here because the body hasn't been read yet.
+	for attempt := 0; attempt < 2; attempt++ {
+		var resp *http.Response
+		err := o.fs.pacer.Call(func() (bool, error) {
+			var err error
+			resp, err = o.fs.srv.Call(ctx, &opts)
+			return shouldRetry(ctx, resp, err)
+		})
+		if err == nil {
+			return resp.Body, nil
+		}
+		if attempt == 0 && o.fs.refreshOnError(err) {
+			continue
+		}
 		return nil, err
 	}
-	return resp.Body, nil
+	return nil, errors.New("funambol: download authentication retry exhausted")
 }
 
 // Update the object with the contents of the io.Reader
@@ -739,10 +777,19 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		resp, err := o.fs.srv.CallJSON(ctx, &upOpts, nil, &upRes)
 		return shouldRetry(ctx, resp, err)
 	})
-	if err != nil {
-		return fmt.Errorf("upload bytes: %w", err)
+	if err == nil {
+		err = upRes.AsErr()
 	}
-	if err := upRes.AsErr(); err != nil {
+	if err != nil {
+		// The byte stream bypasses callJSON's SEC-1003 handling.  If the
+		// validation key rotated, adopt the fresh key + renewed cookies the
+		// server returned, then ask the caller to retry: the body has already
+		// been consumed and can't be replayed here, so operations.Copy re-runs
+		// Update with a freshly-opened reader (its phase-1 metadata call now
+		// uses the new key).
+		if o.fs.refreshOnError(err) {
+			return fserrors.RetryError(fmt.Errorf("upload bytes: validation key rotated, retrying: %w", err))
+		}
 		return fmt.Errorf("upload bytes: %w", err)
 	}
 
