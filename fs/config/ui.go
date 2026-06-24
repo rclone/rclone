@@ -442,7 +442,7 @@ func backendConfig(ctx context.Context, name string, m configmap.Mapper, ri *fs.
 				out.Option.Examples[1].Value == "false" &&
 				out.Option.Exclusive {
 				// Use Confirm for Yes/No questions as it has a nicer interface=
-				fmt.Println(out.Option.Help)
+				fmt.Println(renderHelpForTerminal(out.Option.Help))
 				in.Result = fmt.Sprint(Confirm(Default))
 			} else {
 				value := ChooseOption(out.Option, name)
