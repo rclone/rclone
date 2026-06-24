@@ -552,8 +552,10 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 }
 
 // deleteBatch is the maximum number of media ids sent to a single delete call.
-// Kept comfortably under the server's ~1000-element ceiling.
-const deleteBatch = 500
+// The server rejects deleting "more than 1000 elements" at once, so 999 is the
+// largest provably-safe batch (one under the limit regardless of whether the
+// boundary is inclusive), minimising the number of round-trips.
+const deleteBatch = 999
 
 // purgeContents recursively deletes everything inside dirID (sub-folders and
 // media) without deleting dirID itself.
