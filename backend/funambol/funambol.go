@@ -546,9 +546,69 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	return f.purgeCheck(ctx, dir, true)
 }
 
-// Purge deletes a directory and all its contents
+// Purge deletes a directory and all its contents.
+//
+// The SAPI folder-delete endpoint refuses to recursively delete a folder that
+// holds more than ~1000 items in a single call ("can't delete more than 1000
+// elements"), so we can't just hand the folder id to deleteFolder.  Instead we
+// empty the tree ourselves bottom-up — media deleted in capped batches and
+// sub-folders recursed into — and only then remove the now-empty folder.
 func (f *Fs) Purge(ctx context.Context, dir string) error {
-	return f.purgeCheck(ctx, dir, false)
+	root := path.Join(f.root, dir)
+	if root == "" {
+		return errors.New("can't purge root directory")
+	}
+	dirID, err := f.dirCache.FindDir(ctx, dir, false)
+	if err != nil {
+		return err
+	}
+	if err := f.purgeContents(ctx, dirID); err != nil {
+		return err
+	}
+	if err := f.deleteFolder(ctx, dirID); err != nil {
+		return fmt.Errorf("purge: %w", err)
+	}
+	f.dirCache.FlushDir(dir)
+	return nil
+}
+
+// deleteBatch is the maximum number of media ids sent to a single delete call.
+// Kept comfortably under the server's ~1000-element ceiling.
+const deleteBatch = 500
+
+// purgeContents recursively deletes everything inside dirID (sub-folders and
+// media) without deleting dirID itself.
+func (f *Fs) purgeContents(ctx context.Context, dirID string) error {
+	folders, err := f.listFolders(ctx, dirID)
+	if err != nil {
+		return err
+	}
+	for _, fl := range folders {
+		if err := f.purgeContents(ctx, fl.ID.String()); err != nil {
+			return err
+		}
+		if err := f.deleteFolder(ctx, fl.ID.String()); err != nil {
+			return fmt.Errorf("purge sub-folder: %w", err)
+		}
+	}
+	// Fully paginate the listing before deleting so we never mutate the folder
+	// while a paged read of it is still in flight.
+	var ids []string
+	if err := f.listMedia(ctx, dirID, func(it *api.Item) {
+		ids = append(ids, it.ID.String())
+	}); err != nil {
+		return err
+	}
+	for i := 0; i < len(ids); i += deleteBatch {
+		end := i + deleteBatch
+		if end > len(ids) {
+			end = len(ids)
+		}
+		if err := f.deleteMedia(ctx, ids[i:end]...); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (f *Fs) deleteMedia(ctx context.Context, ids ...string) error {
