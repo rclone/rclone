@@ -526,12 +526,6 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 }
 
 // Purge deletes a directory and all its contents.
-//
-// The SAPI folder-delete endpoint refuses to recursively delete a folder that
-// holds more than ~1000 items in a single call ("can't delete more than 1000
-// elements"), so we can't just hand the folder id to deleteFolder.  Instead we
-// empty the tree ourselves bottom-up — media deleted in capped batches and
-// sub-folders recursed into — and only then remove the now-empty folder.
 func (f *Fs) Purge(ctx context.Context, dir string) error {
 	root := path.Join(f.root, dir)
 	if root == "" {
@@ -541,10 +535,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	if err != nil {
 		return err
 	}
-	if err := f.purgeContents(ctx, dirID); err != nil {
-		return err
-	}
-	if err := f.deleteFolder(ctx, dirID); err != nil {
+	if err := f.purgeDir(ctx, dirID); err != nil {
 		return fmt.Errorf("purge: %w", err)
 	}
 	f.dirCache.FlushDir(dir)
@@ -557,19 +548,31 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 // inclusive or not) while keeping round-trips to a minimum.
 const deleteBatch = 999
 
-// purgeContents recursively deletes everything inside dirID (sub-folders and
-// media) without deleting dirID itself.
-func (f *Fs) purgeContents(ctx context.Context, dirID string) error {
+// purgeDir deletes dirID and everything beneath it.
+//
+// The fast path is the server's own recursive folder-delete, which removes a
+// whole subtree in a single request.  That call is refused once a subtree holds
+// more than ~1000 elements ("can't delete more than 1000 elements"), so on any
+// failure we fall back to emptying this folder ourselves: recurse into each
+// sub-folder (which retries the fast path at the smaller scale) and delete the
+// folder's own media in capped batches, then remove the now-empty folder.
+//
+// This matters for speed: most trees are wiped in a handful of recursive
+// folder-deletes instead of listing every file (200 per page) and deleting it
+// in batches — the round-trip count, not the byte count, dominates the time.
+func (f *Fs) purgeDir(ctx context.Context, dirID string) error {
+	// Fast path: one call deletes the whole subtree when it's small enough.
+	if err := f.deleteFolder(ctx, dirID); err == nil {
+		return nil
+	}
+	// Too big (or otherwise refused): drain this level and recurse.
 	folders, err := f.listFolders(ctx, dirID)
 	if err != nil {
 		return err
 	}
 	for _, fl := range folders {
-		if err := f.purgeContents(ctx, fl.ID.String()); err != nil {
+		if err := f.purgeDir(ctx, fl.ID.String()); err != nil {
 			return err
-		}
-		if err := f.deleteFolder(ctx, fl.ID.String()); err != nil {
-			return fmt.Errorf("purge sub-folder: %w", err)
 		}
 	}
 	// Fully paginate the listing before deleting so we never mutate the folder
@@ -589,7 +592,8 @@ func (f *Fs) purgeContents(ctx context.Context, dirID string) error {
 			return err
 		}
 	}
-	return nil
+	// Contents gone — the folder itself is now small enough to delete.
+	return f.deleteFolder(ctx, dirID)
 }
 
 func (f *Fs) deleteMedia(ctx context.Context, ids ...string) error {
