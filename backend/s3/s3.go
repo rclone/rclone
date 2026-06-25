@@ -4438,6 +4438,9 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	//structs.SetFrom(&mReq, req)
 	var mReq s3.CreateMultipartUploadInput
 	setFrom_s3CreateMultipartUploadInput_s3PutObjectInput(&mReq, ui.req)
+	if ui.checksumType != "" {
+		mReq.ChecksumType = ui.checksumType
+	}
 
 	uploadParts := f.opt.MaxUploadParts
 	if uploadParts < 1 {
@@ -4570,8 +4573,9 @@ func (w *s3ChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 		SSECustomerAlgorithm: w.multiPartUploadInput.SSECustomerAlgorithm,
 		SSECustomerKey:       w.multiPartUploadInput.SSECustomerKey,
 		SSECustomerKeyMD5:    w.multiPartUploadInput.SSECustomerKeyMD5,
+		ChecksumAlgorithm:    w.multiPartUploadInput.ChecksumAlgorithm,
 	}
-	if w.f.opt.DirectoryBucket {
+	if w.f.opt.DirectoryBucket || w.multiPartUploadInput.ChecksumAlgorithm != "" {
 		// Directory buckets do not support "Content-Md5" header
 		uploadPartReq.ContentMD5 = nil
 	}
@@ -4797,8 +4801,9 @@ func (o *Object) uploadSinglepartPresignedRequest(ctx context.Context, req *s3.P
 
 // Info needed for an upload
 type uploadInfo struct {
-	req       *s3.PutObjectInput
-	md5sumHex string
+	req          *s3.PutObjectInput
+	md5sumHex    string
+	checksumType types.ChecksumType
 }
 
 // Prepare object for being uploaded
@@ -4993,6 +4998,10 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 			ui.req.IfNoneMatch = aws.String(value)
 		case "x-amz-tagging":
 			ui.req.Tagging = aws.String(value)
+		case "x-amz-checksum-algorithm":
+			ui.req.ChecksumAlgorithm = types.ChecksumAlgorithm(strings.ToUpper(value))
+		case "x-amz-checksum-type":
+			ui.checksumType = types.ChecksumType(strings.ToUpper(value))
 		default:
 			const amzMetaPrefix = "x-amz-meta-"
 			if strings.HasPrefix(lowerKey, amzMetaPrefix) {
