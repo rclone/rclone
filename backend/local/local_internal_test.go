@@ -471,6 +471,59 @@ func testMetadata(t *testing.T, r *fstest.Run, o *Object, when time.Time) {
 	})
 }
 
+// Check that the setuid, setgid and sticky bits from "mode" metadata are
+// stripped by default and only restored with --local-metadata-restore-special-bits.
+//
+// See: https://github.com/rclone/rclone/security/advisories/GHSA-945v-v9p3-v5xw
+func TestMetadataSpecialBits(t *testing.T) {
+	switch runtime.GOOS {
+	case "windows", "plan9", "js":
+		t.Skip("mode metadata is not applied on this OS")
+	}
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	const filePath = "setuid.bin"
+	r.WriteFile(filePath, "payload", time.Now())
+	f := r.Flocal.(*Fs)
+
+	obj, err := f.NewObject(ctx, filePath)
+	require.NoError(t, err)
+	o := obj.(*Object)
+	osPath := filepath.Join(f.root, filePath)
+
+	statMode := func() os.FileMode {
+		t.Helper()
+		fi, err := os.Stat(osPath)
+		require.NoError(t, err)
+		return fi.Mode()
+	}
+
+	// "40000755" is Go's os.FileMode layout for setuid|0755 - a value a real
+	// unix st_mode can never produce, so it can only come from an
+	// attacker-controlled source remote.
+	const setuidMode = "40000755"
+
+	t.Run("StrippedByDefault", func(t *testing.T) {
+		require.NoError(t, os.Chmod(osPath, 0644))
+		require.NoError(t, o.writeMetadataToFile(fs.Metadata{"mode": setuidMode}))
+		mode := statMode()
+		assert.Equal(t, os.FileMode(0755), mode.Perm())
+		assert.Zero(t, mode&(os.ModeSetuid|os.ModeSetgid|os.ModeSticky),
+			fmt.Sprintf("special bits should be stripped by default, got %v", mode))
+	})
+
+	t.Run("RestoredWithFlag", func(t *testing.T) {
+		f.opt.MetadataRestoreSpecial = true
+		defer func() { f.opt.MetadataRestoreSpecial = false }()
+		require.NoError(t, os.Chmod(osPath, 0644))
+		require.NoError(t, o.writeMetadataToFile(fs.Metadata{"mode": setuidMode}))
+		mode := statMode()
+		assert.Equal(t, os.FileMode(0755), mode.Perm())
+		assert.NotZero(t, mode&os.ModeSetuid,
+			fmt.Sprintf("setuid bit should be restored with the flag, got %v", mode))
+	})
+}
+
 func TestFilter(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
