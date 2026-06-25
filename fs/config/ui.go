@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 	"slices"
 	"sort"
 	"strconv"
@@ -441,7 +442,7 @@ func backendConfig(ctx context.Context, name string, m configmap.Mapper, ri *fs.
 				out.Option.Examples[1].Value == "false" &&
 				out.Option.Exclusive {
 				// Use Confirm for Yes/No questions as it has a nicer interface=
-				fmt.Println(out.Option.Help)
+				fmt.Println(renderHelpForTerminal(out.Option.Help))
 				in.Result = fmt.Sprint(Confirm(Default))
 			} else {
 				value := ChooseOption(out.Option, name)
@@ -483,12 +484,26 @@ func RemoteConfig(ctx context.Context, name string) error {
 	return PostConfig(ctx, name, m, ri)
 }
 
+// rootRelativeMarkdownLink matches a markdown link with a root-relative
+// target, e.g. [encoding section in the overview](/overview/#encoding).
+var rootRelativeMarkdownLink = regexp.MustCompile(`\[([^\]]+)\]\((/[^)]*)\)`)
+
+// renderHelpForTerminal makes an option's help string readable on the
+// terminal. The same help text is also used to generate the website
+// documentation, where markdown links with root-relative targets resolve
+// correctly. On the terminal those links are confusing, so rewrite them to
+// "text (https://rclone.org/path)" using rclone.org as the implied root.
+func renderHelpForTerminal(help string) string {
+	return rootRelativeMarkdownLink.ReplaceAllString(help, "$1 (https://rclone.org$2)")
+}
+
 // ChooseOption asks the user to choose an option
 func ChooseOption(o *fs.Option, name string) string {
 	fmt.Printf("Option %s.\n", o.Name)
 	if o.Help != "" {
 		// Show help string without empty lines.
 		help := strings.ReplaceAll(strings.TrimSpace(o.Help), "\n\n", "\n")
+		help = renderHelpForTerminal(help)
 		fmt.Println(help)
 	}
 
