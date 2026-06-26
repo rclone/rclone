@@ -271,16 +271,22 @@ func (ds *dirStream) Next() (de fuse.DirEntry, errno syscall.Errno) {
 func (ds *dirStream) Close() {
 }
 
-// Seekdir implements fusefs.FileSeekdirer so go-fuse can rewind the directory
-// stream when the kernel calls lseek(fd, 0, SEEK_SET) before a second getdents.
-// Without this, go-fuse returns ENOTSUP and ls returns empty on every call after
-// the first. See: https://github.com/hanwen/go-fuse/issues/549
+// Seekdir implements fusefs.FileSeekdirer so go-fuse can reposition the
+// directory stream. The kernel calls this both to rewind (lseek(fd, 0,
+// SEEK_SET) before a second getdents) and, for a kernel-NFS-exported mount,
+// to resume from a previously returned directory cookie: nfsd is stateless,
+// so it opens a fresh handle and seeks to the last offset on every readdir
+// continuation. Handling only offset 0 made go-fuse return ENOTSUP for those
+// resumes, so any listing spanning more than one readdir batch failed over NFS.
+//
+// dirStream is a snapshot taken at Readdir time and go-fuse assigns each entry
+// a sequential offset in Next() order (the entry yielded at index i carries
+// offset i+1), so repositioning to off means the next entry is the one at
+// index off. Values past the end clamp to EOF via HasNext.
+// See: https://github.com/hanwen/go-fuse/issues/549
 func (ds *dirStream) Seekdir(_ context.Context, off uint64) syscall.Errno {
-	if off == 0 {
-		ds.i = 0
-		return 0
-	}
-	return syscall.ENOTSUP
+	ds.i = int(off)
+	return 0
 }
 
 var _ fusefs.DirStream = (*dirStream)(nil)
