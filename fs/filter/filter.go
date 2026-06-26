@@ -631,7 +631,11 @@ func (f *Filter) MakeListR(ctx context.Context, NewObject func(ctx context.Conte
 					if err == fs.ErrorObjectNotFound {
 						// Skip files that are not found
 					} else if err != nil {
-						return err
+						// Count and log the error but carry on so that one
+						// unreadable file (e.g. permission denied) doesn't stop
+						// the other --files-from files being processed.
+						fs.Errorf(remote, "--files-from failed to read file: %v", err)
+						_ = fs.CountError(gCtx, err)
 					} else {
 						err = callback(entries)
 						if err != nil {
