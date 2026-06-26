@@ -492,6 +492,7 @@ which might be useful:
 - `client_cert`
 - `client_key`
 - `connect_timeout`
+- `cookie_jar_name`
 - `disable_http2`
 - `disable_http_keep_alives`
 - `dump`
@@ -2933,6 +2934,49 @@ between the source and the backend, for backends that do not support
 mod times, and instead use uploaded times. However, if the backend
 does not support checksums, note that syncing or copying within the
 time skew window may still result in additional transfers for safety.
+
+### --use-cookies
+
+This flag enables a cookie jar so that HTTP cookies (such as session
+cookies) returned by a server are stored and sent back on later
+requests, for all HTTP based backends and remotes.
+
+The cookie jar is held in memory only and is **not** persisted between
+rclone runs - cookies are discarded when rclone exits.
+
+By default every connection shares a single cookie jar, so a cookie set
+on one connection is visible to all the others. See `--cookie-jar-name`
+below if you need to keep cookies isolated.
+
+### --cookie-jar-name string
+
+This sets the name of the cookie jar that a connection uses. Connections
+that use the same jar name share cookies; connections with different
+names use separate, isolated jars. It requires `--use-cookies` to have
+any effect.
+
+Note that setting this as a **global** flag (on the command line or with
+`global.cookie_jar_name`) renames the single shared jar but still puts
+**every** connection into it - so on its own it does not isolate
+anything.
+
+To actually get separate jars you must set it per remote using a config
+**override**, so that different remotes are given different jar names.
+For example, to give a remote its own private cookie jar, put this in
+the config file:
+
+```ini
+[remote]
+type = XXX
+...
+override.cookie_jar_name = potato
+```
+
+or use it in the connection string `remote,override.cookie_jar_name=potato:`.
+
+Any connections that do not set an override continue to share the
+default jar. See [override.var](#globalconfig) for more about config
+overrides.
 
 ### --use-mmap
 

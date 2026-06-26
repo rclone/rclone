@@ -411,7 +411,7 @@ var ConfigOptionsInfo = Options{{
 }, {
 	Name:    "use_cookies",
 	Default: false,
-	Help:    "Enable session cookiejar. All connections share a single cookie jar by default. Use --cookie-jar-name to create separate named jars. Cookies are not persisted between rclone runs.",
+	Help:    "Enable session cookiejar, shared by all connections by default",
 	Groups:  "Networking",
 }, {
 	Name:    "cookie_jar_name",

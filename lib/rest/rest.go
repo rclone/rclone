@@ -58,13 +58,6 @@ func defaultErrorHandler(resp *http.Response) (err error) {
 	return fmt.Errorf("HTTP error %v (%v) returned body: %q", resp.StatusCode, resp.Status, body)
 }
 
-// Client returns the underlying http.Client.
-func (api *Client) Client() *http.Client {
-	api.mu.RLock()
-	defer api.mu.RUnlock()
-	return api.c
-}
-
 // SetErrorHandler sets the handler to decode an error response when
 // the HTTP status code is not 2xx.  The handler should close resp.Body.
 func (api *Client) SetErrorHandler(fn func(resp *http.Response) error) *Client {

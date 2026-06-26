@@ -364,20 +364,6 @@ func NewClientWithUnixSocket(ctx context.Context, path string) *http.Client {
 	})
 }
 
-// ClientWithFreshCookieJar returns a shallow copy of base with a new, empty
-// cookie jar. Transport, CheckRedirect, and Timeout are copied from base; the
-// old Jar (if any) is not. Use this for per-operation or per-session cookie
-// isolation when sharing the same transport configuration.
-func ClientWithFreshCookieJar(base *http.Client) *http.Client {
-	jar, _ := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
-	return &http.Client{
-		Transport:     base.Transport,
-		CheckRedirect: base.CheckRedirect,
-		Timeout:       base.Timeout,
-		Jar:           jar,
-	}
-}
-
 // Transport is our http Transport which wraps an http.Transport
 // * Sets the User Agent
 // * Does logging
