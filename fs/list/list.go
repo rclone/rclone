@@ -103,7 +103,11 @@ func filterDir(ctx context.Context, entries fs.DirEntries, includeAll bool, dir 
 	prefix := ""
 	if dir != "" {
 		prefix = dir
-		if !bucket.IsAllSlashes(dir) {
+		// Don't double the slash if dir already ends in one - this
+		// happens for a pseudo-directory created by an object key
+		// containing "//", and doubling it here makes every real
+		// child entry fail the HasPrefix check below (#9383).
+		if !bucket.IsAllSlashes(dir) && !strings.HasSuffix(dir, "/") {
 			prefix += "/"
 		}
 	}

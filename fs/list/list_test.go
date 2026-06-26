@@ -87,6 +87,19 @@ func TestFilterAndSortCheckDirRoot(t *testing.T) {
 	)
 }
 
+func TestFilterDirHandlesDirRemoteEndingInSlash(t *testing.T) {
+	// Regression test for #9383: when dir itself already ends in "/"
+	// (e.g. a pseudo-directory created by an object key containing "//"),
+	// filterDir must not double the slash when building its prefix --
+	// otherwise every real child entry is wrongly rejected as "too short".
+	da := mockdir.New("dir/sub")
+	oA := mockobject.Object("dir/file")
+	entries := fs.DirEntries{da, oA}
+	newEntries, err := filterDir(context.Background(), entries, true, "dir/", nil, nil)
+	require.NoError(t, err)
+	assert.Equal(t, fs.DirEntries{da, oA}, newEntries)
+}
+
 type unknownDirEntry string
 
 func (o unknownDirEntry) Fs() fs.Info                               { return fs.Unknown }
