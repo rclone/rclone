@@ -385,6 +385,39 @@ func (n *Node) Create(ctx context.Context, name string, flags uint32, mode uint3
 
 var _ = (fusefs.NodeCreater)((*Node)(nil))
 
+// Mknod creates a regular file. The kernel NFS server creates regular files
+// with MKNOD (it creates-then-opens, so vfs_create routes through fuse_create
+// which sends FUSE_MKNOD when there is no open intent), so without this an
+// NFS-exported mount fails every file creation with ENOTSUPP. Local and SMB
+// clients create via Create (FUSE_CREATE) and are unaffected. This mirrors the
+// cmd/mount (bazil) backend, which implements mknod for the same reason
+// (see #2115).
+//
+// Device/special files are not supported by the VFS, so a non-zero rdev is
+// rejected. Mknod returns no open handle (unlike Create), so the handle Create
+// opens is flushed (to instantiate the file and surface any I/O error) and
+// released before returning.
+func (n *Node) Mknod(ctx context.Context, name string, mode uint32, rdev uint32, out *fuse.EntryOut) (node *fusefs.Inode, errno syscall.Errno) {
+	defer log.Trace(n, "name=%q, mode=%#o, rdev=%d", name, mode, rdev)("node=%v, errno=%v", &node, &errno)
+	if rdev != 0 {
+		fs.Errorf(n, "Can't create device node %q", name)
+		return nil, syscall.EIO
+	}
+	node, fh, _, errno := n.Create(ctx, name, uint32(os.O_CREATE|os.O_WRONLY), mode, out)
+	if errno != 0 {
+		return nil, errno
+	}
+	if fh != nil {
+		if errno := fh.(fusefs.FileFlusher).Flush(ctx); errno != 0 {
+			return nil, errno
+		}
+		_ = fh.(fusefs.FileReleaser).Release(ctx)
+	}
+	return node, 0
+}
+
+var _ = (fusefs.NodeMknoder)((*Node)(nil))
+
 // Unlink should remove a child from this directory.  If the
 // return status is OK, the Inode is removed as child in the
 // FS tree automatically. Default is to return EROFS.
