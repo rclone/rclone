@@ -12,6 +12,8 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/rclone/rclone/lib/bucket"
+	"github.com/rclone/rclone/lib/pacer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -127,6 +129,57 @@ func TestClientStopsAfterTenRedirects(t *testing.T) {
 	}
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "stopped after 10 redirects")
+}
+
+func TestObjectNotFoundMapping(t *testing.T) {
+	ctx, opt, client := SetupS3Test(t)
+	gotHead, gotGet := false, false
+
+	// Return 404 for all requests.
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodHead:
+			gotHead = true
+		case http.MethodGet:
+			gotGet = true
+		}
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer server.Close()
+
+	opt.Endpoint = server.URL
+	opt.ForcePathStyle = true
+	opt.Region = "us-east-1"
+	opt.AccessKeyID = "id"
+	opt.SecretAccessKey = "secret"
+	c, _, err := s3Connection(ctx, opt, client)
+	require.NoError(t, err)
+
+	f := &Fs{
+		name:  "s3test",
+		opt:   *opt,
+		ctx:   ctx,
+		c:     c,
+		pacer: fs.NewPacer(ctx, pacer.NewS3(pacer.MinSleep(minSleep))),
+		cache: bucket.NewCache(),
+	}
+	f.setRoot("bucket")
+
+	// HEAD path: NewObject reads metadata via HeadObject.
+	_, headErr := f.NewObject(ctx, "missing.txt")
+	require.True(t, gotHead, "server should have received a HEAD request")
+	assert.ErrorIs(t, headErr, fs.ErrorObjectNotFound)
+
+	// GET path: Object.Open issues a GetObject.
+	o := &Object{fs: f, remote: "missing.txt"}
+	in, getErr := o.Open(ctx)
+	if in != nil {
+		_ = in.Close()
+	}
+	require.True(t, gotGet, "server should have received a GET request")
+	assert.ErrorIs(t, getErr, fs.ErrorObjectNotFound)
+
+	assert.Equal(t, headErr, getErr, "HeadObject and GetObject should map a 404 to the same error")
 }
 
 // TestIntegration runs integration tests against the remote
