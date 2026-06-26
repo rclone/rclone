@@ -201,7 +201,7 @@ func (n *Node) Lookup(ctx context.Context, name string, out *fuse.EntryOut) (ino
 	// out.SetAttrTimeout(dt time.Duration)
 	n.fsys.setEntryOut(vfsNode, out)
 
-	return n.NewInode(ctx, newNode, fusefs.StableAttr{Mode: out.Attr.Mode}), 0
+	return n.NewInode(ctx, newNode, fusefs.StableAttr{Mode: out.Attr.Mode, Ino: newNode.node.Inode()}), 0
 }
 
 var _ = (fusefs.NodeLookuper)((*Node)(nil))
@@ -337,7 +337,7 @@ func (n *Node) Mkdir(ctx context.Context, name string, mode uint32, out *fuse.En
 	}
 	newNode := newNode(n.fsys, newDir)
 	n.fsys.setEntryOut(newNode.node, out)
-	newInode := n.NewInode(ctx, newNode, fusefs.StableAttr{Mode: out.Attr.Mode})
+	newInode := n.NewInode(ctx, newNode, fusefs.StableAttr{Mode: out.Attr.Mode, Ino: newNode.node.Inode()})
 	return newInode, 0
 }
 
@@ -379,7 +379,7 @@ func (n *Node) Create(ctx context.Context, name string, flags uint32, mode uint3
 	n.fsys.setEntryOut(vfsNode, out)
 	newNode := newNode(n.fsys, vfsNode)
 	fs.Debugf(nil, "attr=%#v", out.Attr)
-	newInode := n.NewInode(ctx, newNode, fusefs.StableAttr{Mode: out.Attr.Mode})
+	newInode := n.NewInode(ctx, newNode, fusefs.StableAttr{Mode: out.Attr.Mode, Ino: newNode.node.Inode()})
 	return newInode, fh, 0, 0
 }
 
@@ -528,7 +528,7 @@ func (n *Node) Symlink(ctx context.Context, target, name string, out *fuse.Entry
 
 	n.fsys.setEntryOut(vfsNode, out)
 	newNode := newNode(n.fsys, vfsNode)
-	newInode := n.NewInode(ctx, newNode, fusefs.StableAttr{Mode: out.Attr.Mode})
+	newInode := n.NewInode(ctx, newNode, fusefs.StableAttr{Mode: out.Attr.Mode, Ino: newNode.node.Inode()})
 
 	return newInode, 0
 }
