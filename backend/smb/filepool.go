@@ -16,12 +16,12 @@ type FsInterface interface {
 	getConnection(ctx context.Context, share string) (*conn, error)
 	putConnection(pc **conn, err error)
 	removeSession()
+	isClosed(c *conn) bool
 }
 
 type file struct {
 	*smb2.File
-	c        *conn
-	closeder closeder // liveness checker; normally c itself, overridable in tests
+	c *conn
 }
 
 type filePool struct {
@@ -67,7 +67,7 @@ func (p *filePool) get() (*file, error) {
 		return nil, fmt.Errorf("failed to open: %w", err)
 	}
 
-	return &file{File: fl, c: c, closeder: c}, nil
+	return &file{File: fl, c: c}, nil
 }
 
 func (p *filePool) put(f *file, err error) {
@@ -104,7 +104,7 @@ func (p *filePool) drain() error {
 			//
 			// If the connection is dead, skip the Close — the server
 			// will clean up the file handle when the TCP session ends.
-			if f.closeder.closed() {
+			if p.fs.isClosed(f.c) {
 				fs.Debugf(nil, "Skipping close on dead connection for %s", p.path)
 				return nil
 			}

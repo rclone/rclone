@@ -13,35 +13,25 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// alwaysClosed implements closeder for a dead connection in tests.
-type alwaysClosed struct{}
-
-func (alwaysClosed) closed() bool { return true }
-
-// neverClosed implements closeder for an alive connection in tests.
-type neverClosed struct{}
-
-func (neverClosed) closed() bool { return false }
-
-// newDeadConn creates a conn that reports itself as closed and has been
-// in the pool long enough to trigger the liveness check.
+// newDeadConn creates a conn that has been in the pool long enough to
+// trigger the liveness check.
 func newDeadConn(share string) *conn {
 	return &conn{
 		shareName: share,
-		pooledAt:  time.Now().Add(-10 * time.Minute), // old enough to be checked
-		closeder:  alwaysClosed{},
+		pooledAt:  time.Now().Add(-10 * time.Minute),
 	}
 }
 
-// newAliveConn creates a conn that reports itself as alive.
+// newAliveConn creates a conn.
 func newAliveConn(share string) *conn {
 	return &conn{
 		shareName: share,
-		closeder:  neverClosed{},
 	}
 }
 
 // newTestFs creates a minimal Fs suitable for pool tests.
+// f.closed is set to report all connections as alive by default;
+// individual tests override it as needed.
 func newTestFs() *Fs {
 	ctx := context.Background()
 	f := &Fs{
@@ -51,25 +41,13 @@ func newTestFs() *Fs {
 			Port:        "445",
 			IdleTimeout: fs.Duration(60 * time.Second),
 		},
-		ctx:   ctx,
-		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(1*time.Millisecond), pacer.MaxSleep(10*time.Millisecond))),
+		ctx:    ctx,
+		pacer:  fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(1*time.Millisecond), pacer.MaxSleep(10*time.Millisecond))),
+		closed: func(c *conn) bool { return false },
 	}
 	f.pool = nil
 	f.drain = time.AfterFunc(time.Duration(f.opt.IdleTimeout), func() {})
 	return f
-}
-
-// TestConnClosed verifies the closed() method via the closeder interface.
-func TestConnClosed(t *testing.T) {
-	t.Run("dead connection", func(t *testing.T) {
-		c := newDeadConn("share")
-		assert.True(t, c.closed())
-	})
-
-	t.Run("alive connection", func(t *testing.T) {
-		c := newAliveConn("share")
-		assert.False(t, c.closed())
-	})
 }
 
 // TestGetConnectionDiscardsDeadConnections verifies that getConnection
@@ -78,20 +56,19 @@ func TestGetConnectionDiscardsDeadConnections(t *testing.T) {
 	f := newTestFs()
 
 	alive := newAliveConn("myshare")
+	dead1 := newDeadConn("myshare")
+	dead2 := newDeadConn("myshare")
+	dead3 := newDeadConn("myshare")
 
-	// Pool: 3 dead connections, then 1 alive one.
-	f.pool = []*conn{
-		newDeadConn("myshare"),
-		newDeadConn("myshare"),
-		newDeadConn("myshare"),
-		alive,
-	}
+	deadSet := map[*conn]bool{dead1: true, dead2: true, dead3: true}
+	f.closed = func(c *conn) bool { return deadSet[c] }
+
+	f.pool = []*conn{dead1, dead2, dead3, alive}
 
 	c, err := f.getConnection(context.Background(), "myshare")
 	require.NoError(t, err)
 	assert.Equal(t, alive, c, "should return the alive connection, not a dead one")
 
-	// Pool should be empty now (3 dead discarded, 1 alive returned).
 	f.poolMu.Lock()
 	assert.Empty(t, f.pool)
 	f.poolMu.Unlock()
@@ -101,6 +78,7 @@ func TestGetConnectionDiscardsDeadConnections(t *testing.T) {
 // connections are dead, getConnection falls through to create a new one.
 func TestGetConnectionAllDeadFallsThrough(t *testing.T) {
 	f := newTestFs()
+	f.closed = func(c *conn) bool { return true }
 
 	f.pool = []*conn{
 		newDeadConn("myshare"),
@@ -108,12 +86,9 @@ func TestGetConnectionAllDeadFallsThrough(t *testing.T) {
 		newDeadConn("myshare"),
 	}
 
-	// getConnection will drain the pool, then try newConnection which
-	// will fail (no real server). That's fine — we're testing pool cleanup.
 	_, err := f.getConnection(context.Background(), "myshare")
 	assert.Error(t, err, "should fail because no real server to connect to")
 
-	// All dead connections should have been discarded.
 	f.poolMu.Lock()
 	assert.Empty(t, f.pool, "all dead connections should be discarded")
 	f.poolMu.Unlock()
@@ -136,11 +111,11 @@ func TestGetConnectionAliveReturnedDirectly(t *testing.T) {
 // is returned without an Echo check, even if it would report as dead.
 func TestGetConnectionRecentNotChecked(t *testing.T) {
 	f := newTestFs()
+	f.closed = func(c *conn) bool { return true }
 
 	recentDead := &conn{
 		shareName: "myshare",
-		pooledAt:  time.Now(), // just now — within IdleTimeout
-		closeder:  alwaysClosed{},
+		pooledAt:  time.Now(),
 	}
 	f.pool = []*conn{recentDead}
 
@@ -154,20 +129,17 @@ func TestGetConnectionRecentNotChecked(t *testing.T) {
 func TestGetConnectionMixedPool(t *testing.T) {
 	f := newTestFs()
 
+	dead := newDeadConn("myshare")
 	first := newAliveConn("myshare")
 	second := newAliveConn("myshare")
 
-	f.pool = []*conn{
-		newDeadConn("myshare"),
-		first,
-		second, // should stay in pool
-	}
+	f.closed = func(c *conn) bool { return c == dead }
+	f.pool = []*conn{dead, first, second}
 
 	c, err := f.getConnection(context.Background(), "myshare")
 	require.NoError(t, err)
 	assert.Equal(t, first, c, "should return first alive connection")
 
-	// second should still be in the pool.
 	f.poolMu.Lock()
 	assert.Len(t, f.pool, 1)
 	assert.Equal(t, second, f.pool[0])
@@ -201,18 +173,22 @@ func TestPutConnectionWithErrorChecksLiveness(t *testing.T) {
 
 		f.poolMu.Lock()
 		assert.Len(t, f.pool, 1, "alive connection should be returned to pool")
-		f.pool = nil // reset
+		f.pool = nil
 		f.poolMu.Unlock()
 	})
 
 	t.Run("dead after error is discarded", func(t *testing.T) {
-		c := newDeadConn("myshare")
+		dead := newDeadConn("myshare")
+		deadPtr := dead // capture before putConnection nils it
+		f.closed = func(c *conn) bool { return c == deadPtr }
 		someErr := assert.AnError
-		f.putConnection(&c, someErr)
+		f.putConnection(&dead, someErr)
 
 		f.poolMu.Lock()
 		assert.Empty(t, f.pool, "dead connection should NOT be returned to pool")
 		f.poolMu.Unlock()
+
+		f.closed = func(c *conn) bool { return false }
 	})
 }
 
@@ -221,11 +197,14 @@ func TestPutConnectionWithErrorChecksLiveness(t *testing.T) {
 func TestConcurrentGetConnectionWithDeadPool(t *testing.T) {
 	f := newTestFs()
 
-	// Fill pool with a mix of dead and alive connections.
+	deadConns := make(map[*conn]bool)
 	for i := 0; i < 5; i++ {
-		f.pool = append(f.pool, newDeadConn("myshare"))
+		dead := newDeadConn("myshare")
+		deadConns[dead] = true
+		f.pool = append(f.pool, dead)
 		f.pool = append(f.pool, newAliveConn("myshare"))
 	}
+	f.closed = func(c *conn) bool { return deadConns[c] }
 
 	var wg sync.WaitGroup
 	var gotCount atomic.Int32

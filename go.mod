@@ -286,3 +286,5 @@ require (
 	golang.org/x/mobile v0.0.0-20260312152759-81488f6aeb60
 	golang.org/x/term v0.43.0
 )
+
+replace github.com/cloudsoda/go-smb2 => /workspace/go-smb2_cloudsoda
