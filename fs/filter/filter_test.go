@@ -176,6 +176,35 @@ func TestNewFilterWithFilesFromRaw(t *testing.T) {
 	}
 }
 
+func TestNewFilterWithFilesFrom0(t *testing.T) {
+	Opt := Opt
+
+	// Set up the input
+	Opt.FilesFromRaw = []string{testFile(t, "#comment\x00files1\nmore\x00files2\n")}
+	Opt.FilesFrom0 = true
+
+	rm := func(p string) {
+		err := os.Remove(p)
+		if err != nil {
+			t.Logf("error removing %q: %v", p, err)
+		}
+	}
+	// Reset the input
+	defer func() {
+		rm(Opt.FilesFromRaw[0])
+	}()
+
+	f, err := NewFilter(&Opt)
+	require.NoError(t, err)
+	assert.Len(t, f.files, 3)
+	for _, name := range []string{"#comment", "files1\nmore", "files2\n"} {
+		_, ok := f.files[name]
+		if !ok {
+			t.Errorf("Didn't find file %q in f.files", name)
+		}
+	}
+}
+
 func TestNewFilterFullExceptFilesFromOpt(t *testing.T) {
 	Opt := Opt
 
@@ -767,7 +796,7 @@ five
 		}()
 		fileName = "-"
 	}
-	err := forEachLine(fileName, raw, func(s string) error {
+	err := forEachLine(fileName, raw, false, func(s string) error {
 		lines = append(lines, s)
 		return nil
 	})
@@ -794,6 +823,71 @@ func TestFilterForEachLineWithRaw(t *testing.T) {
 
 func TestFilterForEachLineStdinWithRaw(t *testing.T) {
 	testFilterForEachLine(t, true, true)
+}
+
+func testFilterForEachLineNul(t *testing.T, useStdin bool) {
+	file := testFile(t, "one\x00two\nthree\x00four\x00five\x00")
+	defer func() {
+		err := os.Remove(file)
+		require.NoError(t, err)
+	}()
+	lines := []string{}
+	fileName := file
+	if useStdin {
+		in, err := os.Open(file)
+		require.NoError(t, err)
+		oldStdin := os.Stdin
+		os.Stdin = in
+		defer func() {
+			os.Stdin = oldStdin
+			_ = in.Close()
+		}()
+		fileName = "-"
+	}
+	err := forEachLine(fileName, true, true, func(s string) error {
+		lines = append(lines, s)
+		return nil
+	})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"one", "two\nthree", "four", "five"}, lines)
+}
+
+func TestFilterForEachLineNul(t *testing.T) {
+	testFilterForEachLineNul(t, false)
+}
+
+func TestFilterForEachLineNulStdin(t *testing.T) {
+	testFilterForEachLineNul(t, true)
+}
+
+func TestFilterForEachLineNulNoTrailing(t *testing.T) {
+	file := testFile(t, "one\x00two\x00three")
+	defer func() {
+		err := os.Remove(file)
+		require.NoError(t, err)
+	}()
+	var lines []string
+	err := forEachLine(file, true, true, func(s string) error {
+		lines = append(lines, s)
+		return nil
+	})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"one", "two", "three"}, lines)
+}
+
+func TestFilterForEachLineNulConsecutive(t *testing.T) {
+	file := testFile(t, "one\x00\x00two\x00")
+	defer func() {
+		err := os.Remove(file)
+		require.NoError(t, err)
+	}()
+	var lines []string
+	err := forEachLine(file, true, true, func(s string) error {
+		lines = append(lines, s)
+		return nil
+	})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"one", "", "two"}, lines)
 }
 
 func TestFilterMatchesFromDocs(t *testing.T) {

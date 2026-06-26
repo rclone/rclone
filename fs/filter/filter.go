@@ -46,6 +46,11 @@ var OptionsInfo = fs.Options{{
 	Help:    "Read list of source-file names from file without any processing of lines (use - to read from stdin)",
 	Groups:  "Filter",
 }, {
+	Name:    "files_from0",
+	Default: false,
+	Help:    "NULL terminated version of --files-from-raw",
+	Groups:  "Filter",
+}, {
 	Name:    "min_age",
 	Default: fs.DurationOff,
 	Help:    "Only transfer files older than this in s or suffix ms|s|m|h|d|w|M|y",
@@ -145,6 +150,7 @@ type Options struct {
 	ExcludeFile    []string      `config:"exclude_if_present"`
 	FilesFrom      []string      `config:"files_from"`
 	FilesFromRaw   []string      `config:"files_from_raw"`
+	FilesFrom0     bool          `config:"files_from0"`
 	MetaRules      RulesOpt      `config:"metadata"`
 	MinAge         fs.Duration   `config:"min_age"`
 	MaxAge         fs.Duration   `config:"max_age"`
@@ -229,7 +235,7 @@ func NewFilter(opt *Options) (f *Filter, err error) {
 			return nil, fmt.Errorf("the usage of --files-from overrides all other filters, it should be used alone or with --files-from-raw")
 		}
 		f.initAddFile() // init to show --files-from set even if no files within
-		err := forEachLine(rule, false, func(line string) error {
+		err := forEachLine(rule, false, false, func(line string) error {
 			return f.AddFile(line)
 		})
 		if err != nil {
@@ -244,7 +250,7 @@ func NewFilter(opt *Options) (f *Filter, err error) {
 			return nil, fmt.Errorf("the usage of --files-from-raw overrides all other filters, it should be used alone or with --files-from")
 		}
 		f.initAddFile() // init to show --files-from set even if no files within
-		err := forEachLine(rule, true, func(line string) error {
+		err := forEachLine(rule, true, f.Opt.FilesFrom0, func(line string) error {
 			return f.AddFile(line)
 		})
 		if err != nil {

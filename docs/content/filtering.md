@@ -719,6 +719,13 @@ with `;` or `#` are read without any processing. [rclone lsf](/commands/rclone_l
 has a compatible format that can be used to export file lists from remotes for
 input to `--files-from-raw`.
 
+### `--files-from0` - NULL terminated version of `--files-from-raw`
+
+If specified, `--files-from-raw` treats the input as a NUL-delimited
+list instead of a newline-delimited list. This allows handling files that contain embedded newline
+characters. It is similar to the `-print0` option of `find` and the `-0`
+option of `xargs`.
+
 ### `--ignore-case` - make searches case insensitive
 
 By default, rclone filter patterns are case sensitive. The `--ignore-case`
