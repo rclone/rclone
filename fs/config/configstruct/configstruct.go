@@ -145,9 +145,8 @@ func InterfaceToString(in any) (strValue string, err error) {
 					strSlice[i] = strValue
 				}
 				return InterfaceToString(strSlice)
-			} else {
-				err = errors.New("don't know how to convert this")
 			}
+			err = errors.New("don't know how to convert this")
 		}
 	}
 	if err != nil {
