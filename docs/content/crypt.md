@@ -787,9 +787,9 @@ This uses a 32 byte (256 bit key) key derived from the user password.
 1 MiB (1048576 bytes) file will encrypt to
 
 - 32 bytes header
-- 16 chunks of 65568 bytes
+- 16 chunks of 65552 bytes
 
-1049120 bytes total (a 0.05% overhead). This is the overhead for big
+1048864 bytes total (a 0.03% overhead). This is the overhead for big
 files.
 
 ### Name encryption
