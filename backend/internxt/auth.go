@@ -153,10 +153,16 @@ func refreshJWTToken(ctx context.Context, name string, m configmap.Mapper) error
 // Returns the AccessResponse on success, or an error if 2FA is required or login fails.
 func (f *Fs) reLogin(ctx context.Context) (*internxtauth.AccessResponse, error) {
 	password, err := obscure.Reveal(f.opt.Pass)
-	twoFASecret, _ := obscure.Reveal(f.opt.TwoFASecret)
-
 	if err != nil {
 		return nil, fmt.Errorf("couldn't decrypt password: %w", err)
+	}
+
+	twoFASecret := ""
+	if f.opt.OtpSecretKey != "" {
+		twoFASecret, err = obscure.Reveal(f.opt.OtpSecretKey)
+		if err != nil {
+			return nil, fmt.Errorf("invalid OTP secret key: %w", err)
+		}
 	}
 
 	cfg := internxtconfig.NewDefaultToken("")
@@ -247,9 +253,29 @@ func (f *Fs) reAuthorize(ctx context.Context) error {
 
 	err := f.refreshOrReLogin(ctx)
 	if err != nil {
-		f.authFailed = true
+		// Only latch the circuit breaker on genuine, non-recoverable auth
+		// failures. Transient errors (network blips, timeouts, 429, 5xx,
+		// context cancellation) must not permanently disable the remote -
+		// otherwise a single hiccup forces the user to reconfigure even
+		// though the credentials and 2FA secret are still valid.
+		if !isTemporaryErr(err) {
+			f.authFailed = true
+		}
 		return err
 	}
 
 	return nil
+}
+
+// isTemporaryErr reports whether err is a transient failure that may
+// succeed if retried, as opposed to a genuine authentication failure.
+func isTemporaryErr(err error) bool {
+	if fserrors.ShouldRetry(err) {
+		return true
+	}
+	var httpErr *sdkerrors.HTTPError
+	if errors.As(err, &httpErr) {
+		return httpErr.Temporary()
+	}
+	return false
 }

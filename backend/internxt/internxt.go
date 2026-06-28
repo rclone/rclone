@@ -97,6 +97,30 @@ func init() {
 			Required:   true,
 			IsPassword: true,
 		}, {
+			Name: "2fa_code",
+			Help: `The 2FA code.
+
+The value can also be provided with --internxt-2fa-code=000000
+
+The 2FA code of your Internxt account if the account is set up with
+two-factor authentication.`,
+			Required:  false,
+			Advanced:  true,
+			Sensitive: true,
+		}, {
+			Name: "otp_secret_key",
+			Help: `The OTP secret key.
+
+The value can also be provided with --internxt-otp-secret-key=ABCDEFGHIJKLMNOPQRSTUVWXYZ234567
+
+The OTP secret key (TOTP seed, also known as the authenticator key) of your
+Internxt account if the account is set up with two-factor authentication.
+When set, rclone automatically generates 2FA codes as needed.`,
+			Required:   false,
+			Advanced:   true,
+			Sensitive:  true,
+			IsPassword: true,
+		}, {
 			Name:      "mnemonic",
 			Help:      "Mnemonic (internal use only)",
 			Required:  false,
@@ -165,18 +189,18 @@ func Config(ctx context.Context, name string, m configmap.Mapper, configIn fs.Co
 		}
 
 		if loginResp.TFA {
-			return fs.ConfigInputOptional("2fa_secret", "config_2fa_secret", "Two-factor authentication secret (TOTP seed, also known as authenticator key).\n\nCaution: this is the secret key used to generate your 2FA codes.")
+			return fs.ConfigInputOptional("otp_secret_key", "config_otp_secret_key", "OTP secret key (TOTP seed, also known as the authenticator key).\n\nCaution: this is the secret key used to generate your 2FA codes.")
 		}
 
 		// No 2FA required, do login directly
 		return fs.ConfigGoto("login")
 
-	case "2fa_secret":
-		twoFASecret := configIn.Result
-		if twoFASecret == "" {
+	case "otp_secret_key":
+		otpSecretKey := configIn.Result
+		if otpSecretKey == "" {
 			return fs.ConfigInput("2fa", "config_2fa", "Two-factor authentication code")
 		}
-		m.Set("2fa_secret", obscure.MustObscure(twoFASecret))
+		m.Set("otp_secret_key", obscure.MustObscure(otpSecretKey))
 		return fs.ConfigGoto("login")
 
 	case "2fa":
@@ -188,12 +212,21 @@ func Config(ctx context.Context, name string, m configmap.Mapper, configIn fs.Co
 		return fs.ConfigGoto("login")
 
 	case "login":
+		// Both values are optional: depending on the chosen flow only one of
+		// them (or neither, for accounts without 2FA) will be set.
 		twoFA, _ := m.Get("2fa_code")
-		twoFAObsecuredSecret, _ := m.Get("2fa_secret")
-		twoFASecret, _ := obscure.Reveal(twoFAObsecuredSecret)
 
-		if twoFASecret != "" {
-			twoFA, _ = totp.GenerateCode(twoFASecret, time.Now())
+		if obscuredSecret, _ := m.Get("otp_secret_key"); obscuredSecret != "" {
+			otpSecretKey, err2FaReveal := obscure.Reveal(obscuredSecret)
+			if err2FaReveal != nil {
+				return nil, fmt.Errorf("invalid OTP secret key: %w", err2FaReveal)
+			}
+
+			var err2FaGenerate error
+			twoFA, err2FaGenerate = totp.GenerateCode(otpSecretKey, time.Now())
+			if err2FaGenerate != nil {
+				return nil, fmt.Errorf("failed to generate 2FA code: %w", err2FaGenerate)
+			}
 		}
 
 		loginResp, err := auth.DoLogin(ctx, cfg, email, pass, twoFA)
@@ -227,8 +260,8 @@ func Config(ctx context.Context, name string, m configmap.Mapper, configIn fs.Co
 type Options struct {
 	Email              string               `config:"email"`
 	Pass               string               `config:"pass"`
-	TwoFA              string               `config:"2fa"`
-	TwoFASecret        string               `config:"2fa_secret"` // The TOTP seed/secret
+	TwoFA              string               `config:"2fa_code"`
+	OtpSecretKey       string               `config:"otp_secret_key"` // The TOTP seed/secret
 	Mnemonic           string               `config:"mnemonic"`
 	SkipHashValidation bool                 `config:"skip_hash_validation"`
 	UploadCutoff       fs.SizeSuffix        `config:"upload_cutoff"`
