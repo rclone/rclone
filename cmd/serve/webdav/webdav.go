@@ -413,6 +413,17 @@ func (w *WebDAV) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		w.serveDir(rw, r, remote)
 		return
 	}
+	// RFC 4918 section 10.6: when the Overwrite header is omitted from a
+	// COPY or MOVE request the resource MUST treat the request as if
+	// Overwrite: T had been sent. The upstream golang.org/x/net/webdav
+	// library mis-handles this for MOVE by checking == "T" instead of
+	// != "F", so an absent header is treated as Overwrite: F and the
+	// request fails with 412 Precondition Failed. Normalise the header
+	// here when the client did not send one, so the default matches the
+	// RFC for both verbs. See https://github.com/rclone/rclone/issues/9496.
+	if (r.Method == "COPY" || r.Method == "MOVE") && r.Header.Get("Overwrite") == "" {
+		r.Header.Set("Overwrite", "T")
+	}
 	// Add URL Prefix back to path since webdavhandler needs to
 	// return absolute references.
 	r.URL.Path = w.opt.HTTP.BaseURL + r.URL.Path
