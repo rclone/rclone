@@ -29,8 +29,9 @@ var commandDefinition = &cobra.Command{
 	Long: `If source:path is a file or directory then it copies it to a file or
 directory named dest:path.
 
-This can be used to upload single files to other than their current
-name.  If the source is a directory then it acts exactly like the
+This can be used to copy a single file to a destination with a name
+different from its source - for example, uploading and renaming in one
+step. If the source is a directory then it acts exactly like the
 [copy](/commands/rclone_copy/) command.
 
 So
