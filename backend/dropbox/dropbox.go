@@ -268,6 +268,36 @@ folders.`,
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name: "skip_shared_folders",
+			Help: `Instructs rclone to skip all shared folders.
+
+When set, any folder that is a shared folder mount point will be
+excluded from directory listings, regardless of ownership.
+This is useful if you prefer to back up shared folders separately
+using a separate remote configured with the shared folder namespace.`,
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name: "skip_unowned_folders",
+			Help: `Instructs rclone to skip shared folders not owned by the current user.
+
+When set, any folder that is a shared folder mount point and not
+owned by the current user will be excluded from directory listings.
+This is useful when backing up multiple Dropbox accounts that share
+common folders, to avoid duplicating the shared data across accounts.
+
+Note: In Dropbox Business, 'Team Folders' are owned by the Team.
+For standard team members, these folders evaluate as 'unowned'
+(editor/viewer access) and will be excluded by this flag. To back up
+Team Folders, do not use this flag or run the backup using a Team Admin
+account.
+
+If --dropbox-skip-shared-folders is also enabled, this flag has no effect.
+
+This makes an extra API call per shared folder mount point.`,
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:     "pacer_min_sleep",
 			Default:  defaultMinSleep,
 			Help:     "Minimum time to sleep between API calls.",
@@ -331,21 +361,23 @@ will fail to download them.
 
 // Options defines the configuration for this backend
 type Options struct {
-	ChunkSize        fs.SizeSuffix        `config:"chunk_size"`
-	Impersonate      string               `config:"impersonate"`
-	ImpersonateAdmin string               `config:"impersonate_admin"`
-	SharedFiles      bool                 `config:"shared_files"`
-	SharedFolders    bool                 `config:"shared_folders"`
-	BatchMode        string               `config:"batch_mode"`
-	BatchSize        int                  `config:"batch_size"`
-	BatchTimeout     fs.Duration          `config:"batch_timeout"`
-	AsyncBatch       bool                 `config:"async_batch"`
-	PacerMinSleep    fs.Duration          `config:"pacer_min_sleep"`
-	Enc              encoder.MultiEncoder `config:"encoding"`
-	RootNsid         string               `config:"root_namespace"`
-	ExportFormats    fs.CommaSepList      `config:"export_formats"`
-	SkipExports      bool                 `config:"skip_exports"`
-	ShowAllExports   bool                 `config:"show_all_exports"`
+	ChunkSize          fs.SizeSuffix        `config:"chunk_size"`
+	Impersonate        string               `config:"impersonate"`
+	ImpersonateAdmin   string               `config:"impersonate_admin"`
+	SharedFiles        bool                 `config:"shared_files"`
+	SharedFolders      bool                 `config:"shared_folders"`
+	SkipSharedFolders  bool                 `config:"skip_shared_folders"`
+	SkipUnownedFolders bool                 `config:"skip_unowned_folders"`
+	BatchMode          string               `config:"batch_mode"`
+	BatchSize          int                  `config:"batch_size"`
+	BatchTimeout       fs.Duration          `config:"batch_timeout"`
+	AsyncBatch         bool                 `config:"async_batch"`
+	PacerMinSleep      fs.Duration          `config:"pacer_min_sleep"`
+	Enc                encoder.MultiEncoder `config:"encoding"`
+	RootNsid           string               `config:"root_namespace"`
+	ExportFormats      fs.CommaSepList      `config:"export_formats"`
+	SkipExports        bool                 `config:"skip_exports"`
+	ShowAllExports     bool                 `config:"show_all_exports"`
 }
 
 // Fs represents a remote dropbox server
@@ -1122,6 +1154,26 @@ func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) (
 			leaf := f.opt.Enc.ToStandardName(path.Base(entryPath))
 			remote := path.Join(dir, leaf)
 			if folderInfo != nil {
+				if folderInfo.SharingInfo != nil && folderInfo.SharingInfo.SharedFolderId != "" {
+					if f.opt.SkipSharedFolders {
+						fs.Debugf(remote, "Skipping shared folder")
+						continue
+					}
+					if f.opt.SkipUnownedFolders {
+						var sfMeta *sharing.SharedFolderMetadata
+						err = f.pacer.Call(func() (bool, error) {
+							var apiErr error
+							sfMeta, apiErr = f.sharing.GetFolderMetadata(sharing.NewGetMetadataArgs(folderInfo.SharingInfo.SharedFolderId))
+							return shouldRetry(ctx, apiErr)
+						})
+						if err != nil {
+							fs.Errorf(remote, "Failed to get shared folder metadata (defaulting to include): %v", err)
+						} else if sfMeta != nil && sfMeta.AccessType != nil && sfMeta.AccessType.Tag != sharing.AccessLevelOwner {
+							fs.Debugf(remote, "Skipping unowned shared folder")
+							continue
+						}
+					}
+				}
 				d := fs.NewDir(remote, time.Time{}).SetID(folderInfo.Id)
 				err = list.Add(d)
 				if err != nil {
