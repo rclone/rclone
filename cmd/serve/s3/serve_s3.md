@@ -177,6 +177,17 @@ Versioning is not currently supported.
 Metadata will only be saved in memory other than the rclone `mtime`
 metadata which will be set as the modification time of the file.
 
+### Object names
+
+`serve s3` stores objects as files in the backend, so object keys are
+mapped to file paths rather than treated as the opaque strings AWS S3
+allows. Keys must be in canonical path form: keys that contain `..` or
+`.` path segments, repeated slashes (`//`), or a leading or trailing
+slash are rejected with a `400 Bad Request` (`InvalidArgument`)
+instead of being normalised, since normalising them could alias two
+distinct keys to the same file or resolve a key outside its bucket.
+This matches the behaviour of other S3 servers such as MinIO.
+
 ### Supported operations
 
 `serve s3` currently supports the following operations.

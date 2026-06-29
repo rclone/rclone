@@ -127,7 +127,10 @@ func (b *s3Backend) HeadObject(ctx context.Context, bucketName, objectName strin
 		return nil, gofakes3.BucketNotFound(bucketName)
 	}
 
-	fp := path.Join(bucketName, objectName)
+	fp, err := bucketObjectPath(bucketName, objectName)
+	if err != nil {
+		return nil, err
+	}
 	node, err := _vfs.Stat(fp)
 	if err != nil {
 		return nil, gofakes3.KeyNotFound(objectName)
@@ -182,7 +185,10 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 		return nil, gofakes3.BucketNotFound(bucketName)
 	}
 
-	fp := path.Join(bucketName, objectName)
+	fp, err := bucketObjectPath(bucketName, objectName)
+	if err != nil {
+		return nil, err
+	}
 	node, err := _vfs.Stat(fp)
 	if err != nil {
 		return nil, gofakes3.KeyNotFound(objectName)
@@ -320,7 +326,10 @@ func (b *s3Backend) PutObject(
 		return result, gofakes3.BucketNotFound(bucketName)
 	}
 
-	fp := path.Join(bucketName, objectName)
+	fp, err := bucketObjectPath(bucketName, objectName)
+	if err != nil {
+		return result, err
+	}
 	objectDir := path.Dir(fp)
 	// _, err = db.fs.Stat(objectDir)
 	// if err == vfs.ENOENT {
@@ -413,7 +422,10 @@ func (b *s3Backend) deleteObject(ctx context.Context, bucketName, objectName str
 		return gofakes3.BucketNotFound(bucketName)
 	}
 
-	fp := path.Join(bucketName, objectName)
+	fp, err := bucketObjectPath(bucketName, objectName)
+	if err != nil {
+		return err
+	}
 	// S3 does not report an error when attempting to delete a key that does not exist, so
 	// we need to skip IsNotExist errors.
 	if err := _vfs.Remove(fp); err != nil && !os.IsNotExist(err) {
@@ -484,7 +496,10 @@ func (b *s3Backend) CopyObject(ctx context.Context, srcBucket, srcKey, dstBucket
 	if err != nil {
 		return result, err
 	}
-	fp := path.Join(srcBucket, srcKey)
+	fp, err := bucketObjectPath(srcBucket, srcKey)
+	if err != nil {
+		return result, err
+	}
 	if srcBucket == dstBucket && srcKey == dstKey {
 		b.meta.Store(fp, meta)
 
