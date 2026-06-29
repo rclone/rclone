@@ -107,7 +107,10 @@ func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objec
 		return "", gofakes3.ErrMultipartUploadNotSupported
 	}
 
-	fp := path.Join(bucketName, objectName)
+	fp, err := bucketObjectPath(bucketName, objectName)
+	if err != nil {
+		return "", err
+	}
 	objectDir := path.Dir(fp)
 	if objectDir != "." {
 		if err := mkdirRecursive(objectDir, _vfs); err != nil {
