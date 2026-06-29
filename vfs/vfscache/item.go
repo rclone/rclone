@@ -860,20 +860,38 @@ func (item *Item) reload(ctx context.Context) error {
 //
 // call with lock held
 func (item *Item) _checkObject(o fs.Object) error {
-	if o == nil {
-		if item.info.Fingerprint != "" {
-			// no remote object && local object
-			// remove local object unless dirty
+	if o == nil && item.info.Fingerprint != "" {
+		// A nil object here is ambiguous: the remote object may have been
+		// deleted, or the directory listing may have been successful but
+		// incomplete - an eventually consistent backend, a stale negative right
+		// after a remount, or a flaky proxy returning empty without an error - so
+		// that o == nil arrives here with no error to signal it. Removing a clean,
+		// fully cached file on an *unconfirmed* deletion discards data that is
+		// otherwise still readable, so re-confirm with the remote before acting on
+		// the nil, mirroring the re-confirm the download path already does.
+		var rerr error
+		o, rerr = item.c.fremote.NewObject(item.c.ctx, item.name)
+		switch {
+		case errors.Is(rerr, fs.ErrorObjectNotFound) || errors.Is(rerr, fs.ErrorIsDir):
+			// Remote confirms the object is gone - remove unless dirty.
 			if !item.info.Dirty {
 				item._remove("stale (remote deleted)")
 			} else {
 				fs.Debugf(item.name, "vfs cache: remote object has gone but local object modified - keeping it")
 			}
-			//} else {
-			// no remote object && no local object
-			// OK
+			o = nil
+		case rerr != nil:
+			// Could not confirm the object (transient error / unconfirmed listing)
+			// - keep the cached copy rather than discard data we cannot prove was
+			// deleted. Its fingerprint matched when it was written, so serving it
+			// is safe.
+			fs.Infof(item.name, "vfs cache: remote lookup unconfirmed (%v) - keeping cached copy", rerr)
+			o = nil
 		}
-	} else {
+		// rerr == nil: o now holds the real remote object; fall through to the
+		// fingerprint check below as if it had been passed in.
+	}
+	if o != nil {
 		remoteFingerprint := fs.Fingerprint(item.c.ctx, o, item.c.opt.FastFingerprint)
 		fs.Debugf(item.name, "vfs cache: checking remote fingerprint %q against cached fingerprint %q", remoteFingerprint, item.info.Fingerprint)
 		if item.info.Fingerprint != "" {
