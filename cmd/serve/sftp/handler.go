@@ -18,7 +18,7 @@ type vfsHandler struct {
 	*vfs.VFS
 }
 
-// vfsHandler returns a Handlers object with the test handlers.
+// newVFSHandler returns a Handlers object with the test handlers.
 func newVFSHandler(vfs *vfs.VFS) sftp.Handlers {
 	v := vfsHandler{VFS: vfs}
 	return sftp.Handlers{

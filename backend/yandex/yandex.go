@@ -662,7 +662,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	return f.purgeCheck(ctx, dir, false)
 }
 
-// copyOrMoves copies or moves directories or files depending on the method parameter
+// copyOrMove copies or moves directories or files depending on the method parameter
 func (f *Fs) copyOrMove(ctx context.Context, method, src, dst string, overwrite bool) (err error) {
 	opts := rest.Opts{
 		Method:     "POST",
