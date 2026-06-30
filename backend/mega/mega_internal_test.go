@@ -16,20 +16,11 @@ import (
 // process disappears from listings straight away rather than lingering as a
 // ghost until go-mega's next event poll reconciles the in-memory tree.
 //
-// The ghost is a race between the upload's server event being replayed and
-// the delete, so it puts, removes and lists in a tight loop to make it show
-// up reliably.
+// It puts, removes and lists in a tight loop to make any lingering entry
+// show up reliably, exercising whichever delete mode the remote is
+// configured with (hard_delete or the default trash).
 func (f *Fs) InternalTestGhostAfterRemove(t *testing.T) {
 	ctx := context.Background()
-
-	// Exercise the default soft-delete path - the hard_delete=true path
-	// hits a separate bug in go-mega's Delete which leaves the node in its
-	// parent's children regardless of what rclone does.
-	if f.opt.HardDelete {
-		oldHardDelete := f.opt.HardDelete
-		f.opt.HardDelete = false
-		defer func() { f.opt.HardDelete = oldHardDelete }()
-	}
 
 	dir := "ghost-test"
 	require.NoError(t, f.Mkdir(ctx, dir))
