@@ -1330,7 +1330,7 @@ func (o *Object) isDynamicLargeObject(ctx context.Context) (bool, error) {
 	return o.hasHeader(ctx, "X-Object-Manifest")
 }
 
-// isStaticLargeObjectFile checks for the X-Static-Large-Object header
+// isStaticLargeObject checks for the X-Static-Large-Object header
 func (o *Object) isStaticLargeObject(ctx context.Context) (bool, error) {
 	if o.fs.opt.NoLargeObjects {
 		return false, nil
