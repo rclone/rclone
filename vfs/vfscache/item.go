@@ -69,6 +69,7 @@ type Item struct {
 	modified        bool                     // set if the file has been modified since the last Open
 	beingReset      bool                     // cache cleaner is resetting the cache file, access not allowed
 	graceTimer      *time.Timer              // timer for delayed close after grace period
+	closing         chan struct{}            // non-nil while a grace-period close is tearing the handle down, closed when done
 }
 
 // Info is persisted to backing store
@@ -520,6 +521,15 @@ func (item *Item) open(o fs.Object) (err error) {
 	item.mu.Lock()
 	defer item.mu.Unlock()
 
+	// Wait for any in-progress grace-period close to finish so we start
+	// from a fully closed item rather than racing the fd teardown.
+	for item.closing != nil {
+		closing := item.closing
+		item.mu.Unlock()
+		<-closing
+		item.mu.Lock()
+	}
+
 	item.info.ATime = time.Now()
 
 	osPath, err := item.c.createItemDir(item.name) // No locking in Cache
@@ -714,7 +724,14 @@ func (item *Item) closeAfterGrace() {
 	}
 	item.graceTimer = nil
 
+	// _actualClose drops item.mu while it tears down the downloaders,
+	// during which the fd is still open. Publish that a close is in
+	// progress so a concurrent open waits rather than tripping over the
+	// half-closed handle.
+	item.closing = make(chan struct{})
 	err := item._actualClose(nil, false)
+	close(item.closing)
+	item.closing = nil
 	if err != nil {
 		fs.Errorf(item.name, "vfs cache: close after grace period failed: %v", err)
 	}
