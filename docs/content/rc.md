@@ -404,6 +404,8 @@ This shows:
 If you wish to set config (the equivalent of the global flags) for the
 duration of an rc call only then pass in the `_config` parameter.
 
+Alternatively, you can pass config options flat at the top level of the parameter map. The option names are the same as their CLI flags without `--` and with `-` replaced by `_` (e.g. `transfers` instead of `Transfers` inside `_config`).
+
 This should be in the same format as the `main` key returned by
 [options/get](#options-get).
 
@@ -425,11 +427,25 @@ parameter, you would pass this parameter in your JSON blob.
 "_config":{"CheckSum": true}
 ```
 
+Or pass it flat at the top level:
+
+```json
+"checksum": true
+```
+
 If using `rclone rc` this could be passed as
 
 ```console
 rclone rc sync/sync ... _config='{"CheckSum": true}'
 ```
+
+Or simply flat:
+
+```console
+rclone rc sync/sync ... checksum=true
+```
+
+If both flat parameters and `_config` are supplied, the parameters in the legacy `_config` block will take precedence.
 
 Any config parameters you don't set will inherit the global defaults
 which were set with command line flags or environment variables.
@@ -443,6 +459,13 @@ setting the equivalent of `--buffer-size` in string or integer format.
 "_config":{"BufferSize": 44040192}
 ```
 
+Or flat:
+
+```json
+"buffer_size": "42M"
+"buffer_size": 44040192
+```
+
 If you wish to check the `_config` assignment has worked properly then
 calling `options/local` will show what the value got set to.
 
@@ -450,6 +473,8 @@ calling `options/local` will show what the value got set to.
 
 If you wish to set filters for the duration of an rc call only then
 pass in the `_filter` parameter.
+
+Alternatively, you can pass filter options flat at the top level of the parameter map. The option names are the same as their CLI flags without `--` and with `-` replaced by `_` (e.g. `exclude` instead of `Exclude` inside `_filter`).
 
 This should be in the same format as the `filter` key returned by
 [options/get](#options-get).
@@ -477,11 +502,25 @@ you would pass this parameter in your JSON blob.
 "_filter":{"MaxSize":"1M", "IncludeRule":["a","b"], "MaxAge":"42s"}
 ```
 
+Or pass them flat at the top level:
+
+```json
+"max_size":"1M", "include":["a","b"], "max_age":"42s"
+```
+
 If using `rclone rc` this could be passed as
 
 ```console
 rclone rc ... _filter='{"MaxSize":"1M", "IncludeRule":["a","b"], "MaxAge":"42s"}'
 ```
+
+Or simply flat:
+
+```console
+rclone rc ... max_size=1M include="a,b" max_age=42s
+```
+
+If both flat parameters and `_filter` are supplied, the parameters in the legacy `_filter` block will take precedence.
 
 Any filter parameters you don't set will inherit the global defaults
 which were set with command line flags or environment variables.
@@ -493,6 +532,12 @@ setting the equivalent of `--buffer-size` in string or integer format.
 ```json
 "_filter":{"MinSize": "42M"}
 "_filter":{"MinSize": 44040192}
+```
+
+Or flat:
+
+```json
+"min_size": "42M"
 ```
 
 If you wish to check the `_filter` assignment has worked properly then
