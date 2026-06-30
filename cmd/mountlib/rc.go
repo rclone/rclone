@@ -62,6 +62,10 @@ This takes the following parameters:
 - mountOpt: a JSON object with Mount options in.
 - vfsOpt: a JSON object with VFS options in.
 
+Alternatively, you can pass VFS and Mount options flat at the top level of the parameter map. The option names are the same as their CLI flags without '--' and with '-' replaced by '_' (e.g. 'vfs_cache_mode' instead of 'CacheMode' inside 'vfsOpt', and 'volname' instead of 'VolName' inside 'mountOpt').
+
+If both flat parameters and nested 'vfsOpt'/'mountOpt' blocks are supplied, the parameters in the nested blocks will take precedence.
+
 On Windows mountPoint may be set to "*" to assign the next available
 drive letter automatically, or a network share UNC path (e.g.
 "\\server\share") to mount as a network drive. In these cases the
@@ -79,6 +83,7 @@ Example:
 rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint
 rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint mountType=mount
 rclone rc mount/mount fs=TestDrive: mountPoint=/mnt/tmp vfsOpt='{"CacheMode": 2}' mountOpt='{"AllowOther": true}'
+rclone rc mount/mount fs=TestDrive: mountPoint=/mnt/tmp vfs_cache_mode=writes volname=MyTestVolume
 rclone rc mount/mount fs=mydrive: mountPoint=* mountType=cmount
 ` + "```" + `
 
@@ -100,13 +105,13 @@ func mountRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 
 	vfsOpt := vfscommon.Opt
-	err = in.GetStructMissingOK("vfsOpt", &vfsOpt)
+	err = parseVfsOptions(in, &vfsOpt)
 	if err != nil {
 		return nil, err
 	}
 
 	mountOpt := Opt
-	err = in.GetStructMissingOK("mountOpt", &mountOpt)
+	err = parseMountOptions(in, &mountOpt)
 	if err != nil {
 		return nil, err
 	}
