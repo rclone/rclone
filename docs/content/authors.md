@@ -1159,3 +1159,4 @@ put them back in again. -->
 - max <max@example.com>
 - Bryan Stenson <bryan.stenson@gmail.com>
 - happysnaker <73147033+happysnaker@users.noreply.github.com>
+- Jan Schlien <rclone-github@jan-o-sch.net>
