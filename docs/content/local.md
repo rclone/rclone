@@ -296,6 +296,31 @@ backends and the VFS.
 
 Note that this flag is incompatible with `-copy-links` / `-L`.
 
+#### Symlink targets and the destination
+
+When rclone recreates a `.rclonelink` file as a symlink on local storage,
+the symlink can point anywhere - including, with an absolute path or one
+using `../` - to a location outside the directory you are copying into. This
+is normal - rclone reproduces whatever target the link had, so backups
+round-trip faithfully.
+
+What rclone will **not** do is *write through* such a link. If a remote you
+are copying from contains both a symlink and a file or directory that would
+be placed inside it - for example a `dir.rclonelink` pointing somewhere
+outside the destination, alongside a `dir/file.txt` - rclone refuses to
+follow the symlink when writing `dir/file.txt`. The offending file is
+skipped with an error, the rest of the transfer continues, and the skipped
+file is counted in the error summary printed at the end of the run.
+
+This protects you from a malicious or compromised remote using `-l` /
+`--links` to plant a symlink and then write through it to somewhere outside
+your destination. Ordinary symlink round-trips, and symlinks that stay
+inside the destination, are unaffected.
+
+If you have intentionally pre-created a symlinked directory inside your
+destination and want rclone to write into the directory it points at, do
+not use `-l` / `--links` for that copy, or remove the symlink first.
+
 ### Restricting filesystems with --one-file-system
 
 Normally rclone will recurse through filesystems as mounted.
