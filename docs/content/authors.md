@@ -1158,3 +1158,4 @@ put them back in again. -->
 - lewoberst <github@jan-o-sch.net>
 - max <max@example.com>
 - Bryan Stenson <bryan.stenson@gmail.com>
+- happysnaker <73147033+happysnaker@users.noreply.github.com>
