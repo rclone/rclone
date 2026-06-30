@@ -133,6 +133,19 @@ func InterfaceToString(in any) (strValue string, err error) {
 		if do, ok := in.(fmt.Stringer); ok {
 			strValue = do.String()
 		} else {
+			// Check if it is a slice or array
+			val := reflect.ValueOf(in)
+			if val.Kind() == reflect.Slice || val.Kind() == reflect.Array {
+				strSlice := make([]string, val.Len())
+				for i := 0; i < val.Len(); i++ {
+					strValue, err = InterfaceToString(val.Index(i).Interface())
+					if err != nil {
+						return "", err
+					}
+					strSlice[i] = strValue
+				}
+				return InterfaceToString(strSlice)
+			}
 			err = errors.New("don't know how to convert this")
 		}
 	}
@@ -262,14 +275,35 @@ func Set(config configmap.Getter, opt any) (err error) {
 
 // setIfSameType set aPtr with b if they are the same type or returns false.
 func setIfSameType(aPtr any, b any) bool {
+	if b == nil {
+		return false
+	}
 	aVal := reflect.ValueOf(aPtr).Elem()
 	bVal := reflect.ValueOf(b)
 
-	if aVal.Type() != bVal.Type() {
-		return false
+	if aVal.Type() == bVal.Type() {
+		aVal.Set(bVal)
+		return true
 	}
-	aVal.Set(bVal)
-	return true
+
+	// Special case: if target is []string and source is a slice or array
+	if aVal.Type() == reflect.TypeOf([]string(nil)) && (bVal.Kind() == reflect.Slice || bVal.Kind() == reflect.Array) {
+		strSlice := make([]string, bVal.Len())
+		ok := true
+		for i := 0; i < bVal.Len(); i++ {
+			var err error
+			strSlice[i], err = InterfaceToString(bVal.Index(i).Interface())
+			if err != nil {
+				ok = false
+				break
+			}
+		}
+		if ok {
+			aVal.Set(reflect.ValueOf(strSlice))
+			return true
+		}
+	}
+	return false
 }
 
 // SetAny interprets the field names in defaults and looks up config
