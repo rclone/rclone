@@ -127,3 +127,86 @@ func TestRc(t *testing.T) {
 		})
 	})
 }
+
+func TestRcFlatOptions(t *testing.T) {
+	// Disable tests under macOS and the CI since they are locking up
+	if runtime.GOOS == "darwin" {
+		testy.SkipUnreliable(t)
+	}
+	ctx := context.Background()
+	configfile.Install()
+	mount := rc.Calls.Get("mount/mount")
+	assert.NotNil(t, mount)
+	unmount := rc.Calls.Get("mount/unmount")
+	assert.NotNil(t, unmount)
+	getMountTypes := rc.Calls.Get("mount/types")
+	assert.NotNil(t, getMountTypes)
+
+	localDir := t.TempDir()
+	err := os.WriteFile(filepath.Join(localDir, "file.txt"), []byte("hello"), 0666)
+	require.NoError(t, err)
+
+	out, err := getMountTypes.Fn(ctx, nil)
+	require.NoError(t, err)
+	var mountTypes []string
+	err = out.GetStruct("mountTypes", &mountTypes)
+	require.NoError(t, err)
+	if len(mountTypes) == 0 {
+		t.Skip("Can't mount")
+	}
+
+	mountPointFlat := t.TempDir()
+	if runtime.GOOS == "windows" {
+		require.NoError(t, os.RemoveAll(mountPointFlat))
+	}
+
+	in := rc.Params{
+		"fs":         localDir,
+		"mountPoint": mountPointFlat,
+		"file_perms": 0400,           // flat VFS option
+		"volname":    "MyTestVolume", // flat Mount option
+	}
+
+	// mount
+	out, err = mount.Fn(ctx, in)
+	if err != nil {
+		t.Skipf("Mount failed - skipping test: %v", err)
+	}
+
+	// check the returned mount point matches what we asked for
+	returnedMountPoint, err := out.GetString("mountPoint")
+	require.NoError(t, err)
+	assert.Equal(t, mountPointFlat, returnedMountPoint)
+
+	// check that the flat options were consumed and removed from parameter map
+	_, ok := in["file_perms"]
+	assert.False(t, ok, "file_perms flat option should have been deleted")
+	_, ok = in["volname"]
+	assert.False(t, ok, "volname flat option should have been deleted")
+
+	// unmount
+	_, err = unmount.Fn(ctx, rc.Params{
+		"mountPoint": mountPointFlat,
+	})
+	require.NoError(t, err)
+
+	// FIXME wait a moment for the OS to release the mount point
+	time.Sleep(100 * time.Millisecond)
+}
+
+func TestRcFlatOptionsNull(t *testing.T) {
+	ctx := context.Background()
+	configfile.Install()
+	mount := rc.Calls.Get("mount/mount")
+	assert.NotNil(t, mount)
+
+	in := rc.Params{
+		"fs":             "some_fs",
+		"mountPoint":     "some_mount_point",
+		"vfs_cache_mode": nil, // flat VFS option set to null
+	}
+
+	_, err := mount.Fn(ctx, in)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "interpreting <nil> as string failed")
+}
