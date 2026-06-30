@@ -286,7 +286,7 @@ large file of a known size to stay below this number of chunks limit.
 Any files larger than this that need to be server-side copied will be
 copied in chunks of this size.
 
-The minimum is 0 and the maximum is 5 GiB.`,
+The minimum is 1 byte and the maximum is 5 GiB.`,
 			Default:  fs.SizeSuffix(maxSizeForCopy),
 			Advanced: true,
 		}, {
