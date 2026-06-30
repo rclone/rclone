@@ -2,6 +2,7 @@ package rc
 
 import (
 	"context"
+	"reflect"
 	"sync"
 
 	"github.com/rclone/rclone/fs"
@@ -35,14 +36,29 @@ func initFilterOptions() {
 	})
 }
 
+// isMap returns true if v's underlying type is a map
+func isMap(v any) bool {
+	if v == nil {
+		return false
+	}
+	t := reflect.TypeOf(v)
+	for t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+	return t.Kind() == reflect.Map
+}
+
 // hasConfigOption checks if any config options are present in the params
 func hasConfigOption(in Params) bool {
 	if _, ok := in["_config"]; ok {
 		return true
 	}
 	initConfigOptions()
-	for k := range in {
+	for k, v := range in {
 		if configOptionsMap[k] {
+			if isMap(v) {
+				continue
+			}
 			return true
 		}
 	}
@@ -55,8 +71,11 @@ func hasFilterOption(in Params) bool {
 		return true
 	}
 	initFilterOptions()
-	for k := range in {
+	for k, v := range in {
 		if filterOptionsMap[k] {
+			if isMap(v) {
+				continue
+			}
 			return true
 		}
 	}
@@ -69,12 +88,32 @@ func AddConfig(ctx context.Context, in Params) (context.Context, error) {
 		return ctx, nil
 	}
 	ctx, ci := fs.AddConfig(ctx)
-	err := configstruct.SetAny(in, ci)
-	if err != nil {
-		return ctx, err
+
+	// Extract the genuine flat config options
+	initConfigOptions()
+	flatConfig := make(map[string]any)
+	for k, v := range in {
+		if configOptionsMap[k] {
+			if isMap(v) {
+				continue
+			}
+			flatConfig[k] = v
+		}
 	}
+
+	if len(flatConfig) > 0 {
+		err := configstruct.SetAny(flatConfig, ci)
+		if err != nil {
+			return ctx, err
+		}
+		// Remove the consumed flat options from the input params
+		for k := range flatConfig {
+			delete(in, k)
+		}
+	}
+
 	if _, ok := in["_config"]; ok {
-		err = in.GetStruct("_config", ci)
+		err := in.GetStruct("_config", ci)
 		if err != nil {
 			return ctx, err
 		}
@@ -90,13 +129,33 @@ func AddFilter(ctx context.Context, in Params) (context.Context, error) {
 	}
 	// Copy of the current filter options
 	opt := filter.GetConfig(ctx).Opt
-	err := configstruct.SetAny(in, &opt)
-	if err != nil {
-		return ctx, err
+
+	// Extract the genuine flat filter options
+	initFilterOptions()
+	flatFilter := make(map[string]any)
+	for k, v := range in {
+		if filterOptionsMap[k] {
+			if isMap(v) {
+				continue
+			}
+			flatFilter[k] = v
+		}
 	}
+
+	if len(flatFilter) > 0 {
+		err := configstruct.SetAny(flatFilter, &opt)
+		if err != nil {
+			return ctx, err
+		}
+		// Remove the consumed flat options from the input params
+		for k := range flatFilter {
+			delete(in, k)
+		}
+	}
+
 	if _, ok := in["_filter"]; ok {
 		// Update the options from the parameter
-		err = in.GetStruct("_filter", &opt)
+		err := in.GetStruct("_filter", &opt)
 		if err != nil {
 			return ctx, err
 		}

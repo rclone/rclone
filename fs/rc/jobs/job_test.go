@@ -427,6 +427,66 @@ func TestExecuteJobWithFlatFilter(t *testing.T) {
 	assert.Equal(t, true, called)
 }
 
+// A null-valued flat config/filter param must produce a clean
+// error, not panic the rc handler.
+func TestExecuteJobWithFlatConfigNull(t *testing.T) {
+	ctx := context.Background()
+	jobID.Store(0)
+	called := false
+	jobFn := func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		called = true
+		return nil, nil
+	}
+	var err error
+	require.NotPanics(t, func() {
+		_, _, err = NewJob(ctx, jobFn, rc.Params{
+			"buffer_size": nil,
+		})
+	})
+	assert.Error(t, err)
+	assert.False(t, called)
+}
+
+// Flat config/filter options should be consumed and removed from
+// the params (like _config and _filter are), so they don't leak into the
+// command's parameter map.
+func TestExecuteJobFlatParamsRemoved(t *testing.T) {
+	ctx := context.Background()
+	jobID.Store(0)
+	var got rc.Params
+	jobFn := func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		got = in
+		return nil, nil
+	}
+	_, _, err := NewJob(ctx, jobFn, rc.Params{
+		"buffer_size": "42M",
+		"max_size":    "1k",
+		"include":     []string{"a"},
+	})
+	require.NoError(t, err)
+	_, ok := got["buffer_size"]
+	assert.False(t, ok, "flat config option buffer_size should have been removed from in")
+	_, ok = got["max_size"]
+	assert.False(t, ok, "flat filter option max_size should have been removed from in")
+	_, ok = got["include"]
+	assert.False(t, ok, "flat filter option include should have been removed from in")
+}
+
+// options/set with a "filter" block is a valid, documented call, but
+// the flat-parameter feature treats the top-level "filter" key (a registered
+// filter option name) as the --filter option and fails trying to parse the
+// block map as a string, breaking the call.
+func TestExecuteJobOptionsSetFilterBlock(t *testing.T) {
+	ctx := context.Background()
+	jobID.Store(0)
+	call := rc.Calls.Get("options/set")
+	require.NotNil(t, call)
+	_, _, err := NewJob(ctx, call.Fn, rc.Params{
+		"filter": rc.Params{"MaxSize": "1M"},
+	})
+	require.NoError(t, err)
+}
+
 func TestExecuteJobWithGroup(t *testing.T) {
 	ctx := context.Background()
 	jobID.Store(0)
