@@ -42,7 +42,7 @@ func isMap(v any) bool {
 		return false
 	}
 	t := reflect.TypeOf(v)
-	for t.Kind() == reflect.Ptr {
+	for t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 	return t.Kind() == reflect.Map
