@@ -31,7 +31,7 @@ require (
 	github.com/aws/smithy-go v1.24.3
 	github.com/buengese/sgzip v0.1.1
 	github.com/cloudinary/cloudinary-go/v2 v2.15.0
-	github.com/cloudsoda/go-smb2 v0.0.0-20250228001242-d4c70e6251cc
+	github.com/cloudsoda/go-smb2 v0.0.0-20260701064823-d8c5600d73b8
 	github.com/colinmarc/hdfs/v2 v2.4.0
 	github.com/coreos/go-semver v0.3.1
 	github.com/coreos/go-systemd/v22 v22.6.0
@@ -82,7 +82,7 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
-	github.com/t3rm1n4l/go-mega v0.0.0-20251120131202-6845944c051c
+	github.com/t3rm1n4l/go-mega v0.0.0-20260630094356-4de2f127f34a
 	github.com/unknwon/goconfig v1.0.0
 	github.com/willscott/go-nfs v0.0.4
 	github.com/winfsp/cgofuse v1.6.1-0.20260126094232-f2c4fccdb286
