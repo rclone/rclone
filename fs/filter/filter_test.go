@@ -176,12 +176,12 @@ func TestNewFilterWithFilesFromRaw(t *testing.T) {
 	}
 }
 
-func TestNewFilterWithFilesFrom0(t *testing.T) {
+func TestNewFilterForbiddenMixOfFilesFrom0AndFilterRule(t *testing.T) {
 	Opt := Opt
 
 	// Set up the input
-	Opt.FilesFromRaw = []string{testFile(t, "#comment\x00files1\nmore\x00files2\n")}
-	Opt.FilesFrom0 = true
+	Opt.FilterRule = []string{"- filter1", "- filter1b"}
+	Opt.FilesFrom0 = []string{testFile(t, "#comment\x00files1\x00files2\x00")}
 
 	rm := func(p string) {
 		err := os.Remove(p)
@@ -191,13 +191,35 @@ func TestNewFilterWithFilesFrom0(t *testing.T) {
 	}
 	// Reset the input
 	defer func() {
-		rm(Opt.FilesFromRaw[0])
+		rm(Opt.FilesFrom0[0])
+	}()
+
+	_, err := NewFilter(&Opt)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "the usage of --files-from0 overrides all other filters")
+}
+
+func TestNewFilterWithFilesFrom0(t *testing.T) {
+	Opt := Opt
+
+	// Set up the input: NUL-separated, with an embedded newline in one entry
+	Opt.FilesFrom0 = []string{testFile(t, "#comment\x00files1\nmore\x00files2\x00")}
+
+	rm := func(p string) {
+		err := os.Remove(p)
+		if err != nil {
+			t.Logf("error removing %q: %v", p, err)
+		}
+	}
+	// Reset the input
+	defer func() {
+		rm(Opt.FilesFrom0[0])
 	}()
 
 	f, err := NewFilter(&Opt)
 	require.NoError(t, err)
 	assert.Len(t, f.files, 3)
-	for _, name := range []string{"#comment", "files1\nmore", "files2\n"} {
+	for _, name := range []string{"#comment", "files1\nmore", "files2"} {
 		_, ok := f.files[name]
 		if !ok {
 			t.Errorf("Didn't find file %q in f.files", name)

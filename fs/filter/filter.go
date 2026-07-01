@@ -47,8 +47,8 @@ var OptionsInfo = fs.Options{{
 	Groups:  "Filter",
 }, {
 	Name:    "files_from0",
-	Default: false,
-	Help:    "NULL terminated version of --files-from-raw",
+	Default: []string{},
+	Help:    "Read list of source-file names from file using NUL as separator (use - to read from stdin)",
 	Groups:  "Filter",
 }, {
 	Name:    "min_age",
@@ -150,7 +150,7 @@ type Options struct {
 	ExcludeFile    []string      `config:"exclude_if_present"`
 	FilesFrom      []string      `config:"files_from"`
 	FilesFromRaw   []string      `config:"files_from_raw"`
-	FilesFrom0     bool          `config:"files_from0"`
+	FilesFrom0     []string      `config:"files_from0"`
 	MetaRules      RulesOpt      `config:"metadata"`
 	MinAge         fs.Duration   `config:"min_age"`
 	MaxAge         fs.Duration   `config:"max_age"`
@@ -232,7 +232,7 @@ func NewFilter(opt *Options) (f *Filter, err error) {
 
 	for _, rule := range f.Opt.FilesFrom {
 		if !inActive {
-			return nil, fmt.Errorf("the usage of --files-from overrides all other filters, it should be used alone or with --files-from-raw")
+			return nil, fmt.Errorf("the usage of --files-from overrides all other filters, it should be used alone or with --files-from-raw or --files-from0")
 		}
 		f.initAddFile() // init to show --files-from set even if no files within
 		err := forEachLine(rule, false, false, func(line string) error {
@@ -247,10 +247,23 @@ func NewFilter(opt *Options) (f *Filter, err error) {
 		// --files-from-raw can be used with --files-from, hence we do
 		// not need to get the value of f.InActive again
 		if !inActive {
-			return nil, fmt.Errorf("the usage of --files-from-raw overrides all other filters, it should be used alone or with --files-from")
+			return nil, fmt.Errorf("the usage of --files-from-raw overrides all other filters, it should be used alone or with --files-from or --files-from0")
 		}
 		f.initAddFile() // init to show --files-from set even if no files within
-		err := forEachLine(rule, true, f.Opt.FilesFrom0, func(line string) error {
+		err := forEachLine(rule, true, false, func(line string) error {
+			return f.AddFile(line)
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	for _, rule := range f.Opt.FilesFrom0 {
+		if !inActive {
+			return nil, fmt.Errorf("the usage of --files-from0 overrides all other filters, it should be used alone or with --files-from or --files-from-raw")
+		}
+		f.initAddFile() // init to show --files-from set even if no files within
+		err := forEachLine(rule, true, true, func(line string) error {
 			return f.AddFile(line)
 		})
 		if err != nil {

@@ -719,12 +719,20 @@ with `;` or `#` are read without any processing. [rclone lsf](/commands/rclone_l
 has a compatible format that can be used to export file lists from remotes for
 input to `--files-from-raw`.
 
-### `--files-from0` - NULL terminated version of `--files-from-raw`
+### `--files-from0` - Read NUL separated list of source-file names
 
-If specified, `--files-from-raw` treats the input as a NUL-delimited
-list instead of a newline-delimited list. This allows handling files that contain embedded newline
-characters. It is similar to the `-print0` option of `find` and the `-0`
+This flag is the same as `--files-from-raw` except that input is
+split on NUL (`\0`) characters instead of newlines. This allows
+handling filenames that contain embedded newline characters.
+
+It is similar to the `-print0` option of `find` and the `-0`
 option of `xargs`.
+
+E.g. to copy files listed by `find`:
+
+```console
+find /path -print0 | rclone copy --files-from0 - /path remote:path
+```
 
 ### `--ignore-case` - make searches case insensitive
 
