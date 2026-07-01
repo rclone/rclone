@@ -23,7 +23,6 @@ import (
 	"github.com/rclone/rclone/cmd/serve"
 	"github.com/rclone/rclone/cmd/serve/dlna/data"
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/lib/systemd"
@@ -77,13 +76,13 @@ func init() {
 	serve.AddRc("dlna", func(ctx context.Context, f fs.Fs, in rc.Params) (serve.Handle, error) {
 		// Read VFS Opts
 		var vfsOpt = vfscommon.Opt // set default opts
-		err := configstruct.SetAny(in, &vfsOpt)
+		err := rc.ParseOptions(in, "vfsOpt", &vfsOpt)
 		if err != nil {
 			return nil, err
 		}
 		// Read opts
 		var opt = Opt // set default opts
-		err = configstruct.SetAny(in, &opt)
+		err = rc.ParseOptions(in, "opt", &opt)
 		if err != nil {
 			return nil, err
 		}

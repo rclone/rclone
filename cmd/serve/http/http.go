@@ -22,7 +22,6 @@ import (
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
-	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/rc"
 	libhttp "github.com/rclone/rclone/lib/http"
@@ -79,19 +78,19 @@ func init() {
 	cmdserve.AddRc("http", func(ctx context.Context, f fs.Fs, in rc.Params) (cmdserve.Handle, error) {
 		// Read VFS Opts
 		var vfsOpt = vfscommon.Opt // set default opts
-		err := configstruct.SetAny(in, &vfsOpt)
+		err := rc.ParseOptions(in, "vfsOpt", &vfsOpt)
 		if err != nil {
 			return nil, err
 		}
 		// Read Proxy Opts
 		var proxyOpt = proxy.Opt // set default opts
-		err = configstruct.SetAny(in, &proxyOpt)
+		err = rc.ParseOptions(in, "proxyOpt", &proxyOpt)
 		if err != nil {
 			return nil, err
 		}
 		// Read opts
 		var opt = Opt // set default opts
-		err = configstruct.SetAny(in, &opt)
+		err = rc.ParseOptions(in, "opt", &opt)
 		if err != nil {
 			return nil, err
 		}

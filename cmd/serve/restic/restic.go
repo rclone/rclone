@@ -20,7 +20,6 @@ import (
 	cmdserve "github.com/rclone/rclone/cmd/serve"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
-	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/rc"
@@ -79,7 +78,7 @@ func init() {
 	cmdserve.AddRc("restic", func(ctx context.Context, f fs.Fs, in rc.Params) (cmdserve.Handle, error) {
 		// Read opts
 		var opt = Opt // set default opts
-		err := configstruct.SetAny(in, &opt)
+		err := rc.ParseOptions(in, "opt", &opt)
 		if err != nil {
 			return nil, err
 		}
