@@ -105,13 +105,13 @@ func mountRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 
 	vfsOpt := vfscommon.Opt
-	err = parseVfsOptions(in, &vfsOpt)
+	err = rc.ParseOptions(in, "vfsOpt", &vfsOpt)
 	if err != nil {
 		return nil, err
 	}
 
 	mountOpt := Opt
-	err = parseMountOptions(in, &mountOpt)
+	err = rc.ParseOptions(in, "mountOpt", &mountOpt)
 	if err != nil {
 		return nil, err
 	}
@@ -135,6 +135,15 @@ func mountRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 	// Get Fs.fs to be mounted from fs parameter in the params
 	fdst, err := rc.GetFs(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+
+	// Clean up consumed keys and check for leftovers
+	delete(in, "mountPoint")
+	delete(in, "mountType")
+	delete(in, "fs")
+	err = rc.CheckParamsUsed(in)
 	if err != nil {
 		return nil, err
 	}
