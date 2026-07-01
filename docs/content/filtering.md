@@ -272,8 +272,8 @@ is included.
 Any path/file included at that stage is processed by the rclone
 command.
 
-`--files-from` and `--files-from-raw` flags over-ride and cannot be
-combined with other filter options.
+`--files-from`, `--files-from-raw` and `--files-from0` flags
+over-ride and cannot be combined with other filter options.
 
 To see the internal combined rule list, in regular expression form,
 for a command add the `--dump filters` flag. Running an rclone command
@@ -396,8 +396,8 @@ processed in.
 `--exclude` should not be used with `--include`, `--include-from`,
 `--filter` or `--filter-from` flags.
 
-`--exclude` has no effect when combined with `--files-from` or
-`--files-from-raw` flags.
+`--exclude` has no effect when combined with `--files-from`,
+`--files-from-raw` or `--files-from0` flags.
 
 E.g. `rclone ls remote: --exclude *.bak` excludes all .bak files
 from listing.
@@ -440,8 +440,8 @@ are applied to an rclone command.
 `--exclude-from` should not be used with `--include`, `--include-from`,
 `--filter` or `--filter-from` flags.
 
-`--exclude-from` has no effect when combined with `--files-from` or
-`--files-from-raw` flags.
+`--exclude-from` has no effect when combined with `--files-from`,
+`--files-from-raw` or `--files-from0` flags.
 
 `--exclude-from` followed by `-` reads filter rules from standard input.
 
@@ -453,8 +453,8 @@ command.
 This flag can be repeated. See above for the order filter flags are
 processed in.
 
-`--include` has no effect when combined with `--files-from` or
-`--files-from-raw` flags.
+`--include` has no effect when combined with `--files-from`,
+`--files-from-raw` or `--files-from0` flags.
 
 `--include` implies `--exclude **` at the end of an rclone internal
 filter list. Therefore if you mix `--include` and `--include-from`
@@ -513,8 +513,8 @@ flags with `--exclude`, `--exclude-from`, `--filter` or `--filter-from`,
 you must use include rules for all the files you want in the include
 statement. For more flexibility use the `--filter-from` flag.
 
-`--include-from` has no effect when combined with `--files-from` or
-`--files-from-raw` flags.
+`--include-from` has no effect when combined with `--files-from`,
+`--files-from-raw` or `--files-from0` flags.
 
 `--include-from` followed by `-` reads filter rules from standard input.
 
@@ -531,8 +531,8 @@ implies an `--exclude *` rule which it adds to the bottom of the internal rule
 list. `--filter...+` does not imply
 that rule.
 
-`--filter` has no effect when combined with `--files-from` or
-`--files-from-raw` flags.
+`--filter` has no effect when combined with `--files-from`,
+`--files-from-raw` or `--files-from0` flags.
 
 `--filter` should not be used with `--include`, `--include-from`,
 `--exclude` or `--exclude-from` flags.
@@ -612,7 +612,7 @@ no others.
 
 Other filter flags (`--include`, `--include-from`, `--exclude`,
 `--exclude-from`, `--filter` and `--filter-from`) are ignored when
-`--files-from` is used.
+`--files-from`, `--files-from-raw` or `--files-from0` is used.
 
 `--files-from` expects a list of files as its input. Leading or
 trailing whitespace is stripped from the input lines. Lines starting
@@ -731,7 +731,7 @@ option of `xargs`.
 E.g. to copy files listed by `find`:
 
 ```console
-find /path -print0 | rclone copy --files-from0 - /path remote:path
+find /path -print0 | rclone copy --files-from0 - / remote:path
 ```
 
 ### `--ignore-case` - make searches case insensitive
@@ -861,7 +861,7 @@ This will stay constant across retries.
 
 - Safe to use with `rclone sync`; source and destination selections will match.
 - **Do not** use with `--delete-excluded`, as this could delete unselected files.
-- Ignored if `--files-from` is used.
+- Ignored if `--files-from`, `--files-from-raw` or `--files-from0` is used.
 
 #### Examples
 
