@@ -24,6 +24,7 @@ import (
 	"github.com/rclone/rclone/fs/sync"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -142,6 +143,34 @@ func TestInternalFindExportFormat(t *testing.T) {
 		}
 		assert.Equal(t, test.wantMimeType, gotMimeType)
 		assert.Equal(t, true, gotIsDocument)
+	}
+}
+
+func TestShortcutLoop(t *testing.T) {
+	f := &Fs{}
+	f.dirCache = dircache.New("", "root", f)
+	// root is FolderX with ID "X"
+	f.dirCache.Put("", "X")
+	// a real subfolder
+	f.dirCache.Put("sub", "sub-id")
+	// a nested subfolder reached via a shortcut, composite ID
+	f.dirCache.Put("sub/nested", joinID("nested-id", "shortcut-id"))
+
+	for _, test := range []struct {
+		name     string
+		remote   string
+		targetID string
+		want     bool
+	}{
+		{"shortcut to the root itself", "loop", "X", true},
+		{"shortcut to the parent", "sub/loop", "sub-id", true},
+		{"shortcut to a grandparent", "sub/nested/loop", "X", true},
+		{"shortcut to a composite ancestor", "sub/nested/loop", "nested-id", true},
+		{"shortcut to an unrelated folder", "sub/loop", "other-id", false},
+		{"shortcut to a sibling", "sub/loop", "sub-id2", false},
+	} {
+		got := f.shortcutLoop(test.remote, test.targetID)
+		assert.Equal(t, test.want, got, test.name)
 	}
 }
 
