@@ -2439,12 +2439,40 @@ func (f *Fs) resolveShortcut(ctx context.Context, item *drive.File) (newItem *dr
 	return newItem, nil
 }
 
+// shortcutLoop reports whether a folder shortcut at remote pointing to
+// the directory targetID would create a recursive loop.
+//
+// This is the case when targetID is the ID of remote's parent or any
+// other ancestor directory, as descending into it would list an
+// ancestor again forever. The ancestor IDs are looked up in the
+// directory cache which is always populated for the parents of remote
+// as they are listed before their children.
+func (f *Fs) shortcutLoop(remote, targetID string) bool {
+	for dir := path.Dir(remote); ; dir = path.Dir(dir) {
+		if dir == "." {
+			dir = ""
+		}
+		if id, ok := f.dirCache.Get(dir); ok && actualID(id) == targetID {
+			return true
+		}
+		if dir == "" {
+			return false
+		}
+	}
+}
+
 // itemToDirEntry converts a drive.File to an fs.DirEntry.
 // When the drive.File cannot be represented as an fs.DirEntry
 // (nil, nil) is returned.
 func (f *Fs) itemToDirEntry(ctx context.Context, remote string, item *drive.File) (entry fs.DirEntry, err error) {
 	switch {
 	case item.MimeType == driveFolderType:
+		// A folder shortcut pointing at one of its own ancestors
+		// would make rclone recurse forever, so drop it.
+		if isShortcutID(item.Id) && f.shortcutLoop(remote, actualID(item.Id)) {
+			fs.Errorf(remote, "Ignoring folder shortcut as it points to an ancestor directory creating a loop")
+			return nil, nil
+		}
 		// cache the directory ID for later lookups
 		f.dirCache.Put(remote, item.Id)
 		// cache the resource key for later lookups
