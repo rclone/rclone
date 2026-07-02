@@ -301,9 +301,16 @@ func GlobalStats() *StatsInfo {
 }
 
 // NewStatsGroup creates new stats under named group.
+//
+// The averageLoop is intentionally NOT started here: it is started on
+// demand by NewTransfer / NewTransferRemoteSize when real transfer
+// activity begins and stopped by DoneTransferring when the last
+// transfer completes. Starting it eagerly leaked one goroutine per
+// group that never performed a transfer (issue #9567) - e.g. rcd
+// daemons driven by frequent rc sync/move calls where each call gets
+// a fresh job/N group and the source is often empty.
 func NewStatsGroup(ctx context.Context, group string) *StatsInfo {
 	stats := NewStats(ctx)
-	stats.startAverageLoop()
 	stats.group = group
 	groups.set(ctx, group, stats)
 	return stats
