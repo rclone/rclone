@@ -36,12 +36,22 @@ import (
 const (
 	rcloneClientID              = "1000.46MXF275FM2XV7QCHX5A7K3LGME66B"
 	rcloneEncryptedClientSecret = "U-2gxclZQBcOG9NPhjiXAhj-f0uQ137D0zar8YyNHXHkQZlTeSpIOQfmCb4oSpvosJp_SJLXmLLeUA"
-	minSleep                    = 10 * time.Millisecond
-	maxSleep                    = 60 * time.Second
-	decayConstant               = 2 // bigger for slower decay, exponential
 	configRootID                = "root_folder_id"
+	// minSleep is the pacer's minimum delay between calls when --zoho-tpslimit
+	// is 0 (cap disabled); a small floor always remains because backoff and
+	// Retry-After still apply.
+	minSleep = 10 * time.Millisecond
 
 	defaultUploadCutoff = 10 * 1024 * 1024 // 10 MiB
+
+	// defaultTPSLimit is the sustainable refill rate (API calls/second) of
+	// Zoho WorkDrive's throttle, measured live. Going faster drains the token
+	// bucket and then triggers long (~119s) 429 Retry-After stalls (see
+	// --zoho-tpslimit).
+	defaultTPSLimit = 6.0
+	// defaultTPSLimitBurst is the token-bucket capacity; keep at 1 as burst > 1
+	// caused synchronized 429 clusters.
+	defaultTPSLimitBurst = 1
 
 	// retryAfterMargin adds a small extra delay after Zoho's Retry-After value.
 	// This gives rate-limit tokens time to refill and helps avoid another 429.
@@ -224,6 +234,31 @@ browser.`,
 			Default:  fs.SizeSuffix(defaultUploadCutoff),
 			Advanced: true,
 		}, {
+			Name: "tpslimit",
+			Help: `Max number of API transactions per second.
+
+Zoho WorkDrive rate limits its API and returns HTTP 429 (error F7008,
+"Request rate limit exceeded") when called too quickly, so the data API
+calls (list, upload, download, copy, move, delete) are paced to this rate.
+
+Set to 0 to disable the cap, matching the global --tpslimit; pacing still
+can't be turned off entirely because backoff and Retry-After always apply.
+
+The default of 6 is a safe sustainable rate. Higher values can trigger long
+429 Retry-After stalls that make throughput WORSE, so raise it only if your
+account tolerates more.`,
+			Default:  defaultTPSLimit,
+			Advanced: true,
+		}, {
+			Name: "tpslimit_burst",
+			Help: `Number of API calls to allow back-to-back without sleeping, for --zoho-tpslimit.
+
+This is the token-bucket capacity. Keep at 1 for Zoho: a burst > 1
+lets several calls fire at once after an idle gap, which can trigger
+synchronized clusters of 429 errors.`,
+			Default:  defaultTPSLimitBurst,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -237,10 +272,12 @@ browser.`,
 
 // Options defines the configuration for this backend
 type Options struct {
-	UploadCutoff fs.SizeSuffix        `config:"upload_cutoff"`
-	RootFolderID string               `config:"root_folder_id"`
-	Region       string               `config:"region"`
-	Enc          encoder.MultiEncoder `config:"encoding"`
+	UploadCutoff  fs.SizeSuffix        `config:"upload_cutoff"`
+	RootFolderID  string               `config:"root_folder_id"`
+	Region        string               `config:"region"`
+	TPSLimit      float64              `config:"tpslimit"`
+	TPSLimitBurst int                  `config:"tpslimit_burst"`
+	Enc           encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote workdrive
@@ -512,6 +549,12 @@ func (f *Fs) readMetaDataForID(ctx context.Context, id string) (*api.Item, error
 	return &result.Item, nil
 }
 
+// tpsMinSleep converts a transactions-per-second rate into the pacer's minimum
+// sleep between calls.
+func tpsMinSleep(tps float64) time.Duration {
+	return time.Duration(float64(time.Second) / tps)
+}
+
 // NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
@@ -535,6 +578,15 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
+	// Add a delay between API calls to respect Zoho's per-second request limit.
+	// The wait time is calculated from the configured TPS value and retried on errors.
+	pacerMinSleep := minSleep
+	pacerBurst := 1
+	if opt.TPSLimit > 0 {
+		pacerMinSleep = tpsMinSleep(opt.TPSLimit)
+		pacerBurst = max(opt.TPSLimitBurst, 1)
+	}
+
 	f := &Fs{
 		name:        name,
 		root:        root,
@@ -542,7 +594,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		srv:         rest.NewClient(oAuthClient).SetRoot(rootURL),
 		downloadsrv: rest.NewClient(oAuthClient).SetRoot(downloadURL),
 		uploadsrv:   rest.NewClient(oAuthClient).SetRoot(uploadURL),
-		pacer:       fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		pacer:       fs.NewPacer(ctx, pacer.NewGoogleDrive(pacer.MinSleep(pacerMinSleep), pacer.Burst(pacerBurst))),
 	}
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
