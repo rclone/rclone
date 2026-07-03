@@ -3,6 +3,7 @@ package zoho
 import (
 	"context"
 	"net/http"
+	"sync"
 	"testing"
 	"time"
 
@@ -11,10 +12,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// newTestFs returns a bare *Fs so the 429/retry logic in shouldRetry can be
-// exercised in isolation. No network or pacer is involved.
+// newTestFs returns a bare *Fs carrying just the throttle state shouldRetry
+// touches, armed exactly as NewFs arms it. No network or pacer is involved, so
+// the 429/retry logic can be exercised in isolation.
 func newTestFs() *Fs {
-	return &Fs{}
+	f := &Fs{throttle: &throttleState{}}
+	f.throttle.progress.Store(true)
+	return f
 }
 
 func TestShouldRetry(t *testing.T) {
@@ -77,4 +81,53 @@ func TestShouldRetry(t *testing.T) {
 		retry, _ := f.shouldRetry(cctx, nil, nil)
 		assert.False(t, retry)
 	})
+}
+
+// TestThrottleEpisode covers the once-per-episode logging state machine that
+// logThrottle/shouldRetry drive through throttleState, without sleeping: the
+// penalty window is moved by hand instead of waited out.
+func TestThrottleEpisode(t *testing.T) {
+	ctx := context.Background()
+	f := newTestFs() // progress armed: the first 429 would log at NOTICE
+	resp429 := &http.Response{StatusCode: 429, Header: http.Header{"Retry-After": {"1"}}}
+	respOK := &http.Response{StatusCode: 200}
+
+	// The first 429 consumes the armed flag (logs once) and opens a penalty window.
+	_, _ = f.shouldRetry(ctx, resp429, assert.AnError)
+	assert.False(t, f.throttle.progress.Load(), "first 429 disarms progress")
+
+	// A success still inside the penalty window must not re-arm (would let a
+	// burst of in-flight successes start a fresh episode too early).
+	_, _ = f.shouldRetry(ctx, respOK, nil)
+	assert.False(t, f.throttle.progress.Load(), "success during penalty window does not re-arm")
+
+	// Once the penalty window has elapsed, a success re-arms for the next episode.
+	f.throttle.penaltyUntilNano.Store(time.Now().Add(-time.Second).UnixNano())
+	_, _ = f.shouldRetry(ctx, respOK, nil)
+	assert.True(t, f.throttle.progress.Load(), "success after penalty window re-arms")
+}
+
+// TestThrottleStateConcurrent drives the lock-free throttleState (shared across
+// the shallow Fs copy) from many goroutines. Like the registry test, `go test
+// -race` is the real assertion: it would flag any non-atomic access. The final
+// flag is interleaving-dependent, so it is deliberately not asserted.
+func TestThrottleStateConcurrent(t *testing.T) {
+	ctx := context.Background()
+	f := newTestFs()
+	resp429 := &http.Response{StatusCode: 429, Header: http.Header{"Retry-After": {"1"}}}
+	respOK := &http.Response{StatusCode: 200}
+
+	var wg sync.WaitGroup
+	for i := range 64 {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			if i%2 == 0 {
+				_, _ = f.shouldRetry(ctx, resp429, assert.AnError)
+			} else {
+				_, _ = f.shouldRetry(ctx, respOK, nil)
+			}
+		}(i)
+	}
+	wg.Wait()
 }
