@@ -12,6 +12,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -291,6 +292,17 @@ type Fs struct {
 	uploadsrv   *rest.Client       // the connection to the upload server
 	dirCache    *dircache.DirCache // Map of directory path to directory id
 	pacer       *fs.Pacer          // pacer for API calls
+	throttle    *throttleState     // once-per-episode 429 logging state (shared across Fs copies)
+}
+
+// throttleState tracks 429 throttling for once-per-episode logging (see
+// logThrottle). It sits behind a pointer so the "assume it is a file" shallow
+// copy of Fs shares one state; both fields are atomic, so it is lock-free. An
+// "episode" is a run of 429s with no recovery (a success after the penalty
+// window clears) between them.
+type throttleState struct {
+	penaltyUntilNano atomic.Int64 // unix-nanos the current 429 penalty should clear
+	progress         atomic.Bool  // a call succeeded after the last penalty window
 }
 
 // Object describes a Zoho WorkDrive object
@@ -421,16 +433,40 @@ var retryErrorCodes = []int{
 	509, // Bandwidth Limit Exceeded
 }
 
+// logThrottle logs the first 429 in a throttling episode at NOTICE level.
+//
+// The err value contains the server response body. Further 429s are not logged
+// until shouldRetry observes a real recovery, which prevents sustained
+// throttling from flooding the log. The pacer still logs every retry at DEBUG.
+// Using recovery instead of a fixed time window works with both Zoho penalty
+// regimes.
+func (f *Fs) logThrottle(wait time.Duration, err error) {
+	newBurst := f.throttle.progress.Swap(false)
+	f.throttle.penaltyUntilNano.Store(time.Now().Add(wait).UnixNano())
+	secs := int(wait / time.Second)
+	if newBurst {
+		fs.Logf(f, "Too many requests: Trying again in %d seconds. %v", secs, err)
+	}
+}
+
 // shouldRetry reports whether the given resp and err deserve to be retried.
 //
 // A 429 is honoured via the Retry-After header (falling back to 60s plus a
-// margin); expired OAuth tokens are retried, missing OAuth scopes abort, and
-// standard HTTP retry conditions are also handled.
+// margin) and starts or continues a throttling episode; expired OAuth tokens
+// are retried, missing OAuth scopes abort, and standard HTTP retry conditions
+// are also handled.
 //
 // Returns whether to retry, and the err as a convenience.
 func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
 	if fserrors.ContextError(ctx, &err) {
 		return false, err
+	}
+	if err == nil && resp != nil && resp.StatusCode < 400 {
+		// Treat as recovered only after the latest 429 wait ends, so in-flight
+		// successes don't start a new throttling episode too early.
+		if time.Now().UnixNano() > f.throttle.penaltyUntilNano.Load() {
+			f.throttle.progress.Store(true)
+		}
 	}
 	authRetry := false
 
@@ -454,10 +490,12 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 				fs.Logf(f, "Failed to parse Retry-After: %q: %v", values[0], parseErr)
 			} else {
 				wait := time.Duration(retryAfter)*time.Second + retryAfterMargin
+				f.logThrottle(wait, err)
 				return true, pacer.RetryAfterError(err, wait)
 			}
 		}
 		wait := 60*time.Second + retryAfterMargin
+		f.logThrottle(wait, err)
 		return true, pacer.RetryAfterError(err, wait)
 	}
 	return authRetry || fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
@@ -595,7 +633,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		downloadsrv: rest.NewClient(oAuthClient).SetRoot(downloadURL),
 		uploadsrv:   rest.NewClient(oAuthClient).SetRoot(uploadURL),
 		pacer:       fs.NewPacer(ctx, pacer.NewGoogleDrive(pacer.MinSleep(pacerMinSleep), pacer.Burst(pacerBurst))),
+		throttle:    &throttleState{},
 	}
+	// Arm progress so the very first 429 is logged at NOTICE.
+	f.throttle.progress.Store(true)
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
 	}).Fill(ctx, f)
