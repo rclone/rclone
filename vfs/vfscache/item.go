@@ -471,7 +471,10 @@ func (item *Item) _createFile(osPath string) (err error) {
 	}
 	item.modified = false
 	// t0 := time.Now()
-	fd, err := file.OpenFile(osPath, os.O_RDWR, 0600)
+	// Use O_CREATE so the cache file is recreated if it has been removed
+	// underneath us (e.g. _checkObject dropped a stale entry, or an external
+	// deletion), rather than failing the open with a hard IO error.
+	fd, err := file.OpenFile(osPath, os.O_RDWR|os.O_CREATE, 0600)
 	// fs.Debugf(item.name, "OpenFile took %v", time.Since(t0))
 	if err != nil {
 		return fmt.Errorf("vfs cache item: open failed: %w", err)
@@ -560,6 +563,10 @@ func (item *Item) open(o fs.Object) (err error) {
 			return nil
 		}
 		fs.Debugf(item.name, "vfs cache: cache file vanished during grace period, recreating")
+		// The backing file is gone, so any ranges are invalid.
+		item.info.Rs = nil
+		// It also can't be dirty if the data no longer exists.
+		item.info.Dirty = false
 		if item.fd != nil {
 			_ = item.fd.Close()
 			item.fd = nil
