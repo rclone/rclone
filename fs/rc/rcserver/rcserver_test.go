@@ -376,7 +376,7 @@ func TestRemoteServing(t *testing.T) {
 	testServer(t, tests, &opt)
 }
 
-// checkServeRemote must reject request-derived backend instantiation on the
+// TestCheckServeRemote must reject request-derived backend instantiation on the
 // unauthenticated file-serving path, and global.* config mutation.
 func TestCheckServeRemote(t *testing.T) {
 	for _, test := range []struct {
