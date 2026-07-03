@@ -2185,7 +2185,16 @@ func (o *Object) decodeMetaDataFromDownloadResponse(info *blob.DownloadStreamRes
 	}
 	// NOTE - Client library always returns MD5 as base64 decoded string, Object needs to maintain
 	// this as base64 encoded string.
-	o.md5 = base64.StdEncoding.EncodeToString(info.ContentMD5)
+	//
+	// On a range request the service returns the whole-blob MD5 in the
+	// x-ms-blob-content-md5 header (BlobContentMD5) and leaves Content-MD5
+	// (ContentMD5) empty, so prefer BlobContentMD5. Never overwrite a known
+	// hash with an empty one, or a ranged read would drop the object's MD5.
+	if md5 := info.BlobContentMD5; len(md5) > 0 {
+		o.md5 = base64.StdEncoding.EncodeToString(md5)
+	} else if len(info.ContentMD5) > 0 {
+		o.md5 = base64.StdEncoding.EncodeToString(info.ContentMD5)
+	}
 	if info.ContentType == nil {
 		o.mimeType = ""
 	} else {
