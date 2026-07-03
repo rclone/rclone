@@ -12,6 +12,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -53,6 +54,28 @@ const (
 	// defaultTPSLimitBurst is the token-bucket capacity; keep at 1 as burst > 1
 	// caused synchronized 429 clusters.
 	defaultTPSLimitBurst = 1
+
+	// defaultListFolderWindow / defaultListFolderLimit / defaultListFolderBurst
+	// configure the per-folder listing limiter; folderListLimiter documents the
+	// measured throttle model. Zoho allows ~19 listings of one folder in any
+	// rolling ~60s window and the 20th returns F7008 (measured live 2026-07-05:
+	// every trip landed exactly on the 20th listing inside 60s, every clean run
+	// stayed at <=19 - including a deliberate over-limit probe tripping at #20).
+	// The limiter guarantees at most limit listings per window: each window
+	// starts with burst listings passing immediately (the burst RE-ARMS at every
+	// window boundary) and the remaining limit-burst are paced window/(limit-burst)
+	// apart, while a sliding log of the last limit grants enforces the cap across
+	// window boundaries and idle resumes. burst never raises the per-window total -
+	// it only sets how many listings may go back-to-back. Bursts of 4, 5 and 6
+	// under this cap all ran clean live; 6 is the largest validated, hence the
+	// default. Only repeated same-folder listings are paced; set limit to 0 to
+	// disable entirely.
+	defaultListFolderWindow = fs.Duration(60 * time.Second)
+	defaultListFolderLimit  = 19 // 0 = disabled
+	defaultListFolderBurst  = 6
+	// folderListLimitersMaxEntries caps the per-folder limiter map against unbounded
+	// growth on very long-lived processes.
+	folderListLimitersMaxEntries = 100000
 
 	// retryAfterMargin adds a small extra delay after Zoho's Retry-After value.
 	// This gives rate-limit tokens time to refill and helps avoid another 429.
@@ -260,6 +283,63 @@ synchronized clusters of 429 errors.`,
 			Default:  defaultTPSLimitBurst,
 			Advanced: true,
 		}, {
+			Name: "list_folder_limit",
+			Help: `Max listings of the SAME folder allowed per --zoho-list-folder-window.
+
+Zoho WorkDrive rate limits its listing API (GET files/{id}/files) PER
+folder, independently of --zoho-tpslimit: listing one folder too often in a
+short time returns HTTP 429 (error F7008) with a multi-minute Retry-After
+penalty, which a tight polling loop can hit even at a low overall rate.
+Measured live, Zoho allows ~19 listings of one folder in any rolling ~60s
+window and the 20th fails, which the defaults (19 per 60s) model exactly.
+
+This is a true per-window cap for any traffic pattern: each window starts
+with --zoho-list-folder-burst listings passing back-to-back (the burst
+re-arms at every window boundary) and the rest are spaced
+--zoho-list-folder-window/(limit - burst) apart (the defaults give ~4.6s),
+while a sliding log of recent listings enforces the cap across window
+boundaries. 0 disables the limiter. Only REPEATED listings of one folder are
+delayed; different folders, or a folder listed fewer than
+--zoho-list-folder-burst times, never are.
+
+A HIGHER value means MORE listings per window, not more safety: raising it
+above 19 trips F7008. Lower it for a wider margin at the cost of listing
+responsiveness.`,
+			Default:  defaultListFolderLimit,
+			Advanced: true,
+		}, {
+			Name: "list_folder_window",
+			Help: `The window for --zoho-list-folder-limit.
+
+The default of 60s (shown as 1m0s) matches Zoho's real sliding window: at
+most --zoho-list-folder-limit listings of one folder are allowed in any
+window of this length. A bare number is parsed as seconds ("60" = "60s").
+
+Widen it (or lower the limit) for a bigger safety margin; the sustained
+spacing between same-folder listings is window/(limit - burst).`,
+			Default:  defaultListFolderWindow,
+			Advanced: true,
+		}, {
+			Name: "list_folder_burst",
+			Help: `Same-folder listings allowed back-to-back before --zoho-list-folder-limit paces them.
+
+The burst is carved out of --zoho-list-folder-limit, so raising it never
+raises the per-window total: this many listings may fire immediately and the
+remaining limit - burst are spaced window/(limit - burst) apart. The burst
+RE-ARMS at every window boundary, so sustained re-listing gets a fresh burst
+each window while a sliding log of recent listings still enforces the
+per-window cap. A folder listed only a handful of times (the common case - a
+sync re-listing one directory a few times then moving on) never waits.
+
+The default 6 is the largest burst validated live under the default 19-per-60s
+cap (bursts of 4, 5 and 6 all ran clean; an over-cap probe tripped F7008
+exactly at the 20th listing in a window). Keep it well below ~15 - Zoho also
+has an instantaneous back-to-back cap around 15-16 regardless of the window.
+Set to 1 to pace from the second listing. Values >= the limit are clamped to
+limit - 1.`,
+			Default:  defaultListFolderBurst,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -273,12 +353,15 @@ synchronized clusters of 429 errors.`,
 
 // Options defines the configuration for this backend
 type Options struct {
-	UploadCutoff  fs.SizeSuffix        `config:"upload_cutoff"`
-	RootFolderID  string               `config:"root_folder_id"`
-	Region        string               `config:"region"`
-	TPSLimit      float64              `config:"tpslimit"`
-	TPSLimitBurst int                  `config:"tpslimit_burst"`
-	Enc           encoder.MultiEncoder `config:"encoding"`
+	UploadCutoff     fs.SizeSuffix        `config:"upload_cutoff"`
+	RootFolderID     string               `config:"root_folder_id"`
+	Region           string               `config:"region"`
+	TPSLimit         float64              `config:"tpslimit"`
+	TPSLimitBurst    int                  `config:"tpslimit_burst"`
+	ListFolderLimit  int                  `config:"list_folder_limit"`
+	ListFolderWindow fs.Duration          `config:"list_folder_window"`
+	ListFolderBurst  int                  `config:"list_folder_burst"`
+	Enc              encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote workdrive
@@ -303,6 +386,131 @@ type Fs struct {
 type throttleState struct {
 	penaltyUntilNano atomic.Int64 // unix-nanos the current 429 penalty should clear
 	progress         atomic.Bool  // a call succeeded after the last penalty window
+}
+
+// folderListLimiters holds the per-folder-id listing rate limiters and the time
+// each folder was last listed. One instance is shared process-wide (folderListLimiterRegistry)
+// rather than per-*Fs because Zoho keys its listing throttle to the folder id:
+// a per-Fs limiter would let each new Fs re-list a shared ancestor with a fresh,
+// full-burst limiter, draining the bucket -> F7008.
+type folderListLimiters struct {
+	mu        sync.Mutex
+	limiters  map[string]*folderListLimiterEntry
+	lastSweep time.Time
+}
+
+// folderListLimiterRegistry is the process-wide registry of per-folder listing
+// limiters, shared by every *Fs and keyed by region+folder-id so entries never
+// collide across accounts or regions.
+var folderListLimiterRegistry = &folderListLimiters{limiters: make(map[string]*folderListLimiterEntry)}
+
+// folderListLimiterEntry is a per-folder listing rate limiter plus the time the folder
+// was last listed, used for idle eviction.
+type folderListLimiterEntry struct {
+	limiter    *folderWindowLimiter
+	lastListed time.Time
+}
+
+// folderWindowLimiter shapes same-folder listings to at most limit per window
+// with a burst re-armed at each window boundary. Two layers:
+//
+// Shape (fixed window): a grid anchored at the first request advances in whole
+// windows; each window's first burst grants pass immediately and the remaining
+// limit-burst are spaced interval = window/(limit-burst) apart, so under
+// continuous demand every window starts with a fast burst - the flow the
+// options promise.
+//
+// Safety (sliding log): grants keeps the last limit grant times; a new grant
+// is also forced to be >= grants[len-limit] + window + margin, so no rolling
+// window ever sees more than limit grants even across grid boundaries or on
+// resume-after-idle, where the fixed-window shape alone could cluster a
+// boundary burst too close to earlier grants.
+type folderWindowLimiter struct {
+	mu          sync.Mutex
+	window      time.Duration // Zoho's per-folder window (--zoho-list-folder-window)
+	limit       int           // window budget AND sliding cap (--zoho-list-folder-limit)
+	burst       int           // grants passed immediately at each window start
+	interval    time.Duration // spacing of the paced phase: window/(limit-burst)
+	windowStart time.Time     // fixed grid anchor; zero until the first grant
+	used        int           // grants handed out in the current window
+	lastGrant   time.Time     // time of the most recent grant
+	grants      []time.Time   // last <=limit grant times (sliding safety log)
+}
+
+// folderListSafetyMargin is added on top of the sliding-log wait so a grant
+// lands strictly after the matching old grant has left Zoho's window.
+const folderListSafetyMargin = 500 * time.Millisecond
+
+// reserve commits the next grant at or after now and returns its time.
+// It converges in at most a few passes: rolling the grid forward resets the
+// window budget, and the sliding log can push the candidate at most once more.
+func (l *folderWindowLimiter) reserve(now time.Time) time.Time {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if l.windowStart.IsZero() {
+		l.windowStart = now
+	}
+	cand := now
+	for range 4 {
+		// Roll the fixed grid forward so cand lies in the current window,
+		// re-arming the burst for the new window.
+		if d := cand.Sub(l.windowStart); d >= l.window {
+			l.windowStart = l.windowStart.Add(l.window * (d / l.window))
+			l.used = 0
+		}
+		next := cand
+		switch {
+		case l.used < l.burst:
+			// window-start burst passes immediately
+		case l.used < l.limit:
+			if t := l.lastGrant.Add(l.interval); t.After(next) {
+				next = t
+			}
+		default:
+			// window budget exhausted - wait for the next window's burst
+			next = l.windowStart.Add(l.window)
+		}
+		// Sliding safety: never more than limit grants in any rolling window.
+		if len(l.grants) >= l.limit {
+			if t := l.grants[len(l.grants)-l.limit].Add(l.window + folderListSafetyMargin); t.After(next) {
+				next = t
+			}
+		}
+		if next.Equal(cand) {
+			break
+		}
+		cand = next
+	}
+	l.used++
+	l.lastGrant = cand
+	if len(l.grants) < l.limit {
+		l.grants = append(l.grants, cand)
+	} else {
+		copy(l.grants, l.grants[1:])
+		l.grants[len(l.grants)-1] = cand
+	}
+	return cand
+}
+
+// Wait blocks until the limiter grants a listing or ctx is cancelled. A grant
+// reserved by a cancelled Wait is not returned - erring on the safe side, it
+// just leaves a little of the window budget unused.
+func (l *folderWindowLimiter) Wait(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	d := time.Until(l.reserve(time.Now()))
+	if d <= 0 {
+		return nil
+	}
+	timer := time.NewTimer(d)
+	defer timer.Stop()
+	select {
+	case <-timer.C:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 // Object describes a Zoho WorkDrive object
@@ -684,10 +892,89 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 // Should return true to finish processing
 type listAllFn func(*api.Item) bool
 
+// folderListLimiter provides the shared per-folder listing rate limiter for dirID.
+//
+// Zoho WorkDrive throttles its listing API (GET files/{id}/files) PER folder,
+// independently of --zoho-tpslimit. Measured live (2026-07-05), that per-folder
+// throttle is a sliding window: ~19 listings of one folder within any rolling
+// ~60s are allowed and the 20th returns F7008 with a ~300s Retry-After. Every
+// observed trip landed exactly on the 20th listing inside 60s and every clean
+// run stayed at <=19, including a deliberate over-limit probe (window total 22)
+// tripping at #20; an earlier token-bucket refill model fitted the same data
+// inconsistently. There is also a much smaller instantaneous cap (~15-16
+// back-to-back listings trip on their own), so burst must stay well below that.
+//
+// The limiter (folderWindowLimiter) guarantees at most limit listings per
+// window for any traffic pattern: each window starts with burst listings
+// passing back-to-back - the burst RE-ARMS at every window boundary - and the
+// remaining limit-burst are paced window/(limit-burst) apart, while the
+// sliding log of the last limit grants enforces the cap across window
+// boundaries and idle resumes. Raising burst therefore never raises the
+// per-window total - it only front-loads it, widening the sustained spacing
+// to compensate. Different folders, or a folder listed fewer than burst
+// times, are never delayed - only tps applies unless the SAME folder is
+// re-listed enough to drain the burst.
+//
+// It paces repeated listings of the same folder; without it, listing one folder
+// too often trips Zoho's per-folder throttle and returns HTTP 429. The limiter is
+// created on demand in folderListLimiterRegistry, and limiters idle longer than
+// the window are evicted (at most once per window): after a full window idle
+// Zoho's sliding window is empty and the limiter is fully refilled, so dropping
+// it is lossless. Only called when --zoho-list-folder-limit > 0, so limit is
+// never zero.
+//
+// Returns the folder's *folderWindowLimiter, ready to Wait on before listing.
+func (f *Fs) folderListLimiter(dirID string) *folderWindowLimiter {
+	flReg := folderListLimiterRegistry
+	window := time.Duration(f.opt.ListFolderWindow)
+	// Key by region+folder-id so one limiter is shared per physical folder
+	// across every *Fs without colliding across accounts or regions.
+	key := f.opt.Region + "\x00" + dirID
+	flReg.mu.Lock()
+	defer flReg.mu.Unlock()
+	now := time.Now()
+	if now.Sub(flReg.lastSweep) > window || len(flReg.limiters) > folderListLimitersMaxEntries {
+		before := len(flReg.limiters)
+		for id, e := range flReg.limiters {
+			if now.Sub(e.lastListed) > window {
+				delete(flReg.limiters, id)
+			}
+		}
+		flReg.lastSweep = now
+		fs.Debugf(f, "folder listing limiter sweep: evicted %d of %d idle limiters", before-len(flReg.limiters), before)
+	}
+	e := flReg.limiters[key]
+	if e == nil {
+		// The first Fs to list this folder fixes the shape; in the normal case
+		// every Fs for the same account shares the same limit/window/burst.
+		// limit > 0 is guaranteed by the caller; clamp burst into [1, limit-1]
+		// (at limit 1 the burst token itself is the whole window's budget).
+		burst := min(max(f.opt.ListFolderBurst, 1), max(f.opt.ListFolderLimit-1, 1))
+		intervalTokens := max(f.opt.ListFolderLimit-burst, 1)
+		e = &folderListLimiterEntry{limiter: &folderWindowLimiter{
+			window:   window,
+			limit:    f.opt.ListFolderLimit,
+			burst:    burst,
+			interval: window / time.Duration(intervalTokens),
+		}}
+		flReg.limiters[key] = e
+	}
+	e.lastListed = now
+	return e.limiter
+}
+
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
 func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
+	// Pace repeated listings of the SAME folder under Zoho's per-folder throttle
+	// (see --zoho-list-folder-limit). One token per listAll call, not per page,
+	// so multi-page listings of a single folder are not penalised.
+	if f.opt.ListFolderLimit > 0 {
+		if err = f.folderListLimiter(dirID).Wait(ctx); err != nil {
+			return false, err
+		}
+	}
 	const listItemsLimit = 1000
 	opts := rest.Opts{
 		Method:       "GET",
