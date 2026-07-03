@@ -42,6 +42,10 @@ const (
 	configRootID                = "root_folder_id"
 
 	defaultUploadCutoff = 10 * 1024 * 1024 // 10 MiB
+
+	// retryAfterMargin adds a small extra delay after Zoho's Retry-After value.
+	// This gives rate-limit tokens time to refill and helps avoid another 429.
+	retryAfterMargin = 1 * time.Second
 )
 
 // Globals
@@ -380,9 +384,14 @@ var retryErrorCodes = []int{
 	509, // Bandwidth Limit Exceeded
 }
 
-// shouldRetry returns a boolean as to whether this resp and err
-// deserve to be retried.  It returns the err as a convenience
-func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
+// shouldRetry reports whether the given resp and err deserve to be retried.
+//
+// A 429 is honoured via the Retry-After header (falling back to 60s plus a
+// margin); expired OAuth tokens are retried, missing OAuth scopes abort, and
+// standard HTTP retry conditions are also handled.
+//
+// Returns whether to retry, and the err as a convenience.
+func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
 	if fserrors.ContextError(ctx, &err) {
 		return false, err
 	}
@@ -399,9 +408,20 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 		fs.Debugf(nil, "Should retry: %v", err)
 	}
 	if resp != nil && resp.StatusCode == 429 {
-		err = pacer.RetryAfterError(err, 60*time.Second)
-		fs.Debugf(nil, "Too many requests. Trying again in %d seconds.", 60)
-		return true, err
+		// Zoho's listing API is heavily rate limited and tells us how long to
+		// wait in the Retry-After header. Honour it so we don't retry too early
+		// (which makes Zoho escalate the penalty), falling back to 60s.
+		if values := resp.Header["Retry-After"]; len(values) == 1 && values[0] != "" {
+			retryAfter, parseErr := strconv.Atoi(values[0])
+			if parseErr != nil {
+				fs.Logf(f, "Failed to parse Retry-After: %q: %v", values[0], parseErr)
+			} else {
+				wait := time.Duration(retryAfter)*time.Second + retryAfterMargin
+				return true, pacer.RetryAfterError(err, wait)
+			}
+		}
+		wait := 60*time.Second + retryAfterMargin
+		return true, pacer.RetryAfterError(err, wait)
 	}
 	return authRetry || fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
@@ -484,7 +504,7 @@ func (f *Fs) readMetaDataForID(ctx context.Context, id string) (*api.Item, error
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return shouldRetry(ctx, resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, err
@@ -591,7 +611,7 @@ OUTER:
 		var resp *http.Response
 		err = f.pacer.Call(func() (bool, error) {
 			resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-			return shouldRetry(ctx, resp, err)
+			return f.shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
 			return found, fmt.Errorf("couldn't list files: %w", err)
@@ -704,7 +724,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &mkdir, &info)
-		return shouldRetry(ctx, resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		//fmt.Printf("...Error %v\n", err)
@@ -782,7 +802,7 @@ func (f *Fs) uploadLargeFile(ctx context.Context, name string, parent string, si
 	var uploadResponse *api.LargeUploadResponse
 	err = f.pacer.CallNoRetry(func() (bool, error) {
 		resp, err = f.uploadsrv.CallJSON(ctx, &opts, nil, &uploadResponse)
-		return shouldRetry(ctx, resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("upload large error: %v", err)
@@ -838,7 +858,7 @@ func (f *Fs) upload(ctx context.Context, name string, parent string, size int64,
 	var uploadResponse *api.UploadResponse
 	err = f.pacer.CallNoRetry(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &uploadResponse)
-		return shouldRetry(ctx, resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("upload error: %w", err)
@@ -937,7 +957,7 @@ func (f *Fs) deleteObject(ctx context.Context, id string) (err error) {
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &delete, nil)
-		return shouldRetry(ctx, resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return fmt.Errorf("delete object failed: %w", err)
@@ -1007,7 +1027,7 @@ func (f *Fs) rename(ctx context.Context, id, name string) (item *api.Item, err e
 	var result *api.ItemInfo
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &rename, &result)
-		return shouldRetry(ctx, resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("rename failed: %w", err)
@@ -1060,7 +1080,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	var result *api.ItemList
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &copyFile, &result)
-		return shouldRetry(ctx, resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("couldn't copy file: %w", err)
@@ -1105,7 +1125,7 @@ func (f *Fs) move(ctx context.Context, srcID, parentID string) (item *api.Item, 
 	var result *api.ItemList
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &moveFile, &result)
-		return shouldRetry(ctx, resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("move failed: %w", err)
@@ -1348,7 +1368,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.downloadsrv.Call(ctx, &opts)
-		return shouldRetry(ctx, resp, err)
+		return o.fs.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, err
