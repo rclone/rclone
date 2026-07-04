@@ -413,6 +413,12 @@ func (w *WebDAV) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		w.serveDir(rw, r, remote)
 		return
 	}
+	// Work around bug in x/net/webdav which handles Overwrite incorrectly
+	// See: https://github.com/golang/go/issues/66059
+	// Remove when the above bug is fixed.
+	if (r.Method == "COPY" || r.Method == "MOVE") && r.Header.Get("Overwrite") == "" {
+		r.Header.Set("Overwrite", "T")
+	}
 	// Add URL Prefix back to path since webdavhandler needs to
 	// return absolute references.
 	r.URL.Path = w.opt.HTTP.BaseURL + r.URL.Path
