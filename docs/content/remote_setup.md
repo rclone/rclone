@@ -75,7 +75,7 @@ y/e/d>
 ## Configuring by copying the config file
 
 Rclone stores all of its configuration in a single file. This can easily be
-copied to configure a remote rclone (although some backends does not support
+copied to configure a remote rclone (although some backends do not support
 reusing the same configuration, consult your backend documentation to be
 sure).
 

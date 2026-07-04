@@ -53,6 +53,13 @@ func TestRangeOptionDecode(t *testing.T) {
 		{in: RangeOption{Start: 1, End: -1}, size: 100, wantOffset: 1, wantLimit: -1},
 		{in: RangeOption{Start: -1, End: 90}, size: 100, wantOffset: 10, wantLimit: -1},
 		{in: RangeOption{Start: -1, End: -1}, size: 100, wantOffset: 0, wantLimit: -1},
+		// Regression test for #6310: a suffix range whose length exceeds
+		// the size of the object must not produce a negative offset -
+		// RFC 7233 section 2.1 says the entire representation should be
+		// used instead. "bytes=-90407" against a 5 byte object panicked
+		// downstream with "slice bounds out of range [-90402:]".
+		{in: RangeOption{Start: -1, End: 90407}, size: 5, wantOffset: 0, wantLimit: -1},
+		{in: RangeOption{Start: -1, End: 5}, size: 5, wantOffset: 0, wantLimit: -1},
 	} {
 		gotOffset, gotLimit := test.in.Decode(test.size)
 		what := fmt.Sprintf("%+v size=%d", test.in, test.size)
@@ -224,6 +231,20 @@ func TestFixRangeOptions(t *testing.T) {
 			},
 			want: []OpenOption{
 				&RangeOption{Start: 10, End: 99},
+			},
+			size: 100,
+		},
+		{
+			// Regression test for #6310: a suffix range longer than the
+			// object must clamp to the start of the file (Start: 0),
+			// not produce a negative Start which would corrupt the
+			// Range header sent to the remote.
+			name: "Fetch the last N bytes where N is bigger than size",
+			in: []OpenOption{
+				&RangeOption{Start: -1, End: 90407},
+			},
+			want: []OpenOption{
+				&RangeOption{Start: 0, End: 99},
 			},
 			size: 100,
 		},
