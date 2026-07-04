@@ -271,3 +271,42 @@ func percentDiff(start, end uint64) uint64 {
 	}
 	return (diff * 100) / start
 }
+
+// Regression for #9567: NewStatsGroup used to start the averageLoop
+// goroutine unconditionally at group creation. When an rcd daemon was
+// driven by many rc sync/move calls that transferred zero files, each
+// call created a fresh job/N group whose averageLoop was started but
+// never stopped (nothing ever went transferring->empty), leaking one
+// goroutine per call. The loop must only start on demand from
+// NewTransfer / NewTransferRemoteSize, and it must still stop when the
+// last transfer completes.
+func TestNewStatsGroupDoesNotStartAverageLoop(t *testing.T) {
+	ctx := context.Background()
+	defer func() {
+		groups = newStatsGroups()
+	}()
+
+	stats := NewStatsGroup(ctx, "test-group-9567")
+
+	stats.mu.RLock()
+	started := stats.average.started
+	stats.mu.RUnlock()
+	assert.False(t, started,
+		"NewStatsGroup must not start averageLoop for a zero-transfer group (issue #9567)")
+
+	// The loop must still start on demand when a real transfer is added,
+	// and stop cleanly once the last transfer completes.
+	tr := stats.NewTransferRemoteSize("regression-9567", 0, nil, nil)
+	stats.mu.RLock()
+	startedAfterTransfer := stats.average.started
+	stats.mu.RUnlock()
+	assert.True(t, startedAfterTransfer,
+		"averageLoop should start on demand when a transfer is added")
+
+	tr.Done(ctx, nil)
+	stats.mu.RLock()
+	startedAfterDone := stats.average.started
+	stats.mu.RUnlock()
+	assert.False(t, startedAfterDone,
+		"averageLoop should stop when the last transfer is done")
+}

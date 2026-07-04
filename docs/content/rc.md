@@ -15,6 +15,43 @@ or [use HTTP directly](#api-http).
 If you just want to run a remote control then see the [rcd](/commands/rclone_rcd/)
 command.
 
+## Security {#security}
+
+**Access to the rc API is equivalent to shell access as the user running
+rclone.** Treat the rc port as you would an interactive login on the host.
+
+Any caller who can reach the API (and pass authentication, if it is enabled)
+can, among other things:
+
+- **Run OS commands** as the rclone user. `core/command` re-executes the rclone
+  binary with arbitrary arguments, and several backend options shell out to
+  programs, so even creating a remote with `config/create` can lead to command
+  execution.
+- **Read and write any file** reachable by the rclone process, by pointing
+  `operations/*` or `sync/*` at a `local` remote (or via `--rc-files` /
+  `--rc-serve`). Writing arbitrary files as the rclone user is itself a route to
+  code execution.
+- **Read back stored credentials.** rclone configs routinely hold cloud-provider
+  secrets. `config/dump` and friends expose them, so a compromise of the rc
+  reaches every configured backend.
+- **Change rclone's runtime behaviour** with `options/set`, **manage remotes**
+  with `config/*`, and **stop the process** with `core/quit`.
+
+There is currently no per-endpoint capability or scope system: authentication is
+all-or-nothing. Granting any access grants all of the above.
+
+Consequently:
+
+- **Do not bind the rc to a network address you do not control.** The default
+  bind is loopback (`localhost:5572`); keep it there unless you have a specific
+  reason to change it.
+- **Do not use `--rc-no-auth` on a non-loopback bind.** It disables
+  authentication on the endpoints that access remotes — see
+  [`--rc-no-auth`](#--rc-no-auth).
+- **Use authentication and TLS** (`--rc-user`/`--rc-pass` or `--rc-htpasswd`,
+  plus `--rc-cert`/`--rc-key`) whenever the port is reachable by anyone you do
+  not fully trust, and raise `--rc-min-tls-version`.
+
 ## Supported parameters
 
 ### --rc
@@ -367,6 +404,8 @@ This shows:
 If you wish to set config (the equivalent of the global flags) for the
 duration of an rc call only then pass in the `_config` parameter.
 
+Alternatively, you can pass config options flat at the top level of the parameter map. The option names are the same as their CLI flags without `--` and with `-` replaced by `_` (e.g. `transfers` instead of `Transfers` inside `_config`).
+
 This should be in the same format as the `main` key returned by
 [options/get](#options-get).
 
@@ -388,11 +427,25 @@ parameter, you would pass this parameter in your JSON blob.
 "_config":{"CheckSum": true}
 ```
 
+Or pass it flat at the top level:
+
+```json
+"checksum": true
+```
+
 If using `rclone rc` this could be passed as
 
 ```console
 rclone rc sync/sync ... _config='{"CheckSum": true}'
 ```
+
+Or simply flat:
+
+```console
+rclone rc sync/sync ... checksum=true
+```
+
+If both flat parameters and `_config` are supplied, the parameters in the legacy `_config` block will take precedence.
 
 Any config parameters you don't set will inherit the global defaults
 which were set with command line flags or environment variables.
@@ -406,6 +459,13 @@ setting the equivalent of `--buffer-size` in string or integer format.
 "_config":{"BufferSize": 44040192}
 ```
 
+Or flat:
+
+```json
+"buffer_size": "42M"
+"buffer_size": 44040192
+```
+
 If you wish to check the `_config` assignment has worked properly then
 calling `options/local` will show what the value got set to.
 
@@ -413,6 +473,8 @@ calling `options/local` will show what the value got set to.
 
 If you wish to set filters for the duration of an rc call only then
 pass in the `_filter` parameter.
+
+Alternatively, you can pass filter options flat at the top level of the parameter map. The option names are the same as their CLI flags without `--` and with `-` replaced by `_` (e.g. `exclude` instead of `Exclude` inside `_filter`).
 
 This should be in the same format as the `filter` key returned by
 [options/get](#options-get).
@@ -440,11 +502,25 @@ you would pass this parameter in your JSON blob.
 "_filter":{"MaxSize":"1M", "IncludeRule":["a","b"], "MaxAge":"42s"}
 ```
 
+Or pass them flat at the top level:
+
+```json
+"max_size":"1M", "include":["a","b"], "max_age":"42s"
+```
+
 If using `rclone rc` this could be passed as
 
 ```console
 rclone rc ... _filter='{"MaxSize":"1M", "IncludeRule":["a","b"], "MaxAge":"42s"}'
 ```
+
+Or simply flat:
+
+```console
+rclone rc ... max_size=1M include="a,b" max_age=42s
+```
+
+If both flat parameters and `_filter` are supplied, the parameters in the legacy `_filter` block will take precedence.
 
 Any filter parameters you don't set will inherit the global defaults
 which were set with command line flags or environment variables.
@@ -456,6 +532,12 @@ setting the equivalent of `--buffer-size` in string or integer format.
 ```json
 "_filter":{"MinSize": "42M"}
 "_filter":{"MinSize": 44040192}
+```
+
+Or flat:
+
+```json
+"min_size": "42M"
 ```
 
 If you wish to check the `_filter` assignment has worked properly then

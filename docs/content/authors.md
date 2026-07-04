@@ -1150,3 +1150,14 @@ put them back in again. -->
 - IceLocke <lockeice@gmail.com>
 - nako-ruru <nako_ruru@163.com>
 - bright <nako_ruru@sina.com>
+- Filippo <57143294+FilippoMuschera@users.noreply.github.com>
+- Gaurav <amvermagaurav007@gmail.com>
+- Yuhang Cao <caoyuhang@fwerkor.com>
+- Yash Anil <yashanil98@gmail.com>
+- yashanil98 <79158725+yashanil98@users.noreply.github.com>
+- lewoberst <github@jan-o-sch.net>
+- max <max@example.com>
+- Bryan Stenson <bryan.stenson@gmail.com>
+- happysnaker <73147033+happysnaker@users.noreply.github.com>
+- Jan Schlien <rclone-github@jan-o-sch.net>
+- user77 <abubakarm@gmail.com>
