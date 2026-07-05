@@ -1451,7 +1451,7 @@ func (f *Fs) createOrUpdate(ctx context.Context, file string, createTime time.Ti
 	return info, nil
 }
 
-// copyOrMoves copies or moves directories or files depending on the method parameter
+// copyOrMove copies or moves directories or files depending on the method parameter
 func (f *Fs) copyOrMove(ctx context.Context, method, src, dest string) (info *api.JottaFile, err error) {
 	opts := rest.Opts{
 		Method:     "POST",

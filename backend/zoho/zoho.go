@@ -12,6 +12,8 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -36,12 +38,48 @@ import (
 const (
 	rcloneClientID              = "1000.46MXF275FM2XV7QCHX5A7K3LGME66B"
 	rcloneEncryptedClientSecret = "U-2gxclZQBcOG9NPhjiXAhj-f0uQ137D0zar8YyNHXHkQZlTeSpIOQfmCb4oSpvosJp_SJLXmLLeUA"
-	minSleep                    = 10 * time.Millisecond
-	maxSleep                    = 60 * time.Second
-	decayConstant               = 2 // bigger for slower decay, exponential
 	configRootID                = "root_folder_id"
+	// minSleep is the pacer's minimum delay between calls when --zoho-tpslimit
+	// is 0 (cap disabled); a small floor always remains because backoff and
+	// Retry-After still apply.
+	minSleep = 10 * time.Millisecond
 
 	defaultUploadCutoff = 10 * 1024 * 1024 // 10 MiB
+
+	// defaultTPSLimit is the sustainable refill rate (API calls/second) of
+	// Zoho WorkDrive's throttle, measured live. Going faster drains the token
+	// bucket and then triggers long (~119s) 429 Retry-After stalls (see
+	// --zoho-tpslimit).
+	defaultTPSLimit = 6.0
+	// defaultTPSLimitBurst is the token-bucket capacity; keep at 1 as burst > 1
+	// caused synchronized 429 clusters.
+	defaultTPSLimitBurst = 1
+
+	// defaultListFolderWindow / defaultListFolderLimit / defaultListFolderBurst
+	// configure the per-folder listing limiter; folderListLimiter documents the
+	// measured throttle model. Zoho allows ~19 listings of one folder in any
+	// rolling ~60s window and the 20th returns F7008 (measured live 2026-07-05:
+	// every trip landed exactly on the 20th listing inside 60s, every clean run
+	// stayed at <=19 - including a deliberate over-limit probe tripping at #20).
+	// The limiter guarantees at most limit listings per window: each window
+	// starts with burst listings passing immediately (the burst RE-ARMS at every
+	// window boundary) and the remaining limit-burst are paced window/(limit-burst)
+	// apart, while a sliding log of the last limit grants enforces the cap across
+	// window boundaries and idle resumes. burst never raises the per-window total -
+	// it only sets how many listings may go back-to-back. Bursts of 4, 5 and 6
+	// under this cap all ran clean live; 6 is the largest validated, hence the
+	// default. Only repeated same-folder listings are paced; set limit to 0 to
+	// disable entirely.
+	defaultListFolderWindow = fs.Duration(60 * time.Second)
+	defaultListFolderLimit  = 19 // 0 = disabled
+	defaultListFolderBurst  = 6
+	// folderListLimitersMaxEntries caps the per-folder limiter map against unbounded
+	// growth on very long-lived processes.
+	folderListLimitersMaxEntries = 100000
+
+	// retryAfterMargin adds a small extra delay after Zoho's Retry-After value.
+	// This gives rate-limit tokens time to refill and helps avoid another 429.
+	retryAfterMargin = 1 * time.Second
 )
 
 // Globals
@@ -220,6 +258,88 @@ browser.`,
 			Default:  fs.SizeSuffix(defaultUploadCutoff),
 			Advanced: true,
 		}, {
+			Name: "tpslimit",
+			Help: `Max number of API transactions per second.
+
+Zoho WorkDrive rate limits its API and returns HTTP 429 (error F7008,
+"Request rate limit exceeded") when called too quickly, so the data API
+calls (list, upload, download, copy, move, delete) are paced to this rate.
+
+Set to 0 to disable the cap, matching the global --tpslimit; pacing still
+can't be turned off entirely because backoff and Retry-After always apply.
+
+The default of 6 is a safe sustainable rate. Higher values can trigger long
+429 Retry-After stalls that make throughput WORSE, so raise it only if your
+account tolerates more.`,
+			Default:  defaultTPSLimit,
+			Advanced: true,
+		}, {
+			Name: "tpslimit_burst",
+			Help: `Number of API calls to allow back-to-back without sleeping, for --zoho-tpslimit.
+
+This is the token-bucket capacity. Keep at 1 for Zoho: a burst > 1
+lets several calls fire at once after an idle gap, which can trigger
+synchronized clusters of 429 errors.`,
+			Default:  defaultTPSLimitBurst,
+			Advanced: true,
+		}, {
+			Name: "list_folder_limit",
+			Help: `Max listings of the SAME folder allowed per --zoho-list-folder-window.
+
+Zoho WorkDrive rate limits its listing API (GET files/{id}/files) PER
+folder, independently of --zoho-tpslimit: listing one folder too often in a
+short time returns HTTP 429 (error F7008) with a multi-minute Retry-After
+penalty, which a tight polling loop can hit even at a low overall rate.
+Measured live, Zoho allows ~19 listings of one folder in any rolling ~60s
+window and the 20th fails, which the defaults (19 per 60s) model exactly.
+
+This is a true per-window cap for any traffic pattern: each window starts
+with --zoho-list-folder-burst listings passing back-to-back (the burst
+re-arms at every window boundary) and the rest are spaced
+--zoho-list-folder-window/(limit - burst) apart (the defaults give ~4.6s),
+while a sliding log of recent listings enforces the cap across window
+boundaries. 0 disables the limiter. Only REPEATED listings of one folder are
+delayed; different folders, or a folder listed fewer than
+--zoho-list-folder-burst times, never are.
+
+A HIGHER value means MORE listings per window, not more safety: raising it
+above 19 trips F7008. Lower it for a wider margin at the cost of listing
+responsiveness.`,
+			Default:  defaultListFolderLimit,
+			Advanced: true,
+		}, {
+			Name: "list_folder_window",
+			Help: `The window for --zoho-list-folder-limit.
+
+The default of 60s (shown as 1m0s) matches Zoho's real sliding window: at
+most --zoho-list-folder-limit listings of one folder are allowed in any
+window of this length. A bare number is parsed as seconds ("60" = "60s").
+
+Widen it (or lower the limit) for a bigger safety margin; the sustained
+spacing between same-folder listings is window/(limit - burst).`,
+			Default:  defaultListFolderWindow,
+			Advanced: true,
+		}, {
+			Name: "list_folder_burst",
+			Help: `Same-folder listings allowed back-to-back before --zoho-list-folder-limit paces them.
+
+The burst is carved out of --zoho-list-folder-limit, so raising it never
+raises the per-window total: this many listings may fire immediately and the
+remaining limit - burst are spaced window/(limit - burst) apart. The burst
+RE-ARMS at every window boundary, so sustained re-listing gets a fresh burst
+each window while a sliding log of recent listings still enforces the
+per-window cap. A folder listed only a handful of times (the common case - a
+sync re-listing one directory a few times then moving on) never waits.
+
+The default 6 is the largest burst validated live under the default 19-per-60s
+cap (bursts of 4, 5 and 6 all ran clean; an over-cap probe tripped F7008
+exactly at the 20th listing in a window). Keep it well below ~15 - Zoho also
+has an instantaneous back-to-back cap around 15-16 regardless of the window.
+Set to 1 to pace from the second listing. Values >= the limit are clamped to
+limit - 1.`,
+			Default:  defaultListFolderBurst,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -233,10 +353,15 @@ browser.`,
 
 // Options defines the configuration for this backend
 type Options struct {
-	UploadCutoff fs.SizeSuffix        `config:"upload_cutoff"`
-	RootFolderID string               `config:"root_folder_id"`
-	Region       string               `config:"region"`
-	Enc          encoder.MultiEncoder `config:"encoding"`
+	UploadCutoff     fs.SizeSuffix        `config:"upload_cutoff"`
+	RootFolderID     string               `config:"root_folder_id"`
+	Region           string               `config:"region"`
+	TPSLimit         float64              `config:"tpslimit"`
+	TPSLimitBurst    int                  `config:"tpslimit_burst"`
+	ListFolderLimit  int                  `config:"list_folder_limit"`
+	ListFolderWindow fs.Duration          `config:"list_folder_window"`
+	ListFolderBurst  int                  `config:"list_folder_burst"`
+	Enc              encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote workdrive
@@ -250,6 +375,142 @@ type Fs struct {
 	uploadsrv   *rest.Client       // the connection to the upload server
 	dirCache    *dircache.DirCache // Map of directory path to directory id
 	pacer       *fs.Pacer          // pacer for API calls
+	throttle    *throttleState     // once-per-episode 429 logging state (shared across Fs copies)
+}
+
+// throttleState tracks 429 throttling for once-per-episode logging (see
+// logThrottle). It sits behind a pointer so the "assume it is a file" shallow
+// copy of Fs shares one state; both fields are atomic, so it is lock-free. An
+// "episode" is a run of 429s with no recovery (a success after the penalty
+// window clears) between them.
+type throttleState struct {
+	penaltyUntilNano atomic.Int64 // unix-nanos the current 429 penalty should clear
+	progress         atomic.Bool  // a call succeeded after the last penalty window
+}
+
+// folderListLimiters holds the per-folder-id listing rate limiters and the time
+// each folder was last listed. One instance is shared process-wide (folderListLimiterRegistry)
+// rather than per-*Fs because Zoho keys its listing throttle to the folder id:
+// a per-Fs limiter would let each new Fs re-list a shared ancestor with a fresh,
+// full-burst limiter, draining the bucket -> F7008.
+type folderListLimiters struct {
+	mu        sync.Mutex
+	limiters  map[string]*folderListLimiterEntry
+	lastSweep time.Time
+}
+
+// folderListLimiterRegistry is the process-wide registry of per-folder listing
+// limiters, shared by every *Fs and keyed by region+folder-id so entries never
+// collide across accounts or regions.
+var folderListLimiterRegistry = &folderListLimiters{limiters: make(map[string]*folderListLimiterEntry)}
+
+// folderListLimiterEntry is a per-folder listing rate limiter plus the time the folder
+// was last listed, used for idle eviction.
+type folderListLimiterEntry struct {
+	limiter    *folderWindowLimiter
+	lastListed time.Time
+}
+
+// folderWindowLimiter shapes same-folder listings to at most limit per window
+// with a burst re-armed at each window boundary. Two layers:
+//
+// Shape (fixed window): a grid anchored at the first request advances in whole
+// windows; each window's first burst grants pass immediately and the remaining
+// limit-burst are spaced interval = window/(limit-burst) apart, so under
+// continuous demand every window starts with a fast burst - the flow the
+// options promise.
+//
+// Safety (sliding log): grants keeps the last limit grant times; a new grant
+// is also forced to be >= grants[len-limit] + window + margin, so no rolling
+// window ever sees more than limit grants even across grid boundaries or on
+// resume-after-idle, where the fixed-window shape alone could cluster a
+// boundary burst too close to earlier grants.
+type folderWindowLimiter struct {
+	mu          sync.Mutex
+	window      time.Duration // Zoho's per-folder window (--zoho-list-folder-window)
+	limit       int           // window budget AND sliding cap (--zoho-list-folder-limit)
+	burst       int           // grants passed immediately at each window start
+	interval    time.Duration // spacing of the paced phase: window/(limit-burst)
+	windowStart time.Time     // fixed grid anchor; zero until the first grant
+	used        int           // grants handed out in the current window
+	lastGrant   time.Time     // time of the most recent grant
+	grants      []time.Time   // last <=limit grant times (sliding safety log)
+}
+
+// folderListSafetyMargin is added on top of the sliding-log wait so a grant
+// lands strictly after the matching old grant has left Zoho's window.
+const folderListSafetyMargin = 500 * time.Millisecond
+
+// reserve commits the next grant at or after now and returns its time.
+// It converges in at most a few passes: rolling the grid forward resets the
+// window budget, and the sliding log can push the candidate at most once more.
+func (l *folderWindowLimiter) reserve(now time.Time) time.Time {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if l.windowStart.IsZero() {
+		l.windowStart = now
+	}
+	cand := now
+	for range 4 {
+		// Roll the fixed grid forward so cand lies in the current window,
+		// re-arming the burst for the new window.
+		if d := cand.Sub(l.windowStart); d >= l.window {
+			l.windowStart = l.windowStart.Add(l.window * (d / l.window))
+			l.used = 0
+		}
+		next := cand
+		switch {
+		case l.used < l.burst:
+			// window-start burst passes immediately
+		case l.used < l.limit:
+			if t := l.lastGrant.Add(l.interval); t.After(next) {
+				next = t
+			}
+		default:
+			// window budget exhausted - wait for the next window's burst
+			next = l.windowStart.Add(l.window)
+		}
+		// Sliding safety: never more than limit grants in any rolling window.
+		if len(l.grants) >= l.limit {
+			if t := l.grants[len(l.grants)-l.limit].Add(l.window + folderListSafetyMargin); t.After(next) {
+				next = t
+			}
+		}
+		if next.Equal(cand) {
+			break
+		}
+		cand = next
+	}
+	l.used++
+	l.lastGrant = cand
+	if len(l.grants) < l.limit {
+		l.grants = append(l.grants, cand)
+	} else {
+		copy(l.grants, l.grants[1:])
+		l.grants[len(l.grants)-1] = cand
+	}
+	return cand
+}
+
+// Wait blocks until the limiter grants a listing or ctx is cancelled. A grant
+// reserved by a cancelled Wait is not returned - erring on the safe side, it
+// just leaves a little of the window budget unused.
+func (l *folderWindowLimiter) Wait(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	d := time.Until(l.reserve(time.Now()))
+	if d <= 0 {
+		return nil
+	}
+	timer := time.NewTimer(d)
+	defer timer.Stop()
+	select {
+	case <-timer.C:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 // Object describes a Zoho WorkDrive object
@@ -380,11 +641,40 @@ var retryErrorCodes = []int{
 	509, // Bandwidth Limit Exceeded
 }
 
-// shouldRetry returns a boolean as to whether this resp and err
-// deserve to be retried.  It returns the err as a convenience
-func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
+// logThrottle logs the first 429 in a throttling episode at NOTICE level.
+//
+// The err value contains the server response body. Further 429s are not logged
+// until shouldRetry observes a real recovery, which prevents sustained
+// throttling from flooding the log. The pacer still logs every retry at DEBUG.
+// Using recovery instead of a fixed time window works with both Zoho penalty
+// regimes.
+func (f *Fs) logThrottle(wait time.Duration, err error) {
+	newBurst := f.throttle.progress.Swap(false)
+	f.throttle.penaltyUntilNano.Store(time.Now().Add(wait).UnixNano())
+	secs := int(wait / time.Second)
+	if newBurst {
+		fs.Logf(f, "Too many requests: Trying again in %d seconds. %v", secs, err)
+	}
+}
+
+// shouldRetry reports whether the given resp and err deserve to be retried.
+//
+// A 429 is honoured via the Retry-After header (falling back to 60s plus a
+// margin) and starts or continues a throttling episode; expired OAuth tokens
+// are retried, missing OAuth scopes abort, and standard HTTP retry conditions
+// are also handled.
+//
+// Returns whether to retry, and the err as a convenience.
+func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
 	if fserrors.ContextError(ctx, &err) {
 		return false, err
+	}
+	if err == nil && resp != nil && resp.StatusCode < 400 {
+		// Treat as recovered only after the latest 429 wait ends, so in-flight
+		// successes don't start a new throttling episode too early.
+		if time.Now().UnixNano() > f.throttle.penaltyUntilNano.Load() {
+			f.throttle.progress.Store(true)
+		}
 	}
 	authRetry := false
 
@@ -399,9 +689,22 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 		fs.Debugf(nil, "Should retry: %v", err)
 	}
 	if resp != nil && resp.StatusCode == 429 {
-		err = pacer.RetryAfterError(err, 60*time.Second)
-		fs.Debugf(nil, "Too many requests. Trying again in %d seconds.", 60)
-		return true, err
+		// Zoho's listing API is heavily rate limited and tells us how long to
+		// wait in the Retry-After header. Honour it so we don't retry too early
+		// (which makes Zoho escalate the penalty), falling back to 60s.
+		if values := resp.Header["Retry-After"]; len(values) == 1 && values[0] != "" {
+			retryAfter, parseErr := strconv.Atoi(values[0])
+			if parseErr != nil {
+				fs.Logf(f, "Failed to parse Retry-After: %q: %v", values[0], parseErr)
+			} else {
+				wait := time.Duration(retryAfter)*time.Second + retryAfterMargin
+				f.logThrottle(wait, err)
+				return true, pacer.RetryAfterError(err, wait)
+			}
+		}
+		wait := 60*time.Second + retryAfterMargin
+		f.logThrottle(wait, err)
+		return true, pacer.RetryAfterError(err, wait)
 	}
 	return authRetry || fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
@@ -484,12 +787,18 @@ func (f *Fs) readMetaDataForID(ctx context.Context, id string) (*api.Item, error
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return shouldRetry(ctx, resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, err
 	}
 	return &result.Item, nil
+}
+
+// tpsMinSleep converts a transactions-per-second rate into the pacer's minimum
+// sleep between calls.
+func tpsMinSleep(tps float64) time.Duration {
+	return time.Duration(float64(time.Second) / tps)
 }
 
 // NewFs constructs an Fs from the path, container:path
@@ -515,6 +824,15 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
+	// Add a delay between API calls to respect Zoho's per-second request limit.
+	// The wait time is calculated from the configured TPS value and retried on errors.
+	pacerMinSleep := minSleep
+	pacerBurst := 1
+	if opt.TPSLimit > 0 {
+		pacerMinSleep = tpsMinSleep(opt.TPSLimit)
+		pacerBurst = max(opt.TPSLimitBurst, 1)
+	}
+
 	f := &Fs{
 		name:        name,
 		root:        root,
@@ -522,8 +840,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		srv:         rest.NewClient(oAuthClient).SetRoot(rootURL),
 		downloadsrv: rest.NewClient(oAuthClient).SetRoot(downloadURL),
 		uploadsrv:   rest.NewClient(oAuthClient).SetRoot(uploadURL),
-		pacer:       fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		pacer:       fs.NewPacer(ctx, pacer.NewGoogleDrive(pacer.MinSleep(pacerMinSleep), pacer.Burst(pacerBurst))),
+		throttle:    &throttleState{},
 	}
+	// Arm progress so the very first 429 is logged at NOTICE.
+	f.throttle.progress.Store(true)
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
 	}).Fill(ctx, f)
@@ -571,10 +892,89 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 // Should return true to finish processing
 type listAllFn func(*api.Item) bool
 
+// folderListLimiter provides the shared per-folder listing rate limiter for dirID.
+//
+// Zoho WorkDrive throttles its listing API (GET files/{id}/files) PER folder,
+// independently of --zoho-tpslimit. Measured live (2026-07-05), that per-folder
+// throttle is a sliding window: ~19 listings of one folder within any rolling
+// ~60s are allowed and the 20th returns F7008 with a ~300s Retry-After. Every
+// observed trip landed exactly on the 20th listing inside 60s and every clean
+// run stayed at <=19, including a deliberate over-limit probe (window total 22)
+// tripping at #20; an earlier token-bucket refill model fitted the same data
+// inconsistently. There is also a much smaller instantaneous cap (~15-16
+// back-to-back listings trip on their own), so burst must stay well below that.
+//
+// The limiter (folderWindowLimiter) guarantees at most limit listings per
+// window for any traffic pattern: each window starts with burst listings
+// passing back-to-back - the burst RE-ARMS at every window boundary - and the
+// remaining limit-burst are paced window/(limit-burst) apart, while the
+// sliding log of the last limit grants enforces the cap across window
+// boundaries and idle resumes. Raising burst therefore never raises the
+// per-window total - it only front-loads it, widening the sustained spacing
+// to compensate. Different folders, or a folder listed fewer than burst
+// times, are never delayed - only tps applies unless the SAME folder is
+// re-listed enough to drain the burst.
+//
+// It paces repeated listings of the same folder; without it, listing one folder
+// too often trips Zoho's per-folder throttle and returns HTTP 429. The limiter is
+// created on demand in folderListLimiterRegistry, and limiters idle longer than
+// the window are evicted (at most once per window): after a full window idle
+// Zoho's sliding window is empty and the limiter is fully refilled, so dropping
+// it is lossless. Only called when --zoho-list-folder-limit > 0, so limit is
+// never zero.
+//
+// Returns the folder's *folderWindowLimiter, ready to Wait on before listing.
+func (f *Fs) folderListLimiter(dirID string) *folderWindowLimiter {
+	flReg := folderListLimiterRegistry
+	window := time.Duration(f.opt.ListFolderWindow)
+	// Key by region+folder-id so one limiter is shared per physical folder
+	// across every *Fs without colliding across accounts or regions.
+	key := f.opt.Region + "\x00" + dirID
+	flReg.mu.Lock()
+	defer flReg.mu.Unlock()
+	now := time.Now()
+	if now.Sub(flReg.lastSweep) > window || len(flReg.limiters) > folderListLimitersMaxEntries {
+		before := len(flReg.limiters)
+		for id, e := range flReg.limiters {
+			if now.Sub(e.lastListed) > window {
+				delete(flReg.limiters, id)
+			}
+		}
+		flReg.lastSweep = now
+		fs.Debugf(f, "folder listing limiter sweep: evicted %d of %d idle limiters", before-len(flReg.limiters), before)
+	}
+	e := flReg.limiters[key]
+	if e == nil {
+		// The first Fs to list this folder fixes the shape; in the normal case
+		// every Fs for the same account shares the same limit/window/burst.
+		// limit > 0 is guaranteed by the caller; clamp burst into [1, limit-1]
+		// (at limit 1 the burst token itself is the whole window's budget).
+		burst := min(max(f.opt.ListFolderBurst, 1), max(f.opt.ListFolderLimit-1, 1))
+		intervalTokens := max(f.opt.ListFolderLimit-burst, 1)
+		e = &folderListLimiterEntry{limiter: &folderWindowLimiter{
+			window:   window,
+			limit:    f.opt.ListFolderLimit,
+			burst:    burst,
+			interval: window / time.Duration(intervalTokens),
+		}}
+		flReg.limiters[key] = e
+	}
+	e.lastListed = now
+	return e.limiter
+}
+
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
 func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
+	// Pace repeated listings of the SAME folder under Zoho's per-folder throttle
+	// (see --zoho-list-folder-limit). One token per listAll call, not per page,
+	// so multi-page listings of a single folder are not penalised.
+	if f.opt.ListFolderLimit > 0 {
+		if err = f.folderListLimiter(dirID).Wait(ctx); err != nil {
+			return false, err
+		}
+	}
 	const listItemsLimit = 1000
 	opts := rest.Opts{
 		Method:       "GET",
@@ -591,7 +991,7 @@ OUTER:
 		var resp *http.Response
 		err = f.pacer.Call(func() (bool, error) {
 			resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-			return shouldRetry(ctx, resp, err)
+			return f.shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
 			return found, fmt.Errorf("couldn't list files: %w", err)
@@ -704,7 +1104,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &mkdir, &info)
-		return shouldRetry(ctx, resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		//fmt.Printf("...Error %v\n", err)
@@ -782,7 +1182,7 @@ func (f *Fs) uploadLargeFile(ctx context.Context, name string, parent string, si
 	var uploadResponse *api.LargeUploadResponse
 	err = f.pacer.CallNoRetry(func() (bool, error) {
 		resp, err = f.uploadsrv.CallJSON(ctx, &opts, nil, &uploadResponse)
-		return shouldRetry(ctx, resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("upload large error: %v", err)
@@ -838,7 +1238,7 @@ func (f *Fs) upload(ctx context.Context, name string, parent string, size int64,
 	var uploadResponse *api.UploadResponse
 	err = f.pacer.CallNoRetry(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &uploadResponse)
-		return shouldRetry(ctx, resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("upload error: %w", err)
@@ -937,7 +1337,7 @@ func (f *Fs) deleteObject(ctx context.Context, id string) (err error) {
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &delete, nil)
-		return shouldRetry(ctx, resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return fmt.Errorf("delete object failed: %w", err)
@@ -1007,7 +1407,7 @@ func (f *Fs) rename(ctx context.Context, id, name string) (item *api.Item, err e
 	var result *api.ItemInfo
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &rename, &result)
-		return shouldRetry(ctx, resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("rename failed: %w", err)
@@ -1060,7 +1460,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	var result *api.ItemList
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &copyFile, &result)
-		return shouldRetry(ctx, resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("couldn't copy file: %w", err)
@@ -1105,7 +1505,7 @@ func (f *Fs) move(ctx context.Context, srcID, parentID string) (item *api.Item, 
 	var result *api.ItemList
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &moveFile, &result)
-		return shouldRetry(ctx, resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("move failed: %w", err)
@@ -1348,7 +1748,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.downloadsrv.Call(ctx, &opts)
-		return shouldRetry(ctx, resp, err)
+		return o.fs.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, err
