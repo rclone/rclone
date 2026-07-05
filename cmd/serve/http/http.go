@@ -35,17 +35,22 @@ import (
 )
 
 // OptionsInfo describes the Options in use
-var OptionsInfo = fs.Options{}.
+var OptionsInfo = fs.Options{{
+	Name:    "disable_dir_list",
+	Default: false,
+	Help:    "Disable HTML directory list on GET request for a directory",
+}}.
 	Add(libhttp.ConfigInfo).
 	Add(libhttp.AuthConfigInfo).
 	Add(libhttp.TemplateConfigInfo)
 
 // Options required for http server
 type Options struct {
-	Auth       libhttp.AuthConfig
-	HTTP       libhttp.Config
-	Template   libhttp.TemplateConfig
-	DisableZip bool
+	Auth           libhttp.AuthConfig
+	HTTP           libhttp.Config
+	Template       libhttp.TemplateConfig
+	DisableDirList bool `config:"disable_dir_list"`
+	DisableZip     bool
 }
 
 // DefaultOpt is the default values used for Options
@@ -257,6 +262,10 @@ func (s *HTTP) handler(w http.ResponseWriter, r *http.Request) {
 	isDir := strings.HasSuffix(r.URL.Path, "/")
 	remote := strings.Trim(r.URL.Path, "/")
 	if isDir {
+		if s.opt.DisableDirList {
+			http.NotFound(w, r)
+			return
+		}
 		s.serveDir(w, r, remote)
 	} else {
 		s.serveFile(w, r, remote)

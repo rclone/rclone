@@ -408,6 +408,98 @@ func TestCompressedTextFile(t *testing.T) {
 	assert.Equal(t, "0123456789\n", string(body))
 }
 
+func TestDisableDirList(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, setAllModTimes("testdata/files", expectedTime))
+	f, err := fs.NewFs(ctx, "testdata/files")
+	require.NoError(t, err)
+
+	do := func(t *testing.T, disableDirList bool, url string) (int, []byte) {
+		t.Helper()
+		opts := Options{
+			HTTP: libhttp.DefaultCfg(),
+			Template: libhttp.TemplateConfig{
+				Path: testTemplate,
+			},
+			DisableDirList: disableDirList,
+		}
+		opts.HTTP.ListenAddr = []string{testBindAddress}
+		opts.Auth.BasicUser = testUser
+		opts.Auth.BasicPass = testPass
+
+		s, err := newServer(ctx, f, &opts, &vfscommon.Opt, &proxy.Opt)
+		require.NoError(t, err)
+		go func() { require.NoError(t, s.Serve()) }()
+		defer func() { assert.NoError(t, s.server.Shutdown()) }()
+
+		urls := s.server.URLs()
+		require.Len(t, urls, 1)
+		testURL := urls[0]
+
+		pause := time.Millisecond
+		for range 10 {
+			resp, err := http.Head(testURL)
+			if err == nil {
+				_ = resp.Body.Close()
+				break
+			}
+			time.Sleep(pause)
+			pause *= 2
+		}
+
+		req, err := http.NewRequest("GET", testURL+url, nil)
+		require.NoError(t, err)
+		req.SetBasicAuth(testUser, testPass)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		defer func() { _ = resp.Body.Close() }()
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		return resp.StatusCode, body
+	}
+
+	t.Run("enabled by default - root dir lists", func(t *testing.T) {
+		status, body := do(t, false, "")
+		assert.Equal(t, http.StatusOK, status)
+		assert.Contains(t, string(body), "Directory listing of /")
+	})
+
+	t.Run("enabled by default - subdir lists", func(t *testing.T) {
+		status, body := do(t, false, "three/")
+		assert.Equal(t, http.StatusOK, status)
+		assert.Contains(t, string(body), "Directory listing of /three")
+	})
+
+	t.Run("disabled - root dir returns not found", func(t *testing.T) {
+		status, _ := do(t, true, "")
+		assert.Equal(t, http.StatusNotFound, status)
+	})
+
+	t.Run("disabled - subdir returns not found", func(t *testing.T) {
+		status, _ := do(t, true, "three/")
+		assert.Equal(t, http.StatusNotFound, status)
+	})
+
+	t.Run("disabled - existing and non-existent dirs return identical response", func(t *testing.T) {
+		// Both must return the same body to prevent directory enumeration
+		_, existingBody := do(t, true, "three/")
+		_, nonExistentBody := do(t, true, "doesnotexist/")
+		assert.Equal(t, "404 page not found\n", string(existingBody))
+		assert.Equal(t, "404 page not found\n", string(nonExistentBody))
+	})
+
+	t.Run("disabled - files still served", func(t *testing.T) {
+		status, body := do(t, true, "two.txt")
+		assert.Equal(t, http.StatusOK, status)
+		assert.Equal(t, "0123456789\n", string(body))
+	})
+
+	t.Run("disabled - subdir file still served", func(t *testing.T) {
+		status, _ := do(t, true, "three/a.txt")
+		assert.Equal(t, http.StatusOK, status)
+	})
+}
+
 func TestRc(t *testing.T) {
 	servetest.TestRc(t, rc.Params{
 		"type":           "http",
