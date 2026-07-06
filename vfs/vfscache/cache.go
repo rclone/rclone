@@ -411,7 +411,7 @@ func rename(osOldPath, osNewPath string) error {
 			return nil
 		}
 	}
-	if err = os.Rename(osOldPath, osNewPath); err != nil {
+	if err = file.Rename(osOldPath, osNewPath); err != nil {
 		return fmt.Errorf("failed to rename in cache: %s to %s: %w", osOldPath, osNewPath, err)
 	}
 	return nil
