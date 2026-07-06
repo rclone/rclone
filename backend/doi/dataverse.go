@@ -4,6 +4,7 @@ package doi
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -44,39 +45,36 @@ func activateDataverse(resolvedURL *url.URL) (isActive bool) {
 	return persistentID != ""
 }
 
-// Resolve the main API endpoint for a DOI hosted on a Dataverse installation
-func resolveDataverseEndpoint(resolvedURL *url.URL) (provider Provider, endpoint *url.URL, err error) {
-	queryValues := resolvedURL.Query()
-	persistentID := queryValues.Get("persistentId")
-
+// dataverseVersionEndpoint builds the dataset-version endpoint
+// /api/datasets/:persistentId/versions/{version} relative to base. The
+// real PID rides in the persistentId query parameter (the path
+// placeholder is literal).
+func dataverseVersionEndpoint(base *url.URL, pid, version string) *url.URL {
+	if version == "" {
+		version = api.LatestVersion
+	}
 	query := url.Values{}
-	query.Add("persistentId", persistentID)
-	endpointURL := resolvedURL.ResolveReference(&url.URL{Path: "/api/datasets/:persistentId/", RawQuery: query.Encode()})
+	query.Add("persistentId", pid)
+	return base.ResolveReference(&url.URL{
+		Path:     "/api/datasets/:persistentId/versions/" + version,
+		RawQuery: query.Encode(),
+	})
+}
 
-	return Dataverse, endpointURL, nil
+// Resolve the main API endpoint for a DOI hosted on a Dataverse installation
+func resolveDataverseEndpoint(resolvedURL *url.URL, version string) (provider Provider, endpoint *url.URL, err error) {
+	pid := resolvedURL.Query().Get("persistentId")
+	return Dataverse, dataverseVersionEndpoint(resolvedURL, pid, version), nil
 }
 
 // resolveDataverseDirectEndpoint builds the dataset-version endpoint from
-// host + dataset_pid (direct mode), skipping doi.org resolution. It
-// targets /api/datasets/:persistentId/versions/{version}; the real PID
-// rides in the persistentId query parameter (the path placeholder is
-// literal).
+// host + dataset_pid (direct mode), skipping doi.org resolution.
 func resolveDataverseDirectEndpoint(opt *Options) (provider Provider, endpoint *url.URL, err error) {
 	base, err := url.Parse(strings.TrimRight(opt.Host, "/"))
 	if err != nil {
 		return "", nil, fmt.Errorf("invalid host %q: %w", opt.Host, err)
 	}
-	version := opt.Version
-	if version == "" {
-		version = api.LatestVersion
-	}
-	query := url.Values{}
-	query.Add("persistentId", opt.DatasetPID)
-	endpointURL := base.ResolveReference(&url.URL{
-		Path:     "/api/datasets/:persistentId/versions/" + version,
-		RawQuery: query.Encode(),
-	})
-	return Dataverse, endpointURL, nil
+	return Dataverse, dataverseVersionEndpoint(base, opt.DatasetPID, opt.Version), nil
 }
 
 // datasetPID returns the dataset persistent ID, from the option (direct
@@ -139,42 +137,33 @@ func (dp *dataverseProvider) ListEntries(ctx context.Context) (entries []*Object
 	return entries, nil
 }
 
-// fetchVersion fetches the dataset version's file list + timestamp. In
-// direct mode the endpoint targets /versions/{version}; in resolved mode
-// it is the dataset endpoint and we read latestVersion.
+// callDataverseJSON runs a JSON API call through the pacer and surfaces
+// the Dataverse {status,message} error envelope as an error.
+func (f *Fs) callDataverseJSON(ctx context.Context, opts *rest.Opts, result interface{ Err() error }) error {
+	err := f.pacer.Call(func() (bool, error) {
+		res, callErr := f.srv.CallJSON(ctx, opts, nil, result)
+		return shouldRetry(ctx, res, callErr)
+	})
+	if err != nil {
+		return err
+	}
+	return result.Err()
+}
+
+// fetchVersion fetches the dataset version's file list + timestamp from
+// the /versions/{version} endpoint (same shape in direct and resolved
+// mode).
 func (dp *dataverseProvider) fetchVersion(ctx context.Context) (*api.DataverseDatasetVersion, error) {
 	opts := rest.Opts{
 		Method:     "GET",
 		Path:       strings.TrimLeft(dp.f.endpoint.EscapedPath(), "/"),
 		Parameters: dp.f.endpoint.Query(),
 	}
-	if dp.f.opt.DatasetPID != "" {
-		var result api.DataverseVersionResponse
-		err := dp.f.pacer.Call(func() (bool, error) {
-			res, callErr := dp.f.srv.CallJSON(ctx, &opts, nil, &result)
-			return shouldRetry(ctx, res, callErr)
-		})
-		if err != nil {
-			return nil, err
-		}
-		if result.Status == "ERROR" {
-			msg := result.Message
-			if msg == "" {
-				msg = result.Status
-			}
-			return nil, fmt.Errorf("API returned non-OK status: %s", msg)
-		}
-		return &result.Data, nil
-	}
-	var result api.DataverseDatasetResponse
-	err := dp.f.pacer.Call(func() (bool, error) {
-		res, callErr := dp.f.srv.CallJSON(ctx, &opts, nil, &result)
-		return shouldRetry(ctx, res, callErr)
-	})
-	if err != nil {
+	var result api.DataverseVersionResponse
+	if err := dp.f.callDataverseJSON(ctx, &opts, &result); err != nil {
 		return nil, err
 	}
-	return &result.Data.LatestVersion, nil
+	return &result.Data, nil
 }
 
 // newObjectDataverseFile builds an Object from a whole-version file
@@ -189,15 +178,19 @@ func (f *Fs) newObjectDataverseFile(file *api.DataverseFile, modTime time.Time) 
 		ref.RawQuery = query.Encode()
 	}
 	contentURL := f.endpoint.ResolveReference(ref)
+	accessStatus := ""
+	if file.Restricted {
+		accessStatus = "restricted"
+	}
 	return &Object{
-		fs:          f,
-		remote:      path.Join(file.DirectoryLabel, f.effectiveLabel(df)),
-		contentURL:  contentURL.String(),
-		size:        f.effectiveSize(df),
-		modTime:     modTime,
-		md5:         f.effectiveMD5(df),
-		contentType: f.effectiveContentType(df),
-		restricted:  file.Restricted,
+		fs:           f,
+		remote:       path.Join(file.DirectoryLabel, f.effectiveLabel(df)),
+		contentURL:   contentURL.String(),
+		size:         f.effectiveSize(df),
+		modTime:      modTime,
+		md5:          f.effectiveMD5(df),
+		contentType:  f.effectiveContentType(df),
+		accessStatus: accessStatus,
 	}
 }
 
@@ -258,17 +251,24 @@ func (f *Fs) accessFormat(df *api.DataverseDataFile) string {
 	return ""
 }
 
-// isSafeDirLabel rejects directory labels that would traverse outside the
-// dataset root. Dataverse should never emit these, but a corrupted or
-// hostile dataset shouldn't be able to escape the mount.
+// isSafeTreeName reports whether a /tree item name is a single, clean
+// path segment — the /tree counterpart of isSafeDirLabel below.
+func isSafeTreeName(name string) bool {
+	return name != "" && name != "." && name != ".." && !strings.Contains(name, "/")
+}
+
+// isSafeDirLabel rejects directory labels with a ".." path segment,
+// which would traverse outside the dataset root. Dataverse should never
+// emit these, but a corrupted or hostile dataset shouldn't be able to
+// escape the mount. ".." is only rejected as a whole segment: names
+// merely containing consecutive dots (e.g. "results..final") are fine.
 func isSafeDirLabel(dir string) bool {
-	if dir == "" {
-		return true
+	for _, seg := range strings.Split(dir, "/") {
+		if seg == ".." {
+			return false
+		}
 	}
-	if strings.Contains(dir, "..") {
-		return false
-	}
-	return strings.HasPrefix(path.Clean("/"+dir), "/")
+	return true
 }
 
 // parseDataverseTime parses Dataverse's RFC3339-ish timestamps, returning
@@ -297,10 +297,12 @@ func treeRequestPath(version string) string {
 }
 
 // treeSupported feature-detects the /tree endpoint with a cheap root
-// probe (path="", limit=1). It returns true on any 2xx and false on a
-// 404 (endpoint absent) or any other error — the caller falls back to the
-// whole-version listing, so a false here is always safe. The probe also
-// validates the connection/auth.
+// probe (path="", limit=1). It returns true only when the probe answers
+// 2xx with a well-formed /tree envelope — a catch-all front-end could
+// answer 200 to an unknown API path — and false on a 404 (endpoint
+// absent) or any other error. The caller falls back to the whole-version
+// listing, so a false here is always safe. The probe also validates the
+// connection/auth.
 func treeSupported(ctx context.Context, f *Fs, datasetPID, version string) bool {
 	if datasetPID == "" {
 		return false
@@ -321,13 +323,23 @@ func treeSupported(ctx context.Context, f *Fs, datasetPID, version string) bool 
 	err := f.pacer.Call(func() (bool, error) {
 		var callErr error
 		res, callErr = f.srv.Call(ctx, &opts)
-		return shouldRetry(ctx, res, callErr)
+		retry, retryErr := shouldRetry(ctx, res, callErr)
+		if res != nil && (retry || retryErr != nil) {
+			// IgnoreStatus leaves the body open even on error statuses;
+			// close it before the pacer re-issues the request.
+			_ = res.Body.Close()
+		}
+		return retry, retryErr
 	})
 	if err != nil || res == nil {
 		return false
 	}
 	defer func() { _ = res.Body.Close() }()
-	return res.StatusCode >= 200 && res.StatusCode < 300
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
+		return false
+	}
+	var tr api.TreeResponse
+	return json.NewDecoder(res.Body).Decode(&tr) == nil && tr.Status == "OK"
 }
 
 // listTree fetches one page of a single directory level via /tree.
@@ -359,19 +371,8 @@ func listTree(ctx context.Context, f *Fs, datasetPID, version, dir, cursor strin
 		ExtraHeaders: map[string]string{"Accept": "application/json"},
 	}
 	var tr api.TreeResponse
-	err := f.pacer.Call(func() (bool, error) {
-		res, callErr := f.srv.CallJSON(ctx, &opts, nil, &tr)
-		return shouldRetry(ctx, res, callErr)
-	})
-	if err != nil {
+	if err := f.callDataverseJSON(ctx, &opts, &tr); err != nil {
 		return nil, fmt.Errorf("list tree: %w", err)
-	}
-	if tr.Status == "ERROR" {
-		msg := tr.Message
-		if msg == "" {
-			msg = tr.Status
-		}
-		return nil, fmt.Errorf("API returned non-OK status: %s", msg)
 	}
 	return &tr.Data, nil
 }
@@ -399,11 +400,18 @@ func (f *Fs) listTreeP(ctx context.Context, dir string, callback fs.ListRCallbac
 		var entries fs.DirEntries
 		for i := range page.Items {
 			item := &page.Items[i]
+			// Defence-in-depth mirroring isSafeDirLabel on the flat path:
+			// a name that is not a single clean path segment could project
+			// entries outside the listed directory.
+			if !isSafeTreeName(item.Name) {
+				fs.Logf(f, "skipping tree item with unsafe name %q", item.Name)
+				continue
+			}
 			if item.IsFolder() {
 				entries = append(entries, fs.NewDir(path.Join(dir, item.Name), time.Time{}))
 				continue
 			}
-			entries = append(entries, f.newObjectTreeItem(item, treePath))
+			entries = append(entries, f.newObjectTreeItem(item, path.Join(dir, item.Name)))
 		}
 		total += len(entries)
 		if len(entries) > 0 {
@@ -428,9 +436,22 @@ func (f *Fs) listTreeP(ctx context.Context, dir string, callback fs.ListRCallbac
 // newObjectTreeItem builds an Object for a /tree file entry, carrying the
 // endpoint-provided downloadUrl (which already encodes ?format=…) and
 // access status so Open fetches exactly the bytes the item's size/MD5
-// describe and a 403 can be attributed.
-func (f *Fs) newObjectTreeItem(item *api.TreeItem, treePath string) *Object {
+// describe and a 403 can be attributed. remote is the object's path
+// relative to the Fs root.
+func (f *Fs) newObjectTreeItem(item *api.TreeItem, remote string) *Object {
 	contentURL := item.DownloadURL
+	if contentURL == "" && item.ID != 0 {
+		// Some items (e.g. restricted files) may omit downloadUrl; fall
+		// back to the ID-based access endpoint like the whole-version
+		// path does.
+		ref := &url.URL{Path: fmt.Sprintf("/api/access/datafile/%d", item.ID)}
+		if IngestFormat(f.opt.IngestFormat) == IngestFormatOriginal {
+			query := url.Values{}
+			query.Add("format", "original")
+			ref.RawQuery = query.Encode()
+		}
+		contentURL = ref.String()
+	}
 	if contentURL != "" && f.endpoint != nil {
 		if ref, err := url.Parse(contentURL); err == nil {
 			contentURL = f.endpoint.ResolveReference(ref).String()
@@ -438,15 +459,41 @@ func (f *Fs) newObjectTreeItem(item *api.TreeItem, treePath string) *Object {
 	}
 	return &Object{
 		fs:           f,
-		remote:       path.Join(treePath, item.Name),
+		remote:       remote,
 		contentURL:   contentURL,
 		size:         item.Size,
 		modTime:      time.Time{},
-		md5:          item.ChecksumValue(),
+		md5:          item.MD5(),
 		contentType:  item.ContentType,
 		accessStatus: item.Access,
-		restricted:   item.Access != "" && item.Access != "public",
 	}
+}
+
+// treeLevel fetches all pages of one directory level, memoised in the
+// Fs cache so per-file NewObject lookups don't re-list the level.
+func (f *Fs) treeLevel(ctx context.Context, dir string) ([]api.TreeItem, error) {
+	key := "tree:" + dir
+	if cached, found := f.cache.GetMaybe(key); found {
+		if items, ok := cached.([]api.TreeItem); ok {
+			return items, nil
+		}
+	}
+	originals := IngestFormat(f.opt.IngestFormat) == IngestFormatOriginal
+	var items []api.TreeItem
+	cursor := ""
+	for {
+		page, err := listTree(ctx, f, f.datasetPID(), f.opt.Version, dir, cursor, treeListLimit, originals)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, page.Items...)
+		if page.NextCursor == nil || *page.NextCursor == "" {
+			break
+		}
+		cursor = *page.NextCursor
+	}
+	f.cache.Put(key, items)
+	return items, nil
 }
 
 // newObjectTree resolves a single object via /tree: list the parent
@@ -462,25 +509,17 @@ func (f *Fs) newObjectTree(ctx context.Context, remote string) (fs.Object, error
 		parent = ""
 	}
 	leaf := path.Base(full)
-	originals := IngestFormat(f.opt.IngestFormat) == IngestFormatOriginal
 
-	cursor := ""
-	for {
-		page, err := listTree(ctx, f, f.datasetPID(), f.opt.Version, parent, cursor, treeListLimit, originals)
-		if err != nil {
-			return nil, err
+	items, err := f.treeLevel(ctx, parent)
+	if err != nil {
+		return nil, err
+	}
+	for i := range items {
+		item := &items[i]
+		if item.IsFolder() || item.Name != leaf {
+			continue
 		}
-		for i := range page.Items {
-			item := &page.Items[i]
-			if item.IsFolder() || item.Name != leaf {
-				continue
-			}
-			return f.newObjectTreeItem(item, parent), nil
-		}
-		if page.NextCursor == nil || *page.NextCursor == "" {
-			break
-		}
-		cursor = *page.NextCursor
+		return f.newObjectTreeItem(item, remote), nil
 	}
 	return nil, fs.ErrorObjectNotFound
 }

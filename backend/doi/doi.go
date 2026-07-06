@@ -204,9 +204,10 @@ type Object struct {
 	modTime     time.Time // modification time of the object
 	contentType string    // content type of the object
 	md5         string    // MD5 hash of the object content
-	// Dataverse-only (zero for other providers), used to attribute a 403:
-	accessStatus string // /tree access marker: "public" | "restricted" | "embargoed"
-	restricted   bool   // file is access-restricted
+	// Dataverse-only (empty for other providers), used to attribute a
+	// 403: "public" | "restricted" | "embargoed" | "retentionExpired"
+	// (from /tree, or derived from the whole-version restricted flag).
+	accessStatus string
 }
 
 // doiProvider is the interface used to list objects in a DOI
@@ -294,7 +295,7 @@ func resolveEndpoint(ctx context.Context, srv *rest.Client, pacer *fs.Pacer, opt
 
 	switch opt.Provider {
 	case string(Dataverse):
-		return resolveDataverseEndpoint(resolvedURL)
+		return resolveDataverseEndpoint(resolvedURL, opt.Version)
 	case string(Invenio):
 		return resolveInvenioEndpoint(ctx, srv, pacer, resolvedURL)
 	case string(Zenodo):
@@ -303,7 +304,7 @@ func resolveEndpoint(ctx context.Context, srv *rest.Client, pacer *fs.Pacer, opt
 
 	hostname := strings.ToLower(resolvedURL.Hostname())
 	if hostname == "dataverse.harvard.edu" || activateDataverse(resolvedURL) {
-		return resolveDataverseEndpoint(resolvedURL)
+		return resolveDataverseEndpoint(resolvedURL, opt.Version)
 	}
 	if hostname == "zenodo.org" || strings.HasSuffix(hostname, ".zenodo.org") {
 		return resolveZenodoEndpoint(ctx, srv, pacer, resolvedURL, opt.Doi)
@@ -337,15 +338,20 @@ func (f *Fs) httpConnection(ctx context.Context, opt *Options) (isFile bool, err
 		// cross-host redirect to S3).
 		if opt.Token != "" {
 			f.srv.SetHeader(api.AuthHeader, opt.Token)
+		} else {
+			// The connection can be rebuilt by the backend "set" command:
+			// a cleared token must not leave the old header behind.
+			f.srv.RemoveHeader(api.AuthHeader)
 		}
 		f.doiProvider = newDataverseProvider(f)
-		// Feature-detect the lazy /tree listing; on a 404 or any error
-		// useTree stays false and listing uses the whole-version path.
-		pid := opt.DatasetPID
-		if pid == "" {
-			pid = endpoint.Query().Get("persistentId")
+		// Feature-detect the lazy /tree listing in direct mode only, so
+		// existing resolved-DOI remotes keep the whole-version listing
+		// (and its original-name substitution for ingested files)
+		// unchanged. On a 404 or any error useTree stays false and
+		// listing uses the whole-version path.
+		if opt.DatasetPID != "" {
+			f.useTree = treeSupported(ctx, f, opt.DatasetPID, opt.Version)
 		}
-		f.useTree = treeSupported(ctx, f, pid, opt.Version)
 	case Invenio, Zenodo:
 		f.doiProvider = newInvenioProvider(f)
 	default:
@@ -406,30 +412,29 @@ func shouldRetry(ctx context.Context, res *http.Response, err error) (bool, erro
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(res, retryErrorCodes), err
 }
 
-// NewFs creates a new Fs object from the name and root. It connects to
-// the host specified in the config file.
-func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
-	root = strings.Trim(root, "/")
-
-	// Parse config into Options struct
-	opt := new(Options)
-	err := configstruct.Set(m, opt)
-	if err != nil {
-		return nil, err
-	}
+// checkOptions validates and normalises the config options in place. It
+// runs at NewFs time and again when the backend "set" command rebuilds
+// the connection with merged options.
+func checkOptions(opt *Options) error {
 	// Direct mode: host + dataset_pid address a Dataverse dataset
 	// directly, skipping DOI resolution. Otherwise a DOI is required.
 	switch {
 	case opt.Host != "" && opt.DatasetPID == "",
 		opt.Host == "" && opt.DatasetPID != "":
-		return nil, errors.New("host and dataset_pid must both be set for Dataverse direct mode")
+		return errors.New("host and dataset_pid must both be set for Dataverse direct mode")
 	}
 	directMode := opt.Host != "" && opt.DatasetPID != ""
 	if directMode && opt.Doi != "" {
-		return nil, errors.New("set either doi or host+dataset_pid, not both")
+		return errors.New("set either doi or host+dataset_pid, not both")
 	}
 	if !directMode && opt.Doi == "" {
-		return nil, errors.New("doi is required (or set host+dataset_pid for a Dataverse dataset)")
+		return errors.New("doi is required (or set host+dataset_pid for a Dataverse dataset)")
+	}
+	if directMode {
+		hostURL, err := url.Parse(strings.TrimRight(opt.Host, "/"))
+		if err != nil || hostURL.Host == "" || (hostURL.Scheme != "http" && hostURL.Scheme != "https") {
+			return fmt.Errorf("host must be an http(s) URL like https://demo.dataverse.org, got %q", opt.Host)
+		}
 	}
 	if opt.Doi != "" {
 		opt.Doi = parseDoi(opt.Doi)
@@ -443,7 +448,24 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	case IngestFormatOriginal, IngestFormatArchival:
 		// ok
 	default:
-		return nil, fmt.Errorf("invalid ingest_format %q (want %q or %q)", opt.IngestFormat, IngestFormatOriginal, IngestFormatArchival)
+		return fmt.Errorf("invalid ingest_format %q (want %q or %q)", opt.IngestFormat, IngestFormatOriginal, IngestFormatArchival)
+	}
+	return nil
+}
+
+// NewFs creates a new Fs object from the name and root. It connects to
+// the host specified in the config file.
+func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
+	root = strings.Trim(root, "/")
+
+	// Parse config into Options struct
+	opt := new(Options)
+	err := configstruct.Set(m, opt)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkOptions(opt); err != nil {
+		return nil, err
 	}
 
 	client := fshttp.NewClient(ctx)
@@ -546,7 +568,11 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 	for _, entry := range entries {
 		if entry.Remote() == remoteFullPath {
-			return entry, nil
+			// Provider entries carry the dataset-absolute path; the
+			// returned object's Remote() must be relative to the Fs root.
+			newEntry := *entry
+			newEntry.remote = remote
+			return &newEntry, nil
 		}
 	}
 
@@ -739,18 +765,23 @@ func readClient(base *http.Client) *http.Client {
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	fs.FixRangeOption(options, o.size)
 
-	// Pull the byte range out of the options so it can be re-issued on
-	// resume; forward all other headers unchanged.
+	// Pull the byte range out of the typed options so it can be
+	// re-issued on resume; forward all other headers unchanged.
+	// FixRangeOption has already normalised SeekOption and suffix
+	// ranges into absolute RangeOptions.
 	headers := make(http.Header)
-	for k, v := range fs.OpenOptionHeaders(options) {
-		headers.Set(k, v)
-	}
 	startOffset, endOffset := int64(0), int64(-1)
-	if rh := headers.Get("Range"); rh != "" {
-		if s, e, ok := parseByteRange(rh); ok {
-			startOffset, endOffset = s, e
+	for _, option := range options {
+		switch x := option.(type) {
+		case *fs.RangeOption:
+			startOffset, endOffset = x.Start, x.End
+		case *fs.SeekOption:
+			startOffset = x.Offset
+		default:
+			if k, v := option.Header(); k != "" {
+				headers.Set(k, v)
+			}
 		}
-		headers.Del("Range")
 	}
 
 	body, err := o.fetchRange(ctx, startOffset, endOffset, headers)
@@ -777,7 +808,7 @@ func (o *Object) doGet(ctx context.Context, rawURL string, start, end int64, hea
 	if err != nil {
 		return nil, err
 	}
-	if sendToken && o.fs.opt.Token != "" {
+	if sendToken && o.fs.provider == Dataverse && o.fs.opt.Token != "" {
 		req.Header.Set(api.AuthHeader, o.fs.opt.Token)
 	}
 	for k, vs := range headers {
@@ -837,25 +868,33 @@ func (o *Object) fetchRange(ctx context.Context, start, end int64, forwardedHead
 		}
 		return nil, readErr
 	}
+	if start > 0 && res.StatusCode == http.StatusOK {
+		// The server ignored the Range request. Delivering the body
+		// would splice bytes from offset 0 into the middle of a resumed
+		// stream, so fail instead and let the transfer-level retry
+		// restart cleanly.
+		_ = res.Body.Close()
+		return nil, fmt.Errorf("read %s: server ignored Range request at offset %d", o.remote, start)
+	}
 	return res.Body, nil
 }
 
 // accessDeniedError turns a Dataverse 401/403 into a message that tells
 // the user why the file couldn't be fetched, so rclone's per-file
-// skip-and-continue surfaces an actionable reason. The /tree access
-// marker distinguishes restricted from embargoed when present; otherwise
-// it falls back to the file's restricted flag.
+// skip-and-continue surfaces an actionable reason. The access marker
+// comes from the /tree listing or the whole-version restricted flag.
 func (o *Object) accessDeniedError(status int) error {
 	switch o.accessStatus {
-	case "restricted":
-		return fmt.Errorf("read %s: HTTP %d: file is restricted — your API token does not grant access to it", o.remote, status)
 	case "embargoed":
 		return fmt.Errorf("read %s: HTTP %d: file is under embargo — it is not yet available for download", o.remote, status)
-	}
-	if o.restricted {
+	case "retentionExpired":
+		return fmt.Errorf("read %s: HTTP %d: file's retention period has expired — it is no longer available for download", o.remote, status)
+	case "", "public":
+		return fmt.Errorf("read %s: HTTP %d: access denied — the file is restricted or embargoed, or the API token is missing/invalid", o.remote, status)
+	default:
+		// "restricted" or any other non-public marker
 		return fmt.Errorf("read %s: HTTP %d: file is restricted — your API token does not grant access to it", o.remote, status)
 	}
-	return fmt.Errorf("read %s: HTTP %d: access denied — the file is restricted or embargoed, or the API token is missing/invalid", o.remote, status)
 }
 
 // resumingReader wraps the response body so a mid-stream failure
@@ -908,34 +947,6 @@ func (r *resumingReader) Read(p []byte) (int, error) {
 
 func (r *resumingReader) Close() error {
 	return r.body.Close()
-}
-
-// parseByteRange parses an HTTP byte Range header ("bytes=100-199" or
-// "bytes=100-") into numeric offsets. End is inclusive per RFC 7233;
-// returns -1 for open-ended.
-func parseByteRange(h string) (start, end int64, ok bool) {
-	h = strings.TrimSpace(h)
-	if !strings.HasPrefix(h, "bytes=") {
-		return 0, 0, false
-	}
-	spec := strings.TrimPrefix(h, "bytes=")
-	dash := strings.IndexByte(spec, '-')
-	if dash < 0 {
-		return 0, 0, false
-	}
-	s, err := strconv.ParseInt(spec[:dash], 10, 64)
-	if err != nil {
-		return 0, 0, false
-	}
-	tail := spec[dash+1:]
-	if tail == "" {
-		return s, -1, true
-	}
-	e, err := strconv.ParseInt(tail, 10, 64)
-	if err != nil {
-		return 0, 0, false
-	}
-	return s, e, true
 }
 
 // Update in to the object with the modTime given of the given size
@@ -1002,11 +1013,18 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		if err != nil {
 			return nil, fmt.Errorf("reading config: %w", err)
 		}
+		if err := checkOptions(&newOpt); err != nil {
+			return nil, err
+		}
+		// Adopt the new options and drop the metadata caches before
+		// reconnecting: the connection check reads f.opt, and cached
+		// listings from the old dataset/version/format must not survive.
+		f.opt = newOpt
+		f.cache.Clear()
 		_, err = f.httpConnection(ctx, &newOpt)
 		if err != nil {
 			return nil, fmt.Errorf("updating session: %w", err)
 		}
-		f.opt = newOpt
 		keys := []string{}
 		for k := range opt {
 			keys = append(keys, k)

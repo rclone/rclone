@@ -47,8 +47,8 @@ func dvFixtureServer(t *testing.T, dsPID string, files []api.DataverseFile, cont
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(api.DataverseVersionResponse{
-			Status: "OK",
-			Data:   api.DataverseDatasetVersion{LastUpdateTime: "2026-05-01T00:00:00Z", Files: files},
+			Envelope: api.Envelope{Status: "OK"},
+			Data:     api.DataverseDatasetVersion{LastUpdateTime: "2026-05-01T00:00:00Z", Files: files},
 		})
 	})
 
@@ -211,6 +211,13 @@ func TestDataverseRootIsFile(t *testing.T) {
 	if got.Root() != "papers/2026" {
 		t.Errorf("want root=papers/2026, got %q", got.Root())
 	}
+	obj, err := got.NewObject(context.Background(), "report.pdf")
+	if err != nil {
+		t.Fatalf("NewObject: %v", err)
+	}
+	if obj.Remote() != "report.pdf" {
+		t.Errorf("NewObject remote must be relative to the root; got %q", obj.Remote())
+	}
 }
 
 func TestDataverseNewObject(t *testing.T) {
@@ -301,8 +308,8 @@ func TestDataverseResumesOnMidStreamFailure(t *testing.T) {
 	mux.HandleFunc("/api/datasets/:persistentId/versions/:latest", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(api.DataverseVersionResponse{
-			Status: "OK",
-			Data:   api.DataverseDatasetVersion{LastUpdateTime: "2026-05-01T00:00:00Z", Files: files},
+			Envelope: api.Envelope{Status: "OK"},
+			Data:     api.DataverseDatasetVersion{LastUpdateTime: "2026-05-01T00:00:00Z", Files: files},
 		})
 	})
 	mux.HandleFunc("/api/access/datafile/11", func(w http.ResponseWriter, r *http.Request) {
@@ -316,11 +323,14 @@ func TestDataverseResumesOnMidStreamFailure(t *testing.T) {
 			_, _ = fmt.Sscanf(rh, "bytes=%d-", &start)
 		}
 		if presignHits == 1 {
-			// First fetch: promise the full length, write part, then
-			// hijack-close to simulate a mid-stream cut.
+			// First fetch: promise the full length, write and flush part
+			// of the body, then hijack-close to simulate a mid-stream cut
+			// (without the flush nothing reaches the client and Go's
+			// transport would transparently retry the whole GET instead).
 			w.Header().Set("Content-Length", fmt.Sprintf("%d", len(payload)))
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write(payload[:200])
+			w.(http.Flusher).Flush()
 			hj, ok := w.(http.Hijacker)
 			if !ok {
 				t.Fatal("ResponseWriter doesn't support hijack")
@@ -379,8 +389,8 @@ func TestDataverseReadRetriesTransientStatus(t *testing.T) {
 	mux.HandleFunc("/api/datasets/:persistentId/versions/:latest", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(api.DataverseVersionResponse{
-			Status: "OK",
-			Data:   api.DataverseDatasetVersion{LastUpdateTime: "2026-05-01T00:00:00Z", Files: files},
+			Envelope: api.Envelope{Status: "OK"},
+			Data:     api.DataverseDatasetVersion{LastUpdateTime: "2026-05-01T00:00:00Z", Files: files},
 		})
 	})
 	mux.HandleFunc("/api/access/datafile/8", func(w http.ResponseWriter, _ *http.Request) {
@@ -402,24 +412,88 @@ func TestDataverseReadRetriesTransientStatus(t *testing.T) {
 	}
 }
 
-func TestParseByteRange(t *testing.T) {
+func TestIsSafeDirLabel(t *testing.T) {
 	tests := []struct {
 		in   string
-		s, e int64
-		ok   bool
+		want bool
 	}{
-		{"bytes=0-99", 0, 99, true},
-		{"bytes=100-", 100, -1, true},
-		{"bytes=200-1023", 200, 1023, true},
-		{"bytes=", 0, 0, false},
-		{"items=0-9", 0, 0, false},
-		{"bytes=abc-def", 0, 0, false},
+		{"", true},
+		{"papers/2026", true},
+		{"results..final", true}, // ".." only rejected as a whole segment
+		{"..", false},
+		{"a/../b", false},
+		{"../escape", false},
+		{"deep/a/..", false},
 	}
 	for _, tc := range tests {
-		s, e, ok := parseByteRange(tc.in)
-		if s != tc.s || e != tc.e || ok != tc.ok {
-			t.Errorf("parseByteRange(%q): got (%d,%d,%v) want (%d,%d,%v)", tc.in, s, e, ok, tc.s, tc.e, tc.ok)
+		if got := isSafeDirLabel(tc.in); got != tc.want {
+			t.Errorf("isSafeDirLabel(%q): got %v want %v", tc.in, got, tc.want)
 		}
+	}
+}
+
+// A resume against a server that ignores the Range header (200 + full
+// body) must fail rather than splice bytes from offset 0 into the middle
+// of the stream.
+func TestDataverseResumeRejectsRangeIgnoringServer(t *testing.T) {
+	payload := make([]byte, 1024)
+	for i := range payload {
+		payload[i] = byte(i % 256)
+	}
+	files := []api.DataverseFile{
+		{DataFile: api.DataverseDataFile{ID: 12, Filename: "norange.bin", FileSize: int64(len(payload))}},
+	}
+	hits := 0
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/datasets/:persistentId/versions/:latest", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(api.DataverseVersionResponse{
+			Envelope: api.Envelope{Status: "OK"},
+			Data:     api.DataverseDatasetVersion{LastUpdateTime: "2026-05-01T00:00:00Z", Files: files},
+		})
+	})
+	mux.HandleFunc("/api/access/datafile/12", func(w http.ResponseWriter, _ *http.Request) {
+		hits++
+		// Always ignore Range: 200 with the full length promised.
+		w.Header().Set("Content-Length", fmt.Sprintf("%d", len(payload)))
+		w.WriteHeader(http.StatusOK)
+		if hits == 1 {
+			// First fetch: flush part of the body, then cut mid-stream to
+			// force a resume.
+			_, _ = w.Write(payload[:200])
+			w.(http.Flusher).Flush()
+			hj, ok := w.(http.Hijacker)
+			if !ok {
+				t.Fatal("ResponseWriter doesn't support hijack")
+			}
+			conn, _, err := hj.Hijack()
+			if err != nil {
+				t.Fatalf("hijack: %v", err)
+			}
+			_ = conn.Close()
+			return
+		}
+		_, _ = w.Write(payload)
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	f := newDvTestFs(t, srv.URL, testPID, "")
+	obj, err := f.NewObject(context.Background(), "norange.bin")
+	if err != nil {
+		t.Fatalf("NewObject: %v", err)
+	}
+	rc, err := obj.Open(context.Background())
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	defer func() { _ = rc.Close() }()
+	got, err := io.ReadAll(rc)
+	if err == nil {
+		t.Fatalf("ReadAll: want error when the resume gets a Range-ignoring 200, got %d clean bytes", len(got))
+	}
+	if bytes.Contains(got, payload[:1]) && len(got) > 200 {
+		t.Errorf("resume delivered spliced bytes: got %d bytes", len(got))
 	}
 }
 
@@ -497,8 +571,8 @@ func TestDataverseForbiddenAttributed(t *testing.T) {
 	mux.HandleFunc("/api/datasets/:persistentId/versions/:latest", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(api.DataverseVersionResponse{
-			Status: "OK",
-			Data:   api.DataverseDatasetVersion{LastUpdateTime: "2026-05-01T00:00:00Z", Files: files},
+			Envelope: api.Envelope{Status: "OK"},
+			Data:     api.DataverseDatasetVersion{LastUpdateTime: "2026-05-01T00:00:00Z", Files: files},
 		})
 	})
 	mux.HandleFunc("/api/access/datafile/7", func(w http.ResponseWriter, _ *http.Request) {
@@ -576,6 +650,12 @@ func TestDataverseRequiresHostAndPID(t *testing.T) {
 	}); err == nil {
 		t.Error("neither doi nor host+dataset_pid should error")
 	}
+	// A host without a scheme must fail validation, not at runtime.
+	if _, err := NewFs(context.Background(), "test", "", configmap.Simple{
+		"type": "doi", "host": "demo.dataverse.org", "dataset_pid": testPID,
+	}); err == nil || !strings.Contains(err.Error(), "host") {
+		t.Errorf("scheme-less host should error mentioning host, got %v", err)
+	}
 }
 
 // ---- /tree fast-path --------------------------------------------------------
@@ -610,8 +690,8 @@ func treeFixtureServer(t *testing.T, dsPID string, levels map[string][]api.TreeI
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(api.TreeResponse{
-			Status: "OK",
-			Data:   api.TreePage{Path: r.URL.Query().Get("path"), Items: items[start:end], NextCursor: next},
+			Envelope: api.Envelope{Status: "OK"},
+			Data:     api.TreePage{Path: r.URL.Query().Get("path"), Items: items[start:end], NextCursor: next},
 		})
 	})
 
@@ -639,11 +719,19 @@ func TestDataverseTreeListsAndPages(t *testing.T) {
 				ContentType: "text/plain", Access: "public",
 				Checksum:    &api.TreeChecksum{Type: "MD5", Value: "md5-readme"},
 				DownloadURL: "/api/access/datafile/1"},
+			// A digest from a non-MD5 fixity algorithm must not be
+			// surfaced as the MD5 hash.
+			{Type: "file", Name: "sha.bin", Path: "sha.bin", ID: 5, Size: 3,
+				Access:      "public",
+				Checksum:    &api.TreeChecksum{Type: "SHA-1", Value: "sha1-digest"},
+				DownloadURL: "/api/access/datafile/5"},
 		},
 		"data": {
 			{Type: "file", Name: "a.bin", Path: "data/a.bin", ID: 2, Size: 5, Access: "public", DownloadURL: "/api/access/datafile/2"},
 			{Type: "file", Name: "b.bin", Path: "data/b.bin", ID: 3, Size: 6, Access: "public", DownloadURL: "/api/access/datafile/3"},
 			{Type: "file", Name: "c.bin", Path: "data/c.bin", ID: 4, Size: 7, Access: "public", DownloadURL: "/api/access/datafile/4"},
+			// An unsafe name must be dropped, not projected outside "data".
+			{Type: "file", Name: "../evil", Path: "data/../evil", ID: 9, Size: 1, Access: "public", DownloadURL: "/api/access/datafile/9"},
 		},
 	}
 	srv := treeFixtureServer(t, dsPID, levels, nil)
@@ -653,14 +741,15 @@ func TestDataverseTreeListsAndPages(t *testing.T) {
 	}
 
 	got := remoteSet(mustList(t, f, ""))
-	if want := map[string]bool{"data": true, "readme.txt": true}; !equalSets(got, want) {
+	if want := map[string]bool{"data": true, "readme.txt": true, "sha.bin": true}; !equalSets(got, want) {
 		t.Errorf(`List(""): got %v want %v`, got, want)
 	}
 
-	// 3 files paged 2-at-a-time: the cursor must be followed to see all.
+	// 4 items paged 2-at-a-time: the cursor must be followed to see all;
+	// the unsafe "../evil" name must be skipped.
 	got = remoteSet(mustList(t, f, "data"))
 	if want := map[string]bool{"data/a.bin": true, "data/b.bin": true, "data/c.bin": true}; !equalSets(got, want) {
-		t.Errorf("List(data): got %v want %v (cursor not followed?)", got, want)
+		t.Errorf("List(data): got %v want %v (cursor not followed, or unsafe name not skipped?)", got, want)
 	}
 
 	obj, err := f.NewObject(context.Background(), "readme.txt")
@@ -672,6 +761,55 @@ func TestDataverseTreeListsAndPages(t *testing.T) {
 	}
 	if h, _ := obj.Hash(context.Background(), hash.MD5); h != "md5-readme" {
 		t.Errorf("Hash: got %q want md5-readme", h)
+	}
+
+	shaObj, err := f.NewObject(context.Background(), "sha.bin")
+	if err != nil {
+		t.Fatalf("NewObject sha.bin: %v", err)
+	}
+	if h, _ := shaObj.Hash(context.Background(), hash.MD5); h != "" {
+		t.Errorf("non-MD5 checksum must be suppressed; got %q", h)
+	}
+}
+
+// Entries returned by the /tree listing must be relative to the Fs root,
+// exactly like the whole-version path: folders and files alike.
+func TestDataverseTreeListWithRoot(t *testing.T) {
+	dsPID := "doi:10.5072/FK2/TREE"
+	levels := map[string][]api.TreeItem{
+		"": {
+			{Type: "folder", Name: "papers", Path: "papers", Counts: &api.TreeCounts{Files: 2}},
+		},
+		"papers": {
+			{Type: "folder", Name: "figures", Path: "papers/figures", Counts: &api.TreeCounts{Files: 1}},
+			{Type: "file", Name: "report.pdf", Path: "papers/report.pdf", ID: 2, Size: 100, Access: "public", DownloadURL: "/api/access/datafile/2"},
+		},
+		"papers/figures": {
+			{Type: "file", Name: "fig1.png", Path: "papers/figures/fig1.png", ID: 3, Size: 50, Access: "public", DownloadURL: "/api/access/datafile/3"},
+		},
+	}
+	srv := treeFixtureServer(t, dsPID, levels, nil)
+	f := newDvTestFs(t, srv.URL, dsPID, "papers")
+	if !f.useTree {
+		t.Fatal("expected useTree=true")
+	}
+
+	got := remoteSet(mustList(t, f, ""))
+	if want := map[string]bool{"report.pdf": true, "figures": true}; !equalSets(got, want) {
+		t.Errorf(`List("") with root=papers: got %v want %v`, got, want)
+	}
+
+	got = remoteSet(mustList(t, f, "figures"))
+	if want := map[string]bool{"figures/fig1.png": true}; !equalSets(got, want) {
+		t.Errorf(`List("figures") with root=papers: got %v want %v`, got, want)
+	}
+
+	obj, err := f.NewObject(context.Background(), "figures/fig1.png")
+	if err != nil {
+		t.Fatalf("NewObject: %v", err)
+	}
+	if obj.Remote() != "figures/fig1.png" {
+		t.Errorf("NewObject remote: got %q want figures/fig1.png", obj.Remote())
 	}
 }
 
@@ -733,7 +871,7 @@ func TestDataverseTreeIngestOriginalsForwarded(t *testing.T) {
 			items = []api.TreeItem{item}
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(api.TreeResponse{Status: "OK", Data: api.TreePage{Items: items}})
+		_ = json.NewEncoder(w).Encode(api.TreeResponse{Envelope: api.Envelope{Status: "OK"}, Data: api.TreePage{Items: items}})
 	})
 	mux.HandleFunc("/api/access/datafile/5", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Query().Get("format") != "original" {
@@ -784,8 +922,8 @@ func TestDataverseReadStripsTokenOnCrossHostRedirect(t *testing.T) {
 	mux.HandleFunc("/api/datasets/:persistentId/versions/:latest", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(api.DataverseVersionResponse{
-			Status: "OK",
-			Data:   api.DataverseDatasetVersion{LastUpdateTime: "2026-05-01T00:00:00Z", Files: files},
+			Envelope: api.Envelope{Status: "OK"},
+			Data:     api.DataverseDatasetVersion{LastUpdateTime: "2026-05-01T00:00:00Z", Files: files},
 		})
 	})
 	mux.HandleFunc("/api/access/datafile/3", func(w http.ResponseWriter, r *http.Request) {

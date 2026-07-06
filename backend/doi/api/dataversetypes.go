@@ -2,6 +2,32 @@
 
 package api
 
+import (
+	"fmt"
+	"strings"
+)
+
+// Envelope is the common `{status, message}` wrapper on Dataverse API
+// responses; message is populated on "status":"ERROR".
+type Envelope struct {
+	Status  string `json:"status"`
+	Message string `json:"message,omitempty"`
+}
+
+// Err returns an error if the envelope reports one. A Dataverse
+// installation can answer 200 with an ERROR envelope, so decoded
+// responses must be checked even on HTTP success.
+func (e *Envelope) Err() error {
+	if e.Status == "ERROR" {
+		msg := e.Message
+		if msg == "" {
+			msg = e.Status
+		}
+		return fmt.Errorf("API returned non-OK status: %s", msg)
+	}
+	return nil
+}
+
 // DataverseDatasetResponse is returned by the Dataverse dataset API
 type DataverseDatasetResponse struct {
 	Status string           `json:"status"`
@@ -41,9 +67,10 @@ type DataverseDataFile struct {
 
 // IsIngested reports whether Dataverse stored an "original" form
 // alongside the archival form (true for tabular ingest: CSV/SPSS/Stata
-// uploads parsed into a normalised .tab).
+// uploads parsed into a normalised .tab). The original name can equal
+// the stored name (a .tab upload), so only its presence is checked.
 func (d DataverseDataFile) IsIngested() bool {
-	return d.OriginalFileName != "" && d.OriginalFileName != d.Filename
+	return d.OriginalFileName != ""
 }
 
 // StoredMD5 returns the MD5 Dataverse persisted for this file, from
@@ -72,9 +99,8 @@ type Checksum struct {
 // a single version (unlike DataverseDatasetResponse, whose data wraps
 // latestVersion), so it reuses DataverseDatasetVersion directly.
 type DataverseVersionResponse struct {
-	Status  string                  `json:"status"`
-	Data    DataverseDatasetVersion `json:"data"`
-	Message string                  `json:"message,omitempty"` // populated on "status":"ERROR"
+	Envelope
+	Data DataverseDatasetVersion `json:"data"`
 }
 
 // AuthHeader is the request header Dataverse uses for token-based API
@@ -100,9 +126,8 @@ const LatestVersion = ":latest"
 
 // TreeResponse is the envelope returned by the /tree endpoint.
 type TreeResponse struct {
-	Status  string   `json:"status"`
-	Data    TreePage `json:"data"`
-	Message string   `json:"message,omitempty"` // populated on "status":"ERROR"
+	Envelope
+	Data TreePage `json:"data"`
 }
 
 // TreePage is one page of a single directory level.
@@ -114,6 +139,7 @@ type TreePage struct {
 	NextCursor       *string `json:"nextCursor"`
 	Limit            int     `json:"limit,omitempty"`
 	Order            string  `json:"order,omitempty"`
+	Include          string  `json:"include,omitempty"`
 	ApproximateCount int64   `json:"approximateCount,omitempty"`
 }
 
@@ -134,7 +160,7 @@ type TreeItem struct {
 	ID          int64         `json:"id,omitempty"`
 	Size        int64         `json:"size,omitempty"`
 	ContentType string        `json:"contentType,omitempty"`
-	Access      string        `json:"access,omitempty"` // "public"|"restricted"|"embargoed"
+	Access      string        `json:"access,omitempty"` // "public"|"restricted"|"embargoed"|"retentionExpired"
 	Checksum    *TreeChecksum `json:"checksum,omitempty"`
 	DownloadURL string        `json:"downloadUrl,omitempty"`
 }
@@ -147,19 +173,22 @@ type TreeChecksum struct {
 
 // TreeCounts is the per-folder recursive summary (informational only).
 type TreeCounts struct {
-	Files      int64 `json:"files"`
-	Folders    int64 `json:"folders"`
-	Bytes      int64 `json:"bytes"`
-	Restricted int64 `json:"restricted"`
-	Embargoed  int64 `json:"embargoed"`
+	Files            int64 `json:"files"`
+	Folders          int64 `json:"folders"`
+	Bytes            int64 `json:"bytes"`
+	Restricted       int64 `json:"restricted"`
+	Embargoed        int64 `json:"embargoed"`
+	RetentionExpired int64 `json:"retentionExpired"`
 }
 
 // IsFolder reports whether the item is a directory.
 func (i *TreeItem) IsFolder() bool { return i.Type == "folder" }
 
-// ChecksumValue returns the file's checksum value, or "" if absent.
-func (i *TreeItem) ChecksumValue() string {
-	if i.Checksum == nil {
+// MD5 returns the file's checksum value when it is an MD5, or "".
+// Installations can be configured with another fixity algorithm
+// (SHA-1/SHA-256/...), whose digest must not be surfaced as an MD5.
+func (i *TreeItem) MD5() string {
+	if i.Checksum == nil || !strings.EqualFold(i.Checksum.Type, "MD5") {
 		return ""
 	}
 	return i.Checksum.Value
