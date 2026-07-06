@@ -2,6 +2,7 @@ package zoho
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"sync"
 	"testing"
@@ -73,6 +74,16 @@ func TestShouldRetry(t *testing.T) {
 		assert.True(t, retry)
 	})
 
+	// A bare 401 R008 body means the folder was deleted (Zoho no longer accepts
+	// its id). It is unrecoverable, so it is NOT retried.
+	t.Run("401 R008 deleted folder is not retried", func(t *testing.T) {
+		f := newTestFs()
+		resp := &http.Response{StatusCode: 401}
+		err := errors.New(`HTTP error 401: {"errors":[{"id":"R008","title":"Unauthorized access"}]}`)
+		retry, _ := f.shouldRetry(ctx, resp, err)
+		assert.False(t, retry)
+	})
+
 	// A cancelled context is never retried.
 	t.Run("cancelled context aborts", func(t *testing.T) {
 		f := newTestFs()
@@ -81,6 +92,26 @@ func TestShouldRetry(t *testing.T) {
 		retry, _ := f.shouldRetry(cctx, nil, nil)
 		assert.False(t, retry)
 	})
+}
+
+// isMissingResourceErr must match only a genuine 401 R008 body, so an unrelated
+// error that merely mentions R008 (or an R008 body on some other status) is not
+// mistaken for a deleted resource.
+func TestIsMissingResourceErr(t *testing.T) {
+	r008 := errors.New(`HTTP error 401: {"errors":[{"id":"R008","title":"Unauthorized access"}]}`)
+
+	// A 401 R008 body is a missing resource.
+	assert.True(t, isMissingResourceErr(&http.Response{StatusCode: 401}, r008))
+
+	// An R008 body on a non-401 status is not (guards the ungated substring).
+	assert.False(t, isMissingResourceErr(&http.Response{StatusCode: 500}, r008))
+
+	// A 401 that is not R008 is not a missing resource.
+	assert.False(t, isMissingResourceErr(&http.Response{StatusCode: 401}, errors.New("HTTP error 401: expired_token")))
+
+	// No response or no error is not a missing resource.
+	assert.False(t, isMissingResourceErr(nil, r008))
+	assert.False(t, isMissingResourceErr(&http.Response{StatusCode: 401}, nil))
 }
 
 // TestThrottleEpisode covers the once-per-episode logging state machine that
