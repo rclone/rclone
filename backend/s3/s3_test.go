@@ -4,6 +4,7 @@ package s3
 import (
 	"context"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -11,6 +12,8 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/rclone/rclone/lib/bucket"
+	"github.com/rclone/rclone/lib/pacer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,6 +23,163 @@ func SetupS3Test(t *testing.T) (context.Context, *Options, *http.Client) {
 	opt.Provider = "AWS"
 	client := getClient(ctx, opt)
 	return ctx, opt, client
+}
+
+func TestClientRemovesSecurityTokenOnCrossHostRedirect(t *testing.T) {
+	ctx, _, client := SetupS3Test(t)
+
+	redirectServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Empty(t, r.Header.Get("X-Amz-Security-Token"))
+		assert.Equal(t, "date", r.Header.Get("X-Amz-Date"))
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer redirectServer.Close()
+
+	initialServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "token", r.Header.Get("X-Amz-Security-Token"))
+		http.Redirect(w, r, redirectServer.URL, http.StatusTemporaryRedirect)
+	}))
+	defer initialServer.Close()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, initialServer.URL, nil)
+	require.NoError(t, err)
+	req.Header.Set("X-Amz-Security-Token", "token")
+	req.Header.Set("X-Amz-Date", "date")
+
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.NoError(t, resp.Body.Close())
+}
+
+func TestClientDoesNotRestoreSecurityTokenAfterCrossHostRedirect(t *testing.T) {
+	ctx, _, client := SetupS3Test(t)
+
+	redirectServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/middle":
+			assert.Empty(t, r.Header.Get("X-Amz-Security-Token"))
+			assert.Equal(t, "date", r.Header.Get("X-Amz-Date"))
+			http.Redirect(w, r, "/final", http.StatusTemporaryRedirect)
+		case "/final":
+			assert.Empty(t, r.Header.Get("X-Amz-Security-Token"))
+			assert.Equal(t, "date", r.Header.Get("X-Amz-Date"))
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer redirectServer.Close()
+
+	initialServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "token", r.Header.Get("X-Amz-Security-Token"))
+		http.Redirect(w, r, redirectServer.URL+"/middle", http.StatusTemporaryRedirect)
+	}))
+	defer initialServer.Close()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, initialServer.URL, nil)
+	require.NoError(t, err)
+	req.Header.Set("X-Amz-Security-Token", "token")
+	req.Header.Set("X-Amz-Date", "date")
+
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.NoError(t, resp.Body.Close())
+}
+
+func TestClientKeepsSecurityTokenOnSameHostRedirect(t *testing.T) {
+	ctx, _, client := SetupS3Test(t)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/":
+			assert.Equal(t, "token", r.Header.Get("X-Amz-Security-Token"))
+			http.Redirect(w, r, "/redirected", http.StatusTemporaryRedirect)
+		case "/redirected":
+			assert.Equal(t, "token", r.Header.Get("X-Amz-Security-Token"))
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, server.URL, nil)
+	require.NoError(t, err)
+	req.Header.Set("X-Amz-Security-Token", "token")
+
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.NoError(t, resp.Body.Close())
+}
+
+func TestClientStopsAfterTenRedirects(t *testing.T) {
+	_, _, client := SetupS3Test(t)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, r.URL.String(), http.StatusTemporaryRedirect)
+	}))
+	defer server.Close()
+
+	resp, err := client.Get(server.URL)
+	if resp != nil {
+		_ = resp.Body.Close()
+	}
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "stopped after 10 redirects")
+}
+
+func TestObjectNotFoundMapping(t *testing.T) {
+	ctx, opt, client := SetupS3Test(t)
+	gotHead, gotGet := false, false
+
+	// Return 404 for all requests.
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodHead:
+			gotHead = true
+		case http.MethodGet:
+			gotGet = true
+		}
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer server.Close()
+
+	opt.Endpoint = server.URL
+	opt.ForcePathStyle = true
+	opt.Region = "us-east-1"
+	opt.AccessKeyID = "id"
+	opt.SecretAccessKey = "secret"
+	c, _, err := s3Connection(ctx, opt, client)
+	require.NoError(t, err)
+
+	f := &Fs{
+		name:  "s3test",
+		opt:   *opt,
+		ctx:   ctx,
+		c:     c,
+		pacer: fs.NewPacer(ctx, pacer.NewS3(pacer.MinSleep(minSleep))),
+		cache: bucket.NewCache(),
+	}
+	f.setRoot("bucket")
+
+	// HEAD path: NewObject reads metadata via HeadObject.
+	_, headErr := f.NewObject(ctx, "missing.txt")
+	require.True(t, gotHead, "server should have received a HEAD request")
+	assert.ErrorIs(t, headErr, fs.ErrorObjectNotFound)
+
+	// GET path: Object.Open issues a GetObject.
+	o := &Object{fs: f, remote: "missing.txt"}
+	in, getErr := o.Open(ctx)
+	if in != nil {
+		_ = in.Close()
+	}
+	require.True(t, gotGet, "server should have received a GET request")
+	assert.ErrorIs(t, getErr, fs.ErrorObjectNotFound)
+
+	assert.Equal(t, headErr, getErr, "HeadObject and GetObject should map a 404 to the same error")
 }
 
 // TestIntegration runs integration tests against the remote

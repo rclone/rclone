@@ -286,7 +286,7 @@ large file of a known size to stay below this number of chunks limit.
 Any files larger than this that need to be server-side copied will be
 copied in chunks of this size.
 
-The minimum is 0 and the maximum is 5 GiB.`,
+The minimum is 1 byte and the maximum is 5 GiB.`,
 			Default:  fs.SizeSuffix(maxSizeForCopy),
 			Advanced: true,
 		}, {
@@ -1351,8 +1351,32 @@ func getClient(ctx context.Context, opt *Options) *http.Client {
 		}
 	})
 	return &http.Client{
-		Transport: t,
+		Transport:     t,
+		CheckRedirect: s3CheckRedirect,
 	}
+}
+
+func s3CheckRedirect(req *http.Request, via []*http.Request) error {
+	if len(via) >= 10 {
+		return errors.New("stopped after 10 redirects")
+	}
+	if s3RedirectCrossesHost(req, via) {
+		req.Header.Del("X-Amz-Security-Token")
+	}
+	return nil
+}
+
+func s3RedirectCrossesHost(req *http.Request, via []*http.Request) bool {
+	if len(via) == 0 {
+		return false
+	}
+	host := via[0].URL.Host
+	for _, redirect := range via[1:] {
+		if redirect.URL.Host != host {
+			return true
+		}
+	}
+	return host != req.URL.Host
 }
 
 // Fixup the request if needed.
@@ -4337,6 +4361,9 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		}
 	}
 	if err != nil {
+		if statusCode := getHTTPStatusCode(err); statusCode == http.StatusNotFound || statusCode == http.StatusMethodNotAllowed {
+			return nil, fs.ErrorObjectNotFound
+		}
 		return nil, err
 	}
 

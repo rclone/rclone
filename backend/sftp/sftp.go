@@ -28,6 +28,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/env"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
@@ -197,6 +198,11 @@ E.g. the second example above should be rewritten as:
 
 	rclone sync /home/local/directory remote:/homes/USER/directory --sftp-path-override @/volume1`,
 			Advanced: true,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			Default:  encoder.Display,
 		}, {
 			Name:     "set_modtime",
 			Default:  true,
@@ -554,50 +560,51 @@ This feature may be useful backups made with --copy-dest.`,
 
 // Options defines the configuration for this backend
 type Options struct {
-	Host                    string          `config:"host"`
-	User                    string          `config:"user"`
-	Port                    string          `config:"port"`
-	Pass                    string          `config:"pass"`
-	KeyPem                  string          `config:"key_pem"`
-	KeyFile                 string          `config:"key_file"`
-	KeyFilePass             string          `config:"key_file_pass"`
-	PubKey                  string          `config:"pubkey"`
-	PubKeyFile              string          `config:"pubkey_file"`
-	KnownHostsFile          string          `config:"known_hosts_file"`
-	KeyUseAgent             bool            `config:"key_use_agent"`
-	UseInsecureCipher       bool            `config:"use_insecure_cipher"`
-	DisableHashCheck        bool            `config:"disable_hashcheck"`
-	AskPassword             bool            `config:"ask_password"`
-	PathOverride            string          `config:"path_override"`
-	SetModTime              bool            `config:"set_modtime"`
-	ShellType               string          `config:"shell_type"`
-	Hashes                  fs.CommaSepList `config:"hashes"`
-	Md5sumCommand           string          `config:"md5sum_command"`
-	Sha1sumCommand          string          `config:"sha1sum_command"`
-	Crc32sumCommand         string          `config:"crc32sum_command"`
-	Sha256sumCommand        string          `config:"sha256sum_command"`
-	Blake3sumCommand        string          `config:"blake3sum_command"`
-	Xxh3sumCommand          string          `config:"xxh3sum_command"`
-	Xxh128sumCommand        string          `config:"xxh128sum_command"`
-	SkipLinks               bool            `config:"skip_links"`
-	Subsystem               string          `config:"subsystem"`
-	ServerCommand           string          `config:"server_command"`
-	UseFstat                bool            `config:"use_fstat"`
-	DisableConcurrentReads  bool            `config:"disable_concurrent_reads"`
-	DisableConcurrentWrites bool            `config:"disable_concurrent_writes"`
-	IdleTimeout             fs.Duration     `config:"idle_timeout"`
-	ChunkSize               fs.SizeSuffix   `config:"chunk_size"`
-	Concurrency             int             `config:"concurrency"`
-	Connections             int             `config:"connections"`
-	SetEnv                  fs.SpaceSepList `config:"set_env"`
-	Ciphers                 fs.SpaceSepList `config:"ciphers"`
-	KeyExchange             fs.SpaceSepList `config:"key_exchange"`
-	MACs                    fs.SpaceSepList `config:"macs"`
-	HostKeyAlgorithms       fs.SpaceSepList `config:"host_key_algorithms"`
-	SSH                     fs.SpaceSepList `config:"ssh"`
-	SocksProxy              string          `config:"socks_proxy"`
-	HTTPProxy               string          `config:"http_proxy"`
-	CopyIsHardlink          bool            `config:"copy_is_hardlink"`
+	Host                    string               `config:"host"`
+	User                    string               `config:"user"`
+	Port                    string               `config:"port"`
+	Pass                    string               `config:"pass"`
+	KeyPem                  string               `config:"key_pem"`
+	KeyFile                 string               `config:"key_file"`
+	KeyFilePass             string               `config:"key_file_pass"`
+	PubKey                  string               `config:"pubkey"`
+	PubKeyFile              string               `config:"pubkey_file"`
+	KnownHostsFile          string               `config:"known_hosts_file"`
+	KeyUseAgent             bool                 `config:"key_use_agent"`
+	UseInsecureCipher       bool                 `config:"use_insecure_cipher"`
+	DisableHashCheck        bool                 `config:"disable_hashcheck"`
+	AskPassword             bool                 `config:"ask_password"`
+	PathOverride            string               `config:"path_override"`
+	Enc                     encoder.MultiEncoder `config:"encoding"`
+	SetModTime              bool                 `config:"set_modtime"`
+	ShellType               string               `config:"shell_type"`
+	Hashes                  fs.CommaSepList      `config:"hashes"`
+	Md5sumCommand           string               `config:"md5sum_command"`
+	Sha1sumCommand          string               `config:"sha1sum_command"`
+	Crc32sumCommand         string               `config:"crc32sum_command"`
+	Sha256sumCommand        string               `config:"sha256sum_command"`
+	Blake3sumCommand        string               `config:"blake3sum_command"`
+	Xxh3sumCommand          string               `config:"xxh3sum_command"`
+	Xxh128sumCommand        string               `config:"xxh128sum_command"`
+	SkipLinks               bool                 `config:"skip_links"`
+	Subsystem               string               `config:"subsystem"`
+	ServerCommand           string               `config:"server_command"`
+	UseFstat                bool                 `config:"use_fstat"`
+	DisableConcurrentReads  bool                 `config:"disable_concurrent_reads"`
+	DisableConcurrentWrites bool                 `config:"disable_concurrent_writes"`
+	IdleTimeout             fs.Duration          `config:"idle_timeout"`
+	ChunkSize               fs.SizeSuffix        `config:"chunk_size"`
+	Concurrency             int                  `config:"concurrency"`
+	Connections             int                  `config:"connections"`
+	SetEnv                  fs.SpaceSepList      `config:"set_env"`
+	Ciphers                 fs.SpaceSepList      `config:"ciphers"`
+	KeyExchange             fs.SpaceSepList      `config:"key_exchange"`
+	MACs                    fs.SpaceSepList      `config:"macs"`
+	HostKeyAlgorithms       fs.SpaceSepList      `config:"host_key_algorithms"`
+	SSH                     fs.SpaceSepList      `config:"ssh"`
+	SocksProxy              string               `config:"socks_proxy"`
+	HTTPProxy               string               `config:"http_proxy"`
+	CopyIsHardlink          bool                 `config:"copy_is_hardlink"`
 }
 
 // Fs stores the interface to the remote SFTP files
@@ -1171,10 +1178,10 @@ func (f *Fs) getPass() (string, error) {
 func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m configmap.Mapper, opt *Options, sshConfig *ssh.ClientConfig) (fs.Fs, error) {
 	// Populate the Filesystem Object
 	f.name = name
-	f.root = root
-	f.absRoot = root
-	f.shellRoot = root
 	f.opt = *opt
+	f.root = root
+	f.absRoot = f.opt.Enc.FromStandardPath(root)
+	f.shellRoot = f.absRoot
 	f.m = m
 	f.config = sshConfig
 	f.url = "sftp://" + opt.User + "@" + opt.Host + ":" + opt.Port + "/" + root
@@ -1255,19 +1262,19 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 	// Ensure we have absolute path to root
 	// It appears that WS FTP doesn't like relative paths,
 	// and the openssh sftp tool also uses absolute paths.
-	if !path.IsAbs(f.root) {
+	if !path.IsAbs(f.absRoot) {
 		// Trying RealPath first, to perform proper server-side canonicalize.
 		// It may fail (SSH_FX_FAILURE reported on WS FTP) and will then resort
 		// to simple path join with current directory from Getwd (which can work
 		// on WS FTP, even though it is also based on RealPath).
-		absRoot, err := c.sftpClient.RealPath(f.root)
+		absRoot, err := c.sftpClient.RealPath(f.absRoot)
 		if err != nil {
 			fs.Debugf(f, "Failed to resolve path using RealPath: %v", err)
 			cwd, err := c.sftpClient.Getwd()
 			if err != nil {
 				fs.Debugf(f, "Failed to read current directory - using relative paths: %v", err)
 			} else {
-				f.absRoot = path.Join(cwd, f.root)
+				f.absRoot = path.Join(cwd, f.absRoot)
 				fs.Debugf(f, "Relative path joined with current directory to get absolute path %q", f.absRoot)
 			}
 		} else {
@@ -1378,7 +1385,7 @@ func (f *Fs) dirExists(ctx context.Context, dir string) (bool, error) {
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	root := path.Join(f.absRoot, dir)
+	root := f.remotePath(dir)
 	sftpDir := root
 	if sftpDir == "" {
 		sftpDir = "."
@@ -1396,7 +1403,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return nil, fmt.Errorf("error listing %q: %w", dir, err)
 	}
 	for _, info := range infos {
-		remote := path.Join(dir, info.Name())
+		remote := path.Join(dir, f.opt.Enc.ToStandardName(info.Name()))
 		// If file is a symlink (not a regular file is the best cross platform test we can do), do a stat to
 		// pick up the size and type of the destination, instead of the size and type of the symlink.
 		if !info.Mode().IsRegular() && !info.IsDir() {
@@ -1455,7 +1462,7 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 // directories above that
 func (f *Fs) mkParentDir(ctx context.Context, remote string) error {
 	parent := path.Dir(remote)
-	return f.mkdir(ctx, path.Join(f.absRoot, parent))
+	return f.mkdir(ctx, f.remotePath(parent))
 }
 
 // mkdir makes the directory and parents using native paths
@@ -1495,7 +1502,7 @@ func (f *Fs) mkdir(ctx context.Context, dirPath string) error {
 
 // Mkdir makes the root directory of the Fs object
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	root := path.Join(f.absRoot, dir)
+	root := f.remotePath(dir)
 	return f.mkdir(ctx, root)
 }
 
@@ -1520,7 +1527,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		return fs.ErrorDirectoryNotEmpty
 	}
 	// Remove the directory
-	root := path.Join(f.absRoot, dir)
+	root := f.remotePath(dir)
 	c, err := f.getSftpConnection(ctx)
 	if err != nil {
 		return fmt.Errorf("Rmdir: %w", err)
@@ -1545,7 +1552,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, fmt.Errorf("Move: %w", err)
 	}
-	srcPath, dstPath := srcObj.path(), path.Join(f.absRoot, remote)
+	srcPath, dstPath := srcObj.path(), f.remotePath(remote)
 	if _, ok := c.sftpClient.HasExtension("posix-rename@openssh.com"); ok {
 		err = c.sftpClient.PosixRename(srcPath, dstPath)
 	} else {
@@ -1585,7 +1592,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, fmt.Errorf("Copy: %w", err)
 	}
-	srcPath, dstPath := srcObj.path(), path.Join(f.absRoot, remote)
+	srcPath, dstPath := srcObj.path(), f.remotePath(remote)
 	err = c.sftpClient.Link(srcPath, dstPath)
 	f.putSftpConnection(&c, err)
 	if err != nil {
@@ -1618,8 +1625,8 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		fs.Debugf(srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
-	srcPath := path.Join(srcFs.absRoot, srcRemote)
-	dstPath := path.Join(f.absRoot, dstRemote)
+	srcPath := srcFs.remotePath(srcRemote)
+	dstPath := f.remotePath(dstRemote)
 
 	// Check if destination exists
 	ok, err := f.dirExists(ctx, dstPath)
@@ -2085,20 +2092,21 @@ func (f *Fs) quoteOrEscapeShellPath(shellPath string) (string, error) {
 
 // remotePath returns the native SFTP path of the file or directory at the remote given
 func (f *Fs) remotePath(remote string) string {
-	return path.Join(f.absRoot, remote)
+	return path.Join(f.absRoot, f.opt.Enc.FromStandardPath(remote))
 }
 
 // remoteShellPath returns the SSH shell path of the file or directory at the remote given
 func (f *Fs) remoteShellPath(remote string) string {
+	encodedRemote := f.opt.Enc.FromStandardPath(remote)
 	if f.opt.PathOverride != "" {
-		shellPath := path.Join(f.opt.PathOverride, remote)
+		shellPath := path.Join(f.opt.PathOverride, encodedRemote)
 		if f.opt.PathOverride[0] == '@' {
-			shellPath = path.Join(strings.TrimPrefix(f.opt.PathOverride, "@"), f.absRoot, remote)
+			shellPath = path.Join(strings.TrimPrefix(f.opt.PathOverride, "@"), f.absRoot, encodedRemote)
 		}
 		fs.Debugf(f, "Shell path redirected to %q with option path_override", shellPath)
 		return shellPath
 	}
-	shellPath := path.Join(f.absRoot, remote)
+	shellPath := path.Join(f.absRoot, encodedRemote)
 	if f.shellType == "powershell" || f.shellType == "cmd" {
 		// If remote shell is powershell or cmd, then server is probably Windows.
 		// The sftp package converts everything to POSIX paths: Forward slashes, and
@@ -2187,7 +2195,7 @@ func (o *Object) setMetadata(info os.FileInfo) {
 func (f *Fs) stat(ctx context.Context, remote string) (info os.FileInfo, err error) {
 	absPath := remote
 	if !strings.HasPrefix(remote, "/") {
-		absPath = path.Join(f.absRoot, remote)
+		absPath = f.remotePath(remote)
 	}
 	c, err := f.getSftpConnection(ctx)
 	if err != nil {
