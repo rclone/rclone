@@ -1161,3 +1161,4 @@ put them back in again. -->
 - happysnaker <73147033+happysnaker@users.noreply.github.com>
 - Jan Schlien <rclone-github@jan-o-sch.net>
 - user77 <abubakarm@gmail.com>
+- maximilize <3752128+maximilize@users.noreply.github.com>
