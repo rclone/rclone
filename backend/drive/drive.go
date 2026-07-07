@@ -1303,6 +1303,7 @@ func createOAuthClient(ctx context.Context, opt *Options, name string, m configm
 			return nil, fmt.Errorf("failed to create client from environment: %w", err)
 		}
 	} else {
+		oauthutil.SharedClientIDWarning(name, "Google Drive", "https://rclone.org/drive/#making-your-own-client-id", m)
 		oAuthClient, _, err = oauthutil.NewClientWithBaseClient(ctx, name, m, driveConfig, getClient(ctx, opt))
 		if err != nil {
 			return nil, fmt.Errorf("failed to create oauth client: %w", err)
