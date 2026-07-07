@@ -34,7 +34,11 @@ import (
 )
 
 // OptionsInfo describes the Options in use
-var OptionsInfo = fs.Options{}.
+var OptionsInfo = fs.Options{{
+	Name:    "disable_zip",
+	Default: false,
+	Help:    "Disable zip download of directories",
+}}.
 	Add(libhttp.ConfigInfo).
 	Add(libhttp.AuthConfigInfo).
 	Add(libhttp.TemplateConfigInfo)
@@ -44,7 +48,7 @@ type Options struct {
 	Auth       libhttp.AuthConfig
 	HTTP       libhttp.Config
 	Template   libhttp.TemplateConfig
-	DisableZip bool
+	DisableZip bool `config:"disable_zip"`
 }
 
 // DefaultOpt is the default values used for Options
@@ -73,7 +77,6 @@ func init() {
 	flags.AddFlagsFromOptions(flagSet, "", OptionsInfo)
 	vfsflags.AddFlags(flagSet)
 	proxyflags.AddFlags(flagSet)
-	flagSet.BoolVar(&Opt.DisableZip, "disable-zip", false, "Disable zip download of directories")
 	cmdserve.Command.AddCommand(Command)
 	cmdserve.AddRc("http", func(ctx context.Context, f fs.Fs, in rc.Params) (cmdserve.Handle, error) {
 		// Read VFS Opts

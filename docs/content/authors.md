@@ -1161,3 +1161,10 @@ put them back in again. -->
 - happysnaker <73147033+happysnaker@users.noreply.github.com>
 - Jan Schlien <rclone-github@jan-o-sch.net>
 - user77 <abubakarm@gmail.com>
+- maximilize <3752128+maximilize@users.noreply.github.com>
+- dithwick <46924962+dithwick@users.noreply.github.com>
+- Sandy Luppino <s.luppino@opendrives.com>
+- Sanjays2402 <51058514+Sanjays2402@users.noreply.github.com>
+- blackflytech <blackflytech@outlook.com>
+- Amit Mishra <amit.mishra.eee21@itbhu.ac.in>
+- Erol Ozcan <erol.ozcan@gmail.com>
