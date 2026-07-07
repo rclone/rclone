@@ -66,6 +66,7 @@ import (
 	_ "github.com/rclone/rclone/cmd/serve/restic"
 	_ "github.com/rclone/rclone/cmd/serve/s3"
 	_ "github.com/rclone/rclone/cmd/serve/sftp"
+	_ "github.com/rclone/rclone/cmd/serve/smb"
 	_ "github.com/rclone/rclone/cmd/serve/webdav"
 	_ "github.com/rclone/rclone/cmd/settier"
 	_ "github.com/rclone/rclone/cmd/sha1sum"
