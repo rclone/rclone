@@ -1688,7 +1688,7 @@ func (f *Fs) newObjectWithExportInfo(
 		if !isDocument {
 			fs.Debugf(remote, "Ignoring unknown document type %q", info.MimeType)
 			gdocsWarnOnce.Do(func() {
-				fs.Logf(remote, "Skipping unexportable google documents. Use --drive-show-all-gdocs to include them in server side copy and move", info.MimeType)
+				fs.Logf(remote, "Skipping unexportable google document %q. Use --drive-show-all-gdocs to include them in server side copy and move", info.MimeType)
 			})
 			return nil, fs.ErrorObjectNotFound
 		}
