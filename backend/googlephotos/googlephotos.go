@@ -94,6 +94,23 @@ var (
 	}
 )
 
+// gphotosOAuthOptions returns a copy of oauthutil.SharedOptions with
+// the client_id help tailored for Google Photos. It copies the shared
+// options rather than mutating the global slice.
+func gphotosOAuthOptions() []fs.Option {
+	opts := []fs.Option{}
+	for _, opt := range oauthutil.SharedOptions {
+		if opt.Name == config.ConfigClientID {
+			opt.Help = "OAuth Client Id.\n\nCreating your own is now strongly recommended.\nIf you leave this blank rclone uses a shared client_id which is being retired and will stop working during 2026.\nSee https://rclone.org/googlephotos/#making-your-own-client-id for how to create your own."
+		}
+		if opt.Name == config.ConfigClientSecret {
+			opt.Help = "OAuth Client Secret.\n\nLeave blank to use rclone's shared client_id.\nIf you created your own client_id then enter its client secret here."
+		}
+		opts = append(opts, opt)
+	}
+	return opts
+}
+
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
@@ -101,7 +118,7 @@ func init() {
 		Prefix:      "gphotos",
 		Description: "Google Photos",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+		Config: func(ctx context.Context, name string, m configmap.Mapper, configIn fs.ConfigIn) (*fs.ConfigOut, error) {
 			// Parse config into Options struct
 			opt := new(Options)
 			err := configstruct.Set(m, opt)
@@ -109,7 +126,7 @@ func init() {
 				return nil, fmt.Errorf("couldn't parse config into struct: %w", err)
 			}
 
-			switch config.State {
+			switch configIn.State {
 			case "":
 				// Fill in the scopes
 				if opt.ReadOnly {
@@ -117,6 +134,25 @@ func init() {
 				} else {
 					oauthConfig.Scopes = scopesReadWrite
 				}
+				return fs.ConfigGoto("client_id")
+			case "client_id":
+				if clientID, _ := m.Get(config.ConfigClientID); clientID != "" {
+					return fs.ConfigGoto("oauth")
+				}
+				return oauthutil.SharedClientIDConfigConfirm("client_id_warning", "Google Photos", "https://rclone.org/googlephotos/#making-your-own-client-id")
+			case "client_id_warning":
+				if configIn.Result == "true" {
+					// Continue using the shared client_id
+					return fs.ConfigGoto("oauth")
+				}
+				return fs.ConfigInput("client_id_set", config.ConfigClientID, "OAuth Client Id")
+			case "client_id_set":
+				m.Set(config.ConfigClientID, configIn.Result)
+				return fs.ConfigInput("client_secret_set", config.ConfigClientSecret, "OAuth Client Secret")
+			case "client_secret_set":
+				m.Set(config.ConfigClientSecret, configIn.Result)
+				return fs.ConfigGoto("oauth")
+			case "oauth":
 				return oauthutil.ConfigOut("warning1", &oauthutil.Options{
 					OAuth2Config: oauthConfig,
 				})
@@ -136,9 +172,9 @@ IMPORTANT: Due to Google policy changes rclone can now only download photos it u
 			case "warning_done":
 				return nil, nil
 			}
-			return nil, fmt.Errorf("unknown state %q", config.State)
+			return nil, fmt.Errorf("unknown state %q", configIn.State)
 		},
-		Options: append(append(oauthutil.SharedOptions, []fs.Option{{
+		Options: append(append(gphotosOAuthOptions(), []fs.Option{{
 			Name:    "read_only",
 			Default: false,
 			Help: `Set to make the Google Photos backend read only.
@@ -348,6 +384,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, err
 	}
+
+	oauthutil.SharedClientIDWarning(name, "Google Photos", "https://rclone.org/googlephotos/#making-your-own-client-id", m)
 
 	baseClient := fshttp.NewClient(ctx)
 	oAuthClient, ts, err := oauthutil.NewClientWithBaseClient(ctx, name, m, oauthConfig, baseClient)

@@ -208,7 +208,10 @@ func driveOAuthOptions() []fs.Option {
 	opts := []fs.Option{}
 	for _, opt := range oauthutil.SharedOptions {
 		if opt.Name == config.ConfigClientID {
-			opt.Help = "Google Application Client Id\nSetting your own is recommended.\nSee https://rclone.org/drive/#making-your-own-client-id for how to create your own.\nIf you leave this blank, it will use an internal key which is low performance."
+			opt.Help = "Google Application Client Id\nLeave blank to use rclone's shared client_id, or if you are using a service account.\nThe shared client_id is being retired and will stop working during 2026, so creating your own is now strongly recommended.\nSee https://rclone.org/drive/#making-your-own-client-id for how to create your own."
+		}
+		if opt.Name == config.ConfigClientSecret {
+			opt.Help = "Google Application Client Secret\nLeave blank to use rclone's shared client_id, or if you are using a service account.\nIf you created your own client_id then enter its client secret here."
 		}
 		opts = append(opts, opt)
 	}
@@ -222,7 +225,7 @@ func init() {
 		Description: "Google Drive",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
-		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+		Config: func(ctx context.Context, name string, m configmap.Mapper, configIn fs.ConfigIn) (*fs.ConfigOut, error) {
 			// Parse config into Options struct
 			opt := new(Options)
 			err := configstruct.Set(m, opt)
@@ -230,7 +233,7 @@ func init() {
 				return nil, fmt.Errorf("couldn't parse config into struct: %w", err)
 			}
 
-			switch config.State {
+			switch configIn.State {
 			case "":
 				// Fill in the scopes
 				driveConfig.Scopes = driveScopes(opt.Scope)
@@ -241,24 +244,43 @@ func init() {
 				}
 
 				if opt.ServiceAccountFile == "" && opt.ServiceAccountCredentials == "" && !opt.EnvAuth {
-					return oauthutil.ConfigOut("teamdrive", &oauthutil.Options{
-						OAuth2Config: driveConfig,
-					})
+					return fs.ConfigGoto("client_id")
 				}
 				return fs.ConfigGoto("teamdrive")
+			case "client_id":
+				if clientID, _ := m.Get(config.ConfigClientID); clientID != "" {
+					return fs.ConfigGoto("oauth")
+				}
+				return oauthutil.SharedClientIDConfigConfirm("client_id_warning", "Google Drive", "https://rclone.org/drive/#making-your-own-client-id")
+			case "client_id_warning":
+				if configIn.Result == "true" {
+					// Continue using the shared client_id
+					return fs.ConfigGoto("oauth")
+				}
+				return fs.ConfigInput("client_id_set", config.ConfigClientID, "Google Application Client Id")
+			case "client_id_set":
+				m.Set(config.ConfigClientID, configIn.Result)
+				return fs.ConfigInput("client_secret_set", config.ConfigClientSecret, "Google Application Client Secret")
+			case "client_secret_set":
+				m.Set(config.ConfigClientSecret, configIn.Result)
+				return fs.ConfigGoto("oauth")
+			case "oauth":
+				return oauthutil.ConfigOut("teamdrive", &oauthutil.Options{
+					OAuth2Config: driveConfig,
+				})
 			case "teamdrive":
 				if opt.TeamDriveID == "" {
 					return fs.ConfigConfirm("teamdrive_ok", false, "config_change_team_drive", "Configure this as a Shared Drive (Team Drive)?\n")
 				}
 				return fs.ConfigConfirm("teamdrive_change", false, "config_change_team_drive", fmt.Sprintf("Change current Shared Drive (Team Drive) ID %q?\n", opt.TeamDriveID))
 			case "teamdrive_ok":
-				if config.Result == "false" {
+				if configIn.Result == "false" {
 					m.Set("team_drive", "")
 					return nil, nil
 				}
 				return fs.ConfigGoto("teamdrive_config")
 			case "teamdrive_change":
-				if config.Result == "false" {
+				if configIn.Result == "false" {
 					return nil, nil
 				}
 				return fs.ConfigGoto("teamdrive_config")
@@ -279,14 +301,14 @@ func init() {
 					return teamDrive.Id, teamDrive.Name
 				})
 			case "teamdrive_final":
-				driveID := config.Result
+				driveID := configIn.Result
 				m.Set("team_drive", driveID)
 				m.Set("root_folder_id", "")
 				opt.TeamDriveID = driveID
 				opt.RootFolderID = ""
 				return nil, nil
 			}
-			return nil, fmt.Errorf("unknown state %q", config.State)
+			return nil, fmt.Errorf("unknown state %q", configIn.State)
 		},
 		MetadataInfo: &fs.MetadataInfo{
 			System: systemMetadataInfo,
@@ -1303,6 +1325,7 @@ func createOAuthClient(ctx context.Context, opt *Options, name string, m configm
 			return nil, fmt.Errorf("failed to create client from environment: %w", err)
 		}
 	} else {
+		oauthutil.SharedClientIDWarning(name, "Google Drive", "https://rclone.org/drive/#making-your-own-client-id", m)
 		oAuthClient, _, err = oauthutil.NewClientWithBaseClient(ctx, name, m, driveConfig, getClient(ctx, opt))
 		if err != nil {
 			return nil, fmt.Errorf("failed to create oauth client: %w", err)
@@ -1688,7 +1711,7 @@ func (f *Fs) newObjectWithExportInfo(
 		if !isDocument {
 			fs.Debugf(remote, "Ignoring unknown document type %q", info.MimeType)
 			gdocsWarnOnce.Do(func() {
-				fs.Logf(remote, "Skipping unexportable google documents. Use --drive-show-all-gdocs to include them in server side copy and move", info.MimeType)
+				fs.Logf(remote, "Skipping unexportable google document %q. Use --drive-show-all-gdocs to include them in server side copy and move", info.MimeType)
 			})
 			return nil, fs.ErrorObjectNotFound
 		}
