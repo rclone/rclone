@@ -484,6 +484,24 @@ func OverrideCredentials(name string, m configmap.Mapper, origConfig *Config) (n
 	return newConfig, changed
 }
 
+// SharedClientIDWarning warns the user that this remote is relying on
+// rclone's built-in shared OAuth client_id.
+//
+// It only warns when the user has not configured their own client_id
+// (config.ConfigClientID is blank in the config), so it must only be
+// called from the code path that actually uses the shared client_id -
+// not for service account, environment or anonymous auth which don't.
+//
+// name is the remote's name, service is the human readable name of the
+// service (eg "Google Drive") and helpURL points at the docs describing
+// how to make your own client_id.
+func SharedClientIDWarning(name, service, helpURL string, m configmap.Mapper) {
+	if clientID, _ := m.Get(config.ConfigClientID); clientID != "" {
+		return
+	}
+	fs.Logf(name, "This remote uses rclone's shared %s client_id, which is being retired and will stop working during 2026. Create your own client_id to avoid interruption: %s", service, helpURL)
+}
+
 // NewClientWithBaseClient gets a token from the config file and
 // configures a Client with it.  It returns the client and a
 // TokenSource which Invalidate may need to be called on.  It uses the

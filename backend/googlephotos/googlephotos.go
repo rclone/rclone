@@ -349,6 +349,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
+	oauthutil.SharedClientIDWarning(name, "Google Photos", "https://rclone.org/googlephotos/#making-your-own-client-id", m)
+
 	baseClient := fshttp.NewClient(ctx)
 	oAuthClient, ts, err := oauthutil.NewClientWithBaseClient(ctx, name, m, oauthConfig, baseClient)
 	if err != nil {
