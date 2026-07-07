@@ -1370,13 +1370,13 @@ func s3RedirectCrossesHost(req *http.Request, via []*http.Request) bool {
 	if len(via) == 0 {
 		return false
 	}
-	host := via[0].URL.Host
+	scheme, host := via[0].URL.Scheme, via[0].URL.Host
 	for _, redirect := range via[1:] {
-		if redirect.URL.Host != host {
+		if redirect.URL.Host != host || redirect.URL.Scheme != scheme {
 			return true
 		}
 	}
-	return host != req.URL.Host
+	return host != req.URL.Host || scheme != req.URL.Scheme
 }
 
 // Fixup the request if needed.
