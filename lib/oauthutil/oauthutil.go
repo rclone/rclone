@@ -502,6 +502,25 @@ func SharedClientIDWarning(name, service, helpURL string, m configmap.Mapper) {
 	fs.Logf(name, "This remote uses rclone's shared %s client_id, which is being retired and will stop working during 2026. Create your own client_id to avoid interruption: %s", service, helpURL)
 }
 
+// SharedClientIDConfigConfirm returns a config wizard Yes/No step
+// warning that this remote would use rclone's shared client_id (which
+// is being retired) and asking whether to continue with it anyway. It
+// should only be used when the user has left client_id blank on the
+// OAuth path.
+//
+// state is the config state to go to next, service is the human
+// readable name of the service (eg "Google Drive") and helpURL points
+// at the docs describing how to make your own client_id.
+//
+// The question defaults to No to steer the user towards making their
+// own client_id.
+func SharedClientIDConfigConfirm(state, service, helpURL string) (*fs.ConfigOut, error) {
+	return fs.ConfigConfirm(state, false, "config_shared_client_id", fmt.Sprintf(`rclone's shared %s client_id is being retired and will stop working during 2026.
+Create your own to avoid interruption: %s
+
+Continue using the shared client_id anyway?`, service, helpURL))
+}
+
 // NewClientWithBaseClient gets a token from the config file and
 // configures a Client with it.  It returns the client and a
 // TokenSource which Invalidate may need to be called on.  It uses the

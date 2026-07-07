@@ -50,12 +50,15 @@ XX / Google Photos
 Storage> google photos
 ** See help for google photos backend at: https://rclone.org/googlephotos/ **
 
-Google Application Client Id
-Leave blank normally.
+OAuth Client Id.
+Creating your own is now strongly recommended.
+If you leave this blank rclone uses a shared client_id which is being retired and will stop working during 2026.
+See https://rclone.org/googlephotos/#making-your-own-client-id for how to create your own.
 Enter a string value. Press Enter for the default ("").
 client_id> 
-Google Application Client Secret
-Leave blank normally.
+OAuth Client Secret.
+Leave blank to use rclone's shared client_id.
+If you created your own client_id then enter its client secret here.
 Enter a string value. Press Enter for the default ("").
 client_secret> 
 Set to make the Google Photos backend read only.
@@ -69,6 +72,17 @@ y) Yes
 n) No
 y/n> n
 Remote config
+rclone's shared Google Photos client_id is being retired and will stop working during 2026.
+Create your own to avoid interruption: https://rclone.org/googlephotos/#making-your-own-client-id
+
+Continue using the shared client_id anyway?
+y) Yes
+n) No (default)
+y/n> n
+OAuth Client Id.
+client_id> 1234567890-abcdefghijklmnop.apps.googleusercontent.com
+OAuth Client Secret.
+client_secret> GOCSPX-your-client-secret
 Use web browser to automatically authenticate rclone with remote?
  * Say Y if the machine running rclone has a web browser you can use
  * Say N if running rclone on a (remote) machine without web browser access
@@ -253,7 +267,9 @@ Here are the Standard options specific to google photos (Google Photos).
 
 OAuth Client Id.
 
-Leave blank normally.
+Creating your own is now strongly recommended.
+If you leave this blank rclone uses a shared client_id which is being retired and will stop working during 2026.
+See https://rclone.org/googlephotos/#making-your-own-client-id for how to create your own.
 
 Properties:
 
@@ -266,7 +282,8 @@ Properties:
 
 OAuth Client Secret.
 
-Leave blank normally.
+Leave blank to use rclone's shared client_id.
+If you created your own client_id then enter its client secret here.
 
 Properties:
 
@@ -653,11 +670,13 @@ The Google Photos API does not support deleting albums - see [bug #135714733](ht
 
 When you use rclone with Google photos in its default configuration you
 are using rclone's client_id.  This is shared between all the rclone
-users.  There is a global rate limit on the number of queries per
-second that each client_id can do set by Google.
+users.
 
-If there is a problem with this client_id (eg quota too low or the
-client_id stops working) then you can make your own.
+**This shared client_id is being retired and will stop working during
+2026.**  To avoid interruption you must create and use your own
+client_id, so creating one is now required rather than optional.  New
+remotes created with `rclone config` will warn you if you leave the
+client_id blank.
 
 Please follow the steps in [the google drive docs](https://rclone.org/drive/#making-your-own-client-id)
 with the following differences:
