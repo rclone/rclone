@@ -1162,3 +1162,4 @@ put them back in again. -->
 - Jan Schlien <rclone-github@jan-o-sch.net>
 - user77 <abubakarm@gmail.com>
 - maximilize <3752128+maximilize@users.noreply.github.com>
+- dithwick <46924962+dithwick@users.noreply.github.com>
