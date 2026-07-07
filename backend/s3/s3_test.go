@@ -115,6 +115,54 @@ func TestClientKeepsSecurityTokenOnSameHostRedirect(t *testing.T) {
 	assert.NoError(t, resp.Body.Close())
 }
 
+func TestRedirectCrossesHost(t *testing.T) {
+	mustReq := func(method, url string) *http.Request {
+		req, err := http.NewRequest(method, url, nil)
+		require.NoError(t, err)
+		return req
+	}
+	for _, test := range []struct {
+		name string
+		via  []string
+		req  string
+		want bool
+	}{
+		{
+			name: "SameHost",
+			via:  []string{"https://bucket.example.com/"},
+			req:  "https://bucket.example.com/redirected",
+			want: false,
+		},
+		{
+			name: "DifferentHost",
+			via:  []string{"https://bucket.example.com/"},
+			req:  "https://evil.example.com/redirected",
+			want: true,
+		},
+		{
+			name: "SchemeDowngradeSameHost",
+			via:  []string{"https://bucket.example.com/"},
+			req:  "http://bucket.example.com/redirected",
+			want: true,
+		},
+		{
+			name: "SchemeDowngradeMidChain",
+			via:  []string{"https://bucket.example.com/", "http://bucket.example.com/middle"},
+			req:  "http://bucket.example.com/final",
+			want: true,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			via := make([]*http.Request, len(test.via))
+			for i, url := range test.via {
+				via[i] = mustReq(http.MethodGet, url)
+			}
+			got := s3RedirectCrossesHost(mustReq(http.MethodGet, test.req), via)
+			assert.Equal(t, test.want, got)
+		})
+	}
+}
+
 func TestClientStopsAfterTenRedirects(t *testing.T) {
 	_, _, client := SetupS3Test(t)
 
