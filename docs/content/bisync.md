@@ -1053,9 +1053,20 @@ encodings.)
 The following backends have known issues that need more investigation:
 
 <!--- start list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
-- `TestFilen` (`filen`)
-  - [`TestBisyncRemoteRemote/resync_modes`](https://pub.rclone.org/integration-tests/current/filen-cmd.bisync-TestFilen-1.txt)
-  - [`TestBisyncRemoteRemote/rmdirs`](https://pub.rclone.org/integration-tests/current/filen-cmd.bisync-TestFilen-1.txt)
+- `TestGoogleCloudStorage,directory_markers` (`googlecloudstorage`)
+  - [`TestBisyncRemoteLocal/all_changed`](https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage,directory_markers-1.txt)
+  - [`TestBisyncRemoteLocal/backupdir`](https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage,directory_markers-1.txt)
+  - [`TestBisyncRemoteLocal/basic`](https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage,directory_markers-1.txt)
+  - [`TestBisyncRemoteLocal/changes`](https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage,directory_markers-1.txt)
+  - [`TestBisyncRemoteLocal/check_access`](https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage,directory_markers-1.txt)
+  - [79 more](https://pub.rclone.org/integration-tests/current/)
+- `TestGoogleCloudStorage` (`googlecloudstorage`)
+  - [`TestBisyncRemoteLocal/all_changed`](https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage-1.txt)
+  - [`TestBisyncRemoteLocal/backupdir`](https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage-1.txt)
+  - [`TestBisyncRemoteLocal/basic`](https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage-1.txt)
+  - [`TestBisyncRemoteLocal/changes`](https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage-1.txt)
+  - [`TestBisyncRemoteLocal/check_access`](https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage-1.txt)
+  - [79 more](https://pub.rclone.org/integration-tests/current/)
 - `TestHuaweiDrive` (`huaweidrive`)
   - [`TestBisyncRemoteLocal/ext_paths`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
   - [`TestBisyncRemoteLocal/extended_filenames`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
@@ -1063,9 +1074,7 @@ The following backends have known issues that need more investigation:
   - [`TestBisyncLocalRemote/ext_paths`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
   - [`TestBisyncLocalRemote/extended_filenames`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
   - [4 more](https://pub.rclone.org/integration-tests/current/)
-- `TestSeafile` (`seafile`)
-  - [`TestBisyncLocalRemote/rmdirs`](https://pub.rclone.org/integration-tests/current/seafile-cmd.bisync-TestSeafile-1.txt)
-- Updated: 2026-06-05-010010
+- Updated: 2026-07-08-010014
 <!--- end list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
 
 The following backends either have not been tested recently or have known issues

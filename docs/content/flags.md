@@ -121,7 +121,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.74.3")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.74.4")
 ```
 
 
@@ -805,8 +805,10 @@ Backend-only flags (these can be set in the config file also).
       --local-case-sensitive                                Force the filesystem to report itself as case sensitive
       --local-description string                            Description of the remote
       --local-encoding Encoding                             The encoding for the backend (default Slash,Dot)
+      --local-fatal-if-no-space                             Make out-of-space errors fatal during transfers
       --local-hashes CommaSepList                           Comma separated list of supported checksum types
       --local-links                                         Translate symlinks to/from regular files with a '.rclonelink' extension for the local backend
+      --local-metadata-restore-special-bits                 Restore the setuid, setgid and sticky bits from metadata
       --local-no-check-updated                              Don't check to see if the files change during upload
       --local-no-clone                                      Disable reflink cloning for server-side copies
       --local-no-preallocate                                Disable preallocation of disk space for transferred files

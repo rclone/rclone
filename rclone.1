@@ -15,7 +15,7 @@
 . ftr VB CB
 . ftr VBI CBI
 .\}
-.TH "rclone" "1" "Jun 05, 2026" "User Manual" ""
+.TH "rclone" "1" "Jul 08, 2026" "User Manual" ""
 .hy
 .SH NAME
 .PP
@@ -6326,14 +6326,14 @@ rclone convmv \[dq]stories/The Quick Brown Fox!.txt\[dq] --name-transform \[dq]a
 .nf
 \f[C]
 rclone convmv \[dq]stories/The Quick Brown Fox!\[dq] --name-transform \[dq]date=-{YYYYMMDD}\[dq]
-// Output: stories/The Quick Brown Fox!-20260605
+// Output: stories/The Quick Brown Fox!-20260708
 \f[R]
 .fi
 .IP
 .nf
 \f[C]
 rclone convmv \[dq]stories/The Quick Brown Fox!\[dq] --name-transform \[dq]date=-{macfriendlytime}\[dq]
-// Output: stories/The Quick Brown Fox!-2026-06-05 0414PM
+// Output: stories/The Quick Brown Fox!-2026-07-08 0504PM
 \f[R]
 .fi
 .IP
@@ -6596,8 +6596,9 @@ Copy files from source to dest, skipping identical files.
 If source:path is a file or directory then it copies it to a file or
 directory named dest:path.
 .PP
-This can be used to upload single files to other than their current
-name.
+This can be used to copy a single file to a destination with a name
+different from its source - for example, uploading and renaming in one
+step.
 If the source is a directory then it acts exactly like the
 copy (https://rclone.org/commands/rclone_copy/) command.
 .PP
@@ -16323,6 +16324,18 @@ Versioning is not currently supported.
 Metadata will only be saved in memory other than the rclone
 \f[V]mtime\f[R] metadata which will be set as the modification time of
 the file.
+.SS Object names
+.PP
+\f[V]serve s3\f[R] stores objects as files in the backend, so object
+keys are mapped to file paths rather than treated as the opaque strings
+AWS S3 allows.
+Keys must be in canonical path form: keys that contain \f[V]..\f[R] or
+\f[V].\f[R] path segments, repeated slashes (\f[V]//\f[R]), or a leading
+or trailing slash are rejected with a \f[V]400 Bad Request\f[R]
+(\f[V]InvalidArgument\f[R]) instead of being normalised, since
+normalising them could alias two distinct keys to the same file or
+resolve a key outside its bucket.
+This matches the behaviour of other S3 servers such as MinIO.
 .SS Supported operations
 .PP
 \f[V]serve s3\f[R] currently supports the following operations.
@@ -21747,7 +21760,7 @@ It outputs warnings and significant events.
 It only outputs error messages.
 .PP
 See also the logging section.
-.SS --windows-event-log LogLevel
+.SS --windows-event-log-level LogLevel
 .PP
 If this is configured (the default is \f[V]OFF\f[R]) then logs of this
 level and above will be logged to the Windows event log in
@@ -21769,17 +21782,17 @@ but not currently used).
 Rclone will declare its log source as \[dq]rclone\[dq] if it is has
 enough permissions to create the registry key needed.
 If not then logs will appear as \[dq]Application\[dq].
-You can run \f[V]rclone version --windows-event-log DEBUG\f[R] once as
-administrator to create the registry key in advance.
+You can run \f[V]rclone version --windows-event-log-level DEBUG\f[R]
+once as administrator to create the registry key in advance.
 .PP
-\f[B]Note\f[R] that the \f[V]--windows-event-log\f[R] level must be
-greater (more severe) than or equal to the \f[V]--log-level\f[R].
+\f[B]Note\f[R] that the \f[V]--windows-event-log-level\f[R] level must
+be greater (more severe) than or equal to the \f[V]--log-level\f[R].
 For example to log DEBUG to a log file but ERRORs to the event log you
 would use
 .IP
 .nf
 \f[C]
---log-file rclone.log --log-level DEBUG --windows-event-log ERROR
+--log-file rclone.log --log-level DEBUG --windows-event-log-level ERROR
 \f[R]
 .fi
 .PP
@@ -23858,7 +23871,7 @@ y/e/d>
 .PP
 Rclone stores all of its configuration in a single file.
 This can easily be copied to configure a remote rclone (although some
-backends does not support reusing the same configuration, consult your
+backends do not support reusing the same configuration, consult your
 backend documentation to be sure).
 .PP
 Start by running rclone config to create the configuration file on your
@@ -25377,6 +25390,55 @@ directly.
 .PP
 If you just want to run a remote control then see the
 rcd (https://rclone.org/commands/rclone_rcd/) command.
+.SS Security
+.PP
+\f[B]Access to the rc API is equivalent to shell access as the user
+running rclone.\f[R] Treat the rc port as you would an interactive login
+on the host.
+.PP
+Any caller who can reach the API (and pass authentication, if it is
+enabled) can, among other things:
+.IP \[bu] 2
+\f[B]Run OS commands\f[R] as the rclone user.
+\f[V]core/command\f[R] re-executes the rclone binary with arbitrary
+arguments, and several backend options shell out to programs, so even
+creating a remote with \f[V]config/create\f[R] can lead to command
+execution.
+.IP \[bu] 2
+\f[B]Read and write any file\f[R] reachable by the rclone process, by
+pointing \f[V]operations/*\f[R] or \f[V]sync/*\f[R] at a \f[V]local\f[R]
+remote (or via \f[V]--rc-files\f[R] / \f[V]--rc-serve\f[R]).
+Writing arbitrary files as the rclone user is itself a route to code
+execution.
+.IP \[bu] 2
+\f[B]Read back stored credentials.\f[R] rclone configs routinely hold
+cloud-provider secrets.
+\f[V]config/dump\f[R] and friends expose them, so a compromise of the rc
+reaches every configured backend.
+.IP \[bu] 2
+\f[B]Change rclone\[aq]s runtime behaviour\f[R] with
+\f[V]options/set\f[R], \f[B]manage remotes\f[R] with \f[V]config/*\f[R],
+and \f[B]stop the process\f[R] with \f[V]core/quit\f[R].
+.PP
+There is currently no per-endpoint capability or scope system:
+authentication is all-or-nothing.
+Granting any access grants all of the above.
+.PP
+Consequently:
+.IP \[bu] 2
+\f[B]Do not bind the rc to a network address you do not control.\f[R]
+The default bind is loopback (\f[V]localhost:5572\f[R]); keep it there
+unless you have a specific reason to change it.
+.IP \[bu] 2
+\f[B]Do not use \f[VB]--rc-no-auth\f[B] on a non-loopback bind.\f[R] It
+disables authentication on the endpoints that access remotes \[em] see
+\f[V]--rc-no-auth\f[R].
+.IP \[bu] 2
+\f[B]Use authentication and TLS\f[R]
+(\f[V]--rc-user\f[R]/\f[V]--rc-pass\f[R] or \f[V]--rc-htpasswd\f[R],
+plus \f[V]--rc-cert\f[R]/\f[V]--rc-key\f[R]) whenever the port is
+reachable by anyone you do not fully trust, and raise
+\f[V]--rc-min-tls-version\f[R].
 .SS Supported parameters
 .SS --rc
 .PP
@@ -30200,7 +30262,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default \[dq]rclone/v1.74.3\[dq])
+      --user-agent string                  Set the user-agent to a specified string (default \[dq]rclone/v1.74.4\[dq])
 \f[R]
 .fi
 .SS Performance
@@ -30884,8 +30946,10 @@ Backend-only flags (these can be set in the config file also).
       --local-case-sensitive                                Force the filesystem to report itself as case sensitive
       --local-description string                            Description of the remote
       --local-encoding Encoding                             The encoding for the backend (default Slash,Dot)
+      --local-fatal-if-no-space                             Make out-of-space errors fatal during transfers
       --local-hashes CommaSepList                           Comma separated list of supported checksum types
       --local-links                                         Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension for the local backend
+      --local-metadata-restore-special-bits                 Restore the setuid, setgid and sticky bits from metadata
       --local-no-check-updated                              Don\[aq]t check to see if the files change during upload
       --local-no-clone                                      Disable reflink cloning for server-side copies
       --local-no-preallocate                                Disable preallocation of disk space for transferred files
@@ -33498,12 +33562,37 @@ filename encodings.)
 .PP
 The following backends have known issues that need more investigation:
 .IP \[bu] 2
-\f[V]TestFilen\f[R] (\f[V]filen\f[R])
+\f[V]TestGoogleCloudStorage,directory_markers\f[R]
+(\f[V]googlecloudstorage\f[R])
 .RS 2
 .IP \[bu] 2
-\f[V]TestBisyncRemoteRemote/resync_modes\f[R] (https://pub.rclone.org/integration-tests/current/filen-cmd.bisync-TestFilen-1.txt)
+\f[V]TestBisyncRemoteLocal/all_changed\f[R] (https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage,directory_markers-1.txt)
 .IP \[bu] 2
-\f[V]TestBisyncRemoteRemote/rmdirs\f[R] (https://pub.rclone.org/integration-tests/current/filen-cmd.bisync-TestFilen-1.txt)
+\f[V]TestBisyncRemoteLocal/backupdir\f[R] (https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage,directory_markers-1.txt)
+.IP \[bu] 2
+\f[V]TestBisyncRemoteLocal/basic\f[R] (https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage,directory_markers-1.txt)
+.IP \[bu] 2
+\f[V]TestBisyncRemoteLocal/changes\f[R] (https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage,directory_markers-1.txt)
+.IP \[bu] 2
+\f[V]TestBisyncRemoteLocal/check_access\f[R] (https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage,directory_markers-1.txt)
+.IP \[bu] 2
+79 more (https://pub.rclone.org/integration-tests/current/)
+.RE
+.IP \[bu] 2
+\f[V]TestGoogleCloudStorage\f[R] (\f[V]googlecloudstorage\f[R])
+.RS 2
+.IP \[bu] 2
+\f[V]TestBisyncRemoteLocal/all_changed\f[R] (https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage-1.txt)
+.IP \[bu] 2
+\f[V]TestBisyncRemoteLocal/backupdir\f[R] (https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage-1.txt)
+.IP \[bu] 2
+\f[V]TestBisyncRemoteLocal/basic\f[R] (https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage-1.txt)
+.IP \[bu] 2
+\f[V]TestBisyncRemoteLocal/changes\f[R] (https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage-1.txt)
+.IP \[bu] 2
+\f[V]TestBisyncRemoteLocal/check_access\f[R] (https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage-1.txt)
+.IP \[bu] 2
+79 more (https://pub.rclone.org/integration-tests/current/)
 .RE
 .IP \[bu] 2
 \f[V]TestHuaweiDrive\f[R] (\f[V]huaweidrive\f[R])
@@ -33522,13 +33611,7 @@ The following backends have known issues that need more investigation:
 4 more (https://pub.rclone.org/integration-tests/current/)
 .RE
 .IP \[bu] 2
-\f[V]TestSeafile\f[R] (\f[V]seafile\f[R])
-.RS 2
-.IP \[bu] 2
-\f[V]TestBisyncLocalRemote/rmdirs\f[R] (https://pub.rclone.org/integration-tests/current/seafile-cmd.bisync-TestSeafile-1.txt)
-.RE
-.IP \[bu] 2
-Updated: 2026-06-05-010010
+Updated: 2026-07-08-010014
 .PP
 The following backends either have not been tested recently or have
 known issues that are deemed unfixable for the time being:
@@ -33675,6 +33758,12 @@ directory is to rename it to the same name on both sides.
 (As of \f[V]rclone v1.64\f[R], a \f[V]--resync\f[R] is no longer
 required after doing so, as bisync will automatically detect that Path1
 and Path2 are in agreement.)
+.PP
+Note that although the flag --track-renames ensures that renamed/moved
+files won\[aq]t be deleted and uploaded again, they are still counted as
+deleted files for purposes of the --max-delete flag (as this check
+happens before the rename detection operation).
+See this issue (https://github.com/rclone/rclone/issues/8685).
 .SS \f[V]--fast-list\f[R] used by default
 .PP
 Unlike most other rclone commands, bisync uses
@@ -42964,7 +43053,7 @@ Cutoff for switching to multipart copy.
 Any files larger than this that need to be server-side copied will be
 copied in chunks of this size.
 .PP
-The minimum is 0 and the maximum is 5 GiB.
+The minimum is 1 byte and the maximum is 5 GiB.
 .PP
 Properties:
 .IP \[bu] 2
@@ -56118,9 +56207,9 @@ This uses a 32 byte (256 bit key) key derived from the user password.
 .IP \[bu] 2
 32 bytes header
 .IP \[bu] 2
-16 chunks of 65568 bytes
+16 chunks of 65552 bytes
 .PP
-1049120 bytes total (a 0.05% overhead).
+1048864 bytes total (a 0.03% overhead).
 This is the overhead for big files.
 .SS Name encryption
 .PP
@@ -61764,9 +61853,18 @@ However you can set this to restrict rclone to a specific folder
 hierarchy or to access data within the \[dq]Computers\[dq] tab on the
 drive web interface (where files from Google\[aq]s Backup and Sync
 desktop program go).
+However, this is not the easiest method.
+Instead, you can create a shortcut to a folder in \[dq]Computers\[dq]
+and place it in \[dq]My Drive.\[dq] To do so, right-click the folder,
+select \[dq]Organize\[dq], and then choose \[dq]Add shortcut\[dq] in the
+Google Drive web interface.
+Once you add the shortcut to \[dq]My Drive,\[dq] rclone will display the
+folder, allowing you to interact with it.
+See also Shortcuts.
 .PP
-In order to do this you will have to find the \f[V]Folder ID\f[R] of the
-directory you wish rclone to display.
+If, however, you choose to change your root folder, you will have to
+find the \f[V]Folder ID\f[R] of the directory you wish rclone to
+display.
 This will be the last segment of the URL when you open the relevant
 folder in the drive web interface.
 .PP
@@ -61776,7 +61874,13 @@ in the browser, then you use \f[V]1XyfxxxxxxxxxxxxxxxxxxxxxxxxxKHCh\f[R]
 as the \f[V]root_folder_id\f[R] in the config.
 .PP
 \f[B]NB\f[R] folders under the \[dq]Computers\[dq] tab seem to be read
-only (drive gives a 500 error) when using rclone.
+only (drive gives a 500 error) when using rclone, but they are also
+read-only in the Google Drive web interface, likely because this folder
+is managed by the Google Drive Desktop tool.
+Top-level folders in \[dq]Computers\[dq] are read-only, but you can
+interact with folders contained within them using rclone.
+These are the folders for which you can create a shortcut as well, as
+described above.
 .PP
 There doesn\[aq]t appear to be an API to discover the folder IDs of the
 \[dq]Computers\[dq] tab - please contact us if you know otherwise!
@@ -64384,6 +64488,26 @@ limitation is that any grants will expire after a week, which can be
 annoying to refresh constantly.
 If, for whatever reason, a short grant time is not a problem, then
 keeping the application in testing mode would also be sufficient.
+.PP
+In most cases verification is not actually required.
+Google exempts a number of app
+categories (https://support.google.com/cloud/answer/13464323) from
+mandatory verification, including:
+.IP \[bu] 2
+\f[B]Personal Use apps\f[R]: if the app is for your personal use (fewer
+than 100 users), you and your limited number of users can keep using it
+without verification - you will just need to click through the
+\[dq]unverified app\[dq] warning screen during sign-in.
+Verification is only required if you want to grow your user base beyond
+100 users.
+.IP \[bu] 2
+\f[B]Development/Testing/Staging apps\f[R]: apps in development, testing
+or staging mode are not subject to verification (but are limited to the
+100-user cap and the unverified-app warning until verified).
+.PP
+So for typical personal rclone use you can leave the app unverified,
+accept the warning screen, and publish it (rather than leaving it in
+\[dq]Testing\[dq]) to avoid the weekly grant expiry described above.
 .PP
 (Thanks to \[at]balazer on github for these instructions.)
 .PP
@@ -89523,6 +89647,36 @@ backends and the VFS.
 .PP
 Note that this flag is incompatible with \f[V]-copy-links\f[R] /
 \f[V]-L\f[R].
+.SS Symlink targets and the destination
+.PP
+When rclone recreates a \f[V].rclonelink\f[R] file as a symlink on local
+storage, the symlink can point anywhere - including, with an absolute
+path or one using \f[V]../\f[R] - to a location outside the directory
+you are copying into.
+This is normal - rclone reproduces whatever target the link had, so
+backups round-trip faithfully.
+.PP
+What rclone will \f[B]not\f[R] do is \f[I]write through\f[R] such a
+link.
+If a remote you are copying from contains both a symlink and a file or
+directory that would be placed inside it - for example a
+\f[V]dir.rclonelink\f[R] pointing somewhere outside the destination,
+alongside a \f[V]dir/file.txt\f[R] - rclone refuses to follow the
+symlink when writing \f[V]dir/file.txt\f[R].
+The offending file is skipped with an error, the rest of the transfer
+continues, and the skipped file is counted in the error summary printed
+at the end of the run.
+.PP
+This protects you from a malicious or compromised remote using
+\f[V]-l\f[R] / \f[V]--links\f[R] to plant a symlink and then write
+through it to somewhere outside your destination.
+Ordinary symlink round-trips, and symlinks that stay inside the
+destination, are unaffected.
+.PP
+If you have intentionally pre-created a symlinked directory inside your
+destination and want rclone to write into the directory it points at, do
+not use \f[V]-l\f[R] / \f[V]--links\f[R] for that copy, or remove the
+symlink first.
 .SS Restricting filesystems with --one-file-system
 .PP
 Normally rclone will recurse through filesystems as mounted.
@@ -89896,6 +90050,53 @@ Env Var: RCLONE_LOCAL_NO_SET_MODTIME
 Type: bool
 .IP \[bu] 2
 Default: false
+.SS --local-metadata-restore-special-bits
+.PP
+Restore the setuid, setgid and sticky bits from metadata.
+.PP
+When restoring metadata with --metadata rclone applies the
+\[dq]mode\[dq] from the source.
+By default rclone applies only the permission bits and strips the
+setuid, setgid and sticky bits.
+.PP
+The \[dq]mode\[dq] comes from the source remote which may not be
+trusted.
+Restoring a setuid or setgid bit onto freshly written, source-controlled
+content can plant a setuid binary, which is dangerous in particular when
+restoring from an untrusted source while running as root.
+For this reason these bits are not restored by default.
+.PP
+If you trust the source and want the setuid, setgid and sticky bits
+restored - for example when restoring a system backup made by rclone -
+set this flag.
+.PP
+Properties:
+.IP \[bu] 2
+Config: metadata_restore_special_bits
+.IP \[bu] 2
+Env Var: RCLONE_LOCAL_METADATA_RESTORE_SPECIAL_BITS
+.IP \[bu] 2
+Type: bool
+.IP \[bu] 2
+Default: false
+.SS --local-fatal-if-no-space
+.PP
+Make out-of-space errors fatal during transfers.
+.PP
+When enabled, an ENOSPC error during a write returns a fatal error so
+that rclone aborts rather than retrying the operation.
+Useful for backup scripts that should halt loudly on a full disk rather
+than spin retrying.
+.PP
+Properties:
+.IP \[bu] 2
+Config: fatal_if_no_space
+.IP \[bu] 2
+Env Var: RCLONE_LOCAL_FATAL_IF_NO_SPACE
+.IP \[bu] 2
+Type: bool
+.IP \[bu] 2
+Default: false
 .SS --local-time-type
 .PP
 Set what kind of time is returned.
@@ -90014,6 +90215,14 @@ User metadata is stored as extended attributes (which may not be
 supported by all file systems) under the \[dq]user.*\[dq] prefix.
 .PP
 Metadata is supported on files and directories.
+.PP
+When restoring metadata with \f[V]--metadata\f[R] rclone applies the
+\[dq]mode\[dq], \[dq]uid\[dq] and \[dq]gid\[dq] from the source.
+These come from the source remote which may not be trusted, so restoring
+metadata as root from an untrusted source can change file ownership and
+is not recommended.
+The setuid, setgid and sticky bits are not restored by default - see the
+\f[V]--local-metadata-restore-special-bits\f[R] flag.
 .PP
 Here are the possible system metadata items for the local backend.
 .PP
@@ -90150,6 +90359,181 @@ Options:
 .IP \[bu] 2
 \[dq]error\[dq]: Return an error based on option value.
 .SH Changelog
+.SS v1.74.4 - 2026-07-08
+.PP
+See commits (https://github.com/rclone/rclone/compare/v1.74.3...v1.74.4)
+.IP \[bu] 2
+Bug Fixes
+.RS 2
+.IP \[bu] 2
+accounting
+.RS 2
+.IP \[bu] 2
+Fix goroutine leak in ResetCounters (Nick Craig-Wood)
+.IP \[bu] 2
+Fix goroutine leak in NewStatsGroup for zero-transfer rc jobs
+(Sanjays2402)
+.RE
+.IP \[bu] 2
+archive extract: Fix path traversal letting archives escape the
+destination CVE-2026-59732 (Nick Craig-Wood)
+.IP \[bu] 2
+build
+.RS 2
+.IP \[bu] 2
+Fix multiple CVEs by upgrading to go1.26.5 (Nick Craig-Wood)
+.RS 2
+.IP \[bu] 2
+CVE-2026-39822: os: Root escape via symlink plus trailing slash
+.IP \[bu] 2
+CVE-2026-42505: crypto/tls: Encrypted Client Hello privacy leak
+.RE
+.IP \[bu] 2
+Update golang.org/x/image to v0.43.0 to fix image decoding
+vulnerabilities (Nick Craig-Wood)
+.RS 2
+.IP \[bu] 2
+CVE-2026-46604: panic decoding a TIFF image with an out-of-bounds strip
+offset
+.IP \[bu] 2
+CVE-2026-46602: unbounded memory use from lack of a limit on TIFF tile
+sizes
+.IP \[bu] 2
+CVE-2026-46601: panic on a WEBP VP8 alpha channel size mismatch
+.IP \[bu] 2
+CVE-2026-33813: panic decoding a large WEBP image on 32-bit platforms
+.RE
+.RE
+.IP \[bu] 2
+cmd/mount2
+.RS 2
+.IP \[bu] 2
+Fix NFS file creation by implementing Mknod (Sandy Luppino)
+.IP \[bu] 2
+Fix ESTALE over NFS by reporting stable inode numbers (Sandy Luppino)
+.IP \[bu] 2
+Fix NFS directory listings by supporting non-zero Seekdir offsets (Sandy
+Luppino)
+.RE
+.IP \[bu] 2
+completion: Fix powershell completion corrupting non-ASCII names (Yash
+Anil)
+.IP \[bu] 2
+doc fixes (Bryan Stenson, Castronaut, Filippo, Gaurav, happysnaker,
+Jan-Philipp Reßler, Nick Craig-Wood, user77)
+.IP \[bu] 2
+filter: Fix \f[V]--files-from\f[R] copy stopping at the first unreadable
+file (Nick Craig-Wood)
+.IP \[bu] 2
+fs
+.RS 2
+.IP \[bu] 2
+Fix command line flag being ignored when set to its default value (Nick
+Craig-Wood)
+.IP \[bu] 2
+Fix negative offset when a suffix Range request exceeds object size
+(Amit Mishra)
+.RE
+.IP \[bu] 2
+gui: Update embedded release to 1.1.10 (Nick Craig-Wood)
+.IP \[bu] 2
+ncdu: Fix duplicated keystrokes on Windows by pinning tcell to v2.9.0
+(Nick Craig-Wood)
+.IP \[bu] 2
+serve restic: Fix \f[V]--private-repos\f[R] isolation bypass
+CVE-2026-59733 (Nick Craig-Wood)
+.IP \[bu] 2
+serve s3
+.RS 2
+.IP \[bu] 2
+Fix spurious 404 on HEAD/GET during VFS writeback (max)
+.IP \[bu] 2
+Fix path traversal letting clients see files in the root
+GHSA-8v25-v8p6-qf7v (Nick Craig-Wood)
+.RE
+.IP \[bu] 2
+serve webdav: Fix MOVE overwrite failing without Overwrite header
+(Sanjay Santhanam)
+.IP \[bu] 2
+serve/http: Fix \f[V]--disable-zip\f[R] so it works over rc (Nick
+Craig-Wood)
+.RE
+.IP \[bu] 2
+VFS
+.RS 2
+.IP \[bu] 2
+Fix hang reopening a file during the handle-caching grace period (Nick
+Craig-Wood)
+.RE
+.IP \[bu] 2
+Local
+.RS 2
+.IP \[bu] 2
+Stop \f[V]--links\f[R] symlinks escaping the destination directory
+CVE-2026-54572 (Nick Craig-Wood)
+.IP \[bu] 2
+Don\[aq]t restore setuid/setgid/sticky bits from metadata by default
+GHSA-945v-v9p3-v5xw (Nick Craig-Wood)
+.RE
+.IP \[bu] 2
+Drive
+.RS 2
+.IP \[bu] 2
+Warn when non-exportable Google documents are skipped (Nick Craig-Wood)
+.IP \[bu] 2
+Fix stray %!(EXTRA) in unexportable google document log message (Nick
+Craig-Wood)
+.IP \[bu] 2
+Warn when using rclone\[aq]s shared client_id (Nick Craig-Wood)
+.RE
+.IP \[bu] 2
+Filelu
+.RS 2
+.IP \[bu] 2
+Fix recursive listing path handling and file filtering (kingston125)
+.RE
+.IP \[bu] 2
+Googlephotos
+.RS 2
+.IP \[bu] 2
+Warn when using rclone\[aq]s shared client_id (Nick Craig-Wood)
+.RE
+.IP \[bu] 2
+Mega
+.RS 2
+.IP \[bu] 2
+Wait for server events after upload, delete and move (Nick Craig-Wood)
+.IP \[bu] 2
+Fix hard deleted files reappearing in listings (Nick Craig-Wood)
+.RE
+.IP \[bu] 2
+S3
+.RS 2
+.IP \[bu] 2
+Remove session token on cross-host redirects (IceLocke)
+.IP \[bu] 2
+Strip STS security token on same-host HTTPS->HTTP redirect
+GHSA-cf44-9pgv-m4xc (Nick Craig-Wood)
+.IP \[bu] 2
+Fix error mapping in GetObject to match HeadObject (lewoberst)
+.IP \[bu] 2
+Correct documented \f[V]copy_cutoff\f[R] minimum to 1 byte (max)
+.IP \[bu] 2
+Fix mounting a prefix failing with 403 when HEAD is not permitted (Nick
+Craig-Wood)
+.RE
+.IP \[bu] 2
+Smb
+.RS 2
+.IP \[bu] 2
+Fix for IBM iSeries and signature verification (dithwick)
+.RE
+.IP \[bu] 2
+WebDAV
+.RS 2
+.IP \[bu] 2
+Fix mixed property statuses in multi-status responses (nako-ruru)
+.RE
 .SS v1.74.3 - 2026-06-05
 .PP
 See commits (https://github.com/rclone/rclone/compare/v1.74.2...v1.74.3)

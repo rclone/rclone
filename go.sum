@@ -204,8 +204,6 @@ github.com/cloudflare/circl v1.6.3 h1:9GPOhQGF9MCYUeXyMYlqTR6a5gTrgR/fBLXvUgtVcg
 github.com/cloudflare/circl v1.6.3/go.mod h1:2eXP6Qfat4O/Yhh8BznvKnJ+uzEoTQ6jVKJRn81BiS4=
 github.com/cloudinary/cloudinary-go/v2 v2.15.0 h1:iLoIwb7BJECHTbNcmIhYDsQhoZiACWGNvEpyqQy97Dk=
 github.com/cloudinary/cloudinary-go/v2 v2.15.0/go.mod h1:ireC4gqVetsjVhYlwjUJwKTbZuWjEIynbR9zQTlqsvo=
-github.com/cloudsoda/go-smb2 v0.0.0-20250228001242-d4c70e6251cc h1:t8YjNUCt1DimB4HCIXBztwWMhgxr5yG5/YaRl9Afdfg=
-github.com/cloudsoda/go-smb2 v0.0.0-20250228001242-d4c70e6251cc/go.mod h1:CgWpFCFWzzEA5hVkhAc6DZZzGd3czx+BblvOzjmg6KA=
 github.com/cloudsoda/go-smb2 v0.0.0-20260701064823-d8c5600d73b8 h1:+KC2I+emnT6ccWmo7IHbtchGc/vFqAxUuovo2eUgMuM=
 github.com/cloudsoda/go-smb2 v0.0.0-20260701064823-d8c5600d73b8/go.mod h1:1pQXB0vAlzRlqcY7LYKOOZMw0wKfJPFxTLsJRF2Gswo=
 github.com/cloudsoda/sddl v0.0.0-20250224235906-926454e91efc h1:0xCWmFKBmarCqqqLeM7jFBSw/Or81UEElFqO8MY+GDs=

@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Jun 05, 2026
+% Jul 08, 2026
 
 # NAME
 
@@ -5416,12 +5416,12 @@ rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,command=e
 
 ```console
 rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{YYYYMMDD}"
-// Output: stories/The Quick Brown Fox!-20260605
+// Output: stories/The Quick Brown Fox!-20260708
 ```
 
 ```console
 rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{macfriendlytime}"
-// Output: stories/The Quick Brown Fox!-2026-06-05 0414PM
+// Output: stories/The Quick Brown Fox!-2026-07-08 0504PM
 ```
 
 ```console
@@ -5631,8 +5631,9 @@ Copy files from source to dest, skipping identical files.
 If source:path is a file or directory then it copies it to a file or
 directory named dest:path.
 
-This can be used to upload single files to other than their current
-name.  If the source is a directory then it acts exactly like the
+This can be used to copy a single file to a destination with a name
+different from its source - for example, uploading and renaming in one
+step. If the source is a directory then it acts exactly like the
 [copy](https://rclone.org/commands/rclone_copy/) command.
 
 So
@@ -14066,6 +14067,17 @@ Versioning is not currently supported.
 Metadata will only be saved in memory other than the rclone `mtime`
 metadata which will be set as the modification time of the file.
 
+## Object names
+
+`serve s3` stores objects as files in the backend, so object keys are
+mapped to file paths rather than treated as the opaque strings AWS S3
+allows. Keys must be in canonical path form: keys that contain `..` or
+`.` path segments, repeated slashes (`//`), or a leading or trailing
+slash are rejected with a `400 Bad Request` (`InvalidArgument`)
+instead of being normalised, since normalising them could alias two
+distinct keys to the same file or resolve a key outside its bucket.
+This matches the behaviour of other S3 servers such as MinIO.
+
 ## Supported operations
 
 `serve s3` currently supports the following operations.
@@ -18664,7 +18676,7 @@ warnings and significant events.
 
 See also the [logging](#logging) section.
 
-### --windows-event-log LogLevel
+### --windows-event-log-level LogLevel
 
 If this is configured (the default is `OFF`) then logs of this level
 and above will be logged to the Windows event log in **addition** to
@@ -18680,15 +18692,15 @@ and `Error`. If enabled we map rclone levels like this.
 
 Rclone will declare its log source as "rclone" if it is has enough
 permissions to create the registry key needed. If not then logs will
-appear as "Application". You can run `rclone version --windows-event-log DEBUG`
+appear as "Application". You can run `rclone version --windows-event-log-level DEBUG`
 once as administrator to create the registry key in advance.
 
-**Note** that the `--windows-event-log` level must be greater (more
+**Note** that the `--windows-event-log-level` level must be greater (more
 severe) than or equal to the `--log-level`. For example to log DEBUG
 to a log file but ERRORs to the event log you would use
 
 ```text
---log-file rclone.log --log-level DEBUG --windows-event-log ERROR
+--log-file rclone.log --log-level DEBUG --windows-event-log-level ERROR
 ```
 
 This option is only supported Windows platforms.
@@ -20470,7 +20482,7 @@ y/e/d>
 ## Configuring by copying the config file
 
 Rclone stores all of its configuration in a single file. This can easily be
-copied to configure a remote rclone (although some backends does not support
+copied to configure a remote rclone (although some backends do not support
 reusing the same configuration, consult your backend documentation to be
 sure).
 
@@ -21639,6 +21651,43 @@ or [use HTTP directly](#api-http).
 
 If you just want to run a remote control then see the [rcd](https://rclone.org/commands/rclone_rcd/)
 command.
+
+## Security {#security}
+
+**Access to the rc API is equivalent to shell access as the user running
+rclone.** Treat the rc port as you would an interactive login on the host.
+
+Any caller who can reach the API (and pass authentication, if it is enabled)
+can, among other things:
+
+- **Run OS commands** as the rclone user. `core/command` re-executes the rclone
+  binary with arbitrary arguments, and several backend options shell out to
+  programs, so even creating a remote with `config/create` can lead to command
+  execution.
+- **Read and write any file** reachable by the rclone process, by pointing
+  `operations/*` or `sync/*` at a `local` remote (or via `--rc-files` /
+  `--rc-serve`). Writing arbitrary files as the rclone user is itself a route to
+  code execution.
+- **Read back stored credentials.** rclone configs routinely hold cloud-provider
+  secrets. `config/dump` and friends expose them, so a compromise of the rc
+  reaches every configured backend.
+- **Change rclone's runtime behaviour** with `options/set`, **manage remotes**
+  with `config/*`, and **stop the process** with `core/quit`.
+
+There is currently no per-endpoint capability or scope system: authentication is
+all-or-nothing. Granting any access grants all of the above.
+
+Consequently:
+
+- **Do not bind the rc to a network address you do not control.** The default
+  bind is loopback (`localhost:5572`); keep it there unless you have a specific
+  reason to change it.
+- **Do not use `--rc-no-auth` on a non-loopback bind.** It disables
+  authentication on the endpoints that access remotes — see
+  [`--rc-no-auth`](#--rc-no-auth).
+- **Use authentication and TLS** (`--rc-user`/`--rc-pass` or `--rc-htpasswd`,
+  plus `--rc-cert`/`--rc-key`) whenever the port is reachable by anyone you do
+  not fully trust, and raise `--rc-min-tls-version`.
 
 ## Supported parameters
 
@@ -25003,7 +25052,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.74.3")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.74.4")
 ```
 
 
@@ -25687,8 +25736,10 @@ Backend-only flags (these can be set in the config file also).
       --local-case-sensitive                                Force the filesystem to report itself as case sensitive
       --local-description string                            Description of the remote
       --local-encoding Encoding                             The encoding for the backend (default Slash,Dot)
+      --local-fatal-if-no-space                             Make out-of-space errors fatal during transfers
       --local-hashes CommaSepList                           Comma separated list of supported checksum types
       --local-links                                         Translate symlinks to/from regular files with a '.rclonelink' extension for the local backend
+      --local-metadata-restore-special-bits                 Restore the setuid, setgid and sticky bits from metadata
       --local-no-check-updated                              Don't check to see if the files change during upload
       --local-no-clone                                      Disable reflink cloning for server-side copies
       --local-no-preallocate                                Disable preallocation of disk space for transferred files
@@ -27215,8 +27266,8 @@ internals of the generated export file.) Therefore, bisync automatically skips
 `--download-hash` for files with a size less than 0.
 
 See also: [`Hasher`](https://rclone.org/hasher/) backend,
-[`cryptcheck`](https://rclone.org/commands/rclone_cryptcheck/) command, [`rclone check
---download`](https://rclone.org/commands/rclone_check/) option,
+[`cryptcheck`](https://rclone.org/commands/rclone_cryptcheck/) command,
+[`rclone check --download`](https://rclone.org/commands/rclone_check/) option,
 [`md5sum`](https://rclone.org/commands/rclone_md5sum/) command
 
 ### --max-delete
@@ -27790,9 +27841,20 @@ encodings.)
 The following backends have known issues that need more investigation:
 
 <!--- start list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
-- `TestFilen` (`filen`)
-  - [`TestBisyncRemoteRemote/resync_modes`](https://pub.rclone.org/integration-tests/current/filen-cmd.bisync-TestFilen-1.txt)
-  - [`TestBisyncRemoteRemote/rmdirs`](https://pub.rclone.org/integration-tests/current/filen-cmd.bisync-TestFilen-1.txt)
+- `TestGoogleCloudStorage,directory_markers` (`googlecloudstorage`)
+  - [`TestBisyncRemoteLocal/all_changed`](https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage,directory_markers-1.txt)
+  - [`TestBisyncRemoteLocal/backupdir`](https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage,directory_markers-1.txt)
+  - [`TestBisyncRemoteLocal/basic`](https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage,directory_markers-1.txt)
+  - [`TestBisyncRemoteLocal/changes`](https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage,directory_markers-1.txt)
+  - [`TestBisyncRemoteLocal/check_access`](https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage,directory_markers-1.txt)
+  - [79 more](https://pub.rclone.org/integration-tests/current/)
+- `TestGoogleCloudStorage` (`googlecloudstorage`)
+  - [`TestBisyncRemoteLocal/all_changed`](https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage-1.txt)
+  - [`TestBisyncRemoteLocal/backupdir`](https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage-1.txt)
+  - [`TestBisyncRemoteLocal/basic`](https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage-1.txt)
+  - [`TestBisyncRemoteLocal/changes`](https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage-1.txt)
+  - [`TestBisyncRemoteLocal/check_access`](https://pub.rclone.org/integration-tests/current/googlecloudstorage-cmd.bisync-TestGoogleCloudStorage-1.txt)
+  - [79 more](https://pub.rclone.org/integration-tests/current/)
 - `TestHuaweiDrive` (`huaweidrive`)
   - [`TestBisyncRemoteLocal/ext_paths`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
   - [`TestBisyncRemoteLocal/extended_filenames`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
@@ -27800,9 +27862,7 @@ The following backends have known issues that need more investigation:
   - [`TestBisyncLocalRemote/ext_paths`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
   - [`TestBisyncLocalRemote/extended_filenames`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
   - [4 more](https://pub.rclone.org/integration-tests/current/)
-- `TestSeafile` (`seafile`)
-  - [`TestBisyncLocalRemote/rmdirs`](https://pub.rclone.org/integration-tests/current/seafile-cmd.bisync-TestSeafile-1.txt)
-- Updated: 2026-06-05-010010
+- Updated: 2026-07-08-010014
 <!--- end list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
 
 The following backends either have not been tested recently or have known issues
@@ -27907,6 +27967,11 @@ Otherwise, the most effective and efficient method of renaming a directory
 is to rename it to the same name on both sides. (As of `rclone v1.64`,
 a `--resync` is no longer required after doing so, as bisync will automatically
 detect that Path1 and Path2 are in agreement.)
+
+Note that although the flag --track-renames ensures that renamed/moved files won't
+be deleted and uploaded again, they are still counted as deleted files for purposes
+of the --max-delete flag (as this check happens before the rename detection
+operation). See [this issue](https://github.com/rclone/rclone/issues/8685).
 
 ### `--fast-list` used by default
 
@@ -32772,7 +32837,7 @@ Cutoff for switching to multipart copy.
 Any files larger than this that need to be server-side copied will be
 copied in chunks of this size.
 
-The minimum is 0 and the maximum is 5 GiB.
+The minimum is 1 byte and the maximum is 5 GiB.
 
 Properties:
 
@@ -43990,9 +44055,9 @@ This uses a 32 byte (256 bit key) key derived from the user password.
 1 MiB (1048576 bytes) file will encrypt to
 
 - 32 bytes header
-- 16 chunks of 65568 bytes
+- 16 chunks of 65552 bytes
 
-1049120 bytes total (a 0.05% overhead). This is the overhead for big
+1048864 bytes total (a 0.03% overhead). This is the overhead for big
 files.
 
 ### Name encryption
@@ -48515,9 +48580,14 @@ correct root to use itself.
 However you can set this to restrict rclone to a specific folder
 hierarchy or to access data within the "Computers" tab on the drive
 web interface (where files from Google's Backup and Sync desktop
-program go).
+program go). However, this is not the easiest method. 
+Instead, you can create a shortcut to a folder in "Computers" and 
+place it in "My Drive." To do so, right-click the folder, select 
+"Organize", and then choose "Add shortcut" in the Google Drive web interface. 
+Once you add the shortcut to "My Drive," rclone will display the folder, allowing you to interact with it.
+See also [Shortcuts](#shortcuts). 
 
-In order to do this you will have to find the `Folder ID` of the
+If, however, you choose to change your root folder, you will have to find the `Folder ID` of the
 directory you wish rclone to display.  This will be the last segment
 of the URL when you open the relevant folder in the drive web
 interface.
@@ -48528,7 +48598,11 @@ in the browser, then you use `1XyfxxxxxxxxxxxxxxxxxxxxxxxxxKHCh` as
 the `root_folder_id` in the config.
 
 **NB** folders under the "Computers" tab seem to be read only (drive
-gives a 500 error) when using rclone.
+gives a 500 error) when using rclone, but they are also read-only in the Google Drive web interface, 
+likely because this folder is managed by the Google Drive Desktop tool.
+Top-level folders in "Computers" are read-only, but you can interact 
+with folders contained within them using rclone.
+These are the folders for which you can create a shortcut as well, as described above.
 
 There doesn't appear to be an API to discover the folder IDs of the
 "Computers" tab - please contact us if you know otherwise!
@@ -50351,6 +50425,23 @@ the remote configuration, it's not such a big deal). Keeping the application in
 after a week, which can be annoying to refresh constantly. If, for whatever
 reason, a short grant time is not a problem, then keeping the application in
 testing mode would also be sufficient.
+
+In most cases verification is not actually required. Google [exempts a number of
+app categories](https://support.google.com/cloud/answer/13464323) from mandatory
+verification, including:
+
+- **Personal Use apps**: if the app is for your personal use (fewer than 100
+  users), you and your limited number of users can keep using it without
+  verification - you will just need to click through the "unverified app"
+  warning screen during sign-in. Verification is only required if you want to
+  grow your user base beyond 100 users.
+- **Development/Testing/Staging apps**: apps in development, testing or staging
+  mode are not subject to verification (but are limited to the 100-user cap and
+  the unverified-app warning until verified).
+
+So for typical personal rclone use you can leave the app unverified, accept the
+warning screen, and publish it (rather than leaving it in "Testing") to avoid
+the weekly grant expiry described above.
 
 (Thanks to @balazer on github for these instructions.)
 
@@ -69864,6 +69955,31 @@ backends and the VFS.
 
 Note that this flag is incompatible with `-copy-links` / `-L`.
 
+#### Symlink targets and the destination
+
+When rclone recreates a `.rclonelink` file as a symlink on local storage,
+the symlink can point anywhere - including, with an absolute path or one
+using `../` - to a location outside the directory you are copying into. This
+is normal - rclone reproduces whatever target the link had, so backups
+round-trip faithfully.
+
+What rclone will **not** do is *write through* such a link. If a remote you
+are copying from contains both a symlink and a file or directory that would
+be placed inside it - for example a `dir.rclonelink` pointing somewhere
+outside the destination, alongside a `dir/file.txt` - rclone refuses to
+follow the symlink when writing `dir/file.txt`. The offending file is
+skipped with an error, the rest of the transfer continues, and the skipped
+file is counted in the error summary printed at the end of the run.
+
+This protects you from a malicious or compromised remote using `-l` /
+`--links` to plant a symlink and then write through it to somewhere outside
+your destination. Ordinary symlink round-trips, and symlinks that stay
+inside the destination, are unaffected.
+
+If you have intentionally pre-created a symlinked directory inside your
+destination and want rclone to write into the directory it points at, do
+not use `-l` / `--links` for that copy, or remove the symlink first.
+
 ### Restricting filesystems with --one-file-system
 
 Normally rclone will recurse through filesystems as mounted.
@@ -70180,6 +70296,47 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --local-metadata-restore-special-bits
+
+Restore the setuid, setgid and sticky bits from metadata.
+
+When restoring metadata with --metadata rclone applies the "mode" from
+the source. By default rclone applies only the permission bits and
+strips the setuid, setgid and sticky bits.
+
+The "mode" comes from the source remote which may not be trusted.
+Restoring a setuid or setgid bit onto freshly written,
+source-controlled content can plant a setuid binary, which is dangerous
+in particular when restoring from an untrusted source while running as
+root. For this reason these bits are not restored by default.
+
+If you trust the source and want the setuid, setgid and sticky bits
+restored - for example when restoring a system backup made by rclone -
+set this flag.
+
+Properties:
+
+- Config:      metadata_restore_special_bits
+- Env Var:     RCLONE_LOCAL_METADATA_RESTORE_SPECIAL_BITS
+- Type:        bool
+- Default:     false
+
+#### --local-fatal-if-no-space
+
+Make out-of-space errors fatal during transfers.
+
+When enabled, an ENOSPC error during a write returns a fatal error so
+that rclone aborts rather than retrying the operation. Useful for
+backup scripts that should halt loudly on a full disk rather than spin
+retrying.
+
+Properties:
+
+- Config:      fatal_if_no_space
+- Env Var:     RCLONE_LOCAL_FATAL_IF_NO_SPACE
+- Type:        bool
+- Default:     false
+
 #### --local-time-type
 
 Set what kind of time is returned.
@@ -70266,6 +70423,13 @@ supported by all file systems) under the "user.*" prefix.
 
 Metadata is supported on files and directories.
 
+When restoring metadata with `--metadata` rclone applies the
+"mode", "uid" and "gid" from the source. These come from the source
+remote which may not be trusted, so restoring metadata as root from an
+untrusted source can change file ownership and is not recommended. The
+setuid, setgid and sticky bits are not restored by default - see the
+`--local-metadata-restore-special-bits` flag.
+
 Here are the possible system metadata items for the local backend.
 
 | Name | Help | Type | Example | Read Only |
@@ -70318,6 +70482,69 @@ Options:
 <!-- markdownlint-disable line-length -->
 
 # Changelog
+
+## v1.74.4 - 2026-07-08
+
+[See commits](https://github.com/rclone/rclone/compare/v1.74.3...v1.74.4)
+
+- Bug Fixes
+  - accounting
+    - Fix goroutine leak in ResetCounters (Nick Craig-Wood)
+    - Fix goroutine leak in NewStatsGroup for zero-transfer rc jobs (Sanjays2402)
+  - archive extract: Fix path traversal letting archives escape the destination CVE-2026-59732 (Nick Craig-Wood)
+  - build
+    - Fix multiple CVEs by upgrading to go1.26.5 (Nick Craig-Wood)
+      - CVE-2026-39822: os: Root escape via symlink plus trailing slash
+      - CVE-2026-42505: crypto/tls: Encrypted Client Hello privacy leak
+    - Update golang.org/x/image to v0.43.0 to fix image decoding vulnerabilities (Nick Craig-Wood)
+      - CVE-2026-46604: panic decoding a TIFF image with an out-of-bounds strip offset
+      - CVE-2026-46602: unbounded memory use from lack of a limit on TIFF tile sizes
+      - CVE-2026-46601: panic on a WEBP VP8 alpha channel size mismatch
+      - CVE-2026-33813: panic decoding a large WEBP image on 32-bit platforms
+  - cmd/mount2
+    - Fix NFS file creation by implementing Mknod (Sandy Luppino)
+    - Fix ESTALE over NFS by reporting stable inode numbers (Sandy Luppino)
+    - Fix NFS directory listings by supporting non-zero Seekdir offsets (Sandy Luppino)
+  - completion: Fix powershell completion corrupting non-ASCII names (Yash Anil)
+  - doc fixes (Bryan Stenson, Castronaut, Filippo, Gaurav, happysnaker, Jan-Philipp Reßler, Nick Craig-Wood, user77)
+  - filter: Fix `--files-from` copy stopping at the first unreadable file (Nick Craig-Wood)
+  - fs
+    - Fix command line flag being ignored when set to its default value (Nick Craig-Wood)
+    - Fix negative offset when a suffix Range request exceeds object size (Amit Mishra)
+  - gui: Update embedded release to 1.1.10 (Nick Craig-Wood)
+  - ncdu: Fix duplicated keystrokes on Windows by pinning tcell to v2.9.0 (Nick Craig-Wood)
+  - serve restic: Fix `--private-repos` isolation bypass CVE-2026-59733 (Nick Craig-Wood)
+  - serve s3
+    - Fix spurious 404 on HEAD/GET during VFS writeback (max)
+    - Fix path traversal letting clients see files in the root GHSA-8v25-v8p6-qf7v (Nick Craig-Wood)
+  - serve webdav: Fix MOVE overwrite failing without Overwrite header (Sanjay Santhanam)
+  - serve/http: Fix `--disable-zip` so it works over rc (Nick Craig-Wood)
+- VFS
+  - Fix hang reopening a file during the handle-caching grace period (Nick Craig-Wood)
+- Local
+  - Stop `--links` symlinks escaping the destination directory CVE-2026-54572 (Nick Craig-Wood)
+  - Don't restore setuid/setgid/sticky bits from metadata by default GHSA-945v-v9p3-v5xw (Nick Craig-Wood)
+- Drive
+  - Warn when non-exportable Google documents are skipped (Nick Craig-Wood)
+  - Fix stray %!(EXTRA) in unexportable google document log message (Nick Craig-Wood)
+  - Warn when using rclone's shared client_id (Nick Craig-Wood)
+- Filelu
+  - Fix recursive listing path handling and file filtering (kingston125)
+- Googlephotos
+  - Warn when using rclone's shared client_id (Nick Craig-Wood)
+- Mega
+  - Wait for server events after upload, delete and move (Nick Craig-Wood)
+  - Fix hard deleted files reappearing in listings (Nick Craig-Wood)
+- S3
+  - Remove session token on cross-host redirects (IceLocke)
+  - Strip STS security token on same-host HTTPS->HTTP redirect GHSA-cf44-9pgv-m4xc (Nick Craig-Wood)
+  - Fix error mapping in GetObject to match HeadObject (lewoberst)
+  - Correct documented `copy_cutoff` minimum to 1 byte (max)
+  - Fix mounting a prefix failing with 403 when HEAD is not permitted (Nick Craig-Wood)
+- Smb
+  - Fix for IBM iSeries and signature verification (dithwick)
+- WebDAV
+  - Fix mixed property statuses in multi-status responses (nako-ruru)
 
 ## v1.74.3 - 2026-06-05
 
