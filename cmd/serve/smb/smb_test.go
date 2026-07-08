@@ -1468,6 +1468,15 @@ func TestServeNamespaceOrder(t *testing.T) {
 	}
 }
 
+// TestRc checks that serve smb can be started and stopped via the rc
+// serve/start and serve/stop calls.
+func TestRc(t *testing.T) {
+	servetest.TestRc(t, rc.Params{
+		"type":           "smb",
+		"vfs_cache_mode": "off",
+	})
+}
+
 func dirNames(entries []os.FileInfo) []string {
 	names := make([]string, len(entries))
 	for i, e := range entries {
