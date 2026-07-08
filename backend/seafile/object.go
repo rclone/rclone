@@ -12,7 +12,6 @@ import (
 // Object describes a seafile object (also commonly called a file)
 type Object struct {
 	fs            *Fs       // what this object is part of
-	id            string    // internal ID of object
 	remote        string    // The remote path (full path containing library name if target at root)
 	pathInLibrary string    // Path of the object without the library name
 	size          int64     // size of the object
@@ -107,7 +106,6 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 		// Set the properties from the upload back to the object
 		o.size = uploaded.Size
-		o.id = uploaded.ID
 
 		return nil
 	}
@@ -117,11 +115,4 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 // Remove this object
 func (o *Object) Remove(ctx context.Context) error {
 	return o.fs.deleteFile(ctx, o.libraryID, o.pathInLibrary)
-}
-
-// ==================== Optional Interface fs.IDer ====================
-
-// ID returns the ID of the Object if known, or "" if not
-func (o *Object) ID() string {
-	return o.id
 }
