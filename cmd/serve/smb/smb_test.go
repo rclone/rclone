@@ -14,7 +14,9 @@ import (
 
 	smb2 "github.com/cloudsoda/go-smb2"
 	_ "github.com/rclone/rclone/backend/local"
+	"github.com/rclone/rclone/cmd/serve/servetest"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/require"
@@ -1938,6 +1940,15 @@ func TestServeFileIDFollowsRename(t *testing.T) {
 	create("e/g.txt", 0)
 	require.Equal(t, id, idOf("d2/g.txt"))
 	require.NotEqual(t, id, idOf("e/g.txt"))
+}
+
+// TestRc checks that serve smb can be started and stopped via the rc
+// serve/start and serve/stop calls.
+func TestRc(t *testing.T) {
+	servetest.TestRc(t, rc.Params{
+		"type":           "smb",
+		"vfs_cache_mode": "off",
+	})
 }
 
 func dirNames(entries []os.FileInfo) []string {
