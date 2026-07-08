@@ -1175,11 +1175,13 @@ func (f *Fs) uploadLargeFile(ctx context.Context, name string, parent string, si
 		ContentType:   "application/octet-stream",
 		Options:       options,
 		ExtraHeaders: map[string]string{
-			"x-filename":          url.QueryEscape(name),
-			"x-parent_id":         parent,
-			"override-name-exist": "true",
-			"upload-id":           uuid.New().String(),
-			"x-streammode":        "1",
+			"x-filename":  url.QueryEscape(name),
+			"x-parent_id": parent,
+			// Must carry the x- prefix; without it the stream endpoint ignores
+			// the flag and creates a duplicate instead of overwriting.
+			"x-override-name-exist": "true",
+			"upload-id":             uuid.New().String(),
+			"x-streammode":          "1",
 		},
 	}
 
