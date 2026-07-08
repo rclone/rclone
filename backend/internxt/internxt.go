@@ -343,7 +343,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			fs.Debugf(f, "getUserInfo returned 401, attempting re-auth")
 			authErr := f.refreshOrReLogin(ctx)
 			if authErr != nil {
-				return nil, fmt.Errorf("failed to fetch user info (re-auth failed): %w", err)
+				return nil, fmt.Errorf("failed to fetch user info (re-auth failed: %w): %w", authErr, err)
 			}
 			userInfo, err = getUserInfo(ctx, &userInfoConfig{Token: f.cfg.Token})
 			if err == nil {
