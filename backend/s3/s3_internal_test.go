@@ -144,6 +144,31 @@ func (f *Fs) InternalTestNoHead(t *testing.T) {
 
 }
 
+func (f *Fs) InternalTestHasChildren(t *testing.T) {
+	ctx := context.Background()
+	contents := random.String(100)
+	item := fstest.NewItem("has-children/file.txt", contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))
+	obj := fstests.PutTestContents(ctx, t, f, &item, contents, true)
+	defer func() {
+		assert.NoError(t, obj.Remove(ctx))
+	}()
+
+	// A prefix with an object under it is a directory
+	found, err := f.hasChildren(ctx, "has-children")
+	require.NoError(t, err)
+	assert.True(t, found, "prefix with an object should report children")
+
+	// The object itself is a file so has no children
+	found, err = f.hasChildren(ctx, "has-children/file.txt")
+	require.NoError(t, err)
+	assert.False(t, found, "a file should not report children")
+
+	// A path which doesn't exist has no children
+	found, err = f.hasChildren(ctx, "has-children/does-not-exist")
+	require.NoError(t, err)
+	assert.False(t, found, "a missing path should not report children")
+}
+
 func TestVersionLess(t *testing.T) {
 	key1 := "key1"
 	key2 := "key2"
@@ -785,6 +810,7 @@ func (f *Fs) InternalTestObjectLock(t *testing.T) {
 func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("Metadata", f.InternalTestMetadata)
 	t.Run("NoHead", f.InternalTestNoHead)
+	t.Run("HasChildren", f.InternalTestHasChildren)
 	t.Run("Versions", f.InternalTestVersions)
 	t.Run("ObjectLock", f.InternalTestObjectLock)
 }
