@@ -39,12 +39,20 @@ func (f *Fs) getRawHash(ctx context.Context, hashType hash.Type, remote, fp stri
 	return op.val, err
 }
 
-// put new hashes for an object
-func (o *Object) putHashes(ctx context.Context, rawHashes hashMap) error {
+// put new hashes for an object.
+// localSize, if provided, overrides o.Object.Size() for the fingerprint
+// key. This is needed for remotes like Google Photos that return a
+// size of -1 until eventual consistency resolves, so we key the cache
+// on the local source size that was used during upload.
+func (o *Object) putHashes(ctx context.Context, rawHashes hashMap, localSize ...int64) error {
 	if o.f.opt.MaxAge <= 0 {
 		return nil
 	}
-	fp := o.fingerprint(ctx)
+	size := o.Object.Size()
+	if len(localSize) > 0 {
+		size = localSize[0]
+	}
+	fp := o.fingerprintWithSize(ctx, size)
 	if fp == "" {
 		return nil
 	}
@@ -133,8 +141,42 @@ func (o *Object) updateHashes(ctx context.Context) error {
 
 // Update the object with the given data, time and size.
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	_ = o.f.pruneHash(src.Remote())
-	return o.Object.Update(ctx, in, src, options...)
+	var (
+		common hash.Set
+		rehash bool
+		hashes hashMap
+	)
+	f := o.f
+	if fsrc := src.Fs(); fsrc != nil {
+		common = fsrc.Hashes().Overlap(f.keepHashes)
+		rehash = fsrc.Features().SlowHash || common != f.keepHashes
+	}
+
+	// Only calculate/cache the hash in-flight if the underlying remote
+	// does not support hashes natively (like Google Photos).
+	underlyingSupportsHashes := o.Object.Fs().Hashes().Count() != 0
+
+	wrapIn := in
+	if !underlyingSupportsHashes && rehash {
+		r, err := f.newHashingReader(ctx, in, func(sums hashMap) {
+			hashes = sums
+		})
+		if err == nil {
+			wrapIn = r
+		}
+	}
+
+	_ = f.pruneHash(src.Remote())
+	err := o.Object.Update(ctx, wrapIn, src, options...)
+	if err != nil {
+		return err
+	}
+
+	// Cache the hash only if we calculated it in-flight
+	if !underlyingSupportsHashes && len(hashes) > 0 {
+		_ = o.putHashes(ctx, hashes, src.Size())
+	}
+	return nil
 }
 
 // Remove an object.
@@ -230,7 +272,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		}
 	}
 	if len(hashes) > 0 {
-		err := o.(*Object).putHashes(ctx, hashes)
+		err := o.(*Object).putHashes(ctx, hashes, src.Size())
 		fs.Debugf(o, "Applied %d source hashes, err: %v", len(hashes), err)
 	}
 	return o, err
@@ -280,7 +322,7 @@ func (r *hashingReader) Close() error {
 	return nil
 }
 
-// Return object fingerprint or empty string in case of errors
+// fingerprint returns the cache key for this object.
 //
 // Note that we can't use the generic `fs.Fingerprint` here because
 // this fingerprint is used to pick _derived hashes_ that are slow
@@ -291,7 +333,14 @@ func (r *hashingReader) Close() error {
 // while `fs.Fingerprint` would select a hash _produced by hasher_
 // creating unresolvable fingerprint loop.
 func (o *Object) fingerprint(ctx context.Context) string {
-	size := o.Object.Size()
+	return o.fingerprintWithSize(ctx, o.Object.Size())
+}
+
+// fingerprintWithSize is like fingerprint but uses an explicit size.
+// This lets callers (e.g. Update) supply the local source size instead of
+// the remote size, for remotes that return -1 until eventual consistency
+// resolves (e.g. Google Photos in async batch_mode).
+func (o *Object) fingerprintWithSize(ctx context.Context, size int64) string {
 	timeStr := "-"
 	if o.f.fpTime {
 		timeStr = o.Object.ModTime(ctx).UTC().Format(timeFormat)
