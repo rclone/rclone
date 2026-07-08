@@ -771,6 +771,10 @@ func (f *Fs) localPath(name string) string {
 	return filepath.Join(f.root, filepath.FromSlash(f.opt.Enc.FromStandardPath(name)))
 }
 
+func (f *Fs) wrapPathLengthError(localPath string, err error) error {
+	return wrapWindowsPathLengthError(localPath, f.opt.NoUNC, err)
+}
+
 // Put the Object to the local filesystem
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	// Temporary Object under construction - info filled in by Update()
@@ -792,7 +796,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	localPath := f.localPath(dir)
 	err := file.MkdirAll(localPath, 0777)
 	if err != nil {
-		return err
+		return f.wrapPathLengthError(localPath, err)
 	}
 	if dir == "" {
 		fi, err := f.lstat(localPath)
@@ -862,7 +866,7 @@ func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	localPath := f.localPath(dir)
 	if fi, err := os.Stat(localPath); err != nil {
-		return err
+		return f.wrapPathLengthError(localPath, err)
 	} else if !fi.IsDir() {
 		return fs.ErrorIsFile
 	}
@@ -872,7 +876,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 			err = os.Remove(localPath)
 		}
 	}
-	return err
+	return f.wrapPathLengthError(localPath, err)
 }
 
 // Precision of the file system
@@ -993,6 +997,10 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		// not enough rights to write to dst
 		return nil, err
 	} else if err != nil {
+		err = f.wrapPathLengthError(dstObj.path, err)
+		if errors.Is(err, errWindowsLongPath) {
+			return nil, err
+		}
 		// not quite clear, but probably trying to move a file across file system
 		// boundaries. Copying might still work.
 		fs.Debugf(src, "Can't move: %v: trying copy", err)
@@ -1041,7 +1049,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	dstParentPath := filepath.Dir(dstPath)
 	err = file.MkdirAll(dstParentPath, 0777)
 	if err != nil {
-		return err
+		return f.wrapPathLengthError(dstParentPath, err)
 	}
 
 	// Do the move
@@ -1053,6 +1061,10 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		// not enough rights to write to dst
 		return err
 	} else if err != nil {
+		err = f.wrapPathLengthError(dstPath, err)
+		if errors.Is(err, errWindowsLongPath) {
+			return err
+		}
 		// not quite clear, but probably trying to move directory across file system
 		// boundaries. Copying might still work.
 		fs.Debugf(src, "Can't move dir: %v: trying copy", err)
@@ -1244,7 +1256,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	}
 	err := o.setTimes(modTime, modTime)
 	if err != nil {
-		return err
+		return o.fs.wrapPathLengthError(o.path, err)
 	}
 	// Re-read metadata
 	return o.lstat()
@@ -1384,7 +1396,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 
 	fd, err := file.Open(o.path)
 	if err != nil {
-		return
+		return nil, o.fs.wrapPathLengthError(o.path, err)
 	}
 	wrappedFd := readers.NewLimitedReadCloser(fd, limit)
 	if offset != 0 {
@@ -1410,7 +1422,8 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 // mkdirAll makes all the directories needed to store the object
 func (o *Object) mkdirAll() error {
 	dir := filepath.Dir(o.path)
-	return file.MkdirAll(dir, 0777)
+	err := file.MkdirAll(dir, 0777)
+	return o.fs.wrapPathLengthError(dir, err)
 }
 
 type nopWriterCloser struct {
@@ -1465,13 +1478,14 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if !o.translatedLink {
 		f, err := file.OpenFile(o.path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 		if err != nil {
+			err = o.fs.wrapPathLengthError(o.path, err)
 			if runtime.GOOS == "windows" && os.IsPermission(err) {
 				// If permission denied on Windows might be trying to update a
 				// hidden file, in which case try opening without CREATE
 				// See: https://stackoverflow.com/questions/13215716/ioerror-errno-13-permission-denied-when-trying-to-open-hidden-file-in-w-mod
 				f, err = file.OpenFile(o.path, os.O_WRONLY|os.O_TRUNC, 0666)
 				if err != nil {
-					return err
+					return o.fs.wrapPathLengthError(o.path, err)
 				}
 			} else {
 				return err
@@ -1580,7 +1594,7 @@ func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.Wr
 
 	out, err := file.OpenFile(o.path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
-		return nil, err
+		return nil, f.wrapPathLengthError(o.path, err)
 	}
 	// Pre-allocate the file for performance reasons
 	if !f.opt.NoPreAllocate {
@@ -1643,13 +1657,13 @@ func (o *Object) lstat() error {
 	if err == nil {
 		o.setMetadata(info)
 	}
-	return err
+	return o.fs.wrapPathLengthError(o.path, err)
 }
 
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
 	o.clearHashCache()
-	return remove(o.path)
+	return o.fs.wrapPathLengthError(o.path, remove(o.path))
 }
 
 // Metadata returns metadata for an object
