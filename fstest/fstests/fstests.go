@@ -1818,6 +1818,44 @@ func Run(t *testing.T, opt *Opt) {
 				assert.Equal(t, file1Contents[:50], ReadObject(ctx, t, obj, 50), "contents of file1 differ after limited read")
 			})
 
+			// TestObjectOpenFingerprint tests that opening an object - in particular
+			// with a range request - does not change its fingerprint.
+			//
+			// go test -v -run 'TestIntegration/FsMkdir/FsPutFiles/ObjectOpenFingerprint$'
+			t.Run("ObjectOpenFingerprint", func(t *testing.T) {
+				skipIfNotOk(t)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
+
+				// Read the whole object first so any lazily fetched hash
+				// is populated, then take that as the reference.
+				_ = ReadObject(ctx, t, obj, -1)
+				fastWant := fs.Fingerprint(ctx, obj, true)
+				slowWant := fs.Fingerprint(ctx, obj, false)
+
+				checkFingerprint := func(what string) {
+					assert.Equal(t, fastWant, fs.Fingerprint(ctx, obj, true), "fast fingerprint changed after %s", what)
+					assert.Equal(t, slowWant, fs.Fingerprint(ctx, obj, false), "slow fingerprint changed after %s", what)
+				}
+
+				// Opening the object in various ways must not change the fingerprint
+				_ = ReadObject(ctx, t, obj, -1)
+				checkFingerprint("full read")
+
+				_ = ReadObject(ctx, t, obj, -1, &fs.SeekOption{Offset: 50})
+				checkFingerprint("seek read")
+
+				_ = ReadObject(ctx, t, obj, -1, &fs.RangeOption{Start: 5, End: 15})
+				checkFingerprint("range read")
+
+				_ = ReadObject(ctx, t, obj, -1, &fs.RangeOption{Start: 80, End: -1})
+				checkFingerprint("range read to end")
+
+				// A freshly fetched object must have the same fingerprint too
+				obj = fstest.NewObject(ctx, t, f, file1.Path)
+				_ = ReadObject(ctx, t, obj, -1)
+				checkFingerprint("refresh")
+			})
+
 			// TestObjectUpdate tests that Update works
 			t.Run("ObjectUpdate", func(t *testing.T) {
 				skipIfNotOk(t)
