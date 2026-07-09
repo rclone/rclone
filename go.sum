@@ -204,8 +204,6 @@ github.com/cloudflare/circl v1.6.3 h1:9GPOhQGF9MCYUeXyMYlqTR6a5gTrgR/fBLXvUgtVcg
 github.com/cloudflare/circl v1.6.3/go.mod h1:2eXP6Qfat4O/Yhh8BznvKnJ+uzEoTQ6jVKJRn81BiS4=
 github.com/cloudinary/cloudinary-go/v2 v2.15.0 h1:iLoIwb7BJECHTbNcmIhYDsQhoZiACWGNvEpyqQy97Dk=
 github.com/cloudinary/cloudinary-go/v2 v2.15.0/go.mod h1:ireC4gqVetsjVhYlwjUJwKTbZuWjEIynbR9zQTlqsvo=
-github.com/cloudsoda/go-smb2 v0.0.0-20250228001242-d4c70e6251cc h1:t8YjNUCt1DimB4HCIXBztwWMhgxr5yG5/YaRl9Afdfg=
-github.com/cloudsoda/go-smb2 v0.0.0-20250228001242-d4c70e6251cc/go.mod h1:CgWpFCFWzzEA5hVkhAc6DZZzGd3czx+BblvOzjmg6KA=
 github.com/cloudsoda/go-smb2 v0.0.0-20260701064823-d8c5600d73b8 h1:+KC2I+emnT6ccWmo7IHbtchGc/vFqAxUuovo2eUgMuM=
 github.com/cloudsoda/go-smb2 v0.0.0-20260701064823-d8c5600d73b8/go.mod h1:1pQXB0vAlzRlqcY7LYKOOZMw0wKfJPFxTLsJRF2Gswo=
 github.com/cloudsoda/sddl v0.0.0-20250224235906-926454e91efc h1:0xCWmFKBmarCqqqLeM7jFBSw/Or81UEElFqO8MY+GDs=
@@ -428,8 +426,8 @@ github.com/hashicorp/golang-lru/v2 v2.0.7/go.mod h1:QeFd9opnmA6QUJc5vARoKUSoFhyf
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
-github.com/internxt/rclone-adapter v0.0.0-20260331173834-036f908d0160 h1:PV6ipOJN0JIek4dqPqsTtenQmjI1SZntCUgPzhfk9gM=
-github.com/internxt/rclone-adapter v0.0.0-20260331173834-036f908d0160/go.mod h1:yRuPDnHgGmsbvopF0amMqXxr4n32GynzX5GTwFYDHaw=
+github.com/internxt/rclone-adapter v0.0.0-20260708165336-dd6561bacfa2 h1:ZeebPK9Bnpy40uTuneEeVMYaMMerol3qsmIvzD0EIAk=
+github.com/internxt/rclone-adapter v0.0.0-20260708165336-dd6561bacfa2/go.mod h1:4jGLEnNHyWOVSGn89IeWUVqlKCEitOM3D32/XypGy/o=
 github.com/jcmturner/aescts/v2 v2.0.0 h1:9YKLH6ey7H4eDBXW8khjYslgyqG2xZikXP0EQFKrle8=
 github.com/jcmturner/aescts/v2 v2.0.0/go.mod h1:AiaICIRyfYg35RUkr8yESTqvSy7csK90qZ5xfvvsoNs=
 github.com/jcmturner/dnsutils/v2 v2.0.0 h1:lltnkeZGL0wILNvrNiVCR6Ro5PGU/SeBvVO/8c/iPbo=
