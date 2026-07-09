@@ -565,6 +565,7 @@ func updateRemote(ctx context.Context, name string, keyValues rc.Params, opt Upd
 	}
 
 	choices := configmap.Simple{}
+	ephemeral := configmap.Simple{}
 	m := fs.ConfigMap(ri.Prefix, ri.Options, name, nil)
 
 	// Set the config
@@ -588,7 +589,13 @@ func updateRemote(ctx context.Context, name string, keyValues rc.Params, opt Upd
 		choices.Set(k, vStr)
 		if !strings.HasPrefix(k, fs.ConfigKeyEphemeralPrefix) {
 			m.Set(k, vStr)
+		} else {
+			ephemeral.Set(k, vStr)
 		}
+	}
+	// Add a getter to make sure ephemeral config is still visible
+	if len(ephemeral) > 0 {
+		m.AddGetter(ephemeral, configmap.PriorityNormal)
 	}
 	if opt.Edit {
 		choices[fs.ConfigEdit] = "true"
