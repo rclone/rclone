@@ -1370,13 +1370,13 @@ func s3RedirectCrossesHost(req *http.Request, via []*http.Request) bool {
 	if len(via) == 0 {
 		return false
 	}
-	host := via[0].URL.Host
+	scheme, host := via[0].URL.Scheme, via[0].URL.Host
 	for _, redirect := range via[1:] {
-		if redirect.URL.Host != host {
+		if redirect.URL.Host != host || redirect.URL.Scheme != scheme {
 			return true
 		}
 	}
-	return host != req.URL.Host
+	return host != req.URL.Host || scheme != req.URL.Scheme
 }
 
 // Fixup the request if needed.
@@ -1923,18 +1923,50 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		newRoot, leaf := path.Split(oldRoot)
 		f.setRoot(newRoot)
 		_, err := f.NewObject(ctx, leaf)
-		if errors.Is(err, fs.ErrorObjectNotFound) {
+		switch {
+		case err == nil:
+			// It is a file so return an fs which points to the parent
+			return f, fs.ErrorIsFile
+		case errors.Is(err, fs.ErrorObjectNotFound):
 			// File doesn't exist or is a directory so return old f
 			f.setRoot(oldRoot)
 			return f, nil
+		default:
+			// We couldn't HEAD the object so now attempt to list it
+			hasChildren, listErr := f.hasChildren(ctx, leaf)
+			if listErr != nil {
+				fs.Debugf(f, "Couldn't check %q for children after HEAD failed (%v): %v", oldRoot, err, listErr)
+			}
+			// If it listed and has children it must be a directory
+			if hasChildren {
+				f.setRoot(oldRoot)
+				return f, nil
+			}
+			// If it has no children it is either a file or an empty directory. We can't
+			// tell these two cases apart. We choose file which is more likely, and
+			// return an fs which points to the parent.
+			return f, fs.ErrorIsFile
 		}
-		if err != nil {
-			return nil, err
-		}
-		// return an error with an fs which points to the parent
-		return f, fs.ErrorIsFile
 	}
 	return f, nil
+}
+
+// hasChildren reports whether the directory dir contains any objects.
+func (f *Fs) hasChildren(ctx context.Context, dir string) (found bool, err error) {
+	bucket, directory := f.split(dir)
+	err = f.list(ctx, listOpt{
+		bucket:    bucket,
+		directory: directory,
+		prefix:    f.rootDirectory,
+		recurse:   true,
+	}, func(remote string, object *types.Object, versionID *string, isDirectory bool) error {
+		found = true
+		return errEndList // stop after the first object
+	})
+	if err != nil && err != fs.ErrorDirNotFound {
+		return false, err
+	}
+	return found, nil
 }
 
 // getMetaDataListing gets the metadata from the object unconditionally from the listing

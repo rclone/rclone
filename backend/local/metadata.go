@@ -140,15 +140,22 @@ func (o *Object) writeMetadataToFile(m fs.Metadata) (outErr error) {
 		if mode >= 0 {
 			umode := uint(mode)
 			if umode <= math.MaxUint32 {
+				fileMode := os.FileMode(umode)
+				// fileMode comes from the source, which may be untrusted, so
+				// by default apply only the permission bits and strip the
+				// setuid, setgid and sticky bits.
+				if !o.fs.opt.MetadataRestoreSpecial {
+					fileMode = fileMode.Perm()
+				}
 				if o.translatedLink {
 					if haveLChmod {
-						err = lChmod(o.path, os.FileMode(umode))
+						err = lChmod(o.path, fileMode)
 					} else {
-						fs.Debugf(o, "Unable to set mode %v on a symlink on this OS", os.FileMode(umode))
+						fs.Debugf(o, "Unable to set mode %v on a symlink on this OS", fileMode)
 						err = nil
 					}
 				} else {
-					err = os.Chmod(o.path, os.FileMode(umode))
+					err = os.Chmod(o.path, fileMode)
 				}
 				if err != nil {
 					outErr = fmt.Errorf("failed to change permissions: %w", err)
