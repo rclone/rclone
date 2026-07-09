@@ -3,17 +3,19 @@
 package extract
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestStripDotSlashPrefix(t *testing.T) {
+func TestDestPath(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
+		dstDir   string
 		expected string
+		wantErr  bool
 	}{
 		{
 			name:     "strip leading dot-slash from file",
@@ -36,12 +38,13 @@ func TestStripDotSlashPrefix(t *testing.T) {
 			expected: "dir/file.txt",
 		},
 		{
-			name:     "dot-dot-slash NOT stripped (path traversal safety)",
-			input:    "../etc/passwd",
-			expected: "../etc/passwd",
+			name:     "joined onto destination directory",
+			input:    "file.txt",
+			dstDir:   "safe/prefix",
+			expected: "safe/prefix/file.txt",
 		},
 		{
-			name:     "dot-slash directory entry becomes empty",
+			name:     "archive root entry skipped",
 			input:    "./",
 			expected: "",
 		},
@@ -50,12 +53,49 @@ func TestStripDotSlashPrefix(t *testing.T) {
 			input:    "././file.txt",
 			expected: "./file.txt",
 		},
+		{
+			name:    "leading dot-dot rejected",
+			input:   "../etc/passwd",
+			wantErr: true,
+		},
+		{
+			name:    "leading dot-dot rejected with destination",
+			input:   "../escaped.txt",
+			dstDir:  "safe/prefix",
+			wantErr: true,
+		},
+		{
+			name:    "interior dot-dot rejected",
+			input:   "dir/../../escaped.txt",
+			dstDir:  "safe/prefix",
+			wantErr: true,
+		},
+		{
+			name:    "trailing dot-dot rejected",
+			input:   "dir/..",
+			wantErr: true,
+		},
+		{
+			name:    "backslash dot-dot rejected",
+			input:   `..\escaped.txt`,
+			wantErr: true,
+		},
+		{
+			name:    "nested backslash dot-dot rejected",
+			input:   `dir\..\..\escaped.txt`,
+			dstDir:  "safe/prefix",
+			wantErr: true,
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			// This mirrors the stripping logic in ArchiveExtract
-			got := strings.TrimPrefix(tc.input, "./")
+			got, err := destPath(tc.input, tc.dstDir)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
 			assert.Equal(t, tc.expected, got)
 		})
 	}
