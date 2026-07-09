@@ -371,7 +371,7 @@ over MSI. This token is then exchanged for actual storage token using
 
 #### Azure CLI tool `az` {#use_az}
 
-Set to use the [Azure CLI tool `az`](https://learn.microsoft.com/en-us/cli/azure/)
+If `use_az` is set, use [Azure CLI tool `az`](https://learn.microsoft.com/en-us/cli/azure/)
 as the sole means of authentication.
 
 Setting this can be useful if you wish to use the `az` CLI on a host with
