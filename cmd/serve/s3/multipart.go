@@ -235,6 +235,7 @@ func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, obj
 
 	if err := up.validate(input); err != nil {
 		_ = up.abort(ctx)
+		b.forgetPath(ctx, up.fp)
 		return "", "", err
 	}
 
@@ -248,6 +249,7 @@ func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, obj
 	up.mu.Unlock()
 	if leftover != 0 || streamed != total {
 		_ = up.abort(ctx)
+		b.forgetPath(ctx, up.fp)
 		return "", "", gofakes3.ErrInvalidPart
 	}
 
@@ -260,12 +262,7 @@ func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, obj
 		return "", "", err
 	}
 
-	// Invalidate the parent directory's cached listing so subsequent VFS
-	// Stat / List calls pick up the newly-written object from the
-	// underlying Fs (we wrote to the Fs directly, bypassing VFS).
-	if root, err := _vfs.Root(); err == nil {
-		root.ForgetPath(up.fp, fs.EntryObject)
-	}
+	b.forgetPath(ctx, up.fp)
 
 	b.meta.Store(up.fp, up.meta)
 	if val, ok := up.meta["X-Amz-Meta-Mtime"]; ok {
@@ -291,7 +288,25 @@ func (b *s3Backend) AbortMultipartUpload(ctx context.Context, bucketName, object
 		return err
 	}
 	defer b.multipartUploads.Delete(uploadID)
-	return up.abort(ctx)
+	err = up.abort(ctx)
+	b.forgetPath(ctx, up.fp)
+	return err
+}
+
+// forgetPath invalidates the parent directory's cached VFS listing so that
+// subsequent VFS Stat / List calls re-read up.fp from the underlying Fs. The
+// streamed multipart path writes to (and, on abort, removes from) the Fs
+// directly, bypassing the VFS, so the VFS cache would otherwise keep serving a
+// stale entry - including a ghost of a pre-existing object that an aborted
+// upload has overwritten and removed.
+func (b *s3Backend) forgetPath(ctx context.Context, fp string) {
+	_vfs, err := b.s.getVFS(ctx)
+	if err != nil {
+		return
+	}
+	if root, err := _vfs.Root(); err == nil {
+		root.ForgetPath(fp, fs.EntryObject)
+	}
 }
 
 // validate cross-checks the part list supplied by the client against the
