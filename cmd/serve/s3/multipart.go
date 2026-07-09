@@ -29,15 +29,21 @@ import (
 	"github.com/rclone/gofakes3"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/object"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/pool"
 )
+
+// multipartUploadPrefix is prepended to the leaf name of the temporary object
+// a streamed multipart upload is written to before it is moved into place.
+const multipartUploadPrefix = ".rclone_multipart_upload_"
 
 // multipartUpload tracks one in-flight S3 multipart upload that is being
 // streamed, in part order, into a single PutStream upload to the underlying Fs.
 type multipartUpload struct {
 	bucket, key string
-	fp          string // = path.Join(bucket, key)
+	fp          string // final object path
+	streamFp    string // path the parts are streamed to (fp when the backend uploads atomically)
 	meta        map[string]string
 
 	pipeW *io.PipeWriter // parts are streamed here, in part-number order
@@ -56,11 +62,12 @@ type multipartUpload struct {
 }
 
 // newMultipartUpload allocates an upload struct.
-func newMultipartUpload(bucket, key, fp string, meta map[string]string) *multipartUpload {
+func newMultipartUpload(bucket, key, fp, streamFp string, meta map[string]string) *multipartUpload {
 	return &multipartUpload{
 		bucket:    bucket,
 		key:       key,
 		fp:        fp,
+		streamFp:  streamFp,
 		meta:      meta,
 		partMD5s:  map[int][]byte{},
 		partSizes: map[int]int64{},
@@ -81,10 +88,19 @@ func (b *s3Backend) loadUpload(uploadID gofakes3.UploadID) (*multipartUpload, er
 // CreateMultipartUpload begins a new multipart upload that streams the parts,
 // in part-number order, into a single PutStream upload to the underlying Fs.
 //
-// If streaming is disabled (--disable-multipart-streaming) or the Fs has no
-// PutStream, ErrMultipartUploadNotSupported is returned so that gofakes3 falls
-// back to buffering the whole upload in memory; a one-off NOTICE warns about
-// the memory use.
+// Backends that upload atomically (PartialUploads=false) are streamed
+// straight to the final object. An aborted or failed upload never
+// makes a partial object visible or disturbs a pre-existing one.
+// Backends where a partial upload is visible (PartialUploads=true)
+// are instead streamed to a temporary object that is moved into
+// place, server-side, on completion, giving the same atomic
+// behaviour.
+//
+// If streaming is disabled (--disable-multipart-streaming), the Fs has no
+// PutStream, or a non-atomic Fs can't move/copy objects server-side,
+// ErrMultipartUploadNotSupported is returned so that gofakes3 falls back to
+// buffering the whole upload in memory; a one-off NOTICE warns about the
+// memory use.
 func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objectName string, meta map[string]string) (gofakes3.UploadID, error) {
 	_vfs, err := b.s.getVFS(ctx)
 	if err != nil {
@@ -96,12 +112,8 @@ func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objec
 
 	f := _vfs.Fs()
 	features := f.Features()
-	if b.s.opt.DisableMultipartStreaming || features.PutStream == nil {
+	if reason := b.noStreamingReason(f); reason != "" {
 		b.warnInMemoryOnce.Do(func() {
-			reason := "this backend doesn't support streaming uploads"
-			if b.s.opt.DisableMultipartStreaming {
-				reason = "--disable-multipart-streaming is set"
-			}
 			fs.Logf(nil, "serve s3: buffering multipart uploads in memory because %s - this may use a lot of memory", reason)
 		})
 		return "", gofakes3.ErrMultipartUploadNotSupported
@@ -118,9 +130,16 @@ func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objec
 		}
 	}
 
-	up := newMultipartUpload(bucketName, objectName, fp, meta)
+	uploadID := gofakes3.UploadID(uuid.New().String())
+	streamFp := fp
+	// If partial uploads visible, stream to temporary object
+	if features.PartialUploads {
+		streamFp = path.Join(objectDir, multipartUploadPrefix+string(uploadID))
+	}
 
-	src := object.NewStaticObjectInfo(fp, time.Now(), -1, true, nil, f)
+	up := newMultipartUpload(bucketName, objectName, fp, streamFp, meta)
+
+	src := object.NewStaticObjectInfo(streamFp, time.Now(), -1, true, nil, f)
 	pr, pw := io.Pipe()
 	// Use a context that outlives this request (it's cancelled on abort) but
 	// keeps its values.
@@ -135,9 +154,23 @@ func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objec
 		close(up.putDone)
 	}()
 
-	uploadID := gofakes3.UploadID(uuid.New().String())
 	b.multipartUploads.Store(uploadID, up)
 	return uploadID, nil
+}
+
+// noStreamingReason returns a non-empty reason why streamed multipart uploads
+// can't be used for f, or "" if they can.
+func (b *s3Backend) noStreamingReason(f fs.Fs) string {
+	switch {
+	case b.s.opt.DisableMultipartStreaming:
+		return "--disable-multipart-streaming is set"
+	case f.Features().PutStream == nil:
+		return "this backend doesn't support streaming uploads"
+	case f.Features().PartialUploads && !operations.CanServerSideMove(f):
+		return "this backend can't upload atomically and has no server-side move or copy"
+	default:
+		return ""
+	}
 }
 
 // UploadPart writes a single part from the S3 client into the streaming upload.
@@ -235,7 +268,7 @@ func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, obj
 
 	if err := up.validate(input); err != nil {
 		_ = up.abort(ctx)
-		b.forgetPath(ctx, up.fp)
+		b.forgetPath(ctx, up.streamFp)
 		return "", "", err
 	}
 
@@ -249,11 +282,12 @@ func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, obj
 	up.mu.Unlock()
 	if leftover != 0 || streamed != total {
 		_ = up.abort(ctx)
-		b.forgetPath(ctx, up.fp)
+		b.forgetPath(ctx, up.streamFp)
 		return "", "", gofakes3.ErrInvalidPart
 	}
 
 	if err := up.close(ctx); err != nil {
+		b.forgetPath(ctx, up.streamFp)
 		return "", "", err
 	}
 
@@ -262,6 +296,15 @@ func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, obj
 		return "", "", err
 	}
 
+	// If the parts were streamed to a temporary object move it into place
+	if up.streamFp != up.fp {
+		if err := b.moveIntoPlace(ctx, _vfs.Fs(), up.streamFp, up.fp); err != nil {
+			b.forgetPath(ctx, up.streamFp)
+			b.forgetPath(ctx, up.fp)
+			return "", "", err
+		}
+		b.forgetPath(ctx, up.streamFp)
+	}
 	b.forgetPath(ctx, up.fp)
 
 	b.meta.Store(up.fp, up.meta)
@@ -289,16 +332,28 @@ func (b *s3Backend) AbortMultipartUpload(ctx context.Context, bucketName, object
 	}
 	defer b.multipartUploads.Delete(uploadID)
 	err = up.abort(ctx)
-	b.forgetPath(ctx, up.fp)
+	// An atomic backend leaves the final object untouched by the aborted
+	// upload; a non-atomic one only ever wrote the temporary object. Either way
+	// invalidating streamFp is enough.
+	b.forgetPath(ctx, up.streamFp)
 	return err
 }
 
+// moveIntoPlace moves the temporary object srcFp to its final path dstFp on f,
+// server-side, overwriting any object already there.
+func (b *s3Backend) moveIntoPlace(ctx context.Context, f fs.Fs, srcFp, dstFp string) error {
+	srcObj, err := f.NewObject(ctx, srcFp)
+	if err != nil {
+		return fmt.Errorf("failed to find uploaded object: %w", err)
+	}
+	if _, err := operations.Move(ctx, f, nil, dstFp, srcObj); err != nil {
+		return fmt.Errorf("failed to move uploaded object into place: %w", err)
+	}
+	return nil
+}
+
 // forgetPath invalidates the parent directory's cached VFS listing so that
-// subsequent VFS Stat / List calls re-read up.fp from the underlying Fs. The
-// streamed multipart path writes to (and, on abort, removes from) the Fs
-// directly, bypassing the VFS, so the VFS cache would otherwise keep serving a
-// stale entry - including a ghost of a pre-existing object that an aborted
-// upload has overwritten and removed.
+// subsequent VFS Stat / List calls re-read fp from the underlying Fs.
 func (b *s3Backend) forgetPath(ctx context.Context, fp string) {
 	_vfs, err := b.s.getVFS(ctx)
 	if err != nil {
