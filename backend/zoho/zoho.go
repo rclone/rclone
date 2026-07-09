@@ -447,6 +447,12 @@ const folderListSafetyMargin = 500 * time.Millisecond
 func (l *folderWindowLimiter) reserve(now time.Time) time.Time {
 	l.mu.Lock()
 	defer l.mu.Unlock()
+	// Never let a grant move backwards, even if concurrent callers observe
+	// time.Now() out of order: the sliding safety log below indexes grants as
+	// an ordered history, so out-of-order grant times would corrupt the cap.
+	if now.Before(l.lastGrant) {
+		now = l.lastGrant
+	}
 	if l.windowStart.IsZero() {
 		l.windowStart = now
 	}
