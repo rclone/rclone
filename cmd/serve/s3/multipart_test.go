@@ -10,30 +10,56 @@ import (
 	"net/url"
 	"path"
 	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	_ "github.com/rclone/rclone/backend/memory"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/random"
+	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// testBackingCounter hands out unique backing roots across test servers.
+var testBackingCounter atomic.Int64
 
 // newMultipartTestServer starts a serve s3 server backed by a fresh local temp
 // directory and returns a low-level minio Core client (for explicit control of
 // the multipart parts), the backing Fs and the bucket name. The server and
 // client are torn down via t.Cleanup.
 func newMultipartTestServer(t *testing.T, disableStreaming bool) (*minio.Core, fs.Fs, string) {
+	return newMultipartTestServerBacking(t, "", disableStreaming)
+}
+
+// newMultipartTestServerBacking is like newMultipartTestServer but backed by
+// the named remote (a fresh local temp directory if empty). ":memory:" gives
+// an atomic (PartialUploads=false) backing, so the streamed-straight-to-the-
+// destination path is exercised as well as the temporary-object path that
+// local (PartialUploads=true) uses.
+func newMultipartTestServerBacking(t *testing.T, backing string, disableStreaming bool) (*minio.Core, fs.Fs, string) {
 	fstest.Initialise()
 	ctx := context.Background()
-	f, err := fs.NewFs(ctx, t.TempDir())
+	if backing == "" {
+		backing = t.TempDir()
+	}
+	f, err := fs.NewFs(ctx, backing)
 	require.NoError(t, err)
-	const bucket = "test"
+	// A unique bucket per server: every plain ":memory:" backing shares one
+	// process-wide store, so a fixed name would leak objects between tests.
+	bucket := fmt.Sprintf("test-%d", testBackingCounter.Add(1))
 	require.NoError(t, f.Mkdir(ctx, bucket))
+	// The VFS is cached per remote (fs.ConfigString), so a shared ":memory:"
+	// server reuses a VFS whose cached root listing predates the bucket just
+	// created; forget it so the new bucket is visible.
+	if root, err := vfs.New(ctx, f, &vfscommon.Opt).Root(); err == nil {
+		root.ForgetAll()
+	}
 
 	keyid := random.String(16)
 	keysec := random.String(16)
@@ -179,20 +205,98 @@ func TestMultipartNonContiguous(t *testing.T) {
 	require.Error(t, err)
 }
 
+// requireOnly asserts that the bucket contains only the expected
+// objects, in particular no leftover temporary multipart objects.
+func requireOnly(t *testing.T, f fs.Fs, bucket string, want ...string) {
+	entries, err := f.List(context.Background(), bucket)
+	require.NoError(t, err)
+	var got []string
+	for _, entry := range entries {
+		got = append(got, path.Base(entry.Remote()))
+	}
+	assert.ElementsMatch(t, want, got)
+}
+
+// testRemotes to exercise all the code branches
+var testRemotes = []struct {
+	name    string
+	backing string
+}{
+	{"Local", ""},          // PartialUploads=true
+	{"Memory", ":memory:"}, // PartialUploads=false
+}
+
 // TestMultipartAbort checks that aborting an upload tears down the streamed
-// PutStream so no object is left behind.
+// PutStream so neither the object nor its temporary object is left behind.
 func TestMultipartAbort(t *testing.T) {
-	core, f, bucket := newMultipartTestServer(t, false)
-	ctx := context.Background()
-	const object = "aborted.bin"
+	for _, tc := range testRemotes {
+		t.Run(tc.name, func(t *testing.T) {
+			core, f, bucket := newMultipartTestServerBacking(t, tc.backing, false)
+			ctx := context.Background()
+			const object = "aborted.bin"
 
-	uploadID, err := core.NewMultipartUpload(ctx, bucket, object, minio.PutObjectOptions{})
-	require.NoError(t, err)
-	data := []byte(random.String(50 * 1024))
-	_, err = core.PutObjectPart(ctx, bucket, object, uploadID, 1, bytes.NewReader(data), int64(len(data)), minio.PutObjectPartOptions{})
-	require.NoError(t, err)
-	require.NoError(t, core.AbortMultipartUpload(ctx, bucket, object, uploadID))
+			uploadID, err := core.NewMultipartUpload(ctx, bucket, object, minio.PutObjectOptions{})
+			require.NoError(t, err)
+			data := []byte(random.String(50 * 1024))
+			_, err = core.PutObjectPart(ctx, bucket, object, uploadID, 1, bytes.NewReader(data), int64(len(data)), minio.PutObjectPartOptions{})
+			require.NoError(t, err)
+			require.NoError(t, core.AbortMultipartUpload(ctx, bucket, object, uploadID))
 
-	_, err = f.NewObject(ctx, path.Join(bucket, object))
-	require.ErrorIs(t, err, fs.ErrorObjectNotFound)
+			_, err = f.NewObject(ctx, path.Join(bucket, object))
+			require.ErrorIs(t, err, fs.ErrorObjectNotFound)
+			requireOnly(t, f, bucket)
+		})
+	}
+}
+
+// TestMultipartAbortPreservesExisting checks that aborting an upload to a name
+// that already holds an object leaves the existing object untouched - the
+// streamed upload must be atomic, not overwrite the destination as it goes.
+func TestMultipartAbortPreservesExisting(t *testing.T) {
+	for _, tc := range testRemotes {
+		t.Run(tc.name, func(t *testing.T) {
+			core, f, bucket := newMultipartTestServerBacking(t, tc.backing, false)
+			ctx := context.Background()
+			const object = "existing.bin"
+
+			// Put an object the normal (non-multipart) way.
+			existing := []byte(random.String(100))
+			_, err := core.PutObject(ctx, bucket, object, bytes.NewReader(existing), int64(len(existing)), "", "", minio.PutObjectOptions{})
+			require.NoError(t, err)
+
+			// Start a multipart upload to the same name, upload a part, then abort.
+			uploadID, err := core.NewMultipartUpload(ctx, bucket, object, minio.PutObjectOptions{})
+			require.NoError(t, err)
+			data := []byte(random.String(50 * 1024))
+			_, err = core.PutObjectPart(ctx, bucket, object, uploadID, 1, bytes.NewReader(data), int64(len(data)), minio.PutObjectPartOptions{})
+			require.NoError(t, err)
+			require.NoError(t, core.AbortMultipartUpload(ctx, bucket, object, uploadID))
+
+			// The original object must survive, and no temporary object be left behind.
+			assert.Equal(t, existing, readObject(t, f, bucket, object))
+			requireOnly(t, f, bucket, object)
+		})
+	}
+}
+
+// TestMultipartOverwrite checks that a completed multipart upload atomically
+// replaces an existing object of the same name.
+func TestMultipartOverwrite(t *testing.T) {
+	for _, tc := range testRemotes {
+		t.Run(tc.name, func(t *testing.T) {
+			core, f, bucket := newMultipartTestServerBacking(t, tc.backing, false)
+			ctx := context.Background()
+			const object = "overwrite.bin"
+
+			existing := []byte(random.String(100))
+			_, err := core.PutObject(ctx, bucket, object, bytes.NewReader(existing), int64(len(existing)), "", "", minio.PutObjectOptions{})
+			require.NoError(t, err)
+
+			want, err := multipartUploadParts(t, core, bucket, object, []int{60 * 1024, 40 * 1024})
+			require.NoError(t, err)
+
+			assert.Equal(t, want, readObject(t, f, bucket, object))
+			requireOnly(t, f, bucket, object)
+		})
+	}
 }

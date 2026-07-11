@@ -668,6 +668,34 @@ func PasswordRemote(ctx context.Context, name string, keyValues rc.Params) error
 	return err
 }
 
+// UnsetRemote removes the named keys from the remote of name.
+//
+// It returns the keys that were actually removed - keys that didn't
+// exist are silently ignored. It returns an error if the remote
+// doesn't exist or if an attempt is made to unset the "type" key.
+func UnsetRemote(name string, keys ...string) (removed []string, err error) {
+	err = fspath.CheckConfigName(name)
+	if err != nil {
+		return nil, err
+	}
+	if GetValue(name, "type") == "" {
+		return nil, fmt.Errorf("remote %q doesn't exist", name)
+	}
+	for _, key := range keys {
+		if key == "type" {
+			return nil, errors.New(`can't unset the "type" of a remote - use "config delete" to remove the whole remote`)
+		}
+	}
+	for _, key := range keys {
+		if FileDeleteKey(name, key) {
+			removed = append(removed, key)
+		}
+	}
+	SaveConfig()
+	cache.ClearConfig(name) // remove any remotes based on this config from the cache
+	return removed, nil
+}
+
 // JSONListProviders prints all the providers and options in JSON format
 func JSONListProviders() error {
 	b, err := json.MarshalIndent(fs.Registry, "", "    ")

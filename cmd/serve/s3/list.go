@@ -23,6 +23,11 @@ func (b *s3Backend) entryListR(_vfs *vfs.VFS, bucketName, fdPath, name string, a
 	for _, entry := range dirEntries {
 		object := entry.Name()
 
+		// Hide the in-progress multipart uploads
+		if strings.HasPrefix(object, multipartUploadPrefix) {
+			continue
+		}
+
 		// workaround for control-chars detect
 		objectPath := path.Join(fdPath, object)
 
