@@ -245,6 +245,57 @@ func TestCopyNoTraverseDeadlock(t *testing.T) {
 	r.CheckRemoteItems(t, items...)
 }
 
+// Test that --no-check-dest with --backup-dir is rejected
+//
+// If it wasn't then the destination files would be overwritten
+// without being saved to --backup-dir, as --no-check-dest never
+// looks at the destination so the backup logic can never run.
+func TestCopyNoCheckDestBackupDir(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+
+	ci.NoCheckDest = true
+	ci.BackupDir = r.FremoteName + "/backup"
+
+	file1 := r.WriteFile("existing", "potatoes", t1)
+	r.CheckLocalItems(t, file1)
+	file2 := r.WriteObject(ctx, "dst/existing", "potato", t2)
+	r.CheckRemoteItems(t, file2)
+
+	fdst, err := fs.NewFs(ctx, r.FremoteName+"/dst")
+	require.NoError(t, err)
+
+	err = CopyDir(ctx, fdst, r.Flocal, false)
+	require.EqualError(t, err, "can't use --no-check-dest with --backup-dir")
+
+	// Check the destination file was not overwritten
+	r.CheckLocalItems(t, file1)
+	r.CheckRemoteItems(t, file2)
+}
+
+// Test that --no-check-dest with --suffix is rejected - see above
+func TestCopyNoCheckDestSuffix(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+
+	ci.NoCheckDest = true
+	ci.Suffix = ".bak"
+
+	file1 := r.WriteFile("existing", "potatoes", t1)
+	r.CheckLocalItems(t, file1)
+	file2 := r.WriteObject(ctx, "existing", "potato", t2)
+	r.CheckRemoteItems(t, file2)
+
+	err := CopyDir(ctx, r.Fremote, r.Flocal, false)
+	require.EqualError(t, err, "can't use --no-check-dest with --suffix")
+
+	// Check the destination file was not overwritten
+	r.CheckLocalItems(t, file1)
+	r.CheckRemoteItems(t, file2)
+}
+
 // Now with --check-first
 func TestCopyCheckFirst(t *testing.T) {
 	ctx := context.Background()

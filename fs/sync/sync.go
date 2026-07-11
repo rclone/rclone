@@ -233,8 +233,12 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		if ci.Immutable {
 			return nil, errors.New("can't use --no-check-dest with --immutable")
 		}
-		if s.backupDir != nil {
+		// Note that these can't check s.backupDir as it hasn't been set yet
+		if ci.BackupDir != "" {
 			return nil, errors.New("can't use --no-check-dest with --backup-dir")
+		}
+		if ci.Suffix != "" {
+			return nil, errors.New("can't use --no-check-dest with --suffix")
 		}
 	}
 	if s.trackRenames {

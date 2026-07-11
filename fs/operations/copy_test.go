@@ -189,6 +189,34 @@ func TestCopyFileBackupDir(t *testing.T) {
 	r.CheckRemoteItems(t, file1old, file1)
 }
 
+// Test that --no-check-dest with --backup-dir or --suffix is
+// rejected, as without the destination object no backup can be made
+func TestCopyFileNoCheckDestBackupDir(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+
+	ci.NoCheckDest = true
+	ci.BackupDir = r.FremoteName + "/backup"
+
+	file1 := r.WriteFile("dst/file1", "file1 contents", t1)
+	r.CheckLocalItems(t, file1)
+
+	file1old := r.WriteObject(ctx, "dst/file1", "file1 contents old", t1)
+	r.CheckRemoteItems(t, file1old)
+
+	err := operations.CopyFile(ctx, r.Fremote, r.Flocal, file1.Path, file1.Path)
+	require.EqualError(t, err, "can't use --no-check-dest with --backup-dir")
+	r.CheckRemoteItems(t, file1old)
+
+	ci.BackupDir = ""
+	ci.Suffix = ".bak"
+
+	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file1.Path, file1.Path)
+	require.EqualError(t, err, "can't use --no-check-dest with --suffix")
+	r.CheckRemoteItems(t, file1old)
+}
+
 // Test with CompareDest set
 func TestCopyFileCompareDest(t *testing.T) {
 	ctx := context.Background()
