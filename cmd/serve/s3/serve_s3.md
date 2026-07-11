@@ -98,7 +98,16 @@ example its own multipart upload, still with bounded memory). This works
 for any remote that supports `PutStream`, which is nearly all of them,
 including through `crypt`.
 
-**Advantages**
+The upload is atomic so the destination object only ever changes on a
+successful completion. A failed or aborted upload never affects any
+object already stored under that name. Remotes that upload atomically
+already (object stores such as `s3`) are streamed straight to the
+destination. On remotes where a partial upload would otherwise be visible
+(such as `local`), the parts are streamed to a temporary object that is
+moved into place, server-side, on completion; these remotes therefore
+also need to support a server-side move or copy.
+
+**Features**
 
 - The whole object is never buffered in memory; memory use is bounded by
   the parts in flight, not the upload size.
@@ -109,7 +118,12 @@ including through `crypt`.
   overshoot.
 - Works through `crypt` for any part size, since the object is encrypted
   as one continuous stream.
-- Backend-agnostic - it only needs the remote to support `PutStream`.
+- The destination object only ever changes atomically, on completion: an
+  aborted or failed upload leaves any pre-existing object of the same
+  name untouched, and a partly-uploaded object never becomes visible.
+- Backend-agnostic - it only needs the remote to support `PutStream`
+  (plus a server-side move or copy on remotes that don't upload
+  atomically).
 
 **Limitations**
 
@@ -126,11 +140,18 @@ including through `crypt`.
 - Parts are serialised into one stream, so ingest from the client is
   effectively single-threaded, although the remote's own upload still
   runs concurrently.
+- On remotes that don't upload atomically (such as `local`), the
+  completed object is moved into place with a server-side operation.
+  This is a cheap rename on most such remotes. On these remotes, if
+  `serve s3` is killed part-way through an upload the temporary object
+  (named with a leading `.rclone_multipart_upload_`) may be left behind;
+  it is hidden from S3 listings but must be removed manually.
 
 #### Disabling streaming
 
 If you pass `--disable-multipart-streaming`, or the remote doesn't
-support `PutStream`, multipart uploads are instead **buffered in memory**
+support `PutStream` (or doesn't upload atomically and can't move or copy
+server-side), multipart uploads are instead **buffered in memory**
 by the underlying S3 library: every part is held in memory and the whole
 object is written out in one go when the upload completes (the previous
 behaviour). This removes the in-order/contiguous-part restriction above,

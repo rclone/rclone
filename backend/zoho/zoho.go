@@ -663,12 +663,20 @@ func (f *Fs) logThrottle(wait time.Duration, err error) {
 	}
 }
 
+// isMissingResourceErr reports whether resp/err is Zoho's 401 "R008 Unauthorized
+// access" - returned (not a 404) for a resource id (folder or file) that was
+// deleted or never existed. A freshly refreshed token still gets it, so it is a
+// missing resource, not a token problem.
+func isMissingResourceErr(resp *http.Response, err error) bool {
+	return resp != nil && resp.StatusCode == 401 && err != nil && strings.Contains(err.Error(), "R008")
+}
+
 // shouldRetry reports whether the given resp and err deserve to be retried.
 //
 // A 429 is honoured via the Retry-After header (falling back to 60s plus a
 // margin) and starts or continues a throttling episode; expired OAuth tokens
 // are retried, missing OAuth scopes abort, and standard HTTP retry conditions
-// are also handled.
+// are also handled. A missing folder (R008) is not retried.
 //
 // Returns whether to retry, and the err as a convenience.
 func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
@@ -693,6 +701,11 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 	if resp != nil && resp.StatusCode == 401 && len(resp.Header["Www-Authenticate"]) == 1 && strings.Contains(resp.Header["Www-Authenticate"][0], "expired_token") {
 		authRetry = true
 		fs.Debugf(nil, "Should retry: %v", err)
+	}
+
+	// A missing resource never reappears, and retrying escalates to a 429 F7008.
+	if isMissingResourceErr(resp, err) {
+		return false, err
 	}
 	if resp != nil && resp.StatusCode == 429 {
 		// Zoho's listing API is heavily rate limited and tells us how long to
@@ -772,6 +785,16 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.It
 		return false
 	})
 	if err != nil {
+		if err == fs.ErrorDirNotFound {
+			// The cached parent directory id is stale: its folder was deleted, so
+			// listing it returned R008 (mapped to ErrorDirNotFound). Flush the stale
+			// entry so a later create re-resolves (and recreates) the parent, and
+			// report the object as not found - it cannot exist if its parent is gone.
+			parent := strings.TrimSuffix(path[:len(path)-len(leaf)], "/")
+			fs.Debugf(f, "readMetaDataForPath %q: parent %q stale (R008), flushing dircache", path, parent)
+			f.dirCache.FlushDir(parent)
+			return nil, fs.ErrorObjectNotFound
+		}
 		return nil, err
 	}
 	if !found {
@@ -1000,7 +1023,13 @@ OUTER:
 			return f.shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
-			return found, fmt.Errorf("couldn't list files: %w", err)
+			// Surface a missing folder as directory-not-found so dircache/the VFS
+			// treat it as gone instead of hard-failing on a stale id.
+			if isMissingResourceErr(resp, err) {
+				fs.Debugf(f, "listAll %q: R008 unauthorized - treating as directory not found", dirID)
+				return false, fs.ErrorDirNotFound
+			}
+			return false, fmt.Errorf("couldn't list files: %w", err)
 		}
 		if len(result.Items) == 0 {
 			break
@@ -1175,11 +1204,13 @@ func (f *Fs) uploadLargeFile(ctx context.Context, name string, parent string, si
 		ContentType:   "application/octet-stream",
 		Options:       options,
 		ExtraHeaders: map[string]string{
-			"x-filename":          url.QueryEscape(name),
-			"x-parent_id":         parent,
-			"override-name-exist": "true",
-			"upload-id":           uuid.New().String(),
-			"x-streammode":        "1",
+			"x-filename":  url.QueryEscape(name),
+			"x-parent_id": parent,
+			// Must carry the x- prefix; without it the stream endpoint ignores
+			// the flag and creates a duplicate instead of overwriting.
+			"x-override-name-exist": "true",
+			"upload-id":             uuid.New().String(),
+			"x-streammode":          "1",
 		},
 	}
 
