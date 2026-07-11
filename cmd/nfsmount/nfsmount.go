@@ -55,10 +55,25 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (asyncerrors 
 	}
 
 	// Options
-	options := []string{
-		"-o", fmt.Sprintf("port=%s", port),
-		"-o", fmt.Sprintf("mountport=%s", port),
-		"-o", "tcp",
+	//
+	// OpenBSD's mount_nfs(8) doesn't understand "-o mountport=" or "-o
+	// tcp" - the mountd port isn't settable that way and TCP is
+	// requested with the "-T" flag instead, so build a different set of
+	// options there. FreeBSD's mount_nfs(8) accepts the same "-o
+	// port=", "-o mountport=" and "-o tcp" options as Linux so it uses
+	// the common case.
+	var options []string
+	if runtime.GOOS == "openbsd" {
+		options = []string{
+			"-o", fmt.Sprintf("port=%s", port),
+			"-T",
+		}
+	} else {
+		options = []string{
+			"-o", fmt.Sprintf("port=%s", port),
+			"-o", fmt.Sprintf("mountport=%s", port),
+			"-o", "tcp",
+		}
 	}
 	for _, option := range opt.ExtraOptions {
 		options = append(options, "-o", option)
