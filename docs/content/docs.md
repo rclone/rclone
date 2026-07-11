@@ -2445,7 +2445,8 @@ The argument to this should be a command with a space separated list
 of arguments. If one of the arguments has a space in then enclose it
 in `"`, if you want a literal `"` in an argument then enclose the
 argument in `"` and double the `"`. See [CSV encoding](https://godoc.org/encoding/csv)
-for more info.
+for more info. This includes the command itself: if the path to the
+executable contains a space, it must be quoted too.
 
 Eg
 
@@ -2453,6 +2454,7 @@ Eg
 --password-command "echo hello"
 --password-command 'echo "hello with space"'
 --password-command 'echo "hello with ""quotes"" and space"'
+--password-command '"/path with a space/get-password.sh"'
 ```
 
 Note that when changing the configuration password the environment
