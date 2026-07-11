@@ -2018,6 +2018,16 @@ func MoveCaseInsensitive(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileNam
 // moveOrCopyFile moves or copies a single file possibly to a new name
 func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFileName string, cp bool, allowOverlap bool) (err error) {
 	ci := fs.GetConfig(ctx)
+	if ci.NoCheckDest {
+		// Backing up the destination file needs the destination
+		// object, which --no-check-dest never fetches
+		if ci.BackupDir != "" {
+			return errors.New("can't use --no-check-dest with --backup-dir")
+		}
+		if ci.Suffix != "" {
+			return errors.New("can't use --no-check-dest with --suffix")
+		}
+	}
 	logger, usingLogger := GetLogger(ctx)
 	dstFilePath := path.Join(fdst.Root(), dstFileName)
 	srcFilePath := path.Join(fsrc.Root(), srcFileName)
