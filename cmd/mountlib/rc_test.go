@@ -48,6 +48,9 @@ func TestRcMountContext(t *testing.T) {
 	localDir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(localDir, "included.txt"), []byte("included"), 0666))
 	require.NoError(t, os.WriteFile(filepath.Join(localDir, "excluded.txt"), []byte("excluded"), 0666))
+	hiddenDir := filepath.Join(localDir, "hidden")
+	require.NoError(t, os.Mkdir(hiddenDir, 0777))
+	require.NoError(t, os.WriteFile(filepath.Join(hiddenDir, ".hide"), nil, 0666))
 	mountPoint := t.TempDir()
 	in := rc.Params{
 		"fs":         localDir,
@@ -58,6 +61,7 @@ func TestRcMountContext(t *testing.T) {
 		},
 		"_filter": rc.Params{
 			"ExcludeRule": []string{"excluded.txt"},
+			"ExcludeFile": []string{".hide"},
 		},
 	}
 
