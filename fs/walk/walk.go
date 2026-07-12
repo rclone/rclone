@@ -582,7 +582,7 @@ func NewDirTree(ctx context.Context, f fs.Fs, path string, includeAll bool, maxL
 	ci := fs.GetConfig(ctx)
 	fi := filter.GetConfig(ctx)
 	// if --no-traverse and --files-from build DirTree just from files
-	if ci.NoTraverse && fi.HaveFilesFrom() {
+	if ci.NoTraverse && fi.HaveFilesFrom() || fi.Opt.FilesFromStrict {
 		return walkRDirTree(ctx, f, path, includeAll, maxLevel, fi.MakeListR(ctx, f.NewObject))
 	}
 	// if have ListR; and recursing; and not using --files-from; then build a DirTree with ListR
