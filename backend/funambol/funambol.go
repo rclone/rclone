@@ -632,6 +632,17 @@ func (f *Fs) deleteMedia(ctx context.Context, ids ...string) error {
 	return f.callJSON(ctx, &opts, &req, &res)
 }
 
+// CleanUp empties the server-side trash.  Deletes are soft: removed items land
+// in the trash and keep counting against the storage quota until it is emptied.
+// The call returns an empty body on success, hence NoResponse.
+func (f *Fs) CleanUp(ctx context.Context) error {
+	opts := rest.Opts{Method: "POST", Path: "/sapi/media/trash", Parameters: url.Values{"action": {"empty"}}, NoResponse: true}
+	if err := f.callJSON(ctx, &opts, nil, &struct{}{}); err != nil {
+		return fmt.Errorf("cleanup: %w", err)
+	}
+	return nil
+}
+
 // Put the object into the container
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	existing, err := f.newObjectWithInfo(ctx, src.Remote(), nil)
@@ -984,6 +995,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 var (
 	_ fs.Fs              = (*Fs)(nil)
 	_ fs.Purger          = (*Fs)(nil)
+	_ fs.CleanUpper      = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.DirMover        = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
