@@ -337,6 +337,63 @@ This may be due to newer [Apparmor](https://wiki.ubuntu.com/AppArmor) restrictio
 which can be disabled with `sudo aa-disable /usr/bin/fusermount3` (you may need
 to `sudo apt install apparmor-utils` beforehand).
 
+### Mounting on OpenBSD
+
+`rclone nfsmount` works on OpenBSD by spinning up the [serve nfs](/commands/rclone_serve_nfs/)
+server and mounting it with the system `mount_nfs(8)`, the same approach used
+for the NFS mount method on macOS. There is no FUSE-based mount option on
+OpenBSD, so `nfsmount` is the only way to mount rclone remotes as a local
+file system there.
+
+#### portmap registration
+
+OpenBSD's kernel NFS client locates `mountd` through the system portmapper
+rather than connecting to a fixed port, so rclone's in-process NFS server
+needs to be registered with portmap before it can be mounted. Start the
+`serve nfs` server on a fixed port, stop the system NFS services so they
+don't conflict with it, then register that port with portmap for both the
+`nfs` and `mountd` RPC programs (this is the recipe from
+[hjicks in #8578](https://github.com/rclone/rclone/issues/8578#issuecomment-2799229652)):
+
+```console
+rclone serve nfs --addr localhost:<PORT> remote:path
+
+doas rcctl stop nfsd portmap
+doas pkill -9 mountd   # mountd can't be stopped via rcctl(8)
+doas rcctl -f start portmap
+doas rpcinfo -s nfs 3 <PORT>
+doas rpcinfo -s mountd 3 <PORT>
+```
+
+Replace `<PORT>` with the port passed to `--addr`. Port 2049 works too, but
+needs either running rclone as root or adjusting `sysctl(8)` at
+securelevel 0, so a non-privileged port is simpler for testing.
+
+#### Use `mount_nfs -T`, not `mount`
+
+Mount the exported NFS share directly with `mount_nfs(8)` using the `-T`
+flag to force TCP, rather than the generic `mount(8)` wrapper - OpenBSD's
+`mount(8)` does not understand `-T` and rejects it with `unknown option -- T`:
+
+```console
+mount_nfs -T localhost:/ /path/to/local/mount
+```
+
+`rclone nfsmount` does this for you automatically on OpenBSD (it calls
+`mount_nfs` directly with `-T` instead of going through `mount`), so this
+is only needed if you are mounting the `serve nfs` export by hand.
+
+#### AUTH_UNIX and existing limitations
+
+OpenBSD's (and the other BSDs') kernel NFS client requires the server to
+offer the `AUTH_UNIX` authentication flavor during the MOUNT RPC handshake;
+a server that only offers `AUTH_NULL` is rejected with
+`mount_nfs: can't access /: Authentication error`. rclone's NFS server
+advertises `AUTH_UNIX` for this reason, though it does not implement any
+per-user access control on top of it - see
+[issue #8578](https://github.com/rclone/rclone/issues/8578) for the
+background on this and for the current state of OpenBSD support.
+
 ### Limitations
 
 Without the use of `--vfs-cache-mode` this can only write files
