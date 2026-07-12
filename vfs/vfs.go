@@ -199,10 +199,28 @@ var (
 // New creates a new VFS and root directory.  If opt is nil, then
 // DefaultOpt will be used.
 //
+// If the disk cache is already in use by an incompatible VFS, New logs the
+// error and disables caching for the new VFS.
+//
 // The ctx passed in is not used for cancellation but is used to find
 // the config in the context (if any) and filter config in the context
 // (if any).
 func New(ctx context.Context, f fs.Fs, opt *vfscommon.Options) *VFS {
+	vfs, err := NewWithError(ctx, f, opt)
+	if err == nil {
+		return vfs
+	}
+	fs.Errorf(f, "%v - disabling VFS cache", err)
+	fallbackOpt := vfscommon.Opt
+	if opt != nil {
+		fallbackOpt = *opt
+	}
+	fallbackOpt.CacheMode = vfscommon.CacheModeOff
+	vfs, _ = NewWithError(ctx, f, &fallbackOpt)
+	return vfs
+}
+
+func NewWithError(ctx context.Context, f fs.Fs, opt *vfscommon.Options) (*VFS, error) {
 	fsDir := fs.NewDir("", time.Now())
 	// Strip the ctx of any cancellation but copy the config across
 	newCtx := context.Background()
@@ -238,7 +256,15 @@ func New(ctx context.Context, f fs.Fs, opt *vfscommon.Options) *VFS {
 			fs.Debugf(f, "Reusing VFS from active cache")
 			activeVFS.inUse.Add(1)
 			cancel()
-			return activeVFS
+			return activeVFS, nil
+		}
+	}
+	if vfs.Opt.CacheMode > vfscommon.CacheModeOff {
+		for _, activeVFS := range active[configName] {
+			if activeVFS.Opt.CacheMode > vfscommon.CacheModeOff {
+				cancel()
+				return nil, fmt.Errorf("VFS cache for %q is already in use by an incompatible VFS", configName)
+			}
 		}
 	}
 	// Put the VFS into the active cache
@@ -283,7 +309,7 @@ func New(ctx context.Context, f fs.Fs, opt *vfscommon.Options) *VFS {
 	// This can take some time so do it after the Pin
 	vfs.SetCacheMode(vfs.Opt.CacheMode)
 
-	return vfs
+	return vfs, nil
 }
 
 // refresh the directory cache for all directories

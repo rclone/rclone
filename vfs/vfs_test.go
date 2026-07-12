@@ -160,6 +160,9 @@ func TestVFSNew(t *testing.T) {
 	vfs2 = New(ctx, r.Fremote, nil)
 	assert.NotSame(t, vfs, vfs2)
 	checkActiveCacheEntries(2)
+	vfs3 := New(ctx, r.Fremote, nil)
+	assert.Same(t, vfs2, vfs3)
+	vfs3.Shutdown()
 	vfs2.Shutdown()
 
 	filterOpt := filter.Opt
@@ -170,17 +173,51 @@ func TestVFSNew(t *testing.T) {
 	vfs2 = New(ctx, r.Fremote, nil)
 	assert.NotSame(t, vfs, vfs2)
 	checkActiveCacheEntries(2)
+	vfs3 = New(ctx, r.Fremote, nil)
+	assert.Same(t, vfs2, vfs3)
+	vfs3.Shutdown()
 	vfs2.Shutdown()
 
 	ctx = fs.WithRCRequest(context.Background())
 	vfs2 = New(ctx, r.Fremote, nil)
 	assert.NotSame(t, vfs, vfs2)
 	checkActiveCacheEntries(2)
+	vfs3 = New(ctx, r.Fremote, nil)
+	assert.Same(t, vfs2, vfs3)
+	vfs3.Shutdown()
 	vfs2.Shutdown()
 
 	cleanupVFS(t, vfs)
 
 	checkActiveCacheEntries(0)
+}
+
+func TestVFSNewCacheConflict(t *testing.T) {
+	r := fstest.NewRun(t)
+	opt := vfscommon.Opt
+	opt.CacheMode = vfscommon.CacheModeMinimal
+
+	ctx, _ := fs.AddConfig(context.Background())
+	first, err := NewWithError(ctx, r.Fremote, &opt)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		cleanupVFS(t, first)
+	})
+
+	reused, err := NewWithError(ctx, r.Fremote, &opt)
+	require.NoError(t, err)
+	assert.Same(t, first, reused)
+	reused.Shutdown()
+
+	otherCtx, _ := fs.AddConfig(context.Background())
+	conflicting, err := NewWithError(otherCtx, r.Fremote, &opt)
+	require.Error(t, err)
+	assert.Nil(t, conflicting)
+
+	fallback := New(otherCtx, r.Fremote, &opt)
+	assert.NotSame(t, first, fallback)
+	assert.Equal(t, vfscommon.CacheModeOff, fallback.Opt.CacheMode)
+	fallback.Shutdown()
 }
 
 // TestVFSNewWithOpts sees if the New command works properly

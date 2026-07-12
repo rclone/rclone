@@ -3,6 +3,7 @@
 package archive
 
 import (
+	"archive/zip"
 	"bytes"
 	"context"
 	"fmt"
@@ -180,6 +181,32 @@ func testArchive(t *testing.T, archiveName string, archiveFn func(t *testing.T, 
 	// Now check the level above
 	checkTree(ctx, "Root", t, ":archive:"+output, inputRoot, checkFiles)
 	// run(t, "cp", "-a", inputRoot, output, "/tmp/test-"+archiveName)
+}
+
+func TestArchiveFilterDoesNotHideContainer(t *testing.T) {
+	archivePath := filepath.Join(t.TempDir(), "test.zip")
+	archiveFile, err := os.Create(archivePath)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = archiveFile.Close()
+	})
+	zipWriter := zip.NewWriter(archiveFile)
+	entry, err := zipWriter.Create("included.txt")
+	require.NoError(t, err)
+	_, err = entry.Write([]byte("included"))
+	require.NoError(t, err)
+	require.NoError(t, zipWriter.Close())
+	require.NoError(t, archiveFile.Close())
+
+	ctx, fi := filter.AddConfig(context.Background())
+	require.NoError(t, fi.AddRule("+ *.txt"))
+	require.NoError(t, fi.AddRule("- *"))
+
+	archiveFs, err := cache.Get(ctx, ":archive:"+archivePath)
+	require.NoError(t, err)
+	obj, err := archiveFs.NewObject(ctx, "included.txt")
+	require.NoError(t, err)
+	assert.Equal(t, "included", fstests.ReadObject(ctx, t, obj, -1))
 }
 
 // Make sure we have the executable named

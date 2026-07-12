@@ -383,7 +383,10 @@ func (m *MountPoint) mount(ctx context.Context) (mountDaemon *os.Process, err er
 		}
 	}
 
-	m.VFS = vfs.New(ctx, m.Fs, &m.VFSOpt)
+	m.VFS, err = vfs.NewWithError(ctx, m.Fs, &m.VFSOpt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create VFS: %w", err)
+	}
 
 	var actualMountpoint string
 	m.ErrChan, m.UnmountFn, actualMountpoint, err = m.MountFn(m.VFS, m.MountPoint, &m.MountOpt)
