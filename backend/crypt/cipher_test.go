@@ -682,6 +682,31 @@ func TestNonStandardDecryptDirName(t *testing.T) {
 	}
 }
 
+// Test directories with names which look like they have version
+// strings. Version strings only apply to files, so directory names
+// must be encrypted verbatim, otherwise EncryptDirName doesn't match
+// the encryption of the same directory as the parent of a file name,
+// making any files inside invisible to directory listings.
+func TestVersionedDirName(t *testing.T) {
+	const dir = "dir-v2001-02-03-040506-123"
+	for _, encoding := range []string{"base32", "base64", "base32768"} {
+		enc, _ := NewNameEncoding(encoding)
+		for _, mode := range []NameEncryptionMode{NameEncryptionStandard, NameEncryptionObfuscated} {
+			c, _ := newCipher(mode, "", "", true, enc)
+			what := fmt.Sprintf("Testing %q (mode=%v)", encoding, mode)
+			// Check the encrypted directory name matches the parent
+			// directory of an encrypted file name
+			encryptedDir := c.EncryptDirName(dir)
+			encryptedFile := c.EncryptFileName(dir + "/file.txt")
+			assert.Equal(t, encryptedDir+"/", encryptedFile[:strings.LastIndex(encryptedFile, "/")+1], what)
+			// Check the encrypted directory name round trips OK
+			decryptedDir, err := c.DecryptDirName(encryptedDir)
+			assert.NoError(t, err, what)
+			assert.Equal(t, dir, decryptedDir, what)
+		}
+	}
+}
+
 func TestEncryptedSize(t *testing.T) {
 	c, _ := newCipher(NameEncryptionStandard, "", "", true, nil)
 	for _, test := range []struct {
