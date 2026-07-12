@@ -8,6 +8,7 @@ import (
 	_ "embed"
 	"fmt"
 	iofs "io/fs"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -143,9 +144,6 @@ For more help see [the GUI docs](/gui/).
 			opt.HTTP.ListenAddr = []string{"localhost:0"}
 		}
 
-		// CORS: allow the GUI origin to make cross-port API requests.
-		opt.HTTP.AllowOrigin = guiOrigin
-
 		// Forward metrics flag to the RC server.
 		if command.Flags().Changed("enable-metrics") {
 			opt.EnableMetrics = enableMetrics
@@ -175,6 +173,21 @@ For more help see [the GUI docs](/gui/).
 				opt.Auth.BasicPass = randomPass
 				fs.Infof(nil, "No password specified. Using random password: %s", randomPass)
 			}
+		}
+
+		// When the GUI is bound to a wildcard address the bound origin
+		// (e.g. http://[::]:5522) is never what a browser sends in its
+		// Origin header, and the GUI may be reached via any number of
+		// hosts (localhost, a LAN IP, a Docker host), so no single
+		// origin can match them all.
+		switch addr, _ := guiServer.Addr().(*net.TCPAddr); {
+		case addr == nil || !addr.IP.IsUnspecified():
+			opt.HTTP.AllowOrigin = guiOrigin
+		case !opt.NoAuth:
+			opt.HTTP.AllowOrigin = "*"
+		default:
+			opt.HTTP.AllowOrigin = guiOrigin
+			fs.Logf(nil, "GUI bound to a wildcard address with --no-auth: browsers can only use the API from %s. Enable auth or bind --addr to a specific host.", guiOrigin)
 		}
 
 		// Start the RC server (unchanged rcserver.Start)
