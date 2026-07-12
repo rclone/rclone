@@ -220,6 +220,8 @@ func New(ctx context.Context, f fs.Fs, opt *vfscommon.Options) *VFS {
 	return vfs
 }
 
+// NewWithError creates a new VFS and returns an error if an incompatible active
+// VFS is already using the same disk cache.
 func NewWithError(ctx context.Context, f fs.Fs, opt *vfscommon.Options) (*VFS, error) {
 	fsDir := fs.NewDir("", time.Now())
 	// Strip the ctx of any cancellation but copy the config across
