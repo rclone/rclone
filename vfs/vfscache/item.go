@@ -1233,6 +1233,21 @@ func (item *Item) _ensure(offset, size int64) (err error) {
 	if offset+size > item.info.Size {
 		size = item.info.Size - offset
 	}
+	// Check to see if we are about to request data beyond of the size of
+	// the remote object. This can happen if the the cached range metadata
+	// is out of sync with the cache file after an unclean shutdown.
+	if item.o != nil {
+		if remoteSize := item.o.Size(); remoteSize >= 0 && offset+size > remoteSize {
+			beyond := ranges.Range{Pos: remoteSize, Size: offset + size - remoteSize}
+			if !item.info.Rs.Present(beyond) {
+				fs.Errorf(item.name, "vfs cache: cached file (%d) is unexpectedly larger than the remote object (%d). The cached file is likely corrupted after an unclean shutdown; recovering the %d bytes available from the remote", offset+size, remoteSize, remoteSize)
+			}
+			size = remoteSize - offset
+		}
+	}
+	if size <= 0 {
+		return nil
+	}
 	r := ranges.Range{Pos: offset, Size: size}
 	present := item.info.Rs.Present(r)
 	/* This statement simulates a cache space error for test purpose */
