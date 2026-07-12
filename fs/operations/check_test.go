@@ -556,7 +556,7 @@ func (o *hashOverrideObject) Hash(ctx context.Context, ty hash.Type) (string, er
 	return o.ContentMockObject.Hash(ctx, ty)
 }
 
-func newEqualTestObject(t *testing.T, ctx context.Context, name string, hashes hash.Set, content []byte, emptyHash bool) fs.Object {
+func newEqualTestObject(ctx context.Context, t *testing.T, name string, hashes hash.Set, content []byte, emptyHash bool) fs.Object {
 	f, err := mockfs.NewFs(ctx, name, "", nil)
 	require.NoError(t, err)
 	f.(*mockfs.Fs).SetHashes(hashes)
@@ -572,8 +572,8 @@ func newEqualTestObject(t *testing.T, ctx context.Context, name string, hashes h
 func TestEqualChecksumEmptyDstHashWarning(t *testing.T) {
 	ctx, ci := fs.AddConfig(context.Background())
 	ci.CheckSum = true
-	src := newEqualTestObject(t, ctx, "srcFs", hash.NewHashSet(hash.MD5), []byte("data"), false)
-	dst := newEqualTestObject(t, ctx, "dstFs", hash.NewHashSet(hash.MD5), []byte("data"), true)
+	src := newEqualTestObject(ctx, t, "srcFs", hash.NewHashSet(hash.MD5), []byte("data"), false)
+	dst := newEqualTestObject(ctx, t, "dstFs", hash.NewHashSet(hash.MD5), []byte("data"), true)
 
 	output := bilib.CaptureOutput(func() {
 		assert.True(t, operations.Equal(ctx, src, dst))
@@ -584,8 +584,8 @@ func TestEqualChecksumEmptyDstHashWarning(t *testing.T) {
 func TestEqualChecksumNoCommonHashWarningUnchanged(t *testing.T) {
 	ctx, ci := fs.AddConfig(context.Background())
 	ci.CheckSum = true
-	src := newEqualTestObject(t, ctx, "srcFs", hash.NewHashSet(hash.MD5), []byte("data"), false)
-	dst := newEqualTestObject(t, ctx, "dstFs", hash.NewHashSet(hash.SHA1), []byte("data"), false)
+	src := newEqualTestObject(ctx, t, "srcFs", hash.NewHashSet(hash.MD5), []byte("data"), false)
+	dst := newEqualTestObject(ctx, t, "dstFs", hash.NewHashSet(hash.SHA1), []byte("data"), false)
 
 	output := bilib.CaptureOutput(func() {
 		assert.True(t, operations.Equal(ctx, src, dst))
@@ -596,8 +596,8 @@ func TestEqualChecksumNoCommonHashWarningUnchanged(t *testing.T) {
 func TestEqualChecksumHashPresentNoWarning(t *testing.T) {
 	ctx, ci := fs.AddConfig(context.Background())
 	ci.CheckSum = true
-	src := newEqualTestObject(t, ctx, "srcFs", hash.NewHashSet(hash.MD5), []byte("data"), false)
-	dst := newEqualTestObject(t, ctx, "dstFs", hash.NewHashSet(hash.MD5), []byte("data"), false)
+	src := newEqualTestObject(ctx, t, "srcFs", hash.NewHashSet(hash.MD5), []byte("data"), false)
+	dst := newEqualTestObject(ctx, t, "dstFs", hash.NewHashSet(hash.MD5), []byte("data"), false)
 
 	output := bilib.CaptureOutput(func() {
 		assert.True(t, operations.Equal(ctx, src, dst))
