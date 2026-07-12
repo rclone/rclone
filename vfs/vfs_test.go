@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
@@ -153,6 +154,29 @@ func TestVFSNew(t *testing.T) {
 	vfs2.Shutdown()
 
 	checkActiveCacheEntries(1)
+
+	ctx, config := fs.AddConfig(context.Background())
+	config.BufferSize += fs.Mebi
+	vfs2 = New(ctx, r.Fremote, nil)
+	assert.NotSame(t, vfs, vfs2)
+	checkActiveCacheEntries(2)
+	vfs2.Shutdown()
+
+	filterOpt := filter.Opt
+	filterOpt.ExcludeRule = []string{"excluded"}
+	filterConfig, err := filter.NewFilter(&filterOpt)
+	require.NoError(t, err)
+	ctx = filter.ReplaceConfig(context.Background(), filterConfig)
+	vfs2 = New(ctx, r.Fremote, nil)
+	assert.NotSame(t, vfs, vfs2)
+	checkActiveCacheEntries(2)
+	vfs2.Shutdown()
+
+	ctx = fs.WithRCRequest(context.Background())
+	vfs2 = New(ctx, r.Fremote, nil)
+	assert.NotSame(t, vfs, vfs2)
+	checkActiveCacheEntries(2)
+	vfs2.Shutdown()
 
 	cleanupVFS(t, vfs)
 

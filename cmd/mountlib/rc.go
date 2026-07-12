@@ -135,7 +135,7 @@ func mountRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 
 	mnt := NewMountPoint(mountFn, mountPoint, fdst, &mountOpt, &vfsOpt)
-	_, err = mnt.Mount()
+	_, err = mnt.mount(ctx)
 	if err != nil {
 		fs.Logf(nil, "mount FAILED: %v", err)
 		return nil, err

@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sync"
 	"testing"
 	"time"
 
@@ -15,10 +16,72 @@ import (
 	"github.com/rclone/rclone/cmd/mountlib"
 	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/fs/rc/jobs"
 	"github.com/rclone/rclone/fstest/testy"
+	"github.com/rclone/rclone/vfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestRcMountContext(t *testing.T) {
+	ctx := context.Background()
+	configfile.Install()
+	mount := rc.Calls.Get("mount/mount")
+	require.NotNil(t, mount)
+	unmount := rc.Calls.Get("mount/unmount")
+	require.NotNil(t, unmount)
+
+	var mountedVFS *vfs.VFS
+	mountlib.AddRc("test-mount-context", func(VFS *vfs.VFS, _ string, _ *mountlib.Options) (<-chan error, func() error, string, error) {
+		mountedVFS = VFS
+		errChan := make(chan error, 1)
+		var once sync.Once
+		return errChan, func() error {
+			once.Do(func() {
+				VFS.Shutdown()
+				errChan <- nil
+			})
+			return nil
+		}, "", nil
+	})
+
+	localDir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(localDir, "included.txt"), []byte("included"), 0666))
+	require.NoError(t, os.WriteFile(filepath.Join(localDir, "excluded.txt"), []byte("excluded"), 0666))
+	mountPoint := t.TempDir()
+	in := rc.Params{
+		"fs":         localDir,
+		"mountPoint": mountPoint,
+		"mountType":  "test-mount-context",
+		"_config": rc.Params{
+			"Links": true,
+		},
+		"_filter": rc.Params{
+			"ExcludeRule": []string{"excluded.txt"},
+		},
+	}
+
+	mounted := false
+	t.Cleanup(func() {
+		if mounted {
+			_, _ = unmount.Fn(ctx, rc.Params{"mountPoint": mountPoint})
+		}
+	})
+	_, _, err := jobs.NewJob(ctx, mount.Fn, in)
+	require.NoError(t, err)
+	mounted = true
+	require.NotNil(t, mountedVFS)
+	assert.True(t, mountedVFS.Opt.Links)
+
+	entries, err := mountedVFS.ReadDir("")
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
+	assert.Equal(t, "included.txt", entries[0].Name())
+
+	_, err = unmount.Fn(ctx, rc.Params{"mountPoint": mountPoint})
+	require.NoError(t, err)
+	mounted = false
+}
 
 func TestRc(t *testing.T) {
 	// Disable tests under macOS and the CI since they are locking up

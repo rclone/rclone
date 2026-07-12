@@ -226,12 +226,15 @@ func New(ctx context.Context, f fs.Fs, opt *vfscommon.Options) *VFS {
 	// Fill out anything else
 	vfs.Opt.Init(ctx)
 
-	// Find a VFS with the same name and options and return it if possible
+	// Find a VFS with the same name, options and context and return it if possible
 	activeMu.Lock()
 	defer activeMu.Unlock()
 	configName := fs.ConfigString(f)
 	for _, activeVFS := range active[configName] {
-		if vfs.Opt == activeVFS.Opt {
+		if vfs.Opt == activeVFS.Opt &&
+			fs.GetConfig(vfs.ctx) == fs.GetConfig(activeVFS.ctx) &&
+			filter.GetConfig(vfs.ctx) == filter.GetConfig(activeVFS.ctx) &&
+			fs.IsRCRequest(vfs.ctx) == fs.IsRCRequest(activeVFS.ctx) {
 			fs.Debugf(f, "Reusing VFS from active cache")
 			activeVFS.inUse.Add(1)
 			cancel()
