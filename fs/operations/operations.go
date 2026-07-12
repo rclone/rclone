@@ -296,7 +296,7 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 			// this it would be silent: warn once so the operator is not misled
 			// into thinking a checksum check actually happened. See #9540.
 			emptyHashWarning.Do(func() {
-				fs.Logf(dst.Fs(), "--checksum is in use but the destination has no stored hash for some objects (e.g. multipart/rcat uploads); falling back to --size-only for those objects")
+				fs.Logf(dst.Fs(), "--checksum is in use but the source or destination has no stored hash for some objects (e.g. multipart/rcat uploads); falling back to --size-only for those objects")
 			})
 			fs.Debugf(src, "Size of src and dst objects identical")
 		} else {
