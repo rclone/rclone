@@ -38,6 +38,31 @@ All mount and VFS options are submitted by the docker daemon via API, but
 you can also provide defaults on the command line as well as set path to the
 config file and cache directory or adjust logging verbosity.
 
+## Restarting or upgrading the plugin
+
+When the plugin is restarted (for example with
+`docker plugin disable rclone && docker plugin enable rclone`, when upgrading
+the plugin, or when the host reboots) rclone reads its `docker-plugin.state`
+file and restores the volumes and mounts that were active before. The plugin
+starts serving its socket straight away and re-establishes the mounts in the
+background, so a slow or unreachable remote no longer prevents the plugin from
+coming back up.
+
+However, restarting the plugin necessarily stops and restarts the process that
+serves the FUSE mounts. Any container that is **already running** and holding
+files open on an rclone volume keeps a handle to the old, now dead mount, so
+those handles start returning `transport endpoint is not connected` until the
+container is restarted. This is a limitation of replacing the process behind a
+live FUSE mount and cannot be avoided by rclone - the plugin itself recovers and
+newly started containers work normally, but:
+
+- **Restart any containers that were using rclone volumes** after you restart
+  or upgrade the plugin (e.g. `docker restart <container>`), or stop them before
+  and start them after.
+- Databases and other applications that keep files open continuously (Grafana,
+  Prometheus, SQLite-backed apps, etc.) are the most affected and should always
+  be restarted.
+
 ## Security
 
 The plugin API accepts a `remote` (aka `fs`) option on volume creation, and this
