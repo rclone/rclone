@@ -774,7 +774,10 @@ version recommended):
 		} else {
 			templateString = DefaultAuthResponseTemplate
 		}
-		code := in.Result
+		code := strings.TrimSpace(in.Result)
+		if len(code) > 2048 {
+			return fs.ConfigError(newState("*oauth-remote"), "Verification code too long - please try again")
+		}
 		opt, err := getOAuth()
 		if err != nil {
 			return nil, err
