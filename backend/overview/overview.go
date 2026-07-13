@@ -1,5 +1,5 @@
-// Package info provides info about a backend
-package info
+// Package overview provides info about a backend
+package overview
 
 import (
 	"fmt"
