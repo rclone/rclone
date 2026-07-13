@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 
@@ -27,6 +28,8 @@ type Storage struct {
 	gc *goconfig.ConfigFile // config file loaded - not thread safe
 	fi os.FileInfo          // stat of the file when last loaded
 }
+
+var insecureConfigPermsWarning sync.Once
 
 // Check to see if we need to reload the config
 //
@@ -75,6 +78,16 @@ func (s *Storage) _load() (err error) {
 
 	// Update s.fi with the current file info
 	s.fi, _ = os.Stat(configPath)
+
+	// Warn once if the config file has insecure permissions.
+	// Skip on Windows where permissions are synthesised and chmod does not apply.
+	if s.fi != nil && runtime.GOOS != "windows" {
+		if s.fi.Mode().Perm()&0077 != 0 {
+			insecureConfigPermsWarning.Do(func() {
+				fs.Logf(nil, "Warning: config file %q has insecure permissions %v; it may contain sensitive tokens. Consider running: chmod 600 %q", configPath, s.fi.Mode().Perm(), configPath)
+			})
+		}
+	}
 
 	cryptReader, err := config.Decrypt(fd)
 	if err != nil {
