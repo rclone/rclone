@@ -131,6 +131,7 @@ directories to and from different cloud storage providers.
 - WebDAV [:page_facing_up:](https://rclone.org/webdav/)
 - Yandex Disk [:page_facing_up:](https://rclone.org/yandex/)
 - Zadara Object Storage [:page_facing_up:](https://rclone.org/s3/#zadara)
+- Zero Services (ZERO-Z3) [:page_facing_up:](https://rclone.org/s3/#zero-z3)
 - Zoho WorkDrive [:page_facing_up:](https://rclone.org/zoho/)
 - Zata.ai [:page_facing_up:](https://rclone.org/s3/#Zata)
 - The local filesystem [:page_facing_up:](https://rclone.org/local/)
