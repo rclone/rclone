@@ -146,7 +146,22 @@ func retry(t *testing.T, what string, f func() error) {
 	require.NoError(t, err, what)
 }
 
-// check interface
+// checkFingerprint checks that the fingerprint of the in-memory
+// object (memory) exactly matches the fingerprint of the same object
+// read back from the remote (reloaded).
+func checkFingerprint(ctx context.Context, t *testing.T, memory, reloaded fs.Object) {
+	t.Helper()
+	for _, test := range []struct {
+		fast bool
+		name string
+	}{
+		{fast: false, name: "slow"},
+		{fast: true, name: "fast"},
+	} {
+		memoryFingerprint, reloadedFingerprint := fs.Fingerprint(ctx, memory, test.fast), fs.Fingerprint(ctx, reloaded, test.fast)
+		assert.Equal(t, memoryFingerprint, reloadedFingerprint, "%s fingerprint of object in memory (%v) should exactly match fingerprint read back from the remote (%v)", test.name, memoryFingerprint, reloadedFingerprint)
+	}
+}
 
 // PutTestContentsMetadata puts file with given contents to the remote and checks it but unlike TestPutLarge doesn't remove
 //
@@ -198,8 +213,10 @@ func PutTestContentsMetadata(ctx context.Context, t *testing.T, f fs.Fs, file *f
 		}
 		file.Check(t, obj, f.Precision())
 		// Re-read the object and check again
+		liveObj := obj
 		obj = fstest.NewObject(ctx, t, f, file.Path)
 		file.Check(t, obj, f.Precision())
+		checkFingerprint(ctx, t, liveObj, obj)
 	}
 	return obj
 }
@@ -253,8 +270,10 @@ func testPutLarge(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item,
 	file.Check(t, obj, f.Precision())
 
 	// Re-read the object and check again
+	liveObj := obj
 	obj = fstest.NewObject(ctx, t, f, file.Path)
 	file.Check(t, obj, f.Precision())
+	checkFingerprint(ctx, t, liveObj, obj)
 
 	// Download the object and check it is OK
 	downloadHash := hash.NewMultiHasher()
@@ -1276,6 +1295,7 @@ func Run(t *testing.T, opt *Opt) {
 
 				// Check dst lightly - list above has checked ModTime/Hashes
 				assert.Equal(t, file2Copy.Path, dst.Remote())
+				checkFingerprint(ctx, t, dst, fstest.NewObject(ctx, t, f, file2Copy.Path))
 
 				// check that mutating dst does not mutate src
 				if !strings.Contains(fs.ConfigStringFull(f), "copy_is_hardlink") {
@@ -1332,8 +1352,10 @@ func Run(t *testing.T, opt *Opt) {
 
 					// Check metadata is correct
 					fstest.CheckEntryMetadata(ctx, t, f, oDst, ci.MetadataSet)
+					liveObj := oDst
 					oDst = fstest.NewObject(ctx, t, f, dstName)
 					fstest.CheckEntryMetadata(ctx, t, f, oDst, ci.MetadataSet)
+					checkFingerprint(ctx, t, liveObj, oDst)
 
 					// Remove test files
 					require.NoError(t, oSrc.Remove(ctx))
@@ -1371,6 +1393,7 @@ func Run(t *testing.T, opt *Opt) {
 				fstest.CheckListing(t, f, []fstest.Item{file1, file2Move})
 				// Check dst lightly - list above has checked ModTime/Hashes
 				assert.Equal(t, file2Move.Path, dst.Remote())
+				checkFingerprint(ctx, t, dst, fstest.NewObject(ctx, t, f, file2Move.Path))
 				// 1: file name.txt
 				// 2: other.txt
 
@@ -1440,8 +1463,10 @@ func Run(t *testing.T, opt *Opt) {
 
 					// Check metadata is correct
 					fstest.CheckEntryMetadata(ctx, t, f, newO, ci.MetadataSet)
+					liveObj := newO
 					newO = fstest.NewObject(ctx, t, f, newName)
 					fstest.CheckEntryMetadata(ctx, t, f, newO, ci.MetadataSet)
+					checkFingerprint(ctx, t, liveObj, newO)
 
 					// Remove test file
 					require.NoError(t, newO.Remove(ctx))
@@ -1763,6 +1788,7 @@ func Run(t *testing.T, opt *Opt) {
 				require.NoError(t, err)
 				file1.ModTime = newModTime
 				file1.CheckModTime(t, obj, obj.ModTime(ctx), f.Precision())
+				checkFingerprint(ctx, t, obj, fstest.NewObject(ctx, t, f, file1.Path))
 				// And make a new object and read it from there too
 				TestObjectModTime(t)
 			})
@@ -1827,33 +1853,34 @@ func Run(t *testing.T, opt *Opt) {
 				obj := fstest.NewObject(ctx, t, f, file1.Path)
 
 				// Read the whole object first so any lazily fetched hash
-				// is populated, then take that as the reference.
+				// is populated, then read a reference object to compare
+				// fingerprints against.
 				_ = ReadObject(ctx, t, obj, -1)
-				fastWant := fs.Fingerprint(ctx, obj, true)
-				slowWant := fs.Fingerprint(ctx, obj, false)
-
-				checkFingerprint := func(what string) {
-					assert.Equal(t, fastWant, fs.Fingerprint(ctx, obj, true), "fast fingerprint changed after %s", what)
-					assert.Equal(t, slowWant, fs.Fingerprint(ctx, obj, false), "slow fingerprint changed after %s", what)
-				}
+				reference := fstest.NewObject(ctx, t, f, file1.Path)
+				_ = ReadObject(ctx, t, reference, -1)
 
 				// Opening the object in various ways must not change the fingerprint
-				_ = ReadObject(ctx, t, obj, -1)
-				checkFingerprint("full read")
-
-				_ = ReadObject(ctx, t, obj, -1, &fs.SeekOption{Offset: 50})
-				checkFingerprint("seek read")
-
-				_ = ReadObject(ctx, t, obj, -1, &fs.RangeOption{Start: 5, End: 15})
-				checkFingerprint("range read")
-
-				_ = ReadObject(ctx, t, obj, -1, &fs.RangeOption{Start: 80, End: -1})
-				checkFingerprint("range read to end")
+				for _, test := range []struct {
+					name    string
+					options []fs.OpenOption
+				}{
+					{name: "full read"},
+					{name: "seek read", options: []fs.OpenOption{&fs.SeekOption{Offset: 50}}},
+					{name: "range read", options: []fs.OpenOption{&fs.RangeOption{Start: 5, End: 15}}},
+					{name: "range read to end", options: []fs.OpenOption{&fs.RangeOption{Start: 80, End: -1}}},
+				} {
+					t.Run(test.name, func(t *testing.T) {
+						_ = ReadObject(ctx, t, obj, -1, test.options...)
+						checkFingerprint(ctx, t, obj, reference)
+					})
+				}
 
 				// A freshly fetched object must have the same fingerprint too
-				obj = fstest.NewObject(ctx, t, f, file1.Path)
-				_ = ReadObject(ctx, t, obj, -1)
-				checkFingerprint("refresh")
+				t.Run("refresh", func(t *testing.T) {
+					obj := fstest.NewObject(ctx, t, f, file1.Path)
+					_ = ReadObject(ctx, t, obj, -1)
+					checkFingerprint(ctx, t, obj, reference)
+				})
 			})
 
 			// TestObjectUpdate tests that Update works
@@ -1880,8 +1907,10 @@ func Run(t *testing.T, opt *Opt) {
 				file1.Check(t, obj, f.Precision())
 
 				// Re-read the object and check again
+				liveObj := obj
 				obj = fstest.NewObject(ctx, t, f, file1.Path)
 				file1.Check(t, obj, f.Precision())
+				checkFingerprint(ctx, t, liveObj, obj)
 
 				// check contents correct
 				assert.Equal(t, contents, ReadObject(ctx, t, obj, -1), "contents of updated file1 differ")
@@ -2377,8 +2406,10 @@ func Run(t *testing.T, opt *Opt) {
 						file.Size = int64(contentSize) // use correct size when checking
 						file.Check(t, obj, f.Precision())
 						// Re-read the object and check again
+						liveObj := obj
 						obj = fstest.NewObject(ctx, t, f, file.Path)
 						file.Check(t, obj, f.Precision())
+						checkFingerprint(ctx, t, liveObj, obj)
 						require.NoError(t, obj.Remove(ctx))
 					})
 				}
