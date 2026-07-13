@@ -24,6 +24,7 @@ import (
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/lib/random"
+	"github.com/rclone/rclone/lib/terminal"
 )
 
 const (
@@ -709,6 +710,23 @@ func JSONListProviders() error {
 	return nil
 }
 
+// colorizeTier applies a color based on level of support
+func colorizeTier(tier string) string {
+	var color string
+	switch tier {
+	case "Tier 1", "Tier 2":
+		color = terminal.GreenBg
+	case "Tier 3":
+		color = terminal.YellowBg
+	case "Tier 4", "Tier 5":
+		color = terminal.RedBg
+	default:
+		return tier
+	}
+
+	return terminal.BlackFg + color + tier + terminal.Reset
+}
+
 // fsOption returns an Option describing the possible remotes
 func fsOption() *fs.Option {
 	o := &fs.Option{
@@ -723,7 +741,7 @@ func fsOption() *fs.Option {
 		}
 		example := fs.OptionExample{
 			Value: item.Name,
-			Help:  item.Description,
+			Help:  item.Description + " - " + colorizeTier(item.Overview.Tier),
 		}
 		o.Examples = append(o.Examples, example)
 	}
