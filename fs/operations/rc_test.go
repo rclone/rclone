@@ -650,13 +650,16 @@ func TestRcCommand(t *testing.T) {
 func TestRcDu(t *testing.T) {
 	ctx := context.Background()
 	_, call := rcNewRun(t, "core/du")
-	in := rc.Params{}
+	dir := t.TempDir()
+	in := rc.Params{"dir": dir}
 	out, err := call.Fn(ctx, in)
 	if err == diskusage.ErrUnsupported {
 		t.Skip(err)
 	}
-	assert.NotEqual(t, "", out["dir"])
-	info := out["info"].(diskusage.Info)
+	require.NoError(t, err)
+	assert.Equal(t, dir, out["dir"])
+	info, ok := out["info"].(diskusage.Info)
+	require.True(t, ok)
 	assert.True(t, info.Total != 0)
 	assert.True(t, info.Total > info.Free)
 	assert.True(t, info.Total > info.Available)
