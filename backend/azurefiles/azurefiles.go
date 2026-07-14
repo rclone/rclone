@@ -253,10 +253,10 @@ func (f *Fs) Features() *fs.Features {
 
 // Precision return the precision of this Fs
 //
-// One second. FileREST API times are in RFC1123 which in the example shows a precision of seconds
+// The SMB last write time properties are ISO 8601 with 100 ns (FILETIME) precision
 // Source: https://learn.microsoft.com/en-us/rest/api/storageservices/representation-of-date-time-values-in-headers
 func (f *Fs) Precision() time.Duration {
-	return time.Second
+	return smbTimePrecision
 }
 
 // Hashes returns the supported hash sets.
