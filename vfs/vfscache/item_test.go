@@ -15,6 +15,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/random"
+	"github.com/rclone/rclone/lib/ranges"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
@@ -443,6 +444,59 @@ func TestItemReloadCacheStale(t *testing.T) {
 	// object is correct
 
 	checkObject(t, r, "existing", "HELLO"+contents2[5:])
+}
+
+// TestItemReloadDirtyBeyondRemote checks that reloading a dirty cache
+// item whose cache file has grown larger than the remote object
+// recovers what it can from the cache file instead of failing with
+// "invalid seek position".
+func TestItemReloadDirtyBeyondRemote(t *testing.T) {
+	r, c := newItemTestCache(t)
+
+	// Small remote object (100 bytes)
+	_, obj, item := newFile(t, r, c, "existing")
+
+	// Open it and write over and past the end of the remote object,
+	// growing the cache file to 200 bytes and making it dirty.
+	require.NoError(t, item.Open(obj))
+	newContents := random.String(200)
+	n, err := item.WriteAt([]byte(newContents), 0)
+	require.NoError(t, err)
+	assert.Equal(t, 200, n)
+	assert.True(t, item.IsDirty())
+
+	size, err := item.GetSize()
+	require.NoError(t, err)
+	assert.Equal(t, int64(200), size)
+
+	// Simulate an unclean shutdown: the cache file on disk is fully grown
+	// but the final range-metadata update was never persisted, so Rs
+	// under-reports the parts of the file that are present. Here the
+	// remaining present range [0,150) ends beyond the 100 byte remote
+	// object, so the missing range [150,200) starts past the end of the
+	// remote object.
+	item.mu.Lock()
+	item.info.Rs = item.info.Rs.Intersection(ranges.Range{Pos: 0, Size: 150})
+	require.NoError(t, item._save())
+	require.NoError(t, item.fd.Close())
+	item.fd = nil
+	item.mu.Unlock()
+
+	// Drop the item so reload has to reload the metadata from disk
+	c.mu.Lock()
+	delete(c.item, item.name)
+	c.mu.Unlock()
+
+	// Reload the dirty item. Before the fix this failed trying to download
+	// the missing [150,200) range from the 100 byte remote object with
+	// "invalid seek position".
+	item2, _ := c._get("existing")
+	require.NoError(t, item2.reload(context.Background()))
+	assert.False(t, item2.IsDirty())
+
+	// The grown contents are recovered from the cache file and written
+	// back to the remote.
+	checkObject(t, r, "existing", newContents)
 }
 
 func TestItemReadWrite(t *testing.T) {
