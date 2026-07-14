@@ -601,10 +601,10 @@ func TestWriteBackMaxQueue(t *testing.T) {
 
 	// put toTransfer things in the queue
 	pis := []*putItem{}
-	for range toTransfer {
+	for i := range toTransfer {
 		pi := newPutItem(t)
 		pis = append(pis, pi)
-		wb.Add(0, fmt.Sprintf("number%d", 1), 10, true, pi.put)
+		wb.Add(0, fmt.Sprintf("number%d", i), 10, true, pi.put)
 	}
 
 	inProgress, queued := wb.Stats()
