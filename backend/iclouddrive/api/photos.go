@@ -1649,6 +1649,29 @@ type ckBoolField struct {
 	Value bool `json:"value"`
 }
 
+// UnmarshalJSON parses a CloudKit boolean field, accepting both the
+// boolean (true/false) and numeric (0/1) encodings the server uses
+func (b *ckBoolField) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		Value json.RawMessage `json:"value"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	if len(raw.Value) == 0 {
+		return nil
+	}
+	if err := json.Unmarshal(raw.Value, &b.Value); err == nil {
+		return nil
+	}
+	var n float64
+	if err := json.Unmarshal(raw.Value, &n); err != nil {
+		return fmt.Errorf("cannot unmarshal %q as CloudKit bool", raw.Value)
+	}
+	b.Value = n != 0
+	return nil
+}
+
 type ckReferenceField struct {
 	Value struct {
 		RecordName string `json:"recordName"`
