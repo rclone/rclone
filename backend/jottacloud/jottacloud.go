@@ -1876,8 +1876,10 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 		return err
 	}
 
-	// update local metadata
-	o.modTime = modTime
+	// update local metadata - the server stores modtimes with second
+	// precision so truncate here too to keep the in-memory modtime
+	// identical to the one a fresh listing returns
+	o.modTime = modTime.Truncate(time.Second)
 	return nil
 }
 
