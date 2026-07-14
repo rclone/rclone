@@ -2470,9 +2470,16 @@ func quoteOrEscapeShellPath(shellType string, shellPath string) (string, error) 
 		return "'" + powerShellQuoteEscaper.Replace(shellPath) + "'", nil
 	}
 	// Windows Command Prompt
+	//
+	// cmd has no reliable command-line escaping for the double quote used
+	// as the delimiter, while % expands environment variables and ! may
+	// expand them when delayed expansion is enabled, even inside double
+	// quotes. A newline or carriage return ends the command. None of these
+	// can be neutralised safely, so reject any path containing them rather
+	// than risk altering the command.
 	if shellType == "cmd" {
-		if strings.Contains(shellPath, "\"") {
-			return "", fmt.Errorf("path is not valid in shell type %s: %s", shellType, shellPath)
+		if strings.ContainsAny(shellPath, "\"%!\r\n") {
+			return "", fmt.Errorf("path is not valid in shell type %s: %q", shellType, shellPath)
 		}
 		return "\"" + shellPath + "\"", nil
 	}

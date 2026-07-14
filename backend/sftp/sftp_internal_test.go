@@ -36,6 +36,10 @@ func TestShellEscapeUnix(t *testing.T) {
 		{"$(rm -rf /)", "\\$\\(rm\\ -rf\\ /\\)"},
 		{"/test/\n", "/test/'\n'"},
 		{":\"'", ":\\\"\\'"},
+		// a backslash must be escaped so it cannot neutralise the escape
+		// of the metacharacter that follows it
+		{"a\\;id", "a\\\\\\;id"},
+		{"`id`", "\\`id\\`"},
 	} {
 		got, err := quoteOrEscapeShellPath("unix", test.unescaped)
 		assert.NoError(t, err)
@@ -50,8 +54,15 @@ func TestShellEscapeCmd(t *testing.T) {
 	}{
 		{"", "\"\"", true},
 		{"c:/this/is/harmless", "\"c:/this/is/harmless\"", true},
+		// & < > | ^ are not special inside cmd double quotes so are allowed
 		{"c:/test&notepad", "\"c:/test&notepad\"", true},
 		{"c:/test\"&\"notepad", "", false},
+		// % and ! expand environment variables even inside double quotes
+		{"c:/test%PATH%notepad", "", false},
+		{"c:/test!PATH!notepad", "", false},
+		// a newline or carriage return ends the command
+		{"c:/test\nnotepad", "", false},
+		{"c:/test\rnotepad", "", false},
 	} {
 		got, err := quoteOrEscapeShellPath("cmd", test.unescaped)
 		if test.ok {
