@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"golang.org/x/crypto/nacl/secretbox"
+	"golang.org/x/text/unicode/norm"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/obscure"
@@ -274,6 +275,11 @@ func SetConfigPassword(password string) error {
 	if err != nil {
 		return err
 	}
+	// Normalize the config encryption password to reduce weird
+	// variations so that the same password always derives the same
+	// key. This is safe for the master password as it is only ever
+	// used to derive the key, never sent anywhere verbatim.
+	password = norm.NFKC.String(password)
 	// Create SHA256 has of the password
 	sha := sha256.New()
 	_, err = sha.Write([]byte("[" + password + "][rclone-config]"))

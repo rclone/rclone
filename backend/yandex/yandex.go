@@ -577,7 +577,7 @@ func (f *Fs) waitForJob(ctx context.Context, location string) (err error) {
 		}
 
 		switch status.Status {
-		case "failure":
+		case "failure", "failed":
 			return fmt.Errorf("async operation returned %q", status.Status)
 		case "success":
 			return nil
@@ -1124,6 +1124,14 @@ func (o *Object) upload(ctx context.Context, in io.Reader, overwrite bool, mimeT
 		resp, err = o.fs.srv.Call(ctx, &opts)
 		return shouldRetry(ctx, resp, err)
 	})
+	if err != nil {
+		return err
+	}
+
+	// Wait for PUT to be committed
+	if ur.OperationID != "" {
+		err = o.fs.waitForJob(ctx, rootURL+"/operations/"+ur.OperationID)
+	}
 
 	return err
 }
