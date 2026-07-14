@@ -1158,14 +1158,16 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
-	//if file uploaded successfully then return metadata
-	o.modTime = modTime
-	o.md5sum = ""                   // according to unit tests after put the md5 is empty.
-	o.size = int64(in1.BytesRead()) // better solution o.readMetaData() ?
-	//and set modTime of uploaded file
+	//set modTime of uploaded file
 	err = o.SetModTime(ctx, modTime)
+	if err != nil {
+		return err
+	}
 
-	return err
+	// Re-read the metadata so the object has the md5sum the server
+	// computed for the upload.
+	o.hasMetaData = false
+	return o.readMetaData(ctx)
 }
 
 // Remove an object
