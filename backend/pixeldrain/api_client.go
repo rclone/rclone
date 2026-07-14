@@ -179,6 +179,11 @@ func (f *Fs) nodeToObject(node FilesystemNode) (o *Object) {
 	// operations. Saving it here would confuse rclone a lot. So instead we
 	// strip it here and add it back for every API request we need to perform
 	node.Path = strings.TrimPrefix(node.Path, f.pathPrefix)
+	// The server stores modtimes with millisecond precision, but
+	// write responses echo back the full precision time which was
+	// sent, so truncate to make the object identical to the one a
+	// fresh listing returns.
+	node.Modified = node.Modified.Truncate(time.Millisecond)
 	return &Object{fs: f, base: node}
 }
 
