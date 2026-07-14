@@ -1,6 +1,8 @@
 package http
 
 import (
+	"archive/zip"
+	"bytes"
 	"compress/gzip"
 	"context"
 	"flag"
@@ -24,6 +26,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+type zipEntry struct {
+	IsDir    bool
+	Contents string
+}
 
 var (
 	updateGolden = flag.Bool("updategolden", false, "update golden files for regression test")
@@ -102,10 +109,37 @@ func checkGolden(t *testing.T, fileName string, got []byte) {
 	} else {
 		want, err := os.ReadFile(fileName)
 		require.NoError(t, err)
+		if strings.HasSuffix(fileName, ".zip") {
+			assert.Equal(t, readZip(t, want), readZip(t, got), fileName)
+			return
+		}
 		wants := strings.Split(string(want), "\n")
 		gots := strings.Split(string(got), "\n")
 		assert.Equal(t, wants, gots, fileName)
 	}
+}
+
+func readZip(t *testing.T, data []byte) map[string]zipEntry {
+	t.Helper()
+	zr, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
+	require.NoError(t, err)
+
+	entries := make(map[string]zipEntry, len(zr.File))
+	for _, f := range zr.File {
+		entry := zipEntry{
+			IsDir: f.FileInfo().IsDir(),
+		}
+		if !entry.IsDir {
+			rc, err := f.Open()
+			require.NoError(t, err)
+			contents, err := io.ReadAll(rc)
+			require.NoError(t, err)
+			require.NoError(t, rc.Close())
+			entry.Contents = string(contents)
+		}
+		entries[f.Name] = entry
+	}
+	return entries
 }
 
 func testGET(t *testing.T, useProxy bool) {
