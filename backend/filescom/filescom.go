@@ -866,7 +866,24 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
-	return o.readMetaData(ctx)
+	// The server computes the MD5 asynchronously after upload so
+	// retry reading the metadata for a short time until it appears.
+	const maxTries = 10
+	for tries := 1; ; tries++ {
+		err = o.readMetaData(ctx)
+		if err != nil {
+			return err
+		}
+		if o.md5 != "" || tries >= maxTries {
+			break
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(time.Duration(tries) * 100 * time.Millisecond):
+		}
+	}
+	return nil
 }
 
 // Remove an object

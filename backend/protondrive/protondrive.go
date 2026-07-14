@@ -264,9 +264,14 @@ func shouldRetry(ctx context.Context, err error) (bool, error) {
 	}
 	var apiErr *proton.APIError
 	if errors.As(err, &apiErr) {
-		// Transient storage block error ("Please retry").
-		if apiErr.Code == 200501 {
-			fs.Debugf(nil, "Retrying storage block error: %v", err)
+		// Code 200501 is a generic Drive operation-failure code. Proton also
+		// returns it with an HTTP 422 for permanent validation failures (for
+		// example a content key packet that cannot be verified, or an upload
+		// format the account is not enabled for), which must NOT be retried -
+		// doing so spins the pacer until the operation times out. Only retry it
+		// when it is not a permanent client (4xx) error.
+		if apiErr.Code == 200501 && (apiErr.Status < 400 || apiErr.Status >= 500) {
+			fs.Debugf(nil, "Retrying transient storage block error: %v", err)
 			return true, err
 		}
 		// Server errors. 503 is already handled by the SDK; retry the rest.
@@ -1125,7 +1130,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	o.id = linkID
 	o.originalSize = &fileSystemAttrs.Size
-	o.modTime = modTime
+	// The server stores modtimes with second precision so truncate
+	// here too to keep the in-memory modtime identical to the one a
+	// fresh listing returns.
+	o.modTime = modTime.Truncate(time.Second)
 	o.blockSizes = fileSystemAttrs.BlockSizes
 	o.digests = &sha1Hash
 
