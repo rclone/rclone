@@ -202,9 +202,12 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) (err error) 
 	if err != nil {
 		return err
 	}
-	o.modtime = modTime
+	// The server stores modtimes with second precision so truncate
+	// here too to keep the in-memory modtime identical to the one a
+	// fresh listing returns.
+	o.modtime = modTime.Truncate(time.Second)
 	if o.file != nil {
-		o.file.UpdatedAt.Time = modTime
+		o.file.UpdatedAt.Time = o.modtime
 	}
 	return nil
 }
