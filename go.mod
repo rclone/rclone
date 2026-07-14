@@ -14,6 +14,7 @@ require (
 	github.com/FilenCloudDienste/filen-sdk-go v0.0.39
 	github.com/Files-com/files-sdk-go/v3 v3.3.82
 	github.com/Max-Sum/base32768 v0.0.0-20230304063302-18e6ce5945fd
+	github.com/Microsoft/go-winio v0.6.2
 	github.com/a1ex3/zstd-seekable-format-go/pkg v0.10.0
 	github.com/a8m/tree v0.0.0-20240104212747-2c8764a5f17e
 	github.com/aalpar/deheap v1.1.2
@@ -277,7 +278,6 @@ require (
 
 require (
 	github.com/IBM/go-sdk-core/v5 v5.21.2
-	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.4.1
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/pkg/xattr v0.4.12

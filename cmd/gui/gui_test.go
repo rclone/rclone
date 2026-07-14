@@ -25,13 +25,14 @@ const (
 
 func TestBuildLoginURL(t *testing.T) {
 	tests := []struct {
-		name   string
-		guiURL string
-		rcURL  string
-		user   string
-		pass   string
-		noAuth bool
-		want   string
+		name    string
+		guiURL  string
+		rcURL   string
+		user    string
+		pass    string
+		noAuth  bool
+		desktop bool
+		want    string
 	}{
 		{
 			name:   "with credentials",
@@ -43,6 +44,15 @@ func TestBuildLoginURL(t *testing.T) {
 			want:   "http://localhost:5580/login?pass=secret&url=http%3A%2F%2Flocalhost%3A5572%2F&user=gui",
 		},
 		{
+			name:    "desktop with credentials",
+			guiURL:  "http://localhost:5580/",
+			rcURL:   "http://localhost:5572/",
+			user:    "gui",
+			pass:    "secret",
+			desktop: true,
+			want:    "http://localhost:5580/login?mode=desktop&pass=secret&url=http%3A%2F%2Flocalhost%3A5572%2F&user=gui",
+		},
+		{
 			name:   "no auth",
 			guiURL: "http://localhost:5580/",
 			rcURL:  "http://localhost:5572/",
@@ -50,6 +60,13 @@ func TestBuildLoginURL(t *testing.T) {
 			pass:   "",
 			noAuth: true,
 			want:   "http://localhost:5580/",
+		},
+		{
+			name:    "desktop without auth",
+			guiURL:  "http://localhost:5580/",
+			noAuth:  true,
+			desktop: true,
+			want:    "http://localhost:5580/?mode=desktop",
 		},
 		{
 			name:   "no auth ignores credentials",
@@ -63,7 +80,7 @@ func TestBuildLoginURL(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := buildLoginURL(tt.guiURL, tt.rcURL, tt.user, tt.pass, tt.noAuth)
+			got := buildLoginURL(tt.guiURL, tt.rcURL, tt.user, tt.pass, tt.noAuth, tt.desktop)
 			assert.Equal(t, tt.want, got)
 		})
 	}

@@ -33,14 +33,17 @@ var distZip []byte
 var distTag string
 
 var (
-	guiAddr       []string
-	apiAddr       []string
-	user          string
-	pass          string
-	noAuth        bool
-	noOpenBrowser bool
-	enableMetrics bool
+	guiAddr                 []string
+	apiAddr                 []string
+	user                    string
+	pass                    string
+	noAuth                  bool
+	noOpenBrowser           bool
+	enableMetrics           bool
+	windowsExplorerLauncher bool
 )
+
+var openBrowser = open.Start
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
@@ -52,6 +55,8 @@ func init() {
 	f.BoolVar(&noAuth, "no-auth", false, "Don't require auth for the RC API")
 	f.BoolVar(&noOpenBrowser, "no-open-browser", false, "Skip opening the browser automatically")
 	f.BoolVar(&enableMetrics, "enable-metrics", false, "Enable OpenMetrics/Prometheus compatible endpoint at /metrics")
+	f.BoolVar(&windowsExplorerLauncher, "windows-explorer-launcher", false, "")
+	_ = f.MarkHidden("windows-explorer-launcher")
 }
 
 var commandDefinition = &cobra.Command{
@@ -65,6 +70,9 @@ ports, generates login credentials automatically unless --no-auth
 is specified, and opens the browser already authenticated.
 
     rclone gui
+
+On Windows, double-clicking rclone.exe in Explorer starts the GUI in
+the background. Double-clicking it again reopens the running GUI.
 
 By default rclone gui serves the web GUI that was embedded into the
 rclone binary at build time from https://github.com/rclone/rclone-web/
@@ -100,8 +108,25 @@ For more help see [the GUI docs](/gui/).
 		"versionIntroduced": "v1.74",
 		"groups":            "RC",
 	},
-	RunE: func(command *cobra.Command, args []string) error {
+	RunE: func(command *cobra.Command, args []string) (runErr error) {
+		if windowsExplorerLauncher {
+			defer func() {
+				if runErr != nil {
+					showLauncherError(runErr)
+				}
+			}()
+		}
 		cmd.CheckArgs(0, 1, command, args)
+		launcher, alreadyRunning, err := newDesktopLauncher(windowsExplorerLauncher)
+		if err != nil {
+			return err
+		}
+		if launcher != nil {
+			defer launcher.Close()
+		}
+		if alreadyRunning {
+			return nil
+		}
 		ctx := context.Background()
 
 		// Resolve the GUI source (embedded, directory, or .zip)
@@ -165,7 +190,9 @@ For more help see [the GUI docs](/gui/).
 		if !opt.NoAuth {
 			if opt.Auth.BasicUser == "" {
 				opt.Auth.BasicUser = "gui"
-				fs.Infof(nil, "No username specified. Using default username: %s", opt.Auth.BasicUser)
+				if !windowsExplorerLauncher {
+					fs.Infof(nil, "No username specified. Using default username: %s", opt.Auth.BasicUser)
+				}
 			}
 			if opt.Auth.BasicPass == "" {
 				randomPass, err := random.Password(128)
@@ -173,7 +200,9 @@ For more help see [the GUI docs](/gui/).
 					return fmt.Errorf("failed to make password: %w", err)
 				}
 				opt.Auth.BasicPass = randomPass
-				fs.Infof(nil, "No password specified. Using random password: %s", randomPass)
+				if !windowsExplorerLauncher {
+					fs.Infof(nil, "No password specified. Using random password: %s", randomPass)
+				}
 			}
 		}
 
@@ -205,11 +234,23 @@ For more help see [the GUI docs](/gui/).
 		fs.Logf(nil, "Serving GUI %s on %s", guiSource, guiURL)
 
 		// Open browser
-		loginURL := buildLoginURL(guiURL, rcURL, opt.Auth.BasicUser, opt.Auth.BasicPass, opt.NoAuth)
+		loginURL := buildLoginURL(guiURL, rcURL, opt.Auth.BasicUser, opt.Auth.BasicPass, opt.NoAuth, windowsExplorerLauncher)
+		if launcher != nil {
+			launcher.publishURL(loginURL)
+		}
 
-		fs.Logf(nil, "GUI available at %s", loginURL)
+		if windowsExplorerLauncher {
+			fs.Logf(nil, "GUI opened in the default browser")
+		} else {
+			fs.Logf(nil, "GUI available at %s", loginURL)
+		}
 		if !noOpenBrowser {
-			if err := open.Start(loginURL); err != nil {
+			if err := openBrowser(loginURL); err != nil {
+				if windowsExplorerLauncher {
+					_ = rcServer.Shutdown()
+					_ = guiServer.Shutdown()
+					return fmt.Errorf("failed to open GUI in browser: %w", err)
+				}
 				fs.Errorf(nil, "failed to open GUI in browser: %v", err)
 			}
 		}
@@ -300,20 +341,22 @@ func guiHandler(srcFS iofs.FS) (http.Handler, error) {
 // guiBaseURL is the GUI server's URL. rcURL is the RC API server's URL.
 // When auth is enabled it appends url, user, and pass as query
 // parameters so the React app can discover the API endpoint and
-// log in automatically.
-func buildLoginURL(guiBaseURL, rcURL, user, pass string, noAuth bool) string {
+// log in automatically. Desktop launches also include their UI mode.
+func buildLoginURL(guiBaseURL, rcURL, user, pass string, noAuth, desktop bool) string {
 	u, err := url.Parse(guiBaseURL)
 	if err != nil {
 		return guiBaseURL
 	}
-	if noAuth {
-		return u.String()
-	}
-	u.Path = "/login"
 	q := u.Query()
-	q.Set("url", rcURL)
-	q.Set("user", user)
-	q.Set("pass", pass)
+	if !noAuth {
+		u.Path = "/login"
+		q.Set("url", rcURL)
+		q.Set("user", user)
+		q.Set("pass", pass)
+	}
+	if desktop {
+		q.Set("mode", "desktop")
+	}
 	u.RawQuery = q.Encode()
 	return u.String()
 }
