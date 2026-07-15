@@ -471,6 +471,13 @@ func TestMiddlewareCORS(t *testing.T) {
 				expectedOrigin = ss.http.AllowOrigin
 			}
 			require.Equal(t, expectedOrigin, resp.Header.Get("Access-Control-Allow-Origin"), "allow origin should match")
+
+			// Regression for #9614: the Prefer request header (used by the rc
+			// server for RFC 7240 respond-async) must be listed in
+			// Access-Control-Allow-Headers so browser preflight succeeds when
+			// the GUI issues async rc calls cross-origin.
+			allowHeaders := resp.Header.Get("Access-Control-Allow-Headers")
+			require.Contains(t, allowHeaders, "Prefer", "Access-Control-Allow-Headers should include Prefer")
 		})
 	}
 }
