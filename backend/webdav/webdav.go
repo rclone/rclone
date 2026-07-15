@@ -180,6 +180,10 @@ to an unknown webserver.
 However this is desirable in some circumstances. If you are getting
 an error like "401 Unauthorized" when rclone is attempting to read
 files from the webdav server then you can try this option.
+
+Note that enabling this also permits sending your credentials over a
+plaintext HTTP connection if the server redirects from HTTPS to HTTP,
+which rclone otherwise refuses to do.
 `,
 				Advanced: true,
 				Default:  false,
@@ -511,6 +515,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			rt: ntlmssp.Negotiator{RoundTripper: t},
 		}
 	}
+	// Refuse redirects that downgrade HTTPS to plaintext HTTP.
+	client.CheckRedirect = rest.RefuseHTTPSDowngradeRedirectFn
 	f.srv = rest.NewClient(client).SetRoot(u.String())
 
 	f.features = (&fs.Features{
