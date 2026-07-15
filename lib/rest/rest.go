@@ -215,18 +215,51 @@ func ClientWithNoRedirects(c *http.Client) *http.Client {
 	return &clientCopy
 }
 
+// ErrHTTPSDowngrade is returned by the redirect handlers when a server tries to
+// redirect an HTTPS request to a plaintext HTTP URL. Following such a redirect
+// would replay any credentials over the network in cleartext, so rclone refuses.
+var ErrHTTPSDowngrade = errors.New("refusing to follow HTTPS to HTTP redirect: would send credentials in cleartext")
+
+// isHTTPSDowngrade reports whether following the redirect to req would
+// move from an https:// URL to a plaintext http:// URL.
+func isHTTPSDowngrade(req *http.Request, via []*http.Request) bool {
+	if len(via) == 0 {
+		return false
+	}
+	prev := via[len(via)-1]
+	return prev.URL.Scheme == "https" && req.URL.Scheme == "http"
+}
+
 // PreserveMethodRedirectFn is a CheckRedirect function that
 // preserves the original HTTP method on redirects.
 //
 // By default Go's http.Client changes the method to GET on 301, 302,
 // and 303 redirects. This function overrides that behaviour so the
 // original method (e.g. PROPFIND being preserved across a 307) is kept.
+//
+// It refuses an HTTPS to HTTP downgrade with ErrHTTPSDowngrade.
 func PreserveMethodRedirectFn(req *http.Request, via []*http.Request) error {
 	if len(via) >= 10 {
 		return errors.New("stopped after 10 redirects")
 	}
+	if isHTTPSDowngrade(req, via) {
+		return ErrHTTPSDowngrade
+	}
 	if len(via) > 0 {
 		req.Method = via[0].Method
+	}
+	return nil
+}
+
+// RefuseHTTPSDowngradeRedirectFn is a CheckRedirect function that follows
+// redirects like the default net/http client but refuses to follow one
+// that downgrades from HTTPS to plaintext HTTP, returning ErrHTTPSDowngrade.
+func RefuseHTTPSDowngradeRedirectFn(req *http.Request, via []*http.Request) error {
+	if len(via) >= 10 {
+		return errors.New("stopped after 10 redirects")
+	}
+	if isHTTPSDowngrade(req, via) {
+		return ErrHTTPSDowngrade
 	}
 	return nil
 }
