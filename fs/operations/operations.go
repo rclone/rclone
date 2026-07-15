@@ -1180,18 +1180,10 @@ func Purge(ctx context.Context, f fs.Fs, dir string) (err error) {
 // obeys includes and excludes.
 func Delete(ctx context.Context, f fs.Fs) error {
 	ci := fs.GetConfig(ctx)
-	var backupDir fs.Fs
-	if ci.BackupDir != "" || ci.Suffix != "" {
-		var err error
-		backupDir, err = BackupDir(ctx, f, f, "")
-		if err != nil {
-			return err
-		}
-	}
 	delChan := make(fs.ObjectsChan, ci.Checkers)
 	delErr := make(chan error, 1)
 	go func() {
-		delErr <- DeleteFilesWithBackupDir(ctx, delChan, backupDir)
+		delErr <- DeleteFiles(ctx, delChan)
 	}()
 	err := ListFn(ctx, f, func(o fs.Object) {
 		delChan <- o
@@ -2125,7 +2117,7 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 			fs.Debugf(srcObj, "Not removing source file as destination file exists and --ignore-existing is set")
 			logger(ctx, Match, srcObj, dstObj, nil)
 		} else if !SameObject(srcObj, dstObj) {
-			err = DeleteFile(ctx, srcObj)
+			err = DeleteFileWithBackupDir(ctx, srcObj, backupDir)
 			logger(ctx, Differ, srcObj, dstObj, nil)
 		}
 	}
