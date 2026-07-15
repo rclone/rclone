@@ -1130,7 +1130,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	o.id = linkID
 	o.originalSize = &fileSystemAttrs.Size
-	o.modTime = modTime
+	// The server stores modtimes with second precision so truncate
+	// here too to keep the in-memory modtime identical to the one a
+	// fresh listing returns.
+	o.modTime = modTime.Truncate(time.Second)
 	o.blockSizes = fileSystemAttrs.BlockSizes
 	o.digests = &sha1Hash
 

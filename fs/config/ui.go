@@ -167,6 +167,8 @@ func Choose(what string, kind string, choices, help []string, defaultValue strin
 					number = fmt.Sprintf("%2d", pos)
 				}
 				fmt.Printf("%s %c %s\n", number, sep, line)
+				// reapply color for second line
+				terminal.WriteString(attributes[(pos-1)%len(attributes)])
 			}
 		}
 		terminal.WriteString(terminal.Reset)

@@ -1499,8 +1499,11 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 		}
 		// FIXME check if response is valid
 		if len(result.Responses) == 1 && result.Responses[0].Props.StatusOK() {
-			// update cached modtime
-			o.modTime = modTime
+			// update cached modtime - the PROPPATCH sets it with
+			// second precision so truncate here too to keep the
+			// in-memory modtime identical to the one a fresh
+			// listing returns
+			o.modTime = modTime.Truncate(time.Second)
 			return nil
 		}
 		// got an error, but it's possible it actually worked, so double-check
