@@ -704,9 +704,10 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (f
 		}
 	}
 	features := &fs.Features{
-		ReadMimeType:  true,
-		ReadMetadata:  true,
-		WriteMetadata: true,
+		DuplicateFiles: true,
+		ReadMimeType:   true,
+		ReadMetadata:   true,
+		WriteMetadata:  true,
 	}
 	if f.library {
 		features.CanHaveEmptyDirectories = true
@@ -779,7 +780,6 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 
 	var entries fs.DirEntries
 	seenDirs := map[string]struct{}{}
-	seenObjects := map[string]*Object{}
 	for _, image := range images {
 		remote := f.remoteFromImage(image)
 		if prefix != "" {
@@ -800,10 +800,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 			continue
 		}
 		objRemote := cleanRemote(path.Join(dir, remote))
-		seenObjects[objRemote] = f.newObjectFromImage(objRemote, image)
-	}
-	for _, obj := range seenObjects {
-		entries = append(entries, obj)
+		entries = append(entries, f.newObjectFromImage(objRemote, image))
 	}
 	if dir != "" && len(entries) == 0 {
 		return nil, fs.ErrorDirNotFound
@@ -1016,7 +1013,6 @@ func (f *Fs) listAlbumEntries(ctx context.Context, dir, albumURI, imagePrefix st
 
 	var entries fs.DirEntries
 	seenDirs := map[string]struct{}{}
-	seenObjects := map[string]*Object{}
 	for _, image := range images {
 		albumRemote := f.remoteFromImage(image)
 		remaining := albumRemote
@@ -1038,10 +1034,7 @@ func (f *Fs) listAlbumEntries(ctx context.Context, dir, albumURI, imagePrefix st
 			continue
 		}
 		objRemote := cleanRemote(path.Join(dir, remaining))
-		seenObjects[objRemote] = f.newObjectFromImageInAlbum(objRemote, image, albumURI, albumRemote)
-	}
-	for _, obj := range seenObjects {
-		entries = append(entries, obj)
+		entries = append(entries, f.newObjectFromImageInAlbum(objRemote, image, albumURI, albumRemote))
 	}
 	if imagePrefix != "" && len(entries) == 0 {
 		return nil, fs.ErrorDirNotFound

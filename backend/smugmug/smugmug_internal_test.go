@@ -301,6 +301,78 @@ func TestObjectOpenUsesUnsignedDownloadClient(t *testing.T) {
 	}
 }
 
+func TestListPreservesDuplicateFileNames(t *testing.T) {
+	ctx := context.Background()
+	server := duplicateImageServer(t)
+	defer server.Close()
+
+	f := &Fs{
+		albumURI: server.URL + "/api/v2/album/AbCdEf",
+		client:   server.Client(),
+		pacer:    fs.NewPacer(ctx, pacer.NewDefault()),
+	}
+	entries, err := f.List(ctx, "")
+	if err != nil {
+		t.Fatalf("List returned error: %v", err)
+	}
+	assertDuplicateImageEntries(t, entries)
+}
+
+func TestListAlbumEntriesPreservesDuplicateFileNames(t *testing.T) {
+	ctx := context.Background()
+	server := duplicateImageServer(t)
+	defer server.Close()
+
+	f := &Fs{
+		client: server.Client(),
+		pacer:  fs.NewPacer(ctx, pacer.NewDefault()),
+	}
+	entries, err := f.listAlbumEntries(ctx, "", server.URL+"/api/v2/album/AbCdEf", "")
+	if err != nil {
+		t.Fatalf("listAlbumEntries returned error: %v", err)
+	}
+	assertDuplicateImageEntries(t, entries)
+}
+
+func duplicateImageServer(t *testing.T) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/v2/album/AbCdEf!images" {
+			t.Errorf("unexpected path %q", r.URL.Path)
+			http.Error(w, "bad path", http.StatusNotFound)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{
+			"Response": {
+				"AlbumImage": [
+					{"Uri": "/api/v2/album/AbCdEf/image/ImgOne", "FileName": "photo.jpg", "OriginalSize": 1},
+					{"Uri": "/api/v2/album/AbCdEf/image/ImgTwo", "FileName": "photo.jpg", "OriginalSize": 2}
+				]
+			}
+		}`))
+	}))
+}
+
+func assertDuplicateImageEntries(t *testing.T, entries fs.DirEntries) {
+	t.Helper()
+	if len(entries) != 2 {
+		t.Fatalf("entry count = %d, want 2", len(entries))
+	}
+	for i, entry := range entries {
+		obj, ok := entry.(*Object)
+		if !ok {
+			t.Fatalf("entry %d has type %T, want *Object", i, entry)
+		}
+		if obj.Remote() != "photo.jpg" {
+			t.Fatalf("entry %d remote = %q, want %q", i, obj.Remote(), "photo.jpg")
+		}
+		if obj.Size() != int64(i+1) {
+			t.Fatalf("entry %d size = %d, want %d", i, obj.Size(), i+1)
+		}
+	}
+}
+
 func TestParseRetryAfter(t *testing.T) {
 	now := time.Date(2026, 6, 25, 15, 0, 0, 0, time.UTC)
 	for _, test := range []struct {
