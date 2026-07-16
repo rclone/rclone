@@ -6,10 +6,12 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/lib/pacer"
 )
 
@@ -66,6 +68,25 @@ func TestNormalizeNodeURI(t *testing.T) {
 		if got != test.want {
 			t.Fatalf("normalizeNodeURI(%q) = %q, want %q", test.in, got, test.want)
 		}
+	}
+}
+
+func TestRevealObscured(t *testing.T) {
+	want := strings.Repeat("s", smugMugAPISecretLength)
+	got, err := revealObscured("api_secret", obscure.MustObscure(want), smugMugAPISecretLength)
+	if err != nil {
+		t.Fatalf("revealObscured returned error: %v", err)
+	}
+	if got != want {
+		t.Fatalf("revealObscured = %q, want %q", got, want)
+	}
+}
+
+func TestRevealObscuredRejectsPlainAPISecret(t *testing.T) {
+	plainBase64URLSecret := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789AB"
+	_, err := revealObscured("api_secret", plainBase64URLSecret, smugMugAPISecretLength)
+	if err == nil {
+		t.Fatal("expected plain API secret to be rejected")
 	}
 }
 

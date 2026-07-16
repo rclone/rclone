@@ -53,6 +53,10 @@ const (
 	maxSleep          = 2 * time.Second
 	cacheFilePrefix   = "rclone-smugmug-upload-"
 	configAccessToken = "access_token"
+
+	obscureIVSize            = 16
+	smugMugAPISecretLength   = 64
+	minAccessTokenSecretSize = 16
 )
 
 var (
@@ -635,13 +639,13 @@ func getOptions(m configmap.Mapper) (*Options, error) {
 	if opt.APISecret == "" {
 		opt.APISecret = obscure.MustReveal(defaultAPISecret)
 	} else {
-		opt.APISecret, err = revealIfObscured(opt.APISecret)
+		opt.APISecret, err = revealObscured("api_secret", opt.APISecret, smugMugAPISecretLength)
 		if err != nil {
 			return nil, err
 		}
 	}
 	if opt.AccessTokenSecret != "" {
-		opt.AccessTokenSecret, err = revealIfObscured(opt.AccessTokenSecret)
+		opt.AccessTokenSecret, err = revealObscured("access_token_secret", opt.AccessTokenSecret, minAccessTokenSecretSize)
 		if err != nil {
 			return nil, err
 		}
@@ -649,12 +653,19 @@ func getOptions(m configmap.Mapper) (*Options, error) {
 	return opt, nil
 }
 
-func revealIfObscured(in string) (string, error) {
-	out, err := obscure.Reveal(in)
-	if err == nil {
-		return out, nil
+func revealObscured(name, in string, minPlainSize int) (string, error) {
+	decoded, err := base64.RawURLEncoding.DecodeString(in)
+	if err != nil {
+		return "", fmt.Errorf("%s must be stored obscured; use `rclone config` or `rclone obscure`: %w", name, err)
 	}
-	return in, nil
+	if len(decoded) < obscureIVSize+minPlainSize {
+		return "", fmt.Errorf("%s must be stored obscured; use `rclone config` or `rclone obscure`", name)
+	}
+	out, err := obscure.Reveal(in)
+	if err != nil {
+		return "", fmt.Errorf("failed to reveal %s: %w", name, err)
+	}
+	return out, nil
 }
 
 // NewFs constructs an Fs from the path.
