@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/lib/pacer"
 )
@@ -87,6 +88,34 @@ func TestRevealObscuredRejectsPlainAPISecret(t *testing.T) {
 	_, err := revealObscured("api_secret", plainBase64URLSecret, smugMugAPISecretLength)
 	if err == nil {
 		t.Fatal("expected plain API secret to be rejected")
+	}
+}
+
+func TestGetOptionsDefaultsToRootNode(t *testing.T) {
+	opt, err := getOptions(configmap.Simple{})
+	if err != nil {
+		t.Fatalf("getOptions returned error: %v", err)
+	}
+	if opt.RootNode != "root" {
+		t.Fatalf("RootNode = %q, want %q", opt.RootNode, "root")
+	}
+	if opt.AlbumURI != "" {
+		t.Fatalf("AlbumURI = %q, want empty", opt.AlbumURI)
+	}
+}
+
+func TestGetOptionsKeepsAlbumMode(t *testing.T) {
+	opt, err := getOptions(configmap.Simple{
+		"album_uri": "/api/v2/album/AbCdEf",
+	})
+	if err != nil {
+		t.Fatalf("getOptions returned error: %v", err)
+	}
+	if opt.AlbumURI != "/api/v2/album/AbCdEf" {
+		t.Fatalf("AlbumURI = %q, want %q", opt.AlbumURI, "/api/v2/album/AbCdEf")
+	}
+	if opt.RootNode != "" {
+		t.Fatalf("RootNode = %q, want empty", opt.RootNode)
 	}
 }
 

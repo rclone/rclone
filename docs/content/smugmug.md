@@ -10,8 +10,8 @@ This backend works with [SmugMug](https://www.smugmug.com/) in two modes:
 
 - album mode uploads, lists, downloads, replaces, and deletes media in one
   configured album.
-- library mode lists SmugMug folders and albums as a filesystem tree when
-  `root_node` is configured.
+- library mode lists SmugMug folders and albums as a filesystem tree. It is the
+  default mode for newly configured remotes.
 
 ## Configuration
 
@@ -21,17 +21,19 @@ Create a remote with:
 rclone config
 ```
 
-Choose `smugmug`, then configure either `album_uri` or `root_node`.
+Choose `smugmug`. By default rclone uses library mode with `root_node = root`,
+which lists the authenticated user's SmugMug folders and albums.
 
-For album mode, enter the album URI, album key, or a SmugMug web URL. The album
-URI looks like `/api/v2/album/AbCdEf`; the key is the final `AbCdEf` part. For
-web URLs, rclone resolves the URL to its parent album, so image URLs such as
-`https://photos.example.com/2023/My-Album/i-AbCdEf/A` are accepted.
+For album mode, set `album_uri` to the album URI, album key, or a SmugMug web
+URL. The album URI looks like `/api/v2/album/AbCdEf`; the key is the final
+`AbCdEf` part. For web URLs, rclone resolves the URL to its parent album, so
+image URLs such as `https://photos.example.com/2023/My-Album/i-AbCdEf/A` are
+accepted.
 
-For library mode, set `root_node` to a node URI such as `/api/v2/node/AbCdEf`,
-a node ID such as `AbCdEf`, or `root` for the authenticated user's root node.
-In this mode folders and albums appear as directories. Uploads must target an
-existing album path.
+For a different library root, set `root_node` to a node URI such as
+`/api/v2/node/AbCdEf`, a node ID such as `AbCdEf`, or `root` for the
+authenticated user's root node. In this mode folders and albums appear as
+directories. Uploads must target an existing album path.
 
 During setup, rclone opens SmugMug's OAuth authorization page and asks for the
 six-digit verification code.
@@ -223,7 +225,7 @@ SmugMug album API URI, album key, or web URL to upload into.
 
 Use values like `/api/v2/album/AbCdEf`, `AbCdEf`, or `https://photos.example.com/2023/My-Album/i-AbCdEf/A`.
 
-Leave blank when using `root_node` library mode.
+Leave blank to use library mode.
 
 Properties:
 
@@ -236,13 +238,14 @@ Properties:
 
 SmugMug root node API URI or node ID for library mode.
 
-When this is set, rclone presents SmugMug folders and albums as a filesystem tree. Use `root` or `authuser` for the authenticated user's root node.
+By default rclone presents the authenticated user's SmugMug folders and albums as a filesystem tree. Use `root` or `authuser` for the authenticated user's root node.
 
 Properties:
 
 - Config:      root_node
 - Env Var:     RCLONE_SMUGMUG_ROOT_NODE
 - Type:        string
+- Default:     "root"
 - Required:    false
 
 ### Advanced options

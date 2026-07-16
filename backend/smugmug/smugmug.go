@@ -277,10 +277,11 @@ func init() {
 		CommandHelp: commandHelp,
 		Options: []fs.Option{{
 			Name: "album_uri",
-			Help: "SmugMug album API URI, album key, or web URL to upload into.\n\nUse values like `/api/v2/album/AbCdEf`, `AbCdEf`, or `https://photos.example.com/2023/My-Album/i-AbCdEf/A`.\n\nLeave blank when using `root_node` library mode.",
+			Help: "SmugMug album API URI, album key, or web URL to upload into.\n\nUse values like `/api/v2/album/AbCdEf`, `AbCdEf`, or `https://photos.example.com/2023/My-Album/i-AbCdEf/A`.\n\nLeave blank to use library mode.",
 		}, {
-			Name: "root_node",
-			Help: "SmugMug root node API URI or node ID for library mode.\n\nWhen this is set, rclone presents SmugMug folders and albums as a filesystem tree. Use `root` or `authuser` for the authenticated user's root node.",
+			Name:    "root_node",
+			Help:    "SmugMug root node API URI or node ID for library mode.\n\nBy default rclone presents the authenticated user's SmugMug folders and albums as a filesystem tree. Use `root` or `authuser` for the authenticated user's root node.",
+			Default: "root",
 		}, {
 			Name:      "api_key",
 			Help:      "SmugMug API key.\n\nLeave blank normally to use rclone's bundled development key.",
@@ -650,6 +651,9 @@ func getOptions(m configmap.Mapper) (*Options, error) {
 			return nil, err
 		}
 	}
+	if opt.AlbumURI == "" && opt.RootNode == "" {
+		opt.RootNode = "root"
+	}
 	return opt, nil
 }
 
@@ -702,17 +706,17 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (f
 		downloadClient: baseClient,
 		pacer:          fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep))),
 	}
-	if opt.RootNode != "" {
+	if opt.AlbumURI != "" {
+		f.albumURI, err = f.resolveAlbumURI(ctx, opt.AlbumURI)
+		if err != nil {
+			return nil, err
+		}
+	} else {
 		f.rootNodeURI, err = f.resolveRootNodeURI(ctx, opt.RootNode)
 		if err != nil {
 			return nil, err
 		}
 		f.library = true
-	} else {
-		f.albumURI, err = f.resolveAlbumURI(ctx, opt.AlbumURI)
-		if err != nil {
-			return nil, err
-		}
 	}
 	features := &fs.Features{
 		DuplicateFiles: true,
