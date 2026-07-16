@@ -25,10 +25,36 @@ func SetupS3Test(t *testing.T) (context.Context, *Options, *http.Client) {
 	return ctx, opt, client
 }
 
+// s3SecretTestHeaderNames is a deliberately literal copy of
+// s3RedirectSecretHeaders: deriving the test inputs from the production list
+// would make the redirect tests unable to detect a header missing from it.
+// TestRedirectSecretHeadersMatchTestList keeps the two lists in sync.
+var s3SecretTestHeaderNames = []string{
+	"X-Amz-Security-Token",
+	"X-Amz-S3session-Token",
+	"Authorization",
+	"ibm-service-instance-id",
+	"X-Amz-Server-Side-Encryption-Customer-Algorithm",
+	"X-Amz-Server-Side-Encryption-Customer-Key",
+	"X-Amz-Server-Side-Encryption-Customer-Key-Md5",
+	"X-Amz-Copy-Source-Server-Side-Encryption-Customer-Algorithm",
+	"X-Amz-Copy-Source-Server-Side-Encryption-Customer-Key",
+	"X-Amz-Copy-Source-Server-Side-Encryption-Customer-Key-Md5",
+	"Referer",
+}
+
+// TestRedirectSecretHeadersMatchTestList fails when a header is added to
+// s3RedirectSecretHeaders without a matching literal entry in
+// s3SecretTestHeaderNames (or vice versa), so every stripped header stays
+// covered by the redirect tests.
+func TestRedirectSecretHeadersMatchTestList(t *testing.T) {
+	assert.ElementsMatch(t, s3RedirectSecretHeaders, s3SecretTestHeaderNames)
+}
+
 // s3SecretTestHeaders assigns each header a distinct test value
 func s3SecretTestHeaders() map[string]string {
-	headers := make(map[string]string, len(s3RedirectSecretHeaders))
-	for _, header := range s3RedirectSecretHeaders {
+	headers := make(map[string]string, len(s3SecretTestHeaderNames))
+	for _, header := range s3SecretTestHeaderNames {
 		headers[header] = "secret-" + header
 	}
 	return headers
@@ -132,6 +158,45 @@ func TestClientKeepsSecretHeadersOnSameHostRedirect(t *testing.T) {
 	for header, value := range secretHeaders {
 		req.Header.Set(header, value)
 	}
+
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.NoError(t, resp.Body.Close())
+}
+
+// TestClientRemovesGeneratedRefererOnCrossHostRedirect checks that the
+// Referer header net/http generates automatically when following a redirect -
+// which for a presigned request carries the signed query string - is not
+// forwarded to a different host. The same-host hop first proves the client
+// really does generate the Referer, so the cross-host assertion can't pass
+// vacuously.
+func TestClientRemovesGeneratedRefererOnCrossHostRedirect(t *testing.T) {
+	ctx, _, client := SetupS3Test(t)
+
+	crossHostServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Empty(t, r.Header.Get("Referer"), "Referer should have been stripped on cross-host redirect")
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer crossHostServer.Close()
+
+	var presignedURL string
+	initialServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/bucket/object":
+			http.Redirect(w, r, "/middle", http.StatusTemporaryRedirect)
+		case "/middle":
+			assert.Equal(t, presignedURL, r.Header.Get("Referer"), "client should generate a Referer holding the presigned URL")
+			http.Redirect(w, r, crossHostServer.URL, http.StatusTemporaryRedirect)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer initialServer.Close()
+	presignedURL = initialServer.URL + "/bucket/object?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Signature=secret-signature"
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, presignedURL, nil)
+	require.NoError(t, err)
 
 	resp, err := client.Do(req)
 	require.NoError(t, err)

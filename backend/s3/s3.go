@@ -1362,8 +1362,9 @@ func getClient(ctx context.Context, opt *Options) *http.Client {
 // on a scheme downgrade, and has no knowledge that the SSE-C headers hold raw
 // encryption keys, so we strip them all ourselves.
 var s3RedirectSecretHeaders = []string{
-	"X-Amz-Security-Token", // AWS STS session token
-	"Authorization",        // e.g. IBM IAM bearer token
+	"X-Amz-Security-Token",  // AWS STS session token
+	"X-Amz-S3session-Token", // S3 Express (directory bucket) session token
+	"Authorization",         // e.g. IBM IAM bearer token
 	"ibm-service-instance-id",
 	"X-Amz-Server-Side-Encryption-Customer-Algorithm",
 	"X-Amz-Server-Side-Encryption-Customer-Key",
