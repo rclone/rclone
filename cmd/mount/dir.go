@@ -81,7 +81,7 @@ func (d *Dir) Lookup(ctx context.Context, req *fuse.LookupRequest, resp *fuse.Lo
 	resp.EntryValid = time.Duration(d.fsys.opt.AttrTimeout)
 	// Check the mnode to see if it has a fuse Node cached
 	// We must return the same fuse nodes for vfs Nodes
-	node, ok := mnode.Sys().(fusefs.Node)
+	node, ok := mnode.Aux(d.fsys).(fusefs.Node)
 	if ok {
 		return node, nil
 	}
@@ -94,7 +94,7 @@ func (d *Dir) Lookup(ctx context.Context, req *fuse.LookupRequest, resp *fuse.Lo
 		panic("bad type")
 	}
 	// Cache the node for later
-	mnode.SetSys(node)
+	mnode.SetAux(d.fsys, node)
 	return node, nil
 }
 
@@ -158,7 +158,7 @@ func (d *Dir) Create(ctx context.Context, req *fuse.CreateRequest, resp *fuse.Cr
 		return nil, nil, translateError(err)
 	}
 	node = &File{file, d.fsys}
-	file.SetSys(node) // cache the FUSE node for later
+	file.SetAux(d.fsys, node) // cache the FUSE node for later
 	return node, &FileHandle{fh}, err
 }
 
@@ -172,7 +172,7 @@ func (d *Dir) Mkdir(ctx context.Context, req *fuse.MkdirRequest) (node fusefs.No
 		return nil, translateError(err)
 	}
 	node = &Dir{dir, d.fsys}
-	dir.SetSys(node) // cache the FUSE node for later
+	dir.SetAux(d.fsys, node) // cache the FUSE node for later
 	return node, nil
 }
 

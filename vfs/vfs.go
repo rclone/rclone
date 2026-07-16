@@ -69,6 +69,8 @@ type Node interface {
 	Truncate(size int64) error
 	Path() string
 	SetSys(any)
+	Aux(owner any) any
+	SetAux(owner, value any)
 }
 
 // Check interfaces
