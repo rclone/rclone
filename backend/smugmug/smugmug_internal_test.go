@@ -1,12 +1,16 @@
 package smugmug
 
 import (
+	"context"
 	"encoding/json"
+	"io"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/lib/pacer"
 )
 
 func TestAlbumPathFromURLPath(t *testing.T) {
@@ -249,6 +253,51 @@ func TestApplySmugMugUploadMetadata(t *testing.T) {
 		if headers[key] != want {
 			t.Fatalf("headers[%q] = %q, want %q", key, headers[key], want)
 		}
+	}
+}
+
+func TestObjectOpenUsesUnsignedDownloadClient(t *testing.T) {
+	ctx := context.Background()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got := r.Header.Get("Authorization"); got != "" {
+			t.Fatalf("download request sent Authorization header %q", got)
+		}
+		_, _ = w.Write([]byte("image"))
+	}))
+	defer server.Close()
+
+	baseClient := server.Client()
+	signedClient := *baseClient
+	signedClient.Transport = &oauth1Transport{
+		base: baseClient.Transport,
+		cred: oauthCredentials{
+			consumerKey:    "key",
+			consumerSecret: "secret",
+			token:          "token",
+			tokenSecret:    "token-secret",
+		},
+	}
+	f := &Fs{
+		client:         &signedClient,
+		downloadClient: baseClient,
+		pacer:          fs.NewPacer(ctx, pacer.NewDefault()),
+	}
+	o := &Object{
+		fs:          f,
+		downloadURL: server.URL,
+	}
+
+	in, err := o.Open(ctx)
+	if err != nil {
+		t.Fatalf("Open returned error: %v", err)
+	}
+	defer fs.CheckClose(in, &err)
+	got, err := io.ReadAll(in)
+	if err != nil {
+		t.Fatalf("ReadAll returned error: %v", err)
+	}
+	if string(got) != "image" {
+		t.Fatalf("download body = %q, want %q", got, "image")
 	}
 }
 

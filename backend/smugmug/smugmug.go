@@ -336,15 +336,16 @@ type Options struct {
 
 // Fs represents a SmugMug album.
 type Fs struct {
-	name        string
-	root        string
-	opt         Options
-	albumURI    string
-	rootNodeURI string
-	library     bool
-	features    *fs.Features
-	client      *http.Client
-	pacer       *fs.Pacer
+	name           string
+	root           string
+	opt            Options
+	albumURI       string
+	rootNodeURI    string
+	library        bool
+	features       *fs.Features
+	client         *http.Client
+	downloadClient *http.Client
+	pacer          *fs.Pacer
 }
 
 // Object describes a SmugMug image.
@@ -683,11 +684,12 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (f
 	}
 
 	f := &Fs{
-		name:   name,
-		root:   root,
-		opt:    *opt,
-		client: &client,
-		pacer:  fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep))),
+		name:           name,
+		root:           root,
+		opt:            *opt,
+		client:         &client,
+		downloadClient: baseClient,
+		pacer:          fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep))),
 	}
 	if opt.RootNode != "" {
 		f.rootNodeURI, err = f.resolveRootNodeURI(ctx, opt.RootNode)
@@ -2017,7 +2019,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 				}
 			}
 		}
-		resp, err = o.fs.client.Do(req)
+		resp, err = o.fs.downloadClient.Do(req)
 		retry, err := shouldRetry(ctx, resp, err)
 		if retry && resp != nil && resp.Body != nil {
 			_, _ = io.Copy(io.Discard, resp.Body)
