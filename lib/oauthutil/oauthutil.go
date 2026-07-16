@@ -716,8 +716,9 @@ version recommended):
 		// Find the overridden options
 		inM := ri.Options.NonDefault(m)
 		delete(inM, fs.ConfigToken) // delete token as we are refreshing it
+		ci := fs.GetConfig(ctx)
 		for k, v := range inM {
-			fs.Debugf(nil, "sending %s = %q", k, v)
+			fs.Debugf(nil, "sending %s = %s", k, fs.RedactOptionValue(ci, ri.Options.Get(k), v))
 		}
 		// Encode them into a string
 		mCopyString, err := inM.Encode()
@@ -748,9 +749,10 @@ version recommended):
 		}
 		// Save the config updates
 		if newFormat {
+			ci := fs.GetConfig(ctx)
 			for k, v := range outM {
 				m.Set(k, v)
-				fs.Debugf(nil, "received %s = %q", k, v)
+				fs.Debugf(nil, "received %s = %s", k, fs.RedactOptionValue(ci, ri.Options.Get(k), v))
 			}
 		} else {
 			m.Set(fs.ConfigToken, code)

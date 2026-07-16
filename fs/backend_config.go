@@ -11,6 +11,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/rclone/rclone/fs/config/configmap"
 )
@@ -462,11 +463,61 @@ func configAll(ctx context.Context, name string, m configmap.Mapper, ri *RegInfo
 	return nil, fmt.Errorf("internal error: bad state %q", state)
 }
 
+// redactDumpAuthWarnOnce makes sure the --dump auth warning is only shown once
+var redactDumpAuthWarnOnce sync.Once
+
+// RedactValue makes value safe for inclusion in the debug log.
+//
+// Non-empty values are replaced with "XXX" as they may contain
+// secrets such as passwords or tokens, unless --dump auth is in use
+// in which case the value is returned quoted.
+func RedactValue(ci *ConfigInfo, value string) string {
+	if value == "" || ci.Dump&DumpAuth != 0 {
+		return fmt.Sprintf("%q", value)
+	}
+	return "XXX"
+}
+
+// RedactOptionValue is like RedactValue except that value is only
+// redacted if opt is unknown (nil), a password or sensitive.
+func RedactOptionValue(ci *ConfigInfo, opt *Option, value string) string {
+	if opt == nil || opt.IsPassword || opt.Sensitive {
+		return RedactValue(ci, value)
+	}
+	return fmt.Sprintf("%q", value)
+}
+
+// redactConfigOut renders out for the debug log, redacting any
+// values which may contain secrets.
+func redactConfigOut(ci *ConfigInfo, out *ConfigOut) string {
+	if out == nil {
+		return "<nil>"
+	}
+	var b strings.Builder
+	fmt.Fprintf(&b, "{State:%q", out.State)
+	if out.Option != nil {
+		fmt.Fprintf(&b, " Option:%s=%s", out.Option.Name, RedactOptionValue(ci, out.Option, out.Option.String()))
+	}
+	if out.OAuth != nil {
+		b.WriteString(" OAuth:set")
+	}
+	if out.Error != "" {
+		fmt.Fprintf(&b, " Error:%q", out.Error)
+	}
+	fmt.Fprintf(&b, " Result:%s}", RedactValue(ci, out.Result))
+	return b.String()
+}
+
 func backendConfigStep(ctx context.Context, name string, m configmap.Mapper, ri *RegInfo, choices configmap.Getter, in ConfigIn) (out *ConfigOut, err error) {
 	ci := GetConfig(ctx)
-	Debugf(name, "config in: state=%q, result=%q", in.State, in.Result)
+	if ci.Dump&DumpAuth != 0 {
+		redactDumpAuthWarnOnce.Do(func() {
+			Logf(nil, "--dump auth is in use - debug output may contain secrets such as passwords and tokens")
+		})
+	}
+	Debugf(name, "config in: state=%q, result=%s", in.State, RedactValue(ci, in.Result))
 	defer func() {
-		Debugf(name, "config out: out=%+v, err=%v", out, err)
+		Debugf(name, "config out: out=%s, err=%v", redactConfigOut(ci, out), err)
 	}()
 
 	switch {
@@ -510,13 +561,13 @@ func backendConfigStep(ctx context.Context, name string, m configmap.Mapper, ri 
 		}
 		// If override value is set in the choices then use that
 		if result, ok := choices.Get(out.Option.Name); ok {
-			Debugf(nil, "Override value found, choosing value %q for state %q", result, out.State)
+			Debugf(nil, "Override value found, choosing value %s for state %q", RedactOptionValue(ci, out.Option, result), out.State)
 			return ConfigResult(out.State, result)
 		}
 		// If AutoConfirm is set, choose the default value
 		if ci.AutoConfirm {
 			result := fmt.Sprint(out.Option.Default)
-			Debugf(nil, "Auto confirm is set, choosing default %q for state %q, override by setting config parameter %q", result, out.State, out.Option.Name)
+			Debugf(nil, "Auto confirm is set, choosing default %s for state %q, override by setting config parameter %q", RedactOptionValue(ci, out.Option, result), out.State, out.Option.Name)
 			return ConfigResult(out.State, result)
 		}
 		// If fs.ConfigEdit is set then make the default value
@@ -527,7 +578,7 @@ func backendConfigStep(ctx context.Context, name string, m configmap.Mapper, ri 
 				oldValue := newOption.Value
 				err = newOption.Set(value)
 				if err != nil {
-					Errorf(nil, "Failed to set %q from %q - using default: %v", out.Option.Name, value, err)
+					Errorf(nil, "Failed to set %q from %s - using default: %v", out.Option.Name, RedactOptionValue(ci, newOption, value), err)
 				} else {
 					newOption.Default = newOption.Value
 					newOption.Value = oldValue
