@@ -720,9 +720,6 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (f
 		ReadMetadata:   true,
 		WriteMetadata:  true,
 	}
-	if f.library {
-		features.CanHaveEmptyDirectories = true
-	}
 	f.features = features.Fill(ctx, f)
 	if root != "" {
 		remote := path.Base(root)
@@ -865,11 +862,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	}
 	loc, err := f.resolveLibraryPath(ctx, fullDir)
 	if err == nil {
-		// Album prefixes are virtual directories encoded in image filenames.
-		if loc.albumPrefix != "" || loc.node.Type == "Folder" || loc.node.Type == "Album" {
-			return nil
-		}
-		return fmt.Errorf("SmugMug path %q is a %s, not a folder", fullDir, loc.node.Type)
+		return mkdirExistingLibraryPath(dir, fullDir, loc)
 	}
 	if !errors.Is(err, errNodeNotFound) {
 		return err
@@ -893,6 +886,19 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	}
 	_, err = f.createNode(ctx, parent.node.Uri, "Folder", f.opt.Enc.FromStandardName(leaf), "", "")
 	return err
+}
+
+func mkdirExistingLibraryPath(dir, fullDir string, loc *libraryLocation) error {
+	if loc.albumPrefix != "" {
+		if dir == "" {
+			return nil
+		}
+		return fmt.Errorf("SmugMug album path %q is virtual and can't store empty directories", fullDir)
+	}
+	if loc.node.Type == "Folder" || loc.node.Type == "Album" {
+		return nil
+	}
+	return fmt.Errorf("SmugMug path %q is a %s, not a folder", fullDir, loc.node.Type)
 }
 
 // Rmdir removes a virtual directory if it is empty.

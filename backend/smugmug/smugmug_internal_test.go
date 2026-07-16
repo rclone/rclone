@@ -90,6 +90,61 @@ func TestRevealObscuredRejectsPlainAPISecret(t *testing.T) {
 	}
 }
 
+func TestMkdirExistingLibraryPath(t *testing.T) {
+	for _, test := range []struct {
+		name        string
+		dir         string
+		fullDir     string
+		loc         *libraryLocation
+		errContains string
+	}{
+		{
+			name:    "folder",
+			fullDir: "Projects",
+			loc:     &libraryLocation{node: node{Type: "Folder"}},
+		},
+		{
+			name:    "album",
+			fullDir: "Projects/BlueMesa",
+			loc:     &libraryLocation{node: node{Type: "Album"}},
+		},
+		{
+			name:    "virtual root",
+			fullDir: "Projects/BlueMesa/prints",
+			loc:     &libraryLocation{node: node{Type: "Album"}, albumPrefix: "prints"},
+		},
+		{
+			name:        "virtual child",
+			dir:         "Projects/BlueMesa/prints",
+			fullDir:     "Projects/BlueMesa/prints",
+			loc:         &libraryLocation{node: node{Type: "Album"}, albumPrefix: "prints"},
+			errContains: "virtual",
+		},
+		{
+			name:        "unsupported node",
+			fullDir:     "Projects/Page",
+			loc:         &libraryLocation{node: node{Type: "Page"}},
+			errContains: "not a folder",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			err := mkdirExistingLibraryPath(test.dir, test.fullDir, test.loc)
+			if test.errContains == "" {
+				if err != nil {
+					t.Fatalf("mkdirExistingLibraryPath returned error: %v", err)
+				}
+				return
+			}
+			if err == nil {
+				t.Fatal("expected error")
+			}
+			if !strings.Contains(err.Error(), test.errContains) {
+				t.Fatalf("error %q does not contain %q", err, test.errContains)
+			}
+		})
+	}
+}
+
 func TestAPILinkUnmarshal(t *testing.T) {
 	for _, test := range []struct {
 		in   string

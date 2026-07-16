@@ -204,8 +204,9 @@ when writing.
 
 SmugMug albums are flat media collections. In album mode, rclone represents
 paths virtually by encoding slashes in uploaded file names. In library mode,
-`mkdir` and `rmdir` manage SmugMug folders only. Use `rclone backend
-create-album` when you need a new album.
+`mkdir` and `rmdir` manage real SmugMug folders only. Virtual album subpaths
+cannot store empty directories. Use `rclone backend create-album` when you need a
+new album.
 
 SmugMug requires a `Content-MD5` header for uploads. If the source does not
 provide an MD5 hash, rclone calculates one before upload and caches files larger
