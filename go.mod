@@ -82,7 +82,7 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
-	github.com/t3rm1n4l/go-mega v0.0.0-20260630094356-4de2f127f34a
+	github.com/t3rm1n4l/go-mega v0.0.0-20260717075258-c6acd6a5bd04
 	github.com/unknwon/goconfig v1.0.0
 	github.com/willscott/go-nfs v0.0.4
 	github.com/winfsp/cgofuse v1.6.1-0.20260126094232-f2c4fccdb286
