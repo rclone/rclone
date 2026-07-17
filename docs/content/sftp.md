@@ -216,7 +216,9 @@ is being performed` each time the backend is started in this mode.
 
 Host key matching, using standard ssh `known_hosts` files can be
 turned on by enabling the `known_hosts_file` option. This can point to
-the file maintained by `OpenSSH` or can point to a unique file.
+the file maintained by `OpenSSH` or can point to a unique file. To
+explicitly disable host key checking and silence the warning, the
+`known_hosts_file` option can be set to `none`.
 
 Alternatively rclone can maintain server host keys in a `host_keys`
 setting in the config file. This can be updated automatically with
