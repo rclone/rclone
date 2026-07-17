@@ -263,14 +263,24 @@ func (m *March) Run(ctx context.Context) error {
 		dstDepth:  dstDepth - 1,
 		noDst:     m.NoCheckDest,
 	}
+	// When the context is cancelled, discard the remaining jobs so that the
+	// senders in the checker goroutines above do not block on a full `in`
+	// channel and traversing.Wait() can return. On a normal completion the
+	// context is never cancelled, so signal this goroutine to exit via `done`
+	// once the march has finished; otherwise it would park on m.Ctx.Done()
+	// forever, leaking a goroutine that pins the run's listings (issue #9620).
+	done := make(chan struct{})
 	go func() {
-		// when the context is cancelled discard the remaining jobs
-		<-m.Ctx.Done()
-		for range in {
-			traversing.Done()
+		select {
+		case <-m.Ctx.Done():
+			for range in {
+				traversing.Done()
+			}
+		case <-done:
 		}
 	}()
 	traversing.Wait()
+	close(done)
 	close(in)
 	wg.Wait()
 
