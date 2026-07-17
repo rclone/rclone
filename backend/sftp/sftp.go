@@ -120,7 +120,7 @@ Set this if you have a signed certificate you want to use for authentication.` +
 			Name: "known_hosts_file",
 			Help: `Optional path to known_hosts file.
 
-Set this value to enable server host key validation.` + env.ShellExpandHelp,
+Set this value to enable server host key validation. Set to ` + "`none`" + ` to silence the "No host key validation" notice.` + env.ShellExpandHelp,
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "~/.ssh/known_hosts",
@@ -1312,6 +1312,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	switch {
+	case opt.KnownHostsFile == "none":
+		// Silence Host key validation warning if explicitly disabled
+		sshConfig.HostKeyCallback = ssh.InsecureIgnoreHostKey()
 	case opt.KnownHostsFile != "":
 		hostcallback, err := knownhosts.New(env.ShellExpand(opt.KnownHostsFile))
 		if err != nil {
@@ -1336,7 +1339,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 	default:
 		sshConfig.HostKeyCallback = ssh.InsecureIgnoreHostKey()
-		fs.Logf(name, "No host key validation is being performed. Set known_hosts_file or use --sftp-pin-host-key to enable it. See: https://rclone.org/sftp/#host-key-validation")
+		fs.Logf(name, "No host key validation is being performed. Set known_hosts_file (to \"none\" to silence this notice) or use --sftp-pin-host-key to enable it. See: https://rclone.org/sftp/#host-key-validation")
 	}
 
 	if opt.UseInsecureCipher && (opt.Ciphers != nil || opt.KeyExchange != nil) {
