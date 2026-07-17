@@ -266,6 +266,9 @@ and you will need to add the appropriate `@cert-authority` entry.
 The `known_hosts_file` setting can be set during `rclone config` as an
 advanced option.
 
+By default, a notice will be displayed when the `known_hosts_file` setting
+is not configured. The value `none` can be used to silence this notice.
+
 ### ssh-agent on macOS
 
 Note that there seem to be various problems with using an ssh-agent on
