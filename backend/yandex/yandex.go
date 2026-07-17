@@ -1158,16 +1158,29 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
-	//set modTime of uploaded file
-	err = o.SetModTime(ctx, modTime)
-	if err != nil {
-		return err
+	// Set the modTime of the uploaded file and re-read the metadata
+	// so the object has the md5sum the server computed for the upload.
+	//
+	// The server sometimes silently drops the custom property holding
+	// the modtime when it is set just after an upload, so check the
+	// modtime read back and set it again if it didn't stick.
+	const maxTries = 3
+	for try := 1; try <= maxTries; try++ {
+		err = o.SetModTime(ctx, modTime)
+		if err != nil {
+			return err
+		}
+		o.hasMetaData = false
+		err = o.readMetaData(ctx)
+		if err != nil {
+			return err
+		}
+		if o.modTime.Equal(modTime) {
+			return nil
+		}
+		fs.Debugf(o, "modtime not stored after upload (got %v, want %v) - setting again (try %d/%d)", o.modTime, modTime, try, maxTries)
 	}
-
-	// Re-read the metadata so the object has the md5sum the server
-	// computed for the upload.
-	o.hasMetaData = false
-	return o.readMetaData(ctx)
+	return errors.New("failed to store modtime after upload")
 }
 
 // Remove an object
