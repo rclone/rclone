@@ -70,7 +70,8 @@ Get quick info about your active serve instances, and start new ones.
 ### Settings
 
 Edit your `rclone.conf` file directly, set logging flags, and
-performance parameters.
+performance parameters. A desktop-launched Windows GUI also provides an
+option to exit rclone.
 
 ## How it works
 
@@ -104,6 +105,22 @@ A few good measures:
 If you want to access it remotely but want to avoid running a proxy
 and exposing ports, you can use Cloudflare Tunnels or localhost.run or
 Tailscale (all free).
+
+## Windows desktop launcher
+
+The Windows download remains a portable ZIP with no installer. You can
+double-click the icon-bearing `rclone.exe` in Explorer, or create a
+Desktop or Start-menu shortcut to it, to open the GUI without keeping a
+console window open. A console window may appear briefly during startup.
+
+Only one desktop-launched GUI runs per Windows user session. Opening the
+executable or shortcut again reopens the authenticated GUI in your
+browser. Commands run from CMD or PowerShell are unchanged, and an
+explicit `rclone gui` command remains a normal terminal process.
+
+The desktop-launched GUI includes **Exit rclone** under **Settings**.
+After confirmation, it stops rclone along with any active transfers,
+mounts, and serves.
 
 ## Options
 

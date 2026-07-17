@@ -536,6 +536,7 @@ func AddBackendFlags() {
 func Main() {
 	setupRootCommand(Root)
 	AddBackendFlags()
+	os.Args = guiLauncherArgs(os.Args, launchedFromExplorer())
 	if err := Root.Execute(); err != nil {
 		if strings.HasPrefix(err.Error(), "unknown command") && selfupdateEnabled {
 			Root.PrintErrf("You could use '%s selfupdate' to get latest features.\n\n", Root.CommandPath())
@@ -543,4 +544,12 @@ func Main() {
 		fs.Logf(nil, "Fatal error: %v", err)
 		os.Exit(exitcode.UsageError)
 	}
+}
+
+// guiLauncherArgs starts the GUI for a zero-argument Windows Explorer launch.
+func guiLauncherArgs(args []string, fromExplorer bool) []string {
+	if fromExplorer && len(args) == 1 {
+		return append(args, "gui", "--no-console", "--windows-explorer-launcher")
+	}
+	return args
 }

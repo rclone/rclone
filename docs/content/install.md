@@ -178,8 +178,15 @@ links. If not sure, use the first link.
 Open this file in the Explorer and extract `rclone.exe`. Rclone is a
 portable executable so you can place it wherever is convenient.
 
-Open a CMD window (or powershell) and run the binary. Note that rclone
-does not launch a GUI by default, it runs in the CMD Window.
+Double-click `rclone.exe`, or a shortcut to it, to open the Web GUI in
+your browser. The executable and shortcuts to it use the rclone icon. A
+console window may appear briefly while the GUI starts. Double-clicking
+again reopens the existing GUI instead of starting another copy. Use
+**Settings > Exit rclone** in the GUI to stop the desktop process; active
+transfers, mounts, and serves will also stop.
+
+Running `rclone.exe` from CMD or PowerShell is unchanged and uses the
+command line normally.
 
 - Run `rclone.exe config` to setup. See [rclone config docs](/docs/) for more details.
 - Optionally configure [automatic execution](#autostart).
