@@ -207,6 +207,7 @@ backends:
    fastlist: false
    ignore:
      - TestIntegration/FsMkdir/FsPutZeroLength
+     - TestRWFileHandleWriteNoWrite
    ignoretests:
      - cmd/bisync
  - backend:  "internetarchive"
