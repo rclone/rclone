@@ -44,6 +44,12 @@ func shouldRetry(ctx context.Context, err error) (bool, error) {
 		return false, nil
 	}
 	if perr, ok := err.(*putio.ErrorResponse); ok {
+		// put.io serializes trash operations per account, so
+		// concurrent deletes can fail with a 400
+		// TRASH_LOCK_TIMEOUT error which deserves a retry.
+		if perr.Type == "TRASH_LOCK_TIMEOUT" {
+			return true, err
+		}
 		err = &statusCodeError{response: perr.Response}
 	}
 	if scerr, ok := err.(*statusCodeError); ok && scerr.response.StatusCode == 429 {
