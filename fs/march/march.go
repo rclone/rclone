@@ -263,14 +263,19 @@ func (m *March) Run(ctx context.Context) error {
 		dstDepth:  dstDepth - 1,
 		noDst:     m.NoCheckDest,
 	}
+	// Discard the remaining jobs on cancellation to unblock the senders.
+	done := make(chan struct{})
 	go func() {
-		// when the context is cancelled discard the remaining jobs
-		<-m.Ctx.Done()
-		for range in {
-			traversing.Done()
+		select {
+		case <-m.Ctx.Done():
+			for range in {
+				traversing.Done()
+			}
+		case <-done:
 		}
 	}()
 	traversing.Wait()
+	close(done)
 	close(in)
 	wg.Wait()
 
