@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -41,8 +42,39 @@ func TestMain(m *testing.M) {
 	fstest.TestMain(m)
 }
 
+// sharingRefused caches whether the remote refuses sharing invitations.
+var sharingRefused *bool
+
+// skipIfSharingRefused skips t if the remote cannot add permissions via
+// the driveItem invite API.
+//
+// Microsoft has been progressively disabling sharing invitations on
+// both Business and Personal accounts (the invite API returns 400
+// sharingFailed for any recipient on affected accounts), which makes
+// the permission writing tests impossible.
+func (f *Fs) skipIfSharingRefused(t *testing.T, r *fstest.Run) {
+	if sharingRefused == nil {
+		file := r.WriteObject(ctx, randomFilename(), "sharing probe", t2)
+		obj, err := r.Fremote.NewObject(ctx, file.Path)
+		require.NoError(t, err)
+		m := f.newMetadata(obj.Remote())
+		m.normalizedID = obj.(*Object).id
+		p := defaultPermissions(f.driveType)[0]
+		p.Roles[0] = api.ReadRole
+		_, _, err = m.addPermission(ctx, p)
+		_ = obj.Remove(ctx)
+		refused := err != nil && strings.Contains(err.Error(), "sharingFailed")
+		sharingRefused = &refused
+	}
+	if *sharingRefused {
+		t.Skip("skipping test: server refuses sharing invitations (sharingFailed)")
+	}
+}
+
 // TestWritePermissions tests reading and writing permissions
 func (f *Fs) TestWritePermissions(t *testing.T, r *fstest.Run) {
+	f.skipIfSharingRefused(t, r)
+
 	// setup
 	ctx, ci := fs.AddConfig(ctx)
 	ci.Metadata = true
@@ -141,6 +173,8 @@ func (f *Fs) TestReadPermissions(t *testing.T, r *fstest.Run) {
 
 // TestReadMetadata tests that all the read-only system properties are present and non-blank
 func (f *Fs) TestReadMetadata(t *testing.T, r *fstest.Run) {
+	f.skipIfSharingRefused(t, r)
+
 	// setup
 	ctx, ci := fs.AddConfig(ctx)
 	ci.Metadata = true
@@ -165,6 +199,8 @@ func (f *Fs) TestReadMetadata(t *testing.T, r *fstest.Run) {
 
 // TestDirectoryMetadata tests reading and writing modtime and other metadata and permissions for directories
 func (f *Fs) TestDirectoryMetadata(t *testing.T, r *fstest.Run) {
+	f.skipIfSharingRefused(t, r)
+
 	// setup
 	ctx, ci := fs.AddConfig(ctx)
 	ci.Metadata = true
@@ -276,6 +312,8 @@ func (f *Fs) TestDirectoryMetadata(t *testing.T, r *fstest.Run) {
 
 // TestServerSideCopyMove tests server-side Copy and Move
 func (f *Fs) TestServerSideCopyMove(t *testing.T, r *fstest.Run) {
+	f.skipIfSharingRefused(t, r)
+
 	// setup
 	ctx, ci := fs.AddConfig(ctx)
 	ci.Metadata = true
@@ -320,6 +358,8 @@ func (f *Fs) TestServerSideCopyMove(t *testing.T, r *fstest.Run) {
 
 // TestMetadataMapper tests adding permissions with the --metadata-mapper
 func (f *Fs) TestMetadataMapper(t *testing.T, r *fstest.Run) {
+	f.skipIfSharingRefused(t, r)
+
 	// setup
 	ctx, ci := fs.AddConfig(ctx)
 	ci.Metadata = true
