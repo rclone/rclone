@@ -12,6 +12,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -43,6 +44,12 @@ func newMultipartTestServer(t *testing.T, disableStreaming bool) (*minio.Core, f
 // destination path is exercised as well as the temporary-object path that
 // local (PartialUploads=true) uses.
 func newMultipartTestServerBacking(t *testing.T, backing string, disableStreaming bool) (*minio.Core, fs.Fs, string) {
+	return newMultipartTestServerOpt(t, backing, disableStreaming, nil)
+}
+
+// newMultipartTestServerOpt is like newMultipartTestServerBacking but also
+// applies tweak (if non-nil) to the server Options before starting it.
+func newMultipartTestServerOpt(t *testing.T, backing string, disableStreaming bool, tweak func(*Options)) (*minio.Core, fs.Fs, string) {
 	fstest.Initialise()
 	ctx := context.Background()
 	if backing == "" {
@@ -67,6 +74,9 @@ func newMultipartTestServerBacking(t *testing.T, backing string, disableStreamin
 	opt.DisableMultipartStreaming = disableStreaming
 	opt.AuthKey = []string{fmt.Sprintf("%s,%s", keyid, keysec)}
 	opt.HTTP.ListenAddr = []string{endpoint}
+	if tweak != nil {
+		tweak(&opt)
+	}
 	w, err := newServer(ctx, f, &opt, &vfscommon.Opt, &proxy.Opt)
 	require.NoError(t, err)
 	go func() { _ = w.Serve() }()
@@ -277,6 +287,165 @@ func TestMultipartAbortPreservesExisting(t *testing.T) {
 			requireOnly(t, f, bucket, object)
 		})
 	}
+}
+
+// TestMultipartRetryAfterStreamed checks that a part which is uploaded again
+// after its first copy has already been streamed to the backend - as a client
+// whose HTTP request timed out will do when it retries - is accepted
+// idempotently and doesn't fail the CompleteMultipartUpload.
+func TestMultipartRetryAfterStreamed(t *testing.T) {
+	core, f, bucket := newMultipartTestServer(t, false)
+	ctx := context.Background()
+	const object = "retry.bin"
+
+	part1 := []byte(random.String(60 * 1024))
+	part2 := []byte(random.String(40 * 1024))
+	want := append(append([]byte(nil), part1...), part2...)
+
+	uploadID, err := core.NewMultipartUpload(ctx, bucket, object, minio.PutObjectOptions{})
+	require.NoError(t, err)
+
+	// Parts uploaded in order are streamed synchronously, so by the time
+	// PutObjectPart returns the part is already in the backend stream.
+	p1, err := core.PutObjectPart(ctx, bucket, object, uploadID, 1, bytes.NewReader(part1), int64(len(part1)), minio.PutObjectPartOptions{})
+	require.NoError(t, err)
+	p2, err := core.PutObjectPart(ctx, bucket, object, uploadID, 2, bytes.NewReader(part2), int64(len(part2)), minio.PutObjectPartOptions{})
+	require.NoError(t, err)
+
+	// Retry part 1 with identical content, as a client retrying after a
+	// timeout does.
+	p1retry, err := core.PutObjectPart(ctx, bucket, object, uploadID, 1, bytes.NewReader(part1), int64(len(part1)), minio.PutObjectPartOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, p1.ETag, p1retry.ETag)
+
+	_, err = core.CompleteMultipartUpload(ctx, bucket, object, uploadID, []minio.CompletePart{
+		{PartNumber: 1, ETag: p1.ETag},
+		{PartNumber: 2, ETag: p2.ETag},
+	}, minio.PutObjectOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, want, readObject(t, f, bucket, object))
+}
+
+// TestMultipartRetryDifferentContent checks that re-uploading a part with
+// different content after the first copy has been streamed is rejected - the
+// in-order stream can't replace data already sent to the backend.
+func TestMultipartRetryDifferentContent(t *testing.T) {
+	core, _, bucket := newMultipartTestServer(t, false)
+	ctx := context.Background()
+	const object = "retry-different.bin"
+
+	uploadID, err := core.NewMultipartUpload(ctx, bucket, object, minio.PutObjectOptions{})
+	require.NoError(t, err)
+
+	part1 := []byte(random.String(60 * 1024))
+	_, err = core.PutObjectPart(ctx, bucket, object, uploadID, 1, bytes.NewReader(part1), int64(len(part1)), minio.PutObjectPartOptions{})
+	require.NoError(t, err)
+
+	other := []byte(random.String(60 * 1024))
+	_, err = core.PutObjectPart(ctx, bucket, object, uploadID, 1, bytes.NewReader(other), int64(len(other)), minio.PutObjectPartOptions{})
+	require.Error(t, err)
+
+	require.NoError(t, core.AbortMultipartUpload(ctx, bucket, object, uploadID))
+}
+
+// TestMultipartReplaceBuffered checks that re-uploading a part which has been
+// received but not yet streamed (it is waiting for an earlier part) replaces
+// the buffered copy, matching S3's last-write-wins semantics.
+func TestMultipartReplaceBuffered(t *testing.T) {
+	core, f, bucket := newMultipartTestServer(t, false)
+	ctx := context.Background()
+	const object = "replace-buffered.bin"
+
+	uploadID, err := core.NewMultipartUpload(ctx, bucket, object, minio.PutObjectOptions{})
+	require.NoError(t, err)
+
+	// Part 2 arrives first so it is buffered awaiting part 1.
+	old := []byte(random.String(40 * 1024))
+	_, err = core.PutObjectPart(ctx, bucket, object, uploadID, 2, bytes.NewReader(old), int64(len(old)), minio.PutObjectPartOptions{})
+	require.NoError(t, err)
+
+	// Upload part 2 again with different content - the buffered copy must be
+	// replaced.
+	part2 := []byte(random.String(40 * 1024))
+	p2, err := core.PutObjectPart(ctx, bucket, object, uploadID, 2, bytes.NewReader(part2), int64(len(part2)), minio.PutObjectPartOptions{})
+	require.NoError(t, err)
+
+	part1 := []byte(random.String(60 * 1024))
+	p1, err := core.PutObjectPart(ctx, bucket, object, uploadID, 1, bytes.NewReader(part1), int64(len(part1)), minio.PutObjectPartOptions{})
+	require.NoError(t, err)
+
+	_, err = core.CompleteMultipartUpload(ctx, bucket, object, uploadID, []minio.CompletePart{
+		{PartNumber: 1, ETag: p1.ETag},
+		{PartNumber: 2, ETag: p2.ETag},
+	}, minio.PutObjectOptions{})
+	require.NoError(t, err)
+	want := append(append([]byte(nil), part1...), part2...)
+	assert.Equal(t, want, readObject(t, f, bucket, object))
+}
+
+// TestMultipartBufferLimit checks that a part arriving ahead of its turn
+// blocks once the reorder buffer limit is reached, and is admitted once the
+// missing part arrives and the buffer drains.
+func TestMultipartBufferLimit(t *testing.T) {
+	core, f, bucket := newMultipartTestServerOpt(t, "", false, func(opt *Options) {
+		opt.MultipartStreamingBufferLimit = 50 * 1024
+	})
+	ctx := context.Background()
+	const object = "buffer-limit.bin"
+
+	sizes := []int{40 * 1024, 40 * 1024, 40 * 1024}
+	datas := make([][]byte, len(sizes))
+	var want []byte
+	for i, sz := range sizes {
+		datas[i] = []byte(random.String(sz))
+		want = append(want, datas[i]...)
+	}
+
+	uploadID, err := core.NewMultipartUpload(ctx, bucket, object, minio.PutObjectOptions{})
+	require.NoError(t, err)
+
+	// Part 3 arrives first: the buffer is empty so it is admitted even though
+	// it must wait for its turn.
+	p3, err := core.PutObjectPart(ctx, bucket, object, uploadID, 3, bytes.NewReader(datas[2]), int64(sizes[2]), minio.PutObjectPartOptions{})
+	require.NoError(t, err)
+
+	// Part 2 would take the buffer over the limit, so it must block until
+	// part 1 arrives and the stream drains.
+	type partResult struct {
+		part minio.ObjectPart
+		err  error
+	}
+	done := make(chan partResult, 1)
+	go func() {
+		p, err := core.PutObjectPart(ctx, bucket, object, uploadID, 2, bytes.NewReader(datas[1]), int64(sizes[1]), minio.PutObjectPartOptions{})
+		done <- partResult{p, err}
+	}()
+	select {
+	case r := <-done:
+		t.Fatalf("part 2 was not blocked by the buffer limit (err=%v)", r.err)
+	case <-time.After(200 * time.Millisecond):
+	}
+
+	// Part 1 is the part the stream needs so it is admitted regardless of the
+	// limit; streaming it frees the buffer and unblocks part 2.
+	p1, err := core.PutObjectPart(ctx, bucket, object, uploadID, 1, bytes.NewReader(datas[0]), int64(sizes[0]), minio.PutObjectPartOptions{})
+	require.NoError(t, err)
+	var p2 minio.ObjectPart
+	select {
+	case r := <-done:
+		require.NoError(t, r.err)
+		p2 = r.part
+	case <-time.After(10 * time.Second):
+		t.Fatal("part 2 was never unblocked")
+	}
+
+	_, err = core.CompleteMultipartUpload(ctx, bucket, object, uploadID, []minio.CompletePart{
+		{PartNumber: 1, ETag: p1.ETag},
+		{PartNumber: 2, ETag: p2.ETag},
+		{PartNumber: 3, ETag: p3.ETag},
+	}, minio.PutObjectOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, want, readObject(t, f, bucket, object))
 }
 
 // TestMultipartOverwrite checks that a completed multipart upload atomically

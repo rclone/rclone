@@ -41,6 +41,10 @@ var OptionsInfo = fs.Options{{
 	Name:    "disable_multipart_streaming",
 	Default: false,
 	Help:    "Buffer multipart uploads in memory instead of streaming them to the backend (see the Multipart uploads docs section)",
+}, {
+	Name:    "multipart_streaming_buffer_limit",
+	Default: fs.SizeSuffix(256 * 1024 * 1024),
+	Help:    "Maximum memory buffered per streamed multipart upload for parts arriving out of order, 0 for unlimited (see the Multipart uploads docs section)",
 }}.
 	Add(httplib.ConfigInfo).
 	Add(httplib.AuthConfigInfo)
@@ -48,13 +52,14 @@ var OptionsInfo = fs.Options{{
 // Options contains options for the s3 Server
 type Options struct {
 	//TODO add more options
-	ForcePathStyle            bool     `config:"force_path_style"`
-	EtagHash                  string   `config:"etag_hash"`
-	AuthKey                   []string `config:"auth_key"`
-	NoCleanup                 bool     `config:"no_cleanup"`
-	DisableMultipartStreaming bool     `config:"disable_multipart_streaming"`
-	Auth                      httplib.AuthConfig
-	HTTP                      httplib.Config
+	ForcePathStyle                bool          `config:"force_path_style"`
+	EtagHash                      string        `config:"etag_hash"`
+	AuthKey                       []string      `config:"auth_key"`
+	NoCleanup                     bool          `config:"no_cleanup"`
+	DisableMultipartStreaming     bool          `config:"disable_multipart_streaming"`
+	MultipartStreamingBufferLimit fs.SizeSuffix `config:"multipart_streaming_buffer_limit"`
+	Auth                          httplib.AuthConfig
+	HTTP                          httplib.Config
 }
 
 // Opt is options set by command line flags

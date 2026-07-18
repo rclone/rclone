@@ -129,14 +129,25 @@ also need to support a server-side move or copy.
 
 - Parts must arrive in ascending, contiguous part-number order
   (1, 2, 3, ...). Parts the client uploads concurrently or out of order
-  are buffered until their turn, so higher client upload concurrency
-  uses more memory; non-contiguous part numbers are rejected. Configure
-  the client to upload in part order, ideally with low concurrency, for
-  the lowest memory use.
-- No per-part retry. Once a part has been streamed it is committed, so a
-  failure partway through aborts the whole upload and the client must
-  start it again, rather than retrying a single part. (The remote's own
-  upload still retries its internal chunks.)
+  are buffered until their turn. The memory used for this buffering is
+  capped, per upload, by `--multipart-streaming-buffer-limit` (default
+  `256M`, `0` for no limit): a part that would take the buffer over the
+  limit is stalled until the stream drains, so a client that uploads
+  faster than the remote can accept sees backpressure rather than
+  unbounded server memory use. Since a stalled part holds its HTTP
+  request open, clients whose upload concurrency times chunk size
+  exceeds the limit may need a longer read timeout when the remote is
+  slow. Non-contiguous part numbers are rejected on completion.
+  Configure the client to upload in part order, ideally with low
+  concurrency, for the lowest memory use.
+- A part uploaded again before completion - typically a client retrying
+  after a timeout - is accepted: if the earlier copy is still buffered
+  it is replaced, and if it has already been streamed an identical
+  re-upload is a no-op. What isn't possible is replacing a part that has
+  already been streamed with *different* content - that is rejected. A
+  failure in the stream to the remote itself still aborts the whole
+  upload and the client must start it again. (The remote's own upload
+  still retries its internal chunks.)
 - Parts are serialised into one stream, so ingest from the client is
   effectively single-threaded, although the remote's own upload still
   runs concurrently.
