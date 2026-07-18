@@ -156,6 +156,17 @@ func (f *Fs) toNative(remote string) (string, error) {
 	return native, nil
 }
 
+// This turns a native path with a leading / into a path suitable for
+// the squashfs library which requires io/fs.ValidPath paths with no
+// leading / and "." for the root directory.
+func toIOFS(native string) string {
+	native = strings.Trim(native, "/")
+	if native == "" {
+		return "."
+	}
+	return native
+}
+
 // Turn a (nativeDir, leaf) into a remote
 func (f *Fs) fromNative(nativeDir string, leaf string) string {
 	// fs.Debugf(nil, "nativeDir = %q, leaf = %q, root=%q", nativeDir, leaf, f.root)
@@ -196,7 +207,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return nil, err
 	}
 
-	items, err := f.sqfs.ReadDir(nativeDir)
+	items, err := f.sqfs.ReadDir(toIOFS(nativeDir))
 	if err != nil {
 		return nil, fmt.Errorf("read squashfs: couldn't read directory: %w", err)
 	}
@@ -238,7 +249,7 @@ func (f *Fs) newObjectNative(nativePath string) (o fs.Object, err error) {
 	leaf = strings.Trim(leaf, "/")
 
 	// FIXME need to detect directory not found
-	fis, err := f.sqfs.ReadDir(dir)
+	fis, err := f.sqfs.ReadDir(toIOFS(dir))
 	if err != nil {
 
 		return nil, fs.ErrorObjectNotFound
