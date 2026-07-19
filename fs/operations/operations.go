@@ -416,7 +416,9 @@ func SameObject(src, dst fs.Object) bool {
 // It returns the destination object if possible.  Note that this may
 // be nil.
 //
-// This is accounted as a check.
+// This is accounted as a check, unless Move falls back to Copy + Delete
+// (on backends without server-side move), in which case the Copy is
+// accounted as a transfer.
 func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
 	return move(ctx, fdst, dst, remote, src, false)
 }
