@@ -35,6 +35,7 @@ import (
 	_ "github.com/rclone/rclone/backend/huaweidrive"
 	_ "github.com/rclone/rclone/backend/iclouddrive"
 	_ "github.com/rclone/rclone/backend/imagekit"
+	_ "github.com/rclone/rclone/backend/imap"
 	_ "github.com/rclone/rclone/backend/internetarchive"
 	_ "github.com/rclone/rclone/backend/internxt"
 	_ "github.com/rclone/rclone/backend/jottacloud"
