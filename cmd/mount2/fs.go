@@ -105,6 +105,27 @@ func (f *FS) setEntryOut(node vfs.Node, out *fuse.EntryOut) {
 	out.SetAttrTimeout(time.Duration(f.opt.AttrTimeout))
 }
 
+// Called from the VFS's invalidation goroutine.
+//
+// The Operations() checks skip nodes which newNode has created but not
+// yet registered with NewInode - notifying on those would panic.
+func (f *FS) invalidateKernelCacheForEntry(parent vfs.Node, name string, node vfs.Node) {
+	// Drop the parent's cached dir entry so the next access re-LOOKUPs.
+	if parentNode, ok := parent.Sys().(*Node); ok && parentNode.Operations() != nil {
+		if errno := parentNode.NotifyEntry(name); errno != 0 && errno != syscall.ENOENT {
+			fs.Debugf(parent.Path(), "Failed to invalidate kernel dir entry %q: %v", name, errno)
+		}
+	}
+	// For an already-open file, also drop its attributes and page cache.
+	if node != nil && node.IsFile() {
+		if fuseNode, ok := node.Sys().(*Node); ok && fuseNode.Operations() != nil {
+			if errno := fuseNode.NotifyContent(0, -1); errno != 0 && errno != syscall.ENOENT {
+				fs.Debugf(node.Path(), "Failed to invalidate kernel node data: %v", errno)
+			}
+		}
+	}
+}
+
 // Translate errors from mountlib into Syscall error numbers
 func translateError(err error) syscall.Errno {
 	if err == nil {
