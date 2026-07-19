@@ -144,6 +144,33 @@ func (f *Fs) InternalTestNoHead(t *testing.T) {
 
 }
 
+func (f *Fs) InternalTestNoHeadObjectCopy(t *testing.T) {
+	ctx := context.Background()
+	contents := random.String(1000)
+	item := fstest.NewItem("test-no-head-object-copy-src", contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))
+	src := fstests.PutTestContents(ctx, t, f, &item, contents, true)
+	defer func() {
+		assert.NoError(t, src.Remove(ctx))
+	}()
+	// Set NoHeadObject for this test so the copied object's metadata is not read back
+	f.opt.NoHeadObject = true
+	defer func() {
+		f.opt.NoHeadObject = false
+	}()
+	dst, err := f.Copy(ctx, src, "test-no-head-object-copy-dst")
+	require.NoError(t, err)
+	defer func() {
+		assert.NoError(t, dst.Remove(ctx))
+	}()
+	assert.Equal(t, src.Size(), dst.Size())
+	srcHash, err := src.Hash(ctx, hash.MD5)
+	require.NoError(t, err)
+	dstHash, err := dst.Hash(ctx, hash.MD5)
+	require.NoError(t, err)
+	assert.Equal(t, srcHash, dstHash)
+	assert.NotEqual(t, "", dstHash)
+}
+
 func (f *Fs) InternalTestHasChildren(t *testing.T) {
 	ctx := context.Background()
 	contents := random.String(100)
@@ -810,6 +837,7 @@ func (f *Fs) InternalTestObjectLock(t *testing.T) {
 func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("Metadata", f.InternalTestMetadata)
 	t.Run("NoHead", f.InternalTestNoHead)
+	t.Run("NoHeadObjectCopy", f.InternalTestNoHeadObjectCopy)
 	t.Run("HasChildren", f.InternalTestHasChildren)
 	t.Run("Versions", f.InternalTestVersions)
 	t.Run("ObjectLock", f.InternalTestObjectLock)
