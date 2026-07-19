@@ -43,41 +43,67 @@ to supply your own `api_key` and `api_secret`.
 
 ## Usage
 
-Upload a single image:
+The examples below use `smug:` for an album-mode remote and `smuglib:` for a
+library-mode remote. Library mode is the default and starts at the authenticated
+user's root folder.
 
-```console
-rclone copyto photo.jpg smug:photo.jpg
-```
-
-Upload a directory of images:
-
-```console
-rclone copy ./photos smug:
-```
-
-List the album:
-
-```console
-rclone ls smug:
-```
-
-List a library tree:
+List the library root or a folder:
 
 ```console
 rclone lsf smuglib:
 rclone lsf smuglib:Projects
+rclone lsjson smuglib:Projects
 ```
 
-Upload into an album in library mode:
+List only SmugMug folders or albums under a path:
 
 ```console
-rclone copyto photo.jpg smuglib:Projects/BlueMesa/photo.jpg
+rclone backend list-folders smuglib: Projects
+rclone backend list-albums smuglib: Projects
+rclone backend list smuglib: Projects -o recursive=true
 ```
 
-Create a SmugMug folder in library mode:
+Upload a single image to an exact destination file name:
+
+```console
+rclone copyto photo.jpg smug:photo.jpg
+rclone copyto photo.jpg smuglib:Projects/RiverLight/photo.jpg
+```
+
+Upload a directory of images to an existing album:
+
+```console
+rclone copy ./photos smug:
+rclone copy ./photos smuglib:Projects/RiverLight
+```
+
+Show upload progress and per-file logging from the terminal:
+
+```console
+rclone copy ./photos smuglib:Projects/RiverLight -P --stats 5s
+rclone copy ./photos smuglib:Projects/RiverLight -v
+```
+
+Download images from SmugMug:
+
+```console
+rclone copy smuglib:Projects/RiverLight ./downloads
+rclone copyto smuglib:Projects/RiverLight/photo.jpg ./photo.jpg
+```
+
+Use `copy` when the destination is a directory or album. Use `copyto` when the
+destination is the exact file path or when you want to rename one image:
+
+```console
+rclone copy ./photos smuglib:Projects/RiverLight
+rclone copyto photo.jpg smuglib:Projects/RiverLight/cover.jpg
+```
+
+Create a SmugMug folder under an existing SmugMug folder:
 
 ```console
 rclone mkdir smuglib:Projects/NewFolder
+rclone mkdir smuglib:Projects/NewFolder/NestedFolder
 ```
 
 Remove an empty SmugMug folder in library mode:
@@ -132,7 +158,16 @@ rclone backend copy-image smuglib: Projects/BlueMesa/photo.jpg Projects/RiverLig
 rclone backend move-image smuglib: Projects/BlueMesa/photo.jpg Projects/RiverLight/photo.jpg
 ```
 
-## Creating albums
+## Creating folders and albums
+
+Use `mkdir` for SmugMug folders:
+
+```console
+rclone mkdir smuglib:Projects/NewFolder
+```
+
+The parent must be a SmugMug folder. SmugMug albums are media collections, so
+empty directories inside an album path are virtual and cannot be created.
 
 Use `create-album` with a parent folder path:
 
@@ -167,7 +202,7 @@ rclone copyto photo.jpg smuglib:Projects/RiverLight/photo.jpg
 
 Or configure another album-mode remote with the returned `album_uri`.
 
-## Copying and moving images
+## Copying, moving, and collecting images
 
 Use normal rclone commands to copy or move an image between albums in a
 library-mode remote:
@@ -188,6 +223,11 @@ SmugMug's exposed `CopyImage` API does not accept a destination album, so
 cross-album copies stream through rclone and upload to the destination. Moves
 delete the source image only after the destination upload succeeds.
 
+SmugMug's v2 API exposes collected images as album-image relationships, but it
+does not expose a public destination-album collect endpoint that rclone can use.
+Use `copy`, `copyto`, `move`, or `moveto` for filesystem behavior rather than a
+SmugMug-native collect operation.
+
 ## Metadata
 
 SmugMug supports rclone metadata for image fields. Use `-M` to preserve
@@ -207,8 +247,8 @@ when writing.
 SmugMug albums are flat media collections. In album mode, rclone represents
 paths virtually by encoding slashes in uploaded file names. In library mode,
 `mkdir` and `rmdir` manage real SmugMug folders only. Virtual album subpaths
-cannot store empty directories. Use `rclone backend create-album` when you need a
-new album.
+cannot store empty directories. Use `rclone backend create-album` when you need
+a new album.
 
 SmugMug requires a `Content-MD5` header for uploads. If the source does not
 provide an MD5 hash, rclone calculates one before upload and caches files larger
