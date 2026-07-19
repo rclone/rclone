@@ -1,0 +1,26 @@
+backend: rs
+name: RS
+tier: Tier 4
+maintainers: External
+features_score: 5
+integration_tests: Passing
+data_integrity: Hash
+performance: High
+adoption: Some use
+docs: Full
+security: High
+virtual: true
+remote: 'TestRsLocal:'
+features:
+- About
+- CanHaveEmptyDirectories
+- Command
+- Copy
+- DirMove
+- Move
+- PutStream
+- SlowHash
+hashes:
+- md5
+- sha256
+precision: 1000000000

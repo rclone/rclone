@@ -20,6 +20,25 @@ backends:
  - backend:  "local"
    remote:   ""
    fastlist: false
+ - backend:  "raid3"
+   remote:   "TestRaid3Local:"
+   fastlist: true
+ - backend:  "raid3"
+   remote:   "TestRaid3Minio:"
+   fastlist: true
+   ignore:
+     # MinIO/S3 metadata and timing quirks with raid3
+     - TestIntegration/FsMkdir/FsPutFiles/FsCopy/Metadata
+     - TestIntegration/FsMkdir/FsPutFiles/ObjectMimeType
+     - TestIntegration/FsMkdir/FsPutFiles/ObjectMetadata
+     - TestIntegration/FsMkdir/FsPutFiles/ObjectUpdate
+     - TestIntegration/FsMkdir/FsPutFiles/FromRoot/List
+     - TestIntegration/FsMkdir/FsPutFiles/FromRoot/ListEntries
+     - TestIntegration/FsMkdir/FsPutFiles/FromRoot/Put
+     - TestIntegration/FsMkdir/FsPutFiles/ObjectRemove
+ - backend:  "rs"
+   remote:   "TestRsLocal:"
+   fastlist: false
  - backend:  "b2"
    remote:   "TestB2:"
    fastlist: true
