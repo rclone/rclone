@@ -637,6 +637,18 @@ func (f *Fs) drainPool(ctx context.Context) (err error) {
 	return err
 }
 
+// commandEncoding hardens the user-configured filename encoding so that it
+// can never restore a raw CR or LF.
+//
+// The FTP control channel is line oriented and the ftp library writes command
+// arguments (paths) straight onto it without escaping, so a filename
+// containing CR/LF would otherwise be able to inject an independent FTP
+// command. CR/LF are therefore always encoded to safe symbols regardless of
+// the configured encoding, which is what the default encoding already does.
+func commandEncoding(enc encoder.MultiEncoder) encoder.MultiEncoder {
+	return enc | encoder.EncodeCrLf
+}
+
 // NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs, err error) {
 	// defer fs.Trace(nil, "name=%q, root=%q", name, root)("fs=%v, err=%v", &ff, &err)
@@ -646,6 +658,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 	if err != nil {
 		return nil, err
 	}
+	opt.Enc = commandEncoding(opt.Enc)
 	pass := ""
 	if opt.AskPassword && opt.Pass == "" {
 		pass = config.GetPassword("FTP server password")
