@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -12,6 +13,26 @@ import (
 
 	"golang.org/x/net/proxy"
 )
+
+// maxResponseBytes is the maximum size of CONNECT response we will
+// read from the proxy so a malicious proxy can't use all our memory.
+const maxResponseBytes = 1024 * 1024
+
+// bufferedConn is a net.Conn which reads from buffered first then Conn
+type bufferedConn struct {
+	net.Conn
+	buffered []byte // unread bytes received after the CONNECT response
+}
+
+// Read from buffered first then the underlying Conn
+func (c *bufferedConn) Read(p []byte) (n int, err error) {
+	if len(c.buffered) > 0 {
+		n = copy(p, c.buffered)
+		c.buffered = c.buffered[n:]
+		return n, nil
+	}
+	return c.Conn.Read(p)
+}
 
 // HTTPConnectDial connects using HTTP CONNECT via proxyDialer
 //
@@ -67,16 +88,31 @@ func HTTPConnectDial(network, addr string, proxyURL *url.URL, proxyDialer proxy.
 		_ = conn.Close()
 		return nil, fmt.Errorf("HTTP CONNECT proxy failed to send CONNECT: %q", err)
 	}
-	br := bufio.NewReader(conn)
+	limitedConn := &io.LimitedReader{R: conn, N: maxResponseBytes}
+	br := bufio.NewReader(limitedConn)
 	req := &http.Request{URL: &url.URL{Scheme: "http", Host: addr}}
 	resp, err := http.ReadResponse(br, req)
 	if err != nil {
 		_ = conn.Close()
+		if limitedConn.N <= 0 {
+			return nil, fmt.Errorf("HTTP CONNECT proxy response too large (more than %d bytes)", maxResponseBytes)
+		}
 		return nil, fmt.Errorf("HTTP CONNECT proxy failed to read response: %q", err)
 	}
 	if resp.StatusCode != http.StatusOK {
 		_ = conn.Close()
 		return nil, fmt.Errorf("HTTP CONNECT proxy failed: %s", resp.Status)
+	}
+	// The server may have sent bytes for the tunnelled protocol (eg an
+	// SSH banner or FTP greeting) which br has buffered along with the
+	// CONNECT response - make sure they aren't lost.
+	if n := br.Buffered(); n > 0 {
+		buffered := make([]byte, n)
+		if _, err := io.ReadFull(br, buffered); err != nil {
+			_ = conn.Close()
+			return nil, fmt.Errorf("HTTP CONNECT proxy failed to read buffered bytes: %q", err)
+		}
+		conn = &bufferedConn{Conn: conn, buffered: buffered}
 	}
 	return conn, nil
 }
