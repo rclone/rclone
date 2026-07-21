@@ -9,11 +9,15 @@ import (
 	"strings"
 
 	"github.com/rclone/rclone/fs"
+	"golang.org/x/text/unicode/norm"
 )
 
 // GlobPathToRegexp converts an rsync style glob path to a regexp
+//
+// The glob is normalised to NFC so that paths normalised likewise
+// match regardless of the unicode form they were written in.
 func GlobPathToRegexp(glob string, ignoreCase bool) (*regexp.Regexp, error) {
-	return globToRegexp(glob, true, true, ignoreCase)
+	return globToRegexp(norm.NFC.String(glob), true, true, ignoreCase)
 }
 
 // GlobStringToRegexp converts an rsync style glob string to a regexp

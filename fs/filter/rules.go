@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/rclone/rclone/fs"
+	"golang.org/x/text/unicode/norm"
 )
 
 // RulesOpt is configuration for a rule set
@@ -29,8 +30,11 @@ type rule struct {
 }
 
 // Match returns true if rule matches path
+//
+// The path is normalised to NFC before matching so that it matches
+// rules regardless of the unicode form it is in.
 func (r *rule) Match(path string) bool {
-	return r.Regexp.MatchString(path)
+	return r.Regexp.MatchString(norm.NFC.String(path))
 }
 
 // String the rule
