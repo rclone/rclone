@@ -211,7 +211,7 @@ backends:
    ignoretests:
      - cmd/bisync
  - backend:  "internetarchive"
-   remote:   "TestIA:rclone-integration-test"
+   remote:   "TestIA:rclone-integration-test-2"
    fastlist: true
    tests:
      - backend
