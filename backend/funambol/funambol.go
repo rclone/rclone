@@ -226,6 +226,27 @@ func isTransientCode(code string) bool {
 	return false
 }
 
+// isFatalCode reports SAPI error codes for hard account limits — FOL-1035
+// (maximum folder count per user) and FOL-1015 (maximum folder depth).
+// Retrying cannot succeed, so these must abort the run instead of letting
+// rclone's retry layers re-run the whole transfer.
+func isFatalCode(code string) bool {
+	switch code {
+	case "FOL-1015", "FOL-1035":
+		return true
+	}
+	return false
+}
+
+// wrapFatal marks hard-limit SAPI errors as fatal for rclone's retry logic.
+func wrapFatal(err error) error {
+	var ae *api.Error
+	if errors.As(err, &ae) && isFatalCode(ae.Code) {
+		return fserrors.FatalError(err)
+	}
+	return err
+}
+
 // ensureSession makes sure we have something to authenticate with: either a
 // live validation key or the persistent login cookie that can mint one.
 // Logging in from scratch needs the emailed verification code, so it can only
@@ -285,7 +306,7 @@ func (f *Fs) callJSON(ctx context.Context, opts *rest.Opts, request, response an
 			if errors.As(err, &ae) && (resp != nil && resp.StatusCode == http.StatusUnauthorized || isReauthCode(ae.Code)) {
 				return errReconnect(f.name)
 			}
-			return err
+			return wrapFatal(err)
 		}
 		// SAPI may signal failure with HTTP 200 + an error envelope.
 		if er, ok := response.(interface{ AsErr() error }); ok {
@@ -293,7 +314,7 @@ func (f *Fs) callJSON(ctx context.Context, opts *rest.Opts, request, response an
 				if f.refreshOnError(aErr) && attempt < 2 {
 					continue
 				}
-				return aErr
+				return wrapFatal(aErr)
 			}
 		}
 		return nil
@@ -643,18 +664,11 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 	return nil
 }
 
-// Put the object into the container
+// Put the object into the container.  No existence check here: Update sweeps
+// every same-name copy from a fresh listing before uploading anyway.
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	existing, err := f.newObjectWithInfo(ctx, src.Remote(), nil)
-	switch err {
-	case nil:
-		return existing, existing.Update(ctx, in, src, options...)
-	case fs.ErrorObjectNotFound:
-		o := &Object{fs: f, remote: src.Remote()}
-		return o, o.Update(ctx, in, src, options...)
-	default:
-		return nil, err
-	}
+	o := &Object{fs: f, remote: src.Remote()}
+	return o, o.Update(ctx, in, src, options...)
 }
 
 // About gets quota information
@@ -808,13 +822,34 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// Overwrite: the server appends " (1)", " (2)" … when a name already
 	// exists rather than replacing, so remove any current same-name item
-	// before uploading to keep the requested name.
+	// before uploading to keep the requested name.  Sweep ALL copies from a
+	// fresh listing, not just the one this object knows about: a retried
+	// upload whose first attempt timed out after the server had committed it
+	// leaves an extra same-name copy behind (the fresh copy is not listable
+	// straight away, so the retry cannot see it and delete it).
+	ids := make([]string, 0, 1)
 	if o.id != "" {
-		if dErr := o.fs.deleteMedia(ctx, o.id); dErr != nil {
-			fs.Logf(o, "couldn't remove previous version before upload: %v", dErr)
-		}
-		o.id = ""
+		ids = append(ids, o.id)
 	}
+	lcLeaf := strings.ToLower(leaf)
+	lErr := o.fs.listMedia(ctx, dirID, func(item *api.Item) {
+		id := item.ID.String()
+		if id == "" || (o.id != "" && id == o.id) {
+			return
+		}
+		if strings.ToLower(o.fs.opt.Enc.ToStandardName(item.Name)) == lcLeaf {
+			ids = append(ids, id)
+		}
+	})
+	if lErr != nil {
+		fs.Logf(o, "couldn't check for previous versions before upload: %v", lErr)
+	}
+	if len(ids) > 0 {
+		if dErr := o.fs.deleteMedia(ctx, ids...); dErr != nil {
+			fs.Logf(o, "couldn't remove previous version(s) before upload: %v", dErr)
+		}
+	}
+	o.id = ""
 
 	// Phase 1: metadata -> obtain the upload GUID
 	var metaReq api.UploadMetadataRequest
@@ -944,6 +979,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		CaseInsensitive:         true,
 		CanHaveEmptyDirectories: true,
 		ReadMimeType:            false,
+		// The server stores multiple items with the same name in the same
+		// folder (e.g. when an upload is retried after a timeout), so expose
+		// that to rclone and make "rclone dedupe" usable for repair.
+		DuplicateFiles: true,
 	}).Fill(ctx, f)
 
 	// Restore the session established during config (survives 2FA).
