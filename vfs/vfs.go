@@ -742,6 +742,38 @@ func (vfs *VFS) Chtimes(name string, atime time.Time, mtime time.Time) error {
 	return nil
 }
 
+// Chmod changes the mode of the named file.
+//
+// If name is a symlink the mode of the link itself is changed, not
+// its target (like lchmod). It does not follow the link, so it works
+// on symlinks whose target doesn't exist.
+//
+// The VFS doesn't store file permissions so currently this returns
+// ENOSYS if the file exists and ENOENT if it doesn't.
+func (vfs *VFS) Chmod(name string, mode os.FileMode) error {
+	_, err := vfs.Stat(name)
+	if err != nil {
+		return err
+	}
+	return ENOSYS
+}
+
+// Chown changes the uid and gid of the named file.
+//
+// If name is a symlink the ownership of the link itself is changed,
+// not its target (like lchown). It does not follow the link, so it
+// works on symlinks whose target doesn't exist.
+//
+// The VFS doesn't store file ownership so currently this returns
+// ENOSYS if the file exists and ENOENT if it doesn't.
+func (vfs *VFS) Chown(name string, uid, gid int) error {
+	_, err := vfs.Stat(name)
+	if err != nil {
+		return err
+	}
+	return ENOSYS
+}
+
 // mkdir creates a new directory with the specified name and permission bits
 // (before umask) returning the new directory node.
 func (vfs *VFS) mkdir(name string, perm os.FileMode) (*Dir, error) {
