@@ -35,7 +35,7 @@ require (
 	github.com/colinmarc/hdfs/v2 v2.4.0
 	github.com/coreos/go-semver v0.3.1
 	github.com/coreos/go-systemd/v22 v22.6.0 // v22.7.0 fails to compile on netbsd - don't upgrade until fixed upstream
-	github.com/diskfs/go-diskfs v1.9.3
+	github.com/diskfs/go-diskfs v1.9.4
 	github.com/dop251/scsu v0.0.0-20220106150536-84ac88021d00
 	github.com/dropbox/dropbox-sdk-go-unofficial/v6 v6.4.0
 	github.com/gabriel-vasile/mimetype v1.4.13
