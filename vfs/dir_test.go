@@ -3,11 +3,14 @@ package vfs
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"runtime"
 	"slices"
 	"sort"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 	"unsafe"
@@ -18,6 +21,54 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+type controlledListFs struct {
+	fs.Fs
+	block        atomic.Bool
+	fail         atomic.Bool
+	ignoreCancel atomic.Bool
+	wantConfig   *fs.ConfigInfo
+	started      chan struct{}
+	release      chan struct{}
+	returned     chan struct{}
+	once         sync.Once
+	returnOnce   sync.Once
+}
+
+func (f *controlledListFs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
+	if f.wantConfig != nil && fs.GetConfig(ctx) != f.wantConfig {
+		return nil, errors.New("listing context did not preserve VFS config")
+	}
+	if f.block.Load() {
+		f.once.Do(func() { close(f.started) })
+		if f.ignoreCancel.Load() {
+			<-f.release
+		} else {
+			select {
+			case <-f.release:
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			}
+		}
+	}
+	if f.fail.Load() {
+		return nil, errors.New("injected list failure")
+	}
+	entries, err := f.Fs.List(ctx, dir)
+	if f.returned != nil {
+		f.returnOnce.Do(func() { close(f.returned) })
+	}
+	return entries, err
+}
+
+func nodeNames(nodes Nodes) []string {
+	names := make([]string, 0, len(nodes))
+	for _, node := range nodes {
+		names = append(names, node.Name())
+	}
+	sort.Strings(names)
+	return names
+}
 
 func dirCreate(t *testing.T) (r *fstest.Run, vfs *VFS, dir *Dir, item fstest.Item) {
 	r, vfs = newTestVFS(t)
@@ -81,6 +132,588 @@ func TestDirMethods(t *testing.T) {
 
 	// VFS
 	assert.Equal(t, vfs, dir.VFS())
+}
+
+func TestDirReadDirSWRKeepsSnapshotReadable(t *testing.T) {
+	r := fstest.NewRun(t)
+	r.WriteObject(context.Background(), "old.txt", "old", t1)
+	f := &controlledListFs{
+		Fs:      r.Fremote,
+		started: make(chan struct{}),
+		release: make(chan struct{}),
+	}
+	vfs := New(context.Background(), f, nil)
+	t.Cleanup(func() { cleanupVFS(t, vfs) })
+	root, err := vfs.Root()
+	require.NoError(t, err)
+	initial, err := root.ReadDirAll()
+	require.NoError(t, err)
+	assert.Equal(t, []string{"old.txt"}, nodeNames(initial))
+
+	r.WriteObject(context.Background(), "new.txt", "new", t2)
+	f.wantConfig = fs.GetConfig(vfs.ctx)
+	f.block.Store(true)
+	done := make(chan error, 1)
+	go func() { done <- root.readDirSWR(context.Background()) }()
+	select {
+	case <-f.started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("background listing did not start")
+	}
+
+	readDone := make(chan Nodes, 1)
+	go func() {
+		nodes, readErr := root.ReadDirAll()
+		if readErr != nil {
+			readDone <- nil
+			return
+		}
+		readDone <- nodes
+	}()
+	select {
+	case nodes := <-readDone:
+		assert.Equal(t, []string{"old.txt"}, nodeNames(nodes))
+	case <-time.After(5 * time.Second):
+		t.Fatal("cached directory read blocked behind background listing")
+	}
+
+	close(f.release)
+	require.NoError(t, <-done)
+	updated, err := root.ReadDirAll()
+	require.NoError(t, err)
+	assert.Equal(t, []string{"new.txt", "old.txt"}, nodeNames(updated))
+}
+
+func TestDirReadDirSWRRequiresSnapshot(t *testing.T) {
+	r := fstest.NewRun(t)
+	vfs := New(context.Background(), r.Fremote, nil)
+	t.Cleanup(func() { cleanupVFS(t, vfs) })
+	root, err := vfs.Root()
+	require.NoError(t, err)
+	require.EqualError(t, root.readDirSWR(context.Background()), "directory cache has no existing snapshot")
+}
+
+func TestDirReadDirSWRReportsConcurrentRefresh(t *testing.T) {
+	r := fstest.NewRun(t)
+	r.WriteObject(context.Background(), "old.txt", "old", t1)
+	f := &controlledListFs{
+		Fs:      r.Fremote,
+		started: make(chan struct{}),
+		release: make(chan struct{}),
+	}
+	vfs := New(context.Background(), f, nil)
+	t.Cleanup(func() { cleanupVFS(t, vfs) })
+	root, err := vfs.Root()
+	require.NoError(t, err)
+	_, err = root.ReadDirAll()
+	require.NoError(t, err)
+
+	f.block.Store(true)
+	done := make(chan error, 1)
+	go func() { done <- root.readDirSWR(context.Background()) }()
+	select {
+	case <-f.started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("background listing did not start")
+	}
+	require.EqualError(t, root.readDirSWR(context.Background()), "directory refresh already in progress")
+	close(f.release)
+	require.NoError(t, <-done)
+}
+
+func TestDirReadDirSWRReportsRecursiveRefresh(t *testing.T) {
+	r := fstest.NewRun(t)
+	r.WriteObject(context.Background(), "old.txt", "old", t1)
+	vfs := New(context.Background(), r.Fremote, nil)
+	t.Cleanup(func() { cleanupVFS(t, vfs) })
+	root, err := vfs.Root()
+	require.NoError(t, err)
+	_, err = root.ReadDirAll()
+	require.NoError(t, err)
+
+	vfs.refreshMu.Lock()
+	err = root.readDirSWR(context.Background())
+	vfs.refreshMu.Unlock()
+	require.EqualError(t, err, "recursive directory refresh already in progress")
+}
+
+func TestDirReadDirSWRFailurePreservesSnapshot(t *testing.T) {
+	r := fstest.NewRun(t)
+	r.WriteObject(context.Background(), "old.txt", "old", t1)
+	f := &controlledListFs{
+		Fs:      r.Fremote,
+		started: make(chan struct{}),
+		release: make(chan struct{}),
+	}
+	vfs := New(context.Background(), f, nil)
+	t.Cleanup(func() { cleanupVFS(t, vfs) })
+	root, err := vfs.Root()
+	require.NoError(t, err)
+	_, err = root.ReadDirAll()
+	require.NoError(t, err)
+	root.mu.RLock()
+	readBefore := root.read
+	oldNode := root.items["old.txt"]
+	root.mu.RUnlock()
+
+	f.fail.Store(true)
+	err = root.readDirSWR(context.Background())
+	require.EqualError(t, err, "injected list failure")
+	root.mu.RLock()
+	assert.Equal(t, readBefore, root.read)
+	assert.Same(t, oldNode, root.items["old.txt"])
+	root.mu.RUnlock()
+	nodes, err := root.ReadDirAll()
+	require.NoError(t, err)
+	assert.Equal(t, []string{"old.txt"}, nodeNames(nodes))
+}
+
+func TestDirReadDirSWRCancellationReleasesRefresh(t *testing.T) {
+	r := fstest.NewRun(t)
+	r.WriteObject(context.Background(), "old.txt", "old", t1)
+	f := &controlledListFs{
+		Fs:      r.Fremote,
+		started: make(chan struct{}),
+		release: make(chan struct{}),
+	}
+	vfs := New(context.Background(), f, nil)
+	t.Cleanup(func() { cleanupVFS(t, vfs) })
+	root, err := vfs.Root()
+	require.NoError(t, err)
+	_, err = root.ReadDirAll()
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	f.block.Store(true)
+	done := make(chan error, 1)
+	go func() { done <- root.readDirSWR(ctx) }()
+	select {
+	case <-f.started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("background listing did not start")
+	}
+	cancel()
+	require.ErrorIs(t, <-done, context.Canceled)
+
+	f.block.Store(false)
+	require.NoError(t, root.readDirSWR(context.Background()))
+}
+
+func TestDirReadDirSWRRejectsResultWhenBackendIgnoresCancellation(t *testing.T) {
+	r := fstest.NewRun(t)
+	r.WriteObject(context.Background(), "old.txt", "old", t1)
+	f := &controlledListFs{
+		Fs:      r.Fremote,
+		started: make(chan struct{}),
+		release: make(chan struct{}),
+	}
+	vfs := New(context.Background(), f, nil)
+	t.Cleanup(func() { cleanupVFS(t, vfs) })
+	root, err := vfs.Root()
+	require.NoError(t, err)
+	_, err = root.ReadDirAll()
+	require.NoError(t, err)
+	r.WriteObject(context.Background(), "new.txt", "new", t2)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	f.block.Store(true)
+	f.ignoreCancel.Store(true)
+	done := make(chan error, 1)
+	go func() { done <- root.readDirSWR(ctx) }()
+	select {
+	case <-f.started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("background listing did not start")
+	}
+	cancel()
+	close(f.release)
+	require.ErrorIs(t, <-done, context.Canceled)
+	nodes, err := root.ReadDirAll()
+	require.NoError(t, err)
+	assert.Equal(t, []string{"old.txt"}, nodeNames(nodes))
+}
+
+func TestDirReadDirSWRRejectsCancellationWhileWaitingToMerge(t *testing.T) {
+	r := fstest.NewRun(t)
+	r.WriteObject(context.Background(), "old.txt", "old", t1)
+	f := &controlledListFs{
+		Fs:      r.Fremote,
+		started: make(chan struct{}),
+		release: make(chan struct{}),
+	}
+	vfs := New(context.Background(), f, nil)
+	t.Cleanup(func() { cleanupVFS(t, vfs) })
+	root, err := vfs.Root()
+	require.NoError(t, err)
+	_, err = root.ReadDirAll()
+	require.NoError(t, err)
+	r.WriteObject(context.Background(), "new.txt", "new", t2)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	f.block.Store(true)
+	f.ignoreCancel.Store(true)
+	f.returned = make(chan struct{})
+	done := make(chan error, 1)
+	go func() { done <- root.readDirSWR(ctx) }()
+	select {
+	case <-f.started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("background listing did not start")
+	}
+	root.mu.Lock()
+	close(f.release)
+	select {
+	case <-f.returned:
+	case <-time.After(5 * time.Second):
+		root.mu.Unlock()
+		t.Fatal("backend listing did not return")
+	}
+	cancel()
+	root.mu.Unlock()
+	require.ErrorIs(t, <-done, context.Canceled)
+	nodes, err := root.ReadDirAll()
+	require.NoError(t, err)
+	assert.Equal(t, []string{"old.txt"}, nodeNames(nodes))
+}
+
+func TestDirReadDirSWRRejectsResultAfterVFSCancellation(t *testing.T) {
+	r := fstest.NewRun(t)
+	r.WriteObject(context.Background(), "old.txt", "old", t1)
+	f := &controlledListFs{
+		Fs:      r.Fremote,
+		started: make(chan struct{}),
+		release: make(chan struct{}),
+	}
+	vfs := New(context.Background(), f, nil)
+	t.Cleanup(func() { cleanupVFS(t, vfs) })
+	root, err := vfs.Root()
+	require.NoError(t, err)
+	_, err = root.ReadDirAll()
+	require.NoError(t, err)
+	r.WriteObject(context.Background(), "new.txt", "new", t2)
+
+	f.block.Store(true)
+	f.ignoreCancel.Store(true)
+	done := make(chan error, 1)
+	go func() { done <- root.readDirSWR(context.Background()) }()
+	select {
+	case <-f.started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("background listing did not start")
+	}
+	vfs.cancel()
+	close(f.release)
+	require.ErrorIs(t, <-done, context.Canceled)
+	nodes, err := root.ReadDirAll()
+	require.NoError(t, err)
+	assert.Equal(t, []string{"old.txt"}, nodeNames(nodes))
+}
+
+func TestDirReadDirSWRDiscardsInvalidatedResult(t *testing.T) {
+	r := fstest.NewRun(t)
+	r.WriteObject(context.Background(), "old.txt", "old", t1)
+	f := &controlledListFs{
+		Fs:      r.Fremote,
+		started: make(chan struct{}),
+		release: make(chan struct{}),
+	}
+	vfs := New(context.Background(), f, nil)
+	t.Cleanup(func() { cleanupVFS(t, vfs) })
+	root, err := vfs.Root()
+	require.NoError(t, err)
+	_, err = root.ReadDirAll()
+	require.NoError(t, err)
+	r.WriteObject(context.Background(), "new.txt", "new", t2)
+
+	f.block.Store(true)
+	done := make(chan error, 1)
+	go func() { done <- root.readDirSWR(context.Background()) }()
+	select {
+	case <-f.started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("background listing did not start")
+	}
+	root.invalidateDir("")
+	close(f.release)
+	require.EqualError(t, <-done, "directory cache changed during refresh of \"\"")
+
+	root.mu.RLock()
+	assert.True(t, root.read.IsZero())
+	assert.NotNil(t, root.items["old.txt"])
+	assert.Nil(t, root.items["new.txt"])
+	root.mu.RUnlock()
+}
+
+func TestDirReadDirSWRDiscardsConcurrentVirtualDelete(t *testing.T) {
+	r := fstest.NewRun(t)
+	r.WriteObject(context.Background(), "old.txt", "old", t1)
+	f := &controlledListFs{
+		Fs:      r.Fremote,
+		started: make(chan struct{}),
+		release: make(chan struct{}),
+	}
+	vfs := New(context.Background(), f, nil)
+	t.Cleanup(func() { cleanupVFS(t, vfs) })
+	root, err := vfs.Root()
+	require.NoError(t, err)
+	_, err = root.ReadDirAll()
+	require.NoError(t, err)
+	r.WriteObject(context.Background(), "new.txt", "new", t2)
+
+	f.block.Store(true)
+	done := make(chan error, 1)
+	go func() { done <- root.readDirSWR(context.Background()) }()
+	select {
+	case <-f.started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("background listing did not start")
+	}
+	root.DelVirtual("old.txt")
+	close(f.release)
+	require.EqualError(t, <-done, "directory cache changed during refresh of \"\"")
+
+	root.mu.RLock()
+	assert.NotZero(t, root.read)
+	assert.Nil(t, root.items["old.txt"])
+	assert.Nil(t, root.items["new.txt"])
+	root.mu.RUnlock()
+}
+
+func TestDirReadDirSWRDiscardsCompetingSnapshotMerge(t *testing.T) {
+	r := fstest.NewRun(t)
+	r.WriteObject(context.Background(), "old.txt", "old", t1)
+	f := &controlledListFs{
+		Fs:      r.Fremote,
+		started: make(chan struct{}),
+		release: make(chan struct{}),
+	}
+	vfs := New(context.Background(), f, nil)
+	t.Cleanup(func() { cleanupVFS(t, vfs) })
+	root, err := vfs.Root()
+	require.NoError(t, err)
+	_, err = root.ReadDirAll()
+	require.NoError(t, err)
+	r.WriteObject(context.Background(), "new.txt", "new", t2)
+
+	f.block.Store(true)
+	done := make(chan error, 1)
+	go func() { done <- root.readDirSWR(context.Background()) }()
+	select {
+	case <-f.started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("background listing did not start")
+	}
+	root.mu.Lock()
+	oldEntry := root.items["old.txt"].DirEntry()
+	mergeErr := root._readDirFromEntries(fs.DirEntries{oldEntry}, nil, time.Time{})
+	root.mu.Unlock()
+	require.NoError(t, mergeErr)
+	close(f.release)
+	require.EqualError(t, <-done, "directory cache changed during refresh of \"\"")
+
+	nodes, err := root.ReadDirAll()
+	require.NoError(t, err)
+	assert.Equal(t, []string{"old.txt"}, nodeNames(nodes))
+}
+
+func TestDirReadDirSWRDiscardsDetachedDirectory(t *testing.T) {
+	r := fstest.NewRun(t)
+	r.WriteObject(context.Background(), "dir/old.txt", "old", t1)
+	f := &controlledListFs{
+		Fs:      r.Fremote,
+		started: make(chan struct{}),
+		release: make(chan struct{}),
+	}
+	vfs := New(context.Background(), f, nil)
+	t.Cleanup(func() { cleanupVFS(t, vfs) })
+	_, err := vfs.Stat("dir/old.txt")
+	require.NoError(t, err)
+	root, err := vfs.Root()
+	require.NoError(t, err)
+	dir := root.cachedDir("dir")
+	require.NotNil(t, dir)
+
+	f.block.Store(true)
+	done := make(chan error, 1)
+	go func() { done <- dir.readDirSWR(context.Background()) }()
+	select {
+	case <-f.started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("background listing did not start")
+	}
+	root.mu.Lock()
+	mergeErr := root._readDirFromEntries(nil, nil, time.Time{})
+	root.mu.Unlock()
+	require.NoError(t, mergeErr)
+	close(f.release)
+	require.EqualError(t, <-done, "directory cache changed during refresh of \"dir\"")
+	assert.Nil(t, root.cachedDir("dir"))
+}
+
+func TestDirReadDirSWRDiscardsResultAfterRename(t *testing.T) {
+	r := fstest.NewRun(t)
+	r.WriteObject(context.Background(), "dir/old.txt", "old", t1)
+	f := &controlledListFs{
+		Fs:      r.Fremote,
+		started: make(chan struct{}),
+		release: make(chan struct{}),
+	}
+	vfs := New(context.Background(), f, nil)
+	t.Cleanup(func() { cleanupVFS(t, vfs) })
+	_, err := vfs.Stat("dir/old.txt")
+	require.NoError(t, err)
+	root, err := vfs.Root()
+	require.NoError(t, err)
+	dir := root.cachedDir("dir")
+	require.NotNil(t, dir)
+
+	f.block.Store(true)
+	done := make(chan error, 1)
+	go func() { done <- dir.readDirSWR(context.Background()) }()
+	select {
+	case <-f.started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("background listing did not start")
+	}
+	root.mu.Lock()
+	dir.renameTree("renamed")
+	root.mu.Unlock()
+	close(f.release)
+	require.EqualError(t, <-done, "directory cache changed during refresh of \"dir\"")
+	assert.Same(t, dir, root.cachedDir("renamed"))
+}
+
+func TestDirReadDirSWRSerializesRecursiveRefresh(t *testing.T) {
+	r := fstest.NewRun(t)
+	r.WriteObject(context.Background(), "dir/old.txt", "old", t1)
+	f := &controlledListFs{
+		Fs:      r.Fremote,
+		started: make(chan struct{}),
+		release: make(chan struct{}),
+	}
+	vfs := New(context.Background(), f, nil)
+	t.Cleanup(func() { cleanupVFS(t, vfs) })
+	_, err := vfs.Stat("dir/old.txt")
+	require.NoError(t, err)
+	root, err := vfs.Root()
+	require.NoError(t, err)
+	dir := root.cachedDir("dir")
+	require.NotNil(t, dir)
+
+	f.block.Store(true)
+	done := make(chan error, 1)
+	go func() { done <- dir.readDirSWR(context.Background()) }()
+	select {
+	case <-f.started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("background listing did not start")
+	}
+	if vfs.refreshMu.TryLock() {
+		vfs.refreshMu.Unlock()
+		t.Fatal("recursive refresh lock was available during directory refresh")
+	}
+	close(f.release)
+	require.NoError(t, <-done)
+	require.NoError(t, root.readDirTree())
+}
+
+func TestDirReadDirSWRSerializesCacheCleanup(t *testing.T) {
+	r := fstest.NewRun(t)
+	r.WriteObject(context.Background(), "old.txt", "old", t1)
+	f := &controlledListFs{
+		Fs:      r.Fremote,
+		started: make(chan struct{}),
+		release: make(chan struct{}),
+	}
+	vfs := New(context.Background(), f, nil)
+	t.Cleanup(func() { cleanupVFS(t, vfs) })
+	root, err := vfs.Root()
+	require.NoError(t, err)
+	_, err = root.ReadDirAll()
+	require.NoError(t, err)
+	r.WriteObject(context.Background(), "new.txt", "new", t2)
+	root.mu.Lock()
+	root.read = time.Now().Add(-3 * time.Duration(vfs.Opt.DirCacheTime))
+	root.mu.Unlock()
+
+	f.block.Store(true)
+	refreshDone := make(chan error, 1)
+	go func() { refreshDone <- root.readDirSWR(context.Background()) }()
+	select {
+	case <-f.started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("background listing did not start")
+	}
+	if root.refreshMu.TryLock() {
+		root.refreshMu.Unlock()
+		t.Fatal("cache cleanup lock was available during background refresh")
+	}
+	nodes, err := root.ReadDirAll()
+	require.NoError(t, err)
+	assert.Equal(t, []string{"old.txt"}, nodeNames(nodes))
+
+	close(f.release)
+	require.NoError(t, <-refreshDone)
+	root.cacheCleanup()
+	updated, err := root.ReadDirAll()
+	require.NoError(t, err)
+	assert.Equal(t, []string{"new.txt", "old.txt"}, nodeNames(updated))
+}
+
+func TestDirReadDirSWRSerializesAncestorCacheCleanup(t *testing.T) {
+	r := fstest.NewRun(t)
+	r.WriteObject(context.Background(), "dir/old.txt", "old", t1)
+	f := &controlledListFs{
+		Fs:      r.Fremote,
+		started: make(chan struct{}),
+		release: make(chan struct{}),
+	}
+	vfs := New(context.Background(), f, nil)
+	t.Cleanup(func() { cleanupVFS(t, vfs) })
+	_, err := vfs.Stat("dir/old.txt")
+	require.NoError(t, err)
+	root, err := vfs.Root()
+	require.NoError(t, err)
+	dir := root.cachedDir("dir")
+	require.NotNil(t, dir)
+	r.WriteObject(context.Background(), "dir/new.txt", "new", t2)
+
+	f.block.Store(true)
+	refreshDone := make(chan error, 1)
+	go func() { refreshDone <- dir.readDirSWR(context.Background()) }()
+	select {
+	case <-f.started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("child background listing did not start")
+	}
+	if dir.refreshMu.TryLock() {
+		dir.refreshMu.Unlock()
+		t.Fatal("child cleanup lock was available during background refresh")
+	}
+	parentReadDone := make(chan Nodes, 1)
+	go func() {
+		nodes, readErr := root.ReadDirAll()
+		if readErr != nil {
+			parentReadDone <- nil
+			return
+		}
+		parentReadDone <- nodes
+	}()
+	select {
+	case nodes := <-parentReadDone:
+		assert.Equal(t, []string{"dir"}, nodeNames(nodes))
+	case <-time.After(5 * time.Second):
+		t.Fatal("ancestor read blocked behind child background refresh")
+	}
+	nodes, err := dir.ReadDirAll()
+	require.NoError(t, err)
+	assert.Equal(t, []string{"old.txt"}, nodeNames(nodes))
+
+	close(f.release)
+	require.NoError(t, <-refreshDone)
+	root.refreshMu.Lock()
+	root.forgetAllForCleanup()
+	root.refreshMu.Unlock()
 }
 
 func TestDirForgetAll(t *testing.T) {

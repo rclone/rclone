@@ -89,6 +89,61 @@ func TestRcRefresh(t *testing.T) {
 	// FIXME needs more tests
 }
 
+func TestRcRefreshStale(t *testing.T) {
+	r, vfs, call := rcNewRun(t, "vfs/refresh")
+	root, err := vfs.Root()
+	require.NoError(t, err)
+	_, err = root.ReadDirAll()
+	require.NoError(t, err)
+	out, err := call.Fn(context.Background(), rc.Params{
+		"fs":    fs.ConfigString(r.Fremote),
+		"stale": "true",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, rc.Params{
+		"result": map[string]string{"": "OK"},
+	}, out)
+}
+
+func TestRcRefreshStaleRejectsMissingSnapshot(t *testing.T) {
+	r, vfs, call := rcNewRun(t, "vfs/refresh")
+	_, _ = r, vfs
+	out, err := call.Fn(context.Background(), rc.Params{
+		"fs":    fs.ConfigString(r.Fremote),
+		"stale": "true",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, rc.Params{
+		"result": map[string]string{"": "directory cache has no existing snapshot"},
+	}, out)
+}
+
+func TestRcRefreshStaleRejectsUncachedPath(t *testing.T) {
+	r, vfs, call := rcNewRun(t, "vfs/refresh")
+	_, _ = r, vfs
+	out, err := call.Fn(context.Background(), rc.Params{
+		"fs":    fs.ConfigString(r.Fremote),
+		"dir":   "not-cached",
+		"stale": "true",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, rc.Params{
+		"result": map[string]string{"not-cached": ENOENT.Error()},
+	}, out)
+}
+
+func TestRcRefreshStaleRejectsRecursive(t *testing.T) {
+	r, vfs, call := rcNewRun(t, "vfs/refresh")
+	_, _ = r, vfs
+	out, err := call.Fn(context.Background(), rc.Params{
+		"fs":        fs.ConfigString(r.Fremote),
+		"recursive": "true",
+		"stale":     "true",
+	})
+	require.EqualError(t, err, "recursive=true cannot be combined with stale=true")
+	assert.Nil(t, out)
+}
+
 func TestRcPollInterval(t *testing.T) {
 	r, vfs, call := rcNewRun(t, "vfs/poll-interval")
 	_ = vfs

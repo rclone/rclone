@@ -73,6 +73,12 @@ starting with dir will refresh that directory, e.g.
 
 If the parameter recursive=true is given the whole directory tree
 will get refreshed. This refresh will use --fast-list if enabled.
+
+If stale=true is given, cached directory contents remain available while the
+remote listing is fetched. The new listing replaces the cached contents when
+it succeeds; failures leave the previous contents unchanged. This mode only
+refreshes directories already present in the VFS cache and cannot be combined
+with recursive=true.
 ` + getVFSHelp,
 	})
 }
@@ -121,11 +127,42 @@ func rcRefresh(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 			delete(in, k)
 		}
 	}
+	stale := false
+	{
+		const k = "stale"
+
+		if v, ok := in[k]; ok {
+			s, ok := v.(string)
+			if !ok {
+				return out, fmt.Errorf("value must be string %q=%v", k, v)
+			}
+			stale, err = strconv.ParseBool(s)
+			if err != nil {
+				return out, fmt.Errorf("invalid value %q=%v", k, v)
+			}
+			delete(in, k)
+		}
+	}
+	if recursive && stale {
+		return nil, errors.New("recursive=true cannot be combined with stale=true")
+	}
+	getRefreshDir := getDir
+	if stale {
+		getRefreshDir = func(dirPath string) (*Dir, error) {
+			dir := root.cachedDir(strings.Trim(dirPath, "/"))
+			if dir == nil {
+				return nil, ENOENT
+			}
+			return dir, nil
+		}
+	}
 
 	result := map[string]string{}
 	if len(in) == 0 {
 		if recursive {
 			err = root.readDirTree()
+		} else if stale {
+			err = root.readDirSWR(ctx)
 		} else {
 			err = root.readDir()
 		}
@@ -141,12 +178,14 @@ func rcRefresh(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 				return out, fmt.Errorf("value must be string %q=%v", k, v)
 			}
 			if strings.HasPrefix(k, "dir") {
-				dir, err := getDir(path)
+				dir, err := getRefreshDir(path)
 				if err != nil {
 					result[path] = err.Error()
 				} else {
 					if recursive {
 						err = dir.readDirTree()
+					} else if stale {
+						err = dir.readDirSWR(ctx)
 					} else {
 						err = dir.readDir()
 					}
