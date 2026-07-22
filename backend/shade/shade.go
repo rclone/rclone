@@ -22,6 +22,7 @@ import (
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
@@ -41,6 +42,25 @@ const (
 	maxChunkSize     = int64(5 * 1024 * 1024 * 1024) // Maximum chunk size (5GB)
 	maxUploadParts   = 10000                         // maximum allowed number of parts in a multipart upload
 )
+
+// retryErrorCodes is a slice of error codes that we will retry
+var retryErrorCodes = []int{
+	429, // Too Many Requests.
+	500, // Internal Server Error
+	502, // Bad Gateway
+	503, // Service Unavailable
+	504, // Gateway Timeout
+	509, // Bandwidth Limit Exceeded
+}
+
+// shouldRetry returns a boolean as to whether this resp and err
+// deserve to be retried.  It returns the err as a convenience
+func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
+	if fserrors.ContextError(ctx, &err) {
+		return false, err
+	}
+	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
+}
 
 // Register with Fs
 func init() {
@@ -126,14 +146,14 @@ func (f *Fs) refreshJWTToken(ctx context.Context) (string, error) {
 		res, err := f.apiSrv.Call(ctx, &opts)
 		if err != nil {
 			fs.Debugf(f, "Token request failed: %v", err)
-			return false, err
+			return shouldRetry(ctx, res, err)
 		}
 
 		defer fs.CheckClose(res.Body, &err)
 
 		if res.StatusCode != http.StatusOK {
 			fs.Debugf(f, "Token request failed with code: %d", res.StatusCode)
-			return res.StatusCode == http.StatusTooManyRequests, fmt.Errorf("failed to get ShadeFS token, status: %d", res.StatusCode)
+			return fserrors.ShouldRetryHTTP(res, retryErrorCodes), fmt.Errorf("failed to get ShadeFS token, status: %d", res.StatusCode)
 		}
 
 		// Read token directly as plain text
@@ -202,10 +222,7 @@ func (f *Fs) callAPI(ctx context.Context, method, path string, response any) (*h
 		} else {
 			res, err = f.srv.Call(ctx, &opts)
 		}
-		if err != nil {
-			return res != nil && res.StatusCode == http.StatusTooManyRequests, err
-		}
-		return false, nil
+		return shouldRetry(ctx, res, err)
 	})
 	return res, err
 }
@@ -334,11 +351,11 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.Call(ctx, &opts)
 
-		if err != nil && resp.StatusCode == http.StatusBadRequest {
+		if err != nil && resp != nil && resp.StatusCode == http.StatusBadRequest {
 			fs.Debugf(f, "Bad token from server: %v", token)
 		}
 
-		return resp != nil && resp.StatusCode == http.StatusTooManyRequests, err
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, err
@@ -860,9 +877,9 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		}
 		res, err = client.Do(req)
 		if err != nil {
-			return false, err
+			return shouldRetry(ctx, nil, err)
 		}
-		return res.StatusCode == http.StatusTooManyRequests, nil
+		return fserrors.ShouldRetryHTTP(res, retryErrorCodes), nil
 	})
 
 	if err != nil {
@@ -899,12 +916,12 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		err = o.fs.pacer.Call(func() (bool, error) {
 			downloadRes, err = client.Call(ctx, &opts)
 			if err != nil {
-				return false, err
+				return shouldRetry(ctx, downloadRes, err)
 			}
 			if downloadRes == nil {
 				return false, fmt.Errorf("failed to fetch presigned URL")
 			}
-			return downloadRes.StatusCode == http.StatusTooManyRequests, nil
+			return fserrors.ShouldRetryHTTP(downloadRes, retryErrorCodes), nil
 		})
 
 		if err != nil {
