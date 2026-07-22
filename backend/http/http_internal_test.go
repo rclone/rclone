@@ -314,6 +314,22 @@ func TestOpen(t *testing.T) {
 	}
 }
 
+func TestNoHeadMetadataDefaults(t *testing.T) {
+	m := prepareServer(t)
+	m.Set("no_head", "true")
+	m.Set("no_head_size", "100B")
+	m.Set("no_head_time", "2024-08-05T07:36:07Z")
+
+	f, err := NewFs(context.Background(), remoteName, "", m)
+	require.NoError(t, err)
+	o, err := f.NewObject(context.Background(), "four/under four.txt")
+	require.NoError(t, err)
+
+	assert.Equal(t, int64(100), o.Size())
+	assert.Equal(t, time.Date(2024, 8, 5, 7, 36, 7, 0, time.UTC),
+		o.ModTime(context.Background()))
+}
+
 func TestMimeType(t *testing.T) {
 	f := prepare(t)
 

@@ -95,6 +95,23 @@ sizes of any files, and some files that don't exist may be in the listing.`,
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name: "no_head_size",
+			Help: `Set a default file size for --http-no-head.
+
+When HEAD requests are disabled, rclone normally reports an unknown file size.
+Set this option to report the specified size for every file instead.
+Leave it at 0 to keep reporting an unknown size.`,
+			Default:  fs.SizeSuffix(0),
+			Advanced: true,
+		}, {
+			Name: "no_head_time",
+			Help: `Set a default modification time for --http-no-head.
+
+When HEAD requests are disabled, rclone normally reports an unset modification
+time. Set this option to report the specified time for every file instead.`,
+			Default:  fs.Time{},
+			Advanced: true,
+		}, {
 			Name:    "no_escape",
 			Help:    "Do not escape URL metacharacters in path names.",
 			Default: false,
@@ -139,11 +156,13 @@ var systemMetadataInfo = map[string]fs.MetadataHelp{
 
 // Options defines the configuration for this backend
 type Options struct {
-	Endpoint string          `config:"url"`
-	NoSlash  bool            `config:"no_slash"`
-	NoHead   bool            `config:"no_head"`
-	Headers  fs.CommaSepList `config:"headers"`
-	NoEscape bool            `config:"no_escape"`
+	Endpoint   string          `config:"url"`
+	NoSlash    bool            `config:"no_slash"`
+	NoHead     bool            `config:"no_head"`
+	NoHeadSize fs.SizeSuffix   `config:"no_head_size"`
+	NoHeadTime fs.Time         `config:"no_head_time"`
+	Headers    fs.CommaSepList `config:"headers"`
+	NoEscape   bool            `config:"no_escape"`
 }
 
 // Fs stores the interface to the remote HTTP files
@@ -688,7 +707,13 @@ func (o *Object) url() string {
 func (o *Object) head(ctx context.Context) error {
 	if o.fs.opt.NoHead {
 		o.size = -1
+		if o.fs.opt.NoHeadSize > 0 {
+			o.size = int64(o.fs.opt.NoHeadSize)
+		}
 		o.modTime = timeUnset
+		if o.fs.opt.NoHeadTime.IsSet() {
+			o.modTime = time.Time(o.fs.opt.NoHeadTime)
+		}
 		o.contentType = fs.MimeType(ctx, o)
 		return nil
 	}
