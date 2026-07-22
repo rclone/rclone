@@ -175,20 +175,8 @@ For more help see [the GUI docs](/gui/).
 			}
 		}
 
-		// When the GUI is bound to a wildcard address the bound origin
-		// (e.g. http://[::]:5522) is never what a browser sends in its
-		// Origin header, and the GUI may be reached via any number of
-		// hosts (localhost, a LAN IP, a Docker host), so no single
-		// origin can match them all.
-		switch addr, _ := guiServer.Addr().(*net.TCPAddr); {
-		case addr == nil || !addr.IP.IsUnspecified():
-			opt.HTTP.AllowOrigin = guiOrigin
-		case !opt.NoAuth:
-			opt.HTTP.AllowOrigin = "*"
-		default:
-			opt.HTTP.AllowOrigin = guiOrigin
-			fs.Logf(nil, "GUI bound to a wildcard address with --no-auth: browsers can only use the API from %s. Enable auth or bind --addr to a specific host.", guiOrigin)
-		}
+		addr, _ := guiServer.Addr().(*net.TCPAddr)
+		opt.HTTP.AllowOrigin = resolveAllowOrigin(command.Flags().Changed("rc-allow-origin"), opt.HTTP.AllowOrigin, guiOrigin, addr, opt.NoAuth)
 
 		// Start the RC server (unchanged rcserver.Start)
 		rcServer, err := rcserver.Start(ctx, &opt)
@@ -251,6 +239,28 @@ func originFromURL(rawURL string) string {
 		return strings.TrimRight(rawURL, "/")
 	}
 	return u.Scheme + "://" + u.Host
+}
+
+// resolveAllowOrigin picks the Access-Control-Allow-Origin value for the RC
+// API server. An explicit --rc-allow-origin always wins. Otherwise a value is
+// derived from how the GUI is bound: the bound origin (e.g. http://[::]:5522)
+// is never what a browser sends in its Origin header when the GUI is bound to
+// a wildcard address, and the GUI may be reached via any number of hosts
+// (localhost, a LAN IP, a Docker host), so no single origin can match them
+// all.
+func resolveAllowOrigin(explicitAllowOrigin bool, currentAllowOrigin, guiOrigin string, addr *net.TCPAddr, noAuth bool) string {
+	if explicitAllowOrigin {
+		return currentAllowOrigin
+	}
+	switch {
+	case addr == nil || !addr.IP.IsUnspecified():
+		return guiOrigin
+	case !noAuth:
+		return "*"
+	default:
+		fs.Logf(nil, "GUI bound to a wildcard address with --no-auth: browsers can only use the API from %s. Enable auth or bind --addr to a specific host.", guiOrigin)
+		return guiOrigin
+	}
 }
 
 // guiSourceFS opens the GUI bundle at the given path. An empty path
