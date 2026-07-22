@@ -7,6 +7,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -188,10 +189,35 @@ type SaveFolderRequest struct {
 	} `json:"data"`
 }
 
-// IDsRequest carries a list of media ids (used by media delete)
+// IDsRequest carries a list of media ids (used by media delete).  The ids are
+// sent as JSON numbers — the shape the official client uses.
 type IDsRequest struct {
 	Data struct {
-		IDs []string `json:"ids"`
+		IDs []json.Number `json:"ids"`
+	} `json:"data"`
+}
+
+// IDFieldsRequest fetches specific media items by id.  The ids must be JSON
+// numbers, and the field names must come from the server's accepted set — an
+// unknown field name fails the whole call with COM-1021.
+type IDFieldsRequest struct {
+	Data struct {
+		IDs    []json.Number `json:"ids"`
+		Fields []string      `json:"fields"`
+	} `json:"data"`
+}
+
+// ChangesResponse is returned by /sapi/profile/changes?action=get.  Queried
+// with from=0 it describes the full account state: data.file.U holds the id of
+// every live file — crucially including items detached from any folder, which
+// no folder listing (and no folder-less media listing) will ever return.
+type ChangesResponse struct {
+	Status
+	Data struct {
+		File struct {
+			Updated []ID `json:"U"`
+			Deleted []ID `json:"D"`
+		} `json:"file"`
 	} `json:"data"`
 }
 
