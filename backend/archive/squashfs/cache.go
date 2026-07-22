@@ -161,5 +161,10 @@ func (c *cache) Writable() (backend.WritableFile, error) {
 	return nil, errCacheNotImplemented
 }
 
+// Path returns the path to the underlying storage - not applicable here
+func (c *cache) Path() string {
+	return ""
+}
+
 // check interfaces
 var _ backend.Storage = (*cache)(nil)

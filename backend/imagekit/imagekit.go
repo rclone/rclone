@@ -32,6 +32,12 @@ const (
 )
 
 var systemMetadataInfo = map[string]fs.MetadataHelp{
+	"mtime": {
+		Help:     "Time of last modification, read from the file's updatedAt field",
+		Type:     "RFC 3339",
+		Example:  "2006-01-02T15:04:05.999999999Z07:00",
+		ReadOnly: true,
+	},
 	"btime": {
 		Help:     "Time of file birth (creation) read from Last-Modified header",
 		Type:     "RFC 3339",
@@ -593,12 +599,12 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	var offset int64
 	var count int64
 
-	fs.FixRangeOption(options, -1)
+	fs.FixRangeOption(options, o.Size())
 	partialContent := false
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.RangeOption:
-			offset, count = x.Decode(-1)
+			offset, count = x.Decode(o.Size())
 			partialContent = true
 		case *fs.SeekOption:
 			offset = x.Offset
@@ -626,7 +632,13 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", offset, offset+count-1))
+	if partialContent {
+		if count > 0 {
+			req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", offset, offset+count-1))
+		} else {
+			req.Header.Set("Range", fmt.Sprintf("bytes=%d-", offset))
+		}
+	}
 	resp, err := client.Do(req)
 
 	if err != nil {
@@ -636,13 +648,9 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	end := resp.ContentLength
 
 	if partialContent && resp.StatusCode == http.StatusOK {
-		skip := offset
-
-		if offset < 0 {
-			skip = end + offset + 1
-		}
-
-		_, err = io.CopyN(io.Discard, resp.Body, skip)
+		// The server ignored the Range request so skip to the
+		// offset and limit what is read ourselves
+		_, err = io.CopyN(io.Discard, resp.Body, offset)
 		if err != nil {
 			if resp != nil {
 				_ = resp.Body.Close()
@@ -650,7 +658,11 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			return nil, err
 		}
 
-		return readers.NewLimitedReadCloser(resp.Body, end-skip), nil
+		limit := end - offset
+		if count > 0 && count < limit {
+			limit = count
+		}
+		return readers.NewLimitedReadCloser(resp.Body, limit), nil
 	}
 
 	return resp.Body, nil
@@ -753,6 +765,7 @@ func uploadFile(ctx context.Context, f *Fs, in io.Reader, srcRemote string, opti
 // Metadata returns the metadata for the object
 func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error) {
 
+	metadata.Set("mtime", o.file.UpdatedAt.Format(time.RFC3339Nano))
 	metadata.Set("btime", o.file.CreatedAt.Format(time.RFC3339))
 	metadata.Set("size", strconv.FormatUint(o.file.Size, 10))
 	metadata.Set("file-type", o.file.FileType)

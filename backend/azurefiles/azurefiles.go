@@ -58,6 +58,9 @@ const (
 	maxFileSize           = 4 * fs.Tebi
 	defaultChunkSize      = 4 * fs.Mebi
 	storageDefaultBaseURL = "file.core.windows.net"
+	// smbTimePrecision is the precision the server stores
+	// modtimes with (100 ns FILETIME ticks)
+	smbTimePrecision = 100 * time.Nanosecond
 )
 
 func init() {
@@ -250,10 +253,10 @@ func (f *Fs) Features() *fs.Features {
 
 // Precision return the precision of this Fs
 //
-// One second. FileREST API times are in RFC1123 which in the example shows a precision of seconds
+// The SMB last write time properties are ISO 8601 with 100 ns (FILETIME) precision
 // Source: https://learn.microsoft.com/en-us/rest/api/storageservices/representation-of-date-time-values-in-headers
 func (f *Fs) Precision() time.Duration {
-	return time.Second
+	return smbTimePrecision
 }
 
 // Hashes returns the supported hash sets.
@@ -598,7 +601,10 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	if err != nil {
 		return fmt.Errorf("unable to set modTime: %w", err)
 	}
-	o.modTime = t
+	// Truncate to the precision the server stores the modtime with
+	// to keep the in-memory modtime identical to the one a fresh
+	// listing returns.
+	o.modTime = t.Truncate(smbTimePrecision)
 	return nil
 }
 
@@ -769,10 +775,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return fmt.Errorf("update: failed to set properties: %w", err)
 	}
 
-	// Make sure Object is in sync
+	// Make sure Object is in sync, truncating the modtime to the
+	// precision the server stores it with so it is identical to the
+	// one a fresh listing returns
 	o.size = size
 	o.md5 = md5Hash
-	o.modTime = modTime
+	o.modTime = modTime.Truncate(smbTimePrecision)
 	o.contentType = contentType
 	return nil
 }

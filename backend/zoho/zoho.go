@@ -151,6 +151,20 @@ func init() {
 					}
 				}
 
+				// If a root_folder_id is already set (from config, or a previous
+				// setup) don't overwrite it on update/reconnect unless the user
+				// asks to, mirroring how the drive backend gates its team drive id.
+				if rootID, _ := m.Get(configRootID); rootID != "" {
+					return fs.ConfigConfirm("root_change", false, "config_change_root", fmt.Sprintf("Change current root folder id %q?\n", rootID))
+				}
+				return fs.ConfigGoto("select_edition")
+			case "root_change":
+				if config.Result == "false" {
+					// Keep the existing root_folder_id; the token has already been refreshed.
+					return nil, nil
+				}
+				return fs.ConfigGoto("select_edition")
+			case "select_edition":
 				_, apiSrv, err := getSrvs()
 				if err != nil {
 					return nil, err
@@ -252,6 +266,11 @@ browser.`,
 				Value: "com.au",
 				Help:  "Australia",
 			}},
+		}, {
+			Name:      "root_folder_id",
+			Help:      "ID of the root folder.\n\nLeave blank normally.\n\nFill in to make rclone use a non root folder as its starting point.",
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name:     "upload_cutoff",
 			Help:     "Cutoff for switching to large file upload api (>= 10 MiB).",

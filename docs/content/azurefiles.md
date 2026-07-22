@@ -115,8 +115,8 @@ rclone sync --interactive /home/local/directory remote:dir
 
 ### Modified time
 
-The modified time is stored as Azure standard `LastModified` time on
-files
+The modified time is stored as the SMB `LastWriteTime` property on
+files. It has a precision of 100 ns.
 
 ### Performance
 

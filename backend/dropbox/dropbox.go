@@ -1008,13 +1008,12 @@ func (f *Fs) listReceivedFiles(ctx context.Context, callback func(fs.DirEntry) e
 			}
 		}
 		for _, entry := range res.Entries {
-			fmt.Printf("%+v\n", entry)
 			entryPath := entry.Name
 			o := &Object{
 				fs:      f,
 				url:     entry.PreviewUrl,
 				remote:  entryPath,
-				modTime: *entry.TimeInvited,
+				modTime: time.Time(*entry.TimeInvited),
 			}
 			if err != nil {
 				return err
@@ -1463,7 +1462,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		},
 	}
 	if expire < fs.DurationOff {
-		expiryTime := time.Now().Add(time.Duration(expire)).UTC().Round(time.Second)
+		expiryTime := dropbox.DBXTime(time.Now().Add(time.Duration(expire)).UTC().Round(time.Second))
 		createArg.Settings.Expires = &expiryTime
 	}
 
@@ -1877,7 +1876,7 @@ func (o *Object) setMetadataForExport(info *files.FileMetadata) {
 func (o *Object) setMetadataFromEntry(info *files.FileMetadata) error {
 	o.id = info.Id
 	o.bytes = int64(info.Size)
-	o.modTime = info.ClientModified
+	o.modTime = time.Time(info.ClientModified)
 	o.hash = info.ContentHash
 
 	if !info.IsDownloadable {
@@ -2171,7 +2170,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	commitInfo := files.NewCommitInfo(o.fs.opt.Enc.FromStandardPath(o.remotePath()))
 	commitInfo.Mode.Tag = "overwrite"
 	// The Dropbox API only accepts timestamps in UTC with second precision.
-	clientModified := src.ModTime(ctx).UTC().Round(time.Second)
+	clientModified := dropbox.DBXTime(src.ModTime(ctx).UTC().Round(time.Second))
 	commitInfo.ClientModified = &clientModified
 	// Don't attempt to create filenames that are too long
 	if cErr := checkPathLength(commitInfo.Path); cErr != nil {
@@ -2197,7 +2196,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// This will only happen if we are uploading async batches
 	if entry == nil {
 		o.bytes = size
-		o.modTime = *commitInfo.ClientModified
+		o.modTime = time.Time(*commitInfo.ClientModified)
 		o.hash = "" // we don't have this
 		return nil
 	}
