@@ -5,6 +5,7 @@ package funambol
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -421,37 +422,71 @@ func (f *Fs) listMedia(ctx context.Context, dirID string, fn func(*api.Item)) er
 	}
 }
 
-// listAllMedia pages through the account-wide media listing — the same
-// folder-less view the web app's "Documents" section is built on.  It is the
-// only listing that still shows items whose parent folder has been deleted
-// server-side (which detaches the files instead of removing them).
-func (f *Fs) listAllMedia(ctx context.Context, fn func(*api.Item)) error {
-	offset := 0
-	var req api.FieldsRequest
-	req.Data.Fields = append([]string{"folderid"}, mediaFields...)
-	for {
-		var res api.MediaResponse
-		opts := rest.Opts{
-			Method: "POST",
-			Path:   "/sapi/media",
-			Parameters: url.Values{
-				"action": {"get"},
-				"origin": {"omh,dropbox"},
-				"limit":  {strconv.Itoa(listChunk)},
-				"offset": {strconv.Itoa(offset)},
-			},
-		}
-		if err := f.callJSON(ctx, &opts, &req, &res); err != nil {
-			return fmt.Errorf("list all media: %w", err)
-		}
-		for i := range res.Data.Media {
-			fn(&res.Data.Media[i])
-		}
-		if !res.Data.More || len(res.Data.Media) == 0 {
-			return nil
-		}
-		offset += len(res.Data.Media)
+// listFileIDs returns the id of every live file in the account, from the
+// profile-changes feed queried from time zero.  This is the only enumeration
+// that includes items detached from any folder: a server-side folder delete
+// orphans the contained files, which then vanish from every folder listing
+// (and from the folder-less media listing, which returns nothing) but remain
+// in the changes feed and keep counting against the quota.
+func (f *Fs) listFileIDs(ctx context.Context) ([]string, error) {
+	var res api.ChangesResponse
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/sapi/profile/changes",
+		Parameters: url.Values{
+			"action": {"get"},
+			"from":   {"0"},
+			"origin": {"omh,dropbox"},
+		},
 	}
+	if err := f.callJSON(ctx, &opts, nil, &res); err != nil {
+		return nil, fmt.Errorf("list file ids: %w", err)
+	}
+	ids := make([]string, 0, len(res.Data.File.Updated))
+	for _, id := range res.Data.File.Updated {
+		if id.String() != "" {
+			ids = append(ids, id.String())
+		}
+	}
+	return ids, nil
+}
+
+// hydrateBatch is how many ids are fetched per by-id media call (the official
+// web client uses 400).
+const hydrateBatch = 400
+
+// getMediaByIDs fetches the given media items by id.  Only fields from the
+// server's accepted set may be requested (an unknown name fails the call with
+// COM-1021); "size" and "name" are known-good.
+func (f *Fs) getMediaByIDs(ctx context.Context, ids []string, fields []string) ([]api.Item, error) {
+	var req api.IDFieldsRequest
+	req.Data.Fields = fields
+	req.Data.IDs = numericIDs(ids)
+	var res api.MediaResponse
+	opts := rest.Opts{
+		Method:     "POST",
+		Path:       "/sapi/media",
+		Parameters: url.Values{"action": {"get"}, "origin": {"omh,dropbox"}},
+	}
+	if err := f.callJSON(ctx, &opts, &req, &res); err != nil {
+		return nil, fmt.Errorf("get media by ids: %w", err)
+	}
+	return res.Data.Media, nil
+}
+
+// numericIDs converts string ids to the JSON-number form SAPI expects,
+// dropping (and logging) anything non-numeric rather than corrupting the
+// request body.
+func numericIDs(ids []string) []json.Number {
+	out := make([]json.Number, 0, len(ids))
+	for _, id := range ids {
+		if _, err := strconv.ParseInt(id, 10, 64); err != nil {
+			fs.Errorf(nil, "funambol: skipping non-numeric media id %q", id)
+			continue
+		}
+		out = append(out, json.Number(id))
+	}
+	return out
 }
 
 // walkFolderIDs records dirID and every folder id beneath it into seen.
@@ -688,7 +723,10 @@ func (f *Fs) purgeDir(ctx context.Context, dirID string) error {
 
 func (f *Fs) deleteMedia(ctx context.Context, ids ...string) error {
 	var req api.IDsRequest
-	req.Data.IDs = ids
+	req.Data.IDs = numericIDs(ids)
+	if len(req.Data.IDs) == 0 {
+		return nil
+	}
 	opts := rest.Opts{Method: "POST", Path: "/sapi/media", Parameters: url.Values{"action": {"delete"}}}
 	var res api.Status
 	return f.callJSON(ctx, &opts, &req, &res)
@@ -700,12 +738,15 @@ var commandHelp = []fs.CommandHelp{{
 	Short: "Delete files left behind by server-side folder deletes",
 	Long: `The service's folder-delete detaches the files a folder contains
 instead of removing them: they disappear from every folder listing but
-live on in the account-wide media listing (the web app's "Documents"
-view) and keep counting against the storage quota.
+live on (visible in the web app's "Documents" view) and keep counting
+against the storage quota.
 
-This command lists the whole account, keeps every file whose folder
-still exists, and deletes the rest.  Deleted items land in the trash,
-so follow up with "rclone cleanup remote:" to actually free the quota.
+This command enumerates every file in the account via the
+profile-changes feed — the only server-side enumeration that includes
+detached items — compares that against what is reachable through the
+folder tree, and deletes the difference by id.  Deleted items land in
+the trash, so follow up with "rclone cleanup remote:" to actually free
+the quota.
 
 Usage:
 
@@ -715,46 +756,59 @@ It returns a JSON object with the number of orphans deleted and their
 total size in bytes.`,
 }}
 
-// cleanupOrphans deletes every media item whose parent folder no longer
-// exists.  Items reporting no folder id at all are left alone: that is
-// ambiguous (a listing quirk rather than proof of orphanhood) and deleting on
-// ambiguity could destroy live files.
+// cleanupOrphans deletes every media item that is not reachable through the
+// folder tree.  An item is an orphan when its id appears in the account-wide
+// changes feed but in no folder's listing — which is what a server-side
+// folder delete leaves behind.  Reachability is judged purely by comparing
+// the two enumerations, never by an item's own folderid (the server omits
+// that field for detached items, so trusting it would be ambiguous).
 func (f *Fs) cleanupOrphans(ctx context.Context) (any, error) {
+	all, err := f.listFileIDs(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cleanup-orphans: %w", err)
+	}
 	live := make(map[string]struct{})
 	if err := f.walkFolderIDs(ctx, f.rootID, live); err != nil {
 		return nil, fmt.Errorf("cleanup-orphans: walking folders: %w", err)
 	}
-	var (
-		ids     []string
-		bytes   int64
-		skipped int
-	)
-	err := f.listAllMedia(ctx, func(it *api.Item) {
-		folderID := it.FolderID.String()
-		if folderID == "" {
-			skipped++
-			return
+	reachable := make(map[string]struct{})
+	for folderID := range live {
+		err := f.listMedia(ctx, folderID, func(it *api.Item) {
+			reachable[it.ID.String()] = struct{}{}
+		})
+		if err != nil {
+			return nil, fmt.Errorf("cleanup-orphans: listing folder contents: %w", err)
 		}
-		if _, ok := live[folderID]; ok {
-			return
+	}
+	var orphans []string
+	for _, id := range all {
+		if _, ok := reachable[id]; !ok {
+			orphans = append(orphans, id)
 		}
-		ids = append(ids, it.ID.String())
-		bytes += it.Size
-	})
-	if err != nil {
-		return nil, fmt.Errorf("cleanup-orphans: %w", err)
 	}
-	if skipped > 0 {
-		fs.Logf(f, "cleanup-orphans: left %d item(s) with no folder id untouched", skipped)
+	fs.Infof(f, "cleanup-orphans: %d file(s) in account, %d reachable via folders, %d orphaned", len(all), len(reachable), len(orphans))
+	// Size accounting is best-effort: the deletion below works from ids alone.
+	var bytes int64
+	for i := 0; i < len(orphans); i += hydrateBatch {
+		end := min(i+hydrateBatch, len(orphans))
+		items, err := f.getMediaByIDs(ctx, orphans[i:end], []string{"size", "name"})
+		if err != nil {
+			fs.Logf(f, "cleanup-orphans: couldn't fetch sizes (continuing): %v", err)
+			bytes = -1
+			break
+		}
+		for i := range items {
+			bytes += items[i].Size
+		}
 	}
-	for i := 0; i < len(ids); i += deleteBatch {
-		end := min(i+deleteBatch, len(ids))
-		if err := f.deleteMedia(ctx, ids[i:end]...); err != nil {
+	for i := 0; i < len(orphans); i += deleteBatch {
+		end := min(i+deleteBatch, len(orphans))
+		if err := f.deleteMedia(ctx, orphans[i:end]...); err != nil {
 			return nil, fmt.Errorf("cleanup-orphans: deleting: %w", err)
 		}
-		fs.Infof(f, "cleanup-orphans: deleted %d/%d orphaned item(s)", end, len(ids))
+		fs.Infof(f, "cleanup-orphans: deleted %d/%d orphaned item(s)", end, len(orphans))
 	}
-	return map[string]any{"deleted": len(ids), "bytes": bytes}, nil
+	return map[string]any{"deleted": len(orphans), "bytes": bytes}, nil
 }
 
 // Command executes a backend-specific command.
