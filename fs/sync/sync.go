@@ -464,7 +464,7 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 							return
 						}
 					} else {
-						deleteFileErr := operations.DeleteFileWithBackupDir(s.ctx, src, s.backupDir)
+						deleteFileErr := operations.DeleteFile(s.ctx, src)
 						s.processError(deleteFileErr)
 						s.logger(s.ctx, operations.TransferError, pair.Src, pair.Dst, deleteFileErr)
 					}
@@ -512,7 +512,7 @@ func (s *syncCopyMove) pairCopyOrMove(ctx context.Context, in *pipe, fdst fs.Fs,
 				_, err = operations.MoveTransfer(ctx, fdst, dst, src.Remote(), src)
 			} else {
 				// src == dst signals delete the src
-				err = operations.DeleteFileWithBackupDir(ctx, src, s.backupDir)
+				err = operations.DeleteFile(ctx, src)
 			}
 		} else {
 			_, err = operations.Copy(ctx, fdst, dst, src.Remote(), src)
