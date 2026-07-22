@@ -54,6 +54,7 @@ func init() {
 		Description: "Funambol / OneMediaHub (O2 Cloud and other telco tenants)",
 		NewFs:       NewFs,
 		Config:      Config,
+		CommandHelp: commandHelp,
 		Options: []fs.Option{{
 			Name:      "user",
 			Help:      "Username for the Funambol / OneMediaHub account.\n\nUsually the email address or mobile number (MSISDN) you log in with.",
@@ -420,6 +421,54 @@ func (f *Fs) listMedia(ctx context.Context, dirID string, fn func(*api.Item)) er
 	}
 }
 
+// listAllMedia pages through the account-wide media listing — the same
+// folder-less view the web app's "Documents" section is built on.  It is the
+// only listing that still shows items whose parent folder has been deleted
+// server-side (which detaches the files instead of removing them).
+func (f *Fs) listAllMedia(ctx context.Context, fn func(*api.Item)) error {
+	offset := 0
+	var req api.FieldsRequest
+	req.Data.Fields = append([]string{"folderid"}, mediaFields...)
+	for {
+		var res api.MediaResponse
+		opts := rest.Opts{
+			Method: "POST",
+			Path:   "/sapi/media",
+			Parameters: url.Values{
+				"action": {"get"},
+				"origin": {"omh,dropbox"},
+				"limit":  {strconv.Itoa(listChunk)},
+				"offset": {strconv.Itoa(offset)},
+			},
+		}
+		if err := f.callJSON(ctx, &opts, &req, &res); err != nil {
+			return fmt.Errorf("list all media: %w", err)
+		}
+		for i := range res.Data.Media {
+			fn(&res.Data.Media[i])
+		}
+		if !res.Data.More || len(res.Data.Media) == 0 {
+			return nil
+		}
+		offset += len(res.Data.Media)
+	}
+}
+
+// walkFolderIDs records dirID and every folder id beneath it into seen.
+func (f *Fs) walkFolderIDs(ctx context.Context, dirID string, seen map[string]struct{}) error {
+	seen[dirID] = struct{}{}
+	folders, err := f.listFolders(ctx, dirID)
+	if err != nil {
+		return err
+	}
+	for _, fl := range folders {
+		if err := f.walkFolderIDs(ctx, fl.ID.String(), seen); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // List the objects and directories in dir into entries.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	dirID, err := f.dirCache.FindDir(ctx, dir, false)
@@ -599,22 +648,14 @@ const deleteBatch = 999
 
 // purgeDir deletes dirID and everything beneath it.
 //
-// The fast path is the server's own recursive folder-delete, which removes a
-// whole subtree in a single request.  That call is refused once a subtree holds
-// more than ~1000 elements ("can't delete more than 1000 elements"), so on any
-// failure we fall back to emptying this folder ourselves: recurse into each
-// sub-folder (which retries the fast path at the smaller scale) and delete the
-// folder's own media in capped batches, then remove the now-empty folder.
-//
-// This matters for speed: most trees are wiped in a handful of recursive
-// folder-deletes instead of listing every file (200 per page) and deleting it
-// in batches — the round-trip count, not the byte count, dominates the time.
+// The server's own recursive folder-delete must NOT be used on a folder that
+// still has files in it: it removes the folder tree but merely detaches the
+// files, which disappear from every folder listing yet live on in the
+// account-wide media listing (the web app's "Documents" view) and keep
+// counting against the storage quota forever.  So each folder's media is
+// deleted explicitly in capped batches, sub-folders are recursed into, and
+// only then is the empty folder itself removed.
 func (f *Fs) purgeDir(ctx context.Context, dirID string) error {
-	// Fast path: one call deletes the whole subtree when it's small enough.
-	if err := f.deleteFolder(ctx, dirID); err == nil {
-		return nil
-	}
-	// Too big (or otherwise refused): drain this level and recurse.
 	folders, err := f.listFolders(ctx, dirID)
 	if err != nil {
 		return err
@@ -641,7 +682,7 @@ func (f *Fs) purgeDir(ctx context.Context, dirID string) error {
 			return err
 		}
 	}
-	// Contents gone — the folder itself is now small enough to delete.
+	// Contents gone — deleting the now-empty folder can't orphan anything.
 	return f.deleteFolder(ctx, dirID)
 }
 
@@ -651,6 +692,79 @@ func (f *Fs) deleteMedia(ctx context.Context, ids ...string) error {
 	opts := rest.Opts{Method: "POST", Path: "/sapi/media", Parameters: url.Values{"action": {"delete"}}}
 	var res api.Status
 	return f.callJSON(ctx, &opts, &req, &res)
+}
+
+// commandHelp describes the backend-specific commands.
+var commandHelp = []fs.CommandHelp{{
+	Name:  "cleanup-orphans",
+	Short: "Delete files left behind by server-side folder deletes",
+	Long: `The service's folder-delete detaches the files a folder contains
+instead of removing them: they disappear from every folder listing but
+live on in the account-wide media listing (the web app's "Documents"
+view) and keep counting against the storage quota.
+
+This command lists the whole account, keeps every file whose folder
+still exists, and deletes the rest.  Deleted items land in the trash,
+so follow up with "rclone cleanup remote:" to actually free the quota.
+
+Usage:
+
+    rclone backend cleanup-orphans remote:
+
+It returns a JSON object with the number of orphans deleted and their
+total size in bytes.`,
+}}
+
+// cleanupOrphans deletes every media item whose parent folder no longer
+// exists.  Items reporting no folder id at all are left alone: that is
+// ambiguous (a listing quirk rather than proof of orphanhood) and deleting on
+// ambiguity could destroy live files.
+func (f *Fs) cleanupOrphans(ctx context.Context) (any, error) {
+	live := make(map[string]struct{})
+	if err := f.walkFolderIDs(ctx, f.rootID, live); err != nil {
+		return nil, fmt.Errorf("cleanup-orphans: walking folders: %w", err)
+	}
+	var (
+		ids     []string
+		bytes   int64
+		skipped int
+	)
+	err := f.listAllMedia(ctx, func(it *api.Item) {
+		folderID := it.FolderID.String()
+		if folderID == "" {
+			skipped++
+			return
+		}
+		if _, ok := live[folderID]; ok {
+			return
+		}
+		ids = append(ids, it.ID.String())
+		bytes += it.Size
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cleanup-orphans: %w", err)
+	}
+	if skipped > 0 {
+		fs.Logf(f, "cleanup-orphans: left %d item(s) with no folder id untouched", skipped)
+	}
+	for i := 0; i < len(ids); i += deleteBatch {
+		end := min(i+deleteBatch, len(ids))
+		if err := f.deleteMedia(ctx, ids[i:end]...); err != nil {
+			return nil, fmt.Errorf("cleanup-orphans: deleting: %w", err)
+		}
+		fs.Infof(f, "cleanup-orphans: deleted %d/%d orphaned item(s)", end, len(ids))
+	}
+	return map[string]any{"deleted": len(ids), "bytes": bytes}, nil
+}
+
+// Command executes a backend-specific command.
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (any, error) {
+	switch name {
+	case "cleanup-orphans":
+		return f.cleanupOrphans(ctx)
+	default:
+		return nil, fs.ErrorCommandNotFound
+	}
 }
 
 // CleanUp empties the server-side trash.  Deletes are soft: removed items land
@@ -1034,6 +1148,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 var (
 	_ fs.Fs              = (*Fs)(nil)
 	_ fs.Purger          = (*Fs)(nil)
+	_ fs.Commander       = (*Fs)(nil)
 	_ fs.CleanUpper      = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.DirMover        = (*Fs)(nil)
