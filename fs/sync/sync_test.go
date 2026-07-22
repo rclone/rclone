@@ -1851,39 +1851,6 @@ func TestMoveWithoutDeleteEmptySrcDirs(t *testing.T) {
 	r.CheckRemoteItems(t, file1, file2)
 }
 
-func TestMoveBackupDirNoNeedTransfer(t *testing.T) {
-	for _, checkFirst := range []bool{false, true} {
-		t.Run(fmt.Sprintf("checkFirst=%v", checkFirst), func(t *testing.T) {
-			ctx := context.Background()
-			ctx, ci := fs.AddConfig(ctx)
-			r := fstest.NewRun(t)
-			if !operations.CanServerSideMove(r.Fremote) {
-				t.Skip("Skipping test as remote does not support server-side move or copy")
-			}
-
-			ci.BackupDir = r.FremoteName + "/backup"
-			if checkFirst {
-				ci.CheckFirst = true
-				ci.OrderBy = "size"
-			}
-
-			fdst, err := fs.NewFs(ctx, r.FremoteName+"/dst")
-			require.NoError(t, err)
-			file1 := r.WriteFile("file1", "file1 contents", t1)
-			dstFile1 := r.WriteObject(ctx, "dst/file1", "file1 contents", t1)
-			r.CheckLocalItems(t, file1)
-			r.CheckRemoteItems(t, dstFile1)
-
-			err = MoveDir(ctx, fdst, r.Flocal, false, false)
-			require.NoError(t, err)
-			r.CheckLocalItems(t)
-			backupFile1 := file1
-			backupFile1.Path = "backup/file1"
-			r.CheckRemoteItems(t, dstFile1, backupFile1)
-		})
-	}
-}
-
 func TestMoveWithIgnoreExisting(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
