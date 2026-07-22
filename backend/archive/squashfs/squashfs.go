@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"path"
 	"strings"
 	"time"
@@ -156,6 +157,17 @@ func (f *Fs) toNative(remote string) (string, error) {
 	return native, nil
 }
 
+// This turns a native path with a leading / into a path suitable for
+// the squashfs library which requires io/fs.ValidPath paths with no
+// leading / and "." for the root directory.
+func toIOFS(native string) string {
+	native = strings.Trim(native, "/")
+	if native == "" {
+		return "."
+	}
+	return native
+}
+
 // Turn a (nativeDir, leaf) into a remote
 func (f *Fs) fromNative(nativeDir string, leaf string) string {
 	// fs.Debugf(nil, "nativeDir = %q, leaf = %q, root=%q", nativeDir, leaf, f.root)
@@ -169,13 +181,12 @@ func (f *Fs) fromNative(nativeDir string, leaf string) string {
 }
 
 // Convert a FileInfo into an Object from native dir
-func (f *Fs) objectFromFileInfo(nativeDir string, item squashfs.FileStat) *Object {
+func (f *Fs) objectFromFileInfo(nativeDir string, item os.FileInfo) *Object {
 	return &Object{
 		fs:      f,
 		remote:  f.fromNative(nativeDir, item.Name()),
 		size:    item.Size(),
 		modTime: item.ModTime(),
-		item:    item,
 	}
 }
 
@@ -196,32 +207,31 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return nil, err
 	}
 
-	items, err := f.sqfs.ReadDir(nativeDir)
+	items, err := f.sqfs.ReadDir(toIOFS(nativeDir))
 	if err != nil {
 		return nil, fmt.Errorf("read squashfs: couldn't read directory: %w", err)
 	}
 
 	entries = make(fs.DirEntries, 0, len(items))
-	for _, fi := range items {
-		item, ok := fi.(squashfs.FileStat)
-		if !ok {
-			return nil, fmt.Errorf("internal error: unexpected type for %q: %T", fi.Name(), fi)
-		}
+	for _, item := range items {
 		// fs.Debugf(item.Name(), "entry = %#v", item)
 		var entry fs.DirEntry
-		if err != nil {
-			return nil, fmt.Errorf("error reading item %q: %q", item.Name(), err)
-		}
 		if item.IsDir() {
-			var remote = f.fromNative(nativeDir, item.Name())
-			entry = fs.NewDir(remote, item.ModTime())
-		} else {
-			if item.Mode().IsRegular() {
-				entry = f.objectFromFileInfo(nativeDir, item)
-			} else {
-				fs.Debugf(item.Name(), "FIXME Not regular file - skipping")
-				continue
+			remote := f.fromNative(nativeDir, item.Name())
+			info, err := item.Info()
+			if err != nil {
+				return nil, fmt.Errorf("error reading item %q: %w", item.Name(), err)
 			}
+			entry = fs.NewDir(remote, info.ModTime())
+		} else if item.Type().IsRegular() {
+			info, err := item.Info()
+			if err != nil {
+				return nil, fmt.Errorf("error reading item %q: %w", item.Name(), err)
+			}
+			entry = f.objectFromFileInfo(nativeDir, info)
+		} else {
+			fs.Debugf(item.Name(), "FIXME Not regular file - skipping")
+			continue
 		}
 		entries = append(entries, entry)
 	}
@@ -238,7 +248,7 @@ func (f *Fs) newObjectNative(nativePath string) (o fs.Object, err error) {
 	leaf = strings.Trim(leaf, "/")
 
 	// FIXME need to detect directory not found
-	fis, err := f.sqfs.ReadDir(dir)
+	fis, err := f.sqfs.ReadDir(toIOFS(dir))
 	if err != nil {
 
 		return nil, fs.ErrorObjectNotFound
@@ -249,11 +259,11 @@ func (f *Fs) newObjectNative(nativePath string) (o fs.Object, err error) {
 			if fi.IsDir() {
 				return nil, fs.ErrorNotAFile
 			}
-			item, ok := fi.(squashfs.FileStat)
-			if !ok {
-				return nil, fmt.Errorf("internal error: unexpected type for %q: %T", fi.Name(), fi)
+			info, err := fi.Info()
+			if err != nil {
+				return nil, fmt.Errorf("error reading item %q: %w", fi.Name(), err)
 			}
-			o = f.objectFromFileInfo(dir, item)
+			o = f.objectFromFileInfo(dir, info)
 			break
 		}
 	}
@@ -328,7 +338,6 @@ type Object struct {
 	remote  string
 	size    int64
 	modTime time.Time
-	item    squashfs.FileStat
 }
 
 // Fs returns read only access to the Fs that this object is part of
@@ -405,8 +414,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 	}
 
 	fs.Debugf(o, "Opening %q", remote)
-	//fh, err := o.fs.sqfs.OpenFile(remote, os.O_RDONLY)
-	fh, err := o.item.Open()
+	fh, err := o.fs.sqfs.OpenFile(toIOFS(remote), os.O_RDONLY)
 	if err != nil {
 		return nil, err
 	}

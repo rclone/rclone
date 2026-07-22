@@ -272,7 +272,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			if err != nil {
 				return nil, fmt.Errorf("couldn't login: %w", err)
 			}
-			megaCache[opt.User] = srv
 			m.Set(sessionIDConfigKey, srv.GetSessionID())
 			encodedMasterKey := base64.StdEncoding.EncodeToString(srv.GetMasterKey())
 			m.Set(masterKeyConfigKey, encodedMasterKey)
@@ -287,6 +286,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 				return nil, fmt.Errorf("login with previous auth keys failed: %w", err)
 			}
 		}
+		// Cache the session so all Fs instances of this user share
+		// it - the move code relies on all objects being in the same
+		// in-memory tree.
+		megaCache[opt.User] = srv
 	}
 	f.srv = srv
 
