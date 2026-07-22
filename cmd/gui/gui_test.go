@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"io"
 	iofs "io/fs"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -94,6 +95,66 @@ func TestOriginFromURL(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := originFromURL(tt.url)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestResolveAllowOrigin(t *testing.T) {
+	wildcard := &net.TCPAddr{IP: net.IPv4zero, Port: 5533}
+	specific := &net.TCPAddr{IP: net.ParseIP("127.0.0.1"), Port: 5533}
+
+	tests := []struct {
+		name                string
+		explicitAllowOrigin bool
+		currentAllowOrigin  string
+		guiOrigin           string
+		addr                *net.TCPAddr
+		noAuth              bool
+		want                string
+	}{
+		{
+			name:                "explicit flag wins even on a wildcard bind",
+			explicitAllowOrigin: true,
+			currentAllowOrigin:  "http://192.0.2.10:5522",
+			guiOrigin:           "http://[::]:5580",
+			addr:                wildcard,
+			noAuth:              false,
+			want:                "http://192.0.2.10:5522",
+		},
+		{
+			name:                "explicit flag wins on a specific bind too",
+			explicitAllowOrigin: true,
+			currentAllowOrigin:  "http://192.0.2.10:5522",
+			guiOrigin:           "http://127.0.0.1:5580",
+			addr:                specific,
+			noAuth:              false,
+			want:                "http://192.0.2.10:5522",
+		},
+		{
+			name:      "specific bind falls back to the gui origin",
+			guiOrigin: "http://127.0.0.1:5580",
+			addr:      specific,
+			want:      "http://127.0.0.1:5580",
+		},
+		{
+			name:      "wildcard bind with auth falls back to *",
+			guiOrigin: "http://[::]:5580",
+			addr:      wildcard,
+			noAuth:    false,
+			want:      "*",
+		},
+		{
+			name:      "wildcard bind without auth falls back to the gui origin",
+			guiOrigin: "http://[::]:5580",
+			addr:      wildcard,
+			noAuth:    true,
+			want:      "http://[::]:5580",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := resolveAllowOrigin(tt.explicitAllowOrigin, tt.currentAllowOrigin, tt.guiOrigin, tt.addr, tt.noAuth)
 			assert.Equal(t, tt.want, got)
 		})
 	}
