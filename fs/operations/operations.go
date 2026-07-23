@@ -2119,7 +2119,7 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 			fs.Debugf(srcObj, "Not removing source file as destination file exists and --ignore-existing is set")
 			logger(ctx, Match, srcObj, dstObj, nil)
 		} else if !SameObject(srcObj, dstObj) {
-			err = DeleteFile(ctx, srcObj)
+			err = DeleteFileWithBackupDir(ctx, srcObj, backupDir)
 			logger(ctx, Differ, srcObj, dstObj, nil)
 		}
 	}
