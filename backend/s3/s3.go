@@ -3249,6 +3249,16 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
+	// With NoHeadObject no metadata was read for the new object, so carry
+	// the size and MD5 over from the source as a server-side copy produces
+	// an object with identical content.
+	if f.opt.NoHeadObject {
+		if dstObject, ok := dstObj.(*Object); ok {
+			dstObject.bytes = srcObj.bytes
+			dstObject.md5 = srcObj.md5
+		}
+	}
+
 	// Set Object Lock via separate API calls if requested
 	if f.opt.ObjectLockSetAfterUpload {
 		if dstObject, ok := dstObj.(*Object); ok {
