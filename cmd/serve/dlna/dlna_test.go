@@ -57,6 +57,20 @@ func TestInit(t *testing.T) {
 	startServer(t, f)
 }
 
+func TestServiceControlRejectsOversizedBody(t *testing.T) {
+	body := `<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body>` +
+		`<u:RegisterDevice xmlns:u="urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1">` +
+		strings.Repeat("x", maxSOAPBodySize) +
+		`</u:RegisterDevice></s:Body></s:Envelope>`
+	req, err := http.NewRequest("POST", baseURL+serviceControlURL, strings.NewReader(body))
+	require.NoError(t, err)
+	req.Header.Set("SOAPACTION", `"urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1#RegisterDevice"`)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+	assert.Equal(t, http.StatusRequestEntityTooLarge, resp.StatusCode)
+}
+
 // Make sure that it serves rootDesc.xml (SCPD in uPnP parlance).
 func TestRootSCPD(t *testing.T) {
 	req, err := http.NewRequest("GET", baseURL+rootDescPath, nil)
