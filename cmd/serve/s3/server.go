@@ -29,6 +29,8 @@ const (
 	ctxKeyID ctxKey = iota
 )
 
+const proxyAccessKeyID = "rclone-auth-proxy"
+
 // Server is a s3.FileSystem interface
 type Server struct {
 	server       *httplib.Server
@@ -74,6 +76,12 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 	if err != nil {
 		return nil, fmt.Errorf("parsing auth list failed: %q", err)
 	}
+	if proxy.Opt.AuthProxy != "" {
+		// SigV4 signing does not incorporate the access key ID. Keep the
+		// client key for the auth proxy, then replace it with this fixed key
+		// before signature verification.
+		authList = map[string]string{proxyAccessKeyID: w.s3Secret}
+	}
 
 	var newLogger logger
 	w.faker = gofakes3.New(
@@ -90,9 +98,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 
 	if proxy.Opt.AuthProxy != "" {
 		w.proxy = proxy.New(ctx, proxyOpt, vfsOpt)
-		// proxy auth middleware
 		w.handler = proxyAuthMiddleware(w.handler, w)
-		w.handler = authPairMiddleware(w.handler, w)
 	} else {
 		w._vfs = vfs.New(ctx, f, vfsOpt)
 
@@ -164,31 +170,54 @@ func (w *Server) Shutdown() error {
 	return w.server.Shutdown()
 }
 
-func authPairMiddleware(next http.Handler, ws *Server) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		accessKey, _ := parseAccessKeyID(r)
-		// set the auth pair
-		authPair := map[string]string{
-			accessKey: ws.s3Secret,
-		}
-		ws.faker.AddAuthKeys(authPair)
-		next.ServeHTTP(w, r)
-	})
+func writeAuthError(w http.ResponseWriter, err signature.ErrorCode) {
+	resp := signature.GetAPIError(err)
+	w.Header().Set("Content-Type", "application/xml")
+	w.WriteHeader(resp.HTTPStatusCode)
+	_, _ = w.Write(signature.EncodeAPIErrorToResponse(resp))
 }
 
 func proxyAuthMiddleware(next http.Handler, ws *Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		accessKey, _ := parseAccessKeyID(r)
+		accessKey, parseErr := parseAccessKeyID(r)
+		if parseErr != signature.ErrNone {
+			writeAuthError(w, parseErr)
+			return
+		}
+		if !replaceAccessKeyID(r, accessKey) {
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+		if verifyErr := signature.V4SignVerify(r); verifyErr != signature.ErrNone {
+			writeAuthError(w, verifyErr)
+			return
+		}
 		value, err := ws.auth(accessKey)
 		if err != nil {
 			fs.Infof(r.URL.Path, "%s: Auth failed: %v", r.RemoteAddr, err)
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
 		}
-		if value != nil {
-			r = r.WithContext(context.WithValue(r.Context(), ctxKeyID, value))
+		if value == nil {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
 		}
-
+		r = r.WithContext(context.WithValue(r.Context(), ctxKeyID, value))
 		next.ServeHTTP(w, r)
 	})
+}
+
+// replaceAccessKeyID swaps the client-selected access key for the fixed key
+// registered with the signature verifier. The SigV4 signing key is derived
+// from the secret and credential scope, not the access key ID.
+func replaceAccessKeyID(r *http.Request, accessKey string) bool {
+	oldCredential := "Credential=" + accessKey + "/"
+	authorization := r.Header.Get("Authorization")
+	if !strings.Contains(authorization, oldCredential) {
+		return false
+	}
+	r.Header.Set("Authorization", strings.Replace(authorization, oldCredential, "Credential="+proxyAccessKeyID+"/", 1))
+	return true
 }
 
 func parseAccessKeyID(r *http.Request) (accessKey string, error signature.ErrorCode) {
