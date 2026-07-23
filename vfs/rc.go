@@ -73,6 +73,11 @@ starting with dir will refresh that directory, e.g.
 
 If the parameter recursive=true is given the whole directory tree
 will get refreshed. This refresh will use --fast-list if enabled.
+
+On a mount or mount2 (Linux) this also drops the kernel's cached
+directory entries and attributes for the refreshed paths, so
+out-of-band changes are seen at once; other mount backends (cmount,
+NFS) can't and will wait for --attr-timeout.
 ` + getVFSHelp,
 	})
 }
@@ -132,6 +137,7 @@ func rcRefresh(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		if err != nil {
 			result[""] = err.Error()
 		} else {
+			root.invalidateKernelCacheForSubtree()
 			result[""] = "OK"
 		}
 	} else {
@@ -153,6 +159,7 @@ func rcRefresh(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 					if err != nil {
 						result[path] = err.Error()
 					} else {
+						dir.invalidateKernelCacheForSubtree()
 						result[path] = "OK"
 					}
 				}
@@ -187,6 +194,11 @@ parameter key starting with file will forget that file and any
 starting with dir will forget that dir, e.g.
 
     rclone rc vfs/forget file=hello file2=goodbye dir=home/junk
+
+On a mount or mount2 (Linux) this also drops the kernel's cached
+directory entries and attributes so an out-of-band change is seen
+at once; other mount backends (cmount, NFS) can't and will wait
+for --attr-timeout.
 ` + getVFSHelp,
 	})
 }
@@ -204,6 +216,7 @@ func rcForget(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 	forgotten := []string{}
 	if len(in) == 0 {
+		root.invalidateKernelCacheForSubtree()
 		root.ForgetAll()
 	} else {
 		for k, v := range in {

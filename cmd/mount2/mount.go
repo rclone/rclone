@@ -233,6 +233,8 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error
 		return nil, nil, "", err
 	}
 
+	removeInvalidateKernelCacheHook := VFS.AddInvalidateKernelCacheHook(fsys.invalidateKernelCacheForEntry)
+
 	//mountOpts := &fuse.MountOptions{}
 	//server, err := fusefs.Mount(mountpoint, fsys, &opts)
 	// server, err := fusefs.Mount(mountpoint, root, &opts)
@@ -241,6 +243,7 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error
 	// }
 
 	umount := func() error {
+		removeInvalidateKernelCacheHook()
 		// Shutdown the VFS
 		fsys.VFS.Shutdown()
 		return server.Unmount()

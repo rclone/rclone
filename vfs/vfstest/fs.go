@@ -108,6 +108,7 @@ func RunTests(t *testing.T, useVFS bool, minimumRequiredCacheMode vfscommon.Cach
 			t.Run("TestWriteFileAppend", TestWriteFileAppend)
 			t.Run("TestSymlinks", TestSymlinks)
 			t.Run("TestMknod", TestMknod)
+			t.Run("TestFileForgetGrown", TestFileForgetGrown)
 		})
 		fs.Logf(nil, "Finished test run with %s (ok=%v)", what, ok)
 		run.Finalise()

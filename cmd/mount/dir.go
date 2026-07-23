@@ -262,6 +262,7 @@ func (d *Dir) Symlink(ctx context.Context, req *fuse.SymlinkRequest) (node fusef
 	}
 
 	node = &File{n.(*vfs.File), d.fsys}
+	n.SetSys(node) // cache the FUSE node for later
 	return node, nil
 }
 
