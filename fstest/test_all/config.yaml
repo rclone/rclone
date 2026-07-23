@@ -423,6 +423,10 @@ backends:
    listretries: 5
    tests:
      - backend
+ - backend:  "funambol"
+   remote:   "TestFunambol:"
+   fastlist: false
+   listretries: 8
  # Disabled due to account cancellation - no longer available to me
  # - backend:  "qingstor"
  #   remote:   "TestQingStor:"

@@ -1,0 +1,1212 @@
+// Package funambol provides an interface to Funambol / OneMediaHub
+// (cloud.o2online.es) storage system, which is built on the Funambol /
+// OneMediaHub "SAPI".
+package funambol
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"net/http/cookiejar"
+	"net/url"
+	"path"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/rclone/rclone/backend/funambol/api"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/fshttp"
+	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/dircache"
+	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/rest"
+)
+
+const (
+	defaultEndpoint = "https://cloud.o2online.es"
+	minSleep        = 10 * time.Millisecond
+	maxSleep        = 2 * time.Second
+	decayConstant   = 2
+	listChunk       = 200    // media items per page
+	uploadMediaType = "file" // store everything as a generic file (no transcoding)
+)
+
+// mediaFields are the item fields we ask the listing endpoint to return.
+// "contenttype"/"mime" are intentionally absent: SAPI rejects them as fields.
+var mediaFields = []string{
+	"name", "size", "creationdate", "modificationdate", "url", "favorite",
+}
+
+// Register with Fs
+func init() {
+	fs.Register(&fs.RegInfo{
+		Name:        "funambol",
+		Description: "Funambol / OneMediaHub (O2 Cloud and other telco tenants)",
+		NewFs:       NewFs,
+		Config:      Config,
+		CommandHelp: commandHelp,
+		Options: []fs.Option{{
+			Name:      "user",
+			Help:      "Username for the Funambol / OneMediaHub account.\n\nUsually the email address or mobile number (MSISDN) you log in with.",
+			Required:  true,
+			Sensitive: true,
+		}, {
+			Name:       "pass",
+			Help:       "Password for the Funambol / OneMediaHub account.",
+			Required:   true,
+			IsPassword: true,
+		}, {
+			Name: "cookies",
+			Help: `Persisted session cookies (set automatically by rclone config).
+
+This holds the logged-in session established during config (after any
+two-factor step) so it can be reused.  When it expires, reconnect with
+"rclone config reconnect remote:".`,
+			Hide:      fs.OptionHideBoth,
+			Sensitive: true,
+			Advanced:  true,
+		}, {
+			Name: "device_id",
+			Help: `Device id reported to the service (auto-generated if left blank).
+
+This identifies the rclone "device" to the service and appears in your
+account's device list.  Leave it empty: rclone generates a stable
+"web-<hex>" id on first login and saves it here, registering itself just
+like the official app.  Set it only to reuse a specific existing id.`,
+			Advanced:  true,
+			Sensitive: true,
+		}, {
+			Name: "endpoint",
+			Help: `SAPI endpoint of the provider hosting the service.
+
+Funambol / OneMediaHub is white-labelled by several operators.  Leave
+this set to the default for O2 Spain, or point it at another tenant,
+e.g. https://www.cloud.example.com`,
+			Default:  defaultEndpoint,
+			Advanced: true,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			Default: encoder.Display |
+				encoder.EncodeBackSlash |
+				encoder.EncodeDoubleQuote |
+				encoder.EncodeInvalidUtf8,
+		}},
+	})
+}
+
+// Options defines the configuration for this backend
+type Options struct {
+	User     string               `config:"user"`
+	Pass     string               `config:"pass"`
+	Endpoint string               `config:"endpoint"`
+	Cookies  string               `config:"cookies"`
+	DeviceID string               `config:"device_id"`
+	Enc      encoder.MultiEncoder `config:"encoding"`
+}
+
+// Fs represents a remote Funambol / OneMediaHub
+type Fs struct {
+	name     string
+	root     string
+	opt      Options
+	features *fs.Features
+	client   *http.Client
+	srv      *rest.Client
+	dirCache *dircache.DirCache
+	pacer    *fs.Pacer
+	rootID   string           // numeric id of the account root folder
+	m        configmap.Mapper // for persisting refreshed session cookies
+
+	auth *authState // shared session state (pointer so *Fs stays copyable)
+}
+
+// authState serialises (re-)authentication.  The session itself lives in the
+// http.Client cookie jar (JSESSIONID + persistent-login cookie) and the
+// validation key, so only a mutex is needed to guard concurrent refreshes.
+type authState struct {
+	mu sync.Mutex
+}
+
+// Object describes a Funambol / OneMediaHub file
+type Object struct {
+	fs          *Fs
+	remote      string
+	hasMetaData bool
+	size        int64
+	modTime     time.Time
+	id          string
+	url         string
+}
+
+// ------------------------------------------------------------
+
+// Name of the remote (as passed into NewFs)
+func (f *Fs) Name() string { return f.name }
+
+// Root of the remote (as passed into NewFs)
+func (f *Fs) Root() string { return f.root }
+
+// String converts this Fs to a string
+func (f *Fs) String() string { return fmt.Sprintf("funambol root '%s'", f.root) }
+
+// Features returns the optional features of this Fs
+func (f *Fs) Features() *fs.Features { return f.features }
+
+// Precision of the remote (SAPI stores second-resolution timestamps)
+func (f *Fs) Precision() time.Duration { return time.Second }
+
+// Hashes returns the supported hash sets.  The item "etag" looks like a digest
+// but is assigned per upload (two uploads of identical bytes get different
+// etags), so it is not a usable content hash and no hash type is advertised.
+func (f *Fs) Hashes() hash.Set { return hash.Set(hash.None) }
+
+func parsePath(p string) string { return strings.Trim(p, "/") }
+
+var retryErrorCodes = []int{429, 500, 502, 503, 504, 509}
+
+func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
+	if fserrors.ContextError(ctx, &err) {
+		return false, err
+	}
+	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
+}
+
+// ---- authentication ----
+//
+// The session lives in the cookie jar (JSESSIONID + validationKey [+ PLC]).
+// SAPI wants the validation key as a query parameter, and its value is exactly
+// the validationKey cookie, so key() reads it straight from the jar.  The
+// interactive login / two-factor flow lives in session.go.
+
+// errReconnect is returned when the persistent login has expired and re-login
+// would need a fresh two-factor code.
+func errReconnect(name string) error {
+	return fmt.Errorf("funambol: session expired - run %q to log in again", "rclone config reconnect "+name+":")
+}
+
+// key returns the current validation key (stored as the validationKey cookie).
+// It may be empty after a fresh restore from the persistent login cookie, in
+// which case the first call deliberately provokes a SEC-1003 to mint one.
+func (f *Fs) key() string {
+	return f.validationKeyFromJar()
+}
+
+// authCodes are SAPI error codes that mean the persistent login itself is no
+// longer valid, so only a fresh interactive login (two-factor) can recover.
+func isReauthCode(code string) bool {
+	switch code {
+	case "SEC-1000", "SEC-1001", "SEC-1004", "SEC-1005":
+		return true
+	}
+	return false
+}
+
+// isTransientCode reports SAPI error codes that signal a temporary server-side
+// fault rather than a definitive failure, so the call is worth retrying with
+// backoff.  These come back as HTTP 200 + an error envelope, so the HTTP-level
+// shouldRetry never sees them.
+func isTransientCode(code string) bool {
+	switch code {
+	// "Unknown exception in folder handling" — an internal server hiccup, seen
+	// when several transfers create/list the same folder tree concurrently.
+	case "FOL-1000":
+		return true
+	}
+	return false
+}
+
+// isFatalCode reports SAPI error codes for hard account limits — FOL-1035
+// (maximum folder count per user) and FOL-1015 (maximum folder depth).
+// Retrying cannot succeed, so these must abort the run instead of letting
+// rclone's retry layers re-run the whole transfer.
+func isFatalCode(code string) bool {
+	switch code {
+	case "FOL-1015", "FOL-1035":
+		return true
+	}
+	return false
+}
+
+// wrapFatal marks hard-limit SAPI errors as fatal for rclone's retry logic.
+func wrapFatal(err error) error {
+	var ae *api.Error
+	if errors.As(err, &ae) && isFatalCode(ae.Code) {
+		return fserrors.FatalError(err)
+	}
+	return err
+}
+
+// ensureSession makes sure we have something to authenticate with: either a
+// live validation key or the persistent login cookie that can mint one.
+// Logging in from scratch needs the emailed verification code, so it can only
+// happen interactively via "rclone config".
+func (f *Fs) ensureLogin(ctx context.Context) error {
+	f.auth.mu.Lock()
+	defer f.auth.mu.Unlock()
+	if f.validationKeyFromJar() != "" || f.persistentLoginPresent() {
+		return nil
+	}
+	return errReconnect(f.name)
+}
+
+// callJSON makes an authenticated SAPI JSON call.  The validation key rotates
+// and eventually expires; when it does the server replies 401 SEC-1003 with a
+// fresh key in the error's data field (and renews the persistent login
+// cookie).  We pick that up, store it, persist the refreshed cookies and retry
+// - so a session established once with two-factor keeps working unattended.
+func (f *Fs) callJSON(ctx context.Context, opts *rest.Opts, request, response any) error {
+	if err := f.ensureLogin(ctx); err != nil {
+		return err
+	}
+	for attempt := 0; attempt < 3; attempt++ {
+		if opts.Parameters == nil {
+			opts.Parameters = url.Values{}
+		}
+		if vk := f.key(); vk != "" {
+			opts.Parameters.Set("validationkey", vk)
+		} else {
+			opts.Parameters.Del("validationkey")
+		}
+		var resp *http.Response
+		err := f.pacer.Call(func() (bool, error) {
+			var err error
+			resp, err = f.srv.CallJSON(ctx, opts, request, response)
+			if retry, rErr := shouldRetry(ctx, resp, err); retry || err != nil {
+				return retry, rErr
+			}
+			// HTTP succeeded: retry transient SAPI exceptions (HTTP 200 +
+			// error envelope) with the pacer's backoff. SEC-1003 and other
+			// envelope errors are left for the outer loop to handle.
+			if er, ok := response.(interface{ AsErr() error }); ok {
+				if aErr := er.AsErr(); aErr != nil {
+					var ae *api.Error
+					if errors.As(aErr, &ae) && isTransientCode(ae.Code) {
+						return true, aErr
+					}
+				}
+			}
+			return false, nil
+		})
+		if err != nil {
+			if f.refreshOnError(err) && attempt < 2 {
+				continue
+			}
+			var ae *api.Error
+			if errors.As(err, &ae) && (resp != nil && resp.StatusCode == http.StatusUnauthorized || isReauthCode(ae.Code)) {
+				return errReconnect(f.name)
+			}
+			return wrapFatal(err)
+		}
+		// SAPI may signal failure with HTTP 200 + an error envelope.
+		if er, ok := response.(interface{ AsErr() error }); ok {
+			if aErr := er.AsErr(); aErr != nil {
+				if f.refreshOnError(aErr) && attempt < 2 {
+					continue
+				}
+				return wrapFatal(aErr)
+			}
+		}
+		return nil
+	}
+	return errors.New("funambol: authentication retry exhausted")
+}
+
+// refreshOnError handles a SEC-1003 ("invalid mandatory validation key") by
+// adopting the fresh key the server hands back and persisting the renewed
+// cookies.  It reports whether the caller should retry.
+func (f *Fs) refreshOnError(err error) bool {
+	var ae *api.Error
+	if !errors.As(err, &ae) || ae.Code != "SEC-1003" || ae.Data == "" {
+		return false
+	}
+	f.setValidationKey(ae.Data)
+	f.persistSession() // the 401 also renewed the persistent login cookie
+	return true
+}
+
+// ---- dircache.DirCacher ----
+
+// FindLeaf finds a directory called leaf in the directory with id pathID
+func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
+	folders, err := f.listFolders(ctx, pathID)
+	if err != nil {
+		return "", false, err
+	}
+	for _, fl := range folders {
+		if strings.EqualFold(f.opt.Enc.ToStandardName(fl.Name), leaf) {
+			return fl.ID.String(), true, nil
+		}
+	}
+	return "", false, nil
+}
+
+// CreateDir makes a directory with pathID as parent and name leaf
+func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
+	var req api.SaveFolderRequest
+	req.Data.Name = f.opt.Enc.FromStandardName(leaf)
+	parent := api.ID(pathID)
+	req.Data.Parent = &parent
+	var res api.SaveFolderResponse
+	opts := rest.Opts{Method: "POST", Path: "/sapi/media/folder", Parameters: url.Values{"action": {"save"}}}
+	if err := f.callJSON(ctx, &opts, &req, &res); err != nil {
+		return "", fmt.Errorf("CreateDir: %w", err)
+	}
+	id := res.NewID()
+	if id == "" {
+		return "", errors.New("CreateDir: server returned no folder id")
+	}
+	return id.String(), nil
+}
+
+// ---- listing ----
+
+// listFolders returns every sub-folder of dirID in a single request.
+//
+// Unlike the media listing, the folder-list endpoint takes only "parentid":
+// the official client sends no "limit" or "offset", and the server returns the
+// full set in one response.  Passing "offset" makes the server reject the call
+// with COM-1021 ("Invalid parameter value"), so we deliberately don't paginate
+// here — matching the app's behaviour.
+func (f *Fs) listFolders(ctx context.Context, dirID string) ([]api.Folder, error) {
+	var res api.FoldersResponse
+	opts := rest.Opts{
+		Method:     "GET",
+		Path:       "/sapi/media/folder",
+		Parameters: url.Values{"action": {"list"}, "parentid": {dirID}},
+	}
+	if err := f.callJSON(ctx, &opts, nil, &res); err != nil {
+		return nil, fmt.Errorf("list folders: %w", err)
+	}
+	return res.Data.Folders, nil
+}
+
+func (f *Fs) listMedia(ctx context.Context, dirID string, fn func(*api.Item)) error {
+	offset := 0
+	var req api.FieldsRequest
+	req.Data.Fields = mediaFields
+	for {
+		var res api.MediaResponse
+		opts := rest.Opts{
+			Method: "POST",
+			Path:   "/sapi/media",
+			Parameters: url.Values{
+				"action":   {"get"},
+				"folderid": {dirID},
+				"limit":    {strconv.Itoa(listChunk)},
+				"offset":   {strconv.Itoa(offset)},
+			},
+		}
+		if err := f.callJSON(ctx, &opts, &req, &res); err != nil {
+			return fmt.Errorf("list media: %w", err)
+		}
+		for i := range res.Data.Media {
+			fn(&res.Data.Media[i])
+		}
+		if !res.Data.More || len(res.Data.Media) == 0 {
+			return nil
+		}
+		offset += len(res.Data.Media)
+	}
+}
+
+// listFileIDs returns the id of every live file in the account, from the
+// profile-changes feed queried from time zero.  This is the only enumeration
+// that includes items detached from any folder: a server-side folder delete
+// orphans the contained files, which then vanish from every folder listing
+// (and from the folder-less media listing, which returns nothing) but remain
+// in the changes feed and keep counting against the quota.
+func (f *Fs) listFileIDs(ctx context.Context) ([]string, error) {
+	var res api.ChangesResponse
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/sapi/profile/changes",
+		Parameters: url.Values{
+			"action": {"get"},
+			"from":   {"0"},
+			"origin": {"omh,dropbox"},
+		},
+	}
+	if err := f.callJSON(ctx, &opts, nil, &res); err != nil {
+		return nil, fmt.Errorf("list file ids: %w", err)
+	}
+	ids := make([]string, 0, len(res.Data.File.Updated))
+	for _, id := range res.Data.File.Updated {
+		if id.String() != "" {
+			ids = append(ids, id.String())
+		}
+	}
+	return ids, nil
+}
+
+// hydrateBatch is how many ids are fetched per by-id media call (the official
+// web client uses 400).
+const hydrateBatch = 400
+
+// getMediaByIDs fetches the given media items by id.  Only fields from the
+// server's accepted set may be requested (an unknown name fails the call with
+// COM-1021); "size" and "name" are known-good.
+func (f *Fs) getMediaByIDs(ctx context.Context, ids []string, fields []string) ([]api.Item, error) {
+	var req api.IDFieldsRequest
+	req.Data.Fields = fields
+	req.Data.IDs = numericIDs(ids)
+	var res api.MediaResponse
+	opts := rest.Opts{
+		Method:     "POST",
+		Path:       "/sapi/media",
+		Parameters: url.Values{"action": {"get"}, "origin": {"omh,dropbox"}},
+	}
+	if err := f.callJSON(ctx, &opts, &req, &res); err != nil {
+		return nil, fmt.Errorf("get media by ids: %w", err)
+	}
+	return res.Data.Media, nil
+}
+
+// numericIDs converts string ids to the JSON-number form SAPI expects,
+// dropping (and logging) anything non-numeric rather than corrupting the
+// request body.
+func numericIDs(ids []string) []json.Number {
+	out := make([]json.Number, 0, len(ids))
+	for _, id := range ids {
+		if _, err := strconv.ParseInt(id, 10, 64); err != nil {
+			fs.Errorf(nil, "funambol: skipping non-numeric media id %q", id)
+			continue
+		}
+		out = append(out, json.Number(id))
+	}
+	return out
+}
+
+// walkFolderIDs records dirID and every folder id beneath it into seen.
+func (f *Fs) walkFolderIDs(ctx context.Context, dirID string, seen map[string]struct{}) error {
+	seen[dirID] = struct{}{}
+	folders, err := f.listFolders(ctx, dirID)
+	if err != nil {
+		return err
+	}
+	for _, fl := range folders {
+		if err := f.walkFolderIDs(ctx, fl.ID.String(), seen); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// List the objects and directories in dir into entries.
+func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	dirID, err := f.dirCache.FindDir(ctx, dir, false)
+	if err != nil {
+		return nil, err
+	}
+	folders, err := f.listFolders(ctx, dirID)
+	if err != nil {
+		return nil, err
+	}
+	for _, fl := range folders {
+		name := f.opt.Enc.ToStandardName(fl.Name)
+		remote := path.Join(dir, name)
+		f.dirCache.Put(remote, fl.ID.String())
+		entries = append(entries, fs.NewDir(remote, time.UnixMilli(fl.Date)).SetID(fl.ID.String()))
+	}
+	var iErr error
+	err = f.listMedia(ctx, dirID, func(item *api.Item) {
+		if item.Name == "" {
+			return
+		}
+		remote := path.Join(dir, f.opt.Enc.ToStandardName(item.Name))
+		o, oErr := f.newObjectWithInfo(ctx, remote, item)
+		if oErr != nil {
+			iErr = oErr
+			return
+		}
+		entries = append(entries, o)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if iErr != nil {
+		return nil, iErr
+	}
+	return entries, nil
+}
+
+// ---- objects ----
+
+func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.Item) (fs.Object, error) {
+	o := &Object{fs: f, remote: remote}
+	if info != nil {
+		if err := o.setMetaData(info); err != nil {
+			return nil, err
+		}
+	} else if err := o.readMetaData(ctx); err != nil {
+		return nil, err
+	}
+	return o, nil
+}
+
+// NewObject finds the Object at remote.
+func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
+	return f.newObjectWithInfo(ctx, remote, nil)
+}
+
+func (f *Fs) readMetaDataForPath(ctx context.Context, remote string) (*api.Item, error) {
+	leaf, dirID, err := f.dirCache.FindPath(ctx, remote, false)
+	if err != nil {
+		if err == fs.ErrorDirNotFound {
+			return nil, fs.ErrorObjectNotFound
+		}
+		return nil, err
+	}
+	lcLeaf := strings.ToLower(leaf)
+	var found *api.Item
+	err = f.listMedia(ctx, dirID, func(item *api.Item) {
+		if found == nil && strings.ToLower(f.opt.Enc.ToStandardName(item.Name)) == lcLeaf {
+			it := *item
+			found = &it
+		}
+	})
+	if err != nil {
+		return nil, err
+	}
+	if found == nil {
+		return nil, fs.ErrorObjectNotFound
+	}
+	return found, nil
+}
+
+func (o *Object) setMetaData(info *api.Item) error {
+	o.hasMetaData = true
+	o.size = info.Size
+	o.modTime = info.ModTime()
+	o.id = info.ID.String()
+	o.url = info.URL
+	return nil
+}
+
+func (o *Object) readMetaData(ctx context.Context) error {
+	if o.hasMetaData {
+		return nil
+	}
+	info, err := o.fs.readMetaDataForPath(ctx, o.remote)
+	if err != nil {
+		return err
+	}
+	return o.setMetaData(info)
+}
+
+// ---- Fs write operations ----
+
+// Mkdir creates the directory if it doesn't exist
+func (f *Fs) Mkdir(ctx context.Context, dir string) error {
+	_, err := f.dirCache.FindDir(ctx, dir, true)
+	return err
+}
+
+func (f *Fs) deleteFolder(ctx context.Context, id string) error {
+	var req api.FoldersRequest
+	req.Data.Folders = []string{id}
+	opts := rest.Opts{Method: "POST", Path: "/sapi/media/folder", Parameters: url.Values{"action": {"delete"}}, NoResponse: true}
+	return f.callJSON(ctx, &opts, &req, &struct{}{})
+}
+
+func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
+	root := path.Join(f.root, dir)
+	if root == "" {
+		return errors.New("can't purge root directory")
+	}
+	dirID, err := f.dirCache.FindDir(ctx, dir, false)
+	if err != nil {
+		return err
+	}
+	if check {
+		folders, err := f.listFolders(ctx, dirID)
+		if err != nil {
+			return err
+		}
+		empty := len(folders) == 0
+		if empty {
+			err = f.listMedia(ctx, dirID, func(*api.Item) { empty = false })
+			if err != nil {
+				return err
+			}
+		}
+		if !empty {
+			return fs.ErrorDirectoryNotEmpty
+		}
+	}
+	if err := f.deleteFolder(ctx, dirID); err != nil {
+		return fmt.Errorf("rmdir: %w", err)
+	}
+	f.dirCache.FlushDir(dir)
+	return nil
+}
+
+// Rmdir removes the directory, refusing if not empty
+func (f *Fs) Rmdir(ctx context.Context, dir string) error {
+	return f.purgeCheck(ctx, dir, true)
+}
+
+// Purge deletes a directory and all its contents.
+func (f *Fs) Purge(ctx context.Context, dir string) error {
+	root := path.Join(f.root, dir)
+	if root == "" {
+		return errors.New("can't purge root directory")
+	}
+	dirID, err := f.dirCache.FindDir(ctx, dir, false)
+	if err != nil {
+		return err
+	}
+	if err := f.purgeDir(ctx, dirID); err != nil {
+		return fmt.Errorf("purge: %w", err)
+	}
+	f.dirCache.FlushDir(dir)
+	return nil
+}
+
+// deleteBatch is the maximum number of media ids sent to a single delete call.
+// media?action=delete rejects bigger batches with MED-1025 ("Number of items
+// in the request is over the limit"); the boundary was measured against the
+// live service: 500 is accepted, 501 is refused.
+const deleteBatch = 500
+
+// purgeDir deletes dirID and everything beneath it.
+//
+// The server's own recursive folder-delete must NOT be used on a folder that
+// still has files in it: it removes the folder tree but merely detaches the
+// files, which disappear from every folder listing yet live on in the
+// account-wide media listing (the web app's "Documents" view) and keep
+// counting against the storage quota forever.  So each folder's media is
+// deleted explicitly in capped batches, sub-folders are recursed into, and
+// only then is the empty folder itself removed.
+func (f *Fs) purgeDir(ctx context.Context, dirID string) error {
+	folders, err := f.listFolders(ctx, dirID)
+	if err != nil {
+		return err
+	}
+	for _, fl := range folders {
+		if err := f.purgeDir(ctx, fl.ID.String()); err != nil {
+			return err
+		}
+	}
+	// Fully paginate the listing before deleting so we never mutate the folder
+	// while a paged read of it is still in flight.
+	var ids []string
+	if err := f.listMedia(ctx, dirID, func(it *api.Item) {
+		ids = append(ids, it.ID.String())
+	}); err != nil {
+		return err
+	}
+	for i := 0; i < len(ids); i += deleteBatch {
+		end := i + deleteBatch
+		if end > len(ids) {
+			end = len(ids)
+		}
+		if err := f.deleteMedia(ctx, ids[i:end]...); err != nil {
+			return err
+		}
+	}
+	// Contents gone — deleting the now-empty folder can't orphan anything.
+	return f.deleteFolder(ctx, dirID)
+}
+
+func (f *Fs) deleteMedia(ctx context.Context, ids ...string) error {
+	var req api.IDsRequest
+	req.Data.IDs = numericIDs(ids)
+	if len(req.Data.IDs) == 0 {
+		return nil
+	}
+	opts := rest.Opts{Method: "POST", Path: "/sapi/media", Parameters: url.Values{"action": {"delete"}}}
+	var res api.Status
+	return f.callJSON(ctx, &opts, &req, &res)
+}
+
+// commandHelp describes the backend-specific commands.
+var commandHelp = []fs.CommandHelp{{
+	Name:  "cleanup-orphans",
+	Short: "Delete files left behind by server-side folder deletes",
+	Long: `The service's folder-delete detaches the files a folder contains
+instead of removing them: they disappear from every folder listing but
+live on (visible in the web app's "Documents" view) and keep counting
+against the storage quota.
+
+This command enumerates every file in the account via the
+profile-changes feed — the only server-side enumeration that includes
+detached items — compares that against what is reachable through the
+folder tree, and deletes the difference by id.  Deleted items land in
+the trash, so follow up with "rclone cleanup remote:" to actually free
+the quota.
+
+Usage:
+
+    rclone backend cleanup-orphans remote:
+
+It returns a JSON object with the number of orphans deleted and their
+total size in bytes.`,
+}}
+
+// cleanupOrphans deletes every media item that is not reachable through the
+// folder tree.  An item is an orphan when its id appears in the account-wide
+// changes feed but in no folder's listing — which is what a server-side
+// folder delete leaves behind.  Reachability is judged purely by comparing
+// the two enumerations, never by an item's own folderid (the server omits
+// that field for detached items, so trusting it would be ambiguous).
+func (f *Fs) cleanupOrphans(ctx context.Context) (any, error) {
+	all, err := f.listFileIDs(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cleanup-orphans: %w", err)
+	}
+	live := make(map[string]struct{})
+	if err := f.walkFolderIDs(ctx, f.rootID, live); err != nil {
+		return nil, fmt.Errorf("cleanup-orphans: walking folders: %w", err)
+	}
+	reachable := make(map[string]struct{})
+	for folderID := range live {
+		err := f.listMedia(ctx, folderID, func(it *api.Item) {
+			reachable[it.ID.String()] = struct{}{}
+		})
+		if err != nil {
+			return nil, fmt.Errorf("cleanup-orphans: listing folder contents: %w", err)
+		}
+	}
+	var orphans []string
+	for _, id := range all {
+		if _, ok := reachable[id]; !ok {
+			orphans = append(orphans, id)
+		}
+	}
+	fs.Infof(f, "cleanup-orphans: %d file(s) in account, %d reachable via folders, %d orphaned", len(all), len(reachable), len(orphans))
+	// Size accounting is best-effort: the deletion below works from ids alone.
+	var bytes int64
+	for i := 0; i < len(orphans); i += hydrateBatch {
+		end := min(i+hydrateBatch, len(orphans))
+		items, err := f.getMediaByIDs(ctx, orphans[i:end], []string{"size", "name"})
+		if err != nil {
+			fs.Logf(f, "cleanup-orphans: couldn't fetch sizes (continuing): %v", err)
+			bytes = -1
+			break
+		}
+		for i := range items {
+			bytes += items[i].Size
+		}
+	}
+	for i := 0; i < len(orphans); i += deleteBatch {
+		end := min(i+deleteBatch, len(orphans))
+		if err := f.deleteMedia(ctx, orphans[i:end]...); err != nil {
+			return nil, fmt.Errorf("cleanup-orphans: deleting: %w", err)
+		}
+		fs.Infof(f, "cleanup-orphans: deleted %d/%d orphaned item(s)", end, len(orphans))
+	}
+	return map[string]any{"deleted": len(orphans), "bytes": bytes}, nil
+}
+
+// Command executes a backend-specific command.
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (any, error) {
+	switch name {
+	case "cleanup-orphans":
+		return f.cleanupOrphans(ctx)
+	default:
+		return nil, fs.ErrorCommandNotFound
+	}
+}
+
+// CleanUp empties the server-side trash.  Deletes are soft: removed items land
+// in the trash and keep counting against the storage quota until it is emptied.
+// The call returns an empty body on success, hence NoResponse.
+func (f *Fs) CleanUp(ctx context.Context) error {
+	opts := rest.Opts{Method: "POST", Path: "/sapi/media/trash", Parameters: url.Values{"action": {"empty"}}, NoResponse: true}
+	if err := f.callJSON(ctx, &opts, nil, &struct{}{}); err != nil {
+		return fmt.Errorf("cleanup: %w", err)
+	}
+	return nil
+}
+
+// Put the object into the container.  No existence check here: Update sweeps
+// every same-name copy from a fresh listing before uploading anyway.
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	o := &Object{fs: f, remote: src.Remote()}
+	return o, o.Update(ctx, in, src, options...)
+}
+
+// About gets quota information
+func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
+	var res api.StorageSpace
+	opts := rest.Opts{Method: "GET", Path: "/sapi/media", Parameters: url.Values{"action": {"get-storage-space"}}}
+	if err := f.callJSON(ctx, &opts, nil, &res); err != nil {
+		return nil, err
+	}
+	usage := &fs.Usage{Used: fs.NewUsageValue(res.Data.Used)}
+	if !res.Data.NoLimit && res.Data.Quota > 0 {
+		usage.Total = fs.NewUsageValue(res.Data.Quota)
+		usage.Free = fs.NewUsageValue(res.Data.Free)
+	}
+	return usage, nil
+}
+
+// DirCacheFlush resets the directory cache
+func (f *Fs) DirCacheFlush() { f.dirCache.ResetRoot() }
+
+// saveFolder renames and/or re-parents a folder via action=save.  A nil parent
+// leaves the folder where it is (rename only).
+func (f *Fs) saveFolder(ctx context.Context, id, name string, parent *string) error {
+	var req api.SaveFolderRequest
+	req.Data.ID = api.ID(id)
+	req.Data.Name = f.opt.Enc.FromStandardName(name)
+	if parent != nil {
+		p := api.ID(*parent)
+		req.Data.Parent = &p
+	}
+	var res api.SaveFolderResponse
+	opts := rest.Opts{Method: "POST", Path: "/sapi/media/folder", Parameters: url.Values{"action": {"save"}}}
+	return f.callJSON(ctx, &opts, &req, &res)
+}
+
+// DirMove moves and/or renames the directory srcRemote in srcFs to dstRemote in
+// f using a server-side folder save.
+func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
+	srcFs, ok := src.(*Fs)
+	if !ok {
+		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		return fs.ErrorCantDirMove
+	}
+	srcID, _, _, dstDirectoryID, dstLeaf, err := f.dirCache.DirMove(ctx, srcFs.dirCache, srcFs.root, srcRemote, f.root, dstRemote)
+	if err != nil {
+		return err
+	}
+	if err := f.saveFolder(ctx, srcID, dstLeaf, &dstDirectoryID); err != nil {
+		return fmt.Errorf("DirMove: %w", err)
+	}
+	srcFs.dirCache.FlushDir(srcRemote)
+	return nil
+}
+
+// ---- Object interface ----
+
+// Fs returns the parent Fs
+func (o *Object) Fs() fs.Info { return o.fs }
+
+// String returns the remote path
+func (o *Object) String() string {
+	if o == nil {
+		return "<nil>"
+	}
+	return o.remote
+}
+
+// Remote returns the remote path
+func (o *Object) Remote() string { return o.remote }
+
+// Hash is unsupported: the service exposes no usable content hash.
+func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
+	return "", hash.ErrUnsupported
+}
+
+// Size returns the size of the object in bytes
+func (o *Object) Size() int64 {
+	if err := o.readMetaData(context.TODO()); err != nil {
+		fs.Logf(o, "Failed to read metadata: %v", err)
+		return 0
+	}
+	return o.size
+}
+
+// ModTime returns the modification time of the object
+func (o *Object) ModTime(ctx context.Context) time.Time {
+	if err := o.readMetaData(ctx); err != nil {
+		fs.Logf(o, "Failed to read metadata: %v", err)
+		return time.Now()
+	}
+	return o.modTime
+}
+
+// SetModTime is not supported standalone (mtime is set on upload)
+func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
+	return fs.ErrorCantSetModTime
+}
+
+// Storable returns whether this object is storable
+func (o *Object) Storable() bool { return true }
+
+// ID returns the ID of the Object
+func (o *Object) ID() string { return o.id }
+
+// Open an object for read
+func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
+	if err := o.readMetaData(ctx); err != nil {
+		return nil, err
+	}
+	if o.url == "" {
+		return nil, errors.New("can't download - no URL")
+	}
+	if err := o.fs.ensureLogin(ctx); err != nil {
+		return nil, err
+	}
+	fs.FixRangeOption(options, o.size)
+	opts := rest.Opts{Method: "GET", RootURL: o.url, Options: options}
+	// The download streams from a direct URL and so bypasses callJSON's
+	// SEC-1003 handling.  Replicate it: if the validation key has rotated,
+	// adopt the fresh one the server returns, persist the renewed cookies and
+	// retry once.  Retrying is safe here because the body hasn't been read yet.
+	for attempt := 0; attempt < 2; attempt++ {
+		var resp *http.Response
+		err := o.fs.pacer.Call(func() (bool, error) {
+			var err error
+			resp, err = o.fs.srv.Call(ctx, &opts)
+			return shouldRetry(ctx, resp, err)
+		})
+		if err == nil {
+			return resp.Body, nil
+		}
+		if attempt == 0 && o.fs.refreshOnError(err) {
+			continue
+		}
+		return nil, err
+	}
+	return nil, errors.New("funambol: download authentication retry exhausted")
+}
+
+// Update the object with the contents of the io.Reader
+func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	size := src.Size()
+	if size < 0 {
+		return errors.New("funambol: can't upload unknown-sized objects")
+	}
+	leaf, dirID, err := o.fs.dirCache.FindPath(ctx, o.remote, true)
+	if err != nil {
+		return err
+	}
+	name := o.fs.opt.Enc.FromStandardName(leaf)
+
+	// Overwrite: the server appends " (1)", " (2)" … when a name already
+	// exists rather than replacing, so remove any current same-name item
+	// before uploading to keep the requested name.  Sweep ALL copies from a
+	// fresh listing, not just the one this object knows about: a retried
+	// upload whose first attempt timed out after the server had committed it
+	// leaves an extra same-name copy behind (the fresh copy is not listable
+	// straight away, so the retry cannot see it and delete it).
+	ids := make([]string, 0, 1)
+	if o.id != "" {
+		ids = append(ids, o.id)
+	}
+	lcLeaf := strings.ToLower(leaf)
+	lErr := o.fs.listMedia(ctx, dirID, func(item *api.Item) {
+		id := item.ID.String()
+		if id == "" || (o.id != "" && id == o.id) {
+			return
+		}
+		if strings.ToLower(o.fs.opt.Enc.ToStandardName(item.Name)) == lcLeaf {
+			ids = append(ids, id)
+		}
+	})
+	if lErr != nil {
+		fs.Logf(o, "couldn't check for previous versions before upload: %v", lErr)
+	}
+	if len(ids) > 0 {
+		if dErr := o.fs.deleteMedia(ctx, ids...); dErr != nil {
+			fs.Logf(o, "couldn't remove previous version(s) before upload: %v", dErr)
+		}
+	}
+	o.id = ""
+
+	// Phase 1: metadata -> obtain the upload GUID
+	var metaReq api.UploadMetadataRequest
+	metaReq.Data.Name = name
+	metaReq.Data.ContentType = fs.MimeType(ctx, src)
+	metaReq.Data.Size = size
+	metaReq.Data.FolderID = dirID
+	mod := src.ModTime(ctx)
+	metaReq.Data.CreationDate = api.FormatTime(mod)
+	metaReq.Data.ModificationDate = api.FormatTime(mod)
+	var metaRes api.UploadMetadataResponse
+	metaOpts := rest.Opts{
+		Method:     "POST",
+		Path:       "/sapi/upload/" + uploadMediaType,
+		Parameters: url.Values{"action": {"save-metadata"}},
+	}
+	if err := o.fs.callJSON(ctx, &metaOpts, &metaReq, &metaRes); err != nil {
+		return fmt.Errorf("upload metadata: %w", err)
+	}
+	guid := metaRes.ID.String()
+	if guid == "" {
+		return errors.New("upload metadata: server returned no id")
+	}
+
+	// Phase 2: stream the bytes
+	if err := o.fs.ensureLogin(ctx); err != nil {
+		return err
+	}
+	var upRes api.UploadResponse
+	upOpts := rest.Opts{
+		Method:        "POST",
+		Path:          "/sapi/upload/" + uploadMediaType,
+		Parameters:    url.Values{"action": {"save"}, "validationkey": {o.fs.key()}},
+		Body:          in,
+		ContentType:   "application/octet-stream",
+		ContentLength: &size,
+		ExtraHeaders: map[string]string{
+			"x-funambol-id":        guid,
+			"x-funambol-file-size": strconv.FormatInt(size, 10),
+		},
+		Options: options,
+	}
+	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
+		resp, err := o.fs.srv.CallJSON(ctx, &upOpts, nil, &upRes)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err == nil {
+		err = upRes.AsErr()
+	}
+	if err != nil {
+		// The byte stream bypasses callJSON's SEC-1003 handling.  If the
+		// validation key rotated, adopt the fresh key + renewed cookies the
+		// server returned, then ask the caller to retry: the body has already
+		// been consumed and can't be replayed here, so operations.Copy re-runs
+		// Update with a freshly-opened reader (its phase-1 metadata call now
+		// uses the new key).
+		if o.fs.refreshOnError(err) {
+			return fserrors.RetryError(fmt.Errorf("upload bytes: validation key rotated, retrying: %w", err))
+		}
+		return fmt.Errorf("upload bytes: %w", err)
+	}
+
+	// Populate metadata from the upload response.  Re-reading via a listing
+	// here would race the server's indexing (the just-uploaded item is not
+	// immediately listable), which previously caused spurious retries and
+	// duplicate " (N)" files.
+	o.id = upRes.ID.String()
+	o.size = size
+	o.modTime = mod
+	o.hasMetaData = true
+	return nil
+}
+
+// Remove an object
+func (o *Object) Remove(ctx context.Context) error {
+	if err := o.readMetaData(ctx); err != nil {
+		return err
+	}
+	return o.fs.deleteMedia(ctx, o.id)
+}
+
+// ---- construction ----
+
+// NewFs constructs an Fs from the path
+func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
+	opt := new(Options)
+	if err := configstruct.Set(m, opt); err != nil {
+		return nil, err
+	}
+	if opt.Pass != "" {
+		clear, err := obscure.Reveal(opt.Pass)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't decrypt password: %w", err)
+		}
+		opt.Pass = clear
+	}
+	if opt.Endpoint == "" {
+		opt.Endpoint = defaultEndpoint
+	}
+	opt.Endpoint = strings.TrimRight(opt.Endpoint, "/")
+	if opt.DeviceID == "" {
+		opt.DeviceID = newDeviceID()
+		m.Set("device_id", opt.DeviceID)
+	}
+
+	client := fshttp.NewClient(ctx)
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		return nil, err
+	}
+	client.Jar = jar
+	srv := rest.NewClient(client).SetRoot(opt.Endpoint)
+	srv.SetErrorHandler(sapiErrorHandler)
+	srv.SetHeader("X-deviceid", opt.DeviceID)
+
+	f := &Fs{
+		name:   name,
+		root:   parsePath(root),
+		opt:    *opt,
+		m:      m,
+		client: client,
+		srv:    srv,
+		pacer:  fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		auth:   new(authState),
+	}
+	f.features = (&fs.Features{
+		CaseInsensitive:         true,
+		CanHaveEmptyDirectories: true,
+		ReadMimeType:            false,
+		// The server stores multiple items with the same name in the same
+		// folder (e.g. when an upload is retried after a timeout), so expose
+		// that to rclone and make "rclone dedupe" usable for repair.
+		DuplicateFiles: true,
+	}).Fill(ctx, f)
+
+	// Restore the session established during config (survives 2FA).
+	if opt.Cookies != "" {
+		f.restoreCookies(opt.Cookies)
+	}
+
+	// Authenticate and discover the root folder id.
+	if err := f.ensureLogin(ctx); err != nil {
+		return nil, err
+	}
+	var rootRes api.FoldersResponse
+	opts := rest.Opts{Method: "GET", Path: "/sapi/media/folder/root", Parameters: url.Values{"action": {"get"}}}
+	if err := f.callJSON(ctx, &opts, nil, &rootRes); err != nil {
+		return nil, fmt.Errorf("couldn't find root folder: %w", err)
+	}
+	if len(rootRes.Data.Folders) == 0 {
+		return nil, errors.New("couldn't find root folder")
+	}
+	f.rootID = rootRes.Data.Folders[0].ID.String()
+
+	f.dirCache = dircache.New(f.root, f.rootID, f)
+	err = f.dirCache.FindRoot(ctx, false)
+	if err != nil {
+		// Maybe root is a file
+		newRoot, remote := dircache.SplitPath(f.root)
+		tempF := *f
+		tempF.dirCache = dircache.New(newRoot, f.rootID, &tempF)
+		tempF.root = newRoot
+		if err := tempF.dirCache.FindRoot(ctx, false); err != nil {
+			return f, nil
+		}
+		_, err := tempF.newObjectWithInfo(ctx, remote, nil)
+		if err != nil {
+			if err == fs.ErrorObjectNotFound {
+				return f, nil
+			}
+			return nil, err
+		}
+		f.features.Fill(ctx, &tempF)
+		f.dirCache = tempF.dirCache
+		f.root = tempF.root
+		return f, fs.ErrorIsFile
+	}
+	return f, nil
+}
+
+// Check the interfaces are satisfied
+var (
+	_ fs.Fs              = (*Fs)(nil)
+	_ fs.Purger          = (*Fs)(nil)
+	_ fs.Commander       = (*Fs)(nil)
+	_ fs.CleanUpper      = (*Fs)(nil)
+	_ fs.Abouter         = (*Fs)(nil)
+	_ fs.DirMover        = (*Fs)(nil)
+	_ fs.DirCacheFlusher = (*Fs)(nil)
+	_ fs.Object          = (*Object)(nil)
+	_ fs.IDer            = (*Object)(nil)
+)
