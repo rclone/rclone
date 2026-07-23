@@ -209,10 +209,9 @@ func globToRegexp(glob string, pathMode bool, addAnchors bool, ignoreCase bool) 
 
 var (
 	// Can't deal with
-	//   / or ** in {}
 	//   {{ regexp }}
 	//   nested {} (the inner braces are opaque to the directory split below)
-	tooHardRe = regexp.MustCompile(`({[^{}]*(\*\*|/)[^{}]*})|\{\{|\}\}|\{[^{}]*\{`)
+	tooHardRe = regexp.MustCompile(`\{\{|\}\}|\{[^{}]*\{`)
 
 	// Squash all /
 	squashSlash = regexp.MustCompile(`/{2,}`)
@@ -229,6 +228,148 @@ func globToDirGlobs(glob string) (out []string) {
 		out = append(out, "/**")
 		return out
 	}
+
+	globs := expandPathBraceGlobs(glob)
+	if globs == nil {
+		fs.Infof(nil, "Can't figure out directory filters from %q: looking in all directories", glob)
+		return []string{"/**"}
+	}
+	seen := make(map[string]struct{})
+	for _, glob := range globs {
+		for _, dirGlob := range globToDirGlobsSingle(glob) {
+			if _, ok := seen[dirGlob]; ok {
+				continue
+			}
+			seen[dirGlob] = struct{}{}
+			out = append(out, dirGlob)
+		}
+	}
+	return out
+}
+
+// expandPathBraceGlobs expands brace groups containing path separators or
+// recursive wildcards, leaving ordinary filename alternatives untouched.
+func expandPathBraceGlobs(glob string) []string {
+	for start := 0; start < len(glob); start++ {
+		switch glob[start] {
+		case '\\':
+			start++
+			continue
+		case '[':
+			start = skipGlobClass(glob, start)
+			continue
+		case '{':
+		default:
+			continue
+		}
+
+		end := start + 1
+		for end < len(glob) && glob[end] != '}' {
+			if glob[end] == '\\' {
+				end++
+			} else if glob[end] == '[' {
+				end = skipGlobClass(glob, end)
+			}
+			end++
+		}
+		if end == len(glob) {
+			return []string{glob}
+		}
+
+		content := glob[start+1 : end]
+		if braceContainsOpaquePathPattern(content) {
+			return nil
+		}
+		if !braceContainsPathPattern(content) {
+			start = end
+			continue
+		}
+
+		var expanded []string
+		for _, option := range splitBraceOptions(content) {
+			suffixExpansions := expandPathBraceGlobs(glob[:start] + option + glob[end+1:])
+			if suffixExpansions == nil {
+				return nil
+			}
+			for _, suffixExpansion := range suffixExpansions {
+				expanded = append(expanded, suffixExpansion)
+			}
+		}
+		return expanded
+	}
+	return []string{glob}
+}
+
+func braceContainsOpaquePathPattern(content string) bool {
+	for i := 0; i < len(content); i++ {
+		switch content[i] {
+		case '\\':
+			if i+1 < len(content) && (content[i+1] == '/' ||
+				(content[i+1] == '*' && i+2 < len(content) && content[i+2] == '*')) {
+				return true
+			}
+			i++
+		case '[':
+			end := skipGlobClass(content, i)
+			class := content[i : end+1]
+			if strings.Contains(class, "/") || strings.Contains(class, "**") {
+				return true
+			}
+			i = end
+		}
+	}
+	return false
+}
+
+func braceContainsPathPattern(content string) bool {
+	for i := 0; i < len(content); i++ {
+		switch content[i] {
+		case '\\':
+			i++
+		case '[':
+			i = skipGlobClass(content, i)
+		case '/':
+			return true
+		case '*':
+			if i+1 < len(content) && content[i+1] == '*' {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func splitBraceOptions(content string) []string {
+	var options []string
+	start := 0
+	for i := 0; i < len(content); i++ {
+		switch content[i] {
+		case '\\':
+			i++
+		case '[':
+			i = skipGlobClass(content, i)
+		case ',':
+			options = append(options, content[start:i])
+			start = i + 1
+		}
+	}
+	return append(options, content[start:])
+}
+
+func skipGlobClass(glob string, start int) int {
+	for i := start + 1; i < len(glob); i++ {
+		if glob[i] == '\\' {
+			i++
+			continue
+		}
+		if glob[i] == ']' {
+			return i
+		}
+	}
+	return len(glob) - 1
+}
+
+func globToDirGlobsSingle(glob string) (out []string) {
 
 	// Get rid of multiple /s
 	glob = squashSlash.ReplaceAllString(glob, "/")
