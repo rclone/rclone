@@ -33,6 +33,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"sort"
 	"testing"
 	"time"
@@ -181,8 +182,7 @@ func newRunIndividual(t *testing.T, individual bool) *Run {
 			}
 			require.NoError(t, err)
 			sort.Strings(toDelete)
-			for i := len(toDelete) - 1; i >= 0; i-- {
-				dir := toDelete[i]
+			for _, dir := range slices.Backward(toDelete) {
 				_ = Retry(t, fmt.Sprintf("removing dir %q", dir), func() error {
 					return r.Fremote.Rmdir(ctx, dir)
 				})
