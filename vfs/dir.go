@@ -1,7 +1,9 @@
 package vfs
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -13,6 +15,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/dirtree"
+	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/object"
@@ -28,15 +31,18 @@ type Dir struct {
 	inode        uint64      // read only: inode number
 	f            fs.Fs       // read only
 	cleanupTimer *time.Timer // read only: timer to call cacheCleanup
+	refreshMu    sync.Mutex  // serializes forced and stale-while-revalidate refreshes
 
-	mu      sync.RWMutex // protects the following
-	parent  *Dir         // parent, nil for root
-	path    string
-	entry   fs.Directory
-	read    time.Time         // time directory entry last read
-	items   map[string]Node   // directory entries - can be empty but not nil
-	virtual map[string]vState // virtual directory entries - may be nil
-	sys     atomic.Value      // user defined info to be attached here
+	mu         sync.RWMutex // protects the following
+	parent     *Dir         // parent, nil for root
+	path       string
+	entry      fs.Directory
+	read       time.Time         // time directory entry last read
+	items      map[string]Node   // directory entries - can be empty but not nil
+	virtual    map[string]vState // virtual directory entries - may be nil
+	refreshing bool              // a stale-while-revalidate listing is in progress
+	generation uint64            // incremented whenever cached contents are invalidated
+	sys        atomic.Value      // user defined info to be attached here
 
 	modTimeMu sync.Mutex // protects the following
 	modTime   time.Time
@@ -82,12 +88,14 @@ func (d *Dir) cacheCleanup() {
 
 	when := time.Now()
 
+	d.refreshMu.Lock()
+	defer d.refreshMu.Unlock()
 	d.mu.Lock()
 	_, stale := d._age(when)
 	d.mu.Unlock()
 
 	if stale {
-		d.ForgetAll()
+		d.forgetAllForCleanup()
 	}
 }
 
@@ -234,11 +242,38 @@ func (d *Dir) ForgetAll() (hasVirtual bool) {
 	}
 
 	d.mu.RUnlock()
+	return d.forgetSelf()
+}
+
+// forgetAllForCleanup recursively expires cached directories without holding
+// an ancestor directory lock while waiting for a child refresh to finish.
+// d.refreshMu must already be held by the caller.
+func (d *Dir) forgetAllForCleanup() (hasVirtual bool) {
+	d.mu.RLock()
+	children := make([]*Dir, 0)
+	for _, node := range d.items {
+		if dir, ok := node.(*Dir); ok {
+			children = append(children, dir)
+		}
+	}
+	d.mu.RUnlock()
+
+	for _, dir := range children {
+		dir.refreshMu.Lock()
+		dir.forgetAllForCleanup()
+		dir.refreshMu.Unlock()
+	}
+	return d.forgetSelf()
+}
+
+// forgetSelf clears only this directory's cache.
+func (d *Dir) forgetSelf() (hasVirtual bool) {
 
 	// We run this part with Lock so we can modify the Dir
 
 	d.mu.Lock()
 	defer d.mu.Unlock()
+	d.generation++
 
 	// Purge any unnecessary virtual entries
 	d._purgeVirtual()
@@ -275,6 +310,7 @@ func (d *Dir) invalidateDir(absPath string) {
 	node := d.vfs.root.cachedNode(absPath)
 	if dir, ok := node.(*Dir); ok {
 		dir.mu.Lock()
+		dir.generation++
 		if !dir.read.IsZero() {
 			fs.Debugf(dir.path, "invalidating directory cache")
 			dir.read = time.Time{}
@@ -372,6 +408,7 @@ func (d *Dir) _age(when time.Time) (age time.Duration, stale bool) {
 func (d *Dir) renameTree(dirPath string) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
+	d.generation++
 
 	// Make sure the path is correct for each node
 	if d.path != dirPath {
@@ -444,6 +481,7 @@ func name(p string) string {
 // note that we add new objects rather than updating old ones
 func (d *Dir) addObject(node Node) {
 	d.mu.Lock()
+	d.generation++
 	leaf := node.Name()
 	d.items[leaf] = node
 	if d.virtual == nil {
@@ -505,6 +543,7 @@ func (d *Dir) AddVirtual(leaf string, size int64, isDir bool) {
 // from a remote directory listing.
 func (d *Dir) delObject(leaf string) {
 	d.mu.Lock()
+	d.generation++
 	delete(d.items, leaf)
 	if d.virtual == nil {
 		d.virtual = make(map[string]vState)
@@ -530,6 +569,11 @@ func (d *Dir) DelVirtual(leaf string) {
 
 // read the directory and sets d.items - must be called with the lock held
 func (d *Dir) _readDir() error {
+	// A stale-while-revalidate refresh deliberately keeps the previous
+	// snapshot readable until its replacement is ready.
+	if d.refreshing {
+		return nil
+	}
 	when := time.Now()
 	if age, stale := d._age(when); stale {
 		if age != 0 {
@@ -538,12 +582,31 @@ func (d *Dir) _readDir() error {
 	} else {
 		return nil
 	}
-	entries, err := list.DirSorted(d.vfs.ctx, d.f, false, d.path)
+	entries, err := d.listDir(d.vfs.ctx, d.f, d.path)
+	if err != nil {
+		return err
+	}
+
+	err = d._readDirFromEntries(entries, nil, time.Time{})
+	if err != nil {
+		return err
+	}
+
+	d.read = time.Now()
+	d.cleanupTimer.Reset(time.Duration(d.vfs.Opt.DirCacheTime * 2))
+
+	return nil
+}
+
+// listDir reads and normalizes a single remote directory. It does not require
+// d.mu, so callers may fetch a replacement snapshot without blocking readers.
+func (d *Dir) listDir(ctx context.Context, f fs.Fs, dirPath string) (entries fs.DirEntries, err error) {
+	entries, err = list.DirSorted(ctx, f, false, dirPath)
 	if err == fs.ErrorDirNotFound {
 		// We treat directory not found as empty because we
 		// create directories on the fly
 	} else if err != nil {
-		return err
+		return nil, err
 	}
 
 	if d.vfs.Opt.BlockNormDupes { // do this only if requested, as it will have a performance hit
@@ -575,15 +638,7 @@ func (d *Dir) _readDir() error {
 		entries = filteredEntries
 	}
 
-	err = d._readDirFromEntries(entries, nil, time.Time{})
-	if err != nil {
-		return err
-	}
-
-	d.read = time.Now()
-	d.cleanupTimer.Reset(time.Duration(d.vfs.Opt.DirCacheTime * 2))
-
-	return nil
+	return entries, nil
 }
 
 // update d.items for each dir in the DirTree below this one and
@@ -730,6 +785,7 @@ func (mv manageVirtuals) end(d *Dir) {
 // update d.items and if dirTree is not nil update each dir in the DirTree below this one and
 // set the last read time - must be called with the lock held
 func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree, when time.Time) error {
+	d.generation++
 	var err error
 	mv := d._newManageVirtuals()
 	for _, entry := range entries {
@@ -788,6 +844,10 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 
 // readDirTree forces a refresh of the complete directory tree
 func (d *Dir) readDirTree() error {
+	d.vfs.refreshMu.Lock()
+	defer d.vfs.refreshMu.Unlock()
+	d.refreshMu.Lock()
+	defer d.refreshMu.Unlock()
 	d.mu.RLock()
 	f, path := d.f, d.path
 	d.mu.RUnlock()
@@ -812,10 +872,105 @@ func (d *Dir) readDirTree() error {
 
 // readDir forces a refresh of the directory
 func (d *Dir) readDir() error {
+	d.vfs.refreshMu.RLock()
+	defer d.vfs.refreshMu.RUnlock()
+	d.refreshMu.Lock()
+	defer d.refreshMu.Unlock()
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	d.read = time.Time{}
 	return d._readDir()
+}
+
+// readDirSWR refreshes a single directory while keeping its old snapshot
+// readable. Concurrent refreshes return an error. Listing failures leave the
+// prior cache contents and freshness timestamp unchanged.
+func (d *Dir) readDirSWR(ctx context.Context) error {
+	if !d.vfs.refreshMu.TryRLock() {
+		return errors.New("recursive directory refresh already in progress")
+	}
+	defer d.vfs.refreshMu.RUnlock()
+	if !d.refreshMu.TryLock() {
+		return errors.New("directory refresh already in progress")
+	}
+	defer d.refreshMu.Unlock()
+
+	d.mu.Lock()
+	parent := d.parent
+	d.mu.Unlock()
+	if parent != nil {
+		parent.mu.RLock()
+	}
+	d.mu.Lock()
+	if d.parent != parent {
+		d.mu.Unlock()
+		if parent != nil {
+			parent.mu.RUnlock()
+		}
+		return errors.New("directory cache changed before refresh started")
+	}
+	if d.read.IsZero() {
+		d.mu.Unlock()
+		if parent != nil {
+			parent.mu.RUnlock()
+		}
+		return errors.New("directory cache has no existing snapshot")
+	}
+	d.refreshing = true
+	f, dirPath, generation := d.f, d.path, d.generation
+	var parentGeneration uint64
+	if parent != nil {
+		parentGeneration = parent.generation
+	}
+	d.mu.Unlock()
+	if parent != nil {
+		parent.mu.RUnlock()
+	}
+
+	defer func() {
+		d.mu.Lock()
+		d.refreshing = false
+		d.mu.Unlock()
+	}()
+
+	listCtx, cancel := context.WithCancel(ctx)
+	stopVFS := context.AfterFunc(d.vfs.ctx, cancel)
+	defer func() {
+		stopVFS()
+		cancel()
+	}()
+	listCtx = fs.CopyConfig(listCtx, d.vfs.ctx)
+	listCtx = filter.CopyConfig(listCtx, d.vfs.ctx)
+	entries, err := d.listDir(listCtx, f, dirPath)
+	if err != nil {
+		return err
+	}
+
+	if parent != nil {
+		parent.mu.RLock()
+		defer parent.mu.RUnlock()
+	}
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	if err = listCtx.Err(); err != nil {
+		return err
+	}
+	if err = d.vfs.ctx.Err(); err != nil {
+		return err
+	}
+	attached := parent == nil && d == d.vfs.root
+	if parent != nil {
+		attached = d.parent == parent && parent.generation == parentGeneration
+	}
+	if !attached || d.path != dirPath || d.generation != generation {
+		return fmt.Errorf("directory cache changed during refresh of %q", dirPath)
+	}
+	if err = d._readDirFromEntries(entries, nil, time.Time{}); err != nil {
+		return err
+	}
+	d.read = time.Now()
+	d.cleanupTimer.Reset(time.Duration(d.vfs.Opt.DirCacheTime * 2))
+	return nil
 }
 
 // jsonErrorf formats the string according to a format specifier and

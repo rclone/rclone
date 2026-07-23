@@ -183,6 +183,7 @@ type VFS struct {
 	cache       *vfscache.Cache
 	cancel      context.CancelFunc
 	cancelCache context.CancelFunc
+	refreshMu   sync.RWMutex // serializes recursive refreshes with directory refreshes
 	usageMu     sync.Mutex
 	usageTime   time.Time
 	usage       *fs.Usage
