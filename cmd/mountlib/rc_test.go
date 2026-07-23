@@ -121,7 +121,9 @@ func TestRc(t *testing.T) {
 		time.Sleep(100 * time.Millisecond)
 
 		t.Run("Unmount", func(t *testing.T) {
-			_, err := unmount.Fn(ctx, in)
+			_, err := unmount.Fn(ctx, rc.Params{
+				"mountPoint": mountPoint,
+			})
 			require.NoError(t, err)
 			assert.Equal(t, 0, len(checkMountList()))
 		})
