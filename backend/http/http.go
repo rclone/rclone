@@ -96,19 +96,25 @@ sizes of any files, and some files that don't exist may be in the listing.`,
 			Advanced: true,
 		}, {
 			Name: "no_head_size",
-			Help: `Set a default file size for --http-no-head.
+			Help: `Set the reported file size for --http-no-head.
 
 When HEAD requests are disabled, rclone normally reports an unknown file size.
-Set this option to report the specified size for every file instead.
-Leave it at 0 to keep reporting an unknown size.`,
-			Default:  fs.SizeSuffix(0),
+Set this option to a non-negative value to report that size for every file,
+including 0. Leave it at -1 to keep reporting an unknown size.
+
+The configured size is authoritative. If it does not match the actual file
+size, transfers may fail their size check and retry unless --ignore-size is
+used. It can also make multi-thread transfers request incorrect ranges and
+make mounted files unreadable past the reported size.`,
+			Default:  fs.SizeSuffix(-1),
 			Advanced: true,
 		}, {
 			Name: "no_head_time",
 			Help: `Set a default modification time for --http-no-head.
 
 When HEAD requests are disabled, rclone normally reports an unset modification
-time. Set this option to report the specified time for every file instead.`,
+time. Set this option to report the specified time for every file instead.
+Changing the configured time later makes every file appear modified to a sync.`,
 			Default:  fs.Time{},
 			Advanced: true,
 		}, {
@@ -330,7 +336,9 @@ func (f *Fs) httpConnection(ctx context.Context, opt *Options) (isFile bool, err
 // the host specified in the config file.
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
-	opt := new(Options)
+	opt := &Options{
+		NoHeadSize: fs.SizeSuffix(-1),
+	}
 	err := configstruct.Set(m, opt)
 	if err != nil {
 		return nil, err
@@ -706,10 +714,7 @@ func (o *Object) url() string {
 // head sends a HEAD request to update info fields in the Object
 func (o *Object) head(ctx context.Context) error {
 	if o.fs.opt.NoHead {
-		o.size = -1
-		if o.fs.opt.NoHeadSize > 0 {
-			o.size = int64(o.fs.opt.NoHeadSize)
-		}
+		o.size = int64(o.fs.opt.NoHeadSize)
 		o.modTime = timeUnset
 		if o.fs.opt.NoHeadTime.IsSet() {
 			o.modTime = time.Time(o.fs.opt.NoHeadTime)
