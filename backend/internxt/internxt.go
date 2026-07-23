@@ -367,6 +367,25 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.bridgeUser = userInfo.BridgeUser
 	f.userID = userInfo.UserID
 
+	// The refresh endpoint rotates the token on every successful call.
+	// Persist the rotated token so routine use keeps the stored token
+	// current; otherwise it keeps its original expiry and accounts that
+	// cannot re-login non-interactively (2FA) eventually strand.
+	if userInfo.NewToken != "" {
+		if rotated, rotErr := jwtToOAuth2Token(userInfo.NewToken); rotErr != nil {
+			fs.Debugf(f, "Not adopting rotated token from user info: %v", rotErr)
+		} else {
+			// Use the rotated token for this session even if saving it
+			// fails; persistence is best-effort.
+			f.cfg.Token = userInfo.NewToken
+			if putErr := oauthutil.PutToken(name, m, rotated, false); putErr != nil {
+				fs.Debugf(f, "Failed to save rotated token from user info: %v", putErr)
+			} else {
+				fs.Debugf(f, "Persisted rotated token from user info, expiry: %v", rotated.Expiry)
+			}
+		}
+	}
+
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
 	}).Fill(ctx, f)
