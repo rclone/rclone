@@ -14,6 +14,7 @@ import (
 	internxtauth "github.com/internxt/rclone-adapter/auth"
 	internxtconfig "github.com/internxt/rclone-adapter/config"
 	sdkerrors "github.com/internxt/rclone-adapter/errors"
+	"github.com/pquerna/otp/totp"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
@@ -156,6 +157,14 @@ func (f *Fs) reLogin(ctx context.Context) (*internxtauth.AccessResponse, error) 
 		return nil, fmt.Errorf("couldn't decrypt password: %w", err)
 	}
 
+	twoFASecret := ""
+	if f.opt.OtpSecretKey != "" {
+		twoFASecret, err = obscure.Reveal(f.opt.OtpSecretKey)
+		if err != nil {
+			return nil, fmt.Errorf("invalid OTP secret key: %w", err)
+		}
+	}
+
 	cfg := internxtconfig.NewDefaultToken("")
 	cfg.HTTPClient = fshttp.NewClient(ctx)
 
@@ -164,11 +173,17 @@ func (f *Fs) reLogin(ctx context.Context) (*internxtauth.AccessResponse, error) 
 		return nil, fmt.Errorf("re-login check failed: %w", err)
 	}
 
-	if loginResp.TFA {
+	if loginResp.TFA && twoFASecret == "" {
 		return nil, errors.New("account requires 2FA - please run: rclone config reconnect " + f.name + ":")
 	}
 
-	resp, err := internxtauth.DoLogin(ctx, cfg, f.opt.Email, password, "")
+	otpCode := ""
+	if loginResp.TFA && twoFASecret != "" {
+		tfa, _ := totp.GenerateCode(twoFASecret, time.Now())
+		otpCode = tfa
+	}
+
+	resp, err := internxtauth.DoLogin(ctx, cfg, f.opt.Email, password, otpCode)
 	if err != nil {
 		return nil, fmt.Errorf("re-login failed: %w", err)
 	}
@@ -238,9 +253,29 @@ func (f *Fs) reAuthorize(ctx context.Context) error {
 
 	err := f.refreshOrReLogin(ctx)
 	if err != nil {
-		f.authFailed = true
+		// Only latch the circuit breaker on genuine, non-recoverable auth
+		// failures. Transient errors (network blips, timeouts, 429, 5xx,
+		// context cancellation) must not permanently disable the remote -
+		// otherwise a single hiccup forces the user to reconfigure even
+		// though the credentials and 2FA secret are still valid.
+		if !isTemporaryErr(err) {
+			f.authFailed = true
+		}
 		return err
 	}
 
 	return nil
+}
+
+// isTemporaryErr reports whether err is a transient failure that may
+// succeed if retried, as opposed to a genuine authentication failure.
+func isTemporaryErr(err error) bool {
+	if fserrors.ShouldRetry(err) {
+		return true
+	}
+	var httpErr *sdkerrors.HTTPError
+	if errors.As(err, &httpErr) {
+		return httpErr.Temporary()
+	}
+	return false
 }
