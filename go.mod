@@ -261,7 +261,7 @@ require (
 	golang.org/x/image v0.44.0 // indirect
 	golang.org/x/tools v0.48.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260715232425-e75dac1f907d // indirect
-	google.golang.org/grpc v1.80.0 // indirect - v1.81.0 and later fail to compile on plan9 - don't upgrade until fixed upstream
+	google.golang.org/grpc v1.80.0 // indirect; indirect - v1.81.0 and later fail to compile on plan9 - don't upgrade until fixed upstream
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/ini.v1 v1.67.3 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
