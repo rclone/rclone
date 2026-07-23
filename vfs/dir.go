@@ -1174,6 +1174,26 @@ func (d *Dir) RemoveName(name string) error {
 	return node.Remove()
 }
 
+// nodeKind classifies a Node as a regular file, a symlink or a directory
+type nodeKind byte
+
+const (
+	nodeKindFile    nodeKind = iota // regular file
+	nodeKindSymlink                 // symbolic link
+	nodeKindDir                     // directory
+)
+
+// kindOf returns the nodeKind of n
+func kindOf(n Node) nodeKind {
+	if n.IsDir() {
+		return nodeKindDir
+	}
+	if f, ok := n.(*File); ok && f.IsSymlink() {
+		return nodeKindSymlink
+	}
+	return nodeKindFile
+}
+
 // Rename the file
 func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 	// fs.Debugf(d, "BEFORE\n%s", d.dump())
@@ -1186,6 +1206,21 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 	oldNode, err := d.stat(oldName)
 	if err != nil {
 		fs.Errorf(oldPath, "Dir.Rename error: %v", err)
+		return err
+	}
+	// Reject a cross-kind file/symlink collision that would duplicate on the remote, see #8245
+	newNode, err := destDir.stat(newName)
+	switch err {
+	case ENOENT:
+		// not found, carry on
+	case nil:
+		// found so check what it is
+		if kindOf(newNode) != kindOf(oldNode) {
+			return EEXIST
+		}
+	default:
+		// a different error - report
+		fs.Errorf(newPath, "Dir.Rename stat failed: %v", err)
 		return err
 	}
 	switch x := oldNode.DirEntry().(type) {
