@@ -20,6 +20,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/rclone/rclone/backend/huaweidrive/api"
 	"github.com/rclone/rclone/fs"
@@ -159,41 +160,16 @@ Custom metadata keys can be any string and will be stored in the file's properti
 			Help:     "Cutoff for switching to resumable upload.\n\nAny files larger than this will be uploaded using resumable upload.\nThe minimum is 0 and the maximum is 20 MiB (Huawei Drive API limit for single request uploads).",
 			Default:  20 * fs.Mebi,
 			Advanced: true,
-		}, {
-			Name:     config.ConfigEncoding,
-			Help:     config.ConfigEncodingHelp,
-			Advanced: true,
-			// Huawei Drive has strict filename restrictions
-			// API error: "The fileName can not be blank and can not contain '<>|:\"*?/\\', cannot equal .. or . and not exceed max limit."
-			// Additionally encode slash and some Unicode characters that might cause issues
-			Default: (encoder.Display |
-				encoder.EncodeBackSlash |
-				encoder.EncodeSlash |
-				encoder.EncodeInvalidUtf8 |
-				encoder.EncodeRightSpace |
-				encoder.EncodeLeftSpace |
-				encoder.EncodeLeftTilde |
-				encoder.EncodeRightPeriod |
-				encoder.EncodeLeftPeriod |
-				encoder.EncodeColon |
-				encoder.EncodePipe |
-				encoder.EncodeDoubleQuote |
-				encoder.EncodeLtGt |
-				encoder.EncodeQuestion |
-				encoder.EncodeAsterisk |
-				encoder.EncodeCtl |
-				encoder.EncodeDot),
 		}}...),
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	RootFolderID string               `config:"root_folder_id"`
-	ChunkSize    fs.SizeSuffix        `config:"chunk_size"`
-	ListChunk    int                  `config:"list_chunk"`
-	UploadCutoff fs.SizeSuffix        `config:"upload_cutoff"`
-	Enc          encoder.MultiEncoder `config:"encoding"`
+	RootFolderID string        `config:"root_folder_id"`
+	ChunkSize    fs.SizeSuffix `config:"chunk_size"`
+	ListChunk    int           `config:"list_chunk"`
+	UploadCutoff fs.SizeSuffix `config:"upload_cutoff"`
 }
 
 // itemMeta stores cached metadata for an item, used to resolve old paths
@@ -202,6 +178,147 @@ type itemMeta struct {
 	parentID string // ID of the parent directory
 	name     string // leaf name of the item
 	isDir    bool   // whether this is a directory
+}
+
+// hwEncodeFilename encodes a Standard-encoded rclone filename into a safe form
+// for the Huawei Drive API.
+//
+// The Huawei Drive API rejects filenames containing '<', '>', '|', ':', '"',
+// '*', '?', '/', '\', as well as the whole-name values "." and "..". Some API
+// deployments also apply NFKC normalization before validation, which converts
+// fullwidth Unicode substitutes (e.g., ．→ .) back to their ASCII originals,
+// defeating any fullwidth-character encoding scheme.
+//
+// To remain stable under NFKC normalization, we use percent-encoding (%XX).
+// The '%' character is not on the API blacklist and is plain ASCII, so %XX
+// sequences are preserved verbatim by NFKC.
+func hwEncodeFilename(stdName string) string {
+	// Decode Standard encoding (e.g., ／→/, ．→ .) to get the raw filename.
+	raw := encoder.Standard.Decode(stdName)
+	return hwEncodeRaw(raw)
+}
+
+// hwEncodeRaw applies Huawei-safe percent-encoding to a raw (unencoded) filename.
+func hwEncodeRaw(raw string) string {
+	if raw == "" {
+		return ""
+	}
+	// Whole-name dot forms that the API rejects outright.
+	if raw == "." {
+		return "%2E"
+	}
+	if raw == ".." {
+		return "%2E%2E"
+	}
+
+	var out strings.Builder
+	out.Grow(len(raw))
+	input := raw
+	first := true
+	for len(input) > 0 {
+		r, size := utf8.DecodeRuneInString(input)
+		isLast := len(input) == size
+
+		if r == utf8.RuneError && size == 1 {
+			// Invalid UTF-8 byte: percent-encode it.
+			fmt.Fprintf(&out, "%%%02X", input[0])
+			input = input[1:]
+			first = false
+			continue
+		}
+
+		// Characters always rejected by the Huawei Drive API.
+		switch r {
+		case '<', '>', '|', ':', '"', '*', '?', '/', '\\':
+			fmt.Fprintf(&out, "%%%02X", r)
+			input = input[size:]
+			first = false
+			continue
+		case '%':
+			// Escape our own escape character to keep encoding invertible.
+			out.WriteString("%25")
+			input = input[size:]
+			first = false
+			continue
+		}
+
+		// Control characters (U+0000–U+001F) and DEL (U+007F).
+		if r <= 0x1F || r == 0x7F {
+			fmt.Fprintf(&out, "%%%02X", r)
+			input = input[size:]
+			first = false
+			continue
+		}
+
+		// Leading characters that the API rejects.
+		if first {
+			switch r {
+			case ' ':
+				out.WriteString("%20")
+				input = input[size:]
+				first = false
+				continue
+			case '.':
+				out.WriteString("%2E")
+				input = input[size:]
+				first = false
+				continue
+			case '~':
+				out.WriteString("%7E")
+				input = input[size:]
+				first = false
+				continue
+			}
+		}
+
+		// Trailing characters that the API rejects.
+		if isLast {
+			switch r {
+			case ' ':
+				out.WriteString("%20")
+				input = input[size:]
+				continue
+			case '.':
+				out.WriteString("%2E")
+				input = input[size:]
+				continue
+			}
+		}
+
+		// All other characters (including non-ASCII Unicode) pass through.
+		out.WriteString(input[:size])
+		input = input[size:]
+		first = false
+	}
+	return out.String()
+}
+
+// hwDecodeFilename converts a Huawei Drive API filename back to Standard
+// rclone encoding.
+func hwDecodeFilename(apiName string) string {
+	raw := hwDecodeRaw(apiName)
+	return encoder.Standard.Encode(raw)
+}
+
+// hwDecodeRaw undoes percent-encoding applied by hwEncodeRaw.
+func hwDecodeRaw(s string) string {
+	if !strings.Contains(s, "%") {
+		return s
+	}
+	var out strings.Builder
+	out.Grow(len(s))
+	for i := 0; i < len(s); {
+		if s[i] == '%' && i+2 < len(s) {
+			if b, err := strconv.ParseUint(s[i+1:i+3], 16, 8); err == nil {
+				out.WriteByte(byte(b))
+				i += 3
+				continue
+			}
+		}
+		out.WriteByte(s[i])
+		i++
+	}
+	return out.String()
 }
 
 // Fs represents a remote Huawei Drive
@@ -507,7 +624,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
 	// Encode the leaf name to match the stored (encoded) name in the API
-	encodedLeaf := f.opt.Enc.FromStandardName(leaf)
+	encodedLeaf := hwEncodeFilename(leaf)
 	// Find the leaf in pathID
 	found, err = f.listAll(ctx, pathID, func(item *api.File) bool {
 		if item.FileName == encodedLeaf && item.IsDir() {
@@ -522,7 +639,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
 	// Encode the directory name
-	encodedLeaf := f.opt.Enc.FromStandardName(leaf)
+	encodedLeaf := hwEncodeFilename(leaf)
 	if encodedLeaf == "" {
 		return "", fmt.Errorf("invalid directory name: cannot be empty")
 	}
@@ -755,7 +872,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 	var iErr error
 	_, err = f.listAll(ctx, directoryID, func(info *api.File) bool {
-		remote := path.Join(dir, f.opt.Enc.ToStandardName(info.FileName))
+		remote := path.Join(dir, hwDecodeFilename(info.FileName))
 		if info.IsDir() {
 			// cache the directory ID for later lookups
 			f.dirCache.Put(remote, info.ID)
@@ -1016,7 +1133,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	copyReq := api.CopyFileRequest{
-		FileName: f.opt.Enc.FromStandardName(leaf),
+		FileName: hwEncodeFilename(leaf),
 	}
 
 	// Set parent folder for the copy destination
@@ -1142,7 +1259,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	// Set filename if we need to rename
 	if needsRename {
-		moveReq.FileName = f.opt.Enc.FromStandardName(dstLeaf)
+		moveReq.FileName = hwEncodeFilename(dstLeaf)
 	}
 
 	var info *api.File
@@ -1232,7 +1349,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	fs.Debugf(f, "DirMove: srcID=%q srcDirectoryID=%q srcLeaf=%q dstDirectoryID=%q dstLeaf=%q", srcID, srcDirectoryID, srcLeaf, dstDirectoryID, dstLeaf)
 
 	moveReq := api.UpdateFileRequest{
-		FileName: f.opt.Enc.FromStandardName(dstLeaf),
+		FileName: hwEncodeFilename(dstLeaf),
 	}
 
 	var info *api.File
@@ -1324,7 +1441,7 @@ func (f *Fs) listRRecursive(ctx context.Context, dir string, directoryID string,
 
 	// List current directory
 	_, err := f.listAll(ctx, directoryID, func(info *api.File) bool {
-		remote := path.Join(dir, f.opt.Enc.ToStandardName(info.FileName))
+		remote := path.Join(dir, hwDecodeFilename(info.FileName))
 
 		if info.IsDir() {
 			// It's a directory
@@ -1485,7 +1602,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Fi
 
 	found, err := f.listAll(ctx, directoryID, func(item *api.File) bool {
 		// Convert the API filename to standard name for comparison
-		standardName := f.opt.Enc.ToStandardName(item.FileName)
+		standardName := hwDecodeFilename(item.FileName)
 		if standardName == leaf && !item.IsDir() {
 			info = item
 			return true
@@ -1571,7 +1688,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
-	leaf = o.fs.opt.Enc.FromStandardName(leaf)
+	leaf = hwEncodeFilename(leaf)
 
 	// Handle unknown size by spooling to a temp file to determine size
 	if size < 0 {
@@ -2310,7 +2427,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 					entryType = fs.EntryDirectory
 				}
 				if parentPath, ok := f.dirCache.GetInv(cached.parentID); ok {
-					oldPath := path.Join(parentPath, f.opt.Enc.ToStandardName(cached.name))
+					oldPath := path.Join(parentPath, hwDecodeFilename(cached.name))
 					pathsToClear = append(pathsToClear, entryInfo{path: oldPath, entryType: entryType})
 				}
 				// Remove stale entry; future List calls will repopulate
@@ -2324,7 +2441,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 				if change.File.IsDir() {
 					entryType = fs.EntryDirectory
 				}
-				fileName := f.opt.Enc.ToStandardName(change.File.FileName)
+				fileName := hwDecodeFilename(change.File.FileName)
 				if len(change.File.ParentFolder) > 0 {
 					for _, parent := range change.File.ParentFolder {
 						if parentPath, ok := f.dirCache.GetInv(parent); ok {

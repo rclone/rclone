@@ -16,7 +16,6 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fstest/fstests"
-	"github.com/rclone/rclone/lib/encoder"
 )
 
 // TestIntegration runs integration tests against the remote
@@ -120,93 +119,50 @@ func TestTimeFormats(t *testing.T) {
 
 // TestEncoding tests filename encoding for Huawei Drive restrictions
 func TestEncoding(t *testing.T) {
-	// Create encoder with Huawei Drive restrictions
-	enc := encoder.MultiEncoder( //nolint:unconvert
-		encoder.Display |
-			encoder.EncodeBackSlash |
-			encoder.EncodeSlash |
-			encoder.EncodeInvalidUtf8 |
-			encoder.EncodeRightSpace |
-			encoder.EncodeLeftSpace |
-			encoder.EncodeLeftTilde |
-			encoder.EncodeRightPeriod |
-			encoder.EncodeLeftPeriod |
-			encoder.EncodeColon |
-			encoder.EncodePipe |
-			encoder.EncodeDoubleQuote |
-			encoder.EncodeLtGt |
-			encoder.EncodeQuestion |
-			encoder.EncodeAsterisk |
-			encoder.EncodeCtl |
-			encoder.EncodeDot)
-
-	// Test cases for problematic characters that should be encoded
+	// Test cases: raw filename → expected percent-encoded API filename
 	testCases := []struct {
 		name     string
 		input    string
 		expected string
 	}{
-		{"angle_brackets", "file<>name", "file＜＞name"},
-		{"quotes", "file\"name", "file＂name"},
-		{"pipe", "file|name", "file｜name"},
-		{"colon", "file:name", "file：name"},
-		{"asterisk", "file*name", "file＊name"},
-		{"question", "file?name", "file？name"},
-		{"backslash", "file\\name", "file＼name"},
-		{"forward_slash", "file/name", "file／name"},
-		{"leading_space", " filename", "␠filename"},
-		{"trailing_space", "filename ", "filename␠"},
-		{"leading_dot", ".filename", "．filename"},
-		{"control_chars", "file\tname\ntest", "file␉name␊test"},
+		{"angle_brackets", "file<>name", "file%3C%3Ename"},
+		{"quotes", "file\"name", "file%22name"},
+		{"pipe", "file|name", "file%7Cname"},
+		{"colon", "file:name", "file%3Aname"},
+		{"asterisk", "file*name", "file%2Aname"},
+		{"question", "file?name", "file%3Fname"},
+		{"backslash", "file\\name", "file%5Cname"},
+		{"forward_slash", "file/name", "file%2Fname"},
+		{"leading_space", " filename", "%20filename"},
+		{"trailing_space", "filename ", "filename%20"},
+		{"leading_dot", ".filename", "%2Efilename"},
+		{"control_chars", "file\tname\ntest", "file%09name%0Atest"},
+		{"percent_escape", "file%2Fname", "file%252Fname"},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			encoded := enc.FromStandardName(tc.input)
+			encoded := hwEncodeRaw(tc.input)
 			if encoded != tc.expected {
 				t.Errorf("encoding %q: expected %q, got %q", tc.input, tc.expected, encoded)
 			}
 
-			// Test decoding back - only for reversible encodings
-			// Some characters like forward slash and control chars are one-way encoded
-			decoded := enc.ToStandardName(encoded)
-			if tc.name != "forward_slash" && tc.name != "control_chars" {
-				if decoded != tc.input {
-					t.Errorf("decoding %q: expected %q, got %q", encoded, tc.input, decoded)
-				}
+			// Every encoding must round-trip correctly
+			decoded := hwDecodeRaw(encoded)
+			if decoded != tc.input {
+				t.Errorf("decoding %q: expected %q, got %q", encoded, tc.input, decoded)
 			}
 		})
 	}
 }
 
-// TestFileNameEncoding tests that problematic characters are properly encoded
+// TestFileNameEncoding tests that the hwEncodeFilename/hwDecodeFilename functions
+// correctly handle Huawei Drive API filename restrictions.
 func TestFileNameEncoding(t *testing.T) {
-	// Create a mock Fs with default encoding options
-	opts := Options{}
-	// Set the default encoding from our config
-	opts.Enc = (encoder.Display |
-		encoder.EncodeBackSlash |
-		encoder.EncodeInvalidUtf8 |
-		encoder.EncodeRightSpace |
-		encoder.EncodeLeftSpace |
-		encoder.EncodeLeftTilde |
-		encoder.EncodeRightPeriod |
-		encoder.EncodeLeftPeriod |
-		encoder.EncodeColon |
-		encoder.EncodePipe |
-		encoder.EncodeDoubleQuote |
-		encoder.EncodeLtGt |
-		encoder.EncodeQuestion |
-		encoder.EncodeAsterisk |
-		encoder.EncodeCtl |
-		encoder.EncodeDot)
-
-	f := &Fs{opt: opts}
-
-	// Test problematic characters that Huawei Drive rejects
+	// Test cases: raw filename → expected encoded API filename → decoded back to raw
 	testCases := []struct {
-		input string
-		desc  string
+		rawInput string
+		desc     string
 	}{
 		{`file<name>.txt`, "angle brackets"},
 		{`file|name.txt`, "pipe character"},
@@ -215,28 +171,41 @@ func TestFileNameEncoding(t *testing.T) {
 		{`file*name.txt`, "asterisk"},
 		{`file?name.txt`, "question mark"},
 		{`file\name.txt`, "backslash"},
-		{` leading_space.txt`, "leading space"},
-		{`trailing_space.txt `, "trailing space"},
-		{`.leading_dot.txt`, "leading dot"},
-		{`trailing_dot.txt.`, "trailing dot"},
-		{`~leading_tilde.txt`, "leading tilde"},
-		{"file\x00name.txt", "control character"},
+		{` leading space.txt`, "leading space"},
+		{`trailing space.txt `, "trailing space"},
+		{`.leading dot.txt`, "leading dot"},
+		{`trailing dot.txt.`, "trailing dot"},
+		{`~leading tilde.txt`, "leading tilde"},
+		{"file\x00name.txt", "NUL control character"},
+		{"file\x1fname.txt", "US control character"},
+		{`file%2Fname.txt`, "literal percent-encoded sequence"},
 	}
 
 	for _, tc := range testCases {
-		encoded := f.opt.Enc.FromStandardName(tc.input)
-		// The encoded name should be different from input (meaning it was encoded)
-		if encoded == tc.input {
-			t.Errorf("Expected %s (%q) to be encoded, but got same string", tc.desc, tc.input)
+		// hwEncodeRaw takes a raw filename (not Standard-encoded)
+		encoded := hwEncodeRaw(tc.rawInput)
+		// The encoded name must differ from the raw input for restricted inputs
+		if encoded == tc.rawInput {
+			t.Errorf("%s (%q): expected encoding to change the name, got same string", tc.desc, tc.rawInput)
 		}
 
-		// Test that we can decode it back (skip control characters as they are not reversible)
-		decoded := f.opt.Enc.ToStandardName(encoded)
-		if tc.desc != "control character" && decoded != tc.input {
-			t.Errorf("Round-trip failed for %s: input=%q, encoded=%q, decoded=%q", tc.desc, tc.input, encoded, decoded)
+		// Round-trip: decode must restore the original raw name
+		decoded := hwDecodeRaw(encoded)
+		if decoded != tc.rawInput {
+			t.Errorf("%s: round-trip failed: raw=%q encoded=%q decoded=%q", tc.desc, tc.rawInput, encoded, decoded)
 		}
 
-		t.Logf("✓ %s: %q → %q → %q", tc.desc, tc.input, encoded, decoded)
+		t.Logf("✓ %s: %q → %q → %q", tc.desc, tc.rawInput, encoded, decoded)
+	}
+
+	// Test whole-name special cases
+	for _, whole := range []string{".", ".."} {
+		encoded := hwEncodeRaw(whole)
+		decoded := hwDecodeRaw(encoded)
+		if decoded != whole {
+			t.Errorf("whole-name %q round-trip failed: encoded=%q decoded=%q", whole, encoded, decoded)
+		}
+		t.Logf("✓ whole-name %q: → %q → %q", whole, encoded, decoded)
 	}
 }
 
@@ -781,48 +750,10 @@ func TestRetryErrorCodes(t *testing.T) {
 	}
 }
 
-// TestEncodingConfiguration tests the encoding configuration matches requirements
+// TestEncodingConfiguration tests that hwEncodeRaw handles all Huawei Drive
+// restricted characters with percent-encoding, which is stable under NFKC
+// normalization unlike the previous fullwidth-character scheme.
 func TestEncodingConfiguration(t *testing.T) {
-	// This should match the default encoding set in the config
-	expectedEncoding := (encoder.Display |
-		encoder.EncodeBackSlash |
-		encoder.EncodeSlash |
-		encoder.EncodeInvalidUtf8 |
-		encoder.EncodeRightSpace |
-		encoder.EncodeLeftSpace |
-		encoder.EncodeLeftTilde |
-		encoder.EncodeRightPeriod |
-		encoder.EncodeLeftPeriod |
-		encoder.EncodeColon |
-		encoder.EncodePipe |
-		encoder.EncodeDoubleQuote |
-		encoder.EncodeLtGt |
-		encoder.EncodeQuestion |
-		encoder.EncodeAsterisk |
-		encoder.EncodeCtl |
-		encoder.EncodeDot)
-
-	// Test that all required encodings are present
-	requiredEncodings := []encoder.MultiEncoder{
-		encoder.EncodeBackSlash,   // \
-		encoder.EncodeSlash,       // /
-		encoder.EncodeColon,       // :
-		encoder.EncodePipe,        // |
-		encoder.EncodeDoubleQuote, // "
-		encoder.EncodeLtGt,        // < >
-		encoder.EncodeQuestion,    // ?
-		encoder.EncodeAsterisk,    // *
-		encoder.EncodeCtl,         // Control characters
-	}
-
-	for _, required := range requiredEncodings {
-		if (expectedEncoding & required) == 0 {
-			t.Errorf("encoding configuration missing required encoding: %v", required)
-		}
-	}
-
-	// Test that the encoding handles Huawei Drive restricted characters
-	enc := expectedEncoding
 	restrictedChars := []struct {
 		char string
 		desc string
@@ -840,9 +771,14 @@ func TestEncodingConfiguration(t *testing.T) {
 
 	for _, rc := range restrictedChars {
 		testName := "test" + rc.char + "file.txt"
-		encoded := enc.FromStandardName(testName)
+		encoded := hwEncodeRaw(testName)
 		if encoded == testName {
 			t.Errorf("character %s (%s) was not encoded", rc.char, rc.desc)
+		}
+		// Must round-trip correctly
+		decoded := hwDecodeRaw(encoded)
+		if decoded != testName {
+			t.Errorf("character %s (%s): round-trip failed: got %q", rc.char, rc.desc, decoded)
 		}
 	}
 }
