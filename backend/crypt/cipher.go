@@ -486,7 +486,15 @@ func (c *Cipher) deobfuscateSegment(ciphertext string) (string, error) {
 }
 
 // encryptFileName encrypts a file path
-func (c *Cipher) encryptFileName(in string) string {
+//
+// If stripVersion is set then a version string (as used by
+// --b2-versions) on the last segment is stripped before encryption
+// and added back in plain text afterwards. Version strings are added
+// by the underlying backend to encrypted file leaf names, so this
+// should only be set when encrypting file names, never directory
+// names, otherwise the encryption of a directory name won't match its
+// encryption as the parent of a file name.
+func (c *Cipher) encryptFileName(in string, stripVersion bool) string {
 	segments := strings.Split(in, "/")
 	for i := range segments {
 		// Skip directory name encryption if the user chose to
@@ -499,7 +507,7 @@ func (c *Cipher) encryptFileName(in string) string {
 		// of the file name gets encrypted/obfuscated
 		hasVersion := false
 		var t time.Time
-		if i == (len(segments)-1) && version.Match(segments[i]) {
+		if stripVersion && i == (len(segments)-1) && version.Match(segments[i]) {
 			var s string
 			t, s = version.Remove(segments[i])
 			// version.Remove can fail, in which case it returns segments[i]
@@ -529,7 +537,7 @@ func (c *Cipher) EncryptFileName(in string) string {
 	if c.mode == NameEncryptionOff {
 		return in + c.encryptedSuffix
 	}
-	return c.encryptFileName(in)
+	return c.encryptFileName(in, true)
 }
 
 // EncryptDirName encrypts a directory path
@@ -537,11 +545,13 @@ func (c *Cipher) EncryptDirName(in string) string {
 	if c.mode == NameEncryptionOff || !c.dirNameEncrypt {
 		return in
 	}
-	return c.encryptFileName(in)
+	return c.encryptFileName(in, false)
 }
 
 // decryptFileName decrypts a file path
-func (c *Cipher) decryptFileName(in string) (string, error) {
+//
+// stripVersion should be set as for encryptFileName.
+func (c *Cipher) decryptFileName(in string, stripVersion bool) (string, error) {
 	segments := strings.Split(in, "/")
 	for i := range segments {
 		var err error
@@ -555,7 +565,7 @@ func (c *Cipher) decryptFileName(in string) (string, error) {
 		// of the file name gets decrypted/deobfuscated
 		hasVersion := false
 		var t time.Time
-		if i == (len(segments)-1) && version.Match(segments[i]) {
+		if stripVersion && i == (len(segments)-1) && version.Match(segments[i]) {
 			var s string
 			t, s = version.Remove(segments[i])
 			// version.Remove can fail, in which case it returns segments[i]
@@ -601,7 +611,7 @@ func (c *Cipher) DecryptFileName(in string) (string, error) {
 		// Leave the version string on, if it was there
 		return decrypted, nil
 	}
-	return c.decryptFileName(in)
+	return c.decryptFileName(in, true)
 }
 
 // DecryptDirName decrypts a directory path
@@ -609,7 +619,7 @@ func (c *Cipher) DecryptDirName(in string) (string, error) {
 	if c.mode == NameEncryptionOff || !c.dirNameEncrypt {
 		return in, nil
 	}
-	return c.decryptFileName(in)
+	return c.decryptFileName(in, false)
 }
 
 // NameEncryptionMode returns the encryption mode in use for names
