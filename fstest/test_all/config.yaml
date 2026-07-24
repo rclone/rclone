@@ -29,6 +29,28 @@ backends:
      # It isn't possible to turn off versions, and setting hard_delete doesn't stop
      # versions being made on overwrite.
      - TestRmdirsNoLeaveRoot
+ - backend: "bunny"
+   remote: "TestBunny:"
+   fastlist: false
+   ignore:
+     # Move operations are not supported by the bunny.net API as documented
+     - TestDirMove
+     # bunny.net only supports hash-based file checks as documented
+     - TestFileSetModTime
+     # Bunny returns 200 [] for both nonexistent and empty directories -
+     # the two cases are indistinguishable at the API level.
+     # The following tests cannot cope with this quirk:
+     # They call operations.Mkdir (NOOP) and rely on a change, which never happens
+     - TestIntegration/FsMkdir
+     - TestIntegration/FsRmdirNotFound
+     - TestRmdirsNoLeaveRoot
+     - TestDirMkdir
+     - TestDirMkdirSub
+     - TestTransformFile
+     - TestManualTransformFile
+     - TestSyncIgnoreErrors
+     - TestSyncAfterRemovingAFileAndAddingAFileSubDir
+     - TestSyncAfterRemovingAFileAndAddingAFileSubDirWithErrors
  - backend:  "crypt"
    remote:   "TestCryptDrive:"
    fastlist: true
