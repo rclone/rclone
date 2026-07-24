@@ -19,7 +19,11 @@ pip install yt-dlp
 
 ## Configuration
 
-The YouTube backend can be configured with minimal setup:
+The YouTube backend supports two configuration modes:
+
+### Single URL Mode (Default)
+
+The simplest setup requires no additional configuration. Rclone automatically discovers subscribed channels and playlists:
 
 ```
 No remotes found, make a new one?
@@ -32,12 +36,73 @@ Type of storage to configure.
 Storage> ytfs
 ```
 
+### Manifest File Mode
+
+For custom channel and playlist organization, use a JSON manifest file:
+
+```
+name> youtube_custom
+
+Type of storage to configure.
+Storage> ytfs
+
+manifest_file> /path/to/manifest.json
+```
+
 ### Options
 
-Currently the YouTube backend requires no additional configuration. It automatically discovers and lists subscribed channels and playlists for the authenticated user.
+- **manifest_file** (string): Path to a JSON manifest file defining channels and playlists. When set, this takes precedence over automatic discovery. Optional.
 
-**Future options (not yet implemented):**
-- OAuth authentication for accessing private videos and subscriptions
+### Manifest JSON Format
+
+Create a `manifest.json` file with the following structure:
+
+```json
+{
+  "channels": [
+    {
+      "id": "UCddiUEpMJcEKBB68VHQnAow",
+      "name": "My Channel"
+    }
+  ],
+  "playlists": [
+    {
+      "id": "PLrAXtmErZgOeiKm4sgNOknGvNjby9efdf",
+      "name": "My Playlist"
+    }
+  ]
+}
+```
+
+### Example rclone config with manifest
+
+```ini
+[youtube]
+type = ytfs
+manifest_file = /home/user/.config/rclone/yt_manifest.json
+```
+
+### Usage Examples
+
+List channels from manifest:
+```
+rclone lsd youtube_custom:channels/
+```
+
+List videos in a channel:
+```
+rclone lsd "youtube_custom:channels/My Channel/"
+```
+
+List playlists:
+```
+rclone lsd youtube_custom:playlists/
+```
+
+Stream a video:
+```
+rclone cat "youtube_custom:channels/My Channel/Video Title — {VideoID}"
+```
 
 ## Filesystem layout
 
@@ -65,6 +130,26 @@ The YouTube backend organizes content hierarchically:
 - **videos/**: Video files within each channel (accessible as directory entries)
 
 Each video is accessed as a virtual file via `yt-dlp` and streamed on-demand.
+
+## Reference
+
+### Manifest JSON Schema
+
+The manifest file uses a JSON structure to define custom channels and playlists. Both sections are optional.
+
+**Root properties:**
+- **channels** (array, optional): List of YouTube channels to expose
+- **playlists** (array, optional): List of YouTube playlists to expose
+
+**Channel object:**
+- **id** (string, required): YouTube channel ID (e.g., `UCddiUEpMJcEKBB68VHQnAow`)
+- **name** (string, required): Display name for the channel in the filesystem
+
+**Playlist object:**
+- **id** (string, required): YouTube playlist ID (e.g., `PLrAXtmErZgOeiKm4sgNOknGvNjby9efdf`)
+- **name** (string, required): Display name for the playlist in the filesystem
+
+**Configuration note:** If both `url` and `manifest_file` are configured, `manifest_file` takes precedence. The manifest approach is recommended for reproducible configurations or when you need fine-grained control over exposed content.
 
 ## Limitations
 

@@ -3,8 +3,10 @@ package ytfs
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"strings"
 	"time"
@@ -21,6 +23,24 @@ const (
 	minSleep = 10 * time.Millisecond
 )
 
+// ChannelEntry describes a channel in the manifest
+type ChannelEntry struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+// PlaylistEntry describes a playlist in the manifest
+type PlaylistEntry struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+// YouTubeManifest describes the structure of a JSON manifest file
+type YouTubeManifest struct {
+	Channels  []ChannelEntry  `json:"channels"`
+	Playlists []PlaylistEntry `json:"playlists"`
+}
+
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "ytfs",
@@ -35,14 +55,19 @@ func init() {
 			Name:    "use_oauth",
 			Help:    "Use OAuth2 for YouTube API access (if available; defaults to yt-dlp with cookies).",
 			Default: false,
+		}, {
+			Name:    "manifest_file",
+			Help:    "Path to JSON manifest file defining channels and playlists.",
+			Default: "",
 		}},
 	})
 }
 
 // Options for the ytfs backend
 type Options struct {
-	URL      string `config:"url"`
-	UseOAuth bool   `config:"use_oauth"`
+	URL          string `config:"url"`
+	UseOAuth     bool   `config:"use_oauth"`
+	ManifestFile string `config:"manifest_file"`
 }
 
 // Fs represents a read-only YouTube filesystem
@@ -53,6 +78,28 @@ type Fs struct {
 	features *fs.Features
 	pacer    *fs.Pacer
 	client   *api.Client
+	manifest *YouTubeManifest
+}
+
+// LoadManifest loads and parses a JSON manifest file
+func (f *Fs) LoadManifest() error {
+	if f.opt.ManifestFile == "" {
+		return nil
+	}
+
+	data, err := os.ReadFile(f.opt.ManifestFile)
+	if err != nil {
+		return fmt.Errorf("failed to read manifest file: %w", err)
+	}
+
+	manifest := &YouTubeManifest{}
+	err = json.Unmarshal(data, manifest)
+	if err != nil {
+		return fmt.Errorf("failed to parse manifest JSON: %w", err)
+	}
+
+	f.manifest = manifest
+	return nil
 }
 
 // NewFs constructs a new ytfs filesystem
@@ -71,6 +118,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		opt:    opt,
 		client: client,
 		pacer:  fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep))),
+	}
+
+	err = f.LoadManifest()
+	if err != nil {
+		return nil, err
 	}
 
 	f.features = (&fs.Features{
@@ -151,11 +203,20 @@ func (f *Fs) dirTime() time.Time {
 	return time.Now()
 }
 
-// listChannels returns subscribed channels (stub — not yet implemented)
-// Full channel enumeration requires YouTube API authentication or advanced yt-dlp configuration.
-// MVP implementation returns empty list; future versions will fetch from YouTube API or yt-dlp.
+// listChannels returns subscribed channels from the loaded manifest
 func (f *Fs) listChannels(ctx context.Context, prefix string) (fs.DirEntries, error) {
-	return nil, nil
+	if f.manifest == nil || len(f.manifest.Channels) == 0 {
+		return nil, nil
+	}
+
+	var entries fs.DirEntries
+	for _, ch := range f.manifest.Channels {
+		// Format: "id — Name" (with en-dash separator)
+		sanitizedName := sanitizeName(ch.Name)
+		dirName := prefix + ch.ID + " — " + sanitizedName
+		entries = append(entries, fs.NewDir(dirName, f.dirTime()))
+	}
+	return entries, nil
 }
 
 // listChannelVideos returns videos in a specific channel
@@ -188,11 +249,20 @@ func (f *Fs) listChannelVideos(ctx context.Context, prefix, channelID string) (f
 	return entries, nil
 }
 
-// listPlaylists returns user playlists (stub — not yet implemented)
-// Full playlist enumeration requires YouTube API authentication or advanced yt-dlp configuration.
-// MVP implementation returns empty list; future versions will fetch from YouTube API or yt-dlp.
+// listPlaylists returns user playlists from the loaded manifest
 func (f *Fs) listPlaylists(ctx context.Context, prefix string) (fs.DirEntries, error) {
-	return nil, nil
+	if f.manifest == nil || len(f.manifest.Playlists) == 0 {
+		return nil, nil
+	}
+
+	var entries fs.DirEntries
+	for _, pl := range f.manifest.Playlists {
+		// Format: "id — Name" (with en-dash separator)
+		sanitizedName := sanitizeName(pl.Name)
+		dirName := prefix + pl.ID + " — " + sanitizedName
+		entries = append(entries, fs.NewDir(dirName, f.dirTime()))
+	}
+	return entries, nil
 }
 
 // listPlaylistVideos returns videos in a specific playlist
@@ -256,12 +326,12 @@ func unsanitizeName(s string) string {
 
 // Object describes a YouTube video object
 type Object struct {
-	fs       *Fs
-	remote   string
-	videoID  string
-	title    string
-	duration int
-	url      string
+	fs         *Fs
+	remote     string
+	videoID    string
+	title      string
+	duration   int
+	url        string
 	uploadDate string
 }
 
