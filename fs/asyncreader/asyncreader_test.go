@@ -309,10 +309,10 @@ func TestAsyncReaderSkipBytes(t *testing.T) {
 	require.Equal(t, len(data), n)
 
 	initialReads := []int{0, 1, 100, 2048,
-		softStartInitial - 1, softStartInitial, softStartInitial + 1,
+		4095, 4096, 4097,
 		8000, len(data)}
 	skips := []int{-1000, -101, -100, -99, 0, 1, 2048,
-		softStartInitial - 1, softStartInitial, softStartInitial + 1,
+		4095, 4096, 4097,
 		8000, len(data), BufferSize, 2 * BufferSize}
 
 	for buffers := 1; buffers <= 5; buffers++ {

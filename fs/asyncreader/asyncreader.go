@@ -15,8 +15,7 @@ import (
 
 const (
 	// BufferSize is the default size of the async buffer
-	BufferSize       = pool.BufferSize
-	softStartInitial = 4 * 1024
+	BufferSize = pool.BufferSize
 )
 
 // ErrorStreamAbandoned is returned when the input is closed before the end of the stream
@@ -35,7 +34,6 @@ type AsyncReader struct {
 	err     error          // If an error has occurred it is here
 	cur     *buffer        // Current buffer being served
 	exited  chan struct{}  // Channel is closed been the async reader shuts down
-	size    int            // size of buffer to use
 	closed  bool           // whether we have closed the underlying stream
 	mu      sync.Mutex     // lock for Read/WriteTo/Abandon/Close
 	ci      *fs.ConfigInfo // for reading config
@@ -71,7 +69,6 @@ func (a *AsyncReader) init(rd io.ReadCloser, buffers int) {
 	a.exited = make(chan struct{})
 	a.buffers = buffers
 	a.cur = nil
-	a.size = softStartInitial
 
 	// Create tokens
 	for range buffers {
@@ -87,10 +84,6 @@ func (a *AsyncReader) init(rd io.ReadCloser, buffers int) {
 			select {
 			case <-a.token:
 				b := a.getBuffer()
-				if a.size < BufferSize {
-					b.buf = b.buf[:a.size]
-					a.size <<= 1
-				}
 				err := b.read(a.in)
 				a.ready <- b
 				if err != nil {
