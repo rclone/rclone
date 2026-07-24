@@ -65,53 +65,21 @@ After it has run it will log the status of the ` + "`encryptedremote:`" + `.
 
 // cryptCheck checks the integrity of an encrypted remote
 func cryptCheck(ctx context.Context, fdst, fsrc fs.Fs) error {
-	// Check to see fcrypt is a crypt
 	fcrypt, ok := fdst.(*crypt.Fs)
 	if !ok {
 		return fmt.Errorf("%s:%s is not a crypt remote", fdst.Name(), fdst.Root())
 	}
-	// Find a hash to use
 	funderlying := fcrypt.UnWrap()
-	hashType := funderlying.Hashes().GetOne()
-	if hashType == hash.None {
+	if funderlying.Hashes().GetOne() == hash.None {
 		return fmt.Errorf("%s:%s does not support any hashes", funderlying.Name(), funderlying.Root())
 	}
-	fs.Infof(nil, "Using %v for hash comparisons", hashType)
 
-	opt, close, err := check.GetCheckOpt(fsrc, fcrypt)
+	opt, close, err := check.GetCheckOpt(fsrc, fdst)
 	if err != nil {
 		return err
 	}
 	defer close()
 
-	// checkIdentical checks to see if dst and src are identical
-	//
-	// it returns true if differences were found
-	// it also returns whether it couldn't be hashed
-	opt.Check = func(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool, err error) {
-		cryptDst := dst.(*crypt.Object)
-		underlyingDst := cryptDst.UnWrap()
-		underlyingHash, err := underlyingDst.Hash(ctx, hashType)
-		if err != nil {
-			return true, false, fmt.Errorf("error reading hash from underlying %v: %w", underlyingDst, err)
-		}
-		if underlyingHash == "" {
-			return false, true, nil
-		}
-		cryptHash, err := fcrypt.ComputeHash(ctx, cryptDst, src, hashType)
-		if err != nil {
-			return true, false, fmt.Errorf("error computing hash: %w", err)
-		}
-		if cryptHash == "" {
-			return false, true, nil
-		}
-		if cryptHash != underlyingHash {
-			err = fmt.Errorf("hashes differ (%s:%s) %q vs (%s:%s) %q", fdst.Name(), fdst.Root(), cryptHash, fsrc.Name(), fsrc.Root(), underlyingHash)
-			fs.Errorf(src, "%s", err.Error())
-			return true, false, nil
-		}
-		return false, false, nil
-	}
-
-	return operations.CheckFn(ctx, opt)
+	_, err = operations.CryptCheck(ctx, opt)
+	return err
 }
