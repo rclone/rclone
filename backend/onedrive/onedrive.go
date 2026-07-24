@@ -393,6 +393,16 @@ In this case you will see a message like this
 If you are 100% sure you want to download this file anyway then use
 the --onedrive-av-override flag, or av_override = true in the config
 file.
+
+When set, malware-flagged files are downloaded via Microsoft Graph
+beta APIs with Prefer: forceInfectedDownload (contentStream, then
+/content). Clean files continue to use the stable v1.0 endpoint.
+
+This is a beta API and may change. It works reliably with application
+permissions (client_credentials). With delegated (user) login on
+OneDrive for Business, Microsoft often still blocks the download.
+tenant_url configurations fall back to the legacy AVOverride query
+parameter.
 `,
 			Advanced: true,
 		}, {
@@ -2406,25 +2416,120 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	}
 
 	fs.FixRangeOption(options, o.size)
-	var resp *http.Response
+	// Only malware-flagged files use Graph beta; clean files stay on stable v1.0.
+	if o.fs.opt.AVOverride && o.fs.opt.TenantURL == "" && o.malwareDetected() {
+		return o.openInfected(ctx, options...)
+	}
 	opts := o.fs.newOptsCall(o.id, "GET", "/content")
 	opts.Options = options
 	if o.fs.opt.AVOverride {
+		// SharePoint v2 (tenant_url) or non-flagged objects: keep legacy query.
 		opts.Parameters = url.Values{"AVOverride": {"1"}}
 	}
+	return o.openWithRedirect(ctx, &opts)
+}
+
+// malwareDetected reports whether metadata says this object is malware-flagged.
+func (o *Object) malwareDetected() bool {
+	return o.meta != nil && o.meta.malwareDetected
+}
+
+// openInfected downloads a malware-flagged file using Graph beta APIs.
+// contentStream applies Prefer for the whole transfer (needs application auth on many tenants);
+// beta /content + Prefer is tried next.
+func (o *Object) openInfected(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	in, err = o.openContentStream(ctx, options...)
+	if err == nil {
+		return in, nil
+	}
+	fs.Debugf(o, "contentStream download failed, trying beta /content: %v", err)
+	in, err2 := o.openContentPrefer(ctx, options...)
+	if err2 == nil {
+		return in, nil
+	}
+	return nil, fmt.Errorf("%w; beta /content also failed: %v (malware download often requires application permissions / client_credentials, or a tenant admin account)", err, err2)
+}
+
+// openContentStream streams the object via Graph beta contentStream.
+func (o *Object) openContentStream(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	var resp *http.Response
+	id, drive, _ := o.fs.parseNormalizedID(o.id)
+	if drive == "" {
+		drive = o.fs.driveID
+	}
+	opts := rest.Opts{
+		Method:  "GET",
+		RootURL: graphAPIEndpoint[o.fs.opt.Region] + "/beta/drives/" + drive,
+		Path:    "/items/" + id + "/contentStream",
+		Options: options,
+		ExtraHeaders: map[string]string{
+			"Prefer": "forceInfectedDownload",
+		},
+	}
+	err = o.fs.pacer.Call(func() (bool, error) {
+		resp, err = o.fs.srv.Call(ctx, &opts)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode == http.StatusOK && resp.ContentLength > 0 && resp.Header.Get("Content-Range") == "" {
+		o.size = resp.ContentLength
+	}
+	return resp.Body, nil
+}
+
+// openContentPrefer downloads via Graph beta /content with Prefer: forceInfectedDownload.
+func (o *Object) openContentPrefer(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	id, drive, _ := o.fs.parseNormalizedID(o.id)
+	if drive == "" {
+		drive = o.fs.driveID
+	}
+	opts := rest.Opts{
+		Method:  "GET",
+		RootURL: graphAPIEndpoint[o.fs.opt.Region] + "/beta/drives/" + drive,
+		Path:    "/items/" + id + "/content",
+		Options: options,
+		ExtraHeaders: map[string]string{
+			"Prefer": "forceInfectedDownload",
+		},
+	}
+	return o.openWithRedirect(ctx, &opts)
+}
+
+// openWithRedirect downloads via /content style endpoints that 302 to a preauthenticated URL.
+func (o *Object) openWithRedirect(ctx context.Context, opts *rest.Opts) (in io.ReadCloser, err error) {
+	var resp *http.Response
 	// Make a note of the redirect target as we need to call it without Auth
 	var redirectReq *http.Request
 	opts.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		if len(via) >= 10 {
 			return errors.New("stopped after 10 redirects")
 		}
-		req.Header.Del("Authorization") // remove Auth header
+		// Preauthenticated download URLs must not carry the Graph Authorization header.
+		req.Header.Del("Authorization")
+		// Keep Prefer on the redirect when forcing infected download; some SharePoint
+		// endpoints honor it only on the final download request.
+		// Do not delete Prefer here: users may set it via --header.
+		if o.fs.opt.AVOverride {
+			if req.Header.Get("Prefer") == "" {
+				req.Header.Set("Prefer", "forceInfectedDownload")
+			}
+			// Append AVOverride without re-encoding tempauth (re-encoding breaks the signature).
+			if !strings.Contains(req.URL.RawQuery, "AVOverride=") {
+				if req.URL.RawQuery == "" {
+					req.URL.RawQuery = "AVOverride=1"
+				} else {
+					req.URL.RawQuery += "&AVOverride=1"
+				}
+			}
+		}
 		redirectReq = req
 		return http.ErrUseLastResponse
 	}
 
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.Call(ctx, &opts)
+		resp, err = o.fs.srv.Call(ctx, opts)
 		if redirectReq != nil {
 			// It is a redirect which we are expecting
 			err = nil
