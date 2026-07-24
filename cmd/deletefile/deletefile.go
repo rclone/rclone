@@ -32,11 +32,16 @@ specified file exists, it will always be removed.`,
 			if fileName == "" {
 				return fmt.Errorf("%s is a directory or doesn't exist: %w", args[0], fs.ErrorObjectNotFound)
 			}
-			fileObj, err := f.NewObject(context.Background(), fileName)
+			ctx := context.Background()
+			fileObj, err := f.NewObject(ctx, fileName)
 			if err != nil {
 				return err
 			}
-			return operations.DeleteFile(context.Background(), fileObj)
+			backupDir, err := operations.BackupDir(ctx, f, "")
+			if err != nil {
+				return err
+			}
+			return operations.DeleteFileWithBackupDir(ctx, fileObj, backupDir)
 		})
 	},
 }
