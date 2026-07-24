@@ -108,6 +108,34 @@ opens your browser to the moment you get back the verification
 code.  This is on `http://127.0.0.1:53682/` and this it may require
 you to unblock it temporarily if you are running a host firewall.
 
+### Headless authentication via device code
+
+When the machine running rclone has no browser available (a server,
+container, or SSH session), rclone offers an OAuth 2.0 device-authorization
+grant ([RFC 8628](https://www.rfc-editor.org/rfc/rfc8628)). This avoids the
+need to install rclone on a second machine just to authenticate.
+
+When prompted with `How should rclone obtain authorization for this remote?`
+choose `device`. rclone will then print something like:
+
+```
+2026/05/06 20:09:14 NOTICE: Requesting device code...
+2026/05/06 20:09:14 NOTICE: To authenticate, visit https://microsoft.com/devicelogin and enter the code: FJK595XD
+2026/05/06 20:09:14 NOTICE: Code expires at Tue, 06 May 2026 20:24:14 UTC
+2026/05/06 20:09:14 NOTICE: Waiting for authorization...
+```
+
+Open the URL on any device with a browser (your phone is fine), enter the
+code, sign in, and approve the requested permissions. rclone is meanwhile
+polling Microsoft and will save the token automatically once you finish.
+
+If you are supplying your own Client ID instead of relying on rclone's
+default, the Azure app registration must have **Allow public client flows**
+enabled under *Authentication → Advanced settings*, and you must leave
+`client_secret` blank when configuring the remote — device flow is a
+public-client flow and Microsoft rejects requests that include a client
+secret.
+
 Once configured you can then use `rclone` like this (replace `remote` with the
 name you gave your remote):
 

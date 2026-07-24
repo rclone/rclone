@@ -104,6 +104,7 @@ type Config struct {
 	ClientSecret         string
 	TokenURL             string
 	AuthURL              string
+	DeviceAuthURL        string // RFC 8628 device-authorization endpoint; empty disables device flow
 	Scopes               []string
 	EndpointParams       url.Values
 	RedirectURL          string
@@ -119,9 +120,10 @@ func (conf *Config) MakeOauth2Config() *oauth2.Config {
 		RedirectURL:  conf.RedirectURL,
 		Scopes:       conf.Scopes,
 		Endpoint: oauth2.Endpoint{
-			AuthURL:   conf.AuthURL,
-			TokenURL:  conf.TokenURL,
-			AuthStyle: conf.AuthStyle,
+			AuthURL:       conf.AuthURL,
+			TokenURL:      conf.TokenURL,
+			DeviceAuthURL: conf.DeviceAuthURL,
+			AuthStyle:     conf.AuthStyle,
 		},
 	}
 }
@@ -277,7 +279,8 @@ func (ts *TokenSource) reReadToken() (changed bool) {
 }
 
 type retrieveErrResponse struct {
-	Error string `json:"error"`
+	Error            string `json:"error"`
+	ErrorDescription string `json:"error_description"`
 }
 
 // If err is nil or an error other than fatal OAuth errors, returns err itself.
@@ -685,12 +688,48 @@ func ConfigOAuth(ctx context.Context, name string, m configmap.Mapper, ri *fs.Re
 			// If using client credential flow, skip straight to getting the token since we don't need a browser
 			return fs.ConfigGoto(newState("*oauth-do"))
 		}
+		if deviceFlowSupported(oauthConfig) {
+			// Prompt name is intentionally still config_is_local so that
+			// non-interactive callers (e.g. `rclone config create ...
+			// config_is_local=true`) keep working: the harness's override
+			// lookup matches the legacy boolean values, which are mapped to
+			// the new "local"/"remote" choices in the *oauth-islocal state.
+			return fs.ConfigChooseExclusiveFixed(newState("*oauth-islocal"), "config_is_local", "How should rclone obtain authorization for this remote?", []fs.OptionExample{{
+				Value: "local",
+				Help:  "Use the web browser on this machine\nrclone will open a browser and listen on localhost. Choose this when the\nmachine running rclone has a desktop browser available.\n(Legacy value: true)",
+			}, {
+				Value: "device",
+				Help:  "Use a device-code flow on a separate device\nrclone prints a short URL and code; sign in on any phone or computer with\na browser. No second rclone install needed.",
+			}, {
+				Value: "remote",
+				Help:  "Run `rclone authorize` on a different machine\nUse this only if device flow is unavailable.\n(Legacy value: false)",
+			}})
+		}
 		return fs.ConfigConfirm(newState("*oauth-islocal"), true, "config_is_local", "Use web browser to automatically authenticate rclone with remote?\n * Say Y if the machine running rclone has a web browser you can use\n * Say N if running rclone on a (remote) machine without web browser access\nIf not sure try Y. If Y failed, try N.\n")
 	case "*oauth-islocal":
-		if in.Result == "true" {
+		// Accept the legacy boolean values "true"/"false" alongside the new
+		// named choices so that non-interactive callers passing
+		// config_is_local=true|false keep working.
+		switch in.Result {
+		case "local", "true":
 			return fs.ConfigGoto(newState("*oauth-do"))
+		case "device":
+			return fs.ConfigGoto(newState("*oauth-device"))
 		}
 		return fs.ConfigGoto(newState("*oauth-remote"))
+	case "*oauth-device":
+		opt, err := getOAuth()
+		if err != nil {
+			return nil, err
+		}
+		oauthConfig, _ := OverrideCredentials(name, m, opt.OAuth2Config)
+		if !deviceFlowSupported(oauthConfig) {
+			return nil, errors.New("device flow not supported by this backend")
+		}
+		if err := configSetupDevice(ctx, name, m, oauthConfig, opt); err != nil {
+			return nil, err
+		}
+		return fs.ConfigGoto(newState("*oauth-done"))
 	case "*oauth-remote":
 		opt, err := getOAuth()
 		if err != nil {
@@ -882,6 +921,12 @@ func noWebserverNeeded(oauthConfig *Config) bool {
 	return oauthConfig.RedirectURL == TitleBarRedirectURL
 }
 
+// deviceFlowSupported reports whether the backend has opted into the OAuth 2.0
+// device-authorization grant by setting a device-code endpoint URL.
+func deviceFlowSupported(oauthConfig *Config) bool {
+	return oauthConfig != nil && oauthConfig.DeviceAuthURL != ""
+}
+
 // get the URL we need to send the user to
 func getAuthURL(name string, m configmap.Mapper, oauthConfig *Config, opt *Options) (authURL string, state string, err error) {
 	oauthConfig, _ = OverrideCredentials(name, m, oauthConfig)
@@ -936,6 +981,84 @@ func clientCredentialsFlowGetToken(ctx context.Context, name string, m configmap
 		return fmt.Errorf("client credentials flow: failed to get token: %w", err)
 	}
 	return nil
+}
+
+// configSetupDevice runs the OAuth 2.0 device-authorization grant (RFC 8628):
+// it requests a user_code/device_code from the auth server, prints the
+// verification URL and code, and blocks while polling the token endpoint
+// until the user has authorized (or the device code expires).
+//
+// The device flow is a public-client flow, so the request is made without
+// the client secret. If a backend's app registration is configured as a
+// confidential client, the auth server is expected to reject the call with a
+// clear error which is surfaced to the user.
+func configSetupDevice(ctx context.Context, name string, m configmap.Mapper, oauthConfig *Config, opt *Options) error {
+	if opt == nil {
+		opt = &Options{}
+	}
+	ctx = Context(ctx, fshttp.NewClient(ctx))
+
+	// Build a public-client copy of the oauth2 config: device flow does not
+	// take a client secret, and Microsoft (and others) reject the request if
+	// one is sent.
+	publicConfig := *oauthConfig
+	publicConfig.ClientSecret = ""
+	oauth2Conf := publicConfig.MakeOauth2Config()
+
+	// RFC 8628 does not define access_type, and Microsoft Azure AD rejects
+	// unknown parameters on /devicecode with "invalid_request". Offline
+	// access for the device flow is requested via the offline_access scope,
+	// not access_type=offline (which is a Google convention for the
+	// authorization-code flow). So pass through only caller-supplied opts.
+	deviceOpts := opt.OAuth2Opts
+
+	fs.Logf(nil, "Requesting device code...\n")
+	resp, err := oauth2Conf.DeviceAuth(ctx, deviceOpts...)
+	if err != nil {
+		return fmt.Errorf("device flow: failed to get device code: %w", describeOAuthError(err))
+	}
+
+	// Microsoft's response carries a localized human-readable message; if
+	// present prefer it because it already contains the URL and code formatted
+	// for the user's locale.
+	if resp.VerificationURIComplete != "" {
+		fs.Logf(nil, "To authenticate, visit:\n\n    %s\n\nor visit %s and enter the code: %s\n",
+			resp.VerificationURIComplete, resp.VerificationURI, resp.UserCode)
+	} else {
+		fs.Logf(nil, "To authenticate, visit %s and enter the code: %s\n",
+			resp.VerificationURI, resp.UserCode)
+	}
+	if !resp.Expiry.IsZero() {
+		fs.Logf(nil, "Code expires at %s\n", resp.Expiry.Format(time.RFC1123))
+	}
+	fs.Logf(nil, "Waiting for authorization...\n")
+
+	token, err := oauth2Conf.DeviceAccessToken(ctx, resp, deviceOpts...)
+	if err != nil {
+		return fmt.Errorf("device flow: failed to obtain token: %w", describeOAuthError(err))
+	}
+	return PutToken(name, m, token, true)
+}
+
+// describeOAuthError surfaces the OAuth error code and description from a
+// *oauth2.RetrieveError, which would otherwise marshal as a generic
+// "oauth2: ..." string. Unlike maybeWrapOAuthError it makes no assumption
+// about the request context (in particular, it does not suggest "rclone
+// config reconnect", which is meaningless before any token has been
+// obtained).
+func describeOAuthError(err error) error {
+	rErr, ok := err.(*oauth2.RetrieveError)
+	if !ok {
+		return err
+	}
+	var resp retrieveErrResponse
+	if jsonErr := json.Unmarshal(rErr.Body, &resp); jsonErr != nil || resp.Error == "" {
+		return err
+	}
+	if resp.ErrorDescription != "" {
+		return fmt.Errorf("%s: %s", resp.Error, resp.ErrorDescription)
+	}
+	return errors.New(resp.Error)
 }
 
 // configSetup does the initial creation of the token
