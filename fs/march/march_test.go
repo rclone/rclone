@@ -6,9 +6,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs"
@@ -375,6 +377,60 @@ func TestMarchNoProcessDstOnly(t *testing.T) {
 			assert.Empty(t, mt.dstOnly, "dstOnly should be empty with NoProcessDstOnly")
 			fstest.CompareItems(t, mt.match, match, test.dirMatch, precision, "match")
 		})
+	}
+}
+
+// TestMarchNoGoroutineLeak checks that a march which completes normally (its
+// context is never cancelled, as with an async rc job) does not strand the
+// janitor goroutine that drains the job channel. Before the fix that goroutine
+// parked on m.Ctx.Done() forever, leaking one goroutine per run and pinning the
+// run's listings (issue #9620).
+func TestMarchNoGoroutineLeak(t *testing.T) {
+	r := fstest.NewRun(t)
+
+	ctx := context.Background()
+	ctx, _ = fs.AddConfig(ctx)
+	// Write to both src and dst so the march lists real directories on both
+	// sides and completes cleanly (no missing-directory listing errors).
+	r.WriteBoth(ctx, "test", "hello world", t1)
+	r.WriteBoth(ctx, "sub dir/test2", "hello world", t1)
+
+	runMarch := func() {
+		mt := &marchTester{ctx: ctx, cancel: func() {}}
+		m := &March{
+			Ctx:      ctx,
+			Fdst:     r.Fremote,
+			Fsrc:     r.Flocal,
+			Dir:      "",
+			Callback: mt,
+		}
+		require.NoError(t, m.Run(ctx))
+	}
+
+	// Warm up so any one-time background goroutines are already started.
+	runMarch()
+	waitForGoroutines := func() int {
+		// Give any exiting goroutines a moment to unwind before counting.
+		var n int
+		for range 20 {
+			runtime.GC()
+			n = runtime.NumGoroutine()
+			time.Sleep(10 * time.Millisecond)
+		}
+		return n
+	}
+	before := waitForGoroutines()
+
+	const runs = 20
+	for range runs {
+		runMarch()
+	}
+	after := waitForGoroutines()
+
+	// The leak stranded one goroutine per run. Allow a small slack for unrelated
+	// runtime goroutines, but well under the number of runs.
+	if after-before >= runs {
+		t.Fatalf("goroutine leak: %d before, %d after %d marches (delta %d)", before, after, runs, after-before)
 	}
 }
 
