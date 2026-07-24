@@ -1,0 +1,23 @@
+[codespell]
+skip = .git,*.pdf,*.svg,*.min.*,go.sum,rclone.1,MANUAL.*,*/commands/*,*/changelog.md,*/flags.md,*/authors.md,testdata,.npm,.cache
+check-hidden = true
+# Ignore camelCase and PascalCase identifiers (common in Go code)
+ignore-regex = \b[a-z]+[A-Z]\w*\b|\b[A-Z][a-z]+[A-Z]\w*\b
+# bu,nd,ue,sav,ket,nin,hel,mis,ot,te - short variable names / test data fragments
+# goup - CSS class name for "Go up" navigation
+# afile - test filename pattern in filter tests
+# crashers - valid English word
+# responser - Go interface name in linkbox backend
+# medias - API field name in pikpak backend
+# deriver - Internet Archive metadata field name
+# fasle - intentional misspelling in test case for error handling
+# copys - DigitalOcean Spaces rate limit description
+# unknwon - external Go package name (github.com/unknwon/goconfig)
+# browseable - Samba configuration keyword
+# unparseable - valid variant spelling
+# crypted - valid term (encrypted/decrypted context)
+# notin,parth,buda - contributor names
+# sme - product name (StorageMadeEasy File Fabric)
+# re-use - valid hyphenated English
+# keep-alives - valid HTTP term (plural of keep-alive)
+ignore-words-list = bu,nd,ue,sav,ket,nin,hel,mis,ot,te,goup,afile,crashers,responser,medias,deriver,fasle,copys,unknwon,browseable,unparseable,crypted,notin,parth,buda,sme,re-use,keep-alives

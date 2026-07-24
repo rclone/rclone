@@ -13,7 +13,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
 INFO  : There was nothing to transfer
@@ -67,7 +67,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying Path2 files to Path1
 NOTICE: - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
 NOTICE: file10.txt: Skipped copy as --dry-run is set (size 19)
@@ -96,7 +96,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 NOTICE: - [36mPath1[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile2.txt[0m
@@ -161,7 +161,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : - [36mPath1[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile2.txt[0m
