@@ -6,9 +6,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs"
@@ -272,6 +274,53 @@ func TestMarch(t *testing.T) {
 			fstest.CompareItems(t, mt.match, match, test.dirMatch, precision, "match")
 		})
 	}
+}
+
+// countMarchRunGoroutines counts goroutines currently executing inside a
+// March.Run closure
+func countMarchRunGoroutines() int {
+	buf := make([]byte, 1<<20)
+	n := runtime.Stack(buf, true)
+	return strings.Count(string(buf[:n]), "fs/march.(*March).Run.func")
+}
+
+// TestMarchNoGoroutineLeak checks that a successful march leaves no goroutine
+// behind even when its context is never cancelled, as happens for an
+// asynchronous rc job (see issue #9620).
+func TestMarchNoGoroutineLeak(t *testing.T) {
+	r := fstest.NewRun(t)
+
+	// A background context, never cancelled - mirrors an async rc job.
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel() // cleanup AFTER the assertion below
+
+	r.WriteFile("file1", "hello world", t1)
+	r.WriteFile("sub dir/file2", "hello world", t1)
+
+	ctx, _ = fs.AddConfig(ctx)
+	fi := filter.GetConfig(ctx)
+	mt := &marchTester{
+		ctx:    ctx,
+		cancel: cancel,
+	}
+	m := &March{
+		Ctx:           ctx,
+		Fdst:          r.Fremote,
+		Fsrc:          r.Flocal,
+		Dir:           "",
+		Callback:      mt,
+		DstIncludeAll: fi.Opt.DeleteExcluded,
+	}
+
+	require.NoError(t, m.Run(ctx))
+
+	// The janitor goroutine must have exited even though ctx was never
+	// cancelled. Eventually covers scheduling lag for the workers and
+	// producers, which also match ".Run.func" but exit promptly once Run
+	// returns.
+	require.Eventually(t, func() bool {
+		return countMarchRunGoroutines() == 0
+	}, 5*time.Second, 10*time.Millisecond, "march goroutine leaked")
 }
 
 func TestMarchNoProcessDstOnly(t *testing.T) {

@@ -263,11 +263,18 @@ func (m *March) Run(ctx context.Context) error {
 		dstDepth:  dstDepth - 1,
 		noDst:     m.NoCheckDest,
 	}
+	done := make(chan struct{})
+	defer close(done)
 	go func() {
-		// when the context is cancelled discard the remaining jobs
-		<-m.Ctx.Done()
-		for range in {
-			traversing.Done()
+		// when the context is cancelled discard the remaining jobs, but
+		// exit unconditionally once the march finishes so a successful
+		// march (whose context is never cancelled) doesn't strand us
+		select {
+		case <-m.Ctx.Done():
+			for range in {
+				traversing.Done()
+			}
+		case <-done:
 		}
 	}()
 	traversing.Wait()
