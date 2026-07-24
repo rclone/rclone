@@ -67,7 +67,9 @@ func TestServiceControlRejectsOversizedBody(t *testing.T) {
 	req.Header.Set("SOAPACTION", `"urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1#RegisterDevice"`)
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() {
+		require.NoError(t, resp.Body.Close())
+	}()
 	assert.Equal(t, http.StatusRequestEntityTooLarge, resp.StatusCode)
 }
 
