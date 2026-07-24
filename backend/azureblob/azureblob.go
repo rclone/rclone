@@ -22,6 +22,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
@@ -259,6 +260,22 @@ listing.`,
 			Advanced: true,
 			Hide:     fs.OptionHideBoth,
 		}, {
+			Name: "list_parallelism",
+			Help: `Number of parallel shards to list a directory with.
+
+EXPERIMENTAL. If set greater than 1, the blob name keyspace of each
+directory is split into this many ranges which are listed concurrently
+using the Arrow startFrom/endBefore range parameters. This can
+dramatically speed up listing containers with millions of objects, for
+both recursive (ListR) and single directory listings.
+
+This has no effect unless "use_arrow_list" is also set, as Arrow is the
+only listing path that supports server-side name ranges. The default of
+0 (or 1) lists sequentially.`,
+			Default:  0,
+			Advanced: true,
+			Hide:     fs.OptionHideBoth,
+		}, {
 			Name: "access_tier",
 			Help: `Access tier of blob: hot, cool, cold or archive.
 
@@ -412,6 +429,7 @@ type Options struct {
 	UploadConcurrency    int                  `config:"upload_concurrency"`
 	ListChunkSize        uint                 `config:"list_chunk"`
 	UseArrowList         bool                 `config:"use_arrow_list"`
+	ListParallelism      int                  `config:"list_parallelism"`
 	AccessTier           string               `config:"access_tier"`
 	ArchiveTierDelete    bool                 `config:"archive_tier_delete"`
 	DisableCheckSum      bool                 `config:"disable_checksum"`
@@ -435,6 +453,7 @@ type Fs struct {
 	cntSVCcache        map[string]*container.Client // reference to containerClient per container
 	arrowCntSVCcache   map[string]*arrowlist.Client // reference to arrowlist client per container
 	arrowClientOpts    *arrowlist.ClientOptions     // client options for the arrowlist clients
+	arrowXMLFallback   atomic.Bool                  // set once the server answers XML so parallel listing is not retried
 	svc                *service.Client              // client to access azblob
 	cred               azcore.TokenCredential       // how to generate tokens (may be nil)
 	usingSharedKeyCred bool                         // set if using shared key credentials
@@ -633,6 +652,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	if opt.ListChunkSize > maxListChunkSize {
 		return nil, fmt.Errorf("blob list size can't be greater than %v - was %v", maxListChunkSize, opt.ListChunkSize)
+	}
+	if opt.ListParallelism > 1 && !opt.UseArrowList {
+		fs.Logf(nil, "azureblob: list_parallelism has no effect without use_arrow_list - listing sequentially")
 	}
 
 	if opt.AccessTier == "" {
@@ -1188,6 +1210,40 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 		opts.UseArrowFormat = to.Ptr(true)
 	}
 
+	var foundItems int
+	var err error
+	if useArrow && f.opt.ListParallelism > 1 && !f.arrowXMLFallback.Load() {
+		// Arrow exposes server-side startFrom/endBefore name ranges, so the
+		// keyspace can be sharded and listed concurrently.
+		foundItems, err = f.listArrowParallel(ctx, containerName, directory, prefix, addContainer, opts, delimiter, fn)
+	} else {
+		foundItems, err = f.listBlobsPager(ctx, containerName, directory, prefix, addContainer, opts, delimiter, fn)
+	}
+	if err != nil {
+		return err
+	}
+	if f.opt.DirectoryMarkers && foundItems == 0 && directory != "" {
+		// Determine whether the directory exists or not by whether it has a marker
+		_, err := f.readMetaData(ctx, containerName, directory)
+		if err != nil {
+			if err == fs.ErrorObjectNotFound {
+				return fs.ErrorDirNotFound
+			}
+			return err
+		}
+	}
+	return nil
+}
+
+// listBlobsPager runs the hierarchy listing described by opts, calling fn for
+// each blob and subdirectory, and returns the number of raw items seen.
+// delimiter selects flat (recurse) vs hierarchical listing. If opts requests
+// the Apache Arrow format the listing goes through the arrowlist pager
+// (falling back to the SDK pager if the credentials don't support it); if the
+// service then answers with XML (Arrow listing not enabled) a debug message
+// is logged.
+func (f *Fs) listBlobsPager(ctx context.Context, containerName, directory, prefix string, addContainer bool, opts *arrowlist.ListBlobsHierarchyOptions, delimiter string, fn listFn) (foundItems int, err error) {
+	useArrow := opts.UseArrowFormat != nil && *opts.UseArrowFormat
 	var pager *runtime.Pager[container.ListBlobsHierarchyResponse]
 	if useArrow {
 		arrowSVC, err := f.arrowCntSVC(containerName)
@@ -1201,7 +1257,6 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 	if pager == nil {
 		pager = f.cntSVC(containerName).NewListBlobsHierarchyPager(delimiter, &opts.ListBlobsHierarchyOptions)
 	}
-	foundItems := 0
 	checkedArrow := false
 	for pager.More() {
 		var response container.ListBlobsHierarchyResponse
@@ -1225,9 +1280,9 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 		if err != nil {
 			// Check http error code along with service code, current SDK doesn't populate service code correctly sometimes
 			if storageErr, ok := err.(*azcore.ResponseError); ok && (storageErr.ErrorCode == string(bloberror.ContainerNotFound) || storageErr.StatusCode == http.StatusNotFound) {
-				return fs.ErrorDirNotFound
+				return foundItems, fs.ErrorDirNotFound
 			}
-			return err
+			return foundItems, err
 		}
 		// Advance marker to next
 		// marker = response.NextMarker
@@ -1268,7 +1323,7 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 			// Send object
 			err = fn(remote, file, isDirectory)
 			if err != nil {
-				return err
+				return foundItems, err
 			}
 		}
 		// Send the subdirectories
@@ -1302,21 +1357,11 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 			// Send object
 			err = fn(remote, nil, true)
 			if err != nil {
-				return err
+				return foundItems, err
 			}
 		}
 	}
-	if f.opt.DirectoryMarkers && foundItems == 0 && directory != "" {
-		// Determine whether the directory exists or not by whether it has a marker
-		_, err := f.readMetaData(ctx, containerName, directory)
-		if err != nil {
-			if err == fs.ErrorObjectNotFound {
-				return fs.ErrorDirNotFound
-			}
-			return err
-		}
-	}
-	return nil
+	return foundItems, nil
 }
 
 // Convert a list item into a DirEntry
