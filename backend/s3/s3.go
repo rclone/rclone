@@ -2524,6 +2524,9 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 					continue
 				}
 				remote = remote[len(opt.prefix):]
+				// Trim leading slashes which can occur with object
+				// keys containing consecutive slashes (e.g. "dir//file")
+				remote = strings.TrimLeft(remote, "/")
 				// Trim one slash off the remote name
 				remote, _ = strings.CutSuffix(remote, "/")
 				if remote == "" || bucket.IsAllSlashes(remote) {
@@ -2568,6 +2571,9 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 				}
 			}
 			remote = remote[len(opt.prefix):]
+			// Trim leading slashes which can occur with object
+			// keys containing consecutive slashes (e.g. "dir//file")
+			remote = strings.TrimLeft(remote, "/")
 			if isDirectory {
 				// process directory markers as directories
 				remote, _ = strings.CutSuffix(remote, "/")
