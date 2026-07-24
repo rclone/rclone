@@ -2434,7 +2434,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if err != nil {
 		if resp != nil {
 			if virus := resp.Header.Get("X-Virus-Infected"); virus != "" {
-				err = fmt.Errorf("server reports this file is infected with a virus - use --onedrive-av-override to download anyway: %s: %w", virus, err)
+				err = malwareDownloadError(o.fs.opt.AVOverride, fmt.Errorf("%s: %w", virus, err))
 			}
 		}
 		return nil, err
@@ -2442,12 +2442,26 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if redirectReq != nil {
 		err = o.fs.pacer.Call(func() (bool, error) {
 			resp, err = o.fs.unAuth.Do(redirectReq)
+			if err != nil {
+				return shouldRetry(ctx, resp, err)
+			}
+			// unAuth.Do does not check status; treat non-2xx as failure so a malware
+			// JSON body is not written out as file content.
+			if resp.StatusCode < 200 || resp.StatusCode > 299 {
+				body, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
+				_ = resp.Body.Close()
+				err = fmt.Errorf("HTTP error %d (%s) %s", resp.StatusCode, resp.Status, strings.TrimSpace(string(body)))
+				if strings.Contains(string(body), "malwareDetected") || resp.Header.Get("X-Virus-Infected") != "" {
+					err = malwareDownloadError(o.fs.opt.AVOverride, err)
+				}
+				return shouldRetry(ctx, resp, err)
+			}
 			return shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
 			if resp != nil {
 				if virus := resp.Header.Get("X-Virus-Infected"); virus != "" {
-					err = fmt.Errorf("server reports this file is infected with a virus - use --onedrive-av-override to download anyway: %s: %w", virus, err)
+					err = malwareDownloadError(o.fs.opt.AVOverride, fmt.Errorf("%s: %w", virus, err))
 				}
 			}
 			return nil, err
@@ -2459,6 +2473,14 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		o.size = resp.ContentLength
 	}
 	return resp.Body, err
+}
+
+// malwareDownloadError formats an error when the server blocks a malware-flagged file.
+func malwareDownloadError(avOverride bool, err error) error {
+	if avOverride {
+		return fmt.Errorf("server reports this file is infected with a virus: %w (if downloads remain blocked, use application permissions / client_credentials or a tenant admin account)", err)
+	}
+	return fmt.Errorf("server reports this file is infected with a virus - use --onedrive-av-override to download anyway: %w", err)
 }
 
 // createUploadSession creates an upload session for the object
