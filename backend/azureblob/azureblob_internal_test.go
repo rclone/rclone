@@ -213,6 +213,7 @@ func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("WriteUncommittedBlocks", f.testWriteUncommittedBlocks)
 	t.Run("Metadata", f.testMetadataPaths)
 	t.Run("GzipEncoding", f.testGzipEncoding)
+	t.Run("ArrowList", f.testArrowList)
 }
 
 // helper to read blob properties for an object

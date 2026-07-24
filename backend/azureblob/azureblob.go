@@ -26,12 +26,15 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/bloberror"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blockblob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/sas"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/service"
+	"github.com/rclone/rclone/backend/azureblob/arrowlist"
 	"github.com/rclone/rclone/backend/azureblob/auth"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/chunksize"
@@ -236,6 +239,26 @@ avoid the time out.`,
 			Default:  maxListChunkSize,
 			Advanced: true,
 		}, {
+			Name: "use_arrow_list",
+			Help: `Use the experimental Apache Arrow listing format.
+
+If set, directory listings are fetched using the ListBlobs Apache
+Arrow response format instead of XML. This can be faster for very
+large containers.
+
+This is EXPERIMENTAL and requires the "Blob Listing with Apache Arrow"
+preview feature to be enabled on the storage account. It is NOT
+supported on accounts with a hierarchical namespace (ADLS Gen2) -
+those return a 409 error. If the feature is not enabled the server
+returns XML and the listing transparently falls back to the normal XML
+path (logged at debug level).
+
+Not supported with connection_string auth - falls back to normal
+listing.`,
+			Default:  false,
+			Advanced: true,
+			Hide:     fs.OptionHideBoth,
+		}, {
 			Name: "access_tier",
 			Help: `Access tier of blob: hot, cool, cold or archive.
 
@@ -388,6 +411,7 @@ type Options struct {
 	UseCopyBlob          bool                 `config:"use_copy_blob"`
 	UploadConcurrency    int                  `config:"upload_concurrency"`
 	ListChunkSize        uint                 `config:"list_chunk"`
+	UseArrowList         bool                 `config:"use_arrow_list"`
 	AccessTier           string               `config:"access_tier"`
 	ArchiveTierDelete    bool                 `config:"archive_tier_delete"`
 	DisableCheckSum      bool                 `config:"disable_checksum"`
@@ -407,8 +431,10 @@ type Fs struct {
 	opt                Options                      // parsed config options
 	ci                 *fs.ConfigInfo               // global config
 	features           *fs.Features                 // optional features
-	cntSVCcacheMu      sync.Mutex                   // mutex to protect cntSVCcache
+	cntSVCcacheMu      sync.Mutex                   // mutex to protect cntSVCcache and arrowCntSVCcache
 	cntSVCcache        map[string]*container.Client // reference to containerClient per container
+	arrowCntSVCcache   map[string]*arrowlist.Client // reference to arrowlist client per container
+	arrowClientOpts    *arrowlist.ClientOptions     // client options for the arrowlist clients
 	svc                *service.Client              // client to access azblob
 	cred               azcore.TokenCredential       // how to generate tokens (may be nil)
 	usingSharedKeyCred bool                         // set if using shared key credentials
@@ -623,14 +649,15 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	ci := fs.GetConfig(ctx)
 	f := &Fs{
-		name:        name,
-		opt:         *opt,
-		ci:          ci,
-		pacer:       fs.NewPacer(ctx, pacer.NewS3(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
-		uploadToken: pacer.NewTokenDispenser(ci.Transfers),
-		copyToken:   pacer.NewTokenDispenser(opt.CopyTotalConcurrency),
-		cache:       bucket.NewCache(),
-		cntSVCcache: make(map[string]*container.Client, 1),
+		name:             name,
+		opt:              *opt,
+		ci:               ci,
+		pacer:            fs.NewPacer(ctx, pacer.NewS3(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		uploadToken:      pacer.NewTokenDispenser(ci.Transfers),
+		copyToken:        pacer.NewTokenDispenser(opt.CopyTotalConcurrency),
+		cache:            bucket.NewCache(),
+		cntSVCcache:      make(map[string]*container.Client, 1),
+		arrowCntSVCcache: make(map[string]*arrowlist.Client, 1),
 	}
 	f.publicAccess = container.PublicAccessType(opt.PublicAccess)
 	f.setRoot(root)
@@ -677,6 +704,15 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.usingSharedKeyCred = res.UsingSharedKeyCred
 	f.anonymous = res.Anonymous
 
+	// Client options for the arrowlist clients, using the same transport and
+	// gzip policy as the SDK clients built above.
+	f.arrowClientOpts = &arrowlist.ClientOptions{
+		ClientOptions: azcore.ClientOptions{
+			Transport:       auth.Transporter(ctx),
+			PerCallPolicies: []policy.Policy{setAcceptEncodingGzip{}},
+		},
+	}
+
 	// if using Container level SAS put the container client into the cache
 	if opt.SASURL != "" && res.Container != "" {
 		_ = f.cntSVC(res.Container)
@@ -713,6 +749,44 @@ func (f *Fs) cntSVC(containerName string) (containerClient *container.Client) {
 		f.cntSVCcache[containerName] = containerClient
 	}
 	return containerClient
+}
+
+// errArrowAuthUnsupported is returned by arrowCntSVC when the configured
+// credentials can't be used for Arrow listing.
+var errArrowAuthUnsupported = errors.New("credentials not supported for Arrow listing (connection_string auth is not supported)")
+
+// return the arrowlist client for the container passed in
+//
+// Returns errArrowAuthUnsupported if the configured credentials can't be
+// reused for the arrowlist client's pipeline.
+func (f *Fs) arrowCntSVC(containerName string) (client *arrowlist.Client, err error) {
+	// The container URL includes any SAS token in its query
+	url := f.cntSVC(containerName).URL()
+	f.cntSVCcacheMu.Lock()
+	defer f.cntSVCcacheMu.Unlock()
+	if client, ok := f.arrowCntSVCcache[containerName]; ok {
+		return client, nil
+	}
+	switch {
+	case f.usingSharedKeyCred:
+		// Covers account+key and the emulator (auth fills in Account/Key)
+		var cred *arrowlist.SharedKeyCredential
+		cred, err = arrowlist.NewSharedKeyCredential(f.opt.Account, f.opt.Key)
+		if err == nil {
+			client, err = arrowlist.NewClientWithSharedKeyCredential(url, cred, f.arrowClientOpts)
+		}
+	case f.cred != nil:
+		client, err = arrowlist.NewClient(url, f.cred, f.arrowClientOpts)
+	case f.anonymous || f.opt.SASURL != "":
+		client, err = arrowlist.NewClientWithNoCredential(url, f.arrowClientOpts)
+	default:
+		return nil, errArrowAuthUnsupported
+	}
+	if err != nil {
+		return nil, err
+	}
+	f.arrowCntSVCcache[containerName] = client
+	return client, nil
 }
 
 // Return an Object from a path
@@ -1091,19 +1165,44 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 		delimiter = "/"
 	}
 
-	pager := f.cntSVC(containerName).NewListBlobsHierarchyPager(delimiter, &container.ListBlobsHierarchyOptions{
-		// Copy, Metadata, Snapshots, UncommittedBlobs, Deleted, Tags, Versions, LegalHold, ImmutabilityPolicy, DeletedWithVersions bool
-		Include: container.ListBlobsInclude{
-			Copy:             false,
-			Metadata:         true,
-			Snapshots:        false,
-			UncommittedBlobs: false,
-			Deleted:          false,
+	opts := &arrowlist.ListBlobsHierarchyOptions{
+		ListBlobsHierarchyOptions: container.ListBlobsHierarchyOptions{
+			// Copy, Metadata, Snapshots, UncommittedBlobs, Deleted, Tags, Versions, LegalHold, ImmutabilityPolicy, DeletedWithVersions bool
+			Include: container.ListBlobsInclude{
+				Copy:             false,
+				Metadata:         true,
+				Snapshots:        false,
+				UncommittedBlobs: false,
+				Deleted:          false,
+			},
+			Prefix:     &directory,
+			MaxResults: &maxResults,
 		},
-		Prefix:     &directory,
-		MaxResults: &maxResults,
-	})
+	}
+	// Experimental: request the Apache Arrow listing format. The arrowlist
+	// pager requests an Arrow IPC stream and decodes it, falling back to XML
+	// if the account doesn't have Arrow listing enabled. Skip the
+	// maxResults==1 probe (isEmpty) which doesn't benefit.
+	useArrow := f.opt.UseArrowList && maxResults != 1
+	if useArrow {
+		opts.UseArrowFormat = to.Ptr(true)
+	}
+
+	var pager *runtime.Pager[container.ListBlobsHierarchyResponse]
+	if useArrow {
+		arrowSVC, err := f.arrowCntSVC(containerName)
+		if err != nil {
+			fs.Debugf(f, "Not using Arrow listing: %v", err)
+			useArrow = false
+		} else {
+			pager = arrowSVC.NewListBlobsHierarchyPager(delimiter, opts)
+		}
+	}
+	if pager == nil {
+		pager = f.cntSVC(containerName).NewListBlobsHierarchyPager(delimiter, &opts.ListBlobsHierarchyOptions)
+	}
 	foundItems := 0
+	checkedArrow := false
 	for pager.More() {
 		var response container.ListBlobsHierarchyResponse
 		err := f.pacer.Call(func() (bool, error) {
@@ -1112,6 +1211,16 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 			//response, err = f.srv.ListBlobsHierarchySegment(ctx, marker, delimiter, options)
 			return f.shouldRetry(ctx, err)
 		})
+
+		// If Arrow was requested but the service answered with XML, Arrow
+		// listing is not enabled on this account; the listing is still correct
+		// but not accelerated.
+		if useArrow && !checkedArrow && err == nil {
+			checkedArrow = true
+			if response.ContentType == nil || !strings.HasPrefix(*response.ContentType, arrowlist.ArrowContentType) {
+				fs.Debugf(f, "Apache Arrow listing requested but server returned XML - Blob Listing with Apache Arrow may not be enabled on this account")
+			}
+		}
 
 		if err != nil {
 			// Check http error code along with service code, current SDK doesn't populate service code correctly sometimes
@@ -1138,7 +1247,12 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 				fs.Debugf(f, "Odd name received %q", remote)
 				continue
 			}
-			isDirectory := isDirectoryMarker(*file.Properties.ContentLength, file.Metadata, remote)
+			// ContentLength is documented as nullable in the Arrow listing schema
+			size := int64(-1)
+			if file.Properties.ContentLength != nil {
+				size = *file.Properties.ContentLength
+			}
+			isDirectory := isDirectoryMarker(size, file.Metadata, remote)
 			if isDirectory {
 				// Don't insert the root directory
 				if remote == f.opt.Enc.ToStandardPath(directory) {
@@ -1167,6 +1281,13 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 			remote := f.opt.Enc.ToStandardPath(*blobPrefix.Name)
 			if !strings.HasPrefix(remote, prefix) {
 				fs.Debugf(f, "Odd directory name received %q", remote)
+				continue
+			}
+			// Don't insert the root directory. The Arrow listing returns a
+			// directory marker blob with the same name as the listed directory
+			// as a BlobPrefix, whereas XML returns it as a blob (handled
+			// above).
+			if remote == f.opt.Enc.ToStandardPath(directory) {
 				continue
 			}
 			remote = remote[len(prefix):]
