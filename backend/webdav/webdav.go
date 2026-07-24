@@ -144,16 +144,27 @@ You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'
 			Default:  minSleep,
 			Advanced: true,
 		}, {
-			Name: "nextcloud_chunk_size",
-			Help: `Nextcloud upload chunk size.
+			Name: "chunk_size",
+			Help: `Upload chunk size for chunked/resumable upload protocols (Nextcloud chunking, Infinite Scale tus).
 
-We recommend configuring your NextCloud instance to increase the max chunk size to 1 GB for better upload performances.
+For Nextcloud, we recommend configuring your NextCloud instance to
+increase the max chunk size to 1 GB for better upload performances.
 See https://docs.nextcloud.com/server/latest/admin_manual/configuration_files/big_file_upload_configuration.html#adjust-chunk-size-on-nextcloud-side
 
-Set to 0 to disable chunked uploading.
+For Nextcloud, set to 0 to disable chunked uploading. Infinite Scale
+uploads are always chunked via tus, so 0 is treated the same as
+leaving this unset.
+
+Set to -1 (the default) to use each vendor's own default of 10 MiB.
 `,
 			Advanced: true,
-			Default:  10 * fs.Mebi, // Default NextCloud `max_chunk_size` is `10 MiB`. See https://github.com/nextcloud/server/blob/0447b53bda9fe95ea0cbed765aa332584605d652/apps/files/lib/App.php#L57
+			Default:  fs.SizeSuffix(-1),
+		}, {
+			Name:     "nextcloud_chunk_size",
+			Help:     "Deprecated: use chunk_size instead.",
+			Advanced: true,
+			Hide:     fs.OptionHideConfigurator,
+			Default:  fs.SizeSuffix(-1),
 		}, {
 			Name:     "owncloud_exclude_shares",
 			Help:     "Exclude ownCloud shares",
@@ -189,20 +200,21 @@ files from the webdav server then you can try this option.
 
 // Options defines the configuration for this backend
 type Options struct {
-	URL                string               `config:"url"`
-	Vendor             string               `config:"vendor"`
-	User               string               `config:"user"`
-	Pass               string               `config:"pass"`
-	BearerToken        string               `config:"bearer_token"`
-	BearerTokenCommand fs.SpaceSepList      `config:"bearer_token_command"`
-	Enc                encoder.MultiEncoder `config:"encoding"`
-	Headers            fs.CommaSepList      `config:"headers"`
-	PacerMinSleep      fs.Duration          `config:"pacer_min_sleep"`
-	ChunkSize          fs.SizeSuffix        `config:"nextcloud_chunk_size"`
-	ExcludeShares      bool                 `config:"owncloud_exclude_shares"`
-	ExcludeMounts      bool                 `config:"owncloud_exclude_mounts"`
-	UnixSocket         string               `config:"unix_socket"`
-	AuthRedirect       bool                 `config:"auth_redirect"`
+	URL                      string               `config:"url"`
+	Vendor                   string               `config:"vendor"`
+	User                     string               `config:"user"`
+	Pass                     string               `config:"pass"`
+	BearerToken              string               `config:"bearer_token"`
+	BearerTokenCommand       fs.SpaceSepList      `config:"bearer_token_command"`
+	Enc                      encoder.MultiEncoder `config:"encoding"`
+	Headers                  fs.CommaSepList      `config:"headers"`
+	PacerMinSleep            fs.Duration          `config:"pacer_min_sleep"`
+	ChunkSize                fs.SizeSuffix        `config:"chunk_size"`
+	DeprecatedNextcloudChunk fs.SizeSuffix        `config:"nextcloud_chunk_size"`
+	ExcludeShares            bool                 `config:"owncloud_exclude_shares"`
+	ExcludeMounts            bool                 `config:"owncloud_exclude_mounts"`
+	UnixSocket               string               `config:"unix_socket"`
+	AuthRedirect             bool                 `config:"auth_redirect"`
 }
 
 // Fs represents a remote webdav
@@ -651,7 +663,15 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		f.hasOCSHA1 = true
 		f.canChunk = false
 		f.canTus = true
-		f.opt.ChunkSize = 10 * fs.Mebi
+		// Chunking can never be disabled for infinitescale - tus uploads
+		// are always chunked - so only warn when the user explicitly
+		// asked for 0, not on the default/unset (negative) value.
+		if f.opt.ChunkSize == 0 {
+			fs.Logf(nil, "WARNING: chunk_size cannot be disabled for infinitescale, using default of 10Mi")
+		}
+		if f.opt.ChunkSize <= 0 {
+			f.opt.ChunkSize = 10 * fs.Mebi
+		}
 	case "nextcloud":
 		f.precision = time.Second
 		f.useOCMtime = true
@@ -659,8 +679,20 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		f.hasOCSHA1 = true
 		f.canChunk = true
 
+		// nextcloud_chunk_size is deprecated in favour of chunk_size
+		if f.opt.DeprecatedNextcloudChunk >= 0 {
+			if f.opt.ChunkSize >= 0 {
+				return errors.New("only one of 'chunk_size' and the deprecated 'nextcloud_chunk_size' may be set")
+			}
+			fs.Logf(nil, "WARNING: nextcloud_chunk_size is deprecated - use chunk_size instead")
+			f.opt.ChunkSize = f.opt.DeprecatedNextcloudChunk
+		}
+
+		if f.opt.ChunkSize < 0 {
+			f.opt.ChunkSize = 10 * fs.Mebi
+		}
 		if f.opt.ChunkSize == 0 {
-			fs.Logf(nil, "Chunked uploads are disabled because nextcloud_chunk_size is set to 0")
+			fs.Logf(nil, "Chunked uploads are disabled because chunk_size is set to 0")
 		} else {
 			chunksUploadURL, err := f.getChunksUploadURL()
 			if err != nil {

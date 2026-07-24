@@ -389,7 +389,8 @@ any space in Infinite Scale, if the display was enabled in the personal
 settings of the user through a checkbox there.
 
 Infinite Scale works with the chunking [tus](https://tus.io) upload protocol.
-The chunk size is currently fixed 10 MB.
+The chunk size defaults to 10 MB and can be changed with the
+[--webdav-chunk-size](#--webdav-chunk-size) option.
 
 ### Sharepoint Online
 
