@@ -2970,6 +2970,42 @@ Using this flag on a sync operation without also using `--update` would cause
 all files modified at any time other than the last upload time to be uploaded
 again, which is probably not what you want.
 
+### --use-snapshot NEVER|ATTEMPT|ALWAYS
+
+Some backends allow the creation of point-in-time snapshots of data. If this
+option is enabled on a backend that supports these snapshots, rclone can use
+this feature to copy or sync files from a snapshot instead of the live data.
+This is useful when syncing files that could be modified during an operation,
+such as with long-running operations or frequently updated data. Without this
+option, such an operation might fail if relevant files are locked exclusively,
+or could lead to corrupted data being saved. Once an operation involving a
+snapshot is completed, the snapshot is removed automatically.
+
+`NEVER` never creates snapshots, even on a platform that supports them. This
+is the default.
+
+`ATTEMPT` creates snapshots whenever possible, but proceeds without them if
+snapshot creation fails.
+
+`ALWAYS` always creates snapshots, and ends the operation if snapshot creation
+fails.
+
+On Windows, rclone uses [VSS](https://learn.microsoft.com/en-us/windows-server/storage/file-server/volume-shadow-copy-service)
+to create and manage snapshots. This option serves as a replacement for
+[using rclone with an external script](https://github.com/rclone/rclone/wiki/How-to-enable-VSS-for-rclone)
+to achieve the same behavior. To use VSS, rclone must be run with administrator
+privileges. In case rclone cannot clean up snapshots after use (e.g. if the
+operation is stopped early or crashes), the user should remove them manually to
+avoid accumulating unused snapshots. For more information and examples on
+managing VSS snapshots, see the `vssadmin delete shadows` [documentation](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/vssadmin-delete-shadows)
+and the `vssadmin list shadows` [documentation](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/vssadmin-list-shadows).
+
+Other platforms are not currently supported.
+
+Using this option with `rclone move` or other operations that delete source
+data is not supported, as snapshots may not directly connect to the original
+files once they are created, and they may be read-only.
+
 ### -v, -vv, --verbose
 
 With `-v` rclone will tell you about each file that is transferred and

@@ -411,6 +411,9 @@ type Fs struct {
 	// do os.Lstat or os.Stat
 	lstat        func(name string) (os.FileInfo, error)
 	objectMetaMu sync.RWMutex // global lock for Object metadata
+
+	// if this Fs represents a snapshot, this cleans up the underlying snapshot data
+	snapshotCleanup func(ctx context.Context) error
 }
 
 // Object represents a local filesystem object
@@ -901,6 +904,22 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		}
 	}
 	return err
+}
+
+// CreateSnapshot creates a point-in-time snapshot of a directory, if possible
+func (f *Fs) CreateSnapshot(ctx context.Context) (fs.Fs, error) {
+	return f.createSnapshot(ctx)
+}
+
+// Shutdown the backend, closing any background tasks and any
+// cached connections.
+func (f *Fs) Shutdown(ctx context.Context) error {
+	if f.snapshotCleanup != nil {
+		if err := f.snapshotCleanup(ctx); err != nil {
+			return fmt.Errorf("cleaning up snapshot: %v", err)
+		}
+	}
+	return nil
 }
 
 // Precision of the file system
@@ -1877,18 +1896,19 @@ func (d *Directory) Hash() {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs              = &Fs{}
-	_ fs.PutStreamer     = &Fs{}
-	_ fs.Mover           = &Fs{}
-	_ fs.DirMover        = &Fs{}
-	_ fs.Commander       = &Fs{}
-	_ fs.OpenWriterAter  = &Fs{}
-	_ fs.DirSetModTimer  = &Fs{}
-	_ fs.MkdirMetadataer = &Fs{}
-	_ fs.Object          = &Object{}
-	_ fs.Metadataer      = &Object{}
-	_ fs.SetMetadataer   = &Object{}
-	_ fs.Directory       = &Directory{}
-	_ fs.SetModTimer     = &Directory{}
-	_ fs.SetMetadataer   = &Directory{}
+	_ fs.Fs                = &Fs{}
+	_ fs.PutStreamer       = &Fs{}
+	_ fs.Mover             = &Fs{}
+	_ fs.DirMover          = &Fs{}
+	_ fs.Commander         = &Fs{}
+	_ fs.OpenWriterAter    = &Fs{}
+	_ fs.DirSetModTimer    = &Fs{}
+	_ fs.MkdirMetadataer   = &Fs{}
+	_ fs.CreateSnapshotter = &Fs{}
+	_ fs.Object            = &Object{}
+	_ fs.Metadataer        = &Object{}
+	_ fs.SetMetadataer     = &Object{}
+	_ fs.Directory         = &Directory{}
+	_ fs.SetModTimer       = &Directory{}
+	_ fs.SetMetadataer     = &Directory{}
 )

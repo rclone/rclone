@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"sort"
 	"strings"
@@ -1378,6 +1379,166 @@ func TestCopyDeleteBefore(t *testing.T) {
 
 	r.CheckRemoteItems(t, file1, file2)
 	r.CheckLocalItems(t, file2)
+}
+
+// Test syncing a file using snapshots
+func testSyncWithSnapshot(ctx context.Context, t *testing.T, useLockedFile, expectErr bool) {
+	accounting.GlobalStats().ResetCounters()
+	r := fstest.NewRun(t)
+	file1 := r.WriteFile("snapshot-potato", "Snapshot Potato Content", t1)
+	r.CheckLocalItems(t, file1)
+	r.Mkdir(ctx, r.Fremote)
+
+	createSnap := r.Flocal.Features().CreateSnapshot
+	if createSnap == nil {
+		// Note: some platforms (e.g. local Linux) will have CreateSnapshot defined but not actually support snapshots,
+		// so this check doesn't catch everything
+		t.Skip("snapshots not supported on this platform")
+	}
+	// Wrap the actual snapshot creation function to add a usage counter
+	snapshots := 0
+	r.Flocal.Features().CreateSnapshot = func(ctx context.Context) (fs.Fs, error) {
+		snapshots++
+		return createSnap(ctx)
+	}
+
+	// Spawn a process that attempts to lock the file of interest.
+	// This may only work on Windows because of how UNIX handles file locking.
+	var cleanupLockHelper func()
+	if useLockedFile {
+		filePath := filepath.Join(r.LocalName, file1.Path)
+		cleanupLockHelper = createExclusiveFileLock(t, filePath)
+	}
+
+	// Perform the sync (which includes removing the snapshot)
+	ctx = predictDstFromLogger(ctx)
+
+	if useLockedFile {
+		// todo(maxgreen01) remove
+		t.Log("making sure the file is still locked...")
+		filePath := filepath.Join(r.LocalName, file1.Path)
+		err := os.Rename(filePath, filePath)
+		assert.Error(t, err, "file should still be locked by helper process")
+	}
+
+	err := Sync(ctx, r.Fremote, r.Flocal, false)
+	t.Logf("%s sync just finished", time.Now().Format(time.StampNano))
+
+	// Release the lock immediately after sync so files can be cleaned up
+	if cleanupLockHelper != nil {
+		cleanupLockHelper()
+	}
+
+	if accounting.Stats(ctx).Errored() {
+		t.Logf("%s sync failed with error: %v", time.Now().Format(time.StampNano), accounting.Stats(ctx).GetLastError())
+	} else {
+		t.Logf("%s sync completed with error: %v", time.Now().Format(time.StampNano), err)
+	}
+
+	if errors.Is(err, os.ErrPermission) {
+		t.Skip("insufficient permissions to use snapshots")
+
+	} else if expectErr {
+		assert.Error(t, err)
+		assert.Equal(t, snapshots, 0)
+		r.CheckRemoteItems(t)
+
+	} else {
+		assert.NoError(t, err)
+
+		switch fs.GetConfig(ctx).UseSnapshotMode {
+		case fs.UseSnapshotModeNever:
+			assert.Equal(t, snapshots, 0)
+		case fs.UseSnapshotModeAttempt, fs.UseSnapshotModeAlways:
+			assert.Equal(t, snapshots, 1)
+		}
+
+		testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
+		r.CheckRemoteItems(t, file1)
+	}
+
+}
+
+// Entry point only used in starting a separate child process to lock a file for testing purposes
+func TestFileLockHelper(t *testing.T) {
+	if os.Getenv("IS_LOCK_HOLDER") != "1" {
+		t.Skip()
+	}
+	filePath := os.Getenv("FILE_TO_LOCK")
+	if filePath == "" {
+		t.Skip()
+	}
+	holdExclusiveFileLock(t, filePath)
+}
+
+// Test syncing files using snapshots
+func TestSyncWithSnapshot(t *testing.T) {
+	// Do a preliminary check to make sure snapshots are implemented and
+	// the necessary permissions are available before running the
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	r.Mkdir(ctx, r.Fremote)
+	createSnap := r.Flocal.Features().CreateSnapshot
+	if createSnap != nil {
+		_, err := createSnap(ctx)
+		switch {
+		case errors.Is(err, fs.ErrorNotImplemented):
+			t.Skip("snapshots not supported on this platform")
+		case errors.Is(err, os.ErrPermission):
+			t.Skip("insufficient permissions to use snapshots")
+		}
+	}
+	// Clean up the preliminary Run immediately to avoid potential interference with the real tests
+	r.Finalise()
+
+	for _, test := range []struct {
+		name          string
+		mode          fs.UseSnapshotMode
+		useLockedFile bool
+		expectErr     bool
+	}{
+		// regular behavior -- should always pass
+		{name: "No Lock Snapshot Never", mode: fs.UseSnapshotModeNever, expectErr: false},
+		{name: "No Lock Snapshot Attempt", mode: fs.UseSnapshotModeAttempt, expectErr: false},
+		{name: "No Lock Snapshot Always", mode: fs.UseSnapshotModeAlways, expectErr: false},
+
+		// syncing locked files should succeed when using snapshots, but fail without them
+		{name: "Yes Lock Snapshot Never", mode: fs.UseSnapshotModeNever, useLockedFile: true, expectErr: true},
+		{name: "Yes Lock Snapshot Attempt", mode: fs.UseSnapshotModeAttempt, useLockedFile: true, expectErr: false},
+		{name: "Yes Lock Snapshot Always", mode: fs.UseSnapshotModeAlways, useLockedFile: true, expectErr: false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			ctx := context.Background()
+			ctx, ci := fs.AddConfig(ctx)
+			ci.UseSnapshotMode = test.mode
+
+			testSyncWithSnapshot(ctx, t, test.useLockedFile, test.expectErr)
+		})
+	}
+}
+
+// Test that file-by-file Move isn't compatible with snapshot because it modifies source data
+func TestMoveWithSnapshot(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	ci.UseSnapshotMode = fs.UseSnapshotModeAlways
+	r := fstest.NewRun(t)
+	file1 := r.WriteFile("snapshot-potato", "Snapshot Potato Content", t1)
+	r.CheckLocalItems(t, file1)
+	r.Mkdir(ctx, r.Fremote)
+
+	createSnap := r.Flocal.Features().CreateSnapshot
+	if createSnap == nil {
+		t.Skip("snapshots not supported on this platform")
+	}
+	r.Fremote.Features().Disable("DirMove") // force one-by-one file move
+
+	err := MoveDir(ctx, r.Fremote, r.Flocal, false, false)
+	if errors.Is(err, fs.ErrorNotImplemented) {
+		t.Skip("snapshots not supported on this platform")
+	}
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "snapshot")
 }
 
 // Test with exclude
