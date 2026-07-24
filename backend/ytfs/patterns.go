@@ -85,6 +85,14 @@ var patterns = dirPatterns{
 			return f.listChannels(ctx, prefix)
 		},
 	},
+	{ // metadata files: .nfo, -thumb.jpg, .srt, .chapters.xml (before dir to avoid shadowing)
+		re:     `^channels/([^/]+)/([^/]+\.(nfo|chapters\.xml|srt))$`,
+		isFile: true,
+	},
+	{ // metadata thumb files (before dir to avoid shadowing)
+		re:     `^channels/([^/]+)/([^/]+-thumb\.jpg)$`,
+		isFile: true,
+	},
 	{ // channel video file (before channel dir to avoid shadowing)
 		re:     `^channels/([^/]+)/([^/]+)$`,
 		isFile: true,
@@ -100,6 +108,14 @@ var patterns = dirPatterns{
 		toEntries: func(ctx context.Context, f lister, prefix string, match []string) (fs.DirEntries, error) {
 			return f.listPlaylists(ctx, prefix)
 		},
+	},
+	{ // metadata files: .nfo, -thumb.jpg, .srt, .chapters.xml (before dir to avoid shadowing)
+		re:     `^playlists/([^/]+)/([^/]+\.(nfo|chapters\.xml|srt))$`,
+		isFile: true,
+	},
+	{ // metadata thumb files (before dir to avoid shadowing)
+		re:     `^playlists/([^/]+)/([^/]+-thumb\.jpg)$`,
+		isFile: true,
 	},
 	{ // playlist video file (before playlist dir to avoid shadowing)
 		re:     `^playlists/([^/]+)/([^/]+)$`,
