@@ -53,6 +53,8 @@ type Options struct {
 	Namespace            string               `config:"namespace"`
 	Region               string               `config:"region"`
 	Endpoint             string               `config:"endpoint"`
+	ListStart            string               `config:"list_start"`
+	ListCheckpointFile   string               `config:"list_checkpoint_file"`
 	Enc                  encoder.MultiEncoder `config:"encoding"`
 	ConfigFile           string               `config:"config_file"`
 	ConfigProfile        string               `config:"config_profile"`
@@ -118,6 +120,31 @@ func newOptions() []fs.Option {
 		Name:     "endpoint",
 		Help:     "Endpoint for Object storage API.\n\nLeave blank to use the default endpoint for the region.",
 		Required: false,
+	}, {
+		Name: "list_start",
+		Help: `Start listing from this object name marker.
+
+			This is a manual override for the initial OCI ListObjects Start value.
+			Typically this should be an object name previously returned as NextStartWith.
+
+			If the marker is invalid or missing, listing fails with a structured error.
+			If --oos-list-checkpoint-file applies, it takes precedence and this option is ignored.`,
+		Advanced: true,
+	}, {
+		Name: "list_checkpoint_file",
+		Help: `Path to a local checkpoint file used during listing.
+
+			Rclone reads this file before listing and updates it after each listed page.
+			Pass it back to rclone directly rather than converting it into --oos-list-start.
+
+			The checkpoint includes the resume marker plus listing scope
+			(bucket/prefix/delimiter). Scope mismatch or invalid checkpoint state causes
+			listing to fail with a structured error. Version mismatches are loaded
+			compatibly when possible.
+
+			If both this option and --oos-list-start are set, a matching checkpoint takes
+			precedence. An empty checkpoint marker means "resume from the beginning".`,
+		Advanced: true,
 	}, {
 		Name:     "config_file",
 		Help:     "Path to OCI config file",
