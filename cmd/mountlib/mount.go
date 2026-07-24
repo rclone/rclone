@@ -366,6 +366,10 @@ func NewMountCommand(commandName string, hidden bool, mount MountFn) *cobra.Comm
 
 // Mount the remote at mountpoint
 func (m *MountPoint) Mount() (mountDaemon *os.Process, err error) {
+	return m.mount(context.Background())
+}
+
+func (m *MountPoint) mount(ctx context.Context) (mountDaemon *os.Process, err error) {
 
 	// Ensure sensible defaults
 	m.SetVolumeName(m.MountOpt.VolumeName)
@@ -379,7 +383,10 @@ func (m *MountPoint) Mount() (mountDaemon *os.Process, err error) {
 		}
 	}
 
-	m.VFS = vfs.New(context.Background(), m.Fs, &m.VFSOpt)
+	m.VFS, err = vfs.NewWithError(ctx, m.Fs, &m.VFSOpt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create VFS: %w", err)
+	}
 
 	var actualMountpoint string
 	m.ErrChan, m.UnmountFn, actualMountpoint, err = m.MountFn(m.VFS, m.MountPoint, &m.MountOpt)

@@ -34,6 +34,7 @@ import (
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
 )
@@ -94,6 +95,15 @@ type archive struct {
 	f        fs.Fs             // the archive Fs, may be nil
 }
 
+var getArchiveFilter = sync.OnceValues(func() (*filter.Filter, error) {
+	return filter.NewFilter(&filter.Options{
+		MinAge:  fs.DurationOff,
+		MaxAge:  fs.DurationOff,
+		MinSize: -1,
+		MaxSize: -1,
+	})
+})
+
 // If remote is an archive then return it otherwise return nil
 func findArchive(remote string) *archive {
 	// FIXME use something faster than linear search?
@@ -144,7 +154,11 @@ func (a *archive) init(ctx context.Context, f fs.Fs) (fs.Fs, error) {
 	if a.f != nil {
 		return a.f, nil
 	}
-	newFs, err := a.archiver.New(ctx, f, a.remote, a.prefix, a.root)
+	noFilter, err := getArchiveFilter()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create archive filter: %w", err)
+	}
+	newFs, err := a.archiver.New(filter.ReplaceConfig(ctx, noFilter), f, a.remote, a.prefix, a.root)
 	if err != nil && err != fs.ErrorIsFile {
 		return nil, fmt.Errorf("failed to create archive %q: %w", a.remote, err)
 	}
