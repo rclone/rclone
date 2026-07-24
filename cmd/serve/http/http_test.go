@@ -448,3 +448,51 @@ func TestRc(t *testing.T) {
 		"vfs_cache_mode": "off",
 	})
 }
+
+func TestDisableDirList(t *testing.T) {
+	ctx := context.Background()
+	f, err := fs.NewFs(ctx, "testdata/files")
+	require.NoError(t, err)
+
+	opts := Options{
+		HTTP:           libhttp.DefaultCfg(),
+		DisableDirList: true,
+	}
+	opts.HTTP.ListenAddr = []string{testBindAddress}
+	if proxy.Opt.AuthProxy == "" {
+		opts.Auth.BasicUser = testUser
+		opts.Auth.BasicPass = testPass
+	}
+
+	s, err := newServer(ctx, f, &opts, &vfscommon.Opt, &proxy.Opt)
+	require.NoError(t, err, "failed to start server")
+	go func() {
+		_ = s.Serve()
+	}()
+	defer func() { assert.NoError(t, s.server.Shutdown()) }()
+
+	urls := s.server.URLs()
+	require.Len(t, urls, 1)
+	testURL := urls[0]
+
+	pause := time.Millisecond
+	for range 10 {
+		resp, err := http.Head(testURL)
+		if err == nil {
+			_ = resp.Body.Close()
+			break
+		}
+		time.Sleep(pause)
+		pause *= 2
+	}
+
+	req, err := http.NewRequest("GET", testURL, nil)
+	require.NoError(t, err)
+	req.SetBasicAuth(testUser, testPass)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer func() { _ = resp.Body.Close() }()
+
+	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+}

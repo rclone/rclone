@@ -36,6 +36,10 @@ import (
 
 // OptionsInfo describes the Options in use
 var OptionsInfo = fs.Options{{
+	Name:    "disable_dir_list",
+	Default: false,
+	Help:    "Disable HTML directory list on GET request for a directory",
+}, {
 	Name:    "disable_zip",
 	Default: false,
 	Help:    "Disable zip download of directories",
@@ -46,10 +50,11 @@ var OptionsInfo = fs.Options{{
 
 // Options required for http server
 type Options struct {
-	Auth       libhttp.AuthConfig
-	HTTP       libhttp.Config
-	Template   libhttp.TemplateConfig
-	DisableZip bool `config:"disable_zip"`
+	Auth           libhttp.AuthConfig
+	HTTP           libhttp.Config
+	Template       libhttp.TemplateConfig
+	DisableDirList bool `config:"disable_dir_list"`
+	DisableZip     bool `config:"disable_zip"`
 }
 
 // DefaultOpt is the default values used for Options
@@ -268,6 +273,10 @@ func (s *HTTP) handler(w http.ResponseWriter, r *http.Request) {
 
 // serveDir serves a directory index at dirRemote
 func (s *HTTP) serveDir(w http.ResponseWriter, r *http.Request, dirRemote string) {
+	if s.opt.DisableDirList {
+		http.Error(w, "Directory listing disabled", http.StatusForbidden)
+		return
+	}
 	ctx := r.Context()
 	VFS, err := s.getVFS(r.Context())
 	if err != nil {
