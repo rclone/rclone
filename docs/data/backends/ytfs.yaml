@@ -1,0 +1,16 @@
+backend: ytfs
+name: YouTube
+tier: unstable
+maintainers: None
+features_score: 0
+integration_tests: Failing
+data_integrity: Other
+performance: Low
+adoption: None
+docs: Full
+security: High
+virtual: true
+remote: 'TestYtfs:'
+features: []
+hashes: []
+precision: -1

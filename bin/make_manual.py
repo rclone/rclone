@@ -100,6 +100,7 @@ docs = [
     "union.md",
     "webdav.md",
     "yandex.md",
+    "ytfs.md",
     "zoho.md",
 
     "local.md",

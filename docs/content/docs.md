@@ -98,6 +98,7 @@ See the following for detailed instructions for
 - [Uloz.to](/ulozto/)
 - [WebDAV](/webdav/)
 - [Yandex Disk](/yandex/)
+- [YouTube](/ytfs/)
 - [Zoho WorkDrive](/zoho/)
 - [The local filesystem](/local/)
 
