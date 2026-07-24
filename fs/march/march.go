@@ -66,9 +66,9 @@ type Marcher interface {
 // Note: this will flag filter-aware backends on the source side
 func (m *March) init(ctx context.Context) {
 	ci := fs.GetConfig(ctx)
-	m.srcListDir = m.makeListDir(ctx, m.Fsrc, m.SrcIncludeAll, m.srcKey)
+	m.srcListDir = m.makeListDir(ctx, m.Fsrc, m.SrcIncludeAll, m.srcKey, true)
 	if !m.NoTraverse {
-		m.dstListDir = m.makeListDir(ctx, m.Fdst, m.DstIncludeAll, m.dstKey)
+		m.dstListDir = m.makeListDir(ctx, m.Fdst, m.DstIncludeAll, m.dstKey, false)
 	}
 	// Now create the matching transform
 	// ..normalise the UTF8 first
@@ -129,11 +129,12 @@ func (m *March) dstKey(entry fs.DirEntry) string {
 // ensure listings are cancelled when the march context is cancelled.
 //
 // Note: this will optionally flag filter-aware backends!
-func (m *March) makeListDir(ctx context.Context, f fs.Fs, includeAll bool, keyFn list.KeyFn) listDirFn {
+func (m *March) makeListDir(ctx context.Context, f fs.Fs, includeAll bool, keyFn list.KeyFn, isSource bool) listDirFn {
 	ci := fs.GetConfig(ctx)
 	fi := filter.GetConfig(ctx)
 	if !(ci.UseListR && f.Features().ListR != nil) && // !--fast-list active and
-		!(ci.NoTraverse && fi.HaveFilesFrom()) { // !(--files-from and --no-traverse)
+		!(ci.NoTraverse && fi.HaveFilesFrom()) && // !(--files-from and --no-traverse)
+		!(isSource && fi.Opt.FilesFromStrict) { 
 		return func(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
 			dirCtx := filter.SetUseFilter(ctx, f.Features().FilterAware && !includeAll) // make filter-aware backends constrain List
 			return list.DirSortedFn(dirCtx, f, includeAll, dir, callback, keyFn)
