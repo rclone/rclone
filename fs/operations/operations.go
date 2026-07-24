@@ -64,6 +64,13 @@ func CheckHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object) (equal b
 		return true, hash.None, nil
 	}
 	equal, ht, _, _, err = checkHashes(ctx, src, dst, common.GetOne())
+	// errNoHash means a common hash type exists but one object had no stored
+	// hash for it. Public callers (check, bisync, sync) treat that as a
+	// size-only match, so don't surface it as an error here; equal() inspects
+	// this case separately via checkHashes to warn under --checksum. See #9540.
+	if err == errNoHash {
+		err = nil
+	}
 	return equal, ht, err
 }
 
@@ -99,7 +106,7 @@ func checkHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object, ht hash.
 	})
 	err = g.Wait()
 	if err == errNoHash {
-		return true, hash.None, srcHash, dstHash, nil
+		return true, hash.None, srcHash, dstHash, errNoHash
 	}
 	if srcErr != nil {
 		err = fs.CountError(ctx, srcErr)
@@ -194,6 +201,7 @@ func sizeDiffers(ctx context.Context, src, dst fs.ObjectInfo) bool {
 }
 
 var checksumWarning sync.Once
+var emptyHashWarning sync.Once
 
 // options for equal function()
 type equalOpt struct {
@@ -261,20 +269,35 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 
 	// If checking checksum and not modtime
 	if opt.checkSum {
-		// Check the hash
-		same, ht, _ := CheckHashes(ctx, src, dst)
+		common := src.Fs().Hashes().Overlap(dst.Fs().Hashes())
+		if common.Count() == 0 {
+			// No hash type in common at all: fall back to size-only and warn
+			// once (existing behaviour).
+			checksumWarning.Do(func() {
+				fs.Logf(dst.Fs(), "--checksum is in use but the source and destination have no hashes in common; falling back to --size-only")
+			})
+			fs.Debugf(src, "Size of src and dst objects identical")
+			logger(ctx, Match, src, dst, nil)
+			return true
+		}
+		// A common hash type exists. Use the internal checkHashes so we can
+		// tell apart a real hash comparison from the case where one object has
+		// no stored hash for that type (errNoHash), e.g. a multipart/rcat
+		// upload to S3 whose ETag is not a plain MD5.
+		same, ht, _, _, err := checkHashes(ctx, src, dst, common.GetOne())
 		if !same {
 			fs.Debugf(src, "%v differ", ht)
 			logger(ctx, Differ, src, dst, nil)
 			return false
 		}
-		if ht == hash.None {
-			common := src.Fs().Hashes().Overlap(dst.Fs().Hashes())
-			if common.Count() == 0 {
-				checksumWarning.Do(func() {
-					fs.Logf(dst.Fs(), "--checksum is in use but the source and destination have no hashes in common; falling back to --size-only")
-				})
-			}
+		if errors.Is(err, errNoHash) {
+			// The size-only fall back is correct (re-uploading every streamed
+			// object on every run would be the wrong default), but without
+			// this it would be silent: warn once so the operator is not misled
+			// into thinking a checksum check actually happened. See #9540.
+			emptyHashWarning.Do(func() {
+				fs.Logf(dst.Fs(), "--checksum is in use but the source or destination has no stored hash for some objects (e.g. multipart/rcat uploads); falling back to --size-only for those objects")
+			})
 			fs.Debugf(src, "Size of src and dst objects identical")
 		} else {
 			fs.Debugf(src, "Size and %v of src and dst objects identical", ht)
