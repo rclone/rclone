@@ -63,6 +63,7 @@ func MimeType(ctx context.Context, o DirEntry) (mimeType string) {
 			return mimeType
 		}
 	}
+
 	return MimeTypeFromName(o.Remote())
 }
 
