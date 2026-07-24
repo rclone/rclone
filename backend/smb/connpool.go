@@ -78,6 +78,7 @@ type conn struct {
 	smbSession *smb2.Session
 	smbShare   *smb2.Share
 	shareName  string
+	pooledAt   time.Time // when this connection was returned to the pool
 }
 
 // Closes the connection
@@ -92,9 +93,15 @@ func (c *conn) close() (err error) {
 	return sessionLogoffErr
 }
 
-// True if it's closed
+// closed reports whether the connection is dead by sending an SMB Echo.
 func (c *conn) closed() bool {
 	return c.smbSession.Echo() != nil
+}
+
+// isClosed reports whether c is dead, using f.closed (which defaults
+// to (*conn).closed but can be overridden in tests).
+func (f *Fs) isClosed(c *conn) bool {
+	return f.closed(c)
 }
 
 // Show that we are using a SMB session
@@ -171,6 +178,14 @@ func (f *Fs) getConnection(ctx context.Context, share string) (c *conn, err erro
 	}
 	f.poolMu.Unlock()
 	if c != nil {
+		// Connections that have been idle in the pool for a long time
+		// may have died (TCP deadline expired). Check liveness via Echo
+		// outside the mutex to avoid serializing concurrent callers
+		// behind a network round-trip. If dead, discard and try again.
+		if !c.pooledAt.IsZero() && time.Since(c.pooledAt) > time.Duration(f.opt.IdleTimeout) && f.closed(c) {
+			fs.Debugf(f, "Discarding dead pooled SMB connection")
+			return f.getConnection(ctx, share)
+		}
 		return c, nil
 	}
 	err = f.pacer.Call(func() (bool, error) {
@@ -201,16 +216,15 @@ func (f *Fs) putConnection(pc **conn, err error) {
 	if err != nil {
 		// If not a regular SMB error then check the connection
 		if !(errors.Is(err, os.ErrNotExist) || errors.Is(err, os.ErrExist) || errors.Is(err, os.ErrPermission)) {
-			echoErr := c.smbSession.Echo()
-			if echoErr != nil {
-				fs.Debugf(f, "Connection failed, closing: %v", echoErr)
-				_ = c.close()
+			if f.closed(c) {
+				fs.Debugf(f, "Connection failed, discarding: %v", err)
 				return
 			}
 			fs.Debugf(f, "Connection OK after error: %v", err)
 		}
 	}
 
+	c.pooledAt = time.Now()
 	f.poolMu.Lock()
 	f.pool = append(f.pool, c)
 	if f.opt.IdleTimeout > 0 {
@@ -240,7 +254,7 @@ func (f *Fs) drainPool(ctx context.Context) (err error) {
 	g, _ := errgroup.WithContext(ctx)
 	for i, c := range f.pool {
 		g.Go(func() (err error) {
-			if !c.closed() {
+			if !f.closed(c) {
 				err = c.close()
 			}
 			f.pool[i] = nil
