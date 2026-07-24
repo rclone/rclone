@@ -188,3 +188,8 @@ type BatchCreateResponse struct {
 type BatchRemoveItems struct {
 	MediaItemIDs []string `json:"mediaItemIds"`
 }
+
+// BatchAddItems is for adding items to an album
+type BatchAddItems struct {
+	MediaItemIDs []string `json:"mediaItemIds"`
+}
