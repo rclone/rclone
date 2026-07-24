@@ -91,6 +91,9 @@ func init() {
 				Value: "infinitescale",
 				Help:  "ownCloud Infinite Scale",
 			}, {
+				Value: "opencloud",
+				Help:  "OpenCloud",
+			}, {
 				Value: "sharepoint",
 				Help:  "Sharepoint Online, authenticated by Microsoft account",
 			}, {
@@ -643,10 +646,10 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		f.propsetMtime = true
 		f.hasOCMD5 = true
 		f.hasOCSHA1 = true
-	case "infinitescale":
+	case "opencloud", "infinitescale":
 		f.precision = time.Second
 		f.useOCMtime = true
-		f.propsetMtime = true
+		f.propsetMtime = false
 		f.hasOCMD5 = false
 		f.hasOCSHA1 = true
 		f.canChunk = false
@@ -859,7 +862,7 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 		}
 
 		// Check OK
-		if !item.Props.StatusOK() {
+		if !(item.Props.StatusOK() || item.Props.Code() == 425) {
 			fs.Debugf(remote, "Ignoring item with bad status %q", item.Props.Status)
 			continue
 		}
@@ -1559,7 +1562,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return fmt.Errorf("Update mkParentDir failed: %w", err)
 	}
 
-	if o.fs.canTus { // supports the tus upload protocol, ie. InfiniteScale
+	if o.fs.canTus && src.Size() != 0 { // supports the tus upload protocol, ie. OpenCloud and InfiniteScale
 		fs.Debugf(src, "Update will use the tus protocol to upload")
 		contentType := fs.MimeType(ctx, src)
 		err = o.updateViaTus(ctx, in, contentType, src, options...)
