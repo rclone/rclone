@@ -39,6 +39,7 @@ RUN echo "**** Install Dependencies ****" && \
     apk add --no-cache \
         ca-certificates \
         fuse3 \
+        tini \
         tzdata && \
     echo "Enable user_allow_other in fuse" && \
     echo "user_allow_other" >> /etc/fuse.conf
@@ -47,7 +48,7 @@ COPY --from=builder /go/src/github.com/rclone/rclone/rclone /usr/local/bin/
 
 RUN addgroup -g 1009 rclone && adduser -u 1009 -Ds /bin/sh -G rclone rclone
 
-ENTRYPOINT [ "rclone" ]
+ENTRYPOINT [ "/sbin/tini", "--", "rclone" ]
 
 WORKDIR /data
 ENV XDG_CONFIG_HOME=/config
