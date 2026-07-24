@@ -155,10 +155,16 @@ update:
 tidy:
 	go mod tidy
 
-doc:	rclone.1 MANUAL.html MANUAL.txt rcdocs commanddocs
+doc:	rclone.1 MANUAL.html MANUAL.txt rcdocs commanddocs manpages
 
 rclone.1:	MANUAL.md
 	pandoc -s --from markdown-smart --to man MANUAL.md -o rclone.1
+
+manpages: rclone rclone.1
+	-@rmdir -p '$$HOME/.config/rclone'
+	XDG_CACHE_HOME="" XDG_CONFIG_HOME="" HOME="\$$HOME" USER="\$$USER" rclone genmanpages --config=/notfound man/
+	cp -a rclone.1 man/rclone.1
+	@[ ! -e '$$HOME' ] || (echo 'Error: created unwanted directory named $$HOME' && exit 1)
 
 MANUAL.md:	bin/make_manual.py docs/content/*.md commanddocs backenddocs rcdocs
 	./bin/make_manual.py
@@ -185,14 +191,16 @@ backenddocs: rclone bin/make_backend_docs.py
 rcdocs: rclone
 	bin/make_rc_docs.sh
 
-install: rclone
+install: rclone manpages
 	install -d ${DESTDIR}/usr/bin
 	install ${GOPATH}/bin/rclone ${DESTDIR}/usr/bin
+	install -d ${DESTDIR}/usr/share/man/man1
+	install -m 644 man/*.1 ${DESTDIR}/usr/share/man/man1/
 
 clean:
 	go clean ./...
 	find . -name \*~ | xargs -r rm -f
-	rm -rf build docs/public
+	rm -rf build docs/public man/
 	rm -f rclone fs/operations/operations.test fs/sync/sync.test fs/test_all.log test.log
 
 website:

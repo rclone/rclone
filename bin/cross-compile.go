@@ -161,6 +161,9 @@ func buildZip(dir string) string {
 	run("cp", "-a", "../MANUAL.txt", filepath.Join(dir, "README.txt"))
 	run("cp", "-a", "../MANUAL.html", filepath.Join(dir, "README.html"))
 	run("cp", "-a", "../rclone.1", dir)
+	if _, err := os.Stat("../man"); err == nil {
+		run("cp", "-a", "../man", dir)
+	}
 	if *gitLog != "" {
 		run("cp", "-a", *gitLog, dir)
 	}
