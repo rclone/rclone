@@ -1,6 +1,7 @@
 package vfs
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -869,6 +870,20 @@ func (d *Dir) statMetadata(leaf, baseLeaf string) (metaNode Node, err error) {
 // returns a custom error if directory on a case-insensitive file system
 // contains files with names that differ only by case.
 func (d *Dir) stat(leaf string) (Node, error) {
+	ci := fs.GetConfig(d.vfs.ctx)
+	normUnicode := !ci.NoUnicodeNormalization
+	normCase := ci.IgnoreCaseSync || d.vfs.Opt.CaseInsensitive
+
+	// Lazy dir read: use NewObject (e.g. HeadObject for S3) instead of listing
+	// the whole directory. Disabled whenever any form of name normalization is
+	// active (case folding via --vfs-case-insensitive or --ignore-case-sync,
+	// unicode normalization unless --no-unicode-normalization is set) because
+	// those features need the full directory listing to find matching names.
+	// Also disabled when --vfs-block-norm-dupes is set.
+	if d.vfs.Opt.LazyDirRead && !normCase && !normUnicode && !d.vfs.Opt.BlockNormDupes {
+		return d.statLazy(leaf)
+	}
+
 	d.mu.Lock()
 	err := d._readDir()
 	if err != nil {
@@ -891,9 +906,6 @@ func (d *Dir) stat(leaf string) (Node, error) {
 		}
 	}
 
-	ci := fs.GetConfig(d.vfs.ctx)
-	normUnicode := !ci.NoUnicodeNormalization
-	normCase := ci.IgnoreCaseSync || d.vfs.Opt.CaseInsensitive
 	if !ok && (normUnicode || normCase) {
 		leafNormalized := operations.ToNormal(leaf, normUnicode, normCase) // this handles both case and unicode normalization
 		d.mu.Lock()
@@ -916,6 +928,80 @@ func (d *Dir) stat(leaf string) (Node, error) {
 		return nil, ENOENT
 	}
 	return item, nil
+}
+
+// statLazy looks up a single item using the backend's NewObject (e.g. S3
+// HeadObject) rather than listing the full directory. It is used when
+// --vfs-lazy-dir-read is set.
+//
+// The lookup order is:
+//  1. Items already in the directory cache — returned without any network call.
+//  2. NewObject — a single object lookup (HeadObject for S3).
+//  3. A bounded List call to detect virtual (prefix-only) directories.
+//
+// Items found via NewObject are added to d.items without updating d.read, so
+// subsequent lookups of the same leaf are served from cache. A full _readDir()
+// is still performed when ReadDirAll is called.
+func (d *Dir) statLazy(leaf string) (Node, error) {
+	// 1. Check the existing cache first.
+	d.mu.Lock()
+	item, ok := d.items[leaf]
+	d.mu.Unlock()
+	if ok {
+		return item, nil
+	}
+
+	// Look for a metadata file before going to the network.
+	if baseLeaf, found := d.vfs.isMetadataFile(leaf); found {
+		node, err := d.statMetadata(leaf, baseLeaf)
+		if err != nil {
+			return nil, err
+		}
+		d.addObject(node)
+		return node, nil
+	}
+
+	// 2. Try a direct object lookup — HeadObject for S3.
+	fullPath := path.Join(d.path, leaf)
+	o, err := d.f.NewObject(context.TODO(), fullPath)
+	if err == nil {
+		// Found as a regular file. Create the node and cache it.
+		node := newFile(d, d.path, o, leaf)
+		d.mu.Lock()
+		// Another goroutine may have populated this in the meantime.
+		if existing, ok := d.items[leaf]; ok {
+			d.mu.Unlock()
+			return existing, nil
+		}
+		d.items[leaf] = node
+		d.mu.Unlock()
+		fs.Debugf(d.path, "lazy stat: found %q via NewObject", leaf)
+		return node, nil
+	}
+	if err != fs.ErrorObjectNotFound && err != fs.ErrorNotAFile && err != fs.ErrorIsDir {
+		return nil, err
+	}
+
+	// 3. Not found as a file. Check whether the leaf is a virtual directory by
+	// doing a bounded list. This issues a ListObjectsV2 with prefix="leaf/" and
+	// stops after the first result — it does NOT list the whole directory.
+	entries, listErr := d.f.List(context.TODO(), fullPath)
+	if listErr == nil && len(entries) > 0 {
+		// The leaf exists as a directory prefix. Find or create the Dir node.
+		d.mu.Lock()
+		if existing, ok := d.items[leaf]; ok {
+			d.mu.Unlock()
+			return existing, nil
+		}
+		entry := fs.NewDir(fullPath, time.Now())
+		dir := newDir(d.vfs, d.f, d, entry)
+		d.items[leaf] = dir
+		d.mu.Unlock()
+		fs.Debugf(d.path, "lazy stat: found %q as directory via List", leaf)
+		return dir, nil
+	}
+
+	return nil, ENOENT
 }
 
 // Check to see if a directory is empty
