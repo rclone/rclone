@@ -285,7 +285,8 @@ func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 		// Rename in the cache
 		if d.vfs.cache != nil && d.vfs.cache.Exists(oldPath) {
 			if err := d.vfs.cache.Rename(oldPath, newPath, newObject); err != nil {
-				fs.Infof(f.Path(), "File.Rename failed in Cache: %v", err)
+				fs.Errorf(f.Path(), "File.Rename failed in Cache: %v", err)
+				return err
 			}
 		}
 		// Update the node with the new details

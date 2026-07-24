@@ -18,3 +18,11 @@ var OpenFile = os.OpenFile
 func IsReserved(path string) error {
 	return nil
 }
+
+// Rename renames (moves) oldPath to newPath, replacing newPath if it exists.
+//
+// On non-Windows platforms this is os.Rename, which already replaces the
+// destination and works when other handles have the file open.
+func Rename(oldPath, newPath string) error {
+	return os.Rename(oldPath, newPath)
+}
