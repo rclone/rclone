@@ -36,6 +36,7 @@ import (
 */
 
 const (
+	configRegion     = "region"
 	configAppleID    = "apple_id"
 	configPassword   = "password"
 	configClientID   = "client_id"
@@ -49,6 +50,7 @@ const (
 
 // Options defines the configuration for this backend
 type Options struct {
+	Region     string               `config:"region"`
 	AppleID    string               `config:"apple_id"`
 	Password   string               `config:"password"`
 	TrustToken string               `config:"trust_token"`
