@@ -13,9 +13,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rclone/rclone/backend/crypt"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
+	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fstest"
@@ -664,6 +668,106 @@ func TestRcDu(t *testing.T) {
 	assert.True(t, info.Total > info.Free)
 	assert.True(t, info.Total > info.Available)
 	assert.True(t, info.Free >= info.Available)
+}
+
+func TestRcCryptCheck(t *testing.T) {
+	ctx := context.Background()
+	r, call := rcNewRun(t, "operations/cryptcheck")
+	r.Mkdir(ctx, r.Fremote)
+
+	cryptName := "TestCryptRc:"
+	fcrypt, err := crypt.NewFs(ctx, "TestCryptRc", "", configmap.Simple{
+		"remote":              r.FremoteName,
+		"password":            obscure.MustObscure("test-password"),
+		"filename_encryption": "standard",
+		"filename_encoding":   "base32",
+	})
+	require.NoError(t, err)
+	cache.Put(cryptName, fcrypt)
+
+	writeCrypt := func(remote, contents string) {
+		src := object.NewStaticObjectInfo(remote, t1, int64(len(contents)), true, nil, nil)
+		_, err := fcrypt.Put(ctx, strings.NewReader(contents), src)
+		require.NoError(t, err)
+	}
+
+	file1 := r.WriteFile("file1", "file1 contents", t1)
+	writeCrypt(file1.Path, "file1 contents")
+
+	out, err := call.Fn(ctx, rc.Params{
+		"srcFs": r.LocalName,
+		"dstFs": cryptName,
+		"match": true,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, &[]string{"file1"}, out["match"])
+	assert.Equal(t, r.Fremote.Hashes().GetOne().String(), out["hashType"])
+	assert.Equal(t, "OK", out["status"])
+	assert.Equal(t, true, out["success"])
+
+	cryptObject, err := fcrypt.NewObject(ctx, file1.Path)
+	require.NoError(t, err)
+	underlyingObject := cryptObject.(*crypt.Object).UnWrap()
+	corruptContents := strings.Repeat("\x00", int(underlyingObject.Size()))
+	corruptInfo := object.NewStaticObjectInfo(underlyingObject.Remote(), t1, int64(len(corruptContents)), true, nil, nil)
+	require.NoError(t, underlyingObject.Update(ctx, strings.NewReader(corruptContents), corruptInfo))
+
+	out, err = call.Fn(ctx, rc.Params{
+		"srcFs": r.LocalName,
+		"dstFs": cryptName,
+		"error": true,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, &[]string{"file1"}, out["error"])
+	assert.Equal(t, "1 errors while checking", out["status"])
+	assert.Equal(t, false, out["success"])
+	writeCrypt(file1.Path, "file1 contents")
+
+	file2 := r.WriteFile("file2", "file2 contents", t1)
+	file4 := r.WriteFile("file4", "source contents", t1)
+	writeCrypt("file3", "file3 contents")
+	writeCrypt(file4.Path, "remote contents")
+
+	in := rc.Params{
+		"srcFs":        r.LocalName,
+		"dstFs":        cryptName,
+		"combined":     true,
+		"missingOnSrc": true,
+		"missingOnDst": true,
+		"match":        true,
+		"differ":       true,
+		"error":        true,
+	}
+	out, err = call.Fn(ctx, in)
+	require.NoError(t, err)
+
+	combined := *out["combined"].(*[]string)
+	sort.Strings(combined)
+	assert.Equal(t, []string{"* file4", "+ file2", "- file3", "= file1"}, combined)
+	assert.Equal(t, &[]string{"file3"}, out["missingOnSrc"])
+	assert.Equal(t, &[]string{file2.Path}, out["missingOnDst"])
+	assert.Equal(t, &[]string{"file1"}, out["match"])
+	assert.Equal(t, &[]string{"file4"}, out["differ"])
+	assert.Equal(t, &[]string{}, out["error"])
+	assert.Equal(t, r.Fremote.Hashes().GetOne().String(), out["hashType"])
+	assert.Equal(t, "3 differences found", out["status"])
+	assert.Equal(t, false, out["success"])
+
+	out, err = call.Fn(ctx, rc.Params{
+		"srcFs": r.LocalName,
+		"dstFs": r.FremoteName,
+	})
+	require.NoError(t, err)
+	assert.Contains(t, out["status"], "is not a crypt remote")
+	assert.Equal(t, false, out["success"])
+
+	_, err = call.Fn(ctx, rc.Params{
+		"srcFs":  r.LocalName,
+		"dstFs":  cryptName,
+		"oneWay": "invalid",
+	})
+	require.Error(t, err)
+	assert.True(t, rc.IsErrParamInvalid(err))
 }
 
 // operations/check: check the source and destination are the same

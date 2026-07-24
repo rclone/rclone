@@ -13,6 +13,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/rclone/rclone/backend/crypt"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"
@@ -291,6 +292,60 @@ func Check(ctx context.Context, opt *CheckOpt) error {
 	}
 
 	return CheckFn(ctx, &optCopy)
+}
+
+// CryptCheck checks the integrity of an encrypted destination.
+func CryptCheck(ctx context.Context, opt *CheckOpt) (hashType hash.Type, err error) {
+	fcrypt, ok := opt.Fdst.(*crypt.Fs)
+	if !ok {
+		return hash.None, fmt.Errorf("%s:%s is not a crypt remote", opt.Fdst.Name(), opt.Fdst.Root())
+	}
+	funderlying := fcrypt.UnWrap()
+	hashType = funderlying.Hashes().GetOne()
+	if hashType == hash.None {
+		return hash.None, fmt.Errorf("%s:%s does not support any hashes", funderlying.Name(), funderlying.Root())
+	}
+	fs.Infof(nil, "Using %v for hash comparisons", hashType)
+
+	optCopy := *opt
+	var checkErrors atomic.Int32
+	optCopy.Check = func(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool, err error) {
+		cryptDst, ok := dst.(*crypt.Object)
+		if !ok {
+			checkErrors.Add(1)
+			return true, false, fmt.Errorf("expected crypt object, got %T", dst)
+		}
+		underlyingDst := cryptDst.UnWrap()
+		underlyingHash, err := underlyingDst.Hash(ctx, hashType)
+		if err != nil {
+			checkErrors.Add(1)
+			return true, false, fmt.Errorf("error reading hash from underlying %v: %w", underlyingDst, err)
+		}
+		if underlyingHash == "" {
+			return false, true, nil
+		}
+		cryptHash, err := fcrypt.ComputeHash(ctx, cryptDst, src, hashType)
+		if err != nil {
+			checkErrors.Add(1)
+			return true, false, fmt.Errorf("error computing hash: %w", err)
+		}
+		if cryptHash == "" {
+			return false, true, nil
+		}
+		if cryptHash != underlyingHash {
+			err = fmt.Errorf("hashes differ (%s:%s) %q vs (%s:%s) %q", opt.Fdst.Name(), opt.Fdst.Root(), cryptHash, opt.Fsrc.Name(), opt.Fsrc.Root(), underlyingHash)
+			fs.Errorf(src, "%s", err.Error())
+			return true, false, nil
+		}
+		return false, false, nil
+	}
+
+	err = CheckFn(ctx, &optCopy)
+	if errors := checkErrors.Load(); errors > 0 {
+		err = fserrors.FsError(fmt.Errorf("%d errors while checking", errors))
+		fserrors.Count(err)
+	}
+	return hashType, err
 }
 
 // CheckEqualReaders checks to see if in1 and in2 have the same
