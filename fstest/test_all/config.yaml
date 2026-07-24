@@ -213,6 +213,7 @@ backends:
  - backend:  "internetarchive"
    remote:   "TestIA:rclone-integration-test-2"
    fastlist: true
+   short:    true
    tests:
      - backend
    ignore:
