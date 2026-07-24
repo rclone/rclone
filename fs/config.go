@@ -411,7 +411,12 @@ var ConfigOptionsInfo = Options{{
 }, {
 	Name:    "use_cookies",
 	Default: false,
-	Help:    "Enable session cookiejar",
+	Help:    "Enable session cookiejar, shared by all connections by default",
+	Groups:  "Networking",
+}, {
+	Name:    "cookie_jar_name",
+	Default: "",
+	Help:    "Share a cookie jar with all other connections using the same name. Requires --use-cookies.",
 	Groups:  "Networking",
 }, {
 	Name:    "use_mmap",
@@ -645,6 +650,7 @@ type ConfigInfo struct {
 	Progress                   bool              `config:"progress"`
 	ProgressTerminalTitle      bool              `config:"progress_terminal_title"`
 	Cookie                     bool              `config:"use_cookies"`
+	CookieJarName              string            `config:"cookie_jar_name"`
 	UseMmap                    bool              `config:"use_mmap"`
 	MaxBufferMemory            SizeSuffix        `config:"max_buffer_memory"`
 	CaCert                     []string          `config:"ca_cert"`     // Client Side CA

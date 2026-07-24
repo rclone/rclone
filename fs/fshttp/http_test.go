@@ -175,6 +175,8 @@ func TestCertificates(t *testing.T) {
 	ctx := context.TODO()
 	ci := fs.GetConfig(ctx)
 	// Create a test certificate and write it to a temp file
+	origCert, origKey := ci.ClientCert, ci.ClientKey
+	t.Cleanup(func() { ci.ClientCert, ci.ClientKey = origCert, origKey })
 	ci.ClientCert = t.TempDir() + "client.cert"
 	ci.ClientKey = t.TempDir() + "client.key"
 	validity := 1 * time.Second
@@ -201,4 +203,59 @@ func TestCertificates(t *testing.T) {
 	// The new cert should be auto-loaded before we make this request
 	_, err = client.Get(ts.URL)
 	assert.NoError(t, err)
+}
+
+func TestNewClientCustom_CookieJarSharedByDefault(t *testing.T) {
+	t.Cleanup(ResetCookieJars)
+	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
+	t.Cleanup(func() { ci.Cookie = false })
+	ci.Cookie = true
+
+	c1 := NewClientCustom(ctx, nil)
+	c2 := NewClientCustom(ctx, nil)
+
+	require.NotNil(t, c1.Jar)
+	require.NotNil(t, c2.Jar)
+	assert.Same(t, c1.Jar, c2.Jar)
+}
+
+func TestNewClientCustom_NamedJarShared(t *testing.T) {
+	t.Cleanup(ResetCookieJars)
+	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
+	t.Cleanup(func() { ci.Cookie = false; ci.CookieJarName = "" })
+	ci.Cookie = true
+	ci.CookieJarName = "test-shared"
+
+	c1 := NewClientCustom(ctx, nil)
+	c2 := NewClientCustom(ctx, nil)
+
+	require.NotNil(t, c1.Jar)
+	assert.Same(t, c1.Jar, c2.Jar)
+}
+
+func TestNewClientCustom_NamedJarIsolated(t *testing.T) {
+	t.Cleanup(ResetCookieJars)
+	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
+	t.Cleanup(func() { ci.Cookie = false; ci.CookieJarName = "" })
+	ci.Cookie = true
+
+	// default (unnamed) jar
+	ci.CookieJarName = ""
+	c0 := NewClientCustom(ctx, nil)
+
+	ci.CookieJarName = "jar-a"
+	ca := NewClientCustom(ctx, nil)
+
+	ci.CookieJarName = "jar-b"
+	cb := NewClientCustom(ctx, nil)
+
+	require.NotNil(t, c0.Jar)
+	require.NotNil(t, ca.Jar)
+	require.NotNil(t, cb.Jar)
+	assert.NotSame(t, c0.Jar, ca.Jar)
+	assert.NotSame(t, c0.Jar, cb.Jar)
+	assert.NotSame(t, ca.Jar, cb.Jar)
 }
