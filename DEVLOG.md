@@ -1,64 +1,84 @@
 # rclone Development Log
 
 ## Working State
-**Session:** 1 | **Date:** 2026-07-24 | **Branch:** feat/ytfs
+**Session:** 2 | **Date:** 2026-07-24 | **Branch:** feat/ytfs
 
 ### Active Task
-YouTube read-only filesystem backend via yt-dlp
-- [x] Step 1: Create feature branch and scaffold backend structure
-- [x] Step 2: Implement sanitizeName/unsanitizeName helpers (using `∕` U+2215)
-- [x] Step 3: Wire up basic Fs interface (stub List/NewObject, read-only ops)
-- [ ] Step 4: Implement yt-dlp metadata extraction (api/api.go)
-- [ ] Step 5: Implement directory tree (channels, videos, playlists)
-- [ ] Step 6: Implement streaming/playback integration
-- [ ] Step 7: Add integration tests
-- [ ] Step 8: Register backend in all.go, docs, navbar
+Fix PR #9657 CI failure and prepare for merge
+- [x] Step 1: Identify CI failure (go.mod missing fsnotify dependency)
+- [x] Step 2: Run go mod tidy to resolve deps
+- [x] Step 3: Verify all tests pass locally (-race flag)
+- [x] Step 4: Amend last commit with go.mod fix
+- [x] Step 5: Force push to feat/ytfs branch
+- [ ] Step 6: Wait for CI to pass and merge PR
 
 ### Key Files (current shape)
-**`backend/ytfs/ytfs.go`** (NEW, ~150 lines)
-Core Fs implementation: NewFs, sanitizeName/unsanitizeName helpers, read-only ops (Put/Mkdir/Rmdir return ErrorPermissionDenied). Stubs for List/NewObject.
+**`backend/ytfs/ytfs.go`** (914 lines)
+Full Fs implementation with read-only enforcement, metadata caching, file watcher for hot reload, concurrent deduplication. Thread-safe with RWMutex for manifest swaps.
 
-**`backend/ytfs/ytfs_test.go`** (NEW, ~75 lines)
-Tests for sanitizeName round-trip: "Video / Title" ↔ "Video ∕ Title", covering edge cases. All passing.
+**`backend/ytfs/ytfs_test.go`** (4671 lines, 77.0% coverage)
+Comprehensive test suite: 174 test functions covering metadata caching TTL/expiry, concurrent requests, file watcher debounce, XML escaping, context cancellation, stress tests (200 goroutines).
 
-**`backend/ytfs/api/api.go`** (NEW, ~80 lines)
-yt-dlp wrapper: Channel/Video/Playlist types and Client methods (stubs). Includes extractJSON helper for calling yt-dlp -J.
+**`backend/ytfs/metadata/cache.go`** (285 lines)
+Cache manager with 32 methods: TTL tracking, concurrent deduplication, size limits (2MB thumbnails, 10MB subtitles).
+
+**`backend/ytfs/metadata/types.go`** (272 lines)
+Type definitions: CacheConfig, VideoMetadata, NFOMovie, ThumbnailManifest, SubtitlesManifest, ChaptersManifest.
+
+**`go.mod`** (FIXED)
+Added `github.com/fsnotify/fsnotify v1.7.0` for file watcher implementation (was missing, caused CI failure).
 
 ### Decisions (active)
-- **D-1 (sanitize char)**: Use `∕` U+2215 DIVISION SLASH for raw `/` replacement (consistent with gmailfs/gcalfs).
-- **D-2 (substring only)**: Sanitize user strings (titles, names) only before splicing into paths.
-- **MVP scope**: channels, videos, playlists; yt-dlp API; VFS-based caching (rclone built-in).
+- **D-1 (sanitize char)**: Use `∕` U+2215 DIVISION SLASH for raw `/` replacement
+- **D-2 (cache strategy)**: TTL-based (24h default, 7d max) with concurrent deduplication
+- **D-3 (hot reload)**: File watcher with 500ms debounce, RWMutex for thread safety
+- **D-4 (Emby metadata)**: NFO + thumbnails + SRT + chapters, lazy-loaded on first access
 
 ### Next Steps
-1. Flesh out api/api.go with yt-dlp calls (GetChannelInfo, GetVideoInfo, GetPlaylistInfo).
-2. Implement directory listing pattern (channels/ → /channels/{channel-id}/ → videos/playlists).
-3. Add Object type and Open() for streaming support.
-4. Write integration tests (mocked yt-dlp, real tree navigation).
-5. Register backend in `backend/all.go` and test harness.
-6. Add documentation (docs/content/ytfs.md, etc.).
+1. Wait for GitHub CI to run with fixed go.mod
+2. Merge PR #9657 into master when CI passes
+3. Monitor that metadata caching feature works in real Emby setups
 
 ### Blockers
-- None yet; yt-dlp needs to be installed in dev env for real tests.
+- None currently; CI should pass with go.mod fix
 
 ### Watch Out
-- Slash handling is critical — any title with "/" must roundtrip cleanly through sanitize/unsanitize.
-- Cache key parity (learned from Sprint 3): ensure any cached channel/video data uses sanitized names as keys.
-- Read-only invariant: all write ops must return ErrorPermissionDenied.
+- fsnotify is critical for hot reload — ensure it's correctly imported in ytfs.go
+- Don't commit .agentic/ or docs/agents/ directories (already in .gitignore)
 
 ---
 
 ## Milestones
-- [ ] Backend compiles and tests pass
-- [ ] Directory tree structure (channels/videos/playlists) working
-- [ ] Streaming/Open() implementation
-- [ ] Integration tests
-- [ ] Documentation & registration
-- [ ] Ready for upstream PR
+- [x] Core ytfs backend with channels/playlists/videos
+- [x] JSON manifest support with hot reload
+- [x] Metadata caching and Emby integration  
+- [x] Comprehensive test coverage (77%)
+- [x] Complete documentation with use cases
+- [x] Fix CI build failure (go.mod)
+- [ ] Merge PR #9657 to master
+
+## Session Archive
+
+### Session 1 -- 2026-07-24: Implement ytfs with metadata and Emby support
+**What we did:** Implemented complete YouTube filesystem backend with three-phase rollout: base backend (82.6% coverage), JSON manifest (86% coverage), metadata caching + hot reload + Emby integration (77% coverage). 3 commits, comprehensive test suite, full documentation.
+**Files:** backend/ytfs/*, docs/content/ytfs.md, DEVLOG.md
+**Decisions:** Slash sanitization with U+2215; metadata TTL-based caching; file watcher for hot reload; NFO/thumbnail/SRT/chapters support for Emby; read-only invariant enforcement
 
 ## Mistakes & Lessons
-(None yet — fresh start.)
+### 2026-07-24 - Command injection vulnerability in Object.Open()
+**What happened:** Initial implementation used `sh -c "yt-dlp ... " + videoID` which allowed command injection
+**Root cause:** Shell string concatenation without escaping
+**How we fixed it:** Changed to exec.CommandContext with discrete args: `exec.CommandContext(ctx, "yt-dlp", "-f", "best", "-o", "-", videoID)`
+**Lesson:** Always use exec with discrete arguments, never concatenate shell commands
+
+### 2026-07-24 - Missing go.mod dependency caused CI failure
+**What happened:** PR showed DIRTY status with ACTION_REQUIRED on CI check, blocking merge
+**Root cause:** Added fsnotify for file watcher but didn't run `go mod tidy` before committing
+**How we fixed it:** Ran go mod tidy, amended last commit with go.mod/go.sum changes, force pushed
+**Lesson:** Always run `go mod tidy` after adding new imports; CI catches build issues before merge
 
 ## Technical Debt & Future Ideas
-- Consider OAuth2 support (YouTube Data API v3) as alternative to yt-dlp.
-- Cache persistence to disk (e.g., ~/.cache/ytfs/) for metadata.
-- Search support (searches/ directory for search results).
+- OAuth2 support for private videos (YouTube Data API v3 alternative)
+- Cache persistence to disk (~/.cache/ytfs/) for metadata longevity
+- Search support (searches/ directory for search results)
+- Combine storage layer for writable uploads alongside read-only YouTube content
