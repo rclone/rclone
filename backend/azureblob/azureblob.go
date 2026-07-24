@@ -1599,6 +1599,16 @@ func (f *Fs) deleteContainer(ctx context.Context, containerName string) error {
 	})
 }
 
+// isInvalidURI reports whether err is the InvalidUri error Azure Storage
+// returns when a request addresses a blob by a syntactically invalid URI.
+func isInvalidURI(err error) bool {
+	var storageErr *azcore.ResponseError
+	if errors.As(err, &storageErr) {
+		return storageErr.ErrorCode == string(bloberror.InvalidURI)
+	}
+	return false
+}
+
 // Rmdir deletes the container if the fs is at the root
 //
 // Returns an error if it isn't empty
@@ -1612,6 +1622,15 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		}
 		fs.Debugf(o, "Removing directory marker")
 		err := o.Remove(ctx)
+		if err != nil && isInvalidURI(err) {
+			// Hierarchical namespace (HNS/ADLS Gen2) accounts can reject a delete
+			// addressed with a trailing slash on the directory marker blob name
+			// with InvalidUri, even though the same name is accepted when the
+			// marker is created - retry once against the same path without the
+			// trailing slash.
+			o.remote = dir
+			err = o.Remove(ctx)
+		}
 		if err != nil {
 			return fmt.Errorf("removing directory marker failed: %w", err)
 		}
