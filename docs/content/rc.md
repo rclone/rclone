@@ -2742,6 +2742,14 @@ curl -H "Content-Type: application/json" -X POST -d '{"potato":2,"sausage":1}' '
 If you use the `--rc` flag this will also enable the use of the go
 profiling tools on the same port.
 
+The profiling endpoints follow the same authentication rules as the
+rest of the rc: they are only served if authentication has been set up
+(`--rc-user`/`--rc-pass` or `--rc-htpasswd`) or the
+[`--rc-no-auth`](#--rc-no-auth) flag is in use. For debugging on the
+default localhost port the easiest thing is to use `--rc --rc-no-auth`
+(but see the warning about using `--rc-no-auth` on a non-loopback
+bind).
+
 To use these, first [install go](https://golang.org/doc/install).
 
 ### Debugging memory use

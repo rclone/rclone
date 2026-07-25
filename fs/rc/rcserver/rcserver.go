@@ -126,8 +126,11 @@ func newServer(ctx context.Context, opt *rc.Options, mux *http.ServeMux) (*Serve
 		middleware.SetHeader("Server", "rclone/"+fs.Version),
 	)
 
-	// Add the debug handler which is installed in the default mux
-	router.Handle("/debug/pprof/*", mux)
+	// Add the debug handler which is installed in the default mux.
+	// Only do this if auth is enabled.
+	if s.noAuth || s.server.UsingAuth() {
+		router.Handle("/debug/pprof/*", mux)
+	}
 
 	// FIXME split these up into individual functions
 	router.Get("/*", s.handler)
