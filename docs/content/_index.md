@@ -197,6 +197,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Proton Drive" home="https://proton.me/drive" config="/protondrive/" >}}
 {{< provider name="QingStor" home="https://www.qingcloud.com/products/storage" config="/qingstor/" >}}
 {{< provider name="Qiniu Cloud Object Storage (Kodo)" home="https://www.qiniu.com/en/products/kodo" config="/s3/#qiniu" >}}
+{{< provider name="Quark Drive" home="https://pan.quark.cn/" config="/quark/" >}}
 {{< provider name="Quatrix by Maytech" home="https://www.maytech.net/products/quatrix-business" config="/quatrix/" >}}
 {{< provider name="Rabata Cloud Storage" home="https://rabata.io" config="/s3/#Rabata" >}}
 {{< provider name="RackCorp Object Storage" home="https://www.rackcorp.com/" config="/s3/#RackCorp" >}}
