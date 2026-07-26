@@ -286,7 +286,7 @@ large file of a known size to stay below this number of chunks limit.
 Any files larger than this that need to be server-side copied will be
 copied in chunks of this size.
 
-The minimum is 0 and the maximum is 5 GiB.`,
+The minimum is 1 byte and the maximum is 5 GiB.`,
 			Default:  fs.SizeSuffix(maxSizeForCopy),
 			Advanced: true,
 		}, {
@@ -1351,8 +1351,32 @@ func getClient(ctx context.Context, opt *Options) *http.Client {
 		}
 	})
 	return &http.Client{
-		Transport: t,
+		Transport:     t,
+		CheckRedirect: s3CheckRedirect,
 	}
+}
+
+func s3CheckRedirect(req *http.Request, via []*http.Request) error {
+	if len(via) >= 10 {
+		return errors.New("stopped after 10 redirects")
+	}
+	if s3RedirectCrossesHost(req, via) {
+		req.Header.Del("X-Amz-Security-Token")
+	}
+	return nil
+}
+
+func s3RedirectCrossesHost(req *http.Request, via []*http.Request) bool {
+	if len(via) == 0 {
+		return false
+	}
+	scheme, host := via[0].URL.Scheme, via[0].URL.Host
+	for _, redirect := range via[1:] {
+		if redirect.URL.Host != host || redirect.URL.Scheme != scheme {
+			return true
+		}
+	}
+	return host != req.URL.Host || scheme != req.URL.Scheme
 }
 
 // Fixup the request if needed.
@@ -1899,18 +1923,50 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		newRoot, leaf := path.Split(oldRoot)
 		f.setRoot(newRoot)
 		_, err := f.NewObject(ctx, leaf)
-		if errors.Is(err, fs.ErrorObjectNotFound) {
+		switch {
+		case err == nil:
+			// It is a file so return an fs which points to the parent
+			return f, fs.ErrorIsFile
+		case errors.Is(err, fs.ErrorObjectNotFound):
 			// File doesn't exist or is a directory so return old f
 			f.setRoot(oldRoot)
 			return f, nil
+		default:
+			// We couldn't HEAD the object so now attempt to list it
+			hasChildren, listErr := f.hasChildren(ctx, leaf)
+			if listErr != nil {
+				fs.Debugf(f, "Couldn't check %q for children after HEAD failed (%v): %v", oldRoot, err, listErr)
+			}
+			// If it listed and has children it must be a directory
+			if hasChildren {
+				f.setRoot(oldRoot)
+				return f, nil
+			}
+			// If it has no children it is either a file or an empty directory. We can't
+			// tell these two cases apart. We choose file which is more likely, and
+			// return an fs which points to the parent.
+			return f, fs.ErrorIsFile
 		}
-		if err != nil {
-			return nil, err
-		}
-		// return an error with an fs which points to the parent
-		return f, fs.ErrorIsFile
 	}
 	return f, nil
+}
+
+// hasChildren reports whether the directory dir contains any objects.
+func (f *Fs) hasChildren(ctx context.Context, dir string) (found bool, err error) {
+	bucket, directory := f.split(dir)
+	err = f.list(ctx, listOpt{
+		bucket:    bucket,
+		directory: directory,
+		prefix:    f.rootDirectory,
+		recurse:   true,
+	}, func(remote string, object *types.Object, versionID *string, isDirectory bool) error {
+		found = true
+		return errEndList // stop after the first object
+	})
+	if err != nil && err != fs.ErrorDirNotFound {
+		return false, err
+	}
+	return found, nil
 }
 
 // getMetaDataListing gets the metadata from the object unconditionally from the listing
@@ -4337,6 +4393,9 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		}
 	}
 	if err != nil {
+		if statusCode := getHTTPStatusCode(err); statusCode == http.StatusNotFound || statusCode == http.StatusMethodNotAllowed {
+			return nil, fs.ErrorObjectNotFound
+		}
 		return nil, err
 	}
 

@@ -300,6 +300,37 @@ func TestExecuteJobWithConfig(t *testing.T) {
 	assert.NotEqual(t, 42*fs.Mebi, ci.BufferSize)
 }
 
+// NewJob must mark the context as a remote control (rc) request, including for
+// asynchronous jobs whose context is detached
+func TestNewJobMarksRCRequest(t *testing.T) {
+	jobID.Store(0)
+	jobs := newJobs() // local instance so we don't pollute the global registry
+
+	// synchronous job
+	var syncMarked bool
+	_, _, err := jobs.NewJob(context.Background(), func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		syncMarked = fs.IsRCRequest(ctx)
+		return nil, nil
+	}, rc.Params{})
+	require.NoError(t, err)
+	assert.True(t, syncMarked, "sync rc job context must be marked as an rc request")
+
+	// asynchronous job - the context is detached, so the marker must be set
+	// after that detachment to survive
+	done := make(chan bool, 1)
+	_, _, err = jobs.NewJob(context.Background(), func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		done <- fs.IsRCRequest(ctx)
+		return nil, nil
+	}, rc.Params{"_async": true})
+	require.NoError(t, err)
+	select {
+	case asyncMarked := <-done:
+		assert.True(t, asyncMarked, "async rc job context must be marked as an rc request")
+	case <-time.After(5 * time.Second):
+		t.Fatal("async job did not run")
+	}
+}
+
 func TestExecuteJobWithFilter(t *testing.T) {
 	ctx := context.Background()
 	called := false
@@ -319,6 +350,141 @@ func TestExecuteJobWithFilter(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, true, called)
+}
+
+func TestExecuteJobWithFlatConfig(t *testing.T) {
+	ctx := context.Background()
+	jobID.Store(0)
+	called := false
+	jobFn := func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		ci := fs.GetConfig(ctx)
+		assert.Equal(t, 42*fs.Mebi, ci.BufferSize)
+		called = true
+		return nil, nil
+	}
+	_, _, err := NewJob(ctx, jobFn, rc.Params{
+		"buffer_size": "42M",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, true, called)
+
+	// Test that legacy _config overrides flat parameter
+	jobID.Store(0)
+	called = false
+	jobFn2 := func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		ci := fs.GetConfig(ctx)
+		assert.Equal(t, 10*fs.Mebi, ci.BufferSize)
+		called = true
+		return nil, nil
+	}
+	_, _, err = NewJob(ctx, jobFn2, rc.Params{
+		"buffer_size": "42M",
+		"_config": rc.Params{
+			"BufferSize": "10M",
+		},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, true, called)
+}
+
+func TestExecuteJobWithFlatFilter(t *testing.T) {
+	ctx := context.Background()
+	called := false
+	jobID.Store(0)
+	jobFn := func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		fi := filter.GetConfig(ctx)
+		assert.Equal(t, fs.SizeSuffix(1024), fi.Opt.MaxSize)
+		assert.Equal(t, []string{"a", "b", "c"}, fi.Opt.IncludeRule)
+		called = true
+		return nil, nil
+	}
+	_, _, err := NewJob(ctx, jobFn, rc.Params{
+		"include":  []string{"a", "b", "c"},
+		"max_size": "1k",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, true, called)
+
+	// Test that legacy _filter overrides flat parameter
+	called = false
+	jobID.Store(0)
+	jobFn2 := func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		fi := filter.GetConfig(ctx)
+		assert.Equal(t, fs.SizeSuffix(2048), fi.Opt.MaxSize)
+		assert.Equal(t, []string{"x", "y"}, fi.Opt.IncludeRule)
+		called = true
+		return nil, nil
+	}
+	_, _, err = NewJob(ctx, jobFn2, rc.Params{
+		"include":  []string{"a", "b", "c"},
+		"max_size": "1k",
+		"_filter": rc.Params{
+			"IncludeRule": []string{"x", "y"},
+			"MaxSize":     "2k",
+		},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, true, called)
+}
+
+// A null-valued flat config/filter param must produce a clean
+// error, not panic the rc handler.
+func TestExecuteJobWithFlatConfigNull(t *testing.T) {
+	ctx := context.Background()
+	jobID.Store(0)
+	called := false
+	jobFn := func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		called = true
+		return nil, nil
+	}
+	var err error
+	require.NotPanics(t, func() {
+		_, _, err = NewJob(ctx, jobFn, rc.Params{
+			"buffer_size": nil,
+		})
+	})
+	assert.Error(t, err)
+	assert.False(t, called)
+}
+
+// Flat config/filter options should be consumed and removed from
+// the params (like _config and _filter are), so they don't leak into the
+// command's parameter map.
+func TestExecuteJobFlatParamsRemoved(t *testing.T) {
+	ctx := context.Background()
+	jobID.Store(0)
+	var got rc.Params
+	jobFn := func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		got = in
+		return nil, nil
+	}
+	_, _, err := NewJob(ctx, jobFn, rc.Params{
+		"buffer_size": "42M",
+		"max_size":    "1k",
+		"include":     []string{"a"},
+	})
+	require.NoError(t, err)
+	_, ok := got["buffer_size"]
+	assert.False(t, ok, "flat config option buffer_size should have been removed from in")
+	_, ok = got["max_size"]
+	assert.False(t, ok, "flat filter option max_size should have been removed from in")
+	_, ok = got["include"]
+	assert.False(t, ok, "flat filter option include should have been removed from in")
+}
+
+// options/set with a "filter" block is a valid, documented call, but
+// the flat-parameter feature treats the top-level "filter" key (a registered
+// filter option name) as the --filter option and fails trying to parse the
+// block map as a string, breaking the call.
+func TestExecuteJobOptionsSetFilterBlock(t *testing.T) {
+	ctx := context.Background()
+	jobID.Store(0)
+	call := rc.Calls.Get("options/set")
+	require.NotNil(t, call)
+	_, _, err := NewJob(ctx, call.Fn, rc.Params{
+		"filter": rc.Params{"MaxSize": "1M"},
+	})
+	require.NoError(t, err)
 }
 
 func TestExecuteJobWithGroup(t *testing.T) {

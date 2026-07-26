@@ -15,6 +15,8 @@ import (
 	"context"
 	"crypto/md5"
 	"crypto/tls"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -256,11 +258,8 @@ func (f *Fs) login(ctx context.Context) error {
 // so this refreshes the token and updates the request parameters for
 // the retry.
 func (f *Fs) shouldRetryWeb(ctx context.Context, resp *http.Response, err error, result responser, opts *rest.Opts) (bool, error) {
-	if fserrors.ContextError(ctx, &err) {
-		return false, err
-	}
-	if fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes) {
-		return true, err
+	if retry, err := f.shouldRetry(ctx, resp, err); retry || err != nil {
+		return retry, err
 	}
 	// If the web API returned an error, it may be due to an expired token.
 	// Refresh the token and retry.
@@ -1015,6 +1014,14 @@ var retryErrorCodes = []int{
 func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
 	if fserrors.ContextError(ctx, &err) {
 		return false, err
+	}
+	// The API is fronted by bot protection which under load
+	// intermittently returns an HTML challenge page with a 200
+	// status instead of JSON. This surfaces as a JSON syntax error,
+	// so retry it to let the pacer back off until the block lifts.
+	var syntaxErr *json.SyntaxError
+	if errors.As(err, &syntaxErr) {
+		return true, err
 	}
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }

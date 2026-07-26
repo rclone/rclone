@@ -77,7 +77,8 @@ func TestShouldRetry(t *testing.T) {
 	}{
 		{"nil error", ctx, nil, false},
 		{"cancelled context", cancelledCtx, errors.New("some error"), false},
-		{"storage block error Code=200501", ctx, apiErr(422, 200501), true},
+		{"permanent validation error Code=200501 Status=422 (not retried)", ctx, apiErr(422, 200501), false},
+		{"transient storage block error Code=200501 Status=500 (retried)", ctx, apiErr(500, 200501), true},
 		{"server error Status=500", ctx, apiErr(500, 0), true},
 		{"server error Status=502", ctx, apiErr(502, 0), true},
 		{"server error Status=504", ctx, apiErr(504, 0), true},

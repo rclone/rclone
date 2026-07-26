@@ -14,7 +14,6 @@ remote: 'TestDrime:'
 features:
 - About
 - CanHaveEmptyDirectories
-- Copy
 - DirCacheFlush
 - DirMove
 - Move

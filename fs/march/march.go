@@ -24,8 +24,11 @@ import (
 // comparison in matchListings.
 type matchTransformFn func(name string) string
 
-// list a directory into callback returning err
-type listDirFn func(dir string, callback fs.ListRCallback) (err error)
+// list a directory into callback returning err.
+//
+// The ctx argument should be m.Ctx or a child of it so that listings
+// are cancelled when the march context is cancelled.
+type listDirFn func(ctx context.Context, dir string, callback fs.ListRCallback) (err error)
 
 // March holds the data used to traverse two Fs simultaneously,
 // calling Callback for each match
@@ -41,6 +44,7 @@ type March struct {
 	Callback               Marcher         // object to call with results
 	NoCheckDest            bool            // transfer all objects regardless without checking dst
 	NoUnicodeNormalization bool            // don't normalize unicode characters in filenames
+	NoProcessDstOnly       bool            // if set, when source listing finishes, cancel the dst listing
 	// internal state
 	srcListDir   listDirFn // function to call to list a directory in the src
 	dstListDir   listDirFn // function to call to list a directory in the dst
@@ -117,16 +121,21 @@ func (m *March) dstKey(entry fs.DirEntry) string {
 	return m.srcOrDstKey(entry, false)
 }
 
-// makeListDir makes constructs a listing function for the given fs
+// makeListDir constructs a listing function for the given fs
 // and includeAll flags for marching through the file system.
+//
+// The returned function uses the ctx it is called with for the
+// listing operations. Callers must pass m.Ctx or a child of it to
+// ensure listings are cancelled when the march context is cancelled.
+//
 // Note: this will optionally flag filter-aware backends!
 func (m *March) makeListDir(ctx context.Context, f fs.Fs, includeAll bool, keyFn list.KeyFn) listDirFn {
 	ci := fs.GetConfig(ctx)
 	fi := filter.GetConfig(ctx)
 	if !(ci.UseListR && f.Features().ListR != nil) && // !--fast-list active and
 		!(ci.NoTraverse && fi.HaveFilesFrom()) { // !(--files-from and --no-traverse)
-		return func(dir string, callback fs.ListRCallback) (err error) {
-			dirCtx := filter.SetUseFilter(m.Ctx, f.Features().FilterAware && !includeAll) // make filter-aware backends constrain List
+		return func(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
+			dirCtx := filter.SetUseFilter(ctx, f.Features().FilterAware && !includeAll) // make filter-aware backends constrain List
 			return list.DirSortedFn(dirCtx, f, includeAll, dir, callback, keyFn)
 		}
 	}
@@ -139,10 +148,10 @@ func (m *March) makeListDir(ctx context.Context, f fs.Fs, includeAll bool, keyFn
 		dirs    dirtree.DirTree
 		dirsErr error
 	)
-	return func(dir string, callback fs.ListRCallback) (err error) {
+	return func(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
 		mu.Lock()
 		if !started {
-			dirCtx := filter.SetUseFilter(m.Ctx, f.Features().FilterAware && !includeAll) // make filter-aware backends constrain List
+			dirCtx := filter.SetUseFilter(ctx, f.Features().FilterAware && !includeAll) // make filter-aware backends constrain List
 			dirs, dirsErr = walk.NewDirTree(dirCtx, f, m.Dir, includeAll, ci.MaxDepth)
 			started = true
 		}
@@ -289,7 +298,7 @@ func (m *March) aborting() bool {
 // Into match go matchPair's of src and dst which have the same name
 //
 // This checks for duplicates and checks the list is sorted.
-func (m *March) matchListings(srcChan, dstChan <-chan fs.DirEntry, srcOnly, dstOnly func(fs.DirEntry), match func(dst, src fs.DirEntry)) error {
+func (m *March) matchListings(srcChan, dstChan <-chan fs.DirEntry, dstCancel func(), srcOnly, dstOnly func(fs.DirEntry), match func(dst, src fs.DirEntry)) error {
 	var (
 		srcPrev, dstPrev         fs.DirEntry
 		srcPrevName, dstPrevName string
@@ -317,6 +326,12 @@ func (m *March) matchListings(srcChan, dstChan <-chan fs.DirEntry, srcOnly, dstO
 		if src == nil {
 			src, srcHasMore = <-srcChan
 			srcName = m.srcKey(src)
+		}
+		// If the source listing is finished and we don't need
+		// dst-only entries, cancel the dst listing early.
+		if !srcHasMore && m.NoProcessDstOnly {
+			dstCancel()
+			break
 		}
 		if dst == nil {
 			dst, dstHasMore = <-dstChan
@@ -384,15 +399,18 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 		srcChan                = make(chan fs.DirEntry, 100)
 		dstChan                = make(chan fs.DirEntry, 100)
 		srcListErr, dstListErr error
+		dstListCancelled       bool
 		wg                     sync.WaitGroup
 		ci                     = fs.GetConfig(m.Ctx)
+		dstCtx, dstCancel      = context.WithCancel(m.Ctx)
 	)
+	defer dstCancel()
 
 	// List the src and dst directories
 	if !job.noSrc {
 		srcChan := srcChan // duplicate this as we may override it later
 		wg.Go(func() {
-			srcListErr = m.srcListDir(job.srcRemote, func(entries fs.DirEntries) error {
+			srcListErr = m.srcListDir(m.Ctx, job.srcRemote, func(entries fs.DirEntries) error {
 				for _, entry := range entries {
 					srcChan <- entry
 				}
@@ -407,12 +425,19 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 	if !m.NoTraverse && !job.noDst {
 		startedDst = true
 		wg.Go(func() {
-			dstListErr = m.dstListDir(job.dstRemote, func(entries fs.DirEntries) error {
+			dstListErr = m.dstListDir(dstCtx, job.dstRemote, func(entries fs.DirEntries) error {
 				for _, entry := range entries {
-					dstChan <- entry
+					select {
+					case <-dstCtx.Done():
+						return dstCtx.Err()
+					case dstChan <- entry:
+					}
 				}
 				return nil
 			})
+			if dstCtx.Err() != nil {
+				dstListCancelled = true
+			}
 			close(dstChan)
 		})
 	}
@@ -494,7 +519,7 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 	}
 
 	// Work out what to do and do it
-	err := m.matchListings(srcChan, dstChan, func(src fs.DirEntry) {
+	err := m.matchListings(srcChan, dstChan, dstCancel, func(src fs.DirEntry) {
 		recurse := m.Callback.SrcOnly(src)
 		if recurse && job.srcDepth > 0 {
 			jobs = append(jobs, listDirJob{
@@ -540,7 +565,9 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 		srcListErr = fs.CountError(m.Ctx, srcListErr)
 		return nil, srcListErr
 	}
-	if dstListErr == fs.ErrorDirNotFound {
+	if dstListCancelled {
+		// Ignore dst listing errors if we cancelled it
+	} else if dstListErr == fs.ErrorDirNotFound {
 		// Copy the stuff anyway
 	} else if dstListErr != nil {
 		if job.dstRemote != "" {

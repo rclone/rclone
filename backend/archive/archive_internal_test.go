@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path"
@@ -217,5 +218,62 @@ func TestArchiveSquashfs(t *testing.T) {
 	skipIfNoExe(t, "rclone")
 	testArchive(t, "test.sqfs", func(t *testing.T, output, input string) {
 		run(t, "mksquashfs", input, output)
+	})
+}
+
+// TestArchiveSquashfsIssue9004 lists and reads squashfs images that exercise
+// two layouts go-diskfs used to choke on (fixed in go-diskfs v1.9.4):
+//
+//   - 1.sqfs: a single empty directory, so the image has no fragment table
+//     (its fragment-table start holds the "not present" sentinel).
+//   - 2.sqfs: a small tree whose superblock has the NO_XATTRS flag set while
+//     inodes still carry a (non-sentinel) xattr index - the shape squashfs-
+//     tools-ng can emit. Built by packing a two-file tree with xattrs via
+//     `gensquashfs -x`, then setting the NO_XATTRS superblock flag; the tree
+//     content is trivial placeholder data.
+//
+// Both images used to fail to list. Regression test for #9004.
+func TestArchiveSquashfsIssue9004(t *testing.T) {
+	fstest.Initialise()
+	ctx := context.Background()
+
+	testdata, err := filepath.Abs(filepath.Join("squashfs", "testdata"))
+	require.NoError(t, err)
+
+	archiveFor := func(t *testing.T, name string) fs.Fs {
+		f, err := cache.Get(ctx, ":archive:"+filepath.Join(testdata, name))
+		require.NoError(t, err)
+		return f
+	}
+
+	t.Run("EmptyDir", func(t *testing.T) {
+		// 1.sqfs is a single empty directory - it must list without error.
+		entries, err := archiveFor(t, "1.sqfs").List(ctx, "")
+		require.NoError(t, err)
+		assert.Equal(t, 0, len(entries))
+	})
+
+	t.Run("NoXattrTree", func(t *testing.T) {
+		f := archiveFor(t, "2.sqfs")
+		entries, err := f.List(ctx, "")
+		require.NoError(t, err)
+		names := make([]string, 0, len(entries))
+		for _, e := range entries {
+			names = append(names, path.Base(e.Remote()))
+		}
+		assert.Contains(t, names, "alpha")
+		assert.Contains(t, names, "beta")
+
+		// A file in the tree must be readable with its real content.
+		obj, err := f.NewObject(ctx, "beta/sample.xml")
+		require.NoError(t, err)
+		assert.Greater(t, obj.Size(), int64(0))
+		rc, err := obj.Open(ctx)
+		require.NoError(t, err)
+		data, err := io.ReadAll(rc)
+		require.NoError(t, err)
+		require.NoError(t, rc.Close())
+		assert.Equal(t, int(obj.Size()), len(data))
+		assert.True(t, bytes.HasPrefix(data, []byte("<?xml")))
 	})
 }

@@ -37,6 +37,10 @@ var OptionsInfo = fs.Options{{
 	Name:    "no_cleanup",
 	Default: false,
 	Help:    "Not to cleanup empty folder after object is deleted",
+}, {
+	Name:    "disable_multipart_streaming",
+	Default: false,
+	Help:    "Buffer multipart uploads in memory instead of streaming them to the backend (see the Multipart uploads docs section)",
 }}.
 	Add(httplib.ConfigInfo).
 	Add(httplib.AuthConfigInfo)
@@ -44,12 +48,13 @@ var OptionsInfo = fs.Options{{
 // Options contains options for the s3 Server
 type Options struct {
 	//TODO add more options
-	ForcePathStyle bool     `config:"force_path_style"`
-	EtagHash       string   `config:"etag_hash"`
-	AuthKey        []string `config:"auth_key"`
-	NoCleanup      bool     `config:"no_cleanup"`
-	Auth           httplib.AuthConfig
-	HTTP           httplib.Config
+	ForcePathStyle            bool     `config:"force_path_style"`
+	EtagHash                  string   `config:"etag_hash"`
+	AuthKey                   []string `config:"auth_key"`
+	NoCleanup                 bool     `config:"no_cleanup"`
+	DisableMultipartStreaming bool     `config:"disable_multipart_streaming"`
+	Auth                      httplib.AuthConfig
+	HTTP                      httplib.Config
 }
 
 // Opt is options set by command line flags

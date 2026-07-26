@@ -577,7 +577,7 @@ func (f *Fs) waitForJob(ctx context.Context, location string) (err error) {
 		}
 
 		switch status.Status {
-		case "failure":
+		case "failure", "failed":
 			return fmt.Errorf("async operation returned %q", status.Status)
 		case "success":
 			return nil
@@ -662,7 +662,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	return f.purgeCheck(ctx, dir, false)
 }
 
-// copyOrMoves copies or moves directories or files depending on the method parameter
+// copyOrMove copies or moves directories or files depending on the method parameter
 func (f *Fs) copyOrMove(ctx context.Context, method, src, dst string, overwrite bool) (err error) {
 	opts := rest.Opts{
 		Method:     "POST",
@@ -1124,6 +1124,14 @@ func (o *Object) upload(ctx context.Context, in io.Reader, overwrite bool, mimeT
 		resp, err = o.fs.srv.Call(ctx, &opts)
 		return shouldRetry(ctx, resp, err)
 	})
+	if err != nil {
+		return err
+	}
+
+	// Wait for PUT to be committed
+	if ur.OperationID != "" {
+		err = o.fs.waitForJob(ctx, rootURL+"/operations/"+ur.OperationID)
+	}
 
 	return err
 }
@@ -1150,14 +1158,29 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
-	//if file uploaded successfully then return metadata
-	o.modTime = modTime
-	o.md5sum = ""                   // according to unit tests after put the md5 is empty.
-	o.size = int64(in1.BytesRead()) // better solution o.readMetaData() ?
-	//and set modTime of uploaded file
-	err = o.SetModTime(ctx, modTime)
-
-	return err
+	// Set the modTime of the uploaded file and re-read the metadata
+	// so the object has the md5sum the server computed for the upload.
+	//
+	// The server sometimes silently drops the custom property holding
+	// the modtime when it is set just after an upload, so check the
+	// modtime read back and set it again if it didn't stick.
+	const maxTries = 3
+	for try := 1; try <= maxTries; try++ {
+		err = o.SetModTime(ctx, modTime)
+		if err != nil {
+			return err
+		}
+		o.hasMetaData = false
+		err = o.readMetaData(ctx)
+		if err != nil {
+			return err
+		}
+		if o.modTime.Equal(modTime) {
+			return nil
+		}
+		fs.Debugf(o, "modtime not stored after upload (got %v, want %v) - setting again (try %d/%d)", o.modTime, modTime, try, maxTries)
+	}
+	return errors.New("failed to store modtime after upload")
 }
 
 // Remove an object

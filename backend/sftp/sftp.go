@@ -269,9 +269,15 @@ E.g. the second example above should be rewritten as:
 			Help:     "The command used to read XXH128 hashes.\n\nLeave blank for autodetect.",
 			Advanced: true,
 		}, {
-			Name:     "skip_links",
-			Default:  false,
-			Help:     "Set to skip any symlinks and any other non regular files.",
+			Name:    "skip_links",
+			Default: false,
+			Help: `Set to skip any symlinks and any other non regular files.
+
+This only affects listing: symlinks and other non regular files are
+omitted from directory listings. It is not a security control and does
+not prevent writes from following symlinks on the server - confining an
+SFTP account to a directory must be enforced server side (for example
+with a chroot jail or restricted permissions).`,
 			Advanced: true,
 		}, {
 			Name:     "subsystem",

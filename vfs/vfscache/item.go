@@ -69,6 +69,7 @@ type Item struct {
 	modified        bool                     // set if the file has been modified since the last Open
 	beingReset      bool                     // cache cleaner is resetting the cache file, access not allowed
 	graceTimer      *time.Timer              // timer for delayed close after grace period
+	closing         chan struct{}            // non-nil while a grace-period close is tearing the handle down, closed when done
 }
 
 // Info is persisted to backing store
@@ -470,7 +471,10 @@ func (item *Item) _createFile(osPath string) (err error) {
 	}
 	item.modified = false
 	// t0 := time.Now()
-	fd, err := file.OpenFile(osPath, os.O_RDWR, 0600)
+	// Use O_CREATE so the cache file is recreated if it has been removed
+	// underneath us (e.g. _checkObject dropped a stale entry, or an external
+	// deletion), rather than failing the open with a hard IO error.
+	fd, err := file.OpenFile(osPath, os.O_RDWR|os.O_CREATE, 0600)
 	// fs.Debugf(item.name, "OpenFile took %v", time.Since(t0))
 	if err != nil {
 		return fmt.Errorf("vfs cache item: open failed: %w", err)
@@ -520,6 +524,15 @@ func (item *Item) open(o fs.Object) (err error) {
 	item.mu.Lock()
 	defer item.mu.Unlock()
 
+	// Wait for any in-progress grace-period close to finish so we start
+	// from a fully closed item rather than racing the fd teardown.
+	for item.closing != nil {
+		closing := item.closing
+		item.mu.Unlock()
+		<-closing
+		item.mu.Lock()
+	}
+
 	item.info.ATime = time.Now()
 
 	osPath, err := item.c.createItemDir(item.name) // No locking in Cache
@@ -550,6 +563,10 @@ func (item *Item) open(o fs.Object) (err error) {
 			return nil
 		}
 		fs.Debugf(item.name, "vfs cache: cache file vanished during grace period, recreating")
+		// The backing file is gone, so any ranges are invalid.
+		item.info.Rs = nil
+		// It also can't be dirty if the data no longer exists.
+		item.info.Dirty = false
 		if item.fd != nil {
 			_ = item.fd.Close()
 			item.fd = nil
@@ -714,7 +731,14 @@ func (item *Item) closeAfterGrace() {
 	}
 	item.graceTimer = nil
 
+	// _actualClose drops item.mu while it tears down the downloaders,
+	// during which the fd is still open. Publish that a close is in
+	// progress so a concurrent open waits rather than tripping over the
+	// half-closed handle.
+	item.closing = make(chan struct{})
 	err := item._actualClose(nil, false)
+	close(item.closing)
+	item.closing = nil
 	if err != nil {
 		fs.Errorf(item.name, "vfs cache: close after grace period failed: %v", err)
 	}
@@ -1208,6 +1232,21 @@ func (item *Item) _ensure(offset, size int64) (err error) {
 	// defer log.Trace(item.name, "offset=%d, size=%d", offset, size)("err=%v", &err)
 	if offset+size > item.info.Size {
 		size = item.info.Size - offset
+	}
+	// Check to see if we are about to request data beyond of the size of
+	// the remote object. This can happen if the the cached range metadata
+	// is out of sync with the cache file after an unclean shutdown.
+	if item.o != nil {
+		if remoteSize := item.o.Size(); remoteSize >= 0 && offset+size > remoteSize {
+			beyond := ranges.Range{Pos: remoteSize, Size: offset + size - remoteSize}
+			if !item.info.Rs.Present(beyond) {
+				fs.Errorf(item.name, "vfs cache: cached file (%d) is unexpectedly larger than the remote object (%d). The cached file is likely corrupted after an unclean shutdown; recovering the %d bytes available from the remote", offset+size, remoteSize, remoteSize)
+			}
+			size = remoteSize - offset
+		}
+	}
+	if size <= 0 {
+		return nil
 	}
 	r := ranges.Range{Pos: offset, Size: size}
 	present := item.info.Rs.Present(r)

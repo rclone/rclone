@@ -43,7 +43,10 @@ This file describes how to make the various kinds of releases
 
 Early in the next release cycle update the dependencies.
 
-- Review any pinned packages in go.mod and remove if possible
+- Active Pins
+  - `github.com/gdamore/tcell/v2` v2.9.0 - awaiting fix for [tcell/issues/1124](https://github.com/gdamore/tcell/issues/1124)
+    - See: [#9539](https://github.com/rclone/rclone/issues/9539)
+- Review Active Pins in go.mod and remove if possible
 - `make updatedirect`
 - `make GOTAGS=cmount`
 - `make compiletest`
@@ -192,7 +195,7 @@ this will be done already.
 Now
 
 - git co ${BASE_TAG}-stable
-- git cherry-pick any fixes
+- `git cherry-pick -x` any fixes
 - make startstable
 - Do the steps as above
 - git co master

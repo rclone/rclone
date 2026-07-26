@@ -121,6 +121,8 @@ backends:
      - TestCopyURL
      - TestMoveFileWithIgnoreExisting
      - TestCopyFileCompareDest
+     # fs/sync
+     - TestSyncCompareDest
      #vfs
      - TestFileSetModTime/cache=off,open=false,write=false
      - TestFileSetModTime/cache=off,open=true,write=false
@@ -205,11 +207,13 @@ backends:
    fastlist: false
    ignore:
      - TestIntegration/FsMkdir/FsPutZeroLength
+     - TestRWFileHandleWriteNoWrite
    ignoretests:
      - cmd/bisync
  - backend:  "internetarchive"
-   remote:   "TestIA:rclone-integration-test"
+   remote:   "TestIA:rclone-integration-test-2"
    fastlist: true
+   short:    true
    tests:
      - backend
    ignore:
@@ -545,6 +549,7 @@ backends:
      - TestCaseInsensitiveMoveFile
      - TestFixCase
      - TestListDirSorted        # Can't upload files starting with . - FIXME fix with encoding
+     - TestListDirSortedFn      # Can't upload files starting with . - FIXME fix with encoding
      - TestSyncOverlapWithFilter # Can't upload files starting with . - FIXME fix with encoding
    ignoretests:
      - cmd/bisync
@@ -686,6 +691,7 @@ backends:
  - backend: "internxt"
    remote: "TestInternxt:"
    fastlist: false
+   extratime: 2.0
    listretries: 5
    ignore:
      - TestRWFileHandleWriteNoWrite

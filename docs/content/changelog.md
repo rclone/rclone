@@ -6,6 +6,100 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.74.4 - 2026-07-08
+
+[See commits](https://github.com/rclone/rclone/compare/v1.74.3...v1.74.4)
+
+- Bug Fixes
+  - accounting
+    - Fix goroutine leak in ResetCounters (Nick Craig-Wood)
+    - Fix goroutine leak in NewStatsGroup for zero-transfer rc jobs (Sanjays2402)
+  - archive extract: Fix path traversal letting archives escape the destination CVE-2026-59732 (Nick Craig-Wood)
+  - build
+    - Fix multiple CVEs by upgrading to go1.26.5 (Nick Craig-Wood)
+      - CVE-2026-39822: os: Root escape via symlink plus trailing slash
+      - CVE-2026-42505: crypto/tls: Encrypted Client Hello privacy leak
+    - Update golang.org/x/image to v0.43.0 to fix image decoding vulnerabilities (Nick Craig-Wood)
+      - CVE-2026-46604: panic decoding a TIFF image with an out-of-bounds strip offset
+      - CVE-2026-46602: unbounded memory use from lack of a limit on TIFF tile sizes
+      - CVE-2026-46601: panic on a WEBP VP8 alpha channel size mismatch
+      - CVE-2026-33813: panic decoding a large WEBP image on 32-bit platforms
+  - cmd/mount2
+    - Fix NFS file creation by implementing Mknod (Sandy Luppino)
+    - Fix ESTALE over NFS by reporting stable inode numbers (Sandy Luppino)
+    - Fix NFS directory listings by supporting non-zero Seekdir offsets (Sandy Luppino)
+  - completion: Fix powershell completion corrupting non-ASCII names (Yash Anil)
+  - doc fixes (Bryan Stenson, Castronaut, Filippo, Gaurav, happysnaker, Jan-Philipp Reßler, Nick Craig-Wood, user77)
+  - filter: Fix `--files-from` copy stopping at the first unreadable file (Nick Craig-Wood)
+  - fs
+    - Fix command line flag being ignored when set to its default value (Nick Craig-Wood)
+    - Fix negative offset when a suffix Range request exceeds object size (Amit Mishra)
+  - gui: Update embedded release to 1.1.10 (Nick Craig-Wood)
+  - ncdu: Fix duplicated keystrokes on Windows by pinning tcell to v2.9.0 (Nick Craig-Wood)
+  - serve restic: Fix `--private-repos` isolation bypass CVE-2026-59733 (Nick Craig-Wood)
+  - serve s3
+    - Fix spurious 404 on HEAD/GET during VFS writeback (max)
+    - Fix path traversal letting clients see files in the root GHSA-8v25-v8p6-qf7v (Nick Craig-Wood)
+  - serve webdav: Fix MOVE overwrite failing without Overwrite header (Sanjay Santhanam)
+  - serve/http: Fix `--disable-zip` so it works over rc (Nick Craig-Wood)
+- VFS
+  - Fix hang reopening a file during the handle-caching grace period (Nick Craig-Wood)
+- Local
+  - Stop `--links` symlinks escaping the destination directory CVE-2026-54572 (Nick Craig-Wood)
+  - Don't restore setuid/setgid/sticky bits from metadata by default GHSA-945v-v9p3-v5xw (Nick Craig-Wood)
+- Drive
+  - Warn when non-exportable Google documents are skipped (Nick Craig-Wood)
+  - Fix stray %!(EXTRA) in unexportable google document log message (Nick Craig-Wood)
+  - Warn when using rclone's shared client_id (Nick Craig-Wood)
+- Filelu
+  - Fix recursive listing path handling and file filtering (kingston125)
+- Googlephotos
+  - Warn when using rclone's shared client_id (Nick Craig-Wood)
+- Mega
+  - Wait for server events after upload, delete and move (Nick Craig-Wood)
+  - Fix hard deleted files reappearing in listings (Nick Craig-Wood)
+- S3
+  - Remove session token on cross-host redirects (IceLocke)
+  - Strip STS security token on same-host HTTPS->HTTP redirect GHSA-cf44-9pgv-m4xc (Nick Craig-Wood)
+  - Fix error mapping in GetObject to match HeadObject (lewoberst)
+  - Correct documented `copy_cutoff` minimum to 1 byte (max)
+  - Fix mounting a prefix failing with 403 when HEAD is not permitted (Nick Craig-Wood)
+- Smb
+  - Fix for IBM iSeries and signature verification (dithwick)
+- WebDAV
+  - Fix mixed property statuses in multi-status responses (nako-ruru)
+
+## v1.74.3 - 2026-06-05
+
+[See commits](https://github.com/rclone/rclone/compare/v1.74.2...v1.74.3)
+
+- Bug Fixes
+  - rc
+    - Fix unauthenticated command execution via `--rc-serve` inline remotes CVE-2026-49980 (Nick Craig-Wood)
+    - Stop `global.*` connection string options changing config CVE-2026-49980 (Nick Craig-Wood)
+  - build: Fix multiple CVEs by upgrading to go1.26.4 (Nick Craig-Wood)
+    - CVE-2026-42504: mime: quadratic complexity in WordDecoder.DecodeHeader
+    - CVE-2026-42507: net/textproto: arbitrary input are included in errors without any escaping
+    - CVE-2026-27145: crypto/x509: split candidate hostname only once
+  - log: Fix wrong source `file:line` in JSON logs from release builds (Nick Craig-Wood)
+  - mount2: Fix empty directory listings on re-read (Janne Beate Bakeng)
+  - serve s3: Fix multipart `ListParts` pagination returning wrong part numbers (Nick Craig-Wood)
+  - serve sftp
+    - Fix file corruption when a client resumes an upload (Nick Craig-Wood)
+    - Fix truncate request being silently ignored (Nick Craig-Wood)
+- Local
+  - Fix `getXattr` returning empty map instead of nil (Leon Brocard)
+- Drime
+  - Fix server-side copy and move failing with Cloudflare 520 error (Nick Craig-Wood)
+  - Fix files being uploaded to the wrong directory (Nick Craig-Wood)
+  - Remove duplicate upload_cutoff config option (Nick Craig-Wood)
+  - Fix directory rename leaving the renamed folder empty in VFS (Nick Craig-Wood)
+- Drive
+  - Fix server-side move failing on shared drives with duplicate dirs (Nick Craig-Wood)
+- Iclouddrive
+  - Fix ADP/PCS cookie acquisition for iCloud Drive (Yakov Till)
+  - Fix "Index has invalid data" error listing iCloud Photos (Nick Craig-Wood)
+
 ## v1.74.2 - 2026-05-22
 
 [See commits](https://github.com/rclone/rclone/compare/v1.74.1...v1.74.2)

@@ -45,9 +45,31 @@ var (
 		Name:     "case_insensitive",
 		Default:  false,
 		Value:    true,
+		set:      true, // set as if from a flag
 		Advanced: true,
 	}
-	testOptions = Options{nouncOption, copyLinksOption, caseInsensitiveOption}
+	// setToDefaultOption has been set explicitly to a value which
+	// happens to equal its default - it must still override the config
+	setToDefaultOption = Option{
+		Name:    "set_to_default",
+		Default: "deflt",
+		Value:   "deflt",
+		set:     true,
+	}
+	// envDefaultOption has had a value loaded as a default from the
+	// environment (so set is false). It is only honoured over more
+	// specific sources when it differs from the default.
+	envDefaultOption = Option{
+		Name:    "env_default",
+		Default: "deflt",
+		Value:   "deflt", // equal to default, so must not be surfaced
+	}
+	envDefaultDiffOption = Option{
+		Name:    "env_default_diff",
+		Default: "deflt",
+		Value:   "fromenv", // differs from default, so must be surfaced
+	}
+	testOptions = Options{nouncOption, copyLinksOption, caseInsensitiveOption, setToDefaultOption, envDefaultOption, envDefaultDiffOption}
 )
 
 func TestOptionsSetValues(t *testing.T) {
@@ -266,6 +288,9 @@ func TestOptionGetters(t *testing.T) {
 		{regInfoValuesGetterFalse, "not_found", "", false},
 		{regInfoValuesGetterFalse, "case_insensitive", "true", true},
 		{regInfoValuesGetterFalse, "copy_links", "", false},
+		{regInfoValuesGetterFalse, "set_to_default", "deflt", true},
+		{regInfoValuesGetterFalse, "env_default", "", false},
+		{regInfoValuesGetterFalse, "env_default_diff", "fromenv", true},
 		{regInfoValuesGetterTrue, "not_found", "", false},
 		{regInfoValuesGetterTrue, "case_insensitive", "true", true},
 		{regInfoValuesGetterTrue, "copy_links", "false", true},

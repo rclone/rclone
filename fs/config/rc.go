@@ -258,6 +258,44 @@ func rcDelete(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	rc.Add(rc.Call{
+		Path:  "config/unset",
+		Fn:    rcUnset,
+		Title: "Unset keys in a remote in the config file.",
+		Help: `
+Parameters:
+
+- name - name of remote
+- keys - a list of key names to remove
+
+Returns:
+
+- removed - a list of the keys that were actually removed
+
+See the [config unset](/commands/rclone_config_unset/) command for more information on the above.
+`,
+	})
+}
+
+// Remove keys from a remote in the config file
+func rcUnset(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	name, err := in.GetString("name")
+	if err != nil {
+		return nil, err
+	}
+	var keys []string
+	err = in.GetStruct("keys", &keys)
+	if err != nil {
+		return nil, err
+	}
+	removed, err := UnsetRemote(name, keys...)
+	if err != nil {
+		return nil, err
+	}
+	return rc.Params{"removed": removed}, nil
+}
+
+func init() {
+	rc.Add(rc.Call{
 		Path:  "config/setpath",
 		Fn:    rcSetPath,
 		Title: "Set the path of the config file",

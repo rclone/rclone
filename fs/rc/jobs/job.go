@@ -19,7 +19,6 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/cache"
-	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/rc"
 	"golang.org/x/sync/errgroup"
 )
@@ -242,41 +241,6 @@ func getAsync(ctx context.Context, in rc.Params) (context.Context, bool, error) 
 	return ctx, isAsync, nil
 }
 
-// See if _config is set and if so adjust ctx to include it
-func getConfig(ctx context.Context, in rc.Params) (context.Context, error) {
-	if _, ok := in["_config"]; !ok {
-		return ctx, nil
-	}
-	ctx, ci := fs.AddConfig(ctx)
-	err := in.GetStruct("_config", ci)
-	if err != nil {
-		return ctx, err
-	}
-	delete(in, "_config") // remove the parameter
-	return ctx, nil
-}
-
-// See if _filter is set and if so adjust ctx to include it
-func getFilter(ctx context.Context, in rc.Params) (context.Context, error) {
-	if _, ok := in["_filter"]; !ok {
-		return ctx, nil
-	}
-	// Copy of the current filter options
-	opt := filter.GetConfig(ctx).Opt
-	// Update the options from the parameter
-	err := in.GetStruct("_filter", &opt)
-	if err != nil {
-		return ctx, err
-	}
-	fi, err := filter.NewFilter(&opt)
-	if err != nil {
-		return ctx, err
-	}
-	ctx = filter.ReplaceConfig(ctx, fi)
-	delete(in, "_filter") // remove the parameter
-	return ctx, nil
-}
-
 type jobKeyType struct{}
 
 // Key for adding jobs to ctx
@@ -292,12 +256,12 @@ func (jobs *Jobs) NewJob(ctx context.Context, fn rc.Func, in rc.Params) (job *Jo
 		return nil, nil, err
 	}
 
-	ctx, err = getConfig(ctx, in)
+	ctx, err = rc.AddConfig(ctx, in)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	ctx, err = getFilter(ctx, in)
+	ctx, err = rc.AddFilter(ctx, in)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -327,6 +291,9 @@ func (jobs *Jobs) NewJob(ctx context.Context, fn rc.Func, in rc.Params) (job *Jo
 
 	// Add the job to the context
 	ctx = context.WithValue(ctx, jobKey, job)
+
+	// Mark the context as created from an rc request
+	ctx = fs.WithRCRequest(ctx)
 
 	if isAsync {
 		go job.run(ctx, fn, in)

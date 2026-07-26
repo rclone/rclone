@@ -40,9 +40,14 @@ XX / Google Drive
    \ "drive"
 [snip]
 Storage> drive
-Google Application Client Id - leave blank normally.
+Google Application Client Id
+Leave blank to use rclone's shared client_id, or if you are using a service account.
+The shared client_id is being retired and will stop working during 2026, so creating your own is now strongly recommended.
+See https://rclone.org/drive/#making-your-own-client-id for how to create your own.
 client_id>
-Google Application Client Secret - leave blank normally.
+Google Application Client Secret
+Leave blank to use rclone's shared client_id, or if you are using a service account.
+If you created your own client_id then enter its client secret here.
 client_secret>
 Scope that rclone should use when requesting access from drive.
 Choose a number from below, or type in your own value
@@ -64,6 +69,17 @@ scope> 1
 Service Account Credentials JSON file path - needed only if you want use SA instead of interactive login.
 service_account_file>
 Remote config
+rclone's shared Google Drive client_id is being retired and will stop working during 2026.
+Create your own to avoid interruption: https://rclone.org/drive/#making-your-own-client-id
+
+Continue using the shared client_id anyway?
+y) Yes
+n) No (default)
+y/n> n
+Google Application Client Id
+client_id> 1234567890-abcdefghijklmnop.apps.googleusercontent.com
+Google Application Client Secret
+client_secret> GOCSPX-your-client-secret
 Use web browser to automatically authenticate rclone with remote?
  * Say Y if the machine running rclone has a web browser you can use
  * Say N if running rclone on a (remote) machine without web browser access
@@ -82,8 +98,8 @@ y/n> n
 Configuration complete.
 Options:
 type: drive
-- client_id:
-- client_secret:
+- client_id: 1234567890-abcdefghijklmnop.apps.googleusercontent.com
+- client_secret: GOCSPX-your-client-secret
 - scope: drive
 - root_folder_id:
 - service_account_file:
@@ -186,9 +202,14 @@ correct root to use itself.
 However you can set this to restrict rclone to a specific folder
 hierarchy or to access data within the "Computers" tab on the drive
 web interface (where files from Google's Backup and Sync desktop
-program go).
+program go). However, this is not the easiest method. 
+Instead, you can create a shortcut to a folder in "Computers" and 
+place it in "My Drive." To do so, right-click the folder, select 
+"Organize", and then choose "Add shortcut" in the Google Drive web interface. 
+Once you add the shortcut to "My Drive," rclone will display the folder, allowing you to interact with it.
+See also [Shortcuts](#shortcuts). 
 
-In order to do this you will have to find the `Folder ID` of the
+If, however, you choose to change your root folder, you will have to find the `Folder ID` of the
 directory you wish rclone to display.  This will be the last segment
 of the URL when you open the relevant folder in the drive web
 interface.
@@ -199,7 +220,11 @@ in the browser, then you use `1XyfxxxxxxxxxxxxxxxxxxxxxxxxxKHCh` as
 the `root_folder_id` in the config.
 
 **NB** folders under the "Computers" tab seem to be read only (drive
-gives a 500 error) when using rclone.
+gives a 500 error) when using rclone, but they are also read-only in the Google Drive web interface, 
+likely because this folder is managed by the Google Drive Desktop tool.
+Top-level folders in "Computers" are read-only, but you can interact 
+with folders contained within them using rclone.
+These are the folders for which you can create a shortcut as well, as described above.
 
 There doesn't appear to be an API to discover the folder IDs of the
 "Computers" tab - please contact us if you know otherwise!
@@ -474,9 +499,14 @@ used to create shortcuts.
 Shortcuts can be completely ignored with the `--drive-skip-shortcuts` flag
 or the corresponding `skip_shortcuts` configuration setting.
 
-If you have shortcuts that lead to an infinite recursion in your drive (e.g. a
-shortcut pointing to a parent folder), `skip_shortcuts` might be mandatory to
-be able to copy the drive.
+When `rclone lsf --format i` lists a file shortcut, the ID field contains the
+target file ID followed by the shortcut ID, separated by a tab. This internal
+tab is not changed by `--separator`.
+
+If you have a folder shortcut that points at one of its own parent folders it
+would lead to an infinite recursion. Rclone detects this, leaves the offending
+shortcut out of the listing and logs an ERROR, so the rest of the drive can
+still be copied.
 
 ### Emptying trash
 
@@ -606,9 +636,9 @@ Here are the Standard options specific to drive (Google Drive).
 #### --drive-client-id
 
 Google Application Client Id
-Setting your own is recommended.
+Leave blank to use rclone's shared client_id, or if you are using a service account.
+The shared client_id is being retired and will stop working during 2026, so creating your own is now strongly recommended.
 See https://rclone.org/drive/#making-your-own-client-id for how to create your own.
-If you leave this blank, it will use an internal key which is low performance.
 
 Properties:
 
@@ -619,9 +649,9 @@ Properties:
 
 #### --drive-client-secret
 
-OAuth Client Secret.
-
-Leave blank normally.
+Google Application Client Secret
+Leave blank to use rclone's shared client_id, or if you are using a service account.
+If you created your own client_id then enter its client secret here.
 
 Properties:
 
@@ -1936,14 +1966,18 @@ not have SHA1 or SHA256 hashes especially if they were uploaded before 2018.
 
 When you use rclone with Google drive in its default configuration you
 are using rclone's client_id.  This is shared between all the rclone
-users.  There is a global rate limit on the number of queries per
-second that each client_id can do set by Google.  rclone already has a
-high quota and I will continue to make sure it is high enough by
-contacting Google.
+users.
 
-It is strongly recommended to use your own client ID as the default
-rclone ID is heavily used. If you have multiple services running, it
-is recommended to use an API key for each service. The default Google
+**This shared client_id is being retired and will stop working during
+2026.**  To avoid interruption you must create and use your own
+client_id, so creating one is now required rather than merely
+recommended.  New remotes created with `rclone config` will warn you if
+you leave the client_id blank.
+
+Using your own client_id has other benefits too. There is a global
+rate limit on the number of queries per second that each client_id can
+do set by Google. If you have multiple services running, it is
+recommended to use an API key for each service. The default Google
 quota is 10 transactions per second so it is recommended to stay under
 that number as if you use more than that, it will cause rclone to rate
 limit and make things slower.
@@ -2022,6 +2056,23 @@ the remote configuration, it's not such a big deal). Keeping the application in
 after a week, which can be annoying to refresh constantly. If, for whatever
 reason, a short grant time is not a problem, then keeping the application in
 testing mode would also be sufficient.
+
+In most cases verification is not actually required. Google [exempts a number of
+app categories](https://support.google.com/cloud/answer/13464323) from mandatory
+verification, including:
+
+- **Personal Use apps**: if the app is for your personal use (fewer than 100
+  users), you and your limited number of users can keep using it without
+  verification - you will just need to click through the "unverified app"
+  warning screen during sign-in. Verification is only required if you want to
+  grow your user base beyond 100 users.
+- **Development/Testing/Staging apps**: apps in development, testing or staging
+  mode are not subject to verification (but are limited to the 100-user cap and
+  the unverified-app warning until verified).
+
+So for typical personal rclone use you can leave the app unverified, accept the
+warning screen, and publish it (rather than leaving it in "Testing") to avoid
+the weekly grant expiry described above.
 
 (Thanks to @balazer on github for these instructions.)
 

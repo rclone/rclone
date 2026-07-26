@@ -201,7 +201,7 @@ func (n *Node) Lookup(ctx context.Context, name string, out *fuse.EntryOut) (ino
 	// out.SetAttrTimeout(dt time.Duration)
 	n.fsys.setEntryOut(vfsNode, out)
 
-	return n.NewInode(ctx, newNode, fusefs.StableAttr{Mode: out.Attr.Mode}), 0
+	return n.NewInode(ctx, newNode, fusefs.StableAttr{Mode: out.Attr.Mode, Ino: newNode.node.Inode()}), 0
 }
 
 var _ = (fusefs.NodeLookuper)((*Node)(nil))
@@ -271,16 +271,22 @@ func (ds *dirStream) Next() (de fuse.DirEntry, errno syscall.Errno) {
 func (ds *dirStream) Close() {
 }
 
-// Seekdir implements fusefs.FileSeekdirer so go-fuse can rewind the directory
-// stream when the kernel calls lseek(fd, 0, SEEK_SET) before a second getdents.
-// Without this, go-fuse returns ENOTSUP and ls returns empty on every call after
-// the first. See: https://github.com/hanwen/go-fuse/issues/549
+// Seekdir implements fusefs.FileSeekdirer so go-fuse can reposition the
+// directory stream. The kernel calls this both to rewind (lseek(fd, 0,
+// SEEK_SET) before a second getdents) and, for a kernel-NFS-exported mount,
+// to resume from a previously returned directory cookie: nfsd is stateless,
+// so it opens a fresh handle and seeks to the last offset on every readdir
+// continuation. Handling only offset 0 made go-fuse return ENOTSUP for those
+// resumes, so any listing spanning more than one readdir batch failed over NFS.
+//
+// dirStream is a snapshot taken at Readdir time and go-fuse assigns each entry
+// a sequential offset in Next() order (the entry yielded at index i carries
+// offset i+1), so repositioning to off means the next entry is the one at
+// index off. Values past the end clamp to EOF via HasNext.
+// See: https://github.com/hanwen/go-fuse/issues/549
 func (ds *dirStream) Seekdir(_ context.Context, off uint64) syscall.Errno {
-	if off == 0 {
-		ds.i = 0
-		return 0
-	}
-	return syscall.ENOTSUP
+	ds.i = int(off)
+	return 0
 }
 
 var _ fusefs.DirStream = (*dirStream)(nil)
@@ -337,7 +343,7 @@ func (n *Node) Mkdir(ctx context.Context, name string, mode uint32, out *fuse.En
 	}
 	newNode := newNode(n.fsys, newDir)
 	n.fsys.setEntryOut(newNode.node, out)
-	newInode := n.NewInode(ctx, newNode, fusefs.StableAttr{Mode: out.Attr.Mode})
+	newInode := n.NewInode(ctx, newNode, fusefs.StableAttr{Mode: out.Attr.Mode, Ino: newNode.node.Inode()})
 	return newInode, 0
 }
 
@@ -379,11 +385,44 @@ func (n *Node) Create(ctx context.Context, name string, flags uint32, mode uint3
 	n.fsys.setEntryOut(vfsNode, out)
 	newNode := newNode(n.fsys, vfsNode)
 	fs.Debugf(nil, "attr=%#v", out.Attr)
-	newInode := n.NewInode(ctx, newNode, fusefs.StableAttr{Mode: out.Attr.Mode})
+	newInode := n.NewInode(ctx, newNode, fusefs.StableAttr{Mode: out.Attr.Mode, Ino: newNode.node.Inode()})
 	return newInode, fh, 0, 0
 }
 
 var _ = (fusefs.NodeCreater)((*Node)(nil))
+
+// Mknod creates a regular file. The kernel NFS server creates regular files
+// with MKNOD (it creates-then-opens, so vfs_create routes through fuse_create
+// which sends FUSE_MKNOD when there is no open intent), so without this an
+// NFS-exported mount fails every file creation with ENOTSUPP. Local and SMB
+// clients create via Create (FUSE_CREATE) and are unaffected. This mirrors the
+// cmd/mount (bazil) backend, which implements mknod for the same reason
+// (see #2115).
+//
+// Device/special files are not supported by the VFS, so a non-zero rdev is
+// rejected. Mknod returns no open handle (unlike Create), so the handle Create
+// opens is flushed (to instantiate the file and surface any I/O error) and
+// released before returning.
+func (n *Node) Mknod(ctx context.Context, name string, mode uint32, rdev uint32, out *fuse.EntryOut) (node *fusefs.Inode, errno syscall.Errno) {
+	defer log.Trace(n, "name=%q, mode=%#o, rdev=%d", name, mode, rdev)("node=%v, errno=%v", &node, &errno)
+	if rdev != 0 {
+		fs.Errorf(n, "Can't create device node %q", name)
+		return nil, syscall.EIO
+	}
+	node, fh, _, errno := n.Create(ctx, name, uint32(os.O_CREATE|os.O_WRONLY), mode, out)
+	if errno != 0 {
+		return nil, errno
+	}
+	if fh != nil {
+		if errno := fh.(fusefs.FileFlusher).Flush(ctx); errno != 0 {
+			return nil, errno
+		}
+		_ = fh.(fusefs.FileReleaser).Release(ctx)
+	}
+	return node, 0
+}
+
+var _ = (fusefs.NodeMknoder)((*Node)(nil))
 
 // Unlink should remove a child from this directory.  If the
 // return status is OK, the Inode is removed as child in the
@@ -495,7 +534,7 @@ func (n *Node) Symlink(ctx context.Context, target, name string, out *fuse.Entry
 
 	n.fsys.setEntryOut(vfsNode, out)
 	newNode := newNode(n.fsys, vfsNode)
-	newInode := n.NewInode(ctx, newNode, fusefs.StableAttr{Mode: out.Attr.Mode})
+	newInode := n.NewInode(ctx, newNode, fusefs.StableAttr{Mode: out.Attr.Mode, Ino: newNode.node.Inode()})
 
 	return newInode, 0
 }
