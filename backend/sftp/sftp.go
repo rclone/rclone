@@ -45,7 +45,45 @@ const (
 	maxSleep                = 2 * time.Second
 	decayConstant           = 2           // bigger for slower decay, exponential
 	keepAliveInterval       = time.Minute // send keepalives every this long while running commands
+	metadataTimeFormat      = time.RFC3339Nano
 )
+
+// system metadata keys which this backend owns
+//
+// These are read-only: the SFTP protocol carries them in every stat, but
+// rclone does not yet write them back (see #7310).
+var systemMetadataInfo = map[string]fs.MetadataHelp{
+	"mode": {
+		Help:     "File type and mode",
+		Type:     "octal, unix style",
+		Example:  "0100664",
+		ReadOnly: true,
+	},
+	"uid": {
+		Help:     "User ID of owner",
+		Type:     "decimal number",
+		Example:  "500",
+		ReadOnly: true,
+	},
+	"gid": {
+		Help:     "Group ID of owner",
+		Type:     "decimal number",
+		Example:  "500",
+		ReadOnly: true,
+	},
+	"atime": {
+		Help:     "Time of last access",
+		Type:     "RFC 3339",
+		Example:  "2006-01-02T15:04:05.999999999Z07:00",
+		ReadOnly: true,
+	},
+	"mtime": {
+		Help:     "Time of last modification",
+		Type:     "RFC 3339",
+		Example:  "2006-01-02T15:04:05.999999999Z07:00",
+		ReadOnly: true,
+	},
+}
 
 var (
 	currentUser          = env.CurrentUser()
@@ -58,6 +96,14 @@ func init() {
 		Name:        "sftp",
 		Description: "SSH/SFTP",
 		NewFs:       NewFs,
+		MetadataInfo: &fs.MetadataInfo{
+			System: systemMetadataInfo,
+			Help: `SFTP supports reading the following system metadata for each object,
+taken from the file attributes returned by the server. rclone does not
+write these back yet (see [#7310](https://github.com/rclone/rclone/issues/7310)).
+
+Metadata is supported on files but not directories.`,
+		},
 		Options: []fs.Option{{
 			Name:      "host",
 			Help:      "SSH host to connect to.\n\nE.g. \"example.com\".",
@@ -644,7 +690,11 @@ type Object struct {
 	remote    string
 	size      int64       // size of the object
 	modTime   uint32      // modification time of the object as unix time
+	atime     uint32      // access time of the object as unix time
 	mode      os.FileMode // mode bits from the file
+	sysMode   uint32      // raw unix mode bits as reported by the server
+	uid       uint32      // user ID of owner
+	gid       uint32      // group ID of owner
 	md5sum    *string     // Cached MD5 checksum
 	sha1sum   *string     // Cached SHA-1 checksum
 	crc32sum  *string     // Cached CRC-32 checksum
@@ -1214,6 +1264,7 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 		SlowHash:                 true,
 		PartialUploads:           true,
 		DirModTimeUpdatesOnWrite: true, // indicate writing files to a directory updates its modtime
+		ReadMetadata:             true,
 	}).Fill(ctx, f)
 	if !opt.CopyIsHardlink {
 		// Disable server side copy unless --sftp-copy-is-hardlink is set
@@ -2192,9 +2243,27 @@ func (o *Object) shellPath() string {
 
 // setMetadata updates the info in the object from the stat result passed in
 func (o *Object) setMetadata(info os.FileInfo) {
-	o.modTime = info.Sys().(*sftp.FileStat).Mtime
+	stat := info.Sys().(*sftp.FileStat)
+	o.modTime = stat.Mtime
+	o.atime = stat.Atime
 	o.size = info.Size()
 	o.mode = info.Mode()
+	o.sysMode = stat.Mode
+	o.uid = stat.UID
+	o.gid = stat.GID
+}
+
+// Metadata returns the system metadata for the object as read from the
+// server's file attributes (mode, uid, gid, atime, mtime). See #7310.
+func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error) {
+	metadata = fs.Metadata{
+		"mode":  fmt.Sprintf("%0o", o.sysMode),
+		"uid":   fmt.Sprintf("%d", o.uid),
+		"gid":   fmt.Sprintf("%d", o.gid),
+		"atime": time.Unix(int64(o.atime), 0).Format(metadataTimeFormat),
+		"mtime": time.Unix(int64(o.modTime), 0).Format(metadataTimeFormat),
+	}
+	return metadata, nil
 }
 
 // statRemote stats the file or directory at the remote given
@@ -2453,4 +2522,5 @@ var (
 	_ fs.Abouter        = &Fs{}
 	_ fs.Shutdowner     = &Fs{}
 	_ fs.Object         = &Object{}
+	_ fs.Metadataer     = &Object{}
 )
