@@ -1267,15 +1267,11 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 	encRoot := f.opt.Enc.FromStandardPath(root)
 
 	if check {
-		// check directory exists
-		_, err = f.getDirMetadata(ctx, root)
-		if err != nil {
-			return fmt.Errorf("Rmdir: %w", err)
-		}
-
-		// check directory empty
+		// ListFolder reports a missing path and a path that is a file, so it
+		// checks that the directory exists and is empty in a single request.
 		arg := files.NewListFolderArg(encRoot)
 		arg.Recursive = false
+		arg.Limit = 1
 		if root == "/" {
 			arg.Path = "" // Specify root folder as empty string
 		}
@@ -1285,9 +1281,20 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 			return shouldRetry(ctx, err)
 		})
 		if err != nil {
+			switch e := err.(type) {
+			case files.ListFolderAPIError:
+				if e.EndpointError != nil && e.EndpointError.Path != nil {
+					switch e.EndpointError.Path.Tag {
+					case files.LookupErrorNotFound:
+						err = fs.ErrorDirNotFound
+					case files.LookupErrorNotFolder:
+						err = fs.ErrorIsFile
+					}
+				}
+			}
 			return fmt.Errorf("Rmdir: %w", err)
 		}
-		if len(res.Entries) != 0 {
+		if len(res.Entries) != 0 || res.HasMore {
 			return errors.New("directory not empty")
 		}
 	}
