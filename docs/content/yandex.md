@@ -273,6 +273,14 @@ to twice the max size of file in GiB should be enough, so if you want
 to upload a 30 GiB file set a timeout of `2 * 30 = 60m`, that is
 `--timeout 60m`.
 
+If you get `500 Internal Server Error` errors just after uploads,
+particularly when uploading many files in parallel, then try setting
+`--yandex-upload-wait 2s`. Yandex Disk finalizes uploads
+asynchronously on its servers and can report an upload as complete
+slightly before the file is ready, so accessing the file's metadata
+too soon causes these errors. Yandex support recommend waiting
+1.5s - 3s after each upload.
+
 Having a Yandex Mail account is mandatory to use the Yandex.Disk subscription.
 Token generation will work without a mail account, but Rclone won't be able to
 complete any actions.
