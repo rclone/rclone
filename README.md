@@ -112,6 +112,7 @@ directories to and from different cloud storage providers.
 - RackCorp Object Storage [:page_facing_up:](https://rclone.org/s3/#RackCorp)
 - rsync.net [:page_facing_up:](https://rclone.org/sftp/#rsync-net)
 - Scaleway [:page_facing_up:](https://rclone.org/s3/#scaleway)
+- Scality (RING / ARTESCA) [:page_facing_up:](https://rclone.org/s3/#scality)
 - Seafile [:page_facing_up:](https://rclone.org/seafile/)
 - Seagate Lyve Cloud [:page_facing_up:](https://rclone.org/s3/#lyve)
 - SeaweedFS [:page_facing_up:](https://rclone.org/s3/#seaweedfs)
