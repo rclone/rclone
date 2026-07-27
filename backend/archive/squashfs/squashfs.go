@@ -43,9 +43,32 @@ type Fs struct {
 	root        string   // position to read from within the archive
 }
 
+// recoverParsePanic converts a panic raised while parsing a squashfs image
+// into an error assigned through err.
+func recoverParsePanic(err *error) {
+	if r := recover(); r != nil {
+		*err = fmt.Errorf("invalid or corrupt squashfs image: %v", r)
+	}
+}
+
+// recoveringReadCloser wraps a reader returned by the go-diskfs parser so
+// panics raised while reading become errors.
+//
+// The parser reads file data lazily, so an image which opens cleanly can
+// still panic on the first Read.
+type recoveringReadCloser struct {
+	io.ReadCloser
+}
+
+func (r recoveringReadCloser) Read(p []byte) (n int, err error) {
+	defer recoverParsePanic(&err)
+	return r.ReadCloser.Read(p)
+}
+
 // New constructs an Fs from the (wrappedFs, remote) with the objects
 // prefix with prefix and rooted at root
-func New(ctx context.Context, wrappedFs fs.Fs, remote, prefix, root string) (fs.Fs, error) {
+func New(ctx context.Context, wrappedFs fs.Fs, remote, prefix, root string) (_ fs.Fs, err error) {
+	defer recoverParsePanic(&err)
 	// FIXME vfs cache?
 	// FIXME could factor out ReadFileHandle and just use that rather than the full VFS
 	fs.Debugf(nil, "Squashfs: New: remote=%q, prefix=%q, root=%q", remote, prefix, root)
@@ -201,6 +224,7 @@ func (f *Fs) objectFromFileInfo(nativeDir string, item os.FileInfo) *Object {
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	defer log.Trace(f, "dir=%q", dir)("entries=%v, err=%v", &entries, &err)
+	defer recoverParsePanic(&err)
 
 	nativeDir, err := f.toNative(dir)
 	if err != nil {
@@ -242,6 +266,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 
 // newObjectNative finds the object at the native path passed in
 func (f *Fs) newObjectNative(nativePath string) (o fs.Object, err error) {
+	defer recoverParsePanic(&err)
 	// get the path and filename
 	dir, leaf := path.Split(nativePath)
 	dir = strings.TrimRight(dir, "/")
@@ -394,6 +419,7 @@ func (o *Object) Hash(ctx context.Context, ht hash.Type) (string, error) {
 
 // Open opens the file for read.  Call Close() on the returned io.ReadCloser
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.ReadCloser, err error) {
+	defer recoverParsePanic(&err)
 	var offset, limit int64 = 0, -1
 	for _, option := range options {
 		switch x := option.(type) {
@@ -426,13 +452,15 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 			return nil, err
 		}
 	}
+	rc = recoveringReadCloser{fh}
+
 	// If limited then don't return everything
 	if limit >= 0 {
 		fs.Debugf(nil, "limit=%d, offset=%d, options=%v", limit, offset, options)
-		return readers.NewLimitedReadCloser(fh, limit), nil
+		return readers.NewLimitedReadCloser(rc, limit), nil
 	}
 
-	return fh, nil
+	return rc, nil
 }
 
 // Update in to the object with the modTime given of the given size
