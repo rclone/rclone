@@ -56,7 +56,7 @@ Leave blank to use SAS URL or Emulator.`,
 	Sensitive: true,
 }, {
 	Name: "sas_url",
-	Help: `SAS URL for container level access only.
+	Help: `SAS URL for container or blob level access.
 
 Leave blank if using account/key or Emulator.`,
 	Sensitive: true,
@@ -317,6 +317,7 @@ type NewClientResult[Client any] struct {
 	UsingSharedKeyCred bool                   // set if using shared key credentials
 	Anonymous          bool                   // true if anonymous authentication was used
 	Container          string                 // Container that SAS URL points to
+	BlobName           string                 // Blob name that SAS URL points to (if blob-level SAS)
 }
 
 // NewClient creates a service client from the rclone options
@@ -383,8 +384,9 @@ func NewClient[Client, ClientOptions, SharedKeyCredential any](ctx context.Conte
 		}
 		endpoint := opt.SASURL
 		r.Container = parts.ContainerName
+		r.BlobName = parts.BlobName
 		// Check if we have container level SAS or account level SAS
-		if conf.Blob && r.Container != "" {
+		if parts.BlobName == "" && conf.Blob && r.Container != "" {
 			// Container level SAS
 			if conf.RootContainer != "" && r.Container != conf.RootContainer {
 				return r, fmt.Errorf("container name in SAS URL (%q) and container provided in command (%q) do not match", r.Container, conf.RootContainer)
