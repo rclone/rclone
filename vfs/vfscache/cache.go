@@ -789,6 +789,9 @@ func (c *Cache) purgeOverQuota() {
 
 // clean empties the cache of stuff if it can
 func (c *Cache) clean(kicked bool) {
+	// Recover here rather than in the cleaner goroutine so that a panic
+	// cleaning one item does not stop the cache being cleaned ever again.
+	defer vfscommon.RecoverPanic(c.fremote, nil)
 	// Cache may be empty so end
 	_, err := os.Stat(c.root)
 	if os.IsNotExist(err) {

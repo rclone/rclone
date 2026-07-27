@@ -17,6 +17,7 @@ import (
 	"github.com/rclone/rclone/lib/ranges"
 	"github.com/rclone/rclone/vfs/vfscache/downloaders"
 	"github.com/rclone/rclone/vfs/vfscache/writeback"
+	"github.com/rclone/rclone/vfs/vfscommon"
 )
 
 // NB as Cache and Item are tightly linked it is necessary to have a
@@ -721,6 +722,7 @@ func (item *Item) Close(storeFn StoreFn) (err error) {
 // Grace period only applies to non-dirty files, so storeFn (only
 // needed for writeback) and syncWriteBack are not relevant.
 func (item *Item) closeAfterGrace() {
+	defer vfscommon.RecoverPanic(item.name, nil)
 	item.mu.Lock()
 	defer item.mu.Unlock()
 
@@ -736,9 +738,14 @@ func (item *Item) closeAfterGrace() {
 	// progress so a concurrent open waits rather than tripping over the
 	// half-closed handle.
 	item.closing = make(chan struct{})
+	// Release the waiters however this ends: if a panic in the backend is
+	// recovered above, leaving item.closing open would block every later
+	// open of this file forever.
+	defer func() {
+		close(item.closing)
+		item.closing = nil
+	}()
 	err := item._actualClose(nil, false)
-	close(item.closing)
-	item.closing = nil
 	if err != nil {
 		fs.Errorf(item.name, "vfs cache: close after grace period failed: %v", err)
 	}

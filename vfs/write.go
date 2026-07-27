@@ -8,6 +8,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/vfs/vfscommon"
 )
 
 // WriteFileHandle is an open for write handle on a File
@@ -69,15 +70,25 @@ func (fh *WriteFileHandle) openPending() (err error) {
 	var pipeReader *io.PipeReader
 	pipeReader, fh.pipeWriter = io.Pipe()
 	go func() {
+		var (
+			o   fs.Object
+			err error
+		)
+		// Report the outcome however this ends: if a panic escaped here the
+		// process would die, and if it were recovered without reporting then
+		// whoever is waiting on the result would wait forever.
+		defer func() {
+			// Close the pipeReader so the pipeWriter fails with ErrClosedPipe
+			_ = pipeReader.Close()
+			fh.o = o
+			fh.result <- err
+		}()
+		defer vfscommon.RecoverPanic(fh.remote, &err)
 		// NB Rcat deals with Stats.Transferring, etc.
-		o, err := operations.Rcat(fh.file.ctx, fh.file.Fs(), fh.remote, pipeReader, time.Now(), nil)
+		o, err = operations.Rcat(fh.file.ctx, fh.file.Fs(), fh.remote, pipeReader, time.Now(), nil)
 		if err != nil {
 			fs.Errorf(fh.remote, "WriteFileHandle.New Rcat failed: %v", err)
 		}
-		// Close the pipeReader so the pipeWriter fails with ErrClosedPipe
-		_ = pipeReader.Close()
-		fh.o = o
-		fh.result <- err
 	}()
 	fh.file.setSize(0)
 	fh.truncated = true
