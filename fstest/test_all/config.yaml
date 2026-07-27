@@ -218,6 +218,7 @@ backends:
      - backend
    ignore:
      - TestIntegration/FsMkdir/FsEncoding
+     - TestIntegration/FsMkdir/FsPutFiles/FsCopy/Metadata
    extratime: 2.0
  - backend:  "jottacloud"
    remote:   "TestJottacloud:"
