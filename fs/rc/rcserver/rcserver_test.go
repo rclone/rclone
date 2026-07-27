@@ -787,6 +787,7 @@ func TestServingRoot(t *testing.T) {
 	opt := newTestOpt()
 	opt.Serve = true
 	opt.Files = testFs
+	opt.NoAuth = true
 	testServer(t, tests, &opt)
 }
 
@@ -800,6 +801,53 @@ func TestServingRootNoFiles(t *testing.T) {
 	opt := newTestOpt()
 	opt.Serve = true
 	opt.Files = ""
+	opt.NoAuth = true
+	testServer(t, tests, &opt)
+}
+
+// On a server with no authentication configured and without --rc-no-auth the
+// remote listing must not disclose the configured remote names.
+func TestServingRootFailClosed(t *testing.T) {
+	forbidden := regexp.MustCompile(`"status": 403`)
+	tests := []testRun{{
+		Name:     "rootlist-star",
+		URL:      "*",
+		Status:   http.StatusForbidden,
+		Contains: forbidden,
+	}, {
+		Name:     "rootlist-empty",
+		URL:      "",
+		Status:   http.StatusForbidden,
+		Contains: forbidden,
+	}}
+	opt := newTestOpt()
+	opt.Serve = true
+	opt.Files = ""
+	testServer(t, tests, &opt)
+}
+
+// With authentication configured the remote listing is available to
+// authenticated requests only.
+func TestServingRootWithAuth(t *testing.T) {
+	const user, pass = "user", "pass"
+	tests := []testRun{{
+		Name:     "rootlist-authed",
+		URL:      "",
+		User:     user,
+		Pass:     pass,
+		Status:   http.StatusOK,
+		Contains: matchRemoteDirListing,
+	}, {
+		Name:     "rootlist-unauthed",
+		URL:      "",
+		Status:   http.StatusUnauthorized,
+		Contains: regexp.MustCompile(`Unauthorized`),
+	}}
+	opt := newTestOpt()
+	opt.Serve = true
+	opt.Files = ""
+	opt.Auth.BasicUser = user
+	opt.Auth.BasicPass = pass
 	testServer(t, tests, &opt)
 }
 
