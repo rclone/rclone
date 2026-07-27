@@ -78,6 +78,11 @@ https.  You will need to supply the ` + "`--{{ .Prefix }}cert` and `--{{ .Prefix
 If you wish to do client side certificate validation then you will need to
 supply ` + "`--{{ .Prefix }}client-ca`" + ` also.
 
+When TLS is configured every listener given with ` + "`--{{ .Prefix }}addr`" + ` serves TLS.
+An individual listener can be prefixed with ` + "`http://`" + ` to serve unencrypted
+HTTP on that address, or with ` + "`tls://`" + ` to state explicitly that it must serve
+TLS.  Using a ` + "`tls://`" + ` address without ` + "`--{{ .Prefix }}cert` and `--{{ .Prefix }}key`" + ` is an error.
+
 ` + "`--{{ .Prefix }}cert`" + ` must be set to the path of a file containing
 either a PEM encoded certificate, or a concatenation of that with the CA
 certificate. ` + "`--{{ .Prefix }}key`" + ` must be set to the path of a file
@@ -404,7 +409,12 @@ func NewServer(ctx context.Context, options ...Option) (*Server, error) {
 				return nil, err
 			}
 			instance = newInstance(ctx, s, listener, s.tlsConfig, addr)
-		} else if strings.HasPrefix(addr, "tls://") || (len(s.cfg.ListenAddr) == 1 && s.tlsConfig != nil) {
+		} else if strings.HasPrefix(addr, "tls://") || (!strings.HasPrefix(addr, "http://") && s.tlsConfig != nil) {
+			// If TLS is configured all listeners serve TLS unless
+			// explicitly marked http://.
+			if s.tlsConfig == nil {
+				return nil, fmt.Errorf("can't listen on %q: %w", addr, ErrTLSConfigRequired)
+			}
 			addr = strings.TrimPrefix(addr, "tls://")
 			listener, err := net.Listen("tcp", addr)
 			if err != nil {
@@ -486,6 +496,8 @@ var (
 	ErrTLSFileMismatch = errors.New("need both --cert and --key to use TLS")
 	// ErrTLSParseCA - hard coded errors, allowing for easier testing
 	ErrTLSParseCA = errors.New("unable to parse client certificate authority")
+	// ErrTLSConfigRequired - hard coded errors, allowing for easier testing
+	ErrTLSConfigRequired = errors.New("need both --cert and --key to use a tls:// address")
 )
 
 func (s *Server) initTLS() error {

@@ -79,11 +79,15 @@ func basicAuth(authenticator *LoggedBasicAuth) func(next http.Handler) http.Hand
 func MiddlewareAuthCertificateUser() Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			for _, cert := range r.TLS.PeerCertificates {
-				if cert.Subject.CommonName != "" {
-					r = r.WithContext(context.WithValue(r.Context(), ctxKeyUser, cert.Subject.CommonName))
-					next.ServeHTTP(w, r)
-					return
+			// r.TLS is nil on a plain HTTP listener (http:// prefix) where
+			// there can be no client certificate
+			if r.TLS != nil {
+				for _, cert := range r.TLS.PeerCertificates {
+					if cert.Subject.CommonName != "" {
+						r = r.WithContext(context.WithValue(r.Context(), ctxKeyUser, cert.Subject.CommonName))
+						next.ServeHTTP(w, r)
+						return
+					}
 				}
 			}
 			code := http.StatusUnauthorized
