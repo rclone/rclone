@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -148,6 +149,7 @@ const (
 	rootDescPath      = "/rootDesc.xml"
 	resPath           = "/r/"
 	serviceControlURL = "/ctl"
+	maxSOAPBodySize   = 1 << 20
 )
 
 type server struct {
@@ -303,7 +305,13 @@ func (s *server) serviceControlHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var env soap.Envelope
+	r.Body = http.MaxBytesReader(w, r.Body, maxSOAPBodySize)
 	if err := xml.NewDecoder(r.Body).Decode(&env); err != nil {
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			http.Error(w, "SOAP request body too large", http.StatusRequestEntityTooLarge)
+			return
+		}
 		serveError(ctx, s, w, "Could not parse SOAP request body", err)
 		return
 	}
