@@ -78,8 +78,8 @@ func TestMiddlewareAuth(t *testing.T) {
 			},
 			auth: AuthConfig{
 				Realm: "test",
-				CustomAuthFn: func(user, pass string) (value any, err error) {
-					if user == "custom" && pass == "custom" {
+				CustomAuthFn: func(r *http.Request, user, pass string) (value any, err error) {
+					if user == "custom" && pass == "custom" && r.RemoteAddr != "" {
 						return true, nil
 					}
 					return nil, errors.New("invalid credentials")
@@ -294,7 +294,7 @@ func TestMiddlewareAuthCertificateUser(t *testing.T) {
 			},
 			auth: AuthConfig{
 				Realm: "test",
-				CustomAuthFn: func(user, pass string) (value any, err error) {
+				CustomAuthFn: func(_ *http.Request, user, pass string) (value any, err error) {
 					if user == "custom" && pass == "custom" {
 						return true, nil
 					}
@@ -316,7 +316,7 @@ func TestMiddlewareAuthCertificateUser(t *testing.T) {
 			},
 			auth: AuthConfig{
 				Realm: "test",
-				CustomAuthFn: func(user, pass string) (value any, err error) {
+				CustomAuthFn: func(_ *http.Request, user, pass string) (value any, err error) {
 					fmt.Println("CUSTOMAUTH", user, pass)
 					if user == "rclone-dev-client" && pass == "" {
 						return true, nil
