@@ -104,7 +104,7 @@ jobs:
           echo "runner-os-version=$ImageOS" >> $GITHUB_OUTPUT
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -270,7 +270,7 @@ jobs:
           echo "runner-os-version=$ImageOS" >> $GITHUB_OUTPUT
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
             fetch-depth: 0
 
@@ -384,7 +384,7 @@ jobs:
           echo "runner-os-version=$ImageOS" >> $GITHUB_OUTPUT
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
