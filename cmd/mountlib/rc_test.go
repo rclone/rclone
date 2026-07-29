@@ -13,8 +13,10 @@ import (
 	_ "github.com/rclone/rclone/cmd/mount"
 	_ "github.com/rclone/rclone/cmd/mount2"
 	"github.com/rclone/rclone/cmd/mountlib"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/testy"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,6 +28,7 @@ func TestRc(t *testing.T) {
 		testy.SkipUnreliable(t)
 	}
 	ctx := context.Background()
+	fstest.Initialise()
 	configfile.Install()
 	mount := rc.Calls.Get("mount/mount")
 	assert.NotNil(t, mount)
@@ -161,10 +164,22 @@ func TestRc(t *testing.T) {
 		ctxWithFilter, err := rc.AddFilter(ctxWithConfig, in)
 		require.NoError(t, err)
 
+		ci := fs.GetConfig(ctxWithConfig)
+		assert.Equal(t, 99, ci.LowLevelRetries)
+
 		out, err := mount.Fn(ctxWithFilter, in)
 		if err != nil {
 			t.Skipf("Mount failed - skipping test: %v", err)
 		}
+		t.Cleanup(func() {
+			_, err = unmount.Fn(ctx, rc.Params{
+				"mountPoint": filterMountPoint,
+			})
+			assert.NoError(t, err)
+
+			// FIXME wait a moment for the OS to release the mount point
+			time.Sleep(100 * time.Millisecond)
+		})
 
 		returnedMountPoint, err := out.GetString("mountPoint")
 		require.NoError(t, err)
@@ -180,14 +195,5 @@ func TestRc(t *testing.T) {
 		_, err = os.Stat(excludedPath)
 		require.Error(t, err)
 		require.True(t, os.IsNotExist(err))
-
-		// unmount
-		_, err = unmount.Fn(ctx, rc.Params{
-			"mountPoint": filterMountPoint,
-		})
-		require.NoError(t, err)
-
-		// FIXME wait a moment for the OS to release the mount point
-		time.Sleep(100 * time.Millisecond)
 	})
 }
