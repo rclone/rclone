@@ -194,6 +194,22 @@ func (s *Session) Request(ctx context.Context, opts rest.Opts, request any, resp
 	return resp, nil
 }
 
+// acceptedDespiteConflict returns true when Apple signals a successful code
+// validation with HTTP 409. Since ~mid-2026, idmsa returns 409 on the
+// securitycode endpoints even when the code is accepted (body carries
+// securityCode.valid=true), but it still issues X-Apple-Session-Token on
+// success. Treat token issuance as ground truth and absorb the headers so
+// TrustSession can proceed.
+func (s *Session) acceptedDespiteConflict(resp *http.Response) bool {
+	if resp == nil || resp.StatusCode != 409 || resp.Header.Get("X-Apple-Session-Token") == "" {
+		return false
+	}
+	s.mu.Lock()
+	s.extractHeaders(resp)
+	s.mu.Unlock()
+	return true
+}
+
 // Requires2FA returns true if the session requires 2FA
 func (s *Session) Requires2FA() bool {
 	if s.needs2FA {
@@ -660,7 +676,10 @@ func (s *Session) Validate2FACode(ctx context.Context, code string) error {
 		NoResponse:   true,
 	}
 
-	_, err = s.Request(ctx, opts, nil, nil)
+	resp, err := s.Request(ctx, opts, nil, nil)
+	if err != nil && s.acceptedDespiteConflict(resp) {
+		err = nil
+	}
 	if err == nil {
 		if err := s.TrustSession(ctx); err != nil {
 			return err
@@ -788,7 +807,10 @@ func (s *Session) ValidateSMSCode(ctx context.Context, code string, phoneID int,
 		Body:         body,
 		NoResponse:   true,
 	}
-	_, err = s.Request(ctx, opts, nil, nil)
+	resp, err := s.Request(ctx, opts, nil, nil)
+	if err != nil && s.acceptedDespiteConflict(resp) {
+		err = nil
+	}
 	if err == nil {
 		if err := s.TrustSession(ctx); err != nil {
 			return err
