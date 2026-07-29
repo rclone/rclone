@@ -516,7 +516,11 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *objects
 				o.md5 = md5
 			}
 		}
-		o.bytes = *info.Size
+		if info.Size != nil {
+			o.bytes = *info.Size
+		} else {
+			fs.Debugf(o, "Failed to find object length")
+		}
 		o.storageTier = storageTierMap[strings.ToLower(string(info.StorageTier))]
 	} else {
 		err := o.readMetaData(ctx) // reads info and headers, returning an error
