@@ -12,6 +12,7 @@
 package s3
 
 import (
+	"bytes"
 	"context"
 	"crypto/md5"
 	"encoding/hex"
@@ -49,31 +50,37 @@ type multipartUpload struct {
 	pipeW *io.PipeWriter // parts are streamed here, in part-number order
 
 	mu        sync.Mutex
+	cond      *sync.Cond     // signalled when buffered shrinks, nextPart advances or the upload closes
 	partMD5s  map[int][]byte // raw MD5 sums per part (for the final S3 multipart ETag)
 	partSizes map[int]int64  // observed part sizes
 	closed    bool
 
-	putCancel context.CancelFunc // cancels the background PutStream
-	putDone   chan struct{}      // closed when the background PutStream returns
-	putErr    error              // PutStream result (read only after putDone is closed)
-	nextPart  int                // next part number to stream (1-based)
-	streamBuf map[int]*pool.RW   // parts received ahead of nextPart, awaiting their turn
-	pumping   bool               // a goroutine is currently writing to the pipe
+	putCancel   context.CancelFunc // cancels the background PutStream
+	putDone     chan struct{}      // closed when the background PutStream returns
+	putErr      error              // PutStream result (read only after putDone is closed)
+	nextPart    int                // next part number to stream (1-based)
+	streamBuf   map[int]*pool.RW   // parts received ahead of nextPart, awaiting their turn
+	pumping     bool               // a goroutine is currently writing to the pipe
+	buffered    int64              // bytes of parts admitted but not yet streamed or released
+	bufferLimit int64              // max buffered before parts ahead of nextPart must wait (<= 0 for no limit)
 }
 
 // newMultipartUpload allocates an upload struct.
-func newMultipartUpload(bucket, key, fp, streamFp string, meta map[string]string) *multipartUpload {
-	return &multipartUpload{
-		bucket:    bucket,
-		key:       key,
-		fp:        fp,
-		streamFp:  streamFp,
-		meta:      meta,
-		partMD5s:  map[int][]byte{},
-		partSizes: map[int]int64{},
-		nextPart:  1,
-		streamBuf: map[int]*pool.RW{},
+func newMultipartUpload(bucket, key, fp, streamFp string, meta map[string]string, bufferLimit int64) *multipartUpload {
+	up := &multipartUpload{
+		bucket:      bucket,
+		key:         key,
+		fp:          fp,
+		streamFp:    streamFp,
+		meta:        meta,
+		partMD5s:    map[int][]byte{},
+		partSizes:   map[int]int64{},
+		nextPart:    1,
+		streamBuf:   map[int]*pool.RW{},
+		bufferLimit: bufferLimit,
 	}
+	up.cond = sync.NewCond(&up.mu)
+	return up
 }
 
 // loadUpload looks up an in-flight upload by ID.
@@ -137,7 +144,7 @@ func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objec
 		streamFp = path.Join(objectDir, multipartUploadPrefix+string(uploadID))
 	}
 
-	up := newMultipartUpload(bucketName, objectName, fp, streamFp, meta)
+	up := newMultipartUpload(bucketName, objectName, fp, streamFp, meta, int64(b.s.opt.MultipartStreamingBufferLimit))
 
 	src := object.NewStaticObjectInfo(streamFp, time.Now(), -1, true, nil, f)
 	pr, pw := io.Pipe()
@@ -180,6 +187,12 @@ func (b *s3Backend) UploadPart(ctx context.Context, bucketName, objectName strin
 		return "", err
 	}
 
+	// Wait until there is room to buffer this part, bounding the memory a
+	// client which uploads faster than the backend drains can consume.
+	if err := up.waitForTurn(partNumber, contentLength); err != nil {
+		return "", err
+	}
+
 	// Buffer the part in a pool-backed RW so we can MD5 it (for the ETag) and
 	// stream it once it is this part's turn.
 	rw := multipart.NewRW().Reserve(contentLength)
@@ -187,10 +200,12 @@ func (b *s3Backend) UploadPart(ctx context.Context, bucketName, objectName strin
 	n, err := io.Copy(rw, io.TeeReader(body, hasher))
 	if err != nil {
 		_ = rw.Close()
+		up.release(contentLength)
 		return "", err
 	}
 	if n != contentLength {
 		_ = rw.Close()
+		up.release(contentLength)
 		return "", gofakes3.ErrIncompleteBody
 	}
 	md5Sum := hasher.Sum(nil)
@@ -202,15 +217,73 @@ func (b *s3Backend) UploadPart(ctx context.Context, bucketName, objectName strin
 	return etag, nil
 }
 
+// waitForTurn blocks until size bytes can be admitted to the reorder buffer,
+// then reserves them, bounding the memory an upload can consume when the
+// client sends parts faster than the backend drains them.
+//
+// The next part the stream needs (and any retry of an earlier one) is always
+// admitted so the pipe can keep draining; so is a single part bigger than the
+// limit when the buffer is empty, to guarantee progress. Reserved bytes are
+// returned with release, or by the pump as the part is streamed.
+func (up *multipartUpload) waitForTurn(partNumber int, size int64) error {
+	up.mu.Lock()
+	defer up.mu.Unlock()
+	for {
+		if up.closed {
+			return gofakes3.ErrNoSuchUpload
+		}
+		if up.bufferLimit <= 0 || partNumber <= up.nextPart || up.buffered == 0 || up.buffered+size <= up.bufferLimit {
+			up.buffered += size
+			return nil
+		}
+		up.cond.Wait()
+	}
+}
+
+// release returns size bytes reserved by waitForTurn to the reorder buffer
+// budget and wakes any parts waiting for room.
+func (up *multipartUpload) release(size int64) {
+	up.mu.Lock()
+	up.buffered -= size
+	up.cond.Broadcast()
+	up.mu.Unlock()
+}
+
 // streamPart records a part and streams the parts into the pipe in order.
 //
 // Parts must be uploaded in ascending, contiguous part-number order. A part
 // that arrives ahead of the next expected one is buffered until its turn; the
 // parts are then pumped into the pipe in order. Whichever goroutine finds the
 // next part available does the pumping, so concurrent (but in-order) clients
-// are tolerated with buffering bounded by how far ahead they run.
+// are tolerated, with the buffering bounded by waitForTurn.
+//
+// A part number may be uploaded more than once - typically a client retrying
+// after its request timed out, but real S3 also allows replacing a part. If
+// the earlier copy is still buffered it is replaced (last write wins). If it
+// has already been streamed it can't be replaced: an identical re-upload is
+// accepted idempotently (the data is already in the stream) and a different
+// one is rejected.
 func (up *multipartUpload) streamPart(partNumber int, size int64, md5Sum []byte, rw *pool.RW) error {
 	up.mu.Lock()
+	if oldMD5, exists := up.partMD5s[partNumber]; exists {
+		if old, buffered := up.streamBuf[partNumber]; buffered {
+			_ = old.Close()
+			up.buffered -= up.partSizes[partNumber]
+			up.cond.Broadcast()
+		} else {
+			// Already streamed (or streaming right now): the stream can't be
+			// rewritten, so accept an identical part and reject the rest.
+			same := bytes.Equal(md5Sum, oldMD5) && size == up.partSizes[partNumber]
+			up.buffered -= size
+			up.cond.Broadcast()
+			up.mu.Unlock()
+			_ = rw.Close()
+			if !same {
+				return gofakes3.ErrorMessagef(gofakes3.ErrNotImplemented, "part %d has already been streamed to the backend and cannot be replaced with different contents", partNumber)
+			}
+			return nil
+		}
+	}
 	up.partMD5s[partNumber] = md5Sum
 	up.partSizes[partNumber] = size
 	up.streamBuf[partNumber] = rw
@@ -230,6 +303,7 @@ func (up *multipartUpload) streamPart(partNumber int, size int64, md5Sum []byte,
 			return nil
 		}
 		delete(up.streamBuf, up.nextPart)
+		psize := prw.Size()
 		up.mu.Unlock()
 
 		err := pipePart(up.pipeW, prw)
@@ -237,12 +311,16 @@ func (up *multipartUpload) streamPart(partNumber int, size int64, md5Sum []byte,
 		if err != nil {
 			up.mu.Lock()
 			up.pumping = false
+			up.buffered -= psize
+			up.cond.Broadcast()
 			up.mu.Unlock()
 			return err
 		}
 
 		up.mu.Lock()
 		up.nextPart++
+		up.buffered -= psize
+		up.cond.Broadcast()
 	}
 }
 
@@ -400,6 +478,7 @@ func (up *multipartUpload) close(ctx context.Context) error {
 		return nil
 	}
 	up.closed = true
+	up.cond.Broadcast()
 	up.mu.Unlock()
 
 	err := up.pipeW.Close()
@@ -425,6 +504,7 @@ func (up *multipartUpload) abort(ctx context.Context) error {
 	up.closed = true
 	streamBuf := up.streamBuf
 	up.streamBuf = nil
+	up.cond.Broadcast()
 	up.mu.Unlock()
 
 	for _, rw := range streamBuf {

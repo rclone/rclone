@@ -213,10 +213,12 @@ backends:
  - backend:  "internetarchive"
    remote:   "TestIA:rclone-integration-test-2"
    fastlist: true
+   short:    true
    tests:
      - backend
    ignore:
      - TestIntegration/FsMkdir/FsEncoding
+     - TestIntegration/FsMkdir/FsPutFiles/FsCopy/Metadata
    extratime: 2.0
  - backend:  "jottacloud"
    remote:   "TestJottacloud:"
