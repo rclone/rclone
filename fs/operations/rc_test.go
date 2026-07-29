@@ -681,6 +681,7 @@ func TestRcCryptCheck(t *testing.T) {
 		"password":            obscure.MustObscure("test-password"),
 		"filename_encryption": "standard",
 		"filename_encoding":   "base32",
+		"suffix":              ".bin",
 	})
 	require.NoError(t, err)
 	cache.Put(cryptName, fcrypt)
@@ -719,7 +720,7 @@ func TestRcCryptCheck(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, &[]string{"file1"}, out["error"])
-	assert.Equal(t, "1 errors while checking", out["status"])
+	assert.Contains(t, out["status"], "1 errors while checking")
 	assert.Equal(t, false, out["success"])
 	writeCrypt(file1.Path, "file1 contents")
 

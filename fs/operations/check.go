@@ -342,7 +342,7 @@ func CryptCheck(ctx context.Context, opt *CheckOpt) (hashType hash.Type, err err
 
 	err = CheckFn(ctx, &optCopy)
 	if errors := checkErrors.Load(); errors > 0 {
-		err = fserrors.FsError(fmt.Errorf("%d errors while checking", errors))
+		err = fserrors.FsError(fmt.Errorf("%d errors while checking (last error %w)", errors, err))
 		fserrors.Count(err)
 	}
 	return hashType, err
