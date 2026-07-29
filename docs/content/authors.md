@@ -1171,3 +1171,7 @@ put them back in again. -->
 - TowyTowy <towy@airreps.link>
 - 0rangeSeaW0lf <0sw-8m4k2v@waku.li>
 - sijie-Z <sijie-zhou@users.noreply.github.com>
+- Søren Lindberg <deeferentleeg@gmail.com>
+- Kyue <Gooh456@users.noreply.github.com>
+- Giridhar <80974392+giri256@users.noreply.github.com>
+- p1 <giridharpavan593@gmail.com>
