@@ -1182,3 +1182,4 @@ put them back in again. -->
 - Dzmitry Nianakhau <dzmitry.nianakhau@scality.com>
 - Anupam Mediratta <mediratta@gmail.com>
 - Socialpranker <273312799+Socialpranker@users.noreply.github.com>
+- phatlc <phatle.hsd@gmail.com>
