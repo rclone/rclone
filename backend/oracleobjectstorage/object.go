@@ -362,7 +362,11 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	if err != nil {
 		return nil, err
 	}
-	o.bytes = *bytes
+	if bytes != nil {
+		o.bytes = *bytes
+	} else {
+		fs.Debugf(o, "Failed to find object length")
+	}
 	return resp.HTTPResponse().Body, nil
 }
 
