@@ -1175,3 +1175,11 @@ put them back in again. -->
 - Kyue <Gooh456@users.noreply.github.com>
 - Giridhar <80974392+giri256@users.noreply.github.com>
 - p1 <giridharpavan593@gmail.com>
+- Zero Services GmbH <info@zeroservices.eu>
+- Noah Zalev <github@nzalev.ca>
+- Acts1631 <69813585+acts-1631@users.noreply.github.com>
+- ifloppy <68799904+ifloppy@users.noreply.github.com>
+- Dzmitry Nianakhau <dzmitry.nianakhau@scality.com>
+- Anupam Mediratta <mediratta@gmail.com>
+- Socialpranker <273312799+Socialpranker@users.noreply.github.com>
+- phatlc <phatle.hsd@gmail.com>
