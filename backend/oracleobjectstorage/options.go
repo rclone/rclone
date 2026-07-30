@@ -72,6 +72,7 @@ type Options struct {
 	SSECustomerKey       string               `config:"sse_customer_key"`
 	SSECustomerKeyFile   string               `config:"sse_customer_key_file"`
 	SSECustomerKeySha256 string               `config:"sse_customer_key_sha256"`
+	Decompress           bool                 `config:"decompress"`
 }
 
 func newOptions() []fs.Option {
@@ -346,5 +347,20 @@ Using Your Own Keys for Server-Side Encryption (https://docs.cloud.oracle.com/Co
 			Value: sseDefaultAlgorithm,
 			Help:  sseDefaultAlgorithm,
 		}},
+	}, {
+		Name: "decompress",
+		Help: `If set this will decompress gzip encoded objects.
+
+It is possible to upload objects to object storage with
+"Content-Encoding: gzip" set. Normally rclone will download these
+files as compressed objects.
+
+If this flag is set then rclone will decompress these files with
+"Content-Encoding: gzip" as they are received. This means that rclone
+can't check the size and hash but the file contents will be
+decompressed.
+`,
+		Default:  false,
+		Advanced: true,
 	}}
 }
