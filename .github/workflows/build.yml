@@ -165,6 +165,11 @@ jobs:
           sudo chown root:$USER /etc/fuse.conf
           sudo apt-get update
           sudo apt-get install -y fuse3 libfuse-dev rpm pkg-config git-annex git-annex-remote-rclone nfs-common
+          # The podman static bundle in runner image ubuntu24/20260726.254 and
+          # later ships a non-setuid fusermount3 in /usr/local/bin which
+          # shadows the setuid one from the fuse3 package and breaks FUSE
+          # mounts with "Operation not permitted", so remove it.
+          sudo rm -f /usr/local/bin/fusermount /usr/local/bin/fusermount3
         if: matrix.os == 'ubuntu-latest'
 
       - name: Install Libraries on macOS
