@@ -2042,12 +2042,21 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 
 	// write chunks
 	in := readers.NewCountingReader(in0)
-	buf := make([]byte, int(chunkSize))
+	bufSize := chunkSize
+	if size >= 0 && size < bufSize {
+		bufSize = size
+	}
+	buf := make([]byte, int(bufSize))
 	cursor := files.UploadSessionCursor{
 		SessionId: res.SessionId,
 		Offset:    0,
 	}
-	appendArg := files.UploadSessionAppendArg{Cursor: &cursor}
+	appendArg := files.UploadSessionAppendArg{
+		Cursor: &cursor,
+		// A known-size upload which fits in a single chunk can close the
+		// session with its only append, saving an empty append request
+		Close: size >= 0 && size <= chunkSize,
+	}
 	for currentChunk := 1; ; currentChunk++ {
 		cursor.Offset = in.BytesRead()
 
