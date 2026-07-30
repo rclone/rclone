@@ -33,6 +33,9 @@ type KerberosFactory struct {
 	loadConfig func() (*config.Config, error)
 }
 
+// kerberosFactory is the shared KerberosFactory used to cache all connections
+var kerberosFactory = NewKerberosFactory()
+
 // NewKerberosFactory creates a new instance of KerberosFactory with default dependencies.
 func NewKerberosFactory() *KerberosFactory {
 	return &KerberosFactory{
