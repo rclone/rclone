@@ -26,6 +26,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/transform"
 	"github.com/stretchr/testify/assert"
@@ -1192,6 +1193,119 @@ func testSyncAfterRemovingAFileAndAddingAFile(ctx context.Context, t *testing.T)
 
 func TestSyncAfterRemovingAFileAndAddingAFile(t *testing.T) {
 	testSyncAfterRemovingAFileAndAddingAFile(context.Background(), t)
+}
+
+func testSyncReplacesFileAndDirectory(t *testing.T, sourceIsDirectory, useListR bool) {
+	t.Helper()
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	ci.UseListR = useListR
+	if useListR && r.Fremote.Features().ListR == nil {
+		r.Fremote.Features().ListR = func(ctx context.Context, dir string, callback fs.ListRCallback) error {
+			r.Fremote.Features().ListR = nil
+			return walk.ListR(ctx, r.Fremote, dir, true, -1, walk.ListAll, callback)
+		}
+		defer func() {
+			r.Fremote.Features().ListR = nil
+		}()
+	}
+
+	var file fstest.Item
+	if sourceIsDirectory {
+		file = r.WriteFile("item/new", "new contents", t1)
+		r.WriteObject(ctx, "item", "old contents", t2)
+	} else {
+		file = r.WriteFile("item", "new contents", t1)
+		r.WriteObject(ctx, "item/old", "old contents", t2)
+	}
+
+	require.NoError(t, Sync(ctx, r.Fremote, r.Flocal, false))
+
+	r.CheckLocalItems(t, file)
+	r.CheckRemoteItems(t, file)
+}
+
+func TestSyncReplacesFileAndDirectory(t *testing.T) {
+	for _, useListR := range []bool{false, true} {
+		mode := "list"
+		if useListR {
+			mode = "listR"
+		}
+		t.Run("directory with file/"+mode, func(t *testing.T) {
+			testSyncReplacesFileAndDirectory(t, false, useListR)
+		})
+		t.Run("file with directory/"+mode, func(t *testing.T) {
+			testSyncReplacesFileAndDirectory(t, true, useListR)
+		})
+	}
+}
+
+func TestSyncReplacesFileAndDirectoryWithBackupDir(t *testing.T) {
+	for _, sourceIsDirectory := range []bool{false, true} {
+		name := "directory with file"
+		if sourceIsDirectory {
+			name = "file with directory"
+		}
+		t.Run(name, func(t *testing.T) {
+			ctx := context.Background()
+			ctx, ci := fs.AddConfig(ctx)
+			r := fstest.NewRun(t)
+			if !operations.CanServerSideMove(r.Fremote) {
+				t.Skip("Skipping test as remote does not support server-side move")
+			}
+			ci.BackupDir = r.FremoteName + "/backup"
+			fdst, err := fs.NewFs(ctx, r.FremoteName+"/dst")
+			require.NoError(t, err)
+
+			var file, old fstest.Item
+			if sourceIsDirectory {
+				file = r.WriteFile("item/new", "new contents", t1)
+				old = r.WriteObject(ctx, "dst/item", "old contents", t2)
+				file.Path = "dst/item/new"
+				old.Path = "backup/item"
+			} else {
+				file = r.WriteFile("item", "new contents", t1)
+				old = r.WriteObject(ctx, "dst/item/old", "old contents", t2)
+				file.Path = "dst/item"
+				old.Path = "backup/item/old"
+			}
+
+			require.NoError(t, Sync(ctx, fdst, r.Flocal, false))
+
+			r.CheckRemoteItems(t, file, old)
+		})
+	}
+}
+
+func TestSyncReplaceDirectorySafetyChecks(t *testing.T) {
+	t.Run("immutable", func(t *testing.T) {
+		ctx := context.Background()
+		ctx, ci := fs.AddConfig(ctx)
+		ci.Immutable = true
+		r := fstest.NewRun(t)
+		r.WriteFile("item", "new contents", t1)
+		old := r.WriteObject(ctx, "item/old", "old contents", t2)
+
+		err := Sync(ctx, r.Fremote, r.Flocal, false)
+		require.ErrorIs(t, err, fs.ErrorImmutableModified)
+		r.CheckRemoteItems(t, old)
+	})
+
+	t.Run("active filters", func(t *testing.T) {
+		ctx := context.Background()
+		r := fstest.NewRun(t)
+		r.WriteFile("item", "new contents", t1)
+		old := r.WriteObject(ctx, "item/old", "old contents", t2)
+		flt, err := filter.NewFilter(nil)
+		require.NoError(t, err)
+		require.NoError(t, flt.AddRule("+ *"))
+		ctx = filter.ReplaceConfig(ctx, flt)
+
+		err = Sync(ctx, r.Fremote, r.Flocal, false)
+		require.ErrorContains(t, err, "filters are active")
+		r.CheckRemoteItems(t, old)
+	})
 }
 
 // Sync after removing a file and adding a file
