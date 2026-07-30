@@ -45,6 +45,7 @@ type March struct {
 	NoCheckDest            bool            // transfer all objects regardless without checking dst
 	NoUnicodeNormalization bool            // don't normalize unicode characters in filenames
 	NoProcessDstOnly       bool            // if set, when source listing finishes, cancel the dst listing
+	MatchFileAndDirectory  bool            // match identically named files and directories when no same-type match exists
 	// internal state
 	srcListDir   listDirFn // function to call to list a directory in the src
 	dstListDir   listDirFn // function to call to list a directory in the dst
@@ -90,6 +91,22 @@ func (m *March) init(ctx context.Context) {
 
 // srcOrDstKey turns a directory entry into a sort key using the defined transforms.
 func (m *March) srcOrDstKey(entry fs.DirEntry, isSrc bool) string {
+	name := m.srcOrDstBaseKey(entry, isSrc)
+	if entry == nil {
+		return name
+	}
+	// Suffix entries to make identically named files and
+	// directories sort consistently with directories first.
+	if _, isDirectory := entry.(fs.Directory); isDirectory {
+		name += "D"
+	} else {
+		name += "F"
+	}
+	return name
+}
+
+// srcOrDstBaseKey turns a directory entry into a comparison key without its type.
+func (m *March) srcOrDstBaseKey(entry fs.DirEntry, isSrc bool) string {
 	if entry == nil {
 		return ""
 	}
@@ -100,13 +117,6 @@ func (m *March) srcOrDstKey(entry fs.DirEntry, isSrc bool) string {
 	}
 	for _, transform := range m.transforms {
 		name = transform(name)
-	}
-	// Suffix entries to make identically named files and
-	// directories sort consistently with directories first.
-	if isDirectory {
-		name += "D"
-	} else {
-		name += "F"
 	}
 	return name
 }
@@ -304,6 +314,9 @@ func (m *March) aborting() bool {
 //
 // This checks for duplicates and checks the list is sorted.
 func (m *March) matchListings(srcChan, dstChan <-chan fs.DirEntry, dstCancel func(), srcOnly, dstOnly func(fs.DirEntry), match func(dst, src fs.DirEntry)) error {
+	if m.MatchFileAndDirectory && !m.NoTraverse {
+		return m.matchListingGroups(srcChan, dstChan, dstCancel, srcOnly, dstOnly, match)
+	}
 	var (
 		srcPrev, dstPrev         fs.DirEntry
 		srcPrevName, dstPrevName string
@@ -388,6 +401,134 @@ func (m *March) matchListings(srcChan, dstChan <-chan fs.DirEntry, dstCancel fun
 		case dst == nil:
 			srcOnly(src)
 			srcDone()
+		}
+	}
+	return nil
+}
+
+type entryGroupReader struct {
+	entries <-chan fs.DirEntry
+	key     func(fs.DirEntry) string
+	pending fs.DirEntry
+	more    bool
+	started bool
+}
+
+func (r *entryGroupReader) next() (key string, entries fs.DirEntries, ok bool) {
+	var entry fs.DirEntry
+	if r.started {
+		if !r.more {
+			return "", nil, false
+		}
+		entry = r.pending
+	} else {
+		entry, r.more = <-r.entries
+		r.started = true
+		if !r.more {
+			return "", nil, false
+		}
+	}
+
+	key = r.key(entry)
+	entries = append(entries, entry)
+	for {
+		entry, r.more = <-r.entries
+		if !r.more {
+			r.pending = nil
+			return key, entries, true
+		}
+		if r.key(entry) != key {
+			r.pending = entry
+			return key, entries, true
+		}
+		entries = append(entries, entry)
+	}
+}
+
+func deduplicateEntryGroup(entries fs.DirEntries, side string) map[string]fs.DirEntry {
+	unique := make(map[string]fs.DirEntry, len(entries))
+	for _, entry := range entries {
+		switch entry.(type) {
+		case fs.Object, fs.Directory:
+		default:
+			panic("Bad object in DirEntries")
+		}
+		entryType := fs.DirEntryType(entry)
+		if _, found := unique[entryType]; found {
+			fs.Logf(entry, "Duplicate %s found in %s - ignoring", entryType, side)
+			continue
+		}
+		unique[entryType] = entry
+	}
+	return unique
+}
+
+func forEachEntryGroup(entries map[string]fs.DirEntry, fn func(fs.DirEntry)) {
+	for _, entryType := range []string{"directory", "object"} {
+		if entry, found := entries[entryType]; found {
+			fn(entry)
+		}
+	}
+}
+
+func firstEntryGroup(entries map[string]fs.DirEntry) fs.DirEntry {
+	for _, entryType := range []string{"directory", "object"} {
+		if entry, found := entries[entryType]; found {
+			return entry
+		}
+	}
+	return nil
+}
+
+func (m *March) matchListingGroups(srcChan, dstChan <-chan fs.DirEntry, dstCancel func(), srcOnly, dstOnly func(fs.DirEntry), match func(dst, src fs.DirEntry)) error {
+	srcReader := entryGroupReader{entries: srcChan, key: func(entry fs.DirEntry) string {
+		return m.srcOrDstBaseKey(entry, true)
+	}}
+	dstReader := entryGroupReader{entries: dstChan, key: func(entry fs.DirEntry) string {
+		return m.srcOrDstBaseKey(entry, false)
+	}}
+	srcKey, srcEntries, srcMore := srcReader.next()
+	if !srcMore && m.NoProcessDstOnly {
+		dstCancel()
+		return nil
+	}
+	dstKey, dstEntries, dstMore := dstReader.next()
+
+	for srcMore || dstMore {
+		if m.aborting() {
+			return m.Ctx.Err()
+		}
+		if !srcMore && m.NoProcessDstOnly {
+			dstCancel()
+			break
+		}
+		switch {
+		case !dstMore || srcMore && srcKey < dstKey:
+			forEachEntryGroup(deduplicateEntryGroup(srcEntries, "source"), srcOnly)
+			srcKey, srcEntries, srcMore = srcReader.next()
+		case !srcMore || dstKey < srcKey:
+			forEachEntryGroup(deduplicateEntryGroup(dstEntries, "destination"), dstOnly)
+			dstKey, dstEntries, dstMore = dstReader.next()
+		default:
+			srcByType := deduplicateEntryGroup(srcEntries, "source")
+			dstByType := deduplicateEntryGroup(dstEntries, "destination")
+			for _, entryType := range []string{"directory", "object"} {
+				src, srcOK := srcByType[entryType]
+				dst, dstOK := dstByType[entryType]
+				if srcOK && dstOK {
+					match(dst, src)
+					delete(srcByType, entryType)
+					delete(dstByType, entryType)
+				}
+			}
+			if len(srcByType) == 1 && len(dstByType) == 1 {
+				match(firstEntryGroup(dstByType), firstEntryGroup(srcByType))
+			} else {
+				forEachEntryGroup(srcByType, srcOnly)
+				forEachEntryGroup(dstByType, dstOnly)
+			}
+			srcKey, srcEntries, srcMore = srcReader.next()
+			dstKey, dstEntries, dstMore = dstReader.next()
 		}
 	}
 	return nil
