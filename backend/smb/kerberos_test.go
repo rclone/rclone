@@ -3,6 +3,8 @@ package smb
 import (
 	"os"
 	"path/filepath"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -139,4 +141,53 @@ func TestKerberosFactory_GetClient_ReloadOnCcacheChange(t *testing.T) {
 	_, err = factory.GetClient(ccachePath)
 	assert.NoError(t, err)
 	assert.Equal(t, 2, loadCallCount, "expected reload on changed ccache")
+}
+
+func TestSharedKerberosFactoryCachesClients(t *testing.T) {
+	tmpFile, err := os.CreateTemp(t.TempDir(), "krb5cc_test")
+	assert.NoError(t, err)
+	assert.NoError(t, tmpFile.Close())
+
+	var loadCallCount atomic.Int32
+	loadBlocked := make(chan struct{})
+	originalFactory := kerberosFactory
+	t.Cleanup(func() { kerberosFactory = originalFactory })
+	kerberosFactory = &KerberosFactory{
+		loadCCache: func(string) (*credentials.CCache, error) {
+			loadCallCount.Add(1)
+			<-loadBlocked
+			return &credentials.CCache{}, nil
+		},
+		newClient: func(*credentials.CCache, *config.Config, ...func(*client.Settings)) (*client.Client, error) {
+			return &client.Client{}, nil
+		},
+		loadConfig: func() (*config.Config, error) {
+			return &config.Config{}, nil
+		},
+	}
+
+	ccachePath := "FILE:" + filepath.ToSlash(tmpFile.Name())
+	const clientCount = 8
+	var wg sync.WaitGroup
+	start := make(chan struct{})
+	errs := make(chan error, clientCount)
+	for range clientCount {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			_, err := getKerberosClient(ccachePath)
+			errs <- err
+		}()
+	}
+
+	close(start)
+	assert.Never(t, func() bool { return loadCallCount.Load() > 1 }, 100*time.Millisecond, 5*time.Millisecond)
+	close(loadBlocked)
+	wg.Wait()
+	close(errs)
+	for err := range errs {
+		assert.NoError(t, err)
+	}
+	assert.Equal(t, int32(1), loadCallCount.Load(), "expected concurrent dials to share one cached client")
 }

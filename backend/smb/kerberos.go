@@ -16,6 +16,8 @@ import (
 
 // KerberosFactory encapsulates dependencies and caches for Kerberos clients.
 type KerberosFactory struct {
+	mu sync.Mutex
+
 	// clientCache caches Kerberos clients keyed by resolved ccache path.
 	// Clients are reused unless the associated ccache file changes.
 	clientCache sync.Map // map[string]*client.Client
@@ -42,12 +44,20 @@ func NewKerberosFactory() *KerberosFactory {
 	}
 }
 
+var kerberosFactory = NewKerberosFactory()
+
+func getKerberosClient(ccachePath string) (*client.Client, error) {
+	return kerberosFactory.GetClient(ccachePath)
+}
+
 // GetClient returns a cached Kerberos client or creates a new one if needed.
 func (kf *KerberosFactory) GetClient(ccachePath string) (*client.Client, error) {
 	resolvedPath, err := resolveCcachePath(ccachePath)
 	if err != nil {
 		return nil, err
 	}
+	kf.mu.Lock()
+	defer kf.mu.Unlock()
 
 	stat, err := os.Stat(resolvedPath)
 	if err != nil {
