@@ -2054,6 +2054,15 @@ And this sets NOTICE level logs (normal without -v)
 
     rclone rc options/set --json '{"main": {"LogLevel": "NOTICE"}}'
 
+And this sets the number of transfers to 10
+
+    rclone rc options/set --json '{"main": {"Transfers": 10}}'
+
+This will change the number of transfers for syncs which are already
+running as well as new syncs. When scaling up new transfers will start
+immediately and when scaling down transfers over the limit will stop
+after they have finished the file they are transferring.
+
 ### pluginsctl/addPlugin: Add a plugin using url {#pluginsctl-addPlugin}
 
 Used for adding a plugin to the webgui.
