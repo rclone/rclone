@@ -27,6 +27,12 @@ func (f *Fs) dial(ctx context.Context, network, addr string) (*conn, error) {
 	if err != nil {
 		return nil, err
 	}
+	ownershipTransferred := false
+	defer func() {
+		if !ownershipTransferred {
+			_ = tconn.Close()
+		}
+	}()
 
 	pass := ""
 	if f.opt.Pass != "" {
@@ -66,6 +72,7 @@ func (f *Fs) dial(ctx context.Context, network, addr string) (*conn, error) {
 		return nil, err
 	}
 
+	ownershipTransferred = true
 	return &conn{
 		smbSession: session,
 		conn:       &tconn,
