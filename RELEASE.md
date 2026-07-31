@@ -16,7 +16,7 @@ This file describes how to make the various kinds of releases
 - Check GitHub actions build for master is Green
 - make test # see integration test server or run locally
 - make tag
-- edit docs/content/changelog.md # make sure to remove duplicate logs from point
+- edit docs/content/changelog.md # duplicate logs from point rels removed automatically
   releases
 - make tidy
 - make doc
