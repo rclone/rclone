@@ -62,7 +62,7 @@ d) Delete this remote
 y/e/d> y
 ```
 
-If you have two-factor authentication enabled on your Internxt account, you will be prompted to enter the code during login.
+If you have two-factor authentication enabled on your Internxt account, you will be prompted to enter the secret (for automatic code generation) during login. If not provided, you will be prompted to enter the code for a one time login.
 
 ### Security Considerations
 
@@ -136,6 +136,41 @@ Properties:
 ### Advanced options
 
 Here are the Advanced options specific to internxt (Internxt Drive).
+
+#### --internxt-2fa-code
+
+The 2FA code.
+
+The value can also be provided with --internxt-2fa-code=000000
+
+The 2FA code of your Internxt account if the account is set up with
+two-factor authentication.
+
+Properties:
+
+- Config:      2fa_code
+- Env Var:     RCLONE_INTERNXT_2FA_CODE
+- Type:        string
+- Required:    false
+
+#### --internxt-otp-secret-key
+
+The OTP secret key.
+
+The value can also be provided with --internxt-otp-secret-key=ABCDEFGHIJKLMNOPQRSTUVWXYZ234567
+
+The OTP secret key (TOTP seed, also known as the authenticator key) of your
+Internxt account if the account is set up with two-factor authentication.
+When set, rclone automatically generates 2FA codes as needed.
+
+**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
+
+Properties:
+
+- Config:      otp_secret_key
+- Env Var:     RCLONE_INTERNXT_OTP_SECRET_KEY
+- Type:        string
+- Required:    false
 
 #### --internxt-mnemonic
 
