@@ -204,6 +204,12 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		libhttp.WithTemplate(s.opt.Template),
 	)
 	if err != nil {
+		if s._vfs != nil {
+			s._vfs.Shutdown()
+		}
+		if s.proxy != nil {
+			_ = s.proxy.Close()
+		}
 		return nil, fmt.Errorf("failed to init server: %w", err)
 	}
 
@@ -235,6 +241,12 @@ func (s *HTTP) Addr() net.Addr {
 
 // Shutdown the server
 func (s *HTTP) Shutdown() error {
+	if s._vfs != nil {
+		s._vfs.Shutdown()
+	}
+	if s.proxy != nil {
+		_ = s.proxy.Close()
+	}
 	return s.server.Shutdown()
 }
 

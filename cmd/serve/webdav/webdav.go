@@ -292,6 +292,12 @@ func newWebDAV(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		libhttp.WithTemplate(w.opt.Template),
 	)
 	if err != nil {
+		if w._vfs != nil {
+			w._vfs.Shutdown()
+		}
+		if w.proxy != nil {
+			_ = w.proxy.Close()
+		}
 		return nil, fmt.Errorf("failed to init server: %w", err)
 	}
 
@@ -513,6 +519,12 @@ func (w *WebDAV) Addr() net.Addr {
 
 // Shutdown the server
 func (w *WebDAV) Shutdown() error {
+	if w._vfs != nil {
+		w._vfs.Shutdown()
+	}
+	if w.proxy != nil {
+		_ = w.proxy.Close()
+	}
 	return w.server.Shutdown()
 }
 

@@ -244,6 +244,9 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 	}
 	listener, err := net.Listen(network, s.httpListenAddr)
 	if err != nil {
+		if s.vfs != nil {
+			s.vfs.Shutdown()
+		}
 		return nil, err
 	}
 	s.HTTPConn = listener
@@ -401,6 +404,9 @@ func (s *server) Wait() {
 
 // Shutdown the DLNA server
 func (s *server) Shutdown() error {
+	if s.vfs != nil {
+		s.vfs.Shutdown()
+	}
 	err := s.HTTPConn.Close()
 	close(s.waitChan)
 	if err != nil {

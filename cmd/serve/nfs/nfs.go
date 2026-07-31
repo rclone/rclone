@@ -98,10 +98,16 @@ func init() {
 		var opt = Opt // set default opts
 		err = rc.ParseOptions(in, "opt", &opt)
 		if err != nil {
+			VFS.Shutdown()
 			return nil, err
 		}
 		// Create server
-		return NewServer(ctx, VFS, &opt)
+		s, err := NewServer(ctx, VFS, &opt)
+		if err != nil {
+			VFS.Shutdown()
+			return nil, err
+		}
+		return s, nil
 	})
 }
 
