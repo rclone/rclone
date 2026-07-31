@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -206,6 +207,15 @@ func TestMiddlewareAuth(t *testing.T) {
 			})
 		})
 	}
+}
+
+// A request arriving over a plain HTTP listener has no TLS state so it can't
+// carry a client certificate and must be rejected.
+func TestMiddlewareAuthCertificateUserNoTLS(t *testing.T) {
+	handler := MiddlewareAuthCertificateUser()(testEchoHandler([]byte("ok")))
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, httptest.NewRequest("GET", "http://example.com/", nil))
+	require.Equal(t, http.StatusUnauthorized, rec.Code)
 }
 
 func TestMiddlewareAuthCertificateUser(t *testing.T) {

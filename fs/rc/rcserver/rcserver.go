@@ -126,8 +126,11 @@ func newServer(ctx context.Context, opt *rc.Options, mux *http.ServeMux) (*Serve
 		middleware.SetHeader("Server", "rclone/"+fs.Version),
 	)
 
-	// Add the debug handler which is installed in the default mux
-	router.Handle("/debug/pprof/*", mux)
+	// Add the debug handler which is installed in the default mux.
+	// Only do this if auth is enabled.
+	if s.noAuth || s.server.UsingAuth() {
+		router.Handle("/debug/pprof/*", mux)
+	}
 
 	// FIXME split these up into individual functions
 	router.Get("/*", s.handler)
@@ -326,6 +329,12 @@ func (s *Server) handleOptions(w http.ResponseWriter, r *http.Request, path stri
 }
 
 func (s *Server) serveRoot(w http.ResponseWriter, r *http.Request) {
+	// Listing the configured remotes discloses their names so
+	// require auth like the rest of the rc endpoints
+	if !s.noAuth && !s.server.UsingAuth() {
+		writeError(r.URL.Path, nil, w, errors.New("listing the remotes requires authentication to be set up on the rc server or the --rc-no-auth flag"), http.StatusForbidden)
+		return
+	}
 	remoteNames := config.GetRemoteNames()
 	sort.Strings(remoteNames)
 	directory := serve.NewDirectory("", s.server.HTMLTemplate())

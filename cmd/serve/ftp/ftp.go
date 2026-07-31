@@ -5,6 +5,7 @@ package ftp
 
 import (
 	"context"
+	"crypto/subtle"
 	"errors"
 	"fmt"
 	"io"
@@ -351,7 +352,13 @@ func (d *driver) CheckPasswd(sctx *ftp.Context, user, pass string) (ok bool, err
 		d.userPass[user] = oPass
 		d.userPassMu.Unlock()
 	} else {
-		ok = d.opt.User == user && (d.opt.Pass == "" || d.opt.Pass == pass)
+		userOK := subtle.ConstantTimeCompare([]byte(d.opt.User), []byte(user))
+		// No password configured means any password is accepted
+		passOK := 1
+		if d.opt.Pass != "" {
+			passOK = subtle.ConstantTimeCompare([]byte(d.opt.Pass), []byte(pass))
+		}
+		ok = (userOK & passOK) == 1
 		if !ok {
 			fs.Infof(nil, "login failed: bad credentials")
 			return false, nil
