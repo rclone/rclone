@@ -2,6 +2,7 @@ package vfs
 
 import (
 	"context"
+	"runtime"
 	"testing"
 	"time"
 
@@ -110,6 +111,20 @@ func newTestPollVFS(t *testing.T, changeNotify func(context.Context, func(string
 	return r, vfs, call
 }
 
+func waitForPollLock(t *testing.T, vfs *VFS) {
+	t.Helper()
+	deadline := time.Now().Add(time.Second)
+	for time.Now().Before(deadline) {
+		if vfs.pollMu.TryLock() {
+			vfs.pollMu.Unlock()
+			runtime.Gosched()
+			continue
+		}
+		return
+	}
+	t.Fatal("poll interval update did not acquire poll lock")
+}
+
 func TestRcPollInterval(t *testing.T) {
 	r, vfs, call := rcNewRun(t, "vfs/poll-interval")
 	_ = vfs
@@ -147,11 +162,7 @@ func TestRcPollIntervalShutdown(t *testing.T) {
 		resultCh <- result{out: out, err: err}
 	}()
 
-	select {
-	case got := <-resultCh:
-		t.Fatalf("poll interval update returned before shutdown: out=%v err=%v", got.out, got.err)
-	case <-time.After(100 * time.Millisecond):
-	}
+	waitForPollLock(t, vfs)
 
 	shutdownDone := make(chan struct{})
 	go func() {
@@ -173,6 +184,24 @@ func TestRcPollIntervalShutdown(t *testing.T) {
 		t.Fatal("poll interval update did not return after shutdown")
 	}
 	assert.Equal(t, originalInterval, vfs.Opt.PollInterval)
+}
+
+func TestSetPollIntervalAfterShutdown(t *testing.T) {
+	initialIntervalReceived := make(chan struct{})
+	_, vfs, _ := newTestPollVFS(t, func(_ context.Context, _ func(string, fs.EntryType), pollInterval <-chan time.Duration) {
+		go func() {
+			<-pollInterval
+			close(initialIntervalReceived)
+			for range pollInterval {
+			}
+		}()
+	})
+	<-initialIntervalReceived
+	vfs.Shutdown()
+
+	timeoutHit, err := setPollInterval(vfs, time.Hour, 0)
+	require.EqualError(t, err, "VFS is shutting down")
+	assert.False(t, timeoutHit)
 }
 
 func TestRcPollIntervalUpdate(t *testing.T) {
