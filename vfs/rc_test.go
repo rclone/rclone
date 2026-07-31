@@ -3,6 +3,7 @@ package vfs
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
@@ -99,6 +100,75 @@ func TestRcPollInterval(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, rc.Params{}, out)
 	// FIXME needs more tests
+}
+
+func TestRcPollIntervalShutdown(t *testing.T) {
+	r := fstest.NewRun(t)
+	features := r.Fremote.Features()
+	originalChangeNotify := features.ChangeNotify
+	t.Cleanup(func() {
+		features.ChangeNotify = originalChangeNotify
+	})
+
+	initialIntervalReceived := make(chan struct{})
+	features.ChangeNotify = func(_ context.Context, _ func(string, fs.EntryType), pollInterval <-chan time.Duration) {
+		go func() {
+			<-pollInterval
+			close(initialIntervalReceived)
+		}()
+	}
+
+	vfs := New(context.Background(), r.Fremote, nil)
+	t.Cleanup(func() {
+		if vfs.inUse.Load() > 0 {
+			vfs.Shutdown()
+		}
+	})
+	<-initialIntervalReceived
+
+	call := rc.Calls.Get("vfs/poll-interval")
+	require.NotNil(t, call)
+	originalInterval := vfs.Opt.PollInterval
+
+	type result struct {
+		out rc.Params
+		err error
+	}
+	resultCh := make(chan result, 1)
+	go func() {
+		out, err := call.Fn(context.Background(), rc.Params{
+			"fs":       fs.ConfigString(r.Fremote),
+			"interval": "1h",
+		})
+		resultCh <- result{out: out, err: err}
+	}()
+
+	select {
+	case got := <-resultCh:
+		t.Fatalf("poll interval update returned before shutdown: out=%v err=%v", got.out, got.err)
+	case <-time.After(100 * time.Millisecond):
+	}
+
+	shutdownDone := make(chan struct{})
+	go func() {
+		vfs.Shutdown()
+		close(shutdownDone)
+	}()
+
+	select {
+	case <-shutdownDone:
+	case <-time.After(time.Second):
+		t.Fatal("VFS shutdown blocked behind poll interval update")
+	}
+
+	select {
+	case got := <-resultCh:
+		require.EqualError(t, got.err, "VFS is shutting down")
+		assert.Nil(t, got.out)
+	case <-time.After(time.Second):
+		t.Fatal("poll interval update did not return after shutdown")
+	}
+	assert.Equal(t, originalInterval, vfs.Opt.PollInterval)
 }
 
 func TestRcList(t *testing.T) {
