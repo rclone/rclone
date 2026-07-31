@@ -637,6 +637,47 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --local-metadata-restore-special-bits
+
+Restore the setuid, setgid and sticky bits from metadata.
+
+When restoring metadata with --metadata rclone applies the "mode" from
+the source. By default rclone applies only the permission bits and
+strips the setuid, setgid and sticky bits.
+
+The "mode" comes from the source remote which may not be trusted.
+Restoring a setuid or setgid bit onto freshly written,
+source-controlled content can plant a setuid binary, which is dangerous
+in particular when restoring from an untrusted source while running as
+root. For this reason these bits are not restored by default.
+
+If you trust the source and want the setuid, setgid and sticky bits
+restored - for example when restoring a system backup made by rclone -
+set this flag.
+
+Properties:
+
+- Config:      metadata_restore_special_bits
+- Env Var:     RCLONE_LOCAL_METADATA_RESTORE_SPECIAL_BITS
+- Type:        bool
+- Default:     false
+
+#### --local-fatal-if-no-space
+
+Make out-of-space errors fatal during transfers.
+
+When enabled, an ENOSPC error during a write returns a fatal error so
+that rclone aborts rather than retrying the operation. Useful for
+backup scripts that should halt loudly on a full disk rather than spin
+retrying.
+
+Properties:
+
+- Config:      fatal_if_no_space
+- Env Var:     RCLONE_LOCAL_FATAL_IF_NO_SPACE
+- Type:        bool
+- Default:     false
+
 #### --local-time-type
 
 Set what kind of time is returned.
@@ -722,6 +763,13 @@ User metadata is stored as extended attributes (which may not be
 supported by all file systems) under the "user.*" prefix.
 
 Metadata is supported on files and directories.
+
+When restoring metadata with `--metadata` rclone applies the
+"mode", "uid" and "gid" from the source. These come from the source
+remote which may not be trusted, so restoring metadata as root from an
+untrusted source can change file ownership and is not recommended. The
+setuid, setgid and sticky bits are not restored by default - see the
+`--local-metadata-restore-special-bits` flag.
 
 Here are the possible system metadata items for the local backend.
 
