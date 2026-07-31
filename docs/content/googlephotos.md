@@ -533,17 +533,6 @@ Properties:
 - Type:        Duration
 - Default:     0s
 
-#### --gphotos-batch-commit-timeout
-
-Max time to wait for a batch to finish committing. (no longer used)
-
-Properties:
-
-- Config:      batch_commit_timeout
-- Env Var:     RCLONE_GPHOTOS_BATCH_COMMIT_TIMEOUT
-- Type:        Duration
-- Default:     10m0s
-
 #### --gphotos-description
 
 Description of the remote.

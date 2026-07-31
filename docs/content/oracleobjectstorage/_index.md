@@ -748,6 +748,27 @@ Properties:
   - "AES256"
     - AES256
 
+#### --oos-decompress
+
+If set this will decompress gzip encoded objects.
+
+It is possible to upload objects to object storage with
+"Content-Encoding: gzip" set. Normally rclone will download these
+files as compressed objects.
+
+If this flag is set then rclone will decompress these files with
+"Content-Encoding: gzip" as they are received. This means that rclone
+can't check the size and hash but the file contents will be
+decompressed.
+
+
+Properties:
+
+- Config:      decompress
+- Env Var:     RCLONE_OOS_DECOMPRESS
+- Type:        bool
+- Default:     false
+
 #### --oos-description
 
 Description of the remote.

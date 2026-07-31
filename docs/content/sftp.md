@@ -773,7 +773,7 @@ Here are the Advanced options specific to sftp (SSH/SFTP).
 
 Optional path to known_hosts file.
 
-Set this value to enable server host key validation.
+Set this value to enable server host key validation. Set to `none` to silence the "No host key validation" notice.
 
 Leading `~` will be expanded in the file name as will environment variables such as `${RCLONE_CONFIG_DIR}`.
 
@@ -786,6 +786,60 @@ Properties:
 - Examples:
   - "~/.ssh/known_hosts"
     - Use OpenSSH's known_hosts file.
+
+#### --sftp-pin-host-key
+
+Pin the server host key on first connection (Trust On First Use).
+
+Intended for one-time use as the `--sftp-pin-host-key` command-line
+flag. Run rclone once with the flag and the server's host key will be
+recorded into the host_keys config option. On subsequent runs (without
+the flag) host_keys is consulted and any mismatch is refused.
+
+Setting this option persistently in the config file is not
+recommended. While it is set, rclone will also accept any new
+host key algorithm the server later presents, which widens the trust
+surface beyond the initial pin. To pin a new key after a legitimate
+key change, re-run with the flag.
+
+The first connection is unauthenticated, so ideally do it over a
+trusted network or cross-check the fingerprint rclone logs against
+one provided out of band.
+
+If known_hosts_file is also set, that takes precedence and this option
+is ignored.
+
+Properties:
+
+- Config:      pin_host_key
+- Env Var:     RCLONE_SFTP_PIN_HOST_KEY
+- Type:        bool
+- Default:     false
+
+#### --sftp-host-keys
+
+Pinned host keys for this remote, used to verify the server.
+
+Comma-separated list of "algo base64-key" entries (the same format as
+the second and third fields of an OpenSSH known_hosts line). Usually
+populated automatically by running once with --sftp-pin-host-key, but
+can be set by hand to pin a server's public key obtained out of band.
+Note that each entry is the complete public key, not its SHA256
+fingerprint.
+
+When non-empty, the offered host key must match one of the entries or
+the connection is refused. To re-pin after a legitimate key change,
+clear this option and reconnect with --sftp-pin-host-key, or edit the
+value directly.
+
+At most 16 entries may be pinned.
+
+Properties:
+
+- Config:      host_keys
+- Env Var:     RCLONE_SFTP_HOST_KEYS
+- Type:        CommaSepList
+- Default:     
 
 #### --sftp-ask-password
 
@@ -836,6 +890,19 @@ Properties:
 - Env Var:     RCLONE_SFTP_PATH_OVERRIDE
 - Type:        string
 - Required:    false
+
+#### --sftp-encoding
+
+The encoding for the backend.
+
+See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
+
+- Config:      encoding
+- Env Var:     RCLONE_SFTP_ENCODING
+- Type:        Encoding
+- Default:     Slash,Del,Ctl,Dot
 
 #### --sftp-set-modtime
 
@@ -975,6 +1042,12 @@ Properties:
 #### --sftp-skip-links
 
 Set to skip any symlinks and any other non regular files.
+
+This only affects listing: symlinks and other non regular files are
+omitted from directory listings. It is not a security control and does
+not prevent writes from following symlinks on the server - confining an
+SFTP account to a directory must be enforced server side (for example
+with a chroot jail or restricted permissions).
 
 Properties:
 

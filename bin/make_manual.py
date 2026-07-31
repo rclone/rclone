@@ -8,7 +8,7 @@ import os
 import re
 import time
 import subprocess
-from datetime import datetime
+from datetime import datetime, timezone
 
 docpath = "docs/content"
 outfile = "MANUAL.md"
@@ -200,8 +200,8 @@ def read_commands(docpath):
 def main():
     check_docs(docpath)
     command_docs = read_commands(docpath).replace("\\", "\\\\") # escape \ so we can use command_docs in re.sub
-    build_date = datetime.utcfromtimestamp(
-            int(os.environ.get('SOURCE_DATE_EPOCH', time.time())))
+    build_date = datetime.fromtimestamp(
+            int(os.environ.get('SOURCE_DATE_EPOCH', time.time())), timezone.utc)
     help_output = subprocess.check_output(["rclone", "help"]).decode("utf-8")
     with open(outfile, "w") as out:
         out.write("""\

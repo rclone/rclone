@@ -847,6 +847,29 @@ Returns
 
 See the [listremotes](/commands/rclone_listremotes/) command for more information on the above.
 
+### config/oauthstatus: Get the status of the OAuth authentication server. {#config-oauthstatus}
+
+Returns the current status of the OAuth authentication server.
+
+Returns a JSON object:
+- status - "running" or "stopped"
+- authUrl - URL for the authorization (only if status is "running")
+
+Eg
+
+    {
+        "status": "running",
+        "authUrl": "http://127.0.0.1:53682/auth?state=..."
+    }
+
+### config/oauthstop: Stop any running OAuth authentication server. {#config-oauthstop}
+
+Stops the OAuth authentication server if one is running.
+
+This can be used to recover from an interrupted OAuth flow without
+restarting rclone. If no OAuth authentication is in progress, an error
+is returned.
+
 ### config/password: password the config for a remote. {#config-password}
 
 This takes the following parameters:
@@ -903,6 +926,19 @@ Parameters:
 
 A good idea is to disable AskPassword before making this call
 
+### config/unset: Unset keys in a remote in the config file. {#config-unset}
+
+Parameters:
+
+- name - name of remote
+- keys - a list of key names to remove
+
+Returns:
+
+- removed - a list of the keys that were actually removed
+
+See the [config unset](/commands/rclone_config_unset/) command for more information on the above.
+
 ### config/update: update the config for a remote. {#config-update}
 
 This takes the following parameters:
@@ -921,13 +957,6 @@ This takes the following parameters:
 
 
 See the [config update](/commands/rclone_config_update/) command for more information on the above.
-
-**Reconnecting a remote:** Calling `config/update` with empty
-`parameters` runs the post-config / authorize flow, equivalent to
-`rclone config reconnect`. This can be used to re-authenticate a
-remote (e.g. refresh an OAuth token):
-
-    rclone rc config/update name=myremote parameters={} opt={"nonInteractive": true}
 
 ### core/bwlimit: Set the bandwidth limit. {#core-bwlimit}
 
@@ -1476,6 +1505,10 @@ This takes the following parameters:
 - mountOpt: a JSON object with Mount options in.
 - vfsOpt: a JSON object with VFS options in.
 
+Alternatively, you can pass VFS and Mount options flat at the top level of the parameter map. The option names are the same as their CLI flags without '--' and with '-' replaced by '_' (e.g. 'vfs_cache_mode' instead of 'CacheMode' inside 'vfsOpt', and 'volname' instead of 'VolName' inside 'mountOpt').
+
+If both flat parameters and nested 'vfsOpt'/'mountOpt' blocks are supplied, the parameters in the nested blocks will take precedence.
+
 On Windows mountPoint may be set to "*" to assign the next available
 drive letter automatically, or a network share UNC path (e.g.
 "\\server\share") to mount as a network drive. In these cases the
@@ -1493,6 +1526,7 @@ Example:
 rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint
 rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint mountType=mount
 rclone rc mount/mount fs=TestDrive: mountPoint=/mnt/tmp vfsOpt='{"CacheMode": 2}' mountOpt='{"AllowOther": true}'
+rclone rc mount/mount fs=TestDrive: mountPoint=/mnt/tmp vfs_cache_mode=writes volname=MyTestVolume
 rclone rc mount/mount fs=mydrive: mountPoint=* mountType=cmount
 ```
 
@@ -2226,13 +2260,15 @@ Other parameters are as described in the documentation for the
 relevant [rclone serve](/commands/rclone_serve/) command line options.
 To translate a command line option to an rc parameter, remove the
 leading `--` and replace `-` with `_`, so `--vfs-cache-mode` becomes
-`vfs_cache_mode`. Note that global parameters must be set with
-`_config` and `_filter` as described above.
+`vfs_cache_mode`.
+
+Option parameters (such as VFS, proxy, and protocol-specific options) can be passed flat at the top level of the parameter map or inside nested JSON objects under the `vfsOpt`, `proxyOpt`, and `opt` keys (e.g. `vfsOpt='{"CacheMode": 2}'`, `proxyOpt='{"AuthProxy": "http://127.0.0.1:8080"}'`). If both flat parameters and nested blocks are supplied, the parameters in the nested blocks will take precedence. Note that global parameters must be set with `_config` and `_filter` as described above.
 
 Examples:
 
     rclone rc serve/start type=nfs fs=remote: addr=:4321 vfs_cache_mode=full
     rclone rc serve/start --json '{"type":"nfs","fs":"remote:","addr":":1234","vfs_cache_mode":"full"}'
+    rclone rc serve/start type=webdav fs=remote: vfsOpt='{"CacheMode": 2}' proxyOpt='{"AuthProxy": "http://127.0.0.1:8080"}'
 
 This will give the reply
 

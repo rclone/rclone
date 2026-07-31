@@ -702,17 +702,6 @@ Properties:
 - Type:        string
 - Required:    false
 
-#### --drive-alternate-export
-
-Deprecated: No longer needed.
-
-Properties:
-
-- Config:      alternate_export
-- Env Var:     RCLONE_DRIVE_ALTERNATE_EXPORT
-- Type:        bool
-- Default:     false
-
 ### Advanced options
 
 Here are the Advanced options specific to drive (Google Drive).

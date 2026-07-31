@@ -403,36 +403,6 @@ Properties:
   - "false"
     - Ignore and continue.
 
-#### --mailru-user-agent
-
-HTTP user agent used internally by client.
-
-Defaults to "rclone/VERSION" or "--user-agent" provided on command line.
-
-Properties:
-
-- Config:      user_agent
-- Env Var:     RCLONE_MAILRU_USER_AGENT
-- Type:        string
-- Required:    false
-
-#### --mailru-quirks
-
-Comma separated list of internal maintenance flags.
-
-This option must not be used by an ordinary user. It is intended only to
-facilitate remote troubleshooting of backend issues. Strict meaning of
-flags is not documented and not guaranteed to persist between releases.
-Quirks will be removed when the backend grows stable.
-Supported quirks: atomicmkdir binlist unknowndirs
-
-Properties:
-
-- Config:      quirks
-- Env Var:     RCLONE_MAILRU_QUIRKS
-- Type:        string
-- Required:    false
-
 #### --mailru-encoding
 
 The encoding for the backend.

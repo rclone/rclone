@@ -247,6 +247,27 @@ Properties:
 - Type:        bool
 - Default:     true
 
+#### --yandex-upload-wait
+
+Wait this long after an upload before setting the modification time.
+
+Yandex Disk finalizes an upload asynchronously on its servers after
+the upload has completed. If the modification time is set while this
+finalization is still in progress the server returns 500 Internal
+Server Error errors.
+
+If you are getting 500 errors on upload then setting this to 2s is
+normally enough to stop them, at the cost of slowing down uploads.
+
+Yandex support recommend a value of 1.5s - 3s.
+
+Properties:
+
+- Config:      upload_wait
+- Env Var:     RCLONE_YANDEX_UPLOAD_WAIT
+- Type:        Duration
+- Default:     0s
+
 #### --yandex-description
 
 Description of the remote.

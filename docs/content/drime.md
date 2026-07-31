@@ -234,7 +234,7 @@ Properties:
 - Config:      upload_cutoff
 - Env Var:     RCLONE_DRIME_UPLOAD_CUTOFF
 - Type:        SizeSuffix
-- Default:     200Mi
+- Default:     5Mi
 
 #### --drime-chunk-size
 
