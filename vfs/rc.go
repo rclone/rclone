@@ -275,6 +275,8 @@ func getStatus(vfs *VFS, in rc.Params) (out rc.Params, err error) {
 	for k, v := range in {
 		return nil, fmt.Errorf("invalid parameter: %s=%s", k, v)
 	}
+	vfs.pollMu.Lock()
+	defer vfs.pollMu.Unlock()
 	return rc.Params{
 		"enabled":   vfs.Opt.PollInterval != 0,
 		"supported": vfs.pollChan != nil,
@@ -332,11 +334,14 @@ func rcPollInterval(ctx context.Context, in rc.Params) (out rc.Params, err error
 	for k, v := range in {
 		return nil, fmt.Errorf("invalid parameter: %s=%s", k, v)
 	}
+	vfs.pollMu.Lock()
 	if vfs.pollChan == nil {
+		vfs.pollMu.Unlock()
 		return nil, errors.New("poll-interval is not supported by this remote")
 	}
 
 	if !intervalPresent {
+		vfs.pollMu.Unlock()
 		return getStatus(vfs, in)
 	}
 	var timeoutHit bool
@@ -351,7 +356,11 @@ func rcPollInterval(ctx context.Context, in rc.Params) (out rc.Params, err error
 		vfs.Opt.PollInterval = fs.Duration(interval)
 	case <-timeoutChan:
 		timeoutHit = true
+	case <-vfs.ctx.Done():
+		vfs.pollMu.Unlock()
+		return nil, errors.New("VFS is shutting down")
 	}
+	vfs.pollMu.Unlock()
 	out, err = getStatus(vfs, in)
 	if out != nil {
 		out["timeout"] = timeoutHit
