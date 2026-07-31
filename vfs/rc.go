@@ -288,6 +288,32 @@ func getStatus(vfs *VFS, in rc.Params) (out rc.Params, err error) {
 	}, nil
 }
 
+func setPollInterval(vfs *VFS, interval, timeout time.Duration) (timeoutHit bool, err error) {
+	vfs.pollMu.Lock()
+	defer vfs.pollMu.Unlock()
+	if vfs.ctx.Err() != nil {
+		return false, errors.New("VFS is shutting down")
+	}
+	if vfs.pollChan == nil {
+		return false, errors.New("poll-interval is not supported by this remote")
+	}
+	var timeoutChan <-chan time.Time
+	if timeout > 0 {
+		timer := time.NewTimer(timeout)
+		defer timer.Stop()
+		timeoutChan = timer.C
+	}
+	select {
+	case vfs.pollChan <- interval:
+		vfs.Opt.PollInterval = fs.Duration(interval)
+	case <-timeoutChan:
+		timeoutHit = true
+	case <-vfs.ctx.Done():
+		return false, errors.New("VFS is shutting down")
+	}
+	return timeoutHit, nil
+}
+
 func init() {
 	rc.Add(rc.Call{
 		Path:  "vfs/poll-interval",
@@ -334,33 +360,19 @@ func rcPollInterval(ctx context.Context, in rc.Params) (out rc.Params, err error
 	for k, v := range in {
 		return nil, fmt.Errorf("invalid parameter: %s=%s", k, v)
 	}
-	vfs.pollMu.Lock()
-	if vfs.pollChan == nil {
-		vfs.pollMu.Unlock()
-		return nil, errors.New("poll-interval is not supported by this remote")
-	}
-
 	if !intervalPresent {
+		vfs.pollMu.Lock()
+		supported := vfs.pollChan != nil
 		vfs.pollMu.Unlock()
+		if !supported {
+			return nil, errors.New("poll-interval is not supported by this remote")
+		}
 		return getStatus(vfs, in)
 	}
-	var timeoutHit bool
-	var timeoutChan <-chan time.Time
-	if timeout > 0 {
-		timer := time.NewTimer(timeout)
-		defer timer.Stop()
-		timeoutChan = timer.C
+	timeoutHit, err := setPollInterval(vfs, interval, timeout)
+	if err != nil {
+		return nil, err
 	}
-	select {
-	case vfs.pollChan <- interval:
-		vfs.Opt.PollInterval = fs.Duration(interval)
-	case <-timeoutChan:
-		timeoutHit = true
-	case <-vfs.ctx.Done():
-		vfs.pollMu.Unlock()
-		return nil, errors.New("VFS is shutting down")
-	}
-	vfs.pollMu.Unlock()
 	out, err = getStatus(vfs, in)
 	if out != nil {
 		out["timeout"] = timeoutHit
