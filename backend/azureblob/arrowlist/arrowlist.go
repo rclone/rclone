@@ -1,4 +1,4 @@
-//go:build !plan9 && !solaris && !js
+//go:build !plan9 && !js
 
 // Package arrowlist implements the experimental "Blob Listing with Apache
 // Arrow" feature on top of the released Azure azblob SDK.
