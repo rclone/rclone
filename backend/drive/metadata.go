@@ -106,10 +106,10 @@ var permissionsFields = googleapi.Field(strings.Join([]string{
 
 // getPermission returns permissions for the fileID and permissionID passed in
 func (f *Fs) getPermission(ctx context.Context, fileID, permissionID string, useCache bool) (perm *drive.Permission, inherited bool, err error) {
-	f.permissionsMu.Lock()
-	defer f.permissionsMu.Unlock()
 	if useCache {
+		f.permissionsMu.Lock()
 		perm = f.permissions[permissionID]
+		f.permissionsMu.Unlock()
 		if perm != nil {
 			return perm, false, nil
 		}
@@ -131,7 +131,9 @@ func (f *Fs) getPermission(ctx context.Context, fileID, permissionID string, use
 	cleanPermission(perm)
 
 	// cache the permission
+	f.permissionsMu.Lock()
 	f.permissions[permissionID] = perm
+	f.permissionsMu.Unlock()
 
 	return perm, inherited, err
 }
