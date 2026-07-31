@@ -1,4 +1,4 @@
-//go:build !plan9 && !solaris && !js
+//go:build !plan9 && !js
 
 // Parallel listing support for azureblob, built on the Apache Arrow
 // listing format.
