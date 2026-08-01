@@ -724,6 +724,9 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (f
 		ReadMetadata:   true,
 		WriteMetadata:  true,
 	}
+	if f.library {
+		features.CanHaveEmptyDirectories = true
+	}
 	f.features = features.Fill(ctx, f)
 	if root != "" {
 		remote := path.Base(root)
@@ -888,7 +891,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	if parent.albumPrefix != "" || parent.node.Type != "Folder" {
 		return fmt.Errorf("SmugMug parent path %q is not a folder", parentPath)
 	}
-	_, err = f.createNode(ctx, parent.node.Uri, "Folder", f.opt.Enc.FromStandardName(leaf), "", "")
+	_, err = f.createNode(ctx, parent.node.Uri, parent.nodePath, "Folder", f.opt.Enc.FromStandardName(leaf), "", "")
 	return err
 }
 
@@ -1368,7 +1371,11 @@ func (f *Fs) commandNodeInfo(item node, itemPath string) commandNodeInfo {
 	}
 }
 
-func (f *Fs) createNode(ctx context.Context, parentURI, kind, name, urlName, privacy string) (commandNodeInfo, error) {
+func (f *Fs) commandNodeInfoInParent(item node, parentPath string) commandNodeInfo {
+	return f.commandNodeInfo(item, cleanRemote(path.Join(parentPath, f.nodeName(item))))
+}
+
+func (f *Fs) createNode(ctx context.Context, parentURI, parentPath, kind, name, urlName, privacy string) (commandNodeInfo, error) {
 	parentURI, err := normalizeNodeURI(parentURI)
 	if err != nil {
 		return commandNodeInfo{}, err
@@ -1403,39 +1410,40 @@ func (f *Fs) createNode(ctx context.Context, parentURI, kind, name, urlName, pri
 			item.Uris["Album"] = apiLink{Uri: albumURI}
 		}
 	}
-	return f.commandNodeInfo(item, f.nodeName(item)), nil
+	return f.commandNodeInfoInParent(item, parentPath), nil
 }
 
-func (f *Fs) commandCreateParent(ctx context.Context, opt map[string]string) (string, error) {
+func (f *Fs) commandCreateParent(ctx context.Context, opt map[string]string) (parentURI, parentPath string, err error) {
 	if parent := strings.TrimSpace(opt["parent"]); parent != "" {
-		return normalizeNodeURI(parent)
+		parentURI, err = normalizeNodeURI(parent)
+		return parentURI, "", err
 	}
 	if nodeOpt := strings.TrimSpace(opt["node"]); nodeOpt != "" {
-		return normalizeNodeURI(nodeOpt)
+		parentURI, err = normalizeNodeURI(nodeOpt)
+		return parentURI, "", err
 	}
 	pathOpt := strings.TrimSpace(opt["path"])
 	rootNodeURI := f.rootNodeURI
-	var err error
 	if rootNodeURI == "" {
 		rootNodeURI, err = f.getAuthRootNodeURI(ctx)
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
 	}
 	if pathOpt == "" {
 		pathOpt = f.root
 	}
 	if pathOpt == "" {
-		return rootNodeURI, nil
+		return rootNodeURI, "", nil
 	}
 	loc, err := f.resolveNodePathFrom(ctx, rootNodeURI, pathOpt)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	if loc.node.Type != "Folder" {
-		return "", fmt.Errorf("SmugMug path %q is a %s, not a folder", pathOpt, loc.node.Type)
+		return "", "", fmt.Errorf("SmugMug path %q is a %s, not a folder", pathOpt, loc.node.Type)
 	}
-	return loc.node.Uri, nil
+	return loc.node.Uri, loc.nodePath, nil
 }
 
 func commandImageTransferArgs(arg []string, opt map[string]string) (src, dst string, err error) {
@@ -1607,7 +1615,7 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		if nodeName == "" && len(arg) > 0 {
 			nodeName = arg[0]
 		}
-		parentURI, err := f.commandCreateParent(ctx, opt)
+		parentURI, parentPath, err := f.commandCreateParent(ctx, opt)
 		if err != nil {
 			return nil, err
 		}
@@ -1615,7 +1623,7 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		if name == "create-folder" {
 			kind = "Folder"
 		}
-		return f.createNode(ctx, parentURI, kind, nodeName, opt["url_name"], opt["privacy"])
+		return f.createNode(ctx, parentURI, parentPath, kind, nodeName, opt["url_name"], opt["privacy"])
 	case "copy-image", "move-image":
 		srcRemote, dstRemote, err := commandImageTransferArgs(arg, opt)
 		if err != nil {

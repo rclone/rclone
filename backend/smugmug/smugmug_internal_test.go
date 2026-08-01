@@ -121,6 +121,40 @@ func TestGetOptionsKeepsAlbumMode(t *testing.T) {
 	}
 }
 
+func TestNewFsEmptyDirectoryFeature(t *testing.T) {
+	ctx := context.Background()
+	baseConfig := configmap.Simple{
+		configAccessToken:     "token",
+		"access_token_secret": obscure.MustObscure("0123456789abcdef"),
+	}
+
+	libraryConfig := configmap.Simple{}
+	for key, value := range baseConfig {
+		libraryConfig[key] = value
+	}
+	libraryConfig["root_node"] = "NdRoot"
+	f, err := NewFs(ctx, "smug", "", libraryConfig)
+	if err != nil {
+		t.Fatalf("NewFs library mode returned error: %v", err)
+	}
+	if !f.Features().CanHaveEmptyDirectories {
+		t.Fatal("library mode should advertise CanHaveEmptyDirectories")
+	}
+
+	albumConfig := configmap.Simple{}
+	for key, value := range baseConfig {
+		albumConfig[key] = value
+	}
+	albumConfig["album_uri"] = "/api/v2/album/AbCdEf"
+	f, err = NewFs(ctx, "smug", "", albumConfig)
+	if err != nil {
+		t.Fatalf("NewFs album mode returned error: %v", err)
+	}
+	if f.Features().CanHaveEmptyDirectories {
+		t.Fatal("album mode should not advertise CanHaveEmptyDirectories")
+	}
+}
+
 func TestMkdirExistingLibraryPath(t *testing.T) {
 	for _, test := range []struct {
 		name        string
@@ -173,6 +207,29 @@ func TestMkdirExistingLibraryPath(t *testing.T) {
 				t.Fatalf("error %q does not contain %q", err, test.errContains)
 			}
 		})
+	}
+}
+
+func TestCommandNodeInfoInParent(t *testing.T) {
+	f := &Fs{}
+	item := node{
+		Name:   "RiverLight",
+		Type:   "Album",
+		Uri:    "/api/v2/node/NdAlbum",
+		WebUri: "https://example.invalid/RiverLight",
+		Uris: map[string]apiLink{
+			"Album": {Uri: "/api/v2/album/AbCdEf"},
+		},
+	}
+
+	got := f.commandNodeInfoInParent(item, "Projects")
+	if got.Path != "Projects/RiverLight" {
+		t.Fatalf("Path = %q, want %q", got.Path, "Projects/RiverLight")
+	}
+
+	got = f.commandNodeInfoInParent(item, "")
+	if got.Path != "RiverLight" {
+		t.Fatalf("Path = %q, want %q", got.Path, "RiverLight")
 	}
 }
 
