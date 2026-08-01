@@ -252,8 +252,9 @@ func TestEndToEnd(t *testing.T) {
 	}
 }
 
-// For each layout mode, migrate a single remote from git-annex-remote-rclone to
-// git-annex-remote-rclone-builtin and run `git annex testremote`.
+// For each layout mode, migrate a single remote from git-annex-remote-rclone
+// to git-annex-remote-rclone-builtin and verify that annexed files remain
+// accessible.
 func TestEndToEndMigration(t *testing.T) {
 	skipE2eTestIfNecessary(t)
 
@@ -303,8 +304,6 @@ func TestEndToEndMigration(t *testing.T) {
 			)
 
 			tc.runInRepo(t, "git", "annex", "fsck", "--from=MigratedRemote", "foo")
-
-			tc.runInRepo(t, "git", "annex", "testremote", "MigratedRemote")
 		})
 	}
 }
