@@ -710,7 +710,10 @@ func (o *Object) Storable() bool {
 
 // SetModTime sets the metadata on the object to set the modification date
 func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
-	o.file.LastModified = t
+	// The server stores modtimes with millisecond precision so round
+	// here too to keep the in-memory modtime identical to the one a
+	// fresh listing returns.
+	o.file.LastModified = t.Round(time.Millisecond)
 	return o.fs.filen.UpdateMeta(ctx, o.file)
 }
 
@@ -752,7 +755,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			fs.Logf(option, "Unsupported mandatory option: %v", option)
 		}
 	}
-	newModTime := src.ModTime(ctx)
+	// The server stores modtimes with millisecond precision so round
+	// here too to keep the in-memory modtime identical to the one a
+	// fresh listing returns.
+	newModTime := src.ModTime(ctx).Round(time.Millisecond)
 	newIncomplete, err := o.file.NewFromBase(o.fs.filen.FileEncryptionVersion)
 	if err != nil {
 		return err

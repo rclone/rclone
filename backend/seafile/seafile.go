@@ -550,7 +550,6 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	o := &Object{
 		fs:            f,
 		libraryID:     libraryID,
-		id:            fileDetails.ID,
 		remote:        remote,
 		pathInLibrary: filePath,
 		modTime:       modTime,
@@ -1239,7 +1238,6 @@ func (f *Fs) buildDirEntries(parentPath, libraryID, parentPathInLibrary string, 
 		} else if entry.Type == api.FileTypeFile {
 			object := &Object{
 				fs:            f,
-				id:            entry.ID,
 				remote:        filePath,
 				pathInLibrary: filePathInLibrary,
 				size:          entry.Size,
@@ -1359,5 +1357,4 @@ var (
 	_ fs.UserInfoer   = &Fs{}
 	_ fs.Shutdowner   = &Fs{}
 	_ fs.Object       = &Object{}
-	_ fs.IDer         = &Object{}
 )

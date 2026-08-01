@@ -438,12 +438,14 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 	defer f.putConnection(&cn, err)
 
-	_, err = cn.smbShare.Stat(dstPath)
-	if os.IsNotExist(err) {
-		err = cn.smbShare.Rename(f.toSambaPath(srcPath), f.toSambaPath(dstPath))
-		return translateError(err, true)
+	_, err = cn.smbShare.Stat(f.toSambaPath(dstPath))
+	if err == nil {
+		return fs.ErrorDirExists
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("failed to check destination directory: %w", err)
 	}
-	return fs.ErrorDirExists
+	err = cn.smbShare.Rename(f.toSambaPath(srcPath), f.toSambaPath(dstPath))
+	return translateError(err, true)
 }
 
 // List files and directories in a directory

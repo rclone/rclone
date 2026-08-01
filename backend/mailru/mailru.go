@@ -1733,7 +1733,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	o.mrHash = newHash
 	o.size = size
-	o.modTime = src.ModTime(ctx)
+	// The server stores modtimes with second precision so truncate
+	// here too to keep the in-memory modtime identical to the one a
+	// fresh listing returns.
+	o.modTime = src.ModTime(ctx).Truncate(time.Second)
 	return o.addFileMetaData(ctx, true)
 }
 
@@ -2036,7 +2039,11 @@ func (o *Object) Storable() bool {
 // Commits the datastore
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	// fs.Debugf(o, ">>> SetModTime [%v]", modTime)
-	o.modTime = modTime
+	//
+	// The server stores modtimes with second precision so truncate
+	// here too to keep the in-memory modtime identical to the one a
+	// fresh listing returns.
+	o.modTime = modTime.Truncate(time.Second)
 	return o.addFileMetaData(ctx, true)
 }
 

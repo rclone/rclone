@@ -98,7 +98,16 @@ example its own multipart upload, still with bounded memory). This works
 for any remote that supports `PutStream`, which is nearly all of them,
 including through `crypt`.
 
-**Advantages**
+The upload is atomic so the destination object only ever changes on a
+successful completion. A failed or aborted upload never affects any
+object already stored under that name. Remotes that upload atomically
+already (object stores such as `s3`) are streamed straight to the
+destination. On remotes where a partial upload would otherwise be visible
+(such as `local`), the parts are streamed to a temporary object that is
+moved into place, server-side, on completion; these remotes therefore
+also need to support a server-side move or copy.
+
+**Features**
 
 - The whole object is never buffered in memory; memory use is bounded by
   the parts in flight, not the upload size.
@@ -109,28 +118,51 @@ including through `crypt`.
   overshoot.
 - Works through `crypt` for any part size, since the object is encrypted
   as one continuous stream.
-- Backend-agnostic - it only needs the remote to support `PutStream`.
+- The destination object only ever changes atomically, on completion: an
+  aborted or failed upload leaves any pre-existing object of the same
+  name untouched, and a partly-uploaded object never becomes visible.
+- Backend-agnostic - it only needs the remote to support `PutStream`
+  (plus a server-side move or copy on remotes that don't upload
+  atomically).
 
 **Limitations**
 
 - Parts must arrive in ascending, contiguous part-number order
   (1, 2, 3, ...). Parts the client uploads concurrently or out of order
-  are buffered until their turn, so higher client upload concurrency
-  uses more memory; non-contiguous part numbers are rejected. Configure
-  the client to upload in part order, ideally with low concurrency, for
-  the lowest memory use.
-- No per-part retry. Once a part has been streamed it is committed, so a
-  failure partway through aborts the whole upload and the client must
-  start it again, rather than retrying a single part. (The remote's own
-  upload still retries its internal chunks.)
+  are buffered until their turn. The memory used for this buffering is
+  capped, per upload, by `--multipart-streaming-buffer-limit` (default
+  `256M`, `0` for no limit): a part that would take the buffer over the
+  limit is stalled until the stream drains, so a client that uploads
+  faster than the remote can accept sees backpressure rather than
+  unbounded server memory use. Since a stalled part holds its HTTP
+  request open, clients whose upload concurrency times chunk size
+  exceeds the limit may need a longer read timeout when the remote is
+  slow. Non-contiguous part numbers are rejected on completion.
+  Configure the client to upload in part order, ideally with low
+  concurrency, for the lowest memory use.
+- A part uploaded again before completion - typically a client retrying
+  after a timeout - is accepted: if the earlier copy is still buffered
+  it is replaced, and if it has already been streamed an identical
+  re-upload is a no-op. What isn't possible is replacing a part that has
+  already been streamed with *different* content - that is rejected. A
+  failure in the stream to the remote itself still aborts the whole
+  upload and the client must start it again. (The remote's own upload
+  still retries its internal chunks.)
 - Parts are serialised into one stream, so ingest from the client is
   effectively single-threaded, although the remote's own upload still
   runs concurrently.
+- On remotes that don't upload atomically (such as `local`), the
+  completed object is moved into place with a server-side operation.
+  This is a cheap rename on most such remotes. On these remotes, if
+  `serve s3` is killed part-way through an upload the temporary object
+  (named with a leading `.rclone_multipart_upload_`) may be left behind;
+  it is hidden from S3 listings but must be removed manually.
 
 #### Disabling streaming
 
 If you pass `--disable-multipart-streaming`, or the remote doesn't
-support `PutStream`, multipart uploads are instead **buffered in memory**
+support `PutStream` (or doesn't upload atomically and can't move or copy
+server-side), multipart uploads are instead **buffered in memory**
 by the underlying S3 library: every part is held in memory and the whole
 object is written out in one go when the upload completes (the previous
 behaviour). This removes the in-order/contiguous-part restriction above,
@@ -176,6 +208,17 @@ Versioning is not currently supported.
 
 Metadata will only be saved in memory other than the rclone `mtime`
 metadata which will be set as the modification time of the file.
+
+### Object names
+
+`serve s3` stores objects as files in the backend, so object keys are
+mapped to file paths rather than treated as the opaque strings AWS S3
+allows. Keys must be in canonical path form: keys that contain `..` or
+`.` path segments, repeated slashes (`//`), or a leading or trailing
+slash are rejected with a `400 Bad Request` (`InvalidArgument`)
+instead of being normalised, since normalising them could alias two
+distinct keys to the same file or resolve a key outside its bucket.
+This matches the behaviour of other S3 servers such as MinIO.
 
 ### Supported operations
 

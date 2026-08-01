@@ -30,7 +30,7 @@ var _ fusefs.InodeEmbedder = (*Node)(nil)
 func newNode(fsys *FS, vfsNode vfs.Node) (node *Node) {
 	// Check the vfsNode to see if it has a fuse Node cached
 	// We must return the same fuse nodes for vfs Nodes
-	node, ok := vfsNode.Sys().(*Node)
+	node, ok := vfsNode.Aux(fsys).(*Node)
 	if ok {
 		return node
 	}
@@ -39,7 +39,7 @@ func newNode(fsys *FS, vfsNode vfs.Node) (node *Node) {
 		fsys: fsys,
 	}
 	// Cache the node for later
-	vfsNode.SetSys(node)
+	vfsNode.SetAux(fsys, node)
 	return node
 }
 

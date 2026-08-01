@@ -22,7 +22,6 @@ import (
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/rc"
@@ -81,19 +80,19 @@ func init() {
 	cmdserve.AddRc("webdav", func(ctx context.Context, f fs.Fs, in rc.Params) (cmdserve.Handle, error) {
 		// Read VFS Opts
 		var vfsOpt = vfscommon.Opt // set default opts
-		err := configstruct.SetAny(in, &vfsOpt)
+		err := rc.ParseOptions(in, "vfsOpt", &vfsOpt)
 		if err != nil {
 			return nil, err
 		}
 		// Read Proxy Opts
 		var proxyOpt = proxy.Opt // set default opts
-		err = configstruct.SetAny(in, &proxyOpt)
+		err = rc.ParseOptions(in, "proxyOpt", &proxyOpt)
 		if err != nil {
 			return nil, err
 		}
 		// Read opts
 		var opt = Opt // set default opts
-		err = configstruct.SetAny(in, &opt)
+		err = rc.ParseOptions(in, "opt", &opt)
 		if err != nil {
 			return nil, err
 		}
@@ -351,8 +350,8 @@ func (w *WebDAV) getVFS(ctx context.Context) (VFS *vfs.VFS, err error) {
 }
 
 // auth does proxy authorization
-func (w *WebDAV) auth(user, pass string) (value any, err error) {
-	VFS, _, err := w.proxy.Call(user, pass, false)
+func (w *WebDAV) auth(r *http.Request, user, pass string) (value any, err error) {
+	VFS, _, err := w.proxy.Call(user, pass, false, r.RemoteAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -412,6 +411,12 @@ func (w *WebDAV) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	if !w.opt.DisableDirList && (r.Method == "GET" || r.Method == "HEAD") && isDir {
 		w.serveDir(rw, r, remote)
 		return
+	}
+	// Work around bug in x/net/webdav which handles Overwrite incorrectly
+	// See: https://github.com/golang/go/issues/66059
+	// Remove when the above bug is fixed.
+	if (r.Method == "COPY" || r.Method == "MOVE") && r.Header.Get("Overwrite") == "" {
+		r.Header.Set("Overwrite", "T")
 	}
 	// Add URL Prefix back to path since webdavhandler needs to
 	// return absolute references.

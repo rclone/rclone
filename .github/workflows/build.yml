@@ -37,7 +37,7 @@ jobs:
         include:
           - job_name: linux
             os: ubuntu-latest
-            go: '~1.26.4'
+            go: '~1.26.5'
             gotags: cmount
             build_flags: '-include "^linux/"'
             check: true
@@ -48,14 +48,14 @@ jobs:
 
           - job_name: linux_386
             os: ubuntu-latest
-            go: '~1.26.4'
+            go: '~1.26.5'
             goarch: 386
             gotags: cmount
             quicktest: true
 
           - job_name: mac_amd64
             os: macos-latest
-            go: '~1.26.4'
+            go: '~1.26.5'
             gotags: 'cmount'
             build_flags: '-include "^darwin/amd64" -cgo'
             quicktest: true
@@ -64,14 +64,14 @@ jobs:
 
           - job_name: mac_arm64
             os: macos-latest
-            go: '~1.26.4'
+            go: '~1.26.5'
             gotags: 'cmount'
             build_flags: '-include "^darwin/arm64" -cgo -macos-arch arm64 -cgo-cflags=-I/usr/local/include -cgo-ldflags=-L/usr/local/lib'
             deploy: true
 
           - job_name: windows
             os: windows-latest
-            go: '~1.26.4'
+            go: '~1.26.5'
             gotags: cmount
             cgo: '0'
             build_flags: '-include "^windows/"'
@@ -81,14 +81,14 @@ jobs:
 
           - job_name: other_os
             os: ubuntu-latest
-            go: '~1.26.4'
+            go: '~1.26.5'
             build_flags: '-exclude "^(windows/|darwin/|linux/)"'
             compile_all: true
             deploy: true
 
           - job_name: go1.25
             os: ubuntu-latest
-            go: '~1.25.7'
+            go: '~1.25.12'
             quicktest: true
             racequicktest: true
 
@@ -104,13 +104,13 @@ jobs:
           echo "runner-os-version=$ImageOS" >> $GITHUB_OUTPUT
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Install Go
         id: setup-go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version: ${{ matrix.go }}
           check-latest: true
@@ -131,7 +131,7 @@ jobs:
       # it is shared via a single key to avoid storing the same ~600 MiB in
       # every job's cache and overflowing the repo cache limit.
       - name: Module cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ${{ steps.go-paths.outputs.mod-cache }}
           key: go-mod-${{ steps.get-runner-parameters.outputs.year-week }}-${{ hashFiles('go.sum') }}
@@ -142,7 +142,7 @@ jobs:
       # The build cache holds compiled artifacts which are specific to the
       # OS, arch and Go version, so it is kept per job.
       - name: Build cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ${{ steps.go-paths.outputs.build-cache }}
           key: go-build-${{ matrix.job_name }}-${{ steps.get-runner-parameters.outputs.runner-os-version }}-go${{ steps.setup-go.outputs.go-version }}-${{ steps.get-runner-parameters.outputs.year-week }}-${{ hashFiles('go.sum') }}
@@ -165,6 +165,11 @@ jobs:
           sudo chown root:$USER /etc/fuse.conf
           sudo apt-get update
           sudo apt-get install -y fuse3 libfuse-dev rpm pkg-config git-annex git-annex-remote-rclone nfs-common
+          # The podman static bundle in runner image ubuntu24/20260726.254 and
+          # later ships a non-setuid fusermount3 in /usr/local/bin which
+          # shadows the setuid one from the fuse3 package and breaks FUSE
+          # mounts with "Operation not permitted", so remove it.
+          sudo rm -f /usr/local/bin/fusermount /usr/local/bin/fusermount3
         if: matrix.os == 'ubuntu-latest'
 
       - name: Install Libraries on macOS
@@ -270,20 +275,20 @@ jobs:
           echo "runner-os-version=$ImageOS" >> $GITHUB_OUTPUT
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
             fetch-depth: 0
 
       - name: Install Go
         id: setup-go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
-          go-version: '~1.26.4'
+          go-version: '~1.26.5'
           check-latest: true
           cache: false
           
       - name: Module cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/go/pkg/mod
           key: go-mod-${{ steps.get-runner-parameters.outputs.year-week }}-${{ hashFiles('go.sum') }}
@@ -292,7 +297,7 @@ jobs:
             go-mod-
 
       - name: Cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cache/go-build
@@ -384,16 +389,16 @@ jobs:
           echo "runner-os-version=$ImageOS" >> $GITHUB_OUTPUT
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       # Upgrade together with NDK version
       - name: Set up Go
         id: setup-go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
-          go-version: '~1.26.4'
+          go-version: '~1.26.5'
           # Caching is handled explicitly below to share the module cache
           # with the other jobs - see the build job for the rationale.
           cache: false
@@ -405,7 +410,7 @@ jobs:
           echo "mod-cache=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
 
       - name: Module cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ${{ steps.go-paths.outputs.mod-cache }}
           key: go-mod-${{ steps.get-runner-parameters.outputs.year-week }}-${{ hashFiles('go.sum') }}
@@ -414,7 +419,7 @@ jobs:
             go-mod-
 
       - name: Build cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ${{ steps.go-paths.outputs.build-cache }}
           key: go-build-android-${{ steps.get-runner-parameters.outputs.runner-os-version }}-go${{ steps.setup-go.outputs.go-version }}-${{ steps.get-runner-parameters.outputs.year-week }}-${{ hashFiles('go.sum') }}

@@ -13,8 +13,10 @@ import (
 	_ "github.com/rclone/rclone/cmd/mount"
 	_ "github.com/rclone/rclone/cmd/mount2"
 	"github.com/rclone/rclone/cmd/mountlib"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/testy"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,6 +28,7 @@ func TestRc(t *testing.T) {
 		testy.SkipUnreliable(t)
 	}
 	ctx := context.Background()
+	fstest.Initialise()
 	configfile.Install()
 	mount := rc.Calls.Get("mount/mount")
 	assert.NotNil(t, mount)
@@ -121,9 +124,76 @@ func TestRc(t *testing.T) {
 		time.Sleep(100 * time.Millisecond)
 
 		t.Run("Unmount", func(t *testing.T) {
-			_, err := unmount.Fn(ctx, in)
+			_, err := unmount.Fn(ctx, rc.Params{
+				"mountPoint": mountPoint,
+			})
 			require.NoError(t, err)
 			assert.Equal(t, 0, len(checkMountList()))
 		})
+	})
+
+	t.Run("MountWithFilterAndConfig", func(t *testing.T) {
+		if len(mountTypes) == 0 {
+			t.Skip("Can't mount")
+		}
+		filterDir := t.TempDir()
+		err := os.WriteFile(filepath.Join(filterDir, "allowed.txt"), []byte("allow"), 0666)
+		require.NoError(t, err)
+		err = os.WriteFile(filepath.Join(filterDir, "excluded.txt"), []byte("exclude"), 0666)
+		require.NoError(t, err)
+
+		filterMountPoint := t.TempDir()
+		if runtime.GOOS == "windows" {
+			require.NoError(t, os.RemoveAll(filterMountPoint))
+		}
+
+		in := rc.Params{
+			"fs":         filterDir,
+			"mountPoint": filterMountPoint,
+			"_filter": rc.Params{
+				"ExcludeRule": []string{"excluded.txt"},
+			},
+			"_config": rc.Params{
+				"LowLevelRetries": 99,
+			},
+		}
+
+		// mount
+		ctxWithConfig, err := rc.AddConfig(ctx, in)
+		require.NoError(t, err)
+		ctxWithFilter, err := rc.AddFilter(ctxWithConfig, in)
+		require.NoError(t, err)
+
+		ci := fs.GetConfig(ctxWithConfig)
+		assert.Equal(t, 99, ci.LowLevelRetries)
+
+		out, err := mount.Fn(ctxWithFilter, in)
+		if err != nil {
+			t.Skipf("Mount failed - skipping test: %v", err)
+		}
+		t.Cleanup(func() {
+			_, err = unmount.Fn(ctx, rc.Params{
+				"mountPoint": filterMountPoint,
+			})
+			assert.NoError(t, err)
+
+			// FIXME wait a moment for the OS to release the mount point
+			time.Sleep(100 * time.Millisecond)
+		})
+
+		returnedMountPoint, err := out.GetString("mountPoint")
+		require.NoError(t, err)
+		assert.Equal(t, filterMountPoint, returnedMountPoint)
+
+		// check allowed.txt is visible in mount point
+		allowedPath := filepath.Join(filterMountPoint, "allowed.txt")
+		_, err = os.Stat(allowedPath)
+		require.NoError(t, err)
+
+		// check excluded.txt is not visible in mount point due to the filter
+		excludedPath := filepath.Join(filterMountPoint, "excluded.txt")
+		_, err = os.Stat(excludedPath)
+		require.Error(t, err)
+		require.True(t, os.IsNotExist(err))
 	})
 }

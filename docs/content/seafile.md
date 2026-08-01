@@ -378,17 +378,6 @@ Properties:
 - Type:        string
 - Required:    false
 
-#### --seafile-auth-token
-
-Authentication token.
-
-Properties:
-
-- Config:      auth_token
-- Env Var:     RCLONE_SEAFILE_AUTH_TOKEN
-- Type:        string
-- Required:    false
-
 ### Advanced options
 
 Here are the Advanced options specific to seafile (seafile).

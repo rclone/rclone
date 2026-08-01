@@ -86,6 +86,50 @@ func getFileHash(node any, hashType hash.Type) string {
 	return hash
 }
 
+// canonicalKey reports whether key is a non-empty path in canonical form: it
+// is equal to the path it cleans to, so it has no ".", ".." or empty
+// (repeated, leading or trailing slash) segments.
+//
+// The key is anchored with a leading "/" before cleaning so that a leading
+// ".." cannot silently escape upwards and still compare equal.
+func canonicalKey(key string) bool {
+	return key != "" && "/"+key == path.Clean("/"+key)
+}
+
+// errInvalidObjectName is returned for object keys that cannot be represented
+// as a backend path, for example because they contain "..", "." or "//"
+// segments. Like MinIO, this is reported as a 400 Bad Request rather than
+// silently resolving the key to a different object (or one outside the
+// bucket).
+func errInvalidObjectName(key string) error {
+	return gofakes3.ErrorMessagef(gofakes3.ErrInvalidArgument, "Object name contains unsupported characters: %q", key)
+}
+
+// bucketObjectPath joins the bucket name and object key into a backend path.
+//
+// S3 object keys are opaque, so rclone treats "dir/../file" and "file" as
+// distinct keys and refuses to normalise one into the other. Keys that are
+// not in canonical form (or that would escape the bucket) are rejected with
+// errInvalidObjectName rather than resolved.
+func bucketObjectPath(bucketName, objectName string) (string, error) {
+	if !canonicalKey(objectName) {
+		return "", errInvalidObjectName(objectName)
+	}
+	return path.Join(bucketName, objectName), nil
+}
+
+// bucketDirPath joins the bucket name and a directory path (a listing prefix)
+// into a backend path. It is like bucketObjectPath except that the empty path
+// is allowed and addresses the bucket root. Every other non-canonical path,
+// including one with a trailing slash, is rejected - it is not normalised, so
+// "dir" and "dir/" are not treated as the same directory.
+func bucketDirPath(bucketName, dirName string) (string, error) {
+	if dirName == "" {
+		return bucketName, nil
+	}
+	return bucketObjectPath(bucketName, dirName)
+}
+
 func prefixParser(p *gofakes3.Prefix) (path, remaining string) {
 	idx := strings.LastIndexByte(p.Prefix, '/')
 	if idx < 0 {

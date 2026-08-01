@@ -1151,7 +1151,10 @@ func (o *Object) dynamicUpload(ctx context.Context, size int64, modTime time.Tim
 	}
 
 	o.size = size
-	o.modTime = modTime
+	// finalize sends the modtime rounded to microseconds so round
+	// here too to keep the in-memory modtime identical to the one a
+	// fresh listing returns.
+	o.modTime = modTime.Round(time.Microsecond)
 
 	return nil
 }
