@@ -142,7 +142,7 @@ func MiddlewareAuthCustom(fn CustomAuthFn, realm string, userFromContext bool) M
 				return
 			}
 
-			value, err := fn(user, pass)
+			value, err := fn(r, user, pass)
 			if err != nil {
 				fs.Infof(r.URL.Path, "%s: Auth failed from %s: %v", r.RemoteAddr, user, err)
 				goauth.NewBasicAuthenticator(realm, func(user, realm string) string { return "" }).RequireAuth(w, r) //Reuse BasicAuth error reporting
