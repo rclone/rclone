@@ -239,6 +239,7 @@ func skipE2eTestIfNecessary(t *testing.T) {
 // parameters like repo layouts, and runtime may suffer from a combinatorial
 // explosion.
 func TestEndToEnd(t *testing.T) {
+	t.Parallel()
 	skipE2eTestIfNecessary(t)
 
 	for _, mode := range allLayoutModes() {
@@ -273,6 +274,7 @@ func TestEndToEnd(t *testing.T) {
 // to git-annex-remote-rclone-builtin and verify that annexed files remain
 // accessible.
 func TestEndToEndMigration(t *testing.T) {
+	t.Parallel()
 	skipE2eTestIfNecessary(t)
 
 	if _, err := exec.LookPath("git-annex-remote-rclone"); err != nil {
@@ -330,6 +332,7 @@ func TestEndToEndMigration(t *testing.T) {
 // remote are present on the other. Similarly, test that files deleted from one
 // are removed on the other.
 func TestEndToEndRepoLayoutCompat(t *testing.T) {
+	t.Parallel()
 	skipE2eTestIfNecessary(t)
 
 	if _, err := exec.LookPath("git-annex-remote-rclone"); err != nil {
