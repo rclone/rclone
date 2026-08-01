@@ -10,6 +10,7 @@ import (
 	"context"
 	"io"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
@@ -29,9 +30,15 @@ import (
 // startTestSSHClient starts an sftp server serving a temporary local directory
 // with the given VFS options and returns an ssh client connected to it.
 func startTestSSHClient(t *testing.T, vfsOpt *vfscommon.Options) *ssh.Client {
+	return startTestSSHClientDir(t, t.TempDir(), vfsOpt)
+}
+
+// startTestSSHClientDir starts an sftp server serving dir with the given VFS
+// options and returns an ssh client connected to it.
+func startTestSSHClientDir(t *testing.T, dir string, vfsOpt *vfscommon.Options) *ssh.Client {
 	ctx := context.Background()
 
-	f, err := fs.NewFs(ctx, t.TempDir())
+	f, err := fs.NewFs(ctx, dir)
 	require.NoError(t, err)
 
 	opt := Opt
@@ -208,6 +215,33 @@ func TestSetstatMtime(t *testing.T) {
 	fi, err := client.Stat(fileName)
 	require.NoError(t, err)
 	assert.True(t, fi.ModTime().Equal(epoch), "mtime not applied: got %v want %v", fi.ModTime(), epoch)
+}
+
+// Test that md5sum reports the hash of the data just uploaded while the VFS
+// cache holds it for writeback and the remote still has the old contents.
+func TestHashsumWhileUploading(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "file.txt"), []byte("one"), 0600))
+
+	// A long writeback keeps the file in the cache waiting to be uploaded
+	vfsOpt := vfscommon.Opt
+	vfsOpt.CacheMode = vfscommon.CacheModeWrites
+	vfsOpt.WriteBack = fs.Duration(time.Hour)
+	conn := startTestSSHClientDir(t, dir, &vfsOpt)
+
+	client, err := sftp.NewClient(conn)
+	require.NoError(t, err)
+	defer func() { _ = client.Close() }()
+	require.NoError(t, writeFile(client, "file.txt", "two"))
+
+	session, err := conn.NewSession()
+	require.NoError(t, err)
+	defer func() { _ = session.Close() }()
+	out, err := session.Output("md5sum /file.txt")
+	require.NoError(t, err)
+
+	// md5 of "two", not of "one"
+	assert.Equal(t, "b8a9f715dbb64fd5c56e7783c6820a61  /file.txt\n", string(out))
 }
 
 // Test that a panic in a request handler is recovered and returned as an
