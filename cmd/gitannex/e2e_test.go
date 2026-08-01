@@ -18,6 +18,7 @@ import (
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/testy"
 	"github.com/rclone/rclone/lib/buildinfo"
+	"github.com/rclone/rclone/lib/israce"
 )
 
 // checkRcloneBinaryVersion runs whichever rclone is on the PATH and checks
@@ -192,6 +193,13 @@ func skipE2eTestIfNecessary(t *testing.T) {
 
 	if runtime.GOOS == "darwin" && testy.CI() {
 		t.Skip("Skipping on macOS CI - tests frequently time out")
+	}
+
+	// The code under test runs in a separate rclone subprocess which is not
+	// built with race instrumentation, so running these tests under the race
+	// detector costs time without adding any race coverage.
+	if israce.Enabled {
+		t.Skip("Skipping because the race detector cannot observe the rclone subprocess")
 	}
 
 	// TODO: Support e2e tests on Windows. Need to evaluate the semantics of the
