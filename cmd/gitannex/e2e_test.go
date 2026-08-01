@@ -169,14 +169,17 @@ func (e *e2eTestingContext) runInRepo(t *testing.T, command string, args ...stri
 	require.NoError(t, err, fmt.Sprintf("+ %s %v failed:\n%s\n", command, args, buf))
 }
 
-// createGitRepo creates an empty git repository in the ephemeral repo
-// directory. It makes "global" config changes that are ultimately scoped to the
+// createGitRepo creates an empty git-annex repository in the ephemeral repo
+// directory. The "global" git config it writes is ultimately scoped to the
 // calling test thanks to runInRepo() overriding the HOME environment variable.
 func (e *e2eTestingContext) createGitRepo(t *testing.T) {
-	e.runInRepo(t, "git", "annex", "version")
-	e.runInRepo(t, "git", "config", "--global", "user.name", "User Name")
-	e.runInRepo(t, "git", "config", "--global", "user.email", "user@example.com")
-	e.runInRepo(t, "git", "config", "--global", "init.defaultBranch", "main")
+	gitConfig := "[user]\n" +
+		"\tname = User Name\n" +
+		"\temail = user@example.com\n" +
+		"[init]\n" +
+		"\tdefaultBranch = main\n"
+	require.NoError(t, os.WriteFile(
+		filepath.Join(e.homeDir, ".gitconfig"), []byte(gitConfig), 0600))
 	e.runInRepo(t, "git", "init")
 	e.runInRepo(t, "git", "annex", "init")
 }
