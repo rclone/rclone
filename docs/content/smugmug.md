@@ -286,7 +286,6 @@ Properties:
 - Env Var:     RCLONE_SMUGMUG_ROOT_NODE
 - Type:        string
 - Default:     "root"
-- Required:    false
 
 ### Advanced options
 

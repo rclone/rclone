@@ -1,0 +1,23 @@
+backend: smugmug
+name: SmugMug
+tier: Tier 4
+maintainers: External
+features_score: 2
+integration_tests: Passing
+data_integrity: Other
+performance: Medium
+adoption: Some use
+docs: Full
+security: High
+virtual: false
+remote: 'TestSmugMug:'
+features:
+- Command
+- DuplicateFiles
+- PublicLink
+- ReadMetadata
+- ReadMimeType
+- UserInfo
+- WriteMetadata
+hashes: []
+precision: 3153600000000000000
