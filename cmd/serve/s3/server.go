@@ -140,8 +140,8 @@ func (w *Server) getVFS(ctx context.Context) (VFS *vfs.VFS, err error) {
 }
 
 // auth does proxy authorization
-func (w *Server) auth(accessKeyID string) (value any, err error) {
-	VFS, _, err := w.proxy.Call(stringToMd5Hash(accessKeyID), accessKeyID, false)
+func (w *Server) auth(r *http.Request, accessKeyID string) (value any, err error) {
+	VFS, _, err := w.proxy.Call(stringToMd5Hash(accessKeyID), accessKeyID, false, r.RemoteAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +187,7 @@ func authPairMiddleware(next http.Handler, ws *Server) http.Handler {
 func proxyAuthMiddleware(next http.Handler, ws *Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		accessKey, _ := parseAccessKeyID(r)
-		value, err := ws.auth(accessKey)
+		value, err := ws.auth(r, accessKey)
 		if err != nil {
 			fs.Infof(r.URL.Path, "%s: Auth failed: %v", r.RemoteAddr, err)
 		}

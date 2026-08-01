@@ -317,7 +317,7 @@ func (l *Logger) PrintResponse(sessionID string, code int, message string) {
 // CheckPasswd handle auth based on configuration
 func (d *driver) CheckPasswd(sctx *ftp.Context, user, pass string) (ok bool, err error) {
 	if d.proxy != nil {
-		_, _, err = d.proxy.Call(user, pass, false)
+		_, _, err = d.proxy.Call(user, pass, false, sctx.Sess.RemoteAddr().String())
 		if err != nil {
 			fs.Infof(nil, "proxy login failed: %v", err)
 			return false, nil
@@ -366,7 +366,7 @@ func (d *driver) getVFS(sctx *ftp.Context) (VFS *vfs.VFS, err error) {
 	if err != nil {
 		return nil, err
 	}
-	VFS, _, err = d.proxy.Call(user, pass, false)
+	VFS, _, err = d.proxy.Call(user, pass, false, sctx.Sess.RemoteAddr().String())
 	if err != nil {
 		return nil, fmt.Errorf("proxy login failed: %w", err)
 	}
