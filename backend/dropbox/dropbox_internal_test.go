@@ -80,6 +80,26 @@ func TestChangeNotifyTrimsRootCaseInsensitively(t *testing.T) {
 	}, notifications)
 }
 
+type paperMetadataClient struct {
+	files.Client
+	info *files.FileMetadata
+}
+
+func (c paperMetadataClient) GetMetadata(arg *files.GetMetadataArg) (files.IsMetadata, error) {
+	if arg.Path == "document" {
+		return c.info, nil
+	}
+	return nil, files.GetMetadataAPIError{
+		APIError: dropbox.APIError{ErrorSummary: "path/not_found/"},
+		EndpointError: &files.GetMetadataError{
+			Tagged: dropbox.Tagged{Tag: files.GetMetadataErrorPath},
+			Path: &files.LookupError{
+				Tagged: dropbox.Tagged{Tag: files.LookupErrorNotFound},
+			},
+		},
+	}
+}
+
 func TestInternalCheckPathLength(t *testing.T) {
 	rep := func(n int, r rune) (out string) {
 		rs := make([]rune, n)
@@ -115,6 +135,30 @@ func TestInternalCheckPathLength(t *testing.T) {
 		err := checkPathLength(test.in)
 		assert.Equal(t, test.ok, err == nil, test.in)
 	}
+}
+
+func TestPaperExportRemote(t *testing.T) {
+	ctx := context.Background()
+	info := &files.FileMetadata{
+		ExportInfo: &files.ExportInfo{ExportAs: "markdown"},
+	}
+	f := &Fs{
+		exportExts: []exportExtension{"md"},
+		pacer:      fs.NewPacer(ctx, pacer.NewDefault()),
+		srv:        paperMetadataClient{info: info},
+	}
+
+	direct, err := f.NewObject(ctx, "document.md")
+	require.NoError(t, err)
+	assert.Equal(t, "document.md", direct.Remote())
+
+	listed, err := f.newObjectWithInfo(ctx, "document.md", info)
+	require.NoError(t, err)
+	assert.Equal(t, "document.md.md", listed.Remote())
+
+	legacy, err := f.newObjectWithInfo(ctx, "document.paper", info)
+	require.NoError(t, err)
+	assert.Equal(t, "document.md", legacy.Remote())
 }
 
 func (f *Fs) importPaperForTest(t *testing.T) {

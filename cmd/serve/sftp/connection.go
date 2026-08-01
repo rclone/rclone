@@ -57,6 +57,7 @@ type conn struct {
 // execCommand implements an extremely limited number of commands to
 // interoperate with the rclone sftp backend
 func (c *conn) execCommand(ctx context.Context, out io.Writer, command string) (err error) {
+	defer recoverPanic(&err)
 	binary, args := command, ""
 	before, after, ok := strings.Cut(command, " ")
 	if ok {
@@ -269,6 +270,11 @@ func (c *conn) handleChannel(newChannel ssh.NewChannel) {
 
 	// Handle out-of-band requests
 	go func(in <-chan *ssh.Request) {
+		// Unblock the main routine when the requests run out, otherwise a
+		// channel which never makes a supported request - because it was
+		// rejected, or was closed straight away - leaks this goroutine and
+		// the channel for the lifetime of the connection.
+		defer close(isSFTP)
 		for req := range in {
 			fs.Debugf(c.what, "Request: %v\n", req.Type)
 			ok := false
@@ -276,8 +282,15 @@ func (c *conn) handleChannel(newChannel ssh.NewChannel) {
 			var reply []byte
 			switch req.Type {
 			case "subsystem":
-				fs.Debugf(c.what, "Subsystem: %s\n", req.Payload[4:])
-				if string(req.Payload[4:]) == "sftp" {
+				// The payload is a length-prefixed string, so it must be
+				// decoded rather than sliced to avoid panics if too short.
+				var subsystem struct{ Name string }
+				if err := ssh.Unmarshal(req.Payload, &subsystem); err != nil {
+					fs.Errorf(c.what, "ignoring bad subsystem request: %v", err)
+					break
+				}
+				fs.Debugf(c.what, "Subsystem: %s\n", subsystem.Name)
+				if subsystem.Name == "sftp" {
 					ok = true
 					subSystemIsSFTP = true
 				}
@@ -304,7 +317,12 @@ func (c *conn) handleChannel(newChannel ssh.NewChannel) {
 	}(requests)
 
 	// Wait for either subsystem "sftp" or "exec" request
-	if <-isSFTP {
+	subSystemIsSFTP, ok := <-isSFTP
+	if !ok {
+		fs.Debugf(c.what, "Channel closed without a supported request")
+		return
+	}
+	if subSystemIsSFTP {
 		if err := serveChannel(channel, c.handlers, c.what); err != nil {
 			fs.Errorf(c.what, "Failed to serve SFTP: %v", err)
 		}

@@ -693,7 +693,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	// See if the root is actually an object
 	if f.root != "" {
-		_, err = f.getFileMetadata(ctx, f.slashRoot)
+		_, _, err = f.getFileMetadata(ctx, f.slashRoot)
 		if err == nil {
 			newRoot := path.Dir(f.root)
 			if newRoot == "." {
@@ -728,9 +728,10 @@ func (f *Fs) setRoot(root string) {
 }
 
 type getMetadataResult struct {
-	entry    files.IsMetadata
-	notFound bool
-	err      error
+	entry              files.IsMetadata
+	remoteIsExportPath bool
+	notFound           bool
+	err                error
 }
 
 // getMetadata gets the metadata for a file or directory
@@ -779,6 +780,7 @@ func (f *Fs) getMetadataForExt(ctx context.Context, filePath string, wantExportE
 				ch <- getMetadataResult{notFound: true}
 				return
 			}
+			res.remoteIsExportPath = true
 		}
 
 		// Return our real result or error
@@ -824,7 +826,7 @@ func (f *Fs) possibleMetadatas(ctx context.Context, filePath string) (ret []<-ch
 }
 
 // getFileMetadata gets the metadata for a file
-func (f *Fs) getFileMetadata(ctx context.Context, filePath string) (*files.FileMetadata, error) {
+func (f *Fs) getFileMetadata(ctx context.Context, filePath string) (*files.FileMetadata, bool, error) {
 	var res getMetadataResult
 
 	// Try all possible metadatas
@@ -833,7 +835,7 @@ func (f *Fs) getFileMetadata(ctx context.Context, filePath string) (*files.FileM
 		res = <-ch
 
 		if res.err != nil {
-			return nil, res.err
+			return nil, false, res.err
 		}
 		if !res.notFound {
 			break
@@ -841,17 +843,17 @@ func (f *Fs) getFileMetadata(ctx context.Context, filePath string) (*files.FileM
 	}
 
 	if res.notFound {
-		return nil, fs.ErrorObjectNotFound
+		return nil, false, fs.ErrorObjectNotFound
 	}
 
 	fileInfo, ok := res.entry.(*files.FileMetadata)
 	if !ok {
 		if _, ok = res.entry.(*files.FolderMetadata); ok {
-			return nil, fs.ErrorIsDir
+			return nil, false, fs.ErrorIsDir
 		}
-		return nil, fs.ErrorNotAFile
+		return nil, false, fs.ErrorNotAFile
 	}
-	return fileInfo, nil
+	return fileInfo, res.remoteIsExportPath, nil
 }
 
 // getDirMetadata gets the metadata for a directory
@@ -1873,7 +1875,7 @@ func (o *Object) Size() int64 {
 	return o.bytes
 }
 
-func (o *Object) setMetadataForExport(info *files.FileMetadata) {
+func (o *Object) setMetadataForExport(info *files.FileMetadata, remoteIsExportPath bool) {
 	o.bytes = -1
 	o.hash = ""
 
@@ -1894,8 +1896,10 @@ func (o *Object) setMetadataForExport(info *files.FileMetadata) {
 		o.exportType = exportExportable
 		// get rid of any paper extension, if present
 		o.remote = strings.TrimSuffix(o.remote, paperExtension)
-		// add the export extension
-		o.remote += "." + string(exportExt)
+		if !remoteIsExportPath {
+			// add the export extension
+			o.remote += "." + string(exportExt)
+		}
 	}
 }
 
@@ -1903,19 +1907,23 @@ func (o *Object) setMetadataForExport(info *files.FileMetadata) {
 //
 // This isn't a complete set of metadata and has an inaccurate date
 func (o *Object) setMetadataFromEntry(info *files.FileMetadata) error {
+	return o.setMetadataFromEntryWithExportPath(info, false)
+}
+
+func (o *Object) setMetadataFromEntryWithExportPath(info *files.FileMetadata, remoteIsExportPath bool) error {
 	o.id = info.Id
 	o.bytes = int64(info.Size)
 	o.modTime = time.Time(info.ClientModified)
 	o.hash = info.ContentHash
 
 	if !info.IsDownloadable {
-		o.setMetadataForExport(info)
+		o.setMetadataForExport(info, remoteIsExportPath)
 	}
 	return nil
 }
 
 // Reads the entry for a file from dropbox
-func (o *Object) readEntry(ctx context.Context) (*files.FileMetadata, error) {
+func (o *Object) readEntry(ctx context.Context) (*files.FileMetadata, bool, error) {
 	return o.fs.getFileMetadata(ctx, o.remotePath())
 }
 
@@ -1925,11 +1933,11 @@ func (o *Object) readEntryAndSetMetadata(ctx context.Context) error {
 	if !o.modTime.IsZero() {
 		return nil
 	}
-	entry, err := o.readEntry(ctx)
+	entry, remoteIsExportPath, err := o.readEntry(ctx)
 	if err != nil {
 		return err
 	}
-	return o.setMetadataFromEntry(entry)
+	return o.setMetadataFromEntryWithExportPath(entry, remoteIsExportPath)
 }
 
 // Returns the remote path for the object
@@ -2064,12 +2072,21 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 
 	// write chunks
 	in := readers.NewCountingReader(in0)
-	buf := make([]byte, int(chunkSize))
+	bufSize := chunkSize
+	if size >= 0 && size < bufSize {
+		bufSize = size
+	}
+	buf := make([]byte, int(bufSize))
 	cursor := files.UploadSessionCursor{
 		SessionId: res.SessionId,
 		Offset:    0,
 	}
-	appendArg := files.UploadSessionAppendArg{Cursor: &cursor}
+	appendArg := files.UploadSessionAppendArg{
+		Cursor: &cursor,
+		// A known-size upload which fits in a single chunk can close the
+		// session with its only append, saving an empty append request
+		Close: size >= 0 && size <= chunkSize,
+	}
 	for currentChunk := 1; ; currentChunk++ {
 		cursor.Offset = in.BytesRead()
 

@@ -21,12 +21,18 @@ import (
 // initiates the SMB handshake, and then sets up a Client.
 //
 // The context is only used for establishing the connection, not after.
-func (f *Fs) dial(ctx context.Context, network, addr string) (*conn, error) {
+func (f *Fs) dial(ctx context.Context, network, addr string) (c *conn, err error) {
 	dialer := fshttp.NewDialer(ctx)
 	tconn, err := dialer.DialContext(ctx, network, addr)
 	if err != nil {
 		return nil, err
 	}
+	// Close tconn it if any of the remaining setup fails.
+	defer func() {
+		if err != nil {
+			_ = tconn.Close()
+		}
+	}()
 
 	pass := ""
 	if f.opt.Pass != "" {
@@ -38,7 +44,7 @@ func (f *Fs) dial(ctx context.Context, network, addr string) (*conn, error) {
 
 	d := &smb2.Dialer{}
 	if f.opt.UseKerberos {
-		cl, err := NewKerberosFactory().GetClient(f.opt.KerberosCCache)
+		cl, err := kerberosFactory.GetClient(f.opt.KerberosCCache)
 		if err != nil {
 			return nil, err
 		}
