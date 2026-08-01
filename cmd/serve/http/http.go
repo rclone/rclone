@@ -175,8 +175,8 @@ func (s *HTTP) getVFS(ctx context.Context) (VFS *vfs.VFS, err error) {
 }
 
 // auth does proxy authorization
-func (s *HTTP) auth(user, pass string) (value any, err error) {
-	VFS, _, err := s.proxy.Call(user, pass, false)
+func (s *HTTP) auth(r *http.Request, user, pass string) (value any, err error) {
+	VFS, _, err := s.proxy.Call(user, pass, false, r.RemoteAddr)
 	if err != nil {
 		return nil, err
 	}
