@@ -2172,12 +2172,15 @@ func (f *Fs) upload(
 		resp, err = f.client.Do(req)
 		retry, err := shouldRetry(ctx, resp, err)
 		if retry {
+			if _, ok := in.(io.Seeker); !ok {
+				if resp != nil {
+					return false, nil
+				}
+				return false, err
+			}
 			if resp != nil && resp.Body != nil {
 				_, _ = io.Copy(io.Discard, resp.Body)
 				_ = resp.Body.Close()
-			}
-			if _, ok := in.(io.Seeker); !ok {
-				retry = false
 			}
 		}
 		return retry, err

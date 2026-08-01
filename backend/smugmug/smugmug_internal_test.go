@@ -1,11 +1,13 @@
 package smugmug
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -404,6 +406,58 @@ func TestObjectOpenUsesUnsignedDownloadClient(t *testing.T) {
 	if string(got) != "image" {
 		t.Fatalf("download body = %q, want %q", got, "image")
 	}
+}
+
+func TestUploadWithNonSeekableBodyReturnsHTTPError(t *testing.T) {
+	ctx := context.Background()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(`{"Code":500,"Message":"server said no"}`))
+	}))
+	defer server.Close()
+
+	target, err := url.Parse(server.URL)
+	if err != nil {
+		t.Fatalf("url.Parse returned error: %v", err)
+	}
+	client := server.Client()
+	client.Transport = rewriteTransport{
+		base:   client.Transport,
+		target: target,
+	}
+	f := &Fs{
+		client: client,
+		pacer:  fs.NewPacer(ctx, pacer.NewDefault()),
+	}
+
+	err = f.upload(ctx, bytes.NewBufferString("body"), 4, nil, "", &uploadResponse{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if !strings.Contains(err.Error(), "server said no") {
+		t.Fatalf("upload error = %q, want SmugMug HTTP error body", err)
+	}
+}
+
+type rewriteTransport struct {
+	base   http.RoundTripper
+	target *url.URL
+}
+
+func (t rewriteTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	base := t.base
+	if base == nil {
+		base = http.DefaultTransport
+	}
+	clone := req.Clone(req.Context())
+	clone.URL.Scheme = t.target.Scheme
+	clone.URL.Host = t.target.Host
+	clone.URL.Path = t.target.Path
+	clone.URL.RawPath = t.target.RawPath
+	clone.URL.RawQuery = t.target.RawQuery
+	clone.Host = t.target.Host
+	return base.RoundTrip(clone)
 }
 
 func TestListPreservesDuplicateFileNames(t *testing.T) {
