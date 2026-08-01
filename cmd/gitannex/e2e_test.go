@@ -247,7 +247,16 @@ func TestEndToEnd(t *testing.T) {
 				"rcloneremotename=MyRcloneRemote", "rcloneprefix="+testingContext.ephemeralRepoDir,
 				"rclonelayout="+string(mode))
 
-			testingContext.runInRepo(t, "git", "annex", "testremote", "MyTestRemote")
+			// Layout modes only vary how object paths are constructed, so
+			// one layout mode gets the full testremote suite for depth. The
+			// rest use --fast, which still exercises every special remote
+			// protocol operation but skips the key size and chunking matrix
+			// that mostly tests git-annex itself.
+			if mode == layoutModeNodir {
+				testingContext.runInRepo(t, "git", "annex", "testremote", "MyTestRemote")
+			} else {
+				testingContext.runInRepo(t, "git", "annex", "testremote", "--fast", "MyTestRemote")
+			}
 		})
 	}
 }
