@@ -6,9 +6,11 @@ import (
 	"io"
 	"os"
 	"testing"
+	"time"
 	"unsafe"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/mockfs"
@@ -86,6 +88,80 @@ func TestFileMethods(t *testing.T) {
 
 	// VFS
 	assert.Equal(t, vfs, file.VFS())
+}
+
+func testFileHash(t *testing.T, cacheMode vfscommon.CacheMode) {
+	const (
+		oldHash = "0ef726ce9b1a7692357ff70dd321d595" // md5 of "file1 contents"
+		newHash = "24d459a81449d7210c8f9a86c2913034" // md5 of "NEW"
+	)
+	ctx := context.Background()
+	_, vfs, file, _ := fileCreate(t, cacheMode)
+
+	// An unmodified file reads its hash from the remote object
+	hashSum, err := file.Hash(ctx, hash.MD5)
+	require.NoError(t, err)
+	assert.Equal(t, oldHash, hashSum)
+
+	// Reading the file may leave an unmodified copy in the cache which
+	// must not be used in place of the remote object
+	fd, err := vfs.OpenFile("dir/file1", os.O_RDONLY, 0777)
+	require.NoError(t, err)
+	_, err = io.ReadAll(fd)
+	require.NoError(t, err)
+	require.NoError(t, fd.Close())
+
+	hashSum, err = file.Hash(ctx, hash.MD5)
+	require.NoError(t, err)
+	assert.Equal(t, oldHash, hashSum)
+
+	// While a writer is open the file is modified in the cache but not
+	// written back yet, so the hash comes from the cached copy
+	flags := os.O_WRONLY | os.O_TRUNC
+	if cacheMode == vfscommon.CacheModeMinimal {
+		// Only files opened for read and write are cached in minimal mode
+		flags = os.O_RDWR | os.O_TRUNC
+	}
+	fd, err = vfs.OpenFile("dir/file1", flags, 0777)
+	require.NoError(t, err)
+	_, err = fd.WriteString("NEW")
+	require.NoError(t, err)
+
+	hashSum, err = file.Hash(ctx, hash.MD5)
+	require.NoError(t, err)
+	if cacheMode >= vfscommon.CacheModeMinimal {
+		require.NotNil(t, vfs.cache.DirtyItem(file.CachePath()), "cache item not dirty")
+		assert.Equal(t, newHash, hashSum)
+	} else {
+		// Without a cache there is no local copy to read
+		assert.Equal(t, oldHash, hashSum)
+	}
+
+	// Once written back the hash comes from the remote object again
+	require.NoError(t, fd.Close())
+	vfs.WaitForWriters(waitForWritersDelay)
+
+	if vfs.cache != nil {
+		assert.Nil(t, vfs.cache.DirtyItem(file.CachePath()), "cache item still dirty")
+	}
+	hashSum, err = file.Hash(ctx, hash.MD5)
+	require.NoError(t, err)
+	assert.Equal(t, newHash, hashSum)
+}
+
+func TestFileHash(t *testing.T) {
+	t.Run("CacheModeOff", func(t *testing.T) {
+		testFileHash(t, vfscommon.CacheModeOff)
+	})
+	t.Run("CacheModeMinimal", func(t *testing.T) {
+		testFileHash(t, vfscommon.CacheModeMinimal)
+	})
+	t.Run("CacheModeWrites", func(t *testing.T) {
+		testFileHash(t, vfscommon.CacheModeWrites)
+	})
+	t.Run("CacheModeFull", func(t *testing.T) {
+		testFileHash(t, vfscommon.CacheModeFull)
+	})
 }
 
 func testFileSetModTime(t *testing.T, cacheMode vfscommon.CacheMode, open bool, write bool) {
@@ -417,4 +493,25 @@ func TestFileRename(t *testing.T) {
 
 func TestFileStructSize(t *testing.T) {
 	t.Logf("File struct has size %d bytes", unsafe.Sizeof(File{}))
+}
+
+// A file being uploaded without a cache has no hash until the upload finishes
+func TestFileHashUploading(t *testing.T) {
+	opt := vfscommon.Opt
+	opt.CacheMode = vfscommon.CacheModeOff
+	_, vfs := newTestVFSOpt(t, &opt)
+
+	fd, err := vfs.OpenFile("file1", os.O_WRONLY|os.O_CREATE, 0777)
+	require.NoError(t, err)
+	_, err = fd.WriteString("data")
+	require.NoError(t, err)
+
+	node, err := vfs.Stat("file1")
+	require.NoError(t, err)
+	start := time.Now()
+	_, err = node.(*File).Hash(context.Background(), hash.MD5)
+	assert.ErrorIs(t, err, ENOENT)
+	assert.Less(t, time.Since(start), 2*time.Second, "Hash should not wait for the upload")
+
+	require.NoError(t, fd.Close())
 }
