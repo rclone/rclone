@@ -39,6 +39,24 @@ func newItemTestCache(t *testing.T) (r *fstest.Run, c *Cache) {
 	return newTestCacheOpt(t, opt)
 }
 
+func newItemManualWriteBackTestCache(t *testing.T) (r *fstest.Run, c *Cache) {
+	opt := vfscommon.Opt
+
+	// Disable the cache cleaner as it interferes with these tests
+	opt.CachePollInterval = 0
+
+	// Check manual writeback overrides synchronous close writeback
+	opt.WriteBack = 0
+
+	// Disable handle caching so existing tests get immediate close behavior
+	opt.HandleCaching = 0
+
+	opt.CacheMode = vfscommon.CacheModeWrites
+	opt.ManualWriteBack = true
+
+	return newTestCacheOpt(t, opt)
+}
+
 // Check the object has contents
 func checkObject(t *testing.T, r *fstest.Run, remote string, contents string) {
 	obj, err := r.Fremote.NewObject(context.Background(), remote)
@@ -120,6 +138,70 @@ func TestItemDirty(t *testing.T) {
 
 	assert.Equal(t, true, item.IsDirty())
 	checkObject(t, r, "potato", "hello")
+}
+
+func TestItemManualWriteBackPush(t *testing.T) {
+	r, c := newItemManualWriteBackTestCache(t)
+	item, _ := c.get("potato")
+	require.NoError(t, item.Open(nil))
+
+	n, err := item.WriteAt([]byte("hello"), 0)
+	require.NoError(t, err)
+	assert.Equal(t, 5, n)
+
+	require.NoError(t, item.Close(nil))
+	assert.True(t, item.IsDirty())
+	r.CheckRemoteItems(t)
+
+	infos, err := c.DirtyInfo(context.Background())
+	require.NoError(t, err)
+	require.Len(t, infos, 1)
+	assert.Equal(t, DirtyInfo{
+		Name:         "potato",
+		Size:         5,
+		ModTime:      infos[0].ModTime,
+		Open:         false,
+		RemoteExists: false,
+	}, infos[0])
+
+	callbackCalled := false
+	err = c.Push(context.Background(), "potato", func(o fs.Object) {
+		callbackCalled = true
+		assert.Equal(t, "potato", o.Remote())
+		assert.Equal(t, int64(5), o.Size())
+	})
+	require.NoError(t, err)
+	assert.True(t, callbackCalled)
+	assert.False(t, item.IsDirty())
+	checkObject(t, r, "potato", "hello")
+
+	infos, err = c.DirtyInfo(context.Background())
+	require.NoError(t, err)
+	assert.Empty(t, infos)
+}
+
+func TestItemManualWriteBackRevert(t *testing.T) {
+	r, c := newItemManualWriteBackTestCache(t)
+	item, _ := c.get("potato")
+	require.NoError(t, item.Open(nil))
+
+	n, err := item.WriteAt([]byte("hello"), 0)
+	require.NoError(t, err)
+	assert.Equal(t, 5, n)
+
+	require.NoError(t, item.Close(nil))
+	assert.True(t, item.IsDirty())
+	r.CheckRemoteItems(t)
+
+	require.NoError(t, c.Revert("potato"))
+	assert.False(t, item.IsDirty())
+
+	_, err = r.Fremote.NewObject(context.Background(), "potato")
+	assert.Equal(t, fs.ErrorObjectNotFound, err)
+
+	infos, err := c.DirtyInfo(context.Background())
+	require.NoError(t, err)
+	assert.Empty(t, infos)
 }
 
 func TestItemSync(t *testing.T) {

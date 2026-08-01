@@ -87,6 +87,7 @@ find that you need one or the other or both.
     --vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
     --vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
     --vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
+    --vfs-manual-writeback                 Disable automatic VFS cache writeback and require manual push
     --vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
 ```
 
@@ -104,6 +105,23 @@ closed and if they haven't been accessed for `--vfs-write-back`
 seconds. If rclone is quit or dies with files that haven't been
 uploaded, these will be uploaded next time rclone is run with the same
 flags.
+
+If `--vfs-manual-writeback` is set, changed files are kept dirty in
+the VFS cache after close and are not uploaded automatically, including
+after restarting rclone with the same cache. This requires
+`--vfs-cache-mode writes` or `--vfs-cache-mode full`; if a lower cache
+mode is configured, rclone promotes it to `writes`.
+
+Manual writeback is controlled through the RC API:
+
+- `vfs/dirty` lists files staged in the VFS cache.
+- `vfs/push file=path`, `vfs/push dir=path`, or `vfs/push all=true`
+  uploads staged files.
+- `vfs/revert file=path`, `vfs/revert dir=path`, or
+  `vfs/revert all=true` discards staged changes without uploading.
+
+`file`, `file2`, ... select exact files. `dir`, `dir2`, ... select
+recursive directory prefixes.
 
 If using `--vfs-cache-max-size` or `--vfs-cache-min-free-space` note
 that the cache may exceed these quotas for two reasons. Firstly

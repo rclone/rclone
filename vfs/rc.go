@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/vfs/vfscache"
 	"github.com/rclone/rclone/vfs/vfscache/writeback"
 )
 
@@ -556,4 +558,327 @@ func rcQueueSetExpiry(ctx context.Context, in rc.Params) (out rc.Params, err err
 	}
 	err = vfs.cache.QueueSetExpiry(writeback.Handle(id), refTime, time.Duration(float64(time.Second)*expiry))
 	return nil, err
+}
+
+type dirtySelector struct {
+	all   bool
+	files map[string]struct{}
+	dirs  []string
+}
+
+type manualResult struct {
+	Name  string `json:"name"`
+	Error string `json:"error,omitempty"`
+}
+
+func parseDirtySelector(in rc.Params, defaultAll, requireExplicit bool) (selector dirtySelector, err error) {
+	selector.files = map[string]struct{}{}
+
+	all, err := in.GetBool("all")
+	if err == nil {
+		selector.all = all
+		delete(in, "all")
+	} else if !rc.IsErrParamNotFound(err) {
+		return selector, err
+	}
+
+	for k, v := range in {
+		pathString, ok := v.(string)
+		if !ok {
+			return selector, fmt.Errorf("value must be string %q=%v", k, v)
+		}
+		pathString = strings.Trim(pathString, "/")
+		switch {
+		case strings.HasPrefix(k, "file"):
+			selector.files[pathString] = struct{}{}
+		case strings.HasPrefix(k, "dir"):
+			selector.dirs = append(selector.dirs, pathString)
+		default:
+			return selector, fmt.Errorf("unknown key %q", k)
+		}
+	}
+	if !selector.all && len(selector.files) == 0 && len(selector.dirs) == 0 {
+		if requireExplicit {
+			return selector, errors.New(`need at least one "file", "dir", or all=true parameter`)
+		}
+		selector.all = defaultAll
+	}
+	return selector, nil
+}
+
+func (selector dirtySelector) matches(name string) bool {
+	name = strings.Trim(name, "/")
+	if selector.all {
+		return true
+	}
+	if _, found := selector.files[name]; found {
+		return true
+	}
+	for _, dir := range selector.dirs {
+		if dir == "" || name == dir || strings.HasPrefix(name, dir+"/") {
+			return true
+		}
+	}
+	return false
+}
+
+func selectedDirtyInfos(infos []vfscache.DirtyInfo, selector dirtySelector) []vfscache.DirtyInfo {
+	out := make([]vfscache.DirtyInfo, 0, len(infos))
+	for _, info := range infos {
+		if selector.matches(info.Name) {
+			out = append(out, info)
+		}
+	}
+	return out
+}
+
+func selectedDirtyNames(infos []vfscache.DirtyInfo, selector dirtySelector) []string {
+	seen := map[string]struct{}{}
+	for _, info := range infos {
+		if selector.matches(info.Name) {
+			seen[info.Name] = struct{}{}
+		}
+	}
+	for name := range selector.files {
+		seen[name] = struct{}{}
+	}
+	names := make([]string, 0, len(seen))
+	for name := range seen {
+		names = append(names, name)
+	}
+	slices.Sort(names)
+	return names
+}
+
+func dirtyInfoSummary(infos []vfscache.DirtyInfo) rc.Params {
+	var bytes int64
+	for _, info := range infos {
+		bytes += info.Size
+	}
+	return rc.Params{
+		"files": infos,
+		"count": len(infos),
+		"bytes": bytes,
+	}
+}
+
+func checkManualWriteBack(vfs *VFS) error {
+	if vfs.cache == nil {
+		return rc.NewErrParamInvalid(errors.New("can't call this unless using the VFS cache"))
+	}
+	if !vfs.Opt.ManualWriteBack {
+		return rc.NewErrParamInvalid(errors.New("can't call this unless --vfs-manual-writeback is enabled"))
+	}
+	return nil
+}
+
+func init() {
+	rc.Add(rc.Call{
+		Path:   "vfs/dirty",
+		NoAuth: true,
+		Title:  "List files staged for manual VFS writeback.",
+		Help: strings.ReplaceAll(`
+This returns files modified in the VFS cache when |--vfs-manual-writeback|
+is enabled.
+
+If no selectors are passed, all dirty files are returned. To restrict
+the result, pass files as |file=path|, |file2=path|, or recursive
+directory prefixes as |dir=path|, |dir2=path|.
+
+This returns:
+
+- |files| - an array of dirty files
+- |count| - the number of dirty files returned
+- |bytes| - the total size of dirty files returned
+
+Each file has |name|, |size|, |modTime|, |open|, and |remoteExists|.
+
+`, "|", "`") + getVFSHelp,
+		Fn: rcDirty,
+	})
+}
+
+func rcDirty(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	vfs, err := getVFS(in)
+	if err != nil {
+		return nil, err
+	}
+	if err = checkManualWriteBack(vfs); err != nil {
+		return nil, err
+	}
+	selector, err := parseDirtySelector(in, true, false)
+	if err != nil {
+		return nil, err
+	}
+	infos, err := vfs.cache.DirtyInfo(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return dirtyInfoSummary(selectedDirtyInfos(infos, selector)), nil
+}
+
+func init() {
+	rc.Add(rc.Call{
+		Path:  "vfs/push",
+		Title: "Push files staged for manual VFS writeback.",
+		Help: strings.ReplaceAll(`
+This uploads files modified in the VFS cache when |--vfs-manual-writeback|
+is enabled. It waits for selected uploads to finish. To run it in the
+background, use the standard RC |_async=true| parameter.
+
+Select files with |file=path|, |file2=path|, recursive directory
+prefixes with |dir=path|, |dir2=path|, or all dirty files with
+|all=true|.
+
+This returns |pushed| and |failed| arrays.
+
+`, "|", "`") + getVFSHelp,
+		Fn: rcPush,
+	})
+}
+
+func rcPush(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	vfs, err := getVFS(in)
+	if err != nil {
+		return nil, err
+	}
+	if err = checkManualWriteBack(vfs); err != nil {
+		return nil, err
+	}
+	selector, err := parseDirtySelector(in, false, true)
+	if err != nil {
+		return nil, err
+	}
+	infos, err := vfs.cache.DirtyInfo(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return vfs.rcPushOrRevert(ctx, selectedDirtyNames(infos, selector), true)
+}
+
+func init() {
+	rc.Add(rc.Call{
+		Path:  "vfs/revert",
+		Title: "Revert files staged for manual VFS writeback.",
+		Help: strings.ReplaceAll(`
+This discards files modified in the VFS cache when |--vfs-manual-writeback|
+is enabled without uploading them.
+
+Select files with |file=path|, |file2=path|, recursive directory
+prefixes with |dir=path|, |dir2=path|, or all dirty files with
+|all=true|.
+
+Existing remote files revert to the remote object. Files that only
+exist in the manual writeback cache are removed from the VFS view.
+
+This returns |reverted| and |failed| arrays.
+
+`, "|", "`") + getVFSHelp,
+		Fn: rcRevert,
+	})
+}
+
+func rcRevert(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	vfs, err := getVFS(in)
+	if err != nil {
+		return nil, err
+	}
+	if err = checkManualWriteBack(vfs); err != nil {
+		return nil, err
+	}
+	selector, err := parseDirtySelector(in, false, true)
+	if err != nil {
+		return nil, err
+	}
+	infos, err := vfs.cache.DirtyInfo(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return vfs.rcPushOrRevert(ctx, selectedDirtyNames(infos, selector), false)
+}
+
+func (vfs *VFS) rcPushOrRevert(ctx context.Context, names []string, push bool) (rc.Params, error) {
+	done := []manualResult{}
+	failed := []manualResult{}
+	for _, name := range names {
+		var err error
+		if push {
+			err = vfs.pushDirty(ctx, name)
+		} else {
+			err = vfs.revertDirty(ctx, name)
+		}
+		if err != nil {
+			failed = append(failed, manualResult{Name: name, Error: err.Error()})
+		} else {
+			done = append(done, manualResult{Name: name})
+		}
+	}
+	key := "reverted"
+	if push {
+		key = "pushed"
+	}
+	out := rc.Params{
+		key:      done,
+		"failed": failed,
+	}
+	if len(failed) > 0 {
+		return out, fmt.Errorf("%d file(s) failed", len(failed))
+	}
+	return out, nil
+}
+
+func (vfs *VFS) fileForPath(name string) *File {
+	node, err := vfs.Stat(name)
+	if err != nil {
+		return nil
+	}
+	file, ok := node.(*File)
+	if !ok {
+		return nil
+	}
+	return file
+}
+
+func (vfs *VFS) pushDirty(ctx context.Context, name string) error {
+	file := vfs.fileForPath(name)
+	return vfs.cache.Push(ctx, name, func(o fs.Object) {
+		if o == nil {
+			return
+		}
+		if file != nil {
+			file.setObject(o)
+			return
+		}
+		if err := vfs.AddVirtual(o.Remote(), o.Size(), false); err != nil {
+			fs.Errorf(o.Remote(), "Failed to add pushed object to VFS: %v", err)
+		}
+	})
+}
+
+func (vfs *VFS) revertDirty(ctx context.Context, name string) error {
+	var obj fs.Object
+	obj, err := vfs.f.NewObject(ctx, name)
+	if err != nil {
+		if !errors.Is(err, fs.ErrorObjectNotFound) {
+			return err
+		}
+		obj = nil
+	}
+	file := vfs.fileForPath(name)
+	err = vfs.cache.Revert(name)
+	if err != nil {
+		return err
+	}
+	if file == nil {
+		return nil
+	}
+	if obj != nil {
+		file.mu.Lock()
+		file.pendingModTime = time.Time{}
+		file.mu.Unlock()
+		file.setObject(obj)
+	} else {
+		file.Dir().delObject(file.Name())
+	}
+	return nil
 }
