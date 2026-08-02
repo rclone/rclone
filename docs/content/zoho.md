@@ -251,6 +251,21 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --zoho-root-folder-id
+
+ID of the root folder.
+
+Leave blank normally.
+
+Fill in to make rclone use a non root folder as its starting point.
+
+Properties:
+
+- Config:      root_folder_id
+- Env Var:     RCLONE_ZOHO_ROOT_FOLDER_ID
+- Type:        string
+- Required:    false
+
 #### --zoho-upload-cutoff
 
 Cutoff for switching to large file upload api (>= 10 MiB).
@@ -261,6 +276,118 @@ Properties:
 - Env Var:     RCLONE_ZOHO_UPLOAD_CUTOFF
 - Type:        SizeSuffix
 - Default:     10Mi
+
+#### --zoho-tpslimit
+
+Max number of API transactions per second.
+
+Zoho WorkDrive rate limits its API and returns HTTP 429 (error F7008,
+"Request rate limit exceeded") when called too quickly, so the data API
+calls (list, upload, download, copy, move, delete) are paced to this rate.
+
+Set to 0 to disable the cap, matching the global --tpslimit; pacing still
+can't be turned off entirely because backoff and Retry-After always apply.
+
+The default of 6 is a safe sustainable rate. Higher values can trigger long
+429 Retry-After stalls that make throughput WORSE, so raise it only if your
+account tolerates more.
+
+Properties:
+
+- Config:      tpslimit
+- Env Var:     RCLONE_ZOHO_TPSLIMIT
+- Type:        float64
+- Default:     6
+
+#### --zoho-tpslimit-burst
+
+Number of API calls to allow back-to-back without sleeping, for --zoho-tpslimit.
+
+This is the token-bucket capacity. Keep at 1 for Zoho: a burst > 1
+lets several calls fire at once after an idle gap, which can trigger
+synchronized clusters of 429 errors.
+
+Properties:
+
+- Config:      tpslimit_burst
+- Env Var:     RCLONE_ZOHO_TPSLIMIT_BURST
+- Type:        int
+- Default:     1
+
+#### --zoho-list-folder-limit
+
+Max listings of the SAME folder allowed per --zoho-list-folder-window.
+
+Zoho WorkDrive rate limits its listing API (GET files/{id}/files) PER
+folder, independently of --zoho-tpslimit: listing one folder too often in a
+short time returns HTTP 429 (error F7008) with a multi-minute Retry-After
+penalty, which a tight polling loop can hit even at a low overall rate.
+Measured live, Zoho allows ~19 listings of one folder in any rolling ~60s
+window and the 20th fails, which the defaults (19 per 60s) model exactly.
+
+This is a true per-window cap for any traffic pattern: each window starts
+with --zoho-list-folder-burst listings passing back-to-back (the burst
+re-arms at every window boundary) and the rest are spaced
+--zoho-list-folder-window/(limit - burst) apart (the defaults give ~4.6s),
+while a sliding log of recent listings enforces the cap across window
+boundaries. 0 disables the limiter. Only REPEATED listings of one folder are
+delayed; different folders, or a folder listed fewer than
+--zoho-list-folder-burst times, never are.
+
+A HIGHER value means MORE listings per window, not more safety: raising it
+above 19 trips F7008. Lower it for a wider margin at the cost of listing
+responsiveness.
+
+Properties:
+
+- Config:      list_folder_limit
+- Env Var:     RCLONE_ZOHO_LIST_FOLDER_LIMIT
+- Type:        int
+- Default:     19
+
+#### --zoho-list-folder-window
+
+The window for --zoho-list-folder-limit.
+
+The default of 60s (shown as 1m0s) matches Zoho's real sliding window: at
+most --zoho-list-folder-limit listings of one folder are allowed in any
+window of this length. A bare number is parsed as seconds ("60" = "60s").
+
+Widen it (or lower the limit) for a bigger safety margin; the sustained
+spacing between same-folder listings is window/(limit - burst).
+
+Properties:
+
+- Config:      list_folder_window
+- Env Var:     RCLONE_ZOHO_LIST_FOLDER_WINDOW
+- Type:        Duration
+- Default:     1m0s
+
+#### --zoho-list-folder-burst
+
+Same-folder listings allowed back-to-back before --zoho-list-folder-limit paces them.
+
+The burst is carved out of --zoho-list-folder-limit, so raising it never
+raises the per-window total: this many listings may fire immediately and the
+remaining limit - burst are spaced window/(limit - burst) apart. The burst
+RE-ARMS at every window boundary, so sustained re-listing gets a fresh burst
+each window while a sliding log of recent listings still enforces the
+per-window cap. A folder listed only a handful of times (the common case - a
+sync re-listing one directory a few times then moving on) never waits.
+
+The default 6 is the largest burst validated live under the default 19-per-60s
+cap (bursts of 4, 5 and 6 all ran clean; an over-cap probe tripped F7008
+exactly at the 20th listing in a window). Keep it well below ~15 - Zoho also
+has an instantaneous back-to-back cap around 15-16 regardless of the window.
+Set to 1 to pace from the second listing. Values >= the limit are clamped to
+limit - 1.
+
+Properties:
+
+- Config:      list_folder_burst
+- Env Var:     RCLONE_ZOHO_LIST_FOLDER_BURST
+- Type:        int
+- Default:     6
 
 #### --zoho-encoding
 

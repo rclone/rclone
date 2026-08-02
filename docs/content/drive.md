@@ -499,6 +499,10 @@ used to create shortcuts.
 Shortcuts can be completely ignored with the `--drive-skip-shortcuts` flag
 or the corresponding `skip_shortcuts` configuration setting.
 
+When `rclone lsf --format i` lists a file shortcut, the ID field contains the
+target file ID followed by the shortcut ID, separated by a tab. This internal
+tab is not changed by `--separator`.
+
 If you have a folder shortcut that points at one of its own parent folders it
 would lead to an infinite recursion. Rclone detects this, leaves the offending
 shortcut out of the listing and logs an ERROR, so the rest of the drive can
@@ -697,17 +701,6 @@ Properties:
 - Env Var:     RCLONE_DRIVE_SERVICE_ACCOUNT_FILE
 - Type:        string
 - Required:    false
-
-#### --drive-alternate-export
-
-Deprecated: No longer needed.
-
-Properties:
-
-- Config:      alternate_export
-- Env Var:     RCLONE_DRIVE_ALTERNATE_EXPORT
-- Type:        bool
-- Default:     false
 
 ### Advanced options
 

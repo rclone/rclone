@@ -18,10 +18,12 @@ import (
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/filter"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
@@ -337,6 +339,117 @@ func TestSymlinkInTreeWriteThroughWorks(t *testing.T) {
 	got, err := os.ReadFile(filepath.Join(f.root, "sub", "file.txt"))
 	require.NoError(t, err)
 	require.Equal(t, "world", string(got))
+}
+
+// TestEncodingEscapeBlocked checks that a name from a malicious source can't
+// be decoded into path syntax which writes outside the destination.
+func TestEncodingEscapeBlocked(t *testing.T) {
+	ctx := context.Background()
+	outer := t.TempDir()
+
+	// What a source backend which encodes Dot returns from Remote() for an
+	// object called "../marker.txt" - e.g. s3 listing the key
+	// "tenant/../marker.txt" with the remote rooted at "tenant".
+	remote := encoder.OS.ToStandardPath("../marker.txt")
+	require.Equal(t, "．．/marker.txt", remote)
+
+	// A file outside the destination the attacker wants to overwrite.
+	marker := filepath.Join(outer, "marker.txt")
+	require.NoError(t, os.WriteFile(marker, []byte("original"), 0600))
+
+	// An encoding without Dot decodes the name back into "..".
+	fRaw, err := NewFs(ctx, "local", filepath.Join(outer, "dst"), configmap.Simple{"encoding": "Slash"})
+	require.NoError(t, err)
+	f := fRaw.(*Fs)
+
+	require.ErrorIs(t, putFile(ctx, f, remote, "PWNED"), errPathEscapes)
+	got, err := os.ReadFile(marker)
+	require.NoError(t, err)
+	require.Equal(t, "original", string(got), "a file outside the destination was overwritten")
+
+	// The other entry points which resolve a name are refused too.
+	require.ErrorIs(t, f.Mkdir(ctx, remote), errPathEscapes)
+	require.ErrorIs(t, f.Rmdir(ctx, remote), errPathEscapes)
+	_, err = f.NewObject(ctx, remote)
+	require.ErrorIs(t, err, errPathEscapes)
+
+	// Ordinary names in the same configuration still work.
+	require.NoError(t, putFile(ctx, f, "sub/file.txt", "hello"))
+	got, err = os.ReadFile(filepath.Join(f.root, "sub", "file.txt"))
+	require.NoError(t, err)
+	require.Equal(t, "hello", string(got))
+
+	// The entry points which take a name as a destination refuse it too.
+	src, err := f.NewObject(ctx, "sub/file.txt")
+	require.NoError(t, err)
+	_, err = f.Move(ctx, src, remote)
+	require.ErrorIs(t, err, errPathEscapes)
+	require.ErrorIs(t, f.DirMove(ctx, f, "sub", remote), errPathEscapes)
+	_, err = f.OpenWriterAt(ctx, remote, 5)
+	require.ErrorIs(t, err, errPathEscapes)
+	_, err = f.List(ctx, remote)
+	require.ErrorIs(t, err, errPathEscapes)
+
+	// With the default encoding the name is stored literally as fullwidth
+	// dots, inside the destination.
+	dRaw, err := NewFs(ctx, "local", filepath.Join(outer, "default"), configmap.Simple{"encoding": encoder.OS.String()})
+	require.NoError(t, err)
+	d := dRaw.(*Fs)
+	require.NoError(t, putFile(ctx, d, remote, "safe"))
+	got, err = os.ReadFile(filepath.Join(d.root, "．．", "marker.txt"))
+	require.NoError(t, err)
+	require.Equal(t, "safe", string(got))
+
+	if runtime.GOOS == "windows" {
+		// A backslash is a path separator on Windows, so an encoding
+		// without BackSlash escapes the root even though it has Dot.
+		wRaw, err := NewFs(ctx, "local", filepath.Join(outer, "win"), configmap.Simple{"encoding": "Slash,Dot"})
+		require.NoError(t, err)
+		require.ErrorIs(t, putFile(ctx, wRaw, `..\marker.txt`, "PWNED"), errPathEscapes)
+		got, err := os.ReadFile(marker)
+		require.NoError(t, err)
+		require.Equal(t, "original", string(got), "a file outside the destination was overwritten")
+	}
+}
+
+// TestLocalPath checks which names localPath refuses. It must refuse
+// exactly those which resolve outside the root - names which are merely
+// unusual on the host platform are the OS's business, not ours.
+func TestLocalPath(t *testing.T) {
+	ctx := context.Background()
+	fRaw, err := NewFs(ctx, "local", t.TempDir(), configmap.Simple{"encoding": "Raw"})
+	require.NoError(t, err)
+	f := fRaw.(*Fs)
+
+	const refused = "!"
+	for _, test := range []struct {
+		name string
+		want string // slash separated path relative to the root, or refused
+	}{
+		{name: "", want: "."},
+		{name: "file.txt", want: "file.txt"},
+		{name: "sub/file.txt", want: "sub/file.txt"},
+		{name: "sub/../file.txt", want: "file.txt"},
+		{name: "..", want: refused},
+		{name: "../marker.txt", want: refused},
+		{name: "sub/../../marker.txt", want: refused},
+		// Windows reserved device names are ordinary file names to
+		// rclone, which addresses the destination with \\?\ paths.
+		{name: "NUL", want: "NUL"},
+		{name: "sub/aux.c", want: "sub/aux.c"},
+		// An absolute name resolves relative to the root, as it always has.
+		{name: "/etc/passwd", want: "etc/passwd"},
+	} {
+		got, err := f.localPath(test.name)
+		if test.want == refused {
+			assert.ErrorIs(t, err, errPathEscapes, test.name)
+			assert.True(t, fserrors.IsNoRetryError(err), test.name)
+			continue
+		}
+		if assert.NoError(t, err, test.name) {
+			assert.Equal(t, filepath.Join(f.root, filepath.FromSlash(test.want)), got, test.name)
+		}
+	}
 }
 
 func TestHashWithTypeNone(t *testing.T) {

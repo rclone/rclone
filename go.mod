@@ -21,6 +21,7 @@ require (
 	github.com/adrg/xdg v0.5.3
 	github.com/anacrolix/dms v1.7.2
 	github.com/anacrolix/log v0.17.0
+	github.com/apache/arrow-go/v18 v18.7.0
 	github.com/atotto/clipboard v0.1.4
 	github.com/aws/aws-sdk-go-v2 v1.42.1
 	github.com/aws/aws-sdk-go-v2/config v1.32.30
@@ -177,9 +178,11 @@ require (
 	github.com/go-playground/validator/v10 v10.30.3 // indirect
 	github.com/go-resty/resty/v2 v2.17.2 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
+	github.com/goccy/go-json v0.10.6 // indirect
 	github.com/gofrs/flock v0.13.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/btree v1.1.3 // indirect
+	github.com/google/flatbuffers v25.12.19+incompatible // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.18 // indirect
 	github.com/googleapis/gax-go/v2 v2.22.0 // indirect
@@ -261,7 +264,7 @@ require (
 	golang.org/x/image v0.44.0 // indirect
 	golang.org/x/tools v0.48.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260715232425-e75dac1f907d // indirect
-	google.golang.org/grpc v1.80.0 // indirect - v1.81.0 and later fail to compile on plan9 - don't upgrade until fixed upstream
+	google.golang.org/grpc v1.84.0-dev.0.20260723093437-b6eac429d7b6 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/ini.v1 v1.67.3 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

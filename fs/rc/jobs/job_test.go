@@ -234,6 +234,10 @@ func TestJobRunPanic(t *testing.T) {
 	assert.Equal(t, rc.Params{}, job.Output)
 	assert.True(t, job.Duration >= floatSleepTime)
 	assert.Contains(t, job.Error, "panic received: boom")
+	// The stack trace must not be leaked to the rc caller - it is
+	// logged server-side only.
+	assert.NotContains(t, job.Error, "goroutine")
+	assert.NotContains(t, job.Error, "runtime/debug.Stack")
 	assert.Equal(t, false, job.Success)
 	assert.Equal(t, true, job.Finished)
 	job.mu.Unlock()
