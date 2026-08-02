@@ -93,11 +93,15 @@ test:	rclone test_all
 	@echo "Written logs in test_all.log"
 
 # Quick test
+#
+# The timeout is raised above the go test default of 10m as the
+# cmd/gitannex end to end tests can take longer than that on slow CI
+# runners.
 quicktest:
-	RCLONE_CONFIG="/notfound" go test $(LDFLAGS) $(BUILDTAGS) ./...
+	RCLONE_CONFIG="/notfound" go test $(LDFLAGS) $(BUILDTAGS) -timeout 20m ./...
 
 racequicktest:
-	RCLONE_CONFIG="/notfound" go test $(LDFLAGS) $(BUILDTAGS) -cpu=2 -race ./...
+	RCLONE_CONFIG="/notfound" go test $(LDFLAGS) $(BUILDTAGS) -cpu=2 -race -timeout 20m ./...
 
 compiletest:
 	RCLONE_CONFIG="/notfound" go test $(LDFLAGS) $(BUILDTAGS) -run XXX ./...
