@@ -2111,6 +2111,13 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 		if err != nil {
 			return nil, err
 		}
+		if size >= 0 {
+			// Check for sources which truncate early
+			expected := min(uint64(currentChunk)*uint64(chunkSize), uint64(size))
+			if in.BytesRead() < expected {
+				return nil, fmt.Errorf("expected %d bytes in input, but only read %d: %w", size, in.BytesRead(), io.ErrUnexpectedEOF)
+			}
+		}
 		if appendArg.Close {
 			break
 		}
