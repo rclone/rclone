@@ -151,6 +151,7 @@ type uploadSessionClient struct {
 	maxAppends   int    // fail the append after this many calls to stop runaway loops
 	bytesWritten int64  // bytes received by UploadSessionAppendV2Context
 	finishCalled bool   // set if UploadSessionFinishContext was called
+	appended     func() // if set, called after each successful append
 }
 
 var errTooManyAppends = errors.New("too many appends - upload looping?")
@@ -173,6 +174,9 @@ func (c *uploadSessionClient) UploadSessionAppendV2Context(ctx context.Context, 
 		return err
 	}
 	c.bytesWritten += n
+	if c.appended != nil {
+		c.appended()
+	}
 	return nil
 }
 
@@ -195,6 +199,16 @@ func newUploadTestFs(t *testing.T, srv files.ContextClient, chunkSize fs.SizeSuf
 	f.batcher, err = batcher.New(ctx, f, f.commitBatch, batcherOptions)
 	require.NoError(t, err)
 	return f
+}
+
+// endlessReader supplies bytes forever
+type endlessReader struct{}
+
+func (endlessReader) Read(p []byte) (int, error) {
+	for i := range p {
+		p[i] = 'x'
+	}
+	return len(p), nil
 }
 
 func TestUploadChunkedEarlyEOF(t *testing.T) {
@@ -233,6 +247,25 @@ func TestUploadChunkedEarlyEOF(t *testing.T) {
 		assert.True(t, client.finishCalled)
 		assert.Equal(t, int64(250), client.bytesWritten)
 	})
+}
+
+func TestUploadChunkedCancel(t *testing.T) {
+	// Cancelling the context must stop the upload even though every
+	// append is succeeding
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	client := &uploadSessionClient{maxAppends: 8}
+	client.appended = func() {
+		if client.appends == 2 {
+			cancel()
+		}
+	}
+	f := newUploadTestFs(t, client, 100)
+	o := &Object{fs: f, remote: "test.bin"}
+	_, err := o.uploadChunked(ctx, endlessReader{}, files.NewCommitInfo("/test.bin"), -1)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, context.Canceled)
+	assert.False(t, client.finishCalled)
 }
 
 func (f *Fs) importPaperForTest(t *testing.T) {

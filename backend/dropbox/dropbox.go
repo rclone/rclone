@@ -2106,6 +2106,11 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 					}
 				}
 			}
+			// Don't waste the low level retries if the context has
+			// been cancelled
+			if fserrors.ContextError(ctx, &err) {
+				return false, err
+			}
 			return err != nil, err
 		})
 		if err != nil {
