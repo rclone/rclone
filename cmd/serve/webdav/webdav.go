@@ -356,8 +356,8 @@ func (w *WebDAV) getVFS(ctx context.Context) (VFS *vfs.VFS, err error) {
 }
 
 // auth does proxy authorization
-func (w *WebDAV) auth(user, pass string) (value any, err error) {
-	VFS, _, err := w.proxy.Call(user, pass, false)
+func (w *WebDAV) auth(r *http.Request, user, pass string) (value any, err error) {
+	VFS, _, err := w.proxy.Call(user, pass, false, r.RemoteAddr)
 	if err != nil {
 		return nil, err
 	}

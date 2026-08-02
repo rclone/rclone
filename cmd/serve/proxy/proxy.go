@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/netip"
 	"os/exec"
 	"strings"
 	"time"
@@ -62,7 +63,8 @@ process (on STDIN) would look similar to this:
 |||json
 {
   "user": "me",
-  "pass": "mypassword"
+  "pass": "mypassword",
+  "client_ip": "192.168.1.1"
 }
 |||
 
@@ -72,9 +74,17 @@ proxy process (on STDIN) would look similar to this:
 |||json
 {
   "user": "me",
-  "public_key": "AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf"
+  "public_key": "AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf",
+  "client_ip": "192.168.1.1"
 }
 |||
+
+The |client_ip| key holds the IP address the client connected from,
+without a port number.  It can be used to restrict logins to certain
+networks, or to log authentication attempts centrally.  It is omitted if
+the client has no IP address, for example when connecting over a unix
+socket.  Note that if rclone is behind a reverse proxy this will be the
+address of the reverse proxy and not the original client.
 
 And as an example return this on STDOUT
 
@@ -101,11 +111,12 @@ to make proxy to many different sftp backends, you could make the
 in the output and the user to |user|. For security you'd probably want
 to restrict the |host| to a limited list.
 
-An internal cache of backends is keyed on the |user| and a hash of the
-|pass| or |public_key|.  This means that if a user's password or
-public-key changes, or the proxy returns different config parameters
-(eg a rotated |api_key|), a fresh backend will be created on the next
-request rather than the cached one being reused.
+An internal cache of backends is keyed on the |user|, a hash of the
+|pass| or |public_key|, and the |client_ip|.  This means that if a
+user's password or public-key changes, the client connects from a new IP
+address, or the proxy returns different config parameters (eg a rotated
+|api_key|), a fresh backend will be created on the next request rather
+than the cached one being reused.
 
 This can be used to build general purpose proxies to any kind of
 backend that rclone supports.
@@ -218,29 +229,41 @@ var cacheKeyHMACKey = func() []byte {
 	return key
 }()
 
-// generateCacheKey creates a composite cache key from user and auth credentials
-func generateCacheKey(user, auth string) string {
+// ipFromAddr returns the bare IP from a "host:port" address, or "" if it has none.
+func ipFromAddr(addr string) string {
+	ap, err := netip.ParseAddrPort(addr)
+	if err != nil {
+		return ""
+	}
+	return ap.Addr().Unmap().String()
+}
+
+// generateCacheKey creates a composite cache key from the user, the auth
+// credentials and the client's IP address.
+func generateCacheKey(user, auth, clientIP string) string {
 	mac := hmac.New(sha256.New, cacheKeyHMACKey)
 	mac.Write([]byte(auth))
+	// Separate the two so ("ab", "c") can't collide with ("a", "bc")
+	mac.Write([]byte{0})
+	mac.Write([]byte(clientIP))
 	return user + "-" + hex.EncodeToString(mac.Sum(nil)[:8])
 }
 
 // call runs the auth proxy and returns a cacheEntry and an error
-func (p *Proxy) call(user, auth string, isPublicKey bool) (value any, err error) {
-	var config configmap.Simple
+func (p *Proxy) call(user, auth string, isPublicKey bool, clientIP string) (value any, err error) {
 	// Contact the proxy
-	if isPublicKey {
-		config, err = p.run(map[string]string{
-			"user":       user,
-			"public_key": auth,
-		})
-	} else {
-		config, err = p.run(map[string]string{
-			"user": user,
-			"pass": auth,
-		})
+	in := map[string]string{
+		"user": user,
 	}
-
+	if isPublicKey {
+		in["public_key"] = auth
+	} else {
+		in["pass"] = auth
+	}
+	if clientIP != "" {
+		in["client_ip"] = clientIP
+	}
+	config, err := p.run(in)
 	if err != nil {
 		return nil, err
 	}
@@ -261,10 +284,10 @@ func (p *Proxy) call(user, auth string, isPublicKey bool) (value any, err error)
 		return nil, fmt.Errorf("proxy: couldn't find backend for %q: %w", fsName, err)
 	}
 
-	// Make the cache key include the auth so that changes to the
-	// auth (eg the proxy returning new config) create a fresh
-	// backend rather than reusing the cached one.
-	cacheKey := generateCacheKey(user, auth)
+	// Make the cache key include the auth and the client IP so that
+	// changes to either (eg the proxy returning new config) create a
+	// fresh backend rather than reusing the cached one.
+	cacheKey := generateCacheKey(user, auth, clientIP)
 
 	// base name of config on user name and auth hash.  This may appear in logs
 	name := "proxy-" + cacheKey
@@ -304,16 +327,23 @@ func (p *Proxy) call(user, auth string, isPublicKey bool) (value any, err error)
 
 // Call runs the auth proxy with the username and password/public key provided
 // returning a *vfs.VFS and the key used in the VFS cache.
-func (p *Proxy) Call(user, auth string, isPublicKey bool) (VFS *vfs.VFS, vfsKey string, err error) {
-	// Cache key includes the auth so credential changes don't hit a stale entry
-	cacheKey := generateCacheKey(user, auth)
+//
+// remoteAddr is the address of the client as returned by net.Addr.String().
+// It may be empty if the client has no IP address, for example when
+// connecting over a unix socket.
+func (p *Proxy) Call(user, auth string, isPublicKey bool, remoteAddr string) (VFS *vfs.VFS, vfsKey string, err error) {
+	clientIP := ipFromAddr(remoteAddr)
+
+	// Cache key includes the auth and the client IP so credential or
+	// address changes don't hit a stale entry
+	cacheKey := generateCacheKey(user, auth, clientIP)
 
 	// Look in the cache first with the credential-aware key
 	value, ok := p.vfsCache.GetMaybe(cacheKey)
 
 	// If not found then call the proxy for a fresh answer
 	if !ok {
-		value, err = p.call(user, auth, isPublicKey)
+		value, err = p.call(user, auth, isPublicKey, clientIP)
 		if err != nil {
 			return nil, "", err
 		}

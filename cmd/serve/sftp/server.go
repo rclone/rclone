@@ -178,7 +178,7 @@ func (s *server) configure() (err error) {
 			fs.Debugf(describeConn(c), "Password login attempt for %s", c.User())
 			if s.proxy != nil {
 				// query the proxy for the config
-				_, vfsKey, err := s.proxy.Call(c.User(), string(pass), false)
+				_, vfsKey, err := s.proxy.Call(c.User(), string(pass), false, c.RemoteAddr().String())
 				if err != nil {
 					return nil, err
 				}
@@ -205,6 +205,7 @@ func (s *server) configure() (err error) {
 					c.User(),
 					base64.StdEncoding.EncodeToString(pubKey.Marshal()),
 					true,
+					c.RemoteAddr().String(),
 				)
 				if err != nil {
 					return nil, err

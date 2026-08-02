@@ -382,20 +382,20 @@ type Options struct {
 
 // Fs represents a remote dropbox server
 type Fs struct {
-	name           string         // name of this remote
-	root           string         // the path we are working on
-	opt            Options        // parsed options
-	ci             *fs.ConfigInfo // global config
-	features       *fs.Features   // optional features
-	srv            files.Client   // the connection to the dropbox server
-	svc            files.Client   // the connection to the dropbox server (unauthorized)
-	sharing        sharing.Client // as above, but for generating sharing links
-	users          users.Client   // as above, but for accessing user information
-	team           team.Client    // for the Teams API
-	slashRoot      string         // root with "/" prefix, lowercase
-	slashRootSlash string         // root with "/" prefix and postfix, lowercase
-	pacer          *fs.Pacer      // To pace the API calls
-	ns             string         // The namespace we are using or "" for none
+	name           string                // name of this remote
+	root           string                // the path we are working on
+	opt            Options               // parsed options
+	ci             *fs.ConfigInfo        // global config
+	features       *fs.Features          // optional features
+	srv            files.ContextClient   // the connection to the dropbox server
+	svc            files.ContextClient   // the connection to the dropbox server (unauthorized)
+	sharing        sharing.ContextClient // as above, but for generating sharing links
+	users          users.ContextClient   // as above, but for accessing user information
+	team           team.ContextClient    // for the Teams API
+	slashRoot      string                // root with "/" prefix, lowercase
+	slashRootSlash string                // root with "/" prefix and postfix, lowercase
+	pacer          *fs.Pacer             // To pace the API calls
+	ns             string                // The namespace we are using or "" for none
 	batcher        *batcher.Batcher[*files.UploadSessionFinishArg, *files.FileMetadata]
 	exportExts     []exportExtension
 }
@@ -577,7 +577,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	// NOTE: needs to be created pre-impersonation so we can look up the impersonated user
-	f.team = team.New(cfg)
+	f.team = team.NewContext(cfg)
 
 	if opt.Impersonate != "" {
 		user := team.UserSelectorArg{
@@ -588,7 +588,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		members := []*team.UserSelectorArg{&user}
 		args := team.NewMembersGetInfoArgs(members)
 
-		memberIDs, err := f.team.MembersGetInfo(args)
+		memberIDs, err := f.team.MembersGetInfoContext(ctx, args)
 		if err != nil {
 			return nil, fmt.Errorf("invalid dropbox team member: %q: %w", opt.Impersonate, err)
 		}
@@ -603,10 +603,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		cfg.AsAdminID = opt.ImpersonateAdmin
 	}
 
-	f.srv = files.New(cfg)
-	f.svc = files.New(ucfg)
-	f.sharing = sharing.New(cfg)
-	f.users = users.New(cfg)
+	f.srv = files.NewContext(cfg)
+	f.svc = files.NewContext(ucfg)
+	f.sharing = sharing.NewContext(cfg)
+	f.users = users.NewContext(cfg)
 	f.features = (&fs.Features{
 		CaseInsensitive:         true,
 		ReadMimeType:            false,
@@ -673,7 +673,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		// If root starts with / then use the actual root
 		var acc *users.FullAccount
 		err = f.pacer.Call(func() (bool, error) {
-			acc, err = f.users.GetCurrentAccount()
+			acc, err = f.users.GetCurrentAccountContext(ctx)
 			return shouldRetry(ctx, err)
 		})
 		if err != nil {
@@ -693,7 +693,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	// See if the root is actually an object
 	if f.root != "" {
-		_, err = f.getFileMetadata(ctx, f.slashRoot)
+		_, _, err = f.getFileMetadata(ctx, f.slashRoot)
 		if err == nil {
 			newRoot := path.Dir(f.root)
 			if newRoot == "." {
@@ -728,15 +728,16 @@ func (f *Fs) setRoot(root string) {
 }
 
 type getMetadataResult struct {
-	entry    files.IsMetadata
-	notFound bool
-	err      error
+	entry              files.IsMetadata
+	remoteIsExportPath bool
+	notFound           bool
+	err                error
 }
 
 // getMetadata gets the metadata for a file or directory
 func (f *Fs) getMetadata(ctx context.Context, objPath string) (res getMetadataResult) {
 	res.err = f.pacer.Call(func() (bool, error) {
-		res.entry, res.err = f.srv.GetMetadata(&files.GetMetadataArg{
+		res.entry, res.err = f.srv.GetMetadataContext(ctx, &files.GetMetadataArg{
 			Path: f.opt.Enc.FromStandardPath(objPath),
 		})
 		return shouldRetry(ctx, res.err)
@@ -779,6 +780,7 @@ func (f *Fs) getMetadataForExt(ctx context.Context, filePath string, wantExportE
 				ch <- getMetadataResult{notFound: true}
 				return
 			}
+			res.remoteIsExportPath = true
 		}
 
 		// Return our real result or error
@@ -824,7 +826,7 @@ func (f *Fs) possibleMetadatas(ctx context.Context, filePath string) (ret []<-ch
 }
 
 // getFileMetadata gets the metadata for a file
-func (f *Fs) getFileMetadata(ctx context.Context, filePath string) (*files.FileMetadata, error) {
+func (f *Fs) getFileMetadata(ctx context.Context, filePath string) (*files.FileMetadata, bool, error) {
 	var res getMetadataResult
 
 	// Try all possible metadatas
@@ -833,7 +835,7 @@ func (f *Fs) getFileMetadata(ctx context.Context, filePath string) (*files.FileM
 		res = <-ch
 
 		if res.err != nil {
-			return nil, res.err
+			return nil, false, res.err
 		}
 		if !res.notFound {
 			break
@@ -841,17 +843,17 @@ func (f *Fs) getFileMetadata(ctx context.Context, filePath string) (*files.FileM
 	}
 
 	if res.notFound {
-		return nil, fs.ErrorObjectNotFound
+		return nil, false, fs.ErrorObjectNotFound
 	}
 
 	fileInfo, ok := res.entry.(*files.FileMetadata)
 	if !ok {
 		if _, ok = res.entry.(*files.FolderMetadata); ok {
-			return nil, fs.ErrorIsDir
+			return nil, false, fs.ErrorIsDir
 		}
-		return nil, fs.ErrorNotAFile
+		return nil, false, fs.ErrorNotAFile
 	}
-	return fileInfo, nil
+	return fileInfo, res.remoteIsExportPath, nil
 }
 
 // getDirMetadata gets the metadata for a directory
@@ -910,7 +912,7 @@ func (f *Fs) listSharedFolders(ctx context.Context, callback func(fs.DirEntry) e
 				Limit: 100,
 			}
 			err := f.pacer.Call(func() (bool, error) {
-				res, err = f.sharing.ListFolders(&arg)
+				res, err = f.sharing.ListFoldersContext(ctx, &arg)
 				return shouldRetry(ctx, err)
 			})
 			if err != nil {
@@ -922,7 +924,7 @@ func (f *Fs) listSharedFolders(ctx context.Context, callback func(fs.DirEntry) e
 				Cursor: res.Cursor,
 			}
 			err := f.pacer.Call(func() (bool, error) {
-				res, err = f.sharing.ListFoldersContinue(&arg)
+				res, err = f.sharing.ListFoldersContinueContext(ctx, &arg)
 				return shouldRetry(ctx, err)
 			})
 			if err != nil {
@@ -971,7 +973,7 @@ func (f *Fs) mountSharedFolder(ctx context.Context, id string) error {
 		SharedFolderId: id,
 	}
 	err := f.pacer.Call(func() (bool, error) {
-		_, err := f.sharing.MountFolder(&arg)
+		_, err := f.sharing.MountFolderContext(ctx, &arg)
 		return shouldRetry(ctx, err)
 	})
 	return err
@@ -988,7 +990,7 @@ func (f *Fs) listReceivedFiles(ctx context.Context, callback func(fs.DirEntry) e
 				Limit: 100,
 			}
 			err := f.pacer.Call(func() (bool, error) {
-				res, err = f.sharing.ListReceivedFiles(&arg)
+				res, err = f.sharing.ListReceivedFilesContext(ctx, &arg)
 				return shouldRetry(ctx, err)
 			})
 			if err != nil {
@@ -1000,7 +1002,7 @@ func (f *Fs) listReceivedFiles(ctx context.Context, callback func(fs.DirEntry) e
 				Cursor: res.Cursor,
 			}
 			err := f.pacer.Call(func() (bool, error) {
-				res, err = f.sharing.ListReceivedFilesContinue(&arg)
+				res, err = f.sharing.ListReceivedFilesContinueContext(ctx, &arg)
 				return shouldRetry(ctx, err)
 			})
 			if err != nil {
@@ -1107,7 +1109,7 @@ func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) (
 				arg.Path = "" // Specify root folder as empty string
 			}
 			err = f.pacer.Call(func() (bool, error) {
-				res, err = f.srv.ListFolder(arg)
+				res, err = f.srv.ListFolderContext(ctx, arg)
 				return shouldRetry(ctx, err)
 			})
 			if err != nil {
@@ -1125,7 +1127,7 @@ func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) (
 				Cursor: res.Cursor,
 			}
 			err = f.pacer.Call(func() (bool, error) {
-				res, err = f.srv.ListFolderContinue(&arg)
+				res, err = f.srv.ListFolderContinueContext(ctx, &arg)
 				return shouldRetry(ctx, err)
 			})
 			if err != nil {
@@ -1162,7 +1164,7 @@ func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) (
 						var sfMeta *sharing.SharedFolderMetadata
 						err = f.pacer.Call(func() (bool, error) {
 							var apiErr error
-							sfMeta, apiErr = f.sharing.GetFolderMetadata(sharing.NewGetMetadataArgs(folderInfo.SharingInfo.SharedFolderId))
+							sfMeta, apiErr = f.sharing.GetFolderMetadataContext(ctx, sharing.NewGetMetadataArgs(folderInfo.SharingInfo.SharedFolderId))
 							return shouldRetry(ctx, apiErr)
 						})
 						if err != nil {
@@ -1249,7 +1251,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 		return cErr
 	}
 	err = f.pacer.Call(func() (bool, error) {
-		_, err = f.srv.CreateFolderV2(&arg2)
+		_, err = f.srv.CreateFolderV2Context(ctx, &arg2)
 		return shouldRetry(ctx, err)
 	})
 	return err
@@ -1277,7 +1279,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 		}
 		var res *files.ListFolderResult
 		err = f.pacer.Call(func() (bool, error) {
-			res, err = f.srv.ListFolder(arg)
+			res, err = f.srv.ListFolderContext(ctx, arg)
 			return shouldRetry(ctx, err)
 		})
 		if err != nil {
@@ -1301,7 +1303,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 
 	// remove it
 	err = f.pacer.Call(func() (bool, error) {
-		_, err = f.srv.DeleteV2(&files.DeleteArg{Path: encRoot})
+		_, err = f.srv.DeleteV2Context(ctx, &files.DeleteArg{Path: encRoot})
 		return shouldRetry(ctx, err)
 	})
 	return err
@@ -1360,7 +1362,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 	}
 	var result *files.RelocationResult
 	err = f.pacer.Call(func() (bool, error) {
-		result, err = f.srv.CopyV2(&arg)
+		result, err = f.srv.CopyV2Context(ctx, &arg)
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
@@ -1421,7 +1423,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	var err error
 	var result *files.RelocationResult
 	err = f.pacer.Call(func() (bool, error) {
-		result, err = f.srv.MoveV2(&arg)
+		result, err = f.srv.MoveV2Context(ctx, &arg)
 		switch e := err.(type) {
 		case files.MoveV2APIError:
 			// There seems to be a bit of eventual consistency here which causes this to
@@ -1475,7 +1477,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 
 	var linkRes sharing.IsSharedLinkMetadata
 	err = f.pacer.Call(func() (bool, error) {
-		linkRes, err = f.sharing.CreateSharedLinkWithSettings(&createArg)
+		linkRes, err = f.sharing.CreateSharedLinkWithSettingsContext(ctx, &createArg)
 		return shouldRetry(ctx, err)
 	})
 
@@ -1484,7 +1486,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		fs.Debugf(absPath, "can't create link with expiry, trying without")
 		createArg.Settings.Expires = nil
 		err = f.pacer.Call(func() (bool, error) {
-			linkRes, err = f.sharing.CreateSharedLinkWithSettings(&createArg)
+			linkRes, err = f.sharing.CreateSharedLinkWithSettingsContext(ctx, &createArg)
 			return shouldRetry(ctx, err)
 		})
 	}
@@ -1498,7 +1500,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		}
 		var listRes *sharing.ListSharedLinksResult
 		err = f.pacer.Call(func() (bool, error) {
-			listRes, err = f.sharing.ListSharedLinks(&listArg)
+			listRes, err = f.sharing.ListSharedLinksContext(ctx, &listArg)
 			return shouldRetry(ctx, err)
 		})
 		if err != nil {
@@ -1559,7 +1561,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		},
 	}
 	err = f.pacer.Call(func() (bool, error) {
-		_, err = f.srv.MoveV2(&arg)
+		_, err = f.srv.MoveV2Context(ctx, &arg)
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
@@ -1573,7 +1575,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	var q *users.SpaceUsage
 	err = f.pacer.Call(func() (bool, error) {
-		q, err = f.users.GetSpaceUsage()
+		q, err = f.users.GetSpaceUsageContext(ctx)
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
@@ -1660,7 +1662,7 @@ func (f *Fs) changeNotifyCursor(ctx context.Context) (cursor string, err error) 
 			arg.Path = ""
 		}
 
-		startCursor, err = f.srv.ListFolderGetLatestCursor(arg)
+		startCursor, err = f.srv.ListFolderGetLatestCursorContext(ctx, arg)
 
 		return shouldRetry(ctx, err)
 	})
@@ -1693,7 +1695,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 			Timeout: timeout,
 		}
 
-		res, err = f.svc.ListFolderLongpoll(&args)
+		res, err = f.svc.ListFolderLongpollContext(ctx, &args)
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
@@ -1716,7 +1718,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 			Cursor: cursor,
 		}
 		err = f.pacer.Call(func() (bool, error) {
-			changeList, err = f.srv.ListFolderContinue(&arg)
+			changeList, err = f.srv.ListFolderContinueContext(ctx, &arg)
 			return shouldRetry(ctx, err)
 		})
 		if err != nil {
@@ -1851,7 +1853,7 @@ func (o *Object) Size() int64 {
 	return o.bytes
 }
 
-func (o *Object) setMetadataForExport(info *files.FileMetadata) {
+func (o *Object) setMetadataForExport(info *files.FileMetadata, remoteIsExportPath bool) {
 	o.bytes = -1
 	o.hash = ""
 
@@ -1872,8 +1874,10 @@ func (o *Object) setMetadataForExport(info *files.FileMetadata) {
 		o.exportType = exportExportable
 		// get rid of any paper extension, if present
 		o.remote = strings.TrimSuffix(o.remote, paperExtension)
-		// add the export extension
-		o.remote += "." + string(exportExt)
+		if !remoteIsExportPath {
+			// add the export extension
+			o.remote += "." + string(exportExt)
+		}
 	}
 }
 
@@ -1881,19 +1885,23 @@ func (o *Object) setMetadataForExport(info *files.FileMetadata) {
 //
 // This isn't a complete set of metadata and has an inaccurate date
 func (o *Object) setMetadataFromEntry(info *files.FileMetadata) error {
+	return o.setMetadataFromEntryWithExportPath(info, false)
+}
+
+func (o *Object) setMetadataFromEntryWithExportPath(info *files.FileMetadata, remoteIsExportPath bool) error {
 	o.id = info.Id
 	o.bytes = int64(info.Size)
 	o.modTime = time.Time(info.ClientModified)
 	o.hash = info.ContentHash
 
 	if !info.IsDownloadable {
-		o.setMetadataForExport(info)
+		o.setMetadataForExport(info, remoteIsExportPath)
 	}
 	return nil
 }
 
 // Reads the entry for a file from dropbox
-func (o *Object) readEntry(ctx context.Context) (*files.FileMetadata, error) {
+func (o *Object) readEntry(ctx context.Context) (*files.FileMetadata, bool, error) {
 	return o.fs.getFileMetadata(ctx, o.remotePath())
 }
 
@@ -1903,11 +1911,11 @@ func (o *Object) readEntryAndSetMetadata(ctx context.Context) error {
 	if !o.modTime.IsZero() {
 		return nil
 	}
-	entry, err := o.readEntry(ctx)
+	entry, remoteIsExportPath, err := o.readEntry(ctx)
 	if err != nil {
 		return err
 	}
-	return o.setMetadataFromEntry(entry)
+	return o.setMetadataFromEntryWithExportPath(entry, remoteIsExportPath)
 }
 
 // Returns the remote path for the object
@@ -1961,7 +1969,7 @@ func (o *Object) export(ctx context.Context) (in io.ReadCloser, err error) {
 	arg := files.ExportArg{Path: o.id, ExportFormat: string(o.exportAPIFormat)}
 	var exportResult *files.ExportResult
 	err = o.fs.pacer.Call(func() (bool, error) {
-		exportResult, in, err = o.fs.srv.Export(&arg)
+		exportResult, in, err = o.fs.srv.ExportContext(ctx, &arg)
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
@@ -1983,7 +1991,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			Url: o.url,
 		}
 		err = o.fs.pacer.Call(func() (bool, error) {
-			_, in, err = o.fs.sharing.GetSharedLinkFile(&arg)
+			_, in, err = o.fs.sharing.GetSharedLinkFileContext(ctx, &arg)
 			return shouldRetry(ctx, err)
 		})
 		if err != nil {
@@ -2003,7 +2011,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		ExtraHeaders: headers,
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
-		_, in, err = o.fs.srv.Download(&arg)
+		_, in, err = o.fs.srv.DownloadContext(ctx, &arg)
 		return shouldRetry(ctx, err)
 	})
 
@@ -2027,7 +2035,7 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 	// start upload
 	var res *files.UploadSessionStartResult
 	err = o.fs.pacer.Call(func() (bool, error) {
-		res, err = o.fs.srv.UploadSessionStart(&files.UploadSessionStartArg{}, nil)
+		res, err = o.fs.srv.UploadSessionStartContext(ctx, &files.UploadSessionStartArg{}, nil)
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
@@ -2073,7 +2081,7 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 			if _, err = chunk.Seek(skip, io.SeekStart); err != nil {
 				return false, err
 			}
-			err = o.fs.srv.UploadSessionAppendV2(&appendArg, chunk)
+			err = o.fs.srv.UploadSessionAppendV2Context(ctx, &appendArg, chunk)
 			// after session is started, we retry everything
 			if err != nil {
 				// Check for incorrect offset error and retry with new offset
@@ -2132,7 +2140,7 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 	}
 
 	err = o.fs.pacer.Call(func() (bool, error) {
-		entry, err = o.fs.srv.UploadSessionFinish(args, nil)
+		entry, err = o.fs.srv.UploadSessionFinishContext(ctx, args, nil)
 		if retry, err := shouldRetryExclude(ctx, err); !retry {
 			return retry, err
 		}
@@ -2200,7 +2208,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		entry, err = o.uploadChunked(ctx, in, commitInfo, size)
 	} else {
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
-			entry, err = o.fs.srv.Upload(&files.UploadArg{CommitInfo: *commitInfo}, in)
+			entry, err = o.fs.srv.UploadContext(ctx, &files.UploadArg{CommitInfo: *commitInfo}, in)
 			return shouldRetry(ctx, err)
 		})
 	}
@@ -2225,7 +2233,7 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 		return errNotSupportedInSharedMode
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
-		_, err = o.fs.srv.DeleteV2(&files.DeleteArg{
+		_, err = o.fs.srv.DeleteV2Context(ctx, &files.DeleteArg{
 			Path: o.fs.opt.Enc.FromStandardPath(o.remotePath()),
 		})
 		return shouldRetry(ctx, err)

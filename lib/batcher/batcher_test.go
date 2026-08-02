@@ -19,6 +19,21 @@ type (
 	Item   string
 )
 
+// blockingStringer pauses Commit in its debug log after the shutdown check.
+type blockingStringer struct {
+	started chan struct{}
+	release chan struct{}
+	once    sync.Once
+}
+
+func (b *blockingStringer) String() string {
+	b.once.Do(func() {
+		close(b.started)
+		<-b.release
+	})
+	return "batcher test"
+}
+
 func TestBatcherNew(t *testing.T) {
 	ctx := context.Background()
 	ci := fs.GetConfig(ctx)
@@ -219,6 +234,80 @@ func TestBatcherCommitShutdown(t *testing.T) {
 	wg.Wait()
 	assert.Equal(t, 4, commits)
 	assert.Equal(t, 10, totalSize)
+}
+
+func TestBatcherCommitRacingShutdown(t *testing.T) {
+	for _, mode := range []string{"sync", "async"} {
+		t.Run(mode, func(t *testing.T) {
+			ctx := context.Background()
+			ci := fs.GetConfig(ctx)
+			oldLogLevel := ci.LogLevel
+			ci.LogLevel = fs.LogLevelDebug
+			defer func() { ci.LogLevel = oldLogLevel }()
+
+			committed := make(chan struct{})
+			commitBatch := func(ctx context.Context, items []Item, results []Result, errors []error) error {
+				close(committed)
+				for i := range items {
+					results[i] = Result(items[i])
+				}
+				return nil
+			}
+			blocker := &blockingStringer{
+				started: make(chan struct{}),
+				release: make(chan struct{}),
+			}
+			b, err := New[Item, Result](ctx, blocker, commitBatch, Options{
+				Mode:         mode,
+				Size:         1,
+				Timeout:      time.Hour,
+				MaxBatchSize: 1000,
+			})
+			require.NoError(t, err)
+
+			commitDone := make(chan error, 1)
+			go func() {
+				_, err := b.Commit(ctx, "item", Item("item"))
+				commitDone <- err
+			}()
+			select {
+			case <-blocker.started:
+			case <-time.After(time.Second):
+				t.Fatal("commit did not reach the admission point")
+			}
+
+			ci.LogLevel = oldLogLevel
+			shutdownDone := make(chan struct{})
+			go func() {
+				b.Shutdown()
+				close(shutdownDone)
+			}()
+
+			// Give Shutdown a chance to contend with the blocked admission.
+			select {
+			case <-b.closed:
+			case <-time.After(100 * time.Millisecond):
+			}
+			close(blocker.release)
+
+			select {
+			case err := <-commitDone:
+				require.NoError(t, err)
+			case <-time.After(time.Second):
+				t.Fatal("commit hung while racing shutdown")
+			}
+			select {
+			case <-shutdownDone:
+			case <-time.After(time.Second):
+				t.Fatal("shutdown hung while racing commit")
+			}
+			select {
+			case <-committed:
+			case <-time.After(time.Second):
+				t.Fatal("accepted commit was dropped during shutdown")
+			}
+		})
+	}
 }
 
 func TestBatcherCommitAsync(t *testing.T) {
