@@ -3,8 +3,11 @@ package dropbox
 import (
 	"context"
 	"io"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/files"
@@ -16,11 +19,11 @@ import (
 )
 
 type paperMetadataClient struct {
-	files.Client
+	files.ContextClient
 	info *files.FileMetadata
 }
 
-func (c paperMetadataClient) GetMetadata(arg *files.GetMetadataArg) (files.IsMetadata, error) {
+func (c paperMetadataClient) GetMetadataContext(ctx context.Context, arg *files.GetMetadataArg) (files.IsMetadata, error) {
 	if arg.Path == "document" {
 		return c.info, nil
 	}
@@ -32,6 +35,48 @@ func (c paperMetadataClient) GetMetadata(arg *files.GetMetadataArg) (files.IsMet
 				Tagged: dropbox.Tagged{Tag: files.LookupErrorNotFound},
 			},
 		},
+	}
+}
+
+func TestInternalGetMetadataCancellation(t *testing.T) {
+	requestStarted := make(chan struct{})
+	releaseRequest := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		close(requestStarted)
+		<-releaseRequest
+	}))
+	defer server.Close()
+	defer close(releaseRequest)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	f := &Fs{
+		srv: files.NewContext(dropbox.Config{
+			Client: server.Client(),
+			URLGenerator: func(hostType string, namespace string, route string) string {
+				return server.URL
+			},
+		}),
+		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(0), pacer.MaxSleep(time.Millisecond))),
+	}
+
+	result := make(chan getMetadataResult, 1)
+	go func() {
+		result <- f.getMetadata(ctx, "/file")
+	}()
+
+	select {
+	case <-requestStarted:
+	case <-time.After(time.Second):
+		t.Fatal("Dropbox request did not start")
+	}
+	cancel()
+
+	select {
+	case res := <-result:
+		require.ErrorIs(t, res.err, context.Canceled)
+	case <-time.After(time.Second):
+		t.Fatal("Dropbox request did not observe cancellation")
 	}
 }
 
@@ -110,7 +155,7 @@ Lorem ipsum __dolor__ sit amet
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		reader := strings.NewReader(content)
-		_, err = f.srv.PaperCreate(&arg, reader)
+		_, err = f.srv.PaperCreateContext(context.Background(), &arg, reader)
 		return shouldRetry(context.Background(), err)
 	})
 	require.NoError(t, err)
