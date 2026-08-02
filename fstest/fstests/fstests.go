@@ -2544,6 +2544,131 @@ func Run(t *testing.T, opt *Opt) {
 			}
 		})
 
+		// TestFsPutShortEOF tests uploading a file where the reader
+		// returns EOF before the declared size worth of data has been
+		// read.
+		//
+		// go test -v -run 'TestIntegration/FsMkdir/FsPutShortEOF'
+		t.Run("FsPutShortEOF", func(t *testing.T) {
+			skipIfNotOk(t)
+
+			const putTimeout = 5 * time.Minute
+
+			// putShortEOF uploads a file declaring declared bytes but
+			// supplying only actual bytes, then checks the upload
+			// terminates and removes anything it created.
+			putShortEOF := func(t *testing.T, remote string, declared, actual int64) {
+				contents := random.String(int(actual))
+				obji := object.NewStaticObjectInfo(remote, fstest.Time("2003-02-03T04:05:06.499999999Z"), declared, true, nil, nil)
+
+				type result struct {
+					obj      fs.Object
+					err      error
+					panicked any
+				}
+				putCtx, cancel := context.WithCancel(ctx)
+				defer cancel()
+				resultChan := make(chan result, 1)
+				go func() {
+					var res result
+					defer func() {
+						res.panicked = recover()
+						resultChan <- res
+					}()
+					res.obj, res.err = f.Put(putCtx, bytes.NewBufferString(contents), obji)
+				}()
+
+				var res result
+				select {
+				case res = <-resultChan:
+				case <-time.After(putTimeout):
+					t.Errorf("Put did not return within %v with a source %d bytes short of its declared size", putTimeout, declared-actual)
+					cancel()
+					select {
+					case res = <-resultChan:
+					case <-time.After(time.Minute):
+						t.Fatal("Put still did not return after cancelling the context - giving up")
+					}
+				}
+				require.Nil(t, res.panicked, "Put must not panic when the source returns EOF early")
+
+				if res.err != nil {
+					t.Logf("Put returned an error (acceptable): %v", res.err)
+					// Remove any partial object left behind
+					obj, err := f.NewObject(ctx, remote)
+					if err == nil {
+						assert.NoError(t, obj.Remove(ctx))
+					}
+					return
+				}
+
+				// Put claimed success so the object must exist and must
+				// contain only the bytes actually supplied.
+				var obj fs.Object
+				retry(t, "FsPutShortEOF: check uploaded object exists", func() error {
+					var err error
+					obj, err = f.NewObject(ctx, remote)
+					if errors.Is(err, fs.ErrorObjectNotFound) {
+						return fserrors.RetryErrorf("object not found yet")
+					}
+					return err
+				})
+				if size := obj.Size(); size >= 0 {
+					assert.Equal(t, actual, size, "object uploaded from a short source must contain the bytes actually supplied, not the declared size")
+				}
+				assert.NoError(t, obj.Remove(ctx))
+			}
+
+			t.Run("Simple", func(t *testing.T) {
+				var N int64 = 5 * 1024
+				if *fstest.SizeLimit > 0 && N > *fstest.SizeLimit {
+					N = *fstest.SizeLimit
+					t.Logf("Reduce file size due to limit %d", N)
+				}
+				putShortEOF(t, "short-eof.bin", 2*N, N)
+			})
+
+			t.Run("Chunked", func(t *testing.T) {
+				if testing.Short() {
+					t.Skip("not running with -short")
+				}
+				if opt.ChunkedUpload.Skip {
+					t.Skip("skipping as ChunkedUpload.Skip is set")
+				}
+				setUploadChunkSizer, _ := f.(SetUploadChunkSizer)
+				if setUploadChunkSizer == nil {
+					t.Skipf("%T does not implement SetUploadChunkSizer", f)
+				}
+				setUploadCutoffer, _ := f.(SetUploadCutoffer)
+
+				minChunkSize := max(opt.ChunkedUpload.MinChunkSize, 100)
+				if opt.ChunkedUpload.CeilChunkSize != nil {
+					minChunkSize = opt.ChunkedUpload.CeilChunkSize(minChunkSize)
+				}
+
+				// Set the minimum chunk size and upload cutoff, restoring them at the end
+				oldChunkSize, err := setUploadChunkSizer.SetUploadChunkSize(minChunkSize)
+				require.NoError(t, err)
+				var oldUploadCutoff fs.SizeSuffix
+				if setUploadCutoffer != nil {
+					oldUploadCutoff, err = setUploadCutoffer.SetUploadCutoff(minChunkSize)
+					require.NoError(t, err)
+				}
+				defer func() {
+					_, err := setUploadChunkSizer.SetUploadChunkSize(oldChunkSize)
+					assert.NoError(t, err)
+					if setUploadCutoffer != nil {
+						_, err := setUploadCutoffer.SetUploadCutoff(oldUploadCutoff)
+						assert.NoError(t, err)
+					}
+				}()
+
+				// Declare a size spanning 4 chunks but EOF after 1.5
+				cs := int64(minChunkSize)
+				putShortEOF(t, "short-eof-chunked.bin", 4*cs, cs+cs/2)
+			})
+		})
+
 		// Copy files with chunked copy if available
 		t.Run("FsCopyChunked", func(t *testing.T) {
 			skipIfNotOk(t)
