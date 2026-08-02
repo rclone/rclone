@@ -88,6 +88,24 @@ access_key_id = ACCESS_KEY_ID
 secret_access_key = SECRET_ACCESS_KEY
 ```
 
+### Object uploads (PUT)
+
+A `PutObject` upload only ever changes the object at its key atomically, on
+success, a failed or interrupted PUT neither removes nor overwrites the
+object already stored at the key, and never leaves a partial object visible
+at it.
+
+Remotes that upload atomically (e.g. object stores such as `s3`) are streamed
+straight to the destination. On remotes where a partial upload would
+otherwise be visible (e.g. `local`), and whenever `--vfs-cache-mode` is
+`writes` or above, the upload is written to a temporary object that is
+renamed into place on success; these remotes need to support a server-side
+move or copy for this (nearly all do - without move or copy the upload is
+written directly and a failed PUT may leave a partial object at the key). If
+`serve s3` is killed part-way through an upload the temporary object (named
+with a leading `.rclone_put_object_`) may be left behind; it is hidden from
+S3 listings but must be removed manually.
+
 ### Multipart uploads
 
 By default `serve s3` **streams** each multipart upload, in part-number
