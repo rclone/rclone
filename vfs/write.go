@@ -1,6 +1,9 @@
 package vfs
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"io"
 	"os"
 	"sync"
@@ -21,6 +24,8 @@ type WriteFileHandle struct {
 	o           fs.Object
 	result      chan error
 	file        *File
+	ctx         context.Context    // the streaming upload runs under this
+	cancel      context.CancelFunc // fails the streaming upload, unblocking a stalled write
 	offset      int64
 	flags       int
 	closed      bool // set if handle has been closed
@@ -46,6 +51,7 @@ func newWriteFileHandle(d *Dir, f *File, remote string, flags int) (*WriteFileHa
 		result: make(chan error, 1),
 		file:   f,
 	}
+	fh.ctx, fh.cancel = context.WithCancel(f.ctx)
 	fh.cond = sync.Cond{L: &fh.mu}
 	fh.file.addWriter(fh)
 	return fh, nil
@@ -85,7 +91,7 @@ func (fh *WriteFileHandle) openPending() (err error) {
 		}()
 		defer vfscommon.RecoverPanic(fh.remote, &err)
 		// NB Rcat deals with Stats.Transferring, etc.
-		o, err = operations.Rcat(fh.file.ctx, fh.file.Fs(), fh.remote, pipeReader, time.Now(), nil)
+		o, err = operations.Rcat(fh.ctx, fh.file.Fs(), fh.remote, pipeReader, time.Now(), nil)
 		if err != nil {
 			fs.Errorf(fh.remote, "WriteFileHandle.New Rcat failed: %v", err)
 		}
@@ -196,10 +202,22 @@ func (fh *WriteFileHandle) Offset() (offset int64) {
 //
 // Must be called with fh.mu held
 func (fh *WriteFileHandle) close() (err error) {
+	return fh.closeWithError(nil)
+}
+
+// closeWithError closes the file handle like close does. If reason is
+// non-nil the streaming upload is failed with reason rather than being
+// ended normally, so a partially written file is discarded instead of
+// being stored as if it were complete.
+//
+// Must be called with fh.mu held
+func (fh *WriteFileHandle) closeWithError(reason error) (err error) {
 	if fh.closed {
 		return ECLOSED
 	}
 	fh.closed = true
+	// Release the upload context once the upload has finished
+	defer fh.cancel()
 	// leave writer open until file is transferred
 	defer func() {
 		fh.file.delWriter(fh)
@@ -211,14 +229,21 @@ func (fh *WriteFileHandle) close() (err error) {
 	if err = fh.openPending(); err != nil {
 		return err
 	}
-	writeCloseErr := fh.pipeWriter.Close()
+	writeCloseErr := fh.pipeWriter.CloseWithError(reason)
 	err = <-fh.result
 	if err == nil {
 		fh.file.setObject(fh.o)
 		err = writeCloseErr
-	} else if fh.file.getObject() == nil {
-		// Remove vfs file entry when no object is present
-		_ = fh.file.Remove()
+	} else {
+		if fh.file.getObject() == nil {
+			// Remove vfs file entry when no object is present
+			_ = fh.file.Remove()
+		}
+		if reason != nil {
+			// The upload's own error is usually just the cancellation
+			// the abandon caused - reason is the cause worth reporting.
+			err = reason
+		}
 	}
 	return err
 }
@@ -228,6 +253,34 @@ func (fh *WriteFileHandle) Close() error {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
 	return fh.close()
+}
+
+// CloseWithError closes the file handle, abandoning the write.
+//
+// The streaming upload to the backend is failed with reason rather than
+// being ended normally, so the partially written file is discarded
+// instead of being stored as if it were complete. A stalled upload is
+// interrupted rather than waited for, so this returns promptly even
+// when the backend has stopped accepting data. A nil reason is the
+// same as Close.
+//
+// It returns ECLOSED if the handle has already been closed.
+func (fh *WriteFileHandle) CloseWithError(reason error) error {
+	// Don't let an EOF-like reason be mistaken for a clean end of stream
+	// by whatever is reading the other end of the pipe.
+	if reason != nil && (errors.Is(reason, io.EOF) || errors.Is(reason, io.ErrUnexpectedEOF)) {
+		reason = fmt.Errorf("write aborted: %v", reason)
+	}
+	if reason != nil {
+		// Fail the upload before taking the lock: a write blocked on a
+		// stalled upload holds fh.mu, and only failing the upload
+		// unblocks it - otherwise the abandon would wait out the
+		// backend's timeout (or forever without one).
+		fh.cancel()
+	}
+	fh.mu.Lock()
+	defer fh.mu.Unlock()
+	return fh.closeWithError(reason)
 }
 
 // Flush is called on each close() of a file descriptor. So if a

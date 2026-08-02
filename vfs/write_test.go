@@ -13,6 +13,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/random"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -235,6 +236,47 @@ func TestWriteFileHandleWriteAt(t *testing.T) {
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1}, []string{}, fs.ModTimeNotSupported)
 }
 
+func TestWriteFileHandleCloseWithError(t *testing.T) {
+	// io.ErrUnexpectedEOF must fail the upload like any other reason.
+	for _, reason := range []error{errors.New("upload interrupted"), io.ErrUnexpectedEOF} {
+		t.Run(reason.Error(), func(t *testing.T) {
+			r, vfs, fh := writeHandleCreate(t)
+
+			// Write some data then abandon the write mid-stream
+			n, err := fh.Write([]byte("hello"))
+			require.NoError(t, err)
+			assert.Equal(t, 5, n)
+
+			err = fh.CloseWithError(reason)
+			require.Error(t, err)
+			assert.ErrorContains(t, err, reason.Error())
+
+			// Check double close
+			assert.Equal(t, ECLOSED, fh.Close())
+
+			if *fstest.RemoteName == "" {
+				_, err = vfs.Stat("file1")
+				assert.Equal(t, ENOENT, err, "The abandoned file must not exist in the VFS or on the remote")
+				fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{}, []string{}, fs.ModTimeNotSupported)
+			}
+		})
+	}
+
+	// CloseWithError with a nil reason behaves like Close and commits the file
+	t.Run("NilReason", func(t *testing.T) {
+		r, vfs := newTestVFS(t)
+		h, err := vfs.OpenFile("file2", os.O_WRONLY|os.O_CREATE, 0777)
+		require.NoError(t, err)
+		fh2, ok := h.(*WriteFileHandle)
+		require.True(t, ok)
+		_, err = fh2.Write([]byte("hello"))
+		require.NoError(t, err)
+		require.NoError(t, fh2.CloseWithError(nil))
+		file2 := fstest.NewItem("file2", "hello", t1)
+		fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file2}, []string{}, fs.ModTimeNotSupported)
+	})
+}
+
 func TestWriteFileHandleFlush(t *testing.T) {
 	_, vfs, fh := writeHandleCreate(t)
 
@@ -382,4 +424,84 @@ func TestFileReadAtZeroLength(t *testing.T) {
 
 func TestFileReadAtNonZeroLength(t *testing.T) {
 	testFileReadAt(t, 100)
+}
+
+// stallingFs wraps an Fs so that streaming uploads accept a little data and
+// then stall until their context is cancelled, like a remote that has
+// stopped accepting data.
+type stallingFs struct {
+	fs.Fs
+	stalled  chan struct{} // closed once the upload has stalled
+	features *fs.Features
+}
+
+func newStallingFs(base fs.Fs) *stallingFs {
+	f := &stallingFs{Fs: base, stalled: make(chan struct{})}
+	features := *base.Features()
+	features.PutStream = f.PutStream
+	f.features = &features
+	return f
+}
+
+// Features returns the optional features of this Fs
+func (f *stallingFs) Features() *fs.Features { return f.features }
+
+// PutStream reads a little of in then stalls until ctx is cancelled.
+func (f *stallingFs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	buf := make([]byte, 1024)
+	_, _ = in.Read(buf)
+	close(f.stalled)
+	<-ctx.Done()
+	return nil, ctx.Err()
+}
+
+// TestWriteFileHandleCloseWithErrorStalled checks that CloseWithError
+// interrupts an upload the backend has stopped accepting data for. The
+// writer is blocked in the pipe holding the handle's lock, so the abandon
+// must fail the upload to unblock it, rather than waiting on the lock
+// until the backend gives up of its own accord.
+func TestWriteFileHandleCloseWithErrorStalled(t *testing.T) {
+	r := fstest.NewRun(t)
+	f := newStallingFs(r.Fremote)
+	// A tweaked option so this VFS is not deduplicated onto an active VFS
+	// of the unwrapped remote, whose config string it shares.
+	opt := vfscommon.Opt
+	opt.WriteWait += fs.Duration(time.Millisecond)
+	vfs := New(context.Background(), f, &opt)
+	t.Cleanup(vfs.Shutdown)
+
+	h, err := vfs.OpenFile("stalled", os.O_WRONLY|os.O_CREATE, 0777)
+	require.NoError(t, err)
+	fh, ok := h.(*WriteFileHandle)
+	require.True(t, ok)
+
+	// Write more than the transfer buffers absorb, so the write blocks on
+	// the stalled upload while holding the handle's lock.
+	writeDone := make(chan error, 1)
+	go func() {
+		_, err := fh.Write(make([]byte, 20<<20))
+		writeDone <- err
+	}()
+
+	select {
+	case <-f.stalled:
+	case <-time.After(10 * time.Second):
+		t.Fatal("upload never started")
+	}
+
+	// The abandon must interrupt the stalled upload promptly.
+	closeDone := make(chan error, 1)
+	go func() { closeDone <- fh.CloseWithError(errors.New("abandoned")) }()
+	select {
+	case err := <-closeDone:
+		require.Error(t, err)
+	case <-time.After(10 * time.Second):
+		t.Fatal("CloseWithError did not interrupt the stalled upload")
+	}
+	select {
+	case err := <-writeDone:
+		require.Error(t, err)
+	case <-time.After(10 * time.Second):
+		t.Fatal("the blocked write was never unblocked")
+	}
 }
