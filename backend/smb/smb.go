@@ -836,6 +836,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return fmt.Errorf("Update Close failed: %w", err)
 	}
 
+	// Return the connection so the SetModTime below can reuse it rather than
+	// dialling a second one - the file is closed so remove() no longer needs
+	// it. This nils cn out, making the deferred putConnection a no-op.
+	o.fs.putConnection(&cn, nil)
+
 	// Set the modified time and also o.statResult
 	err = o.SetModTime(ctx, src.ModTime(ctx))
 	if err != nil {
