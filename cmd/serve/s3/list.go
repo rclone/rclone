@@ -23,8 +23,8 @@ func (b *s3Backend) entryListR(_vfs *vfs.VFS, bucketName, fdPath, name string, a
 	for _, entry := range dirEntries {
 		object := entry.Name()
 
-		// Hide the in-progress multipart uploads
-		if strings.HasPrefix(object, multipartUploadPrefix) {
+		// Hide the temporary objects of in-progress uploads
+		if strings.HasPrefix(object, multipartUploadPrefix) || strings.HasPrefix(object, putObjectPrefix) {
 			continue
 		}
 
