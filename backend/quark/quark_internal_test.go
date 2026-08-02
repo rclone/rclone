@@ -46,8 +46,15 @@ func TestConfigQRCodeLogin(t *testing.T) {
 		case "/account/info":
 			assert.Equal(t, "service-ticket", r.URL.Query().Get("st"))
 			http.SetCookie(w, &http.Cookie{Name: "__pus", Value: "pus-value", Path: "/"})
-			http.SetCookie(w, &http.Cookie{Name: "__puus", Value: "puus-value", Path: "/"})
 			_, _ = fmt.Fprint(w, `{"success":true,"code":"OK","data":{"nickname":"rclone-test"}}`)
+		case "/1/clouddrive/file/sort":
+			assert.Equal(t, rootID, r.URL.Query().Get("pdir_fid"))
+			assert.Equal(t, "1", r.URL.Query().Get("_size"))
+			cookie, err := r.Cookie("__pus")
+			require.NoError(t, err)
+			assert.Equal(t, "pus-value", cookie.Value)
+			http.SetCookie(w, &http.Cookie{Name: "__puus", Value: "puus-value", Path: "/"})
+			_, _ = fmt.Fprint(w, `{"status":200,"code":0,"data":{"list":[]}}`)
 		default:
 			http.NotFound(w, r)
 		}
@@ -115,6 +122,9 @@ func TestConfigQRCodeLoginPollsPendingStatus(t *testing.T) {
 		case "/account/info":
 			http.SetCookie(w, &http.Cookie{Name: "__pus", Value: "one", Path: "/"})
 			_, _ = fmt.Fprint(w, `{"success":true,"code":"OK","data":{}}`)
+		case "/1/clouddrive/file/sort":
+			http.SetCookie(w, &http.Cookie{Name: "__puus", Value: "two", Path: "/"})
+			_, _ = fmt.Fprint(w, `{"status":200,"code":0,"data":{"list":[]}}`)
 		default:
 			http.NotFound(w, r)
 		}
@@ -191,6 +201,7 @@ func TestFileAPIRequests(t *testing.T) {
 			listCalls.Add(1)
 			assert.Equal(t, "0", r.URL.Query().Get("pdir_fid"))
 			assert.Equal(t, "1", r.URL.Query().Get("_page"))
+			assert.Equal(t, "500", r.URL.Query().Get("_size"))
 			_, _ = fmt.Fprint(w, `{"status":200,"code":0,"data":{"list":[{"fid":"dir-id","pdir_fid":"0","file_name":"docs","dir":true,"size":0,"updated_at":1710000000000},{"fid":"file-id","pdir_fid":"0","file_name":"hello.txt","file":true,"size":5,"updated_at":1710000001000,"md5":"5d41402abc4b2a76b9719d911017c592","sha1":"aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d","format_type":"text/plain"}]}}`)
 		case "/1/clouddrive/file":
 			var body createDirRequest
@@ -235,6 +246,78 @@ func TestFileAPIRequests(t *testing.T) {
 	require.NoError(t, f.moveItem(context.Background(), "file-id", "dir-id"))
 	require.NoError(t, f.renameItem(context.Background(), "file-id", "renamed.txt"))
 	require.NoError(t, f.deleteItem(context.Background(), "file-id"))
+}
+
+func TestFileAPIRefreshesCookie(t *testing.T) {
+	var listCalls atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch listCalls.Add(1) {
+		case 1:
+			assert.Contains(t, r.Header.Get("Cookie"), "__puus=old")
+			http.SetCookie(w, &http.Cookie{Name: "__puus", Value: "new", Path: "/"})
+		case 2:
+			assert.Contains(t, r.Header.Get("Cookie"), "__puus=new")
+			http.SetCookie(w, &http.Cookie{Name: "__puus", Value: "newest", Path: "/"})
+		default:
+			t.Fatalf("unexpected list request %d", listCalls.Load())
+		}
+		_, _ = fmt.Fprint(w, `{"status":200,"code":0,"data":{"list":[]}}`)
+	}))
+	defer server.Close()
+
+	oldEndpoints := currentEndpoints
+	currentEndpoints.Drive = server.URL
+	t.Cleanup(func() { currentEndpoints = oldEndpoints })
+	m := configmap.Simple{"cookie": obscure.MustObscure("__pus=one; __puus=old; other=kept")}
+	f, err := newFs(context.Background(), "test", "", m)
+	require.NoError(t, err)
+	require.NoError(t, f.dirCache.FindRoot(context.Background(), false))
+	_, err = f.listAll(context.Background(), rootID)
+	require.NoError(t, err)
+
+	stored, ok := m.Get("cookie")
+	require.True(t, ok)
+	stored, err = obscure.Reveal(stored)
+	require.NoError(t, err)
+	assert.Contains(t, stored, "__pus=one")
+	assert.Contains(t, stored, "__puus=new")
+	assert.Contains(t, stored, "other=kept")
+
+	_, err = f.listAll(context.Background(), rootID)
+	require.NoError(t, err)
+	assert.Contains(t, f.cookies.header(), "__puus=newest")
+	stored, err = obscure.Reveal(m["cookie"])
+	require.NoError(t, err)
+	assert.Contains(t, stored, "__puus=new")
+	require.NoError(t, f.Shutdown(context.Background()))
+	stored, err = obscure.Reveal(m["cookie"])
+	require.NoError(t, err)
+	assert.Contains(t, stored, "__puus=newest")
+}
+
+func TestCookieTransportRejectsUntrustedHosts(t *testing.T) {
+	received := make(chan string, 1)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		received <- r.Header.Get("Cookie")
+		http.SetCookie(w, &http.Cookie{Name: "__puus", Value: "untrusted", Path: "/"})
+		_, _ = fmt.Fprint(w, "ok")
+	}))
+	defer server.Close()
+
+	m := configmap.Simple{}
+	store := newCookieStore("test", "__pus=one; __puus=trusted", m, endpointSet{})
+	client := &http.Client{Transport: &cookieTransport{base: http.DefaultTransport, cookies: store}}
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, server.URL, nil)
+	require.NoError(t, err)
+	req.Header.Set("Cookie", "leak=bad")
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	require.NoError(t, resp.Body.Close())
+	assert.Empty(t, <-received)
+	assert.Equal(t, "__pus=one; __puus=trusted", store.header())
+	_, ok := m.Get("cookie")
+	assert.False(t, ok)
 }
 
 func TestModTimeMilliseconds(t *testing.T) {

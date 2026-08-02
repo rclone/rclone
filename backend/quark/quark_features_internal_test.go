@@ -119,6 +119,19 @@ func TestListAllPaginationAndNamePreservation(t *testing.T) {
 	assert.EqualValues(t, 2, calls.Load())
 }
 
+func TestFileNameHTMLEncodingIsSymmetric(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.NotFound(w, r)
+	}))
+	defer server.Close()
+	f := newTestFs(t, server.URL)
+
+	name := `a&#x22;b&c"d'e<f>g`
+	encoded := encodeFileName(name, f.opt.Enc)
+	assert.Equal(t, `a&amp;#x22;b&amp;c&#34;d&#39;e&lt;f&gt;g`, encoded)
+	assert.Equal(t, name, decodeFileName(encoded, f.opt.Enc))
+}
+
 func TestListRRecursesDirectories(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

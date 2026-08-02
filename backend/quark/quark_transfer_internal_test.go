@@ -28,6 +28,10 @@ func TestUploadMultipart(t *testing.T) {
 		authMetas   []string
 		finishCalls atomic.Int32
 		firstPart   atomic.Int32
+		inFlight    atomic.Int32
+		maxInFlight atomic.Int32
+		twoStarted  = make(chan struct{})
+		startOnce   sync.Once
 	)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -39,7 +43,7 @@ func TestUploadMultipart(t *testing.T) {
 			assert.EqualValues(t, 7, body.Size)
 			assert.Equal(t, rootID, body.ParentID)
 			assert.False(t, body.ParallelUpload)
-			_, _ = fmt.Fprintf(w, `{"status":200,"code":0,"data":{"task_id":"task-id","bucket":"","obj_key":"object-key","upload_id":"upload-id","upload_url":%q,"auth_info":{},"callback":{}},"metadata":{"part_size":3}}`, serverURL(r))
+			_, _ = fmt.Fprintf(w, `{"status":200,"code":0,"data":{"task_id":"task-id","bucket":"","obj_key":"object-key","upload_id":"upload-id","upload_url":%q,"auth_info":{},"callback":{}},"metadata":{"part_size":3,"part_thread":2}}`, serverURL(r))
 		case "/1/clouddrive/file/update/hash":
 			var body updateHashRequest
 			require.NoError(t, json.NewDecoder(r.Body).Decode(&body))
@@ -58,6 +62,21 @@ func TestUploadMultipart(t *testing.T) {
 			body, err := io.ReadAll(r.Body)
 			require.NoError(t, err)
 			if r.Method == http.MethodPut {
+				current := inFlight.Add(1)
+				defer inFlight.Add(-1)
+				for {
+					maximum := maxInFlight.Load()
+					if current <= maximum || maxInFlight.CompareAndSwap(maximum, current) {
+						break
+					}
+				}
+				if current >= 2 {
+					startOnce.Do(func() { close(twoStarted) })
+				}
+				select {
+				case <-twoStarted:
+				case <-time.After(time.Second):
+				}
 				partNumber := r.URL.Query().Get("partNumber")
 				if partNumber == "1" && firstPart.Add(1) == 1 {
 					http.Error(w, "retry me", http.StatusServiceUnavailable)
@@ -89,12 +108,32 @@ func TestUploadMultipart(t *testing.T) {
 	obj, err := f.upload(context.Background(), bytes.NewBufferString("abcdefg"), src, "hello.txt", rootID)
 	require.NoError(t, err)
 	assert.Equal(t, "uploaded-id", obj.id)
-	assert.Equal(t, []string{"abc", "def", "g"}, parts)
+	assert.ElementsMatch(t, []string{"abc", "def", "g"}, parts)
 	assert.Contains(t, commitBody, `<PartNumber>1</PartNumber><ETag>"etag-1"</ETag>`)
 	assert.Contains(t, commitBody, `<PartNumber>3</PartNumber><ETag>"etag-3"</ETag>`)
 	assert.NotEmpty(t, authMetas)
 	assert.EqualValues(t, 2, firstPart.Load())
+	assert.EqualValues(t, 2, maxInFlight.Load())
 	assert.EqualValues(t, 1, finishCalls.Load())
+}
+
+func TestResolvePartThreads(t *testing.T) {
+	tests := []struct {
+		name          string
+		serverThreads int
+		partCount     int
+		want          int
+	}{
+		{name: "missing server value", partCount: 10, want: 1},
+		{name: "server value", serverThreads: 9, partCount: 10, want: 9},
+		{name: "fewer parts", serverThreads: 9, partCount: 3, want: 3},
+		{name: "safety limit", serverThreads: 100, partCount: 100, want: maxUploadPartThreads},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.want, resolvePartThreads(test.serverThreads, test.partCount))
+		})
+	}
 }
 
 func TestUploadInstantAndUnknownSize(t *testing.T) {
@@ -129,6 +168,120 @@ func TestUploadInstantAndUnknownSize(t *testing.T) {
 	assert.Equal(t, "instant-id", obj.id)
 	assert.False(t, obj.ModTime(context.Background()).IsZero())
 	assert.Zero(t, ossCalls.Load())
+}
+
+func TestUploadFallsBackWhenInstantUploadIsNotVisible(t *testing.T) {
+	var (
+		preCalls    atomic.Int32
+		hashCalls   atomic.Int32
+		partCalls   atomic.Int32
+		fullUpload  atomic.Bool
+		hashUpdates []bool
+		mu          sync.Mutex
+	)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/1/clouddrive/file/upload/pre":
+			var body uploadPreRequest
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&body))
+			mu.Lock()
+			hashUpdates = append(hashUpdates, body.HashUpdate)
+			mu.Unlock()
+			call := preCalls.Add(1)
+			_, _ = fmt.Fprintf(w, `{"status":200,"code":0,"data":{"task_id":"task-%d","bucket":"","obj_key":"object-key","upload_id":"upload-%d","upload_url":%q,"auth_info":{},"callback":{}},"metadata":{"part_size":8}}`, call, call, serverURL(r))
+		case "/1/clouddrive/file/update/hash":
+			hashCalls.Add(1)
+			_, _ = fmt.Fprint(w, `{"status":200,"code":0,"data":{"finish":true,"fid":"invisible-id"}}`)
+		case "/1/clouddrive/file/upload/auth":
+			_, _ = fmt.Fprint(w, `{"status":200,"code":0,"data":{"auth_key":"oss-auth"}}`)
+		case "/object-key":
+			if r.Method == http.MethodPut {
+				partCalls.Add(1)
+				w.Header().Set("ETag", `"etag-1"`)
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+			_, _ = fmt.Fprint(w, `<CompleteMultipartUploadResult/>`)
+		case "/1/clouddrive/file/upload/finish":
+			fullUpload.Store(true)
+			_, _ = fmt.Fprint(w, `{"status":200,"code":0,"data":{"fid":"uploaded-id","size":8,"file_name":"file.bin","pdir_fid":"0","file":true}}`)
+		case "/1/clouddrive/file/sort":
+			if fullUpload.Load() {
+				_, _ = fmt.Fprint(w, `{"status":200,"code":0,"data":{"list":[{"fid":"uploaded-id","pdir_fid":"0","file_name":"file.bin","file":true,"size":8}]}}`)
+				return
+			}
+			_, _ = fmt.Fprint(w, `{"status":200,"code":0,"data":{"list":[]}}`)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	oldInterval := taskPollInterval
+	oldTimeout := taskPollTimeout
+	taskPollInterval = 10 * time.Millisecond
+	taskPollTimeout = time.Second
+	t.Cleanup(func() {
+		taskPollInterval = oldInterval
+		taskPollTimeout = oldTimeout
+	})
+
+	f := newTestFs(t, server.URL)
+	src := object.NewStaticObjectInfo("file.bin", time.Now(), 8, true, nil, f)
+	obj, err := f.upload(context.Background(), bytes.NewBufferString("fallback"), src, "file.bin", rootID)
+	require.NoError(t, err, "pre=%d hash=%d parts=%d full=%v hashUpdates=%v", preCalls.Load(), hashCalls.Load(), partCalls.Load(), fullUpload.Load(), hashUpdates)
+	assert.Equal(t, "uploaded-id", obj.id)
+	assert.EqualValues(t, 2, preCalls.Load())
+	assert.EqualValues(t, 1, hashCalls.Load())
+	assert.EqualValues(t, 1, partCalls.Load())
+	assert.Equal(t, []bool{true, false}, hashUpdates)
+}
+
+func TestUploadAcceptsFinishedMultipartBeforeListingVisibility(t *testing.T) {
+	var partCalls atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/1/clouddrive/file/upload/pre":
+			_, _ = fmt.Fprintf(w, `{"status":200,"code":0,"data":{"task_id":"task-id","bucket":"","obj_key":"object-key","upload_id":"upload-id","upload_url":%q,"auth_info":{},"callback":{}},"metadata":{"part_size":8}}`, serverURL(r))
+		case "/1/clouddrive/file/update/hash":
+			_, _ = fmt.Fprint(w, `{"status":200,"code":0,"data":{"finish":false}}`)
+		case "/1/clouddrive/file/upload/auth":
+			_, _ = fmt.Fprint(w, `{"status":200,"code":0,"data":{"auth_key":"oss-auth"}}`)
+		case "/object-key":
+			if r.Method == http.MethodPut {
+				partCalls.Add(1)
+				w.Header().Set("ETag", `"etag-1"`)
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+			_, _ = fmt.Fprint(w, `<CompleteMultipartUploadResult/>`)
+		case "/1/clouddrive/file/upload/finish":
+			_, _ = fmt.Fprint(w, `{"status":200,"code":0,"data":{"fid":"uploaded-id","size":8,"file_name":"file.bin","pdir_fid":"0","file":true}}`)
+		case "/1/clouddrive/file/sort":
+			_, _ = fmt.Fprint(w, `{"status":200,"code":0,"data":{"list":[]}}`)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	oldInterval := taskPollInterval
+	oldTimeout := taskPollTimeout
+	taskPollInterval = 10 * time.Millisecond
+	taskPollTimeout = 100 * time.Millisecond
+	t.Cleanup(func() {
+		taskPollInterval = oldInterval
+		taskPollTimeout = oldTimeout
+	})
+
+	f := newTestFs(t, server.URL)
+	src := object.NewStaticObjectInfo("file.bin", time.Now(), 8, true, nil, f)
+	obj, err := f.upload(context.Background(), bytes.NewBufferString("finished"), src, "file.bin", rootID)
+	require.NoError(t, err)
+	assert.Equal(t, "uploaded-id", obj.id)
+	assert.EqualValues(t, 1, partCalls.Load())
 }
 
 func TestUploadZeroByte(t *testing.T) {
@@ -229,17 +382,20 @@ func TestUpdateUsesTemporaryNameThenReplaces(t *testing.T) {
 }
 
 func TestDownloadURLSyncAndRange(t *testing.T) {
+	contentServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "bytes=2-4", r.Header.Get("Range"))
+		assert.Empty(t, r.Header.Get("Cookie"))
+		w.Header().Set("Content-Range", "bytes 2-4/5")
+		w.WriteHeader(http.StatusPartialContent)
+		_, _ = fmt.Fprint(w, "llo")
+	}))
+	defer contentServer.Close()
+
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/1/clouddrive/file/download":
 			w.Header().Set("Content-Type", "application/json")
-			_, _ = fmt.Fprintf(w, `{"status":200,"code":0,"data":[{"fid":"file-id","download_url":%q}]}`, serverURL(r)+"/content")
-		case "/content":
-			assert.Equal(t, "bytes=2-4", r.Header.Get("Range"))
-			assert.Empty(t, r.Header.Get("Cookie"))
-			w.Header().Set("Content-Range", "bytes 2-4/5")
-			w.WriteHeader(http.StatusPartialContent)
-			_, _ = fmt.Fprint(w, "llo")
+			_, _ = fmt.Fprintf(w, `{"status":200,"code":0,"data":[{"fid":"file-id","download_url":%q}]}`, contentServer.URL)
 		default:
 			http.NotFound(w, r)
 		}

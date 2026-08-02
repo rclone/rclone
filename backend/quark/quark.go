@@ -19,6 +19,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/boombuler/barcode/qr"
@@ -36,16 +37,19 @@ import (
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/rest"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
 	rootID                = "0"
 	defaultUserAgent      = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36"
-	defaultListPageSize   = 50
+	defaultListPageSize   = 500
 	defaultUploadPartSize = int64(8 * fs.Mebi)
 	maxUploadParts        = 10_000
+	maxUploadPartThreads  = 32
 	maxPartUploadAttempts = 3
 	shareListPageSize     = 500
+	cookieSaveInterval    = time.Minute
 	configQRSession       = "config_qr_session"
 	qrSuccessStatus       = 2_000_000
 	qrNotScannedStatus    = 50_004_001
@@ -93,10 +97,25 @@ type Fs struct {
 	srv       *rest.Client
 	dirCache  *dircache.DirCache
 	pacer     *fs.Pacer
-	cookie    string
+	cookies   *cookieStore
 	rootID    string
 	endpoints endpointSet
 	chunkSize fs.SizeSuffix
+}
+
+type cookieStore struct {
+	mu           sync.RWMutex
+	value        string
+	lastSaved    string
+	lastSave     time.Time
+	name         string
+	m            configmap.Mapper
+	trustedHosts map[string]struct{}
+}
+
+type cookieTransport struct {
+	base    http.RoundTripper
+	cookies *cookieStore
 }
 
 // Object describes a Quark Drive file.
@@ -401,6 +420,26 @@ func finishQRCodeLogin(ctx context.Context, endpoints endpointSet, session qrSes
 		return "", fmt.Errorf("quark drive account validation failed: code=%q message=%q", account.Code, account.Message)
 	}
 
+	listURL, err := url.Parse(endpoints.Drive + "/1/clouddrive/file/sort")
+	if err != nil {
+		return "", err
+	}
+	q = listURL.Query()
+	q.Set("pr", "ucpro")
+	q.Set("fr", "pc")
+	q.Set("uc_param_str", "")
+	q.Set("pdir_fid", rootID)
+	q.Set("_page", "1")
+	q.Set("_size", "1")
+	listURL.RawQuery = q.Encode()
+	var list api.ListResponse
+	if err = loginJSON(ctx, client, http.MethodGet, listURL.String(), endpoints.Pan, &list); err != nil {
+		return "", err
+	}
+	if err = list.Response.Check(); err != nil {
+		return "", fmt.Errorf("quark drive session bootstrap failed: %w", err)
+	}
+
 	seen := map[string]bool{}
 	values := make([]string, 0)
 	for _, rawURL := range []string{endpoints.Pan, endpoints.Drive, endpoints.UOP} {
@@ -530,6 +569,117 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	return f, fs.ErrorIsFile
 }
 
+func newCookieStore(name, value string, m configmap.Mapper, endpoints endpointSet) *cookieStore {
+	trustedHosts := make(map[string]struct{}, 3)
+	for _, rawURL := range []string{endpoints.Pan, endpoints.Drive, endpoints.UOP} {
+		u, err := url.Parse(rawURL)
+		if err == nil && u.Host != "" {
+			trustedHosts[strings.ToLower(u.Host)] = struct{}{}
+		}
+	}
+	return &cookieStore{value: value, lastSaved: value, name: name, m: m, trustedHosts: trustedHosts}
+}
+
+func (s *cookieStore) trusted(u *url.URL) bool {
+	host := strings.ToLower(strings.TrimSuffix(u.Hostname(), "."))
+	if host == "quark.cn" || strings.HasSuffix(host, ".quark.cn") {
+		return true
+	}
+	_, ok := s.trustedHosts[strings.ToLower(u.Host)]
+	return ok
+}
+
+func (s *cookieStore) header() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.value
+}
+
+func mergeCookies(header string, updates []*http.Cookie) string {
+	parts := strings.Split(header, ";")
+	for i := range parts {
+		parts[i] = strings.TrimSpace(parts[i])
+	}
+	for _, update := range updates {
+		if update.Name == "" {
+			continue
+		}
+		deleteCookie := update.MaxAge < 0 || (!update.Expires.IsZero() && update.Expires.Before(time.Now()))
+		replacement := (&http.Cookie{Name: update.Name, Value: update.Value, Quoted: update.Quoted}).String()
+		found := false
+		for i, part := range parts {
+			name, _, ok := strings.Cut(part, "=")
+			if !ok || strings.TrimSpace(name) != update.Name {
+				continue
+			}
+			if !found && !deleteCookie {
+				parts[i] = replacement
+				found = true
+			} else {
+				parts[i] = ""
+			}
+		}
+		if !found && !deleteCookie {
+			parts = append(parts, replacement)
+		}
+	}
+	merged := parts[:0]
+	for _, part := range parts {
+		if part != "" {
+			merged = append(merged, part)
+		}
+	}
+	return strings.Join(merged, "; ")
+}
+
+func (s *cookieStore) update(updates []*http.Cookie) {
+	if len(updates) == 0 {
+		return
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	value := mergeCookies(s.value, updates)
+	if value == s.value {
+		return
+	}
+	s.value = value
+	if time.Since(s.lastSave) >= cookieSaveInterval {
+		s.saveLocked()
+	}
+}
+
+func (s *cookieStore) saveLocked() {
+	if s.value == s.lastSaved {
+		return
+	}
+	s.m.Set("cookie", obscure.MustObscure(s.value))
+	s.lastSaved = s.value
+	s.lastSave = time.Now()
+	fs.Debugf(s.name, "Saved refreshed cookies in config file")
+}
+
+func (s *cookieStore) flush() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.saveLocked()
+}
+
+func (t *cookieTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	request := req.Clone(req.Context())
+	request.Header = req.Header.Clone()
+	trusted := t.cookies.trusted(request.URL)
+	if trusted {
+		request.Header.Set("Cookie", t.cookies.header())
+	} else {
+		request.Header.Del("Cookie")
+	}
+	resp, err := t.base.RoundTrip(request)
+	if resp != nil && trusted {
+		t.cookies.update(resp.Cookies())
+	}
+	return resp, err
+}
+
 func newFs(ctx context.Context, name, root string, m configmap.Mapper) (*Fs, error) {
 	opt := new(Options)
 	if err := configstruct.Set(m, opt); err != nil {
@@ -549,9 +699,14 @@ func newFs(ctx context.Context, name, root string, m configmap.Mapper) (*Fs, err
 	newCtx, ci := fs.AddConfig(ctx)
 	ci.UserAgent = opt.UserAgent
 	client := fshttp.NewClient(newCtx)
+	cookies := newCookieStore(name, cookie, m, currentEndpoints)
+	transport := client.Transport
+	if transport == nil {
+		transport = http.DefaultTransport
+	}
+	client.Transport = &cookieTransport{base: transport, cookies: cookies}
 	srv := rest.NewClient(client).SetRoot(currentEndpoints.Drive)
 	srv.SetHeader("Accept", "application/json, text/plain, */*")
-	srv.SetHeader("Cookie", cookie)
 	srv.SetHeader("Origin", currentEndpoints.Pan)
 	srv.SetHeader("Referer", strings.TrimSuffix(currentEndpoints.Pan, "/")+"/")
 	rootFolderID := opt.RootFolderID
@@ -565,7 +720,7 @@ func newFs(ctx context.Context, name, root string, m configmap.Mapper) (*Fs, err
 		client:    client,
 		srv:       srv,
 		pacer:     fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(100*time.Millisecond), pacer.MaxSleep(2*time.Second), pacer.DecayConstant(2))),
-		cookie:    cookie,
+		cookies:   cookies,
 		rootID:    rootFolderID,
 		endpoints: currentEndpoints,
 		chunkSize: opt.ChunkSize,
@@ -589,6 +744,8 @@ func errorHandler(resp *http.Response) error {
 }
 
 var retryErrorCodes = []int{408, 409, 429, 500, 502, 503, 504, 509}
+
+var errItemWaitTimeout = errors.New("timed out waiting for Quark Drive item state")
 
 func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
 	if fserrors.ContextError(ctx, &err) {
@@ -640,9 +797,19 @@ func (f *Fs) Features() *fs.Features { return f.features }
 // DirCacheFlush clears cached directory IDs.
 func (f *Fs) DirCacheFlush() { f.dirCache.ResetRoot() }
 
+// Shutdown saves the latest cookies received from Quark Drive.
+func (f *Fs) Shutdown(ctx context.Context) error {
+	f.cookies.flush()
+	return nil
+}
+
 func decodeFileName(name string, enc encoder.MultiEncoder) string {
 	name = html.UnescapeString(name)
 	return enc.ToStandardName(name)
+}
+
+func encodeFileName(name string, enc encoder.MultiEncoder) string {
+	return html.EscapeString(enc.FromStandardName(name))
 }
 
 func (f *Fs) listAll(ctx context.Context, parentID string) ([]api.Item, error) {
@@ -694,6 +861,9 @@ func (f *Fs) waitForItem(ctx context.Context, parentID, id, leaf string, present
 	for {
 		items, err := f.listAll(waitCtx, parentID)
 		if err != nil {
+			if waitCtx.Err() != nil {
+				return nil, fmt.Errorf("%w: %w", errItemWaitTimeout, err)
+			}
 			return nil, err
 		}
 		var found *api.Item
@@ -715,7 +885,7 @@ func (f *Fs) waitForItem(ctx context.Context, parentID, id, leaf string, present
 			if present {
 				state = "become visible"
 			}
-			return nil, fmt.Errorf("timed out waiting for Quark Drive item %q to %s: %w", id, state, waitCtx.Err())
+			return nil, fmt.Errorf("%w: item %q did not %s: %w", errItemWaitTimeout, id, state, waitCtx.Err())
 		case <-time.After(taskPollInterval):
 		}
 	}
@@ -739,7 +909,7 @@ func (f *Fs) FindLeaf(ctx context.Context, parentID, leaf string) (string, bool,
 func (f *Fs) createDir(ctx context.Context, parentID, leaf string) (string, error) {
 	request := createDirRequest{
 		ParentID:    parentID,
-		FileName:    f.opt.Enc.FromStandardName(leaf),
+		FileName:    encodeFileName(leaf, f.opt.Enc),
 		DirPath:     "",
 		DirInitLock: false,
 	}
@@ -1052,7 +1222,7 @@ func (f *Fs) copyItem(ctx context.Context, id, parentID string) (string, error) 
 }
 
 func (f *Fs) renameItem(ctx context.Context, id, newName string) error {
-	request := renameRequest{ID: id, FileName: f.opt.Enc.FromStandardName(newName)}
+	request := renameRequest{ID: id, FileName: encodeFileName(newName, f.opt.Enc)}
 	var response api.IDResponse
 	if err := f.callJSON(ctx, http.MethodPost, "/1/clouddrive/file/rename", nil, &request, &response); err != nil {
 		return err
@@ -1260,9 +1430,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	}
 	fs.FixRangeOption(options, o.size)
 	downloadSrv := rest.NewClient(o.fs.client)
-	if isQuarkHost(downloadURL) {
-		downloadSrv.SetHeader("Cookie", o.fs.cookie)
-	}
 	opts := rest.Opts{Method: http.MethodGet, RootURL: downloadURL, Options: options}
 	var response *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -1489,15 +1656,15 @@ func spoolInput(in io.Reader, expectedSize int64) (file *os.File, size int64, md
 	return file, size, md5sum, sha1sum, cleanup, nil
 }
 
-func (f *Fs) uploadPre(ctx context.Context, leaf, parentID, mimeType string, size int64, modTime time.Time) (*api.UploadPreResponse, error) {
+func (f *Fs) uploadPre(ctx context.Context, leaf, parentID, mimeType string, size int64, modTime time.Time, hashUpdate bool) (*api.UploadPreResponse, error) {
 	if modTime.IsZero() {
 		modTime = time.Now()
 	}
 	request := uploadPreRequest{
-		FileName:       f.opt.Enc.FromStandardName(leaf),
+		FileName:       encodeFileName(leaf, f.opt.Enc),
 		Size:           size,
 		ParentID:       parentID,
-		HashUpdate:     true,
+		HashUpdate:     hashUpdate,
 		DirName:        "",
 		FormatType:     mimeType,
 		CreatedAt:      modTime.UnixMilli(),
@@ -1599,7 +1766,7 @@ func uploadURL(pre *api.UploadPreResponse, query url.Values) (*url.URL, error) {
 	return u, nil
 }
 
-func (f *Fs) uploadPart(ctx context.Context, pre *api.UploadPreResponse, mimeType string, partNumber int, body []byte) (string, error) {
+func (f *Fs) uploadPart(ctx context.Context, pre *api.UploadPreResponse, mimeType string, partNumber int, file io.ReaderAt, offset, length int64) (string, error) {
 	query := url.Values{"partNumber": []string{strconv.Itoa(partNumber)}, "uploadId": []string{pre.Data.UploadID}}
 	u, err := uploadURL(pre, query)
 	if err != nil {
@@ -1615,10 +1782,11 @@ func (f *Fs) uploadPart(ctx context.Context, pre *api.UploadPreResponse, mimeTyp
 		if authErr != nil {
 			return "", authErr
 		}
-		req, requestErr := http.NewRequestWithContext(ctx, http.MethodPut, u.String(), bytes.NewReader(body))
+		req, requestErr := http.NewRequestWithContext(ctx, http.MethodPut, u.String(), io.NewSectionReader(file, offset, length))
 		if requestErr != nil {
 			return "", requestErr
 		}
+		req.ContentLength = length
 		req.Header.Set("Authorization", auth)
 		req.Header.Set("Content-Type", mimeType)
 		req.Header.Set("Date", date)
@@ -1763,6 +1931,13 @@ func resolvePartSize(size, serverPartSize int64, configured fs.SizeSuffix) int64
 	return partSize
 }
 
+func resolvePartThreads(serverThreads, partCount int) int {
+	if serverThreads <= 0 {
+		serverThreads = 1
+	}
+	return min(serverThreads, partCount, maxUploadPartThreads)
+}
+
 func (f *Fs) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, leaf, parentID string) (*Object, error) {
 	file, size, md5sum, sha1sum, cleanup, err := spoolInput(in, src.Size())
 	if err != nil {
@@ -1778,7 +1953,7 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, leaf, 
 		modTime = time.Now()
 	}
 	modTime = time.UnixMilli(modTime.UnixMilli())
-	pre, err := f.uploadPre(ctx, leaf, parentID, mimeType, size, modTime)
+	pre, err := f.uploadPre(ctx, leaf, parentID, mimeType, size, modTime, true)
 	if err != nil {
 		return nil, err
 	}
@@ -1794,10 +1969,17 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, leaf, 
 		if id == "" {
 			return nil, errors.New("quark drive instant upload returned no file ID")
 		}
-		if _, err = f.waitForItem(ctx, parentID, id, leaf, true); err != nil {
+		if _, err = f.waitForItem(ctx, parentID, id, leaf, true); err == nil {
+			return &Object{fs: f, remote: src.Remote(), id: id, parentID: parentID, size: size, modTime: modTime, mimeType: mimeType}, nil
+		}
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+		fs.Infof(src, "Instant upload result was not visible (%v); retrying as a multipart upload", err)
+		pre, err = f.uploadPre(ctx, leaf, parentID, mimeType, size, modTime, false)
+		if err != nil {
 			return nil, err
 		}
-		return &Object{fs: f, remote: src.Remote(), id: id, parentID: parentID, size: size, modTime: modTime, mimeType: mimeType}, nil
 	}
 
 	partSize := resolvePartSize(size, pre.Metadata.PartSize, f.chunkSize)
@@ -1805,24 +1987,26 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, leaf, 
 	if partCount == 0 {
 		partCount = 1
 	}
-	parts := make([]uploadedPart, 0, partCount)
+	parts := make([]uploadedPart, partCount)
+	group, groupCtx := errgroup.WithContext(ctx)
+	partThreads := resolvePartThreads(pre.Metadata.PartThread, partCount)
+	fs.Debugf(src, "Using %d concurrent multipart upload threads for %d parts", partThreads, partCount)
+	group.SetLimit(partThreads)
 	for partNumber := 1; partNumber <= partCount; partNumber++ {
+		partNumber := partNumber
 		offset := int64(partNumber-1) * partSize
 		length := min(partSize, max(int64(0), size-offset))
-		if length > int64(int(^uint(0)>>1)) {
-			return nil, fmt.Errorf("quark drive upload part is too large for this platform: %d", length)
-		}
-		body := make([]byte, int(length))
-		if length > 0 {
-			if _, err = file.ReadAt(body, offset); err != nil && !errors.Is(err, io.EOF) {
-				return nil, err
+		group.Go(func() error {
+			etag, uploadErr := f.uploadPart(groupCtx, pre, mimeType, partNumber, file, offset, length)
+			if uploadErr != nil {
+				return uploadErr
 			}
-		}
-		etag, uploadErr := f.uploadPart(ctx, pre, mimeType, partNumber, body)
-		if uploadErr != nil {
-			return nil, uploadErr
-		}
-		parts = append(parts, uploadedPart{Number: partNumber, ETag: etag})
+			parts[partNumber-1] = uploadedPart{Number: partNumber, ETag: etag}
+			return nil
+		})
+	}
+	if err = group.Wait(); err != nil {
+		return nil, err
 	}
 	if err = f.commitUpload(ctx, pre, parts); err != nil {
 		return nil, err
@@ -1847,7 +2031,10 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, leaf, 
 		info.FormatType = mimeType
 	}
 	if _, err = f.waitForItem(ctx, parentID, info.FID, leaf, true); err != nil {
-		return nil, err
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+		fs.Infof(src, "Multipart upload finished but was not yet visible (%v); accepting the finish response", err)
 	}
 	object, err := f.newObjectWithInfo(ctx, src.Remote(), info)
 	if err != nil {
