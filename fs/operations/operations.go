@@ -1838,6 +1838,15 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 
 			return nil, err
 		}
+
+		// Check transfer - the source may have ended before size
+		// bytes in which case the object will have been truncated
+		if sizeDiffers(ctx, info, obj) {
+			err = fmt.Errorf("corrupted on transfer: sizes differ src %d vs dst(%s) %d", info.Size(), fdst, obj.Size())
+			err = fs.CountError(ctx, err)
+			fs.Errorf(obj, "%v", err)
+			return obj, err
+		}
 	} else {
 		// Size unknown use Rcat
 		obj, err = Rcat(ctx, fdst, dstFileName, in, modTime, meta)

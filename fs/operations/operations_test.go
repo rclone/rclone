@@ -1637,6 +1637,18 @@ func TestRcatSize(t *testing.T) {
 	r.CheckRemoteItems(t, file1, file2)
 }
 
+func TestRcatSizeShortEOF(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+
+	const body = "------------------------------------------------------------"
+
+	// Upload declaring twice as many bytes as the source supplies
+	bodyReader := io.NopCloser(strings.NewReader(body))
+	_, err := operations.RcatSize(ctx, r.Fremote, "potato1", bodyReader, 2*int64(len(body)), t1, nil)
+	require.Error(t, err, "uploading a source which ends before its declared size must not succeed")
+}
+
 func TestRcatSizeMetadata(t *testing.T) {
 	r := fstest.NewRun(t)
 
