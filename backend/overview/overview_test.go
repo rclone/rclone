@@ -1,8 +1,10 @@
 package overview
 
 import (
+	"strings"
 	"testing"
 
+	"github.com/rclone/rclone/docs/data/backends"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -52,4 +54,18 @@ func TestGetBackendConfig(t *testing.T) {
 
 	assert.Equal(t, expectedMemoryConfig, conf, "parsed memory.yaml should match")
 
+}
+
+// Check every embedded backend YAML file parses on all architectures
+func TestGetBackendConfigAll(t *testing.T) {
+	entries, err := backends.BackendFS.ReadDir(".")
+	require.NoError(t, err)
+	require.NotEmpty(t, entries)
+
+	for _, entry := range entries {
+		name := strings.TrimSuffix(entry.Name(), ".yaml")
+		conf, err := GetBackendConfig(name)
+		assert.NoError(t, err, "failed to load %s", entry.Name())
+		assert.NotNil(t, conf)
+	}
 }
