@@ -1114,7 +1114,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	modTime := src.ModTime(ctx)
 	var linkID string
 	var fileSystemAttrs *proton.RevisionXAttrCommon
-	if err = o.fs.pacer.Call(func() (bool, error) {
+	if err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		linkID, fileSystemAttrs, err = o.fs.protonDrive.UploadFileByReader(ctx, folderLinkID, leaf, modTime, in, 0)
 		return shouldRetry(ctx, err)
 	}); err != nil {
