@@ -424,8 +424,11 @@ func (b *s3Backend) PutObject(
 			return result, _vfs.Chtimes(fp, ti, ti)
 		}
 		// ignore error since the file is successfully created
+	}
 
-		if val, ok := meta["mtime"]; ok {
+	if val, ok := meta["mtime"]; ok {
+		ti, err := swift.FloatStringToTime(val)
+		if err == nil {
 			b.storeModtime(fp, meta, val)
 			return result, _vfs.Chtimes(fp, ti, ti)
 		}

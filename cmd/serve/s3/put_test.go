@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ncw/swift/v2"
 	"github.com/rclone/gofakes3"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/fs"
@@ -149,6 +150,28 @@ func TestPutObjectFailureNewKey(t *testing.T) {
 				require.Error(t, err)
 			})
 		}
+	}
+}
+
+// TestPutObjectMtime checks that the object's modtime is set from the
+// "X-Amz-Meta-Mtime" or "mtime" metadata supplied with the PUT.
+func TestPutObjectMtime(t *testing.T) {
+	want := fstest.Time("2011-12-25T12:59:59.123456789Z")
+	for _, metaKey := range []string{"X-Amz-Meta-Mtime", "mtime"} {
+		t.Run(metaKey, func(t *testing.T) {
+			b, f, bucket := newPutTestBackend(t, "", nil)
+			ctx := context.Background()
+			const object = "mtime.txt"
+
+			contents := []byte(random.String(50))
+			meta := map[string]string{metaKey: swift.TimeToFloatString(want)}
+			_, err := b.PutObject(ctx, bucket, object, meta, bytes.NewReader(contents), int64(len(contents)))
+			require.NoError(t, err)
+
+			o, err := f.NewObject(ctx, path.Join(bucket, object))
+			require.NoError(t, err)
+			fstest.AssertTimeEqualWithPrecision(t, object, want, o.ModTime(ctx), f.Precision())
+		})
 	}
 }
 
