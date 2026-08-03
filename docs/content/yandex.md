@@ -247,6 +247,27 @@ Properties:
 - Type:        bool
 - Default:     true
 
+#### --yandex-upload-wait
+
+Wait this long after an upload before setting the modification time.
+
+Yandex Disk finalizes an upload asynchronously on its servers after
+the upload has completed. If the modification time is set while this
+finalization is still in progress the server returns 500 Internal
+Server Error errors.
+
+If you are getting 500 errors on upload then setting this to 2s is
+normally enough to stop them, at the cost of slowing down uploads.
+
+Yandex support recommend a value of 1.5s - 3s.
+
+Properties:
+
+- Config:      upload_wait
+- Env Var:     RCLONE_YANDEX_UPLOAD_WAIT
+- Type:        Duration
+- Default:     0s
+
 #### --yandex-description
 
 Description of the remote.
@@ -272,6 +293,14 @@ headers` errors in the logs if this is happening.  Setting the timeout
 to twice the max size of file in GiB should be enough, so if you want
 to upload a 30 GiB file set a timeout of `2 * 30 = 60m`, that is
 `--timeout 60m`.
+
+If you get `500 Internal Server Error` errors just after uploads,
+particularly when uploading many files in parallel, then try setting
+`--yandex-upload-wait 2s`. Yandex Disk finalizes uploads
+asynchronously on its servers and can report an upload as complete
+slightly before the file is ready, so accessing the file's metadata
+too soon causes these errors. Yandex support recommend waiting
+1.5s - 3s after each upload.
 
 Having a Yandex Mail account is mandatory to use the Yandex.Disk subscription.
 Token generation will work without a mail account, but Rclone won't be able to

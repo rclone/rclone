@@ -331,6 +331,10 @@ However this is desirable in some circumstances. If you are getting
 an error like "401 Unauthorized" when rclone is attempting to read
 files from the webdav server then you can try this option.
 
+Note that enabling this also permits sending your credentials over a
+plaintext HTTP connection if the server redirects from HTTPS to HTTP,
+which rclone otherwise refuses to do.
+
 
 Properties:
 

@@ -963,28 +963,6 @@ Properties:
 - Type:        bool
 - Default:     false
 
-#### --azureblob-memory-pool-flush-time
-
-How often internal memory buffer pools will be flushed. (no longer used)
-
-Properties:
-
-- Config:      memory_pool_flush_time
-- Env Var:     RCLONE_AZUREBLOB_MEMORY_POOL_FLUSH_TIME
-- Type:        Duration
-- Default:     1m0s
-
-#### --azureblob-memory-pool-use-mmap
-
-Whether to use mmap buffers in internal memory pool. (no longer used)
-
-Properties:
-
-- Config:      memory_pool_use_mmap
-- Env Var:     RCLONE_AZUREBLOB_MEMORY_POOL_USE_MMAP
-- Type:        bool
-- Default:     false
-
 #### --azureblob-encoding
 
 The encoding for the backend.

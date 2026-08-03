@@ -25,25 +25,64 @@ func SetupS3Test(t *testing.T) (context.Context, *Options, *http.Client) {
 	return ctx, opt, client
 }
 
-func TestClientRemovesSecurityTokenOnCrossHostRedirect(t *testing.T) {
+// s3SecretTestHeaderNames is a deliberately literal copy of
+// s3RedirectSecretHeaders: deriving the test inputs from the production list
+// would make the redirect tests unable to detect a header missing from it.
+// TestRedirectSecretHeadersMatchTestList keeps the two lists in sync.
+var s3SecretTestHeaderNames = []string{
+	"X-Amz-Security-Token",
+	"X-Amz-S3session-Token",
+	"Authorization",
+	"ibm-service-instance-id",
+	"X-Amz-Server-Side-Encryption-Customer-Algorithm",
+	"X-Amz-Server-Side-Encryption-Customer-Key",
+	"X-Amz-Server-Side-Encryption-Customer-Key-Md5",
+	"X-Amz-Copy-Source-Server-Side-Encryption-Customer-Algorithm",
+	"X-Amz-Copy-Source-Server-Side-Encryption-Customer-Key",
+	"X-Amz-Copy-Source-Server-Side-Encryption-Customer-Key-Md5",
+	"Referer",
+}
+
+// TestRedirectSecretHeadersMatchTestList fails when a header is added to
+// s3RedirectSecretHeaders without a matching literal entry in
+// s3SecretTestHeaderNames (or vice versa), so every stripped header stays
+// covered by the redirect tests.
+func TestRedirectSecretHeadersMatchTestList(t *testing.T) {
+	assert.ElementsMatch(t, s3RedirectSecretHeaders, s3SecretTestHeaderNames)
+}
+
+// s3SecretTestHeaders assigns each header a distinct test value
+func s3SecretTestHeaders() map[string]string {
+	headers := make(map[string]string, len(s3SecretTestHeaderNames))
+	for _, header := range s3SecretTestHeaderNames {
+		headers[header] = "secret-" + header
+	}
+	return headers
+}
+
+func TestClientRemovesSecretHeadersOnCrossHostRedirect(t *testing.T) {
 	ctx, _, client := SetupS3Test(t)
+	secretHeaders := s3SecretTestHeaders()
 
 	redirectServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Empty(t, r.Header.Get("X-Amz-Security-Token"))
+		for header := range secretHeaders {
+			assert.Empty(t, r.Header.Get(header), "%s should have been stripped", header)
+		}
 		assert.Equal(t, "date", r.Header.Get("X-Amz-Date"))
 		w.WriteHeader(http.StatusOK)
 	}))
 	defer redirectServer.Close()
 
 	initialServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, "token", r.Header.Get("X-Amz-Security-Token"))
 		http.Redirect(w, r, redirectServer.URL, http.StatusTemporaryRedirect)
 	}))
 	defer initialServer.Close()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, initialServer.URL, nil)
 	require.NoError(t, err)
-	req.Header.Set("X-Amz-Security-Token", "token")
+	for header, value := range secretHeaders {
+		req.Header.Set(header, value)
+	}
 	req.Header.Set("X-Amz-Date", "date")
 
 	resp, err := client.Do(req)
@@ -52,18 +91,24 @@ func TestClientRemovesSecurityTokenOnCrossHostRedirect(t *testing.T) {
 	assert.NoError(t, resp.Body.Close())
 }
 
-func TestClientDoesNotRestoreSecurityTokenAfterCrossHostRedirect(t *testing.T) {
+func TestClientDoesNotRestoreSecretHeadersAfterCrossHostRedirect(t *testing.T) {
 	ctx, _, client := SetupS3Test(t)
+	secretHeaders := s3SecretTestHeaders()
+
+	assertStripped := func(r *http.Request) {
+		for header := range secretHeaders {
+			assert.Empty(t, r.Header.Get(header), "%s should have been stripped", header)
+		}
+		assert.Equal(t, "date", r.Header.Get("X-Amz-Date"))
+	}
 
 	redirectServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/middle":
-			assert.Empty(t, r.Header.Get("X-Amz-Security-Token"))
-			assert.Equal(t, "date", r.Header.Get("X-Amz-Date"))
+			assertStripped(r)
 			http.Redirect(w, r, "/final", http.StatusTemporaryRedirect)
 		case "/final":
-			assert.Empty(t, r.Header.Get("X-Amz-Security-Token"))
-			assert.Equal(t, "date", r.Header.Get("X-Amz-Date"))
+			assertStripped(r)
 			w.WriteHeader(http.StatusOK)
 		default:
 			http.NotFound(w, r)
@@ -72,14 +117,15 @@ func TestClientDoesNotRestoreSecurityTokenAfterCrossHostRedirect(t *testing.T) {
 	defer redirectServer.Close()
 
 	initialServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, "token", r.Header.Get("X-Amz-Security-Token"))
 		http.Redirect(w, r, redirectServer.URL+"/middle", http.StatusTemporaryRedirect)
 	}))
 	defer initialServer.Close()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, initialServer.URL, nil)
 	require.NoError(t, err)
-	req.Header.Set("X-Amz-Security-Token", "token")
+	for header, value := range secretHeaders {
+		req.Header.Set(header, value)
+	}
 	req.Header.Set("X-Amz-Date", "date")
 
 	resp, err := client.Do(req)
@@ -88,16 +134,18 @@ func TestClientDoesNotRestoreSecurityTokenAfterCrossHostRedirect(t *testing.T) {
 	assert.NoError(t, resp.Body.Close())
 }
 
-func TestClientKeepsSecurityTokenOnSameHostRedirect(t *testing.T) {
+func TestClientKeepsSecretHeadersOnSameHostRedirect(t *testing.T) {
 	ctx, _, client := SetupS3Test(t)
+	secretHeaders := s3SecretTestHeaders()
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/":
-			assert.Equal(t, "token", r.Header.Get("X-Amz-Security-Token"))
 			http.Redirect(w, r, "/redirected", http.StatusTemporaryRedirect)
 		case "/redirected":
-			assert.Equal(t, "token", r.Header.Get("X-Amz-Security-Token"))
+			for header, value := range secretHeaders {
+				assert.Equal(t, value, r.Header.Get(header), "%s should have been preserved", header)
+			}
 			w.WriteHeader(http.StatusOK)
 		default:
 			http.NotFound(w, r)
@@ -107,12 +155,77 @@ func TestClientKeepsSecurityTokenOnSameHostRedirect(t *testing.T) {
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, server.URL, nil)
 	require.NoError(t, err)
-	req.Header.Set("X-Amz-Security-Token", "token")
+	for header, value := range secretHeaders {
+		req.Header.Set(header, value)
+	}
 
 	resp, err := client.Do(req)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.NoError(t, resp.Body.Close())
+}
+
+// TestClientRemovesGeneratedRefererOnCrossHostRedirect checks that the
+// Referer header net/http generates automatically when following a redirect -
+// which for a presigned request carries the signed query string - is not
+// forwarded to a different host. The same-host hop first proves the client
+// really does generate the Referer, so the cross-host assertion can't pass
+// vacuously.
+func TestClientRemovesGeneratedRefererOnCrossHostRedirect(t *testing.T) {
+	ctx, _, client := SetupS3Test(t)
+
+	crossHostServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Empty(t, r.Header.Get("Referer"), "Referer should have been stripped on cross-host redirect")
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer crossHostServer.Close()
+
+	var presignedURL string
+	initialServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/bucket/object":
+			http.Redirect(w, r, "/middle", http.StatusTemporaryRedirect)
+		case "/middle":
+			assert.Equal(t, presignedURL, r.Header.Get("Referer"), "client should generate a Referer holding the presigned URL")
+			http.Redirect(w, r, crossHostServer.URL, http.StatusTemporaryRedirect)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer initialServer.Close()
+	presignedURL = initialServer.URL + "/bucket/object?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Signature=secret-signature"
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, presignedURL, nil)
+	require.NoError(t, err)
+
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.NoError(t, resp.Body.Close())
+}
+
+func mustNewGet(t *testing.T, url string) *http.Request {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	require.NoError(t, err)
+	return req
+}
+
+func TestS3CheckRedirectRejectsSchemeDowngrade(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		via  string
+		req  string
+	}{
+		{"SameHostDowngrade", "https://bucket.example.com/", "http://bucket.example.com/redirected"},
+		{"CrossHostDowngrade", "https://bucket.example.com/", "http://evil.example.com/redirected"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			err := s3CheckRedirect(mustNewGet(t, test.req), []*http.Request{mustNewGet(t, test.via)})
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "HTTPS to HTTP")
+		})
+	}
 }
 
 func TestRedirectCrossesHost(t *testing.T) {

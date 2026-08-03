@@ -17,7 +17,6 @@ import (
 	"github.com/rclone/rclone/backend/shade/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/chunksize"
-	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/rest"
 )
@@ -255,30 +254,20 @@ func (s *shadeChunkWriter) Close(ctx context.Context) error {
 		return err
 	}
 
+	// The complete response has an empty body so don't attempt to decode it
 	completeOpts := rest.Opts{
-		Method:  "POST",
-		Path:    fmt.Sprintf("/%s/upload/multipart/complete?token=%s", s.f.drive, url.QueryEscape(s.initToken)),
-		RootURL: s.f.endpoint,
+		Method:     "POST",
+		Path:       fmt.Sprintf("/%s/upload/multipart/complete?token=%s", s.f.drive, url.QueryEscape(s.initToken)),
+		RootURL:    s.f.endpoint,
+		NoResponse: true,
 		ExtraHeaders: map[string]string{
 			"Authorization": "Bearer " + token,
 		},
 	}
 
-	var response http.Response
-
 	err = s.f.pacer.Call(func() (bool, error) {
-		res, err := s.f.srv.CallJSON(ctx, &completeOpts, completeBody, &response)
-
-		if err != nil {
-			return shouldRetry(ctx, res, err)
-		}
-
-		if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
-			body, _ := io.ReadAll(res.Body)
-			return fserrors.ShouldRetryHTTP(res, retryErrorCodes), fmt.Errorf("complete multipart failed with status %d: %s", res.StatusCode, string(body))
-		}
-
-		return false, nil
+		res, err := s.f.srv.CallJSON(ctx, &completeOpts, completeBody, nil)
+		return shouldRetry(ctx, res, err)
 	})
 
 	if err != nil {
