@@ -265,6 +265,15 @@ func (up *multipartUpload) release(size int64) {
 // one is rejected.
 func (up *multipartUpload) streamPart(partNumber int, size int64, md5Sum []byte, rw *pool.RW) error {
 	up.mu.Lock()
+	if up.closed {
+		// The upload was aborted or completed while the part body was
+		// being received.
+		up.buffered -= size
+		up.cond.Broadcast()
+		up.mu.Unlock()
+		_ = rw.Close()
+		return gofakes3.ErrNoSuchUpload
+	}
 	if oldMD5, exists := up.partMD5s[partNumber]; exists {
 		if old, buffered := up.streamBuf[partNumber]; buffered {
 			_ = old.Close()
