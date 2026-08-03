@@ -5,6 +5,7 @@ package s3
 import (
 	"bytes"
 	"context"
+	"crypto/md5"
 	"fmt"
 	"io"
 	"net/url"
@@ -16,10 +17,12 @@ import (
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/rclone/gofakes3"
 	_ "github.com/rclone/rclone/backend/memory"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
@@ -446,6 +449,47 @@ func TestMultipartBufferLimit(t *testing.T) {
 	}, minio.PutObjectOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, want, readObject(t, f, bucket, object))
+}
+
+// TestMultipartAbortDuringUploadPart aborts the upload between a part's
+// waitForTurn and its streamPart - as happens when the abort arrives while
+// the part body is still being received from the client - and checks that
+// streamPart fails cleanly instead of panicking on the torn-down upload.
+func TestMultipartAbortDuringUploadPart(t *testing.T) {
+	up := newMultipartUpload("bucket", "key", "bucket/key", "bucket/key", nil, 0)
+
+	// Mimic CreateMultipartUpload's background PutStream with a stub consumer.
+	pr, pw := io.Pipe()
+	_, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	up.pipeW = pw
+	up.putCancel = cancel
+	up.putDone = make(chan struct{})
+	go func() {
+		_, err := io.Copy(io.Discard, pr)
+		up.putErr = err
+		_ = pr.CloseWithError(err)
+		close(up.putDone)
+	}()
+
+	// An UploadPart in progress: the part is admitted, then the abort lands
+	// while its body is still being received.
+	contents := []byte("hello")
+	require.NoError(t, up.waitForTurn(1, int64(len(contents))))
+	require.NoError(t, up.abort(context.Background()))
+
+	// The UploadPart resumes: it buffers the part and calls streamPart.
+	rw := multipart.NewRW()
+	_, err := rw.Write(contents)
+	require.NoError(t, err)
+	md5Sum := md5.Sum(contents)
+	err = up.streamPart(1, int64(len(contents)), md5Sum[:], rw)
+	require.ErrorIs(t, err, gofakes3.ErrNoSuchUpload)
+
+	// The reorder buffer reservation must have been returned
+	up.mu.Lock()
+	assert.Equal(t, int64(0), up.buffered)
+	up.mu.Unlock()
 }
 
 // TestMultipartOverwrite checks that a completed multipart upload atomically
