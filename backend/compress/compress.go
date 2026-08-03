@@ -698,6 +698,16 @@ func (f *Fs) putWithCustomFunctions(ctx context.Context, in io.Reader, src fs.Ob
 		return nil, err
 	}
 
+	// Check the source supplied the number of bytes it declared -
+	// compressed data is stored under a name containing the
+	// original size so a mismatch makes the object unreadable.
+	if size := src.Size(); size >= 0 && meta.Size != size {
+		if removeErr := dataObject.Remove(ctx); removeErr != nil {
+			fs.Errorf(dataObject, "Failed to remove partially transferred object: %v", removeErr)
+		}
+		return nil, fmt.Errorf("expected %d bytes in input, but got %d: %w", size, meta.Size, io.ErrUnexpectedEOF)
+	}
+
 	mo, err := f.putMetadata(ctx, meta, src, options, putMeta)
 
 	// meta data upload may fail. in this case we try to remove the original object
