@@ -709,7 +709,7 @@ Request" error rather than a more sensible error when the
 authentication fails for Swift.
 
 So this most likely means your username / password is wrong.  You can
-investigate further with the `--dump-bodies` flag.
+investigate further with the `--dump bodies` flag.
 
 This may also be caused by specifying the region when you shouldn't
 have (e.g. OVH).
