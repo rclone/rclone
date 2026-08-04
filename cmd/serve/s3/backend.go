@@ -48,13 +48,17 @@ type s3Backend struct {
 	// warnInMemoryOnce logs a single NOTICE the first time a multipart
 	// upload falls back to being buffered in memory.
 	warnInMemoryOnce sync.Once
+
+	reaperQuit chan struct{} // closed to stop the abandoned upload reaper
+	reaperStop sync.Once
 }
 
 // newBackend creates a new SimpleBucketBackend.
-func newBackend(s *Server) gofakes3.Backend {
+func newBackend(s *Server) *s3Backend {
 	return &s3Backend{
-		s:    s,
-		meta: new(sync.Map),
+		s:          s,
+		meta:       new(sync.Map),
+		reaperQuit: make(chan struct{}),
 	}
 }
 

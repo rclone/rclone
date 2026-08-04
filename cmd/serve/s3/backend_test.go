@@ -37,7 +37,7 @@ func newTestBackend(t *testing.T) (*s3Backend, string) {
 	w, err := newServer(ctx, f, &opt, &vfscommon.Opt, &proxy.Opt)
 	require.NoError(t, err)
 
-	return newBackend(w).(*s3Backend), root
+	return newBackend(w), root
 }
 
 const rootSecret = "ROOT_LEVEL_SECRET_MARKER"
