@@ -37,7 +37,7 @@ import (
 
 // multipartUploadPrefix is prepended to the leaf name of the temporary object
 // a streamed multipart upload is written to before it is moved into place.
-const multipartUploadPrefix = ".rclone_multipart_upload_"
+const multipartUploadPrefix = tempObjectPrefix + "multipart_"
 
 // multipartUpload tracks one in-flight S3 multipart upload that is being
 // streamed, in part order, into a single PutStream upload to the underlying Fs.

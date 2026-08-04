@@ -21,6 +21,7 @@ import (
 	_ "github.com/rclone/rclone/backend/memory"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/random"
@@ -490,6 +491,39 @@ func TestMultipartAbortDuringUploadPart(t *testing.T) {
 	up.mu.Lock()
 	assert.Equal(t, int64(0), up.buffered)
 	up.mu.Unlock()
+}
+
+// TestTempObjectsHiddenFromListings checks that the reserved .rclone_temp_
+// prefix, and the multipart prefix used before it was reserved, are hidden
+// from S3 listings while remaining visible to rclone itself for cleanup.
+func TestTempObjectsHiddenFromListings(t *testing.T) {
+	core, f, bucket := newMultipartTestServer(t, false)
+	ctx := context.Background()
+
+	names := []string{
+		"visible.bin",
+		tempObjectPrefix + "anything",
+		multipartUploadPrefix + "leftover",
+		putObjectPrefix + "leftover",
+		legacyMultipartUploadPrefix + "leftover",
+	}
+	for _, name := range names {
+		data := []byte("x")
+		src := object.NewStaticObjectInfo(path.Join(bucket, name), time.Now(), int64(len(data)), true, nil, f)
+		_, err := f.Put(ctx, bytes.NewReader(data), src)
+		require.NoError(t, err)
+	}
+	// All the objects really exist on the backing remote...
+	requireOnly(t, f, bucket, names...)
+
+	// ...but only the visible one appears in an S3 listing.
+	result, err := core.ListObjects(bucket, "", "", "", 1000)
+	require.NoError(t, err)
+	var keys []string
+	for _, o := range result.Contents {
+		keys = append(keys, o.Key)
+	}
+	assert.Equal(t, []string{"visible.bin"}, keys)
 }
 
 // TestMultipartOverwrite checks that a completed multipart upload atomically
