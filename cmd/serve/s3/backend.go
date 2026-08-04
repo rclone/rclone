@@ -25,9 +25,13 @@ var (
 	emptyPrefix = &gofakes3.Prefix{}
 )
 
+// tempObjectPrefix is reserved for serve s3's temporary objects: an object
+// whose leaf name starts with it is hidden from S3 listings.
+const tempObjectPrefix = ".rclone_temp_"
+
 // putObjectPrefix is prepended to the leaf name of the temporary object a
 // PutObject upload is written to before it is renamed into place.
-const putObjectPrefix = ".rclone_put_object_"
+const putObjectPrefix = tempObjectPrefix + "put_"
 
 // s3Backend implements the gofacess3.Backend interface to make an S3
 // backend for gofakes3. It also implements gofakes3.MultipartBackend so that

@@ -103,7 +103,7 @@ renamed into place on success; these remotes need to support a server-side
 move or copy for this (nearly all do - without move or copy the upload is
 written directly and a failed PUT may leave a partial object at the key). If
 `serve s3` is killed part-way through an upload the temporary object (named
-with a leading `.rclone_put_object_`) may be left behind; it is hidden from
+with a leading `.rclone_temp_put_`) may be left behind; it is hidden from
 S3 listings but must be removed manually.
 
 ### Multipart uploads
@@ -173,8 +173,32 @@ also need to support a server-side move or copy.
   completed object is moved into place with a server-side operation.
   This is a cheap rename on most such remotes. On these remotes, if
   `serve s3` is killed part-way through an upload the temporary object
-  (named with a leading `.rclone_multipart_upload_`) may be left behind;
+  (named with a leading `.rclone_temp_multipart_`) may be left behind;
   it is hidden from S3 listings but must be removed manually.
+
+#### Cleaning up temporary objects
+
+If `serve s3` is killed part-way through an upload it can leave a
+temporary object behind, named with a leading `.rclone_temp_`. This
+whole prefix is reserved: any object whose name (the last
+`/`-separated segment of its key) starts with `.rclone_temp_` is
+hidden from S3 listings, so don't give real objects such names - an
+existing object with such a name disappears from listings (though it
+stays accessible directly by its key: only listings hide reserved
+names, `GET`, `HEAD` and `DELETE` of the exact key still work). A
+temporary object never holds acknowledged data - uploads whose
+temporary object survived were never confirmed to the client - so old
+ones are safe to delete:
+
+    rclone delete --min-age 24h --include ".rclone_temp_*" remote:path
+
+The `--min-age` protects uploads which are still in progress: make sure
+it is longer than your longest upload, especially if several `serve s3`
+instances share the same remote.
+
+rclone v1.75 named its temporary multipart objects
+`.rclone_multipart_upload_*`; leftovers from an older server are also
+hidden from listings and can be cleaned up the same way.
 
 #### Disabling streaming
 
