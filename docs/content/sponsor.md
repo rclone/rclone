@@ -14,9 +14,9 @@ Thank you to our sponsors:
 <!-- markdownlint-capture -->
 <!-- markdownlint-disable line-length no-bare-urls -->
 
+{{< sponsor src="/img/logos/exaba.svg" width="300" height="200" title="Visit our sponsor Exaba" link="https://www.exaba.com/?utm_source=rclone&utm_medium=referral&utm_campaign=banner&utm_content=msp&utm_term=rclone">}}
 {{< sponsor src="/img/logos/idrive_e2.svg" width="300" height="200" title="Visit our sponsor IDrive e2" link="https://www.idrive.com/e2/?refer=rclone">}}
 {{< sponsor src="/img/logos/filescom-enterprise-grade-workflows.png" width="300" height="200" title="Start Your Free Trial Today" link="https://files.com/?utm_source=rclone&utm_medium=referral&utm_campaign=banner&utm_term=rclone">}}
-{{< sponsor src="/img/logos/internxt.jpg" width="300" height="200" title="Visit rclone's sponsor Internxt" link="https://internxt.com/specialoffer/rclone">}}
 {{< sponsor src="/img/logos/mega-s4.svg" width="300" height="200" title="MEGA S4: New S3 compatible object storage. High scale. Low cost. Free egress." link="https://mega.io/objectstorage?utm_source=rclone&utm_medium=referral&utm_campaign=rclone-mega-s4&mct=rclonepromo">}}
 {{< sponsor src="/img/logos/sia.svg" width="200" height="200" title="Visit our sponsor sia" link="https://sia.tech">}}
 {{< sponsor src="/img/logos/route4me.svg" width="400" height="200" title="Visit our sponsor Route4Me" link="https://route4me.com/">}}

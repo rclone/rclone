@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"net/http"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
@@ -68,8 +69,11 @@ Use ` + "`--{{ .Prefix }}salt`" + ` to change the password hashing salt from the
 // CustomAuthFn if used will be used to authenticate user, pass. If an error
 // is returned then the user is not authenticated.
 //
+// r is the request being authenticated, for example to find the address
+// the client connected from in r.RemoteAddr.
+//
 // If a non nil value is returned then it is added to the context under the key
-type CustomAuthFn func(user, pass string) (value any, err error)
+type CustomAuthFn func(r *http.Request, user, pass string) (value any, err error)
 
 // AuthConfigInfo descripts the Options in use
 var AuthConfigInfo = fs.Options{{

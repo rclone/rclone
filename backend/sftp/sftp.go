@@ -120,7 +120,7 @@ Set this if you have a signed certificate you want to use for authentication.` +
 			Name: "known_hosts_file",
 			Help: `Optional path to known_hosts file.
 
-Set this value to enable server host key validation.` + env.ShellExpandHelp,
+Set this value to enable server host key validation. Set to ` + "`none`" + ` to silence the "No host key validation" notice.` + env.ShellExpandHelp,
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "~/.ssh/known_hosts",
@@ -1312,6 +1312,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	switch {
+	case opt.KnownHostsFile == "none":
+		// Silence Host key validation warning if explicitly disabled
+		sshConfig.HostKeyCallback = ssh.InsecureIgnoreHostKey()
 	case opt.KnownHostsFile != "":
 		hostcallback, err := knownhosts.New(env.ShellExpand(opt.KnownHostsFile))
 		if err != nil {
@@ -1336,7 +1339,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 	default:
 		sshConfig.HostKeyCallback = ssh.InsecureIgnoreHostKey()
-		fs.Logf(name, "No host key validation is being performed. Set known_hosts_file or use --sftp-pin-host-key to enable it. See: https://rclone.org/sftp/#host-key-validation")
+		fs.Logf(name, "No host key validation is being performed. Set known_hosts_file (to \"none\" to silence this notice) or use --sftp-pin-host-key to enable it. See: https://rclone.org/sftp/#host-key-validation")
 	}
 
 	if opt.UseInsecureCipher && (opt.Ciphers != nil || opt.KeyExchange != nil) {
@@ -2444,17 +2447,39 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 	return hashString, nil
 }
 
+// powerShellQuoteEscaper doubles every character PowerShell accepts as a
+// single-quote string delimiter. As well as the ASCII apostrophe, PowerShell
+// treats the Unicode smart quotes U+2018, U+2019, U+201A and U+201B as single
+// quotes, so a path wrapped in apostrophes must double all of them or an
+// attacker controlled filename could close the literal and inject a statement.
+// Doubling a delimiter is PowerShell's escape for a literal occurrence of it,
+// and preserves the exact character.
+var powerShellQuoteEscaper = strings.NewReplacer(
+	"'", "''",
+	"‘", "‘‘",
+	"’", "’’",
+	"‚", "‚‚",
+	"‛", "‛‛",
+)
+
 // quoteOrEscapeShellPath makes path a valid string argument in configured shell
 // and also ensures it cannot cause unintended behavior.
 func quoteOrEscapeShellPath(shellType string, shellPath string) (string, error) {
 	// PowerShell
 	if shellType == "powershell" {
-		return "'" + strings.ReplaceAll(shellPath, "'", "''") + "'", nil
+		return "'" + powerShellQuoteEscaper.Replace(shellPath) + "'", nil
 	}
 	// Windows Command Prompt
+	//
+	// cmd has no reliable command-line escaping for the double quote used
+	// as the delimiter, while % expands environment variables and ! may
+	// expand them when delayed expansion is enabled, even inside double
+	// quotes. A newline or carriage return ends the command. None of these
+	// can be neutralised safely, so reject any path containing them rather
+	// than risk altering the command.
 	if shellType == "cmd" {
-		if strings.Contains(shellPath, "\"") {
-			return "", fmt.Errorf("path is not valid in shell type %s: %s", shellType, shellPath)
+		if strings.ContainsAny(shellPath, "\"%!\r\n") {
+			return "", fmt.Errorf("path is not valid in shell type %s: %q", shellType, shellPath)
 		}
 		return "\"" + shellPath + "\"", nil
 	}

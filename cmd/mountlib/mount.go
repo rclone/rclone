@@ -210,6 +210,7 @@ type (
 
 // MountPoint represents a mount with options and runtime state
 type MountPoint struct {
+	Ctx        context.Context
 	MountPoint string
 	MountedOn  time.Time
 	MountOpt   Options
@@ -224,6 +225,7 @@ type MountPoint struct {
 // NewMountPoint makes a new mounting structure
 func NewMountPoint(mount MountFn, mountPoint string, f fs.Fs, mountOpt *Options, vfsOpt *vfscommon.Options) *MountPoint {
 	return &MountPoint{
+		Ctx:        context.Background(),
 		MountFn:    mount,
 		MountPoint: mountPoint,
 		Fs:         f,
@@ -379,7 +381,7 @@ func (m *MountPoint) Mount() (mountDaemon *os.Process, err error) {
 		}
 	}
 
-	m.VFS = vfs.New(context.Background(), m.Fs, &m.VFSOpt)
+	m.VFS = vfs.New(m.Ctx, m.Fs, &m.VFSOpt)
 
 	var actualMountpoint string
 	m.ErrChan, m.UnmountFn, actualMountpoint, err = m.MountFn(m.VFS, m.MountPoint, &m.MountOpt)

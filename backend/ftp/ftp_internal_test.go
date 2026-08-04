@@ -12,10 +12,33 @@ import (
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// A filename containing raw CR/LF must never survive encoding into an FTP
+// command argument, whatever encoding the user configured, otherwise it could
+// inject an independent FTP command onto the line-oriented control channel.
+func TestCommandEncodingNeutralisesCRLF(t *testing.T) {
+	// Internal Standard-encoded name as produced by e.g. a Unix local
+	// source, carrying raw CR/LF.
+	for _, std := range []string{
+		"victim\r\nDELE other-secret\r\nNOOP",
+		"victim␍␊DELE other-secret␍␊NOOP",
+	} {
+		for _, configured := range []encoder.MultiEncoder{
+			encoder.EncodeSlash,                        // "Slash" - omits Ctl and CrLf
+			encoder.EncodeZero,                         // "None"
+			encoder.Display | encoder.EncodeRightSpace, // the FTP default
+		} {
+			got := commandEncoding(configured).FromStandardPath(std)
+			assert.NotContains(t, got, "\r", "encoding %v leaked raw CR: %q", configured, got)
+			assert.NotContains(t, got, "\n", "encoding %v leaked raw LF: %q", configured, got)
+		}
+	}
+}
 
 type settings map[string]any
 

@@ -186,16 +186,7 @@ func (f *FS) Readlink(link string) (result string, err error) {
 func (f *FS) Chmod(name string, mode os.FileMode) (err error) {
 	name = f.fullPath(name)
 	defer log.Trace(name, "mode=%v", mode)("err=%v", &err)
-	file, err := f.vfs.Open(name)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := file.Close(); err != nil {
-			fs.Logf(f, "Error while closing file: %e", err)
-		}
-	}()
-	err = file.Chmod(mode)
+	err = f.vfs.Chmod(name, mode)
 	// Mask Chmod not implemented
 	if err == vfs.ENOSYS {
 		err = nil
@@ -213,16 +204,12 @@ func (f *FS) Lchown(name string, uid, gid int) (err error) {
 func (f *FS) Chown(name string, uid, gid int) (err error) {
 	name = f.fullPath(name)
 	defer log.Trace(name, "uid=%d, gid=%d", uid, gid)("err=%v", &err)
-	file, err := f.vfs.Open(name)
-	if err != nil {
-		return err
+	err = f.vfs.Chown(name, uid, gid)
+	// Mask Chown not implemented
+	if err == vfs.ENOSYS {
+		err = nil
 	}
-	defer func() {
-		if err := file.Close(); err != nil {
-			fs.Logf(f, "Error while closing file: %e", err)
-		}
-	}()
-	return file.Chown(uid, gid)
+	return err
 }
 
 // Chtimes changes the access time and modified time
