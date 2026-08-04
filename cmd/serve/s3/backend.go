@@ -371,10 +371,10 @@ func (b *s3Backend) PutObject(
 	// (never the object at fp) and any stale VFS state for fp.
 	cleanup := func() {
 		if tmpFp != fp {
-			b.forgetPath(ctx, tmpFp)
+			b.forgetPath(_vfs, tmpFp)
 			_ = _vfs.Remove(tmpFp)
 		} else {
-			b.forgetPath(ctx, fp)
+			b.forgetPath(_vfs, fp)
 		}
 	}
 
