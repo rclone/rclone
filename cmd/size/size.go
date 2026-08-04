@@ -52,10 +52,12 @@ of the size command.`,
 		cmd.Run(false, false, command, func() error {
 			var err error
 			var results struct {
-				Count    int64 `json:"count"`
-				Bytes    int64 `json:"bytes"`
-				Sizeless int64 `json:"sizeless"`
+				Fs       string `json:"fs"`
+				Count    int64  `json:"count"`
+				Bytes    int64  `json:"bytes"`
+				Sizeless int64  `json:"sizeless"`
 			}
+			results.Fs = args[0]
 
 			results.Count, results.Bytes, results.Sizeless, err = operations.Count(context.Background(), fsrc)
 			if err != nil {
