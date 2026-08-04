@@ -671,9 +671,6 @@ func (s *syncCopyMove) deleteEmptyDirectories(ctx context.Context, f fs.Fs, entr
 	if len(entriesMap) == 0 {
 		return nil
 	}
-	// Check this operation's own error: a reused rcd stats group (rc "_group")
-	// stays errored after any earlier operation, so accounting.Stats(ctx) would
-	// suppress deletion here for the lifetime of the group.
 	if s.currentError() != nil && !s.ci.IgnoreErrors {
 		fs.Errorf(f, "%v", fs.ErrorNotDeletingDirs)
 		return fs.ErrorNotDeletingDirs
