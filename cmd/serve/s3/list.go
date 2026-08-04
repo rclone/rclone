@@ -8,6 +8,11 @@ import (
 	"github.com/rclone/rclone/vfs"
 )
 
+// legacyMultipartUploadPrefix marked the temporary objects of in-progress
+// multipart uploads before the tempObjectPrefix namespace was reserved
+// (rclone v1.75); leftovers from an older server are still hidden.
+const legacyMultipartUploadPrefix = ".rclone_multipart_upload_"
+
 func (b *s3Backend) entryListR(_vfs *vfs.VFS, bucketName, fdPath, name string, addPrefix bool, response *gofakes3.ObjectList) error {
 	fp, err := bucketDirPath(bucketName, fdPath)
 	if err != nil {
@@ -24,7 +29,7 @@ func (b *s3Backend) entryListR(_vfs *vfs.VFS, bucketName, fdPath, name string, a
 		object := entry.Name()
 
 		// Hide the temporary objects of in-progress uploads
-		if strings.HasPrefix(object, multipartUploadPrefix) || strings.HasPrefix(object, putObjectPrefix) {
+		if strings.HasPrefix(object, tempObjectPrefix) || strings.HasPrefix(object, legacyMultipartUploadPrefix) {
 			continue
 		}
 
