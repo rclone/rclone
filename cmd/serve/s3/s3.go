@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"strings"
+	"time"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/serve"
@@ -44,6 +45,10 @@ var OptionsInfo = fs.Options{{
 	Name:    "multipart_streaming_buffer_limit",
 	Default: fs.SizeSuffix(256 * 1024 * 1024),
 	Help:    "Maximum memory buffered per streamed multipart upload for parts arriving out of order, 0 for unlimited (see the Multipart uploads docs section)",
+}, {
+	Name:    "multipart_expiry",
+	Default: fs.Duration(24 * time.Hour),
+	Help:    "Abort incomplete multipart uploads idle for longer than this, 0 to keep them forever (see the Multipart uploads docs section)",
 }}.
 	Add(httplib.ConfigInfo).
 	Add(httplib.AuthConfigInfo)
@@ -57,6 +62,7 @@ type Options struct {
 	NoCleanup                     bool          `config:"no_cleanup"`
 	DisableMultipartStreaming     bool          `config:"disable_multipart_streaming"`
 	MultipartStreamingBufferLimit fs.SizeSuffix `config:"multipart_streaming_buffer_limit"`
+	MultipartExpiry               fs.Duration   `config:"multipart_expiry"`
 	Auth                          httplib.AuthConfig
 	HTTP                          httplib.Config
 }

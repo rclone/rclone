@@ -283,6 +283,27 @@ rclone v1.75 named its temporary multipart objects
 `.rclone_multipart_upload_*`; leftovers from an older server are also
 hidden from listings and can be cleaned up the same way.
 
+#### Abandoned uploads
+
+A client which starts a multipart upload and vanishes without either
+completing or aborting it would otherwise hold on to its resources - an
+open upload to the remote and, with the VFS cache, a growing cache file
+which cannot be evicted - forever.
+
+An incomplete multipart upload which has had no activity for
+`--multipart-expiry` (default `24h`) is therefore aborted and cleaned
+up, exactly as if the client had called `AbortMultipartUpload`, and a
+`NOTICE` is logged.
+
+An upload with a part still being received is never expired, however
+slowly the part is arriving, and each completed part restarts the
+clock, so the expiry only needs to outlast the client's pauses
+*between* parts, not the whole upload.
+
+Late operations on an expired upload fail with `NoSuchUpload`, as they
+do on real S3 when a lifecycle rule has aborted the upload. Set
+`--multipart-expiry 0` to keep incomplete uploads forever.
+
 #### Disabling streaming
 
 If you pass `--disable-multipart-streaming`, multipart uploads are
