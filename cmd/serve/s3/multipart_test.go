@@ -617,6 +617,84 @@ func TestMultipartCompleteRenameFailureKeepsUpload(t *testing.T) {
 	require.NoError(t, err, "the upload record must survive a retryable Complete failure")
 }
 
+// TestMultipartReaper checks that an incomplete multipart upload abandoned
+// by its client is aborted and cleaned up after --multipart-expiry, and that
+// late operations on it fail with NoSuchUpload.
+func TestMultipartReaper(t *testing.T) {
+	core, f, bucket := newMultipartTestServerOpt(t, "", false, func(opt *Options) {
+		opt.MultipartExpiry = fs.Duration(100 * time.Millisecond)
+	})
+	ctx := context.Background()
+	const object = "abandoned.bin"
+
+	uploadID, err := core.NewMultipartUpload(ctx, bucket, object, minio.PutObjectOptions{})
+	require.NoError(t, err)
+	data := []byte(random.String(50 * 1024))
+	_, err = core.PutObjectPart(ctx, bucket, object, uploadID, 1, bytes.NewReader(data), int64(len(data)), minio.PutObjectPartOptions{})
+	require.NoError(t, err)
+
+	// Wait for well over the expiry and the reaper interval, then the
+	// upload must be gone.
+	time.Sleep(time.Second)
+	_, err = core.PutObjectPart(ctx, bucket, object, uploadID, 2, bytes.NewReader(data), int64(len(data)), minio.PutObjectPartOptions{})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "NoSuchUpload")
+	err = core.AbortMultipartUpload(ctx, bucket, object, uploadID)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "NoSuchUpload")
+
+	// Nothing is left at the key or as a temporary object.
+	_, err = f.NewObject(ctx, path.Join(bucket, object))
+	require.ErrorIs(t, err, fs.ErrorObjectNotFound)
+	requireOnly(t, f, bucket)
+}
+
+// TestMultipartReapExpiredUploads checks the reaper's rules directly: an
+// idle upload past the expiry is aborted and cleaned up, one with a request
+// in flight is left alone however stale its idle time, and a fresh one is
+// kept.
+func TestMultipartReapExpiredUploads(t *testing.T) {
+	b, _, bucket := newPutTestBackend(t, "", nil)
+	ctx := context.Background()
+	_vfs, err := b.s.getVFS(ctx)
+	require.NoError(t, err)
+
+	newUp := func(id string) *multipartUpload {
+		up := newMultipartUpload(bucket, id, bucket+"/"+id, bucket+"/"+multipartUploadPrefix+id, nil, 0)
+		up.fh = &stubSink{}
+		up.vfs = _vfs
+		b.multipartUploads.Store(gofakes3.UploadID(id), up)
+		return up
+	}
+
+	const expiry = time.Hour
+	now := time.Now()
+
+	newUp("fresh")
+	idle := newUp("idle")
+	busy := newUp("busy")
+	busy.startActivity()
+	for _, up := range []*multipartUpload{idle, busy} {
+		up.mu.Lock()
+		up.lastUsed = now.Add(-2 * expiry)
+		up.mu.Unlock()
+	}
+
+	b.reapExpiredUploads(now, expiry)
+
+	_, err = b.loadUpload("fresh")
+	assert.NoError(t, err, "a fresh upload must not be reaped")
+	_, err = b.loadUpload("busy")
+	assert.NoError(t, err, "an upload with a request in flight must not be reaped")
+	_, err = b.loadUpload("idle")
+	assert.ErrorIs(t, err, gofakes3.ErrNoSuchUpload, "an idle upload past the expiry must be reaped")
+
+	// The reaped upload was aborted, not committed.
+	sink := idle.fh.(*stubSink)
+	assert.True(t, sink.closed)
+	assert.Equal(t, errMultipartAborted, sink.abortErr)
+}
+
 // cacheWritesVFSOpt returns VFS options with --vfs-cache-mode writes and the
 // given write-back delay.
 func cacheWritesVFSOpt(writeBack time.Duration) *vfscommon.Options {

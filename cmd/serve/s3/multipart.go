@@ -27,6 +27,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/ncw/swift/v2"
@@ -61,7 +62,9 @@ type multipartUpload struct {
 	partMD5s  map[int][]byte // raw MD5 sums per part (for the final S3 multipart ETag)
 	partSizes map[int]int64  // observed part sizes
 	closed    bool
-	aborted   bool // closed by abort, so nothing was committed
+	aborted   bool      // closed by abort, so nothing was committed
+	active    int       // requests in flight for this upload, protecting it from the reaper
+	lastUsed  time.Time // when the last request for this upload finished
 
 	nextPart    int              // next part number to stream (1-based)
 	streamBuf   map[int]*pool.RW // parts received ahead of nextPart, awaiting their turn
@@ -83,9 +86,25 @@ func newMultipartUpload(bucket, key, fp, streamFp string, meta map[string]string
 		nextPart:    1,
 		streamBuf:   map[int]*pool.RW{},
 		bufferLimit: bufferLimit,
+		lastUsed:    time.Now(),
 	}
 	up.cond = sync.NewCond(&up.mu)
 	return up
+}
+
+// startActivity marks the upload as having a request in flight.
+func (up *multipartUpload) startActivity() {
+	up.mu.Lock()
+	up.active++
+	up.mu.Unlock()
+}
+
+// endActivity marks the request done and restarts the upload's idle time.
+func (up *multipartUpload) endActivity() {
+	up.mu.Lock()
+	up.active--
+	up.lastUsed = time.Now()
+	up.mu.Unlock()
 }
 
 // loadUpload looks up an in-flight upload by ID.
@@ -174,6 +193,8 @@ func (b *s3Backend) UploadPart(ctx context.Context, bucketName, objectName strin
 	if err != nil {
 		return "", err
 	}
+	up.startActivity()
+	defer up.endActivity()
 
 	// Wait until there is room to buffer this part, bounding the memory a
 	// client which uploads faster than the backend drains can consume.
@@ -354,6 +375,8 @@ func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, obj
 	if err != nil {
 		return "", "", err
 	}
+	up.startActivity()
+	defer up.endActivity()
 
 	if err := up.validate(input); err != nil {
 		b.multipartUploads.Delete(uploadID)
@@ -414,6 +437,53 @@ func (b *s3Backend) AbortMultipartUpload(ctx context.Context, bucketName, object
 	}
 	b.discardUpload(up)
 	return nil
+}
+
+// startReaper starts a goroutine which aborts incomplete multipart
+// uploads once they have been idle for expiry. Stopped by stopReaper.
+func (b *s3Backend) startReaper(expiry time.Duration) {
+	interval := min(expiry/2, time.Minute)
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-b.reaperQuit:
+				return
+			case <-ticker.C:
+				b.reapExpiredUploads(time.Now(), expiry)
+			}
+		}
+	}()
+}
+
+// stopReaper stops the abandoned upload reaper, if running.
+func (b *s3Backend) stopReaper() {
+	b.reaperStop.Do(func() {
+		close(b.reaperQuit)
+	})
+}
+
+// reapExpiredUploads aborts and cleans up multipart uploads which have had
+// no request activity for longer than expiry.
+func (b *s3Backend) reapExpiredUploads(now time.Time, expiry time.Duration) {
+	b.multipartUploads.Range(func(key, value any) bool {
+		uploadID := key.(gofakes3.UploadID)
+		up := value.(*multipartUpload)
+		up.mu.Lock()
+		expired := up.active == 0 && now.Sub(up.lastUsed) >= expiry
+		up.mu.Unlock()
+		if !expired {
+			return true
+		}
+		fs.Logf(up.fp, "aborting multipart upload %s idle for more than %v", uploadID, expiry)
+		b.multipartUploads.Delete(uploadID)
+		if err := up.abort(); err != nil {
+			fs.Errorf(up.fp, "aborting abandoned multipart upload: %v", err)
+		}
+		b.discardUpload(up)
+		return true
+	})
 }
 
 // discardUpload cleans up after a failed or aborted upload, removing the
