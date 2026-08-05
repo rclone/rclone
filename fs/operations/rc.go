@@ -1,7 +1,9 @@
 package operations
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -14,6 +16,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/lib/diskusage"
@@ -1003,4 +1006,105 @@ func rcHashsumFile(ctx context.Context, in rc.Params) (out rc.Params, err error)
 		"hash":     sum,
 	}
 	return out, err
+}
+
+func init() {
+	rc.Add(rc.Call{
+		Path:  "operations/cat",
+		Fn:    rcCat,
+		Title: "Concatenates any files and returns their contents.",
+		Help: `This takes the following parameters:
+
+- fs - a remote name string e.g. "drive:path/to/file" or "drive:path/to/dir"
+- remote - (optional) a path within that remote e.g. "file.txt"
+- offset - (optional) start printing at offset N (or from end if negative) (default 0)
+- count - (optional) only print N characters (default -1)
+- head - (optional) only print the first N characters (default 0)
+- tail - (optional) only print the last N characters (default 0)
+- maxSize - (optional) maximum size limit in bytes when returning JSON (default unlimited)
+- separator - (optional) separator string to use between files (default "")
+
+Returns:
+
+- result - concatenated text contents of the file(s)
+- result_base64 - base64-encoded representation of the concatenated contents
+
+Or streams bytes directly if executed over HTTP RC server.
+
+See the [cat](/commands/rclone_cat/) command for more information on the above.
+`,
+	})
+}
+
+// Cat any files to output
+func rcCat(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	// Support fs, remote, path alias, or arg slice
+	fsString, err := in.GetString("fs")
+	if err != nil {
+		if pathStr, pErr := in.GetString("path"); pErr == nil {
+			in["fs"] = pathStr
+		} else {
+			var arg []string
+			if aErr := in.GetStructMissingOK("arg", &arg); aErr == nil && len(arg) > 0 {
+				in["fs"] = arg[0]
+			}
+		}
+	} else {
+		if remoteString, rErr := in.GetString("remote"); rErr == nil && remoteString != "" {
+			in["fs"] = fspath.JoinRootPath(fsString, remoteString)
+		}
+	}
+
+	offset, _ := in.GetInt64("offset")
+	count, err := in.GetInt64("count")
+	if err != nil {
+		count = -1
+	}
+	head, _ := in.GetInt64("head")
+	tail, _ := in.GetInt64("tail")
+	separator, _ := in.GetString("separator")
+
+	usedOffset := offset != 0 || count >= 0
+	usedHead := head > 0
+	usedTail := tail > 0
+
+	if (usedHead && usedTail) || (usedHead && usedOffset) || (usedTail && usedOffset) {
+		return nil, errors.New("can only use one of head, tail or offset/count")
+	}
+	if head > 0 {
+		offset = 0
+		count = head
+	}
+	if tail > 0 {
+		offset = -tail
+		count = -1
+	}
+
+	maxSize, _ := in.GetInt64("maxSize")
+
+	ctx, f, err := rc.GetFsNamedFileOK(ctx, in, "fs")
+	if err != nil {
+		return nil, err
+	}
+
+	if httpResponse, hErr := in.GetHTTPResponseWriter(); hErr == nil && httpResponse != nil {
+		err = Cat(ctx, f, httpResponse, offset, count, []byte(separator))
+		return nil, err
+	}
+
+	var buf bytes.Buffer
+	err = Cat(ctx, f, &buf, offset, count, []byte(separator))
+	if err != nil {
+		return nil, err
+	}
+
+	data := buf.Bytes()
+	if maxSize > 0 && int64(len(data)) > maxSize {
+		return nil, fmt.Errorf("read %d bytes which exceeds maximum specified maxSize limit of %d bytes; use offset/count or HTTP streaming", len(data), maxSize)
+	}
+
+	return rc.Params{
+		"result":        string(data),
+		"result_base64": base64.StdEncoding.EncodeToString(data),
+	}, nil
 }
