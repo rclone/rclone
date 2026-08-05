@@ -34,10 +34,9 @@ type Server struct {
 	server       *httplib.Server
 	opt          Options
 	f            fs.Fs
-	_vfs         *vfs.VFS // don't use directly, use getVFS
+	provider     *proxy.Provider
 	faker        *gofakes3.GoFakeS3
 	handler      http.Handler
-	proxy        *proxy.Proxy
 	ctx          context.Context // for global config
 	s3Secret     string
 	etagHashType hash.Type
@@ -49,8 +48,14 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		f:            f,
 		ctx:          ctx,
 		opt:          *opt,
+		provider:     proxy.NewProvider(ctx, f, vfsOpt, proxyOpt),
 		etagHashType: hash.None,
 	}
+	defer func() {
+		if err != nil {
+			w.provider.Shutdown()
+		}
+	}()
 
 	if w.opt.EtagHash == "auto" {
 		w.etagHashType = f.Hashes().GetOne()
@@ -88,14 +93,11 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 
 	w.handler = w.faker.Server()
 
-	if proxy.Opt.AuthProxy != "" {
-		w.proxy = proxy.New(ctx, proxyOpt, vfsOpt)
+	if w.provider.IsProxy() {
 		// proxy auth middleware
 		w.handler = proxyAuthMiddleware(w.handler, w)
 		w.handler = authPairMiddleware(w.handler, w)
 	} else {
-		w._vfs = vfs.New(ctx, f, vfsOpt)
-
 		if len(opt.AuthKey) > 0 {
 			w.faker.AddAuthKeys(authList)
 		}
@@ -106,12 +108,6 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		httplib.WithAuth(opt.Auth),
 	)
 	if err != nil {
-		if w._vfs != nil {
-			w._vfs.Shutdown()
-		}
-		if w.proxy != nil {
-			_ = w.proxy.Close()
-		}
 		return nil, fmt.Errorf("failed to init server: %w", err)
 	}
 
@@ -122,8 +118,8 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 }
 
 func (w *Server) getVFS(ctx context.Context) (VFS *vfs.VFS, err error) {
-	if w._vfs != nil {
-		return w._vfs, nil
+	if w.provider.VFS() != nil {
+		return w.provider.VFS(), nil
 	}
 
 	value := ctx.Value(ctxKeyID)
@@ -140,7 +136,7 @@ func (w *Server) getVFS(ctx context.Context) (VFS *vfs.VFS, err error) {
 
 // auth does proxy authorization
 func (w *Server) auth(r *http.Request, accessKeyID string) (value any, err error) {
-	VFS, _, err := w.proxy.Call(stringToMd5Hash(accessKeyID), accessKeyID, false, r.RemoteAddr)
+	VFS, _, err := w.provider.Proxy().Call(stringToMd5Hash(accessKeyID), accessKeyID, false, r.RemoteAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -167,13 +163,9 @@ func (w *Server) Addr() net.Addr {
 
 // Shutdown the server
 func (w *Server) Shutdown() error {
-	if w._vfs != nil {
-		w._vfs.Shutdown()
-	}
-	if w.proxy != nil {
-		_ = w.proxy.Close()
-	}
-	return w.server.Shutdown()
+	err := w.server.Shutdown()
+	w.provider.Shutdown()
+	return err
 }
 
 func authPairMiddleware(next http.Handler, ws *Server) http.Handler {

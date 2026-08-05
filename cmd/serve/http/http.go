@@ -4,7 +4,6 @@ package http
 import (
 	"context"
 	_ "embed"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -150,33 +149,21 @@ control the stats printing.
 
 // HTTP contains everything to run the server
 type HTTP struct {
-	f      fs.Fs
-	_vfs   *vfs.VFS // don't use directly, use getVFS
-	server *libhttp.Server
-	opt    Options
-	proxy  *proxy.Proxy
-	ctx    context.Context // for global config
+	f        fs.Fs
+	provider *proxy.Provider
+	server   *libhttp.Server
+	opt      Options
+	ctx      context.Context // for global config
 }
 
 // Gets the VFS in use for this request
 func (s *HTTP) getVFS(ctx context.Context) (VFS *vfs.VFS, err error) {
-	if s._vfs != nil {
-		return s._vfs, nil
-	}
-	value := libhttp.CtxGetAuth(ctx)
-	if value == nil {
-		return nil, errors.New("no VFS found in context")
-	}
-	VFS, ok := value.(*vfs.VFS)
-	if !ok {
-		return nil, fmt.Errorf("context value is not VFS: %#v", value)
-	}
-	return VFS, nil
+	return s.provider.Get(ctx)
 }
 
 // auth does proxy authorization
 func (s *HTTP) auth(r *http.Request, user, pass string) (value any, err error) {
-	VFS, _, err := s.proxy.Call(user, pass, false, r.RemoteAddr)
+	VFS, _, err := s.provider.Proxy().Call(user, pass, false, r.RemoteAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -185,17 +172,19 @@ func (s *HTTP) auth(r *http.Request, user, pass string) (value any, err error) {
 
 func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Options, proxyOpt *proxy.Options) (s *HTTP, err error) {
 	s = &HTTP{
-		f:   f,
-		ctx: ctx,
-		opt: *opt,
+		f:        f,
+		ctx:      ctx,
+		opt:      *opt,
+		provider: proxy.NewProvider(ctx, f, vfsOpt, proxyOpt),
 	}
+	defer func() {
+		if err != nil {
+			s.provider.Shutdown()
+		}
+	}()
 
-	if proxyOpt.AuthProxy != "" {
-		s.proxy = proxy.New(ctx, proxyOpt, vfsOpt)
-		// override auth
+	if s.provider.IsProxy() {
 		s.opt.Auth.CustomAuthFn = s.auth
-	} else {
-		s._vfs = vfs.New(ctx, f, vfsOpt)
 	}
 
 	s.server, err = libhttp.NewServer(ctx,
@@ -204,12 +193,6 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		libhttp.WithTemplate(s.opt.Template),
 	)
 	if err != nil {
-		if s._vfs != nil {
-			s._vfs.Shutdown()
-		}
-		if s.proxy != nil {
-			_ = s.proxy.Close()
-		}
 		return nil, fmt.Errorf("failed to init server: %w", err)
 	}
 
@@ -241,13 +224,9 @@ func (s *HTTP) Addr() net.Addr {
 
 // Shutdown the server
 func (s *HTTP) Shutdown() error {
-	if s._vfs != nil {
-		s._vfs.Shutdown()
-	}
-	if s.proxy != nil {
-		_ = s.proxy.Close()
-	}
-	return s.server.Shutdown()
+	err := s.server.Shutdown()
+	s.provider.Shutdown()
+	return err
 }
 
 // serveFavicon serves the remote's favicon.ico if it exists, otherwise
