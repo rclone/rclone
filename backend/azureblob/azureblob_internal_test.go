@@ -54,6 +54,11 @@ func TestBlockIDCreator(t *testing.T) {
 	assert.ErrorContains(t, bic2.checkID(chunkNumber, got), "random bytes")
 }
 
+func TestCopySASTimingConstants(t *testing.T) {
+	require.Greater(t, sasCopyStartSkew, time.Duration(0))
+	require.Greater(t, sasCopyValidity, sasCopyStartSkew)
+}
+
 func (f *Fs) testFeatures(t *testing.T) {
 	// Check first feature flags are set on this remote
 	enabled := f.Features().SetTier
