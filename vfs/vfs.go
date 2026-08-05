@@ -357,6 +357,12 @@ func activeCacheEntries() (vfs *VFS, count int) {
 	return vfs, count
 }
 
+// ActiveCount returns the total number of VFS instances in the active cache.
+func ActiveCount() int {
+	_, count := activeCacheEntries()
+	return count
+}
+
 // Fs returns the Fs passed into the New call
 func (vfs *VFS) Fs() fs.Fs {
 	return vfs.f

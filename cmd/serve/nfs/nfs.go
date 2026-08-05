@@ -82,6 +82,17 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.AddFlagsFromOptions(flagSet, "", OptionsInfo)
 }
 
+type nfsHandler struct {
+	*Server
+	vfs *vfs.VFS
+}
+
+func (h *nfsHandler) Shutdown() error {
+	err := h.Server.Shutdown()
+	h.vfs.Shutdown()
+	return err
+}
+
 func init() {
 	vfsflags.AddFlags(Command.Flags())
 	AddFlags(Command.Flags())
@@ -107,7 +118,7 @@ func init() {
 			VFS.Shutdown()
 			return nil, err
 		}
-		return s, nil
+		return &nfsHandler{Server: s, vfs: VFS}, nil
 	})
 }
 
@@ -117,7 +128,9 @@ func Run(command *cobra.Command, args []string) {
 	cmd.CheckArgs(1, 1, command, args)
 	f = cmd.NewFsSrc(args)
 	cmd.Run(false, true, command, func() error {
-		s, err := NewServer(context.Background(), vfs.New(context.Background(), f, &vfscommon.Opt), &Opt)
+		VFS := vfs.New(context.Background(), f, &vfscommon.Opt)
+		defer VFS.Shutdown()
+		s, err := NewServer(context.Background(), VFS, &Opt)
 		if err != nil {
 			return err
 		}

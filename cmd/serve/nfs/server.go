@@ -16,7 +16,6 @@ import (
 
 // Server contains everything to run the Server
 type Server struct {
-	vfs                 *vfs.VFS
 	opt                 Options
 	handler             nfs.Handler
 	ctx                 context.Context // for global config
@@ -35,22 +34,15 @@ func NewServer(ctx context.Context, vfs *vfs.VFS, opt *Options) (s *Server, err 
 	}
 
 	s = &Server{
-		vfs: vfs,
 		ctx: ctx,
 		opt: *opt,
 	}
 	s.handler, err = NewHandler(ctx, vfs, opt)
 	if err != nil {
-		if s.vfs != nil {
-			s.vfs.Shutdown()
-		}
 		return nil, fmt.Errorf("failed to make NFS handler: %w", err)
 	}
 	s.listener, err = net.Listen("tcp", s.opt.ListenAddr)
 	if err != nil {
-		if s.vfs != nil {
-			s.vfs.Shutdown()
-		}
 		return nil, fmt.Errorf("failed to open listening socket: %w", err)
 	}
 	return s, nil
@@ -63,9 +55,6 @@ func (s *Server) Addr() net.Addr {
 
 // Shutdown stops the server
 func (s *Server) Shutdown() error {
-	if s.vfs != nil {
-		s.vfs.Shutdown()
-	}
 	return s.listener.Close()
 }
 

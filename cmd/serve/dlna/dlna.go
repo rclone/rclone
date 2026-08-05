@@ -404,10 +404,10 @@ func (s *server) Wait() {
 
 // Shutdown the DLNA server
 func (s *server) Shutdown() error {
+	err := s.HTTPConn.Close()
 	if s.vfs != nil {
 		s.vfs.Shutdown()
 	}
-	err := s.HTTPConn.Close()
 	close(s.waitChan)
 	if err != nil {
 		return fmt.Errorf("failed to shutdown DLNA server: %w", err)

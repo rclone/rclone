@@ -97,10 +97,8 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		// proxy auth middleware
 		w.handler = proxyAuthMiddleware(w.handler, w)
 		w.handler = authPairMiddleware(w.handler, w)
-	} else {
-		if len(opt.AuthKey) > 0 {
-			w.faker.AddAuthKeys(authList)
-		}
+	} else if len(opt.AuthKey) > 0 {
+		w.faker.AddAuthKeys(authList)
 	}
 
 	w.server, err = httplib.NewServer(ctx,
