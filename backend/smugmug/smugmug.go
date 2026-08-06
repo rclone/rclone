@@ -24,6 +24,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 	"unicode/utf8"
@@ -39,6 +40,7 @@ import (
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
+	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
@@ -354,6 +356,10 @@ type Fs struct {
 	srv            *rest.Client
 	downloadClient *http.Client
 	pacer          *fs.Pacer
+	dirCache       *dircache.DirCache
+	cacheMu        sync.RWMutex
+	nodeCache      map[string]api.Node
+	childrenCache  map[string][]api.Node
 }
 
 // Object describes a SmugMug image.
@@ -579,6 +585,7 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (f
 			return nil, err
 		}
 		f.library = true
+		f.dirCache = dircache.New("", f.rootNodeURI, f)
 	}
 	features := &fs.Features{
 		DuplicateFiles: true,
@@ -801,7 +808,11 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		if loc.node.Type != "Folder" {
 			return fmt.Errorf("rmdir only removes SmugMug folders; %q is a %s", fullDir, loc.node.Type)
 		}
-		return f.doJSON(ctx, http.MethodDelete, loc.node.URI, nil, nil)
+		if err := f.doJSON(ctx, http.MethodDelete, loc.node.URI, nil, nil); err != nil {
+			return err
+		}
+		f.DirCacheFlush()
+		return nil
 	}
 	return nil
 }
@@ -984,11 +995,30 @@ func (f *Fs) resolveLibraryPath(ctx context.Context, remote string) (*libraryLoc
 }
 
 func (f *Fs) resolveLibraryPathFrom(ctx context.Context, rootNodeURI, remote string) (*libraryLocation, error) {
+	remote = cleanRemote(remote)
+	if remote != "" && rootNodeURI == f.rootNodeURI && f.dirCache != nil {
+		if nodeURI, ok := f.dirCache.Get(remote); ok {
+			item, err := f.getNode(ctx, nodeURI)
+			if err != nil {
+				if errors.Is(err, errNodeNotFound) {
+					f.dirCache.FlushDir(remote)
+				} else {
+					return nil, err
+				}
+			} else if item.Type == "Folder" {
+				return &libraryLocation{
+					node:     item,
+					albumURI: f.albumURIFromNode(item),
+					nodePath: remote,
+				}, nil
+			}
+		}
+	}
+
 	root, err := f.getNode(ctx, rootNodeURI)
 	if err != nil {
 		return nil, err
 	}
-	remote = cleanRemote(remote)
 	if remote == "" {
 		return &libraryLocation{
 			node:     root,
@@ -1026,6 +1056,7 @@ func (f *Fs) resolveLibraryPathFrom(ctx context.Context, rootNodeURI, remote str
 				nodePath:    strings.Join(nodePath, "/"),
 			}, nil
 		}
+		f.cacheDirectoryPath(strings.Join(nodePath, "/"), current)
 	}
 	return &libraryLocation{
 		node:     current,
@@ -1062,6 +1093,77 @@ func (f *Fs) albumURIFromNode(item api.Node) string {
 		return ""
 	}
 	return item.Uris["Album"].URI
+}
+
+func cloneNodes(in []api.Node) []api.Node {
+	if in == nil {
+		return nil
+	}
+	out := make([]api.Node, len(in))
+	copy(out, in)
+	return out
+}
+
+func (f *Fs) cacheNode(item api.Node) {
+	if item.URI == "" {
+		return
+	}
+	f.cacheMu.Lock()
+	defer f.cacheMu.Unlock()
+	if f.nodeCache == nil {
+		f.nodeCache = make(map[string]api.Node)
+	}
+	f.nodeCache[item.URI] = item
+}
+
+func (f *Fs) getCachedNode(uri string) (api.Node, bool) {
+	f.cacheMu.RLock()
+	defer f.cacheMu.RUnlock()
+	item, ok := f.nodeCache[uri]
+	return item, ok
+}
+
+func (f *Fs) cacheChildNodes(parentURI string, children []api.Node) {
+	f.cacheMu.Lock()
+	defer f.cacheMu.Unlock()
+	if f.childrenCache == nil {
+		f.childrenCache = make(map[string][]api.Node)
+	}
+	f.childrenCache[parentURI] = cloneNodes(children)
+	if f.nodeCache == nil {
+		f.nodeCache = make(map[string]api.Node)
+	}
+	for _, child := range children {
+		if child.URI != "" {
+			f.nodeCache[child.URI] = child
+		}
+	}
+}
+
+func (f *Fs) getCachedChildNodes(parentURI string) ([]api.Node, bool) {
+	f.cacheMu.RLock()
+	defer f.cacheMu.RUnlock()
+	children, ok := f.childrenCache[parentURI]
+	return cloneNodes(children), ok
+}
+
+func (f *Fs) invalidateChildNodes(parentURI string) {
+	f.cacheMu.Lock()
+	defer f.cacheMu.Unlock()
+	delete(f.childrenCache, parentURI)
+}
+
+func (f *Fs) flushNodeCache() {
+	f.cacheMu.Lock()
+	defer f.cacheMu.Unlock()
+	f.nodeCache = nil
+	f.childrenCache = nil
+}
+
+func (f *Fs) cacheDirectoryPath(remote string, item api.Node) {
+	if f.dirCache != nil && item.Type == "Folder" && item.URI != "" {
+		f.dirCache.Put(cleanRemote(remote), item.URI)
+	}
 }
 
 func (f *Fs) listImages(ctx context.Context) ([]api.AlbumImage, error) {
@@ -1108,6 +1210,9 @@ func (f *Fs) getNode(ctx context.Context, nodeURI string) (api.Node, error) {
 	if err != nil {
 		return api.Node{}, err
 	}
+	if item, ok := f.getCachedNode(nodeURI); ok {
+		return item, nil
+	}
 	var result api.Response
 	if err := f.doJSON(ctx, http.MethodGet, addQuery(nodeURI, "_verbosity", "1"), nil, &result); err != nil {
 		return api.Node{}, err
@@ -1115,6 +1220,7 @@ func (f *Fs) getNode(ctx context.Context, nodeURI string) (api.Node, error) {
 	if result.Response.Node == nil {
 		return api.Node{}, errNodeNotFound
 	}
+	f.cacheNode(*result.Response.Node)
 	return *result.Response.Node, nil
 }
 
@@ -1138,6 +1244,9 @@ func (f *Fs) listChildNodes(ctx context.Context, nodeURI string) ([]api.Node, er
 	if err != nil {
 		return nil, err
 	}
+	if children, ok := f.getCachedChildNodes(nodeURI); ok {
+		return children, nil
+	}
 	uri := fmt.Sprintf("%s!children?count=%d&_verbosity=1", nodeURI, listChunkSize)
 	var out []api.Node
 	for uri != "" {
@@ -1148,7 +1257,42 @@ func (f *Fs) listChildNodes(ctx context.Context, nodeURI string) ([]api.Node, er
 		out = append(out, result.Response.Node...)
 		uri = result.Response.Pages.NextPage
 	}
+	f.cacheChildNodes(nodeURI, out)
 	return out, nil
+}
+
+// FindLeaf finds a folder node named leaf under the folder node pathID.
+func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
+	children, err := f.listChildNodes(ctx, pathID)
+	if err != nil {
+		if errors.Is(err, errNodeNotFound) {
+			return "", false, nil
+		}
+		return "", false, err
+	}
+	for _, child := range children {
+		if child.Type == "Folder" && (f.nodeName(child) == leaf || child.URLName == leaf || path.Base(child.URLPath) == leaf) {
+			return child.URI, true, nil
+		}
+	}
+	return "", false, nil
+}
+
+// CreateDir creates a folder node named leaf under the folder node pathID.
+func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
+	info, err := f.createNode(ctx, pathID, "", "Folder", f.opt.Enc.FromStandardName(leaf), "", "")
+	if err != nil {
+		return "", err
+	}
+	return info.NodeURI, nil
+}
+
+// DirCacheFlush resets the directory and node caches.
+func (f *Fs) DirCacheFlush() {
+	if f.dirCache != nil {
+		f.dirCache.ResetRoot()
+	}
+	f.flushNodeCache()
 }
 
 func (f *Fs) resolveRootNodeURI(ctx context.Context, in string) (string, error) {
@@ -1271,6 +1415,11 @@ func (f *Fs) createNode(ctx context.Context, parentURI, parentPath, kind, name, 
 			}
 			item.Uris["Album"] = api.Link{URI: albumURI}
 		}
+	}
+	f.cacheNode(item)
+	f.invalidateChildNodes(parentURI)
+	if parentPath != "" || parentURI == f.rootNodeURI {
+		f.cacheDirectoryPath(path.Join(parentPath, f.nodeName(item)), item)
 	}
 	return f.commandNodeInfoInParent(item, parentPath), nil
 }
@@ -2729,12 +2878,14 @@ func readMD5(in io.Reader, size, threshold int64) (md5sum string, out io.Reader,
 }
 
 var (
-	_ fs.Fs            = (*Fs)(nil)
-	_ fs.Commander     = (*Fs)(nil)
-	_ fs.UserInfoer    = (*Fs)(nil)
-	_ fs.PublicLinker  = (*Fs)(nil)
-	_ fs.Object        = (*Object)(nil)
-	_ fs.MimeTyper     = (*Object)(nil)
-	_ fs.Metadataer    = (*Object)(nil)
-	_ fs.SetMetadataer = (*Object)(nil)
+	_ fs.Fs              = (*Fs)(nil)
+	_ fs.Commander       = (*Fs)(nil)
+	_ fs.DirCacheFlusher = (*Fs)(nil)
+	_ fs.UserInfoer      = (*Fs)(nil)
+	_ fs.PublicLinker    = (*Fs)(nil)
+	_ fs.Object          = (*Object)(nil)
+	_ fs.MimeTyper       = (*Object)(nil)
+	_ fs.Metadataer      = (*Object)(nil)
+	_ fs.SetMetadataer   = (*Object)(nil)
+	_ dircache.DirCacher = (*Fs)(nil)
 )

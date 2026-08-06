@@ -17,6 +17,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/pacer"
 )
 
@@ -280,6 +281,50 @@ func TestCommandNodeInfoInParent(t *testing.T) {
 	got = f.commandNodeInfoInParent(item, "")
 	if got.Path != "RiverLight" {
 		t.Fatalf("Path = %q, want %q", got.Path, "RiverLight")
+	}
+}
+
+func TestResolveLibraryPathCachesNodes(t *testing.T) {
+	ctx := context.Background()
+	var rootGets, rootChildren, projectChildren int
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/v2/node/NdRoot", func(w http.ResponseWriter, r *http.Request) {
+		rootGets++
+		_, _ = w.Write([]byte(`{"Response":{"Node":{"Name":"Root","Type":"Folder","Uri":"/api/v2/node/NdRoot"}}}`))
+	})
+	mux.HandleFunc("/api/v2/node/NdRoot!children", func(w http.ResponseWriter, r *http.Request) {
+		rootChildren++
+		_, _ = w.Write([]byte(`{"Response":{"Node":[{"Name":"Projects","Type":"Folder","Uri":"/api/v2/node/NdProjects"}]}}`))
+	})
+	mux.HandleFunc("/api/v2/node/NdProjects!children", func(w http.ResponseWriter, r *http.Request) {
+		projectChildren++
+		_, _ = w.Write([]byte(`{"Response":{"Node":[{"Name":"BlueMesa","Type":"Album","Uri":"/api/v2/node/NdAlbum","Uris":{"Album":{"Uri":"/api/v2/album/AbCdEf"}}}]}}`))
+	})
+	server := httptest.NewServer(mux)
+	defer server.Close()
+
+	f := &Fs{
+		rootNodeURI: "/api/v2/node/NdRoot",
+		client:      server.Client(),
+		srv:         newSmugMugRESTClient(server.Client()).SetRoot(server.URL),
+		pacer:       fs.NewPacer(ctx, pacer.NewDefault()),
+	}
+	f.dirCache = dircache.New("", f.rootNodeURI, f)
+
+	for range 2 {
+		loc, err := f.resolveLibraryPath(ctx, "Projects/BlueMesa/photo.jpg")
+		if err != nil {
+			t.Fatalf("resolveLibraryPath returned error: %v", err)
+		}
+		if loc.albumURI != "/api/v2/album/AbCdEf" || loc.albumPrefix != "photo.jpg" {
+			t.Fatalf("resolveLibraryPath returned albumURI=%q albumPrefix=%q", loc.albumURI, loc.albumPrefix)
+		}
+	}
+	if rootGets != 1 || rootChildren != 1 || projectChildren != 1 {
+		t.Fatalf("API calls = root:%d root children:%d project children:%d, want 1 each", rootGets, rootChildren, projectChildren)
+	}
+	if got, ok := f.dirCache.Get("Projects"); !ok || got != "/api/v2/node/NdProjects" {
+		t.Fatalf("dir cache Projects = %q, %v; want /api/v2/node/NdProjects, true", got, ok)
 	}
 }
 
