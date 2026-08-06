@@ -41,6 +41,7 @@ import (
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/rest"
 )
 
 const (
@@ -350,6 +351,7 @@ type Fs struct {
 	library        bool
 	features       *fs.Features
 	client         *http.Client
+	srv            *rest.Client
 	downloadClient *http.Client
 	pacer          *fs.Pacer
 }
@@ -562,6 +564,7 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (f
 		root:           root,
 		opt:            *opt,
 		client:         &client,
+		srv:            newSmugMugRESTClient(&client),
 		downloadClient: baseClient,
 		pacer:          fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep))),
 	}
@@ -1561,65 +1564,49 @@ func (f *Fs) remoteFromImage(image api.AlbumImage) string {
 	return cleanRemote(f.opt.Enc.ToStandardPath(name))
 }
 
-func (f *Fs) doJSON(ctx context.Context, method, uri string, in, out any) (err error) {
-	var body []byte
-	if in != nil {
-		body, err = json.Marshal(in)
-		if err != nil {
-			return err
-		}
+func newSmugMugRESTClient(client *http.Client) *rest.Client {
+	if client == nil {
+		client = http.DefaultClient
 	}
-
-	var resp *http.Response
-	err = f.pacer.Call(func() (bool, error) {
-		var reader io.Reader
-		if body != nil {
-			reader = bytes.NewReader(body)
-		}
-		req, err := http.NewRequestWithContext(ctx, method, f.apiURL(uri), reader)
-		if err != nil {
-			return false, err
-		}
-		req.Header.Set("Accept", "application/json")
-		if body != nil {
-			req.Header.Set("Content-Type", "application/json")
-		}
-		resp, err = f.client.Do(req)
-		retry, err := shouldRetry(ctx, resp, err)
-		if retry && resp != nil && resp.Body != nil {
-			_, _ = io.Copy(io.Discard, resp.Body)
-			_ = resp.Body.Close()
-		}
-		return retry, err
-	})
-	if err != nil {
-		return err
-	}
-	defer fs.CheckClose(resp.Body, &err)
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return parseHTTPError(resp, respBody)
-	}
-	if out != nil && len(respBody) != 0 {
-		err = json.Unmarshal(respBody, out)
-		if err != nil {
-			return fmt.Errorf("failed to decode SmugMug response: %w", err)
-		}
-	}
-	return nil
+	return rest.NewClient(client).
+		SetRoot(apiOrigin).
+		SetHeader("Accept", "application/json").
+		SetErrorHandler(smugMugErrorHandler)
 }
 
-func (f *Fs) apiURL(uri string) string {
+func (f *Fs) restClient() *rest.Client {
+	if f.srv == nil {
+		f.srv = newSmugMugRESTClient(f.client)
+	}
+	return f.srv
+}
+
+func (f *Fs) doJSON(ctx context.Context, method, uri string, in, out any) (err error) {
+	var resp *http.Response
+	opts := rest.Opts{
+		Method:     method,
+		Path:       uri,
+		NoResponse: out == nil,
+	}
 	if strings.HasPrefix(uri, "http://") || strings.HasPrefix(uri, "https://") {
-		return uri
+		opts.RootURL = uri
+		opts.Path = ""
+	} else if !strings.HasPrefix(uri, "/") {
+		opts.Path = "/" + uri
 	}
-	if strings.HasPrefix(uri, "/") {
-		return apiOrigin + uri
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.restClient().CallJSON(ctx, &opts, in, out)
+		return shouldRetry(ctx, resp, err)
+	})
+	return err
+}
+
+func smugMugErrorHandler(resp *http.Response) error {
+	body, err := rest.ReadBody(resp)
+	if err != nil {
+		return fmt.Errorf("error reading SmugMug error body: %w", err)
 	}
-	return apiOrigin + "/" + uri
+	return parseHTTPError(resp, body)
 }
 
 func smugMugMetadataPatch(metadata fs.Metadata) (map[string]any, error) {
