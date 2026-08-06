@@ -28,6 +28,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/rclone/rclone/backend/smugmug/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config"
@@ -376,142 +377,8 @@ type Object struct {
 	downloadURL   string
 }
 
-type apiResponse struct {
-	Response struct {
-		URI        string       `json:"Uri"`
-		Album      *album       `json:"Album"`
-		AlbumImage []albumImage `json:"AlbumImage"`
-		Image      []albumImage `json:"Image"`
-		Node       *node        `json:"Node"`
-		Pages      pages        `json:"Pages"`
-	} `json:"Response"`
-	Code    int    `json:"Code"`
-	Message string `json:"Message"`
-}
-
-type apiLink struct {
-	URI string `json:"Uri"`
-}
-
-func (l *apiLink) UnmarshalJSON(b []byte) error {
-	if string(b) == "null" {
-		return nil
-	}
-	var s string
-	if err := json.Unmarshal(b, &s); err == nil {
-		l.URI = s
-		return nil
-	}
-	type link apiLink
-	return json.Unmarshal(b, (*link)(l))
-}
-
-type apiStringList string
-
-func (l *apiStringList) UnmarshalJSON(b []byte) error {
-	if string(b) == "null" {
-		return nil
-	}
-	var s string
-	if err := json.Unmarshal(b, &s); err == nil {
-		*l = apiStringList(s)
-		return nil
-	}
-	var ss []string
-	if err := json.Unmarshal(b, &ss); err == nil {
-		*l = apiStringList(strings.Join(ss, ","))
-		return nil
-	}
-	return fmt.Errorf("unexpected string list value %s", string(b))
-}
-
-type apiFloat struct {
-	value float64
-	valid bool
-}
-
-func (f *apiFloat) UnmarshalJSON(b []byte) error {
-	if string(b) == "null" {
-		return nil
-	}
-	var n float64
-	if err := json.Unmarshal(b, &n); err == nil {
-		f.value = n
-		f.valid = true
-		return nil
-	}
-	var s string
-	if err := json.Unmarshal(b, &s); err == nil {
-		if strings.TrimSpace(s) == "" {
-			return nil
-		}
-		value, err := strconv.ParseFloat(strings.TrimSpace(s), 64)
-		if err != nil {
-			return err
-		}
-		f.value = value
-		f.valid = true
-		return nil
-	}
-	return fmt.Errorf("unexpected float value %s", string(b))
-}
-
-func (f apiFloat) ptr() *float64 {
-	if !f.valid {
-		return nil
-	}
-	value := f.value
-	return &value
-}
-
-type album struct {
-	URI     string             `json:"Uri"`
-	Name    string             `json:"Name"`
-	URLName string             `json:"UrlName"`
-	WebURI  string             `json:"WebUri"`
-	Uris    map[string]apiLink `json:"Uris"`
-}
-
-type node struct {
-	Name         string             `json:"Name"`
-	URI          string             `json:"Uri"`
-	NodeID       string             `json:"NodeID"`
-	Type         string             `json:"Type"`
-	URLName      string             `json:"UrlName"`
-	URLPath      string             `json:"UrlPath"`
-	WebURI       string             `json:"WebUri"`
-	DateAdded    string             `json:"DateAdded"`
-	DateModified string             `json:"DateModified"`
-	Uris         map[string]apiLink `json:"Uris"`
-}
-
-type pages struct {
-	NextPage string `json:"NextPage"`
-}
-
-type authUserResponse struct {
-	Response struct {
-		User user `json:"User"`
-	} `json:"Response"`
-}
-
-type user struct {
-	Name     string             `json:"Name"`
-	NickName string             `json:"NickName"`
-	URI      string             `json:"Uri"`
-	WebURI   string             `json:"WebUri"`
-	Uris     map[string]apiLink `json:"Uris"`
-}
-
-type nodeListResponse struct {
-	Response struct {
-		Node  []node `json:"Node"`
-		Pages pages  `json:"Pages"`
-	} `json:"Response"`
-}
-
 type libraryLocation struct {
-	node        node
+	node        api.Node
 	albumURI    string
 	albumPrefix string
 	nodePath    string
@@ -549,39 +416,6 @@ type downloadDetails struct {
 	URL  string
 	Size int64
 	MD5  string
-}
-
-type albumImage struct {
-	URI          string             `json:"Uri"`
-	FileName     string             `json:"FileName"`
-	Title        string             `json:"Title"`
-	Caption      string             `json:"Caption"`
-	Keywords     apiStringList      `json:"Keywords"`
-	Hidden       *bool              `json:"Hidden"`
-	Latitude     apiFloat           `json:"Latitude"`
-	Longitude    apiFloat           `json:"Longitude"`
-	Altitude     apiFloat           `json:"Altitude"`
-	ArchivedURI  string             `json:"ArchivedUri"`
-	ArchivedSize int64              `json:"ArchivedSize"`
-	ArchivedMD5  string             `json:"ArchivedMD5"`
-	OriginalSize int64              `json:"OriginalSize"`
-	Size         int64              `json:"Size"`
-	Date         string             `json:"Date"`
-	LastUpdated  string             `json:"LastUpdated"`
-	Format       string             `json:"Format"`
-	MimeType     string             `json:"MimeType"`
-	WebURI       string             `json:"WebUri"`
-	Uris         map[string]apiLink `json:"Uris"`
-}
-
-type uploadResponse struct {
-	Stat    string `json:"stat"`
-	Message string `json:"message"`
-	Image   struct {
-		ImageURI      string `json:"ImageUri"`
-		AlbumImageURI string `json:"AlbumImageUri"`
-		URL           string `json:"URL"`
-	} `json:"Image"`
 }
 
 type oauthCredentials struct {
@@ -1197,16 +1031,16 @@ func (f *Fs) resolveLibraryPathFrom(ctx context.Context, rootNodeURI, remote str
 	}, nil
 }
 
-func (f *Fs) findChildNode(nodes []node, name string) (node, bool) {
+func (f *Fs) findChildNode(nodes []api.Node, name string) (api.Node, bool) {
 	for _, item := range nodes {
 		if f.nodeName(item) == name || item.URLName == name || path.Base(item.URLPath) == name {
 			return item, true
 		}
 	}
-	return node{}, false
+	return api.Node{}, false
 }
 
-func (f *Fs) nodeName(item node) string {
+func (f *Fs) nodeName(item api.Node) string {
 	name := item.Name
 	if name == "" {
 		name = item.URLName
@@ -1220,22 +1054,22 @@ func (f *Fs) nodeName(item node) string {
 	return cleanRemote(f.opt.Enc.ToStandardName(name))
 }
 
-func (f *Fs) albumURIFromNode(item node) string {
+func (f *Fs) albumURIFromNode(item api.Node) string {
 	if item.Uris == nil {
 		return ""
 	}
 	return item.Uris["Album"].URI
 }
 
-func (f *Fs) listImages(ctx context.Context) ([]albumImage, error) {
+func (f *Fs) listImages(ctx context.Context) ([]api.AlbumImage, error) {
 	return f.listAlbumImages(ctx, f.albumURI)
 }
 
-func (f *Fs) listAlbumImages(ctx context.Context, albumURI string) ([]albumImage, error) {
+func (f *Fs) listAlbumImages(ctx context.Context, albumURI string) ([]api.AlbumImage, error) {
 	uri := fmt.Sprintf("%s!images?count=%d&_verbosity=1", albumURI, listChunkSize)
-	var out []albumImage
+	var out []api.AlbumImage
 	for uri != "" {
-		var result apiResponse
+		var result api.Response
 		if err := f.doJSON(ctx, http.MethodGet, uri, nil, &result); err != nil {
 			return nil, err
 		}
@@ -1246,10 +1080,10 @@ func (f *Fs) listAlbumImages(ctx context.Context, albumURI string) ([]albumImage
 	return out, nil
 }
 
-func (f *Fs) getAuthUser(ctx context.Context) (user, error) {
-	var result authUserResponse
+func (f *Fs) getAuthUser(ctx context.Context) (api.User, error) {
+	var result api.AuthUserResponse
 	if err := f.doJSON(ctx, http.MethodGet, "/api/v2!authuser?_verbosity=1", nil, &result); err != nil {
-		return user{}, err
+		return api.User{}, err
 	}
 	return result.Response.User, nil
 }
@@ -1266,45 +1100,45 @@ func (f *Fs) getAuthRootNodeURI(ctx context.Context) (string, error) {
 	return root, nil
 }
 
-func (f *Fs) getNode(ctx context.Context, nodeURI string) (node, error) {
+func (f *Fs) getNode(ctx context.Context, nodeURI string) (api.Node, error) {
 	nodeURI, err := normalizeNodeURI(nodeURI)
 	if err != nil {
-		return node{}, err
+		return api.Node{}, err
 	}
-	var result apiResponse
+	var result api.Response
 	if err := f.doJSON(ctx, http.MethodGet, addQuery(nodeURI, "_verbosity", "1"), nil, &result); err != nil {
-		return node{}, err
+		return api.Node{}, err
 	}
 	if result.Response.Node == nil {
-		return node{}, errNodeNotFound
+		return api.Node{}, errNodeNotFound
 	}
 	return *result.Response.Node, nil
 }
 
-func (f *Fs) getAlbum(ctx context.Context, albumURI string) (album, error) {
+func (f *Fs) getAlbum(ctx context.Context, albumURI string) (api.Album, error) {
 	albumURI, err := normalizeAlbumURI(albumURI)
 	if err != nil {
-		return album{}, err
+		return api.Album{}, err
 	}
-	var result apiResponse
+	var result api.Response
 	if err := f.doJSON(ctx, http.MethodGet, addQuery(albumURI, "_verbosity", "1"), nil, &result); err != nil {
-		return album{}, err
+		return api.Album{}, err
 	}
 	if result.Response.Album == nil {
-		return album{}, fs.ErrorDirNotFound
+		return api.Album{}, fs.ErrorDirNotFound
 	}
 	return *result.Response.Album, nil
 }
 
-func (f *Fs) listChildNodes(ctx context.Context, nodeURI string) ([]node, error) {
+func (f *Fs) listChildNodes(ctx context.Context, nodeURI string) ([]api.Node, error) {
 	nodeURI, err := normalizeNodeURI(nodeURI)
 	if err != nil {
 		return nil, err
 	}
 	uri := fmt.Sprintf("%s!children?count=%d&_verbosity=1", nodeURI, listChunkSize)
-	var out []node
+	var out []api.Node
 	for uri != "" {
-		var result nodeListResponse
+		var result api.NodeListResponse
 		if err := f.doJSON(ctx, http.MethodGet, uri, nil, &result); err != nil {
 			return nil, err
 		}
@@ -1385,7 +1219,7 @@ func (f *Fs) listCommandNodes(ctx context.Context, startNodeURI, startPath, kind
 	return out, nil
 }
 
-func (f *Fs) commandNodeInfo(item node, itemPath string) commandNodeInfo {
+func (f *Fs) commandNodeInfo(item api.Node, itemPath string) commandNodeInfo {
 	return commandNodeInfo{
 		Type:     item.Type,
 		Name:     f.nodeName(item),
@@ -1396,7 +1230,7 @@ func (f *Fs) commandNodeInfo(item node, itemPath string) commandNodeInfo {
 	}
 }
 
-func (f *Fs) commandNodeInfoInParent(item node, parentPath string) commandNodeInfo {
+func (f *Fs) commandNodeInfoInParent(item api.Node, parentPath string) commandNodeInfo {
 	return f.commandNodeInfo(item, cleanRemote(path.Join(parentPath, f.nodeName(item))))
 }
 
@@ -1419,7 +1253,7 @@ func (f *Fs) createNode(ctx context.Context, parentURI, parentPath, kind, name, 
 	if urlName != "" {
 		in["UrlName"] = urlName
 	}
-	var result apiResponse
+	var result api.Response
 	if err := f.doJSON(ctx, http.MethodPost, parentURI+"!children", in, &result); err != nil {
 		return commandNodeInfo{}, err
 	}
@@ -1430,9 +1264,9 @@ func (f *Fs) createNode(ctx context.Context, parentURI, parentPath, kind, name, 
 	if kind == "Album" && f.albumURIFromNode(item) == "" && item.NodeID != "" {
 		if albumURI, err := f.resolveNodeAlbumURI(ctx, item.NodeID); err == nil {
 			if item.Uris == nil {
-				item.Uris = map[string]apiLink{}
+				item.Uris = map[string]api.Link{}
 			}
-			item.Uris["Album"] = apiLink{URI: albumURI}
+			item.Uris["Album"] = api.Link{URI: albumURI}
 		}
 	}
 	return f.commandNodeInfoInParent(item, parentPath), nil
@@ -1660,11 +1494,11 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 	}
 }
 
-func (f *Fs) newObjectFromImage(remote string, image albumImage) *Object {
+func (f *Fs) newObjectFromImage(remote string, image api.AlbumImage) *Object {
 	return f.newObjectFromImageInAlbum(remote, image, f.albumURI, f.remoteFromImage(image))
 }
 
-func (f *Fs) newObjectFromImageInAlbum(remote string, image albumImage, albumURI, albumRemote string) *Object {
+func (f *Fs) newObjectFromImageInAlbum(remote string, image api.AlbumImage, albumURI, albumRemote string) *Object {
 	size := image.ArchivedSize
 	if size == 0 {
 		size = image.OriginalSize
@@ -1692,9 +1526,9 @@ func (f *Fs) newObjectFromImageInAlbum(remote string, image albumImage, albumURI
 		caption:       image.Caption,
 		keywords:      string(image.Keywords),
 		hidden:        image.Hidden,
-		latitude:      image.Latitude.ptr(),
-		longitude:     image.Longitude.ptr(),
-		altitude:      image.Altitude.ptr(),
+		latitude:      image.Latitude.Ptr(),
+		longitude:     image.Longitude.Ptr(),
+		altitude:      image.Altitude.Ptr(),
 		md5:           normalizeMD5(image.ArchivedMD5),
 		webURI:        image.WebURI,
 		imageURI:      imageURI,
@@ -1716,7 +1550,7 @@ func imageURIFromAlbumImageURI(uri string) string {
 	return "/api/v2/image/" + imageKey
 }
 
-func (f *Fs) remoteFromImage(image albumImage) string {
+func (f *Fs) remoteFromImage(image api.AlbumImage) string {
 	name := image.FileName
 	if name == "" {
 		name = image.Title
@@ -1929,11 +1763,11 @@ func (o *Object) publicLink(ctx context.Context) (string, error) {
 	if uri == "" {
 		return "", fs.ErrorObjectNotFound
 	}
-	var result apiResponse
+	var result api.Response
 	if err := o.fs.doJSON(ctx, http.MethodGet, addQuery(uri, "_verbosity", "1"), nil, &result); err != nil {
 		return "", err
 	}
-	var image albumImage
+	var image api.AlbumImage
 	switch {
 	case len(result.Response.AlbumImage) > 0:
 		image = result.Response.AlbumImage[0]
@@ -2098,7 +1932,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
-	var upload uploadResponse
+	var upload api.UploadResponse
 	remote := o.remote
 	if remote == "" {
 		remote = src.Remote()
@@ -2183,7 +2017,7 @@ func (f *Fs) upload(
 	size int64,
 	headers map[string]string,
 	replaceURI string,
-	out *uploadResponse,
+	out *api.UploadResponse,
 ) (err error) {
 	seeker, seekable := uploadSeeker(in)
 	var resp *http.Response
@@ -2616,7 +2450,7 @@ func parseHTTPError(resp *http.Response, body []byte) error {
 	if len(body) == 0 {
 		return fmt.Errorf("SmugMug error %s", resp.Status)
 	}
-	var apiErr apiResponse
+	var apiErr api.Response
 	if json.Unmarshal(body, &apiErr) == nil && apiErr.Message != "" {
 		return fmt.Errorf("SmugMug error %s: %s", resp.Status, apiErr.Message)
 	}
@@ -2689,7 +2523,7 @@ func (f *Fs) resolveAlbumPath(ctx context.Context, hostOrNick, albumPath string)
 	q := url.Values{}
 	q.Set("urlpath", albumPath)
 	q.Set("_verbosity", "1")
-	var result apiResponse
+	var result api.Response
 	uri := "/api/v2/user/" + url.PathEscape(nickname) + "!urlpathlookup?" + q.Encode()
 	if err := f.doJSON(ctx, http.MethodGet, uri, nil, &result); err != nil {
 		return "", err
@@ -2706,7 +2540,7 @@ func (f *Fs) resolveAlbumPath(ctx context.Context, hostOrNick, albumPath string)
 }
 
 func (f *Fs) resolveNodeAlbumURI(ctx context.Context, nodeID string) (string, error) {
-	var result apiResponse
+	var result api.Response
 	err := f.doJSON(ctx, http.MethodGet, "/api/v2/node/"+url.PathEscape(nodeID)+"?_verbosity=1", nil, &result)
 	if err != nil {
 		return "", err

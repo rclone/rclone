@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rclone/rclone/backend/smugmug/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
@@ -215,29 +216,29 @@ func TestMkdirExistingLibraryPath(t *testing.T) {
 		{
 			name:    "folder",
 			fullDir: "Projects",
-			loc:     &libraryLocation{node: node{Type: "Folder"}},
+			loc:     &libraryLocation{node: api.Node{Type: "Folder"}},
 		},
 		{
 			name:    "album",
 			fullDir: "Projects/BlueMesa",
-			loc:     &libraryLocation{node: node{Type: "Album"}},
+			loc:     &libraryLocation{node: api.Node{Type: "Album"}},
 		},
 		{
 			name:    "virtual root",
 			fullDir: "Projects/BlueMesa/prints",
-			loc:     &libraryLocation{node: node{Type: "Album"}, albumPrefix: "prints"},
+			loc:     &libraryLocation{node: api.Node{Type: "Album"}, albumPrefix: "prints"},
 		},
 		{
 			name:        "virtual child",
 			dir:         "Projects/BlueMesa/prints",
 			fullDir:     "Projects/BlueMesa/prints",
-			loc:         &libraryLocation{node: node{Type: "Album"}, albumPrefix: "prints"},
+			loc:         &libraryLocation{node: api.Node{Type: "Album"}, albumPrefix: "prints"},
 			errContains: "virtual",
 		},
 		{
 			name:        "unsupported node",
 			fullDir:     "Projects/Page",
-			loc:         &libraryLocation{node: node{Type: "Page"}},
+			loc:         &libraryLocation{node: api.Node{Type: "Page"}},
 			errContains: "not a folder",
 		},
 	} {
@@ -261,12 +262,12 @@ func TestMkdirExistingLibraryPath(t *testing.T) {
 
 func TestCommandNodeInfoInParent(t *testing.T) {
 	f := &Fs{}
-	item := node{
+	item := api.Node{
 		Name:   "RiverLight",
 		Type:   "Album",
 		URI:    "/api/v2/node/NdAlbum",
 		WebURI: "https://example.invalid/RiverLight",
-		Uris: map[string]apiLink{
+		Uris: map[string]api.Link{
 			"Album": {URI: "/api/v2/album/AbCdEf"},
 		},
 	}
@@ -290,7 +291,7 @@ func TestAPILinkUnmarshal(t *testing.T) {
 		{`"/api/v2/node/NdAbCd"`, "/api/v2/node/NdAbCd"},
 		{`{"Uri":"/api/v2/node/NdAbCd"}`, "/api/v2/node/NdAbCd"},
 	} {
-		var got apiLink
+		var got api.Link
 		if err := json.Unmarshal([]byte(test.in), &got); err != nil {
 			t.Fatalf("json.Unmarshal(%s) returned error: %v", test.in, err)
 		}
@@ -318,7 +319,7 @@ func TestAlbumImageAPILinkUnmarshal(t *testing.T) {
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			var got albumImage
+			var got api.AlbumImage
 			if err := json.Unmarshal([]byte(test.in), &got); err != nil {
 				t.Fatalf("json.Unmarshal(%s) returned error: %v", test.in, err)
 			}
@@ -367,7 +368,7 @@ func TestAlbumImageMetadataUnmarshal(t *testing.T) {
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			var got albumImage
+			var got api.AlbumImage
 			if err := json.Unmarshal([]byte(test.in), &got); err != nil {
 				t.Fatalf("json.Unmarshal(%s) returned error: %v", test.in, err)
 			}
@@ -386,23 +387,26 @@ func TestAlbumImageMetadataUnmarshal(t *testing.T) {
 			if got.Hidden != nil && *got.Hidden != test.wantHidden {
 				t.Fatalf("Hidden = %v, want %v", *got.Hidden, test.wantHidden)
 			}
-			if got.Latitude.valid != test.wantHasLat {
-				t.Fatalf("Latitude present = %v, want %v", got.Latitude.valid, test.wantHasLat)
+			latitude, hasLatitude := got.Latitude.Value()
+			if hasLatitude != test.wantHasLat {
+				t.Fatalf("Latitude present = %v, want %v", hasLatitude, test.wantHasLat)
 			}
-			if got.Latitude.valid && got.Latitude.value != test.wantLatitude {
-				t.Fatalf("Latitude = %v, want %v", got.Latitude.value, test.wantLatitude)
+			if hasLatitude && latitude != test.wantLatitude {
+				t.Fatalf("Latitude = %v, want %v", latitude, test.wantLatitude)
 			}
-			if got.Longitude.valid != test.wantHasLong {
-				t.Fatalf("Longitude present = %v, want %v", got.Longitude.valid, test.wantHasLong)
+			longitude, hasLongitude := got.Longitude.Value()
+			if hasLongitude != test.wantHasLong {
+				t.Fatalf("Longitude present = %v, want %v", hasLongitude, test.wantHasLong)
 			}
-			if got.Longitude.valid && got.Longitude.value != test.wantLongitude {
-				t.Fatalf("Longitude = %v, want %v", got.Longitude.value, test.wantLongitude)
+			if hasLongitude && longitude != test.wantLongitude {
+				t.Fatalf("Longitude = %v, want %v", longitude, test.wantLongitude)
 			}
-			if got.Altitude.valid != test.wantHasAlt {
-				t.Fatalf("Altitude present = %v, want %v", got.Altitude.valid, test.wantHasAlt)
+			altitude, hasAltitude := got.Altitude.Value()
+			if hasAltitude != test.wantHasAlt {
+				t.Fatalf("Altitude present = %v, want %v", hasAltitude, test.wantHasAlt)
 			}
-			if got.Altitude.valid && got.Altitude.value != test.wantAltitude {
-				t.Fatalf("Altitude = %v, want %v", got.Altitude.value, test.wantAltitude)
+			if hasAltitude && altitude != test.wantAltitude {
+				t.Fatalf("Altitude = %v, want %v", altitude, test.wantAltitude)
 			}
 		})
 	}
@@ -411,7 +415,7 @@ func TestAlbumImageMetadataUnmarshal(t *testing.T) {
 func TestNewObjectUsesArchivedRenditionMetadata(t *testing.T) {
 	f := &Fs{}
 	const md5sum = "0123456789abcdef0123456789abcdef"
-	o := f.newObjectFromImageInAlbum("photo.jpg", albumImage{
+	o := f.newObjectFromImageInAlbum("photo.jpg", api.AlbumImage{
 		URI:          "/api/v2/album/AbCdEf/image/ImgOne",
 		FileName:     "photo.jpg",
 		ArchivedURI:  "https://example.invalid/archived.jpg",
@@ -437,7 +441,7 @@ func TestNewObjectUsesArchivedRenditionMetadata(t *testing.T) {
 }
 
 func TestNewObjectUnknownSizeIsZero(t *testing.T) {
-	o := (&Fs{}).newObjectFromImageInAlbum("photo.jpg", albumImage{
+	o := (&Fs{}).newObjectFromImageInAlbum("photo.jpg", api.AlbumImage{
 		URI:      "/api/v2/album/AbCdEf/image/ImgOne",
 		FileName: "photo.jpg",
 	}, "/api/v2/album/AbCdEf", "photo.jpg")
@@ -596,7 +600,7 @@ func TestUploadWithNonSeekableBodyReturnsHTTPError(t *testing.T) {
 		pacer:  fs.NewPacer(ctx, pacer.NewDefault()),
 	}
 
-	err = f.upload(ctx, bytes.NewBufferString("body"), 4, nil, "", &uploadResponse{})
+	err = f.upload(ctx, bytes.NewBufferString("body"), 4, nil, "", &api.UploadResponse{})
 	if err == nil {
 		t.Fatal("expected error")
 	}
@@ -641,7 +645,7 @@ func TestUploadRetriesSeekableAccountingBody(t *testing.T) {
 		pacer:  fs.NewPacer(ctx, pacer.NewDefault()),
 	}
 
-	var upload uploadResponse
+	var upload api.UploadResponse
 	err = f.upload(ctx, &testAccounter{in: bytes.NewReader([]byte("body"))}, 4, nil, "", &upload)
 	if err != nil {
 		t.Fatalf("upload returned error: %v", err)
