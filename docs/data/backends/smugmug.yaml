@@ -4,7 +4,7 @@ tier: Tier 4
 maintainers: External
 features_score: 2
 integration_tests: Passing
-data_integrity: Other
+data_integrity: Hash
 performance: Medium
 adoption: Some use
 docs: Full
@@ -20,5 +20,6 @@ features:
 - ReadMimeType
 - UserInfo
 - WriteMetadata
-hashes: []
+hashes:
+- md5
 precision: 3153600000000000000

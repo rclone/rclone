@@ -15,6 +15,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/pacer"
 )
 
@@ -75,8 +76,19 @@ func TestNormalizeNodeURI(t *testing.T) {
 }
 
 func TestRevealObscured(t *testing.T) {
-	want := strings.Repeat("s", smugMugAPISecretLength)
-	got, err := revealObscured("api_secret", obscure.MustObscure(want), smugMugAPISecretLength)
+	want := strings.Repeat("s", 64)
+	got, err := revealObscured("api_secret", obscure.MustObscure(want))
+	if err != nil {
+		t.Fatalf("revealObscured returned error: %v", err)
+	}
+	if got != want {
+		t.Fatalf("revealObscured = %q, want %q", got, want)
+	}
+}
+
+func TestRevealObscuredAcceptsShortSecret(t *testing.T) {
+	want := "short-secret"
+	got, err := revealObscured("api_secret", obscure.MustObscure(want))
 	if err != nil {
 		t.Fatalf("revealObscured returned error: %v", err)
 	}
@@ -87,7 +99,7 @@ func TestRevealObscured(t *testing.T) {
 
 func TestRevealObscuredRejectsPlainAPISecret(t *testing.T) {
 	plainBase64URLSecret := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789AB"
-	_, err := revealObscured("api_secret", plainBase64URLSecret, smugMugAPISecretLength)
+	_, err := revealObscured("api_secret", plainBase64URLSecret)
 	if err == nil {
 		t.Fatal("expected plain API secret to be rejected")
 	}
@@ -118,6 +130,43 @@ func TestGetOptionsKeepsAlbumMode(t *testing.T) {
 	}
 	if opt.RootNode != "" {
 		t.Fatalf("RootNode = %q, want empty", opt.RootNode)
+	}
+}
+
+func TestConfigExistingTokenAsksRefresh(t *testing.T) {
+	m := configmap.Simple{
+		configAccessToken:     "token",
+		"access_token_secret": obscure.MustObscure("secret"),
+	}
+	out, err := Config(context.Background(), "smug", m, fs.ConfigIn{})
+	if err != nil {
+		t.Fatalf("Config returned error: %v", err)
+	}
+	if out == nil || out.Option == nil {
+		t.Fatalf("Config returned %#v, want refresh question", out)
+	}
+	if out.State != "refresh" {
+		t.Fatalf("State = %q, want %q", out.State, "refresh")
+	}
+	if out.Option.Name != "config_refresh_token" {
+		t.Fatalf("Option.Name = %q, want %q", out.Option.Name, "config_refresh_token")
+	}
+}
+
+func TestConfigExistingTokenCanBeKept(t *testing.T) {
+	m := configmap.Simple{
+		configAccessToken:     "token",
+		"access_token_secret": obscure.MustObscure("secret"),
+	}
+	out, err := Config(context.Background(), "smug", m, fs.ConfigIn{
+		State:  "refresh",
+		Result: "false",
+	})
+	if err != nil {
+		t.Fatalf("Config returned error: %v", err)
+	}
+	if out != nil {
+		t.Fatalf("Config returned %#v, want nil", out)
 	}
 }
 
@@ -359,6 +408,44 @@ func TestAlbumImageMetadataUnmarshal(t *testing.T) {
 	}
 }
 
+func TestNewObjectUsesArchivedRenditionMetadata(t *testing.T) {
+	f := &Fs{}
+	const md5sum = "0123456789abcdef0123456789abcdef"
+	o := f.newObjectFromImageInAlbum("photo.jpg", albumImage{
+		URI:          "/api/v2/album/AbCdEf/image/ImgOne",
+		FileName:     "photo.jpg",
+		ArchivedURI:  "https://example.invalid/archived.jpg",
+		ArchivedSize: 7,
+		ArchivedMD5:  strings.ToUpper(md5sum),
+		OriginalSize: 99,
+		Size:         88,
+	}, "/api/v2/album/AbCdEf", "photo.jpg")
+
+	if o.Size() != 7 {
+		t.Fatalf("Size = %d, want 7", o.Size())
+	}
+	gotHash, err := o.Hash(context.Background(), hash.MD5)
+	if err != nil {
+		t.Fatalf("Hash returned error: %v", err)
+	}
+	if gotHash != md5sum {
+		t.Fatalf("Hash = %q, want %q", gotHash, md5sum)
+	}
+	if o.downloadURL != "https://example.invalid/archived.jpg" {
+		t.Fatalf("downloadURL = %q, want archived URL", o.downloadURL)
+	}
+}
+
+func TestNewObjectUnknownSizeIsZero(t *testing.T) {
+	o := (&Fs{}).newObjectFromImageInAlbum("photo.jpg", albumImage{
+		URI:      "/api/v2/album/AbCdEf/image/ImgOne",
+		FileName: "photo.jpg",
+	}, "/api/v2/album/AbCdEf", "photo.jpg")
+	if o.Size() != 0 {
+		t.Fatalf("Size = %d, want 0", o.Size())
+	}
+}
+
 func TestSmugMugMetadataPatch(t *testing.T) {
 	patch, err := smugMugMetadataPatch(fs.Metadata{
 		"title":     "Cover",
@@ -465,6 +552,27 @@ func TestObjectOpenUsesUnsignedDownloadClient(t *testing.T) {
 	}
 }
 
+func TestFindDownloadDetails(t *testing.T) {
+	details := findDownloadDetails(map[string]any{
+		"Response": map[string]any{
+			"Image": map[string]any{
+				"ArchivedUri":  "https://example.invalid/archive.jpg",
+				"ArchivedSize": float64(12),
+				"ArchivedMD5":  "0123456789abcdef0123456789abcdef",
+			},
+		},
+	})
+	if details.URL != "https://example.invalid/archive.jpg" {
+		t.Fatalf("URL = %q, want archived URL", details.URL)
+	}
+	if details.Size != 12 {
+		t.Fatalf("Size = %d, want 12", details.Size)
+	}
+	if details.MD5 != "0123456789abcdef0123456789abcdef" {
+		t.Fatalf("MD5 = %q, want archived MD5", details.MD5)
+	}
+}
+
 func TestUploadWithNonSeekableBodyReturnsHTTPError(t *testing.T) {
 	ctx := context.Background()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -497,6 +605,55 @@ func TestUploadWithNonSeekableBodyReturnsHTTPError(t *testing.T) {
 	}
 }
 
+func TestUploadRetriesSeekableAccountingBody(t *testing.T) {
+	ctx := context.Background()
+	var requests int
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Errorf("ReadAll returned error: %v", err)
+		}
+		if string(body) != "body" {
+			t.Errorf("request body = %q, want %q", body, "body")
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if requests == 1 {
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte(`{"Code":500,"Message":"retry me"}`))
+			return
+		}
+		_, _ = w.Write([]byte(`{"stat":"ok","Image":{"ImageUri":"/api/v2/image/ImgOne","AlbumImageUri":"/api/v2/album/AbCdEf/image/ImgOne"}}`))
+	}))
+	defer server.Close()
+
+	target, err := url.Parse(server.URL)
+	if err != nil {
+		t.Fatalf("url.Parse returned error: %v", err)
+	}
+	client := server.Client()
+	client.Transport = rewriteTransport{
+		base:   client.Transport,
+		target: target,
+	}
+	f := &Fs{
+		client: client,
+		pacer:  fs.NewPacer(ctx, pacer.NewDefault()),
+	}
+
+	var upload uploadResponse
+	err = f.upload(ctx, &testAccounter{in: bytes.NewReader([]byte("body"))}, 4, nil, "", &upload)
+	if err != nil {
+		t.Fatalf("upload returned error: %v", err)
+	}
+	if requests != 2 {
+		t.Fatalf("requests = %d, want 2", requests)
+	}
+	if upload.Image.ImageURI != "/api/v2/image/ImgOne" {
+		t.Fatalf("ImageURI = %q, want uploaded image URI", upload.Image.ImageURI)
+	}
+}
+
 type rewriteTransport struct {
 	base   http.RoundTripper
 	target *url.URL
@@ -515,6 +672,26 @@ func (t rewriteTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	clone.URL.RawQuery = t.target.RawQuery
 	clone.Host = t.target.Host
 	return base.RoundTrip(clone)
+}
+
+type testAccounter struct {
+	in io.Reader
+}
+
+func (a *testAccounter) Read(p []byte) (int, error) {
+	return a.in.Read(p)
+}
+
+func (a *testAccounter) OldStream() io.Reader {
+	return a.in
+}
+
+func (a *testAccounter) SetStream(in io.Reader) {
+	a.in = in
+}
+
+func (a *testAccounter) WrapStream(in io.Reader) io.Reader {
+	return &testAccounter{in: in}
 }
 
 func TestListPreservesDuplicateFileNames(t *testing.T) {

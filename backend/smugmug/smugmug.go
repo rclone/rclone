@@ -25,6 +25,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -54,9 +56,7 @@ const (
 	cacheFilePrefix   = "rclone-smugmug-upload-"
 	configAccessToken = "access_token"
 
-	obscureIVSize            = 16
-	smugMugAPISecretLength   = 64
-	minAccessTokenSecretSize = 16
+	obscureIVSize = 16
 )
 
 var (
@@ -307,7 +307,7 @@ func init() {
 			Sensitive:  true,
 		}, {
 			Name:     "md5_memory_limit",
-			Help:     "Files bigger than this will be cached on disk when rclone must calculate upload MD5.",
+			Help:     "Files bigger than this will be cached on disk when rclone must cache an upload body before sending it.",
 			Default:  fs.SizeSuffix(32 * 1024 * 1024),
 			Advanced: true,
 		}, {
@@ -369,6 +369,7 @@ type Object struct {
 	latitude      *float64
 	longitude     *float64
 	altitude      *float64
+	md5           string
 	webURI        string
 	imageURI      string
 	albumImageURI string
@@ -544,6 +545,12 @@ type commandImageTransferInfo struct {
 	ServerSide          bool   `json:"server_side"`
 }
 
+type downloadDetails struct {
+	URL  string
+	Size int64
+	MD5  string
+}
+
 type albumImage struct {
 	URI          string             `json:"Uri"`
 	FileName     string             `json:"FileName"`
@@ -555,6 +562,8 @@ type albumImage struct {
 	Longitude    apiFloat           `json:"Longitude"`
 	Altitude     apiFloat           `json:"Altitude"`
 	ArchivedURI  string             `json:"ArchivedUri"`
+	ArchivedSize int64              `json:"ArchivedSize"`
+	ArchivedMD5  string             `json:"ArchivedMD5"`
 	OriginalSize int64              `json:"OriginalSize"`
 	Size         int64              `json:"Size"`
 	Date         string             `json:"Date"`
@@ -593,11 +602,20 @@ func Config(ctx context.Context, name string, m configmap.Mapper, in fs.ConfigIn
 	if err != nil {
 		return nil, err
 	}
-	if opt.AccessToken != "" && opt.AccessTokenSecret != "" {
-		return nil, nil
-	}
+	hasToken := opt.AccessToken != "" && opt.AccessTokenSecret != ""
 
 	switch {
+	case in.State == "" && hasToken:
+		return fs.ConfigConfirm("refresh", true, "config_refresh_token", "Token already configured - replace it?")
+	case in.State == "refresh":
+		replace, err := strconv.ParseBool(in.Result)
+		if err != nil {
+			return fs.ConfigError("", fmt.Sprintf("Invalid refresh response: %v", err))
+		}
+		if !replace {
+			return nil, nil
+		}
+		fallthrough
 	case in.State == "":
 		token, secret, err := requestToken(ctx, opt)
 		if err != nil {
@@ -640,13 +658,13 @@ func getOptions(m configmap.Mapper) (*Options, error) {
 	if opt.APISecret == "" {
 		opt.APISecret = obscure.MustReveal(defaultAPISecret)
 	} else {
-		opt.APISecret, err = revealObscured("api_secret", opt.APISecret, smugMugAPISecretLength)
+		opt.APISecret, err = revealObscured("api_secret", opt.APISecret)
 		if err != nil {
 			return nil, err
 		}
 	}
 	if opt.AccessTokenSecret != "" {
-		opt.AccessTokenSecret, err = revealObscured("access_token_secret", opt.AccessTokenSecret, minAccessTokenSecretSize)
+		opt.AccessTokenSecret, err = revealObscured("access_token_secret", opt.AccessTokenSecret)
 		if err != nil {
 			return nil, err
 		}
@@ -657,19 +675,26 @@ func getOptions(m configmap.Mapper) (*Options, error) {
 	return opt, nil
 }
 
-func revealObscured(name, in string, minPlainSize int) (string, error) {
+func revealObscured(name, in string) (string, error) {
 	decoded, err := base64.RawURLEncoding.DecodeString(in)
 	if err != nil {
 		return "", fmt.Errorf("%s must be stored obscured; use `rclone config` or `rclone obscure`: %w", name, err)
 	}
-	if len(decoded) < obscureIVSize+minPlainSize {
+	if len(decoded) <= obscureIVSize {
 		return "", fmt.Errorf("%s must be stored obscured; use `rclone config` or `rclone obscure`", name)
 	}
 	out, err := obscure.Reveal(in)
 	if err != nil {
 		return "", fmt.Errorf("failed to reveal %s: %w", name, err)
 	}
+	if !looksLikeSecret(out) {
+		return "", fmt.Errorf("%s must be stored obscured; use `rclone config` or `rclone obscure`", name)
+	}
 	return out, nil
+}
+
+func looksLikeSecret(in string) bool {
+	return in != "" && utf8.ValidString(in) && !strings.ContainsFunc(in, unicode.IsControl)
 }
 
 // NewFs constructs an Fs from the path.
@@ -769,7 +794,7 @@ func (f *Fs) Precision() time.Duration {
 
 // Hashes returns the supported hash types of the filesystem.
 func (f *Fs) Hashes() hash.Set {
-	return hash.NewHashSet()
+	return hash.NewHashSet(hash.MD5)
 }
 
 // Features returns the optional features of this Fs.
@@ -1640,12 +1665,12 @@ func (f *Fs) newObjectFromImage(remote string, image albumImage) *Object {
 }
 
 func (f *Fs) newObjectFromImageInAlbum(remote string, image albumImage, albumURI, albumRemote string) *Object {
-	size := image.OriginalSize
+	size := image.ArchivedSize
 	if size == 0 {
-		size = image.Size
+		size = image.OriginalSize
 	}
 	if size == 0 {
-		size = -1
+		size = image.Size
 	}
 	modTime := parseSmugMugTime(image.LastUpdated)
 	if modTime.IsZero() {
@@ -1670,6 +1695,7 @@ func (f *Fs) newObjectFromImageInAlbum(remote string, image albumImage, albumURI
 		latitude:      image.Latitude.ptr(),
 		longitude:     image.Longitude.ptr(),
 		altitude:      image.Altitude.ptr(),
+		md5:           normalizeMD5(image.ArchivedMD5),
 		webURI:        image.WebURI,
 		imageURI:      imageURI,
 		albumImageURI: image.URI,
@@ -1852,7 +1878,10 @@ func (o *Object) Remote() string {
 
 // Hash returns the selected checksum.
 func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
-	return "", hash.ErrUnsupported
+	if ty != hash.MD5 {
+		return "", hash.ErrUnsupported
+	}
+	return o.md5, nil
 }
 
 // ModTime returns the modification date of the file.
@@ -2061,7 +2090,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return errors.New("can't upload object of unknown size to SmugMug")
 	}
 
-	md5Base64, uploadBody, cleanup, err := o.prepareUpload(ctx, in, src)
+	md5Hex, md5Base64, uploadBody, cleanup, err := o.prepareUpload(ctx, in, src)
 	if cleanup != nil {
 		defer cleanup()
 	}
@@ -2070,7 +2099,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	var upload uploadResponse
-	albumURI, albumRemote, err := o.fs.uploadTarget(ctx, src.Remote())
+	remote := o.remote
+	if remote == "" {
+		remote = src.Remote()
+	}
+	albumURI, albumRemote, err := o.fs.uploadTarget(ctx, remote)
 	if err != nil {
 		return err
 	}
@@ -2102,12 +2135,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if upload.Stat != "" && upload.Stat != "ok" {
 		return fmt.Errorf("SmugMug upload failed: %s", upload.Message)
 	}
-	o.remote = src.Remote()
+	o.remote = remote
 	o.albumURI = albumURI
 	o.albumRemote = albumRemote
 	o.size = size
 	o.modTime = src.ModTime(ctx)
 	o.contentType = contentType
+	o.md5 = normalizeMD5(md5Hex)
 	o.imageURI = upload.Image.ImageURI
 	o.albumImageURI = upload.Image.AlbumImageURI
 	o.setMetadata(metadata)
@@ -2115,28 +2149,32 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 }
 
 func (o *Object) prepareUpload(ctx context.Context, in io.Reader, src fs.ObjectInfo) (
-	md5Base64 string, out io.Reader, cleanup func(), err error,
+	md5Hex, md5Base64 string, out io.Reader, cleanup func(), err error,
 ) {
+	var wrap accounting.WrapFn
+	unwrapped, wrap := accounting.UnWrap(in)
+
 	md5Hex, hashErr := src.Hash(ctx, hash.MD5)
 	if hashErr == nil && md5Hex != "" {
+		md5Hex = strings.ToLower(md5Hex)
 		md5Base64, err = md5HexToBase64(md5Hex)
 		if err != nil {
-			return "", nil, nil, err
+			return "", "", nil, nil, err
 		}
-		return md5Base64, in, func() {}, nil
+		if _, ok := uploadSeeker(unwrapped); ok {
+			return md5Hex, md5Base64, wrap(unwrapped), func() {}, nil
+		}
 	}
 
-	var wrap accounting.WrapFn
-	in, wrap = accounting.UnWrap(in)
-	md5Hex, out, cleanup, err = readMD5(in, src.Size(), int64(o.fs.opt.MD5MemoryLimit))
+	md5Hex, out, cleanup, err = readMD5(unwrapped, src.Size(), int64(o.fs.opt.MD5MemoryLimit))
 	if err != nil {
-		return "", nil, cleanup, fmt.Errorf("failed to calculate upload MD5: %w", err)
+		return "", "", nil, cleanup, fmt.Errorf("failed to calculate upload MD5: %w", err)
 	}
 	md5Base64, err = md5HexToBase64(md5Hex)
 	if err != nil {
-		return "", nil, cleanup, err
+		return "", "", nil, cleanup, err
 	}
-	return md5Base64, wrap(out), cleanup, nil
+	return md5Hex, md5Base64, wrap(out), cleanup, nil
 }
 
 func (f *Fs) upload(
@@ -2147,16 +2185,16 @@ func (f *Fs) upload(
 	replaceURI string,
 	out *uploadResponse,
 ) (err error) {
+	seeker, seekable := uploadSeeker(in)
 	var resp *http.Response
 	var tried bool
 	err = f.pacer.Call(func() (bool, error) {
 		if tried {
-			if seeker, ok := in.(io.Seeker); ok {
-				if _, err := seeker.Seek(0, io.SeekStart); err != nil {
-					return false, err
-				}
-			} else {
+			if !seekable {
 				return false, errors.New("can't retry SmugMug upload with a non-seekable body")
+			}
+			if _, err := seeker.Seek(0, io.SeekStart); err != nil {
+				return false, err
 			}
 		}
 		tried = true
@@ -2174,7 +2212,7 @@ func (f *Fs) upload(
 		resp, err = f.client.Do(req)
 		retry, err := shouldRetry(ctx, resp, err)
 		if retry {
-			if _, ok := in.(io.Seeker); !ok {
+			if !seekable {
 				if resp != nil {
 					return false, nil
 				}
@@ -2206,6 +2244,19 @@ func (f *Fs) upload(
 	return nil
 }
 
+func uploadSeeker(in io.Reader) (io.Seeker, bool) {
+	if seeker, ok := in.(io.Seeker); ok {
+		return seeker, true
+	}
+	unwrapped, _ := accounting.UnWrap(in)
+	if unwrapped != in {
+		if seeker, ok := unwrapped.(io.Seeker); ok {
+			return seeker, true
+		}
+	}
+	return nil, false
+}
+
 // Remove removes this object.
 func (o *Object) Remove(ctx context.Context) error {
 	uri := o.albumImageURI
@@ -2233,21 +2284,58 @@ func (o *Object) getDownloadURL(ctx context.Context) (string, error) {
 	if err := o.fs.doJSON(ctx, http.MethodGet, uri, nil, &raw); err != nil {
 		return "", err
 	}
-	downloadURL := findDownloadURL(raw)
-	if downloadURL == "" {
+	details := findDownloadDetails(raw)
+	if details.URL == "" {
 		return "", errors.New("SmugMug response did not include a downloadable media URL")
 	}
-	o.downloadURL = downloadURL
-	return downloadURL, nil
+	if details.Size > 0 {
+		o.size = details.Size
+	}
+	if md5 := normalizeMD5(details.MD5); md5 != "" {
+		o.md5 = md5
+	}
+	o.downloadURL = details.URL
+	return o.downloadURL, nil
 }
 
-func findDownloadURL(v any) string {
-	preferred := []string{"OriginalUrl", "OriginalURL", "ArchivedUri", "LargestImageUrl", "LargestImageURL", "Url", "URL"}
+func findDownloadDetails(v any) downloadDetails {
+	preferred := []struct {
+		urlKeys  []string
+		sizeKeys []string
+		md5Keys  []string
+	}{
+		{
+			urlKeys:  []string{"OriginalUrl", "OriginalURL"},
+			sizeKeys: []string{"OriginalSize"},
+			md5Keys:  []string{"OriginalMD5"},
+		},
+		{
+			urlKeys:  []string{"ArchivedUri", "ArchivedURI"},
+			sizeKeys: []string{"ArchivedSize"},
+			md5Keys:  []string{"ArchivedMD5"},
+		},
+		{
+			urlKeys:  []string{"LargestImageUrl", "LargestImageURL"},
+			sizeKeys: []string{"LargestImageSize", "LargestSize"},
+			md5Keys:  []string{"LargestImageMD5", "LargestMD5"},
+		},
+		{
+			urlKeys:  []string{"Url", "URL"},
+			sizeKeys: []string{"Size"},
+			md5Keys:  []string{"MD5"},
+		},
+	}
 	switch x := v.(type) {
 	case map[string]any:
-		for _, key := range preferred {
-			if value, ok := x[key].(string); ok && strings.HasPrefix(value, "http") {
-				return value
+		for _, candidate := range preferred {
+			for _, key := range candidate.urlKeys {
+				if value, ok := x[key].(string); ok && strings.HasPrefix(value, "http") {
+					return downloadDetails{
+						URL:  value,
+						Size: firstInt64Value(x, candidate.sizeKeys...),
+						MD5:  firstStringValue(x, candidate.md5Keys...),
+					}
+				}
 			}
 		}
 		keys := make([]string, 0, len(x))
@@ -2256,18 +2344,52 @@ func findDownloadURL(v any) string {
 		}
 		sort.Strings(keys)
 		for _, key := range keys {
-			if value := findDownloadURL(x[key]); value != "" {
+			if value := findDownloadDetails(x[key]); value.URL != "" {
 				return value
 			}
 		}
 	case []any:
 		for _, item := range x {
-			if value := findDownloadURL(item); value != "" {
+			if value := findDownloadDetails(item); value.URL != "" {
 				return value
 			}
 		}
 	}
+	return downloadDetails{}
+}
+
+func firstStringValue(values map[string]any, keys ...string) string {
+	for _, key := range keys {
+		if value, ok := values[key].(string); ok {
+			return value
+		}
+	}
 	return ""
+}
+
+func firstInt64Value(values map[string]any, keys ...string) int64 {
+	for _, key := range keys {
+		switch value := values[key].(type) {
+		case float64:
+			if value > 0 {
+				return int64(value)
+			}
+		case int64:
+			if value > 0 {
+				return value
+			}
+		case int:
+			if value > 0 {
+				return int64(value)
+			}
+		case string:
+			n, err := strconv.ParseInt(strings.TrimSpace(value), 10, 64)
+			if err == nil && n > 0 {
+				return n
+			}
+		}
+	}
+	return 0
 }
 
 func requestToken(ctx context.Context, opt *Options) (token, secret string, err error) {
@@ -2740,6 +2862,17 @@ func md5HexToBase64(in string) (string, error) {
 		return "", fmt.Errorf("failed to decode MD5 %q: %w", in, err)
 	}
 	return base64.StdEncoding.EncodeToString(sum), nil
+}
+
+func normalizeMD5(in string) string {
+	in = strings.ToLower(strings.TrimSpace(in))
+	if len(in) != 32 {
+		return ""
+	}
+	if _, err := hex.DecodeString(in); err != nil {
+		return ""
+	}
+	return in
 }
 
 func readMD5(in io.Reader, size, threshold int64) (md5sum string, out io.Reader, cleanup func(), err error) {
