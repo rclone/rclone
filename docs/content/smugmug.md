@@ -349,7 +349,7 @@ Properties:
 
 #### --smugmug-md5-memory-limit
 
-Files bigger than this will be cached on disk when rclone must calculate upload MD5.
+Files bigger than this will be cached on disk when rclone must cache an upload body before sending it.
 
 Properties:
 
