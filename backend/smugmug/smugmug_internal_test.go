@@ -215,10 +215,10 @@ func TestCommandNodeInfoInParent(t *testing.T) {
 	item := node{
 		Name:   "RiverLight",
 		Type:   "Album",
-		Uri:    "/api/v2/node/NdAlbum",
-		WebUri: "https://example.invalid/RiverLight",
+		URI:    "/api/v2/node/NdAlbum",
+		WebURI: "https://example.invalid/RiverLight",
 		Uris: map[string]apiLink{
-			"Album": {Uri: "/api/v2/album/AbCdEf"},
+			"Album": {URI: "/api/v2/album/AbCdEf"},
 		},
 	}
 
@@ -245,8 +245,8 @@ func TestAPILinkUnmarshal(t *testing.T) {
 		if err := json.Unmarshal([]byte(test.in), &got); err != nil {
 			t.Fatalf("json.Unmarshal(%s) returned error: %v", test.in, err)
 		}
-		if got.Uri != test.want {
-			t.Fatalf("json.Unmarshal(%s) = %q, want %q", test.in, got.Uri, test.want)
+		if got.URI != test.want {
+			t.Fatalf("json.Unmarshal(%s) = %q, want %q", test.in, got.URI, test.want)
 		}
 	}
 }
@@ -273,8 +273,8 @@ func TestAlbumImageAPILinkUnmarshal(t *testing.T) {
 			if err := json.Unmarshal([]byte(test.in), &got); err != nil {
 				t.Fatalf("json.Unmarshal(%s) returned error: %v", test.in, err)
 			}
-			if got.Uris["Image"].Uri != test.want {
-				t.Fatalf("json.Unmarshal(%s) = %q, want %q", test.in, got.Uris["Image"].Uri, test.want)
+			if got.Uris["Image"].URI != test.want {
+				t.Fatalf("json.Unmarshal(%s) = %q, want %q", test.in, got.Uris["Image"].URI, test.want)
 			}
 		})
 	}

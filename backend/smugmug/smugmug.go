@@ -377,7 +377,7 @@ type Object struct {
 
 type apiResponse struct {
 	Response struct {
-		Uri        string       `json:"Uri"`
+		URI        string       `json:"Uri"`
 		Album      *album       `json:"Album"`
 		AlbumImage []albumImage `json:"AlbumImage"`
 		Image      []albumImage `json:"Image"`
@@ -389,7 +389,7 @@ type apiResponse struct {
 }
 
 type apiLink struct {
-	Uri string `json:"Uri"`
+	URI string `json:"Uri"`
 }
 
 func (l *apiLink) UnmarshalJSON(b []byte) error {
@@ -398,7 +398,7 @@ func (l *apiLink) UnmarshalJSON(b []byte) error {
 	}
 	var s string
 	if err := json.Unmarshal(b, &s); err == nil {
-		l.Uri = s
+		l.URI = s
 		return nil
 	}
 	type link apiLink
@@ -464,21 +464,21 @@ func (f apiFloat) ptr() *float64 {
 }
 
 type album struct {
-	Uri     string             `json:"Uri"`
+	URI     string             `json:"Uri"`
 	Name    string             `json:"Name"`
-	UrlName string             `json:"UrlName"`
-	WebUri  string             `json:"WebUri"`
+	URLName string             `json:"UrlName"`
+	WebURI  string             `json:"WebUri"`
 	Uris    map[string]apiLink `json:"Uris"`
 }
 
 type node struct {
 	Name         string             `json:"Name"`
-	Uri          string             `json:"Uri"`
+	URI          string             `json:"Uri"`
 	NodeID       string             `json:"NodeID"`
 	Type         string             `json:"Type"`
-	UrlName      string             `json:"UrlName"`
-	UrlPath      string             `json:"UrlPath"`
-	WebUri       string             `json:"WebUri"`
+	URLName      string             `json:"UrlName"`
+	URLPath      string             `json:"UrlPath"`
+	WebURI       string             `json:"WebUri"`
 	DateAdded    string             `json:"DateAdded"`
 	DateModified string             `json:"DateModified"`
 	Uris         map[string]apiLink `json:"Uris"`
@@ -497,8 +497,8 @@ type authUserResponse struct {
 type user struct {
 	Name     string             `json:"Name"`
 	NickName string             `json:"NickName"`
-	Uri      string             `json:"Uri"`
-	WebUri   string             `json:"WebUri"`
+	URI      string             `json:"Uri"`
+	WebURI   string             `json:"WebUri"`
 	Uris     map[string]apiLink `json:"Uris"`
 }
 
@@ -545,7 +545,7 @@ type commandImageTransferInfo struct {
 }
 
 type albumImage struct {
-	Uri          string             `json:"Uri"`
+	URI          string             `json:"Uri"`
 	FileName     string             `json:"FileName"`
 	Title        string             `json:"Title"`
 	Caption      string             `json:"Caption"`
@@ -554,14 +554,14 @@ type albumImage struct {
 	Latitude     apiFloat           `json:"Latitude"`
 	Longitude    apiFloat           `json:"Longitude"`
 	Altitude     apiFloat           `json:"Altitude"`
-	ArchivedUri  string             `json:"ArchivedUri"`
+	ArchivedURI  string             `json:"ArchivedUri"`
 	OriginalSize int64              `json:"OriginalSize"`
 	Size         int64              `json:"Size"`
 	Date         string             `json:"Date"`
 	LastUpdated  string             `json:"LastUpdated"`
 	Format       string             `json:"Format"`
 	MimeType     string             `json:"MimeType"`
-	WebUri       string             `json:"WebUri"`
+	WebURI       string             `json:"WebUri"`
 	Uris         map[string]apiLink `json:"Uris"`
 }
 
@@ -569,8 +569,8 @@ type uploadResponse struct {
 	Stat    string `json:"stat"`
 	Message string `json:"message"`
 	Image   struct {
-		ImageUri      string `json:"ImageUri"`
-		AlbumImageUri string `json:"AlbumImageUri"`
+		ImageURI      string `json:"ImageUri"`
+		AlbumImageURI string `json:"AlbumImageUri"`
 		URL           string `json:"URL"`
 	} `json:"Image"`
 }
@@ -891,7 +891,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	if parent.albumPrefix != "" || parent.node.Type != "Folder" {
 		return fmt.Errorf("SmugMug parent path %q is not a folder", parentPath)
 	}
-	_, err = f.createNode(ctx, parent.node.Uri, parent.nodePath, "Folder", f.opt.Enc.FromStandardName(leaf), "", "")
+	_, err = f.createNode(ctx, parent.node.URI, parent.nodePath, "Folder", f.opt.Enc.FromStandardName(leaf), "", "")
 	return err
 }
 
@@ -939,7 +939,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		if loc.node.Type != "Folder" {
 			return fmt.Errorf("rmdir only removes SmugMug folders; %q is a %s", fullDir, loc.node.Type)
 		}
-		return f.doJSON(ctx, http.MethodDelete, loc.node.Uri, nil, nil)
+		return f.doJSON(ctx, http.MethodDelete, loc.node.URI, nil, nil)
 	}
 	return nil
 }
@@ -976,10 +976,10 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		if loc.albumPrefix != "" {
 			return "", fs.ErrorCantShareDirectories
 		}
-		if loc.node.WebUri == "" {
+		if loc.node.WebURI == "" {
 			return "", errors.New("SmugMug node response did not include a web URL")
 		}
-		return loc.node.WebUri, nil
+		return loc.node.WebURI, nil
 	}
 
 	if remote == "" {
@@ -987,10 +987,10 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		if err != nil {
 			return "", err
 		}
-		if album.WebUri == "" {
+		if album.WebURI == "" {
 			return "", errors.New("SmugMug album response did not include a web URL")
 		}
-		return album.WebUri, nil
+		return album.WebURI, nil
 	}
 	return "", fs.ErrorCantShareDirectories
 }
@@ -1008,7 +1008,7 @@ func (f *Fs) listLibrary(ctx context.Context, dir string) (fs.DirEntries, error)
 		return f.listAlbumEntries(ctx, dir, loc.albumURI, loc.albumPrefix)
 	}
 
-	children, err := f.listChildNodes(ctx, loc.node.Uri)
+	children, err := f.listChildNodes(ctx, loc.node.URI)
 	if err != nil {
 		return nil, err
 	}
@@ -1146,7 +1146,7 @@ func (f *Fs) resolveLibraryPathFrom(ctx context.Context, rootNodeURI, remote str
 				nodePath:    strings.Join(nodePath, "/"),
 			}, nil
 		}
-		children, err := f.listChildNodes(ctx, current.Uri)
+		children, err := f.listChildNodes(ctx, current.URI)
 		if err != nil {
 			return nil, err
 		}
@@ -1174,7 +1174,7 @@ func (f *Fs) resolveLibraryPathFrom(ctx context.Context, rootNodeURI, remote str
 
 func (f *Fs) findChildNode(nodes []node, name string) (node, bool) {
 	for _, item := range nodes {
-		if f.nodeName(item) == name || item.UrlName == name || path.Base(item.UrlPath) == name {
+		if f.nodeName(item) == name || item.URLName == name || path.Base(item.URLPath) == name {
 			return item, true
 		}
 	}
@@ -1184,10 +1184,10 @@ func (f *Fs) findChildNode(nodes []node, name string) (node, bool) {
 func (f *Fs) nodeName(item node) string {
 	name := item.Name
 	if name == "" {
-		name = item.UrlName
+		name = item.URLName
 	}
 	if name == "" {
-		name = path.Base(strings.Trim(item.UrlPath, "/"))
+		name = path.Base(strings.Trim(item.URLPath, "/"))
 	}
 	if name == "" {
 		name = item.NodeID
@@ -1199,7 +1199,7 @@ func (f *Fs) albumURIFromNode(item node) string {
 	if item.Uris == nil {
 		return ""
 	}
-	return item.Uris["Album"].Uri
+	return item.Uris["Album"].URI
 }
 
 func (f *Fs) listImages(ctx context.Context) ([]albumImage, error) {
@@ -1234,7 +1234,7 @@ func (f *Fs) getAuthRootNodeURI(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	root := user.Uris["Node"].Uri
+	root := user.Uris["Node"].URI
 	if root == "" {
 		return "", errors.New("SmugMug auth user response did not include a root node")
 	}
@@ -1328,7 +1328,7 @@ func (f *Fs) commandStartNode(ctx context.Context, arg []string, opt map[string]
 	if err != nil {
 		return "", "", err
 	}
-	return loc.node.Uri, loc.nodePath, nil
+	return loc.node.URI, loc.nodePath, nil
 }
 
 func (f *Fs) resolveNodePathFrom(ctx context.Context, rootNodeURI, remote string) (*libraryLocation, error) {
@@ -1350,7 +1350,7 @@ func (f *Fs) listCommandNodes(ctx context.Context, startNodeURI, startPath, kind
 			out = append(out, f.commandNodeInfo(child, childPath))
 		}
 		if recursive && child.Type == "Folder" {
-			sub, err := f.listCommandNodes(ctx, child.Uri, childPath, kind, true)
+			sub, err := f.listCommandNodes(ctx, child.URI, childPath, kind, true)
 			if err != nil {
 				return nil, err
 			}
@@ -1365,9 +1365,9 @@ func (f *Fs) commandNodeInfo(item node, itemPath string) commandNodeInfo {
 		Type:     item.Type,
 		Name:     f.nodeName(item),
 		Path:     itemPath,
-		NodeURI:  item.Uri,
+		NodeURI:  item.URI,
 		AlbumURI: f.albumURIFromNode(item),
-		WebURI:   item.WebUri,
+		WebURI:   item.WebURI,
 	}
 }
 
@@ -1407,7 +1407,7 @@ func (f *Fs) createNode(ctx context.Context, parentURI, parentPath, kind, name, 
 			if item.Uris == nil {
 				item.Uris = map[string]apiLink{}
 			}
-			item.Uris["Album"] = apiLink{Uri: albumURI}
+			item.Uris["Album"] = apiLink{URI: albumURI}
 		}
 	}
 	return f.commandNodeInfoInParent(item, parentPath), nil
@@ -1443,7 +1443,7 @@ func (f *Fs) commandCreateParent(ctx context.Context, opt map[string]string) (pa
 	if loc.node.Type != "Folder" {
 		return "", "", fmt.Errorf("SmugMug path %q is a %s, not a folder", pathOpt, loc.node.Type)
 	}
-	return loc.node.Uri, loc.nodePath, nil
+	return loc.node.URI, loc.nodePath, nil
 }
 
 func commandImageTransferArgs(arg []string, opt map[string]string) (src, dst string, err error) {
@@ -1573,9 +1573,9 @@ func (f *Fs) UserInfo(ctx context.Context) (map[string]string, error) {
 	return map[string]string{
 		"name":          user.Name,
 		"nick_name":     user.NickName,
-		"user_uri":      user.Uri,
-		"web_uri":       user.WebUri,
-		"root_node_uri": user.Uris["Node"].Uri,
+		"user_uri":      user.URI,
+		"web_uri":       user.WebURI,
+		"root_node_uri": user.Uris["Node"].URI,
 	}, nil
 }
 
@@ -1590,9 +1590,9 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		return commandRootInfo{
 			Name:        user.Name,
 			NickName:    user.NickName,
-			UserURI:     user.Uri,
-			WebURI:      user.WebUri,
-			RootNodeURI: user.Uris["Node"].Uri,
+			UserURI:     user.URI,
+			WebURI:      user.WebURI,
+			RootNodeURI: user.Uris["Node"].URI,
 		}, nil
 	case "list", "list-folders", "list-albums":
 		startNodeURI, startPath, err := f.commandStartNode(ctx, arg, opt)
@@ -1651,9 +1651,9 @@ func (f *Fs) newObjectFromImageInAlbum(remote string, image albumImage, albumURI
 	if modTime.IsZero() {
 		modTime = parseSmugMugTime(image.Date)
 	}
-	imageURI := image.Uris["Image"].Uri
+	imageURI := image.Uris["Image"].URI
 	if imageURI == "" {
-		imageURI = imageURIFromAlbumImageURI(image.Uri)
+		imageURI = imageURIFromAlbumImageURI(image.URI)
 	}
 	return &Object{
 		fs:            f,
@@ -1670,10 +1670,10 @@ func (f *Fs) newObjectFromImageInAlbum(remote string, image albumImage, albumURI
 		latitude:      image.Latitude.ptr(),
 		longitude:     image.Longitude.ptr(),
 		altitude:      image.Altitude.ptr(),
-		webURI:        image.WebUri,
+		webURI:        image.WebURI,
 		imageURI:      imageURI,
-		albumImageURI: image.Uri,
-		downloadURL:   image.ArchivedUri,
+		albumImageURI: image.URI,
+		downloadURL:   image.ArchivedURI,
 	}
 }
 
@@ -1696,19 +1696,13 @@ func (f *Fs) remoteFromImage(image albumImage) string {
 		name = image.Title
 	}
 	if name == "" {
-		name = path.Base(image.Uri)
+		name = path.Base(image.URI)
 	}
 	return cleanRemote(f.opt.Enc.ToStandardPath(name))
 }
 
-func (f *Fs) encodedRemote(remote string) string {
-	fullRemote := cleanRemote(path.Join(f.root, remote))
-	return f.opt.Enc.FromStandardPath(fullRemote)
-}
-
-func (f *Fs) doJSON(ctx context.Context, method, uri string, in, out any) error {
+func (f *Fs) doJSON(ctx context.Context, method, uri string, in, out any) (err error) {
 	var body []byte
-	var err error
 	if in != nil {
 		body, err = json.Marshal(in)
 		if err != nil {
@@ -1741,7 +1735,7 @@ func (f *Fs) doJSON(ctx context.Context, method, uri string, in, out any) error 
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer fs.CheckClose(resp.Body, &err)
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
@@ -1919,10 +1913,10 @@ func (o *Object) publicLink(ctx context.Context) (string, error) {
 	default:
 		return "", errors.New("SmugMug image response did not include image metadata")
 	}
-	if image.WebUri == "" {
+	if image.WebURI == "" {
 		return "", errors.New("SmugMug image response did not include a web URL")
 	}
-	o.webURI = image.WebUri
+	o.webURI = image.WebURI
 	return o.webURI, nil
 }
 
@@ -2114,8 +2108,8 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	o.size = size
 	o.modTime = src.ModTime(ctx)
 	o.contentType = contentType
-	o.imageURI = upload.Image.ImageUri
-	o.albumImageURI = upload.Image.AlbumImageUri
+	o.imageURI = upload.Image.ImageURI
+	o.albumImageURI = upload.Image.AlbumImageURI
 	o.setMetadata(metadata)
 	return nil
 }
@@ -2152,10 +2146,10 @@ func (f *Fs) upload(
 	headers map[string]string,
 	replaceURI string,
 	out *uploadResponse,
-) error {
+) (err error) {
 	var resp *http.Response
 	var tried bool
-	err := f.pacer.Call(func() (bool, error) {
+	err = f.pacer.Call(func() (bool, error) {
 		if tried {
 			if seeker, ok := in.(io.Seeker); ok {
 				if _, err := seeker.Seek(0, io.SeekStart); err != nil {
@@ -2196,7 +2190,7 @@ func (f *Fs) upload(
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer fs.CheckClose(resp.Body, &err)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
@@ -2304,7 +2298,7 @@ func oauthRequest(
 	opt *Options,
 	method, rawURL, token, tokenSecret string,
 	extra map[string]string,
-) (url.Values, error) {
+) (values url.Values, err error) {
 	req, err := http.NewRequestWithContext(ctx, method, rawURL, nil)
 	if err != nil {
 		return nil, err
@@ -2322,7 +2316,7 @@ func oauthRequest(
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer fs.CheckClose(resp.Body, &err)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
@@ -2330,7 +2324,7 @@ func oauthRequest(
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		return nil, parseHTTPError(resp, body)
 	}
-	values, err := url.ParseQuery(string(body))
+	values, err = url.ParseQuery(string(body))
 	if err != nil {
 		return nil, err
 	}
@@ -2533,7 +2527,7 @@ func (f *Fs) resolveAlbumURI(ctx context.Context, in string) (string, error) {
 	return f.resolveAlbumPath(ctx, "", albumPathFromURLPath(in))
 }
 
-func (f *Fs) resolveAlbumWebURL(ctx context.Context, u *url.URL) (string, error) {
+func (f *Fs) resolveAlbumWebURL(ctx context.Context, u *url.URL) (albumURI string, err error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	if err != nil {
 		return "", err
@@ -2542,7 +2536,7 @@ func (f *Fs) resolveAlbumWebURL(ctx context.Context, u *url.URL) (string, error)
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer fs.CheckClose(resp.Body, &err)
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		return "", fmt.Errorf("SmugMug page lookup failed: %s", resp.Status)
 	}
@@ -2566,10 +2560,7 @@ func (f *Fs) resolveAlbumWebURL(ctx context.Context, u *url.URL) (string, error)
 }
 
 func (f *Fs) resolveAlbumPath(ctx context.Context, hostOrNick, albumPath string) (string, error) {
-	nickname := hostOrNick
-	if strings.HasSuffix(nickname, ".smugmug.com") {
-		nickname = strings.TrimSuffix(nickname, ".smugmug.com")
-	}
+	nickname := strings.TrimSuffix(hostOrNick, ".smugmug.com")
 	if strings.Contains(nickname, ".") || nickname == "" {
 		return "", errors.New("could not determine SmugMug nickname for album path")
 	}
@@ -2581,12 +2572,12 @@ func (f *Fs) resolveAlbumPath(ctx context.Context, hostOrNick, albumPath string)
 	if err := f.doJSON(ctx, http.MethodGet, uri, nil, &result); err != nil {
 		return "", err
 	}
-	if result.Response.Album != nil && result.Response.Album.Uri != "" {
-		return result.Response.Album.Uri, nil
+	if result.Response.Album != nil && result.Response.Album.URI != "" {
+		return result.Response.Album.URI, nil
 	}
 	if result.Response.Node != nil {
-		if albumLink, ok := result.Response.Node.Uris["Album"]; ok && albumLink.Uri != "" {
-			return albumLink.Uri, nil
+		if albumLink, ok := result.Response.Node.Uris["Album"]; ok && albumLink.URI != "" {
+			return albumLink.URI, nil
 		}
 	}
 	return "", fmt.Errorf("SmugMug path %q did not resolve to an album", albumPath)
@@ -2599,8 +2590,8 @@ func (f *Fs) resolveNodeAlbumURI(ctx context.Context, nodeID string) (string, er
 		return "", err
 	}
 	if result.Response.Node != nil {
-		if albumLink, ok := result.Response.Node.Uris["Album"]; ok && albumLink.Uri != "" {
-			return albumLink.Uri, nil
+		if albumLink, ok := result.Response.Node.Uris["Album"]; ok && albumLink.URI != "" {
+			return albumLink.URI, nil
 		}
 	}
 	return "", fmt.Errorf("SmugMug node %q is not an album", nodeID)
