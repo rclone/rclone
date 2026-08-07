@@ -205,7 +205,7 @@ func TestCmdTest(t *testing.T) {
 
 	// Test creation of simple test data
 	createSimpleTestData(t)
-	out, err = rclone("config", "create", "myCombine", "combine", "upstreams", "root=myLocal:"+testFolder)
+	_, err = rclone("config", "create", "myCombine", "combine", "upstreams", "root=myLocal:"+testFolder)
 	assert.NoError(t, err)
 
 	// Test access to config file and simple test data
