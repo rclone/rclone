@@ -751,6 +751,7 @@ func TestListPreservesDuplicateFileNames(t *testing.T) {
 	f := &Fs{
 		albumURI: server.URL + "/api/v2/album/AbCdEf",
 		client:   server.Client(),
+		srv:      newSmugMugRESTClient(server.Client()),
 		pacer:    fs.NewPacer(ctx, pacer.NewDefault()),
 	}
 	entries, err := f.List(ctx, "")
@@ -767,6 +768,7 @@ func TestListAlbumEntriesPreservesDuplicateFileNames(t *testing.T) {
 
 	f := &Fs{
 		client: server.Client(),
+		srv:    newSmugMugRESTClient(server.Client()),
 		pacer:  fs.NewPacer(ctx, pacer.NewDefault()),
 	}
 	entries, err := f.listAlbumEntries(ctx, "", server.URL+"/api/v2/album/AbCdEf", "")
@@ -794,6 +796,184 @@ func duplicateImageServer(t *testing.T) *httptest.Server {
 			}
 		}`))
 	}))
+}
+
+func TestListAlbumImagesCachesUntilAlbumChanges(t *testing.T) {
+	ctx := context.Background()
+	var listCount, deleteCount int
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodDelete {
+			deleteCount++
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"Code":200,"Message":"Ok"}`))
+			return
+		}
+		listCount++
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{
+			"Response": {
+				"AlbumImage": [
+					{"Uri": "/api/v2/album/AbCdEf/image/ImgOne", "FileName": "photo.jpg", "ArchivedSize": 1}
+				]
+			}
+		}`))
+	}))
+	defer server.Close()
+
+	albumURI := server.URL + "/api/v2/album/AbCdEf"
+	f := &Fs{
+		albumURI: albumURI,
+		client:   server.Client(),
+		srv:      newSmugMugRESTClient(server.Client()),
+		pacer:    fs.NewPacer(ctx, pacer.NewDefault()),
+	}
+
+	for i := range 3 {
+		if _, err := f.listAlbumImages(ctx, albumURI); err != nil {
+			t.Fatalf("listAlbumImages %d returned error: %v", i, err)
+		}
+	}
+	if listCount != 1 {
+		t.Fatalf("album listed %d times, want 1 (cache miss)", listCount)
+	}
+
+	o := &Object{
+		fs:            f,
+		remote:        "photo.jpg",
+		albumURI:      albumURI,
+		albumImageURI: albumURI + "/image/ImgOne",
+	}
+	if err := o.Remove(ctx); err != nil {
+		t.Fatalf("Remove returned error: %v", err)
+	}
+	if deleteCount != 1 {
+		t.Fatalf("delete count = %d, want 1", deleteCount)
+	}
+
+	if _, err := f.listAlbumImages(ctx, albumURI); err != nil {
+		t.Fatalf("listAlbumImages after Remove returned error: %v", err)
+	}
+	if listCount != 2 {
+		t.Fatalf("album listed %d times after Remove, want 2 (cache invalidated)", listCount)
+	}
+}
+
+func TestListAlbumImagesDiscardsListingThatRacedInvalidation(t *testing.T) {
+	ctx := context.Background()
+	var f *Fs
+	albumPath := "/api/v2/album/AbCdEf"
+	var listCount int
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		listCount++
+		// Simulate an upload landing in the album while this listing is in
+		// flight: the invalidation happens after the cache miss but before the
+		// response is stored.
+		if listCount == 1 {
+			f.invalidateAlbumImages(f.albumURI)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"Response":{"AlbumImage":[]}}`))
+	}))
+	defer server.Close()
+
+	f = &Fs{
+		albumURI: server.URL + albumPath,
+		client:   server.Client(),
+		srv:      newSmugMugRESTClient(server.Client()),
+		pacer:    fs.NewPacer(ctx, pacer.NewDefault()),
+	}
+
+	if _, err := f.listAlbumImages(ctx, f.albumURI); err != nil {
+		t.Fatalf("listAlbumImages returned error: %v", err)
+	}
+	if _, ok := f.getCachedAlbumImages(f.albumURI); ok {
+		t.Fatal("listing that raced an invalidation was cached")
+	}
+	if _, err := f.listAlbumImages(ctx, f.albumURI); err != nil {
+		t.Fatalf("second listAlbumImages returned error: %v", err)
+	}
+	if listCount != 2 {
+		t.Fatalf("album listed %d times, want 2 (raced listing not reused)", listCount)
+	}
+}
+
+func TestAlbumImageCacheInvalidatedByMutations(t *testing.T) {
+	ctx := context.Background()
+	albumURI := "/api/v2/album/AbCdEf"
+	images := []api.AlbumImage{{URI: albumURI + "/image/ImgOne", FileName: "photo.jpg"}}
+
+	for _, test := range []struct {
+		name   string
+		mutate func(t *testing.T, f *Fs)
+	}{
+		{
+			name: "SetMetadata",
+			mutate: func(t *testing.T, f *Fs) {
+				o := &Object{fs: f, albumURI: albumURI, albumImageURI: albumURI + "/image/ImgOne"}
+				if err := o.SetMetadata(ctx, fs.Metadata{"title": "new"}); err != nil {
+					t.Fatalf("SetMetadata returned error: %v", err)
+				}
+			},
+		},
+		{
+			name: "DirCacheFlush",
+			mutate: func(t *testing.T, f *Fs) {
+				f.DirCacheFlush()
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(`{"Code":200,"Message":"Ok"}`))
+			}))
+			defer server.Close()
+
+			f := &Fs{
+				client: server.Client(),
+				srv:    newSmugMugRESTClient(server.Client()).SetRoot(server.URL),
+				pacer:  fs.NewPacer(ctx, pacer.NewDefault()),
+			}
+			f.cacheAlbumImages(albumURI, images, f.imagesGeneration())
+			if _, ok := f.getCachedAlbumImages(albumURI); !ok {
+				t.Fatal("album images were not cached to begin with")
+			}
+			test.mutate(t, f)
+			if _, ok := f.getCachedAlbumImages(albumURI); ok {
+				t.Fatalf("album images still cached after %s", test.name)
+			}
+		})
+	}
+}
+
+func TestListAlbumImagesCacheIsPerAlbum(t *testing.T) {
+	ctx := context.Background()
+	seen := map[string]int{}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		seen[r.URL.Path]++
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"Response":{"AlbumImage":[]}}`))
+	}))
+	defer server.Close()
+
+	f := &Fs{
+		client: server.Client(),
+		srv:    newSmugMugRESTClient(server.Client()),
+		pacer:  fs.NewPacer(ctx, pacer.NewDefault()),
+	}
+	first := server.URL + "/api/v2/album/AbCdEf"
+	second := server.URL + "/api/v2/album/GhIjKl"
+	for _, albumURI := range []string{first, second, first, second} {
+		if _, err := f.listAlbumImages(ctx, albumURI); err != nil {
+			t.Fatalf("listAlbumImages(%q) returned error: %v", albumURI, err)
+		}
+	}
+	if got := seen["/api/v2/album/AbCdEf!images"]; got != 1 {
+		t.Fatalf("first album listed %d times, want 1", got)
+	}
+	if got := seen["/api/v2/album/GhIjKl!images"]; got != 1 {
+		t.Fatalf("second album listed %d times, want 1", got)
+	}
 }
 
 func assertDuplicateImageEntries(t *testing.T, entries fs.DirEntries) {

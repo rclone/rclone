@@ -360,6 +360,8 @@ type Fs struct {
 	cacheMu        sync.RWMutex
 	nodeCache      map[string]api.Node
 	childrenCache  map[string][]api.Node
+	imagesCache    map[string][]api.AlbumImage
+	imagesGen      uint64
 }
 
 // Object describes a SmugMug image.
@@ -1158,6 +1160,62 @@ func (f *Fs) flushNodeCache() {
 	defer f.cacheMu.Unlock()
 	f.nodeCache = nil
 	f.childrenCache = nil
+	f.imagesCache = nil
+	f.imagesGen++
+}
+
+// cloneImages copies the slice so a caller can't disturb the cached listing.
+//
+// The copy is shallow: the Uris map inside each image stays shared with the
+// cache. Callers treat images as read only, and deep copying every map on each
+// cache hit would cost more than the API call the cache exists to avoid.
+func cloneImages(in []api.AlbumImage) []api.AlbumImage {
+	if in == nil {
+		return nil
+	}
+	out := make([]api.AlbumImage, len(in))
+	copy(out, in)
+	return out
+}
+
+// imagesGeneration returns a counter that changes whenever any album listing is
+// invalidated. Take it before a fetch and hand it back to cacheAlbumImages so a
+// listing that raced an invalidation is discarded rather than cached.
+func (f *Fs) imagesGeneration() uint64 {
+	f.cacheMu.RLock()
+	defer f.cacheMu.RUnlock()
+	return f.imagesGen
+}
+
+func (f *Fs) cacheAlbumImages(albumURI string, images []api.AlbumImage, gen uint64) {
+	if albumURI == "" {
+		return
+	}
+	f.cacheMu.Lock()
+	defer f.cacheMu.Unlock()
+	if f.imagesGen != gen {
+		return
+	}
+	if f.imagesCache == nil {
+		f.imagesCache = make(map[string][]api.AlbumImage)
+	}
+	f.imagesCache[albumURI] = cloneImages(images)
+}
+
+func (f *Fs) getCachedAlbumImages(albumURI string) ([]api.AlbumImage, bool) {
+	f.cacheMu.RLock()
+	defer f.cacheMu.RUnlock()
+	images, ok := f.imagesCache[albumURI]
+	return cloneImages(images), ok
+}
+
+// invalidateAlbumImages drops the cached image list for albumURI, which must be
+// called whenever an album's images are added to, removed, or edited.
+func (f *Fs) invalidateAlbumImages(albumURI string) {
+	f.cacheMu.Lock()
+	defer f.cacheMu.Unlock()
+	delete(f.imagesCache, albumURI)
+	f.imagesGen++
 }
 
 func (f *Fs) cacheDirectoryPath(remote string, item api.Node) {
@@ -1171,6 +1229,10 @@ func (f *Fs) listImages(ctx context.Context) ([]api.AlbumImage, error) {
 }
 
 func (f *Fs) listAlbumImages(ctx context.Context, albumURI string) ([]api.AlbumImage, error) {
+	if images, ok := f.getCachedAlbumImages(albumURI); ok {
+		return images, nil
+	}
+	gen := f.imagesGeneration()
 	uri := fmt.Sprintf("%s!images?count=%d&_verbosity=1", albumURI, listChunkSize)
 	var out []api.AlbumImage
 	for uri != "" {
@@ -1182,6 +1244,7 @@ func (f *Fs) listAlbumImages(ctx context.Context, albumURI string) ([]api.AlbumI
 		out = append(out, result.Response.Image...)
 		uri = result.Response.Pages.NextPage
 	}
+	f.cacheAlbumImages(albumURI, out, gen)
 	return out, nil
 }
 
@@ -1723,13 +1786,6 @@ func newSmugMugRESTClient(client *http.Client) *rest.Client {
 		SetErrorHandler(smugMugErrorHandler)
 }
 
-func (f *Fs) restClient() *rest.Client {
-	if f.srv == nil {
-		f.srv = newSmugMugRESTClient(f.client)
-	}
-	return f.srv
-}
-
 func (f *Fs) doJSON(ctx context.Context, method, uri string, in, out any) (err error) {
 	var resp *http.Response
 	opts := rest.Opts{
@@ -1744,7 +1800,7 @@ func (f *Fs) doJSON(ctx context.Context, method, uri string, in, out any) (err e
 		opts.Path = "/" + uri
 	}
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.restClient().CallJSON(ctx, &opts, in, out)
+		resp, err = f.srv.CallJSON(ctx, &opts, in, out)
 		return shouldRetry(ctx, resp, err)
 	})
 	return err
@@ -1980,6 +2036,8 @@ func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
 	if err := o.fs.doJSON(ctx, http.MethodPatch, uri, patch, nil); err != nil {
 		return err
 	}
+	// Album listings carry these fields, so they are stale now.
+	o.fs.invalidateAlbumImages(o.albumURI)
 	o.applyMetadataPatch(patch)
 	return nil
 }
@@ -2105,6 +2163,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if upload.Stat != "" && upload.Stat != "ok" {
 		return fmt.Errorf("SmugMug upload failed: %s", upload.Message)
 	}
+	// The album listing is now stale in both the album written to and, if the
+	// object moved album, the one it came from.
+	o.fs.invalidateAlbumImages(o.albumURI)
+	o.fs.invalidateAlbumImages(albumURI)
 	o.remote = remote
 	o.albumURI = albumURI
 	o.albumRemote = albumRemote
@@ -2236,7 +2298,11 @@ func (o *Object) Remove(ctx context.Context) error {
 	if uri == "" {
 		return fs.ErrorObjectNotFound
 	}
-	return o.fs.doJSON(ctx, http.MethodDelete, uri, nil, nil)
+	if err := o.fs.doJSON(ctx, http.MethodDelete, uri, nil, nil); err != nil {
+		return err
+	}
+	o.fs.invalidateAlbumImages(o.albumURI)
+	return nil
 }
 
 func (o *Object) getDownloadURL(ctx context.Context) (string, error) {
