@@ -2306,6 +2306,7 @@ This means that:
 - files are always transferred
 - this can cause duplicates on remotes which allow it (e.g. Google Drive)
 - `--retries 1` is recommended otherwise you'll transfer everything again on a retry
+- it can't be used with `sync`, `--immutable`, `--backup-dir` or `--suffix`
 
 This flag is useful to minimise the transactions if you know that none
 of the files are on the destination.
