@@ -696,11 +696,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 	}
 
-	// Measure the size if it is unknown
-	if sizeUnknown {
-		counter = readers.NewCountingReader(in)
-		in = counter
-	}
+	// Count the bytes read so short reads from the source can be detected
+	counter = readers.NewCountingReader(in)
+	in = counter
 
 	// Check we have a source MD5 hash...
 	if hashStr, err := src.Hash(ctx, hash.MD5); err == nil && hashStr != "" {
@@ -735,6 +733,21 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if sizeUnknown {
 		// Read the uploaded size - the file will be truncated to that size by updateSizeHashModTime
 		size = int64(counter.BytesRead())
+	} else if bytesRead := int64(counter.BytesRead()); bytesRead != size {
+		// The file was created at the declared size so a short source
+		// leaves the remainder padded with zeroes
+		if isNewlyCreated {
+			if _, delErr := fc.Delete(ctx, nil); delErr != nil {
+				fs.Errorf(o, "failed to delete partially uploaded file: %v", delErr)
+			}
+		} else if bytesRead < size {
+			// Truncate the file to the bytes actually received so it
+			// is not left padded to the declared size with zeroes
+			if _, resizeErr := fc.Resize(ctx, bytesRead, nil); resizeErr != nil {
+				fs.Errorf(o, "failed to truncate partially updated file: %v", resizeErr)
+			}
+		}
+		return fmt.Errorf("update: expected %d bytes in input, but got %d: %w", size, bytesRead, io.ErrUnexpectedEOF)
 	}
 	if hashUnknown {
 		md5Hash = hasher.Sum(nil)
