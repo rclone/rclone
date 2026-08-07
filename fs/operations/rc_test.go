@@ -893,3 +893,74 @@ func TestRcHashsumFile(t *testing.T) {
 	assert.Equal(t, "md5", out["hashType"])
 	assert.Equal(t, "0ef726ce9b1a7692357ff70dd321d595", out["hash"])
 }
+
+// operations/cat: cat file content
+func TestRcCat(t *testing.T) {
+	ctx := context.Background()
+	r, call := rcNewRun(t, "operations/cat")
+	r.Mkdir(ctx, r.Fremote)
+
+	file1Contents := "Hello Rclone Cat Operation!"
+	file1 := r.WriteBoth(ctx, "cat-file1.txt", file1Contents, t1)
+	r.CheckLocalItems(t, file1)
+	r.CheckRemoteItems(t, file1)
+
+	// 1. Basic test with fs + remote
+	in := rc.Params{
+		"fs":     r.FremoteName,
+		"remote": file1.Path,
+	}
+	out, err := call.Fn(ctx, in)
+	require.NoError(t, err)
+	assert.Equal(t, file1Contents, out["result"])
+	assert.NotEmpty(t, out["result_base64"])
+
+	// 2. Combined fs parameter
+	in = rc.Params{
+		"fs": path.Join(r.FremoteName, file1.Path),
+	}
+	out, err = call.Fn(ctx, in)
+	require.NoError(t, err)
+	assert.Equal(t, file1Contents, out["result"])
+
+	// 3. Range offset and count
+	in = rc.Params{
+		"fs":     r.FremoteName,
+		"remote": file1.Path,
+		"offset": int64(6),
+		"count":  int64(6),
+	}
+	out, err = call.Fn(ctx, in)
+	require.NoError(t, err)
+	assert.Equal(t, "Rclone", out["result"])
+
+	// 4. Head flag
+	in = rc.Params{
+		"fs":     r.FremoteName,
+		"remote": file1.Path,
+		"head":   int64(5),
+	}
+	out, err = call.Fn(ctx, in)
+	require.NoError(t, err)
+	assert.Equal(t, "Hello", out["result"])
+
+	// 5. Tail flag
+	in = rc.Params{
+		"fs":     r.FremoteName,
+		"remote": file1.Path,
+		"tail":   int64(10),
+	}
+	out, err = call.Fn(ctx, in)
+	require.NoError(t, err)
+	assert.Equal(t, "Operation!", out["result"])
+
+	// 6. Max size limit violation test
+	in = rc.Params{
+		"fs":      r.FremoteName,
+		"remote":  file1.Path,
+		"maxSize": int64(5),
+	}
+	_, err = call.Fn(ctx, in)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "exceeds maximum specified maxSize limit")
+}
