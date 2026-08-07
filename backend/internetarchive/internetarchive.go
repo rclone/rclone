@@ -30,6 +30,7 @@ import (
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
+	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 )
 
@@ -854,11 +855,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	// make a PUT request at (IAS3)/encoded(:item/:path)
+	counter := readers.NewCountingReader(in)
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:        "PUT",
 		Path:          "/" + url.PathEscape(path.Join(bucket, bucketPath)),
-		Body:          in,
+		Body:          counter,
 		ContentLength: &size,
 		ExtraHeaders:  headers,
 	}
@@ -867,6 +869,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		resp, err = o.fs.srv.Call(ctx, &opts)
 		return o.fs.shouldRetry(resp, err)
 	})
+
+	// Check the source supplied the number of bytes it declared
+	// otherwise a truncated file would be stored as a good upload
+	if err == nil && size >= 0 && int64(counter.BytesRead()) != size {
+		err = fmt.Errorf("expected %d bytes in input, but got %d: %w", size, counter.BytesRead(), io.ErrUnexpectedEOF)
+	}
 
 	// we can't update/find metadata here as IA will "ingest" uploaded file(s)
 	// upon uploads. (you can find its progress at https://archive.org/history/ItemNameHere )
