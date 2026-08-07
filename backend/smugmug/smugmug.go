@@ -1164,11 +1164,8 @@ func (f *Fs) flushNodeCache() {
 	f.imagesGen++
 }
 
-// cloneImages copies the slice so a caller can't disturb the cached listing.
-//
-// The copy is shallow: the Uris map inside each image stays shared with the
-// cache. Callers treat images as read only, and deep copying every map on each
-// cache hit would cost more than the API call the cache exists to avoid.
+// cloneImages copies the slice so callers cannot disturb the cached listing;
+// the Uris map inside each AlbumImage is shared and must not be mutated.
 func cloneImages(in []api.AlbumImage) []api.AlbumImage {
 	if in == nil {
 		return nil
@@ -2036,7 +2033,7 @@ func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
 	if err := o.fs.doJSON(ctx, http.MethodPatch, uri, patch, nil); err != nil {
 		return err
 	}
-	// Album listings carry these fields, so they are stale now.
+	// Album listings carry these fields; invalidate after a successful PATCH.
 	o.fs.invalidateAlbumImages(o.albumURI)
 	o.applyMetadataPatch(patch)
 	return nil
@@ -2163,8 +2160,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if upload.Stat != "" && upload.Stat != "ok" {
 		return fmt.Errorf("SmugMug upload failed: %s", upload.Message)
 	}
-	// The album listing is now stale in both the album written to and, if the
-	// object moved album, the one it came from.
+	// Invalidate both the destination album and, if the object moved, its source.
 	o.fs.invalidateAlbumImages(o.albumURI)
 	o.fs.invalidateAlbumImages(albumURI)
 	o.remote = remote
