@@ -205,6 +205,8 @@ func TestCmdTest(t *testing.T) {
 
 	// Test creation of simple test data
 	createSimpleTestData(t)
+	out, err = rclone("config", "create", "myCombine", "combine", "upstreams", "root=myLocal:"+testFolder)
+	assert.NoError(t, err)
 
 	// Test access to config file and simple test data
 	out, err = rclone("lsl", "myLocal:"+testFolder)
@@ -212,6 +214,27 @@ func TestCmdTest(t *testing.T) {
 	if assert.NoError(t, err) {
 		assert.Contains(t, out, "rclone.config")
 		assert.Contains(t, out, "testdata/folderA/fileA1.txt")
+	}
+
+	// Test recursive lsd with backend ListR enabled
+	out, err = rclone("lsd", "-R", "myCombine:")
+	if assert.NoError(t, err) {
+		assert.Contains(t, out, "root/testdata/folderA/folderAA")
+		assert.Len(t, strings.Split(strings.TrimSpace(out), "\n"), 5)
+	}
+
+	// Test recursive lsd with backend ListR disabled
+	out, err = rclone("lsd", "-R", "--disable", "ListR", "myCombine:")
+	if assert.NoError(t, err) {
+		assert.Contains(t, out, "root/testdata/folderA/folderAA")
+		assert.Len(t, strings.Split(strings.TrimSpace(out), "\n"), 5)
+	}
+
+	// Test recursive lsd with a maximum depth
+	out, err = rclone("lsd", "-R", "--max-depth", "2", "myLocal:"+testFolder)
+	if assert.NoError(t, err) {
+		assert.Contains(t, out, "testdata/folderA")
+		assert.NotContains(t, out, "testdata/folderA/folderAA")
 	}
 
 }
