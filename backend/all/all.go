@@ -66,6 +66,7 @@ import (
 	_ "github.com/rclone/rclone/backend/storj"
 	_ "github.com/rclone/rclone/backend/sugarsync"
 	_ "github.com/rclone/rclone/backend/swift"
+	_ "github.com/rclone/rclone/backend/telegramdrive"
 	_ "github.com/rclone/rclone/backend/ulozto"
 	_ "github.com/rclone/rclone/backend/union"
 	_ "github.com/rclone/rclone/backend/webdav"
