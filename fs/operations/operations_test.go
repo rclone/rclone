@@ -1078,6 +1078,28 @@ func TestMoveFileBackupDir(t *testing.T) {
 	r.CheckRemoteItems(t, file1old, file1)
 }
 
+func TestMoveFileBackupDirNoNeedTransfer(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	if !operations.CanServerSideMove(r.Fremote) {
+		t.Skip("Skipping test as remote does not support server-side move or copy")
+	}
+
+	ci.BackupDir = r.FremoteName + "/backup"
+
+	file1 := r.WriteBoth(ctx, "file1", "file1 contents", t1)
+	r.CheckLocalItems(t, file1)
+	r.CheckRemoteItems(t, file1)
+
+	err := operations.MoveFile(ctx, r.Fremote, r.Flocal, file1.Path, file1.Path)
+	require.NoError(t, err)
+	r.CheckLocalItems(t)
+	backupFile1 := file1
+	backupFile1.Path = "backup/file1"
+	r.CheckRemoteItems(t, file1, backupFile1)
+}
+
 // testFsInfo is for unit testing fs.Info
 type testFsInfo struct {
 	name      string
