@@ -51,6 +51,11 @@ var OptionsInfo = fs.Options{{
 	Help:    "Read list of source-file names from file using NUL as separator (use - to read from stdin)",
 	Groups:  "Filter",
 }, {
+	Name:    "files_from_strict",
+	Default: false,
+	Help:    "Require all listed files to exist",
+	Groups:  "Filter",
+}, {
 	Name:    "min_age",
 	Default: fs.DurationOff,
 	Help:    "Only transfer files older than this in s or suffix ms|s|m|h|d|w|M|y",
@@ -145,19 +150,20 @@ var OptionsInfo = fs.Options{{
 
 // Options configures the filter
 type Options struct {
-	DeleteExcluded bool          `config:"delete_excluded"`
-	RulesOpt                     // embedded so we don't change the JSON API
-	ExcludeFile    []string      `config:"exclude_if_present"`
-	FilesFrom      []string      `config:"files_from"`
-	FilesFromRaw   []string      `config:"files_from_raw"`
-	FilesFrom0     []string      `config:"files_from0"`
-	MetaRules      RulesOpt      `config:"metadata"`
-	MinAge         fs.Duration   `config:"min_age"`
-	MaxAge         fs.Duration   `config:"max_age"`
-	MinSize        fs.SizeSuffix `config:"min_size"`
-	MaxSize        fs.SizeSuffix `config:"max_size"`
-	IgnoreCase     bool          `config:"ignore_case"`
-	HashFilter     string        `config:"hash_filter"`
+	DeleteExcluded  bool          `config:"delete_excluded"`
+	RulesOpt                      // embedded so we don't change the JSON API
+	ExcludeFile     []string      `config:"exclude_if_present"`
+	FilesFrom       []string      `config:"files_from"`
+	FilesFromRaw    []string      `config:"files_from_raw"`
+	FilesFrom0      []string      `config:"files_from0"`
+	FilesFromStrict bool          `config:"files_from_strict"`
+	MetaRules       RulesOpt      `config:"metadata"`
+	MinAge          fs.Duration   `config:"min_age"`
+	MaxAge          fs.Duration   `config:"max_age"`
+	MinSize         fs.SizeSuffix `config:"min_size"`
+	MaxSize         fs.SizeSuffix `config:"max_size"`
+	IgnoreCase      bool          `config:"ignore_case"`
+	HashFilter      string        `config:"hash_filter"`
 }
 
 func init() {
@@ -647,8 +653,11 @@ func (f *Filter) MakeListR(ctx context.Context, NewObject func(ctx context.Conte
 				var entries = make(fs.DirEntries, 1)
 				for remote := range remotes {
 					entries[0], err = NewObject(gCtx, remote)
-					if err == fs.ErrorObjectNotFound {
+					if !f.Opt.FilesFromStrict && err == fs.ErrorObjectNotFound {
 						// Skip files that are not found
+					} else if err == fs.ErrorObjectNotFound {
+						fs.Errorf(remote, "--files-from: %v", err)
+						return err
 					} else if err != nil {
 						// Count and log the error but carry on so that one
 						// unreadable file (e.g. permission denied) doesn't stop
