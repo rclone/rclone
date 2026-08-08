@@ -178,6 +178,11 @@ links. If not sure, use the first link.
 Open this file in the Explorer and extract `rclone.exe`. Rclone is a
 portable executable so you can place it wherever is convenient.
 
+To download `rclone.exe` and start using it in the temrinal
+from anywhere, you can also use this download script
+[install.bat](rclone\docs\content\install.bat). Just download the script
+anywhere and run it in CMD as administrator.
+
 Open a CMD window (or powershell) and run the binary. Note that rclone
 does not launch a GUI by default, it runs in the CMD Window.
 
