@@ -22,11 +22,7 @@ func (p *EpLno) lno(upstreams []*upstream.Fs) (*upstream.Fs, error) {
 	var minNumObj int64 = math.MaxInt64
 	var lnoUpstream *upstream.Fs
 	for _, u := range upstreams {
-		numObj, err := u.GetNumObjects()
-		if err != nil {
-			fs.LogPrintf(fs.LogLevelNotice, nil,
-				"Number of Objects is not supported for upstream %s, treating as 0", u.Name())
-		}
+		numObj := u.GetNumObjects()
 		if minNumObj > numObj {
 			minNumObj = numObj
 			lnoUpstream = u
@@ -42,11 +38,7 @@ func (p *EpLno) lnoEntries(entries []upstream.Entry) (upstream.Entry, error) {
 	var minNumObj int64 = math.MaxInt64
 	var lnoEntry upstream.Entry
 	for _, e := range entries {
-		numObj, err := e.UpstreamFs().GetNumObjects()
-		if err != nil {
-			fs.LogPrintf(fs.LogLevelNotice, nil,
-				"Number of Objects is not supported for upstream %s, treating as 0", e.UpstreamFs().Name())
-		}
+		numObj := e.UpstreamFs().GetNumObjects()
 		if minNumObj > numObj {
 			minNumObj = numObj
 			lnoEntry = e
