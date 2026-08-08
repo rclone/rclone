@@ -828,6 +828,14 @@ type CreateFoldersResponse struct {
 	Folders []*DriveItem `json:"folders"`
 }
 
+// ShareID identifies a shared CloudDocs root record returned by drivews for
+// SHARED_FOLDER and FILE_IN_SHARED_FOLDER items.
+type ShareID struct {
+	ShareName  string   `json:"shareName"`
+	RecordName string   `json:"recordName"`
+	ZoneID     CKZoneID `json:"zoneID"`
+}
+
 // DriveItem represents an item on iCloud.
 type DriveItem struct {
 	DateCreated         time.Time    `json:"dateCreated"`
@@ -844,6 +852,7 @@ type DriveItem struct {
 	FileCount           int64        `json:"fileCount"`
 	ShareCount          int64        `json:"shareCount"`
 	ShareAliasCount     int64        `json:"shareAliasCount"`
+	ShareID             *ShareID     `json:"shareID"`
 	DirectChildrenCount int64        `json:"directChildrenCount"`
 	Items               []*DriveItem `json:"items"`
 	NumberOfItems       int64        `json:"numberOfItems"`
@@ -890,6 +899,26 @@ func DeconstructDriveID(id string) (docType, zone, docid string) {
 		return "", "", id
 	}
 	return split[0], split[1], split[2]
+}
+
+// IsSharedFolderChildID reports whether the given drivewsid refers to an item that
+// lives inside a folder shared by another Apple ID (a "participant" share).
+//
+// Such items have a drivewsid of the form FOLDER_IN_SHARED_FOLDER::zone::docwsid (or
+// FILE_IN_SHARED_FOLDER::...) and cannot be addressed by the drivews endpoints
+// (retrieveItemDetailsInFolders etc.), which only operate within the caller's own
+// zone. They must instead be addressed through the docws item endpoints by item_id.
+//
+// An empty drivewsid also counts as a shared child: items discovered via the docws
+// enumerate endpoint only carry an item_id (no drivewsid), so descendants deeper than
+// one level below the share root reach here with an empty drivewsid.
+func IsSharedFolderChildID(drivewsid string) bool {
+	if drivewsid == "" {
+		return true
+	}
+	docType, _, _ := DeconstructDriveID(drivewsid)
+	return strings.HasPrefix(docType, "FOLDER_IN_SHARED_FOLDER") ||
+		strings.HasPrefix(docType, "FILE_IN_SHARED_FOLDER")
 }
 
 // ConstructDriveID constructs a drive ID from the given components.
