@@ -91,6 +91,8 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error
 	filesys := NewFS(VFS, opt)
 	filesys.server = fusefs.New(c, nil)
 
+	removeInvalidateKernelCacheHook := VFS.AddInvalidateKernelCacheHook(filesys.invalidateKernelCacheForEntry)
+
 	// Serve the mount point in the background returning error to errChan
 	errChan := make(chan error, 1)
 	go func() {
@@ -103,6 +105,7 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error
 	}()
 
 	unmount := func() error {
+		removeInvalidateKernelCacheHook()
 		// Shutdown the VFS
 		filesys.VFS.Shutdown()
 		return fuse.Unmount(mountpoint)

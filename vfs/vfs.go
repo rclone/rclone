@@ -191,6 +191,8 @@ type VFS struct {
 	pollMu      sync.Mutex
 	pollChan    chan time.Duration
 	inUse       atomic.Int32 // count of number of opens
+
+	kernelCacheInvalidator kernelCacheInvalidator
 }
 
 // Keep track of active VFS keyed on fs.ConfigString(f)
