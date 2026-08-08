@@ -3134,3 +3134,50 @@ func blankMissingHashes(logger, lsf *bytes.Buffer) {
 	logger.Reset()
 	logger.Write(bytes.Join(loggerSplit, []byte("\n")))
 }
+
+// Test that the number of transfer goroutines is scaled up and down
+// when the config is reloaded, eg by the rc options/set command.
+func TestSyncScaleTransfers(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	ci.Transfers = 4
+	r := fstest.NewRun(t)
+
+	s, err := newSyncCopyMove(ctx, r.Fremote, r.Flocal, fs.DeleteModeOff, false, false, false, false)
+	require.NoError(t, err)
+	defer func() {
+		s.inCancel()
+		s.cancel()
+	}()
+
+	// Register the callback as run() does
+	removeReloadCallback := s.ci.AddReloadCallback(s.configReloaded)
+	defer removeReloadCallback()
+
+	waitForTransfers := func(want int32) {
+		deadline := time.Now().Add(10 * time.Second)
+		for s.transfersRunning.Load() != want {
+			if time.Now().After(deadline) {
+				t.Fatalf("want %d transfer goroutines but got %d", want, s.transfersRunning.Load())
+			}
+			time.Sleep(time.Millisecond)
+		}
+	}
+
+	s.startTransfers()
+	waitForTransfers(4)
+
+	// Scale up the number of transfers as the rc options/set command would
+	ci.Transfers = 8
+	require.NoError(t, ci.Reload(ctx))
+	waitForTransfers(8)
+
+	// Scale down the number of transfers
+	ci.Transfers = 2
+	require.NoError(t, ci.Reload(ctx))
+	waitForTransfers(2)
+
+	// Check all the transfer goroutines stop when the pipe is closed
+	s.stopTransfers()
+	waitForTransfers(0)
+}

@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -69,6 +70,9 @@ type syncCopyMove struct {
 	checkerWg              sync.WaitGroup         // wait for checkers
 	toBeChecked            *pipe                  // checkers channel
 	transfersWg            sync.WaitGroup         // wait for transfers
+	maxTransfers           atomic.Int32           // number of transfer goroutines wanted
+	transfersRunning       atomic.Int32           // number of transfer goroutines running
+	transfersChanged       chan struct{}          // signalled when maxTransfers is changed
 	toBeUploaded           *pipe                  // copiers channel
 	errorMu                sync.Mutex             // Mutex covering the errors variables
 	err                    error                  // normal error from copy process
@@ -144,6 +148,7 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		copyEmptySrcDirs:       copyEmptySrcDirs,
 		deleteEmptySrcDirs:     deleteEmptySrcDirs,
 		dir:                    "",
+		transfersChanged:       make(chan struct{}, 1),
 		srcFilesChan:           make(chan fs.Object, ci.Checkers+ci.Transfers),
 		srcFilesResult:         make(chan error, 1),
 		dstFilesResult:         make(chan error, 1),
@@ -165,6 +170,8 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		modifiedDirs:           make(map[string]struct{}),
 		allowOverlap:           allowOverlap,
 	}
+
+	s.maxTransfers.Store(int32(ci.Transfers))
 
 	s.logger, s.usingLogger = operations.GetLogger(ctx)
 
@@ -497,12 +504,19 @@ func (s *syncCopyMove) pairRenamer(in *pipe, out *pipe, fraction int, wg *sync.W
 }
 
 // pairCopyOrMove reads Objects on in and moves or copies them.
-func (s *syncCopyMove) pairCopyOrMove(ctx context.Context, in *pipe, fdst fs.Fs, fraction int, wg *sync.WaitGroup) {
-	defer wg.Done()
+//
+// inCtx is a context cancelled by manageTransfers to make this
+// goroutine stop after it has finished its current transfer.
+//
+// When it finishes it sends true to exited if it stopped because in
+// was closed or the sync was cancelled, or false if it stopped
+// because inCtx was cancelled to reduce the number of transfers.
+func (s *syncCopyMove) pairCopyOrMove(ctx context.Context, in *pipe, fdst fs.Fs, fraction int, inCtx context.Context, exited chan<- bool) {
 	var err error
 	for {
-		pair, ok := in.GetMax(s.inCtx, fraction)
+		pair, ok := in.GetMax(inCtx, fraction)
 		if !ok {
+			exited <- inCtx.Err() == nil || s.inCtx.Err() != nil
 			return
 		}
 		src := pair.Src
@@ -542,10 +556,87 @@ func (s *syncCopyMove) stopCheckers() {
 
 // This starts the background transfers
 func (s *syncCopyMove) startTransfers() {
-	s.transfersWg.Add(s.ci.Transfers)
-	for i := range s.ci.Transfers {
-		fraction := (100 * i) / s.ci.Transfers
-		go s.pairCopyOrMove(s.ctx, s.toBeUploaded, s.fdst, fraction, &s.transfersWg)
+	s.transfersWg.Add(1)
+	go s.manageTransfers()
+}
+
+// manageTransfers maintains the pool of transfer goroutines.
+//
+// It starts s.maxTransfers goroutines and if s.maxTransfers changes
+// (eg by --transfers being changed with the rc options/set command)
+// it starts new goroutines or stops running ones to match.
+//
+// It runs until the transfers pipe has been closed or the sync has
+// been cancelled and all the transfer goroutines have finished.
+func (s *syncCopyMove) manageTransfers() {
+	defer s.transfersWg.Done()
+	var (
+		exited   = make(chan bool)    // transfer goroutines send here when they finish
+		cancels  []context.CancelFunc // cancel functions for the goroutines not asked to stop
+		started  int                  // number of transfer goroutines started so far
+		running  int                  // number of transfer goroutines running
+		stopping int                  // number of transfer goroutines asked to stop
+		closed   bool                 // set when the pipe is closed or the sync is cancelled
+	)
+	defer func() {
+		// Cancel any contexts left to free resources
+		for _, cancel := range cancels {
+			cancel()
+		}
+	}()
+	for {
+		if !closed {
+			// Adjust the number of transfer goroutines to match maxTransfers
+			want := int(s.maxTransfers.Load())
+			if want < 1 {
+				want = 1
+			}
+			for running-stopping < want {
+				ctx, cancel := context.WithCancel(s.inCtx)
+				cancels = append(cancels, cancel)
+				fraction := (100 * (started % want)) / want
+				started++
+				running++
+				s.transfersRunning.Store(int32(running))
+				go s.pairCopyOrMove(s.ctx, s.toBeUploaded, s.fdst, fraction, ctx, exited)
+			}
+			for running-stopping > want {
+				// Ask the most recently started goroutine to stop
+				// once it has finished its current transfer.
+				i := len(cancels) - 1
+				cancels[i]()
+				cancels = cancels[:i]
+				stopping++
+			}
+		}
+		select {
+		case <-s.transfersChanged:
+		case wasClosed := <-exited:
+			running--
+			s.transfersRunning.Store(int32(running))
+			if wasClosed {
+				closed = true
+			} else {
+				stopping--
+			}
+			if closed && running == 0 {
+				return
+			}
+		}
+	}
+}
+
+// configReloaded is called when the config s is using has been
+// reloaded, eg by the rc options/set command. It adjusts the number
+// of transfer goroutines if --transfers has changed.
+func (s *syncCopyMove) configReloaded(ci *fs.ConfigInfo) {
+	newTransfers := int32(ci.Transfers)
+	if s.maxTransfers.Swap(newTransfers) != newTransfers {
+		fs.Infof(s.fdst, "Setting transfers to %d", newTransfers)
+		select {
+		case s.transfersChanged <- struct{}{}:
+		default:
+		}
 	}
 }
 
@@ -938,6 +1029,11 @@ func (s *syncCopyMove) run() error {
 		fs.Errorf(s.fdst, "Nothing to do as source and destination are the same")
 		return nil
 	}
+
+	// Adjust the number of transfers if the config is reloaded, eg
+	// by the rc options/set command
+	removeReloadCallback := s.ci.AddReloadCallback(s.configReloaded)
+	defer removeReloadCallback()
 
 	// Start background checking and transferring pipeline
 	s.startCheckers()
