@@ -44,6 +44,9 @@ const (
 	maxSleep      = 2 * time.Second
 	decayConstant = 2 // bigger for slower decay, exponential
 
+	authMethodPassword = "password"
+	authMethodWeb      = "web"
+
 	clientUIDKey           = "client_uid"
 	clientAccessTokenKey   = "client_access_token"
 	clientRefreshTokenKey  = "client_refresh_token"
@@ -67,13 +70,26 @@ func init() {
 		Description: "Proton Drive",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
-			Name:     "username",
-			Help:     `The username of your proton account`,
-			Required: true,
+			Name: "auth_method",
+			Help: `Choose how rclone authenticates with Proton Drive.
+
+Use "password" for the existing username/password login flow.
+Use "web" for Proton browser login via session fork. This is experimental
+and avoids direct password login, which can trigger Proton anti-bot checks.`,
+			Default: "password",
+			Examples: []fs.OptionExample{{
+				Value: authMethodPassword,
+				Help:  "Use username/password login",
+			}, {
+				Value: authMethodWeb,
+				Help:  "Use Proton browser login",
+			}},
+		}, {
+			Name: "username",
+			Help: `The username of your proton account`,
 		}, {
 			Name:       "password",
 			Help:       "The password of your proton account.",
-			Required:   true,
 			IsPassword: true,
 		}, {
 			Name: "mailbox_password",
@@ -206,6 +222,7 @@ then we might have a problem with caching the stale data.`,
 
 // Options defines the configuration for this backend
 type Options struct {
+	AuthMethod      string `config:"auth_method"`
 	Username        string `config:"username"`
 	Password        string `config:"password"`
 	MailboxPassword string `config:"mailbox_password"`
@@ -362,6 +379,22 @@ func deAuthHandler() {
 	clearConfigMap(_mapper)
 }
 
+func validateProtonAuthMethod(authMethod string) error {
+	switch authMethod {
+	case "", authMethodPassword, authMethodWeb:
+		return nil
+	default:
+		return fmt.Errorf("unknown auth_method %q; expected %q or %q", authMethod, authMethodPassword, authMethodWeb)
+	}
+}
+
+func normalizeProtonAuthMethod(authMethod string) string {
+	if authMethod == "" {
+		return authMethodPassword
+	}
+	return authMethod
+}
+
 func protonDriveAppVersionFromRcloneVersion(version string) string {
 	const fallback = "external-drive-rclone@1.0.0-stable"
 
@@ -480,6 +513,11 @@ func newProtonDrive(ctx context.Context, f *Fs, opt *Options, m configmap.Mapper
 	config.ReplaceExistingDraft = opt.ReplaceExistingDraft
 	config.EnableCaching = opt.EnableCaching
 
+	if err := validateProtonAuthMethod(opt.AuthMethod); err != nil {
+		return nil, err
+	}
+	opt.AuthMethod = normalizeProtonAuthMethod(opt.AuthMethod)
+
 	// let's see if we have the cached access credential
 	uid, accessToken, refreshToken, saltedKeyPass, hasUseReusableLoginCredentials := getConfigMap(m)
 	_saltedKeyPass = saltedKeyPass
@@ -508,8 +546,35 @@ func newProtonDrive(ctx context.Context, f *Fs, opt *Options, m configmap.Mapper
 		}
 	}
 
+	if opt.AuthMethod == authMethodWeb {
+		fs.Logf(f, "No working cached Proton Drive session found; starting browser login")
+		credential, err := protonDriveAuthViaWeb(ctx, f, config.AppVersion, config.UserAgent, config.Transport)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't authenticate with Proton browser login: %w", err)
+		}
+
+		config.UseReusableLogin = true
+		config.ReusableCredential.UID = credential.UID
+		config.ReusableCredential.AccessToken = credential.AccessToken
+		config.ReusableCredential.RefreshToken = credential.RefreshToken
+		config.ReusableCredential.SaltedKeyPass = credential.SaltedKeyPass
+
+		protonDrive, _, err := protonDriveAPI.NewProtonDrive(ctx, config, authHandler, deAuthHandler)
+		if err != nil {
+			clearConfigMap(m)
+			return nil, fmt.Errorf("couldn't initialize a new proton drive instance using browser login credentials: %w", err)
+		}
+
+		fs.Debugf(f, "Used Proton browser login to initialize the ProtonDrive API")
+		setConfigMap(m, credential.UID, credential.AccessToken, credential.RefreshToken, credential.SaltedKeyPass)
+		return protonDrive, nil
+	}
+
 	// if not, let's try to log the user in using username and password (and 2FA if required)
 	fs.Debugf(f, "Using username and password to log in")
+	if opt.Username == "" || opt.Password == "" {
+		return nil, errors.New("username and password are required when auth_method=password")
+	}
 	config.UseReusableLogin = false
 	config.FirstLoginCredential.Username = opt.Username
 	config.FirstLoginCredential.Password = opt.Password
