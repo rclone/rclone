@@ -393,6 +393,23 @@ This option disables concurrent writes should that be necessary.
 `,
 			Advanced: true,
 		}, {
+			Name:    "disable_multithread_upload",
+			Default: false,
+			Help: `If set don't use multi-thread (multi-connection) uploads.
+
+Normally rclone uploads a single large file over several SFTP
+connections at once (one per chunk), which greatly improves throughput
+on high latency links, the same way multi-thread downloads already
+work. Each connection writes a different, non-overlapping byte range of
+the file, so this requires a server that allows several handles to the
+same file with writes at arbitrary offsets, which OpenSSH does.
+
+Set this if your SFTP server only accepts sequential writes (for
+example some object storage backed SFTP gateways), or if you see
+corrupted uploads or "invalid offset" style errors on large files.
+`,
+			Advanced: true,
+		}, {
 			Name:    "idle_timeout",
 			Default: fs.Duration(60 * time.Second),
 			Help: `Max time before closing idle connections.
@@ -648,6 +665,7 @@ type Options struct {
 	UseFstat                bool                 `config:"use_fstat"`
 	DisableConcurrentReads  bool                 `config:"disable_concurrent_reads"`
 	DisableConcurrentWrites bool                 `config:"disable_concurrent_writes"`
+	DisableMultithreadUpld  bool                 `config:"disable_multithread_upload"`
 	IdleTimeout             fs.Duration          `config:"idle_timeout"`
 	ChunkSize               fs.SizeSuffix        `config:"chunk_size"`
 	Concurrency             int                  `config:"concurrency"`
@@ -1593,6 +1611,11 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 	if !opt.CopyIsHardlink {
 		// Disable server side copy unless --sftp-copy-is-hardlink is set
 		f.features.Copy = nil
+	}
+	if opt.DisableMultithreadUpld {
+		// Fall back to single-connection uploads on servers that don't
+		// support concurrent writes at arbitrary offsets.
+		f.features.OpenWriterAt = nil
 	}
 	// Make a connection and pool it to return errors early
 	c, err := f.getSftpConnection(ctx)
@@ -2845,6 +2868,7 @@ var (
 	_ fs.PutStreamer    = &Fs{}
 	_ fs.Mover          = &Fs{}
 	_ fs.Copier         = &Fs{}
+	_ fs.OpenWriterAter = &Fs{}
 	_ fs.DirMover       = &Fs{}
 	_ fs.DirSetModTimer = &Fs{}
 	_ fs.Abouter        = &Fs{}
