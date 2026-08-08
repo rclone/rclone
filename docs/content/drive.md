@@ -2015,7 +2015,7 @@ including
     You should now see the three scopes on your Data access page. Now press save
     at the bottom!
 
-6. After adding scopes, click Audience
+6. After adding scopes, click Audience.
 Scroll down and click "+ Add users". Add yourself as a test user and press save.
 
 7. Go to Overview on the left panel, click "Create OAuth client". Choose
