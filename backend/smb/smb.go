@@ -171,7 +171,8 @@ type Fs struct {
 	sessions atomic.Int32
 	poolMu   sync.Mutex
 	pool     []*conn
-	drain    *time.Timer // used to drain the pool when we stop using the connections
+	drain    *time.Timer        // used to drain the pool when we stop using the connections
+	closed   func(c *conn) bool // reports whether c is dead; defaults to (*conn).closed (Echo), overridden in tests
 
 	ctx context.Context
 }
@@ -198,10 +199,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	root = strings.Trim(root, "/")
 
 	f := &Fs{
-		name: name,
-		opt:  *opt,
-		ctx:  ctx,
-		root: root,
+		name:   name,
+		opt:    *opt,
+		ctx:    ctx,
+		root:   root,
+		closed: (*conn).closed,
 	}
 	f.features = (&fs.Features{
 		CaseInsensitive:         opt.CaseInsensitive,
