@@ -13,7 +13,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
 INFO  : There was nothing to transfer
@@ -35,7 +35,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
@@ -59,7 +59,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
@@ -86,7 +86,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
 INFO  : There was nothing to transfer
@@ -107,7 +107,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
@@ -131,7 +131,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mRCLONE_TEST[0m
@@ -157,7 +157,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 ERROR : [31mBisync critical error: cannot find prior Path1 or Path2 listings, likely due to critical error on prior run
 [35mTip: here are the filenames we were looking for. Do they exist?
 [0m[36mPath1: [94m{workdir/}{session}.path1.lst[0m
@@ -180,7 +180,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
 INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
@@ -200,7 +200,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
