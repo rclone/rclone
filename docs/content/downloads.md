@@ -40,6 +40,7 @@ in the Go Wiki.
 | ARM - 64 Bit | {{< download windows arm64 >}} | {{< download osx arm64 >}} | {{< download linux arm64 >}} | {{< download linux arm64 deb >}} | {{< download linux arm64 rpm >}} | - | - | - | - | - |
 | MIPS - Big Endian | - | - | {{< download linux mips >}} | {{< download linux mips deb >}} | {{< download linux mips rpm >}} | - | - | - | - | - |
 | MIPS - Little Endian | - | - | {{< download linux mipsle >}} | {{< download linux mipsle deb >}} | {{< download linux mipsle rpm >}} | - | - | - | - | - |
+| RISC-V 64-bit | - | - | {{< download linux riscv64 >}} | {{< download linux riscv64 deb >}} | {{< download linux riscv64 rpm >}} | - | - | - | - | - |
 
 <!-- markdownlint-disable-next-line no-bare-urls line-length -->
 You can also find a [mirror of the downloads on GitHub](https://github.com/rclone/rclone/releases/tag/{{< version >}}).
@@ -129,6 +130,7 @@ script) from a URL which doesn't change then you can use these links.
 | ARM - 64 Bit | {{< cdownload windows arm64 >}} | {{< cdownload osx arm64 >}} | {{< cdownload linux arm64 >}} | {{< cdownload linux arm64 deb >}} | {{< cdownload linux arm64 rpm >}} | - | - | - | - | - |
 | MIPS - Big Endian | - | - | {{< cdownload linux mips >}} | {{< cdownload linux mips deb >}} | {{< cdownload linux mips rpm >}} | - | - | - | - | - |
 | MIPS - Little Endian | - | - | {{< cdownload linux mipsle >}} | {{< cdownload linux mipsle deb >}} | {{< cdownload linux mipsle rpm >}} | - | - | - | - | - |
+| RISC-V 64-bit | - | - | {{< cdownload linux riscv64 >}} | {{< cdownload linux riscv64 deb >}} | {{< cdownload linux riscv64 rpm >}} | - | - | - | - | - |
 
 ## Older Downloads
 
