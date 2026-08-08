@@ -11,7 +11,6 @@
 package drive
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -22,7 +21,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fserrors"
-	"github.com/rclone/rclone/lib/readers"
+	"github.com/rclone/rclone/lib/multipart"
 	"google.golang.org/api/drive/v3"
 	"google.golang.org/api/googleapi"
 )
@@ -168,37 +167,40 @@ func (rx *resumableUpload) Upload(ctx context.Context) (*drive.File, error) {
 	start := int64(0)
 	var StatusCode int
 	var err error
-	buf := make([]byte, int(rx.f.opt.ChunkSize))
+	chunkSize := int64(rx.f.opt.ChunkSize)
 	for finished := false; !finished; {
-		var reqSize int64
-		var chunk io.ReadSeeker
+		reqSize := chunkSize
 		if rx.ContentLength >= 0 {
-			// If size known use repeatable reader for smoother bwlimit
 			if start >= rx.ContentLength {
 				break
 			}
-			reqSize = min(rx.ContentLength-start, int64(rx.f.opt.ChunkSize))
-			chunk = readers.NewRepeatableLimitReaderBuffer(rx.Media, buf, reqSize)
-		} else {
-			// If size unknown read into buffer
-			var n int
-			n, err = readers.ReadFill(rx.Media, buf)
+			reqSize = min(rx.ContentLength-start, chunkSize)
+		}
+
+		// Buffer the chunk in memory from the global pool so reads are
+		// repeatable for retries
+		rw := multipart.NewRW()
+		var n int64
+		n, err = io.CopyN(rw, rx.Media, reqSize)
+		if rx.ContentLength < 0 {
 			if err == io.EOF {
 				// Send the last chunk with the correct ContentLength
 				// otherwise Google doesn't know we've finished
-				rx.ContentLength = start + int64(n)
+				rx.ContentLength = start + n
 				finished = true
-			} else if err != nil {
-				return nil, err
+				err = nil
 			}
-			reqSize = int64(n)
-			chunk = bytes.NewReader(buf[:reqSize])
+			reqSize = n
+		}
+		if err != nil {
+			_ = rw.Close()
+			return nil, err
 		}
 
 		// Transfer the chunk
 		err = rx.f.pacer.Call(func() (bool, error) {
 			fs.Debugf(rx.remote, "Sending chunk %d length %d", start, reqSize)
-			StatusCode, err = rx.transferChunk(ctx, start, chunk, reqSize)
+			StatusCode, err = rx.transferChunk(ctx, start, rw, reqSize)
 			again, err := rx.f.shouldRetry(ctx, err)
 			if StatusCode == statusResumeIncomplete || StatusCode == http.StatusCreated || StatusCode == http.StatusOK {
 				again = false
@@ -206,8 +208,12 @@ func (rx *resumableUpload) Upload(ctx context.Context) (*drive.File, error) {
 			}
 			return again, err
 		})
+		closeErr := rw.Close()
 		if err != nil {
 			return nil, err
+		}
+		if closeErr != nil {
+			return nil, closeErr
 		}
 
 		start += reqSize
