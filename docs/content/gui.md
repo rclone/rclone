@@ -84,6 +84,10 @@ When you run `rclone gui` this is what happens
 - The URL already contains the username & password, in which case the
   GUI will use those values and log you in automatically.
 
+The rc address is passed to the GUI via the `url` query parameter (the
+URL printed in the terminal); append `?url=http://...` to point it at a
+different rc server.
+
 ## Security
 
 It's important to think first about what rclone has access to and what
