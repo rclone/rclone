@@ -72,6 +72,15 @@ Press Enter for the default (drive).
  2 / iCloud Photos
    \ (photos)
 service> 2
+Option region.
+Region for iCloud endpoints.
+Choose a number from below, or type in your own value of type string.
+Press Enter for the default (global).
+ 1 / Global (default)
+   \ (global)
+ 2 / China Mainland
+   \ (chinamainland)
+region> 1
 Option apple_id.
 Apple ID.
 Enter a value.
@@ -99,6 +108,7 @@ Remote config
 [icloudphotos]
 - type: iclouddrive
 - service: photos
+- region: global
 - apple_id: APPLEID
 - password: *** ENCRYPTED ***
 - cookies: ****************************
