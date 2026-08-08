@@ -1640,3 +1640,51 @@ func TestKey(t *testing.T) {
 	assert.Equal(t, [32]byte{}, c.nameKey)
 	assert.Equal(t, [16]byte{}, c.nameTweak)
 }
+
+// TestChunkNonceCalculation tests that nonce calculation for chunks produces the same nonce sequence
+func TestChunkNonceCalculation(t *testing.T) {
+	c := &Cipher{}
+	require.NoError(t, c.Key("potato", ""))
+
+	// Create a test file nonce
+	fileNonce := nonce{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17}
+
+	// Test parameters
+	chunkSize := blockDataSize * 3 // 3 blocks per chunk
+	blocksPerChunk := chunkSize / blockDataSize
+
+	// Calculate nonces for chunks 0, 1, 2
+	chunk0Nonce := fileNonce
+	chunk1Nonce := fileNonce
+	chunk1Nonce.add(uint64(blocksPerChunk))
+	chunk2Nonce := fileNonce
+	chunk2Nonce.add(uint64(2 * blocksPerChunk))
+
+	// Test that chunk 0 starts with file nonce
+	assert.Equal(t, fileNonce, chunk0Nonce)
+
+	// Test that chunk 1 starts with file nonce + 3 blocks
+	expected1 := fileNonce
+	expected1.add(3)
+	assert.Equal(t, expected1, chunk1Nonce)
+
+	// Test that chunk 2 starts with file nonce + 6 blocks
+	expected2 := fileNonce
+	expected2.add(6)
+	assert.Equal(t, expected2, chunk2Nonce)
+
+	// Test block nonce calculation within chunks
+	for chunkNum := 0; chunkNum < 3; chunkNum++ {
+		chunkNonce := fileNonce
+		chunkNonce.add(uint64(chunkNum * blocksPerChunk))
+
+		// Test first 3 blocks of this chunk
+		blockNonce := chunkNonce
+		for blockInChunk := 0; blockInChunk < 3; blockInChunk++ {
+			expectedBlockNonce := fileNonce
+			expectedBlockNonce.add(uint64(chunkNum*blocksPerChunk + blockInChunk))
+			assert.Equal(t, expectedBlockNonce, blockNonce, "chunk %d block %d", chunkNum, blockInChunk)
+			blockNonce.increment()
+		}
+	}
+}
