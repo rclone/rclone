@@ -477,6 +477,21 @@ backends:
    fastlist: false
    ignoretests:
      - cmd/bisync
+ - backend:  "quark"
+   remote:   "TestQuark:"
+   fastlist: true
+   ignore:
+     # Quark normalizes Unicode file names, so composed and decomposed forms
+     # cannot coexist for the normalization collision matrix.
+     - TestApplyTransforms
+     # Quark does not expose an API for changing an existing file's modtime.
+     - TestTouchDir
+     - TestFileSetModTime/cache=off,open=false,write=false
+     - TestFileSetModTime/cache=off,open=true,write=false
+     - TestFileSetModTime/cache=off,open=true,write=true
+     - TestFileSetModTime/cache=full,open=false,write=false
+     - TestFileSetModTime/cache=full,open=true,write=false
+     - TestWriteFileModTimeWithOpenWriters
  - backend:  "webdav"
    remote:   "TestWebdavNextcloud:"
    ignore:
