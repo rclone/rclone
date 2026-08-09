@@ -9,11 +9,13 @@ import (
 	"path"
 
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/fserrors"
@@ -133,7 +135,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID string, leaf string) (pathIDOu
 		return "", false, fs.ErrorIsFile
 	}
 
-	return f.IDJoin(item.Drivewsid, item.Etag), true, nil
+	return f.folderID(item), true, nil
 }
 
 // Features implements fs.Fs.
@@ -152,9 +154,39 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 		return errors.New("can't purge root directory")
 	}
 
-	directoryID, etag, err := f.FindDir(ctx, dir, false)
+	jDirectoryID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
 		return err
+	}
+	directoryID, etag := f.parseNormalizedID(jDirectoryID)
+
+	if api.IsSharedFolderChildID(directoryID) {
+		if !check {
+			return fs.ErrorCantPurge
+		}
+		items, err := f.listAll(ctx, jDirectoryID)
+		if err != nil {
+			return err
+		}
+		if len(items) > 0 {
+			return fs.ErrorDirectoryNotEmpty
+		}
+		cd := f.icloud.CloudDocsService(f.pacer, shouldRetry)
+		if cd == nil {
+			return errors.New("iclouddrive: cannot remove shared directory: account has no ckdatabasews service")
+		}
+		dirUUID, err := f.cloudDocsDirectoryRecordID(ctx, cd, dir, directoryID)
+		if err != nil {
+			return err
+		}
+		if dirUUID == "" {
+			return fmt.Errorf("iclouddrive: cannot remove shared directory %q: missing CloudDocs directory ID", dir)
+		}
+		if err := cd.DeleteDirectory(ctx, dirUUID); err != nil {
+			return err
+		}
+		f.dirCache.FlushDir(dir)
+		return nil
 	}
 
 	if check {
@@ -197,18 +229,37 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 }
 
 func (f *Fs) listAll(ctx context.Context, dirID string) (items []*api.DriveItem, err error) {
-	var item *api.DriveItem
 	var resp *http.Response
 
-	if err = f.pacer.Call(func() (bool, error) {
-		id, _ := f.parseNormalizedID(dirID)
-		item, resp, err = f.service.GetItemByDriveID(ctx, id, true)
-		return shouldRetry(ctx, resp, err)
-	}); err != nil {
-		return nil, err
-	}
+	id, _ := f.parseNormalizedID(dirID)
+	itemID := f.parseSharedItemID(dirID)
 
-	items = item.Items
+	// Items inside a folder shared by another Apple ID cannot be listed through the
+	// drivews retrieveItemDetailsInFolders endpoint (it only operates within the
+	// caller's own zone and returns HTTP 400). Use the docws enumerate-by-item_id
+	// endpoint instead. See api.IsSharedFolderChildID.
+	if itemID != "" && api.IsSharedFolderChildID(id) {
+		var raws []*api.DriveItemRaw
+		if err = f.pacer.Call(func() (bool, error) {
+			raws, resp, err = f.service.GetItemsInFolder(ctx, itemID, 5000)
+			return shouldRetry(ctx, resp, err)
+		}); err != nil {
+			return nil, err
+		}
+		items = make([]*api.DriveItem, 0, len(raws))
+		for _, raw := range raws {
+			items = append(items, raw.IntoDriveItem())
+		}
+	} else {
+		var item *api.DriveItem
+		if err = f.pacer.Call(func() (bool, error) {
+			item, resp, err = f.service.GetItemByDriveID(ctx, id, true)
+			return shouldRetry(ctx, resp, err)
+		}); err != nil {
+			return nil, err
+		}
+		items = item.Items
+	}
 
 	for i, item := range items {
 		item.Name = f.opt.Enc.ToStandardName(item.Name)
@@ -234,11 +285,10 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 
 	for _, item := range items {
-		id := item.Drivewsid
 		name := item.FullName()
 		remote := path.Join(dir, name)
 		if item.IsFolder() {
-			jid := f.putFolderCache(id, item.Etag, remote)
+			jid := f.putFolderCache(item, remote)
 			d := fs.NewDir(remote, item.DateModified).SetID(jid).SetSize(item.AssetQuota)
 			entries = append(entries, d)
 		} else {
@@ -422,6 +472,32 @@ func (f *Fs) parseNormalizedID(rid string) (id string, etag string) {
 	return split[0], split[1]
 }
 
+// parseSharedItemID returns the item_id embedded in a normalized ID, if present.
+//
+// For items that live inside a folder shared by another Apple ID we cache the id as
+// `drivewsid#etag#itemID`, because such items can only be addressed through the docws
+// endpoints by item_id (the drivewsid is unusable, and may even be empty). Normal
+// (own-zone) items are cached as `drivewsid#etag` and this returns "".
+func (f *Fs) parseSharedItemID(rid string) string {
+	split := strings.Split(rid, "#")
+	if len(split) >= 3 {
+		return split[2]
+	}
+	return ""
+}
+
+// folderID builds the normalized directory cache id for a DriveItem. For items inside
+// a folder shared by another Apple ID it additionally embeds the item_id (see
+// parseSharedItemID); for normal items it is identical to IDJoin so behaviour is
+// unchanged.
+func (f *Fs) folderID(item *api.DriveItem) string {
+	base := f.IDJoin(item.Drivewsid, item.Etag)
+	if item.Itemid != "" && api.IsSharedFolderChildID(item.Drivewsid) {
+		base += "#" + item.Itemid
+	}
+	return base
+}
+
 // FindPath finds the leaf and directoryID from a normalized path
 func (f *Fs) FindPath(ctx context.Context, remote string, create bool) (leaf, directoryID, etag string, err error) {
 	leaf, jDirectoryID, err := f.dirCache.FindPath(ctx, remote, create)
@@ -453,10 +529,54 @@ func (f *Fs) IDJoin(id string, etag string) string {
 	return strings.Join([]string{id, etag}, "#")
 }
 
-func (f *Fs) putFolderCache(id, etag, remote string) string {
-	jid := f.IDJoin(id, etag)
-	f.dirCache.Put(remote, f.IDJoin(id, etag))
+func (f *Fs) putFolderCache(item *api.DriveItem, remote string) string {
+	jid := f.folderID(item)
+	f.dirCache.Put(remote, jid)
 	return jid
+}
+
+func (f *Fs) cloudDocsDirectoryRecordID(ctx context.Context, cd *api.CloudDocs, dirRemote, dirID string) (string, error) {
+	if dirRemote == "." {
+		dirRemote = ""
+	}
+	return f.cloudDocsDirectoryRecordIDAbs(ctx, cd, path.Join(f.root, dirRemote), dirID)
+}
+
+func (f *Fs) cloudDocsDirectoryRecordIDAbs(ctx context.Context, cd *api.CloudDocs, absDir, dirID string) (string, error) {
+	if dirID == "" {
+		parent, leaf := dircache.SplitPath(absDir)
+		dc := dircache.New("", f.rootID, f)
+		parentJID, err := dc.FindDir(ctx, parent, false)
+		if err != nil {
+			return "", err
+		}
+		parentID, _ := f.parseNormalizedID(parentJID)
+		parentRecordID, err := f.cloudDocsDirectoryRecordIDAbs(ctx, cd, parent, parentID)
+		if err != nil {
+			return "", err
+		}
+		return cd.FindDirectoryUUID(ctx, parentRecordID, leaf)
+	}
+	if api.IsSharedFolderChildID(dirID) {
+		return api.GetDocIDFromDriveID(dirID), nil
+	}
+	if isSharedFolderRootID(dirID) {
+		parent, leaf := dircache.SplitPath(absDir)
+		dc := dircache.New("", f.rootID, f)
+		parentID, err := dc.FindDir(ctx, parent, false)
+		if err != nil {
+			return "", err
+		}
+		item, found, err := f.findLeafItem(ctx, parentID, leaf)
+		if err != nil {
+			return "", err
+		}
+		if !found || item == nil || item.ShareID == nil || item.ShareID.RecordName == "" {
+			return "", fmt.Errorf("iclouddrive: shared root %q has no CloudDocs shareID", dirID)
+		}
+		return item.ShareID.RecordName, nil
+	}
+	return "", fmt.Errorf("iclouddrive: directory %q is not in a shared folder", dirID)
 }
 
 // Rmdir implements fs.Fs.
@@ -479,6 +599,13 @@ func (f *Fs) String() string {
 // This should be implemented by the backend and will be called by the
 // dircache package when appropriate.
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (string, error) {
+	// A folder cannot be created directly inside a folder shared by another Apple
+	// ID: drivews/docws return HTTP 400 for the share root and every sub-folder.
+	// Route those through the CloudDocs workaround (see createDirViaCloudDocs).
+	if f.isSharedWriteJID(pathID) {
+		return f.createDirViaCloudDocs(ctx, pathID, leaf)
+	}
+
 	var item *api.DriveItem
 	var err error
 	var found bool
@@ -512,7 +639,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (string, error)
 		return "", err
 	}
 
-	return f.IDJoin(item.Drivewsid, item.Etag), err
+	return f.folderID(item), err
 }
 
 // DirMove moves src, srcRemote to this remote at dstRemote
@@ -537,6 +664,14 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 	srcDirectoryID, srcEtag := f.parseNormalizedID(jsrcDirectoryID)
 	dstDirectoryID, _ := f.parseNormalizedID(jdstDirectoryID)
+	if f.isSharedWriteJID(srcID) || f.isSharedWriteJID(jsrcDirectoryID) || f.isSharedWriteJID(jdstDirectoryID) {
+		if err := f.dirMoveViaCloudDocs(ctx, srcFs, srcID, jdstDirectoryID, dstLeaf, srcRemote, dstRemote); err != nil {
+			return err
+		}
+		srcFs.dirCache.FlushDir(srcRemote)
+		f.dirCache.FlushDir(dstRemote)
+		return nil
+	}
 
 	_, err = f.move(ctx, srcID, srcDirectoryID, srcLeaf, srcEtag, dstDirectoryID, dstLeaf)
 	if err != nil {
@@ -546,6 +681,47 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	srcFs.dirCache.FlushDir(srcRemote)
 
 	return nil
+}
+
+// dirMoveViaCloudDocs moves or renames an existing directory inside a folder shared
+// by another Apple ID. The drivews directory move endpoint cannot address the
+// owner's shared zone, but the directory record can be re-parented/renamed through
+// the shared CloudDocs database.
+func (f *Fs) dirMoveViaCloudDocs(ctx context.Context, srcFs *Fs, srcJID, dstParentJID, dstLeaf, srcRemote, dstRemote string) error {
+	srcID, _ := f.parseNormalizedID(srcJID)
+	if !api.IsSharedFolderChildID(srcID) && f.parseSharedItemID(srcJID) == "" {
+		return fs.ErrorCantDirMove
+	}
+	dstParentID, _ := f.parseNormalizedID(dstParentJID)
+
+	cd := f.icloud.CloudDocsService(f.pacer, shouldRetry)
+	if cd == nil {
+		return errors.New("iclouddrive: cannot move a directory in a shared folder: account has no ckdatabasews service")
+	}
+
+	srcAbs := path.Join(srcFs.root, srcRemote)
+	srcUUID, err := srcFs.cloudDocsDirectoryRecordIDAbs(ctx, cd, srcAbs, srcID)
+	if err != nil {
+		return err
+	}
+	if srcUUID == "" {
+		return fmt.Errorf("iclouddrive: cannot move shared directory %q: missing source CloudDocs directory ID", srcAbs)
+	}
+
+	dstAbs := path.Join(f.root, dstRemote)
+	dstParentAbs := path.Dir(path.Clean(dstAbs))
+	if dstParentAbs == "." {
+		dstParentAbs = ""
+	}
+	dstParentUUID, err := f.cloudDocsDirectoryRecordIDAbs(ctx, cd, dstParentAbs, dstParentID)
+	if err != nil {
+		return err
+	}
+	if dstParentUUID == "" {
+		return fmt.Errorf("iclouddrive: cannot move shared directory %q: missing target CloudDocs directory ID", dstAbs)
+	}
+
+	return cd.ReparentDirectory(ctx, srcUUID, dstParentUUID, f.opt.Enc.FromStandardName(dstLeaf))
 }
 
 func (f *Fs) move(ctx context.Context, ID, srcDirectoryID, srcLeaf, srcEtag, dstDirectoryID, dstLeaf string) (*api.DriveItem, error) {
@@ -596,6 +772,10 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	dstLeaf, dstDirectoryID, _, err := f.FindPath(ctx, remote, true)
 	if err != nil {
 		return nil, err
+	}
+
+	if isSharedWriteDirID(srcDirectoryID) || isSharedWriteDirID(dstDirectoryID) || api.IsSharedFolderChildID(srcObj.driveID) {
+		return nil, fs.ErrorCantMove
 	}
 
 	item, err := f.move(ctx, srcObj.driveID, srcDirectoryID, srcLeaf, srcObj.etag, dstDirectoryID, dstLeaf)
@@ -785,7 +965,11 @@ func (f *Fs) NewObjectFromDriveItem(ctx context.Context, remote string, item *ap
 }
 
 func (f *Fs) readMetaData(ctx context.Context, path string) (item *api.DriveItem, err error) {
-	leaf, ID, _, err := f.FindPath(ctx, path, false)
+	// Use the full normalized directory ID (which, for items inside a shared folder,
+	// carries the item_id needed to list the folder via the docws endpoint). Going
+	// through f.FindPath here would strip it down to drivewsid#etag - see folderID
+	// and parseSharedItemID.
+	leaf, directoryID, err := f.dirCache.FindPath(ctx, path, false)
 
 	if err != nil {
 		if err == fs.ErrorDirNotFound {
@@ -794,7 +978,7 @@ func (f *Fs) readMetaData(ctx context.Context, path string) (item *api.DriveItem
 		return nil, err
 	}
 
-	item, found, err := f.findLeafItem(ctx, ID, leaf)
+	item, found, err := f.findLeafItem(ctx, directoryID, leaf)
 
 	if err != nil {
 		return nil, err
@@ -851,27 +1035,81 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		return io.NopCloser(bytes.NewBufferString("")), nil
 	}
 
+	// Files inside a folder shared by another Apple ID have no usable drivewsid
+	// (they are addressed by item_id via the docws endpoints), so the by_id download
+	// lookup is not available — the enumerate/item response gives a direct download
+	// URL instead. That URL is short-lived, but an Object can live a long time (e.g.
+	// in a VFS mount cache), so the cached URL may have gone stale: refresh it from
+	// the item lookup and retry on a download failure.
+	shared := api.IsSharedFolderChildID(o.driveID)
+
+	url, err := o.resolveDownloadURL(ctx, shared, false)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := o.downloadURLBody(ctx, url, options)
+	if err != nil && shared {
+		fs.Debugf(o, "iclouddrive: shared download failed (%v), refreshing download URL and retrying", err)
+		var fresh string
+		if fresh, err = o.resolveDownloadURL(ctx, shared, true); err == nil {
+			resp, err = o.downloadURLBody(ctx, fresh, options)
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Body, nil
+}
+
+// resolveDownloadURL returns the download URL for the object. For own-zone items it
+// resolves via the by-id lookup. For files inside a folder shared by another Apple
+// ID it returns the cached URL, re-resolving it via the item lookup when the cache
+// is empty or a refresh is forced (the shared URL is short-lived).
+func (o *Object) resolveDownloadURL(ctx context.Context, shared, refresh bool) (string, error) {
+	if !shared {
+		var url string
+		var resp *http.Response
+		var err error
+		if err = o.fs.pacer.Call(func() (bool, error) {
+			url, resp, err = o.fs.service.GetDownloadURLByDriveID(ctx, o.driveID)
+			return shouldRetry(ctx, resp, err)
+		}); err != nil {
+			return "", err
+		}
+		return url, nil
+	}
+	if o.downloadURL != "" && !refresh {
+		return o.downloadURL, nil
+	}
+	var item *api.DriveItemRaw
 	var resp *http.Response
 	var err error
-
 	if err = o.fs.pacer.Call(func() (bool, error) {
-		var url string
+		item, resp, err = o.fs.service.GetItemRawByItemID(ctx, o.itemID)
+		return shouldRetry(ctx, resp, err)
+	}); err != nil {
+		return "", err
+	}
+	if item == nil || item.ItemInfo == nil || item.ItemInfo.Urls.URLDownload == "" {
+		return "", fmt.Errorf("iclouddrive: could not resolve download URL for %q", o.remote)
+	}
+	o.downloadURL = item.ItemInfo.Urls.URLDownload
+	return o.downloadURL, nil
+}
 
-		//var doc *api.Document
-		//if o.docID == "" {
-		//doc, resp, err = o.fs.service.GetDocByItemID(ctx, o.itemID)
-		//}
-
-		// Can not get the download url on a item to work, so do it the hard way.
-		url, _, err = o.fs.service.GetDownloadURLByDriveID(ctx, o.driveID)
-
+// downloadURLBody fetches the given URL through the pacer and returns the response.
+func (o *Object) downloadURLBody(ctx context.Context, url string, options []fs.OpenOption) (*http.Response, error) {
+	var resp *http.Response
+	var err error
+	if err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.service.DownloadFile(ctx, url, options)
 		return shouldRetry(ctx, resp, err)
 	}); err != nil {
 		return nil, err
 	}
-
-	return resp.Body, err
+	return resp, nil
 }
 
 // Remote implements fs.Object.
@@ -885,8 +1123,36 @@ func (o *Object) Remove(ctx context.Context) error {
 		return nil
 	}
 
+	leaf, dirID, err := o.fs.dirCache.FindPath(ctx, o.remote, false)
+	if err == nil {
+		id, _ := o.fs.parseNormalizedID(dirID)
+		if api.IsSharedFolderChildID(id) || api.IsSharedFolderChildID(o.driveID) || o.driveID == "" {
+			cd := o.fs.icloud.CloudDocsService(o.fs.pacer, shouldRetry)
+			if cd == nil {
+				return errors.New("iclouddrive: cannot remove shared file: account has no ckdatabasews service")
+			}
+			dirRecordID, err := o.fs.cloudDocsDirectoryRecordID(ctx, cd, path.Dir(path.Clean(o.remote)), id)
+			if err != nil {
+				return err
+			}
+			uuid, err := cd.FindFileUUID(ctx, dirRecordID, leaf)
+			if err != nil {
+				return err
+			}
+			if uuid == "" {
+				return fs.ErrorObjectNotFound
+			}
+			if err := cd.DeleteFile(ctx, uuid); err != nil {
+				return err
+			}
+			o.fs.dirCache.FlushDir(path.Dir(o.remote))
+			return nil
+		}
+	} else if err != fs.ErrorDirNotFound {
+		return err
+	}
+
 	var resp *http.Response
-	var err error
 	if err = o.fs.pacer.Call(func() (bool, error) {
 		_, resp, err = o.fs.service.MoveItemToTrashByID(ctx, o.driveID, o.etag, true)
 		return retryResultUnknown(ctx, resp, err)
@@ -933,6 +1199,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	leaf, dirID, _, err := o.fs.FindPath(ctx, path.Clean(remote), true)
 	if err != nil {
 		return err
+	}
+
+	// Items whose parent is a folder shared by another Apple ID cannot be written
+	// through the drivews/docws upload endpoints (they only operate in the caller's
+	// own zone and return HTTP 400). Route those through CloudKit instead.
+	if isSharedWriteDirID(dirID) {
+		return o.updateViaCloudDocs(ctx, in, src, leaf, dirID, modTime, size)
 	}
 
 	// Move current file to trash
@@ -1002,6 +1275,310 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	o.modTime = modTime
 	o.size = src.Size()
 
+	return nil
+}
+
+func isSharedFolderRootID(id string) bool {
+	return strings.HasPrefix(id, "SHARED_FOLDER::")
+}
+
+func isSharedWriteDirID(id string) bool {
+	return isSharedFolderRootID(id) || api.IsSharedFolderChildID(id)
+}
+
+func sharedUploadTempName(leaf, token string) string {
+	ext := ""
+	if !strings.HasSuffix(leaf, ".") {
+		if i := strings.LastIndexByte(leaf, '.'); i > 0 {
+			ext = leaf[i:]
+		}
+	}
+	return ".rclone-upload-" + token + ext
+}
+
+// findSharedFolderRoot returns the drivewsid of the nearest SHARED_FOLDER ancestor
+// of remote. The share may be nested below the drive root, or the Fs root itself
+// may be inside the share, so don't assume the first relative path component is
+// the shared folder.
+func (f *Fs) findSharedFolderRoot(ctx context.Context, remote string) (string, error) {
+	return f.findSharedFolderRootAbs(ctx, path.Join(f.root, remote))
+}
+
+// findSharedFolderRootAbs is findSharedFolderRoot for an absolute path (relative to
+// the drive root, not to f.root). It walks up from the item's parent looking for the
+// nearest SHARED_FOLDER ancestor.
+func (f *Fs) findSharedFolderRootAbs(ctx context.Context, absItemPath string) (string, error) {
+	dir := path.Dir(path.Clean(absItemPath))
+	if dir == "." {
+		dir = ""
+	}
+	dc := dircache.New("", f.rootID, f)
+	for {
+		jid, err := dc.FindDir(ctx, dir, false)
+		if err != nil {
+			return "", err
+		}
+		id, _ := f.parseNormalizedID(jid)
+		if isSharedFolderRootID(id) {
+			return id, nil
+		}
+		if dir == "" {
+			break
+		}
+		dir = path.Dir(dir)
+		if dir == "." {
+			dir = ""
+		}
+	}
+
+	return "", fmt.Errorf("iclouddrive: could not find shared-folder root for %q", absItemPath)
+}
+
+// isSharedWriteJID reports whether a normalized directory-cache id refers to a
+// folder shared by another Apple ID (the share root or any sub-folder). Sub-folders
+// deep enough to lack a drivewsid are still recognised by the embedded item_id.
+func (f *Fs) isSharedWriteJID(jid string) bool {
+	id, _ := f.parseNormalizedID(jid)
+	return isSharedWriteDirID(id) || f.parseSharedItemID(jid) != ""
+}
+
+// sharedDirTempName returns a unique, collision-free folder name used while a new
+// shared sub-directory is staged in the caller's own zone root before being moved
+// into the owner's zone. The final name is applied afterwards via CloudDocs.
+func sharedDirTempName(token string) string {
+	return ".rclone-dir-" + token
+}
+
+// createDirViaCloudDocs creates a directory inside a folder shared by another Apple
+// ID. drivews/docws cannot do this directly (HTTP 400), so it mirrors the document
+// write path (see updateViaCloudDocs):
+//
+//  1. create the folder under a temporary name in the caller's own zone root;
+//  2. move it into the share root, which lands it in the owner's zone with PCS
+//     chaining done server-side (this alone is enough for the share root itself);
+//  3. if the target is a sub-folder, re-parent and rename the record into it via the
+//     CloudKit shared database; the server re-chains PCS because the record now
+//     carries its own key.
+//
+// It returns the new directory's normalized cache id.
+func (f *Fs) createDirViaCloudDocs(ctx context.Context, parentJID, leaf string) (string, error) {
+	parentID, _ := f.parseNormalizedID(parentJID)
+
+	// Resolve the parent's absolute path (relative to the drive root). CreateDir can
+	// run while the directory cache is still locating its own root (e.g. for
+	// "mkdir remote:Share/new", where the Fs root is the not-yet-existent new dir),
+	// in which case cached paths are drive-root-absolute; once the root is found they
+	// are relative to f.root. Normalise to absolute so the helpers below work in
+	// either state.
+	parentRemote, ok := f.dirCache.GetInv(parentJID)
+	if !ok {
+		return "", fmt.Errorf("iclouddrive: cannot create shared directory %q: parent path unknown", leaf)
+	}
+	// Decide whether the cached parent path is drive-root-absolute or relative to
+	// f.root. CreateDir is invoked by the dircache while it holds its internal mutex,
+	// so we must NOT call any DirCache method that re-locks that mutex (FoundRoot,
+	// FindDir, etc.) because that self-deadlocks. Get/GetInv use a separate mutex
+	// and are safe.
+	//
+	// The cache entry that maps to "" is the cache's current frame root: while the
+	// root is still being located it is the true drive root (f.rootID) and all cached
+	// paths are drive-root-absolute; once the root is found the cache is re-based and
+	// that entry becomes f.root's id, with cached paths relative to f.root. So we only
+	// prepend f.root when the frame root is no longer the true drive root.
+	frameRootID, ok := f.dirCache.Get("")
+	parentAbs := parentRemote
+	if ok && frameRootID != f.rootID {
+		parentAbs = path.Join(f.root, parentRemote)
+	}
+	newAbs := path.Join(parentAbs, leaf)
+
+	cd := f.icloud.CloudDocsService(f.pacer, shouldRetry)
+	if cd == nil {
+		return "", errors.New("iclouddrive: cannot create a directory in a shared folder: account has no ckdatabasews service")
+	}
+
+	// The share root is the only addressable ancestor in the owner's zone.
+	shareRootID, err := f.findSharedFolderRootAbs(ctx, newAbs)
+	if err != nil {
+		return "", err
+	}
+
+	// (1) Create under a temporary name in the caller's own zone root. The final
+	// name is applied later, after the record has moved into the owner's zone,
+	// so a clashing name in the own root or share root cannot cause a "name 2"
+	// rename of the user-visible folder.
+	tempName := f.opt.Enc.FromStandardName(sharedDirTempName(uuid.NewString()))
+	var ownItem *api.DriveItem
+	var resp *http.Response
+	if err = f.pacer.Call(func() (bool, error) {
+		ownItem, resp, err = f.service.CreateNewFolderByDriveID(ctx, f.rootID, tempName)
+		return ignoreResultUnknown(ctx, resp, err)
+	}); err != nil {
+		return "", err
+	}
+
+	// (2) Move it into the share root (lands in the owner's zone, PCS applied).
+	var moved *api.DriveItem
+	if err = f.pacer.Call(func() (bool, error) {
+		moved, resp, err = f.service.MoveItemByDriveID(ctx, ownItem.Drivewsid, ownItem.Etag, shareRootID, true)
+		return ignoreResultUnknown(ctx, resp, err)
+	}); err != nil {
+		return "", err
+	}
+	uuid := api.GetDocIDFromDriveID(moved.Drivewsid)
+	name := f.opt.Enc.FromStandardName(leaf)
+	cleanupMovedDir := func() {
+		_ = cd.DeleteDirectory(ctx, uuid)
+	}
+
+	// (3) Re-parent into the target. The CloudDocs directory record of the target
+	// is the share root itself when the parent is the share root, or the sub-folder
+	// otherwise; either way ReparentDirectory sets the final name and (for a deeper
+	// target) re-chains PCS.
+	targetDirUUID, err := f.cloudDocsDirectoryRecordIDAbs(ctx, cd, parentAbs, parentID)
+	if err != nil {
+		cleanupMovedDir()
+		return "", err
+	}
+	if targetDirUUID == "" {
+		cleanupMovedDir()
+		return "", fmt.Errorf("iclouddrive: cannot create directory in shared folder %q: missing CloudDocs directory ID", parentAbs)
+	}
+	if err = cd.ReparentDirectory(ctx, uuid, targetDirUUID, name); err != nil {
+		cleanupMovedDir()
+		return "", err
+	}
+
+	// The moved/re-parented folder's drivewsid and item_id are not reported back by
+	// the CloudDocs response, so re-resolve it through the parent listing (which lists
+	// by ID, uncached) to build a correct cache id; deeper shared folders are
+	// addressed by item_id, not drivewsid.
+	item, found, err := f.findLeafItem(ctx, parentJID, leaf)
+	if err != nil {
+		return "", err
+	}
+	if !found || item == nil {
+		return "", fmt.Errorf("iclouddrive: created shared directory %q but could not re-read it", newAbs)
+	}
+	return f.folderID(item), nil
+}
+
+// updateViaCloudDocs writes a document into a folder shared by another Apple ID.
+// drivews/docws cannot do this directly, so it: (1) uploads the document under a
+// temporary collision-free name into the caller's own zone root, (2) moves it into
+// the share root (which puts it in the owner's zone with PCS chaining done
+// server-side), then (3) re-parents and renames the record into the target
+// sub-folder via the CloudKit shared database. See api.CloudDocs.
+func (o *Object) updateViaCloudDocs(ctx context.Context, in io.Reader, src fs.ObjectInfo, leaf, dirID string, modTime time.Time, size int64) error {
+	f := o.fs
+	cd := f.icloud.CloudDocsService(f.pacer, shouldRetry)
+	if cd == nil {
+		return errors.New("iclouddrive: cannot write into a shared sub-folder: account has no ckdatabasews service")
+	}
+
+	remote := o.Remote()
+	dirRemote := path.Dir(path.Clean(remote))
+	targetDirUUID, err := f.cloudDocsDirectoryRecordID(ctx, cd, dirRemote, dirID)
+	if err != nil {
+		return err
+	}
+	if targetDirUUID == "" {
+		return fmt.Errorf("iclouddrive: cannot write into shared directory %q: missing CloudDocs directory ID", dirRemote)
+	}
+
+	// The file must first land in the owner's zone via an addressable SHARED_FOLDER
+	// ancestor. Find that ancestor from the directory cache instead of assuming
+	// shared folders are direct children of the drive root.
+	shareRootID, err := f.findSharedFolderRoot(ctx, remote)
+	if err != nil {
+		return err
+	}
+
+	name := f.opt.Enc.FromStandardName(leaf)
+	tempName := f.opt.Enc.FromStandardName(sharedUploadTempName(leaf, uuid.NewString()))
+	var resp *http.Response
+
+	// (1) Upload into the caller's own zone root under a temporary name. The final
+	// name is applied in CloudDocs after the record has moved into the owner's zone,
+	// avoiding "name 2" suffixes if the share root already contains the same leaf.
+	var uploadInfo *api.UploadResponse
+	if err = f.pacer.Call(func() (bool, error) {
+		uploadInfo, resp, err = f.service.CreateUpload(ctx, size, tempName)
+		return ignoreResultUnknown(ctx, resp, err)
+	}); err != nil {
+		return err
+	}
+	var upload *api.SingleFileResponse
+	if err = f.pacer.Call(func() (bool, error) {
+		upload, resp, err = f.service.Upload(ctx, in, size, tempName, uploadInfo.URL)
+		return ignoreResultUnknown(ctx, resp, err)
+	}); err != nil {
+		return err
+	}
+	r := api.NewUpdateFileInfo()
+	r.DocumentID = uploadInfo.DocumentID
+	r.Path.Path = tempName
+	r.Path.StartingDocumentID = api.GetDocIDFromDriveID(f.rootID) // own zone root
+	r.Data.Receipt = upload.SingleFile.Receipt
+	r.Data.Signature = upload.SingleFile.Signature
+	r.Data.ReferenceSignature = upload.SingleFile.ReferenceSignature
+	r.Data.WrappingKey = upload.SingleFile.WrappingKey
+	r.Data.Size = upload.SingleFile.Size
+	r.Mtime = modTime.Unix() * 1000
+	r.Btime = modTime.Unix() * 1000
+	var ownItem *api.DriveItem
+	if err = f.pacer.Call(func() (bool, error) {
+		ownItem, resp, err = f.service.UpdateFile(ctx, &r)
+		return ignoreResultUnknown(ctx, resp, err)
+	}); err != nil {
+		return err
+	}
+
+	// (2) Move it into the share root (lands in the owner's zone, PCS applied).
+	var moved *api.DriveItem
+	if err = f.pacer.Call(func() (bool, error) {
+		moved, resp, err = f.service.MoveItemByDriveID(ctx, ownItem.Drivewsid, ownItem.Etag, shareRootID, true)
+		return ignoreResultUnknown(ctx, resp, err)
+	}); err != nil {
+		return err
+	}
+	uuid := api.GetDocIDFromDriveID(moved.Drivewsid)
+
+	// Overwrite: if a file with the same name already exists in the target folder,
+	// remove its record so we don't leave a duplicate (best-effort). The lookup is
+	// not query-indexable, so a miss is possible; log it so a resulting duplicate is
+	// diagnosable.
+	if o.itemID != "" {
+		oldUUID, qerr := cd.FindFileUUID(ctx, targetDirUUID, leaf)
+		switch {
+		case qerr != nil:
+			fs.Debugf(o, "iclouddrive: could not look up existing %q in shared folder to overwrite: %v", leaf, qerr)
+		case oldUUID == "":
+			fs.Debugf(o, "iclouddrive: existing copy of %q not found in shared folder before overwrite; a duplicate may result", leaf)
+		case !strings.EqualFold(oldUUID, uuid):
+			if derr := cd.DeleteFile(ctx, oldUUID); derr != nil {
+				fs.Debugf(o, "iclouddrive: could not delete previous copy of %q (%s): %v", leaf, oldUUID, derr)
+			}
+		}
+	}
+
+	// (3) Re-parent the record into the target shared sub-folder and set the final
+	// name. The CloudDocs request layer already paces and retries each call, so no
+	// extra pacer here.
+	if err = cd.ReparentStructure(ctx, uuid, targetDirUUID, name); err != nil {
+		return err
+	}
+
+	o.size = size
+	o.modTime = modTime
+	o.docID = uuid
+	// Best-effort: refresh metadata (item_id etc.) from the now-placed file.
+	f.dirCache.FlushDir(dirRemote)
+	if item, merr := f.readMetaData(ctx, remote); merr == nil {
+		_ = o.setMetaData(item)
+		o.modTime = modTime
+		o.size = size
+	}
 	return nil
 }
 
