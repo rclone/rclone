@@ -280,6 +280,11 @@ for all `mount` and `serve` commands on macOS. For details, see [vfs-case-sensit
 
 #### NFS mount
 
+For macOS (and other platforms where this path is supported), prefer the dedicated
+[rclone nfsmount](/commands/rclone_nfsmount/) command. It starts the NFS server and
+performs the mount for you. `rclone mount` itself still uses FUSE (macFUSE/FUSE-T)
+and does not switch to NFS via a flag.
+
 This method spins up an NFS server using [serve nfs](/commands/rclone_serve_nfs/)
 command and mounts it to the specified mountpoint. If you run this in background
 mode using |--daemon|, you will need to send SIGTERM signal to the rclone process
