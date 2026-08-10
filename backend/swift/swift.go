@@ -193,20 +193,16 @@ func init() {
 			}, {
 				Value: "https://authenticate.ain.net",
 				Help:  "Blomp Cloud Storage",
-			},
-			{
+			}, {
 				Value: "https://swiss-backup01.infomaniak.com/identity/v3",
 				Help:  "Infomaniak Swiss backup Location 01",
-			},
-			{
+			}, {
 				Value: "https://swiss-backup02.infomaniak.com/identity/v3",
 				Help:  "Infomaniak Swiss backup Location 02",
-			},
-			{
+			}, {
 				Value: "https://swiss-backup03.infomaniak.com/identity/v3",
 				Help:  "Infomaniak Swiss backup Location 03",
-			},
-			{
+			}, {
 				Value: "https://swiss-backup04.infomaniak.com/identity/v3",
 				Help:  "Infomaniak Swiss backup Location 04",
 			}},
