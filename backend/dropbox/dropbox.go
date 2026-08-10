@@ -1672,6 +1672,24 @@ func (f *Fs) changeNotifyCursor(ctx context.Context) (cursor string, err error) 
 	return startCursor.Cursor, nil
 }
 
+// trimRootFromChangeNotifyPath removes the configured root from a
+// ChangeNotify entry's display path.
+//
+// PathDisplay's casing can - in rare instances - fail to match the root's
+// casing (see "The Case folding of PathDisplay problem" above), so the
+// root is matched against the always-lowercase PathLower instead, and the
+// same number of bytes trimmed off PathDisplay - the Dropbox docs say only
+// the casing differs between the two, so they stay the same length.
+func (f *Fs) trimRootFromChangeNotifyPath(pathLower, pathDisplay string) string {
+	if !strings.HasPrefix(pathLower, strings.ToLower(f.slashRootSlash)) {
+		return ""
+	}
+	if len(pathDisplay) < len(f.slashRootSlash) {
+		return ""
+	}
+	return pathDisplay[len(f.slashRootSlash):]
+}
+
 func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.EntryType), startCursor string) (newCursor string, err error) {
 	cursor := startCursor
 	var res *files.ListFolderLongpollResult
@@ -1731,13 +1749,13 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 			switch info := entry.(type) {
 			case *files.FolderMetadata:
 				entryType = fs.EntryDirectory
-				entryPath = strings.TrimPrefix(info.PathDisplay, f.slashRootSlash)
+				entryPath = f.trimRootFromChangeNotifyPath(info.PathLower, info.PathDisplay)
 			case *files.FileMetadata:
 				entryType = fs.EntryObject
-				entryPath = strings.TrimPrefix(info.PathDisplay, f.slashRootSlash)
+				entryPath = f.trimRootFromChangeNotifyPath(info.PathLower, info.PathDisplay)
 			case *files.DeletedMetadata:
 				entryType = fs.EntryObject
-				entryPath = strings.TrimPrefix(info.PathDisplay, f.slashRootSlash)
+				entryPath = f.trimRootFromChangeNotifyPath(info.PathLower, info.PathDisplay)
 			default:
 				fs.Errorf(entry, "dropbox ChangeNotify: ignoring unknown EntryType %T", entry)
 				continue
