@@ -3,16 +3,24 @@
 package fserrors
 
 import (
+	"slices"
 	"syscall"
 
 	liberrors "github.com/rclone/rclone/lib/errors"
 )
 
+// noSpaceErrors are the errors which mean the disk is full.
+//
+// Platform specific files add to this list in their init functions.
+var noSpaceErrors = []error{
+	syscall.ENOSPC,
+}
+
 // IsErrNoSpace checks a possibly wrapped error to
-// see if it contains a ENOSPC error
+// see if it contains an out of space error.
 func IsErrNoSpace(cause error) (isNoSpc bool) {
 	liberrors.Walk(cause, func(c error) bool {
-		if c == syscall.ENOSPC {
+		if slices.Contains(noSpaceErrors, c) {
 			isNoSpc = true
 			return true
 		}
