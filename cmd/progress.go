@@ -60,7 +60,7 @@ func startProgress() func() {
 					log.Handler.ResetOutput()
 				}
 				operations.SyncPrintf = oldSyncPrint
-				fmt.Fprintln(config.PasswordPromptOutput, "")
+				_, _ = fmt.Fprintln(config.PasswordPromptOutput, "")
 				return
 			}
 		}
