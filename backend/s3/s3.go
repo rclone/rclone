@@ -394,6 +394,25 @@ Use this only if v4 signatures don't work, e.g. pre Jewel/v10 CEPH.`,
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name: "use_oss_v4_auth",
+			Help: `If true use Alibaba Cloud OSS native V4 authentication (OSS4-HMAC-SHA256).
+
+Some Alibaba Cloud OSS endpoints (for example dedicated regions) only
+accept OSS V4 signatures and reject AWS style signatures with the
+error "Only support authorization for OSS4-HMAC-SHA256". Alibaba
+require OSS V4 signatures for accounts created after March 2025 and
+buckets created after September 2025.
+
+This is enabled by default for the Alibaba provider.
+
+The region for the signature is read from the endpoint if possible,
+otherwise the region option is used.
+
+Note that presigned requests (rclone link and use_presigned_request)
+are still signed with AWS style signatures.`,
+			Default:  fs.Tristate{},
+			Advanced: true,
+		}, {
 			Name: "use_dual_stack",
 			Help: `If true use AWS S3 dual-stack endpoint (IPv6 support).
 
@@ -1109,6 +1128,7 @@ type Options struct {
 	UploadConcurrency           int                  `config:"upload_concurrency"`
 	ForcePathStyle              bool                 `config:"force_path_style"`
 	V2Auth                      bool                 `config:"v2_auth"`
+	UseOSSV4Auth                fs.Tristate          `config:"use_oss_v4_auth"`
 	UseAccelerateEndpoint       bool                 `config:"use_accelerate_endpoint"`
 	UseARNRegion                bool                 `config:"use_arn_region"`
 	LeavePartsOnError           bool                 `config:"leave_parts_on_error"`
@@ -1586,6 +1606,11 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 	}
 
 	setQuirks(opt, provider)
+	useOSSV4Auth := opt.UseOSSV4Auth.Value && !opt.V2Auth && opt.Region != "other-v2-signature"
+	if useOSSV4Auth {
+		// Make OSS responses look like S3 responses
+		client = ossFixupResponses(client)
+	}
 	awsConfig.RetryMaxAttempts = ci.LowLevelRetries
 	awsConfig.HTTPClient = client
 
@@ -1636,6 +1661,12 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 				s3Opt.HTTPSignerV4 = &v2Signer{opt: opt}
 			})
 		}
+	} else if useOSSV4Auth {
+		signer := newOSSV4Signer(opt)
+		fs.Debugf(nil, "Using OSS V4 auth with signing region %q", signer.region)
+		options = append(options, func(s3Opt *s3.Options) {
+			s3Opt.HTTPSignerV4 = signer
+		})
 	}
 
 	// Fixup the request if needed
@@ -1809,6 +1840,7 @@ func setQuirks(opt *Options, provider *Provider) {
 		opt.UploadCutoff = math.MaxInt64
 	}
 	set(&opt.UseUnsignedPayload, true, provider.Quirks.UseUnsignedPayload)
+	set(&opt.UseOSSV4Auth, false, provider.Quirks.UseOSSV4Auth)
 	set(&opt.UseXID, true, provider.Quirks.UseXID)
 	set(&opt.SignAcceptEncoding, true, provider.Quirks.SignAcceptEncoding)
 	set(&opt.ObjectLockSupported, true, provider.Quirks.ObjectLockSupported)

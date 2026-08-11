@@ -35,3 +35,4 @@ storage_class:
 bucket_acl: true
 quirks:
   use_multipart_etag: false # multipar ETags differ from AWS
+  use_oss_v4_auth: true # some endpoints only accept OSS V4 signatures
