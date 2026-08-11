@@ -37,6 +37,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
@@ -66,9 +67,11 @@ func TestMkdir(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
 
+	checks := accounting.GlobalStats().GetChecks()
 	err := operations.Mkdir(ctx, r.Fremote, "")
 	require.NoError(t, err)
 	fstest.CheckListing(t, r.Fremote, []fstest.Item{})
+	assert.Equal(t, checks+1, accounting.GlobalStats().GetChecks(), "Mkdir should be counted as a check")
 
 	err = operations.Mkdir(ctx, r.Fremote, "")
 	require.NoError(t, err)
@@ -1961,17 +1964,22 @@ func TestSetDirModTime(t *testing.T) {
 	ci.NoUpdateDirModTime = false
 
 	// First try with the directory not existing - should return an error
+	errs := accounting.GlobalStats().GetErrors()
 	newDst, err = operations.SetDirModTime(ctx, r.Fremote, nil, "set modtime on non existent directory", t2)
 	require.Error(t, err)
 	require.Nil(t, newDst)
+	assert.Equal(t, errs+1, accounting.GlobalStats().GetErrors(), "the error should be counted")
+	assert.True(t, fserrors.IsCounted(err), "the returned error should be marked as counted")
 
 	// Then try with the directory existing
 	require.NoError(t, r.Fremote.Mkdir(ctx, name))
 	existingDir := fstest.NewDirectory(ctx, t, r.Fremote, name)
 
+	checks := accounting.GlobalStats().GetChecks()
 	newDst, err = operations.SetDirModTime(ctx, r.Fremote, existingDir, "SHOULD BE IGNORED", t2)
 	require.NoError(t, err)
 	require.NotNil(t, newDst)
+	assert.Equal(t, checks+1, accounting.GlobalStats().GetChecks(), "SetDirModTime should be counted as a check")
 
 	// Check the returned directory and one read from the listing
 	// The modtime will only be correct on newDst if it had a SetModTime method

@@ -1057,12 +1057,16 @@ func ListDir(ctx context.Context, f fs.Fs, w io.Writer) error {
 }
 
 // Mkdir makes a destination directory or container
-func Mkdir(ctx context.Context, f fs.Fs, dir string) error {
+func Mkdir(ctx context.Context, f fs.Fs, dir string) (err error) {
+	tr := accounting.Stats(ctx).NewCheckingTransferNoHistory(dirTransferEntry(f, nil, dir), "making directory")
+	defer func() {
+		tr.Done(ctx, err)
+	}()
 	if SkipDestructive(ctx, fs.LogDirName(f, dir), "make directory") {
 		return nil
 	}
 	fs.Infof(fs.LogDirName(f, dir), "Making directory")
-	err := f.Mkdir(ctx, dir)
+	err = f.Mkdir(ctx, dir)
 	if err != nil {
 		err = fs.CountError(ctx, err)
 		return err
@@ -1079,6 +1083,10 @@ func MkdirMetadata(ctx context.Context, f fs.Fs, dir string, metadata fs.Metadat
 	if do == nil {
 		return nil, Mkdir(ctx, f, dir)
 	}
+	tr := accounting.Stats(ctx).NewCheckingTransferNoHistory(dirTransferEntry(f, nil, dir), "making directory")
+	defer func() {
+		tr.Done(ctx, err)
+	}()
 	logName := fs.LogDirName(f, dir)
 	if SkipDestructive(ctx, logName, "make directory") {
 		return nil, nil
@@ -1132,6 +1140,11 @@ func MkdirModTime(ctx context.Context, f fs.Fs, dir string, modTime time.Time) (
 // TryRmdir removes a container but not if not empty.  It doesn't
 // count errors but may return one.
 func TryRmdir(ctx context.Context, f fs.Fs, dir string) error {
+	tr := accounting.Stats(ctx).NewCheckingTransferNoHistory(dirTransferEntry(f, nil, dir), "removing directory")
+	defer func() {
+		// Pass nil error to Done as TryRmdir doesn't count errors
+		tr.Done(ctx, nil)
+	}()
 	accounting.Stats(ctx).DeletedDirs(1)
 	if SkipDestructive(ctx, fs.LogDirName(f, dir), "remove directory") {
 		return nil
@@ -2685,6 +2698,15 @@ func dirName(f fs.Fs, dst fs.Directory, dir string) any {
 	return f
 }
 
+// Return the best way of describing the directory as a DirEntry for
+// the progress display, describing the root directory as the Fs.
+func dirTransferEntry(f fs.Fs, dst fs.Directory, dir string) fs.DirEntry {
+	if dst != nil && dst.Remote() != "" {
+		return dst
+	}
+	return fs.NewDir(fmt.Sprint(fs.LogDirName(f, dir)), time.Time{})
+}
+
 // CopyDirMetadata copies the src directory to dst or f if nil.  If dst is nil then it uses
 // dir as the name of the new directory.
 //
@@ -2693,6 +2715,12 @@ func dirName(f fs.Fs, dst fs.Directory, dir string) any {
 func CopyDirMetadata(ctx context.Context, f fs.Fs, dst fs.Directory, dir string, src fs.Directory) (newDst fs.Directory, err error) {
 	ci := fs.GetConfig(ctx)
 	logName := dirName(f, dst, dir)
+	tr := accounting.Stats(ctx).NewCheckingTransferNoHistory(dirTransferEntry(f, dst, dir), "updating metadata")
+	defer func() {
+		// Count the error before Done so it is only counted once
+		err = fs.CountError(ctx, err)
+		tr.Done(ctx, err)
+	}()
 	if SkipDestructive(ctx, logName, "update directory metadata") {
 		return nil, nil
 	}
@@ -2754,6 +2782,12 @@ func SetDirModTime(ctx context.Context, f fs.Fs, dst fs.Directory, dir string, m
 		fs.Debugf(logName, "Skipping set directory modification time as --no-update-dir-modtime is set")
 		return nil, nil
 	}
+	tr := accounting.Stats(ctx).NewCheckingTransferNoHistory(dirTransferEntry(f, dst, dir), "setting modtime")
+	defer func() {
+		// Count the error before Done so it is only counted once
+		err = fs.CountError(ctx, err)
+		tr.Done(ctx, err)
+	}()
 	if SkipDestructive(ctx, logName, "set directory modification time") {
 		return nil, nil
 	}
