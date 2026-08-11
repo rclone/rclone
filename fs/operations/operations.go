@@ -1097,6 +1097,7 @@ func MkdirMetadata(ctx context.Context, f fs.Fs, dir string, metadata fs.Metadat
 		err = fs.CountError(ctx, err)
 		return nil, err
 	}
+	accounting.Stats(ctx).UpdatedDirs(1)
 	if mtime, ok := metadata["mtime"]; ok {
 		fs.Infof(logName, "Made directory with metadata (mtime=%s)", mtime)
 	} else {
@@ -1132,6 +1133,9 @@ func MkdirModTime(ctx context.Context, f fs.Fs, dir string, modTime time.Time) (
 	// The directory was created with Mkdir then we should try to set the time
 	if do := f.Features().DirSetModTime; do != nil {
 		err = do(ctx, dir, modTime)
+		if err == nil {
+			accounting.Stats(ctx).UpdatedDirs(1)
+		}
 	}
 	fs.Infof(logName, "Made directory with modification time %v", modTime)
 	return newDst, err
@@ -2763,6 +2767,7 @@ func CopyDirMetadata(ctx context.Context, f fs.Fs, dst fs.Directory, dir string,
 	if err != nil {
 		return nil, err
 	}
+	accounting.Stats(ctx).UpdatedDirs(1)
 	fs.Infof(logName, "Updated directory metadata")
 	return newDst, nil
 }
@@ -2805,6 +2810,7 @@ func SetDirModTime(ctx context.Context, f fs.Fs, dst fs.Directory, dir string, m
 			} else if err != nil {
 				return dst, err
 			} else {
+				accounting.Stats(ctx).UpdatedDirs(1)
 				fs.Infof(logName, "Set directory modification time (using SetModTime)")
 				return dst, nil
 			}
@@ -2817,6 +2823,7 @@ func SetDirModTime(ctx context.Context, f fs.Fs, dst fs.Directory, dir string, m
 		if err != nil {
 			return dst, err
 		}
+		accounting.Stats(ctx).UpdatedDirs(1)
 		fs.Infof(logName, "Set directory modification time (using DirSetModTime)")
 		return dst, nil
 	}
