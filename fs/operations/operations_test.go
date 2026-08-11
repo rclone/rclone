@@ -1880,9 +1880,11 @@ func TestMkdirMetadata(t *testing.T) {
 		t.Skip("Skipping test as remote does not support MkdirMetadata")
 	}
 
+	updatedDirs := statsUpdatedDirs(t)
 	newDst, err := operations.MkdirMetadata(ctx, r.Fremote, name, testMetadata)
 	require.NoError(t, err)
 	require.NotNil(t, newDst)
+	assert.Equal(t, updatedDirs+1, statsUpdatedDirs(t), "MkdirMetadata should be counted as an updated dir")
 
 	require.True(t, features.ReadDirMetadata, "Expecting ReadDirMetadata to be supported if MkdirMetadata is supported")
 
@@ -1898,8 +1900,10 @@ func TestMkdirModTime(t *testing.T) {
 	if r.Fremote.Features().DirSetModTime == nil && r.Fremote.Features().MkdirMetadata == nil {
 		t.Skip("Skipping test as remote does not support DirSetModTime or MkdirMetadata")
 	}
+	updatedDirs := statsUpdatedDirs(t)
 	newDst, err := operations.MkdirModTime(ctx, r.Fremote, name, t2)
 	require.NoError(t, err)
+	assert.Equal(t, updatedDirs+1, statsUpdatedDirs(t), "MkdirModTime should be counted as an updated dir")
 
 	// Check the returned directory and one read from the listing
 	// newDst may be nil here depending on how the modtime was set
@@ -1907,6 +1911,13 @@ func TestMkdirModTime(t *testing.T) {
 		fstest.CheckDirModTime(ctx, t, r.Fremote, newDst, t2)
 	}
 	fstest.CheckDirModTime(ctx, t, r.Fremote, fstest.NewDirectory(ctx, t, r.Fremote, name), t2)
+}
+
+// statsUpdatedDirs reads the updatedDirs stat from the global stats
+func statsUpdatedDirs(t *testing.T) int64 {
+	out, err := accounting.GlobalStats().RemoteStats(true)
+	require.NoError(t, err)
+	return out["updatedDirs"].(int64)
 }
 
 func TestCopyDirMetadata(t *testing.T) {
@@ -1926,9 +1937,11 @@ func TestCopyDirMetadata(t *testing.T) {
 	require.NotNil(t, newSrc)
 
 	// First try with the directory not existing
+	updatedDirs := statsUpdatedDirs(t)
 	newDst, err := operations.CopyDirMetadata(ctx, r.Fremote, nil, nameNonExistent, newSrc)
 	require.NoError(t, err)
 	require.NotNil(t, newDst)
+	assert.Equal(t, updatedDirs+1, statsUpdatedDirs(t), "CopyDirMetadata should be counted as an updated dir")
 
 	// Check the returned directory and one read from the listing
 	fstest.CheckEntryMetadata(ctx, t, r.Fremote, newDst, testMetadata)
@@ -1976,10 +1989,12 @@ func TestSetDirModTime(t *testing.T) {
 	existingDir := fstest.NewDirectory(ctx, t, r.Fremote, name)
 
 	checks := accounting.GlobalStats().GetChecks()
+	updatedDirs := statsUpdatedDirs(t)
 	newDst, err = operations.SetDirModTime(ctx, r.Fremote, existingDir, "SHOULD BE IGNORED", t2)
 	require.NoError(t, err)
 	require.NotNil(t, newDst)
 	assert.Equal(t, checks+1, accounting.GlobalStats().GetChecks(), "SetDirModTime should be counted as a check")
+	assert.Equal(t, updatedDirs+1, statsUpdatedDirs(t), "SetDirModTime should be counted as an updated dir")
 
 	// Check the returned directory and one read from the listing
 	// The modtime will only be correct on newDst if it had a SetModTime method
