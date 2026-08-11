@@ -1217,7 +1217,6 @@ func (s *syncCopyMove) setDelayedDirModTimes(ctx context.Context) error {
 					_, err = operations.SetDirModTime(gCtx, s.fdst, item.dst, item.dir, item.modTime)
 				}
 				if err != nil {
-					err = fs.CountError(ctx, err)
 					fs.Errorf(item.dir, "Failed to update directory timestamp or metadata: %v", err)
 					errCount.Add(err)
 				}
