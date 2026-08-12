@@ -432,6 +432,42 @@ func TestDirMetadataInTreeWorks(t *testing.T) {
 	require.True(t, fi.ModTime().Equal(fstest.Time("2001-02-03T04:05:06Z")))
 }
 
+// TestDirBTimeThroughPlantedSymlinkBlocked checks a btime write
+// through a symlink can't escape the root.
+func TestDirBTimeThroughPlantedSymlinkBlocked(t *testing.T) {
+	if !haveSetBTime {
+		t.Skip("birth time is not settable on this OS")
+	}
+	ctx := context.Background()
+
+	evil := t.TempDir()
+	evilDir := filepath.Join(evil, "secret.d")
+	require.NoError(t, os.Mkdir(evilDir, 0700))
+
+	// Read the outside dir's btime through a local Fs rooted at evil.
+	evilFsRaw, err := NewFs(ctx, "local", evil, configmap.Simple{})
+	require.NoError(t, err)
+	evilFs := evilFsRaw.(*Fs)
+	readBTime := func() string {
+		o, err := evilFs.newObject("secret.d")
+		require.NoError(t, err)
+		require.NoError(t, o.lstat())
+		m, err := o.Metadata(ctx)
+		require.NoError(t, err)
+		return m["btime"]
+	}
+	before := readBTime()
+
+	r := fstest.NewRun(t)
+	f := r.Flocal.(*Fs)
+	linksMode(f)
+	require.NoError(t, putLink(ctx, f, "pwn", evilDir))
+
+	_, _ = f.MkdirMetadata(ctx, "pwn", fs.Metadata{"btime": "2001-02-03T04:05:06Z"})
+
+	require.Equal(t, before, readBTime(), "btime escaped through planted symlink to %q", evilDir)
+}
+
 // TestEncodingEscapeBlocked checks that a name from a malicious source can't
 // be decoded into path syntax which writes outside the destination.
 func TestEncodingEscapeBlocked(t *testing.T) {
