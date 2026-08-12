@@ -1318,7 +1318,7 @@ func (o *Object) setTimes(atime, mtime time.Time) (err error) {
 	if o.translatedLink {
 		err = lChtimes(o.path, atime, mtime)
 	} else {
-		err = os.Chtimes(o.path, atime, mtime)
+		err = o.fs.chtimes(o.path, atime, mtime)
 	}
 	return err
 }
@@ -1566,6 +1566,45 @@ func (f *Fs) symlink(target, localPath string) (err error) {
 		return err
 	}
 	return root.Symlink(target, rel)
+}
+
+// chmod changes the mode of localPath.
+func (f *Fs) chmod(localPath string, mode os.FileMode) (err error) {
+	if !f.opt.TranslateSymlinks {
+		return os.Chmod(localPath, mode)
+	}
+	root, rel, err := f.osRoot(localPath)
+	if err != nil {
+		return err
+	}
+	defer fs.CheckClose(root, &err)
+	return root.Chmod(rel, mode)
+}
+
+// chown changes the ownership of localPath.
+func (f *Fs) chown(localPath string, uid, gid int) (err error) {
+	if !f.opt.TranslateSymlinks {
+		return os.Chown(localPath, uid, gid)
+	}
+	root, rel, err := f.osRoot(localPath)
+	if err != nil {
+		return err
+	}
+	defer fs.CheckClose(root, &err)
+	return root.Chown(rel, uid, gid)
+}
+
+// chtimes changes the atime and mtime of localPath.
+func (f *Fs) chtimes(localPath string, atime, mtime time.Time) (err error) {
+	if !f.opt.TranslateSymlinks {
+		return os.Chtimes(localPath, atime, mtime)
+	}
+	root, rel, err := f.osRoot(localPath)
+	if err != nil {
+		return err
+	}
+	defer fs.CheckClose(root, &err)
+	return root.Chtimes(rel, atime, mtime)
 }
 
 // mkdirAll makes all the directories needed to store the object
