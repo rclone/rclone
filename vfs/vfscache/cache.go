@@ -563,7 +563,15 @@ func (c *Cache) reload(ctx context.Context) error {
 }
 
 // KickCleaner kicks cache cleaner upon out of space situation
+//
+// This does nothing when the cleaner is disabled. Only the cleaner clears the
+// out of space condition, so with no cleaner running the wait below would never
+// return.
 func (c *Cache) KickCleaner() {
+	if c.opt.CachePollInterval <= 0 {
+		return
+	}
+
 	/* Use a separate kicker mutex for the kick to go through without waiting for the
 	   cache mutex to avoid letting a thread kick again after the clearer just
 	   finished cleaning and unlock the cache mutex. */
