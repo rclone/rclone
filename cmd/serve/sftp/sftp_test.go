@@ -78,6 +78,32 @@ func TestSftp(t *testing.T) {
 	servetest.Run(t, "sftp", start)
 }
 
+// TestNewServerPerServerAuthProxy checks that a per-server proxyOpt.AuthProxy
+// enables proxy mode even when the process-global proxy.Opt.AuthProxy is empty,
+// which is the normal case when the server is configured via serve/start.
+func TestNewServerPerServerAuthProxy(t *testing.T) {
+	// Ensure the global is empty so we only test the per-server option.
+	assert.Equal(t, "", proxy.Opt.AuthProxy)
+
+	opt := Opt
+	opt.ListenAddr = testBindAddress
+
+	proxyOpt := proxy.Opt
+	proxyOpt.AuthProxy = "/path/to/auth/proxy"
+
+	w, err := newServer(context.Background(), nil, &opt, &vfscommon.Opt, &proxyOpt)
+	require.NoError(t, err)
+	// Shutdown waits for Serve to finish, so Serve must be running first.
+	go func() {
+		assert.NoError(t, w.Serve())
+	}()
+	defer func() {
+		assert.NoError(t, w.Shutdown())
+	}()
+	assert.True(t, w.provider.IsProxy(), "expected auth proxy to be enabled by per-server option")
+	assert.Nil(t, w.provider.VFS(), "expected no fixed VFS when auth proxy is in use")
+}
+
 func TestRc(t *testing.T) {
 	servetest.TestRc(t, rc.Params{
 		"type":           "sftp",
