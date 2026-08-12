@@ -1,4 +1,4 @@
-//go:build !plan9 && !solaris && !js
+//go:build !plan9 && !js
 
 package azureblob
 
@@ -52,6 +52,11 @@ func TestBlockIDCreator(t *testing.T) {
 	assert.ErrorContains(t, bic.checkID(chunkNumber, "AAAA"+got), "bad block ID length")
 	assert.ErrorContains(t, bic.checkID(chunkNumber+1, got), "expecting decoded")
 	assert.ErrorContains(t, bic2.checkID(chunkNumber, got), "random bytes")
+}
+
+func TestCopySASTimingConstants(t *testing.T) {
+	require.Greater(t, sasCopyStartSkew, time.Duration(0))
+	require.Greater(t, sasCopyValidity, sasCopyStartSkew)
 }
 
 func (f *Fs) testFeatures(t *testing.T) {
@@ -213,6 +218,7 @@ func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("WriteUncommittedBlocks", f.testWriteUncommittedBlocks)
 	t.Run("Metadata", f.testMetadataPaths)
 	t.Run("GzipEncoding", f.testGzipEncoding)
+	t.Run("ArrowList", f.testArrowList)
 }
 
 // helper to read blob properties for an object

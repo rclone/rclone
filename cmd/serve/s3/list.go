@@ -8,8 +8,17 @@ import (
 	"github.com/rclone/rclone/vfs"
 )
 
-func (b *s3Backend) entryListR(_vfs *vfs.VFS, bucket, fdPath, name string, addPrefix bool, response *gofakes3.ObjectList) error {
-	fp := path.Join(bucket, fdPath)
+// legacyMultipartUploadPrefix marked the temporary objects of in-progress
+// multipart uploads before the tempObjectPrefix namespace was reserved
+// (rclone v1.75); leftovers from an older server are still hidden.
+const legacyMultipartUploadPrefix = ".rclone_multipart_upload_"
+
+func (b *s3Backend) entryListR(_vfs *vfs.VFS, bucketName, fdPath, name string, addPrefix bool, response *gofakes3.ObjectList) error {
+	fp, err := bucketDirPath(bucketName, fdPath)
+	if err != nil {
+		// A listing prefix that can't be represented as a path matches nothing.
+		return gofakes3.ErrNoSuchKey
+	}
 
 	dirEntries, err := getDirEntries(fp, _vfs)
 	if err != nil {
@@ -18,6 +27,11 @@ func (b *s3Backend) entryListR(_vfs *vfs.VFS, bucket, fdPath, name string, addPr
 
 	for _, entry := range dirEntries {
 		object := entry.Name()
+
+		// Hide the temporary objects of in-progress uploads
+		if strings.HasPrefix(object, tempObjectPrefix) || strings.HasPrefix(object, legacyMultipartUploadPrefix) {
+			continue
+		}
 
 		// workaround for control-chars detect
 		objectPath := path.Join(fdPath, object)
@@ -32,7 +46,7 @@ func (b *s3Backend) entryListR(_vfs *vfs.VFS, bucket, fdPath, name string, addPr
 				response.AddPrefix(prefixWithTrailingSlash)
 				continue
 			}
-			err := b.entryListR(_vfs, bucket, path.Join(fdPath, object), "", false, response)
+			err := b.entryListR(_vfs, bucketName, path.Join(fdPath, object), "", false, response)
 			if err != nil {
 				return err
 			}

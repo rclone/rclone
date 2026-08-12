@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -78,8 +79,8 @@ func TestMiddlewareAuth(t *testing.T) {
 			},
 			auth: AuthConfig{
 				Realm: "test",
-				CustomAuthFn: func(user, pass string) (value any, err error) {
-					if user == "custom" && pass == "custom" {
+				CustomAuthFn: func(r *http.Request, user, pass string) (value any, err error) {
+					if user == "custom" && pass == "custom" && r.RemoteAddr != "" {
 						return true, nil
 					}
 					return nil, errors.New("invalid credentials")
@@ -208,6 +209,15 @@ func TestMiddlewareAuth(t *testing.T) {
 	}
 }
 
+// A request arriving over a plain HTTP listener has no TLS state so it can't
+// carry a client certificate and must be rejected.
+func TestMiddlewareAuthCertificateUserNoTLS(t *testing.T) {
+	handler := MiddlewareAuthCertificateUser()(testEchoHandler([]byte("ok")))
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, httptest.NewRequest("GET", "http://example.com/", nil))
+	require.Equal(t, http.StatusUnauthorized, rec.Code)
+}
+
 func TestMiddlewareAuthCertificateUser(t *testing.T) {
 	serverCertBytes := testReadTestdataFile(t, "local.crt")
 	serverKeyBytes := testReadTestdataFile(t, "local.key")
@@ -294,7 +304,7 @@ func TestMiddlewareAuthCertificateUser(t *testing.T) {
 			},
 			auth: AuthConfig{
 				Realm: "test",
-				CustomAuthFn: func(user, pass string) (value any, err error) {
+				CustomAuthFn: func(_ *http.Request, user, pass string) (value any, err error) {
 					if user == "custom" && pass == "custom" {
 						return true, nil
 					}
@@ -316,7 +326,7 @@ func TestMiddlewareAuthCertificateUser(t *testing.T) {
 			},
 			auth: AuthConfig{
 				Realm: "test",
-				CustomAuthFn: func(user, pass string) (value any, err error) {
+				CustomAuthFn: func(_ *http.Request, user, pass string) (value any, err error) {
 					fmt.Println("CUSTOMAUTH", user, pass)
 					if user == "rclone-dev-client" && pass == "" {
 						return true, nil

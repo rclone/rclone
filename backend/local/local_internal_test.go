@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sort"
+	"sync"
 	"testing"
 	"time"
 
@@ -17,10 +18,12 @@ import (
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/filter"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
@@ -202,6 +205,251 @@ func TestSymlinkError(t *testing.T) {
 	}
 	_, err := NewFs(context.Background(), "local", "/", m)
 	assert.Equal(t, errLinksAndCopyLinks, err)
+}
+
+// putLink writes target as a translated link object (name + ".rclonelink") on f.
+func putLink(ctx context.Context, f fs.Fs, name, target string) error {
+	in := bytes.NewBufferString(target)
+	src := object.NewStaticObjectInfo(name+fs.LinkSuffix, fstest.Time("2001-02-03T04:05:10Z"), int64(len(target)), true, nil, nil)
+	_, err := f.Put(ctx, in, src)
+	return err
+}
+
+// putFile writes content as a regular object on f.
+func putFile(ctx context.Context, f fs.Fs, remote, content string) error {
+	in := bytes.NewBufferString(content)
+	src := object.NewStaticObjectInfo(remote, fstest.Time("2001-02-03T04:05:10Z"), int64(len(content)), true, nil, nil)
+	_, err := f.Put(ctx, in, src)
+	return err
+}
+
+// linksMode puts f into "-l/--links" mode, as if --links or the backend
+// links=true option were set.
+func linksMode(f *Fs) {
+	f.opt.FollowSymlinks = false
+	f.opt.TranslateSymlinks = true
+	f.lstat = os.Lstat
+}
+
+// TestSymlinkEscapeWriteThroughBlocked mirrors the GHSA-cf44-9pgv-m4xc PoC: a
+// malicious --links source serves "pwn.rclonelink" whose body is a path outside
+// the destination, plus a sibling "pwn/authkeys" that sorts after it and would
+// be written through the planted symlink. rclone reproduces the symlink (a
+// faithful backup of the source) but must refuse to write through it, so
+// nothing lands outside the destination (CWE-59).
+func TestSymlinkEscapeWriteThroughBlocked(t *testing.T) {
+	ctx := context.Background()
+
+	// A directory outside the destination the attacker wants to write into
+	evil := t.TempDir()
+	evilFile := filepath.Join(evil, "authkeys")
+
+	r := fstest.NewRun(t)
+	f := r.Flocal.(*Fs)
+	linksMode(f)
+
+	// The symlink is reproduced faithfully, pointing outside the destination.
+	require.NoError(t, putLink(ctx, f, "pwn", evil))
+	link := filepath.Join(f.root, "pwn")
+	fi, err := os.Lstat(link)
+	require.NoError(t, err)
+	require.True(t, fi.Mode()&os.ModeSymlink != 0, "symlink should be reproduced faithfully")
+	target, err := os.Readlink(link)
+	require.NoError(t, err)
+	require.Equal(t, evil, target)
+
+	// But writing the sibling object through it must be refused.
+	err = putFile(ctx, f, "pwn/authkeys", "PWNED")
+	require.Error(t, err, "writing through a planted symlink should be refused")
+
+	// Nothing escaped the destination.
+	_, err = os.Stat(evilFile)
+	require.True(t, os.IsNotExist(err), "a file escaped the destination into %q", evilFile)
+}
+
+// TestSymlinkEscapeNestedBlocked covers the chained variant: an in-tree symlink
+// "evil" -> "." (the destination root) is created, then "evil/pwn" -> outside
+// is planted through it, then a write nested under that. Every component is
+// re-validated against the root, so the write-through is refused and nothing
+// escapes.
+func TestSymlinkEscapeNestedBlocked(t *testing.T) {
+	ctx := context.Background()
+
+	evil := t.TempDir()
+	evilFile := filepath.Join(evil, "authkeys")
+
+	r := fstest.NewRun(t)
+	f := r.Flocal.(*Fs)
+	linksMode(f)
+
+	require.NoError(t, putLink(ctx, f, "evil", "."))
+	require.NoError(t, putLink(ctx, f, "evil/pwn", evil))
+
+	err := putFile(ctx, f, "evil/pwn/authkeys", "PWNED")
+	require.Error(t, err, "writing through a nested planted symlink should be refused")
+
+	_, err = os.Stat(evilFile)
+	require.True(t, os.IsNotExist(err), "a file escaped the destination into %q", evilFile)
+}
+
+// TestSymlinkEscapeConcurrent races symlink creation against the sibling write
+// for many pairs at once, exercising the time-of-check/time-of-use window.
+// os.Root resolves relative to a directory file descriptor, so whatever the
+// interleaving nothing may escape the destination.
+func TestSymlinkEscapeConcurrent(t *testing.T) {
+	ctx := context.Background()
+
+	evil := t.TempDir()
+
+	r := fstest.NewRun(t)
+	f := r.Flocal.(*Fs)
+	linksMode(f)
+
+	const pairs = 50
+	var wg sync.WaitGroup
+	for i := range pairs {
+		name := fmt.Sprintf("pwn%d", i)
+		wg.Add(2)
+		go func() { defer wg.Done(); _ = putLink(ctx, f, name, evil) }()
+		go func() { defer wg.Done(); _ = putFile(ctx, f, name+"/authkeys", "PWNED") }()
+	}
+	wg.Wait()
+
+	entries, err := os.ReadDir(evil)
+	require.NoError(t, err)
+	require.Empty(t, entries, "files escaped the destination into %q", evil)
+}
+
+// TestSymlinkInTreeWriteThroughWorks checks the fix doesn't break legitimate
+// use: an in-tree symlink to a sibling directory can still be created and
+// written through, since that write stays inside the destination.
+func TestSymlinkInTreeWriteThroughWorks(t *testing.T) {
+	ctx := context.Background()
+
+	r := fstest.NewRun(t)
+	f := r.Flocal.(*Fs)
+	linksMode(f)
+
+	require.NoError(t, putFile(ctx, f, "sub/keep.txt", "hello"))
+	require.NoError(t, putLink(ctx, f, "link", "sub"))
+
+	require.NoError(t, putFile(ctx, f, "link/file.txt", "world"))
+
+	// The write landed in the real sibling directory, inside the destination.
+	got, err := os.ReadFile(filepath.Join(f.root, "sub", "file.txt"))
+	require.NoError(t, err)
+	require.Equal(t, "world", string(got))
+}
+
+// TestEncodingEscapeBlocked checks that a name from a malicious source can't
+// be decoded into path syntax which writes outside the destination.
+func TestEncodingEscapeBlocked(t *testing.T) {
+	ctx := context.Background()
+	outer := t.TempDir()
+
+	// What a source backend which encodes Dot returns from Remote() for an
+	// object called "../marker.txt" - e.g. s3 listing the key
+	// "tenant/../marker.txt" with the remote rooted at "tenant".
+	remote := encoder.OS.ToStandardPath("../marker.txt")
+	require.Equal(t, "．．/marker.txt", remote)
+
+	// A file outside the destination the attacker wants to overwrite.
+	marker := filepath.Join(outer, "marker.txt")
+	require.NoError(t, os.WriteFile(marker, []byte("original"), 0600))
+
+	// An encoding without Dot decodes the name back into "..".
+	fRaw, err := NewFs(ctx, "local", filepath.Join(outer, "dst"), configmap.Simple{"encoding": "Slash"})
+	require.NoError(t, err)
+	f := fRaw.(*Fs)
+
+	require.ErrorIs(t, putFile(ctx, f, remote, "PWNED"), errPathEscapes)
+	got, err := os.ReadFile(marker)
+	require.NoError(t, err)
+	require.Equal(t, "original", string(got), "a file outside the destination was overwritten")
+
+	// The other entry points which resolve a name are refused too.
+	require.ErrorIs(t, f.Mkdir(ctx, remote), errPathEscapes)
+	require.ErrorIs(t, f.Rmdir(ctx, remote), errPathEscapes)
+	_, err = f.NewObject(ctx, remote)
+	require.ErrorIs(t, err, errPathEscapes)
+
+	// Ordinary names in the same configuration still work.
+	require.NoError(t, putFile(ctx, f, "sub/file.txt", "hello"))
+	got, err = os.ReadFile(filepath.Join(f.root, "sub", "file.txt"))
+	require.NoError(t, err)
+	require.Equal(t, "hello", string(got))
+
+	// The entry points which take a name as a destination refuse it too.
+	src, err := f.NewObject(ctx, "sub/file.txt")
+	require.NoError(t, err)
+	_, err = f.Move(ctx, src, remote)
+	require.ErrorIs(t, err, errPathEscapes)
+	require.ErrorIs(t, f.DirMove(ctx, f, "sub", remote), errPathEscapes)
+	_, err = f.OpenWriterAt(ctx, remote, 5)
+	require.ErrorIs(t, err, errPathEscapes)
+	_, err = f.List(ctx, remote)
+	require.ErrorIs(t, err, errPathEscapes)
+
+	// With the default encoding the name is stored literally as fullwidth
+	// dots, inside the destination.
+	dRaw, err := NewFs(ctx, "local", filepath.Join(outer, "default"), configmap.Simple{"encoding": encoder.OS.String()})
+	require.NoError(t, err)
+	d := dRaw.(*Fs)
+	require.NoError(t, putFile(ctx, d, remote, "safe"))
+	got, err = os.ReadFile(filepath.Join(d.root, "．．", "marker.txt"))
+	require.NoError(t, err)
+	require.Equal(t, "safe", string(got))
+
+	if runtime.GOOS == "windows" {
+		// A backslash is a path separator on Windows, so an encoding
+		// without BackSlash escapes the root even though it has Dot.
+		wRaw, err := NewFs(ctx, "local", filepath.Join(outer, "win"), configmap.Simple{"encoding": "Slash,Dot"})
+		require.NoError(t, err)
+		require.ErrorIs(t, putFile(ctx, wRaw, `..\marker.txt`, "PWNED"), errPathEscapes)
+		got, err := os.ReadFile(marker)
+		require.NoError(t, err)
+		require.Equal(t, "original", string(got), "a file outside the destination was overwritten")
+	}
+}
+
+// TestLocalPath checks which names localPath refuses. It must refuse
+// exactly those which resolve outside the root - names which are merely
+// unusual on the host platform are the OS's business, not ours.
+func TestLocalPath(t *testing.T) {
+	ctx := context.Background()
+	fRaw, err := NewFs(ctx, "local", t.TempDir(), configmap.Simple{"encoding": "Raw"})
+	require.NoError(t, err)
+	f := fRaw.(*Fs)
+
+	const refused = "!"
+	for _, test := range []struct {
+		name string
+		want string // slash separated path relative to the root, or refused
+	}{
+		{name: "", want: "."},
+		{name: "file.txt", want: "file.txt"},
+		{name: "sub/file.txt", want: "sub/file.txt"},
+		{name: "sub/../file.txt", want: "file.txt"},
+		{name: "..", want: refused},
+		{name: "../marker.txt", want: refused},
+		{name: "sub/../../marker.txt", want: refused},
+		// Windows reserved device names are ordinary file names to
+		// rclone, which addresses the destination with \\?\ paths.
+		{name: "NUL", want: "NUL"},
+		{name: "sub/aux.c", want: "sub/aux.c"},
+		// An absolute name resolves relative to the root, as it always has.
+		{name: "/etc/passwd", want: "etc/passwd"},
+	} {
+		got, err := f.localPath(test.name)
+		if test.want == refused {
+			assert.ErrorIs(t, err, errPathEscapes, test.name)
+			assert.True(t, fserrors.IsNoRetryError(err), test.name)
+			continue
+		}
+		if assert.NoError(t, err, test.name) {
+			assert.Equal(t, filepath.Join(f.root, filepath.FromSlash(test.want)), got, test.name)
+		}
+	}
 }
 
 func TestHashWithTypeNone(t *testing.T) {
@@ -468,6 +716,59 @@ func testMetadata(t *testing.T, r *fstest.Run, o *Object, when time.Time) {
 		if xattrSupported && (canSetXattrOnLinks || !o.translatedLink) {
 			assert.Equal(t, "wedges", m["potato"])
 		}
+	})
+}
+
+// Check that the setuid, setgid and sticky bits from "mode" metadata are
+// stripped by default and only restored with --local-metadata-restore-special-bits.
+//
+// See: https://github.com/rclone/rclone/security/advisories/GHSA-945v-v9p3-v5xw
+func TestMetadataSpecialBits(t *testing.T) {
+	switch runtime.GOOS {
+	case "windows", "plan9", "js":
+		t.Skip("mode metadata is not applied on this OS")
+	}
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	const filePath = "setuid.bin"
+	r.WriteFile(filePath, "payload", time.Now())
+	f := r.Flocal.(*Fs)
+
+	obj, err := f.NewObject(ctx, filePath)
+	require.NoError(t, err)
+	o := obj.(*Object)
+	osPath := filepath.Join(f.root, filePath)
+
+	statMode := func() os.FileMode {
+		t.Helper()
+		fi, err := os.Stat(osPath)
+		require.NoError(t, err)
+		return fi.Mode()
+	}
+
+	// "40000755" is Go's os.FileMode layout for setuid|0755 - a value a real
+	// unix st_mode can never produce, so it can only come from an
+	// attacker-controlled source remote.
+	const setuidMode = "40000755"
+
+	t.Run("StrippedByDefault", func(t *testing.T) {
+		require.NoError(t, os.Chmod(osPath, 0644))
+		require.NoError(t, o.writeMetadataToFile(fs.Metadata{"mode": setuidMode}))
+		mode := statMode()
+		assert.Equal(t, os.FileMode(0755), mode.Perm())
+		assert.Zero(t, mode&(os.ModeSetuid|os.ModeSetgid|os.ModeSticky),
+			fmt.Sprintf("special bits should be stripped by default, got %v", mode))
+	})
+
+	t.Run("RestoredWithFlag", func(t *testing.T) {
+		f.opt.MetadataRestoreSpecial = true
+		defer func() { f.opt.MetadataRestoreSpecial = false }()
+		require.NoError(t, os.Chmod(osPath, 0644))
+		require.NoError(t, o.writeMetadataToFile(fs.Metadata{"mode": setuidMode}))
+		mode := statMode()
+		assert.Equal(t, os.FileMode(0755), mode.Perm())
+		assert.NotZero(t, mode&os.ModeSetuid,
+			fmt.Sprintf("setuid bit should be restored with the flag, got %v", mode))
 	})
 }
 

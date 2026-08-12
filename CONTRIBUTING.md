@@ -113,6 +113,36 @@ GitHub.
 You may sometimes be asked to [base your changes on the latest master](#basing-your-changes-on-the-latest-master)
 or [squash your commits](#squashing-your-commits).
 
+## AI-assisted contributions
+
+You are welcome to use AI coding assistants (Claude Code, Codex, Cursor, Gemini
+CLI, and similar) to help write your contribution. Rclone has an
+[AGENTS.md](AGENTS.md) file at the top of the repository describing the project's
+conventions; point your tool at it so the code it produces matches rclone's
+style.
+
+However, the same standard applies to every pull request whether or not a tool
+was involved: **you are responsible for the code you submit.** Before you open a
+pull request please make sure that:
+
+- You understand every line of the change and can explain why it is correct. If
+  a reviewer asks a question about it, you should be able to answer without
+  going back to the tool.
+- You have actually built and run it. At a minimum `go build` and
+  `make quicktest` must pass, and for a backend change you should run the
+  [backend tests](#backend-testing) against a real remote where you can.
+- The change is a genuine fix or feature that you have verified solves the
+  problem, not a plausible-looking guess. Unverified, AI-generated pull requests
+  that do not compile, do not pass the tests, invent APIs that do not exist, or
+  do not actually do what the description claims waste maintainer time and are
+  likely to be closed.
+- You have trimmed the comments. AI tools tend to add verbose comments that
+  restate what the code plainly does or narrate the change being made; please
+  cut these down to match the [code commenting style](AGENTS.md#code-commenting-style).
+
+In short: an AI assistant is a tool to help *you* contribute, not a substitute
+for understanding and testing your own work.
+
 ## Using Git and GitHub
 
 ### Committing your changes

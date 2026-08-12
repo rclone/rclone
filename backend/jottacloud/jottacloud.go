@@ -1451,7 +1451,7 @@ func (f *Fs) createOrUpdate(ctx context.Context, file string, createTime time.Ti
 	return info, nil
 }
 
-// copyOrMoves copies or moves directories or files depending on the method parameter
+// copyOrMove copies or moves directories or files depending on the method parameter
 func (f *Fs) copyOrMove(ctx context.Context, method, src, dest string) (info *api.JottaFile, err error) {
 	opts := rest.Opts{
 		Method:     "POST",
@@ -1876,8 +1876,10 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 		return err
 	}
 
-	// update local metadata
-	o.modTime = modTime
+	// update local metadata - the server stores modtimes with second
+	// precision so truncate here too to keep the in-memory modtime
+	// identical to the one a fresh listing returns
+	o.modTime = modTime.Truncate(time.Second)
 	return nil
 }
 

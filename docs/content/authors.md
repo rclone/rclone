@@ -1155,3 +1155,40 @@ put them back in again. -->
 - Yuhang Cao <caoyuhang@fwerkor.com>
 - Yash Anil <yashanil98@gmail.com>
 - yashanil98 <79158725+yashanil98@users.noreply.github.com>
+- lewoberst <github@jan-o-sch.net>
+- max <max@example.com>
+- Bryan Stenson <bryan.stenson@gmail.com>
+- happysnaker <73147033+happysnaker@users.noreply.github.com>
+- Jan Schlien <rclone-github@jan-o-sch.net>
+- user77 <abubakarm@gmail.com>
+- maximilize <3752128+maximilize@users.noreply.github.com>
+- dithwick <46924962+dithwick@users.noreply.github.com>
+- Sandy Luppino <s.luppino@opendrives.com>
+- Sanjays2402 <51058514+Sanjays2402@users.noreply.github.com>
+- blackflytech <blackflytech@outlook.com>
+- Amit Mishra <amit.mishra.eee21@itbhu.ac.in>
+- Erol Ozcan <erol.ozcan@gmail.com>
+- TowyTowy <towy@airreps.link>
+- 0rangeSeaW0lf <0sw-8m4k2v@waku.li>
+- sijie-Z <sijie-zhou@users.noreply.github.com>
+- Søren Lindberg <deeferentleeg@gmail.com>
+- Kyue <Gooh456@users.noreply.github.com>
+- Giridhar <80974392+giri256@users.noreply.github.com>
+- p1 <giridharpavan593@gmail.com>
+- Zero Services GmbH <info@zeroservices.eu>
+- Noah Zalev <github@nzalev.ca>
+- Acts1631 <69813585+acts-1631@users.noreply.github.com>
+- ifloppy <68799904+ifloppy@users.noreply.github.com>
+- Dzmitry Nianakhau <dzmitry.nianakhau@scality.com>
+- Anupam Mediratta <mediratta@gmail.com>
+- Socialpranker <273312799+Socialpranker@users.noreply.github.com>
+- phatlc <phatle.hsd@gmail.com>
+- Punya Jain <4511945+punya10@users.noreply.github.com>
+- acoeur <7315110+forestrock@users.noreply.github.com>
+- SillyZir <269283839+SillyZir@users.noreply.github.com>
+- am-at-enrollvb <arthur.melton@enrollvb.com>
+- Loi Nguyen <vanloi999@gmail.com>
+- debaditya <82204129+DebadityaHait@users.noreply.github.com>
+- alliasgher <alliasgher123@gmail.com>
+- Anton Karpov <karpovantonme@gmail.com>
+- Edward Klesel <eklesel@bluecove.com>

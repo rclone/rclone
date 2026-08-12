@@ -19,7 +19,6 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/cache"
-	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/rc"
 	"golang.org/x/sync/errgroup"
 )
@@ -109,7 +108,11 @@ func (job *Job) OnFinish(fn func()) func() {
 func (job *Job) run(ctx context.Context, fn rc.Func, in rc.Params) {
 	defer func() {
 		if r := recover(); r != nil {
-			job.finish(nil, fmt.Errorf("panic received: %v \n%s", r, string(debug.Stack())))
+			// Log the full stack trace server-side only - it must not
+			// be returned to the rc caller as it leaks internal paths,
+			// dependency versions and memory addresses.
+			fs.Errorf(nil, "rc: job %d panic: %v\n%s", job.ID, r, string(debug.Stack()))
+			job.finish(nil, fmt.Errorf("panic received: %v", r))
 		}
 	}()
 	job.finish(fn(ctx, in))
@@ -242,41 +245,6 @@ func getAsync(ctx context.Context, in rc.Params) (context.Context, bool, error) 
 	return ctx, isAsync, nil
 }
 
-// See if _config is set and if so adjust ctx to include it
-func getConfig(ctx context.Context, in rc.Params) (context.Context, error) {
-	if _, ok := in["_config"]; !ok {
-		return ctx, nil
-	}
-	ctx, ci := fs.AddConfig(ctx)
-	err := in.GetStruct("_config", ci)
-	if err != nil {
-		return ctx, err
-	}
-	delete(in, "_config") // remove the parameter
-	return ctx, nil
-}
-
-// See if _filter is set and if so adjust ctx to include it
-func getFilter(ctx context.Context, in rc.Params) (context.Context, error) {
-	if _, ok := in["_filter"]; !ok {
-		return ctx, nil
-	}
-	// Copy of the current filter options
-	opt := filter.GetConfig(ctx).Opt
-	// Update the options from the parameter
-	err := in.GetStruct("_filter", &opt)
-	if err != nil {
-		return ctx, err
-	}
-	fi, err := filter.NewFilter(&opt)
-	if err != nil {
-		return ctx, err
-	}
-	ctx = filter.ReplaceConfig(ctx, fi)
-	delete(in, "_filter") // remove the parameter
-	return ctx, nil
-}
-
 type jobKeyType struct{}
 
 // Key for adding jobs to ctx
@@ -292,12 +260,12 @@ func (jobs *Jobs) NewJob(ctx context.Context, fn rc.Func, in rc.Params) (job *Jo
 		return nil, nil, err
 	}
 
-	ctx, err = getConfig(ctx, in)
+	ctx, err = rc.AddConfig(ctx, in)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	ctx, err = getFilter(ctx, in)
+	ctx, err = rc.AddFilter(ctx, in)
 	if err != nil {
 		return nil, nil, err
 	}

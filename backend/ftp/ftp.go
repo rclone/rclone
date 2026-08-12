@@ -637,6 +637,18 @@ func (f *Fs) drainPool(ctx context.Context) (err error) {
 	return err
 }
 
+// commandEncoding hardens the user-configured filename encoding so that it
+// can never restore a raw CR or LF.
+//
+// The FTP control channel is line oriented and the ftp library writes command
+// arguments (paths) straight onto it without escaping, so a filename
+// containing CR/LF would otherwise be able to inject an independent FTP
+// command. CR/LF are therefore always encoded to safe symbols regardless of
+// the configured encoding, which is what the default encoding already does.
+func commandEncoding(enc encoder.MultiEncoder) encoder.MultiEncoder {
+	return enc | encoder.EncodeCrLf
+}
+
 // NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs, err error) {
 	// defer fs.Trace(nil, "name=%q, root=%q", name, root)("fs=%v, err=%v", &ff, &err)
@@ -646,6 +658,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 	if err != nil {
 		return nil, err
 	}
+	opt.Enc = commandEncoding(opt.Enc)
 	pass := ""
 	if opt.AskPassword && opt.Pass == "" {
 		pass = config.GetPassword("FTP server password")
@@ -1235,7 +1248,10 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	path = o.fs.opt.Enc.FromStandardPath(path)
 	err = c.SetTime(path, modTime.In(time.UTC))
 	if err == nil && o.info != nil {
-		o.info.ModTime = modTime
+		// The server stores modtimes with second precision so
+		// truncate here too to keep the in-memory modtime identical
+		// to the one a fresh listing returns.
+		o.info.ModTime = modTime.Truncate(time.Second)
 		o.info.precise = true
 	}
 	o.fs.putFtpConnection(&c, err)
@@ -1390,9 +1406,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	o.fs.putFtpConnection(&c, nil)
 	if o.fs.opt.NoCheckUpload {
 		o.info = &FileInfo{
-			Name:    o.remote,
-			Size:    uint64(src.Size()),
-			ModTime: src.ModTime(ctx),
+			Name: o.remote,
+			Size: uint64(src.Size()),
+			// The server stores modtimes with second precision so
+			// truncate here too to keep the in-memory modtime
+			// identical to the one a fresh listing returns.
+			ModTime: src.ModTime(ctx).Truncate(time.Second),
 			precise: true,
 			IsDir:   false,
 		}

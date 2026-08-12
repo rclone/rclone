@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rclone/gofakes3"
@@ -36,6 +37,7 @@ type Server struct {
 	f            fs.Fs
 	_vfs         *vfs.VFS // don't use directly, use getVFS
 	faker        *gofakes3.GoFakeS3
+	backend      *s3Backend
 	handler      http.Handler
 	proxy        *proxy.Proxy
 	ctx          context.Context // for global config
@@ -75,9 +77,14 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		return nil, fmt.Errorf("parsing auth list failed: %q", err)
 	}
 
+	w.backend = newBackend(w)
+	if w.opt.MultipartExpiry > 0 {
+		w.backend.startReaper(time.Duration(w.opt.MultipartExpiry))
+	}
+
 	var newLogger logger
 	w.faker = gofakes3.New(
-		newBackend(w),
+		w.backend,
 		gofakes3.WithHostBucket(!opt.ForcePathStyle),
 		gofakes3.WithLogger(newLogger),
 		gofakes3.WithRequestID(rand.Uint64()),
@@ -133,8 +140,8 @@ func (w *Server) getVFS(ctx context.Context) (VFS *vfs.VFS, err error) {
 }
 
 // auth does proxy authorization
-func (w *Server) auth(accessKeyID string) (value any, err error) {
-	VFS, _, err := w.proxy.Call(stringToMd5Hash(accessKeyID), accessKeyID, false)
+func (w *Server) auth(r *http.Request, accessKeyID string) (value any, err error) {
+	VFS, _, err := w.proxy.Call(stringToMd5Hash(accessKeyID), accessKeyID, false, r.RemoteAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -161,6 +168,7 @@ func (w *Server) Addr() net.Addr {
 
 // Shutdown the server
 func (w *Server) Shutdown() error {
+	w.backend.stopReaper()
 	return w.server.Shutdown()
 }
 
@@ -179,7 +187,7 @@ func authPairMiddleware(next http.Handler, ws *Server) http.Handler {
 func proxyAuthMiddleware(next http.Handler, ws *Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		accessKey, _ := parseAccessKeyID(r)
-		value, err := ws.auth(accessKey)
+		value, err := ws.auth(r, accessKey)
 		if err != nil {
 			fs.Infof(r.URL.Path, "%s: Auth failed: %v", r.RemoteAddr, err)
 		}

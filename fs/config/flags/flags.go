@@ -168,6 +168,12 @@ func installFlag(flags *pflag.FlagSet, name string, groupsString string) {
 			}
 			fs.Debugf(nil, "Setting --%s %q from environment variable %s=%q", name, flag.Value, envKey, envValue)
 			flag.DefValue = envValue
+			// This is a default from the environment, not an explicit
+			// flag on the command line, so don't let it take precedence
+			// over more specific configuration sources.
+			if isOption {
+				opt.MarkUnset()
+			}
 		}
 	}
 
