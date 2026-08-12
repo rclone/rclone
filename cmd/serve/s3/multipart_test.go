@@ -8,6 +8,7 @@ import (
 	"crypto/md5"
 	"fmt"
 	"io"
+	"math"
 	"net/url"
 	"path"
 	"sync"
@@ -1021,4 +1022,39 @@ func TestUploadPartNoReserveBeforeBody(t *testing.T) {
 	require.True(t, reader.read, "the body must have been read")
 	require.Less(t, reader.recorded, wantPages,
 		"UploadPart preallocated pool pages from the declared Content-Length before any body bytes arrived")
+}
+
+// TestWaitForTurnRejectsBogusSize checks that the reorder-buffer admission
+// rejects a negative client-declared part length and that a huge declared
+// length cannot overflow the running total so as to admit a further part past
+// the buffer limit.
+func TestWaitForTurnRejectsBogusSize(t *testing.T) {
+	up := newMultipartUpload("bucket", "key", "bucket/key", "bucket/key", nil, 1<<20)
+
+	// A part length can never be negative.
+	require.ErrorIs(t, up.waitForTurn(1, -1), gofakes3.ErrInvalidArgument)
+
+	// A huge out-of-order part is admitted once because the buffer is empty,
+	// driving buffered near the top of the int64 range.
+	require.NoError(t, up.waitForTurn(2, math.MaxInt64))
+
+	// A further out-of-order part must wait, not be wrongly admitted by an
+	// overflow of buffered+size.
+	admitted := make(chan struct{})
+	go func() {
+		_ = up.waitForTurn(3, math.MaxInt64)
+		close(admitted)
+	}()
+	select {
+	case <-admitted:
+		t.Fatal("out-of-order part admitted past the buffer limit via overflow")
+	case <-time.After(50 * time.Millisecond):
+	}
+
+	// Wake the blocked goroutine so it doesn't leak.
+	up.mu.Lock()
+	up.closed = true
+	up.cond.Broadcast()
+	up.mu.Unlock()
+	<-admitted
 }
