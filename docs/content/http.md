@@ -24,7 +24,7 @@ path is resolved from the root of the domain.
 
 If the path following the `remote:` ends with `/` it will be assumed to point
 to a directory. If the path does not end with `/`, then a HEAD request is sent
-and the response used to decide if it it is treated as a file or a directory
+and the response used to decide if it is treated as a file or a directory
 (run with `-vv` to see details). When [--http-no-head](#http-no-head) is
 specified, a path without ending `/` is always assumed to be a file. If rclone
 incorrectly assumes the path is a file, the solution is to specify the path with

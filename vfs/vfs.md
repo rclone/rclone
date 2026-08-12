@@ -61,7 +61,7 @@ at all times. The buffered data is bound to one open file and won't be
 shared.
 
 This flag is a upper limit for the used memory per open file.  The
-buffer will only use memory for data that is downloaded but not not
+buffer will only use memory for data that is downloaded but not
 yet read. If the buffer is empty, only a small amount of memory will
 be used.
 

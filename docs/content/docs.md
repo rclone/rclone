@@ -2260,7 +2260,7 @@ Most multi-thread transfers do not take additional memory, but some do
 at maximum `--transfers` \* `--multi-thread-chunk-size` \*
 `--multi-thread-streams` or specifically for the s3 backend
 `--transfers` \* `--s3-chunk-size` \* `--s3-concurrency`. However you
-can use the the [--max-buffer-memory](/docs/#max-buffer-memory) flag
+can use the [--max-buffer-memory](/docs/#max-buffer-memory) flag
 to control the maximum memory used here.
 
 **NB** that this **only** works with supported backends as the
