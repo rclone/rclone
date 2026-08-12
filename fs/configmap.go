@@ -3,20 +3,25 @@
 package fs
 
 import (
+	"context"
 	"os"
 
 	"github.com/rclone/rclone/fs/config/configmap"
 )
 
 // A configmap.Getter to read from the environment RCLONE_CONFIG_backend_option_name
-type configEnvVars string
+type configEnvVars struct {
+	configName string
+	options    Options
+}
 
 // Get a config item from the environment variables if possible
-func (configName configEnvVars) Get(key string) (value string, ok bool) {
-	envKey := ConfigToEnv(string(configName), key)
+func (c configEnvVars) Get(key string) (value string, ok bool) {
+	envKey := ConfigToEnv(c.configName, key)
 	value, ok = os.LookupEnv(envKey)
 	if ok {
-		Debugf(nil, "Setting %s=%q for %q from environment variable %s", key, value, configName, envKey)
+		opt := c.options.Get(key)
+		Debugf(nil, "Setting %s=%s for %q from environment variable %s", key, RedactOptionValue(GetConfig(context.Background()), opt, value), c.configName, envKey)
 	}
 	return value, ok
 }
@@ -41,13 +46,13 @@ func (oev optionEnvVars) Get(key string) (value string, ok bool) {
 	}
 	value, ok = os.LookupEnv(envKey)
 	if ok {
-		Debugf(nil, "Setting %s %s=%q from environment variable %s", oev.prefix, key, value, envKey)
+		Debugf(nil, "Setting %s %s=%s from environment variable %s", oev.prefix, key, RedactOptionValue(GetConfig(context.Background()), opt, value), envKey)
 	} else if opt.NoPrefix {
 		// For options with NoPrefix set, check without prefix too
 		envKey := OptionToEnv(key)
 		value, ok = os.LookupEnv(envKey)
 		if ok {
-			Debugf(nil, "Setting %s=%q for %s from environment variable %s", key, value, oev.prefix, envKey)
+			Debugf(nil, "Setting %s=%s for %s from environment variable %s", key, RedactOptionValue(GetConfig(context.Background()), opt, value), oev.prefix, envKey)
 		}
 	}
 	return value, ok
@@ -125,7 +130,7 @@ func ConfigMap(prefix string, options Options, configName string, connectionStri
 
 	// remote specific environment vars
 	if configName != "" {
-		config.AddGetter(configEnvVars(configName), configmap.PriorityNormal)
+		config.AddGetter(configEnvVars{configName: configName, options: options}, configmap.PriorityNormal)
 	}
 
 	// backend specific environment vars
