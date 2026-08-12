@@ -311,10 +311,10 @@ set this flag.`,
 				Name: "fatal_if_no_space",
 				Help: `Make out-of-space errors fatal during transfers.
 
-When enabled, an ENOSPC error during a write returns a fatal error so
-that rclone aborts rather than retrying the operation. Useful for
-backup scripts that should halt loudly on a full disk rather than spin
-retrying.`,
+When enabled, an out of space error while writing, creating a directory,
+or creating a file returns a fatal error so that rclone aborts rather
+than retrying the operation. Useful for backup scripts that should halt
+loudly on a full disk rather than spin retrying.`,
 				Default:  false,
 				Advanced: true,
 			},
