@@ -26,7 +26,9 @@ func TestUseTrash(t *testing.T) {
 
 	r := fstest.NewRun(t)
 	f := r.Flocal.(*Fs)
+	// NewRun shares the local Fs between tests - restore the option afterwards
 	f.opt.UseTrash = true
+	t.Cleanup(func() { f.opt.UseTrash = false })
 
 	r.WriteFile("trashme.txt", "content", trashTime)
 	obj, err := f.NewObject(ctx, "trashme.txt")
@@ -64,6 +66,10 @@ func TestUseTrashPurge(t *testing.T) {
 
 	r := fstest.NewRun(t)
 	f := r.Flocal.(*Fs)
+	// NewRun shares the local Fs between tests - set the option explicitly
+	// for both halves and restore it afterwards
+	f.opt.UseTrash = false
+	t.Cleanup(func() { f.opt.UseTrash = false })
 
 	assert.Equal(t, fs.ErrorCantPurge, f.Purge(ctx, "sub"))
 
