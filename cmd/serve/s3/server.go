@@ -71,9 +71,9 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		fs.Debugf(f, "Using hash %v for ETag", w.etagHashType)
 	}
 
-	if len(opt.AuthKey) == 0 {
+	if len(opt.AuthKey) == 0 && !w.provider.IsProxy() {
 		fs.Logf("serve s3", "No auth provided so allowing anonymous access")
-	} else {
+	} else if len(opt.AuthKey) > 0 {
 		w.s3Secret = getAuthSecret(opt.AuthKey)
 	}
 
