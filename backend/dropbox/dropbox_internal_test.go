@@ -268,6 +268,24 @@ func TestUploadChunkedCancel(t *testing.T) {
 	assert.False(t, client.finishCalled)
 }
 
+func TestTrimPrefixFold(t *testing.T) {
+	for _, test := range []struct {
+		name   string
+		path   string
+		prefix string
+		want   string
+	}{
+		{name: "MatchingCase", path: "/Root/File.txt", prefix: "/Root/", want: "File.txt"},
+		{name: "DifferentCase", path: "/ROOT/File.txt", prefix: "/root/", want: "File.txt"},
+		{name: "NoMatch", path: "/Other/File.txt", prefix: "/root/", want: "/Other/File.txt"},
+		{name: "Root", path: "/File.txt", prefix: "/", want: "File.txt"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.want, trimPrefixFold(test.path, test.prefix))
+		})
+	}
+}
+
 func (f *Fs) importPaperForTest(t *testing.T) {
 	content := `# test doc
 
