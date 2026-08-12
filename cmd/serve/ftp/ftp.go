@@ -16,7 +16,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/rclone/rclone/cmd"
@@ -166,15 +165,22 @@ You can set a single username and password with the --user and --pass flags.
 
 // driver contains everything to run the driver for the FTP server
 type driver struct {
-	f          fs.Fs
-	srv        *ftp.Server
-	ctx        context.Context // for global config
-	opt        Options
-	provider   *proxy.Provider
-	useTLS     bool
-	userPassMu sync.Mutex        // to protect userPass
-	userPass   map[string]string // cache of username => password when using vfs proxy
+	f        fs.Fs
+	srv      *ftp.Server
+	ctx      context.Context // for global config
+	opt      Options
+	provider *proxy.Provider
+	useTLS   bool
 }
+
+// sessionObscuredPassKey is the key under which the obscured password is
+// stored in the per-session ftp.Session.Data map when using the auth proxy.
+//
+// The credential must be bound to the FTP session, not to the username: two
+// sessions can share a username but resolve to different proxy backends, so a
+// username-keyed store would let a later login rebind an earlier session's
+// operations to the later session's backend.
+const sessionObscuredPassKey = "rclone-obscured-pass"
 
 func init() {
 	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "ftp", Opt: &Opt, Options: OptionsInfo})
@@ -205,9 +211,6 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		}
 	}()
 
-	if d.provider.IsProxy() {
-		d.userPass = make(map[string]string, 16)
-	}
 	d.useTLS = d.opt.TLSKey != ""
 
 	// Check PassivePorts format since the server library doesn't!
@@ -327,17 +330,18 @@ func (d *driver) CheckPasswd(sctx *ftp.Context, user, pass string) (ok bool, err
 			fs.Infof(nil, "proxy login failed: %v", err)
 			return false, nil
 		}
-		// Cache obscured password for later lookup.
+		// Cache the obscured password on the session for later lookup.
 		//
-		// We don't cache the VFS directly in the driver as we want them
-		// to be expired and the auth proxy does that for us.
+		// We don't cache the VFS directly as we want it to be expired and
+		// the auth proxy does that for us. We bind the credential to this
+		// FTP session rather than to the username so a later login with the
+		// same username but a different credential can't rebind this
+		// session's operations to a different backend.
 		oPass, err := obscure.Obscure(pass)
 		if err != nil {
 			return false, err
 		}
-		d.userPassMu.Lock()
-		d.userPass[user] = oPass
-		d.userPassMu.Unlock()
+		sctx.Sess.Data[sessionObscuredPassKey] = oPass
 	} else {
 		userOK := subtle.ConstantTimeCompare([]byte(d.opt.User), []byte(user))
 		// No password configured means any password is accepted
@@ -361,9 +365,7 @@ func (d *driver) getVFS(sctx *ftp.Context) (VFS *vfs.VFS, err error) {
 		return d.provider.VFS(), nil
 	}
 	user := sctx.Sess.LoginUser()
-	d.userPassMu.Lock()
-	oPass, ok := d.userPass[user]
-	d.userPassMu.Unlock()
+	oPass, ok := sctx.Sess.Data[sessionObscuredPassKey].(string)
 	if !ok {
 		return nil, fmt.Errorf("proxy user not logged in")
 	}
