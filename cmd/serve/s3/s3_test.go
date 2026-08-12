@@ -308,6 +308,34 @@ func TestListBucketsAuthProxy(t *testing.T) {
 	testListBuckets(t, cases, true)
 }
 
+// TestNewServerPerServerAuthProxy checks that a per-server proxyOpt.AuthProxy
+// enables proxy mode even when the process-global proxy.Opt.AuthProxy is empty,
+// which is the normal case when the server is configured via serve/start.
+func TestNewServerPerServerAuthProxy(t *testing.T) {
+	fstest.Initialise()
+
+	// Ensure the global is empty so we only test the per-server option.
+	assert.Equal(t, "", proxy.Opt.AuthProxy)
+
+	f, err := fs.NewFs(context.Background(), "testdata")
+	require.NoError(t, err)
+
+	opt := Opt
+	opt.AuthKey = []string{"access-key,secret-key"}
+	opt.HTTP.ListenAddr = []string{endpoint}
+
+	proxyOpt := proxy.Opt
+	proxyOpt.AuthProxy = "/path/to/auth/proxy"
+
+	w, err := newServer(context.Background(), f, &opt, &vfscommon.Opt, &proxyOpt)
+	require.NoError(t, err)
+	defer func() {
+		assert.NoError(t, w.Shutdown())
+	}()
+	assert.True(t, w.provider.IsProxy(), "expected auth proxy to be enabled by per-server option")
+	assert.Nil(t, w.provider.VFS(), "expected no fixed VFS when auth proxy is in use")
+}
+
 func TestRc(t *testing.T) {
 	servetest.TestRc(t, rc.Params{
 		"type":           "s3",
