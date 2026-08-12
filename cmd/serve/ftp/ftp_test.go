@@ -21,6 +21,7 @@ import (
 	"github.com/rclone/rclone/lib/israce"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -98,6 +99,27 @@ func TestCheckPasswd(t *testing.T) {
 			assert.Equal(t, test.want, ok)
 		})
 	}
+}
+
+// TestNewServerPerServerAuthProxy checks that a per-server proxyOpt.AuthProxy
+// enables proxy mode even when the process-global proxy.Opt.AuthProxy is empty,
+// which is the normal case when the server is configured via serve/start.
+func TestNewServerPerServerAuthProxy(t *testing.T) {
+	// Ensure the global is empty so we only test the per-server option.
+	assert.Equal(t, "", proxy.Opt.AuthProxy)
+
+	opt := Opt
+	opt.ListenAddr = testHOST + ":" + testPORT
+	opt.PassivePorts = testPASSIVEPORTRANGE
+
+	proxyOpt := proxy.Opt
+	proxyOpt.AuthProxy = "/path/to/auth/proxy"
+
+	d, err := newServer(context.Background(), nil, &opt, &vfscommon.Opt, &proxyOpt)
+	require.NoError(t, err)
+	defer d.provider.Shutdown()
+	assert.True(t, d.provider.IsProxy(), "expected auth proxy to be enabled by per-server option")
+	assert.Nil(t, d.provider.VFS(), "expected no fixed VFS when auth proxy is in use")
 }
 
 func TestRc(t *testing.T) {
