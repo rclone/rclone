@@ -10,6 +10,7 @@ import (
 
 	"github.com/aalpar/deheap"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/fserrors"
 )
 
@@ -187,8 +188,8 @@ func newLess(orderBy string) (less lessFn, fraction int, err error) {
 	if orderBy == "" {
 		return nil, fraction, nil
 	}
-	parts := strings.Split(strings.ToLower(orderBy), ",")
-	switch parts[0] {
+	parts := strings.Split(orderBy, ",")
+	switch strings.ToLower(parts[0]) {
 	case "name":
 		less = func(a, b fs.ObjectPair) bool {
 			return a.Src.Remote() < b.Src.Remote()
@@ -202,12 +203,44 @@ func newLess(orderBy string) (less lessFn, fraction int, err error) {
 			ctx := context.Background()
 			return a.Src.ModTime(ctx).Before(b.Src.ModTime(ctx))
 		}
+	case "pattern":
+		if len(parts) < 2 {
+			return nil, fraction, fmt.Errorf("pattern requires at least one glob")
+		}
+		matches := make([]func(string) bool, 0, len(parts)-1)
+		for _, glob := range parts[1:] {
+			if glob == "" {
+				return nil, fraction, fmt.Errorf("empty pattern glob")
+			}
+			re, err := filter.GlobPathToRegexp(glob, false)
+			if err != nil {
+				return nil, fraction, fmt.Errorf("bad pattern glob %q: %w", glob, err)
+			}
+			matches = append(matches, re.MatchString)
+		}
+		rank := func(remote string) int {
+			for i, match := range matches {
+				if match(remote) {
+					return i
+				}
+			}
+			return len(matches)
+		}
+		less = func(a, b fs.ObjectPair) bool {
+			aRemote, bRemote := a.Src.Remote(), b.Src.Remote()
+			aRank, bRank := rank(aRemote), rank(bRemote)
+			if aRank != bRank {
+				return aRank < bRank
+			}
+			return aRemote < bRemote
+		}
+		return less, fraction, nil
 	default:
 		return nil, fraction, fmt.Errorf("unknown --order-by comparison %q", parts[0])
 	}
 	descending := false
 	if len(parts) > 1 {
-		switch parts[1] {
+		switch strings.ToLower(parts[1]) {
 		case "ascending", "asc":
 		case "descending", "desc":
 			descending = true
