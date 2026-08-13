@@ -266,7 +266,12 @@ func (c *copy) manualCopy(ctx context.Context) (actionTaken string, newDst fs.Ob
 	}
 
 	if doMultiThreadCopy(ctx, c.f, c.src) {
-		return c.multiThreadCopy(ctx, uploadOptions)
+		actionTaken, newDst, err = c.multiThreadCopy(ctx, uploadOptions)
+		if !errors.Is(err, fs.ErrorRangeIgnored) {
+			return actionTaken, newDst, err
+		}
+		fs.Logf(c.src, "multi-thread copy: %v: downloading in a single stream", err)
+		c.tr.Reset(ctx)
 	}
 
 	var in io.ReadCloser
