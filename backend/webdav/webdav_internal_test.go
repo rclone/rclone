@@ -10,11 +10,13 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/backend/webdav"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -239,4 +241,46 @@ func TestOpenRetriesMismatchedContentRange(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "cde", string(contents))
 	assert.Equal(t, int32(2), getRequests.Load())
+}
+
+func TestCopyFallsBackWhenRangeIgnored(t *testing.T) {
+	var rangeRequests atomic.Int32
+	var fullRequests atomic.Int32
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.LowLevelRetries = 2
+	ci.MultiThreadStreams = 2
+	ci.MultiThreadSet = true
+	ci.MultiThreadCutoff = 1
+	ci.MultiThreadChunkSize = 4
+
+	src, tidy := prepareFileObject(ctx, t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Range") == "" {
+			fullRequests.Add(1)
+		} else {
+			rangeRequests.Add(1)
+		}
+		w.Header().Set("Content-Length", "10")
+		w.WriteHeader(http.StatusOK)
+		_, err := io.WriteString(w, "abcdefghij")
+		require.NoError(t, err)
+	})
+	defer tidy()
+
+	dstFs, err := local.NewFs(ctx, "local", t.TempDir(), configmap.Simple{
+		"no_preallocate": "true",
+		"no_sparse":      "true",
+	})
+	require.NoError(t, err)
+	dst, err := operations.Copy(ctx, dstFs, nil, "file.txt", src)
+	require.NoError(t, err)
+
+	in, err := dst.Open(ctx)
+	require.NoError(t, err)
+	defer func() { require.NoError(t, in.Close()) }()
+	contents, err := io.ReadAll(in)
+	require.NoError(t, err)
+	assert.Equal(t, "abcdefghij", string(contents))
+	assert.Positive(t, rangeRequests.Load())
+	assert.LessOrEqual(t, rangeRequests.Load(), int32(3))
+	assert.Equal(t, int32(1), fullRequests.Load())
 }
