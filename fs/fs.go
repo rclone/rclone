@@ -53,6 +53,7 @@ var (
 	ErrorFileNameTooLong             = errors.New("file name too long")
 	ErrorCantListRoot                = errors.New("can't list root")
 	ErrorFileTooSmall                = errors.New("file too small for multipart upload")
+	ErrorRangeIgnored                = errors.New("server ignored requested range")
 )
 
 // FileTooSmallError is returned by OpenChunkWriter when a file is below the
