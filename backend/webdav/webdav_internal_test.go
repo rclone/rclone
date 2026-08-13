@@ -3,9 +3,11 @@ package webdav_test
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/rclone/rclone/backend/webdav"
@@ -150,4 +152,91 @@ func TestReservedCharactersInPathAreEscaped(t *testing.T) {
 	// The semicolon must be percent-encoded as %3B
 	assert.Contains(t, capturedPath, "my%3Btest", "semicolons in path should be percent-encoded")
 	assert.NotContains(t, capturedPath, "my;test", "raw semicolons should not appear in path")
+}
+
+const fileInfoResponse = `<d:multistatus xmlns:d="DAV:">
+<d:response>
+ <d:href>/file.txt</d:href>
+ <d:propstat>
+  <d:prop>
+   <d:getcontentlength>10</d:getcontentlength>
+   <d:resourcetype/>
+  </d:prop>
+  <d:status>HTTP/1.1 200 OK</d:status>
+ </d:propstat>
+</d:response>
+</d:multistatus>`
+
+func prepareFileObject(ctx context.Context, t *testing.T, getHandler http.HandlerFunc) (fs.Object, func()) {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "PROPFIND" {
+			w.WriteHeader(http.StatusMultiStatus)
+			_, err := fmt.Fprint(w, fileInfoResponse)
+			require.NoError(t, err)
+			return
+		}
+		if r.Method == http.MethodGet {
+			getHandler(w, r)
+			return
+		}
+		http.Error(w, "unexpected method", http.StatusMethodNotAllowed)
+	})
+	ts := httptest.NewServer(handler)
+
+	configfile.Install()
+	f, err := webdav.NewFs(ctx, remoteName, "", configmap.Simple{
+		"type": "webdav",
+		"url":  ts.URL,
+	})
+	require.NoError(t, err)
+	o, err := f.NewObject(ctx, "file.txt")
+	require.NoError(t, err)
+	return o, ts.Close
+}
+
+func TestOpenDoesNotRetryIgnoredRange(t *testing.T) {
+	var getRequests atomic.Int32
+	o, tidy := prepareFileObject(context.Background(), t, func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "bytes=2-4", r.Header.Get("Range"))
+		getRequests.Add(1)
+		w.Header().Set("Content-Length", "10")
+		w.WriteHeader(http.StatusOK)
+		_, err := io.WriteString(w, "abcdefghij")
+		require.NoError(t, err)
+	})
+	defer tidy()
+
+	in, err := o.Open(context.Background(), &fs.RangeOption{Start: 2, End: 4})
+	assert.Nil(t, in)
+	assert.ErrorIs(t, err, fs.ErrorRangeIgnored)
+	assert.Equal(t, int32(1), getRequests.Load())
+}
+
+func TestOpenRetriesMismatchedContentRange(t *testing.T) {
+	var getRequests atomic.Int32
+	o, tidy := prepareFileObject(context.Background(), t, func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "bytes=2-4", r.Header.Get("Range"))
+		if getRequests.Add(1) == 1 {
+			w.Header().Set("Content-Length", "3")
+			w.Header().Set("Content-Range", "bytes 0-2/10")
+			w.WriteHeader(http.StatusPartialContent)
+			_, err := io.WriteString(w, "abc")
+			require.NoError(t, err)
+			return
+		}
+		w.Header().Set("Content-Length", "3")
+		w.Header().Set("Content-Range", "bytes 2-4/10")
+		w.WriteHeader(http.StatusPartialContent)
+		_, err := io.WriteString(w, "cde")
+		require.NoError(t, err)
+	})
+	defer tidy()
+
+	in, err := o.Open(context.Background(), &fs.RangeOption{Start: 2, End: 4})
+	require.NoError(t, err)
+	defer func() { require.NoError(t, in.Close()) }()
+	contents, err := io.ReadAll(in)
+	require.NoError(t, err)
+	assert.Equal(t, "cde", string(contents))
+	assert.Equal(t, int32(2), getRequests.Load())
 }
