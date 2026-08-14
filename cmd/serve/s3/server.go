@@ -55,6 +55,9 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 	}
 	defer func() {
 		if err != nil {
+			if w.backend != nil {
+				w.backend.stopReaper()
+			}
 			w.provider.Shutdown()
 		}
 	}()
@@ -168,6 +171,7 @@ func (w *Server) Addr() net.Addr {
 
 // Shutdown the server
 func (w *Server) Shutdown() error {
+	w.backend.stopReaper()
 	err := w.server.Shutdown()
 	w.provider.Shutdown()
 	return err
