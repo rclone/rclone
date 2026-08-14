@@ -358,7 +358,12 @@ func (d *driver) CheckPasswd(sctx *ftp.Context, user, pass string) (ok bool, err
 	return true, nil
 }
 
-// Get the VFS for this connection
+// getVFS returns the VFS for this connection.
+//
+// In proxy mode, getVFS calls proxy.Call on each FTP command which refreshes
+// the proxy cache timer (like http/webdav). Therefore, connection-level pinning
+// is not used; only individual transfers exceeding the cache expiry window
+// could be affected.
 func (d *driver) getVFS(sctx *ftp.Context) (VFS *vfs.VFS, err error) {
 	if !d.provider.IsProxy() {
 		// If no proxy always use the same VFS

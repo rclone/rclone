@@ -99,6 +99,13 @@ func (s *server) acceptConnection(nConn net.Conn) {
 	// Discard all global out-of-band Requests
 	go ssh.DiscardRequests(reqs)
 
+	if sshConn.Permissions != nil && sshConn.Permissions.Extensions != nil {
+		if vfsKey := sshConn.Permissions.Extensions["_vfsKey"]; vfsKey != "" {
+			s.provider.Pin(vfsKey)
+			defer s.provider.Unpin(vfsKey)
+		}
+	}
+
 	c := &conn{
 		what: what,
 		vfs:  s.getVFS(what, sshConn),
@@ -111,7 +118,7 @@ func (s *server) acceptConnection(nConn net.Conn) {
 	c.handlers = newVFSHandler(c.vfs)
 
 	// Accept all channels
-	go c.handleChannels(chans)
+	c.handleChannels(chans)
 }
 
 // Accept connections and call them in a go routine
