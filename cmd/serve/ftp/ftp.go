@@ -170,8 +170,7 @@ type driver struct {
 	srv        *ftp.Server
 	ctx        context.Context // for global config
 	opt        Options
-	globalVFS  *vfs.VFS     // the VFS if not using auth proxy
-	proxy      *proxy.Proxy // may be nil if not in use
+	provider   *proxy.Provider
 	useTLS     bool
 	userPassMu sync.Mutex        // to protect userPass
 	userPass   map[string]string // cache of username => password when using vfs proxy
@@ -195,15 +194,19 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 	}
 
 	d := &driver{
-		f:   f,
-		ctx: ctx,
-		opt: *opt,
+		f:        f,
+		ctx:      ctx,
+		opt:      *opt,
+		provider: proxy.NewProvider(ctx, f, vfsOpt, proxyOpt),
 	}
-	if proxy.Opt.AuthProxy != "" {
-		d.proxy = proxy.New(ctx, proxyOpt, vfsOpt)
+	defer func() {
+		if err != nil {
+			d.provider.Shutdown()
+		}
+	}()
+
+	if d.provider.IsProxy() {
 		d.userPass = make(map[string]string, 16)
-	} else {
-		d.globalVFS = vfs.New(ctx, f, vfsOpt)
 	}
 	d.useTLS = d.opt.TLSKey != ""
 
@@ -250,7 +253,9 @@ func (d *driver) Serve() error {
 //lint:ignore U1000 unused when not building linux
 func (d *driver) Shutdown() error {
 	fs.Logf(d.f, "Stopping FTP on %s", d.srv.Hostname+":"+strconv.Itoa(d.srv.Port))
-	return d.srv.Shutdown()
+	err := d.srv.Shutdown()
+	d.provider.Shutdown()
+	return err
 }
 
 // Return the first address of the server
@@ -316,8 +321,8 @@ func (l *Logger) PrintResponse(sessionID string, code int, message string) {
 
 // CheckPasswd handle auth based on configuration
 func (d *driver) CheckPasswd(sctx *ftp.Context, user, pass string) (ok bool, err error) {
-	if d.proxy != nil {
-		_, _, err = d.proxy.Call(user, pass, false, sctx.Sess.RemoteAddr().String())
+	if d.provider.IsProxy() {
+		_, _, err = d.provider.Proxy().Call(user, pass, false, sctx.Sess.RemoteAddr().String())
 		if err != nil {
 			fs.Infof(nil, "proxy login failed: %v", err)
 			return false, nil
@@ -351,9 +356,9 @@ func (d *driver) CheckPasswd(sctx *ftp.Context, user, pass string) (ok bool, err
 
 // Get the VFS for this connection
 func (d *driver) getVFS(sctx *ftp.Context) (VFS *vfs.VFS, err error) {
-	if d.proxy == nil {
+	if !d.provider.IsProxy() {
 		// If no proxy always use the same VFS
-		return d.globalVFS, nil
+		return d.provider.VFS(), nil
 	}
 	user := sctx.Sess.LoginUser()
 	d.userPassMu.Lock()
@@ -366,7 +371,7 @@ func (d *driver) getVFS(sctx *ftp.Context) (VFS *vfs.VFS, err error) {
 	if err != nil {
 		return nil, err
 	}
-	VFS, _, err = d.proxy.Call(user, pass, false, sctx.Sess.RemoteAddr().String())
+	VFS, _, err = d.provider.Proxy().Call(user, pass, false, sctx.Sess.RemoteAddr().String())
 	if err != nil {
 		return nil, fmt.Errorf("proxy login failed: %w", err)
 	}

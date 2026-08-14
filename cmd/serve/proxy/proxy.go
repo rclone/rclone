@@ -22,6 +22,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
 	libcache "github.com/rclone/rclone/lib/cache"
+	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 )
@@ -161,13 +162,19 @@ type cacheEntry struct {
 //
 // Any VFS are created with the vfsOpt passed in.
 func New(ctx context.Context, opt *Options, vfsOpt *vfscommon.Options) *Proxy {
-	return &Proxy{
+	p := &Proxy{
 		ctx:      ctx,
 		Opt:      *opt,
 		cmdLine:  strings.Fields(opt.AuthProxy),
 		vfsCache: libcache.New(),
 		vfsOpt:   *vfsOpt,
 	}
+	p.vfsCache.SetFinalizer(func(value any) {
+		if entry, ok := value.(cacheEntry); ok && entry.vfs != nil {
+			entry.vfs.Shutdown()
+		}
+	})
+	return p
 }
 
 // run the proxy command returning a config map
@@ -373,4 +380,109 @@ func (p *Proxy) Get(key string) *vfs.VFS {
 	}
 	entry := value.(cacheEntry)
 	return entry.vfs
+}
+
+// Shutdown shuts down all cached VFS instances
+func (p *Proxy) Shutdown() {
+	if p != nil && p.vfsCache != nil {
+		p.vfsCache.Clear()
+	}
+}
+
+// Provider hands out VFS instances, either a fixed one or per-user via an auth proxy.
+type Provider struct {
+	vfs   *vfs.VFS // set if not using an auth proxy
+	proxy *Proxy   // set if using an auth proxy
+}
+
+// NewProvider creates a Provider. If proxyOpt.AuthProxy is set it creates an
+// auth proxy; otherwise it creates a fixed VFS from f and vfsOpt.
+func NewProvider(ctx context.Context, f fs.Fs, vfsOpt *vfscommon.Options, proxyOpt *Options) *Provider {
+	p := &Provider{}
+	if proxyOpt != nil && proxyOpt.AuthProxy != "" {
+		p.proxy = New(ctx, proxyOpt, vfsOpt)
+	} else {
+		p.vfs = vfs.New(ctx, f, vfsOpt)
+	}
+	return p
+}
+
+// Get returns the VFS for the current request context.
+// For fixed-VFS providers it returns the single VFS.
+// For proxy providers it reads the VFS from the request's auth context.
+func (p *Provider) Get(ctx context.Context) (*vfs.VFS, error) {
+	if p.vfs != nil {
+		return p.vfs, nil
+	}
+	value := libhttp.CtxGetAuth(ctx)
+	if value == nil {
+		return nil, errors.New("no VFS found in context")
+	}
+	VFS, ok := value.(*vfs.VFS)
+	if !ok {
+		return nil, fmt.Errorf("context value is not VFS: %#v", value)
+	}
+	return VFS, nil
+}
+
+// VFS returns the fixed VFS, or nil if using an auth proxy.
+func (p *Provider) VFS() *vfs.VFS {
+	if p == nil {
+		return nil
+	}
+	return p.vfs
+}
+
+// Proxy returns the Proxy instance, or nil if not using an auth proxy.
+func (p *Provider) Proxy() *Proxy {
+	if p == nil {
+		return nil
+	}
+	return p.proxy
+}
+
+// IsProxy returns true if using an auth proxy.
+func (p *Provider) IsProxy() bool {
+	return p != nil && p.proxy != nil
+}
+
+// Shutdown tears down the provider: shuts down the fixed VFS or flushes all proxy cache entries.
+func (p *Provider) Shutdown() {
+	if p == nil {
+		return
+	}
+	if p.vfs != nil {
+		p.vfs.Shutdown()
+	}
+	if p.proxy != nil {
+		p.proxy.Shutdown()
+	}
+}
+
+// Pin pins the cache entry for key so it won't be evicted by expire
+func (p *Proxy) Pin(key string) {
+	if p != nil && p.vfsCache != nil {
+		p.vfsCache.Pin(key)
+	}
+}
+
+// Unpin unpins the cache entry for key
+func (p *Proxy) Unpin(key string) {
+	if p != nil && p.vfsCache != nil {
+		p.vfsCache.Unpin(key)
+	}
+}
+
+// Pin pins the cache entry for key if using an auth proxy
+func (p *Provider) Pin(key string) {
+	if p != nil && p.proxy != nil {
+		p.proxy.Pin(key)
+	}
+}
+
+// Unpin unpins the cache entry for key if using an auth proxy
+func (p *Provider) Unpin(key string) {
+	if p != nil && p.proxy != nil {
+		p.proxy.Unpin(key)
+	}
 }

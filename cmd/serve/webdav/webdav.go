@@ -4,7 +4,6 @@ package webdav
 import (
 	"context"
 	"encoding/xml"
-	"errors"
 	"fmt"
 	"mime"
 	"net"
@@ -235,9 +234,8 @@ type WebDAV struct {
 	server        *libhttp.Server
 	opt           Options
 	f             fs.Fs
-	_vfs          *vfs.VFS // don't use directly, use getVFS
+	provider      *proxy.Provider
 	webdavhandler *webdav.Handler
-	proxy         *proxy.Proxy
 	ctx           context.Context // for global config
 	etagHashType  hash.Type
 }
@@ -265,8 +263,15 @@ func newWebDAV(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		f:            f,
 		ctx:          ctx,
 		opt:          *opt,
+		provider:     proxy.NewProvider(ctx, f, vfsOpt, proxyOpt),
 		etagHashType: hash.None,
 	}
+	defer func() {
+		if err != nil {
+			w.provider.Shutdown()
+		}
+	}()
+
 	if opt.EtagHash == "auto" {
 		w.etagHashType = f.Hashes().GetOne()
 	} else if opt.EtagHash != "" {
@@ -278,12 +283,9 @@ func newWebDAV(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 	if w.etagHashType != hash.None {
 		fs.Debugf(f, "Using hash %v for ETag", w.etagHashType)
 	}
-	if proxyOpt.AuthProxy != "" {
-		w.proxy = proxy.New(ctx, proxyOpt, vfsOpt)
-		// override auth
+
+	if w.provider.IsProxy() {
 		w.opt.Auth.CustomAuthFn = w.auth
-	} else {
-		w._vfs = vfs.New(ctx, f, vfsOpt)
 	}
 
 	w.server, err = libhttp.NewServer(ctx,
@@ -335,23 +337,12 @@ func newWebDAV(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 
 // Gets the VFS in use for this request
 func (w *WebDAV) getVFS(ctx context.Context) (VFS *vfs.VFS, err error) {
-	if w._vfs != nil {
-		return w._vfs, nil
-	}
-	value := libhttp.CtxGetAuth(ctx)
-	if value == nil {
-		return nil, errors.New("no VFS found in context")
-	}
-	VFS, ok := value.(*vfs.VFS)
-	if !ok {
-		return nil, fmt.Errorf("context value is not VFS: %#v", value)
-	}
-	return VFS, nil
+	return w.provider.Get(ctx)
 }
 
 // auth does proxy authorization
 func (w *WebDAV) auth(r *http.Request, user, pass string) (value any, err error) {
-	VFS, _, err := w.proxy.Call(user, pass, false, r.RemoteAddr)
+	VFS, _, err := w.provider.Proxy().Call(user, pass, false, r.RemoteAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -513,7 +504,9 @@ func (w *WebDAV) Addr() net.Addr {
 
 // Shutdown the server
 func (w *WebDAV) Shutdown() error {
-	return w.server.Shutdown()
+	err := w.server.Shutdown()
+	w.provider.Shutdown()
+	return err
 }
 
 // logRequest is called by the webdav module on every request
