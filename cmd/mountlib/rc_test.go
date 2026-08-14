@@ -2,6 +2,7 @@ package mountlib_test
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -18,6 +19,8 @@ import (
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/testy"
+	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -196,4 +199,22 @@ func TestRc(t *testing.T) {
 		require.Error(t, err)
 		require.True(t, os.IsNotExist(err))
 	})
+}
+
+func TestMountFailureVFSRelease(t *testing.T) {
+	localDir := t.TempDir()
+	f, err := fs.NewFs(context.Background(), localDir)
+	require.NoError(t, err)
+
+	failingMountFn := func(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error, func() error, string, error) {
+		return nil, nil, "", errors.New("simulated mount error")
+	}
+
+	mnt := mountlib.NewMountPoint(failingMountFn, "/invalid/mountpoint", f, &mountlib.Opt, &vfscommon.Opt)
+	initialActive := vfs.ActiveCount()
+
+	_, err = mnt.Mount()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "simulated mount error")
+	assert.Equal(t, initialActive, vfs.ActiveCount(), "VFS should be shut down when MountFn fails")
 }
