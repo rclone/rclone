@@ -126,4 +126,29 @@ func TestDownloaders(t *testing.T) {
 			return item.HasRange(r)
 		}, 10*time.Second, 10*time.Millisecond)
 	})
+
+	// A waiter for a range beyond the item's size but within the source
+	// object's size must still be dispatched. _ensureDownloader will not
+	// start a downloader for it, so nothing else would ever wake it.
+	t.Run("DownloadBeyondItemSize", func(t *testing.T) {
+		item := &testItem{
+			t:    t,
+			size: 1024 * 1024,
+		}
+		opt := vfscommon.Opt
+		dls := New(ctx, item, &opt, remote, src)
+		defer cancel(dls)
+
+		done := make(chan error, 1)
+		go func() {
+			done <- dls.Download(ranges.Range{Pos: 40 * 1024 * 1024, Size: 250})
+		}()
+
+		select {
+		case err := <-done:
+			assert.NoError(t, err)
+		case <-time.After(30 * time.Second):
+			t.Fatal("Download did not return: the waiter was never dispatched")
+		}
+	})
 }
