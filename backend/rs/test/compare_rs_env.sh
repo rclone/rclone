@@ -18,7 +18,7 @@ RS_PARITY_SHARDS="${RS_PARITY_SHARDS:-3}"
 RS_REMOTE="${RS_REMOTE:-localrs}"
 RS_SINGLE_REMOTE="${RS_SINGLE_REMOTE:-rslocalsingle}"
 
-# MinIO/S3 layout (used when --storage-type=minio). Ports 9201+ avoid raid3 defaults (9001–9004).
+# MinIO/S3 layout (used when --storage-type=minio). Ports start at 9201.
 RS_REMOTE_MINIO="${RS_REMOTE_MINIO:-minirs}"
 RS_SINGLE_REMOTE_MINIO="${RS_SINGLE_REMOTE_MINIO:-rsminiosingle}"
 RS_MINIO_BUCKET="${RS_MINIO_BUCKET:-rsint}"

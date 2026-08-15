@@ -1,6 +1,6 @@
 # RS backend — bash integration tests
 
-Black-box tests for the Reed-Solomon (`rs`) virtual backend, structured like `backend/raid3/test/`.
+Black-box tests for the Reed-Solomon (`rs`) virtual backend.
 
 ## Quick start
 
@@ -24,7 +24,7 @@ cd backend/rs/test
 ./compare_all.sh
 ```
 
-`compare_all.sh` matches the **raid3** orchestrator pattern: **by default** it runs that sequence for **`local`**, then again for **`MinIO`** (Docker). Use **`--storage-type=local`** or **`--storage-type=minio`** to run only one backend.
+`compare_all.sh` **by default** runs that sequence for **`local`**, then again for **`MinIO`** (Docker). Use **`--storage-type=local`** or **`--storage-type=minio`** to run only one backend.
 
 For each `--storage-type`, in order:
 
@@ -49,7 +49,7 @@ Optional pause between steps: `COMPARE_ALL_SLEEP_BETWEEN_TESTS=1` (default; set 
 | `./compare.sh --storage-type=minio test quorum_dirs` | Same checks against MinIO-backed shards. |
 | `./compare.sh --storage-type=local test move_copy` | Same-remote `copyto`, `moveto`, and directory move behavior. |
 | `./compare.sh --storage-type=minio test move_copy` | Same checks against MinIO-backed shards. |
-| `./compare_heal.sh -v --storage-type=local` | Same as **`test heal`** (wrapper for parity with raid3 naming). |
+| `./compare_heal.sh -v --storage-type=local` | Same as **`test heal`**. |
 | `./compare_sequential.sh` | Runs **`smoke` → `verify` → `heal` → `quorum_dirs` → `move_copy`** in order (`--storage-type` / `-v` supported); continues after failures and prints which steps failed. |
 
 ## Configuration
@@ -59,7 +59,7 @@ Optional pause between steps: `COMPARE_ALL_SLEEP_BETWEEN_TESTS=1` (default; set 
 
 ### MinIO (Docker)
 
-Ports default to **9201–9208** (seven shards + single) so they do not overlap raid3’s MinIO defaults (9001–9004). Override with **`MINIO_RS_FIRST_S3_PORT`** / **`MINIO_RS_FIRST_CONSOLE_PORT`** in `compare_rs_env.local.sh` if needed.
+Ports default to **9201–9208** (seven shards + single). Override with **`MINIO_RS_FIRST_S3_PORT`** / **`MINIO_RS_FIRST_CONSOLE_PORT`** in `compare_rs_env.local.sh` if needed.
 
 ```bash
 cd backend/rs/test
@@ -71,7 +71,7 @@ RCLONE_BINARY=/path/to/rclone RSVERIFY_BINARY=/path/to/rsverify ./compare_all.sh
 
 `compare.sh` starts containers automatically if they are missing; **`manage.sh`** is for explicit start/stop/recreate.
 
-Optional overrides: create `compare_rs_env.local.sh` to adjust paths, `RS_DATA_SHARDS` / `RS_PARITY_SHARDS` (regenerate **`tests.config`** after changes), or **`MINIO_IMAGE`** (same idea as `backend/raid3/test`). If you still have an old **`tests.minio.config`**, you can remove it; MinIO remotes now live in **`tests.config`**.
+Optional overrides: create `compare_rs_env.local.sh` to adjust paths, `RS_DATA_SHARDS` / `RS_PARITY_SHARDS` (regenerate **`tests.config`** after changes), or **`MINIO_IMAGE`**. If you still have an old **`tests.minio.config`**, you can remove it; MinIO remotes now live in **`tests.config`**.
 
 After changing the config template in **`compare_common.sh`**, delete **`tests.config`** and run **`./setup.sh`** again (`setup.sh` skips writing when the file already exists).
 

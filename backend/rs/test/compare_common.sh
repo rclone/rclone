@@ -1,7 +1,7 @@
 # Shared helpers for rs comparison scripts.
 # shellcheck shell=bash
 
-# Native Windows guard (same idea as raid3/compare_common.sh)
+# Native Windows guard
 if [[ -n "${WINDIR:-}" ]] || [[ -n "${SYSTEMROOT:-}" ]]; then
   if [[ "${OSTYPE:-}" != "msys" ]] && [[ "${OSTYPE:-}" != "cygwin" ]] && [[ ! -f /proc/version ]] && [[ ! -d /usr/bin ]]; then
     cat >&2 <<'EOF'

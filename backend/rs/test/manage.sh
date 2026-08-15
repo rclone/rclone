@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# manage.sh — start/stop MinIO containers for rs shell tests (see backend/raid3/test/manage.sh).
+# manage.sh — start/stop MinIO containers for rs shell tests.
 #
 # Usage:
 #   ./manage.sh --storage-type=minio start|stop|recreate
