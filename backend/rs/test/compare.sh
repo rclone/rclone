@@ -42,7 +42,7 @@ Run from: ${SCRIPT_DIR}
 EOF
 }
 
-# rclone with optional S3 timeouts when STORAGE_TYPE=minio (mirrors raid3 compare_common).
+# rclone with optional S3 timeouts when STORAGE_TYPE=minio.
 rs_rclone() {
   local bin
   bin=$(find_rclone_binary)

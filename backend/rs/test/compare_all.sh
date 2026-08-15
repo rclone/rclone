@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# compare_all.sh — master script for rs shell integration tests (same idea as raid3/compare_all.sh).
+# compare_all.sh — master script for rs shell integration tests.
 #
 # By default runs the full suite for each storage backend: local, then minio.
 # Use --storage-type to run only one backend.
@@ -13,7 +13,7 @@
 #
 # Usage:
 #   ./compare_all.sh [-v] [--storage-type=local|minio]
-#   ./compare_all.sh test [options]    (optional "test" is ignored; same as raid3)
+#   ./compare_all.sh test [options]    (optional "test" is ignored)
 #
 # Environment:
 #   COMPARE_ALL_SLEEP_BETWEEN_TESTS  Seconds to sleep between steps (default: 1). Set to 0 to disable.
