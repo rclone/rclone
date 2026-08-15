@@ -134,6 +134,9 @@ func TestVarious(t *testing.T) {
 		{"stories/Вот русское предложение, в котором байтов больше, чем символов.txt", "stories/Вот русское предложение, в котором бай", []string{"truncate_bytes=70"}},
 		{"stories/Вот русское предложение, в котором байтов больше, чем символов.txt", "stories/Вот русское предложение, в котором байтов больше, чем си.txt", []string{"truncate_keep_extension=60"}},
 		{"stories/Вот русское предложение, в котором байтов больше, чем символов.txt", "stories/Вот русское предложение, в котором б.txt", []string{"truncate_bytes_keep_extension=70"}},
+		// the extension alone exceeds the limit, so there is nothing valid to return
+		{"stories/photo.jpeg", "stories/photo.jpeg", []string{"all,truncate_keep_extension=3"}},
+		{"stories/a.tar.gz", "stories/a.tar.gz", []string{"all,truncate_keep_extension=2"}},
 		{"stories/The Quick Brown Fox!.txt", "stories/The Quick Brown Fox!.txt", []string{"all,command=echo"}},
 		{"stories/The Quick Brown Fox!.txt", "stories/The Quick Brown Fox!.txt-" + time.Now().Local().Format("20060102"), []string{"date=-{YYYYMMDD}"}},
 		{"stories/The Quick Brown Fox!.txt", "stories/The Quick Brown Fox!.txt-" + time.Now().Local().Format("2006-01-02 0304PM"), []string{"date=-{macfriendlytime}"}},
