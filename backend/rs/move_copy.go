@@ -36,19 +36,12 @@ func moveShard(ctx context.Context, dstFs, srcFs *Fs, srcRemote, dstRemote strin
 	if err != nil {
 		return err
 	}
-	if do := dstFs.backends[shard].Features().Move; do != nil {
-		_, err = do(ctx, srcShardObj, dstRemote)
-		return err
-	}
-	doCopy := dstFs.backends[shard].Features().Copy
-	if doCopy == nil {
+	do := dstFs.backends[shard].Features().Move
+	if do == nil {
 		return fs.ErrorCantMove
 	}
-	_, err = doCopy(ctx, srcShardObj, dstRemote)
-	if err != nil {
-		return err
-	}
-	return srcShardObj.Remove(ctx)
+	_, err = do(ctx, srcShardObj, dstRemote)
+	return err
 }
 
 func removeShardObject(ctx context.Context, b fs.Fs, remote string) error {
@@ -65,21 +58,56 @@ func rollbackMoveShard(ctx context.Context, dstFs, srcFs *Fs, srcRemote, dstRemo
 	if err != nil {
 		return nil
 	}
-	if do := dstFs.backends[shard].Features().Move; do != nil {
-		_, err = do(ctx, dstShardObj, srcRemote)
-		if err == nil {
-			return nil
-		}
-	}
-	doCopy := srcFs.backends[shard].Features().Copy
-	if doCopy == nil {
+	do := dstFs.backends[shard].Features().Move
+	if do == nil {
 		return fs.ErrorCantMove
 	}
-	_, err = doCopy(ctx, dstShardObj, srcRemote)
-	if err != nil {
-		return err
+	_, err = do(ctx, dstShardObj, srcRemote)
+	return err
+}
+
+func (f *Fs) allBackendsHaveCopy() bool {
+	for _, b := range f.backends {
+		if b.Features().Copy == nil {
+			return false
+		}
 	}
-	return dstShardObj.Remove(ctx)
+	return true
+}
+
+func (f *Fs) allBackendsHaveMove() bool {
+	for _, b := range f.backends {
+		if b.Features().Move == nil {
+			return false
+		}
+	}
+	return true
+}
+
+func moveOnlyBackupShard(ctx context.Context, f *Fs, paths copyMovePaths, shard int) error {
+	b := f.backends[shard]
+	if !shardObjectExists(ctx, b, paths.remote) {
+		return nil
+	}
+	if shardObjectExists(ctx, b, paths.bak) {
+		if err := removeShardObject(ctx, b, paths.bak); err != nil {
+			return err
+		}
+	}
+	return moveShard(ctx, f, f, paths.remote, paths.bak, shard)
+}
+
+func moveOnlyRestoreDstShard(ctx context.Context, f *Fs, paths copyMovePaths, shard int) error {
+	b := f.backends[shard]
+	if !shardObjectExists(ctx, b, paths.bak) {
+		return nil
+	}
+	if shardObjectExists(ctx, b, paths.remote) {
+		// dst present means phase 2 left a moved-src particle (rollback disabled or failed).
+		// Do not delete it to install backup — leave skew for heal.
+		return nil
+	}
+	return moveShard(ctx, f, f, paths.bak, paths.remote, shard)
 }
 
 // copyMoveAtomic runs two-phase copy-to-temp + backup + swap for destination overwrite safety.
@@ -152,6 +180,69 @@ func (f *Fs) copyMoveAtomic(ctx context.Context, op string, srcObj *Object, remo
 	return f.newObjectAfterCopyMove(ctx, remote, srcObj), nil
 }
 
+// moveOnlyAtomic runs backup + move when all shards have Move but not Copy.
+func (f *Fs) moveOnlyAtomic(ctx context.Context, srcObj *Object, remote string) (fs.Object, error) {
+	srcFs := srcObj.fs
+	nonce, err := newCopyMoveNonce()
+	if err != nil {
+		return nil, fs.ErrorCantMove
+	}
+	paths := copyMoveArtifactPaths(remote, nonce)
+
+	err = f.runQuorumTransaction(ctx, quorumTransaction{
+		OpName:        "move-backup",
+		Remote:        remote,
+		SkipPreflight: true,
+		Forward: func(opCtx context.Context, shard int) error {
+			return moveOnlyBackupShard(opCtx, f, paths, shard)
+		},
+		Rollback: func(opCtx context.Context, shard int) error {
+			return moveOnlyRestoreDstShard(opCtx, f, paths, shard)
+		},
+		CommitError: func(result quorumOpResult, required int) error {
+			return copyMoveQuorumNotMetErr("move", remote, result, required)
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	err = f.runQuorumTransaction(ctx, quorumTransaction{
+		OpName:        "move-swap",
+		Remote:        remote,
+		SkipPreflight: true,
+		Forward: func(opCtx context.Context, shard int) error {
+			return moveShard(opCtx, f, srcFs, srcObj.remote, paths.remote, shard)
+		},
+		Rollback: func(opCtx context.Context, shard int) error {
+			if err := rollbackMoveShard(opCtx, f, srcFs, srcObj.remote, paths.remote, shard); err != nil {
+				return err
+			}
+			return moveOnlyRestoreDstShard(opCtx, f, paths, shard)
+		},
+		CommitError: func(result quorumOpResult, required int) error {
+			return copyMoveQuorumNotMetErr("move", remote, result, required)
+		},
+	})
+	if err != nil {
+		// Shards that failed phase 2 may still have dst at .rs-bak-* from committed phase 1.
+		_ = f.runQuorumTransaction(ctx, quorumTransaction{
+			OpName:        "move-restore-failed",
+			Remote:        remote,
+			SkipPreflight: true,
+			Forward: func(opCtx context.Context, shard int) error {
+				return moveOnlyRestoreDstShard(opCtx, f, paths, shard)
+			},
+		})
+		return nil, err
+	}
+
+	if err := f.moveOnlyCommitCleanup(ctx, paths); err != nil {
+		fs.Logf(f, "rs: move %q commit cleanup incomplete: %v", remote, err)
+	}
+	return f.newObjectAfterCopyMove(ctx, remote, srcObj), nil
+}
+
 func (f *Fs) copyMoveCommitCleanup(ctx context.Context, paths copyMovePaths) error {
 	return f.runQuorumTransaction(ctx, quorumTransaction{
 		OpName:        "copymove-cleanup",
@@ -163,6 +254,17 @@ func (f *Fs) copyMoveCommitCleanup(ctx context.Context, paths copyMovePaths) err
 				return err
 			}
 			return removeShardObject(opCtx, b, paths.tmp)
+		},
+	})
+}
+
+func (f *Fs) moveOnlyCommitCleanup(ctx context.Context, paths copyMovePaths) error {
+	return f.runQuorumTransaction(ctx, quorumTransaction{
+		OpName:        "moveonly-cleanup",
+		Remote:        paths.remote,
+		SkipPreflight: true,
+		Forward: func(opCtx context.Context, shard int) error {
+			return removeShardObject(opCtx, f.backends[shard], paths.bak)
 		},
 	})
 }
@@ -183,6 +285,9 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if _, err := f.preflightReachableShards(ctx); err != nil {
 		return nil, err
 	}
+	if !f.allBackendsHaveCopy() {
+		return nil, fs.ErrorCantCopy
+	}
 	return f.copyMoveAtomic(ctx, "copy", srcObj, remote, false)
 }
 
@@ -202,7 +307,13 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if _, err := f.preflightReachableShards(ctx); err != nil {
 		return nil, err
 	}
-	return f.copyMoveAtomic(ctx, "move", srcObj, remote, true)
+	if f.allBackendsHaveCopy() {
+		return f.copyMoveAtomic(ctx, "move", srcObj, remote, true)
+	}
+	if f.allBackendsHaveMove() {
+		return f.moveOnlyAtomic(ctx, srcObj, remote)
+	}
+	return nil, fs.ErrorCantMove
 }
 
 // DirMove moves srcRemote from src to dstRemote with shard-aligned server-side operations.

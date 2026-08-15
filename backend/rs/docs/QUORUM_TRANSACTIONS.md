@@ -183,6 +183,16 @@ Columns: **Preflight** → **Execute (op set)** → **Commit** → **Rollback** 
 
 ### Copy / Move (server-side)
 
+`Fs.Copy` and `Fs.Move` select a **whole-object path** up front from destination shard capabilities (lowest common denominator — no per-shard mixing):
+
+| Path | When | Sequence |
+|------|------|----------|
+| **Copy-based** | All shards have `Copy` | Two-phase temp + backup + swap ([`copyMoveAtomic`](../move_copy.go)) |
+| **Move-only** | Not all shards have `Copy`, but all have `Move` | Two-phase backup + move (no `.rs-tmp-*`) |
+| **Refuse** | Mixed or missing capabilities | `fs.ErrorCantCopy` / `fs.ErrorCantMove` before any shard mutation |
+
+#### Copy-based path (all shards have `Copy`)
+
 Overwrite uses a **two-phase temp + backup + swap** so a pre-existing destination is not destroyed before new data is committed ([`move_copy.go`](../move_copy.go), [`move_copy_swap.go`](../move_copy_swap.go)):
 
 1. **Phase 1 — temps (dst untouched):** per-shard server-side `Copy` of `src → {remote}.rs-tmp-{nonce}`. **Move** uses copy-to-temp only (source particles remain until commit).
@@ -191,12 +201,32 @@ Overwrite uses a **two-phase temp + backup + swap** so a pre-existing destinatio
 
 | Phase | Spec |
 |-------|------|
-| Preflight | Compatible `*rs.Fs` layout; `reachable >= write_quorum` |
+| Preflight | Compatible `*rs.Fs` layout; `reachable >= write_quorum`; all shards have `Copy` |
 | Phase 1 | Per-shard `Copy` to `.rs-tmp-*`; rollback removes temps only |
 | Phase 2 | Backup dst → `.rs-bak-*`, install temp → dst; rollback restores dst from backup |
 | Commit | `successes >= write_quorum` on each phase; staging cleanup; Move removes src |
 | Return | Provisional `*Object` with source logical size/ModTime metadata — no destination footer read ([`newObjectAfterCopyMove`](../object.go)) |
 | Heal | Object heal for particle skew; [`healCopyMoveArtifacts`](../move_copy_heal.go) purges `.rs-tmp-*` and restores or purges `.rs-bak-*` after a crash mid-swap (no central transaction log — in-process rollback covers normal failures) |
+
+A **process crash mid-swap** on this path is converged by **`backend heal`** (no central transaction log).
+
+#### Move-only path (all shards have `Move`, not all have `Copy`)
+
+Used when shard backends support rename/`Move` but not server-side `Copy` (e.g. Linux `local`). Overwrite safety uses backup only — no `.rs-tmp-*` ([`moveOnlyAtomic`](../move_copy.go)):
+
+1. **Phase 1 — backup (dst untouched until phase 2):** per shard, if dst exists, `Move` dst → `{remote}.rs-bak-{nonce}`.
+2. **Phase 2 — move:** per shard, `Move` src → dst (source particles gone on success).
+3. **Commit:** delete `.rs-bak-*` backups on all shards; no separate src-remove pass.
+
+| Phase | Spec |
+|-------|------|
+| Preflight | Compatible `*rs.Fs` layout; `reachable >= write_quorum`; all shards have `Move` |
+| Phase 1 | Backup dst → `.rs-bak-*` when present; rollback moves bak → dst |
+| Phase 2 | Move src → dst; rollback moves dst → src, then bak → dst |
+| Commit | `successes >= write_quorum` on each phase; delete `.rs-bak-*` only |
+| Return | Same provisional object as copy-based path |
+| In-process failure | Compensating rollback restores src + dst intact |
+| Hard crash mid-sequence | **Not converged by today's heal.** A crash after phase 2 can leave the **WriteID split across src and dst** (each name below **k**). With a `.rs-bak-*` present, [`healCopyMoveArtifacts`](../move_copy_heal.go) restores the old dst over moved-src particles; greenfield (no bak) leaves both names below **k** and the orphan pass purges both. Heal reconstruction of a split WriteID is out of scope. |
 
 On ModTime-capable shard backends (local, MinIO), server-side copy/move preserves shard ModTime; returned metadata matches destination shards. S3 may not preserve ModTime on copy — see [`OPEN_QUESTIONS.md`](OPEN_QUESTIONS.md) Q14.
 

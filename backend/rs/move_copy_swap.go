@@ -83,18 +83,12 @@ func shardMoveObject(ctx context.Context, b fs.Fs, srcRemote, dstRemote string) 
 	if err != nil {
 		return err
 	}
-	if do := b.Features().Move; do != nil {
-		_, err = do(ctx, srcObj, dstRemote)
-		return err
-	}
-	doCopy := b.Features().Copy
-	if doCopy == nil {
+	do := b.Features().Move
+	if do == nil {
 		return fs.ErrorCantMove
 	}
-	if _, err = doCopy(ctx, srcObj, dstRemote); err != nil {
-		return err
-	}
-	return srcObj.Remove(ctx)
+	_, err = do(ctx, srcObj, dstRemote)
+	return err
 }
 
 // shardBackupDst moves or copies dst aside to bak when dst exists. dst is kept when Copy is used.
