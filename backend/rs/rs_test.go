@@ -894,46 +894,45 @@ func (s *sequenceReader) Read(p []byte) (int, error) {
 	return n, nil
 }
 
-// TestLargeObjectPutOpen1GiB exercises the upload/read path with a ~1 GiB object.
-// It streams deterministic data into Put and verifies the logical content via MD5 and footer fields.
-func TestLargeObjectPutOpen1GiB(t *testing.T) {
+// TestLargeObjectPutOpen32MiB exercises the upload/read path with a 32 MiB + 1 byte object.
+// The size is not a multiple of the stripe (k × S = 3 × 256 KiB), so the final partial
+// stripe and shard padding are covered. Construction goes through NewFs so validateOptions runs.
+func TestLargeObjectPutOpen32MiB(t *testing.T) {
 	if testing.Short() {
-		t.Skip("Skipping 1 GiB rs test in short mode")
+		t.Skip("Skipping 32 MiB rs test in short mode")
 	}
 
-	const size int64 = 1 << 30 // 1 GiB
+	const size int64 = 32*1024*1024 + 1
 	const seed int64 = 12345
 
 	ctx := context.Background()
-	backends := make([]fs.Fs, 4)
-	for i := range backends {
-		b, err := cache.Get(ctx, ":memory:rs-large-"+time.Now().Format("150405")+"-"+string(rune('a'+i)))
-		require.NoError(t, err)
-		backends[i] = b
+	unique := strconv.FormatInt(time.Now().UnixNano(), 10)
+	remotes := []string{
+		":memory:rs-large-" + unique + "-a",
+		":memory:rs-large-" + unique + "-b",
+		":memory:rs-large-" + unique + "-c",
+		":memory:rs-large-" + unique + "-d",
+		":memory:rs-large-" + unique + "-e",
 	}
-
-	f := &Fs{
-		name:     "rs",
-		root:     "",
-		backends: backends,
-		opt: Options{
-			DataShards:         2,
-			ParityShards:       2,
-			Rollback:           true,
-			UseSpooling:        true,
-		},
-		features: (&fs.Features{}),
+	cfg := configmap.Simple{
+		"remotes":       strings.Join(remotes, ","),
+		"data_shards":   "3",
+		"parity_shards": "2",
+		"use_spooling":  "true",
+		"rollback":      "true",
 	}
+	fsi, err := NewFs(ctx, "rs-large", "", cfg)
+	require.NoError(t, err)
 
 	modTime := time.Unix(1800000001, 0)
 	srcInfo := object.NewStaticObjectInfo("large.bin", modTime, size, true, nil, nil)
 
-	// Stream 1 GiB into Put using a deterministic sequence.
+	// Stream 32 MiB + 1 into Put using a deterministic sequence.
 	putReader := &sequenceReader{
 		remaining: size,
 		r:         rand.New(rand.NewSource(seed)),
 	}
-	obj, err := f.Put(ctx, putReader, srcInfo)
+	obj, err := fsi.Put(ctx, putReader, srcInfo)
 	require.NoError(t, err)
 	require.Equal(t, size, obj.Size())
 
