@@ -22,6 +22,7 @@ func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("QuorumList", func(t *testing.T) { testInternalQuorumList(t, f) })
 	t.Run("Degraded", func(t *testing.T) { testInternalDegraded(t, f) })
 	t.Run("Heal", func(t *testing.T) { testInternalHeal(t, f) })
+	t.Run("Verify", func(t *testing.T) { testInternalVerify(t, f) })
 }
 
 const internalTestDir = "internal-test"
@@ -93,6 +94,19 @@ func testInternalDegraded(t *testing.T, f *Fs) {
 	out, err = f.Command(ctx, "degraded", []string{"ls"}, nil)
 	require.NoError(t, err)
 	require.Contains(t, out.(string), "DEGRADED "+remote)
+}
+
+func testInternalVerify(t *testing.T, f *Fs) {
+	ctx := context.Background()
+	require.NoError(t, f.Mkdir(ctx, internalTestDir))
+	remote := internalTestDir + "/verify.bin"
+	data := []byte("verify-me-internal")
+	putInternalTestObject(ctx, t, f, remote, data)
+
+	out, err := f.Command(ctx, "verify", []string{remote}, map[string]string{"hashes": "true", "strict": "true"})
+	require.NoError(t, err)
+	require.Contains(t, out.(string), "OK       "+remote)
+	require.Contains(t, out.(string), "Failed: 0")
 }
 
 func testInternalHeal(t *testing.T, f *Fs) {

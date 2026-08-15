@@ -14,7 +14,7 @@ This backend implements a virtual Reed-Solomon layout over multiple remotes.
   - Quorum: **read/list at k**; **writes/metadata/namespace at `write_quorum`** (default `k+1`); transaction spec [`docs/QUORUM_TRANSACTIONS.md`](docs/QUORUM_TRANSACTIONS.md)
   - Two-phase operation retries (full pass + one fast retry for failing shards)
   - Read/reconstruct path from available shards
-  - `status`, `heal`, and `degraded` backend command plumbing
+  - `status`, `heal`, `degraded`, and `verify` backend command plumbing
   - Same-layout server-side **`Copy`**, **`Move`**, and **`DirMove`** on the logical remote ([`move_copy.go`](move_copy.go)): per-shard delegated `Features().Copy` / `Move` / `DirMove` under write quorum (see [`docs/OPEN_QUESTIONS.md`](docs/OPEN_QUESTIONS.md) Q2)
   - Shell integration gate: [`test/compare_all.sh`](test/compare_all.sh) (local + MinIO: smoke, verify, heal, quorum_dirs, move_copy) — see [`test/README.md`](test/README.md)
 - Not yet complete:
@@ -50,10 +50,12 @@ Notes:
 - Write commit requires at least `write_quorum` successful shard uploads (default `k+1`).
 - Streaming `Open` uses parallel range reads per stripe; reconstruct `Open` probes shards in parallel once. **`List`**, **`NewObject`** (footer probe), **`Rmdir`** empty-dir checks, full-namespace heal listing, heal discovery / stripe reads / legacy `ReadAll` / healed shard **`Put`s** also fan out across shards in parallel where safe (same quorum and “lowest shard wins” rules as before).
 
-## rsverify (developer tool)
+## backend verify (integrity check)
 
-The standalone helper `rsverify` lives under `cmd/rsverify`. Build with:
+Read-only integrity verification via the backend command:
 
-`go build -o rsverify ./cmd/rsverify`
+`rclone backend verify rs:`
 
-Subcommands: `encode`, `decode`, `check`, `footer` (see `rsverify --help`). Defaults match rclone particle layout (RCLONERS footer v1 unless `encode --footer=false`). Use `encode --stripe-size` / rs `stripe_fragment_size` to control the RS fragment size **S**. **`check`** validates each particle footer and **virtual-padding** on-disk sizes via [`ValidateShardParticleFile`](payloadlayout.go).
+`rclone backend verify rs: path/to/file.bin -o hashes=true -o strict=true`
+
+Default checks parse footers, validate WriteID group consistency, virtual-padding layout, and stream each shard payload against `PayloadCRC32C`. With `-o hashes=true`, stripe-wise reconstruction compares logical MD5/SHA256 to footer hashes. With `-o strict=true`, all k+m shards must be present in the winning WriteID group. Unlike `degraded` (presence-only), verify validates particle integrity. Unlike `heal`, verify makes no writes.

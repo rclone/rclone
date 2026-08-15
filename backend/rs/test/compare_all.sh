@@ -6,8 +6,8 @@
 # Use --storage-type to run only one backend.
 #
 # Per storage type, runs (in order):
-#   1. compare.sh test verify       (smoke + rsverify)
-#   2. compare.sh test heal         (smoke + drop shard + heal (single-object) + rsverify)
+#   1. compare.sh test verify       (smoke + backend verify)
+#   2. compare.sh test heal         (smoke + drop shard + heal (single-object) + backend verify)
 #   3. compare.sh test quorum_dirs  (mkdir/lsd/rmdir + backend degraded summary)
 #   4. compare.sh test move_copy    (same-remote copyto, moveto, directory move)
 #

@@ -12,12 +12,11 @@ cd backend/rs/test
 
 ## Full local gate (recommended before pushing)
 
-From the **repository root**, build the binaries that include the `rs` backend and `rsverify`, then run the full shell suite:
+From the **repository root**, build rclone with the `rs` backend, then run the full shell suite:
 
 ```bash
 cd /path/to/rclone
 go build -o rclone .
-go build -o rsverify ./cmd/rsverify
 
 cd backend/rs/test
 ./setup.sh
@@ -28,8 +27,8 @@ cd backend/rs/test
 
 For each `--storage-type`, in order:
 
-1. **`test verify`** — `smoke` (rcat, cat, shard checks) plus **`rsverify check`** on all particles.
-2. **`test heal`** — `smoke`, delete the **last-shard** particle, **`rclone cat`** (degraded read), **`rclone backend heal`** (single-object), then **`rsverify check`**.
+1. **`test verify`** — `smoke` (rcat, cat, shard checks) plus **`rclone backend verify`** (`-o hashes=true -o strict=true`).
+2. **`test heal`** — `smoke`, delete the **last-shard** particle, **`rclone cat`** (degraded read), **`rclone backend heal`** (single-object), then **`rclone backend verify`**.
 3. **`test quorum_dirs`** — `mkdir` / `lsd` / `rmdir` happy path and **`rclone backend degraded ... summary`**.
 4. **`test move_copy`** — same-remote `copyto`, `moveto`, and directory move checks.
 
@@ -41,10 +40,10 @@ Optional pause between steps: `COMPARE_ALL_SLEEP_BETWEEN_TESTS=1` (default; set 
 |---------|----------------|
 | `./compare.sh --storage-type=local test smoke` | Basic upload/read and shard files on disk. |
 | `./compare.sh --storage-type=minio test smoke` | Same checks via S3 (Docker MinIO; **`lsl`** per shard). |
-| `./compare.sh --storage-type=local test verify` | Smoke + **`rsverify check`** (needs `rsverify` binary). |
-| `./compare.sh --storage-type=minio test verify` | Smoke + download particles to temp + **`rsverify check`**. |
-| `./compare.sh --storage-type=local test heal` | Smoke + drop last shard + heal (single-object) + **`rsverify`**. |
-| `./compare.sh --storage-type=minio test heal` | Same via **`rclone deletefile`** on last shard + heal (single-object) + **`rsverify`**. |
+| `./compare.sh --storage-type=local test verify` | Smoke + **`rclone backend verify`** (hashes + strict). |
+| `./compare.sh --storage-type=minio test verify` | Same via remote shard reads (no download-to-temp). |
+| `./compare.sh --storage-type=local test heal` | Smoke + drop last shard + heal (single-object) + **`backend verify`**. |
+| `./compare.sh --storage-type=minio test heal` | Same via **`rclone deletefile`** on last shard + heal (single-object) + **`backend verify`**. |
 | `./compare.sh --storage-type=local test quorum_dirs` | `mkdir` / `lsd` / `rmdir` empty dir and **`backend degraded summary`**. |
 | `./compare.sh --storage-type=minio test quorum_dirs` | Same checks against MinIO-backed shards. |
 | `./compare.sh --storage-type=local test move_copy` | Same-remote `copyto`, `moveto`, and directory move behavior. |
@@ -65,7 +64,7 @@ Ports default to **9201–9208** (seven shards + single). Override with **`MINIO
 cd backend/rs/test
 ./setup.sh
 ./manage.sh start --storage-type=minio
-RCLONE_BINARY=/path/to/rclone RSVERIFY_BINARY=/path/to/rsverify ./compare_all.sh --storage-type=minio
+RCLONE_BINARY=/path/to/rclone ./compare_all.sh --storage-type=minio
 ./manage.sh stop --storage-type=minio   # optional
 ```
 
@@ -80,7 +79,6 @@ After changing the config template in **`compare_common.sh`**, delete **`tests.c
 | Variable | Purpose |
 |----------|---------|
 | **`RCLONE_BINARY`** | Path to `rclone` if not using the repo root `./rclone` or `PATH`. |
-| **`RSVERIFY_BINARY`** | Path to `rsverify` if not using repo root `./rsverify` or `PATH`. |
 | **`COMPARE_ALL_SLEEP_BETWEEN_TESTS`** | Seconds to sleep between `compare_all` suites (default `1`). |
 | **`MINIO_IMAGE`** | MinIO Docker image (default pinned release; see `compare_rs_env.sh`). |
 | **`RS_MINIO_BUCKET`** | S3 bucket name used on every shard (default `rsint`). |

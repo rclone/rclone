@@ -1173,7 +1173,7 @@ func ReconstructDataFromShards(shards [][]byte, dataShards, parityShards int, co
 }
 
 // ReconstructDataFromShardsFlat performs a single whole-buffer Split/Join decode (legacy layout).
-// It is used by rsverify --raw where shards are raw RS pieces without stripe metadata.
+// It is used where shards are raw RS pieces without stripe metadata.
 func ReconstructDataFromShardsFlat(shards [][]byte, dataShards, parityShards int, contentLength int64) ([]byte, error) {
 	available := 0
 	for _, s := range shards {

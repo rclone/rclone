@@ -2,7 +2,6 @@
 _junk/
 rclone
 rclone.exe
-/rsverify
 build
 /docs/public/
 /docs/.hugo_build.lock

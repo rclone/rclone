@@ -27,6 +27,8 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		return f.healCommand(ctx, arg, opt)
 	case "degraded":
 		return f.degradedCommand(ctx, arg, opt)
+	case "verify":
+		return f.verifyCommand(ctx, arg, opt)
 	default:
 		return nil, fs.ErrorCommandNotFound
 	}

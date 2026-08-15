@@ -122,6 +122,43 @@ Examples:
     rclone backend degraded rs: summary
     rclone backend degraded rs: ls
 `,
+}, {
+	Name:  "verify",
+	Short: "Read-only integrity check of RS shard particles",
+	Long: `Verifies logical objects by reading shard particles through the configured remotes.
+Unlike degraded (presence-only counts), verify parses footers, checks WriteID group
+consistency, validates virtual-padding layout, and streams each present shard payload
+against PayloadCRC32C.
+
+Default checks do not reconstruct logical content. Use -o hashes=true to stripe-wise
+reconstruct and compare MD5/SHA256 against footer hashes (incremental; never buffers
+the whole object). Use -o strict=true to require all k+m shards in the winning WriteID
+group (otherwise >= k present shards report DEGRADED but count as success).
+
+Read-only: no shard uploads or namespace repair (use heal for that).
+
+Usage:
+
+    rclone backend verify rs:
+    rclone backend verify rs: path/to/file.bin
+
+Options:
+
+    -o hashes=true    Reconstruct stripe-wise and compare logical MD5/SHA256 to footer
+    -o strict=true    Require all k+m shards in the winning WriteID group
+
+Examples:
+
+    rclone backend verify rs:
+    rclone backend verify rs: important.dat -o hashes=true -o strict=true
+
+Output includes summary counts (Scanned/OK/DEGRADED/SKEW/CORRUPT/FAIL and Failed: N)
+and per-object detail lines. The command always returns a report unless it cannot run.
+`,
+	Opts: map[string]string{
+		"hashes": `If "true", reconstruct stripe-wise and compare logical MD5/SHA256 to footer hashes.`,
+		"strict": `If "true", require all k+m shards in the winning WriteID group; missing shards fail the object.`,
+	},
 }}
 
 // Options defines backend configuration.

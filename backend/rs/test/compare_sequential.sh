@@ -6,8 +6,8 @@
 # Usage:
 #   ./compare_sequential.sh [--storage-type=local|minio] [-v]
 #
-# Requires: cwd = this directory, ./setup.sh (tests.config), repo-root rclone binary
-# for verify/heal (rsverify). MinIO: Docker + ./manage.sh start --storage-type=minio
+# Requires: cwd = this directory, ./setup.sh (tests.config), repo-root rclone binary.
+# MinIO: Docker + ./manage.sh start --storage-type=minio
 #
 set -u
 
