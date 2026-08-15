@@ -143,24 +143,6 @@ purge_rs_integration_root() {
   run_rclone_integration "${storage_type}" purge "${remote}:" 2>/dev/null || true
 }
 
-find_rsverify_binary() {
-  if [[ -n "${RSVERIFY_BINARY:-}" ]] && [[ -x "${RSVERIFY_BINARY}" ]]; then
-    echo "${RSVERIFY_BINARY}"
-    return 0
-  fi
-  local repo_root
-  repo_root=$(cd "${SCRIPT_DIR}/../../.." && pwd)
-  if [[ -x "${repo_root}/rsverify" ]]; then
-    echo "${repo_root}/rsverify"
-    return 0
-  fi
-  if command -v rsverify >/dev/null 2>&1; then
-    command -v rsverify
-    return 0
-  fi
-  die "rsverify not found (go build -o rsverify ./cmd/rsverify in repo root, or set RSVERIFY_BINARY)"
-}
-
 # MinIO test containers: name|user|pass|host_s3_port|host_console_port|data_dir
 MINIO_RS_CONTAINERS=()
 

@@ -6,8 +6,8 @@
 #   ./compare.sh list
 #   ./compare.sh --storage-type=local test smoke
 #   ./compare.sh --storage-type=minio test smoke   # needs Docker; ./setup.sh + MinIO config
-#   ./compare.sh --storage-type=local test verify   # smoke + rsverify check (needs ./rsverify)
-#   ./compare.sh --storage-type=local test heal      # smoke, drop last shard, heal (single-object), rsverify
+#   ./compare.sh --storage-type=local test verify   # smoke + backend verify
+#   ./compare.sh --storage-type=local test heal      # smoke, drop last shard, heal (single-object), backend verify
 #
 # Requires: ./setup.sh run once from this directory.
 #
@@ -115,8 +115,8 @@ list_tests() {
   cat <<'EOF'
 Available tests:
   smoke        Upload via rs, cat back, verify each shard has the object on disk.
-  verify       Same as smoke, then rsverify check on all shard particles (build: go build -o rsverify ./cmd/rsverify).
-  heal         smoke, delete last-shard particle, cat (degraded), backend heal (single-object), rsverify check.
+  verify       Same as smoke, then rclone backend verify (hashes + strict).
+  heal         smoke, delete last-shard particle, cat (degraded), backend heal (single-object), backend verify.
   quorum_dirs  mkdir/lsd/rmdir happy path + backend degraded summary.
   move_copy    same-remote copyto, moveto, and directory move flow.
 EOF
@@ -222,64 +222,55 @@ run_smoke_test() {
   return 0
 }
 
+assert_backend_verify_ok() {
+  local test_case="$1"
+  local object_base="$2"
+  local out err rc report
+  out=$(mktemp)
+  err=$(mktemp)
+  log_info "test:${test_case}" "backend verify ${RS_REMOTE}: ${object_base}"
+  set +e
+  rs_rclone backend verify "${RS_REMOTE}:" "${object_base}" -o hashes=true -o strict=true >"${out}" 2>"${err}"
+  rc=$?
+  set -e
+  report=$(cat "${out}" 2>/dev/null || true)
+  print_if_verbose "backend verify" "${out}" "${err}"
+  rm -f "${out}" "${err}"
+  if [[ "${rc}" -ne 0 ]]; then
+    log_fail "test:${test_case}" "backend verify failed (status ${rc})"
+    return 1
+  fi
+  if ! grep -q 'Failed: 0' <<<"${report}"; then
+    log_fail "test:${test_case}" "backend verify report missing Failed: 0"
+    printf '%s\n' "${report}" >&2
+    return 1
+  fi
+  if grep -qE '^(CORRUPT|FAIL) ' <<<"${report}"; then
+    log_fail "test:${test_case}" "backend verify report contains CORRUPT/FAIL lines"
+    printf '%s\n' "${report}" >&2
+    return 1
+  fi
+  return 0
+}
+
 run_verify_test() {
   local test_case="verify"
-  local rsverify_tmp=""
-  trap '[[ -n "${rsverify_tmp}" ]] && rm -rf "${rsverify_tmp}"' RETURN
 
   if ! run_smoke_test; then
     log_fail "test:${test_case}" "smoke step failed"
     return 1
   fi
-  local rsverify_bin
-  rsverify_bin=$(find_rsverify_binary)
   local object_base
   object_base=$(rs_smoke_object_basename)
-  local paths=()
-  local i p shard_remote
-  if [[ "${STORAGE_TYPE}" == "minio" ]]; then
-    rsverify_tmp=$(mktemp -d)
-    for i in $(seq 1 "${RS_SHARD_TOTAL}"); do
-      shard_remote=$(rs_minio_shard_remote_name "${i}")
-      p="${rsverify_tmp}/p${i}"
-      if ! rs_rclone copyto "${shard_remote}:${RS_MINIO_BUCKET}/${object_base}" "${p}"; then
-        log_fail "test:${test_case}" "failed to download particle from ${shard_remote}"
-        return 1
-      fi
-      paths+=("${p}")
-    done
-  else
-    for i in $(seq 1 "${RS_SHARD_TOTAL}"); do
-      p="${DATA_DIR}/$(printf '%02d' "${i}")_local/${object_base}"
-      paths+=("${p}")
-    done
-  fi
-
-  log_info "test:${test_case}" "rsverify check (${#paths[@]} particles)"
-  local out err rc
-  out=$(mktemp)
-  err=$(mktemp)
-  set +e
-  "${rsverify_bin}" check "${paths[@]}" >"${out}" 2>"${err}"
-  rc=$?
-  set -e
-  print_if_verbose "rsverify check" "${out}" "${err}"
-  rm -f "${out}"
-  if [[ "${rc}" -ne 0 ]]; then
-    log_fail "test:${test_case}" "rsverify check failed (status ${rc})"
-    cat "${err}" >&2 || true
-    rm -f "${err}"
+  if ! assert_backend_verify_ok "${test_case}" "${object_base}"; then
     return 1
   fi
-  rm -f "${err}"
-  log_pass "test:${test_case}" "OK (rsverify check)"
+  log_pass "test:${test_case}" "OK (backend verify)"
   return 0
 }
 
 run_heal_test() {
   local test_case="heal"
-  local rsverify_tmp=""
-  trap '[[ -n "${rsverify_tmp}" ]] && rm -rf "${rsverify_tmp}"' RETURN
 
   if ! run_smoke_test; then
     log_fail "test:${test_case}" "smoke step failed"
@@ -375,45 +366,11 @@ run_heal_test() {
     fi
   fi
 
-  local rsverify_bin
-  rsverify_bin=$(find_rsverify_binary)
-  local paths=()
-  local i p shard_remote
-  if [[ "${STORAGE_TYPE}" == "minio" ]]; then
-    rsverify_tmp=$(mktemp -d)
-    for i in $(seq 1 "${RS_SHARD_TOTAL}"); do
-      shard_remote=$(rs_minio_shard_remote_name "${i}")
-      p="${rsverify_tmp}/p${i}"
-      if ! rs_rclone copyto "${shard_remote}:${RS_MINIO_BUCKET}/${object_base}" "${p}"; then
-        log_fail "test:${test_case}" "failed to download particle from ${shard_remote}"
-        return 1
-      fi
-      paths+=("${p}")
-    done
-  else
-    for i in $(seq 1 "${RS_SHARD_TOTAL}"); do
-      p="${DATA_DIR}/$(printf '%02d' "${i}")_local/${object_base}"
-      paths+=("${p}")
-    done
-  fi
-  log_info "test:${test_case}" "rsverify check (${#paths[@]} particles)"
-  out=$(mktemp)
-  err=$(mktemp)
-  set +e
-  "${rsverify_bin}" check "${paths[@]}" >"${out}" 2>"${err}"
-  rc=$?
-  set -e
-  print_if_verbose "rsverify check" "${out}" "${err}"
-  rm -f "${out}"
-  if [[ "${rc}" -ne 0 ]]; then
-    log_fail "test:${test_case}" "rsverify check failed (status ${rc})"
-    cat "${err}" >&2 || true
-    rm -f "${err}"
+  if ! assert_backend_verify_ok "${test_case}" "${object_base}"; then
     return 1
   fi
-  rm -f "${err}"
 
-  log_pass "test:${test_case}" "OK (drop last shard + heal + rsverify)"
+  log_pass "test:${test_case}" "OK (drop last shard + heal + backend verify)"
   return 0
 }
 
