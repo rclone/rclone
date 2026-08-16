@@ -457,15 +457,18 @@ func (dl *downloader) Write(p []byte) (n int, err error) {
 	// defer log.Trace(dl.dls.src, "p_len=%d", len(p))("n=%d, err=%v", &n, &err)
 
 	// Kick the waiters on exit if some characters received
+	//
+	// Only logs kickWaiters failures rather than returning them as this
+	// Write's own error: kickWaiters can return the downloaders' stale
+	// accumulated lastErr, which would otherwise fail this write (even
+	// when it succeeded) and get wrapped again by download(), growing
+	// unboundedly on every subsequent call while lastErr stays set.
 	defer func() {
 		if n <= 0 {
 			return
 		}
 		if waitErr := dl.dls.kickWaiters(); waitErr != nil {
 			fs.Errorf(dl.dls.src, "vfs cache: download write: failed to kick waiters: %v", waitErr)
-			if err == nil {
-				err = waitErr
-			}
 		}
 	}()
 
