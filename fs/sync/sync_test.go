@@ -1827,6 +1827,33 @@ func TestMoveWithDeleteEmptySrcDirs(t *testing.T) {
 	r.CheckRemoteItems(t, file1, file2)
 }
 
+// A stats group outlives a single operation - every rc call passing the
+// same _group shares it. An error recorded in the group by some earlier,
+// unrelated operation must not stop this move deleting its empty source
+// directories, as this move has no errors of its own.
+func TestMoveWithDeleteEmptySrcDirsPreexistingGroupError(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
+	r.Mkdir(ctx, r.Fremote)
+
+	ctx = accounting.WithStatsGroup(ctx, "TestMoveWithDeleteEmptySrcDirsPreexistingGroupError")
+	// Record an error against the group from an unrelated operation
+	accounting.Stats(ctx).Error(errors.New("unrelated earlier error"))
+	require.True(t, accounting.Stats(ctx).Errored())
+
+	err := MoveDir(ctx, r.Fremote, r.Flocal, true, false)
+	require.NoError(t, err)
+
+	// The empty source directory must still have been removed
+	r.CheckLocalListing(
+		t,
+		nil,
+		[]string{},
+	)
+	r.CheckRemoteItems(t, file1)
+}
+
 func TestMoveWithoutDeleteEmptySrcDirs(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
