@@ -114,11 +114,10 @@ func encodeLogicalToShardWriters(ctx context.Context, in io.Reader, src fs.Objec
 			}
 			return buildZeroLengthShards(ctx, src, dataShards, parityShards, writers, withFooter, writeID)
 		}
-		if readErr == io.ErrUnexpectedEOF {
-			readErr = nil
-		} else if readErr == io.EOF && n == 0 {
+		if readErr == io.EOF && n == 0 {
 			break
-		} else if readErr != nil {
+		}
+		if readErr != nil && readErr != io.ErrUnexpectedEOF {
 			return nil, fmt.Errorf("rs: read source: %w", readErr)
 		}
 		if n == 0 {
