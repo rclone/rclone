@@ -40,6 +40,7 @@ type Object struct {
 // Fs returns the parent rs filesystem.
 func (o *Object) Fs() fs.Info { return o.fs }
 
+// String returns a description of the Object
 func (o *Object) String() string {
 	if o == nil {
 		return "<nil>"
@@ -428,13 +429,6 @@ func footerLayoutCompatible(ref *Footer, ft *Footer, shardIndex int) bool {
 		return false
 	}
 	return ft.Algorithm == ref.Algorithm
-}
-
-func footerCompatibleForStripeRead(ref *Footer, ft *Footer, shardIndex int) bool {
-	if !footerLayoutCompatible(ref, ft, shardIndex) {
-		return false
-	}
-	return ft.WriteID == ref.WriteID
 }
 
 func shardParticleValidForSelection(f *Fs, layoutRef *Footer, ft *Footer, shardIndex int, sz int64) bool {
@@ -1170,37 +1164,6 @@ func ReconstructDataFromShards(shards [][]byte, dataShards, parityShards int, co
 		return nil, fmt.Errorf("rs: decoded length %d want %d", logicalPos, contentLength)
 	}
 	return out.Bytes(), nil
-}
-
-// ReconstructDataFromShardsFlat performs a single whole-buffer Split/Join decode (legacy layout).
-// It is used where shards are raw RS pieces without stripe metadata.
-func ReconstructDataFromShardsFlat(shards [][]byte, dataShards, parityShards int, contentLength int64) ([]byte, error) {
-	available := 0
-	for _, s := range shards {
-		if s != nil {
-			available++
-		}
-	}
-	if available < dataShards {
-		return nil, fmt.Errorf("rs: insufficient shards for reconstruction: have %d need %d", available, dataShards)
-	}
-	enc, err := reedsolomon.New(dataShards, parityShards)
-	if err != nil {
-		return nil, err
-	}
-	cp := make([][]byte, len(shards))
-	copy(cp, shards)
-	if err := enc.Reconstruct(cp); err != nil {
-		return nil, err
-	}
-	if contentLength > int64(^uint(0)>>1) {
-		return nil, fmt.Errorf("rs: object too large to join in memory")
-	}
-	var buf bytes.Buffer
-	if err := enc.Join(&buf, cp[:dataShards], int(contentLength)); err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
 }
 
 func applyReadOptions(data []byte, options ...fs.OpenOption) []byte {

@@ -123,14 +123,3 @@ func mergeNamespaceHealStats(dst *namespaceHealStats, src namespaceHealStats) {
 	dst.skipped += src.skipped
 	dst.failed += src.failed
 }
-
-func appendHealDetails(details, extra string) string {
-	extra = strings.TrimSpace(extra)
-	if extra == "" {
-		return details
-	}
-	if details == "" {
-		return extra
-	}
-	return details + "\n" + extra
-}

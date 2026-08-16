@@ -37,11 +37,6 @@ func parentDirsOf(remote string) []string {
 	return out
 }
 
-func (f *Fs) collectObjectVotes(ctx context.Context) (map[string]int, error) {
-	counts, _, err := f.collectObjectPresence(ctx)
-	return counts, err
-}
-
 func (f *Fs) collectShardObjectSets(ctx context.Context) ([]map[string]struct{}, error) {
 	n := len(f.backends)
 	sets := make([]map[string]struct{}, n)

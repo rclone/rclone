@@ -334,6 +334,7 @@ func (f *Fs) Name() string { return f.name }
 // Root returns the root path within the virtual backend.
 func (f *Fs) Root() string { return f.root }
 
+// String converts this Fs to a string
 func (f *Fs) String() string { return fmt.Sprintf("RS root %q", f.root) }
 
 // Features describes optional capabilities exposed by rs.

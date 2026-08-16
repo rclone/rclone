@@ -121,10 +121,10 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	n := len(f.backends)
 	type shardHit struct {
-		ok   bool
-		size int64
+		ok    bool
+		size  int64
 		hasMT bool
-		mt   time.Time
+		mt    time.Time
 	}
 	hits := make([]shardHit, n)
 	g, gctx := errgroup.WithContext(ctx)

@@ -31,9 +31,9 @@ func TestParseRemotes(t *testing.T) {
 
 func TestValidateOptions(t *testing.T) {
 	opt := &Options{
-		Remotes:            "a:,b:,c:",
-		DataShards:         2,
-		ParityShards:       1,
+		Remotes:      "a:,b:,c:",
+		DataShards:   2,
+		ParityShards: 1,
 	}
 	require.NoError(t, validateOptions(opt))
 	require.Equal(t, DefaultStripeFragmentSize, opt.StripeFragmentSize)
@@ -776,10 +776,10 @@ func TestRebuildMissingShardsForObjectEndToEnd(t *testing.T) {
 		root:     "",
 		backends: backends,
 		opt: Options{
-			DataShards:         2,
-			ParityShards:       2,
-			Rollback:           true,
-			UseSpooling:        true,
+			DataShards:   2,
+			ParityShards: 2,
+			Rollback:     true,
+			UseSpooling:  true,
 		},
 		features: (&fs.Features{}),
 	}
@@ -834,10 +834,10 @@ func TestRebuildMissingShardsForObjectDryRun(t *testing.T) {
 		root:     "",
 		backends: backends,
 		opt: Options{
-			DataShards:         2,
-			ParityShards:       2,
-			Rollback:           true,
-			UseSpooling:        true,
+			DataShards:   2,
+			ParityShards: 2,
+			Rollback:     true,
+			UseSpooling:  true,
 		},
 		features: (&fs.Features{}),
 	}
@@ -976,10 +976,10 @@ func TestSetModTimeUpdatesShardRemotes(t *testing.T) {
 		root:     "",
 		backends: backends,
 		opt: Options{
-			DataShards:         2,
-			ParityShards:       2,
-			Rollback:           true,
-			UseSpooling:        true,
+			DataShards:   2,
+			ParityShards: 2,
+			Rollback:     true,
+			UseSpooling:  true,
 		},
 		features: (&fs.Features{}),
 	}
@@ -1056,10 +1056,10 @@ func TestSetModTimeFooterFallback(t *testing.T) {
 		root:     "",
 		backends: backends,
 		opt: Options{
-			DataShards:         2,
-			ParityShards:       2,
-			Rollback:           true,
-			UseSpooling:        true,
+			DataShards:   2,
+			ParityShards: 2,
+			Rollback:     true,
+			UseSpooling:  true,
 		},
 		features: (&fs.Features{}),
 	}
@@ -1190,10 +1190,10 @@ func TestHealCommandSummaryCounts(t *testing.T) {
 		root:     "",
 		backends: backends,
 		opt: Options{
-			DataShards:         2,
-			ParityShards:       2,
-			Rollback:           true,
-			UseSpooling:        true,
+			DataShards:   2,
+			ParityShards: 2,
+			Rollback:     true,
+			UseSpooling:  true,
 		},
 		features: (&fs.Features{}),
 	}
@@ -1290,11 +1290,11 @@ func TestNewFsPutOpenIntegration(t *testing.T) {
 		":memory:rs-int-" + unique + "-d",
 	}
 	cfg := configmap.Simple{
-		"remotes":              strings.Join(remotes, ","),
-		"data_shards":          "3",
-		"parity_shards":        "1",
-		"use_spooling":         "true",
-		"rollback":             "true",
+		"remotes":       strings.Join(remotes, ","),
+		"data_shards":   "3",
+		"parity_shards": "1",
+		"use_spooling":  "true",
+		"rollback":      "true",
 	}
 	fsi, err := NewFs(ctx, "rs-integration", "", cfg)
 	require.NoError(t, err)
@@ -1332,11 +1332,11 @@ func TestOpenStripeStreamingSmallReads(t *testing.T) {
 		":memory:rs-stream-" + unique + "-d",
 	}
 	cfg := configmap.Simple{
-		"remotes":              strings.Join(remotes, ","),
-		"data_shards":          "3",
-		"parity_shards":        "1",
-		"use_spooling":         "true",
-		"rollback":             "true",
+		"remotes":       strings.Join(remotes, ","),
+		"data_shards":   "3",
+		"parity_shards": "1",
+		"use_spooling":  "true",
+		"rollback":      "true",
 	}
 	fsi, err := NewFs(ctx, "rs-stream-small", "", cfg)
 	require.NoError(t, err)
@@ -1376,11 +1376,11 @@ func TestOpenFullReconstructStreamingSmallReads(t *testing.T) {
 		":memory:rs-degraded-" + unique + "-d",
 	}
 	cfg := configmap.Simple{
-		"remotes":              strings.Join(remotes, ","),
-		"data_shards":          "3",
-		"parity_shards":        "1",
-		"use_spooling":         "true",
-		"rollback":             "true",
+		"remotes":       strings.Join(remotes, ","),
+		"data_shards":   "3",
+		"parity_shards": "1",
+		"use_spooling":  "true",
+		"rollback":      "true",
 	}
 	fsi, err := NewFs(ctx, "rs-degraded-stream", "", cfg)
 	require.NoError(t, err)
@@ -1426,11 +1426,11 @@ func TestOpenRangeDegradedStripePath(t *testing.T) {
 		":memory:rs-deg-rng-" + unique + "-d",
 	}
 	cfg := configmap.Simple{
-		"remotes":              strings.Join(remotes, ","),
-		"data_shards":          "3",
-		"parity_shards":        "1",
-		"use_spooling":         "true",
-		"rollback":             "true",
+		"remotes":       strings.Join(remotes, ","),
+		"data_shards":   "3",
+		"parity_shards": "1",
+		"use_spooling":  "true",
+		"rollback":      "true",
 	}
 	fsi, err := NewFs(ctx, "rs-deg-range", "", cfg)
 	require.NoError(t, err)
@@ -1465,10 +1465,10 @@ func TestNewFsUnknownSizeDefaultNoSpoolingFallsBack(t *testing.T) {
 		":memory:rs-int-unk-" + unique + "-d",
 	}
 	cfg := configmap.Simple{
-		"remotes":              strings.Join(remotes, ","),
-		"data_shards":          "3",
-		"parity_shards":        "1",
-		"rollback":             "true",
+		"remotes":       strings.Join(remotes, ","),
+		"data_shards":   "3",
+		"parity_shards": "1",
+		"rollback":      "true",
 	}
 	fsi, err := NewFs(ctx, "rs-int-unk", "", cfg)
 	require.NoError(t, err)
@@ -1501,11 +1501,11 @@ func TestNewFsHealIntegration(t *testing.T) {
 		":memory:rs-rebuild-" + unique + "-d",
 	}
 	cfg := configmap.Simple{
-		"remotes":              strings.Join(remotes, ","),
-		"data_shards":          "3",
-		"parity_shards":        "1",
-		"use_spooling":         "true",
-		"rollback":             "true",
+		"remotes":       strings.Join(remotes, ","),
+		"data_shards":   "3",
+		"parity_shards": "1",
+		"use_spooling":  "true",
+		"rollback":      "true",
 	}
 	fsi, err := NewFs(ctx, "rs-rebuild", "", cfg)
 	require.NoError(t, err)
