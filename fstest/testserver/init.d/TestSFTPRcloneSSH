@@ -57,7 +57,11 @@ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC/t7p34BvEQu9GTuxmKmR626qATj+9Vt//o8y453U5
 #EOF
 chmod 600 ${PUBLIC_KEY}
 
-    run rclone serve sftp --authorized-keys "${PUBLIC_KEY}" --addr ${IP}:${PORT} ${DATADIR}
+    # --vfs-cache-mode writes lets the server accept random-access writes
+    # (truncate and writes at arbitrary offsets), as required to test
+    # multi-thread uploads. Without it serve sftp rejects SetStat with
+    # SSH_FX_FAILURE.
+    run rclone serve sftp --authorized-keys "${PUBLIC_KEY}" --addr ${IP}:${PORT} --vfs-cache-mode writes ${DATADIR}
     
     echo type=sftp
     echo ssh=ssh -i ${PRIVATE_KEY} -o StrictHostKeyChecking=no -p ${PORT} user@${IP}
