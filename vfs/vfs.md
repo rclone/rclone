@@ -115,12 +115,14 @@ first. rclone will start with files that haven't been accessed for the
 longest. This cache flushing strategy is efficient and more relevant
 files are likely to remain cached.
 
-The `--vfs-cache-max-age` will evict files from the cache
-after the set time since last access has passed. The default value of
+The `--vfs-cache-max-age` option evicts files from the cache after the
+set time since last access has passed. In this context, age means time
+since rclone last accessed the cached file; it is not based on the
+remote object's creation time or modification time. The default value of
 1 hour will start evicting files from cache that haven't been accessed
-for 1 hour. When a cached file is accessed the 1 hour timer is reset to 0
-and will wait for 1 more hour before evicting. Specify the time with
-standard notation, s, m, h, d, w .
+for 1 hour. When a cached file is accessed, this timer is reset to 0
+and the file will wait for 1 more hour before eviction. Specify the time
+with standard notation, such as `s`, `m`, `h`, `d`, or `w`.
 
 You **should not** run two copies of rclone using the same VFS cache
 with the same or overlapping remotes if using `--vfs-cache-mode > off`.
