@@ -53,6 +53,30 @@ func (f noCopyFs) Features() *fs.Features {
 	return &base
 }
 
+// copyCapableFs gives a shard backend server-side Copy on platforms where the base lacks it
+// (e.g. Linux/Windows local), so copy-based path tests run on every platform. On Darwin the
+// base Copy (clonefile) is passed through unchanged.
+type copyCapableFs struct {
+	fs.Fs
+}
+
+func (f copyCapableFs) Features() *fs.Features {
+	features := f.Fs.Features()
+	base := *features
+	if base.Copy == nil {
+		base.Copy = func(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+			rc, err := src.Open(ctx)
+			if err != nil {
+				return nil, err
+			}
+			defer func() { _ = rc.Close() }()
+			info := object.NewStaticObjectInfo(remote, src.ModTime(ctx), src.Size(), true, nil, f.Fs)
+			return f.Fs.Put(ctx, rc, info)
+		}
+	}
+	return &base
+}
+
 // noMoveFs hides server-side Move.
 type noMoveFs struct {
 	fs.Fs
@@ -185,7 +209,7 @@ func shardHasSuffixObject(ctx context.Context, t *testing.T, backends []fs.Fs, s
 
 func TestCopyMovePhase1FailurePreservesDst(t *testing.T) {
 	ctx := context.Background()
-	backends := makeLocalBackends(t, 4, "rs-cm-p1")
+	backends := copyCapableBackends(t, 4, "rs-cm-p1")
 	backends[2] = phaseFailCopyToTempFs{Fs: backends[2], fail: true}
 	backends[3] = phaseFailCopyToTempFs{Fs: backends[3], fail: true}
 	f := copyMoveTestFs(t, backends)
@@ -209,7 +233,7 @@ func TestCopyMovePhase1FailurePreservesDst(t *testing.T) {
 
 func TestCopyMovePhase2FailureRestoresDst(t *testing.T) {
 	ctx := context.Background()
-	backends := makeLocalBackends(t, 4, "rs-cm-p2")
+	backends := copyCapableBackends(t, 4, "rs-cm-p2")
 	backends[2] = phaseFailSwapFs{Fs: backends[2], fail: true}
 	backends[3] = phaseFailSwapFs{Fs: backends[3], fail: true}
 	f := copyMoveTestFs(t, backends)
@@ -231,7 +255,7 @@ func TestCopyMovePhase2FailureRestoresDst(t *testing.T) {
 
 func TestCopyMoveOverwriteSuccess(t *testing.T) {
 	ctx := context.Background()
-	backends := makeLocalBackends(t, 4, "rs-cm-ok")
+	backends := copyCapableBackends(t, 4, "rs-cm-ok")
 	f := copyMoveTestFs(t, backends)
 
 	dstData := []byte("old-dst-bytes-for-overwrite")
@@ -263,7 +287,7 @@ func TestCopyMoveOverwriteSuccess(t *testing.T) {
 
 func TestMoveOverwriteFailurePreservesDst(t *testing.T) {
 	ctx := context.Background()
-	backends := makeLocalBackends(t, 4, "rs-mv-p2")
+	backends := copyCapableBackends(t, 4, "rs-mv-p2")
 	backends[2] = phaseFailSwapFs{Fs: backends[2], fail: true}
 	backends[3] = phaseFailSwapFs{Fs: backends[3], fail: true}
 	f := copyMoveTestFs(t, backends)
@@ -285,7 +309,7 @@ func TestMoveOverwriteFailurePreservesDst(t *testing.T) {
 
 func TestMoveOverwriteSuccessRemovesSrc(t *testing.T) {
 	ctx := context.Background()
-	backends := makeLocalBackends(t, 4, "rs-mv-ok")
+	backends := copyCapableBackends(t, 4, "rs-mv-ok")
 	f := copyMoveTestFs(t, backends)
 
 	dstData := []byte("old-at-dst")
@@ -364,6 +388,15 @@ func noCopyBackends(t *testing.T, n int, prefix string) []fs.Fs {
 	backends := makeLocalBackends(t, n, prefix)
 	for i := range backends {
 		backends[i] = noCopyFs{Fs: backends[i]}
+	}
+	return backends
+}
+
+func copyCapableBackends(t *testing.T, n int, prefix string) []fs.Fs {
+	t.Helper()
+	backends := makeLocalBackends(t, n, prefix)
+	for i := range backends {
+		backends[i] = copyCapableFs{Fs: backends[i]}
 	}
 	return backends
 }
