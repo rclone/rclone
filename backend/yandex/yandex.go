@@ -1189,6 +1189,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
+	// Check the source supplied the number of bytes it declared
+	// otherwise a truncated file would be stored as a good upload.
+	if size := src.Size(); size >= 0 && int64(in1.BytesRead()) != size {
+		return fmt.Errorf("expected %d bytes in input, but got %d: %w", size, in1.BytesRead(), io.ErrUnexpectedEOF)
+	}
+
 	// Set the modTime of the uploaded file and re-read the metadata
 	// so the object has the md5sum the server computed for the upload.
 	//
