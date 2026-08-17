@@ -1797,7 +1797,7 @@ func TestCopyMoveReturnsProvisionalObjectAfterSetModTime(t *testing.T) {
 
 func TestCopyOverOrphanDestinationParticles(t *testing.T) {
 	ctx := context.Background()
-	backends := makeLocalBackends(t, 4, "rs-copy-orphan-dst")
+	backends := copyCapableBackends(t, 4, "rs-copy-orphan-dst")
 	f := &Fs{
 		name:     "rs",
 		root:     "",
@@ -1883,7 +1883,7 @@ func copyMoveTestFs(t *testing.T, backends []fs.Fs) *Fs {
 
 func TestCopyQuorumRollbackOnFailure(t *testing.T) {
 	ctx := context.Background()
-	backends := makeLocalBackends(t, 4, "rs-copy-rb")
+	backends := copyCapableBackends(t, 4, "rs-copy-rb")
 	backends[2] = failCopyFs{Fs: backends[2], fail: true}
 	backends[3] = failCopyFs{Fs: backends[3], fail: true}
 	f := copyMoveTestFs(t, backends)
