@@ -688,6 +688,9 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}()
 
 	for {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return nil, ctxErr
+		}
 		var fis []os.FileInfo
 		if useReadDir {
 			// Windows and Plan9 read the directory entries with the stat information in which
