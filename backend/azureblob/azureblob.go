@@ -2367,7 +2367,6 @@ func (o *Object) decodeMetaDataFromDownloadResponse(info *blob.DownloadStreamRes
 	} else {
 		o.mimeType = *info.ContentType
 	}
-	o.size = size
 	if info.LastModified == nil {
 		o.modTime = time.Now()
 	} else {
@@ -2381,7 +2380,9 @@ func (o *Object) decodeMetaDataFromDownloadResponse(info *blob.DownloadStreamRes
 	// }
 	o.setMetadata(metadata)
 
-	// If it was a Range request, the size is wrong, so correct it
+	// If ContentRange is present, the response was a ranged request
+	// where Content-Length is the chunk size, not the full object size.
+	// In that case use the total size from the Content-Range header.
 	if info.ContentRange != nil {
 		contentRange := *info.ContentRange
 		slash := strings.IndexRune(contentRange, '/')
@@ -2390,11 +2391,13 @@ func (o *Object) decodeMetaDataFromDownloadResponse(info *blob.DownloadStreamRes
 			if err == nil {
 				o.size = i
 			} else {
-				fs.Debugf(o, "Failed to find parse integer from in %q: %v", contentRange, err)
+				fs.Debugf(o, "Failed to parse integer from Content-Range %q: %v", contentRange, err)
 			}
 		} else {
-			fs.Debugf(o, "Failed to find length in %q", contentRange)
+			fs.Debugf(o, "Failed to find length in Content-Range %q", contentRange)
 		}
+	} else {
+		o.size = size
 	}
 	o.contentEncoding = info.ContentEncoding
 
