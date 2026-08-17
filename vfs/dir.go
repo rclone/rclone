@@ -257,6 +257,7 @@ func (d *Dir) forgetDirPath(relativePath string) {
 	if dir == nil {
 		return
 	}
+	dir.invalidateKernelCacheForSubtree()
 	dir.ForgetAll()
 }
 
@@ -286,6 +287,7 @@ func (d *Dir) changeNotify(relativePath string, entryType fs.EntryType) {
 	if entryType == fs.EntryDirectory {
 		d.invalidateDir(absPath)
 	}
+	d.vfs.invalidateKernelCacheForPath(absPath)
 }
 
 // ForgetPath clears the cache for itself and all subdirectories if
@@ -304,6 +306,24 @@ func (d *Dir) ForgetPath(relativePath string, entryType fs.EntryType) {
 	}
 	if entryType == fs.EntryDirectory {
 		d.forgetDirPath(relativePath)
+	}
+	d.vfs.invalidateKernelCacheForPath(absPath)
+}
+
+func (d *Dir) invalidateKernelCacheForSubtree() {
+	if !d.vfs.HasInvalidateKernelCacheHooks() {
+		return
+	}
+	// We run this with RLock only to avoid deadlocks in the recursion
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	// Note that this does not invalidate d's own entry. Callers invalidate that
+	// via invalidateKernelCacheForPath.
+	for name, node := range d.items {
+		d.vfs.invalidateKernelCacheForEntry(d, name, node)
+		if dir, ok := node.(*Dir); ok {
+			dir.invalidateKernelCacheForSubtree()
+		}
 	}
 }
 
