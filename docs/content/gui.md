@@ -2,7 +2,6 @@
 title: "GUI"
 description: "Web based Graphical User Interface"
 versionIntroduced: "v1.49"
-status: "Beta"
 ---
 
 # rclone gui
