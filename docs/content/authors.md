@@ -1202,3 +1202,4 @@ put them back in again. -->
 - Morax <james20081204@gmail.com>
 - Shurong Cao <170531907+CAOShurong@users.noreply.github.com>
 - Dave <davixk83@gmail.com>
+- max <max@maxmax.ch>
