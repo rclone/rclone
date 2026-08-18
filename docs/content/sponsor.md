@@ -17,11 +17,12 @@ Thank you to our sponsors:
 {{< sponsor src="/img/logos/exaba.svg" width="300" height="200" title="Visit our sponsor Exaba" link="https://exaba.com/product/integration/rclone/?utm_source=rclone&utm_medium=referral&utm_campaign=ad&utm_content=developer&utm_term=rclone">}}
 {{< sponsor src="/img/logos/idrive_e2.svg" width="300" height="200" title="Visit our sponsor IDrive e2" link="https://www.idrive.com/e2/?refer=rclone">}}
 {{< sponsor src="/img/logos/filescom-enterprise-grade-workflows.png" width="300" height="200" title="Start Your Free Trial Today" link="https://files.com/?utm_source=rclone&utm_medium=referral&utm_campaign=banner&utm_term=rclone">}}
+{{< sponsor src="/img/logos/dropbox.svg" width="300" height="200" title="Visit our sponsor Dropbox" link="https://dropbox.com">}}
 {{< sponsor src="/img/logos/mega-s4.svg" width="300" height="200" title="MEGA S4: New S3 compatible object storage. High scale. Low cost. Free egress." link="https://mega.io/objectstorage?utm_source=rclone&utm_medium=referral&utm_campaign=rclone-mega-s4&mct=rclonepromo">}}
 {{< sponsor src="/img/logos/sia.svg" width="200" height="200" title="Visit our sponsor sia" link="https://sia.tech">}}
 {{< sponsor src="/img/logos/route4me.svg" width="400" height="200" title="Visit our sponsor Route4Me" link="https://route4me.com/">}}
 {{< sponsor src="/img/logos/rcloneview.svg" width="300" height="200" title="Visit our sponsor RcloneView" link="https://rcloneview.com/">}}
-{{< sponsor src="/img/logos/rcloneui.svg" width="300" height="200" title="Visit our sponsor RcloneUI" link="https://github.com/rclone-ui/rclone-ui">}}
+{{< sponsor src="/img/logos/rcloneui.svg" width="300" height="200" title="Visit our sponsor RcloneUI" link="https://rcloneui.com">}}
 {{< sponsor src="/img/logos/data-raven.svg" width="300" height="200" title="Data Raven: rclone, managed. Unlimited transfers, no per-GB fees." link="https://dataraven.io/r/rclone">}}
 {{< sponsor src="/img/logos/shade.svg" width="300" height="200" title="Visit our sponsor Shade" link="https://shade.inc">}}
 {{< sponsor src="/img/logos/filelu-rclone.svg" width="300" height="200" title="Visit our sponsor FileLu" link="https://filelu.com/">}}
@@ -30,6 +31,7 @@ Thank you to our sponsors:
 {{< sponsor src="/img/logos/servercore.svg" width="300" height="200" title="Visit our sponsor servercore" link="https://servercore.com/services/object-storage/?utm_source=rclone.org&utm_medium=referral&utm_campaign=cloud-s3_rclone_231025_paid">}}
 {{< sponsor src="/img/logos/exchangerate-api.png" width="300" height="200" title="Visit our sponsor ExchangeRate-API" link="https://www.exchangerate-api.com/">}}
 {{< sponsor src="/img/logos/impossible-cloud.svg" width="300" height="200" title="Visit our sponsor Impossible Cloud" link="https://www.impossiblecloud.com/">}}
+{{< sponsor src="/img/logos/flyingcircus.svg" width="300" height="200" title="Visit our sponsor Flying Circus" link="https://flyingcircus.io/">}}
 
 <!-- markdownlint-restore -->
 
