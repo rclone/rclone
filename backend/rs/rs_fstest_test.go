@@ -35,14 +35,30 @@ func TestIntegration(t *testing.T) {
 	})
 }
 
-// TestStandard runs fstest against TestRsLocal from fstest/testserver/init.d/TestRsLocal.
+// TestStandard runs the fstest suite against an rs remote over four temporary
+// local shard directories (k=3, m=1), configured in-process like the chunker,
+// crypt and union standard tests. No external test server is needed, so it
+// runs on all platforms including Windows.
 func TestStandard(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
 	}
+	dirs := make([]string, 4)
+	for i := range dirs {
+		dirs[i] = t.TempDir()
+	}
+	name := "TestRsLocal"
 	fstests.Run(t, &fstests.Opt{
-		RemoteName:                   "TestRsLocal:",
-		NilObject:                    (*rs.Object)(nil),
+		RemoteName: name + ":",
+		NilObject:  (*rs.Object)(nil),
+		ExtraConfig: []fstests.ExtraConfigItem{
+			{Name: name, Key: "type", Value: "rs"},
+			{Name: name, Key: "remotes", Value: strings.Join(dirs, ",")},
+			{Name: name, Key: "data_shards", Value: "3"},
+			{Name: name, Key: "parity_shards", Value: "1"},
+			{Name: name, Key: "use_spooling", Value: "false"},
+			{Name: name, Key: "rollback", Value: "true"},
+		},
 		UnimplementableFsMethods:     integrationUnimplementableFsMethods,
 		UnimplementableObjectMethods: integrationUnimplementableObjectMethods,
 		QuickTestOK:                  true,
