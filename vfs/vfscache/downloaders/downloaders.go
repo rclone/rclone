@@ -394,7 +394,11 @@ func (dls *Downloaders) _dispatchWaiters() {
 		// Clip the size against the actual size in case it has shrunk
 		r := waiter.r
 		r.Clip(dls.src.Size())
-		if dls.item.HasRange(r) {
+		// Wake the waiter if its data has arrived, or if there is nothing
+		// left to download for it. _ensureDownloader starts a downloader
+		// only when FindMissing is non empty, so a waiter with nothing
+		// missing would otherwise never be woken by anything.
+		if dls.item.HasRange(r) || dls.item.FindMissing(waiter.r).IsEmpty() {
 			waiter.errChan <- nil
 		} else {
 			newWaiters = append(newWaiters, waiter)

@@ -128,6 +128,13 @@ func (w *pikpakChunkWriter) Upload(ctx context.Context) (err error) {
 		return err
 	}
 
+	// Check the source supplied the number of bytes it declared before
+	// finalising, otherwise a truncated file would be stored as a good
+	// upload. Returning an error here aborts the upload.
+	if size >= 0 && off != size {
+		return fmt.Errorf("multipart upload: expected %d bytes in input, but got %d: %w", size, off, io.ErrUnexpectedEOF)
+	}
+
 	err = w.Close(ctx)
 	if err != nil {
 		return fmt.Errorf("multipart upload: failed to finalise: %w", err)

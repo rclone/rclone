@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"strings"
 	"testing"
 
 	"github.com/rclone/rclone/fs/rc"
@@ -54,6 +55,26 @@ func TestTransfer(t *testing.T) {
 		assert.Equal(t, "", snap.Group)
 		assert.Equal(t, "srcFs:srcFs", snap.SrcFs)
 		assert.Equal(t, "dstFs:dstFs", snap.DstFs)
+	})
+
+	t.Run("DoneReleasesAccount", func(t *testing.T) {
+		content := "hello world"
+		o := mockobject.New("obj").WithContent([]byte(content), mockobject.SeekModeNone)
+		tr := newTransfer(s, o, srcFs, dstFs)
+		in := tr.Account(ctx, io.NopCloser(strings.NewReader(content)))
+		_, err := io.Copy(io.Discard, in)
+		require.NoError(t, err)
+
+		tr.Done(ctx, nil)
+
+		tr.mu.RLock()
+		acc := tr.acc
+		tr.mu.RUnlock()
+		assert.Nil(t, acc)
+
+		snap := tr.Snapshot()
+		assert.Equal(t, int64(len(content)), snap.Bytes)
+		assert.Equal(t, int64(len(content)), snap.Size)
 	})
 
 	t.Run("rcStats", func(t *testing.T) {
