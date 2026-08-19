@@ -802,10 +802,14 @@ func GetConfig(ctx context.Context) *ConfigInfo {
 }
 
 // CopyConfig copies the global config (if any) from srcCtx into
-// dstCtx returning the new context.
+// dstCtx returning the new context. It also copies the rc request
+// marker if present.
 func CopyConfig(dstCtx, srcCtx context.Context) context.Context {
 	if srcCtx == nil {
 		return dstCtx
+	}
+	if IsRCRequest(srcCtx) {
+		dstCtx = WithRCRequest(dstCtx)
 	}
 	c := srcCtx.Value(configContextKey)
 	if c == nil {

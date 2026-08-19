@@ -2,11 +2,13 @@ package chunkedreader
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"sync"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/asyncreader"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/operations"
@@ -135,6 +137,14 @@ func (s *stream) close() (err error) {
 	orErr(&err, s.rw.Close())
 	if s.rc != nil {
 		orErr(&err, s.rc.Close())
+	}
+	// close cancels the stream's context above, so a cancellation error
+	// just means the stream was intentionally abandoned. Report that as
+	// asyncreader.ErrorStreamAbandoned - the same signal the sequential
+	// reader uses - so callers (e.g. the VFS cache downloader) treat it as
+	// a benign teardown rather than a read failure.
+	if errors.Is(err, context.Canceled) {
+		return asyncreader.ErrorStreamAbandoned
 	}
 	if err != nil && err != io.EOF {
 		return fmt.Errorf("parallel chunked reader: failed to read stream at %d size %d: %w", s.offset, s.size, err)

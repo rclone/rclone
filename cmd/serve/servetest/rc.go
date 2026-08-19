@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/vfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -52,6 +53,9 @@ func TestRc(t *testing.T, in rc.Params) {
 	name := in["type"].(string)
 	addr := GetEphemeralPort(t)
 
+	// Track active VFS count before starting server
+	initialActive := vfs.ActiveCount()
+
 	// Start the server
 	in["fs"] = dir
 	in["addr"] = addr
@@ -71,7 +75,10 @@ func TestRc(t *testing.T, in rc.Params) {
 	_, err = serveStop.Fn(ctx, rc.Params{"id": id})
 	require.NoError(t, err)
 
-	// Check we can make no longer make connections to the server
+	// Check the VFS was properly released
+	assert.Equal(t, initialActive, vfs.ActiveCount(), "VFS should have been shut down after server stop")
+
+	// Check we can no longer make connections to the server
 	err = checkTCP(addr)
 	assert.Error(t, err)
 }

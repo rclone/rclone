@@ -286,7 +286,7 @@ large file of a known size to stay below this number of chunks limit.
 Any files larger than this that need to be server-side copied will be
 copied in chunks of this size.
 
-The minimum is 0 and the maximum is 5 GiB.`,
+The minimum is 1 byte and the maximum is 5 GiB.`,
 			Default:  fs.SizeSuffix(maxSizeForCopy),
 			Advanced: true,
 		}, {
@@ -1356,12 +1356,39 @@ func getClient(ctx context.Context, opt *Options) *http.Client {
 	}
 }
 
+// s3RedirectSecretHeaders are the request headers carrying origin-bound
+// secrets that must not be forwarded when a redirect crosses a host or
+// downgrades the scheme. Go strips Authorization on a hostname change but not
+// on a scheme downgrade, and has no knowledge that the SSE-C headers hold raw
+// encryption keys, so we strip them all ourselves.
+var s3RedirectSecretHeaders = []string{
+	"X-Amz-Security-Token",  // AWS STS session token
+	"X-Amz-S3session-Token", // S3 Express (directory bucket) session token
+	"Authorization",         // e.g. IBM IAM bearer token
+	"ibm-service-instance-id",
+	"X-Amz-Server-Side-Encryption-Customer-Algorithm",
+	"X-Amz-Server-Side-Encryption-Customer-Key",
+	"X-Amz-Server-Side-Encryption-Customer-Key-Md5",
+	"X-Amz-Copy-Source-Server-Side-Encryption-Customer-Algorithm",
+	"X-Amz-Copy-Source-Server-Side-Encryption-Customer-Key",
+	"X-Amz-Copy-Source-Server-Side-Encryption-Customer-Key-Md5",
+	"Referer", // may be a presigned request
+}
+
 func s3CheckRedirect(req *http.Request, via []*http.Request) error {
 	if len(via) >= 10 {
 		return errors.New("stopped after 10 redirects")
 	}
+	// Never follow a redirect that downgrades the transport from HTTPS to
+	// HTTP. An S3 endpoint has no legitimate reason to do this, and replaying
+	// the request over plaintext would expose whatever credential it carries.
+	if via[len(via)-1].URL.Scheme == "https" && req.URL.Scheme == "http" {
+		return fmt.Errorf("refusing to follow insecure redirect from HTTPS to HTTP: %s", req.URL.Redacted())
+	}
 	if s3RedirectCrossesHost(req, via) {
-		req.Header.Del("X-Amz-Security-Token")
+		for _, header := range s3RedirectSecretHeaders {
+			req.Header.Del(header)
+		}
 	}
 	return nil
 }
@@ -1370,13 +1397,13 @@ func s3RedirectCrossesHost(req *http.Request, via []*http.Request) bool {
 	if len(via) == 0 {
 		return false
 	}
-	host := via[0].URL.Host
+	scheme, host := via[0].URL.Scheme, via[0].URL.Host
 	for _, redirect := range via[1:] {
-		if redirect.URL.Host != host {
+		if redirect.URL.Host != host || redirect.URL.Scheme != scheme {
 			return true
 		}
 	}
-	return host != req.URL.Host
+	return host != req.URL.Host || scheme != req.URL.Scheme
 }
 
 // Fixup the request if needed.
@@ -1689,7 +1716,9 @@ func setEndpointValueForIDriveE2(m configmap.Mapper) (err error) {
 	if !ok || value == "" {
 		return
 	}
-	client := &http.Client{Timeout: time.Second * 3}
+	// Reuse the S3 redirect policy so this bootstrap call, which posts the
+	// access key ID, won't be redirected from HTTPS to plaintext HTTP.
+	client := &http.Client{Timeout: time.Second * 3, CheckRedirect: s3CheckRedirect}
 	// API to get user region endpoint against the Access Key details: https://www.idrive.com/e2/guides/get_region_endpoint
 	resp, err := client.Post("https://api.idrivee2.com/api/service/get_region_end_point",
 		"application/json",
@@ -1923,18 +1952,50 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		newRoot, leaf := path.Split(oldRoot)
 		f.setRoot(newRoot)
 		_, err := f.NewObject(ctx, leaf)
-		if errors.Is(err, fs.ErrorObjectNotFound) {
+		switch {
+		case err == nil:
+			// It is a file so return an fs which points to the parent
+			return f, fs.ErrorIsFile
+		case errors.Is(err, fs.ErrorObjectNotFound):
 			// File doesn't exist or is a directory so return old f
 			f.setRoot(oldRoot)
 			return f, nil
+		default:
+			// We couldn't HEAD the object so now attempt to list it
+			hasChildren, listErr := f.hasChildren(ctx, leaf)
+			if listErr != nil {
+				fs.Debugf(f, "Couldn't check %q for children after HEAD failed (%v): %v", oldRoot, err, listErr)
+			}
+			// If it listed and has children it must be a directory
+			if hasChildren {
+				f.setRoot(oldRoot)
+				return f, nil
+			}
+			// If it has no children it is either a file or an empty directory. We can't
+			// tell these two cases apart. We choose file which is more likely, and
+			// return an fs which points to the parent.
+			return f, fs.ErrorIsFile
 		}
-		if err != nil {
-			return nil, err
-		}
-		// return an error with an fs which points to the parent
-		return f, fs.ErrorIsFile
 	}
 	return f, nil
+}
+
+// hasChildren reports whether the directory dir contains any objects.
+func (f *Fs) hasChildren(ctx context.Context, dir string) (found bool, err error) {
+	bucket, directory := f.split(dir)
+	err = f.list(ctx, listOpt{
+		bucket:    bucket,
+		directory: directory,
+		prefix:    f.rootDirectory,
+		recurse:   true,
+	}, func(remote string, object *types.Object, versionID *string, isDirectory bool) error {
+		found = true
+		return errEndList // stop after the first object
+	})
+	if err != nil && err != fs.ErrorDirNotFound {
+		return false, err
+	}
+	return found, nil
 }
 
 // getMetaDataListing gets the metadata from the object unconditionally from the listing
@@ -4361,6 +4422,9 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		}
 	}
 	if err != nil {
+		if statusCode := getHTTPStatusCode(err); statusCode == http.StatusNotFound || statusCode == http.StatusMethodNotAllowed {
+			return nil, fs.ErrorObjectNotFound
+		}
 		return nil, err
 	}
 

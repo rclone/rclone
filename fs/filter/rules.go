@@ -2,6 +2,7 @@ package filter
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"os"
 	"regexp"
@@ -114,10 +115,26 @@ func (rs *rules) includeMany(remotes []string) bool {
 	return true
 }
 
+// scanNul is a split function for a Scanner that returns each NUL-terminated
+// sequence of bytes. It correctly handles the final segment even if it
+// lacks a trailing NUL.
+func scanNul(data []byte, atEOF bool) (advance int, token []byte, err error) {
+	if atEOF && len(data) == 0 {
+		return 0, nil, nil
+	}
+	if i := bytes.IndexByte(data, '\x00'); i >= 0 {
+		return i + 1, data[:i], nil
+	}
+	if atEOF {
+		return len(data), data, nil
+	}
+	return 0, nil, nil
+}
+
 // forEachLine calls fn on every line in the file pointed to by path
 //
 // It ignores empty lines and lines starting with '#' or ';' if raw is false
-func forEachLine(path string, raw bool, fn func(string) error) (err error) {
+func forEachLine(path string, raw bool, useNulDelimiter bool, fn func(string) error) (err error) {
 	var scanner *bufio.Scanner
 	if path == "-" {
 		scanner = bufio.NewScanner(os.Stdin)
@@ -129,6 +146,11 @@ func forEachLine(path string, raw bool, fn func(string) error) (err error) {
 		scanner = bufio.NewScanner(in)
 		defer fs.CheckClose(in, &err)
 	}
+
+	if useNulDelimiter {
+		scanner.Split(scanNul)
+	}
+
 	for scanner.Scan() {
 		line := scanner.Text()
 		if !raw {
@@ -199,7 +221,7 @@ func parseRules(opt *RulesOpt, add addFn, clear clearFn) (err error) {
 		addImplicitExclude = true
 	}
 	for _, rule := range opt.IncludeFrom {
-		err := forEachLine(rule, false, func(line string) error {
+		err := forEachLine(rule, false, false, func(line string) error {
 			return add(true, line)
 		})
 		if err != nil {
@@ -215,7 +237,7 @@ func parseRules(opt *RulesOpt, add addFn, clear clearFn) (err error) {
 		foundExcludeRule = true
 	}
 	for _, rule := range opt.ExcludeFrom {
-		err := forEachLine(rule, false, func(line string) error {
+		err := forEachLine(rule, false, false, func(line string) error {
 			return add(false, line)
 		})
 		if err != nil {
@@ -235,7 +257,7 @@ func parseRules(opt *RulesOpt, add addFn, clear clearFn) (err error) {
 		}
 	}
 	for _, rule := range opt.FilterFrom {
-		err := forEachLine(rule, false, func(rule string) error {
+		err := forEachLine(rule, false, false, func(rule string) error {
 			return addRule(rule, add, clear)
 		})
 		if err != nil {

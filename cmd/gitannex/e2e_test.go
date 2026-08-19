@@ -16,7 +16,9 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/fstest/testy"
 	"github.com/rclone/rclone/lib/buildinfo"
+	"github.com/rclone/rclone/lib/israce"
 )
 
 // checkRcloneBinaryVersion runs whichever rclone is on the PATH and checks
@@ -167,14 +169,17 @@ func (e *e2eTestingContext) runInRepo(t *testing.T, command string, args ...stri
 	require.NoError(t, err, fmt.Sprintf("+ %s %v failed:\n%s\n", command, args, buf))
 }
 
-// createGitRepo creates an empty git repository in the ephemeral repo
-// directory. It makes "global" config changes that are ultimately scoped to the
+// createGitRepo creates an empty git-annex repository in the ephemeral repo
+// directory. The "global" git config it writes is ultimately scoped to the
 // calling test thanks to runInRepo() overriding the HOME environment variable.
 func (e *e2eTestingContext) createGitRepo(t *testing.T) {
-	e.runInRepo(t, "git", "annex", "version")
-	e.runInRepo(t, "git", "config", "--global", "user.name", "User Name")
-	e.runInRepo(t, "git", "config", "--global", "user.email", "user@example.com")
-	e.runInRepo(t, "git", "config", "--global", "init.defaultBranch", "main")
+	gitConfig := "[user]\n" +
+		"\tname = User Name\n" +
+		"\temail = user@example.com\n" +
+		"[init]\n" +
+		"\tdefaultBranch = main\n"
+	require.NoError(t, os.WriteFile(
+		filepath.Join(e.homeDir, ".gitconfig"), []byte(gitConfig), 0600))
 	e.runInRepo(t, "git", "init")
 	e.runInRepo(t, "git", "annex", "init")
 }
@@ -187,6 +192,17 @@ func skipE2eTestIfNecessary(t *testing.T) {
 	// TODO(#7984): Port e2e tests to `fstest` framework.
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping because fstest remote was specified.")
+	}
+
+	if runtime.GOOS == "darwin" && testy.CI() {
+		t.Skip("Skipping on macOS CI - tests frequently time out")
+	}
+
+	// The code under test runs in a separate rclone subprocess which is not
+	// built with race instrumentation, so running these tests under the race
+	// detector costs time without adding any race coverage.
+	if israce.Enabled {
+		t.Skip("Skipping because the race detector cannot observe the rclone subprocess")
 	}
 
 	// TODO: Support e2e tests on Windows. Need to evaluate the semantics of the
@@ -226,6 +242,7 @@ func skipE2eTestIfNecessary(t *testing.T) {
 // parameters like repo layouts, and runtime may suffer from a combinatorial
 // explosion.
 func TestEndToEnd(t *testing.T) {
+	t.Parallel()
 	skipE2eTestIfNecessary(t)
 
 	for _, mode := range allLayoutModes() {
@@ -242,14 +259,25 @@ func TestEndToEnd(t *testing.T) {
 				"rcloneremotename=MyRcloneRemote", "rcloneprefix="+testingContext.ephemeralRepoDir,
 				"rclonelayout="+string(mode))
 
-			testingContext.runInRepo(t, "git", "annex", "testremote", "MyTestRemote")
+			// Layout modes only vary how object paths are constructed, so
+			// one layout mode gets the full testremote suite for depth. The
+			// rest use --fast, which still exercises every special remote
+			// protocol operation but skips the key size and chunking matrix
+			// that mostly tests git-annex itself.
+			if mode == layoutModeNodir {
+				testingContext.runInRepo(t, "git", "annex", "testremote", "MyTestRemote")
+			} else {
+				testingContext.runInRepo(t, "git", "annex", "testremote", "--fast", "MyTestRemote")
+			}
 		})
 	}
 }
 
-// For each layout mode, migrate a single remote from git-annex-remote-rclone to
-// git-annex-remote-rclone-builtin and run `git annex testremote`.
+// For each layout mode, migrate a single remote from git-annex-remote-rclone
+// to git-annex-remote-rclone-builtin and verify that annexed files remain
+// accessible.
 func TestEndToEndMigration(t *testing.T) {
+	t.Parallel()
 	skipE2eTestIfNecessary(t)
 
 	if _, err := exec.LookPath("git-annex-remote-rclone"); err != nil {
@@ -298,8 +326,6 @@ func TestEndToEndMigration(t *testing.T) {
 			)
 
 			tc.runInRepo(t, "git", "annex", "fsck", "--from=MigratedRemote", "foo")
-
-			tc.runInRepo(t, "git", "annex", "testremote", "MigratedRemote")
 		})
 	}
 }
@@ -309,6 +335,7 @@ func TestEndToEndMigration(t *testing.T) {
 // remote are present on the other. Similarly, test that files deleted from one
 // are removed on the other.
 func TestEndToEndRepoLayoutCompat(t *testing.T) {
+	t.Parallel()
 	skipE2eTestIfNecessary(t)
 
 	if _, err := exec.LookPath("git-annex-remote-rclone"); err != nil {

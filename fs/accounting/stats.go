@@ -33,7 +33,6 @@ var MaxCompletedTransfers = 100
 // to correctly count the updated fields
 type StatsInfo struct {
 	mu                    sync.RWMutex
-	ctx                   context.Context
 	ci                    *fs.ConfigInfo
 	bytes                 int64
 	errors                int64
@@ -85,7 +84,6 @@ type averageValues struct {
 func NewStats(ctx context.Context) *StatsInfo {
 	ci := fs.GetConfig(ctx)
 	s := &StatsInfo{
-		ctx:                   ctx,
 		ci:                    ci,
 		checking:              newTransferMap(ci.Checkers, "checking"),
 		transferring:          newTransferMap(ci.Transfers, "transferring"),
@@ -518,10 +516,10 @@ func (s *StatsInfo) String() string {
 	// Add per transfer stats if required
 	if !s.ci.StatsOneLine {
 		if !s.checking.empty() {
-			_, _ = fmt.Fprintf(buf, "Checking:\n%s\n", s.checking.String(s.ctx, s.inProgress, s.transferring))
+			_, _ = fmt.Fprintf(buf, "Checking:\n%s\n", s.checking.String(s.ci, s.inProgress, s.transferring))
 		}
 		if !s.transferring.empty() {
-			_, _ = fmt.Fprintf(buf, "Transferring:\n%s\n", s.transferring.String(s.ctx, s.inProgress, nil))
+			_, _ = fmt.Fprintf(buf, "Transferring:\n%s\n", s.transferring.String(s.ci, s.inProgress, nil))
 		}
 	}
 
@@ -730,9 +728,15 @@ func (s *StatsInfo) ResetCounters() {
 	s.startedTransfers = nil
 	s.oldDuration = 0
 
+	// Only restart the average loop if it was running. Otherwise
+	// ResetCounters would spawn a goroutine that pins the StatsInfo,
+	// leaking memory when called on stats that never started the loop.
+	wasStarted := s.average.started
 	s._stopAverageLoop()
 	s.average = averageValues{}
-	s._startAverageLoop()
+	if wasStarted {
+		s._startAverageLoop()
+	}
 }
 
 // ResetErrors sets the errors count to 0 and resets lastError, fatalError and retryError

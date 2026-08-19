@@ -37,3 +37,52 @@ directory with book-keeping records of created and mounted volumes.
 All mount and VFS options are submitted by the docker daemon via API, but
 you can also provide defaults on the command line as well as set path to the
 config file and cache directory or adjust logging verbosity.
+
+## Restarting or upgrading the plugin
+
+When the plugin is restarted (for example with
+`docker plugin disable rclone && docker plugin enable rclone`, when upgrading
+the plugin, or when the host reboots) rclone reads its `docker-plugin.state`
+file and restores the volumes and mounts that were active before. The plugin
+starts serving its socket straight away and re-establishes the mounts in the
+background, so a slow or unreachable remote no longer prevents the plugin from
+coming back up.
+
+However, restarting the plugin necessarily stops and restarts the process that
+serves the FUSE mounts. Any container that is **already running** and holding
+files open on an rclone volume keeps a handle to the old, now dead mount, so
+those handles start returning `transport endpoint is not connected` until the
+container is restarted. This is a limitation of replacing the process behind a
+live FUSE mount and cannot be avoided by rclone - the plugin itself recovers and
+newly started containers work normally, but:
+
+- **Restart any containers that were using rclone volumes** after you restart
+  or upgrade the plugin (e.g. `docker restart <container>`), or stop them before
+  and start them after.
+- Databases and other applications that keep files open continuously (Grafana,
+  Prometheus, SQLite-backed apps, etc.) are the most affected and should always
+  be restarted.
+
+## Security
+
+The plugin API accepts a `remote` (aka `fs`) option on volume creation, and this
+is parsed exactly like an rclone connection string. Connection strings are
+trusted configuration: they may carry inline backend options, and some backends
+use those options to run local commands (for example the `sftp` backend's `ssh`
+option spawns an external binary). Anyone who can send requests to the plugin
+socket can therefore make rclone run arbitrary commands as the user running
+`rclone serve docker` (typically root). Treat access to the socket as equivalent
+to that level of access and only expose it to trusted callers.
+
+When listening on the default unix socket at `/run/docker/plugins/rclone.sock`
+rclone creates it with mode `0660` owned by `root` and the group given by
+`--socket-gid` (the process GID by default), so only root and members of that
+group - normally just the docker daemon - can reach it. Do not loosen these
+permissions or hand the group to untrusted users.
+
+When using `--socket-addr` to listen on a TCP socket there is no authentication
+and the API is reachable by anyone who can open the port, so bind it to a
+loopback or otherwise trusted address and protect it with a firewall. Note that
+holding Docker daemon access is already equivalent to root on the host, so a
+caller able to issue `docker volume create` does not gain anything new from
+this; the concern is exposing the socket more widely than the daemon itself.

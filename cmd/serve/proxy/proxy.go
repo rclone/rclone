@@ -4,11 +4,15 @@ package proxy
 import (
 	"bytes"
 	"context"
+	"crypto/hmac"
+	"crypto/rand"
 	"crypto/sha256"
 	"crypto/subtle"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/netip"
 	"os/exec"
 	"strings"
 	"time"
@@ -18,6 +22,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
 	libcache "github.com/rclone/rclone/lib/cache"
+	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 )
@@ -59,7 +64,8 @@ process (on STDIN) would look similar to this:
 |||json
 {
   "user": "me",
-  "pass": "mypassword"
+  "pass": "mypassword",
+  "client_ip": "192.168.1.1"
 }
 |||
 
@@ -69,9 +75,17 @@ proxy process (on STDIN) would look similar to this:
 |||json
 {
   "user": "me",
-  "public_key": "AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf"
+  "public_key": "AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf",
+  "client_ip": "192.168.1.1"
 }
 |||
+
+The |client_ip| key holds the IP address the client connected from,
+without a port number.  It can be used to restrict logins to certain
+networks, or to log authentication attempts centrally.  It is omitted if
+the client has no IP address, for example when connecting over a unix
+socket.  Note that if rclone is behind a reverse proxy this will be the
+address of the reverse proxy and not the original client.
 
 And as an example return this on STDOUT
 
@@ -98,10 +112,12 @@ to make proxy to many different sftp backends, you could make the
 in the output and the user to |user|. For security you'd probably want
 to restrict the |host| to a limited list.
 
-Note that an internal cache is keyed on |user| so only use that for
-configuration, don't use |pass| or |public_key|.  This also means that if a user's
-password or public-key is changed the cache will need to expire (which takes 5 mins)
-before it takes effect.
+An internal cache of backends is keyed on the |user|, a hash of the
+|pass| or |public_key|, and the |client_ip|.  This means that if a
+user's password or public-key changes, the client connects from a new IP
+address, or the proxy returns different config parameters (eg a rotated
+|api_key|), a fresh backend will be created on the next request rather
+than the cached one being reused.
 
 This can be used to build general purpose proxies to any kind of
 backend that rclone supports.
@@ -146,13 +162,19 @@ type cacheEntry struct {
 //
 // Any VFS are created with the vfsOpt passed in.
 func New(ctx context.Context, opt *Options, vfsOpt *vfscommon.Options) *Proxy {
-	return &Proxy{
+	p := &Proxy{
 		ctx:      ctx,
 		Opt:      *opt,
 		cmdLine:  strings.Fields(opt.AuthProxy),
 		vfsCache: libcache.New(),
 		vfsOpt:   *vfsOpt,
 	}
+	p.vfsCache.SetFinalizer(func(value any) {
+		if entry, ok := value.(cacheEntry); ok && entry.vfs != nil {
+			entry.vfs.Shutdown()
+		}
+	})
+	return p
 }
 
 // run the proxy command returning a config map
@@ -196,22 +218,53 @@ func (p *Proxy) run(in map[string]string) (config configmap.Simple, err error) {
 	return config, nil
 }
 
-// call runs the auth proxy and returns a cacheEntry and an error
-func (p *Proxy) call(user, auth string, isPublicKey bool) (value any, err error) {
-	var config configmap.Simple
-	// Contact the proxy
-	if isPublicKey {
-		config, err = p.run(map[string]string{
-			"user":       user,
-			"public_key": auth,
-		})
-	} else {
-		config, err = p.run(map[string]string{
-			"user": user,
-			"pass": auth,
-		})
+// cacheKeyHMACKey is a per-process random key used to derive cache keys
+// from auth credentials. Using a keyed hash (HMAC) rather than a bare
+// SHA256 means the hash fragment that appears in logs and backend names
+// cannot be used to brute-force the underlying password offline.
+var cacheKeyHMACKey = func() []byte {
+	key := make([]byte, 32)
+	if _, err := rand.Read(key); err != nil {
+		panic(fmt.Sprintf("proxy: failed to generate cache key: %v", err))
 	}
+	return key
+}()
 
+// ipFromAddr returns the bare IP from a "host:port" address, or "" if it has none.
+func ipFromAddr(addr string) string {
+	ap, err := netip.ParseAddrPort(addr)
+	if err != nil {
+		return ""
+	}
+	return ap.Addr().Unmap().String()
+}
+
+// generateCacheKey creates a composite cache key from the user, the auth
+// credentials and the client's IP address.
+func generateCacheKey(user, auth, clientIP string) string {
+	mac := hmac.New(sha256.New, cacheKeyHMACKey)
+	mac.Write([]byte(auth))
+	// Separate the two so ("ab", "c") can't collide with ("a", "bc")
+	mac.Write([]byte{0})
+	mac.Write([]byte(clientIP))
+	return user + "-" + hex.EncodeToString(mac.Sum(nil)[:8])
+}
+
+// call runs the auth proxy and returns a cacheEntry and an error
+func (p *Proxy) call(user, auth string, isPublicKey bool, clientIP string) (value any, err error) {
+	// Contact the proxy
+	in := map[string]string{
+		"user": user,
+	}
+	if isPublicKey {
+		in["public_key"] = auth
+	} else {
+		in["pass"] = auth
+	}
+	if clientIP != "" {
+		in["client_ip"] = clientIP
+	}
+	config, err := p.run(in)
 	if err != nil {
 		return nil, err
 	}
@@ -232,12 +285,17 @@ func (p *Proxy) call(user, auth string, isPublicKey bool) (value any, err error)
 		return nil, fmt.Errorf("proxy: couldn't find backend for %q: %w", fsName, err)
 	}
 
-	// base name of config on user name.  This may appear in logs
-	name := "proxy-" + user
+	// Make the cache key include the auth and the client IP so that
+	// changes to either (eg the proxy returning new config) create a
+	// fresh backend rather than reusing the cached one.
+	cacheKey := generateCacheKey(user, auth, clientIP)
+
+	// base name of config on user name and auth hash.  This may appear in logs
+	name := "proxy-" + cacheKey
 	fsString := name + ":" + root
 
 	// Look for fs in the VFS cache
-	value, err = p.vfsCache.Get(user, func(key string) (value any, ok bool, err error) {
+	value, err = p.vfsCache.Get(cacheKey, func(key string) (value any, ok bool, err error) {
 		// Create the Fs from the cache
 		f, err := cache.GetFn(p.ctx, fsString, func(ctx context.Context, fsString string) (fs.Fs, error) {
 			// Update the config with the default values
@@ -270,13 +328,23 @@ func (p *Proxy) call(user, auth string, isPublicKey bool) (value any, err error)
 
 // Call runs the auth proxy with the username and password/public key provided
 // returning a *vfs.VFS and the key used in the VFS cache.
-func (p *Proxy) Call(user, auth string, isPublicKey bool) (VFS *vfs.VFS, vfsKey string, err error) {
-	// Look in the cache first
-	value, ok := p.vfsCache.GetMaybe(user)
+//
+// remoteAddr is the address of the client as returned by net.Addr.String().
+// It may be empty if the client has no IP address, for example when
+// connecting over a unix socket.
+func (p *Proxy) Call(user, auth string, isPublicKey bool, remoteAddr string) (VFS *vfs.VFS, vfsKey string, err error) {
+	clientIP := ipFromAddr(remoteAddr)
+
+	// Cache key includes the auth and the client IP so credential or
+	// address changes don't hit a stale entry
+	cacheKey := generateCacheKey(user, auth, clientIP)
+
+	// Look in the cache first with the credential-aware key
+	value, ok := p.vfsCache.GetMaybe(cacheKey)
 
 	// If not found then call the proxy for a fresh answer
 	if !ok {
-		value, err = p.call(user, auth, isPublicKey)
+		value, err = p.call(user, auth, isPublicKey, clientIP)
 		if err != nil {
 			return nil, "", err
 		}
@@ -288,11 +356,11 @@ func (p *Proxy) Call(user, auth string, isPublicKey bool) (VFS *vfs.VFS, vfsKey 
 		return nil, "", fmt.Errorf("proxy: value is not cache entry: %#v", value)
 	}
 
-	// Check the password / public key is correct in the cached entry.  This
-	// prevents an attack where subsequent requests for the same
-	// user don't have their auth checked. It does mean that if
-	// the password is changed, the user will have to wait for
-	// cache expiry (5m) before trying again.
+	// Check the password / public key matches the cached entry. The
+	// cache key already includes a hash of the auth, so a changed
+	// credential lands on a fresh key rather than this entry; this
+	// check is a final guard against a hash collision on the key
+	// returning a backend created with different auth.
 	authHash := sha256.Sum256([]byte(auth))
 	if subtle.ConstantTimeCompare(authHash[:], entry.pwHash[:]) != 1 {
 		if isPublicKey {
@@ -301,7 +369,7 @@ func (p *Proxy) Call(user, auth string, isPublicKey bool) (VFS *vfs.VFS, vfsKey 
 		return nil, "", errors.New("proxy: incorrect password")
 	}
 
-	return entry.vfs, user, nil
+	return entry.vfs, cacheKey, nil
 }
 
 // Get VFS from the cache using key - returns nil if not found
@@ -312,4 +380,109 @@ func (p *Proxy) Get(key string) *vfs.VFS {
 	}
 	entry := value.(cacheEntry)
 	return entry.vfs
+}
+
+// Shutdown shuts down all cached VFS instances
+func (p *Proxy) Shutdown() {
+	if p != nil && p.vfsCache != nil {
+		p.vfsCache.Clear()
+	}
+}
+
+// Provider hands out VFS instances, either a fixed one or per-user via an auth proxy.
+type Provider struct {
+	vfs   *vfs.VFS // set if not using an auth proxy
+	proxy *Proxy   // set if using an auth proxy
+}
+
+// NewProvider creates a Provider. If proxyOpt.AuthProxy is set it creates an
+// auth proxy; otherwise it creates a fixed VFS from f and vfsOpt.
+func NewProvider(ctx context.Context, f fs.Fs, vfsOpt *vfscommon.Options, proxyOpt *Options) *Provider {
+	p := &Provider{}
+	if proxyOpt != nil && proxyOpt.AuthProxy != "" {
+		p.proxy = New(ctx, proxyOpt, vfsOpt)
+	} else {
+		p.vfs = vfs.New(ctx, f, vfsOpt)
+	}
+	return p
+}
+
+// Get returns the VFS for the current request context.
+// For fixed-VFS providers it returns the single VFS.
+// For proxy providers it reads the VFS from the request's auth context.
+func (p *Provider) Get(ctx context.Context) (*vfs.VFS, error) {
+	if p.vfs != nil {
+		return p.vfs, nil
+	}
+	value := libhttp.CtxGetAuth(ctx)
+	if value == nil {
+		return nil, errors.New("no VFS found in context")
+	}
+	VFS, ok := value.(*vfs.VFS)
+	if !ok {
+		return nil, fmt.Errorf("context value is not VFS: %#v", value)
+	}
+	return VFS, nil
+}
+
+// VFS returns the fixed VFS, or nil if using an auth proxy.
+func (p *Provider) VFS() *vfs.VFS {
+	if p == nil {
+		return nil
+	}
+	return p.vfs
+}
+
+// Proxy returns the Proxy instance, or nil if not using an auth proxy.
+func (p *Provider) Proxy() *Proxy {
+	if p == nil {
+		return nil
+	}
+	return p.proxy
+}
+
+// IsProxy returns true if using an auth proxy.
+func (p *Provider) IsProxy() bool {
+	return p != nil && p.proxy != nil
+}
+
+// Shutdown tears down the provider: shuts down the fixed VFS or flushes all proxy cache entries.
+func (p *Provider) Shutdown() {
+	if p == nil {
+		return
+	}
+	if p.vfs != nil {
+		p.vfs.Shutdown()
+	}
+	if p.proxy != nil {
+		p.proxy.Shutdown()
+	}
+}
+
+// Pin pins the cache entry for key so it won't be evicted by expire
+func (p *Proxy) Pin(key string) {
+	if p != nil && p.vfsCache != nil {
+		p.vfsCache.Pin(key)
+	}
+}
+
+// Unpin unpins the cache entry for key
+func (p *Proxy) Unpin(key string) {
+	if p != nil && p.vfsCache != nil {
+		p.vfsCache.Unpin(key)
+	}
+}
+
+// Pin pins the cache entry for key if using an auth proxy
+func (p *Provider) Pin(key string) {
+	if p != nil && p.proxy != nil {
+		p.proxy.Pin(key)
+	}
+}
+
+// Unpin unpins the cache entry for key if using an auth proxy
+func (p *Provider) Unpin(key string) {
+	if p != nil && p.proxy != nil {
+		p.proxy.Unpin(key)
+	}
 }

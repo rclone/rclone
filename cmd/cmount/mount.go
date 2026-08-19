@@ -170,8 +170,6 @@ func mount(VFS *vfs.VFS, mountPath string, opt *mountlib.Options) (<-chan error,
 
 	// unmount
 	unmount := func() error {
-		// Shutdown the VFS
-		fsys.VFS.Shutdown()
 		var umountOK bool
 		if fsys.destroyed.Load() != 0 {
 			fs.Debugf(nil, "Not calling host.Unmount as mount already Destroyed")

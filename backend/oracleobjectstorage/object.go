@@ -21,6 +21,7 @@ import (
 	"github.com/oracle/oci-go-sdk/v65/objectstorage"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/readers"
 )
 
 // ------------------------------------------------------------
@@ -110,6 +111,7 @@ func (o *Object) decodeMetaDataHead(info *objectstorage.HeadObjectResponse) (err
 	return o.setMetaData(
 		info.ContentLength,
 		info.ContentMd5,
+		info.ContentEncoding,
 		info.ContentType,
 		info.LastModified,
 		info.StorageTier,
@@ -120,6 +122,7 @@ func (o *Object) decodeMetaDataObject(info *objectstorage.GetObjectResponse) (er
 	return o.setMetaData(
 		info.ContentLength,
 		info.ContentMd5,
+		info.ContentEncoding,
 		info.ContentType,
 		info.LastModified,
 		info.StorageTier,
@@ -129,6 +132,7 @@ func (o *Object) decodeMetaDataObject(info *objectstorage.GetObjectResponse) (er
 func (o *Object) setMetaData(
 	contentLength *int64,
 	contentMd5 *string,
+	contentEncoding *string,
 	contentType *string,
 	lastModified *common.SDKTime,
 	storageTier any,
@@ -168,6 +172,11 @@ func (o *Object) setMetaData(
 	} else {
 		tier := strings.ToLower(fmt.Sprintf("%v", storageTier))
 		o.storageTier = storageTierMap[tier]
+	}
+	// If decompressing then size and md5sum are unknown
+	if o.fs.opt.Decompress && contentEncoding != nil && *contentEncoding == "gzip" {
+		o.bytes = -1
+		o.md5 = ""
 	}
 	return nil
 }
@@ -362,7 +371,20 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	if err != nil {
 		return nil, err
 	}
-	o.bytes = *bytes
+	// Decompress body if necessary
+	if resp.ContentEncoding != nil && *resp.ContentEncoding == "gzip" {
+		if o.fs.opt.Decompress {
+			return readers.NewGzipReader(resp.HTTPResponse().Body)
+		}
+		o.fs.warnCompressed.Do(func() {
+			fs.Logf(o, "Not decompressing 'Content-Encoding: gzip' compressed file. Use --oos-decompress to override")
+		})
+	}
+	if bytes != nil {
+		o.bytes = *bytes
+	} else {
+		fs.Debugf(o, "Failed to find object length")
+	}
 	return resp.HTTPResponse().Body, nil
 }
 

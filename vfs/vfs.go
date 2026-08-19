@@ -69,6 +69,8 @@ type Node interface {
 	Truncate(size int64) error
 	Path() string
 	SetSys(any)
+	Aux(owner any) any
+	SetAux(owner, value any)
 }
 
 // Check interfaces
@@ -186,6 +188,7 @@ type VFS struct {
 	usageMu     sync.Mutex
 	usageTime   time.Time
 	usage       *fs.Usage
+	pollMu      sync.Mutex
 	pollChan    chan time.Duration
 	inUse       atomic.Int32 // count of number of opens
 }
@@ -285,6 +288,7 @@ func New(ctx context.Context, f fs.Fs, opt *vfscommon.Options) *VFS {
 
 // refresh the directory cache for all directories
 func (vfs *VFS) refresh() {
+	defer vfscommon.RecoverPanic(vfs.f, nil)
 	fs.Debugf(vfs.f, "Refreshing VFS directory cache")
 	err := vfs.root.readDirTree()
 	if err != nil {
@@ -353,6 +357,12 @@ func activeCacheEntries() (vfs *VFS, count int) {
 	return vfs, count
 }
 
+// ActiveCount returns the total number of VFS instances in the active cache.
+func ActiveCount() int {
+	_, count := activeCacheEntries()
+	return count
+}
+
 // Fs returns the Fs passed into the New call
 func (vfs *VFS) Fs() fs.Fs {
 	return vfs.f
@@ -407,13 +417,15 @@ func (vfs *VFS) Shutdown() {
 
 	vfs.shutdownCache()
 
+	// Cancel any background go routines
+	vfs.cancel()
+
+	vfs.pollMu.Lock()
 	if vfs.pollChan != nil {
 		close(vfs.pollChan)
 		vfs.pollChan = nil
 	}
-
-	// Cancel any background go routines
-	vfs.cancel()
+	vfs.pollMu.Unlock()
 }
 
 // CleanUp deletes the contents of the on disk cache
@@ -740,6 +752,38 @@ func (vfs *VFS) Chtimes(name string, atime time.Time, mtime time.Time) error {
 		return err
 	}
 	return nil
+}
+
+// Chmod changes the mode of the named file.
+//
+// If name is a symlink the mode of the link itself is changed, not
+// its target (like lchmod). It does not follow the link, so it works
+// on symlinks whose target doesn't exist.
+//
+// The VFS doesn't store file permissions so currently this returns
+// ENOSYS if the file exists and ENOENT if it doesn't.
+func (vfs *VFS) Chmod(name string, mode os.FileMode) error {
+	_, err := vfs.Stat(name)
+	if err != nil {
+		return err
+	}
+	return ENOSYS
+}
+
+// Chown changes the uid and gid of the named file.
+//
+// If name is a symlink the ownership of the link itself is changed,
+// not its target (like lchown). It does not follow the link, so it
+// works on symlinks whose target doesn't exist.
+//
+// The VFS doesn't store file ownership so currently this returns
+// ENOSYS if the file exists and ENOENT if it doesn't.
+func (vfs *VFS) Chown(name string, uid, gid int) error {
+	_, err := vfs.Stat(name)
+	if err != nil {
+		return err
+	}
+	return ENOSYS
 }
 
 // mkdir creates a new directory with the specified name and permission bits

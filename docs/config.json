@@ -13,7 +13,8 @@
   ],
   "ignoreFiles": [
     "~$",
-    "^\\."
+    "^\\.",
+    "\\.go$"
   ],
   "enableGitInfo": true,
   "markup": {

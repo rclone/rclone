@@ -4,13 +4,13 @@ import (
 	"context"
 	_ "embed"
 	"strings"
+	"time"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/serve"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/rc"
 	httplib "github.com/rclone/rclone/lib/http"
@@ -37,6 +37,18 @@ var OptionsInfo = fs.Options{{
 	Name:    "no_cleanup",
 	Default: false,
 	Help:    "Not to cleanup empty folder after object is deleted",
+}, {
+	Name:    "disable_multipart_streaming",
+	Default: false,
+	Help:    "Buffer multipart uploads in memory instead of streaming them to the backend",
+}, {
+	Name:    "multipart_streaming_buffer_limit",
+	Default: fs.SizeSuffix(256 * 1024 * 1024),
+	Help:    "Maximum memory buffered per streamed multipart upload for parts arriving out of order, 0 for unlimited",
+}, {
+	Name:    "multipart_expiry",
+	Default: fs.Duration(24 * time.Hour),
+	Help:    "Abort incomplete multipart uploads idle for longer than this, 0 to keep forever",
 }}.
 	Add(httplib.ConfigInfo).
 	Add(httplib.AuthConfigInfo)
@@ -44,12 +56,15 @@ var OptionsInfo = fs.Options{{
 // Options contains options for the s3 Server
 type Options struct {
 	//TODO add more options
-	ForcePathStyle bool     `config:"force_path_style"`
-	EtagHash       string   `config:"etag_hash"`
-	AuthKey        []string `config:"auth_key"`
-	NoCleanup      bool     `config:"no_cleanup"`
-	Auth           httplib.AuthConfig
-	HTTP           httplib.Config
+	ForcePathStyle                bool          `config:"force_path_style"`
+	EtagHash                      string        `config:"etag_hash"`
+	AuthKey                       []string      `config:"auth_key"`
+	NoCleanup                     bool          `config:"no_cleanup"`
+	DisableMultipartStreaming     bool          `config:"disable_multipart_streaming"`
+	MultipartStreamingBufferLimit fs.SizeSuffix `config:"multipart_streaming_buffer_limit"`
+	MultipartExpiry               fs.Duration   `config:"multipart_expiry"`
+	Auth                          httplib.AuthConfig
+	HTTP                          httplib.Config
 }
 
 // Opt is options set by command line flags
@@ -67,19 +82,19 @@ func init() {
 	serve.AddRc("s3", func(ctx context.Context, f fs.Fs, in rc.Params) (serve.Handle, error) {
 		// Read VFS Opts
 		var vfsOpt = vfscommon.Opt // set default opts
-		err := configstruct.SetAny(in, &vfsOpt)
+		err := rc.ParseOptions(in, "vfsOpt", &vfsOpt)
 		if err != nil {
 			return nil, err
 		}
 		// Read Proxy Opts
 		var proxyOpt = proxy.Opt // set default opts
-		err = configstruct.SetAny(in, &proxyOpt)
+		err = rc.ParseOptions(in, "proxyOpt", &proxyOpt)
 		if err != nil {
 			return nil, err
 		}
 		// Read opts
 		var opt = Opt // set default opts
-		err = configstruct.SetAny(in, &opt)
+		err = rc.ParseOptions(in, "opt", &opt)
 		if err != nil {
 			return nil, err
 		}

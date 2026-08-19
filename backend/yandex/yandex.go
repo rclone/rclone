@@ -85,6 +85,21 @@ func init() {
 			Default:  true,
 			Advanced: true,
 			Hide:     fs.OptionHideConfigurator,
+		}, {
+			Name: "upload_wait",
+			Help: `Wait this long after an upload before setting the modification time.
+
+Yandex Disk finalizes an upload asynchronously on its servers after
+the upload has completed. If the modification time is set while this
+finalization is still in progress the server returns 500 Internal
+Server Error errors.
+
+If you are getting 500 errors on upload then setting this to 2s is
+normally enough to stop them, at the cost of slowing down uploads.
+
+Yandex support recommend a value of 1.5s - 3s.`,
+			Default:  fs.Duration(0),
+			Advanced: true,
 		}}...),
 	})
 }
@@ -95,6 +110,7 @@ type Options struct {
 	HardDelete     bool                 `config:"hard_delete"`
 	Enc            encoder.MultiEncoder `config:"encoding"`
 	SpoofUserAgent bool                 `config:"spoof_ua"`
+	UploadWait     fs.Duration          `config:"upload_wait"`
 }
 
 // Fs represents a remote yandex
@@ -577,7 +593,7 @@ func (f *Fs) waitForJob(ctx context.Context, location string) (err error) {
 		}
 
 		switch status.Status {
-		case "failure":
+		case "failure", "failed":
 			return fmt.Errorf("async operation returned %q", status.Status)
 		case "success":
 			return nil
@@ -662,7 +678,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	return f.purgeCheck(ctx, dir, false)
 }
 
-// copyOrMoves copies or moves directories or files depending on the method parameter
+// copyOrMove copies or moves directories or files depending on the method parameter
 func (f *Fs) copyOrMove(ctx context.Context, method, src, dst string, overwrite bool) (err error) {
 	opts := rest.Opts{
 		Method:     "POST",
@@ -1124,8 +1140,31 @@ func (o *Object) upload(ctx context.Context, in io.Reader, overwrite bool, mimeT
 		resp, err = o.fs.srv.Call(ctx, &opts)
 		return shouldRetry(ctx, resp, err)
 	})
+	if err != nil {
+		return err
+	}
 
-	return err
+	// Wait for PUT to be committed
+	if ur.OperationID != "" {
+		err = o.fs.waitForJob(ctx, rootURL+"/operations/"+ur.OperationID)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Wait for the server to finalize the upload before the file's
+	// metadata is accessed. The operation status above can report
+	// success before the finalization has completed, so give the
+	// server some extra time if configured.
+	if o.fs.opt.UploadWait > 0 {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(time.Duration(o.fs.opt.UploadWait)):
+		}
+	}
+
+	return nil
 }
 
 // Update the already existing object
@@ -1150,14 +1189,29 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
-	//if file uploaded successfully then return metadata
-	o.modTime = modTime
-	o.md5sum = ""                   // according to unit tests after put the md5 is empty.
-	o.size = int64(in1.BytesRead()) // better solution o.readMetaData() ?
-	//and set modTime of uploaded file
-	err = o.SetModTime(ctx, modTime)
-
-	return err
+	// Set the modTime of the uploaded file and re-read the metadata
+	// so the object has the md5sum the server computed for the upload.
+	//
+	// The server sometimes silently drops the custom property holding
+	// the modtime when it is set just after an upload, so check the
+	// modtime read back and set it again if it didn't stick.
+	const maxTries = 3
+	for try := 1; try <= maxTries; try++ {
+		err = o.SetModTime(ctx, modTime)
+		if err != nil {
+			return err
+		}
+		o.hasMetaData = false
+		err = o.readMetaData(ctx)
+		if err != nil {
+			return err
+		}
+		if o.modTime.Equal(modTime) {
+			return nil
+		}
+		fs.Debugf(o, "modtime not stored after upload (got %v, want %v) - setting again (try %d/%d)", o.modTime, modTime, try, maxTries)
+	}
+	return errors.New("failed to store modtime after upload")
 }
 
 // Remove an object

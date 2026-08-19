@@ -70,6 +70,36 @@ func TestFTP(t *testing.T) {
 	servetest.Run(t, "ftp", start)
 }
 
+// TestCheckPasswd checks the builtin authentication accepts only the
+// configured credentials, with an empty configured password accepting any
+// password.
+func TestCheckPasswd(t *testing.T) {
+	for _, test := range []struct {
+		name    string
+		optUser string
+		optPass string
+		user    string
+		pass    string
+		want    bool
+	}{
+		{name: "good", optUser: "user", optPass: "pass", user: "user", pass: "pass", want: true},
+		{name: "bad-pass", optUser: "user", optPass: "pass", user: "user", pass: "PASS", want: false},
+		{name: "bad-user", optUser: "user", optPass: "pass", user: "USER", pass: "pass", want: false},
+		{name: "wrong-length-pass", optUser: "user", optPass: "pass", user: "user", pass: "pass2", want: false},
+		{name: "empty-configured-pass", optUser: "user", optPass: "", user: "user", pass: "anything", want: true},
+		{name: "empty-configured-pass-bad-user", optUser: "user", optPass: "", user: "USER", pass: "anything", want: false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			d := &driver{}
+			d.opt.User = test.optUser
+			d.opt.Pass = test.optPass
+			ok, err := d.CheckPasswd(nil, test.user, test.pass)
+			assert.NoError(t, err)
+			assert.Equal(t, test.want, ok)
+		})
+	}
+}
+
 func TestRc(t *testing.T) {
 	if israce.Enabled {
 		t.Skip("Skipping under race detector as underlying library is racy")
