@@ -55,6 +55,7 @@ import (
 	_ "github.com/rclone/rclone/backend/protondrive"
 	_ "github.com/rclone/rclone/backend/putio"
 	_ "github.com/rclone/rclone/backend/qingstor"
+	_ "github.com/rclone/rclone/backend/quark"
 	_ "github.com/rclone/rclone/backend/quatrix"
 	_ "github.com/rclone/rclone/backend/s3"
 	_ "github.com/rclone/rclone/backend/seafile"
