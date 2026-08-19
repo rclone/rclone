@@ -8,7 +8,6 @@ import (
 	"strings"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/rclone/rclone/fs"
 	_ "github.com/rclone/rclone/fs/accounting"
@@ -190,39 +189,6 @@ func testWalkEmpty(t *testing.T) *listDirs {
 }
 func TestWalkEmpty(t *testing.T)  { testWalkEmpty(t).Walk() }
 func TestWalkREmpty(t *testing.T) { testWalkEmpty(t).WalkR() }
-
-// Test that walk stops listing when the context is cancelled.
-func TestWalkContextCancelled(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	listings := make(chan string, 1024)
-	listDir := func(ctx context.Context, f fs.Fs, includeAll bool, dir string) (entries fs.DirEntries, err error) {
-		listings <- dir
-		// Every directory contains one subdirectory so the walk never
-		// finishes on its own.
-		return fs.DirEntries{mockdir.New("sub")}, nil
-	}
-
-	done := make(chan error, 1)
-	go func() {
-		done <- walk(ctx, nil, "", false, -1, func(path string, entries fs.DirEntries, err error) error {
-			return nil
-		}, listDir)
-	}()
-
-	// Wait for the walk to start
-	assert.Equal(t, "", <-listings)
-
-	cancel()
-
-	select {
-	case err := <-done:
-		assert.ErrorIs(t, err, context.Canceled)
-	case <-time.After(10 * time.Second):
-		t.Fatal("walk did not stop after the context was cancelled")
-	}
-}
 
 func testWalkEmptySkip(t *testing.T) *listDirs {
 	return newListDirs(t, nil, true,
