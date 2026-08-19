@@ -788,6 +788,39 @@ func TestListType(t *testing.T) {
 	assert.Equal(t, dirEntries, got)
 }
 
+func TestListRConfinement(t *testing.T) {
+	ctx := context.Background()
+	f, err := mockfs.NewFs(ctx, "mock", "/", nil)
+	require.NoError(t, err)
+	objects := fs.DirEntries{
+		mockobject.Object("ok"),
+		mockobject.Object(".."),
+		mockobject.Object("../escape"),
+		mockdir.New("../evildir"),
+		// leading-slash climbers: filterDir doesn't guard the ListR path, so
+		// these reach RemoveEscaping directly and must still be dropped.
+		mockobject.Object("/../slashescape"),
+		mockobject.Object("//../../slashescape2"),
+		mockobject.Object("dir/deep"),
+	}
+	var got []string
+	callback := func(entries fs.DirEntries) error {
+		for _, entry := range entries {
+			got = append(got, entry.Remote())
+		}
+		return nil
+	}
+	doListR := func(ctx context.Context, dir string, callback fs.ListRCallback) error {
+		return callback(objects)
+	}
+	// includeAll = true exercises the unconditional confinement - the
+	// include/exclude filter block is skipped in this mode, so an escaping
+	// entry would otherwise pass straight through.
+	err = listR(ctx, f, "", true, ListAll, callback, doListR, false)
+	require.NoError(t, err)
+	require.Equal(t, []string{"ok", "dir/deep"}, got)
+}
+
 func TestListR(t *testing.T) {
 	ctx := context.Background()
 	objects := fs.DirEntries{
