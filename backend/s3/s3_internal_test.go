@@ -7,6 +7,7 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
+	"net/http"
 	"path"
 	"strings"
 	"testing"
@@ -16,6 +17,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go"
+	"github.com/aws/smithy-go/middleware"
+	smithyhttp "github.com/aws/smithy-go/transport/http"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/hash"
@@ -319,6 +322,42 @@ func TestRemoveAWSChunked(t *testing.T) {
 			check(got, got2)
 		})
 	}
+}
+
+// TestAddRenameObjectParams checks the renameObject query parameter and
+// x-amz-rename-source header are added to the request before it would be
+// signed, mimicking the SeaweedFS RenameObject wire contract.
+func TestAddRenameObjectParams(t *testing.T) {
+	httpReq, err := http.NewRequest("PUT", "https://example.com/bucket/dst/path", nil)
+	require.NoError(t, err)
+	req := &smithyhttp.Request{Request: httpReq}
+
+	stack := middleware.NewStack("RenameObject", smithyhttp.NewStackRequest)
+	err = addRenameObjectParams("bucket/src/path")(stack)
+	require.NoError(t, err)
+
+	terminal := middleware.HandlerFunc(func(ctx context.Context, in interface{}) (interface{}, middleware.Metadata, error) {
+		return in, middleware.Metadata{}, nil
+	})
+	out, _, err := stack.Build.HandleMiddleware(context.Background(), req, terminal)
+	require.NoError(t, err)
+
+	got, ok := out.(*smithyhttp.Request)
+	require.True(t, ok)
+	assert.True(t, got.URL.Query().Has("renameObject"))
+	assert.Equal(t, "bucket/src/path", got.Header.Get("x-amz-rename-source"))
+}
+
+// TestMoveCrossBucket checks Move refuses a rename across buckets, since
+// SeaweedFS's RenameObject only moves within a single bucket, instead of
+// sending a request the server can't satisfy.
+func TestMoveCrossBucket(t *testing.T) {
+	srcFs := &Fs{root: "bucketA"}
+	dstFs := &Fs{root: "bucketB"}
+	srcObj := &Object{fs: srcFs, remote: "path/file.txt"}
+
+	_, err := dstFs.Move(context.Background(), srcObj, "path/file.txt")
+	assert.ErrorIs(t, err, fs.ErrorCantMove)
 }
 
 func (f *Fs) InternalTestVersions(t *testing.T) {

@@ -1933,6 +1933,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.Provider == "Rabata" {
 		f.features.Copy = nil
 	}
+	if opt.Provider != "SeaweedFS" {
+		// RenameObject is a SeaweedFS extension to the S3 API - fall back
+		// to copy+delete for all other providers.
+		f.features.Move = nil
+	}
 	if opt.Provider == "TencentCOS" && strings.Contains(opt.Endpoint, "cos.accelerate.myqcloud.com") {
 		// Global Acceleration endpoint does not support bucket creation.
 		f.opt.NoCheckBucket = true
@@ -3288,6 +3293,80 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	return dstObj, nil
+}
+
+// addRenameObjectParams returns a stack mutator that turns a PutObject
+// request into a SeaweedFS RenameObject request by adding the renameObject
+// query parameter and the x-amz-rename-source header before the request is
+// signed.
+//
+// See: https://github.com/seaweedfs/seaweedfs/pull/10659
+func addRenameObjectParams(source string) func(stack *middleware.Stack) error {
+	return func(stack *middleware.Stack) error {
+		return stack.Build.Add(middleware.BuildMiddlewareFunc("AddRenameObjectParams", func(ctx context.Context, in middleware.BuildInput, next middleware.BuildHandler) (middleware.BuildOutput, middleware.Metadata, error) {
+			req, ok := in.Request.(*smithyhttp.Request)
+			if !ok {
+				return middleware.BuildOutput{}, middleware.Metadata{}, fmt.Errorf("unknown transport type %T", in.Request)
+			}
+			query := req.URL.Query()
+			query.Set("renameObject", "")
+			req.URL.RawQuery = query.Encode()
+			req.Header.Set("x-amz-rename-source", source)
+			return next.HandleBuild(ctx, in)
+		}), middleware.After)
+	}
+}
+
+// Move src to this remote using server-side move operations.
+//
+// This is stored with the remote path given.
+//
+// It returns the destination Object and a possible error.
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantMove
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	if f.opt.VersionAt.IsSet() {
+		return nil, errNotWithVersionAt
+	}
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debugf(src, "Can't move - not same remote type")
+		return nil, fs.ErrorCantMove
+	}
+	dstBucket, dstPath := f.split(remote)
+	srcBucket, srcPath := srcObj.split()
+	if srcBucket != dstBucket {
+		// RenameObject only moves within a single bucket
+		fs.Debugf(src, "Can't move - source and destination buckets differ: %q != %q", srcBucket, dstBucket)
+		return nil, fs.ErrorCantMove
+	}
+	err := f.mkdirParent(ctx, remote)
+	if err != nil {
+		return nil, err
+	}
+	source := pathEscape(bucket.Join(srcBucket, srcPath))
+
+	req := &s3.PutObjectInput{
+		Bucket: &dstBucket,
+		Key:    &dstPath,
+	}
+	err = f.pacer.Call(func() (bool, error) {
+		_, err := f.c.PutObject(ctx, req, s3.WithAPIOptions(addRenameObjectParams(source)))
+		if err != nil {
+			if getHTTPStatusCode(err) == http.StatusNotImplemented {
+				// SeaweedFS returns 501 for versioned buckets - fall back to copy+delete
+				return false, fs.ErrorCantMove
+			}
+			return f.shouldRetry(ctx, err)
+		}
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return f.NewObject(ctx, remote)
 }
 
 // Hashes returns the supported hash sets.
