@@ -9,7 +9,7 @@ import (
 )
 
 func TestExtractHeadersMergesCookies(t *testing.T) {
-	s := NewSession()
+	s := NewSession(DefaultEndpoints())
 	s.Cookies = []*http.Cookie{{Name: "existing", Value: "old"}}
 
 	resp := &http.Response{Header: make(http.Header)}
@@ -26,7 +26,7 @@ func TestExtractHeadersMergesCookies(t *testing.T) {
 }
 
 func TestExtractHeadersDeletesEmptyCookies(t *testing.T) {
-	s := NewSession()
+	s := NewSession(DefaultEndpoints())
 	s.Cookies = []*http.Cookie{{Name: "X-APPLE-WEBAUTH-HSA-LOGIN", Value: "stale"}, {Name: "keep", Value: "value"}}
 
 	resp := &http.Response{Header: make(http.Header)}
