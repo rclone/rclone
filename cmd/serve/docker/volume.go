@@ -56,16 +56,18 @@ type VolInfo struct {
 }
 
 // volumeMountPath returns the mountpoint for a volume called name below
-// root, together with whether that path stays confined within root.
+// root, together with whether that path is a strict descendant of root.
 //
 // filepath.Join cleans its result, collapsing any ".." components in the
 // volume name, so a crafted name could otherwise resolve to an arbitrary
-// host path outside root. Callers must reject names for which confined is
-// false rather than creating a directory and mounting there.
+// host path outside root, or to root itself (for an empty or "." name)
+// where a mount would shadow every other volume. Callers must reject names
+// for which confined is false rather than creating a directory and mounting
+// there.
 func volumeMountPath(root, name string) (path string, confined bool) {
 	path = filepath.Join(root, name)
 	root = filepath.Clean(root)
-	return path, path == root || strings.HasPrefix(path, root+string(filepath.Separator))
+	return path, strings.HasPrefix(path, root+string(filepath.Separator))
 }
 
 func newVolume(ctx context.Context, name string, volOpt VolOpts, drv *Driver) (*Volume, error) {

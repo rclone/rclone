@@ -245,6 +245,16 @@ func TestDockerPluginVolumeNameConfined(t *testing.T) {
 	// The volume must not have been registered.
 	_, err = drv.Get(&docker.GetRequest{Name: escape})
 	assert.Error(t, err)
+
+	// A name that resolves to the base directory itself (empty or ".")
+	// must also be rejected, since mounting there would shadow every
+	// other volume.
+	for _, name := range []string{"", ".", filepath.Join("a", "..")} {
+		volReq.Name = name
+		err = drv.Create(volReq)
+		assertErrorContains(t, err, "resolves outside the base directory",
+			"name %q should be rejected", name)
+	}
 }
 
 // TestDockerPluginRestoreStateConfined checks that a persisted state file
