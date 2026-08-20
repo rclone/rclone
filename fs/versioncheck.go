@@ -1,7 +1,7 @@
-//go:build !go1.25
+//go:build !go1.26
 
 package fs
 
-// Upgrade to Go version 1.25 to compile rclone - latest stable go
+// Upgrade to Go version 1.26 to compile rclone - latest stable go
 // compiler recommended.
-func init() { Go_version_1_25_required_for_compilation() }
+func init() { Go_version_1_26_required_for_compilation() }
