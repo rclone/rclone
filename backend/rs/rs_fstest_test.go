@@ -39,6 +39,10 @@ func TestIntegration(t *testing.T) {
 // local shard directories (k=3, m=1), configured in-process like the chunker,
 // crypt and union standard tests. No external test server is needed, so it
 // runs on all platforms including Windows.
+//
+// The remote name must NOT match a script in fstest/testserver/init.d
+// (i.e. not TestRsLocal), otherwise the fstest harness executes that
+// script, which fails on Windows.
 func TestStandard(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
@@ -47,7 +51,7 @@ func TestStandard(t *testing.T) {
 	for i := range dirs {
 		dirs[i] = t.TempDir()
 	}
-	name := "TestRsLocal"
+	name := "TestRsStandard"
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: name + ":",
 		NilObject:  (*rs.Object)(nil),
