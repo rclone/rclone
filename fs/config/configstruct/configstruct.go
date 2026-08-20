@@ -287,7 +287,7 @@ func setIfSameType(aPtr any, b any) bool {
 	}
 
 	// Special case: if target is []string and source is a slice or array
-	if aVal.Type() == reflect.TypeOf([]string(nil)) && (bVal.Kind() == reflect.Slice || bVal.Kind() == reflect.Array) {
+	if aVal.Type() == reflect.TypeFor[[]string]() && (bVal.Kind() == reflect.Slice || bVal.Kind() == reflect.Array) {
 		strSlice := make([]string, bVal.Len())
 		ok := true
 		for i := 0; i < bVal.Len(); i++ {
