@@ -1019,8 +1019,7 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 	// intermittently returns an HTML challenge page with a 200
 	// status instead of JSON. This surfaces as a JSON syntax error,
 	// so retry it to let the pacer back off until the block lifts.
-	var syntaxErr *json.SyntaxError
-	if errors.As(err, &syntaxErr) {
+	if _, ok := errors.AsType[*json.SyntaxError](err); ok {
 		return true, err
 	}
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err

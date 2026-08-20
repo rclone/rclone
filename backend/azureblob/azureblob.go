@@ -576,8 +576,7 @@ func (f *Fs) shouldRetry(ctx context.Context, err error) (bool, error) {
 	if fserrors.ContextError(ctx, &err) {
 		return false, err
 	}
-	var storageErr *azcore.ResponseError
-	if errors.As(err, &storageErr) {
+	if storageErr, ok := errors.AsType[*azcore.ResponseError](err); ok {
 		// General errors from:
 		// https://learn.microsoft.com/en-us/rest/api/storageservices/common-rest-api-error-codes
 		// Blob specific errors from:
@@ -2796,8 +2795,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 // isInvalidBlockOrBlob looks for the InvalidBlockOrBlob error in err
 // returning true if it is found
 func isInvalidBlockOrBlob(err error) bool {
-	var storageErr *azcore.ResponseError
-	if errors.As(err, &storageErr) {
+	if storageErr, ok := errors.AsType[*azcore.ResponseError](err); ok {
 		return storageErr.ErrorCode == string(bloberror.InvalidBlobOrBlock)
 	}
 	return false

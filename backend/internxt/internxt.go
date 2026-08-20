@@ -54,8 +54,7 @@ func (f *Fs) shouldRetry(ctx context.Context, err error) (bool, error) {
 	if fserrors.ContextError(ctx, &err) {
 		return false, err
 	}
-	var httpErr *sdkerrors.HTTPError
-	if errors.As(err, &httpErr) {
+	if httpErr, ok := errors.AsType[*sdkerrors.HTTPError](err); ok {
 		switch httpErr.StatusCode() {
 		case 401:
 			if !f.authFailed {
@@ -1064,8 +1063,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		err := o.f.pacer.Call(func() (bool, error) {
 			err := files.DeleteFile(ctx, o.f.cfg, backupUUID)
 			if err != nil {
-				var httpErr *sdkerrors.HTTPError
-				if errors.As(err, &httpErr) {
+				if httpErr, ok := errors.AsType[*sdkerrors.HTTPError](err); ok {
 					// Treat 404 (Not Found) and 204 (No Content) as success
 					switch httpErr.StatusCode() {
 					case 404, 204:
@@ -1117,8 +1115,7 @@ func isEmptyFileLimitError(err error) bool {
 // fileTooLargeError extracts the SDK's FileTooLargeError from a wrapped error
 // chain, returning it (or nil) so callers can branch on the size limit.
 func fileTooLargeError(err error) *sdkerrors.FileTooLargeError {
-	var tooLarge *sdkerrors.FileTooLargeError
-	if errors.As(err, &tooLarge) {
+	if tooLarge, ok := errors.AsType[*sdkerrors.FileTooLargeError](err); ok {
 		return tooLarge
 	}
 	return nil

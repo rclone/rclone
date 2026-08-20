@@ -262,8 +262,7 @@ func shouldRetry(ctx context.Context, err error) (bool, error) {
 	if err == nil {
 		return false, nil
 	}
-	var apiErr *proton.APIError
-	if errors.As(err, &apiErr) {
+	if apiErr, ok := errors.AsType[*proton.APIError](err); ok {
 		// Code 200501 is a generic Drive operation-failure code. Proton also
 		// returns it with an HTTP 422 for permanent validation failures (for
 		// example a content key packet that cannot be verified, or an upload
