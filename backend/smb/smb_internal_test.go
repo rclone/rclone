@@ -11,12 +11,41 @@ import (
 	"testing"
 	"time"
 
+	smb2 "github.com/cloudsoda/go-smb2"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// TestConnWithContext checks that withContext returns session and share
+// wrappers bound to the given ctx without modifying the pooled conn, so
+// cancelling one operation's ctx can't affect a connection still in the pool.
+func TestConnWithContext(t *testing.T) {
+	origSession := &smb2.Session{}
+	origShare := &smb2.Share{}
+	c := &conn{smbSession: origSession, smbShare: origShare}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	session, share := c.withContext(ctx)
+	assert.NotSame(t, origSession, session, "should return a new session wrapper, not mutate the pooled one")
+	assert.NotSame(t, origShare, share, "should return a new share wrapper, not mutate the pooled one")
+	assert.Same(t, origSession, c.smbSession, "pooled conn's session must be unchanged")
+	assert.Same(t, origShare, c.smbShare, "pooled conn's share must be unchanged")
+}
+
+// TestConnWithContextNilShare checks withContext tolerates a conn with no
+// mounted share, which happens before mountShare has been called.
+func TestConnWithContextNilShare(t *testing.T) {
+	c := &conn{smbSession: &smb2.Session{}}
+
+	session, share := c.withContext(context.Background())
+	assert.NotNil(t, session)
+	assert.Nil(t, share)
+}
 
 func TestDialClosesConnectionOnSetupError(t *testing.T) {
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
@@ -91,6 +120,67 @@ func TestUploadConnectionReuse(t *testing.T) {
 	pooled := len(f.pool)
 	f.poolMu.Unlock()
 	assert.Equal(t, 1, pooled, "upload should leave exactly one connection in the pool")
+}
+
+// cancelAfterReader cancels ctx after n bytes have been read from r, to
+// simulate a caller cancelling an in-progress upload.
+type cancelAfterReader struct {
+	r      io.Reader
+	n      int
+	cancel context.CancelFunc
+}
+
+func (c *cancelAfterReader) Read(p []byte) (int, error) {
+	if c.n <= 0 {
+		c.cancel()
+		<-time.After(10 * time.Millisecond) // give ctx cancellation time to propagate
+		return 0, context.Canceled
+	}
+	if len(p) > c.n {
+		p = p[:c.n]
+	}
+	n, err := c.r.Read(p)
+	c.n -= n
+	return n, err
+}
+
+// TestUploadCleansUpOnCancel checks that cancelling an upload's context
+// still results in the partial file being removed from the server, ie the
+// cleanup in Object.Update doesn't itself get cancelled.
+//
+// This needs a real SMB server so it is skipped if one isn't configured.
+func TestUploadCleansUpOnCancel(t *testing.T) {
+	ctx := context.Background()
+	fstest.Initialise()
+	remoteName := *fstest.RemoteName
+	if remoteName == "" {
+		remoteName = "TestSMB:rclone"
+	}
+	remote, err := fs.NewFs(ctx, remoteName)
+	if errors.Is(err, fs.ErrorNotFoundInConfigFile) {
+		t.Skipf("skipping as %q is not configured", remoteName)
+	}
+	require.NoError(t, err)
+	f, ok := remote.(*Fs)
+	if !ok {
+		t.Skipf("skipping as %q is not an SMB remote", remoteName)
+	}
+	defer func() { require.NoError(t, f.Shutdown(ctx)) }()
+
+	contents := strings.Repeat("cancel upload test ", 1024)
+	remotePath := fmt.Sprintf("rclone-test-cancel-upload-%d.txt", time.Now().UnixNano())
+	src := object.NewStaticObjectInfo(remotePath, time.Now(), int64(len(contents)), true, nil, nil)
+
+	uploadCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	in := &cancelAfterReader{r: strings.NewReader(contents), n: len(contents) / 2, cancel: cancel}
+
+	o := &Object{fs: f, remote: remotePath}
+	err = o.Update(uploadCtx, in, src)
+	require.Error(t, err, "upload should fail once cancelled")
+
+	_, err = f.NewObject(ctx, remotePath)
+	assert.ErrorIs(t, err, fs.ErrorObjectNotFound, "partial file should have been cleaned up despite the cancelled context")
 }
 
 // TestIsPathDir tests the isPathDir function logic
