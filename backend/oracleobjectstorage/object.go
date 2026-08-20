@@ -83,9 +83,9 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 func (o *Object) headObject(ctx context.Context) (info *objectstorage.HeadObjectResponse, err error) {
 	bucketName, objectPath := o.split()
 	req := objectstorage.HeadObjectRequest{
-		NamespaceName: common.String(o.fs.opt.Namespace),
-		BucketName:    common.String(bucketName),
-		ObjectName:    common.String(objectPath),
+		NamespaceName: new(o.fs.opt.Namespace),
+		BucketName:    new(bucketName),
+		ObjectName:    new(objectPath),
 	}
 	useBYOKHeadObject(o.fs, &req)
 	var response objectstorage.HeadObjectResponse
@@ -235,10 +235,10 @@ func (o *Object) SetTier(tier string) (err error) {
 	}
 
 	req := objectstorage.UpdateObjectStorageTierRequest{
-		NamespaceName: common.String(o.fs.opt.Namespace),
-		BucketName:    common.String(bucketName),
+		NamespaceName: new(o.fs.opt.Namespace),
+		BucketName:    new(bucketName),
 		UpdateObjectStorageTierDetails: objectstorage.UpdateObjectStorageTierDetails{
-			ObjectName:  common.String(bucketPath),
+			ObjectName:  new(bucketPath),
 			StorageTier: tierEnum,
 		},
 	}
@@ -321,9 +321,9 @@ func (o *Object) Storable() bool {
 func (o *Object) Remove(ctx context.Context) error {
 	bucketName, bucketPath := o.split()
 	req := objectstorage.DeleteObjectRequest{
-		NamespaceName: common.String(o.fs.opt.Namespace),
-		BucketName:    common.String(bucketName),
-		ObjectName:    common.String(bucketPath),
+		NamespaceName: new(o.fs.opt.Namespace),
+		BucketName:    new(bucketName),
+		ObjectName:    new(bucketPath),
 	}
 	err := o.fs.pacer.Call(func() (bool, error) {
 		resp, err := o.fs.srv.DeleteObject(ctx, req)
@@ -336,9 +336,9 @@ func (o *Object) Remove(ctx context.Context) error {
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
 	bucketName, bucketPath := o.split()
 	req := objectstorage.GetObjectRequest{
-		NamespaceName: common.String(o.fs.opt.Namespace),
-		BucketName:    common.String(bucketName),
-		ObjectName:    common.String(bucketPath),
+		NamespaceName: new(o.fs.opt.Namespace),
+		BucketName:    new(bucketName),
+		ObjectName:    new(bucketPath),
 	}
 	o.applyGetObjectOptions(&req, options...)
 	useBYOKGetObject(o.fs, &req)
@@ -456,15 +456,15 @@ func (o *Object) applyPutOptions(req *objectstorage.PutObjectRequest, options ..
 		case "":
 			// ignore
 		case "cache-control":
-			req.CacheControl = common.String(value)
+			req.CacheControl = new(value)
 		case "content-disposition":
-			req.ContentDisposition = common.String(value)
+			req.ContentDisposition = new(value)
 		case "content-encoding":
-			req.ContentEncoding = common.String(value)
+			req.ContentEncoding = new(value)
 		case "content-language":
-			req.ContentLanguage = common.String(value)
+			req.ContentLanguage = new(value)
 		case "content-type":
-			req.ContentType = common.String(value)
+			req.ContentType = new(value)
 		default:
 			if strings.HasPrefix(lowerKey, ociMetaPrefix) {
 				req.OpcMeta[lowerKey] = value
@@ -496,15 +496,15 @@ func (o *Object) applyGetObjectOptions(req *objectstorage.GetObjectRequest, opti
 		case "":
 			// ignore
 		case "cache-control":
-			req.HttpResponseCacheControl = common.String(value)
+			req.HttpResponseCacheControl = new(value)
 		case "content-disposition":
-			req.HttpResponseContentDisposition = common.String(value)
+			req.HttpResponseContentDisposition = new(value)
 		case "content-encoding":
-			req.HttpResponseContentEncoding = common.String(value)
+			req.HttpResponseContentEncoding = new(value)
 		case "content-language":
-			req.HttpResponseContentLanguage = common.String(value)
+			req.HttpResponseContentLanguage = new(value)
 		case "content-type":
-			req.HttpResponseContentType = common.String(value)
+			req.HttpResponseContentType = new(value)
 		case "range":
 			// do nothing
 		default:

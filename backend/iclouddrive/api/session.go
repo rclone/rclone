@@ -718,7 +718,7 @@ func (s *Session) GetAuthState(ctx context.Context) (*AuthStateResponse, error) 
 		Path:          "",
 		ExtraHeaders:  s.GetAuthHeaders(map[string]string{}),
 		RootURL:       authEndpoint,
-		ContentLength: int64Ptr(0),
+		ContentLength: new(int64(0)),
 	}
 	// Use srv.Call directly to capture the raw response body for debugging
 	resp, err := s.srv.Call(ctx, &opts)
@@ -828,7 +828,7 @@ func (s *Session) TrustSession(ctx context.Context) error {
 		ExtraHeaders:  s.GetAuthHeaders(map[string]string{}),
 		RootURL:       authEndpoint,
 		NoResponse:    true,
-		ContentLength: int64Ptr(0),
+		ContentLength: new(int64(0)),
 	}
 
 	_, err := s.Request(ctx, opts, nil, nil)
@@ -846,7 +846,7 @@ func (s *Session) ValidateSession(ctx context.Context) error {
 		Path:          "/validate",
 		ExtraHeaders:  s.GetHeaders(map[string]string{}),
 		RootURL:       setupEndpoint,
-		ContentLength: int64Ptr(0),
+		ContentLength: new(int64(0)),
 	}
 	_, err := s.Request(ctx, opts, nil, &s.AccountInfo)
 	if err != nil {
@@ -903,8 +903,6 @@ func GetCommonHeaders(overwrite map[string]string) map[string]string {
 	maps.Copy(headers, overwrite)
 	return headers
 }
-
-func int64Ptr(v int64) *int64 { return &v }
 
 // NewSession creates a new Session instance with default values
 func NewSession() *Session {

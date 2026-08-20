@@ -2092,7 +2092,7 @@ func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
 			updateReq.Description = value
 		case "favorite":
 			if favorite, err := strconv.ParseBool(value); err == nil {
-				updateReq.Favorite = api.BoolPtr(favorite)
+				updateReq.Favorite = new(favorite)
 			}
 		case "content-type":
 			// Allow setting/overriding MIME type

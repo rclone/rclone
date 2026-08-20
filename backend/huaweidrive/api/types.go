@@ -224,11 +224,6 @@ var GlobalDomains = map[string]bool{
 	"drive.cloud.hicloud.com":       true,
 }
 
-// BoolPtr returns a pointer to a bool value (helper for UpdateFileRequest)
-func BoolPtr(b bool) *bool {
-	return &b
-}
-
 // StartCursor represents response to Changes.getStartCursor endpoint
 type StartCursor struct {
 	Category    string `json:"category"` // "drive#startCursor"
