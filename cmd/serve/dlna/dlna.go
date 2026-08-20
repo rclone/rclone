@@ -307,8 +307,7 @@ func (s *server) serviceControlHandler(w http.ResponseWriter, r *http.Request) {
 	var env soap.Envelope
 	r.Body = http.MaxBytesReader(w, r.Body, maxSOAPBodySize)
 	if err := xml.NewDecoder(r.Body).Decode(&env); err != nil {
-		var maxBytesErr *http.MaxBytesError
-		if errors.As(err, &maxBytesErr) {
+		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
 			http.Error(w, "SOAP request body too large", http.StatusRequestEntityTooLarge)
 			return
 		}

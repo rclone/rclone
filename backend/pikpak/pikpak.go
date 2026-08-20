@@ -432,8 +432,7 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 
 	// traceback to possible api.Error wrapped in err, and re-authorize if necessary
 	// "unauthenticated" (16): when access_token is invalid, but should be handled by oauthutil
-	var terr *oauth2.RetrieveError
-	if errors.As(err, &terr) {
+	if terr, ok := errors.AsType[*oauth2.RetrieveError](err); ok {
 		apiErr := new(api.Error)
 		if err := json.Unmarshal(terr.Body, apiErr); err == nil {
 			if apiErr.Reason == "invalid_grant" {
