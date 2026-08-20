@@ -70,6 +70,7 @@ const (
 	defaultChunkSize      = 4 * fs.Mebi
 	defaultAccessTier     = blob.AccessTier("") // FIXME AccessTierNone
 	sasCopyValidity       = time.Hour           // how long SAS should last when doing server side copy
+	sasCopyStartSkew      = 15 * time.Minute    // how far back SAS should start to allow for clock skew
 )
 
 // setAcceptEncodingGzip is a per-call policy that sets Accept-Encoding: gzip
@@ -1827,7 +1828,7 @@ func (f *Fs) getUserDelegation(ctx context.Context) (*service.UserDelegationCred
 	}
 
 	// Validity window
-	start := time.Now().UTC()
+	start := time.Now().UTC().Add(-sasCopyStartSkew)
 	expiry := start.Add(2 * sasCopyValidity)
 	startStr := start.Format(time.RFC3339)
 	expiryStr := expiry.Format(time.RFC3339)
@@ -1876,7 +1877,7 @@ func (o *Object) getAuth(ctx context.Context, noAuth bool) (srcURL string, err e
 		// Build the SAS values
 		perms := sas.BlobPermissions{Read: true}
 		container, containerPath := o.split()
-		start := time.Now().UTC()
+		start := time.Now().UTC().Add(-sasCopyStartSkew)
 		expiry := start.Add(sasCopyValidity)
 		vals := sas.BlobSignatureValues{
 			StartTime:     start,

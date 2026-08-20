@@ -1190,3 +1190,19 @@ put them back in again. -->
 - Loi Nguyen <vanloi999@gmail.com>
 - debaditya <82204129+DebadityaHait@users.noreply.github.com>
 - alliasgher <alliasgher123@gmail.com>
+- Anton Karpov <karpovantonme@gmail.com>
+- Edward Klesel <eklesel@bluecove.com>
+- Christian De Santis <41491267+christiandesantis@users.noreply.github.com>
+- Rodrigo Rodrigues <191260313+MVP0TAT0@users.noreply.github.com>
+- Recoordinate <296084221+latent-9@users.noreply.github.com>
+- Jiacheng Xu <169599847+Stardust0831@users.noreply.github.com>
+- Teddy Tennant <teddytennant@icloud.com>
+- Dean Chen <862469039@qq.com>
+- Pastalikek65 <Pastalikek65@users.noreply.github.com>
+- Morax <james20081204@gmail.com>
+- Shurong Cao <170531907+CAOShurong@users.noreply.github.com>
+- Dave <davixk83@gmail.com>
+- max <max@maxmax.ch>
+- Hakan İSMAİL <hakanismail53@gmail.com>
+- Shantanav Mukherjee <shantanav7@gmail.com>
+- VXNCXNX <VXNCXNX@users.noreply.github.com>

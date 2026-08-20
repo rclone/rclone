@@ -1818,8 +1818,20 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 		defer func() {
 			tr.Done(ctx, err)
 		}()
-		body := io.NopCloser(in)    // we let the server close the body
-		in := tr.Account(ctx, body) // account the transfer (no buffering)
+		// The stream can only be read once, so hash it on the way past
+		// and compare with the destination afterwards.
+		hashType, hashOption := CommonHash(ctx, fdst, fdst)
+		var hasher *hash.MultiHasher
+		var streamIn io.Reader = in
+		if hashType != hash.None {
+			hasher, err = hash.NewMultiHasherTypes(hashOption.Hashes)
+			if err != nil {
+				return nil, err
+			}
+			streamIn = io.TeeReader(streamIn, hasher)
+		}
+		body := io.NopCloser(streamIn) // we let the server close the body
+		in := tr.Account(ctx, body)    // account the transfer (no buffering)
 
 		if SkipDestructive(ctx, dstFileName, "upload from pipe") {
 			// prevents "broken pipe" errors
@@ -1827,7 +1839,7 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 			return nil, err
 		}
 
-		var options []fs.OpenOption
+		options := []fs.OpenOption{hashOption}
 		for _, option := range fs.GetConfig(ctx).UploadHeaders {
 			options = append(options, option)
 		}
@@ -1836,6 +1848,27 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 		if err != nil {
 			fs.Errorf(dstFileName, "Post request put error: %v", err)
 
+			return nil, err
+		}
+
+		// Verify the upload
+		if sizeDiffers(ctx, info, obj) {
+			err = fmt.Errorf("corrupted on transfer: sizes differ src %d vs dst(%s) %d", size, obj.Fs(), obj.Size())
+		} else if hasher != nil {
+			src := object.NewStaticObjectInfo(dstFileName, modTime, size, true, hasher.Sums(), fdst)
+			// checkHashes logs and counts errors
+			same, _, srcHash, dstHash, _ := checkHashes(ctx, src, obj, hashType)
+			if !same {
+				err = fmt.Errorf("corrupted on transfer: %v hashes differ src %q vs dst(%s) %q", hashType, srcHash, obj.Fs(), dstHash)
+			}
+		}
+		if err != nil {
+			err = fs.CountError(ctx, err)
+			fs.Errorf(obj, "%v", err)
+			fs.Infof(obj, "Removing failed copy")
+			if removeErr := obj.Remove(ctx); removeErr != nil {
+				fs.Infof(obj, "Failed to remove failed copy: %s", removeErr)
+			}
 			return nil, err
 		}
 	} else {

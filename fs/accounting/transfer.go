@@ -66,6 +66,7 @@ type Transfer struct {
 	acc         *Account
 	err         error
 	completedAt time.Time
+	doneBytes   int64
 }
 
 // newCheckingTransfer instantiates new checking of the object.
@@ -116,12 +117,20 @@ func (tr *Transfer) Done(ctx context.Context, err error) {
 		}
 		// Signal done with accounting
 		acc.Done()
-		// free the account since we may keep the transfer
-		acc = nil
+	}
+
+	var doneBytes int64
+	if acc != nil {
+		doneBytes, _ = acc.progress()
 	}
 
 	tr.mu.Lock()
 	tr.completedAt = time.Now()
+	if acc != nil {
+		tr.doneBytes = doneBytes
+	}
+	// free the account since we may keep the transfer
+	tr.acc = nil
 	tr.mu.Unlock()
 
 	if tr.checking {
@@ -181,7 +190,7 @@ func (tr *Transfer) Snapshot() TransferSnapshot {
 	tr.mu.RLock()
 	defer tr.mu.RUnlock()
 
-	var s, b int64 = tr.size, 0
+	b, s := tr.doneBytes, tr.size
 	if tr.acc != nil {
 		b, s = tr.acc.progress()
 	}

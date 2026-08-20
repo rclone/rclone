@@ -2260,7 +2260,7 @@ Most multi-thread transfers do not take additional memory, but some do
 at maximum `--transfers` \* `--multi-thread-chunk-size` \*
 `--multi-thread-streams` or specifically for the s3 backend
 `--transfers` \* `--s3-chunk-size` \* `--s3-concurrency`. However you
-can use the the [--max-buffer-memory](/docs/#max-buffer-memory) flag
+can use the [--max-buffer-memory](/docs/#max-buffer-memory) flag
 to control the maximum memory used here.
 
 **NB** that this **only** works with supported backends as the
@@ -2378,8 +2378,10 @@ describes what aspect is being measured:
 - `size` - order by the size of the files
 - `name` - order by the full path of the files
 - `modtime` - order by the modification date of the files
+- `pattern` - order by a list of path glob patterns
 
-This can have a modifier appended with a comma:
+The `size`, `name` and `modtime` comparisons can have a modifier appended with
+a comma:
 
 - `ascending` or `asc` - order so that the smallest (or oldest) is processed first
 - `descending` or `desc` - order so that the largest (or newest) is processed first
@@ -2398,11 +2400,18 @@ processed continuously.
 
 If no modifier is supplied then the order is `ascending`.
 
+For `pattern`, append one or more comma-separated patterns. Patterns use the
+[filter pattern syntax](/filtering/#patterns). Files matching the first pattern
+are processed first, followed by files matching the second pattern, and so on.
+Files which do not match a pattern are processed last. Within each group, files
+are ordered by full path. Patterns cannot contain a comma.
+
 For example
 
 - `--order-by size,desc` - send the largest files first
 - `--order-by modtime,ascending` - send the oldest files first
 - `--order-by name` - send the files with alphabetically by path first
+- `--order-by 'pattern,*.tar.gz,*.md5'` - send archives before checksum files
 
 If the `--order-by` flag is not supplied or it is supplied with an
 empty string then the default ordering will be used which is as
