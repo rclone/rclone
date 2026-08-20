@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"path"
 	"path/filepath"
@@ -208,6 +209,32 @@ func TestSymlink(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "file.txt"[2:5+1], string(contents))
 	require.NoError(t, in.Close())
+}
+
+// TestSymlinkRangeBeyondEnd checks range requests on a translated
+// symlink's target string don't panic.
+func TestSymlinkRangeBeyondEnd(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	f := r.Flocal.(*Fs)
+	linksMode(f)
+
+	const target = "file.txt"
+	require.NoError(t, putLink(ctx, f, "symlink.txt", target))
+
+	o, err := f.NewObject(ctx, "symlink.txt"+fs.LinkSuffix)
+	require.NoError(t, err)
+
+	// An offset just past the end and a wildly large offset must both read
+	// empty rather than panicking.
+	for _, start := range []int64{int64(len(target)), int64(len(target)) + 1, math.MaxInt64} {
+		in, err := o.Open(ctx, &fs.RangeOption{Start: start, End: -1})
+		require.NoError(t, err)
+		contents, err := io.ReadAll(in)
+		require.NoError(t, err)
+		require.Empty(t, string(contents))
+		require.NoError(t, in.Close())
+	}
 }
 
 func TestSymlinkError(t *testing.T) {
