@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -564,8 +565,7 @@ func TestSyncSetDelayedModTimes(t *testing.T) {
 
 	// Timestamp the directories in reverse order
 	ts := t1
-	for i := len(dirs) - 1; i >= 0; i-- {
-		dir := dirs[i]
+	for _, dir := range slices.Backward(dirs) {
 		_, err := operations.SetDirModTime(ctx, r.Flocal, nil, dir, ts)
 		require.NoError(t, err)
 		ts = ts.Add(time.Minute)
