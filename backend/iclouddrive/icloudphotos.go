@@ -736,10 +736,7 @@ func (f *PhotosFs) ListR(ctx context.Context, dir string, callback fs.ListRCallb
 	}
 	close(jobCh)
 
-	workers := fs.GetConfig(ctx).Checkers
-	if len(jobs) < workers {
-		workers = len(jobs)
-	}
+	workers := min(len(jobs), fs.GetConfig(ctx).Checkers)
 	errs := make(chan error, workers)
 
 	for range workers {
