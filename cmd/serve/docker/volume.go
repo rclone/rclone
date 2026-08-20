@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/rclone/rclone/cmd/mountlib"
@@ -54,8 +55,24 @@ type VolInfo struct {
 	Status     map[string]any `json:",omitempty"`
 }
 
+// volumeMountPath returns the mountpoint for a volume called name below
+// root, together with whether that path stays confined within root.
+//
+// filepath.Join cleans its result, collapsing any ".." components in the
+// volume name, so a crafted name could otherwise resolve to an arbitrary
+// host path outside root. Callers must reject names for which confined is
+// false rather than creating a directory and mounting there.
+func volumeMountPath(root, name string) (path string, confined bool) {
+	path = filepath.Join(root, name)
+	root = filepath.Clean(root)
+	return path, path == root || strings.HasPrefix(path, root+string(filepath.Separator))
+}
+
 func newVolume(ctx context.Context, name string, volOpt VolOpts, drv *Driver) (*Volume, error) {
-	path := filepath.Join(drv.root, name)
+	path, confined := volumeMountPath(drv.root, name)
+	if !confined {
+		return nil, fmt.Errorf("invalid volume name %q: resolves outside the base directory", name)
+	}
 	mnt := &mountlib.MountPoint{
 		MountPoint: path,
 	}
