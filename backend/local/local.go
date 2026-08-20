@@ -1423,6 +1423,13 @@ func (o *Object) openTranslatedLink(offset, limit int64) (lrc io.ReadCloser, err
 	if err != nil {
 		return nil, err
 	}
+	// Clamp offset into range to avoid panic
+	if offset < 0 {
+		offset = 0
+	}
+	if offset > int64(len(linkdst)) {
+		offset = int64(len(linkdst))
+	}
 	return readers.NewLimitedReadCloser(io.NopCloser(strings.NewReader(linkdst[offset:])), limit), nil
 }
 
