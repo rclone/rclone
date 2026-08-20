@@ -146,8 +146,10 @@ func (f *Fs) readZip() (singleObject bool, err error) {
 		}
 		remote = path.Join(f.prefix, remote)
 		if f.root != "" {
-			// Ignore all files outside the root
-			if !strings.HasPrefix(remote, f.root) {
+			// Ignore all files outside the root, requiring a path
+			// boundary so that root "foo" does not also match a
+			// sibling entry such as "foobar"
+			if remote != f.root && !strings.HasPrefix(remote, f.root+"/") {
 				continue
 			}
 			if remote == f.root {
