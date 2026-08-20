@@ -3114,7 +3114,7 @@ func testLoggerVsLsf(ctx context.Context, fdst, fsrc fs.Fs, logger *bytes.Buffer
 // not be compared against the hash the logger predicted.
 func blankMissingHashes(logger, lsf *bytes.Buffer) {
 	noHash := map[string]bool{}
-	for _, line := range bytes.Split(lsf.Bytes(), []byte("\n")) {
+	for line := range bytes.SplitSeq(lsf.Bytes(), []byte("\n")) {
 		elements := bytes.SplitN(line, []byte(";"), 4)
 		if len(elements) == 4 && len(elements[1]) == 0 {
 			noHash[string(elements[3])] = true

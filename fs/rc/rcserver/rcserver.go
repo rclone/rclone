@@ -233,7 +233,7 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 
 	// Check for Prefer: respond-async header (RFC 7240)
 	preferAsync := false
-	for _, pref := range strings.Split(r.Header.Get("Prefer"), ",") {
+	for pref := range strings.SplitSeq(r.Header.Get("Prefer"), ",") {
 		if strings.EqualFold(strings.TrimSpace(pref), "respond-async") {
 			preferAsync = true
 			in["_async"] = true
