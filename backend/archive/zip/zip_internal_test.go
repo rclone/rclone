@@ -83,3 +83,24 @@ func TestReadZipSlip(t *testing.T) {
 	}
 	assert.Equal(t, []string{"good.txt"}, remotes)
 }
+
+// Mounting with a non-empty root must only expose entries within that
+// root directory, not sibling directories that merely share a name
+// prefix (root "foo" must not match "foobar").
+func TestReadZipRootBoundary(t *testing.T) {
+	ctx := context.Background()
+	dir := t.TempDir()
+	name := writeZip(t, dir, "test.zip",
+		"foo/a.txt",
+		"foobar/b.txt",
+	)
+
+	localFs, err := cache.Get(ctx, dir)
+	require.NoError(t, err)
+
+	f, err := New(ctx, localFs, name, "", "foo")
+	require.NoError(t, err)
+
+	remotes := allRemotes(t, f)
+	assert.Equal(t, []string{"a.txt"}, remotes)
+}
