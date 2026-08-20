@@ -103,6 +103,36 @@ func (c *conn) closed() bool {
 	return c.smbSession.Echo() != nil
 }
 
+// withContext returns the session and share bound to ctx so that a
+// single operation's I/O can be cancelled without affecting the
+// pooled connection, which keeps its own long-lived context.
+func (c *conn) withContext(ctx context.Context) (session *smb2.Session, share *smb2.Share) {
+	session = c.smbSession.WithContext(ctx)
+	if c.smbShare != nil {
+		share = c.smbShare.WithContext(ctx)
+	}
+	return session, share
+}
+
+// cleanupGracePeriod bounds how long a withCleanupContext-bound share
+// remains usable after the caller's ctx has been cancelled, so cleanup
+// requests (closing or removing a file) have a chance to reach the server.
+const cleanupGracePeriod = 30 * time.Second
+
+// withCleanupContext returns a share which stays usable for
+// cleanupGracePeriod after ctx is cancelled, so that a file opened on it
+// can still be closed or removed even if the operation that opened it was
+// cancelled. It does not itself watch ctx for cancellation - callers that
+// need the operation to be interruptible must check ctx themselves, e.g.
+// by wrapping the reader or writer with readers.NewContextReader.
+func (c *conn) withCleanupContext(ctx context.Context) (share *smb2.Share, cancel func()) {
+	cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), cleanupGracePeriod)
+	if c.smbShare == nil {
+		return nil, cancel
+	}
+	return c.smbShare.WithContext(cleanupCtx), cancel
+}
+
 // Show that we are using a SMB session
 //
 // Call removeSession() when done
