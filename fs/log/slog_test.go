@@ -287,11 +287,11 @@ func TestOutputHandlerConcurrency(t *testing.T) {
 	var wg sync.WaitGroup
 
 	// Goroutines calling Handle (text format)
-	for i := 0; i < goroutines; i++ {
+	for range goroutines {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for j := 0; j < iterations; j++ {
+			for range iterations {
 				r := slog.NewRecord(t0, slog.LevelInfo, "concurrent text", 0)
 				r.AddAttrs(slog.String("object", "obj"))
 				_ = h.Handle(ctx, r)
@@ -300,11 +300,11 @@ func TestOutputHandlerConcurrency(t *testing.T) {
 	}
 
 	// Goroutines calling setFormat (switching between text and JSON)
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for j := 0; j < iterations; j++ {
+			for j := range iterations {
 				if j%2 == 0 {
 					h.setFormat(logFormatDate | logFormatTime)
 				} else {
@@ -318,7 +318,7 @@ func TestOutputHandlerConcurrency(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		for j := 0; j < iterations; j++ {
+		for range iterations {
 			h.setFormatFlags(logFormatPid | logFormatMicroseconds)
 			h.clearFormatFlags(logFormatPid | logFormatMicroseconds)
 		}
@@ -328,7 +328,7 @@ func TestOutputHandlerConcurrency(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		for j := 0; j < iterations; j++ {
+		for j := range iterations {
 			if j%2 == 0 {
 				h.SetLevel(slog.LevelDebug)
 			} else {
@@ -342,7 +342,7 @@ func TestOutputHandlerConcurrency(t *testing.T) {
 	go func() {
 		defer wg.Done()
 		noop := func(_ slog.Level, _ string) {}
-		for j := 0; j < iterations; j++ {
+		for range iterations {
 			h.SetOutput(noop)
 			h.ResetOutput()
 		}
@@ -352,7 +352,7 @@ func TestOutputHandlerConcurrency(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		for j := 0; j < iterations; j++ {
+		for range iterations {
 			_ = h.WithAttrs(nil)
 			_ = h.WithGroup("g")
 		}

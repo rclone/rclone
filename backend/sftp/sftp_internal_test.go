@@ -428,7 +428,7 @@ func TestHostKeyCallbackRefusesAtCap(t *testing.T) {
 		opt:      Options{PinHostKey: true},
 		hostKeys: map[string][][]byte{},
 	}
-	for i := 0; i < maxHostKeys; i++ {
+	for i := range maxHostKeys {
 		algo := fmt.Sprintf("test-algo-%d", i)
 		f.hostKeys[algo] = [][]byte{{byte(i)}}
 	}
@@ -480,7 +480,7 @@ func TestHostKeyCallbackPinHostKeyRace(t *testing.T) {
 	const N = 16
 	pendings := make([]*pendingKey, N)
 	wg.Add(N)
-	for i := 0; i < N; i++ {
+	for i := range N {
 		go func(i int) {
 			defer wg.Done()
 			cb := f.hostKeyCallback(&pendings[i])
@@ -489,7 +489,7 @@ func TestHostKeyCallbackPinHostKeyRace(t *testing.T) {
 		}(i)
 	}
 	wg.Wait()
-	for i := 0; i < N; i++ {
+	for i := range N {
 		require.NotNil(t, pendings[i], "dial %d should have stashed its own key", i)
 		assert.Equal(t, keyBytes, pendings[i].marshalled)
 	}
@@ -631,7 +631,7 @@ func TestCommitHostKeyConcurrent(t *testing.T) {
 	keys := makeTestKeys(t, N)
 	var wg sync.WaitGroup
 	wg.Add(N)
-	for i := 0; i < N; i++ {
+	for i := range N {
 		go func(i int) {
 			defer wg.Done()
 			f.commitHostKey(&pendingKey{

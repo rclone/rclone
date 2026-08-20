@@ -2031,7 +2031,7 @@ func (album *Album) fetchPhotosParallel(ctx context.Context, totalPhotos int64) 
 	sem := make(chan struct{}, workers)
 	var wg sync.WaitGroup
 
-	for i := 0; i < numPartitions; i++ {
+	for i := range numPartitions {
 		wg.Add(1)
 		go func(idx int) {
 			defer wg.Done()
