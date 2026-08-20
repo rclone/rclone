@@ -121,8 +121,17 @@ func (vol *Volume) prepareState() {
 // retrieved with getPendingMounts for deferred mounting.
 func (vol *Volume) restoreState(ctx context.Context, drv *Driver) error {
 	vol.drv = drv
+	// Re-derive the mountpoint from the base directory and name rather
+	// than trusting the persisted path, which an older rclone or a
+	// tampered state file could have left pointing outside the base
+	// directory.
+	path, confined := volumeMountPath(drv.root, vol.Name)
+	if !confined {
+		return fmt.Errorf("invalid volume name %q: resolves outside the base directory", vol.Name)
+	}
+	vol.MountPoint = path
 	vol.mnt = &mountlib.MountPoint{
-		MountPoint: vol.MountPoint,
+		MountPoint: path,
 	}
 	// Save pending mounts before applyOptions clears them
 	vol.pendingMounts = vol.Mounts
