@@ -769,7 +769,7 @@ func TestItemHandleCachingReopenDuringGraceClose(t *testing.T) {
 	buf := make([]byte, 1)
 
 	const iterations = 50
-	for i := 0; i < iterations; i++ {
+	for i := range iterations {
 		// Open, read (to create a downloader) and close so a grace
 		// timer is pending with the fd and downloaders still alive.
 		require.NoError(t, item.Open(obj))

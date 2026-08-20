@@ -157,7 +157,7 @@ func parseArrowStream(body io.Reader) ([]*container.BlobItem, *string, error) {
 		rec := reader.RecordBatch()
 		rows := int(rec.NumRows())
 
-		for row := 0; row < rows; row++ {
+		for row := range rows {
 			item := &container.BlobItem{
 				Properties: &container.BlobProperties{},
 			}
