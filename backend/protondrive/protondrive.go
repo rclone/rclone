@@ -456,9 +456,9 @@ func isDecimalString(value string) bool {
 // and is captured by --log-file.
 type protonLogger struct{ f *Fs }
 
-func (l protonLogger) Errorf(format string, v ...interface{}) { fs.Errorf(l.f, format, v...) }
-func (l protonLogger) Warnf(format string, v ...interface{})  { fs.Logf(l.f, format, v...) }
-func (l protonLogger) Debugf(format string, v ...interface{}) { fs.Debugf(l.f, format, v...) }
+func (l protonLogger) Errorf(format string, v ...any) { fs.Errorf(l.f, format, v...) }
+func (l protonLogger) Warnf(format string, v ...any)  { fs.Logf(l.f, format, v...) }
+func (l protonLogger) Debugf(format string, v ...any) { fs.Debugf(l.f, format, v...) }
 
 func newProtonDrive(ctx context.Context, f *Fs, opt *Options, m configmap.Mapper) (*protonDriveAPI.ProtonDrive, error) {
 	config := protonDriveAPI.NewDefaultConfig()

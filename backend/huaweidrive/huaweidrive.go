@@ -1030,7 +1030,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		fs.Debugf(f, "Copy: failed to get metadata options: %v", err)
 	}
 	if len(mergedMeta) > 0 {
-		copyReq.Properties = make(map[string]interface{})
+		copyReq.Properties = make(map[string]any)
 		for key, value := range mergedMeta {
 			switch key {
 			case "content-type", "sha256", "btime", "mtime", "utime",
@@ -1720,7 +1720,7 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, leaf, direct
 	}
 
 	// Create metadata
-	metadata := map[string]interface{}{
+	metadata := map[string]any{
 		"fileName": leaf,
 		"mimeType": mimeType,
 	}
@@ -1864,7 +1864,7 @@ func (o *Object) uploadResume(ctx context.Context, in io.Reader, leaf, directory
 	}
 
 	// Prepare metadata for resumable upload initialization
-	metadata := map[string]interface{}{
+	metadata := map[string]any{
 		"fileName": leaf,
 	}
 
@@ -2082,8 +2082,8 @@ func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
 
 	// Prepare the update request payload
 	updateReq := api.UpdateFileRequest{
-		Properties:  make(map[string]interface{}),
-		AppSettings: make(map[string]interface{}),
+		Properties:  make(map[string]any),
+		AppSettings: make(map[string]any),
 	}
 
 	// Process metadata and separate into properties and app settings
