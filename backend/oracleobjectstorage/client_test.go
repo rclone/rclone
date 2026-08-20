@@ -10,6 +10,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"io"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -62,9 +63,7 @@ func TestGzipEncoding(t *testing.T) {
 			"namespace": "test",
 			"endpoint":  srv.URL,
 		}
-		for k, v := range extraConfig {
-			m[k] = v
-		}
+		maps.Copy(m, extraConfig)
 		fsInfo, err := NewFs(ctx, "TestOOSGzip", "bucket", m)
 		require.NoError(t, err)
 		return fsInfo.(*Fs)
