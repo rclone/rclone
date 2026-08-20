@@ -543,7 +543,7 @@ func (f *Fs) readDir(ctx context.Context, dir string) (names []string, err error
 		return nil, fmt.Errorf("failed to readDir: %w", err)
 	}
 
-	contentType := strings.SplitN(res.Header.Get("Content-Type"), ";", 2)[0]
+	contentType, _, _ := strings.Cut(res.Header.Get("Content-Type"), ";")
 	switch contentType {
 	case "text/html":
 		names, err = parse(u, res.Body)
