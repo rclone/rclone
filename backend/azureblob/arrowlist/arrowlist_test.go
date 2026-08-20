@@ -10,7 +10,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/bloberror"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container"
 	"github.com/apache/arrow-go/v18/arrow"
@@ -54,12 +53,12 @@ func TestPagerArrow(t *testing.T) {
 	opts := &ListBlobsHierarchyOptions{
 		ListBlobsHierarchyOptions: container.ListBlobsHierarchyOptions{
 			Include:    container.ListBlobsInclude{Metadata: true, Tags: true},
-			Prefix:     to.Ptr("dir/"),
-			MaxResults: to.Ptr(int32(1000)),
-			StartFrom:  to.Ptr("testcontainer/dir/a"),
+			Prefix:     new("dir/"),
+			MaxResults: new(int32(1000)),
+			StartFrom:  new("testcontainer/dir/a"),
 		},
-		EndBefore:      to.Ptr("testcontainer/dir/n"),
-		UseArrowFormat: to.Ptr(true),
+		EndBefore:      new("testcontainer/dir/n"),
+		UseArrowFormat: new(true),
 	}
 	pager := client.NewListBlobsHierarchyPager("/", opts)
 
@@ -125,7 +124,7 @@ func TestPagerXMLFallback(t *testing.T) {
 	require.NoError(t, err)
 
 	pager := client.NewListBlobsHierarchyPager("/", &ListBlobsHierarchyOptions{
-		UseArrowFormat: to.Ptr(true),
+		UseArrowFormat: new(true),
 	})
 	page, err := pager.NextPage(context.Background())
 	require.NoError(t, err)
@@ -149,8 +148,8 @@ func TestPagerXMLFallbackWithEndBefore(t *testing.T) {
 	require.NoError(t, err)
 
 	pager := client.NewListBlobsHierarchyPager("/", &ListBlobsHierarchyOptions{
-		EndBefore:      to.Ptr("testcontainer/n"),
-		UseArrowFormat: to.Ptr(true),
+		EndBefore:      new("testcontainer/n"),
+		UseArrowFormat: new(true),
 	})
 	_, err = pager.NextPage(context.Background())
 	require.ErrorIs(t, err, ErrEndBeforeXMLFallback)
@@ -172,7 +171,7 @@ func TestPagerSharedKeyAuth(t *testing.T) {
 	require.NoError(t, err)
 
 	pager := client.NewListBlobsHierarchyPager("/", &ListBlobsHierarchyOptions{
-		UseArrowFormat: to.Ptr(true),
+		UseArrowFormat: new(true),
 	})
 	_, err = pager.NextPage(context.Background())
 	require.NoError(t, err)
@@ -191,7 +190,7 @@ func TestPagerResponseError(t *testing.T) {
 	require.NoError(t, err)
 
 	pager := client.NewListBlobsHierarchyPager("/", &ListBlobsHierarchyOptions{
-		UseArrowFormat: to.Ptr(true),
+		UseArrowFormat: new(true),
 	})
 	_, err = pager.NextPage(context.Background())
 	require.Error(t, err)
