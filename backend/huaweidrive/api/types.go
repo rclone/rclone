@@ -47,7 +47,7 @@ type File struct {
 	SHA256                    string           `json:"sha256,omitempty"`
 	CreatedTime               time.Time        `json:"createdTime"`
 	EditedTime                time.Time        `json:"editedTime"`
-	EditedByMeTime            time.Time        `json:"editedByMeTime,omitempty"`
+	EditedByMeTime            time.Time        `json:"editedByMeTime"`
 	ParentFolder              []string         `json:"parentFolder,omitempty"`
 	Owners                    []User           `json:"owners"`
 	LastEditor                User             `json:"lastEditor"`
