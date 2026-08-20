@@ -1897,11 +1897,9 @@ func (o *Object) uploadResume(ctx context.Context, in io.Reader, leaf, directory
 	}
 
 	// Now upload the content in chunks
-	// Note 256k is the minimum chunk size according to Huawei Drive API
-	chunkSize := max(int64(o.fs.opt.ChunkSize), 256*1024)
-	if chunkSize > 64*1024*1024 {
-		chunkSize = 64 * 1024 * 1024 // Maximum single upload size
-	}
+	// Note 256k is the minimum chunk size and 64M the maximum
+	// single upload size according to the Huawei Drive API
+	chunkSize := min(max(int64(o.fs.opt.ChunkSize), 256*1024), 64*1024*1024)
 
 	buf := make([]byte, chunkSize)
 	var offset int64
