@@ -376,8 +376,7 @@ func (f *PhotosFs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut
 		return "", false, nil
 	}
 
-	if strings.HasPrefix(pathID, "lib:") {
-		libraryName := strings.TrimPrefix(pathID, "lib:")
+	if libraryName, ok := strings.CutPrefix(pathID, "lib:"); ok {
 		libraries, err := photosService.GetLibraries(ctx)
 		if err != nil {
 			return "", false, err
