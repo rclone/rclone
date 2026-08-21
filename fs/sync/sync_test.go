@@ -1839,7 +1839,7 @@ func TestMoveWithDeleteEmptySrcDirsPreexistingGroupError(t *testing.T) {
 
 	ctx = accounting.WithStatsGroup(ctx, "TestMoveWithDeleteEmptySrcDirsPreexistingGroupError")
 	// Record an error against the group from an unrelated operation
-	accounting.Stats(ctx).Error(errors.New("unrelated earlier error"))
+	_ = accounting.Stats(ctx).Error(errors.New("unrelated earlier error"))
 	require.True(t, accounting.Stats(ctx).Errored())
 
 	err := MoveDir(ctx, r.Fremote, r.Flocal, true, false)
