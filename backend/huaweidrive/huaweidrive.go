@@ -33,6 +33,7 @@ import (
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/oauth2"
 )
@@ -1771,9 +1772,16 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, leaf, direct
 	}
 
 	// Read and write file content
-	_, err = io.Copy(fileWriter, in)
+	counter := readers.NewCountingReader(in)
+	_, err = io.Copy(fileWriter, counter)
 	if err != nil {
 		return fmt.Errorf("failed to copy file content: %w", err)
+	}
+
+	// Check the source supplied the number of bytes it declared
+	// otherwise a truncated file would be stored as a good upload.
+	if int64(counter.BytesRead()) != size {
+		return fmt.Errorf("expected %d bytes in input, but got %d: %w", size, counter.BytesRead(), io.ErrUnexpectedEOF)
 	}
 
 	err = writer.Close()
