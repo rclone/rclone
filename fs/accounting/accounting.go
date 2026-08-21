@@ -676,6 +676,9 @@ func (acc *Account) String() string {
 	percentageDone := 0
 	if b > 0 {
 		percentageDone = int(100 * float64(a) / float64(b))
+		if percentageDone > 100 {
+			percentageDone = 100
+		}
 	}
 
 	return fmt.Sprintf("%*s:%3d%% / %s, %s, %s",
@@ -708,6 +711,9 @@ func (acc *Account) rcStats(out rc.Params) {
 	percentageDone := 0
 	if b > 0 {
 		percentageDone = int(100 * float64(a) / float64(b))
+		if percentageDone > 100 {
+			percentageDone = 100
+		}
 	}
 	out["percentage"] = percentageDone
 	out["group"] = acc.stats.group
