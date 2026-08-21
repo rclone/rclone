@@ -394,6 +394,13 @@ func walk(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel i
 		wg.Go(func() {
 			for {
 				select {
+				case <-ctx.Done():
+					closeQuit()
+					select {
+					case errs <- ctx.Err():
+					default:
+					}
+					return
 				case job, ok := <-in:
 					if !ok {
 						return
