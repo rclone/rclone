@@ -499,6 +499,32 @@ func TestHashOnUpdate(t *testing.T) {
 	assert.Equal(t, "45685e95985e20822fb2538a522a5ccf", md5)
 }
 
+// Test the hash cached by Update matches a HashesOption hint passed by the caller
+func TestHashOnUpdateWithHashOption(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	const filePath = "file.txt"
+	when := time.Now()
+	r.WriteFile(filePath, "x", when)
+	f := r.Flocal.(*Fs)
+
+	o, err := f.NewObject(ctx, filePath)
+	require.NoError(t, err)
+
+	b := bytes.NewBufferString("content")
+	src := object.NewStaticObjectInfo(filePath, when, int64(b.Len()), true, nil, f)
+	options := []fs.OpenOption{&fs.HashesOption{Hashes: hash.NewHashSet(hash.MD5)}}
+	require.NoError(t, o.Update(ctx, b, src, options...))
+
+	gotContent, err := os.ReadFile(filepath.Join(f.root, filePath))
+	require.NoError(t, err)
+	assert.Equal(t, "content", string(gotContent))
+
+	md5, err := o.Hash(ctx, hash.MD5)
+	require.NoError(t, err)
+	assert.Equal(t, "9a0364b9e99bb480dd25e1f0284c8555", md5)
+}
+
 // Test hashes on deleting an object
 func TestHashOnDelete(t *testing.T) {
 	ctx := context.Background()
