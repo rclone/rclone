@@ -179,6 +179,7 @@ jobs:
           unset HOMEBREW_NO_INSTALL_FROM_API
           brew untap --force homebrew/core
           brew untap --force homebrew/cask
+          brew untap --force aws/tap
           brew update
           brew install --cask macfuse
           brew install git-annex git-annex-remote-rclone
