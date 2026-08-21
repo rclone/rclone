@@ -1010,7 +1010,7 @@ func (f *Fs) listReceivedFiles(ctx context.Context, callback func(fs.DirEntry) e
 			}
 		}
 		for _, entry := range res.Entries {
-			entryPath := entry.Name
+			entryPath := f.opt.Enc.ToStandardName(entry.Name)
 			o := &Object{
 				fs:      f,
 				url:     entry.PreviewUrl,
