@@ -45,6 +45,7 @@ import (
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
+	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 	"github.com/youmark/pkcs8"
 )
@@ -1691,7 +1692,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 // upload does a single non-multipart upload
 //
 // This is recommended for less than 50 MiB of content
-func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID string, modTime time.Time, options ...fs.OpenOption) (err error) {
+func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID string, size int64, modTime time.Time, options ...fs.OpenOption) (err error) {
 	upload := api.UploadFile{
 		Name:              o.fs.opt.Enc.FromStandardName(leaf),
 		ContentModifiedAt: api.Time(modTime),
@@ -1703,9 +1704,10 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 
 	var resp *http.Response
 	var result api.FolderItems
+	counter := readers.NewCountingReader(in)
 	opts := rest.Opts{
 		Method:                "POST",
-		Body:                  in,
+		Body:                  counter,
 		MultipartMetadataName: "attributes",
 		MultipartContentName:  "contents",
 		MultipartFileName:     upload.Name,
@@ -1724,6 +1726,11 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 	})
 	if err != nil {
 		return err
+	}
+	// Check the source supplied the number of bytes it declared
+	// otherwise a truncated file would be stored as a good upload.
+	if size >= 0 && int64(counter.BytesRead()) != size {
+		return fmt.Errorf("expected %d bytes in input, but got %d: %w", size, counter.BytesRead(), io.ErrUnexpectedEOF)
 	}
 	if result.TotalCount != 1 || len(result.Entries) != 1 {
 		return fmt.Errorf("failed to upload %v - not sure why", o)
@@ -1754,7 +1761,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// Upload with simple or multipart
 	if size <= int64(o.fs.opt.UploadCutoff) {
-		err = o.upload(ctx, in, leaf, directoryID, modTime, options...)
+		err = o.upload(ctx, in, leaf, directoryID, size, modTime, options...)
 	} else {
 		err = o.uploadMultipart(ctx, in, leaf, directoryID, size, modTime, options...)
 	}

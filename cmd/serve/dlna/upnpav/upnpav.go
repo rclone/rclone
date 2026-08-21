@@ -58,7 +58,11 @@ type Timestamp struct {
 	time.Time
 }
 
-// MarshalXML formats the Timestamp per DIDL-Lite spec
+// MarshalXML formats the Timestamp per DIDL-Lite spec.
+// Zero times are omitted to avoid producing invalid dates like "0001-01-01".
 func (t Timestamp) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	if t.IsZero() {
+		return nil
+	}
 	return e.EncodeElement(t.Format("2006-01-02"), start)
 }

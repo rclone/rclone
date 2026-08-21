@@ -2,16 +2,85 @@ package dropbox
 
 import (
 	"context"
+	"errors"
 	"io"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/files"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/rclone/rclone/lib/batcher"
+	"github.com/rclone/rclone/lib/pacer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+type paperMetadataClient struct {
+	files.ContextClient
+	info *files.FileMetadata
+}
+
+func (c paperMetadataClient) GetMetadataContext(ctx context.Context, arg *files.GetMetadataArg) (files.IsMetadata, error) {
+	if arg.Path == "document" {
+		return c.info, nil
+	}
+	return nil, files.GetMetadataAPIError{
+		APIError: dropbox.APIError{ErrorSummary: "path/not_found/"},
+		EndpointError: &files.GetMetadataError{
+			Tagged: dropbox.Tagged{Tag: files.GetMetadataErrorPath},
+			Path: &files.LookupError{
+				Tagged: dropbox.Tagged{Tag: files.LookupErrorNotFound},
+			},
+		},
+	}
+}
+
+func TestInternalGetMetadataCancellation(t *testing.T) {
+	requestStarted := make(chan struct{})
+	releaseRequest := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		close(requestStarted)
+		<-releaseRequest
+	}))
+	defer server.Close()
+	defer close(releaseRequest)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	f := &Fs{
+		srv: files.NewContext(dropbox.Config{
+			Client: server.Client(),
+			URLGenerator: func(hostType string, namespace string, route string) string {
+				return server.URL
+			},
+		}),
+		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(0), pacer.MaxSleep(time.Millisecond))),
+	}
+
+	result := make(chan getMetadataResult, 1)
+	go func() {
+		result <- f.getMetadata(ctx, "/file")
+	}()
+
+	select {
+	case <-requestStarted:
+	case <-time.After(time.Second):
+		t.Fatal("Dropbox request did not start")
+	}
+	cancel()
+
+	select {
+	case res := <-result:
+		require.ErrorIs(t, res.err, context.Canceled)
+	case <-time.After(time.Second):
+		t.Fatal("Dropbox request did not observe cancellation")
+	}
+}
 
 func TestInternalCheckPathLength(t *testing.T) {
 	rep := func(n int, r rune) (out string) {
@@ -50,6 +119,155 @@ func TestInternalCheckPathLength(t *testing.T) {
 	}
 }
 
+func TestPaperExportRemote(t *testing.T) {
+	ctx := context.Background()
+	info := &files.FileMetadata{
+		ExportInfo: &files.ExportInfo{ExportAs: "markdown"},
+	}
+	f := &Fs{
+		exportExts: []exportExtension{"md"},
+		pacer:      fs.NewPacer(ctx, pacer.NewDefault()),
+		srv:        paperMetadataClient{info: info},
+	}
+
+	direct, err := f.NewObject(ctx, "document.md")
+	require.NoError(t, err)
+	assert.Equal(t, "document.md", direct.Remote())
+
+	listed, err := f.newObjectWithInfo(ctx, "document.md", info)
+	require.NoError(t, err)
+	assert.Equal(t, "document.md.md", listed.Remote())
+
+	legacy, err := f.newObjectWithInfo(ctx, "document.paper", info)
+	require.NoError(t, err)
+	assert.Equal(t, "document.md", legacy.Remote())
+}
+
+// uploadSessionClient is a mock files.ContextClient which records the
+// chunked upload calls made to it
+type uploadSessionClient struct {
+	files.ContextClient
+	appends      int    // number of UploadSessionAppendV2Context calls
+	maxAppends   int    // fail the append after this many calls to stop runaway loops
+	bytesWritten int64  // bytes received by UploadSessionAppendV2Context
+	finishCalled bool   // set if UploadSessionFinishContext was called
+	appended     func() // if set, called after each successful append
+}
+
+var errTooManyAppends = errors.New("too many appends - upload looping?")
+
+func (c *uploadSessionClient) UploadSessionStartContext(ctx context.Context, arg *files.UploadSessionStartArg, content io.Reader) (*files.UploadSessionStartResult, error) {
+	return &files.UploadSessionStartResult{SessionId: "session"}, nil
+}
+
+func (c *uploadSessionClient) UploadSessionAppendV2Context(ctx context.Context, arg *files.UploadSessionAppendArg, content io.Reader) error {
+	// the real client fails the request if the context is cancelled
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	c.appends++
+	if c.appends > c.maxAppends {
+		return errTooManyAppends
+	}
+	n, err := io.Copy(io.Discard, content)
+	if err != nil {
+		return err
+	}
+	c.bytesWritten += n
+	if c.appended != nil {
+		c.appended()
+	}
+	return nil
+}
+
+func (c *uploadSessionClient) UploadSessionFinishContext(ctx context.Context, arg *files.UploadSessionFinishArg, content io.Reader) (*files.FileMetadata, error) {
+	c.finishCalled = true
+	return &files.FileMetadata{}, nil
+}
+
+// newUploadTestFs makes an Fs with a mock srv for testing uploadChunked
+func newUploadTestFs(t *testing.T, srv files.ContextClient, chunkSize fs.SizeSuffix) *Fs {
+	ctx := context.Background()
+	f := &Fs{
+		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(time.Millisecond), pacer.MaxSleep(2*time.Millisecond))),
+		srv:   srv,
+	}
+	f.opt.ChunkSize = chunkSize
+	batcherOptions := defaultBatcherOptions
+	batcherOptions.Mode = "off"
+	var err error
+	f.batcher, err = batcher.New(ctx, f, f.commitBatch, batcherOptions)
+	require.NoError(t, err)
+	return f
+}
+
+// endlessReader supplies bytes forever
+type endlessReader struct{}
+
+func (endlessReader) Read(p []byte) (int, error) {
+	for i := range p {
+		p[i] = 'x'
+	}
+	return len(p), nil
+}
+
+func TestUploadChunkedEarlyEOF(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("MultiChunk", func(t *testing.T) {
+		// The declared size spans 4 chunks but the source ends after 1.5
+		client := &uploadSessionClient{maxAppends: 8}
+		f := newUploadTestFs(t, client, 100)
+		o := &Object{fs: f, remote: "test.bin"}
+		_, err := o.uploadChunked(ctx, strings.NewReader(strings.Repeat("a", 150)), files.NewCommitInfo("/test.bin"), 400)
+		require.Error(t, err)
+		assert.ErrorIs(t, err, io.ErrUnexpectedEOF)
+		assert.False(t, client.finishCalled, "must not commit a truncated upload")
+	})
+
+	t.Run("SingleChunk", func(t *testing.T) {
+		// The declared size fits in one chunk but the source ends early
+		client := &uploadSessionClient{maxAppends: 8}
+		f := newUploadTestFs(t, client, 500)
+		o := &Object{fs: f, remote: "test.bin"}
+		_, err := o.uploadChunked(ctx, strings.NewReader(strings.Repeat("a", 150)), files.NewCommitInfo("/test.bin"), 400)
+		require.Error(t, err)
+		assert.ErrorIs(t, err, io.ErrUnexpectedEOF)
+		assert.False(t, client.finishCalled, "must not commit a truncated upload")
+	})
+
+	t.Run("Complete", func(t *testing.T) {
+		// A source which supplies exactly the declared size uploads OK
+		client := &uploadSessionClient{maxAppends: 8}
+		f := newUploadTestFs(t, client, 100)
+		o := &Object{fs: f, remote: "test.bin"}
+		entry, err := o.uploadChunked(ctx, strings.NewReader(strings.Repeat("a", 250)), files.NewCommitInfo("/test.bin"), 250)
+		require.NoError(t, err)
+		require.NotNil(t, entry)
+		assert.True(t, client.finishCalled)
+		assert.Equal(t, int64(250), client.bytesWritten)
+	})
+}
+
+func TestUploadChunkedCancel(t *testing.T) {
+	// Cancelling the context must stop the upload even though every
+	// append is succeeding
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	client := &uploadSessionClient{maxAppends: 8}
+	client.appended = func() {
+		if client.appends == 2 {
+			cancel()
+		}
+	}
+	f := newUploadTestFs(t, client, 100)
+	o := &Object{fs: f, remote: "test.bin"}
+	_, err := o.uploadChunked(ctx, endlessReader{}, files.NewCommitInfo("/test.bin"), -1)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, context.Canceled)
+	assert.False(t, client.finishCalled)
+}
+
 func (f *Fs) importPaperForTest(t *testing.T) {
 	content := `# test doc
 
@@ -64,7 +282,7 @@ Lorem ipsum __dolor__ sit amet
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		reader := strings.NewReader(content)
-		_, err = f.srv.PaperCreate(&arg, reader)
+		_, err = f.srv.PaperCreateContext(context.Background(), &arg, reader)
 		return shouldRetry(context.Background(), err)
 	})
 	require.NoError(t, err)

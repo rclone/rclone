@@ -44,6 +44,13 @@ func md5sum(t *testing.T, s string) string {
 }
 
 func (f *Fs) InternalTestMetadata(t *testing.T) {
+	// Impossible Cloud silently drops cache-control,
+	// content-disposition, content-encoding and content-language
+	// system metadata on retrieval (and thus also breaks the
+	// Content-Encoding response header that --s3-decompress relies on).
+	if f.opt.Provider == "ImpossibleCloud" {
+		t.Skip("Impossible Cloud does not preserve all S3 system metadata")
+	}
 	ctx := context.Background()
 	original := random.String(1000)
 	contents := gz(t, original)
@@ -135,6 +142,31 @@ func (f *Fs) InternalTestNoHead(t *testing.T) {
 	}()
 	// PutTestcontents checks the received object
 
+}
+
+func (f *Fs) InternalTestHasChildren(t *testing.T) {
+	ctx := context.Background()
+	contents := random.String(100)
+	item := fstest.NewItem("has-children/file.txt", contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))
+	obj := fstests.PutTestContents(ctx, t, f, &item, contents, true)
+	defer func() {
+		assert.NoError(t, obj.Remove(ctx))
+	}()
+
+	// A prefix with an object under it is a directory
+	found, err := f.hasChildren(ctx, "has-children")
+	require.NoError(t, err)
+	assert.True(t, found, "prefix with an object should report children")
+
+	// The object itself is a file so has no children
+	found, err = f.hasChildren(ctx, "has-children/file.txt")
+	require.NoError(t, err)
+	assert.False(t, found, "a file should not report children")
+
+	// A path which doesn't exist has no children
+	found, err = f.hasChildren(ctx, "has-children/does-not-exist")
+	require.NoError(t, err)
+	assert.False(t, found, "a missing path should not report children")
 }
 
 func TestVersionLess(t *testing.T) {
@@ -464,10 +496,9 @@ func (f *Fs) InternalTestVersions(t *testing.T) {
 			return f.shouldRetry(ctx, err)
 		})
 		var errString string
-		var awsError smithy.APIError
 		if err == nil {
 			errString = "No Error"
-		} else if errors.As(err, &awsError) {
+		} else if awsError, ok := errors.AsType[smithy.APIError](err); ok {
 			errString = awsError.ErrorCode()
 		} else {
 			assert.Fail(t, "Unknown error %T %v", err, err)
@@ -778,6 +809,7 @@ func (f *Fs) InternalTestObjectLock(t *testing.T) {
 func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("Metadata", f.InternalTestMetadata)
 	t.Run("NoHead", f.InternalTestNoHead)
+	t.Run("HasChildren", f.InternalTestHasChildren)
 	t.Run("Versions", f.InternalTestVersions)
 	t.Run("ObjectLock", f.InternalTestObjectLock)
 }

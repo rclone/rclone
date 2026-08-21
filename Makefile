@@ -45,7 +45,7 @@ LINTTAGS=--build-tags "$(GOTAGS)"
 endif
 LDFLAGS=--ldflags "-s -X github.com/rclone/rclone/fs.Version=$(TAG)"
 
-.PHONY: rclone test_all vars version fetch-gui
+.PHONY: rclone test_all vars version fetch-gui fetch-gui-and-commit
 
 rclone:
 ifeq ($(GO_OS),windows)
@@ -61,6 +61,9 @@ endif
 
 fetch-gui:
 	$(SHELL) ./bin/fetch-gui-dist.sh
+
+fetch-gui-and-commit:
+	$(SHELL) ./bin/fetch-gui-dist.sh --commit
 
 test_all:
 	go install $(LDFLAGS) $(BUILDTAGS) $(BUILD_ARGS) github.com/rclone/rclone/fstest/test_all
@@ -90,11 +93,15 @@ test:	rclone test_all
 	@echo "Written logs in test_all.log"
 
 # Quick test
+#
+# The timeout is raised above the go test default of 10m as the
+# cmd/gitannex end to end tests can take longer than that on slow CI
+# runners.
 quicktest:
-	RCLONE_CONFIG="/notfound" go test $(LDFLAGS) $(BUILDTAGS) ./...
+	RCLONE_CONFIG="/notfound" go test $(LDFLAGS) $(BUILDTAGS) -timeout 20m ./...
 
 racequicktest:
-	RCLONE_CONFIG="/notfound" go test $(LDFLAGS) $(BUILDTAGS) -cpu=2 -race ./...
+	RCLONE_CONFIG="/notfound" go test $(LDFLAGS) $(BUILDTAGS) -cpu=2 -race -timeout 20m ./...
 
 compiletest:
 	RCLONE_CONFIG="/notfound" go test $(LDFLAGS) $(BUILDTAGS) -run XXX ./...

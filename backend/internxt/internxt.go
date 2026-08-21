@@ -30,15 +30,21 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
 )
 
 const (
-	minSleep      = 10 * time.Millisecond
-	maxSleep      = 2 * time.Second
-	decayConstant = 2 // bigger for slower decay, exponential
+	minSleep            = 10 * time.Millisecond
+	maxSleep            = 2 * time.Second
+	decayConstant       = 2
+	maxUploadParts      = 10000
+	minChunkSize        = fs.SizeSuffix(5 * 1024 * 1024)
+	minUploadCutoff     = fs.SizeSuffix(100 * 1024 * 1024)
+	defaultUploadCutoff = fs.SizeSuffix(100 * 1024 * 1024)
+	maxUploadCutoff     = fs.SizeSuffix(5 * 1024 * 1024 * 1024)
 )
 
 // shouldRetry determines if an error should be retried.
@@ -48,8 +54,7 @@ func (f *Fs) shouldRetry(ctx context.Context, err error) (bool, error) {
 	if fserrors.ContextError(ctx, &err) {
 		return false, err
 	}
-	var httpErr *sdkerrors.HTTPError
-	if errors.As(err, &httpErr) {
+	if httpErr, ok := errors.AsType[*sdkerrors.HTTPError](err); ok {
 		switch httpErr.StatusCode() {
 		case 401:
 			if !f.authFailed {
@@ -101,6 +106,21 @@ func init() {
 			Default:  true,
 			Advanced: true,
 			Help:     "Skip hash validation when downloading files.\n\nBy default, hash validation is disabled. Set this to false to enable validation.",
+		}, {
+			Name:     "upload_concurrency",
+			Help:     "Concurrency for multipart uploads.\n\nThis is the number of chunks of the same file that are uploaded concurrently.\n\nNote that each chunk is buffered in memory.",
+			Default:  4,
+			Advanced: true,
+		}, {
+			Name:     "upload_cutoff",
+			Help:     "Cutoff for switching to multipart upload.\n\nAny files larger than this will be uploaded in chunks of chunk_size.\nThe minimum is 100 MiB and the maximum is 5 GiB.",
+			Default:  defaultUploadCutoff,
+			Advanced: true,
+		}, {
+			Name:     "chunk_size",
+			Help:     "Chunk size for multipart uploads.\n\nFiles larger than upload_cutoff will be uploaded in chunks of this size.\n\nMemory usage is approximately chunk_size * upload_concurrency.",
+			Default:  fs.SizeSuffix(30 * 1024 * 1024),
+			Advanced: true,
 		}, {
 			Name:     rclone_config.ConfigEncoding,
 			Help:     rclone_config.ConfigEncodingHelp,
@@ -194,6 +214,9 @@ type Options struct {
 	TwoFA              string               `config:"2fa"`
 	Mnemonic           string               `config:"mnemonic"`
 	SkipHashValidation bool                 `config:"skip_hash_validation"`
+	UploadCutoff       fs.SizeSuffix        `config:"upload_cutoff"`
+	ChunkSize          fs.SizeSuffix        `config:"chunk_size"`
+	UploadConcurrency  int                  `config:"upload_concurrency"`
 	Encoding           encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -238,6 +261,11 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
+// DirCacheFlush resets the directory cache
+func (f *Fs) DirCacheFlush() {
+	f.dirCache.ResetRoot()
+}
+
 // Hashes returns type of hashes supported by Internxt
 func (f *Fs) Hashes() hash.Set {
 	return hash.NewHashSet()
@@ -253,6 +281,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	opt := new(Options)
 	if err := configstruct.Set(m, opt); err != nil {
 		return nil, err
+	}
+
+	if err := checkUploadChunkSize(opt.ChunkSize); err != nil {
+		return nil, fmt.Errorf("internxt: chunk size: %w", err)
+	}
+	if err := checkUploadCutoff(opt.UploadCutoff); err != nil {
+		return nil, fmt.Errorf("internxt: upload cutoff: %w", err)
 	}
 
 	if opt.Mnemonic == "" {
@@ -307,7 +342,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			fs.Debugf(f, "getUserInfo returned 401, attempting re-auth")
 			authErr := f.refreshOrReLogin(ctx)
 			if authErr != nil {
-				return nil, fmt.Errorf("failed to fetch user info (re-auth failed): %w", err)
+				return nil, fmt.Errorf("failed to fetch user info (re-auth failed: %w): %w", authErr, err)
 			}
 			userInfo, err = getUserInfo(ctx, &userInfoConfig{Token: f.cfg.Token})
 			if err == nil {
@@ -794,6 +829,80 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	return usage, nil
 }
 
+// Move moves a file to a new location
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
+	if !ok {
+		return nil, fs.ErrorCantMove
+	}
+
+	if srcObj.uuid == "" {
+		return nil, fs.ErrorCantMove
+	}
+
+	leaf, directoryID, err := f.dirCache.FindPath(ctx, remote, true)
+	if err != nil {
+		return nil, err
+	}
+
+	// Parse name and extension from the leaf
+	baseName := f.opt.Encoding.FromStandardName(leaf)
+	newName := strings.TrimSuffix(baseName, path.Ext(baseName))
+	newType := strings.TrimPrefix(path.Ext(baseName), ".")
+
+	// Move the file server-side
+	err = f.pacer.Call(func() (bool, error) {
+		err := files.MoveFile(ctx, f.cfg, srcObj.uuid, directoryID, newName, newType)
+		return f.shouldRetry(ctx, err)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	dstObj := &Object{
+		f:       f,
+		remote:  remote,
+		id:      srcObj.id,
+		uuid:    srcObj.uuid,
+		size:    srcObj.size,
+		modTime: srcObj.modTime,
+	}
+
+	return dstObj, nil
+}
+
+// DirMove moves src, srcRemote to this remote at dstRemote
+// using server-side move operations.
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantDirMove
+//
+// If destination exists then return fs.ErrorDirExists
+func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
+	srcFs, ok := src.(*Fs)
+	if !ok {
+		return fs.ErrorCantDirMove
+	}
+
+	srcID, _, _, dstDirectoryID, dstLeaf, err := f.dirCache.DirMove(ctx, srcFs.dirCache, srcFs.root, srcRemote, f.root, dstRemote)
+	if err != nil {
+		return err
+	}
+
+	encodedLeaf := f.opt.Encoding.FromStandardName(dstLeaf)
+	err = f.pacer.Call(func() (bool, error) {
+		err := folders.MoveFolder(ctx, f.cfg, srcID, dstDirectoryID, encodedLeaf)
+		return f.shouldRetry(ctx, err)
+	})
+	if err != nil {
+		return err
+	}
+
+	srcFs.dirCache.FlushDir(srcRemote)
+	return nil
+}
+
 // Shutdown the backend, closing any background tasks and any cached
 // connections.
 func (f *Fs) Shutdown(ctx context.Context) error {
@@ -884,32 +993,62 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		fs.Debugf(o.f, "Renamed existing file %s to backup %s.%s (UUID: %s)", remote, backupName, backupType, backupUUID)
 	}
 
+	size := src.Size()
+
 	var meta *buckets.CreateMetaResponse
-	err = o.f.pacer.CallNoRetry(func() (bool, error) {
-		var err error
-		meta, err = buckets.UploadFileStreamAuto(ctx,
-			o.f.cfg,
-			dirID,
-			o.f.opt.Encoding.FromStandardName(path.Base(remote)),
-			in,
-			src.Size(),
-			src.ModTime(ctx),
-		)
-		return o.f.shouldRetry(ctx, err)
-	})
+	if size < 0 || size >= int64(o.f.opt.UploadCutoff) {
+		chunkWriter, uploadErr := multipart.UploadMultipart(ctx, src, in, multipart.UploadMultipartOptions{
+			Open:        o.f,
+			OpenOptions: options,
+		})
 
-	if err != nil && isEmptyFileLimitError(err) {
-		o.restoreBackupFile(ctx, backupUUID, origName, origType)
-		return fs.ErrorCantUploadEmptyFiles
-	}
+		if uploadErr != nil {
+			if isEmptyFileLimitError(uploadErr) {
+				o.restoreBackupFile(ctx, backupUUID, origName, origType)
+				return fs.ErrorCantUploadEmptyFiles
+			}
+			if tooLarge := fileTooLargeError(uploadErr); tooLarge != nil {
+				o.restoreBackupFile(ctx, backupUUID, origName, origType)
+				return o.f.tooLargeError(remote, tooLarge)
+			}
+			o.restoreBackupFile(ctx, backupUUID, origName, origType)
+			return uploadErr
+		}
+		w := chunkWriter.(*internxtChunkWriter)
+		meta = w.meta
+	} else {
+		// Use single-part upload for small files
+		err = o.f.pacer.CallNoRetry(func() (bool, error) {
+			var err error
+			meta, err = buckets.UploadFileStreamAuto(ctx,
+				o.f.cfg,
+				dirID,
+				o.f.opt.Encoding.FromStandardName(path.Base(remote)),
+				in,
+				size,
+				src.ModTime(ctx),
+			)
+			return o.f.shouldRetry(ctx, err)
+		})
 
-	if err != nil {
-		meta, err = o.recoverFromTimeoutConflict(ctx, err, remote, dirID)
-	}
+		if err != nil && isEmptyFileLimitError(err) {
+			o.restoreBackupFile(ctx, backupUUID, origName, origType)
+			return fs.ErrorCantUploadEmptyFiles
+		}
 
-	if err != nil {
-		o.restoreBackupFile(ctx, backupUUID, origName, origType)
-		return err
+		if tooLarge := fileTooLargeError(err); tooLarge != nil {
+			o.restoreBackupFile(ctx, backupUUID, origName, origType)
+			return o.f.tooLargeError(remote, tooLarge)
+		}
+
+		if err != nil {
+			meta, err = o.recoverFromTimeoutConflict(ctx, err, remote, dirID)
+		}
+
+		if err != nil {
+			o.restoreBackupFile(ctx, backupUUID, origName, origType)
+			return err
+		}
 	}
 
 	// Update object metadata
@@ -924,8 +1063,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		err := o.f.pacer.Call(func() (bool, error) {
 			err := files.DeleteFile(ctx, o.f.cfg, backupUUID)
 			if err != nil {
-				var httpErr *sdkerrors.HTTPError
-				if errors.As(err, &httpErr) {
+				if httpErr, ok := errors.AsType[*sdkerrors.HTTPError](err); ok {
 					// Treat 404 (Not Found) and 204 (No Content) as success
 					switch httpErr.StatusCode() {
 					case 404, 204:
@@ -972,6 +1110,24 @@ func isEmptyFileLimitError(err error) bool {
 	return strings.Contains(errMsg, "can not have more empty files") ||
 		strings.Contains(errMsg, "cannot have more empty files") ||
 		strings.Contains(errMsg, "you can not have empty files")
+}
+
+// fileTooLargeError extracts the SDK's FileTooLargeError from a wrapped error
+// chain, returning it (or nil) so callers can branch on the size limit.
+func fileTooLargeError(err error) *sdkerrors.FileTooLargeError {
+	if tooLarge, ok := errors.AsType[*sdkerrors.FileTooLargeError](err); ok {
+		return tooLarge
+	}
+	return nil
+}
+
+// tooLargeError formats a per-file, non-retryable error for the sync engine.
+// fserrors.NoRetryError signals "skip this file but continue the sync."
+func (f *Fs) tooLargeError(remote string, tooLarge *sdkerrors.FileTooLargeError) error {
+	return fserrors.NoRetryError(fmt.Errorf("%s: file size %s exceeds account upload limit of %s",
+		remote,
+		fs.SizeSuffix(tooLarge.Size),
+		fs.SizeSuffix(tooLarge.MaxSize)))
 }
 
 // recoverFromTimeoutConflict attempts to recover from a timeout or conflict error

@@ -125,7 +125,10 @@ func (o *RangeOption) Decode(size int64) (offset, limit int64) {
 		}
 	} else {
 		if o.End >= 0 {
-			offset = size - o.End
+			// RFC 7233 section 2.1: if the suffix-length is
+			// larger than the representation, use the entire
+			// representation.
+			offset = max(size-o.End, 0)
 		} else {
 			offset = 0
 		}
@@ -162,7 +165,11 @@ func FixRangeOption(options []OpenOption, size int64) {
 		case *RangeOption:
 			// If start is < 0 then fetch from the end
 			if x.Start < 0 {
-				x = &RangeOption{Start: size - x.End, End: -1}
+				// RFC 7233 section 2.1: if the suffix-length is
+				// larger than the representation, use the entire
+				// representation (#6310).
+				start := max(size-x.End, 0)
+				x = &RangeOption{Start: start, End: -1}
 				options[i] = x
 			}
 			// If end is too big or undefined, fetch to the end
@@ -196,6 +203,32 @@ func (o *SeekOption) String() string {
 // Mandatory returns whether the option must be parsed or can be ignored
 func (o *SeekOption) Mandatory() bool {
 	return true
+}
+
+// ParseHeaders converts the strings passed in via the header flags into HTTPOptions
+func ParseHeaders(headers []string) ([]*HTTPOption, error) {
+	opts := []*HTTPOption{}
+	for _, header := range headers {
+		parts := strings.SplitN(header, ":", 2)
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("failed to parse %q as an HTTP header. Expecting a string like: 'Cache-Control: no-store'", header)
+		}
+		option := &HTTPOption{
+			Key:   strings.TrimSpace(parts[0]),
+			Value: strings.TrimSpace(parts[1]),
+		}
+		opts = append(opts, option)
+	}
+	return opts, nil
+}
+
+// MustParseHeaders converts the strings passed in via the header flags into HTTPOptions or exits.
+func MustParseHeaders(headers []string) []*HTTPOption {
+	opts, err := ParseHeaders(headers)
+	if err != nil {
+		Fatalf(nil, "%v", err)
+	}
+	return opts
 }
 
 // HTTPOption defines a general purpose HTTP option

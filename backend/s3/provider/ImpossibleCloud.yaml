@@ -1,0 +1,21 @@
+name: ImpossibleCloud
+description: Impossible Cloud Object Storage
+region:
+  eu-central-2: Frankfurt, Germany
+  eu-west-1: Amsterdam, Netherlands
+  eu-west-2: London, UK
+  eu-west-3: Paris, France
+  eu-east-1: Poznań, Poland
+  eu-north-1: Copenhagen, Denmark
+  us-east-1: New York, USA
+endpoint:
+  eu-central-2.storage.impossibleapi.net: Frankfurt, Germany
+  eu-west-1.storage.impossibleapi.net: Amsterdam, Netherlands
+  eu-west-2.storage.impossibleapi.net: London, UK
+  eu-west-3.storage.impossibleapi.net: Paris, France
+  eu-east-1.storage.impossibleapi.net: Poznań, Poland
+  eu-north-1.storage.impossibleapi.net: Copenhagen, Denmark
+  us-east-1.storage.impossibleapi.net: New York, USA
+location_constraint: {}
+acl: {}
+bucket_acl: true

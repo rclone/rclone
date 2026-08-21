@@ -19,12 +19,12 @@ func TestFunctional(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skip on non local")
 	}
-	vfstest.RunTests(t, true, vfscommon.CacheModeOff, true, func(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (unmountResult <-chan error, unmount func() error, err error) {
+	vfstest.RunTests(t, true, vfscommon.CacheModeOff, true, func(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (unmountResult <-chan error, unmount func() error, actualMountpoint string, err error) {
 		unmountResultChan := make(chan (error), 1)
 		unmount = func() error {
 			unmountResultChan <- nil
 			return nil
 		}
-		return unmountResultChan, unmount, nil
+		return unmountResultChan, unmount, mountpoint, nil
 	})
 }

@@ -46,10 +46,9 @@ func AddRc(mountUtilName string, mountFunction MountFn) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "mount/mount",
-		AuthRequired: true,
-		Fn:           mountRc,
-		Title:        "Create a new mount point",
+		Path:  "mount/mount",
+		Fn:    mountRc,
+		Title: "Create a new mount point",
 		Help: `rclone allows Linux, FreeBSD, macOS and Windows to mount any of
 Rclone's cloud storage systems as a file system with FUSE.
 
@@ -63,12 +62,29 @@ This takes the following parameters:
 - mountOpt: a JSON object with Mount options in.
 - vfsOpt: a JSON object with VFS options in.
 
+Alternatively, you can pass VFS and Mount options flat at the top level of the parameter map. The option names are the same as their CLI flags without '--' and with '-' replaced by '_' (e.g. 'vfs_cache_mode' instead of 'CacheMode' inside 'vfsOpt', and 'volname' instead of 'VolName' inside 'mountOpt').
+
+If both flat parameters and nested 'vfsOpt'/'mountOpt' blocks are supplied, the parameters in the nested blocks will take precedence.
+
+On Windows mountPoint may be set to "*" to assign the next available
+drive letter automatically, or a network share UNC path (e.g.
+"\\server\share") to mount as a network drive. In these cases the
+actual drive letter is chosen at mount time.
+
+This returns the following values:
+
+- mountPoint: the actual mount point that was used (this may differ
+  from the input, e.g. on Windows when "*" is passed the allocated
+  drive letter is returned)
+
 Example:
 
 ` + "```console" + `
 rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint
 rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint mountType=mount
 rclone rc mount/mount fs=TestDrive: mountPoint=/mnt/tmp vfsOpt='{"CacheMode": 2}' mountOpt='{"AllowOther": true}'
+rclone rc mount/mount fs=TestDrive: mountPoint=/mnt/tmp vfs_cache_mode=writes volname=MyTestVolume
+rclone rc mount/mount fs=mydrive: mountPoint=* mountType=cmount
 ` + "```" + `
 
 The vfsOpt are as described in options/get and can be seen in the
@@ -89,13 +105,13 @@ func mountRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 
 	vfsOpt := vfscommon.Opt
-	err = in.GetStructMissingOK("vfsOpt", &vfsOpt)
+	err = rc.ParseOptions(in, "vfsOpt", &vfsOpt)
 	if err != nil {
 		return nil, err
 	}
 
 	mountOpt := Opt
-	err = in.GetStructMissingOK("mountOpt", &mountOpt)
+	err = rc.ParseOptions(in, "mountOpt", &mountOpt)
 	if err != nil {
 		return nil, err
 	}
@@ -123,12 +139,25 @@ func mountRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		return nil, err
 	}
 
+	// Clean up consumed keys and check for leftovers
+	delete(in, "mountPoint")
+	delete(in, "mountType")
+	delete(in, "fs")
+	err = rc.CheckParamsUsed(in)
+	if err != nil {
+		return nil, err
+	}
+
 	mnt := NewMountPoint(mountFn, mountPoint, fdst, &mountOpt, &vfsOpt)
+	mnt.Ctx = ctx
 	_, err = mnt.Mount()
 	if err != nil {
 		fs.Logf(nil, "mount FAILED: %v", err)
 		return nil, err
 	}
+	// mnt.MountPoint may have been updated by MountFn (e.g. on
+	// Windows when "*" is resolved to an actual drive letter)
+	actualMountPoint := mnt.MountPoint
 	go func() {
 		if err = mnt.Wait(); err != nil {
 			fs.Logf(nil, "unmount FAILED: %v", err)
@@ -136,21 +165,22 @@ func mountRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		}
 		mountMu.Lock()
 		defer mountMu.Unlock()
-		delete(liveMounts, mountPoint)
+		delete(liveMounts, actualMountPoint)
 	}()
 	// Add mount to list if mount point was successfully created
-	liveMounts[mountPoint] = mnt
+	liveMounts[actualMountPoint] = mnt
 
-	fs.Debugf(nil, "Mount for %s created at %s using %s", fdst.String(), mountPoint, mountType)
-	return nil, nil
+	fs.Debugf(nil, "Mount for %s created at %s using %s", fdst.String(), actualMountPoint, mountType)
+	return rc.Params{
+		"mountPoint": actualMountPoint,
+	}, nil
 }
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "mount/unmount",
-		AuthRequired: true,
-		Fn:           unMountRc,
-		Title:        "Unmount selected active mount",
+		Path:  "mount/unmount",
+		Fn:    unMountRc,
+		Title: "Unmount selected active mount",
 		Help: `
 rclone allows Linux, FreeBSD, macOS and Windows to
 mount any of Rclone's cloud storage systems as a file system with
@@ -188,10 +218,9 @@ func unMountRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "mount/types",
-		AuthRequired: true,
-		Fn:           mountTypesRc,
-		Title:        "Show all possible mount types",
+		Path:  "mount/types",
+		Fn:    mountTypesRc,
+		Title: "Show all possible mount types",
 		Help: `This shows all possible mount types and returns them as a list.
 
 This takes no parameters and returns
@@ -224,10 +253,9 @@ func mountTypesRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "mount/listmounts",
-		AuthRequired: true,
-		Fn:           listMountsRc,
-		Title:        "Show current mount points",
+		Path:  "mount/listmounts",
+		Fn:    listMountsRc,
+		Title: "Show current mount points",
 		Help: `This shows currently mounted points, which can be used for performing an unmount.
 
 This takes no parameters and returns
@@ -274,10 +302,9 @@ func listMountsRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:         "mount/unmountall",
-		AuthRequired: true,
-		Fn:           unmountAll,
-		Title:        "Unmount all active mounts",
+		Path:  "mount/unmountall",
+		Fn:    unmountAll,
+		Title: "Unmount all active mounts",
 		Help: `
 rclone allows Linux, FreeBSD, macOS and Windows to
 mount any of Rclone's cloud storage systems as a file system with

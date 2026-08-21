@@ -23,8 +23,6 @@ import (
 	"github.com/rclone/rclone/lib/atexit"
 	sdActivation "github.com/rclone/rclone/lib/sdactivation"
 	"github.com/spf13/pflag"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
 )
 
 // Help returns text describing the http server to add to the command
@@ -53,6 +51,10 @@ for a transfer.
 ` + "`--{{ .Prefix }}max-header-bytes`" + ` controls the maximum number of bytes the server will
 accept in the HTTP header.
 
+` + "`--{{ .Prefix }}response-header`" + ` can be used to set an HTTP header for all responses,
+will overriding existing values. The flag may be repeated to add multiple
+headers. Use the format ` + "`Header-Name: value`" + `.
+
 ` + "`--{{ .Prefix }}baseurl`" + ` controls the URL prefix that rclone serves from.  By default
 rclone will serve from the root.  If you used ` + "`--{{ .Prefix }}baseurl \"/rclone\"`" + ` then
 rclone would serve from a URL starting with "/rclone/".  This is
@@ -75,6 +77,11 @@ By default this will serve over http.  If you want you can serve over
 https.  You will need to supply the ` + "`--{{ .Prefix }}cert` and `--{{ .Prefix }}key`" + ` flags.
 If you wish to do client side certificate validation then you will need to
 supply ` + "`--{{ .Prefix }}client-ca`" + ` also.
+
+When TLS is configured every listener given with ` + "`--{{ .Prefix }}addr`" + ` serves TLS.
+An individual listener can be prefixed with ` + "`http://`" + ` to serve unencrypted
+HTTP on that address, or with ` + "`tls://`" + ` to state explicitly that it must serve
+TLS.  Using a ` + "`tls://`" + ` address without ` + "`--{{ .Prefix }}cert` and `--{{ .Prefix }}key`" + ` is an error.
 
 ` + "`--{{ .Prefix }}cert`" + ` must be set to the path of a file containing
 either a PEM encoded certificate, or a concatenation of that with the CA
@@ -167,6 +174,10 @@ var ConfigInfo = fs.Options{{
 	Name:    "allow_origin",
 	Default: "",
 	Help:    "Origin which cross-domain request (CORS) can be executed from",
+}, {
+	Name:    "response_header",
+	Default: []string{},
+	Help:    "Set HTTP header for all responses, overriding existing values",
 }}
 
 // Config contains options for the http Server
@@ -181,8 +192,9 @@ type Config struct {
 	TLSCertBody        []byte      `config:"-"`                    // TLS PEM public key certificate body (can also include intermediate/CA certificates), ignores TLSCert
 	TLSKeyBody         []byte      `config:"-"`                    // TLS PEM private key body, ignores TLSKey
 	ClientCA           string      `config:"client_ca"`            // Path to TLS PEM CA file with certificate authorities to verify clients with
-	MinTLSVersion      string      `config:"min_tls_version"`      // MinTLSVersion contains the minimum TLS version that is acceptable.
+	MinTLSVersion      string      `config:"min_tls_version"`      // MinTLSVersion contains the minimum TLS version that is acceptable
 	AllowOrigin        string      `config:"allow_origin"`         // AllowOrigin sets the Access-Control-Allow-Origin header
+	ResponseHeaders    []string    `config:"response_header"`      // Set HTTP header for all responses, overriding existing values
 }
 
 // AddFlagsPrefix adds flags for the httplib
@@ -197,6 +209,7 @@ func (cfg *Config) AddFlagsPrefix(flagSet *pflag.FlagSet, prefix string) {
 	flags.StringVarP(flagSet, &cfg.BaseURL, prefix+"baseurl", "", cfg.BaseURL, "Prefix for URLs - leave blank for root", prefix)
 	flags.StringVarP(flagSet, &cfg.MinTLSVersion, prefix+"min-tls-version", "", cfg.MinTLSVersion, "Minimum TLS version that is acceptable", prefix)
 	flags.StringVarP(flagSet, &cfg.AllowOrigin, prefix+"allow-origin", "", cfg.AllowOrigin, "Origin which cross-domain request (CORS) can be executed from", prefix)
+	flags.StringArrayVarP(flagSet, &cfg.ResponseHeaders, prefix+"response-header", "", cfg.ResponseHeaders, "Set HTTP header for all responses, overriding existing values", prefix)
 }
 
 // AddHTTPFlagsPrefix adds flags for the httplib
@@ -281,26 +294,29 @@ func newInstance(ctx context.Context, s *Server, listener net.Listener, tlsCfg *
 		listener = tls.NewListener(listener, tlsCfg)
 	}
 
-	var handler http.Handler = s.mux
+	httpServer := &http.Server{
+		Handler:           s.mux,
+		ReadTimeout:       time.Duration(s.cfg.ServerReadTimeout),
+		WriteTimeout:      time.Duration(s.cfg.ServerWriteTimeout),
+		MaxHeaderBytes:    s.cfg.MaxHeaderBytes,
+		ReadHeaderTimeout: 10 * time.Second, // time to send the headers
+		IdleTimeout:       60 * time.Second, // time to keep idle connections open
+		TLSConfig:         tlsCfg,
+		BaseContext:       NewBaseContext(ctx, url),
+	}
+
 	// Enable h2c (HTTP/2 cleartext) for non-TLS listeners
 	if tlsCfg == nil {
-		h2s := &http2.Server{}
-		handler = h2c.NewHandler(s.mux, h2s)
+		protocols := new(http.Protocols)
+		protocols.SetHTTP1(true)
+		protocols.SetUnencryptedHTTP2(true)
+		httpServer.Protocols = protocols
 	}
 
 	return &instance{
-		url:      url,
-		listener: listener,
-		httpServer: &http.Server{
-			Handler:           handler,
-			ReadTimeout:       time.Duration(s.cfg.ServerReadTimeout),
-			WriteTimeout:      time.Duration(s.cfg.ServerWriteTimeout),
-			MaxHeaderBytes:    s.cfg.MaxHeaderBytes,
-			ReadHeaderTimeout: 10 * time.Second, // time to send the headers
-			IdleTimeout:       60 * time.Second, // time to keep idle connections open
-			TLSConfig:         tlsCfg,
-			BaseContext:       NewBaseContext(ctx, url),
-		},
+		url:        url,
+		listener:   listener,
+		httpServer: httpServer,
 	}
 }
 
@@ -348,7 +364,13 @@ func NewServer(ctx context.Context, options ...Option) (*Server, error) {
 		return nil, err
 	}
 
+	responseHeaders, err := fs.ParseHeaders(s.cfg.ResponseHeaders)
+	if err != nil {
+		return nil, err
+	}
+
 	s.mux.Use(MiddlewareCORS(s.cfg.AllowOrigin))
+	s.mux.Use(MiddlewareResponseHeaders(responseHeaders))
 
 	s.initAuth()
 
@@ -387,7 +409,12 @@ func NewServer(ctx context.Context, options ...Option) (*Server, error) {
 				return nil, err
 			}
 			instance = newInstance(ctx, s, listener, s.tlsConfig, addr)
-		} else if strings.HasPrefix(addr, "tls://") || (len(s.cfg.ListenAddr) == 1 && s.tlsConfig != nil) {
+		} else if strings.HasPrefix(addr, "tls://") || (!strings.HasPrefix(addr, "http://") && s.tlsConfig != nil) {
+			// If TLS is configured all listeners serve TLS unless
+			// explicitly marked http://.
+			if s.tlsConfig == nil {
+				return nil, fmt.Errorf("can't listen on %q: %w", addr, ErrTLSConfigRequired)
+			}
 			addr = strings.TrimPrefix(addr, "tls://")
 			listener, err := net.Listen("tcp", addr)
 			if err != nil {
@@ -469,6 +496,8 @@ var (
 	ErrTLSFileMismatch = errors.New("need both --cert and --key to use TLS")
 	// ErrTLSParseCA - hard coded errors, allowing for easier testing
 	ErrTLSParseCA = errors.New("unable to parse client certificate authority")
+	// ErrTLSConfigRequired - hard coded errors, allowing for easier testing
+	ErrTLSConfigRequired = errors.New("need both --cert and --key to use a tls:// address")
 )
 
 func (s *Server) initTLS() error {

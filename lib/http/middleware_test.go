@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -78,8 +79,8 @@ func TestMiddlewareAuth(t *testing.T) {
 			},
 			auth: AuthConfig{
 				Realm: "test",
-				CustomAuthFn: func(user, pass string) (value any, err error) {
-					if user == "custom" && pass == "custom" {
+				CustomAuthFn: func(r *http.Request, user, pass string) (value any, err error) {
+					if user == "custom" && pass == "custom" && r.RemoteAddr != "" {
 						return true, nil
 					}
 					return nil, errors.New("invalid credentials")
@@ -208,6 +209,15 @@ func TestMiddlewareAuth(t *testing.T) {
 	}
 }
 
+// A request arriving over a plain HTTP listener has no TLS state so it can't
+// carry a client certificate and must be rejected.
+func TestMiddlewareAuthCertificateUserNoTLS(t *testing.T) {
+	handler := MiddlewareAuthCertificateUser()(testEchoHandler([]byte("ok")))
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, httptest.NewRequest("GET", "http://example.com/", nil))
+	require.Equal(t, http.StatusUnauthorized, rec.Code)
+}
+
 func TestMiddlewareAuthCertificateUser(t *testing.T) {
 	serverCertBytes := testReadTestdataFile(t, "local.crt")
 	serverKeyBytes := testReadTestdataFile(t, "local.key")
@@ -294,7 +304,7 @@ func TestMiddlewareAuthCertificateUser(t *testing.T) {
 			},
 			auth: AuthConfig{
 				Realm: "test",
-				CustomAuthFn: func(user, pass string) (value any, err error) {
+				CustomAuthFn: func(_ *http.Request, user, pass string) (value any, err error) {
 					if user == "custom" && pass == "custom" {
 						return true, nil
 					}
@@ -316,7 +326,7 @@ func TestMiddlewareAuthCertificateUser(t *testing.T) {
 			},
 			auth: AuthConfig{
 				Realm: "test",
-				CustomAuthFn: func(user, pass string) (value any, err error) {
+				CustomAuthFn: func(_ *http.Request, user, pass string) (value any, err error) {
 					fmt.Println("CUSTOMAUTH", user, pass)
 					if user == "rclone-dev-client" && pass == "" {
 						return true, nil
@@ -580,6 +590,69 @@ func TestMiddlewareCORSWithAuth(t *testing.T) {
 				expectedOrigin = ss.http.AllowOrigin
 			}
 			require.Equal(t, expectedOrigin, resp.Header.Get("Access-Control-Allow-Origin"), "allow origin should match")
+		})
+	}
+}
+
+func TestMiddlewareResponseHeaders(t *testing.T) {
+	servers := []struct {
+		name   string
+		http   Config
+		header http.Header
+	}{
+		{
+			name: "SingleHeader",
+			http: Config{
+				ListenAddr:      []string{"127.0.0.1:0"},
+				ResponseHeaders: []string{"X-Test-Header: test-value"},
+			},
+			header: http.Header{
+				"X-Test-Header": []string{"test-value"},
+			},
+		},
+		{
+			name: "MultipleHeaders",
+			http: Config{
+				ListenAddr:      []string{"127.0.0.1:0"},
+				ResponseHeaders: []string{"X-Header-One: one", "X-Header-Two: two"},
+			},
+			header: http.Header{
+				"X-Header-One": []string{"one"},
+				"X-Header-Two": []string{"two"},
+			},
+		},
+	}
+
+	for _, ss := range servers {
+		t.Run(ss.name, func(t *testing.T) {
+			s, err := NewServer(context.Background(), WithConfig(ss.http))
+			require.NoError(t, err)
+			defer func() {
+				require.NoError(t, s.Shutdown())
+			}()
+
+			expected := []byte("header-test")
+			s.Router().Mount("/", testEchoHandler(expected))
+			s.Serve()
+
+			url := testGetServerURL(t, s)
+			client := &http.Client{}
+			req, err := http.NewRequest("GET", url, nil)
+			require.NoError(t, err)
+
+			resp, err := client.Do(req)
+			require.NoError(t, err)
+			defer func() {
+				_ = resp.Body.Close()
+			}()
+
+			require.Equal(t, http.StatusOK, resp.StatusCode, "should return ok")
+			testExpectRespBody(t, resp, expected)
+
+			for key, vals := range ss.header {
+				require.Contains(t, resp.Header, key, "response should contain custom header")
+				require.Equal(t, vals, resp.Header.Values(key), "header value should match")
+			}
 		})
 	}
 }

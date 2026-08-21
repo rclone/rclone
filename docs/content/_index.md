@@ -149,7 +149,9 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Hetzner Object Storage" home="https://www.hetzner.com/storage/object-storage/" config="/s3/#hetzner" >}}
 {{< provider name="Hetzner Storage Box" home="https://www.hetzner.com/storage/storage-box" config="/sftp/#hetzner-storage-box" >}}
 {{< provider name="HiDrive" home="https://www.strato.de/cloud-speicher/" config="/hidrive/" >}}
+{{< provider name="Hitachi Content Platform (HCP)" home="https://www.hitachivantara.com/en-us/products/storage/content-platform.html" config="/s3/#hcp" >}}
 {{< provider name="HTTP" home="https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol" config="/http/" >}}
+{{< provider name="Huawei Drive" home="https://cloud.huawei.com/" config="/huaweidrive/" >}}
 {{< provider name="Huawei OBS" home="https://www.huaweicloud.com/intl/en-us/product/obs.html" config="/s3/#huawei-obs" >}}
 {{< provider name="iCloud Drive" home="https://icloud.com/" config="/iclouddrive/" >}}
 {{< provider name="ImageKit" home="https://imagekit.io" config="/imagekit/" >}}
@@ -158,6 +160,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Jottacloud" home="https://www.jottacloud.com/en/" config="/jottacloud/" >}}
 {{< provider name="IBM COS S3" home="http://www.ibm.com/cloud/object-storage" config="/s3/#ibm-cos-s3" >}}
 {{< provider name="IDrive e2" home="https://www.idrive.com/e2/?refer=rclone" config="/s3/#idrive-e2" >}}
+{{< provider name="Impossible Cloud" home="https://www.impossiblecloud.com/" config="/s3/#impossible-cloud" >}}
 {{< provider name="Intercolo Object Storage" home="https://intercolo.de/object-storage" config="/s3/#intercolo" >}}
 {{< provider name="IONOS Cloud" home="https://cloud.ionos.com/storage/object-storage" config="/s3/#ionos" >}}
 {{< provider name="Koofr" home="https://koofr.eu/" config="/koofr/" >}}
@@ -201,6 +204,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Rclone Serve S3" home="/commands/rclone_serve_s3/" config="/s3/#rclone" >}}
 {{< provider name="rsync.net" home="https://rsync.net/products/rclone.html" config="/sftp/#rsync-net" >}}
 {{< provider name="Scaleway" home="https://www.scaleway.com/object-storage/" config="/s3/#scaleway" >}}
+{{< provider name="Scality (RING / ARTESCA)" home="https://www.scality.com/" config="/s3/#scality" >}}
 {{< provider name="Seafile" home="https://www.seafile.com/" config="/seafile/" >}}
 {{< provider name="Seagate Lyve Cloud" home="https://www.seagate.com/gb/en/services/cloud/storage/" config="/s3/#lyve" >}}
 {{< provider name="SeaweedFS" home="https://github.com/chrislusf/seaweedfs/" config="/s3/#seaweedfs" >}}
@@ -221,6 +225,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="WebDAV" home="https://en.wikipedia.org/wiki/WebDAV" config="/webdav/" >}}
 {{< provider name="Yandex Disk" home="https://disk.yandex.com/" config="/yandex/" >}}
 {{< provider name="Zadara Object Storage" home="https://www.zadara.com" config="/s3/#zadara" >}}
+{{< provider name="Zero Services (ZERO-Z3)" home="https://lp.zeroservices.eu/zero-z3/" config="/s3/#zero-z3" >}}
 {{< provider name="Zoho WorkDrive" home="https://www.zoho.com/workdrive/" config="/zoho/" >}}
 {{< provider name="Zata" home="https://zata.ai/" config="/s3/#Zata" end="true" >}}
 {{< provider name="The local filesystem" home="/local/" config="/local/" end="true">}}

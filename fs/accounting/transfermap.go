@@ -1,7 +1,6 @@
 package accounting
 
 import (
-	"context"
 	"fmt"
 	"maps"
 	"sort"
@@ -91,10 +90,9 @@ func (tm *transferMap) _sortedSlice() []*Transfer {
 
 // String returns string representation of map items excluding any in
 // exclude (if set).
-func (tm *transferMap) String(ctx context.Context, progress *inProgress, exclude *transferMap) string {
+func (tm *transferMap) String(ci *fs.ConfigInfo, progress *inProgress, exclude *transferMap) string {
 	tm.mu.RLock()
 	defer tm.mu.RUnlock()
-	ci := fs.GetConfig(ctx)
 	stringList := make([]string, 0, len(tm.items))
 	for _, tr := range tm._sortedSlice() {
 		var what = tr.what

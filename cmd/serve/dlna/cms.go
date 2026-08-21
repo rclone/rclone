@@ -13,13 +13,13 @@ type connectionManagerService struct {
 	upnp.Eventing
 }
 
-func (cms *connectionManagerService) Handle(action string, argsXML []byte, r *http.Request) (map[string]string, error) {
+func (cms *connectionManagerService) Handle(action string, argsXML []byte, r *http.Request) ([]soapArg, error) {
 	switch action {
 	case "GetProtocolInfo":
-		return map[string]string{
-			"Source": defaultProtocolInfo,
-			"Sink":   "",
-		}, nil
+		return soapArgs(
+			"Source", defaultProtocolInfo,
+			"Sink", "",
+		), nil
 	default:
 		return nil, upnp.InvalidActionError
 	}

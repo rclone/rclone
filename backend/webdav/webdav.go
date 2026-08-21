@@ -180,6 +180,10 @@ to an unknown webserver.
 However this is desirable in some circumstances. If you are getting
 an error like "401 Unauthorized" when rclone is attempting to read
 files from the webdav server then you can try this option.
+
+Note that enabling this also permits sending your credentials over a
+plaintext HTTP connection if the server redirects from HTTPS to HTTP,
+which rclone otherwise refuses to do.
 `,
 				Advanced: true,
 				Default:  false,
@@ -511,6 +515,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			rt: ntlmssp.Negotiator{RoundTripper: t},
 		}
 	}
+	// Refuse redirects that downgrade HTTPS to plaintext HTTP.
+	client.CheckRedirect = rest.RefuseHTTPSDowngradeRedirectFn
 	f.srv = rest.NewClient(client).SetRoot(u.String())
 
 	f.features = (&fs.Features{
@@ -796,6 +802,7 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 		ExtraHeaders: map[string]string{
 			"Depth": depth,
 		},
+		AuthRedirect: f.opt.AuthRedirect, // allow redirects to preserve Auth
 	}
 	if f.hasOCMD5 || f.hasOCSHA1 {
 		opts.Body = bytes.NewBuffer(owncloudProps)
@@ -1498,8 +1505,11 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 		}
 		// FIXME check if response is valid
 		if len(result.Responses) == 1 && result.Responses[0].Props.StatusOK() {
-			// update cached modtime
-			o.modTime = modTime
+			// update cached modtime - the PROPPATCH sets it with
+			// second precision so truncate here too to keep the
+			// in-memory modtime identical to the one a fresh
+			// listing returns
+			o.modTime = modTime.Truncate(time.Second)
 			return nil
 		}
 		// got an error, but it's possible it actually worked, so double-check
@@ -1536,6 +1546,18 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
+		if err == nil {
+			err = rest.CheckContentRange(resp, options, o.size)
+			if err != nil {
+				if resp != nil && resp.Body != nil {
+					_ = resp.Body.Close()
+				}
+				if errors.Is(err, fs.ErrorRangeIgnored) {
+					return false, err
+				}
+				return true, fserrors.RetryError(err)
+			}
+		}
 		return o.fs.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {

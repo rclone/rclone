@@ -503,15 +503,19 @@ func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.F
 	}
 
 	go func() {
+		// Wait on the timer and the stop channel together so that a stop
+		// signalled by StopBackgroundRunners is honoured immediately.
+		timer := time.NewTimer(time.Duration(f.opt.ChunkCleanInterval))
+		defer timer.Stop()
 		for {
-			time.Sleep(time.Duration(f.opt.ChunkCleanInterval))
 			select {
 			case <-f.cleanupChan:
 				fs.Infof(f, "stopping cleanup")
 				return
-			default:
+			case <-timer.C:
 				fs.Debugf(f, "starting cleanup")
 				f.CleanUpCache(false)
+				timer.Reset(time.Duration(f.opt.ChunkCleanInterval))
 			}
 		}
 	}()
@@ -563,9 +567,10 @@ Eg
 	})
 
 	rc.Add(rc.Call{
-		Path:  "cache/stats",
-		Fn:    f.httpStats,
-		Title: "Get cache stats",
+		Path:   "cache/stats",
+		NoAuth: true,
+		Fn:     f.httpStats,
+		Title:  "Get cache stats",
 		Help: `
 Show statistics for the cache remote.
 `,

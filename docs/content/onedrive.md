@@ -237,6 +237,41 @@ credentials.
 anyone with the *Client ID* and *Client Secret* can access your
 OneDrive files. Take care to safeguard these credentials.
 
+### Non-admin access to Business OneDrive
+
+If you do not have admin access to your organization's OneDrive for
+Business, you can still connect by manually providing the SharePoint
+tenant URL and drive ID. This works by overriding the base API URL
+from the standard Microsoft Graph endpoint to the SharePoint v2.0
+endpoint.
+
+#### Steps to manually obtain credentials
+
+1. Open your browser and navigate to `https://[your-tenant].sharepoint.com/`
+2. Open Developer Tools (press F12) and go to the **Network** tab.
+3. Search for `driveAccessToken` in the network requests.
+4. Extract the following information from the response:
+   ```json
+   ".driveUrl": "{tenant_url}/v2.0/drives/{drive_id}",
+   ".driveAccessToken": "access_token={access_token}"
+   ```
+
+#### Rclone configuration
+
+Use the extracted values to configure your remote:
+
+```ini
+type = onedrive
+token = {"access_token":"{access_token}","token_type":"Bearer","refresh_token":"","expiry":"2045-12-31T23:59:59Z"}
+drive_id = {drive_id}
+tenant_url = {tenant_url}
+drive_type = business
+```
+
+Since the exact expiry time cannot be determined from web traffic,
+set the expiry to a future date. Note that the token will eventually
+expire and you will need to repeat the process to obtain a new one.
+
 ### Modification times and hashes
 
 OneDrive allows modification times to be set on objects accurate to 1
@@ -469,6 +504,27 @@ Properties:
 - Type:        SizeSuffix
 - Default:     off
 
+#### --onedrive-tenant-url
+
+The tenant URL for non-admin OneDrive access.
+
+Set this to your SharePoint tenant URL to use the SharePoint v2.0 API
+endpoint instead of the standard Microsoft Graph API. This allows
+accessing business OneDrive without admin consent.
+
+The URL can be found in your browser's developer tools by searching
+for "driveAccessToken" in the network requests. Look for the
+".driveUrl" field which contains the tenant URL and drive ID.
+
+Example: https://your-tenant.sharepoint.com/_api
+
+Properties:
+
+- Config:      tenant_url
+- Env Var:     RCLONE_ONEDRIVE_TENANT_URL
+- Type:        string
+- Required:    false
+
 #### --onedrive-chunk-size
 
 Chunk size to upload files with - must be multiple of 320k (327,680 bytes).
@@ -543,23 +599,6 @@ Properties:
   - "Files.Read Files.ReadWrite Files.Read.All Files.ReadWrite.All offline_access"
     - Read and write access to all resources, without the ability to browse SharePoint sites. 
     - Same as if disable_site_permission was set to true
-
-#### --onedrive-disable-site-permission
-
-Disable the request for Sites.Read.All permission.
-
-If set to true, you will no longer be able to search for a SharePoint site when
-configuring drive ID, because rclone will not request Sites.Read.All permission.
-Set it to true if your organization didn't assign Sites.Read.All permission to the
-application, and your organization disallows users to consent app permission
-request on their own.
-
-Properties:
-
-- Config:      disable_site_permission
-- Env Var:     RCLONE_ONEDRIVE_DISABLE_SITE_PERMISSION
-- Type:        bool
-- Default:     false
 
 #### --onedrive-expose-onenote-files
 
@@ -757,6 +796,16 @@ In this case you will see a message like this
 If you are 100% sure you want to download this file anyway then use
 the --onedrive-av-override flag, or av_override = true in the config
 file.
+
+When set, malware-flagged files are downloaded via Microsoft Graph
+beta APIs with Prefer: forceInfectedDownload (contentStream, then
+/content). Clean files continue to use the stable v1.0 endpoint.
+
+This is a beta API and may change. It works reliably with application
+permissions (client_credentials). With delegated (user) login on
+OneDrive for Business, Microsoft often still blocks the download.
+tenant_url configurations fall back to the legacy AVOverride query
+parameter.
 
 
 Properties:
@@ -1243,7 +1292,7 @@ If you see the error above after enabling multi-factor authentication for your
 account, you can fix it by refreshing your OAuth refresh token. To do that, run
 `rclone config`, and choose to edit your OneDrive backend. Then, you don't need
 to actually make any changes until you reach this question:
-`Already have a token - refresh?`. For this question, answer `y` and go through
+`Token already configured - replace it?`. For this question, answer `y` and go through
 the process to refresh your token, just like the first time the backend is
 configured. After this, rclone should work again for this backend.
 

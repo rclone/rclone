@@ -42,12 +42,17 @@ func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fi
 	}
 
 	if fileInfo.IsDir() {
-		defaultChildCount := 1
 		obj.Class = "object.container.storageFolder"
 		obj.Title = fileInfo.Name()
+		obj.Date = upnpav.Timestamp{Time: fileInfo.ModTime()}
+		childCount, err := cds.countChildren(cdsObject.Path)
+		if err != nil {
+			fs.Debugf(cds, "error counting children of %s: %v", cdsObject.Path, err)
+			childCount = 0
+		}
 		return upnpav.Container{
 			Object:     obj,
-			ChildCount: &defaultChildCount,
+			ChildCount: &childCount,
 		}, nil
 	}
 
@@ -75,7 +80,9 @@ func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fi
 	}
 
 	obj.Class = "object.item." + mediaType[1] + "Item"
-	obj.Title = fileInfo.Name()
+	// Remove file extension from title to prevent Samsung TVs from duplicating it
+	// File type is already provided via MIME type in protocolInfo
+	obj.Title = strings.TrimSuffix(fileInfo.Name(), filepath.Ext(fileInfo.Name()))
 	obj.Date = upnpav.Timestamp{Time: fileInfo.ModTime()}
 
 	item := upnpav.Item{
@@ -266,22 +273,43 @@ func (cds *contentDirectoryService) objectFromID(id string) (o object, err error
 	return
 }
 
-func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *http.Request) (map[string]string, error) {
+// countChildren returns the number of child items in a directory.
+func (cds *contentDirectoryService) countChildren(dirPath string) (int, error) {
+	node, err := cds.vfs.Stat(dirPath)
+	if err != nil {
+		return 0, err
+	}
+	dir, ok := node.(*vfs.Dir)
+	if !ok {
+		return 0, nil
+	}
+	entries, err := dir.ReadDirAll()
+	if err != nil {
+		return 0, err
+	}
+	return len(entries), nil
+}
+
+func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *http.Request) ([]soapArg, error) {
 	host := r.Host
 
 	switch action {
 	case "GetSystemUpdateID":
-		return map[string]string{
-			"Id": cds.updateIDString(),
-		}, nil
+		return soapArgs(
+			"Id", cds.updateIDString(),
+		), nil
 	case "GetSortCapabilities":
-		return map[string]string{
-			"SortCaps": "dc:title",
-		}, nil
+		return soapArgs(
+			"SortCaps", "dc:title",
+		), nil
 	case "Browse":
 		var browse browse
 		if err := xml.Unmarshal(argsXML, &browse); err != nil {
 			return nil, err
+		}
+		// Samsung TVs sometimes send empty ObjectID, default to root container
+		if browse.ObjectID == "" {
+			browse.ObjectID = "0"
 		}
 		obj, err := cds.objectFromID(browse.ObjectID)
 		if err != nil {
@@ -305,12 +333,15 @@ func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *htt
 			if err != nil {
 				return nil, err
 			}
-			return map[string]string{
-				"TotalMatches":   fmt.Sprint(totalMatches),
-				"NumberReturned": fmt.Sprint(len(objs)),
-				"Result":         didlLite(string(result)),
-				"UpdateID":       cds.updateIDString(),
-			}, nil
+			// Apply compatibility adjustments for strict DLNA clients
+			resultStr := adjustXML(result)
+			// Argument order must match SCPD definition in ContentDirectory.xml
+			return soapArgs(
+				"Result", didlLite(resultStr),
+				"NumberReturned", fmt.Sprint(len(objs)),
+				"TotalMatches", fmt.Sprint(totalMatches),
+				"UpdateID", cds.updateIDString(),
+			), nil
 		case "BrowseMetadata":
 			node, err := cds.vfs.Stat(obj.Path)
 			if err != nil {
@@ -325,32 +356,36 @@ func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *htt
 			if err != nil {
 				return nil, err
 			}
-			return map[string]string{
-				"TotalMatches":   "1",
-				"NumberReturned": "1",
-				"Result":         didlLite(string(result)),
-				"UpdateID":       cds.updateIDString(),
-			}, nil
+			// Apply compatibility adjustments for strict DLNA clients
+			resultStr := adjustXML(result)
+			// Argument order must match SCPD definition in ContentDirectory.xml
+			return soapArgs(
+				"Result", didlLite(resultStr),
+				"NumberReturned", "1",
+				"TotalMatches", "1",
+				"UpdateID", cds.updateIDString(),
+			), nil
 		default:
 			return nil, upnp.Errorf(upnp.ArgumentValueInvalidErrorCode, "unhandled browse flag: %v", browse.BrowseFlag)
 		}
 	case "GetSearchCapabilities":
-		return map[string]string{
-			"SearchCaps": "",
-		}, nil
+		return soapArgs(
+			"SearchCaps", "",
+		), nil
 	// Samsung Extensions
 	case "X_GetFeatureList":
-		return map[string]string{
-			"FeatureList": `<Features xmlns="urn:schemas-upnp-org:av:avs" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:schemas-upnp-org:av:avs http://www.upnp.org/schemas/av/avs.xsd">
+		return soapArgs(
+			"FeatureList", `<Features xmlns="urn:schemas-upnp-org:av:avs" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:schemas-upnp-org:av:avs http://www.upnp.org/schemas/av/avs.xsd">
 	<Feature name="samsung.com_BASICVIEW" version="1">
 		<container id="0" type="object.item.imageItem"/>
 		<container id="0" type="object.item.audioItem"/>
 		<container id="0" type="object.item.videoItem"/>
 	</Feature>
-</Features>`}, nil
+</Features>`,
+		), nil
 	case "X_SetBookmark":
 		// just ignore
-		return map[string]string{}, nil
+		return nil, nil
 	default:
 		return nil, upnp.InvalidActionError
 	}

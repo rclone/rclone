@@ -1,0 +1,18 @@
+name: HCP
+description: Hitachi Content Platform (HCP)
+region: {}
+endpoint: {}
+location_constraint: {}
+acl: {}
+bucket_acl: true
+quirks:
+  force_path_style: true
+  list_url_encode: true
+  # HCP returns a SHA256-based ETag for multipart uploads instead of the
+  # standard MD5-based ETag, so ETag verification after multipart upload
+  # must be disabled:
+  use_multipart_etag: false
+  # HCP returns object versions oldest first (ascending chronological order)
+  # instead of the S3 standard newest first:
+  # https://docs.hitachivantara.com/r/en-us/content-platform/9.6.x/mk-95hcph002/using-the-hitachi-api-for-amazon-s3/working-with-buckets/listing-bucket-contents-version-2
+  list_versions_oldest_first: true

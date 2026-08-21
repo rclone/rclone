@@ -12,15 +12,38 @@ import (
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+// A filename containing raw CR/LF must never survive encoding into an FTP
+// command argument, whatever encoding the user configured, otherwise it could
+// inject an independent FTP command onto the line-oriented control channel.
+func TestCommandEncodingNeutralisesCRLF(t *testing.T) {
+	// Internal Standard-encoded name as produced by e.g. a Unix local
+	// source, carrying raw CR/LF.
+	for _, std := range []string{
+		"victim\r\nDELE other-secret\r\nNOOP",
+		"victim␍␊DELE other-secret␍␊NOOP",
+	} {
+		for _, configured := range []encoder.MultiEncoder{
+			encoder.EncodeSlash,                        // "Slash" - omits Ctl and CrLf
+			encoder.EncodeZero,                         // "None"
+			encoder.Display | encoder.EncodeRightSpace, // the FTP default
+		} {
+			got := commandEncoding(configured).FromStandardPath(std)
+			assert.NotContains(t, got, "\r", "encoding %v leaked raw CR: %q", configured, got)
+			assert.NotContains(t, got, "\n", "encoding %v leaked raw LF: %q", configured, got)
+		}
+	}
+}
+
 type settings map[string]any
 
 func deriveFs(ctx context.Context, t *testing.T, f fs.Fs, opts settings) fs.Fs {
-	fsName := strings.Split(f.Name(), "{")[0] // strip off hash
+	fsName, _, _ := strings.Cut(f.Name(), "{") // strip off hash
 	configMap := configmap.Simple{}
 	for key, val := range opts {
 		configMap[key] = fmt.Sprintf("%v", val)
@@ -52,13 +75,21 @@ func (f *Fs) testUploadTimeout(t *testing.T) {
 		ci.Timeout = saveTimeout
 	}()
 	ci.LowLevelRetries = 1
-	ci.Timeout = fs.Duration(idleTimeout)
 
 	upload := func(concurrency int, shutTimeout time.Duration) (obj fs.Object, err error) {
+		// Use the saved (long) timeout while NewFs dials the FTP control
+		// connection and reads the welcome banner. On slow CI servers this
+		// can take longer than idleTimeout, which would cause a spurious
+		// i/o timeout before the test can run. The connection's idle
+		// deadline is captured at dial time, so the data connection
+		// dialled later inside Put will still get idleTimeout - which is
+		// what the test is actually trying to exercise.
+		ci.Timeout = saveTimeout
 		fixFs := deriveFs(ctx, t, f, settings{
 			"concurrency":  concurrency,
 			"shut_timeout": shutTimeout,
 		})
+		ci.Timeout = fs.Duration(idleTimeout)
 
 		// Make test object
 		fileTime := fstest.Time("2020-03-08T09:30:00.000000000Z")

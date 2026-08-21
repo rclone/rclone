@@ -402,37 +402,107 @@ func (acc *Account) Read(p []byte) (n int, err error) {
 	return acc.read(acc.in, p)
 }
 
+// AccountSeeker is an Account with a Seek method.
+type AccountSeeker struct {
+	*Account
+	do io.Seeker
+}
+
+var _ io.ReadSeeker = AccountSeeker{}
+
 // Seek to position in the object - see io.Seeker
-//
-// May return an error if not implemented by the underlying reader.
-func (acc *Account) Seek(offset int64, whence int) (int64, error) {
+func (acc AccountSeeker) Seek(offset int64, whence int) (int64, error) {
 	acc.mu.Lock()
 	defer acc.mu.Unlock()
+	return acc.do.Seek(offset, whence)
+}
+
+// WithSeeker returns an Account with a Seek method
+//
+// It returns an error if the underlying reader does not have a Seek method.
+func (acc *Account) WithSeeker() (AccountSeeker, error) {
 	do, ok := acc.in.(io.Seeker)
 	if !ok {
-		return 0, fmt.Errorf("internal error: Seek not implemented for %T", acc.in)
+		return AccountSeeker{}, fmt.Errorf("internal error: Seek not implemented for %T: %w", acc.in, errors.ErrUnsupported)
 	}
-	return do.Seek(offset, whence)
+	return AccountSeeker{
+		Account: acc,
+		do:      do,
+	}, nil
 }
+
+// AccountReaderAt is an Account with a ReadAt method.
+type AccountReaderAt struct {
+	*Account
+	do io.ReaderAt
+}
+
+var (
+	_ io.Reader   = AccountReaderAt{}
+	_ io.ReaderAt = AccountReaderAt{}
+)
 
 // ReadAt from off into p - see io.ReaderAt
 //
 // May return an error if not implemented by the underlying reader.
-func (acc *Account) ReadAt(p []byte, off int64) (n int, err error) {
+func (acc AccountReaderAt) ReadAt(p []byte, off int64) (n int, err error) {
 	acc.mu.Lock()
 	defer acc.mu.Unlock()
-	do, ok := acc.in.(io.ReaderAt)
-	if !ok {
-		return 0, fmt.Errorf("internal error: ReadAt not implemented for %T", acc.in)
-	}
 	bytesUntilLimit, err := acc.checkReadBefore()
 	if err == nil {
-		n, err = do.ReadAt(p, off)
+		n, err = acc.do.ReadAt(p, off)
 		acc.accountRead(n)
 		n, err = acc.checkReadAfter(bytesUntilLimit, n, err)
 	}
 	return n, err
 
+}
+
+// WithReaderAt returns an Account with a ReadAt method
+//
+// It returns an error if the underlying reader does not have a ReadAt method.
+func (acc *Account) WithReaderAt() (AccountReaderAt, error) {
+	do, ok := acc.in.(io.ReaderAt)
+	if !ok {
+		return AccountReaderAt{}, fmt.Errorf("internal error: ReadAt not implemented for %T: %w", acc.in, errors.ErrUnsupported)
+	}
+	return AccountReaderAt{
+		Account: acc,
+		do:      do,
+	}, nil
+}
+
+// AccountReadAtSeeker is an Account with both ReadAt and Seek methods
+type AccountReadAtSeeker struct {
+	AccountReaderAt
+	seeker AccountSeeker
+}
+
+var (
+	_ io.Reader   = AccountReadAtSeeker{}
+	_ io.ReaderAt = AccountReadAtSeeker{}
+	_ io.Seeker   = AccountReadAtSeeker{}
+)
+
+// Seek to position in the object - see io.Seeker
+func (acc AccountReadAtSeeker) Seek(offset int64, whence int) (int64, error) {
+	return acc.seeker.Seek(offset, whence)
+}
+
+// WithReadAtSeeker returns an Account with a ReadAt and Seek method
+//
+// It returns an error if the underlying reader does not have the correct methods.
+func (acc *Account) WithReadAtSeeker() (AccountReadAtSeeker, error) {
+	readerAt, err1 := acc.WithReaderAt()
+	seeker, err2 := acc.WithSeeker()
+	err := errors.Join(err1, err2)
+	if err != nil {
+		return AccountReadAtSeeker{}, err
+	}
+	return AccountReadAtSeeker{
+		AccountReaderAt: readerAt,
+		seeker:          seeker,
+	}, nil
 }
 
 // Thin wrapper for w

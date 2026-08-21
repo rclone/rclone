@@ -10,7 +10,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/oracle/oci-go-sdk/v65/objectstorage"
 )
 
@@ -73,54 +72,54 @@ func populateSSECustomerKeys(opt *Options) error {
 // https://docs.oracle.com/en-us/iaas/Content/Object/Tasks/usingyourencryptionkeys.htm
 func useBYOKPutObject(fs *Fs, request *objectstorage.PutObjectRequest) {
 	if fs.opt.SSEKMSKeyID != "" {
-		request.OpcSseKmsKeyId = common.String(fs.opt.SSEKMSKeyID)
+		request.OpcSseKmsKeyId = new(fs.opt.SSEKMSKeyID)
 	}
 	if fs.opt.SSECustomerAlgorithm != "" {
-		request.OpcSseCustomerAlgorithm = common.String(fs.opt.SSECustomerAlgorithm)
+		request.OpcSseCustomerAlgorithm = new(fs.opt.SSECustomerAlgorithm)
 	}
 	if fs.opt.SSECustomerKey != "" {
-		request.OpcSseCustomerKey = common.String(fs.opt.SSECustomerKey)
+		request.OpcSseCustomerKey = new(fs.opt.SSECustomerKey)
 	}
 	if fs.opt.SSECustomerKeySha256 != "" {
-		request.OpcSseCustomerKeySha256 = common.String(fs.opt.SSECustomerKeySha256)
+		request.OpcSseCustomerKeySha256 = new(fs.opt.SSECustomerKeySha256)
 	}
 }
 
 func useBYOKHeadObject(fs *Fs, request *objectstorage.HeadObjectRequest) {
 	if fs.opt.SSECustomerAlgorithm != "" {
-		request.OpcSseCustomerAlgorithm = common.String(fs.opt.SSECustomerAlgorithm)
+		request.OpcSseCustomerAlgorithm = new(fs.opt.SSECustomerAlgorithm)
 	}
 	if fs.opt.SSECustomerKey != "" {
-		request.OpcSseCustomerKey = common.String(fs.opt.SSECustomerKey)
+		request.OpcSseCustomerKey = new(fs.opt.SSECustomerKey)
 	}
 	if fs.opt.SSECustomerKeySha256 != "" {
-		request.OpcSseCustomerKeySha256 = common.String(fs.opt.SSECustomerKeySha256)
+		request.OpcSseCustomerKeySha256 = new(fs.opt.SSECustomerKeySha256)
 	}
 }
 
 func useBYOKGetObject(fs *Fs, request *objectstorage.GetObjectRequest) {
 	if fs.opt.SSECustomerAlgorithm != "" {
-		request.OpcSseCustomerAlgorithm = common.String(fs.opt.SSECustomerAlgorithm)
+		request.OpcSseCustomerAlgorithm = new(fs.opt.SSECustomerAlgorithm)
 	}
 	if fs.opt.SSECustomerKey != "" {
-		request.OpcSseCustomerKey = common.String(fs.opt.SSECustomerKey)
+		request.OpcSseCustomerKey = new(fs.opt.SSECustomerKey)
 	}
 	if fs.opt.SSECustomerKeySha256 != "" {
-		request.OpcSseCustomerKeySha256 = common.String(fs.opt.SSECustomerKeySha256)
+		request.OpcSseCustomerKeySha256 = new(fs.opt.SSECustomerKeySha256)
 	}
 }
 
 func useBYOKCopyObject(fs *Fs, request *objectstorage.CopyObjectRequest) {
 	if fs.opt.SSEKMSKeyID != "" {
-		request.OpcSseKmsKeyId = common.String(fs.opt.SSEKMSKeyID)
+		request.OpcSseKmsKeyId = new(fs.opt.SSEKMSKeyID)
 	}
 	if fs.opt.SSECustomerAlgorithm != "" {
-		request.OpcSseCustomerAlgorithm = common.String(fs.opt.SSECustomerAlgorithm)
+		request.OpcSseCustomerAlgorithm = new(fs.opt.SSECustomerAlgorithm)
 	}
 	if fs.opt.SSECustomerKey != "" {
-		request.OpcSseCustomerKey = common.String(fs.opt.SSECustomerKey)
+		request.OpcSseCustomerKey = new(fs.opt.SSECustomerKey)
 	}
 	if fs.opt.SSECustomerKeySha256 != "" {
-		request.OpcSseCustomerKeySha256 = common.String(fs.opt.SSECustomerKeySha256)
+		request.OpcSseCustomerKeySha256 = new(fs.opt.SSECustomerKeySha256)
 	}
 }

@@ -21,6 +21,13 @@ import (
 var (
 	findConfigOnce sync.Once
 	configDir      string // where the config is stored
+
+	// trackedServers counts how many live Start/stop pairs this
+	// process holds for each remote. Used by CleanupAll to force-stop
+	// everything this process started even if individual stop
+	// functions never ran (e.g. on signal, panic, fs.Fatalf).
+	trackedMu      sync.Mutex
+	trackedServers = map[string]int{}
 )
 
 // Assume we are run somewhere within the rclone root
@@ -190,9 +197,48 @@ func Start(remote string) (fn func(), err error) {
 		return nil, err
 	}
 
-	// And return a function to stop it
+	trackedMu.Lock()
+	trackedServers[name]++
+	trackedMu.Unlock()
+
+	// And return a function to stop it. The returned closure is
+	// idempotent: calling it twice (e.g. by defer and by CleanupAll)
+	// only decrements once.
+	var once sync.Once
 	return func() {
-		stop(name)
+		once.Do(func() {
+			trackedMu.Lock()
+			if trackedServers[name] > 0 {
+				trackedServers[name]--
+			}
+			trackedMu.Unlock()
+			stop(name)
+		})
 	}, nil
 
+}
+
+// CleanupAll force-stops every server this process ever started via
+// Start, regardless of refcount. Safe to call multiple times and from
+// any goroutine. Intended for end-of-run or signal-handler cleanup in
+// long-running test drivers like fstest/test_all.
+func CleanupAll() {
+	trackedMu.Lock()
+	names := make([]string, 0, len(trackedServers))
+	for name, count := range trackedServers {
+		if count > 0 {
+			names = append(names, name)
+		}
+	}
+	for _, name := range names {
+		trackedServers[name] = 0
+	}
+	trackedMu.Unlock()
+
+	for _, name := range names {
+		fs.Logf(name, "Force-stopping test server")
+		if _, err := run(name, "force-stop"); err != nil {
+			fs.Errorf(name, "Failed to force-stop test server: %v", err)
+		}
+	}
 }

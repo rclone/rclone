@@ -31,6 +31,10 @@ time instead of the current time. Times may be specified as one of:
 Note that value of `--timestamp` is in UTC. If you want local time
 then add the `--localtime` flag.
 
+Metadata can be added when creating a new file with `--metadata-set`.
+For example:
+  rclone touch remote:path -M --metadata-set key=value
+
 ```
 rclone touch remote:path [flags]
 ```
@@ -69,6 +73,7 @@ Flags for filtering directory listings
       --exclude-if-present stringArray      Exclude directories if filename is present
       --files-from stringArray              Read list of source-file names from file (use - to read from stdin)
       --files-from-raw stringArray          Read list of source-file names from file without any processing of lines (use - to read from stdin)
+      --files-from0 stringArray             Read list of source-file names from file using NUL as separator (use - to read from stdin)
   -f, --filter stringArray                  Add a file filtering rule
       --filter-from stringArray             Read file filtering patterns from a file (use - to read from stdin)
       --hash-filter string                  Partition filenames by hash k/n or randomly @/n

@@ -286,7 +286,7 @@ large file of a known size to stay below this number of chunks limit.
 Any files larger than this that need to be server-side copied will be
 copied in chunks of this size.
 
-The minimum is 0 and the maximum is 5 GiB.`,
+The minimum is 1 byte and the maximum is 5 GiB.`,
 			Default:  fs.SizeSuffix(maxSizeForCopy),
 			Advanced: true,
 		}, {
@@ -371,7 +371,7 @@ this may help to speed up the transfers.`,
 
 If this is true (the default) then rclone will use path style access,
 if false then rclone will use virtual path style. See [the AWS S3
-docs](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html#access-bucket-intro)
+docs](https://docs.aws.amazon.com/AmazonS3/latest/userguide/VirtualHosting.html)
 for more info.
 
 Some providers (e.g. AWS, Aliyun OSS, Netease COS, or Tencent COS) require this set to
@@ -741,6 +741,21 @@ knows about - please make a bug report if not.
 
 You can change this if you want to disable the use of multipart uploads.
 This shouldn't be necessary in normal operation.
+
+This should be automatically set correctly for all providers rclone
+knows about - please make a bug report if not.
+`,
+			Default:  fs.Tristate{},
+			Advanced: true,
+		}, {
+			Name: "list_versions_oldest_first",
+			Help: `Set if the backend returns object versions oldest first.
+
+The S3 standard returns object versions newest first. Some backends
+(e.g. Hitachi HCP) return them oldest first instead.
+
+Set this quirk if --s3-version-at or --s3-versions produce incorrect
+results with your backend.
 
 This should be automatically set correctly for all providers rclone
 knows about - please make a bug report if not.
@@ -1125,6 +1140,7 @@ type Options struct {
 	IBMAPIKey                   string               `config:"ibm_api_key"`
 	IBMInstanceID               string               `config:"ibm_resource_instance_id"`
 	IBMIAMEndpoint              string               `config:"ibm_iam_endpoint"`
+	ListVersionsOldestFirst     fs.Tristate          `config:"list_versions_oldest_first"`
 	UseXID                      fs.Tristate          `config:"use_x_id"`
 	SignAcceptEncoding          fs.Tristate          `config:"sign_accept_encoding"`
 	ObjectLockMode              string               `config:"object_lock_mode"`
@@ -1263,8 +1279,7 @@ func (f *Fs) shouldRetry(ctx context.Context, err error) (bool, error) {
 	}
 	// https://github.com/aws/aws-sdk-go-v2/blob/main/CHANGELOG.md#error-handling
 	// If this is an awserr object, try and extract more useful information to determine if we should retry
-	var awsError smithy.APIError
-	if errors.As(err, &awsError) {
+	if awsError, ok := errors.AsType[smithy.APIError](err); ok {
 		// Simple case, check the original embedded error in case it's generically retryable
 		if fserrors.ShouldRetry(awsError) {
 			return true, err
@@ -1335,8 +1350,59 @@ func getClient(ctx context.Context, opt *Options) *http.Client {
 		}
 	})
 	return &http.Client{
-		Transport: t,
+		Transport:     t,
+		CheckRedirect: s3CheckRedirect,
 	}
+}
+
+// s3RedirectSecretHeaders are the request headers carrying origin-bound
+// secrets that must not be forwarded when a redirect crosses a host or
+// downgrades the scheme. Go strips Authorization on a hostname change but not
+// on a scheme downgrade, and has no knowledge that the SSE-C headers hold raw
+// encryption keys, so we strip them all ourselves.
+var s3RedirectSecretHeaders = []string{
+	"X-Amz-Security-Token",  // AWS STS session token
+	"X-Amz-S3session-Token", // S3 Express (directory bucket) session token
+	"Authorization",         // e.g. IBM IAM bearer token
+	"ibm-service-instance-id",
+	"X-Amz-Server-Side-Encryption-Customer-Algorithm",
+	"X-Amz-Server-Side-Encryption-Customer-Key",
+	"X-Amz-Server-Side-Encryption-Customer-Key-Md5",
+	"X-Amz-Copy-Source-Server-Side-Encryption-Customer-Algorithm",
+	"X-Amz-Copy-Source-Server-Side-Encryption-Customer-Key",
+	"X-Amz-Copy-Source-Server-Side-Encryption-Customer-Key-Md5",
+	"Referer", // may be a presigned request
+}
+
+func s3CheckRedirect(req *http.Request, via []*http.Request) error {
+	if len(via) >= 10 {
+		return errors.New("stopped after 10 redirects")
+	}
+	// Never follow a redirect that downgrades the transport from HTTPS to
+	// HTTP. An S3 endpoint has no legitimate reason to do this, and replaying
+	// the request over plaintext would expose whatever credential it carries.
+	if via[len(via)-1].URL.Scheme == "https" && req.URL.Scheme == "http" {
+		return fmt.Errorf("refusing to follow insecure redirect from HTTPS to HTTP: %s", req.URL.Redacted())
+	}
+	if s3RedirectCrossesHost(req, via) {
+		for _, header := range s3RedirectSecretHeaders {
+			req.Header.Del(header)
+		}
+	}
+	return nil
+}
+
+func s3RedirectCrossesHost(req *http.Request, via []*http.Request) bool {
+	if len(via) == 0 {
+		return false
+	}
+	scheme, host := via[0].URL.Scheme, via[0].URL.Host
+	for _, redirect := range via[1:] {
+		if redirect.URL.Host != host || redirect.URL.Scheme != scheme {
+			return true
+		}
+	}
+	return host != req.URL.Host || scheme != req.URL.Scheme
 }
 
 // Fixup the request if needed.
@@ -1506,8 +1572,10 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 			}
 		}
 
-		// Create AssumeRole credentials provider
-		awsConfig.Credentials = stscreds.NewAssumeRoleProvider(stsClient, opt.RoleARN, assumeRoleOptions)
+		// Create AssumeRole credentials provider, wrapped in a
+		// CredentialsCache so we don't call AssumeRole on every
+		// request.
+		awsConfig.Credentials = aws.NewCredentialsCache(stscreds.NewAssumeRoleProvider(stsClient, opt.RoleARN, assumeRoleOptions))
 	}
 
 	provider = loadProvider(opt.Provider)
@@ -1647,7 +1715,9 @@ func setEndpointValueForIDriveE2(m configmap.Mapper) (err error) {
 	if !ok || value == "" {
 		return
 	}
-	client := &http.Client{Timeout: time.Second * 3}
+	// Reuse the S3 redirect policy so this bootstrap call, which posts the
+	// access key ID, won't be redirected from HTTPS to plaintext HTTP.
+	client := &http.Client{Timeout: time.Second * 3, CheckRedirect: s3CheckRedirect}
 	// API to get user region endpoint against the Access Key details: https://www.idrive.com/e2/guides/get_region_endpoint
 	resp, err := client.Post("https://api.idrivee2.com/api/service/get_region_end_point",
 		"application/json",
@@ -1741,6 +1811,7 @@ func setQuirks(opt *Options, provider *Provider) {
 	set(&opt.UseXID, true, provider.Quirks.UseXID)
 	set(&opt.SignAcceptEncoding, true, provider.Quirks.SignAcceptEncoding)
 	set(&opt.ObjectLockSupported, true, provider.Quirks.ObjectLockSupported)
+	set(&opt.ListVersionsOldestFirst, false, provider.Quirks.ListVersionsOldestFirst)
 }
 
 // setRoot changes the root of the Fs
@@ -1880,18 +1951,50 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		newRoot, leaf := path.Split(oldRoot)
 		f.setRoot(newRoot)
 		_, err := f.NewObject(ctx, leaf)
-		if errors.Is(err, fs.ErrorObjectNotFound) {
+		switch {
+		case err == nil:
+			// It is a file so return an fs which points to the parent
+			return f, fs.ErrorIsFile
+		case errors.Is(err, fs.ErrorObjectNotFound):
 			// File doesn't exist or is a directory so return old f
 			f.setRoot(oldRoot)
 			return f, nil
+		default:
+			// We couldn't HEAD the object so now attempt to list it
+			hasChildren, listErr := f.hasChildren(ctx, leaf)
+			if listErr != nil {
+				fs.Debugf(f, "Couldn't check %q for children after HEAD failed (%v): %v", oldRoot, err, listErr)
+			}
+			// If it listed and has children it must be a directory
+			if hasChildren {
+				f.setRoot(oldRoot)
+				return f, nil
+			}
+			// If it has no children it is either a file or an empty directory. We can't
+			// tell these two cases apart. We choose file which is more likely, and
+			// return an fs which points to the parent.
+			return f, fs.ErrorIsFile
 		}
-		if err != nil {
-			return nil, err
-		}
-		// return an error with an fs which points to the parent
-		return f, fs.ErrorIsFile
 	}
 	return f, nil
+}
+
+// hasChildren reports whether the directory dir contains any objects.
+func (f *Fs) hasChildren(ctx context.Context, dir string) (found bool, err error) {
+	bucket, directory := f.split(dir)
+	err = f.list(ctx, listOpt{
+		bucket:    bucket,
+		directory: directory,
+		prefix:    f.rootDirectory,
+		recurse:   true,
+	}, func(remote string, object *types.Object, versionID *string, isDirectory bool) error {
+		found = true
+		return errEndList // stop after the first object
+	})
+	if err != nil && err != fs.ErrorDirNotFound {
+		return false, err
+	}
+	return found, nil
 }
 
 // getMetaDataListing gets the metadata from the object unconditionally from the listing
@@ -2258,6 +2361,13 @@ func (ls *versionsList) List(ctx context.Context) (resp *s3.ListObjectsV2Output,
 	//structs.SetFrom(resp, respVersions)
 	setFrom_s3ListObjectsV2Output_s3ListObjectVersionsOutput(resp, respVersions)
 
+	// Some backends (e.g. Hitachi HCP) return versions oldest first instead
+	// of newest first. Reverse both lists so mergeDeleteMarkers works correctly.
+	if ls.f.opt.ListVersionsOldestFirst.Value {
+		slices.Reverse(respVersions.Versions)
+		slices.Reverse(respVersions.DeleteMarkers)
+	}
+
 	// Merge in delete Markers as types.ObjectVersion if we need them
 	if ls.hidden || ls.usingVersionAt {
 		respVersions.Versions = mergeDeleteMarkers(respVersions.Versions, respVersions.DeleteMarkers)
@@ -2396,8 +2506,7 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 			listBucket.URLEncodeListings(urlEncodeListings)
 			resp, versionIDs, err = listBucket.List(ctx)
 			if err != nil && !urlEncodeListings {
-				var xmlErr *xml.SyntaxError
-				if errors.As(err, &xmlErr) {
+				if _, ok := errors.AsType[*xml.SyntaxError](err); ok {
 					// Retry the listing with URL encoding as there were characters that XML can't encode
 					urlEncodeListings = true
 					fs.Debugf(f, "Retrying listing because of characters which can't be XML encoded")
@@ -2834,8 +2943,7 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 		if err == nil {
 			fs.Infof(f, "Bucket %q created with ACL %q", bucket, f.opt.BucketACL)
 		}
-		var awsErr smithy.APIError
-		if errors.As(err, &awsErr) {
+		if awsErr, ok := errors.AsType[smithy.APIError](err); ok {
 			switch awsErr.ErrorCode() {
 			case "BucketAlreadyOwnedByYou":
 				err = nil
@@ -4304,13 +4412,15 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		resp, err = o.fs.c.GetObject(ctx, &req, s3.WithAPIOptions(APIOptions...))
 		return o.fs.shouldRetry(ctx, err)
 	})
-	var awsError smithy.APIError
-	if errors.As(err, &awsError) {
+	if awsError, ok := errors.AsType[smithy.APIError](err); ok {
 		if awsError.ErrorCode() == "InvalidObjectState" {
 			return nil, fmt.Errorf("Object in GLACIER, restore first: bucket=%q, key=%q", bucket, bucketPath)
 		}
 	}
 	if err != nil {
+		if statusCode := getHTTPStatusCode(err); statusCode == http.StatusNotFound || statusCode == http.StatusMethodNotAllowed {
+			return nil, fs.ErrorObjectNotFound
+		}
 		return nil, err
 	}
 

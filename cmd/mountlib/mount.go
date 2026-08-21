@@ -94,6 +94,11 @@ var OptionsInfo = fs.Options{{
 	Help:    "Allow access to other users (not supported on Windows)",
 	Groups:  "Mount",
 }, {
+	Name:    "allow_idmap",
+	Default: false,
+	Help:    "Allow id-mapped mounts (Linux 6.12+, mount2 only)",
+	Groups:  "Mount",
+}, {
 	Name:    "async_read",
 	Default: true,
 	Help:    "Use asynchronous reads (not supported on Windows)",
@@ -172,6 +177,7 @@ type Options struct {
 	AllowNonEmpty      bool          `config:"allow_non_empty"`
 	AllowRoot          bool          `config:"allow_root"`
 	AllowOther         bool          `config:"allow_other"`
+	AllowIDMap         bool          `config:"allow_idmap"`
 	DefaultPermissions bool          `config:"default_permissions"`
 	WritebackCache     bool          `config:"write_back_cache"`
 	Daemon             bool          `config:"daemon"`
@@ -195,25 +201,41 @@ type (
 	// UnmountFn is called to unmount the file system
 	UnmountFn func() error
 	// MountFn is called to mount the file system
-	MountFn func(VFS *vfs.VFS, mountpoint string, opt *Options) (<-chan error, func() error, error)
+	//
+	// It returns the errChan, unmount function, the actual mountpoint
+	// (which may differ from the input, e.g. on Windows when "*" is
+	// used to auto-assign a drive letter) and an error.
+	MountFn func(VFS *vfs.VFS, mountpoint string, opt *Options) (<-chan error, func() error, string, error)
 )
 
 // MountPoint represents a mount with options and runtime state
 type MountPoint struct {
-	MountPoint string
-	MountedOn  time.Time
-	MountOpt   Options
-	VFSOpt     vfscommon.Options
-	Fs         fs.Fs
-	VFS        *vfs.VFS
-	MountFn    MountFn
-	UnmountFn  UnmountFn
-	ErrChan    <-chan error
+	Ctx             context.Context
+	MountPoint      string
+	MountedOn       time.Time
+	MountOpt        Options
+	VFSOpt          vfscommon.Options
+	Fs              fs.Fs
+	VFS             *vfs.VFS
+	MountFn         MountFn
+	UnmountFn       UnmountFn
+	ErrChan         <-chan error
+	vfsShutdownOnce sync.Once
+}
+
+// shutdownVFS shuts down the VFS instance exactly once
+func (m *MountPoint) shutdownVFS() {
+	m.vfsShutdownOnce.Do(func() {
+		if m.VFS != nil {
+			m.VFS.Shutdown()
+		}
+	})
 }
 
 // NewMountPoint makes a new mounting structure
 func NewMountPoint(mount MountFn, mountPoint string, f fs.Fs, mountOpt *Options, vfsOpt *vfscommon.Options) *MountPoint {
 	return &MountPoint{
+		Ctx:        context.Background(),
 		MountFn:    mount,
 		MountPoint: mountPoint,
 		Fs:         f,
@@ -369,14 +391,19 @@ func (m *MountPoint) Mount() (mountDaemon *os.Process, err error) {
 		}
 	}
 
-	m.VFS = vfs.New(context.Background(), m.Fs, &m.VFSOpt)
+	m.VFS = vfs.New(m.Ctx, m.Fs, &m.VFSOpt)
 
-	m.ErrChan, m.UnmountFn, err = m.MountFn(m.VFS, m.MountPoint, &m.MountOpt)
+	var actualMountpoint string
+	m.ErrChan, m.UnmountFn, actualMountpoint, err = m.MountFn(m.VFS, m.MountPoint, &m.MountOpt)
 	if err != nil {
+		m.shutdownVFS()
 		if len(os.Args) > 0 && strings.HasPrefix(os.Args[0], "/snap/") {
 			return nil, fmt.Errorf("mounting is not supported when running from snap")
 		}
 		return nil, fmt.Errorf("failed to mount FUSE fs: %w", err)
+	}
+	if actualMountpoint != "" {
+		m.MountPoint = actualMountpoint
 	}
 	m.MountedOn = time.Now()
 	return nil, nil
@@ -388,6 +415,7 @@ func (m *MountPoint) Wait() error {
 	var finaliseOnce sync.Once
 	finalise := func() {
 		finaliseOnce.Do(func() {
+			defer m.shutdownVFS()
 			// Unmount only if directory was mounted by rclone, e.g. don't unmount autofs hooks.
 			if err := CheckMountReady(m.MountPoint); err != nil {
 				fs.Debugf(m.MountPoint, "Unmounted externally. Just exit now.")
@@ -415,5 +443,9 @@ func (m *MountPoint) Wait() error {
 
 // Unmount the specified mountpoint
 func (m *MountPoint) Unmount() (err error) {
-	return m.UnmountFn()
+	defer m.shutdownVFS()
+	if m.UnmountFn != nil {
+		return m.UnmountFn()
+	}
+	return nil
 }

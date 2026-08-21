@@ -39,6 +39,7 @@ import (
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
@@ -1637,6 +1638,18 @@ func TestRcatSize(t *testing.T) {
 	r.CheckRemoteItems(t, file1, file2)
 }
 
+func TestRcatSizeShortEOF(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+
+	const body = "------------------------------------------------------------"
+
+	// Upload declaring twice as many bytes as the source supplies
+	bodyReader := io.NopCloser(strings.NewReader(body))
+	_, err := operations.RcatSize(ctx, r.Fremote, "potato1", bodyReader, 2*int64(len(body)), t1, nil)
+	require.Error(t, err, "uploading a source which ends before its declared size must not succeed")
+}
+
 func TestRcatSizeMetadata(t *testing.T) {
 	r := fstest.NewRun(t)
 
@@ -1725,6 +1738,97 @@ func TestRcatSizeUploadHeaders(t *testing.T) {
 		}
 	}
 	assert.True(t, found, "X-Upload-Header not found in options passed to Put")
+}
+
+// corruptingFs wraps an fs.Fs, storing data which doesn't match the
+// data streamed into Put.
+type corruptingFs struct {
+	fs.Fs
+}
+
+func (f *corruptingFs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	n, err := io.Copy(io.Discard, in)
+	if err != nil {
+		return nil, err
+	}
+	return f.Fs.Put(ctx, bytes.NewReader(bytes.Repeat([]byte("!"), int(n))), src, options...)
+}
+
+// noHashFs wraps an fs.Fs, reporting that it supports no hashes.
+type noHashFs struct {
+	fs.Fs
+}
+
+func (f *noHashFs) Hashes() hash.Set {
+	return hash.NewHashSet()
+}
+
+// truncatingFs wraps an fs.Fs, storing one byte less than was streamed
+// into Put and reporting that it supports no hashes, so only the size
+// can reveal the corruption.
+type truncatingFs struct {
+	fs.Fs
+}
+
+func (f *truncatingFs) Hashes() hash.Set {
+	return hash.NewHashSet()
+}
+
+func (f *truncatingFs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	n, err := io.Copy(io.Discard, in)
+	if err != nil {
+		return nil, err
+	}
+	short := bytes.Repeat([]byte("!"), int(n)-1)
+	info := object.NewStaticObjectInfo(src.Remote(), src.ModTime(ctx), int64(len(short)), true, nil, f.Fs)
+	return f.Fs.Put(ctx, bytes.NewReader(short), info, options...)
+}
+
+func TestRcatSizeChecksum(t *testing.T) {
+	const body = "------------------------------------------------------------"
+
+	t.Run("Corrupted", func(t *testing.T) {
+		ctx := context.Background()
+		r := fstest.NewRun(t)
+		if r.Fremote.Hashes().Count() == 0 {
+			t.Skip("Skipping as destination doesn't support hashes")
+		}
+		bodyReader := io.NopCloser(strings.NewReader(body))
+		_, err := operations.RcatSize(ctx, &corruptingFs{Fs: r.Fremote}, "potato1", bodyReader, int64(len(body)), t1, nil)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "corrupted on transfer")
+		r.CheckRemoteItems(t)
+	})
+
+	// A destination which reports no hashes can only be checked by its
+	// size, so the size has to be compared as well as the hash.
+	t.Run("SizeDiffers", func(t *testing.T) {
+		ctx := context.Background()
+		r := fstest.NewRun(t)
+		bodyReader := io.NopCloser(strings.NewReader(body))
+		_, err := operations.RcatSize(ctx, &truncatingFs{Fs: r.Fremote}, "potato4", bodyReader, int64(len(body)), t1, nil)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "corrupted on transfer: sizes differ")
+		r.CheckRemoteItems(t)
+	})
+
+	t.Run("IgnoreChecksum", func(t *testing.T) {
+		ctx, ci := fs.AddConfig(context.Background())
+		ci.IgnoreChecksum = true
+		r := fstest.NewRun(t)
+		bodyReader := io.NopCloser(strings.NewReader(body))
+		_, err := operations.RcatSize(ctx, &corruptingFs{Fs: r.Fremote}, "potato2", bodyReader, int64(len(body)), t1, nil)
+		require.NoError(t, err)
+	})
+
+	t.Run("NoHashes", func(t *testing.T) {
+		ctx := context.Background()
+		r := fstest.NewRun(t)
+		bodyReader := io.NopCloser(strings.NewReader(body))
+		obj, err := operations.RcatSize(ctx, &noHashFs{Fs: r.Fremote}, "potato3", bodyReader, int64(len(body)), t1, nil)
+		require.NoError(t, err)
+		assert.Equal(t, int64(len(body)), obj.Size())
+	})
 }
 
 func TestTouchDir(t *testing.T) {

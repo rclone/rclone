@@ -137,17 +137,6 @@ Properties:
 
 Here are the Advanced options specific to internxt (Internxt Drive).
 
-#### --internxt-mnemonic
-
-Mnemonic (internal use only)
-
-Properties:
-
-- Config:      mnemonic
-- Env Var:     RCLONE_INTERNXT_MNEMONIC
-- Type:        string
-- Required:    false
-
 #### --internxt-skip-hash-validation
 
 Skip hash validation when downloading files.
@@ -160,6 +149,50 @@ Properties:
 - Env Var:     RCLONE_INTERNXT_SKIP_HASH_VALIDATION
 - Type:        bool
 - Default:     true
+
+#### --internxt-upload-concurrency
+
+Concurrency for multipart uploads.
+
+This is the number of chunks of the same file that are uploaded concurrently.
+
+Note that each chunk is buffered in memory.
+
+Properties:
+
+- Config:      upload_concurrency
+- Env Var:     RCLONE_INTERNXT_UPLOAD_CONCURRENCY
+- Type:        int
+- Default:     4
+
+#### --internxt-upload-cutoff
+
+Cutoff for switching to multipart upload.
+
+Any files larger than this will be uploaded in chunks of chunk_size.
+The minimum is 100 MiB and the maximum is 5 GiB.
+
+Properties:
+
+- Config:      upload_cutoff
+- Env Var:     RCLONE_INTERNXT_UPLOAD_CUTOFF
+- Type:        SizeSuffix
+- Default:     100Mi
+
+#### --internxt-chunk-size
+
+Chunk size for multipart uploads.
+
+Files larger than upload_cutoff will be uploaded in chunks of this size.
+
+Memory usage is approximately chunk_size * upload_concurrency.
+
+Properties:
+
+- Config:      chunk_size
+- Env Var:     RCLONE_INTERNXT_CHUNK_SIZE
+- Type:        SizeSuffix
+- Default:     30Mi
 
 #### --internxt-encoding
 

@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -23,7 +24,6 @@ import (
 	"github.com/rclone/rclone/cmd/serve"
 	"github.com/rclone/rclone/cmd/serve/dlna/data"
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/lib/systemd"
@@ -77,13 +77,13 @@ func init() {
 	serve.AddRc("dlna", func(ctx context.Context, f fs.Fs, in rc.Params) (serve.Handle, error) {
 		// Read VFS Opts
 		var vfsOpt = vfscommon.Opt // set default opts
-		err := configstruct.SetAny(in, &vfsOpt)
+		err := rc.ParseOptions(in, "vfsOpt", &vfsOpt)
 		if err != nil {
 			return nil, err
 		}
 		// Read opts
 		var opt = Opt // set default opts
-		err = configstruct.SetAny(in, &opt)
+		err = rc.ParseOptions(in, "opt", &opt)
 		if err != nil {
 			return nil, err
 		}
@@ -148,6 +148,7 @@ const (
 	rootDescPath      = "/rootDesc.xml"
 	resPath           = "/r/"
 	serviceControlURL = "/ctl"
+	maxSOAPBodySize   = 1 << 20
 )
 
 type server struct {
@@ -243,6 +244,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 	}
 	listener, err := net.Listen(network, s.httpListenAddr)
 	if err != nil {
+		s.vfs.Shutdown()
 		return nil, err
 	}
 	s.HTTPConn = listener
@@ -252,7 +254,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 
 // UPnPService is the interface for the SOAP service.
 type UPnPService interface {
-	Handle(action string, argsXML []byte, r *http.Request) (respArgs map[string]string, err error)
+	Handle(action string, argsXML []byte, r *http.Request) (respArgs []soapArg, err error)
 	Subscribe(callback []*url.URL, timeoutSeconds int) (sid string, actualTimeout int, err error)
 	Unsubscribe(sid string) error
 }
@@ -303,7 +305,12 @@ func (s *server) serviceControlHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var env soap.Envelope
+	r.Body = http.MaxBytesReader(w, r.Body, maxSOAPBodySize)
 	if err := xml.NewDecoder(r.Body).Decode(&env); err != nil {
+		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
+			http.Error(w, "SOAP request body too large", http.StatusRequestEntityTooLarge)
+			return
+		}
 		serveError(ctx, s, w, "Could not parse SOAP request body", err)
 		return
 	}
@@ -327,7 +334,7 @@ func (s *server) serviceControlHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Handle a SOAP request and return the response arguments or UPnP error.
-func (s *server) soapActionResponse(sa upnp.SoapAction, actionRequestXML []byte, r *http.Request) (map[string]string, error) {
+func (s *server) soapActionResponse(sa upnp.SoapAction, actionRequestXML []byte, r *http.Request) ([]soapArg, error) {
 	service, ok := s.services[sa.Type]
 	if !ok {
 		// TODO: What's the invalid service error?
@@ -395,6 +402,7 @@ func (s *server) Wait() {
 // Shutdown the DLNA server
 func (s *server) Shutdown() error {
 	err := s.HTTPConn.Close()
+	s.vfs.Shutdown()
 	close(s.waitChan)
 	if err != nil {
 		return fmt.Errorf("failed to shutdown DLNA server: %w", err)

@@ -46,28 +46,33 @@ var OptionsInfo = fs.Options{{
 }, {
 	Name:    "rc_web_gui",
 	Default: false,
-	Help:    "Launch WebGUI on localhost",
+	Help:    "Launch WebGUI on localhost **DEPRECATED**",
 	Groups:  "RC",
+	Hide:    fs.OptionHideBoth,
 }, {
 	Name:    "rc_web_gui_update",
 	Default: false,
-	Help:    "Check and update to latest version of web gui",
+	Help:    "Check and update to latest version of web gui **DEPRECATED**",
 	Groups:  "RC",
+	Hide:    fs.OptionHideBoth,
 }, {
 	Name:    "rc_web_gui_force_update",
 	Default: false,
-	Help:    "Force update to latest version of web gui",
+	Help:    "Force update to latest version of web gui **DEPRECATED**",
 	Groups:  "RC",
+	Hide:    fs.OptionHideBoth,
 }, {
 	Name:    "rc_web_gui_no_open_browser",
 	Default: false,
-	Help:    "Don't open the browser automatically",
+	Help:    "Don't open the browser automatically **DEPRECATED**",
 	Groups:  "RC",
+	Hide:    fs.OptionHideBoth,
 }, {
 	Name:    "rc_web_fetch_url",
 	Default: "https://api.github.com/repos/rclone/rclone-webui-react/releases/latest",
-	Help:    "URL to fetch the releases for webgui",
+	Help:    "URL to fetch the releases for webgui **DEPRECATED**",
 	Groups:  "RC",
+	Hide:    fs.OptionHideBoth,
 }, {
 	Name:    "rc_enable_metrics",
 	Default: false,
@@ -83,11 +88,6 @@ var OptionsInfo = fs.Options{{
 	Default: fs.Duration(10 * time.Second),
 	Help:    "Interval to check for expired async jobs",
 	Groups:  "RC",
-}, {
-	Name:    "metrics_addr",
-	Default: []string{},
-	Help:    "IPaddress:Port or :Port to bind metrics server to",
-	Groups:  "Metrics",
 }}.
 	AddPrefix(libhttp.ConfigInfo, "rc", "RC").
 	AddPrefix(libhttp.AuthConfigInfo, "rc", "RC").
@@ -95,7 +95,8 @@ var OptionsInfo = fs.Options{{
 	AddPrefix(libhttp.ConfigInfo, "metrics", "Metrics").
 	AddPrefix(libhttp.AuthConfigInfo, "metrics", "Metrics").
 	AddPrefix(libhttp.TemplateConfigInfo, "metrics", "Metrics").
-	SetDefault("rc_addr", []string{"localhost:5572"})
+	SetDefault("rc_addr", []string{"localhost:5572"}).
+	SetDefault("metrics_addr", []string{})
 
 func init() {
 	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "rc", Opt: &Opt, Options: OptionsInfo})
@@ -110,12 +111,12 @@ type Options struct {
 	Files               string                 `config:"rc_files"`                   // set to enable serving files locally
 	Serve               bool                   `config:"rc_serve"`                   // set to serve files from remotes
 	ServeNoModTime      bool                   `config:"rc_serve_no_modtime"`        // don't read the modification time
-	NoAuth              bool                   `config:"rc_no_auth"`                 // set to disable auth checks on AuthRequired methods
-	WebUI               bool                   `config:"rc_web_gui"`                 // set to launch the web ui
-	WebGUIUpdate        bool                   `config:"rc_web_gui_update"`          // set to check new update
-	WebGUIForceUpdate   bool                   `config:"rc_web_gui_force_update"`    // set to force download new update
-	WebGUINoOpenBrowser bool                   `config:"rc_web_gui_no_open_browser"` // set to disable auto opening browser
-	WebGUIFetchURL      string                 `config:"rc_web_fetch_url"`           // set the default url for fetching webgui
+	NoAuth              bool                   `config:"rc_no_auth"`                 // set to disable auth checks on methods which require it
+	WebUI               bool                   `config:"rc_web_gui"`                 // set to launch the web ui **DEPRECATED**
+	WebGUIUpdate        bool                   `config:"rc_web_gui_update"`          // set to check new update **DEPRECATED**
+	WebGUIForceUpdate   bool                   `config:"rc_web_gui_force_update"`    // set to force download new update **DEPRECATED**
+	WebGUINoOpenBrowser bool                   `config:"rc_web_gui_no_open_browser"` // set to disable auto opening browser **DEPRECATED**
+	WebGUIFetchURL      string                 `config:"rc_web_fetch_url"`           // set the default url for fetching webgui **DEPRECATED**
 	EnableMetrics       bool                   `config:"rc_enable_metrics"`          // set to disable prometheus metrics on /metrics
 	MetricsHTTP         libhttp.Config         `config:"metrics"`
 	MetricsAuth         libhttp.AuthConfig     `config:"metrics"`

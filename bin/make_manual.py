@@ -8,7 +8,7 @@ import os
 import re
 import time
 import subprocess
-from datetime import datetime
+from datetime import datetime, timezone
 
 docpath = "docs/content"
 outfile = "MANUAL.md"
@@ -56,6 +56,7 @@ docs = [
     "drive.md",
     "googlephotos.md",
     "hasher.md",
+    "huaweidrive.md",
     "hdfs.md",
     "hidrive.md",
     "http.md",
@@ -135,6 +136,7 @@ ignore_docs = [
     "privacy.md",
     "sponsor.md",
     "amazonclouddrive.md",
+    "backends.md",              # Makes JSON confusingly
 ]
 
 def read_doc(doc):
@@ -198,8 +200,8 @@ def read_commands(docpath):
 def main():
     check_docs(docpath)
     command_docs = read_commands(docpath).replace("\\", "\\\\") # escape \ so we can use command_docs in re.sub
-    build_date = datetime.utcfromtimestamp(
-            int(os.environ.get('SOURCE_DATE_EPOCH', time.time())))
+    build_date = datetime.fromtimestamp(
+            int(os.environ.get('SOURCE_DATE_EPOCH', time.time())), timezone.utc)
     help_output = subprocess.check_output(["rclone", "help"]).decode("utf-8")
     with open(outfile, "w") as out:
         out.write("""\

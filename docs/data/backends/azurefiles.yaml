@@ -27,4 +27,4 @@ features:
 - WriteMimeType
 hashes:
 - md5
-precision: 1000000000
+precision: 100

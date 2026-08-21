@@ -6,14 +6,17 @@ package sftp
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
 	iofs "io/fs"
+	"net"
 	"net/url"
 	"os"
 	"path"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -27,7 +30,9 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/env"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
@@ -44,6 +49,7 @@ const (
 	maxSleep                = 2 * time.Second
 	decayConstant           = 2           // bigger for slower decay, exponential
 	keepAliveInterval       = time.Minute // send keepalives every this long while running commands
+	maxHostKeys             = 16          // caps the number of host_keys entries
 )
 
 var (
@@ -114,12 +120,55 @@ Set this if you have a signed certificate you want to use for authentication.` +
 			Name: "known_hosts_file",
 			Help: `Optional path to known_hosts file.
 
-Set this value to enable server host key validation.` + env.ShellExpandHelp,
+Set this value to enable server host key validation. Set to ` + "`none`" + ` to silence the "No host key validation" notice.` + env.ShellExpandHelp,
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "~/.ssh/known_hosts",
 				Help:  "Use OpenSSH's known_hosts file.",
 			}},
+		}, {
+			Name:    "pin_host_key",
+			Default: false,
+			Hide:    fs.OptionHideConfigurator,
+			Help: `Pin the server host key on first connection (Trust On First Use).
+
+Intended for one-time use as the ` + "`--sftp-pin-host-key`" + ` command-line
+flag. Run rclone once with the flag and the server's host key will be
+recorded into the host_keys config option. On subsequent runs (without
+the flag) host_keys is consulted and any mismatch is refused.
+
+Setting this option persistently in the config file is not
+recommended. While it is set, rclone will also accept any new
+host key algorithm the server later presents, which widens the trust
+surface beyond the initial pin. To pin a new key after a legitimate
+key change, re-run with the flag.
+
+The first connection is unauthenticated, so ideally do it over a
+trusted network or cross-check the fingerprint rclone logs against
+one provided out of band.
+
+If known_hosts_file is also set, that takes precedence and this option
+is ignored.`,
+			Advanced: true,
+		}, {
+			Name:    "host_keys",
+			Default: fs.CommaSepList{},
+			Help: `Pinned host keys for this remote, used to verify the server.
+
+Comma-separated list of "algo base64-key" entries (the same format as
+the second and third fields of an OpenSSH known_hosts line). Usually
+populated automatically by running once with --sftp-pin-host-key, but
+can be set by hand to pin a server's public key obtained out of band.
+Note that each entry is the complete public key, not its SHA256
+fingerprint.
+
+When non-empty, the offered host key must match one of the entries or
+the connection is refused. To re-pin after a legitimate key change,
+clear this option and reconnect with --sftp-pin-host-key, or edit the
+value directly.
+
+At most ` + strconv.Itoa(maxHostKeys) + ` entries may be pinned.`,
+			Advanced: true,
 		}, {
 			Name: "key_use_agent",
 			Help: `When set forces the usage of the ssh-agent.
@@ -198,6 +247,11 @@ E.g. the second example above should be rewritten as:
 	rclone sync /home/local/directory remote:/homes/USER/directory --sftp-path-override @/volume1`,
 			Advanced: true,
 		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			Default:  encoder.Display,
+		}, {
 			Name:     "set_modtime",
 			Default:  true,
 			Help:     "Set the modified time on the remote if set.",
@@ -263,9 +317,15 @@ E.g. the second example above should be rewritten as:
 			Help:     "The command used to read XXH128 hashes.\n\nLeave blank for autodetect.",
 			Advanced: true,
 		}, {
-			Name:     "skip_links",
-			Default:  false,
-			Help:     "Set to skip any symlinks and any other non regular files.",
+			Name:    "skip_links",
+			Default: false,
+			Help: `Set to skip any symlinks and any other non regular files.
+
+This only affects listing: symlinks and other non regular files are
+omitted from directory listings. It is not a security control and does
+not prevent writes from following symlinks on the server - confining an
+SFTP account to a directory must be enforced server side (for example
+with a chroot jail or restricted permissions).`,
 			Advanced: true,
 		}, {
 			Name:     "subsystem",
@@ -554,50 +614,53 @@ This feature may be useful backups made with --copy-dest.`,
 
 // Options defines the configuration for this backend
 type Options struct {
-	Host                    string          `config:"host"`
-	User                    string          `config:"user"`
-	Port                    string          `config:"port"`
-	Pass                    string          `config:"pass"`
-	KeyPem                  string          `config:"key_pem"`
-	KeyFile                 string          `config:"key_file"`
-	KeyFilePass             string          `config:"key_file_pass"`
-	PubKey                  string          `config:"pubkey"`
-	PubKeyFile              string          `config:"pubkey_file"`
-	KnownHostsFile          string          `config:"known_hosts_file"`
-	KeyUseAgent             bool            `config:"key_use_agent"`
-	UseInsecureCipher       bool            `config:"use_insecure_cipher"`
-	DisableHashCheck        bool            `config:"disable_hashcheck"`
-	AskPassword             bool            `config:"ask_password"`
-	PathOverride            string          `config:"path_override"`
-	SetModTime              bool            `config:"set_modtime"`
-	ShellType               string          `config:"shell_type"`
-	Hashes                  fs.CommaSepList `config:"hashes"`
-	Md5sumCommand           string          `config:"md5sum_command"`
-	Sha1sumCommand          string          `config:"sha1sum_command"`
-	Crc32sumCommand         string          `config:"crc32sum_command"`
-	Sha256sumCommand        string          `config:"sha256sum_command"`
-	Blake3sumCommand        string          `config:"blake3sum_command"`
-	Xxh3sumCommand          string          `config:"xxh3sum_command"`
-	Xxh128sumCommand        string          `config:"xxh128sum_command"`
-	SkipLinks               bool            `config:"skip_links"`
-	Subsystem               string          `config:"subsystem"`
-	ServerCommand           string          `config:"server_command"`
-	UseFstat                bool            `config:"use_fstat"`
-	DisableConcurrentReads  bool            `config:"disable_concurrent_reads"`
-	DisableConcurrentWrites bool            `config:"disable_concurrent_writes"`
-	IdleTimeout             fs.Duration     `config:"idle_timeout"`
-	ChunkSize               fs.SizeSuffix   `config:"chunk_size"`
-	Concurrency             int             `config:"concurrency"`
-	Connections             int             `config:"connections"`
-	SetEnv                  fs.SpaceSepList `config:"set_env"`
-	Ciphers                 fs.SpaceSepList `config:"ciphers"`
-	KeyExchange             fs.SpaceSepList `config:"key_exchange"`
-	MACs                    fs.SpaceSepList `config:"macs"`
-	HostKeyAlgorithms       fs.SpaceSepList `config:"host_key_algorithms"`
-	SSH                     fs.SpaceSepList `config:"ssh"`
-	SocksProxy              string          `config:"socks_proxy"`
-	HTTPProxy               string          `config:"http_proxy"`
-	CopyIsHardlink          bool            `config:"copy_is_hardlink"`
+	Host                    string               `config:"host"`
+	User                    string               `config:"user"`
+	Port                    string               `config:"port"`
+	Pass                    string               `config:"pass"`
+	KeyPem                  string               `config:"key_pem"`
+	KeyFile                 string               `config:"key_file"`
+	KeyFilePass             string               `config:"key_file_pass"`
+	PubKey                  string               `config:"pubkey"`
+	PubKeyFile              string               `config:"pubkey_file"`
+	KnownHostsFile          string               `config:"known_hosts_file"`
+	PinHostKey              bool                 `config:"pin_host_key"`
+	HostKeys                fs.CommaSepList      `config:"host_keys"`
+	KeyUseAgent             bool                 `config:"key_use_agent"`
+	UseInsecureCipher       bool                 `config:"use_insecure_cipher"`
+	DisableHashCheck        bool                 `config:"disable_hashcheck"`
+	AskPassword             bool                 `config:"ask_password"`
+	PathOverride            string               `config:"path_override"`
+	Enc                     encoder.MultiEncoder `config:"encoding"`
+	SetModTime              bool                 `config:"set_modtime"`
+	ShellType               string               `config:"shell_type"`
+	Hashes                  fs.CommaSepList      `config:"hashes"`
+	Md5sumCommand           string               `config:"md5sum_command"`
+	Sha1sumCommand          string               `config:"sha1sum_command"`
+	Crc32sumCommand         string               `config:"crc32sum_command"`
+	Sha256sumCommand        string               `config:"sha256sum_command"`
+	Blake3sumCommand        string               `config:"blake3sum_command"`
+	Xxh3sumCommand          string               `config:"xxh3sum_command"`
+	Xxh128sumCommand        string               `config:"xxh128sum_command"`
+	SkipLinks               bool                 `config:"skip_links"`
+	Subsystem               string               `config:"subsystem"`
+	ServerCommand           string               `config:"server_command"`
+	UseFstat                bool                 `config:"use_fstat"`
+	DisableConcurrentReads  bool                 `config:"disable_concurrent_reads"`
+	DisableConcurrentWrites bool                 `config:"disable_concurrent_writes"`
+	IdleTimeout             fs.Duration          `config:"idle_timeout"`
+	ChunkSize               fs.SizeSuffix        `config:"chunk_size"`
+	Concurrency             int                  `config:"concurrency"`
+	Connections             int                  `config:"connections"`
+	SetEnv                  fs.SpaceSepList      `config:"set_env"`
+	Ciphers                 fs.SpaceSepList      `config:"ciphers"`
+	KeyExchange             fs.SpaceSepList      `config:"key_exchange"`
+	MACs                    fs.SpaceSepList      `config:"macs"`
+	HostKeyAlgorithms       fs.SpaceSepList      `config:"host_key_algorithms"`
+	SSH                     fs.SpaceSepList      `config:"ssh"`
+	SocksProxy              string               `config:"socks_proxy"`
+	HTTPProxy               string               `config:"http_proxy"`
+	CopyIsHardlink          bool                 `config:"copy_is_hardlink"`
 }
 
 // Fs stores the interface to the remote SFTP files
@@ -623,6 +686,22 @@ type Fs struct {
 	sessions     atomic.Int32 // count in use sessions
 	tokens       *pacer.TokenDispenser
 	proxyURL     *url.URL // address of HTTP proxy read from environment
+
+	hostKeysMu sync.RWMutex
+	hostKeys   map[string][][]byte // algo -> list of trusted marshalled key bytes
+	tofu       bool                // accept and pin unknown host keys on first use
+}
+
+// pendingKey records a host key accepted via --sftp-pin-host-key
+// during the SSH handshake of a single connection but not yet
+// persisted to the config file. We only commit it after that
+// connection's authentication succeeds, so a failed login can't pin a
+// key.
+type pendingKey struct {
+	algo        string
+	marshalled  []byte
+	fingerprint string
+	hostname    string
 }
 
 // Object is a remote SFTP file that has been stat'd (so it exists, but is not necessarily open for reading)
@@ -715,7 +794,22 @@ func (f *Fs) sftpConnection(ctx context.Context) (c *conn, err error) {
 		err: make(chan error, 1),
 	}
 	if len(f.opt.SSH) == 0 {
-		c.sshClient, err = f.newSSHClientInternal(ctx, "tcp", f.opt.Host+":"+f.opt.Port, f.config)
+		sshConfig := f.config
+		var pending *pendingKey
+		if f.tofu {
+			// Give this dial its own host key callback and pending key
+			// slot so a key stashed here can only be committed by this
+			// connection, and only if its own authentication succeeds.
+			configCopy := *f.config
+			configCopy.HostKeyCallback = f.hostKeyCallback(&pending)
+			sshConfig = &configCopy
+		}
+		c.sshClient, err = f.newSSHClientInternal(ctx, "tcp", f.opt.Host+":"+f.opt.Port, sshConfig)
+		if err == nil && pending != nil {
+			// ssh.NewClientConn only returns success once the server is
+			// authenticated, so the stashed key is safe to persist.
+			f.commitHostKey(pending)
+		}
 	} else {
 		c.sshClient, err = f.newSSHClientExternal()
 	}
@@ -811,7 +905,7 @@ func (f *Fs) getSftpConnection(ctx context.Context) (c *conn, err error) {
 	err = f.pacer.Call(func() (bool, error) {
 		c, err = f.sftpConnection(ctx)
 		if err != nil {
-			return true, err
+			return fserrors.ShouldRetry(err), err
 		}
 		return false, nil
 	})
@@ -898,6 +992,250 @@ func (f *Fs) drainPool(ctx context.Context) (err error) {
 	return nil
 }
 
+// parseHostKeysField parses the host_keys config option, a list of
+// "algo base64-key" entries (the second and third fields of an OpenSSH
+// known_hosts line). Returns a map from algorithm name to the list of
+// marshalled public-key bytes pinned for that algorithm. Empty input
+// yields an empty (non-nil) map.
+//
+// Each entry must be a valid SSH public key (not a certificate) whose
+// key type matches the stated algorithm. Duplicate entries are
+// dropped, and more than maxHostKeys distinct entries is an error.
+func parseHostKeysField(entries fs.CommaSepList) (map[string][][]byte, error) {
+	out := make(map[string][][]byte)
+	total := 0
+entries:
+	for i, entry := range entries {
+		entry = strings.TrimSpace(entry)
+		if entry == "" {
+			continue
+		}
+		fields := strings.Fields(entry)
+		if len(fields) != 2 {
+			return nil, fmt.Errorf("host_keys entry %d: expected \"<algo> <base64>\", got %q", i+1, entry)
+		}
+		algo := fields[0]
+		marshalled, err := base64.StdEncoding.DecodeString(fields[1])
+		if err != nil {
+			return nil, fmt.Errorf("host_keys entry %d (%s): invalid base64: %w", i+1, algo, err)
+		}
+		pk, err := ssh.ParsePublicKey(marshalled)
+		if err != nil {
+			return nil, fmt.Errorf("host_keys entry %d (%s): not a valid SSH public key: %w", i+1, algo, err)
+		}
+		if _, isCert := pk.(*ssh.Certificate); isCert {
+			return nil, fmt.Errorf("host_keys entry %d (%s): SSH certificates cannot be pinned; use known_hosts_file with an @cert-authority entry instead", i+1, algo)
+		}
+		if pk.Type() != algo {
+			hint := ""
+			if pk.Type() == ssh.KeyAlgoRSA && (algo == ssh.KeyAlgoRSASHA256 || algo == ssh.KeyAlgoRSASHA512) {
+				// A common slip: rsa-sha2-* name signature algorithms,
+				// but an RSA public key blob's format is ssh-rsa.
+				hint = fmt.Sprintf(" (%s is a signature algorithm, use %s)", algo, ssh.KeyAlgoRSA)
+			}
+			return nil, fmt.Errorf("host_keys entry %d: stated algorithm %q doesn't match the key's type %q%s", i+1, algo, pk.Type(), hint)
+		}
+		for _, existing := range out[algo] {
+			if bytes.Equal(existing, marshalled) {
+				continue entries
+			}
+		}
+		total++
+		if total > maxHostKeys {
+			return nil, fmt.Errorf("host_keys has more than %d entries; trim it or use known_hosts_file instead", maxHostKeys)
+		}
+		out[algo] = append(out[algo], marshalled)
+	}
+	return out, nil
+}
+
+// formatHostKeysField formats the in-memory pinned host keys back into a
+// CommaSepList of "algo base64" entries in a deterministic order so
+// config-file diffs stay clean.
+func formatHostKeysField(keys map[string][][]byte) fs.CommaSepList {
+	algos := make([]string, 0, len(keys))
+	for algo := range keys {
+		algos = append(algos, algo)
+	}
+	sort.Strings(algos)
+	var parts fs.CommaSepList
+	for _, algo := range algos {
+		// sort the keys within an algorithm for deterministic output
+		list := append([][]byte(nil), keys[algo]...)
+		sort.Slice(list, func(i, j int) bool { return bytes.Compare(list[i], list[j]) < 0 })
+		for _, k := range list {
+			parts = append(parts, algo+" "+base64.StdEncoding.EncodeToString(k))
+		}
+	}
+	return parts
+}
+
+// pinnedHostKeyAlgorithms returns the host-key algorithms to negotiate
+// for the pinned keys, in a deterministic order.
+//
+// RSA public keys report their type as "ssh-rsa" whichever signature
+// algorithm signed the handshake, so a pinned "ssh-rsa" entry is
+// expanded to the rsa-sha2 signature algorithms too. Offering only
+// "ssh-rsa" would restrict the negotiation to SHA-1 signatures, which
+// modern servers (OpenSSH >= 8.8) refuse by default.
+func pinnedHostKeyAlgorithms(keys map[string][][]byte) []string {
+	algos := make([]string, 0, len(keys)+2)
+	for algo := range keys {
+		if algo == ssh.KeyAlgoRSA {
+			algos = append(algos, ssh.KeyAlgoRSASHA512, ssh.KeyAlgoRSASHA256)
+		}
+		algos = append(algos, algo)
+	}
+	sort.Strings(algos)
+	return algos
+}
+
+// formatPinnedFingerprints returns a comma-separated list of SHA256
+// fingerprints for the supplied marshalled public keys, suitable for
+// inclusion in user-facing error messages.
+func formatPinnedFingerprints(algo string, keys [][]byte) string {
+	fps := make([]string, 0, len(keys))
+	for _, k := range keys {
+		pk, err := ssh.ParsePublicKey(k)
+		if err != nil {
+			fps = append(fps, "<unparseable>")
+			continue
+		}
+		fps = append(fps, ssh.FingerprintSHA256(pk))
+	}
+	return strings.Join(fps, ", ")
+}
+
+// hostKeyCallback returns an ssh.HostKeyCallback that validates the offered
+// server key against f.hostKeys.
+//
+// When pin_host_key is set, pending must point at the dialing
+// connection's own pending key slot: if no key is pinned yet for the
+// offered algorithm the offered key is stashed there for the dialer to
+// commit once its authentication succeeds. A nil pending disables
+// accept-on-first-use, making the callback validate-only.
+func (f *Fs) hostKeyCallback(pending **pendingKey) ssh.HostKeyCallback {
+	return func(hostname string, _ net.Addr, key ssh.PublicKey) error {
+		// SSH host certificates cannot be byte-pinned meaningfully: the
+		// certificate changes whenever it's re-signed even though the
+		// underlying CA is unchanged.
+		if _, isCert := key.(*ssh.Certificate); isCert {
+			return fserrors.NoLowLevelRetryError(fmt.Errorf("sftp: server presented an SSH certificate (%s) which pin_host_key cannot validate; use known_hosts_file with an @cert-authority entry instead", key.Type()))
+		}
+		algo := key.Type()
+		marshalled := key.Marshal()
+
+		f.hostKeysMu.RLock()
+		trusted, have := f.hostKeys[algo]
+		f.hostKeysMu.RUnlock()
+
+		if have {
+			for _, t := range trusted {
+				if bytes.Equal(t, marshalled) {
+					return nil
+				}
+			}
+			return fserrors.NoLowLevelRetryError(fmt.Errorf("sftp: host key mismatch for %s: server offered %s key with fingerprint %s; pinned fingerprints for this algorithm: %s -- if the server key has changed legitimately, clear host_keys and re-run with --sftp-pin-host-key",
+				hostname, algo, ssh.FingerprintSHA256(key), formatPinnedFingerprints(algo, trusted)))
+		}
+
+		// No pinned key for this algorithm. Either accept if --sftp-pin-host-key is set or reject.
+		if !f.opt.PinHostKey || pending == nil {
+			return fserrors.NoLowLevelRetryError(fmt.Errorf("sftp: server offered %s key with fingerprint %s but no key is pinned for this algorithm in host_keys; re-run with --sftp-pin-host-key to accept on first use",
+				algo, ssh.FingerprintSHA256(key)))
+		}
+		// Cap the host_keys growth
+		f.hostKeysMu.RLock()
+		total := 0
+		for _, list := range f.hostKeys {
+			total += len(list)
+		}
+		f.hostKeysMu.RUnlock()
+		if total >= maxHostKeys {
+			return fserrors.NoLowLevelRetryError(fmt.Errorf("sftp: host_keys already contains %d entries (cap %d); refusing to pin %s key with fingerprint %s -- clear or trim host_keys and re-run with --sftp-pin-host-key",
+				total, maxHostKeys, algo, ssh.FingerprintSHA256(key)))
+		}
+		// Stash the offered key for this connection's dialer to persist post-auth.
+		*pending = &pendingKey{
+			algo:        algo,
+			marshalled:  marshalled,
+			fingerprint: ssh.FingerprintSHA256(key),
+			hostname:    hostname,
+		}
+		fs.Logf(f, "Accepted %s host key %s for %s on first use", algo, ssh.FingerprintSHA256(key), hostname)
+		return nil
+	}
+}
+
+// commitHostKey records a --sftp-pin-host-key accepted host key into
+// both the durable config file and the in-memory f.hostKeys trust
+// set. The in-memory update is what closes the trust loop after the
+// callback deliberately left f.hostKeys untouched pre-auth.
+func (f *Fs) commitHostKey(pk *pendingKey) {
+	// Hold the lock for the whole read-modify-write so concurrent
+	// commits from parallel dials can't lose each other's key.
+	f.hostKeysMu.Lock()
+	defer f.hostKeysMu.Unlock()
+	// Re-read the current stored value rather than reformatting our in-memory
+	// map. This narrows (but cannot close - the config layer has no locked
+	// read-modify-write) the window for clobbering an update made by a
+	// parallel rclone process.
+	current, _ := f.m.Get("host_keys")
+	var entries fs.CommaSepList
+	if err := entries.Set(current); err != nil {
+		fs.Errorf(f, "Not persisting %s host key %s for %s: existing host_keys value became unsplittable: %v -- fix or clear host_keys in the config and re-run with --sftp-pin-host-key",
+			pk.algo, pk.fingerprint, pk.hostname, err)
+		return
+	}
+	keys, err := parseHostKeysField(entries)
+	if err != nil {
+		// host_keys was parseable at NewFs time but isn't now...
+		snippet := current
+		const max = 120
+		if len(snippet) > max {
+			snippet = snippet[:max] + "..."
+		}
+		fs.Errorf(f, "Not persisting %s host key %s for %s: existing host_keys value became unparseable (%d bytes: %q): %v -- fix or clear host_keys in the config and re-run with --sftp-pin-host-key",
+			pk.algo, pk.fingerprint, pk.hostname, len(current), snippet, err)
+		return
+	}
+	// De-duplicate before appending. Even if already present durably, sync
+	// the in-memory view in case it lagged behind the file.
+	alreadyPresent := false
+	for _, existing := range keys[pk.algo] {
+		if bytes.Equal(existing, pk.marshalled) {
+			alreadyPresent = true
+			break
+		}
+	}
+	if !alreadyPresent {
+		// Re-check the cap against the stored value: it may have grown
+		// since the callback checked it.
+		total := 0
+		for _, list := range keys {
+			total += len(list)
+		}
+		if total >= maxHostKeys {
+			fs.Errorf(f, "Not persisting %s host key %s for %s: host_keys already contains %d entries (cap %d) -- clear or trim host_keys and re-run with --sftp-pin-host-key",
+				pk.algo, pk.fingerprint, pk.hostname, total, maxHostKeys)
+			return
+		}
+		keys[pk.algo] = append(keys[pk.algo], pk.marshalled)
+	}
+
+	f.hostKeys = keys
+
+	if alreadyPresent {
+		return
+	}
+	f.m.Set("host_keys", formatHostKeysField(keys).String())
+	if strings.HasPrefix(f.name, ":") {
+		fs.Logf(f, "%s host key %s captured but not persisted (on-the-fly remote); first-connect protection only", pk.algo, pk.fingerprint)
+	} else {
+		fs.Logf(f, "Pinned %s host key %s for %s in config", pk.algo, pk.fingerprint, pk.hostname)
+	}
+}
+
 // NewFs creates a new Fs object from the name and root. It connects to
 // the host specified in the config file.
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
@@ -934,24 +1272,74 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		ClientVersion: "SSH-2.0-" + f.ci.UserAgent,
 	}
 
-	if len(opt.HostKeyAlgorithms) != 0 {
-		sshConfig.HostKeyAlgorithms = []string(opt.HostKeyAlgorithms)
+	// pin_host_key and host_keys only apply when rclone does the host
+	// key checking itself: known_hosts_file takes precedence and the
+	// external ssh program does its own validation, so in either case
+	// host_keys is ignored entirely, without being parsed.
+	usePinning := (opt.PinHostKey || len(opt.HostKeys) > 0) && opt.KnownHostsFile == "" && len(opt.SSH) == 0
+	var parsedHostKeys map[string][][]byte
+	if usePinning {
+		// Parse pinned host keys early so we can both validate the config
+		// and, when no host_key_algorithms is set, narrow the negotiated
+		// algorithm list to those we already trust.
+		parsed, err := parseHostKeysField(opt.HostKeys)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't parse host_keys: %w", err)
+		}
+		parsedHostKeys = parsed
+		f.hostKeys = parsed
 	}
 
-	if opt.KnownHostsFile != "" {
+	if len(opt.HostKeyAlgorithms) != 0 {
+		sshConfig.HostKeyAlgorithms = []string(opt.HostKeyAlgorithms)
+	} else if len(parsedHostKeys) > 0 && !opt.PinHostKey {
+		// Restrict negotiated host-key algorithms to those we have a
+		// pinned key for, so a server offering an additional unpinned
+		// algorithm doesn't cause a spurious mismatch when we'd happily
+		// accept the same server's pinned algorithm.
+		//
+		// Not done with pin_host_key set: there any algorithm the
+		// server presents can be accepted and pinned on first use, so
+		// the negotiation must stay open to new algorithms.
+		sshConfig.HostKeyAlgorithms = pinnedHostKeyAlgorithms(parsedHostKeys)
+	}
+
+	// When the ssh option is set, the external ssh program makes the
+	// connection and does its own host key validation, so none of the
+	// host key checking configured below takes effect.
+	if len(opt.SSH) > 0 && (opt.PinHostKey || len(opt.HostKeys) > 0) {
+		fs.Logf(name, "pin_host_key and host_keys are ignored when the ssh option is set; the ssh program does its own host key validation")
+	}
+
+	switch {
+	case opt.KnownHostsFile == "none":
+		// Silence Host key validation warning if explicitly disabled
+		sshConfig.HostKeyCallback = ssh.InsecureIgnoreHostKey()
+	case opt.KnownHostsFile != "":
 		hostcallback, err := knownhosts.New(env.ShellExpand(opt.KnownHostsFile))
 		if err != nil {
 			return nil, fmt.Errorf("couldn't parse known_hosts_file: %w", err)
 		}
 		sshConfig.HostKeyCallback = hostcallback
-	} else {
-		// Set insecure HostKeyCallback if no known_hosts_file is
-		// configured. Rclone has no mechanism to manage
-		// known_hosts files so we can't enable host key
-		// validation by default. Users can enable it by setting
-		// known_hosts_file. See: https://rclone.org/sftp/#host-key-validation
+		if opt.PinHostKey || len(opt.HostKeys) > 0 {
+			fs.Logf(name, "known_hosts_file is set; ignoring pin_host_key and host_keys")
+		}
+	case usePinning:
+		// Pinning mode: validate against host_keys. When pin_host_key
+		// is set, each dial swaps in its own accept-and-stash callback
+		// (see sftpConnection), so the shared config only ever
+		// validates.
+		sshConfig.HostKeyCallback = f.hostKeyCallback(nil)
+		f.tofu = opt.PinHostKey
+		if opt.PinHostKey && len(parsedHostKeys) == 0 {
+			fs.Logf(name, "pin_host_key is set with no pinned host_keys yet; accepting the next server key on first use")
+		}
+		if opt.PinHostKey && strings.HasPrefix(name, ":") {
+			fs.Logf(name, "pin_host_key on an on-the-fly remote cannot persist the pinned key; the server key will be re-accepted on every run")
+		}
+	default:
 		sshConfig.HostKeyCallback = ssh.InsecureIgnoreHostKey()
-		fs.Logf(name, "No host key validation is being performed. Set known_hosts_file to enable it. See: https://rclone.org/sftp/#host-key-validation")
+		fs.Logf(name, "No host key validation is being performed. Set known_hosts_file (to \"none\" to silence this notice) or use --sftp-pin-host-key to enable it. See: https://rclone.org/sftp/#host-key-validation")
 	}
 
 	if opt.UseInsecureCipher && (opt.Ciphers != nil || opt.KeyExchange != nil) {
@@ -1171,10 +1559,10 @@ func (f *Fs) getPass() (string, error) {
 func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m configmap.Mapper, opt *Options, sshConfig *ssh.ClientConfig) (fs.Fs, error) {
 	// Populate the Filesystem Object
 	f.name = name
-	f.root = root
-	f.absRoot = root
-	f.shellRoot = root
 	f.opt = *opt
+	f.root = root
+	f.absRoot = f.opt.Enc.FromStandardPath(root)
+	f.shellRoot = f.absRoot
 	f.m = m
 	f.config = sshConfig
 	f.url = "sftp://" + opt.User + "@" + opt.Host + ":" + opt.Port + "/" + root
@@ -1255,19 +1643,19 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 	// Ensure we have absolute path to root
 	// It appears that WS FTP doesn't like relative paths,
 	// and the openssh sftp tool also uses absolute paths.
-	if !path.IsAbs(f.root) {
+	if !path.IsAbs(f.absRoot) {
 		// Trying RealPath first, to perform proper server-side canonicalize.
 		// It may fail (SSH_FX_FAILURE reported on WS FTP) and will then resort
 		// to simple path join with current directory from Getwd (which can work
 		// on WS FTP, even though it is also based on RealPath).
-		absRoot, err := c.sftpClient.RealPath(f.root)
+		absRoot, err := c.sftpClient.RealPath(f.absRoot)
 		if err != nil {
 			fs.Debugf(f, "Failed to resolve path using RealPath: %v", err)
 			cwd, err := c.sftpClient.Getwd()
 			if err != nil {
 				fs.Debugf(f, "Failed to read current directory - using relative paths: %v", err)
 			} else {
-				f.absRoot = path.Join(cwd, f.root)
+				f.absRoot = path.Join(cwd, f.absRoot)
 				fs.Debugf(f, "Relative path joined with current directory to get absolute path %q", f.absRoot)
 			}
 		} else {
@@ -1378,7 +1766,7 @@ func (f *Fs) dirExists(ctx context.Context, dir string) (bool, error) {
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	root := path.Join(f.absRoot, dir)
+	root := f.remotePath(dir)
 	sftpDir := root
 	if sftpDir == "" {
 		sftpDir = "."
@@ -1396,7 +1784,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return nil, fmt.Errorf("error listing %q: %w", dir, err)
 	}
 	for _, info := range infos {
-		remote := path.Join(dir, info.Name())
+		remote := path.Join(dir, f.opt.Enc.ToStandardName(info.Name()))
 		// If file is a symlink (not a regular file is the best cross platform test we can do), do a stat to
 		// pick up the size and type of the destination, instead of the size and type of the symlink.
 		if !info.Mode().IsRegular() && !info.IsDir() {
@@ -1455,7 +1843,7 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 // directories above that
 func (f *Fs) mkParentDir(ctx context.Context, remote string) error {
 	parent := path.Dir(remote)
-	return f.mkdir(ctx, path.Join(f.absRoot, parent))
+	return f.mkdir(ctx, f.remotePath(parent))
 }
 
 // mkdir makes the directory and parents using native paths
@@ -1495,7 +1883,7 @@ func (f *Fs) mkdir(ctx context.Context, dirPath string) error {
 
 // Mkdir makes the root directory of the Fs object
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	root := path.Join(f.absRoot, dir)
+	root := f.remotePath(dir)
 	return f.mkdir(ctx, root)
 }
 
@@ -1520,7 +1908,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		return fs.ErrorDirectoryNotEmpty
 	}
 	// Remove the directory
-	root := path.Join(f.absRoot, dir)
+	root := f.remotePath(dir)
 	c, err := f.getSftpConnection(ctx)
 	if err != nil {
 		return fmt.Errorf("Rmdir: %w", err)
@@ -1545,7 +1933,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, fmt.Errorf("Move: %w", err)
 	}
-	srcPath, dstPath := srcObj.path(), path.Join(f.absRoot, remote)
+	srcPath, dstPath := srcObj.path(), f.remotePath(remote)
 	if _, ok := c.sftpClient.HasExtension("posix-rename@openssh.com"); ok {
 		err = c.sftpClient.PosixRename(srcPath, dstPath)
 	} else {
@@ -1585,7 +1973,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, fmt.Errorf("Copy: %w", err)
 	}
-	srcPath, dstPath := srcObj.path(), path.Join(f.absRoot, remote)
+	srcPath, dstPath := srcObj.path(), f.remotePath(remote)
 	err = c.sftpClient.Link(srcPath, dstPath)
 	f.putSftpConnection(&c, err)
 	if err != nil {
@@ -1618,8 +2006,8 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		fs.Debugf(srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
-	srcPath := path.Join(srcFs.absRoot, srcRemote)
-	dstPath := path.Join(f.absRoot, dstRemote)
+	srcPath := srcFs.remotePath(srcRemote)
+	dstPath := f.remotePath(dstRemote)
 
 	// Check if destination exists
 	ok, err := f.dirExists(ctx, dstPath)
@@ -2059,17 +2447,39 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 	return hashString, nil
 }
 
+// powerShellQuoteEscaper doubles every character PowerShell accepts as a
+// single-quote string delimiter. As well as the ASCII apostrophe, PowerShell
+// treats the Unicode smart quotes U+2018, U+2019, U+201A and U+201B as single
+// quotes, so a path wrapped in apostrophes must double all of them or an
+// attacker controlled filename could close the literal and inject a statement.
+// Doubling a delimiter is PowerShell's escape for a literal occurrence of it,
+// and preserves the exact character.
+var powerShellQuoteEscaper = strings.NewReplacer(
+	"'", "''",
+	"‘", "‘‘",
+	"’", "’’",
+	"‚", "‚‚",
+	"‛", "‛‛",
+)
+
 // quoteOrEscapeShellPath makes path a valid string argument in configured shell
 // and also ensures it cannot cause unintended behavior.
 func quoteOrEscapeShellPath(shellType string, shellPath string) (string, error) {
 	// PowerShell
 	if shellType == "powershell" {
-		return "'" + strings.ReplaceAll(shellPath, "'", "''") + "'", nil
+		return "'" + powerShellQuoteEscaper.Replace(shellPath) + "'", nil
 	}
 	// Windows Command Prompt
+	//
+	// cmd has no reliable command-line escaping for the double quote used
+	// as the delimiter, while % expands environment variables and ! may
+	// expand them when delayed expansion is enabled, even inside double
+	// quotes. A newline or carriage return ends the command. None of these
+	// can be neutralised safely, so reject any path containing them rather
+	// than risk altering the command.
 	if shellType == "cmd" {
-		if strings.Contains(shellPath, "\"") {
-			return "", fmt.Errorf("path is not valid in shell type %s: %s", shellType, shellPath)
+		if strings.ContainsAny(shellPath, "\"%!\r\n") {
+			return "", fmt.Errorf("path is not valid in shell type %s: %q", shellType, shellPath)
 		}
 		return "\"" + shellPath + "\"", nil
 	}
@@ -2085,20 +2495,21 @@ func (f *Fs) quoteOrEscapeShellPath(shellPath string) (string, error) {
 
 // remotePath returns the native SFTP path of the file or directory at the remote given
 func (f *Fs) remotePath(remote string) string {
-	return path.Join(f.absRoot, remote)
+	return path.Join(f.absRoot, f.opt.Enc.FromStandardPath(remote))
 }
 
 // remoteShellPath returns the SSH shell path of the file or directory at the remote given
 func (f *Fs) remoteShellPath(remote string) string {
+	encodedRemote := f.opt.Enc.FromStandardPath(remote)
 	if f.opt.PathOverride != "" {
-		shellPath := path.Join(f.opt.PathOverride, remote)
+		shellPath := path.Join(f.opt.PathOverride, encodedRemote)
 		if f.opt.PathOverride[0] == '@' {
-			shellPath = path.Join(strings.TrimPrefix(f.opt.PathOverride, "@"), f.absRoot, remote)
+			shellPath = path.Join(strings.TrimPrefix(f.opt.PathOverride, "@"), f.absRoot, encodedRemote)
 		}
 		fs.Debugf(f, "Shell path redirected to %q with option path_override", shellPath)
 		return shellPath
 	}
-	shellPath := path.Join(f.absRoot, remote)
+	shellPath := path.Join(f.absRoot, encodedRemote)
 	if f.shellType == "powershell" || f.shellType == "cmd" {
 		// If remote shell is powershell or cmd, then server is probably Windows.
 		// The sftp package converts everything to POSIX paths: Forward slashes, and
@@ -2187,7 +2598,7 @@ func (o *Object) setMetadata(info os.FileInfo) {
 func (f *Fs) stat(ctx context.Context, remote string) (info os.FileInfo, err error) {
 	absPath := remote
 	if !strings.HasPrefix(remote, "/") {
-		absPath = path.Join(f.absRoot, remote)
+		absPath = f.remotePath(remote)
 	}
 	c, err := f.getSftpConnection(ctx)
 	if err != nil {

@@ -3,16 +3,19 @@ package gui
 
 import (
 	"archive/zip"
+	"bytes"
 	"context"
-	"embed"
+	_ "embed"
 	"fmt"
 	iofs "io/fs"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
 	"sync"
 
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
@@ -24,8 +27,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//go:embed dist
-var assets embed.FS
+//go:embed dist.zip
+var distZip []byte
+
+//go:embed dist.tag
+var distTag string
 
 var (
 	guiAddr       []string
@@ -88,6 +94,8 @@ Use --user and --pass to set specific credentials:
 Use --no-auth to disable authentication entirely:
 
     rclone gui --no-auth
+
+For more help see [the GUI docs](/gui/).
 `,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.74",
@@ -136,9 +144,6 @@ Use --no-auth to disable authentication entirely:
 			opt.HTTP.ListenAddr = []string{"localhost:0"}
 		}
 
-		// CORS: allow the GUI origin to make cross-port API requests.
-		opt.HTTP.AllowOrigin = guiOrigin
-
 		// Forward metrics flag to the RC server.
 		if command.Flags().Changed("enable-metrics") {
 			opt.EnableMetrics = enableMetrics
@@ -170,6 +175,9 @@ Use --no-auth to disable authentication entirely:
 			}
 		}
 
+		addr, _ := guiServer.Addr().(*net.TCPAddr)
+		opt.HTTP.AllowOrigin = resolveAllowOrigin(command.Flags().Changed("rc-allow-origin"), opt.HTTP.AllowOrigin, guiOrigin, addr, opt.NoAuth)
+
 		// Start the RC server (unchanged rcserver.Start)
 		rcServer, err := rcserver.Start(ctx, &opt)
 		if err != nil || rcServer == nil {
@@ -185,12 +193,17 @@ Use --no-auth to disable authentication entirely:
 		if err != nil || spaHandler == nil {
 			return fmt.Errorf("failed to start GUI handler: %w", err)
 		}
+		guiServer.Router().Use(middleware.Compress(5))
 		guiServer.Router().Get("/*", spaHandler.ServeHTTP)
 		guiServer.Router().Head("/*", spaHandler.ServeHTTP)
 		guiServer.Serve()
 
 		guiURL := guiServer.URLs()[0]
-		fs.Logf(nil, "Serving GUI on %s", guiURL)
+		guiSource := fmt.Sprintf("version %s", strings.TrimSpace(distTag))
+		if srcPath != "" {
+			guiSource = fmt.Sprintf("from %s", srcPath)
+		}
+		fs.Logf(nil, "Serving GUI %s on %s", guiSource, guiURL)
 
 		// Open browser
 		loginURL := buildLoginURL(guiURL, rcURL, opt.Auth.BasicUser, opt.Auth.BasicPass, opt.NoAuth)
@@ -228,21 +241,43 @@ func originFromURL(rawURL string) string {
 	return u.Scheme + "://" + u.Host
 }
 
+// resolveAllowOrigin picks the Access-Control-Allow-Origin value for the RC
+// API server. An explicit --rc-allow-origin always wins. Otherwise a value is
+// derived from how the GUI is bound: the bound origin (e.g. http://[::]:5522)
+// is never what a browser sends in its Origin header when the GUI is bound to
+// a wildcard address, and the GUI may be reached via any number of hosts
+// (localhost, a LAN IP, a Docker host), so no single origin can match them
+// all.
+func resolveAllowOrigin(explicitAllowOrigin bool, currentAllowOrigin, guiOrigin string, addr *net.TCPAddr, noAuth bool) string {
+	if explicitAllowOrigin {
+		return currentAllowOrigin
+	}
+	switch {
+	case addr == nil || !addr.IP.IsUnspecified():
+		return guiOrigin
+	case !noAuth:
+		return "*"
+	default:
+		fs.Logf(nil, "GUI bound to a wildcard address with --no-auth: browsers can only use the API from %s. Enable auth or bind --addr to a specific host.", guiOrigin)
+		return guiOrigin
+	}
+}
+
 // guiSourceFS opens the GUI bundle at the given path. An empty path
-// returns the embedded bundle. The returned cleanup func must be
-// called on shutdown (no-op for embedded/DirFS, Close for the zip
-// reader).
+// returns the embedded bundle (read from the zip embedded in the binary).
+// The returned cleanup func must be called on shutdown (no-op for the
+// embedded bundle and DirFS, Close for an external zip reader).
 func guiSourceFS(path string) (iofs.FS, func() error, error) {
 	noop := func() error { return nil }
 	if path == "" {
-		sub, err := iofs.Sub(assets, "dist")
+		zr, err := zip.NewReader(bytes.NewReader(distZip), int64(len(distZip)))
 		if err != nil {
-			return nil, nil, fmt.Errorf("embedded GUI dir not found: was `make fetch-gui` run before building?: %w", err)
+			return nil, nil, fmt.Errorf("failed to read embedded GUI zip: was `make fetch-gui` run before building?: %w", err)
 		}
-		if _, err := iofs.Stat(sub, "index.html"); err != nil {
-			return nil, nil, fmt.Errorf("embedded GUI not found: was `make fetch-gui` run before building?: %w", err)
+		if _, err := iofs.Stat(zr, "index.html"); err != nil {
+			return nil, nil, fmt.Errorf("embedded GUI has no index.html: was `make fetch-gui` run before building?: %w", err)
 		}
-		return sub, noop, nil
+		return zr, noop, nil
 	}
 	info, err := os.Stat(path)
 	if err != nil {

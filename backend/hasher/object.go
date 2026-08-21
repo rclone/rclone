@@ -131,10 +131,62 @@ func (o *Object) updateHashes(ctx context.Context) error {
 	return nil
 }
 
+// wrapInHashingReader wraps in with a hashing reader if needed and
+// returns the (possibly wrapped) reader. After the transfer completes
+// successfully, call the returned storeHashes function to store the
+// computed hashes.
+func (f *Fs) wrapInHashingReader(ctx context.Context, in io.Reader, src fs.ObjectInfo) (wrapIn io.Reader, storeHashes func(o *Object)) {
+	var (
+		common hash.Set
+		rehash bool
+		hashes hashMap
+	)
+	if fsrc := src.Fs(); fsrc != nil {
+		common = fsrc.Hashes().Overlap(f.keepHashes)
+		// Rehash if source does not have all required hashes or hashing is slow
+		rehash = fsrc.Features().SlowHash || common != f.keepHashes
+	}
+
+	wrapIn = in
+	if rehash {
+		r, err := f.newHashingReader(ctx, in, func(sums hashMap) {
+			hashes = sums
+		})
+		fs.Debugf(src, "Rehash in-fly due to incomplete or slow source set %v (err: %v)", common, err)
+		if err == nil {
+			wrapIn = r
+		} else {
+			rehash = false
+		}
+	}
+
+	storeHashes = func(o *Object) {
+		if !rehash {
+			hashes = hashMap{}
+			for _, ht := range common.Array() {
+				if h, e := src.Hash(ctx, ht); e == nil && h != "" {
+					hashes[ht] = h
+				}
+			}
+		}
+		if len(hashes) > 0 {
+			err := o.putHashes(ctx, hashes)
+			fs.Debugf(o, "Applied %d source hashes, err: %v", len(hashes), err)
+		}
+	}
+	return wrapIn, storeHashes
+}
+
 // Update the object with the given data, time and size.
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	wrapIn, storeHashes := o.f.wrapInHashingReader(ctx, in, src)
 	_ = o.f.pruneHash(src.Remote())
-	return o.Object.Update(ctx, in, src, options...)
+	err := o.Object.Update(ctx, wrapIn, src, options...)
+	if err != nil {
+		return err
+	}
+	storeHashes(o)
+	return nil
 }
 
 // Remove an object.
@@ -189,51 +241,15 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (r io.ReadC
 
 // Put data into the remote path with given modTime and size
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	var (
-		o      fs.Object
-		common hash.Set
-		rehash bool
-		hashes hashMap
-	)
-	if fsrc := src.Fs(); fsrc != nil {
-		common = fsrc.Hashes().Overlap(f.keepHashes)
-		// Rehash if source does not have all required hashes or hashing is slow
-		rehash = fsrc.Features().SlowHash || common != f.keepHashes
-	}
-
-	wrapIn := in
-	if rehash {
-		r, err := f.newHashingReader(ctx, in, func(sums hashMap) {
-			hashes = sums
-		})
-		fs.Debugf(src, "Rehash in-fly due to incomplete or slow source set %v (err: %v)", common, err)
-		if err == nil {
-			wrapIn = r
-		} else {
-			rehash = false
-		}
-	}
-
+	wrapIn, storeHashes := f.wrapInHashingReader(ctx, in, src)
 	_ = f.pruneHash(src.Remote())
 	oResult, err := f.Fs.Put(ctx, wrapIn, src, options...)
-	o, err = f.wrapObject(oResult, err)
+	o, err := f.wrapObject(oResult, err)
 	if err != nil {
 		return nil, err
 	}
-
-	if !rehash {
-		hashes = hashMap{}
-		for _, ht := range common.Array() {
-			if h, e := src.Hash(ctx, ht); e == nil && h != "" {
-				hashes[ht] = h
-			}
-		}
-	}
-	if len(hashes) > 0 {
-		err := o.(*Object).putHashes(ctx, hashes)
-		fs.Debugf(o, "Applied %d source hashes, err: %v", len(hashes), err)
-	}
-	return o, err
+	storeHashes(o.(*Object))
+	return o, nil
 }
 
 type hashingReader struct {

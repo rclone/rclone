@@ -57,7 +57,6 @@ type Item struct {
 	FileHash     any         `json:"file_hash"`
 	Public       bool        `json:"public"`
 	Thumbnail    bool        `json:"thumbnail"`
-	MuxStatus    any         `json:"mux_status"`
 	ThumbnailURL any         `json:"thumbnail_url"`
 	WorkspaceID  int         `json:"workspace_id"`
 	IsEncrypted  int         `json:"is_encrypted"`
@@ -77,9 +76,9 @@ type Listing struct {
 	Data        []Item `json:"data"`
 	From        int    `json:"from"`
 	LastPage    int    `json:"last_page"`
-	NextPage    int    `json:"next_page"`
+	NextPageURL string `json:"next_page_url"`
 	PerPage     int    `json:"per_page"`
-	PrevPage    int    `json:"prev_page"`
+	PrevPageURL string `json:"prev_page_url"`
 	To          int    `json:"to"`
 	Total       int    `json:"total"`
 }
@@ -171,7 +170,7 @@ type MultiPartCreateRequest struct {
 	Mime         string      `json:"mime"`
 	Size         int64       `json:"size"`
 	Extension    string      `json:"extension"`
-	ParentID     json.Number `json:"parent_id"`
+	ParentID     json.Number `json:"parentId"`
 	RelativePath string      `json:"relativePath"`
 	WorkspaceID  string      `json:"workspaceId,omitempty"`
 }
@@ -222,7 +221,7 @@ type MultiPartEntriesRequest struct {
 	Filename        string      `json:"filename"`
 	Size            int64       `json:"size"`
 	ClientExtension string      `json:"clientExtension"`
-	ParentID        json.Number `json:"parent_id"`
+	ParentID        json.Number `json:"parentId"`
 	RelativePath    string      `json:"relativePath"`
 	WorkspaceID     string      `json:"workspaceId,omitempty"`
 }

@@ -331,7 +331,19 @@ func TestIsAFileRoot(t *testing.T) {
 	f, err := NewFs(context.Background(), remoteName, "one%.txt", m)
 	assert.Equal(t, err, fs.ErrorIsFile)
 
-	testListRoot(t, f, false)
+	entries, err := f.List(context.Background(), "")
+	require.NoError(t, err)
+
+	require.Equal(t, 1, len(entries))
+
+	e := entries[0]
+	assert.Equal(t, "one%.txt", e.Remote())
+	assert.Equal(t, int64(5+lineEndSize), e.Size())
+	_, ok := e.(*Object)
+	assert.True(t, ok)
+
+	_, err = f.List(context.Background(), "anysub")
+	assert.Equal(t, fs.ErrorDirNotFound, err)
 }
 
 func TestIsAFileSubDir(t *testing.T) {

@@ -81,6 +81,21 @@ Where `$PORT` is the same port number used in the `serve nfs` command
 and `$HOSTNAME` is the network address of the machine that `serve nfs`
 was run on.
 
+NFS clients can also mount a subdirectory of the served remote by
+including it in the mount path. For example to mount only the
+`photos/2024` subdirectory:
+
+```sh
+mount -t nfs -o port=$PORT,mountport=$PORT,tcp $HOSTNAME:/photos/2024 path/to/mountpoint
+```
+
+The subpath is resolved within the served remote and must refer to an
+existing directory (not a file or a symlink). Subpath mounts are a
+convenience equivalent to mounting `/` and changing directory: they
+share access to the same underlying VFS and the same file handles, so
+they do not isolate the client from siblings or parents of the mounted
+subdirectory.
+
 If `--vfs-metadata-extension` is in use then for the `--nfs-cache-type disk`
 and `--nfs-cache-type cache` the metadata files will have the file
 handle of their parent file suffixed with `0x00, 0x00, 0x00, 0x01`.
@@ -611,6 +626,7 @@ rclone serve nfs remote:path [flags]
       --vfs-case-insensitive                   If a file name not found, find a case insensitive match
       --vfs-disk-space-total-size SizeSuffix   Specify the total space of disk (default off)
       --vfs-fast-fingerprint                   Use fast (less accurate) fingerprints for change detection
+      --vfs-handle-caching Duration            Time to keep file handle and downloaders alive after last close (default 5s)
       --vfs-links                              Translate symlinks to/from regular files with a '.rclonelink' extension for the VFS
       --vfs-metadata-extension string          Set the extension to read metadata from
       --vfs-read-ahead SizeSuffix              Extra read ahead over --buffer-size when using cache-mode full
@@ -638,6 +654,7 @@ Flags for filtering directory listings
       --exclude-if-present stringArray      Exclude directories if filename is present
       --files-from stringArray              Read list of source-file names from file (use - to read from stdin)
       --files-from-raw stringArray          Read list of source-file names from file without any processing of lines (use - to read from stdin)
+      --files-from0 stringArray             Read list of source-file names from file using NUL as separator (use - to read from stdin)
   -f, --filter stringArray                  Add a file filtering rule
       --filter-from stringArray             Read file filtering patterns from a file (use - to read from stdin)
       --hash-filter string                  Partition filenames by hash k/n or randomly @/n

@@ -2,8 +2,10 @@ package gui
 
 import (
 	"archive/zip"
+	"compress/gzip"
 	"io"
 	iofs "io/fs"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -11,6 +13,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -91,6 +95,66 @@ func TestOriginFromURL(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := originFromURL(tt.url)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestResolveAllowOrigin(t *testing.T) {
+	wildcard := &net.TCPAddr{IP: net.IPv4zero, Port: 5533}
+	specific := &net.TCPAddr{IP: net.ParseIP("127.0.0.1"), Port: 5533}
+
+	tests := []struct {
+		name                string
+		explicitAllowOrigin bool
+		currentAllowOrigin  string
+		guiOrigin           string
+		addr                *net.TCPAddr
+		noAuth              bool
+		want                string
+	}{
+		{
+			name:                "explicit flag wins even on a wildcard bind",
+			explicitAllowOrigin: true,
+			currentAllowOrigin:  "http://192.0.2.10:5522",
+			guiOrigin:           "http://[::]:5580",
+			addr:                wildcard,
+			noAuth:              false,
+			want:                "http://192.0.2.10:5522",
+		},
+		{
+			name:                "explicit flag wins on a specific bind too",
+			explicitAllowOrigin: true,
+			currentAllowOrigin:  "http://192.0.2.10:5522",
+			guiOrigin:           "http://127.0.0.1:5580",
+			addr:                specific,
+			noAuth:              false,
+			want:                "http://192.0.2.10:5522",
+		},
+		{
+			name:      "specific bind falls back to the gui origin",
+			guiOrigin: "http://127.0.0.1:5580",
+			addr:      specific,
+			want:      "http://127.0.0.1:5580",
+		},
+		{
+			name:      "wildcard bind with auth falls back to *",
+			guiOrigin: "http://[::]:5580",
+			addr:      wildcard,
+			noAuth:    false,
+			want:      "*",
+		},
+		{
+			name:      "wildcard bind without auth falls back to the gui origin",
+			guiOrigin: "http://[::]:5580",
+			addr:      wildcard,
+			noAuth:    true,
+			want:      "http://[::]:5580",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := resolveAllowOrigin(tt.explicitAllowOrigin, tt.currentAllowOrigin, tt.guiOrigin, tt.addr, tt.noAuth)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -301,4 +365,38 @@ func TestHandlerSPAFallbackDeepPath(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Contains(t, string(body), "<div id=\"root\"></div>")
+}
+
+func TestHandlerServesGzip(t *testing.T) {
+	dir := writeTestDir(t)
+	srcFS, cleanup, err := guiSourceFS(dir)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = cleanup() })
+
+	h, err := guiHandler(srcFS)
+	require.NoError(t, err)
+
+	// Build a chi router with Compress middleware, mirroring the
+	// production setup in the gui command.
+	r := chi.NewRouter()
+	r.Use(middleware.Compress(5))
+	r.Get("/*", h.ServeHTTP)
+
+	req := httptest.NewRequest("GET", "/", nil)
+	req.Header.Set("Accept-Encoding", "gzip")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	resp := w.Result()
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, "gzip", resp.Header.Get("Content-Encoding"),
+		"response should be gzip-encoded when client accepts it")
+
+	// Decompress and verify the content is correct.
+	gr, err := gzip.NewReader(resp.Body)
+	require.NoError(t, err)
+	body, err := io.ReadAll(gr)
+	require.NoError(t, err)
+	require.NoError(t, gr.Close())
+	assert.Contains(t, string(body), `<div id="root"></div>`)
 }

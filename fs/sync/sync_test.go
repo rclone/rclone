@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -564,8 +565,7 @@ func TestSyncSetDelayedModTimes(t *testing.T) {
 
 	// Timestamp the directories in reverse order
 	ts := t1
-	for i := len(dirs) - 1; i >= 0; i-- {
-		dir := dirs[i]
+	for _, dir := range slices.Backward(dirs) {
 		_, err := operations.SetDirModTime(ctx, r.Flocal, nil, dir, ts)
 		require.NoError(t, err)
 		ts = ts.Add(time.Minute)
@@ -3101,7 +3101,36 @@ func testLoggerVsLsf(ctx context.Context, fdst, fsrc fs.Fs, logger *bytes.Buffer
 
 	if fsrc.Precision() == fdst.Precision() && fsrc.Hashes().Contains(hash.MD5) && canTestHash {
 		lsf := DstLsf(ctx, fdst)
+		blankMissingHashes(&newlogger, lsf)
 		err := LoggerMatchesLsf(&newlogger, lsf)
 		require.NoError(t, err)
 	}
+}
+
+// blankMissingHashes clears the hash in logger lines for paths where
+// the lsf listing has an empty hash. An empty hash from a backend
+// means the hash is unknown, not wrong - for example ownCloud does
+// not carry the checksum over on a server-side copy - so it should
+// not be compared against the hash the logger predicted.
+func blankMissingHashes(logger, lsf *bytes.Buffer) {
+	noHash := map[string]bool{}
+	for line := range bytes.SplitSeq(lsf.Bytes(), []byte("\n")) {
+		elements := bytes.SplitN(line, []byte(";"), 4)
+		if len(elements) == 4 && len(elements[1]) == 0 {
+			noHash[string(elements[3])] = true
+		}
+	}
+	if len(noHash) == 0 {
+		return
+	}
+	loggerSplit := bytes.Split(logger.Bytes(), []byte("\n"))
+	for i, line := range loggerSplit {
+		elements := bytes.SplitN(line, []byte(";"), 4)
+		if len(elements) == 4 && noHash[string(elements[3])] {
+			elements[1] = nil
+			loggerSplit[i] = bytes.Join(elements, []byte(";"))
+		}
+	}
+	logger.Reset()
+	logger.Write(bytes.Join(loggerSplit, []byte("\n")))
 }

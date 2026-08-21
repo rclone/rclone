@@ -17,6 +17,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -416,7 +417,9 @@ func SameObject(src, dst fs.Object) bool {
 // It returns the destination object if possible.  Note that this may
 // be nil.
 //
-// This is accounted as a check.
+// This is accounted as a check, unless Move falls back to Copy + Delete
+// (on backends without server-side move), in which case the Copy is
+// accounted as a transfer.
 func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
 	return move(ctx, fdst, dst, remote, src, false)
 }
@@ -546,7 +549,11 @@ func SuffixName(ctx context.Context, remote string) string {
 // and accumulating stats and errors.
 //
 // If backupDir is set then it moves the file to there instead of
-// deleting
+// deleting.
+//
+// Use BackupDir to find backupDir from --backup-dir. That lookup is
+// relatively expensive, so when deleting many files do it once outside
+// the loop rather than calling it for every object.
 func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs) (err error) {
 	tr := accounting.Stats(ctx).NewCheckingTransfer(dst, "deleting")
 	defer func() {
@@ -579,8 +586,8 @@ func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs
 
 // DeleteFile deletes a single file respecting --dry-run and accumulating stats and errors.
 //
-// If useBackupDir is set and --backup-dir is in effect then it moves
-// the file to there instead of deleting
+// DeleteFile does not honour --backup-dir: it always deletes. Call
+// DeleteFileWithBackupDir instead if --backup-dir support is required.
 func DeleteFile(ctx context.Context, dst fs.Object) (err error) {
 	return DeleteFileWithBackupDir(ctx, dst, nil)
 }
@@ -1563,8 +1570,7 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 
 	errCount := errcount.New()
 	// Delete all directories at the same level in parallel
-	for level := len(toDelete) - 1; level >= 0; level-- {
-		dirs := toDelete[level]
+	for level, dirs := range slices.Backward(toDelete) {
 		if len(dirs) == 0 {
 			continue
 		}
@@ -1812,8 +1818,20 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 		defer func() {
 			tr.Done(ctx, err)
 		}()
-		body := io.NopCloser(in)    // we let the server close the body
-		in := tr.Account(ctx, body) // account the transfer (no buffering)
+		// The stream can only be read once, so hash it on the way past
+		// and compare with the destination afterwards.
+		hashType, hashOption := CommonHash(ctx, fdst, fdst)
+		var hasher *hash.MultiHasher
+		var streamIn io.Reader = in
+		if hashType != hash.None {
+			hasher, err = hash.NewMultiHasherTypes(hashOption.Hashes)
+			if err != nil {
+				return nil, err
+			}
+			streamIn = io.TeeReader(streamIn, hasher)
+		}
+		body := io.NopCloser(streamIn) // we let the server close the body
+		in := tr.Account(ctx, body)    // account the transfer (no buffering)
 
 		if SkipDestructive(ctx, dstFileName, "upload from pipe") {
 			// prevents "broken pipe" errors
@@ -1821,7 +1839,7 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 			return nil, err
 		}
 
-		var options []fs.OpenOption
+		options := []fs.OpenOption{hashOption}
 		for _, option := range fs.GetConfig(ctx).UploadHeaders {
 			options = append(options, option)
 		}
@@ -1830,6 +1848,27 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 		if err != nil {
 			fs.Errorf(dstFileName, "Post request put error: %v", err)
 
+			return nil, err
+		}
+
+		// Verify the upload
+		if sizeDiffers(ctx, info, obj) {
+			err = fmt.Errorf("corrupted on transfer: sizes differ src %d vs dst(%s) %d", size, obj.Fs(), obj.Size())
+		} else if hasher != nil {
+			src := object.NewStaticObjectInfo(dstFileName, modTime, size, true, hasher.Sums(), fdst)
+			// checkHashes logs and counts errors
+			same, _, srcHash, dstHash, _ := checkHashes(ctx, src, obj, hashType)
+			if !same {
+				err = fmt.Errorf("corrupted on transfer: %v hashes differ src %q vs dst(%s) %q", hashType, srcHash, obj.Fs(), dstHash)
+			}
+		}
+		if err != nil {
+			err = fs.CountError(ctx, err)
+			fs.Errorf(obj, "%v", err)
+			fs.Infof(obj, "Removing failed copy")
+			if removeErr := obj.Remove(ctx); removeErr != nil {
+				fs.Infof(obj, "Failed to remove failed copy: %s", removeErr)
+			}
 			return nil, err
 		}
 	} else {
@@ -2472,8 +2511,8 @@ func DirMove(ctx context.Context, f fs.Fs, srcRemote, dstRemote string) (err err
 	}
 
 	// Remove the source directories in reverse order
-	for i := len(dirs) - 1; i >= 0; i-- {
-		err := f.Rmdir(ctx, dirs[i])
+	for _, dir := range slices.Backward(dirs) {
+		err := f.Rmdir(ctx, dir)
 		if err != nil {
 			return fmt.Errorf("RenameDir rmdir: %w", err)
 		}

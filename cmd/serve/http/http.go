@@ -4,7 +4,6 @@ package http
 import (
 	"context"
 	_ "embed"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -22,7 +21,6 @@ import (
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
-	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/rc"
 	libhttp "github.com/rclone/rclone/lib/http"
@@ -35,17 +33,26 @@ import (
 )
 
 // OptionsInfo describes the Options in use
-var OptionsInfo = fs.Options{}.
+var OptionsInfo = fs.Options{{
+	Name:    "disable_zip",
+	Default: false,
+	Help:    "Disable zip download of directories",
+}, {
+	Name:    "disable_dir_list",
+	Default: false,
+	Help:    "Disable HTML directory list on GET request for a directory",
+}}.
 	Add(libhttp.ConfigInfo).
 	Add(libhttp.AuthConfigInfo).
 	Add(libhttp.TemplateConfigInfo)
 
 // Options required for http server
 type Options struct {
-	Auth       libhttp.AuthConfig
-	HTTP       libhttp.Config
-	Template   libhttp.TemplateConfig
-	DisableZip bool
+	Auth           libhttp.AuthConfig
+	HTTP           libhttp.Config
+	Template       libhttp.TemplateConfig
+	DisableZip     bool `config:"disable_zip"`
+	DisableDirList bool `config:"disable_dir_list"`
 }
 
 // DefaultOpt is the default values used for Options
@@ -74,24 +81,23 @@ func init() {
 	flags.AddFlagsFromOptions(flagSet, "", OptionsInfo)
 	vfsflags.AddFlags(flagSet)
 	proxyflags.AddFlags(flagSet)
-	flagSet.BoolVar(&Opt.DisableZip, "disable-zip", false, "Disable zip download of directories")
 	cmdserve.Command.AddCommand(Command)
 	cmdserve.AddRc("http", func(ctx context.Context, f fs.Fs, in rc.Params) (cmdserve.Handle, error) {
 		// Read VFS Opts
 		var vfsOpt = vfscommon.Opt // set default opts
-		err := configstruct.SetAny(in, &vfsOpt)
+		err := rc.ParseOptions(in, "vfsOpt", &vfsOpt)
 		if err != nil {
 			return nil, err
 		}
 		// Read Proxy Opts
 		var proxyOpt = proxy.Opt // set default opts
-		err = configstruct.SetAny(in, &proxyOpt)
+		err = rc.ParseOptions(in, "proxyOpt", &proxyOpt)
 		if err != nil {
 			return nil, err
 		}
 		// Read opts
 		var opt = Opt // set default opts
-		err = configstruct.SetAny(in, &opt)
+		err = rc.ParseOptions(in, "opt", &opt)
 		if err != nil {
 			return nil, err
 		}
@@ -143,33 +149,21 @@ control the stats printing.
 
 // HTTP contains everything to run the server
 type HTTP struct {
-	f      fs.Fs
-	_vfs   *vfs.VFS // don't use directly, use getVFS
-	server *libhttp.Server
-	opt    Options
-	proxy  *proxy.Proxy
-	ctx    context.Context // for global config
+	f        fs.Fs
+	provider *proxy.Provider
+	server   *libhttp.Server
+	opt      Options
+	ctx      context.Context // for global config
 }
 
 // Gets the VFS in use for this request
 func (s *HTTP) getVFS(ctx context.Context) (VFS *vfs.VFS, err error) {
-	if s._vfs != nil {
-		return s._vfs, nil
-	}
-	value := libhttp.CtxGetAuth(ctx)
-	if value == nil {
-		return nil, errors.New("no VFS found in context")
-	}
-	VFS, ok := value.(*vfs.VFS)
-	if !ok {
-		return nil, fmt.Errorf("context value is not VFS: %#v", value)
-	}
-	return VFS, nil
+	return s.provider.Get(ctx)
 }
 
 // auth does proxy authorization
-func (s *HTTP) auth(user, pass string) (value any, err error) {
-	VFS, _, err := s.proxy.Call(user, pass, false)
+func (s *HTTP) auth(r *http.Request, user, pass string) (value any, err error) {
+	VFS, _, err := s.provider.Proxy().Call(user, pass, false, r.RemoteAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -178,17 +172,19 @@ func (s *HTTP) auth(user, pass string) (value any, err error) {
 
 func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Options, proxyOpt *proxy.Options) (s *HTTP, err error) {
 	s = &HTTP{
-		f:   f,
-		ctx: ctx,
-		opt: *opt,
+		f:        f,
+		ctx:      ctx,
+		opt:      *opt,
+		provider: proxy.NewProvider(ctx, f, vfsOpt, proxyOpt),
 	}
+	defer func() {
+		if err != nil {
+			s.provider.Shutdown()
+		}
+	}()
 
-	if proxyOpt.AuthProxy != "" {
-		s.proxy = proxy.New(ctx, proxyOpt, vfsOpt)
-		// override auth
+	if s.provider.IsProxy() {
 		s.opt.Auth.CustomAuthFn = s.auth
-	} else {
-		s._vfs = vfs.New(ctx, f, vfsOpt)
 	}
 
 	s.server, err = libhttp.NewServer(ctx,
@@ -228,7 +224,9 @@ func (s *HTTP) Addr() net.Addr {
 
 // Shutdown the server
 func (s *HTTP) Shutdown() error {
-	return s.server.Shutdown()
+	err := s.server.Shutdown()
+	s.provider.Shutdown()
+	return err
 }
 
 // serveFavicon serves the remote's favicon.ico if it exists, otherwise
@@ -257,6 +255,10 @@ func (s *HTTP) handler(w http.ResponseWriter, r *http.Request) {
 	isDir := strings.HasSuffix(r.URL.Path, "/")
 	remote := strings.Trim(r.URL.Path, "/")
 	if isDir {
+		if s.opt.DisableDirList {
+			http.NotFound(w, r)
+			return
+		}
 		s.serveDir(w, r, remote)
 	} else {
 		s.serveFile(w, r, remote)
@@ -345,6 +347,12 @@ func (s *HTTP) serveFile(w http.ResponseWriter, r *http.Request, remote string) 
 	node, err := VFS.Stat(remote)
 	if err == vfs.ENOENT {
 		fs.Infof(remote, "%s: File not found", r.RemoteAddr)
+		if s.opt.DisableDirList {
+			// Return the same response as for a directory URL so
+			// that missing and existing paths are indistinguishable
+			http.NotFound(w, r)
+			return
+		}
 		http.Error(w, "File not found", http.StatusNotFound)
 		return
 	} else if err != nil {
@@ -352,6 +360,13 @@ func (s *HTTP) serveFile(w http.ResponseWriter, r *http.Request, remote string) 
 		return
 	}
 	if !node.IsFile() {
+		if s.opt.DisableDirList {
+			// Return the same response as for a directory URL so
+			// that a directory's existence can't be probed via a
+			// URL without a trailing slash
+			http.NotFound(w, r)
+			return
+		}
 		http.Error(w, "Not a file", http.StatusNotFound)
 		return
 	}

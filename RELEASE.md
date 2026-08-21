@@ -11,11 +11,12 @@ This file describes how to make the various kinds of releases
 
 - git checkout master # see below for stable branch
 - git pull # IMPORTANT
+- make fetch-gui-and-commit # bump the embedded GUI if rclone-web has a newer release
 - git status - make sure everything is checked in
 - Check GitHub actions build for master is Green
 - make test # see integration test server or run locally
 - make tag
-- edit docs/content/changelog.md # make sure to remove duplicate logs from point
+- edit docs/content/changelog.md # duplicate logs from point rels removed automatically
   releases
 - make tidy
 - make doc
@@ -42,7 +43,10 @@ This file describes how to make the various kinds of releases
 
 Early in the next release cycle update the dependencies.
 
-- Review any pinned packages in go.mod and remove if possible
+- Active Pins
+  - `github.com/gdamore/tcell/v2` v2.9.0 - awaiting fix for [tcell/issues/1124](https://github.com/gdamore/tcell/issues/1124)
+    - See: [#9539](https://github.com/rclone/rclone/issues/9539)
+- Review Active Pins in go.mod and remove if possible
 - `make updatedirect`
 - `make GOTAGS=cmount`
 - `make compiletest`
@@ -83,6 +87,19 @@ build.
 
 Once it compiles locally, push it on a test branch and commit fixes
 until the tests pass.
+
+### Pseudo versions
+
+Go makes pseudo versions for untagged repos and repos not at a tag.
+The pseudo versions on repos that have been tagged before do not get
+updated automatically so need manually checking. These can be found with
+
+```console
+grep -E '[0-9]{14}-[0-9a-f]{12}' go.mod | grep -v indirect | grep -v 'v0\.0\.0'
+```
+
+These will need to be updated manually using the `go get ...@branch`
+syntax.
 
 ### Major versions
 
@@ -178,7 +195,7 @@ this will be done already.
 Now
 
 - git co ${BASE_TAG}-stable
-- git cherry-pick any fixes
+- `git cherry-pick -x` any fixes
 - make startstable
 - Do the steps as above
 - git co master

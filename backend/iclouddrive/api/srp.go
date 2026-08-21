@@ -46,10 +46,10 @@ type srpClient struct {
 }
 
 // newSRPClient generates a random 32-byte secret and computes the public value A.
-func newSRPClient() *srpClient {
+func newSRPClient() (*srpClient, error) {
 	secret := make([]byte, 32)
 	if _, err := rand.Read(secret); err != nil {
-		panic(fmt.Sprintf("srp: rand.Read failed: %v", err))
+		return nil, fmt.Errorf("srp: rand.Read failed: %w", err)
 	}
 
 	a := new(big.Int).SetBytes(secret)
@@ -60,7 +60,7 @@ func newSRPClient() *srpClient {
 		a: a,
 		A: A,
 		k: k,
-	}
+	}, nil
 }
 
 // getABytes returns the padded public value A.
@@ -71,16 +71,21 @@ func (c *srpClient) getABytes() []byte {
 // processChallenge computes the session key and proof values from the server challenge.
 // username is the Apple ID, derivedKey is the output of derivePassword, salt and B come
 // from the server's init response (raw bytes, already base64-decoded).
-func (c *srpClient) processChallenge(username, derivedKey, salt, serverB []byte) {
+func (c *srpClient) processChallenge(username, derivedKey, salt, serverB []byte) error {
 	B := new(big.Int).SetBytes(serverB)
 
-	// Validate B
+	// Validate B (RFC 5054)
 	if B.Cmp(big.NewInt(0)) <= 0 || B.Cmp(srpN) >= 0 {
-		panic("srp: invalid server-supplied B, must be 1..N-1")
+		return fmt.Errorf("srp: invalid server-supplied B, must be 1..N-1")
 	}
 
 	x := calculateX(salt, derivedKey)
 	u := calculateU(c.A, B)
+
+	// Validate u (RFC 5054)
+	if u.Sign() == 0 {
+		return fmt.Errorf("srp: calculated u is zero, aborting")
+	}
 	S := calculateS(c.k, x, c.a, B, u)
 	c.K = calculateK(S)
 
@@ -88,6 +93,7 @@ func (c *srpClient) processChallenge(username, derivedKey, salt, serverB []byte)
 	bBytes := padToN(B)
 	c.M1 = calculateM1(username, salt, aBytes, bBytes, c.K)
 	c.M2 = calculateM2(aBytes, c.M1, c.K)
+	return nil
 }
 
 // derivePassword performs Apple's password key derivation.
@@ -98,10 +104,12 @@ func derivePassword(password string, salt []byte, iterations int, protocol strin
 
 	var passInput string
 	switch protocol {
+	case "s2k":
+		passInput = string(passHash[:])
 	case "s2k_fo":
 		passInput = hex.EncodeToString(passHash[:])
-	default: // "s2k"
-		passInput = string(passHash[:])
+	default:
+		return nil, fmt.Errorf("unsupported SRP protocol: %q", protocol)
 	}
 	return pbkdf2.Key(sha256.New, passInput, salt, iterations, 32)
 }
@@ -142,7 +150,7 @@ func getMultiplier() *big.Int {
 }
 
 // calculateX computes x = H(salt | H(":" | password))
-// Apple's variant: NoUserNameInX — username is omitted from the inner hash.
+// Apple's variant: NoUserNameInX - username is omitted from the inner hash.
 // The "password" here is actually the derived key from derivePassword.
 func calculateX(salt, derivedKey []byte) *big.Int {
 	h := srpHashFunc()

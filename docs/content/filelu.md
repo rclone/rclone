@@ -219,6 +219,28 @@ Properties:
 
 Here are the Advanced options specific to filelu (FileLu Cloud Storage).
 
+#### --filelu-upload-cutoff
+
+Cutoff for switching to chunked upload. Any files larger than this will be uploaded in chunks of chunk_size.
+
+Properties:
+
+- Config:      upload_cutoff
+- Env Var:     RCLONE_FILELU_UPLOAD_CUTOFF
+- Type:        SizeSuffix
+- Default:     500Mi
+
+#### --filelu-chunk-size
+
+Chunk size to use for uploading. Used for multipart uploads.
+
+Properties:
+
+- Config:      chunk_size
+- Env Var:     RCLONE_FILELU_CHUNK_SIZE
+- Type:        SizeSuffix
+- Default:     64Mi
+
 #### --filelu-encoding
 
 The encoding for the backend.

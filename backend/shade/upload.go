@@ -125,10 +125,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 
 	err = o.fs.pacer.Call(func() (bool, error) {
 		res, err := o.fs.srv.CallJSON(ctx, &opts, reqBody, &initResp)
-		if err != nil {
-			return res != nil && res.StatusCode == http.StatusTooManyRequests, err
-		}
-		return false, nil
+		return shouldRetry(ctx, res, err)
 	})
 
 	if err != nil {
@@ -183,10 +180,7 @@ func (s *shadeChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, read
 
 	err = s.f.pacer.Call(func() (bool, error) {
 		res, err := s.f.srv.CallJSON(ctx, &partOpts, nil, &partURL)
-		if err != nil {
-			return res != nil && res.StatusCode == http.StatusTooManyRequests, err
-		}
-		return false, nil
+		return shouldRetry(ctx, res, err)
 	})
 
 	if err != nil {
@@ -195,7 +189,6 @@ func (s *shadeChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, read
 	opts := rest.Opts{
 		Method:        "PUT",
 		RootURL:       partURL.URL,
-		Body:          &chunk,
 		ContentType:   "",
 		ContentLength: &n,
 	}
@@ -208,11 +201,10 @@ func (s *shadeChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, read
 	}
 
 	err = s.f.pacer.Call(func() (bool, error) {
+		// Use a fresh reader for each attempt so retries resend the whole chunk
+		opts.Body = bytes.NewReader(chunk.Bytes())
 		uploadRes, err = s.f.srv.Call(ctx, &opts)
-		if err != nil {
-			return uploadRes != nil && uploadRes.StatusCode == http.StatusTooManyRequests, err
-		}
-		return false, nil
+		return shouldRetry(ctx, uploadRes, err)
 	})
 
 	if err != nil {
@@ -262,34 +254,20 @@ func (s *shadeChunkWriter) Close(ctx context.Context) error {
 		return err
 	}
 
+	// The complete response has an empty body so don't attempt to decode it
 	completeOpts := rest.Opts{
-		Method:  "POST",
-		Path:    fmt.Sprintf("/%s/upload/multipart/complete?token=%s", s.f.drive, url.QueryEscape(s.initToken)),
-		RootURL: s.f.endpoint,
+		Method:     "POST",
+		Path:       fmt.Sprintf("/%s/upload/multipart/complete?token=%s", s.f.drive, url.QueryEscape(s.initToken)),
+		RootURL:    s.f.endpoint,
+		NoResponse: true,
 		ExtraHeaders: map[string]string{
 			"Authorization": "Bearer " + token,
 		},
 	}
 
-	var response http.Response
-
 	err = s.f.pacer.Call(func() (bool, error) {
-		res, err := s.f.srv.CallJSON(ctx, &completeOpts, completeBody, &response)
-
-		if err != nil && res == nil {
-			return false, err
-		}
-
-		if res.StatusCode == http.StatusTooManyRequests {
-			return true, err // Retry on 429
-		}
-
-		if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
-			body, _ := io.ReadAll(res.Body)
-			return false, fmt.Errorf("complete multipart failed with status %d: %s", res.StatusCode, string(body))
-		}
-
-		return false, nil
+		res, err := s.f.srv.CallJSON(ctx, &completeOpts, completeBody, nil)
+		return shouldRetry(ctx, res, err)
 	})
 
 	if err != nil {

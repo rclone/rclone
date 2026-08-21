@@ -24,6 +24,8 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/rclone/rclone/fstest/runs"
+	"github.com/rclone/rclone/fstest/testserver"
+	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/pacer"
 )
 
@@ -51,6 +53,13 @@ func init() {
 var Opt = &runs.RunOpt{}
 
 func main() {
+	// Make sure any test servers we start get stopped on exit or
+	// signal. Without this, a killed test_all run leaves docker
+	// containers behind (refcount never decrements) and breaks
+	// subsequent runs.
+	atexit.Register(testserver.CleanupAll)
+	defer atexit.Run()
+
 	flag.Parse()
 	conf, err := runs.NewConfig(Opt.ConfigFile)
 	if err != nil {
@@ -144,6 +153,7 @@ func main() {
 	report.EmailHTML(*Opt)
 	report.Upload(*Opt)
 	if !report.AllPassed() {
+		atexit.Run()
 		os.Exit(1)
 	}
 }

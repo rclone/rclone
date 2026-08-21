@@ -199,3 +199,23 @@ func TestCoreCommand(t *testing.T) {
 		test("unknown_command", "STREAM", version+errorString, true)
 	})
 }
+
+// core/disks: Tests local disks
+func TestCoreDisks(t *testing.T) {
+	call := Calls.Get("core/disks")
+	assert.NotNil(t, call)
+	in := Params{}
+	out, err := call.Fn(context.Background(), in)
+	require.NoError(t, err)
+	require.NotNil(t, out)
+	require.NotNil(t, out["disks"])
+	disks, ok := out["disks"].([]string)
+	require.True(t, ok)
+	assert.True(t, len(disks) >= 2)
+	for _, disk := range disks {
+		assert.NotEqual(t, disk, "")
+		if disk != "/" {
+			assert.False(t, strings.HasSuffix(disk, "/"))
+		}
+	}
+}

@@ -183,7 +183,7 @@ y) Yes
 n) No
 y/n> n
 Remote config
-Already have a token - refresh?
+Token already configured - replace it?
 y) Yes
 n) No
 y/n> y
@@ -320,19 +320,6 @@ Properties:
 
 - Config:      box_config_file
 - Env Var:     RCLONE_BOX_BOX_CONFIG_FILE
-- Type:        string
-- Required:    false
-
-#### --box-config-credentials
-
-Box App config.json contents.
-
-Leave blank normally.
-
-Properties:
-
-- Config:      config_credentials
-- Env Var:     RCLONE_BOX_CONFIG_CREDENTIALS
 - Type:        string
 - Required:    false
 
