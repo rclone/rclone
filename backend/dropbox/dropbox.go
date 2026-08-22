@@ -392,8 +392,8 @@ type Fs struct {
 	sharing        sharing.ContextClient // as above, but for generating sharing links
 	users          users.ContextClient   // as above, but for accessing user information
 	team           team.ContextClient    // for the Teams API
-	slashRoot      string                // root with "/" prefix, lowercase
-	slashRootSlash string                // root with "/" prefix and postfix, lowercase
+	slashRoot      string                // root with "/" prefix
+	slashRootSlash string                // root with "/" prefix and postfix
 	pacer          *fs.Pacer             // To pace the API calls
 	ns             string                // The namespace we are using or "" for none
 	batcher        *batcher.Batcher[*files.UploadSessionFinishArg, *files.FileMetadata]
@@ -725,6 +725,13 @@ func (f *Fs) setRoot(root string) {
 	if f.root != "" {
 		f.slashRootSlash += "/"
 	}
+}
+
+func trimPrefixFold(s, prefix string) string {
+	if len(s) >= len(prefix) && strings.EqualFold(s[:len(prefix)], prefix) {
+		return s[len(prefix):]
+	}
+	return s
 }
 
 type getMetadataResult struct {
@@ -1731,13 +1738,13 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 			switch info := entry.(type) {
 			case *files.FolderMetadata:
 				entryType = fs.EntryDirectory
-				entryPath = strings.TrimPrefix(info.PathDisplay, f.slashRootSlash)
+				entryPath = trimPrefixFold(info.PathDisplay, f.slashRootSlash)
 			case *files.FileMetadata:
 				entryType = fs.EntryObject
-				entryPath = strings.TrimPrefix(info.PathDisplay, f.slashRootSlash)
+				entryPath = trimPrefixFold(info.PathDisplay, f.slashRootSlash)
 			case *files.DeletedMetadata:
 				entryType = fs.EntryObject
-				entryPath = strings.TrimPrefix(info.PathDisplay, f.slashRootSlash)
+				entryPath = trimPrefixFold(info.PathDisplay, f.slashRootSlash)
 			default:
 				fs.Errorf(entry, "dropbox ChangeNotify: ignoring unknown EntryType %T", entry)
 				continue
