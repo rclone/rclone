@@ -451,12 +451,13 @@ func TestMatchListings(t *testing.T) {
 	)
 
 	for _, test := range []struct {
-		what       string
-		input      fs.DirEntries // pairs of input src, dst
-		srcOnly    fs.DirEntries
-		dstOnly    fs.DirEntries
-		matches    []matchPair // pairs of output
-		transforms []matchTransformFn
+		what                  string
+		input                 fs.DirEntries // pairs of input src, dst
+		srcOnly               fs.DirEntries
+		dstOnly               fs.DirEntries
+		matches               []matchPair // pairs of output
+		transforms            []matchTransformFn
+		matchFileAndDirectory bool
 	}{
 		{
 			what: "only src or dst",
@@ -597,6 +598,40 @@ func TestMatchListings(t *testing.T) {
 			},
 		},
 		{
+			what: "File replaces directory",
+			input: fs.DirEntries{
+				A, dirA,
+			},
+			matches: []matchPair{
+				{A, dirA},
+			},
+			matchFileAndDirectory: true,
+		},
+		{
+			what: "Directory replaces file",
+			input: fs.DirEntries{
+				dirA, A,
+			},
+			matches: []matchPair{
+				{dirA, A},
+			},
+			matchFileAndDirectory: true,
+		},
+		{
+			what: "Same type match takes precedence",
+			input: fs.DirEntries{
+				A, dirA,
+				nil, A,
+			},
+			dstOnly: fs.DirEntries{
+				dirA,
+			},
+			matches: []matchPair{
+				{A, A},
+			},
+			matchFileAndDirectory: true,
+		},
+		{
 			what: "Sync with directory #1",
 			input: fs.DirEntries{
 				dirA, nil,
@@ -653,8 +688,9 @@ func TestMatchListings(t *testing.T) {
 
 			// Skeleton March for testing
 			m := March{
-				Ctx:        context.Background(),
-				transforms: test.transforms,
+				Ctx:                   context.Background(),
+				transforms:            test.transforms,
+				MatchFileAndDirectory: test.matchFileAndDirectory,
 			}
 
 			// Make a channel to send the source (0) or dest (1) using a list.Sorter
