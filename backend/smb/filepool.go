@@ -56,7 +56,8 @@ func (p *filePool) get() (*file, error) {
 		return nil, err
 	}
 
-	fl, err := c.smbShare.OpenFile(p.path, os.O_WRONLY, 0o644)
+	_, cShare := c.withContext(p.ctx)
+	fl, err := cShare.OpenFile(p.path, os.O_WRONLY, 0o644)
 	if err != nil {
 		p.fs.putConnection(&c, err)
 		return nil, fmt.Errorf("failed to open: %w", err)
