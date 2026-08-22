@@ -671,7 +671,12 @@ func (s *syncCopyMove) deleteEmptyDirectories(ctx context.Context, f fs.Fs, entr
 	if len(entriesMap) == 0 {
 		return nil
 	}
-	if accounting.Stats(ctx).Errored() && !s.ci.IgnoreErrors {
+	// Only this sync's own errors should stop directories being deleted.
+	// The stats group can outlive a single operation - it is shared by
+	// every rc call passing the same _group - so consulting it here would
+	// let an unrelated earlier error disable this for the rest of the
+	// group's lifetime.
+	if s.currentError() != nil && !s.ci.IgnoreErrors {
 		fs.Errorf(f, "%v", fs.ErrorNotDeletingDirs)
 		return fs.ErrorNotDeletingDirs
 	}
