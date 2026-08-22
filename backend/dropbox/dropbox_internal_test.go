@@ -119,6 +119,40 @@ func TestInternalCheckPathLength(t *testing.T) {
 	}
 }
 
+func TestInternalTrimRootFromChangeNotifyPath(t *testing.T) {
+	f := &Fs{}
+	f.setRoot("MyRoot")
+
+	for _, test := range []struct {
+		name        string
+		pathLower   string
+		pathDisplay string
+		want        string
+	}{
+		{
+			name:        "matching case",
+			pathLower:   "/myroot/sub/file.txt",
+			pathDisplay: "/MyRoot/sub/file.txt",
+			want:        "sub/file.txt",
+		},
+		{
+			name:        "root casing differs from PathDisplay",
+			pathLower:   "/myroot/sub/file.txt",
+			pathDisplay: "/myRoot/sub/file.txt", // note lowercase "r" - differs from configured "MyRoot"
+			want:        "sub/file.txt",
+		},
+		{
+			name:        "not under root",
+			pathLower:   "/otherroot/sub/file.txt",
+			pathDisplay: "/OtherRoot/sub/file.txt",
+			want:        "",
+		},
+	} {
+		got := f.trimRootFromChangeNotifyPath(test.pathLower, test.pathDisplay)
+		assert.Equal(t, test.want, got, test.name)
+	}
+}
+
 func TestPaperExportRemote(t *testing.T) {
 	ctx := context.Background()
 	info := &files.FileMetadata{
