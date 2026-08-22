@@ -21,8 +21,10 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/net/html"
 )
@@ -98,6 +100,23 @@ sizes of any files, and some files that don't exist may be in the listing.`,
 			Name:    "no_escape",
 			Help:    "Do not escape URL metacharacters in path names.",
 			Default: false,
+		}, {
+			Name: "strict_listings",
+			Help: `Return an error on listing errors.
+
+If set then any error encountered while stat'ing an entry in a
+directory listing will be returned as an error from the listing
+rather than the entry being skipped.
+
+Without this flag rclone skips entries which fail to be stat'd as it
+may be scraping a web site with broken or transiently failing links.
+
+Setting this flag means that a transient error on a listing (e.g. a
+Cloudflare 524) will fail the whole sync instead, which will stop
+rclone from deleting files on the destination that appear to have
+disappeared from the source.`,
+			Default:  false,
+			Advanced: true,
 		}},
 	}
 	fs.Register(fsi)
@@ -139,11 +158,12 @@ var systemMetadataInfo = map[string]fs.MetadataHelp{
 
 // Options defines the configuration for this backend
 type Options struct {
-	Endpoint string          `config:"url"`
-	NoSlash  bool            `config:"no_slash"`
-	NoHead   bool            `config:"no_head"`
-	Headers  fs.CommaSepList `config:"headers"`
-	NoEscape bool            `config:"no_escape"`
+	Endpoint       string          `config:"url"`
+	NoSlash        bool            `config:"no_slash"`
+	NoHead         bool            `config:"no_head"`
+	Headers        fs.CommaSepList `config:"headers"`
+	NoEscape       bool            `config:"no_escape"`
+	StrictListings bool            `config:"strict_listings"`
 }
 
 // Fs stores the interface to the remote HTTP files
@@ -156,7 +176,8 @@ type Fs struct {
 	endpoint    *url.URL
 	endpointURL string // endpoint as a string
 	httpClient  *http.Client
-	fileName    string // set if we are pointing to a file
+	pacer       *fs.Pacer // pacer for API calls
+	fileName    string    // set if we are pointing to a file
 }
 
 // Object is a remote object that has been stat'd (so it exists, but is not necessarily open for reading)
@@ -185,6 +206,36 @@ func statusError(res *http.Response, err error) error {
 		return fmt.Errorf("HTTP Error: %s", res.Status)
 	}
 	return nil
+}
+
+// retryErrorCodes is a slice of error codes that we will retry
+//
+// This includes the Cloudflare specific errors 520-527 which are
+// returned transiently when the origin server is unreachable or
+// timing out.
+var retryErrorCodes = []int{
+	429, // Too Many Requests
+	500, // Internal Server Error
+	502, // Bad Gateway
+	503, // Service Unavailable
+	504, // Gateway Timeout
+	520, // Cloudflare: Unknown Error
+	521, // Cloudflare: Web Server Is Down
+	522, // Cloudflare: Connection Timed Out
+	523, // Cloudflare: Origin Is Unreachable
+	524, // Cloudflare: A Timeout Occurred
+	525, // Cloudflare: SSL Handshake Failed
+	526, // Cloudflare: Invalid SSL Certificate
+	527, // Cloudflare: Railgun Error
+}
+
+// shouldRetry returns a boolean as to whether this resp and err
+// deserve to be retried. It returns the err as a convenience
+func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
+	if fserrors.ContextError(ctx, &err) {
+		return false, err
+	}
+	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
 // getFsEndpoint decides if url is to be considered a file or directory,
@@ -328,6 +379,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		ReadMetadata:            true,
 		CanHaveEmptyDirectories: true,
 	}).Fill(ctx, f)
+
+	f.pacer = fs.NewPacer(ctx, pacer.NewDefault())
 
 	// Make the http connection
 	isFile, err := f.httpConnection(ctx, opt)
@@ -531,7 +584,11 @@ func (f *Fs) readDir(ctx context.Context, dir string) (names []string, err error
 		return nil, fmt.Errorf("readDir failed: %w", err)
 	}
 	f.addHeaders(req)
-	res, err := f.httpClient.Do(req)
+	var res *http.Response
+	err = f.pacer.Call(func() (bool, error) {
+		res, err = f.httpClient.Do(req)
+		return f.shouldRetry(ctx, res, err)
+	})
 	if err == nil {
 		defer fs.CheckClose(res.Body, &err)
 		if res.StatusCode == http.StatusNotFound {
@@ -584,11 +641,15 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if err != nil {
 		return nil, fmt.Errorf("error listing %q: %w", dir, err)
 	}
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	var (
 		entriesMu sync.Mutex // to protect entries
+		errMu     sync.Mutex // to protect firstErr
 		wg        sync.WaitGroup
 		checkers  = f.ci.Checkers
 		in        = make(chan string, checkers)
+		firstErr  error
 	)
 	add := func(entry fs.DirEntry) {
 		entriesMu.Lock()
@@ -598,6 +659,9 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	for range checkers {
 		wg.Go(func() {
 			for remote := range in {
+				if ctx.Err() != nil {
+					return
+				}
 				file := &Object{
 					fs:     f,
 					remote: remote,
@@ -609,6 +673,15 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 					// ...found a directory not a file
 					add(fs.NewDir(remote, time.Time{}))
 				default:
+					if f.opt.StrictListings {
+						errMu.Lock()
+						if firstErr == nil {
+							firstErr = fmt.Errorf("failed to stat %q: %w", remote, err)
+							cancel()
+						}
+						errMu.Unlock()
+						return
+					}
 					fs.Debugf(remote, "skipping because of error: %v", err)
 				}
 			}
@@ -621,11 +694,17 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		if isDir {
 			add(fs.NewDir(remote, time.Time{}))
 		} else {
-			in <- remote
+			select {
+			case in <- remote:
+			case <-ctx.Done():
+			}
 		}
 	}
 	close(in)
 	wg.Wait()
+	if firstErr != nil {
+		return nil, firstErr
+	}
 	return entries, nil
 }
 
@@ -698,7 +777,11 @@ func (o *Object) head(ctx context.Context) error {
 		return fmt.Errorf("stat failed: %w", err)
 	}
 	o.fs.addHeaders(req)
-	res, err := o.fs.httpClient.Do(req)
+	var res *http.Response
+	err = o.fs.pacer.Call(func() (bool, error) {
+		res, err = o.fs.httpClient.Do(req)
+		return o.fs.shouldRetry(ctx, res, err)
+	})
 	if err == nil && res.StatusCode == http.StatusNotFound {
 		return fs.ErrorObjectNotFound
 	}
@@ -782,7 +865,11 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	o.fs.addHeaders(req)
 
 	// Do the request
-	res, err := o.fs.httpClient.Do(req)
+	var res *http.Response
+	err = o.fs.pacer.Call(func() (bool, error) {
+		res, err = o.fs.httpClient.Do(req)
+		return o.fs.shouldRetry(ctx, res, err)
+	})
 	err = statusError(res, err)
 	if err != nil {
 		return nil, fmt.Errorf("Open failed: %w", err)

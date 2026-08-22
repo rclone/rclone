@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -580,4 +581,150 @@ func TestFsNoSlashRoots(t *testing.T) {
 			assert.Equal(t, ts.URL+endpoint, f.String(), what)
 		}
 	}
+}
+
+// TestRetryTransientErrors checks that transient errors (e.g. a
+// Cloudflare 524) on directory and head requests are retried by the
+// pacer rather than failing or being skipped.
+func TestRetryTransientErrors(t *testing.T) {
+	ci := fs.GetConfig(context.Background())
+	saved := ci.LowLevelRetries
+	ci.LowLevelRetries = 3
+	defer func() { ci.LowLevelRetries = saved }()
+
+	var (
+		mu       sync.Mutex
+		dirGets  int
+		headGets int
+	)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		transient := false
+		switch r.Method {
+		case http.MethodGet:
+			dirGets++
+			transient = dirGets <= 2
+		case http.MethodHead:
+			headGets++
+			transient = headGets <= 2
+		}
+		mu.Unlock()
+		if transient {
+			http.Error(w, "Gateway Timeout", 524)
+			return
+		}
+		if r.Method == http.MethodGet {
+			w.Header().Set("Content-Type", "text/html")
+			_, _ = w.Write([]byte(`<html><body><a href="one.txt">one.txt</a></body></html>`))
+			return
+		}
+		w.Header().Set("Content-Length", "5")
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	m := configmap.Simple{"url": server.URL + "/"}
+	f, err := NewFs(context.Background(), remoteName, "", m)
+	require.NoError(t, err)
+
+	entries, err := f.List(context.Background(), "")
+	require.NoError(t, err)
+	require.Equal(t, 1, len(entries))
+	assert.Equal(t, "one.txt", entries[0].Remote())
+
+	mu.Lock()
+	defer mu.Unlock()
+	assert.Equal(t, 3, dirGets, "directory GET should have been retried twice")
+	assert.Equal(t, 3, headGets, "head request should have been retried twice")
+}
+
+// TestRetryOpen checks that transient errors on the GET request used
+// to download an object are retried by the pacer.
+func TestRetryOpen(t *testing.T) {
+	ci := fs.GetConfig(context.Background())
+	saved := ci.LowLevelRetries
+	ci.LowLevelRetries = 3
+	defer func() { ci.LowLevelRetries = saved }()
+
+	var (
+		mu       sync.Mutex
+		requests int
+		getGets  int
+	)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		requests++
+		if r.Method == http.MethodGet {
+			getGets++
+		}
+		mu.Unlock()
+		if r.Method == http.MethodGet && requests <= 3 {
+			http.Error(w, "Gateway Timeout", 524)
+			return
+		}
+		w.Header().Set("Content-Length", "5")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("hello"))
+	}))
+	defer server.Close()
+
+	m := configmap.Simple{"url": server.URL + "/"}
+	f, err := NewFs(context.Background(), remoteName, "", m)
+	require.NoError(t, err)
+
+	o, err := f.NewObject(context.Background(), "one.txt")
+	require.NoError(t, err)
+	in, err := o.Open(context.Background())
+	require.NoError(t, err)
+	body, err := io.ReadAll(in)
+	require.NoError(t, err)
+	require.NoError(t, in.Close())
+	assert.Equal(t, "hello", string(body))
+
+	mu.Lock()
+	defer mu.Unlock()
+	assert.Equal(t, 3, getGets, "GET request should have been retried twice")
+}
+
+// TestListStrictListings checks that when an entry fails to be
+// stat'd, the default behaviour is to skip it, but with the
+// strict_listings option set the listing returns an error instead so
+// that the sync delete phase won't run.
+func TestListStrictListings(t *testing.T) {
+	ci := fs.GetConfig(context.Background())
+	saved := ci.LowLevelRetries
+	ci.LowLevelRetries = 2
+	defer func() { ci.LowLevelRetries = saved }()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/bad.txt" {
+			http.Error(w, "Gateway Timeout", 524)
+			return
+		}
+		if r.Method == http.MethodGet {
+			w.Header().Set("Content-Type", "text/html")
+			_, _ = w.Write([]byte(`<html><body><a href="one.txt">one.txt</a><a href="bad.txt">bad.txt</a></body></html>`))
+			return
+		}
+		w.Header().Set("Content-Length", "5")
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	// Default (lax): the entry which errors is silently skipped
+	m := configmap.Simple{"url": server.URL + "/"}
+	f, err := NewFs(context.Background(), remoteName, "", m)
+	require.NoError(t, err)
+	entries, err := f.List(context.Background(), "")
+	require.NoError(t, err)
+	require.Equal(t, 1, len(entries))
+	assert.Equal(t, "one.txt", entries[0].Remote())
+
+	// strict_listings: the listing returns an error
+	m = configmap.Simple{"url": server.URL + "/", "strict_listings": "true"}
+	f, err = NewFs(context.Background(), remoteName, "", m)
+	require.NoError(t, err)
+	_, err = f.List(context.Background(), "")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "bad.txt")
 }
