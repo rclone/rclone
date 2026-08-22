@@ -253,6 +253,26 @@ platforms may be added in the future.)`,
 				Advanced: true,
 			},
 			{
+				Name: "use_trash",
+				Help: `Send deleted files to the OS trash instead of deleting permanently.
+
+When enabled, files and directories deleted by rclone are moved to the
+operating system trash (the Recycle Bin on Windows, ~/.Trash on macOS,
+the freedesktop.org trash on Linux and other Unix systems) rather than
+being deleted permanently. This mirrors the behaviour many cloud
+backends have by default (e.g. --drive-use-trash).
+
+If the platform trash is not available - an unsupported platform or
+architecture, or a file on a different filesystem than the trash
+directory - rclone returns an error instead of falling back to
+permanent deletion.
+
+On Windows this is limited to paths shorter than 260 characters as the
+underlying API does not support extended-length paths.`,
+				Default:  false,
+				Advanced: true,
+			},
+			{
 				Name: "no_preallocate",
 				Help: `Disable preallocation of disk space for transferred files.
 
@@ -393,6 +413,7 @@ type Options struct {
 	Enc                    encoder.MultiEncoder `config:"encoding"`
 	NoClone                bool                 `config:"no_clone"`
 	MetadataRestoreSpecial bool                 `config:"metadata_restore_special_bits"`
+	UseTrash               bool                 `config:"use_trash"`
 }
 
 // Fs represents a local filesystem rooted at root
@@ -943,6 +964,17 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	} else if !fi.IsDir() {
 		return fs.ErrorIsFile
 	}
+	if f.opt.UseTrash {
+		// preserve Rmdir semantics: only remove empty directories
+		entries, err := os.ReadDir(localPath)
+		if err != nil {
+			return err
+		}
+		if len(entries) > 0 {
+			return fmt.Errorf("directory not empty: %q", localPath)
+		}
+		return moveToTrash(localPath)
+	}
 	err = os.Remove(localPath)
 	if runtime.GOOS == "windows" && errors.Is(err, iofs.ErrPermission) { // https://github.com/golang/go/issues/26295
 		if os.Chmod(localPath, 0o600) == nil {
@@ -950,6 +982,30 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		}
 	}
 	return err
+}
+
+// Purge deletes all the files and the directory
+//
+// Only supported with --local-use-trash where the whole directory is
+// moved to the trash in one operation - otherwise rclone falls back to
+// the standard recursive delete.
+func (f *Fs) Purge(ctx context.Context, dir string) error {
+	if !f.opt.UseTrash {
+		return fs.ErrorCantPurge
+	}
+	localPath, err := f.localPath(dir)
+	if err != nil {
+		return err
+	}
+	if fi, err := os.Stat(localPath); err != nil {
+		if os.IsNotExist(err) {
+			return fs.ErrorDirNotFound
+		}
+		return err
+	} else if !fi.IsDir() {
+		return fs.ErrorIsFile
+	}
+	return moveToTrash(localPath)
 }
 
 // Precision of the file system
@@ -1808,6 +1864,9 @@ func (o *Object) lstat() error {
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
 	o.clearHashCache()
+	if o.fs.opt.UseTrash {
+		return moveToTrash(o.path)
+	}
 	return remove(o.path)
 }
 
@@ -1940,6 +1999,7 @@ func (d *Directory) Hash() {
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs              = &Fs{}
+	_ fs.Purger          = &Fs{}
 	_ fs.PutStreamer     = &Fs{}
 	_ fs.Mover           = &Fs{}
 	_ fs.DirMover        = &Fs{}
