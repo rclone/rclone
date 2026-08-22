@@ -20,3 +20,6 @@ __pycache__
 .DS_Store
 resource_windows_*.syso
 .devcontainer
+backend/rs/test/_data
+backend/rs/test/compare_rs_env.local.sh
+backend/rs/test/tests.config
