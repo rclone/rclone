@@ -655,6 +655,34 @@ func TestCacheCleaner(t *testing.T) {
 	assert.False(t, found)
 }
 
+func TestCacheKickCleaner(t *testing.T) {
+	// kickCleaner runs KickCleaner and reports whether it returned in time.
+	kickCleaner := func(t *testing.T, c *Cache) bool {
+		t.Helper()
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			c.KickCleaner()
+		}()
+		select {
+		case <-done:
+			return true
+		case <-time.After(2 * time.Second):
+			return false
+		}
+	}
+
+	// Only the cleaner clears the out of space condition, so with no cleaner
+	// running a KickCleaner which waited for it would never return.
+	t.Run("CleanerDisabled", func(t *testing.T) {
+		opt := vfscommon.Opt
+		opt.CachePollInterval = 0
+		_, c := newTestCacheOpt(t, opt)
+
+		assert.True(t, kickCleaner(t, c), "KickCleaner did not return with the cleaner disabled")
+	})
+}
+
 func TestCacheSetModTime(t *testing.T) {
 	_, c := newTestCache(t)
 
