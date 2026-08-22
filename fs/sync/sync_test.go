@@ -1851,6 +1851,34 @@ func TestMoveWithoutDeleteEmptySrcDirs(t *testing.T) {
 	r.CheckRemoteItems(t, file1, file2)
 }
 
+// TestMoveWithDeleteEmptySrcDirsAfterPriorError checks that --delete-empty-src-dirs
+// still removes the empty source directories when the stats group carries an error
+// from an earlier operation, as happens when a long-running rcd reuses a stats group.
+func TestMoveWithDeleteEmptySrcDirsAfterPriorError(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
+	file2 := r.WriteFile("nested/sub dir/file", "nested", t1)
+	r.Mkdir(ctx, r.Fremote)
+
+	// Leave an error in the stats group, as a prior operation on a reused rcd
+	// _group would, then run an otherwise clean move.
+	ctx = predictDstFromLogger(ctx)
+	accounting.GlobalStats().ResetCounters()
+	_ = fs.CountError(ctx, errors.New("boom"))
+	err := MoveDir(ctx, r.Fremote, r.Flocal, true, false)
+	require.NoError(t, err)
+	testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
+	accounting.GlobalStats().ResetCounters()
+
+	r.CheckLocalListing(
+		t,
+		nil,
+		[]string{},
+	)
+	r.CheckRemoteItems(t, file1, file2)
+}
+
 func TestMoveWithIgnoreExisting(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
