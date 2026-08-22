@@ -155,6 +155,7 @@ type UI struct {
 	sortByModTime      int8              // +1 for normal (newest first), 0 for off, -1 for reverse (oldest first)
 	dirPosMap          map[string]dirPos // store for directory positions
 	selectedEntries    map[string]dirPos // selected entries of current directory
+	noConfirmDelete    bool              // skip delete confirmation for the remainder of the session
 }
 
 // Where we have got to in the directory listing
@@ -572,12 +573,11 @@ func (u *UI) deleteSingle() {
 	cursorPos := u.dirPosMap[u.path]
 	dirPos := u.sortPerm[cursorPos.entry]
 	dirEntry := u.entries[dirPos]
-	u.boxMenu = []string{"cancel", "confirm"}
+
+	// doDelete performs the actual deletion without any confirmation prompt.
+	var doDelete func() (string, error)
 	if obj, isFile := dirEntry.(fs.Object); isFile {
-		u.boxMenuHandler = func(f fs.Fs, p string, o int) (string, error) {
-			if o != 1 {
-				return "Aborted!", nil
-			}
+		doDelete = func() (string, error) {
 			err := operations.DeleteFile(ctx, obj)
 			if err != nil {
 				return "", err
@@ -588,15 +588,9 @@ func (u *UI) deleteSingle() {
 			}
 			return "Successfully deleted file!", nil
 		}
-		u.popupBox([]string{
-			"Delete this file?",
-			fspath.JoinRootPath(u.fsName, dirEntry.String())})
 	} else {
-		u.boxMenuHandler = func(f fs.Fs, p string, o int) (string, error) {
-			if o != 1 {
-				return "Aborted!", nil
-			}
-			err := operations.Purge(ctx, f, dirEntry.String())
+		doDelete = func() (string, error) {
+			err := operations.Purge(ctx, u.f, dirEntry.String())
 			if err != nil {
 				return "", err
 			}
@@ -606,6 +600,32 @@ func (u *UI) deleteSingle() {
 			}
 			return "Successfully purged folder!", nil
 		}
+	}
+
+	// If the user has previously chosen "confirm all", skip the dialog.
+	if u.noConfirmDelete {
+		if _, err := doDelete(); err != nil {
+			u.popupBox([]string{"error:", err.Error()})
+		}
+		return
+	}
+
+	u.boxMenu = []string{"cancel", "confirm", "confirm all"}
+	u.boxMenuHandler = func(f fs.Fs, p string, o int) (string, error) {
+		if o == 0 {
+			return "Aborted!", nil
+		}
+		if o == 2 {
+			// "confirm all": skip confirmation for the rest of this session
+			u.noConfirmDelete = true
+		}
+		return doDelete()
+	}
+	if _, isFile := dirEntry.(fs.Object); isFile {
+		u.popupBox([]string{
+			"Delete this file?",
+			fspath.JoinRootPath(u.fsName, dirEntry.String())})
+	} else {
 		u.popupBox([]string{
 			"Purge this directory?",
 			"ALL files in it will be deleted",
@@ -616,13 +636,7 @@ func (u *UI) deleteSingle() {
 func (u *UI) deleteSelected() {
 	ctx := context.Background()
 
-	u.boxMenu = []string{"cancel", "confirm"}
-
-	u.boxMenuHandler = func(f fs.Fs, p string, o int) (string, error) {
-		if o != 1 {
-			return "Aborted!", nil
-		}
-
+	doDeleteSelected := func(f fs.Fs) (string, error) {
 		positionsToDelete := make([]int, len(u.selectedEntries))
 		i := 0
 
@@ -663,6 +677,27 @@ func (u *UI) deleteSelected() {
 		}
 
 		return "Successfully deleted all items!", nil
+	}
+
+	// If the user has previously chosen "confirm all", skip the dialog.
+	if u.noConfirmDelete {
+		if _, err := doDeleteSelected(u.f); err != nil {
+			u.popupBox([]string{"error:", err.Error()})
+		}
+		return
+	}
+
+	u.boxMenu = []string{"cancel", "confirm", "confirm all"}
+
+	u.boxMenuHandler = func(f fs.Fs, p string, o int) (string, error) {
+		if o == 0 {
+			return "Aborted!", nil
+		}
+		if o == 2 {
+			// "confirm all": skip confirmation for the rest of this session
+			u.noConfirmDelete = true
+		}
+		return doDeleteSelected(f)
 	}
 	u.popupBox([]string{
 		"Delete selected items?",
