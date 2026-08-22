@@ -1,0 +1,19 @@
+backend: Bunny
+name: Bunny
+tier: Tier 4
+maintainers: External
+features_score: 0
+integration_tests: Passing
+data_integrity: Other
+performance: High
+adoption: Some use
+docs: Full
+security: High
+virtual: false
+remote: 'TestBunny:'
+features:
+- BucketBased
+- BucketBasedRootOK
+hashes:
+- sha256
+precision: null
