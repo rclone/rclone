@@ -2365,21 +2365,20 @@ func (o *Object) decodeMetaDataFromDownloadResponse(info *blob.DownloadStreamRes
 	} else {
 		o.mimeType = *info.ContentType
 	}
-	o.size = size
-	if info.LastModified == nil {
-		o.modTime = time.Now()
-	} else {
-		o.modTime = *info.LastModified
-	}
-	// FIXME response doesn't appear to have AccessTier in?
-	// if info.AccessTier == nil {
-	// 	o.accessTier = blob.AccessTier("")
-	// } else {
-	// 	o.accessTier = blob.AccessTier(*info.AccessTier)
-	// }
-	o.setMetadata(metadata)
-
-	// If it was a Range request, the size is wrong, so correct it
+	// The download response's size depends on the kind of request:
+	//
+	//   - For a ranged request the ContentLength is the length of the
+	//     response body (i.e. the chunk size), not the size of the
+	//     object. The true object size is given in the Content-Range
+	//     header, so parse that when present.
+	//   - For a full download ContentLength is the object size.
+	//
+	// Never overwrite a known object size with the (smaller) response
+	// body length of a ranged request: the VFS cache compares the
+	// remote object size against the size of its local cache file, and
+	// with the object size incorrectly reported as one chunk long it
+	// would treat every read past the first chunk as a corrupt cache
+	// file and enter an unbounded recovery loop (see #9782).
 	if info.ContentRange != nil {
 		contentRange := *info.ContentRange
 		slash := strings.IndexRune(contentRange, '/')
@@ -2393,7 +2392,23 @@ func (o *Object) decodeMetaDataFromDownloadResponse(info *blob.DownloadStreamRes
 		} else {
 			fs.Debugf(o, "Failed to find length in %q", contentRange)
 		}
+	} else if o.size == 0 || size > o.size {
+		// Full download response, or object size not known yet:
+		// ContentLength is the object size. Never shrink a known size.
+		o.size = size
 	}
+	if info.LastModified == nil {
+		o.modTime = time.Now()
+	} else {
+		o.modTime = *info.LastModified
+	}
+	// FIXME response doesn't appear to have AccessTier in?
+	// if info.AccessTier == nil {
+	// 	o.accessTier = blob.AccessTier("")
+	// } else {
+	// 	o.accessTier = blob.AccessTier(*info.AccessTier)
+	// }
+	o.setMetadata(metadata)
 	o.contentEncoding = info.ContentEncoding
 
 	// If decompressing then size and md5sum are unknown

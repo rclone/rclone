@@ -632,3 +632,75 @@ func (f *Fs) testMetadataPaths(t *testing.T) {
 		assert.Contains(t, err.Error(), "invalid tag")
 	})
 }
+
+func TestDecodeMetaDataFromDownloadResponseRangeNoContentRange(t *testing.T) {
+	// Regression test for #9782:
+	// A ranged download response without a Content-Range header must not
+	// overwrite a known object size with the (smaller) Content-Length
+	// (the length of the range body).
+
+	originalSize := int64(169 * 1024 * 1024 * 1024) // 169 GiB — known from listing
+	chunkSize := int64(64 * 1024 * 1024)            // 64 MiB — a typical --vfs-read-chunk-size
+
+	o := &Object{
+		size:   originalSize,
+		remote: "test-blob.dat",
+		fs:     &Fs{},
+	}
+
+	// Simulate a ranged response for a 64 MiB chunk, no Content-Range header
+	info := &blob.DownloadStreamResponse{}
+	info.ContentLength = &chunkSize
+	info.Metadata = map[string]*string{}
+
+	err := o.decodeMetaDataFromDownloadResponse(info)
+	require.NoError(t, err)
+	assert.Equal(t, originalSize, o.size,
+		"object size should not be shrunk by a ranged response without Content-Range")
+}
+
+func TestDecodeMetaDataFromDownloadResponseRangeWithContentRange(t *testing.T) {
+	// A ranged download response WITH a Content-Range header should set the
+	// object size from the total-size part of the header.
+
+	originalSize := int64(169 * 1024 * 1024 * 1024) // 169 GiB
+	chunkSize := int64(64 * 1024 * 1024)            // 64 MiB
+	contentRange := "bytes 0-67108863/181289406464" // chunk/total = 169 GiB
+
+	o := &Object{
+		size:   originalSize,
+		remote: "test-blob.dat",
+		fs:     &Fs{},
+	}
+
+	info := &blob.DownloadStreamResponse{}
+	info.ContentLength = &chunkSize
+	info.ContentRange = &contentRange
+	info.Metadata = map[string]*string{}
+
+	err := o.decodeMetaDataFromDownloadResponse(info)
+	require.NoError(t, err)
+	assert.Equal(t, int64(181289406464), o.size,
+		"object size should be set from Content-Range header total")
+}
+
+func TestDecodeMetaDataFromDownloadResponseFullDownload(t *testing.T) {
+	// A full download response (no Content-Range, ContentLength matches the
+	// object size) should set the size normally.
+
+	originalSize := int64(1024 * 1024) // 1 MiB
+
+	o := &Object{
+		remote: "test-blob.dat",
+		fs:     &Fs{},
+	}
+
+	info := &blob.DownloadStreamResponse{}
+	info.ContentLength = &originalSize
+	info.Metadata = map[string]*string{}
+
+	err := o.decodeMetaDataFromDownloadResponse(info)
+	require.NoError(t, err)
+	assert.Equal(t, originalSize, o.size,
+		"object size should be set from ContentLength on full download")
+}
