@@ -36,6 +36,7 @@ var (
 // prepareServer prepares the test server and shuts it down automatically
 // when the test completes.
 func prepareServer(t *testing.T) configmap.Simple {
+	t.Helper()
 	// file server for test/files
 	fileServer := http.FileServer(http.Dir(filesPath))
 
@@ -98,6 +99,7 @@ func prepareServer(t *testing.T) configmap.Simple {
 // prepare prepares the test server and shuts it down automatically
 // when the test completes.
 func prepare(t *testing.T) fs.Fs {
+	t.Helper()
 	m := prepareServer(t)
 
 	// Instantiate it
@@ -107,7 +109,25 @@ func prepare(t *testing.T) fs.Fs {
 	return f
 }
 
+// assertSingleFileList asserts that f is pinned to a single file: List("")
+// returns exactly that file with the expected size, and List of any
+// non-empty directory returns fs.ErrorDirNotFound.
+func assertSingleFileList(t *testing.T, f fs.Fs, name string, size int64) {
+	t.Helper()
+	entries, err := f.List(context.Background(), "")
+	require.NoError(t, err)
+	require.Equal(t, 1, len(entries))
+	assert.Equal(t, name, entries[0].Remote())
+	assert.Equal(t, size, entries[0].Size())
+	_, ok := entries[0].(*Object)
+	assert.True(t, ok)
+
+	_, err = f.List(context.Background(), "anysub")
+	assert.Equal(t, fs.ErrorDirNotFound, err)
+}
+
 func testListRoot(t *testing.T, f fs.Fs, noSlash bool) {
+	t.Helper()
 	entries, err := f.List(context.Background(), "")
 	require.NoError(t, err)
 
@@ -331,19 +351,7 @@ func TestIsAFileRoot(t *testing.T) {
 	f, err := NewFs(context.Background(), remoteName, "one%.txt", m)
 	assert.Equal(t, err, fs.ErrorIsFile)
 
-	entries, err := f.List(context.Background(), "")
-	require.NoError(t, err)
-
-	require.Equal(t, 1, len(entries))
-
-	e := entries[0]
-	assert.Equal(t, "one%.txt", e.Remote())
-	assert.Equal(t, int64(5+lineEndSize), e.Size())
-	_, ok := e.(*Object)
-	assert.True(t, ok)
-
-	_, err = f.List(context.Background(), "anysub")
-	assert.Equal(t, fs.ErrorDirNotFound, err)
+	assertSingleFileList(t, f, "one%.txt", int64(5+lineEndSize))
 }
 
 func TestIsAFileSubDir(t *testing.T) {
@@ -352,18 +360,7 @@ func TestIsAFileSubDir(t *testing.T) {
 	f, err := NewFs(context.Background(), remoteName, "three/underthree.txt", m)
 	assert.Equal(t, err, fs.ErrorIsFile)
 
-	entries, err := f.List(context.Background(), "")
-	require.NoError(t, err)
-
-	sort.Sort(entries)
-
-	assert.Equal(t, 1, len(entries))
-
-	e := entries[0]
-	assert.Equal(t, "underthree.txt", e.Remote())
-	assert.Equal(t, int64(8+lineEndSize), e.Size())
-	_, ok := e.(*Object)
-	assert.True(t, ok)
+	assertSingleFileList(t, f, "underthree.txt", int64(8+lineEndSize))
 }
 
 func TestParseName(t *testing.T) {
