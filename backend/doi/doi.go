@@ -203,7 +203,7 @@ func resolveDoiURL(ctx context.Context, srv *rest.Client, pacer *fs.Pacer, opt *
 	return resolvedURL, nil
 }
 
-// Resolve the passed configuration into a provider and enpoint
+// Resolve the passed configuration into a provider and endpoint
 func resolveEndpoint(ctx context.Context, srv *rest.Client, pacer *fs.Pacer, opt *Options) (provider Provider, endpoint *url.URL, err error) {
 	resolvedURL, err := resolveDoiURL(ctx, srv, pacer, opt)
 	if err != nil {
@@ -428,7 +428,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		if !strings.HasPrefix(entry.remote, fullDir) {
 			continue
 		}
-		// Then, find entries in subfolers
+		// Then, find entries in subfolders
 		remotePath := entry.remote
 		if fullDir != "" {
 			remotePath = strings.TrimLeft(strings.TrimPrefix(remotePath, fullDir), "/")
