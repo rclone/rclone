@@ -78,14 +78,23 @@ func TestLsd(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
 	file1 := r.WriteObject(ctx, "sub dir/hello world", "hello world", t1)
+	file2 := r.WriteObject(ctx, "sub dir/sub sub dir/hello world", "hello world", t1)
 
-	r.CheckRemoteItems(t, file1)
+	r.CheckRemoteItems(t, file1, file2)
 
 	var buf bytes.Buffer
-	err := operations.ListDir(ctx, r.Fremote, &buf)
+	err := operations.ListDir(ctx, r.Fremote, &buf, false)
 	require.NoError(t, err)
 	res := buf.String()
 	assert.Contains(t, res, "sub dir\n")
+	assert.NotContains(t, res, "sub dir/sub sub dir\n")
+
+	buf.Reset()
+	err = operations.ListDir(ctx, r.Fremote, &buf, true)
+	require.NoError(t, err)
+	res = buf.String()
+	assert.Contains(t, res, "sub dir\n")
+	assert.Contains(t, res, "sub dir/sub sub dir\n")
 }
 
 func TestLs(t *testing.T) {

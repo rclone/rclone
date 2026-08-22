@@ -1043,10 +1043,11 @@ func ConfigMaxDepth(ctx context.Context, recursive bool) int {
 	return depth
 }
 
-// ListDir lists the directories/buckets/containers in the Fs to the supplied writer
-func ListDir(ctx context.Context, f fs.Fs, w io.Writer) error {
+// ListDir lists the directories/buckets/containers in the Fs to the supplied writer.
+// Recursive controls the default depth; an explicit --max-depth takes precedence.
+func ListDir(ctx context.Context, f fs.Fs, w io.Writer, recursive bool) error {
 	ci := fs.GetConfig(ctx)
-	return walk.ListR(ctx, f, "", false, ConfigMaxDepth(ctx, false), walk.ListDirs, func(entries fs.DirEntries) error {
+	return walk.ListR(ctx, f, "", false, ConfigMaxDepth(ctx, recursive), walk.ListDirs, func(entries fs.DirEntries) error {
 		entries.ForDir(func(dir fs.Directory) {
 			if dir != nil {
 				SyncFprintf(w, "%s %13s %s %s\n", SizeStringField(dir.Size(), ci.HumanReadable, 12), dir.ModTime(ctx).Local().Format("2006-01-02 15:04:05"), CountStringField(dir.Items(), ci.HumanReadable, 9), dir.Remote())
