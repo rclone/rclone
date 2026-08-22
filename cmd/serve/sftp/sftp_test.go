@@ -50,7 +50,12 @@ func TestSftp(t *testing.T) {
 		opt.User = testUser
 		opt.Pass = testPass
 
-		w, err := newServer(context.Background(), f, &opt, &vfscommon.Opt, &proxy.Opt)
+		// Multi-thread uploads write at arbitrary offsets, which serve sftp
+		// only accepts with the VFS cache on.
+		vfsOpt := vfscommon.Opt
+		vfsOpt.CacheMode = vfscommon.CacheModeWrites
+
+		w, err := newServer(context.Background(), f, &opt, &vfsOpt, &proxy.Opt)
 		require.NoError(t, err)
 		go func() {
 			require.NoError(t, w.Serve())

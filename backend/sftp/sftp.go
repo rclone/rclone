@@ -393,6 +393,26 @@ This option disables concurrent writes should that be necessary.
 `,
 			Advanced: true,
 		}, {
+			Name:    "disable_multithread_upload",
+			Default: false,
+			Help: `If set don't use multi-thread (multi-connection) uploads.
+
+Normally rclone uploads a single large file over several SFTP
+connections at once (one per chunk), which greatly improves throughput
+on high latency links, the same way multi-thread downloads already
+work. Each connection writes a different, non-overlapping byte range of
+the file, so this requires a server that allows several handles to the
+same file with writes at arbitrary offsets, which OpenSSH does.
+
+Set this if your SFTP server only accepts sequential writes (for
+example some object storage backed SFTP gateways), or if you see
+corrupted uploads or "invalid offset" style errors on large files.
+
+Multi-thread uploads are disabled automatically when
+--sftp-disable-concurrent-writes or --sftp-connections is in use.
+`,
+			Advanced: true,
+		}, {
 			Name:    "idle_timeout",
 			Default: fs.Duration(60 * time.Second),
 			Help: `Max time before closing idle connections.
@@ -614,53 +634,54 @@ This feature may be useful backups made with --copy-dest.`,
 
 // Options defines the configuration for this backend
 type Options struct {
-	Host                    string               `config:"host"`
-	User                    string               `config:"user"`
-	Port                    string               `config:"port"`
-	Pass                    string               `config:"pass"`
-	KeyPem                  string               `config:"key_pem"`
-	KeyFile                 string               `config:"key_file"`
-	KeyFilePass             string               `config:"key_file_pass"`
-	PubKey                  string               `config:"pubkey"`
-	PubKeyFile              string               `config:"pubkey_file"`
-	KnownHostsFile          string               `config:"known_hosts_file"`
-	PinHostKey              bool                 `config:"pin_host_key"`
-	HostKeys                fs.CommaSepList      `config:"host_keys"`
-	KeyUseAgent             bool                 `config:"key_use_agent"`
-	UseInsecureCipher       bool                 `config:"use_insecure_cipher"`
-	DisableHashCheck        bool                 `config:"disable_hashcheck"`
-	AskPassword             bool                 `config:"ask_password"`
-	PathOverride            string               `config:"path_override"`
-	Enc                     encoder.MultiEncoder `config:"encoding"`
-	SetModTime              bool                 `config:"set_modtime"`
-	ShellType               string               `config:"shell_type"`
-	Hashes                  fs.CommaSepList      `config:"hashes"`
-	Md5sumCommand           string               `config:"md5sum_command"`
-	Sha1sumCommand          string               `config:"sha1sum_command"`
-	Crc32sumCommand         string               `config:"crc32sum_command"`
-	Sha256sumCommand        string               `config:"sha256sum_command"`
-	Blake3sumCommand        string               `config:"blake3sum_command"`
-	Xxh3sumCommand          string               `config:"xxh3sum_command"`
-	Xxh128sumCommand        string               `config:"xxh128sum_command"`
-	SkipLinks               bool                 `config:"skip_links"`
-	Subsystem               string               `config:"subsystem"`
-	ServerCommand           string               `config:"server_command"`
-	UseFstat                bool                 `config:"use_fstat"`
-	DisableConcurrentReads  bool                 `config:"disable_concurrent_reads"`
-	DisableConcurrentWrites bool                 `config:"disable_concurrent_writes"`
-	IdleTimeout             fs.Duration          `config:"idle_timeout"`
-	ChunkSize               fs.SizeSuffix        `config:"chunk_size"`
-	Concurrency             int                  `config:"concurrency"`
-	Connections             int                  `config:"connections"`
-	SetEnv                  fs.SpaceSepList      `config:"set_env"`
-	Ciphers                 fs.SpaceSepList      `config:"ciphers"`
-	KeyExchange             fs.SpaceSepList      `config:"key_exchange"`
-	MACs                    fs.SpaceSepList      `config:"macs"`
-	HostKeyAlgorithms       fs.SpaceSepList      `config:"host_key_algorithms"`
-	SSH                     fs.SpaceSepList      `config:"ssh"`
-	SocksProxy              string               `config:"socks_proxy"`
-	HTTPProxy               string               `config:"http_proxy"`
-	CopyIsHardlink          bool                 `config:"copy_is_hardlink"`
+	Host                     string               `config:"host"`
+	User                     string               `config:"user"`
+	Port                     string               `config:"port"`
+	Pass                     string               `config:"pass"`
+	KeyPem                   string               `config:"key_pem"`
+	KeyFile                  string               `config:"key_file"`
+	KeyFilePass              string               `config:"key_file_pass"`
+	PubKey                   string               `config:"pubkey"`
+	PubKeyFile               string               `config:"pubkey_file"`
+	KnownHostsFile           string               `config:"known_hosts_file"`
+	PinHostKey               bool                 `config:"pin_host_key"`
+	HostKeys                 fs.CommaSepList      `config:"host_keys"`
+	KeyUseAgent              bool                 `config:"key_use_agent"`
+	UseInsecureCipher        bool                 `config:"use_insecure_cipher"`
+	DisableHashCheck         bool                 `config:"disable_hashcheck"`
+	AskPassword              bool                 `config:"ask_password"`
+	PathOverride             string               `config:"path_override"`
+	Enc                      encoder.MultiEncoder `config:"encoding"`
+	SetModTime               bool                 `config:"set_modtime"`
+	ShellType                string               `config:"shell_type"`
+	Hashes                   fs.CommaSepList      `config:"hashes"`
+	Md5sumCommand            string               `config:"md5sum_command"`
+	Sha1sumCommand           string               `config:"sha1sum_command"`
+	Crc32sumCommand          string               `config:"crc32sum_command"`
+	Sha256sumCommand         string               `config:"sha256sum_command"`
+	Blake3sumCommand         string               `config:"blake3sum_command"`
+	Xxh3sumCommand           string               `config:"xxh3sum_command"`
+	Xxh128sumCommand         string               `config:"xxh128sum_command"`
+	SkipLinks                bool                 `config:"skip_links"`
+	Subsystem                string               `config:"subsystem"`
+	ServerCommand            string               `config:"server_command"`
+	UseFstat                 bool                 `config:"use_fstat"`
+	DisableConcurrentReads   bool                 `config:"disable_concurrent_reads"`
+	DisableConcurrentWrites  bool                 `config:"disable_concurrent_writes"`
+	DisableMultithreadUpload bool                 `config:"disable_multithread_upload"`
+	IdleTimeout              fs.Duration          `config:"idle_timeout"`
+	ChunkSize                fs.SizeSuffix        `config:"chunk_size"`
+	Concurrency              int                  `config:"concurrency"`
+	Connections              int                  `config:"connections"`
+	SetEnv                   fs.SpaceSepList      `config:"set_env"`
+	Ciphers                  fs.SpaceSepList      `config:"ciphers"`
+	KeyExchange              fs.SpaceSepList      `config:"key_exchange"`
+	MACs                     fs.SpaceSepList      `config:"macs"`
+	HostKeyAlgorithms        fs.SpaceSepList      `config:"host_key_algorithms"`
+	SSH                      fs.SpaceSepList      `config:"ssh"`
+	SocksProxy               string               `config:"socks_proxy"`
+	HTTPProxy                string               `config:"http_proxy"`
+	CopyIsHardlink           bool                 `config:"copy_is_hardlink"`
 }
 
 // Fs stores the interface to the remote SFTP files
@@ -1593,6 +1614,21 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 	if !opt.CopyIsHardlink {
 		// Disable server side copy unless --sftp-copy-is-hardlink is set
 		f.features.Copy = nil
+	}
+	// Multi-thread uploads open one write handle per connection. Fall back to
+	// single-connection uploads when the user asked for it, when concurrent
+	// writes are disabled (a server that can't take out-of-order packets on one
+	// handle won't take several handles writing at arbitrary offsets either), or
+	// when connections are capped (the per-file fan-out would deadlock waiting on
+	// the pool, and a user limiting connections doesn't want it anyway).
+	switch {
+	case opt.DisableMultithreadUpload:
+		f.features.OpenWriterAt = nil
+	case opt.DisableConcurrentWrites:
+		f.features.OpenWriterAt = nil
+	case opt.Connections > 0:
+		fs.Logf(f, "Disabling multi-thread uploads because --sftp-connections is set")
+		f.features.OpenWriterAt = nil
 	}
 	// Make a connection and pool it to return errors early
 	c, err := f.getSftpConnection(ctx)
@@ -2845,6 +2881,7 @@ var (
 	_ fs.PutStreamer    = &Fs{}
 	_ fs.Mover          = &Fs{}
 	_ fs.Copier         = &Fs{}
+	_ fs.OpenWriterAter = &Fs{}
 	_ fs.DirMover       = &Fs{}
 	_ fs.DirSetModTimer = &Fs{}
 	_ fs.Abouter        = &Fs{}
