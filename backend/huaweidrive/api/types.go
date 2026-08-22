@@ -37,44 +37,44 @@ type FileList struct {
 
 // File represents a file or folder in Huawei Drive
 type File struct {
-	ID                        string                 `json:"id"`
-	FileName                  string                 `json:"fileName"`
-	OriginalFilename          string                 `json:"originalFilename,omitempty"`
-	Description               string                 `json:"description,omitempty"`
-	MimeType                  string                 `json:"mimeType"`
-	Category                  string                 `json:"category"`
-	Size                      int64                  `json:"size,omitempty"`
-	SHA256                    string                 `json:"sha256,omitempty"`
-	CreatedTime               time.Time              `json:"createdTime"`
-	EditedTime                time.Time              `json:"editedTime"`
-	EditedByMeTime            time.Time              `json:"editedByMeTime,omitempty"`
-	ParentFolder              []string               `json:"parentFolder,omitempty"`
-	Owners                    []User                 `json:"owners"`
-	LastEditor                User                   `json:"lastEditor"`
-	Permissions               []Permission           `json:"permissions"`
-	PermissionIDs             []string               `json:"permissionIds"`
-	Capabilities              FileCapabilities       `json:"capabilities"`
-	OwnedByMe                 bool                   `json:"ownedByMe"`
-	EditedByMe                bool                   `json:"editedByMe"`
-	ViewedByMe                bool                   `json:"viewedByMe"`
-	HasShared                 bool                   `json:"hasShared"`
-	Recycled                  bool                   `json:"recycled"`
-	DirectlyRecycled          bool                   `json:"directlyRecycled"`
-	Favorite                  bool                   `json:"favorite"`
-	ExistThumbnail            bool                   `json:"existThumbnail"`
-	ThumbnailVersion          int64                  `json:"thumbnailVersion"`
-	IconDownloadLink          string                 `json:"iconDownloadLink,omitempty"`
-	ContentDownloadLink       string                 `json:"contentDownloadLink,omitempty"`
-	ContentVersion            string                 `json:"contentVersion,omitempty"`
-	LastHistoryVersionID      string                 `json:"lastHistoryVersionId,omitempty"`
-	OccupiedSpace             int64                  `json:"occupiedSpace,omitempty"`
-	Version                   int64                  `json:"version"`
-	WritersHasSharePermission bool                   `json:"writersHasSharePermission"`
-	WriterHasCopyPermission   bool                   `json:"writerHasCopyPermission"`
-	Containers                []string               `json:"containers"`
-	Properties                map[string]interface{} `json:"properties,omitempty"`
-	AppSettings               map[string]interface{} `json:"appSettings,omitempty"`
-	ContentExtras             *ContentExtras         `json:"contentExtras,omitempty"`
+	ID                        string           `json:"id"`
+	FileName                  string           `json:"fileName"`
+	OriginalFilename          string           `json:"originalFilename,omitempty"`
+	Description               string           `json:"description,omitempty"`
+	MimeType                  string           `json:"mimeType"`
+	Category                  string           `json:"category"`
+	Size                      int64            `json:"size,omitempty"`
+	SHA256                    string           `json:"sha256,omitempty"`
+	CreatedTime               time.Time        `json:"createdTime"`
+	EditedTime                time.Time        `json:"editedTime"`
+	EditedByMeTime            time.Time        `json:"editedByMeTime"`
+	ParentFolder              []string         `json:"parentFolder,omitempty"`
+	Owners                    []User           `json:"owners"`
+	LastEditor                User             `json:"lastEditor"`
+	Permissions               []Permission     `json:"permissions"`
+	PermissionIDs             []string         `json:"permissionIds"`
+	Capabilities              FileCapabilities `json:"capabilities"`
+	OwnedByMe                 bool             `json:"ownedByMe"`
+	EditedByMe                bool             `json:"editedByMe"`
+	ViewedByMe                bool             `json:"viewedByMe"`
+	HasShared                 bool             `json:"hasShared"`
+	Recycled                  bool             `json:"recycled"`
+	DirectlyRecycled          bool             `json:"directlyRecycled"`
+	Favorite                  bool             `json:"favorite"`
+	ExistThumbnail            bool             `json:"existThumbnail"`
+	ThumbnailVersion          int64            `json:"thumbnailVersion"`
+	IconDownloadLink          string           `json:"iconDownloadLink,omitempty"`
+	ContentDownloadLink       string           `json:"contentDownloadLink,omitempty"`
+	ContentVersion            string           `json:"contentVersion,omitempty"`
+	LastHistoryVersionID      string           `json:"lastHistoryVersionId,omitempty"`
+	OccupiedSpace             int64            `json:"occupiedSpace,omitempty"`
+	Version                   int64            `json:"version"`
+	WritersHasSharePermission bool             `json:"writersHasSharePermission"`
+	WriterHasCopyPermission   bool             `json:"writerHasCopyPermission"`
+	Containers                []string         `json:"containers"`
+	Properties                map[string]any   `json:"properties,omitempty"`
+	AppSettings               map[string]any   `json:"appSettings,omitempty"`
+	ContentExtras             *ContentExtras   `json:"contentExtras,omitempty"`
 }
 
 // IsDir returns true if the file is a directory
@@ -125,41 +125,41 @@ type Thumbnail struct {
 
 // CreateFolderRequest represents request to create a folder
 type CreateFolderRequest struct {
-	FileName     string                 `json:"fileName"`
-	Description  string                 `json:"description,omitempty"`
-	MimeType     string                 `json:"mimeType"`
-	ParentFolder []string               `json:"parentFolder,omitempty"`
-	Favorite     bool                   `json:"favorite,omitempty"`
-	Properties   map[string]interface{} `json:"properties,omitempty"`
-	AppSettings  map[string]interface{} `json:"appSettings,omitempty"`
-	AutoRename   int                    `json:"autoRename,omitempty"`
+	FileName     string         `json:"fileName"`
+	Description  string         `json:"description,omitempty"`
+	MimeType     string         `json:"mimeType"`
+	ParentFolder []string       `json:"parentFolder,omitempty"`
+	Favorite     bool           `json:"favorite,omitempty"`
+	Properties   map[string]any `json:"properties,omitempty"`
+	AppSettings  map[string]any `json:"appSettings,omitempty"`
+	AutoRename   int            `json:"autoRename,omitempty"`
 }
 
 // UpdateFileRequest represents request to update a file
 type UpdateFileRequest struct {
-	FileName                  string                 `json:"fileName,omitempty"`
-	Description               string                 `json:"description,omitempty"`
-	MimeType                  string                 `json:"mimeType,omitempty"`
-	Favorite                  *bool                  `json:"favorite,omitempty"`
-	Recycled                  *bool                  `json:"recycled,omitempty"`
-	OriginalFilename          string                 `json:"originalFilename,omitempty"`
-	WriterHasCopyPermission   *bool                  `json:"writerHasCopyPermission,omitempty"`
-	WritersHasSharePermission *bool                  `json:"writersHasSharePermission,omitempty"`
-	Properties                map[string]interface{} `json:"properties,omitempty"`
-	AppSettings               map[string]interface{} `json:"appSettings,omitempty"`
-	AddParentFolder           []string               `json:"addParentFolder,omitempty"`
-	RemoveParentFolder        []string               `json:"removeParentFolder,omitempty"`
-	CreatedTime               *time.Time             `json:"createdTime,omitempty"`
-	EditedTime                *time.Time             `json:"editedTime,omitempty"`
+	FileName                  string         `json:"fileName,omitempty"`
+	Description               string         `json:"description,omitempty"`
+	MimeType                  string         `json:"mimeType,omitempty"`
+	Favorite                  *bool          `json:"favorite,omitempty"`
+	Recycled                  *bool          `json:"recycled,omitempty"`
+	OriginalFilename          string         `json:"originalFilename,omitempty"`
+	WriterHasCopyPermission   *bool          `json:"writerHasCopyPermission,omitempty"`
+	WritersHasSharePermission *bool          `json:"writersHasSharePermission,omitempty"`
+	Properties                map[string]any `json:"properties,omitempty"`
+	AppSettings               map[string]any `json:"appSettings,omitempty"`
+	AddParentFolder           []string       `json:"addParentFolder,omitempty"`
+	RemoveParentFolder        []string       `json:"removeParentFolder,omitempty"`
+	CreatedTime               *time.Time     `json:"createdTime,omitempty"`
+	EditedTime                *time.Time     `json:"editedTime,omitempty"`
 }
 
 // CopyFileRequest represents request to copy a file
 type CopyFileRequest struct {
-	FileName     string                 `json:"fileName,omitempty"`
-	MimeType     string                 `json:"mimeType,omitempty"`
-	ParentFolder []string               `json:"parentFolder,omitempty"`
-	Properties   map[string]interface{} `json:"properties,omitempty"`
-	AppSettings  map[string]interface{} `json:"appSettings,omitempty"`
+	FileName     string         `json:"fileName,omitempty"`
+	MimeType     string         `json:"mimeType,omitempty"`
+	ParentFolder []string       `json:"parentFolder,omitempty"`
+	Properties   map[string]any `json:"properties,omitempty"`
+	AppSettings  map[string]any `json:"appSettings,omitempty"`
 }
 
 // ResumeUploadInitResponse represents response to resume upload init
@@ -222,11 +222,6 @@ var DomainToRootURL = map[string]string{
 var GlobalDomains = map[string]bool{
 	"driveapis.cloud.huawei.com.cn": true,
 	"drive.cloud.hicloud.com":       true,
-}
-
-// BoolPtr returns a pointer to a bool value (helper for UpdateFileRequest)
-func BoolPtr(b bool) *bool {
-	return &b
 }
 
 // StartCursor represents response to Changes.getStartCursor endpoint

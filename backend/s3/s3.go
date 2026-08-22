@@ -1279,8 +1279,7 @@ func (f *Fs) shouldRetry(ctx context.Context, err error) (bool, error) {
 	}
 	// https://github.com/aws/aws-sdk-go-v2/blob/main/CHANGELOG.md#error-handling
 	// If this is an awserr object, try and extract more useful information to determine if we should retry
-	var awsError smithy.APIError
-	if errors.As(err, &awsError) {
+	if awsError, ok := errors.AsType[smithy.APIError](err); ok {
 		// Simple case, check the original embedded error in case it's generically retryable
 		if fserrors.ShouldRetry(awsError) {
 			return true, err
@@ -2507,8 +2506,7 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 			listBucket.URLEncodeListings(urlEncodeListings)
 			resp, versionIDs, err = listBucket.List(ctx)
 			if err != nil && !urlEncodeListings {
-				var xmlErr *xml.SyntaxError
-				if errors.As(err, &xmlErr) {
+				if _, ok := errors.AsType[*xml.SyntaxError](err); ok {
 					// Retry the listing with URL encoding as there were characters that XML can't encode
 					urlEncodeListings = true
 					fs.Debugf(f, "Retrying listing because of characters which can't be XML encoded")
@@ -2945,8 +2943,7 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 		if err == nil {
 			fs.Infof(f, "Bucket %q created with ACL %q", bucket, f.opt.BucketACL)
 		}
-		var awsErr smithy.APIError
-		if errors.As(err, &awsErr) {
+		if awsErr, ok := errors.AsType[smithy.APIError](err); ok {
 			switch awsErr.ErrorCode() {
 			case "BucketAlreadyOwnedByYou":
 				err = nil
@@ -4415,8 +4412,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		resp, err = o.fs.c.GetObject(ctx, &req, s3.WithAPIOptions(APIOptions...))
 		return o.fs.shouldRetry(ctx, err)
 	})
-	var awsError smithy.APIError
-	if errors.As(err, &awsError) {
+	if awsError, ok := errors.AsType[smithy.APIError](err); ok {
 		if awsError.ErrorCode() == "InvalidObjectState" {
 			return nil, fmt.Errorf("Object in GLACIER, restore first: bucket=%q, key=%q", bucket, bucketPath)
 		}

@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"os"
 	"path"
@@ -1617,9 +1618,7 @@ func (ps *PhotosService) GetLibraryAlbumCounts(ctx context.Context) (map[string]
 		if err := ps.requestForArea(ctx, area, "internal/records/query/batch", map[string]any{"batch": batch}, &response); err != nil {
 			return nil, fmt.Errorf("failed to get library album counts: %w", err)
 		}
-		for k, v := range response.toCounts(order) {
-			counts[k] = v
-		}
+		maps.Copy(counts, response.toCounts(order))
 	}
 	return counts, nil
 }
@@ -2032,7 +2031,7 @@ func (album *Album) fetchPhotosParallel(ctx context.Context, totalPhotos int64) 
 	sem := make(chan struct{}, workers)
 	var wg sync.WaitGroup
 
-	for i := 0; i < numPartitions; i++ {
+	for i := range numPartitions {
 		wg.Add(1)
 		go func(idx int) {
 			defer wg.Done()

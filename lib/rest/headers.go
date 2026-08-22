@@ -126,10 +126,7 @@ func CheckContentRange(resp *http.Response, options []fs.OpenOption, size int64)
 			expectedEnd = rangeSize - 1
 		}
 	} else if rangeSize >= 0 {
-		expectedStart = rangeSize - requested.End
-		if expectedStart < 0 {
-			expectedStart = 0
-		}
+		expectedStart = max(rangeSize-requested.End, 0)
 		expectedEnd = rangeSize - 1
 	}
 

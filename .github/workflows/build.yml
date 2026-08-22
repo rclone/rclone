@@ -32,12 +32,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        job_name: ['linux', 'linux_386', 'mac_amd64', 'mac_arm64', 'windows', 'other_os', 'go1.25']
+        job_name: ['linux', 'linux_386', 'mac_amd64', 'mac_arm64', 'windows', 'other_os', 'go1.26']
 
         include:
           - job_name: linux
             os: ubuntu-latest
-            go: '~1.26.6'
+            go: '~1.27.0'
             gotags: cmount
             build_flags: '-include "^linux/"'
             check: true
@@ -48,14 +48,14 @@ jobs:
 
           - job_name: linux_386
             os: ubuntu-latest
-            go: '~1.26.6'
+            go: '~1.27.0'
             goarch: 386
             gotags: cmount
             quicktest: true
 
           - job_name: mac_amd64
             os: macos-latest
-            go: '~1.26.6'
+            go: '~1.27.0'
             gotags: 'cmount'
             build_flags: '-include "^darwin/amd64" -cgo'
             quicktest: true
@@ -64,14 +64,14 @@ jobs:
 
           - job_name: mac_arm64
             os: macos-latest
-            go: '~1.26.6'
+            go: '~1.27.0'
             gotags: 'cmount'
             build_flags: '-include "^darwin/arm64" -cgo -macos-arch arm64 -cgo-cflags=-I/usr/local/include -cgo-ldflags=-L/usr/local/lib'
             deploy: true
 
           - job_name: windows
             os: windows-latest
-            go: '~1.26.6'
+            go: '~1.27.0'
             gotags: cmount
             cgo: '0'
             build_flags: '-include "^windows/"'
@@ -81,14 +81,14 @@ jobs:
 
           - job_name: other_os
             os: ubuntu-latest
-            go: '~1.26.6'
+            go: '~1.27.0'
             build_flags: '-exclude "^(windows/|darwin/|linux/)"'
             compile_all: true
             deploy: true
 
-          - job_name: go1.25
+          - job_name: go1.26
             os: ubuntu-latest
-            go: '~1.25.13'
+            go: '~1.26.6'
             quicktest: true
             racequicktest: true
 
@@ -179,6 +179,7 @@ jobs:
           unset HOMEBREW_NO_INSTALL_FROM_API
           brew untap --force homebrew/core
           brew untap --force homebrew/cask
+          brew untap --force aws/tap
           brew update
           brew install --cask macfuse
           brew install git-annex git-annex-remote-rclone
@@ -283,7 +284,7 @@ jobs:
         id: setup-go
         uses: actions/setup-go@v7
         with:
-          go-version: '~1.26.6'
+          go-version: '~1.27.0'
           check-latest: true
           cache: false
           
@@ -398,7 +399,7 @@ jobs:
         id: setup-go
         uses: actions/setup-go@v7
         with:
-          go-version: '~1.26.6'
+          go-version: '~1.27.0'
           # Caching is handled explicitly below to share the module cache
           # with the other jobs - see the build job for the rationale.
           cache: false

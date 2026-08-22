@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/oracle/oci-go-sdk/v65/objectstorage"
 	"github.com/rclone/rclone/fs"
 )
@@ -61,16 +60,16 @@ func (f *Fs) copy(ctx context.Context, dstObj *Object, srcObj *Object) (err erro
 		}
 	}
 	copyObjectDetails := objectstorage.CopyObjectDetails{
-		SourceObjectName:          common.String(srcPath),
-		DestinationRegion:         common.String(dstObj.fs.opt.Region),
-		DestinationNamespace:      common.String(dstObj.fs.opt.Namespace),
-		DestinationBucket:         common.String(dstBucket),
-		DestinationObjectName:     common.String(dstPath),
+		SourceObjectName:          new(srcPath),
+		DestinationRegion:         new(dstObj.fs.opt.Region),
+		DestinationNamespace:      new(dstObj.fs.opt.Namespace),
+		DestinationBucket:         new(dstBucket),
+		DestinationObjectName:     new(dstPath),
 		DestinationObjectMetadata: metadataWithOpcPrefix(srcObj.meta),
 	}
 	req := objectstorage.CopyObjectRequest{
-		NamespaceName:     common.String(srcObj.fs.opt.Namespace),
-		BucketName:        common.String(srcBucket),
+		NamespaceName:     new(srcObj.fs.opt.Namespace),
+		BucketName:        new(srcBucket),
 		CopyObjectDetails: copyObjectDetails,
 	}
 	useBYOKCopyObject(f, &req)

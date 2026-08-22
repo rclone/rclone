@@ -496,10 +496,9 @@ func (f *Fs) InternalTestVersions(t *testing.T) {
 			return f.shouldRetry(ctx, err)
 		})
 		var errString string
-		var awsError smithy.APIError
 		if err == nil {
 			errString = "No Error"
-		} else if errors.As(err, &awsError) {
+		} else if awsError, ok := errors.AsType[smithy.APIError](err); ok {
 			errString = awsError.ErrorCode()
 		} else {
 			assert.Fail(t, "Unknown error %T %v", err, err)

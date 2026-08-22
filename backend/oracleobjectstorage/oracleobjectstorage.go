@@ -329,14 +329,14 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 		chunkSize = limit
 	}
 	var request = objectstorage.ListObjectsRequest{
-		NamespaceName: common.String(f.opt.Namespace),
-		BucketName:    common.String(bucket),
-		Prefix:        common.String(directory),
-		Limit:         common.Int(chunkSize),
-		Fields:        common.String("name,size,etag,timeCreated,md5,timeModified,storageTier,archivalState"),
+		NamespaceName: new(f.opt.Namespace),
+		BucketName:    new(bucket),
+		Prefix:        new(directory),
+		Limit:         new(chunkSize),
+		Fields:        new("name,size,etag,timeCreated,md5,timeModified,storageTier,archivalState"),
 	}
 	if delimiter != "" {
-		request.Delimiter = common.String(delimiter)
+		request.Delimiter = new(delimiter)
 	}
 
 	for {
@@ -471,8 +471,8 @@ func (f *Fs) listBuckets(ctx context.Context) (entries fs.DirEntries, err error)
 		return nil, fmt.Errorf("can't list buckets with %v provider, use a valid auth provider in config file", noAuth)
 	}
 	var request = objectstorage.ListBucketsRequest{
-		NamespaceName: common.String(f.opt.Namespace),
-		CompartmentId: common.String(f.opt.Compartment),
+		NamespaceName: new(f.opt.Namespace),
+		CompartmentId: new(f.opt.Compartment),
 	}
 	var resp objectstorage.ListBucketsResponse
 	for {
@@ -569,12 +569,12 @@ func (f *Fs) makeBucket(ctx context.Context, bucketName string) error {
 	}
 	return f.cache.Create(bucketName, func() error {
 		details := objectstorage.CreateBucketDetails{
-			Name:             common.String(bucketName),
-			CompartmentId:    common.String(f.opt.Compartment),
+			Name:             new(bucketName),
+			CompartmentId:    new(f.opt.Compartment),
 			PublicAccessType: objectstorage.CreateBucketDetailsPublicAccessTypeNopublicaccess,
 		}
 		req := objectstorage.CreateBucketRequest{
-			NamespaceName:       common.String(f.opt.Namespace),
+			NamespaceName:       new(f.opt.Namespace),
 			CreateBucketDetails: details,
 		}
 		err := f.pacer.Call(func() (bool, error) {
@@ -601,8 +601,8 @@ func (f *Fs) makeBucket(ctx context.Context, bucketName string) error {
 // NB this can return incorrect results if called immediately after bucket deletion
 func (f *Fs) bucketExists(ctx context.Context, bucketName string) (bool, error) {
 	req := objectstorage.HeadBucketRequest{
-		NamespaceName: common.String(f.opt.Namespace),
-		BucketName:    common.String(bucketName),
+		NamespaceName: new(f.opt.Namespace),
+		BucketName:    new(bucketName),
 	}
 	err := f.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.HeadBucket(ctx, req)
@@ -627,8 +627,8 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	}
 	return f.cache.Remove(bucketName, func() error {
 		req := objectstorage.DeleteBucketRequest{
-			NamespaceName: common.String(f.opt.Namespace),
-			BucketName:    common.String(bucketName),
+			NamespaceName: new(f.opt.Namespace),
+			BucketName:    new(bucketName),
 		}
 		err := f.pacer.Call(func() (bool, error) {
 			resp, err := f.srv.DeleteBucket(ctx, req)
@@ -646,7 +646,7 @@ func (f *Fs) abortMultiPartUpload(ctx context.Context, bucketName, bucketPath, u
 		return nil
 	}
 	request := objectstorage.AbortMultipartUploadRequest{
-		NamespaceName: common.String(f.opt.Namespace),
+		NamespaceName: new(f.opt.Namespace),
 		BucketName:    bucketName,
 		ObjectName:    bucketPath,
 		UploadId:      uploadID,

@@ -28,7 +28,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/bloberror"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blockblob"
@@ -576,8 +575,7 @@ func (f *Fs) shouldRetry(ctx context.Context, err error) (bool, error) {
 	if fserrors.ContextError(ctx, &err) {
 		return false, err
 	}
-	var storageErr *azcore.ResponseError
-	if errors.As(err, &storageErr) {
+	if storageErr, ok := errors.AsType[*azcore.ResponseError](err); ok {
 		// General errors from:
 		// https://learn.microsoft.com/en-us/rest/api/storageservices/common-rest-api-error-codes
 		// Blob specific errors from:
@@ -906,15 +904,15 @@ func mapMetadataToAzure(meta map[string]string, logf func(string, ...any)) (head
 		lowerKey := strings.ToLower(k)
 		switch lowerKey {
 		case "cache-control":
-			headers.BlobCacheControl = pString(v)
+			headers.BlobCacheControl = new(v)
 		case "content-disposition":
-			headers.BlobContentDisposition = pString(v)
+			headers.BlobContentDisposition = new(v)
 		case "content-encoding":
-			headers.BlobContentEncoding = pString(v)
+			headers.BlobContentEncoding = new(v)
 		case "content-language":
-			headers.BlobContentLanguage = pString(v)
+			headers.BlobContentLanguage = new(v)
 		case "content-type":
-			headers.BlobContentType = pString(v)
+			headers.BlobContentType = new(v)
 		case "x-ms-tags":
 			parsed, perr := parseXMsTags(v)
 			if perr != nil {
@@ -1208,7 +1206,7 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 	// maxResults==1 probe (isEmpty) which doesn't benefit.
 	useArrow := f.opt.UseArrowList && maxResults != 1
 	if useArrow {
-		opts.UseArrowFormat = to.Ptr(true)
+		opts.UseArrowFormat = new(true)
 	}
 
 	var foundItems int
@@ -2637,11 +2635,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	return downloadResponse.Body, nil
 }
 
-// Converts a string into a pointer to a string
-func pString(s string) *string {
-	return &s
-}
-
 // readSeekCloser joins an io.Reader and an io.Seeker and provides a no-op io.Closer
 type readSeekCloser struct {
 	io.Reader
@@ -2796,8 +2789,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 // isInvalidBlockOrBlob looks for the InvalidBlockOrBlob error in err
 // returning true if it is found
 func isInvalidBlockOrBlob(err error) bool {
-	var storageErr *azcore.ResponseError
-	if errors.As(err, &storageErr) {
+	if storageErr, ok := errors.AsType[*azcore.ResponseError](err); ok {
 		return storageErr.ErrorCode == string(bloberror.InvalidBlobOrBlock)
 	}
 	return false
@@ -3169,7 +3161,7 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 
 	// Start with default content-type based on source
 	ui.httpHeaders = blob.HTTPHeaders{
-		BlobContentType: pString(fs.MimeType(ctx, src)),
+		BlobContentType: new(fs.MimeType(ctx, src)),
 	}
 
 	// Apply mapped metadata/headers/tags if requested
@@ -3215,15 +3207,15 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 				o.tags[parts[0]] = parts[1]
 			}
 		case "cache-control":
-			ui.httpHeaders.BlobCacheControl = pString(value)
+			ui.httpHeaders.BlobCacheControl = new(value)
 		case "content-disposition":
-			ui.httpHeaders.BlobContentDisposition = pString(value)
+			ui.httpHeaders.BlobContentDisposition = new(value)
 		case "content-encoding":
-			ui.httpHeaders.BlobContentEncoding = pString(value)
+			ui.httpHeaders.BlobContentEncoding = new(value)
 		case "content-language":
-			ui.httpHeaders.BlobContentLanguage = pString(value)
+			ui.httpHeaders.BlobContentLanguage = new(value)
 		case "content-type":
-			ui.httpHeaders.BlobContentType = pString(value)
+			ui.httpHeaders.BlobContentType = new(value)
 		}
 	}
 
