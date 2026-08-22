@@ -393,7 +393,8 @@ func (f *Fs) url(remote string) string {
 		return f.endpointURL + trimmedRemote
 	}
 	// Default behavior
-	return f.endpointURL + rest.URLPathEscape(trimmedRemote)
+	escaped := rest.URLPathEscape(trimmedRemote)
+	return f.endpointURL + strings.TrimPrefix(escaped, "./")
 }
 
 // Errors returned by parseName
