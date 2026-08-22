@@ -189,11 +189,13 @@ func TestProtonParseForkKeyPasswordErrors(t *testing.T) {
 	}
 }
 
-func TestNormalizeSaltedKeyPass(t *testing.T) {
-	base64Value := base64.StdEncoding.EncodeToString([]byte("already encoded"))
-
-	assert.Equal(t, base64Value, normalizeSaltedKeyPass(base64Value))
-	assert.Equal(t, base64.StdEncoding.EncodeToString([]byte("raw key password")), normalizeSaltedKeyPass("raw key password"))
+func TestEncodeSaltedKeyPass(t *testing.T) {
+	for _, keyPassword := range []string{
+		"raw key password",
+		"YWxyZWFkeSBiYXNlNjQ=",
+	} {
+		assert.Equal(t, base64.StdEncoding.EncodeToString([]byte(keyPassword)), encodeSaltedKeyPass(keyPassword))
+	}
 }
 
 func TestProtonSessionForkHTTPFlow(t *testing.T) {

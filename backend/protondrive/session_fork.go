@@ -115,7 +115,7 @@ func protonDriveAuthViaWeb(ctx context.Context, f *Fs, appVersion, userAgent str
 			UID:           statusResponse.UID,
 			AccessToken:   statusResponse.AccessToken,
 			RefreshToken:  statusResponse.RefreshToken,
-			SaltedKeyPass: normalizeSaltedKeyPass(keyPassword),
+			SaltedKeyPass: encodeSaltedKeyPass(keyPassword),
 		}, nil
 	}
 }
@@ -231,10 +231,9 @@ func protonParseForkKeyPassword(encryptionKey []byte, encryptedPayload string) (
 	return payload.KeyPassword, nil
 }
 
-func normalizeSaltedKeyPass(keyPassword string) string {
-	if _, err := base64.StdEncoding.DecodeString(keyPassword); err == nil {
-		return keyPassword
-	}
+// encodeSaltedKeyPass wraps the literal fork key password in the bridge's
+// base64 transport format for reusable credentials.
+func encodeSaltedKeyPass(keyPassword string) string {
 	return base64.StdEncoding.EncodeToString([]byte(keyPassword))
 }
 
