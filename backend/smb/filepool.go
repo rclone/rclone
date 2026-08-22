@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/cloudsoda/go-smb2"
+	"github.com/rclone/rclone/fs"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -15,6 +16,7 @@ type FsInterface interface {
 	getConnection(ctx context.Context, share string) (*conn, error)
 	putConnection(pc **conn, err error)
 	removeSession()
+	isClosed(c *conn) bool
 }
 
 type file struct {
@@ -44,8 +46,11 @@ func newFilePool(ctx context.Context, fs FsInterface, share, path string) *fileP
 func (p *filePool) get() (*file, error) {
 	p.mu.Lock()
 	if len(p.pool) > 0 {
-		f := p.pool[len(p.pool)-1]
-		p.pool = p.pool[:len(p.pool)-1]
+		// FIFO order: take the oldest connection so that all pooled
+		// connections get used in rotation and none sit idle long
+		// enough for the TCP deadline (--timeout) to expire.
+		f := p.pool[0]
+		p.pool = p.pool[1:]
 		p.mu.Unlock()
 		return f, nil
 	}
@@ -90,6 +95,19 @@ func (p *filePool) drain() error {
 	g, _ := errgroup.WithContext(p.ctx)
 	for _, f := range files {
 		g.Go(func() error {
+			// During long multi-thread transfers, connections that
+			// finished their last chunk early sit idle in the pool.
+			// Their TCP deadline (--timeout) can expire, killing the
+			// connection. When we try to Close the SMB file handle
+			// over a dead connection it fails with "i/o timeout",
+			// even though all data was written successfully.
+			//
+			// If the connection is dead, skip the Close — the server
+			// will clean up the file handle when the TCP session ends.
+			if p.fs.isClosed(f.c) {
+				fs.Debugf(nil, "Skipping close on dead connection for %s", p.path)
+				return nil
+			}
 			err := f.Close()
 			p.fs.putConnection(&f.c, err)
 			return err
