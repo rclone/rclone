@@ -391,7 +391,9 @@ func (m *MountPoint) Mount() (mountDaemon *os.Process, err error) {
 		}
 	}
 
-	m.VFS = vfs.New(m.Ctx, m.Fs, &m.VFSOpt)
+	if m.VFS == nil {
+		m.VFS = vfs.New(m.Ctx, m.Fs, &m.VFSOpt)
+	}
 
 	var actualMountpoint string
 	m.ErrChan, m.UnmountFn, actualMountpoint, err = m.MountFn(m.VFS, m.MountPoint, &m.MountOpt)
