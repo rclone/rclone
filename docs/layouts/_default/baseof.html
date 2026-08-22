@@ -61,7 +61,7 @@
       <footer>
         <div class="row">
           <div class="col-footer{{ if not (and (gt .WordCount 200) (not (.Params.notoc))) }} col-footer-notoc{{ end }}">
-            <div class="card card-body">
+            <div class="card card-body card-body-padded">
               <p style="font-size: 90%;">
                 &copy; <a href="https://www.craig-wood.com/nick/" target="blank">Nick Craig-Wood</a> 2014-{{ now.Format "2006" }}<br>
                 {{ if .File}}{{ with $path := strings.TrimPrefix "/" .File.Path }}Source file <a href="https://github.com/rclone/rclone/blob/master/docs/content/{{ $path }}" target="blank">{{ $path }}</a>{{ end }}
