@@ -40,9 +40,26 @@ func (b *bisyncRun) setLockFile() (err error) {
 			}
 		}
 
-		pidStr := []byte(strconv.Itoa(os.Getpid()))
-		if err = os.WriteFile(b.lockFile, pidStr, bilib.PermSecure); err != nil {
-			return fmt.Errorf(Color(terminal.RedFg, "cannot create lock file: %s: %w"), b.lockFile, err)
+		for range 2 {
+			var df *os.File
+			df, err = os.OpenFile(b.lockFile, os.O_CREATE|os.O_EXCL|os.O_WRONLY, bilib.PermSecure)
+			if err == nil {
+				pidStr := strconv.Itoa(os.Getpid())
+				if _, err = df.WriteString(pidStr); err == nil {
+					err = df.Close()
+				}
+				if err == nil {
+					break
+				}
+				_ = df.Close()
+				_ = os.Remove(b.lockFile)
+			}
+			if !os.IsExist(err) || !b.lockFileIsExpired() {
+				return fmt.Errorf(Color(terminal.RedFg, "cannot create lock file: %s: %w"), b.lockFile, err)
+			}
+			if err = os.Remove(b.lockFile); err != nil {
+				return fmt.Errorf(Color(terminal.RedFg, "cannot remove expired lock file: %s: %w"), b.lockFile, err)
+			}
 		}
 		fs.Debugf(nil, "Lock file created: %s", b.lockFile)
 		b.renewLockFile()
