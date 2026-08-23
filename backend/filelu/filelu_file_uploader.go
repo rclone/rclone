@@ -25,7 +25,9 @@ func (f *Fs) multipartUpload(ctx context.Context, in io.Reader, remote string) e
 	}
 
 	if dir != "" {
-		_ = f.Mkdir(ctx, dir)
+		if _, err := f.createFolder(ctx, dir); err != nil {
+			return fmt.Errorf("failed to create multipart folder: %w", err)
+		}
 	}
 
 	folder := strings.Trim(dir, "/")
