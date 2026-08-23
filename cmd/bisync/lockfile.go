@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strconv"
 	"sync"
 	"time"
@@ -32,24 +33,91 @@ func (b *bisyncRun) setLockFile() (err error) {
 	b.setLockFileExpiration()
 	if !b.opt.DryRun {
 		b.lockFile = b.basePath + ".lck"
-		if bilib.FileExists(b.lockFile) {
-			if !b.lockFileIsExpired() {
-				errTip := Color(terminal.MagentaFg, "Tip: this indicates that another bisync run (of these same paths) either is still running or was interrupted before completion. \n")
-				errTip += Color(terminal.MagentaFg, "If you're SURE you want to override this safety feature, you can delete the lock file with the following command, then run bisync again: \n")
-				errTip += fmt.Sprintf(Color(terminal.HiRedFg, "rclone deletefile \"%s\""), b.lockFile)
-				return fmt.Errorf(Color(terminal.RedFg, "prior lock file found: %s \n")+errTip, Color(terminal.HiYellowFg, b.lockFile))
+		err = b.createLockFile()
+		if err != nil {
+			if os.IsExist(err) {
+				if !b.lockFileIsExpired() {
+					return b.priorLockErr()
+				}
+				if err = os.Remove(b.lockFile); err != nil {
+					return fmt.Errorf(Color(terminal.RedFg, "cannot remove expired lock file: %s: %w"), b.lockFile, err)
+				}
+				err = b.createLockFile()
+			}
+			if err != nil {
+				if os.IsExist(err) {
+					return b.priorLockErr()
+				}
+				return fmt.Errorf(Color(terminal.RedFg, "cannot create lock file: %s: %w"), b.lockFile, err)
 			}
 		}
-
-		pidStr := []byte(strconv.Itoa(os.Getpid()))
-		if err = os.WriteFile(b.lockFile, pidStr, bilib.PermSecure); err != nil {
-			return fmt.Errorf(Color(terminal.RedFg, "cannot create lock file: %s: %w"), b.lockFile, err)
-		}
 		fs.Debugf(nil, "Lock file created: %s", b.lockFile)
-		b.renewLockFile()
 		b.lockFileOpt.stopRenewal = b.startLockRenewal()
 	}
 	return nil
+}
+
+func (b *bisyncRun) createLockFile() error {
+	now := time.Now()
+	data := b.lockFileOpt.data
+	data.Session = b.basePath
+	data.PID = strconv.Itoa(os.Getpid())
+	data.TimeRenewed = now
+	data.TimeExpires = now.Add(time.Duration(b.opt.MaxLock))
+
+	payload, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+	payload = append(payload, '\n')
+
+	tmp, err := os.CreateTemp(filepath.Dir(b.lockFile), filepath.Base(b.lockFile)+".tmp-*")
+	if err != nil {
+		return err
+	}
+	tmpName := tmp.Name()
+	defer func() {
+		_ = os.Remove(tmpName)
+	}()
+	if _, err = tmp.Write(payload); err != nil {
+		_ = tmp.Close()
+		return err
+	}
+	if err = tmp.Close(); err != nil {
+		return err
+	}
+
+	// Hard-link the populated temp file so the lock file is schema-valid from creation.
+	err = os.Link(tmpName, b.lockFile)
+	if err != nil && !os.IsExist(err) {
+		// Fall back to O_EXCL for filesystems without hard-link support.
+		var df *os.File
+		df, err = os.OpenFile(b.lockFile, os.O_CREATE|os.O_EXCL|os.O_WRONLY, bilib.PermSecure)
+		if err != nil {
+			return err
+		}
+		if _, err = df.Write(payload); err != nil {
+			_ = df.Close()
+			_ = os.Remove(b.lockFile)
+			return err
+		}
+		if err = df.Close(); err != nil {
+			_ = os.Remove(b.lockFile)
+			return err
+		}
+	}
+	if err != nil {
+		return err
+	}
+	b.lockFileOpt.data = data
+	return nil
+}
+
+func (b *bisyncRun) priorLockErr() error {
+	errTip := Color(terminal.MagentaFg, "Tip: this indicates that another bisync run (of these same paths) either is still running or was interrupted before completion. \n")
+	errTip += Color(terminal.MagentaFg, "If you're SURE you want to override this safety feature, you can delete the lock file with the following command, then run bisync again: \n")
+	errTip += fmt.Sprintf(Color(terminal.HiRedFg, "rclone deletefile \"%s\""), b.lockFile)
+	return fmt.Errorf(Color(terminal.RedFg, "prior lock file found: %s \n")+errTip, Color(terminal.HiYellowFg, b.lockFile))
 }
 
 func (b *bisyncRun) removeLockFile() (err error) {
