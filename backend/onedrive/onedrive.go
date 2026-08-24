@@ -549,31 +549,34 @@ func chooseDrive(ctx context.Context, name string, m configmap.Mapper, srv *rest
 	// We don't have the final ID yet?
 	// query Microsoft Graph
 	if opt.finalDriveID == "" {
-		_, err := srv.CallJSON(ctx, &opt.opts, nil, &drives)
-		if err != nil {
-			return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available drives: %v", err))
+		_, drivesErr := srv.CallJSON(ctx, &opt.opts, nil, &drives)
+		if drivesErr != nil {
+			fs.Debugf(nil, "Failed to query /me/drives: %v - trying /me/drive", drivesErr)
 		}
-
 		// Also call /me/drive as sometimes /me/drives doesn't return it #4068
 		if opt.opts.Path == "/me/drives" {
-			opt.opts.Path = "/me/drive"
+			meDriveOpts := opt.opts
+			meDriveOpts.Path = "/me/drive"
 			meDrive := api.DriveResource{}
-			_, err := srv.CallJSON(ctx, &opt.opts, nil, &meDrive)
-			if err != nil {
-				return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available drives: %v", err))
-			}
-			found := false
-			for _, drive := range drives.Drives {
-				if drive.DriveID == meDrive.DriveID {
-					found = true
-					break
+			_, meDriveErr := srv.CallJSON(ctx, &meDriveOpts, nil, &meDrive)
+			if meDriveErr == nil {
+				found := false
+				for _, drive := range drives.Drives {
+					if drive.DriveID == meDrive.DriveID {
+						found = true
+						break
+					}
 				}
+				// add the me drive if not found already
+				if !found {
+					fs.Debugf(nil, "Adding %v to drives list from /me/drive", meDrive)
+					drives.Drives = append(drives.Drives, meDrive)
+				}
+			} else if drivesErr != nil {
+				return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available drives: /me/drives: %v; /me/drive: %v", drivesErr, meDriveErr))
 			}
-			// add the me drive if not found already
-			if !found {
-				fs.Debugf(nil, "Adding %v to drives list from /me/drive", meDrive)
-				drives.Drives = append(drives.Drives, meDrive)
-			}
+		} else if drivesErr != nil {
+			return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available drives: %v", drivesErr))
 		}
 	} else {
 		drives.Drives = append(drives.Drives, api.DriveResource{
