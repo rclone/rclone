@@ -155,6 +155,7 @@ type RenameFileResponse struct {
 // MoveFileRequest is the request body for PUT /api/files/:id/move
 type MoveFileRequest struct {
 	FolderID *string `json:"folder_id"`
+	Name     *string `json:"name,omitempty"`
 }
 
 // CopyFileRequest is the request body for POST /api/files/:id/copy
