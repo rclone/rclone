@@ -136,6 +136,56 @@ func TestInternalGetPermissionCacheHit(t *testing.T) {
 	assert.Equal(t, int32(1), requests.Load())
 }
 
+func newListTestFs(t *testing.T, handler http.Handler) *Fs {
+	t.Helper()
+	server := httptest.NewServer(handler)
+	t.Cleanup(server.Close)
+	service, err := drive.NewService(
+		context.Background(),
+		option.WithHTTPClient(server.Client()),
+		option.WithEndpoint(server.URL+"/"),
+	)
+	require.NoError(t, err)
+	return &Fs{
+		svc:             service,
+		pacer:           fs.NewPacer(context.Background(), pacer.NewGoogleDrive()),
+		dirResourceKeys: new(stdsync.Map),
+	}
+}
+
+func TestInternalListIncompleteSearch(t *testing.T) {
+	f := newListTestFs(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, err := io.WriteString(w, `{"files":[{"id":"file-1","name":"file-1"}],"incompleteSearch":true}`)
+		assert.NoError(t, err)
+	}))
+
+	var seen []string
+	found, incomplete, err := f.list(context.Background(), []string{"dir-id"}, "", false, false, false, false, func(item *drive.File) bool {
+		seen = append(seen, item.Id)
+		return false
+	})
+	require.NoError(t, err)
+	assert.False(t, found)
+	assert.True(t, incomplete, "incomplete should reflect incompleteSearch in the API response even though items were returned")
+	assert.Equal(t, []string{"file-1"}, seen)
+}
+
+func TestInternalListCompleteSearch(t *testing.T) {
+	f := newListTestFs(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, err := io.WriteString(w, `{"files":[],"incompleteSearch":false}`)
+		assert.NoError(t, err)
+	}))
+
+	found, incomplete, err := f.list(context.Background(), []string{"dir-id"}, "", false, false, false, false, func(item *drive.File) bool {
+		return false
+	})
+	require.NoError(t, err)
+	assert.False(t, found)
+	assert.False(t, incomplete)
+}
+
 func TestDriveScopes(t *testing.T) {
 	for _, test := range []struct {
 		in       string

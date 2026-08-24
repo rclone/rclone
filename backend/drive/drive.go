@@ -690,11 +690,14 @@ resource key is not needed.
 
 Normally rclone will work around a bug in Google Drive when using
 --fast-list (ListR) where the search "(A in parents) or (B in
-parents)" returns nothing sometimes. See #3114, #4289 and
+parents)" returns nothing, or only some of the results, sometimes.
+See #3114, #4289, #9810 and
 https://issuetracker.google.com/issues/149522397
 
 Rclone detects this by finding no items in more than one directory
-when listing and retries them as lists of individual directories.
+when listing, or by the Drive API reporting the search as incomplete
+even though it returned some results, and retries the affected
+directories individually.
 
 This means that if you have a lot of empty directories rclone will end
 up listing them all individually and this can take many more API
@@ -1017,8 +1020,11 @@ func (f *Fs) getRootID(ctx context.Context) (string, error) {
 //
 // If the user fn ever returns true then it early exits with found = true
 //
+// incomplete is set if the Google API reports any page of the search as
+// incompleteSearch, which means the results may be missing entries.
+//
 // Search params: https://developers.google.com/drive/search-parameters
-func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directoriesOnly, filesOnly, trashedOnly, includeAll bool, fn listFn) (found bool, err error) {
+func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directoriesOnly, filesOnly, trashedOnly, includeAll bool, fn listFn) (found, incomplete bool, err error) {
 	var query []string
 	if !includeAll {
 		q := "trashed=" + strconv.FormatBool(trashedOnly)
@@ -1145,9 +1151,10 @@ OUTER:
 			return f.shouldRetry(ctx, err)
 		})
 		if err != nil {
-			return false, fmt.Errorf("couldn't list directory: %w", err)
+			return false, false, fmt.Errorf("couldn't list directory: %w", err)
 		}
 		if files.IncompleteSearch {
+			incomplete = true
 			fs.Errorf(f, "search result INCOMPLETE")
 		}
 		for _, item := range files.Files {
@@ -1167,7 +1174,7 @@ OUTER:
 				}
 				item, err = f.resolveShortcut(ctx, item)
 				if err != nil {
-					return false, fmt.Errorf("list: %w", err)
+					return false, false, fmt.Errorf("list: %w", err)
 				}
 				// leave the dangling shortcut out of the listings
 				// we've already logged about the dangling shortcut in resolveShortcut
@@ -1753,7 +1760,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
 	// Find the leaf in pathID
 	pathID = actualID(pathID)
-	found, err = f.list(ctx, []string{pathID}, leaf, true, false, f.opt.TrashedOnly, false, func(item *drive.File) bool {
+	found, _, err = f.list(ctx, []string{pathID}, leaf, true, false, f.opt.TrashedOnly, false, func(item *drive.File) bool {
 		if !f.opt.SkipGdocs {
 			_, exportName, _, isDocument := f.findExportFormat(ctx, item)
 			if exportName == leaf {
@@ -2030,7 +2037,7 @@ func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) e
 	directoryID = actualID(directoryID)
 
 	var iErr error
-	_, err = f.list(ctx, []string{directoryID}, "", false, false, f.opt.TrashedOnly, false, func(item *drive.File) bool {
+	_, _, err = f.list(ctx, []string{directoryID}, "", false, false, f.opt.TrashedOnly, false, func(item *drive.File) bool {
 		entry, err := f.itemToDirEntry(ctx, path.Join(dir, item.Name), item)
 		if err != nil {
 			iErr = err
@@ -2120,7 +2127,7 @@ func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in chan listRE
 		listRSlices{dirs, paths}.Sort()
 		var iErr error
 		foundItems := false
-		_, err := f.list(ctx, dirs, "", false, false, f.opt.TrashedOnly, false, func(item *drive.File) bool {
+		_, incomplete, err := f.list(ctx, dirs, "", false, false, f.opt.TrashedOnly, false, func(item *drive.File) bool {
 			// shared with me items have no parents when at the root
 			if f.opt.SharedWithMe && len(item.Parents) == 0 && len(paths) == 1 && paths[0] == "" {
 				item.Parents = dirs
@@ -2168,14 +2175,19 @@ func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in chan listRE
 			}
 			return false
 		})
-		// Found no items in more than one directory. Retry these as
-		// individual directories This is to work around a bug in google
-		// drive where (A in parents) or (B in parents) returns nothing
-		// sometimes. See #3114, #4289 and
+		// Found no items in more than one directory, or the API reported the
+		// search as incomplete. Retry these as individual directories. This
+		// is to work around a bug in google drive where (A in parents) or (B
+		// in parents) returns nothing, or only partial results, sometimes.
+		// See #3114, #4289, #9810 and
 		// https://issuetracker.google.com/issues/149522397
-		if f.opt.FastListBugFix && len(dirs) > 1 && !foundItems {
+		if f.opt.FastListBugFix && len(dirs) > 1 && (!foundItems || incomplete) {
 			if atomic.SwapInt32(&f.grouping, 1) != 1 {
-				fs.Debugf(f, "Disabling ListR to work around bug in drive as multi listing (%d) returned no entries", len(dirs))
+				if incomplete {
+					fs.Debugf(f, "Disabling ListR to work around bug in drive as multi listing (%d) returned an incomplete search", len(dirs))
+				} else {
+					fs.Debugf(f, "Disabling ListR to work around bug in drive as multi listing (%d) returned no entries", len(dirs))
+				}
 			}
 			f.listRmu.Lock()
 			for i := range dirs {
@@ -2191,7 +2203,7 @@ func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in chan listRE
 		}
 		// If using a grouping of 1 and dir was empty then check to see if it
 		// is part of the group that caused grouping to be disabled.
-		if grouping == 1 && len(dirs) == 1 && !foundItems {
+		if grouping == 1 && len(dirs) == 1 && !foundItems && !incomplete {
 			f.listRmu.Lock()
 			if _, found := f.listRempties[dirs[0]]; found {
 				// Remove the ID
@@ -2635,7 +2647,7 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 	for _, srcDir := range dirs[1:] {
 		// list the objects
 		infos := []*drive.File{}
-		_, err := f.list(ctx, []string{srcDir.ID()}, "", false, false, f.opt.TrashedOnly, true, func(info *drive.File) bool {
+		_, _, err := f.list(ctx, []string{srcDir.ID()}, "", false, false, f.opt.TrashedOnly, true, func(info *drive.File) bool {
 			infos = append(infos, info)
 			return false
 		})
@@ -2771,7 +2783,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 		// to enumerate trashed children: let the server filter them out instead of
 		// paging through them. Hard deletes still need to see them (#1040).
 		includeAll := !f.opt.UseTrash || f.opt.TrashedOnly
-		found, err := f.list(ctx, []string{directoryID}, "", false, false, f.opt.TrashedOnly, includeAll, func(item *drive.File) bool {
+		found, _, err := f.list(ctx, []string{directoryID}, "", false, false, f.opt.TrashedOnly, includeAll, func(item *drive.File) bool {
 			if !item.Trashed {
 				fs.Debugf(dir, "Rmdir: contains file: %q", item.Name)
 				return true
@@ -2960,7 +2972,7 @@ func (r cleanupResult) Error() string {
 }
 
 func (f *Fs) cleanupTeamDrive(ctx context.Context, dir string, directoryID string) (r cleanupResult, err error) {
-	_, err = f.list(ctx, []string{directoryID}, "", false, false, true, false, func(item *drive.File) bool {
+	_, _, err = f.list(ctx, []string{directoryID}, "", false, false, true, false, func(item *drive.File) bool {
 		remote := path.Join(dir, item.Name)
 		if item.ExplicitlyTrashed { // description is wrong - can also be set for folders - no need to recurse them
 			err := f.delete(ctx, item.Id, false)
@@ -3559,7 +3571,7 @@ func (r unTrashResult) Error() string {
 func (f *Fs) unTrash(ctx context.Context, dir string, directoryID string, recurse bool) (r unTrashResult, err error) {
 	directoryID = actualID(directoryID)
 	fs.Debugf(dir, "finding trash to restore in directory %q", directoryID)
-	_, err = f.list(ctx, []string{directoryID}, "", false, false, f.opt.TrashedOnly, true, func(item *drive.File) bool {
+	_, _, err = f.list(ctx, []string{directoryID}, "", false, false, f.opt.TrashedOnly, true, func(item *drive.File) bool {
 		remote := path.Join(dir, item.Name)
 		if item.ExplicitlyTrashed {
 			fs.Infof(remote, "restoring %q", item.Id)
@@ -4230,7 +4242,7 @@ func (f *Fs) getRemoteInfoWithExport(ctx context.Context, remote string) (
 	}
 	directoryID = actualID(directoryID)
 
-	found, err := f.list(ctx, []string{directoryID}, leaf, false, false, f.opt.TrashedOnly, false, func(item *drive.File) bool {
+	found, _, err := f.list(ctx, []string{directoryID}, leaf, false, false, f.opt.TrashedOnly, false, func(item *drive.File) bool {
 		if !f.opt.SkipGdocs {
 			extension, exportName, exportMimeType, isDocument = f.findExportFormat(ctx, item)
 			if exportName == leaf {
