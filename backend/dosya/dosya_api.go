@@ -237,11 +237,15 @@ func (f *Fs) renameFile(ctx context.Context, fileID string, newName string) erro
 	return nil
 }
 
-// moveFile moves a file to a new folder
-func (f *Fs) moveFile(ctx context.Context, fileID string, folderID string) error {
+// moveFile moves a file to a new folder and, if newName is non-empty,
+// renames it in the same request
+func (f *Fs) moveFile(ctx context.Context, fileID string, folderID string, newName string) error {
 	request := api.MoveFileRequest{}
 	if folderID != "" && folderID != rootID {
 		request.FolderID = &folderID
+	}
+	if newName != "" {
+		request.Name = &newName
 	}
 	opts := rest.Opts{
 		Method: "PUT",
@@ -511,7 +515,7 @@ func (f *Fs) uploadFile(ctx context.Context, in io.Reader, remote string, size i
 // createShareLink creates a public share link for a file
 func (f *Fs) createShareLink(ctx context.Context, fileID string, expire fs.Duration) (*api.ShareLinkResponse, error) {
 	request := api.ShareLinkRequest{}
-	if expire > 0 {
+	if expire < fs.DurationOff {
 		days := int(time.Duration(expire).Hours() / 24)
 		if days < 1 {
 			days = 1

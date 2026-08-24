@@ -24,7 +24,7 @@ import (
 
 const (
 	rootID         = "root"
-	defaultBaseURL = "https://dosya.dev"
+	defaultBaseURL = "https://api.dosya.dev"
 	minSleep       = 100 * time.Millisecond
 	maxSleep       = 2 * time.Second
 	decayConstant  = 2
@@ -377,18 +377,20 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	needsMove := srcDirID != dstDirID
 	needsRename := srcLeaf != dstLeaf
 
-	if needsMove {
-		err = f.moveFile(ctx, srcObj.file.ID, dstDirID)
-		if err != nil {
-			return nil, fmt.Errorf("couldn't move file: %w", err)
+	// Moving and renaming in the same request (rather than a moveFile call
+	// followed by a separate renameFile call) matters when both are needed:
+	// a two-step move-then-rename can transiently place the file's CURRENT
+	// name into a destination folder that already holds an unrelated file
+	// with that name, even though the FINAL name is free - the server only
+	// allows one active name per folder, so that intermediate state 409s.
+	if needsMove || needsRename {
+		newName := ""
+		if needsRename {
+			newName = f.opt.Enc.FromStandardName(dstLeaf)
 		}
-	}
-
-	if needsRename {
-		newName := f.opt.Enc.FromStandardName(dstLeaf)
-		err = f.renameFile(ctx, srcObj.file.ID, newName)
+		err = f.moveFile(ctx, srcObj.file.ID, dstDirID, newName)
 		if err != nil {
-			return nil, fmt.Errorf("couldn't rename file: %w", err)
+			return nil, err
 		}
 	}
 
@@ -679,7 +681,7 @@ var (
 	_ fs.Copier          = (*Fs)(nil)
 	_ fs.Purger          = (*Fs)(nil)
 	_ fs.ListRer         = (*Fs)(nil)
-	_ fs.PublicLinker     = (*Fs)(nil)
+	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.PutUncheckeder  = (*Fs)(nil)
 	_ dircache.DirCacher = (*Fs)(nil)
