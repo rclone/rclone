@@ -20,6 +20,7 @@ import (
 	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/rclone/gofakes3/signature"
 	_ "github.com/rclone/rclone/backend/local"
 	_ "github.com/rclone/rclone/backend/s3" // for TestS3Minio backing remote
 	"github.com/rclone/rclone/cmd/serve/proxy"
@@ -42,11 +43,19 @@ const (
 )
 
 // Configure and serve the server
+//
+// If f is nil the server is expected to be using an auth proxy, in
+// which case the credentials are handed to the test proxy via the
+// environment rather than --auth-key.
 func serveS3(t *testing.T, f fs.Fs) (testURL string, keyid string, keysec string, w *Server) {
 	keyid = random.String(16)
 	keysec = random.String(16)
 	opt := Opt // copy default options
-	opt.AuthKey = []string{fmt.Sprintf("%s,%s", keyid, keysec)}
+	if f == nil {
+		t.Setenv("RCLONE_TEST_PROXY_AUTH_KEY", fmt.Sprintf("%s,%s", keyid, keysec))
+	} else {
+		opt.AuthKey = []string{fmt.Sprintf("%s,%s", keyid, keysec)}
+	}
 	opt.HTTP.ListenAddr = []string{endpoint}
 	w, _ = newServer(context.Background(), f, &opt, &vfscommon.Opt, &proxy.Opt)
 	go func() {
@@ -286,9 +295,6 @@ func TestListBucketsAuthProxy(t *testing.T) {
 		{
 			description: "list buckets",
 			bucket:      "mybucket",
-			// request with random keyid
-			// instead of what was set in 'authPair'
-			keyID: random.String(16),
 			files: []FileStuct{
 				{
 					path:     "",
@@ -299,6 +305,12 @@ func TestListBucketsAuthProxy(t *testing.T) {
 					filename: "bar.txt",
 				},
 			},
+		},
+		{
+			description: "list buckets: unknown s3 key",
+			bucket:      "mybucket",
+			keyID:       random.String(16),
+			shouldFail:  true,
 		},
 		{
 			description: "list buckets: wrong s3 secret",
@@ -337,6 +349,85 @@ func TestNewServerPerServerAuthProxy(t *testing.T) {
 	}()
 	assert.True(t, w.provider.IsProxy(), "expected auth proxy to be enabled by per-server option")
 	assert.Nil(t, w.provider.VFS(), "expected no fixed VFS when auth proxy is in use")
+}
+
+// TestAuthProxyEmptySecret checks that a request for an arbitrary
+// access key ID signed with an empty secret is refused when using an
+// auth proxy without --auth-key.
+func TestAuthProxyEmptySecret(t *testing.T) {
+	fstest.Initialise()
+
+	prog, err := filepath.Abs("../servetest/proxy_code.go")
+	require.NoError(t, err)
+	files, err := filepath.Abs("testdata")
+	require.NoError(t, err)
+	proxy.Opt.AuthProxy = "go run " + prog + " " + files
+	defer func() {
+		proxy.Opt.AuthProxy = ""
+	}()
+
+	endpoint, keyid, _, s := serveS3(t, nil)
+	defer func() {
+		assert.NoError(t, s.server.Shutdown())
+	}()
+
+	for _, accessKeyID := range []string{keyid, random.String(16)} {
+		req, err := http.NewRequest("GET", endpoint+"/", nil)
+		require.NoError(t, err)
+		req.Header.Set("X-Amz-Content-Sha256", "UNSIGNED-PAYLOAD")
+		signer := v4.NewSigner()
+		err = signer.SignHTTP(context.Background(), aws.Credentials{AccessKeyID: accessKeyID, SecretAccessKey: ""}, req, "UNSIGNED-PAYLOAD", "s3", "us-east-1", time.Now())
+		require.NoError(t, err)
+
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		body, _ := io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode, string(body))
+		assert.NotContains(t, string(body), "ListAllMyBucketsResult")
+	}
+}
+
+// TestAuthProxyKeysNotRegistered checks that secrets supplied by the
+// auth proxy are never registered in gofakes3's process wide key
+// store where any other serve s3 instance in the process would honour
+// them.
+func TestAuthProxyKeysNotRegistered(t *testing.T) {
+	fstest.Initialise()
+
+	prog, err := filepath.Abs("../servetest/proxy_code.go")
+	require.NoError(t, err)
+	files, err := filepath.Abs("testdata")
+	require.NoError(t, err)
+	proxy.Opt.AuthProxy = "go run " + prog + " " + files
+	defer func() {
+		proxy.Opt.AuthProxy = ""
+	}()
+
+	endpoint, keyid, keysec, s := serveS3(t, nil)
+	defer func() {
+		assert.NoError(t, s.server.Shutdown())
+	}()
+
+	sign := func() *http.Request {
+		req, err := http.NewRequest("GET", endpoint+"/", nil)
+		require.NoError(t, err)
+		req.Header.Set("X-Amz-Content-Sha256", "UNSIGNED-PAYLOAD")
+		signer := v4.NewSigner()
+		err = signer.SignHTTP(context.Background(), aws.Credentials{AccessKeyID: keyid, SecretAccessKey: keysec}, req, "UNSIGNED-PAYLOAD", "s3", "us-east-1", time.Now())
+		require.NoError(t, err)
+		return req
+	}
+
+	// A correctly signed request is accepted by the server
+	resp, err := http.DefaultClient.Do(sign())
+	require.NoError(t, err)
+	body, _ := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	assert.Equal(t, http.StatusOK, resp.StatusCode, string(body))
+
+	// But the key it used must not be in the global key store
+	assert.NotEqual(t, signature.ErrNone, signature.V4SignVerify(sign()), "proxy secret was registered in the gofakes3 key store")
 }
 
 // TestAuthKeyPerServer checks that two servers in the same process
