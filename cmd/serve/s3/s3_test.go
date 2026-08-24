@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"path"
 	"path/filepath"
@@ -15,6 +16,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	_ "github.com/rclone/rclone/backend/local"
@@ -334,6 +337,37 @@ func TestNewServerPerServerAuthProxy(t *testing.T) {
 	}()
 	assert.True(t, w.provider.IsProxy(), "expected auth proxy to be enabled by per-server option")
 	assert.Nil(t, w.provider.VFS(), "expected no fixed VFS when auth proxy is in use")
+}
+
+// TestAuthKeyPerServer checks that two servers in the same process
+// with different --auth-key pairs only accept their own credentials.
+func TestAuthKeyPerServer(t *testing.T) {
+	fstest.Initialise()
+	f, err := fs.NewFs(context.Background(), "testdata")
+	require.NoError(t, err)
+
+	urlA, keyA, secA, sA := serveS3(t, f)
+	defer func() { assert.NoError(t, sA.server.Shutdown()) }()
+	urlB, keyB, secB, sB := serveS3(t, f)
+	defer func() { assert.NoError(t, sB.server.Shutdown()) }()
+
+	signedGet := func(url, accessKeyID, secret string) int {
+		req, err := http.NewRequest("GET", url+"/", nil)
+		require.NoError(t, err)
+		req.Header.Set("X-Amz-Content-Sha256", "UNSIGNED-PAYLOAD")
+		err = v4.NewSigner().SignHTTP(context.Background(), aws.Credentials{AccessKeyID: accessKeyID, SecretAccessKey: secret}, req, "UNSIGNED-PAYLOAD", "s3", "us-east-1", time.Now())
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		_, _ = io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+		return resp.StatusCode
+	}
+
+	assert.Equal(t, http.StatusOK, signedGet(urlA, keyA, secA), "A with A's key")
+	assert.Equal(t, http.StatusOK, signedGet(urlB, keyB, secB), "B with B's key")
+	assert.Equal(t, http.StatusForbidden, signedGet(urlA, keyB, secB), "A with B's key")
+	assert.Equal(t, http.StatusForbidden, signedGet(urlB, keyA, secA), "B with A's key")
 }
 
 func TestRc(t *testing.T) {

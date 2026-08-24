@@ -74,7 +74,7 @@ require (
 	github.com/quasilyte/go-ruleguard/dsl v0.3.23
 	github.com/rclone/Proton-API-Bridge v1.0.5
 	github.com/rclone/go-proton-api v1.0.4
-	github.com/rclone/gofakes3 v0.0.8
+	github.com/rclone/gofakes3 v0.0.9
 	github.com/rfjakob/eme v1.2.0
 	github.com/rivo/uniseg v0.4.7
 	github.com/rogpeppe/go-internal v1.15.0
