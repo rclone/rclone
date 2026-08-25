@@ -65,11 +65,47 @@ func TestRefuseHTTPSDowngradeRedirectFn(t *testing.T) {
 		next := mkRedirectReq(t, "https://example.com/b", "GET")
 		assert.NoError(t, RefuseHTTPSDowngradeRedirectFn(next, []*http.Request{orig}))
 	})
+	t.Run("RefusesDowngradeViaOtherHost", func(t *testing.T) {
+		orig := mkRedirectReq(t, "https://example.com/a", "GET")
+		mid := mkRedirectReq(t, "https://other.example/b", "GET")
+		next := mkRedirectReq(t, "http://example.com/c", "GET")
+		assert.ErrorIs(t, RefuseHTTPSDowngradeRedirectFn(next, []*http.Request{orig, mid}), ErrHTTPSDowngrade)
+	})
+	t.Run("AllowsPlaintextOriginViaHTTPS", func(t *testing.T) {
+		orig := mkRedirectReq(t, "http://example.com/a", "GET")
+		mid := mkRedirectReq(t, "https://other.example/b", "GET")
+		next := mkRedirectReq(t, "http://example.com/c", "GET")
+		assert.NoError(t, RefuseHTTPSDowngradeRedirectFn(next, []*http.Request{orig, mid}))
+	})
 	t.Run("TooManyRedirects", func(t *testing.T) {
 		next := mkRedirectReq(t, "https://example.com/b", "GET")
 		via := make([]*http.Request, 10)
 		assert.Error(t, RefuseHTTPSDowngradeRedirectFn(next, via))
 	})
+}
+
+func TestSameHost(t *testing.T) {
+	for _, test := range []struct {
+		a, b string
+		want bool
+	}{
+		{"https://example.com/a", "https://example.com/b", true},
+		{"https://example.com/", "https://EXAMPLE.com/", true},
+		{"https://example.com/", "https://example.com:443/", true},
+		{"http://example.com/", "http://example.com:80/", true},
+		{"https://example.com/", "http://example.com/", false},
+		{"https://example.com:8443/", "https://example.com:8444/", false},
+		{"https://example.com/", "https://www.example.com/", false},
+		{"https://example.com/", "https://example.com.evil/", false},
+		{"http://[::1]:8080/", "http://[::1]:8080/", true},
+		{"http://[::1]:8080/", "http://[::1]:8081/", false},
+	} {
+		a, err := url.Parse(test.a)
+		require.NoError(t, err)
+		b, err := url.Parse(test.b)
+		require.NoError(t, err)
+		assert.Equal(t, test.want, SameHost(a, b), "%s vs %s", test.a, test.b)
+	}
 }
 
 // newDowngradeServers returns an HTTPS server that redirects every
