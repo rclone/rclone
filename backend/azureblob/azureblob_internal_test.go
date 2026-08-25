@@ -56,6 +56,7 @@ func TestBlockIDCreator(t *testing.T) {
 
 func TestDecodeMetaDataFromDownloadResponse(t *testing.T) {
 	pInt64 := func(i int64) *int64 { return &i }
+	pString := func(s string) *string { return &s }
 	newTestObject := func() *Object {
 		return &Object{
 			fs:     &Fs{},
