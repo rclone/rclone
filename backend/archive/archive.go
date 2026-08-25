@@ -495,22 +495,48 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return nil, err
 	}
 
-	entries, err = subFs.List(ctx, dir)
+	subEntries, err := subFs.List(ctx, dir)
 	if err != nil {
 		return nil, err
 	}
-	for i, entry := range entries {
+	entries = subEntries[:0]
+	skipped := 0
+	for _, entry := range subEntries {
+		remote := entry.Remote()
+		// Only pass on direct children of dir - anything else
+		// could escape the archive's namespace
+		if !isDirectChild(dir, remote) {
+			fs.Debugf(f, "Skipping entry %q which is not in directory %q", remote, dir)
+			skipped++
+			continue
+		}
 		// Can only unarchive files
 		if o, ok := entry.(fs.Object); ok {
-			remote := o.Remote()
 			archive := f.findArchive(remote)
 			if archive != nil {
 				// Overwrite entry with directory
-				entries[i] = fs.NewDir(remote, o.ModTime(ctx))
+				entry = fs.NewDir(remote, o.ModTime(ctx))
 			}
 		}
+		entries = append(entries, entry)
+	}
+	if skipped > 0 {
+		fs.Logf(f, "Skipped %d entries in %q whose names escape the directory", skipped, dir)
 	}
 	return entries, nil
+}
+
+// isDirectChild reports whether remote names an entry directly in dir
+// ("" being the root), with no ".." or other components in between.
+func isDirectChild(dir, remote string) bool {
+	if remote == "" || remote == "." || remote == ".." || strings.HasSuffix(remote, "/") {
+		return false
+	}
+	parent := path.Dir(remote)
+	if parent == "." || parent == "/" {
+		parent = ""
+	}
+	return parent == dir && path.Clean(remote) == remote
 }
 
 // NewObject creates a new remote archive file object
@@ -529,6 +555,11 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	o, err := subFs.NewObject(ctx, remote)
 	if err != nil {
 		return nil, err
+	}
+	// Don't trust the archiver to have returned the object asked for
+	if o.Remote() != remote {
+		fs.Debugf(f, "Ignoring object %q returned for %q", o.Remote(), remote)
+		return nil, fs.ErrorObjectNotFound
 	}
 	return o, nil
 }
