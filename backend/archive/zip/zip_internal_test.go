@@ -104,3 +104,27 @@ func TestReadZipRootBoundary(t *testing.T) {
 	remotes := allRemotes(t, f)
 	assert.Equal(t, []string{"a.txt"}, remotes)
 }
+
+// A file entry whose name refers to the archive's own root (".", "/",
+// "./" or "") must be skipped, not turn the whole archive into a single
+// file which hides every other entry.
+func TestReadZipRootNamedEntry(t *testing.T) {
+	ctx := context.Background()
+	dir := t.TempDir()
+	name := writeZip(t, dir, "dot.zip",
+		".",
+		"/",
+		"./",
+		"",
+		"good.txt",
+	)
+
+	localFs, err := cache.Get(ctx, dir)
+	require.NoError(t, err)
+
+	f, err := New(ctx, localFs, name, "", "")
+	require.NoError(t, err)
+
+	remotes := allRemotes(t, f)
+	assert.Equal(t, []string{"good.txt"}, remotes)
+}
