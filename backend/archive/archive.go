@@ -185,8 +185,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 	foundArchive := subArchive(remote)
 	if foundArchive != nil {
 		fs.Debugf(nil, "Found archiver for %q remote %q", foundArchive.archiver.Extension, foundArchive.remote)
-		// Archive path
-		foundArchive.root = strings.Trim(remote[len(foundArchive.remote):], "/")
+		// Archive path, in canonical form so that it compares equal
+		// to the cleaned entry names inside the archive
+		foundArchive.root = strings.Trim(path.Clean(remote[len(foundArchive.remote):]), "/")
+		if foundArchive.root == "." {
+			foundArchive.root = ""
+		}
 		// Path to the archive
 		archiveRemote := remote[:len(foundArchive.remote)]
 		// Remote is archive leaf name
