@@ -57,7 +57,13 @@ The input format is comma separated list of key,value pairs.  Standard
 
 For example, to set a Cookie use 'Cookie,name=value', or '"Cookie","name=value"'.
 
-You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'.`,
+You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'.
+
+The headers are only sent to the host in the configured URL. If the
+server redirects to another host (including a subdomain or a different
+port) the headers are not sent to it, or to any further hop in that
+redirect chain. When headers are set, a redirect from https to http is
+refused as it would send them in cleartext.`,
 			Default:  fs.CommaSepList{},
 			Advanced: true,
 		}, {
@@ -283,6 +289,11 @@ func (f *Fs) httpConnection(ctx context.Context, opt *Options) (isFile bool, err
 	}
 
 	client := fshttp.NewClient(ctx)
+	// Without configured headers keep the default policy which
+	// public mirrors that redirect from https to http rely on.
+	if len(opt.Headers) > 0 {
+		client.CheckRedirect = checkRedirect(opt)
+	}
 
 	endpoint, isFile := getFsEndpoint(ctx, client, u.String(), opt)
 	fs.Debugf(nil, "Root: %s", endpoint)
@@ -508,6 +519,45 @@ func addHeaders(req *http.Request, opt *Options) {
 		value := opt.Headers[i+1]
 		req.Header.Add(key, value)
 	}
+}
+
+// checkRedirect returns an http.Client.CheckRedirect function which
+// follows redirects but refuses an HTTPS to HTTP downgrade with
+// rest.ErrHTTPSDowngrade and strips the configured headers when the
+// redirect chain has left the originally requested host at any point.
+func checkRedirect(opt *Options) func(req *http.Request, via []*http.Request) error {
+	return func(req *http.Request, via []*http.Request) error {
+		if err := rest.RefuseHTTPSDowngradeRedirectFn(req, via); err != nil {
+			if errors.Is(err, rest.ErrHTTPSDowngrade) {
+				err = fmt.Errorf("%w (the configured headers would be sent to the plaintext target)", err)
+			}
+			return err
+		}
+		if redirectLeavesHost(req, via) {
+			for i := 0; i < len(opt.Headers); i += 2 {
+				req.Header.Del(opt.Headers[i])
+			}
+		}
+		return nil
+	}
+}
+
+// redirectLeavesHost reports whether any hop in the redirect chain
+// via plus the pending request req is to a different host from the
+// original request via[0].
+//
+// net/http copies the headers afresh from the original request for
+// every hop, so once the chain has visited another host the headers
+// must be stripped from every subsequent hop, even one back to the
+// original host, as the other host chose the URL.
+func redirectLeavesHost(req *http.Request, via []*http.Request) bool {
+	origin := via[0].URL
+	for _, hop := range via {
+		if !rest.SameHost(hop.URL, origin) {
+			return true
+		}
+	}
+	return !rest.SameHost(req.URL, origin)
 }
 
 // Adds the configured headers to the request if any
