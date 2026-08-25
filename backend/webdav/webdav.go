@@ -233,6 +233,7 @@ type Fs struct {
 	ntlmAuthMu         sync.Mutex    // mutex to serialize NTLM auth roundtrips
 	chunksUploadURL    string        // upload URL for nextcloud chunked
 	canChunk           bool          // set if nextcloud and nextcloud_chunk_size is set
+	canRecalcHash      bool          // set if the server can recalculate checksums with PATCH (nextcloud)
 	authSingleflight   *singleflight.Group
 }
 
@@ -664,6 +665,7 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		f.propsetMtime = true
 		f.hasOCSHA1 = true
 		f.canChunk = true
+		f.canRecalcHash = true
 
 		if f.opt.ChunkSize == 0 {
 			fs.Logf(nil, "Chunked uploads are disabled because nextcloud_chunk_size is set to 0")
@@ -1471,11 +1473,16 @@ var owncloudPropsetWithChecksum = `<?xml version="1.0" encoding="utf-8" ?>
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	if o.fs.propsetMtime {
+		// Setting the modification time discards the stored
+		// checksums so they are set again in the same request.
+		// Servers which can't do that recalculate them afterwards.
 		checksums := ""
-		if o.fs.hasOCSHA1 && o.sha1 != "" {
-			checksums = "SHA1:" + o.sha1
-		} else if o.fs.hasOCMD5 && o.md5 != "" {
-			checksums = "MD5:" + o.md5
+		if !o.fs.canRecalcHash {
+			if o.fs.hasOCSHA1 && o.sha1 != "" {
+				checksums = "SHA1:" + o.sha1
+			} else if o.fs.hasOCMD5 && o.md5 != "" {
+				checksums = "MD5:" + o.md5
+			}
 		}
 
 		opts := rest.Opts{
@@ -1510,6 +1517,12 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 			// in-memory modtime identical to the one a fresh
 			// listing returns
 			o.modTime = modTime.Truncate(time.Second)
+			if o.fs.canRecalcHash && (o.sha1 != "" || o.md5 != "") {
+				err = o.recalculateHash(ctx)
+				if err != nil {
+					return fmt.Errorf("couldn't restore checksum after setting modified time: %w", err)
+				}
+			}
 			return nil
 		}
 		// got an error, but it's possible it actually worked, so double-check
@@ -1596,7 +1609,54 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	// read metadata from remote
 	o.hasMetaData = false
-	return o.readMetaData(ctx)
+	err = o.readMetaData(ctx)
+	if err != nil {
+		return err
+	}
+	// The server only stores a checksum supplied with the upload,
+	// so ask the server to calculate one if it is missing.
+	if o.fs.canRecalcHash && o.sha1 == "" && o.md5 == "" {
+		err = o.recalculateHash(ctx)
+		if err != nil {
+			return fmt.Errorf("couldn't calculate checksum after upload: %w", err)
+		}
+	}
+	return nil
+}
+
+// recalculateHash asks the server to calculate and store the checksum
+// of the object's contents, updating the cached hash from the result.
+//
+// This uses the nextcloud PATCH extension with the X-Recalculate-Hash
+// header which returns the checksum in the OC-Checksum header.
+func (o *Object) recalculateHash(ctx context.Context) error {
+	hashName := ""
+	if o.fs.hasOCSHA1 {
+		hashName = "sha1"
+	} else if o.fs.hasOCMD5 {
+		hashName = "md5"
+	} else {
+		return nil
+	}
+	opts := rest.Opts{
+		Method:       "PATCH",
+		Path:         o.filePath(),
+		NoResponse:   true,
+		ExtraHeaders: map[string]string{"X-Recalculate-Hash": hashName},
+	}
+	var resp *http.Response
+	err := o.fs.pacer.Call(func() (bool, error) {
+		var err error
+		resp, err = o.fs.srv.Call(ctx, &opts)
+		return o.fs.shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return err
+	}
+	hashes := (&api.Prop{Checksums: []string{resp.Header.Get("OC-Checksum")}}).Hashes()
+	o.sha1 = hashes[hash.SHA1]
+	o.md5 = hashes[hash.MD5]
+	return nil
 }
 
 func (o *Object) extraHeaders(ctx context.Context, src fs.ObjectInfo) map[string]string {
