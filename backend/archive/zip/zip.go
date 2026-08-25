@@ -18,6 +18,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/lib/readers"
+	"github.com/rclone/rclone/lib/sanitize"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 )
@@ -135,10 +136,13 @@ func (f *Fs) readZip() (singleObject bool, err error) {
 		return singleObject, fmt.Errorf("failed to read zip file: %w", err)
 	}
 	dt := dirtree.New()
+	skipped := 0
 	for _, file := range zr.File {
-		remote := strings.Trim(path.Clean(file.Name), "/")
-		if remote == "." {
-			remote = ""
+		// Skip entries whose name escapes the archive's own namespace
+		remote, err := sanitize.Path(file.Name)
+		if err != nil {
+			skipped++
+			continue
 		}
 		remote = path.Join(f.prefix, remote)
 		if f.root != "" {
@@ -172,6 +176,9 @@ func (f *Fs) readZip() (singleObject bool, err error) {
 				break
 			}
 		}
+	}
+	if skipped > 0 {
+		fs.Logf(f, "Skipped %d zip entries which escape the archive", skipped)
 	}
 	dt.CheckParents("")
 	dt.Sort()
