@@ -16,6 +16,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/lib/readers"
+	"github.com/rclone/rclone/lib/sanitize"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 )
@@ -237,8 +238,15 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 
 	entries = make(fs.DirEntries, 0, len(items))
+	skipped := 0
 	for _, item := range items {
 		// fs.Debugf(item.Name(), "entry = %#v", item)
+		// Skip entry names that aren't safe
+		if err := sanitize.Leaf(item.Name()); err != nil {
+			fs.Debugf(f, "Skipping squashfs entry %q which escapes the archive", item.Name())
+			skipped++
+			continue
+		}
 		var entry fs.DirEntry
 		if item.IsDir() {
 			remote := f.fromNative(nativeDir, item.Name())
@@ -258,6 +266,12 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			continue
 		}
 		entries = append(entries, entry)
+	}
+
+	// Log once per listing rather than per entry so a crafted image
+	// can't flood the log
+	if skipped > 0 {
+		fs.Logf(f, "Skipped %d squashfs entries in %q whose names escape the archive", skipped, dir)
 	}
 
 	// fs.Debugf(f, "dir=%q, entries=%v", dir, entries)
