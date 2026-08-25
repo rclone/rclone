@@ -174,6 +174,12 @@ func TestCertificates(t *testing.T) {
 	// create a test cert/key pair and write it to the files
 	ctx := context.TODO()
 	ci := fs.GetConfig(ctx)
+	// Restore the global config for later tests as the temp files
+	// are removed when this test finishes
+	oldCert, oldKey := ci.ClientCert, ci.ClientKey
+	t.Cleanup(func() {
+		ci.ClientCert, ci.ClientKey = oldCert, oldKey
+	})
 	// Create a test certificate and write it to a temp file
 	ci.ClientCert = t.TempDir() + "client.cert"
 	ci.ClientKey = t.TempDir() + "client.key"
@@ -201,4 +207,60 @@ func TestCertificates(t *testing.T) {
 	// The new cert should be auto-loaded before we make this request
 	_, err = client.Get(ts.URL)
 	assert.NoError(t, err)
+}
+
+// TestRedirectStripsGlobalHeaders checks the headers set with --header
+// are sent to the requested host and any redirect on it but not to
+// another host the request is redirected to
+func TestRedirectStripsGlobalHeaders(t *testing.T) {
+	var got http.Header
+	target := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got = r.Header.Clone()
+	}))
+	defer target.Close()
+
+	var ts *httptest.Server
+	ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/same":
+			http.Redirect(w, r, ts.URL+"/moved", http.StatusFound)
+		case "/other":
+			http.Redirect(w, r, target.URL+"/moved", http.StatusFound)
+		case "/back":
+			// Chain via the other host and back again
+			http.Redirect(w, r, target.URL+"/bounce", http.StatusFound)
+		default:
+			got = r.Header.Clone()
+		}
+	}))
+	defer ts.Close()
+	// The other host bounces /bounce back to the original host
+	target.Config.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/bounce" {
+			http.Redirect(w, r, ts.URL+"/moved", http.StatusFound)
+			return
+		}
+		got = r.Header.Clone()
+	})
+
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.Headers = []*fs.HTTPOption{{Key: "X-Potato", Value: "sausage"}}
+	client := NewClient(ctx)
+
+	for _, test := range []struct {
+		path string
+		want string
+	}{
+		{"/direct", "sausage"},
+		{"/same", "sausage"},
+		{"/other", ""},
+		{"/back", ""},
+	} {
+		got = nil
+		resp, err := client.Get(ts.URL + test.path)
+		require.NoError(t, err, test.path)
+		require.NoError(t, resp.Body.Close())
+		require.NotNil(t, got, test.path)
+		assert.Equal(t, test.want, got.Get("X-Potato"), test.path)
+	}
 }
