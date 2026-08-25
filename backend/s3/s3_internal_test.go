@@ -9,6 +9,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
+	"os/exec"
 	"path"
 	"strings"
 	"testing"
@@ -834,6 +836,59 @@ func (f *Fs) InternalTestObjectLock(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "GOVERNANCE", gotMetadata["object-lock-mode"])
 	})
+}
+
+// TestCommandIdentityTokenRetriever checks that a successful command's
+// trimmed stdout is used as the token.
+func TestCommandIdentityTokenRetriever(t *testing.T) {
+	if _, err := exec.LookPath("echo"); err != nil {
+		t.Skip("echo not found in PATH")
+	}
+	r := &commandIdentityTokenRetriever{command: []string{"echo", "  test-jwt-token  "}}
+	token, err := r.GetIdentityToken()
+	require.NoError(t, err)
+	assert.Equal(t, "test-jwt-token", string(token))
+}
+
+// TestCommandIdentityTokenRetrieverEmpty checks that a command producing no
+// output is treated as a failure to obtain a token.
+func TestCommandIdentityTokenRetrieverEmpty(t *testing.T) {
+	if _, err := exec.LookPath("true"); err != nil {
+		t.Skip("true not found in PATH")
+	}
+	r := &commandIdentityTokenRetriever{command: []string{"true"}}
+	_, err := r.GetIdentityToken()
+	assert.Error(t, err)
+}
+
+// TestCommandIdentityTokenRetrieverFailure checks that a non-zero exit
+// status is treated as a failure to obtain a token.
+func TestCommandIdentityTokenRetrieverFailure(t *testing.T) {
+	if _, err := exec.LookPath("false"); err != nil {
+		t.Skip("false not found in PATH")
+	}
+	r := &commandIdentityTokenRetriever{command: []string{"false"}}
+	_, err := r.GetIdentityToken()
+	assert.Error(t, err)
+}
+
+// TestS3ConnectionWebIdentityTokenCommand checks that setting
+// web_identity_token_command routes s3Connection through the
+// AssumeRoleWithWebIdentity path (wrapped in a CredentialsCache so STS isn't
+// called on every request) rather than falling through to static
+// credentials.
+func TestS3ConnectionWebIdentityTokenCommand(t *testing.T) {
+	opt := &Options{
+		Provider:                "Other",
+		Endpoint:                "https://sts.example.com",
+		Region:                  "us-east-1",
+		RoleARN:                 "arn:aws:iam::123456789012:role/test-role",
+		WebIdentityTokenCommand: fs.SpaceSepList{"echo", "test-jwt"},
+	}
+	c, _, err := s3Connection(context.Background(), opt, http.DefaultClient)
+	require.NoError(t, err)
+	_, ok := c.Options().Credentials.(*aws.CredentialsCache)
+	assert.True(t, ok, "expected AssumeRoleWithWebIdentity credentials to be wrapped in a CredentialsCache")
 }
 
 func (f *Fs) InternalTest(t *testing.T) {

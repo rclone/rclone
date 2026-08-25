@@ -17,6 +17,7 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"os/exec"
 	"path"
 	"regexp"
 	"slices"
@@ -349,8 +350,31 @@ If empty, the default session duration will be used.`,
 		}, {
 			Name: "role_external_id",
 			Help: `External ID for assumed role.
-			
+
 Leave blank if not using an external ID.`,
+			Advanced: true,
+		}, {
+			Name:    "web_identity_token_command",
+			Default: fs.SpaceSepList{},
+			Help: `Command whose output is used as the JWT for AssumeRoleWithWebIdentity.
+
+If set, rclone calls STS AssumeRoleWithWebIdentity (using role_arn) instead
+of AssumeRole. The command is run every time the temporary credentials need
+refreshing (on the cadence set by role_session_duration), and its trimmed
+stdout is used directly as the JWT - rclone does not parse, cache, or know
+anything about how the command itself obtains or refreshes the token, so
+this works regardless of where the token is actually stored (a file, an OS
+keyring, wherever). The command must print nothing but the token on
+success; wrap a noisier tool in a small script if needed, e.g.:
+
+    #!/bin/sh
+    set -o pipefail
+    capsule auth token 2>/dev/null | sed -n 's/^Authentication token: //p'
+
+A non-zero exit status, or empty output, is treated as a failure to obtain
+credentials.
+
+Leave blank if not using an external command to obtain the JWT.`,
 			Advanced: true,
 		}, {
 			Name: "upload_concurrency",
@@ -1105,6 +1129,7 @@ type Options struct {
 	RoleSessionName             string               `config:"role_session_name"`
 	RoleSessionDuration         fs.Duration          `config:"role_session_duration"`
 	RoleExternalID              string               `config:"role_external_id"`
+	WebIdentityTokenCommand     fs.SpaceSepList      `config:"web_identity_token_command"`
 	UploadConcurrency           int                  `config:"upload_concurrency"`
 	ForcePathStyle              bool                 `config:"force_path_style"`
 	V2Auth                      bool                 `config:"v2_auth"`
@@ -1496,6 +1521,36 @@ func (s3logger) Logf(classification logging.Classification, format string, v ...
 	}
 }
 
+// commandIdentityTokenRetriever implements stscreds.IdentityTokenRetriever by
+// running an external command and using its trimmed stdout as the JWT. It
+// knows nothing about how the command obtains or refreshes the token - that
+// is entirely up to whatever the user has configured - and is re-run every
+// time the temporary credentials need refreshing.
+type commandIdentityTokenRetriever struct {
+	command []string
+}
+
+// GetIdentityToken runs the configured command and returns its trimmed
+// stdout as the JWT. A non-zero exit status or empty output is an error.
+func (r *commandIdentityTokenRetriever) GetIdentityToken() ([]byte, error) {
+	var stdout, stderr bytes.Buffer
+	cmd := exec.Command(r.command[0], r.command[1:]...)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		fs.Errorf(nil, "web_identity_token_command failed: %v", err)
+		if ers := strings.TrimSpace(stderr.String()); ers != "" {
+			fs.Errorf(nil, "web_identity_token_command stderr: %s", ers)
+		}
+		return nil, fmt.Errorf("web_identity_token_command failed: %w", err)
+	}
+	token := strings.TrimSpace(stdout.String())
+	if token == "" {
+		return nil, errors.New("web_identity_token_command returned an empty token")
+	}
+	return []byte(token), nil
+}
+
 // s3Connection makes a connection to s3
 func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Client *s3.Client, provider *Provider, err error) {
 	ci := fs.GetConfig(ctx)
@@ -1547,34 +1602,67 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 		opt.Region = "us-east-1"
 	}
 
-	// Handle assume role if RoleARN is specified
-	if opt.RoleARN != "" {
-		fs.Debugf(nil, "Using assume role with ARN: %s", opt.RoleARN)
+	// Normalized endpoint for the STS client below - S3-compatible
+	// providers such as MinIO serve STS from the same host as S3, so
+	// role_arn and web_identity_token_command need this too, not just the
+	// S3 client (which gets its own copy of this normalization further down).
+	stsEndpoint := opt.Endpoint
+	if stsEndpoint != "" && !strings.HasPrefix(stsEndpoint, "http") {
+		stsEndpoint = "https://" + stsEndpoint
+	}
 
+	// Handle assume role if RoleARN or WebIdentityTokenCommand is specified
+	if opt.RoleARN != "" || len(opt.WebIdentityTokenCommand) != 0 {
 		// Set region for the config before creating STS client
 		awsConfig.Region = opt.Region
 
 		// Create STS client using the base credentials
-		stsClient := sts.NewFromConfig(awsConfig)
+		stsClient := sts.NewFromConfig(awsConfig, func(o *sts.Options) {
+			if stsEndpoint != "" {
+				o.BaseEndpoint = &stsEndpoint
+			}
+		})
 
-		// Configure AssumeRole options
-		assumeRoleOptions := func(aro *stscreds.AssumeRoleOptions) {
-			// Set session name if provided, otherwise use a default
+		// Configure WebIdentityRole/AssumeRole options
+		webIdentityOptions := func(wiro *stscreds.WebIdentityRoleOptions) {
 			if opt.RoleSessionName != "" {
-				aro.RoleSessionName = opt.RoleSessionName
+				wiro.RoleSessionName = opt.RoleSessionName
 			}
 			if opt.RoleSessionDuration != 0 {
-				aro.Duration = time.Duration(opt.RoleSessionDuration)
-			}
-			if opt.RoleExternalID != "" {
-				aro.ExternalID = &opt.RoleExternalID
+				wiro.Duration = time.Duration(opt.RoleSessionDuration)
 			}
 		}
 
-		// Create AssumeRole credentials provider, wrapped in a
-		// CredentialsCache so we don't call AssumeRole on every
-		// request.
-		awsConfig.Credentials = aws.NewCredentialsCache(stscreds.NewAssumeRoleProvider(stsClient, opt.RoleARN, assumeRoleOptions))
+		switch {
+		case len(opt.WebIdentityTokenCommand) != 0:
+			fs.Debugf(nil, "Using AssumeRoleWithWebIdentity via web_identity_token_command, ARN: %s", opt.RoleARN)
+
+			// Create WebIdentityRole credentials provider, wrapped in a
+			// CredentialsCache so we don't call AssumeRoleWithWebIdentity
+			// (or the token command) on every request.
+			retriever := &commandIdentityTokenRetriever{command: opt.WebIdentityTokenCommand}
+			awsConfig.Credentials = aws.NewCredentialsCache(stscreds.NewWebIdentityRoleProvider(stsClient, opt.RoleARN, retriever, webIdentityOptions))
+		default: // opt.RoleARN != ""
+			fs.Debugf(nil, "Using assume role with ARN: %s", opt.RoleARN)
+
+			assumeRoleOptions := func(aro *stscreds.AssumeRoleOptions) {
+				// Set session name if provided, otherwise use a default
+				if opt.RoleSessionName != "" {
+					aro.RoleSessionName = opt.RoleSessionName
+				}
+				if opt.RoleSessionDuration != 0 {
+					aro.Duration = time.Duration(opt.RoleSessionDuration)
+				}
+				if opt.RoleExternalID != "" {
+					aro.ExternalID = &opt.RoleExternalID
+				}
+			}
+
+			// Create AssumeRole credentials provider, wrapped in a
+			// CredentialsCache so we don't call AssumeRole on every
+			// request.
+			awsConfig.Credentials = aws.NewCredentialsCache(stscreds.NewAssumeRoleProvider(stsClient, opt.RoleARN, assumeRoleOptions))
+		}
 	}
 
 	provider = loadProvider(opt.Provider)
