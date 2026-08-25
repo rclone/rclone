@@ -3,6 +3,7 @@
 package archive
 
 import (
+	"archive/zip"
 	"bytes"
 	"context"
 	"fmt"
@@ -276,4 +277,33 @@ func TestArchiveSquashfsIssue9004(t *testing.T) {
 		assert.Equal(t, int(obj.Size()), len(data))
 		assert.True(t, bytes.HasPrefix(data, []byte("<?xml")))
 	})
+}
+
+// TestArchiveUncleanRoot checks that a path into an archive which isn't
+// in canonical form (with "./" or doubled slashes) still finds its
+// directory.
+func TestArchiveUncleanRoot(t *testing.T) {
+	fstest.Initialise()
+	ctx := context.Background()
+
+	var buf bytes.Buffer
+	zw := zip.NewWriter(&buf)
+	w, err := zw.Create("sub/dir/a.txt")
+	require.NoError(t, err)
+	_, err = w.Write([]byte("data"))
+	require.NoError(t, err)
+	require.NoError(t, zw.Close())
+	zipPath := filepath.Join(t.TempDir(), "test.zip")
+	require.NoError(t, os.WriteFile(zipPath, buf.Bytes(), 0600))
+
+	for _, root := range []string{"sub/dir", "sub/./dir", "sub//dir", "./sub/dir/", "sub/dir/."} {
+		t.Run(root, func(t *testing.T) {
+			f, err := cache.Get(ctx, ":archive:"+zipPath+"/"+root)
+			require.NoError(t, err)
+			entries, err := f.List(ctx, "")
+			require.NoError(t, err)
+			require.Len(t, entries, 1)
+			assert.Equal(t, "a.txt", entries[0].Remote())
+		})
+	}
 }
