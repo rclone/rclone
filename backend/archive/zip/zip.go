@@ -163,6 +163,14 @@ func (f *Fs) readZip() (singleObject bool, err error) {
 			dt.AddDir(dir)
 		} else {
 			if remote == "" {
+				// A file at the root itself can only be the
+				// archive member f.root points at - with no root
+				// it is a crafted name for the archive's own
+				// directory, which can't be a file
+				if f.root == "" {
+					skipped++
+					continue
+				}
 				remote = path.Base(f.root)
 				singleObject = true
 				dt = dirtree.New()
