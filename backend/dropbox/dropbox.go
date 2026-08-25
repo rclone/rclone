@@ -392,8 +392,8 @@ type Fs struct {
 	sharing        sharing.ContextClient // as above, but for generating sharing links
 	users          users.ContextClient   // as above, but for accessing user information
 	team           team.ContextClient    // for the Teams API
-	slashRoot      string                // root with "/" prefix, lowercase
-	slashRootSlash string                // root with "/" prefix and postfix, lowercase
+	slashRoot      string                // root with "/" prefix
+	slashRootSlash string                // root with "/" prefix and postfix
 	pacer          *fs.Pacer             // To pace the API calls
 	ns             string                // The namespace we are using or "" for none
 	batcher        *batcher.Batcher[*files.UploadSessionFinishArg, *files.FileMetadata]
@@ -1672,6 +1672,19 @@ func (f *Fs) changeNotifyCursor(ctx context.Context) (cursor string, err error) 
 	return startCursor.Cursor, nil
 }
 
+// trimRootDisplay trims the configured root prefix from a Dropbox display
+// path. PathDisplay comes back with server-side display casing while
+// slashRootSlash keeps the casing the user typed in the config, so a
+// case-sensitive comparison would silently fail for case-mismatched roots.
+// The match is therefore case-insensitive, mirroring the CaseInsensitive
+// feature of this backend.
+func (f *Fs) trimRootDisplay(p string) string {
+	if len(p) >= len(f.slashRootSlash) && strings.EqualFold(p[:len(f.slashRootSlash)], f.slashRootSlash) {
+		return p[len(f.slashRootSlash):]
+	}
+	return p
+}
+
 func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.EntryType), startCursor string) (newCursor string, err error) {
 	cursor := startCursor
 	var res *files.ListFolderLongpollResult
@@ -1731,13 +1744,13 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 			switch info := entry.(type) {
 			case *files.FolderMetadata:
 				entryType = fs.EntryDirectory
-				entryPath = strings.TrimPrefix(info.PathDisplay, f.slashRootSlash)
+				entryPath = f.trimRootDisplay(info.PathDisplay)
 			case *files.FileMetadata:
 				entryType = fs.EntryObject
-				entryPath = strings.TrimPrefix(info.PathDisplay, f.slashRootSlash)
+				entryPath = f.trimRootDisplay(info.PathDisplay)
 			case *files.DeletedMetadata:
 				entryType = fs.EntryObject
-				entryPath = strings.TrimPrefix(info.PathDisplay, f.slashRootSlash)
+				entryPath = f.trimRootDisplay(info.PathDisplay)
 			default:
 				fs.Errorf(entry, "dropbox ChangeNotify: ignoring unknown EntryType %T", entry)
 				continue
