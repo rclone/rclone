@@ -153,37 +153,60 @@ func newListTestFs(t *testing.T, handler http.Handler) *Fs {
 	}
 }
 
-func TestInternalListIncompleteSearch(t *testing.T) {
+// TestInternalListRRunnerPartialBatch reproduces the scenario in #9810: a
+// batched multi-directory listing where the Drive API silently returns no
+// items for some of the requested directories while returning items
+// normally for others. It checks that only the directories which got no
+// items are retried individually (not the whole batch, which would
+// duplicate the entries already emitted for the healthy directories) and
+// that ListR grouping is disabled as a result.
+func TestInternalListRRunnerPartialBatch(t *testing.T) {
 	f := newListTestFs(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		_, err := io.WriteString(w, `{"files":[{"id":"file-1","name":"file-1"}],"incompleteSearch":true}`)
+		// dir-a has a file, dir-b and dir-c are silently dropped by the
+		// simulated Drive bug even though they are not actually empty
+		_, err := io.WriteString(w, `{"files":[{"id":"file-a","name":"file-a.txt","mimeType":"text/plain","md5Checksum":"d41d8cd98f00b204e9800998ecf8427e","parents":["dir-a"]}]}`)
 		assert.NoError(t, err)
 	}))
+	f.opt.FastListBugFix = true
+	f.grouping = listRGrouping
+	f.listRmu = new(stdsync.Mutex)
+	f.listRempties = make(map[string]struct{})
 
-	var seen []string
-	found, incomplete, err := f.list(context.Background(), []string{"dir-id"}, "", false, false, false, false, func(item *drive.File) bool {
-		seen = append(seen, item.Id)
-		return false
-	})
-	require.NoError(t, err)
-	assert.False(t, found)
-	assert.True(t, incomplete, "incomplete should reflect incompleteSearch in the API response even though items were returned")
-	assert.Equal(t, []string{"file-1"}, seen)
-}
+	in := make(chan listREntry, 10)
+	out := make(chan error, 1)
+	var wg stdsync.WaitGroup
+	var mu stdsync.Mutex
+	var emitted []string
+	var requeued []listREntry
+	cb := func(entry fs.DirEntry) error {
+		mu.Lock()
+		defer mu.Unlock()
+		emitted = append(emitted, entry.Remote())
+		return nil
+	}
+	sendJob := func(job listREntry) {
+		mu.Lock()
+		defer mu.Unlock()
+		requeued = append(requeued, job)
+	}
 
-func TestInternalListCompleteSearch(t *testing.T) {
-	f := newListTestFs(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		_, err := io.WriteString(w, `{"files":[],"incompleteSearch":false}`)
-		assert.NoError(t, err)
-	}))
+	wg.Add(3)
+	in <- listREntry{id: "dir-a", path: "a"}
+	in <- listREntry{id: "dir-b", path: "b"}
+	in <- listREntry{id: "dir-c", path: "c"}
+	close(in)
 
-	found, incomplete, err := f.list(context.Background(), []string{"dir-id"}, "", false, false, false, false, func(item *drive.File) bool {
-		return false
-	})
-	require.NoError(t, err)
-	assert.False(t, found)
-	assert.False(t, incomplete)
+	f.listRRunner(context.Background(), &wg, in, out, cb, sendJob)
+	require.NoError(t, <-out)
+
+	assert.Equal(t, []string{"a/file-a.txt"}, emitted, "the healthy directory's item should be emitted exactly once")
+	requeuedIDs := make([]string, len(requeued))
+	for i, job := range requeued {
+		requeuedIDs[i] = job.id
+	}
+	assert.ElementsMatch(t, []string{"dir-b", "dir-c"}, requeuedIDs, "only the directories that returned no items should be retried, not dir-a")
+	assert.Equal(t, int32(1), f.grouping, "grouping should be disabled after a partial batch")
 }
 
 func TestDriveScopes(t *testing.T) {
