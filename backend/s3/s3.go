@@ -4653,6 +4653,16 @@ func (w *s3ChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 			// retry all chunks once have done the first few
 			return true, err
 		}
+		if uout == nil || uout.ETag == nil {
+			// A successful UploadPart without an ETag header is unusable: the
+			// part ETag is required by CompleteMultipartUpload. Proxies and
+			// load balancers have been observed emitting empty 200 responses
+			// under load - see #9822. Treat it as a retryable error so the
+			// pacer retries this chunk, instead of dereferencing a nil ETag
+			// in the debug log below or completing the upload with a broken
+			// part list.
+			return true, fmt.Errorf("UploadPart response for chunk %d has no ETag", chunkNumber+1)
+		}
 		return false, nil
 	})
 	if err != nil {
