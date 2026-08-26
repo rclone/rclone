@@ -1043,7 +1043,8 @@ will use this much memory for buffering.
 
 When using `mount` or `cmount` each open file descriptor will use this much
 memory for buffering.
-See the [mount](/commands/rclone_mount/#file-buffering) documentation for more details.
+See the [mount](/commands/rclone_mount/#vfs-file-buffering) documentation for
+more details.
 
 Set to `0` to disable the buffering for the minimum memory usage.
 
