@@ -882,3 +882,20 @@ func TestMatchListingsNoProcessDstOnly(t *testing.T) {
 		})
 	}
 }
+
+func TestMatchListingGroupsRejectsOutOfOrderEntries(t *testing.T) {
+	m := March{
+		Ctx:                   context.Background(),
+		MatchFileAndDirectory: true,
+	}
+	src := make(chan fs.DirEntry, 2)
+	src <- mockobject.Object("b")
+	src <- mockobject.Object("a")
+	close(src)
+	dst := make(chan fs.DirEntry)
+	close(dst)
+
+	require.PanicsWithValue(t, "Out of order listing in source", func() {
+		_ = m.matchListings(src, dst, func() {}, func(fs.DirEntry) {}, func(fs.DirEntry) {}, func(fs.DirEntry, fs.DirEntry) {})
+	})
+}

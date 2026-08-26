@@ -95,8 +95,9 @@ func (m *March) srcOrDstKey(entry fs.DirEntry, isSrc bool) string {
 	if entry == nil {
 		return name
 	}
-	// Suffix entries to make identically named files and
-	// directories sort consistently with directories first.
+	// Delimit the type so entries sort by name before type, with
+	// directories first for identically named entries.
+	name += "\x00"
 	if _, isDirectory := entry.(fs.Directory); isDirectory {
 		name += "D"
 	} else {
@@ -407,34 +408,42 @@ func (m *March) matchListings(srcChan, dstChan <-chan fs.DirEntry, dstCancel fun
 }
 
 type entryGroupReader struct {
-	entries <-chan fs.DirEntry
-	key     func(fs.DirEntry) string
-	pending fs.DirEntry
-	more    bool
-	started bool
+	entries     <-chan fs.DirEntry
+	key         func(fs.DirEntry) string
+	sortKey     func(fs.DirEntry) string
+	side        string
+	pending     fs.DirEntry
+	previousKey string
+}
+
+func (r *entryGroupReader) read() (entry fs.DirEntry, ok bool) {
+	if r.pending != nil {
+		entry = r.pending
+		r.pending = nil
+		return entry, true
+	}
+	entry, ok = <-r.entries
+	if !ok {
+		return nil, false
+	}
+	sortKey := r.sortKey(entry)
+	if r.previousKey != "" && sortKey < r.previousKey {
+		panic("Out of order listing in " + r.side)
+	}
+	r.previousKey = sortKey
+	return entry, true
 }
 
 func (r *entryGroupReader) next() (key string, entries fs.DirEntries, ok bool) {
-	var entry fs.DirEntry
-	if r.started {
-		if !r.more {
-			return "", nil, false
-		}
-		entry = r.pending
-	} else {
-		entry, r.more = <-r.entries
-		r.started = true
-		if !r.more {
-			return "", nil, false
-		}
+	entry, ok := r.read()
+	if !ok {
+		return "", nil, false
 	}
-
 	key = r.key(entry)
 	entries = append(entries, entry)
 	for {
-		entry, r.more = <-r.entries
-		if !r.more {
-			r.pending = nil
+		entry, ok = r.read()
+		if !ok {
 			return key, entries, true
 		}
 		if r.key(entry) != key {
@@ -483,10 +492,10 @@ func firstEntryGroup(entries map[string]fs.DirEntry) fs.DirEntry {
 func (m *March) matchListingGroups(srcChan, dstChan <-chan fs.DirEntry, dstCancel func(), srcOnly, dstOnly func(fs.DirEntry), match func(dst, src fs.DirEntry)) error {
 	srcReader := entryGroupReader{entries: srcChan, key: func(entry fs.DirEntry) string {
 		return m.srcOrDstBaseKey(entry, true)
-	}}
+	}, sortKey: m.srcKey, side: "source"}
 	dstReader := entryGroupReader{entries: dstChan, key: func(entry fs.DirEntry) string {
 		return m.srcOrDstBaseKey(entry, false)
-	}}
+	}, sortKey: m.dstKey, side: "destination"}
 	srcKey, srcEntries, srcMore := srcReader.next()
 	if !srcMore && m.NoProcessDstOnly {
 		dstCancel()

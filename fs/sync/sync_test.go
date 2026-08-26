@@ -1241,6 +1241,20 @@ func TestSyncReplacesFileAndDirectory(t *testing.T) {
 	}
 }
 
+func TestSyncDeleteAfterMatchesNamesBeforeTypeSuffix(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	require.Equal(t, fs.DeleteModeAfter, ci.DeleteMode)
+	r := fstest.NewRun(t)
+
+	file := r.WriteFile("a", "new contents", t1)
+	fileWithSuffix := r.WriteFile("a-", "other contents", t1)
+	r.WriteObject(ctx, "a", "old contents", t2)
+
+	require.NoError(t, Sync(ctx, r.Fremote, r.Flocal, false))
+	r.CheckRemoteItems(t, file, fileWithSuffix)
+}
+
 func TestSyncReplacesFileAndDirectoryWithBackupDir(t *testing.T) {
 	for _, sourceIsDirectory := range []bool{false, true} {
 		name := "directory with file"
