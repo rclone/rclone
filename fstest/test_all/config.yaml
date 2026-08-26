@@ -460,6 +460,9 @@ backends:
     #  fs/operations
      - TestCheckSum
      - TestHashSums/Md5
+    # PikPak declares MD5 but never returns it for uploaded files, so
+    # corruption can't be detected by comparing hashes.
+     - TestRcatSizeChecksum/Corrupted
     #  fs/sync
      - TestSyncWithTrackRenames
     # integration
