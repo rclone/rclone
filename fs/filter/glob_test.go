@@ -193,3 +193,16 @@ func TestGlobToDirGlobs(t *testing.T) {
 		assert.Equal(t, test.want, got, test.in)
 	}
 }
+
+func TestGlobToDirGlobsUnbalanced(t *testing.T) {
+	for _, test := range []struct {
+		in   string
+		want []string
+	}{
+		{`a}}/c/**`, []string{"/**"}},
+		{`a/{b,c}}`, []string{"/**"}},
+	} {
+		got := globToDirGlobs(test.in)
+		assert.Equal(t, test.want, got, test.in)
+	}
+}

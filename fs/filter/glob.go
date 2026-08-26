@@ -234,6 +234,11 @@ const maxBraceExpansions = 1000
 // a {{ regexp }} section, nested braces, an unterminated group, or more
 // alternatives than maxBraceExpansions.
 func expandBraces(glob string) (out []string, ok bool) {
+	// A {{ or }} indicates a regexp section or unexpandable brace construct
+	if strings.Contains(glob, "{{") || strings.Contains(glob, "}}") {
+		return nil, false
+	}
+
 	// Find the first brace group, ignoring escaped braces
 	start := -1
 	slashed := false
