@@ -13,6 +13,8 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/fstest/mockfs"
+	"github.com/rclone/rclone/fstest/mockobject"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -499,4 +501,165 @@ func TestVFSIsMetadataFile(t *testing.T) {
 	rawName, found = vfs.isMetadataFile("leaf.metadata")
 	assert.Equal(t, "leaf", rawName)
 	assert.Equal(t, true, found)
+}
+
+// idObject wraps a mock object with a backend ID so it satisfies fs.IDer.
+//
+// An empty id means ID() reports no ID is available, as backends do for
+// objects whose ID they don't know.
+type idObject struct {
+	fs.Object
+	id string
+}
+
+// ID returns the backend ID of the object
+func (o idObject) ID() string { return o.id }
+
+// newIDObject makes an object of the given size with the given backend ID
+func newIDObject(remote, id string, contents []byte) idObject {
+	return idObject{
+		Object: mockobject.New(remote).WithContent(contents, mockobject.SeekModeNone),
+		id:     id,
+	}
+}
+
+// The high bit marks an inode as being derived from a backend ID rather
+// than from the counter.
+const inodeIDBit = uint64(0x8000000000000000)
+
+func TestDeriveInode(t *testing.T) {
+	contents := []byte("mock file content")
+
+	t.Run("SameIDSameInode", func(t *testing.T) {
+		// Two distinct objects sharing a backend ID - as happens when the
+		// VFS drops a node and later recreates it from a fresh listing.
+		a := newIDObject("file.txt", "backend-id-1", contents)
+		b := newIDObject("file.txt", "backend-id-1", contents)
+		assert.Equal(t, deriveInode(a), deriveInode(b))
+	})
+
+	t.Run("DifferentIDDifferentInode", func(t *testing.T) {
+		a := newIDObject("a.txt", "backend-id-1", contents)
+		b := newIDObject("b.txt", "backend-id-2", contents)
+		assert.NotEqual(t, deriveInode(a), deriveInode(b))
+	})
+
+	t.Run("IDSetsHighBit", func(t *testing.T) {
+		inode := deriveInode(newIDObject("file.txt", "backend-id-1", contents))
+		assert.Equal(t, inodeIDBit, inode&inodeIDBit)
+	})
+
+	t.Run("EmptyIDUsesCounter", func(t *testing.T) {
+		// fs.Directory requires ID() but backends which have no ID for a
+		// directory return "", so that must fall back to the counter.
+		a := deriveInode(newIDObject("file.txt", "", contents))
+		b := deriveInode(newIDObject("file.txt", "", contents))
+		assert.NotEqual(t, a, b)
+		assert.Zero(t, a&inodeIDBit)
+		assert.Zero(t, b&inodeIDBit)
+	})
+
+	t.Run("NoIDerUsesCounter", func(t *testing.T) {
+		// A backend which doesn't implement fs.IDer at all
+		a := deriveInode(mockobject.New("file.txt"))
+		b := deriveInode(mockobject.New("file.txt"))
+		assert.NotEqual(t, a, b)
+		assert.Zero(t, a&inodeIDBit)
+		assert.Zero(t, b&inodeIDBit)
+	})
+
+	t.Run("NilEntryUsesCounter", func(t *testing.T) {
+		// newFile is called with a nil object for files being created
+		a := deriveInode(nil)
+		b := deriveInode(nil)
+		assert.NotEqual(t, a, b)
+		assert.Zero(t, a&inodeIDBit)
+		assert.Zero(t, b&inodeIDBit)
+	})
+}
+
+// inodeAfterForget returns the inode of remote, then forgets the whole
+// directory cache and returns the inode of remote as freshly listed.
+func inodeAfterForget(t *testing.T, vfs *VFS, remote string) (before, after uint64) {
+	node, err := vfs.Stat(remote)
+	require.NoError(t, err)
+	before = node.Inode()
+
+	root, err := vfs.Root()
+	require.NoError(t, err)
+	root.ForgetAll()
+
+	node, err = vfs.Stat(remote)
+	require.NoError(t, err)
+	return before, node.Inode()
+}
+
+// newMockVFS makes a VFS on a mockfs holding the entries given
+func newMockVFS(t *testing.T, entries ...fs.DirEntry) *VFS {
+	fMock, err := mockfs.NewFs(context.Background(), "test", "root", nil)
+	require.NoError(t, err)
+	f := fMock.(*mockfs.Fs)
+	for _, entry := range entries {
+		switch x := entry.(type) {
+		case fs.Object:
+			f.AddObject(x)
+		default:
+			t.Fatalf("can't add %T to mockfs", entry)
+		}
+	}
+	vfs := New(context.Background(), f, nil)
+	t.Cleanup(func() {
+		cleanupVFS(t, vfs)
+	})
+	return vfs
+}
+
+func TestFileInodeAfterForget(t *testing.T) {
+	contents := []byte("mock file content")
+
+	t.Run("WithID", func(t *testing.T) {
+		vfs := newMockVFS(t, newIDObject("file.txt", "backend-id-1", contents))
+		before, after := inodeAfterForget(t, vfs, "file.txt")
+		assert.Equal(t, before, after, "inode should survive the file being forgotten")
+		assert.Equal(t, inodeIDBit, before&inodeIDBit)
+	})
+
+	// Without a backend ID there is nothing stable to derive the inode
+	// from, so it changes - this is what the ID is needed to avoid.
+	t.Run("WithoutID", func(t *testing.T) {
+		vfs := newMockVFS(t, mockobject.New("file.txt").WithContent(contents, mockobject.SeekModeNone))
+		before, after := inodeAfterForget(t, vfs, "file.txt")
+		assert.NotEqual(t, before, after)
+	})
+}
+
+// Unlike TestFileInodeAfterForget this calls newDir directly rather than
+// forgetting and re-listing the directory: mockfs lists only the objects
+// added to its flat root, so it never returns a directory entry to
+// rediscover. Calling newDir twice covers the same thing - that the same
+// directory ID gives the same inode each time a *Dir is made for it.
+func TestDirInodeAfterForget(t *testing.T) {
+	const dir = "dir"
+	const remote = dir + "/file.txt"
+
+	t.Run("WithID", func(t *testing.T) {
+		vfs := newMockVFS(t, newIDObject(remote, "file-id", []byte("x")))
+		root, err := vfs.Root()
+		require.NoError(t, err)
+		d := newDir(vfs, vfs.f, root, fs.NewDir(dir, t1).SetID("dir-id"))
+		before := d.Inode()
+		again := newDir(vfs, vfs.f, root, fs.NewDir(dir, t1).SetID("dir-id"))
+		assert.Equal(t, before, again.Inode(), "inode should be the same for the same directory ID")
+		assert.Equal(t, inodeIDBit, before&inodeIDBit)
+	})
+
+	t.Run("WithoutID", func(t *testing.T) {
+		vfs := newMockVFS(t, newIDObject(remote, "file-id", []byte("x")))
+		root, err := vfs.Root()
+		require.NoError(t, err)
+		d := newDir(vfs, vfs.f, root, fs.NewDir(dir, t1))
+		again := newDir(vfs, vfs.f, root, fs.NewDir(dir, t1))
+		assert.NotEqual(t, d.Inode(), again.Inode())
+		assert.Zero(t, d.Inode()&inodeIDBit)
+	})
 }
