@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"sync"
 	"time"
 
@@ -59,18 +60,25 @@ func (bs *buckets) _setOff() {
 }
 
 const defaultMaxBurstSize = 4 * 1024 * 1024 // must be bigger than the biggest request
+const tokenBucketBurstScale = (256 * 1024 * 1024) / defaultMaxBurstSize
 
-// make a new empty token bucket with the bandwidth given
-func newEmptyTokenBucket(bandwidth fs.SizeSuffix) *rate.Limiter {
+func tokenBucketBurst(bandwidth fs.SizeSuffix) int {
 	// Relate maxBurstSize to bandwidth limit
 	// 4M gives 2.5 Gb/s on Windows
 	// Use defaultMaxBurstSize up to 2GBit/s (256MiB/s) then scale
-	maxBurstSize := max((bandwidth*defaultMaxBurstSize)/(256*1024*1024), defaultMaxBurstSize)
+	maxBurstSize := max(bandwidth/tokenBucketBurstScale, defaultMaxBurstSize)
+	maxBurstSize = min(maxBurstSize, fs.SizeSuffix(math.MaxInt))
+	return int(maxBurstSize)
+}
+
+// make a new empty token bucket with the bandwidth given
+func newEmptyTokenBucket(bandwidth fs.SizeSuffix) *rate.Limiter {
+	maxBurstSize := tokenBucketBurst(bandwidth)
 	// fs.Debugf(nil, "bandwidth=%v maxBurstSize=%v", bandwidth, maxBurstSize)
-	tb := rate.NewLimiter(rate.Limit(bandwidth), int(maxBurstSize))
+	tb := rate.NewLimiter(rate.Limit(bandwidth), maxBurstSize)
 	if tb != nil {
 		// empty the bucket
-		err := tb.WaitN(context.Background(), int(maxBurstSize))
+		err := tb.WaitN(context.Background(), maxBurstSize)
 		if err != nil {
 			fs.Errorf(nil, "Failed to empty token bucket: %v", err)
 		}
