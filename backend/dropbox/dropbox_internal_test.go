@@ -86,6 +86,71 @@ func TestInternalGetMetadataCancellation(t *testing.T) {
 	}
 }
 
+type changeNotifyClient struct {
+	files.ContextClient
+	entries []files.IsMetadata
+}
+
+func (c changeNotifyClient) ListFolderLongpollContext(context.Context, *files.ListFolderLongpollArg) (*files.ListFolderLongpollResult, error) {
+	return files.NewListFolderLongpollResult(true), nil
+}
+
+func (c changeNotifyClient) ListFolderContinueContext(context.Context, *files.ListFolderContinueArg) (*files.ListFolderResult, error) {
+	return files.NewListFolderResult(c.entries, "next", false), nil
+}
+
+func TestTrimPrefixFold(t *testing.T) {
+	for _, test := range []struct {
+		name   string
+		path   string
+		prefix string
+		want   string
+	}{
+		{name: "exact casing", path: "/Docs/Sub", prefix: "/Docs/", want: "Sub"},
+		{name: "different casing", path: "/docs/Sub", prefix: "/Docs/", want: "Sub"},
+		{name: "different UTF-8 lengths", path: "/K/Sub", prefix: "/K/", want: "Sub"},
+		{name: "exact root", path: "/docs", prefix: "/Docs/", want: ""},
+		{name: "sibling boundary", path: "/Docs2/File", prefix: "/Docs/", want: "/Docs2/File"},
+		{name: "root remote", path: "/File", prefix: "/", want: "File"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.want, trimPrefixFold(test.path, test.prefix))
+		})
+	}
+}
+
+func TestChangeNotifyTrimsRootCaseInsensitively(t *testing.T) {
+	ctx := context.Background()
+	client := changeNotifyClient{entries: []files.IsMetadata{
+		&files.FolderMetadata{Metadata: files.Metadata{PathDisplay: "/docs/Sub"}},
+		&files.FileMetadata{Metadata: files.Metadata{PathDisplay: "/docs/Sub/File.TXT"}},
+		&files.DeletedMetadata{Metadata: files.Metadata{PathDisplay: "/docs/Gone.md"}},
+	}}
+	f := &Fs{
+		ci:             fs.GetConfig(ctx),
+		srv:            client,
+		svc:            client,
+		slashRootSlash: "/Docs/",
+		pacer:          fs.NewPacer(ctx, pacer.NewDefault()),
+	}
+
+	type notification struct {
+		path      string
+		entryType fs.EntryType
+	}
+	var notifications []notification
+	cursor, err := f.changeNotifyRunner(ctx, func(path string, entryType fs.EntryType) {
+		notifications = append(notifications, notification{path: path, entryType: entryType})
+	}, "start")
+	require.NoError(t, err)
+	assert.Equal(t, "next", cursor)
+	assert.Equal(t, []notification{
+		{path: "Sub", entryType: fs.EntryDirectory},
+		{path: "Sub/File.TXT", entryType: fs.EntryObject},
+		{path: "Gone.md", entryType: fs.EntryObject},
+	}, notifications)
+}
+
 func TestInternalCheckPathLength(t *testing.T) {
 	rep := func(n int, r rune) (out string) {
 		rs := make([]rune, n)
