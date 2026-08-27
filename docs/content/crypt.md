@@ -813,6 +813,15 @@ This means that
 - filenames with the same name will encrypt the same
 - filenames which start the same won't have a common prefix
 
+A version string of the form `-vYYYY-MM-DD-HHMMSS-NNN` on the end of a
+file name (as added by `--b2-versions` / `--s3-versions`) is left in
+plain text so that versioned files can be found. Directory names are
+encrypted in full. Rclone before v1.76 left such a suffix in plain
+text on directory names too, so a directory named like this created by
+an older rclone will appear in listings with a warning but can't be
+opened or removed until renamed on the underlying remote to the name
+given in the warning.
+
 This uses a 32 byte key (256 bits) and a 16 byte (128 bits) IV both of
 which are derived from the user password.
 
