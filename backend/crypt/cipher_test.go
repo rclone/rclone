@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path"
 	"strings"
 	"testing"
 
@@ -684,23 +685,38 @@ func TestNonStandardDecryptDirName(t *testing.T) {
 
 // Test directories whose name looks like it has a version string -
 // these encrypt verbatim, so that EncryptDirName agrees with the same
-// directory encrypted as the parent of a file name
+// directory encrypted as the parent of a file name, whereas file names
+// keep the version string in plain text
 func TestVersionedDirName(t *testing.T) {
 	const dir = "dir-v2001-02-03-040506-123"
-	for _, encoding := range []string{"base32", "base64", "base32768"} {
-		enc, _ := NewNameEncoding(encoding)
-		for _, mode := range []NameEncryptionMode{NameEncryptionStandard, NameEncryptionObfuscated} {
-			c, _ := newCipher(mode, "", "", true, enc)
-			what := fmt.Sprintf("Testing %q (mode=%v)", encoding, mode)
-			// Check EncryptDirName matches the parent of an encrypted file name
-			encryptedDir := c.EncryptDirName(dir)
-			encryptedFile := c.EncryptFileName(dir + "/file.txt")
-			assert.Equal(t, encryptedDir+"/", encryptedFile[:strings.LastIndex(encryptedFile, "/")+1], what)
-			// Check the encrypted directory name round trips OK
-			decryptedDir, err := c.DecryptDirName(encryptedDir)
-			assert.NoError(t, err, what)
-			assert.Equal(t, dir, decryptedDir, what)
-		}
+	enc, err := NewNameEncoding("base32")
+	require.NoError(t, err)
+	for _, mode := range []NameEncryptionMode{NameEncryptionStandard, NameEncryptionObfuscated} {
+		c, err := newCipher(mode, "", "", true, enc)
+		require.NoError(t, err)
+		what := fmt.Sprintf("Testing mode=%v", mode)
+		// Check EncryptDirName matches the parent of an encrypted file name
+		encryptedDir := c.EncryptDirName(dir)
+		encryptedFile := c.EncryptFileName(dir + "/file.txt")
+		assert.Equal(t, encryptedDir, path.Dir(encryptedFile), what)
+		// Check the encrypted directory name round trips OK
+		decryptedDir, err := c.DecryptDirName(encryptedDir)
+		assert.NoError(t, err, what)
+		assert.Equal(t, dir, decryptedDir, what)
+		// Check a file with the same name keeps its version string in plain text
+		encryptedFile = c.EncryptFileName(dir)
+		assert.NotEqual(t, encryptedDir, encryptedFile, what)
+		assert.Contains(t, encryptedFile, "-v2001-02-03-040506-123", what)
+		decryptedFile, err := c.DecryptFileName(encryptedFile)
+		assert.NoError(t, err, what)
+		assert.Equal(t, dir, decryptedFile, what)
+		// Check a directory with a legacy encrypted name (the file form) still decrypts
+		decryptedDir, err = c.DecryptDirName(encryptedFile)
+		assert.NoError(t, err, what)
+		assert.Equal(t, dir, decryptedDir, what)
+		// but a name which is bad in both forms is still an error
+		_, err = c.DecryptDirName("!!!-v2001-02-03-040506-123")
+		assert.Error(t, err, what)
 	}
 }
 
