@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path"
 	"strconv"
 	"strings"
 	"sync"
@@ -487,12 +488,10 @@ func (c *Cipher) deobfuscateSegment(ciphertext string) (string, error) {
 
 // encryptFileName encrypts a file path
 //
-// If stripVersion is set then a version string on the last segment (as
-// used by --b2-versions) is removed before encryption and put back in
-// plain text afterwards. Only file leaf names are given version strings
-// by the underlying backend, so it must not be set for directory names,
-// which would otherwise encrypt differently from the same directory
-// appearing as the parent of a file name.
+// If stripVersion is set, a version string (as used by --b2-versions)
+// on the last segment is kept in plain text. Set it for file names
+// only: directory names must encrypt identically whether passed alone
+// or as the parent of a file name.
 func (c *Cipher) encryptFileName(in string, stripVersion bool) string {
 	segments := strings.Split(in, "/")
 	for i := range segments {
@@ -540,6 +539,9 @@ func (c *Cipher) EncryptFileName(in string) string {
 }
 
 // EncryptDirName encrypts a directory path
+//
+// Unlike EncryptFileName, a version string on the last segment is
+// encrypted along with the rest of the name.
 func (c *Cipher) EncryptDirName(in string) string {
 	if c.mode == NameEncryptionOff || !c.dirNameEncrypt {
 		return in
@@ -614,11 +616,27 @@ func (c *Cipher) DecryptFileName(in string) (string, error) {
 }
 
 // DecryptDirName decrypts a directory path
+//
+// Unlike DecryptFileName, a version string on the last segment is
+// expected to be part of the encrypted name. Directory names created
+// by rclone before v1.76 had a version-like suffix left in plain
+// text; these are still decrypted so that they appear in listings,
+// but they can't be opened or removed until renamed on the
+// underlying remote.
 func (c *Cipher) DecryptDirName(in string) (string, error) {
 	if c.mode == NameEncryptionOff || !c.dirNameEncrypt {
 		return in, nil
 	}
-	return c.decryptFileName(in, false)
+	out, err := c.decryptFileName(in, false)
+	if err != nil && version.Match(path.Base(in)) {
+		var legacyErr error
+		out, legacyErr = c.decryptFileName(in, true)
+		if legacyErr == nil {
+			fs.Logf(nil, "crypt: directory %q has a legacy encrypted name - rename %q on the underlying remote to %q to make it accessible", out, in, c.encryptFileName(out, false))
+			return out, nil
+		}
+	}
+	return out, err
 }
 
 // NameEncryptionMode returns the encryption mode in use for names
