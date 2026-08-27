@@ -42,7 +42,7 @@ func init() {
 			{Name: "phone", Help: "Telefonní číslo ve formátu +420123456789"},
 			{Name: "auth_code", IsPassword: true, Help: "Přihlašovací kód z Telegramu (pouze při prvním přihlášení)"},
 			{Name: "twofa_password", IsPassword: true, Advanced: true, Help: "Heslo Telegram 2FA (pouze pokud je zapnuté)"},
-			{Name: "chat_id", Default: "me", Help: "ID chatu, kam se mají soubory ukládat (např. 'me', '-100123456', 'username')"},
+			{Name: "chat_id", Default: "me", Help: "Cíl pro soubory: 'me' nebo username chatu (např. '@my_channel')"},
 			{Name: "session_string", Advanced: true, Help: "Uložený session string pro automatické přihlášení"},
 		},
 	})
