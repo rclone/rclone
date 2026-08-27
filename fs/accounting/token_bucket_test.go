@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -89,4 +90,21 @@ func TestRcBwLimit(t *testing.T) {
 		"rate":             "off",
 	}, out)
 
+}
+
+func TestNewEmptyTokenBucketHugeBandwidth(t *testing.T) {
+	// Large bandwidths used to overflow int64 in the burst scaling
+	// product (bandwidth*defaultMaxBurstSize) and, on 32-bit builds,
+	// wrap negative in the int() conversion, which silently disabled
+	// the limiter. The burst must stay positive and the limiter usable.
+	for _, bw := range []fs.SizeSuffix{
+		200 * fs.Gibi, // 32-bit int() truncation used to go negative
+		2 * fs.Tebi,   // int64 overflow boundary
+		4 * fs.Tebi,
+		10 * fs.Tebi,
+	} {
+		tb := newEmptyTokenBucket(bw)
+		require.NotNil(t, tb)
+		assert.Greater(t, tb.Burst(), 0, "burst must be positive for %v", bw)
+	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"sync"
 	"time"
 
@@ -64,8 +65,17 @@ const defaultMaxBurstSize = 4 * 1024 * 1024 // must be bigger than the biggest r
 func newEmptyTokenBucket(bandwidth fs.SizeSuffix) *rate.Limiter {
 	// Relate maxBurstSize to bandwidth limit
 	// 4M gives 2.5 Gb/s on Windows
-	// Use defaultMaxBurstSize up to 2GBit/s (256MiB/s) then scale
-	maxBurstSize := max((bandwidth*defaultMaxBurstSize)/(256*1024*1024), defaultMaxBurstSize)
+	// Use defaultMaxBurstSize up to 2GBit/s (256MiB/s) then scale.
+	// The scale factor defaultMaxBurstSize/(256*1024*1024) equals 1/64,
+	// so compute bandwidth/64 directly to avoid int64 overflow for
+	// bandwidths >= 2TiB/s (the product (bandwidth*4M) wraps negative).
+	// Clamp to math.MaxInt32 so the int() conversion cannot truncate to a
+	// negative burst on 32-bit builds, which would silently disable the
+	// limiter.
+	maxBurstSize := max(bandwidth/64, defaultMaxBurstSize)
+	if maxBurstSize > math.MaxInt32 {
+		maxBurstSize = math.MaxInt32
+	}
 	// fs.Debugf(nil, "bandwidth=%v maxBurstSize=%v", bandwidth, maxBurstSize)
 	tb := rate.NewLimiter(rate.Limit(bandwidth), int(maxBurstSize))
 	if tb != nil {
