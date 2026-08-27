@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"runtime"
 	"testing"
 	"time"
@@ -161,5 +163,88 @@ func TestMoveCopy(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, fileMemory.Size, obj.Size())
 		})
+	})
+}
+
+// TestHealWrites reproduces the scenario in issue #9647: with
+// create_policy = all, if one upstream is missing a file (e.g. from a
+// past partial failure), re-running the copy should repair it when
+// heal_writes is set, but does not by default.
+func TestHealWrites(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+	ctx := context.Background()
+
+	newUnion := func(t *testing.T, dirs []string, healWrites bool) (fs.Fs, string, string) {
+		fsString := fmt.Sprintf(":union,upstreams='%s %s',create_policy=all,heal_writes=%v:", dirs[0], dirs[1], healWrites)
+		f, err := fs.NewFs(ctx, fsString)
+		require.NoError(t, err)
+		return f, dirs[0], dirs[1]
+	}
+
+	t.Run("DefaultDoesNotHeal", func(t *testing.T) {
+		dirs := MakeTestDirs(t, 2)
+		f, u1, u2 := newUnion(t, dirs, false)
+
+		contents := random.String(50)
+		file := fstest.NewItem("file.txt", contents, time.Now())
+		_ = fstests.PutTestContents(ctx, t, f, &file, contents, true)
+
+		// Both upstreams should have the file after the initial put
+		assert.FileExists(t, filepath.Join(u1, "file.txt"))
+		assert.FileExists(t, filepath.Join(u2, "file.txt"))
+
+		// Simulate a partial failure: the file goes missing on u1
+		require.NoError(t, os.Remove(filepath.Join(u1, "file.txt")))
+
+		// Re-running the same write via the union Object.Update should
+		// only touch upstreams which already have the file
+		o, err := f.NewObject(ctx, file.Path)
+		require.NoError(t, err)
+		newContents := random.String(60)
+		in := bytes.NewBufferString(newContents)
+		src := object.NewStaticObjectInfo(file.Path, time.Now(), int64(len(newContents)), true, nil, nil)
+		require.NoError(t, o.Update(ctx, in, src))
+
+		assert.NoFileExists(t, filepath.Join(u1, "file.txt"))
+		assert.FileExists(t, filepath.Join(u2, "file.txt"))
+	})
+
+	t.Run("HealWritesRepairsMissingUpstream", func(t *testing.T) {
+		dirs := MakeTestDirs(t, 2)
+		f, u1, u2 := newUnion(t, dirs, true)
+
+		contents := random.String(50)
+		file := fstest.NewItem("file.txt", contents, time.Now())
+		_ = fstests.PutTestContents(ctx, t, f, &file, contents, true)
+
+		assert.FileExists(t, filepath.Join(u1, "file.txt"))
+		assert.FileExists(t, filepath.Join(u2, "file.txt"))
+
+		// Simulate a partial failure: the file goes missing on u1
+		require.NoError(t, os.Remove(filepath.Join(u1, "file.txt")))
+
+		o, err := f.NewObject(ctx, file.Path)
+		require.NoError(t, err)
+		newContents := random.String(60)
+		in := bytes.NewBufferString(newContents)
+		src := object.NewStaticObjectInfo(file.Path, time.Now(), int64(len(newContents)), true, nil, nil)
+		require.NoError(t, o.Update(ctx, in, src))
+
+		// heal_writes should have created the file on u1 as well as
+		// updating it on u2
+		assert.FileExists(t, filepath.Join(u1, "file.txt"))
+		assert.FileExists(t, filepath.Join(u2, "file.txt"))
+
+		b1, err := os.ReadFile(filepath.Join(u1, "file.txt"))
+		require.NoError(t, err)
+		b2, err := os.ReadFile(filepath.Join(u2, "file.txt"))
+		require.NoError(t, err)
+		assert.Equal(t, newContents, string(b1))
+		assert.Equal(t, newContents, string(b2))
+
+		// The union object itself should reflect the healed size
+		assert.Equal(t, int64(len(newContents)), o.Size())
 	})
 }

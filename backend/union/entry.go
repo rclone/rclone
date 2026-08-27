@@ -81,29 +81,68 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	} else if err != nil {
 		return err
 	}
-	if len(entries) == 1 {
+	var missing []*upstream.Fs
+	if o.fs.opt.HealWrites {
+		missing, err = o.fs.missingCreateUpstreams(ctx, src.Remote(), entries)
+		if err != nil {
+			return err
+		}
+	}
+	if len(entries) == 1 && len(missing) == 0 {
 		obj := entries[0].(*upstream.Object)
 		return obj.Update(ctx, in, src, options...)
 	}
 	// Multi-threading
-	readers, errChan := multiReader(len(entries), in)
-	errs := Errors(make([]error, len(entries)+1))
-	multithread(len(entries), func(i int) {
-		if o, ok := entries[i].(*upstream.Object); ok {
-			err := o.Update(ctx, readers[i], src, options...)
-			if err != nil {
-				errs[i] = fmt.Errorf("%s: %w", o.UpstreamFs().Name(), err)
-				if len(entries) > 1 {
-					// Drain the input buffer to allow other uploads to continue
-					_, _ = io.Copy(io.Discard, readers[i])
+	//
+	// All n readers must be serviced concurrently in a single multithread
+	// call: multiReader tees in with an io.MultiWriter, whose Write blocks
+	// until every pipe has been read from, so servicing entries and
+	// missing in separate multithread calls (and thus separate
+	// sync.WaitGroups) would deadlock.
+	n := len(entries) + len(missing)
+	readers, errChan := multiReader(n, in)
+	errs := Errors(make([]error, n+1))
+	newObjs := make([]upstream.Entry, len(missing))
+	multithread(n, func(i int) {
+		if i < len(entries) {
+			if o, ok := entries[i].(*upstream.Object); ok {
+				err := o.Update(ctx, readers[i], src, options...)
+				if err != nil {
+					errs[i] = fmt.Errorf("%s: %w", o.UpstreamFs().Name(), err)
+					if n > 1 {
+						// Drain the input buffer to allow other uploads to continue
+						_, _ = io.Copy(io.Discard, readers[i])
+					}
 				}
+			} else {
+				errs[i] = fs.ErrorNotAFile
 			}
-		} else {
-			errs[i] = fs.ErrorNotAFile
+			return
 		}
+		j := i - len(entries)
+		u := missing[j]
+		newO, err := u.Put(ctx, readers[i], src, options...)
+		if err != nil {
+			errs[i] = fmt.Errorf("%s: %w", u.Name(), err)
+			if n > 1 {
+				// Drain the input buffer to allow other uploads to continue
+				_, _ = io.Copy(io.Discard, readers[i])
+			}
+			return
+		}
+		newObjs[j] = u.WrapObject(newO)
 	})
-	errs[len(entries)] = <-errChan
-	return errs.Err()
+	errs[n] = <-errChan
+	err = errs.Err()
+	if len(missing) > 0 {
+		// Heal the object's candidate list with any newly created uploads
+		for _, e := range newObjs {
+			if e != nil {
+				o.co = append(o.co, e)
+			}
+		}
+	}
+	return err
 }
 
 // Remove candidate objects selected by ACTION policy
