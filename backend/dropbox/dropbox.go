@@ -392,8 +392,8 @@ type Fs struct {
 	sharing        sharing.ContextClient // as above, but for generating sharing links
 	users          users.ContextClient   // as above, but for accessing user information
 	team           team.ContextClient    // for the Teams API
-	slashRoot      string                // root with "/" prefix, lowercase
-	slashRootSlash string                // root with "/" prefix and postfix, lowercase
+	slashRoot      string                // root with "/" prefix
+	slashRootSlash string                // root with "/" prefix and postfix
 	pacer          *fs.Pacer             // To pace the API calls
 	ns             string                // The namespace we are using or "" for none
 	batcher        *batcher.Batcher[*files.UploadSessionFinishArg, *files.FileMetadata]
@@ -1672,6 +1672,34 @@ func (f *Fs) changeNotifyCursor(ctx context.Context) (cursor string, err error) 
 	return startCursor.Cursor, nil
 }
 
+// trimPrefixFold returns s with the leading prefix removed, matching
+// case insensitively rune by rune so folded runes of differing UTF-8
+// length still match.
+//
+// If s is exactly the root that prefix names (prefix without its
+// trailing "/") it returns "". If prefix doesn't match it returns s
+// unchanged.
+func trimPrefixFold(s, prefix string) string {
+	if strings.HasSuffix(prefix, "/") && strings.EqualFold(s, strings.TrimSuffix(prefix, "/")) {
+		return ""
+	}
+
+	offset := 0
+	for prefix != "" {
+		if offset >= len(s) {
+			return s
+		}
+		sRune, sSize := utf8.DecodeRuneInString(s[offset:])
+		prefixRune, prefixSize := utf8.DecodeRuneInString(prefix)
+		if !strings.EqualFold(string(sRune), string(prefixRune)) {
+			return s
+		}
+		offset += sSize
+		prefix = prefix[prefixSize:]
+	}
+	return s[offset:]
+}
+
 func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.EntryType), startCursor string) (newCursor string, err error) {
 	cursor := startCursor
 	var res *files.ListFolderLongpollResult
@@ -1731,17 +1759,18 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 			switch info := entry.(type) {
 			case *files.FolderMetadata:
 				entryType = fs.EntryDirectory
-				entryPath = strings.TrimPrefix(info.PathDisplay, f.slashRootSlash)
+				entryPath = info.PathDisplay
 			case *files.FileMetadata:
 				entryType = fs.EntryObject
-				entryPath = strings.TrimPrefix(info.PathDisplay, f.slashRootSlash)
+				entryPath = info.PathDisplay
 			case *files.DeletedMetadata:
 				entryType = fs.EntryObject
-				entryPath = strings.TrimPrefix(info.PathDisplay, f.slashRootSlash)
+				entryPath = info.PathDisplay
 			default:
 				fs.Errorf(entry, "dropbox ChangeNotify: ignoring unknown EntryType %T", entry)
 				continue
 			}
+			entryPath = trimPrefixFold(entryPath, f.slashRootSlash)
 
 			if entryPath != "" {
 				notifyFunc(f.opt.Enc.ToStandardPath(entryPath), entryType)
