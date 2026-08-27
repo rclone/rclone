@@ -96,7 +96,19 @@ func TestVerifyCopy(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// skipIfNoSymlinks skips the test if this process can't create symlinks.
+//
+// Windows grants the privilege only to an elevated process or one running with
+// Developer Mode enabled, so an ordinary user gets ERROR_PRIVILEGE_NOT_HELD.
+func skipIfNoSymlinks(t *testing.T) {
+	t.Helper()
+	if err := os.Symlink("target", filepath.Join(t.TempDir(), "link")); err != nil {
+		t.Skipf("Skipping as symlinks are unavailable: %v", err)
+	}
+}
+
 func TestSymlink(t *testing.T) {
+	skipIfNoSymlinks(t)
 	ctx := context.Background()
 	r := fstest.NewRun(t)
 	f := r.Flocal.(*Fs)
@@ -238,6 +250,7 @@ func linksMode(f *Fs) {
 // faithful backup of the source) but must refuse to write through it, so
 // nothing lands outside the destination (CWE-59).
 func TestSymlinkEscapeWriteThroughBlocked(t *testing.T) {
+	skipIfNoSymlinks(t)
 	ctx := context.Background()
 
 	// A directory outside the destination the attacker wants to write into
@@ -273,6 +286,7 @@ func TestSymlinkEscapeWriteThroughBlocked(t *testing.T) {
 // re-validated against the root, so the write-through is refused and nothing
 // escapes.
 func TestSymlinkEscapeNestedBlocked(t *testing.T) {
+	skipIfNoSymlinks(t)
 	ctx := context.Background()
 
 	evil := t.TempDir()
@@ -324,6 +338,7 @@ func TestSymlinkEscapeConcurrent(t *testing.T) {
 // use: an in-tree symlink to a sibling directory can still be created and
 // written through, since that write stays inside the destination.
 func TestSymlinkInTreeWriteThroughWorks(t *testing.T) {
+	skipIfNoSymlinks(t)
 	ctx := context.Background()
 
 	r := fstest.NewRun(t)
@@ -555,6 +570,7 @@ func TestHashOnDelete(t *testing.T) {
 }
 
 func TestMetadata(t *testing.T) {
+	skipIfNoSymlinks(t)
 	ctx := context.Background()
 	r := fstest.NewRun(t)
 	const filePath = "metafile.txt"
@@ -831,6 +847,7 @@ func TestFilter(t *testing.T) {
 }
 
 func testFilterSymlink(t *testing.T, copyLinks bool) {
+	skipIfNoSymlinks(t)
 	ctx := context.Background()
 	r := fstest.NewRun(t)
 	defer r.Finalise()
@@ -935,6 +952,7 @@ func TestFilterSymlinkLinks(t *testing.T) {
 }
 
 func TestCopySymlink(t *testing.T) {
+	skipIfNoSymlinks(t)
 	ctx := context.Background()
 	r := fstest.NewRun(t)
 	defer r.Finalise()
