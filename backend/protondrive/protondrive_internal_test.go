@@ -86,7 +86,7 @@ func TestShouldRetry(t *testing.T) {
 		{"rate limit Status=429 (handled by SDK, not retried here)", ctx, apiErr(429, 0), false},
 		{"client error Status=400", ctx, apiErr(400, 0), false},
 		{"client error Status=404", ctx, apiErr(404, 0), false},
-		{"wrapped API error retried via errors.As", ctx, fmt.Errorf("wrapped: %w", &proton.APIError{Status: 500}), true},
+		{"wrapped API error retried via errors.As", ctx, fmt.Errorf("wrapped: %w", apiErr(500, 0)), true},
 		{"non-API error falls back to fserrors.ShouldRetry", ctx, errors.New("plain error"), false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
