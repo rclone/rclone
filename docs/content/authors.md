@@ -1216,3 +1216,4 @@ put them back in again. -->
 - Rayan Salhab <r.salhab@aiyexpertsolutions.com>
 - Vijay Misal <misalvijay153@gmail.com>
 - Sune Mølgaard <sune@molgaard.org>
+- Anatoly Tarnavsky <anatolyt@gmail.com>
