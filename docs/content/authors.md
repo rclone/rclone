@@ -1214,3 +1214,4 @@ put them back in again. -->
 - shaurya <shauryajaiswal.dev@gmail.com>
 - water <672684719@qq.com>
 - Rayan Salhab <r.salhab@aiyexpertsolutions.com>
+- Vijay Misal <misalvijay153@gmail.com>
