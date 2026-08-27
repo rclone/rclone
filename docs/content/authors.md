@@ -1215,3 +1215,4 @@ put them back in again. -->
 - water <672684719@qq.com>
 - Rayan Salhab <r.salhab@aiyexpertsolutions.com>
 - Vijay Misal <misalvijay153@gmail.com>
+- Sune Mølgaard <sune@molgaard.org>
