@@ -6,12 +6,12 @@ import (
 	"io"
 	"time"
 
-	"github.com/gotd/td/tg"
 	"github.com/gotd/td/session"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/auth"
-	"github.com/gotd/td/telegram/uploader"
 	"github.com/gotd/td/telegram/downloader"
+	"github.com/gotd/td/telegram/uploader"
+	"github.com/gotd/td/tg"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -24,6 +24,8 @@ type Options struct {
 	AppID    int    `config:"api_id"`
 	AppHash  string `config:"api_hash"`
 	Phone    string `config:"phone"`
+	AuthCode string `config:"auth_code"`
+	Password string `config:"twofa_password"`
 	Session  string `config:"session_string"`
 	ChatID   string `config:"chat_id"`
 }
@@ -37,6 +39,8 @@ func init() {
 			{Name: "api_id", Required: true, Help: "Telegram API ID"},
 			{Name: "api_hash", Required: true, Help: "Telegram API Hash"},
 			{Name: "phone", Help: "Telefonní číslo ve formátu +420123456789"},
+			{Name: "auth_code", IsPassword: true, Help: "Přihlašovací kód z Telegramu (pouze při prvním přihlášení)"},
+			{Name: "twofa_password", IsPassword: true, Advanced: true, Help: "Heslo Telegram 2FA (pouze pokud je zapnuté)"},
 			{Name: "chat_id", Default: "me", Help: "ID chatu, kam se mají soubory ukládat (např. 'me', '-100123456', 'username')"},
 			{Name: "session_string", Advanced: true, Help: "Uložený session string pro automatické přihlášení"},
 		},
@@ -57,13 +61,13 @@ type Fs struct {
 
 // Object reprezentuje jeden konkrétní soubor na Telegramu
 type Object struct {
-	fs          *Fs
-	remote      string
-	size        int64
-	modTime     time.Time
-	messageID   int // ID zprávy v Telegramu
-	documentID  int64
-	accessHash  int64
+	fs         *Fs
+	remote     string
+	size       int64
+	modTime    time.Time
+	messageID  int // ID zprávy v Telegramu
+	documentID int64
+	accessHash int64
 }
 
 // configSessionStorage implementuje session.Storage pro rclone config
@@ -87,7 +91,9 @@ func (s *configSessionStorage) StoreSession(ctx context.Context, data []byte) er
 
 // terminalAuth implementuje auth.UserAuthenticator pro interaktivní zadání kódu
 type terminalAuth struct {
-	phone string
+	phone    string
+	authCode string
+	password string
 }
 
 func (a terminalAuth) Phone(_ context.Context) (string, error) {
@@ -95,11 +101,11 @@ func (a terminalAuth) Phone(_ context.Context) (string, error) {
 }
 
 func (a terminalAuth) Password(_ context.Context) (string, error) {
-	return config.GetPassword("Telegram 2FA Password: "), nil
+	return a.password, nil
 }
 
 func (a terminalAuth) Code(_ context.Context, _ *tg.AuthSentCode) (string, error) {
-	return config.ReadLine("Telegram Auth Code: "), nil
+	return a.authCode, nil
 }
 
 func (a terminalAuth) AcceptTermsOfService(_ context.Context, tos tg.HelpTermsOfService) error {
@@ -136,7 +142,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 // connect vytvoří MTProto klienta a provede autentizaci
 func (f *Fs) connect(ctx context.Context, m configmap.Mapper) error {
 	storage := &configSessionStorage{m: m, name: f.name}
-	
+
 	f.client = telegram.NewClient(f.opt.AppID, f.opt.AppHash, telegram.Options{
 		SessionStorage: storage,
 	})
@@ -157,7 +163,11 @@ func (f *Fs) connect(ctx context.Context, m configmap.Mapper) error {
 				if f.opt.Phone == "" {
 					return fmt.Errorf("phone number is required for first login")
 				}
-				flow := auth.NewFlow(terminalAuth{phone: f.opt.Phone}, auth.SendCodeOptions{})
+				flow := auth.NewFlow(terminalAuth{
+					phone:    f.opt.Phone,
+					authCode: f.opt.AuthCode,
+					password: f.opt.Password,
+				}, auth.SendCodeOptions{})
 				if err := f.client.Auth().IfNecessary(ctx, flow); err != nil {
 					return err
 				}
@@ -208,12 +218,12 @@ func (f *Fs) resolvePeer(ctx context.Context, chatID string) (tg.InputPeerClass,
 // Metody pro Fs (Manipulace se složkami)
 // ==========================================
 
-func (f *Fs) Name() string { return f.name }
-func (f *Fs) Root() string { return f.root }
-func (f *Fs) String() string { return fmt.Sprintf("TelegramDrive root '%s'", f.root) }
+func (f *Fs) Name() string             { return f.name }
+func (f *Fs) Root() string             { return f.root }
+func (f *Fs) String() string           { return fmt.Sprintf("TelegramDrive root '%s'", f.root) }
 func (f *Fs) Precision() time.Duration { return time.Second }
-func (f *Fs) Hashes() hash.Set { return hash.Set(hash.None) }
-func (f *Fs) Features() *fs.Features { return f.features }
+func (f *Fs) Hashes() hash.Set         { return hash.Set(hash.None) }
+func (f *Fs) Features() *fs.Features   { return f.features }
 
 // List zobrazí obsah složky (ZOBRAZENÍ SOUBORŮ)
 func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
@@ -222,7 +232,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	}
 
 	var entries fs.DirEntries
-	
+
 	// TODO: Implementovat stránkování historie
 	history, err := f.tg.MessagesGetHistory(ctx, &tg.MessagesGetHistoryRequest{
 		Peer:  f.peer,
@@ -268,7 +278,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 			}
 		}
 	}
-	
+
 	return entries, nil
 }
 
@@ -324,13 +334,15 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 // Metody pro Object (Manipulace se souborem)
 // ==========================================
 
-func (o *Object) Fs() fs.Info { return o.fs }
-func (o *Object) String() string { return o.remote }
-func (o *Object) Remote() string { return o.remote }
+func (o *Object) Fs() fs.Info                           { return o.fs }
+func (o *Object) String() string                        { return o.remote }
+func (o *Object) Remote() string                        { return o.remote }
 func (o *Object) ModTime(ctx context.Context) time.Time { return o.modTime }
-func (o *Object) Size() int64 { return o.size }
-func (o *Object) Storable() bool { return true }
-func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) { return "", hash.ErrUnsupported }
+func (o *Object) Size() int64                           { return o.size }
+func (o *Object) Storable() bool                        { return true }
+func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
+	return "", hash.ErrUnsupported
+}
 
 // SetModTime Telegram neumožňuje měnit datum starých zpráv, takže vracíme chybu nebo ignorujeme
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
@@ -359,7 +371,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 // Update přehraje existující soubor (NAHRÁVÁNÍ SOUBORU / PŘEPSÁNÍ)
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	u := uploader.NewUploader(o.fs.tg)
-	
+
 	// Nahrání souboru jako dokumentu
 	f, err := u.Upload(ctx, uploader.NewUpload(o.remote, in, src.Size()))
 	if err != nil {
@@ -400,7 +412,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 // Remove smaže soubor (MAZÁNÍ SOUBORŮ)
 func (o *Object) Remove(ctx context.Context) error {
 	_, err := o.fs.tg.MessagesDeleteMessages(ctx, &tg.MessagesDeleteMessagesRequest{
-		ID: []int{o.messageID},
+		ID:     []int{o.messageID},
 		Revoke: true,
 	})
 	return err
