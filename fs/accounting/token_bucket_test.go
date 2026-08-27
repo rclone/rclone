@@ -14,15 +14,19 @@ import (
 
 func TestTokenBucketBurstScalesLargeBandwidthWithoutOverflow(t *testing.T) {
 	bandwidth := 4 * fs.Tebi
+	want := bandwidth / tokenBucketBurstScale
+	if want > fs.SizeSuffix(math.MaxInt) {
+		want = fs.SizeSuffix(math.MaxInt)
+	}
 
 	tb := newEmptyTokenBucket(bandwidth)
 	require.NotNil(t, tb)
 	assert.Equal(t, rate.Limit(bandwidth), tb.Limit())
-	assert.Equal(t, int(bandwidth/tokenBucketBurstScale), tb.Burst())
+	assert.Equal(t, int(want), tb.Burst())
 }
 
 func TestTokenBucketBurstCapsAtMaxInt(t *testing.T) {
-	want := fs.SizeSuffix(fs.SizeSuffixMaxValue / 64)
+	want := fs.SizeSuffix(fs.SizeSuffixMaxValue / tokenBucketBurstScale)
 	if want > fs.SizeSuffix(math.MaxInt) {
 		want = fs.SizeSuffix(math.MaxInt)
 	}
