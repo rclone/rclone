@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gotd/td/session"
@@ -210,8 +212,40 @@ func (f *Fs) resolvePeer(ctx context.Context, chatID string) (tg.InputPeerClass,
 	if chatID == "me" || chatID == "" {
 		return &tg.InputPeerSelf{}, nil
 	}
-	// TODO: Přidat podporu pro usernames a číselná ID
-	return &tg.InputPeerSelf{}, nil
+
+	if id, err := strconv.ParseInt(chatID, 10, 64); err == nil {
+		if id < 0 {
+			id = -id
+			if id >= 1000000000 {
+				id -= 1000000000000
+			}
+			return nil, fmt.Errorf("numeric chat IDs require a channel access hash; use a username or me")
+		}
+		return nil, fmt.Errorf("numeric chat IDs require a user access hash; use a username or me")
+	}
+
+	username := strings.TrimPrefix(chatID, "@")
+	resolved, err := f.tg.ContactsResolveUsername(ctx, &tg.ContactsResolveUsernameRequest{
+		Username: username,
+	})
+	if err != nil {
+		return nil, err
+	}
+	switch peer := resolved.Peer.(type) {
+	case *tg.PeerUser:
+		for _, user := range resolved.Users {
+			if user, ok := user.(*tg.User); ok && user.ID == peer.UserID {
+				return &tg.InputPeerUser{UserID: peer.UserID, AccessHash: user.AccessHash}, nil
+			}
+		}
+	case *tg.PeerChannel:
+		for _, chat := range resolved.Chats {
+			if chat, ok := chat.(*tg.Channel); ok && chat.ID == peer.ChannelID {
+				return &tg.InputPeerChannel{ChannelID: peer.ChannelID, AccessHash: chat.AccessHash}, nil
+			}
+		}
+	}
+	return nil, fmt.Errorf("username %q did not resolve to a supported peer", chatID)
 }
 
 // ==========================================
