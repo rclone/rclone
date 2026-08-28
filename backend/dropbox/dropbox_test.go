@@ -4,8 +4,8 @@ package dropbox
 import (
 	"testing"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fstest/fstests"
 )
 
 // TestIntegration runs integration tests against the remote

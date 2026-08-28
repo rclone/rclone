@@ -5,9 +5,9 @@ package nfs
 import (
 	"testing"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/vfs"
-	"github.com/rclone/rclone/vfs/vfscommon"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/vfs"
+	"github.com/PhateValleyman/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

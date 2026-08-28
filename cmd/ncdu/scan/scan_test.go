@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"testing"
 
-	_ "github.com/rclone/rclone/backend/local"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fstest"
-	"github.com/rclone/rclone/fstest/mockdir"
-	"github.com/rclone/rclone/fstest/mockobject"
+	_ "github.com/PhateValleyman/rclone/backend/local"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fstest"
+	"github.com/PhateValleyman/rclone/fstest/mockdir"
+	"github.com/PhateValleyman/rclone/fstest/mockobject"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rclone/rclone/backend/onedrive/api"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/fserrors"
-	"github.com/rclone/rclone/lib/dircache"
-	"github.com/rclone/rclone/lib/errcount"
+	"github.com/PhateValleyman/rclone/backend/onedrive/api"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/fserrors"
+	"github.com/PhateValleyman/rclone/lib/dircache"
+	"github.com/PhateValleyman/rclone/lib/errcount"
 )
 
 const (
@@ -400,7 +400,7 @@ func (m *Metadata) WritePermissions(ctx context.Context) (err error) {
 // When all of the above are true, Graph indicates it has added the
 // user permission, but it immediately drops it
 //
-// See: https://github.com/rclone/rclone/issues/8465
+// See: https://github.com/PhateValleyman/rclone/issues/8465
 func (m *Metadata) orderPermissions(xs []*api.PermissionsType) {
 	// Return true if identity has any user permissions
 	hasUserIdentity := func(identity *api.IdentitySet) bool {

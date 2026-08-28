@@ -127,7 +127,7 @@ type FolderItems struct {
 	NextMarker *string `json:"next_marker,omitempty"`
 	// There is some confusion about how this is actually
 	// returned. The []struct has worked for many years, but in
-	// https://github.com/rclone/rclone/issues/8776 box was
+	// https://github.com/PhateValleyman/rclone/issues/8776 box was
 	// returning it returned not as a list. We don't actually use
 	// this so comment it out.
 	//

@@ -14,13 +14,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/rclone/rclone/backend/iclouddrive/api"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config"
-	"github.com/rclone/rclone/fs/config/configmap"
-	"github.com/rclone/rclone/fs/config/configstruct"
-	"github.com/rclone/rclone/fs/config/obscure"
-	"github.com/rclone/rclone/lib/encoder"
+	"github.com/PhateValleyman/rclone/backend/iclouddrive/api"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/config"
+	"github.com/PhateValleyman/rclone/fs/config/configmap"
+	"github.com/PhateValleyman/rclone/fs/config/configstruct"
+	"github.com/PhateValleyman/rclone/fs/config/obscure"
+	"github.com/PhateValleyman/rclone/lib/encoder"
 )
 
 const configAuthSession = "_auth_session"

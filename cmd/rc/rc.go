@@ -12,12 +12,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/rclone/rclone/cmd"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/flags"
-	"github.com/rclone/rclone/fs/fshttp"
-	"github.com/rclone/rclone/fs/rc"
-	"github.com/rclone/rclone/fs/rc/jobs"
+	"github.com/PhateValleyman/rclone/cmd"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/config/flags"
+	"github.com/PhateValleyman/rclone/fs/fshttp"
+	"github.com/PhateValleyman/rclone/fs/rc"
+	"github.com/PhateValleyman/rclone/fs/rc/jobs"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )

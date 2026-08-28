@@ -11,8 +11,8 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/rclone/rclone/cmd/test/info/internal"
-	"github.com/rclone/rclone/fs"
+	"github.com/PhateValleyman/rclone/cmd/test/info/internal"
+	"github.com/PhateValleyman/rclone/fs"
 )
 
 func main() {

@@ -17,21 +17,21 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rclone/rclone/cmd/mountlib"
-	"github.com/rclone/rclone/cmd/serve/docker"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config"
-	"github.com/rclone/rclone/fstest"
-	"github.com/rclone/rclone/fstest/testy"
-	"github.com/rclone/rclone/lib/file"
+	"github.com/PhateValleyman/rclone/cmd/mountlib"
+	"github.com/PhateValleyman/rclone/cmd/serve/docker"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/config"
+	"github.com/PhateValleyman/rclone/fstest"
+	"github.com/PhateValleyman/rclone/fstest/testy"
+	"github.com/PhateValleyman/rclone/lib/file"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	_ "github.com/rclone/rclone/backend/local"
-	_ "github.com/rclone/rclone/backend/memory"
-	_ "github.com/rclone/rclone/cmd/cmount"
-	_ "github.com/rclone/rclone/cmd/mount"
+	_ "github.com/PhateValleyman/rclone/backend/local"
+	_ "github.com/PhateValleyman/rclone/backend/memory"
+	_ "github.com/PhateValleyman/rclone/cmd/cmount"
+	_ "github.com/PhateValleyman/rclone/cmd/mount"
 )
 
 func initialise(ctx context.Context, t *testing.T) (string, fs.Fs) {

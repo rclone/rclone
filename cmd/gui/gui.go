@@ -16,13 +16,13 @@ import (
 	"sync"
 
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/rclone/rclone/cmd"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/rc"
-	"github.com/rclone/rclone/fs/rc/rcserver"
-	libhttp "github.com/rclone/rclone/lib/http"
-	"github.com/rclone/rclone/lib/random"
-	"github.com/rclone/rclone/lib/systemd"
+	"github.com/PhateValleyman/rclone/cmd"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/rc"
+	"github.com/PhateValleyman/rclone/fs/rc/rcserver"
+	libhttp "github.com/PhateValleyman/rclone/lib/http"
+	"github.com/PhateValleyman/rclone/lib/random"
+	"github.com/PhateValleyman/rclone/lib/systemd"
 	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/cobra"
 )
@@ -68,7 +68,7 @@ is specified, and opens the browser already authenticated.
     rclone gui
 
 By default rclone gui serves the web GUI that was embedded into the
-rclone binary at build time from https://github.com/rclone/rclone-web/
+rclone binary at build time from https://github.com/PhateValleyman/rclone-web/
 You can override this by passing a path to either an unpacked GUI
 directory or a dist.zip archive (e.g. one downloaded from the
 rclone-web releases page):

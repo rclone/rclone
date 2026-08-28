@@ -6,8 +6,8 @@ import (
 	"io"
 	"sync"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/fserrors"
 )
 
 // AccountFn is a function which will be called after every read

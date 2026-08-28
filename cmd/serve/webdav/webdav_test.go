@@ -17,15 +17,15 @@ import (
 	"strings"
 	"testing"
 
-	_ "github.com/rclone/rclone/backend/local"
-	"github.com/rclone/rclone/cmd/serve/proxy"
-	"github.com/rclone/rclone/cmd/serve/servetest"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/configmap"
-	"github.com/rclone/rclone/fs/config/obscure"
-	"github.com/rclone/rclone/fs/filter"
-	"github.com/rclone/rclone/fs/rc"
-	"github.com/rclone/rclone/vfs/vfscommon"
+	_ "github.com/PhateValleyman/rclone/backend/local"
+	"github.com/PhateValleyman/rclone/cmd/serve/proxy"
+	"github.com/PhateValleyman/rclone/cmd/serve/servetest"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/config/configmap"
+	"github.com/PhateValleyman/rclone/fs/config/obscure"
+	"github.com/PhateValleyman/rclone/fs/filter"
+	"github.com/PhateValleyman/rclone/fs/rc"
+	"github.com/PhateValleyman/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/webdav"
@@ -388,7 +388,7 @@ func mkcol(t *testing.T, baseURL, path string) {
 }
 
 // TestMoveDefaultsToOverwrite is a regression test for
-// https://github.com/rclone/rclone/issues/9496
+// https://github.com/PhateValleyman/rclone/issues/9496
 //
 // RFC 4918 section 10.6 requires that when the Overwrite header is omitted
 // from a COPY or MOVE request, the resource MUST behave as if Overwrite: T

@@ -14,12 +14,12 @@ import (
 	internxtauth "github.com/internxt/rclone-adapter/auth"
 	internxtconfig "github.com/internxt/rclone-adapter/config"
 	sdkerrors "github.com/internxt/rclone-adapter/errors"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/configmap"
-	"github.com/rclone/rclone/fs/config/obscure"
-	"github.com/rclone/rclone/fs/fserrors"
-	"github.com/rclone/rclone/fs/fshttp"
-	"github.com/rclone/rclone/lib/oauthutil"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/config/configmap"
+	"github.com/PhateValleyman/rclone/fs/config/obscure"
+	"github.com/PhateValleyman/rclone/fs/fserrors"
+	"github.com/PhateValleyman/rclone/fs/fshttp"
+	"github.com/PhateValleyman/rclone/lib/oauthutil"
 	"golang.org/x/oauth2"
 )
 

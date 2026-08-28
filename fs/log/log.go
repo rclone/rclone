@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rclone/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 

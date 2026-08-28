@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/rclone/gofakes3"
-	"github.com/rclone/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs"
 )
 
 // logger output formatted message

@@ -19,11 +19,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rclone/rclone/backend/pikpak/api"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/configmap"
-	"github.com/rclone/rclone/fs/fserrors"
-	"github.com/rclone/rclone/lib/rest"
+	"github.com/PhateValleyman/rclone/backend/pikpak/api"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/config/configmap"
+	"github.com/PhateValleyman/rclone/fs/fserrors"
+	"github.com/PhateValleyman/rclone/lib/rest"
 )
 
 // Globals

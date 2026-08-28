@@ -16,10 +16,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/accounting"
-	"github.com/rclone/rclone/fs/cache"
-	"github.com/rclone/rclone/fs/rc"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/accounting"
+	"github.com/PhateValleyman/rclone/fs/cache"
+	"github.com/PhateValleyman/rclone/fs/rc"
 	"golang.org/x/sync/errgroup"
 )
 

@@ -20,9 +20,9 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/fserrors"
-	"github.com/rclone/rclone/lib/encoder"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/fserrors"
+	"github.com/PhateValleyman/rclone/lib/encoder"
 	"golang.org/x/text/encoding/charmap"
 	"golang.org/x/text/unicode/norm"
 )

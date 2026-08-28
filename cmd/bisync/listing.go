@@ -16,12 +16,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rclone/rclone/cmd/bisync/bilib"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/accounting"
-	"github.com/rclone/rclone/fs/filter"
-	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/fs/operations"
+	"github.com/PhateValleyman/rclone/cmd/bisync/bilib"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/accounting"
+	"github.com/PhateValleyman/rclone/fs/filter"
+	"github.com/PhateValleyman/rclone/fs/hash"
+	"github.com/PhateValleyman/rclone/fs/operations"
 )
 
 // ListingHeader defines first line of a listing
@@ -610,7 +610,7 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 			}
 			if srcNewName != "" { // if it was renamed and not deleted
 				if new == nil { // should not happen. log error and debug info
-					b.handleErr(b.renames, "internal error", fmt.Errorf("missing info for %q. Please report a bug at https://github.com/rclone/rclone/issues", srcNewName), true, true)
+					b.handleErr(b.renames, "internal error", fmt.Errorf("missing info for %q. Please report a bug at https://github.com/PhateValleyman/rclone/issues", srcNewName), true, true)
 					fs.PrettyPrint(srcList, "srcList for debugging", fs.LogLevelNotice)
 					continue
 				}

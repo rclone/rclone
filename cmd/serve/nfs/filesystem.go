@@ -9,10 +9,10 @@ import (
 	"time"
 
 	billy "github.com/go-git/go-billy/v5"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/log"
-	"github.com/rclone/rclone/vfs"
-	"github.com/rclone/rclone/vfs/vfscommon"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/log"
+	"github.com/PhateValleyman/rclone/vfs"
+	"github.com/PhateValleyman/rclone/vfs/vfscommon"
 	"github.com/willscott/go-nfs/file"
 )
 

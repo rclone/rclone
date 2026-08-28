@@ -13,11 +13,11 @@ import (
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/rclone/rclone/cmd/serve/proxy"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fstest"
-	"github.com/rclone/rclone/lib/random"
-	"github.com/rclone/rclone/vfs/vfscommon"
+	"github.com/PhateValleyman/rclone/cmd/serve/proxy"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fstest"
+	"github.com/PhateValleyman/rclone/lib/random"
+	"github.com/PhateValleyman/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -17,20 +17,20 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/rclone/rclone/lib/encoder"
+	"github.com/PhateValleyman/rclone/lib/encoder"
 
-	"github.com/rclone/rclone/backend/hidrive/api"
-	"github.com/rclone/rclone/backend/hidrive/hidrivehash"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config"
-	"github.com/rclone/rclone/fs/config/configmap"
-	"github.com/rclone/rclone/fs/config/configstruct"
-	"github.com/rclone/rclone/fs/config/obscure"
-	"github.com/rclone/rclone/fs/fserrors"
-	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/lib/oauthutil"
-	"github.com/rclone/rclone/lib/pacer"
-	"github.com/rclone/rclone/lib/rest"
+	"github.com/PhateValleyman/rclone/backend/hidrive/api"
+	"github.com/PhateValleyman/rclone/backend/hidrive/hidrivehash"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/config"
+	"github.com/PhateValleyman/rclone/fs/config/configmap"
+	"github.com/PhateValleyman/rclone/fs/config/configstruct"
+	"github.com/PhateValleyman/rclone/fs/config/obscure"
+	"github.com/PhateValleyman/rclone/fs/fserrors"
+	"github.com/PhateValleyman/rclone/fs/hash"
+	"github.com/PhateValleyman/rclone/lib/oauthutil"
+	"github.com/PhateValleyman/rclone/lib/pacer"
+	"github.com/PhateValleyman/rclone/lib/rest"
 )
 
 const (

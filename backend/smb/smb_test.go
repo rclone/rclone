@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/rclone/rclone/backend/smb"
-	"github.com/rclone/rclone/fstest"
-	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/PhateValleyman/rclone/backend/smb"
+	"github.com/PhateValleyman/rclone/fstest"
+	"github.com/PhateValleyman/rclone/fstest/fstests"
 )
 
 // TestIntegration runs integration tests against the remote

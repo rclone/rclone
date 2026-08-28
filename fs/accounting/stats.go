@@ -11,10 +11,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/fserrors"
-	"github.com/rclone/rclone/fs/rc"
-	"github.com/rclone/rclone/lib/terminal"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/fserrors"
+	"github.com/PhateValleyman/rclone/fs/rc"
+	"github.com/PhateValleyman/rclone/lib/terminal"
 )
 
 const (

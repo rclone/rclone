@@ -14,15 +14,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/configmap"
-	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/config/configmap"
+	"github.com/PhateValleyman/rclone/fs/fserrors"
 
-	"github.com/rclone/rclone/backend/iclouddrive/api"
-	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/lib/dircache"
-	"github.com/rclone/rclone/lib/encoder"
-	"github.com/rclone/rclone/lib/pacer"
+	"github.com/PhateValleyman/rclone/backend/iclouddrive/api"
+	"github.com/PhateValleyman/rclone/fs/hash"
+	"github.com/PhateValleyman/rclone/lib/dircache"
+	"github.com/PhateValleyman/rclone/lib/encoder"
+	"github.com/PhateValleyman/rclone/lib/pacer"
 
 	"golang.org/x/text/unicode/norm"
 )

@@ -13,7 +13,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/rclone/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs"
 )
 
 // DirCache caches paths to directory IDs and vice versa

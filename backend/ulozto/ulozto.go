@@ -17,19 +17,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rclone/rclone/backend/ulozto/api"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config"
-	"github.com/rclone/rclone/fs/config/configmap"
-	"github.com/rclone/rclone/fs/config/configstruct"
-	"github.com/rclone/rclone/fs/config/obscure"
-	"github.com/rclone/rclone/fs/fserrors"
-	"github.com/rclone/rclone/fs/fshttp"
-	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/lib/dircache"
-	"github.com/rclone/rclone/lib/encoder"
-	"github.com/rclone/rclone/lib/pacer"
-	"github.com/rclone/rclone/lib/rest"
+	"github.com/PhateValleyman/rclone/backend/ulozto/api"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/config"
+	"github.com/PhateValleyman/rclone/fs/config/configmap"
+	"github.com/PhateValleyman/rclone/fs/config/configstruct"
+	"github.com/PhateValleyman/rclone/fs/config/obscure"
+	"github.com/PhateValleyman/rclone/fs/fserrors"
+	"github.com/PhateValleyman/rclone/fs/fshttp"
+	"github.com/PhateValleyman/rclone/fs/hash"
+	"github.com/PhateValleyman/rclone/lib/dircache"
+	"github.com/PhateValleyman/rclone/lib/encoder"
+	"github.com/PhateValleyman/rclone/lib/pacer"
+	"github.com/PhateValleyman/rclone/lib/rest"
 )
 
 // TODO Uloz.to only supports file names of 255 characters or less and silently truncates names that are longer.
@@ -122,7 +122,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
-	// Strip leading and trailing slashes, see https://github.com/rclone/rclone/issues/7796 for details.
+	// Strip leading and trailing slashes, see https://github.com/PhateValleyman/rclone/issues/7796 for details.
 	root = strings.Trim(root, "/")
 
 	client := fshttp.NewClient(ctx)

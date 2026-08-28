@@ -17,10 +17,10 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/rclone/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs"
 
-	"github.com/rclone/rclone/lib/pacer"
-	"github.com/rclone/rclone/lib/rest"
+	"github.com/PhateValleyman/rclone/lib/pacer"
+	"github.com/PhateValleyman/rclone/lib/rest"
 
 	"golang.org/x/text/unicode/norm"
 )

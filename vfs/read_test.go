@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/rclone/rclone/fstest"
+	"github.com/PhateValleyman/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

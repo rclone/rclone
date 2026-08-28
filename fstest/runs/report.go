@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/lib/file"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/lib/file"
 	"github.com/skratchdot/open-golang/open"
 )
 
@@ -244,8 +244,8 @@ a:focus {
 <table>
 <tr><th>Version</th><td>{{ .Version }}</td></tr>
 <tr><th>Test</th><td><a href="{{ .URL }}">{{ .DateTime}}</a></td></tr>
-<tr><th>Branch</th><td><a href="https://github.com/rclone/rclone/tree/{{ .Branch }}">{{ .Branch }}</a></td></tr>
-{{ if .Commit}}<tr><th>Commit</th><td><a href="https://github.com/rclone/rclone/commit/{{ .Commit }}">{{ .Commit }}</a></td></tr>{{ end }}
+<tr><th>Branch</th><td><a href="https://github.com/PhateValleyman/rclone/tree/{{ .Branch }}">{{ .Branch }}</a></td></tr>
+{{ if .Commit}}<tr><th>Commit</th><td><a href="https://github.com/PhateValleyman/rclone/commit/{{ .Commit }}">{{ .Commit }}</a></td></tr>{{ end }}
 <tr><th>Go</th><td>{{ .GoVersion }} {{ .GOOS }}/{{ .GOARCH }}</td></tr>
 <tr><th>Duration</th><td>{{ .Duration }}</td></tr>
 {{ if .Previous}}<tr><th>Previous</th><td><a href="../{{ .Previous }}/index.html">{{ .Previous }}</a></td></tr>{{ end }}

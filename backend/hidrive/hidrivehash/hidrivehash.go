@@ -16,7 +16,7 @@ import (
 	"hash"
 	"io"
 
-	"github.com/rclone/rclone/backend/hidrive/hidrivehash/internal"
+	"github.com/PhateValleyman/rclone/backend/hidrive/hidrivehash/internal"
 )
 
 const (

@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/lib/encoder"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/lib/encoder"
 )
 
 const (

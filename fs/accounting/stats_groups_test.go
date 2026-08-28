@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/fserrors"
-	"github.com/rclone/rclone/fs/rc"
-	"github.com/rclone/rclone/fstest/mockobject"
-	"github.com/rclone/rclone/fstest/testy"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/fserrors"
+	"github.com/PhateValleyman/rclone/fs/rc"
+	"github.com/PhateValleyman/rclone/fstest/mockobject"
+	"github.com/PhateValleyman/rclone/fstest/testy"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

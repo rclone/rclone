@@ -6,7 +6,7 @@ package kv
 import (
 	"context"
 
-	"github.com/rclone/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs"
 )
 
 // DB represents a key-value database

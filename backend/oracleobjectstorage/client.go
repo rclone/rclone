@@ -14,9 +14,9 @@ import (
 	"github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/oracle/oci-go-sdk/v65/common/auth"
 	"github.com/oracle/oci-go-sdk/v65/objectstorage"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/fserrors"
-	"github.com/rclone/rclone/fs/fshttp"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/fserrors"
+	"github.com/PhateValleyman/rclone/fs/fshttp"
 )
 
 func expandPath(filepath string) (expandedPath string) {

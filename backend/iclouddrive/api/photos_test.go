@@ -12,10 +12,10 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config"
-	"github.com/rclone/rclone/lib/pacer"
-	"github.com/rclone/rclone/lib/rest"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/config"
+	"github.com/PhateValleyman/rclone/lib/pacer"
+	"github.com/PhateValleyman/rclone/lib/rest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

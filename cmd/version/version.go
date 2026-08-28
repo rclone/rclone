@@ -14,10 +14,10 @@ import (
 	"time"
 
 	"github.com/coreos/go-semver/semver"
-	"github.com/rclone/rclone/cmd"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/flags"
-	"github.com/rclone/rclone/fs/fshttp"
+	"github.com/PhateValleyman/rclone/cmd"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/config/flags"
+	"github.com/PhateValleyman/rclone/fs/fshttp"
 	"github.com/spf13/cobra"
 )
 

@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rclone/rclone/cmd/bisync/bilib"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/lib/terminal"
+	"github.com/PhateValleyman/rclone/cmd/bisync/bilib"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/lib/terminal"
 )
 
 const basicallyforever = fs.Duration(200 * 365 * 24 * time.Hour)

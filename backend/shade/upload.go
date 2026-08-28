@@ -14,11 +14,11 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/rclone/rclone/backend/shade/api"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/chunksize"
-	"github.com/rclone/rclone/lib/multipart"
-	"github.com/rclone/rclone/lib/rest"
+	"github.com/PhateValleyman/rclone/backend/shade/api"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/chunksize"
+	"github.com/PhateValleyman/rclone/lib/multipart"
+	"github.com/PhateValleyman/rclone/lib/rest"
 )
 
 var warnStreamUpload sync.Once

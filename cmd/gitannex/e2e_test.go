@@ -14,11 +14,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fstest"
-	"github.com/rclone/rclone/fstest/testy"
-	"github.com/rclone/rclone/lib/buildinfo"
-	"github.com/rclone/rclone/lib/israce"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fstest"
+	"github.com/PhateValleyman/rclone/fstest/testy"
+	"github.com/PhateValleyman/rclone/lib/buildinfo"
+	"github.com/PhateValleyman/rclone/lib/israce"
 )
 
 // checkRcloneBinaryVersion runs whichever rclone is on the PATH and checks

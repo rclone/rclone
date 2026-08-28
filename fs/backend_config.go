@@ -13,7 +13,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/PhateValleyman/rclone/fs/config/configmap"
 )
 
 const (

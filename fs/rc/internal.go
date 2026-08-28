@@ -16,11 +16,11 @@ import (
 	"github.com/adrg/xdg"
 	"github.com/coreos/go-semver/semver"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/obscure"
-	"github.com/rclone/rclone/lib/atexit"
-	"github.com/rclone/rclone/lib/buildinfo"
-	"github.com/rclone/rclone/lib/debug"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/config/obscure"
+	"github.com/PhateValleyman/rclone/lib/atexit"
+	"github.com/PhateValleyman/rclone/lib/buildinfo"
+	"github.com/PhateValleyman/rclone/lib/debug"
 )
 
 func init() {

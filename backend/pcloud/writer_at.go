@@ -10,9 +10,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/rclone/rclone/backend/pcloud/api"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/lib/rest"
+	"github.com/PhateValleyman/rclone/backend/pcloud/api"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/lib/rest"
 )
 
 // writerAt implements fs.WriterAtCloser, adding the OpenWrtierAt feature to pcloud.

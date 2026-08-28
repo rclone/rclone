@@ -11,12 +11,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rclone/rclone/backend/huaweidrive/api"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/configmap"
-	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/fstest/fstests"
-	"github.com/rclone/rclone/lib/encoder"
+	"github.com/PhateValleyman/rclone/backend/huaweidrive/api"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/config/configmap"
+	"github.com/PhateValleyman/rclone/fs/hash"
+	"github.com/PhateValleyman/rclone/fstest/fstests"
+	"github.com/PhateValleyman/rclone/lib/encoder"
 )
 
 // TestIntegration runs integration tests against the remote

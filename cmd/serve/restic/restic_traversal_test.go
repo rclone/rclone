@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	_ "github.com/rclone/rclone/backend/memory"
-	"github.com/rclone/rclone/cmd"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/operations"
+	_ "github.com/PhateValleyman/rclone/backend/memory"
+	"github.com/PhateValleyman/rclone/cmd"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/operations"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

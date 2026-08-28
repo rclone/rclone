@@ -3,7 +3,7 @@
 // These need to be defined in a separate package to avoid import loops
 package common //nolint:revive // Don't include revive when running golangci-lint because this triggers var-naming: avoid meaningless package names
 
-import "github.com/rclone/rclone/fs"
+import "github.com/PhateValleyman/rclone/fs"
 
 // Options defines the configuration for this backend
 type Options struct {

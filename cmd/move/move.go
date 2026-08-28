@@ -5,11 +5,11 @@ import (
 	"context"
 	"strings"
 
-	"github.com/rclone/rclone/cmd"
-	"github.com/rclone/rclone/fs/config/flags"
-	"github.com/rclone/rclone/fs/operations"
-	"github.com/rclone/rclone/fs/operations/operationsflags"
-	"github.com/rclone/rclone/fs/sync"
+	"github.com/PhateValleyman/rclone/cmd"
+	"github.com/PhateValleyman/rclone/fs/config/flags"
+	"github.com/PhateValleyman/rclone/fs/operations"
+	"github.com/PhateValleyman/rclone/fs/operations/operationsflags"
+	"github.com/PhateValleyman/rclone/fs/sync"
 	"github.com/spf13/cobra"
 )
 
@@ -64,7 +64,7 @@ the backend supports it. If metadata syncing is required then use the
 |--metadata| flag.
 
 Note that the modification time and metadata for the root directory
-will **not** be synced. See <https://github.com/rclone/rclone/issues/7652>
+will **not** be synced. See <https://github.com/PhateValleyman/rclone/issues/7652>
 for more info.
 
 **Important**: Since this can cause data loss, test first with the

@@ -10,10 +10,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/rclone/rclone/cmd/bisync/bilib"
-	"github.com/rclone/rclone/fs"
-	fslog "github.com/rclone/rclone/fs/log"
-	"github.com/rclone/rclone/fs/rc"
+	"github.com/PhateValleyman/rclone/cmd/bisync/bilib"
+	"github.com/PhateValleyman/rclone/fs"
+	fslog "github.com/PhateValleyman/rclone/fs/log"
+	"github.com/PhateValleyman/rclone/fs/rc"
 )
 
 func addRC() {

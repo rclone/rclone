@@ -7,7 +7,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/rclone/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs"
 )
 
 // CreateZip creates a zip file from a vfs.Dir writing it to w

@@ -7,8 +7,8 @@ package hdfs_test
 import (
 	"testing"
 
-	"github.com/rclone/rclone/backend/hdfs"
-	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/PhateValleyman/rclone/backend/hdfs"
+	"github.com/PhateValleyman/rclone/fstest/fstests"
 )
 
 // TestIntegration runs integration tests against the remote

@@ -11,10 +11,10 @@ import (
 	"sync"
 
 	"github.com/internxt/rclone-adapter/buckets"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/chunksize"
-	"github.com/rclone/rclone/lib/multipart"
-	"github.com/rclone/rclone/lib/pool"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/chunksize"
+	"github.com/PhateValleyman/rclone/lib/multipart"
+	"github.com/PhateValleyman/rclone/lib/pool"
 )
 
 var warnStreamUpload sync.Once

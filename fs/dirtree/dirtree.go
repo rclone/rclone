@@ -9,7 +9,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/rclone/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs"
 )
 
 // DirTree is a map of directories to entries

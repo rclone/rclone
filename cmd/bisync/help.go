@@ -11,9 +11,9 @@ import (
 	"strings"
 
 	"github.com/muesli/reflow/wordwrap"
-	"github.com/rclone/rclone/cmd"
-	"github.com/rclone/rclone/cmd/bisync"
-	"github.com/rclone/rclone/fs"
+	"github.com/PhateValleyman/rclone/cmd"
+	"github.com/PhateValleyman/rclone/cmd/bisync"
+	"github.com/PhateValleyman/rclone/fs"
 	"github.com/spf13/pflag"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"

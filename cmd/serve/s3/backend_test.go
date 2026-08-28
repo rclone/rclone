@@ -9,11 +9,11 @@ import (
 	"testing"
 
 	"github.com/rclone/gofakes3"
-	_ "github.com/rclone/rclone/backend/local"
-	"github.com/rclone/rclone/cmd/serve/proxy"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fstest"
-	"github.com/rclone/rclone/vfs/vfscommon"
+	_ "github.com/PhateValleyman/rclone/backend/local"
+	"github.com/PhateValleyman/rclone/cmd/serve/proxy"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fstest"
+	"github.com/PhateValleyman/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

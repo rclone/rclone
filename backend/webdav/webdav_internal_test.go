@@ -8,11 +8,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rclone/rclone/backend/webdav"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/configfile"
-	"github.com/rclone/rclone/fs/config/configmap"
-	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/PhateValleyman/rclone/backend/webdav"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/config/configfile"
+	"github.com/PhateValleyman/rclone/fs/config/configmap"
+	"github.com/PhateValleyman/rclone/fs/config/obscure"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

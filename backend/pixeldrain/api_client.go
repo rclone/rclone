@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/fserrors"
-	"github.com/rclone/rclone/lib/rest"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/fserrors"
+	"github.com/PhateValleyman/rclone/lib/rest"
 )
 
 // FilesystemPath is the object which is returned from the pixeldrain API when

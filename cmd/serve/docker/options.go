@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/rclone/rclone/cmd/mountlib"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/configmap"
-	"github.com/rclone/rclone/fs/config/configstruct"
-	"github.com/rclone/rclone/fs/fspath"
-	"github.com/rclone/rclone/fs/rc"
-	"github.com/rclone/rclone/vfs/vfscommon"
+	"github.com/PhateValleyman/rclone/cmd/mountlib"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/config/configmap"
+	"github.com/PhateValleyman/rclone/fs/config/configstruct"
+	"github.com/PhateValleyman/rclone/fs/fspath"
+	"github.com/PhateValleyman/rclone/fs/rc"
+	"github.com/PhateValleyman/rclone/vfs/vfscommon"
 )
 
 // applyOptions configures volume from request options.

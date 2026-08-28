@@ -10,9 +10,9 @@ import (
 
 	fusefs "github.com/hanwen/go-fuse/v2/fs"
 	"github.com/hanwen/go-fuse/v2/fuse"
-	"github.com/rclone/rclone/cmd/mountlib"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/vfs"
+	"github.com/PhateValleyman/rclone/cmd/mountlib"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/vfs"
 )
 
 func init() {

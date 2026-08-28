@@ -10,12 +10,12 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/rclone/rclone/fs/rc"
-	"github.com/rclone/rclone/lib/transferaccounter"
+	"github.com/PhateValleyman/rclone/fs/rc"
+	"github.com/PhateValleyman/rclone/lib/transferaccounter"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/asyncreader"
-	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/asyncreader"
+	"github.com/PhateValleyman/rclone/fs/fserrors"
 )
 
 // ErrorMaxTransferLimitReached defines error when transfer limit is reached.

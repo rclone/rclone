@@ -8,8 +8,8 @@ import (
 	"io"
 	"time"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/hash"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/hash"
 )
 
 // StaticObjectInfo is an ObjectInfo which can be constructed from scratch

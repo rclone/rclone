@@ -18,13 +18,13 @@ import (
 	"unicode/utf8"
 
 	"github.com/peterh/liner"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/configmap"
-	"github.com/rclone/rclone/fs/config/configstruct"
-	"github.com/rclone/rclone/fs/config/obscure"
-	"github.com/rclone/rclone/fs/driveletter"
-	"github.com/rclone/rclone/fs/fspath"
-	"github.com/rclone/rclone/lib/terminal"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/config/configmap"
+	"github.com/PhateValleyman/rclone/fs/config/configstruct"
+	"github.com/PhateValleyman/rclone/fs/config/obscure"
+	"github.com/PhateValleyman/rclone/fs/driveletter"
+	"github.com/PhateValleyman/rclone/fs/fspath"
+	"github.com/PhateValleyman/rclone/lib/terminal"
 )
 
 var (

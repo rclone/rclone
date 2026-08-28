@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rclone/rclone/backend/azureblob/auth"
-	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/PhateValleyman/rclone/backend/azureblob/auth"
+	"github.com/PhateValleyman/rclone/fstest/fstests"
 	"github.com/stretchr/testify/assert"
 )
 

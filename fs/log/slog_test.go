@@ -15,7 +15,7 @@ import (
 
 	"log/slog"
 
-	"github.com/rclone/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -82,14 +82,14 @@ func TestIsLogFrame(t *testing.T) {
 		want bool
 	}{
 		// rclone's own log packages
-		{"fsLog", "github.com/rclone/rclone/fs/log.go", "github.com/rclone/rclone/fs.Debugf", true},
-		{"fsLogSlog", "github.com/rclone/rclone/fs/log/slog.go", "github.com/rclone/rclone/fs/log.(*OutputHandler).Handle", true},
+		{"fsLog", "github.com/PhateValleyman/rclone/fs/log.go", "github.com/PhateValleyman/rclone/fs.Debugf", true},
+		{"fsLogSlog", "github.com/PhateValleyman/rclone/fs/log/slog.go", "github.com/PhateValleyman/rclone/fs/log.(*OutputHandler).Handle", true},
 		// standard library slog with -trimpath: path is "log/slog/logger.go"
 		{"slogTrimpath", "log/slog/logger.go", "log/slog.(*Logger).log", true},
 		// standard library slog without -trimpath: full path contains "/log/"
 		{"slogFullPath", "/usr/local/go/src/log/slog/logger.go", "log/slog.(*Logger).Log", true},
 		// a real caller must not be skipped
-		{"realCaller", "github.com/rclone/rclone/backend/drive/drive.go", "github.com/rclone/rclone/backend/drive.(*Fs).newObjectWithInfo", false},
+		{"realCaller", "github.com/PhateValleyman/rclone/backend/drive/drive.go", "github.com/PhateValleyman/rclone/backend/drive.(*Fs).newObjectWithInfo", false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

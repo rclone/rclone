@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/filter"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/filter"
 )
 
 func init() {

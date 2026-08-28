@@ -10,12 +10,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/dirtree"
-	"github.com/rclone/rclone/fs/filter"
-	"github.com/rclone/rclone/fs/list"
-	"github.com/rclone/rclone/fs/walk"
-	"github.com/rclone/rclone/lib/transform"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/dirtree"
+	"github.com/PhateValleyman/rclone/fs/filter"
+	"github.com/PhateValleyman/rclone/fs/list"
+	"github.com/PhateValleyman/rclone/fs/walk"
+	"github.com/PhateValleyman/rclone/lib/transform"
 	"golang.org/x/sync/semaphore"
 	"golang.org/x/text/unicode/norm"
 )

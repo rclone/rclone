@@ -20,17 +20,17 @@ import (
 	"github.com/buengese/sgzip"
 	"github.com/gabriel-vasile/mimetype"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/accounting"
-	"github.com/rclone/rclone/fs/chunkedreader"
-	"github.com/rclone/rclone/fs/config/configmap"
-	"github.com/rclone/rclone/fs/config/configstruct"
-	"github.com/rclone/rclone/fs/fspath"
-	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/fs/list"
-	"github.com/rclone/rclone/fs/log"
-	"github.com/rclone/rclone/fs/object"
-	"github.com/rclone/rclone/fs/operations"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/accounting"
+	"github.com/PhateValleyman/rclone/fs/chunkedreader"
+	"github.com/PhateValleyman/rclone/fs/config/configmap"
+	"github.com/PhateValleyman/rclone/fs/config/configstruct"
+	"github.com/PhateValleyman/rclone/fs/fspath"
+	"github.com/PhateValleyman/rclone/fs/hash"
+	"github.com/PhateValleyman/rclone/fs/list"
+	"github.com/PhateValleyman/rclone/fs/log"
+	"github.com/PhateValleyman/rclone/fs/object"
+	"github.com/PhateValleyman/rclone/fs/operations"
 )
 
 // Globals

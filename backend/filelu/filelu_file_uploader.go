@@ -13,8 +13,8 @@ import (
 	"path"
 	"strings"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/lib/rest"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/lib/rest"
 )
 
 // multipartUpload uploads a file in fixed-size chunks using the multipart API.

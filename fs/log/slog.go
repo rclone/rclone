@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rclone/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs"
 )
 
 // Handler is the standard handler for the logging.

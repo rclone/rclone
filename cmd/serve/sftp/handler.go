@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/pkg/sftp"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/vfs"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/vfs"
 )
 
 // recoverPanic turns a panic into an error assigned through err.

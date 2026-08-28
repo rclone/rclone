@@ -9,11 +9,11 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fstest"
-	"github.com/rclone/rclone/fstest/fstests"
-	"github.com/rclone/rclone/lib/bucket"
-	"github.com/rclone/rclone/lib/pacer"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fstest"
+	"github.com/PhateValleyman/rclone/fstest/fstests"
+	"github.com/PhateValleyman/rclone/lib/bucket"
+	"github.com/PhateValleyman/rclone/lib/pacer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

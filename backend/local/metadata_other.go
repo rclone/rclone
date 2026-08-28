@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/rclone/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs"
 )
 
 // Read the time specified from the os.FileInfo

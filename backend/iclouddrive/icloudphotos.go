@@ -13,14 +13,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rclone/rclone/backend/iclouddrive/api"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/configmap"
-	"github.com/rclone/rclone/fs/fshttp"
-	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/fs/list"
-	"github.com/rclone/rclone/lib/dircache"
-	"github.com/rclone/rclone/lib/pacer"
+	"github.com/PhateValleyman/rclone/backend/iclouddrive/api"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/config/configmap"
+	"github.com/PhateValleyman/rclone/fs/fshttp"
+	"github.com/PhateValleyman/rclone/fs/hash"
+	"github.com/PhateValleyman/rclone/fs/list"
+	"github.com/PhateValleyman/rclone/lib/dircache"
+	"github.com/PhateValleyman/rclone/lib/pacer"
 )
 
 const rootID = "photos-root"

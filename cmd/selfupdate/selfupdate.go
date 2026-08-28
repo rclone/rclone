@@ -22,16 +22,16 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/rclone/rclone/cmd"
-	"github.com/rclone/rclone/cmd/cmount"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/flags"
-	"github.com/rclone/rclone/fs/fshttp"
-	"github.com/rclone/rclone/lib/buildinfo"
-	"github.com/rclone/rclone/lib/random"
+	"github.com/PhateValleyman/rclone/cmd"
+	"github.com/PhateValleyman/rclone/cmd/cmount"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/config/flags"
+	"github.com/PhateValleyman/rclone/fs/fshttp"
+	"github.com/PhateValleyman/rclone/lib/buildinfo"
+	"github.com/PhateValleyman/rclone/lib/random"
 	"github.com/spf13/cobra"
 
-	versionCmd "github.com/rclone/rclone/cmd/version"
+	versionCmd "github.com/PhateValleyman/rclone/cmd/version"
 )
 
 //go:embed selfupdate.md

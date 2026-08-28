@@ -15,10 +15,10 @@ import (
 
 	// Without this import, the various backends would be unavailable. It looks
 	// unused, but the act of importing runs the package's `init()` function.
-	_ "github.com/rclone/rclone/backend/all"
+	_ "github.com/PhateValleyman/rclone/backend/all"
 
-	"github.com/rclone/rclone/fs/fspath"
-	"github.com/rclone/rclone/fstest"
+	"github.com/PhateValleyman/rclone/fs/fspath"
+	"github.com/PhateValleyman/rclone/fstest"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

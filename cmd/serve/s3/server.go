@@ -15,12 +15,12 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/rclone/gofakes3"
 	"github.com/rclone/gofakes3/signature"
-	"github.com/rclone/rclone/cmd/serve/proxy"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/hash"
-	httplib "github.com/rclone/rclone/lib/http"
-	"github.com/rclone/rclone/vfs"
-	"github.com/rclone/rclone/vfs/vfscommon"
+	"github.com/PhateValleyman/rclone/cmd/serve/proxy"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/hash"
+	httplib "github.com/PhateValleyman/rclone/lib/http"
+	"github.com/PhateValleyman/rclone/vfs"
+	"github.com/PhateValleyman/rclone/vfs/vfscommon"
 )
 
 type ctxKey int

@@ -18,10 +18,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rclone/rclone/fs/fserrors"
-	"github.com/rclone/rclone/fs/object"
-	"github.com/rclone/rclone/fstest"
-	"github.com/rclone/rclone/lib/file"
+	"github.com/PhateValleyman/rclone/fs/fserrors"
+	"github.com/PhateValleyman/rclone/fs/object"
+	"github.com/PhateValleyman/rclone/fstest"
+	"github.com/PhateValleyman/rclone/lib/file"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

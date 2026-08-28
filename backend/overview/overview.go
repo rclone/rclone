@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/rclone/rclone/docs/data/backends"
+	"github.com/PhateValleyman/rclone/docs/data/backends"
 	"gopkg.in/yaml.v3"
 )
 

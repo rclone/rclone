@@ -9,14 +9,14 @@ import (
 	mutex "sync" // renamed as "sync" already in use
 	"time"
 
-	"github.com/rclone/rclone/cmd/bisync/bilib"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/accounting"
-	"github.com/rclone/rclone/fs/filter"
-	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/fs/operations"
-	"github.com/rclone/rclone/fs/sync"
-	"github.com/rclone/rclone/lib/terminal"
+	"github.com/PhateValleyman/rclone/cmd/bisync/bilib"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/accounting"
+	"github.com/PhateValleyman/rclone/fs/filter"
+	"github.com/PhateValleyman/rclone/fs/hash"
+	"github.com/PhateValleyman/rclone/fs/operations"
+	"github.com/PhateValleyman/rclone/fs/sync"
+	"github.com/PhateValleyman/rclone/lib/terminal"
 )
 
 // Results represents a pair of synced files, as reported by the LoggerFn

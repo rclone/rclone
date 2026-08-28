@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rclone/rclone/backend/union/upstream"
-	"github.com/rclone/rclone/fs"
+	"github.com/PhateValleyman/rclone/backend/union/upstream"
+	"github.com/PhateValleyman/rclone/fs"
 )
 
 func init() {

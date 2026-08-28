@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/rclone/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs"
 )
 
 type transform struct {

@@ -11,9 +11,9 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/rclone/rclone/fstest/testy"
-	"github.com/rclone/rclone/vfs/vfscommon"
-	"github.com/rclone/rclone/vfs/vfstest"
+	"github.com/PhateValleyman/rclone/fstest/testy"
+	"github.com/PhateValleyman/rclone/vfs/vfscommon"
+	"github.com/PhateValleyman/rclone/vfs/vfstest"
 )
 
 func TestMount(t *testing.T) {

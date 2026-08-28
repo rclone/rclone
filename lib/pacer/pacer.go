@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rclone/rclone/lib/caller"
-	liberrors "github.com/rclone/rclone/lib/errors"
+	"github.com/PhateValleyman/rclone/lib/caller"
+	liberrors "github.com/PhateValleyman/rclone/lib/errors"
 )
 
 // State represents the public Pacer state that will be passed to the

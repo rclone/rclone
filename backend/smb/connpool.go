@@ -9,10 +9,10 @@ import (
 	"time"
 
 	smb2 "github.com/cloudsoda/go-smb2"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/accounting"
-	"github.com/rclone/rclone/fs/config/obscure"
-	"github.com/rclone/rclone/fs/fshttp"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/accounting"
+	"github.com/PhateValleyman/rclone/fs/config/obscure"
+	"github.com/PhateValleyman/rclone/fs/fshttp"
 	"golang.org/x/sync/errgroup"
 )
 

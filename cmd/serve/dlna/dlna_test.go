@@ -13,14 +13,14 @@ import (
 
 	"github.com/anacrolix/dms/soap"
 
-	"github.com/rclone/rclone/cmd/serve/servetest"
-	"github.com/rclone/rclone/fs/config/configfile"
-	"github.com/rclone/rclone/fs/rc"
-	"github.com/rclone/rclone/vfs"
-	"github.com/rclone/rclone/vfs/vfscommon"
+	"github.com/PhateValleyman/rclone/cmd/serve/servetest"
+	"github.com/PhateValleyman/rclone/fs/config/configfile"
+	"github.com/PhateValleyman/rclone/fs/rc"
+	"github.com/PhateValleyman/rclone/vfs"
+	"github.com/PhateValleyman/rclone/vfs/vfscommon"
 
-	_ "github.com/rclone/rclone/backend/local"
-	"github.com/rclone/rclone/fs"
+	_ "github.com/PhateValleyman/rclone/backend/local"
+	"github.com/PhateValleyman/rclone/fs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -118,7 +118,7 @@ func TestServeContent(t *testing.T) {
 
 // Check that ContentDirectory#Browse returns appropriate metadata on the root container.
 func TestContentDirectoryBrowseMetadata(t *testing.T) {
-	// Sample from: https://github.com/rclone/rclone/issues/3253#issuecomment-524317469
+	// Sample from: https://github.com/PhateValleyman/rclone/issues/3253#issuecomment-524317469
 	req, err := http.NewRequest("POST", baseURL+serviceControlURL, strings.NewReader(`
 <?xml version="1.0" encoding="utf-8"?>
 <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"
@@ -154,7 +154,7 @@ func TestContentDirectoryBrowseMetadata(t *testing.T) {
 
 // Check that Browse response arguments are in the SCPD-defined order.
 // Samsung TVs require this specific ordering to work correctly.
-// See: https://github.com/rclone/rclone/issues/9346
+// See: https://github.com/PhateValleyman/rclone/issues/9346
 func TestContentDirectoryBrowseResponseOrder(t *testing.T) {
 	req, err := http.NewRequest("POST", baseURL+serviceControlURL, strings.NewReader(`
 <?xml version="1.0" encoding="utf-8"?>

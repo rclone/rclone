@@ -15,9 +15,9 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/configmap"
-	"github.com/rclone/rclone/lib/oauthutil"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/config/configmap"
+	"github.com/PhateValleyman/rclone/lib/oauthutil"
 
 	"maps"
 

@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/config/configstruct"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/chunkedreader"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/chunkedreader"
 )
 
 // unknownModeHandler implements compressionModeHandler for unknown compression types

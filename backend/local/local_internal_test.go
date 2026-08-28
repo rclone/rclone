@@ -14,18 +14,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/accounting"
-	"github.com/rclone/rclone/fs/config/configmap"
-	"github.com/rclone/rclone/fs/filter"
-	"github.com/rclone/rclone/fs/fserrors"
-	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/fs/object"
-	"github.com/rclone/rclone/fs/operations"
-	"github.com/rclone/rclone/fstest"
-	"github.com/rclone/rclone/lib/encoder"
-	"github.com/rclone/rclone/lib/file"
-	"github.com/rclone/rclone/lib/readers"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/accounting"
+	"github.com/PhateValleyman/rclone/fs/config/configmap"
+	"github.com/PhateValleyman/rclone/fs/filter"
+	"github.com/PhateValleyman/rclone/fs/fserrors"
+	"github.com/PhateValleyman/rclone/fs/hash"
+	"github.com/PhateValleyman/rclone/fs/object"
+	"github.com/PhateValleyman/rclone/fs/operations"
+	"github.com/PhateValleyman/rclone/fstest"
+	"github.com/PhateValleyman/rclone/lib/encoder"
+	"github.com/PhateValleyman/rclone/lib/file"
+	"github.com/PhateValleyman/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -571,7 +571,7 @@ func TestMetadata(t *testing.T) {
 	require.NoError(t, err)
 
 	// Check that operating on the symlink didn't change the file it was pointing to
-	// See: https://github.com/rclone/rclone/security/advisories/GHSA-hrxh-9w67-g4cv
+	// See: https://github.com/PhateValleyman/rclone/security/advisories/GHSA-hrxh-9w67-g4cv
 	assert.Equal(t, oMeta, oMetaNew, "metadata setting on symlink messed up file")
 
 	// Now run the same tests on the file
@@ -722,7 +722,7 @@ func testMetadata(t *testing.T, r *fstest.Run, o *Object, when time.Time) {
 // Check that the setuid, setgid and sticky bits from "mode" metadata are
 // stripped by default and only restored with --local-metadata-restore-special-bits.
 //
-// See: https://github.com/rclone/rclone/security/advisories/GHSA-945v-v9p3-v5xw
+// See: https://github.com/PhateValleyman/rclone/security/advisories/GHSA-945v-v9p3-v5xw
 func TestMetadataSpecialBits(t *testing.T) {
 	switch runtime.GOOS {
 	case "windows", "plan9", "js":

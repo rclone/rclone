@@ -9,9 +9,9 @@ import (
 	"testing"
 
 	"github.com/anacrolix/dms/soap"
-	localBackend "github.com/rclone/rclone/backend/local"
-	"github.com/rclone/rclone/fs/config/configmap"
-	"github.com/rclone/rclone/vfs"
+	localBackend "github.com/PhateValleyman/rclone/backend/local"
+	"github.com/PhateValleyman/rclone/fs/config/configmap"
+	"github.com/PhateValleyman/rclone/vfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

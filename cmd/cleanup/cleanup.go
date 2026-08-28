@@ -4,8 +4,8 @@ package cleanup
 import (
 	"context"
 
-	"github.com/rclone/rclone/cmd"
-	"github.com/rclone/rclone/fs/operations"
+	"github.com/PhateValleyman/rclone/cmd"
+	"github.com/PhateValleyman/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
 

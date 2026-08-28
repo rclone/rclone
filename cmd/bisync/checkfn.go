@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/rclone/rclone/backend/crypt"
-	"github.com/rclone/rclone/cmd/bisync/bilib"
-	"github.com/rclone/rclone/cmd/check"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/accounting"
-	"github.com/rclone/rclone/fs/filter"
-	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/fs/operations"
+	"github.com/PhateValleyman/rclone/backend/crypt"
+	"github.com/PhateValleyman/rclone/cmd/bisync/bilib"
+	"github.com/PhateValleyman/rclone/cmd/check"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/accounting"
+	"github.com/PhateValleyman/rclone/fs/filter"
+	"github.com/PhateValleyman/rclone/fs/hash"
+	"github.com/PhateValleyman/rclone/fs/operations"
 )
 
 type bisyncCheck = struct {

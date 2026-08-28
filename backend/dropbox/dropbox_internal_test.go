@@ -12,10 +12,10 @@ import (
 
 	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/files"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fstest/fstests"
-	"github.com/rclone/rclone/lib/batcher"
-	"github.com/rclone/rclone/lib/pacer"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fstest/fstests"
+	"github.com/PhateValleyman/rclone/lib/batcher"
+	"github.com/PhateValleyman/rclone/lib/pacer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

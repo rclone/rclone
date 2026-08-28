@@ -24,20 +24,20 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/cache"
-	"github.com/rclone/rclone/fs/config"
-	"github.com/rclone/rclone/fs/fserrors"
-	"github.com/rclone/rclone/fs/fspath"
-	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/fs/object"
-	"github.com/rclone/rclone/fs/operations"
-	"github.com/rclone/rclone/fs/walk"
-	"github.com/rclone/rclone/fstest"
-	"github.com/rclone/rclone/fstest/testserver"
-	"github.com/rclone/rclone/lib/encoder"
-	"github.com/rclone/rclone/lib/random"
-	"github.com/rclone/rclone/lib/readers"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/cache"
+	"github.com/PhateValleyman/rclone/fs/config"
+	"github.com/PhateValleyman/rclone/fs/fserrors"
+	"github.com/PhateValleyman/rclone/fs/fspath"
+	"github.com/PhateValleyman/rclone/fs/hash"
+	"github.com/PhateValleyman/rclone/fs/object"
+	"github.com/PhateValleyman/rclone/fs/operations"
+	"github.com/PhateValleyman/rclone/fs/walk"
+	"github.com/PhateValleyman/rclone/fstest"
+	"github.com/PhateValleyman/rclone/fstest/testserver"
+	"github.com/PhateValleyman/rclone/lib/encoder"
+	"github.com/PhateValleyman/rclone/lib/random"
+	"github.com/PhateValleyman/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -2091,7 +2091,7 @@ func Run(t *testing.T, opt *Opt) {
 							return
 						}
 						// For OneDrive Personal, link expiry is a premium feature
-						// Don't let it fail the test (https://github.com/rclone/rclone/issues/5420)
+						// Don't let it fail the test (https://github.com/PhateValleyman/rclone/issues/5420)
 						if fsInfo.Name == "onedrive" && strings.Contains(err.Error(), "accountUpgradeRequired") {
 							t.Log("treating accountUpgradeRequired as success for PublicLink")
 							link, err = "bogus link to "+remote, nil
@@ -2808,7 +2808,7 @@ func Run(t *testing.T, opt *Opt) {
 		// an object in that folder, whose name is taken from a directory that
 		// exists in the absolute root.
 		// This test is added after
-		// https://github.com/rclone/rclone/issues/3164.
+		// https://github.com/PhateValleyman/rclone/issues/3164.
 		t.Run("FsRootCollapse", func(t *testing.T) {
 			deepRemoteName := subRemoteName + "/deeper/nonexisting/directory"
 			deepRemote, err := fs.NewFs(context.Background(), deepRemoteName)

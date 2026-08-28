@@ -13,10 +13,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/rclone/rclone/backend/overview"
-	"github.com/rclone/rclone/fs/config/configmap"
-	"github.com/rclone/rclone/fs/config/configstruct"
-	"github.com/rclone/rclone/lib/errcount"
+	"github.com/PhateValleyman/rclone/backend/overview"
+	"github.com/PhateValleyman/rclone/fs/config/configmap"
+	"github.com/PhateValleyman/rclone/fs/config/configstruct"
+	"github.com/PhateValleyman/rclone/lib/errcount"
 )
 
 // Registry of filesystems

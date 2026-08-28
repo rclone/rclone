@@ -3,7 +3,7 @@ package filen
 import (
 	"testing"
 
-	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/PhateValleyman/rclone/fstest/fstests"
 )
 
 func TestIntegration(t *testing.T) {

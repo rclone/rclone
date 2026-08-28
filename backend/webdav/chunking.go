@@ -16,9 +16,9 @@ import (
 	"path"
 	"time"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/lib/readers"
-	"github.com/rclone/rclone/lib/rest"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/lib/readers"
+	"github.com/PhateValleyman/rclone/lib/rest"
 )
 
 func (f *Fs) shouldRetryChunkMerge(ctx context.Context, resp *http.Response, err error, sleepTime *time.Duration, wasLocked *bool) (bool, error) {

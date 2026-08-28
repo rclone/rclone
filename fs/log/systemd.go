@@ -7,7 +7,7 @@ package log
 import (
 	"runtime"
 
-	"github.com/rclone/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs"
 )
 
 // Enables systemd logs if configured or if auto-detected

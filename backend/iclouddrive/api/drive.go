@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/lib/rest"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/lib/rest"
 )
 
 const (

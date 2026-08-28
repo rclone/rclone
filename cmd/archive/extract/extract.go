@@ -11,12 +11,12 @@ import (
 	"strings"
 
 	"github.com/mholt/archives"
-	"github.com/rclone/rclone/cmd"
-	"github.com/rclone/rclone/cmd/archive"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/accounting"
-	"github.com/rclone/rclone/fs/filter"
-	"github.com/rclone/rclone/fs/operations"
+	"github.com/PhateValleyman/rclone/cmd"
+	"github.com/PhateValleyman/rclone/cmd/archive"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/accounting"
+	"github.com/PhateValleyman/rclone/fs/filter"
+	"github.com/PhateValleyman/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
 

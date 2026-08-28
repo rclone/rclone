@@ -11,8 +11,8 @@ import (
 
 	"github.com/spf13/pflag"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/config/flags"
 )
 
 // TemplateHelp returns a string that describes how to use a custom template

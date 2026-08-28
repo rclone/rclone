@@ -19,12 +19,12 @@ import (
 	"testing"
 	"time"
 
-	_ "github.com/rclone/rclone/backend/all" // import all the backends
-	"github.com/rclone/rclone/cmd/mountlib"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/walk"
-	"github.com/rclone/rclone/fstest"
-	"github.com/rclone/rclone/vfs/vfscommon"
+	_ "github.com/PhateValleyman/rclone/backend/all" // import all the backends
+	"github.com/PhateValleyman/rclone/cmd/mountlib"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/walk"
+	"github.com/PhateValleyman/rclone/fstest"
+	"github.com/PhateValleyman/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

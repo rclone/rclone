@@ -35,7 +35,7 @@ import (
 const (
 	// moduleName and moduleVersion identify this package in the azcore
 	// telemetry policy's User-Agent fragment.
-	moduleName    = "github.com/rclone/rclone/backend/azureblob/arrowlist"
+	moduleName    = "github.com/PhateValleyman/rclone/backend/azureblob/arrowlist"
 	moduleVersion = "v0.0.1"
 
 	// serviceVersion is the x-ms-version sent with listing requests. Arrow

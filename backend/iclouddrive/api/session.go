@@ -17,9 +17,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/fshttp"
-	"github.com/rclone/rclone/lib/rest"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/fshttp"
+	"github.com/PhateValleyman/rclone/lib/rest"
 )
 
 const iCloudUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.3.1 Safari/605.1.15"

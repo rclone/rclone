@@ -8,7 +8,7 @@ import (
 	"syscall"
 
 	"github.com/pkg/xattr"
-	"github.com/rclone/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs"
 )
 
 const (

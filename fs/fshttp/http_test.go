@@ -16,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rclone/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"moul.io/http2curl/v2"

@@ -2,7 +2,7 @@
 package chunksize
 
 import (
-	"github.com/rclone/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs"
 )
 
 // Calculator calculates the minimum chunk size needed to fit within

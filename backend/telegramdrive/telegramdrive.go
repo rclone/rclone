@@ -14,10 +14,10 @@ import (
 	"github.com/gotd/td/telegram/downloader"
 	"github.com/gotd/td/telegram/uploader"
 	"github.com/gotd/td/tg"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/configmap"
-	"github.com/rclone/rclone/fs/config/configstruct"
-	"github.com/rclone/rclone/fs/hash"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/config/configmap"
+	"github.com/PhateValleyman/rclone/fs/config/configstruct"
+	"github.com/PhateValleyman/rclone/fs/hash"
 )
 
 // Options definuje parametry pro rclone.conf

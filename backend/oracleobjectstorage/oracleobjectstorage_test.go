@@ -10,11 +10,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/fstest"
-	"github.com/rclone/rclone/fstest/fstests"
-	"github.com/rclone/rclone/lib/random"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/hash"
+	"github.com/PhateValleyman/rclone/fstest"
+	"github.com/PhateValleyman/rclone/fstest/fstests"
+	"github.com/PhateValleyman/rclone/lib/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

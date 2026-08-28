@@ -9,9 +9,9 @@ import (
 	"sync/atomic"
 	"testing"
 
-	_ "github.com/rclone/rclone/backend/local"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/operations"
+	_ "github.com/PhateValleyman/rclone/backend/local"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/operations"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/lib/mmap"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/lib/mmap"
 	"golang.org/x/sync/semaphore"
 )
 

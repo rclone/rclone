@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rclone/rclone/backend/iclouddrive/api"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/lib/dircache"
+	"github.com/PhateValleyman/rclone/backend/iclouddrive/api"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/lib/dircache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

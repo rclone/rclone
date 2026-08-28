@@ -9,7 +9,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/rclone/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs"
 )
 
 // RulesOpt is configuration for a rule set

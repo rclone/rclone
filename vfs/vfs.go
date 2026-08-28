@@ -36,14 +36,14 @@ import (
 	"slices"
 
 	"github.com/go-git/go-billy/v5"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/cache"
-	"github.com/rclone/rclone/fs/filter"
-	"github.com/rclone/rclone/fs/log"
-	"github.com/rclone/rclone/fs/rc"
-	"github.com/rclone/rclone/fs/walk"
-	"github.com/rclone/rclone/vfs/vfscache"
-	"github.com/rclone/rclone/vfs/vfscommon"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/cache"
+	"github.com/PhateValleyman/rclone/fs/filter"
+	"github.com/PhateValleyman/rclone/fs/log"
+	"github.com/PhateValleyman/rclone/fs/rc"
+	"github.com/PhateValleyman/rclone/fs/walk"
+	"github.com/PhateValleyman/rclone/vfs/vfscache"
+	"github.com/PhateValleyman/rclone/vfs/vfscommon"
 )
 
 //go:embed vfs.md

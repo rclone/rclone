@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/rclone/rclone/fs/config/configmap"
-	"github.com/rclone/rclone/fs/fspath"
+	"github.com/PhateValleyman/rclone/fs/config/configmap"
+	"github.com/PhateValleyman/rclone/fs/fspath"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

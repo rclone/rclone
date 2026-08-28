@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/operations"
-	"github.com/rclone/rclone/fstest"
-	"github.com/rclone/rclone/vfs/vfscommon"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/operations"
+	"github.com/PhateValleyman/rclone/fstest"
+	"github.com/PhateValleyman/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -717,7 +717,7 @@ func TestRWCacheRename(t *testing.T) {
 
 // Test the cache reading a file that is updated externally
 //
-// See: https://github.com/rclone/rclone/issues/6053
+// See: https://github.com/PhateValleyman/rclone/issues/6053
 func TestRWCacheUpdate(t *testing.T) {
 	opt := vfscommon.Opt
 	opt.CacheMode = vfscommon.CacheModeFull

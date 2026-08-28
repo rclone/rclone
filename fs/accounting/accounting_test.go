@@ -10,10 +10,10 @@ import (
 	"testing"
 	"unicode/utf8"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/asyncreader"
-	"github.com/rclone/rclone/fs/fserrors"
-	"github.com/rclone/rclone/lib/readers"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/asyncreader"
+	"github.com/PhateValleyman/rclone/fs/fserrors"
+	"github.com/PhateValleyman/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

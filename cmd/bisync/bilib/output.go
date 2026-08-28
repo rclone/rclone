@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"sync"
 
-	"github.com/rclone/rclone/fs/log"
+	"github.com/PhateValleyman/rclone/fs/log"
 )
 
 // CaptureOutput runs a function capturing its output at log level INFO.

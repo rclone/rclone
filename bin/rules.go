@@ -27,12 +27,12 @@ import "github.com/quasilyte/go-ruleguard/dsl"
 //
 // Caveats:
 //   - After applying the suggestions, imports may have to be fixed manually,
-//     removing unused "log", adding "github.com/rclone/rclone/fs" and "fmt",
+//     removing unused "log", adding "github.com/PhateValleyman/rclone/fs" and "fmt",
 //     and if there was a variable named "fs" or "fmt" in the scope the name
 //     clash must be fixed.
 //   - Suggested code is incorrect when within fs package itself, due to the
 //     "fs."" prefix. Could handle it using condition
-//     ".Where(m.File().PkgPath.Matches(`github.com/rclone/rclone/fs`))"
+//     ".Where(m.File().PkgPath.Matches(`github.com/PhateValleyman/rclone/fs`))"
 //     but not sure how to avoid duplicating all checks with and without this
 //     condition so haven't bothered yet.
 func useFsLog(m dsl.Matcher) {

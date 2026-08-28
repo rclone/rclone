@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/rclone/rclone/fstest/mockdir"
-	"github.com/rclone/rclone/fstest/mockobject"
+	"github.com/PhateValleyman/rclone/fstest/mockdir"
+	"github.com/PhateValleyman/rclone/fstest/mockobject"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

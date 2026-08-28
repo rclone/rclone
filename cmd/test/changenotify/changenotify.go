@@ -6,10 +6,10 @@ import (
 	"errors"
 	"time"
 
-	"github.com/rclone/rclone/cmd"
-	"github.com/rclone/rclone/cmd/test"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/PhateValleyman/rclone/cmd"
+	"github.com/PhateValleyman/rclone/cmd/test"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/config/flags"
 	"github.com/spf13/cobra"
 )
 

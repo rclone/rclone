@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rclone/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs"
 )
 
 // UploadMemoryManager dynamically calculates every chunk size for the transfer and increases or decreases it

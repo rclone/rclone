@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/lib/file"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/lib/file"
 )
 
 // GetLatestReleaseURL returns the latest release details of the rclone-webui-react
@@ -180,7 +180,7 @@ func Unzip(src, dest string) (err error) {
 	// Closure to address file descriptors issue with all the deferred .Close() methods
 	extractAndWriteFile := func(f *zip.File) error {
 		path := filepath.Join(dest, f.Name)
-		// Check for Zip Slip: https://github.com/rclone/rclone/issues/3529
+		// Check for Zip Slip: https://github.com/PhateValleyman/rclone/issues/3529
 		if !strings.HasPrefix(path, dest) {
 			return fmt.Errorf("%s: illegal file path", path)
 		}

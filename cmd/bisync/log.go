@@ -8,9 +8,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/lib/encoder"
-	"github.com/rclone/rclone/lib/terminal"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/lib/encoder"
+	"github.com/PhateValleyman/rclone/lib/terminal"
 )
 
 func (b *bisyncRun) indentf(tag, file, format string, args ...any) {

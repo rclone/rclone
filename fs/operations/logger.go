@@ -8,8 +8,8 @@ import (
 	"io"
 	mutex "sync"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/hash"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/hash"
 	"github.com/spf13/pflag"
 )
 

@@ -14,10 +14,10 @@ import (
 
 	"slices"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/log"
-	"github.com/rclone/rclone/fs/operations"
-	"github.com/rclone/rclone/vfs/vfscommon"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/log"
+	"github.com/PhateValleyman/rclone/fs/operations"
+	"github.com/PhateValleyman/rclone/vfs/vfscommon"
 )
 
 // The File object is tightly coupled to the Dir object. Since they

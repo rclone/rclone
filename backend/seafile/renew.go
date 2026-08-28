@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rclone/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs"
 )
 
 // Renew allows tokens to be renewed on expiry.

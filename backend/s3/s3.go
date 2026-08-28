@@ -45,27 +45,27 @@ import (
 	"golang.org/x/net/http/httpguts"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/accounting"
-	"github.com/rclone/rclone/fs/chunksize"
-	"github.com/rclone/rclone/fs/config"
-	"github.com/rclone/rclone/fs/config/configmap"
-	"github.com/rclone/rclone/fs/config/configstruct"
-	"github.com/rclone/rclone/fs/fserrors"
-	"github.com/rclone/rclone/fs/fshttp"
-	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/fs/list"
-	"github.com/rclone/rclone/fs/operations"
-	"github.com/rclone/rclone/lib/atexit"
-	"github.com/rclone/rclone/lib/bucket"
-	"github.com/rclone/rclone/lib/encoder"
-	"github.com/rclone/rclone/lib/multipart"
-	"github.com/rclone/rclone/lib/pacer"
-	"github.com/rclone/rclone/lib/pool"
-	"github.com/rclone/rclone/lib/readers"
-	"github.com/rclone/rclone/lib/rest"
-	"github.com/rclone/rclone/lib/transferaccounter"
-	"github.com/rclone/rclone/lib/version"
+	"github.com/PhateValleyman/rclone/fs"
+	"github.com/PhateValleyman/rclone/fs/accounting"
+	"github.com/PhateValleyman/rclone/fs/chunksize"
+	"github.com/PhateValleyman/rclone/fs/config"
+	"github.com/PhateValleyman/rclone/fs/config/configmap"
+	"github.com/PhateValleyman/rclone/fs/config/configstruct"
+	"github.com/PhateValleyman/rclone/fs/fserrors"
+	"github.com/PhateValleyman/rclone/fs/fshttp"
+	"github.com/PhateValleyman/rclone/fs/hash"
+	"github.com/PhateValleyman/rclone/fs/list"
+	"github.com/PhateValleyman/rclone/fs/operations"
+	"github.com/PhateValleyman/rclone/lib/atexit"
+	"github.com/PhateValleyman/rclone/lib/bucket"
+	"github.com/PhateValleyman/rclone/lib/encoder"
+	"github.com/PhateValleyman/rclone/lib/multipart"
+	"github.com/PhateValleyman/rclone/lib/pacer"
+	"github.com/PhateValleyman/rclone/lib/pool"
+	"github.com/PhateValleyman/rclone/lib/readers"
+	"github.com/PhateValleyman/rclone/lib/rest"
+	"github.com/PhateValleyman/rclone/lib/transferaccounter"
+	"github.com/PhateValleyman/rclone/lib/version"
 )
 
 // Register with Fs
@@ -551,7 +551,7 @@ There is currently an unsolved issue with the s3 (specifically minio) backend
 and HTTP/2.  HTTP/2 is enabled by default for the s3 backend but can be
 disabled here.  When the issue is solved this flag will be removed.
 
-See: https://github.com/rclone/rclone/issues/4673, https://github.com/rclone/rclone/issues/3631
+See: https://github.com/PhateValleyman/rclone/issues/4673, https://github.com/PhateValleyman/rclone/issues/3631
 
 `,
 		}, {
@@ -2467,7 +2467,7 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 	// it doesn't encode CommonPrefixes.
 	// See: https://tracker.ceph.com/issues/41870
 	//
-	// This does not work under IBM COS also: See https://github.com/rclone/rclone/issues/3345
+	// This does not work under IBM COS also: See https://github.com/PhateValleyman/rclone/issues/3345
 	// though maybe it does on some versions.
 	//
 	// This does work with minio but was only added relatively recently

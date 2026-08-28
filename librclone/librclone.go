@@ -7,11 +7,11 @@
 //
 // Build a shared library like this:
 //
-//	go build --buildmode=c-shared -o librclone.so github.com/rclone/rclone/librclone
+//	go build --buildmode=c-shared -o librclone.so github.com/PhateValleyman/rclone/librclone
 //
 // Build a static library like this:
 //
-//	go build --buildmode=c-archive -o librclone.a github.com/rclone/rclone/librclone
+//	go build --buildmode=c-archive -o librclone.a github.com/PhateValleyman/rclone/librclone
 //
 // Both the above commands will also generate `librclone.h` which should
 // be `#include`d in `C` programs wishing to use the library.
@@ -32,15 +32,15 @@ import "C"
 import (
 	"unsafe"
 
-	"github.com/rclone/rclone/librclone/librclone"
+	"github.com/PhateValleyman/rclone/librclone/librclone"
 
-	_ "github.com/rclone/rclone/backend/all"   // import all backends
-	_ "github.com/rclone/rclone/cmd/cmount"    // import cmount
-	_ "github.com/rclone/rclone/cmd/mount"     // import mount
-	_ "github.com/rclone/rclone/cmd/mount2"    // import mount2
-	_ "github.com/rclone/rclone/fs/operations" // import operations/* rc commands
-	_ "github.com/rclone/rclone/fs/sync"       // import sync/*
-	_ "github.com/rclone/rclone/lib/plugin"    // import plugins
+	_ "github.com/PhateValleyman/rclone/backend/all"   // import all backends
+	_ "github.com/PhateValleyman/rclone/cmd/cmount"    // import cmount
+	_ "github.com/PhateValleyman/rclone/cmd/mount"     // import mount
+	_ "github.com/PhateValleyman/rclone/cmd/mount2"    // import mount2
+	_ "github.com/PhateValleyman/rclone/fs/operations" // import operations/* rc commands
+	_ "github.com/PhateValleyman/rclone/fs/sync"       // import sync/*
+	_ "github.com/PhateValleyman/rclone/lib/plugin"    // import plugins
 )
 
 // RcloneInitialize initializes rclone as a library
