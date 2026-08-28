@@ -247,4 +247,58 @@ func TestHealWrites(t *testing.T) {
 		// The union object itself should reflect the healed size
 		assert.Equal(t, int64(len(newContents)), o.Size())
 	})
+
+	// With a narrowing action_policy such as epff, actionEntries only
+	// returns a subset of the upstreams which actually hold the object.
+	// heal_writes must compare against the object's full candidate list,
+	// not that narrowed subset, or it will misclassify upstreams which
+	// already have the file as missing and create duplicate candidates.
+	t.Run("HealWritesDoesNotDuplicateWithNarrowingActionPolicy", func(t *testing.T) {
+		dirs := MakeTestDirs(t, 2)
+		fsString := fmt.Sprintf(":union,upstreams='%s %s',action_policy=epff,create_policy=all,heal_writes=true:", dirs[0], dirs[1])
+		f, err := fs.NewFs(ctx, fsString)
+		require.NoError(t, err)
+		u1, u2 := dirs[0], dirs[1]
+
+		contents := random.String(50)
+		file := fstest.NewItem("file.txt", contents, time.Now())
+		_ = fstests.PutTestContents(ctx, t, f, &file, contents, true)
+
+		// Both upstreams genuinely have the file - nothing is missing
+		assert.FileExists(t, filepath.Join(u1, "file.txt"))
+		assert.FileExists(t, filepath.Join(u2, "file.txt"))
+
+		o, err := f.NewObject(ctx, file.Path)
+		require.NoError(t, err)
+		uo := o.(*Object)
+		require.Len(t, uo.candidates(), 2)
+
+		// epff always selects the same (first) upstream for update, so the
+		// other upstream's content is expected to go stale - that's the
+		// policy working as intended, not something heal_writes should
+		// override since the file isn't missing there, just outdated
+		u2Before, err := os.ReadFile(filepath.Join(u2, "file.txt"))
+		require.NoError(t, err)
+
+		for i := range 3 {
+			newContents := random.String(60 + i)
+			in := bytes.NewBufferString(newContents)
+			src := object.NewStaticObjectInfo(file.Path, time.Now(), int64(len(newContents)), true, nil, nil)
+			require.NoError(t, uo.Update(ctx, in, src))
+
+			// The candidate list must not grow: nothing was missing, so
+			// epff's single action candidate must not be treated as the
+			// full set and cause the other upstream to be re-created
+			assert.Len(t, uo.candidates(), 2, "candidate list should not grow on update %d", i)
+
+			b1, err := os.ReadFile(filepath.Join(u1, "file.txt"))
+			require.NoError(t, err)
+			assert.Equal(t, newContents, string(b1))
+		}
+
+		// u2 was never missing, so heal_writes must not have touched it
+		u2After, err := os.ReadFile(filepath.Join(u2, "file.txt"))
+		require.NoError(t, err)
+		assert.Equal(t, string(u2Before), string(u2After))
+	})
 }

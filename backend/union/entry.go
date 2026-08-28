@@ -83,7 +83,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	var missing []*upstream.Fs
 	if o.fs.opt.HealWrites {
-		missing, err = o.fs.missingCreateUpstreams(ctx, src.Remote(), entries)
+		// Compare against the object's full candidate list, not entries:
+		// action_policy may narrow entries to a subset of the upstreams
+		// which actually hold the object (e.g. epff picks only one), and
+		// those upstreams must not be misclassified as missing.
+		missing, err = o.fs.missingCreateUpstreams(ctx, src.Remote(), o.candidates())
 		if err != nil {
 			return err
 		}
@@ -135,12 +139,15 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	errs[n] = <-errChan
 	err = errs.Err()
 	if len(missing) > 0 {
-		// Heal the object's candidate list with any newly created uploads
+		// Heal the object's candidate list with any newly created uploads.
+		// Guarded by writebackMu as Open also mutates o.co under this lock.
+		o.writebackMu.Lock()
 		for _, e := range newObjs {
 			if e != nil {
 				o.co = append(o.co, e)
 			}
 		}
+		o.writebackMu.Unlock()
 	}
 	return err
 }
