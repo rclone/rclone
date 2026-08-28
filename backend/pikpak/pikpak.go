@@ -58,6 +58,7 @@ import (
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
+	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/oauth2"
 )
@@ -1446,10 +1447,11 @@ func (f *Fs) uploadByResumable(ctx context.Context, in io.Reader, name string, s
 	if err != nil {
 		return fmt.Errorf("failed to create upload client: %w", err)
 	}
+	counter := readers.NewCountingReader(in)
 	req := &s3.PutObjectInput{
 		Bucket: &p.Bucket,
 		Key:    &p.Key,
-		Body:   io.NopCloser(in),
+		Body:   io.NopCloser(counter),
 	}
 	// Apply upload options
 	for _, option := range options {
@@ -1477,7 +1479,14 @@ func (f *Fs) uploadByResumable(ctx context.Context, in io.Reader, name string, s
 		_, err = client.PutObject(ctx, req, s3opts...)
 		return f.shouldRetry(ctx, nil, err)
 	})
-	return
+	if err != nil {
+		return err
+	}
+	// Check for truncation of input
+	if size >= 0 && int64(counter.BytesRead()) != size {
+		return fmt.Errorf("expected %d bytes in input, but got %d: %w", size, counter.BytesRead(), io.ErrUnexpectedEOF)
+	}
+	return nil
 }
 
 func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, gcid string, size int64, options ...fs.OpenOption) (info *api.File, err error) {

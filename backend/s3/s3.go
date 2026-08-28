@@ -3275,6 +3275,16 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
+	// With NoHeadObject no metadata was read for the new object, so carry
+	// the size and MD5 over from the source as a server-side copy produces
+	// an object with identical content.
+	if f.opt.NoHeadObject {
+		if dstObject, ok := dstObj.(*Object); ok {
+			dstObject.bytes = srcObj.bytes
+			dstObject.md5 = srcObj.md5
+		}
+	}
+
 	// Set Object Lock via separate API calls if requested
 	if f.opt.ObjectLockSetAfterUpload {
 		if dstObject, ok := dstObj.(*Object); ok {
@@ -4652,6 +4662,16 @@ func (w *s3ChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 			}
 			// retry all chunks once have done the first few
 			return true, err
+		}
+		if uout == nil || uout.ETag == nil {
+			// A successful UploadPart without an ETag header is unusable: the
+			// part ETag is required by CompleteMultipartUpload. Proxies and
+			// load balancers have been observed emitting empty 200 responses
+			// under load - see #9822. Treat it as a retryable error so the
+			// pacer retries this chunk, instead of dereferencing a nil ETag
+			// in the debug log below or completing the upload with a broken
+			// part list.
+			return true, fmt.Errorf("UploadPart response for chunk %d has no ETag", chunkNumber+1)
 		}
 		return false, nil
 	})
