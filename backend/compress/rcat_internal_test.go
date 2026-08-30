@@ -3,6 +3,7 @@ package compress
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"io"
 	"testing"
 	"time"
@@ -109,6 +110,28 @@ func TestRcat(t *testing.T) {
 			require.NoError(t, err)
 			require.NoError(t, rc.Close())
 			assert.Equal(t, content, got)
+		})
+	}
+}
+
+// TestIsCompressible checks the compressibility heuristic on data at
+// both ends of the scale for every compression mode which has one.
+func TestIsCompressible(t *testing.T) {
+	compressible := bytes.Repeat([]byte("compress me "), 4096)
+	incompressible := make([]byte, len(compressible))
+	_, err := io.ReadFull(rand.Reader, incompressible)
+	require.NoError(t, err)
+	for name, handler := range map[string]compressionModeHandler{
+		"gzip": &gzipModeHandler{},
+		"zstd": &zstdModeHandler{},
+	} {
+		t.Run(name, func(t *testing.T) {
+			ok, err := handler.isCompressible(bytes.NewReader(compressible), 0)
+			require.NoError(t, err)
+			assert.True(t, ok)
+			ok, err = handler.isCompressible(bytes.NewReader(incompressible), 0)
+			require.NoError(t, err)
+			assert.False(t, ok)
 		})
 	}
 }

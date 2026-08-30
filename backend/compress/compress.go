@@ -1125,6 +1125,15 @@ func (o *Object) Remove(ctx context.Context) error {
 	return objErr
 }
 
+// countingDiscard is an io.Writer which discards its input and counts
+// the bytes written
+type countingDiscard int64
+
+func (c *countingDiscard) Write(p []byte) (int, error) {
+	*c += countingDiscard(len(p))
+	return len(p), nil
+}
+
 // ReadCloserWrapper combines a Reader and a Closer to a ReadCloser
 type ReadCloserWrapper struct {
 	io.Reader
