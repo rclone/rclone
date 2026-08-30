@@ -1221,3 +1221,4 @@ put them back in again. -->
 - shaurya <19599684+no-hup@users.noreply.github.com>
 - no-hup <shauryaj.finance@gmail.com>
 - Dhevenddra <dhevg20020402@gmail.com>
+- Splainte <r.wycke@hotmail.fr>
