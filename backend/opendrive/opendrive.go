@@ -23,8 +23,8 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/pacer"
-	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 )
 
@@ -1047,7 +1047,6 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// resp.Body.Close()
 	// fs.Debugf(nil, "PostOpen: %#v", openResponse)
 
-	buf := make([]byte, o.fs.opt.ChunkSize)
 	chunkOffset := int64(0)
 	remainingBytes := size
 	chunkCounter := 0
@@ -1057,17 +1056,27 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		remainingBytes -= currentChunkSize
 		fs.Debugf(o, "Uploading chunk %d, size=%d, remain=%d", chunkCounter, currentChunkSize, remainingBytes)
 
-		chunk := readers.NewRepeatableLimitReaderBuffer(in, buf, currentChunkSize)
+		// Buffer the chunk in memory from the global pool so reads are
+		// repeatable for retries
+		rw := multipart.NewRW()
+		_, err = io.CopyN(rw, in, currentChunkSize)
+		if err != nil {
+			_ = rw.Close()
+			if err == io.EOF {
+				err = fmt.Errorf("short read of chunk %d: %w", chunkCounter, io.ErrUnexpectedEOF)
+			}
+			return fmt.Errorf("failed to create file: %w", err)
+		}
 		var reply uploadFileChunkReply
 		err = o.fs.pacer.Call(func() (bool, error) {
 			// seek to the start in case this is a retry
-			if _, err = chunk.Seek(0, io.SeekStart); err != nil {
+			if _, err = rw.Seek(0, io.SeekStart); err != nil {
 				return false, err
 			}
 			opts := rest.Opts{
 				Method: "POST",
 				Path:   "/upload/upload_file_chunk.json",
-				Body:   chunk,
+				Body:   rw,
 				MultipartParams: url.Values{
 					"session_id":    []string{o.fs.session.SessionID},
 					"file_id":       []string{o.id},
@@ -1082,8 +1091,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &reply)
 			return o.fs.shouldRetry(ctx, resp, err)
 		})
+		closeErr := rw.Close()
 		if err != nil {
 			return fmt.Errorf("failed to create file: %w", err)
+		}
+		if closeErr != nil {
+			return fmt.Errorf("failed to create file: %w", closeErr)
 		}
 		if reply.TotalWritten != currentChunkSize {
 			return fmt.Errorf("failed to create file: incomplete write of %d/%d bytes", reply.TotalWritten, currentChunkSize)
