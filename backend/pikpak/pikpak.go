@@ -224,7 +224,7 @@ Fill in for rclone to use a non root folder as its starting point.
 			Advanced: true,
 		}, {
 			Name:     "hash_memory_limit",
-			Help:     "Files bigger than this will be cached on disk to calculate hash if required.",
+			Help:     "Files bigger than this will be cached on disk to calculate hash if required.\n\nFiles of unknown size are always cached on disk.",
 			Default:  fs.SizeSuffix(10 * 1024 * 1024),
 			Advanced: true,
 		}, {
