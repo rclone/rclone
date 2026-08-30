@@ -33,6 +33,7 @@ import (
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/oauth2"
@@ -1741,9 +1742,10 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, leaf, direct
 		metadata["autoRename"] = 3
 	}
 
-	// Create multipart form
-	var buf bytes.Buffer
-	writer := multipart.NewWriter(&buf)
+	// Build the multipart body in pooled memory so it can be re-sent on retry
+	rw := pool.NewRW(pool.Global())
+	defer fs.CheckClose(rw, &err)
+	writer := multipart.NewWriter(rw)
 
 	// Add metadata part - use exact format from Huawei docs
 	metadataWriter, err := writer.CreatePart(textproto.MIMEHeader{
@@ -1789,15 +1791,17 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, leaf, direct
 		return fmt.Errorf("failed to close multipart writer: %w", err)
 	}
 
-	bodyBytes := buf.Bytes()
+	bodySize := rw.Size()
 	opts := rest.Opts{
 		Method: "POST",
 		Parameters: url.Values{
 			"uploadType": []string{"multipart"},
 			"fields":     []string{"*"},
 		},
-		ContentType: fmt.Sprintf("multipart/related; boundary=%s", writer.Boundary()),
-		RootURL:     o.fs.uploadURL,
+		ContentType:   fmt.Sprintf("multipart/related; boundary=%s", writer.Boundary()),
+		ContentLength: &bodySize,
+		RootURL:       o.fs.uploadURL,
+		Body:          rw,
 	}
 
 	if o.id != "" {
@@ -1811,7 +1815,10 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, leaf, direct
 
 	var info *api.File
 	err = o.fs.pacer.Call(func() (bool, error) {
-		opts.Body = bytes.NewReader(bodyBytes)
+		_, err := rw.Seek(0, io.SeekStart)
+		if err != nil {
+			return false, err
+		}
 		resp, err := srv.CallJSON(ctx, &opts, nil, &info)
 		return shouldRetry(ctx, resp, err)
 	})
