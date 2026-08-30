@@ -4,7 +4,6 @@ package s3
 //go:generate go run gen_setfrom.go -o setfrom.go
 
 import (
-	"bytes"
 	"context"
 	"crypto/md5"
 	"crypto/tls"
@@ -4762,27 +4761,36 @@ func (o *Object) uploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.R
 }
 
 // bufferForObjectLockMD5 buffers the body and computes Content-MD5 when
-// Object Lock parameters are set on the request. AWS S3 requires Content-MD5
-// for PutObject with Object Lock params and cannot compute it automatically
+// Object Lock parameters are set on the request and Content-MD5 isn't
+// already known from the source. AWS S3 requires Content-MD5 for
+// PutObject with Object Lock params and cannot compute it automatically
 // from a non-seekable io.Reader.
 // See: https://github.com/aws/aws-sdk-go-v2/discussions/2960
-func bufferForObjectLockMD5(req *s3.PutObjectInput, in io.Reader) (io.Reader, error) {
-	if req.ObjectLockMode == "" && req.ObjectLockRetainUntilDate == nil && req.ObjectLockLegalHoldStatus == "" {
-		return in, nil
+//
+// The returned body must not be closed by the transport and cleanup must
+// be called once the upload has finished with it.
+func bufferForObjectLockMD5(req *s3.PutObjectInput, in io.Reader) (body io.Reader, cleanup func(), err error) {
+	cleanup = func() {}
+	if req.ContentMD5 != nil || (req.ObjectLockMode == "" && req.ObjectLockRetainUntilDate == nil && req.ObjectLockLegalHoldStatus == "") {
+		return in, cleanup, nil
 	}
-	buf, err := io.ReadAll(in)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read body for Content-MD5: %w", err)
+	rw := multipart.NewRW()
+	cleanup = func() {
+		_ = rw.Close()
 	}
-	md5sum := md5.Sum(buf)
-	md5base64 := base64.StdEncoding.EncodeToString(md5sum[:])
+	hasher := md5.New()
+	if _, err = io.Copy(rw, io.TeeReader(in, hasher)); err != nil {
+		return nil, cleanup, fmt.Errorf("failed to read body for Content-MD5: %w", err)
+	}
+	md5base64 := base64.StdEncoding.EncodeToString(hasher.Sum(nil))
 	req.ContentMD5 = &md5base64
-	return bytes.NewReader(buf), nil
+	return rw, cleanup, nil
 }
 
 // Upload a single part using PutObject
 func (o *Object) uploadSinglepartPutObject(ctx context.Context, req *s3.PutObjectInput, size int64, in io.Reader) (etag string, lastModified time.Time, versionID *string, err error) {
-	in, err = bufferForObjectLockMD5(req, in)
+	in, cleanup, err := bufferForObjectLockMD5(req, in)
+	defer cleanup()
 	if err != nil {
 		return etag, lastModified, nil, err
 	}
@@ -4817,7 +4825,8 @@ func (o *Object) uploadSinglepartPutObject(ctx context.Context, req *s3.PutObjec
 // Upload a single part using a presigned request
 func (o *Object) uploadSinglepartPresignedRequest(ctx context.Context, req *s3.PutObjectInput, size int64, in io.Reader) (etag string, lastModified time.Time, versionID *string, err error) {
 	// Content-MD5 must be set before signing so it's included in the presigned URL.
-	in, err = bufferForObjectLockMD5(req, in)
+	in, cleanup, err := bufferForObjectLockMD5(req, in)
+	defer cleanup()
 	if err != nil {
 		return etag, lastModified, nil, err
 	}
@@ -4832,8 +4841,9 @@ func (o *Object) uploadSinglepartPresignedRequest(ctx context.Context, req *s3.P
 		in = nil
 	}
 
-	// create the vanilla http request
-	httpReq, err := http.NewRequestWithContext(ctx, "PUT", putReq.URL, in)
+	// create the vanilla http request, making sure the transport can't
+	// close a pooled body
+	httpReq, err := http.NewRequestWithContext(ctx, "PUT", putReq.URL, readers.NoCloser(in))
 	if err != nil {
 		return etag, lastModified, nil, fmt.Errorf("s3 upload: new request: %w", err)
 	}
@@ -4841,6 +4851,13 @@ func (o *Object) uploadSinglepartPresignedRequest(ctx context.Context, req *s3.P
 	// set the headers we signed and the length
 	httpReq.Header = putReq.SignedHeader
 	httpReq.ContentLength = size
+	// let the client resend a seekable body when following a redirect
+	if seeker, ok := in.(io.Seeker); ok {
+		httpReq.GetBody = func() (io.ReadCloser, error) {
+			_, err := seeker.Seek(0, io.SeekStart)
+			return io.NopCloser(readers.NoCloser(in)), err
+		}
+	}
 
 	var resp *http.Response
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
