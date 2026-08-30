@@ -172,14 +172,8 @@ func TestCertificates(t *testing.T) {
 	// Set --client-cert and --client-key in config to
 	// a pair of temp files
 	// create a test cert/key pair and write it to the files
-	ctx := context.TODO()
-	ci := fs.GetConfig(ctx)
-	// Restore the global config for later tests as the temp files
-	// are removed when this test finishes
-	oldCert, oldKey := ci.ClientCert, ci.ClientKey
-	t.Cleanup(func() {
-		ci.ClientCert, ci.ClientKey = oldCert, oldKey
-	})
+	// Use a private config so the cert paths don't leak into other tests
+	ctx, ci := fs.AddConfig(context.TODO())
 	// Create a test certificate and write it to a temp file
 	ci.ClientCert = t.TempDir() + "client.cert"
 	ci.ClientKey = t.TempDir() + "client.key"
