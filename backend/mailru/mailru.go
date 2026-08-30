@@ -36,6 +36,7 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
@@ -1614,7 +1615,6 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	var (
-		fileBuf  []byte
 		fileHash []byte
 		newHash  []byte
 		slowHash bool
@@ -1660,15 +1660,19 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// Attempt to put by calculating hash in memory
 	if trySpeedup && size <= int64(o.fs.opt.SpeedupMaxMem) {
-		fileBuf, err = io.ReadAll(in)
-		if err != nil {
+		rw := multipart.NewRW()
+		defer func() {
+			_ = rw.Close()
+		}()
+		hasher := mrhash.New()
+		if _, err = io.Copy(rw, io.TeeReader(in, hasher)); err != nil {
 			return err
 		}
-		fileHash = mrhash.Sum(fileBuf)
+		fileHash = hasher.Sum(nil)
 		if o.putByHash(ctx, fileHash, src, "memory") {
 			return nil
 		}
-		wrapIn = bytes.NewReader(fileBuf)
+		wrapIn = rw
 		trySpeedup = false // speedup failed, force upload
 	}
 
@@ -1702,9 +1706,8 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// Upload object data
 	if size <= mrhash.Size {
 		// Optimize upload: skip extra request if data fits in the hash buffer.
-		if fileBuf == nil {
-			fileBuf, err = io.ReadAll(wrapIn)
-		}
+		var fileBuf []byte
+		fileBuf, err = io.ReadAll(wrapIn)
 		if fileHash == nil && err == nil {
 			fileHash = mrhash.Sum(fileBuf)
 		}
@@ -1869,6 +1872,12 @@ func (o *Object) upload(ctx context.Context, in io.Reader, size int64, options .
 		strHash string
 	)
 	err = o.fs.pacer.Call(func() (bool, error) {
+		// Rewind seekable bodies so a retry resends the whole file
+		if seeker, ok := in.(io.Seeker); ok {
+			if _, err := seeker.Seek(0, io.SeekStart); err != nil {
+				return false, err
+			}
+		}
 		res, err = o.fs.srv.Call(ctx, &opts)
 		if err == nil {
 			strHash, err = readBodyWord(res)
