@@ -1916,17 +1916,22 @@ func (o *Object) uploadResume(ctx context.Context, in io.Reader, leaf, directory
 	// single upload size according to the Huawei Drive API
 	chunkSize := min(max(int64(o.fs.opt.ChunkSize), 256*1024), 64*1024*1024)
 
-	buf := make([]byte, chunkSize)
 	var offset int64
 
 	for offset < size {
-		n, err := io.ReadFull(in, buf)
-		if err != nil && err != io.ErrUnexpectedEOF && err != io.EOF {
+		// Buffer the chunk in pooled memory so it can be re-sent on retry
+		rw := pool.NewRW(pool.Global())
+		n, err := io.CopyN(rw, in, min(size-offset, chunkSize))
+		if err != nil {
+			// io.EOF here means the source ran out before the declared size
+			if err == io.EOF {
+				err = io.ErrUnexpectedEOF
+			}
+			_ = rw.Close()
 			return fmt.Errorf("failed to read chunk at offset %d: %w", offset, err)
 		}
 
-		chunk := buf[:n]
-		end := offset + int64(n) - 1
+		end := offset + n - 1
 
 		// Upload this chunk using the original client with OAuth authentication
 		chunkOpts := rest.Opts{
@@ -1934,17 +1939,20 @@ func (o *Object) uploadResume(ctx context.Context, in io.Reader, leaf, directory
 			RootURL: location,
 			Path:    "", // Empty path since RootURL contains the full URL
 			ExtraHeaders: map[string]string{
-				"Content-Range":  fmt.Sprintf("bytes %d-%d/%d", offset, end, size),
-				"Content-Length": strconv.Itoa(n),
-				"Content-Type":   mimeType,
+				"Content-Range": fmt.Sprintf("bytes %d-%d/%d", offset, end, size),
+				"Content-Type":  mimeType,
 			},
+			ContentLength: &n,
+			Body:          rw,
 		}
 
 		var info *api.File
 		var chunkResp *http.Response
 		err = o.fs.pacer.Call(func() (bool, error) {
-			chunkOpts.Body = bytes.NewReader(chunk)
-			var err error
+			_, err := rw.Seek(0, io.SeekStart)
+			if err != nil {
+				return false, err
+			}
 			chunkResp, err = srv.CallJSON(ctx, &chunkOpts, nil, &info)
 			// 308 means continue uploading (incomplete)
 			if chunkResp != nil && chunkResp.StatusCode == 308 {
@@ -1958,11 +1966,15 @@ func (o *Object) uploadResume(ctx context.Context, in io.Reader, leaf, directory
 			}
 			return shouldRetry(ctx, chunkResp, err)
 		})
+		closeErr := rw.Close()
 		if err != nil {
 			return fmt.Errorf("failed to upload chunk at offset %d: %w", offset, err)
 		}
+		if closeErr != nil {
+			return closeErr
+		}
 
-		offset += int64(n)
+		offset += n
 
 		// If we got file info back, we're done
 		if info != nil && info.ID != "" {
