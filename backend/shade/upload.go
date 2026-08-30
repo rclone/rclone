@@ -3,7 +3,6 @@
 package shade
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -155,16 +154,14 @@ func (s *shadeChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, read
 		return 0, err
 	}
 
-	// Read chunk
-	var chunk bytes.Buffer
-	n, err := io.Copy(&chunk, reader)
+	// Find the chunk size
+	n, err := reader.Seek(0, io.SeekEnd)
+	if err != nil {
+		return 0, fmt.Errorf("failed to read chunk: %w", err)
+	}
 
 	if n == 0 {
 		return 0, nil
-	}
-
-	if err != nil {
-		return 0, fmt.Errorf("failed to read chunk: %w", err)
 	}
 	// Get presigned URL for this part
 	var partURL api.PartURL
@@ -201,14 +198,18 @@ func (s *shadeChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, read
 	}
 
 	err = s.f.pacer.Call(func() (bool, error) {
-		// Use a fresh reader for each attempt so retries resend the whole chunk
-		opts.Body = bytes.NewReader(chunk.Bytes())
+		// Rewind the chunk so each attempt sends it in full
+		_, err = reader.Seek(0, io.SeekStart)
+		if err != nil {
+			return false, err
+		}
+		opts.Body = reader
 		uploadRes, err = s.f.srv.Call(ctx, &opts)
 		return shouldRetry(ctx, uploadRes, err)
 	})
 
 	if err != nil {
-		return 0, fmt.Errorf("failed to upload part %d: %w", chunk, err)
+		return 0, fmt.Errorf("failed to upload part %d: %w", chunkNumber+1, err)
 	}
 
 	if uploadRes.StatusCode != http.StatusOK && uploadRes.StatusCode != http.StatusCreated {
