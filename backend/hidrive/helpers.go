@@ -839,17 +839,24 @@ func createHiDriveScopes(role string, access string) []string {
 	return []string{}
 }
 
+// accountedReadSeeker reads through any accounting wrapped around a
+// buffered reader while seeking the buffer underneath it,
+// so a retry can rewind the buffer without copying it.
+type accountedReadSeeker struct {
+	io.Reader
+	io.Seeker
+}
+
 // cachedReader returns a version of the reader that caches its contents and
 // can therefore be reset using Seek.
+//
+// Readers which are already seekable buffers are used as they are,
+// even when wrapped in accounting.
 func cachedReader(reader io.Reader) io.ReadSeeker {
-	bytesReader, ok := reader.(*bytes.Reader)
-	if ok {
-		return bytesReader
-	}
-
-	repeatableReader, ok := reader.(*readers.RepeatableReader)
-	if ok {
-		return repeatableReader
+	unwrapped, _ := accounting.UnWrap(reader)
+	switch unwrapped.(type) {
+	case *bytes.Reader, *readers.RepeatableReader:
+		return accountedReadSeeker{Reader: reader, Seeker: unwrapped.(io.Seeker)}
 	}
 
 	return readers.NewRepeatableReader(reader)
