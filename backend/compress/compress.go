@@ -31,6 +31,7 @@ import (
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/lib/multipart"
 )
 
 // Globals
@@ -563,15 +564,19 @@ type compressionResult[T sgzip.GzipMetadata | SzstdMetadata] struct {
 func (f *Fs) rcat(ctx context.Context, dstFileName string, in io.ReadCloser, modTime time.Time, options []fs.OpenOption) (o fs.Object, err error) {
 
 	// cache small files in memory and do normal upload
-	buf := make([]byte, f.opt.RAMCacheLimit)
-	if n, err := io.ReadFull(in, buf); err == io.EOF || err == io.ErrUnexpectedEOF {
-		src := object.NewStaticObjectInfo(dstFileName, modTime, int64(len(buf[:n])), false, nil, f.Fs)
-		return f.Fs.Put(ctx, bytes.NewBuffer(buf[:n]), src, options...)
+	rw := multipart.NewRW()
+	defer fs.CheckClose(rw, &err)
+	_, err = io.CopyN(rw, in, int64(f.opt.RAMCacheLimit))
+	if err == io.EOF {
+		src := object.NewStaticObjectInfo(dstFileName, modTime, rw.Size(), false, nil, f.Fs)
+		return f.Fs.Put(ctx, rw, src, options...)
+	} else if err != nil {
+		return nil, err
 	}
 
 	// Need to include what we already read
 	in = &ReadCloserWrapper{
-		Reader: io.MultiReader(bytes.NewReader(buf), in),
+		Reader: io.MultiReader(rw, in),
 		Closer: in,
 	}
 
