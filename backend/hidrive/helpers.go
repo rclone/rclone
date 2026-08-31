@@ -24,6 +24,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/ranges"
 	"github.com/rclone/rclone/lib/readers"
@@ -637,11 +638,18 @@ func (f *Fs) updateFileChunked(ctx context.Context, path string, content io.Read
 		}
 
 		// Read a chunk of data.
-		chunkReader, bytesRead, readErr := readerForChunk(content, chunkSize)
-		if bytesRead < chunkSize {
+		var (
+			chunkReader *pool.RW
+			bytesRead   int64
+		)
+		chunkReader, bytesRead, readErr = readerForChunk(content, int64(chunkSize))
+		if bytesRead < int64(chunkSize) {
 			startMoreTransfers = false
 		}
 		if readErr != nil || bytesRead <= 0 {
+			if chunkReader != nil {
+				_ = chunkReader.Close()
+			}
 			break
 		}
 
@@ -651,11 +659,12 @@ func (f *Fs) updateFileChunked(ctx context.Context, path string, content io.Read
 			// After this upload is done,
 			// signal that another transfer can be started.
 			defer transferSemaphore.Release(1)
-			uploadErr := f.patchFile(gCtx, path, cachedReader(chunkReader), chunkOffset, zeroTime)
+			defer func() { _ = chunkReader.Close() }()
+			uploadErr := f.patchFile(gCtx, path, chunkReader, chunkOffset, zeroTime)
 			if uploadErr == nil {
 				// Remember successfully written chunks.
 				okChunksMu.Lock()
-				okChunks = append(okChunks, ranges.Range{Pos: int64(chunkOffset), Size: int64(bytesRead)})
+				okChunks = append(okChunks, ranges.Range{Pos: int64(chunkOffset), Size: bytesRead})
 				okChunksMu.Unlock()
 				fs.Debugf(f, "Done uploading chunk of size %v at offset %v.", bytesRead, chunkOffset)
 			} else {
@@ -699,10 +708,10 @@ func (f *Fs) updateFileChunked(ctx context.Context, path string, content io.Read
 // starting at the given offset.
 //
 // Replaces the file contents starting from the given byte offset
-// with the content of the io.ReadSeeker.
+// with the content of the buffer.
 // If the offset is beyond the file end, the file is extended up to the offset.
 // The maximum size of the update is limited by MaximumUploadBytes.
-// The io.ReadSeeker should be resettable by seeking to its start.
+// The caller remains responsible for closing the buffer.
 // If modTime is not the zero time instant,
 // it will be set as the file's modification time after the operation.
 //
@@ -714,7 +723,7 @@ func (f *Fs) updateFileChunked(ctx context.Context, path string, content io.Read
 // usually expand the holes into regions of 0-bytes.
 //
 // This returns fs.ErrorObjectNotFound if the object is not found.
-func (f *Fs) patchFile(ctx context.Context, path string, content io.ReadSeeker, offset uint64, modTime time.Time) error {
+func (f *Fs) patchFile(ctx context.Context, path string, content *pool.RW, offset uint64, modTime time.Time) error {
 	parameters := api.NewQueryParameters()
 	parameters.SetPath(path)
 	parameters.Set("offset", strconv.FormatUint(offset, 10))
@@ -726,13 +735,15 @@ func (f *Fs) patchFile(ctx context.Context, path string, content io.ReadSeeker, 
 		}
 	}
 
+	contentLength := content.Size()
 	opts := rest.Opts{
-		Method:      "PATCH",
-		Path:        "/file",
-		Body:        content,
-		ContentType: "application/octet-stream",
-		Parameters:  parameters.Values,
-		NoResponse:  true,
+		Method:        "PATCH",
+		Path:          "/file",
+		Body:          content,
+		ContentType:   "application/octet-stream",
+		ContentLength: &contentLength,
+		Parameters:    parameters.Values,
+		NoResponse:    true,
 	}
 
 	var resp *http.Response
@@ -876,25 +887,28 @@ func cachedReader(reader io.Reader) io.ReadSeeker {
 	return readers.NewRepeatableReader(reader)
 }
 
-// readerForChunk reads a chunk of bytes from reader (after handling any accounting).
-// Returns a new io.Reader (chunkReader) for that chunk
-// and the number of bytes that have been read from reader.
-func readerForChunk(reader io.Reader, length int) (chunkReader io.Reader, bytesRead int, err error) {
-	// Unwrap any accounting from the input if present.
-	reader, wrap := accounting.UnWrap(reader)
+// readerForChunk reads up to length bytes from reader into a buffer
+// from the global memory pool and returns it
+// along with the number of bytes that have been read from reader.
+// Reaching the end of reader early is not an error.
+//
+// Any accounting on reader is applied when the buffer is read instead,
+// so the upload is what gets accounted.
+// The caller must Close the buffer when done with it.
+func readerForChunk(reader io.Reader, length int64) (chunkReader *pool.RW, bytesRead int64, err error) {
+	reader, acc := unwrapAccounting(reader)
+	chunkReader = multipart.NewRW()
+	if acc != nil {
+		chunkReader.SetAccounting(acc.AccountRead)
+	}
 
-	// Read a chunk of data.
-	buffer := make([]byte, length)
-	bytesRead, err = io.ReadFull(reader, buffer)
-	if err == io.EOF || err == io.ErrUnexpectedEOF {
+	bytesRead, err = io.CopyN(chunkReader, reader, length)
+	if err == io.EOF {
 		err = nil
 	}
 	if err != nil {
+		_ = chunkReader.Close()
 		return nil, bytesRead, err
 	}
-	// Truncate unused capacity.
-	buffer = buffer[:bytesRead]
-
-	// Use wrap to put any accounting back for chunkReader.
-	return wrap(bytes.NewReader(buffer)), bytesRead, nil
+	return chunkReader, bytesRead, nil
 }
