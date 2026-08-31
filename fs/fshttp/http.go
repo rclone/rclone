@@ -671,8 +671,11 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	if t.dump&fs.DumpTrace != 0 {
 		traceReq = req.WithContext(httptrace.WithClientTrace(req.Context(), newClientTrace(req)))
 	}
-	// Do round trip
-	resp, err = t.Transport.RoundTrip(traceReq)
+	// Do round trip unless a fault is being injected
+	resp, err = injectFault(traceReq)
+	if resp == nil && err == nil {
+		resp, err = t.Transport.RoundTrip(traceReq)
+	}
 	// Dump response, and the request too if we deferred it for --dump errors
 	if wantDump && (!onError || isRetryableResponse(resp, err)) {
 		logMutex.Lock()
