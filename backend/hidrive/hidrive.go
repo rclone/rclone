@@ -30,6 +30,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/rest"
 )
 
@@ -978,7 +979,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		// Metadata should be updated even if the upload fails.
 		info, metaErr = o.fs.fetchMetadataForPath(ctx, resolvedPath, api.HiDriveObjectWithMetadataFields)
 	} else {
-		info, err = o.fs.overwriteFile(ctx, resolvedPath, cachedReader(in), modTime)
+		var content *pool.RW
+		content, _, err = readerForChunk(in, src.Size())
+		if err == nil {
+			info, err = o.fs.overwriteFile(ctx, resolvedPath, content, modTime)
+			_ = content.Close()
+		}
 		metaErr = err
 	}
 

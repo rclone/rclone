@@ -10,7 +10,6 @@ package hidrive
 // to be resolved prior to execution with resolvePath(...).
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"io"
@@ -27,7 +26,6 @@ import (
 	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/ranges"
-	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/semaphore"
@@ -514,16 +512,16 @@ func (f *Fs) createFile(ctx context.Context, path string, content *pool.RW, modT
 }
 
 // overwriteFile updates the content of the file at the given path
-// with the content of the io.ReadSeeker.
+// with the content of the buffer.
 // If the file does not exist it will be created.
 // The maximum size of the content is limited by MaximumUploadBytes.
-// The io.ReadSeeker should be resettable by seeking to its start.
+// The caller remains responsible for closing the buffer.
 // If modTime is not the zero time instant,
 // it will be set as the file's modification time after the operation.
 //
 // This returns fs.ErrorDirNotFound
 // if the parent directory of the file is not found.
-func (f *Fs) overwriteFile(ctx context.Context, path string, content io.ReadSeeker, modTime time.Time) (*api.HiDriveObject, error) {
+func (f *Fs) overwriteFile(ctx context.Context, path string, content *pool.RW, modTime time.Time) (*api.HiDriveObject, error) {
 	parameters := api.NewQueryParameters()
 	parameters.SetFileInDirectory(path)
 
@@ -535,12 +533,14 @@ func (f *Fs) overwriteFile(ctx context.Context, path string, content io.ReadSeek
 		}
 	}
 
+	contentLength := content.Size()
 	opts := rest.Opts{
-		Method:      "PUT",
-		Path:        "/file",
-		Body:        content,
-		ContentType: "application/octet-stream",
-		Parameters:  parameters.Values,
+		Method:        "PUT",
+		Path:          "/file",
+		Body:          content,
+		ContentType:   "application/octet-stream",
+		ContentLength: &contentLength,
+		Parameters:    parameters.Values,
 	}
 
 	var result api.HiDriveObject
@@ -862,29 +862,6 @@ func unwrapAccounting(reader io.Reader) (unwrapped io.Reader, acc *accounting.Ac
 	unwrapped, wrap := accounting.UnWrap(reader)
 	_, acc = accounting.UnWrapAccounting(wrap(unwrapped))
 	return unwrapped, acc
-}
-
-// accountedReadSeeker reads through any accounting wrapped around a
-// buffered reader while seeking the buffer underneath it,
-// so a retry can rewind the buffer without copying it.
-type accountedReadSeeker struct {
-	io.Reader
-	io.Seeker
-}
-
-// cachedReader returns a version of the reader that caches its contents and
-// can therefore be reset using Seek.
-//
-// Readers which are already seekable buffers are used as they are,
-// even when wrapped in accounting.
-func cachedReader(reader io.Reader) io.ReadSeeker {
-	unwrapped, _ := accounting.UnWrap(reader)
-	switch unwrapped.(type) {
-	case *bytes.Reader, *readers.RepeatableReader:
-		return accountedReadSeeker{Reader: reader, Seeker: unwrapped.(io.Seeker)}
-	}
-
-	return readers.NewRepeatableReader(reader)
 }
 
 // readerForChunk reads up to length bytes from reader into a buffer
