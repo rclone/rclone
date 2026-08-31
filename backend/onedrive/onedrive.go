@@ -573,7 +573,7 @@ func chooseDrive(ctx context.Context, name string, m configmap.Mapper, srv *rest
 					drives.Drives = append(drives.Drives, meDrive)
 				}
 			} else if drivesErr != nil {
-				return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available drives: /me/drives: %v; /me/drive: %v", drivesErr, meDriveErr))
+				return fs.ConfigError("driveid", fmt.Sprintf("Failed to query available drives: /me/drives: %v; /me/drive: %v\nEnter the drive ID manually instead", drivesErr, meDriveErr))
 			}
 		} else if drivesErr != nil {
 			return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available drives: %v", drivesErr))
