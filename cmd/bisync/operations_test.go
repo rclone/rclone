@@ -35,7 +35,7 @@ func TestBisyncStaleGroupError(t *testing.T) {
 
 	// Simulate an earlier, unrelated operation having recorded an error
 	// against the same group before this run starts.
-	accounting.Stats(ctx).Error(errors.New("earlier unrelated error"))
+	_ = accounting.Stats(ctx).Error(errors.New("earlier unrelated error"))
 	require.True(t, accounting.Stats(ctx).Errored())
 
 	opt.Resync = false
