@@ -24,6 +24,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/ranges"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
@@ -454,17 +455,17 @@ func (f *Fs) deleteObject(ctx context.Context, path string) error {
 }
 
 // createFile creates a file at the given path
-// with the content of the io.ReadSeeker.
+// with the content of the buffer.
 // This guarantees that existing files will not be overwritten.
 // The maximum size of the content is limited by MaximumUploadBytes.
-// The io.ReadSeeker should be resettable by seeking to its start.
+// The caller remains responsible for closing the buffer.
 // If modTime is not the zero time instant,
 // it will be set as the file's modification time after the operation.
 //
 // This returns fs.ErrorDirNotFound
 // if the parent directory of the file is not found.
 // This returns ErrorFileExists if a file already exists at the specified path.
-func (f *Fs) createFile(ctx context.Context, path string, content io.ReadSeeker, modTime time.Time, onExist OnExistAction) (*api.HiDriveObject, error) {
+func (f *Fs) createFile(ctx context.Context, path string, content *pool.RW, modTime time.Time, onExist OnExistAction) (*api.HiDriveObject, error) {
 	parameters := api.NewQueryParameters()
 	parameters.SetFileInDirectory(path)
 	if onExist == AutoNameOnExist {
@@ -479,12 +480,14 @@ func (f *Fs) createFile(ctx context.Context, path string, content io.ReadSeeker,
 		}
 	}
 
+	contentLength := content.Size()
 	opts := rest.Opts{
-		Method:      "POST",
-		Path:        "/file",
-		Body:        content,
-		ContentType: "application/octet-stream",
-		Parameters:  parameters.Values,
+		Method:        "POST",
+		Path:          "/file",
+		Body:          content,
+		ContentType:   "application/octet-stream",
+		ContentLength: &contentLength,
+		Parameters:    parameters.Values,
 	}
 
 	var result api.HiDriveObject
@@ -837,6 +840,17 @@ func createHiDriveScopes(role string, access string) []string {
 		return []string{access}
 	}
 	return []string{}
+}
+
+// unwrapAccounting splits any transfer accounting off reader,
+// returning the raw stream and the accounting (nil if there is none),
+// so the stream can be buffered and accounted when the buffer is uploaded.
+func unwrapAccounting(reader io.Reader) (unwrapped io.Reader, acc *accounting.Account) {
+	// Any kind of accounter re-wraps into the one type UnWrapAccounting
+	// knows how to take the *Account out of.
+	unwrapped, wrap := accounting.UnWrap(reader)
+	_, acc = accounting.UnWrapAccounting(wrap(unwrapped))
+	return unwrapped, acc
 }
 
 // accountedReadSeeker reads through any accounting wrapped around a
