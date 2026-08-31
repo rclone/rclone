@@ -28,6 +28,7 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
@@ -514,9 +515,24 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	// (i.e. everything up to the cutoff) in the first request,
 	// avoids files being created on upload failure for small files.
 	// (As opposed to creating an empty file and then uploading the content.)
-	tmpReader, bytesRead, err := readerForChunk(in, int(f.opt.UploadCutoff))
-	cutoffReader := cachedReader(tmpReader)
+	//
+	// Only buffer as much as the source declares it has,
+	// so small files do not cost the whole cutoff in memory.
+	prefixSize := int64(f.opt.UploadCutoff)
+	if size := src.Size(); size >= 0 && size < prefixSize {
+		prefixSize = size
+	}
+	unwrapped, acc := unwrapAccounting(in)
+	cutoffReader := multipart.NewRW()
+	if acc != nil {
+		cutoffReader.SetAccounting(acc.AccountRead)
+	}
+	bytesRead, err := io.CopyN(cutoffReader, unwrapped, prefixSize)
+	if err == io.EOF {
+		err = nil
+	}
 	if err != nil {
+		_ = cutoffReader.Close()
 		return nil, err
 	}
 
@@ -540,6 +556,7 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 		}
 		return false, createErr
 	})
+	_ = cutoffReader.Close()
 
 	if err != nil {
 		return nil, err
@@ -556,7 +573,7 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	}
 	// If there is more left to write, o.Update needs to skip ahead.
 	// Use a fs.SeekOption with the current offset to do this.
-	options = append(options, &fs.SeekOption{Offset: int64(bytesRead)})
+	options = append(options, &fs.SeekOption{Offset: bytesRead})
 	err = o.Update(ctx, in, src, options...)
 
 	if err == nil {
