@@ -111,6 +111,7 @@ Optional Flags:
       --force                                Bypass --max-delete safety check and run the sync. Consider using with --verbose
   -h, --help                                 help for bisync
       --ignore-listing-checksum              Do not use checksums for listings (add --ignore-checksum to additionally skip post-copy checksum checks)
+      --max-delete-renames-aware             Exclude tracked renames from the --max-delete safety check (requires --track-renames)
       --max-lock Duration                    Consider lock files older than this to be expired (default: 0 (never expire)) (minimum: 2m) (default 0s)
       --no-cleanup                           Retain working files (useful for troubleshooting and testing).
       --no-slow-hash                         Ignore listing checksums only on backends where they are slow
@@ -497,6 +498,20 @@ the user had inadvertently deleted the files on one side or the other.
 To force the sync, either set a different delete percentage limit,
 e.g. `--max-delete 75` (allows up to 75% deletion), or use `--force`
 to bypass the check.
+
+When `--track-renames` is in use, `--max-delete-renames-aware` can exclude
+files that are guaranteed to match as tracked renames from the deletion count.
+If the initial deletion count exceeds `--max-delete`, bisync performs a rename
+matching preflight before starting either sync direction. The run still aborts
+if the remaining unmatched deletions exceed the limit.
+
+The preflight uses the selected [`--track-renames-strategy`](/docs/#track-renames-strategy)
+and the attributes stored in the normal bisync listings. A hash strategy forces
+both listings to use a common hash and is incompatible with
+`--ignore-listing-checksum`. The option only exempts matches when the destination
+supports server-side moves and the selected strategy is supported by both paths.
+It requires `--track-renames` and is disabled by default because hashing may add
+listing time. `--force` bypasses both the safety check and this preflight.
 
 Also see the [all files changed](#all-files-changed) check.
 
@@ -1172,10 +1187,10 @@ is to rename it to the same name on both sides. (As of `rclone v1.64`,
 a `--resync` is no longer required after doing so, as bisync will automatically
 detect that Path1 and Path2 are in agreement.)
 
-Note that although the flag --track-renames ensures that renamed/moved files won't
-be deleted and uploaded again, they are still counted as deleted files for purposes
-of the --max-delete flag (as this check happens before the rename detection
-operation). See [this issue](https://github.com/rclone/rclone/issues/8685).
+By default, renamed or moved files are still counted as deleted files for
+purposes of `--max-delete`, because the safety check happens before rename
+detection. Use `--max-delete-renames-aware` together with `--track-renames` to
+run a rename preflight and exclude guaranteed matches from this count.
 
 ### `--fast-list` used by default
 
