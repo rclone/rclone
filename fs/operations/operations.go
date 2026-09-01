@@ -1115,30 +1115,22 @@ func MkdirMetadata(ctx context.Context, f fs.Fs, dir string, metadata fs.Metadat
 // If the directory was created with MkDir then it will attempt to use
 // Fs.DirSetModTime to update the directory modtime if available.
 func MkdirModTime(ctx context.Context, f fs.Fs, dir string, modTime time.Time) (newDst fs.Directory, err error) {
-	logName := fs.LogDirName(f, dir)
-	if SkipDestructive(ctx, logName, "make directory") {
-		return nil, nil
+	if f.Features().MkdirMetadata != nil {
+		// Make the directory with the modtime as metadata
+		metadata := fs.Metadata{
+			"mtime": modTime.Format(time.RFC3339Nano),
+		}
+		return MkdirMetadata(ctx, f, dir, metadata)
 	}
-	metadata := fs.Metadata{
-		"mtime": modTime.Format(time.RFC3339Nano),
-	}
-	newDst, err = MkdirMetadata(ctx, f, dir, metadata)
+	// Otherwise make the directory then set the modtime if possible
+	err = Mkdir(ctx, f, dir)
 	if err != nil {
 		return nil, err
 	}
-	if newDst != nil {
-		// The directory was created and we have logged already
-		return newDst, nil
+	if f.Features().DirSetModTime == nil {
+		return nil, nil
 	}
-	// The directory was created with Mkdir then we should try to set the time
-	if do := f.Features().DirSetModTime; do != nil {
-		err = do(ctx, dir, modTime)
-		if err == nil {
-			accounting.Stats(ctx).UpdatedDirs(1)
-		}
-	}
-	fs.Infof(logName, "Made directory with modification time %v", modTime)
-	return newDst, err
+	return SetDirModTime(ctx, f, nil, dir, modTime)
 }
 
 // TryRmdir removes a container but not if not empty.  It doesn't
