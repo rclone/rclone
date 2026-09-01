@@ -156,39 +156,44 @@ func newListTestFs(t *testing.T, handler http.Handler) *Fs {
 // TestInternalListRRunnerPartialBatch reproduces the scenario in #9810: a
 // batched multi-directory listing where the Drive API silently returns no
 // items for some of the requested directories while returning items
-// normally for others. It checks that only the directories which got no
-// items are retried individually (not the whole batch, which would
-// duplicate the entries already emitted for the healthy directories) and
-// that ListR grouping is disabled as a result.
+// normally for others. It checks that the directories with no items are
+// retried together as a single fresh batch, without duplicating the
+// entries already emitted for the healthy directory, and that ListR
+// grouping is left untouched.
 func TestInternalListRRunnerPartialBatch(t *testing.T) {
+	var requests [][]string
 	f := newListTestFs(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		q := r.URL.Query().Get("q")
+		requests = append(requests, []string{q})
 		w.Header().Set("Content-Type", "application/json")
-		// dir-a has a file, dir-b and dir-c are silently dropped by the
-		// simulated Drive bug even though they are not actually empty
-		_, err := io.WriteString(w, `{"files":[{"id":"file-a","name":"file-a.txt","mimeType":"text/plain","md5Checksum":"d41d8cd98f00b204e9800998ecf8427e","parents":["dir-a"]}]}`)
+		var err error
+		switch {
+		case strings.Contains(q, "dir-a") && strings.Contains(q, "dir-b") && strings.Contains(q, "dir-c"):
+			// first request: only dir-a has an item, dir-b and dir-c are
+			// silently dropped by the simulated Drive bug even though
+			// they are not actually empty
+			_, err = io.WriteString(w, `{"files":[{"id":"file-a","name":"file-a.txt","mimeType":"text/plain","md5Checksum":"d41d8cd98f00b204e9800998ecf8427e","parents":["dir-a"]}]}`)
+		case strings.Contains(q, "dir-b") && strings.Contains(q, "dir-c"):
+			// retry of just the empty directories: both turn out to have items
+			_, err = io.WriteString(w, `{"files":[{"id":"file-b","name":"file-b.txt","mimeType":"text/plain","md5Checksum":"d41d8cd98f00b204e9800998ecf8427e","parents":["dir-b"]},{"id":"file-c","name":"file-c.txt","mimeType":"text/plain","md5Checksum":"d41d8cd98f00b204e9800998ecf8427e","parents":["dir-c"]}]}`)
+		default:
+			t.Fatalf("unexpected query: %s", q)
+		}
 		assert.NoError(t, err)
 	}))
 	f.opt.FastListBugFix = true
 	f.grouping = listRGrouping
-	f.listRmu = new(stdsync.Mutex)
-	f.listRempties = make(map[string]struct{})
 
 	in := make(chan listREntry, 10)
 	out := make(chan error, 1)
 	var wg stdsync.WaitGroup
 	var mu stdsync.Mutex
 	var emitted []string
-	var requeued []listREntry
 	cb := func(entry fs.DirEntry) error {
 		mu.Lock()
 		defer mu.Unlock()
 		emitted = append(emitted, entry.Remote())
 		return nil
-	}
-	sendJob := func(job listREntry) {
-		mu.Lock()
-		defer mu.Unlock()
-		requeued = append(requeued, job)
 	}
 
 	wg.Add(3)
@@ -197,16 +202,12 @@ func TestInternalListRRunnerPartialBatch(t *testing.T) {
 	in <- listREntry{id: "dir-c", path: "c"}
 	close(in)
 
-	f.listRRunner(context.Background(), &wg, in, out, cb, sendJob)
+	f.listRRunner(context.Background(), &wg, in, out, cb)
 	require.NoError(t, <-out)
 
-	assert.Equal(t, []string{"a/file-a.txt"}, emitted, "the healthy directory's item should be emitted exactly once")
-	requeuedIDs := make([]string, len(requeued))
-	for i, job := range requeued {
-		requeuedIDs[i] = job.id
-	}
-	assert.ElementsMatch(t, []string{"dir-b", "dir-c"}, requeuedIDs, "only the directories that returned no items should be retried, not dir-a")
-	assert.Equal(t, int32(1), f.grouping, "grouping should be disabled after a partial batch")
+	assert.ElementsMatch(t, []string{"a/file-a.txt", "b/file-b.txt", "c/file-c.txt"}, emitted, "all three directories' items should be emitted exactly once")
+	assert.Equal(t, int32(listRGrouping), f.grouping, "grouping should be left untouched by the retry")
+	assert.Len(t, requests, 2, "expected one batch request and one retry request for the empty directories")
 }
 
 func TestDriveScopes(t *testing.T) {
