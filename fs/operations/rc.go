@@ -764,6 +764,25 @@ func (s stringWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
+// RcReportWriter returns a writer for the report called name.
+//
+// The report is enabled if in[name] is true, or if in[name] is absent
+// and Default is true. When enabled, each line written to the returned
+// writer is collected as a string in out[name], otherwise nil is
+// returned to disable the report.
+func RcReportWriter(in rc.Params, out rc.Params, name string, Default bool) io.Writer {
+	active, err := in.GetBool(name)
+	if err != nil {
+		active = Default
+	}
+	if !active {
+		return nil
+	}
+	result := []string{}
+	out[name] = &result
+	return stringWriter{&result}
+}
+
 // Check two directories
 func rcCheck(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	srcFs, err := rc.GetFsNamed(ctx, in, "srcFs")
@@ -822,26 +841,12 @@ func rcCheck(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 
 	out = rc.Params{}
-
-	getOutput := func(name string, Default bool) io.Writer {
-		active, err := in.GetBool(name)
-		if err != nil {
-			active = Default
-		}
-		if !active {
-			return nil
-		}
-		result := []string{}
-		out[name] = &result
-		return stringWriter{&result}
-	}
-
-	opt.Combined = getOutput("combined", false)
-	opt.MissingOnSrc = getOutput("missingOnSrc", true)
-	opt.MissingOnDst = getOutput("missingOnDst", true)
-	opt.Match = getOutput("match", false)
-	opt.Differ = getOutput("differ", true)
-	opt.Error = getOutput("error", true)
+	opt.Combined = RcReportWriter(in, out, "combined", false)
+	opt.MissingOnSrc = RcReportWriter(in, out, "missingOnSrc", true)
+	opt.MissingOnDst = RcReportWriter(in, out, "missingOnDst", true)
+	opt.Match = RcReportWriter(in, out, "match", false)
+	opt.Differ = RcReportWriter(in, out, "differ", true)
+	opt.Error = RcReportWriter(in, out, "error", true)
 
 	if checkFileHash != "" {
 		out["hashType"] = checkFileHashType.String()
