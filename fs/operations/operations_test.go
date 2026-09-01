@@ -1895,15 +1895,17 @@ func TestMkdirMetadata(t *testing.T) {
 
 func TestMkdirModTime(t *testing.T) {
 	const name = "directory with modtime"
-	ctx := context.Background()
+	ctx, ci := fs.AddConfig(context.Background())
 	r := fstest.NewRun(t)
 	if r.Fremote.Features().DirSetModTime == nil && r.Fremote.Features().MkdirMetadata == nil {
 		t.Skip("Skipping test as remote does not support DirSetModTime or MkdirMetadata")
 	}
 	updatedDirs := statsUpdatedDirs(t)
+	checks := accounting.GlobalStats().GetChecks()
 	newDst, err := operations.MkdirModTime(ctx, r.Fremote, name, t2)
 	require.NoError(t, err)
 	assert.Equal(t, updatedDirs+1, statsUpdatedDirs(t), "MkdirModTime should be counted as an updated dir")
+	realChecks := accounting.GlobalStats().GetChecks() - checks
 
 	// Check the returned directory and one read from the listing
 	// newDst may be nil here depending on how the modtime was set
@@ -1911,6 +1913,18 @@ func TestMkdirModTime(t *testing.T) {
 		fstest.CheckDirModTime(ctx, t, r.Fremote, newDst, t2)
 	}
 	fstest.CheckDirModTime(ctx, t, r.Fremote, fstest.NewDirectory(ctx, t, r.Fremote, name), t2)
+
+	// Check that --dry-run counts the same number of checks as the
+	// real run but doesn't update any dirs
+	updatedDirs = statsUpdatedDirs(t)
+	checks = accounting.GlobalStats().GetChecks()
+	ci.DryRun = true
+	newDst, err = operations.MkdirModTime(ctx, r.Fremote, "dry run "+name, t2)
+	ci.DryRun = false
+	require.NoError(t, err)
+	require.Nil(t, newDst)
+	assert.Equal(t, realChecks, accounting.GlobalStats().GetChecks()-checks, "--dry-run should count the same checks as the real run")
+	assert.Equal(t, updatedDirs, statsUpdatedDirs(t), "--dry-run should not count updated dirs")
 }
 
 // statsUpdatedDirs reads the updatedDirs stat from the global stats
