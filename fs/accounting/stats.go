@@ -798,6 +798,20 @@ func (s *StatsInfo) NewCheckingTransfer(obj fs.DirEntry, what string) *Transfer 
 	return tr
 }
 
+// NewCheckingTransferNoHistory adds a checking transfer to the stats,
+// from the object, which is shown while it is running but is not kept
+// in the completed transfers history (so never appears in
+// core/transferred).
+//
+// Use this for repeated bookkeeping operations (eg directory modtime
+// updates) which would otherwise crowd file transfers out of the
+// history.
+func (s *StatsInfo) NewCheckingTransferNoHistory(obj fs.DirEntry, what string) *Transfer {
+	tr := newCheckingTransferNoHistory(s, obj, what)
+	s.checking.add(tr)
+	return tr
+}
+
 // DoneChecking removes a check from the stats
 func (s *StatsInfo) DoneChecking(remote string) {
 	s.checking.del(remote)
@@ -831,7 +845,7 @@ func (s *StatsInfo) NewTransfer(obj fs.DirEntry, dstFs fs.Fs) *Transfer {
 
 // NewTransferRemoteSize adds a transfer to the stats based on remote and size.
 func (s *StatsInfo) NewTransferRemoteSize(remote string, size int64, srcFs, dstFs fs.Fs) *Transfer {
-	tr := newTransferRemoteSize(s, remote, size, false, "", srcFs, dstFs)
+	tr := newTransferRemoteSize(s, remote, size, false, "", srcFs, dstFs, false)
 	s.transferring.add(tr)
 	s.startAverageLoop()
 	return tr
