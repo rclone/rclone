@@ -4,8 +4,6 @@ package check
 import (
 	"context"
 	"fmt"
-	"io"
-	"os"
 	"strings"
 
 	"github.com/rclone/rclone/cmd"
@@ -78,57 +76,22 @@ option for more information.`, "|", "`")
 
 // GetCheckOpt gets the options corresponding to the check flags
 func GetCheckOpt(fsrc, fdst fs.Fs) (opt *operations.CheckOpt, close func(), err error) {
-	closers := []io.Closer{}
-
 	opt = &operations.CheckOpt{
 		Fsrc:   fsrc,
 		Fdst:   fdst,
 		OneWay: oneway,
 	}
 
-	open := func(name string, pout *io.Writer) error {
-		if name == "" {
-			return nil
-		}
-		if name == "-" {
-			*pout = os.Stdout
-			return nil
-		}
-		out, err := os.Create(name)
-		if err != nil {
-			return err
-		}
-		*pout = out
-		closers = append(closers, out)
-		return nil
-	}
-
-	if err = open(combined, &opt.Combined); err != nil {
+	close, err = operations.OpenReportFiles(
+		operations.ReportFile{Name: combined, Out: &opt.Combined},
+		operations.ReportFile{Name: missingOnSrc, Out: &opt.MissingOnSrc},
+		operations.ReportFile{Name: missingOnDst, Out: &opt.MissingOnDst},
+		operations.ReportFile{Name: match, Out: &opt.Match},
+		operations.ReportFile{Name: differ, Out: &opt.Differ},
+		operations.ReportFile{Name: errFile, Out: &opt.Error},
+	)
+	if err != nil {
 		return nil, nil, err
-	}
-	if err = open(missingOnSrc, &opt.MissingOnSrc); err != nil {
-		return nil, nil, err
-	}
-	if err = open(missingOnDst, &opt.MissingOnDst); err != nil {
-		return nil, nil, err
-	}
-	if err = open(match, &opt.Match); err != nil {
-		return nil, nil, err
-	}
-	if err = open(differ, &opt.Differ); err != nil {
-		return nil, nil, err
-	}
-	if err = open(errFile, &opt.Error); err != nil {
-		return nil, nil, err
-	}
-
-	close = func() {
-		for _, closer := range closers {
-			err := closer.Close()
-			if err != nil {
-				fs.Errorf(nil, "Failed to close report output: %v", err)
-			}
-		}
 	}
 
 	return opt, close, nil

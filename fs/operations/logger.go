@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	mutex "sync"
 
 	"github.com/rclone/rclone/fs"
@@ -300,6 +301,48 @@ func WinningSide(ctx context.Context, sigil Sigil, src, dst fs.DirEntry, err err
 	winner.Err = fmt.Errorf("unknown case -- can't determine winner. %v", err)
 	fs.Debugf(winner.Obj, "%v", winner.Err)
 	return winner
+}
+
+// ReportFile pairs the name of a file a report is written to with
+// the writer to set when it is opened.
+type ReportFile struct {
+	Name string     // file name, "" for no report or "-" for stdout
+	Out  *io.Writer // set to the opened file
+}
+
+// OpenReportFiles opens the report files for writing and returns a
+// function to close them.
+//
+// For each file an empty Name leaves Out unchanged so the report is
+// not written, "-" sets it to stdout and any other Name is created as
+// a file, truncating it if it exists.
+func OpenReportFiles(files ...ReportFile) (close func(), err error) {
+	closers := []io.Closer{}
+	close = func() {
+		for _, closer := range closers {
+			err := closer.Close()
+			if err != nil {
+				fs.Errorf(nil, "Failed to close report output: %v", err)
+			}
+		}
+	}
+	for _, file := range files {
+		switch file.Name {
+		case "":
+			continue
+		case "-":
+			*file.Out = os.Stdout
+		default:
+			out, err := os.Create(file.Name)
+			if err != nil {
+				close()
+				return nil, err
+			}
+			*file.Out = out
+			closers = append(closers, out)
+		}
+	}
+	return close, nil
 }
 
 // NewSyncLoggerOpt returns a LoggerOpt with no report writers set and

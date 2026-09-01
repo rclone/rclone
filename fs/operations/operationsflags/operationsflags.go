@@ -5,8 +5,6 @@ package operationsflags
 import (
 	"context"
 	_ "embed"
-	"io"
-	"os"
 	"strings"
 
 	"github.com/rclone/rclone/fs"
@@ -76,54 +74,17 @@ func AddLoggerFlags(cmdFlags *pflag.FlagSet, opt *operations.LoggerOpt, flagsOpt
 
 // ConfigureLoggers verifies and sets up writers for log files requested via CLI flags
 func ConfigureLoggers(ctx context.Context, fdst fs.Fs, command *cobra.Command, opt *operations.LoggerOpt, flagsOpt AddLoggerFlagsOptions) (func(), error) {
-	closers := []io.Closer{}
-
-	open := func(name string, pout *io.Writer) error {
-		if name == "" {
-			return nil
-		}
-		if name == "-" {
-			*pout = os.Stdout
-			return nil
-		}
-		out, err := os.Create(name)
-		if err != nil {
-			return err
-		}
-		*pout = out
-		closers = append(closers, out)
-		return nil
-	}
-
-	if err := open(flagsOpt.Combined, &opt.Combined); err != nil {
+	close, err := operations.OpenReportFiles(
+		operations.ReportFile{Name: flagsOpt.Combined, Out: &opt.Combined},
+		operations.ReportFile{Name: flagsOpt.MissingOnSrc, Out: &opt.MissingOnSrc},
+		operations.ReportFile{Name: flagsOpt.MissingOnDst, Out: &opt.MissingOnDst},
+		operations.ReportFile{Name: flagsOpt.Match, Out: &opt.Match},
+		operations.ReportFile{Name: flagsOpt.Differ, Out: &opt.Differ},
+		operations.ReportFile{Name: flagsOpt.ErrFile, Out: &opt.Error},
+		operations.ReportFile{Name: flagsOpt.DestAfter, Out: &opt.DestAfter},
+	)
+	if err != nil {
 		return nil, err
-	}
-	if err := open(flagsOpt.MissingOnSrc, &opt.MissingOnSrc); err != nil {
-		return nil, err
-	}
-	if err := open(flagsOpt.MissingOnDst, &opt.MissingOnDst); err != nil {
-		return nil, err
-	}
-	if err := open(flagsOpt.Match, &opt.Match); err != nil {
-		return nil, err
-	}
-	if err := open(flagsOpt.Differ, &opt.Differ); err != nil {
-		return nil, err
-	}
-	if err := open(flagsOpt.ErrFile, &opt.Error); err != nil {
-		return nil, err
-	}
-	if err := open(flagsOpt.DestAfter, &opt.DestAfter); err != nil {
-		return nil, err
-	}
-
-	close := func() {
-		for _, closer := range closers {
-			err := closer.Close()
-			if err != nil {
-				fs.Errorf(nil, "Failed to close report output: %v", err)
-			}
-		}
 	}
 
 	opt.Init(ctx, fdst, command.Flags())
