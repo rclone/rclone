@@ -100,6 +100,20 @@ normally enough to stop them, at the cost of slowing down uploads.
 Yandex support recommend a value of 1.5s - 3s.`,
 			Default:  fs.Duration(0),
 			Advanced: true,
+		}, {
+			Name: "app_folder",
+			Help: `Use the application folder as the root.
+
+If you registered your own OAuth application with Yandex with only
+the "Application Folder" permission (cloud_api:disk.app_folder)
+instead of full disk access, then rclone needs to address paths with
+the "app:/" prefix instead of the usual "disk:/" prefix, otherwise
+all requests fail with a 403 Forbidden error.
+
+Set this to true if your OAuth token only has access to the
+application folder.`,
+			Default:  false,
+			Advanced: true,
 		}}...),
 	})
 }
@@ -111,18 +125,20 @@ type Options struct {
 	Enc            encoder.MultiEncoder `config:"encoding"`
 	SpoofUserAgent bool                 `config:"spoof_ua"`
 	UploadWait     fs.Duration          `config:"upload_wait"`
+	AppFolder      bool                 `config:"app_folder"`
 }
 
 // Fs represents a remote yandex
 type Fs struct {
-	name     string
-	root     string         // root path
-	opt      Options        // parsed options
-	ci       *fs.ConfigInfo // global config
-	features *fs.Features   // optional features
-	srv      *rest.Client   // the connection to the yandex server
-	pacer    *fs.Pacer      // pacer for API calls
-	diskRoot string         // root path with "disk:/" container name
+	name      string
+	root      string         // root path
+	opt       Options        // parsed options
+	ci        *fs.ConfigInfo // global config
+	features  *fs.Features   // optional features
+	srv       *rest.Client   // the connection to the yandex server
+	pacer     *fs.Pacer      // pacer for API calls
+	diskRoot  string         // root path with the container prefix, e.g. "disk:/" or "app:/"
+	container string         // container prefix in use, e.g. "disk:" or "app:"
 }
 
 // Object describes a swift object
@@ -209,13 +225,21 @@ func errorHandler(resp *http.Response) error {
 func (f *Fs) setRoot(root string) {
 	//Set root path
 	f.root = strings.Trim(root, "/")
+	//Set the container prefix. This is "disk:" normally, or "app:" if the
+	//OAuth token only has access to the application folder (see the
+	//app_folder option).
+	if f.opt.AppFolder {
+		f.container = "app:"
+	} else {
+		f.container = "disk:"
+	}
 	//Set disk root path.
-	//Adding "disk:" to root path as all paths on disk start with it
+	//Adding the container prefix to root path as all paths on disk start with it
 	var diskRoot string
 	if f.root == "" {
-		diskRoot = "disk:/"
+		diskRoot = f.container + "/"
 	} else {
-		diskRoot = "disk:/" + f.root + "/"
+		diskRoot = f.container + "/" + f.root + "/"
 	}
 	f.diskRoot = diskRoot
 }
@@ -494,9 +518,13 @@ func (f *Fs) CreateDir(ctx context.Context, path string) (err error) {
 		NoResponse: true,
 	}
 
-	// If creating a directory with a : use (undocumented) disk: prefix
-	if strings.ContainsRune(path, ':') {
-		path = "disk:" + path
+	if f.opt.AppFolder {
+		// Bare relative paths are not resolved under the app folder root,
+		// unlike the disk root, so the "app:" prefix is always required.
+		path = f.container + path
+	} else if strings.ContainsRune(path, ':') {
+		// If creating a directory with a : use (undocumented) disk: prefix
+		path = f.container + path
 	}
 	opts.Parameters.Set("path", f.opt.Enc.FromStandardPath(path))
 
@@ -518,8 +546,8 @@ func (f *Fs) CreateDir(ctx context.Context, path string) (err error) {
 func (f *Fs) mkDirs(ctx context.Context, path string) (err error) {
 	//trim filename from path
 	//dirString := strings.TrimSuffix(path, filepath.Base(path))
-	//trim "disk:" from path
-	dirString := strings.TrimPrefix(path, "disk:")
+	//trim the container prefix, e.g. "disk:" or "app:", from path
+	dirString := strings.TrimPrefix(path, f.container)
 	if dirString == "" {
 		return nil
 	}
@@ -808,7 +836,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	//fmt.Printf("Move src: %s (FullPath: %s), dst: %s (FullPath: %s)\n", srcRemote, srcPath, dstRemote, dstPath)
 
 	// Refuse to move to or from the root
-	if srcPath == "disk:/" || dstPath == "disk:/" {
+	if srcPath == srcFs.container+"/" || dstPath == f.container+"/" {
 		fs.Debugf(src, "DirMove error: Can't move root")
 		return errors.New("can't move root directory")
 	}
