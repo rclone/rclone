@@ -308,25 +308,11 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 	}
 
 	fs.Infof(nil, "Building Path1 and Path2 listings")
-	startErrors := accounting.Stats(fctx).GetErrors()
 	b.march.ls1, b.march.ls2, err = b.makeMarchListing(fctx)
-	// Only count errors recorded while building this run's listings.
-	// The stats group can be long-lived and shared between separate rc
-	// calls (the "_group" parameter under rclone rcd), so a stale error
-	// from an earlier, unrelated operation must not make this run abort
-	// as critical. For a one-shot run the group is fresh, so the delta
-	// equals the absolute count and behaviour is unchanged.
-	if err != nil || accounting.Stats(fctx).GetErrors() > startErrors {
+	if err != nil {
 		fs.Error(nil, Color(terminal.RedFg, "There were errors while building listings. Aborting as it is too dangerous to continue."))
 		b.critical = true
 		b.retryable = true
-		if err == nil {
-			if lastErr := accounting.Stats(fctx).GetLastError(); lastErr != nil {
-				err = fmt.Errorf("errors while building listings: %w", lastErr)
-			} else {
-				err = errors.New("errors while building listings")
-			}
-		}
 		return err
 	}
 
