@@ -95,7 +95,6 @@ func init() {
 			return oauthutil.ConfigOut("", &oauthutil.Options{
 				OAuth2Config: oauthConfig,
 				CheckAuth:    checkAuth,
-				StateBlankOK: true, // pCloud seems to drop the state parameter now - see #4210
 			})
 		},
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
