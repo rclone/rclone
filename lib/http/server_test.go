@@ -16,10 +16,6 @@ import (
 	"golang.org/x/net/http2"
 )
 
-func testEmptyHandler() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-}
-
 func testEchoHandler(data []byte) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write(data)

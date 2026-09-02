@@ -205,6 +205,40 @@ func TestMiddlewareAuth(t *testing.T) {
 					testExpectRespBody(t, resp, expected)
 				}
 			})
+
+			// OPTIONS is not exempt from authentication: a handler
+			// may reveal information about the path in its answer
+			t.Run("NoCredsOPTIONS", func(t *testing.T) {
+				client := &http.Client{}
+				req, err := http.NewRequest("OPTIONS", url, nil)
+				require.NoError(t, err)
+
+				resp, err := client.Do(req)
+				require.NoError(t, err)
+				defer func() {
+					_ = resp.Body.Close()
+				}()
+
+				require.Equal(t, http.StatusUnauthorized, resp.StatusCode, "OPTIONS with no creds should return unauthorized")
+			})
+
+			// A CORS preflight is only exempt when CORS is enabled
+			// which it isn't for these servers
+			t.Run("NoCredsPreflight", func(t *testing.T) {
+				client := &http.Client{}
+				req, err := http.NewRequest("OPTIONS", url, nil)
+				require.NoError(t, err)
+				req.Header.Set("Origin", "http://test.rclone.org")
+				req.Header.Set("Access-Control-Request-Method", "GET")
+
+				resp, err := client.Do(req)
+				require.NoError(t, err)
+				defer func() {
+					_ = resp.Body.Close()
+				}()
+
+				require.Equal(t, http.StatusUnauthorized, resp.StatusCode, "preflight with no creds and no CORS should return unauthorized")
+			})
 		})
 	}
 }
@@ -541,7 +575,7 @@ func TestMiddlewareCORSWithAuth(t *testing.T) {
 		auth AuthConfig
 	}{
 		{
-			name: "ServerWithAuth",
+			name: "Basic",
 			http: Config{
 				ListenAddr:  []string{"127.0.0.1:0"},
 				AllowOrigin: "http://test.rclone.org",
@@ -552,44 +586,121 @@ func TestMiddlewareCORSWithAuth(t *testing.T) {
 				BasicPass: "test_pass",
 			},
 		},
+		{
+			name: "Custom",
+			http: Config{
+				ListenAddr:  []string{"127.0.0.1:0"},
+				AllowOrigin: "http://test.rclone.org",
+			},
+			auth: AuthConfig{
+				Realm: "test",
+				CustomAuthFn: func(r *http.Request, user, pass string) (value any, err error) {
+					if user == "test_user" && pass == "test_pass" {
+						return true, nil
+					}
+					return nil, errors.New("invalid credentials")
+				},
+			},
+		},
+		{
+			name: "UserFromHeader",
+			http: Config{
+				ListenAddr:  []string{"127.0.0.1:0"},
+				AllowOrigin: "http://test.rclone.org",
+			},
+			auth: AuthConfig{
+				Realm:          "test",
+				UserFromHeader: "X-Remote-User",
+			},
+		},
 	}
 
 	for _, ss := range authServers {
 		t.Run(ss.name, func(t *testing.T) {
-			s, err := NewServer(context.Background(), WithConfig(ss.http))
+			s, err := NewServer(context.Background(), WithConfig(ss.http), WithAuth(ss.auth))
 			require.NoError(t, err)
 			defer func() {
 				require.NoError(t, s.Shutdown())
 			}()
 
-			s.Router().Mount("/", testEmptyHandler())
+			s.Router().Mount("/", testEchoHandler([]byte("secret-page")))
 			s.Serve()
 
 			url := testGetServerURL(t, s)
 
-			client := &http.Client{}
-			req, err := http.NewRequest("OPTIONS", url, nil)
-			require.NoError(t, err)
-
-			resp, err := client.Do(req)
-			require.NoError(t, err)
-			defer func() {
-				_ = resp.Body.Close()
-			}()
-
-			require.Equal(t, http.StatusOK, resp.StatusCode, "OPTIONS should return ok even if not authenticated")
-
-			testExpectRespBody(t, resp, []byte{})
-
-			for _, key := range _testCORSHeaderKeys {
-				require.Contains(t, resp.Header, key, "CORS headers should be sent even if not authenticated")
+			doOPTIONS := func(t *testing.T, setup func(req *http.Request)) *http.Response {
+				req, err := http.NewRequest("OPTIONS", url, nil)
+				require.NoError(t, err)
+				if setup != nil {
+					setup(req)
+				}
+				resp, err := http.DefaultClient.Do(req)
+				require.NoError(t, err)
+				t.Cleanup(func() {
+					_ = resp.Body.Close()
+				})
+				return resp
 			}
 
-			expectedOrigin := url
-			if ss.http.AllowOrigin != "" {
-				expectedOrigin = ss.http.AllowOrigin
+			preflight := func(req *http.Request) {
+				req.Header.Set("Origin", ss.http.AllowOrigin)
+				req.Header.Set("Access-Control-Request-Method", "GET")
 			}
-			require.Equal(t, expectedOrigin, resp.Header.Get("Access-Control-Allow-Origin"), "allow origin should match")
+
+			// checkPreflight checks resp was answered by the CORS
+			// middleware and never reached the handler behind it
+			checkPreflight := func(t *testing.T, resp *http.Response) {
+				require.Equal(t, http.StatusOK, resp.StatusCode, "preflight OPTIONS should return ok")
+				testExpectRespBody(t, resp, []byte{})
+				for _, key := range _testCORSHeaderKeys {
+					require.Contains(t, resp.Header, key, "CORS headers should be sent")
+				}
+				require.Equal(t, ss.http.AllowOrigin, resp.Header.Get("Access-Control-Allow-Origin"), "allow origin should match")
+			}
+
+			// A browser preflight can't carry credentials so it
+			// must succeed without them
+			t.Run("PreflightNoCreds", func(t *testing.T) {
+				checkPreflight(t, doOPTIONS(t, preflight))
+			})
+
+			// A proxy in front of the browser may stamp an
+			// Authorization header the server can't check onto the
+			// preflight, which mustn't stop it succeeding
+			t.Run("PreflightIgnoresAuthorization", func(t *testing.T) {
+				checkPreflight(t, doOPTIONS(t, func(req *http.Request) {
+					preflight(req)
+					req.Header.Set("Authorization", "Bearer not-checked-here")
+				}))
+				checkPreflight(t, doOPTIONS(t, func(req *http.Request) {
+					preflight(req)
+					req.SetBasicAuth("test_user", "wrong")
+				}))
+				checkPreflight(t, doOPTIONS(t, func(req *http.Request) {
+					preflight(req)
+					req.SetBasicAuth("test_user", "test_pass")
+				}))
+			})
+
+			// Any other OPTIONS is authenticated like any other
+			// request as the handler's answer may reveal
+			// information about the path
+			t.Run("OPTIONSNoCreds", func(t *testing.T) {
+				resp := doOPTIONS(t, nil)
+				require.Equal(t, http.StatusUnauthorized, resp.StatusCode, "OPTIONS with no creds should return unauthorized")
+			})
+
+			t.Run("OPTIONSGoodCreds", func(t *testing.T) {
+				resp := doOPTIONS(t, func(req *http.Request) {
+					if ss.auth.UserFromHeader != "" {
+						req.Header.Set(ss.auth.UserFromHeader, "test_user")
+					} else {
+						req.SetBasicAuth("test_user", "test_pass")
+					}
+				})
+				require.Equal(t, http.StatusOK, resp.StatusCode, "OPTIONS with good creds should return ok")
+				testExpectRespBody(t, resp, []byte("secret-page"))
+			})
 		})
 	}
 }
