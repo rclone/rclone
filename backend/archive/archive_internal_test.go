@@ -379,3 +379,27 @@ func TestArchiveEscapingArchiver(t *testing.T) {
 	_, err = f.NewObject(ctx, "test.escaping/file.txt")
 	assert.ErrorIs(t, err, fs.ErrorObjectNotFound)
 }
+
+// TestIsDirectChild checks the guard which decides whether an entry
+// returned by an archiver belongs directly in the directory listed.
+func TestIsDirectChild(t *testing.T) {
+	for _, test := range []struct {
+		dir, remote string
+		want        bool
+	}{
+		{"", "a.txt", true},
+		{"", "/a.txt", false},
+		{"", "a.txt/", false},
+		{"", "../a.txt", false},
+		{"", "sub/a.txt", false},
+		{"d", "d/a.txt", true},
+		{"d", "d", false},
+		{"d", "d/", false},
+		{"d", "d//a.txt", false},
+		{"d", "d/../a.txt", false},
+		{"d", "dd/a.txt", false},
+		{"d", "a.txt", false},
+	} {
+		assert.Equal(t, test.want, isDirectChild(test.dir, test.remote), "dir=%q remote=%q", test.dir, test.remote)
+	}
+}

@@ -36,6 +36,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/sanitize"
 )
 
 // Register with Fs
@@ -529,14 +530,14 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // isDirectChild reports whether remote names an entry directly in dir
 // ("" being the root), with no ".." or other components in between.
 func isDirectChild(dir, remote string) bool {
-	if remote == "" || remote == "." || remote == ".." || strings.HasSuffix(remote, "/") {
-		return false
+	if dir != "" {
+		var ok bool
+		remote, ok = strings.CutPrefix(remote, dir+"/")
+		if !ok {
+			return false
+		}
 	}
-	parent := path.Dir(remote)
-	if parent == "." || parent == "/" {
-		parent = ""
-	}
-	return parent == dir && path.Clean(remote) == remote
+	return sanitize.Leaf(remote) == nil
 }
 
 // NewObject creates a new remote archive file object
