@@ -38,6 +38,7 @@ const (
 	testUser        = "user"
 	testPass        = "pass"
 	testTemplate    = "../http/testdata/golden/testindex.html"
+	testAllowOrigin = "http://test.rclone.org"
 )
 
 // check interfaces
@@ -255,6 +256,12 @@ func HelpTestGET(t *testing.T, testURL string) {
 // the test files directory, starts it, waits for it to be ready, and returns
 // the base URL. It registers cleanup to shut the server down.
 func startAuthenticatedServer(t *testing.T) string {
+	return startAuthenticatedServerAllowOrigin(t, "")
+}
+
+// startAuthenticatedServerAllowOrigin is startAuthenticatedServer
+// with CORS enabled for allowOrigin if it is non-empty.
+func startAuthenticatedServerAllowOrigin(t *testing.T, allowOrigin string) string {
 	t.Helper()
 
 	f, err := fs.NewFs(context.Background(), "../http/testdata/files")
@@ -262,6 +269,7 @@ func startAuthenticatedServer(t *testing.T) string {
 
 	opt := Opt
 	opt.HTTP.ListenAddr = []string{testBindAddress}
+	opt.HTTP.AllowOrigin = allowOrigin
 	opt.Template.Path = testTemplate
 	opt.Auth.BasicUser = testUser
 	opt.Auth.BasicPass = testPass
@@ -277,6 +285,64 @@ func startAuthenticatedServer(t *testing.T) string {
 
 	testURL := w.server.URLs()[0]
 	return testURL
+}
+
+// TestOPTIONSRequiresAuth checks OPTIONS can't be used to discover
+// whether a path exists, and whether it is a file or a directory,
+// without authenticating.
+func TestOPTIONSRequiresAuth(t *testing.T) {
+	doOPTIONS := func(url string, setup func(req *http.Request)) *http.Response {
+		req, err := http.NewRequest("OPTIONS", url, nil)
+		require.NoError(t, err)
+		if setup != nil {
+			setup(req)
+		}
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		_ = resp.Body.Close()
+		return resp
+	}
+
+	testURL := startAuthenticatedServer(t)
+
+	// The Allow header the WebDAV handler returns differs for an
+	// existing file, an existing directory and a missing path so
+	// it must not be visible without credentials.
+	allows := map[string]string{}
+	for _, path := range []string{"two.txt", "three/", "doesnotexist"} {
+		t.Run(path, func(t *testing.T) {
+			resp := doOPTIONS(testURL+path, nil)
+			assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+			assert.Empty(t, resp.Header.Get("Allow"))
+			assert.Empty(t, resp.Header.Get("DAV"))
+			assert.NotEmpty(t, resp.Header.Get("WWW-Authenticate"))
+
+			resp = doOPTIONS(testURL+path, func(req *http.Request) {
+				req.SetBasicAuth(testUser, testPass)
+			})
+			assert.Equal(t, http.StatusOK, resp.StatusCode)
+			assert.NotEmpty(t, resp.Header.Get("Allow"))
+			assert.Equal(t, "1, 2", resp.Header.Get("DAV"))
+			allows[path] = resp.Header.Get("Allow")
+		})
+	}
+	assert.NotEqual(t, allows["two.txt"], allows["three/"])
+	assert.NotEqual(t, allows["three/"], allows["doesnotexist"])
+	assert.NotEqual(t, allows["two.txt"], allows["doesnotexist"])
+
+	// A browser CORS preflight can't carry credentials so it must
+	// succeed, but it mustn't reach the WebDAV handler
+	t.Run("Preflight", func(t *testing.T) {
+		testURL := startAuthenticatedServerAllowOrigin(t, testAllowOrigin)
+		resp := doOPTIONS(testURL+"two.txt", func(req *http.Request) {
+			req.Header.Set("Origin", testAllowOrigin)
+			req.Header.Set("Access-Control-Request-Method", "PROPFIND")
+		})
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.Empty(t, resp.Header.Get("Allow"))
+		assert.Empty(t, resp.Header.Get("DAV"))
+		assert.Equal(t, testAllowOrigin, resp.Header.Get("Access-Control-Allow-Origin"))
+	})
 }
 
 func TestCompressedTextFile(t *testing.T) {

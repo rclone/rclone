@@ -55,6 +55,13 @@ accept in the HTTP header.
 will overriding existing values. The flag may be repeated to add multiple
 headers. Use the format ` + "`Header-Name: value`" + `.
 
+` + "`--{{ .Prefix }}allow-origin`" + ` enables cross-origin (CORS) requests from browsers
+by setting the ` + "`Access-Control-Allow-Origin`" + ` header on every response to the
+origin given, e.g. ` + "`--{{ .Prefix }}allow-origin https://app.example.com`" + `. Browser
+CORS preflight OPTIONS requests are answered by rclone without needing
+authentication as browsers never send credentials with them. Setting this
+to ` + "`*`" + ` allows any origin which is a security risk on an authenticated server.
+
 ` + "`--{{ .Prefix }}baseurl`" + ` controls the URL prefix that rclone serves from.  By default
 rclone will serve from the root.  If you used ` + "`--{{ .Prefix }}baseurl \"/rclone\"`" + ` then
 rclone would serve from a URL starting with "/rclone/".  This is
