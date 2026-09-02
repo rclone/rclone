@@ -128,3 +128,30 @@ func TestReadZipRootNamedEntry(t *testing.T) {
 	remotes := allRemotes(t, f)
 	assert.Equal(t, []string{"good.txt"}, remotes)
 }
+
+// Listings are served from a cache which must survive callers
+// filtering the returned slice in place, as fs/list does.
+func TestListCacheNotAliased(t *testing.T) {
+	ctx := context.Background()
+	dir := t.TempDir()
+	name := writeZip(t, dir, "test.zip", "a.txt", "b.txt", "c.txt")
+
+	localFs, err := cache.Get(ctx, dir)
+	require.NoError(t, err)
+	f, err := New(ctx, localFs, name, "", "")
+	require.NoError(t, err)
+
+	entries, err := f.List(ctx, "")
+	require.NoError(t, err)
+	require.Len(t, entries, 3)
+	// Compact in place, dropping the first entry
+	copy(entries, entries[1:])
+
+	entries, err = f.List(ctx, "")
+	require.NoError(t, err)
+	var remotes []string
+	for _, entry := range entries {
+		remotes = append(remotes, entry.Remote())
+	}
+	assert.Equal(t, []string{"a.txt", "b.txt", "c.txt"}, remotes)
+}
