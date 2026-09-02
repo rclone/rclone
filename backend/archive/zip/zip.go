@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"slices"
 	"strings"
 	"time"
 
@@ -217,7 +218,8 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return nil, fs.ErrorDirNotFound
 	}
 	fs.Debugf(f, "dir=%q, entries=%v", dir, entries)
-	return entries, nil
+	// Return a copy as callers may filter the listing in place
+	return slices.Clone(entries), nil
 }
 
 // NewObject finds the Object at remote.
