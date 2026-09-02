@@ -198,7 +198,7 @@ func TestHandleFlatListResponse_MultiRecordBatch(t *testing.T) {
 
 	// First batch: 2 rows
 	builder := arrowArray.NewRecordBuilder(alloc, schema)
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		builder.Field(0).(*arrowArray.StringBuilder).Append("batch1_blob")
 		for j := 1; j < 11; j++ {
 			builder.Field(j).AppendNull()

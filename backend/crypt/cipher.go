@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path"
 	"strconv"
 	"strings"
 	"sync"
@@ -486,7 +487,12 @@ func (c *Cipher) deobfuscateSegment(ciphertext string) (string, error) {
 }
 
 // encryptFileName encrypts a file path
-func (c *Cipher) encryptFileName(in string) string {
+//
+// If stripVersion is set, a version string (as used by --b2-versions)
+// on the last segment is kept in plain text. Set it for file names
+// only: directory names must encrypt identically whether passed alone
+// or as the parent of a file name.
+func (c *Cipher) encryptFileName(in string, stripVersion bool) string {
 	segments := strings.Split(in, "/")
 	for i := range segments {
 		// Skip directory name encryption if the user chose to
@@ -499,7 +505,7 @@ func (c *Cipher) encryptFileName(in string) string {
 		// of the file name gets encrypted/obfuscated
 		hasVersion := false
 		var t time.Time
-		if i == (len(segments)-1) && version.Match(segments[i]) {
+		if stripVersion && i == (len(segments)-1) && version.Match(segments[i]) {
 			var s string
 			t, s = version.Remove(segments[i])
 			// version.Remove can fail, in which case it returns segments[i]
@@ -529,19 +535,24 @@ func (c *Cipher) EncryptFileName(in string) string {
 	if c.mode == NameEncryptionOff {
 		return in + c.encryptedSuffix
 	}
-	return c.encryptFileName(in)
+	return c.encryptFileName(in, true)
 }
 
 // EncryptDirName encrypts a directory path
+//
+// Unlike EncryptFileName, a version string on the last segment is
+// encrypted along with the rest of the name.
 func (c *Cipher) EncryptDirName(in string) string {
 	if c.mode == NameEncryptionOff || !c.dirNameEncrypt {
 		return in
 	}
-	return c.encryptFileName(in)
+	return c.encryptFileName(in, false)
 }
 
 // decryptFileName decrypts a file path
-func (c *Cipher) decryptFileName(in string) (string, error) {
+//
+// stripVersion is as for encryptFileName.
+func (c *Cipher) decryptFileName(in string, stripVersion bool) (string, error) {
 	segments := strings.Split(in, "/")
 	for i := range segments {
 		var err error
@@ -555,7 +566,7 @@ func (c *Cipher) decryptFileName(in string) (string, error) {
 		// of the file name gets decrypted/deobfuscated
 		hasVersion := false
 		var t time.Time
-		if i == (len(segments)-1) && version.Match(segments[i]) {
+		if stripVersion && i == (len(segments)-1) && version.Match(segments[i]) {
 			var s string
 			t, s = version.Remove(segments[i])
 			// version.Remove can fail, in which case it returns segments[i]
@@ -601,15 +612,31 @@ func (c *Cipher) DecryptFileName(in string) (string, error) {
 		// Leave the version string on, if it was there
 		return decrypted, nil
 	}
-	return c.decryptFileName(in)
+	return c.decryptFileName(in, true)
 }
 
 // DecryptDirName decrypts a directory path
+//
+// Unlike DecryptFileName, a version string on the last segment is
+// expected to be part of the encrypted name. Directory names created
+// by rclone before v1.76 had a version-like suffix left in plain
+// text; these are still decrypted so that they appear in listings,
+// but they can't be opened or removed until renamed on the
+// underlying remote.
 func (c *Cipher) DecryptDirName(in string) (string, error) {
 	if c.mode == NameEncryptionOff || !c.dirNameEncrypt {
 		return in, nil
 	}
-	return c.decryptFileName(in)
+	out, err := c.decryptFileName(in, false)
+	if err != nil && version.Match(path.Base(in)) {
+		var legacyErr error
+		out, legacyErr = c.decryptFileName(in, true)
+		if legacyErr == nil {
+			fs.Logf(nil, "crypt: directory %q has a legacy encrypted name - rename %q on the underlying remote to %q to make it accessible", out, in, c.encryptFileName(out, false))
+			return out, nil
+		}
+	}
+	return out, err
 }
 
 // NameEncryptionMode returns the encryption mode in use for names

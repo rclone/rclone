@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"slices"
 	"strings"
 
 	"github.com/mholt/archives"
@@ -219,10 +220,8 @@ func ArchiveExtract(ctx context.Context, dst fs.Fs, dstDir string, src fs.Fs, sr
 func destPath(nameInArchive, dstDir string) (string, error) {
 	remote := strings.TrimPrefix(nameInArchive, "./")
 	isSeparator := func(r rune) bool { return r == '/' || r == '\\' }
-	for _, segment := range strings.FieldsFunc(remote, isSeparator) {
-		if segment == ".." {
-			return "", fmt.Errorf("refusing to extract archive entry %q with a %q path component", nameInArchive, "..")
-		}
+	if slices.Contains(strings.FieldsFunc(remote, isSeparator), "..") {
+		return "", fmt.Errorf("refusing to extract archive entry %q with a %q path component", nameInArchive, "..")
 	}
 	if remote == "" {
 		return "", nil

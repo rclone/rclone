@@ -51,6 +51,7 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/lib/batcher"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
@@ -392,8 +393,8 @@ type Fs struct {
 	sharing        sharing.ContextClient // as above, but for generating sharing links
 	users          users.ContextClient   // as above, but for accessing user information
 	team           team.ContextClient    // for the Teams API
-	slashRoot      string                // root with "/" prefix, lowercase
-	slashRootSlash string                // root with "/" prefix and postfix, lowercase
+	slashRoot      string                // root with "/" prefix
+	slashRootSlash string                // root with "/" prefix and postfix
 	pacer          *fs.Pacer             // To pace the API calls
 	ns             string                // The namespace we are using or "" for none
 	batcher        *batcher.Batcher[*files.UploadSessionFinishArg, *files.FileMetadata]
@@ -1010,7 +1011,7 @@ func (f *Fs) listReceivedFiles(ctx context.Context, callback func(fs.DirEntry) e
 			}
 		}
 		for _, entry := range res.Entries {
-			entryPath := entry.Name
+			entryPath := f.opt.Enc.ToStandardName(entry.Name)
 			o := &Object{
 				fs:      f,
 				url:     entry.PreviewUrl,
@@ -1672,6 +1673,34 @@ func (f *Fs) changeNotifyCursor(ctx context.Context) (cursor string, err error) 
 	return startCursor.Cursor, nil
 }
 
+// trimPrefixFold returns s with the leading prefix removed, matching
+// case insensitively rune by rune so folded runes of differing UTF-8
+// length still match.
+//
+// If s is exactly the root that prefix names (prefix without its
+// trailing "/") it returns "". If prefix doesn't match it returns s
+// unchanged.
+func trimPrefixFold(s, prefix string) string {
+	if strings.HasSuffix(prefix, "/") && strings.EqualFold(s, strings.TrimSuffix(prefix, "/")) {
+		return ""
+	}
+
+	offset := 0
+	for prefix != "" {
+		if offset >= len(s) {
+			return s
+		}
+		sRune, sSize := utf8.DecodeRuneInString(s[offset:])
+		prefixRune, prefixSize := utf8.DecodeRuneInString(prefix)
+		if !strings.EqualFold(string(sRune), string(prefixRune)) {
+			return s
+		}
+		offset += sSize
+		prefix = prefix[prefixSize:]
+	}
+	return s[offset:]
+}
+
 func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.EntryType), startCursor string) (newCursor string, err error) {
 	cursor := startCursor
 	var res *files.ListFolderLongpollResult
@@ -1731,17 +1760,18 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 			switch info := entry.(type) {
 			case *files.FolderMetadata:
 				entryType = fs.EntryDirectory
-				entryPath = strings.TrimPrefix(info.PathDisplay, f.slashRootSlash)
+				entryPath = info.PathDisplay
 			case *files.FileMetadata:
 				entryType = fs.EntryObject
-				entryPath = strings.TrimPrefix(info.PathDisplay, f.slashRootSlash)
+				entryPath = info.PathDisplay
 			case *files.DeletedMetadata:
 				entryType = fs.EntryObject
-				entryPath = strings.TrimPrefix(info.PathDisplay, f.slashRootSlash)
+				entryPath = info.PathDisplay
 			default:
 				fs.Errorf(entry, "dropbox ChangeNotify: ignoring unknown EntryType %T", entry)
 				continue
 			}
+			entryPath = trimPrefixFold(entryPath, f.slashRootSlash)
 
 			if entryPath != "" {
 				notifyFunc(f.opt.Enc.ToStandardPath(entryPath), entryType)
@@ -2050,11 +2080,6 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 
 	// write chunks
 	in := readers.NewCountingReader(in0)
-	bufSize := chunkSize
-	if size >= 0 && size < bufSize {
-		bufSize = size
-	}
-	buf := make([]byte, int(bufSize))
 	cursor := files.UploadSessionCursor{
 		SessionId: res.SessionId,
 		Offset:    0,
@@ -2074,14 +2099,21 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 			fs.Debugf(o, "Uploading chunk %d/%d", currentChunk, chunks)
 		}
 
-		chunk := readers.NewRepeatableLimitReaderBuffer(in, buf, chunkSize)
+		// Buffer the chunk in memory from the global pool for retries
+		rw := multipart.NewRW()
+		var n int64
+		n, err = io.CopyN(rw, in, chunkSize)
+		if err != nil && err != io.EOF {
+			_ = rw.Close()
+			return nil, err
+		}
 		skip := int64(0)
 		err = o.fs.pacer.Call(func() (bool, error) {
 			// seek to the start in case this is a retry
-			if _, err = chunk.Seek(skip, io.SeekStart); err != nil {
+			if _, err = rw.Seek(skip, io.SeekStart); err != nil {
 				return false, err
 			}
-			err = o.fs.srv.UploadSessionAppendV2Context(ctx, &appendArg, chunk)
+			err = o.fs.srv.UploadSessionAppendV2Context(ctx, &appendArg, rw)
 			// after session is started, we retry everything
 			if err != nil {
 				// Check for incorrect offset error and retry with new offset
@@ -2093,10 +2125,10 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 						what := fmt.Sprintf("incorrect offset error received: sent %d, need %d, skip %d", cursor.Offset, correctOffset, skip)
 						if skip < 0 {
 							return false, fmt.Errorf("can't seek backwards to correct offset: %s", what)
-						} else if skip == chunkSize {
+						} else if skip == n {
 							fs.Debugf(o, "%s: chunk received OK - continuing", what)
 							return false, nil
-						} else if skip > chunkSize {
+						} else if skip > n {
 							// This error should never happen
 							return false, fmt.Errorf("can't seek forwards by more than a chunk to correct offset: %s", what)
 						}
@@ -2113,8 +2145,12 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 			}
 			return err != nil, err
 		})
+		closeErr := rw.Close()
 		if err != nil {
 			return nil, err
+		}
+		if closeErr != nil {
+			return nil, closeErr
 		}
 		if size >= 0 {
 			// Check for sources which truncate early

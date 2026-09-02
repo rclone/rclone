@@ -37,9 +37,9 @@ import (
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
-	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 )
 
@@ -549,31 +549,34 @@ func chooseDrive(ctx context.Context, name string, m configmap.Mapper, srv *rest
 	// We don't have the final ID yet?
 	// query Microsoft Graph
 	if opt.finalDriveID == "" {
-		_, err := srv.CallJSON(ctx, &opt.opts, nil, &drives)
-		if err != nil {
-			return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available drives: %v", err))
+		_, drivesErr := srv.CallJSON(ctx, &opt.opts, nil, &drives)
+		if drivesErr != nil {
+			fs.Debugf(nil, "Failed to query /me/drives: %v - trying /me/drive", drivesErr)
 		}
-
 		// Also call /me/drive as sometimes /me/drives doesn't return it #4068
 		if opt.opts.Path == "/me/drives" {
-			opt.opts.Path = "/me/drive"
+			meDriveOpts := opt.opts
+			meDriveOpts.Path = "/me/drive"
 			meDrive := api.DriveResource{}
-			_, err := srv.CallJSON(ctx, &opt.opts, nil, &meDrive)
-			if err != nil {
-				return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available drives: %v", err))
-			}
-			found := false
-			for _, drive := range drives.Drives {
-				if drive.DriveID == meDrive.DriveID {
-					found = true
-					break
+			_, meDriveErr := srv.CallJSON(ctx, &meDriveOpts, nil, &meDrive)
+			if meDriveErr == nil {
+				found := false
+				for _, drive := range drives.Drives {
+					if drive.DriveID == meDrive.DriveID {
+						found = true
+						break
+					}
 				}
+				// add the me drive if not found already
+				if !found {
+					fs.Debugf(nil, "Adding %v to drives list from /me/drive", meDrive)
+					drives.Drives = append(drives.Drives, meDrive)
+				}
+			} else if drivesErr != nil {
+				return fs.ConfigError("driveid", fmt.Sprintf("Failed to query available drives: /me/drives: %v; /me/drive: %v\nEnter the drive ID manually instead", drivesErr, meDriveErr))
 			}
-			// add the me drive if not found already
-			if !found {
-				fs.Debugf(nil, "Adding %v to drives list from /me/drive", meDrive)
-				drives.Drives = append(drives.Drives, meDrive)
-			}
+		} else if drivesErr != nil {
+			return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available drives: %v", drivesErr))
 		}
 	} else {
 		drives.Drives = append(drives.Drives, api.DriveResource{
@@ -2678,9 +2681,8 @@ func (o *Object) uploadFragment(ctx context.Context, url string, start int64, to
 			}
 			return true, fmt.Errorf("retry this chunk skipping %d bytes: %w", skip, err)
 		} else if err != nil && resp != nil && resp.StatusCode == http.StatusNotFound {
-			fs.Debugf(o, "Received 404 error: assuming eventual consistency problem with session - retrying chunk: %v", err)
-			time.Sleep(5 * time.Second) // a little delay to help things along
-			return true, err
+			fs.Debugf(o, "Received 404 error: upload session not found - not retrying: %v", err)
+			return false, fserrors.NoLowLevelRetryError(err)
 		}
 		if err != nil {
 			return shouldRetry(ctx, resp, err)
@@ -2746,11 +2748,25 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 	position := int64(0)
 	for remaining > 0 {
 		n := min(remaining, int64(o.fs.opt.ChunkSize))
-		seg := readers.NewRepeatableReader(io.LimitReader(in, n))
+		// Buffer the chunk in memory from the global pool so it can be
+		// re-sent (or partly re-sent after a 416) on retry
+		rw := multipart.NewRW()
+		_, err = io.CopyN(rw, in, n)
+		if err != nil {
+			_ = rw.Close()
+			if err == io.EOF {
+				err = fmt.Errorf("expected %d bytes in input, but got %d: %w", size, position, io.ErrUnexpectedEOF)
+			}
+			return nil, err
+		}
 		fs.Debugf(o, "Uploading segment %d/%d size %d", position, size, n)
-		info, err = o.uploadFragment(ctx, uploadURL, position, size, seg, n, options...)
+		info, err = o.uploadFragment(ctx, uploadURL, position, size, rw, n, options...)
+		closeErr := rw.Close()
 		if err != nil {
 			return nil, err
+		}
+		if closeErr != nil {
+			return nil, closeErr
 		}
 		remaining -= n
 		position += n

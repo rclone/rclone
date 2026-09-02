@@ -114,7 +114,7 @@ Side by side comparison with more details:
 To make a new Storj configuration you need one of the following:
 
 - Access Grant that someone else shared with you.
-- [API Key](https://documentation.storj.io/getting-started/uploading-your-first-object/create-an-api-key)
+- [API Key](https://storj.dev/learn/concepts/access/access-grants/api-key)
   of a Storj project you are a member of.
 
 Here is an example of how to make a remote called `remote`.  First run:

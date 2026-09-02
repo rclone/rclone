@@ -688,6 +688,9 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}()
 
 	for {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return nil, ctxErr
+		}
 		var fis []os.FileInfo
 		if useReadDir {
 			// Windows and Plan9 read the directory entries with the stat information in which
@@ -1650,12 +1653,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		out = nopWriterCloser{&symlinkData}
 	}
 
-	// Calculate the hash of the object we are reading as we go along
+	// Calculate the hash of the object as we write it
+	var w io.Writer = out
 	if hasher != nil {
-		in = io.TeeReader(in, hasher)
+		w = io.MultiWriter(w, hasher)
 	}
 
-	_, err = io.Copy(out, in)
+	_, err = io.Copy(w, in)
 	closeErr := out.Close()
 	if err == nil {
 		err = closeErr

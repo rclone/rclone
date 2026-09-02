@@ -54,8 +54,7 @@ func (f *Fs) shouldRetry(ctx context.Context, err error) (bool, error) {
 	if fserrors.ContextError(ctx, &err) {
 		return false, err
 	}
-	var httpErr *sdkerrors.HTTPError
-	if errors.As(err, &httpErr) {
+	if httpErr, ok := errors.AsType[*sdkerrors.HTTPError](err); ok {
 		switch httpErr.StatusCode() {
 		case 401:
 			if !f.authFailed {
@@ -366,6 +365,25 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.cfg.BasicAuthHeader = computeBasicAuthHeader(userInfo.BridgeUser, userInfo.UserID)
 	f.bridgeUser = userInfo.BridgeUser
 	f.userID = userInfo.UserID
+
+	// The refresh endpoint rotates the token on every successful call.
+	// Persist the rotated token so routine use keeps the stored token
+	// current; otherwise it keeps its original expiry and accounts that
+	// cannot re-login non-interactively (2FA) eventually strand.
+	if userInfo.NewToken != "" {
+		if rotated, rotErr := jwtToOAuth2Token(userInfo.NewToken); rotErr != nil {
+			fs.Debugf(f, "Not adopting rotated token from user info: %v", rotErr)
+		} else {
+			// Use the rotated token for this session even if saving it
+			// fails; persistence is best-effort.
+			f.cfg.Token = userInfo.NewToken
+			if putErr := oauthutil.PutToken(name, m, rotated, false); putErr != nil {
+				fs.Debugf(f, "Failed to save rotated token from user info: %v", putErr)
+			} else {
+				fs.Debugf(f, "Persisted rotated token from user info, expiry: %v", rotated.Expiry)
+			}
+		}
+	}
 
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
@@ -1064,8 +1082,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		err := o.f.pacer.Call(func() (bool, error) {
 			err := files.DeleteFile(ctx, o.f.cfg, backupUUID)
 			if err != nil {
-				var httpErr *sdkerrors.HTTPError
-				if errors.As(err, &httpErr) {
+				if httpErr, ok := errors.AsType[*sdkerrors.HTTPError](err); ok {
 					// Treat 404 (Not Found) and 204 (No Content) as success
 					switch httpErr.StatusCode() {
 					case 404, 204:
@@ -1117,8 +1134,7 @@ func isEmptyFileLimitError(err error) bool {
 // fileTooLargeError extracts the SDK's FileTooLargeError from a wrapped error
 // chain, returning it (or nil) so callers can branch on the size limit.
 func fileTooLargeError(err error) *sdkerrors.FileTooLargeError {
-	var tooLarge *sdkerrors.FileTooLargeError
-	if errors.As(err, &tooLarge) {
+	if tooLarge, ok := errors.AsType[*sdkerrors.FileTooLargeError](err); ok {
 		return tooLarge
 	}
 	return nil

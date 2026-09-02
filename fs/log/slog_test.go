@@ -287,76 +287,64 @@ func TestOutputHandlerConcurrency(t *testing.T) {
 	var wg sync.WaitGroup
 
 	// Goroutines calling Handle (text format)
-	for i := 0; i < goroutines; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for j := 0; j < iterations; j++ {
+	for range goroutines {
+		wg.Go(func() {
+			for range iterations {
 				r := slog.NewRecord(t0, slog.LevelInfo, "concurrent text", 0)
 				r.AddAttrs(slog.String("object", "obj"))
 				_ = h.Handle(ctx, r)
 			}
-		}()
+		})
 	}
 
 	// Goroutines calling setFormat (switching between text and JSON)
-	for i := 0; i < 2; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for j := 0; j < iterations; j++ {
+	for range 2 {
+		wg.Go(func() {
+			for j := range iterations {
 				if j%2 == 0 {
 					h.setFormat(logFormatDate | logFormatTime)
 				} else {
 					h.setFormat(logFormatJSON)
 				}
 			}
-		}()
+		})
 	}
 
 	// Goroutines calling setFormatFlags / clearFormatFlags
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for j := 0; j < iterations; j++ {
+	wg.Go(func() {
+		for range iterations {
 			h.setFormatFlags(logFormatPid | logFormatMicroseconds)
 			h.clearFormatFlags(logFormatPid | logFormatMicroseconds)
 		}
-	}()
+	})
 
 	// Goroutines calling SetLevel
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for j := 0; j < iterations; j++ {
+	wg.Go(func() {
+		for j := range iterations {
 			if j%2 == 0 {
 				h.SetLevel(slog.LevelDebug)
 			} else {
 				h.SetLevel(slog.LevelInfo)
 			}
 		}
-	}()
+	})
 
 	// Goroutines calling SetOutput / ResetOutput
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		noop := func(_ slog.Level, _ string) {}
-		for j := 0; j < iterations; j++ {
+		for range iterations {
 			h.SetOutput(noop)
 			h.ResetOutput()
 		}
-	}()
+	})
 
 	// Goroutines calling WithAttrs / WithGroup (reads format)
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for j := 0; j < iterations; j++ {
+	wg.Go(func() {
+		for range iterations {
 			_ = h.WithAttrs(nil)
 			_ = h.WithGroup("g")
 		}
-	}()
+	})
 
 	// Use a channel with a timeout to detect deadlocks
 	done := make(chan struct{})

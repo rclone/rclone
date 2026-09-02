@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"slices"
 	"strings"
 	"time"
 
@@ -682,10 +683,8 @@ func UnsetRemote(name string, keys ...string) (removed []string, err error) {
 	if GetValue(name, "type") == "" {
 		return nil, fmt.Errorf("remote %q doesn't exist", name)
 	}
-	for _, key := range keys {
-		if key == "type" {
-			return nil, errors.New(`can't unset the "type" of a remote - use "config delete" to remove the whole remote`)
-		}
+	if slices.Contains(keys, "type") {
+		return nil, errors.New(`can't unset the "type" of a remote - use "config delete" to remove the whole remote`)
 	}
 	for _, key := range keys {
 		if FileDeleteKey(name, key) {

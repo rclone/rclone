@@ -96,7 +96,19 @@ func TestVerifyCopy(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// skipIfNoSymlinks skips the test if this process can't create symlinks.
+//
+// Windows grants the privilege only to an elevated process or one running with
+// Developer Mode enabled, so an ordinary user gets ERROR_PRIVILEGE_NOT_HELD.
+func skipIfNoSymlinks(t *testing.T) {
+	t.Helper()
+	if err := os.Symlink("target", filepath.Join(t.TempDir(), "link")); err != nil {
+		t.Skipf("Skipping as symlinks are unavailable: %v", err)
+	}
+}
+
 func TestSymlink(t *testing.T) {
+	skipIfNoSymlinks(t)
 	ctx := context.Background()
 	r := fstest.NewRun(t)
 	f := r.Flocal.(*Fs)
@@ -238,6 +250,7 @@ func linksMode(f *Fs) {
 // faithful backup of the source) but must refuse to write through it, so
 // nothing lands outside the destination (CWE-59).
 func TestSymlinkEscapeWriteThroughBlocked(t *testing.T) {
+	skipIfNoSymlinks(t)
 	ctx := context.Background()
 
 	// A directory outside the destination the attacker wants to write into
@@ -273,6 +286,7 @@ func TestSymlinkEscapeWriteThroughBlocked(t *testing.T) {
 // re-validated against the root, so the write-through is refused and nothing
 // escapes.
 func TestSymlinkEscapeNestedBlocked(t *testing.T) {
+	skipIfNoSymlinks(t)
 	ctx := context.Background()
 
 	evil := t.TempDir()
@@ -324,6 +338,7 @@ func TestSymlinkEscapeConcurrent(t *testing.T) {
 // use: an in-tree symlink to a sibling directory can still be created and
 // written through, since that write stays inside the destination.
 func TestSymlinkInTreeWriteThroughWorks(t *testing.T) {
+	skipIfNoSymlinks(t)
 	ctx := context.Background()
 
 	r := fstest.NewRun(t)
@@ -499,6 +514,32 @@ func TestHashOnUpdate(t *testing.T) {
 	assert.Equal(t, "45685e95985e20822fb2538a522a5ccf", md5)
 }
 
+// Test the hash cached by Update matches a HashesOption hint passed by the caller
+func TestHashOnUpdateWithHashOption(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	const filePath = "file.txt"
+	when := time.Now()
+	r.WriteFile(filePath, "x", when)
+	f := r.Flocal.(*Fs)
+
+	o, err := f.NewObject(ctx, filePath)
+	require.NoError(t, err)
+
+	b := bytes.NewBufferString("content")
+	src := object.NewStaticObjectInfo(filePath, when, int64(b.Len()), true, nil, f)
+	options := []fs.OpenOption{&fs.HashesOption{Hashes: hash.NewHashSet(hash.MD5)}}
+	require.NoError(t, o.Update(ctx, b, src, options...))
+
+	gotContent, err := os.ReadFile(filepath.Join(f.root, filePath))
+	require.NoError(t, err)
+	assert.Equal(t, "content", string(gotContent))
+
+	md5, err := o.Hash(ctx, hash.MD5)
+	require.NoError(t, err)
+	assert.Equal(t, "9a0364b9e99bb480dd25e1f0284c8555", md5)
+}
+
 // Test hashes on deleting an object
 func TestHashOnDelete(t *testing.T) {
 	ctx := context.Background()
@@ -529,6 +570,7 @@ func TestHashOnDelete(t *testing.T) {
 }
 
 func TestMetadata(t *testing.T) {
+	skipIfNoSymlinks(t)
 	ctx := context.Background()
 	r := fstest.NewRun(t)
 	const filePath = "metafile.txt"
@@ -805,6 +847,7 @@ func TestFilter(t *testing.T) {
 }
 
 func testFilterSymlink(t *testing.T, copyLinks bool) {
+	skipIfNoSymlinks(t)
 	ctx := context.Background()
 	r := fstest.NewRun(t)
 	defer r.Finalise()
@@ -909,6 +952,7 @@ func TestFilterSymlinkLinks(t *testing.T) {
 }
 
 func TestCopySymlink(t *testing.T) {
+	skipIfNoSymlinks(t)
 	ctx := context.Background()
 	r := fstest.NewRun(t)
 	defer r.Finalise()

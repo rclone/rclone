@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -564,8 +565,7 @@ func TestSyncSetDelayedModTimes(t *testing.T) {
 
 	// Timestamp the directories in reverse order
 	ts := t1
-	for i := len(dirs) - 1; i >= 0; i-- {
-		dir := dirs[i]
+	for _, dir := range slices.Backward(dirs) {
 		_, err := operations.SetDirModTime(ctx, r.Flocal, nil, dir, ts)
 		require.NoError(t, err)
 		ts = ts.Add(time.Minute)
@@ -3142,7 +3142,7 @@ func testLoggerVsLsf(ctx context.Context, fdst, fsrc fs.Fs, logger *bytes.Buffer
 // not be compared against the hash the logger predicted.
 func blankMissingHashes(logger, lsf *bytes.Buffer) {
 	noHash := map[string]bool{}
-	for _, line := range bytes.Split(lsf.Bytes(), []byte("\n")) {
+	for line := range bytes.SplitSeq(lsf.Bytes(), []byte("\n")) {
 		elements := bytes.SplitN(line, []byte(";"), 4)
 		if len(elements) == 4 && len(elements[1]) == 0 {
 			noHash[string(elements[3])] = true

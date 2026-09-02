@@ -1206,3 +1206,19 @@ put them back in again. -->
 - Hakan İSMAİL <hakanismail53@gmail.com>
 - Shantanav Mukherjee <shantanav7@gmail.com>
 - VXNCXNX <VXNCXNX@users.noreply.github.com>
+- Rohit Behera <126186063+r0h1tb@users.noreply.github.com>
+- Rahman Yilmaz <85690773+Sudo-Rahman@users.noreply.github.com>
+- Sanjay Kanth A <sanjaykanthsk09@gmail.com>
+- machsix <28209092+machsix@users.noreply.github.com>
+- CAOShurong <3502119616@qq.com>
+- shaurya <shauryajaiswal.dev@gmail.com>
+- water <672684719@qq.com>
+- Rayan Salhab <r.salhab@aiyexpertsolutions.com>
+- Vijay Misal <misalvijay153@gmail.com>
+- Sune Mølgaard <sune@molgaard.org>
+- Anatoly Tarnavsky <anatolyt@gmail.com>
+- cyphercodes <cyphercodes@users.noreply.github.com>
+- shaurya <19599684+no-hup@users.noreply.github.com>
+- no-hup <shauryaj.finance@gmail.com>
+- Dhevenddra <dhevg20020402@gmail.com>
+- Splainte <r.wycke@hotmail.fr>

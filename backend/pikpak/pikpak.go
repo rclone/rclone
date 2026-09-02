@@ -58,6 +58,7 @@ import (
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
+	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/oauth2"
 )
@@ -223,7 +224,7 @@ Fill in for rclone to use a non root folder as its starting point.
 			Advanced: true,
 		}, {
 			Name:     "hash_memory_limit",
-			Help:     "Files bigger than this will be cached on disk to calculate hash if required.",
+			Help:     "Files bigger than this will be cached on disk to calculate hash if required.\n\nFiles of unknown size are always cached on disk.",
 			Default:  fs.SizeSuffix(10 * 1024 * 1024),
 			Advanced: true,
 		}, {
@@ -432,8 +433,7 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 
 	// traceback to possible api.Error wrapped in err, and re-authorize if necessary
 	// "unauthenticated" (16): when access_token is invalid, but should be handled by oauthutil
-	var terr *oauth2.RetrieveError
-	if errors.As(err, &terr) {
+	if terr, ok := errors.AsType[*oauth2.RetrieveError](err); ok {
 		apiErr := new(api.Error)
 		if err := json.Unmarshal(terr.Body, apiErr); err == nil {
 			if apiErr.Reason == "invalid_grant" {
@@ -1447,10 +1447,11 @@ func (f *Fs) uploadByResumable(ctx context.Context, in io.Reader, name string, s
 	if err != nil {
 		return fmt.Errorf("failed to create upload client: %w", err)
 	}
+	counter := readers.NewCountingReader(in)
 	req := &s3.PutObjectInput{
 		Bucket: &p.Bucket,
 		Key:    &p.Key,
-		Body:   io.NopCloser(in),
+		Body:   io.NopCloser(counter),
 	}
 	// Apply upload options
 	for _, option := range options {
@@ -1478,7 +1479,14 @@ func (f *Fs) uploadByResumable(ctx context.Context, in io.Reader, name string, s
 		_, err = client.PutObject(ctx, req, s3opts...)
 		return f.shouldRetry(ctx, nil, err)
 	})
-	return
+	if err != nil {
+		return err
+	}
+	// Check for truncation of input
+	if size >= 0 && int64(counter.BytesRead()) != size {
+		return fmt.Errorf("expected %d bytes in input, but got %d: %w", size, counter.BytesRead(), io.ErrUnexpectedEOF)
+	}
+	return nil
 }
 
 func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, gcid string, size int64, options ...fs.OpenOption) (info *api.File, err error) {
