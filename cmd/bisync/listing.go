@@ -675,7 +675,7 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 			b.debugFn(tr.Name, func() {
 				prettyprint(tr, tr.Name, fs.LogLevelInfo)
 			})
-			if tr.Error == nil && tr.Bytes > 0 || tr.Size <= 0 {
+			if tr.Error == nil && (tr.Bytes > 0 || tr.Size <= 0) {
 				prettyprint(tr, "keeping: "+tr.Name, fs.LogLevelDebug)
 				toKeep = append(toKeep, tr.Name)
 			}
