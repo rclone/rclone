@@ -2,7 +2,6 @@ package compress
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"crypto/md5"
 	"encoding/hex"
@@ -23,7 +22,7 @@ type gzipModeHandler struct{}
 // isCompressible checks the compression ratio of the provided data and returns true if the ratio exceeds
 // the configured threshold
 func (g *gzipModeHandler) isCompressible(r io.Reader, compressionMode int) (bool, error) {
-	var b bytes.Buffer
+	var b countingDiscard
 	var n int64
 	w, err := sgzip.NewWriterLevel(&b, sgzip.DefaultCompression)
 	if err != nil {
@@ -37,7 +36,7 @@ func (g *gzipModeHandler) isCompressible(r io.Reader, compressionMode int) (bool
 	if err != nil {
 		return false, err
 	}
-	ratio := float64(n) / float64(b.Len())
+	ratio := float64(n) / float64(b)
 	return ratio > minCompressionRatio, nil
 }
 

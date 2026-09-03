@@ -1961,7 +1961,7 @@ and far less prone to critical errors / undetected changes
 - Bisync is now capable of rolling a file listing back in cases of uncertainty,
 essentially marking the file as needing to be rechecked next time.
 - A few basic terminal colors are now supported, controllable with
-[`--color`](/docs/#color) (`AUTO`|`NEVER`|`ALWAYS`)
+[`--color`](/docs/#color-autoneveralways) (`AUTO`|`NEVER`|`ALWAYS`)
 - Initial listing snapshots of Path1 and Path2 are now generated concurrently,
 using the same "march" infrastructure as `check` and `sync`,
 for performance improvements and less
@@ -1991,7 +1991,7 @@ behavior with new [`--conflict-resolve`](#conflict-resolve),
 [`--conflict-suffix`](#conflict-suffix) flags.
 - A new [`--resync-mode`](#resync-mode) flag allows more control over which
 version of a file gets kept during a `--resync`.
-- Bisync now supports [`--retries`](/docs/#retries-int) and [`--retries-sleep`](/docs/#retries-sleep-time)
+- Bisync now supports [`--retries`](/docs/#retries-int) and [`--retries-sleep`](/docs/#retries-sleep-duration)
 (when [`--resilient`](#resilient) is set.)
 
 ### `v1.64`

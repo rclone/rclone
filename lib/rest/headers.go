@@ -10,45 +10,49 @@ import (
 	"github.com/rclone/rclone/fs"
 )
 
-type contentRange struct {
-	start int64
-	end   int64
-	size  int64
+// ContentRange is a parsed Content-Range response header.
+type ContentRange struct {
+	Start int64 // first byte position of the range
+	End   int64 // last byte position of the range (inclusive)
+	Size  int64 // complete length of the representation, or -1 if unknown
 }
 
-func parseContentRange(value string) (contentRange, error) {
+// ParseContentRange parses a Content-Range header of the form
+// "bytes start-end/size" as returned with a ranged (206) response.
+// The Size is -1 if the complete length is unknown ("*").
+func ParseContentRange(value string) (ContentRange, error) {
 	const prefix = "bytes "
 	if !strings.HasPrefix(value, prefix) {
-		return contentRange{}, fmt.Errorf("doesn't start with %q", prefix)
+		return ContentRange{}, fmt.Errorf("doesn't start with %q", prefix)
 	}
 
 	rangeAndSize := strings.Split(value[len(prefix):], "/")
 	if len(rangeAndSize) != 2 {
-		return contentRange{}, errors.New("must contain one '/'")
+		return ContentRange{}, errors.New("must contain one '/'")
 	}
 	bounds := strings.Split(rangeAndSize[0], "-")
 	if len(bounds) != 2 {
-		return contentRange{}, errors.New("must contain one '-'")
+		return ContentRange{}, errors.New("must contain one '-'")
 	}
 
 	start, err := strconv.ParseInt(bounds[0], 10, 64)
 	if err != nil || start < 0 {
-		return contentRange{}, errors.New("invalid start")
+		return ContentRange{}, errors.New("invalid start")
 	}
 	end, err := strconv.ParseInt(bounds[1], 10, 64)
 	if err != nil || end < start {
-		return contentRange{}, errors.New("invalid end")
+		return ContentRange{}, errors.New("invalid end")
 	}
 
 	size := int64(-1)
 	if rangeAndSize[1] != "*" {
 		size, err = strconv.ParseInt(rangeAndSize[1], 10, 64)
 		if err != nil || size < 0 || end >= size {
-			return contentRange{}, errors.New("invalid complete length")
+			return ContentRange{}, errors.New("invalid complete length")
 		}
 	}
 
-	return contentRange{start: start, end: end, size: size}, nil
+	return ContentRange{Start: start, End: end, Size: size}, nil
 }
 
 // CheckContentRange checks that a response satisfies a Range open option.
@@ -106,18 +110,18 @@ func CheckContentRange(resp *http.Response, options []fs.OpenOption, size int64)
 	}
 
 	responseRange := resp.Header.Get("Content-Range")
-	got, err := parseContentRange(responseRange)
+	got, err := ParseContentRange(responseRange)
 	if err != nil {
 		return fmt.Errorf("invalid Content-Range %q: %w", responseRange, err)
 	}
 
-	if size >= 0 && got.size >= 0 && got.size != size {
+	if size >= 0 && got.Size >= 0 && got.Size != size {
 		return fmt.Errorf("Content-Range %q does not match expected size %d", responseRange, size)
 	}
 
 	rangeSize := size
 	if rangeSize < 0 {
-		rangeSize = got.size
+		rangeSize = got.Size
 	}
 	expectedStart := requested.Start
 	expectedEnd := requested.End
@@ -132,18 +136,18 @@ func CheckContentRange(resp *http.Response, options []fs.OpenOption, size int64)
 
 	var matches bool
 	if requested.Start < 0 && rangeSize < 0 {
-		matches = got.end-got.start+1 <= requested.End
+		matches = got.End-got.Start+1 <= requested.End
 	} else {
-		matches = got.start == expectedStart
+		matches = got.Start == expectedStart
 		if expectedEnd >= 0 {
-			matches = matches && got.end == expectedEnd
+			matches = matches && got.End == expectedEnd
 		}
 	}
 	if !matches {
 		return fmt.Errorf("Content-Range %q does not match requested range %q", responseRange, requestRange)
 	}
 
-	contentLength := got.end - got.start + 1
+	contentLength := got.End - got.Start + 1
 	if contentLength <= 0 {
 		return fmt.Errorf("invalid Content-Range %q: length overflows", responseRange)
 	}

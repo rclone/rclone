@@ -13,6 +13,8 @@ import (
 	"fmt"
 	"io"
 	"math/bits"
+	"net"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -21,6 +23,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -28,6 +31,7 @@ import (
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
@@ -36,6 +40,7 @@ import (
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/testserver"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
@@ -250,6 +255,7 @@ func testPutLarge(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item,
 		obj        fs.Object
 		uploadHash *hash.MultiHasher
 	)
+	inUse := pool.Global().InUse()
 	retry(t, "PutLarge", func() error {
 		r := readers.NewPatternReader(file.Size)
 		uploadHash = hash.NewMultiHasher()
@@ -266,6 +272,7 @@ func testPutLarge(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item,
 		}
 		return err
 	})
+	assert.Equal(t, inUse, pool.Global().InUse(), "buffers not returned to the global pool after upload")
 	file.Hashes = uploadHash.Sums()
 	file.Check(t, obj, f.Precision())
 
@@ -2542,6 +2549,187 @@ func Run(t *testing.T, opt *Opt) {
 					}
 				})
 			}
+		})
+
+		// TestFsPutRetry tests that an upload survives a transient HTTP
+		// failure without corrupting the object
+		t.Run("FsPutRetry", func(t *testing.T) {
+			skipIfNotOk(t)
+
+			// faults are the transient failures injected into the
+			// first request carrying upload data
+			faults := []struct {
+				name       string
+				statusCode int
+				err        error
+			}{
+				{name: "Status500", statusCode: http.StatusInternalServerError},
+				// io.ErrUnexpectedEOF is in fserrors' portable list of
+				// retriable errors, unlike syscall.ECONNRESET which
+				// doesn't exist on plan9.
+				{name: "NetError", err: &net.OpError{Op: "write", Net: "tcp", Err: io.ErrUnexpectedEOF}},
+			}
+
+			// putRetry uploads size bytes to remote, failing the first
+			// request carrying at least minBody bytes of body with the
+			// given fault before it is sent. Put must then either
+			// succeed with the correct contents or fail cleanly, and
+			// any pooled buffers it used must be returned.
+			putRetry := func(t *testing.T, remote string, size, minBody int64, statusCode int, faultErr error) {
+				var faulted atomic.Bool
+				fshttp.SetFaultInjector(func(req *http.Request) (int, error) {
+					if faulted.Load() {
+						return 0, nil
+					}
+					if req.Body == nil || req.Body == http.NoBody {
+						return 0, nil
+					}
+					if req.ContentLength > 0 {
+						if req.ContentLength < minBody {
+							return 0, nil
+						}
+					} else {
+						// The length is unknown (e.g. a multipart
+						// form) so peek at the body to see whether it
+						// carries at least minBody bytes of data,
+						// replaying the peeked bytes if the request is
+						// sent on. This stops the fault being spent on
+						// a small API call sent with unknown length.
+						peek := make([]byte, minBody)
+						n, _ := io.ReadFull(req.Body, peek)
+						req.Body = struct {
+							io.Reader
+							io.Closer
+						}{io.MultiReader(bytes.NewReader(peek[:n]), req.Body), req.Body}
+						if int64(n) < minBody {
+							return 0, nil
+						}
+					}
+					if !faulted.CompareAndSwap(false, true) {
+						return 0, nil
+					}
+					return statusCode, faultErr
+				})
+				defer fshttp.SetFaultInjector(nil)
+
+				file := fstest.Item{
+					ModTime: fstest.Time("2001-02-03T04:05:06.499999999Z"),
+					Path:    remote,
+					Size:    size,
+				}
+				// Remove anything left behind if the test fails part way
+				t.Cleanup(func() {
+					obj, err := f.NewObject(ctx, remote)
+					if err == nil {
+						_ = obj.Remove(ctx)
+					}
+				})
+				inUse := pool.Global().InUse()
+				uploadHash := hash.NewMultiHasher()
+				in := io.TeeReader(readers.NewPatternReader(size), uploadHash)
+				obji := object.NewStaticObjectInfo(remote, file.ModTime, size, true, nil, nil)
+				obj, err := f.Put(ctx, in, obji)
+				fshttp.SetFaultInjector(nil)
+				assert.Equal(t, inUse, pool.Global().InUse(), "buffers not returned to the global pool after upload")
+				file.Hashes = uploadHash.Sums()
+
+				// checkAndRemove checks obj has the expected contents
+				// then removes it
+				checkAndRemove := func(obj fs.Object) {
+					file.Check(t, obj, f.Precision())
+					downloadHash := hash.NewMultiHasher()
+					download, err := obj.Open(ctx)
+					require.NoError(t, err)
+					n, err := io.Copy(downloadHash, download)
+					require.NoError(t, err)
+					assert.Equal(t, size, n)
+					require.NoError(t, download.Close())
+					assert.Equal(t, file.Hashes, downloadHash.Sums())
+					assert.NoError(t, obj.Remove(ctx))
+				}
+
+				if !faulted.Load() {
+					if err == nil {
+						assert.NoError(t, obj.Remove(ctx))
+					}
+					t.Skip("no upload request could be faulted")
+				}
+				if err != nil {
+					// A clean failure is acceptable but the object must
+					// not have been left behind with the wrong contents
+					t.Logf("Put returned an error after the injected failure (acceptable): %v", err)
+					obj, err := f.NewObject(ctx, remote)
+					if errors.Is(err, fs.ErrorObjectNotFound) {
+						return
+					}
+					require.NoError(t, err)
+					checkAndRemove(obj)
+					return
+				}
+				require.NotNil(t, obj)
+				file.Check(t, obj, f.Precision())
+				// Re-read the object, which waits for it to become visible
+				checkAndRemove(fstest.NewObject(ctx, t, f, remote))
+			}
+
+			t.Run("Simple", func(t *testing.T) {
+				var size int64 = 64 * 1024
+				if *fstest.SizeLimit > 0 && size > *fstest.SizeLimit {
+					size = *fstest.SizeLimit
+					t.Logf("Reduce file size due to limit %d", size)
+				}
+				for _, fault := range faults {
+					t.Run(fault.name, func(t *testing.T) {
+						putRetry(t, "retry-"+fault.name+".bin", size, size, fault.statusCode, fault.err)
+					})
+				}
+			})
+
+			t.Run("Chunked", func(t *testing.T) {
+				if testing.Short() {
+					t.Skip("not running with -short")
+				}
+				if opt.ChunkedUpload.Skip {
+					t.Skip("skipping as ChunkedUpload.Skip is set")
+				}
+				setUploadChunkSizer, _ := f.(SetUploadChunkSizer)
+				if setUploadChunkSizer == nil {
+					t.Skipf("%T does not implement SetUploadChunkSizer", f)
+				}
+				setUploadCutoffer, _ := f.(SetUploadCutoffer)
+
+				// Use a chunk size large enough that only chunk
+				// uploads, not API calls, carry enough body to fault
+				chunkSize := max(opt.ChunkedUpload.MinChunkSize, 64*fs.Kibi)
+				if opt.ChunkedUpload.MaxChunkSize > 0 && chunkSize > opt.ChunkedUpload.MaxChunkSize {
+					chunkSize = opt.ChunkedUpload.MaxChunkSize
+				}
+				if opt.ChunkedUpload.CeilChunkSize != nil {
+					chunkSize = opt.ChunkedUpload.CeilChunkSize(chunkSize)
+				}
+
+				oldChunkSize, err := setUploadChunkSizer.SetUploadChunkSize(chunkSize)
+				require.NoError(t, err)
+				var oldUploadCutoff fs.SizeSuffix
+				if setUploadCutoffer != nil {
+					oldUploadCutoff, err = setUploadCutoffer.SetUploadCutoff(chunkSize)
+					require.NoError(t, err)
+				}
+				defer func() {
+					_, err := setUploadChunkSizer.SetUploadChunkSize(oldChunkSize)
+					assert.NoError(t, err)
+					if setUploadCutoffer != nil {
+						_, err := setUploadCutoffer.SetUploadCutoff(oldUploadCutoff)
+						assert.NoError(t, err)
+					}
+				}()
+
+				for _, fault := range faults {
+					t.Run(fault.name, func(t *testing.T) {
+						putRetry(t, "retry-chunked-"+fault.name+".bin", int64(2*chunkSize+1), int64(chunkSize/2), fault.statusCode, fault.err)
+					})
+				}
+			})
 		})
 
 		// TestFsPutShortEOF tests uploading a file where the reader

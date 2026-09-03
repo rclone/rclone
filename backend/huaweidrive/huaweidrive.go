@@ -33,6 +33,8 @@ import (
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/pool"
+	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/oauth2"
 )
@@ -1740,9 +1742,10 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, leaf, direct
 		metadata["autoRename"] = 3
 	}
 
-	// Create multipart form
-	var buf bytes.Buffer
-	writer := multipart.NewWriter(&buf)
+	// Build the multipart body in pooled memory so it can be re-sent on retry
+	rw := pool.NewRW(pool.Global())
+	defer fs.CheckClose(rw, &err)
+	writer := multipart.NewWriter(rw)
 
 	// Add metadata part - use exact format from Huawei docs
 	metadataWriter, err := writer.CreatePart(textproto.MIMEHeader{
@@ -1771,9 +1774,16 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, leaf, direct
 	}
 
 	// Read and write file content
-	_, err = io.Copy(fileWriter, in)
+	counter := readers.NewCountingReader(in)
+	_, err = io.Copy(fileWriter, counter)
 	if err != nil {
 		return fmt.Errorf("failed to copy file content: %w", err)
+	}
+
+	// Check the source supplied the number of bytes it declared
+	// otherwise a truncated file would be stored as a good upload.
+	if int64(counter.BytesRead()) != size {
+		return fmt.Errorf("expected %d bytes in input, but got %d: %w", size, counter.BytesRead(), io.ErrUnexpectedEOF)
 	}
 
 	err = writer.Close()
@@ -1781,15 +1791,17 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, leaf, direct
 		return fmt.Errorf("failed to close multipart writer: %w", err)
 	}
 
-	bodyBytes := buf.Bytes()
+	bodySize := rw.Size()
 	opts := rest.Opts{
 		Method: "POST",
 		Parameters: url.Values{
 			"uploadType": []string{"multipart"},
 			"fields":     []string{"*"},
 		},
-		ContentType: fmt.Sprintf("multipart/related; boundary=%s", writer.Boundary()),
-		RootURL:     o.fs.uploadURL,
+		ContentType:   fmt.Sprintf("multipart/related; boundary=%s", writer.Boundary()),
+		ContentLength: &bodySize,
+		RootURL:       o.fs.uploadURL,
+		Body:          rw,
 	}
 
 	if o.id != "" {
@@ -1803,7 +1815,10 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, leaf, direct
 
 	var info *api.File
 	err = o.fs.pacer.Call(func() (bool, error) {
-		opts.Body = bytes.NewReader(bodyBytes)
+		_, err := rw.Seek(0, io.SeekStart)
+		if err != nil {
+			return false, err
+		}
 		resp, err := srv.CallJSON(ctx, &opts, nil, &info)
 		return shouldRetry(ctx, resp, err)
 	})
@@ -1901,17 +1916,22 @@ func (o *Object) uploadResume(ctx context.Context, in io.Reader, leaf, directory
 	// single upload size according to the Huawei Drive API
 	chunkSize := min(max(int64(o.fs.opt.ChunkSize), 256*1024), 64*1024*1024)
 
-	buf := make([]byte, chunkSize)
 	var offset int64
 
 	for offset < size {
-		n, err := io.ReadFull(in, buf)
-		if err != nil && err != io.ErrUnexpectedEOF && err != io.EOF {
+		// Buffer the chunk in pooled memory so it can be re-sent on retry
+		rw := pool.NewRW(pool.Global())
+		n, err := io.CopyN(rw, in, min(size-offset, chunkSize))
+		if err != nil {
+			// io.EOF here means the source ran out before the declared size
+			if err == io.EOF {
+				err = io.ErrUnexpectedEOF
+			}
+			_ = rw.Close()
 			return fmt.Errorf("failed to read chunk at offset %d: %w", offset, err)
 		}
 
-		chunk := buf[:n]
-		end := offset + int64(n) - 1
+		end := offset + n - 1
 
 		// Upload this chunk using the original client with OAuth authentication
 		chunkOpts := rest.Opts{
@@ -1919,17 +1939,20 @@ func (o *Object) uploadResume(ctx context.Context, in io.Reader, leaf, directory
 			RootURL: location,
 			Path:    "", // Empty path since RootURL contains the full URL
 			ExtraHeaders: map[string]string{
-				"Content-Range":  fmt.Sprintf("bytes %d-%d/%d", offset, end, size),
-				"Content-Length": strconv.Itoa(n),
-				"Content-Type":   mimeType,
+				"Content-Range": fmt.Sprintf("bytes %d-%d/%d", offset, end, size),
+				"Content-Type":  mimeType,
 			},
+			ContentLength: &n,
+			Body:          rw,
 		}
 
 		var info *api.File
 		var chunkResp *http.Response
 		err = o.fs.pacer.Call(func() (bool, error) {
-			chunkOpts.Body = bytes.NewReader(chunk)
-			var err error
+			_, err := rw.Seek(0, io.SeekStart)
+			if err != nil {
+				return false, err
+			}
 			chunkResp, err = srv.CallJSON(ctx, &chunkOpts, nil, &info)
 			// 308 means continue uploading (incomplete)
 			if chunkResp != nil && chunkResp.StatusCode == 308 {
@@ -1943,11 +1966,15 @@ func (o *Object) uploadResume(ctx context.Context, in io.Reader, leaf, directory
 			}
 			return shouldRetry(ctx, chunkResp, err)
 		})
+		closeErr := rw.Close()
 		if err != nil {
 			return fmt.Errorf("failed to upload chunk at offset %d: %w", offset, err)
 		}
+		if closeErr != nil {
+			return closeErr
+		}
 
-		offset += int64(n)
+		offset += n
 
 		// If we got file info back, we're done
 		if info != nil && info.ID != "" {
