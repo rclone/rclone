@@ -720,6 +720,30 @@ func (f *Fs) deleteObject(ctx context.Context, id string) error {
 	return nil
 }
 
+// CleanUp empties the trash
+func (f *Fs) CleanUp(ctx context.Context) error {
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/file-entries/delete",
+	}
+	request := api.EmptyTrashRequest{
+		EntryIDs:   []string{},
+		EmptyTrash: true,
+	}
+	var result api.DeleteResponse
+	err := f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(ctx, &opts, &request, &result)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return fmt.Errorf("failed to empty trash: %w", err)
+	}
+	for name, errstring := range result.Errors {
+		return fmt.Errorf("failed to empty trash item %q: %s", name, errstring)
+	}
+	return nil
+}
+
 // purgeCheck removes the root directory, if check is set then it
 // refuses to do so if it has anything in
 func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
@@ -1677,6 +1701,7 @@ var (
 	_ fs.DirMover        = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
+	_ fs.CleanUpper      = (*Fs)(nil)
 	_ fs.OpenChunkWriter = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.IDer            = (*Object)(nil)

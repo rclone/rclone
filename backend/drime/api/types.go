@@ -115,13 +115,19 @@ func (e Error) Error() string {
 // Check Error satisfies the error interface
 var _ error = (*Error)(nil)
 
-// DeleteRequest is the input to DELETE /file-entries
+// DeleteRequest is the input to POST /file-entries/delete
 type DeleteRequest struct {
 	EntryIDs      []string `json:"entryIds"`
 	DeleteForever bool     `json:"deleteForever"`
 }
 
-// DeleteResponse is the input to DELETE /file-entries
+// EmptyTrashRequest is the input to POST /file-entries/delete when emptying the trash
+type EmptyTrashRequest struct {
+	EntryIDs   []string `json:"entryIds"`
+	EmptyTrash bool     `json:"emptyTrash"`
+}
+
+// DeleteResponse is returned by POST /file-entries/delete
 type DeleteResponse struct {
 	Status  string            `json:"status"`
 	Message string            `json:"message"`
