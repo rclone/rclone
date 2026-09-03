@@ -20,6 +20,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/lib/kv"
+	"golang.org/x/sync/singleflight"
 )
 
 // Register with Fs
@@ -81,6 +82,8 @@ type Fs struct {
 	slowHashes hash.Set // passed to the base and then cached
 	autoHashes hash.Set // calculated in-house and cached
 	keepHashes hash.Set // checksums to keep in cache (slow + auto)
+	// concurrency control
+	hashGroup singleflight.Group // deduplicates concurrent updateHashes calls
 }
 
 var warnExperimental sync.Once
@@ -182,6 +185,11 @@ func NewFs(ctx context.Context, fsname, rpath string, cmap configmap.Mapper) (fs
 		PartialUploads:           true,
 	}
 	f.features = stubFeatures.Fill(ctx, f).Mask(ctx, f.Fs).WrapsFs(f, f.Fs)
+
+	// Set SlowHash based on whether we have fast pass-through hashes.
+	// Must be set AFTER Mask() to avoid being ANDed to false.
+	// When passHashes is empty, computing hashes requires downloading the file.
+	f.features.SlowHash = f.passHashes.Count() == 0
 
 	// Enable ListP always
 	f.features.ListP = f.ListP
