@@ -884,6 +884,57 @@ func (f *Fs) InternalTestObjectLock(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "GOVERNANCE", gotMetadata["object-lock-mode"])
 	})
+
+	t.Run("CopyMetadata", func(t *testing.T) {
+		// Impossible Cloud silently drops cache-control,
+		// content-disposition, content-encoding and content-language
+		// system metadata on retrieval.
+		if f.opt.Provider == "ImpossibleCloud" {
+			t.Skip("Impossible Cloud does not preserve all S3 system metadata")
+		}
+		if f.features.Copy == nil {
+			t.Skip("provider can't copy server side")
+		}
+		contents := gz(t, random.String(100))
+		metadata := fs.Metadata{
+			"cache-control":       "no-cache",
+			"content-disposition": "inline",
+			"content-encoding":    "gzip",
+			"content-language":    "en-US",
+		}
+		// Cloudflare insists on decompressing `Content-Encoding: gzip`
+		// unless `Cache-Control: no-transform` is supplied, as in
+		// InternalTestMetadata above.
+		if f.opt.Provider == "Cloudflare" {
+			metadata["cache-control"] = "no-transform"
+		}
+		item := fstest.NewItem("test-object-lock-copy-src", contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))
+		src := fstests.PutTestContentsMetadata(ctx, t, f, &item, true, contents, true, "text/plain", metadata)
+		defer func() {
+			removeLocked(t, src)
+		}()
+
+		// An Object Lock option makes Copy use the REPLACE metadata
+		// directive, which discards whatever is not supplied with the copy.
+		f.opt.ObjectLockMode = "GOVERNANCE"
+		f.opt.ObjectLockRetainUntilDate = retainUntilDate.Format(time.RFC3339)
+		defer func() {
+			f.opt.ObjectLockMode = ""
+			f.opt.ObjectLockRetainUntilDate = ""
+		}()
+
+		dst, err := f.Copy(ctx, src, "test-object-lock-copy-dst")
+		require.NoError(t, err)
+		defer func() {
+			removeLocked(t, dst)
+		}()
+
+		gotMetadata, err := dst.(*Object).Metadata(ctx)
+		require.NoError(t, err)
+		for _, k := range []string{"cache-control", "content-disposition", "content-encoding", "content-language"} {
+			assert.Equal(t, metadata[k], gotMetadata[k], "%s not preserved by copy", k)
+		}
+	})
 }
 
 func (f *Fs) InternalTest(t *testing.T) {
