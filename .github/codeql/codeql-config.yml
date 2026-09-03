@@ -1,0 +1,28 @@
+name: "Rclone CodeQL Config"
+
+query-filters:
+  - exclude:
+      id: go/clear-text-logging
+  - exclude:
+      id: go/insecure-hostkeycallback
+  - exclude:
+      id: go/log-injection
+  - exclude:
+      id: go/path-injection
+  - exclude:
+      id: go/reflected-xss
+  - exclude: 
+      id: go/request-forgery
+  - exclude:      
+      id: go/unvalidated-url-redirection
+  - exclude:  
+      id: go/xml/xpath-injection
+  #Uncomment to suppress more potential warnings
+  #- exclude: 
+  #    tags contain: 
+  #      - security
+        #- exclude:
+        #problem.severity:
+        #- warning
+        #- recommendation
+
