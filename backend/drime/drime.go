@@ -47,14 +47,15 @@ import (
 )
 
 const (
-	minSleep            = 10 * time.Millisecond
-	maxSleep            = 20 * time.Second
-	decayConstant       = 1 // bigger for slower decay, exponential
-	baseURL             = "https://app.drime.cloud/"
-	rootURL             = baseURL + "api/v1"
-	maxUploadParts      = 10000 // maximum allowed number of parts in a multi-part upload
-	minChunkSize        = fs.SizeSuffix(1024 * 1024 * 5)
-	defaultUploadCutoff = fs.SizeSuffix(5 * 1024 * 1024) // as per https://docs.drime.cloud/uploads-guide
+	minSleep             = 10 * time.Millisecond
+	maxSleep             = 20 * time.Second
+	decayConstant        = 1 // bigger for slower decay, exponential
+	baseURL              = "https://app.drime.cloud/"
+	rootURL              = baseURL + "api/v1"
+	maxUploadParts       = 10000 // maximum allowed number of parts in a multi-part upload
+	minChunkSize         = fs.SizeSuffix(1024 * 1024 * 5)
+	defaultUploadCutoff  = fs.SizeSuffix(5 * 1024 * 1024) // as per https://docs.drime.cloud/uploads-guide
+	presignedUploadLimit = fs.SizeSuffix(5 * 1024 * 1024)
 )
 
 // Register with Fs
@@ -98,6 +99,14 @@ Leave this blank normally unless you wish to specify a Workspace ID.
 		}, {
 			Name:     "hard_delete",
 			Help:     "Delete files permanently rather than putting them into the trash.",
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name: "use_presigned_uploads",
+			Help: `Use presigned URLs for files smaller than 5 MiB.
+
+This adds an extra API request for each eligible file. Files larger than
+upload_cutoff and files with unknown size use multipart uploads instead.`,
 			Default:  false,
 			Advanced: true,
 		}, {
@@ -178,15 +187,16 @@ base32768isOK = true // make sure maxFileLength for 2 byte unicode chars is the 
 
 // Options defines the configuration for this backend
 type Options struct {
-	AccessToken       string               `config:"access_token"`
-	RootFolderID      string               `config:"root_folder_id"`
-	WorkspaceID       string               `config:"workspace_id"`
-	UploadConcurrency int                  `config:"upload_concurrency"`
-	ChunkSize         fs.SizeSuffix        `config:"chunk_size"`
-	HardDelete        bool                 `config:"hard_delete"`
-	UploadCutoff      fs.SizeSuffix        `config:"upload_cutoff"`
-	ListChunk         int                  `config:"list_chunk"`
-	Enc               encoder.MultiEncoder `config:"encoding"`
+	AccessToken         string               `config:"access_token"`
+	RootFolderID        string               `config:"root_folder_id"`
+	WorkspaceID         string               `config:"workspace_id"`
+	UploadConcurrency   int                  `config:"upload_concurrency"`
+	ChunkSize           fs.SizeSuffix        `config:"chunk_size"`
+	HardDelete          bool                 `config:"hard_delete"`
+	UsePresignedUploads bool                 `config:"use_presigned_uploads"`
+	UploadCutoff        fs.SizeSuffix        `config:"upload_cutoff"`
+	ListChunk           int                  `config:"list_chunk"`
+	Enc                 encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote drime
@@ -1397,7 +1407,7 @@ func (s *drimeChunkWriter) Close(ctx context.Context) error {
 	}
 
 	// s3/entries request to create drime object from multipart upload
-	req := api.MultiPartEntriesRequest{
+	req := api.S3EntriesRequest{
 		ClientMime:      s.mime,
 		ClientName:      s.leaf,
 		Filename:        s.uploadName,
@@ -1405,7 +1415,7 @@ func (s *drimeChunkWriter) Close(ctx context.Context) error {
 		ClientExtension: s.extension,
 		ParentID:        s.parentID,
 		RelativePath:    s.relativePath,
-		WorkspaceID:     s.f.opt.WorkspaceID,
+		WorkspaceID:     s.f.workspaceID(),
 	}
 
 	entriesOpts := rest.Opts{
@@ -1413,7 +1423,7 @@ func (s *drimeChunkWriter) Close(ctx context.Context) error {
 		Path:   "/s3/entries",
 	}
 
-	var res api.MultiPartEntriesResponse
+	var res api.S3EntriesResponse
 	err = s.f.pacer.Call(func() (bool, error) {
 		res, err := s.f.srv.CallJSON(ctx, &entriesOpts, req, &res)
 		return shouldRetry(ctx, res, err)
@@ -1565,6 +1575,94 @@ func (o *Object) Storable() bool {
 	return true
 }
 
+// shouldUsePresignedUpload reports whether size should use a presigned URL.
+func (f *Fs) shouldUsePresignedUpload(size int64) bool {
+	return f.opt.UsePresignedUploads &&
+		size >= 0 &&
+		size <= int64(f.opt.UploadCutoff) &&
+		size < int64(presignedUploadLimit)
+}
+
+// workspaceID returns the configured workspace or the personal workspace.
+func (f *Fs) workspaceID() json.Number {
+	if f.opt.WorkspaceID == "" {
+		return "0"
+	}
+	return json.Number(f.opt.WorkspaceID)
+}
+
+// uploadPresigned uploads an object through a presigned URL.
+func (o *Object) uploadPresigned(ctx context.Context, in io.Reader, src fs.ObjectInfo, leaf, directoryID string) error {
+	mimeType := fs.MimeType(ctx, src)
+	encodedLeaf := o.fs.opt.Enc.FromStandardName(leaf)
+	presignRequest := api.SimpleUploadPresignRequest{
+		Filename:    encodedLeaf,
+		Mime:        mimeType,
+		Size:        src.Size(),
+		Extension:   strings.TrimPrefix(path.Ext(encodedLeaf), "."),
+		WorkspaceID: o.fs.workspaceID(),
+		ParentID:    json.Number(directoryID),
+	}
+	presignOpts := rest.Opts{
+		Method: "POST",
+		Path:   "/s3/simple/presign",
+	}
+	var presignResponse api.SimpleUploadPresignResponse
+	err := o.fs.pacer.Call(func() (bool, error) {
+		resp, err := o.fs.srv.CallJSON(ctx, &presignOpts, &presignRequest, &presignResponse)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return fmt.Errorf("failed to get presigned upload URL: %w", err)
+	}
+	if presignResponse.URL == "" || presignResponse.Key == "" {
+		return errors.New("failed to get presigned upload URL: response has no URL or key")
+	}
+
+	size := src.Size()
+	uploadOpts := rest.Opts{
+		Method:        "PUT",
+		RootURL:       presignResponse.URL,
+		Body:          in,
+		ContentType:   mimeType,
+		ContentLength: &size,
+		NoResponse:    true,
+		ExtraHeaders: map[string]string{
+			"Authorization": "",
+		},
+	}
+	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
+		resp, err := o.fs.srv.Call(ctx, &uploadOpts)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return fmt.Errorf("failed to upload with presigned URL: %w", err)
+	}
+
+	entryRequest := api.S3EntriesRequest{
+		ClientMime:      mimeType,
+		ClientName:      encodedLeaf,
+		Filename:        path.Base(presignResponse.Key),
+		Size:            size,
+		ClientExtension: strings.TrimPrefix(path.Ext(encodedLeaf), "."),
+		ParentID:        json.Number(directoryID),
+		WorkspaceID:     o.fs.workspaceID(),
+	}
+	entryOpts := rest.Opts{
+		Method: "POST",
+		Path:   "/s3/entries",
+	}
+	var entryResponse api.S3EntriesResponse
+	err = o.fs.pacer.Call(func() (bool, error) {
+		resp, err := o.fs.srv.CallJSON(ctx, &entryOpts, &entryRequest, &entryResponse)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create entry after presigned upload: %w", err)
+	}
+	return o.setMetaData(&entryResponse.FileEntry)
+}
+
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	if o.id == "" {
@@ -1641,6 +1739,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		s := chunkWriter.(*drimeChunkWriter)
 
 		return o.setMetaData(&s.fileEntry)
+	}
+	if o.fs.shouldUsePresignedUpload(size) {
+		return o.uploadPresigned(ctx, in, src, leaf, directoryID)
 	}
 
 	// Do the upload
