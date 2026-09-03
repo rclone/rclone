@@ -16,7 +16,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
@@ -1174,51 +1173,9 @@ func rcGetFile(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 				}
 			}
 
-			readErr := func() (err error) {
-				tr := accounting.Stats(ctx).NewTransfer(o, nil)
-				defer func() {
-					tr.Done(ctx, err)
-				}()
-
-				opt := fs.RangeOption{Start: offset, End: -1}
-				if opt.Start < 0 && size >= 0 {
-					opt.Start += size
-				}
-				if count >= 0 {
-					if opt.Start >= 0 {
-						opt.End = opt.Start + count - 1
-					} else {
-						opt.End = -1
-					}
-				}
-				var options []fs.OpenOption
-				if opt.Start > 0 || opt.End >= 0 || opt.Start < 0 {
-					options = append(options, &opt)
-				}
-				for _, option := range ci.DownloadHeaders {
-					options = append(options, option)
-				}
-
-				var in io.ReadCloser
-				in, openErr := Open(ctx, o, options...)
-				if openErr != nil {
-					err = fs.CountError(ctx, openErr)
-					return fmt.Errorf("failed to open file: %w", openErr)
-				}
-				defer func() {
-					_ = in.Close()
-				}()
-
-				if count >= 0 {
-					in = &readCloser{Reader: &io.LimitedReader{R: in, N: count}, Closer: in}
-				}
-				in = tr.Account(ctx, in).WithBuffer()
-
-				_, err = io.Copy(w, in)
+			err = catObject(ctx, o, w, offset, count)
+			if err != nil {
 				return err
-			}()
-			if readErr != nil {
-				return readErr
 			}
 		}
 		return nil
