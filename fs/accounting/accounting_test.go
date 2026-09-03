@@ -321,6 +321,8 @@ func TestAccountMaxTransferWriteTo(t *testing.T) {
 	n, err := acc.WriteTo(&b)
 	assert.Equal(t, int64(15), n)
 	assert.Equal(t, ErrorMaxTransferLimitReachedFatal, err)
+	// Nothing past the limit must reach the writer
+	assert.Equal(t, 15, b.Len())
 }
 
 func TestAccountReadCtx(t *testing.T) {

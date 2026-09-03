@@ -51,6 +51,7 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/lib/batcher"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
@@ -2079,11 +2080,6 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 
 	// write chunks
 	in := readers.NewCountingReader(in0)
-	bufSize := chunkSize
-	if size >= 0 && size < bufSize {
-		bufSize = size
-	}
-	buf := make([]byte, int(bufSize))
 	cursor := files.UploadSessionCursor{
 		SessionId: res.SessionId,
 		Offset:    0,
@@ -2103,14 +2099,21 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 			fs.Debugf(o, "Uploading chunk %d/%d", currentChunk, chunks)
 		}
 
-		chunk := readers.NewRepeatableLimitReaderBuffer(in, buf, chunkSize)
+		// Buffer the chunk in memory from the global pool for retries
+		rw := multipart.NewRW()
+		var n int64
+		n, err = io.CopyN(rw, in, chunkSize)
+		if err != nil && err != io.EOF {
+			_ = rw.Close()
+			return nil, err
+		}
 		skip := int64(0)
 		err = o.fs.pacer.Call(func() (bool, error) {
 			// seek to the start in case this is a retry
-			if _, err = chunk.Seek(skip, io.SeekStart); err != nil {
+			if _, err = rw.Seek(skip, io.SeekStart); err != nil {
 				return false, err
 			}
-			err = o.fs.srv.UploadSessionAppendV2Context(ctx, &appendArg, chunk)
+			err = o.fs.srv.UploadSessionAppendV2Context(ctx, &appendArg, rw)
 			// after session is started, we retry everything
 			if err != nil {
 				// Check for incorrect offset error and retry with new offset
@@ -2122,10 +2125,10 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 						what := fmt.Sprintf("incorrect offset error received: sent %d, need %d, skip %d", cursor.Offset, correctOffset, skip)
 						if skip < 0 {
 							return false, fmt.Errorf("can't seek backwards to correct offset: %s", what)
-						} else if skip == chunkSize {
+						} else if skip == n {
 							fs.Debugf(o, "%s: chunk received OK - continuing", what)
 							return false, nil
-						} else if skip > chunkSize {
+						} else if skip > n {
 							// This error should never happen
 							return false, fmt.Errorf("can't seek forwards by more than a chunk to correct offset: %s", what)
 						}
@@ -2142,8 +2145,12 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 			}
 			return err != nil, err
 		})
+		closeErr := rw.Close()
 		if err != nil {
 			return nil, err
+		}
+		if closeErr != nil {
+			return nil, closeErr
 		}
 		if size >= 0 {
 			// Check for sources which truncate early

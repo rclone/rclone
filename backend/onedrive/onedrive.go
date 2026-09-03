@@ -37,9 +37,9 @@ import (
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
-	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 )
 
@@ -573,7 +573,7 @@ func chooseDrive(ctx context.Context, name string, m configmap.Mapper, srv *rest
 					drives.Drives = append(drives.Drives, meDrive)
 				}
 			} else if drivesErr != nil {
-				return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available drives: /me/drives: %v; /me/drive: %v", drivesErr, meDriveErr))
+				return fs.ConfigError("driveid", fmt.Sprintf("Failed to query available drives: /me/drives: %v; /me/drive: %v\nEnter the drive ID manually instead", drivesErr, meDriveErr))
 			}
 		} else if drivesErr != nil {
 			return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available drives: %v", drivesErr))
@@ -2748,11 +2748,25 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 	position := int64(0)
 	for remaining > 0 {
 		n := min(remaining, int64(o.fs.opt.ChunkSize))
-		seg := readers.NewRepeatableReader(io.LimitReader(in, n))
+		// Buffer the chunk in memory from the global pool so it can be
+		// re-sent (or partly re-sent after a 416) on retry
+		rw := multipart.NewRW()
+		_, err = io.CopyN(rw, in, n)
+		if err != nil {
+			_ = rw.Close()
+			if err == io.EOF {
+				err = fmt.Errorf("expected %d bytes in input, but got %d: %w", size, position, io.ErrUnexpectedEOF)
+			}
+			return nil, err
+		}
 		fs.Debugf(o, "Uploading segment %d/%d size %d", position, size, n)
-		info, err = o.uploadFragment(ctx, uploadURL, position, size, seg, n, options...)
+		info, err = o.uploadFragment(ctx, uploadURL, position, size, rw, n, options...)
+		closeErr := rw.Close()
 		if err != nil {
 			return nil, err
+		}
+		if closeErr != nil {
+			return nil, closeErr
 		}
 		remaining -= n
 		position += n
