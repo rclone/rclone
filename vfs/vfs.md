@@ -30,6 +30,12 @@ the directory cache expires if the backend configured does not support
 polling for changes. If the backend supports polling, changes will be
 picked up within the polling interval.
 
+Changes that this rclone made itself are recognised as such and don't
+invalidate the directory cache, as it was updated when the change was
+made. A side effect of this is that a change made elsewhere to a
+directory this rclone has just written to may not be noticed until the
+directory cache expires.
+
 You can send a `SIGHUP` signal to rclone for it to flush all
 directory caches, regardless of how old they are.  Assuming only one
 rclone instance is running, you can reset the cache like this:

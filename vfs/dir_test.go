@@ -141,6 +141,65 @@ func TestDirForgetPath(t *testing.T) {
 	assert.Equal(t, 0, len(dir.items))
 }
 
+// Check that change notifications describing changes the VFS made
+// itself don't invalidate the parent directory listing
+func TestDirChangeNotify(t *testing.T) {
+	_, vfs, dir, file1 := dirCreate(t)
+
+	root, err := vfs.Root()
+	require.NoError(t, err)
+
+	// Read the directories in so they are in the cache
+	readDirs := func() {
+		_, err := vfs.Stat(file1.Path)
+		require.NoError(t, err)
+		require.False(t, root.read.IsZero())
+		require.False(t, dir.read.IsZero())
+	}
+
+	// Forget the changes the VFS has made
+	forgetChanges := func() {
+		for _, d := range []*Dir{root, dir} {
+			d.mu.Lock()
+			d.changed = time.Time{}
+			d.mu.Unlock()
+		}
+	}
+
+	// A file changed by someone else invalidates the directory it is in
+	readDirs()
+	forgetChanges()
+	root.changeNotify("dir/file2", fs.EntryObject)
+	assert.False(t, root.read.IsZero())
+	assert.True(t, dir.read.IsZero())
+
+	// A directory changed by someone else invalidates the directory and its parent
+	readDirs()
+	forgetChanges()
+	root.changeNotify("dir", fs.EntryDirectory)
+	assert.True(t, root.read.IsZero())
+	assert.True(t, dir.read.IsZero())
+
+	// Write a file into dir with the VFS
+	fd, err := vfs.Create("dir/file2")
+	require.NoError(t, err)
+	require.NoError(t, fd.Close())
+
+	// A notification for that file doesn't invalidate dir
+	readDirs()
+	root.changeNotify("dir/file2", fs.EntryObject)
+	assert.False(t, root.read.IsZero())
+	assert.False(t, dir.read.IsZero())
+
+	// Nor does a notification for dir, which is how some backends
+	// report a change to the contents of a directory - dir itself is
+	// still invalidated as it may have changed in other ways
+	readDirs()
+	root.changeNotify("dir", fs.EntryDirectory)
+	assert.False(t, root.read.IsZero())
+	assert.True(t, dir.read.IsZero())
+}
+
 func TestDirWalk(t *testing.T) {
 	r, vfs, _, file1 := dirCreate(t)
 

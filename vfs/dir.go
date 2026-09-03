@@ -35,6 +35,7 @@ type Dir struct {
 	path    string
 	entry   fs.Directory
 	read    time.Time         // time directory entry last read
+	changed time.Time         // time the VFS last changed the contents of this directory
 	items   map[string]Node   // directory entries - can be empty but not nil
 	virtual map[string]vState // virtual directory entries - may be nil
 
@@ -273,16 +274,50 @@ func (d *Dir) invalidateDir(absPath string) {
 	}
 }
 
+// changedRecently returns true if this VFS changed the contents of the
+// directory at absPath recently enough that a change notification arriving
+// now is likely to be describing that change.
+//
+// A notification can take up to the poll interval to arrive, so allow a
+// generous margin on top of that.
+func (d *Dir) changedRecently(absPath string) bool {
+	dir, ok := d.vfs.root.cachedNode(absPath).(*Dir)
+	if !ok {
+		return false
+	}
+	window := max(2*time.Duration(d.vfs.Opt.PollInterval), time.Minute)
+	dir.mu.RLock()
+	defer dir.mu.RUnlock()
+	return !dir.changed.IsZero() && time.Since(dir.changed) < window
+}
+
 // changeNotify invalidates the directory cache for the relativePath
 // passed in.
 //
 // if entryType is a directory it invalidates the parent of the directory too.
+//
+// Notifications describing changes this VFS made itself are ignored where
+// they can be identified, as the directory cache was updated when the
+// change was made.
 func (d *Dir) changeNotify(relativePath string, entryType fs.EntryType) {
 	defer log.Trace(d.path, "relativePath=%q, type=%v", relativePath, entryType)("")
 	d.mu.RLock()
 	absPath := path.Join(d.path, relativePath)
 	d.mu.RUnlock()
-	d.invalidateDir(vfscommon.FindParent(absPath))
+	parent := vfscommon.FindParent(absPath)
+	// The parent listing only changes if absPath itself was created,
+	// removed or renamed. A notification for a directory may instead be
+	// reporting a change to that directory's contents, in which case the
+	// parent listing is still correct.
+	ours := d.changedRecently(parent)
+	if !ours && entryType == fs.EntryDirectory {
+		ours = d.changedRecently(absPath)
+	}
+	if ours {
+		fs.Debugf(parent, "Not invalidating directory cache as this change was made by the VFS")
+	} else {
+		d.invalidateDir(parent)
+	}
 	if entryType == fs.EntryDirectory {
 		d.invalidateDir(absPath)
 	}
@@ -436,6 +471,7 @@ func (d *Dir) addObject(node Node) {
 	d.mu.Lock()
 	leaf := node.Name()
 	d.items[leaf] = node
+	d.changed = time.Now()
 	if d.virtual == nil {
 		d.virtual = make(map[string]vState)
 	}
@@ -496,6 +532,7 @@ func (d *Dir) AddVirtual(leaf string, size int64, isDir bool) {
 func (d *Dir) delObject(leaf string) {
 	d.mu.Lock()
 	delete(d.items, leaf)
+	d.changed = time.Now()
 	if d.virtual == nil {
 		d.virtual = make(map[string]vState)
 	}
