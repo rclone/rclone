@@ -130,6 +130,56 @@ func (f *Fs) InternalTestMetadata(t *testing.T) {
 	})
 }
 
+// InternalTestSetModTimeMetadata checks SetModTime doesn't wipe the system
+// metadata - see https://github.com/rclone/rclone/issues/5243
+func (f *Fs) InternalTestSetModTimeMetadata(t *testing.T) {
+	// SetModTime is a server side copy, so providers without Copy
+	// cannot set the modification time at all.
+	if f.features.Copy == nil {
+		t.Skip("provider can't set mod time without server side copy")
+	}
+	// Impossible Cloud silently drops cache-control,
+	// content-disposition, content-encoding and content-language
+	// system metadata on retrieval.
+	if f.opt.Provider == "ImpossibleCloud" {
+		t.Skip("Impossible Cloud does not preserve all S3 system metadata")
+	}
+	ctx := context.Background()
+	contents := gz(t, random.String(1000))
+
+	item := fstest.NewItem("test-setmodtime-metadata", contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))
+	metadata := fs.Metadata{
+		"cache-control":       "no-cache",
+		"content-disposition": "inline",
+		"content-encoding":    "gzip",
+		"content-language":    "en-US",
+		"content-type":        "text/plain",
+	}
+	// Cloudflare insists on decompressing `Content-Encoding: gzip` unless
+	// `Cache-Control: no-transform` is supplied - see InternalTestMetadata.
+	if f.opt.Provider == "Cloudflare" {
+		metadata["cache-control"] = "no-transform"
+	}
+	obj := fstests.PutTestContentsMetadata(ctx, t, f, &item, true, contents, true, "text/plain", metadata)
+	defer func() {
+		assert.NoError(t, obj.Remove(ctx))
+	}()
+
+	newModTime := fstest.Time("2009-05-06T04:05:06.499999999Z")
+	require.NoError(t, obj.SetModTime(ctx, newModTime))
+
+	// Read back from the remote rather than trusting the cached object
+	checkObj, err := f.NewObject(ctx, item.Path)
+	require.NoError(t, err)
+	assert.True(t, newModTime.Equal(checkObj.ModTime(ctx)), fmt.Sprintf("want %v got %v", newModTime, checkObj.ModTime(ctx)))
+
+	gotMetadata, err := fs.GetMetadata(ctx, checkObj)
+	require.NoError(t, err)
+	for k, v := range metadata {
+		assert.Equal(t, v, gotMetadata[k], k)
+	}
+}
+
 func (f *Fs) InternalTestNoHead(t *testing.T) {
 	ctx := context.Background()
 	// Set NoHead for this test
@@ -838,6 +888,7 @@ func (f *Fs) InternalTestObjectLock(t *testing.T) {
 
 func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("Metadata", f.InternalTestMetadata)
+	t.Run("SetModTimeMetadata", f.InternalTestSetModTimeMetadata)
 	t.Run("NoHead", f.InternalTestNoHead)
 	t.Run("NoHeadObjectCopy", f.InternalTestNoHeadObjectCopy)
 	t.Run("HasChildren", f.InternalTestHasChildren)
