@@ -2029,6 +2029,15 @@ Scroll down and click "+ Add users". Add yourself as a test user and press save.
 9. Go to "Audience" and then click "PUBLISH APP" button and confirm.
    Add yourself as a test user if you haven't already.
 
+    (If the "PUBLISH APP" button is greyed out, Google now requires a
+    homepage URL and a privacy policy URL before publishing, even for a
+    personal single-user app. Go to "Branding" in the left panel, fill in
+    "Application home page" and "Application privacy policy link" - a free
+    GitHub Pages site is fine for these if you don't have a domain of your
+    own - then "Authorized domains" with the domain you used, and click
+    Save. Return to "Audience" and the "PUBLISH APP" button should now be
+    available.)
+
 10. Provide the noted client ID and client secret to rclone.
 
 11. Run the web-based authorization flow from within `rclone config`, by answering
