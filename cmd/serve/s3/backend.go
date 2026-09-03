@@ -111,7 +111,7 @@ func (b *s3Backend) ListBucket(ctx context.Context, bucket string, prefix *gofak
 	response := gofakes3.NewObjectList()
 	path, remaining := prefixParser(prefix)
 
-	err = b.entryListR(_vfs, bucket, path, remaining, prefix.HasDelimiter, response)
+	err = b.listPage(_vfs, bucket, path, remaining, prefix.HasDelimiter, page, response)
 	if err == gofakes3.ErrNoSuchKey {
 		// AWS just returns an empty list
 		response = gofakes3.NewObjectList()
@@ -119,7 +119,7 @@ func (b *s3Backend) ListBucket(ctx context.Context, bucket string, prefix *gofak
 		return nil, err
 	}
 
-	return b.pager(response, page)
+	return response, nil
 }
 
 // formatHeaderTime makes an timestamp which is the same as that used by AWS.
