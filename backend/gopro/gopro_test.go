@@ -490,6 +490,24 @@ func TestObjectSizeFastPaths(t *testing.T) {
 	})
 }
 
+func TestMediaTypes(t *testing.T) {
+	withEdits := (&Fs{opt: Options{IncludeEdits: true}}).mediaTypes()
+	assert.Contains(t, withEdits, "MultiClipEdit")
+	assert.Contains(t, withEdits, "Edit")
+	assert.Contains(t, withEdits, includedTypes)
+
+	withoutEdits := (&Fs{opt: Options{IncludeEdits: false}}).mediaTypes()
+	assert.Equal(t, includedTypes, withoutEdits)
+	assert.NotContains(t, withoutEdits, "MultiClipEdit")
+}
+
+func TestIsEditType(t *testing.T) {
+	assert.True(t, isEditType("MultiClipEdit"))
+	assert.True(t, isEditType("Edit"))
+	assert.False(t, isEditType("Video"))
+	assert.False(t, isEditType(""))
+}
+
 func TestShouldVerifySize(t *testing.T) {
 	assert.False(t, shouldVerifySize(verifySizeOff, false))
 	assert.False(t, shouldVerifySize(verifySizeOff, true))

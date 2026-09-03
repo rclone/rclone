@@ -113,6 +113,7 @@ func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error)
 const (
 	mediaAcceptHeader       = "application/vnd.gopro.jk.media+json; version=2.0.0"
 	userUploadsAcceptHeader = "application/vnd.gopro.jk.user-uploads+json; version=2.0.0"
+	collectionsAcceptHeader = "application/vnd.gopro.jk.collections+json; version=2.0.0"
 
 	// mediaFields is the set of /media/search fields this backend reads.
 	mediaFields = "id,filename,file_extension,type,captured_at,created_at,file_size,width,height,camera_model,item_count,moments_count,ready_to_view,token,content_title,resolution,reprocessed_at"
@@ -236,14 +237,14 @@ to the first file offered.`,
 		}, {
 			Name:     "include_edits",
 			Advanced: true,
-			Default:  false,
+			Default:  true,
 			Help: `Include Highlights and user-made Edits in listings.
 
-Off by default: these "MultiClipEdit"/"Edit" media are composed from
-other clips rather than being their own camera-original recording, so
-they're often a redundant rendering of content the library already
-has natively, and they behave differently enough to be worth opting
-into deliberately rather than getting by surprise:
+On by default, matching what GoPro's own web/app library shows. These
+"MultiClipEdit"/"Edit" media are composed from other clips rather than
+being their own camera-original recording, and behave differently
+enough that it's worth knowing what this backend already does about
+it before turning this off:
 
 - file_size is always null for these - this backend reports their
   size as unknown (like a chaptered video or burst photo set) rather
@@ -253,7 +254,38 @@ into deliberately rather than getting by surprise:
   (typically "json"), not of what's actually downloaded - GoPro
   serves the rendered video (the "baked_source" rendition) for these,
   not the EDL, and this backend's Content-Type follows the filename's
-  own extension (usually ".mp4") to match what's actually served.`,
+  own extension (usually ".mp4") to match what's actually served.
+
+Turn this off if you only want camera-original recordings, or to skip
+what's often a redundant rendering of content the library already has
+natively.`,
+		}, {
+			Name:     "link_allow_download",
+			Advanced: true,
+			Default:  false,
+			Help: `Allow downloading the original file from a public share link.
+
+Off by default. Confirmed live against GoPro's own web UI: this is
+its "Allow Download" toggle when creating a share link, and enabling
+it does two things at once, not just one - per that UI's own warning
+text, if the shared file has embedded GPS data, that gets shared with
+recipients too, not just download access. GoPro's API has one field
+for both; there is no way to control them separately.
+
+Turn this on if you want recipients to be able to download the
+original file, and are fine with any embedded location data going
+out with it.`,
+		}, {
+			Name:     "link_title",
+			Advanced: true,
+			Help: `Title for a public share link.
+
+Defaults to the file's own name (its --gopro-always-add-id {id}
+suffix stripped, since that's never meant to be shown outside this
+backend) if left blank - rclone's own "rclone link" command has no
+way to pass a one-off title per call, so this is the only way to set
+one, and it applies to every link this backend creates for the
+remote's lifetime, not just the next one.`,
 		}, {
 			Name:     "always_add_id",
 			Advanced: true,
@@ -364,6 +396,8 @@ type Options struct {
 	AccessToken       string               `config:"access_token"`
 	DownloadVariation string               `config:"download_variation"`
 	IncludeEdits      bool                 `config:"include_edits"`
+	LinkAllowDownload bool                 `config:"link_allow_download"`
+	LinkTitle         string               `config:"link_title"`
 	AlwaysAddID       bool                 `config:"always_add_id"`
 	VerifySize        string               `config:"verify_size"`
 	ReadSize          bool                 `config:"read_size"`
@@ -561,6 +595,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.features = (&fs.Features{
 		ReadMimeType: true,
 		Move:         f.Move,
+		PublicLink:   f.PublicLink,
 	}).Fill(ctx, f)
 
 	// Check to see if the root is actually a file
@@ -701,6 +736,50 @@ func (f *Fs) updateMedium(ctx context.Context, id string, upd api.MediumUpdate) 
 	})
 	if err != nil {
 		return fmt.Errorf("couldn't update medium %q: %w", id, err)
+	}
+	return nil
+}
+
+// createCollection creates a public share link (a "collection" in GoPro's
+// API) via POST /collections and returns its id - see PublicLink.
+func (f *Fs) createCollection(ctx context.Context, title string, shareGPS bool) (string, error) {
+	opts := rest.Opts{
+		Method:       "POST",
+		Path:         "/collections",
+		ExtraHeaders: map[string]string{"Accept": collectionsAcceptHeader},
+	}
+	body := api.CollectionCreate{Title: title, Cloneable: shareGPS}
+	var result api.Collection
+	var resp *http.Response
+	var err error
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallJSON(ctx, &opts, &body, &result)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return "", fmt.Errorf("couldn't create share link: %w", err)
+	}
+	return result.ID, nil
+}
+
+// addToCollection adds a medium to a share via PUT /collections/{id} - see
+// PublicLink.
+func (f *Fs) addToCollection(ctx context.Context, collectionID, mediumID string) error {
+	opts := rest.Opts{
+		Method:       "PUT",
+		Path:         "/collections/" + collectionID,
+		ExtraHeaders: map[string]string{"Accept": collectionsAcceptHeader},
+		NoResponse:   true,
+	}
+	body := api.CollectionMediaUpdate{MediaIDs: []string{mediumID}}
+	var resp *http.Response
+	var err error
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallJSON(ctx, &opts, &body, nil)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return fmt.Errorf("couldn't add medium to share link: %w", err)
 	}
 	return nil
 }
@@ -1583,6 +1662,51 @@ func destCapturedAt(pattern *dirPattern, match []string, modTime time.Time) (t t
 		modTime.Hour(), modTime.Minute(), modTime.Second(), modTime.Nanosecond(),
 		modTime.Location())
 	return t, !t.Equal(modTime)
+}
+
+// PublicLink creates a public share (a "collection" holding just this one
+// medium, in GoPro's API) and returns its URL - confirmed live, this needs
+// no authentication to view: https://gopro.com/v/{collection_id}.
+// [--gopro-link-title](#gopro-link-title) sets the title explicitly;
+// otherwise it defaults to the file's own name, with this backend's own
+// {id} disambiguation suffix stripped first - it's never meant to be part
+// of a name shown to someone outside this backend.
+//
+// expire is not supported: GoPro's collections API exposes no expiry field,
+// so links don't expire - this interface documents that as acceptable for
+// a backend that can't support it, same as the rest of this comment for
+// unlink. unlink is not supported either: a medium can be in any number of
+// independent shares, and GoPro's API gives no way to look up which
+// collections reference a given medium, so there's no reliable single
+// existing link to remove - silently ignored rather than deleting
+// something that might be the wrong one.
+//
+// [--gopro-link-allow-download](#gopro-link-allow-download) controls
+// whether the share also allows downloading the original file and (GoPro
+// ties the two together) sharing any GPS data embedded in it - off by
+// default.
+func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (string, error) {
+	o, err := f.NewObject(ctx, remote)
+	if err != nil {
+		return "", err
+	}
+	obj, ok := o.(*Object)
+	if !ok {
+		return "", fs.ErrorObjectNotFound
+	}
+	title := f.opt.LinkTitle
+	if title == "" {
+		_, leaf := path.Split(remote)
+		title = stripSuffixID(leaf)
+	}
+	collectionID, err := f.createCollection(ctx, title, f.opt.LinkAllowDownload)
+	if err != nil {
+		return "", err
+	}
+	if err := f.addToCollection(ctx, collectionID, obj.id); err != nil {
+		return "", err
+	}
+	return "https://gopro.com/v/" + collectionID, nil
 }
 
 // MimeType of an Object if known, "" otherwise

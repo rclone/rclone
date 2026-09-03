@@ -65,6 +65,33 @@ type SearchResponse struct {
 	Pages PageInfo `json:"_pages"`
 }
 
+// CollectionCreate is the request body for POST /collections, which creates
+// a public share link (GoPro calls it a "collection" internally, though it
+// always holds exactly one medium as used by this backend). Cloneable is
+// GoPro's own field name for what its web UI labels "Allow Download" -
+// confirmed live via that UI, enabling it also shares any GPS data embedded
+// in the file, not just download access - there's one field for both.
+type CollectionCreate struct {
+	Title     string `json:"title,omitempty"`
+	Cloneable bool   `json:"cloneable"`
+}
+
+// Collection is returned from POST /collections and PUT /collections/{id} -
+// id is a UUID (a distinct id space from a medium's 24-hex-character id),
+// and is also the path segment of the collection's public share URL,
+// https://gopro.com/v/{id} - confirmed live, readable with no authentication.
+type Collection struct {
+	ID        string `json:"id"`
+	Title     string `json:"title"`
+	Cloneable bool   `json:"cloneable"`
+}
+
+// CollectionMediaUpdate is the request body for PUT /collections/{id},
+// which adds the given media to the share.
+type CollectionMediaUpdate struct {
+	MediaIDs []string `json:"media_ids"`
+}
+
 // File is a downloadable rendition of a medium, as returned in
 // _embedded.files or _embedded.variations from GET /media/{id}/download.
 //

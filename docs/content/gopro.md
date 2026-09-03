@@ -177,8 +177,9 @@ file.
 
 GoPro-generated Highlight reels and user-made Edits (`MultiClipEdit`
 and `Edit` media types) are composed from other clips rather than being
-their own camera-original recording, and aren't included by default -
-see [`--gopro-include-edits`](#gopro-include-edits) to opt in.
+their own camera-original recording. They're included by default,
+matching what GoPro's own web/app library shows - see
+[`--gopro-include-edits`](#gopro-include-edits) to exclude them.
 
 These behave differently enough from ordinary media to be worth calling
 out even once included: their own `file_extension` is that of an
@@ -270,6 +271,35 @@ not just cosmetic, so treat it with the same care as
 the API renames the whole medium, not one chapter or frame of it.
 
 `Copy` and `DirMove` remain unimplemented - see "Limitations" below.
+
+## Link sharing
+
+`PublicLink` is implemented (`rclone link remote:path`), creating a
+public share that needs no authentication to view or download from -
+confirmed live with a fresh upload and a plain unauthenticated request
+against the returned URL. GoPro calls the underlying object a
+"collection" internally; this backend always creates one holding just
+the single file being shared, and the link is
+`https://gopro.com/v/{collection-id}`.
+
+The link's title defaults to the file's own name (with this backend's
+own `{id}` disambiguation suffix stripped, since that's never meant to
+be shown outside this backend) - set
+[`--gopro-link-title`](#gopro-link-title) for a custom one; `rclone
+link` itself has no way to pass a one-off title per call, so this
+applies for the remote's lifetime, not just the next link created.
+[`--gopro-link-allow-download`](#gopro-link-allow-download) controls
+whether the link also allows downloading the original file and sharing
+any GPS data embedded in it - off by default; GoPro's API has one
+field for both, confirmed against its own web UI, so they can't be set
+independently.
+
+`--expire` and `--unlink` are not supported and are silently ignored,
+per this command's own documented behaviour for backends that can't:
+GoPro's collections API exposes no expiry field, so links don't expire,
+and a medium can be referenced by any number of independent shares with
+no way to look up which ones from the medium's own record, so there's
+no single reliable "the" link to remove on request.
 
 ## Uploading
 
@@ -364,11 +394,11 @@ Properties:
 
 Include Highlights and user-made Edits in listings.
 
-Off by default: these "MultiClipEdit"/"Edit" media are composed from
-other clips rather than being their own camera-original recording, so
-they're often a redundant rendering of content the library already
-has natively, and they behave differently enough to be worth opting
-into deliberately rather than getting by surprise:
+On by default, matching what GoPro's own web/app library shows. These
+"MultiClipEdit"/"Edit" media are composed from other clips rather than
+being their own camera-original recording, and behave differently
+enough that it's worth knowing what this backend already does about
+it before turning this off:
 
 - file_size is always null for these - this backend reports their
   size as unknown (like a chaptered video or burst photo set) rather
@@ -380,12 +410,56 @@ into deliberately rather than getting by surprise:
   not the EDL, and this backend's Content-Type follows the filename's
   own extension (usually ".mp4") to match what's actually served.
 
+Turn this off if you only want camera-original recordings, or to skip
+what's often a redundant rendering of content the library already has
+natively.
+
 Properties:
 
 - Config:      include_edits
 - Env Var:     RCLONE_GOPRO_INCLUDE_EDITS
 - Type:        bool
+- Default:     true
+
+#### --gopro-link-allow-download
+
+Allow downloading the original file from a public share link.
+
+Off by default. Confirmed live against GoPro's own web UI: this is
+its "Allow Download" toggle when creating a share link, and enabling
+it does two things at once, not just one - per that UI's own warning
+text, if the shared file has embedded GPS data, that gets shared with
+recipients too, not just download access. GoPro's API has one field
+for both; there is no way to control them separately.
+
+Turn this on if you want recipients to be able to download the
+original file, and are fine with any embedded location data going
+out with it.
+
+Properties:
+
+- Config:      link_allow_download
+- Env Var:     RCLONE_GOPRO_LINK_ALLOW_DOWNLOAD
+- Type:        bool
 - Default:     false
+
+#### --gopro-link-title
+
+Title for a public share link.
+
+Defaults to the file's own name (its --gopro-always-add-id {id}
+suffix stripped, since that's never meant to be shown outside this
+backend) if left blank - rclone's own "rclone link" command has no
+way to pass a one-off title per call, so this is the only way to set
+one, and it applies to every link this backend creates for the
+remote's lifetime, not just the next one.
+
+Properties:
+
+- Config:      link_title
+- Env Var:     RCLONE_GOPRO_LINK_TITLE
+- Type:        string
+- Required:    false
 
 #### --gopro-always-add-id
 
