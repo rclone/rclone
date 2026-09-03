@@ -1,37 +1,73 @@
 name: HuaweiOBS
 description: Huawei Object Storage Service
 region:
+  af-north-1: AF-Cairo
   af-south-1: AF-Johannesburg
+  ap-southeast-1: CN-Hong Kong
   ap-southeast-2: AP-Bangkok
   ap-southeast-3: AP-Singapore
-  cn-east-3: CN East-Shanghai1
+  ap-southeast-4: AP-Jakarta
+  ap-southeast-5: AP-Manila
   cn-east-2: CN East-Shanghai2
+  cn-east-3: CN East-Shanghai1
+  cn-east-4: CN East-Qingdao
+  cn-east-5: CN East-Suzhou
   cn-north-1: CN North-Beijing1
+  cn-north-2: CN North-Beijing2
   cn-north-4: CN North-Beijing4
+  cn-north-9: CN North-Ulanqab
+  cn-north-11: CN North-Hebei
+  cn-north-12: CN North-Hohhot
   cn-south-1: CN South-Guangzhou
-  ap-southeast-1: CN-Hong Kong
-  sa-argentina-1: LA-Buenos Aires1
-  sa-peru-1: LA-Lima1
+  cn-south-2: CN South-Shenzhen
+  cn-south-4: CN South-Guangzhou-InvitationOnly
+  cn-southwest-2: CN Southwest-Guiyang1
+  cn-southwest-3: CN Southwest-Chongqing
+  eu-west-101: EU-Dublin
+  la-north-2: LA-Mexico City2
+  la-south-2: LA-Santiago
+  me-east-1: ME-Riyadh
   na-mexico-1: LA-Mexico City1
-  sa-chile-1: LA-Santiago2
-  sa-brazil-1: LA-Sao Paulo1
   ru-northwest-2: RU-Moscow2
+  sa-argentina-1: LA-Buenos Aires1
+  sa-brazil-1: LA-Sao Paulo1
+  sa-chile-1: LA-Santiago2
+  sa-peru-1: LA-Lima1
+  tr-west-1: TR-Istanbul
 endpoint:
+  obs.af-north-1.myhuaweicloud.com: AF-Cairo
   obs.af-south-1.myhuaweicloud.com: AF-Johannesburg
+  obs.ap-southeast-1.myhuaweicloud.com: CN-Hong Kong
   obs.ap-southeast-2.myhuaweicloud.com: AP-Bangkok
   obs.ap-southeast-3.myhuaweicloud.com: AP-Singapore
-  obs.cn-east-3.myhuaweicloud.com: CN East-Shanghai1
+  obs.ap-southeast-4.myhuaweicloud.com: AP-Jakarta
+  obs.ap-southeast-5.myhuaweicloud.com: AP-Manila
   obs.cn-east-2.myhuaweicloud.com: CN East-Shanghai2
+  obs.cn-east-3.myhuaweicloud.com: CN East-Shanghai1
+  obs.cn-east-4.myhuaweicloud.com: CN East-Qingdao
+  obs.cn-east-5.myhuaweicloud.com: CN East-Suzhou
   obs.cn-north-1.myhuaweicloud.com: CN North-Beijing1
+  obs.cn-north-2.myhuaweicloud.com: CN North-Beijing2
   obs.cn-north-4.myhuaweicloud.com: CN North-Beijing4
+  obs.cn-north-9.myhuaweicloud.com: CN North-Ulanqab
+  obs.cn-north-11.myhuaweicloud.com: CN North-Hebei
+  obs.cn-north-12.myhuaweicloud.com: CN North-Hohhot
   obs.cn-south-1.myhuaweicloud.com: CN South-Guangzhou
-  obs.ap-southeast-1.myhuaweicloud.com: CN-Hong Kong
-  obs.sa-argentina-1.myhuaweicloud.com: LA-Buenos Aires1
-  obs.sa-peru-1.myhuaweicloud.com: LA-Lima1
+  obs.cn-south-2.myhuaweicloud.com: CN South-Shenzhen
+  obs.cn-south-4.myhuaweicloud.com: CN South-Guangzhou-InvitationOnly
+  obs.cn-southwest-2.myhuaweicloud.com: CN Southwest-Guiyang1
+  obs.cn-southwest-3.myhuaweicloud.com: CN Southwest-Chongqing
+  obs.eu-west-101.myhuaweicloud.eu: EU-Dublin
+  obs.la-north-2.myhuaweicloud.com: LA-Mexico City2
+  obs.la-south-2.myhuaweicloud.com: LA-Santiago
+  obs.me-east-1.myhuaweicloud.com: ME-Riyadh
   obs.na-mexico-1.myhuaweicloud.com: LA-Mexico City1
-  obs.sa-chile-1.myhuaweicloud.com: LA-Santiago2
-  obs.sa-brazil-1.myhuaweicloud.com: LA-Sao Paulo1
   obs.ru-northwest-2.myhuaweicloud.com: RU-Moscow2
+  obs.sa-argentina-1.myhuaweicloud.com: LA-Buenos Aires1
+  obs.sa-brazil-1.myhuaweicloud.com: LA-Sao Paulo1
+  obs.sa-chile-1.myhuaweicloud.com: LA-Santiago2
+  obs.sa-peru-1.myhuaweicloud.com: LA-Lima1
+  obs.tr-west-1.myhuaweicloud.com: TR-Istanbul
 acl: {}
 bucket_acl: true
 quirks:
