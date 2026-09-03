@@ -173,6 +173,24 @@ check fail on every download. Set
 (for example for `rclone mount`), at the cost of one extra request per
 file.
 
+### Highlights and Edits
+
+GoPro-generated Highlight reels and user-made Edits (`MultiClipEdit`
+and `Edit` media types) are composed from other clips rather than being
+their own camera-original recording, and aren't included by default -
+see [`--gopro-include-edits`](#gopro-include-edits) to opt in.
+
+These behave differently enough from ordinary media to be worth calling
+out even once included: their own `file_extension` is that of an
+internal Edit Decision List (typically `json`), not of what actually
+gets downloaded - GoPro serves the rendered video (a `baked_source`
+rendition) for these, never the EDL, and this backend's reported
+Content-Type follows the filename's own extension (usually `.mp4`)
+rather than `file_extension`, to match what's actually served. Their
+`file_size` is always null, reported the same way as the multi-item
+files above (`-1`, unknown, resolved on demand via
+[`--gopro-read-size`](#gopro-read-size)) rather than skipped.
+
 ### Size verification
 
 The `file_size` GoPro's API reports for a media item can be wrong - seen
@@ -201,11 +219,25 @@ for a multi-item file.
 ## Modification times and hashes
 
 GoPro Media Library reports a `captured_at` timestamp for every item,
-which this backend uses as the modification time, but it cannot be
-changed - `rclone touch` and similar will fail. There is no supported
-hash algorithm, so `--checksum` cannot be used; `rclone sync` falls back
-to comparing size and modification time, which for the multi-item files
-described above means size alone is unavailable unless
+which this backend uses as the modification time. Confirmed live, this
+isn't actually fixed at upload time the way most backends' equivalent is
+- `PUT /media/{id}` can change it - so `SetModTime` is implemented
+(`rclone touch` and similar work). This changes GoPro's own record of
+when the medium was captured, not just a local label, so treat it
+accordingly.
+
+That said, this backend still reports its modtime precision as
+unsupported, deliberately: `rclone sync`/`copy` don't use modification
+time to decide what needs transferring here, so an ordinary sync run
+never calls `SetModTime` as a side effect and won't silently rewrite
+capture dates just because a local file's timestamp doesn't exactly
+match. It's only invoked when something asks for it directly - `rclone
+touch`, or a `Move` across a `by-year`/`by-month`/`by-day` boundary (see
+"Renaming and moving files" below).
+
+There is no supported hash algorithm, so `--checksum` cannot be used;
+`rclone sync` falls back to comparing size alone, which for the
+multi-item files described above means it's unavailable unless
 `--gopro-read-size` is set.
 
 ## Which file gets downloaded
@@ -218,6 +250,26 @@ rendition labelled `"source"`, which is the true original. Set
 `--gopro-download-variation` to something else (for example `1080p`, or a
 proxy label like `high_res_proxy_mp4`) to download a transcoded rendition
 instead, if you want smaller/faster transfers and don't need the original.
+
+## Renaming and moving files
+
+`Move` is implemented (`rclone moveto`, and `rclone move`/`sync` for
+files that already exist at the destination under a different name) -
+confirmed live, a medium's filename isn't fixed after upload the way it
+is on most backends: `PUT /media/{id}` renames it in place.
+
+Moving within `media/all`, or within the same `by-year`/`by-month`/`by-day`
+bucket, only renames the file. Moving across a `by-year`, `by-month` or
+`by-day` boundary (for example `media/by-day/2026/2026-08-28/x.mp4` to
+`media/by-day/2026/2026-08-29/x.mp4`) also changes `captured_at` to match
+the destination date, since those directories are views computed from it
+- this is the one way a move can actually reposition a file between them,
+not just cosmetic, so treat it with the same care as
+[`SetModTime`](#modification-times-and-hashes) above. A multi-item file
+(a chaptered video or burst photo set item) can't be moved individually -
+the API renames the whole medium, not one chapter or frame of it.
+
+`Copy` and `DirMove` remain unimplemented - see "Limitations" below.
 
 ## Uploading
 
@@ -307,6 +359,33 @@ Properties:
 - Env Var:     RCLONE_GOPRO_DOWNLOAD_VARIATION
 - Type:        string
 - Default:     "source"
+
+#### --gopro-include-edits
+
+Include Highlights and user-made Edits in listings.
+
+Off by default: these "MultiClipEdit"/"Edit" media are composed from
+other clips rather than being their own camera-original recording, so
+they're often a redundant rendering of content the library already
+has natively, and they behave differently enough to be worth opting
+into deliberately rather than getting by surprise:
+
+- file_size is always null for these - this backend reports their
+  size as unknown (like a chaptered video or burst photo set) rather
+  than skipping them, so [--gopro-read-size](#gopro-read-size) is
+  needed for an exact size (e.g. for rclone mount).
+- Their own file_extension is that of an internal Edit Decision List
+  (typically "json"), not of what's actually downloaded - GoPro
+  serves the rendered video (the "baked_source" rendition) for these,
+  not the EDL, and this backend's Content-Type follows the filename's
+  own extension (usually ".mp4") to match what's actually served.
+
+Properties:
+
+- Config:      include_edits
+- Env Var:     RCLONE_GOPRO_INCLUDE_EDITS
+- Type:        bool
+- Default:     false
 
 #### --gopro-always-add-id
 
@@ -458,13 +537,17 @@ Properties:
 - No `ListR`: the directory tree above is several overlapping views of the
   same flat media list, so a full recursive listing wouldn't be any faster
   than rclone's default directory-by-directory walk.
-- `Move`, `Copy` and `DirMove` aren't implemented: GoPro Media Library has
-  no server-side move/copy/rename operation to build them on.
+- `Copy` and `DirMove` aren't implemented: GoPro Media Library has no
+  server-side copy operation to build `Copy` on, and `DirMove` has nothing
+  real to rename - every directory in the tree above is synthetic. `Move`
+  is implemented; see "Renaming and moving files" below.
 - Only `Video` and `Burst` media have been confirmed to use the two
   chapter/burst addressing schemes described above; other multi-item types
   (`TimeLapse`, `Continuous`, ...) may follow either one.
-- Albums, HiLight moments, livestreams and sidecar files (GPMF/GPS
-  telemetry, RAW `.GPR` companions from RAW+JPEG capture, etc.) aren't
-  exposed by this backend - only the main rendition of each item is.
+- Albums, moments, livestreams and sidecar files (GPMF/GPS telemetry, RAW
+  `.GPR` companions from RAW+JPEG capture, an Edit's own Edit Decision
+  List, etc.) aren't exposed by this backend - only the main rendition of
+  each item is. Highlights and Edits themselves can be included with
+  [`--gopro-include-edits`](#gopro-include-edits).
 - This is an unofficial, reverse-engineered API. Use it with the
   expectation that GoPro could change or remove it at any time.

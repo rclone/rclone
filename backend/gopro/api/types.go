@@ -38,6 +38,16 @@ type Medium struct {
 	ReprocessedAt *time.Time `json:"reprocessed_at"`
 }
 
+// MediumUpdate is the request body for PUT /media/{id}, which updates a
+// medium in place - only the fields set here are changed. Confirmed live:
+// this can rename a medium (Filename/ContentTitle) and change its
+// CapturedAt, both normally fixed at upload time.
+type MediumUpdate struct {
+	Filename     *string    `json:"filename,omitempty"`
+	ContentTitle *string    `json:"content_title,omitempty"`
+	CapturedAt   *time.Time `json:"captured_at,omitempty"`
+}
+
 // PageInfo describes pagination state returned alongside a media listing
 type PageInfo struct {
 	CurrentPage int `json:"current_page"`

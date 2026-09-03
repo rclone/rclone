@@ -218,12 +218,116 @@ func TestShouldAddID(t *testing.T) {
 	})
 }
 
+func TestExpectedIDSuffixedName(t *testing.T) {
+	f := &Fs{}
+
+	t.Run("single-item medium", func(t *testing.T) {
+		item := &api.Medium{Filename: "GX010123.MP4", ID: "68b22325df3cf752557ac6d7", ItemCount: 1}
+		assert.Equal(t, "GX010123 {68b22325df3cf752557ac6d7}.MP4", expectedIDSuffixedName(f, item))
+	})
+
+	t.Run("multi-item medium resolves to item 1", func(t *testing.T) {
+		item := &api.Medium{Filename: "GX010123.MP4", ID: "68b22325df3cf752557ac6d7", ItemCount: 3}
+		assert.Equal(t, "GX010123-1 {68b22325df3cf752557ac6d7}.MP4", expectedIDSuffixedName(f, item))
+	})
+
+	t.Run("a renamed medium with an arbitrary filename never matches an unrelated id embedded in a path", func(t *testing.T) {
+		// A GoPro medium can be renamed to any filename via the API (see
+		// the rename support), so a real listed name for one medium's id
+		// must never be confused for a different, unrelated {id}-shaped
+		// substring a user's chosen filename happens to contain.
+		item := &api.Medium{Filename: "giveEditAName.mp4", ID: "6a9362c08c23f474301c0899", ItemCount: 1}
+		fabricated := "totally unrelated name {6a9362c08c23f474301c0899}.mp4"
+		assert.NotEqual(t, fabricated, expectedIDSuffixedName(f, item))
+	})
+}
+
 func TestFindID(t *testing.T) {
 	assert.Equal(t, "", findID("potato"))
 	id := "68b22325df3cf752557ac6d7" // a real 24-char lowercase hex medium id
 	assert.Equal(t, id, findID("GX010294 {"+id+"}.MP4"))
-	assert.Equal(t, "", findID("GX010294.MP4")) // a real filename must never match
+	assert.Equal(t, "", findID("GX010294.MP4"))
 	assert.Equal(t, "", findID("potato {too-short}.txt"))
+}
+
+func TestStripSuffixID(t *testing.T) {
+	id := "68b22325df3cf752557ac6d7"
+	assert.Equal(t, "GX010294.MP4", stripSuffixID("GX010294 {"+id+"}.MP4"))
+	assert.Equal(t, "GX010294.MP4", stripSuffixID("GX010294.MP4"))
+	assert.Equal(t, ".MP4", stripSuffixID("{"+id+"}.MP4"))
+
+	t.Run("only strips the suffix, not an id-shaped substring elsewhere", func(t *testing.T) {
+		// A renamed medium can carry an arbitrary filename - an id-shaped
+		// substring that isn't in the exact " {id}" suffix position must
+		// survive untouched.
+		name := "note {" + id + "} halfway through.mp4"
+		assert.Equal(t, name, stripSuffixID(name))
+	})
+}
+
+func TestDestCapturedAt(t *testing.T) {
+	modTime := time.Date(2025, 3, 14, 9, 30, 15, 0, time.UTC)
+
+	t.Run("media/all implies no date", func(t *testing.T) {
+		p := &dirPattern{re: `^media/all/([^/]+)$`}
+		_, ok := destCapturedAt(p, []string{"", "x.mp4"}, modTime)
+		assert.False(t, ok)
+	})
+
+	t.Run("by-year changes only the year, keeps month/day/time-of-day", func(t *testing.T) {
+		p := &dirPattern{re: `^media/by-year/(\d{4})/([^/]+)$`}
+		got, ok := destCapturedAt(p, []string{"", "2026", "x.mp4"}, modTime)
+		assert.True(t, ok)
+		assert.Equal(t, time.Date(2026, 3, 14, 9, 30, 15, 0, time.UTC), got)
+	})
+
+	t.Run("by-month changes year and month, keeps day/time-of-day", func(t *testing.T) {
+		p := &dirPattern{re: `^media/by-month/\d{4}/(\d{4})-(\d{2})/([^/]+)$`}
+		got, ok := destCapturedAt(p, []string{"", "2026", "07", "x.mp4"}, modTime)
+		assert.True(t, ok)
+		assert.Equal(t, time.Date(2026, 7, 14, 9, 30, 15, 0, time.UTC), got)
+	})
+
+	t.Run("by-day pins the whole date, keeps time-of-day", func(t *testing.T) {
+		p := &dirPattern{re: `^media/by-day/\d{4}/(\d{4})-(\d{2})-(\d{2})/([^/]+)$`}
+		got, ok := destCapturedAt(p, []string{"", "2026", "07", "04", "x.mp4"}, modTime)
+		assert.True(t, ok)
+		assert.Equal(t, time.Date(2026, 7, 4, 9, 30, 15, 0, time.UTC), got)
+	})
+
+	t.Run("a destination date matching modTime already needs no change", func(t *testing.T) {
+		p := &dirPattern{re: `^media/by-day/\d{4}/(\d{4})-(\d{2})-(\d{2})/([^/]+)$`}
+		_, ok := destCapturedAt(p, []string{"", "2025", "03", "14", "x.mp4"}, modTime)
+		assert.False(t, ok)
+	})
+}
+
+func TestMoveFastPaths(t *testing.T) {
+	f := &Fs{}
+	ctx := context.Background()
+
+	t.Run("a non-Object src is refused", func(t *testing.T) {
+		_, err := f.Move(ctx, nil, "media/all/x.mp4")
+		assert.Equal(t, fs.ErrorCantMove, err)
+	})
+
+	t.Run("a multi-item object is refused", func(t *testing.T) {
+		src := &Object{fs: f, itemCount: 2}
+		_, err := f.Move(ctx, src, "media/all/x.mp4")
+		assert.Equal(t, fs.ErrorCantMove, err)
+	})
+
+	t.Run("a destination outside media/ is refused", func(t *testing.T) {
+		src := &Object{fs: f, itemCount: 1}
+		_, err := f.Move(ctx, src, "upload/x.mp4")
+		assert.Equal(t, fs.ErrorCantMove, err)
+	})
+
+	t.Run("a directory-shaped destination is refused", func(t *testing.T) {
+		src := &Object{fs: f, itemCount: 1}
+		_, err := f.Move(ctx, src, "media/all")
+		assert.Equal(t, fs.ErrorCantMove, err)
+	})
 }
 
 func TestItemLeaf(t *testing.T) {

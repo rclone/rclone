@@ -117,11 +117,16 @@ const (
 	// mediaFields is the set of /media/search fields this backend reads.
 	mediaFields = "id,filename,file_extension,type,captured_at,created_at,file_size,width,height,camera_model,item_count,moments_count,ready_to_view,token,content_title,resolution,reprocessed_at"
 
-	// includedTypes excludes "MultiClipEdit" and "Edit" - composed/derived
-	// items (server-generated highlight reels and user-made edits) that can
-	// carry an empty filename and a null file_size, which would otherwise
-	// break the dedupe and size logic.
+	// includedTypes is the default type filter - it excludes "MultiClipEdit"
+	// and "Edit" (server-generated Highlights and user-made Edits), which
+	// --gopro-include-edits opts back into - see editTypes and mediaTypes.
 	includedTypes = "Photo,Video,TimeLapse,TimeLapseVideo,Burst,BurstVideo,Chaptered,Continuous,Livestream,Looped,LoopedVideo,ExternalVideo,Session,Audio"
+
+	// editTypes are the composed/derived media types --gopro-include-edits
+	// opts into - not included by default because they carry a null
+	// file_size and a file_extension that doesn't match what's actually
+	// downloaded (see setMetaData and selectRendition).
+	editTypes = "MultiClipEdit,Edit"
 
 	// capturedRangeLayout matches the millisecond-precision UTC timestamp
 	// format the web app sends for the captured_range/range parameters.
@@ -228,6 +233,27 @@ value is matched against the label or quality of the renditions GoPro
 offers for that media item (for example "1080p", or a proxy label such
 as "high_res_proxy_mp4"); if no match is found the backend falls back
 to the first file offered.`,
+		}, {
+			Name:     "include_edits",
+			Advanced: true,
+			Default:  false,
+			Help: `Include Highlights and user-made Edits in listings.
+
+Off by default: these "MultiClipEdit"/"Edit" media are composed from
+other clips rather than being their own camera-original recording, so
+they're often a redundant rendering of content the library already
+has natively, and they behave differently enough to be worth opting
+into deliberately rather than getting by surprise:
+
+- file_size is always null for these - this backend reports their
+  size as unknown (like a chaptered video or burst photo set) rather
+  than skipping them, so [--gopro-read-size](#gopro-read-size) is
+  needed for an exact size (e.g. for rclone mount).
+- Their own file_extension is that of an internal Edit Decision List
+  (typically "json"), not of what's actually downloaded - GoPro
+  serves the rendered video (the "baked_source" rendition) for these,
+  not the EDL, and this backend's Content-Type follows the filename's
+  own extension (usually ".mp4") to match what's actually served.`,
 		}, {
 			Name:     "always_add_id",
 			Advanced: true,
@@ -337,6 +363,7 @@ type Options struct {
 	Pass              string               `config:"pass"`
 	AccessToken       string               `config:"access_token"`
 	DownloadVariation string               `config:"download_variation"`
+	IncludeEdits      bool                 `config:"include_edits"`
 	AlwaysAddID       bool                 `config:"always_add_id"`
 	VerifySize        string               `config:"verify_size"`
 	ReadSize          bool                 `config:"read_size"`
@@ -533,6 +560,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	f.features = (&fs.Features{
 		ReadMimeType: true,
+		Move:         f.Move,
 	}).Fill(ctx, f)
 
 	// Check to see if the root is actually a file
@@ -657,11 +685,48 @@ func (f *Fs) getMedium(ctx context.Context, id string) (*api.Medium, error) {
 	return &item, nil
 }
 
+// updateMedium updates a medium's filename/content_title/captured_at via
+// PUT /media/{id} (204, no body) - only the fields set on upd are changed.
+func (f *Fs) updateMedium(ctx context.Context, id string, upd api.MediumUpdate) error {
+	opts := rest.Opts{
+		Method:     "PUT",
+		Path:       "/media/" + id,
+		NoResponse: true,
+	}
+	var resp *http.Response
+	var err error
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallJSON(ctx, &opts, &upd, nil)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return fmt.Errorf("couldn't update medium %q: %w", id, err)
+	}
+	return nil
+}
+
+// mediaTypes returns the type filter for /media/search - editTypes are
+// only added when --gopro-include-edits is set (see includedTypes).
+func (f *Fs) mediaTypes() string {
+	if f.opt.IncludeEdits {
+		return includedTypes + "," + editTypes
+	}
+	return includedTypes
+}
+
+// isEditType reports whether t is one of editTypes (a Highlight or Edit) -
+// only reachable at all when --gopro-include-edits is set, since the
+// server-side type filter excludes them otherwise.
+func isEditType(t string) bool {
+	return t == "MultiClipEdit" || t == "Edit"
+}
+
 // list pages through /media/search, calling fn for every included medium
 // that matches filter.
 //
 // "MultiClipEdit" and "Edit" media are excluded server-side via the type
-// parameter. A non-empty filter is also applied server-side via
+// parameter, unless --gopro-include-edits opts them back in (see
+// mediaTypes). A non-empty filter is also applied server-side via
 // captured_range, which cuts a by-day/by-month/by-year listing down from a
 // full-library scan to just the matching window; the filter is re-checked
 // client-side as well as a backstop in case the server-side bound is ever
@@ -673,7 +738,7 @@ func (f *Fs) list(ctx context.Context, filter mediaFilter, fn func(item *api.Med
 	lastID := ""
 	params := url.Values{
 		"fields":            {mediaFields},
-		"type":              {includedTypes},
+		"type":              {f.mediaTypes()},
 		"processing_states": {"ready"},
 		"order_by":          {"captured_at"},
 		"per_page":          {strconv.Itoa(perPage)},
@@ -750,11 +815,22 @@ func itemLeaf(fileName string, itemNumber int) string {
 	return fmt.Sprintf("%s-%d%s", base, itemNumber, ext)
 }
 
-// idRe matches a GoPro medium id embedded in a deduped filename.
+// idRe matches a GoPro medium id embedded in a deduped filename - 24
+// lowercase hex characters in braces, the shape addID/addFileID produce.
 //
-// Medium ids are 24 lowercase hex characters, which cannot collide with a
-// real (uppercase) GoPro filename such as GX010123.MP4.
+// A camera-generated filename can never coincidentally match this, but a
+// medium can now be renamed to an arbitrary filename (see the rename
+// support below), so a match here is no longer proof the id is one this
+// backend added - readMetaData's fast path verifies against the fetched
+// medium's own name (expectedIDSuffixedName) before trusting it, rather
+// than relying on this pattern alone.
 var idRe = regexp.MustCompile(`\{([0-9a-f]{24})\}`)
+
+// idSuffixRe matches the "name {id}" (or, for an empty name, just "{id}")
+// suffix addID appends - anchored to the end, unlike idRe, so it can be
+// stripped back off a leaf name (see stripSuffixID) without also matching
+// an id-shaped substring elsewhere in an arbitrary, user-chosen filename.
+var idSuffixRe = regexp.MustCompile(` ?\{[0-9a-f]{24}\}$`)
 
 // findID finds an ID in a string if one is there, or ""
 func findID(name string) string {
@@ -765,6 +841,19 @@ func findID(name string) string {
 	return match[1]
 }
 
+// stripSuffixID removes a trailing " {id}" disambiguation suffix from a
+// leaf name, if present - the inverse of addFileID. This backend's own
+// listings always carry one under --gopro-always-add-id (or when a name
+// collides even without it), but it's never part of the real filename, so
+// a Move destination must have it stripped before being sent as the new
+// filename - GoPro assigns ids itself and doesn't accept one from a
+// rename request.
+func stripSuffixID(name string) string {
+	ext := path.Ext(name)
+	base := strings.TrimSuffix(name, ext)
+	return idSuffixRe.ReplaceAllString(base, "") + ext
+}
+
 // listDir lists a single directory, applying filter and deduping colliding
 // filenames (GoPro cameras reuse filenames constantly, so collisions
 // within one listing are routine, not exceptional).
@@ -773,11 +862,12 @@ func (f *Fs) listDir(ctx context.Context, prefix string, filter mediaFilter) (en
 		if !filter.matches(item.CapturedAt) {
 			return nil
 		}
-		if item.FileSize == nil {
-			// A ready medium can still have a null file_size (seen beyond
-			// just the MultiClipEdit/Edit types this backend already
-			// excludes server-side) - skip it defensively rather than
-			// list an entry with no usable size or content.
+		if item.FileSize == nil && !isEditType(item.Type) {
+			// A ready medium can still have a null file_size beyond the
+			// MultiClipEdit/Edit types, which always have one (handled
+			// below via the same unknown-size path as a multi-item
+			// medium, not skipped) - skip it defensively rather than list
+			// an entry with no usable size or content.
 			fs.Debugf(f, "Skipping %s: ready but file_size is null", item.ID)
 			return nil
 		}
@@ -785,7 +875,7 @@ func (f *Fs) listDir(ctx context.Context, prefix string, filter mediaFilter) (en
 		if itemCount < 1 {
 			itemCount = 1
 		}
-		leaf := f.opt.Enc.FromStandardName(item.Filename)
+		leaf := f.opt.Enc.ToStandardName(item.Filename)
 		for n := 1; n <= itemCount; n++ {
 			remote := leaf
 			if itemCount > 1 {
@@ -823,6 +913,17 @@ func (f *Fs) listDir(ctx context.Context, prefix string, filter mediaFilter) (en
 // to show.
 func shouldAddID(alwaysAddID bool, remote string, count int) bool {
 	return alwaysAddID || count > 1 || remote == ""
+}
+
+// expectedIDSuffixedName reconstructs the id-suffixed leaf listDir would
+// give item's first item when --gopro-always-add-id is set, for verifying
+// a name found via the readMetaData fast path actually belongs to it.
+func expectedIDSuffixedName(f *Fs, item *api.Medium) string {
+	leaf := f.opt.Enc.ToStandardName(item.Filename)
+	if item.ItemCount > 1 {
+		leaf = itemLeaf(leaf, 1)
+	}
+	return addFileID(leaf, item.ID)
 }
 
 // listUploads lists a single directory from the items uploaded this run
@@ -1173,7 +1274,18 @@ func (o *Object) setMetaData(item *api.Medium, itemNumber int) {
 	if o.modTime.IsZero() {
 		o.modTime = item.CreatedAt
 	}
-	o.mimeType = mime.TypeByExtension("." + strings.ToLower(item.FileExtension))
+	// file_extension is the native format of the medium's own record, not
+	// necessarily of what's actually downloaded: a MultiClipEdit's
+	// file_extension is "json" (its Edit Decision List), but its filename
+	// still ends in ".mp4" and selectRendition serves the rendered video,
+	// not the EDL - so the filename's own extension is what actually
+	// matches the bytes served here. Only fall back to file_extension
+	// when the filename has none to go on.
+	ext := path.Ext(item.Filename)
+	if ext == "" {
+		ext = "." + item.FileExtension
+	}
+	o.mimeType = mime.TypeByExtension(strings.ToLower(ext))
 	o.reprocessed = item.ReprocessedAt != nil
 }
 
@@ -1198,13 +1310,29 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	// multi-item medium was meant, so this always resolves to item 1 - a
 	// compound edge case (an id-suffixed name that's also a non-first
 	// chapter/burst item) would resolve to the wrong item here.
-	if id := findID(fileName); id != "" {
+	//
+	// GoPro media can now be renamed to an arbitrary filename (see the
+	// rename support below), so idRe matching a {24-hex} substring no
+	// longer proves it's a suffix this backend added - a renamed file
+	// could coincidentally (or deliberately) contain one. Fetching by
+	// that id and trusting it unconditionally would silently serve a
+	// different medium's content under this name. Guard against that by
+	// only trusting the fast path when it's reconstructible: this backend
+	// only ever produces exactly this shape when --gopro-always-add-id is
+	// set (the default), so verify the fetched medium's own real name,
+	// re-suffixed the same way, matches fileName exactly before using it;
+	// otherwise fall through to the listing-based lookup below, which
+	// fails closed with fs.ErrorObjectNotFound if fileName doesn't
+	// genuinely belong to anything.
+	if id := findID(fileName); id != "" && o.fs.opt.AlwaysAddID {
 		item, err := o.fs.getMedium(ctx, id)
 		if err != nil {
 			return err
 		}
-		o.setMetaData(item, 1)
-		return nil
+		if expectedIDSuffixedName(o.fs, item) == fileName {
+			o.setMetaData(item, 1)
+			return nil
+		}
 	}
 	// Otherwise list the directory the file is in
 	entries, err := o.fs.List(ctx, dir)
@@ -1234,9 +1362,24 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 	return o.modTime
 }
 
-// SetModTime is not supported
+// SetModTime changes captured_at via PUT /media/{id} - confirmed live this
+// is not actually fixed at upload time, unlike most backends' notion of a
+// server-set, immutable capture/creation date.
+//
+// This changes GoPro's own record of when the medium was captured, not
+// just a local modification-time label - a deliberate choice to reuse the
+// one time field GoPro exposes rather than invent a second one it has
+// nowhere to store; treat it accordingly; rclone commands that call this
+// (touch, and copy with --update in some modes) will rewrite that history.
+// captured_at is a medium-level field shared by every item of a
+// multi-item medium (chaptered video, burst photo set), so this changes
+// all of them at once, matching how they already share one modTime.
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	return fs.ErrorCantSetModTime
+	if err := o.fs.updateMedium(ctx, o.id, api.MediumUpdate{CapturedAt: &modTime}); err != nil {
+		return err
+	}
+	o.modTime = modTime
+	return nil
 }
 
 // Storable returns a boolean as to whether this object is storable
@@ -1352,6 +1495,94 @@ func (f *Fs) deleteMedium(ctx context.Context, id string) error {
 		return fmt.Errorf("couldn't delete %q: %s", id, e.Description)
 	}
 	return nil
+}
+
+// Move renames src to remote in place via PUT /media/{id} (updateMedium) -
+// confirmed live this can change both a medium's filename and its
+// captured_at, neither fixed at upload time as most backends' equivalents
+// would be.
+//
+// A destination under media/by-year, media/by-month or media/by-day whose
+// date differs from src's current one is honoured by changing captured_at
+// to match, the one way this "move" can actually reposition an item
+// between those views - they're derived from captured_at, and there's no
+// real folder for anything to move between otherwise. media/all and a
+// same-bucket destination only rename it. upload/ has no medium to rename
+// until an upload completes, so isn't supported as either endpoint.
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
+	if !ok {
+		return nil, fs.ErrorCantMove
+	}
+	// Not srcObj.fs != f: rclone calls this on the *destination* Fs, and
+	// only after its own SameConfig check already confirmed src belongs
+	// to the same gopro: remote - but "same remote" doesn't mean "same
+	// *Fs instance". A moveto whose source and destination land under
+	// different roots (e.g. different media/by-day buckets) gets two
+	// distinct *Fs, one per resolved root, even for the same config - a
+	// pointer-identity check here would wrongly refuse exactly the
+	// cross-directory moves this method exists for (confirmed live: it
+	// did, silently falling back to rclone's generic copy+delete, which
+	// then failed outright since only upload/ accepts new files). Use
+	// srcObj.fs, not f, for the mutation itself - it's the authoritative
+	// Fs for the object actually being changed.
+	if srcObj.itemCount > 1 {
+		// The API renames the whole medium, not one chapter/frame of it -
+		// renaming just one wouldn't be meaningful.
+		return nil, fs.ErrorCantMove
+	}
+	match, _, pattern := patterns.match(f.root, remote, true)
+	if pattern == nil || !pattern.isFile || pattern.isUpload {
+		return nil, fs.ErrorCantMove
+	}
+	leaf := stripSuffixID(match[len(match)-1])
+	filename := f.opt.Enc.FromStandardName(leaf)
+
+	upd := api.MediumUpdate{Filename: &filename, ContentTitle: &filename}
+	if capturedAt, ok := destCapturedAt(pattern, match, srcObj.modTime); ok {
+		upd.CapturedAt = &capturedAt
+	}
+	if err := srcObj.fs.updateMedium(ctx, srcObj.id, upd); err != nil {
+		return nil, err
+	}
+
+	dstObj := &Object{}
+	*dstObj = *srcObj
+	dstObj.fs = f
+	dstObj.remote = remote
+	if upd.CapturedAt != nil {
+		dstObj.modTime = *upd.CapturedAt
+	}
+	return dstObj, nil
+}
+
+// destCapturedAt derives the captured_at Move should set for a destination
+// matched against a media/by-year, media/by-month or media/by-day file
+// pattern, preserving whatever of modTime's own year/month/day/time isn't
+// pinned by the destination. ok is false for media/all (no date implied)
+// or when the implied date already matches modTime (nothing to change).
+func destCapturedAt(pattern *dirPattern, match []string, modTime time.Time) (t time.Time, ok bool) {
+	var year, month, day int
+	switch pattern.re {
+	case `^media/by-year/(\d{4})/([^/]+)$`:
+		year, _ = strconv.Atoi(match[1])
+		month, day = int(modTime.Month()), modTime.Day()
+	case `^media/by-month/\d{4}/(\d{4})-(\d{2})/([^/]+)$`:
+		year, _ = strconv.Atoi(match[1])
+		m, _ := strconv.Atoi(match[2])
+		month, day = m, modTime.Day()
+	case `^media/by-day/\d{4}/(\d{4})-(\d{2})-(\d{2})/([^/]+)$`:
+		year, _ = strconv.Atoi(match[1])
+		m, _ := strconv.Atoi(match[2])
+		d, _ := strconv.Atoi(match[3])
+		month, day = m, d
+	default:
+		return time.Time{}, false
+	}
+	t = time.Date(year, time.Month(month), day,
+		modTime.Hour(), modTime.Minute(), modTime.Second(), modTime.Nanosecond(),
+		modTime.Location())
+	return t, !t.Equal(modTime)
 }
 
 // MimeType of an Object if known, "" otherwise
