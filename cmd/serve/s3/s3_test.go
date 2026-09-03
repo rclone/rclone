@@ -308,6 +308,114 @@ func TestListBucketsAuthProxy(t *testing.T) {
 	testListBuckets(t, cases, true)
 }
 
+// newMinioClient serves f and returns a minio client connected to it.
+func newMinioClient(t *testing.T, f fs.Fs) *minio.Client {
+	endpoint, keyid, keysec, _ := serveS3(t, f)
+	testURL, err := url.Parse(endpoint)
+	require.NoError(t, err)
+	minioClient, err := minio.New(testURL.Host, &minio.Options{
+		Creds:  credentials.NewStaticV4(keyid, keysec, ""),
+		Secure: false,
+	})
+	require.NoError(t, err)
+	return minioClient
+}
+
+// putTestObject puts an object with the given key into bucket on f.
+func putTestObject(t *testing.T, f fs.Fs, bucket, key string) {
+	contents := "contents"
+	obji := object.NewStaticObjectInfo(path.Join(bucket, key), time.Now(), int64(len(contents)), true, nil, nil)
+	_, err := f.Put(context.Background(), bytes.NewBufferString(contents), obji)
+	require.NoError(t, err)
+}
+
+// listKeysWithMinioClient pages through a listing with the given options and
+// returns the keys it yields, common prefixes included.
+func listKeysWithMinioClient(t *testing.T, minioClient *minio.Client, bucket string, opts minio.ListObjectsOptions) (keys []string) {
+	for object := range minioClient.ListObjects(context.Background(), bucket, opts) {
+		require.NoError(t, object.Err)
+		keys = append(keys, object.Key)
+	}
+	return keys
+}
+
+// TestListObjectsPagingWithMinioClient checks that a client paging through a
+// deep hierarchy with a small max-keys sees every key exactly once, in order,
+// exercising the continuation tokens end to end.
+func TestListObjectsPagingWithMinioClient(t *testing.T) {
+	fstest.Initialise()
+	f, _, clean, err := fstest.RandomRemote()
+	require.NoError(t, err)
+	defer clean()
+
+	// A chunk store shaped like the one Proxmox Backup Server lists:
+	// many directories, each holding a few objects, listed with a prefix
+	// and no delimiter.
+	var want []string
+	for dir := range 20 {
+		for file := range 5 {
+			key := fmt.Sprintf(".chunks/%04x/chunk%d", dir, file)
+			want = append(want, key)
+			putTestObject(t, f, "mybucket", key)
+		}
+	}
+	slices.Sort(want)
+
+	minioClient := newMinioClient(t, f)
+	for _, useV1 := range []bool{false, true} {
+		t.Run(fmt.Sprintf("UseV1=%v", useV1), func(t *testing.T) {
+			got := listKeysWithMinioClient(t, minioClient, "mybucket", minio.ListObjectsOptions{
+				Prefix:    ".chunks",
+				Recursive: true,
+				MaxKeys:   7,
+				UseV1:     useV1,
+			})
+			assert.Equal(t, want, got)
+		})
+	}
+}
+
+// TestListObjectsDelimitedPagingWithMinioClient checks that a client paging
+// through a delimited listing sees every common prefix and every object key
+// exactly once, whichever side of a page boundary they fall.
+func TestListObjectsDelimitedPagingWithMinioClient(t *testing.T) {
+	fstest.Initialise()
+	f, _, clean, err := fstest.RandomRemote()
+	require.NoError(t, err)
+	defer clean()
+
+	// Directories and objects which interleave in key order, so that a page
+	// boundary has to fall between a common prefix and an object key.
+	var want []string
+	for i := range 20 {
+		if i%2 == 0 {
+			putTestObject(t, f, "mybucket", fmt.Sprintf("a%02d/object", i))
+			want = append(want, fmt.Sprintf("a%02d/", i))
+		} else {
+			key := fmt.Sprintf("a%02d.txt", i)
+			putTestObject(t, f, "mybucket", key)
+			want = append(want, key)
+		}
+	}
+	slices.Sort(want)
+
+	minioClient := newMinioClient(t, f)
+	for _, maxKeys := range []int{1, 3, 7, 20} {
+		for _, useV1 := range []bool{false, true} {
+			t.Run(fmt.Sprintf("MaxKeys%d/UseV1=%v", maxKeys, useV1), func(t *testing.T) {
+				got := listKeysWithMinioClient(t, minioClient, "mybucket", minio.ListObjectsOptions{
+					MaxKeys: maxKeys,
+					UseV1:   useV1,
+				})
+				// The client yields the objects of a page before its common
+				// prefixes, so only the keys of the whole listing are sorted.
+				slices.Sort(got)
+				assert.Equal(t, want, got)
+			})
+		}
+	}
+}
+
 func TestRc(t *testing.T) {
 	servetest.TestRc(t, rc.Params{
 		"type":           "s3",
