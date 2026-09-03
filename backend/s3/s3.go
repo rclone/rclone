@@ -3263,6 +3263,23 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		f.opt.ObjectLockLegalHoldStatus != ""
 	if needsReplace {
 		req.MetadataDirective = types.MetadataDirectiveReplace
+		// REPLACE discards whatever is not supplied, so when it was not
+		// --metadata that forced it, carry the source values over.
+		if !ci.Metadata {
+			err = srcObj.readMetaData(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read source metadata: %w", err)
+			}
+			req.CacheControl = srcObj.cacheControl
+			req.ContentDisposition = srcObj.contentDisposition
+			req.ContentEncoding = srcObj.contentEncoding
+			req.ContentLanguage = srcObj.contentLanguage
+			for k, v := range srcObj.meta {
+				if _, found := req.Metadata[k]; !found {
+					req.Metadata[k] = v
+				}
+			}
+		}
 	}
 
 	err = f.copy(ctx, &req, dstBucket, dstPath, srcBucket, srcPath, srcObj)
