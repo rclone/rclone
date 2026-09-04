@@ -1595,11 +1595,15 @@ func (f *Fs) workspaceID() json.Number {
 func (o *Object) uploadPresigned(ctx context.Context, in io.Reader, src fs.ObjectInfo, leaf, directoryID string) error {
 	mimeType := fs.MimeType(ctx, src)
 	encodedLeaf := o.fs.opt.Enc.FromStandardName(leaf)
+	extension := strings.TrimPrefix(path.Ext(encodedLeaf), ".")
+	if extension == "" {
+		extension = "bin"
+	}
 	presignRequest := api.SimpleUploadPresignRequest{
 		Filename:    encodedLeaf,
 		Mime:        mimeType,
 		Size:        src.Size(),
-		Extension:   strings.TrimPrefix(path.Ext(encodedLeaf), "."),
+		Extension:   extension,
 		WorkspaceID: o.fs.workspaceID(),
 		ParentID:    json.Number(directoryID),
 	}
@@ -1644,7 +1648,7 @@ func (o *Object) uploadPresigned(ctx context.Context, in io.Reader, src fs.Objec
 		ClientName:      encodedLeaf,
 		Filename:        path.Base(presignResponse.Key),
 		Size:            size,
-		ClientExtension: strings.TrimPrefix(path.Ext(encodedLeaf), "."),
+		ClientExtension: extension,
 		ParentID:        json.Number(directoryID),
 		WorkspaceID:     o.fs.workspaceID(),
 	}

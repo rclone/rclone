@@ -49,6 +49,7 @@ func TestUploadPresigned(t *testing.T) {
 	const (
 		contents      = "hello"
 		authorization = "Bearer secret"
+		filename      = "371add24d1b9ee47aa4912e2a5f9f608"
 	)
 	var server *httptest.Server
 	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -58,8 +59,8 @@ func TestUploadPresigned(t *testing.T) {
 			var request map[string]any
 			require.NoError(t, json.NewDecoder(r.Body).Decode(&request))
 			require.Equal(t, map[string]any{
-				"extension":   "txt",
-				"filename":    "file.txt",
+				"extension":   "bin",
+				"filename":    filename,
 				"mime":        "text/plain",
 				"parentId":    float64(42),
 				"size":        float64(len(contents)),
@@ -80,15 +81,15 @@ func TestUploadPresigned(t *testing.T) {
 			var request map[string]any
 			require.NoError(t, json.NewDecoder(r.Body).Decode(&request))
 			require.Equal(t, map[string]any{
-				"clientExtension": "txt",
+				"clientExtension": "bin",
 				"clientMime":      "text/plain",
-				"clientName":      "file.txt",
+				"clientName":      filename,
 				"filename":        "uuid",
 				"parentId":        float64(42),
 				"size":            float64(len(contents)),
 				"workspaceId":     float64(0),
 			}, request)
-			_, err := w.Write([]byte(`{"fileEntry":{"id":123,"name":"file.txt","file_size":5,"mime":"text/plain"},"status":"success"}`))
+			_, err := w.Write([]byte(`{"fileEntry":{"id":123,"name":"` + filename + `","file_size":5,"mime":"text/plain"},"status":"success"}`))
 			require.NoError(t, err)
 		default:
 			t.Fatalf("unexpected request path %q", r.URL.Path)
@@ -103,9 +104,9 @@ func TestUploadPresigned(t *testing.T) {
 		srv:   client,
 		pacer: fs.NewPacer(context.Background(), pacer.NewDefault()),
 	}
-	o := &Object{fs: f, remote: "file.txt"}
-	src := object.NewStaticObjectInfo("file.txt", time.Now(), int64(len(contents)), true, nil, nil).WithMimeType("text/plain")
-	require.NoError(t, o.uploadPresigned(context.Background(), bytes.NewBufferString(contents), src, "file.txt", "42"))
+	o := &Object{fs: f, remote: filename}
+	src := object.NewStaticObjectInfo(filename, time.Now(), int64(len(contents)), true, nil, nil).WithMimeType("text/plain")
+	require.NoError(t, o.uploadPresigned(context.Background(), bytes.NewBufferString(contents), src, filename, "42"))
 	require.Equal(t, "123", o.id)
 }
 
