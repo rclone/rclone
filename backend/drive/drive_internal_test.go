@@ -334,6 +334,69 @@ func TestInternalListStopEarlyStopsAtFirstMatch(t *testing.T) {
 	assert.Equal(t, int32(0), resolved.Load())
 }
 
+// TestInternalListBulkNoShortcuts checks that a bulk listing page
+// with no shortcuts on it lists correctly without ever hitting the
+// Files.Get endpoint (ie the errgroup path is bypassed entirely).
+func TestInternalListBulkNoShortcuts(t *testing.T) {
+	var getCalls atomic.Int32
+	f := newListTestFs(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if strings.HasSuffix(r.URL.Path, "/files") {
+			_, err := fmt.Fprint(w, `{"files":[
+				{"id":"file-1","name":"file1","mimeType":"text/plain"},
+				{"id":"file-2","name":"file2","mimeType":"text/plain"}
+			]}`)
+			assert.NoError(t, err)
+			return
+		}
+		getCalls.Add(1)
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+
+	var names []string
+	found, err := f.list(context.Background(), []string{"parent-id"}, "", false, false, false, false, false, func(item *drive.File) bool {
+		names = append(names, item.Name)
+		return false
+	})
+	require.NoError(t, err)
+	assert.False(t, found)
+	assert.Equal(t, []string{"file1", "file2"}, names)
+	assert.Equal(t, int32(0), getCalls.Load())
+}
+
+// TestInternalListBulkAllShortcutsSkipped checks that a bulk listing
+// page where every shortcut is skip-eligible (eg --drive-skip-shortcuts)
+// still filters those shortcuts out of what's passed to fn, even
+// though hasShortcutToResolve is false for the page (nothing needs
+// resolving) and the errgroup path is bypassed.
+func TestInternalListBulkAllShortcutsSkipped(t *testing.T) {
+	var getCalls atomic.Int32
+	f := newListTestFs(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if strings.HasSuffix(r.URL.Path, "/files") {
+			_, err := fmt.Fprint(w, `{"files":[
+				{"id":"shortcut-1","name":"link1","mimeType":"application/vnd.google-apps.shortcut","shortcutDetails":{"targetId":"target-1","targetMimeType":"text/plain"}},
+				{"id":"file-1","name":"file1","mimeType":"text/plain"}
+			]}`)
+			assert.NoError(t, err)
+			return
+		}
+		getCalls.Add(1)
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	f.opt.SkipShortcuts = true
+
+	var names []string
+	found, err := f.list(context.Background(), []string{"parent-id"}, "", false, false, false, false, false, func(item *drive.File) bool {
+		names = append(names, item.Name)
+		return false
+	})
+	require.NoError(t, err)
+	assert.False(t, found)
+	assert.Equal(t, []string{"file1"}, names)
+	assert.Equal(t, int32(0), getCalls.Load())
+}
+
 func TestDriveScopes(t *testing.T) {
 	for _, test := range []struct {
 		in       string

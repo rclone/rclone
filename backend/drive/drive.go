@@ -1218,18 +1218,11 @@ OUTER:
 					break OUTER
 				}
 			}
-		} else {
-			// Bulk listing - resolve shortcut targets concurrently,
-			// bounded by --checkers, since each resolution is a
-			// separate API call.
-			//
-			// dangling[i] records whether files.Files[i] resolved to
-			// a dangling shortcut; this can't be recovered from the
-			// resolved item's MimeType alone once files.Files[i] is
-			// overwritten, since resolveShortcut mutates MimeType to
-			// shortcutMimeTypeDangling on a 404, which is a distinct
-			// value from shortcutMimeType that isShortcut checks for.
-			dangling := make([]bool, len(files.Files))
+		} else if hasShortcutToResolve(files.Files, skipShortcut) {
+			// Bulk listing with at least one shortcut to resolve -
+			// resolve shortcut targets concurrently, bounded by
+			// --checkers, since each resolution is a separate API
+			// call.
 			g, gCtx := errgroup.WithContext(ctx)
 			g.SetLimit(f.ci.Checkers)
 			for i, item := range files.Files {
@@ -1241,7 +1234,6 @@ OUTER:
 					if err != nil {
 						return fmt.Errorf("list: %w", err)
 					}
-					dangling[i] = newItem.MimeType == shortcutMimeTypeDangling
 					files.Files[i] = newItem
 					return nil
 				})
@@ -1249,13 +1241,28 @@ OUTER:
 			if err = g.Wait(); err != nil {
 				return false, err
 			}
-			for i, item := range files.Files {
+			for _, item := range files.Files {
 				if isShortcut(item) && skipShortcut(item) {
 					continue
 				}
 				// leave the dangling shortcut out of the listings
 				// we've already logged about the dangling shortcut in resolveShortcut
-				if f.opt.SkipDanglingShortcuts && dangling[i] {
+				if f.opt.SkipDanglingShortcuts && item.MimeType == shortcutMimeTypeDangling {
+					continue
+				}
+				if checkItem(item) {
+					found = true
+					break OUTER
+				}
+			}
+		} else {
+			// Bulk listing with no shortcuts to resolve on this page -
+			// skip the errgroup setup entirely. Shortcuts can still be
+			// present here if every one of them is skip-eligible (eg
+			// --drive-skip-shortcuts), so they still need filtering
+			// out rather than being passed to fn unresolved.
+			for _, item := range files.Files {
+				if isShortcut(item) && skipShortcut(item) {
 					continue
 				}
 				if checkItem(item) {
@@ -2470,6 +2477,17 @@ func shortcutID(compositeID string) (shortcutID string) {
 // isShortcut returns true of the item is a shortcut
 func isShortcut(item *drive.File) bool {
 	return item.MimeType == shortcutMimeType && item.ShortcutDetails != nil
+}
+
+// hasShortcutToResolve returns true if any item in items is a
+// shortcut that skip doesn't want ignored.
+func hasShortcutToResolve(items []*drive.File, skip func(*drive.File) bool) bool {
+	for _, item := range items {
+		if isShortcut(item) && !skip(item) {
+			return true
+		}
+	}
+	return false
 }
 
 // Dereference shortcut if required. It returns the newItem (which may
