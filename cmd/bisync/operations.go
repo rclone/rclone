@@ -309,7 +309,7 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 
 	fs.Infof(nil, "Building Path1 and Path2 listings")
 	b.march.ls1, b.march.ls2, err = b.makeMarchListing(fctx)
-	if err != nil || accounting.Stats(fctx).Errored() {
+	if err != nil {
 		fs.Error(nil, Color(terminal.RedFg, "There were errors while building listings. Aborting as it is too dangerous to continue."))
 		b.critical = true
 		b.retryable = true
