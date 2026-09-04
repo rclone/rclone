@@ -135,6 +135,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Exaba" home="https://exaba.com/" config="/s3/#exaba" >}}
 {{< provider name="Fastly Object Storage" home="https://www.fastly.com/products/storage" config="/s3/#fastly" >}}
 {{< provider name="Fastmail Files" home="https://www.fastmail.com/" config="/webdav/#fastmail-files" >}}
+{{< provider name="FebBox" home="https://www.febbox.com/" config="/febbox/" >}}
 {{< provider name="FileLu Cloud Storage" home="https://filelu.com/" config="/filelu/" >}}
 {{< provider name="FileLu S5 (S3-Compatible Object Storage)" home="https://s5lu.com/" config="/s3/#filelu-s5" >}}
 {{< provider name="Filen" home="https://www.filen.io/" config="/filen/" >}}
