@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/Azure/go-ntlmssp"
+	"github.com/icholy/digest"
 	"golang.org/x/sync/singleflight"
 
 	"github.com/rclone/rclone/backend/webdav/api"
@@ -235,6 +236,10 @@ type Fs struct {
 	canChunk           bool          // set if nextcloud and nextcloud_chunk_size is set
 	canRecalcHash      bool          // set if the server can recalculate checksums with PATCH (nextcloud)
 	authSingleflight   *singleflight.Group
+	digestMu           sync.Mutex        // protects the digest fields below
+	digestChal         *digest.Challenge // challenge to sign requests with, nil if the server hasn't asked for digest
+	digestHost         string            // host digestChal came from
+	digestCount        int               // number of times digestChal has been used
 }
 
 // Object describes a webdav object
@@ -299,7 +304,100 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 		}
 		return true, err
 	}
+	// If the server asked for digest authentication then sign the retry with it
+	if resp != nil && resp.StatusCode == 401 && f.setDigestChallenge(resp) {
+		return true, err
+	}
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
+}
+
+// setDigestChallenge stores the digest authentication challenge from a 401
+// response so that later requests can be signed with it.
+//
+// It returns true if the request which produced resp should be retried, now
+// that it can be signed.
+func (f *Fs) setDigestChallenge(resp *http.Response) bool {
+	if f.opt.User == "" && f.opt.Pass == "" {
+		return false
+	}
+	chal, err := digest.FindChallenge(resp.Header)
+	if err != nil || resp.Request == nil {
+		return false
+	}
+	// A request which was signed and still came back 401 means the credentials
+	// are wrong, so signing it again would only repeat it. The exception is a
+	// stale nonce, which is the server asking for a fresh signature.
+	if digest.IsDigest(resp.Request.Header.Get("Authorization")) && !chal.Stale {
+		return false
+	}
+	host := resp.Request.URL.Host
+	f.digestMu.Lock()
+	defer f.digestMu.Unlock()
+	if f.digestChal == nil {
+		fs.Debugf(f, "Server requires digest authentication")
+	}
+	// Only restart the count for a nonce we haven't seen: two requests can be
+	// challenged with the same one at once and must not share a count
+	if f.digestChal == nil || f.digestChal.Nonce != chal.Nonce || f.digestHost != host {
+		f.digestChal = chal
+		f.digestHost = host
+		f.digestCount = 0
+	}
+	return true
+}
+
+// takeDigestChallenge returns the challenge to sign a request to host with
+// and the nonce count to sign it with, or nil if that host hasn't asked for
+// digest authentication.
+//
+// Every call takes the next count, so no two requests are signed with the
+// same one.
+func (f *Fs) takeDigestChallenge(host string) (*digest.Challenge, int) {
+	f.digestMu.Lock()
+	defer f.digestMu.Unlock()
+	// Credentials are only for the host which asked for them, so a redirect
+	// somewhere else is sent unsigned rather than leaking them
+	if f.digestChal == nil || f.digestHost != host {
+		return nil, 0
+	}
+	f.digestCount++
+	return f.digestChal, f.digestCount
+}
+
+// digestRoundTripper signs requests with digest authentication once the
+// server has asked for it.
+//
+// The signature covers the request method and URI, so each request sent needs
+// one of its own - in particular each hop of a redirect. It signs in a
+// RoundTripper rather than using digest.Transport because that reads the
+// whole body into memory to be able to send it twice, which would buffer
+// every uploaded file.
+type digestRoundTripper struct {
+	f  *Fs
+	rt http.RoundTripper
+}
+
+// RoundTrip implements http.RoundTripper
+func (d *digestRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	chal, count := d.f.takeDigestChallenge(req.URL.Host)
+	if chal == nil {
+		return d.rt.RoundTrip(req)
+	}
+	cred, err := digest.Digest(chal, digest.Options{
+		Method:   req.Method,
+		URI:      req.URL.RequestURI(),
+		GetBody:  req.GetBody,
+		Count:    count,
+		Username: d.f.opt.User,
+		Password: d.f.opt.Pass,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to sign request with digest authentication: %w", err)
+	}
+	// RoundTrip must not modify the request it was given
+	req = req.Clone(req.Context())
+	req.Header.Set("Authorization", cred.String())
+	return d.rt.RoundTrip(req)
 }
 
 // safeRoundTripper is a wrapper for http.RoundTripper that serializes
@@ -515,6 +613,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			fs: f,
 			rt: ntlmssp.Negotiator{RoundTripper: t},
 		}
+	} else if opt.User != "" || opt.Pass != "" {
+		// Signs requests if the server turns out to want digest
+		// authentication. NTLM is excluded as its negotiation takes the
+		// credentials from the basic authentication header itself.
+		client.Transport = &digestRoundTripper{f: f, rt: client.Transport}
 	}
 	// Refuse redirects that downgrade HTTPS to plaintext HTTP.
 	client.CheckRedirect = rest.RefuseHTTPSDowngradeRedirectFn

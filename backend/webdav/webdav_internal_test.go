@@ -6,10 +6,14 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 
+	auth "github.com/abbot/go-http-auth"
 	"github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/backend/webdav"
 	"github.com/rclone/rclone/fs"
@@ -19,6 +23,7 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	netwebdav "golang.org/x/net/webdav"
 )
 
 var (
@@ -283,4 +288,175 @@ func TestCopyFallsBackWhenRangeIgnored(t *testing.T) {
 	assert.Positive(t, rangeRequests.Load())
 	assert.LessOrEqual(t, rangeRequests.Load(), int32(3))
 	assert.Equal(t, int32(1), fullRequests.Load())
+}
+
+const (
+	digestUser  = "user"
+	digestPass  = "pass"
+	digestRealm = "rclone"
+)
+
+// digestServer runs a WebDAV server on dir which only accepts digest
+// authentication
+func digestServer(t *testing.T, dir string) *httptest.Server {
+	authenticator := auth.NewDigestAuthenticator(digestRealm, func(user, realm string) string {
+		if user == digestUser {
+			return digestPass
+		}
+		return ""
+	})
+	authenticator.PlainTextSecrets = true
+	handler := &netwebdav.Handler{
+		FileSystem: netwebdav.Dir(dir),
+		LockSystem: netwebdav.NewMemLS(),
+	}
+	ts := httptest.NewServer(authenticator.Wrap(func(w http.ResponseWriter, r *auth.AuthenticatedRequest) {
+		handler.ServeHTTP(w, &r.Request)
+	}))
+	t.Cleanup(ts.Close)
+	return ts
+}
+
+// newDigestFs makes an Fs pointing at ts authenticating with pass
+func newDigestFs(t *testing.T, ts *httptest.Server, pass string) (fs.Fs, error) {
+	configfile.Install()
+	return webdav.NewFs(context.Background(), remoteName, "", configmap.Simple{
+		"type": "webdav",
+		"url":  ts.URL,
+		"user": digestUser,
+		"pass": obscure.MustObscure(pass),
+	})
+}
+
+// TestDigestAuth checks that a server which only accepts digest
+// authentication can be listed
+func TestDigestAuth(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "file.txt"), []byte("hello"), 0600))
+
+	f, err := newDigestFs(t, digestServer(t, dir), digestPass)
+	require.NoError(t, err)
+
+	entries, err := f.List(context.Background(), "")
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
+	assert.Equal(t, "file.txt", entries[0].Remote())
+	assert.Equal(t, int64(5), entries[0].Size())
+}
+
+// TestDigestAuthUpload checks that a file can be uploaded to a server which
+// only accepts digest authentication.
+//
+// The signature covers the request URI but not the body, so the body is
+// streamed rather than held in memory to be sent a second time.
+func TestDigestAuthUpload(t *testing.T) {
+	dir := t.TempDir()
+	f, err := newDigestFs(t, digestServer(t, dir), digestPass)
+	require.NoError(t, err)
+
+	contents := "hello digest"
+	_, err = operations.Rcat(context.Background(), f, "uploaded.txt", io.NopCloser(strings.NewReader(contents)), time.Now(), nil)
+	require.NoError(t, err)
+
+	written, err := os.ReadFile(filepath.Join(dir, "uploaded.txt"))
+	require.NoError(t, err)
+	assert.Equal(t, contents, string(written))
+}
+
+// TestDigestAuthWrongPassword checks that bad credentials fail rather than
+// being retried against the server for ever
+func TestDigestAuthWrongPassword(t *testing.T) {
+	f, err := newDigestFs(t, digestServer(t, t.TempDir()), "wrong")
+	require.NoError(t, err)
+
+	_, err = f.List(context.Background(), "")
+	require.Error(t, err)
+}
+
+// TestDigestAuthStaleNonce checks that a request signed with an expired nonce
+// is signed again with the replacement the server sends
+func TestDigestAuthStaleNonce(t *testing.T) {
+	var requests atomic.Int32
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authorization := r.Header.Get("Authorization")
+		switch n := requests.Add(1); {
+		case n == 1:
+			// Rclone sends basic authentication until it knows better
+			assert.False(t, strings.HasPrefix(authorization, "Digest"), "the first request can't be signed yet")
+			w.Header().Set("WWW-Authenticate", `Digest realm="rclone", nonce="nonce-1", algorithm=MD5, qop="auth"`)
+			w.WriteHeader(http.StatusUnauthorized)
+		case n == 2:
+			assert.Contains(t, authorization, `nonce="nonce-1"`)
+			// The nonce has expired, so ask for a signature made with a new one
+			w.Header().Set("WWW-Authenticate", `Digest realm="rclone", nonce="nonce-2", algorithm=MD5, qop="auth", stale=true`)
+			w.WriteHeader(http.StatusUnauthorized)
+		default:
+			assert.Contains(t, authorization, `nonce="nonce-2"`, "the stale nonce should have been replaced")
+			_, err := fmt.Fprint(w, `<d:multistatus xmlns:d="DAV:"></d:multistatus>`)
+			require.NoError(t, err)
+		}
+	}))
+	defer ts.Close()
+
+	f, err := newDigestFs(t, ts, digestPass)
+	require.NoError(t, err)
+
+	_, err = f.List(context.Background(), "")
+	require.NoError(t, err)
+	assert.Equal(t, int32(3), requests.Load())
+}
+
+// TestBasicAuthNotRetried checks that a 401 from a server which doesn't offer
+// digest authentication is reported straight away
+func TestBasicAuthNotRetried(t *testing.T) {
+	var requests atomic.Int32
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		w.Header().Set("WWW-Authenticate", `Basic realm="rclone"`)
+		w.WriteHeader(http.StatusUnauthorized)
+	}))
+	defer ts.Close()
+
+	f, err := newDigestFs(t, ts, digestPass)
+	require.NoError(t, err)
+
+	_, err = f.List(context.Background(), "")
+	require.Error(t, err)
+	assert.Equal(t, int32(1), requests.Load(), "a 401 without a digest challenge shouldn't be retried")
+}
+
+// TestDigestAuthRedirectToOtherHost checks that a redirect somewhere else is
+// sent unsigned, so the credentials only reach the host which asked for them
+func TestDigestAuthRedirectToOtherHost(t *testing.T) {
+	var otherAuth atomic.Value
+	otherAuth.Store("")
+	other := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		otherAuth.Store(r.Header.Get("Authorization"))
+		_, err := fmt.Fprint(w, `<d:multistatus xmlns:d="DAV:"></d:multistatus>`)
+		require.NoError(t, err)
+	}))
+	defer other.Close()
+
+	var originAuth atomic.Value
+	originAuth.Store("")
+	var requests atomic.Int32
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if requests.Add(1) == 1 {
+			w.Header().Set("WWW-Authenticate", `Digest realm="rclone", nonce="nonce-1", algorithm=MD5, qop="auth"`)
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		originAuth.Store(r.Header.Get("Authorization"))
+		http.Redirect(w, r, other.URL+"/", http.StatusFound)
+	}))
+	defer ts.Close()
+
+	f, err := newDigestFs(t, ts, digestPass)
+	require.NoError(t, err)
+
+	_, err = f.List(context.Background(), "")
+	require.NoError(t, err)
+
+	assert.Contains(t, originAuth.Load(), "Digest ", "the challenging host should be signed")
+	assert.NotContains(t, otherAuth.Load(), "Digest ", "another host shouldn't be sent the credentials")
 }

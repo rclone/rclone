@@ -110,6 +110,25 @@ To copy a local directory to an WebDAV directory called backup
 rclone copy /home/source remote:backup
 ```
 
+### Authentication
+
+When configured with a user name and password rclone uses basic
+authentication. If the server rejects that and asks for digest
+authentication instead, rclone signs the request again using the
+challenge the server sent and uses digest authentication for the rest of
+the session. This needs no configuration.
+
+Note that the first request of a session is still sent using basic
+authentication, so use an `https` URL if you don't want your password to
+be readable on the wire. If that first request is an upload then the
+server rejects it before rclone has the challenge, and rclone sends the
+file again once it can sign it.
+
+Rclone can sign with the `MD5`, `SHA-256`, `SHA-512` and `SHA-512-256`
+algorithms. A server which asks for anything else, `MD5-sess` for
+example, is not supported. Neither is a server offering only
+`qop=auth-int`, which hashes the body of the request into the signature.
+
 ### Modification times and hashes
 
 Plain WebDAV does not support modified times.  However when used with
