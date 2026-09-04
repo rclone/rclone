@@ -162,7 +162,7 @@ at all times. The buffered data is bound to one open file and won't be
 shared.
 
 This flag is a upper limit for the used memory per open file.  The
-buffer will only use memory for data that is downloaded but not not
+buffer will only use memory for data that is downloaded but not
 yet read. If the buffer is empty, only a small amount of memory will
 be used.
 
@@ -217,7 +217,8 @@ longest. This cache flushing strategy is efficient and more relevant
 files are likely to remain cached.
 
 The `--vfs-cache-max-age` will evict files from the cache
-after the set time since last access has passed. The default value of
+after the set time since last access has passed; it is based on access time,
+not on when the file was first added to the cache. The default value of
 1 hour will start evicting files from cache that haven't been accessed
 for 1 hour. When a cached file is accessed the 1 hour timer is reset to 0
 and will wait for 1 more hour before evicting. Specify the time with

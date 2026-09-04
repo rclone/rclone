@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Jul 31, 2026
+% Sep 04, 2026
 
 # NAME
 
@@ -707,7 +707,7 @@ not the rclone developers so it may be out of date. Its current version is as be
 ## Source installation {#source}
 
 Make sure you have git and [Go](https://golang.org/) installed.
-Go version 1.25 or newer is required, the latest release is recommended.
+Go version 1.26 or newer is required, the latest release is recommended.
 You can get it from your package manager, or download it from
 [golang.org/dl](https://golang.org/dl/). Then you can run the following:
 
@@ -5479,12 +5479,12 @@ rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,command=e
 
 ```console
 rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{YYYYMMDD}"
-// Output: stories/The Quick Brown Fox!-20260731
+// Output: stories/The Quick Brown Fox!-20260904
 ```
 
 ```console
 rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{macfriendlytime}"
-// Output: stories/The Quick Brown Fox!-2026-07-31 0340PM
+// Output: stories/The Quick Brown Fox!-2026-09-04 0450PM
 ```
 
 ```console
@@ -7402,6 +7402,11 @@ for all `mount` and `serve` commands on macOS. For details, see [vfs-case-sensit
 
 ### NFS mount
 
+For macOS (and other platforms where this path is supported), prefer the dedicated
+[rclone nfsmount](https://rclone.org/commands/rclone_nfsmount/) command. It starts the NFS server and
+performs the mount for you. `rclone mount` itself still uses FUSE (macFUSE/FUSE-T)
+and does not switch to NFS via a flag.
+
 This method spins up an NFS server using [serve nfs](https://rclone.org/commands/rclone_serve_nfs/)
 command and mounts it to the specified mountpoint. If you run this in background
 mode using |--daemon|, you will need to send SIGTERM signal to the rclone process
@@ -7739,7 +7744,7 @@ at all times. The buffered data is bound to one open file and won't be
 shared.
 
 This flag is a upper limit for the used memory per open file.  The
-buffer will only use memory for data that is downloaded but not not
+buffer will only use memory for data that is downloaded but not
 yet read. If the buffer is empty, only a small amount of memory will
 be used.
 
@@ -7794,7 +7799,8 @@ longest. This cache flushing strategy is efficient and more relevant
 files are likely to remain cached.
 
 The `--vfs-cache-max-age` will evict files from the cache
-after the set time since last access has passed. The default value of
+after the set time since last access has passed; it is based on access time,
+not on when the file was first added to the cache. The default value of
 1 hour will start evicting files from cache that haven't been accessed
 for 1 hour. When a cached file is accessed the 1 hour timer is reset to 0
 and will wait for 1 more hour before evicting. Specify the time with
@@ -8908,6 +8914,11 @@ for all `mount` and `serve` commands on macOS. For details, see [vfs-case-sensit
 
 ### NFS mount
 
+For macOS (and other platforms where this path is supported), prefer the dedicated
+[rclone nfsmount](https://rclone.org/commands/rclone_nfsmount/) command. It starts the NFS server and
+performs the mount for you. `rclone mount` itself still uses FUSE (macFUSE/FUSE-T)
+and does not switch to NFS via a flag.
+
 This method spins up an NFS server using [serve nfs](https://rclone.org/commands/rclone_serve_nfs/)
 command and mounts it to the specified mountpoint. If you run this in background
 mode using |--daemon|, you will need to send SIGTERM signal to the rclone process
@@ -9245,7 +9256,7 @@ at all times. The buffered data is bound to one open file and won't be
 shared.
 
 This flag is a upper limit for the used memory per open file.  The
-buffer will only use memory for data that is downloaded but not not
+buffer will only use memory for data that is downloaded but not
 yet read. If the buffer is empty, only a small amount of memory will
 be used.
 
@@ -9300,7 +9311,8 @@ longest. This cache flushing strategy is efficient and more relevant
 files are likely to remain cached.
 
 The `--vfs-cache-max-age` will evict files from the cache
-after the set time since last access has passed. The default value of
+after the set time since last access has passed; it is based on access time,
+not on when the file was first added to the cache. The default value of
 1 hour will start evicting files from cache that haven't been accessed
 for 1 hour. When a cached file is accessed the 1 hour timer is reset to 0
 and will wait for 1 more hour before evicting. Specify the time with
@@ -10534,7 +10546,7 @@ at all times. The buffered data is bound to one open file and won't be
 shared.
 
 This flag is a upper limit for the used memory per open file.  The
-buffer will only use memory for data that is downloaded but not not
+buffer will only use memory for data that is downloaded but not
 yet read. If the buffer is empty, only a small amount of memory will
 be used.
 
@@ -10589,7 +10601,8 @@ longest. This cache flushing strategy is efficient and more relevant
 files are likely to remain cached.
 
 The `--vfs-cache-max-age` will evict files from the cache
-after the set time since last access has passed. The default value of
+after the set time since last access has passed; it is based on access time,
+not on when the file was first added to the cache. The default value of
 1 hour will start evicting files from cache that haven't been accessed
 for 1 hour. When a cached file is accessed the 1 hour timer is reset to 0
 and will wait for 1 more hour before evicting. Specify the time with
@@ -11210,7 +11223,7 @@ at all times. The buffered data is bound to one open file and won't be
 shared.
 
 This flag is a upper limit for the used memory per open file.  The
-buffer will only use memory for data that is downloaded but not not
+buffer will only use memory for data that is downloaded but not
 yet read. If the buffer is empty, only a small amount of memory will
 be used.
 
@@ -11265,7 +11278,8 @@ longest. This cache flushing strategy is efficient and more relevant
 files are likely to remain cached.
 
 The `--vfs-cache-max-age` will evict files from the cache
-after the set time since last access has passed. The default value of
+after the set time since last access has passed; it is based on access time,
+not on when the file was first added to the cache. The default value of
 1 hour will start evicting files from cache that haven't been accessed
 for 1 hour. When a cached file is accessed the 1 hour timer is reset to 0
 and will wait for 1 more hour before evicting. Specify the time with
@@ -11839,7 +11853,7 @@ at all times. The buffered data is bound to one open file and won't be
 shared.
 
 This flag is a upper limit for the used memory per open file.  The
-buffer will only use memory for data that is downloaded but not not
+buffer will only use memory for data that is downloaded but not
 yet read. If the buffer is empty, only a small amount of memory will
 be used.
 
@@ -11894,7 +11908,8 @@ longest. This cache flushing strategy is efficient and more relevant
 files are likely to remain cached.
 
 The `--vfs-cache-max-age` will evict files from the cache
-after the set time since last access has passed. The default value of
+after the set time since last access has passed; it is based on access time,
+not on when the file was first added to the cache. The default value of
 1 hour will start evicting files from cache that haven't been accessed
 for 1 hour. When a cached file is accessed the 1 hour timer is reset to 0
 and will wait for 1 more hour before evicting. Specify the time with
@@ -12291,9 +12306,10 @@ This config generated must have this extra parameter
 
 - `_root` - root to use for the backend
 
-And it may have this parameter
+And it may have these parameters
 
 - `_obscure` - comma separated strings for parameters to obscure
+- `_secret_access_key` - the secret for S3 access key auth (see below)
 
 If password authentication was used by the client, input to the proxy
 process (on STDIN) would look similar to this:
@@ -12301,7 +12317,8 @@ process (on STDIN) would look similar to this:
 ```json
 {
   "user": "me",
-  "pass": "mypassword"
+  "pass": "mypassword",
+  "client_ip": "192.168.1.1"
 }
 ```
 
@@ -12311,9 +12328,43 @@ proxy process (on STDIN) would look similar to this:
 ```json
 {
   "user": "me",
-  "public_key": "AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf"
+  "public_key": "AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf",
+  "client_ip": "192.168.1.1"
 }
 ```
+
+If the client authenticated with an S3 access key (`rclone serve s3`),
+the client never sends its secret, only a signature made with it, so
+the input contains just the access key ID as the `user` with no `pass`
+or `public_key`:
+
+```json
+{
+  "user": "AKIAIOSFODNN7EXAMPLE",
+  "client_ip": "192.168.1.1"
+}
+```
+
+In this case the program must look up the secret access key for that
+access key ID and return it in the `_secret_access_key` field of the
+output. Rclone then uses that secret to verify the signature on the
+request, refusing the request if it does not match. This means the
+proxy program is the source of truth for both the credentials and the
+backend they map to. If the program does not return
+`_secret_access_key` or returns it empty the request is refused.
+
+The program's answer for an access key ID is cached (see below) but
+is checked with the program again after 5 minutes even if the access
+key ID is in constant use, so revoking an access key ID in the
+program takes effect within 5 minutes. A rotated secret takes effect
+on the first request signed with it.
+
+The `client_ip` key holds the IP address the client connected from,
+without a port number.  It can be used to restrict logins to certain
+networks, or to log authentication attempts centrally.  It is omitted if
+the client has no IP address, for example when connecting over a unix
+socket.  Note that if rclone is behind a reverse proxy this will be the
+address of the reverse proxy and not the original client.
 
 And as an example return this on STDOUT
 
@@ -12340,11 +12391,12 @@ to make proxy to many different sftp backends, you could make the
 in the output and the user to `user`. For security you'd probably want
 to restrict the `host` to a limited list.
 
-An internal cache of backends is keyed on the `user` and a hash of the
-`pass` or `public_key`.  This means that if a user's password or
-public-key changes, or the proxy returns different config parameters
-(eg a rotated `api_key`), a fresh backend will be created on the next
-request rather than the cached one being reused.
+An internal cache of backends is keyed on the `user`, a hash of the
+`pass` or `public_key`, and the `client_ip`.  This means that if a
+user's password or public-key changes, the client connects from a new IP
+address, or the proxy returns different config parameters (eg a rotated
+`api_key`), a fresh backend will be created on the next request rather
+than the cached one being reused.
 
 This can be used to build general purpose proxies to any kind of
 backend that rclone supports.
@@ -12676,7 +12728,7 @@ at all times. The buffered data is bound to one open file and won't be
 shared.
 
 This flag is a upper limit for the used memory per open file.  The
-buffer will only use memory for data that is downloaded but not not
+buffer will only use memory for data that is downloaded but not
 yet read. If the buffer is empty, only a small amount of memory will
 be used.
 
@@ -12731,7 +12783,8 @@ longest. This cache flushing strategy is efficient and more relevant
 files are likely to remain cached.
 
 The `--vfs-cache-max-age` will evict files from the cache
-after the set time since last access has passed. The default value of
+after the set time since last access has passed; it is based on access time,
+not on when the file was first added to the cache. The default value of
 1 hour will start evicting files from cache that haven't been accessed
 for 1 hour. When a cached file is accessed the 1 hour timer is reset to 0
 and will wait for 1 more hour before evicting. Specify the time with
@@ -13128,9 +13181,10 @@ This config generated must have this extra parameter
 
 - `_root` - root to use for the backend
 
-And it may have this parameter
+And it may have these parameters
 
 - `_obscure` - comma separated strings for parameters to obscure
+- `_secret_access_key` - the secret for S3 access key auth (see below)
 
 If password authentication was used by the client, input to the proxy
 process (on STDIN) would look similar to this:
@@ -13138,7 +13192,8 @@ process (on STDIN) would look similar to this:
 ```json
 {
   "user": "me",
-  "pass": "mypassword"
+  "pass": "mypassword",
+  "client_ip": "192.168.1.1"
 }
 ```
 
@@ -13148,9 +13203,43 @@ proxy process (on STDIN) would look similar to this:
 ```json
 {
   "user": "me",
-  "public_key": "AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf"
+  "public_key": "AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf",
+  "client_ip": "192.168.1.1"
 }
 ```
+
+If the client authenticated with an S3 access key (`rclone serve s3`),
+the client never sends its secret, only a signature made with it, so
+the input contains just the access key ID as the `user` with no `pass`
+or `public_key`:
+
+```json
+{
+  "user": "AKIAIOSFODNN7EXAMPLE",
+  "client_ip": "192.168.1.1"
+}
+```
+
+In this case the program must look up the secret access key for that
+access key ID and return it in the `_secret_access_key` field of the
+output. Rclone then uses that secret to verify the signature on the
+request, refusing the request if it does not match. This means the
+proxy program is the source of truth for both the credentials and the
+backend they map to. If the program does not return
+`_secret_access_key` or returns it empty the request is refused.
+
+The program's answer for an access key ID is cached (see below) but
+is checked with the program again after 5 minutes even if the access
+key ID is in constant use, so revoking an access key ID in the
+program takes effect within 5 minutes. A rotated secret takes effect
+on the first request signed with it.
+
+The `client_ip` key holds the IP address the client connected from,
+without a port number.  It can be used to restrict logins to certain
+networks, or to log authentication attempts centrally.  It is omitted if
+the client has no IP address, for example when connecting over a unix
+socket.  Note that if rclone is behind a reverse proxy this will be the
+address of the reverse proxy and not the original client.
 
 And as an example return this on STDOUT
 
@@ -13177,11 +13266,12 @@ to make proxy to many different sftp backends, you could make the
 in the output and the user to `user`. For security you'd probably want
 to restrict the `host` to a limited list.
 
-An internal cache of backends is keyed on the `user` and a hash of the
-`pass` or `public_key`.  This means that if a user's password or
-public-key changes, or the proxy returns different config parameters
-(eg a rotated `api_key`), a fresh backend will be created on the next
-request rather than the cached one being reused.
+An internal cache of backends is keyed on the `user`, a hash of the
+`pass` or `public_key`, and the `client_ip`.  This means that if a
+user's password or public-key changes, the client connects from a new IP
+address, or the proxy returns different config parameters (eg a rotated
+`api_key`), a fresh backend will be created on the next request rather
+than the cached one being reused.
 
 This can be used to build general purpose proxies to any kind of
 backend that rclone supports.
@@ -13456,7 +13546,7 @@ at all times. The buffered data is bound to one open file and won't be
 shared.
 
 This flag is a upper limit for the used memory per open file.  The
-buffer will only use memory for data that is downloaded but not not
+buffer will only use memory for data that is downloaded but not
 yet read. If the buffer is empty, only a small amount of memory will
 be used.
 
@@ -13511,7 +13601,8 @@ longest. This cache flushing strategy is efficient and more relevant
 files are likely to remain cached.
 
 The `--vfs-cache-max-age` will evict files from the cache
-after the set time since last access has passed. The default value of
+after the set time since last access has passed; it is based on access time,
+not on when the file was first added to the cache. The default value of
 1 hour will start evicting files from cache that haven't been accessed
 for 1 hour. When a cached file is accessed the 1 hour timer is reset to 0
 and will wait for 1 more hour before evicting. Specify the time with
@@ -14249,6 +14340,12 @@ docs](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html)).
 `--auth-key` is not provided then `serve s3` will allow anonymous
 access.
 
+Alternatively `--auth-proxy` can be used to look up the secret for each
+access key ID and choose the backend it maps to (see [Auth
+Proxy](#auth-proxy) below). When an auth proxy is in use `--auth-key`
+is ignored and every request must be signed with the secret the proxy
+returns for its access key ID.
+
 Like all rclone flags `--auth-key` can be set via environment
 variables, in this case `RCLONE_AUTH_KEY`. Since this flag can be
 repeated, the input to `RCLONE_AUTH_KEY` is CSV encoded. Because the
@@ -14324,24 +14421,73 @@ access_key_id = ACCESS_KEY_ID
 secret_access_key = SECRET_ACCESS_KEY
 ```
 
+## Object uploads (PUT)
+
+A `PutObject` upload only ever changes the object at its key atomically, on
+success, a failed or interrupted PUT neither removes nor overwrites the
+object already stored at the key, and never leaves a partial object visible
+at it.
+
+Remotes that upload atomically (e.g. object stores such as `s3`) are streamed
+straight to the destination. On remotes where a partial upload would
+otherwise be visible (e.g. `local`), and whenever `--vfs-cache-mode` is
+`writes` or above, the upload is written to a temporary object that is
+renamed into place on success; these remotes need to support a server-side
+move or copy for this (nearly all do - without move or copy the upload is
+written directly and a failed PUT may leave a partial object at the key). If
+`serve s3` is killed part-way through an upload the temporary object (named
+with a leading `.rclone_temp_put_`) may be left behind; it is hidden from
+S3 listings but must be removed manually.
+
 ## Multipart uploads
 
-By default `serve s3` **streams** each multipart upload, in part-number
-order, into a single `PutStream` upload to the underlying remote, so the
-whole file is never buffered in memory - memory use stays bounded by the
-parts in flight. The remote then performs its own internal upload (for
-example its own multipart upload, still with bounded memory). This works
-for any remote that supports `PutStream`, which is nearly all of them,
-including through `crypt`.
-
-The upload is atomic so the destination object only ever changes on a
+Multipart uploads are written, in part-number order, to a temporary
+object which is renamed into place, server-side, on completion, so the
+upload is atomic. The object at the key only ever changes on a
 successful completion. A failed or aborted upload never affects any
-object already stored under that name. Remotes that upload atomically
-already (object stores such as `s3`) are streamed straight to the
-destination. On remotes where a partial upload would otherwise be visible
-(such as `local`), the parts are streamed to a temporary object that is
-moved into place, server-side, on completion; these remotes therefore
-also need to support a server-side move or copy.
+object already stored under that name and a partly-uploaded object
+never becomes visible under it.
+
+With the default `--vfs-cache-mode off` `serve s3` **streams** each
+multipart upload, in part-number order, into a single streaming upload
+to the underlying remote, so the whole file is never buffered in
+memory. Memory use stays bounded by the parts in flight. The remote
+then performs its own internal upload (for example its own multipart
+upload, still with bounded memory). Remotes that don't support
+streaming uploads (those that must know the file size before the
+upload starts, such as `onedrive`, `pcloud`, `jottacloud`, `mailru`,
+`opendrive`, `putio`, `protondrive` and `zoho`) have the parts spooled
+to a temporary file on **local disk** instead, and uploaded with the
+size then known on completion, so they need local disk space for the
+largest objects in flight rather than memory.
+
+With `--vfs-cache-mode writes` (or `full`) the parts are written to a
+temporary file in the VFS cache and uploaded by the VFS write-back -
+see [Multipart uploads and the VFS
+cache](#multipart-uploads-and-the-vfs-cache) below.
+
+The rename into place needs the remote to support a server-side move
+or copy, which nearly all do. It is a cheap rename on most remotes,
+but on object stores without a real rename (such as `s3` itself) the
+move is performed as a server-side copy and delete of the whole
+object, which can take time and API calls for large objects.
+Concurrent multipart uploads of the same key (which S3 permits) are
+safe. Each writes its own temporary object and the last to complete
+wins.
+
+On the few remotes that support neither server side move nor copy, the
+parts are written straight to the destination object instead and never
+buffered in memory. This is at some cost in atomicity - the incomplete
+object is visible under its final name while the upload is in flight,
+as it also is for a plain object PUT on such remotes, and concurrent
+multipart uploads of the same key write to the same object and can
+interleave. A failed or aborted upload still leaves any pre-existing
+object untouched provided the remote uploads atomically and the VFS
+cache is off; on a remote where partial uploads are visible it may
+leave partial data at the key (like a plain PUT there), and with
+`--vfs-cache-mode writes` (or `full`) a write to the cache cannot be
+abandoned, so an aborted upload's partial data is written back to the
+remote as if it had completed.
 
 **Features**
 
@@ -14356,10 +14502,14 @@ also need to support a server-side move or copy.
   as one continuous stream.
 - The destination object only ever changes atomically, on completion: an
   aborted or failed upload leaves any pre-existing object of the same
-  name untouched, and a partly-uploaded object never becomes visible.
-- Backend-agnostic - it only needs the remote to support `PutStream`
-  (plus a server-side move or copy on remotes that don't upload
-  atomically).
+  name untouched, and a partly-uploaded object never becomes visible
+  (except on the few remotes with no server-side move or copy, as
+  above).
+- Multipart uploads go through the VFS like any other upload, so they
+  show in rclone's transfer stats and obey `--bwlimit`.
+- Backend-agnostic - it only needs the remote to support a server-side
+  move or copy for the rename into place, which nearly all do; a remote
+  without streaming upload support spools to local disk as above.
 
 **Limitations**
 
@@ -14385,31 +14535,121 @@ also need to support a server-side move or copy.
   upload and the client must start it again. (The remote's own upload
   still retries its internal chunks.)
 - Parts are serialised into one stream, so ingest from the client is
-  effectively single-threaded, although the remote's own upload still
-  runs concurrently.
-- On remotes that don't upload atomically (such as `local`), the
-  completed object is moved into place with a server-side operation.
-  This is a cheap rename on most such remotes. On these remotes, if
-  `serve s3` is killed part-way through an upload the temporary object
-  (named with a leading `.rclone_multipart_upload_`) may be left behind;
-  it is hidden from S3 listings but must be removed manually.
+  effectively single-threaded. When streaming, the remote's own upload
+  runs concurrently with the parts arriving; with the local disk spool
+  or the VFS cache the upload to the remote only starts on completion.
+- If `serve s3` is killed part-way through an upload the temporary
+  object (named with a leading `.rclone_temp_multipart_`) may be left
+  behind; it is hidden from S3 listings but must be removed manually.
+
+### Multipart uploads and the VFS cache
+
+With `--vfs-cache-mode writes` (or `full`) multipart uploads do not
+stream to the remote at all. The parts are written, in part-number
+order, to a temporary file in the VFS cache. On completion the file is
+renamed into place and uploaded by the VFS write-back, exactly like a
+plain object PUT. This needs no streaming upload support from the
+remote. The rename normally happens in the cache before the upload has
+started, but the VFS requires the remote to support a server-side move
+or copy to rename files at all (and uses one if the temporary file has
+already been written back, e.g. with `--vfs-write-back 0`). On remotes
+without either, the parts are written to the cache directly under the
+final key instead: the upload still never touches memory, but it loses
+its atomicity - the in-flight upload is visible at the key, and an
+aborted upload cannot be abandoned once in the cache, so its partial
+data is written back to the remote as if it were a completed object.
+
+Remotes that benefit from `--vfs-cache-mode writes`:
+
+- **Remotes over slow or unreliable links.** A failure in a streamed
+  upload aborts the whole multipart upload and the client must start
+  again from the first part; a failed write-back upload is retried by
+  the VFS (see `--vfs-cache-max-age` and friends) without the client
+  being involved. Ingest from the client also runs at local disk speed
+  rather than being throttled to the remote's pace.
+- **Workloads that read back or overwrite what they just wrote.** The
+  completed object stays in the cache, so subsequent `GET`/`HEAD`
+  requests are served locally, and plain PUTs and multipart uploads to
+  the same key go through the same cache entry so the last write wins
+  regardless of upload style.
+
+The trade-offs of the VFS cache:
+
+- The whole object lands on local disk, so the cache (`--cache-dir`)
+  needs space for the largest objects in flight; `--vfs-cache-max-size`
+  cannot evict files which are still being uploaded.
+- The `200 OK` for `CompleteMultipartUpload` means the data is safely
+  in the **local cache**, not yet on the remote - the same durability
+  the cache gives plain PUTs. If an acknowledgement must mean the data
+  has reached the remote (for example WAL archiving), use the default
+  `--vfs-cache-mode off`.
+- The upload to the remote only starts on completion, rather than
+  overlapping with the parts arriving, so the data reaches the remote
+  later than with streaming.
+- If `serve s3` is killed part-way through an upload, the temporary
+  file survives in the cache and the VFS cache recovery uploads it to
+  the remote on restart as a temporary object (named with a leading
+  `.rclone_temp_multipart_`); as with the streaming path, it is
+  hidden from S3 listings but must be removed manually.
+
+### Cleaning up temporary objects
+
+If `serve s3` is killed part-way through an upload it can leave a
+temporary object behind, named with a leading `.rclone_temp_`. This
+whole prefix is reserved: any object whose name (the last
+`/`-separated segment of its key) starts with `.rclone_temp_` is
+hidden from S3 listings, so don't give real objects such names - an
+existing object with such a name disappears from listings (though it
+stays accessible directly by its key: only listings hide reserved
+names, `GET`, `HEAD` and `DELETE` of the exact key still work). A
+temporary object never holds acknowledged data - uploads whose
+temporary object survived were never confirmed to the client - so old
+ones are safe to delete:
+
+    rclone delete --min-age 24h --include ".rclone_temp_*" remote:path
+
+The `--min-age` protects uploads which are still in progress: make sure
+it is longer than your longest upload, especially if several `serve s3`
+instances share the same remote.
+
+rclone v1.75 named its temporary multipart objects
+`.rclone_multipart_upload_*`; leftovers from an older server are also
+hidden from listings and can be cleaned up the same way.
+
+### Abandoned uploads
+
+A client which starts a multipart upload and vanishes without either
+completing or aborting it would otherwise hold on to its resources
+forever.
+
+An incomplete multipart upload which has had no activity for
+`--multipart-expiry` (default `24h`) is therefore aborted and cleaned
+up, exactly as if the client had called `AbortMultipartUpload`, and a
+`NOTICE` is logged.
+
+An upload with a part still being received is never expired, however
+slowly the part is arriving, and each completed part restarts the
+clock, so the expiry only needs to outlast the client's pauses
+*between* parts, not the whole upload.
+
+Late operations on an expired upload fail with `NoSuchUpload`, as they
+do on real S3 when a lifecycle rule has aborted the upload. Set
+`--multipart-expiry 0` to keep incomplete uploads forever.
 
 ### Disabling streaming
 
-If you pass `--disable-multipart-streaming`, or the remote doesn't
-support `PutStream` (or doesn't upload atomically and can't move or copy
-server-side), multipart uploads are instead **buffered in memory**
-by the underlying S3 library: every part is held in memory and the whole
-object is written out in one go when the upload completes (the previous
-behaviour). This removes the in-order/contiguous-part restriction above,
-so parts can be uploaded in any order, but **memory use grows with the
-size of the upload**, so it is only suitable for small objects. A one-off
-`NOTICE` is logged the first time this happens.
-
-Alternatively, if the client is an rclone `s3` remote (like the
-`[serves3]` example above), you can set `use_multipart_uploads = false`
-on it so it uploads each object as a single stream and skips multipart
-uploads altogether.
+If you pass `--disable-multipart-streaming`, multipart uploads are
+instead **buffered in memory** by the underlying S3 library: every
+part is held in memory and the whole object is written out in one go
+when the upload completes. This removes the in-order/contiguous-part
+restriction above, so parts can be uploaded in any order, but **memory
+use grows with the size of the upload**, so it is only suitable for
+small objects. A one-off `NOTICE` is logged the first time this
+happens. This flag is the only thing that makes multipart uploads
+buffer in memory - it is never done because of missing remote
+capabilities. Consider `--vfs-cache-mode writes` instead, which
+buffers the upload in the VFS cache on disk and takes precedence over
+`--disable-multipart-streaming`.
 
 ## Bugs
 
@@ -14659,7 +14899,7 @@ at all times. The buffered data is bound to one open file and won't be
 shared.
 
 This flag is a upper limit for the used memory per open file.  The
-buffer will only use memory for data that is downloaded but not not
+buffer will only use memory for data that is downloaded but not
 yet read. If the buffer is empty, only a small amount of memory will
 be used.
 
@@ -14714,680 +14954,8 @@ longest. This cache flushing strategy is efficient and more relevant
 files are likely to remain cached.
 
 The `--vfs-cache-max-age` will evict files from the cache
-after the set time since last access has passed. The default value of
-1 hour will start evicting files from cache that haven't been accessed
-for 1 hour. When a cached file is accessed the 1 hour timer is reset to 0
-and will wait for 1 more hour before evicting. Specify the time with
-standard notation, s, m, h, d, w .
-
-You **should not** run two copies of rclone using the same VFS cache
-with the same or overlapping remotes if using `--vfs-cache-mode > off`.
-This can potentially cause data corruption if you do. You can work
-around this by giving each rclone its own cache hierarchy with
-`--cache-dir`. You don't need to worry about this if the remotes in
-use don't overlap.
-
-### --vfs-cache-mode off
-
-In this mode (the default) the cache will read directly from the remote and write
-directly to the remote without caching anything on disk.
-
-This will mean some operations are not possible
-
-- Files can't be opened for both read AND write
-- Files opened for write can't be seeked
-- Existing files opened for write must have O_TRUNC set
-- Files open for read with O_TRUNC will be opened write only
-- Files open for write only will behave as if O_TRUNC was supplied
-- Open modes O_APPEND, O_TRUNC are ignored
-- If an upload fails it can't be retried
-
-### --vfs-cache-mode minimal
-
-This is very similar to "off" except that files opened for read AND
-write will be buffered to disk.  This means that files opened for
-write will be a lot more compatible, but uses the minimal disk space.
-
-These operations are not possible
-
-- Files opened for write only can't be seeked
-- Existing files opened for write must have O_TRUNC set
-- Files opened for write only will ignore O_APPEND, O_TRUNC
-- If an upload fails it can't be retried
-
-### --vfs-cache-mode writes
-
-In this mode files opened for read only are still read directly from
-the remote, write only and read/write files are buffered to disk
-first.
-
-This mode should support all normal file system operations.
-
-If an upload fails it will be retried at exponentially increasing
-intervals up to 1 minute.
-
-### --vfs-cache-mode full
-
-In this mode all reads and writes are buffered to and from disk. When
-data is read from the remote this is buffered to disk as well.
-
-In this mode the files in the cache will be sparse files and rclone
-will keep track of which bits of the files it has downloaded.
-
-So if an application only reads the starts of each file, then rclone
-will only buffer the start of the file. These files will appear to be
-their full size in the cache, but they will be sparse files with only
-the data that has been downloaded present in them.
-
-This mode should support all normal file system operations and is
-otherwise identical to `--vfs-cache-mode` writes.
-
-When reading a file rclone will read `--buffer-size` plus
-`--vfs-read-ahead` bytes ahead.  The `--buffer-size` is buffered in memory
-whereas the `--vfs-read-ahead` is buffered on disk.
-
-When using this mode it is recommended that `--buffer-size` is not set
-too large and `--vfs-read-ahead` is set large if required.
-
-**IMPORTANT** not all file systems support sparse files. In particular
-FAT/exFAT do not. Rclone will perform very badly if the cache
-directory is on a filesystem which doesn't support sparse files and it
-will log an ERROR message if one is detected.
-
-### Fingerprinting
-
-Various parts of the VFS use fingerprinting to see if a local file
-copy has changed relative to a remote file. Fingerprints are made
-from:
-
-- size
-- modification time
-- hash
-
-where available on an object.
-
-On some backends some of these attributes are slow to read (they take
-an extra API call per object, or extra work per object).
-
-For example `hash` is slow with the `local` and `sftp` backends as
-they have to read the entire file and hash it, and `modtime` is slow
-with the `s3`, `swift`, `ftp` and `qinqstor` backends because they
-need to do an extra API call to fetch it.
-
-If you use the `--vfs-fast-fingerprint` flag then rclone will not
-include the slow operations in the fingerprint. This makes the
-fingerprinting less accurate but much faster and will improve the
-opening time of cached files.
-
-If you are running a vfs cache over `local`, `s3` or `swift` backends
-then using this flag is recommended.
-
-Note that if you change the value of this flag, the fingerprints of
-the files in the cache may be invalidated and the files will need to
-be downloaded again.
-
-## VFS Chunked Reading
-
-When rclone reads files from a remote it reads them in chunks. This
-means that rather than requesting the whole file rclone reads the
-chunk specified.  This can reduce the used download quota for some
-remotes by requesting only chunks from the remote that are actually
-read, at the cost of an increased number of requests.
-
-These flags control the chunking:
-
-```text
-    --vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
-    --vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
-    --vfs-read-chunk-streams int            The number of parallel streams to read at once
-```
-
-The chunking behaves differently depending on the `--vfs-read-chunk-streams` parameter.
-
-### `--vfs-read-chunk-streams` == 0
-
-Rclone will start reading a chunk of size `--vfs-read-chunk-size`,
-and then double the size for each read. When `--vfs-read-chunk-size-limit` is
-specified, and greater than `--vfs-read-chunk-size`, the chunk size for each
-open file will get doubled only until the specified value is reached. If the
-value is "off", which is the default, the limit is disabled and the chunk size
-will grow indefinitely.
-
-With `--vfs-read-chunk-size 100M` and `--vfs-read-chunk-size-limit 0`
-the following parts will be downloaded: 0-100M, 100M-200M, 200M-300M, 300M-400M
-and so on. When `--vfs-read-chunk-size-limit 500M` is specified, the result would
-be 0-100M, 100M-300M, 300M-700M, 700M-1200M, 1200M-1700M and so on.
-
-Setting `--vfs-read-chunk-size` to `0` or "off" disables chunked reading.
-
-The chunks will not be buffered in memory.
-
-### `--vfs-read-chunk-streams` > 0
-
-Rclone reads `--vfs-read-chunk-streams` chunks of size
-`--vfs-read-chunk-size` concurrently. The size for each read will stay
-constant.
-
-This improves performance performance massively on high latency links
-or very high bandwidth links to high performance object stores.
-
-Some experimentation will be needed to find the optimum values of
-`--vfs-read-chunk-size` and `--vfs-read-chunk-streams` as these will
-depend on the backend in use and the latency to the backend.
-
-For high performance object stores (eg AWS S3) a reasonable place to
-start might be `--vfs-read-chunk-streams 16` and
-`--vfs-read-chunk-size 4M`. In testing with AWS S3 the performance
-scaled roughly as the `--vfs-read-chunk-streams` setting.
-
-Similar settings should work for high latency links, but depending on
-the latency they may need more `--vfs-read-chunk-streams` in order to
-get the throughput.
-
-## VFS Performance
-
-These flags may be used to enable/disable features of the VFS for
-performance or other reasons. See also the [chunked reading](#vfs-chunked-reading)
-feature.
-
-In particular S3 and Swift benefit hugely from the `--no-modtime` flag
-(or use `--use-server-modtime` for a slightly different effect) as each
-read of the modification time takes a transaction.
-
-```text
-    --no-checksum     Don't compare checksums on up/download.
-    --no-modtime      Don't read/write the modification time (can speed things up).
-    --no-seek         Don't allow seeking in files.
-    --read-only       Only allow read-only access.
-```
-
-Sometimes rclone is delivered reads or writes out of order. Rather
-than seeking rclone will wait a short time for the in sequence read or
-write to come in. These flags only come into effect when not using an
-on disk cache file.
-
-```text
-    --vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
-    --vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
-```
-
-When using VFS write caching (`--vfs-cache-mode` with value writes or full),
-the global flag `--transfers` can be set to adjust the number of parallel uploads
-of modified files from the cache (the related global flag `--checkers` has no
-effect on the VFS).
-
-```text
-    --transfers int  Number of file transfers to run in parallel (default 4)
-```
-
-## Symlinks
-
-By default the VFS does not support symlinks. However this may be
-enabled with either of the following flags:
-
-```text
-    --links      Translate symlinks to/from regular files with a '.rclonelink' extension.
-    --vfs-links  Translate symlinks to/from regular files with a '.rclonelink' extension for the VFS
-```
-
-As most cloud storage systems do not support symlinks directly, rclone
-stores the symlink as a normal file with a special extension. So a
-file which appears as a symlink `link-to-file.txt` would be stored on
-cloud storage as `link-to-file.txt.rclonelink` and the contents would
-be the path to the symlink destination.
-
-Note that `--links` enables symlink translation globally in rclone -
-this includes any backend which supports the concept (for example the
-local backend). `--vfs-links` just enables it for the VFS layer.
-
-This scheme is compatible with that used by the
-[local backend with the --local-links flag](https://rclone.org/local/#symlinks-junction-points).
-
-The `--vfs-links` flag has been designed for `rclone mount`, `rclone
-nfsmount` and `rclone serve nfs`.
-
-It hasn't been tested with the other `rclone serve` commands yet.
-
-A limitation of the current implementation is that it expects the
-caller to resolve sub-symlinks. For example given this directory tree
-
-```text
-.
-├── dir
-│   └── file.txt
-└── linked-dir -> dir
-```
-
-The VFS will correctly resolve `linked-dir` but not
-`linked-dir/file.txt`. This is not a problem for the tested commands
-but may be for other commands.
-
-**Note** that there is an outstanding issue with symlink support
-[issue #8245](https://github.com/rclone/rclone/issues/8245) with duplicate
-files being created when symlinks are moved into directories where
-there is a file of the same name (or vice versa).
-
-## VFS Case Sensitivity
-
-Linux file systems are case-sensitive: two files can differ only
-by case, and the exact case must be used when opening a file.
-
-File systems in modern Windows are case-insensitive but case-preserving:
-although existing files can be opened using any case, the exact case used
-to create the file is preserved and available for programs to query.
-It is not allowed for two files in the same directory to differ only by case.
-
-Usually file systems on macOS are case-insensitive. It is possible to make macOS
-file systems case-sensitive but that is not the default.
-
-The `--vfs-case-insensitive` VFS flag controls how rclone handles these
-two cases. If its value is "false", rclone passes file names to the remote
-as-is. If the flag is "true" (or appears without a value on the
-command line), rclone may perform a "fixup" as explained below.
-
-The user may specify a file name to open/delete/rename/etc with a case
-different than what is stored on the remote. If an argument refers
-to an existing file with exactly the same name, then the case of the existing
-file on the disk will be used. However, if a file name with exactly the same
-name is not found but a name differing only by case exists, rclone will
-transparently fixup the name. This fixup happens only when an existing file
-is requested. Case sensitivity of file names created anew by rclone is
-controlled by the underlying remote.
-
-Note that case sensitivity of the operating system running rclone (the target)
-may differ from case sensitivity of a file system presented by rclone (the source).
-The flag controls whether "fixup" is performed to satisfy the target.
-
-If the flag is not provided on the command line, then its default value depends
-on the operating system where rclone runs: "true" on Windows and macOS, "false"
-otherwise. If the flag is provided without a value, then it is "true".
-
-The `--no-unicode-normalization` flag controls whether a similar "fixup" is
-performed for filenames that differ but are [canonically
-equivalent](https://en.wikipedia.org/wiki/Unicode_equivalence) with respect to
-unicode. Unicode normalization can be particularly helpful for users of macOS,
-which prefers form NFD instead of the NFC used by most other platforms. It is
-therefore highly recommended to keep the default of `false` on macOS, to avoid
-encoding compatibility issues.
-
-In the (probably unlikely) event that a directory has multiple duplicate
-filenames after applying case and unicode normalization, the `--vfs-block-norm-dupes`
-flag allows hiding these duplicates. This comes with a performance tradeoff, as
-rclone will have to scan the entire directory for duplicates when listing a
-directory. For this reason, it is recommended to leave this disabled if not
-needed. However, macOS users may wish to consider using it, as otherwise, if a
-remote directory contains both NFC and NFD versions of the same filename, an odd
-situation will occur: both versions of the file will be visible in the mount,
-and both will appear to be editable, however, editing either version will
-actually result in only the NFD version getting edited under the hood. `--vfs-block-
-norm-dupes` prevents this confusion by detecting this scenario, hiding the
-duplicates, and logging an error, similar to how this is handled in `rclone
-sync`.
-
-## VFS Disk Options
-
-This flag allows you to manually set the statistics about the filing system.
-It can be useful when those statistics cannot be read correctly automatically.
-
-```text
-    --vfs-disk-space-total-size    Manually set the total disk space size (example: 256G, default: -1)
-```
-
-## Alternate report of used bytes
-
-Some backends, most notably S3, do not report the amount of bytes used.
-If you need this information to be available when running `df` on the
-filesystem, then pass the flag `--vfs-used-is-size` to rclone.
-With this flag set, instead of relying on the backend to report this
-information, rclone will scan the whole remote similar to `rclone size`
-and compute the total used space itself.
-
-**WARNING**: Contrary to `rclone size`, this flag ignores filters so that the
-result is accurate. However, this is very inefficient and may cost lots of API
-calls resulting in extra charges. Use it as a last resort and only with caching.
-
-## VFS Metadata
-
-If you use the `--vfs-metadata-extension` flag you can get the VFS to
-expose files which contain the [metadata](https://rclone.org/docs/#metadata) as a JSON
-blob. These files will not appear in the directory listing, but can be
-`stat`-ed and opened and once they have been they **will** appear in
-directory listings until the directory cache expires.
-
-Note that some backends won't create metadata unless you pass in the
-`--metadata` flag.
-
-For example, using `rclone mount` with `--metadata --vfs-metadata-extension .metadata`
-we get
-
-```console
-$ ls -l /mnt/
-total 1048577
--rw-rw-r-- 1 user user 1073741824 Mar  3 16:03 1G
-
-$ cat /mnt/1G.metadata
-{
-        "atime": "2025-03-04T17:34:22.317069787Z",
-        "btime": "2025-03-03T16:03:37.708253808Z",
-        "gid": "1000",
-        "mode": "100664",
-        "mtime": "2025-03-03T16:03:39.640238323Z",
-        "uid": "1000"
-}
-
-$ ls -l /mnt/
-total 1048578
--rw-rw-r-- 1 user user 1073741824 Mar  3 16:03 1G
--rw-rw-r-- 1 user user        185 Mar  3 16:03 1G.metadata
-```
-
-If the file has no metadata it will be returned as `{}` and if there
-is an error reading the metadata the error will be returned as
-`{"error":"error string"}`.
-
-```
-rclone serve s3 remote:path [flags]
-```
-
-## Options
-
-```
-      --addr stringArray                              IPaddress:Port or :Port to bind server to (default 127.0.0.1:8080)
-      --allow-origin string                           Origin which cross-domain request (CORS) can be executed from
-      --auth-key stringArray                          Set key pair for v4 authorization: access_key_id,secret_access_key
-      --auth-proxy string                             A program to use to create the backend from the auth
-      --baseurl string                                Prefix for URLs - leave blank for root
-      --cert string                                   TLS PEM key (concatenation of certificate and CA certificate)
-      --client-ca string                              Client certificate authority to verify clients with
-      --dir-cache-time Duration                       Time to cache directory entries for (default 5m0s)
-      --dir-perms FileMode                            Directory permissions (default 777)
-      --disable-multipart-streaming                   Buffer multipart uploads in memory instead of streaming them to the backend (see the Multipart uploads docs section)
-      --etag-hash string                              Which hash to use for the ETag, or auto or blank for off (default "MD5")
-      --file-perms FileMode                           File permissions (default 666)
-      --force-path-style                              If true use path style access if false use virtual hosted style (default true)
-      --gid uint32                                    Override the gid field set by the filesystem (not supported on Windows) (default 1000)
-  -h, --help                                          help for s3
-      --htpasswd string                               A htpasswd file - if not provided no authentication is done
-      --key string                                    TLS PEM Private key
-      --link-perms FileMode                           Link permissions (default 666)
-      --max-header-bytes int                          Maximum size of request header (default 4096)
-      --min-tls-version string                        Minimum TLS version that is acceptable (default "tls1.0")
-      --multipart-streaming-buffer-limit SizeSuffix   Maximum memory buffered per streamed multipart upload for parts arriving out of order, 0 for unlimited (see the Multipart uploads docs section) (default 256Mi)
-      --no-checksum                                   Don't compare checksums on up/download
-      --no-cleanup                                    Not to cleanup empty folder after object is deleted
-      --no-modtime                                    Don't read/write the modification time (can speed things up)
-      --no-seek                                       Don't allow seeking in files
-      --pass string                                   Password for authentication
-      --poll-interval Duration                        Time to wait between polling for changes, must be smaller than dir-cache-time and only on supported remotes (set 0 to disable) (default 1m0s)
-      --read-only                                     Only allow read-only access
-      --realm string                                  Realm for authentication
-      --response-header stringArray                   Set HTTP header for all responses, overriding existing values
-      --salt string                                   Password hashing salt (default "dlPL2MqE")
-      --server-read-timeout Duration                  Timeout for server reading data (default 1h0m0s)
-      --server-write-timeout Duration                 Timeout for server writing data (default 1h0m0s)
-      --uid uint32                                    Override the uid field set by the filesystem (not supported on Windows) (default 1000)
-      --umask FileMode                                Override the permission bits set by the filesystem (not supported on Windows) (default 002)
-      --user string                                   User name for authentication
-      --user-from-header string                       User name from a defined HTTP header
-      --vfs-block-norm-dupes                          If duplicate filenames exist in the same directory (after normalization), log an error and hide the duplicates (may have a performance cost)
-      --vfs-cache-max-age Duration                    Max time since last access of objects in the cache (default 1h0m0s)
-      --vfs-cache-max-size SizeSuffix                 Max total size of objects in the cache (default off)
-      --vfs-cache-min-free-space SizeSuffix           Target minimum free space on the disk containing the cache (default off)
-      --vfs-cache-mode CacheMode                      Cache mode off|minimal|writes|full (default off)
-      --vfs-cache-poll-interval Duration              Interval to poll the cache for stale objects (default 1m0s)
-      --vfs-case-insensitive                          If a file name not found, find a case insensitive match
-      --vfs-disk-space-total-size SizeSuffix          Specify the total space of disk (default off)
-      --vfs-fast-fingerprint                          Use fast (less accurate) fingerprints for change detection
-      --vfs-handle-caching Duration                   Time to keep file handle and downloaders alive after last close (default 5s)
-      --vfs-links                                     Translate symlinks to/from regular files with a '.rclonelink' extension for the VFS
-      --vfs-metadata-extension string                 Set the extension to read metadata from
-      --vfs-read-ahead SizeSuffix                     Extra read ahead over --buffer-size when using cache-mode full
-      --vfs-read-chunk-size SizeSuffix                Read the source objects in chunks (default 128Mi)
-      --vfs-read-chunk-size-limit SizeSuffix          If greater than --vfs-read-chunk-size, double the chunk size after each chunk read, until the limit is reached ('off' is unlimited) (default off)
-      --vfs-read-chunk-streams int                    The number of parallel streams to read at once
-      --vfs-read-wait Duration                        Time to wait for in-sequence read before seeking (default 20ms)
-      --vfs-refresh                                   Refreshes the directory cache recursively in the background on start
-      --vfs-used-is-size rclone size                  Use the rclone size algorithm for Used size
-      --vfs-write-back Duration                       Time to writeback files after last use when using cache (default 5s)
-      --vfs-write-wait Duration                       Time to wait for in-sequence write before giving error (default 1s)
-```
-
-Options shared with other commands are described next.
-See the [global flags page](https://rclone.org/flags/) for global options not listed here.
-
-### Filter Options
-
-Flags for filtering directory listings
-
-```text
-      --delete-excluded                     Delete files on dest excluded from sync
-      --exclude stringArray                 Exclude files matching pattern
-      --exclude-from stringArray            Read file exclude patterns from file (use - to read from stdin)
-      --exclude-if-present stringArray      Exclude directories if filename is present
-      --files-from stringArray              Read list of source-file names from file (use - to read from stdin)
-      --files-from-raw stringArray          Read list of source-file names from file without any processing of lines (use - to read from stdin)
-      --files-from0 stringArray             Read list of source-file names from file using NUL as separator (use - to read from stdin)
-  -f, --filter stringArray                  Add a file filtering rule
-      --filter-from stringArray             Read file filtering patterns from a file (use - to read from stdin)
-      --hash-filter string                  Partition filenames by hash k/n or randomly @/n
-      --ignore-case                         Ignore case in filters (case insensitive)
-      --include stringArray                 Include files matching pattern
-      --include-from stringArray            Read file include patterns from file (use - to read from stdin)
-      --max-age Duration                    Only transfer files younger than this in s or suffix ms|s|m|h|d|w|M|y (default off)
-      --max-depth int                       If set limits the recursion depth to this (default -1)
-      --max-size SizeSuffix                 Only transfer files smaller than this in KiB or suffix B|K|M|G|T|P (default off)
-      --metadata-exclude stringArray        Exclude metadatas matching pattern
-      --metadata-exclude-from stringArray   Read metadata exclude patterns from file (use - to read from stdin)
-      --metadata-filter stringArray         Add a metadata filtering rule
-      --metadata-filter-from stringArray    Read metadata filtering patterns from a file (use - to read from stdin)
-      --metadata-include stringArray        Include metadatas matching pattern
-      --metadata-include-from stringArray   Read metadata include patterns from file (use - to read from stdin)
-      --min-age Duration                    Only transfer files older than this in s or suffix ms|s|m|h|d|w|M|y (default off)
-      --min-size SizeSuffix                 Only transfer files bigger than this in KiB or suffix B|K|M|G|T|P (default off)
-```
-
-## See Also
-
-<!-- markdownlint-capture -->
-<!-- markdownlint-disable ul-style line-length -->
-
-* [rclone serve](https://rclone.org/commands/rclone_serve/)	 - Serve a remote over a protocol.
-
-
-<!-- markdownlint-restore -->
-
-# rclone serve sftp
-
-Serve the remote over SFTP.
-
-## Synopsis
-
-Run an SFTP server to serve a remote over SFTP. This can be used
-with an SFTP client or you can make a remote of type [sftp](/sftp) to use with it.
-
-You can use the [filter](/filtering) flags (e.g. `--include`, `--exclude`)
-to control what is served.
-
-The server will respond to a small number of shell commands, mainly
-md5sum, sha1sum and df, which enable it to provide support for checksums
-and the about feature when accessed from an sftp remote.
-
-Note that this server uses standard 32 KiB packet payload size, which
-means you must not configure the client to expect anything else, e.g.
-with the [chunk_size](https://rclone.org/sftp/#sftp-chunk-size) option on an sftp remote.
-
-The server will log errors.  Use `-v` to see access logs.
-
-`--bwlimit` will be respected for file transfers.
-Use `--stats` to control the stats printing.
-
-You must provide some means of authentication, either with
-`--user`/`--pass`, an authorized keys file (specify location with
-`--authorized-keys` - the default is the same as ssh), an
-`--auth-proxy`, or set the `--no-auth` flag for no
-authentication when logging in.
-
-If you don't supply a host `--key` then rclone will generate rsa, ecdsa
-and ed25519 variants, and cache them for later use in rclone's cache
-directory (see `rclone help flags cache-dir`) in the "serve-sftp"
-directory.
-
-By default the server binds to localhost:2022 - if you want it to be
-reachable externally then supply `--addr :2022` for example.
-
-This also supports being run with socket activation, in which case it will
-listen on the first passed FD.
-It can be configured with .socket and .service unit files as described in
-<https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html>.
-
-Socket activation can be tested ad-hoc with the `systemd-socket-activate`command:
-
-```console
-systemd-socket-activate -l 2222 -- rclone serve sftp :local:vfs/
-```
-
-This will socket-activate rclone on the first connection to port 2222 over TCP.
-
-Note that the default of `--vfs-cache-mode off` is fine for the rclone
-sftp backend, but it may not be with other SFTP clients.
-
-If `--stdio` is specified, rclone will serve SFTP over stdio, which can
-be used with sshd via ~/.ssh/authorized_keys, for example:
-
-```text
-restrict,command="rclone serve sftp --stdio ./photos" ssh-rsa ...
-```
-
-On the client you need to set `--transfers 1` when using `--stdio`.
-Otherwise multiple instances of the rclone server are started by OpenSSH
-which can lead to "corrupted on transfer" errors. This is the case because
-the client chooses indiscriminately which server to send commands to while
-the servers all have different views of the state of the filing system.
-
-The "restrict" in authorized_keys prevents SHA1SUMs and MD5SUMs from being
-used. Omitting "restrict" and using  `--sftp-path-override` to enable
-checksumming is possible but less secure and you could use the SFTP server
-provided by OpenSSH in this case.
-
-## VFS - Virtual File System
-
-This command uses the VFS layer. This adapts the cloud storage objects
-that rclone uses into something which looks much more like a disk
-filing system.
-
-Cloud storage objects have lots of properties which aren't like disk
-files - you can't extend them or write to the middle of them, so the
-VFS layer has to deal with that. Because there is no one right way of
-doing this there are various options explained below.
-
-The VFS layer also implements a directory cache - this caches info
-about files and directories (but not the data) in memory.
-
-## VFS Directory Cache
-
-Using the `--dir-cache-time` flag, you can control how long a
-directory should be considered up to date and not refreshed from the
-backend. Changes made through the VFS will appear immediately or
-invalidate the cache.
-
-```text
-    --dir-cache-time duration   Time to cache directory entries for (default 5m0s)
-    --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)
-```
-
-However, changes made directly on the cloud storage by the web
-interface or a different copy of rclone will only be picked up once
-the directory cache expires if the backend configured does not support
-polling for changes. If the backend supports polling, changes will be
-picked up within the polling interval.
-
-You can send a `SIGHUP` signal to rclone for it to flush all
-directory caches, regardless of how old they are.  Assuming only one
-rclone instance is running, you can reset the cache like this:
-
-```console
-kill -SIGHUP $(pidof rclone)
-```
-
-If you configure rclone with a [remote control](/rc) then you can use
-rclone rc to flush the whole directory cache:
-
-```console
-rclone rc vfs/forget
-```
-
-Or individual files or directories:
-
-```console
-rclone rc vfs/forget file=path/to/file dir=path/to/dir
-```
-
-## VFS File Buffering
-
-The `--buffer-size` flag determines the amount of memory,
-that will be used to buffer data in advance.
-
-Each open file will try to keep the specified amount of data in memory
-at all times. The buffered data is bound to one open file and won't be
-shared.
-
-This flag is a upper limit for the used memory per open file.  The
-buffer will only use memory for data that is downloaded but not not
-yet read. If the buffer is empty, only a small amount of memory will
-be used.
-
-The maximum memory used by rclone for buffering can be up to
-`--buffer-size * open files`.
-
-## VFS File Caching
-
-These flags control the VFS file caching options. File caching is
-necessary to make the VFS layer appear compatible with a normal file
-system. It can be disabled at the cost of some compatibility.
-
-For example you'll need to enable VFS caching if you want to read and
-write simultaneously to a file.  See below for more details.
-
-Note that the VFS cache is separate from the cache backend and you may
-find that you need one or the other or both.
-
-```text
-    --cache-dir string                     Directory rclone will use for caching.
-    --vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
-    --vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
-    --vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
-    --vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
-    --vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
-    --vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
-```
-
-If run with `-vv` rclone will print the location of the file cache.  The
-files are stored in the user cache file area which is OS dependent but
-can be controlled with `--cache-dir` or setting the appropriate
-environment variable.
-
-The cache has 4 different modes selected by `--vfs-cache-mode`.
-The higher the cache mode the more compatible rclone becomes at the
-cost of using disk space.
-
-Note that files are written back to the remote only when they are
-closed and if they haven't been accessed for `--vfs-write-back`
-seconds. If rclone is quit or dies with files that haven't been
-uploaded, these will be uploaded next time rclone is run with the same
-flags.
-
-If using `--vfs-cache-max-size` or `--vfs-cache-min-free-space` note
-that the cache may exceed these quotas for two reasons. Firstly
-because it is only checked every `--vfs-cache-poll-interval`. Secondly
-because open files cannot be evicted from the cache. When
-`--vfs-cache-max-size` or `--vfs-cache-min-free-space` is exceeded,
-rclone will attempt to evict the least accessed files from the cache
-first. rclone will start with files that haven't been accessed for the
-longest. This cache flushing strategy is efficient and more relevant
-files are likely to remain cached.
-
-The `--vfs-cache-max-age` will evict files from the cache
-after the set time since last access has passed. The default value of
+after the set time since last access has passed; it is based on access time,
+not on when the file was first added to the cache. The default value of
 1 hour will start evicting files from cache that haven't been accessed
 for 1 hour. When a cached file is accessed the 1 hour timer is reset to 0
 and will wait for 1 more hour before evicting. Specify the time with
@@ -15784,9 +15352,10 @@ This config generated must have this extra parameter
 
 - `_root` - root to use for the backend
 
-And it may have this parameter
+And it may have these parameters
 
 - `_obscure` - comma separated strings for parameters to obscure
+- `_secret_access_key` - the secret for S3 access key auth (see below)
 
 If password authentication was used by the client, input to the proxy
 process (on STDIN) would look similar to this:
@@ -15794,7 +15363,8 @@ process (on STDIN) would look similar to this:
 ```json
 {
   "user": "me",
-  "pass": "mypassword"
+  "pass": "mypassword",
+  "client_ip": "192.168.1.1"
 }
 ```
 
@@ -15804,9 +15374,43 @@ proxy process (on STDIN) would look similar to this:
 ```json
 {
   "user": "me",
-  "public_key": "AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf"
+  "public_key": "AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf",
+  "client_ip": "192.168.1.1"
 }
 ```
+
+If the client authenticated with an S3 access key (`rclone serve s3`),
+the client never sends its secret, only a signature made with it, so
+the input contains just the access key ID as the `user` with no `pass`
+or `public_key`:
+
+```json
+{
+  "user": "AKIAIOSFODNN7EXAMPLE",
+  "client_ip": "192.168.1.1"
+}
+```
+
+In this case the program must look up the secret access key for that
+access key ID and return it in the `_secret_access_key` field of the
+output. Rclone then uses that secret to verify the signature on the
+request, refusing the request if it does not match. This means the
+proxy program is the source of truth for both the credentials and the
+backend they map to. If the program does not return
+`_secret_access_key` or returns it empty the request is refused.
+
+The program's answer for an access key ID is cached (see below) but
+is checked with the program again after 5 minutes even if the access
+key ID is in constant use, so revoking an access key ID in the
+program takes effect within 5 minutes. A rotated secret takes effect
+on the first request signed with it.
+
+The `client_ip` key holds the IP address the client connected from,
+without a port number.  It can be used to restrict logins to certain
+networks, or to log authentication attempts centrally.  It is omitted if
+the client has no IP address, for example when connecting over a unix
+socket.  Note that if rclone is behind a reverse proxy this will be the
+address of the reverse proxy and not the original client.
 
 And as an example return this on STDOUT
 
@@ -15833,11 +15437,808 @@ to make proxy to many different sftp backends, you could make the
 in the output and the user to `user`. For security you'd probably want
 to restrict the `host` to a limited list.
 
-An internal cache of backends is keyed on the `user` and a hash of the
-`pass` or `public_key`.  This means that if a user's password or
-public-key changes, or the proxy returns different config parameters
-(eg a rotated `api_key`), a fresh backend will be created on the next
-request rather than the cached one being reused.
+An internal cache of backends is keyed on the `user`, a hash of the
+`pass` or `public_key`, and the `client_ip`.  This means that if a
+user's password or public-key changes, the client connects from a new IP
+address, or the proxy returns different config parameters (eg a rotated
+`api_key`), a fresh backend will be created on the next request rather
+than the cached one being reused.
+
+This can be used to build general purpose proxies to any kind of
+backend that rclone supports.
+
+```
+rclone serve s3 remote:path [flags]
+```
+
+## Options
+
+```
+      --addr stringArray                              IPaddress:Port or :Port to bind server to (default 127.0.0.1:8080)
+      --allow-origin string                           Origin which cross-domain request (CORS) can be executed from
+      --auth-key stringArray                          Set key pair for v4 authorization: access_key_id,secret_access_key
+      --auth-proxy string                             A program to use to create the backend from the auth
+      --baseurl string                                Prefix for URLs - leave blank for root
+      --cert string                                   TLS PEM key (concatenation of certificate and CA certificate)
+      --client-ca string                              Client certificate authority to verify clients with
+      --dir-cache-time Duration                       Time to cache directory entries for (default 5m0s)
+      --dir-perms FileMode                            Directory permissions (default 777)
+      --disable-multipart-streaming                   Buffer multipart uploads in memory instead of streaming them to the backend
+      --etag-hash string                              Which hash to use for the ETag, or auto or blank for off (default "MD5")
+      --file-perms FileMode                           File permissions (default 666)
+      --force-path-style                              If true use path style access if false use virtual hosted style (default true)
+      --gid uint32                                    Override the gid field set by the filesystem (not supported on Windows) (default 1000)
+  -h, --help                                          help for s3
+      --htpasswd string                               A htpasswd file - if not provided no authentication is done
+      --key string                                    TLS PEM Private key
+      --link-perms FileMode                           Link permissions (default 666)
+      --max-header-bytes int                          Maximum size of request header (default 4096)
+      --min-tls-version string                        Minimum TLS version that is acceptable (default "tls1.0")
+      --multipart-expiry Duration                     Abort incomplete multipart uploads idle for longer than this, 0 to keep forever (default 1d)
+      --multipart-streaming-buffer-limit SizeSuffix   Maximum memory buffered per streamed multipart upload for parts arriving out of order, 0 for unlimited (default 256Mi)
+      --no-checksum                                   Don't compare checksums on up/download
+      --no-cleanup                                    Not to cleanup empty folder after object is deleted
+      --no-modtime                                    Don't read/write the modification time (can speed things up)
+      --no-seek                                       Don't allow seeking in files
+      --pass string                                   Password for authentication
+      --poll-interval Duration                        Time to wait between polling for changes, must be smaller than dir-cache-time and only on supported remotes (set 0 to disable) (default 1m0s)
+      --read-only                                     Only allow read-only access
+      --realm string                                  Realm for authentication
+      --response-header stringArray                   Set HTTP header for all responses, overriding existing values
+      --salt string                                   Password hashing salt (default "dlPL2MqE")
+      --server-read-timeout Duration                  Timeout for server reading data (default 1h0m0s)
+      --server-write-timeout Duration                 Timeout for server writing data (default 1h0m0s)
+      --uid uint32                                    Override the uid field set by the filesystem (not supported on Windows) (default 1000)
+      --umask FileMode                                Override the permission bits set by the filesystem (not supported on Windows) (default 002)
+      --user string                                   User name for authentication
+      --user-from-header string                       User name from a defined HTTP header
+      --vfs-block-norm-dupes                          If duplicate filenames exist in the same directory (after normalization), log an error and hide the duplicates (may have a performance cost)
+      --vfs-cache-max-age Duration                    Max time since last access of objects in the cache (default 1h0m0s)
+      --vfs-cache-max-size SizeSuffix                 Max total size of objects in the cache (default off)
+      --vfs-cache-min-free-space SizeSuffix           Target minimum free space on the disk containing the cache (default off)
+      --vfs-cache-mode CacheMode                      Cache mode off|minimal|writes|full (default off)
+      --vfs-cache-poll-interval Duration              Interval to poll the cache for stale objects (default 1m0s)
+      --vfs-case-insensitive                          If a file name not found, find a case insensitive match
+      --vfs-disk-space-total-size SizeSuffix          Specify the total space of disk (default off)
+      --vfs-fast-fingerprint                          Use fast (less accurate) fingerprints for change detection
+      --vfs-handle-caching Duration                   Time to keep file handle and downloaders alive after last close (default 5s)
+      --vfs-links                                     Translate symlinks to/from regular files with a '.rclonelink' extension for the VFS
+      --vfs-metadata-extension string                 Set the extension to read metadata from
+      --vfs-read-ahead SizeSuffix                     Extra read ahead over --buffer-size when using cache-mode full
+      --vfs-read-chunk-size SizeSuffix                Read the source objects in chunks (default 128Mi)
+      --vfs-read-chunk-size-limit SizeSuffix          If greater than --vfs-read-chunk-size, double the chunk size after each chunk read, until the limit is reached ('off' is unlimited) (default off)
+      --vfs-read-chunk-streams int                    The number of parallel streams to read at once
+      --vfs-read-wait Duration                        Time to wait for in-sequence read before seeking (default 20ms)
+      --vfs-refresh                                   Refreshes the directory cache recursively in the background on start
+      --vfs-used-is-size rclone size                  Use the rclone size algorithm for Used size
+      --vfs-write-back Duration                       Time to writeback files after last use when using cache (default 5s)
+      --vfs-write-wait Duration                       Time to wait for in-sequence write before giving error (default 1s)
+```
+
+Options shared with other commands are described next.
+See the [global flags page](https://rclone.org/flags/) for global options not listed here.
+
+### Filter Options
+
+Flags for filtering directory listings
+
+```text
+      --delete-excluded                     Delete files on dest excluded from sync
+      --exclude stringArray                 Exclude files matching pattern
+      --exclude-from stringArray            Read file exclude patterns from file (use - to read from stdin)
+      --exclude-if-present stringArray      Exclude directories if filename is present
+      --files-from stringArray              Read list of source-file names from file (use - to read from stdin)
+      --files-from-raw stringArray          Read list of source-file names from file without any processing of lines (use - to read from stdin)
+      --files-from0 stringArray             Read list of source-file names from file using NUL as separator (use - to read from stdin)
+  -f, --filter stringArray                  Add a file filtering rule
+      --filter-from stringArray             Read file filtering patterns from a file (use - to read from stdin)
+      --hash-filter string                  Partition filenames by hash k/n or randomly @/n
+      --ignore-case                         Ignore case in filters (case insensitive)
+      --include stringArray                 Include files matching pattern
+      --include-from stringArray            Read file include patterns from file (use - to read from stdin)
+      --max-age Duration                    Only transfer files younger than this in s or suffix ms|s|m|h|d|w|M|y (default off)
+      --max-depth int                       If set limits the recursion depth to this (default -1)
+      --max-size SizeSuffix                 Only transfer files smaller than this in KiB or suffix B|K|M|G|T|P (default off)
+      --metadata-exclude stringArray        Exclude metadatas matching pattern
+      --metadata-exclude-from stringArray   Read metadata exclude patterns from file (use - to read from stdin)
+      --metadata-filter stringArray         Add a metadata filtering rule
+      --metadata-filter-from stringArray    Read metadata filtering patterns from a file (use - to read from stdin)
+      --metadata-include stringArray        Include metadatas matching pattern
+      --metadata-include-from stringArray   Read metadata include patterns from file (use - to read from stdin)
+      --min-age Duration                    Only transfer files older than this in s or suffix ms|s|m|h|d|w|M|y (default off)
+      --min-size SizeSuffix                 Only transfer files bigger than this in KiB or suffix B|K|M|G|T|P (default off)
+```
+
+## See Also
+
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->
+
+* [rclone serve](https://rclone.org/commands/rclone_serve/)	 - Serve a remote over a protocol.
+
+
+<!-- markdownlint-restore -->
+
+# rclone serve sftp
+
+Serve the remote over SFTP.
+
+## Synopsis
+
+Run an SFTP server to serve a remote over SFTP. This can be used
+with an SFTP client or you can make a remote of type [sftp](/sftp) to use with it.
+
+You can use the [filter](/filtering) flags (e.g. `--include`, `--exclude`)
+to control what is served.
+
+The server will respond to a small number of shell commands, mainly
+md5sum, sha1sum and df, which enable it to provide support for checksums
+and the about feature when accessed from an sftp remote.
+
+Note that this server uses standard 32 KiB packet payload size, which
+means you must not configure the client to expect anything else, e.g.
+with the [chunk_size](https://rclone.org/sftp/#sftp-chunk-size) option on an sftp remote.
+
+The server will log errors.  Use `-v` to see access logs.
+
+`--bwlimit` will be respected for file transfers.
+Use `--stats` to control the stats printing.
+
+You must provide some means of authentication, either with
+`--user`/`--pass`, an authorized keys file (specify location with
+`--authorized-keys` - the default is the same as ssh), an
+`--auth-proxy`, or set the `--no-auth` flag for no
+authentication when logging in.
+
+If you don't supply a host `--key` then rclone will generate rsa, ecdsa
+and ed25519 variants, and cache them for later use in rclone's cache
+directory (see `rclone help flags cache-dir`) in the "serve-sftp"
+directory.
+
+By default the server binds to localhost:2022 - if you want it to be
+reachable externally then supply `--addr :2022` for example.
+
+This also supports being run with socket activation, in which case it will
+listen on the first passed FD.
+It can be configured with .socket and .service unit files as described in
+<https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html>.
+
+Socket activation can be tested ad-hoc with the `systemd-socket-activate`command:
+
+```console
+systemd-socket-activate -l 2222 -- rclone serve sftp :local:vfs/
+```
+
+This will socket-activate rclone on the first connection to port 2222 over TCP.
+
+Note that the default of `--vfs-cache-mode off` is fine for the rclone
+sftp backend, but it may not be with other SFTP clients.
+
+If `--stdio` is specified, rclone will serve SFTP over stdio, which can
+be used with sshd via ~/.ssh/authorized_keys, for example:
+
+```text
+restrict,command="rclone serve sftp --stdio ./photos" ssh-rsa ...
+```
+
+On the client you need to set `--transfers 1` when using `--stdio`.
+Otherwise multiple instances of the rclone server are started by OpenSSH
+which can lead to "corrupted on transfer" errors. This is the case because
+the client chooses indiscriminately which server to send commands to while
+the servers all have different views of the state of the filing system.
+
+The "restrict" in authorized_keys prevents SHA1SUMs and MD5SUMs from being
+used. Omitting "restrict" and using  `--sftp-path-override` to enable
+checksumming is possible but less secure and you could use the SFTP server
+provided by OpenSSH in this case.
+
+## VFS - Virtual File System
+
+This command uses the VFS layer. This adapts the cloud storage objects
+that rclone uses into something which looks much more like a disk
+filing system.
+
+Cloud storage objects have lots of properties which aren't like disk
+files - you can't extend them or write to the middle of them, so the
+VFS layer has to deal with that. Because there is no one right way of
+doing this there are various options explained below.
+
+The VFS layer also implements a directory cache - this caches info
+about files and directories (but not the data) in memory.
+
+## VFS Directory Cache
+
+Using the `--dir-cache-time` flag, you can control how long a
+directory should be considered up to date and not refreshed from the
+backend. Changes made through the VFS will appear immediately or
+invalidate the cache.
+
+```text
+    --dir-cache-time duration   Time to cache directory entries for (default 5m0s)
+    --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)
+```
+
+However, changes made directly on the cloud storage by the web
+interface or a different copy of rclone will only be picked up once
+the directory cache expires if the backend configured does not support
+polling for changes. If the backend supports polling, changes will be
+picked up within the polling interval.
+
+You can send a `SIGHUP` signal to rclone for it to flush all
+directory caches, regardless of how old they are.  Assuming only one
+rclone instance is running, you can reset the cache like this:
+
+```console
+kill -SIGHUP $(pidof rclone)
+```
+
+If you configure rclone with a [remote control](/rc) then you can use
+rclone rc to flush the whole directory cache:
+
+```console
+rclone rc vfs/forget
+```
+
+Or individual files or directories:
+
+```console
+rclone rc vfs/forget file=path/to/file dir=path/to/dir
+```
+
+## VFS File Buffering
+
+The `--buffer-size` flag determines the amount of memory,
+that will be used to buffer data in advance.
+
+Each open file will try to keep the specified amount of data in memory
+at all times. The buffered data is bound to one open file and won't be
+shared.
+
+This flag is a upper limit for the used memory per open file.  The
+buffer will only use memory for data that is downloaded but not
+yet read. If the buffer is empty, only a small amount of memory will
+be used.
+
+The maximum memory used by rclone for buffering can be up to
+`--buffer-size * open files`.
+
+## VFS File Caching
+
+These flags control the VFS file caching options. File caching is
+necessary to make the VFS layer appear compatible with a normal file
+system. It can be disabled at the cost of some compatibility.
+
+For example you'll need to enable VFS caching if you want to read and
+write simultaneously to a file.  See below for more details.
+
+Note that the VFS cache is separate from the cache backend and you may
+find that you need one or the other or both.
+
+```text
+    --cache-dir string                     Directory rclone will use for caching.
+    --vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
+    --vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
+    --vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
+    --vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
+    --vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
+    --vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
+```
+
+If run with `-vv` rclone will print the location of the file cache.  The
+files are stored in the user cache file area which is OS dependent but
+can be controlled with `--cache-dir` or setting the appropriate
+environment variable.
+
+The cache has 4 different modes selected by `--vfs-cache-mode`.
+The higher the cache mode the more compatible rclone becomes at the
+cost of using disk space.
+
+Note that files are written back to the remote only when they are
+closed and if they haven't been accessed for `--vfs-write-back`
+seconds. If rclone is quit or dies with files that haven't been
+uploaded, these will be uploaded next time rclone is run with the same
+flags.
+
+If using `--vfs-cache-max-size` or `--vfs-cache-min-free-space` note
+that the cache may exceed these quotas for two reasons. Firstly
+because it is only checked every `--vfs-cache-poll-interval`. Secondly
+because open files cannot be evicted from the cache. When
+`--vfs-cache-max-size` or `--vfs-cache-min-free-space` is exceeded,
+rclone will attempt to evict the least accessed files from the cache
+first. rclone will start with files that haven't been accessed for the
+longest. This cache flushing strategy is efficient and more relevant
+files are likely to remain cached.
+
+The `--vfs-cache-max-age` will evict files from the cache
+after the set time since last access has passed; it is based on access time,
+not on when the file was first added to the cache. The default value of
+1 hour will start evicting files from cache that haven't been accessed
+for 1 hour. When a cached file is accessed the 1 hour timer is reset to 0
+and will wait for 1 more hour before evicting. Specify the time with
+standard notation, s, m, h, d, w .
+
+You **should not** run two copies of rclone using the same VFS cache
+with the same or overlapping remotes if using `--vfs-cache-mode > off`.
+This can potentially cause data corruption if you do. You can work
+around this by giving each rclone its own cache hierarchy with
+`--cache-dir`. You don't need to worry about this if the remotes in
+use don't overlap.
+
+### --vfs-cache-mode off
+
+In this mode (the default) the cache will read directly from the remote and write
+directly to the remote without caching anything on disk.
+
+This will mean some operations are not possible
+
+- Files can't be opened for both read AND write
+- Files opened for write can't be seeked
+- Existing files opened for write must have O_TRUNC set
+- Files open for read with O_TRUNC will be opened write only
+- Files open for write only will behave as if O_TRUNC was supplied
+- Open modes O_APPEND, O_TRUNC are ignored
+- If an upload fails it can't be retried
+
+### --vfs-cache-mode minimal
+
+This is very similar to "off" except that files opened for read AND
+write will be buffered to disk.  This means that files opened for
+write will be a lot more compatible, but uses the minimal disk space.
+
+These operations are not possible
+
+- Files opened for write only can't be seeked
+- Existing files opened for write must have O_TRUNC set
+- Files opened for write only will ignore O_APPEND, O_TRUNC
+- If an upload fails it can't be retried
+
+### --vfs-cache-mode writes
+
+In this mode files opened for read only are still read directly from
+the remote, write only and read/write files are buffered to disk
+first.
+
+This mode should support all normal file system operations.
+
+If an upload fails it will be retried at exponentially increasing
+intervals up to 1 minute.
+
+### --vfs-cache-mode full
+
+In this mode all reads and writes are buffered to and from disk. When
+data is read from the remote this is buffered to disk as well.
+
+In this mode the files in the cache will be sparse files and rclone
+will keep track of which bits of the files it has downloaded.
+
+So if an application only reads the starts of each file, then rclone
+will only buffer the start of the file. These files will appear to be
+their full size in the cache, but they will be sparse files with only
+the data that has been downloaded present in them.
+
+This mode should support all normal file system operations and is
+otherwise identical to `--vfs-cache-mode` writes.
+
+When reading a file rclone will read `--buffer-size` plus
+`--vfs-read-ahead` bytes ahead.  The `--buffer-size` is buffered in memory
+whereas the `--vfs-read-ahead` is buffered on disk.
+
+When using this mode it is recommended that `--buffer-size` is not set
+too large and `--vfs-read-ahead` is set large if required.
+
+**IMPORTANT** not all file systems support sparse files. In particular
+FAT/exFAT do not. Rclone will perform very badly if the cache
+directory is on a filesystem which doesn't support sparse files and it
+will log an ERROR message if one is detected.
+
+### Fingerprinting
+
+Various parts of the VFS use fingerprinting to see if a local file
+copy has changed relative to a remote file. Fingerprints are made
+from:
+
+- size
+- modification time
+- hash
+
+where available on an object.
+
+On some backends some of these attributes are slow to read (they take
+an extra API call per object, or extra work per object).
+
+For example `hash` is slow with the `local` and `sftp` backends as
+they have to read the entire file and hash it, and `modtime` is slow
+with the `s3`, `swift`, `ftp` and `qinqstor` backends because they
+need to do an extra API call to fetch it.
+
+If you use the `--vfs-fast-fingerprint` flag then rclone will not
+include the slow operations in the fingerprint. This makes the
+fingerprinting less accurate but much faster and will improve the
+opening time of cached files.
+
+If you are running a vfs cache over `local`, `s3` or `swift` backends
+then using this flag is recommended.
+
+Note that if you change the value of this flag, the fingerprints of
+the files in the cache may be invalidated and the files will need to
+be downloaded again.
+
+## VFS Chunked Reading
+
+When rclone reads files from a remote it reads them in chunks. This
+means that rather than requesting the whole file rclone reads the
+chunk specified.  This can reduce the used download quota for some
+remotes by requesting only chunks from the remote that are actually
+read, at the cost of an increased number of requests.
+
+These flags control the chunking:
+
+```text
+    --vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
+    --vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
+    --vfs-read-chunk-streams int            The number of parallel streams to read at once
+```
+
+The chunking behaves differently depending on the `--vfs-read-chunk-streams` parameter.
+
+### `--vfs-read-chunk-streams` == 0
+
+Rclone will start reading a chunk of size `--vfs-read-chunk-size`,
+and then double the size for each read. When `--vfs-read-chunk-size-limit` is
+specified, and greater than `--vfs-read-chunk-size`, the chunk size for each
+open file will get doubled only until the specified value is reached. If the
+value is "off", which is the default, the limit is disabled and the chunk size
+will grow indefinitely.
+
+With `--vfs-read-chunk-size 100M` and `--vfs-read-chunk-size-limit 0`
+the following parts will be downloaded: 0-100M, 100M-200M, 200M-300M, 300M-400M
+and so on. When `--vfs-read-chunk-size-limit 500M` is specified, the result would
+be 0-100M, 100M-300M, 300M-700M, 700M-1200M, 1200M-1700M and so on.
+
+Setting `--vfs-read-chunk-size` to `0` or "off" disables chunked reading.
+
+The chunks will not be buffered in memory.
+
+### `--vfs-read-chunk-streams` > 0
+
+Rclone reads `--vfs-read-chunk-streams` chunks of size
+`--vfs-read-chunk-size` concurrently. The size for each read will stay
+constant.
+
+This improves performance performance massively on high latency links
+or very high bandwidth links to high performance object stores.
+
+Some experimentation will be needed to find the optimum values of
+`--vfs-read-chunk-size` and `--vfs-read-chunk-streams` as these will
+depend on the backend in use and the latency to the backend.
+
+For high performance object stores (eg AWS S3) a reasonable place to
+start might be `--vfs-read-chunk-streams 16` and
+`--vfs-read-chunk-size 4M`. In testing with AWS S3 the performance
+scaled roughly as the `--vfs-read-chunk-streams` setting.
+
+Similar settings should work for high latency links, but depending on
+the latency they may need more `--vfs-read-chunk-streams` in order to
+get the throughput.
+
+## VFS Performance
+
+These flags may be used to enable/disable features of the VFS for
+performance or other reasons. See also the [chunked reading](#vfs-chunked-reading)
+feature.
+
+In particular S3 and Swift benefit hugely from the `--no-modtime` flag
+(or use `--use-server-modtime` for a slightly different effect) as each
+read of the modification time takes a transaction.
+
+```text
+    --no-checksum     Don't compare checksums on up/download.
+    --no-modtime      Don't read/write the modification time (can speed things up).
+    --no-seek         Don't allow seeking in files.
+    --read-only       Only allow read-only access.
+```
+
+Sometimes rclone is delivered reads or writes out of order. Rather
+than seeking rclone will wait a short time for the in sequence read or
+write to come in. These flags only come into effect when not using an
+on disk cache file.
+
+```text
+    --vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
+    --vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
+```
+
+When using VFS write caching (`--vfs-cache-mode` with value writes or full),
+the global flag `--transfers` can be set to adjust the number of parallel uploads
+of modified files from the cache (the related global flag `--checkers` has no
+effect on the VFS).
+
+```text
+    --transfers int  Number of file transfers to run in parallel (default 4)
+```
+
+## Symlinks
+
+By default the VFS does not support symlinks. However this may be
+enabled with either of the following flags:
+
+```text
+    --links      Translate symlinks to/from regular files with a '.rclonelink' extension.
+    --vfs-links  Translate symlinks to/from regular files with a '.rclonelink' extension for the VFS
+```
+
+As most cloud storage systems do not support symlinks directly, rclone
+stores the symlink as a normal file with a special extension. So a
+file which appears as a symlink `link-to-file.txt` would be stored on
+cloud storage as `link-to-file.txt.rclonelink` and the contents would
+be the path to the symlink destination.
+
+Note that `--links` enables symlink translation globally in rclone -
+this includes any backend which supports the concept (for example the
+local backend). `--vfs-links` just enables it for the VFS layer.
+
+This scheme is compatible with that used by the
+[local backend with the --local-links flag](https://rclone.org/local/#symlinks-junction-points).
+
+The `--vfs-links` flag has been designed for `rclone mount`, `rclone
+nfsmount` and `rclone serve nfs`.
+
+It hasn't been tested with the other `rclone serve` commands yet.
+
+A limitation of the current implementation is that it expects the
+caller to resolve sub-symlinks. For example given this directory tree
+
+```text
+.
+├── dir
+│   └── file.txt
+└── linked-dir -> dir
+```
+
+The VFS will correctly resolve `linked-dir` but not
+`linked-dir/file.txt`. This is not a problem for the tested commands
+but may be for other commands.
+
+**Note** that there is an outstanding issue with symlink support
+[issue #8245](https://github.com/rclone/rclone/issues/8245) with duplicate
+files being created when symlinks are moved into directories where
+there is a file of the same name (or vice versa).
+
+## VFS Case Sensitivity
+
+Linux file systems are case-sensitive: two files can differ only
+by case, and the exact case must be used when opening a file.
+
+File systems in modern Windows are case-insensitive but case-preserving:
+although existing files can be opened using any case, the exact case used
+to create the file is preserved and available for programs to query.
+It is not allowed for two files in the same directory to differ only by case.
+
+Usually file systems on macOS are case-insensitive. It is possible to make macOS
+file systems case-sensitive but that is not the default.
+
+The `--vfs-case-insensitive` VFS flag controls how rclone handles these
+two cases. If its value is "false", rclone passes file names to the remote
+as-is. If the flag is "true" (or appears without a value on the
+command line), rclone may perform a "fixup" as explained below.
+
+The user may specify a file name to open/delete/rename/etc with a case
+different than what is stored on the remote. If an argument refers
+to an existing file with exactly the same name, then the case of the existing
+file on the disk will be used. However, if a file name with exactly the same
+name is not found but a name differing only by case exists, rclone will
+transparently fixup the name. This fixup happens only when an existing file
+is requested. Case sensitivity of file names created anew by rclone is
+controlled by the underlying remote.
+
+Note that case sensitivity of the operating system running rclone (the target)
+may differ from case sensitivity of a file system presented by rclone (the source).
+The flag controls whether "fixup" is performed to satisfy the target.
+
+If the flag is not provided on the command line, then its default value depends
+on the operating system where rclone runs: "true" on Windows and macOS, "false"
+otherwise. If the flag is provided without a value, then it is "true".
+
+The `--no-unicode-normalization` flag controls whether a similar "fixup" is
+performed for filenames that differ but are [canonically
+equivalent](https://en.wikipedia.org/wiki/Unicode_equivalence) with respect to
+unicode. Unicode normalization can be particularly helpful for users of macOS,
+which prefers form NFD instead of the NFC used by most other platforms. It is
+therefore highly recommended to keep the default of `false` on macOS, to avoid
+encoding compatibility issues.
+
+In the (probably unlikely) event that a directory has multiple duplicate
+filenames after applying case and unicode normalization, the `--vfs-block-norm-dupes`
+flag allows hiding these duplicates. This comes with a performance tradeoff, as
+rclone will have to scan the entire directory for duplicates when listing a
+directory. For this reason, it is recommended to leave this disabled if not
+needed. However, macOS users may wish to consider using it, as otherwise, if a
+remote directory contains both NFC and NFD versions of the same filename, an odd
+situation will occur: both versions of the file will be visible in the mount,
+and both will appear to be editable, however, editing either version will
+actually result in only the NFD version getting edited under the hood. `--vfs-block-
+norm-dupes` prevents this confusion by detecting this scenario, hiding the
+duplicates, and logging an error, similar to how this is handled in `rclone
+sync`.
+
+## VFS Disk Options
+
+This flag allows you to manually set the statistics about the filing system.
+It can be useful when those statistics cannot be read correctly automatically.
+
+```text
+    --vfs-disk-space-total-size    Manually set the total disk space size (example: 256G, default: -1)
+```
+
+## Alternate report of used bytes
+
+Some backends, most notably S3, do not report the amount of bytes used.
+If you need this information to be available when running `df` on the
+filesystem, then pass the flag `--vfs-used-is-size` to rclone.
+With this flag set, instead of relying on the backend to report this
+information, rclone will scan the whole remote similar to `rclone size`
+and compute the total used space itself.
+
+**WARNING**: Contrary to `rclone size`, this flag ignores filters so that the
+result is accurate. However, this is very inefficient and may cost lots of API
+calls resulting in extra charges. Use it as a last resort and only with caching.
+
+## VFS Metadata
+
+If you use the `--vfs-metadata-extension` flag you can get the VFS to
+expose files which contain the [metadata](https://rclone.org/docs/#metadata) as a JSON
+blob. These files will not appear in the directory listing, but can be
+`stat`-ed and opened and once they have been they **will** appear in
+directory listings until the directory cache expires.
+
+Note that some backends won't create metadata unless you pass in the
+`--metadata` flag.
+
+For example, using `rclone mount` with `--metadata --vfs-metadata-extension .metadata`
+we get
+
+```console
+$ ls -l /mnt/
+total 1048577
+-rw-rw-r-- 1 user user 1073741824 Mar  3 16:03 1G
+
+$ cat /mnt/1G.metadata
+{
+        "atime": "2025-03-04T17:34:22.317069787Z",
+        "btime": "2025-03-03T16:03:37.708253808Z",
+        "gid": "1000",
+        "mode": "100664",
+        "mtime": "2025-03-03T16:03:39.640238323Z",
+        "uid": "1000"
+}
+
+$ ls -l /mnt/
+total 1048578
+-rw-rw-r-- 1 user user 1073741824 Mar  3 16:03 1G
+-rw-rw-r-- 1 user user        185 Mar  3 16:03 1G.metadata
+```
+
+If the file has no metadata it will be returned as `{}` and if there
+is an error reading the metadata the error will be returned as
+`{"error":"error string"}`.
+
+## Auth Proxy
+
+If you supply the parameter `--auth-proxy /path/to/program` then
+rclone will use that program to generate backends on the fly which
+then are used to authenticate incoming requests.  This uses a simple
+JSON based protocol with input on STDIN and output on STDOUT.
+
+**PLEASE NOTE:** `--auth-proxy` and `--authorized-keys` cannot be used
+together, if `--auth-proxy` is set the authorized keys option will be
+ignored.
+
+There is an example program
+[bin/test_proxy.py](https://github.com/rclone/rclone/blob/master/bin/test_proxy.py)
+in the rclone source code.
+
+The program's job is to take a `user` and `pass` on the input and turn
+those into the config for a backend on STDOUT in JSON format.  This
+config will have any default parameters for the backend added, but it
+won't use configuration from environment variables or command line
+options - it is the job of the proxy program to make a complete
+config.
+
+This config generated must have this extra parameter
+
+- `_root` - root to use for the backend
+
+And it may have these parameters
+
+- `_obscure` - comma separated strings for parameters to obscure
+- `_secret_access_key` - the secret for S3 access key auth (see below)
+
+If password authentication was used by the client, input to the proxy
+process (on STDIN) would look similar to this:
+
+```json
+{
+  "user": "me",
+  "pass": "mypassword",
+  "client_ip": "192.168.1.1"
+}
+```
+
+If public-key authentication was used by the client, input to the
+proxy process (on STDIN) would look similar to this:
+
+```json
+{
+  "user": "me",
+  "public_key": "AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf",
+  "client_ip": "192.168.1.1"
+}
+```
+
+If the client authenticated with an S3 access key (`rclone serve s3`),
+the client never sends its secret, only a signature made with it, so
+the input contains just the access key ID as the `user` with no `pass`
+or `public_key`:
+
+```json
+{
+  "user": "AKIAIOSFODNN7EXAMPLE",
+  "client_ip": "192.168.1.1"
+}
+```
+
+In this case the program must look up the secret access key for that
+access key ID and return it in the `_secret_access_key` field of the
+output. Rclone then uses that secret to verify the signature on the
+request, refusing the request if it does not match. This means the
+proxy program is the source of truth for both the credentials and the
+backend they map to. If the program does not return
+`_secret_access_key` or returns it empty the request is refused.
+
+The program's answer for an access key ID is cached (see below) but
+is checked with the program again after 5 minutes even if the access
+key ID is in constant use, so revoking an access key ID in the
+program takes effect within 5 minutes. A rotated secret takes effect
+on the first request signed with it.
+
+The `client_ip` key holds the IP address the client connected from,
+without a port number.  It can be used to restrict logins to certain
+networks, or to log authentication attempts centrally.  It is omitted if
+the client has no IP address, for example when connecting over a unix
+socket.  Note that if rclone is behind a reverse proxy this will be the
+address of the reverse proxy and not the original client.
+
+And as an example return this on STDOUT
+
+```json
+{
+  "type": "sftp",
+  "_root": "",
+  "_obscure": "pass",
+  "user": "me",
+  "pass": "mypassword",
+  "host": "sftp.example.com"
+}
+```
+
+This would mean that an SFTP backend would be created on the fly for
+the `user` and `pass`/`public_key` returned in the output to the host given.  Note
+that since `_obscure` is set to `pass`, rclone will obscure the `pass`
+parameter before creating the backend (which is required for sftp
+backends).
+
+The program can manipulate the supplied `user` in any way, for example
+to make proxy to many different sftp backends, you could make the
+`user` be `user@example.com` and then set the `host` to `example.com`
+in the output and the user to `user`. For security you'd probably want
+to restrict the `host` to a limited list.
+
+An internal cache of backends is keyed on the `user`, a hash of the
+`pass` or `public_key`, and the `client_ip`.  This means that if a
+user's password or public-key changes, the client connects from a new IP
+address, or the proxy returns different config parameters (eg a rotated
+`api_key`), a fresh backend will be created on the next request rather
+than the cached one being reused.
 
 This can be used to build general purpose proxies to any kind of
 backend that rclone supports.
@@ -16246,7 +16647,7 @@ at all times. The buffered data is bound to one open file and won't be
 shared.
 
 This flag is a upper limit for the used memory per open file.  The
-buffer will only use memory for data that is downloaded but not not
+buffer will only use memory for data that is downloaded but not
 yet read. If the buffer is empty, only a small amount of memory will
 be used.
 
@@ -16301,7 +16702,8 @@ longest. This cache flushing strategy is efficient and more relevant
 files are likely to remain cached.
 
 The `--vfs-cache-max-age` will evict files from the cache
-after the set time since last access has passed. The default value of
+after the set time since last access has passed; it is based on access time,
+not on when the file was first added to the cache. The default value of
 1 hour will start evicting files from cache that haven't been accessed
 for 1 hour. When a cached file is accessed the 1 hour timer is reset to 0
 and will wait for 1 more hour before evicting. Specify the time with
@@ -16698,9 +17100,10 @@ This config generated must have this extra parameter
 
 - `_root` - root to use for the backend
 
-And it may have this parameter
+And it may have these parameters
 
 - `_obscure` - comma separated strings for parameters to obscure
+- `_secret_access_key` - the secret for S3 access key auth (see below)
 
 If password authentication was used by the client, input to the proxy
 process (on STDIN) would look similar to this:
@@ -16708,7 +17111,8 @@ process (on STDIN) would look similar to this:
 ```json
 {
   "user": "me",
-  "pass": "mypassword"
+  "pass": "mypassword",
+  "client_ip": "192.168.1.1"
 }
 ```
 
@@ -16718,9 +17122,43 @@ proxy process (on STDIN) would look similar to this:
 ```json
 {
   "user": "me",
-  "public_key": "AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf"
+  "public_key": "AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf",
+  "client_ip": "192.168.1.1"
 }
 ```
+
+If the client authenticated with an S3 access key (`rclone serve s3`),
+the client never sends its secret, only a signature made with it, so
+the input contains just the access key ID as the `user` with no `pass`
+or `public_key`:
+
+```json
+{
+  "user": "AKIAIOSFODNN7EXAMPLE",
+  "client_ip": "192.168.1.1"
+}
+```
+
+In this case the program must look up the secret access key for that
+access key ID and return it in the `_secret_access_key` field of the
+output. Rclone then uses that secret to verify the signature on the
+request, refusing the request if it does not match. This means the
+proxy program is the source of truth for both the credentials and the
+backend they map to. If the program does not return
+`_secret_access_key` or returns it empty the request is refused.
+
+The program's answer for an access key ID is cached (see below) but
+is checked with the program again after 5 minutes even if the access
+key ID is in constant use, so revoking an access key ID in the
+program takes effect within 5 minutes. A rotated secret takes effect
+on the first request signed with it.
+
+The `client_ip` key holds the IP address the client connected from,
+without a port number.  It can be used to restrict logins to certain
+networks, or to log authentication attempts centrally.  It is omitted if
+the client has no IP address, for example when connecting over a unix
+socket.  Note that if rclone is behind a reverse proxy this will be the
+address of the reverse proxy and not the original client.
 
 And as an example return this on STDOUT
 
@@ -16747,11 +17185,12 @@ to make proxy to many different sftp backends, you could make the
 in the output and the user to `user`. For security you'd probably want
 to restrict the `host` to a limited list.
 
-An internal cache of backends is keyed on the `user` and a hash of the
-`pass` or `public_key`.  This means that if a user's password or
-public-key changes, or the proxy returns different config parameters
-(eg a rotated `api_key`), a fresh backend will be created on the next
-request rather than the cached one being reused.
+An internal cache of backends is keyed on the `user`, a hash of the
+`pass` or `public_key`, and the `client_ip`.  This means that if a
+user's password or public-key changes, the client connects from a new IP
+address, or the proxy returns different config parameters (eg a rotated
+`api_key`), a fresh backend will be created on the next request rather
+than the cached one being reused.
 
 This can be used to build general purpose proxies to any kind of
 backend that rclone supports.
@@ -18309,7 +18748,8 @@ will use this much memory for buffering.
 
 When using `mount` or `cmount` each open file descriptor will use this much
 memory for buffering.
-See the [mount](https://rclone.org/commands/rclone_mount/#file-buffering) documentation for more details.
+See the [mount](https://rclone.org/commands/rclone_mount/#vfs-file-buffering) documentation for
+more details.
 
 Set to `0` to disable the buffering for the minimum memory usage.
 
@@ -19526,7 +19966,7 @@ Most multi-thread transfers do not take additional memory, but some do
 at maximum `--transfers` \* `--multi-thread-chunk-size` \*
 `--multi-thread-streams` or specifically for the s3 backend
 `--transfers` \* `--s3-chunk-size` \* `--s3-concurrency`. However you
-can use the the [--max-buffer-memory](https://rclone.org/docs/#max-buffer-memory) flag
+can use the [--max-buffer-memory](https://rclone.org/docs/#max-buffer-memory) flag
 to control the maximum memory used here.
 
 **NB** that this **only** works with supported backends as the
@@ -25603,7 +26043,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.75.0")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.75.1")
 ```
 
 
@@ -28416,11 +28856,12 @@ The following backends have known issues that need more investigation:
   - [`TestBisyncRemoteLocal/normalization`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
   - [`TestBisyncLocalRemote/ext_paths`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
   - [`TestBisyncLocalRemote/extended_filenames`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
-  - [4 more](https://pub.rclone.org/integration-tests/current/)
+  - [3 more](https://pub.rclone.org/integration-tests/current/)
 - `TestPcloud` (`pcloud`)
-  - [`TestBisyncRemoteRemote/check_access`](https://pub.rclone.org/integration-tests/current/pcloud-cmd.bisync-TestPcloud-1.txt)
-  - [`TestBisyncRemoteRemote/rmdirs`](https://pub.rclone.org/integration-tests/current/pcloud-cmd.bisync-TestPcloud-1.txt)
-- Updated: 2026-07-31-010017
+  - [`TestBisyncRemoteLocal/createemptysrcdirs`](https://pub.rclone.org/integration-tests/current/pcloud-cmd.bisync-TestPcloud-1.txt)
+  - [`TestBisyncLocalRemote/resolve`](https://pub.rclone.org/integration-tests/current/pcloud-cmd.bisync-TestPcloud-1.txt)
+  - [`TestBisyncRemoteRemote/createemptysrcdirs`](https://pub.rclone.org/integration-tests/current/pcloud-cmd.bisync-TestPcloud-1.txt)
+- Updated: 2026-09-04-010006
 <!--- end list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
 
 The following backends either have not been tested recently or have known issues
@@ -29318,7 +29759,7 @@ and far less prone to critical errors / undetected changes
 - Bisync is now capable of rolling a file listing back in cases of uncertainty,
 essentially marking the file as needing to be rechecked next time.
 - A few basic terminal colors are now supported, controllable with
-[`--color`](https://rclone.org/docs/#color) (`AUTO`|`NEVER`|`ALWAYS`)
+[`--color`](https://rclone.org/docs/#color-autoneveralways) (`AUTO`|`NEVER`|`ALWAYS`)
 - Initial listing snapshots of Path1 and Path2 are now generated concurrently,
 using the same "march" infrastructure as `check` and `sync`,
 for performance improvements and less
@@ -29348,7 +29789,7 @@ behavior with new [`--conflict-resolve`](#conflict-resolve),
 [`--conflict-suffix`](#conflict-suffix) flags.
 - A new [`--resync-mode`](#resync-mode) flag allows more control over which
 version of a file gets kept during a `--resync`.
-- Bisync now supports [`--retries`](https://rclone.org/docs/#retries-int) and [`--retries-sleep`](/docs/#retries-sleep-time)
+- Bisync now supports [`--retries`](https://rclone.org/docs/#retries-int) and [`--retries-sleep`](/docs/#retries-sleep-duration)
 (when [`--resilient`](#resilient) is set.)
 
 ### `v1.64`
@@ -32177,38 +32618,47 @@ Properties:
   - "br-ne1.magaluobjects.com"
     - Fortaleza, CE (BR), br-ne1
     - Provider: Magalu
-  - "s3.eu-amsterdam.megas4.com"
-    - Mega S4 Amsterdam
+  - "s3.eu-luxembourg-1.megas4.com"
+    - Mega S4 Luxembourg 1
     - Provider: Mega
-  - "s3.eu-luxembourg.megas4.com"
-    - Mega S4 Luxembourg
+  - "s3.eu-luxembourg-2.megas4.com"
+    - Mega S4 Luxembourg 2
     - Provider: Mega
-  - "s3.eu-paris.megas4.com"
-    - Mega S4 Paris
+  - "s3.eu-amsterdam-1.megas4.com"
+    - Mega S4 Amsterdam 1
     - Provider: Mega
-  - "s3.eu-barcelona.megas4.com"
-    - Mega S4 Barcelona
+  - "s3.eu-amsterdam-2.megas4.com"
+    - Mega S4 Amsterdam 2
     - Provider: Mega
-  - "s3.ca-montreal.megas4.com"
-    - Mega S4 Montreal
+  - "s3.eu-paris-1.megas4.com"
+    - Mega S4 Paris 1
     - Provider: Mega
-  - "s3.ca-vancouver.megas4.com"
-    - Mega S4 Vancouver
+  - "s3.eu-paris-2.megas4.com"
+    - Mega S4 Paris 2
     - Provider: Mega
-  - "s3.ap-tokyo.megas4.com"
-    - Mega S4 Tokyo
+  - "s3.eu-barcelona-1.megas4.com"
+    - Mega S4 Barcelona 1
     - Provider: Mega
-  - "s3.eu-central-1.s4.mega.io"
-    - Mega S4 eu-central-1 (Amsterdam, legacy)
+  - "s3.eu-barcelona-2.megas4.com"
+    - Mega S4 Barcelona 2
     - Provider: Mega
-  - "s3.eu-central-2.s4.mega.io"
-    - Mega S4 eu-central-2 (Bettembourg, legacy)
+  - "s3.ca-montreal-1.megas4.com"
+    - Mega S4 Montreal 1
     - Provider: Mega
-  - "s3.ca-central-1.s4.mega.io"
-    - Mega S4 ca-central-1 (Montreal, legacy)
+  - "s3.ca-montreal-2.megas4.com"
+    - Mega S4 Montreal 2
     - Provider: Mega
-  - "s3.ca-west-1.s4.mega.io"
-    - Mega S4 ca-west-1 (Vancouver, legacy)
+  - "s3.ca-vancouver-1.megas4.com"
+    - Mega S4 Vancouver 1
+    - Provider: Mega
+  - "s3.ca-vancouver-2.megas4.com"
+    - Mega S4 Vancouver 2
+    - Provider: Mega
+  - "s3.ap-tokyo-1.megas4.com"
+    - Mega S4 Tokyo 1
+    - Provider: Mega
+  - "s3.ap-tokyo-2.megas4.com"
+    - Mega S4 Tokyo 2
     - Provider: Mega
   - "oos.eu-west-2.outscale.com"
     - Outscale EU West 2 (Paris)
@@ -34725,15 +35175,15 @@ section above.
 From rclone v1.69 [Directory Buckets](https://docs.aws.amazon.com/AmazonS3/latest/userguide/directory-buckets-overview.html)
 are supported.
 
-You will need to set the `directory_buckets = true` config parameter
-or use `--s3-directory-buckets`.
+You will need to set the `directory_bucket = true` config parameter
+or use `--s3-directory-bucket`.
 
 Note that rclone cannot yet:
 
 - Create directory buckets
 - List directory buckets
 
-See [the --s3-directory-buckets flag](#s3-directory-buckets) for more info
+See [the --s3-directory-bucket flag](#s3-directory-bucket) for more info
 
 ### AWS Snowball Edge
 
@@ -44801,6 +45251,15 @@ This means that
 - filenames with the same name will encrypt the same
 - filenames which start the same won't have a common prefix
 
+A version string of the form `-vYYYY-MM-DD-HHMMSS-NNN` on the end of a
+file name (as added by `--b2-versions` / `--s3-versions`) is left in
+plain text so that versioned files can be found. Directory names are
+encrypted in full. Rclone before v1.76 left such a suffix in plain
+text on directory names too, so a directory named like this created by
+an older rclone will appear in listings with a warning but can't be
+opened or removed until renamed on the underlying remote to the name
+given in the warning.
+
 This uses a 32 byte key (256 bits) and a 16 byte (128 bits) IV both of
 which are derived from the user password.
 
@@ -51174,7 +51633,7 @@ including
     You should now see the three scopes on your Data access page. Now press save
     at the bottom!
 
-6. After adding scopes, click Audience
+6. After adding scopes, click Audience.
 Scroll down and click "+ Add users". Add yourself as a test user and press save.
 
 7. Go to Overview on the left panel, click "Create OAuth client". Choose
@@ -53553,7 +54012,7 @@ path is resolved from the root of the domain.
 
 If the path following the `remote:` ends with `/` it will be assumed to point
 to a directory. If the path does not end with `/`, then a HEAD request is sent
-and the response used to decide if it it is treated as a file or a directory
+and the response used to decide if it is treated as a file or a directory
 (run with `-vv` to see details). When [--http-no-head](#http-no-head) is
 specified, a path without ending `/` is always assumed to be a file. If rclone
 incorrectly assumes the path is a file, the solution is to specify the path with
@@ -53738,6 +54197,12 @@ The input format is comma separated list of key,value pairs.  Standard
 For example, to set a Cookie use 'Cookie,name=value', or '"Cookie","name=value"'.
 
 You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'.
+
+The headers are only sent to the host in the configured URL. If the
+server redirects to another host (including a subdomain or a different
+port) the headers are not sent to it, or to any further hop in that
+redirect chain. When headers are set, a redirect from https to http is
+refused as it would send them in cleartext.
 
 Properties:
 
@@ -62510,7 +62975,7 @@ Before you can use rclone with Sia, you will need to have a running copy of
 network (e.g. a NAS). Please follow the [Get started](https://sia.tech/get-started)
 guide and install one.
 
-rclone interacts with Sia network by talking to the Sia daemon via [HTTP API](https://sia.tech/docs/)
+rclone interacts with Sia network by talking to the Sia daemon via [HTTP API](https://docs.sia.tech/)
 which is usually available on port *9980*. By default you will run the daemon
 locally on the same computer so it's safe to leave the API password blank
 (the API URL will be `http://127.0.0.1:9980` making external access impossible).
@@ -63414,7 +63879,7 @@ Request" error rather than a more sensible error when the
 authentication fails for Swift.
 
 So this most likely means your username / password is wrong.  You can
-investigate further with the `--dump-bodies` flag.
+investigate further with the `--dump bodies` flag.
 
 This may also be caused by specifying the region when you shouldn't
 have (e.g. OVH).
@@ -66386,7 +66851,7 @@ correct, and support all features.
 The shell type auto-detection logic, described above, means that
 by default rclone will try to run a shell command the first time
 a new sftp remote is accessed. If you configure a sftp remote
-without a config file, e.g. an [on the fly](https://rclone.org/docs/#backend-path-to-dir])
+without a config file, e.g. an [on the fly](https://rclone.org/docs/#backend-path-to-dir)
 remote, rclone will have nowhere to store the result, and it
 will re-run the command on every access. To avoid this you should
 explicitly set the `shell_type` option to the correct value,
@@ -67386,7 +67851,7 @@ SFTP isn't supported under plan9 until [this
 issue](https://github.com/pkg/sftp/issues/156) is fixed.
 
 Note that since SFTP isn't HTTP based the following flags don't work
-with it: `--dump-headers`, `--dump-bodies`, `--dump-auth`.
+with it: `--dump headers`, `--dump bodies`, `--dump auth`.
 
 Note that `--timeout` and `--contimeout` are both supported.
 
@@ -68074,7 +68539,7 @@ Side by side comparison with more details:
 To make a new Storj configuration you need one of the following:
 
 - Access Grant that someone else shared with you.
-- [API Key](https://documentation.storj.io/getting-started/uploading-your-first-object/create-an-api-key)
+- [API Key](https://storj.dev/learn/concepts/access/access-grants/api-key)
   of a Storj project you are a member of.
 
 Here is an example of how to make a remote called `remote`.  First run:
@@ -69482,7 +69947,9 @@ Likewise plain WebDAV does not support hashes, however when used with
 Fastmail Files, ownCloud or Nextcloud rclone will support SHA1 and MD5 hashes.
 Depending on the exact version of ownCloud or Nextcloud hashes may
 appear on all objects, or only on objects which had a hash uploaded
-with them.
+with them. With Nextcloud, rclone asks the server to calculate the SHA1
+of uploads which had no hash to send, such as streamed uploads, and
+after setting the modification time, which discards the stored hash.
 
 <!-- autogenerated options start - DO NOT EDIT - instead edit fs.RegInfo in backend/webdav/webdav.go and run make backenddocs to verify --> <!-- markdownlint-disable-line line-length -->
 ### Standard options
@@ -71482,6 +71949,149 @@ Options:
 
 # Changelog
 
+## v1.75.1 - 2026-09-04
+
+[See commits](https://github.com/rclone/rclone/compare/v1.75.0...v1.75.1)
+
+- Security
+  - archive
+    - Fix zip slip path traversal in untrusted zip files GHSA-66hp-wgxq-6f5q CVE-PENDING (Nick Craig-Wood)
+    - Hide any archive entry which escapes the directory being listed GHSA-66hp-wgxq-6f5q (Nick Craig-Wood)
+    - Reject unsafe entry names when mounting squashfs images GHSA-66hp-wgxq-6f5q (Nick Craig-Wood)
+    - Fix zip subdirectory root matching sibling directories GHSA-66hp-wgxq-6f5q (Nick Craig-Wood)
+    - Fix zip entry named "." hiding every other file GHSA-66hp-wgxq-6f5q (Nick Craig-Wood)
+    - Fix "directory not found" for archive paths containing "./" or "//" GHSA-66hp-wgxq-6f5q (Nick Craig-Wood)
+  - build
+    - Fix multiple CVEs by upgrading to go1.26.6 (Nick Craig-Wood)
+      - CVE-2026-56860: net/url: quadratic complexity in resolvePath
+      - CVE-2026-56858: html/template: JavaScript regexp context tracking
+      - CVE-2026-56862: crypto/tls: limit handshake messages accepted post-handshake
+      - CVE-2026-56853: net/http: apply ReadHeaderTimeout to unencrypted HTTP/2 check
+      - CVE-2026-56859: encoding/xml: recursion depth guard during decode
+      - CVE-2026-33818: encoding/asn1: enforce maximum recursion depth
+      - CVE-2026-46600: net: panic parsing an invalid SVCB or HTTPS RR in dnsmessage
+      - CVE-2026-39821: net/http: reject ASCII-only Punycode-encoded labels in idna
+    - Update golang.org/x/crypto to v0.56.0 to fix multiple CVEs (Nick Craig-Wood)
+      - CVE-2026-56854: ssh: source-address critical option not enforced for non-public-key auth callbacks
+      - CVE-2026-78662: ssh: a malicious peer could flood an undecided channel's incoming requests, deadlocking the connection
+      - CVE-2026-56855: ssh: a malicious peer could send crafted messages on an established channel, deadlocking the connection
+    - Update golang.org/x/image to v0.45.0 to fix CVE-2026-46603 (Nick Craig-Wood)
+      - CVE-2026-46603: excessive memory allocation during VP8L decoding
+  - fs: Confine directory listing entries that escape the root GHSA-3vxh-3pcx-9m8q GHSA-38xv-hf3p-h7mq CVE-PENDING (Nick Craig-Wood)
+  - fshttp: Don't send `--header` values to other hosts on redirect GHSA-486v-q2wf-fp2r CVE-PENDING (Nick Craig-Wood)
+  - http: Don't leak configured headers to other hosts or over plaintext on redirect GHSA-486v-q2wf-fp2r CVE-PENDING (Nick Craig-Wood)
+  - lib/rest: Check HTTPS downgrades against the original request on redirect GHSA-486v-q2wf-fp2r CVE-PENDING (Nick Craig-Wood)
+  - local
+    - Fix dir metadata escaping the root through a planted symlink GHSA-f8g7-2xjc-7mfh CVE-PENDING (Nick Craig-Wood)
+    - Fix btime escaping the root via a planted symlink GHSA-f8g7-2xjc-7mfh CVE-PENDING (Nick Craig-Wood)
+    - Fix panic on Range request past the end of a symlink GHSA-p6m2-r3w9-mpxw CVE-PENDING (Nick Craig-Wood)
+  - serve docker
+    - Reject volume names that escape the base directory GHSA-p6vx-hf7p-98j6 (Nick Craig-Wood)
+    - Reject volume names resolving to the base directory itself GHSA-p6vx-hf7p-98j6 (Nick Craig-Wood)
+    - Re-derive volume mountpoint from name when restoring state GHSA-p6vx-hf7p-98j6 (Nick Craig-Wood)
+  - serve ftp: Fix auth-proxy sessions sharing credentials by username GHSA-c476-6w5q-jw77 CVE-PENDING (Nick Craig-Wood)
+  - serve s3
+    - Fix memory exhaustion from client-declared multipart part size GHSA-2p48-j3qc-rx9f CVE-PENDING (Nick Craig-Wood)
+    - Reject bogus multipart part sizes in the reorder buffer GHSA-2p48-j3qc-rx9f (Nick Craig-Wood)
+    - Fix auth proxy accepting any request signed with an empty secret GHSA-xwwr-4h3p-r22c CVE-PENDING (Nick Craig-Wood)
+      - **NB** the auth proxy protocol for `serve s3` has changed - the proxy program is now given the access key ID as `user` and must return the secret as `_secret_access_key`
+    - Fix each server accepting the `--auth-key` credentials of all the others (Nick Craig-Wood)
+    - Fix misleading anonymous access log when using an auth proxy via rc GHSA-p569-5gjg-9cmj CVE-PENDING (Nick Craig-Wood)
+  - serve sftp: Fix auth proxy configured via rc being silently ignored GHSA-p569-5gjg-9cmj CVE-PENDING (Nick Craig-Wood)
+- Bug Fixes
+  - accounting
+    - Fix memory leak on long-running rcd (nielash)
+    - Fix memory leak from stats groups on long-running rcd (nielash)
+    - Fix bwlimit burst overflow (Rayan Salhab)
+  - bisync
+    - Fix memory leak when running via the rc (nielash)
+    - Fix failed transfers of empty files being recorded as synced (Nick Craig-Wood)
+  - build: Make go1.26 the minimum required version as needed by golang.org/x/crypto v0.56.0 (Nick Craig-Wood)
+  - config: Redact env var config values in logs (Pastalikek65)
+  - doc fixes (Anton Karpov, CAOShurong, Dean Chen, Nick Craig-Wood, Recoordinate, Rodrigo Rodrigues, Shantanav Mukherjee, shaurya)
+  - lib/batcher: Prevent commits racing shutdown (Loi Nguyen)
+  - lib/transform: Fix panic in `truncate_keep_extension` (VXNCXNX)
+  - multipart: Fix chunked uploads storing truncated objects when the source ends early (Nick Craig-Wood)
+  - operations: Fix silent truncation of streaming uploads whose source ends early (Nick Craig-Wood)
+  - serve
+    - Fix VFS instance leaks on server startup failures and shutdown (Hakan İSMAİL)
+    - Pass the client IP address to the auth proxy (am-at-enrollvb)
+  - serve http: Prevent scrolling to the top on page reload (Sune Mølgaard)
+  - serve nfs: Fix EIO when creating symlinks with `--vfs-links` (SillyZir)
+  - serve s3
+    - Fix failed uploads deleting or corrupting the object at the key (Nick Craig-Wood)
+    - Fix crash when a multipart upload is aborted while a part is uploading (Nick Craig-Wood)
+    - Fix modtime not being set when only mtime metadata is supplied on PUT (Nick Craig-Wood)
+    - Upload all multipart uploads via the VFS so they obey `--bwlimit` and show in stats (Nick Craig-Wood)
+    - Reserve the `.rclone_temp_` prefix for temporary objects (Nick Craig-Wood)
+    - Clean up abandoned multipart uploads after `--multipart-expiry` (Nick Craig-Wood)
+  - vfscache
+    - Fix reader deadlock when the item size drops below the read offset (Dave)
+    - Fix log message growing without bound on repeated write errors (Vijay Misal)
+  - walk: Stop directory traversal when the context is cancelled (Rahman Yilmaz)
+- VFS
+  - Synchronize poll updates with shutdown (Loi Nguyen)
+  - Make poll shutdown lifecycle deterministic (Loi Nguyen)
+- Crypt
+  - Fix hash mismatches with `no_data_encryption` on backends which check upload hashes (Nick Craig-Wood)
+  - Fix directory names which look like versioned file names (TowyTowy)
+  - Warn about directories with legacy version-like encrypted names (Nick Craig-Wood)
+- Azure Blob
+  - Fix Entra ID server-side copy source authentication (Edward Klesel)
+  - Fix spurious vfs cache corruption errors during chunked reads (Nick Craig-Wood)
+- Azurefiles
+  - Fix zero padded files being created when the source ends early (Nick Craig-Wood)
+- Box
+  - Fix truncated files being uploaded successfully when the source ends early (Rohit Behera)
+- Compress
+  - Fix corrupted objects being created when the source ends early (Nick Craig-Wood)
+- Drive
+  - Don't list trashed files when removing a directory into the trash (alliasgher)
+- Dropbox
+  - Preserve Paper export paths on lookup (Loi Nguyen)
+  - Fix context cancellation (e.g. `--max-duration` limit) not stopping in-flight requests (debaditya)
+  - Fix chunked uploads of truncated files never finishing (Nick Craig-Wood)
+  - Don't retry chunked upload requests when the upload has been cancelled (Nick Craig-Wood)
+  - Decode received shared-file names (Sanjay Kanth A)
+  - Fix ChangeNotify when the root's case differs from Dropbox's (Loi Nguyen)
+- Filelu
+  - Fix truncated files being uploaded successfully when the source ends early (Nick Craig-Wood)
+  - Fix duplicate root path during multipart folder creation (kingston125)
+- Huaweidrive
+  - Fix truncated files being uploaded successfully when the source ends early (Rohit Behera)
+- Iclouddrive
+  - Fix uploads into an app container failing with 412 (Christian De Santis)
+- Internetarchive
+  - Fix corrupted files being created when the source ends early (Nick Craig-Wood)
+- Internxt
+  - Persist rotated token returned by the user info call (0rangeSeaW0lf)
+- Onedrive
+  - Fix 403 Forbidden for configuration personal onedrive (machsix)
+  - Fall back to manual drive ID entry when drive listing fails (SillyZir)
+  - Don't retry multipart upload chunk on 404 (upload session not found) (water)
+- Overview
+  - Fix "internal error: no overview data found" on 32 bit architectures (Nick Craig-Wood)
+- Pikpak
+  - Fix truncated files being created when the source ends early (Nick Craig-Wood)
+  - Fix truncated single part uploads reported as ok when source ends early (Nick Craig-Wood)
+- Protondrive
+  - Fix files uploaded with v1.75.0 not being readable in the Proton apps (Nick Craig-Wood)
+  - Fix corrupted uploads after a retried upload error (Nick Craig-Wood)
+- Quatrix
+  - Fix chunk upload retries and fix memory leak (Nick Craig-Wood)
+- S3
+  - Update Mega endpoints (Nick Craig-Wood)
+  - Treat UploadPart success without ETag as retryable error (CAOShurong)
+  - Fix server side copy failing with `--s3-no-head-object` (Anatoly Tarnavsky)
+- Sia
+  - Fix corrupted files being created when the source ends early (Nick Craig-Wood)
+- Smb
+  - Reuse the upload connection for SetModTime (alliasgher)
+- WebDAV
+  - Fix SetModTime failing and hashes missing on Nextcloud (Nick Craig-Wood)
+- Yandex
+  - Fix truncated files being uploaded successfully when the source ends early (Rohit Behera)
+
 ## v1.75.0 - 2026-07-31
 
 [See commits](https://github.com/rclone/rclone/compare/v1.74.0...v1.75.0)
@@ -71490,11 +72100,11 @@ Options:
   - [Scality](https://rclone.org/s3/#scality) (RING / ARTESCA)
   - [Zero Services](https://rclone.org/s3/#zero-z3) (ZERO-Z3)
 - Security
-  - archive: Don't crash on malformed squashfs images GHSA-6jcg-q3wp-x2f4 CVE-PENDING (Nick Craig-Wood)
-  - ftp: Fix ftp command injection when encoding doesn't include CRLF GHSA-8c48-q9wj-3w37 CVE-PENDING (Nick Craig-Wood)
+  - archive: Don't crash on malformed squashfs images GHSA-6jcg-q3wp-x2f4 (Nick Craig-Wood)
+  - ftp: Fix ftp command injection when encoding doesn't include CRLF GHSA-8c48-q9wj-3w37 CVE-2026-71311 (Nick Craig-Wood)
   - lib/http: Use TLS on all `--addr` listeners when `--cert` and `--key` are set GHSA-mfvx-7rcj-9m5g (Nick Craig-Wood)
-  - lib/proxy: Fix unbounded HTTP CONNECT headers causing OOM GHSA-xhf4-832v-7xcr CVE-PENDING (Nick Craig-Wood)
-  - local: Stop source file names escaping the destination directory GHSA-7p4m-qxvv-g567 CVE-PENDING (Nick Craig-Wood)
+  - lib/proxy: Fix unbounded HTTP CONNECT headers causing OOM GHSA-xhf4-832v-7xcr CVE-2026-71310 (Nick Craig-Wood)
+  - local: Stop source file names escaping the destination directory GHSA-7p4m-qxvv-g567 CVE-2026-71313 (Nick Craig-Wood)
   - rc
     - Don't expose pprof debug handlers on an unauthenticated server GHSA-mfvx-7rcj-9m5g CVE-PENDING (Nick Craig-Wood)
     - Require authentication to list the remotes with `--rc-serve` GHSA-mfvx-7rcj-9m5g (Nick Craig-Wood)
@@ -71503,9 +72113,9 @@ Options:
     - Fix redirect credential leaks, reject HTTPS->HTTP and strip secrets GHSA-8mxv-9xhp-86h4 (Nick Craig-Wood)
     - Strip S3 Express session token on cross-host redirects GHSA-8mxv-9xhp-86h4 (Nick Craig-Wood)
   - serve ftp: Use constant time comparison for password check GHSA-mfvx-7rcj-9m5g (Nick Craig-Wood)
-  - serve restic: Fix path traversal above the served directory GHSA-45pq-889g-fcgh CVE-PENDING (Nick Craig-Wood)
+  - serve restic: Fix path traversal above the served directory GHSA-45pq-889g-fcgh CVE-2026-71309 (Nick Craig-Wood)
   - serve sftp: Don't crash the whole server on a bad request GHSA-6jcg-q3wp-x2f4 (Nick Craig-Wood)
-  - sftp: Fix command injection via crafted filenames on PowerShell remotes GHSA-2m8m-jhrm-w6j2 CVE-PENDING (Nick Craig-Wood)
+  - sftp: Fix command injection via crafted filenames on PowerShell remotes GHSA-2m8m-jhrm-w6j2 CVE-2026-71312 (Nick Craig-Wood)
   - vfs: Don't crash the process if a backend panics on a background goroutine GHSA-6jcg-q3wp-x2f4 (Nick Craig-Wood)
   - webdav
     - Fix HTTPS to HTTP redirects leaking credentials GHSA-h4mf-4v27-hggj (Nick Craig-Wood)
