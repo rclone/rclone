@@ -892,6 +892,19 @@ with `--suffix $(date +%F)` in bash, and
 
 See `--compare-dest` and `--copy-dest`.
 
+### --backup-dir-deletes-only
+
+When using `sync` with `--backup-dir`, this option moves only files deleted
+from the destination into the backup directory. Files that are updated by the
+source are overwritten in the destination as normal and are not moved into the
+backup directory first.
+
+This is useful with remotes that provide native file versioning: overwritten
+files retain their version history at the destination, while deleted files are
+still collected in the backup directory.
+
+This option has no effect unless `--backup-dir` is set.
+
 ### --bind string
 
 Local address to bind to for outgoing connections.  This can be an
