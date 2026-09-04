@@ -696,10 +696,12 @@ https://issuetracker.google.com/issues/149522397
 
 Rclone detects this by finding directories with no items in a listing
 of more than one directory and retries just those directories together
-as a single extra listing.
+as a single extra listing. Any directory still showing no items after
+that is queried on its own, since the bug is triggered by combining
+multiple directories into one search.
 
 This means that if you have a lot of directories affected by this bug
-in a single listing rclone will end up doing an extra API call to
+in a single listing rclone will end up doing extra API calls to
 re-list them.
 
 This flag allows the work-around to be disabled. This is **not**
@@ -2184,8 +2186,12 @@ func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in chan listRE
 		// https://issuetracker.google.com/issues/149522397
 		//
 		// A batch of genuinely empty directories costs one extra query for
-		// the whole batch rather than one query per directory, and if that
-		// retry also comes back with no items at all, they are simply empty.
+		// the whole batch rather than one query per directory. However the
+		// bug can affect the same directories again when they are retried
+		// together, since it is the multi-parent query itself that
+		// triggers it - so any directory still empty after the batch retry
+		// is queried once more on its own, which has no "or" clause to
+		// trigger the bug.
 		if f.opt.FastListBugFix && len(dirs) > 1 && iErr == nil {
 			var emptyDirs, emptyPaths []string
 			for i, found := range foundInDir {
@@ -2206,6 +2212,25 @@ func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in chan listRE
 				})
 				if retryErr != nil && iErr == nil {
 					iErr = retryErr
+				}
+				if iErr == nil {
+					for i, found := range emptyFound {
+						if found {
+							continue
+						}
+						fs.Debugf(f, "Retrying directory %q individually as it still had no entries after the batch retry", emptyPaths[i])
+						_, dirErr := f.list(ctx, []string{emptyDirs[i]}, "", false, false, f.opt.TrashedOnly, false, func(item *drive.File) bool {
+							stop, err := f.listRItem(ctx, item, []string{emptyDirs[i]}, []string{emptyPaths[i]}, []bool{false}, cb)
+							if err != nil {
+								iErr = err
+							}
+							return stop
+						})
+						if dirErr != nil {
+							iErr = dirErr
+							break
+						}
+					}
 				}
 			}
 		}

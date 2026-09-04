@@ -210,6 +210,63 @@ func TestInternalListRRunnerPartialBatch(t *testing.T) {
 	assert.Len(t, requests, 2, "expected one batch request and one retry request for the empty directories")
 }
 
+// TestInternalListRRunnerBatchRetryStillEmpty covers the case where the
+// drive bug affects a directory consistently across multi-parent queries:
+// dir-b has no items on the initial batch (dir-a, dir-b, dir-c) or the
+// batch retry (dir-b, dir-c), only when queried entirely on its own. It
+// checks that listRRunner falls back to querying dir-b individually and
+// still finds its item, since a single-directory query has no "or" clause
+// for the bug to affect.
+func TestInternalListRRunnerBatchRetryStillEmpty(t *testing.T) {
+	var requests []string
+	f := newListTestFs(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		q := r.URL.Query().Get("q")
+		requests = append(requests, q)
+		w.Header().Set("Content-Type", "application/json")
+		var err error
+		switch {
+		case strings.Contains(q, "dir-a") && strings.Contains(q, "dir-b") && strings.Contains(q, "dir-c"):
+			// initial batch of 3: only dir-a has an item
+			_, err = io.WriteString(w, `{"files":[{"id":"file-a","name":"file-a.txt","mimeType":"text/plain","md5Checksum":"d41d8cd98f00b204e9800998ecf8427e","parents":["dir-a"]}]}`)
+		case strings.Contains(q, "dir-b") && strings.Contains(q, "dir-c"):
+			// batch retry of the two empty dirs: only dir-c has an item, dir-b is still empty
+			_, err = io.WriteString(w, `{"files":[{"id":"file-c","name":"file-c.txt","mimeType":"text/plain","md5Checksum":"d41d8cd98f00b204e9800998ecf8427e","parents":["dir-c"]}]}`)
+		case strings.Contains(q, "dir-b"):
+			// dir-b queried entirely on its own finally finds its item
+			_, err = io.WriteString(w, `{"files":[{"id":"file-b","name":"file-b.txt","mimeType":"text/plain","md5Checksum":"d41d8cd98f00b204e9800998ecf8427e","parents":["dir-b"]}]}`)
+		default:
+			t.Fatalf("unexpected query: %s", q)
+		}
+		assert.NoError(t, err)
+	}))
+	f.opt.FastListBugFix = true
+	f.grouping = listRGrouping
+
+	in := make(chan listREntry, 10)
+	out := make(chan error, 1)
+	var wg stdsync.WaitGroup
+	var mu stdsync.Mutex
+	var emitted []string
+	cb := func(entry fs.DirEntry) error {
+		mu.Lock()
+		defer mu.Unlock()
+		emitted = append(emitted, entry.Remote())
+		return nil
+	}
+
+	wg.Add(3)
+	in <- listREntry{id: "dir-a", path: "a"}
+	in <- listREntry{id: "dir-b", path: "b"}
+	in <- listREntry{id: "dir-c", path: "c"}
+	close(in)
+
+	f.listRRunner(context.Background(), &wg, in, out, cb)
+	require.NoError(t, <-out)
+
+	assert.ElementsMatch(t, []string{"a/file-a.txt", "b/file-b.txt", "c/file-c.txt"}, emitted, "dir-b's item should still be found via the individual fallback")
+	assert.Len(t, requests, 3, "expected the initial batch, the batch retry (dir-b still empty), and one individual query for dir-b")
+}
+
 func TestDriveScopes(t *testing.T) {
 	for _, test := range []struct {
 		in       string
