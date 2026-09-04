@@ -1,0 +1,59 @@
+---
+# Minimal manual build for internal distribution: produces linux/amd64 and
+# linux/arm64 .zip/.deb/.rpm artifacts using rclone's own release tooling
+# (bin/cross-compile.go + nfpm), without the full upstream build matrix
+# (mac/windows/android/lint) or the upstream-only deploy steps in build.yml,
+# which are gated to github.repository == 'rclone/rclone' and need secrets
+# this fork doesn't have.
+#
+# CGO_ENABLED=0 by default in cross-compile.go (no -cgo flag passed here),
+# so the linux/amd64 build is a static Go binary with no glibc-version
+# coupling - the same artifact should run unmodified on Ubuntu 22.04, 24.04,
+# and RHEL 9.1.
+
+name: internal-linux-release
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          # Needed for git describe/rev-list, which the Makefile uses to
+          # compute the build's version tag.
+          fetch-depth: 0
+
+      - name: Install Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: '~1.27.0'
+          check-latest: true
+
+      - name: Install nfpm (for .deb/.rpm packaging)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rpm
+          make release_dep_linux
+
+      - name: Cross-compile linux/amd64 and linux/arm64 (.zip, .deb, .rpm)
+        run: |
+          eval "$(make -s vars)"
+          go run bin/cross-compile.go -release current -include '^linux/(amd64|arm64)$' "$TAG"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rclone-linux-amd64-arm64
+          path: |
+            build/*.zip
+            build/*.deb
+            build/*.rpm
+          retention-days: 14
