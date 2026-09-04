@@ -235,7 +235,7 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 		return err
 	}
 
-	fs.Infof(nil, "Synching Path1 %s with Path2 %s", quotePath(path1), quotePath(path2))
+	fs.Infof(nil, "Syncing Path1 %s with Path2 %s", quotePath(path1), quotePath(path2))
 
 	if opt.DryRun {
 		// In --dry-run mode, preserve original listings and save updates to the .lst-dry files
