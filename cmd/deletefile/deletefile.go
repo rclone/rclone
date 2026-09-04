@@ -29,14 +29,23 @@ specified file exists, it will always be removed.`,
 		cmd.CheckArgs(1, 1, command, args)
 		f, fileName := cmd.NewFsFile(args[0])
 		cmd.Run(true, false, command, func() error {
+			ctx := context.Background()
 			if fileName == "" {
 				return fmt.Errorf("%s is a directory or doesn't exist: %w", args[0], fs.ErrorObjectNotFound)
 			}
-			fileObj, err := f.NewObject(context.Background(), fileName)
+			fileObj, err := f.NewObject(ctx, fileName)
 			if err != nil {
 				return err
 			}
-			return operations.DeleteFile(context.Background(), fileObj)
+			ci := fs.GetConfig(ctx)
+			var backupDir fs.Fs
+			if ci.BackupDir != "" || ci.Suffix != "" {
+				backupDir, err = operations.BackupDir(ctx, f, f, fileName)
+				if err != nil {
+					return err
+				}
+			}
+			return operations.DeleteFileWithBackupDir(ctx, fileObj, backupDir)
 		})
 	},
 }
