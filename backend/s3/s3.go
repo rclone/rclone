@@ -3263,6 +3263,23 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		f.opt.ObjectLockLegalHoldStatus != ""
 	if needsReplace {
 		req.MetadataDirective = types.MetadataDirectiveReplace
+		// REPLACE discards whatever is not supplied, so when it was not
+		// --metadata that forced it, carry the source values over.
+		if !ci.Metadata {
+			err = srcObj.readMetaData(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read source metadata: %w", err)
+			}
+			req.CacheControl = srcObj.cacheControl
+			req.ContentDisposition = srcObj.contentDisposition
+			req.ContentEncoding = srcObj.contentEncoding
+			req.ContentLanguage = srcObj.contentLanguage
+			for k, v := range srcObj.meta {
+				if _, found := req.Metadata[k]; !found {
+					req.Metadata[k] = v
+				}
+			}
+		}
 	}
 
 	err = f.copy(ctx, &req, dstBucket, dstPath, srcBucket, srcPath, srcObj)
@@ -4239,11 +4256,24 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	}
 
 	// Copy the object to itself to update the metadata
+	//
+	// This needs the REPLACE directive as the modification time lives in the
+	// user metadata, and REPLACE drops any system metadata not supplied here.
 	bucket, bucketPath := o.split()
 	req := s3.CopyObjectInput{
-		ContentType:       aws.String(fs.MimeType(ctx, o)), // Guess the content type
-		Metadata:          mapToS3Metadata(o.meta),
-		MetadataDirective: types.MetadataDirectiveReplace, // replace metadata with that passed in
+		ContentType:        aws.String(fs.MimeType(ctx, o)), // Guess the content type
+		Metadata:           mapToS3Metadata(o.meta),
+		MetadataDirective:  types.MetadataDirectiveReplace, // replace metadata with that passed in
+		CacheControl:       o.cacheControl,
+		ContentDisposition: o.contentDisposition,
+		ContentEncoding:    o.contentEncoding,
+		ContentLanguage:    o.contentLanguage,
+	}
+	// AWS omits x-amz-storage-class from HEAD responses for STANDARD
+	// objects, so an unknown class has to be sent as STANDARD to stop
+	// f.copy applying the configured storage class instead.
+	if o.storageClass != nil || o.fs.opt.StorageClass != "" {
+		req.StorageClass = types.StorageClass(o.GetTier())
 	}
 	if o.fs.opt.RequesterPays {
 		req.RequestPayer = types.RequestPayerRequester
