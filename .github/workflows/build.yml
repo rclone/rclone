@@ -32,7 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        job_name: ['linux', 'linux_386', 'mac_amd64', 'mac_arm64', 'windows', 'other_os', 'go1.25']
+        job_name: ['linux', 'linux_386', 'mac_amd64', 'mac_arm64', 'windows', 'other_os', 'go1.26']
 
         include:
           - job_name: linux
@@ -86,9 +86,9 @@ jobs:
             compile_all: true
             deploy: true
 
-          - job_name: go1.25
+          - job_name: go1.26
             os: ubuntu-latest
-            go: '~1.25.13'
+            go: '~1.26.6'
             quicktest: true
             racequicktest: true
 
