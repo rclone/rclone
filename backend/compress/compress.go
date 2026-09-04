@@ -43,6 +43,7 @@ const (
 	bufferSize          = 8388608
 	heuristicBytes      = 1048576
 	minCompressionRatio = 1.1
+	gzipBlockSize       = 1 << 20
 
 	gzFileExt           = ".gz"
 	zstdFileExt         = ".zst"
@@ -1085,6 +1086,34 @@ type ObjectMetadata struct {
 	CompressionMetadataZstd *SzstdMetadata      // Metadata for Zstd compression
 }
 
+// validate checks metadata read from the wrapped remote before it is used to
+// construct a compressed reader.
+func (meta *ObjectMetadata) validate() error {
+	if meta.Mode != Gzip {
+		return nil
+	}
+	if meta.CompressionMetadataGzip == nil {
+		return errors.New("missing gzip metadata")
+	}
+	if meta.CompressionMetadataGzip.BlockSize != gzipBlockSize {
+		return fmt.Errorf("invalid gzip block size %d", meta.CompressionMetadataGzip.BlockSize)
+	}
+	if meta.Size != meta.CompressionMetadataGzip.Size {
+		return errors.New("gzip metadata size does not match object size")
+	}
+	if meta.Size < 0 {
+		return errors.New("invalid gzip object size")
+	}
+	blocks := meta.Size / gzipBlockSize
+	if meta.Size%gzipBlockSize != 0 {
+		blocks++
+	}
+	if int64(len(meta.CompressionMetadataGzip.BlockData)) < blocks {
+		return errors.New("gzip block data is incomplete")
+	}
+	return nil
+}
+
 // Object with external metadata
 type Object struct {
 	fs.Object                 // Wraps around data object for this object
@@ -1106,6 +1135,9 @@ func readMetadata(ctx context.Context, mo fs.Object) (meta *ObjectMetadata, err 
 	jr := json.NewDecoder(rc)
 	meta = new(ObjectMetadata)
 	if err = jr.Decode(meta); err != nil {
+		return nil, err
+	}
+	if err = meta.validate(); err != nil {
 		return nil, err
 	}
 	return meta, nil
