@@ -261,7 +261,9 @@ func ServePluginOK(w http.ResponseWriter, r *http.Request, pluginsMatchResult []
 
 	director := getDirectorForProxy(origin)
 
-	pluginsProxy.Director = director
+	// Director is deprecated in favour of Rewrite but this code is
+	// unmaintained and scheduled for removal
+	pluginsProxy.Director = director //nolint:staticcheck
 	pluginsProxy.ServeHTTP(w, r)
 	return true
 }
