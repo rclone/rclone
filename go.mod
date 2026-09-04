@@ -281,6 +281,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.4.1
 	github.com/golang-jwt/jwt/v4 v4.5.2
+	github.com/icholy/digest v1.2.0
 	github.com/pkg/xattr v0.4.12
 	github.com/pquerna/otp v1.5.0
 	golang.org/x/mobile v0.0.0-20260709172247-6129f5bee9d5
