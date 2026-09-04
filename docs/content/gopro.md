@@ -301,6 +301,20 @@ and a medium can be referenced by any number of independent shares with
 no way to look up which ones from the medium's own record, so there's
 no single reliable "the" link to remove on request.
 
+## Deleting files
+
+By default, `rclone delete`/`rclone rmdir`/removing a file during
+`rclone sync` doesn't actually make GoPro forget about it - confirmed
+live, GoPro moves it to what its own web/app UI calls "Recently
+Deleted" instead. It's recoverable there for a time, and still counts
+against your storage quota, even though every listing and `NewObject`
+lookup this backend does already correctly treats it as gone. Set
+[`--gopro-use-trash=false`](#gopro-use-trash) to skip that and delete
+permanently instead - confirmed live, this still takes GoPro roughly a
+minute to actually process in the background, not instant, but it's
+gone for good once it does, unlike the indefinitely-recoverable
+default.
+
 ## Uploading
 
 Files uploaded to `upload/` are always sent in chunks (there's no
@@ -461,6 +475,73 @@ Properties:
 - Type:        string
 - Required:    false
 
+#### --gopro-use-trash
+
+Send deleted files to GoPro's own trash instead of deleting permanently.
+
+Confirmed live: without "permanent=true" on the delete request,
+GoPro only moves a medium to what its own UI calls "Recently
+Deleted" - it's not actually gone, remains recoverable there for up
+to 60 days (rclone backend restore, or GoPro's own web/app UI, can
+bring it back - see [--gopro-trashed-only](#gopro-trashed-only)),
+and still counts against your storage quota even while it sits
+there, even though every listing this backend does (and the
+medium's own record) already correctly treats it as absent.
+
+Defaults to true, matching the drive backend's --drive-use-trash and
+GoPro's own web/app default ("delete" there is also recoverable) -
+safer than a mistaken or scripted delete being unrecoverable by
+default. Set to false to skip the trash and delete permanently
+instead - matches what "rclone delete" usually means on backends
+without a trash concept at all. This costs nothing extra for
+GoPro-branded camera media specifically: it's "exempt" from any
+storage quota ("Unlimited Storage" in the account dashboard), so
+there's no space to reclaim by skipping the trash either way.
+Anything uploaded here that isn't GoPro-camera footage is
+"non_exempt" and capped instead ("Additional Storage: x/100GB" in
+the dashboard) - for that content, turning this off still trades a
+recoverable delete for an immediately-final one.
+
+Properties:
+
+- Config:      use_trash
+- Env Var:     RCLONE_GOPRO_USE_TRASH
+- Type:        bool
+- Default:     true
+
+#### --gopro-trashed-only
+
+Only show media in GoPro's trash in listings, for restoring it.
+
+Matches the drive backend's --drive-trashed-only: with this on, every
+listing under media/ shows what's currently in GoPro's "Recently
+Deleted" (see [--gopro-use-trash](#gopro-use-trash)) instead of the
+active library, so it can be inspected or copied out before GoPro
+auto-purges it (confirmed live, roughly 60 days after deletion).
+
+GET /media/deleted (what this reads from) doesn't support the same
+server-side type or date-range filtering /media/search does -
+confirmed live, it always returns the entire trash regardless of
+these parameters - so this backend applies
+[--gopro-include-edits](#gopro-include-edits) and the ready-to-view
+check client-side instead, and a media/by-year, media/by-month or
+media/by-day listing still has to fetch the whole trash first before
+narrowing it down, however small the requested slice.
+
+This changes what every listing shows, not just one path - use an
+on-the-fly connection string (e.g. ":gopro,trashed_only=true:media/all")
+rather than setting it globally in the remote's config if a normal,
+non-trashed view of the same remote is still needed side by side. To
+restore trashed media back to the active library, see "rclone backend
+restore".
+
+Properties:
+
+- Config:      trashed_only
+- Env Var:     RCLONE_GOPRO_TRASHED_ONLY
+- Type:        bool
+- Default:     false
+
 #### --gopro-always-add-id
 
 Always name files "name {id}.ext" instead of just "name.ext".
@@ -539,9 +620,9 @@ chaptered video or burst photo set, not any single one, so an
 individual item's size is normally left unknown (-1) rather than
 guessed at by dividing it evenly. Set this if you need an exact size
 for one of these, for example for rclone mount. This does one extra
-request per file, on top of whatever --gopro-verify-size already costs
-for that file - so listing a large library with lots of chaptered/burst
-items will be slower still.
+request per file, on top of what --gopro-verify-size already costs -
+so listing a large library with lots of chaptered/burst items will be
+slower still.
 
 Properties:
 
@@ -603,6 +684,51 @@ Properties:
 - Env Var:     RCLONE_GOPRO_DESCRIPTION
 - Type:        string
 - Required:    false
+
+## Backend commands
+
+Here are the commands specific to the gopro backend.
+
+Run them with:
+
+```console
+rclone backend COMMAND remote:
+```
+
+The help below will explain what arguments each command takes.
+
+See the [backend](/commands/rclone_backend/) command for more
+info on how to pass options and arguments.
+
+These can be run on a running backend using the rc command
+[backend/command](/rc/#backend-command).
+
+### restore
+
+Restore media from GoPro's trash
+
+```console
+rclone backend restore remote: [options] [<arguments>+]
+```
+
+This restores media out of GoPro's trash and back into the active
+library - confirmed live, undocumented API. It always operates on the
+trash regardless of --gopro-trashed-only, since there would otherwise be
+no way to run it without reconfiguring the remote first.
+
+With no arguments, it restores everything currently in the trash:
+
+    rclone backend restore gopro:
+
+Given one or more arguments, each one names a single medium to restore
+instead - either a bare id, or a trashed listing's own "name {id}.ext"
+leaf (see --gopro-trashed-only and --gopro-always-add-id) pasted straight
+from "rclone lsf":
+
+    rclone backend restore gopro: 6a99f18a239bf36f4c2377cf "photo {6a99f18a239bf36f4c2377cf}.jpg"
+
+Nothing is restored if --dry-run is set; the command logs what would be
+restored instead.
 
 <!-- autogenerated options stop -->
 

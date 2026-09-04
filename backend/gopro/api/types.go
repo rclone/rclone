@@ -65,6 +65,24 @@ type SearchResponse struct {
 	Pages PageInfo `json:"_pages"`
 }
 
+// DeletedMediaResponse is returned from GET /media/deleted
+//
+// Confirmed live: each item here carries every field Medium does (plus
+// several deletion-specific ones this backend has no use for, such as
+// delete_scheduled_at and associations) under the same names, so it
+// decodes directly into Medium.
+type DeletedMediaResponse struct {
+	DeletedMedia []Medium `json:"deleted_media"`
+	Pages        PageInfo `json:"_pages"`
+}
+
+// RestoreRequest is the request body for POST /media/restore, which moves
+// media back out of GoPro's trash to the active library - confirmed live,
+// undocumented.
+type RestoreRequest struct {
+	IDs []string `json:"ids"`
+}
+
 // CollectionCreate is the request body for POST /collections, which creates
 // a public share link (GoPro calls it a "collection" internally, though it
 // always holds exactly one medium as used by this backend). Cloneable is

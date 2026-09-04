@@ -53,6 +53,20 @@ const (
 	// carries short-lived signed CDN URLs) is reused for.
 	dlCacheTTL = 4 * time.Minute
 
+	// deletePermanentDelay is how long deleteMedium waits between its
+	// plain delete and the finalising permanent=true one - see there.
+	// Empirically tuned, not a documented API contract: polling for a
+	// clean "ready to finalise" signal was tried and abandoned - GET
+	// /media/{id} turning 404 (typically under 1s) isn't sufficient on
+	// its own (confirmed failing at that point at least once), and
+	// /media/deleted's own listing is too inconsistently slow to poll
+	// (over 15s once, yet finalising succeeded anyway despite that
+	// listing never having caught up) - so this is a fixed wait picked
+	// from repeated live testing (1s succeeded twice but also failed
+	// once at that same interval in the polling test; 3s succeeded
+	// cleanly every time tried), not a guarantee.
+	deletePermanentDelay = 3 * time.Second
+
 	defaultUploadChunkSize   = fs.SizeSuffix(6 * 1024 * 1024) // matches the reference client
 	defaultUploadConcurrency = 4
 
@@ -176,6 +190,7 @@ func init() {
 		Name:        "gopro",
 		Description: "GoPro Media Library",
 		NewFs:       NewFs,
+		CommandHelp: commandHelp,
 		Config: func(ctx context.Context, name string, m configmap.Mapper, configIn fs.ConfigIn) (*fs.ConfigOut, error) {
 			opt := new(Options)
 			if err := configstruct.Set(m, opt); err != nil {
@@ -286,6 +301,61 @@ backend) if left blank - rclone's own "rclone link" command has no
 way to pass a one-off title per call, so this is the only way to set
 one, and it applies to every link this backend creates for the
 remote's lifetime, not just the next one.`,
+		}, {
+			Name:     "use_trash",
+			Advanced: true,
+			Default:  true,
+			Help: `Send deleted files to GoPro's own trash instead of deleting permanently.
+
+Confirmed live: without "permanent=true" on the delete request,
+GoPro only moves a medium to what its own UI calls "Recently
+Deleted" - it's not actually gone, remains recoverable there for up
+to 60 days (rclone backend restore, or GoPro's own web/app UI, can
+bring it back - see [--gopro-trashed-only](#gopro-trashed-only)),
+and still counts against your storage quota even while it sits
+there, even though every listing this backend does (and the
+medium's own record) already correctly treats it as absent.
+
+Defaults to true, matching the drive backend's --drive-use-trash and
+GoPro's own web/app default ("delete" there is also recoverable) -
+safer than a mistaken or scripted delete being unrecoverable by
+default. Set to false to skip the trash and delete permanently
+instead - matches what "rclone delete" usually means on backends
+without a trash concept at all. This costs nothing extra for
+GoPro-branded camera media specifically: it's "exempt" from any
+storage quota ("Unlimited Storage" in the account dashboard), so
+there's no space to reclaim by skipping the trash either way.
+Anything uploaded here that isn't GoPro-camera footage is
+"non_exempt" and capped instead ("Additional Storage: x/100GB" in
+the dashboard) - for that content, turning this off still trades a
+recoverable delete for an immediately-final one.`,
+		}, {
+			Name:     "trashed_only",
+			Advanced: true,
+			Default:  false,
+			Help: `Only show media in GoPro's trash in listings, for restoring it.
+
+Matches the drive backend's --drive-trashed-only: with this on, every
+listing under media/ shows what's currently in GoPro's "Recently
+Deleted" (see [--gopro-use-trash](#gopro-use-trash)) instead of the
+active library, so it can be inspected or copied out before GoPro
+auto-purges it (confirmed live, roughly 60 days after deletion).
+
+GET /media/deleted (what this reads from) doesn't support the same
+server-side type or date-range filtering /media/search does -
+confirmed live, it always returns the entire trash regardless of
+these parameters - so this backend applies
+[--gopro-include-edits](#gopro-include-edits) and the ready-to-view
+check client-side instead, and a media/by-year, media/by-month or
+media/by-day listing still has to fetch the whole trash first before
+narrowing it down, however small the requested slice.
+
+This changes what every listing shows, not just one path - use an
+on-the-fly connection string (e.g. ":gopro,trashed_only=true:media/all")
+rather than setting it globally in the remote's config if a normal,
+non-trashed view of the same remote is still needed side by side. To
+restore trashed media back to the active library, see "rclone backend
+restore".`,
 		}, {
 			Name:     "always_add_id",
 			Advanced: true,
@@ -398,6 +468,8 @@ type Options struct {
 	IncludeEdits      bool                 `config:"include_edits"`
 	LinkAllowDownload bool                 `config:"link_allow_download"`
 	LinkTitle         string               `config:"link_title"`
+	UseTrash          bool                 `config:"use_trash"`
+	TrashedOnly       bool                 `config:"trashed_only"`
 	AlwaysAddID       bool                 `config:"always_add_id"`
 	VerifySize        string               `config:"verify_size"`
 	ReadSize          bool                 `config:"read_size"`
@@ -800,8 +872,9 @@ func isEditType(t string) bool {
 	return t == "MultiClipEdit" || t == "Edit"
 }
 
-// list pages through /media/search, calling fn for every included medium
-// that matches filter.
+// list pages through /media/search (or, with trashedOnly, GET
+// /media/deleted), calling fn for every included medium that matches
+// filter.
 //
 // "MultiClipEdit" and "Edit" media are excluded server-side via the type
 // parameter, unless --gopro-include-edits opts them back in (see
@@ -810,7 +883,15 @@ func isEditType(t string) bool {
 // full-library scan to just the matching window; the filter is re-checked
 // client-side as well as a backstop in case the server-side bound is ever
 // inexact.
-func (f *Fs) list(ctx context.Context, filter mediaFilter, fn func(item *api.Medium) error) (err error) {
+//
+// trashedOnly is a parameter rather than always reading
+// --gopro-trashed-only directly so that the "restore" backend command (see
+// commandHelp) can always list the trash regardless of that option -
+// listDir is the only other caller, and passes f.opt.TrashedOnly.
+func (f *Fs) list(ctx context.Context, filter mediaFilter, trashedOnly bool, fn func(item *api.Medium) error) (err error) {
+	if trashedOnly {
+		return f.listTrash(ctx, fn)
+	}
 	const perPage = 100
 	page := 1
 	totalPages := 0
@@ -821,6 +902,13 @@ func (f *Fs) list(ctx context.Context, filter mediaFilter, fn func(item *api.Med
 		"processing_states": {"ready"},
 		"order_by":          {"captured_at"},
 		"per_page":          {strconv.Itoa(perPage)},
+		// "export" composition media are internal artifacts (confirmed
+		// live: created via POST /media/{id}/export, e.g. a rendition
+		// generated for a specific share/output format) rather than a
+		// user's own content - GoPro's own web app excludes them from
+		// every listing unconditionally, with no user-facing way to
+		// include them, so this backend does the same.
+		"xcomposition": {"export"},
 	}
 	if start, end, ok := filter.capturedRange(); ok {
 		rangeParam := start.Format(capturedRangeLayout) + "," + end.Format(capturedRangeLayout)
@@ -866,6 +954,176 @@ func (f *Fs) list(ctx context.Context, filter mediaFilter, fn func(item *api.Med
 			break
 		}
 		page++
+	}
+	return nil
+}
+
+// listTrash pages through GET /media/deleted, calling fn for every
+// included item - the trashed-listing counterpart of list's normal
+// /media/search path above, used when trashedOnly is set.
+//
+// Confirmed live: /media/deleted ignores every query parameter list's
+// /media/search path relies on to filter server-side (fields, type,
+// processing_states, xcomposition, range/captured_range) and always
+// returns the entire trash, so this replicates --gopro-include-edits and
+// the ready-to-view check client-side from the fields the response
+// already carries. There's no live-confirmed field to replicate the
+// "export" composition filter with here, so a trashed listing can include
+// export artifacts a normal one would hide. captured_range filtering has
+// no server-side equivalent at all, so listDir's own client-side
+// filter.matches backstop is doing all the narrowing for a by-year,
+// by-month or by-day listing - the whole trash is paged through
+// regardless of how narrow the requested slice is.
+func (f *Fs) listTrash(ctx context.Context, fn func(item *api.Medium) error) (err error) {
+	const perPage = 100
+	page := 1
+	totalPages := 0
+	for {
+		opts := rest.Opts{
+			Method: "GET",
+			Path:   "/media/deleted",
+			Parameters: url.Values{
+				"page":     {strconv.Itoa(page)},
+				"per_page": {strconv.Itoa(perPage)},
+			},
+		}
+		var result api.DeletedMediaResponse
+		var resp *http.Response
+		err = f.pacer.Call(func() (bool, error) {
+			resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
+			return shouldRetry(ctx, resp, err)
+		})
+		if err != nil {
+			return fmt.Errorf("couldn't list trash: %w", err)
+		}
+		for i := range result.DeletedMedia {
+			item := &result.DeletedMedia[i]
+			if isEditType(item.Type) && !f.opt.IncludeEdits {
+				continue
+			}
+			if item.ReadyToView != "" && item.ReadyToView != "ready" {
+				continue
+			}
+			if err := fn(item); err != nil {
+				return err
+			}
+		}
+		if totalPages == 0 {
+			totalPages = result.Pages.TotalPages
+		}
+		if len(result.DeletedMedia) == 0 || page >= totalPages {
+			break
+		}
+		page++
+	}
+	return nil
+}
+
+// commandHelp documents this backend's "rclone backend" commands - see
+// Command.
+var commandHelp = []fs.CommandHelp{{
+	Name:  "restore",
+	Short: "Restore media from GoPro's trash",
+	Long: `This restores media out of GoPro's trash and back into the active
+library - confirmed live, undocumented API. It always operates on the
+trash regardless of --gopro-trashed-only, since there would otherwise be
+no way to run it without reconfiguring the remote first.
+
+With no arguments, it restores everything currently in the trash:
+
+    rclone backend restore gopro:
+
+Given one or more arguments, each one names a single medium to restore
+instead - either a bare id, or a trashed listing's own "name {id}.ext"
+leaf (see --gopro-trashed-only and --gopro-always-add-id) pasted straight
+from "rclone lsf":
+
+    rclone backend restore gopro: 6a99f18a239bf36f4c2377cf "photo {6a99f18a239bf36f4c2377cf}.jpg"
+
+Nothing is restored if --dry-run is set; the command logs what would be
+restored instead.`,
+}}
+
+// Command the backend to run a named command
+//
+// The command run is name
+// args may be used to read arguments from
+// opts may be used to read optional arguments from
+//
+// The result should be capable of being JSON encoded
+// If it is a string or a []string it will be shown to the user
+// otherwise it will be JSON encoded and shown to the user like that
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (any, error) {
+	switch name {
+	case "restore":
+		return f.restore(ctx, arg)
+	}
+	return nil, fs.ErrorCommandNotFound
+}
+
+// restoreResult is returned by the "restore" backend command - see
+// commandHelp.
+type restoreResult struct {
+	Restored int
+}
+
+// restoreArg resolves one "restore" command argument to a medium id -
+// either a bare id, or a trashed listing's own "name {id}.ext" leaf, as
+// findID would find embedded in it.
+func restoreArg(arg string) string {
+	if id := findID(path.Base(arg)); id != "" {
+		return id
+	}
+	return arg
+}
+
+// restore implements the "restore" backend command - see commandHelp.
+func (f *Fs) restore(ctx context.Context, arg []string) (any, error) {
+	ids := make([]string, len(arg))
+	for i, a := range arg {
+		ids[i] = restoreArg(a)
+	}
+	if len(ids) == 0 {
+		err := f.listTrash(ctx, func(item *api.Medium) error {
+			ids = append(ids, item.ID)
+			return nil
+		})
+		if err != nil {
+			return nil, fmt.Errorf("couldn't list trash: %w", err)
+		}
+	}
+	if len(ids) == 0 {
+		return &restoreResult{}, nil
+	}
+	if fs.GetConfig(ctx).DryRun {
+		fs.Logf(f, "Would restore %d medium(s) from trash: %v", len(ids), ids)
+		return &restoreResult{}, nil
+	}
+	if err := f.restoreMedia(ctx, ids); err != nil {
+		return nil, err
+	}
+	return &restoreResult{Restored: len(ids)}, nil
+}
+
+// restoreMedia issues one POST /media/restore call to restore every given
+// id out of the trash - confirmed live, this takes effect immediately, no
+// delay needed (unlike deleteMedium's finalising step: restoring isn't
+// racing anything server-side the way permanently deleting is).
+func (f *Fs) restoreMedia(ctx context.Context, ids []string) error {
+	opts := rest.Opts{
+		Method:     "POST",
+		Path:       "/media/restore",
+		NoResponse: true,
+	}
+	body := api.RestoreRequest{IDs: ids}
+	var resp *http.Response
+	var err error
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallJSON(ctx, &opts, &body, nil)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return fmt.Errorf("couldn't restore media: %w", err)
 	}
 	return nil
 }
@@ -937,7 +1195,7 @@ func stripSuffixID(name string) string {
 // filenames (GoPro cameras reuse filenames constantly, so collisions
 // within one listing are routine, not exceptional).
 func (f *Fs) listDir(ctx context.Context, prefix string, filter mediaFilter) (entries fs.DirEntries, err error) {
-	err = f.list(ctx, filter, func(item *api.Medium) error {
+	err = f.list(ctx, filter, f.opt.TrashedOnly, func(item *api.Medium) error {
 		if !filter.matches(item.CapturedAt) {
 			return nil
 		}
@@ -1403,7 +1661,13 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	// otherwise fall through to the listing-based lookup below, which
 	// fails closed with fs.ErrorObjectNotFound if fileName doesn't
 	// genuinely belong to anything.
-	if id := findID(fileName); id != "" && o.fs.opt.AlwaysAddID {
+	//
+	// GET /media/{id} (what this fetches) only ever finds an active
+	// medium - confirmed live, it 404s for anything in the trash - so
+	// this fast path is skipped entirely under --gopro-trashed-only,
+	// always falling through to the listing-based lookup instead, which
+	// correctly goes through listTrash.
+	if id := findID(fileName); id != "" && o.fs.opt.AlwaysAddID && !o.fs.opt.TrashedOnly {
 		item, err := o.fs.getMedium(ctx, id)
 		if err != nil {
 			return err
@@ -1546,18 +1810,64 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
-	return o.fs.deleteMedium(ctx, o.id)
+	return o.fs.deleteMedium(ctx, o.id, !o.fs.opt.UseTrash)
 }
 
 // deleteMedium deletes the medium with the given id - shared by Remove and
 // gpChunkWriter.Abort, which deletes an incomplete upload's medium so a
 // failed or cancelled upload doesn't leave an unusable entry behind in the
 // library.
-func (f *Fs) deleteMedium(ctx context.Context, id string) error {
+//
+// permanent controls whether GoPro's own trash is bypassed - confirmed
+// live: without it, a delete only moves the medium to GoPro's own trash
+// (/media/deleted, recoverable there, and still counted against storage
+// quota), which readMetaData and every listing already correctly treat as
+// gone, but a user checking their account directly would find it very
+// much still there. Remove respects --gopro-use-trash; Abort always
+// passes true regardless of that setting, since an incomplete upload's
+// placeholder is never something worth recovering from trash.
+//
+// A single call with permanent=true does not actually purge anything -
+// confirmed live (the first attempt at this looked like it worked, but
+// that was a stale conclusion from checking too early combined with a
+// leftover second call from earlier testing; a clean, isolated retry sat
+// in the trash unpurged for over five minutes). The trash step has to
+// happen first: only a *second* delete call, once the medium is already
+// in the trash, with permanent=true, actually finalises it - confirmed by
+// deliberately reproducing that exact sequence. So this always issues the
+// plain delete first, then a second call with permanent=true if
+// requested.
+func (f *Fs) deleteMedium(ctx context.Context, id string, permanent bool) error {
+	if err := f.doDeleteMedium(ctx, id); err != nil {
+		return err
+	}
+	if !permanent {
+		return nil
+	}
+	// Confirmed live: issuing the permanent=true call back-to-back right
+	// after the plain delete above doesn't finalise anything - the medium
+	// sat in the trash unpurged for over five minutes in that case. See
+	// deletePermanentDelay for why this is a plain fixed wait rather than
+	// polling for some more precise "ready" signal.
+	select {
+	case <-time.After(deletePermanentDelay):
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+	return f.doDeleteMedium(ctx, id, "permanent", "true")
+}
+
+// doDeleteMedium issues one DELETE /media call for id, with optional extra
+// query parameters (name/value pairs) - see deleteMedium.
+func (f *Fs) doDeleteMedium(ctx context.Context, id string, extra ...string) error {
+	params := url.Values{"ids": {id}}
+	for i := 0; i+1 < len(extra); i += 2 {
+		params.Set(extra[i], extra[i+1])
+	}
 	opts := rest.Opts{
 		Method:     "DELETE",
 		Path:       "/media",
-		Parameters: url.Values{"ids": {id}},
+		Parameters: params,
 	}
 	var result api.DeleteResponse
 	var resp *http.Response
@@ -1903,7 +2213,7 @@ func (w *gpChunkWriter) Close(ctx context.Context) error {
 // cancelled upload doesn't leave an incomplete, unusable entry behind in
 // the library.
 func (w *gpChunkWriter) Abort(ctx context.Context) error {
-	return w.f.deleteMedium(ctx, w.mediumID)
+	return w.f.deleteMedium(ctx, w.mediumID, true)
 }
 
 // createMedium is step 1: POST /media
