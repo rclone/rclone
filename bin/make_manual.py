@@ -44,6 +44,7 @@ docs = [
     "compress.md",
     "combine.md",
     "doi.md",
+    "dosya.md",
     "drime.md",
     "dropbox.md",
     "filefabric.md",
