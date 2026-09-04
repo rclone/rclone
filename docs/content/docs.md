@@ -50,6 +50,7 @@ See the following for detailed instructions for
 - [Filen](/filen/)
 - [Files.com](/filescom/)
 - [FTP](/ftp/)
+- [Funambol / OneMediaHub](/funambol/)
 - [Gofile](/gofile/)
 - [Google Cloud Storage](/googlecloudstorage/)
 - [Google Drive](/drive/)
