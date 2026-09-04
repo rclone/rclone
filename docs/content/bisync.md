@@ -323,7 +323,7 @@ Time stamps and file contents for `RCLONE_TEST` files are not important, just
 the names and locations. If you have symbolic links in your sync tree it is
 recommended to place `RCLONE_TEST` files in the linked-to directory tree to
 protect against bisync assuming a bunch of deleted files if the linked-to tree
-should not be accessible. See also the [--check-filename](--check-filename) flag.
+should not be accessible. See also the [--check-filename](#--check-filename) flag.
 
 ### --check-filename
 
