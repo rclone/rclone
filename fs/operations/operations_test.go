@@ -43,6 +43,7 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/rclone/rclone/fstest/mockobject"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -309,6 +310,114 @@ func TestHashSumsWithErrors(t *testing.T) {
 	// ERROR must not appear in the output either
 	assert.NotContains(t, buf.String(), " ERROR ")
 	// TODO mock an unreadable file
+}
+
+type testMockDownloadObject struct {
+	*mockobject.ContentMockObject
+	hashFn    func(ctx context.Context, ht hash.Type) (string, error)
+	openCount int
+}
+
+func (m *testMockDownloadObject) Hash(ctx context.Context, ht hash.Type) (string, error) {
+	if m.hashFn != nil {
+		return m.hashFn(ctx, ht)
+	}
+	return m.ContentMockObject.Hash(ctx, ht)
+}
+
+func (m *testMockDownloadObject) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
+	m.openCount++
+	return m.ContentMockObject.Open(ctx, options...)
+}
+
+func TestHashSumDownloadIfMissing(t *testing.T) {
+	ctx := context.Background()
+
+	// 1. When remote provides a hash, it should NOT download
+	mockObj := &testMockDownloadObject{
+		ContentMockObject: mockobject.New("test.txt").WithContent([]byte("hello world"), mockobject.SeekModeNone),
+		hashFn: func(ctx context.Context, ht hash.Type) (string, error) {
+			return "remote-hash-1234", nil
+		},
+	}
+	sum, err := operations.HashSum(ctx, hash.MD5, false, false, mockObj, true)
+	require.NoError(t, err)
+	assert.Equal(t, "remote-hash-1234", sum)
+	assert.Equal(t, 0, mockObj.openCount) // Must not download
+
+	// 2. When remote returns empty hash (""), it SHOULD download if flag is true
+	mockObjEmpty := &testMockDownloadObject{
+		ContentMockObject: mockobject.New("test.txt").WithContent([]byte("hello world"), mockobject.SeekModeNone),
+		hashFn: func(ctx context.Context, ht hash.Type) (string, error) {
+			return "", nil
+		},
+	}
+	// Without downloadIfMissing
+	sum, err = operations.HashSum(ctx, hash.MD5, false, false, mockObjEmpty, false)
+	require.NoError(t, err)
+	assert.Equal(t, "", sum)
+	assert.Equal(t, 0, mockObjEmpty.openCount)
+
+	// With downloadIfMissing
+	sum, err = operations.HashSum(ctx, hash.MD5, false, false, mockObjEmpty, true)
+	require.NoError(t, err)
+	assert.Equal(t, "5eb63bbbe01eeed093cb22bb8f5acdc3", sum) // MD5 of "hello world"
+	assert.Equal(t, 1, mockObjEmpty.openCount)               // Downloaded!
+
+	// 3. When remote returns hash.ErrUnsupported, it SHOULD download if flag is true
+	mockObjUnsupported := &testMockDownloadObject{
+		ContentMockObject: mockobject.New("test.txt").WithContent([]byte("hello world"), mockobject.SeekModeNone),
+		hashFn: func(ctx context.Context, ht hash.Type) (string, error) {
+			return "", hash.ErrUnsupported
+		},
+	}
+	// Without downloadIfMissing
+	_, err = operations.HashSum(ctx, hash.MD5, false, false, mockObjUnsupported, false)
+	require.Error(t, err)
+	assert.Equal(t, 0, mockObjUnsupported.openCount)
+
+	// With downloadIfMissing
+	sum, err = operations.HashSum(ctx, hash.MD5, false, false, mockObjUnsupported, true)
+	require.NoError(t, err)
+	assert.Equal(t, "5eb63bbbe01eeed093cb22bb8f5acdc3", sum)
+	assert.Equal(t, 1, mockObjUnsupported.openCount) // Downloaded!
+
+	// 4. When remote returns an unexpected error, it should NOT download
+	mockObjErr := &testMockDownloadObject{
+		ContentMockObject: mockobject.New("test.txt").WithContent([]byte("hello world"), mockobject.SeekModeNone),
+		hashFn: func(ctx context.Context, ht hash.Type) (string, error) {
+			return "", errors.New("backend disk failure")
+		},
+	}
+	_, err = operations.HashSum(ctx, hash.MD5, false, false, mockObjErr, true)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "backend disk failure")
+	assert.Equal(t, 0, mockObjErr.openCount)
+
+	// 5. Test HashLister end-to-end with memory FS (supports MD5, unsupported SHA1)
+	memFs, err := fs.NewFs(ctx, ":memory:")
+	require.NoError(t, err)
+	content := "-"
+	item1 := fstest.NewItem("file1", content, t1)
+	_ = fstests.PutTestContents(ctx, t, memFs, &item1, content, true)
+
+	// HashLister SHA1 without downloadIfMissing -> empty output
+	buf := &bytes.Buffer{}
+	err = operations.HashLister(ctx, hash.SHA1, false, false, memFs, buf, false)
+	require.NoError(t, err)
+	assert.Empty(t, buf.String())
+
+	// HashLister SHA1 with downloadIfMissing -> downloaded and computed
+	buf.Reset()
+	err = operations.HashLister(ctx, hash.SHA1, false, false, memFs, buf, true)
+	require.NoError(t, err)
+	assert.Contains(t, buf.String(), "3bc15c8aae3e4124dd409035f32ea2fd6835efc9  file1\n")
+
+	// HashLister MD5 with downloadIfMissing -> remote provides hash
+	buf.Reset()
+	err = operations.HashLister(ctx, hash.MD5, false, false, memFs, buf, true)
+	require.NoError(t, err)
+	assert.Contains(t, buf.String(), "336d5ebc5436534e61d16e63ddfca327  file1\n")
 }
 
 func TestHashStream(t *testing.T) {
