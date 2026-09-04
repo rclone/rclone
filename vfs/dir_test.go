@@ -3,11 +3,13 @@ package vfs
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"runtime"
 	"slices"
 	"sort"
+	"sync/atomic"
 	"testing"
 	"time"
 	"unsafe"
@@ -18,6 +20,63 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+type staleListFs struct {
+	fs.Fs
+	block     atomic.Bool
+	fail      atomic.Bool
+	calls     atomic.Int32
+	started   chan struct{}
+	release   chan struct{}
+	afterList func()
+}
+
+func (f *staleListFs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
+	f.calls.Add(1)
+	if f.block.Load() {
+		f.started <- struct{}{}
+		select {
+		case <-f.release:
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+	}
+	if f.fail.Load() {
+		return nil, errors.New("injected list failure")
+	}
+	entries, err := f.Fs.List(ctx, dir)
+	if err == nil && f.afterList != nil {
+		f.afterList()
+	}
+	return entries, err
+}
+
+func newStaleTestVFS(t *testing.T) (*fstest.Run, *staleListFs, *VFS, *Dir) {
+	r := fstest.NewRun(t)
+	r.WriteObject(context.Background(), "old.txt", "old", t1)
+	f := &staleListFs{
+		Fs:      r.Fremote,
+		started: make(chan struct{}, 10),
+		release: make(chan struct{}),
+	}
+	vfs := New(context.Background(), f, nil)
+	t.Cleanup(func() { cleanupVFS(t, vfs) })
+	root, err := vfs.Root()
+	require.NoError(t, err)
+	_, err = root.ReadDirAll()
+	require.NoError(t, err)
+	f.calls.Store(0)
+	return r, f, vfs, root
+}
+
+func sortedNodeNames(nodes Nodes) []string {
+	names := make([]string, 0, len(nodes))
+	for _, node := range nodes {
+		names = append(names, node.Name())
+	}
+	sort.Strings(names)
+	return names
+}
 
 func dirCreate(t *testing.T) (r *fstest.Run, vfs *VFS, dir *Dir, item fstest.Item) {
 	r, vfs = newTestVFS(t)
@@ -81,6 +140,133 @@ func TestDirMethods(t *testing.T) {
 
 	// VFS
 	assert.Equal(t, vfs, dir.VFS())
+}
+
+func TestDirReadDirStaleKeepsSnapshotReadable(t *testing.T) {
+	r, f, _, root := newStaleTestVFS(t)
+	r.WriteObject(context.Background(), "new.txt", "new", t2)
+	f.block.Store(true)
+	done := make(chan error, 1)
+	go func() { done <- root.readDirStale() }()
+	select {
+	case <-f.started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("stale refresh did not start")
+	}
+
+	readDone := make(chan Nodes, 1)
+	go func() {
+		nodes, err := root.ReadDirAll()
+		if err != nil {
+			readDone <- nil
+			return
+		}
+		readDone <- nodes
+	}()
+	select {
+	case nodes := <-readDone:
+		assert.Equal(t, []string{"old.txt"}, sortedNodeNames(nodes))
+	case <-time.After(5 * time.Second):
+		t.Fatal("cached directory read blocked behind stale refresh")
+	}
+
+	close(f.release)
+	require.NoError(t, <-done)
+	updated, err := root.ReadDirAll()
+	require.NoError(t, err)
+	assert.Equal(t, []string{"new.txt", "old.txt"}, sortedNodeNames(updated))
+}
+
+func TestDirReadDirStaleFailurePreservesSnapshot(t *testing.T) {
+	_, f, _, root := newStaleTestVFS(t)
+	root.mu.RLock()
+	readBefore := root.read
+	oldNode := root.items["old.txt"]
+	root.mu.RUnlock()
+
+	f.fail.Store(true)
+	require.EqualError(t, root.readDirStale(), "injected list failure")
+	root.mu.RLock()
+	assert.Equal(t, readBefore, root.read)
+	assert.Same(t, oldNode, root.items["old.txt"])
+	root.mu.RUnlock()
+}
+
+func TestDirReadDirStaleRequiresSnapshot(t *testing.T) {
+	r := fstest.NewRun(t)
+	vfs := New(context.Background(), r.Fremote, nil)
+	t.Cleanup(func() { cleanupVFS(t, vfs) })
+	root, err := vfs.Root()
+	require.NoError(t, err)
+	require.EqualError(t, root.readDirStale(), "directory cache has no existing snapshot")
+}
+
+func TestDirReadDirStaleRetriesAfterCacheChange(t *testing.T) {
+	r, f, _, root := newStaleTestVFS(t)
+	r.WriteObject(context.Background(), "new.txt", "new", t2)
+	f.block.Store(true)
+	done := make(chan error, 1)
+	go func() { done <- root.readDirStale() }()
+	select {
+	case <-f.started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("stale refresh did not start")
+	}
+	root.mu.RLock()
+	oldNode := root.items["old.txt"]
+	root.mu.RUnlock()
+	root.addObject(oldNode)
+	close(f.release)
+	require.NoError(t, <-done)
+	assert.GreaterOrEqual(t, f.calls.Load(), int32(2))
+	nodes, err := root.ReadDirAll()
+	require.NoError(t, err)
+	assert.Equal(t, []string{"new.txt", "old.txt"}, sortedNodeNames(nodes))
+}
+
+func TestDirReadDirStaleConcurrentRefreshesConverge(t *testing.T) {
+	r, f, _, root := newStaleTestVFS(t)
+	r.WriteObject(context.Background(), "new.txt", "new", t2)
+	f.block.Store(true)
+	done := make(chan error, 2)
+	go func() { done <- root.readDirStale() }()
+	go func() { done <- root.readDirStale() }()
+	for range 2 {
+		select {
+		case <-f.started:
+		case <-time.After(5 * time.Second):
+			t.Fatal("concurrent stale refresh did not start")
+		}
+	}
+	close(f.release)
+	require.NoError(t, <-done)
+	require.NoError(t, <-done)
+	assert.GreaterOrEqual(t, f.calls.Load(), int32(3))
+	nodes, err := root.ReadDirAll()
+	require.NoError(t, err)
+	assert.Equal(t, []string{"new.txt", "old.txt"}, sortedNodeNames(nodes))
+}
+
+func TestDirReadDirStaleStopsAfterThreeConflicts(t *testing.T) {
+	r, f, _, root := newStaleTestVFS(t)
+	r.WriteObject(context.Background(), "new.txt", "new", t2)
+	root.mu.RLock()
+	readBefore := root.read
+	root.mu.RUnlock()
+	f.afterList = func() {
+		root.mu.Lock()
+		root.generation++
+		root.mu.Unlock()
+	}
+
+	require.NoError(t, root.readDirStale())
+	assert.Equal(t, int32(3), f.calls.Load())
+	root.mu.RLock()
+	assert.Equal(t, readBefore, root.read)
+	root.mu.RUnlock()
+	nodes, err := root.ReadDirAll()
+	require.NoError(t, err)
+	assert.Equal(t, []string{"old.txt"}, sortedNodeNames(nodes))
 }
 
 func TestDirForgetAll(t *testing.T) {
