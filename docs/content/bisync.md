@@ -1974,7 +1974,7 @@ for performance improvements and less
 options as in `sync`)
 - Equality checks before a sync conflict rename now fall back to `cryptcheck`
 (when possible) or `--download`,
-instead of of `--size-only`, when `check` is not available.
+instead of `--size-only`, when `check` is not available.
 - Bisync no longer fails to find the correct listing file when configs are
 overridden with backend-specific flags.
 - Bisync now fully supports comparing based on any combination of size, modtime,

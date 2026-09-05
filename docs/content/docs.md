@@ -1702,7 +1702,7 @@ like symlinks under Windows). Ignored files won't be copied, moved or
 deleted in a sync.
 
 If you supply this flag then rclone will copy symbolic links from any
-supported backend backend, and store them as text files, with a
+supported backend, and store them as text files, with a
 `.rclonelink` suffix in the destination.
 
 The text file will contain the target of the symbolic link.
@@ -2234,7 +2234,7 @@ rclone will use multiple threads to transfer the file (default 256M).
 Capable backends are marked in the
 [overview](/overview/#optional-features) as `MultithreadUpload`. (They
 need to implement either the `OpenWriterAt` or `OpenChunkWriter`
-internal interfaces). These include include, `local`, `s3`,
+internal interfaces). These include `local`, `s3`,
 `azureblob`, `b2`, `oracleobjectstorage` and `smb` at the time of
 writing.
 

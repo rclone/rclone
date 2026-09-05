@@ -271,7 +271,7 @@ Rclone reads `--vfs-read-chunk-streams` chunks of size
 `--vfs-read-chunk-size` concurrently. The size for each read will stay
 constant.
 
-This improves performance performance massively on high latency links
+This improves performance massively on high latency links
 or very high bandwidth links to high performance object stores.
 
 Some experimentation will be needed to find the optimum values of
