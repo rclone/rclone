@@ -1152,6 +1152,18 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 		case "max-delete":
 			opt.MaxDelete, err = strconv.Atoi(val)
 			require.NoError(b.t, err, "parsing max-delete=%q", val)
+		case "max-delete-renames-aware":
+			opt.MaxDeleteRenamesAware = true
+		case "track-renames":
+			ci.TrackRenames = true
+		case "track-renames-strategy":
+			ci.TrackRenamesStrategy = val
+		case "checkers":
+			ci.Checkers, err = strconv.Atoi(val)
+			require.NoError(b.t, err, "parsing checkers=%q", val)
+		case "transfers":
+			ci.Transfers, err = strconv.Atoi(val)
+			require.NoError(b.t, err, "parsing transfers=%q", val)
 		case "size-only":
 			ci.SizeOnly = true
 		case "ignore-size":
@@ -1647,6 +1659,10 @@ func (b *bisyncTest) mangleResult(dir, file string, golden bool) string {
 		)
 	}
 	rep := logReplacements
+	if b.testCase == "max_delete_track_renames" {
+		// The no-op --force run logs this line on local, but not on memory.
+		rep = append(rep, `^.*There was nothing to transfer.*$`, dropMe)
+	}
 	if b.testCase == "dry_run" {
 		rep = append(rep, dryrunReplacements...)
 	}

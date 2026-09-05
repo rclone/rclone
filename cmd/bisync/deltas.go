@@ -44,17 +44,18 @@ func (d delta) is(cond delta) bool {
 
 // deltaSet
 type deltaSet struct {
-	deltas     map[string]delta
-	size       map[string]int64
-	time       map[string]time.Time
-	hash       map[string]string
-	opt        *Options
-	fs         fs.Fs  // base filesystem
-	msg        string // filesystem name for logging
-	oldCount   int    // original number of files (for "excess deletes" check)
-	deleted    int    // number of deleted files (for "excess deletes" check)
-	foundSame  bool   // true if found at least one unchanged file
-	checkFiles bilib.Names
+	deltas           map[string]delta
+	size             map[string]int64
+	time             map[string]time.Time
+	hash             map[string]string
+	opt              *Options
+	fs               fs.Fs  // base filesystem
+	msg              string // filesystem name for logging
+	oldCount         int    // original number of files (for "excess deletes" check)
+	deleted          int    // number of deleted files (for "excess deletes" check)
+	renameExemptions int    // tracked renames excluded from the max-delete check
+	foundSame        bool   // true if found at least one unchanged file
+	checkFiles       bilib.Names
 }
 
 func (ds *deltaSet) empty() bool {
@@ -541,22 +542,38 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (result
 	return
 }
 
-// excessDeletes checks whether number of deletes is within allowed range
-func (ds *deltaSet) excessDeletes() bool {
+func (ds *deltaSet) effectiveDeletes() int {
+	return max(0, ds.deleted-ds.renameExemptions)
+}
+
+func (ds *deltaSet) exceedsDeletes() bool {
 	maxDelete := ds.opt.MaxDelete
 	maxRatio := float64(maxDelete) / 100.0
 	curRatio := 0.0
-	if ds.deleted > 0 && ds.oldCount > 0 {
-		curRatio = float64(ds.deleted) / float64(ds.oldCount)
+	effectiveDeletes := ds.effectiveDeletes()
+	if effectiveDeletes > 0 && ds.oldCount > 0 {
+		curRatio = float64(effectiveDeletes) / float64(ds.oldCount)
 	}
+	return curRatio > maxRatio
+}
 
-	if curRatio <= maxRatio {
+// excessDeletes checks whether number of deletes is within allowed range
+func (ds *deltaSet) excessDeletes() bool {
+	if !ds.exceedsDeletes() {
 		return false
 	}
 
+	maxDelete := ds.opt.MaxDelete
+	effectiveDeletes := ds.effectiveDeletes()
+	if ds.renameExemptions > 0 {
+		fs.Errorf("Safety abort",
+			"too many deletes (>%d%%, %d of %d after excluding %d tracked renames) on %s %s. Run with --force if desired.",
+			maxDelete, effectiveDeletes, ds.oldCount, ds.renameExemptions, ds.msg, quotePath(bilib.FsPath(ds.fs)))
+		return true
+	}
 	fs.Errorf("Safety abort",
 		"too many deletes (>%d%%, %d of %d) on %s %s. Run with --force if desired.",
-		maxDelete, ds.deleted, ds.oldCount, ds.msg, quotePath(bilib.FsPath(ds.fs)))
+		maxDelete, effectiveDeletes, ds.oldCount, ds.msg, quotePath(bilib.FsPath(ds.fs)))
 	return true
 }
 

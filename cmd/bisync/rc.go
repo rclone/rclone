@@ -90,6 +90,9 @@ func rcBisync(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	if opt.Force, err = in.GetBool("force"); rc.NotErrParamNotFound(err) {
 		fs.Debugf("force", "optional parameter is missing. using default value: %v", opt.Force)
 	}
+	if opt.MaxDeleteRenamesAware, err = in.GetBool("maxDeleteRenamesAware"); rc.NotErrParamNotFound(err) {
+		fs.Debugf("maxDeleteRenamesAware", "optional parameter is missing. using default value: %v", opt.MaxDeleteRenamesAware)
+	}
 	if opt.CreateEmptySrcDirs, err = in.GetBool("createEmptySrcDirs"); rc.NotErrParamNotFound(err) {
 		fs.Debugf("createEmptySrcDirs", "optional parameter is missing. using default value: %v", opt.CreateEmptySrcDirs)
 	}
