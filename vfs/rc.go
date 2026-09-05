@@ -1,9 +1,11 @@
 package vfs
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -18,9 +20,9 @@ const getVFSHelp = `
 This command takes an "fs" parameter. If this parameter is not
 supplied and if there is only one VFS in use then that VFS will be
 used. If there is more than one VFS in use then the "fs" parameter
-must be supplied.`
+must be supplied (e.g. as the remote name, "remote:[vfs-id]", or direct VFS ID).`
 
-// GetVFS gets a VFS with config name "fs" from the cache or returns an error.
+// getVFS gets a VFS with config name or ID "fs" from the cache or returns an error.
 //
 // If "fs" is not set and there is one and only one VFS in the active
 // cache then it returns it. This is for backwards compatibility.
@@ -42,10 +44,35 @@ func getVFS(in rc.Params) (vfs *VFS, err error) {
 	}
 	activeMu.Lock()
 	defer activeMu.Unlock()
-	fsString = cache.Canonicalize(fsString)
-	activeVFS := active[fsString]
+
+	// 1. Direct ID match (e.g., "vfs-12345678")
+	for _, vfses := range active {
+		for _, activeVFS := range vfses {
+			if activeVFS.ID == fsString {
+				delete(in, "fs")
+				return activeVFS, nil
+			}
+		}
+	}
+
+	// 2. ID suffix match (e.g., "remote:[vfs-12345678]")
+	if idx := strings.Index(fsString, "["); idx != -1 && strings.HasSuffix(fsString, "]") {
+		idPart := fsString[idx+1 : len(fsString)-1]
+		baseFs := fsString[:idx]
+		baseFs = cache.Canonicalize(baseFs)
+		for _, activeVFS := range active[baseFs] {
+			if activeVFS.ID == idPart {
+				delete(in, "fs")
+				return activeVFS, nil
+			}
+		}
+	}
+
+	// 3. Match by name
+	canonicalFsString := cache.Canonicalize(fsString)
+	activeVFS := active[canonicalFsString]
 	if len(activeVFS) == 0 {
-		return nil, fmt.Errorf("no VFS found with name %q", fsString)
+		return nil, fmt.Errorf("no VFS found with name or ID %q", fsString)
 	} else if len(activeVFS) > 1 {
 		return nil, fmt.Errorf("more than one VFS active with name %q", fsString)
 	}
@@ -395,21 +422,42 @@ parameter.`,
 	})
 }
 
+// Info describes an active VFS instance
+type Info struct {
+	ID string `json:"id"`
+	Fs string `json:"fs"`
+}
+
 func rcList(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	activeMu.Lock()
 	defer activeMu.Unlock()
 	var names = []string{}
+	var list = []Info{}
+
 	for name, vfses := range active {
 		if len(vfses) == 1 {
 			names = append(names, name)
 		} else {
-			for i := range vfses {
-				names = append(names, fmt.Sprintf("%s[%d]", name, i))
+			for _, activeVFS := range vfses {
+				names = append(names, fmt.Sprintf("%s[%s]", name, activeVFS.ID))
 			}
 		}
+		for _, activeVFS := range vfses {
+			list = append(list, Info{
+				ID: activeVFS.ID,
+				Fs: name,
+			})
+		}
 	}
+
+	// Sort list by ID for deterministic order
+	slices.SortFunc(list, func(a, b Info) int {
+		return cmp.Compare(a.ID, b.ID)
+	})
+
 	out = rc.Params{}
 	out["vfses"] = names
+	out["list"] = list
 	return out, nil
 }
 
