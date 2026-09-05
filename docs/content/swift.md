@@ -151,7 +151,7 @@ rclone sync --interactive /home/local/directory remote:container
 
 ### Configuration from an OpenStack credentials file
 
-An OpenStack credentials file typically looks something something
+An OpenStack credentials file typically looks something
 like this (without the comments)
 
 ```sh
