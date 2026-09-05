@@ -70,7 +70,7 @@ func newFile(d *Dir, dPath string, o fs.Object, leaf string) *File {
 		dPath: dPath,
 		o:     o,
 		leaf:  leaf,
-		inode: newInode(),
+		inode: deriveInode(o),
 		ctx:   d.vfs.ctx,
 	}
 	if o != nil {
