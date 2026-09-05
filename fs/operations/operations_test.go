@@ -1432,6 +1432,7 @@ func TestDirMove(t *testing.T) {
 
 	// Disable DirMove
 	features := r.Fremote.Features()
+	origDirMove := features.DirMove
 	features.DirMove = nil
 
 	require.NoError(t, operations.DirMove(ctx, r.Fremote, "A2", "A3"))
@@ -1479,6 +1480,28 @@ func TestDirMove(t *testing.T) {
 			"A4/B1/C1",
 			"A4/B1/C2",
 			"A4/B1/C3",
+		},
+		fs.GetModifyWindow(ctx, r.Fremote),
+	)
+
+	// Dest directory already exists: must return ErrorDirExists, not merge.
+	features.DirMove = origDirMove
+	destFile := r.WriteObject(ctx, "B_exists/keep", "keep", t1)
+	err := operations.DirMove(ctx, r.Fremote, "A4", "B_exists")
+	require.Equal(t, fs.ErrorDirExists, err)
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		append(files, destFile),
+		[]string{
+			"A4",
+			"A4/B1",
+			"A4/B2",
+			"A4/B1/C1",
+			"A4/B1/C2",
+			"A4/B1/C3",
+			"B_exists",
 		},
 		fs.GetModifyWindow(ctx, r.Fremote),
 	)
