@@ -634,13 +634,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			return f, nil // our root it empty so we probably want to list shared folders
 		}
 
-		dir := path.Dir(f.root)
-		if dir == "." {
-			dir = f.root
-		}
-
 		// root is not empty so we have find the right shared folder if it exists
-		id, err := f.findSharedFolder(ctx, dir)
+		id, err := f.findSharedFolder(ctx, sharedFolderName(f.root))
 		if err != nil {
 			// if we didn't find the specified shared folder we have to bail out here
 			return nil, err
@@ -946,6 +941,14 @@ func (f *Fs) listSharedFolders(ctx context.Context, callback func(fs.DirEntry) e
 	}
 
 	return nil
+}
+
+// sharedFolderName returns the shared folder name in root, which is its first
+// path component. root must be the trimmed root as produced by setRoot (no
+// leading slash).
+func sharedFolderName(root string) string {
+	name, _, _ := strings.Cut(root, "/")
+	return name
 }
 
 // findSharedFolder find the id for a given shared folder name

@@ -188,6 +188,21 @@ func TestInternalCheckPathLength(t *testing.T) {
 	}
 }
 
+func TestInternalSharedFolderName(t *testing.T) {
+	for _, test := range []struct {
+		root string
+		want string
+	}{
+		{root: "", want: ""},
+		{root: "SharedFolder", want: "SharedFolder"},
+		{root: "SharedFolder/subdir", want: "SharedFolder"},
+		{root: "SharedFolder/subdir/deeper", want: "SharedFolder"},
+		{root: "SharedFolder/subdir/deeper/deepest", want: "SharedFolder"},
+	} {
+		assert.Equal(t, test.want, sharedFolderName(test.root), test.root)
+	}
+}
+
 func TestPaperExportRemote(t *testing.T) {
 	ctx := context.Background()
 	info := &files.FileMetadata{
