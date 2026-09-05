@@ -19,6 +19,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/march"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/errcount"
 	"github.com/rclone/rclone/lib/transform"
 	"golang.org/x/sync/errgroup"
@@ -961,6 +962,7 @@ func (s *syncCopyMove) run() error {
 		NoCheckDest:            s.noCheckDest,
 		NoUnicodeNormalization: s.noUnicodeNormalization,
 		NoProcessDstOnly:       s.deleteMode == fs.DeleteModeOff && !s.usingLogger,
+		MatchFileAndDirectory:  s.deleteMode != fs.DeleteModeOff && s.deleteMode != fs.DeleteModeOnly && !s.noTraverse,
 	}
 	s.processError(m.Run(s.ctx))
 
@@ -1232,49 +1234,90 @@ func (s *syncCopyMove) setDelayedDirModTimes(ctx context.Context) error {
 	return errCount.Err("failed to set directory modtime")
 }
 
-// SrcOnly have an object which is in the source only
+func (s *syncCopyMove) copySrcOnlyObject(src fs.Object) {
+	s.logger(s.ctx, operations.MissingOnDst, src, nil, nil)
+	s.markParentNotEmpty(src)
+
+	if s.trackRenames {
+		select {
+		case <-s.ctx.Done():
+			return
+		case s.trackRenamesCh <- src:
+		}
+		return
+	}
+
+	noNeedTransfer, err := operations.CompareOrCopyDest(s.ctx, s.fdst, nil, src, s.compareCopyDest, s.backupDir)
+	if err != nil {
+		s.processError(err)
+		s.logger(s.ctx, operations.TransferError, src, nil, err)
+	}
+	if noNeedTransfer {
+		return
+	}
+
+	fs.Debugf(src, "Need to transfer - File not found at Destination")
+	s.markDirModifiedObject(src)
+	if !s.toBeUploaded.Put(s.inCtx, fs.ObjectPair{Src: src, Dst: nil}) {
+		return
+	}
+}
+
+func (s *syncCopyMove) copySrcOnlyDirectory(src fs.Directory) bool {
+	s.markParentNotEmpty(src)
+	s.logger(s.ctx, operations.MissingOnDst, src, nil, fs.ErrorIsDir)
+	dir := transform.Path(s.ctx, src.Remote(), true)
+	s.copyDirMetadata(s.ctx, s.fdst, nil, dir, src)
+	s.markDirModified(dir)
+	return true
+}
+
+func (s *syncCopyMove) removeConflictingDirectory(ctx context.Context, dst fs.Directory) error {
+	if !s.fi.InActive() && !s.fi.Opt.DeleteExcluded {
+		return fserrors.NoRetryError(errors.New("can't replace directory with file while filters are active without --delete-excluded"))
+	}
+	if s.backupDir == nil {
+		return operations.Purge(ctx, s.fdst, dst.Remote())
+	}
+
+	tree, err := walk.NewDirTree(ctx, s.fdst, dst.Remote(), true, -1)
+	if err != nil {
+		return err
+	}
+	var objects []fs.Object
+	for _, entries := range tree {
+		entries.ForObject(func(object fs.Object) {
+			objects = append(objects, object)
+		})
+	}
+	toDelete := make(fs.ObjectsChan, len(objects))
+	for _, object := range objects {
+		toDelete <- object
+	}
+	close(toDelete)
+	if err := operations.DeleteFilesWithBackupDir(ctx, toDelete, s.backupDir); err != nil {
+		return err
+	}
+
+	dirs := tree.Dirs()
+	for i := len(dirs) - 1; i >= 0; i-- {
+		if err := operations.Rmdir(ctx, s.fdst, dirs[i]); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// SrcOnly has an object which is in the source only
 func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 	if s.deleteMode == fs.DeleteModeOnly {
 		return false
 	}
 	switch x := src.(type) {
 	case fs.Object:
-		s.logger(s.ctx, operations.MissingOnDst, x, nil, nil)
-		s.markParentNotEmpty(src)
-
-		if s.trackRenames {
-			// Save object to check for a rename later
-			select {
-			case <-s.ctx.Done():
-				return
-			case s.trackRenamesCh <- x:
-			}
-		} else {
-			// Check CompareDest && CopyDest
-			NoNeedTransfer, err := operations.CompareOrCopyDest(s.ctx, s.fdst, nil, x, s.compareCopyDest, s.backupDir)
-			if err != nil {
-				s.processError(err)
-				s.logger(s.ctx, operations.TransferError, x, nil, err)
-			}
-			if !NoNeedTransfer {
-				// No need to check since doesn't exist
-				fs.Debugf(src, "Need to transfer - File not found at Destination")
-				s.markDirModifiedObject(x)
-				ok := s.toBeUploaded.Put(s.inCtx, fs.ObjectPair{Src: x, Dst: nil})
-				if !ok {
-					return
-				}
-			}
-		}
+		s.copySrcOnlyObject(x)
 	case fs.Directory:
-		// Do the same thing to the entire contents of the directory
-		s.markParentNotEmpty(src)
-		s.logger(s.ctx, operations.MissingOnDst, src, nil, fs.ErrorIsDir)
-
-		// Create the directory and make sure the Metadata/ModTime is correct
-		s.copyDirMetadata(s.ctx, s.fdst, nil, transform.Path(s.ctx, x.Remote(), true), x)
-		s.markDirModified(transform.Path(s.ctx, x.Remote(), true))
-		return true
+		return s.copySrcOnlyDirectory(x)
 	default:
 		panic("Bad object in DirEntries")
 	}
@@ -1298,14 +1341,30 @@ func (s *syncCopyMove) Match(ctx context.Context, dst, src fs.DirEntry) (recurse
 				return false
 			}
 		} else {
-			// FIXME src is file, dst is directory
-			err := errors.New("can't overwrite directory with file")
-			fs.Errorf(dst, "%v", err)
-			s.processError(err)
-			s.logger(ctx, operations.TransferError, srcX, dstX, err)
+			dstDir, ok := dst.(fs.Directory)
+			if !ok {
+				panic("Bad object in DirEntries")
+			}
+			if s.ci.Immutable {
+				err := fserrors.NoRetryError(fs.ErrorImmutableModified)
+				fs.Errorf(dst, "Source is file and destination is directory: %v", err)
+				s.processError(err)
+				s.logger(ctx, operations.TransferError, srcX, nil, err)
+				return false
+			}
+			s.logger(ctx, operations.MissingOnSrc, nil, dstDir, fs.ErrorIsDir)
+			err := s.removeConflictingDirectory(ctx, dstDir)
+			if err != nil {
+				fs.Errorf(dst, "Failed to remove directory before replacing it with a file: %v", err)
+				s.processError(err)
+				s.logger(ctx, operations.TransferError, srcX, nil, err)
+				return false
+			}
+			s.copySrcOnlyObject(srcX)
 		}
 	case fs.Directory:
 		// Do the same thing to the entire contents of the directory
+		srcOriginal := srcX
 		srcX = fs.NewOverrideDirectory(srcX, transform.Path(ctx, src.Remote(), true))
 		src = srcX
 		if !transform.Transforming(ctx) || src.Remote() != dst.Remote() {
@@ -1331,11 +1390,25 @@ func (s *syncCopyMove) Match(ctx context.Context, dst, src fs.DirEntry) (recurse
 
 			return true
 		}
-		// FIXME src is dir, dst is file
-		err := errors.New("can't overwrite file with directory")
-		fs.Errorf(dst, "%v", err)
-		s.processError(err)
-		s.logger(ctx, operations.TransferError, src.(fs.ObjectInfo), dst.(fs.ObjectInfo), err)
+		dstObject, ok := dst.(fs.Object)
+		if !ok {
+			panic("Bad object in DirEntries")
+		}
+		if s.ci.Immutable {
+			err := fserrors.NoRetryError(fs.ErrorImmutableModified)
+			fs.Errorf(dst, "Source is directory and destination is file: %v", err)
+			s.processError(err)
+			s.logger(ctx, operations.TransferError, srcX, dstObject, err)
+			return false
+		}
+		s.logger(ctx, operations.MissingOnSrc, nil, dstObject, nil)
+		err := operations.DeleteFileWithBackupDir(ctx, dstObject, s.backupDir)
+		if err != nil {
+			s.processError(err)
+			s.logger(ctx, operations.TransferError, srcX, dstObject, err)
+			return false
+		}
+		return s.copySrcOnlyDirectory(srcOriginal)
 	default:
 		panic("Bad object in DirEntries")
 	}
