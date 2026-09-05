@@ -1,7 +1,9 @@
 package operations
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -11,11 +13,14 @@ import (
 	"path"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/diskusage"
 )
 
@@ -1003,4 +1008,195 @@ func rcHashsumFile(ctx context.Context, in rc.Params) (out rc.Params, err error)
 		"hash":     sum,
 	}
 	return out, err
+}
+
+// DefaultGetFileMaxSize is the built-in maximum size limit in bytes for operations/getfile (2 MiB)
+const DefaultGetFileMaxSize = 2 * 1024 * 1024
+
+// maxLimitWriter writes into a buffer up to limit bytes, returning an error if more data is written.
+type maxLimitWriter struct {
+	buf   bytes.Buffer
+	limit int64
+}
+
+func (w *maxLimitWriter) Write(p []byte) (n int, err error) {
+	rem := w.limit - int64(w.buf.Len())
+	if int64(len(p)) > rem {
+		if rem > 0 {
+			w.buf.Write(p[:rem])
+		}
+		return int(rem), fmt.Errorf("read exceeded maximum limit of %d bytes; use offset/count, maxSize or --rc-serve", w.limit)
+	}
+	return w.buf.Write(p)
+}
+
+func init() {
+	rc.Add(rc.Call{
+		Path:  "operations/getfile",
+		Fn:    rcGetFile,
+		Title: "Get a single file into a JSON response.",
+		Help: `This takes the following parameters:
+
+- fs - a remote name string e.g. "drive:path/to/file" or "drive:path/to/dir"
+- remote - (optional) a path within that remote e.g. "file.txt"
+- offset - (optional) start reading at offset N (or from end if negative) (default 0)
+- count - (optional) only read N bytes (default -1)
+- head - (optional) only read the first N bytes (default 0)
+- tail - (optional) only read the last N bytes (default 0)
+- maxSize - (optional) maximum size limit in bytes (can only lower the built-in maximum) (default 2097152 / 2MiB)
+- base64 - (optional) if true, returns the file contents base64-encoded (default false)
+
+Returns:
+
+- result - contents of the file as string or base64-encoded string
+
+For streaming file content over HTTP with Range support, use the --rc-serve flag instead.
+`,
+	})
+}
+
+// Get a single file into a JSON response
+func rcGetFile(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	remote, err := in.GetString("remote")
+	if rc.NotErrParamNotFound(err) {
+		return nil, err
+	}
+	fsString, err := in.GetString("fs")
+	if err != nil {
+		return nil, err
+	}
+	if remote != "" {
+		in = in.Copy()
+		in["fs"] = fspath.JoinRootPath(fsString, remote)
+	}
+
+	offset, err := in.GetInt64("offset")
+	if rc.NotErrParamNotFound(err) {
+		return nil, err
+	}
+	count, err := in.GetInt64("count")
+	if rc.NotErrParamNotFound(err) {
+		return nil, err
+	}
+	if rc.IsErrParamNotFound(err) {
+		count = -1
+	}
+	head, err := in.GetInt64("head")
+	if rc.NotErrParamNotFound(err) {
+		return nil, err
+	}
+	tail, err := in.GetInt64("tail")
+	if rc.NotErrParamNotFound(err) {
+		return nil, err
+	}
+
+	usedOffset := offset != 0 || count >= 0
+	usedHead := head > 0
+	usedTail := tail > 0
+
+	if (usedHead && usedTail) || (usedHead && usedOffset) || (usedTail && usedOffset) {
+		return nil, errors.New("can only use one of head, tail or offset/count")
+	}
+	if head < 0 {
+		return nil, errors.New("head cannot be negative")
+	}
+	if tail < 0 {
+		return nil, errors.New("tail cannot be negative")
+	}
+	if head > 0 {
+		offset = 0
+		count = head
+	}
+	if tail > 0 {
+		offset = -tail
+		count = -1
+	}
+
+	limit := int64(DefaultGetFileMaxSize)
+	maxSize, err := in.GetInt64("maxSize")
+	if rc.NotErrParamNotFound(err) {
+		return nil, err
+	}
+	if !rc.IsErrParamNotFound(err) {
+		if maxSize <= 0 {
+			return nil, errors.New("maxSize must be greater than 0")
+		}
+		if maxSize > DefaultGetFileMaxSize {
+			return nil, fmt.Errorf("maxSize %d cannot exceed built-in maximum of %d bytes", maxSize, DefaultGetFileMaxSize)
+		}
+		limit = maxSize
+	}
+
+	base64Encoded, err := in.GetBool("base64")
+	if rc.NotErrParamNotFound(err) {
+		return nil, err
+	}
+
+	ctx, f, err := rc.GetFsNamedFileOK(ctx, in, "fs")
+	if err != nil {
+		return nil, err
+	}
+
+	ci := fs.GetConfig(ctx)
+	var (
+		fileCount int
+		w         = &maxLimitWriter{limit: limit}
+	)
+
+	err = walk.ListR(ctx, f, "", false, ci.MaxDepth, walk.ListObjects, func(entries fs.DirEntries) error {
+		for _, entry := range entries {
+			o, ok := entry.(fs.Object)
+			if !ok {
+				continue
+			}
+			fileCount++
+			if fileCount > 1 {
+				return errors.New("found more than one file; operations/getfile only supports a single file")
+			}
+
+			// Pre-check size if known
+			size := o.Size()
+			if size >= 0 {
+				start := offset
+				if start < 0 {
+					start += size
+				}
+				if start > size {
+					start = size
+				}
+				reqSize := size - start
+				if count >= 0 && count < reqSize {
+					reqSize = count
+				}
+				if reqSize > limit {
+					return fmt.Errorf("requested size (%d bytes) exceeds maximum limit of %d bytes; use offset/count, maxSize or --rc-serve", reqSize, limit)
+				}
+			}
+
+			err = catObject(ctx, o, w, offset, count)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if fileCount == 0 {
+		return nil, fs.ErrorObjectNotFound
+	}
+
+	data := w.buf.Bytes()
+	if base64Encoded {
+		return rc.Params{
+			"result": base64.StdEncoding.EncodeToString(data),
+		}, nil
+	}
+	if !utf8.Valid(data) {
+		return nil, errors.New("file content is not valid UTF-8 (use base64=true for binary files)")
+	}
+	return rc.Params{
+		"result": string(data),
+	}, nil
 }
