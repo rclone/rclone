@@ -1309,7 +1309,7 @@ func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64, sep []b
 		defer mu.Unlock()
 		err := catObject(ctx, o, w, offset, count)
 		if err != nil {
-			fs.Errorf(o, "%v", err)
+			fs.Errorf(o, "Failed to send to output: %v", err)
 			return
 		}
 		if len(sep) > 0 {
