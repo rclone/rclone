@@ -26,7 +26,10 @@ is in the same format as the standard md5sum tool produces.
 By default, the hash is requested from the remote.  If MD5 is
 not supported by the remote, no hash will be returned.  With the
 download flag, the file will be downloaded from the remote and
-hashed locally enabling MD5 for any remote.
+hashed locally enabling MD5 for any remote.  With the
+download-if-missing flag, the hash will be requested from the remote
+first, and the file will only be downloaded if the remote cannot
+provide a hash.
 
 For other algorithms, see the [hashsum](/commands/rclone_hashsum/)
 command. Running ` + "`rclone md5sum remote:path`" + ` is equivalent
@@ -49,17 +52,17 @@ as a relative path).`,
 		cmd.Run(false, false, command, func() error {
 			if hashsum.ChecksumFile != "" {
 				fsum, sumFile := cmd.NewFsFile(hashsum.ChecksumFile)
-				return operations.CheckSum(context.Background(), fsrc, fsum, sumFile, hash.MD5, nil, hashsum.DownloadFlag)
+				return operations.CheckSum(context.Background(), fsrc, fsum, sumFile, hash.MD5, nil, hashsum.DownloadFlag, hashsum.DownloadIfMissingFlag)
 			}
 			if hashsum.HashsumOutfile == "" {
-				return operations.HashLister(context.Background(), hash.MD5, hashsum.OutputBase64, hashsum.DownloadFlag, fsrc, nil)
+				return operations.HashLister(context.Background(), hash.MD5, hashsum.OutputBase64, hashsum.DownloadFlag, fsrc, nil, hashsum.DownloadIfMissingFlag)
 			}
 			output, close, err := hashsum.GetHashsumOutput(hashsum.HashsumOutfile)
 			if err != nil {
 				return err
 			}
 			defer close()
-			return operations.HashLister(context.Background(), hash.MD5, hashsum.OutputBase64, hashsum.DownloadFlag, fsrc, output)
+			return operations.HashLister(context.Background(), hash.MD5, hashsum.OutputBase64, hashsum.DownloadFlag, fsrc, output, hashsum.DownloadIfMissingFlag)
 		})
 		return nil
 	},
