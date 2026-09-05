@@ -954,7 +954,7 @@ func (f *Fs) listSharedFolders(ctx context.Context, callback func(fs.DirEntry) e
 func (f *Fs) findSharedFolder(ctx context.Context, name string) (id string, err error) {
 	errFoundFile := errors.New("found file")
 	err = f.listSharedFolders(ctx, func(entry fs.DirEntry) error {
-		if entry.(*fs.Dir).Remote() == name {
+		if strings.EqualFold(entry.(*fs.Dir).Remote(), name) {
 			id = entry.(*fs.Dir).ID()
 			return errFoundFile
 		}
@@ -1036,7 +1036,7 @@ func (f *Fs) listReceivedFiles(ctx context.Context, callback func(fs.DirEntry) e
 func (f *Fs) findSharedFile(ctx context.Context, name string) (o *Object, err error) {
 	errFoundFile := errors.New("found file")
 	err = f.listReceivedFiles(ctx, func(entry fs.DirEntry) error {
-		if entry.(*Object).remote == name {
+		if strings.EqualFold(entry.(*Object).remote, name) {
 			o = entry.(*Object)
 			return errFoundFile
 		}

@@ -475,3 +475,48 @@ func TestFindSharedFileResolvesDecodedName(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, encodedName, o.remote)
 }
+
+// sharedFoldersHandler serves a single shared folder from list_folders.
+func sharedFoldersHandler(name, id string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !strings.Contains(r.URL.Path, "list_folders") {
+			http.NotFound(w, r)
+			return
+		}
+		resp := sharing.ListFoldersResult{
+			Entries: []*sharing.SharedFolderMetadata{{Name: name, SharedFolderId: id}},
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(resp)
+	}
+}
+
+// The Dropbox backend advertises CaseInsensitive: true, so a shared folder
+// lookup must match regardless of the case of the requested name.
+func TestInternalFindSharedFolderCaseInsensitive(t *testing.T) {
+	f := newSharingTestFs(t, sharedFoldersHandler("TestFolder", "folder-id"))
+
+	for _, name := range []string{"TestFolder", "testfolder", "TESTFOLDER"} {
+		id, err := f.findSharedFolder(context.Background(), name)
+		require.NoError(t, err, name)
+		assert.Equal(t, "folder-id", id, name)
+	}
+
+	_, err := f.findSharedFolder(context.Background(), "no-such-folder")
+	assert.ErrorIs(t, err, fs.ErrorDirNotFound)
+}
+
+// The Dropbox backend advertises CaseInsensitive: true, so a received file
+// lookup must match regardless of the case of the requested name.
+func TestInternalFindSharedFileCaseInsensitive(t *testing.T) {
+	f := newSharingTestFs(t, receivedFilesHandler(t, "TestFile.txt"))
+
+	for _, name := range []string{"TestFile.txt", "testfile.txt", "TESTFILE.TXT"} {
+		o, err := f.findSharedFile(context.Background(), name)
+		require.NoError(t, err, name)
+		assert.Equal(t, "TestFile.txt", o.remote, name)
+	}
+
+	_, err := f.findSharedFile(context.Background(), "no-such-file.txt")
+	assert.ErrorIs(t, err, fs.ErrorObjectNotFound)
+}
