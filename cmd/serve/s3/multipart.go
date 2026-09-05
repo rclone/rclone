@@ -203,8 +203,9 @@ func (b *s3Backend) UploadPart(ctx context.Context, bucketName, objectName strin
 	}
 
 	// Buffer the part in a pool-backed RW so we can MD5 it (for the ETag) and
-	// stream it once it is this part's turn.
-	rw := multipart.NewRW().Reserve(contentLength)
+	// stream it once it is this part's turn. The RW grows a page at a time as
+	// the body is read.
+	rw := multipart.NewRW()
 	hasher := md5.New()
 	n, err := io.Copy(rw, io.TeeReader(body, hasher))
 	if err != nil {
@@ -234,14 +235,21 @@ func (b *s3Backend) UploadPart(ctx context.Context, bucketName, objectName strin
 // admitted so the sink can keep draining; so is a single part bigger than the
 // limit when the buffer is empty, to guarantee progress. Reserved bytes are
 // returned with release, or by the pump as the part is streamed.
+//
+// size is the client-declared part length and is not trusted: a negative value
+// is rejected, and the admission test is written so a huge value can't overflow
+// the running total and wrongly admit further parts past the limit.
 func (up *multipartUpload) waitForTurn(partNumber int, size int64) error {
+	if size < 0 {
+		return gofakes3.ErrInvalidArgument
+	}
 	up.mu.Lock()
 	defer up.mu.Unlock()
 	for {
 		if up.closed {
 			return gofakes3.ErrNoSuchUpload
 		}
-		if up.bufferLimit <= 0 || partNumber <= up.nextPart || up.buffered == 0 || up.buffered+size <= up.bufferLimit {
+		if up.bufferLimit <= 0 || partNumber <= up.nextPart || up.buffered == 0 || size <= up.bufferLimit-up.buffered {
 			up.buffered += size
 			return nil
 		}

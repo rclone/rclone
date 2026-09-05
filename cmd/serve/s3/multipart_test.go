@@ -8,6 +8,7 @@ import (
 	"crypto/md5"
 	"fmt"
 	"io"
+	"math"
 	"net/url"
 	"path"
 	"sync"
@@ -25,6 +26,7 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/multipart"
+	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
@@ -974,4 +976,85 @@ func TestMultipartOverwrite(t *testing.T) {
 			requireOnly(t, f, bucket, object)
 		})
 	}
+}
+
+// poolProbeReader records the pool's in-use buffer count the first time it is
+// read - after UploadPart has created its buffer but before any body bytes have
+// been delivered - then reports a short body by returning io.EOF.
+type poolProbeReader struct {
+	baseline int
+	recorded int
+	read     bool
+}
+
+func (r *poolProbeReader) Read(p []byte) (int, error) {
+	if !r.read {
+		r.read = true
+		r.recorded = pool.Global().InUse() - r.baseline
+	}
+	return 0, io.EOF
+}
+
+// TestUploadPartNoReserveBeforeBody checks that UploadPart does not preallocate
+// pool memory proportional to the client-declared Content-Length before any
+// body bytes have been received. A part declaring a large size but sending no
+// body must not reserve pages up front, so an unverified header cannot exhaust
+// process memory.
+func TestUploadPartNoReserveBeforeBody(t *testing.T) {
+	b, _, bucket := newPutTestBackend(t, "", nil)
+	ctx := context.Background()
+
+	uploadID, err := b.CreateMultipartUpload(ctx, bucket, "object", nil)
+	require.NoError(t, err)
+
+	const declared = int64(64 << 20) // 64 MiB declared by the client
+	wantPages := int(declared / int64(pool.BufferSize))
+
+	reader := &poolProbeReader{baseline: pool.Global().InUse()}
+	_, err = b.UploadPart(ctx, bucket, "object", uploadID, 1, declared, reader)
+	// No body bytes arrive, so the part is rejected as incomplete.
+	require.ErrorIs(t, err, gofakes3.ErrIncompleteBody)
+
+	// The fixed path allocates nothing before the first read, so recorded is 0;
+	// the vulnerable path preallocated wantPages (64). The pool is process-wide,
+	// so recorded could pick up a few unrelated in-use buffers, but never the
+	// 64-page reservation the bug produced - the margin distinguishes them.
+	require.True(t, reader.read, "the body must have been read")
+	require.Less(t, reader.recorded, wantPages,
+		"UploadPart preallocated pool pages from the declared Content-Length before any body bytes arrived")
+}
+
+// TestWaitForTurnRejectsBogusSize checks that the reorder-buffer admission
+// rejects a negative client-declared part length and that a huge declared
+// length cannot overflow the running total so as to admit a further part past
+// the buffer limit.
+func TestWaitForTurnRejectsBogusSize(t *testing.T) {
+	up := newMultipartUpload("bucket", "key", "bucket/key", "bucket/key", nil, 1<<20)
+
+	// A part length can never be negative.
+	require.ErrorIs(t, up.waitForTurn(1, -1), gofakes3.ErrInvalidArgument)
+
+	// A huge out-of-order part is admitted once because the buffer is empty,
+	// driving buffered near the top of the int64 range.
+	require.NoError(t, up.waitForTurn(2, math.MaxInt64))
+
+	// A further out-of-order part must wait, not be wrongly admitted by an
+	// overflow of buffered+size.
+	admitted := make(chan struct{})
+	go func() {
+		_ = up.waitForTurn(3, math.MaxInt64)
+		close(admitted)
+	}()
+	select {
+	case <-admitted:
+		t.Fatal("out-of-order part admitted past the buffer limit via overflow")
+	case <-time.After(50 * time.Millisecond):
+	}
+
+	// Wake the blocked goroutine so it doesn't leak.
+	up.mu.Lock()
+	up.closed = true
+	up.cond.Broadcast()
+	up.mu.Unlock()
+	<-admitted
 }

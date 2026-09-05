@@ -8,6 +8,11 @@ import (
 )
 
 // Archiver describes an archive package
+//
+// Entry names inside an archive are attacker controlled. An archiver
+// must not expose an entry whose remote escapes the archive's own
+// namespace (for example one with a ".." component), typically by
+// validating names with lib/sanitize.
 type Archiver struct {
 	// New constructs an Fs from the (wrappedFs, remote) with the objects
 	// prefix with prefix and rooted at root

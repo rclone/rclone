@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"path"
 	"path/filepath"
@@ -210,6 +211,32 @@ func TestSymlink(t *testing.T) {
 	require.NoError(t, in.Close())
 }
 
+// TestSymlinkRangeBeyondEnd checks range requests on a translated
+// symlink's target string don't panic.
+func TestSymlinkRangeBeyondEnd(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	f := r.Flocal.(*Fs)
+	linksMode(f)
+
+	const target = "file.txt"
+	require.NoError(t, putLink(ctx, f, "symlink.txt", target))
+
+	o, err := f.NewObject(ctx, "symlink.txt"+fs.LinkSuffix)
+	require.NoError(t, err)
+
+	// An offset just past the end and a wildly large offset must both read
+	// empty rather than panicking.
+	for _, start := range []int64{int64(len(target)), int64(len(target)) + 1, math.MaxInt64} {
+		in, err := o.Open(ctx, &fs.RangeOption{Start: start, End: -1})
+		require.NoError(t, err)
+		contents, err := io.ReadAll(in)
+		require.NoError(t, err)
+		require.Empty(t, string(contents))
+		require.NoError(t, in.Close())
+	}
+}
+
 func TestSymlinkError(t *testing.T) {
 	m := configmap.Simple{
 		"links":      "true",
@@ -354,6 +381,133 @@ func TestSymlinkInTreeWriteThroughWorks(t *testing.T) {
 	got, err := os.ReadFile(filepath.Join(f.root, "sub", "file.txt"))
 	require.NoError(t, err)
 	require.Equal(t, "world", string(got))
+}
+
+// TestDirMetadataThroughPlantedSymlinkBlocked checks metadata +
+// symlinks can't write outside the root.
+func TestDirMetadataThroughPlantedSymlinkBlocked(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("symlinks and unix modes not applicable on Windows")
+	}
+	ctx := context.Background()
+
+	// A directory outside the destination whose metadata the attacker targets.
+	evil := t.TempDir()
+	evilDir := filepath.Join(evil, "secret.d")
+	require.NoError(t, os.Mkdir(evilDir, 0700))
+	evilMtime := fstest.Time("2016-06-07T08:09:10Z")
+	require.NoError(t, os.Chtimes(evilDir, evilMtime, evilMtime))
+
+	r := fstest.NewRun(t)
+	f := r.Flocal.(*Fs)
+	linksMode(f)
+
+	// The planted symlink dst/pwn -> outside, faithfully reproduced by --links.
+	require.NoError(t, putLink(ctx, f, "pwn", evilDir))
+
+	// The source now presents "pwn" as a directory with attacker-chosen mode
+	// and mtime. Applying it must not reach through the planted symlink.
+	metadata := fs.Metadata{
+		"mode":  "0777",
+		"mtime": "2001-02-03T04:05:06Z",
+	}
+	_, err := f.MkdirMetadata(ctx, "pwn", metadata)
+	require.Error(t, err, "applying metadata through a planted symlink should be refused")
+
+	// The outside directory's mode and mtime must be unchanged.
+	fi, err := os.Stat(evilDir)
+	require.NoError(t, err)
+	require.Equal(t, os.FileMode(0700), fi.Mode().Perm(), "chmod escaped through planted symlink to %q", evilDir)
+	require.True(t, fi.ModTime().Equal(evilMtime), "chtimes escaped through planted symlink to %q", evilDir)
+}
+
+// TestDirSetModTimeThroughPlantedSymlinkBlocked checks we can't
+// chtimes outside the root with --links
+func TestDirSetModTimeThroughPlantedSymlinkBlocked(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("symlinks not applicable on Windows")
+	}
+	ctx := context.Background()
+
+	evil := t.TempDir()
+	evilDir := filepath.Join(evil, "secret.d")
+	require.NoError(t, os.Mkdir(evilDir, 0700))
+	evilMtime := fstest.Time("2016-06-07T08:09:10Z")
+	require.NoError(t, os.Chtimes(evilDir, evilMtime, evilMtime))
+
+	r := fstest.NewRun(t)
+	f := r.Flocal.(*Fs)
+	linksMode(f)
+
+	require.NoError(t, putLink(ctx, f, "pwn", evilDir))
+
+	err := f.DirSetModTime(ctx, "pwn", fstest.Time("2001-02-03T04:05:06Z"))
+	require.Error(t, err, "setting dir modtime through a planted symlink should be refused")
+
+	fi, err := os.Stat(evilDir)
+	require.NoError(t, err)
+	require.True(t, fi.ModTime().Equal(evilMtime), "chtimes escaped through planted symlink to %q", evilDir)
+}
+
+// TestDirMetadataInTreeWorks checks the root confinement doesn't
+// break legitimate dir metadata.
+func TestDirMetadataInTreeWorks(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("unix modes not applicable on Windows")
+	}
+	ctx := context.Background()
+
+	r := fstest.NewRun(t)
+	f := r.Flocal.(*Fs)
+	linksMode(f)
+
+	metadata := fs.Metadata{
+		"mode":  "0705",
+		"mtime": "2001-02-03T04:05:06Z",
+	}
+	_, err := f.MkdirMetadata(ctx, "sub", metadata)
+	require.NoError(t, err)
+
+	fi, err := os.Stat(filepath.Join(f.root, "sub"))
+	require.NoError(t, err)
+	require.Equal(t, os.FileMode(0705), fi.Mode().Perm())
+	require.True(t, fi.ModTime().Equal(fstest.Time("2001-02-03T04:05:06Z")))
+}
+
+// TestDirBTimeThroughPlantedSymlinkBlocked checks a btime write
+// through a symlink can't escape the root.
+func TestDirBTimeThroughPlantedSymlinkBlocked(t *testing.T) {
+	if !haveSetBTime {
+		t.Skip("birth time is not settable on this OS")
+	}
+	ctx := context.Background()
+
+	evil := t.TempDir()
+	evilDir := filepath.Join(evil, "secret.d")
+	require.NoError(t, os.Mkdir(evilDir, 0700))
+
+	// Read the outside dir's btime through a local Fs rooted at evil.
+	evilFsRaw, err := NewFs(ctx, "local", evil, configmap.Simple{})
+	require.NoError(t, err)
+	evilFs := evilFsRaw.(*Fs)
+	readBTime := func() string {
+		o, err := evilFs.newObject("secret.d")
+		require.NoError(t, err)
+		require.NoError(t, o.lstat())
+		m, err := o.Metadata(ctx)
+		require.NoError(t, err)
+		return m["btime"]
+	}
+	before := readBTime()
+
+	r := fstest.NewRun(t)
+	f := r.Flocal.(*Fs)
+	linksMode(f)
+	require.NoError(t, putLink(ctx, f, "pwn", evilDir))
+
+	_, _ = f.MkdirMetadata(ctx, "pwn", fs.Metadata{"btime": "2001-02-03T04:05:06Z"})
+
+	require.Equal(t, before, readBTime(), "btime escaped through planted symlink to %q", evilDir)
 }
 
 // TestEncodingEscapeBlocked checks that a name from a malicious source can't
