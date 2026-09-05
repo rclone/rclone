@@ -1222,3 +1222,5 @@ put them back in again. -->
 - no-hup <shauryaj.finance@gmail.com>
 - Dhevenddra <dhevg20020402@gmail.com>
 - Splainte <r.wycke@hotmail.fr>
+- PSR94 <88868390+PSR94@users.noreply.github.com>
+- Shane McCarron <shane.mccarron@corvexconnect.com>

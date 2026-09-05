@@ -143,12 +143,12 @@ func (s *server) configure() (err error) {
 	var authorizedKeysMap map[string]struct{}
 
 	// ensure the user isn't trying to use conflicting flags
-	if proxy.Opt.AuthProxy != "" && s.opt.AuthorizedKeys != "" && s.opt.AuthorizedKeys != Opt.AuthorizedKeys {
+	if s.provider.IsProxy() && s.opt.AuthorizedKeys != "" && s.opt.AuthorizedKeys != Opt.AuthorizedKeys {
 		return errors.New("--auth-proxy and --authorized-keys cannot be used at the same time")
 	}
 
 	// Load the authorized keys
-	if s.opt.AuthorizedKeys != "" && proxy.Opt.AuthProxy == "" {
+	if s.opt.AuthorizedKeys != "" && !s.provider.IsProxy() {
 		authKeysFile := env.ShellExpand(s.opt.AuthorizedKeys)
 		authorizedKeysMap, err = loadAuthorizedKeys(authKeysFile)
 		// If user set the flag away from the default then report an error

@@ -36,6 +36,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/sanitize"
 )
 
 // Register with Fs
@@ -185,8 +186,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 	foundArchive := subArchive(remote)
 	if foundArchive != nil {
 		fs.Debugf(nil, "Found archiver for %q remote %q", foundArchive.archiver.Extension, foundArchive.remote)
-		// Archive path
-		foundArchive.root = strings.Trim(remote[len(foundArchive.remote):], "/")
+		// Archive path, in canonical form so that it compares equal
+		// to the cleaned entry names inside the archive
+		foundArchive.root = strings.Trim(path.Clean(remote[len(foundArchive.remote):]), "/")
+		if foundArchive.root == "." {
+			foundArchive.root = ""
+		}
 		// Path to the archive
 		archiveRemote := remote[:len(foundArchive.remote)]
 		// Remote is archive leaf name
@@ -491,22 +496,48 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return nil, err
 	}
 
-	entries, err = subFs.List(ctx, dir)
+	subEntries, err := subFs.List(ctx, dir)
 	if err != nil {
 		return nil, err
 	}
-	for i, entry := range entries {
+	entries = subEntries[:0]
+	skipped := 0
+	for _, entry := range subEntries {
+		remote := entry.Remote()
+		// Only pass on direct children of dir - anything else
+		// could escape the archive's namespace
+		if !isDirectChild(dir, remote) {
+			fs.Debugf(f, "Skipping entry %q which is not in directory %q", remote, dir)
+			skipped++
+			continue
+		}
 		// Can only unarchive files
 		if o, ok := entry.(fs.Object); ok {
-			remote := o.Remote()
 			archive := f.findArchive(remote)
 			if archive != nil {
 				// Overwrite entry with directory
-				entries[i] = fs.NewDir(remote, o.ModTime(ctx))
+				entry = fs.NewDir(remote, o.ModTime(ctx))
 			}
 		}
+		entries = append(entries, entry)
+	}
+	if skipped > 0 {
+		fs.Logf(f, "Skipped %d entries in %q whose names escape the directory", skipped, dir)
 	}
 	return entries, nil
+}
+
+// isDirectChild reports whether remote names an entry directly in dir
+// ("" being the root), with no ".." or other components in between.
+func isDirectChild(dir, remote string) bool {
+	if dir != "" {
+		var ok bool
+		remote, ok = strings.CutPrefix(remote, dir+"/")
+		if !ok {
+			return false
+		}
+	}
+	return sanitize.Leaf(remote) == nil
 }
 
 // NewObject creates a new remote archive file object
@@ -525,6 +556,11 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	o, err := subFs.NewObject(ctx, remote)
 	if err != nil {
 		return nil, err
+	}
+	// Don't trust the archiver to have returned the object asked for
+	if o.Remote() != remote {
+		fs.Debugf(f, "Ignoring object %q returned for %q", o.Remote(), remote)
+		return nil, fs.ErrorObjectNotFound
 	}
 	return o, nil
 }

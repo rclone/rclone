@@ -12,6 +12,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/walk"
 )
 
@@ -275,6 +276,14 @@ func StatJSON(ctx context.Context, fsrc fs.Fs, remote string, opt *ListJSONOpt) 
 	lj, err := newListJSON(ctx, fsrc, remote, opt)
 	if err != nil {
 		return nil, err
+	}
+
+	// A remote that climbs above the Fs root can never be a valid item.
+	// StatJSON calls List/NewObject directly, bypassing the confinement in
+	// fs/list and fs/walk, so treat it as not found here rather than stat
+	// something outside the configured root.
+	if list.RemoteEscapesRoot(remote) {
+		return nil, nil
 	}
 
 	// Root is always a directory. When we have a NewDirEntry

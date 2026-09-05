@@ -111,6 +111,7 @@ Returns the following values:
 	"totalTransfers": total number of transfers in the group,
 	"transferTime" : total time spent on running jobs,
 	"transfers": number of transferred files,
+	"updatedDirs": number of directories updated (modtime or metadata set),
 	"transferring": an array of currently active file transfers:
 		[
 			{
@@ -405,6 +406,7 @@ func (sg *statsGroups) sum(ctx context.Context) *StatsInfo {
 			sum.deletes += stats.deletes
 			sum.deletesSize += stats.deletesSize
 			sum.deletedDirs += stats.deletedDirs
+			sum.updatedDirs += stats.updatedDirs
 			sum.inProgress.merge(stats.inProgress)
 			sum.startedTransfers = append(sum.startedTransfers, stats.startedTransfers...)
 			sum.oldTimeRanges = append(sum.oldTimeRanges, stats.oldTimeRanges...)

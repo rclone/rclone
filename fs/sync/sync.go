@@ -1128,13 +1128,25 @@ func (s *syncCopyMove) copyDirMetadata(ctx context.Context, f fs.Fs, dst fs.Dire
 	newDst = dst
 	if !equal {
 		if s.setDirMetadata && s.copyEmptySrcDirs {
-			newDst, err = operations.CopyDirMetadata(ctx, f, dst, dir, src)
+			if dst != nil && s.setDirModTime && s.setDirModTimeAfter {
+				// Update the metadata in the delayed pass at the end of
+				// the sync in case transfers into the directory change it
+				s.markDirModified(dst.Remote())
+			} else {
+				newDst, err = operations.CopyDirMetadata(ctx, f, dst, dir, src)
+			}
 		} else if dst == nil && s.setDirModTime && s.copyEmptySrcDirs {
 			newDst, err = operations.MkdirModTime(ctx, f, dir, src.ModTime(ctx))
 		} else if dst == nil && s.copyEmptySrcDirs {
 			err = operations.Mkdir(ctx, f, dir)
 		} else if dst != nil && s.setDirModTime {
-			newDst, err = operations.SetDirModTime(ctx, f, dst, dir, src.ModTime(ctx))
+			if s.setDirModTimeAfter {
+				// Set the modtime in the delayed pass at the end of the
+				// sync in case transfers into the directory change it
+				s.markDirModified(dst.Remote())
+			} else {
+				newDst, err = operations.SetDirModTime(ctx, f, dst, dir, src.ModTime(ctx))
+			}
 		}
 	}
 	if transform.Transforming(ctx) && newDst != nil && src.Remote() != newDst.Remote() {
@@ -1197,7 +1209,9 @@ func (s *syncCopyMove) setDelayedDirModTimes(ctx context.Context) error {
 				continue
 			}
 			if !s.copyEmptySrcDirs {
-				if _, isEmpty := s.srcEmptyDirs[item.dir]; isEmpty {
+				// Skip empty source directories which were never
+				// created on the destination
+				if _, isEmpty := s.srcEmptyDirs[item.dir]; isEmpty && item.dst == nil {
 					continue
 				}
 			}
@@ -1217,7 +1231,6 @@ func (s *syncCopyMove) setDelayedDirModTimes(ctx context.Context) error {
 					_, err = operations.SetDirModTime(gCtx, s.fdst, item.dst, item.dir, item.modTime)
 				}
 				if err != nil {
-					err = fs.CountError(ctx, err)
 					fs.Errorf(item.dir, "Failed to update directory timestamp or metadata: %v", err)
 					errCount.Add(err)
 				}
