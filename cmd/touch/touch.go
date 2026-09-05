@@ -26,9 +26,20 @@ var (
 
 const (
 	defaultLayout          string = "060102"
+	layoutDate             string = "2006-01-02"
+	layoutDotDate          string = "06.01.02"
 	layoutDateWithTime     string = "2006-01-02T15:04:05"
 	layoutDateWithTimeNano string = "2006-01-02T15:04:05.999999999"
 )
+
+var timeLayouts = []string{
+	time.RFC3339Nano,
+	layoutDateWithTimeNano,
+	layoutDateWithTime,
+	layoutDate,
+	defaultLayout,
+	layoutDotDate,
+}
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
@@ -56,9 +67,12 @@ This will touch ` + "`--transfers`" + ` files concurrently.
 If ` + "`--timestamp`" + ` is used then sets the modification time to that
 time instead of the current time. Times may be specified as one of:
 
-- 'YYMMDD' - e.g. 17.10.30
+- 'YYMMDD' - e.g. 171030
+- 'YY.MM.DD' - e.g. 17.10.30
+- 'YYYY-MM-DD' - e.g. 2006-01-02
 - 'YYYY-MM-DDTHH:MM:SS' - e.g. 2006-01-02T15:04:05
 - 'YYYY-MM-DDTHH:MM:SS.SSS' - e.g. 2006-01-02T15:04:05.123456789
+- 'YYYY-MM-DDTHH:MM:SSZ' - e.g. 2006-01-02T15:04:05Z
 
 Note that value of ` + "`--timestamp`" + ` is in UTC. If you want local time
 then add the ` + "`--localtime`" + ` flag.
@@ -100,16 +114,19 @@ func newFsDst(args []string) (f fs.Fs, remote string) {
 
 // parseTimeArgument parses a timestamp string according to specific layouts
 func parseTimeArgument(timeString string) (time.Time, error) {
-	layout := defaultLayout
-	if len(timeString) == len(layoutDateWithTime) {
-		layout = layoutDateWithTime
-	} else if len(timeString) > len(layoutDateWithTime) {
-		layout = layoutDateWithTimeNano
+	var err error
+	for _, layout := range timeLayouts {
+		var t time.Time
+		if localTime {
+			t, err = time.ParseInLocation(layout, timeString, time.Local)
+		} else {
+			t, err = time.Parse(layout, timeString)
+		}
+		if err == nil {
+			return t, nil
+		}
 	}
-	if localTime {
-		return time.ParseInLocation(layout, timeString, time.Local)
-	}
-	return time.Parse(layout, timeString)
+	return time.Time{}, err
 }
 
 // timeOfTouch returns the time value set on files
