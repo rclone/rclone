@@ -1360,6 +1360,11 @@ This stops rclone from trying to use HTTP/2 if available. This can
 sometimes speed up transfers due to a
 [problem in the Go standard library](https://github.com/golang/go/issues/37373).
 
+HTTP/2 is disabled by default for this reason - it multiplexes all
+concurrent transfers onto a single TCP connection, which performs
+badly on lossy or high latency networks. Use `--disable-http2=false`
+to turn HTTP/2 back on.
+
 ### --dscp string
 
 Specify a DSCP value or name to use in connections. This could help QoS
