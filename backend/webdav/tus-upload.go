@@ -62,14 +62,14 @@ func b64encode(s string) string {
 }
 
 // NewUpload creates a new upload from an io.Reader.
-func NewUpload(reader io.Reader, size int64, metadata Metadata, fingerprint string) *Upload {
+func NewUpload(reader io.Reader, size int64, metadata Metadata, fingerprint string) (*Upload, error) {
 	stream, ok := reader.(io.ReadSeeker)
 
 	if !ok {
 		buf := new(bytes.Buffer)
 		_, err := buf.ReadFrom(reader)
 		if err != nil {
-			return nil
+			return nil, err
 		}
 		stream = bytes.NewReader(buf.Bytes())
 	}
@@ -84,5 +84,5 @@ func NewUpload(reader io.Reader, size int64, metadata Metadata, fingerprint stri
 
 		Fingerprint: fingerprint,
 		Metadata:    metadata,
-	}
+	}, nil
 }
