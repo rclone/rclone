@@ -538,43 +538,83 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (string, error)
 	return resp.UUID, nil
 }
 
-// splitNameExt splits a basename into the (name, ext) shape
+// splitNameExt splits a basename into the (plainName, type) pair that Internxt
+// stores a file under.
 func splitNameExt(baseName string) (name, ext string) {
-	name = strings.TrimSuffix(baseName, path.Ext(baseName))
-	ext = strings.TrimPrefix(path.Ext(baseName), ".")
-	return
+	ext = path.Ext(baseName)
+	if ext == baseName {
+		return baseName, ""
+	}
+	return strings.TrimSuffix(baseName, ext), strings.TrimPrefix(ext, ".")
+}
+
+// joinNameExt reassembles the basename a stored (plainName, type) pair
+// displays as, the way List builds its entries.
+func joinNameExt(name, ext string) string {
+	if ext == "" {
+		return name
+	}
+	return name + "." + ext
+}
+
+// legacyNameExt splits a basename at the final dot, the way this backend used
+// to before it adopted the convention the other clients share. It differs from
+// splitNameExt only for a name whose sole dot leads it: ".bashrc" splits into
+// an empty name of type "bashrc".
+func legacyNameExt(baseName string) (name, ext string) {
+	return strings.TrimSuffix(baseName, path.Ext(baseName)), strings.TrimPrefix(path.Ext(baseName), ".")
+}
+
+// existenceCheck builds a lookup criterion for one (plainName, type) spelling.
+func existenceCheck(name, ext string) files.FileExistenceCheck {
+	return files.FileExistenceCheck{
+		PlainName:    name,
+		Type:         ext,
+		OriginalFile: struct{}{},
+	}
 }
 
 // findFile looks up a single file by name within directoryID. Returns
 // (nil, nil) when the file does not exist; surfaces transport/API errors.
 func (f *Fs) findFile(ctx context.Context, leaf, directoryID string) (*folders.File, error) {
-	name, ext := splitNameExt(f.opt.Encoding.FromStandardName(leaf))
+	encodedName := f.opt.Encoding.FromStandardName(leaf)
+	name, ext := splitNameExt(encodedName)
+	checks := []files.FileExistenceCheck{existenceCheck(name, ext)}
+	if encodedName != name {
+		checks = append(checks, existenceCheck(encodedName, ""))
+	}
+	if legacyName, legacyExt := legacyNameExt(encodedName); legacyExt != "" && legacyName != name {
+		checks = append(checks, existenceCheck(legacyName, legacyExt))
+	}
 
 	var checkResult *files.CheckFilesExistenceResponse
 	err := f.pacer.Call(func() (bool, error) {
 		var err error
-		checkResult, err = files.CheckFilesExistence(ctx, f.cfg, directoryID, []files.FileExistenceCheck{{
-			PlainName:    name,
-			Type:         ext,
-			OriginalFile: struct{}{},
-		}})
+		checkResult, err = files.CheckFilesExistence(ctx, f.cfg, directoryID, checks)
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
 		return nil, err
 	}
-	if len(checkResult.Files) == 0 || !checkResult.Files[0].FileExists() {
-		return nil, nil
+
+	var uuid string
+	for _, result := range checkResult.Files {
+		if !result.FileExists() || result.UUID == "" {
+			continue
+		}
+		if joinNameExt(result.PlainName, result.Type) == encodedName {
+			uuid = result.UUID
+			break
+		}
 	}
-	result := checkResult.Files[0]
-	if result.Type != ext || result.UUID == "" {
+	if uuid == "" {
 		return nil, nil
 	}
 
 	var fileMeta *files.FileMeta
 	err = f.pacer.Call(func() (bool, error) {
 		var err error
-		fileMeta, err = files.GetFileMeta(ctx, f.cfg, result.UUID)
+		fileMeta, err = files.GetFileMeta(ctx, f.cfg, uuid)
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
@@ -662,8 +702,10 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		return nil, err
 	}
 
-	// Best-effort existence check
-	existingFile, _ := f.findFile(ctx, leaf, directoryID)
+	existingFile, err := f.findFile(ctx, leaf, directoryID)
+	if err != nil {
+		return nil, err
+	}
 
 	// Create object - if file exists, populate it with existing metadata
 	o := &Object{
@@ -832,10 +874,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	// Parse name and extension from the leaf
-	baseName := f.opt.Encoding.FromStandardName(leaf)
-	newName := strings.TrimSuffix(baseName, path.Ext(baseName))
-	newType := strings.TrimPrefix(path.Ext(baseName), ".")
+	newName, newType := splitNameExt(f.opt.Encoding.FromStandardName(leaf))
 
 	// Move the file server-side
 	err = f.pacer.Call(func() (bool, error) {
