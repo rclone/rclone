@@ -6,10 +6,13 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync/atomic"
 	"testing"
 
+	auth "github.com/abbot/go-http-auth"
 	"github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/backend/webdav"
 	"github.com/rclone/rclone/fs"
@@ -19,6 +22,7 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	netwebdav "golang.org/x/net/webdav"
 )
 
 var (
@@ -353,4 +357,53 @@ func TestListAllRetryDoesNotConcatenate(t *testing.T) {
 		want = append(want, fmt.Sprintf("file-%03d.bin", i))
 	}
 	assert.ElementsMatch(t, want, remotes)
+}
+
+func digestServer(t *testing.T, dir string, testUser, testPass, testDigestRealm string) *httptest.Server {
+	t.Helper()
+	authenticator := auth.NewDigestAuthenticator(testDigestRealm, func(user, realm string) string {
+		if user == testUser {
+			return testPass
+		}
+		return ""
+	})
+	authenticator.PlainTextSecrets = true
+	handler := &netwebdav.Handler{
+		FileSystem: netwebdav.Dir(dir),
+		LockSystem: netwebdav.NewMemLS(),
+	}
+	ts := httptest.NewServer(authenticator.Wrap(func(w http.ResponseWriter, r *auth.AuthenticatedRequest) {
+		handler.ServeHTTP(w, &r.Request)
+	}))
+	t.Cleanup(ts.Close)
+	return ts
+}
+
+func TestDigestAuth(t *testing.T) {
+	testDigestFilename := "testDigestAuthFile.txt"
+	testDigestFilenameContent := []byte("hello world")
+
+	testDigestAuthUser := "user"
+	testDigestAuthPwd := "pwd"
+	testDigestAuthRealm := "test"
+
+	ctx := context.Background()
+
+	dir := t.TempDir()
+	err := os.WriteFile(filepath.Join(dir, testDigestFilename), testDigestFilenameContent, 0600)
+	require.NoError(t, err)
+	configfile.Install()
+	f, err := webdav.NewFs(ctx, remoteName, "", configmap.Simple{
+		"type": "webdav",
+		"url":  digestServer(t, dir, testDigestAuthUser, testDigestAuthPwd, testDigestAuthRealm).URL,
+		"user": testDigestAuthUser,
+		"pass": obscure.MustObscure(testDigestAuthPwd),
+	})
+	require.NoError(t, err)
+
+	entries, err := f.List(ctx, "")
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
+	assert.Equal(t, testDigestFilename, entries[0].Remote())
+	assert.Equal(t, int64(len(testDigestFilenameContent)), entries[0].Size())
 }
