@@ -289,8 +289,9 @@ func TestCopyFallsBackWhenRangeIgnored(t *testing.T) {
 	assert.Equal(t, int32(1), fullRequests.Load())
 }
 
-func digestServer(t *testing.T, dir string, testUser, testPass, testDigestRealm string) *httptest.Server {
+func digestServer(t *testing.T, dir string, testUser, testPass, testDigestRealm string) (*httptest.Server, *atomic.Int32) {
 	t.Helper()
+	var requests atomic.Int32
 	authenticator := auth.NewDigestAuthenticator(testDigestRealm, func(user, realm string) string {
 		if user == testUser {
 			return testPass
@@ -302,11 +303,15 @@ func digestServer(t *testing.T, dir string, testUser, testPass, testDigestRealm 
 		FileSystem: netwebdav.Dir(dir),
 		LockSystem: netwebdav.NewMemLS(),
 	}
-	ts := httptest.NewServer(authenticator.Wrap(func(w http.ResponseWriter, r *auth.AuthenticatedRequest) {
-		handler.ServeHTTP(w, &r.Request)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		authenticator.Wrap(func(w http.ResponseWriter, ar *auth.AuthenticatedRequest) {
+			handler.ServeHTTP(w, &ar.Request)
+		})(w, r)
 	}))
 	t.Cleanup(ts.Close)
-	return ts
+	return ts, &requests
 }
 
 func TestDigestAuth(t *testing.T) {
@@ -323,17 +328,24 @@ func TestDigestAuth(t *testing.T) {
 	err := os.WriteFile(filepath.Join(dir, testDigestFilename), testDigestFilenameContent, 0600)
 	require.NoError(t, err)
 	configfile.Install()
+
+	ts, requests := digestServer(t, dir, testDigestAuthUser, testDigestAuthPwd, testDigestAuthRealm)
 	f, err := webdav.NewFs(ctx, remoteName, "", configmap.Simple{
 		"type": "webdav",
-		"url":  digestServer(t, dir, testDigestAuthUser, testDigestAuthPwd, testDigestAuthRealm).URL,
+		"url":  ts.URL,
 		"user": testDigestAuthUser,
 		"pass": obscure.MustObscure(testDigestAuthPwd),
 	})
 	require.NoError(t, err)
 
-	entries, err := f.List(ctx, "")
-	require.NoError(t, err)
-	require.Len(t, entries, 1)
-	assert.Equal(t, testDigestFilename, entries[0].Remote())
-	assert.Equal(t, int64(len(testDigestFilenameContent)), entries[0].Size())
+	reqCount := 3
+	for range reqCount {
+		entries, err := f.List(ctx, "")
+		require.NoError(t, err)
+		require.Len(t, entries, 1)
+		assert.Equal(t, testDigestFilename, entries[0].Remote())
+		assert.Equal(t, int64(len(testDigestFilenameContent)), entries[0].Size())
+	}
+
+	assert.Equal(t, int32(reqCount+1), requests.Load())
 }
