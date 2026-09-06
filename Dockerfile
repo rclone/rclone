@@ -48,7 +48,7 @@ RUN echo "**** Install Dependencies ****" && \
 
 COPY --from=builder /go/src/github.com/rclone/rclone/rclone /usr/local/bin/
 
-RUN addgroup -g ${RCLONE_GID} rclone && adduser -u ${RCLONE_UID} -Ds /bin/sh -G rclone rclone
+RUN addgroup -g "${RCLONE_GID}" rclone && adduser -u "${RCLONE_UID}" -Ds /bin/sh -G rclone rclone
 
 ENTRYPOINT [ "rclone" ]
 
