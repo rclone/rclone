@@ -692,6 +692,40 @@ func rcDu(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	rc.Add(rc.Call{
+		Path:  "operations/cryptcheck",
+		Fn:    rcCryptCheck,
+		Title: "check an unencrypted source against an encrypted destination",
+		Help: `Checks the integrity of an encrypted destination against an unencrypted source.
+
+This takes the following parameters:
+
+- srcFs - a remote name string e.g. "drive:" for the unencrypted source, "/" for local filesystem
+- dstFs - a crypt remote name string e.g. "encrypted:"
+- oneWay - check one way only, source files must exist on destination
+- combined - make a combined report of changes (default false)
+- missingOnSrc - report all files missing from the source (default true)
+- missingOnDst - report all files missing from the destination (default true)
+- match - report all matching files (default false)
+- differ - report all non-matching files (default true)
+- error - report all files with errors (hashing or reading) (default true)
+
+Returns:
+
+- success - true if no error, false otherwise
+- status - textual summary of check, OK or text string
+- hashType - hash used in check, may be missing
+- combined - array of strings of combined report of changes
+- missingOnSrc - array of strings of all files missing from the source
+- missingOnDst - array of strings of all files missing from the destination
+- match - array of strings of all matching files
+- differ - array of strings of all non-matching files
+- error - array of strings of all files with errors (hashing or reading)
+
+See the [cryptcheck](/commands/rclone_cryptcheck/) command for more information.
+`,
+	})
+
+	rc.Add(rc.Call{
 		Path:  "operations/check",
 		Fn:    rcCheck,
 		Title: "check the source and destination are the same",
@@ -812,36 +846,8 @@ func rcCheck(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		return nil, rc.NewErrParamInvalid(errors.New("need srcFs parameter when not using checkFileHash"))
 	}
 
-	oneway, _ := in.GetBool("oneWay")
 	download, _ := in.GetBool("download")
-
-	opt := &CheckOpt{
-		Fsrc:   srcFs,
-		Fdst:   dstFs,
-		OneWay: oneway,
-	}
-
-	out = rc.Params{}
-
-	getOutput := func(name string, Default bool) io.Writer {
-		active, err := in.GetBool(name)
-		if err != nil {
-			active = Default
-		}
-		if !active {
-			return nil
-		}
-		result := []string{}
-		out[name] = &result
-		return stringWriter{&result}
-	}
-
-	opt.Combined = getOutput("combined", false)
-	opt.MissingOnSrc = getOutput("missingOnSrc", true)
-	opt.MissingOnDst = getOutput("missingOnDst", true)
-	opt.Match = getOutput("match", false)
-	opt.Differ = getOutput("differ", true)
-	opt.Error = getOutput("error", true)
+	out, opt, _ := rcMakeCheckOpt(in, srcFs, dstFs, false)
 
 	if checkFileHash != "" {
 		out["hashType"] = checkFileHashType.String()
@@ -854,6 +860,84 @@ func rcCheck(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 			err = Check(ctx, opt)
 		}
 	}
+	return rcCheckResult(out, err), nil
+}
+
+func rcCryptCheck(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	srcFs, err := rc.GetFsNamed(ctx, in, "srcFs")
+	if err != nil {
+		return nil, err
+	}
+	dstFs, err := rc.GetFsNamed(ctx, in, "dstFs")
+	if err != nil {
+		return nil, err
+	}
+	out, opt, err := rcMakeCheckOpt(in, srcFs, dstFs, true)
+	if err != nil {
+		return nil, err
+	}
+	hashType, err := CryptCheck(ctx, opt)
+	if hashType != hash.None {
+		out["hashType"] = hashType.String()
+	}
+	return rcCheckResult(out, err), nil
+}
+
+func rcMakeCheckOpt(in rc.Params, srcFs, dstFs fs.Fs, strict bool) (out rc.Params, opt *CheckOpt, err error) {
+	getBool := func(name string, Default bool) (bool, error) {
+		active, err := in.GetBool(name)
+		if rc.IsErrParamNotFound(err) || (!strict && err != nil) {
+			return Default, nil
+		}
+		return active, err
+	}
+
+	oneway, err := getBool("oneWay", false)
+	if err != nil {
+		return nil, nil, err
+	}
+	opt = &CheckOpt{
+		Fsrc:   srcFs,
+		Fdst:   dstFs,
+		OneWay: oneway,
+	}
+	out = rc.Params{}
+
+	getOutput := func(name string, Default bool) (io.Writer, error) {
+		active, err := getBool(name, Default)
+		if err != nil {
+			return nil, err
+		}
+		if !active {
+			return nil, nil
+		}
+		result := []string{}
+		out[name] = &result
+		return stringWriter{&result}, nil
+	}
+
+	outputs := []struct {
+		name    string
+		Default bool
+		writer  *io.Writer
+	}{
+		{"combined", false, &opt.Combined},
+		{"missingOnSrc", true, &opt.MissingOnSrc},
+		{"missingOnDst", true, &opt.MissingOnDst},
+		{"match", false, &opt.Match},
+		{"differ", true, &opt.Differ},
+		{"error", true, &opt.Error},
+	}
+	for _, output := range outputs {
+		*output.writer, err = getOutput(output.name, output.Default)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+	return out, opt, nil
+}
+
+func rcCheckResult(out rc.Params, err error) rc.Params {
 	if err != nil {
 		out["status"] = err.Error()
 		out["success"] = false
@@ -861,7 +945,7 @@ func rcCheck(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		out["status"] = "OK"
 		out["success"] = true
 	}
-	return out, nil
+	return out
 }
 
 func init() {
