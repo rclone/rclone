@@ -236,8 +236,9 @@ type Fs struct {
 	canChunk           bool          // set if nextcloud and nextcloud_chunk_size is set
 	canRecalcHash      bool          // set if the server can recalculate checksums with PATCH (nextcloud)
 	authSingleflight   *singleflight.Group
-	digestChal         *digest.Challenge
-	digestAuthMu       sync.Mutex
+	digestAuthMu       sync.Mutex        // mutex to protect the digest fields below
+	digestChal         *digest.Challenge // challenge to sign requests with, nil if the server hasn't asked for digest
+	digestCount        int               // number of times digestChal has been used
 }
 
 // Object describes a webdav object
@@ -308,12 +309,21 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
+// setDigestChallenge stores the digest authentication challenge from a 401
+// response so that later requests can be signed with it.
+//
+// It returns true if the request which produced resp should be retried, now
+// that it can be signed.
 func (f *Fs) setDigestChallenge(resp *http.Response) bool {
 	chal, err := digest.FindChallenge(resp.Header)
 	if err != nil {
 		return false
 	}
-	fs.Debugf(f, "Server requires Digest authentication")
+	f.digestAuthMu.Lock()
+	defer f.digestAuthMu.Unlock()
+	if f.digestChal == nil {
+		fs.Debugf(f, "Server requires digest authentication")
+	}
 	f.digestChal = chal
 	return true
 }
@@ -343,13 +353,14 @@ type digestRoundTripper struct {
 
 // RoundTrip adds Digest authentication to the request.
 func (drt *digestRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	if drt.f.digestChal == nil {
+	chal, count := drt.f.takeDigestChallenge()
+	if chal == nil {
 		return drt.rt.RoundTrip(req)
 	}
-	cred, err := digest.Digest(drt.f.digestChal, digest.Options{
+	cred, err := digest.Digest(chal, digest.Options{
 		Method:   req.Method,
 		URI:      req.URL.RequestURI(),
-		Count:    1,
+		Count:    count,
 		Username: drt.f.opt.User,
 		Password: drt.f.opt.Pass,
 	})
@@ -358,6 +369,22 @@ func (drt *digestRoundTripper) RoundTrip(req *http.Request) (*http.Response, err
 	}
 	req.Header.Set("Authorization", cred.String())
 	return drt.rt.RoundTrip(req)
+}
+
+// takeDigestChallenge returns the challenge to sign a request with and the
+// nonce count to sign it with, or nil if the server hasn't asked for digest
+// authentication.
+//
+// Every call takes the next count, so no two requests are signed with the
+// same one.
+func (f *Fs) takeDigestChallenge() (*digest.Challenge, int) {
+	f.digestAuthMu.Lock()
+	defer f.digestAuthMu.Unlock()
+	if f.digestChal == nil {
+		return nil, 0
+	}
+	f.digestCount++
+	return f.digestChal, f.digestCount
 }
 
 // itemIsDir returns true if the item is a directory
