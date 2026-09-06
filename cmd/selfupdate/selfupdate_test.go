@@ -56,6 +56,12 @@ func TestInstallOnLinux(t *testing.T) {
 	testDir := t.TempDir()
 	path := filepath.Join(testDir, "rclone")
 
+	// Pin the running version so the checks below do not depend on
+	// whether this build happens to be the latest beta.
+	oldVersion := fs.Version
+	fs.Version = "v1.0.0"
+	t.Cleanup(func() { fs.Version = oldVersion })
+
 	regexVer := regexp.MustCompile(`v[0-9]\S+`)
 
 	betaVer, _, err := GetVersion(ctx, true, "")
@@ -71,7 +77,7 @@ func TestInstallOnLinux(t *testing.T) {
 		_ = os.Chmod(path, 0644)
 	}()
 	err = (InstallUpdate(ctx, &Options{Beta: true, Output: path}))
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Contains(t, err.Error(), "run self-update as root")
 
 	// Must keep non-standard permissions
