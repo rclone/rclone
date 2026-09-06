@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/Azure/go-ntlmssp"
+	"github.com/icholy/digest"
 	"golang.org/x/sync/singleflight"
 
 	"github.com/rclone/rclone/backend/webdav/api"
@@ -235,6 +236,8 @@ type Fs struct {
 	canChunk           bool          // set if nextcloud and nextcloud_chunk_size is set
 	canRecalcHash      bool          // set if the server can recalculate checksums with PATCH (nextcloud)
 	authSingleflight   *singleflight.Group
+	digestChal         *digest.Challenge
+	digestAuthMu       sync.Mutex
 }
 
 // Object describes a webdav object
@@ -299,7 +302,20 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 		}
 		return true, err
 	}
+	if resp != nil && resp.StatusCode == 401 && f.setDigestChallenge(resp) {
+		return true, err
+	}
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
+}
+
+func (f *Fs) setDigestChallenge(resp *http.Response) bool {
+	chal, err := digest.FindChallenge(resp.Header)
+	if err != nil {
+		return false
+	}
+	fs.Debugf(f, "Server requires Digest authentication")
+	f.digestChal = chal
+	return true
 }
 
 // safeRoundTripper is a wrapper for http.RoundTripper that serializes
@@ -316,6 +332,32 @@ func (srt *safeRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 	srt.fs.ntlmAuthMu.Lock()
 	defer srt.fs.ntlmAuthMu.Unlock()
 	return srt.rt.RoundTrip(req)
+}
+
+// digestRoundTripper is a wrapper for http.RoundTripper that adds Digest
+// authentication.
+type digestRoundTripper struct {
+	f  *Fs
+	rt http.RoundTripper
+}
+
+// RoundTrip adds Digest authentication to the request.
+func (drt *digestRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	if drt.f.digestChal == nil {
+		return drt.rt.RoundTrip(req)
+	}
+	cred, err := digest.Digest(drt.f.digestChal, digest.Options{
+		Method:   req.Method,
+		URI:      req.URL.RequestURI(),
+		Count:    1,
+		Username: drt.f.opt.User,
+		Password: drt.f.opt.Pass,
+	})
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", cred.String())
+	return drt.rt.RoundTrip(req)
 }
 
 // itemIsDir returns true if the item is a directory
@@ -514,6 +556,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		client.Transport = &safeRoundTripper{
 			fs: f,
 			rt: ntlmssp.Negotiator{RoundTripper: t},
+		}
+	} else if opt.User != "" || opt.Pass != "" {
+		client.Transport = &digestRoundTripper{
+			f:  f,
+			rt: client.Transport,
 		}
 	}
 	// Refuse redirects that downgrade HTTPS to plaintext HTTP.
