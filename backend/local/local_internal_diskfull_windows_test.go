@@ -35,3 +35,18 @@ func TestUpdateFatalIfNoSpaceWindows(t *testing.T) {
 		})
 	}
 }
+
+func TestOpenWriterAtFatalIfNoSpaceWindows(t *testing.T) {
+	for _, test := range []struct {
+		name     string
+		err      error
+		diskFull bool
+	}{
+		{"ERROR_DISK_FULL", windows.ERROR_DISK_FULL, true},
+		{"ERROR_HANDLE_DISK_FULL", windows.ERROR_HANDLE_DISK_FULL, true},
+		{"PathError", &os.PathError{Op: "write", Path: "test.txt", Err: windows.ERROR_DISK_FULL}, true},
+		{"ERROR_ACCESS_DENIED", windows.ERROR_ACCESS_DENIED, false},
+	} {
+		t.Run(test.name, func(t *testing.T) { testOpenWriterAtError(t, test.err, test.diskFull) })
+	}
+}

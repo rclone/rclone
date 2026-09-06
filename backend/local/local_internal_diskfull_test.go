@@ -60,7 +60,7 @@ func TestIsDiskFullError(t *testing.T) {
 // FatalIfNoSpace setting, returning the error from Update.
 func updateWithReader(t *testing.T, fatalIfNoSpace bool, readerErr error) error {
 	t.Helper()
-	r := fstest.NewRun(t)
+	r := fstest.NewRunIndividual(t)
 	f := r.Flocal.(*Fs)
 	f.opt.FatalIfNoSpace = fatalIfNoSpace
 
@@ -95,4 +95,88 @@ func TestUpdateFatalIfNoSpaceOnButNotDiskFull(t *testing.T) {
 	err := updateWithReader(t, true, errors.New("unrelated network error"))
 	require.Error(t, err)
 	assert.False(t, fserrors.IsFatalError(err), "non-disk-full errors must not be fatal regardless of option")
+}
+
+type diskFullWriterAtCloser struct {
+	writeErr error
+	closeErr error
+	n        int
+	data     []byte
+	offset   int64
+	closed   bool
+}
+
+func (w *diskFullWriterAtCloser) WriteAt(p []byte, off int64) (int, error) {
+	w.data = append([]byte(nil), p...)
+	w.offset = off
+	return w.n, w.writeErr
+}
+
+func (w *diskFullWriterAtCloser) Close() error {
+	w.closed = true
+	return w.closeErr
+}
+
+func testOpenWriterAtError(t *testing.T, injected error, diskFull bool) {
+	t.Helper()
+	for _, enabled := range []bool{false, true} {
+		t.Run(fmt.Sprintf("enabled=%v", enabled), func(t *testing.T) {
+			r := fstest.NewRunIndividual(t)
+			f := r.Flocal.(*Fs)
+			f.opt.FatalIfNoSpace = enabled
+			f.opt.NoPreAllocate = true
+			writer, err := f.OpenWriterAt(context.Background(), "test.txt", 0)
+			require.NoError(t, err)
+			wrapped, ok := writer.(*fatalIfNoSpaceWriterAt)
+			require.True(t, ok)
+			require.NoError(t, wrapped.WriterAtCloser.Close())
+			wantN := 2
+			if injected == nil {
+				wantN = 4
+			}
+			underlying := &diskFullWriterAtCloser{writeErr: injected, closeErr: injected, n: wantN}
+			wrapped.WriterAtCloser = underlying
+			n, err := writer.WriteAt([]byte("data"), 17)
+			assert.Equal(t, wantN, n)
+			assert.Equal(t, []byte("data"), underlying.data)
+			assert.Equal(t, int64(17), underlying.offset)
+			assert.ErrorIs(t, err, injected)
+			assert.Equal(t, enabled && diskFull, fserrors.IsFatalError(err))
+			err = writer.Close()
+			assert.True(t, underlying.closed)
+			assert.ErrorIs(t, err, injected)
+			assert.Equal(t, enabled && diskFull, fserrors.IsFatalError(err))
+		})
+	}
+}
+
+func TestOpenWriterAtFatalIfNoSpace(t *testing.T) {
+	for _, test := range []struct {
+		name     string
+		err      error
+		diskFull bool
+	}{
+		{"success", nil, false},
+		{"unrelated", syscall.EPERM, false},
+		{"ENOSPC", syscall.ENOSPC, true},
+		{"ErrDiskFull", file.ErrDiskFull, true},
+		{"wrapped", fmt.Errorf("write: %w", syscall.ENOSPC), true},
+	} {
+		t.Run(test.name, func(t *testing.T) { testOpenWriterAtError(t, test.err, test.diskFull) })
+	}
+}
+
+func TestOpenWriterAtSetupError(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		t.Run(fmt.Sprintf("enabled=%v", enabled), func(t *testing.T) {
+			r := fstest.NewRunIndividual(t)
+			f := r.Flocal.(*Fs)
+			f.opt.FatalIfNoSpace = enabled
+			require.NoError(t, os.WriteFile(filepath.Join(r.LocalName, "parent"), nil, 0600))
+			writer, err := f.OpenWriterAt(context.Background(), "parent/child", 0)
+			require.Error(t, err)
+			assert.Nil(t, writer)
+			assert.False(t, fserrors.IsFatalError(err))
+		})
+	}
 }
