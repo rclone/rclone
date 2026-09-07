@@ -524,9 +524,11 @@ server-side type or date-range filtering /media/search does -
 confirmed live, it always returns the entire trash regardless of
 these parameters - so this backend applies
 [--gopro-include-edits](#gopro-include-edits) and the ready-to-view
-check client-side instead, and a media/by-year, media/by-month or
-media/by-day listing still has to fetch the whole trash first before
-narrowing it down, however small the requested slice.
+check client-side instead, and fetches the whole trash to narrow down
+even a single media/by-year, media/by-month or media/by-day listing.
+That fetch is cached in memory for a few minutes, so only the first
+trashed listing in a given run pays for it - the rest, however many
+different by-year/by-month/by-day views they ask for, are free.
 
 This changes what every listing shows, not just one path - use an
 on-the-fly connection string (e.g. ":gopro,trashed_only=true:media/all")

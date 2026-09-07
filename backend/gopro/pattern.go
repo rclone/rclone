@@ -25,7 +25,7 @@ type lister interface {
 	listDir(ctx context.Context, prefix string, filter mediaFilter) (entries fs.DirEntries, err error)
 	listUploads(ctx context.Context, dir string) (entries fs.DirEntries, err error)
 	dirTime() time.Time
-	startYear() int
+	startYear(ctx context.Context) int
 }
 
 // dirPattern describes a single directory pattern
@@ -248,7 +248,7 @@ func (mf mediaFilter) capturedRange() (start, end time.Time, ok bool) {
 // Return the years from startYear to today
 func years(ctx context.Context, f lister, prefix string, match []string) (entries fs.DirEntries, err error) {
 	currentYear := f.dirTime().Year()
-	for year := f.startYear(); year <= currentYear; year++ {
+	for year := f.startYear(ctx); year <= currentYear; year++ {
 		entries = append(entries, fs.NewDir(prefix+fmt.Sprint(year), f.dirTime()))
 	}
 	return entries, nil

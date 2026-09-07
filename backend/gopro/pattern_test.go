@@ -37,8 +37,8 @@ func (f *testLister) listUploads(ctx context.Context, dir string) (entries fs.Di
 	return f.uploaded[dir], nil
 }
 
-func (f *testLister) dirTime() time.Time { return startTime }
-func (f *testLister) startYear() int     { return 2015 }
+func (f *testLister) dirTime() time.Time                { return startTime }
+func (f *testLister) startYear(ctx context.Context) int { return 2015 }
 
 // find returns the pattern matching re, failing the test if there isn't
 // exactly one

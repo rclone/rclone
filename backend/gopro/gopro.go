@@ -53,6 +53,20 @@ const (
 	// carries short-lived signed CDN URLs) is reused for.
 	dlCacheTTL = 4 * time.Minute
 
+	// mediaCacheTTL bounds how long a full library or trash listing, once
+	// fetched, is reused before being fetched again - see allMedia and
+	// allTrash. Long enough that one recursive listing (rclone ls/size, or
+	// a mount's initial scan), which visits every media/by-year,
+	// media/by-month and media/by-day directory in quick succession, pays
+	// for a single full fetch instead of one /media/search call per month
+	// and per day across every year - confirmed live, that multiplication
+	// is what made recursive listings slow before this cache existed.
+	// Short enough that a long-running process (a mount) doesn't serve
+	// stale data indefinitely; explicit invalidation after this backend's
+	// own uploads/moves/deletes/restores covers the common case of a
+	// listing right after a change made through this same process.
+	mediaCacheTTL = 5 * time.Minute
+
 	// deletePermanentDelay is how long deleteMedium waits between its
 	// plain delete and the finalising permanent=true one - see there.
 	// Empirically tuned, not a documented API contract: polling for a
@@ -346,9 +360,11 @@ server-side type or date-range filtering /media/search does -
 confirmed live, it always returns the entire trash regardless of
 these parameters - so this backend applies
 [--gopro-include-edits](#gopro-include-edits) and the ready-to-view
-check client-side instead, and a media/by-year, media/by-month or
-media/by-day listing still has to fetch the whole trash first before
-narrowing it down, however small the requested slice.
+check client-side instead, and fetches the whole trash to narrow down
+even a single media/by-year, media/by-month or media/by-day listing.
+That fetch is cached in memory for a few minutes, so only the first
+trashed listing in a given run pays for it - the rest, however many
+different by-year/by-month/by-day views they ask for, are free.
 
 This changes what every listing shows, not just one path - use an
 on-the-fly connection string (e.g. ":gopro,trashed_only=true:media/all")
@@ -508,6 +524,14 @@ type Fs struct {
 	dlCacheMu sync.Mutex
 	dlCache   map[string]*dlCacheEntry
 
+	mediaCacheMu sync.Mutex
+	mediaCache   []api.Medium // cached result of allMedia; nil means not (yet) cached
+	mediaCacheAt time.Time
+
+	trashCacheMu sync.Mutex
+	trashCache   []api.Medium // cached result of allTrash; nil means not (yet) cached
+	trashCacheAt time.Time
+
 	uploadedMu sync.Mutex
 	uploaded   dirtree.DirTree // record of items uploaded this run
 }
@@ -553,13 +577,27 @@ func (f *Fs) dirTime() time.Time {
 	return f.startTime
 }
 
-// startYear returns the year to start "by-year" style listings from.
+// startYear returns the year to start "by-year" style listings from - the
+// earliest captured_at year in the library (items are ordered by
+// captured_at ascending, so this is just the first cached item's year),
+// or the current year if the library can't be listed or is empty.
 //
-// GoPro Media Library has no library-wide creation date to anchor this on,
-// so use a fixed year rather than adding a config option for something that
-// only changes the size of a directory listing.
-func (f *Fs) startYear() int {
-	return 2010
+// This used to be a fixed 2010 - GoPro Media Library has no library-wide
+// creation date to anchor a real one on - but enumerating synthetic
+// by-month/by-day directories all the way back to a fixed, distant year
+// regardless of the account's actual content made a fully recursive
+// listing (rclone ls/size, or a mount's initial scan) walk thousands of
+// always-empty date directories: confirmed live, that's what made "ls" on
+// a two-thousand-item library still take minutes even after allMedia
+// started caching the underlying data. Deriving it from the library itself
+// costs nothing extra - allMedia is already cached by the time anything
+// calls this.
+func (f *Fs) startYear(ctx context.Context) int {
+	items, err := f.allMedia(ctx)
+	if err != nil || len(items) == 0 {
+		return f.dirTime().Year()
+	}
+	return items[0].CapturedAt.Year()
 }
 
 // retryErrorCodes is a slice of error codes that we will retry
@@ -806,6 +844,11 @@ func (f *Fs) getMedium(ctx context.Context, id string) (*api.Medium, error) {
 
 // updateMedium updates a medium's filename/content_title/captured_at via
 // PUT /media/{id} (204, no body) - only the fields set on upd are changed.
+//
+// A change here can move which by-year/by-month/by-day bucket the medium
+// falls into (captured_at) or how it's named (filename/content_title), so
+// this invalidates the cached library listing rather than leaving a
+// listing in the same process looking stale until mediaCacheTTL passes.
 func (f *Fs) updateMedium(ctx context.Context, id string, upd api.MediumUpdate) error {
 	opts := rest.Opts{
 		Method:     "PUT",
@@ -821,6 +864,7 @@ func (f *Fs) updateMedium(ctx context.Context, id string, upd api.MediumUpdate) 
 	if err != nil {
 		return fmt.Errorf("couldn't update medium %q: %w", id, err)
 	}
+	f.invalidateMediaCache()
 	return nil
 }
 
@@ -884,25 +928,57 @@ func isEditType(t string) bool {
 	return t == "MultiClipEdit" || t == "Edit"
 }
 
-// list pages through /media/search (or, with trashedOnly, GET
-// /media/deleted), calling fn for every included medium that matches
-// filter.
+// list calls fn for every included medium that matches filter, from the
+// cached full library or (with trashedOnly) full trash listing - see
+// allMedia and allTrash for where that actually comes from.
 //
-// "MultiClipEdit" and "Edit" media are excluded server-side via the type
-// parameter, unless --gopro-include-edits opts them back in (see
-// mediaTypes). A non-empty filter is also applied server-side via
-// captured_range, which cuts a by-day/by-month/by-year listing down from a
-// full-library scan to just the matching window; the filter is re-checked
-// client-side as well as a backstop in case the server-side bound is ever
-// inexact.
+// filter is applied by the caller (listDir has its own filter.matches
+// backstop), not here - this only chooses which cached slice to read, so
+// it no longer needs to know how to build a server-side date-range query.
 //
 // trashedOnly is a parameter rather than always reading
 // --gopro-trashed-only directly so that the "restore" backend command (see
 // commandHelp) can always list the trash regardless of that option -
 // listDir is the only other caller, and passes f.opt.TrashedOnly.
-func (f *Fs) list(ctx context.Context, filter mediaFilter, trashedOnly bool, fn func(item *api.Medium) error) (err error) {
+func (f *Fs) list(ctx context.Context, filter mediaFilter, trashedOnly bool, fn func(item *api.Medium) error) error {
+	var items []api.Medium
+	var err error
 	if trashedOnly {
-		return f.listTrash(ctx, fn)
+		items, err = f.allTrash(ctx)
+	} else {
+		items, err = f.allMedia(ctx)
+	}
+	if err != nil {
+		return err
+	}
+	for i := range items {
+		if err := fn(&items[i]); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// allMedia returns every included medium in the library (any type
+// --gopro-include-edits allows, ready, not an export composition),
+// fetching /media/search in full and caching the result for mediaCacheTTL.
+//
+// media/all, media/by-year, media/by-month and media/by-day used to each
+// query /media/search separately, narrowing the request with a
+// captured_range appropriate to what was asked for - efficient for any one
+// view in isolation, but a recursive listing (rclone ls/size, or a mount's
+// initial scan) visits every by-year/by-month/by-day directory in the
+// tree, which multiplied into one request per month and per day across
+// every year - confirmed live, this is what made recursive listings slow.
+// Fetching the whole library once and narrowing every view from that
+// (listDir's own filter.matches does the narrowing, same as it always
+// backstopped the server-side query) trades a heavier first fetch for
+// every other view in the same cache window being free.
+func (f *Fs) allMedia(ctx context.Context) (items []api.Medium, err error) {
+	f.mediaCacheMu.Lock()
+	defer f.mediaCacheMu.Unlock()
+	if f.mediaCache != nil && time.Since(f.mediaCacheAt) < mediaCacheTTL {
+		return f.mediaCache, nil
 	}
 	const perPage = 100
 	page := 1
@@ -922,14 +998,6 @@ func (f *Fs) list(ctx context.Context, filter mediaFilter, trashedOnly bool, fn 
 		// include them, so this backend does the same.
 		"xcomposition": {"export"},
 	}
-	if start, end, ok := filter.capturedRange(); ok {
-		rangeParam := start.Format(capturedRangeLayout) + "," + end.Format(capturedRangeLayout)
-		// The web app sends both of these set to the same value; replicate
-		// that rather than risk depending on an alias that isn't actually
-		// honoured on its own.
-		params.Set("range", rangeParam)
-		params.Set("captured_range", rangeParam)
-	}
 	for {
 		params.Set("page", strconv.Itoa(page))
 		opts := rest.Opts{
@@ -944,21 +1012,17 @@ func (f *Fs) list(ctx context.Context, filter mediaFilter, trashedOnly bool, fn 
 			return shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
-			return fmt.Errorf("couldn't list media: %w", err)
+			return nil, fmt.Errorf("couldn't list media: %w", err)
 		}
-		items := result.Embedded.Media
-		if len(items) > 0 && items[0].ID == lastID {
+		pageItems := result.Embedded.Media
+		if len(pageItems) > 0 && pageItems[0].ID == lastID {
 			// skip first if ID duplicated from last page
-			items = items[1:]
+			pageItems = pageItems[1:]
 		}
-		if len(items) > 0 {
-			lastID = items[len(items)-1].ID
+		if len(pageItems) > 0 {
+			lastID = pageItems[len(pageItems)-1].ID
 		}
-		for i := range items {
-			if err := fn(&items[i]); err != nil {
-				return err
-			}
-		}
+		items = append(items, pageItems...)
 		if totalPages == 0 {
 			totalPages = result.Pages.TotalPages
 		}
@@ -967,26 +1031,31 @@ func (f *Fs) list(ctx context.Context, filter mediaFilter, trashedOnly bool, fn 
 		}
 		page++
 	}
-	return nil
+	f.mediaCache = items
+	f.mediaCacheAt = time.Now()
+	return items, nil
 }
 
-// listTrash pages through GET /media/deleted, calling fn for every
-// included item - the trashed-listing counterpart of list's normal
-// /media/search path above, used when trashedOnly is set.
-//
-// Confirmed live: /media/deleted ignores every query parameter list's
-// /media/search path relies on to filter server-side (fields, type,
-// processing_states, xcomposition, range/captured_range) and always
-// returns the entire trash, so this replicates --gopro-include-edits and
-// the ready-to-view check client-side from the fields the response
-// already carries. There's no live-confirmed field to replicate the
-// "export" composition filter with here, so a trashed listing can include
-// export artifacts a normal one would hide. captured_range filtering has
-// no server-side equivalent at all, so listDir's own client-side
-// filter.matches backstop is doing all the narrowing for a by-year,
-// by-month or by-day listing - the whole trash is paged through
-// regardless of how narrow the requested slice is.
-func (f *Fs) listTrash(ctx context.Context, fn func(item *api.Medium) error) (err error) {
+// allTrash returns every included trashed medium, fetching GET
+// /media/deleted in full and caching the result for mediaCacheTTL - see
+// allMedia for why caching matters here at all, and doubly so for trash:
+// confirmed live, /media/deleted ignores every query parameter
+// /media/search honours for server-side filtering (fields, type,
+// processing_states, xcomposition, range/captured_range), so even a single
+// by-year/month/day view under --gopro-trashed-only always fetched the
+// *entire* trash on its own, with no way to ask the server to narrow it -
+// caching turns that into a single fetch shared by every view instead of
+// one per view. --gopro-include-edits and the ready-to-view check are
+// still applied here, client-side, from the fields the response already
+// carries; there's no live-confirmed field to also replicate the "export"
+// composition filter this way, so a trashed listing can include export
+// artifacts a normal one would hide.
+func (f *Fs) allTrash(ctx context.Context) (items []api.Medium, err error) {
+	f.trashCacheMu.Lock()
+	defer f.trashCacheMu.Unlock()
+	if f.trashCache != nil && time.Since(f.trashCacheAt) < mediaCacheTTL {
+		return f.trashCache, nil
+	}
 	const perPage = 100
 	page := 1
 	totalPages := 0
@@ -1006,19 +1075,17 @@ func (f *Fs) listTrash(ctx context.Context, fn func(item *api.Medium) error) (er
 			return shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
-			return fmt.Errorf("couldn't list trash: %w", err)
+			return nil, fmt.Errorf("couldn't list trash: %w", err)
 		}
 		for i := range result.DeletedMedia {
-			item := &result.DeletedMedia[i]
+			item := result.DeletedMedia[i]
 			if isEditType(item.Type) && !f.opt.IncludeEdits {
 				continue
 			}
 			if item.ReadyToView != "" && item.ReadyToView != "ready" {
 				continue
 			}
-			if err := fn(item); err != nil {
-				return err
-			}
+			items = append(items, item)
 		}
 		if totalPages == 0 {
 			totalPages = result.Pages.TotalPages
@@ -1028,7 +1095,29 @@ func (f *Fs) listTrash(ctx context.Context, fn func(item *api.Medium) error) (er
 		}
 		page++
 	}
-	return nil
+	f.trashCache = items
+	f.trashCacheAt = time.Now()
+	return items, nil
+}
+
+// invalidateMediaCache clears the cached full-library listing, so the next
+// call to allMedia fetches fresh data - call this after any operation that
+// changes what the library contains or how an item is bucketed by date
+// (upload, move/rename, delete, restore), so a listing right after such a
+// change in the same process doesn't serve a stale view for up to
+// mediaCacheTTL.
+func (f *Fs) invalidateMediaCache() {
+	f.mediaCacheMu.Lock()
+	f.mediaCache = nil
+	f.mediaCacheMu.Unlock()
+}
+
+// invalidateTrashCache is invalidateMediaCache's counterpart for allTrash -
+// see there.
+func (f *Fs) invalidateTrashCache() {
+	f.trashCacheMu.Lock()
+	f.trashCache = nil
+	f.trashCacheMu.Unlock()
 }
 
 // commandHelp documents this backend's "rclone backend" commands - see
@@ -1096,12 +1185,12 @@ func (f *Fs) restore(ctx context.Context, arg []string) (any, error) {
 		ids[i] = restoreArg(a)
 	}
 	if len(ids) == 0 {
-		err := f.listTrash(ctx, func(item *api.Medium) error {
-			ids = append(ids, item.ID)
-			return nil
-		})
+		items, err := f.allTrash(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("couldn't list trash: %w", err)
+		}
+		for i := range items {
+			ids = append(ids, items[i].ID)
 		}
 	}
 	if len(ids) == 0 {
@@ -1120,7 +1209,9 @@ func (f *Fs) restore(ctx context.Context, arg []string) (any, error) {
 // restoreMedia issues one POST /media/restore call to restore every given
 // id out of the trash - confirmed live, this takes effect immediately, no
 // delay needed (unlike deleteMedium's finalising step: restoring isn't
-// racing anything server-side the way permanently deleting is).
+// racing anything server-side the way permanently deleting is). Moves
+// every id from the trash cache to the library cache, so both are
+// invalidated rather than left stale for up to mediaCacheTTL.
 func (f *Fs) restoreMedia(ctx context.Context, ids []string) error {
 	opts := rest.Opts{
 		Method:     "POST",
@@ -1137,6 +1228,8 @@ func (f *Fs) restoreMedia(ctx context.Context, ids []string) error {
 	if err != nil {
 		return fmt.Errorf("couldn't restore media: %w", err)
 	}
+	f.invalidateMediaCache()
+	f.invalidateTrashCache()
 	return nil
 }
 
@@ -1911,6 +2004,12 @@ func (f *Fs) doDeleteMedium(ctx context.Context, id string, extra ...string) err
 		e := result.Embedded.Errors[0]
 		return fmt.Errorf("couldn't delete %q: %s", id, e.Description)
 	}
+	// Every delete either moves id from the library into the trash or
+	// removes it from the trash for good - invalidate both caches rather
+	// than work out which one actually changed, since this isn't a hot
+	// path where the extra fetch on the next listing matters.
+	f.invalidateMediaCache()
+	f.invalidateTrashCache()
 	return nil
 }
 
@@ -2254,6 +2353,7 @@ func (w *gpChunkWriter) Close(ctx context.Context) error {
 	w.f.uploadedMu.Lock()
 	w.f.uploaded.AddEntry(o)
 	w.f.uploadedMu.Unlock()
+	w.f.invalidateMediaCache()
 	return nil
 }
 
