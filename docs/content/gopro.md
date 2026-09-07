@@ -97,15 +97,6 @@ rclone copy remote:media/by-year/2026 /path/to/backup
 rclone mount remote:media/all /mnt/gopro
 ```
 
-### No paid subscription required
-
-This backend works against a free GoPro account with no active GoPro
-subscription and no storage entitlement of its own - checked against one
-directly: authentication, listing, downloading, uploading and deleting all
-worked identically to a paying account. The OAuth grant does come back with
-a narrower `scope` on such an account (missing `media_library_beta` among
-others), but nothing this backend calls appears to be gated behind it.
-
 ## Directory layout
 
 GoPro Media Library has no folders of its own - it's a flat, ID-keyed library.

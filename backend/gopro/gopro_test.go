@@ -2031,3 +2031,194 @@ func TestMoveSucceeds(t *testing.T) {
 		assert.Equal(t, fs.ErrorCantMove, err)
 	})
 }
+
+func TestShouldRetry(t *testing.T) {
+	t.Run("a cancelled context is never retried", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		retry, err := shouldRetry(ctx, nil, errors.New("boom"))
+		assert.False(t, retry)
+		assert.Error(t, err)
+	})
+
+	t.Run("a cancelled context supplies its own error when none was given", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		retry, err := shouldRetry(ctx, nil, nil)
+		assert.False(t, retry)
+		assert.ErrorIs(t, err, context.Canceled)
+	})
+
+	t.Run("a retryable HTTP status is retried", func(t *testing.T) {
+		resp := &http.Response{StatusCode: http.StatusServiceUnavailable}
+		retry, _ := shouldRetry(context.Background(), resp, errors.New("boom"))
+		assert.True(t, retry)
+	})
+
+	t.Run("a non-retryable status with a plain error is not retried", func(t *testing.T) {
+		resp := &http.Response{StatusCode: http.StatusNotFound}
+		retry, _ := shouldRetry(context.Background(), resp, errors.New("boom"))
+		assert.False(t, retry)
+	})
+
+	t.Run("no error at all is not retried", func(t *testing.T) {
+		retry, err := shouldRetry(context.Background(), &http.Response{StatusCode: http.StatusOK}, nil)
+		assert.False(t, retry)
+		assert.NoError(t, err)
+	})
+}
+
+func TestErrorHandler(t *testing.T) {
+	t.Run("a GoPro/OAuth-shaped JSON error body decodes into api.Error's fields", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: 400,
+			Body:       io.NopCloser(strings.NewReader(`{"error":"invalid_grant","error_description":"bad token"}`)),
+		}
+		err := errorHandler(resp)
+		apiErr, ok := err.(*api.Error)
+		require.True(t, ok)
+		assert.Equal(t, "invalid_grant", apiErr.ErrorCode)
+		assert.Equal(t, "bad token", apiErr.ErrorDescription)
+		assert.Equal(t, 400, apiErr.Status)
+	})
+
+	t.Run("a non-JSON body is preserved verbatim rather than dropped", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: 500,
+			Body:       io.NopCloser(strings.NewReader("internal server error")),
+		}
+		err := errorHandler(resp)
+		apiErr, ok := err.(*api.Error)
+		require.True(t, ok)
+		assert.Equal(t, "internal server error", apiErr.Body)
+		assert.Equal(t, 500, apiErr.Status)
+	})
+}
+
+func TestNewObjectWithInfoUsesProvidedInfoWithoutAnyNetworkCall(t *testing.T) {
+	// f has no srv: readMetaData's own network fallback would panic if this
+	// ever reached it, proving the provided info is what's actually used.
+	f := &Fs{}
+	size := int64(42)
+	item := &api.Medium{ID: "abc123", Filename: "x.mp4", FileSize: &size, ItemCount: 1, CapturedAt: startTime}
+	o, err := f.newObjectWithInfo(context.Background(), "media/all/x.mp4", item)
+	require.NoError(t, err)
+	gpObj, ok := o.(*Object)
+	require.True(t, ok)
+	assert.Equal(t, "abc123", gpObj.id)
+	assert.Equal(t, int64(42), gpObj.bytes)
+}
+
+func TestOpenChunkWriterPropagatesEachProtocolStepsFailure(t *testing.T) {
+	src := mockobject.New("upload/x.mp4").WithContent([]byte("hello"), mockobject.SeekModeRegular)
+
+	// A ServeMux request for a path with no registered handler gets Go's
+	// default 404, which isn't in retryErrorCodes - an instant, cheap way
+	// to simulate "this step's endpoint failed" without waiting through the
+	// pacer's retry backoff.
+	newFsWith := func(handlers map[string]http.HandlerFunc) (*Fs, *httptest.Server) {
+		mux := http.NewServeMux()
+		for pattern, h := range handlers {
+			mux.HandleFunc(pattern, h)
+		}
+		return newTestUploadFlowFs(mux)
+	}
+	idJSON := func(id string) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) { writeJSON(t, w, map[string]string{"id": id}) }
+	}
+
+	t.Run("createMedium failing stops immediately", func(t *testing.T) {
+		f, srv := newFsWith(nil)
+		defer srv.Close()
+		_, _, err := f.OpenChunkWriter(context.Background(), "upload/x.mp4", src)
+		assert.Error(t, err)
+	})
+
+	t.Run("createMedium returning an empty id is an error", func(t *testing.T) {
+		f, srv := newFsWith(map[string]http.HandlerFunc{"POST /media": idJSON("")})
+		defer srv.Close()
+		_, _, err := f.OpenChunkWriter(context.Background(), "upload/x.mp4", src)
+		assert.Error(t, err)
+	})
+
+	t.Run("createDerivative failing stops after createMedium succeeds", func(t *testing.T) {
+		f, srv := newFsWith(map[string]http.HandlerFunc{"POST /media": idJSON("med1")})
+		defer srv.Close()
+		_, _, err := f.OpenChunkWriter(context.Background(), "upload/x.mp4", src)
+		assert.Error(t, err)
+	})
+
+	t.Run("createUpload failing stops after the first two steps succeed", func(t *testing.T) {
+		f, srv := newFsWith(map[string]http.HandlerFunc{
+			"POST /media":       idJSON("med1"),
+			"POST /derivatives": idJSON("der1"),
+		})
+		defer srv.Close()
+		_, _, err := f.OpenChunkWriter(context.Background(), "upload/x.mp4", src)
+		assert.Error(t, err)
+	})
+
+	t.Run("getUploadParts failing stops after the first three steps succeed", func(t *testing.T) {
+		f, srv := newFsWith(map[string]http.HandlerFunc{
+			"POST /media":        idJSON("med1"),
+			"POST /derivatives":  idJSON("der1"),
+			"POST /user-uploads": idJSON("up1"),
+		})
+		defer srv.Close()
+		_, _, err := f.OpenChunkWriter(context.Background(), "upload/x.mp4", src)
+		assert.Error(t, err)
+	})
+
+	t.Run("getUploadParts returning no authorizations at all is an error", func(t *testing.T) {
+		f, srv := newFsWith(map[string]http.HandlerFunc{
+			"POST /media":            idJSON("med1"),
+			"POST /derivatives":      idJSON("der1"),
+			"POST /user-uploads":     idJSON("up1"),
+			"GET /user-uploads/der1": func(w http.ResponseWriter, r *http.Request) { writeJSON(t, w, api.UserUploadsResponse{}) },
+		})
+		defer srv.Close()
+		_, _, err := f.OpenChunkWriter(context.Background(), "upload/x.mp4", src)
+		assert.Error(t, err)
+	})
+}
+
+func TestCloseFinalizationFailurePreventsRegistration(t *testing.T) {
+	// Close's three finalising calls run in order; a failure at any of
+	// them must stop before the upload is registered under upload/, since
+	// it hasn't actually finished.
+	newFsWith := func(handlers map[string]http.HandlerFunc) (*Fs, *httptest.Server) {
+		mux := http.NewServeMux()
+		for pattern, h := range handlers {
+			mux.HandleFunc(pattern, h)
+		}
+		return newTestUploadFlowFs(mux)
+	}
+	noContent := func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusNoContent) }
+
+	t.Run("completeUpload failing stops immediately", func(t *testing.T) {
+		f, srv := newFsWith(nil)
+		defer srv.Close()
+		w := &gpChunkWriter{f: f, derivativeID: "der1", uploadID: "up1", mediumID: "med1", remote: "upload/x.mp4"}
+		assert.Error(t, w.Close(context.Background()))
+		entries, err := f.listUploads(context.Background(), "")
+		require.NoError(t, err)
+		assert.Empty(t, entries)
+	})
+
+	t.Run("markDerivativeAvailable failing stops after completeUpload succeeds", func(t *testing.T) {
+		f, srv := newFsWith(map[string]http.HandlerFunc{"PUT /user-uploads/der1": noContent})
+		defer srv.Close()
+		w := &gpChunkWriter{f: f, derivativeID: "der1", uploadID: "up1", mediumID: "med1", remote: "upload/x.mp4"}
+		assert.Error(t, w.Close(context.Background()))
+	})
+
+	t.Run("markMediumAvailable failing stops after the first two finalising calls succeed", func(t *testing.T) {
+		f, srv := newFsWith(map[string]http.HandlerFunc{
+			"PUT /user-uploads/der1": noContent,
+			"PUT /derivatives/der1":  noContent,
+		})
+		defer srv.Close()
+		w := &gpChunkWriter{f: f, derivativeID: "der1", uploadID: "up1", mediumID: "med1", remote: "upload/x.mp4"}
+		assert.Error(t, w.Close(context.Background()))
+	})
+}
