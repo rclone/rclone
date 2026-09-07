@@ -1,4 +1,5 @@
 // Package webdav provides an interface to the Webdav
+
 // object storage system.
 package webdav
 
@@ -316,9 +317,14 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 // that it can be signed.
 func (f *Fs) setDigestChallenge(resp *http.Response) bool {
 	chal, err := digest.FindChallenge(resp.Header)
-	if err != nil {
+	if err != nil || resp.Request == nil {
 		return false
 	}
+
+	if digest.IsDigest(resp.Request.Header.Get("Authorization")) && !chal.Stale {
+		return false
+	}
+
 	f.digestAuthMu.Lock()
 	defer f.digestAuthMu.Unlock()
 	if f.digestChal == nil {

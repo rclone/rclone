@@ -349,3 +349,65 @@ func TestDigestAuth(t *testing.T) {
 
 	assert.Equal(t, int32(reqCount+1), requests.Load())
 }
+
+func TestDigestAuthWrongPassword(t *testing.T) {
+	testDigestAuthUser := "user"
+	testDigestAuthPwd := "pwd"
+	testDigestAuthRealm := "test"
+
+	ctx := context.Background()
+
+	configfile.Install()
+
+	ts, requests := digestServer(t, t.TempDir(), testDigestAuthUser, testDigestAuthPwd, testDigestAuthRealm)
+	f, err := webdav.NewFs(ctx, remoteName, "", configmap.Simple{
+		"type": "webdav",
+		"url":  ts.URL,
+		"user": testDigestAuthUser,
+		"pass": obscure.MustObscure("wrong"),
+	})
+	require.NoError(t, err)
+
+	_, err = f.List(ctx, "")
+	require.Error(t, err)
+
+	assert.Equal(t, int32(2), requests.Load())
+}
+
+func TestDigestAuthStaleNonce(t *testing.T) {
+	ctx := context.Background()
+
+	var requests atomic.Int32
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authorisation := r.Header.Get("Authorization")
+		switch n := requests.Add(1); {
+		case n == 1:
+			assert.False(t, strings.HasPrefix(authorisation, "Digest "), "first request can't be signed yet")
+			w.Header().Set("WWW-Authenticate", `Digest realm="test", nonce="nonce-1", algorithm=MD5, qop="auth"`)
+			w.WriteHeader(http.StatusUnauthorized)
+		case n == 2:
+			assert.Contains(t, authorisation, `nonce="nonce-1"`)
+			w.Header().Set("WWW-Authenticate", `Digest realm="test", nonce="nonce-2", algorithm=MD5, qop="auth", stale=true`)
+			w.WriteHeader(http.StatusUnauthorized)
+		default:
+			assert.Contains(t, authorisation, `nonce="nonce-2"`, "the stale nonce should have been replaced")
+			_, err := fmt.Fprint(w, `<d:multistatus xmlns:d="DAV:"></d:multistatus>`) //
+			require.NoError(t, err)
+		}
+	}))
+	defer ts.Close()
+
+	configfile.Install()
+	f, err := webdav.NewFs(ctx, remoteName, "", configmap.Simple{
+		"type": "webdav",
+		"url":  ts.URL,
+		"user": "user",
+		"pass": obscure.MustObscure("pwd"),
+	})
+	require.NoError(t, err)
+
+	_, err = f.List(ctx, "")
+	require.NoError(t, err)
+
+	assert.Equal(t, int32(3), requests.Load())
+}
