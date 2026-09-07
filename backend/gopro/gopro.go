@@ -289,6 +289,65 @@ Turn this off if you only want camera-original recordings, or to skip
 what's often a redundant rendering of content the library already has
 natively.`,
 		}, {
+			Name:     "include_processing",
+			Advanced: true,
+			Default:  false,
+			Help: `Include media GoPro hasn't finished processing yet.
+
+Off by default: only media with ready_to_view "ready" is listed, since
+that's the only state GoPro's own API documents as done. Turning this
+on also includes "uploading", "registered", "transcoding" and
+"stabilizing" - every state on the way to "ready" - but not "failure"
+or "unknown", which aren't on the way to anything.
+
+Confirmed live: a medium already has its file_size (and, in that one
+confirmed case, its camera-original file) available while
+"transcoding", not just once "ready" - "ready" mainly means every
+extra rendition (proxies, thumbnails) GoPro generates is also done,
+not that the medium is otherwise unusable before then. That's not
+confirmed for every state this option adds, though - a medium with no
+usable file_size yet (still true for at least "uploading" and
+"registered", most of the time) is still skipped by the same check
+that already skips one with file_size null for any other reason, so
+turning this on surfaces whatever's actually downloadable while still
+processing, not a guarantee that every added state has something to
+show.`,
+		}, {
+			Name:     "include_failed",
+			Advanced: true,
+			Default:  false,
+			Help: `Include media stuck in a "failure" or "unknown" ready_to_view state.
+
+Off by default, and separate from --gopro-include-processing: unlike
+that option's states, these two aren't on the way to "ready" - they're
+what a medium ends up in instead, and there's no live-confirmed
+guarantee either one has a usable file_size or rendition to serve.
+Mainly useful to see that something is stuck at all (e.g. to remove
+it) rather than to actually read its content, which may well not be
+there.`,
+		}, {
+			Name:     "show_all",
+			Advanced: true,
+			Default:  false,
+			Help: `Bypass every type/composition/processing filter this backend applies.
+
+Off by default. With this on, /media/search and /media/deleted are
+listed exactly as returned, with none of --gopro-include-edits,
+--gopro-include-processing, --gopro-include-failed, or the
+unconditional exclusion of "export" composition media (internal
+rendered artifacts, not user content) applied - every one of those
+becomes irrelevant while this is on, active or not.
+
+This is a raw escape hatch, not a normal browsing mode: it can surface
+media types, compositions or processing states this backend has never
+been tested against, and nothing guarantees rclone can make sense of
+what comes back - at best a file with no usable size or rendition
+(already handled the same way an Edit's null file_size is elsewhere),
+at worst a confusing failure partway through a listing, download or
+sync. Turn this on to see something --gopro-include-processing and
+--gopro-include-failed still don't cover, not as a default way to
+browse the library.`,
+		}, {
 			Name:     "link_allow_download",
 			Advanced: true,
 			Default:  false,
@@ -487,6 +546,9 @@ type Options struct {
 	AccessToken       string               `config:"access_token"`
 	DownloadVariation string               `config:"download_variation"`
 	IncludeEdits      bool                 `config:"include_edits"`
+	IncludeProcessing bool                 `config:"include_processing"`
+	IncludeFailed     bool                 `config:"include_failed"`
+	ShowAll           bool                 `config:"show_all"`
 	LinkAllowDownload bool                 `config:"link_allow_download"`
 	LinkTitle         string               `config:"link_title"`
 	UseTrash          bool                 `config:"use_trash"`
@@ -940,6 +1002,39 @@ func isEditType(t string) bool {
 	return t == "MultiClipEdit" || t == "Edit"
 }
 
+// processingStates returns the processing_states filter for /media/search -
+// see --gopro-include-processing and --gopro-include-failed for what each
+// added state means and why they're grouped this way.
+func (f *Fs) processingStates() string {
+	states := []string{"ready"}
+	if f.opt.IncludeProcessing {
+		states = append(states, "uploading", "registered", "transcoding", "stabilizing")
+	}
+	if f.opt.IncludeFailed {
+		states = append(states, "failure", "unknown")
+	}
+	return strings.Join(states, ",")
+}
+
+// readyToViewAllowed reports whether state (a ready_to_view value) should
+// be included, applying the same rules processingStates asks /media/search
+// for server-side - allTrash needs this client-side instead, since
+// /media/deleted (confirmed live, see allTrash) ignores processing_states
+// entirely. An empty state (not every response includes the field) is
+// treated as "ready", matching how this backend has always read it.
+func (f *Fs) readyToViewAllowed(state string) bool {
+	switch state {
+	case "", "ready":
+		return true
+	case "uploading", "registered", "transcoding", "stabilizing":
+		return f.opt.IncludeProcessing
+	case "failure", "unknown":
+		return f.opt.IncludeFailed
+	default:
+		return false
+	}
+}
+
 // list calls fn for every included medium that matches filter, from the
 // cached full library or (with trashedOnly) full trash listing - see
 // allMedia and allTrash for where that actually comes from.
@@ -997,18 +1092,21 @@ func (f *Fs) allMedia(ctx context.Context) (items []api.Medium, err error) {
 	totalPages := 0
 	lastID := ""
 	params := url.Values{
-		"fields":            {mediaFields},
-		"type":              {f.mediaTypes()},
-		"processing_states": {"ready"},
-		"order_by":          {"captured_at"},
-		"per_page":          {strconv.Itoa(perPage)},
+		"fields":   {mediaFields},
+		"order_by": {"captured_at"},
+		"per_page": {strconv.Itoa(perPage)},
+	}
+	if !f.opt.ShowAll {
+		params.Set("type", f.mediaTypes())
+		params.Set("processing_states", f.processingStates())
 		// "export" composition media are internal artifacts (confirmed
 		// live: created via POST /media/{id}/export, e.g. a rendition
 		// generated for a specific share/output format) rather than a
 		// user's own content - GoPro's own web app excludes them from
 		// every listing unconditionally, with no user-facing way to
-		// include them, so this backend does the same.
-		"xcomposition": {"export"},
+		// include them, so this backend does the same unless
+		// --gopro-show-all bypasses it.
+		params.Set("xcomposition", "export")
 	}
 	for {
 		params.Set("page", strconv.Itoa(page))
@@ -1057,11 +1155,14 @@ func (f *Fs) allMedia(ctx context.Context) (items []api.Medium, err error) {
 // by-year/month/day view under --gopro-trashed-only always fetched the
 // *entire* trash on its own, with no way to ask the server to narrow it -
 // caching turns that into a single fetch shared by every view instead of
-// one per view. --gopro-include-edits and the ready-to-view check are
-// still applied here, client-side, from the fields the response already
-// carries; there's no live-confirmed field to also replicate the "export"
-// composition filter this way, so a trashed listing can include export
-// artifacts a normal one would hide.
+// one per view. --gopro-include-edits, --gopro-include-processing and
+// --gopro-include-failed are all applied here client-side instead, from
+// the fields the response already carries, since there's nothing
+// server-side to ask for any of them either; --gopro-show-all skips all
+// three of those checks the same way it skips the equivalent server-side
+// ones in allMedia. There's no live-confirmed field to also replicate the
+// "export" composition filter this way even under show_all, so a trashed
+// listing can always include export artifacts a normal one would hide.
 func (f *Fs) allTrash(ctx context.Context) (items []api.Medium, err error) {
 	f.trashCacheMu.Lock()
 	defer f.trashCacheMu.Unlock()
@@ -1091,11 +1192,13 @@ func (f *Fs) allTrash(ctx context.Context) (items []api.Medium, err error) {
 		}
 		for i := range result.DeletedMedia {
 			item := result.DeletedMedia[i]
-			if isEditType(item.Type) && !f.opt.IncludeEdits {
-				continue
-			}
-			if item.ReadyToView != "" && item.ReadyToView != "ready" {
-				continue
+			if !f.opt.ShowAll {
+				if isEditType(item.Type) && !f.opt.IncludeEdits {
+					continue
+				}
+				if !f.readyToViewAllowed(item.ReadyToView) {
+					continue
+				}
 			}
 			items = append(items, item)
 		}
@@ -1316,12 +1419,13 @@ func (f *Fs) listDir(ctx context.Context, prefix string, filter mediaFilter) (en
 		if !filter.matches(item.CapturedAt) {
 			return nil
 		}
-		if item.FileSize == nil && !isEditType(item.Type) {
+		if item.FileSize == nil && !isEditType(item.Type) && !f.opt.ShowAll {
 			// A ready medium can still have a null file_size beyond the
 			// MultiClipEdit/Edit types, which always have one (handled
 			// below via the same unknown-size path as a multi-item
 			// medium, not skipped) - skip it defensively rather than list
-			// an entry with no usable size or content.
+			// an entry with no usable size or content. --gopro-show-all
+			// lists it anyway, with the same unknown-size handling.
 			fs.Debugf(f, "Skipping %s: ready but file_size is null", item.ID)
 			return nil
 		}

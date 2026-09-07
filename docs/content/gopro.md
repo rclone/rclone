@@ -435,6 +435,83 @@ Properties:
 - Type:        bool
 - Default:     true
 
+#### --gopro-include-processing
+
+Include media GoPro hasn't finished processing yet.
+
+Off by default: only media with ready_to_view "ready" is listed, since
+that's the only state GoPro's own API documents as done. Turning this
+on also includes "uploading", "registered", "transcoding" and
+"stabilizing" - every state on the way to "ready" - but not "failure"
+or "unknown", which aren't on the way to anything.
+
+Confirmed live: a medium already has its file_size (and, in that one
+confirmed case, its camera-original file) available while
+"transcoding", not just once "ready" - "ready" mainly means every
+extra rendition (proxies, thumbnails) GoPro generates is also done,
+not that the medium is otherwise unusable before then. That's not
+confirmed for every state this option adds, though - a medium with no
+usable file_size yet (still true for at least "uploading" and
+"registered", most of the time) is still skipped by the same check
+that already skips one with file_size null for any other reason, so
+turning this on surfaces whatever's actually downloadable while still
+processing, not a guarantee that every added state has something to
+show.
+
+Properties:
+
+- Config:      include_processing
+- Env Var:     RCLONE_GOPRO_INCLUDE_PROCESSING
+- Type:        bool
+- Default:     false
+
+#### --gopro-include-failed
+
+Include media stuck in a "failure" or "unknown" ready_to_view state.
+
+Off by default, and separate from --gopro-include-processing: unlike
+that option's states, these two aren't on the way to "ready" - they're
+what a medium ends up in instead, and there's no live-confirmed
+guarantee either one has a usable file_size or rendition to serve.
+Mainly useful to see that something is stuck at all (e.g. to remove
+it) rather than to actually read its content, which may well not be
+there.
+
+Properties:
+
+- Config:      include_failed
+- Env Var:     RCLONE_GOPRO_INCLUDE_FAILED
+- Type:        bool
+- Default:     false
+
+#### --gopro-show-all
+
+Bypass every type/composition/processing filter this backend applies.
+
+Off by default. With this on, /media/search and /media/deleted are
+listed exactly as returned, with none of --gopro-include-edits,
+--gopro-include-processing, --gopro-include-failed, or the
+unconditional exclusion of "export" composition media (internal
+rendered artifacts, not user content) applied - every one of those
+becomes irrelevant while this is on, active or not.
+
+This is a raw escape hatch, not a normal browsing mode: it can surface
+media types, compositions or processing states this backend has never
+been tested against, and nothing guarantees rclone can make sense of
+what comes back - at best a file with no usable size or rendition
+(already handled the same way an Edit's null file_size is elsewhere),
+at worst a confusing failure partway through a listing, download or
+sync. Turn this on to see something --gopro-include-processing and
+--gopro-include-failed still don't cover, not as a default way to
+browse the library.
+
+Properties:
+
+- Config:      show_all
+- Env Var:     RCLONE_GOPRO_SHOW_ALL
+- Type:        bool
+- Default:     false
+
 #### --gopro-link-allow-download
 
 Allow downloading the original file from a public share link.
