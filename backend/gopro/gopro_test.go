@@ -826,39 +826,6 @@ func TestProcessingStates(t *testing.T) {
 	})
 }
 
-func TestReadyToViewAllowed(t *testing.T) {
-	t.Run("ready and the empty state are always allowed", func(t *testing.T) {
-		f := &Fs{}
-		assert.True(t, f.readyToViewAllowed(""))
-		assert.True(t, f.readyToViewAllowed("ready"))
-	})
-
-	t.Run("pre-ready pipeline states need include_processing", func(t *testing.T) {
-		f := &Fs{}
-		for _, state := range []string{"uploading", "registered", "transcoding", "stabilizing"} {
-			assert.False(t, f.readyToViewAllowed(state), state)
-		}
-		f.opt.IncludeProcessing = true
-		for _, state := range []string{"uploading", "registered", "transcoding", "stabilizing"} {
-			assert.True(t, f.readyToViewAllowed(state), state)
-		}
-	})
-
-	t.Run("failure and unknown need include_failed", func(t *testing.T) {
-		f := &Fs{}
-		assert.False(t, f.readyToViewAllowed("failure"))
-		assert.False(t, f.readyToViewAllowed("unknown"))
-		f.opt.IncludeFailed = true
-		assert.True(t, f.readyToViewAllowed("failure"))
-		assert.True(t, f.readyToViewAllowed("unknown"))
-	})
-
-	t.Run("a state this backend has never seen is never allowed, even under the other flags", func(t *testing.T) {
-		f := &Fs{opt: Options{IncludeProcessing: true, IncludeFailed: true}}
-		assert.False(t, f.readyToViewAllowed("something-gopro-added-later"))
-	})
-}
-
 func TestInvalidateCaches(t *testing.T) {
 	f := &Fs{
 		mediaCache:   []api.Medium{{ID: "1"}},
@@ -987,46 +954,70 @@ func TestAllMediaCachesWithinTTLAndRefetchesAfter(t *testing.T) {
 	assert.Equal(t, 2, calls, "a call after the TTL has elapsed must refetch")
 }
 
-func TestAllTrashFiltersClientSide(t *testing.T) {
+func TestAllTrashAppliesNoFilteringAtAll(t *testing.T) {
+	// Trash always shows everything, matching GoPro's own "Recently
+	// Deleted" view - none of include_edits/include_processing/
+	// include_failed/show_all make any difference here, since there's
+	// nothing left to opt into.
 	items := []api.Medium{
 		{ID: "ready", Type: "Video", ReadyToView: "ready"},
 		{ID: "edit", Type: "Edit", ReadyToView: "ready"},
 		{ID: "processing", Type: "Video", ReadyToView: "transcoding"},
 		{ID: "failed", Type: "Video", ReadyToView: "failure"},
+		{ID: "unknown-state", Type: "Video", ReadyToView: "some-future-state"},
 	}
 	srv := httptest.NewServer(jsonHandler(t, "/media/deleted", func(r *http.Request) any {
 		return &api.DeletedMediaResponse{DeletedMedia: items, Pages: api.PageInfo{TotalPages: 1}}
 	}))
 	defer srv.Close()
 
-	t.Run("defaults keep only a plain ready, non-edit item", func(t *testing.T) {
-		f := newTestListFs(srv.URL)
-		got, err := f.allTrash(context.Background())
+	for _, tc := range []struct {
+		name string
+		opt  Options
+	}{
+		{"every option at its default", Options{}},
+		{"include_edits/include_processing/include_failed all on", Options{IncludeEdits: true, IncludeProcessing: true, IncludeFailed: true}},
+		{"show_all on", Options{ShowAll: true}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newTestListFs(srv.URL)
+			f.opt = tc.opt
+			got, err := f.allTrash(context.Background())
+			require.NoError(t, err)
+			var ids []string
+			for _, m := range got {
+				ids = append(ids, m.ID)
+			}
+			assert.ElementsMatch(t, []string{"ready", "edit", "processing", "failed", "unknown-state"}, ids)
+		})
+	}
+}
+
+func TestListDirShowsNullFileSizeTrashedItemsUnconditionally(t *testing.T) {
+	// A null file_size item is skipped in the active library by default,
+	// but never in a trashed listing - restoring or permanently deleting
+	// it doesn't need a usable size, so there's nothing to protect by
+	// hiding it, matching GoPro's own "Recently Deleted" view.
+	items := []api.Medium{
+		{ID: "1", Filename: "broken.mp4", ItemCount: 1, CapturedAt: fstest.Time("2024-01-01T00:00:00Z")},
+	}
+
+	t.Run("the active library still hides it by default", func(t *testing.T) {
+		f := newTestMediaFs(items)
+		entries, err := f.List(context.Background(), "media/all")
 		require.NoError(t, err)
-		require.Len(t, got, 1)
-		assert.Equal(t, "ready", got[0].ID)
+		assert.Empty(t, entries)
 	})
 
-	t.Run("include_edits, include_processing and include_failed each opt one category back in", func(t *testing.T) {
-		f := newTestListFs(srv.URL)
-		f.opt.IncludeEdits = true
-		f.opt.IncludeProcessing = true
-		f.opt.IncludeFailed = true
-		got, err := f.allTrash(context.Background())
+	t.Run("a trashed listing shows it unconditionally", func(t *testing.T) {
+		f := newTestMediaFs(nil)
+		f.opt.TrashedOnly = true
+		f.trashCache = items
+		f.trashCacheAt = time.Now()
+		entries, err := f.List(context.Background(), "media/all")
 		require.NoError(t, err)
-		var ids []string
-		for _, m := range got {
-			ids = append(ids, m.ID)
-		}
-		assert.ElementsMatch(t, []string{"ready", "edit", "processing", "failed"}, ids)
-	})
-
-	t.Run("show_all bypasses every client-side filter, since /media/deleted has no server-side ones", func(t *testing.T) {
-		f := newTestListFs(srv.URL)
-		f.opt.ShowAll = true
-		got, err := f.allTrash(context.Background())
-		require.NoError(t, err)
-		assert.Len(t, got, len(items))
+		require.Len(t, entries, 1)
+		assert.Equal(t, "media/all/broken {1}.mp4", entries[0].Remote())
 	})
 }
 

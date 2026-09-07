@@ -328,14 +328,19 @@ there.`,
 			Name:     "show_all",
 			Advanced: true,
 			Default:  false,
-			Help: `Bypass every type/composition/processing filter this backend applies.
+			Help: `Bypass every type/composition/processing filter this backend applies
+to the active library.
 
-Off by default. With this on, /media/search and /media/deleted are
-listed exactly as returned, with none of --gopro-include-edits,
+Off by default. With this on, /media/search is listed exactly as
+returned, with none of --gopro-include-edits,
 --gopro-include-processing, --gopro-include-failed, or the
 unconditional exclusion of "export" composition media (internal
 rendered artifacts, not user content) applied - every one of those
 becomes irrelevant while this is on, active or not.
+
+This only affects the active library - a trashed listing under
+[--gopro-trashed-only](#gopro-trashed-only) already shows everything
+unconditionally, with or without this set.
 
 This is a raw escape hatch, not a normal browsing mode: it can surface
 media types, compositions or processing states this backend has never
@@ -452,13 +457,22 @@ auto-purges it (confirmed live, roughly 60 days after deletion).
 GET /media/deleted (what this reads from) doesn't support the same
 server-side type or date-range filtering /media/search does -
 confirmed live, it always returns the entire trash regardless of
-these parameters - so this backend applies
-[--gopro-include-edits](#gopro-include-edits) and the ready-to-view
-check client-side instead, and fetches the whole trash to narrow down
-even a single media/by-year, media/by-month or media/by-day listing.
-That fetch is cached in memory for a few minutes, so only the first
-trashed listing in a given run pays for it - the rest, however many
-different by-year/by-month/by-day views they ask for, are free.
+these parameters - so this backend fetches the whole trash to narrow
+down even a single media/by-year, media/by-month or media/by-day
+listing. That fetch is cached in memory for a few minutes, so only the
+first trashed listing in a given run pays for it - the rest, however
+many different by-year/by-month/by-day views they ask for, are free.
+
+Every trashed item is shown, regardless of
+[--gopro-include-edits](#gopro-include-edits),
+[--gopro-include-processing](#gopro-include-processing),
+[--gopro-include-failed](#gopro-include-failed) or an unusable
+file_size - matching GoPro's own web/app "Recently Deleted" view, which
+applies none of its own library's filters either. The only things you
+can do with a trashed item are restore it or delete it for good, so
+there's no browsing-safety reason to hide any of it the way this
+backend hides an unfinished or unrecognised item from the active
+library by default.
 
 This changes what every listing shows, not just one path - use an
 on-the-fly connection string (e.g. ":gopro,trashed_only=true:media/all")
@@ -1086,25 +1100,6 @@ func (f *Fs) processingStates() string {
 	return strings.Join(states, ",")
 }
 
-// readyToViewAllowed reports whether state (a ready_to_view value) should
-// be included, applying the same rules processingStates asks /media/search
-// for server-side - allTrash needs this client-side instead, since
-// /media/deleted (confirmed live, see allTrash) ignores processing_states
-// entirely. An empty state (not every response includes the field) is
-// treated as "ready", matching how this backend has always read it.
-func (f *Fs) readyToViewAllowed(state string) bool {
-	switch state {
-	case "", "ready":
-		return true
-	case "uploading", "registered", "transcoding", "stabilizing":
-		return f.opt.IncludeProcessing
-	case "failure", "unknown":
-		return f.opt.IncludeFailed
-	default:
-		return false
-	}
-}
-
 // list calls fn for every included medium that matches filter, from the
 // cached full library or (with trashedOnly) full trash listing - see
 // allMedia and allTrash for where that actually comes from.
@@ -1216,23 +1211,24 @@ func (f *Fs) allMedia(ctx context.Context) (items []api.Medium, err error) {
 	return items, nil
 }
 
-// allTrash returns every included trashed medium, fetching GET
-// /media/deleted in full and caching the result for mediaCacheTTL - see
-// allMedia for why caching matters here at all, and doubly so for trash:
-// confirmed live, /media/deleted ignores every query parameter
-// /media/search honours for server-side filtering (fields, type,
-// processing_states, xcomposition, range/captured_range), so even a single
-// by-year/month/day view under --gopro-trashed-only always fetched the
-// *entire* trash on its own, with no way to ask the server to narrow it -
-// caching turns that into a single fetch shared by every view instead of
-// one per view. --gopro-include-edits, --gopro-include-processing and
-// --gopro-include-failed are all applied here client-side instead, from
-// the fields the response already carries, since there's nothing
-// server-side to ask for any of them either; --gopro-show-all skips all
-// three of those checks the same way it skips the equivalent server-side
-// ones in allMedia. There's no live-confirmed field to also replicate the
-// "export" composition filter this way even under show_all, so a trashed
-// listing can always include export artifacts a normal one would hide.
+// allTrash returns every trashed medium, fetching GET /media/deleted in
+// full and caching the result for mediaCacheTTL - see allMedia for why
+// caching matters here at all, and doubly so for trash: confirmed live,
+// /media/deleted ignores every query parameter /media/search honours for
+// server-side filtering (fields, type, processing_states, xcomposition,
+// range/captured_range), so even a single by-year/month/day view under
+// --gopro-trashed-only always fetched the *entire* trash on its own, with
+// no way to ask the server to narrow it - caching turns that into a single
+// fetch shared by every view instead of one per view.
+//
+// Unlike allMedia, nothing here is filtered by --gopro-include-edits,
+// --gopro-include-processing, --gopro-include-failed or --gopro-show-all -
+// every trashed item is always included, matching GoPro's own web/app
+// "Recently Deleted" view, which applies none of its own library's
+// filters either. The only things you can do with a trashed item are
+// restore it or delete it for good, so there's no browsing-safety reason
+// to hide any of it the way an unfinished or unrecognised item is hidden
+// from the active library by default.
 func (f *Fs) allTrash(ctx context.Context) (items []api.Medium, err error) {
 	f.trashCacheMu.Lock()
 	defer f.trashCacheMu.Unlock()
@@ -1260,18 +1256,7 @@ func (f *Fs) allTrash(ctx context.Context) (items []api.Medium, err error) {
 		if err != nil {
 			return nil, fmt.Errorf("couldn't list trash: %w", err)
 		}
-		for i := range result.DeletedMedia {
-			item := result.DeletedMedia[i]
-			if !f.opt.ShowAll {
-				if isEditType(item.Type) && !f.opt.IncludeEdits {
-					continue
-				}
-				if !f.readyToViewAllowed(item.ReadyToView) {
-					continue
-				}
-			}
-			items = append(items, item)
-		}
+		items = append(items, result.DeletedMedia...)
 		if totalPages == 0 {
 			totalPages = result.Pages.TotalPages
 		}
@@ -1327,7 +1312,15 @@ from "rclone lsf":
     rclone backend restore gopro: 6a99f18a239bf36f4c2377cf "photo {6a99f18a239bf36f4c2377cf}.jpg"
 
 Nothing is restored if --dry-run is set; the command logs what would be
-restored instead.`,
+restored instead.
+
+GoPro's API accepts the request (202 Accepted) before actually
+restoring anything - confirmed live, this backend's own cache is
+updated straight away, but GoPro's side can lag behind that, and for a
+handful of media that had sat in trash across several sessions it
+never completed at all even minutes later and after being retried,
+with no error to explain why. Re-check with --gopro-trashed-only if a
+restored item doesn't show up in the active library right away.`,
 }}
 
 // Command the backend to run a named command
@@ -1392,11 +1385,14 @@ func (f *Fs) restore(ctx context.Context, arg []string) (any, error) {
 }
 
 // restoreMedia issues one POST /media/restore call to restore every given
-// id out of the trash - confirmed live, this takes effect immediately, no
-// delay needed (unlike deleteMedium's finalising step: restoring isn't
-// racing anything server-side the way permanently deleting is). Moves
-// every id from the trash cache to the library cache, so both are
-// invalidated rather than left stale for up to mediaCacheTTL.
+// id out of the trash. This returns 202 Accepted, not 200/204 - confirmed
+// live, restoration is asynchronous server-side, and for at least some
+// items (repeatedly reproduced live: a handful of media that had sat in
+// trash across several sessions) it never completed at all even minutes
+// later and after being retried, with no error ever returned to explain
+// why. Invalidates both caches on the strength of the 202 alone, same as
+// any other mutation here, since there is nothing further this API gives
+// back to confirm completion with.
 func (f *Fs) restoreMedia(ctx context.Context, ids []string) error {
 	opts := rest.Opts{
 		Method:     "POST",
@@ -1489,13 +1485,18 @@ func (f *Fs) listDir(ctx context.Context, prefix string, filter mediaFilter) (en
 		if !filter.matches(item.CapturedAt) {
 			return nil
 		}
-		if item.FileSize == nil && !isEditType(item.Type) && !f.opt.ShowAll {
+		if item.FileSize == nil && !isEditType(item.Type) && !f.opt.ShowAll && !f.opt.TrashedOnly {
 			// A ready medium can still have a null file_size beyond the
 			// MultiClipEdit/Edit types, which always have one (handled
 			// below via the same unknown-size path as a multi-item
 			// medium, not skipped) - skip it defensively rather than list
-			// an entry with no usable size or content. --gopro-show-all
-			// lists it anyway, with the same unknown-size handling.
+			// an entry with no usable size or content in the active
+			// library. --gopro-show-all lists it anyway, with the same
+			// unknown-size handling - and so does a trashed listing
+			// unconditionally, matching GoPro's own "Recently Deleted"
+			// view: the only things you can do with a trashed item are
+			// restore or permanently delete it, neither of which needs a
+			// usable size, so there's nothing to protect by hiding it.
 			fs.Debugf(f, "Skipping %s: ready but file_size is null", item.ID)
 			return nil
 		}
