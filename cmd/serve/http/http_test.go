@@ -542,3 +542,20 @@ func TestRc(t *testing.T) {
 		"vfs_cache_mode": "off",
 	})
 }
+
+// TestNewServerError checks that a server initialisation failure is
+// returned as an error rather than panicking in the cleanup.
+func TestNewServerError(t *testing.T) {
+	ctx := context.Background()
+	f, err := fs.NewFs(ctx, "testdata/files")
+	require.NoError(t, err)
+
+	opts := Options{
+		HTTP: libhttp.DefaultCfg(),
+	}
+	opts.HTTP.ListenAddr = []string{"localhost:-1"}
+
+	s, err := newServer(ctx, f, &opts, &vfscommon.Opt, &proxy.Opt)
+	require.Error(t, err)
+	assert.Nil(t, s)
+}
