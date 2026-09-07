@@ -371,8 +371,10 @@ func (drt *digestRoundTripper) RoundTrip(req *http.Request) (*http.Response, err
 		Password: drt.f.opt.Pass,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to sign request with digest authentication: %w", err)
 	}
+	// RoundTrip must not modify the original Request
+	req = req.Clone(req.Context())
 	req.Header.Set("Authorization", cred.String())
 	return drt.rt.RoundTrip(req)
 }
