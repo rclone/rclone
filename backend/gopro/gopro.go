@@ -67,20 +67,6 @@ const (
 	// listing right after a change made through this same process.
 	mediaCacheTTL = 5 * time.Minute
 
-	// deletePermanentDelay is how long deleteMedium waits between its
-	// plain delete and the finalising permanent=true one - see there.
-	// Empirically tuned, not a documented API contract: polling for a
-	// clean "ready to finalise" signal was tried and abandoned - GET
-	// /media/{id} turning 404 (typically under 1s) isn't sufficient on
-	// its own (confirmed failing at that point at least once), and
-	// /media/deleted's own listing is too inconsistently slow to poll
-	// (over 15s once, yet finalising succeeded anyway despite that
-	// listing never having caught up) - so this is a fixed wait picked
-	// from repeated live testing (1s succeeded twice but also failed
-	// once at that same interval in the polling test; 3s succeeded
-	// cleanly every time tried), not a guarantee.
-	deletePermanentDelay = 3 * time.Second
-
 	defaultUploadChunkSize   = fs.SizeSuffix(6 * 1024 * 1024) // matches the reference client
 	defaultUploadConcurrency = 4
 
@@ -95,6 +81,23 @@ const (
 	verifySizeAlways      = "always"
 	verifySizeOff         = "off"
 )
+
+// deletePermanentDelay is how long deleteMedium waits between its plain
+// delete and the finalising permanent=true one - see there. Empirically
+// tuned, not a documented API contract: polling for a clean "ready to
+// finalise" signal was tried and abandoned - GET /media/{id} turning 404
+// (typically under 1s) isn't sufficient on its own (confirmed failing at
+// that point at least once), and /media/deleted's own listing is too
+// inconsistently slow to poll (over 15s once, yet finalising succeeded
+// anyway despite that listing never having caught up) - so this is a fixed
+// wait picked from repeated live testing (1s succeeded twice but also
+// failed once at that same interval in the polling test; 3s succeeded
+// cleanly every time tried), not a guarantee.
+//
+// A var rather than a const so tests can shrink it instead of eating a
+// real multi-second sleep for every deleteMedium(permanent=true) case
+// exercised.
+var deletePermanentDelay = 3 * time.Second
 
 // checkUploadChunkSize checks that cs is a legal upload chunk size
 func checkUploadChunkSize(cs fs.SizeSuffix) error {
@@ -156,10 +159,6 @@ const (
 	// file_size and a file_extension that doesn't match what's actually
 	// downloaded (see setMetaData and selectRendition).
 	editTypes = "MultiClipEdit,Edit"
-
-	// capturedRangeLayout matches the millisecond-precision UTC timestamp
-	// format the web app sends for the captured_range/range parameters.
-	capturedRangeLayout = "2006-01-02T15:04:05.000Z"
 )
 
 // oauthConfig describes how to authenticate against GoPro Media Library.

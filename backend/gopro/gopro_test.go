@@ -10,19 +10,50 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/rclone/rclone/backend/gopro/api"
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/dirtree"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/fstest/mockobject"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// writeJSON writes v as the JSON body of a mocked API response, matching
+// what rest.Client.CallJSON expects to be able to decode.
+func writeJSON(t *testing.T, w http.ResponseWriter, v any) {
+	t.Helper()
+	w.Header().Set("Content-Type", "application/json")
+	require.NoError(t, json.NewEncoder(w).Encode(v))
+}
+
+// newTestAPIFs builds a minimal *Fs whose srv and unAuth clients talk to a
+// local httptest.Server, for unit-testing the single-HTTP-call API wrapper
+// methods (getMedium, updateMedium, getUserInfo, ...) without a live
+// account. Callers needing a specific f.opt or f.resourceOwnerID set them
+// on the returned *Fs before use.
+func newTestAPIFs(handler http.Handler) (*Fs, *httptest.Server) {
+	srv := httptest.NewServer(handler)
+	f := &Fs{
+		srv:      rest.NewClient(&http.Client{}).SetRoot(srv.URL),
+		unAuth:   rest.NewClient(&http.Client{}),
+		pacer:    fs.NewPacer(context.Background(), pacer.NewDefault(pacer.MinSleep(time.Millisecond), pacer.MaxSleep(5*time.Millisecond))),
+		dlCache:  map[string]*dlCacheEntry{},
+		uploaded: dirtree.New(),
+	}
+	f.srv.SetErrorHandler(errorHandler)
+	f.unAuth.SetErrorHandler(errorHandler)
+	return f, srv
+}
 
 const fileNameUpload = "rclone-test-image2.jpg"
 
@@ -103,6 +134,71 @@ func TestIntegration(t *testing.T) {
 		entries, err := f.List(ctx, "media/by-year")
 		require.NoError(t, err)
 		assert.NotEmpty(t, entries)
+	})
+
+	// remoteWithOptions builds a second Fs against the same account using
+	// rclone's connection-string syntax ("remote,opt=val:") to override one
+	// or more backend options without touching the configured remote -
+	// see the "Connection strings" section of docs/content/docs.md.
+	remoteWithOptions := func(t *testing.T, opts string) fs.Fs {
+		t.Helper()
+		base := (*fstest.RemoteName)[:len(*fstest.RemoteName)-1]
+		f2, err := fs.NewFs(ctx, base+","+opts+":")
+		require.NoError(t, err)
+		return f2
+	}
+
+	t.Run("ShowAllNeverListsFewerEntriesThanTheDefault", func(t *testing.T) {
+		// show_all bypasses every server- and client-side filter this
+		// backend otherwise applies, so it can only ever surface the same
+		// items or more, never fewer, regardless of the account's actual
+		// content.
+		def, err := f.List(ctx, "media/all")
+		require.NoError(t, err)
+		f2 := remoteWithOptions(t, "show_all=true")
+		all, err := f2.List(ctx, "media/all")
+		require.NoError(t, err)
+		assert.GreaterOrEqual(t, len(all), len(def))
+	})
+
+	t.Run("IncludeProcessingAndIncludeFailedNeverListFewerEntriesThanTheDefault", func(t *testing.T) {
+		def, err := f.List(ctx, "media/all")
+		require.NoError(t, err)
+
+		f2 := remoteWithOptions(t, "include_processing=true")
+		withProcessing, err := f2.List(ctx, "media/all")
+		require.NoError(t, err)
+		assert.GreaterOrEqual(t, len(withProcessing), len(def))
+
+		f3 := remoteWithOptions(t, "include_failed=true")
+		withFailed, err := f3.List(ctx, "media/all")
+		require.NoError(t, err)
+		assert.GreaterOrEqual(t, len(withFailed), len(def))
+	})
+
+	t.Run("ShowEmptyDirsNeverListsFewerYearsThanTheDefault", func(t *testing.T) {
+		def, err := f.List(ctx, "media/by-year")
+		require.NoError(t, err)
+		f2 := remoteWithOptions(t, "show_empty_dirs=true")
+		all, err := f2.List(ctx, "media/by-year")
+		require.NoError(t, err)
+		assert.GreaterOrEqual(t, len(all), len(def))
+	})
+
+	t.Run("StartYearWidensTheRangeWhenCombinedWithShowEmptyDirs", func(t *testing.T) {
+		f2 := remoteWithOptions(t, "start_year=2000,show_empty_dirs=true")
+		entries, err := f2.List(ctx, "media/by-year")
+		require.NoError(t, err)
+		var names []string
+		for _, e := range entries {
+			names = append(names, e.Remote())
+		}
+		assert.Contains(t, names, "media/by-year/2000")
+
+		// The empty year is still directly addressable even though it
+		// doesn't appear in a browsed listing under the default remote.
+		_, err = f.List(ctx, "media/by-day/2000/2000-01-01")
+		assert.NoError(t, err)
 	})
 
 	t.Run("BadDirectory", func(t *testing.T) {
@@ -1025,5 +1121,913 @@ func TestCapturedDates(t *testing.T) {
 		got, err := f.capturedDates(ctx)
 		require.NoError(t, err)
 		assert.Equal(t, []time.Time{trashTime}, got)
+	})
+}
+
+func TestFsAccessors(t *testing.T) {
+	features := &fs.Features{}
+	f := &Fs{name: "remote", root: "some/root", features: features}
+	assert.Equal(t, "remote", f.Name())
+	assert.Equal(t, "some/root", f.Root())
+	assert.Equal(t, `GoPro Media Library path "some/root"`, f.String())
+	assert.Equal(t, fs.ModTimeNotSupported, f.Precision())
+	assert.Equal(t, hash.Set(hash.None), f.Hashes())
+	assert.Same(t, features, f.Features())
+}
+
+func TestObjectAccessors(t *testing.T) {
+	f := &Fs{}
+	o := &Object{fs: f, remote: "media/all/x.mp4", id: "abc123", mimeType: "video/mp4"}
+	assert.Equal(t, f, o.Fs())
+	assert.Equal(t, "media/all/x.mp4", o.String())
+	assert.Equal(t, "media/all/x.mp4", o.Remote())
+	assert.True(t, o.Storable())
+	assert.Equal(t, "video/mp4", o.MimeType(context.Background()))
+	assert.Equal(t, "abc123", o.ID())
+
+	h, err := o.Hash(context.Background(), hash.MD5)
+	assert.Equal(t, "", h)
+	assert.Equal(t, hash.ErrUnsupported, err)
+
+	var nilObj *Object
+	assert.Equal(t, "<nil>", nilObj.String())
+}
+
+func TestMediumTypeForFilename(t *testing.T) {
+	for _, tc := range []struct{ name, want string }{
+		{"GOPR0001.JPG", "Photo"},
+		{"gopr0001.jpeg", "Photo"},
+		{"photo.GPR", "Photo"},
+		{"photo.dng", "Photo"},
+		{"photo.png", "Photo"},
+		{"photo.heic", "Photo"},
+		{"GX010001.MP4", "Video"},
+		{"noext", "Video"},
+	} {
+		assert.Equal(t, tc.want, mediumTypeForFilename(tc.name), tc.name)
+	}
+}
+
+func TestRestoreArg(t *testing.T) {
+	id := "68b22325df3cf752557ac6d7"
+	assert.Equal(t, id, restoreArg(id))
+	assert.Equal(t, id, restoreArg("GX010294 {"+id+"}.MP4"))
+	assert.Equal(t, id, restoreArg("trash/GX010294 {"+id+"}.MP4"))
+	assert.Equal(t, "not-an-id", restoreArg("not-an-id"))
+}
+
+// newTestUploadFs builds a minimal *Fs with a real, empty upload/ dirtree -
+// mirroring what NewFs seeds - for testing Mkdir/Rmdir/List over upload/
+// without a live account.
+func newTestUploadFs() *Fs {
+	f := &Fs{startTime: startTime, uploaded: dirtree.New()}
+	_, uploadRoot, _ := patterns.match(f.root, "upload", false)
+	f.uploaded[strings.Trim(uploadRoot, "/")] = nil
+	return f
+}
+
+func TestMkdirRmdirListUploads(t *testing.T) {
+	f := newTestUploadFs()
+	ctx := context.Background()
+
+	t.Run("the upload root lists empty from the start", func(t *testing.T) {
+		entries, err := f.List(ctx, "upload")
+		require.NoError(t, err)
+		assert.Empty(t, entries)
+	})
+
+	t.Run("Mkdir creates an upload subdirectory, visible in its parent's listing", func(t *testing.T) {
+		require.NoError(t, f.Mkdir(ctx, "upload/dir"))
+		entries, err := f.List(ctx, "upload")
+		require.NoError(t, err)
+		require.Len(t, entries, 1)
+		assert.Equal(t, "upload/dir", entries[0].Remote())
+	})
+
+	t.Run("Mkdir outside upload/ is refused - every other directory is synthetic", func(t *testing.T) {
+		assert.Equal(t, errCantMkdir, f.Mkdir(ctx, "media/all"))
+	})
+
+	t.Run("Rmdir removes an upload subdirectory again", func(t *testing.T) {
+		require.NoError(t, f.Rmdir(ctx, "upload/dir"))
+		entries, err := f.List(ctx, "upload")
+		require.NoError(t, err)
+		assert.Empty(t, entries)
+	})
+
+	t.Run("Rmdir outside upload/ is refused", func(t *testing.T) {
+		assert.Equal(t, errCantRmdir, f.Rmdir(ctx, "media/all"))
+	})
+
+	t.Run("listing an unknown directory is ErrorDirNotFound", func(t *testing.T) {
+		_, err := f.List(ctx, "not-a-real-directory")
+		assert.Equal(t, fs.ErrorDirNotFound, err)
+	})
+}
+
+// newTestMediaFs builds a minimal *Fs with items pre-seeded as the cached
+// full library, so List/listDir can be exercised without a live account -
+// f.srv is deliberately left nil, so a bug that fell through to the network
+// would panic rather than silently pass.
+func newTestMediaFs(items []api.Medium) *Fs {
+	return &Fs{
+		startTime:    startTime,
+		opt:          Options{AlwaysAddID: true},
+		uploaded:     dirtree.New(),
+		mediaCache:   items,
+		mediaCacheAt: time.Now(),
+	}
+}
+
+func TestListDirAndListMediaAll(t *testing.T) {
+	size := int64(100)
+	items := []api.Medium{
+		{ID: "1", Filename: "GX010001.MP4", FileSize: &size, ItemCount: 1, CapturedAt: fstest.Time("2024-01-01T00:00:00Z")},
+		{ID: "2", Filename: "GX010001.MP4", FileSize: &size, ItemCount: 1, CapturedAt: fstest.Time("2024-01-02T00:00:00Z")}, // filename collision with id 1
+		{ID: "3", Filename: "GPAA0001.JPG", FileSize: &size, ItemCount: 3, CapturedAt: fstest.Time("2024-01-03T00:00:00Z")}, // burst - file_size is the total across all 3, still non-null
+		{ID: "4", Filename: "broken.mp4", ItemCount: 1, CapturedAt: fstest.Time("2024-01-04T00:00:00Z")},                    // ready but null file_size - skipped unless show_all
+	}
+
+	t.Run("defaults skip the null file_size item and suffix every entry with always_add_id", func(t *testing.T) {
+		f := newTestMediaFs(items)
+		entries, err := f.List(context.Background(), "media/all")
+		require.NoError(t, err)
+		var names []string
+		for _, e := range entries {
+			names = append(names, e.Remote())
+		}
+		assert.ElementsMatch(t, []string{
+			"media/all/GX010001 {1}.MP4",
+			"media/all/GX010001 {2}.MP4",
+			"media/all/GPAA0001-1 {3}.JPG",
+			"media/all/GPAA0001-2 {3}.JPG",
+			"media/all/GPAA0001-3 {3}.JPG",
+		}, names)
+	})
+
+	t.Run("show_all lists the null file_size item too", func(t *testing.T) {
+		f := newTestMediaFs(items)
+		f.opt.ShowAll = true
+		entries, err := f.List(context.Background(), "media/all")
+		require.NoError(t, err)
+		var names []string
+		for _, e := range entries {
+			names = append(names, e.Remote())
+		}
+		assert.Contains(t, names, "media/all/broken {4}.mp4")
+	})
+}
+
+func TestListDispatchesRootAndMedia(t *testing.T) {
+	f := newTestMediaFs(nil)
+	ctx := context.Background()
+
+	root, err := f.List(ctx, "")
+	require.NoError(t, err)
+	var rootNames []string
+	for _, e := range root {
+		rootNames = append(rootNames, e.Remote())
+	}
+	assert.ElementsMatch(t, []string{"media", "upload"}, rootNames)
+
+	media, err := f.List(ctx, "media")
+	require.NoError(t, err)
+	var mediaNames []string
+	for _, e := range media {
+		mediaNames = append(mediaNames, e.Remote())
+	}
+	assert.ElementsMatch(t, []string{"media/all", "media/by-year", "media/by-month", "media/by-day"}, mediaNames)
+
+	_, err = f.List(ctx, "not-a-real-directory")
+	assert.Equal(t, fs.ErrorDirNotFound, err)
+}
+
+func TestNewFsWithStaticAccessToken(t *testing.T) {
+	// A static access_token skips the OAuth machinery entirely, and root=""
+	// never triggers NewFs's own "is the root a file" probe - so this
+	// exercises NewFs's setup (upload/ root seeding, in particular) without
+	// any network access or live account.
+	// verify_size has no Go zero value default, so it must be supplied
+	// explicitly here - configmap.Simple bypasses the registered-option
+	// Default filling that a real config section gets in production.
+	m := configmap.Simple{"access_token": "test-token", "verify_size": verifySizeReprocessed}
+	fsIface, err := NewFs(context.Background(), "test", "", m)
+	require.NoError(t, err)
+	f, ok := fsIface.(*Fs)
+	require.True(t, ok)
+	assert.Equal(t, "test", f.Name())
+	assert.Equal(t, "", f.Root())
+
+	entries, err := f.List(context.Background(), "upload")
+	require.NoError(t, err, "the upload root must be seeded so listing it doesn't return ErrorDirNotFound before anything has ever been uploaded")
+	assert.Empty(t, entries)
+}
+
+func TestCurrentAccessToken(t *testing.T) {
+	f := &Fs{opt: Options{AccessToken: "static-token"}}
+	tok, err := f.currentAccessToken(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, "static-token", tok)
+}
+
+func TestGetResourceOwnerIDCacheHit(t *testing.T) {
+	// f.srv is left nil: a cache hit must never reach the network.
+	f := &Fs{resourceOwnerID: "cached-id"}
+	rid, err := f.getResourceOwnerID(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, "cached-id", rid)
+}
+
+func TestGetResourceOwnerIDFallsBackToUserInfo(t *testing.T) {
+	f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, "/media/user", r.URL.Path)
+		writeJSON(t, w, api.UserInfo{ID: "user-from-api"})
+	}))
+	defer srv.Close()
+
+	rid, err := f.getResourceOwnerID(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, "user-from-api", rid)
+	assert.Equal(t, "user-from-api", f.resourceOwnerID, "the result must be cached for next time")
+}
+
+func TestGetUserInfoAndAbout(t *testing.T) {
+	f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(t, w, api.UserInfo{
+			ID:                    "u1",
+			NonExemptStorageLimit: 1000,
+			TotalStorage:          1500,
+			NonExempt:             api.StorageBucket{TotalStorage: 400},
+		})
+	}))
+	defer srv.Close()
+
+	usage, err := f.About(context.Background())
+	require.NoError(t, err)
+	require.NotNil(t, usage.Used)
+	require.NotNil(t, usage.Total)
+	require.NotNil(t, usage.Free)
+	assert.Equal(t, int64(1500), *usage.Used)
+	assert.Equal(t, int64(1000), *usage.Total)
+	assert.Equal(t, int64(600), *usage.Free)
+}
+
+func TestAboutClampsNegativeFreeToZero(t *testing.T) {
+	f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(t, w, api.UserInfo{
+			NonExemptStorageLimit: 100,
+			NonExempt:             api.StorageBucket{TotalStorage: 500}, // over quota
+		})
+	}))
+	defer srv.Close()
+
+	usage, err := f.About(context.Background())
+	require.NoError(t, err)
+	require.NotNil(t, usage.Free)
+	assert.Equal(t, int64(0), *usage.Free)
+}
+
+func TestGetMedium(t *testing.T) {
+	f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "/media/abc123", r.URL.Path)
+		assert.Equal(t, mediaFields, r.URL.Query().Get("fields"))
+		writeJSON(t, w, api.Medium{ID: "abc123", Filename: "x.mp4"})
+	}))
+	defer srv.Close()
+
+	item, err := f.getMedium(context.Background(), "abc123")
+	require.NoError(t, err)
+	assert.Equal(t, "x.mp4", item.Filename)
+}
+
+func TestUpdateMediumInvalidatesMediaCache(t *testing.T) {
+	f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "PUT", r.Method)
+		assert.Equal(t, "/media/abc123", r.URL.Path)
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer srv.Close()
+	f.mediaCache = []api.Medium{{ID: "stale"}}
+	f.mediaCacheAt = time.Now()
+
+	name := "new-name"
+	err := f.updateMedium(context.Background(), "abc123", api.MediumUpdate{Filename: &name})
+	require.NoError(t, err)
+	assert.Nil(t, f.mediaCache, "a change to a medium must invalidate the cached listing")
+}
+
+func TestCreateCollectionAddToCollectionAndPublicLink(t *testing.T) {
+	var gotCreate api.CollectionCreate
+	var gotAdd api.CollectionMediaUpdate
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /collections", func(w http.ResponseWriter, r *http.Request) {
+		require.NoError(t, json.NewDecoder(r.Body).Decode(&gotCreate))
+		writeJSON(t, w, api.Collection{ID: "col1"})
+	})
+	mux.HandleFunc("PUT /collections/col1", func(w http.ResponseWriter, r *http.Request) {
+		require.NoError(t, json.NewDecoder(r.Body).Decode(&gotAdd))
+		w.WriteHeader(http.StatusNoContent)
+	})
+	f, srv := newTestAPIFs(mux)
+	defer srv.Close()
+
+	t.Run("createCollection and addToCollection send the right bodies", func(t *testing.T) {
+		id, err := f.createCollection(context.Background(), "my title", true)
+		require.NoError(t, err)
+		assert.Equal(t, "col1", id)
+		assert.Equal(t, "my title", gotCreate.Title)
+		assert.True(t, gotCreate.Cloneable)
+
+		require.NoError(t, f.addToCollection(context.Background(), "col1", "med1"))
+		assert.Equal(t, []string{"med1"}, gotAdd.MediaIDs)
+	})
+
+	t.Run("PublicLink orchestrates both calls and defaults the title to the file's own name", func(t *testing.T) {
+		size := int64(100)
+		f.mediaCache = []api.Medium{{ID: "med1", Filename: "clip.mp4", FileSize: &size, ItemCount: 1, CapturedAt: startTime}}
+		f.mediaCacheAt = time.Now()
+		link, err := f.PublicLink(context.Background(), "media/all/clip.mp4", fs.Duration(0), false)
+		require.NoError(t, err)
+		assert.Equal(t, "https://gopro.com/v/col1", link)
+		assert.Equal(t, "clip.mp4", gotCreate.Title)
+	})
+
+	t.Run("PublicLink prefers an explicit link_title over the file's own name", func(t *testing.T) {
+		f.opt.LinkTitle = "custom title"
+		_, err := f.PublicLink(context.Background(), "media/all/clip.mp4", fs.Duration(0), false)
+		require.NoError(t, err)
+		assert.Equal(t, "custom title", gotCreate.Title)
+	})
+}
+
+func TestGetDownloadCachesResult(t *testing.T) {
+	var calls int
+	f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		assert.Equal(t, "/media/abc123/download", r.URL.Path)
+		writeJSON(t, w, api.DownloadResponse{Filename: "x.mp4"})
+	}))
+	defer srv.Close()
+
+	dl, err := f.getDownload(context.Background(), "abc123")
+	require.NoError(t, err)
+	assert.Equal(t, "x.mp4", dl.Filename)
+
+	dl2, err := f.getDownload(context.Background(), "abc123")
+	require.NoError(t, err)
+	assert.Equal(t, "x.mp4", dl2.Filename)
+	assert.Equal(t, 1, calls, "a second call within the TTL must be served from cache")
+}
+
+func TestDoDeleteMediumInvalidatesCachesAndReportsAPIErrors(t *testing.T) {
+	t.Run("success invalidates both caches", func(t *testing.T) {
+		f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "DELETE", r.Method)
+			assert.Equal(t, "abc123", r.URL.Query().Get("ids"))
+			writeJSON(t, w, api.DeleteResponse{})
+		}))
+		defer srv.Close()
+		f.mediaCache = []api.Medium{{ID: "stale"}}
+		f.mediaCacheAt = time.Now()
+		f.trashCache = []api.Medium{{ID: "stale"}}
+		f.trashCacheAt = time.Now()
+
+		require.NoError(t, f.doDeleteMedium(context.Background(), "abc123"))
+		assert.Nil(t, f.mediaCache)
+		assert.Nil(t, f.trashCache)
+	})
+
+	t.Run("an error embedded in a 200 response is surfaced as a Go error", func(t *testing.T) {
+		f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			writeJSON(t, w, api.DeleteResponse{Embedded: struct {
+				Errors []api.APIError `json:"errors"`
+			}{Errors: []api.APIError{{Description: "not found or inaccessible"}}}})
+		}))
+		defer srv.Close()
+
+		err := f.doDeleteMedium(context.Background(), "abc123")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "not found or inaccessible")
+	})
+
+	t.Run("extra query parameters (e.g. permanent=true) are passed through", func(t *testing.T) {
+		var gotPermanent string
+		f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			gotPermanent = r.URL.Query().Get("permanent")
+			writeJSON(t, w, api.DeleteResponse{})
+		}))
+		defer srv.Close()
+
+		require.NoError(t, f.doDeleteMedium(context.Background(), "abc123", "permanent", "true"))
+		assert.Equal(t, "true", gotPermanent)
+	})
+}
+
+func TestDeleteMediumPermanent(t *testing.T) {
+	old := deletePermanentDelay
+	deletePermanentDelay = time.Millisecond
+	defer func() { deletePermanentDelay = old }()
+
+	var calls []string
+	f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls = append(calls, r.URL.Query().Get("permanent"))
+		writeJSON(t, w, api.DeleteResponse{})
+	}))
+	defer srv.Close()
+
+	require.NoError(t, f.deleteMedium(context.Background(), "abc123", true))
+	require.Len(t, calls, 2, "a permanent delete must issue a plain delete, then a second finalising one")
+	assert.Equal(t, "", calls[0])
+	assert.Equal(t, "true", calls[1])
+}
+
+func TestDeleteMediumPermanentRespectsContextCancellation(t *testing.T) {
+	old := deletePermanentDelay
+	deletePermanentDelay = time.Hour // long enough that only cancellation ends the wait
+	defer func() { deletePermanentDelay = old }()
+
+	f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(t, w, api.DeleteResponse{})
+	}))
+	defer srv.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		time.Sleep(10 * time.Millisecond)
+		cancel()
+	}()
+	err := f.deleteMedium(ctx, "abc123", true)
+	assert.ErrorIs(t, err, context.Canceled)
+}
+
+func TestRemoveDispatchesByTrashedOnly(t *testing.T) {
+	t.Run("trashed_only purges directly, skipping the plain-delete step", func(t *testing.T) {
+		var gotPermanent string
+		var calls int
+		f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			calls++
+			gotPermanent = r.URL.Query().Get("permanent")
+			writeJSON(t, w, api.DeleteResponse{})
+		}))
+		defer srv.Close()
+		f.opt.TrashedOnly = true
+
+		o := &Object{fs: f, id: "abc123"}
+		require.NoError(t, o.Remove(context.Background()))
+		assert.Equal(t, 1, calls, "trashed_only must issue exactly one DELETE, not the plain-then-permanent pair")
+		assert.Equal(t, "true", gotPermanent)
+	})
+
+	t.Run("a normal remove with use_trash goes through the plain delete only", func(t *testing.T) {
+		var calls int
+		f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			calls++
+			assert.Empty(t, r.URL.Query().Get("permanent"))
+			writeJSON(t, w, api.DeleteResponse{})
+		}))
+		defer srv.Close()
+		f.opt.UseTrash = true
+
+		o := &Object{fs: f, id: "abc123"}
+		require.NoError(t, o.Remove(context.Background()))
+		assert.Equal(t, 1, calls)
+	})
+}
+
+func TestRestoreCommand(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("explicit ids are restored and both caches invalidated", func(t *testing.T) {
+		var gotIDs []string
+		f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var body api.RestoreRequest
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&body))
+			gotIDs = body.IDs
+			w.WriteHeader(http.StatusNoContent)
+		}))
+		defer srv.Close()
+		f.mediaCache = []api.Medium{{ID: "stale"}}
+		f.mediaCacheAt = time.Now()
+		f.trashCache = []api.Medium{{ID: "stale"}}
+		f.trashCacheAt = time.Now()
+
+		id := "68b22325df3cf752557ac6d7"
+		result, err := f.Command(ctx, "restore", []string{"GX010294 {" + id + "}.MP4"}, nil)
+		require.NoError(t, err)
+		assert.Equal(t, &restoreResult{Restored: 1}, result)
+		assert.Equal(t, []string{id}, gotIDs)
+		assert.Nil(t, f.mediaCache)
+		assert.Nil(t, f.trashCache)
+	})
+
+	t.Run("no arguments restores everything currently in the trash", func(t *testing.T) {
+		var gotIDs []string
+		f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var body api.RestoreRequest
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&body))
+			gotIDs = body.IDs
+			w.WriteHeader(http.StatusNoContent)
+		}))
+		defer srv.Close()
+		f.trashCache = []api.Medium{{ID: "t1"}, {ID: "t2"}}
+		f.trashCacheAt = time.Now()
+
+		result, err := f.restore(ctx, nil)
+		require.NoError(t, err)
+		assert.Equal(t, &restoreResult{Restored: 2}, result)
+		assert.ElementsMatch(t, []string{"t1", "t2"}, gotIDs)
+	})
+
+	t.Run("an empty trash with no arguments is a no-op, not an error", func(t *testing.T) {
+		f := &Fs{trashCache: []api.Medium{}, trashCacheAt: time.Now()}
+		result, err := f.restore(ctx, nil)
+		require.NoError(t, err)
+		assert.Equal(t, &restoreResult{}, result)
+	})
+
+	t.Run("dry-run reports intent without calling restoreMedia", func(t *testing.T) {
+		var called bool
+		f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			called = true
+		}))
+		defer srv.Close()
+
+		dryCtx, ci := fs.AddConfig(ctx)
+		ci.DryRun = true
+		result, err := f.restore(dryCtx, []string{"abc123"})
+		require.NoError(t, err)
+		assert.Equal(t, &restoreResult{}, result)
+		assert.False(t, called, "dry-run must not issue the restore request")
+	})
+
+	t.Run("an unknown command name is rejected", func(t *testing.T) {
+		f := &Fs{}
+		_, err := f.Command(ctx, "not-a-real-command", nil, nil)
+		assert.Equal(t, fs.ErrorCommandNotFound, err)
+	})
+}
+
+// newTestUploadFlowFs builds an *Fs ready to drive a full OpenChunkWriter ->
+// WriteChunk -> Close upload against handler, with the access-token and
+// resource-owner-id fast paths pre-seeded so the test only has to implement
+// the actual upload protocol endpoints, not the auth ones.
+func newTestUploadFlowFs(handler http.Handler) (*Fs, *httptest.Server) {
+	f, srv := newTestAPIFs(handler)
+	f.opt.AccessToken = "test-token"
+	f.resourceOwnerID = "test-user"
+	return f, srv
+}
+
+func TestOpenChunkWriterWriteChunkCloseRegistersUpload(t *testing.T) {
+	content := []byte("hello chunked gopro upload")
+	var srv *httptest.Server
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /media", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(t, w, map[string]string{"id": "med1"})
+	})
+	mux.HandleFunc("POST /derivatives", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(t, w, map[string]string{"id": "der1"})
+	})
+	mux.HandleFunc("POST /user-uploads", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(t, w, map[string]string{"id": "up1"})
+	})
+	mux.HandleFunc("GET /user-uploads/der1", func(w http.ResponseWriter, r *http.Request) {
+		resp := api.UserUploadsResponse{}
+		resp.Embedded.Authorizations = []api.UploadAuthorization{{URL: srv.URL + "/chunk/1", Part: 1}}
+		writeJSON(t, w, resp)
+	})
+	var gotChunk []byte
+	mux.HandleFunc("PUT /chunk/1", func(w http.ResponseWriter, r *http.Request) {
+		var err error
+		gotChunk, err = io.ReadAll(r.Body)
+		require.NoError(t, err)
+		w.WriteHeader(http.StatusOK)
+	})
+	mux.HandleFunc("PUT /user-uploads/der1", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})
+	mux.HandleFunc("PUT /derivatives/der1", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})
+	mux.HandleFunc("PUT /media/med1", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})
+
+	f, srv := newTestUploadFlowFs(mux)
+	defer srv.Close()
+	f.mediaCache = []api.Medium{{ID: "stale"}}
+	f.mediaCacheAt = time.Now()
+
+	src := mockobject.New("upload/GX010001.MP4").WithContent(content, mockobject.SeekModeRegular)
+	ctx := context.Background()
+	info, writer, err := f.OpenChunkWriter(ctx, "upload/GX010001.MP4", src)
+	require.NoError(t, err)
+	assert.Equal(t, f.opt.UploadConcurrency, info.Concurrency)
+
+	n, err := writer.WriteChunk(ctx, 0, bytes.NewReader(content))
+	require.NoError(t, err)
+	assert.Equal(t, int64(len(content)), n)
+	assert.Equal(t, content, gotChunk)
+
+	require.NoError(t, writer.Close(ctx))
+	assert.Nil(t, f.mediaCache, "a completed upload must invalidate the cached library listing")
+
+	entries, err := f.List(ctx, "upload")
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
+	assert.Equal(t, "upload/GX010001.MP4", entries[0].Remote())
+	uploaded, ok := entries[0].(*Object)
+	require.True(t, ok)
+	assert.Equal(t, "med1", uploaded.id)
+	assert.Equal(t, int64(len(content)), uploaded.bytes)
+}
+
+func TestOpenChunkWriterRejectsUnknownSize(t *testing.T) {
+	f := &Fs{}
+	src := mockobject.New("upload/x.mp4").WithContent(nil, mockobject.SeekModeRegular)
+	src.SetUnknownSize(true)
+	_, _, err := f.OpenChunkWriter(context.Background(), "upload/x.mp4", src)
+	assert.Error(t, err)
+}
+
+func TestOpenChunkWriterRejectsNonUploadPaths(t *testing.T) {
+	f := &Fs{}
+	src := mockobject.New("media/all/x.mp4").WithContent([]byte("x"), mockobject.SeekModeRegular)
+	_, _, err := f.OpenChunkWriter(context.Background(), "media/all/x.mp4", src)
+	assert.Equal(t, errCantUpload, err)
+}
+
+func TestAbortDeletesTheMedium(t *testing.T) {
+	old := deletePermanentDelay
+	deletePermanentDelay = time.Millisecond
+	defer func() { deletePermanentDelay = old }()
+
+	var gotIDs []string
+	f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotIDs = append(gotIDs, r.URL.Query().Get("ids"))
+		writeJSON(t, w, api.DeleteResponse{})
+	}))
+	defer srv.Close()
+
+	w := &gpChunkWriter{f: f, mediumID: "med1"}
+	require.NoError(t, w.Abort(context.Background()))
+	assert.Equal(t, []string{"med1", "med1"}, gotIDs, "Abort always finalises permanently, regardless of --gopro-use-trash")
+}
+
+func TestSizeVerifiesAndCorrectsViaHead(t *testing.T) {
+	var srv *httptest.Server
+	var headCalls int
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /media/abc123/download", func(w http.ResponseWriter, r *http.Request) {
+		dl := makeDownloadResponse(nil, []testFile{{url: srv.URL + "/original.mp4", label: "source"}})
+		writeJSON(t, w, dl)
+	})
+	mux.HandleFunc("HEAD /original.mp4", func(w http.ResponseWriter, r *http.Request) {
+		headCalls++
+		w.Header().Set("Content-Length", "12345")
+		w.WriteHeader(http.StatusOK)
+	})
+	f, s := newTestAPIFs(mux)
+	srv = s
+	defer srv.Close()
+	f.opt.VerifySize = verifySizeAlways
+
+	o := &Object{fs: f, id: "abc123", bytes: 999, itemNumber: 1}
+	assert.Equal(t, int64(12345), o.Size())
+	assert.True(t, o.sizeChecked)
+	assert.Equal(t, 1, headCalls)
+
+	// A resolved size must be cached for this Object's lifetime - a second
+	// call must not re-issue the HEAD.
+	assert.Equal(t, int64(12345), o.Size())
+	assert.Equal(t, 1, headCalls)
+}
+
+func TestSizeVerifyOffNeverChecks(t *testing.T) {
+	// f.srv/unAuth are left nil: verify_size "off" must return without
+	// ever reaching the network, for a known size.
+	o := &Object{fs: &Fs{opt: Options{VerifySize: verifySizeOff}}, bytes: 999}
+	assert.Equal(t, int64(999), o.Size())
+}
+
+func TestOpenDownloadsContentAndFixesSize(t *testing.T) {
+	var srv *httptest.Server
+	want := []byte("the actual file contents")
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /media/abc123/download", func(w http.ResponseWriter, r *http.Request) {
+		dl := makeDownloadResponse(nil, []testFile{{url: srv.URL + "/original.mp4", label: "source"}})
+		writeJSON(t, w, dl)
+	})
+	mux.HandleFunc("GET /original.mp4", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Length", strconv.Itoa(len(want)))
+		_, err := w.Write(want)
+		require.NoError(t, err)
+	})
+	f, s := newTestAPIFs(mux)
+	srv = s
+	defer srv.Close()
+
+	o := &Object{fs: f, id: "abc123", itemNumber: 1, bytes: -1, modTime: startTime}
+	rc, err := o.Open(context.Background())
+	require.NoError(t, err)
+	got, err := io.ReadAll(rc)
+	require.NoError(t, err)
+	require.NoError(t, rc.Close())
+	assert.Equal(t, want, got)
+	assert.Equal(t, int64(len(want)), o.bytes, "Open must resolve an unknown size from the response it already has")
+	assert.True(t, o.sizeChecked)
+}
+
+func TestReadMetaDataAlreadyResolvedIsANoOp(t *testing.T) {
+	// f.fs is left nil: a resolved Object must return without touching it.
+	o := &Object{remote: "media/all/x.mp4", modTime: startTime}
+	require.NoError(t, o.readMetaData(context.Background()))
+}
+
+func TestReadMetaDataRejectsAnUnmatchedPath(t *testing.T) {
+	// patterns.match is always called with isFile=true here, which by
+	// construction only ever matches a file pattern (or nothing) - see
+	// dirPatterns.match - so "media/all" (a directory-only pattern) simply
+	// fails to match at all, the same as any other nonsense path.
+	o := &Object{fs: &Fs{}, remote: "media/all"}
+	err := o.readMetaData(context.Background())
+	assert.Equal(t, fs.ErrorObjectNotFound, err)
+}
+
+func TestReadMetaDataIDFastPath(t *testing.T) {
+	id := "68b22325df3cf752557ac6d7"
+
+	t.Run("a name that reconstructs exactly is trusted without listing", func(t *testing.T) {
+		f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/media/"+id, r.URL.Path)
+			writeJSON(t, w, api.Medium{ID: id, Filename: "GX010294.MP4", ItemCount: 1})
+		}))
+		defer srv.Close()
+		f.opt.AlwaysAddID = true
+
+		o := &Object{fs: f, remote: "media/all/GX010294 {" + id + "}.MP4"}
+		require.NoError(t, o.readMetaData(context.Background()))
+		assert.Equal(t, id, o.id)
+	})
+
+	t.Run("a mismatched reconstruction falls through to the listing lookup instead of trusting the id", func(t *testing.T) {
+		var getMediumCalls int
+		f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			getMediumCalls++
+			writeJSON(t, w, api.Medium{ID: id, Filename: "totally-different-name.mp4", ItemCount: 1})
+		}))
+		defer srv.Close()
+		f.opt.AlwaysAddID = true
+		f.mediaCache = []api.Medium{} // an empty, but cached (non-nil), library
+		f.mediaCacheAt = time.Now()
+
+		o := &Object{fs: f, remote: "media/all/some-renamed-file {" + id + "}.mp4"}
+		err := o.readMetaData(context.Background())
+		assert.Equal(t, fs.ErrorObjectNotFound, err, "a fabricated {id} suffix on an unrelated name must never resolve to that id's medium")
+		assert.Equal(t, 1, getMediumCalls)
+	})
+
+	t.Run("trashed_only always skips the fast path, since GET /media/{id} 404s for trashed items", func(t *testing.T) {
+		var getMediumCalls int
+		f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			getMediumCalls++
+		}))
+		defer srv.Close()
+		f.opt.AlwaysAddID = true
+		f.opt.TrashedOnly = true
+		f.trashCache = []api.Medium{}
+		f.trashCacheAt = time.Now()
+
+		o := &Object{fs: f, remote: "media/all/x {" + id + "}.mp4"}
+		err := o.readMetaData(context.Background())
+		assert.Equal(t, fs.ErrorObjectNotFound, err)
+		assert.Equal(t, 0, getMediumCalls)
+	})
+}
+
+func TestModTimeAndSetModTime(t *testing.T) {
+	t.Run("ModTime returns the already-resolved time without a network call", func(t *testing.T) {
+		o := &Object{fs: &Fs{}, remote: "media/all/x.mp4", modTime: startTime}
+		assert.True(t, startTime.Equal(o.ModTime(context.Background())))
+	})
+
+	t.Run("SetModTime updates captured_at and the Object's own cached modTime", func(t *testing.T) {
+		var gotUpdate api.MediumUpdate
+		f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&gotUpdate))
+			w.WriteHeader(http.StatusNoContent)
+		}))
+		defer srv.Close()
+
+		newTime := time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC)
+		o := &Object{fs: f, id: "abc123", modTime: startTime}
+		require.NoError(t, o.SetModTime(context.Background(), newTime))
+		assert.True(t, newTime.Equal(o.modTime))
+		require.NotNil(t, gotUpdate.CapturedAt)
+		assert.True(t, newTime.Equal(*gotUpdate.CapturedAt))
+	})
+}
+
+func TestPutAndUpdateDriveTheFullUploadProtocol(t *testing.T) {
+	content := []byte("put/update integration through the real multipart uploader")
+	var srv *httptest.Server
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /media", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(t, w, map[string]string{"id": "med1"})
+	})
+	mux.HandleFunc("POST /derivatives", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(t, w, map[string]string{"id": "der1"})
+	})
+	mux.HandleFunc("POST /user-uploads", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(t, w, map[string]string{"id": "up1"})
+	})
+	mux.HandleFunc("GET /user-uploads/der1", func(w http.ResponseWriter, r *http.Request) {
+		resp := api.UserUploadsResponse{}
+		resp.Embedded.Authorizations = []api.UploadAuthorization{{URL: srv.URL + "/chunk/1", Part: 1}}
+		writeJSON(t, w, resp)
+	})
+	mux.HandleFunc("PUT /chunk/1", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	mux.HandleFunc("PUT /user-uploads/der1", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})
+	mux.HandleFunc("PUT /derivatives/der1", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})
+	mux.HandleFunc("PUT /media/med1", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})
+
+	f, s := newTestUploadFlowFs(mux)
+	srv = s
+	defer srv.Close()
+
+	src := mockobject.New("upload/GX010001.MP4").WithContent(content, mockobject.SeekModeRegular)
+	dstObj, err := f.Put(context.Background(), bytes.NewReader(content), src)
+	require.NoError(t, err)
+	assert.Equal(t, "upload/GX010001.MP4", dstObj.Remote())
+
+	gpObj, ok := dstObj.(*Object)
+	require.True(t, ok)
+	assert.Equal(t, "med1", gpObj.id)
+	assert.Equal(t, int64(len(content)), gpObj.bytes)
+
+	entries, err := f.List(context.Background(), "upload")
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
+	assert.Equal(t, "upload/GX010001.MP4", entries[0].Remote())
+}
+
+func TestMoveSucceeds(t *testing.T) {
+	t.Run("a same-bucket rename only renames, captured_at untouched", func(t *testing.T) {
+		var gotUpdate api.MediumUpdate
+		f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/media/abc123", r.URL.Path)
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&gotUpdate))
+			w.WriteHeader(http.StatusNoContent)
+		}))
+		defer srv.Close()
+
+		modTime := time.Date(2025, 3, 14, 9, 30, 15, 0, time.UTC)
+		src := &Object{fs: f, id: "abc123", itemCount: 1, remote: "media/all/old.mp4", modTime: modTime}
+		dst, err := f.Move(context.Background(), src, "media/all/new.mp4")
+		require.NoError(t, err)
+		require.NotNil(t, gotUpdate.Filename)
+		assert.Equal(t, "new.mp4", *gotUpdate.Filename)
+		assert.Nil(t, gotUpdate.CapturedAt, "media/all implies no date change")
+
+		dstObj, ok := dst.(*Object)
+		require.True(t, ok)
+		assert.Equal(t, "media/all/new.mp4", dstObj.Remote())
+		assert.Equal(t, f, dstObj.Fs())
+		assert.True(t, modTime.Equal(dstObj.modTime))
+	})
+
+	t.Run("a move to a different by-day bucket also repins captured_at", func(t *testing.T) {
+		var gotUpdate api.MediumUpdate
+		f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&gotUpdate))
+			w.WriteHeader(http.StatusNoContent)
+		}))
+		defer srv.Close()
+
+		modTime := time.Date(2025, 3, 14, 9, 30, 15, 0, time.UTC)
+		src := &Object{fs: f, id: "abc123", itemCount: 1, remote: "media/by-day/2025/2025-03-14/old.mp4", modTime: modTime}
+		dst, err := f.Move(context.Background(), src, "media/by-day/2026/2026-07-04/new.mp4")
+		require.NoError(t, err)
+		require.NotNil(t, gotUpdate.CapturedAt)
+		assert.Equal(t, time.Date(2026, 7, 4, 9, 30, 15, 0, time.UTC), *gotUpdate.CapturedAt)
+
+		dstObj, ok := dst.(*Object)
+		require.True(t, ok)
+		assert.True(t, gotUpdate.CapturedAt.Equal(dstObj.modTime))
+	})
+
+	t.Run("a move into upload/ is refused - there's no medium to rename until an upload completes", func(t *testing.T) {
+		f := &Fs{}
+		src := &Object{fs: f, itemCount: 1, remote: "media/all/x.mp4"}
+		_, err := f.Move(context.Background(), src, "upload/x.mp4")
+		assert.Equal(t, fs.ErrorCantMove, err)
 	})
 }
