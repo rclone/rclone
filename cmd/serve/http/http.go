@@ -170,8 +170,8 @@ func (s *HTTP) auth(r *http.Request, user, pass string) (value any, err error) {
 	return VFS, err
 }
 
-func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Options, proxyOpt *proxy.Options) (s *HTTP, err error) {
-	s = &HTTP{
+func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Options, proxyOpt *proxy.Options) (_ *HTTP, err error) {
+	s := &HTTP{
 		f:        f,
 		ctx:      ctx,
 		opt:      *opt,
