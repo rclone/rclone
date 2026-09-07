@@ -348,6 +348,42 @@ sync. Turn this on to see something --gopro-include-processing and
 --gopro-include-failed still don't cover, not as a default way to
 browse the library.`,
 		}, {
+			Name:     "show_empty_dirs",
+			Advanced: true,
+			Default:  false,
+			Help: `Show every media/by-year, by-month and by-day directory, not just
+the ones with something in them.
+
+Off by default: media/by-year, media/by-month and media/by-day only
+list years/months/days with at least one included item captured in
+them - cheap to check now that the whole library is cached (see
+--gopro-start-year), and considerably less noisy than the fixed
+1-year-to-today range this backend used to always show regardless of
+content.
+
+Turn this on to get that full range back - mainly for scripts that
+rely on a specific by-day directory always being addressable to move
+or upload a file into it (setting its captured_at in the process, as
+this backend's Move already does) even before anything is captured on
+that day: with this off, a day with nothing in it doesn't appear in a
+listing, but a path under it is still a perfectly valid destination to
+move or upload to directly, exactly as before - this only changes what
+shows up when listing, not what's addressable.`,
+		}, {
+			Name:     "start_year",
+			Advanced: true,
+			Default:  0,
+			Help: `Year to start media/by-year, by-month and by-day listings from.
+
+0 (the default) auto-detects it from the library's own earliest
+captured_at year, refreshed whenever the cached listing is (see
+--gopro-show-empty-dirs's mention of caching) - which is also, on its
+own, almost exactly what --gopro-show-empty-dirs=false already narrows
+the range down to. Set this explicitly to widen the range on purpose
+regardless of content - together with --gopro-show-empty-dirs=true, to
+address a specific day before this account has anything in it at all,
+for example one before its own earliest media.`,
+		}, {
 			Name:     "link_allow_download",
 			Advanced: true,
 			Default:  false,
@@ -549,6 +585,8 @@ type Options struct {
 	IncludeProcessing bool                 `config:"include_processing"`
 	IncludeFailed     bool                 `config:"include_failed"`
 	ShowAll           bool                 `config:"show_all"`
+	ShowEmptyDirs     bool                 `config:"show_empty_dirs"`
+	StartYear         int                  `config:"start_year"`
 	LinkAllowDownload bool                 `config:"link_allow_download"`
 	LinkTitle         string               `config:"link_title"`
 	UseTrash          bool                 `config:"use_trash"`
@@ -639,9 +677,10 @@ func (f *Fs) dirTime() time.Time {
 	return f.startTime
 }
 
-// startYear returns the year to start "by-year" style listings from - the
-// earliest captured_at year in the library, or the current year if the
-// library can't be listed or is empty.
+// startYear returns the year to start "by-year" style listings from -
+// --gopro-start-year if set, otherwise the earliest captured_at year in
+// the library, or the current year if the library can't be listed or is
+// empty.
 //
 // This scans every cached item rather than trusting sort order: the
 // "order_by": {"captured_at"} param elsewhere in this file turns out to
@@ -661,6 +700,9 @@ func (f *Fs) dirTime() time.Time {
 // costs nothing extra - allMedia is already cached by the time anything
 // calls this.
 func (f *Fs) startYear(ctx context.Context) int {
+	if f.opt.StartYear != 0 {
+		return f.opt.StartYear
+	}
 	items, err := f.allMedia(ctx)
 	if err != nil || len(items) == 0 {
 		return f.dirTime().Year()
@@ -672,6 +714,35 @@ func (f *Fs) startYear(ctx context.Context) int {
 		}
 	}
 	return year
+}
+
+// showEmptyDirs reports --gopro-show-empty-dirs - see pattern.go's
+// years/months/days, the only callers.
+func (f *Fs) showEmptyDirs() bool {
+	return f.opt.ShowEmptyDirs
+}
+
+// capturedDates returns every included item's captured_at - the raw
+// material pattern.go's years/months/days filter down to decide which
+// by-year/by-month/by-day directories have anything in them. Reads from
+// the trash instead of the library under --gopro-trashed-only, matching
+// every other listing's own behaviour under that option.
+func (f *Fs) capturedDates(ctx context.Context) ([]time.Time, error) {
+	var items []api.Medium
+	var err error
+	if f.opt.TrashedOnly {
+		items, err = f.allTrash(ctx)
+	} else {
+		items, err = f.allMedia(ctx)
+	}
+	if err != nil {
+		return nil, err
+	}
+	dates := make([]time.Time, len(items))
+	for i := range items {
+		dates[i] = items[i].CapturedAt
+	}
+	return dates, nil
 }
 
 // retryErrorCodes is a slice of error codes that we will retry

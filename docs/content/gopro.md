@@ -512,6 +512,54 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --gopro-show-empty-dirs
+
+Show every media/by-year, by-month and by-day directory, not just
+the ones with something in them.
+
+Off by default: media/by-year, media/by-month and media/by-day only
+list years/months/days with at least one included item captured in
+them - cheap to check now that the whole library is cached (see
+--gopro-start-year), and considerably less noisy than the fixed
+1-year-to-today range this backend used to always show regardless of
+content.
+
+Turn this on to get that full range back - mainly for scripts that
+rely on a specific by-day directory always being addressable to move
+or upload a file into it (setting its captured_at in the process, as
+this backend's Move already does) even before anything is captured on
+that day: with this off, a day with nothing in it doesn't appear in a
+listing, but a path under it is still a perfectly valid destination to
+move or upload to directly, exactly as before - this only changes what
+shows up when listing, not what's addressable.
+
+Properties:
+
+- Config:      show_empty_dirs
+- Env Var:     RCLONE_GOPRO_SHOW_EMPTY_DIRS
+- Type:        bool
+- Default:     false
+
+#### --gopro-start-year
+
+Year to start media/by-year, by-month and by-day listings from.
+
+0 (the default) auto-detects it from the library's own earliest
+captured_at year, refreshed whenever the cached listing is (see
+--gopro-show-empty-dirs's mention of caching) - which is also, on its
+own, almost exactly what --gopro-show-empty-dirs=false already narrows
+the range down to. Set this explicitly to widen the range on purpose
+regardless of content - together with --gopro-show-empty-dirs=true, to
+address a specific day before this account has anything in it at all,
+for example one before its own earliest media.
+
+Properties:
+
+- Config:      start_year
+- Env Var:     RCLONE_GOPRO_START_YEAR
+- Type:        int
+- Default:     0
+
 #### --gopro-link-allow-download
 
 Allow downloading the original file from a public share link.

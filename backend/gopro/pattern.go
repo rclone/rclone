@@ -26,6 +26,8 @@ type lister interface {
 	listUploads(ctx context.Context, dir string) (entries fs.DirEntries, err error)
 	dirTime() time.Time
 	startYear(ctx context.Context) int
+	showEmptyDirs() bool
+	capturedDates(ctx context.Context) ([]time.Time, error)
 }
 
 // dirPattern describes a single directory pattern
@@ -245,25 +247,46 @@ func (mf mediaFilter) capturedRange() (start, end time.Time, ok bool) {
 	return start, end.Add(-time.Millisecond), true
 }
 
-// Return the years from startYear to today
+// Return the years from startYear to today - only the ones with at least
+// one item captured in them, unless --gopro-show-empty-dirs is set
 func years(ctx context.Context, f lister, prefix string, match []string) (entries fs.DirEntries, err error) {
 	currentYear := f.dirTime().Year()
-	for year := f.startYear(ctx); year <= currentYear; year++ {
+	startYear := f.startYear(ctx)
+	present, err := yearsPresent(ctx, f)
+	if err != nil {
+		return nil, err
+	}
+	for year := startYear; year <= currentYear; year++ {
+		if present != nil && !present[year] {
+			continue
+		}
 		entries = append(entries, fs.NewDir(prefix+fmt.Sprint(year), f.dirTime()))
 	}
 	return entries, nil
 }
 
-// Return the months in a given year
+// Return the months in a given year - only the ones with at least one item
+// captured in them, unless --gopro-show-empty-dirs is set
 func months(ctx context.Context, f lister, prefix string, match []string) (entries fs.DirEntries, err error) {
-	year := match[1]
+	year, err := strconv.Atoi(match[1])
+	if err != nil {
+		return nil, fmt.Errorf("bad year %q", match[1])
+	}
+	present, err := monthsPresent(ctx, f, year)
+	if err != nil {
+		return nil, err
+	}
 	for month := 1; month <= 12; month++ {
-		entries = append(entries, fs.NewDir(fmt.Sprintf("%s%s-%02d", prefix, year, month), f.dirTime()))
+		if present != nil && !present[month] {
+			continue
+		}
+		entries = append(entries, fs.NewDir(fmt.Sprintf("%s%s-%02d", prefix, match[1], month), f.dirTime()))
 	}
 	return entries, nil
 }
 
-// Return the days in a given year
+// Return the days in a given year - only the ones with at least one item
+// captured on them, unless --gopro-show-empty-dirs is set
 func days(ctx context.Context, f lister, prefix string, match []string) (entries fs.DirEntries, err error) {
 	year := match[1]
 	current, err := time.Parse("2006", year)
@@ -271,11 +294,74 @@ func days(ctx context.Context, f lister, prefix string, match []string) (entries
 		return nil, fmt.Errorf("bad year %q", match[1])
 	}
 	currentYear := current.Year()
+	present, err := daysPresent(ctx, f, currentYear)
+	if err != nil {
+		return nil, err
+	}
 	for current.Year() == currentYear {
-		entries = append(entries, fs.NewDir(prefix+current.Format("2006-01-02"), f.dirTime()))
+		if present == nil || present[current.YearDay()] {
+			entries = append(entries, fs.NewDir(prefix+current.Format("2006-01-02"), f.dirTime()))
+		}
 		current = current.AddDate(0, 0, 1)
 	}
 	return entries, nil
+}
+
+// yearsPresent returns the set of years with at least one captured item, or
+// nil if --gopro-show-empty-dirs is set (meaning "don't filter, show every
+// year in range regardless of content").
+func yearsPresent(ctx context.Context, f lister) (map[int]bool, error) {
+	if f.showEmptyDirs() {
+		return nil, nil
+	}
+	dates, err := f.capturedDates(ctx)
+	if err != nil {
+		return nil, err
+	}
+	present := map[int]bool{}
+	for _, d := range dates {
+		present[d.Year()] = true
+	}
+	return present, nil
+}
+
+// monthsPresent is yearsPresent's counterpart for the months (1-12) with at
+// least one item captured in them within year.
+func monthsPresent(ctx context.Context, f lister, year int) (map[int]bool, error) {
+	if f.showEmptyDirs() {
+		return nil, nil
+	}
+	dates, err := f.capturedDates(ctx)
+	if err != nil {
+		return nil, err
+	}
+	present := map[int]bool{}
+	for _, d := range dates {
+		if d.Year() == year {
+			present[int(d.Month())] = true
+		}
+	}
+	return present, nil
+}
+
+// daysPresent is yearsPresent's counterpart for the days of the year
+// (1-366, i.e. time.Time.YearDay) with at least one item captured on them
+// within year.
+func daysPresent(ctx context.Context, f lister, year int) (map[int]bool, error) {
+	if f.showEmptyDirs() {
+		return nil, nil
+	}
+	dates, err := f.capturedDates(ctx)
+	if err != nil {
+		return nil, err
+	}
+	present := map[int]bool{}
+	for _, d := range dates {
+		if d.Year() == year {
+			present[d.YearDay()] = true
+		}
+	}
+	return present, nil
 }
 
 // yearMonthDayFilter builds a mediaFilter from the year[/month[/day]]

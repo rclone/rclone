@@ -18,12 +18,14 @@ var startTime = fstest.Time("2019-06-24T15:53:05.999999999Z")
 
 // mock Fs for testing patterns
 type testLister struct {
-	names    []string
-	uploaded dirtree.DirTree
+	names     []string
+	uploaded  dirtree.DirTree
+	showEmpty bool        // defaults to true (see newTestLister) so existing tests see every year/month/day, not just ones with dates in them
+	dates     []time.Time // only consulted when showEmpty is false
 }
 
 func newTestLister() *testLister {
-	return &testLister{uploaded: dirtree.New()}
+	return &testLister{uploaded: dirtree.New(), showEmpty: true}
 }
 
 func (f *testLister) listDir(ctx context.Context, prefix string, filter mediaFilter) (entries fs.DirEntries, err error) {
@@ -39,6 +41,10 @@ func (f *testLister) listUploads(ctx context.Context, dir string) (entries fs.Di
 
 func (f *testLister) dirTime() time.Time                { return startTime }
 func (f *testLister) startYear(ctx context.Context) int { return 2015 }
+func (f *testLister) showEmptyDirs() bool               { return f.showEmpty }
+func (f *testLister) capturedDates(ctx context.Context) ([]time.Time, error) {
+	return f.dates, nil
+}
 
 // find returns the pattern matching re, failing the test if there isn't
 // exactly one
@@ -247,6 +253,40 @@ func TestPatternDays(t *testing.T) {
 	require.Len(t, entries, 365) // 2026 is not a leap year
 	assert.Equal(t, "2026-01-01", entries[0].Remote())
 	assert.Equal(t, "2026-12-31", entries[len(entries)-1].Remote())
+}
+
+func TestPatternYearsMonthsDaysHideEmpty(t *testing.T) {
+	f := newTestLister()
+	f.showEmpty = false
+	f.dates = []time.Time{
+		fstest.Time("2016-03-05T00:00:00Z"),
+		fstest.Time("2016-03-09T00:00:00Z"),
+		fstest.Time("2018-11-30T00:00:00Z"),
+	}
+
+	years, err := years(context.Background(), f, "", nil)
+	require.NoError(t, err)
+	var yearNames []string
+	for _, e := range years {
+		yearNames = append(yearNames, e.Remote())
+	}
+	assert.Equal(t, []string{"2016", "2018"}, yearNames)
+
+	months2016, err := months(context.Background(), f, "", []string{"", "2016"})
+	require.NoError(t, err)
+	var monthNames []string
+	for _, e := range months2016 {
+		monthNames = append(monthNames, e.Remote())
+	}
+	assert.Equal(t, []string{"2016-03"}, monthNames)
+
+	days2016, err := days(context.Background(), f, "", []string{"", "2016"})
+	require.NoError(t, err)
+	var dayNames []string
+	for _, e := range days2016 {
+		dayNames = append(dayNames, e.Remote())
+	}
+	assert.Equal(t, []string{"2016-03-05", "2016-03-09"}, dayNames)
 }
 
 func TestPatternYearMonthDayFilter(t *testing.T) {
