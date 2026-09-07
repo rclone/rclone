@@ -1795,9 +1795,13 @@ func (o *Object) fixSize(resp *http.Response) {
 	}
 }
 
-// Update the object with the contents of the io.Reader, modTime and size
+// Update the object with the contents of the io.Reader, modTime and size.
+// The new object may have been created if an error is returned.
 //
-// The new object may have been created if an error is returned
+// gpChunkWriter.Close already registers the upload under upload/ once it
+// finishes - see there - so there's nothing left to do here beyond setting
+// this Object's own fields for whoever called Put/Update to use right
+// away.
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	chunkWriter, err := multipart.UploadMultipart(ctx, src, in, multipart.UploadMultipartOptions{
 		Open:        o.fs,
@@ -1807,9 +1811,6 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 	o.setMetaData(chunkWriter.(*gpChunkWriter).medium, 1)
-	o.fs.uploadedMu.Lock()
-	o.fs.uploaded.AddEntry(o)
-	o.fs.uploadedMu.Unlock()
 	return nil
 }
 
@@ -2079,6 +2080,7 @@ func mediumTypeForFilename(name string) string {
 // than allocating its own - see "Managing memory" in CONTRIBUTING.md.
 type gpChunkWriter struct {
 	f            *Fs
+	remote       string
 	mediumID     string
 	derivativeID string
 	uploadID     string
@@ -2146,6 +2148,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	}
 	return info, &gpChunkWriter{
 		f:            f,
+		remote:       remote,
 		mediumID:     mediumID,
 		derivativeID: derivativeID,
 		uploadID:     uploadID,
@@ -2205,7 +2208,20 @@ func (w *gpChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 // it won't appear there until GoPro finishes processing it
 // (processing_states=ready is what this backend lists), so re-fetching
 // immediately would race the pipeline for no benefit. A synthetic Medium
-// is built instead.
+// is built instead and registered under upload/, the same way Object.Update
+// registers a normal (non-chunked-copy) upload.
+//
+// This registration has to happen here rather than in Update: rclone's own
+// multi-thread copy (used for any source at or above --multi-thread-cutoff,
+// confirmed live for a 1GiB+ upload) calls OpenChunkWriter and Close
+// directly and then calls NewObject to fetch the result, bypassing Update
+// entirely - confirmed live, this backend's own listing of upload/ (which
+// NewObject falls back to when there's no {id} suffix to resolve by) is
+// empty at that point without this, since nothing else has registered the
+// upload yet, and the whole copy fails with "object not found" even though
+// the upload itself fully succeeded. Registering here instead of (or as
+// well as) in Update means every path that produces a gpChunkWriter ends
+// up registered exactly once, regardless of which one rclone chooses.
 func (w *gpChunkWriter) Close(ctx context.Context) error {
 	if err := w.f.completeUpload(ctx, w.derivativeID, w.uploadID, w.size, w.chunkSize); err != nil {
 		return err
@@ -2226,6 +2242,11 @@ func (w *gpChunkWriter) Close(ctx context.Context) error {
 		CreatedAt:     now,
 		FileSize:      &w.size,
 	}
+	o := &Object{fs: w.f, remote: w.remote}
+	o.setMetaData(w.medium, 1)
+	w.f.uploadedMu.Lock()
+	w.f.uploaded.AddEntry(o)
+	w.f.uploadedMu.Unlock()
 	return nil
 }
 

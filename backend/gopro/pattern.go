@@ -59,7 +59,17 @@ var patterns = dirPatterns{
 	{
 		re: `^upload(?:/(.*))?$`,
 		toEntries: func(ctx context.Context, f lister, prefix string, match []string) (fs.DirEntries, error) {
-			return f.listUploads(ctx, match[0])
+			// prefix (trimmed, matching how Mkdir below builds the same
+			// key), not match[0]: f.uploaded keys its entries by their own
+			// (root-relative) Remote(), the same as everywhere else in
+			// this backend - match[0] is always the absolute matched text
+			// ("upload", "upload/foo", ...), which only equals the
+			// root-relative path when this Fs happens to be rooted at ""
+			// (true for every existing test, false for as ordinary an
+			// invocation as "rclone copy file remote:upload", which roots
+			// the Fs at "upload" itself) - confirmed live, using match[0]
+			// there makes every listUploads lookup miss silently.
+			return f.listUploads(ctx, strings.Trim(prefix, "/"))
 		},
 		canUpload: true,
 		canMkdir:  true,
