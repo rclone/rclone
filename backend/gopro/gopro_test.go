@@ -158,8 +158,9 @@ func TestIntegration(t *testing.T) {
 		})
 
 		t.Run("ObjectSetModTime", func(t *testing.T) {
-			err := dstObj.SetModTime(ctx, dstObj.ModTime(ctx))
-			assert.Equal(t, fs.ErrorCantSetModTime, err)
+			newTime := time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC)
+			require.NoError(t, dstObj.SetModTime(ctx, newTime))
+			assert.True(t, newTime.Equal(dstObj.ModTime(ctx)))
 		})
 
 		t.Run("ObjectStorable", func(t *testing.T) {
