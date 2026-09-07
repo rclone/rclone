@@ -578,9 +578,15 @@ func (f *Fs) dirTime() time.Time {
 }
 
 // startYear returns the year to start "by-year" style listings from - the
-// earliest captured_at year in the library (items are ordered by
-// captured_at ascending, so this is just the first cached item's year),
-// or the current year if the library can't be listed or is empty.
+// earliest captured_at year in the library, or the current year if the
+// library can't be listed or is empty.
+//
+// This scans every cached item rather than trusting sort order: the
+// "order_by": {"captured_at"} param elsewhere in this file turns out to
+// mean descending (newest first), not ascending - confirmed live, page 1
+// of a fresh search came back newest-first - so the true minimum isn't
+// reliably at either end of the slice without documented, guaranteed
+// ordering to rely on.
 //
 // This used to be a fixed 2010 - GoPro Media Library has no library-wide
 // creation date to anchor a real one on - but enumerating synthetic
@@ -597,7 +603,13 @@ func (f *Fs) startYear(ctx context.Context) int {
 	if err != nil || len(items) == 0 {
 		return f.dirTime().Year()
 	}
-	return items[0].CapturedAt.Year()
+	year := items[0].CapturedAt.Year()
+	for i := range items {
+		if y := items[i].CapturedAt.Year(); y < year {
+			year = y
+		}
+	}
+	return year
 }
 
 // retryErrorCodes is a slice of error codes that we will retry
