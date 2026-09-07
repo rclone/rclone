@@ -438,3 +438,17 @@ func TestMoveOverwriteFalseStillRejects(t *testing.T) {
 	assert.Equal(t, http.StatusPreconditionFailed, resp.StatusCode,
 		"MOVE with explicit Overwrite: F must still return 412 when destination exists")
 }
+
+// TestNewWebDAVError checks that a server initialisation failure is
+// returned as an error rather than panicking in the cleanup.
+func TestNewWebDAVError(t *testing.T) {
+	f, err := fs.NewFs(context.Background(), t.TempDir())
+	require.NoError(t, err)
+
+	opt := Opt
+	opt.HTTP.ListenAddr = []string{"localhost:-1"}
+
+	w, err := newWebDAV(context.Background(), f, &opt, &vfscommon.Opt, &proxy.Opt)
+	require.Error(t, err)
+	assert.Nil(t, w)
+}
