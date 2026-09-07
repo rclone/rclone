@@ -306,14 +306,14 @@ no single reliable "the" link to remove on request.
 By default, `rclone delete`/`rclone rmdir`/removing a file during
 `rclone sync` doesn't actually make GoPro forget about it - confirmed
 live, GoPro moves it to what its own web/app UI calls "Recently
-Deleted" instead. It's recoverable there for a time, and still counts
-against your storage quota, even though every listing and `NewObject`
-lookup this backend does already correctly treats it as gone. Set
-[`--gopro-use-trash=false`](#gopro-use-trash) to skip that and delete
-permanently instead - confirmed live, this still takes GoPro roughly a
-minute to actually process in the background, not instant, but it's
-gone for good once it does, unlike the indefinitely-recoverable
-default.
+Deleted" instead. It's recoverable there for up to 60 days, and still
+counts against your storage quota, even though every listing and
+`NewObject` lookup this backend does already correctly treats it as
+gone. Set [`--gopro-use-trash=false`](#gopro-use-trash) to skip that
+and delete permanently instead - confirmed live, this still takes
+GoPro roughly a minute to actually process in the background, not
+instant, but it's gone for good once it does, unlike the 60-day
+recoverable default.
 
 ## Uploading
 

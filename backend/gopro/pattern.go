@@ -200,9 +200,7 @@ func (ds dirPatterns) match(root string, itemPath string, isFile bool) (match []
 }
 
 // mediaFilter restricts a directory listing to media captured on a given
-// year, month and/or day. A zero field means "any". Applied server-side
-// via capturedRange(), with matches() as a client-side backstop in case
-// the server-side bound is ever inexact.
+// year, month and/or day. A zero field means "any" - see matches.
 type mediaFilter struct {
 	year, month, day int
 }
@@ -219,32 +217,6 @@ func (mf mediaFilter) matches(t time.Time) bool {
 		return false
 	}
 	return true
-}
-
-// capturedRange returns the inclusive UTC instant bounds of the filter, for
-// use as the API's captured_range parameter. ok is false for an empty
-// filter (nothing to bound).
-//
-// "day"/"month"/"year" here are UTC calendar dates, matching how captured_at
-// is interpreted elsewhere in this backend (matches, and the by-day/by-month
-// directory names themselves) - not the capturing camera's local time zone,
-// which /media/search doesn't expose a way to filter on anyway.
-func (mf mediaFilter) capturedRange() (start, end time.Time, ok bool) {
-	if mf.year == 0 {
-		return time.Time{}, time.Time{}, false
-	}
-	switch {
-	case mf.day != 0:
-		start = time.Date(mf.year, time.Month(mf.month), mf.day, 0, 0, 0, 0, time.UTC)
-		end = start.AddDate(0, 0, 1)
-	case mf.month != 0:
-		start = time.Date(mf.year, time.Month(mf.month), 1, 0, 0, 0, 0, time.UTC)
-		end = start.AddDate(0, 1, 0)
-	default:
-		start = time.Date(mf.year, 1, 1, 0, 0, 0, 0, time.UTC)
-		end = start.AddDate(1, 0, 0)
-	}
-	return start, end.Add(-time.Millisecond), true
 }
 
 // Return the years from startYear to today - only the ones with at least

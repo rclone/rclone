@@ -3,10 +3,13 @@ package gopro
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"strconv"
 	"testing"
 	"time"
 
@@ -702,5 +705,325 @@ func TestSelectRendition(t *testing.T) {
 		dl := makeDownloadResponse(nil, nil)
 		_, _, err := selectRendition(dl, "source", 1)
 		assert.Error(t, err)
+	})
+}
+
+func TestProcessingStates(t *testing.T) {
+	t.Run("defaults to ready only", func(t *testing.T) {
+		f := &Fs{}
+		assert.Equal(t, "ready", f.processingStates())
+	})
+
+	t.Run("include_processing adds every pre-ready pipeline state", func(t *testing.T) {
+		f := &Fs{opt: Options{IncludeProcessing: true}}
+		assert.Equal(t, "ready,uploading,registered,transcoding,stabilizing", f.processingStates())
+	})
+
+	t.Run("include_failed adds failure and unknown", func(t *testing.T) {
+		f := &Fs{opt: Options{IncludeFailed: true}}
+		assert.Equal(t, "ready,failure,unknown", f.processingStates())
+	})
+
+	t.Run("both options combine", func(t *testing.T) {
+		f := &Fs{opt: Options{IncludeProcessing: true, IncludeFailed: true}}
+		assert.Equal(t, "ready,uploading,registered,transcoding,stabilizing,failure,unknown", f.processingStates())
+	})
+}
+
+func TestReadyToViewAllowed(t *testing.T) {
+	t.Run("ready and the empty state are always allowed", func(t *testing.T) {
+		f := &Fs{}
+		assert.True(t, f.readyToViewAllowed(""))
+		assert.True(t, f.readyToViewAllowed("ready"))
+	})
+
+	t.Run("pre-ready pipeline states need include_processing", func(t *testing.T) {
+		f := &Fs{}
+		for _, state := range []string{"uploading", "registered", "transcoding", "stabilizing"} {
+			assert.False(t, f.readyToViewAllowed(state), state)
+		}
+		f.opt.IncludeProcessing = true
+		for _, state := range []string{"uploading", "registered", "transcoding", "stabilizing"} {
+			assert.True(t, f.readyToViewAllowed(state), state)
+		}
+	})
+
+	t.Run("failure and unknown need include_failed", func(t *testing.T) {
+		f := &Fs{}
+		assert.False(t, f.readyToViewAllowed("failure"))
+		assert.False(t, f.readyToViewAllowed("unknown"))
+		f.opt.IncludeFailed = true
+		assert.True(t, f.readyToViewAllowed("failure"))
+		assert.True(t, f.readyToViewAllowed("unknown"))
+	})
+
+	t.Run("a state this backend has never seen is never allowed, even under the other flags", func(t *testing.T) {
+		f := &Fs{opt: Options{IncludeProcessing: true, IncludeFailed: true}}
+		assert.False(t, f.readyToViewAllowed("something-gopro-added-later"))
+	})
+}
+
+func TestInvalidateCaches(t *testing.T) {
+	f := &Fs{
+		mediaCache:   []api.Medium{{ID: "1"}},
+		mediaCacheAt: time.Now(),
+		trashCache:   []api.Medium{{ID: "2"}},
+		trashCacheAt: time.Now(),
+	}
+
+	f.invalidateMediaCache()
+	assert.Nil(t, f.mediaCache)
+	assert.NotNil(t, f.trashCache, "invalidating the media cache must leave the trash cache alone")
+
+	f.invalidateTrashCache()
+	assert.Nil(t, f.trashCache)
+}
+
+func TestAllMediaCacheHit(t *testing.T) {
+	// f.srv is deliberately left nil: a cache hit must return without ever
+	// dereferencing it, so a nil-pointer panic here means the TTL check is
+	// broken, not that the assertion below failed.
+	want := []api.Medium{{ID: "cached"}}
+	f := &Fs{mediaCache: want, mediaCacheAt: time.Now()}
+	got, err := f.allMedia(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, want, got)
+}
+
+func TestAllTrashCacheHit(t *testing.T) {
+	want := []api.Medium{{ID: "cached"}}
+	f := &Fs{trashCache: want, trashCacheAt: time.Now()}
+	got, err := f.allTrash(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, want, got)
+}
+
+// newTestListFs builds a minimal *Fs whose srv talks to a local
+// httptest.Server, for testing allMedia/allTrash without a live account -
+// both only ever use f.srv, f.pacer and f.opt.
+func newTestListFs(baseURL string) *Fs {
+	f := &Fs{
+		srv:   rest.NewClient(&http.Client{}).SetRoot(baseURL),
+		pacer: fs.NewPacer(context.Background(), pacer.NewDefault(pacer.MinSleep(time.Millisecond), pacer.MaxSleep(5*time.Millisecond))),
+	}
+	f.srv.SetErrorHandler(errorHandler)
+	return f
+}
+
+func jsonHandler(t *testing.T, wantPath string, respond func(r *http.Request) any) http.HandlerFunc {
+	t.Helper()
+	return func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, wantPath, r.URL.Path)
+		w.Header().Set("Content-Type", "application/json")
+		require.NoError(t, json.NewEncoder(w).Encode(respond(r)))
+	}
+}
+
+func TestAllMediaFetchesEveryPageAndDedupsTheBoundary(t *testing.T) {
+	pages := [][]api.Medium{
+		{{ID: "1"}, {ID: "2"}},
+		{{ID: "2"}, {ID: "3"}}, // GoPro's own page boundary can repeat the last item of the previous page
+	}
+	var gotParams []url.Values
+	srv := httptest.NewServer(jsonHandler(t, "/media/search", func(r *http.Request) any {
+		gotParams = append(gotParams, r.URL.Query())
+		page, err := strconv.Atoi(r.URL.Query().Get("page"))
+		require.NoError(t, err)
+		resp := &api.SearchResponse{Pages: api.PageInfo{TotalPages: len(pages)}}
+		resp.Embedded.Media = pages[page-1]
+		return resp
+	}))
+	defer srv.Close()
+
+	f := newTestListFs(srv.URL)
+	items, err := f.allMedia(context.Background())
+	require.NoError(t, err)
+	var ids []string
+	for _, m := range items {
+		ids = append(ids, m.ID)
+	}
+	assert.Equal(t, []string{"1", "2", "3"}, ids)
+	require.Len(t, gotParams, 2)
+	assert.Equal(t, includedTypes, gotParams[0].Get("type"), "the default type filter is sent unless show_all is set")
+	assert.Equal(t, "ready", gotParams[0].Get("processing_states"))
+	assert.Equal(t, "export", gotParams[0].Get("xcomposition"))
+}
+
+func TestAllMediaShowAllOmitsEveryServerSideFilter(t *testing.T) {
+	var gotParams url.Values
+	srv := httptest.NewServer(jsonHandler(t, "/media/search", func(r *http.Request) any {
+		gotParams = r.URL.Query()
+		resp := &api.SearchResponse{Pages: api.PageInfo{TotalPages: 1}}
+		resp.Embedded.Media = []api.Medium{{ID: "1"}}
+		return resp
+	}))
+	defer srv.Close()
+
+	f := newTestListFs(srv.URL)
+	f.opt.ShowAll = true
+	_, err := f.allMedia(context.Background())
+	require.NoError(t, err)
+	assert.Empty(t, gotParams.Get("type"))
+	assert.Empty(t, gotParams.Get("processing_states"))
+	assert.Empty(t, gotParams.Get("xcomposition"))
+}
+
+func TestAllMediaCachesWithinTTLAndRefetchesAfter(t *testing.T) {
+	var calls int
+	srv := httptest.NewServer(jsonHandler(t, "/media/search", func(r *http.Request) any {
+		calls++
+		resp := &api.SearchResponse{Pages: api.PageInfo{TotalPages: 1}}
+		resp.Embedded.Media = []api.Medium{{ID: "1"}}
+		return resp
+	}))
+	defer srv.Close()
+
+	f := newTestListFs(srv.URL)
+	_, err := f.allMedia(context.Background())
+	require.NoError(t, err)
+	_, err = f.allMedia(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, 1, calls, "a second call within the TTL must be served from cache, not refetched")
+
+	f.mediaCacheAt = time.Now().Add(-mediaCacheTTL - time.Second)
+	_, err = f.allMedia(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, 2, calls, "a call after the TTL has elapsed must refetch")
+}
+
+func TestAllTrashFiltersClientSide(t *testing.T) {
+	items := []api.Medium{
+		{ID: "ready", Type: "Video", ReadyToView: "ready"},
+		{ID: "edit", Type: "Edit", ReadyToView: "ready"},
+		{ID: "processing", Type: "Video", ReadyToView: "transcoding"},
+		{ID: "failed", Type: "Video", ReadyToView: "failure"},
+	}
+	srv := httptest.NewServer(jsonHandler(t, "/media/deleted", func(r *http.Request) any {
+		return &api.DeletedMediaResponse{DeletedMedia: items, Pages: api.PageInfo{TotalPages: 1}}
+	}))
+	defer srv.Close()
+
+	t.Run("defaults keep only a plain ready, non-edit item", func(t *testing.T) {
+		f := newTestListFs(srv.URL)
+		got, err := f.allTrash(context.Background())
+		require.NoError(t, err)
+		require.Len(t, got, 1)
+		assert.Equal(t, "ready", got[0].ID)
+	})
+
+	t.Run("include_edits, include_processing and include_failed each opt one category back in", func(t *testing.T) {
+		f := newTestListFs(srv.URL)
+		f.opt.IncludeEdits = true
+		f.opt.IncludeProcessing = true
+		f.opt.IncludeFailed = true
+		got, err := f.allTrash(context.Background())
+		require.NoError(t, err)
+		var ids []string
+		for _, m := range got {
+			ids = append(ids, m.ID)
+		}
+		assert.ElementsMatch(t, []string{"ready", "edit", "processing", "failed"}, ids)
+	})
+
+	t.Run("show_all bypasses every client-side filter, since /media/deleted has no server-side ones", func(t *testing.T) {
+		f := newTestListFs(srv.URL)
+		f.opt.ShowAll = true
+		got, err := f.allTrash(context.Background())
+		require.NoError(t, err)
+		assert.Len(t, got, len(items))
+	})
+}
+
+func TestList(t *testing.T) {
+	items := []api.Medium{{ID: "1"}, {ID: "2"}}
+
+	t.Run("reads the media cache by default", func(t *testing.T) {
+		f := &Fs{mediaCache: items, mediaCacheAt: time.Now()}
+		var got []string
+		err := f.list(context.Background(), mediaFilter{}, false, func(item *api.Medium) error {
+			got = append(got, item.ID)
+			return nil
+		})
+		require.NoError(t, err)
+		assert.Equal(t, []string{"1", "2"}, got)
+	})
+
+	t.Run("reads the trash cache when trashedOnly is true", func(t *testing.T) {
+		f := &Fs{trashCache: items, trashCacheAt: time.Now()}
+		var got []string
+		err := f.list(context.Background(), mediaFilter{}, true, func(item *api.Medium) error {
+			got = append(got, item.ID)
+			return nil
+		})
+		require.NoError(t, err)
+		assert.Equal(t, []string{"1", "2"}, got)
+	})
+
+	t.Run("stops and propagates fn's error instead of visiting the rest", func(t *testing.T) {
+		f := &Fs{mediaCache: items, mediaCacheAt: time.Now()}
+		wantErr := errors.New("boom")
+		var calls int
+		err := f.list(context.Background(), mediaFilter{}, false, func(item *api.Medium) error {
+			calls++
+			return wantErr
+		})
+		assert.Equal(t, wantErr, err)
+		assert.Equal(t, 1, calls)
+	})
+}
+
+func TestStartYear(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("an explicit start_year override always wins, even over library content", func(t *testing.T) {
+		f := &Fs{
+			opt:          Options{StartYear: 1999},
+			mediaCache:   []api.Medium{{CapturedAt: fstest.Time("2020-01-01T00:00:00Z")}},
+			mediaCacheAt: time.Now(),
+		}
+		assert.Equal(t, 1999, f.startYear(ctx))
+	})
+
+	t.Run("without an override, scans every cached item for the true minimum regardless of position", func(t *testing.T) {
+		f := &Fs{mediaCache: []api.Medium{
+			{CapturedAt: fstest.Time("2024-06-01T00:00:00Z")},
+			{CapturedAt: fstest.Time("2016-01-01T00:00:00Z")}, // earliest - neither first nor last
+			{CapturedAt: fstest.Time("2020-01-01T00:00:00Z")},
+		}, mediaCacheAt: time.Now()}
+		assert.Equal(t, 2016, f.startYear(ctx))
+	})
+
+	t.Run("an empty library falls back to the current year", func(t *testing.T) {
+		f := &Fs{startTime: startTime, mediaCache: []api.Medium{}, mediaCacheAt: time.Now()}
+		assert.Equal(t, startTime.Year(), f.startYear(ctx))
+	})
+}
+
+func TestShowEmptyDirsGetter(t *testing.T) {
+	assert.False(t, (&Fs{}).showEmptyDirs())
+	assert.True(t, (&Fs{opt: Options{ShowEmptyDirs: true}}).showEmptyDirs())
+}
+
+func TestCapturedDates(t *testing.T) {
+	ctx := context.Background()
+	mediaTime := fstest.Time("2020-01-01T00:00:00Z")
+	trashTime := fstest.Time("2021-01-01T00:00:00Z")
+
+	t.Run("reads the library by default", func(t *testing.T) {
+		f := &Fs{mediaCache: []api.Medium{{CapturedAt: mediaTime}}, mediaCacheAt: time.Now()}
+		got, err := f.capturedDates(ctx)
+		require.NoError(t, err)
+		assert.Equal(t, []time.Time{mediaTime}, got)
+	})
+
+	t.Run("reads the trash instead under trashed_only", func(t *testing.T) {
+		f := &Fs{
+			opt:          Options{TrashedOnly: true},
+			trashCache:   []api.Medium{{CapturedAt: trashTime}},
+			trashCacheAt: time.Now(),
+		}
+		got, err := f.capturedDates(ctx)
+		require.NoError(t, err)
+		assert.Equal(t, []time.Time{trashTime}, got)
 	})
 }
