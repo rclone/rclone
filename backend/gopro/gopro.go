@@ -627,6 +627,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		dlCache:   map[string]*dlCacheEntry{},
 		uploaded:  dirtree.New(),
 	}
+	// upload/ always exists, even with nothing uploaded to it yet - seed
+	// its key now so listUploads finds it (as an empty listing) rather
+	// than mistaking "never populated" for "doesn't exist" and returning
+	// fs.ErrorDirNotFound, confirmed live for any remote nothing has ever
+	// been uploaded to in this process.
+	_, uploadRoot, _ := patterns.match(root, "upload", false)
+	f.uploaded[strings.Trim(uploadRoot, "/")] = nil
 
 	baseClient := fshttp.NewClient(ctx)
 	if opt.AccessToken != "" {
