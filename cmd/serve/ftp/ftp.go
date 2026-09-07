@@ -189,7 +189,7 @@ func init() {
 var passivePortsRe = regexp.MustCompile(`^\s*\d+\s*-\s*\d+\s*$`)
 
 // Make a new FTP to serve the remote
-func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Options, proxyOpt *proxy.Options) (*driver, error) {
+func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Options, proxyOpt *proxy.Options) (_ *driver, err error) {
 	host, port, err := net.SplitHostPort(opt.ListenAddr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse host:port from %q", opt.ListenAddr)
