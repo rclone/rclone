@@ -355,7 +355,12 @@ on-the-fly connection string (e.g. ":gopro,trashed_only=true:media/all")
 rather than setting it globally in the remote's config if a normal,
 non-trashed view of the same remote is still needed side by side. To
 restore trashed media back to the active library, see "rclone backend
-restore".`,
+restore".
+
+Deleting a file shown here (e.g. via "rclone delete") always purges it
+permanently, regardless of --gopro-use-trash - confirmed live, GoPro's
+API rejects a second ordinary delete on a medium that's already in the
+trash, so there is nothing "soft" left to do to it.`,
 		}, {
 			Name:     "always_add_id",
 			Advanced: true,
@@ -1809,7 +1814,18 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 }
 
 // Remove an object
+//
+// Under --gopro-trashed-only, every object this backend lists or resolves
+// is already in GoPro's trash, so there's nothing "soft" left to do -
+// deleteMedium's usual plain-delete step assumes an active medium and
+// fails against one that's already trashed (confirmed live: "not found or
+// inaccessible"), so this purges it directly instead, regardless of
+// --gopro-use-trash - that option is about whether removing an *active*
+// file goes to trash, which doesn't apply to a file that's there already.
 func (o *Object) Remove(ctx context.Context) error {
+	if o.fs.opt.TrashedOnly {
+		return o.fs.doDeleteMedium(ctx, o.id, "permanent", "true")
+	}
 	return o.fs.deleteMedium(ctx, o.id, !o.fs.opt.UseTrash)
 }
 
@@ -1826,6 +1842,10 @@ func (o *Object) Remove(ctx context.Context) error {
 // much still there. Remove respects --gopro-use-trash; Abort always
 // passes true regardless of that setting, since an incomplete upload's
 // placeholder is never something worth recovering from trash.
+//
+// This assumes id is still an active medium, not one already in the
+// trash - see Remove's --gopro-trashed-only case, which bypasses this
+// entirely.
 //
 // A single call with permanent=true does not actually purge anything -
 // confirmed live (the first attempt at this looked like it worked, but

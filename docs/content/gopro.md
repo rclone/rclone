@@ -535,6 +535,11 @@ non-trashed view of the same remote is still needed side by side. To
 restore trashed media back to the active library, see "rclone backend
 restore".
 
+Deleting a file shown here (e.g. via "rclone delete") always purges it
+permanently, regardless of --gopro-use-trash - confirmed live, GoPro's
+API rejects a second ordinary delete on a medium that's already in the
+trash, so there is nothing "soft" left to do to it.
+
 Properties:
 
 - Config:      trashed_only
