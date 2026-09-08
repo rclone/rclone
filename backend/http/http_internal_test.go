@@ -314,6 +314,54 @@ func TestOpen(t *testing.T) {
 	}
 }
 
+func TestNoHeadMetadataDefaults(t *testing.T) {
+	tests := []struct {
+		name        string
+		size        string
+		modTime     string
+		wantSize    int64
+		wantModTime time.Time
+	}{
+		{
+			name:        "defaults",
+			wantSize:    -1,
+			wantModTime: timeUnset,
+		}, {
+			name:        "zero size",
+			size:        "0B",
+			wantSize:    0,
+			wantModTime: timeUnset,
+		}, {
+			name:        "configured metadata",
+			size:        "100B",
+			modTime:     "2024-08-05T07:36:07Z",
+			wantSize:    100,
+			wantModTime: time.Date(2024, 8, 5, 7, 36, 7, 0, time.UTC),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			m := prepareServer(t)
+			m.Set("no_head", "true")
+			if test.size != "" {
+				m.Set("no_head_size", test.size)
+			}
+			if test.modTime != "" {
+				m.Set("no_head_time", test.modTime)
+			}
+
+			f, err := NewFs(context.Background(), remoteName, "", m)
+			require.NoError(t, err)
+			o, err := f.NewObject(context.Background(), "four/under four.txt")
+			require.NoError(t, err)
+
+			assert.Equal(t, test.wantSize, o.Size())
+			assert.Equal(t, test.wantModTime, o.ModTime(context.Background()))
+		})
+	}
+}
+
 func TestMimeType(t *testing.T) {
 	f := prepare(t)
 
