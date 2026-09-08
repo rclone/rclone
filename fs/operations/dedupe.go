@@ -16,8 +16,17 @@ import (
 	"github.com/rclone/rclone/fs/walk"
 )
 
+// maxDedupeSuffix is the largest -N suffix dedupeRename will try
+// before giving up on renaming an object.
+const maxDedupeSuffix = 10000
+
 // dedupeRename renames the objs slice to different names
-func dedupeRename(ctx context.Context, f fs.Fs, remote string, objs []fs.Object) {
+//
+// files is the listing of f keyed by remote. Names found in it are
+// skipped without asking the backend, and the names allocated here
+// are added to it. Candidates not in the listing are still checked
+// with NewObject as the listing may be incomplete due to filters.
+func dedupeRename(ctx context.Context, f fs.Fs, remote string, objs []fs.Object, files map[string][]fs.Object) {
 	doMove := f.Features().Move
 	if doMove == nil {
 		fs.Fatalf(nil, "Fs %v doesn't support Move", f)
@@ -25,23 +34,32 @@ func dedupeRename(ctx context.Context, f fs.Fs, remote string, objs []fs.Object)
 	ext := path.Ext(remote)
 	base := remote[:len(remote)-len(ext)]
 
+	// The suffix is shared between the objects so names known to
+	// be taken are never re-checked.
+	suffix := 0
 outer:
-	for i, o := range objs {
-		suffix := 1
-		newName := fmt.Sprintf("%s-%d%s", base, i+suffix, ext)
-		_, err := f.NewObject(ctx, newName)
-		for ; err != fs.ErrorObjectNotFound; suffix++ {
+	for _, o := range objs {
+		var newName string
+		for {
+			suffix++
+			if suffix > maxDedupeSuffix {
+				fs.Errorf(o, "Could not find an available new name")
+				continue outer
+			}
+			newName = fmt.Sprintf("%s-%d%s", base, suffix, ext)
+			if _, found := files[newName]; found {
+				continue
+			}
+			existing, err := f.NewObject(ctx, newName)
+			if err == fs.ErrorObjectNotFound {
+				break
+			}
 			if err != nil {
 				err = fs.CountError(ctx, err)
 				fs.Errorf(o, "Failed to check for existing object: %v", err)
 				continue outer
 			}
-			if suffix > 100 {
-				fs.Errorf(o, "Could not find an available new name")
-				continue outer
-			}
-			newName = fmt.Sprintf("%s-%d%s", base, i+suffix, ext)
-			_, err = f.NewObject(ctx, newName)
+			files[newName] = append(files[newName], existing)
 		}
 		if !SkipDestructive(ctx, o, "rename") {
 			newObj, err := doMove(ctx, o, newName)
@@ -51,6 +69,7 @@ outer:
 				continue
 			}
 			fs.Infof(newObj, "renamed from: %v", o)
+			files[newName] = append(files[newName], newObj)
 		}
 	}
 }
@@ -158,7 +177,7 @@ func dedupeList(ctx context.Context, f fs.Fs, ht hash.Type, remote string, objs 
 }
 
 // dedupeInteractive interactively dedupes the slice of objects
-func dedupeInteractive(ctx context.Context, f fs.Fs, ht hash.Type, remote string, objs []fs.Object, byHash bool) bool {
+func dedupeInteractive(ctx context.Context, f fs.Fs, ht hash.Type, remote string, objs []fs.Object, byHash bool, files map[string][]fs.Object) bool {
 	dedupeList(ctx, f, ht, remote, objs, byHash)
 	commands := []string{"sSkip and do nothing", "kKeep just one (choose which in next step)"}
 	if !byHash {
@@ -171,7 +190,7 @@ func dedupeInteractive(ctx context.Context, f fs.Fs, ht hash.Type, remote string
 		keep := config.ChooseNumber("Enter the number of the file to keep", 1, len(objs))
 		dedupeDeleteAllButOne(ctx, keep-1, remote, objs)
 	case 'r':
-		dedupeRename(ctx, f, remote, objs)
+		dedupeRename(ctx, f, remote, objs, files)
 	case 'q':
 		return false
 	}
@@ -461,6 +480,9 @@ func Deduplicate(ctx context.Context, f fs.Fs, mode DeduplicateMode, byHash bool
 		return err
 	}
 
+	// Renaming adds entries to files while it is being iterated. Go
+	// may or may not visit those, but they only ever hold a single
+	// object so are skipped either way.
 	for remote, objs := range files {
 		if len(objs) <= 1 {
 			continue
@@ -475,7 +497,7 @@ func Deduplicate(ctx context.Context, f fs.Fs, mode DeduplicateMode, byHash bool
 		}
 		switch mode {
 		case DeduplicateInteractive:
-			if !dedupeInteractive(ctx, f, ht, remote, objs, byHash) {
+			if !dedupeInteractive(ctx, f, ht, remote, objs, byHash, files) {
 				return nil
 			}
 		case DeduplicateFirst:
@@ -487,7 +509,7 @@ func Deduplicate(ctx context.Context, f fs.Fs, mode DeduplicateMode, byHash bool
 			sortOldestFirst(objs)
 			dedupeDeleteAllButOne(ctx, 0, remote, objs)
 		case DeduplicateRename:
-			dedupeRename(ctx, f, remote, objs)
+			dedupeRename(ctx, f, remote, objs, files)
 		case DeduplicateLargest:
 			sortSmallestFirst(objs)
 			dedupeDeleteAllButOne(ctx, len(objs)-1, remote, objs)
