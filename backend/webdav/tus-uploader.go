@@ -126,23 +126,46 @@ func (u *Uploader) UploadChunk(ctx context.Context, cnt int, options ...fs.OpenO
 	chunkSize := u.fs.opt.ChunkSize
 	data := make([]byte, chunkSize)
 
-	_, err := u.upload.stream.Seek(u.offset, 0)
-
-	if err != nil {
-		fs.Errorf(u.fs, "Chunk %d: Error seek in stream failed: %v", cnt, err)
-		return err
-	}
-
 	size, err := u.upload.stream.Read(data)
 
-	if err != nil {
+	if err != nil && err != io.EOF {
 		fs.Errorf(u.fs, "Chunk %d: Error: Can not read from data stream: %v", cnt, err)
 		return err
 	}
 
-	body := bytes.NewBuffer(data[:size])
+	chunk := data[:size]
 
-	newOffset, err := u.uploadChunk(ctx, body, int64(size), u.offset, options...)
+	newOffset, err := u.uploadChunk(ctx, bytes.NewBuffer(chunk), int64(size), u.offset, options...)
+
+	// If newOffset is not equal to the old offset + size,
+	// upload the remaining chunk to remove the necessity
+	// of seeking in the next chunk upload.
+	// PD: Tus protocol don't talk too much under which conditions
+	// the offset can be different if the request was successful...
+	// but just in case we handle it here.
+	maxRetries := 5
+	retries := 0
+	lastKnownOffset := newOffset
+	for err == nil && newOffset != u.offset+int64(size) {
+		// Some extra robustness checks to prevent issues
+		if newOffset < u.offset {
+			return fmt.Errorf("uploaded chunk no %d failed new offset %d is less than current offset %d", cnt, newOffset, u.offset)
+		}
+		if retries >= maxRetries {
+			if newOffset == lastKnownOffset {
+				return fmt.Errorf("uploaded chunk no %d failed new offset %d is not equal to current offset %d + size %d after %d retries", cnt, newOffset, u.offset, size, maxRetries)
+			}
+
+			lastKnownOffset = newOffset // The progress is increasing, just a bit slow
+			retries = 0
+		}
+		retries++
+
+		uploadedSize := newOffset - u.offset
+		fs.Debugf(u.fs, "Uploading chunk no %d was partial, range %d -> %d retrying from %d to %d", cnt, u.offset, newOffset, newOffset, u.offset+int64(size))
+		remainingBytes := chunk[uploadedSize:]
+		newOffset, err = u.uploadChunk(ctx, bytes.NewBuffer(remainingBytes), int64(size)-uploadedSize, newOffset, options...)
+	}
 
 	if err == nil {
 		fs.Debugf(u.fs, "Uploaded chunk no %d ok, range %d -> %d", cnt, u.offset, newOffset)
