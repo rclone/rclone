@@ -136,6 +136,267 @@ func TestInternalGetPermissionCacheHit(t *testing.T) {
 	assert.Equal(t, int32(1), requests.Load())
 }
 
+// newListTestFs makes a Fs suitable for exercising f.list() against a
+// fake Drive server, with the fields f.list() and its callees need
+// but without going through NewFs (which requires OAuth config).
+func newListTestFs(t *testing.T, handler http.Handler) *Fs {
+	t.Helper()
+	server := httptest.NewServer(handler)
+	t.Cleanup(server.Close)
+	service, err := drive.NewService(
+		context.Background(),
+		option.WithHTTPClient(server.Client()),
+		option.WithEndpoint(server.URL+"/"),
+	)
+	require.NoError(t, err)
+	return &Fs{
+		svc:             service,
+		ci:              fs.GetConfig(context.Background()),
+		pacer:           fs.NewPacer(context.Background(), pacer.NewGoogleDrive()),
+		dirResourceKeys: new(stdsync.Map),
+	}
+}
+
+// TestInternalListResolvesShortcutsConcurrently checks that f.list()
+// resolves multiple shortcuts in a listing page concurrently rather
+// than one at a time, and that the resolved items are still reported
+// in their original listing order.
+func TestInternalListResolvesShortcutsConcurrently(t *testing.T) {
+	const shortcutCount = 3
+	arrived := make(chan string, shortcutCount)
+	release := make(chan struct{})
+	var releaseOnce stdsync.Once
+	releaseRequests := func() {
+		releaseOnce.Do(func() { close(release) })
+	}
+	defer releaseRequests()
+
+	f := newListTestFs(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if strings.HasSuffix(r.URL.Path, "/files") {
+			_, err := fmt.Fprint(w, `{"files":[
+				{"id":"shortcut-1","name":"link1","mimeType":"application/vnd.google-apps.shortcut","shortcutDetails":{"targetId":"target-1","targetMimeType":"text/plain"}},
+				{"id":"shortcut-2","name":"link2","mimeType":"application/vnd.google-apps.shortcut","shortcutDetails":{"targetId":"target-2","targetMimeType":"text/plain"}},
+				{"id":"shortcut-3","name":"link3","mimeType":"application/vnd.google-apps.shortcut","shortcutDetails":{"targetId":"target-3","targetMimeType":"text/plain"}}
+			]}`)
+			assert.NoError(t, err)
+			return
+		}
+		// Files.Get for a shortcut target
+		targetID := path.Base(r.URL.Path)
+		arrived <- targetID
+		<-release
+		_, err := fmt.Fprintf(w, `{"id":%q,"name":"resolved-%s","mimeType":"text/plain"}`, targetID, targetID)
+		assert.NoError(t, err)
+	}))
+
+	type listResult struct {
+		found bool
+		err   error
+		names []string
+	}
+	results := make(chan listResult, 1)
+	go func() {
+		var names []string
+		found, err := f.list(context.Background(), []string{"parent-id"}, "", false, false, false, false, false, func(item *drive.File) bool {
+			names = append(names, item.Name)
+			return false
+		})
+		results <- listResult{found: found, err: err, names: names}
+	}()
+
+	arrivedIDs := make(map[string]bool, shortcutCount)
+	timer := time.NewTimer(time.Second)
+	defer timer.Stop()
+	for len(arrivedIDs) < shortcutCount {
+		select {
+		case targetID := <-arrived:
+			arrivedIDs[targetID] = true
+		case <-timer.C:
+			releaseRequests()
+			t.Fatalf("timed out waiting for concurrent shortcut resolution: got %d of %d", len(arrivedIDs), shortcutCount)
+		}
+	}
+	releaseRequests()
+
+	assert.Equal(t, map[string]bool{"target-1": true, "target-2": true, "target-3": true}, arrivedIDs)
+	result := <-results
+	require.NoError(t, result.err)
+	assert.False(t, result.found)
+	// original listing order must be preserved even though resolution was concurrent
+	assert.Equal(t, []string{"link1", "link2", "link3"}, result.names)
+}
+
+// TestInternalListSkipDanglingShortcuts checks that a dangling
+// shortcut (whose target 404s) is left out of the listing when
+// SkipDanglingShortcuts is set, even though it is resolved
+// concurrently with the other items on the page.
+func TestInternalListSkipDanglingShortcuts(t *testing.T) {
+	f := newListTestFs(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if strings.HasSuffix(r.URL.Path, "/files") {
+			_, err := fmt.Fprint(w, `{"files":[
+				{"id":"shortcut-ok","name":"link-ok","mimeType":"application/vnd.google-apps.shortcut","shortcutDetails":{"targetId":"target-ok","targetMimeType":"text/plain"}},
+				{"id":"shortcut-dangling","name":"link-dangling","mimeType":"application/vnd.google-apps.shortcut","shortcutDetails":{"targetId":"target-missing","targetMimeType":"text/plain"}}
+			]}`)
+			assert.NoError(t, err)
+			return
+		}
+		targetID := path.Base(r.URL.Path)
+		if targetID == "target-missing" {
+			w.WriteHeader(http.StatusNotFound)
+			_, err := fmt.Fprint(w, `{"error":{"code":404,"message":"File not found"}}`)
+			assert.NoError(t, err)
+			return
+		}
+		_, err := fmt.Fprintf(w, `{"id":%q,"name":"resolved-%s","mimeType":"text/plain"}`, targetID, targetID)
+		assert.NoError(t, err)
+	}))
+	f.opt.SkipDanglingShortcuts = true
+
+	var names []string
+	found, err := f.list(context.Background(), []string{"parent-id"}, "", false, false, false, false, false, func(item *drive.File) bool {
+		names = append(names, item.Name)
+		return false
+	})
+	require.NoError(t, err)
+	assert.False(t, found)
+	assert.Equal(t, []string{"link-ok"}, names)
+}
+
+// TestInternalListTitleLookupStopsAtFirstMatch checks that a single
+// item lookup (title != "", as used by FindLeaf and NewObject) stops
+// at the first match without resolving shortcuts that come after it
+// in the listing - ie shortcut resolution stays lazy for early-exit
+// lookups rather than resolving the whole page concurrently.
+func TestInternalListTitleLookupStopsAtFirstMatch(t *testing.T) {
+	var resolved atomic.Int32
+	f := newListTestFs(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if strings.HasSuffix(r.URL.Path, "/files") {
+			_, err := fmt.Fprint(w, `{"files":[
+				{"id":"target-match","name":"wanted","mimeType":"text/plain"},
+				{"id":"shortcut-1","name":"link1","mimeType":"application/vnd.google-apps.shortcut","shortcutDetails":{"targetId":"target-1","targetMimeType":"text/plain"}},
+				{"id":"shortcut-2","name":"link2","mimeType":"application/vnd.google-apps.shortcut","shortcutDetails":{"targetId":"target-2","targetMimeType":"text/plain"}}
+			]}`)
+			assert.NoError(t, err)
+			return
+		}
+		targetID := path.Base(r.URL.Path)
+		resolved.Add(1)
+		_, err := fmt.Fprintf(w, `{"id":%q,"name":"resolved-%s","mimeType":"text/plain"}`, targetID, targetID)
+		assert.NoError(t, err)
+	}))
+
+	var names []string
+	found, err := f.list(context.Background(), []string{"parent-id"}, "wanted", false, false, false, false, false, func(item *drive.File) bool {
+		names = append(names, item.Name)
+		return true
+	})
+	require.NoError(t, err)
+	assert.True(t, found)
+	assert.Equal(t, []string{"wanted"}, names)
+	assert.Equal(t, int32(0), resolved.Load())
+}
+
+// TestInternalListStopEarlyStopsAtFirstMatch checks that a caller
+// with stopEarly set (as purgeCheck uses to detect a non-empty
+// directory, title == "") stops at the first match without resolving
+// shortcuts that come after it in the listing, the same way a
+// title != "" lookup does.
+func TestInternalListStopEarlyStopsAtFirstMatch(t *testing.T) {
+	var resolved atomic.Int32
+	f := newListTestFs(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if strings.HasSuffix(r.URL.Path, "/files") {
+			_, err := fmt.Fprint(w, `{"files":[
+				{"id":"file-1","name":"file1","mimeType":"text/plain"},
+				{"id":"shortcut-1","name":"link1","mimeType":"application/vnd.google-apps.shortcut","shortcutDetails":{"targetId":"target-1","targetMimeType":"text/plain"}},
+				{"id":"shortcut-2","name":"link2","mimeType":"application/vnd.google-apps.shortcut","shortcutDetails":{"targetId":"target-2","targetMimeType":"text/plain"}}
+			]}`)
+			assert.NoError(t, err)
+			return
+		}
+		targetID := path.Base(r.URL.Path)
+		resolved.Add(1)
+		_, err := fmt.Fprintf(w, `{"id":%q,"name":"resolved-%s","mimeType":"text/plain"}`, targetID, targetID)
+		assert.NoError(t, err)
+	}))
+
+	var names []string
+	found, err := f.list(context.Background(), []string{"parent-id"}, "", false, false, false, false, true, func(item *drive.File) bool {
+		names = append(names, item.Name)
+		return true
+	})
+	require.NoError(t, err)
+	assert.True(t, found)
+	assert.Equal(t, []string{"file1"}, names)
+	assert.Equal(t, int32(0), resolved.Load())
+}
+
+// TestInternalListBulkNoShortcuts checks that a bulk listing page
+// with no shortcuts on it lists correctly without ever hitting the
+// Files.Get endpoint (ie the errgroup path is bypassed entirely).
+func TestInternalListBulkNoShortcuts(t *testing.T) {
+	var getCalls atomic.Int32
+	f := newListTestFs(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if strings.HasSuffix(r.URL.Path, "/files") {
+			_, err := fmt.Fprint(w, `{"files":[
+				{"id":"file-1","name":"file1","mimeType":"text/plain"},
+				{"id":"file-2","name":"file2","mimeType":"text/plain"}
+			]}`)
+			assert.NoError(t, err)
+			return
+		}
+		getCalls.Add(1)
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+
+	var names []string
+	found, err := f.list(context.Background(), []string{"parent-id"}, "", false, false, false, false, false, func(item *drive.File) bool {
+		names = append(names, item.Name)
+		return false
+	})
+	require.NoError(t, err)
+	assert.False(t, found)
+	assert.Equal(t, []string{"file1", "file2"}, names)
+	assert.Equal(t, int32(0), getCalls.Load())
+}
+
+// TestInternalListBulkAllShortcutsSkipped checks that a bulk listing
+// page where every shortcut is skip-eligible (eg --drive-skip-shortcuts)
+// still filters those shortcuts out of what's passed to fn, even
+// though hasShortcutToResolve is false for the page (nothing needs
+// resolving) and the errgroup path is bypassed.
+func TestInternalListBulkAllShortcutsSkipped(t *testing.T) {
+	var getCalls atomic.Int32
+	f := newListTestFs(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if strings.HasSuffix(r.URL.Path, "/files") {
+			_, err := fmt.Fprint(w, `{"files":[
+				{"id":"shortcut-1","name":"link1","mimeType":"application/vnd.google-apps.shortcut","shortcutDetails":{"targetId":"target-1","targetMimeType":"text/plain"}},
+				{"id":"file-1","name":"file1","mimeType":"text/plain"}
+			]}`)
+			assert.NoError(t, err)
+			return
+		}
+		getCalls.Add(1)
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	f.opt.SkipShortcuts = true
+
+	var names []string
+	found, err := f.list(context.Background(), []string{"parent-id"}, "", false, false, false, false, false, func(item *drive.File) bool {
+		names = append(names, item.Name)
+		return false
+	})
+	require.NoError(t, err)
+	assert.False(t, found)
+	assert.Equal(t, []string{"file1"}, names)
+	assert.Equal(t, int32(0), getCalls.Load())
+}
+
 func TestDriveScopes(t *testing.T) {
 	for _, test := range []struct {
 		in       string
