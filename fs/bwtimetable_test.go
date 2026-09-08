@@ -316,6 +316,52 @@ func TestBwTimetableSet(t *testing.T) {
 	}
 }
 
+func TestBwTimetableSetReplaces(t *testing.T) {
+	for _, test := range []struct {
+		first  string
+		second string
+		want   string
+	}{
+		{"Sun-00:00,10M", "Mon-10:00,1M", "Mon-10:00,1Mi"},
+		{"Mon-10:00,1M", "Mon-10:00,1M", "Mon-10:00,1Mi"},
+		{"Mon-10:00,1M", "2M", "2Mi"},
+		{"2M", "Mon-10:00,1M", "Mon-10:00,1Mi"},
+		{"11:00,333;13:40,666", "Mon-10:00,1M", "Mon-10:00,1Mi"},
+	} {
+		tt := BwTimetable{}
+		require.NoError(t, tt.Set(test.first), test.first)
+		require.NoError(t, tt.Set(test.second), test.second)
+		assert.Equal(t, test.want, tt.String(), "%q then %q", test.first, test.second)
+
+		var want BwTimetable
+		require.NoError(t, want.Set(test.second))
+		assert.Equal(t, want, tt, "%q then %q", test.first, test.second)
+	}
+}
+
+func TestBwTimetableSetErrorKeepsPrevious(t *testing.T) {
+	for _, in := range []string{
+		"Mon-11:00,333 bad",
+		"Mon-11:00,333 Tue-13:40,bad",
+		"Mon-11:00,333 24:01,666",
+		"11:00,333;bad",
+	} {
+		tt := BwTimetable{}
+		require.NoError(t, tt.Set("Sun-20:00,10M"))
+		require.Error(t, tt.Set(in), in)
+		assert.Equal(t, "Sun-20:00,10Mi", tt.String(), in)
+	}
+}
+
+func TestBwTimetableUnmarshalJSONReplaces(t *testing.T) {
+	var tt BwTimetable
+	require.NoError(t, json.Unmarshal([]byte(`"Sun-00:00,10M"`), &tt))
+	require.NoError(t, json.Unmarshal([]byte(`"Mon-10:00,1M"`), &tt))
+	assert.Equal(t, BwTimetable{
+		BwTimeSlot{DayOfTheWeek: 1, HHMM: 1000, Bandwidth: BwPair{Tx: 1024 * 1024, Rx: 1024 * 1024}},
+	}, tt)
+}
+
 func TestBwTimetableLimitAt(t *testing.T) {
 	for _, test := range []struct {
 		tt   BwTimetable
