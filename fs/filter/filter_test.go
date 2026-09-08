@@ -579,6 +579,28 @@ func TestNewFilterMatches(t *testing.T) {
 	assert.False(t, f.InActive())
 }
 
+func TestNewFilterMatchesPathBraceAlternatives(t *testing.T) {
+	f, err := NewFilter(nil)
+	require.NoError(t, err)
+	require.NoError(t, f.AddRule(`+ /ssh/{config,vault/keys/**}`))
+	require.NoError(t, f.AddRule(`- *`))
+
+	testInclude(t, f, []includeTest{
+		{"ssh/config", 0, 0, true},
+		{"ssh/vault/keys/id_rsa.pub", 0, 0, true},
+		{"ssh/vault/other", 0, 0, false},
+		{"unrelated/file", 0, 0, false},
+	})
+	testDirInclude(t, f, []includeDirTest{
+		{"ssh", true},
+		{"ssh/vault", true},
+		{"ssh/vault/keys", true},
+		{"ssh/vault/keys/archive", true},
+		{"ssh/other", false},
+		{"unrelated", false},
+	})
+}
+
 func TestNewFilterMatchesIgnoreCase(t *testing.T) {
 	f, err := NewFilter(nil)
 	require.NoError(t, err)
