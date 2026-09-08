@@ -74,6 +74,7 @@ type syncCopyMove struct {
 	err                    error                  // normal error from copy process
 	noRetryErr             error                  // error with NoRetry set
 	fatalErr               error                  // fatal error
+	startErrors            int64                  // accounting.Stats(ctx).GetErrors() when this sync/copy/move started
 	commonHash             hash.Type              // common hash type between src and dst
 	modifyWindow           time.Duration          // modify window between fsrc, fdst
 	renameMapMu            sync.Mutex             // mutex to protect the below
@@ -164,6 +165,7 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		setDirModTimeAfter:     !ci.NoUpdateDirModTime && (!copyEmptySrcDirs || fsrc.Features().CanHaveEmptyDirectories && fdst.Features().DirModTimeUpdatesOnWrite),
 		modifiedDirs:           make(map[string]struct{}),
 		allowOverlap:           allowOverlap,
+		startErrors:            accounting.Stats(ctx).GetErrors(),
 	}
 
 	s.logger, s.usingLogger = operations.GetLogger(ctx)
@@ -363,6 +365,27 @@ func (s *syncCopyMove) currentError() error {
 		return s.err
 	}
 	return s.noRetryErr
+}
+
+// erroredThisRun reports whether this sync/copy/move should be treated as
+// having hit an error for the purposes of the delete-on-error safety check.
+//
+// An explicit stats group (set with the rc "_group" parameter) is
+// long-lived and can be shared between separate, unrelated rc calls, so for
+// a grouped context we only count errors recorded since this run started -
+// otherwise an unrelated error from an earlier operation sharing the group
+// would permanently block deletion for every later, error-free operation
+// that reuses it. The default (ungrouped) stats are scoped to a single
+// process invocation, so any error recorded there is treated as belonging
+// to this run, same as before.
+func (s *syncCopyMove) erroredThisRun() bool {
+	if _, hasGroup := accounting.StatsGroupFromContext(s.ctx); !hasGroup {
+		return accounting.Stats(s.ctx).Errored()
+	}
+	if accounting.Stats(s.ctx).GetErrors() > s.startErrors {
+		return true
+	}
+	return s.currentError() != nil
 }
 
 // pairChecker reads Objects~s on in send to out if they need transferring.
@@ -625,7 +648,7 @@ func (s *syncCopyMove) stopDeleters() {
 // checkSrcMap is clear then it assumes that the any source files that
 // have been found have been removed from dstFiles already.
 func (s *syncCopyMove) deleteFiles(checkSrcMap bool) error {
-	if accounting.Stats(s.ctx).Errored() && !s.ci.IgnoreErrors {
+	if s.erroredThisRun() && !s.ci.IgnoreErrors {
 		fs.Errorf(s.fdst, "%v", fs.ErrorNotDeleting)
 		// log all deletes as errors
 		for remote, o := range s.dstFiles {
@@ -671,7 +694,7 @@ func (s *syncCopyMove) deleteEmptyDirectories(ctx context.Context, f fs.Fs, entr
 	if len(entriesMap) == 0 {
 		return nil
 	}
-	if accounting.Stats(ctx).Errored() && !s.ci.IgnoreErrors {
+	if s.erroredThisRun() && !s.ci.IgnoreErrors {
 		fs.Errorf(f, "%v", fs.ErrorNotDeletingDirs)
 		return fs.ErrorNotDeletingDirs
 	}
