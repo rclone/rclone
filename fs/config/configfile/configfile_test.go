@@ -350,17 +350,76 @@ func TestConfigFileSaveSymlinkAbsolute(t *testing.T) {
 		require.NoError(t, err)
 		assert.False(t, info.IsDir())
 	}
+	testSymlinkLoopError := func(t *testing.T, link string, target string, resolvedTarget string) {
+		err = os.Symlink(target, link)
+		require.NoError(t, err)
+		defer func() {
+			_ = os.Remove(link)
+		}()
+
+		assert.NoError(t, config.SetConfigPath(link))
+		data := &Storage{}
+		require.Error(t, data.Load(), config.ErrorConfigFileNotFound)
+
+		err = data.Save()
+		require.Error(t, err, "failed to resolve config path: symlink loop")
+	}
+	testSymlinkBrokenError := func(t *testing.T, link string, target string, resolvedTarget string) {
+		err = os.Symlink(target, link)
+		require.NoError(t, err)
+		defer func() {
+			_ = os.Remove(link)
+		}()
+
+		assert.NoError(t, config.SetConfigPath(link))
+		data := &Storage{}
+		require.Error(t, data.Load(), config.ErrorConfigFileNotFound)
+
+		err = data.Save()
+		require.NoError(t, err)
+
+		info, err := os.Lstat(link)
+		require.NoError(t, err)
+		assert.True(t, info.Mode()&os.ModeSymlink != 0)
+		assert.False(t, info.IsDir())
+
+		_, err = os.Lstat(resolvedTarget)
+		require.Error(t, err)
+	}
 
 	t.Run("Absolute", func(t *testing.T) {
-		link := filepath.Join(linkDir, "configfilelink")
+		link := filepath.Join(linkDir, "configfileabslink")
 		target := filepath.Join(testDir, "b", "configfiletarget")
 		testSymlink(t, link, target, target)
 	})
 	t.Run("Relative", func(t *testing.T) {
-		link := filepath.Join(linkDir, "configfilelink")
+		link := filepath.Join(linkDir, "configfilerellink")
 		target := filepath.Join("b", "c", "configfiletarget")
 		resolvedTarget := filepath.Join(filepath.Dir(link), target)
 		testSymlink(t, link, target, resolvedTarget)
+	})
+	t.Run("Trampoline", func(t *testing.T) {
+		link := filepath.Join(linkDir, "configfilefirstlink")
+		intermediate := filepath.Join(linkDir, "configfileintermediatelink")
+		target := filepath.Join(testDir, "c", "configfiletarget")
+		err = os.Symlink(target, intermediate)
+		require.NoError(t, err)
+		defer func() {
+			_ = os.Remove(intermediate)
+		}()
+
+		testSymlink(t, link, intermediate, target)
+	})
+	t.Run("Loop", func(t *testing.T) {
+		target := filepath.Join(testDir, "configfileself")
+		testSymlinkLoopError(t, target, target, target)
+	})
+	t.Run("Broken", func(t *testing.T) {
+		link := filepath.Join(linkDir, "configfilebrokenfirstlink")
+		intermediate := filepath.Join(linkDir, "configfilebrokenintermediatelink")
+		target := filepath.Join(testDir, "d", "configfilenoexisttarget")
+
+		testSymlinkBrokenError(t, link, intermediate, target)
 	})
 }
 
