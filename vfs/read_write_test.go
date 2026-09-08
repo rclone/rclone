@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -758,4 +759,227 @@ func TestRWCacheUpdate(t *testing.T) {
 		assert.Equal(t, int64(len(contents)), fi.Size())
 		fstest.AssertTimeEqualWithPrecision(t, filename, modTime, fi.ModTime(), r.Fremote.Precision())
 	}
+}
+
+// recordingFs wraps an fs.Fs and records the modtime of every source
+// passed to Put. This lets tests see exactly what modtime the upload
+// carries to the server, instead of the final state after the remote's
+// SetModTime fallback has had a chance to correct it (which masks the
+// issue - see #9637 where Nextcloud cannot fall back at all).
+type recordingFs struct {
+	fs.Fs
+	mu   sync.Mutex
+	puts []time.Time
+}
+
+func (f *recordingFs) record(mt time.Time) {
+	f.mu.Lock()
+	f.puts = append(f.puts, mt)
+	f.mu.Unlock()
+}
+
+func (f *recordingFs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	f.record(src.ModTime(ctx))
+	return f.Fs.Put(ctx, in, src, options...)
+}
+
+func (f *recordingFs) putTimes() []time.Time {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return append([]time.Time(nil), f.puts...)
+}
+
+// Features strips the server-side copy and move features so uploads go
+// through Put, which is where the modtime is recorded. Server-side
+// copies bypass Put entirely.
+func (f *recordingFs) Features() *fs.Features {
+	features := *f.Fs.Features()
+	cp, mv := features.Copy, features.Move
+	features.Copy = func(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+		f.record(src.ModTime(ctx))
+		return cp(ctx, src, remote)
+	}
+	features.Move = func(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+		f.record(src.ModTime(ctx))
+		return mv(ctx, src, remote)
+	}
+	return &features
+}
+
+// newRecordingVFS creates a VFS backed by a recordingFs so tests can
+// observe the modtime each upload carries to the remote.
+func newRecordingVFS(t *testing.T, opt *vfscommon.Options) (r *fstest.Run, vfs *VFS, rec *recordingFs) {
+	r = fstest.NewRun(t)
+	rec = &recordingFs{Fs: r.Fremote}
+	vfs = New(context.Background(), rec, opt)
+	t.Cleanup(func() {
+		cleanupVFS(t, vfs)
+	})
+	return r, vfs, rec
+}
+
+// Test that the modtime set by a writer (e.g. an editor calling
+// utimens) is the one which reaches the remote, not the old modtime
+// of the file - see issue #9637
+func TestRWFileHandleModTimeAfterRewrite(t *testing.T) {
+	r, vfs, rec := newRecordingVFS(t, &vfscommon.Options{
+		CacheMode: vfscommon.CacheModeFull,
+		WriteBack: writeBackDelay,
+	})
+	ctx := context.Background()
+
+	// Create the file with some content and let it settle on the remote
+	fh, err := vfs.OpenFile("file1", os.O_WRONLY|os.O_CREATE, 0777)
+	require.NoError(t, err)
+	_, err = fh.Write([]byte("old content"))
+	require.NoError(t, err)
+	require.NoError(t, fh.Close())
+	vfs.WaitForWriters(waitForWritersDelay)
+
+	// Give the remote object an old modtime, like a file which has
+	// been on the remote for a while
+	oldTime := time.Now().Add(-time.Hour).Truncate(time.Second)
+	obj, err := r.Fremote.NewObject(ctx, "file1")
+	require.NoError(t, err)
+	require.NoError(t, obj.SetModTime(ctx, oldTime))
+
+	// Reopen the file for read-write like an editor would, write new
+	// content and set a fresh modtime (as the kernel does for utimens)
+	h, err := vfs.OpenFile("file1", os.O_RDWR, 0777)
+	require.NoError(t, err)
+	rw, ok := h.(*RWFileHandle)
+	require.True(t, ok)
+
+	_, err = rw.Write([]byte("new content"))
+	require.NoError(t, err)
+
+	newTime := time.Now().Truncate(time.Second)
+	require.NoError(t, rw.file.SetModTime(newTime))
+
+	require.NoError(t, rw.Close())
+	vfs.WaitForWriters(waitForWritersDelay)
+
+	// The upload which carried the new content must have carried the
+	// new modtime as well
+	puts := rec.putTimes()
+	require.NotEmpty(t, puts)
+	got := puts[len(puts)-1]
+	assert.False(t, got.Equal(oldTime), "upload carried modtime %v instead of the new time %v", got, newTime)
+	assert.WithinDuration(t, newTime, got, time.Second)
+}
+
+// TestRWFileHandleModTimeAfterRewriteReopen reproduces the LibreOffice
+// save flow from issue #9637: write the file, close it (which queues the
+// writeback), then reopen it without writing and close again while the
+// upload is still pending. The second close must not clobber the cache
+// file modtime with the old remote modtime, otherwise the pending upload
+// pushes the stale time to the server.
+func TestRWFileHandleModTimeAfterRewriteReopen(t *testing.T) {
+	r, vfs, _ := newRecordingVFS(t, &vfscommon.Options{
+		CacheMode: vfscommon.CacheModeFull,
+		WriteBack: fs.Duration(5 * time.Second),
+	})
+	ctx := context.Background()
+
+	// 1. Create the file, let the first upload settle on the remote
+	fh, err := vfs.OpenFile("file1", os.O_WRONLY|os.O_CREATE, 0777)
+	require.NoError(t, err)
+	_, err = fh.Write([]byte("old content"))
+	require.NoError(t, err)
+	require.NoError(t, fh.Close())
+	vfs.WaitForWriters(waitForWritersDelay)
+
+	// 2. Give the remote object an old modtime, like a file which has
+	// been on the remote for a while
+	oldTime := time.Now().Add(-time.Hour).Truncate(time.Second)
+	obj, err := r.Fremote.NewObject(ctx, "file1")
+	require.NoError(t, err)
+	require.NoError(t, obj.SetModTime(ctx, oldTime))
+
+	// 3. Rewrite the file: write new content, set a fresh modtime (as
+	// the kernel does for utimens) and close. This queues the writeback
+	// which fires in 5s.
+	h, err := vfs.OpenFile("file1", os.O_RDWR, 0777)
+	require.NoError(t, err)
+	rw, ok := h.(*RWFileHandle)
+	require.True(t, ok)
+	_, err = rw.Write([]byte("new content"))
+	require.NoError(t, err)
+	newTime := time.Now().Truncate(time.Second)
+	require.NoError(t, rw.file.SetModTime(newTime))
+	require.NoError(t, rw.Close())
+
+	// 4. Reopen without writing and close again (LibreOffice reopens the
+	// file to verify it after saving). This must not clobber the pending
+	// upload's modtime.
+	h2, err := vfs.OpenFile("file1", os.O_RDWR, 0777)
+	require.NoError(t, err)
+	rw2, ok := h2.(*RWFileHandle)
+	require.True(t, ok)
+	require.NoError(t, rw2.Close())
+	vfs.WaitForWriters(waitForWritersDelay)
+
+	// 5. The upload which carried the new content to the remote must
+	// have carried the new modtime as well - the remote must not be
+	// left with the old modtime (issue #9637).
+	obj, err = r.Fremote.NewObject(ctx, "file1")
+	require.NoError(t, err)
+	got := obj.ModTime(ctx)
+	assert.False(t, got.Equal(oldTime), "remote modtime is %v instead of the new time %v", got, newTime)
+	assert.WithinDuration(t, newTime, got, time.Second)
+}
+
+// Same as above but with a rename in between, like LibreOffice's
+// safe-save: write the new content into a temp file, then rename it over
+// the target while the writeback is still queued.
+func TestRWFileHandleModTimeAfterRewriteRename(t *testing.T) {
+	r, vfs, _ := newRecordingVFS(t, &vfscommon.Options{
+		CacheMode: vfscommon.CacheModeFull,
+		WriteBack: fs.Duration(5 * time.Second),
+	})
+	ctx := context.Background()
+
+	// 1. Target file on the remote with an old modtime
+	fh, err := vfs.OpenFile("file1", os.O_WRONLY|os.O_CREATE, 0777)
+	require.NoError(t, err)
+	_, err = fh.Write([]byte("old content"))
+	require.NoError(t, err)
+	require.NoError(t, fh.Close())
+	vfs.WaitForWriters(waitForWritersDelay)
+	oldTime := time.Now().Add(-time.Hour).Truncate(time.Second)
+	obj, err := r.Fremote.NewObject(ctx, "file1")
+	require.NoError(t, err)
+	require.NoError(t, obj.SetModTime(ctx, oldTime))
+
+	// 2. Write the new content into a temp file, set a fresh modtime
+	// and close (queues the writeback in 5s)
+	h, err := vfs.OpenFile("file1.tmp", os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0777)
+	require.NoError(t, err)
+	rw, ok := h.(*RWFileHandle)
+	require.True(t, ok)
+	_, err = rw.Write([]byte("new content"))
+	require.NoError(t, err)
+	newTime := time.Now().Truncate(time.Second)
+	require.NoError(t, rw.file.SetModTime(newTime))
+	require.NoError(t, rw.Close())
+
+	// 3. Rename the temp file over the target (safe save)
+	require.NoError(t, vfs.Rename("file1.tmp", "file1"))
+
+	// 4. Reopen the renamed file without writing and close again
+	h2, err := vfs.OpenFile("file1", os.O_RDWR, 0777)
+	require.NoError(t, err)
+	rw2, ok := h2.(*RWFileHandle)
+	require.True(t, ok)
+	require.NoError(t, rw2.Close())
+	vfs.WaitForWriters(waitForWritersDelay)
+
+	// 5. The upload which carried the renamed file to the remote must
+	// have carried the new modtime as well - the remote must not be
+	// left with the old modtime (issue #9637).
+	obj, err = r.Fremote.NewObject(ctx, "file1")
+	require.NoError(t, err)
+	got := obj.ModTime(ctx)
+	assert.False(t, got.Equal(oldTime), "remote modtime is %v instead of the new time %v", got, newTime)
+	assert.WithinDuration(t, newTime, got, time.Second)
 }

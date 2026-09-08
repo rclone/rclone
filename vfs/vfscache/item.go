@@ -643,6 +643,14 @@ func (item *Item) _store(ctx context.Context, storeFn StoreFn) (err error) {
 
 	// Object has disappeared if cacheObj == nil
 	if cacheObj != nil {
+		// Make sure the upload carries the item's modtime, not
+		// whatever modtime the cache file happens to have on disk.
+		// A reopen/close since the last write can reset the cache
+		// file's modtime to the remote object's modtime (see
+		// _actualClose), and the upload would then send that stale
+		// time to the server - e.g. Nextcloud can't fix it up
+		// afterwards as SetModTime is not supported.
+		item._setModTime(item.info.ModTime)
 		o, name := item.o, item.name
 		unlockMutexForCall(&item.mu, func() {
 			o, err = operations.Copy(ctx, item.c.fremote, o, name, cacheObj)
