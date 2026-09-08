@@ -105,7 +105,10 @@ func (o *Object) Hash(ctx context.Context, hashType hash.Type) (hashVal string, 
 		return hashVal, err
 	}
 	if f.autoHashes.Contains(hashType) && o.Size() < int64(f.opt.AutoSize) {
-		_ = o.updateHashes(ctx)
+		// Use singleflight to prevent concurrent downloads for same file
+		_, _, _ = f.hashGroup.Do(o.Remote(), func() (interface{}, error) {
+			return nil, o.updateHashes(ctx)
+		})
 		if hashVal, err = o.getHash(ctx, hashType); err != nil {
 			fs.Debugf(o, "auto %s = %q (%v)", hashType, hashVal, err)
 			err = nil
