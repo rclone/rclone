@@ -1,0 +1,17 @@
+name: Infomaniak
+description: Infomaniak Swiss Backup
+region:
+  us-east-1: |-
+    Default region for compatibility.
+    All data is stored in Switzerland.
+endpoint:
+  s3.swiss-backup01.infomaniak.com: Swiss Backup Location 01
+  s3.swiss-backup02.infomaniak.com: Swiss Backup Location 02
+  s3.swiss-backup03.infomaniak.com: Swiss Backup Location 03
+  s3.swiss-backup04.infomaniak.com: Swiss Backup Location 04
+location_constraint: {}
+acl: {}
+bucket_acl: true
+quirks:
+  force_path_style: true
+  use_multipart_etag: false
