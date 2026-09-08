@@ -5,6 +5,7 @@ import (
 	"mime"
 	"path"
 	"strings"
+	"github.com/gabriel-vasile/mimetype"
 )
 
 // Add a minimal number of mime types to augment go's built in types
@@ -55,6 +56,20 @@ func MimeTypeFromName(remote string) (mimeType string) {
 // MimeType returns the MimeType from the object, either by calling
 // the MimeTyper interface or using MimeTypeFromName
 func MimeType(ctx context.Context, o DirEntry) (mimeType string) {
+	// Guess the MimeType from content if possible
+	ci := GetConfig(ctx)
+	if ci.GuessMimetype {
+		if ob, ok := o.(Object); ok {
+			ro, err := ob.Open(ctx)
+			if err == nil {
+				defer ro.Close()
+				if mtype, err := mimetype.DetectReader(ro); err == nil &&
+					mtype.String() != "application/octet-stream" {
+					return mtype.String()
+				}
+			}
+		}
+	}
 	// Read the MimeType from the optional interface if available
 	if do, ok := o.(MimeTyper); ok {
 		mimeType = do.MimeType(ctx)
