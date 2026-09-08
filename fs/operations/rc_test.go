@@ -2,6 +2,7 @@ package operations_test
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -892,4 +893,211 @@ func TestRcHashsumFile(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "md5", out["hashType"])
 	assert.Equal(t, "0ef726ce9b1a7692357ff70dd321d595", out["hash"])
+}
+
+// operations/getfile: get a single file
+func TestRcGetFile(t *testing.T) {
+	ctx := context.Background()
+	r, call := rcNewRun(t, "operations/getfile")
+	r.Mkdir(ctx, r.Fremote)
+
+	file1Contents := "Hello Rclone GetFile Operation!"
+	file1 := r.WriteBoth(ctx, "getfile-file1.txt", file1Contents, t1)
+	r.CheckLocalItems(t, file1)
+	r.CheckRemoteItems(t, file1)
+
+	// 1. Basic test with fs + remote
+	in := rc.Params{
+		"fs":     r.FremoteName,
+		"remote": file1.Path,
+	}
+	out, err := call.Fn(ctx, in)
+	require.NoError(t, err)
+	assert.Equal(t, file1Contents, out["result"])
+
+	// 2. Combined fs parameter
+	in = rc.Params{
+		"fs": path.Join(r.FremoteName, file1.Path),
+	}
+	out, err = call.Fn(ctx, in)
+	require.NoError(t, err)
+	assert.Equal(t, file1Contents, out["result"])
+
+	// 3. Range offset and count
+	in = rc.Params{
+		"fs":     r.FremoteName,
+		"remote": file1.Path,
+		"offset": int64(6),
+		"count":  int64(6),
+	}
+	out, err = call.Fn(ctx, in)
+	require.NoError(t, err)
+	assert.Equal(t, "Rclone", out["result"])
+
+	// 4. Head flag
+	in = rc.Params{
+		"fs":     r.FremoteName,
+		"remote": file1.Path,
+		"head":   int64(5),
+	}
+	out, err = call.Fn(ctx, in)
+	require.NoError(t, err)
+	assert.Equal(t, "Hello", out["result"])
+
+	// 5. Tail flag
+	in = rc.Params{
+		"fs":     r.FremoteName,
+		"remote": file1.Path,
+		"tail":   int64(10),
+	}
+	out, err = call.Fn(ctx, in)
+	require.NoError(t, err)
+	assert.Equal(t, "Operation!", out["result"])
+
+	// 6. Negative offset
+	in = rc.Params{
+		"fs":     r.FremoteName,
+		"remote": file1.Path,
+		"offset": int64(-10),
+	}
+	out, err = call.Fn(ctx, in)
+	require.NoError(t, err)
+	assert.Equal(t, "Operation!", out["result"])
+
+	// 7. Base64 encoding for text file
+	in = rc.Params{
+		"fs":     r.FremoteName,
+		"remote": file1.Path,
+		"base64": true,
+	}
+	out, err = call.Fn(ctx, in)
+	require.NoError(t, err)
+	decoded, err := base64.StdEncoding.DecodeString(out["result"].(string))
+	require.NoError(t, err)
+	assert.Equal(t, file1Contents, string(decoded))
+
+	// 8. Binary file: UTF-8 rejection vs base64 success
+	binaryData := "\x00\xff\xfe\xfd\x80\x81"
+	binFile := r.WriteBoth(ctx, "binary.dat", binaryData, t1)
+	in = rc.Params{
+		"fs":     r.FremoteName,
+		"remote": binFile.Path,
+	}
+	_, err = call.Fn(ctx, in)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "not valid UTF-8")
+
+	in = rc.Params{
+		"fs":     r.FremoteName,
+		"remote": binFile.Path,
+		"base64": true,
+	}
+	out, err = call.Fn(ctx, in)
+	require.NoError(t, err)
+	decodedBin, err := base64.StdEncoding.DecodeString(out["result"].(string))
+	require.NoError(t, err)
+	assert.Equal(t, []byte(binaryData), decodedBin)
+
+	// 9. Max size limit violation test
+	in = rc.Params{
+		"fs":      r.FremoteName,
+		"remote":  file1.Path,
+		"maxSize": int64(5),
+	}
+	_, err = call.Fn(ctx, in)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "exceeds maximum limit")
+
+	// 10. Max size exceeding built-in limit
+	in = rc.Params{
+		"fs":      r.FremoteName,
+		"remote":  file1.Path,
+		"maxSize": int64(operations.DefaultGetFileMaxSize + 1),
+	}
+	_, err = call.Fn(ctx, in)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot exceed built-in maximum")
+
+	// 11. Invalid maxSize values (<= 0)
+	in = rc.Params{
+		"fs":      r.FremoteName,
+		"remote":  file1.Path,
+		"maxSize": int64(0),
+	}
+	_, err = call.Fn(ctx, in)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "maxSize must be greater than 0")
+
+	in["maxSize"] = int64(-5)
+	_, err = call.Fn(ctx, in)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "maxSize must be greater than 0")
+
+	// 12. Invalid parameter types
+	for _, badParam := range []rc.Params{
+		{"fs": r.FremoteName, "remote": file1.Path, "offset": "not_an_int"},
+		{"fs": r.FremoteName, "remote": file1.Path, "count": "not_an_int"},
+		{"fs": r.FremoteName, "remote": file1.Path, "head": "not_an_int"},
+		{"fs": r.FremoteName, "remote": file1.Path, "tail": "not_an_int"},
+		{"fs": r.FremoteName, "remote": file1.Path, "maxSize": "not_an_int"},
+		{"fs": r.FremoteName, "remote": file1.Path, "base64": "not_a_bool"},
+		{"fs": r.FremoteName, "remote": 12345},
+	} {
+		_, err = call.Fn(ctx, badParam)
+		require.Error(t, err)
+	}
+
+	// 13. Conflicting and invalid bounds
+	in = rc.Params{
+		"fs":     r.FremoteName,
+		"remote": file1.Path,
+		"head":   int64(5),
+		"tail":   int64(5),
+	}
+	_, err = call.Fn(ctx, in)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "can only use one of head, tail or offset/count")
+
+	in = rc.Params{
+		"fs":     r.FremoteName,
+		"remote": file1.Path,
+		"head":   int64(-1),
+	}
+	_, err = call.Fn(ctx, in)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "head cannot be negative")
+
+	in = rc.Params{
+		"fs":     r.FremoteName,
+		"remote": file1.Path,
+		"tail":   int64(-1),
+	}
+	_, err = call.Fn(ctx, in)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "tail cannot be negative")
+
+	// 14. Non-existent file / directory with 0 files
+	in = rc.Params{
+		"fs":     r.FremoteName,
+		"remote": "does_not_exist.txt",
+	}
+	_, err = call.Fn(ctx, in)
+	require.Error(t, err)
+
+	emptyDir := path.Join(r.LocalName, "emptydir")
+	require.NoError(t, os.Mkdir(emptyDir, 0755))
+	in = rc.Params{
+		"fs": emptyDir,
+	}
+	_, err = call.Fn(ctx, in)
+	require.Error(t, err)
+	assert.Equal(t, fs.ErrorObjectNotFound, err)
+
+	// 15. Directory containing multiple files
+	in = rc.Params{
+		"fs": r.FremoteName,
+	}
+	_, err = call.Fn(ctx, in)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "found more than one file")
 }

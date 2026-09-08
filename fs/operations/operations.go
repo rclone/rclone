@@ -1313,55 +1313,61 @@ type readCloser struct {
 // if count >= 0 then only that many characters will be output
 func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64, sep []byte) error {
 	var mu sync.Mutex
-	ci := fs.GetConfig(ctx)
 	return ListFn(ctx, f, func(o fs.Object) {
-		var err error
-		tr := accounting.Stats(ctx).NewTransfer(o, nil)
-		defer func() {
-			tr.Done(ctx, err)
-		}()
-		opt := fs.RangeOption{Start: offset, End: -1}
-		size := o.Size()
-		if opt.Start < 0 {
-			opt.Start += size
-		}
-		if count >= 0 {
-			opt.End = opt.Start + count - 1
-		}
-		var options []fs.OpenOption
-		if opt.Start > 0 || opt.End >= 0 {
-			options = append(options, &opt)
-		}
-		for _, option := range ci.DownloadHeaders {
-			options = append(options, option)
-		}
-		var in io.ReadCloser
-		in, err = Open(ctx, o, options...)
-		if err != nil {
-			err = fs.CountError(ctx, err)
-			fs.Errorf(o, "Failed to open: %v", err)
-			return
-		}
-		if count >= 0 {
-			in = &readCloser{Reader: &io.LimitedReader{R: in, N: count}, Closer: in}
-		}
-		in = tr.Account(ctx, in).WithBuffer() // account and buffer the transfer
-		// take the lock just before we output stuff, so at the last possible moment
 		mu.Lock()
 		defer mu.Unlock()
-		_, err = io.Copy(w, in)
+		err := catObject(ctx, o, w, offset, count)
 		if err != nil {
-			err = fs.CountError(ctx, err)
 			fs.Errorf(o, "Failed to send to output: %v", err)
+			return
 		}
 		if len(sep) > 0 {
-			_, err = w.Write(sep)
-			if err != nil {
+			if _, err := w.Write(sep); err != nil {
 				err = fs.CountError(ctx, err)
 				fs.Errorf(o, "Failed to send separator to output: %v", err)
 			}
 		}
 	})
+}
+
+// catObject sends an object or a range of it to the io.Writer
+func catObject(ctx context.Context, o fs.Object, w io.Writer, offset, count int64) (err error) {
+	tr := accounting.Stats(ctx).NewTransfer(o, nil)
+	defer func() {
+		tr.Done(ctx, err)
+	}()
+	opt := fs.RangeOption{Start: offset, End: -1}
+	size := o.Size()
+	if opt.Start < 0 && size >= 0 {
+		opt.Start += size
+	}
+	if count >= 0 {
+		opt.End = opt.Start + count - 1
+	}
+	var options []fs.OpenOption
+	if opt.Start > 0 || opt.End >= 0 {
+		options = append(options, &opt)
+	}
+	for _, option := range fs.GetConfig(ctx).DownloadHeaders {
+		options = append(options, option)
+	}
+	var in io.ReadCloser
+	in, err = Open(ctx, o, options...)
+	if err != nil {
+		err = fs.CountError(ctx, err)
+		return fmt.Errorf("failed to open file: %w", err)
+	}
+	if count >= 0 {
+		in = &readCloser{Reader: &io.LimitedReader{R: in, N: count}, Closer: in}
+	}
+	in = tr.Account(ctx, in).WithBuffer() // account and buffer the transfer
+	defer fs.CheckClose(in, &err)
+	_, err = io.Copy(w, in)
+	if err != nil {
+		err = fs.CountError(ctx, err)
+		return err
+	}
+	return nil
 }
 
 // Rcat reads data from the Reader until EOF and uploads it to a file on remote
