@@ -150,6 +150,8 @@ func (x *BwTimetable) Set(s string) error {
 		return nil
 	}
 
+	var newTimetable BwTimetable
+
 	// Split the timetable string by both spaces and semicolons
 	for tok := range strings.FieldsFuncSeq(s, func(r rune) bool {
 		return r == ' ' || r == ';'
@@ -178,7 +180,7 @@ func (x *BwTimetable) Set(s string) error {
 				if err := ts.Bandwidth.Set(tv[1]); err != nil {
 					return err
 				}
-				*x = append(*x, ts)
+				newTimetable = append(newTimetable, ts)
 			}
 		} else {
 			timespec := strings.Split(tv[0], "-")
@@ -205,9 +207,10 @@ func (x *BwTimetable) Set(s string) error {
 			if err := ts.Bandwidth.Set(tv[1]); err != nil {
 				return err
 			}
-			*x = append(*x, ts)
+			newTimetable = append(newTimetable, ts)
 		}
 	}
+	*x = newTimetable
 	return nil
 }
 
