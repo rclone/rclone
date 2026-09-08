@@ -116,11 +116,14 @@ func useBYOKCopyObject(fs *Fs, request *objectstorage.CopyObjectRequest) {
 	}
 	if fs.opt.SSECustomerAlgorithm != "" {
 		request.OpcSseCustomerAlgorithm = common.String(fs.opt.SSECustomerAlgorithm)
+		request.OpcSourceSseCustomerAlgorithm = common.String(fs.opt.SSECustomerAlgorithm)
 	}
 	if fs.opt.SSECustomerKey != "" {
 		request.OpcSseCustomerKey = common.String(fs.opt.SSECustomerKey)
+		request.OpcSourceSseCustomerKey = common.String(fs.opt.SSECustomerKey)
 	}
 	if fs.opt.SSECustomerKeySha256 != "" {
 		request.OpcSseCustomerKeySha256 = common.String(fs.opt.SSECustomerKeySha256)
+		request.OpcSourceSseCustomerKeySha256 = common.String(fs.opt.SSECustomerKeySha256)
 	}
 }
