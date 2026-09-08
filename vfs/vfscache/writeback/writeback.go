@@ -204,6 +204,17 @@ func (wb *WriteBack) _peekItem() (wbItem *writeBackItem) {
 	return wb.items[0]
 }
 
+// IsUploading returns true if the item is currently being uploaded
+func (wb *WriteBack) IsUploading(id Handle) bool {
+	wb.mu.Lock()
+	defer wb.mu.Unlock()
+
+	if wbItem, ok := wb.lookup[id]; ok {
+		return wbItem.uploading
+	}
+	return false
+}
+
 // stop the timer which runs the expiries
 func (wb *WriteBack) _stopTimer() {
 	if wb.expiry.IsZero() {
