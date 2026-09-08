@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"path/filepath"
 	"runtime"
 	"testing"
 
@@ -167,4 +168,35 @@ func TestIsReserved(t *testing.T) {
 	// Name end with a space or a period
 	require.Error(t, IsReserved("test."))
 	require.Error(t, IsReserved("test "))
+}
+
+// Test Rename, including renaming over a destination that still has an open
+// handle - the case that plain os.Rename fails on Windows.
+func TestRename(t *testing.T) {
+	dir := t.TempDir()
+
+	src := filepath.Join(dir, "src")
+	dst := filepath.Join(dir, "dst")
+
+	// Rename when the destination does not exist
+	require.NoError(t, os.WriteFile(src, []byte("one"), 0666))
+	require.NoError(t, Rename(src, dst))
+	_, err := os.Stat(src)
+	assert.True(t, os.IsNotExist(err))
+	buf, err := os.ReadFile(dst)
+	require.NoError(t, err)
+	assert.Equal(t, "one", string(buf))
+
+	// Rename over an existing destination that still has an open handle
+	require.NoError(t, os.WriteFile(src, []byte("two"), 0666))
+	f, err := Open(dst) // keep dst open across the rename
+	require.NoError(t, err)
+	require.NoError(t, Rename(src, dst))
+	assert.NoError(t, f.Close())
+
+	_, err = os.Stat(src)
+	assert.True(t, os.IsNotExist(err))
+	buf, err = os.ReadFile(dst)
+	require.NoError(t, err)
+	assert.Equal(t, "two", string(buf))
 }
