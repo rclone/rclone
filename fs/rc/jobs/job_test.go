@@ -529,7 +529,7 @@ func TestRcJobStatus(t *testing.T) {
 
 	call := rc.Calls.Get("job/status")
 	assert.NotNil(t, call)
-	in := rc.Params{"jobid": 1}
+	in := rc.Params{"jobId": 1}
 	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.NotNil(t, out)
@@ -539,7 +539,7 @@ func TestRcJobStatus(t *testing.T) {
 	assert.Equal(t, false, out["finished"])
 	assert.Equal(t, false, out["success"])
 
-	in = rc.Params{"jobid": 123123123}
+	in = rc.Params{"jobid": 123123123} // also check backwards compatibility
 	_, err = call.Fn(context.Background(), in)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "job not found")
@@ -589,12 +589,12 @@ func TestRcAsyncJobStop(t *testing.T) {
 
 	call := rc.Calls.Get("job/stop")
 	assert.NotNil(t, call)
-	in := rc.Params{"jobid": 1}
+	in := rc.Params{"jobId": 1}
 	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.Empty(t, out)
 
-	in = rc.Params{"jobid": 123123123}
+	in = rc.Params{"jobid": 123123123} // also check backwards compatibility
 	_, err = call.Fn(context.Background(), in)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "job not found")
@@ -608,7 +608,7 @@ func TestRcAsyncJobStop(t *testing.T) {
 
 	call = rc.Calls.Get("job/status")
 	assert.NotNil(t, call)
-	in = rc.Params{"jobid": 1}
+	in = rc.Params{"jobId": 1}
 	out, err = call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.NotNil(t, out)
@@ -632,12 +632,12 @@ func TestRcSyncJobStop(t *testing.T) {
 
 	call := rc.Calls.Get("job/stop")
 	assert.NotNil(t, call)
-	in := rc.Params{"jobid": 1}
+	in := rc.Params{"jobId": 1}
 	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.Empty(t, out)
 
-	in = rc.Params{"jobid": 123123123}
+	in = rc.Params{"jobid": 123123123} // also check backwards compatibility
 	_, err = call.Fn(context.Background(), in)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "job not found")
@@ -652,7 +652,7 @@ func TestRcSyncJobStop(t *testing.T) {
 
 	call = rc.Calls.Get("job/status")
 	assert.NotNil(t, call)
-	in = rc.Params{"jobid": 1}
+	in = rc.Params{"jobId": 1}
 	out, err = call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.NotNil(t, out)
@@ -693,7 +693,7 @@ func TestRcJobStopGroup(t *testing.T) {
 	call = rc.Calls.Get("job/status")
 	assert.NotNil(t, call)
 	for i := 1; i <= 2; i++ {
-		in = rc.Params{"jobid": i}
+		in = rc.Params{"jobId": i}
 		out, err = call.Fn(context.Background(), in)
 		require.NoError(t, err)
 		require.NotNil(t, out)
