@@ -171,6 +171,23 @@ var OptionsInfo = fs.Options{{
 	Help:    "Time to keep file handle and downloaders alive after last close",
 	Groups:  "VFS",
 }, {
+	Name:    "vfs_lazy_dir_read",
+	Default: false,
+	Help: `Use HeadObject instead of listing the directory on stat
+
+When set, looking up a single file (e.g. via stat or FUSE Lookup) will use
+NewObject (HeadObject for S3) instead of listing the whole directory.
+This avoids fetching the full directory listing for large flat buckets when
+only specific files are accessed.
+
+If the object is not found it will attempt a bounded list to check whether
+the name is a directory.
+
+Note: this option has no effect when --vfs-case-insensitive or
+--vfs-block-norm-dupes are set, as those features require a full directory
+listing to operate correctly.`,
+	Groups: "VFS",
+}, {
 	Name:    "vfs_metadata_extension",
 	Default: "",
 	Help:    "Set the extension to read metadata from.",
@@ -216,6 +233,7 @@ type Options struct {
 	DiskSpaceTotalSize fs.SizeSuffix `config:"vfs_disk_space_total_size"`
 	HandleCaching      fs.Duration   `config:"vfs_handle_caching"`     // time to keep handle alive after last close
 	MetadataExtension  string        `config:"vfs_metadata_extension"` // if set respond to files with this extension with metadata
+	LazyDirRead        bool          `config:"vfs_lazy_dir_read"`      // if set use HeadObject instead of listing on stat
 }
 
 // Opt is the default options modified by the environment variables and command line flags
