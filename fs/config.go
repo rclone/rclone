@@ -566,6 +566,11 @@ var ConfigOptionsInfo = Options{{
 	Default: "",
 	Help:    "HTTP proxy URL.",
 	Groups:  "Networking",
+}, {
+	Name:    "guess_mimetype",
+	Default: false,
+	Help:    "Try to guess mime type of files with magic numbers",
+	Groups:  "Copy",
 }}
 
 // ConfigInfo is filesystem config options
@@ -680,6 +685,7 @@ type ConfigInfo struct {
 	MaxConnections             int               `config:"max_connections"`
 	NameTransform              []string          `config:"name_transform"`
 	HTTPProxy                  string            `config:"http_proxy"`
+	GuessMimetype              bool              `config:"guess_mimetype"`  
 }
 
 func init() {
