@@ -573,10 +573,12 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 				fs.Errorf(nil, "Unable to parse URL %q: %v", f.endpointURL, err)
 				return fs.ErrorDirNotFound
 			}
-			resumeURL, err := rest.URLJoin(u, rest.URLPathEscape(resumeStart))
+			// A bad resume start must fail the listing rather than
+			// return fs.ErrorDirNotFound which sync treats as an empty
+			// directory
+			resumeURL, err := rest.URLJoinRoot(u, resumeStart)
 			if err != nil {
-				fs.Errorf(nil, "Unable to join URL %q for resumeStart %s: %v", f.endpointURL, resumeStart, err)
-				return fs.ErrorDirNotFound
+				return fmt.Errorf("unable to join URL %q for resumeStart %q: %w", f.endpointURL, resumeStart, err)
 			}
 			URL = resumeURL.String()
 		}
