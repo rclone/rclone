@@ -236,9 +236,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, fmt.Errorf("couldn't parse URL %q: %w", opt.Endpoint, err)
 	}
-	u, err := rest.URLJoin(base, rest.URLPathEscape(root))
+	u, err := rest.URLJoinRoot(base, root)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't join URL %q and %q: %w", base.String(), root, err)
+		return nil, err
 	}
 	client := fshttp.NewClient(ctx)
 
