@@ -646,6 +646,38 @@ func TestLocalPath(t *testing.T) {
 	}
 }
 
+// TestLinkSuffixDirectory checks that in --links mode a directory whose
+// name ends in ".rclonelink" is an ordinary directory. Only files are
+// translated into links, so the suffix must stay in its path rather
+// than making it address a sibling.
+func TestLinkSuffixDirectory(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	f := r.Flocal.(*Fs)
+	linksMode(f)
+
+	dir := "sub" + fs.LinkSuffix
+	want := filepath.Join(f.root, dir)
+	mtime := fstest.Time("2001-02-03T04:05:06Z")
+
+	d, err := f.MkdirMetadata(ctx, dir, fs.Metadata{"mtime": mtime.Format(time.RFC3339Nano)})
+	require.NoError(t, err)
+	assert.Equal(t, want, d.(*Directory).path)
+	fi, err := os.Lstat(want)
+	require.NoError(t, err)
+	assert.True(t, fi.IsDir())
+	assert.True(t, fi.ModTime().Equal(mtime), "metadata was not written to the directory")
+
+	entries, err := f.List(ctx, "")
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
+	got, ok := entries[0].(*Directory)
+	require.True(t, ok)
+	assert.Equal(t, dir, got.Remote())
+	assert.Equal(t, want, got.path)
+	assert.False(t, got.translatedLink)
+}
+
 func TestHashWithTypeNone(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
