@@ -21,6 +21,13 @@ returns for its access key ID. Each access key ID is a separate user,
 whose multipart uploads and object metadata are private to it, even if
 the proxy maps several access key IDs to the same backend.
 
+As on AWS, every `x-amz-*` header in an authenticated request must be
+in its signed headers list; a request with an unsigned `x-amz-*`
+header is refused with `AccessDenied`. S3 clients sign these headers
+as a matter of course, but a header added after signing (for example
+by a proxy in front of the server, or `x-amz-meta-*` headers sent
+with a presigned URL which only signs the host) is refused.
+
 Like all rclone flags `--auth-key` can be set via environment
 variables, in this case `RCLONE_AUTH_KEY`. Since this flag can be
 repeated, the input to `RCLONE_AUTH_KEY` is CSV encoded. Because the

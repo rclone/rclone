@@ -34,6 +34,7 @@ import (
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/rclone/rclone/fstest/testy"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/vfs"
@@ -702,6 +703,112 @@ func TestListObjectsDelimitedPagingWithMinioClient(t *testing.T) {
 			})
 		}
 	}
+}
+
+// testUnsignedAmzHeader checks that a request carrying an x-amz-*
+// header which is not in its signed headers list is refused, as AWS
+// does. Otherwise a presigned PUT URL for one object, which signs only
+// the host header, could be turned into a copy from any object the
+// server can reach by adding an unsigned x-amz-copy-source header.
+func testUnsignedAmzHeader(t *testing.T, useProxy bool) {
+	fstest.Initialise()
+	root := t.TempDir()
+	f, err := fs.NewFs(context.Background(), root)
+	require.NoError(t, err)
+
+	const (
+		secret   = "THIS-IS-THE-VICTIM-FILE"
+		original = "PLACEHOLDER-ORIGINAL-CONTENT"
+		uploaded = "UPLOADED-WITH-PRESIGNED-URL"
+	)
+	ctx := context.Background()
+	fstests.PutTestContents(ctx, t, f, &fstest.Item{Path: "src/secret.txt", ModTime: time.Now()}, secret, true)
+	fstests.PutTestContents(ctx, t, f, &fstest.Item{Path: "dst/target.txt", ModTime: time.Now()}, original, true)
+	readFile := func(name string) string {
+		return fstests.ReadObject(ctx, t, fstest.NewObject(ctx, t, f, name), -1)
+	}
+
+	serveFs := f
+	if useProxy {
+		prog, err := filepath.Abs("../servetest/proxy_code.go")
+		require.NoError(t, err)
+		proxy.Opt.AuthProxy = "go run " + prog + " " + root
+		defer func() {
+			proxy.Opt.AuthProxy = ""
+		}()
+		serveFs = nil
+	}
+	endpoint, keyid, keysec, s := serveS3(t, serveFs)
+	defer func() {
+		assert.NoError(t, s.server.Shutdown())
+	}()
+
+	creds := aws.Credentials{AccessKeyID: keyid, SecretAccessKey: keysec}
+	do := func(req *http.Request) (int, string) {
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		body, _ := io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+		return resp.StatusCode, string(body)
+	}
+	sign := func(req *http.Request) {
+		req.Header.Set("X-Amz-Content-Sha256", "UNSIGNED-PAYLOAD")
+		err := v4.NewSigner().SignHTTP(context.Background(), creds, req, "UNSIGNED-PAYLOAD", "s3", "us-east-1", time.Now())
+		require.NoError(t, err)
+	}
+
+	// A presigned PUT URL for dst/target.txt which signs only the host header
+	req, err := http.NewRequest("PUT", endpoint+"/dst/target.txt", nil)
+	require.NoError(t, err)
+	presigned, _, err := v4.NewSigner().PresignHTTP(context.Background(), creds, req, "UNSIGNED-PAYLOAD", "s3", "us-east-1", time.Now())
+	require.NoError(t, err)
+	presignedURL, err := url.Parse(presigned)
+	require.NoError(t, err)
+	require.Equal(t, "host", presignedURL.Query().Get("X-Amz-SignedHeaders"))
+
+	// It works as intended
+	req, err = http.NewRequest("PUT", presigned, strings.NewReader(uploaded))
+	require.NoError(t, err)
+	status, body := do(req)
+	assert.Equal(t, http.StatusOK, status, body)
+	assert.Equal(t, uploaded, readFile("dst/target.txt"))
+
+	// But must not become a copy from an object the URL does not name
+	req, err = http.NewRequest("PUT", presigned, nil)
+	require.NoError(t, err)
+	req.Header.Set("x-amz-copy-source", "/src/secret.txt")
+	status, body = do(req)
+	assert.Equal(t, http.StatusForbidden, status, body)
+	assert.Contains(t, body, "AccessDenied")
+	assert.Equal(t, uploaded, readFile("dst/target.txt"))
+
+	// Nor may an unsigned header be added to a request signed with an
+	// Authorization header
+	req, err = http.NewRequest("PUT", endpoint+"/dst/target.txt", nil)
+	require.NoError(t, err)
+	sign(req)
+	req.Header.Set("x-amz-copy-source", "/src/secret.txt")
+	status, body = do(req)
+	assert.Equal(t, http.StatusForbidden, status, body)
+	assert.Contains(t, body, "AccessDenied")
+	assert.Equal(t, uploaded, readFile("dst/target.txt"))
+
+	// Whereas a copy whose x-amz-copy-source header is signed is allowed
+	req, err = http.NewRequest("PUT", endpoint+"/dst/target.txt", nil)
+	require.NoError(t, err)
+	req.Header.Set("x-amz-copy-source", "/src/secret.txt")
+	sign(req)
+	status, body = do(req)
+	assert.Equal(t, http.StatusOK, status, body)
+	assert.Equal(t, secret, readFile("dst/target.txt"))
+}
+
+func TestUnsignedAmzHeader(t *testing.T) {
+	testUnsignedAmzHeader(t, false)
+}
+
+func TestUnsignedAmzHeaderAuthProxy(t *testing.T) {
+	testUnsignedAmzHeader(t, true)
 }
 
 func TestRc(t *testing.T) {
