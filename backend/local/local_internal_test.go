@@ -621,6 +621,122 @@ func TestLocalPath(t *testing.T) {
 	}
 }
 
+// TestLinkSuffixEscapeBlocked checks that in --links mode a name which
+// passes the root check with its ".rclonelink" suffix can't escape the
+// destination once the suffix is removed: "...rclonelink" must not
+// become "..", the parent of the root.
+func TestLinkSuffixEscapeBlocked(t *testing.T) {
+	skipIfNoSymlinks(t)
+	ctx := context.Background()
+	outer := t.TempDir()
+	newLinksFs := func(dir, encoding string) *Fs {
+		fRaw, err := NewFs(ctx, "local", filepath.Join(outer, dir), configmap.Simple{"encoding": encoding})
+		require.NoError(t, err)
+		f := fRaw.(*Fs)
+		linksMode(f)
+		require.NoError(t, f.Mkdir(ctx, ""))
+		return f
+	}
+	f := newLinksFs("dst", encoder.OS.String())
+	s := newLinksFs("slash", "Slash")
+
+	// Stamp the parent of the destinations so a write to it shows up.
+	before := fstest.Time("2011-12-25T12:59:59Z")
+	require.NoError(t, os.Chtimes(outer, before, before))
+	parentUnchanged := func() {
+		t.Helper()
+		fi, err := os.Lstat(outer)
+		require.NoError(t, err)
+		assert.True(t, fi.ModTime().Equal(before), "the parent of the destination was modified")
+	}
+
+	// A directory called "...rclonelink" is created under its own name
+	// and its metadata goes there, not to the parent of the root which
+	// trimming the suffix off its path would address.
+	remote := ".." + fs.LinkSuffix
+	metadata := fs.Metadata{"mtime": "2001-02-03T04:05:06Z"}
+	_, err := f.MkdirMetadata(ctx, remote, metadata)
+	require.NoError(t, err)
+	parentUnchanged()
+
+	// A file called "...rclonelink" is a link called "..", which the
+	// default encoding stores as fullwidth dots like any other name.
+	require.NoError(t, putFile(ctx, f, remote, "target"))
+	fi, err := os.Lstat(filepath.Join(f.root, "．．"))
+	require.NoError(t, err)
+	assert.NotZero(t, fi.Mode()&os.ModeSymlink)
+	parentUnchanged()
+
+	// Ordinary translated links still resolve to the file without the suffix.
+	o, err := f.newObject("sub/link" + fs.LinkSuffix)
+	require.NoError(t, err)
+	assert.True(t, o.translatedLink)
+	assert.Equal(t, filepath.Join(f.root, "sub", "link"), o.path)
+
+	// A name which merely contains the suffix is a regular file.
+	o, err = f.newObject("sub/link" + fs.LinkSuffix + ".txt")
+	require.NoError(t, err)
+	assert.False(t, o.translatedLink)
+	assert.Equal(t, filepath.Join(f.root, "sub", "link"+fs.LinkSuffix+".txt"), o.path)
+
+	// An encoding without Dot leaves ".." as a real ".." once the suffix
+	// is gone, so the name is refused instead.
+	require.ErrorIs(t, putFile(ctx, s, remote, "PWNED"), errLinkNameInvalid)
+	_, err = s.MkdirMetadata(ctx, remote, metadata)
+	require.NoError(t, err)
+	parentUnchanged()
+
+	// As is any other name which doesn't leave a file name once the
+	// suffix is removed and the encoding applied.
+	for _, name := range []string{
+		remote,
+		"sub/.." + fs.LinkSuffix,
+		"sub/." + fs.LinkSuffix,
+		"sub/．．" + fs.LinkSuffix,
+		"sub/sub2/．．" + fs.LinkSuffix,
+		"sub/．" + fs.LinkSuffix,
+		"sub/" + fs.LinkSuffix,
+		fs.LinkSuffix,
+	} {
+		_, err = s.newObject(name)
+		assert.ErrorIs(t, err, errLinkNameInvalid, name)
+		assert.True(t, fserrors.IsNoRetryError(err), name)
+	}
+
+	// The root check still applies to the name of the link.
+	_, err = s.newObject("../link" + fs.LinkSuffix)
+	require.ErrorIs(t, err, errPathEscapes)
+
+	if runtime.GOOS == "windows" {
+		// A backslash is a path separator on Windows, so an encoding
+		// without BackSlash can hide ".." behind one.
+		w := newLinksFs("win", "Slash,Dot")
+		_, err = w.newObject(`sub\..` + fs.LinkSuffix)
+		assert.ErrorIs(t, err, errLinkNameInvalid)
+	}
+}
+
+// TestLinkSuffixListSkipsInvalidName checks that with --links a regular
+// file whose name is just the suffix is reported as an error and skipped
+// rather than failing the listing of its whole directory.
+func TestLinkSuffixListSkipsInvalidName(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	f := r.Flocal.(*Fs)
+	linksMode(f)
+	when := fstest.Time("2001-02-03T04:05:06Z")
+	r.WriteFile("sub/"+fs.LinkSuffix, "not a link", when)
+	r.WriteFile("sub/file.txt", "hello", when)
+
+	accounting.Stats(ctx).ResetErrors()
+	entries, err := f.List(ctx, "sub")
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
+	assert.Equal(t, "sub/file.txt", entries[0].Remote())
+	assert.Equal(t, int64(1), accounting.Stats(ctx).GetErrors())
+	accounting.Stats(ctx).ResetErrors()
+}
+
 // TestLinkSuffixDirectory checks that in --links mode a directory whose
 // name ends in ".rclonelink" is an ordinary directory. Only files are
 // translated into links, so the suffix must stay in its path rather
