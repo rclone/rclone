@@ -449,6 +449,14 @@ files.  If deleting them permanently is required then use the
 `--drive-use-trash=false` flag, or set the equivalent environment
 variable.
 
+When deleting a file that was shared with you, Google Drive often
+rejects a normal delete with `insufficientFilePermissions` because you
+do not own the file. In that case rclone unlinks the file from the
+folder you can see it in (via `removeParents`) instead of deleting the
+owner's original. If the shared item has no parent folder (typical for
+some Shared-with-me root entries) or has multiple parents, the delete
+still fails and rclone reports why.
+
 ### Shortcuts
 
 In March 2020 Google introduced a new feature in Google Drive called

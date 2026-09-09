@@ -2728,8 +2728,23 @@ func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) e
 	return o.SetModTime(ctx, modTime)
 }
 
-// delete a file or directory unconditionally by ID
+// delete a file or directory unconditionally by ID.
+//
+// Shared files that the user can see but not delete return 403
+// insufficientFilePermissions. In that case fall back to removing the
+// file from its parent folder (unlinking) instead of deleting the
+// underlying owned object. See https://github.com/rclone/rclone/issues/3998
 func (f *Fs) delete(ctx context.Context, id string, useTrash bool) error {
+	err := f.deleteOwned(ctx, id, useTrash)
+	if err == nil || !isInsufficientFilePermissions(err) {
+		return err
+	}
+	fs.Debugf(f, "delete of %s forbidden (%v); unlinking from parent instead", id, err)
+	return f.unlinkFromParents(ctx, id)
+}
+
+// deleteOwned trashes or permanently deletes a Drive file by ID.
+func (f *Fs) deleteOwned(ctx context.Context, id string, useTrash bool) error {
 	return f.pacer.Call(func() (bool, error) {
 		var err error
 		if useTrash {
@@ -2748,6 +2763,67 @@ func (f *Fs) delete(ctx context.Context, id string, useTrash bool) error {
 		}
 		return f.shouldRetry(ctx, err)
 	})
+}
+
+// unlinkFromParents removes id from its Drive parent folders.
+//
+// This is used when the user cannot delete the owned file (shared with
+// them) but can remove it from a folder they can write to.
+func (f *Fs) unlinkFromParents(ctx context.Context, id string) error {
+	info, err := f.getFile(ctx, id, "id,parents")
+	if err != nil {
+		return fmt.Errorf("can't unlink shared file %s: %w", id, err)
+	}
+	parentID, err := chooseUnlinkParent(id, info.Parents)
+	if err != nil {
+		return err
+	}
+	return f.unlinkFromParent(ctx, id, parentID)
+}
+
+// chooseUnlinkParent picks the single parent folder to remove id from.
+func chooseUnlinkParent(id string, parents []string) (string, error) {
+	if len(parents) == 0 {
+		return "", fmt.Errorf("can't delete shared file %s: no parent folder to unlink from", id)
+	}
+	if len(parents) > 1 {
+		return "", errors.New("can't delete safely - has multiple parents")
+	}
+	return parents[0], nil
+}
+
+// unlinkFromParent removes id from a single parent folder.
+func (f *Fs) unlinkFromParent(ctx context.Context, id, parentID string) error {
+	return f.pacer.Call(func() (bool, error) {
+		_, err := f.svc.Files.Update(id, nil).
+			RemoveParents(parentID).
+			Fields("").
+			SupportsAllDrives(true).
+			Context(ctx).Do()
+		return f.shouldRetry(ctx, err)
+	})
+}
+
+// isInsufficientFilePermissions reports whether err is a Drive 403
+// insufficientFilePermissions error (typical for shared files the user
+// can see but not delete).
+func isInsufficientFilePermissions(err error) bool {
+	var gerr *googleapi.Error
+	if !errors.As(err, &gerr) {
+		return false
+	}
+	if gerr.Code != http.StatusForbidden {
+		return false
+	}
+	for _, item := range gerr.Errors {
+		if item.Reason == "insufficientFilePermissions" {
+			return true
+		}
+	}
+	// Some responses only set the top-level message.
+	msg := strings.ToLower(gerr.Message)
+	return strings.Contains(msg, "insufficientfilepermissions") ||
+		strings.Contains(msg, "does not have sufficient permissions")
 }
 
 // purgeCheck removes the dir directory, if check is set then it
