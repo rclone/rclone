@@ -47,3 +47,15 @@ func TestRCRequestContext(t *testing.T) {
 	// An unmarked context stays unmarked
 	assert.False(t, IsRCRequest(CopyConfig(context.Background(), ctx)))
 }
+
+// HTTP/2 multiplexes all concurrent transfers over a single TCP
+// connection, which performs badly on lossy networks - see #8379.
+// The disable_http2 default must stay on so that multi-threaded
+// downloads get multiple connections.
+func TestDisableHTTP2Default(t *testing.T) {
+	opt := ConfigOptionsInfo.Get("disable_http2")
+	assert.NotNil(t, opt)
+	if opt != nil {
+		assert.Equal(t, true, opt.Default)
+	}
+}
