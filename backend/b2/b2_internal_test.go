@@ -4,6 +4,8 @@ import (
 	"context"
 	"crypto/sha1"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"path"
 	"sort"
 	"strings"
@@ -617,3 +619,60 @@ func (f *Fs) InternalTest(t *testing.T) {
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)
+
+// redirectTestHeaders is a deliberately literal copy of
+// redirectSecretHeaders so that a header dropped from the production
+// list fails TestRedirectSecretHeaders rather than silently losing
+// test coverage.
+var redirectTestHeaders = map[string]string{
+	"Authorization": "secret-token",
+	"X-Bz-Server-Side-Encryption-Customer-Algorithm": "AES256",
+	"X-Bz-Server-Side-Encryption-Customer-Key":       "secret-key",
+	"X-Bz-Server-Side-Encryption-Customer-Key-Md5":   "secret-md5",
+}
+
+func TestRedirectSecretHeaders(t *testing.T) {
+	want := make([]string, 0, len(redirectTestHeaders))
+	for header := range redirectTestHeaders {
+		want = append(want, header)
+	}
+	sort.Strings(want)
+	got := append([]string(nil), redirectSecretHeaders...)
+	sort.Strings(got)
+	assert.Equal(t, want, got)
+}
+
+// redirectTestRequest makes a GET request to rawURL carrying the
+// secret headers plus a harmless marker header.
+func redirectTestRequest(t *testing.T, rawURL string) *http.Request {
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, rawURL, nil)
+	require.NoError(t, err)
+	for header, value := range redirectTestHeaders {
+		req.Header.Set(header, value)
+	}
+	req.Header.Set("X-Bz-Test-Mode", "marker")
+	return req
+}
+
+func TestClientStripsSecretHeadersOnCrossHostRedirect(t *testing.T) {
+	client := newClient(context.Background())
+
+	redirectServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		for header := range redirectTestHeaders {
+			assert.Empty(t, r.Header.Get(header), "%s should have been stripped", header)
+		}
+		assert.Equal(t, "marker", r.Header.Get("X-Bz-Test-Mode"))
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer redirectServer.Close()
+
+	initialServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, redirectServer.URL, http.StatusTemporaryRedirect)
+	}))
+	defer initialServer.Close()
+
+	resp, err := client.Do(redirectTestRequest(t, initialServer.URL))
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.NoError(t, resp.Body.Close())
+}
