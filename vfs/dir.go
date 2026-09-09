@@ -478,6 +478,9 @@ func (d *Dir) AddVirtual(leaf string, size int64, isDir bool) {
 			// since the path came from the cache it may have fs.LinkSuffix,
 			// so remove it and mark the *File accordingly
 			leaf, isLink = strings.CutSuffix(leaf, fs.LinkSuffix)
+			if leaf == "" || leaf == "." || leaf == ".." {
+				return
+			}
 		}
 		f := newFile(d, dPath, nil, leaf)
 		if isLink {
@@ -724,11 +727,13 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 	mv := d._newManageVirtuals()
 	for _, entry := range entries {
 		name := path.Base(entry.Remote())
-		if name == "." || name == ".." {
-			continue
-		}
 		if d.vfs.Opt.Links {
 			name, _ = strings.CutSuffix(name, fs.LinkSuffix)
+		}
+		// Check after removing the suffix so "...rclonelink" can't
+		// become an entry called ".."
+		if name == "" || name == "." || name == ".." {
+			continue
 		}
 		node := d.items[name]
 		if mv.add(d, name) {

@@ -16,6 +16,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -31,6 +32,41 @@ func dirCreate(t *testing.T) (r *fstest.Run, vfs *VFS, dir *Dir, item fstest.Ite
 	require.True(t, node.IsDir())
 
 	return r, vfs, node.(*Dir), file1
+}
+
+// TestDirLinksInvalidName checks that with --links an object called
+// "...rclonelink" doesn't become a directory entry called "..", which
+// would address the parent, whether it comes from a listing or from
+// the cache.
+func TestDirLinksInvalidName(t *testing.T) {
+	opt := vfscommon.Opt
+	opt.Links = true
+	r, vfs := newTestVFSOpt(t, &opt)
+
+	file1 := r.WriteObject(context.Background(), "dir/.."+fs.LinkSuffix, "target", t1)
+	file2 := r.WriteObject(context.Background(), "dir/file1", "file1 contents", t1)
+	r.CheckRemoteItems(t, file1, file2)
+
+	node, err := vfs.Stat("dir")
+	require.NoError(t, err)
+	dir := node.(*Dir)
+
+	checkEntries := func() {
+		t.Helper()
+		entries, err := dir.ReadDirAll()
+		require.NoError(t, err)
+		var names []string
+		for _, entry := range entries {
+			names = append(names, entry.Name())
+		}
+		assert.Equal(t, []string{"file1"}, names)
+	}
+	checkEntries()
+
+	for _, leaf := range []string{".." + fs.LinkSuffix, "." + fs.LinkSuffix, fs.LinkSuffix} {
+		dir.AddVirtual(leaf, 6, false)
+	}
+	checkEntries()
 }
 
 func TestDirMethods(t *testing.T) {
