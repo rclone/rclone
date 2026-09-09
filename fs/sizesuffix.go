@@ -182,7 +182,7 @@ func (x *SizeSuffix) Set(s string) error {
 	}
 	value *= multiplier
 	if value >= float64(SizeSuffixMaxValue) {
-		return fmt.Errorf("size can't be greater than %d bytes", int64(SizeSuffixMaxValue))
+		return fmt.Errorf("value can't be greater than %d", int64(SizeSuffixMaxValue))
 	}
 	*x = SizeSuffix(value)
 	return nil
