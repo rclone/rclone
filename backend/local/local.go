@@ -644,15 +644,23 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 }
 
 // Create new directory object from the info passed in
+//
+// Directories are never translated links, so the name is used as is
+// whatever suffix it has.
 func (f *Fs) newDirectory(dir string, fi os.FileInfo) (*Directory, error) {
-	o, err := f.newObject(dir)
+	localPath, err := f.localPath(dir)
 	if err != nil {
 		return nil, err
 	}
-	o.setMetadata(fi)
-	return &Directory{
-		Object: *o,
-	}, nil
+	d := &Directory{
+		Object: Object{
+			fs:     f,
+			remote: dir,
+			path:   localPath,
+		},
+	}
+	d.setMetadata(fi)
+	return d, nil
 }
 
 // List the objects and directories in dir into entries.  The
