@@ -735,6 +735,23 @@ knows about - please make a bug report if not.
 			Default:  fs.Tristate{},
 			Advanced: true,
 		}, {
+			Name: "check_bucket_ownership",
+			Help: strings.ReplaceAll(`Check that the bucket exists and is accessible before treating a
+|BucketAlreadyExists| or |BucketNameUnavailable| error on bucket
+creation as success.
+
+Some providers return the same error for creating a
+bucket the user already owns and for creating a bucket owned by
+someone else, so rclone can't tell which case it is. On those
+providers rclone checks the bucket is accessible before treating the
+error as success and reports the error if it can't access the bucket.
+
+This should be automatically set correctly for all providers rclone
+knows about - please make a bug report if not.
+`, "|", "`"),
+			Default:  fs.Tristate{},
+			Advanced: true,
+		}, {
 			Name: "use_multipart_uploads",
 			Help: `Set if rclone should use multipart uploads.
 
@@ -2959,7 +2976,6 @@ func (f *Fs) bucketCreateError(ctx context.Context, bucket string, err error) er
 	}
 	switch awsErr.ErrorCode() {
 	case "BucketAlreadyOwnedByYou":
-		// we already own the bucket so it exists
 		return nil
 	case "BucketAlreadyExists", "BucketNameUnavailable":
 		if f.opt.UseAlreadyExists.Value {
