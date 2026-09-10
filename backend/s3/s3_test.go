@@ -523,7 +523,7 @@ func newTestS3Fs(t *testing.T, provider, serverURL string) *Fs {
 // fakeBucketServer emulates a Hetzner style bucket endpoint: CreateBucket
 // (PUT) always returns 409 with the given S3 error code, and HeadBucket
 // (HEAD) returns the given status
-func fakeBucketServer(t *testing.T, putCode string, headStatus int) *httptest.Server {
+func fakeBucketServer(t *testing.T, putCode string, headStatus int, headAllowed bool) *httptest.Server {
 	var requests []string
 	t.Cleanup(func() {
 		for _, req := range requests {
@@ -539,6 +539,9 @@ func fakeBucketServer(t *testing.T, putCode string, headStatus int) *httptest.Se
 			body := "<Error><Code>" + putCode + "</Code><Message>The requested bucket name is not available</Message></Error>"
 			_, _ = w.Write([]byte(body))
 		case http.MethodHead:
+			if !headAllowed {
+				t.Errorf("HEAD %s should not have been attempted", r.URL.Path)
+			}
 			w.WriteHeader(headStatus)
 		default:
 			w.WriteHeader(http.StatusNotFound)
@@ -549,17 +552,18 @@ func fakeBucketServer(t *testing.T, putCode string, headStatus int) *httptest.Se
 // TestMakeBucketOwnBucket reports success for an ambiguous 409 error (e.g.
 // Hetzner) when the bucket is accessible
 func TestMakeBucketOwnBucket(t *testing.T) {
-	server := fakeBucketServer(t, "BucketNameUnavailable", http.StatusOK)
+	server := fakeBucketServer(t, "BucketNameUnavailable", http.StatusOK, true)
 	defer server.Close()
 	f := newTestS3Fs(t, "Hetzner", server.URL)
 	require.False(t, f.opt.UseAlreadyExists.Value, "expected Hetzner to clear the use_already_exists quirk")
+	require.True(t, f.opt.CheckBucketOwnership.Value, "expected Hetzner to set the check_bucket_ownership quirk")
 	assert.NoError(t, f.makeBucket(context.Background(), "test-bucket"))
 }
 
 // TestMakeBucketNotOurBucket reports an error for an ambiguous 409 error
 // (e.g. Hetzner) when the bucket is not accessible
 func TestMakeBucketNotOurBucket(t *testing.T) {
-	server := fakeBucketServer(t, "BucketNameUnavailable", http.StatusNotFound)
+	server := fakeBucketServer(t, "BucketNameUnavailable", http.StatusNotFound, true)
 	defer server.Close()
 	f := newTestS3Fs(t, "Hetzner", server.URL)
 	err := f.makeBucket(context.Background(), "test-bucket")
@@ -567,17 +571,28 @@ func TestMakeBucketNotOurBucket(t *testing.T) {
 	assert.True(t, fserrors.IsNoRetryError(err), "%v", err)
 }
 
+// TestMakeBucketAmbiguousUnverified keeps the old behaviour of swallowing
+// ambiguous 409 errors for providers without the quirk
+func TestMakeBucketAmbiguousUnverified(t *testing.T) {
+	server := fakeBucketServer(t, "BucketNameUnavailable", http.StatusNotFound, false)
+	defer server.Close()
+	f := newTestS3Fs(t, "Ceph", server.URL)
+	require.False(t, f.opt.UseAlreadyExists.Value, "expected Ceph to clear the use_already_exists quirk")
+	require.False(t, f.opt.CheckBucketOwnership.Value, "expected Ceph not to set the check_bucket_ownership quirk")
+	assert.NoError(t, f.makeBucket(context.Background(), "test-bucket"))
+}
+
 // TestMakeBucketErrorCodes covers the other bucket error codes
 func TestMakeBucketErrorCodes(t *testing.T) {
 	// BucketAlreadyOwnedByYou always reports success
-	server := fakeBucketServer(t, "BucketAlreadyOwnedByYou", http.StatusNotFound)
+	server := fakeBucketServer(t, "BucketAlreadyOwnedByYou", http.StatusNotFound, true)
 	defer server.Close()
 	f := newTestS3Fs(t, "Hetzner", server.URL)
 	assert.NoError(t, f.makeBucket(context.Background(), "test-bucket"))
 
 	// With use_already_exists set (the default) the ambiguous error always
 	// reports failure
-	server = fakeBucketServer(t, "BucketNameUnavailable", http.StatusNotFound)
+	server = fakeBucketServer(t, "BucketNameUnavailable", http.StatusNotFound, false)
 	defer server.Close()
 	f = newTestS3Fs(t, "AWS", server.URL)
 	require.True(t, f.opt.UseAlreadyExists.Value, "expected AWS to keep the use_already_exists quirk")

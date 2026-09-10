@@ -1132,6 +1132,7 @@ type Options struct {
 	UseAcceptEncodingGzip       fs.Tristate          `config:"use_accept_encoding_gzip"`
 	NoSystemMetadata            bool                 `config:"no_system_metadata"`
 	UseAlreadyExists            fs.Tristate          `config:"use_already_exists"`
+	CheckBucketOwnership        fs.Tristate          `config:"check_bucket_ownership"`
 	UseMultipartUploads         fs.Tristate          `config:"use_multipart_uploads"`
 	UseUnsignedPayload          fs.Tristate          `config:"use_unsigned_payload"`
 	SDKLogMode                  sdkLogMode           `config:"sdk_log_mode"`
@@ -1802,6 +1803,7 @@ func setQuirks(opt *Options, provider *Provider) {
 	set(&opt.UseDataIntegrityProtections, false, provider.Quirks.UseDataIntegrityProtections)
 	set(&opt.MightGzip, true, provider.Quirks.MightGzip)
 	set(&opt.UseAlreadyExists, true, provider.Quirks.UseAlreadyExists)
+	set(&opt.CheckBucketOwnership, false, provider.Quirks.CheckBucketOwnership)
 	set(&opt.UseMultipartUploads, true, provider.Quirks.UseMultipartUploads)
 	if !opt.UseMultipartUploads.Value {
 		opt.UploadCutoff = math.MaxInt64
@@ -2964,10 +2966,13 @@ func (f *Fs) bucketCreateError(ctx context.Context, bucket string, err error) er
 			// We can trust the error to mean not owned by us, so make it non retriable
 			return fserrors.NoRetryError(err)
 		}
-		if exists, _ := f.bucketExists(ctx, bucket); exists {
-			return nil
+		if f.opt.CheckBucketOwnership.Value {
+			if exists, _ := f.bucketExists(ctx, bucket); exists {
+				return nil
+			}
+			return fserrors.NoRetryError(err)
 		}
-		return fserrors.NoRetryError(err)
+		return nil
 	}
 	return err
 }
