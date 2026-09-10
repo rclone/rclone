@@ -2983,10 +2983,11 @@ func (f *Fs) bucketCreateError(ctx context.Context, bucket string, err error) er
 			return fserrors.NoRetryError(err)
 		}
 		if f.opt.CheckBucketOwnership.Value {
-			if exists, _ := f.bucketExists(ctx, bucket); exists {
-				return nil
+			// Error is returned for both owned and unowned fs objects,
+			// so check ownership
+			if exists, _ := f.bucketExists(ctx, bucket); !exists {
+				return fserrors.NoRetryError(err)
 			}
-			return fserrors.NoRetryError(err)
 		}
 		return nil
 	}
