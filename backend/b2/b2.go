@@ -64,7 +64,7 @@ const (
 	maxParts            = 10000
 	maxVersions         = 100 // maximum number of versions we search in --b2-versions mode
 	minChunkSize        = 5 * fs.Mebi
-	defaultChunkSize    = 96 * fs.Mebi
+	defaultChunkSize    = 16 * fs.Mebi
 	defaultUploadCutoff = 200 * fs.Mebi
 	largeFileCopyCutoff = 4 * fs.Gibi // 5E9 is the max
 	defaultMaxAge       = 24 * time.Hour
@@ -153,7 +153,12 @@ The minimum is 0 and the maximum is 4.6 GiB.`,
 When uploading large files, chunk the file into this size.
 
 Must fit in memory. These chunks are buffered in memory and there
-might a maximum of "--transfers" chunks in progress at once.
+might be a maximum of "--transfers" * "--b2-upload-concurrency"
+chunks in progress at once.
+
+B2 has a fixed per part overhead of about a second, so upload speed
+is roughly proportional to the chunk size multiplied by
+"--b2-upload-concurrency".
 
 5,000,000 Bytes is the minimum size.`,
 			Default:  defaultChunkSize,
@@ -168,7 +173,7 @@ concurrently.
 Note that chunks are stored in memory and there may be up to
 "--transfers" * "--b2-upload-concurrency" chunks stored at once
 in memory.`,
-			Default:  4,
+			Default:  8,
 			Advanced: true,
 		}, {
 			Name: "disable_checksum",
