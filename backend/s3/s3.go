@@ -2942,24 +2942,34 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 		if err == nil {
 			fs.Infof(f, "Bucket %q created with ACL %q", bucket, f.opt.BucketACL)
 		}
-		if awsErr, ok := errors.AsType[smithy.APIError](err); ok {
-			switch awsErr.ErrorCode() {
-			case "BucketAlreadyOwnedByYou":
-				err = nil
-			case "BucketAlreadyExists", "BucketNameUnavailable":
-				if f.opt.UseAlreadyExists.Value {
-					// We can trust BucketAlreadyExists to mean not owned by us, so make it non retriable
-					err = fserrors.NoRetryError(err)
-				} else {
-					// We can't trust BucketAlreadyExists to mean not owned by us, so ignore it
-					err = nil
-				}
-			}
-		}
-		return err
+		return f.bucketCreateError(ctx, bucket, err)
 	}, func() (bool, error) {
 		return f.bucketExists(ctx, bucket)
 	})
+}
+
+// bucketCreateError maps the error returned when creating a bucket to the
+// error rclone should report
+func (f *Fs) bucketCreateError(ctx context.Context, bucket string, err error) error {
+	awsErr, ok := errors.AsType[smithy.APIError](err)
+	if !ok {
+		return err
+	}
+	switch awsErr.ErrorCode() {
+	case "BucketAlreadyOwnedByYou":
+		// we already own the bucket so it exists
+		return nil
+	case "BucketAlreadyExists", "BucketNameUnavailable":
+		if f.opt.UseAlreadyExists.Value {
+			// We can trust the error to mean not owned by us, so make it non retriable
+			return fserrors.NoRetryError(err)
+		}
+		if exists, _ := f.bucketExists(ctx, bucket); exists {
+			return nil
+		}
+		return fserrors.NoRetryError(err)
+	}
+	return err
 }
 
 // Rmdir deletes the bucket if the fs is at the root
