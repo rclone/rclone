@@ -365,7 +365,11 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Pr
 	var result api.Multistatus
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallXML(ctx, &opts, nil, &result)
+		var attempt api.Multistatus
+		resp, err = f.srv.CallXML(ctx, &opts, nil, &attempt)
+		if err == nil {
+			result = attempt
+		}
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if apiErr, ok := err.(*api.Error); ok {
@@ -815,7 +819,11 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 	var result api.Multistatus
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallXML(ctx, &opts, nil, &result)
+		var attempt api.Multistatus
+		resp, err = f.srv.CallXML(ctx, &opts, nil, &attempt)
+		if err == nil {
+			result = attempt
+		}
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {

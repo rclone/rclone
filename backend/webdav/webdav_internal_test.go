@@ -284,3 +284,73 @@ func TestCopyFallsBackWhenRangeIgnored(t *testing.T) {
 	assert.LessOrEqual(t, rangeRequests.Load(), int32(3))
 	assert.Equal(t, int32(1), fullRequests.Load())
 }
+
+// TestListAllRetryDoesNotConcatenate verifies that when a listing PROPFIND
+// fails after having partially decoded and is retried, the final listing is
+// exactly the retried response, with no entries carried over from the
+// failed attempt.
+func TestListAllRetryDoesNotConcatenate(t *testing.T) {
+	entryXML := func(i int) string {
+		name := fmt.Sprintf("file-%03d.bin", i)
+		return "<d:response><d:href>/" + name + "</d:href><d:propstat><d:prop>" +
+			"<d:displayname>" + name + "</d:displayname><d:getcontentlength>1024</d:getcontentlength>" +
+			"</d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response>\n"
+	}
+	head := `<?xml version="1.0" encoding="utf-8"?><d:multistatus xmlns:d="DAV:">`
+	self := head + `<d:response><d:href>/</d:href><d:propstat><d:prop><d:resourcetype><d:collection xmlns:d="DAV:"/></d:resourcetype></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response></d:multistatus>`
+	writeEntries := func(w http.ResponseWriter, from, to int) {
+		_, err := fmt.Fprint(w, head)
+		require.NoError(t, err)
+		for i := from; i <= to; i++ {
+			_, err := fmt.Fprint(w, entryXML(i))
+			require.NoError(t, err)
+		}
+	}
+
+	var listCalls atomic.Int64
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, "PROPFIND", r.Method)
+		w.Header().Set("Content-Type", "application/xml; charset=utf-8")
+		if r.Header.Get("Depth") == "0" {
+			w.WriteHeader(207)
+			_, err := fmt.Fprint(w, self)
+			require.NoError(t, err)
+			return
+		}
+		if listCalls.Add(1) == 1 {
+			// return file-000..file-010 but kill the response before it
+			// completes, so the client has parsed those entries when it
+			// hits an unexpected EOF
+			w.Header().Set("Content-Length", "1000000")
+			w.WriteHeader(207)
+			writeEntries(w, 0, 10)
+			return
+		}
+		// return the disjoint file-011..file-030 as a complete listing
+		w.WriteHeader(207)
+		writeEntries(w, 11, 30)
+		_, err := fmt.Fprint(w, "</d:multistatus>")
+		require.NoError(t, err)
+	}))
+	defer ts.Close()
+
+	configfile.Install()
+	m := configmap.Simple{
+		"type": "webdav",
+		"url":  ts.URL,
+	}
+	f, err := webdav.NewFs(context.Background(), remoteName, "", m)
+	require.NoError(t, err)
+
+	entries, err := f.List(context.Background(), "")
+	require.NoError(t, err)
+	var remotes []string
+	for _, e := range entries {
+		remotes = append(remotes, e.Remote())
+	}
+	var want []string
+	for i := 11; i <= 30; i++ {
+		want = append(want, fmt.Sprintf("file-%03d.bin", i))
+	}
+	assert.ElementsMatch(t, want, remotes)
+}
