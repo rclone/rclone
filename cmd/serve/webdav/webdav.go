@@ -258,8 +258,8 @@ func webDAVCompressMiddleware() func(http.Handler) http.Handler {
 var _ webdav.FileSystem = (*WebDAV)(nil)
 
 // Make a new WebDAV to serve the remote
-func newWebDAV(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Options, proxyOpt *proxy.Options) (w *WebDAV, err error) {
-	w = &WebDAV{
+func newWebDAV(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Options, proxyOpt *proxy.Options) (_ *WebDAV, err error) {
+	w := &WebDAV{
 		f:            f,
 		ctx:          ctx,
 		opt:          *opt,

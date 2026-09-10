@@ -1224,3 +1224,14 @@ put them back in again. -->
 - Splainte <r.wycke@hotmail.fr>
 - PSR94 <88868390+PSR94@users.noreply.github.com>
 - Shane McCarron <shane.mccarron@corvexconnect.com>
+- Dhevenddra K G <121691114+Dhevenddra@users.noreply.github.com>
+- Vaibhav Mashal <110161673+vaibhavmashal@users.noreply.github.com>
+- Murat Topcu <murat-topcu@outlook.com>
+- tomaszni <tomaszni@users.noreply.github.com>
+- eliotee <17210244+eliotee@users.noreply.github.com>
+- Aditya <f20220497@goa.bits-pilani.ac.in>
+- Nicholas Velten <nikvelten@gmail.com>
+- youdie006 <xncb135@korea.ac.kr>
+- subomi <86053854+ubmids@users.noreply.github.com>
+- Can Arslan <138895927+mc2rcanarslan@users.noreply.github.com>
+- Can Arslan <carslan@viyaenv.com>
