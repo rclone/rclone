@@ -283,7 +283,7 @@ func (f *Fs) httpConnection(ctx context.Context, opt *Options) (isFile bool, err
 	if err != nil {
 		return false, err
 	}
-	u, err := rest.URLJoin(base, rest.URLPathEscape(f.root))
+	u, err := rest.URLJoinRoot(base, f.root)
 	if err != nil {
 		return false, err
 	}
