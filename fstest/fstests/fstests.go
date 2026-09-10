@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io"
 	"math/bits"
+	"net"
 	"os"
 	"path"
 	"path/filepath"
@@ -21,6 +22,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -587,6 +589,51 @@ func Run(t *testing.T, opt *Opt) {
 			require.Equal(t, filepath.Base(subRemoteName), filepath.Base(got))
 		} else {
 			require.Equal(t, want, got)
+		}
+	})
+
+	// TestFsRootCannotChangeHost tests that a root beginning with //
+	// is treated as a path and can't move the remote to a host of the
+	// attacker's choosing.
+	//
+	// A root beginning with // is a network-path reference under the
+	// URL standard so a backend which resolves its root as a URL
+	// reference against a configured URL could send requests, and
+	// whatever credentials go with them, to the host named in the root.
+	t.Run("FsRootCannotChangeHost", func(t *testing.T) {
+		skipIfNotOk(t)
+		if !strings.HasSuffix(remoteName, ":") {
+			t.Skip("root of a path based remote can't be a network-path reference")
+		}
+		ln, err := net.Listen("tcp", "127.0.0.1:0")
+		require.NoError(t, err)
+		defer func() { _ = ln.Close() }()
+		var connections atomic.Int32
+		go func() {
+			for {
+				conn, err := ln.Accept()
+				if err != nil {
+					return
+				}
+				connections.Add(1)
+				// Reply with junk so the client fails at once rather than retrying a closed connection
+				_, _ = conn.Write([]byte("\x00\xff\x00\xff junk\n"))
+				_ = conn.Close()
+			}
+		}()
+		host := ln.Addr().String()
+		for _, root := range []string{
+			"//" + host + "/",
+			"//" + host + "/" + subRemoteLeaf + "/",
+			"//user:pass@" + host + "/",
+		} {
+			remote := remoteName + root
+			f, err := fs.NewFs(context.Background(), remote)
+			if err == nil {
+				// Not all backends contact the remote in NewFs
+				_, _ = f.List(context.Background(), "")
+			}
+			assert.Equal(t, int32(0), connections.Load(), "remote %q connected to the host named in its root", remote)
 		}
 	})
 
