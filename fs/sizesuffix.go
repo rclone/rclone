@@ -181,6 +181,9 @@ func (x *SizeSuffix) Set(s string) error {
 		return fmt.Errorf("size can't be negative %q", s)
 	}
 	value *= multiplier
+	if value >= float64(SizeSuffixMaxValue) {
+		return fmt.Errorf("value can't be greater than %d", int64(SizeSuffixMaxValue))
+	}
 	*x = SizeSuffix(value)
 	return nil
 }
