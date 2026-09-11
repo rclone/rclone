@@ -2912,6 +2912,10 @@ of timeouts or bigger if you have lots of bandwidth and a fast remote.
 
 The default is to run 4 file transfers in parallel.
 
+This can be changed while rclone is running with the
+[options/set](/rc/#options-set) rc command which will adjust the
+number of transfers of syncs in progress too.
+
 Look at --multi-thread-streams if you would like to control single file transfers.
 
 ### -u, --update
