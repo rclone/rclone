@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"path"
+	"strings"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -33,7 +33,7 @@ type Fs struct {
 	name     string        // the name of the remote
 	root     string        // The root directory (OS path)
 	features *fs.Features  // optional features
-	rootDir  fs.DirEntries // directory listing of root
+	entries  fs.DirEntries // directory listing of root
 	hashes   hash.Set      // which hashes we support
 }
 
@@ -50,15 +50,23 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 	return f, nil
 }
 
-// AddObject adds an Object for List to return
-// Only works for the root for the moment
-func (f *Fs) AddObject(o fs.Object) {
-	f.rootDir = append(f.rootDir, o)
+func (f *Fs) AddDirEntry(e fs.DirEntry) {
+	f.entries = append(f.entries, e)
 	// Make this object part of mockfs if possible
-	do, ok := o.(interface{ SetFs(f fs.Fs) })
+	do, ok := e.(interface{ SetFs(f fs.Fs) })
 	if ok {
 		do.SetFs(f)
 	}
+}
+
+// AddObject adds an Object for List to return
+func (f *Fs) AddObject(o fs.Object) {
+	f.AddDirEntry(o)
+}
+
+// AddDir adds a Directory for List to return
+func (f *Fs) AddDir(d fs.Directory) {
+	f.AddDirEntry(d)
 }
 
 // Name of the remote (as passed into NewFs)
@@ -106,21 +114,36 @@ func (f *Fs) Features() *fs.Features {
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	if dir == "" {
-		return f.rootDir, nil
+	for _, entry := range f.entries {
+		remote := entry.Remote()
+		if !strings.HasPrefix(remote, dir) {
+			continue
+		}
+		remaining := remote[len(dir):]
+		// Only direct children
+		if !strings.Contains(remaining, "/") {
+			entries = append(entries, entry)
+		}
 	}
-	return entries, fs.ErrorDirNotFound
+	if len(entries) == 0 && dir != "" {
+		return nil, fs.ErrorDirNotFound
+	}
+	return entries, nil
 }
 
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error ErrorObjectNotFound.
+//
+// If remote points to a directory then it should return
+// ErrorIsDir if possible without doing any extra work,
+// otherwise ErrorObjectNotFound.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	dirPath := path.Dir(remote)
-	if dirPath == "" || dirPath == "." {
-		for _, entry := range f.rootDir {
-			if entry.Remote() == remote {
-				return entry.(fs.Object), nil
+	for _, entry := range f.entries {
+		if entry.Remote() == remote {
+			if _, ok := entry.(fs.Directory); ok {
+				return nil, fs.ErrorIsDir
 			}
+			return entry.(fs.Object), nil
 		}
 	}
 	return nil, fs.ErrorObjectNotFound
