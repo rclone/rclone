@@ -238,6 +238,7 @@ type Fs struct {
 	authSingleflight   *singleflight.Group
 	digestAuthMu       sync.Mutex        // mutex to protect the digest fields below
 	digestChal         *digest.Challenge // challenge to sign requests with, nil if the server hasn't asked for digest
+	digestURL          *url.URL          // URL digestChal came from, so credentials go nowhere else
 	digestCount        int               // number of times digestChal has been used
 }
 
@@ -330,6 +331,7 @@ func (f *Fs) setDigestChallenge(resp *http.Response) bool {
 		fs.Debugf(f, "Server requires digest authentication")
 	}
 	f.digestChal = chal
+	f.digestURL = resp.Request.URL
 	return true
 }
 
@@ -358,7 +360,7 @@ type digestRoundTripper struct {
 
 // RoundTrip adds Digest authentication to the request.
 func (drt *digestRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	chal, count := drt.f.takeDigestChallenge()
+	chal, count := drt.f.takeDigestChallenge(req.URL)
 	if chal == nil {
 		return drt.rt.RoundTrip(req)
 	}
@@ -379,15 +381,18 @@ func (drt *digestRoundTripper) RoundTrip(req *http.Request) (*http.Response, err
 }
 
 // takeDigestChallenge returns the challenge to sign a request with and the
-// nonce count to sign it with, or nil if the server hasn't asked for digest
+// nonce count to sign it with, or nil if that host hasn't asked for digest
 // authentication.
 //
 // Every call takes the next count, so no two requests are signed with the
 // same one.
-func (f *Fs) takeDigestChallenge() (*digest.Challenge, int) {
+func (f *Fs) takeDigestChallenge(u *url.URL) (*digest.Challenge, int) {
 	f.digestAuthMu.Lock()
 	defer f.digestAuthMu.Unlock()
-	if f.digestChal == nil {
+	// http.Client strips Authorization on a cross-host redirect, but that is
+	// above the transport, so signing here would put it back - the same
+	// problem as GHSA-486v-q2wf-fp2r had with --header
+	if f.digestChal == nil || !rest.SameHost(f.digestURL, u) {
 		return nil, 0
 	}
 	f.digestCount++
