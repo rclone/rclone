@@ -10,20 +10,24 @@ package webdav
 import (
 	"compress/gzip"
 	"context"
+	"encoding/xml"
 	"flag"
 	"io"
 	"net/http"
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	_ "github.com/rclone/rclone/backend/local"
+	_ "github.com/rclone/rclone/backend/memory"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/servetest"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/filter"
+	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
@@ -324,6 +328,78 @@ func TestCompressedPROPFIND(t *testing.T) {
 	body, err := io.ReadAll(gr)
 	require.NoError(t, err)
 	assert.Contains(t, string(body), "multistatus")
+}
+
+// multistatus mirrors enough of the PROPFIND response shape to read back
+// getlastmodified per href.
+type multistatus struct {
+	Responses []struct {
+		Href     string `xml:"href"`
+		Propstat []struct {
+			Prop struct {
+				LastModified string `xml:"getlastmodified"`
+			} `xml:"prop"`
+		} `xml:"propstat"`
+	} `xml:"response"`
+}
+
+// TestPROPFINDLastModifiedUnknownModTime checks that a directory whose
+// modtime isn't known to the backend (e.g. a bucket-style backend like
+// swift or s3, simulated here with the memory backend) doesn't report the
+// static --default-time fallback in its PROPFIND getlastmodified property.
+func TestPROPFINDLastModifiedUnknownModTime(t *testing.T) {
+	ctx := context.Background()
+	f, err := fs.NewFs(ctx, ":memory:TestPROPFINDLastModifiedUnknownModTime")
+	require.NoError(t, err)
+
+	before := time.Now().Add(-time.Minute)
+	_, err = f.Put(ctx, strings.NewReader("hello world\n"), object.NewStaticObjectInfo("subdir/hello.txt", time.Now(), 12, true, nil, nil))
+	require.NoError(t, err)
+
+	opt := Opt
+	opt.HTTP.ListenAddr = []string{testBindAddress}
+	opt.Template.Path = testTemplate
+	opt.Auth.BasicUser = testUser
+	opt.Auth.BasicPass = testPass
+
+	w, err := newWebDAV(ctx, f, &opt, &vfscommon.Opt, &proxy.Opt)
+	require.NoError(t, err)
+	go func() { require.NoError(t, w.Serve()) }()
+	defer func() { assert.NoError(t, w.Shutdown()) }()
+	testURL := w.server.URLs()[0]
+
+	req, err := http.NewRequest("PROPFIND", testURL, nil)
+	require.NoError(t, err)
+	req.SetBasicAuth(testUser, testPass)
+	req.Header.Set("Depth", "1")
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer func() { _ = resp.Body.Close() }()
+	require.Equal(t, http.StatusMultiStatus, resp.StatusCode)
+
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	var ms multistatus
+	require.NoError(t, xml.Unmarshal(body, &ms))
+
+	defaultTime := time.Time(fs.GetConfig(ctx).DefaultTime)
+	found := false
+	for _, r := range ms.Responses {
+		if !strings.HasSuffix(strings.TrimSuffix(r.Href, "/"), "subdir") {
+			continue
+		}
+		require.NotEmpty(t, r.Propstat)
+		lastModified := r.Propstat[0].Prop.LastModified
+		require.NotEmpty(t, lastModified)
+		modTime, err := http.ParseTime(lastModified)
+		require.NoError(t, err)
+		assert.False(t, modTime.Equal(defaultTime), "getlastmodified should not be the static --default-time fallback")
+		assert.True(t, modTime.After(before), "getlastmodified should be close to the current time")
+		found = true
+	}
+	require.True(t, found, "expected a PROPFIND response entry for subdir")
 }
 
 func TestRangeRequestNotCompressed(t *testing.T) {
