@@ -21,6 +21,7 @@ features:
 - ListP
 - ListR
 - OpenChunkWriter
+- Purge
 - PutStream
 - ReadMetadata
 - ReadMimeType

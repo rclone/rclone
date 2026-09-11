@@ -5,6 +5,7 @@ package oracleobjectstorage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -302,17 +303,28 @@ func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) e
 // listFn is called from list to handle an object.
 type listFn func(remote string, object *objectstorage.ObjectSummary, isDirectory bool) error
 
-// list the objects into the function supplied from
-// the bucket and root supplied
-// (bucket, directory) is the starting directory
+// list calls fn for objects in bucket and directory.
+//
+// ctx controls the API requests.
+// bucket is the bucket to list.
+// directory is the path to list within bucket.
 // If prefix is set then it is removed from all file names
 // If addBucket is set then it adds the bucket to the start of the remotes generated
 // If recurse is set the function will recursively list
 // If limit is > 0 then it limits to that many files (must be less than 1000)
-// If hidden is set then it will list the hidden (deleted) files too.
-// if findFile is set it will look for files called (bucket, directory)
-func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBucket bool, recurse bool, limit int,
-	fn listFn) (err error) {
+// includeDirectoryMarkers includes zero-length objects with names ending in a slash.
+// fn receives each listed object.
+func (f *Fs) list(
+	ctx context.Context,
+	bucket string,
+	directory string,
+	prefix string,
+	addBucket bool,
+	recurse bool,
+	limit int,
+	includeDirectoryMarkers bool,
+	fn listFn,
+) (err error) {
 	if prefix != "" {
 		prefix += "/"
 	}
@@ -407,7 +419,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 				remote = path.Join(bucket, remote)
 			}
 			// is this a directory marker?
-			if isDirectory && object.Size != nil && *object.Size == 0 {
+			if isDirectory && object.Size != nil && *object.Size == 0 && !includeDirectoryMarkers {
 				continue // skip directory marker
 			}
 			if isDirectory && len(remote) > 1 {
@@ -456,7 +468,7 @@ func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addB
 		}
 		return nil
 	}
-	err = f.list(ctx, bucket, directory, prefix, addBucket, false, 0, fn)
+	err = f.list(ctx, bucket, directory, prefix, addBucket, false, 0, false, fn)
 	if err != nil {
 		return err
 	}
@@ -641,6 +653,66 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	})
 }
 
+// ------------------------------------------------------------
+// Implement Purger is an optional interfaces for Fs
+//------------------------------------------------------------
+
+// Purge deletes all the files in dir.
+//
+// It implements fs.Purger, using OCI batch requests rather than removing each
+// object returned by List. It also removes directory markers and, when dir is
+// a bucket root, removes the empty bucket.
+func (f *Fs) Purge(ctx context.Context, dir string) error {
+	bucketName, directory := f.split(dir)
+	if bucketName == "" {
+		return fs.ErrorListBucketRequired
+	}
+	const batchSize = 1000
+	objects := make([]objectstorage.BatchDeleteObjectIdentifier, 0, batchSize)
+	deleteObjects := func() error {
+		if len(objects) == 0 {
+			return nil
+		}
+		req := objectstorage.BatchDeleteObjectsRequest{
+			NamespaceName: new(f.opt.Namespace),
+			BucketName:    new(bucketName),
+			BatchDeleteObjectsDetails: objectstorage.BatchDeleteObjectsDetails{
+				Objects:             objects,
+				IsSkipDeletedResult: new(true),
+			},
+		}
+		var resp objectstorage.BatchDeleteObjectsResponse
+		err := f.pacer.Call(func() (bool, error) {
+			var err error
+			resp, err = f.srv.BatchDeleteObjects(ctx, req)
+			return shouldRetry(ctx, resp.HTTPResponse(), err)
+		})
+		if err != nil {
+			return err
+		}
+		var errs []error
+		for _, failed := range resp.Failed {
+			errs = append(errs, fmt.Errorf("failed to delete object %q: %s", *failed.ObjectName, *failed.ErrorMessage))
+		}
+		objects = objects[:0]
+		return errors.Join(errs...)
+	}
+	err := f.list(ctx, bucketName, directory, f.rootDirectory, false, true, 0, true, func(_ string, object *objectstorage.ObjectSummary, _ bool) error {
+		objects = append(objects, objectstorage.BatchDeleteObjectIdentifier{ObjectName: object.Name})
+		if len(objects) == batchSize {
+			return deleteObjects()
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	if err = deleteObjects(); err != nil {
+		return err
+	}
+	return f.Rmdir(ctx, dir)
+}
+
 func (f *Fs) abortMultiPartUpload(ctx context.Context, bucketName, bucketPath, uploadID *string) (err error) {
 	if uploadID == nil || *uploadID == "" {
 		return nil
@@ -728,7 +800,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	bucketName, directory := f.split(dir)
 	list := list.NewHelper(callback)
 	listR := func(bucket, directory, prefix string, addBucket bool) error {
-		return f.list(ctx, bucket, directory, prefix, addBucket, true, 0, func(remote string, object *objectstorage.ObjectSummary, isDirectory bool) error {
+		return f.list(ctx, bucket, directory, prefix, addBucket, true, 0, false, func(remote string, object *objectstorage.ObjectSummary, isDirectory bool) error {
 			entry, err := f.itemToDirEntry(ctx, remote, object, isDirectory)
 			if err != nil {
 				return err
@@ -806,6 +878,7 @@ var (
 	_ fs.ListPer         = &Fs{}
 	_ fs.Commander       = &Fs{}
 	_ fs.CleanUpper      = &Fs{}
+	_ fs.Purger          = &Fs{}
 	_ fs.OpenChunkWriter = &Fs{}
 
 	_ fs.Object    = &Object{}
