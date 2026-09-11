@@ -6,10 +6,13 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync/atomic"
 	"testing"
 
+	auth "github.com/abbot/go-http-auth"
 	"github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/backend/webdav"
 	"github.com/rclone/rclone/fs"
@@ -19,6 +22,7 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	netwebdav "golang.org/x/net/webdav"
 )
 
 var (
@@ -283,4 +287,169 @@ func TestCopyFallsBackWhenRangeIgnored(t *testing.T) {
 	assert.Positive(t, rangeRequests.Load())
 	assert.LessOrEqual(t, rangeRequests.Load(), int32(3))
 	assert.Equal(t, int32(1), fullRequests.Load())
+}
+
+func digestServer(t *testing.T, dir string, testUser, testPass, testDigestRealm string) (*httptest.Server, *atomic.Int32) {
+	t.Helper()
+	var requests atomic.Int32
+	authenticator := auth.NewDigestAuthenticator(testDigestRealm, func(user, realm string) string {
+		if user == testUser {
+			return testPass
+		}
+		return ""
+	})
+	authenticator.PlainTextSecrets = true
+	handler := &netwebdav.Handler{
+		FileSystem: netwebdav.Dir(dir),
+		LockSystem: netwebdav.NewMemLS(),
+	}
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		authenticator.Wrap(func(w http.ResponseWriter, ar *auth.AuthenticatedRequest) {
+			handler.ServeHTTP(w, &ar.Request)
+		})(w, r)
+	}))
+	t.Cleanup(ts.Close)
+	return ts, &requests
+}
+
+func TestDigestAuth(t *testing.T) {
+	testDigestFilename := "testDigestAuthFile.txt"
+	testDigestFilenameContent := []byte("hello world")
+
+	testDigestAuthUser := "user"
+	testDigestAuthPwd := "pwd"
+	testDigestAuthRealm := "test"
+
+	ctx := context.Background()
+
+	dir := t.TempDir()
+	err := os.WriteFile(filepath.Join(dir, testDigestFilename), testDigestFilenameContent, 0600)
+	require.NoError(t, err)
+	configfile.Install()
+
+	ts, requests := digestServer(t, dir, testDigestAuthUser, testDigestAuthPwd, testDigestAuthRealm)
+	f, err := webdav.NewFs(ctx, remoteName, "", configmap.Simple{
+		"type": "webdav",
+		"url":  ts.URL,
+		"user": testDigestAuthUser,
+		"pass": obscure.MustObscure(testDigestAuthPwd),
+	})
+	require.NoError(t, err)
+
+	reqCount := 3
+	for range reqCount {
+		entries, err := f.List(ctx, "")
+		require.NoError(t, err)
+		require.Len(t, entries, 1)
+		assert.Equal(t, testDigestFilename, entries[0].Remote())
+		assert.Equal(t, int64(len(testDigestFilenameContent)), entries[0].Size())
+	}
+
+	assert.Equal(t, int32(reqCount+1), requests.Load())
+}
+
+func TestDigestAuthWrongPassword(t *testing.T) {
+	testDigestAuthUser := "user"
+	testDigestAuthPwd := "pwd"
+	testDigestAuthRealm := "test"
+
+	ctx := context.Background()
+
+	configfile.Install()
+
+	ts, requests := digestServer(t, t.TempDir(), testDigestAuthUser, testDigestAuthPwd, testDigestAuthRealm)
+	f, err := webdav.NewFs(ctx, remoteName, "", configmap.Simple{
+		"type": "webdav",
+		"url":  ts.URL,
+		"user": testDigestAuthUser,
+		"pass": obscure.MustObscure("wrong"),
+	})
+	require.NoError(t, err)
+
+	_, err = f.List(ctx, "")
+	require.Error(t, err)
+
+	assert.Equal(t, int32(2), requests.Load())
+}
+
+func TestDigestAuthStaleNonce(t *testing.T) {
+	ctx := context.Background()
+
+	var requests atomic.Int32
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authorisation := r.Header.Get("Authorization")
+		switch n := requests.Add(1); {
+		case n == 1:
+			assert.False(t, strings.HasPrefix(authorisation, "Digest "), "first request can't be signed yet")
+			w.Header().Set("WWW-Authenticate", `Digest realm="test", nonce="nonce-1", algorithm=MD5, qop="auth"`)
+			w.WriteHeader(http.StatusUnauthorized)
+		case n == 2:
+			assert.Contains(t, authorisation, `nonce="nonce-1"`)
+			w.Header().Set("WWW-Authenticate", `Digest realm="test", nonce="nonce-2", algorithm=MD5, qop="auth", stale=true`)
+			w.WriteHeader(http.StatusUnauthorized)
+		default:
+			assert.Contains(t, authorisation, `nonce="nonce-2"`, "the stale nonce should have been replaced")
+			_, err := fmt.Fprint(w, `<d:multistatus xmlns:d="DAV:"></d:multistatus>`) //
+			require.NoError(t, err)
+		}
+	}))
+	defer ts.Close()
+
+	configfile.Install()
+	f, err := webdav.NewFs(ctx, remoteName, "", configmap.Simple{
+		"type": "webdav",
+		"url":  ts.URL,
+		"user": "user",
+		"pass": obscure.MustObscure("pwd"),
+	})
+	require.NoError(t, err)
+
+	_, err = f.List(ctx, "")
+	require.NoError(t, err)
+
+	assert.Equal(t, int32(3), requests.Load())
+}
+
+func TestDigestAuthRedirectToOtherHost(t *testing.T) {
+	ctx := context.Background()
+
+	var otherAuth atomic.Value
+	otherAuth.Store("")
+	other := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		otherAuth.Store(r.Header.Get("Authorization"))
+		_, err := fmt.Fprint(w, `<d:multistatus xmlns:d="DAV:"></d:multistatus>`)
+		require.NoError(t, err)
+	}))
+	defer other.Close()
+
+	var originAuth atomic.Value
+	originAuth.Store("")
+	var requests atomic.Int32
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if requests.Add(1) == 1 {
+			w.Header().Set("WWW-Authenticate", `Digest realm="test", nonce="nonce-1", algorithm=MD5, qop="auth"`)
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		originAuth.Store(r.Header.Get("Authorization"))
+		http.Redirect(w, r, other.URL+"/", http.StatusFound)
+	}))
+	defer ts.Close()
+
+	configfile.Install()
+	f, err := webdav.NewFs(ctx, remoteName, "", configmap.Simple{
+		"type": "webdav",
+		"url":  ts.URL,
+		"user": "user",
+		"pass": obscure.MustObscure("pwd"),
+	})
+	require.NoError(t, err)
+
+	_, err = f.List(ctx, "")
+	require.NoError(t, err)
+
+	assert.Contains(t, originAuth.Load(), "Digest ", "the challenging host should be signed")
+	assert.NotContains(t, otherAuth.Load(), "Digest ", "another host shouldn't be sent the credentials")
 }
