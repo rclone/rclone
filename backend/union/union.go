@@ -61,6 +61,20 @@ If a remote has less than this much free space then it won't be
 considered for use in lfs or eplfs policies.`,
 			Advanced: true,
 			Default:  fs.Gibi,
+		}, {
+			Name: "heal_writes",
+			Help: `Heal upstreams which are missing a file on update.
+
+When updating an existing file, normally union only writes to the
+upstreams selected by action_policy which already have the file.
+
+If this is set, union will additionally create the file on any
+upstream selected by create_policy which is missing it. This heals
+unions where create_policy created a file on some upstreams only,
+for example because an upstream was temporarily unavailable when the
+file was first uploaded.`,
+			Advanced: true,
+			Default:  false,
 		}},
 	}
 	fs.Register(fsi)
@@ -825,6 +839,29 @@ func (f *Fs) actionEntries(entries ...upstream.Entry) ([]upstream.Entry, error) 
 
 func (f *Fs) create(ctx context.Context, path string) ([]*upstream.Fs, error) {
 	return f.createPolicy.Create(ctx, f.upstreams, path)
+}
+
+// missingCreateUpstreams returns the upstreams selected by create_policy
+// for path which are not already represented amongst entries.
+//
+// This is used by heal_writes to find upstreams which are missing an
+// existing object and should be created rather than updated.
+func (f *Fs) missingCreateUpstreams(ctx context.Context, path string, entries []upstream.Entry) ([]*upstream.Fs, error) {
+	createUpstreams, err := f.create(ctx, path)
+	if err != nil {
+		return nil, err
+	}
+	have := make(map[*upstream.Fs]bool, len(entries))
+	for _, e := range entries {
+		have[e.UpstreamFs()] = true
+	}
+	var missing []*upstream.Fs
+	for _, u := range createUpstreams {
+		if !have[u] {
+			missing = append(missing, u)
+		}
+	}
+	return missing, nil
 }
 
 func (f *Fs) searchEntries(entries ...upstream.Entry) (upstream.Entry, error) {
