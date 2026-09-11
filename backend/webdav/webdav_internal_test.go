@@ -411,3 +411,45 @@ func TestDigestAuthStaleNonce(t *testing.T) {
 
 	assert.Equal(t, int32(3), requests.Load())
 }
+
+func TestDigestAuthRedirectToOtherHost(t *testing.T) {
+	ctx := context.Background()
+
+	var otherAuth atomic.Value
+	otherAuth.Store("")
+	other := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		otherAuth.Store(r.Header.Get("Authorization"))
+		_, err := fmt.Fprint(w, `<d:multistatus xmlns:d="DAV:"></d:multistatus>`)
+		require.NoError(t, err)
+	}))
+	defer other.Close()
+
+	var originAuth atomic.Value
+	originAuth.Store("")
+	var requests atomic.Int32
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if requests.Add(1) == 1 {
+			w.Header().Set("WWW-Authenticate", `Digest realm="test", nonce="nonce-1", algorithm=MD5, qop="auth"`)
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		originAuth.Store(r.Header.Get("Authorization"))
+		http.Redirect(w, r, other.URL+"/", http.StatusFound)
+	}))
+	defer ts.Close()
+
+	configfile.Install()
+	f, err := webdav.NewFs(ctx, remoteName, "", configmap.Simple{
+		"type": "webdav",
+		"url":  ts.URL,
+		"user": "user",
+		"pass": obscure.MustObscure("pwd"),
+	})
+	require.NoError(t, err)
+
+	_, err = f.List(ctx, "")
+	require.NoError(t, err)
+
+	assert.Contains(t, originAuth.Load(), "Digest ", "the challenging host should be signed")
+	assert.NotContains(t, otherAuth.Load(), "Digest ", "another host shouldn't be sent the credentials")
+}
