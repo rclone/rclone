@@ -801,6 +801,7 @@ func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error)
 var (
 	_ fs.Fs              = &Fs{}
 	_ fs.Copier          = &Fs{}
+	_ fs.Mover           = &Fs{}
 	_ fs.PutStreamer     = &Fs{}
 	_ fs.ListRer         = &Fs{}
 	_ fs.ListPer         = &Fs{}
