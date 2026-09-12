@@ -3,6 +3,7 @@
 package oracleobjectstorage
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/base64"
@@ -396,6 +397,9 @@ func isZeroLength(streamReader io.Reader) bool {
 		return v.Len() == 0
 	case *strings.Reader:
 		return v.Len() == 0
+	case *bufio.Reader:
+		_, err := v.Peek(1)
+		return err == io.EOF
 	case *os.File:
 		fi, err := v.Stat()
 		if err != nil {
