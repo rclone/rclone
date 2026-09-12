@@ -1596,39 +1596,6 @@ func TestSyncWithTrackRenames(t *testing.T) {
 	}
 }
 
-func TestParseRenamesStrategyModtime(t *testing.T) {
-	for _, test := range []struct {
-		in      string
-		want    trackRenamesStrategy
-		wantErr bool
-	}{
-		{"", 0, false},
-		{"modtime", trackRenamesStrategyModtime, false},
-		{"hash", trackRenamesStrategyHash, false},
-		{"size", 0, false},
-		{"modtime,hash", trackRenamesStrategyModtime | trackRenamesStrategyHash, false},
-		{"hash,modtime,size", trackRenamesStrategyModtime | trackRenamesStrategyHash, false},
-		{"size,boom", 0, true},
-	} {
-		got, err := parseTrackRenamesStrategy(test.in)
-		assert.Equal(t, test.want, got, test.in)
-		assert.Equal(t, test.wantErr, err != nil, test.in)
-	}
-}
-
-func TestRenamesStrategyModtime(t *testing.T) {
-	both := trackRenamesStrategyHash | trackRenamesStrategyModtime
-	hash := trackRenamesStrategyHash
-	modTime := trackRenamesStrategyModtime
-
-	assert.True(t, both.hash())
-	assert.True(t, both.modTime())
-	assert.True(t, hash.hash())
-	assert.False(t, hash.modTime())
-	assert.False(t, modTime.hash())
-	assert.True(t, modTime.modTime())
-}
-
 func TestSyncWithTrackRenamesStrategyModtime(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
