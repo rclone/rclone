@@ -898,6 +898,52 @@ func TestCopyURL(t *testing.T) {
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1, file2, fstest.NewItem(urlFileName, contents, t1), fstest.NewItem(headerFilename, contents, t1)}, nil, fs.ModTimeNotSupported)
 }
 
+func TestCopyURLSizeOnly(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		contents  string
+		chunked   bool
+		want      string
+		missing   bool
+		noClobber bool
+	}{
+		{name: "same size", contents: "original", want: "original"},
+		{name: "different size", contents: "short", want: "replaced"},
+		{name: "unknown size", contents: "original", chunked: true, want: "replaced"},
+		{name: "missing destination", missing: true, want: "replaced"},
+		{name: "no clobber", contents: "original", noClobber: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx, ci := fs.AddConfig(context.Background())
+			ci.SizeOnly = true
+			r := fstest.NewRun(t)
+			if !tc.missing {
+				r.WriteObject(ctx, "file.txt", tc.contents, t1)
+			}
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				if tc.chunked {
+					w.(http.Flusher).Flush()
+				}
+				_, _ = io.WriteString(w, "replaced")
+			}))
+			defer ts.Close()
+			obj, err := operations.CopyURL(ctx, r.Fremote, "file.txt", ts.URL, false, false, tc.noClobber)
+			if tc.noClobber {
+				require.ErrorContains(t, err, "file already exist")
+				return
+			}
+			require.NoError(t, err)
+			require.NotNil(t, obj)
+			in, err := obj.Open(ctx)
+			require.NoError(t, err)
+			defer func() { assert.NoError(t, in.Close()) }()
+			got, err := io.ReadAll(in)
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, string(got))
+		})
+	}
+}
+
 func TestCopyURLDownloadHeaders(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
