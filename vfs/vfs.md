@@ -449,6 +449,29 @@ and compute the total used space itself.
 result is accurate. However, this is very inefficient and may cost lots of API
 calls resulting in extra charges. Use it as a last resort and only with caching.
 
+### VFS inode Numbers
+
+Files and directories in the VFS are given inode numbers. Where the
+backend can supply a persistent ID for an object (for example Drive,
+Onedrive, Box, Dropbox, B2 and Mega can), the inode number is derived
+from that ID, which means it stays the same for as long as the object
+exists.
+
+This matters when the mount is re-exported by another file server, most
+notably NFS, which validates its file handles against the inode number.
+Without a stable inode the same file can be given a new inode number
+when the directory cache expires and the entry is read from the backend
+again, and clients then see stale file handle errors.
+
+Backends which can't supply an ID have inode numbers allocated in
+sequence instead. These are unique within the lifetime of the rclone
+process, but the same file is not guaranteed the same inode number
+after the directory cache has expired, or if rclone is restarted.
+
+Because the inode number follows the object's ID rather than its path,
+renaming a file keeps its inode number on backends where the ID is
+itself stable across renames.
+
 ### VFS Metadata
 
 If you use the `--vfs-metadata-extension` flag you can get the VFS to

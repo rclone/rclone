@@ -64,7 +64,7 @@ func newDir(vfs *VFS, f fs.Fs, parent *Dir, fsDir fs.Directory) *Dir {
 		entry:   fsDir,
 		path:    fsDir.Remote(),
 		modTime: fsDir.ModTime(vfs.ctx),
-		inode:   newInode(),
+		inode:   deriveInode(fsDir),
 		items:   make(map[string]Node),
 	}
 	// Set timer up like this to avoid race of d.cacheCleanup being called
