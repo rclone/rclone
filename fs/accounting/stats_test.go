@@ -9,9 +9,32 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fstest/mockobject"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestAverageLoopStopsAfterLastCheck(t *testing.T) {
+	ctx := context.Background()
+	stats := NewStats(ctx)
+	t.Cleanup(func() {
+		stats.mu.Lock()
+		defer stats.mu.Unlock()
+		stats._stopAverageLoop()
+	})
+	transfer := stats.NewTransferRemoteSize("transfer", 0, nil, nil)
+	firstCheck := stats.NewCheckingTransfer(mockobject.New("first"), "checking")
+	lastCheck := stats.NewCheckingTransfer(mockobject.New("last"), "checking")
+
+	transfer.Done(ctx, nil)
+	firstCheck.Done(ctx, nil)
+	assert.True(t, stats.average.started, "a check is still active")
+
+	lastCheck.Done(ctx, nil)
+	assert.False(t, stats.average.started, "completed checks must release the averaging goroutine")
+	assert.Equal(t, int64(2), stats.GetChecks())
+	assert.Equal(t, int64(1), stats.GetTransfers())
+}
 
 func TestETA(t *testing.T) {
 	for _, test := range []struct {
