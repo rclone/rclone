@@ -122,6 +122,16 @@ var ConfigOptionsInfo = Options{{
 	Help:    "IO idle timeout",
 	Groups:  "Networking",
 }, {
+	Name:    "min_bandwidth",
+	Default: SizeSuffix(0),
+	Help:    "Minimum average transfer speed required over --min-bandwidth-time before a transfer is considered stalled (e.g. 1k). 0 disables (default)",
+	Groups:  "Networking",
+}, {
+	Name:    "min_bandwidth_time",
+	Default: 60 * time.Second,
+	Help:    "How long a transfer may run below --min-bandwidth before it is cancelled as stalled",
+	Groups:  "Networking",
+}, {
 	Name:    "expect_continue_timeout",
 	Default: 1 * time.Second,
 	Help:    "Timeout when using expect / 100-continue in HTTP",
@@ -584,8 +594,10 @@ type ConfigInfo struct {
 	ModifyWindow               Duration          `config:"modify_window"`
 	Checkers                   int               `config:"checkers"`
 	Transfers                  int               `config:"transfers"`
-	ConnectTimeout             Duration          `config:"contimeout"` // Connect timeout
-	Timeout                    Duration          `config:"timeout"`    // Data channel timeout
+	ConnectTimeout             Duration          `config:"contimeout"`         // Connect timeout
+	Timeout                    Duration          `config:"timeout"`            // Data channel timeout
+	MinBandwidth               SizeSuffix        `config:"min_bandwidth"`      // Minimum avg bytes/sec required over MinBandwidthTime, 0 disables
+	MinBandwidthTime           Duration          `config:"min_bandwidth_time"` // Window MinBandwidth is measured over
 	ExpectContinueTimeout      Duration          `config:"expect_continue_timeout"`
 	Dump                       DumpFlags         `config:"dump"`
 	InsecureSkipVerify         bool              `config:"no_check_certificate"` // Skip server certificate verification

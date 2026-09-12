@@ -58,18 +58,19 @@ type Account struct {
 	// in http transport calls Read() after Do() returns on
 	// CancelRequest so this race can happen when it apparently
 	// shouldn't.
-	mu       sync.Mutex // mutex protects these values
-	in       io.Reader
-	ctx      context.Context // current context for transfer - may change
-	ci       *fs.ConfigInfo
-	origIn   io.ReadCloser
-	close    io.Closer
-	size     int64
-	name     string
-	closed   bool          // set if the file is closed
-	exit     chan struct{} // channel that will be closed when transfer is finished
-	withBuf  bool          // is using a buffered in
-	checking bool          // set if attached transfer is checking
+	mu        sync.Mutex // mutex protects these values
+	in        io.Reader
+	ctx       context.Context         // current context for transfer - may change
+	ctxCancel context.CancelCauseFunc // cancels ctx above -- see Context(), stallCheck()
+	ci        *fs.ConfigInfo
+	origIn    io.ReadCloser
+	close     io.Closer
+	size      int64
+	name      string
+	closed    bool          // set if the file is closed
+	exit      chan struct{} // channel that will be closed when transfer is finished
+	withBuf   bool          // is using a buffered in
+	checking  bool          // set if attached transfer is checking
 
 	tokenBucket buckets // per file bandwidth limiter (may be nil)
 
@@ -78,30 +79,56 @@ type Account struct {
 
 // accountValues holds statistics for this Account
 type accountValues struct {
-	mu      sync.Mutex // Mutex for stat values.
-	bytes   int64      // Total number of bytes read
-	max     int64      // if >=0 the max number of bytes to transfer
-	start   time.Time  // Start time of first read
-	lpTime  time.Time  // Time of last average measurement
-	lpBytes int64      // Number of bytes read since last measurement
-	avg     float64    // Moving average of last few measurements in Byte/s
+	mu            sync.Mutex // Mutex for stat values.
+	bytes         int64      // Total number of bytes read
+	max           int64      // if >=0 the max number of bytes to transfer
+	start         time.Time  // Start time of first read
+	lpTime        time.Time  // Time of last average measurement
+	lpBytes       int64      // Number of bytes read since last measurement
+	avg           float64    // Moving average of last few measurements in Byte/s
+	belowMinSince time.Time  // zero if avg is currently >= ci.MinBandwidth (or checking is disabled)
+	stallFired    bool       // set once the stall cancellation has been raised, so it is raised only once
 }
+
+// ErrorTransferStalled is returned (wrapped, via context.Cause) when a
+// transfer is cancelled for running below --min-bandwidth for longer than
+// --min-bandwidth-time.
+//
+// Marked retryable so --retries re-drives the transfer: a stall is the case
+// most likely to succeed on a fresh attempt, and StatsInfo.Error routes on
+// fserrors.IsRetryError, which reads the Retry() interface a bare
+// errors.New does not implement.
+//
+// This does not reach --low-level-retries. That loop runs inside the
+// backend on fserrors.ShouldRetry, which consults Timeout()/Temporary()
+// rather than Retry() -- and the backend sees the transport's
+// context.Canceled from the cancelled request, never this error.
+var ErrorTransferStalled = fserrors.RetryError(errors.New("transfer stalled: below --min-bandwidth for longer than --min-bandwidth-time"))
 
 const averagePeriod = 16 // period to do exponentially weighted averages over
 
 // newAccountSizeName makes an Account reader for an io.ReadCloser of
 // the given size and name
 func newAccountSizeName(ctx context.Context, stats *StatsInfo, in io.ReadCloser, size int64, name string) *Account {
+	// Derive a cancelable context so stallCheck (run from averageLoop, in the
+	// background, independent of whether anything is currently calling
+	// Read/AccountRead) can abort THIS transfer specifically on a sustained
+	// --min-bandwidth violation, without affecting sibling transfers sharing
+	// the parent ctx. See Context() -- callers that create an Account must
+	// use it (not the original ctx) for the actual Open/Put/Update call for
+	// cancellation to reach an in-flight request.
+	cctx, cancel := context.WithCancelCause(ctx)
 	acc := &Account{
-		stats:  stats,
-		in:     in,
-		ctx:    ctx,
-		ci:     fs.GetConfig(ctx),
-		close:  in,
-		origIn: in,
-		size:   size,
-		name:   name,
-		exit:   make(chan struct{}),
+		stats:     stats,
+		in:        in,
+		ctx:       cctx,
+		ctxCancel: cancel,
+		ci:        fs.GetConfig(ctx),
+		close:     in,
+		origIn:    in,
+		size:      size,
+		name:      name,
+		exit:      make(chan struct{}),
 		values: accountValues{
 			avg:    0,
 			lpTime: time.Now(),
@@ -196,8 +223,14 @@ func (acc *Account) UpdateReader(ctx context.Context, in io.ReadCloser) {
 		acc.Abandon()
 		acc.withBuf = false
 	}
+	// Release the previous attempt's derived context before replacing it --
+	// see newAccountSizeName. A retry gets its own fresh stall-detection
+	// window rather than inheriting a cancellation (or a head start on one)
+	// from whatever the last attempt was doing.
+	oldCancel := acc.ctxCancel
+	acc.ctx, acc.ctxCancel = context.WithCancelCause(ctx)
+	oldCancel(nil)
 	acc.in = in
-	acc.ctx = ctx
 	acc.close = in
 	acc.origIn = in
 	acc.closed = false
@@ -210,7 +243,22 @@ func (acc *Account) UpdateReader(ctx context.Context, in io.ReadCloser) {
 	acc.values.mu.Lock()
 	acc.values.lpBytes = 0
 	acc.values.bytes = 0
+	acc.values.belowMinSince = time.Time{}
+	acc.values.stallFired = false
 	acc.values.mu.Unlock()
+}
+
+// Context returns the context governing this Account's current transfer
+// attempt. Unlike the ctx originally passed to NewAccountSizeName/
+// UpdateReader, this one can be cancelled independently by stallCheck (a
+// sustained --min-bandwidth violation) without touching the parent -- so it
+// must be what callers pass on to the actual Open/Put/Update call for that
+// cancellation to reach an in-flight request rather than only being visible
+// on the NEXT call into this Account.
+func (acc *Account) Context() context.Context {
+	acc.mu.Lock()
+	defer acc.mu.Unlock()
+	return acc.ctx
 }
 
 // averageLoop calculates averages for the stats in the background
@@ -235,19 +283,73 @@ func (acc *Account) averageLoop() {
 			acc.values.avg = (avg + (period-1)*acc.values.avg) / period
 			acc.values.lpBytes = 0
 			acc.values.lpTime = now
+			cancel, cause := acc.stallCheckLocked(now)
 			// Unlock stats
 			acc.values.mu.Unlock()
+			if cancel {
+				acc.cancelStalled(cause)
+			}
 		case <-acc.exit:
 			return
 		}
 	}
 }
 
+// stallCheckLocked decides whether this transfer has been below
+// --min-bandwidth for longer than --min-bandwidth-time. Must be called with
+// acc.values.mu held (from averageLoop, once per completed average -- see
+// its comment). Disabled entirely (returns false, always) when
+// ci.MinBandwidth is 0, the default -- zero behavior change unless set.
+//
+// This checks the smoothed EWMA (acc.values.avg), not the instantaneous
+// bytes-this-second figure: a transfer that legitimately dips for a couple
+// of seconds (a short stall in a server-side operation, a network blip)
+// must not be cancelled for it -- only a SUSTAINED shortfall should be,
+// which is exactly what --min-bandwidth-time is for.
+func (acc *Account) stallCheckLocked(now time.Time) (shouldCancel bool, cause error) {
+	if acc.ci.MinBandwidth <= 0 || acc.values.stallFired {
+		return false, nil
+	}
+	if acc.values.avg >= float64(acc.ci.MinBandwidth) {
+		acc.values.belowMinSince = time.Time{}
+		return false, nil
+	}
+	if acc.values.belowMinSince.IsZero() {
+		acc.values.belowMinSince = now
+		return false, nil
+	}
+	if now.Sub(acc.values.belowMinSince) < time.Duration(acc.ci.MinBandwidthTime) {
+		return false, nil
+	}
+	acc.values.stallFired = true
+	return true, fmt.Errorf("%w: %v/s averaged over the last %v (want >= %v/s)",
+		ErrorTransferStalled, fs.SizeSuffix(acc.values.avg), time.Duration(acc.ci.MinBandwidthTime), acc.ci.MinBandwidth)
+}
+
+// cancelStalled cancels this Account's Context() (see its doc comment for
+// why that -- not the original ctx passed in -- is what callers must use
+// for cancellation to reach an in-flight request) with cause, and logs
+// once. Idempotent: context.CancelCauseFunc is a no-op once already
+// cancelled, so a transfer that finishes normally right as this fires
+// is not affected -- checkReadBefore's ctx.Err() check on the NEXT call
+// is what actually surfaces the error, and there may be no next call if
+// the transfer already completed.
+func (acc *Account) cancelStalled(cause error) {
+	fs.Errorf(acc.name, "%v", cause)
+	acc.mu.Lock()
+	cancel := acc.ctxCancel
+	acc.mu.Unlock()
+	cancel(cause)
+}
+
 // Check the read before it has happened is valid returning the number
 // of bytes remaining to read.
 func (acc *Account) checkReadBefore() (bytesUntilLimit int64, err error) {
-	// Check to see if context is cancelled
-	if err = acc.ctx.Err(); err != nil {
+	// Check to see if context is cancelled. context.Cause, not ctx.Err --
+	// when stallCheckLocked cancelled this via cancelStalled, Err() alone
+	// would only report "context canceled", losing the actual reason
+	// (ErrorTransferStalled, with the measured speed) that Cause carries.
+	if err = context.Cause(acc.ctx); err != nil {
 		return 0, err
 	}
 	acc.values.mu.Lock()
@@ -593,6 +695,10 @@ func (acc *Account) Done() {
 	defer acc.mu.Unlock()
 	close(acc.exit)
 	acc.stats.inProgress.clear(acc.name)
+	// Release Context()'s resources now the transfer is over -- a no-op if
+	// stallCheckLocked already cancelled it, per context.CancelCauseFunc's
+	// own idempotency.
+	acc.ctxCancel(nil)
 }
 
 // progress returns bytes read as well as the size.
