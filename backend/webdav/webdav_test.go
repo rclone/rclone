@@ -34,8 +34,21 @@ func TestIntegration2(t *testing.T) {
 	})
 }
 
-// TestIntegration runs integration tests against the remote
 func TestIntegration3(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("skipping as -remote is set")
+	}
+	fstests.Run(t, &fstests.Opt{
+		RemoteName: "TestWebdavOpenCloud:",
+		NilObject:  (*Object)(nil),
+		ChunkedUpload: fstests.ChunkedUploadConfig{
+			Skip: true,
+		},
+	})
+}
+
+// TestIntegration runs integration tests against the remote
+func TestIntegration4(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("skipping as -remote is set")
 	}
@@ -49,7 +62,7 @@ func TestIntegration3(t *testing.T) {
 }
 
 // TestIntegration runs integration tests against the remote
-func TestIntegration4(t *testing.T) {
+func TestIntegration5(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("skipping as -remote is set")
 	}
