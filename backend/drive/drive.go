@@ -543,6 +543,10 @@ as malware or spam and cannot be downloaded" with the error code
 indicate you acknowledge the risks of downloading the file and rclone
 will download it anyway.
 
+With this flag set rclone sends acknowledgeAbuse=true on every download.
+Google otherwise holds each download of an executable for ~30s to scan it
+for malware on every request, so this also makes those downloads fast.
+
 Note that if you are using service account it will need Manager
 permission (not Content Manager) to for this flag to work. If the SA
 does not have the right permission, Google will just ignore the flag.`,
@@ -4386,19 +4390,29 @@ func isGoogleError(err error, what string) bool {
 	return false
 }
 
+// withAcknowledgeAbuse adds the acknowledgeAbuse=true query parameter to url
+func withAcknowledgeAbuse(url string) string {
+	if strings.ContainsRune(url, '?') {
+		url += "&"
+	} else {
+		url += "?"
+	}
+	return url + "acknowledgeAbuse=true"
+}
+
 // open a url for reading
 func (o *baseObject) open(ctx context.Context, url string, options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	if o.fs.opt.AcknowledgeAbuse {
+		// Send it up front: Google otherwise holds every download of an
+		// executable for ~30s to scan it for malware on each request.
+		url = withAcknowledgeAbuse(url)
+	}
 	_, res, err := o.httpResponse(ctx, url, "GET", options)
 	if err != nil {
 		if isGoogleError(err, "cannotDownloadAbusiveFile") {
 			if o.fs.opt.AcknowledgeAbuse {
 				// Retry acknowledging abuse
-				if strings.ContainsRune(url, '?') {
-					url += "&"
-				} else {
-					url += "?"
-				}
-				url += "acknowledgeAbuse=true"
+				url = withAcknowledgeAbuse(url)
 				_, res, err = o.httpResponse(ctx, url, "GET", options)
 			} else {
 				err = fmt.Errorf("use the --drive-acknowledge-abuse flag to download this file: %w", err)
