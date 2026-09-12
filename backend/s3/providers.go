@@ -25,6 +25,7 @@ type Quirks struct {
 	ListURLEncode               *bool  `yaml:"list_url_encode,omitempty"`
 	UseMultipartEtag            *bool  `yaml:"use_multipart_etag,omitempty"`
 	UseAlreadyExists            *bool  `yaml:"use_already_exists,omitempty"`
+	CheckBucketOwnership        *bool  `yaml:"check_bucket_ownership,omitempty"`
 	UseAcceptEncodingGzip       *bool  `yaml:"use_accept_encoding_gzip,omitempty"`
 	UseDataIntegrityProtections *bool  `yaml:"use_data_integrity_protections,omitempty"`
 	MightGzip                   *bool  `yaml:"might_gzip,omitempty"`
