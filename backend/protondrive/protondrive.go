@@ -9,6 +9,7 @@ import (
 	"path"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/coreos/go-semver/semver"
@@ -29,6 +30,7 @@ import (
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
+	"golang.org/x/time/rate"
 )
 
 /*
@@ -66,6 +68,7 @@ func init() {
 		Name:        "protondrive",
 		Description: "Proton Drive",
 		NewFs:       NewFs,
+		CommandHelp: commandHelp,
 		Options: []fs.Option{{
 			Name:     "username",
 			Help:     `The username of your proton account`,
@@ -182,6 +185,24 @@ will be returned, and no upload will happen.`,
 			Advanced: true,
 			Default:  false,
 		}, {
+			Name: "data_upload_limit",
+			Help: `Limit bulk file upload data without limiting Proton API traffic
+
+This backend-specific limit is applied to file content before it enters the
+Proton upload pipeline. Directory listings, authentication and other Proton API
+requests do not consume this limit. Use "off" for no data limit.`,
+			Advanced: true,
+			Default:  fs.SizeSuffix(-1),
+		}, {
+			Name: "data_download_limit",
+			Help: `Limit bulk file download data without limiting Proton API traffic
+
+This backend-specific limit is applied to file content returned by the Proton
+download pipeline. Directory listings, authentication and other Proton API
+requests do not consume this limit. Use "off" for no data limit.`,
+			Advanced: true,
+			Default:  fs.SizeSuffix(-1),
+		}, {
 			Name: "enable_caching",
 			Help: `Caches the files and folders metadata to reduce API calls
 
@@ -204,6 +225,22 @@ then we might have a problem with caching the stale data.`,
 	})
 }
 
+var commandHelp = []fs.CommandHelp{{
+	Name:  "data-bandwidth",
+	Short: "Show or change Proton file-data bandwidth limits.",
+	Long: `This command controls backend-specific aggregate file-data limits.
+
+Directory listings, authentication and other Proton API requests remain
+outside these limits. Omit both options to inspect the current values.
+
+Use "off" for unlimited. Values use rclone size suffixes, for example 4.8M.
+Runtime changes affect existing transfer readers without restarting rclone.`,
+	Opts: map[string]string{
+		"upload":   "Aggregate upload file-data limit or off.",
+		"download": "Aggregate download file-data limit or off.",
+	},
+}}
+
 // Options defines the configuration for this backend
 type Options struct {
 	Username        string `config:"username"`
@@ -218,19 +255,91 @@ type Options struct {
 	AppVersion           string               `config:"app_version"`
 	ReplaceExistingDraft bool                 `config:"replace_existing_draft"`
 	EnableCaching        bool                 `config:"enable_caching"`
+	DataUploadLimit      fs.SizeSuffix        `config:"data_upload_limit"`
+	DataDownloadLimit    fs.SizeSuffix        `config:"data_download_limit"`
 }
 
 // Fs represents a remote proton drive
 type Fs struct {
 	name string // name of this remote
 	// Notice that for ProtonDrive, it's attached under rootLink (usually /root)
-	root        string                      // the path we are working on.
-	opt         Options                     // parsed config options
-	ci          *fs.ConfigInfo              // global config
-	features    *fs.Features                // optional features
-	pacer       *fs.Pacer                   // pacer for API calls
-	dirCache    *dircache.DirCache          // Map of directory path to directory id
-	protonDrive *protonDriveAPI.ProtonDrive // the Proton API bridging library
+	root          string                      // the path we are working on.
+	opt           Options                     // parsed config options
+	ci            *fs.ConfigInfo              // global config
+	features      *fs.Features                // optional features
+	pacer         *fs.Pacer                   // pacer for API calls
+	dirCache      *dircache.DirCache          // Map of directory path to directory id
+	protonDrive   *protonDriveAPI.ProtonDrive // the Proton API bridging library
+	uploadLimit   *dataRateLimiter
+	downloadLimit *dataRateLimiter
+}
+
+const dataLimitChunkSize = 64 * 1024
+
+// dataRateLimiter is shared by every object of one backend instance.
+type dataRateLimiter struct {
+	mu      sync.RWMutex
+	limiter *rate.Limiter
+	limit   fs.SizeSuffix
+}
+
+func newDataRateLimiter(limit fs.SizeSuffix) *dataRateLimiter {
+	l := new(dataRateLimiter)
+	l.set(limit)
+	return l
+}
+
+func (l *dataRateLimiter) set(limit fs.SizeSuffix) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if limit <= 0 {
+		l.limit = -1
+		l.limiter = nil
+		return
+	}
+	l.limit = limit
+	l.limiter = rate.NewLimiter(rate.Limit(limit), dataLimitChunkSize)
+	// Empty the initial burst so low limits take effect immediately.
+	l.limiter.AllowN(time.Now(), dataLimitChunkSize)
+}
+
+func (l *dataRateLimiter) get() (fs.SizeSuffix, *rate.Limiter) {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+	return l.limit, l.limiter
+}
+
+type limitedDataReader struct {
+	ctx     context.Context
+	reader  io.Reader
+	limiter *dataRateLimiter
+}
+
+func (r *limitedDataReader) Read(p []byte) (int, error) {
+	_, limiter := r.limiter.get()
+	if limiter == nil {
+		return r.reader.Read(p)
+	}
+	if len(p) > dataLimitChunkSize {
+		p = p[:dataLimitChunkSize]
+	}
+	n, err := r.reader.Read(p)
+	if n == 0 {
+		return n, err
+	}
+	if waitErr := limiter.WaitN(r.ctx, n); waitErr != nil {
+		return 0, waitErr
+	}
+	return n, err
+}
+
+func limitDataReader(ctx context.Context, reader io.Reader, limiter *dataRateLimiter) io.Reader {
+	return &limitedDataReader{ctx: ctx, reader: reader, limiter: limiter}
+}
+
+type limitedDataReadCloser struct {
+	io.Reader
+	io.Closer
 }
 
 // Object describes an object
@@ -573,11 +682,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	root = strings.Trim(root, "/")
 
 	f := &Fs{
-		name:  name,
-		root:  root,
-		opt:   *opt,
-		ci:    ci,
-		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		name:          name,
+		root:          root,
+		opt:           *opt,
+		ci:            ci,
+		pacer:         fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		uploadLimit:   newDataRateLimiter(opt.DataUploadLimit),
+		downloadLimit: newDataRateLimiter(opt.DataDownloadLimit),
 	}
 
 	f.features = (&fs.Features{
@@ -651,6 +762,57 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 		err := f.protonDrive.EmptyTrash(ctx)
 		return shouldRetry(ctx, err)
 	})
+}
+
+func parseDataLimit(value string) (fs.SizeSuffix, error) {
+	var limit fs.SizeSuffix
+	if err := limit.Set(value); err != nil {
+		return 0, err
+	}
+	if limit == 0 {
+		limit = -1
+	}
+	return limit, nil
+}
+
+// Command implements backend runtime commands.
+func (f *Fs) Command(_ context.Context, name string, arg []string, opt map[string]string) (any, error) {
+	if name != "data-bandwidth" {
+		return nil, fs.ErrorCommandNotFound
+	}
+	if len(arg) != 0 {
+		return nil, errors.New("data-bandwidth takes no positional arguments")
+	}
+	for key := range opt {
+		if key != "upload" && key != "download" {
+			return nil, fmt.Errorf("unknown data-bandwidth option %q", key)
+		}
+	}
+
+	upload, _ := f.uploadLimit.get()
+	download, _ := f.downloadLimit.get()
+	var err error
+	if value, ok := opt["upload"]; ok {
+		upload, err = parseDataLimit(value)
+		if err != nil {
+			return nil, fmt.Errorf("invalid upload limit: %w", err)
+		}
+	}
+	if value, ok := opt["download"]; ok {
+		download, err = parseDataLimit(value)
+		if err != nil {
+			return nil, fmt.Errorf("invalid download limit: %w", err)
+		}
+	}
+
+	f.uploadLimit.set(upload)
+	f.downloadLimit.set(download)
+	return map[string]any{
+		"upload":                 upload.String(),
+		"download":               download.String(),
+		"uploadBytesPerSecond":   int64(upload),
+		"downloadBytesPerSecond": int64(download),
+	}, nil
 }
 
 // NewObject finds the Object at remote.  If it can't be found
@@ -1087,7 +1249,10 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		o.blockSizes = nil
 	}
 
-	retReader := io.NopCloser(reader) // the NewLimitedReadCloser will deal with the limit
+	retReader := &limitedDataReadCloser{
+		Reader: limitDataReader(ctx, reader, o.fs.downloadLimit),
+		Closer: reader,
+	}
 
 	// deal with limit
 	return readers.NewLimitedReadCloser(retReader, limit), nil
@@ -1114,7 +1279,14 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	var linkID string
 	var fileSystemAttrs *proton.RevisionXAttrCommon
 	if err = o.fs.pacer.CallNoRetry(func() (bool, error) {
-		linkID, fileSystemAttrs, err = o.fs.protonDrive.UploadFileByReader(ctx, folderLinkID, leaf, modTime, in, 0)
+		linkID, fileSystemAttrs, err = o.fs.protonDrive.UploadFileByReader(
+			ctx,
+			folderLinkID,
+			leaf,
+			modTime,
+			limitDataReader(ctx, in, o.fs.uploadLimit),
+			0,
+		)
 		return shouldRetry(ctx, err)
 	}); err != nil {
 		return err
@@ -1278,6 +1450,7 @@ var (
 	_ fs.DirMover        = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
+	_ fs.Commander       = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.MimeTyper       = (*Object)(nil)
 	_ fs.IDer            = (*Object)(nil)
