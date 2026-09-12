@@ -8,23 +8,77 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/bloberror"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blockblob"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// defaultTestEnc mirrors the default value of the "encoding" config option
+// declared in the Options spec in azureblob.go.
+var defaultTestEnc = encoder.EncodeInvalidUtf8 |
+	encoder.EncodeSlash |
+	encoder.EncodeCtl |
+	encoder.EncodeDel |
+	encoder.EncodeBackSlash |
+	encoder.EncodeRightPeriod
+
+// TestSplitDirectoryMarkerPath pins the path rclone builds for a directory
+// marker's DELETE request in Rmdir - see https://github.com/rclone/rclone/issues/9577.
+//
+// f.split retains a single trailing slash on the container path for a
+// directory marker remote ("dir/"), which is the form that hierarchical
+// namespace (HNS/ADLS Gen2) accounts reject with InvalidUri when deleting.
+// It also checks that stripping the trailing slash from the remote before
+// splitting - what Rmdir's InvalidUri fallback does - yields the same
+// container with a path that has no trailing slash.
+func TestSplitDirectoryMarkerPath(t *testing.T) {
+	f := &Fs{
+		root: "container",
+		opt: Options{
+			DirectoryMarkers: true,
+			Enc:              defaultTestEnc,
+		},
+	}
+
+	dir := "it/New folder (5)"
+
+	container, withSlash := f.split(dir + "/")
+	assert.Equal(t, "container", container)
+	assert.Equal(t, "it/New folder (5)/", withSlash)
+
+	container, withoutSlash := f.split(dir)
+	assert.Equal(t, "container", container)
+	assert.Equal(t, "it/New folder (5)", withoutSlash)
+	assert.Equal(t, strings.TrimSuffix(withSlash, "/"), withoutSlash)
+}
+
+// TestIsInvalidURI checks the classification of the InvalidUri storage
+// error that HNS/ADLS Gen2 accounts return when deleting a directory
+// marker addressed with a trailing slash - see
+// https://github.com/rclone/rclone/issues/9577.
+func TestIsInvalidURI(t *testing.T) {
+	assert.True(t, isInvalidURI(&azcore.ResponseError{ErrorCode: string(bloberror.InvalidURI)}))
+	assert.False(t, isInvalidURI(&azcore.ResponseError{ErrorCode: string(bloberror.BlobNotFound)}))
+	assert.False(t, isInvalidURI(errors.New("some other error")))
+	assert.False(t, isInvalidURI(nil))
+}
 
 func TestBlockIDCreator(t *testing.T) {
 	// Check creation and random number
