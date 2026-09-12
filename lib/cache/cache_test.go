@@ -3,6 +3,7 @@ package cache
 import (
 	"errors"
 	"fmt"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -67,6 +68,43 @@ func TestGetFile(t *testing.T) {
 	require.Equal(t, errCached, err)
 
 	assert.Equal(t, f, f2)
+}
+
+func TestGetCoalescesConcurrentCreates(t *testing.T) {
+	c := New()
+	entered := make(chan struct{})
+	release := make(chan struct{})
+	var creates int32
+	create := func(key string) (any, bool, error) {
+		n := atomic.AddInt32(&creates, 1)
+		if n == 1 {
+			close(entered)
+			<-release
+		}
+		return "fs", true, nil
+	}
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		v, err := c.Get("proton:", create)
+		require.NoError(t, err)
+		require.Equal(t, "fs", v)
+	}()
+	<-entered
+
+	secondDone := make(chan struct{})
+	go func() {
+		defer close(secondDone)
+		v, err := c.Get("proton:", create)
+		require.NoError(t, err)
+		require.Equal(t, "fs", v)
+	}()
+	time.Sleep(20 * time.Millisecond)
+	close(release)
+	<-done
+	<-secondDone
+	assert.Equal(t, int32(1), atomic.LoadInt32(&creates))
 }
 
 func TestGetError(t *testing.T) {
