@@ -212,11 +212,105 @@ var (
 	//   / or ** in {}
 	//   {{ regexp }}
 	//   nested {} (the inner braces are opaque to the directory split below)
+	//
+	// A glob matching this is expanded by expandBraces first, which
+	// resolves the / and ** in {} cases into brace free globs.
 	tooHardRe = regexp.MustCompile(`({[^{}]*(\*\*|/)[^{}]*})|\{\{|\}\}|\{[^{}]*\{`)
 
 	// Squash all /
 	squashSlash = regexp.MustCompile(`/{2,}`)
 )
+
+// maxBraceExpansions caps how many globs a glob containing brace groups
+// may expand to. Expansion is combinatorial across groups, so a glob with
+// many alternatives is left for the caller to handle as too hard rather
+// than expanded into an unbounded number of directory globs.
+const maxBraceExpansions = 1000
+
+// expandBraces expands the brace groups in glob into the alternatives
+// they describe, so `a/{b,c/**}` becomes `a/b` and `a/c/**`.
+//
+// ok is false if glob uses a construct the expansion can't represent -
+// a {{ regexp }} section, nested braces, an unterminated group, or more
+// alternatives than maxBraceExpansions.
+func expandBraces(glob string) (out []string, ok bool) {
+	// A {{ or }} indicates a regexp section or unexpandable brace construct
+	if strings.Contains(glob, "{{") || strings.Contains(glob, "}}") {
+		return nil, false
+	}
+
+	// Find the first brace group, ignoring escaped braces
+	start := -1
+	slashed := false
+	for i, c := range glob {
+		if slashed {
+			slashed = false
+			continue
+		}
+		if c == '\\' {
+			slashed = true
+		} else if c == '{' {
+			start = i
+			break
+		}
+	}
+	if start < 0 {
+		return []string{glob}, true
+	}
+
+	// Find the matching close brace, collecting the top level
+	// alternatives as we go. Any brace nested inside the group is
+	// opaque to us, as is a {{ regexp }} section.
+	var alternatives []string
+	altStart := start + 1
+	end := -1
+	slashed = false
+	for i, c := range glob[start+1:] {
+		i += start + 1
+		if slashed {
+			slashed = false
+			continue
+		}
+		switch c {
+		case '\\':
+			slashed = true
+		case '{':
+			return nil, false
+		case ',':
+			alternatives = append(alternatives, glob[altStart:i])
+			altStart = i + 1
+		case '}':
+			alternatives = append(alternatives, glob[altStart:i])
+			end = i
+		}
+		if end >= 0 {
+			break
+		}
+	}
+	if end < 0 {
+		// Unterminated brace group
+		return nil, false
+	}
+	// A }} ends a regexp section rather than this group
+	if end+1 < len(glob) && glob[end+1] == '}' {
+		return nil, false
+	}
+
+	prefix, suffix := glob[:start], glob[end+1:]
+	for _, alternative := range alternatives {
+		// The suffix may contain further groups, so expand what
+		// this alternative produces in turn.
+		expanded, ok := expandBraces(prefix + alternative + suffix)
+		if !ok {
+			return nil, false
+		}
+		out = append(out, expanded...)
+		if len(out) > maxBraceExpansions {
+			return nil, false
+		}
+	}
+	return out, true
+}
 
 // globToDirGlobs takes a file glob and turns it into a series of
 // directory globs.  When matched with a directory (with a trailing /)
@@ -224,9 +318,26 @@ var (
 // this directory.
 func globToDirGlobs(glob string) (out []string) {
 	if tooHardRe.MatchString(glob) {
-		// Can't figure this one out so return any directory might match
-		fs.Infof(nil, "Can't figure out directory filters from %q: looking in all directories", glob)
-		out = append(out, "/**")
+		// Expanding the brace groups turns the / and ** in {} cases
+		// into brace free globs we can split below. The expansions
+		// contain no braces, so they don't reach this branch again.
+		globs, ok := expandBraces(glob)
+		if !ok {
+			// Can't figure this one out so return any directory might match
+			fs.Infof(nil, "Can't figure out directory filters from %q: looking in all directories", glob)
+			out = append(out, "/**")
+			return out
+		}
+		seen := make(map[string]struct{})
+		for _, expanded := range globs {
+			for _, dirGlob := range globToDirGlobs(expanded) {
+				if _, found := seen[dirGlob]; found {
+					continue
+				}
+				seen[dirGlob] = struct{}{}
+				out = append(out, dirGlob)
+			}
+		}
 		return out
 	}
 

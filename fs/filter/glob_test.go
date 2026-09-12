@@ -163,8 +163,11 @@ func TestGlobToDirGlobs(t *testing.T) {
 		{`a/b/*.{jpg,png,gif}`, []string{"a/b/", "a/"}},
 		{`/a/{jpg,png,gif}/*.{jpg,png,gif}`, []string{"/a/{jpg,png,gif}/", "/a/", "/"}},
 		{`a/{b,{c,d}}/*.jpg`, []string{"/**"}},
-		{`a/{a,a*b,a**c}/d/`, []string{"/**"}},
-		{`/a/{a,a*b,a/c,d}/d/`, []string{"/**"}},
+		{`a/{a,a*b,a**c}/d/`, []string{"a/a/d/", "a/a/", "a/", "a/a*b/d/", "a/a*b/", "a/a**c/d/", "a/a**c/", "a/a**/"}},
+		{`/a/{a,a*b,a/c,d}/d/`, []string{"/a/a/d/", "/a/a/", "/a/", "/", "/a/a*b/d/", "/a/a*b/", "/a/a/c/d/", "/a/a/c/", "/a/d/d/", "/a/d/"}},
+		{`/a/{b,c/**}`, []string{"/a/", "/", "/a/c/**/", "/a/c/"}},
+		{`/a/{b,c/**}/d`, []string{"/a/b/", "/a/", "/", "/a/c/**/", "/a/c/"}},
+		{`/a/{b,c}/{d,e/**}`, []string{"/a/b/", "/a/", "/", "/a/b/e/**/", "/a/b/e/", "/a/c/", "/a/c/e/**/", "/a/c/e/"}},
 		{`/a/{{.*}}/d/`, []string{"/**"}},
 		{`**`, []string{"**/"}},
 		{`a**`, []string{"a**/"}},
@@ -186,6 +189,19 @@ func TestGlobToDirGlobs(t *testing.T) {
 	} {
 		_, err := GlobPathToRegexp(test.in, false)
 		assert.NoError(t, err)
+		got := globToDirGlobs(test.in)
+		assert.Equal(t, test.want, got, test.in)
+	}
+}
+
+func TestGlobToDirGlobsUnbalanced(t *testing.T) {
+	for _, test := range []struct {
+		in   string
+		want []string
+	}{
+		{`a}}/c/**`, []string{"/**"}},
+		{`a/{b,c}}`, []string{"/**"}},
+	} {
 		got := globToDirGlobs(test.in)
 		assert.Equal(t, test.want, got, test.in)
 	}
