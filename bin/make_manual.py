@@ -31,6 +31,7 @@ docs = [
 
     # Keep these alphabetical by full name
     "fichier.md",
+    "adb.md",
     "alias.md",
     "s3.md",
     "archive.md",
