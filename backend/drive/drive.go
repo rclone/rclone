@@ -690,15 +690,19 @@ resource key is not needed.
 
 Normally rclone will work around a bug in Google Drive when using
 --fast-list (ListR) where the search "(A in parents) or (B in
-parents)" returns nothing sometimes. See #3114, #4289 and
+parents)" returns nothing for one or more of the directories in the
+search sometimes. See #3114, #4289, #9810 and
 https://issuetracker.google.com/issues/149522397
 
-Rclone detects this by finding no items in more than one directory
-when listing and retries them as lists of individual directories.
+Rclone detects this by finding directories with no items in a listing
+of more than one directory and retries just those directories together
+as a single extra listing. Any directory still showing no items after
+that is queried on its own, since the bug is triggered by combining
+multiple directories into one search.
 
-This means that if you have a lot of empty directories rclone will end
-up listing them all individually and this can take many more API
-calls.
+This means that if you have a lot of directories affected by this bug
+in a single listing rclone will end up doing extra API calls to
+re-list them.
 
 This flag allows the work-around to be disabled. This is **not**
 recommended in normal use - only if you have a particular case you are
@@ -870,8 +874,6 @@ type Fs struct {
 	isTeamDrive      bool               // true if this is a team drive
 	m                configmap.Mapper
 	grouping         int32                        // number of IDs to search at once in ListR - read with atomic
-	listRmu          *sync.Mutex                  // protects listRempties
-	listRempties     map[string]struct{}          // IDs of supposedly empty directories which triggered grouping disable
 	dirResourceKeys  *sync.Map                    // map directory ID to resource key
 	permissionsMu    *sync.Mutex                  // protect the below
 	permissions      map[string]*drive.Permission // map permission IDs to Permissions
@@ -1404,8 +1406,6 @@ func newFs(ctx context.Context, name, path string, m configmap.Mapper) (*Fs, err
 		pacer:           fs.NewPacer(ctx, pacer.NewGoogleDrive(pacer.MinSleep(opt.PacerMinSleep), pacer.Burst(opt.PacerBurst))),
 		m:               m,
 		grouping:        listRGrouping,
-		listRmu:         new(sync.Mutex),
-		listRempties:    make(map[string]struct{}),
 		dirResourceKeys: new(sync.Map),
 		permissionsMu:   new(sync.Mutex),
 		permissions:     make(map[string]*drive.Permission),
@@ -2091,12 +2091,59 @@ func (s listRSlices) Less(i, j int) bool {
 	return s.dirs[i] < s.dirs[j]
 }
 
+// listRItem finds which of the sorted dirs (with matching paths) item
+// belongs to, converts it to a DirEntry and calls cb with it for each
+// matching parent. dirs must be sorted. found[i] is set to true for each
+// dirs[i] that item belongs to.
+//
+// It returns true (to stop the listing early) if cb or the DirEntry
+// conversion returns an error, which is then returned in iErr.
+func (f *Fs) listRItem(ctx context.Context, item *drive.File, dirs, paths []string, found []bool, cb func(fs.DirEntry) error) (stop bool, iErr error) {
+	for _, parent := range item.Parents {
+		var i int
+		earlyExit := false
+		// If only one item in paths then no need to search for the ID
+		// assuming google drive is doing its job properly.
+		//
+		// Note that we at the root when len(paths) == 1 && paths[0] == ""
+		if len(paths) == 1 {
+			// don't check parents at root because
+			// - shared with me items have no parents at the root
+			// - if using a root alias, e.g. "root" or "appDataFolder" the ID won't match
+			i = 0
+			// items at root can have more than one parent so we need to put
+			// the item in just once.
+			earlyExit = true
+		} else {
+			// only handle parents that are in the requested dirs list if not at root
+			i = sort.SearchStrings(dirs, parent)
+			if i == len(dirs) || dirs[i] != parent {
+				continue
+			}
+		}
+		found[i] = true
+		remote := path.Join(paths[i], item.Name)
+		entry, err := f.itemToDirEntry(ctx, remote, item)
+		if err != nil {
+			return true, err
+		}
+		if err := cb(entry); err != nil {
+			return true, err
+		}
+		// If didn't check parents then insert only once
+		if earlyExit {
+			break
+		}
+	}
+	return false, nil
+}
+
 // listRRunner will read dirIDs from the in channel, perform the file listing and call cb with each DirEntry.
 //
 // In each cycle it will read up to grouping entries from the in channel without blocking.
 // If an error occurs it will be send to the out channel and then return. Once the in channel is closed,
 // nil is send to the out channel and the function returns.
-func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in chan listREntry, out chan<- error, cb func(fs.DirEntry) error, sendJob func(listREntry)) {
+func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in chan listREntry, out chan<- error, cb func(fs.DirEntry) error) {
 	var dirs []string
 	var paths []string
 	var grouping int32
@@ -2119,93 +2166,73 @@ func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in chan listRE
 		}
 		listRSlices{dirs, paths}.Sort()
 		var iErr error
-		foundItems := false
+		foundInDir := make([]bool, len(dirs))
 		_, err := f.list(ctx, dirs, "", false, false, f.opt.TrashedOnly, false, func(item *drive.File) bool {
 			// shared with me items have no parents when at the root
 			if f.opt.SharedWithMe && len(item.Parents) == 0 && len(paths) == 1 && paths[0] == "" {
 				item.Parents = dirs
 			}
-			for _, parent := range item.Parents {
-				var i int
-				foundItems = true
-				earlyExit := false
-				// If only one item in paths then no need to search for the ID
-				// assuming google drive is doing its job properly.
-				//
-				// Note that we at the root when len(paths) == 1 && paths[0] == ""
-				if len(paths) == 1 {
-					// don't check parents at root because
-					// - shared with me items have no parents at the root
-					// - if using a root alias, e.g. "root" or "appDataFolder" the ID won't match
-					i = 0
-					// items at root can have more than one parent so we need to put
-					// the item in just once.
-					earlyExit = true
-				} else {
-					// only handle parents that are in the requested dirs list if not at root
-					i = sort.SearchStrings(dirs, parent)
-					if i == len(dirs) || dirs[i] != parent {
-						continue
-					}
-				}
-				remote := path.Join(paths[i], item.Name)
-				entry, err := f.itemToDirEntry(ctx, remote, item)
-				if err != nil {
-					iErr = err
-					return true
-				}
-
-				err = cb(entry)
-				if err != nil {
-					iErr = err
-					return true
-				}
-
-				// If didn't check parents then insert only once
-				if earlyExit {
-					break
-				}
+			stop, err := f.listRItem(ctx, item, dirs, paths, foundInDir, cb)
+			if err != nil {
+				iErr = err
 			}
-			return false
+			return stop
 		})
-		// Found no items in more than one directory. Retry these as
-		// individual directories This is to work around a bug in google
-		// drive where (A in parents) or (B in parents) returns nothing
-		// sometimes. See #3114, #4289 and
+		// Found items in some but not all of the directories in the batch.
+		// Retry the directories with no items together as a single fresh
+		// batch (without disabling grouping). This is to work around a bug
+		// in google drive where (A in parents) or (B in parents) returns
+		// nothing for some of A or B sometimes. See #3114, #4289, #9810 and
 		// https://issuetracker.google.com/issues/149522397
-		if f.opt.FastListBugFix && len(dirs) > 1 && !foundItems {
-			if atomic.SwapInt32(&f.grouping, 1) != 1 {
-				fs.Debugf(f, "Disabling ListR to work around bug in drive as multi listing (%d) returned no entries", len(dirs))
+		//
+		// A batch of genuinely empty directories costs one extra query for
+		// the whole batch rather than one query per directory. However the
+		// bug can affect the same directories again when they are retried
+		// together, since it is the multi-parent query itself that
+		// triggers it - so any directory still empty after the batch retry
+		// is queried once more on its own, which has no "or" clause to
+		// trigger the bug.
+		if f.opt.FastListBugFix && len(dirs) > 1 && iErr == nil {
+			var emptyDirs, emptyPaths []string
+			for i, found := range foundInDir {
+				if !found {
+					emptyDirs = append(emptyDirs, dirs[i])
+					emptyPaths = append(emptyPaths, paths[i])
+				}
 			}
-			f.listRmu.Lock()
-			for i := range dirs {
-				// Requeue the jobs
-				job := listREntry{id: dirs[i], path: paths[i]}
-				sendJob(job)
-				// Make a note of these dirs - if they all turn
-				// out to be empty then we can re-enable grouping
-				f.listRempties[dirs[i]] = struct{}{}
-			}
-			f.listRmu.Unlock()
-			fs.Debugf(f, "Recycled %d entries", len(dirs))
-		}
-		// If using a grouping of 1 and dir was empty then check to see if it
-		// is part of the group that caused grouping to be disabled.
-		if grouping == 1 && len(dirs) == 1 && !foundItems {
-			f.listRmu.Lock()
-			if _, found := f.listRempties[dirs[0]]; found {
-				// Remove the ID
-				delete(f.listRempties, dirs[0])
-				// If no empties left => all the directories that
-				// triggered the grouping being set to 1 were actually
-				// empty so must have made a mistake
-				if len(f.listRempties) == 0 {
-					if atomic.SwapInt32(&f.grouping, listRGrouping) != listRGrouping {
-						fs.Debugf(f, "Re-enabling ListR as previous detection was in error")
+			if len(emptyDirs) > 0 {
+				fs.Debugf(f, "Retrying %d directories with no entries from multi listing (%d) to work around bug in drive", len(emptyDirs), len(dirs))
+				emptyFound := make([]bool, len(emptyDirs))
+				_, retryErr := f.list(ctx, emptyDirs, "", false, false, f.opt.TrashedOnly, false, func(item *drive.File) bool {
+					stop, err := f.listRItem(ctx, item, emptyDirs, emptyPaths, emptyFound, cb)
+					if err != nil {
+						iErr = err
+					}
+					return stop
+				})
+				if retryErr != nil && iErr == nil {
+					iErr = retryErr
+				}
+				if iErr == nil {
+					for i, found := range emptyFound {
+						if found {
+							continue
+						}
+						fs.Debugf(f, "Retrying directory %q individually as it still had no entries after the batch retry", emptyPaths[i])
+						_, dirErr := f.list(ctx, []string{emptyDirs[i]}, "", false, false, f.opt.TrashedOnly, false, func(item *drive.File) bool {
+							stop, err := f.listRItem(ctx, item, []string{emptyDirs[i]}, []string{emptyPaths[i]}, []bool{false}, cb)
+							if err != nil {
+								iErr = err
+							}
+							return stop
+						})
+						if dirErr != nil {
+							iErr = dirErr
+							break
+						}
 					}
 				}
 			}
-			f.listRmu.Unlock()
 		}
 
 		for range dirs {
@@ -2291,7 +2318,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	in <- listREntry{directoryID, dir}
 
 	for range f.ci.Checkers {
-		go f.listRRunner(ctx, &wg, in, out, cb, sendJob)
+		go f.listRRunner(ctx, &wg, in, out, cb)
 	}
 	go func() {
 		// wait until the all directories are processed
