@@ -4,10 +4,12 @@ package webdav
 import (
 	"context"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"mime"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"strconv"
@@ -367,6 +369,23 @@ func (w *WebDAV) postprocess(r *http.Request, remote string) {
 	// set modtime from requests, don't write to client because status is already written
 	switch r.Method {
 	case "COPY", "MOVE", "PUT":
+		mh := r.Header.Get("X-OC-Mtime")
+		if mh == "" {
+			return
+		}
+
+		// COPY and MOVE name the resource to modify in the Destination
+		// header; the request URL is the source, which no longer exists
+		// after a MOVE.
+		if r.Method == "COPY" || r.Method == "MOVE" {
+			var err error
+			remote, err = w.destinationRemote(r)
+			if err != nil {
+				fs.Errorf(nil, "Failed to find destination: %v", err)
+				return
+			}
+		}
+
 		VFS, err := w.getVFS(r.Context())
 		if err != nil {
 			fs.Errorf(nil, "Failed to get VFS: %v", err)
@@ -380,19 +399,38 @@ func (w *WebDAV) postprocess(r *http.Request, remote string) {
 			return
 		}
 
-		mh := r.Header.Get("X-OC-Mtime")
-		if mh != "" {
-			modtimeUnix, err := strconv.ParseInt(mh, 10, 64)
-			if err == nil {
-				err = node.SetModTime(time.Unix(modtimeUnix, 0))
-				if err != nil {
-					fs.Errorf(nil, "Failed to set modtime: %v", err)
-				}
-			} else {
-				fs.Errorf(nil, "Failed to parse modtime: %v", err)
-			}
+		modtimeUnix, err := strconv.ParseInt(mh, 10, 64)
+		if err != nil {
+			fs.Errorf(nil, "Failed to parse modtime: %v", err)
+			return
+		}
+		err = node.SetModTime(time.Unix(modtimeUnix, 0))
+		if err != nil {
+			fs.Errorf(nil, "Failed to set modtime: %v", err)
 		}
 	}
+}
+
+// destinationRemote returns the remote named by the Destination header of
+// a COPY or MOVE request, relative to the root served.
+func (w *WebDAV) destinationRemote(r *http.Request) (string, error) {
+	dst := r.Header.Get("Destination")
+	if dst == "" {
+		return "", errors.New("no Destination header")
+	}
+	u, err := url.Parse(dst)
+	if err != nil {
+		return "", fmt.Errorf("invalid Destination header %q: %w", dst, err)
+	}
+	remote := u.Path
+	if w.opt.HTTP.BaseURL != "" {
+		trimmed := strings.TrimPrefix(remote, w.opt.HTTP.BaseURL)
+		if len(trimmed) == len(remote) {
+			return "", fmt.Errorf("destination %q is outside the served path", dst)
+		}
+		remote = trimmed
+	}
+	return strings.Trim(remote, "/"), nil
 }
 
 func (w *WebDAV) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
