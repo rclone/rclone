@@ -8,7 +8,7 @@ import (
 )
 
 func (b *bisyncRun) trackRenamesPreflight() bool {
-	return b.opt.MaxDeleteRenamesAware && !b.opt.Force
+	return b.opt.MaxDeleteRenamesAware && !b.opt.Force && !b.opt.Resync
 }
 
 func (b *bisyncRun) trackedRenameExemptions(ctx context.Context, ds1, ds2 *deltaSet) (path1, path2 int, err error) {
@@ -47,8 +47,9 @@ func (b *bisyncRun) trackedRenameExemptionsForPath(ctx context.Context, changed,
 		return 0, nil
 	}
 
-	sources := make([]trackrenames.Candidate, 0)
-	for _, name := range changed.sort() {
+	names := changed.sort()
+	var sources []trackrenames.Candidate
+	for _, name := range names {
 		if changed.deltas[name] != deltaNew || b.aliases.Alias(name) != name {
 			continue
 		}
@@ -63,8 +64,8 @@ func (b *bisyncRun) trackedRenameExemptionsForPath(ctx context.Context, changed,
 		return 0, nil
 	}
 
-	destinations := make([]trackrenames.Candidate, 0)
-	for _, name := range changed.sort() {
+	var destinations []trackrenames.Candidate
+	for _, name := range names {
 		if changed.deltas[name] != deltaDeleted || b.aliases.Alias(name) != name {
 			continue
 		}

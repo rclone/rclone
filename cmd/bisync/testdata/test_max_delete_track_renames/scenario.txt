@@ -4,8 +4,8 @@ test max-delete-track-renames
 # - Confirm --track-renames alone retains the existing safety abort.
 # - Confirm the opt-in rename-aware check permits the tracked renames.
 
-test initial bisync
-bisync resync
+test resync bypasses rename-aware hash preflight with ignored listing checksums
+bisync resync track-renames max-delete-renames-aware ignore-listing-checksum
 
 test rename-aware max-delete requires track-renames
 bisync max-delete-renames-aware
@@ -19,19 +19,16 @@ test rename-aware hash matching rejects ignored listing checksums
 bisync track-renames max-delete-renames-aware ignore-listing-checksum
 copy-listings ignore-hash-fail
 
-test force bypasses the rename-aware preflight setup
-bisync track-renames max-delete-renames-aware force
-
 test rename >50% of Path1 files
-copy-as {path1/}file1.txt {path1/}renamed/ file1.txt
+copy-as {path1/}file1.txt {path1/} renamed-file1.txt
 delete-file {path1/}file1.txt
-copy-as {path1/}file2.txt {path1/}renamed/ file2.txt
+copy-as {path1/}file2.txt {path1/} renamed-file2.txt
 delete-file {path1/}file2.txt
-copy-as {path1/}file3.txt {path1/}renamed/ file3.txt
+copy-as {path1/}file3.txt {path1/} renamed-file3.txt
 delete-file {path1/}file3.txt
-copy-as {path1/}file4.txt {path1/}renamed/ file4.txt
+copy-as {path1/}file4.txt {path1/} renamed-file4.txt
 delete-file {path1/}file4.txt
-copy-as {path1/}file5.txt {path1/}renamed/ file5.txt
+copy-as {path1/}file5.txt {path1/} renamed-file5.txt
 delete-file {path1/}file5.txt
 
 test track-renames alone should retain the max-delete safety abort
@@ -39,29 +36,32 @@ bisync track-renames
 copy-listings initial-fail
 
 test rename-aware max-delete should permit tracked renames
-bisync track-renames max-delete-renames-aware checkers=1 transfers=1
+bisync track-renames max-delete-renames-aware
 
 test rename-aware max-delete should work from Path2
-copy-as {path2/}renamed/file1.txt {path2/}renamed2/ file1.txt
-delete-file {path2/}renamed/file1.txt
-copy-as {path2/}renamed/file2.txt {path2/}renamed2/ file2.txt
-delete-file {path2/}renamed/file2.txt
-copy-as {path2/}renamed/file3.txt {path2/}renamed2/ file3.txt
-delete-file {path2/}renamed/file3.txt
-copy-as {path2/}renamed/file4.txt {path2/}renamed2/ file4.txt
-delete-file {path2/}renamed/file4.txt
-copy-as {path2/}renamed/file5.txt {path2/}renamed2/ file5.txt
-delete-file {path2/}renamed/file5.txt
-bisync track-renames max-delete-renames-aware checkers=1 transfers=1
+copy-as {path2/}renamed-file1.txt {path2/} renamed2-file1.txt
+delete-file {path2/}renamed-file1.txt
+copy-as {path2/}renamed-file2.txt {path2/} renamed2-file2.txt
+delete-file {path2/}renamed-file2.txt
+copy-as {path2/}renamed-file3.txt {path2/} renamed2-file3.txt
+delete-file {path2/}renamed-file3.txt
+copy-as {path2/}renamed-file4.txt {path2/} renamed2-file4.txt
+delete-file {path2/}renamed-file4.txt
+copy-as {path2/}renamed-file5.txt {path2/} renamed2-file5.txt
+delete-file {path2/}renamed-file5.txt
+bisync track-renames max-delete-renames-aware
 
 test unmatched deletes should still exceed max-delete
-copy-as {path1/}renamed2/file1.txt {path1/}moved/ file1.txt
-delete-file {path1/}renamed2/file1.txt
-delete-file {path1/}renamed2/file2.txt
-delete-file {path1/}renamed2/file3.txt
-delete-file {path1/}renamed2/file4.txt
-delete-file {path1/}renamed2/file5.txt
+copy-as {path1/}renamed2-file1.txt {path1/} moved-file1.txt
+delete-file {path1/}renamed2-file1.txt
+delete-file {path1/}renamed2-file2.txt
+delete-file {path1/}renamed2-file3.txt
+delete-file {path1/}renamed2-file4.txt
+delete-file {path1/}renamed2-file5.txt
 delete-file {path1/}file6.txt
 delete-file {path1/}file7.txt
-bisync track-renames max-delete-renames-aware checkers=1 transfers=1
+bisync track-renames max-delete-renames-aware
 copy-listings partial-fail
+
+test force bypasses max-delete and rename-aware hash preflight
+bisync track-renames max-delete-renames-aware ignore-listing-checksum force

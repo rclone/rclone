@@ -499,6 +499,10 @@ To force the sync, either set a different delete percentage limit,
 e.g. `--max-delete 75` (allows up to 75% deletion), or use `--force`
 to bypass the check.
 
+Also see the [all files changed](#all-files-changed) check.
+
+### --max-delete-renames-aware
+
 When `--track-renames` is in use, `--max-delete-renames-aware` can exclude
 files that are guaranteed to match as tracked renames from the deletion count.
 If the initial deletion count exceeds `--max-delete`, bisync performs a rename
@@ -509,11 +513,10 @@ The preflight uses the selected [`--track-renames-strategy`](/docs/#track-rename
 and the attributes stored in the normal bisync listings. A hash strategy forces
 both listings to use a common hash and is incompatible with
 `--ignore-listing-checksum`. The option only exempts matches when the destination
-supports server-side moves and the selected strategy is supported by both paths.
+supports server-side moves or copies and the selected strategy is supported by both paths.
 It requires `--track-renames` and is disabled by default because hashing may add
 listing time. `--force` bypasses both the safety check and this preflight.
-
-Also see the [all files changed](#all-files-changed) check.
+The preflight is also disabled during `--resync`, when rename tracking is unavailable.
 
 ### --filters-file {#filters-file}
 
@@ -1929,6 +1932,11 @@ Also note a number of academic publications by
 about *Unison* and synchronization in general.
 
 ## Changelog
+
+### `v1.76`
+
+- Added `--max-delete-renames-aware` to exclude guaranteed tracked renames from
+the `--max-delete` safety check when used with `--track-renames`.
 
 ### `v1.74.2`
 
