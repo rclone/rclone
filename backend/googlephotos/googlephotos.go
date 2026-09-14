@@ -32,6 +32,7 @@ import (
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/oauth2/google"
 )
@@ -1187,6 +1188,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	// Upload the media item in exchange for an UploadToken
+	counter := readers.NewCountingReader(in)
 	opts := rest.Opts{
 		Method:  "POST",
 		Path:    "/uploads",
@@ -1195,7 +1197,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			"X-Goog-Upload-File-Name": fileName,
 			"X-Goog-Upload-Protocol":  "raw",
 		},
-		Body: in,
+		Body: counter,
 	}
 	var token []byte
 	var resp *http.Response
@@ -1209,6 +1211,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	})
 	if err != nil {
 		return fmt.Errorf("couldn't upload file: %w", err)
+	}
+
+	// Check the source supplied the number of bytes it declared
+	// otherwise a truncated file would be stored as a good upload.
+	if size := src.Size(); size >= 0 && int64(counter.BytesRead()) != size {
+		return fmt.Errorf("expected %d bytes in input, but got %d: %w", size, counter.BytesRead(), io.ErrUnexpectedEOF)
 	}
 	uploadToken := strings.TrimSpace(string(token))
 	if uploadToken == "" {
