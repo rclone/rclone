@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"maps"
@@ -538,6 +539,18 @@ func (s *Session) AuthWithToken(ctx context.Context) error {
 	fs.Debugf(nil, "iclouddrive: accountLogin response cookies: %v", cookieDebugSummaries(resp.Cookies()))
 	fs.Debugf(nil, "iclouddrive: session cookie jar after accountLogin: %v", cookieJarDebugSummaries(s.Cookies))
 
+	return s.AccountInfo.checkTerms()
+}
+
+// errTermsUpdateNeeded is returned when the account has iCloud terms pending
+// acceptance, in which case Apple withholds X-APPLE-WEBAUTH-TOKEN from accountLogin
+var errTermsUpdateNeeded = errors.New("iCloud terms and conditions need to be accepted: sign in at https://www.icloud.com, accept the terms, then run \"rclone reconnect remote:\"")
+
+// checkTerms returns an error if the account must accept updated iCloud terms
+func (a *AccountInfo) checkTerms() error {
+	if a.TermsUpdateNeeded {
+		return errTermsUpdateNeeded
+	}
 	return nil
 }
 
@@ -925,6 +938,7 @@ type AccountInfo struct {
 	DsInfo               *dsInfo                `json:"dsInfo"`
 	Webservices          map[string]*webService `json:"webservices"`
 	HsaChallengeRequired bool                   `json:"hsaChallengeRequired"`
+	TermsUpdateNeeded    bool                   `json:"termsUpdateNeeded"`
 }
 
 // dsInfo holds the account metadata fields we read
