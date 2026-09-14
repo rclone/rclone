@@ -1,0 +1,20 @@
+backend: ente
+name: Ente.io
+tier: Tier 1
+maintainers: External
+features_score: 5
+integration_tests: Passing
+data_integrity: Hash
+performance: High
+adoption: Some use
+docs: Full
+security: High
+virtual: false
+remote: 'TestEnte:'
+features:
+- CanHaveEmptyDirectories
+- Move
+- Purge
+hashes:
+- md5
+precision: 1000000

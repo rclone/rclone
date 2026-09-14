@@ -19,6 +19,7 @@ import (
 	_ "github.com/rclone/rclone/backend/drime"
 	_ "github.com/rclone/rclone/backend/drive"
 	_ "github.com/rclone/rclone/backend/dropbox"
+	_ "github.com/rclone/rclone/backend/ente"
 	_ "github.com/rclone/rclone/backend/fichier"
 	_ "github.com/rclone/rclone/backend/filefabric"
 	_ "github.com/rclone/rclone/backend/filelu"
