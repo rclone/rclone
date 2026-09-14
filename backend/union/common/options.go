@@ -14,4 +14,5 @@ type Options struct {
 	SearchPolicy string          `config:"search_policy"`
 	CacheTime    int             `config:"cache_time"`
 	MinFreeSpace fs.SizeSuffix   `config:"min_free_space"`
+	HealWrites   bool            `config:"heal_writes"`
 }
