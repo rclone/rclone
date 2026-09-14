@@ -820,6 +820,19 @@ func (vfs *VFS) Chown(name string, uid, gid int) error {
 // mkdir creates a new directory with the specified name and permission bits
 // (before umask) returning the new directory node.
 func (vfs *VFS) mkdir(name string, perm os.FileMode) (*Dir, error) {
+	// The root directory node always exists, but the directory it
+	// represents may not, so make that on the backend.
+	if strings.Trim(name, "/") == "" {
+		if vfs.Opt.ReadOnly {
+			return nil, EROFS
+		}
+		err := vfs.f.Mkdir(vfs.ctx, "")
+		if err != nil {
+			fs.Errorf(vfs.root, "Dir.Mkdir failed to create directory: %v", err)
+			return nil, err
+		}
+		return vfs.root, nil
+	}
 	dir, leaf, err := vfs.StatParent(name)
 	if err != nil {
 		return nil, err

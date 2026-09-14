@@ -478,6 +478,12 @@ func TestVFSMkdir(t *testing.T) {
 	require.NoError(t, err)
 
 	r.CheckRemoteListing(t, nil, []string{"a", "b", "c", "d"})
+
+	vfs.Opt.ReadOnly = true
+	err = vfs.Mkdir("", 0777)
+	assert.Equal(t, EROFS, err)
+	err = vfs.Mkdir("e", 0777)
+	assert.Equal(t, EROFS, err)
 }
 
 func TestVFSMkdirAll(t *testing.T) {

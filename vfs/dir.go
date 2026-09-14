@@ -18,6 +18,7 @@ import (
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/lib/sanitize"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"golang.org/x/text/unicode/norm"
 )
@@ -1026,9 +1027,28 @@ func (d *Dir) Open(flags int) (fd Handle, err error) {
 	return newDirHandle(d), nil
 }
 
+// checkName returns EINVAL if name isn't a single safe path element,
+// that is it is empty, "." or "..", or contains a "/".
+//
+// Such a name can't be a child of the directory and would make a node
+// whose path is outside it (or outside the VFS root, since at the root
+// path.Join("", "..") preserves the "..").
+func (d *Dir) checkName(name string) error {
+	if err := sanitize.Leaf(name); err != nil {
+		fs.Errorf(d, "Refusing unsafe name: %v", err)
+		return EINVAL
+	}
+	return nil
+}
+
 // Create makes a new file node
+//
+// It returns EINVAL if name isn't a single safe path element.
 func (d *Dir) Create(name string, flags int) (*File, error) {
 	// fs.Debugf(path, "Dir.Create")
+	if err := d.checkName(name); err != nil {
+		return nil, err
+	}
 	// Return existing node if one exists
 	node, err := d.stat(name)
 	switch err {
@@ -1058,9 +1078,14 @@ func (d *Dir) Create(name string, flags int) (*File, error) {
 }
 
 // Mkdir creates a new directory
+//
+// It returns EINVAL if name isn't a single safe path element.
 func (d *Dir) Mkdir(name string) (*Dir, error) {
 	if d.vfs.Opt.ReadOnly {
 		return nil, EROFS
+	}
+	if err := d.checkName(name); err != nil {
+		return nil, err
 	}
 	path := path.Join(d.path, name)
 	node, err := d.stat(name)
@@ -1170,10 +1195,15 @@ func (d *Dir) RemoveName(name string) error {
 }
 
 // Rename the file
+//
+// It returns EINVAL if newName isn't a single safe path element.
 func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 	// fs.Debugf(d, "BEFORE\n%s", d.dump())
 	if d.vfs.Opt.ReadOnly {
 		return EROFS
+	}
+	if err := destDir.checkName(newName); err != nil {
+		return err
 	}
 	oldPath := path.Join(d.path, oldName)
 	newPath := path.Join(destDir.path, newName)

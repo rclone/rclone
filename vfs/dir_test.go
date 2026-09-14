@@ -471,6 +471,48 @@ func TestDirMkdirSub(t *testing.T) {
 	assert.Equal(t, EROFS, err)
 }
 
+// TestDirUnsafeName checks that a name which isn't a single safe path
+// element is refused by everything which creates a node, so it can't
+// build a path outside the directory. At the root path.Join("", "..")
+// preserves the "..", so this would otherwise make a node whose path is
+// outside the VFS root.
+func TestDirUnsafeName(t *testing.T) {
+	r, vfs, dir, file1 := dirCreate(t)
+
+	root, err := vfs.Root()
+	require.NoError(t, err)
+
+	for _, d := range []*Dir{root, dir} {
+		for _, name := range []string{"", ".", "..", "sub/dir", "../escape", "escape/.."} {
+			t.Run(fmt.Sprintf("%q in %q", name, d.Path()), func(t *testing.T) {
+				_, err := d.Mkdir(name)
+				assert.Equal(t, EINVAL, err, "Mkdir")
+
+				_, err = d.Create(name, os.O_WRONLY|os.O_CREATE)
+				assert.Equal(t, EINVAL, err, "Create")
+
+				err = dir.Rename("file1", name, d)
+				assert.Equal(t, EINVAL, err, "Rename")
+
+				// The source name is only looked up so isn't found
+				err = d.Rename(name, "renamed", dir)
+				assert.Equal(t, ENOENT, err, "Rename source")
+			})
+		}
+	}
+
+	// such a name can't be looked up either
+	_, err = vfs.Stat("..")
+	assert.Equal(t, ENOENT, err)
+	_, err = vfs.Stat("../escape")
+	assert.Equal(t, ENOENT, err)
+
+	// check nothing was made in the vfs or the underlying r.Fremote
+	checkListing(t, root, []string{"dir,0,true"})
+	checkListing(t, dir, []string{"file1,14,false"})
+	r.CheckRemoteItems(t, file1)
+}
+
 func TestDirRemove(t *testing.T) {
 	r, vfs, dir, _ := dirCreate(t)
 
