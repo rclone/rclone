@@ -56,7 +56,15 @@ const (
 	driveTypeSharepoint         = "documentLibrary"
 	defaultChunkSize            = 10 * fs.Mebi
 	chunkSizeMultiple           = 320 * fs.Kibi
-	maxSinglePartSize           = 4 * fs.Mebi
+	// maxSinglePartSize is the size at which Graph stops accepting an upload in a
+	// single request (PUT /items/{id}/content). Microsoft documents this as
+	// "250 MB", see
+	// https://learn.microsoft.com/en-us/graph/api/driveitem-put-content
+	// Measured against SharePoint Online the figure is binary and exclusive: a
+	// body of 262143999 bytes is accepted, one of 262144000 is not. That matches
+	// upload_cutoff being an exclusive threshold in Update below, so a cutoff of
+	// exactly 250Mi sends everything the server would refuse to multipart.
+	maxSinglePartSize = 250 * fs.Mebi
 
 	regionGlobal = "global"
 	regionUS     = "us"
@@ -2786,13 +2794,13 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 	return info, o.setMetaData(info)
 }
 
-// Update the content of a remote file within 4 MiB size in one single request
+// Update the content of a remote file smaller than maxSinglePartSize in one single request
 // (currently only used when size is exactly 0)
 // This function will set modtime and metadata after uploading, which will create a new version for the remote file
 func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (info *api.Item, err error) {
 	size := src.Size()
-	if size < 0 || size > int64(maxSinglePartSize) {
-		return nil, fmt.Errorf("size passed into uploadSinglepart must be >= 0 and <= %v", maxSinglePartSize)
+	if size < 0 || size >= int64(maxSinglePartSize) {
+		return nil, fmt.Errorf("size passed into uploadSinglepart must be >= 0 and < %v", maxSinglePartSize)
 	}
 
 	fs.Debugf(o, "Starting singlepart upload")

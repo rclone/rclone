@@ -516,6 +516,30 @@ func (f *Fs) resetTestDefaults(r *fstest.Run) {
 	r.Finalise()
 }
 
+// TestCheckUploadCutoff checks the bounds of the --onedrive-upload-cutoff
+// validation, in particular that the documented API maximum is accepted.
+func TestCheckUploadCutoff(t *testing.T) {
+	for _, test := range []struct {
+		in      fs.SizeSuffix
+		wantErr bool
+	}{
+		{in: 0, wantErr: false},
+		{in: 4 * fs.Mebi, wantErr: false},
+		// maxSinglePartSize is a legal cutoff even though the server refuses a
+		// body of that size, because the cutoff is an exclusive threshold: at
+		// this setting a file of exactly maxSinglePartSize goes multipart.
+		{in: maxSinglePartSize, wantErr: false},
+		{in: maxSinglePartSize + 1, wantErr: true},
+	} {
+		err := checkUploadCutoff(test.in)
+		if test.wantErr {
+			assert.Error(t, err, test.in.String())
+		} else {
+			assert.NoError(t, err, test.in.String())
+		}
+	}
+}
+
 // InternalTest dispatches all internal tests
 func (f *Fs) InternalTest(t *testing.T) {
 	newTestF := func() (*Fs, *fstest.Run) {

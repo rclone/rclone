@@ -22,7 +22,7 @@ Thank you to our sponsors:
 {{< sponsor src="/img/logos/sia.svg" width="200" height="200" title="Visit our sponsor sia" link="https://sia.tech">}}
 {{< sponsor src="/img/logos/route4me.svg" width="400" height="200" title="Visit our sponsor Route4Me" link="https://route4me.com/">}}
 {{< sponsor src="/img/logos/rcloneview.svg" width="300" height="200" title="Visit our sponsor RcloneView" link="https://rcloneview.com/">}}
-{{< sponsor src="/img/logos/rcloneui.svg" width="300" height="200" title="Visit our sponsor RcloneUI" link="https://rcloneui.com">}}
+{{< sponsor src="/img/logos/rcloneui.svg" width="300" height="200" title="Visit our sponsor RcloneUI" link="https://rcloneui.com/web">}}
 {{< sponsor src="/img/logos/data-raven.svg" width="300" height="200" title="Data Raven: rclone, managed. Unlimited transfers, no per-GB fees." link="https://dataraven.io/r/rclone">}}
 {{< sponsor src="/img/logos/shade.svg" width="300" height="200" title="Visit our sponsor Shade" link="https://shade.inc">}}
 {{< sponsor src="/img/logos/filelu-rclone.svg" width="300" height="200" title="Visit our sponsor FileLu" link="https://filelu.com/">}}

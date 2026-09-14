@@ -3303,6 +3303,10 @@ func (f *Fs) Hashes() hash.Set {
 
 // PublicLink generates a public link to the remote path (usually readable by anyone)
 func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (link string, err error) {
+	return f.publicLink(ctx, remote, expire, &s3.GetObjectInput{})
+}
+
+func (f *Fs) publicLink(ctx context.Context, remote string, expire fs.Duration, req *s3.GetObjectInput) (link string, err error) {
 	if strings.HasSuffix(remote, "/") {
 		return "", fs.ErrorCantShareDirectories
 	}
@@ -3316,11 +3320,10 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		expire = maxExpireDuration
 	}
 	bucket, bucketPath := f.split(remote)
-	httpReq, err := s3.NewPresignClient(f.c).PresignGetObject(ctx, &s3.GetObjectInput{
-		Bucket:    &bucket,
-		Key:       &bucketPath,
-		VersionId: o.versionID,
-	}, s3.WithPresignExpires(time.Duration(expire)))
+	req.Bucket = &bucket
+	req.Key = &bucketPath
+	req.VersionId = o.versionID
+	httpReq, err := s3.NewPresignClient(f.c).PresignGetObject(ctx, req, s3.WithPresignExpires(time.Duration(expire)))
 	if err != nil {
 		return "", err
 	}
@@ -3328,6 +3331,40 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 }
 
 var commandHelp = []fs.CommandHelp{{
+	Name:  "link",
+	Short: "Generate a signed link with response header overrides.",
+	Long: `This command generates a signed download link for one file, with optional
+overrides for the HTTP response headers. Pass the file path as a separate
+argument, relative to the remote path.
+
+Usage examples:
+
+` + "```console" + `
+rclone backend link s3:bucket path/to/file -o expire=1h
+rclone backend link s3:bucket path/to/file -o response-expires="Thu, 01 Jan 1970 00:00:00 GMT"
+rclone backend link s3:bucket path/to/file -o response-content-disposition='attachment; filename="download.txt"'
+` + "```" + `
+
+The link expires after 7 days by default. Use ` + "`-o expire=1h`" + ` to change
+its lifetime. Durations must be at least 1 second; values above 7 days are
+limited to 7 days, as with ` + "`rclone link`" + `.
+
+The ` + "`response-expires`" + ` option sets the HTTP Expires response header,
+not the lifetime of the signed link. It must be an HTTP date, such as
+` + "`Thu, 01 Jan 1970 00:00:00 GMT`" + `.
+
+The overrides are included in the signature and must not be changed in the
+returned URL. They do not modify the object's stored metadata.`,
+	Opts: map[string]string{
+		"expire":                       "How long the link will be valid (default 7d, maximum 7d).",
+		"response-cache-control":       "Set the Cache-Control response header.",
+		"response-content-disposition": "Set the Content-Disposition response header.",
+		"response-content-encoding":    "Set the Content-Encoding response header.",
+		"response-content-language":    "Set the Content-Language response header.",
+		"response-content-type":        "Set the Content-Type response header.",
+		"response-expires":             "Set the Expires response header to an HTTP date.",
+	},
+}, {
 	Name:  "restore",
 	Short: "Restore objects from GLACIER or INTELLIGENT-TIERING archive tier.",
 	Long: `This command can be used to restore one or more objects from GLACIER to normal
@@ -3555,6 +3592,44 @@ It doesn't return anything.`,
 // otherwise it will be JSON encoded and shown to the user like that
 func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out any, err error) {
 	switch name {
+	case "link":
+		if len(arg) != 1 || arg[0] == "" {
+			return nil, errors.New("link requires exactly one file path argument")
+		}
+		req := s3.GetObjectInput{}
+		expire := maxExpireDuration
+		for key, value := range opt {
+			switch key {
+			case "expire":
+				duration, err := fs.ParseDuration(value)
+				if err != nil {
+					return nil, fmt.Errorf("invalid expire: %w", err)
+				}
+				if duration < time.Second {
+					return nil, errors.New("expire must be at least 1 second")
+				}
+				expire = fs.Duration(duration)
+			case "response-cache-control":
+				req.ResponseCacheControl = aws.String(value)
+			case "response-content-disposition":
+				req.ResponseContentDisposition = aws.String(value)
+			case "response-content-encoding":
+				req.ResponseContentEncoding = aws.String(value)
+			case "response-content-language":
+				req.ResponseContentLanguage = aws.String(value)
+			case "response-content-type":
+				req.ResponseContentType = aws.String(value)
+			case "response-expires":
+				date, err := http.ParseTime(value)
+				if err != nil {
+					return nil, fmt.Errorf("invalid response-expires: %w", err)
+				}
+				req.ResponseExpires = &date
+			default:
+				return nil, fmt.Errorf("unknown link option %q", key)
+			}
+		}
+		return f.publicLink(ctx, arg[0], expire, &req)
 	case "restore":
 		req := s3.RestoreObjectInput{
 			//Bucket:         &f.rootBucket,

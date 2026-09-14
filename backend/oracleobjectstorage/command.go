@@ -11,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/oracle/oci-go-sdk/v65/objectstorage"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/operations"
@@ -197,22 +196,7 @@ func (f *Fs) rename(ctx context.Context, remote, newName string) (any, error) {
 		}
 		return nil, fs.ErrorNotAFile
 	}
-	details := objectstorage.RenameObjectDetails{
-		SourceName: new(objectPath),
-		NewName:    new(newName),
-	}
-	request := objectstorage.RenameObjectRequest{
-		NamespaceName:       new(f.opt.Namespace),
-		BucketName:          new(bucketName),
-		RenameObjectDetails: details,
-		OpcClientRequestId:  nil,
-		RequestMetadata:     common.RequestMetadata{},
-	}
-	var response objectstorage.RenameObjectResponse
-	err = f.pacer.Call(func() (bool, error) {
-		response, err = f.srv.RenameObject(ctx, request)
-		return shouldRetry(ctx, response.HTTPResponse(), err)
-	})
+	err = f.renameObject(ctx, bucketName, objectPath, newName)
 	if err != nil {
 		return nil, err
 	}
