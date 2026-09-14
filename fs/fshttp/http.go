@@ -594,7 +594,12 @@ func newClientTrace(req *http.Request) *httptrace.ClientTrace {
 
 // redirectLeavesHost reports whether req is a redirect hop in a
 // chain which has visited a host other than that of the original
-// request at any point.
+// request, or downgraded an HTTPS request to plaintext HTTP, at any
+// point.
+//
+// The scheme is checked as well as the host and port since a
+// redirect from https://host:8443/ to http://host:8443/ is the same
+// host but would send the headers in plaintext.
 func redirectLeavesHost(req *http.Request) bool {
 	origin := req
 	for origin.Response != nil && origin.Response.Request != nil {
@@ -602,6 +607,9 @@ func redirectLeavesHost(req *http.Request) bool {
 	}
 	for hop := req; hop != origin; hop = hop.Response.Request {
 		if !rest.SameHost(hop.URL, origin.URL) {
+			return true
+		}
+		if origin.URL.Scheme == "https" && hop.URL.Scheme == "http" {
 			return true
 		}
 	}
@@ -622,6 +630,7 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	// Set user defined headers, unless redirected elsewhere
 	if redirectLeavesHost(req) {
 		for _, option := range t.headers {
+			fs.Debugf(nil, "redirect to %s leaves the original host or downgrades to HTTP: not sending --header %s", req.URL.Redacted(), option.Key)
 			req.Header.Del(option.Key)
 		}
 	} else {
