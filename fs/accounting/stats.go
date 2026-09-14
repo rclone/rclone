@@ -304,7 +304,11 @@ func percent(a int64, b int64) string {
 	if a < 0 || b <= 0 {
 		return "-"
 	}
-	return fmt.Sprintf("%d%%", int(float64(a)*100/float64(b)+0.5))
+	pct := int(float64(a)*100/float64(b) + 0.5)
+	if pct > 100 {
+		pct = 100
+	}
+	return fmt.Sprintf("%d%%", pct)
 }
 
 // returned from calculateTransferStats
