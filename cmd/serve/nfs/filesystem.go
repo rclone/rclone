@@ -44,8 +44,9 @@ func setSys(fi os.FileInfo) {
 
 // FS is our wrapper around the VFS to properly support billy.Filesystem interface
 type FS struct {
-	vfs  *vfs.VFS
-	root string // absolute path within the VFS this FS is rooted at; empty means VFS root
+	vfs     *vfs.VFS
+	root    string                        // absolute path within the VFS this FS is rooted at; empty means VFS root
+	renamed func(oldpath, newpath string) // told of each successful rename (absolute VFS paths), if set
 }
 
 // fullPath returns the absolute path within the VFS for name, which is
@@ -60,7 +61,7 @@ func (f *FS) fullPath(name string) string {
 // subFS returns a new *FS rooted at root within the VFS. root must already
 // be a cleaned absolute path that the caller has validated as a directory.
 func (f *FS) subFS(root string) *FS {
-	return &FS{vfs: f.vfs, root: root}
+	return &FS{vfs: f.vfs, root: root, renamed: f.renamed}
 }
 
 // ReadDir implements read dir
@@ -115,7 +116,11 @@ func (f *FS) Rename(oldpath, newpath string) (err error) {
 	oldpath = f.fullPath(oldpath)
 	newpath = f.fullPath(newpath)
 	defer log.Trace(oldpath, "newpath=%q", newpath)("err=%v", &err)
-	return f.vfs.Rename(oldpath, newpath)
+	err = f.vfs.Rename(oldpath, newpath)
+	if err == nil && f.renamed != nil {
+		f.renamed(oldpath, newpath)
+	}
+	return err
 }
 
 // Remove deletes a file

@@ -22,7 +22,6 @@ import (
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/file"
 	"github.com/willscott/go-nfs"
-	nfshelper "github.com/willscott/go-nfs/helpers"
 )
 
 // Errors on cache initialisation
@@ -63,7 +62,9 @@ func (h *Handler) getCache() (c Cache, err error) {
 	var inner Cache
 	switch h.opt.HandleCache {
 	case cacheMemory:
-		inner = nfshelper.NewCachingHandler(h, h.opt.HandleLimit)
+		mh := newMemoryHandler(h.opt.HandleLimit)
+		h.billyFS.renamed = mh.renamed // renamed files and directories keep their handles
+		inner = mh
 	case cacheDisk:
 		inner, err = newDiskHandler(h)
 	case cacheSymlink:
