@@ -535,9 +535,9 @@ func (w *WebDAV) logRequest(r *http.Request, err error) {
 }
 
 // checkPath returns an error if the client supplied path name has a
-// "." or ".." element. The VFS joins the path onto the Fs root, so
-// such an element would otherwise address objects outside the
-// directory served.
+// "." or ".." element. Such an element can't name anything inside
+// the directory served, and the VFS refuses to make nodes with such
+// names, so the request is rejected up front with a clear error.
 //
 // The elements are checked individually rather than the path compared
 // with path.Clean because path.Clean can't resolve a leading ".." in
@@ -558,12 +558,7 @@ func (w *WebDAV) Mkdir(ctx context.Context, name string, perm os.FileMode) (err 
 	if err != nil {
 		return err
 	}
-	dir, leaf, err := VFS.StatParent(name)
-	if err != nil {
-		return err
-	}
-	_, err = dir.Mkdir(leaf)
-	return err
+	return VFS.Mkdir(name, perm)
 }
 
 // OpenFile opens a file or a directory
