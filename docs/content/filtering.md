@@ -273,7 +273,9 @@ Any path/file included at that stage is processed by the rclone
 command.
 
 `--files-from`, `--files-from-raw` and `--files-from0` flags
-over-ride and cannot be combined with other filter options.
+over-ride and cannot be combined with other filter options, with the
+exception of the flag `--files-from-strict`, which makes the operation
+fail if at least one of the files does not exist.
 
 To see the internal combined rule list, in regular expression form,
 for a command add the `--dump filters` flag. Running an rclone command
@@ -733,6 +735,11 @@ E.g. to copy files listed by `find`:
 ```console
 find /path -print0 | rclone copy --files-from0 - / remote:path
 ```
+
+### `--files-from-strict` - Require all listed files to exist
+
+This is an optional flag that can be combined with `--files-from`.
+This ensures that each supplied file exists in the source filesystem.
 
 ### `--ignore-case` - make searches case insensitive
 
