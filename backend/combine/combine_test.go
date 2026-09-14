@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	unimplementableFsMethods     = []string{"UnWrap", "WrapFs", "SetWrapper", "UserInfo", "Disconnect", "OpenChunkWriter"}
+	unimplementableFsMethods     = []string{"UnWrap", "WrapFs", "SetWrapper", "UserInfo", "Disconnect", "OpenChunkWriter", "CreateSnapshot"}
 	unimplementableObjectMethods = []string{}
 )
 
