@@ -4,6 +4,7 @@
 package oracleobjectstorage
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -553,7 +554,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 // PutStream uploads to the remote path with the modTime given of indeterminate size
 func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	return f.Put(ctx, in, src, options...)
+	return f.Put(ctx, bufio.NewReader(in), src, options...)
 }
 
 // Mkdir creates the bucket if it doesn't exist

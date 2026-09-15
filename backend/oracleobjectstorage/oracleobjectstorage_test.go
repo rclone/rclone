@@ -3,11 +3,16 @@
 package oracleobjectstorage
 
 import (
+	"bufio"
 	"bytes"
 	"compress/gzip"
 	"context"
 	"crypto/md5"
+	"errors"
 	"fmt"
+	"io"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/rclone/rclone/fs"
@@ -15,6 +20,7 @@ import (
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/rclone/rclone/lib/random"
+	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -29,6 +35,51 @@ func TestIntegration(t *testing.T) {
 			MinChunkSize: minChunkSize,
 		},
 	})
+}
+
+func TestIsZeroLength(t *testing.T) {
+	newFile := func(contents string) *os.File {
+		file, err := os.CreateTemp(t.TempDir(), "stream")
+		require.NoError(t, err)
+		_, err = file.WriteString(contents)
+		require.NoError(t, err)
+		_, err = file.Seek(0, io.SeekStart)
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = file.Close() })
+		return file
+	}
+	closedFile := newFile("")
+	require.NoError(t, closedFile.Close())
+
+	for _, test := range []struct {
+		name         string
+		in           io.Reader
+		want         bool
+		wantContents string
+	}{
+		{name: "EmptyBuffer", in: bytes.NewBuffer(nil), want: true},
+		{name: "NonEmptyBuffer", in: bytes.NewBufferString("contents"), want: false},
+		{name: "EmptyBytesReader", in: bytes.NewReader(nil), want: true},
+		{name: "NonEmptyBytesReader", in: bytes.NewReader([]byte("contents")), want: false},
+		{name: "EmptyStringsReader", in: strings.NewReader(""), want: true},
+		{name: "NonEmptyStringsReader", in: strings.NewReader("contents"), want: false},
+		{name: "EmptyBufferedStream", in: bufio.NewReader(io.TeeReader(bytes.NewReader(nil), io.Discard)), want: true},
+		{name: "NonEmptyBufferedStream", in: bufio.NewReader(io.TeeReader(bytes.NewBufferString("contents"), io.Discard)), want: false, wantContents: "contents"},
+		{name: "BufferedStreamError", in: bufio.NewReader(readers.ErrorReader{Err: errors.New("stream error")}), want: false},
+		{name: "EmptyFile", in: newFile(""), want: true},
+		{name: "NonEmptyFile", in: newFile("contents"), want: false},
+		{name: "ClosedFile", in: closedFile, want: false},
+		{name: "OpaqueEmptyStream", in: io.TeeReader(bytes.NewReader(nil), io.Discard), want: false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.want, isZeroLength(test.in))
+			if test.wantContents != "" {
+				contents, err := io.ReadAll(test.in)
+				require.NoError(t, err)
+				assert.Equal(t, test.wantContents, string(contents))
+			}
+		})
+	}
 }
 
 func gz(t *testing.T, s string) string {
