@@ -13,3 +13,4 @@ acl: {}
 bucket_acl: true
 quirks:
   use_already_exists: false
+  check_bucket_ownership: true

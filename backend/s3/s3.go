@@ -735,6 +735,23 @@ knows about - please make a bug report if not.
 			Default:  fs.Tristate{},
 			Advanced: true,
 		}, {
+			Name: "check_bucket_ownership",
+			Help: strings.ReplaceAll(`Check that the bucket exists and is accessible before treating a
+|BucketAlreadyExists| or |BucketNameUnavailable| error on bucket
+creation as success.
+
+Some providers return the same error for creating a
+bucket the user already owns and for creating a bucket owned by
+someone else, so rclone can't tell which case it is. On those
+providers rclone checks the bucket is accessible before treating the
+error as success and reports the error if it can't access the bucket.
+
+This should be automatically set correctly for all providers rclone
+knows about - please make a bug report if not.
+`, "|", "`"),
+			Default:  fs.Tristate{},
+			Advanced: true,
+		}, {
 			Name: "use_multipart_uploads",
 			Help: `Set if rclone should use multipart uploads.
 
@@ -1132,6 +1149,7 @@ type Options struct {
 	UseAcceptEncodingGzip       fs.Tristate          `config:"use_accept_encoding_gzip"`
 	NoSystemMetadata            bool                 `config:"no_system_metadata"`
 	UseAlreadyExists            fs.Tristate          `config:"use_already_exists"`
+	CheckBucketOwnership        fs.Tristate          `config:"check_bucket_ownership"`
 	UseMultipartUploads         fs.Tristate          `config:"use_multipart_uploads"`
 	UseUnsignedPayload          fs.Tristate          `config:"use_unsigned_payload"`
 	SDKLogMode                  sdkLogMode           `config:"sdk_log_mode"`
@@ -1802,6 +1820,7 @@ func setQuirks(opt *Options, provider *Provider) {
 	set(&opt.UseDataIntegrityProtections, false, provider.Quirks.UseDataIntegrityProtections)
 	set(&opt.MightGzip, true, provider.Quirks.MightGzip)
 	set(&opt.UseAlreadyExists, true, provider.Quirks.UseAlreadyExists)
+	set(&opt.CheckBucketOwnership, false, provider.Quirks.CheckBucketOwnership)
 	set(&opt.UseMultipartUploads, true, provider.Quirks.UseMultipartUploads)
 	if !opt.UseMultipartUploads.Value {
 		opt.UploadCutoff = math.MaxInt64
@@ -2942,24 +2961,37 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 		if err == nil {
 			fs.Infof(f, "Bucket %q created with ACL %q", bucket, f.opt.BucketACL)
 		}
-		if awsErr, ok := errors.AsType[smithy.APIError](err); ok {
-			switch awsErr.ErrorCode() {
-			case "BucketAlreadyOwnedByYou":
-				err = nil
-			case "BucketAlreadyExists", "BucketNameUnavailable":
-				if f.opt.UseAlreadyExists.Value {
-					// We can trust BucketAlreadyExists to mean not owned by us, so make it non retriable
-					err = fserrors.NoRetryError(err)
-				} else {
-					// We can't trust BucketAlreadyExists to mean not owned by us, so ignore it
-					err = nil
-				}
-			}
-		}
-		return err
+		return f.bucketCreateError(ctx, bucket, err)
 	}, func() (bool, error) {
 		return f.bucketExists(ctx, bucket)
 	})
+}
+
+// bucketCreateError maps the error returned when creating a bucket to the
+// error rclone should report
+func (f *Fs) bucketCreateError(ctx context.Context, bucket string, err error) error {
+	awsErr, ok := errors.AsType[smithy.APIError](err)
+	if !ok {
+		return err
+	}
+	switch awsErr.ErrorCode() {
+	case "BucketAlreadyOwnedByYou":
+		return nil
+	case "BucketAlreadyExists", "BucketNameUnavailable":
+		if f.opt.UseAlreadyExists.Value {
+			// We can trust the error to mean not owned by us, so make it non retriable
+			return fserrors.NoRetryError(err)
+		}
+		if f.opt.CheckBucketOwnership.Value {
+			// Error is returned for both owned and unowned fs objects,
+			// so check ownership
+			if exists, _ := f.bucketExists(ctx, bucket); !exists {
+				return fserrors.NoRetryError(err)
+			}
+		}
+		return nil
+	}
+	return err
 }
 
 // Rmdir deletes the bucket if the fs is at the root
