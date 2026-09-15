@@ -1953,6 +1953,16 @@ func CopyURL(ctx context.Context, fdst fs.Fs, dstFileName string, url string, au
 				return errors.New("CopyURL failed: file already exist")
 			}
 		}
+		if fs.GetConfig(ctx).SizeOnly && size >= 0 {
+			dst, err = fdst.NewObject(ctx, dstFileName)
+			if err == nil && dst.Size() == size {
+				fs.Debugf(dst, "Unchanged skipping")
+				return nil
+			}
+			if err != nil && !errors.Is(err, fs.ErrorObjectNotFound) {
+				return err
+			}
+		}
 		dst, err = RcatSize(ctx, fdst, dstFileName, in, size, modTime, nil)
 		return err
 	})
