@@ -219,14 +219,31 @@ func (c *copy) updateOrPut(ctx context.Context, in io.ReadCloser, uploadOptions 
 	if c.src.Remote() != c.remoteForCopy {
 		wrappedSrc = fs.NewOverrideRemote(c.src, c.remoteForCopy)
 	}
+	// inAcc.Context(), NOT ctx: a --min-bandwidth stall is detected in the
+	// background (Account's averageLoop), independent of whatever this
+	// Update/Put call is currently blocked doing, and can only reach an
+	// in-flight request by cancelling the SAME context that request is
+	// running under. Passing plain ctx here would make the cancellation
+	// invisible until this call already returns on its own.
+	stallCtx := inAcc.Context()
 	if c.doUpdate && c.inplace {
-		err = c.dst.Update(ctx, inAcc, wrappedSrc, uploadOptions...)
+		err = c.dst.Update(stallCtx, inAcc, wrappedSrc, uploadOptions...)
 		// Make sure newDst is c.dst since we updated it
 		if err == nil {
 			newDst = c.dst
 		}
 	} else {
-		newDst, err = c.f.Put(ctx, inAcc, wrappedSrc, uploadOptions...)
+		newDst, err = c.f.Put(stallCtx, inAcc, wrappedSrc, uploadOptions...)
+	}
+	// A cancelled request surfaces as ctx.Err() -- a bare context.Canceled --
+	// because that is all the HTTP transport propagates; context.Cause is
+	// never consulted. Recover the cause so a --min-bandwidth stall reaches
+	// the caller as the stall itself (measured speed included, and marked
+	// retryable) rather than as "context canceled".
+	if err != nil {
+		if cause := context.Cause(stallCtx); errors.Is(cause, accounting.ErrorTransferStalled) {
+			err = cause
+		}
 	}
 	closeErr := inAcc.Close()
 	if err == nil {
