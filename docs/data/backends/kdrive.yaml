@@ -1,0 +1,21 @@
+backend: kdrive
+name: kdrive
+tier: Tier 2
+maintainers: Community
+features_score: 5
+integration_tests: Unknown
+data_integrity: Unknown
+performance: Unknown
+adoption: Rare
+docs: Basic
+security: Unknown
+virtual: false
+remote: 'TestKDrives:'
+features:
+- About
+- Copy
+- Move
+hashes:
+- kdrivehash
+precision: 1000000
+
