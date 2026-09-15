@@ -59,8 +59,8 @@ type PageInfo struct {
 // SearchResponse is returned from GET /media/search
 type SearchResponse struct {
 	Embedded struct {
-		Media  []Medium   `json:"media"`
-		Errors []APIError `json:"errors"`
+		Media  []Medium        `json:"media"`
+		Errors []EmbeddedError `json:"errors"`
 	} `json:"_embedded"`
 	Pages PageInfo `json:"_pages"`
 }
@@ -183,9 +183,9 @@ type UserInfo struct {
 	UpdatedAt             time.Time     `json:"updated_at"`
 }
 
-// APIError is a single error as returned in an _embedded.errors array, for
+// EmbeddedError is a single error as returned in an _embedded.errors array, for
 // example from DELETE /media
-type APIError struct {
+type EmbeddedError struct {
 	Reason      string `json:"reason"`
 	Code        int    `json:"code"`
 	Description string `json:"description"`
@@ -195,7 +195,7 @@ type APIError struct {
 // DeleteResponse is returned from DELETE /media
 type DeleteResponse struct {
 	Embedded struct {
-		Errors []APIError `json:"errors"`
+		Errors []EmbeddedError `json:"errors"`
 	} `json:"_embedded"`
 }
 

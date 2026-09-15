@@ -234,7 +234,7 @@ func TestPatternYears(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, entries)
 	assert.Equal(t, "2015", entries[0].Remote())
-	assert.Equal(t, "2019", entries[len(entries)-1].Remote())
+	assert.Equal(t, time.Now().Format("2006"), entries[len(entries)-1].Remote())
 }
 
 func TestPatternMonths(t *testing.T) {

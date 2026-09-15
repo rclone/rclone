@@ -222,7 +222,7 @@ func (mf mediaFilter) matches(t time.Time) bool {
 // Return the years from startYear to today - only the ones with at least
 // one item captured in them, unless --gopro-show-empty-dirs is set
 func years(ctx context.Context, f lister, prefix string, match []string) (entries fs.DirEntries, err error) {
-	currentYear := f.dirTime().Year()
+	currentYear := time.Now().Year()
 	startYear := f.startYear(ctx)
 	present, err := yearsPresent(ctx, f)
 	if err != nil {

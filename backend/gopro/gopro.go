@@ -658,6 +658,7 @@ type Object struct {
 	itemCount   int // total items on the parent medium; 1 for an ordinary single-file medium
 	bytes       int64
 	sizeChecked bool // true once bytes has been confirmed (or corrected) against a live response
+	sizeMu      sync.Mutex
 	reprocessed bool // true if the parent medium's reprocessed_at is set - see verify_size's "reprocessed" mode
 	modTime     time.Time
 	mimeType    string
@@ -823,13 +824,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		dlCache:   map[string]*dlCacheEntry{},
 		uploaded:  dirtree.New(),
 	}
-	// upload/ always exists, even with nothing uploaded to it yet - seed
-	// its key now so listUploads finds it (as an empty listing) rather
-	// than mistaking "never populated" for "doesn't exist" and returning
-	// fs.ErrorDirNotFound, confirmed live for any remote nothing has ever
-	// been uploaded to in this process.
-	_, uploadRoot, _ := patterns.match(root, "upload", false)
-	f.uploaded[strings.Trim(uploadRoot, "/")] = nil
+	// upload/ always exists, even with nothing uploaded to it yet. Seed its
+	// listing when this Fs is at the top level; an Fs rooted at upload already
+	// uses the empty key for its own root and must not gain upload/upload.
+	if root == "" {
+		f.uploaded["upload"] = nil
+	}
 
 	baseClient := fshttp.NewClient(ctx)
 	if opt.AccessToken != "" {
@@ -1824,6 +1824,9 @@ func (f *Fs) getDownload(ctx context.Context, id string) (*api.DownloadResponse,
 // resolve that when --gopro-read-size is set, since dividing it exactly
 // always needs a HEAD regardless of whether file_size itself is stale.
 func (o *Object) Size() int64 {
+	o.sizeMu.Lock()
+	defer o.sizeMu.Unlock()
+
 	if o.bytes < 0 {
 		if !o.fs.opt.ReadSize {
 			return o.bytes
@@ -1860,7 +1863,7 @@ func (o *Object) Size() int64 {
 		fs.Debugf(o, "Size: couldn't parse Content-Length: %v", err)
 		return o.bytes
 	}
-	o.reportSizeMismatch(length)
+	o.reportSizeMismatchLocked(length)
 	o.sizeChecked = true
 	return o.bytes
 }
@@ -1871,14 +1874,51 @@ func (o *Object) Size() int64 {
 // worth surfacing, not just a debug-level detail. The file is still
 // downloaded - actual, taken from a live response, is trustworthy.
 func (o *Object) reportSizeMismatch(actual int64) {
+	o.sizeMu.Lock()
+	defer o.sizeMu.Unlock()
+	o.reportSizeMismatchLocked(actual)
+}
+
+// reportSizeMismatchLocked corrects o.bytes to actual when it differs.
+// The caller must hold o.sizeMu.
+func (o *Object) reportSizeMismatchLocked(actual int64) {
 	if o.bytes >= 0 && actual != o.bytes {
 		fs.Logf(o, "file_size from the GoPro API (%d) doesn't match the size actually being served (%d) - using the actual size; downloading anyway", o.bytes, actual)
 	}
 	o.bytes = actual
 }
 
+// copyFrom copies Object metadata without copying its mutex.
+func (o *Object) copyFrom(src *Object) {
+	if o == src {
+		return
+	}
+	o.sizeMu.Lock()
+	defer o.sizeMu.Unlock()
+	src.sizeMu.Lock()
+	defer src.sizeMu.Unlock()
+	o.fs = src.fs
+	o.remote = src.remote
+	o.id = src.id
+	o.itemNumber = src.itemNumber
+	o.itemCount = src.itemCount
+	o.bytes = src.bytes
+	o.sizeChecked = src.sizeChecked
+	o.reprocessed = src.reprocessed
+	o.modTime = src.modTime
+	o.mimeType = src.mimeType
+}
+
 // setMetaData sets the Object data from a Medium
 func (o *Object) setMetaData(item *api.Medium, itemNumber int) {
+	o.sizeMu.Lock()
+	defer o.sizeMu.Unlock()
+	o.setMetaDataLocked(item, itemNumber)
+}
+
+// setMetaDataLocked sets the Object data from a Medium.
+// The caller must hold o.sizeMu.
+func (o *Object) setMetaDataLocked(item *api.Medium, itemNumber int) {
 	o.id = item.ID
 	o.itemNumber = itemNumber
 	o.itemCount = item.ItemCount
@@ -1980,7 +2020,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	for _, entry := range entries {
 		if entry.Remote() == o.remote {
 			if newO, ok := entry.(*Object); ok {
-				*o = *newO
+				o.copyFrom(newO)
 				return nil
 			}
 		}
@@ -2059,6 +2099,9 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 // The GET response this method already makes is itself an authoritative
 // source, so there's no need for a separate HEAD request to fix it here.
 func (o *Object) fixSize(resp *http.Response) {
+	o.sizeMu.Lock()
+	defer o.sizeMu.Unlock()
+
 	if o.sizeChecked {
 		return
 	}
@@ -2077,7 +2120,7 @@ func (o *Object) fixSize(resp *http.Response) {
 		total = resp.ContentLength
 	}
 	if total >= 0 {
-		o.reportSizeMismatch(total)
+		o.reportSizeMismatchLocked(total)
 		o.sizeChecked = true
 	}
 }
@@ -2250,7 +2293,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	dstObj := &Object{}
-	*dstObj = *srcObj
+	dstObj.copyFrom(srcObj)
 	dstObj.fs = f
 	dstObj.remote = remote
 	if upd.CapturedAt != nil {
