@@ -2458,6 +2458,65 @@ func TestSyncBackupDir(t *testing.T) {
 	testSyncBackupDir(t, "backup", "", false)
 }
 
+func TestSyncBackupDirDeletesOnly(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+
+	if !operations.CanServerSideMove(r.Fremote) {
+		t.Skip("Skipping test as remote does not support server-side move")
+	}
+	r.Mkdir(ctx, r.Fremote)
+
+	ci.BackupDir = r.FremoteName + "/backup"
+	ci.BackupDirDeletesOnly = true
+
+	r.WriteObject(ctx, "dst/changed", "old", t1)
+	deleted := r.WriteObject(ctx, "dst/deleted", "deleted", t1)
+	newChanged := r.WriteFile("changed", "new", t2)
+
+	fdst, err := fs.NewFs(ctx, r.FremoteName+"/dst")
+	require.NoError(t, err)
+
+	accounting.GlobalStats().ResetCounters()
+	err = Sync(ctx, fdst, r.Flocal, false)
+	require.NoError(t, err)
+
+	newChangedDst := newChanged
+	newChangedDst.Path = "dst/changed"
+	deleted.Path = "backup/deleted"
+	r.CheckRemoteItems(t, newChangedDst, deleted)
+	r.CheckLocalItems(t, newChanged)
+}
+
+func TestSyncBackupDirDeletesOnlyWithoutBackupDir(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+
+	if !operations.CanServerSideMove(r.Fremote) {
+		t.Skip("Skipping test as remote does not support server-side move")
+	}
+	r.Mkdir(ctx, r.Fremote)
+
+	ci.BackupDirDeletesOnly = true
+	ci.Suffix = ".bak"
+
+	oldChanged := r.WriteObject(ctx, "dst/changed", "old", t1)
+	newChanged := r.WriteFile("changed", "new", t2)
+
+	fdst, err := fs.NewFs(ctx, r.FremoteName+"/dst")
+	require.NoError(t, err)
+
+	accounting.GlobalStats().ResetCounters()
+	err = Sync(ctx, fdst, r.Flocal, false)
+	require.NoError(t, err)
+
+	oldChanged.Path = "dst/changed.bak"
+	newChanged.Path = "dst/changed"
+	r.CheckRemoteItems(t, oldChanged, newChanged)
+}
+
 func TestSyncBackupDirWithSuffix(t *testing.T) {
 	testSyncBackupDir(t, "backup", ".bak", false)
 }

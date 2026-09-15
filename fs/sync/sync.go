@@ -427,7 +427,8 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 						s.markDirModifiedObject(src)
 					}
 					// If destination already exists, then we must move it into --backup-dir if required
-					if pair.Dst != nil && s.backupDir != nil {
+					backupDirDeletesOnly := s.ci.BackupDirDeletesOnly && s.ci.BackupDir != ""
+					if pair.Dst != nil && s.backupDir != nil && !backupDirDeletesOnly {
 						err := operations.MoveBackupDir(s.ctx, s.backupDir, pair.Dst)
 						if err != nil {
 							s.processError(err)

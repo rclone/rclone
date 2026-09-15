@@ -263,6 +263,11 @@ var ConfigOptionsInfo = Options{{
 	Help:    "Make backups into hierarchy based in DIR",
 	Groups:  "Sync",
 }, {
+	Name:    "backup_dir_deletes_only",
+	Default: false,
+	Help:    "Only move deleted files into the backup directory",
+	Groups:  "Sync",
+}, {
 	Name:    "suffix",
 	Default: "",
 	Help:    "Suffix to add to changed files",
@@ -614,6 +619,7 @@ type ConfigInfo struct {
 	CompareDest                []string          `config:"compare_dest"`
 	CopyDest                   []string          `config:"copy_dest"`
 	BackupDir                  string            `config:"backup_dir"`
+	BackupDirDeletesOnly       bool              `config:"backup_dir_deletes_only"`
 	Suffix                     string            `config:"suffix"`
 	SuffixKeepExtension        bool              `config:"suffix_keep_extension"`
 	UseListR                   bool              `config:"fast_list"`
