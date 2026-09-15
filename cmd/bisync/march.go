@@ -160,7 +160,7 @@ func (b *bisyncRun) ForObject(o fs.Object, isPath1 bool) {
 	b.march.marchErrLock.Unlock()
 
 	var modtime time.Time
-	if b.opt.Compare.Modtime {
+	if b.opt.Compare.Modtime || (b.trackRenamesPreflight() && b.trackRenamesStrategy.UsesModtime()) {
 		modtime = o.ModTime(b.march.marchCtx).In(TZ)
 	}
 	id := ""     // TODO: ID(o)
