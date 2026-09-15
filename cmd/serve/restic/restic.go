@@ -13,6 +13,7 @@ import (
 	"path"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -283,19 +284,28 @@ func checkPrivate(next http.Handler) http.Handler {
 	})
 }
 
+// uploadLock serializes uploads to one remote.
+type uploadLock struct {
+	mu   sync.Mutex
+	refs int
+}
+
 // server contains everything to run the server
 type server struct {
-	server *libhttp.Server
-	f      fs.Fs
-	cache  *cache
-	opt    Options
+	server        *libhttp.Server
+	f             fs.Fs
+	cache         *cache
+	opt           Options
+	uploadLocksMu sync.Mutex
+	uploadLocks   map[string]*uploadLock
 }
 
 func newServer(ctx context.Context, f fs.Fs, opt *Options) (s *server, err error) {
 	s = &server{
-		f:     f,
-		cache: newCache(opt.CacheObjects),
-		opt:   *opt,
+		f:           f,
+		cache:       newCache(opt.CacheObjects),
+		opt:         *opt,
+		uploadLocks: make(map[string]*uploadLock),
 	}
 	// Don't bind any HTTP listeners if running with --stdio
 	if opt.Stdio {
@@ -311,6 +321,30 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (s *server, err error
 	router := s.server.Router()
 	s.Bind(router)
 	return s, nil
+}
+
+// lockUpload locks uploads to remote and returns its unlock function.
+func (s *server) lockUpload(remote string) func() {
+	s.uploadLocksMu.Lock()
+	lock := s.uploadLocks[remote]
+	if lock == nil {
+		lock = new(uploadLock)
+		s.uploadLocks[remote] = lock
+	}
+	lock.refs++
+	s.uploadLocksMu.Unlock()
+
+	lock.mu.Lock()
+	return func() {
+		lock.mu.Unlock()
+
+		s.uploadLocksMu.Lock()
+		lock.refs--
+		if lock.refs == 0 {
+			delete(s.uploadLocks, remote)
+		}
+		s.uploadLocksMu.Unlock()
+	}
 }
 
 // Serve restic until the server is shutdown
@@ -422,12 +456,19 @@ func (s *server) postObject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if s.opt.AppendOnly {
-		// make sure the file does not exist yet
-		_, err := s.newObject(r.Context(), remote)
+		unlock := s.lockUpload(remote)
+		defer unlock()
+
+		// Only a definitive not-found result permits creating the object.
+		_, err := s.f.NewObject(r.Context(), remote)
 		if err == nil {
 			fs.Errorf(remote, "Post request: file already exists, refusing to overwrite in append-only mode")
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
-
+			return
+		}
+		if !errors.Is(err, fs.ErrorObjectNotFound) {
+			fs.Errorf(remote, "Post request: failed to check whether file exists: %v", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 	}
