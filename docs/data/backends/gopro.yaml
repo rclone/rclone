@@ -8,7 +8,7 @@ data_integrity: Modtime
 performance: Anecdotal
 adoption: New
 docs: Full
-security: Basic auth
+security: High
 virtual: false
 remote: 'TestGoPro:'
 features:

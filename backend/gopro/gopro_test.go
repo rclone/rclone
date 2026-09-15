@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -1170,15 +1171,16 @@ func TestRestoreArg(t *testing.T) {
 // newTestUploadFs builds a minimal *Fs with a real, empty upload/ dirtree -
 // mirroring what NewFs seeds - for testing Mkdir/Rmdir/List over upload/
 // without a live account.
-func newTestUploadFs() *Fs {
-	f := &Fs{startTime: startTime, uploaded: dirtree.New()}
-	_, uploadRoot, _ := patterns.match(f.root, "upload", false)
-	f.uploaded[strings.Trim(uploadRoot, "/")] = nil
+func newTestUploadFs(root string) *Fs {
+	f := &Fs{root: root, startTime: startTime, uploaded: dirtree.New()}
+	if root == "" {
+		f.uploaded["upload"] = nil
+	}
 	return f
 }
 
 func TestMkdirRmdirListUploads(t *testing.T) {
-	f := newTestUploadFs()
+	f := newTestUploadFs("")
 	ctx := context.Background()
 
 	t.Run("the upload root lists empty from the start", func(t *testing.T) {
@@ -1214,6 +1216,17 @@ func TestMkdirRmdirListUploads(t *testing.T) {
 		_, err := f.List(ctx, "not-a-real-directory")
 		assert.Equal(t, fs.ErrorDirNotFound, err)
 	})
+}
+
+func TestUploadRootDoesNotCreateNestedUploadDirectory(t *testing.T) {
+	f := newTestUploadFs("upload")
+
+	entries, err := f.List(context.Background(), "")
+	require.NoError(t, err)
+	assert.Empty(t, entries)
+
+	_, err = f.List(context.Background(), "upload")
+	assert.Equal(t, fs.ErrorDirNotFound, err)
 }
 
 // newTestMediaFs builds a minimal *Fs with items pre-seeded as the cached
@@ -1312,6 +1325,20 @@ func TestNewFsWithStaticAccessToken(t *testing.T) {
 	entries, err := f.List(context.Background(), "upload")
 	require.NoError(t, err, "the upload root must be seeded so listing it doesn't return ErrorDirNotFound before anything has ever been uploaded")
 	assert.Empty(t, entries)
+}
+
+func TestNewFsWithUploadRoot(t *testing.T) {
+	m := configmap.Simple{"access_token": "test-token", "verify_size": verifySizeReprocessed}
+	fsIface, err := NewFs(context.Background(), "test", "upload", m)
+	require.NoError(t, err)
+	f := fsIface.(*Fs)
+
+	entries, err := f.List(context.Background(), "")
+	require.NoError(t, err)
+	assert.Empty(t, entries)
+
+	_, err = f.List(context.Background(), "upload")
+	assert.Equal(t, fs.ErrorDirNotFound, err)
 }
 
 func TestCurrentAccessToken(t *testing.T) {
@@ -1491,8 +1518,8 @@ func TestDoDeleteMediumInvalidatesCachesAndReportsAPIErrors(t *testing.T) {
 	t.Run("an error embedded in a 200 response is surfaced as a Go error", func(t *testing.T) {
 		f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			writeJSON(t, w, api.DeleteResponse{Embedded: struct {
-				Errors []api.APIError `json:"errors"`
-			}{Errors: []api.APIError{{Description: "not found or inaccessible"}}}})
+				Errors []api.EmbeddedError `json:"errors"`
+			}{Errors: []api.EmbeddedError{{Description: "not found or inaccessible"}}}})
 		}))
 		defer srv.Close()
 
@@ -1792,6 +1819,47 @@ func TestSizeVerifiesAndCorrectsViaHead(t *testing.T) {
 	// call must not re-issue the HEAD.
 	assert.Equal(t, int64(12345), o.Size())
 	assert.Equal(t, 1, headCalls)
+}
+
+func TestSizeConcurrentCallsShareVerification(t *testing.T) {
+	var srv *httptest.Server
+	var headMu sync.Mutex
+	headCalls := 0
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /media/abc123/download", func(w http.ResponseWriter, r *http.Request) {
+		dl := makeDownloadResponse(nil, []testFile{{url: srv.URL + "/original.mp4", label: "source"}})
+		writeJSON(t, w, dl)
+	})
+	mux.HandleFunc("HEAD /original.mp4", func(w http.ResponseWriter, r *http.Request) {
+		headMu.Lock()
+		headCalls++
+		headMu.Unlock()
+		w.Header().Set("Content-Length", "12345")
+		w.WriteHeader(http.StatusOK)
+	})
+	f, s := newTestAPIFs(mux)
+	srv = s
+	defer srv.Close()
+	f.opt.VerifySize = verifySizeAlways
+
+	o := &Object{fs: f, id: "abc123", bytes: 999, itemNumber: 1}
+	results := make(chan int64, 2)
+	var wg sync.WaitGroup
+	for range 2 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			results <- o.Size()
+		}()
+	}
+	wg.Wait()
+	close(results)
+	for size := range results {
+		assert.Equal(t, int64(12345), size)
+	}
+	headMu.Lock()
+	assert.Equal(t, 1, headCalls)
+	headMu.Unlock()
 }
 
 func TestSizeVerifyOffNeverChecks(t *testing.T) {
