@@ -1,0 +1,19 @@
+backend: gopro
+name: GoPro Media Library
+tier: Tier 4
+maintainers: J0s3f
+features_score: 2
+integration_tests: Not yet run in CI
+data_integrity: Modtime
+performance: Anecdotal
+adoption: New
+docs: Full
+security: Basic auth
+virtual: false
+remote: 'TestGoPro:'
+features:
+- About
+- ReadMimeType
+- Remove
+hashes: []
+precision: 1000000000

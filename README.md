@@ -55,6 +55,7 @@ directories to and from different cloud storage providers.
 - Google Cloud Storage [:page_facing_up:](https://rclone.org/googlecloudstorage/)
 - Google Drive [:page_facing_up:](https://rclone.org/drive/)
 - Google Photos [:page_facing_up:](https://rclone.org/googlephotos/)
+- GoPro Media Library [:page_facing_up:](https://rclone.org/gopro/)
 - HDFS (Hadoop Distributed Filesystem) [:page_facing_up:](https://rclone.org/hdfs/)
 - Hetzner Object Storage [:page_facing_up:](https://rclone.org/s3/#hetzner)
 - Hetzner Storage Box [:page_facing_up:](https://rclone.org/sftp/#hetzner-storage-box)
