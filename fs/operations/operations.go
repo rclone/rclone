@@ -892,72 +892,86 @@ func ListLong(ctx context.Context, f fs.Fs, w io.Writer) error {
 	})
 }
 
-// HashSum returns the human-readable hash for ht passed in.  This may
-// be UNSUPPORTED or ERROR. If it isn't returning a valid hash it will
-// return an error.
-func HashSum(ctx context.Context, ht hash.Type, base64Encoded bool, downloadFlag bool, o fs.Object) (string, error) {
+// downloadAndHash downloads the file and hashes it locally
+func downloadAndHash(ctx context.Context, ht hash.Type, base64Encoded bool, o fs.Object) (string, error) {
+	// Setup: Define accounting, open the file with NewReOpen to provide restarts, account for the transfer, and setup a multi-hasher with the appropriate type
+	// Execution: io.Copy file to hasher, get hash and encode in hex
+
 	var sum string
 	var err error
 
-	// If downloadFlag is true, download and hash the file.
-	// If downloadFlag is false, call o.Hash asking the remote for the hash
+	tr := accounting.Stats(ctx).NewTransfer(o, nil)
+	defer func() {
+		tr.Done(ctx, err)
+	}()
+
+	// Open with NewReOpen to provide restarts
+	var options []fs.OpenOption
+	for _, option := range fs.GetConfig(ctx).DownloadHeaders {
+		options = append(options, option)
+	}
+	var in io.ReadCloser
+	in, err = Open(ctx, o, options...)
+	if err != nil {
+		return "ERROR", fmt.Errorf("failed to open file %v: %w", o, err)
+	}
+
+	// Account and buffer the transfer
+	in = tr.Account(ctx, in).WithBuffer()
+
+	// Setup hasher
+	hasher, err := hash.NewMultiHasherTypes(hash.NewHashSet(ht))
+	if err != nil {
+		return "UNSUPPORTED", fmt.Errorf("hash unsupported: %w", err)
+	}
+
+	// Copy to hasher, downloading the file and passing directly to hash
+	_, err = io.Copy(hasher, in)
+	if err != nil {
+		return "ERROR", fmt.Errorf("failed to copy file to hasher: %w", err)
+	}
+
+	// Get hash as hex or base64 encoded string
+	sum, err = hasher.SumString(ht, base64Encoded)
+	if err != nil {
+		return "ERROR", fmt.Errorf("hasher returned an error: %w", err)
+	}
+
+	return sum, nil
+}
+
+// HashSum returns the human-readable hash for ht passed in.  This may
+// be UNSUPPORTED or ERROR. If it isn't returning a valid hash it will
+// return an error.
+// If downloadIfMissingOpt is true, the hash is requested from the remote first
+// and downloaded only if the remote cannot provide a hash.
+func HashSum(ctx context.Context, ht hash.Type, base64Encoded bool, downloadFlag bool, o fs.Object, downloadIfMissingOpt ...bool) (string, error) {
 	if downloadFlag {
-		// Setup: Define accounting, open the file with NewReOpen to provide restarts, account for the transfer, and setup a multi-hasher with the appropriate type
-		// Execution: io.Copy file to hasher, get hash and encode in hex
+		return downloadAndHash(ctx, ht, base64Encoded, o)
+	}
 
-		tr := accounting.Stats(ctx).NewTransfer(o, nil)
-		defer func() {
-			tr.Done(ctx, err)
-		}()
+	downloadIfMissing := false
+	if len(downloadIfMissingOpt) > 0 {
+		downloadIfMissing = downloadIfMissingOpt[0]
+	}
 
-		// Open with NewReOpen to provide restarts
-		var options []fs.OpenOption
-		for _, option := range fs.GetConfig(ctx).DownloadHeaders {
-			options = append(options, option)
-		}
-		var in io.ReadCloser
-		in, err = Open(ctx, o, options...)
-		if err != nil {
-			return "ERROR", fmt.Errorf("failed to open file %v: %w", o, err)
-		}
+	tr := accounting.Stats(ctx).NewCheckingTransfer(o, "hashing")
+	sum, err := o.Hash(ctx, ht)
+	if downloadIfMissing && ((err == nil && sum == "") || err == hash.ErrUnsupported) {
+		tr.Done(ctx, nil)
+		return downloadAndHash(ctx, ht, base64Encoded, o)
+	}
+	tr.Done(ctx, err)
 
-		// Account and buffer the transfer
-		in = tr.Account(ctx, in).WithBuffer()
-
-		// Setup hasher
-		hasher, err := hash.NewMultiHasherTypes(hash.NewHashSet(ht))
-		if err != nil {
-			return "UNSUPPORTED", fmt.Errorf("hash unsupported: %w", err)
-		}
-
-		// Copy to hasher, downloading the file and passing directly to hash
-		_, err = io.Copy(hasher, in)
-		if err != nil {
-			return "ERROR", fmt.Errorf("failed to copy file to hasher: %w", err)
-		}
-
-		// Get hash as hex or base64 encoded string
-		sum, err = hasher.SumString(ht, base64Encoded)
-		if err != nil {
-			return "ERROR", fmt.Errorf("hasher returned an error: %w", err)
-		}
-	} else {
-		tr := accounting.Stats(ctx).NewCheckingTransfer(o, "hashing")
-		defer func() {
-			tr.Done(ctx, err)
-		}()
-
-		sum, err = o.Hash(ctx, ht)
-		if base64Encoded {
-			hexBytes, _ := hex.DecodeString(sum)
-			sum = base64.URLEncoding.EncodeToString(hexBytes)
-		}
-		if err == hash.ErrUnsupported {
-			return "", fmt.Errorf("hash unsupported: %w", err)
-		}
-		if err != nil {
-			return "", fmt.Errorf("failed to get hash %v from backend: %w", ht, err)
-		}
+	if base64Encoded {
+		hexBytes, _ := hex.DecodeString(sum)
+		sum = base64.URLEncoding.EncodeToString(hexBytes)
+	}
+	if err == hash.ErrUnsupported {
+		return "", fmt.Errorf("hash unsupported: %w", err)
+	}
+	if err != nil {
+		return "", fmt.Errorf("failed to get hash %v from backend: %w", ht, err)
 	}
 
 	return sum, nil
@@ -966,11 +980,15 @@ func HashSum(ctx context.Context, ht hash.Type, base64Encoded bool, downloadFlag
 // HashLister does an md5sum equivalent for the hash type passed in
 // Updated to handle both standard hex encoding and base64
 // Updated to perform multiple hashes concurrently
-func HashLister(ctx context.Context, ht hash.Type, outputBase64 bool, downloadFlag bool, f fs.Fs, w io.Writer) error {
+func HashLister(ctx context.Context, ht hash.Type, outputBase64 bool, downloadFlag bool, f fs.Fs, w io.Writer, downloadIfMissingOpt ...bool) error {
+	downloadIfMissing := false
+	if len(downloadIfMissingOpt) > 0 {
+		downloadIfMissing = downloadIfMissingOpt[0]
+	}
 	width := hash.Width(ht, outputBase64)
 	// Use --checkers concurrency unless downloading in which case use --transfers
 	concurrency := fs.GetConfig(ctx).Checkers
-	if downloadFlag {
+	if downloadFlag || downloadIfMissing {
 		concurrency = fs.GetConfig(ctx).Transfers
 	}
 	concurrencyControl := make(chan struct{}, concurrency)
@@ -983,7 +1001,7 @@ func HashLister(ctx context.Context, ht hash.Type, outputBase64 bool, downloadFl
 				<-concurrencyControl
 				wg.Done()
 			}()
-			sum, err := HashSum(ctx, ht, outputBase64, downloadFlag, o)
+			sum, err := HashSum(ctx, ht, outputBase64, downloadFlag, o, downloadIfMissing)
 			if err != nil {
 				fs.Errorf(o, "%v", fs.CountError(ctx, err))
 				return
