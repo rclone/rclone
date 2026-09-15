@@ -25,15 +25,15 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
+	"math/rand/v2"
 	"os"
 	"path"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
-
-	"slices"
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/rclone/rclone/fs"
@@ -191,6 +191,31 @@ type VFS struct {
 	pollMu      sync.Mutex
 	pollChan    chan time.Duration
 	inUse       atomic.Int32 // count of number of opens
+	ID          string       // unique ID of this VFS
+}
+
+type contextKeyType struct{}
+type vfsIDContextKeyType struct{}
+
+var (
+	contextKey      = contextKeyType{}
+	vfsIDContextKey = vfsIDContextKeyType{}
+)
+
+// WithTracker returns a new context that tracks created/reused VFSes in a slice pointer.
+func WithTracker(ctx context.Context, tracker *[]*VFS) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return context.WithValue(ctx, contextKey, tracker)
+}
+
+// WithVFSID returns a new context that specifies a VFS ID to reuse.
+func WithVFSID(ctx context.Context, id string) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return context.WithValue(ctx, vfsIDContextKey, id)
 }
 
 // Keep track of active VFS keyed on fs.ConfigString(f)
@@ -199,6 +224,35 @@ var (
 	active   = map[string][]*VFS{}
 )
 
+// GetVFSByID finds a VFS in the active cache by its ID and increments its use count
+func GetVFSByID(id string) (*VFS, error) {
+	activeMu.Lock()
+	defer activeMu.Unlock()
+	for _, vfses := range active {
+		for _, activeVFS := range vfses {
+			if activeVFS.ID == id {
+				activeVFS.inUse.Add(1)
+				return activeVFS, nil
+			}
+		}
+	}
+	return nil, fmt.Errorf("no VFS found with ID %q", id)
+}
+
+// Exists returns true if a VFS with the given ID is in the active cache.
+func Exists(id string) bool {
+	activeMu.Lock()
+	defer activeMu.Unlock()
+	for _, vfses := range active {
+		for _, activeVFS := range vfses {
+			if activeVFS.ID == id {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // New creates a new VFS and root directory.  If opt is nil, then
 // DefaultOpt will be used.
 //
@@ -206,6 +260,10 @@ var (
 // the config in the context (if any) and filter config in the context
 // (if any).
 func New(ctx context.Context, f fs.Fs, opt *vfscommon.Options) *VFS {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	originalCtx := ctx
 	fsDir := fs.NewDir("", time.Now())
 	// Strip the ctx of any cancellation but copy the config across
 	newCtx := context.Background()
@@ -216,6 +274,7 @@ func New(ctx context.Context, f fs.Fs, opt *vfscommon.Options) *VFS {
 		f:      f,
 		ctx:    ctx,
 		cancel: cancel,
+		ID:     fmt.Sprintf("vfs-%08x", rand.Uint32()),
 	}
 	vfs.inUse.Store(1)
 
@@ -233,16 +292,42 @@ func New(ctx context.Context, f fs.Fs, opt *vfscommon.Options) *VFS {
 	activeMu.Lock()
 	defer activeMu.Unlock()
 	configName := fs.ConfigString(f)
+
+	// 1. Try to match by VFS ID from context first
+	if id, ok := originalCtx.Value(vfsIDContextKey).(string); ok && id != "" {
+		for _, vfses := range active {
+			for _, activeVFS := range vfses {
+				if activeVFS.ID == id {
+					fs.Debugf(f, "Reusing VFS ID %s from active cache via context", id)
+					activeVFS.inUse.Add(1)
+					cancel()
+					if tracker, ok := originalCtx.Value(contextKey).(*[]*VFS); ok {
+						*tracker = append(*tracker, activeVFS)
+					}
+					return activeVFS
+				}
+			}
+		}
+	}
+
+	// 2. Try to match by name and options
 	for _, activeVFS := range active[configName] {
 		if vfs.Opt == activeVFS.Opt {
 			fs.Debugf(f, "Reusing VFS from active cache")
 			activeVFS.inUse.Add(1)
 			cancel()
+			if tracker, ok := originalCtx.Value(contextKey).(*[]*VFS); ok {
+				*tracker = append(*tracker, activeVFS)
+			}
 			return activeVFS
 		}
 	}
 	// Put the VFS into the active cache
 	active[configName] = append(active[configName], vfs)
+
+	if tracker, ok := originalCtx.Value(contextKey).(*[]*VFS); ok {
+		*tracker = append(*tracker, vfs)
+	}
 
 	// Create root directory
 	vfs.root = newDir(vfs, f, nil, fsDir)
@@ -320,6 +405,7 @@ func (vfs *VFS) signalHandler(ctx context.Context) {
 // Stats returns info about the VFS
 func (vfs *VFS) Stats() (out rc.Params) {
 	out = make(rc.Params)
+	out["id"] = vfs.ID
 	out["fs"] = fs.ConfigString(vfs.f)
 	out["opt"] = vfs.Opt
 	out["inUse"] = vfs.inUse.Load()
