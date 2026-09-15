@@ -22,7 +22,9 @@ package vfs
 
 import (
 	"context"
+	"crypto/md5"
 	_ "embed"
+	"encoding/binary"
 	"fmt"
 	"io"
 	"os"
@@ -486,6 +488,24 @@ var inodeCount atomic.Uint64
 // newInode creates a new unique inode number
 func newInode() (inode uint64) {
 	return inodeCount.Add(1)
+}
+
+// deriveInode attempts to create a stable inode number from a backend ID.
+// If the backend does not support IDs, it falls back to a volatile atomic counter.
+func deriveInode(entry fs.DirEntry) uint64 {
+	if entry != nil {
+		if ider, ok := entry.(fs.IDer); ok {
+			if id := ider.ID(); id != "" {
+				sum := md5.Sum([]byte(id))
+				// the range of possible values is restricted to the upper half of
+				// the uint64 range to avoid collisions with the atomic counter
+				return binary.BigEndian.Uint64(sum[:8]) | 0x8000000000000000
+			}
+		}
+	}
+	// the range of possible values is restricted to the lower half of
+	// the uint64 range to avoid collisions with the backend ID hash
+	return newInode() & 0x7FFFFFFFFFFFFFFF
 }
 
 // Stat finds the Node by path starting from the root
