@@ -42,7 +42,6 @@ const (
 	bufferSize          = 8388608
 	heuristicBytes      = 1048576
 	minCompressionRatio = 1.1
-	gzipBlockSize       = 1 << 20
 
 	gzFileExt           = ".gz"
 	zstdFileExt         = ".zst"
@@ -1090,7 +1089,7 @@ func (meta *ObjectMetadata) validate() error {
 	if meta.CompressionMetadataGzip == nil {
 		return errors.New("missing gzip metadata")
 	}
-	if meta.CompressionMetadataGzip.BlockSize != gzipBlockSize {
+	if meta.CompressionMetadataGzip.BlockSize <= 0 {
 		return fmt.Errorf("invalid gzip block size %d", meta.CompressionMetadataGzip.BlockSize)
 	}
 	if meta.Size != meta.CompressionMetadataGzip.Size {
@@ -1099,8 +1098,9 @@ func (meta *ObjectMetadata) validate() error {
 	if meta.Size < 0 {
 		return errors.New("invalid gzip object size")
 	}
-	blocks := meta.Size / gzipBlockSize
-	if meta.Size%gzipBlockSize != 0 {
+	blockSize := int64(meta.CompressionMetadataGzip.BlockSize)
+	blocks := meta.Size / blockSize
+	if meta.Size%blockSize != 0 {
 		blocks++
 	}
 	if int64(len(meta.CompressionMetadataGzip.BlockData)) < blocks {
