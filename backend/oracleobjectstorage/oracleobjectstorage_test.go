@@ -8,10 +8,15 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
+	"io"
+	"sync"
 	"testing"
+	"time"
 
+	"github.com/oracle/oci-go-sdk/v65/objectstorage"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/rclone/rclone/lib/random"
@@ -81,9 +86,99 @@ func (f *Fs) InternalTestGzipEncoding(t *testing.T) {
 	})
 }
 
+// InternalTestPurgeBatches tests purging more objects than fit in one batch.
+func (f *Fs) InternalTestPurgeBatches(t *testing.T) {
+	ctx := context.Background()
+	const (
+		dir               = "purge-batches"
+		objectCount       = 1001
+		uploadConcurrency = 16
+	)
+	defer func() { _ = f.Purge(ctx, dir) }()
+	jobs := make(chan int)
+	errs := make(chan error, objectCount)
+	var wg sync.WaitGroup
+	for range uploadConcurrency {
+		wg.Go(func() {
+			for i := range jobs {
+				remote := fmt.Sprintf("%s/%04d", dir, i)
+				src := object.NewStaticObjectInfo(remote, time.Time{}, 0, true, nil, f)
+				_, err := f.Put(ctx, bytes.NewReader(nil), src)
+				if err != nil {
+					errs <- err
+				}
+			}
+		})
+	}
+	for i := range objectCount {
+		jobs <- i
+	}
+	close(jobs)
+	wg.Wait()
+	close(errs)
+	for err := range errs {
+		require.NoError(t, err)
+	}
+	require.NoError(t, f.Purge(ctx, dir))
+	entries, err := f.List(ctx, dir)
+	require.NoError(t, err)
+	assert.Empty(t, entries)
+}
+
+// InternalTestPurgeDirectoryMarkers tests purging directory marker objects.
+func (f *Fs) InternalTestPurgeDirectoryMarkers(t *testing.T) {
+	ctx := context.Background()
+	const dir = "purge-directory-markers"
+	bucketName, directory := f.split(dir)
+	objectNames := []string{
+		directory + "/",
+		directory + "/child/",
+		directory + "/child/object",
+	}
+	defer func() { _ = f.Purge(ctx, dir) }()
+	for _, objectName := range objectNames {
+		req := objectstorage.PutObjectRequest{
+			NamespaceName: new(f.opt.Namespace),
+			BucketName:    new(bucketName),
+			ObjectName:    new(objectName),
+			PutObjectBody: io.NopCloser(bytes.NewReader(nil)),
+		}
+		err := f.pacer.Call(func() (bool, error) {
+			resp, err := f.srv.PutObject(ctx, req)
+			return shouldRetry(ctx, resp.HTTPResponse(), err)
+		})
+		require.NoError(t, err)
+	}
+	// Use the SDK directly because normal OOS listings hide directory markers.
+	listObjectNames := func() []string {
+		req := objectstorage.ListObjectsRequest{
+			NamespaceName: new(f.opt.Namespace),
+			BucketName:    new(bucketName),
+			Prefix:        new(directory + "/"),
+		}
+		var resp objectstorage.ListObjectsResponse
+		err := f.pacer.Call(func() (bool, error) {
+			var err error
+			resp, err = f.srv.ListObjects(ctx, req)
+			return shouldRetry(ctx, resp.HTTPResponse(), err)
+		})
+		require.NoError(t, err)
+		names := make([]string, 0, len(resp.Objects))
+		for _, object := range resp.Objects {
+			names = append(names, *object.Name)
+		}
+		return names
+	}
+	assert.ElementsMatch(t, objectNames, listObjectNames())
+	require.NoError(t, f.Purge(ctx, dir))
+	assert.Empty(t, listObjectNames())
+}
+
 // InternalTest is called by fstests.Run to extra tests
 func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("GzipEncoding", f.InternalTestGzipEncoding)
+	t.Run("PurgeBatches", f.InternalTestPurgeBatches)
+	t.Run("PurgeDirectoryMarkers", f.InternalTestPurgeDirectoryMarkers)
 }
 
 func (f *Fs) SetUploadChunkSize(cs fs.SizeSuffix) (fs.SizeSuffix, error) {
