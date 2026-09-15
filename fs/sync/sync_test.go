@@ -1827,6 +1827,37 @@ func TestMoveWithDeleteEmptySrcDirs(t *testing.T) {
 	r.CheckRemoteItems(t, file1, file2)
 }
 
+// Test that --delete-empty-src-dirs still deletes empty source
+// directories when an earlier, unrelated operation recorded an error
+// against the same (long-lived) stats group, as happens on rclone rcd.
+// See: https://github.com/rclone/rclone/issues/9634
+func TestMoveWithDeleteEmptySrcDirsIgnoresUnrelatedStaleGroupError(t *testing.T) {
+	ctx := context.Background()
+	ctx = accounting.WithStatsGroup(ctx, "test-group-9634")
+
+	// Simulate an earlier, unrelated operation (e.g. a failed
+	// operations/copyfile call) having recorded an error against this
+	// group before the move under test ever starts.
+	accounting.Stats(ctx).Error(errors.New("earlier unrelated error"))
+	require.True(t, accounting.Stats(ctx).Errored())
+
+	r := fstest.NewRun(t)
+	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
+	r.Mkdir(ctx, r.Fremote)
+
+	// This move has no errors of its own.
+	ctx = predictDstFromLogger(ctx)
+	err := MoveDir(ctx, r.Fremote, r.Flocal, true, false)
+	require.NoError(t, err)
+	testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
+
+	// The empty source directory should still be deleted: the stale error
+	// belongs to an earlier, unrelated operation sharing the same group,
+	// not to this move.
+	r.CheckLocalListing(t, nil, []string{})
+	r.CheckRemoteItems(t, file1)
+}
+
 func TestMoveWithoutDeleteEmptySrcDirs(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
