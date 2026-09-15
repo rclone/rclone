@@ -644,7 +644,6 @@ backends:
    remote: "TestOracleObjectStorage:"
    fastlist: true
    ignore:
-     - TestIntegration/FsMkdir/FsPutFiles/FsPutStream/0
    ignoretests:
      - cmd/bisync
      - cmd/gitannex

@@ -167,7 +167,8 @@ func (p Params) GetInt64(key string) (int64, error) {
 	case int64:
 		return x, nil
 	case float64:
-		if x > math.MaxInt64 || x < math.MinInt64 {
+		// float64(math.MaxInt64) rounds up to 2**63 which doesn't fit in an int64
+		if x >= math.MaxInt64 || x < math.MinInt64 {
 			return 0, ErrParamInvalid{fmt.Errorf("key %q (%v) overflows int64 ", key, value)}
 		}
 		return int64(x), nil
