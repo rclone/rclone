@@ -35,6 +35,7 @@ type Quirks struct {
 	SignAcceptEncoding          *bool  `yaml:"sign_accept_encoding,omitempty"`
 	EtagIsNotMD5                *bool  `yaml:"etag_is_not_md5,omitempty"`
 	ObjectLockSupported         *bool  `yaml:"object_lock_supported,omitempty"`
+	BucketNotifications         *bool  `yaml:"bucket_notifications,omitempty"`
 	CopyCutoff                  *int64 `yaml:"copy_cutoff,omitempty"`
 	MaxUploadParts              *int   `yaml:"max_upload_parts,omitempty"`
 	MinChunkSize                *int64 `yaml:"min_chunk_size,omitempty"`

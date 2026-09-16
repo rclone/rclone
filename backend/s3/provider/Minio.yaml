@@ -16,3 +16,4 @@ sse_customer_key_md5: true
 sse_kms_key_id: true
 quirks:
   force_path_style: true
+  bucket_notifications: true

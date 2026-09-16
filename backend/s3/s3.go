@@ -614,6 +614,30 @@ This should be true, false or left unset to use the default for the provider.
 			Default:  fs.Tristate{},
 			Advanced: true,
 		}, {
+			Name: "use_bucket_notifications",
+			Help: `Whether to use MinIO bucket notifications for change notification.
+
+If enabled, rclone opens a long lived ListenBucketNotification stream and
+uses it to invalidate the VFS directory cache as objects change, which is
+what makes --poll-interval effective on a mount.
+
+Notifications are pushed by the server, so --poll-interval only decides
+whether the stream runs, not how often anything is polled - any non-zero
+value enables it and 0 disables it.
+
+The stream has no resume token, so changes which happen while it is
+disconnected are missed. Rclone invalidates the root directory whenever it
+reconnects, but subdirectories cached beforehand are only refreshed when
+--dir-cache-time expires, so that flag still matters.
+
+This is a MinIO extension and is not available on AWS S3 or other
+providers.
+
+This should be true, false or left unset to use the default for the provider.
+`,
+			Default:  fs.Tristate{},
+			Advanced: true,
+		}, {
 			Name: "use_presigned_request",
 			Help: `Whether to use a presigned request or PutObject for single part uploads
 
@@ -1160,6 +1184,7 @@ type Options struct {
 	UseAlreadyExists            fs.Tristate          `config:"use_already_exists"`
 	UseMultipartUploads         fs.Tristate          `config:"use_multipart_uploads"`
 	UseUnsignedPayload          fs.Tristate          `config:"use_unsigned_payload"`
+	UseBucketNotifications      fs.Tristate          `config:"use_bucket_notifications"`
 	SDKLogMode                  sdkLogMode           `config:"sdk_log_mode"`
 	DirectoryBucket             bool                 `config:"directory_bucket"`
 	IBMAPIKey                   string               `config:"ibm_api_key"`
@@ -1900,6 +1925,7 @@ func setQuirks(opt *Options, provider *Provider) {
 	set(&opt.SignAcceptEncoding, true, provider.Quirks.SignAcceptEncoding)
 	set(&opt.ObjectLockSupported, true, provider.Quirks.ObjectLockSupported)
 	set(&opt.ListVersionsOldestFirst, false, provider.Quirks.ListVersionsOldestFirst)
+	set(&opt.UseBucketNotifications, false, provider.Quirks.BucketNotifications)
 }
 
 // setRoot changes the root of the Fs
@@ -2013,6 +2039,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}).Fill(ctx, f)
 	if opt.Provider == "AWS" {
 		f.features.DoubleSlash = true
+	}
+	// ListenBucketNotification is scoped to a single bucket, so a bucket-less
+	// Fs at the remote root has no stream to subscribe to
+	if f.opt.UseBucketNotifications.Value && f.rootBucket != "" {
+		f.features.ChangeNotify = f.changeNotify
 	}
 	if opt.Provider == "Fastly" {
 		f.features.Copy = nil
