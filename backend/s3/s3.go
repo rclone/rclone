@@ -4,6 +4,7 @@ package s3
 //go:generate go run gen_setfrom.go -o setfrom.go
 
 import (
+	"bytes"
 	"context"
 	"crypto/md5"
 	"crypto/tls"
