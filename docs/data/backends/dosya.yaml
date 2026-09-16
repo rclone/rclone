@@ -1,10 +1,10 @@
 backend: dosya
 name: dosya.dev
-tier: Tier 2
+tier: Tier 1
 maintainers: dosya.dev team
-features_score: 4
+features_score: 5
 integration_tests: Passing
-data_integrity: None
+data_integrity: Hash
 performance: Medium
 adoption: New
 docs: Full
@@ -24,5 +24,6 @@ features:
 - Purge
 - PutUnchecked
 - ReadMimeType
-hashes: []
-precision: -1
+hashes:
+- sha256
+precision: 1000000000

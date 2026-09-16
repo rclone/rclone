@@ -1,10 +1,38 @@
 // Package api has type definitions for dosya.dev
 package api
 
+import "fmt"
+
 // Response is the base response wrapper
 type Response struct {
 	OK    bool   `json:"ok"`
 	Error string `json:"error,omitempty"`
+}
+
+// Error is an error response from the API.
+//
+// StatusCode and Status are filled in from the HTTP response. The API
+// sets ErrorCode on the errors a client is expected to act on rather
+// than just report, e.g. "concurrent_upload_limit".
+type Error struct {
+	StatusCode           int    `json:"-"`
+	Status               string `json:"-"`
+	OK                   bool   `json:"ok"`
+	Message              string `json:"error"`
+	ErrorCode            string `json:"error_code,omitempty"`
+	MaxConcurrentUploads int    `json:"max_concurrent_uploads,omitempty"`
+}
+
+// Error satisfies the error interface
+func (e *Error) Error() string {
+	out := fmt.Sprintf("HTTP error %d (%s)", e.StatusCode, e.Status)
+	if e.Message != "" {
+		out += ": " + e.Message
+	}
+	if e.ErrorCode != "" {
+		out += " (" + e.ErrorCode + ")"
+	}
+	return out
 }
 
 // FileItem represents a file from the dosya API
@@ -19,6 +47,10 @@ type FileItem struct {
 	UpdatedAt float64 `json:"updated_at"`
 	FolderID  *string `json:"folder_id"`
 	IsSynced  int     `json:"is_synced"`
+	// ContentHash is the lowercase-hex SHA-256 of the file's bytes, or "" when
+	// the server has none (e.g. a file uploaded as an R2 multipart, whose parts
+	// are never re-read to hash the whole object - the same limitation S3 has).
+	ContentHash string `json:"content_hash"`
 }
 
 // FolderItem represents a folder from the dosya API
@@ -34,14 +66,17 @@ type FolderItem struct {
 // ListResponse is the response from GET /api/files
 type ListResponse struct {
 	Response
-	Files   []FileItem   `json:"files"`
-	Folders []FolderItem `json:"folders"`
+	Files      []FileItem   `json:"files"`
+	Folders    []FolderItem `json:"folders"`
+	Pagination Pagination   `json:"pagination"`
 }
 
-// FolderTreeResponse is the response from GET /api/folders/tree
-type FolderTreeResponse struct {
-	Response
-	Folders []FolderItem `json:"folders"`
+// Pagination describes which page of files a ListResponse holds
+type Pagination struct {
+	Page       int `json:"page"`
+	PerPage    int `json:"per_page"`
+	TotalFiles int `json:"total_files"`
+	TotalPages int `json:"total_pages"`
 }
 
 // CreateFolderRequest is the request body for POST /api/folders
@@ -65,8 +100,11 @@ type CreateFolderResponse struct {
 // DeleteFolderResponse is the response from DELETE /api/folders/:id
 type DeleteFolderResponse struct {
 	Response
-	FilesAffected  int `json:"files_affected"`
-	FoldersRemoved int `json:"folders_removed"`
+	Permanent      bool `json:"permanent"`
+	Complete       bool `json:"complete"`
+	Remaining      int  `json:"remaining"`
+	FilesAffected  int  `json:"files_affected"`
+	FoldersRemoved int  `json:"folders_removed"`
 }
 
 // RenameFolderRequest is the request body for PUT /api/folders/:id/rename
@@ -77,6 +115,13 @@ type RenameFolderRequest struct {
 // MoveFolderRequest is the request body for PUT /api/folders/:id/move
 type MoveFolderRequest struct {
 	ParentID *string `json:"parent_id"`
+	Name     string  `json:"name,omitempty"`
+}
+
+// MoveFolderResponse is the response from PUT /api/folders/:id/move
+type MoveFolderResponse struct {
+	Response
+	Name string `json:"name"`
 }
 
 // UploadInitRequest is the request body for POST /api/upload/init
@@ -122,6 +167,9 @@ type UploadCompleteResponse struct {
 		Region    string  `json:"region"`
 		Version   int     `json:"version"`
 		CreatedAt float64 `json:"created_at"`
+		// SHA-256 of the uploaded bytes for a single-shot (small-file) upload;
+		// "" for a multipart upload, which the server does not hash.
+		ContentHash string `json:"content_hash"`
 	} `json:"file"`
 }
 
@@ -161,6 +209,7 @@ type MoveFileRequest struct {
 // CopyFileRequest is the request body for POST /api/files/:id/copy
 type CopyFileRequest struct {
 	FolderID *string `json:"folder_id"`
+	Name     string  `json:"name,omitempty"`
 }
 
 // CopyFileResponse is the response from POST /api/files/:id/copy

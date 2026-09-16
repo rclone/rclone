@@ -110,9 +110,17 @@ rclone copy work:docs/ personal:backup/
 
 ### Modification times and hashes
 
-dosya.dev supports modification times with a resolution of 1 second.
+dosya.dev supports modification times with a resolution of 1 second. The
+modification time is sent with the upload, so a copied or synced file keeps
+its original timestamp. Modification times cannot be changed after upload
+without re-uploading the file.
 
-dosya.dev does not support checksums.
+dosya.dev supports SHA-256 checksums. The server computes the hash of a
+single-shot (small file) upload from the bytes it receives, so `rclone check`
+and hash-based sync work without downloading. Large files uploaded in multiple
+parts have no server-side hash (the parts are never re-read to hash the whole
+object), the same limitation the S3 backend has for multipart objects; those
+objects report an empty hash.
 
 ### Restricted filename characters
 
@@ -217,3 +225,15 @@ Empty files (0 bytes) cannot be uploaded to dosya.dev.
 
 Upload requires knowing the file size in advance, so streaming
 uploads of unknown-size files are not supported.
+
+Each workspace limits the number of uploads a user can have in flight
+at once (5 by default, configurable in the workspace settings). When
+`--transfers` is set higher than that limit, rclone waits for a free
+upload slot rather than failing the transfer, retrying every 5 seconds
+for up to 10 minutes.
+
+### Deleting files and directories
+
+rclone deletes files and directories permanently. dosya.dev first moves
+an item to the workspace trash, so rclone deletes it a second time to
+remove it from the trash and free the storage it uses.

@@ -51,6 +51,22 @@ func init() {
 			Default:  defaultBaseURL,
 			Advanced: true,
 		}, {
+			Name: "upload_concurrency",
+			Help: `Concurrency for multipart uploads.
+
+This is the number of parts of the same file that are uploaded
+concurrently. The first part is always uploaded on its own, because
+the server creates the upload when it receives it.
+
+Each part in flight is held in memory, so memory use grows with
+this value times the part size the server chooses.
+
+If you are uploading large files over high-speed links and these
+uploads do not fully utilize your bandwidth, then increasing this
+may help to speed up the transfers.`,
+			Default:  4,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -69,10 +85,11 @@ func init() {
 
 // Options defines the configuration for this backend
 type Options struct {
-	APIKey      string               `config:"api_key"`
-	WorkspaceID string               `config:"workspace_id"`
-	APIURL      string               `config:"api_url"`
-	Enc         encoder.MultiEncoder `config:"encoding"`
+	APIKey            string               `config:"api_key"`
+	WorkspaceID       string               `config:"workspace_id"`
+	APIURL            string               `config:"api_url"`
+	UploadConcurrency int                  `config:"upload_concurrency"`
+	Enc               encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote dosya.dev filesystem
@@ -134,12 +151,16 @@ func (f *Fs) String() string {
 
 // Precision of the ModTimes in this Fs
 func (f *Fs) Precision() time.Duration {
-	return fs.ModTimeNotSupported
+	// Modification times are stored and returned to the second (the API
+	// keeps them as Unix seconds, sent on upload via the source-mtime header).
+	return time.Second
 }
 
 // Hashes returns the supported hash types of the filesystem
 func (f *Fs) Hashes() hash.Set {
-	return hash.Set(hash.None)
+	// The server computes and stores the SHA-256 of a single-shot upload's
+	// bytes; multipart uploads have none (see Object.Hash).
+	return hash.NewHashSet(hash.SHA256)
 }
 
 // Features returns the optional features of this Fs
@@ -172,7 +193,7 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 	}).Fill(ctx, f)
 
 	client := fshttp.NewClient(ctx)
-	f.rest = rest.NewClient(client).SetRoot(strings.TrimSuffix(opt.APIURL, "/"))
+	f.rest = rest.NewClient(client).SetRoot(strings.TrimSuffix(opt.APIURL, "/")).SetErrorHandler(errorHandler)
 	f.rest.SetHeader("Authorization", "Bearer "+f.opt.APIKey)
 
 	f.dirCache = dircache.New(root, rootID, f)
@@ -302,7 +323,8 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	}
 	_ = leaf
 
-	resp, err := f.uploadFile(ctx, in, remote, size, directoryID, nil)
+	modTime := src.ModTime(ctx)
+	resp, err := f.uploadFile(ctx, in, remote, size, modTime, directoryID, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -310,17 +332,31 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	return &Object{
 		fs:     f,
 		remote: remote,
-		file: api.FileItem{
-			ID:        resp.File.ID,
-			Name:      resp.File.Name,
-			SizeBytes: resp.File.SizeBytes,
-			MimeType:  resp.File.MimeType,
-			Extension: resp.File.Extension,
-			Region:    resp.File.Region,
-			CreatedAt: resp.File.CreatedAt,
-			UpdatedAt: resp.File.CreatedAt,
-		},
+		file:   fileFromUpload(resp, modTime),
 	}, nil
+}
+
+// fileFromUpload builds the FileItem for the object an upload just created.
+// The single-shot upload response omits updated_at, so the modification time
+// is taken from what was sent (modTime) rather than defaulting to the create
+// time - it is the time the server stored via the source-mtime header. The
+// SHA-256 comes straight from the response (empty for a multipart upload).
+func fileFromUpload(resp *api.UploadCompleteResponse, modTime time.Time) api.FileItem {
+	updatedAt := resp.File.CreatedAt
+	if !modTime.IsZero() {
+		updatedAt = float64(modTime.Unix())
+	}
+	return api.FileItem{
+		ID:          resp.File.ID,
+		Name:        resp.File.Name,
+		SizeBytes:   resp.File.SizeBytes,
+		MimeType:    resp.File.MimeType,
+		Extension:   resp.File.Extension,
+		Region:      resp.File.Region,
+		CreatedAt:   resp.File.CreatedAt,
+		UpdatedAt:   updatedAt,
+		ContentHash: resp.File.ContentHash,
+	}
 }
 
 // Mkdir makes the directory (container, bucket)
@@ -394,11 +430,18 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		}
 	}
 
-	// Return new object
+	// Return new object. file.Name must reflect the destination leaf, not
+	// the source's - a caller that reuses this object as the src of a
+	// SECOND Move (e.g. operations.RemoveExisting's restore-on-error path)
+	// recomputes srcLeaf from file.Name; a stale name there makes that
+	// second move see srcLeaf == dstLeaf and skip the rename entirely,
+	// silently leaving the object under the wrong name.
+	newFile := srcObj.file
+	newFile.Name = f.opt.Enc.FromStandardName(dstLeaf)
 	return &Object{
 		fs:     f,
 		remote: remote,
-		file:   srcObj.file,
+		file:   newFile,
 	}, nil
 }
 
@@ -415,21 +458,31 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return err
 	}
 
-	// Move folder to new parent only if parent changed
-	if srcDirectoryID != dstDirectoryID {
-		err = f.moveFolder(ctx, srcID, dstDirectoryID)
-		if err != nil {
-			return fmt.Errorf("couldn't move directory: %w", err)
-		}
-	}
-
-	// Rename if needed
 	srcLeaf := srcRemote
 	if idx := strings.LastIndex(srcRemote, "/"); idx >= 0 {
 		srcLeaf = srcRemote[idx+1:]
 	}
-	if srcLeaf != dstLeaf {
-		newName := f.opt.Enc.FromStandardName(dstLeaf)
+	needsRename := srcLeaf != dstLeaf
+	newName := ""
+	if needsRename {
+		newName = f.opt.Enc.FromStandardName(dstLeaf)
+	}
+
+	// Move folder to new parent only if parent changed. The new name goes
+	// in the same request, as for files in Move: a move followed by a
+	// separate rename can collide with an unrelated folder sharing the
+	// CURRENT name in the destination even though the final name is free.
+	if srcDirectoryID != dstDirectoryID {
+		renamed, err := f.moveFolder(ctx, srcID, dstDirectoryID, newName)
+		if err != nil {
+			return fmt.Errorf("couldn't move directory: %w", err)
+		}
+		if renamed {
+			needsRename = false
+		}
+	}
+
+	if needsRename {
 		err = f.renameFolder(ctx, srcID, newName)
 		if err != nil {
 			return fmt.Errorf("couldn't rename directory: %w", err)
@@ -453,15 +506,32 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	resp, err := f.copyFile(ctx, srcObj.file.ID, dstDirID)
+	// Remove any existing object at the destination first: the copy API
+	// creates a new row named after the source file when copying across
+	// folders, which collides with one already there. rclone's own Move
+	// framework code (fs/operations/operations.go) applies this identical
+	// delete-stale-destination-first pattern before a server-side Move;
+	// server-side Copy has no such framework-level step, so it's on us.
+	if existingObj, err := f.NewObject(ctx, remote); err == nil {
+		if err := existingObj.Remove(ctx); err != nil {
+			return nil, fmt.Errorf("couldn't remove existing destination file: %w", err)
+		}
+	}
+
+	dstLeaf, _, err := f.dirCache.FindPath(ctx, remote, false)
+	if err != nil {
+		return nil, err
+	}
+	dstName := f.opt.Enc.FromStandardName(dstLeaf)
+
+	resp, err := f.copyFile(ctx, srcObj.file.ID, dstDirID, dstName)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't copy file: %w", err)
 	}
 
-	// The API names the copy "Copy of <original>". Rename to the
+	// Servers that predate the name field ignore it and name the copy after
+	// the source, or "Copy of <original>" in the same folder. Rename to the
 	// requested destination name if it differs.
-	dstLeaf, _, _ := f.dirCache.FindPath(ctx, remote, false)
-	dstName := f.opt.Enc.FromStandardName(dstLeaf)
 	if resp.Name != dstName {
 		err = f.renameFile(ctx, resp.FileID, dstName)
 		if err != nil {
@@ -470,18 +540,25 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		resp.Name = dstName
 	}
 
+	// A server-side copy is byte-identical to the source and the API
+	// preserves the source's modification time and content hash onto the
+	// copy, so the returned object must report the SOURCE's modtime and hash,
+	// not the copy's wall-clock time. Reading "now" here made the object
+	// rclone holds in memory disagree with the one read back from the remote
+	// (its Fingerprint check compares the two exactly).
 	return &Object{
 		fs:     f,
 		remote: remote,
 		file: api.FileItem{
-			ID:        resp.FileID,
-			Name:      resp.Name,
-			SizeBytes: srcObj.file.SizeBytes,
-			MimeType:  srcObj.file.MimeType,
-			Extension: srcObj.file.Extension,
-			Region:    srcObj.file.Region,
-			CreatedAt: float64(time.Now().Unix()),
-			UpdatedAt: float64(time.Now().Unix()),
+			ID:          resp.FileID,
+			Name:        resp.Name,
+			SizeBytes:   srcObj.file.SizeBytes,
+			MimeType:    srcObj.file.MimeType,
+			Extension:   srcObj.file.Extension,
+			Region:      srcObj.file.Region,
+			CreatedAt:   srcObj.file.CreatedAt,
+			UpdatedAt:   srcObj.file.UpdatedAt,
+			ContentHash: srcObj.file.ContentHash,
 		},
 	}, nil
 }
@@ -515,17 +592,27 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) e
 		if err != nil {
 			return err
 		}
+		// Collect the subdirectories BEFORE handing entries to the
+		// callback. The callback is allowed to filter the slice in place
+		// (walk.ListR does exactly that for ListObjects/ListDirs, via
+		// ListType.Filter), which overwrites the directory entries in the
+		// backing array - iterating entries afterwards would then never
+		// recurse, silently truncating the listing to the top level.
+		var subdirs []string
+		for _, entry := range entries {
+			if d, ok := entry.(fs.Directory); ok {
+				subdirs = append(subdirs, d.Remote())
+			}
+		}
 		err = callback(entries)
 		if err != nil {
 			return err
 		}
 		// Recurse into subdirectories
-		for _, entry := range entries {
-			if d, ok := entry.(fs.Directory); ok {
-				err = listR(d.Remote())
-				if err != nil {
-					return err
-				}
+		for _, subdir := range subdirs {
+			err = listR(subdir)
+			if err != nil {
+				return err
 			}
 		}
 		return nil
@@ -597,7 +684,13 @@ func (o *Object) Fs() fs.Info {
 
 // Hash returns the selected checksum of the file
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
-	return "", hash.ErrUnsupported
+	if t != hash.SHA256 {
+		return "", hash.ErrUnsupported
+	}
+	// May be "" - a multipart-uploaded object carries no server-side hash,
+	// which rclone treats as "hash unavailable for this object" (as it does
+	// for S3 multipart objects).
+	return o.file.ContentHash, nil
 }
 
 // Storable says whether this object can be stored
@@ -631,22 +724,14 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// Upload as new version of existing file
 	fileID := o.file.ID
-	resp, err := o.fs.uploadFile(ctx, in, o.remote, size, directoryID, &fileID)
+	modTime := src.ModTime(ctx)
+	resp, err := o.fs.uploadFile(ctx, in, o.remote, size, modTime, directoryID, &fileID)
 	if err != nil {
 		return err
 	}
 
 	// Update object metadata
-	o.file = api.FileItem{
-		ID:        resp.File.ID,
-		Name:      resp.File.Name,
-		SizeBytes: resp.File.SizeBytes,
-		MimeType:  resp.File.MimeType,
-		Extension: resp.File.Extension,
-		Region:    resp.File.Region,
-		CreatedAt: resp.File.CreatedAt,
-		UpdatedAt: resp.File.CreatedAt,
-	}
+	o.file = fileFromUpload(resp, modTime)
 
 	return nil
 }
