@@ -43,6 +43,8 @@ const (
 	bufferSize          = 8388608
 	heuristicBytes      = 1048576
 	minCompressionRatio = 1.1
+	// Metadata should stay small, even when read from an untrusted remote.
+	maxMetadataSize = 4 * 1024 * 1024
 
 	gzFileExt           = ".gz"
 	zstdFileExt         = ".zst"
@@ -1126,13 +1128,28 @@ type Object struct {
 
 // This function will read the metadata from a metadata object.
 func readMetadata(ctx context.Context, mo fs.Object) (meta *ObjectMetadata, err error) {
+	// Metadata is normally only a few kilobytes, but it is stored on the
+	// wrapped remote and may be supplied by another remote user. Bound the
+	// bytes retained while decoding it so a hostile sidecar cannot exhaust
+	// the client memory.
+	if size := mo.Size(); size > maxMetadataSize {
+		return nil, fmt.Errorf("metadata object is too large: %d bytes", size)
+	}
+
 	// Open our meradata object
 	rc, err := mo.Open(ctx)
 	if err != nil {
 		return nil, err
 	}
 	defer fs.CheckClose(rc, &err)
-	jr := json.NewDecoder(rc)
+	data, err := io.ReadAll(io.LimitReader(rc, maxMetadataSize+1))
+	if err != nil {
+		return nil, err
+	}
+	if len(data) > maxMetadataSize {
+		return nil, fmt.Errorf("metadata object is too large: more than %d bytes", maxMetadataSize)
+	}
+	jr := json.NewDecoder(bytes.NewReader(data))
 	meta = new(ObjectMetadata)
 	if err = jr.Decode(meta); err != nil {
 		return nil, err
