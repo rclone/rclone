@@ -191,6 +191,28 @@ Properties:
 - Type:        string
 - Default:     "https://api.dosya.dev"
 
+#### --dosya-upload-concurrency
+
+Concurrency for multipart uploads.
+
+This is the number of parts of the same file that are uploaded
+concurrently. The first part is always uploaded on its own, because
+the server creates the upload when it receives it.
+
+Each part in flight is held in memory, so memory use grows with
+this value times the part size the server chooses.
+
+If you are uploading large files over high-speed links and these
+uploads do not fully utilize your bandwidth, then increasing this
+may help to speed up the transfers.
+
+Properties:
+
+- Config:      upload_concurrency
+- Env Var:     RCLONE_DOSYA_UPLOAD_CONCURRENCY
+- Type:        int
+- Default:     4
+
 #### --dosya-encoding
 
 The encoding for the backend.
