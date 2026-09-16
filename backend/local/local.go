@@ -1607,10 +1607,10 @@ func (f *Fs) mkdirAll(localPath string) (err error) {
 	return root.MkdirAll(rel, 0777)
 }
 
-// openFile opens localPath for writing. When translating symlinks it goes
-// through os.Root so a symlink planted at the path, or at any parent, is never
-// followed out of the destination. The returned file is independent of the
-// root, which is closed before returning.
+// openFile opens localPath with the given flags and perm. When translating
+// symlinks it goes through os.Root so a symlink planted at the path, or at any
+// parent, is never followed out of the destination. The returned file is
+// independent of the root, which is closed before returning.
 func (f *Fs) openFile(localPath string, flags int, perm os.FileMode) (fi *os.File, err error) {
 	if !f.opt.TranslateSymlinks {
 		return file.OpenFile(localPath, flags, perm)
