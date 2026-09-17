@@ -135,6 +135,13 @@ The input format is comma separated list of key,value pairs.  Standard
 For example, to set a Cookie use 'Cookie,name=value', or '"Cookie","name=value"'.
 
 You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'.
+
+The headers are only sent to the host in the configured URL. If the
+server redirects to another host (including a subdomain or a different
+port) the headers are not sent to it, or to any further hop in that
+redirect chain. The exception is the directory listing and file
+download requests when auth_redirect is set, as that keeps all
+credentials across redirects.
 `,
 			Default:  fs.CommaSepList{},
 			Advanced: true,
@@ -235,6 +242,8 @@ type Fs struct {
 	canChunk           bool          // set if nextcloud and nextcloud_chunk_size is set
 	canRecalcHash      bool          // set if the server can recalculate checksums with PATCH (nextcloud)
 	authSingleflight   *singleflight.Group
+	// redirect policy which keeps opt.Headers on the configured host
+	checkRedirect func(req *http.Request, via []*http.Request) error
 }
 
 // Object describes a webdav object
@@ -389,7 +398,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Pr
 		ExtraHeaders: map[string]string{
 			"Depth": "0",
 		},
-		CheckRedirect: rest.PreserveMethodRedirectFn,
+		CheckRedirect: f.preserveMethodRedirect,
 	}
 	if f.hasOCMD5 || f.hasOCSHA1 {
 		opts.Body = bytes.NewBuffer(owncloudProps)
@@ -555,8 +564,17 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			rt: ntlmssp.Negotiator{RoundTripper: t},
 		}
 	}
-	// Refuse redirects that downgrade HTTPS to plaintext HTTP.
-	client.CheckRedirect = rest.RefuseHTTPSDowngradeRedirectFn
+	// Refuse redirects that downgrade HTTPS to plaintext HTTP and
+	// don't send the configured headers to another host.
+	//
+	// The auth_redirect option bypasses this for the requests it applies
+	// to as it is an explicit opt-in to keep credentials across redirects.
+	headerNames := make([]string, 0, len(opt.Headers)/2)
+	for i := 0; i < len(opt.Headers); i += 2 {
+		headerNames = append(headerNames, opt.Headers[i])
+	}
+	f.checkRedirect = rest.StripHeadersOnCrossHostRedirectFn(headerNames...)
+	client.CheckRedirect = f.checkRedirect
 	f.srv = rest.NewClient(client).SetRoot(u.String())
 
 	f.features = (&fs.Features{
@@ -633,6 +651,16 @@ func (f *Fs) fetchBearerToken(cmd fs.SpaceSepList) (string, error) {
 		return "", fmt.Errorf("failed to get bearer token using %q: %s: %w", f.opt.BearerTokenCommand, stderrString, err)
 	}
 	return stdoutString, nil
+}
+
+// preserveMethodRedirect is an http.Client.CheckRedirect function
+// which applies f.checkRedirect and then preserves the original HTTP
+// method like rest.PreserveMethodRedirectFn.
+func (f *Fs) preserveMethodRedirect(req *http.Request, via []*http.Request) error {
+	if err := f.checkRedirect(req, via); err != nil {
+		return err
+	}
+	return rest.PreserveMethodRedirectFn(req, via)
 }
 
 // Adds the configured headers to the request if any
