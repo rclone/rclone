@@ -25,7 +25,9 @@ func TestNewJobs(t *testing.T) {
 func TestJobsKickExpire(t *testing.T) {
 	testy.SkipUnreliable(t)
 	jobs := newJobs()
-	jobs.opt.JobExpireInterval = fs.Duration(time.Millisecond)
+	opt := rc.Opt // copy so we don't change the global options
+	opt.JobExpireInterval = fs.Duration(time.Millisecond)
+	jobs.opt = &opt
 	assert.Equal(t, false, jobs.expireRunning)
 	jobs.kickExpire()
 	jobs.mu.Lock()
@@ -42,7 +44,9 @@ func TestJobsExpire(t *testing.T) {
 	ctx := context.Background()
 	wait := make(chan struct{})
 	jobs := newJobs()
-	jobs.opt.JobExpireInterval = fs.Duration(time.Millisecond)
+	opt := rc.Opt // copy so we don't change the global options
+	opt.JobExpireInterval = fs.Duration(time.Millisecond)
+	jobs.opt = &opt
 	assert.Equal(t, false, jobs.expireRunning)
 	var gotJobID int64
 	var gotJob *Job
@@ -553,6 +557,10 @@ func TestRcJobStatus(t *testing.T) {
 func TestRcJobList(t *testing.T) {
 	ctx := context.Background()
 	jobID.Store(0)
+	// Don't list the jobs left running by other tests
+	running.mu.Lock()
+	running.jobs = map[int64]*Job{}
+	running.mu.Unlock()
 	_, _, err := NewJob(ctx, longFn, rc.Params{"_async": true})
 	assert.NoError(t, err)
 
