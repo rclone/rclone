@@ -182,12 +182,21 @@ func TestAddOutput(t *testing.T) {
 		extraText = txt
 	}
 
-	h.AddOutput(false, out)
+	remove := h.AddOutput(false, out)
 
 	r := slog.NewRecord(t0, slog.LevelInfo, "world", 0)
 	require.NoError(t, h.Handle(context.Background(), r))
 	assert.Equal(t, "2020/01/02 03:04:05 INFO  : world\n", buf.String())
 	assert.Equal(t, "2020/01/02 03:04:05 INFO  : world\n", extraText)
+
+	// Check the output can be removed again
+	remove()
+	extraText = ""
+	r = slog.NewRecord(t0, slog.LevelInfo, "again", 0)
+	require.NoError(t, h.Handle(context.Background(), r))
+	assert.Equal(t, "2020/01/02 03:04:05 INFO  : world\n2020/01/02 03:04:05 INFO  : again\n", buf.String())
+	assert.Equal(t, "", extraText)
+	assert.Empty(t, h.outputExtra)
 }
 
 // Test AddOutputJSON sends JSON to extra destinations.
@@ -346,12 +355,13 @@ func TestOutputHandlerConcurrency(t *testing.T) {
 		}
 	})
 
-	// Goroutine calling AddOutput alternating JSON and text
+	// Goroutine calling AddOutput alternating JSON and text and removing them
 	wg.Go(func() {
 		noop := func(_ slog.Level, _ string) {}
 		for j := range 20 {
-			h.AddOutput(j%2 == 0, noop)
+			remove := h.AddOutput(j%2 == 0, noop)
 			time.Sleep(time.Millisecond)
+			remove()
 		}
 	})
 

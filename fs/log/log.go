@@ -48,6 +48,11 @@ var OptionsInfo = fs.Options{{
 	Help:    "Comma separated list of log format options",
 	Groups:  "Logging",
 }, {
+	Name:    "log_buffer_size",
+	Default: fs.SizeSuffix(0),
+	Help:    "Keep this much of the most recent logs in memory for reading with the rc (0 to disable)",
+	Groups:  "Logging,RC",
+}, {
 	Name:    "syslog",
 	Default: false,
 	Help:    "Use Syslog for logging",
@@ -83,6 +88,7 @@ type Options struct {
 	MaxAge               fs.Duration   `config:"log_file_max_age"`     // Max age of log file
 	Compress             bool          `config:"log_file_compress"`    // Set to compress log file
 	Format               logFormat     `config:"log_format"`           // Comma separated list of log format options
+	BufferSize           fs.SizeSuffix `config:"log_buffer_size"`      // Size of the in memory buffer of recent logs
 	UseSyslog            bool          `config:"syslog"`               // Use Syslog for logging
 	SyslogFacility       string        `config:"syslog_facility"`      // Facility for syslog, e.g. KERN,USER,...
 	LogSystemdSupport    bool          `config:"log_systemd"`          // set if using systemd logging
@@ -90,7 +96,13 @@ type Options struct {
 }
 
 func init() {
-	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "log", Opt: &Opt, Options: OptionsInfo})
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "log", Opt: &Opt, Options: OptionsInfo, Reload: optReload})
+}
+
+// optReload makes the options which can be changed at runtime live.
+func optReload(ctx context.Context) error {
+	setBufferSize()
+	return nil
 }
 
 // Opt is the options for the logger

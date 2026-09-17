@@ -1725,6 +1725,31 @@ will only work well for the bucket based backends (eg s3, b2,
 azureblob, swift) but these are the only backends likely to have
 millions of entries in a directory.
 
+### --log-buffer-size SizeSuffix
+
+Keep this much of the most recent logs in memory so that they can be
+read with the rc call [core/log](/rc/#core-log). For example
+`--log-buffer-size 1M`.
+
+When the log buffer is full the oldest log entries are dropped, and
+making it smaller keeps the most recent entries. Note that when a
+client is polling the rc the calls it makes are logged too, so size
+this for the poll rate as well as the amount of data being
+transferred, or turn the logging of the calls off with
+[--rc-log-calls=false](/rc/#--rc-log-calls).
+
+This is disabled by default (`--log-buffer-size 0`). Enabling it
+causes every log entry to be formatted as JSON as well as its normal
+format which will use a little more CPU.
+
+Note that the log buffer only contains logs at the current
+`--log-level`.
+
+**Warning**: anyone who can authenticate to the rc can read the log
+buffer, including logs made before they connected. If you use `--dump
+auth` or `--dump bodies` then the log buffer will contain credentials
+and file contents.
+
 ### --log-file string
 
 Log all of rclone's output to a file. This is not active by default.

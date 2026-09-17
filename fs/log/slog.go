@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"os"
 	"runtime"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -139,9 +140,9 @@ type OutputHandler struct {
 	levelVar    slog.LevelVar
 	writer      io.Writer
 	mu          sync.Mutex
-	output      []outputFn    // log to writer if empty or the last item
-	outputExtra []outputExtra // log to all these additional places
-	format      logFormat     // protected by mu
+	output      []outputFn     // log to writer if empty or the last item
+	outputExtra []*outputExtra // log to all these additional places
+	format      logFormat      // protected by mu
 	jsonBuf     bytes.Buffer
 	jsonHandler *slog.JSONHandler
 }
@@ -213,13 +214,24 @@ func (h *OutputHandler) ResetOutput() {
 }
 
 // AddOutput adds an additional logging destination of the type specified.
-func (h *OutputHandler) AddOutput(json bool, fn outputFn) {
+//
+// It returns a function which removes the destination again.
+func (h *OutputHandler) AddOutput(json bool, fn outputFn) (remove func()) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	h.outputExtra = append(h.outputExtra, outputExtra{
+	out := &outputExtra{
 		json:   json,
 		output: fn,
-	})
+	}
+	h.outputExtra = append(h.outputExtra, out)
+	return func() {
+		h.mu.Lock()
+		defer h.mu.Unlock()
+		// Make a new slice as Handle may be using the old one
+		h.outputExtra = slices.DeleteFunc(slices.Clone(h.outputExtra), func(x *outputExtra) bool {
+			return x == out
+		})
+	}
 }
 
 // SetLevel sets a new log level, returning the old one.
