@@ -80,6 +80,17 @@ Leave blank if not sure.
 `,
 			Sensitive: true,
 		}, {
+			Name: "workstation",
+			Help: `Workstation name sent in NTLM authentication.
+
+The NetBIOS name sent as the client workstation in the NTLM AUTHENTICATE
+message. Some servers (e.g. domain-joined Windows servers with per-account
+workstation restrictions or NTLM allow-lists) require this to match a
+specific name. Leave blank to send no workstation name (the default).
+`,
+			Advanced:  true,
+			Sensitive: true,
+		}, {
 			Name: "use_kerberos",
 			Help: `Use Kerberos authentication.
 
@@ -153,6 +164,7 @@ type Options struct {
 	Pass            string      `config:"pass"`
 	Domain          string      `config:"domain"`
 	SPN             string      `config:"spn"`
+	Workstation     string      `config:"workstation"`
 	UseKerberos     bool        `config:"use_kerberos"`
 	KerberosCCache  string      `config:"kerberos_ccache"`
 	HideSpecial     bool        `config:"hide_special_share"`

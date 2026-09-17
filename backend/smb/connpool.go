@@ -60,10 +60,11 @@ func (f *Fs) dial(ctx context.Context, network, addr string) (c *conn, err error
 		}
 	} else {
 		d.Initiator = &smb2.NTLMInitiator{
-			User:      f.opt.User,
-			Password:  pass,
-			Domain:    f.opt.Domain,
-			TargetSPN: f.opt.SPN,
+			User:        f.opt.User,
+			Password:    pass,
+			Domain:      f.opt.Domain,
+			Workstation: f.opt.Workstation,
+			TargetSPN:   f.opt.SPN,
 		}
 	}
 
