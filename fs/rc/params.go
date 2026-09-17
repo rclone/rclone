@@ -66,6 +66,26 @@ func IsErrParamInvalid(err error) bool {
 	return isInvalid
 }
 
+// ErrorWithLogs is returned from a job started with the _logs
+// parameter which failed.
+//
+// Error will add Logs to the error response as _logs provided this
+// is the outermost error.
+type ErrorWithLogs struct {
+	error
+	Logs Params // logs made while the job was running
+}
+
+// NewErrorWithLogs returns a new ErrorWithLogs from err and logs
+func NewErrorWithLogs(err error, logs Params) *ErrorWithLogs {
+	return &ErrorWithLogs{error: err, Logs: logs}
+}
+
+// Unwrap returns the underlying error
+func (e *ErrorWithLogs) Unwrap() error {
+	return e.error
+}
+
 // Reshape reshapes one blob of data into another via json serialization
 //
 // out should be a pointer type
@@ -311,6 +331,11 @@ func (p Params) GetFsDuration(key string) (fs.Duration, error) {
 //
 // It returns a Params and an updated status code
 func Error(path string, in Params, err error, status int) (Params, int) {
+	var logs Params
+	if logsErr, ok := err.(*ErrorWithLogs); ok {
+		logs = logsErr.Logs
+		err = logsErr.error
+	}
 	// Adjust the status code for some well known errors
 	switch {
 	case errors.Is(err, fs.ErrorDirNotFound) || errors.Is(err, fs.ErrorObjectNotFound):
@@ -323,6 +348,9 @@ func Error(path string, in Params, err error, status int) (Params, int) {
 		"error":  err.Error(),
 		"input":  in,
 		"path":   path,
+	}
+	if logs != nil {
+		result["_logs"] = logs
 	}
 	return result, status
 }

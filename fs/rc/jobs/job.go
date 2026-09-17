@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
+	"math"
 	"net/http"
 	"runtime/debug"
 	"slices"
@@ -19,6 +21,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/cache"
+	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/rc"
 	"golang.org/x/sync/errgroup"
 )
@@ -49,12 +52,48 @@ type Job struct {
 	// the real error to the upper application layers while still printing the
 	// string error message.
 	realErr error
+
+	wantLogs bool       // set if _logs was passed in
+	logLevel slog.Level // return logs of this level or more severe
+	logStart int64      // sequence number in log.Recent when the job started
+	logEnd   int64      // sequence number in log.Recent when the job finished
+}
+
+// logs returns the logs made while the job was running so far or nil
+// if they weren't asked for with _logs.
+//
+// It returns the logs from sequence number since, or from the start
+// of the job if since is before that, and at most limit entries if
+// limit > 0.
+//
+// As logs aren't currently attributed to jobs this includes the logs
+// from anything else which was running at the same time.
+//
+// Call with job.mu held.
+func (job *Job) logs(since int64, limit int) rc.Params {
+	if !job.wantLogs {
+		return nil
+	}
+	// Never read from before the job started, so since 0 means
+	// the start of the job and lost counts what the job made.
+	since = max(since, job.logStart)
+	logEnd := int64(math.MaxInt64)
+	if job.Finished {
+		logEnd = job.logEnd
+	}
+	entries, next, lost := log.Recent.Get(since, logEnd, job.logLevel, limit)
+	return rc.Params{
+		"entries": entries,
+		"next":    next,
+		"lost":    lost,
+	}
 }
 
 // mark the job as finished
 func (job *Job) finish(out rc.Params, err error) {
 	job.mu.Lock()
 	job.EndTime = time.Now()
+	job.logEnd = log.Recent.Seq()
 	if out == nil {
 		out = make(rc.Params)
 	}
@@ -108,11 +147,14 @@ func (job *Job) OnFinish(fn func()) func() {
 func (job *Job) run(ctx context.Context, fn rc.Func, in rc.Params) {
 	defer func() {
 		if r := recover(); r != nil {
+			stack := debug.Stack()
+			// Finish the job before logging the stack trace so the
+			// log is outside the window returned by _logs.
+			job.finish(nil, fmt.Errorf("panic received: %v", r))
 			// Log the full stack trace server-side only - it must not
 			// be returned to the rc caller as it leaks internal paths,
 			// dependency versions and memory addresses.
-			fs.Errorf(nil, "rc: job %d panic: %v\n%s", job.ID, r, string(debug.Stack()))
-			job.finish(nil, fmt.Errorf("panic received: %v", r))
+			fs.Errorf(nil, "rc: job %d panic: %v\n%s", job.ID, r, string(stack))
 		}
 	}()
 	job.finish(fn(ctx, in))
@@ -250,8 +292,53 @@ type jobKeyType struct{}
 // Key for adding jobs to ctx
 var jobKey = jobKeyType{}
 
+// LogsRequested returns true if in has _logs set to anything other
+// than false.
+//
+// This doesn't check the value of _logs is valid.
+func LogsRequested(in rc.Params) bool {
+	wantLogs, err := in.GetBool("_logs")
+	if rc.IsErrParamNotFound(err) {
+		return false
+	}
+	return err != nil || wantLogs
+}
+
+// See if _logs is set returning whether the logs are wanted and the
+// minimum level of logs to return.
+//
+// _logs can be a boolean or a log level, e.g. "INFO".
+func getLogs(in rc.Params) (wantLogs bool, level slog.Level, err error) {
+	level = slog.LevelDebug
+	wantLogs = LogsRequested(in)
+	_, boolErr := in.GetBool("_logs")
+	levelString, levelErr := in.GetString("_logs")
+	delete(in, "_logs") // remove the logs parameter after parsing
+	if !wantLogs {
+		return false, level, nil
+	}
+	if !log.Recent.Enabled() {
+		return false, level, log.ErrBufferDisabled
+	}
+	// _logs is true or a level here
+	if boolErr != nil {
+		if levelErr != nil {
+			return false, level, levelErr
+		}
+		level, err = log.ParseLevel(levelString)
+		if err != nil {
+			return false, level, rc.NewErrParamInvalid(fmt.Errorf("_logs must be a boolean or a log level: %w", err))
+		}
+		if level >= fs.SlogLevelOff {
+			return false, level, rc.NewErrParamInvalid(fmt.Errorf("_logs level can't be %q", levelString))
+		}
+	}
+	return wantLogs, level, nil
+}
+
 // NewJob creates a Job and executes it, possibly in the background if _async is set
 func (jobs *Jobs) NewJob(ctx context.Context, fn rc.Func, in rc.Params) (job *Job, out rc.Params, err error) {
+	logStart := log.Recent.Seq() // before anything is logged for this job
 	id := jobID.Add(1)
 	in = in.Copy() // copy input so we can change it
 
@@ -275,6 +362,11 @@ func (jobs *Jobs) NewJob(ctx context.Context, fn rc.Func, in rc.Params) (job *Jo
 		return nil, nil, err
 	}
 
+	wantLogs, logLevel, err := getLogs(in)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	ctx, cancel := context.WithCancel(ctx)
 	stop := func() {
 		cancel()
@@ -287,6 +379,9 @@ func (jobs *Jobs) NewJob(ctx context.Context, fn rc.Func, in rc.Params) (job *Jo
 		Group:     group,
 		StartTime: time.Now(),
 		Stop:      stop,
+		wantLogs:  wantLogs,
+		logLevel:  logLevel,
+		logStart:  logStart,
 	}
 
 	jobs.mu.Lock()
@@ -309,6 +404,18 @@ func (jobs *Jobs) NewJob(ctx context.Context, fn rc.Func, in rc.Params) (job *Jo
 		job.run(ctx, fn, in)
 		out = job.Output
 		err = job.realErr
+		if wantLogs {
+			job.mu.Lock()
+			logs := job.logs(-1, 0)
+			job.mu.Unlock()
+			if err != nil {
+				err = rc.NewErrorWithLogs(err, logs)
+			} else {
+				// Don't add the logs to job.Output
+				out = out.Copy()
+				out["_logs"] = logs
+			}
+		}
 	}
 	return job, out, err
 }
@@ -352,6 +459,10 @@ func init() {
 		Help: `Parameters:
 
 - jobid - id of the job (integer).
+- since - return logs with sequence numbers starting from this - optional
+    - Defaults to the start of the job, and is clamped to it, so the
+      logs made before the job started are never returned.
+- limit - maximum number of log entries to return - optional, defaults to 1000, 0 for no limit
 
 Results:
 
@@ -365,6 +476,10 @@ Results:
 - startTime - time the job started (e.g. "2018-10-26T18:50:20.528336039+01:00")
 - success - boolean - true for success false otherwise
 - output - output of the job as would have been returned if called synchronously
+    - _logs - the logs made while the job was running if it was started with _logs
+        - entries - array of log entries, oldest first
+        - next - pass this as since to carry on reading the logs from where this call finished
+        - lost - the number of log entries which had already been dropped from the log buffer
 - progress - output of the progress related to the underlying job
 `,
 	})
@@ -386,6 +501,28 @@ func rcJobStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	err = rc.Reshape(&out, job)
 	if err != nil {
 		return nil, fmt.Errorf("reshape failed in job status: %w", err)
+	}
+	if job.wantLogs {
+		since, err := in.GetInt64("since")
+		if rc.IsErrParamNotFound(err) {
+			since = -1
+		} else if err != nil {
+			return nil, err
+		}
+		limit, err := in.GetInt64("limit")
+		if rc.IsErrParamNotFound(err) {
+			limit = 1000
+		} else if err != nil {
+			return nil, err
+		}
+		// Put the logs in the output so it is the same as would
+		// have been returned if called synchronously
+		output, ok := out["output"].(map[string]any)
+		if !ok {
+			output = map[string]any{}
+		}
+		output["_logs"] = job.logs(since, int(min(limit, math.MaxInt32)))
+		out["output"] = output
 	}
 	return out, nil
 }
@@ -576,7 +713,7 @@ This takes the following parameters:
 }
 |||
 
-The inputs may use |_async|, |_group|, |_config| and |_filter| as normal when using the rc.
+The inputs may use |_async|, |_group|, |_config|, |_filter| and |_logs| as normal when using the rc.
 
 Returns:
 

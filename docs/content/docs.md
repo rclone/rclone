@@ -1728,7 +1728,8 @@ millions of entries in a directory.
 ### --log-buffer-size SizeSuffix
 
 Keep this much of the most recent logs in memory so that they can be
-read with the rc call [core/log](/rc/#core-log). For example
+read with the rc call [core/log](/rc/#core-log) or returned from rc
+calls with the [_logs](/rc/#logs) parameter. For example
 `--log-buffer-size 1M`.
 
 When the log buffer is full the oldest log entries are dropped, and

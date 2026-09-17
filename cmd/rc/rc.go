@@ -208,7 +208,12 @@ func doCall(ctx context.Context, path string, in rc.Params) (out rc.Params, err 
 		}
 		_, out, err := jobs.NewJob(ctx, call.Fn, in)
 		if err != nil {
-			return errorf(http.StatusInternalServerError, path, "loopback: call failed: %w", err)
+			out, err = errorf(http.StatusInternalServerError, path, "loopback: call failed: %w", err)
+			var logsErr *rc.ErrorWithLogs
+			if errors.As(err, &logsErr) {
+				out["_logs"] = logsErr.Logs
+			}
+			return out, err
 		}
 		// Reshape (serialize then deserialize) the data so it is in the form expected
 		err = rc.Reshape(&out, out)

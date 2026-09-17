@@ -562,6 +562,68 @@ $ rclone rc --json '{ "group": "job/1" }' core/stats
 }
 ```
 
+### Returning the logs of a call with _logs = true {#logs}
+
+If `_logs` is set then the logs made while the call was running will
+be returned along with its result. This needs the log buffer to be
+enabled with [--log-buffer-size](/docs/#log-buffer-size-sizesuffix)
+otherwise the call will return an error.
+
+`_logs` can be set to `true` to return all the logs, or to a log level
+(e.g. `"INFO"` or `"ERROR"`) to return only the logs at that level or
+more severe.
+
+The logs are returned as a `_logs` key in the result of the call, or
+in the error response if the call failed. It has the following keys:
+
+- `entries` - array of logs, oldest first, in the same format
+  as returned by [core/log](#core-log).
+- `next` - the sequence number after the last entry which can be passed
+  as `since` to [core/log](#core-log) to read the logs made after the call.
+- `lost` - the number of log entries which were made while the call was
+  running but had been dropped from the log buffer as it was too small.
+
+```console
+$ rclone rc sync/copy srcFs=/tmp/src dstFs=/tmp/dst _logs=true
+{
+    "_logs": {
+        "entries": [
+            {
+                "level": "info",
+                "msg": "Copied (new)",
+                "object": "file.txt",
+                "objectType": "*local.Object",
+                "seq": 2,
+                "size": 3,
+                "source": "operations/copy.go:385",
+                "time": "2026-09-17T12:43:42.736052334+01:00"
+            }
+        ],
+        "lost": 0,
+        "next": 3
+    }
+}
+```
+
+If the call was started with `_async` then the logs made so far are
+returned as `_logs` in the `output` of [job/status](#job-status), so
+the `output` is the same as would have been returned if the call was
+made synchronously. This returns at most 1000 entries by default -
+pass the `next` value returned as `since` to `job/status` to read
+more, or `limit` to change the number of entries returned.
+
+Note that:
+
+- Rclone doesn't yet record which call made which log entry, so `_logs`
+  returns all the logs made **while** the call was running. If other
+  calls, or other rclone activity such as a mount, were running at the
+  same time then their logs will be included too.
+- The log buffer only contains logs at the current `--log-level`. This
+  is currently a global setting so it can't be changed for a call with
+  `_config`. Use [options/set](#options-set) to change it.
+- `_logs` can't be used on an rc server without authentication unless
+  `--rc-no-auth` is in use.
+
 ## Data types {#data-types}
 
 When the API returns types, these will mostly be straight forward

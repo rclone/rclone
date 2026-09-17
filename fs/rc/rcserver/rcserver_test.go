@@ -910,6 +910,49 @@ func TestAuthRequired(t *testing.T) {
 	testServer(t, tests, &opt)
 }
 
+// _logs returns the logs of everything running so it mustn't be usable
+// without authentication on the calls which don't need authentication.
+func TestLogsAuthRequired(t *testing.T) {
+	tests := []testRun{{
+		Name:        "logs",
+		URL:         "rc/noop",
+		Method:      "POST",
+		Body:        `{"_logs":true}`,
+		ContentType: "application/json",
+		Status:      http.StatusForbidden,
+		Expected: `{
+	"error": "authentication must be set up on the rc server to use _logs or the --rc-no-auth flag must be in use",
+	"input": {
+		"_logs": true
+	},
+	"path": "rc/noop",
+	"status": 403
+}
+`,
+	}, {
+		Name:        "no-logs",
+		URL:         "rc/noop",
+		Method:      "POST",
+		Body:        `{}`,
+		ContentType: "application/json",
+		Status:      http.StatusOK,
+		Expected:    "{}\n",
+	}, {
+		Name:        "logs-false",
+		URL:         "rc/noop",
+		Method:      "POST",
+		Body:        `{"_logs":false}`,
+		ContentType: "application/json",
+		Status:      http.StatusOK,
+		Expected:    "{}\n",
+	}}
+	opt := newTestOpt()
+	opt.Serve = false
+	opt.Files = ""
+	opt.NoAuth = false
+	testServer(t, tests, &opt)
+}
+
 // job/status returns the output of any job so it must need
 // authentication, e.g. so an unauthenticated user can't read the
 // output of config/dump started with _async by an authenticated one.

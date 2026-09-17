@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"net/http"
 	"runtime"
 	"testing"
 	"time"
@@ -11,6 +13,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"
+	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fstest/testy"
 	"github.com/stretchr/testify/assert"
@@ -1088,4 +1091,256 @@ func TestJobsBatchConcurrent(t *testing.T) {
 		assert.Equal(t, want, got)
 	}
 
+}
+
+// setLogBuffer sets the size of the log buffer for the duration of the test.
+func setLogBuffer(t *testing.T, size fs.SizeSuffix) {
+	setSize := func(size fs.SizeSuffix) {
+		call := rc.Calls.Get("options/set")
+		require.NotNil(t, call)
+		_, err := call.Fn(context.Background(), rc.Params{"log": rc.Params{"BufferSize": size.String()}})
+		require.NoError(t, err)
+	}
+	oldSize := log.Opt.BufferSize
+	setSize(size)
+	t.Cleanup(func() { setSize(oldSize) })
+}
+
+// logMessages returns the msg fields of the log entries in logs.
+func logMessages(t *testing.T, logs any) (msgs []string) {
+	t.Helper()
+	require.NotNil(t, logs)
+	// Reshape so this works on direct output and output via JSON
+	var decoded struct {
+		Entries []struct {
+			Msg string `json:"msg"`
+		} `json:"entries"`
+		Next *int64 `json:"next"`
+		Lost *int64 `json:"lost"`
+	}
+	require.NoError(t, rc.Reshape(&decoded, logs))
+	require.NotNil(t, decoded.Lost)
+	assert.Equal(t, int64(0), *decoded.Lost)
+	require.NotNil(t, decoded.Next)
+	for _, entry := range decoded.Entries {
+		msgs = append(msgs, entry.Msg)
+	}
+	return msgs
+}
+
+func TestExecuteJobWithLogs(t *testing.T) {
+	ctx := context.Background()
+	jobID.Store(0)
+	var got rc.Params
+	jobFn := func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		got = in
+		fs.Logf(nil, "notice from job")
+		fs.Errorf(nil, "error from job")
+		return rc.Params{"result": "OK"}, nil
+	}
+
+	// Fails if the log buffer isn't enabled
+	setLogBuffer(t, 0)
+	_, _, err := NewJob(ctx, jobFn, rc.Params{"_logs": true})
+	assert.Equal(t, log.ErrBufferDisabled, err)
+	assert.True(t, rc.IsErrParamInvalid(err), err)
+
+	setLogBuffer(t, 1*fs.Mebi)
+	fs.Logf(nil, "before job")
+
+	// No logs unless asked for
+	_, out, err := NewJob(ctx, jobFn, rc.Params{})
+	require.NoError(t, err)
+	assert.NotContains(t, out, "_logs")
+	_, out, err = NewJob(ctx, jobFn, rc.Params{"_logs": false})
+	require.NoError(t, err)
+	assert.NotContains(t, out, "_logs")
+
+	// All the logs
+	job, out, err := NewJob(ctx, jobFn, rc.Params{"_logs": true})
+	require.NoError(t, err)
+	assert.Equal(t, "OK", out["result"])
+	assert.Equal(t, []string{"notice from job", "error from job"}, logMessages(t, out["_logs"]))
+	assert.NotContains(t, got, "_logs", "_logs should have been removed from in")
+	assert.NotContains(t, job.Output, "_logs", "_logs should not be in the job output")
+
+	// As passed by rclone rc _logs=true
+	_, out, err = NewJob(ctx, jobFn, rc.Params{"_logs": "true"})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"notice from job", "error from job"}, logMessages(t, out["_logs"]))
+
+	// Logs filtered by level
+	_, out, err = NewJob(ctx, jobFn, rc.Params{"_logs": "ERROR"})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"error from job"}, logMessages(t, out["_logs"]))
+
+	// Bad level
+	_, _, err = NewJob(ctx, jobFn, rc.Params{"_logs": "potato"})
+	require.Error(t, err)
+	assert.True(t, rc.IsErrParamInvalid(err), err)
+
+	// OFF isn't a valid level for _logs
+	_, _, err = NewJob(ctx, jobFn, rc.Params{"_logs": "OFF"})
+	require.Error(t, err)
+	assert.True(t, rc.IsErrParamInvalid(err), err)
+
+	// Logs made while parsing the request are included
+	_, out, err = NewJob(ctx, jobFn, rc.Params{
+		"_logs":   "ERROR",
+		"_filter": rc.Params{"IncludeRule": []string{"*.jpg"}, "ExcludeRule": []string{"*.png"}},
+	})
+	require.NoError(t, err)
+	msgs := logMessages(t, out["_logs"])
+	require.Len(t, msgs, 2)
+	assert.Contains(t, msgs[0], "Using --filter is recommended")
+	assert.Equal(t, "error from job", msgs[1])
+}
+
+func TestLogsRequested(t *testing.T) {
+	for _, test := range []struct {
+		in   rc.Params
+		want bool
+	}{
+		{rc.Params{}, false},
+		{rc.Params{"_logs": false}, false},
+		{rc.Params{"_logs": "false"}, false},
+		{rc.Params{"_logs": true}, true},
+		{rc.Params{"_logs": "true"}, true},
+		{rc.Params{"_logs": "INFO"}, true},
+		{rc.Params{"_logs": "potato"}, true},
+		{rc.Params{"_logs": 42}, true},
+	} {
+		assert.Equal(t, test.want, LogsRequested(test.in), fmt.Sprintf("%v", test.in))
+	}
+}
+
+func TestExecuteJobWithLogsError(t *testing.T) {
+	ctx := context.Background()
+	jobID.Store(0)
+	setLogBuffer(t, 1*fs.Mebi)
+
+	testErr := rc.NewErrParamInvalid(errors.New("test error"))
+	errorFn := func(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+		fs.Errorf(nil, "error from job")
+		return nil, testErr
+	}
+	in := rc.Params{"_logs": true}
+	_, _, err := NewJob(ctx, errorFn, in)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, testErr))
+	assert.Equal(t, "test error", err.Error())
+
+	// Check the logs end up in the error response with the status intact
+	out, status := rc.Error("test/path", in, err, http.StatusInternalServerError)
+	assert.Equal(t, http.StatusBadRequest, status)
+	assert.Equal(t, "test error", out["error"])
+	assert.Equal(t, []string{"error from job"}, logMessages(t, out["_logs"]))
+
+	// and via NewJobFromParams as used by job/batch and librclone
+	call := rc.Calls.Get("rc/error")
+	require.NotNil(t, call)
+	out = NewJobFromParams(ctx, rc.Params{"_path": "rc/error", "_logs": true})
+	assert.Contains(t, out, "error")
+	assert.Contains(t, out, "_logs")
+}
+
+// The stack trace from a panic must not be returned to the caller
+func TestExecuteJobWithLogsPanic(t *testing.T) {
+	ctx := context.Background()
+	jobID.Store(0)
+	setLogBuffer(t, 1*fs.Mebi)
+
+	panicFn := func(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+		fs.Errorf(nil, "before panic")
+		panic("boom")
+	}
+	_, _, err := NewJob(ctx, panicFn, rc.Params{"_logs": true})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "panic received: boom")
+	out, _ := rc.Error("test/path", rc.Params{}, err, http.StatusInternalServerError)
+	assert.Equal(t, []string{"before panic"}, logMessages(t, out["_logs"]))
+}
+
+func TestRcJobStatusWithLogs(t *testing.T) {
+	ctx := context.Background()
+	jobID.Store(0)
+	setLogBuffer(t, 1*fs.Mebi)
+
+	started := make(chan struct{})
+	finish := make(chan struct{})
+	jobFn := func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		fs.Logf(nil, "job started")
+		close(started)
+		<-finish
+		fs.Logf(nil, "job finished")
+		return nil, nil
+	}
+	// Logs made before the job starts must never be returned by it
+	fs.Logf(nil, "before the job")
+
+	job, out, err := NewJob(ctx, jobFn, rc.Params{"_async": true, "_logs": true})
+	require.NoError(t, err)
+	assert.NotContains(t, out, "_logs")
+	<-started
+
+	call := rc.Calls.Get("job/status")
+	require.NotNil(t, call)
+	status := func(extra ...any) rc.Params {
+		in := rc.Params{"jobid": job.ID}
+		for i := 0; i < len(extra); i += 2 {
+			in[extra[i].(string)] = extra[i+1]
+		}
+		out, err := call.Fn(ctx, in)
+		require.NoError(t, err)
+		return out
+	}
+	// logs returns the _logs from the output of the status
+	logs := func(out rc.Params) rc.Params {
+		output, ok := out["output"].(map[string]any)
+		require.True(t, ok, "output should be a map")
+		return output["_logs"].(rc.Params)
+	}
+
+	// Logs so far while the job is running
+	out = status()
+	assert.Equal(t, false, out["finished"])
+	assert.Equal(t, []string{"job started"}, logMessages(t, logs(out)))
+
+	// since before the job starts at the job, so the logs made
+	// before it aren't returned and aren't counted as lost
+	out = status("since", 0)
+	assert.Equal(t, []string{"job started"}, logMessages(t, logs(out)))
+
+	// Carry on from next which should return nothing new
+	next := logs(out)["next"].(int64)
+	out = status("since", next)
+	assert.Empty(t, logMessages(t, logs(out)))
+	assert.Equal(t, next, logs(out)["next"])
+
+	// Check limit
+	fs.Logf(nil, "job continuing")
+	out = status("limit", 1)
+	assert.Equal(t, []string{"job started"}, logMessages(t, logs(out)))
+	out = status("since", logs(out)["next"])
+	assert.Equal(t, []string{"job continuing"}, logMessages(t, logs(out)))
+
+	finished := make(chan struct{})
+	job.OnFinish(func() { close(finished) })
+	close(finish)
+	<-finished
+	fs.Logf(nil, "after job")
+
+	// Only the logs made while the job was running once finished
+	out = status()
+	assert.Equal(t, true, out["finished"])
+	assert.Equal(t, []string{"job started", "job continuing", "job finished"}, logMessages(t, logs(out)))
+
+	// No logs in the status if not asked for
+	job, _, err = NewJob(ctx, func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		return nil, nil
+	}, rc.Params{"_async": true})
+	require.NoError(t, err)
+	out = status()
+	output, _ := out["output"].(map[string]any)
+	assert.NotContains(t, output, "_logs")
 }
