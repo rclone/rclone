@@ -762,4 +762,16 @@ func TestDirMetadataExtension(t *testing.T) {
 	if features.ReadDirMetadata {
 		assert.Equal(t, modTime.Format(time.RFC3339Nano), metadata["mtime"])
 	}
+
+	// Check metadata for a file being written, which has no object
+	// yet, exists and is empty
+	fd, err := vfs.OpenFile("dir/newfile", os.O_WRONLY|os.O_CREATE, 0666)
+	require.NoError(t, err)
+	node, err = vfs.Stat("dir/newfile.metadata")
+	require.NoError(t, err)
+	require.True(t, node.IsFile())
+	blob, err = vfs.ReadFile("dir/newfile.metadata")
+	require.NoError(t, err)
+	assert.Equal(t, "{}", string(blob))
+	require.NoError(t, fd.Close())
 }
