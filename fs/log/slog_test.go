@@ -346,6 +346,15 @@ func TestOutputHandlerConcurrency(t *testing.T) {
 		}
 	})
 
+	// Goroutine calling AddOutput alternating JSON and text
+	wg.Go(func() {
+		noop := func(_ slog.Level, _ string) {}
+		for j := range 20 {
+			h.AddOutput(j%2 == 0, noop)
+			time.Sleep(time.Millisecond)
+		}
+	})
+
 	// Use a channel with a timeout to detect deadlocks
 	done := make(chan struct{})
 	go func() {
