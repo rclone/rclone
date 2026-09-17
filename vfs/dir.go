@@ -845,7 +845,7 @@ func (d *Dir) statMetadata(leaf, baseLeaf string) (metaNode Node, err error) {
 	}
 	// Make a memory based file with metadataDump in
 	remote := path.Join(d.path, leaf)
-	o := object.NewMemoryObject(remote, entry.ModTime(d.vfs.ctx), metadataDump)
+	o := object.NewMemoryObject(remote, node.ModTime(), metadataDump)
 	f := newFile(d, d.path, o, leaf)
 	// Base the metadata inode number off the real file inode number
 	// to keep it constant
