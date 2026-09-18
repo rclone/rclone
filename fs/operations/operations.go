@@ -1721,6 +1721,10 @@ func copyDest(ctx context.Context, fdst fs.Fs, dst, src fs.Object, CopyDest, bac
 	opt.updateModTime = false
 	if equal(ctx, src, CopyDestFile, opt) {
 		if dst == nil || !Equal(ctx, src, dst) {
+			// Leave a different destination for the caller to reject
+			if dst != nil && fs.GetConfig(ctx).Immutable {
+				return false, nil
+			}
 			if dst != nil && backupDir != nil {
 				err = MoveBackupDir(ctx, backupDir, dst)
 				if err != nil {
