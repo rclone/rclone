@@ -898,24 +898,39 @@ func TestCopyURL(t *testing.T) {
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1, file2, fstest.NewItem(urlFileName, contents, t1), fstest.NewItem(headerFilename, contents, t1)}, nil, fs.ModTimeNotSupported)
 }
 
+type newObjectCountingFs struct {
+	fs.Fs
+	calls int
+}
+
+func (f *newObjectCountingFs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
+	f.calls++
+	return f.Fs.NewObject(ctx, remote)
+}
+
 func TestCopyURLSizeOnly(t *testing.T) {
 	for _, tc := range []struct {
-		name      string
-		contents  string
-		chunked   bool
-		want      string
-		missing   bool
-		noClobber bool
+		name               string
+		contents           string
+		chunked            bool
+		want               string
+		missing            bool
+		noClobber          bool
+		sizeOnly           bool
+		wantErr            bool
+		wantNewObjectCalls int
 	}{
-		{name: "same size", contents: "original", want: "original"},
-		{name: "different size", contents: "short", want: "replaced"},
-		{name: "unknown size", contents: "original", chunked: true, want: "replaced"},
-		{name: "missing destination", missing: true, want: "replaced"},
-		{name: "no clobber", contents: "original", noClobber: true},
+		{name: "same size", contents: "original", want: "original", sizeOnly: true, wantNewObjectCalls: 1},
+		{name: "different size", contents: "short", want: "replaced", sizeOnly: true, wantNewObjectCalls: 1},
+		{name: "unknown size", contents: "original", chunked: true, want: "replaced", sizeOnly: true},
+		{name: "missing destination", missing: true, want: "replaced", sizeOnly: true, wantNewObjectCalls: 1},
+		{name: "no clobber", contents: "original", noClobber: true, sizeOnly: true, wantErr: true, wantNewObjectCalls: 1},
+		{name: "no clobber missing destination", missing: true, noClobber: true, sizeOnly: true, want: "replaced", wantNewObjectCalls: 1},
+		{name: "same size without size only", contents: "original", want: "replaced"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx, ci := fs.AddConfig(context.Background())
-			ci.SizeOnly = true
+			ci.SizeOnly = tc.sizeOnly
 			r := fstest.NewRun(t)
 			if !tc.missing {
 				r.WriteObject(ctx, "file.txt", tc.contents, t1)
@@ -927,9 +942,12 @@ func TestCopyURLSizeOnly(t *testing.T) {
 				_, _ = io.WriteString(w, "replaced")
 			}))
 			defer ts.Close()
-			obj, err := operations.CopyURL(ctx, r.Fremote, "file.txt", ts.URL, false, false, tc.noClobber)
-			if tc.noClobber {
+			countingFs := &newObjectCountingFs{Fs: r.Fremote}
+			obj, err := operations.CopyURL(ctx, countingFs, "file.txt", ts.URL, false, false, tc.noClobber)
+			assert.Equal(t, tc.wantNewObjectCalls, countingFs.calls)
+			if tc.wantErr {
 				require.ErrorContains(t, err, "file already exist")
+				assert.Nil(t, obj)
 				return
 			}
 			require.NoError(t, err)
