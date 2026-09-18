@@ -346,10 +346,9 @@ func GetJobID(ctx context.Context) (jobID int64, ok bool) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:   "job/status",
-		NoAuth: true,
-		Fn:     rcJobStatus,
-		Title:  "Reads the status of the job ID",
+		Path:  "job/status",
+		Fn:    rcJobStatus,
+		Title: "Reads the status of the job ID",
 		Help: `Parameters:
 
 - jobid - id of the job (integer).
@@ -393,10 +392,9 @@ func rcJobStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:   "job/list",
-		NoAuth: true,
-		Fn:     rcJobList,
-		Title:  "Lists the IDs of the running jobs",
+		Path:  "job/list",
+		Fn:    rcJobList,
+		Title: "Lists the IDs of the running jobs",
 		Help: `Parameters: None.
 
 Results:
