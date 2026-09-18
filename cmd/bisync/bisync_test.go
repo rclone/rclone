@@ -69,7 +69,7 @@ var initDate = time.Date(2000, time.January, 1, 0, 0, 0, 0, bisync.TZ)
 // go run ./fstest/test_all -remotes local,TestCrypt:,TestDrive:,TestOneDrive:,TestOneDriveBusiness:,TestDropbox:,TestCryptDrive:,TestOpenDrive:,TestChunker:,:memory:,TestCryptNoEncryption:,TestCombine:DirA,TestFTPRclone:,TestWebdavRclone:,TestS3Rclone:,TestSFTPRclone:,TestSFTPRcloneSSH:,TestNextcloud:,TestChunkerNometaLocal:,TestChunkerChunk3bLocal:,TestChunkerLocal:,TestChunkerChunk3bNometaLocal:,TestStorj: -run '^TestBisync.*$' -timeout 3h -verbose -maxtries 5
 // go test -timeout 3h -run '^TestBisync.*$' github.com/rclone/rclone/cmd/bisync -remote TestDrive:Bisync -v
 // go test -timeout 3h -run '^TestBisyncRemoteRemote/basic$' github.com/rclone/rclone/cmd/bisync -remote TestDropbox:Bisync -v
-// TestFTPProftpd:,TestFTPPureftpd:,TestFTPRclone:,TestFTPVsftpd:,TestHdfs:,TestS3Minio:,TestS3MinioEdge:,TestS3Rclone:,TestSeafile:,TestSeafileEncrypted:,TestSeafileV6:,TestSFTPOpenssh:,TestSFTPRclone:,TestSFTPRcloneSSH:,TestSia:,TestSwiftAIO:,TestWebdavNextcloud:,TestWebdavOwncloud:,TestWebdavRclone:
+// TestFTPProftpd:,TestFTPPureftpd:,TestFTPRclone:,TestFTPVsftpd:,TestHdfs:,TestS3Minio:,TestS3Rclone:,TestSeafile:,TestSeafileEncrypted:,TestSeafileV6:,TestSFTPOpenssh:,TestSFTPRclone:,TestSFTPRcloneSSH:,TestSia:,TestSwiftAIO:,TestWebdavNextcloud:,TestWebdavOwncloud:,TestWebdavRclone:
 
 // logReplacements make modern test logs comparable with golden dir.
 // It is a string slice of even length with this structure:
