@@ -126,6 +126,40 @@ func TestCopyFile(t *testing.T) {
 	r.CheckRemoteItems(t, file2)
 }
 
+func TestCopyFileImmutable(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	defer accounting.GlobalStats().ResetCounters()
+
+	ci.Immutable = true
+
+	file1 := r.WriteFile("existing", "potato", t1)
+	r.CheckLocalItems(t, file1)
+
+	err := operations.CopyFile(ctx, r.Fremote, r.Flocal, file1.Path, file1.Path)
+	require.NoError(t, err)
+	r.CheckRemoteItems(t, file1)
+
+	// Copying an unchanged file again is fine
+	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file1.Path, file1.Path)
+	require.NoError(t, err)
+	r.CheckRemoteItems(t, file1)
+
+	// Should fail with ErrorImmutableModified and not modify local or remote files
+	file2 := r.WriteFile("existing", "tomatoes", t2)
+	r.CheckLocalItems(t, file2)
+	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file2.Path)
+	assert.ErrorIs(t, err, fs.ErrorImmutableModified)
+	r.CheckLocalItems(t, file2)
+	r.CheckRemoteItems(t, file1)
+
+	ci.NoCheckDest = true
+	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file2.Path)
+	assert.EqualError(t, err, "can't use --no-check-dest with --immutable")
+	r.CheckRemoteItems(t, file1)
+}
+
 // Find the longest file name for writing to local
 func maxLengthFileName(t *testing.T, r *fstest.Run) string {
 	require.NoError(t, r.Flocal.Mkdir(context.Background(), "")) // create the root
