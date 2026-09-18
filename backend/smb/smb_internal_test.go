@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/assert"
@@ -128,4 +129,34 @@ func TestIsPathDir(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNewFsUser(t *testing.T) {
+	ctx := context.Background()
+	for _, test := range []struct {
+		user string
+		want string
+	}{
+		{user: "", want: currentUser},
+		{user: currentUser, want: currentUser},
+		{user: "someone", want: "someone"},
+	} {
+		m := configmap.Simple{"host": "localhost", "user": test.user}
+		f, err := NewFs(ctx, "TestSMB", "", m)
+		require.NoError(t, err)
+		assert.Equal(t, test.want, f.(*Fs).opt.User, "user=%q", test.user)
+	}
+
+	// No user in the config at all
+	f, err := NewFs(ctx, "TestSMB", "", configmap.Simple{"host": "localhost"})
+	require.NoError(t, err)
+	assert.Equal(t, currentUser, f.(*Fs).opt.User)
+}
+
+// The default is blank so that a user name which happens to match the
+// current user is still written to the config file.
+func TestUserDefault(t *testing.T) {
+	ri, err := fs.Find("smb")
+	require.NoError(t, err)
+	assert.Equal(t, "", ri.Options.Get("user").Default)
 }
