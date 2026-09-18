@@ -189,10 +189,35 @@ func (b *bisyncRun) WhichEqual(ctx context.Context, src, dst fs.Object, Fsrc, Fd
 		return false
 	}
 	if noHash {
+		if b.equalWithoutHash(ctx, src, dst, Fsrc, Fdst) {
+			return true
+		}
 		fs.Errorf(src, "failed to check as hash is missing")
 		return false
 	}
 	return !differ
+}
+
+// equalWithoutHash reports whether src and dst are equal by size and, if
+// modtime is being compared, by modtime.
+//
+// It only applies when the user has opted out of cryptcheck and --download
+// with --ignore-checksum or --size-only. In that case checkconflicts has
+// already counted these files as matching, and treating them as unequal here
+// would roll them back out of the listings on every run, so a later delete on
+// one side would be seen as a new file on the other and copied back.
+func (b *bisyncRun) equalWithoutHash(ctx context.Context, src, dst fs.Object, Fsrc, Fdst fs.Fs) bool {
+	ci := fs.GetConfig(ctx)
+	if !ci.IgnoreChecksum && !ci.SizeOnly {
+		return false
+	}
+	if src.Size() < 0 || dst.Size() < 0 || src.Size() != dst.Size() {
+		return false
+	}
+	if !b.opt.Compare.Modtime {
+		return true
+	}
+	return !timeDiffers(ctx, src.ModTime(ctx), dst.ModTime(ctx), Fsrc, Fdst)
 }
 
 // Replaces the standard Equal func with one that also considers checksum
