@@ -1,9 +1,12 @@
 package accounting
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -511,4 +514,29 @@ func TestRemoveDoneTransfers(t *testing.T) {
 	assert.Equal(t, time.Duration(transfers)*time.Second, s._totalDuration())
 	assert.Equal(t, transfers, len(s.startedTransfers))
 	s.mu.Unlock()
+}
+
+// Check the log has the stats attached as a structured field for
+// JSON output regardless of --use-json-log but that they don't
+// appear in the text.
+func TestStatsLog(t *testing.T) {
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.StatsLogLevel = fs.LogLevelNotice
+	for _, useJSONLog := range []bool{false, true} {
+		t.Run(fmt.Sprintf("UseJSONLog=%v", useJSONLog), func(t *testing.T) {
+			ci.UseJSONLog = useJSONLog
+			var buf bytes.Buffer
+			fs.SetLogger(slog.NewJSONHandler(&buf, nil))
+			defer fs.SetLogger(slog.NewTextHandler(io.Discard, nil))
+			s := NewStats(ctx)
+			s.Log()
+			var out struct {
+				Msg   string         `json:"msg"`
+				Stats map[string]any `json:"stats"`
+			}
+			require.NoError(t, json.Unmarshal(buf.Bytes(), &out), buf.String())
+			assert.Equal(t, s.String()+"\n", out.Msg)
+			assert.Contains(t, out.Stats, "totalTransfers")
+		})
+	}
 }

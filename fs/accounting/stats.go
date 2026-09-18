@@ -548,14 +548,12 @@ func (s *StatsInfo) Transferred() []TransferSnapshot {
 }
 
 // Log outputs the StatsInfo to the log
+//
+// The stats are attached as a hidden structured field so they appear
+// in JSON log output but not in the text.
 func (s *StatsInfo) Log() {
-	if s.ci.UseJSONLog {
-		out, _ := s.RemoteStats(false)
-		fs.LogLevelPrintf(s.ci.StatsLogLevel, nil, "%v%v\n", s, fs.LogValueHide("stats", out))
-	} else {
-		fs.LogLevelPrintf(s.ci.StatsLogLevel, nil, "%v\n", s)
-	}
-
+	out, _ := s.RemoteStats(false)
+	fs.LogLevelPrintf(s.ci.StatsLogLevel, nil, "%v%v\n", s, fs.LogValueHide("stats", out))
 }
 
 // Bytes updates the stats for bytes bytes
