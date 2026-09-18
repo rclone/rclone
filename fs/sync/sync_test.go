@@ -2256,6 +2256,36 @@ func TestSyncMultipleCompareDest(t *testing.T) {
 	r.CheckRemoteItems(t, fdest1, fdest2, fdest3)
 }
 
+// Test with CopyDest and Immutable set
+func TestSyncCopyDestImmutable(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	defer accounting.GlobalStats().ResetCounters()
+
+	if r.Fremote.Features().Copy == nil {
+		t.Skip("Skipping test as remote does not support server-side copy")
+	}
+
+	ci.CopyDest = []string{r.FremoteName + "/CopyDest"}
+	ci.Immutable = true
+
+	fdst, err := fs.NewFs(ctx, r.FremoteName+"/dst")
+	require.NoError(t, err)
+
+	file1 := r.WriteObject(ctx, "dst/one", "one", t1)
+	file2 := r.WriteObject(ctx, "CopyDest/one", "onet2", t2)
+	file3 := r.WriteFile("one", "onet2", t2)
+	r.CheckRemoteItems(t, file1, file2)
+
+	// A match in --copy-dest must not replace a different destination
+	accounting.GlobalStats().ResetCounters()
+	err = CopyDir(ctx, fdst, r.Flocal, false)
+	assert.EqualError(t, err, fs.ErrorImmutableModified.Error())
+	r.CheckRemoteItems(t, file1, file2)
+	r.CheckLocalItems(t, file3)
+}
+
 // Test with CopyDest set
 func TestSyncCopyDest(t *testing.T) {
 	ctx := context.Background()
