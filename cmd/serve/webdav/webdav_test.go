@@ -455,7 +455,7 @@ func TestCopySourceFailureDoesNotPublishPartialTarget(t *testing.T) {
 			opt.HTTP.ListenAddr = []string{testBindAddress}
 			w, err := newWebDAV(context.Background(), wrapped, &opt, &vfscommon.Opt, &proxy.Opt)
 			require.NoError(t, err)
-			defer w.Shutdown()
+			defer func() { assert.NoError(t, w.Shutdown()) }()
 			req := httptest.NewRequest("COPY", "http://fixture/source", nil)
 			req.Header.Set("Destination", "http://fixture/target")
 			out := httptest.NewRecorder()
