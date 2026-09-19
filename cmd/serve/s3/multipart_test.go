@@ -1482,3 +1482,54 @@ func TestLimitedBody(t *testing.T) {
 		})
 	}
 }
+
+// TestMultipartBufferTotal checks that --multipart-streaming-buffer-total
+// limits the memory buffered across all uploads, and that an aborted
+// upload's buffered parts are returned to it.
+func TestMultipartBufferTotal(t *testing.T) {
+	b, _, bucket := newPutTestBackend(t, "", nil)
+	b.budget = newBufferBudget(2 * pool.BufferSize)
+	ctx := context.Background()
+
+	upload := func(object string, uploadID gofakes3.UploadID, partNumber int) (string, error) {
+		body := []byte{byte('0' + partNumber)}
+		return b.UploadPart(ctx, bucket, object, uploadID, partNumber, 1, bytes.NewReader(body))
+	}
+
+	// Upload A buffers two out-of-order parts, using up the total.
+	idA, err := b.CreateMultipartUpload(ctx, bucket, "a", nil)
+	require.NoError(t, err)
+	for partNumber := 2; partNumber <= 3; partNumber++ {
+		_, err = upload("a", idA, partNumber)
+		require.NoError(t, err)
+	}
+
+	// Upload B's out-of-order part must wait although its own buffer is
+	// empty.
+	idB, err := b.CreateMultipartUpload(ctx, bucket, "b", nil)
+	require.NoError(t, err)
+	done := make(chan error, 1)
+	go func() {
+		_, err := upload("b", idB, 2)
+		done <- err
+	}()
+	select {
+	case err := <-done:
+		t.Fatalf("upload b's part was not blocked by the buffer total (err=%v)", err)
+	case <-time.After(200 * time.Millisecond):
+	}
+
+	// Aborting upload A frees its buffered parts.
+	require.NoError(t, b.AbortMultipartUpload(ctx, bucket, "a", idA))
+	select {
+	case err := <-done:
+		require.NoError(t, err)
+	case <-time.After(10 * time.Second):
+		t.Fatal("upload b's part was never unblocked")
+	}
+	require.NoError(t, b.AbortMultipartUpload(ctx, bucket, "b", idB))
+
+	b.budget.mu.Lock()
+	assert.Equal(t, int64(0), b.budget.used, "buffer total not all returned")
+	b.budget.mu.Unlock()
+}
