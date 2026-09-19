@@ -254,3 +254,24 @@ func TestDeleteObjectForgetsMetadata(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotContains(t, obj.Metadata, "X-Amz-Meta-Colour", "metadata of the deleted object reappeared")
 }
+
+// TestMetadataMaxObjects checks that the metadata of no more than
+// --metadata-max-objects objects is kept, forgetting that of the least
+// recently used.
+func TestMetadataMaxObjects(t *testing.T) {
+	b, _, bucket := newPutTestBackend(t, "", nil)
+	b.meta = newMetadataStore(2)
+	ctx := context.Background()
+
+	for _, key := range []string{"a", "b", "c"} {
+		meta := map[string]string{"X-Amz-Meta-Key": key}
+		_, err := b.PutObject(ctx, bucket, key, meta, bytes.NewReader([]byte(key)), 1)
+		require.NoError(t, err)
+	}
+
+	for key, want := range map[string]string{"a": "", "b": "b", "c": "c"} {
+		obj, err := b.HeadObject(ctx, bucket, key)
+		require.NoError(t, err)
+		assert.Equal(t, want, obj.Metadata["X-Amz-Meta-Key"], key)
+	}
+}

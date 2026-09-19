@@ -868,7 +868,7 @@ func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, obj
 	}
 	b.deleteUpload(uploadID)
 
-	b.meta.Store(up.fp, up.meta)
+	b.meta.Add(up.fp, up.meta)
 	if val, ok := up.meta["X-Amz-Meta-Mtime"]; ok {
 		if ti, err := swift.FloatStringToTime(val); err == nil {
 			b.storeModtime(up.fp, up.meta, val)

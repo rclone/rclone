@@ -54,6 +54,10 @@ var OptionsInfo = fs.Options{{
 	Default: 1000,
 	Help:    "Maximum number of streamed multipart uploads in progress at once, 0 for unlimited",
 }, {
+	Name:    "metadata_max_objects",
+	Default: 100000,
+	Help:    "Maximum number of objects whose metadata is kept in memory, 0 for unlimited",
+}, {
 	Name:    "multipart_expiry",
 	Default: fs.Duration(24 * time.Hour),
 	Help:    "Abort incomplete multipart uploads idle for longer than this, 0 to keep forever",
@@ -72,6 +76,7 @@ type Options struct {
 	MultipartStreamingBufferLimit fs.SizeSuffix `config:"multipart_streaming_buffer_limit"`
 	MultipartStreamingBufferTotal fs.SizeSuffix `config:"multipart_streaming_buffer_total"`
 	MultipartMaxUploads           int           `config:"multipart_max_uploads"`
+	MetadataMaxObjects            int           `config:"metadata_max_objects"`
 	MultipartExpiry               fs.Duration   `config:"multipart_expiry"`
 	Auth                          httplib.AuthConfig
 	HTTP                          httplib.Config

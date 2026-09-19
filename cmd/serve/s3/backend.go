@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"io"
 	"maps"
+	"math"
 	"os"
 	"path"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/ncw/swift/v2"
 	"github.com/rclone/gofakes3"
 	"github.com/rclone/rclone/fs"
@@ -40,7 +42,7 @@ const putObjectPrefix = tempObjectPrefix + "put_"
 // PutStream, instead of being buffered in memory by gofakes3.
 type s3Backend struct {
 	s    *Server
-	meta *sync.Map
+	meta *lru.Cache[string, map[string]string] // object metadata by path
 
 	// multipartUploads tracks in-flight streaming multipart uploads,
 	// keyed by gofakes3.UploadID.
@@ -64,11 +66,25 @@ type s3Backend struct {
 	reaperStop sync.Once
 }
 
+// newMetadataStore makes a store for the metadata of up to maxObjects
+// objects, forgetting that of the least recently used after that. If
+// maxObjects <= 0 there is no limit.
+func newMetadataStore(maxObjects int) *lru.Cache[string, map[string]string] {
+	if maxObjects <= 0 {
+		maxObjects = math.MaxInt
+	}
+	meta, err := lru.New[string, map[string]string](maxObjects)
+	if err != nil {
+		panic(err) // only fails if maxObjects <= 0
+	}
+	return meta
+}
+
 // newBackend creates a new SimpleBucketBackend.
 func newBackend(s *Server) *s3Backend {
 	return &s3Backend{
 		s:          s,
-		meta:       new(sync.Map),
+		meta:       newMetadataStore(s.opt.MetadataMaxObjects),
 		budget:     newBufferBudget(int64(s.opt.MultipartStreamingBufferTotal)),
 		reaperQuit: make(chan struct{}),
 	}
@@ -187,8 +203,7 @@ func (b *s3Backend) HeadObject(ctx context.Context, bucketName, objectName strin
 		"Content-Type":  mimeType,
 	}
 
-	if val, ok := b.meta.Load(fp); ok {
-		metaMap := val.(map[string]string)
+	if metaMap, ok := b.meta.Get(fp); ok {
 		maps.Copy(meta, metaMap)
 	}
 
@@ -268,8 +283,7 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 		"Content-Type":  mimeType,
 	}
 
-	if val, ok := b.meta.Load(fp); ok {
-		metaMap := val.(map[string]string)
+	if metaMap, ok := b.meta.Get(fp); ok {
 		maps.Copy(meta, metaMap)
 	}
 
@@ -288,7 +302,7 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 func (b *s3Backend) storeModtime(fp string, meta map[string]string, val string) {
 	meta["X-Amz-Meta-Mtime"] = val
 	meta["mtime"] = val
-	b.meta.Store(fp, meta)
+	b.meta.Add(fp, meta)
 }
 
 // TouchObject creates or updates meta on specified object.
@@ -314,7 +328,7 @@ func (b *s3Backend) TouchObject(ctx context.Context, fp string, meta map[string]
 		return result, err
 	}
 
-	b.meta.Store(fp, meta)
+	b.meta.Add(fp, meta)
 
 	if val, ok := meta["X-Amz-Meta-Mtime"]; ok {
 		ti, err := swift.FloatStringToTime(val)
@@ -435,7 +449,7 @@ func (b *s3Backend) PutObject(
 		return result, err
 	}
 
-	b.meta.Store(fp, meta)
+	b.meta.Add(fp, meta)
 
 	if val, ok := meta["X-Amz-Meta-Mtime"]; ok {
 		ti, err := swift.FloatStringToTime(val)
@@ -503,7 +517,7 @@ func (b *s3Backend) deleteObject(ctx context.Context, bucketName, objectName str
 	if err := _vfs.Remove(fp); err != nil && !os.IsNotExist(err) {
 		return err
 	}
-	b.meta.Delete(fp)
+	b.meta.Remove(fp)
 
 	// FIXME: unsafe operation
 	rmdirRecursive(fp, _vfs)
@@ -578,7 +592,7 @@ func (b *s3Backend) CopyObject(ctx context.Context, srcBucket, srcKey, dstBucket
 		return result, gofakes3.KeyNotFound(srcKey)
 	}
 	if srcBucket == dstBucket && srcKey == dstKey {
-		b.meta.Store(fp, meta)
+		b.meta.Add(fp, meta)
 
 		val, ok := meta["X-Amz-Meta-Mtime"]
 		if !ok {
