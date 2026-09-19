@@ -86,11 +86,6 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 	}
 
 	w.backend = newBackend(w)
-	if w.opt.MultipartExpiry > 0 {
-		w.backend.startReaper(time.Duration(w.opt.MultipartExpiry))
-	} else if w.opt.MultipartMaxUploads > 0 {
-		fs.Logf("serve s3", "--multipart-expiry 0 means abandoned multipart uploads are never cleaned up and go on counting towards --multipart-max-uploads %d", w.opt.MultipartMaxUploads)
-	}
 
 	var newLogger logger
 	w.faker = gofakes3.New(
@@ -102,6 +97,12 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		gofakes3.WithV4Auth(authList),
 		gofakes3.WithIntegrityCheck(true), // Check Content-MD5 if supplied
 	)
+	// The reaper uses w.faker so must start after it is set
+	if w.opt.MultipartExpiry > 0 {
+		w.backend.startReaper(time.Duration(w.opt.MultipartExpiry))
+	} else if w.opt.MultipartMaxUploads > 0 {
+		fs.Logf("serve s3", "--multipart-expiry 0 means abandoned multipart uploads are never cleaned up and go on counting towards --multipart-max-uploads %d", w.opt.MultipartMaxUploads)
+	}
 
 	w.handler = w.faker.Server()
 

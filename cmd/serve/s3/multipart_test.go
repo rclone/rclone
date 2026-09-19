@@ -647,9 +647,17 @@ func TestMultipartReaper(t *testing.T) {
 	_, err = core.PutObjectPart(ctx, bucket, object, uploadID, 1, bytes.NewReader(data), int64(len(data)), minio.PutObjectPartOptions{})
 	require.NoError(t, err)
 
+	// FIXME gofakes3 lists nothing when the delimiter is empty
+	uploads, err := core.ListMultipartUploads(ctx, bucket, "", "", "", "/", 1000)
+	require.NoError(t, err)
+	require.Len(t, uploads.Uploads, 1)
+
 	// Wait for well over the expiry and the reaper interval, then the
-	// upload must be gone.
+	// upload must be gone, from listings too.
 	time.Sleep(time.Second)
+	uploads, err = core.ListMultipartUploads(ctx, bucket, "", "", "", "/", 1000)
+	require.NoError(t, err)
+	assert.Empty(t, uploads.Uploads)
 	_, err = core.PutObjectPart(ctx, bucket, object, uploadID, 2, bytes.NewReader(data), int64(len(data)), minio.PutObjectPartOptions{})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "NoSuchUpload")
@@ -660,6 +668,30 @@ func TestMultipartReaper(t *testing.T) {
 	// Nothing is left at the key or as a temporary object.
 	_, err = f.NewObject(ctx, path.Join(bucket, object))
 	require.ErrorIs(t, err, fs.ErrorObjectNotFound)
+	requireOnly(t, f, bucket)
+}
+
+// TestMultipartCompleteFailureForgotten checks that a completion which
+// tears the upload down removes it from gofakes3's records too, so it
+// isn't left in listings or memory.
+func TestMultipartCompleteFailureForgotten(t *testing.T) {
+	core, f, bucket := newMultipartTestServer(t, false)
+	ctx := context.Background()
+	const object = "bad-complete.bin"
+
+	uploadID, err := core.NewMultipartUpload(ctx, bucket, object, minio.PutObjectOptions{})
+	require.NoError(t, err)
+	data := []byte(random.String(50 * 1024))
+	_, err = core.PutObjectPart(ctx, bucket, object, uploadID, 1, bytes.NewReader(data), int64(len(data)), minio.PutObjectPartOptions{})
+	require.NoError(t, err)
+
+	_, err = core.CompleteMultipartUpload(ctx, bucket, object, uploadID, []minio.CompletePart{{PartNumber: 1, ETag: `"00000000000000000000000000000000"`}}, minio.PutObjectOptions{})
+	require.Error(t, err)
+
+	// FIXME gofakes3 lists nothing when the delimiter is empty
+	uploads, err := core.ListMultipartUploads(ctx, bucket, "", "", "", "/", 1000)
+	require.NoError(t, err)
+	assert.Empty(t, uploads.Uploads)
 	requireOnly(t, f, bucket)
 }
 
