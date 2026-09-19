@@ -1211,7 +1211,7 @@ func TestMultipartBufferWaitGivesUp(t *testing.T) {
 	require.ErrorIs(t, err, context.Canceled)
 
 	_, err = b.UploadPart(ctx, bucket, object, uploadID, 3, 1, bytes.NewReader([]byte("3")))
-	assert.True(t, gofakes3.HasErrorCode(err, errSlowDown), "want SlowDown, got %v", err)
+	assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrSlowDown), "want SlowDown, got %v", err)
 
 	require.NoError(t, b.AbortMultipartUpload(ctx, bucket, object, uploadID))
 }
@@ -1605,14 +1605,14 @@ func TestMultipartMaxUploads(t *testing.T) {
 	id2, err := b.CreateMultipartUpload(ctx, bucket, "2", nil)
 	require.NoError(t, err)
 	_, err = b.CreateMultipartUpload(ctx, bucket, "3", nil)
-	assert.True(t, gofakes3.HasErrorCode(err, errSlowDown), "want SlowDown, got %v", err)
+	assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrSlowDown), "want SlowDown, got %v", err)
 
 	// Aborting an upload makes room.
 	require.NoError(t, b.AbortMultipartUpload(ctx, bucket, "1", id1))
 	id3, err := b.CreateMultipartUpload(ctx, bucket, "3", nil)
 	require.NoError(t, err)
 	_, err = b.CreateMultipartUpload(ctx, bucket, "4", nil)
-	assert.True(t, gofakes3.HasErrorCode(err, errSlowDown), "want SlowDown, got %v", err)
+	assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrSlowDown), "want SlowDown, got %v", err)
 
 	// So does completing one.
 	_, _, err = b.CompleteMultipartUpload(ctx, bucket, "2", id2, &gofakes3.CompleteMultipartUploadRequest{})
@@ -1622,7 +1622,7 @@ func TestMultipartMaxUploads(t *testing.T) {
 
 	// A refused upload leaves nothing behind on the remote.
 	_, err = b.CreateMultipartUpload(ctx, bucket, "dir/deep/4", nil)
-	assert.True(t, gofakes3.HasErrorCode(err, errSlowDown), "want SlowDown, got %v", err)
+	assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrSlowDown), "want SlowDown, got %v", err)
 	_vfs, err := b.s.getVFS(ctx)
 	require.NoError(t, err)
 	_, err = _vfs.Stat(bucket + "/dir")
