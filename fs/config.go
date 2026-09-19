@@ -43,6 +43,22 @@ var (
 	// implementation from the fs
 	CountError = func(ctx context.Context, err error) error { return err }
 
+	// StatsGroupFromContext returns the stats group from ctx if set.
+	//
+	// This is used to attribute logs to stats groups.
+	//
+	// This is a function pointer to decouple the accounting
+	// implementation from the fs
+	StatsGroupFromContext = func(ctx context.Context) (string, bool) { return "", false }
+
+	// JobIDFromContext returns the ID of the rc job in ctx if set.
+	//
+	// This is used to attribute logs to the rc job which made them.
+	//
+	// This is a function pointer to decouple the rc jobs
+	// implementation from the fs
+	JobIDFromContext = func(ctx context.Context) (int64, bool) { return 0, false }
+
 	// ConfigProvider is the config key used for provider options
 	ConfigProvider = "provider"
 
