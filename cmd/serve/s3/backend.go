@@ -491,6 +491,7 @@ func (b *s3Backend) deleteObject(ctx context.Context, bucketName, objectName str
 	if err := _vfs.Remove(fp); err != nil && !os.IsNotExist(err) {
 		return err
 	}
+	b.meta.Delete(fp)
 
 	// FIXME: unsafe operation
 	rmdirRecursive(fp, _vfs)
