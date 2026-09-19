@@ -16,6 +16,24 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type testAttributionKey struct{}
+
+// testAttributionCtx is attributed to rc job 1 in stats group "job/1"
+var testAttributionCtx = context.WithValue(context.Background(), testAttributionKey{}, Attribution{JobID: 1, Group: "job/1"})
+
+func init() {
+	// Attribute logs in these tests from the context value above,
+	// in place of the fs/accounting and fs/rc/jobs implementations.
+	fs.StatsGroupFromContext = func(ctx context.Context) (string, bool) {
+		attribution, _ := ctx.Value(testAttributionKey{}).(Attribution)
+		return attribution.Group, attribution.Group != ""
+	}
+	fs.JobIDFromContext = func(ctx context.Context) (int64, bool) {
+		attribution, _ := ctx.Value(testAttributionKey{}).(Attribution)
+		return attribution.JobID, attribution.JobID != 0
+	}
+}
+
 // testEntry is a decoded log entry from the Buffer.
 type testEntry struct {
 	Seq   int64  `json:"seq"`
@@ -36,7 +54,7 @@ func decodeEntries(t *testing.T, entries Entries) (out []testEntry) {
 
 // addEntry adds a log entry in the same format as the JSON log to b.
 func addEntry(b *Buffer, level slog.Level, msg string) {
-	b.add(level, fmt.Sprintf(`{"level":%q,"msg":%q}`+"\n", slogLevelToString(level), msg))
+	b.add(level, Attribution{}, fmt.Sprintf(`{"level":%q,"msg":%q}`+"\n", slogLevelToString(level), msg))
 }
 
 func TestBufferDisabled(t *testing.T) {
@@ -44,7 +62,7 @@ func TestBufferDisabled(t *testing.T) {
 	assert.False(t, b.Enabled())
 	addEntry(b, slog.LevelInfo, "dropped")
 	assert.Equal(t, int64(0), b.Seq())
-	entries, next, lost := b.Get(0, math.MaxInt64, slog.LevelDebug, 0)
+	entries, next, lost := b.Get(0, math.MaxInt64, slog.LevelDebug, Filter{}, 0)
 	assert.Equal(t, Entries{}, entries)
 	assert.Equal(t, int64(0), next)
 	assert.Equal(t, int64(0), lost)
@@ -83,7 +101,7 @@ func TestBufferGet(t *testing.T) {
 		{name: "to before from", from: 5, to: 2, level: slog.LevelDebug, wantNext: 5},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			entries, next, lost := b.Get(test.from, test.to, test.level, test.limit)
+			entries, next, lost := b.Get(test.from, test.to, test.level, Filter{}, test.limit)
 			var gotSeqs []int64
 			for _, e := range decodeEntries(t, entries) {
 				gotSeqs = append(gotSeqs, e.Seq)
@@ -104,7 +122,7 @@ func TestBufferDropsOldEntries(t *testing.T) {
 	}
 	assert.LessOrEqual(t, b.size, int64(1024))
 
-	entries, next, lost := b.Get(0, math.MaxInt64, slog.LevelDebug, 0)
+	entries, next, lost := b.Get(0, math.MaxInt64, slog.LevelDebug, Filter{}, 0)
 	decoded := decodeEntries(t, entries)
 	require.NotEmpty(t, decoded)
 	assert.Greater(t, lost, int64(0))
@@ -114,7 +132,7 @@ func TestBufferDropsOldEntries(t *testing.T) {
 	assert.Equal(t, int(100-lost), len(decoded))
 
 	// The window is entirely in the dropped entries
-	entries, next, gotLost := b.Get(1, 3, slog.LevelDebug, 0)
+	entries, next, gotLost := b.Get(1, 3, slog.LevelDebug, Filter{}, 0)
 	assert.Empty(t, entries)
 	assert.Equal(t, int64(2), gotLost)
 	assert.Equal(t, int64(3), next)
@@ -123,24 +141,24 @@ func TestBufferDropsOldEntries(t *testing.T) {
 	// isn't stored and doesn't evict the other entries
 	addEntry(b, slog.LevelInfo, string(make([]byte, 2048)))
 	assert.Equal(t, int64(101), b.Seq())
-	entries, next, lost = b.Get(0, math.MaxInt64, slog.LevelDebug, 0)
+	entries, next, lost = b.Get(0, math.MaxInt64, slog.LevelDebug, Filter{}, 0)
 	assert.Equal(t, len(decoded), len(entries))
 	assert.Equal(t, int64(101), next)
 	assert.Equal(t, decoded[0].Seq+1, lost, "dropped entries plus the oversized one")
-	entries, next, lost = b.Get(100, math.MaxInt64, slog.LevelDebug, 0)
+	entries, next, lost = b.Get(100, math.MaxInt64, slog.LevelDebug, Filter{}, 0)
 	assert.Empty(t, entries)
 	assert.Equal(t, int64(101), next)
 	assert.Equal(t, int64(1), lost)
 
 	// A gap in the middle of the range is counted as lost too
 	addEntry(b, slog.LevelInfo, "after the gap")
-	entries, next, lost = b.Get(99, math.MaxInt64, slog.LevelDebug, 0)
+	entries, next, lost = b.Get(99, math.MaxInt64, slog.LevelDebug, Filter{}, 0)
 	assert.Len(t, entries, 2)
 	assert.Equal(t, int64(102), next)
 	assert.Equal(t, int64(1), lost)
 
 	// Limit stops before the gap
-	entries, next, lost = b.Get(99, math.MaxInt64, slog.LevelDebug, 1)
+	entries, next, lost = b.Get(99, math.MaxInt64, slog.LevelDebug, Filter{}, 1)
 	assert.Len(t, entries, 1)
 	assert.Equal(t, int64(101), next)
 	assert.Equal(t, int64(1), lost)
@@ -149,9 +167,36 @@ func TestBufferDropsOldEntries(t *testing.T) {
 	addEntry(b, slog.LevelInfo, "kept")
 	b.SetSize(0)
 	assert.False(t, b.Enabled())
-	entries, _, _ = b.Get(0, math.MaxInt64, slog.LevelDebug, 0)
+	entries, _, _ = b.Get(0, math.MaxInt64, slog.LevelDebug, Filter{}, 0)
 	assert.Empty(t, entries)
 	assert.Equal(t, int64(103), b.Seq(), "sequence numbers carry on")
+}
+
+// Get shouldn't scan the whole buffer when the filter matches very little
+func TestBufferGetMaxExamine(t *testing.T) {
+	b := &Buffer{}
+	b.SetSize(int64(16 * fs.Mebi))
+	for i := range maxExamine + 10 {
+		b.add(slog.LevelInfo, Attribution{JobID: 2}, fmt.Sprintf(`{"msg":"msg%d"}`, i))
+	}
+	b.add(slog.LevelInfo, Attribution{JobID: 1}, `{"msg":"wanted"}`)
+
+	// Nothing matches in the first maxExamine entries so Get stops there
+	entries, next, lost := b.Get(0, math.MaxInt64, slog.LevelDebug, Filter{JobID: 1}, 10)
+	assert.Empty(t, entries)
+	assert.Equal(t, int64(maxExamine), next)
+	assert.Equal(t, int64(0), lost)
+
+	// Carrying on from next finds it
+	entries, next, _ = b.Get(next, math.MaxInt64, slog.LevelDebug, Filter{JobID: 1}, 10)
+	decoded := decodeEntries(t, entries)
+	require.Len(t, decoded, 1)
+	assert.Equal(t, "wanted", decoded[0].Msg)
+	assert.Equal(t, int64(maxExamine+11), next)
+
+	// With no limit everything is examined
+	entries, _, _ = b.Get(0, math.MaxInt64, slog.LevelDebug, Filter{JobID: 1}, 0)
+	assert.Len(t, entries, 1)
 }
 
 func TestBufferInvalidJSON(t *testing.T) {
@@ -164,9 +209,9 @@ func TestBufferInvalidJSON(t *testing.T) {
 		"{ }",
 		"{}",
 	} {
-		b.add(slog.LevelInfo, text)
+		b.add(slog.LevelInfo, Attribution{}, text)
 	}
-	entries, _, _ := b.Get(0, math.MaxInt64, slog.LevelDebug, 0)
+	entries, _, _ := b.Get(0, math.MaxInt64, slog.LevelDebug, Filter{}, 0)
 	decoded := decodeEntries(t, entries)
 	require.Len(t, decoded, 5)
 	assert.Equal(t, `not "JSON"`, decoded[0].Msg)
@@ -214,7 +259,7 @@ func TestSetBufferSize(t *testing.T) {
 	assert.Equal(t, start+1, outputs())
 	seq := Recent.Seq()
 	fs.Errorf(nil, "buffered")
-	entries, _, _ := Recent.Get(seq, math.MaxInt64, slog.LevelDebug, 0)
+	entries, _, _ := Recent.Get(seq, math.MaxInt64, slog.LevelDebug, Filter{}, 0)
 	decoded := decodeEntries(t, entries)
 	require.Len(t, decoded, 1)
 	assert.Equal(t, "buffered", decoded[0].Msg)
@@ -228,7 +273,7 @@ func TestSetBufferSize(t *testing.T) {
 	assert.False(t, Recent.Enabled())
 	assert.Equal(t, start, outputs())
 	fs.Errorf(nil, "not buffered")
-	entries, _, _ = Recent.Get(0, math.MaxInt64, slog.LevelDebug, 0)
+	entries, _, _ = Recent.Get(0, math.MaxInt64, slog.LevelDebug, Filter{}, 0)
 	assert.Empty(t, entries)
 }
 
@@ -237,14 +282,14 @@ func TestBufferFromHandler(t *testing.T) {
 	b := &Buffer{}
 	b.SetSize(64 * 1024)
 	h := NewOutputHandler(io.Discard, nil, logFormatDate|logFormatTime)
-	h.AddOutput(true, b.add)
+	h.addRecordOutput(true, b.output)
 
 	r := slog.NewRecord(t0, fs.SlogLevelNotice, "hello", 0)
 	r.AddAttrs(slog.String("object", "file.txt"))
-	require.NoError(t, h.Handle(context.Background(), r))
+	require.NoError(t, h.Handle(testAttributionCtx, r))
 	require.NoError(t, h.Handle(context.Background(), slog.NewRecord(t0, slog.LevelError, "oops", 0)))
 
-	entries, next, lost := b.Get(0, math.MaxInt64, slog.LevelDebug, 0)
+	entries, next, lost := b.Get(0, math.MaxInt64, slog.LevelDebug, Filter{}, 0)
 	assert.Equal(t, int64(2), next)
 	assert.Equal(t, int64(0), lost)
 	decoded := decodeEntries(t, entries)
@@ -255,8 +300,56 @@ func TestBufferFromHandler(t *testing.T) {
 	var full map[string]any
 	require.NoError(t, json.Unmarshal(entries[0], &full))
 	assert.Equal(t, "file.txt", full["object"])
+	assert.Equal(t, "job/1", full["group"])
+	assert.Equal(t, float64(1), full["jobid"])
 	assert.Contains(t, full, "time")
 	assert.Contains(t, full, "source")
+
+	// Check the group was recorded for filtering
+	entries, _, _ = b.Get(0, math.MaxInt64, slog.LevelDebug, Filter{Group: "job/1"}, 0)
+	decoded = decodeEntries(t, entries)
+	require.Len(t, decoded, 1)
+	assert.Equal(t, "hello", decoded[0].Msg)
+}
+
+func TestBufferGetGroup(t *testing.T) {
+	b := &Buffer{}
+	b.SetSize(1024)
+	for i, jobID := range []int64{0, 1, 2, 1, 0, 2} {
+		attribution := Attribution{}
+		if jobID != 0 {
+			attribution = Attribution{JobID: jobID, Group: fmt.Sprintf("job/%d", jobID)}
+		}
+		b.add(slog.LevelInfo, attribution, fmt.Sprintf(`{"msg":"msg%d"}`, i))
+	}
+	b.add(slog.LevelDebug, Attribution{JobID: 1, Group: "job/1"}, `{"msg":"msg6"}`)
+	for _, test := range []struct {
+		name   string
+		level  slog.Level
+		filter Filter
+		want   []int64
+	}{
+		{"all", slog.LevelDebug, Filter{}, []int64{0, 1, 2, 3, 4, 5, 6}},
+		{"group", slog.LevelDebug, Filter{Group: "job/1"}, []int64{1, 3, 6}},
+		{"group and unattributed", slog.LevelDebug, Filter{Group: "job/1", Unattributed: true}, []int64{0, 1, 3, 4, 6}},
+		{"group and level", slog.LevelInfo, Filter{Group: "job/1"}, []int64{1, 3}},
+		{"unknown group", slog.LevelDebug, Filter{Group: "job/3"}, nil},
+		{"unknown group and unattributed", slog.LevelDebug, Filter{Group: "job/3", Unattributed: true}, []int64{0, 4}},
+		{"job", slog.LevelDebug, Filter{JobID: 1}, []int64{1, 3, 6}},
+		{"job and unattributed", slog.LevelDebug, Filter{JobID: 2, Unattributed: true}, []int64{0, 2, 4, 5}},
+		{"job or group", slog.LevelDebug, Filter{JobID: 2, Group: "job/1"}, []int64{1, 2, 3, 5, 6}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			entries, next, lost := b.Get(0, math.MaxInt64, test.level, test.filter, 0)
+			var got []int64
+			for _, e := range decodeEntries(t, entries) {
+				got = append(got, e.Seq)
+			}
+			assert.Equal(t, test.want, got)
+			assert.Equal(t, int64(7), next)
+			assert.Equal(t, int64(0), lost, "filtered entries aren't lost")
+		})
+	}
 }
 
 func TestBufferConcurrency(t *testing.T) {
@@ -274,7 +367,7 @@ func TestBufferConcurrency(t *testing.T) {
 		var from int64
 		for range 500 {
 			var entries []json.RawMessage
-			entries, from, _ = b.Get(from, math.MaxInt64, slog.LevelDebug, 10)
+			entries, from, _ = b.Get(from, math.MaxInt64, slog.LevelDebug, Filter{}, 10)
 			_ = decodeEntries(t, entries)
 			_ = b.Seq()
 		}
@@ -352,4 +445,17 @@ func TestRcLog(t *testing.T) {
 	buf, err = json.Marshal(out)
 	require.NoError(t, err)
 	assert.JSONEq(t, `{"entries":[{"seq":9,"level":"ERROR","msg":"msg9"}],"next":10,"lost":0}`, string(buf))
+
+	// Filter by group
+	addEntry(Recent, slog.LevelInfo, "not in a group")
+	Recent.add(slog.LevelInfo, Attribution{JobID: 1, Group: "job/1"}, `{"msg":"in job/1"}`)
+	out, err = call.Fn(ctx, rc.Params{"since": 10, "group": "job/1"})
+	require.NoError(t, err)
+	assert.Equal(t, []int64{11}, seqs(out))
+	assert.Equal(t, int64(12), out["next"])
+
+	// Filter by rc job
+	out, err = call.Fn(ctx, rc.Params{"since": 10, "jobid": 1})
+	require.NoError(t, err)
+	assert.Equal(t, []int64{11}, seqs(out))
 }

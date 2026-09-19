@@ -910,8 +910,9 @@ func TestAuthRequired(t *testing.T) {
 	testServer(t, tests, &opt)
 }
 
-// _logs returns the logs of everything running so it mustn't be usable
-// without authentication on the calls which don't need authentication.
+// _logs returns the logs which aren't attributed to a job as well as the
+// job's own, so it mustn't be usable without authentication on the calls
+// which don't need authentication.
 func TestLogsAuthRequired(t *testing.T) {
 	tests := []testRun{{
 		Name:        "logs",

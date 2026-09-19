@@ -589,6 +589,8 @@ $ rclone rc sync/copy srcFs=/tmp/src dstFs=/tmp/dst _logs=true
     "_logs": {
         "entries": [
             {
+                "group": "job/1",
+                "jobid": 1,
                 "level": "info",
                 "msg": "Copied (new)",
                 "object": "file.txt",
@@ -614,10 +616,19 @@ more, or `limit` to change the number of entries returned.
 
 Note that:
 
-- Rclone doesn't yet record which call made which log entry, so `_logs`
-  returns all the logs made **while** the call was running. If other
-  calls, or other rclone activity such as a mount, were running at the
-  same time then their logs will be included too.
+- Where rclone knows which rc job made a log entry it records the job's
+  ID as `jobid` and its stats group as `group` in the entry. This is
+  the case for the logs made by the sync, copy, move, check and the
+  other operations, such as the per file `Copied (new)` logs, and for
+  the directory listings they do.
+- Logs from the backends, from the filters, from the retries made by
+  the rate limiter, and from `sync/bisync` are **not** attributed
+  yet. Neither are the logs of anything which isn't an rc job, such as
+  a mount.
+- `_logs` returns the entries for the job and the unattributed entries
+  made **while** the job was running. The unattributed entries may have
+  come from other jobs, or other rclone activity, running at the same
+  time. Entries attributed to other jobs are left out.
 - The log buffer only contains logs at the current `--log-level`. This
   is currently a global setting so it can't be changed for a call with
   `_config`. Use [options/set](#options-set) to change it.

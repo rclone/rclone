@@ -254,9 +254,10 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 		return
 	}
 
-	// Logs aren't currently attributed to calls so _logs returns the logs of
-	// everything running. Don't let unauthenticated users read them
-	// via the calls which don't need authentication.
+	// _logs returns the logs which aren't attributed to a job as well as
+	// the job's own, so it can show the logs of anything else running.
+	// Don't let unauthenticated users read them via the calls which
+	// don't need authentication.
 	if jobs.LogsRequested(in) && !s.noAuth && !s.server.UsingAuth() {
 		writeError(path, in, w, errors.New("authentication must be set up on the rc server to use _logs or the --rc-no-auth flag must be in use"), http.StatusForbidden)
 		return

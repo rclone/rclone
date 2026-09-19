@@ -23,11 +23,38 @@ var ErrBufferDisabled = rc.NewErrParamInvalid(errors.New("log buffer not enabled
 // Recent holds the most recent log entries if --log-buffer-size is set.
 var Recent = &Buffer{}
 
+// Maximum number of entries Get looks at when a limit is in force.
+const maxExamine = 100_000
+
 // bufferEntry is a single log entry in the Buffer.
 type bufferEntry struct {
-	seq   int64
-	level slog.Level
-	json  json.RawMessage
+	seq         int64
+	level       slog.Level
+	attribution Attribution
+	json        json.RawMessage
+}
+
+// Filter selects which entries Buffer.Get returns.
+//
+// The zero value returns all the entries.
+type Filter struct {
+	JobID        int64  // if set, only return entries attributed to this rc job
+	Group        string // if set, only return entries attributed to this stats group
+	Unattributed bool   // if set with JobID or Group, also return entries which aren't attributed
+}
+
+// match returns true if the entry should be returned.
+func (f *Filter) match(entry *bufferEntry) bool {
+	if f.JobID == 0 && f.Group == "" {
+		return true
+	}
+	if f.JobID != 0 && entry.attribution.JobID == f.JobID {
+		return true
+	}
+	if f.Group != "" && entry.attribution.Group == f.Group {
+		return true
+	}
+	return f.Unattributed && !entry.attribution.Attributed()
 }
 
 // Entries is a list of log entries in JSON format as returned by Buffer.Get.
@@ -94,10 +121,18 @@ func (b *Buffer) trim() {
 	}
 }
 
-// add adds a JSON formatted log entry to the Buffer.
+// output adds the JSON formatted log entry text for r to the Buffer.
 //
 // This is called with the log handler's mutex held so it must not log.
-func (b *Buffer) add(level slog.Level, text string) {
+func (b *Buffer) output(r slog.Record, attribution Attribution, text string) {
+	b.add(r.Level, attribution, text)
+}
+
+// add adds a JSON formatted log entry with what it is attributed to
+// (which may be nothing) to the Buffer.
+//
+// This is called with the log handler's mutex held so it must not log.
+func (b *Buffer) add(level slog.Level, attribution Attribution, text string) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if b.maxSize <= 0 {
@@ -123,22 +158,24 @@ func (b *Buffer) add(level slog.Level, text string) {
 	if int64(len(entry)) > b.maxSize {
 		return
 	}
-	b.entries = append(b.entries, bufferEntry{seq: seq, level: level, json: entry})
+	b.entries = append(b.entries, bufferEntry{seq: seq, level: level, attribution: attribution, json: entry})
 	b.size += int64(len(entry))
 	b.trim()
 }
 
 // Get returns the entries with sequence numbers from <= seq < to
-// which are at level or more severe, oldest first.
+// which are at level or more severe and match filter, oldest first.
 //
-// If limit > 0 then at most limit entries are returned.
+// If limit > 0 then at most limit entries are returned and at most
+// maxExamine entries are looked at, so Get may return early with next
+// short of to.
 //
 // It returns next which is the sequence number to pass as from to
 // carry on reading where this call finished, and lost which is the
 // number of entries in the range which are no longer in the Buffer,
 // either because they were dropped to make space or because they
 // were too big to store.
-func (b *Buffer) Get(from, to int64, level slog.Level, limit int) (entries Entries, next, lost int64) {
+func (b *Buffer) Get(from, to int64, level slog.Level, filter Filter, limit int) (entries Entries, next, lost int64) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	to = min(to, b.nextSeq)
@@ -152,12 +189,15 @@ func (b *Buffer) Get(from, to int64, level slog.Level, limit int) (entries Entri
 	examined := 0
 	for ; i < len(b.entries) && b.entries[i].seq < to; i++ {
 		entry := &b.entries[i]
-		if limit > 0 && len(entries) >= limit {
+		// Stop when we have enough entries, or have looked at
+		// enough of them, so this doesn't hold the lock for
+		// too long when the filter matches very little.
+		if limit > 0 && (len(entries) >= limit || examined >= maxExamine) {
 			next = entry.seq
 			break
 		}
 		examined++
-		if entry.level >= level {
+		if entry.level >= level && filter.match(entry) {
 			entries = append(entries, entry.json)
 		}
 	}
@@ -176,8 +216,8 @@ func setBufferSize() {
 	defer bufferOutputMu.Unlock()
 	Recent.SetSize(int64(Opt.BufferSize))
 	if Opt.BufferSize > 0 && bufferOutputRemove == nil {
-		bufferOutputRemove = Handler.AddOutput(true, func(level slog.Level, text string) {
-			Recent.add(level, text)
+		bufferOutputRemove = Handler.addRecordOutput(true, func(r slog.Record, attribution Attribution, text string) {
+			Recent.output(r, attribution, text)
 		})
 	} else if Opt.BufferSize <= 0 && bufferOutputRemove != nil {
 		bufferOutputRemove()
@@ -213,6 +253,8 @@ Parameters:
       happen if rclone has been restarted).
 - limit - maximum number of entries to return - optional, defaults to 1000, 0 for no limit
 - level - only return entries at this level or more severe, e.g. "INFO" - optional
+- group - only return entries attributed to this stats group, e.g. "job/1" - optional
+- jobid - only return entries attributed to this rc job, e.g. 1 - optional
 
 Returns:
 
@@ -224,6 +266,15 @@ Each entry is an object in the same format as used by |--use-json-log|
 with an additional |seq| entry which is the sequence number of
 the log entry. Sequence numbers start from 0 and increase by one for
 each log entry.
+
+Entries which rclone can attribute to the rc job which made them, such
+as the per file logs made by a job doing a sync or copy, have a
+|jobid| entry with the ID of the job and a |group| entry with the name
+of its stats group, e.g. "job/1" or the value of |_group| passed to
+the rc call.
+
+Not all logs can be attributed - see the [_logs](/rc/#logs) docs for
+which can.
 
 Example:
 
@@ -315,7 +366,16 @@ func rcLog(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	} else if rc.NotErrParamNotFound(err) {
 		return nil, err
 	}
-	entries, next, lost := Recent.Get(since, math.MaxInt64, level, int(min(limit, math.MaxInt32)))
+	group, err := in.GetString("group")
+	if rc.NotErrParamNotFound(err) {
+		return nil, err
+	}
+	jobID, err := in.GetInt64("jobid")
+	if rc.NotErrParamNotFound(err) {
+		return nil, err
+	}
+	filter := Filter{Group: group, JobID: jobID}
+	entries, next, lost := Recent.Get(since, math.MaxInt64, level, filter, int(min(limit, math.MaxInt32)))
 	return rc.Params{
 		"entries": entries,
 		"next":    next,

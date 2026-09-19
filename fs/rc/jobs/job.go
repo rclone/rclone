@@ -30,6 +30,9 @@ import (
 func init() {
 	cache.JobOnFinish = OnFinish
 	cache.JobGetJobID = GetJobID
+
+	// Attribute logs to the rc job which made them
+	fs.JobIDFromContext = GetJobID
 }
 
 // Job describes an asynchronous task started via the rc package
@@ -66,8 +69,10 @@ type Job struct {
 // of the job if since is before that, and at most limit entries if
 // limit > 0.
 //
-// As logs aren't currently attributed to jobs this includes the logs
-// from anything else which was running at the same time.
+// This returns the logs attributed to the job and the logs which
+// aren't attributed to anything. As not all logs are attributed, the
+// latter may include logs from anything else which was running at the
+// same time.
 //
 // Call with job.mu held.
 func (job *Job) logs(since int64, limit int) rc.Params {
@@ -81,7 +86,9 @@ func (job *Job) logs(since int64, limit int) rc.Params {
 	if job.Finished {
 		logEnd = job.logEnd
 	}
-	entries, next, lost := log.Recent.Get(since, logEnd, job.logLevel, limit)
+	// Return the job's own logs and any which aren't attributed
+	filter := log.Filter{JobID: job.ID, Unattributed: true}
+	entries, next, lost := log.Recent.Get(since, logEnd, job.logLevel, filter, limit)
 	return rc.Params{
 		"entries": entries,
 		"next":    next,
@@ -476,8 +483,9 @@ Results:
 - startTime - time the job started (e.g. "2018-10-26T18:50:20.528336039+01:00")
 - success - boolean - true for success false otherwise
 - output - output of the job as would have been returned if called synchronously
-    - _logs - the logs made while the job was running if it was started with _logs
-        - entries - array of log entries, oldest first
+    - _logs - the logs of the job if it was started with _logs
+        - entries - array of log entries, oldest first - the job's own logs and
+          the logs made while it was running which aren't attributed to a job
         - next - pass this as since to carry on reading the logs from where this call finished
         - lost - the number of log entries which had already been dropped from the log buffer
 - progress - output of the progress related to the underlying job

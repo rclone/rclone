@@ -1344,3 +1344,52 @@ func TestRcJobStatusWithLogs(t *testing.T) {
 	output, _ := out["output"].(map[string]any)
 	assert.NotContains(t, output, "_logs")
 }
+
+// Logs attributed to other jobs running at the same time aren't returned
+func TestExecuteJobWithLogsAttributed(t *testing.T) {
+	ctx := context.Background()
+	jobID.Store(0)
+	setLogBuffer(t, 1*fs.Mebi)
+
+	aStarted := make(chan struct{})
+	bLogged := make(chan struct{})
+	aLogged := make(chan struct{})
+	aFn := func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		fs.LogfCtx(ctx, nil, "A1")
+		close(aStarted)
+		<-bLogged
+		fs.LogfCtx(ctx, nil, "A2")
+		close(aLogged)
+		return nil, nil
+	}
+	bFn := func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		fs.LogfCtx(ctx, nil, "B1")
+		fs.Logf(nil, "unattributed")
+		close(bLogged)
+		<-aLogged
+		fs.LogfCtx(ctx, nil, "B2")
+		return nil, nil
+	}
+
+	// Both jobs are in the same stats group so this checks the
+	// logs are attributed to the job, not just the group
+	jobA, _, err := NewJob(ctx, aFn, rc.Params{"_async": true, "_logs": true, "_group": "shared"})
+	require.NoError(t, err)
+	finished := make(chan struct{})
+	jobA.OnFinish(func() { close(finished) })
+	<-aStarted
+
+	// Job B runs while job A is running
+	_, out, err := NewJob(ctx, bFn, rc.Params{"_logs": true, "_group": "shared"})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"B1", "unattributed", "B2"}, logMessages(t, out["_logs"]))
+
+	<-finished
+	call := rc.Calls.Get("job/status")
+	require.NotNil(t, call)
+	out, err = call.Fn(ctx, rc.Params{"jobid": jobA.ID})
+	require.NoError(t, err)
+	output, ok := out["output"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, []string{"A1", "unattributed", "A2"}, logMessages(t, output["_logs"]))
+}

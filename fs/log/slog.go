@@ -150,7 +150,37 @@ type OutputHandler struct {
 // Records the type and function pointer for extra logging output.
 type outputExtra struct {
 	json   bool
-	output outputFn
+	output outputRecordFn
+}
+
+// Define the type of an extra logging output which is passed the
+// record and what the log is attributed to
+type outputRecordFn func(r slog.Record, attribution Attribution, text string)
+
+// Attribution records what made a log entry.
+//
+// Logs made with the context aware log functions, e.g. fs.DebugfCtx,
+// are attributed to the rc job and stats group in their context.
+type Attribution struct {
+	JobID int64  // ID of the rc job or 0 if not from an rc job
+	Group string // stats group or "" if not in a stats group
+}
+
+// Attributed returns whether the log was attributed to anything.
+func (a Attribution) Attributed() bool {
+	return a.JobID != 0 || a.Group != ""
+}
+
+// attributionFromContext works out what to attribute a log made with
+// ctx to.
+func attributionFromContext(ctx context.Context) (attribution Attribution) {
+	if group, ok := fs.StatsGroupFromContext(ctx); ok {
+		attribution.Group = group
+	}
+	if jobID, ok := fs.JobIDFromContext(ctx); ok {
+		attribution.JobID = jobID
+	}
+	return attribution
 }
 
 // Define the type of the override logger
@@ -217,6 +247,13 @@ func (h *OutputHandler) ResetOutput() {
 //
 // It returns a function which removes the destination again.
 func (h *OutputHandler) AddOutput(json bool, fn outputFn) (remove func()) {
+	return h.addRecordOutput(json, func(r slog.Record, attribution Attribution, text string) {
+		fn(r.Level, text)
+	})
+}
+
+// addRecordOutput is AddOutput with the output passed the log record.
+func (h *OutputHandler) addRecordOutput(json bool, fn outputRecordFn) (remove func()) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	out := &outputExtra{
@@ -392,6 +429,19 @@ func (h *OutputHandler) Handle(ctx context.Context, r slog.Record) (err error) {
 		}
 	}
 
+	// Work out what this log is attributed to and record it in the
+	// JSON output. The text output doesn't show it.
+	var attribution Attribution
+	if needJSON {
+		attribution = attributionFromContext(ctx)
+		if attribution.JobID != 0 {
+			r.AddAttrs(slog.Int64("jobid", attribution.JobID))
+		}
+		if attribution.Group != "" {
+			r.AddAttrs(slog.String("group", attribution.Group))
+		}
+	}
+
 	if needJSON {
 		var bufJSONBack [256]byte
 		bufJSON = bytes.NewBuffer(bufJSONBack[:0])
@@ -429,9 +479,9 @@ func (h *OutputHandler) Handle(ctx context.Context, r slog.Record) (err error) {
 	// Log to any additional destinations required
 	for _, out := range outputExtra {
 		if out.json {
-			out.output(r.Level, bufJSON.String())
+			out.output(r, attribution, bufJSON.String())
 		} else {
-			out.output(r.Level, bufText.String())
+			out.output(r, attribution, bufText.String())
 		}
 	}
 	return err
