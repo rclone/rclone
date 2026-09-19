@@ -472,6 +472,13 @@ func TestMultipartBufferLimit(t *testing.T) {
 	assert.Equal(t, want, readObject(t, f, bucket, object))
 }
 
+// storeTestUpload records up as an in-flight upload of b, as
+// CreateMultipartUpload does.
+func storeTestUpload(t *testing.T, b *s3Backend, uploadID gofakes3.UploadID, up *multipartUpload) {
+	require.NoError(t, b.reserveUpload())
+	b.addUpload(uploadID, up)
+}
+
 // stubSink is a multipartUpload sink which records how it was closed.
 type stubSink struct {
 	closed   bool
@@ -592,7 +599,7 @@ func TestMultipartAbortAlwaysSucceeds(t *testing.T) {
 	up.fh = failingSink{}
 	up.vfs = _vfs
 	const uploadID = gofakes3.UploadID("failing-close")
-	b.multipartUploads.Store(uploadID, up)
+	storeTestUpload(t, b, uploadID, up)
 
 	require.NoError(t, b.AbortMultipartUpload(ctx, bucket, "key", uploadID))
 
@@ -616,7 +623,7 @@ func TestMultipartCompleteRenameFailureKeepsUpload(t *testing.T) {
 	up.fh = &stubSink{}
 	up.vfs = _vfs
 	const uploadID = gofakes3.UploadID("rename-fails")
-	b.multipartUploads.Store(uploadID, up)
+	storeTestUpload(t, b, uploadID, up)
 
 	_, _, err = b.CompleteMultipartUpload(ctx, bucket, "key", uploadID, &gofakes3.CompleteMultipartUploadRequest{})
 	require.Error(t, err)
@@ -670,7 +677,7 @@ func TestMultipartReapExpiredUploads(t *testing.T) {
 		up := newMultipartUpload(bucket, id, bucket+"/"+id, bucket+"/"+multipartUploadPrefix+id, nil, 0)
 		up.fh = &stubSink{}
 		up.vfs = _vfs
-		b.multipartUploads.Store(gofakes3.UploadID(id), up)
+		storeTestUpload(t, b, gofakes3.UploadID(id), up)
 		return up
 	}
 
@@ -1583,4 +1590,51 @@ func TestMultipartSinkOpenedOnFirstPart(t *testing.T) {
 	assert.Equal(t, []byte{}, readObject(t, f, bucket, "empty.bin"))
 
 	requireOnly(t, f, bucket, "parts.bin", "empty.bin")
+}
+
+// TestMultipartMaxUploads checks that no more than --multipart-max-uploads
+// multipart uploads can be in progress at once, and that finished uploads
+// make room for more.
+func TestMultipartMaxUploads(t *testing.T) {
+	b, _, bucket := newPutTestBackend(t, "", nil)
+	b.s.opt.MultipartMaxUploads = 2
+	ctx := context.Background()
+
+	id1, err := b.CreateMultipartUpload(ctx, bucket, "1", nil)
+	require.NoError(t, err)
+	id2, err := b.CreateMultipartUpload(ctx, bucket, "2", nil)
+	require.NoError(t, err)
+	_, err = b.CreateMultipartUpload(ctx, bucket, "3", nil)
+	assert.True(t, gofakes3.HasErrorCode(err, errSlowDown), "want SlowDown, got %v", err)
+
+	// Aborting an upload makes room.
+	require.NoError(t, b.AbortMultipartUpload(ctx, bucket, "1", id1))
+	id3, err := b.CreateMultipartUpload(ctx, bucket, "3", nil)
+	require.NoError(t, err)
+	_, err = b.CreateMultipartUpload(ctx, bucket, "4", nil)
+	assert.True(t, gofakes3.HasErrorCode(err, errSlowDown), "want SlowDown, got %v", err)
+
+	// So does completing one.
+	_, _, err = b.CompleteMultipartUpload(ctx, bucket, "2", id2, &gofakes3.CompleteMultipartUploadRequest{})
+	require.NoError(t, err)
+	_, err = b.CreateMultipartUpload(ctx, bucket, "4", nil)
+	require.NoError(t, err)
+
+	// A refused upload leaves nothing behind on the remote.
+	_, err = b.CreateMultipartUpload(ctx, bucket, "dir/deep/4", nil)
+	assert.True(t, gofakes3.HasErrorCode(err, errSlowDown), "want SlowDown, got %v", err)
+	_vfs, err := b.s.getVFS(ctx)
+	require.NoError(t, err)
+	_, err = _vfs.Stat(bucket + "/dir")
+	assert.ErrorIs(t, err, vfs.ENOENT, "a refused upload created directories")
+
+	// And so does expiring one.
+	up, err := b.loadUpload(id3)
+	require.NoError(t, err)
+	up.mu.Lock()
+	up.lastUsed = time.Now().Add(-2 * time.Hour)
+	up.mu.Unlock()
+	b.reapExpiredUploads(time.Now(), time.Hour)
+	_, err = b.CreateMultipartUpload(ctx, bucket, "5", nil)
+	require.NoError(t, err)
 }

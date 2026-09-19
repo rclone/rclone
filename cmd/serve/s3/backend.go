@@ -10,6 +10,7 @@ import (
 	"path"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -44,6 +45,13 @@ type s3Backend struct {
 	// multipartUploads tracks in-flight streaming multipart uploads,
 	// keyed by gofakes3.UploadID.
 	multipartUploads sync.Map
+
+	// uploads counts the entries in multipartUploads.
+	uploads atomic.Int64
+
+	// warnMaxUploadsOnce logs a single NOTICE the first time a multipart
+	// upload is refused by --multipart-max-uploads.
+	warnMaxUploadsOnce sync.Once
 
 	// warnInMemoryOnce logs a single NOTICE the first time a multipart
 	// upload falls back to being buffered in memory.
