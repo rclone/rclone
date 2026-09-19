@@ -19,9 +19,11 @@ import (
 	"bytes"
 	"context"
 	"crypto/md5"
+	"encoding"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"hash"
 	"io"
 	"math"
 	"path"
@@ -80,6 +82,9 @@ type multipartUpload struct {
 	nextPart    int              // next part number to stream (1-based)
 	streamBuf   map[int]*pool.RW // parts received ahead of nextPart, awaiting their turn
 	pumping     bool             // a goroutine is currently writing to the sink
+	partialSize int64            // bytes of part nextPart in the sink from an attempt which failed part way
+	poisoned    bool             // the stream holds data the upload can never complete with
+	partialMD5  []byte           // MD5 state after those partialSize bytes (encoding.BinaryMarshaler)
 	buffered    int64            // bytes of parts admitted but not yet streamed or released
 	bufferLimit int64            // max buffered before parts ahead of nextPart must wait (<= 0 for no limit)
 }
@@ -205,6 +210,11 @@ func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objec
 }
 
 // UploadPart writes a single part from the S3 client into the streaming upload.
+//
+// The next part the stream needs is written straight into the sink as it is
+// received. A part which arrives ahead of its turn is buffered in memory until
+// the stream reaches it, and a re-upload of a part already streamed is just
+// hashed to check it matches.
 func (b *s3Backend) UploadPart(ctx context.Context, bucketName, objectName string, uploadID gofakes3.UploadID, partNumber int, contentLength int64, body io.Reader) (string, error) {
 	up, err := b.loadUpload(uploadID)
 	if err != nil {
@@ -213,16 +223,31 @@ func (b *s3Backend) UploadPart(ctx context.Context, bucketName, objectName strin
 	up.startActivity()
 	defer up.endActivity()
 
-	// A re-upload of a part already in the stream is only hashed, to check
-	// it matches, so it needs no buffer.
-	if md5Sum, size, ok := up.streamedPart(partNumber); ok {
-		return verifyStreamedPart(partNumber, md5Sum, size, contentLength, body)
-	}
+	// The sink must never get more than the declared length, and the body
+	// must be read to its end so that an error it only reports there - as
+	// the Content-MD5 check does - is not missed.
+	body = newLimitedBody(body, contentLength)
 
-	// Wait until there is room to buffer this part, bounding the memory a
-	// client which uploads faster than the backend drains can consume.
-	if err := up.waitForTurn(ctx, partNumber, contentLength); err != nil {
+	turn, err := up.waitForTurn(ctx, partNumber, contentLength)
+	if err != nil {
 		return "", err
+	}
+	switch turn {
+	case turnVerify:
+		md5Sum, size, _ := up.streamedPart(partNumber)
+		return verifyStreamedPart(partNumber, md5Sum, size, contentLength, body)
+	case turnStream:
+		md5Sum, err := up.streamDirect(partNumber, contentLength, body)
+		if err != nil {
+			if up.isPoisoned() {
+				// The stream holds data the upload can never complete
+				// with, so tear it down rather than let the client retry
+				// a part which can't be accepted.
+				b.failUpload(uploadID, up)
+			}
+			return "", err
+		}
+		return fmt.Sprintf("%q", hex.EncodeToString(md5Sum)), nil
 	}
 
 	// Buffer the part in a pool-backed RW so we can MD5 it (for the ETag) and
@@ -244,10 +269,52 @@ func (b *s3Backend) UploadPart(ctx context.Context, bucketName, objectName strin
 	md5Sum := hasher.Sum(nil)
 	etag := fmt.Sprintf("%q", hex.EncodeToString(md5Sum))
 
-	if err := up.streamPart(partNumber, n, md5Sum, rw); err != nil {
+	if err := up.bufferPart(ctx, partNumber, n, md5Sum, rw); err != nil {
 		return "", err
 	}
 	return etag, nil
+}
+
+// limitedBody reads the declared length of a part body and no more, then
+// checks the body really ends there. The final read of the underlying body
+// is what reports an error such as a Content-MD5 mismatch, so it must
+// happen even though its data is not wanted.
+type limitedBody struct {
+	body      io.Reader
+	remaining int64
+}
+
+// newLimitedBody returns body limited to size bytes.
+func newLimitedBody(body io.Reader, size int64) *limitedBody {
+	return &limitedBody{body: body, remaining: max(size, 0)}
+}
+
+// maxEmptyReads is how many reads returning nothing are tolerated before a
+// body is declared stuck, as io.Copy does.
+const maxEmptyReads = 100
+
+func (r *limitedBody) Read(p []byte) (int, error) {
+	if r.remaining <= 0 {
+		// The declared length has been read, so all that is left is to
+		// find out how the body ends.
+		var b [1]byte
+		for range maxEmptyReads {
+			n, err := r.body.Read(b[:])
+			if n > 0 {
+				return 0, gofakes3.ErrIncompleteBody
+			}
+			if err != nil {
+				return 0, err
+			}
+		}
+		return 0, io.ErrNoProgress
+	}
+	if int64(len(p)) > r.remaining {
+		p = p[:r.remaining]
+	}
+	n, err := r.body.Read(p)
+	r.remaining -= int64(n)
+	return n, err
 }
 
 // streamedPart returns the MD5 sum and size of partNumber if it has already
@@ -294,15 +361,31 @@ func bufferCharge(size int64) int64 {
 	return (size + pool.BufferSize - 1) / pool.BufferSize * pool.BufferSize
 }
 
-// waitForTurn blocks until a part of size bytes can be admitted to the
-// reorder buffer, then reserves its bufferCharge, bounding the memory an
-// upload can consume when the client sends parts faster than the backend
-// drains them.
+// partTurn says how an admitted part is to be received.
+type partTurn int
+
+const (
+	// turnBuffer means buffer the part until the stream reaches it; its
+	// bufferCharge has been reserved.
+	turnBuffer partTurn = iota
+	// turnStream means stream the part straight into the sink with
+	// streamDirect: the caller now owns the sink.
+	turnStream
+	// turnVerify means the part has already been streamed, so the
+	// re-upload can only be checked against it.
+	turnVerify
+)
+
+// waitForTurn blocks until a part of size bytes can be received, and says
+// how.
 //
-// The next part the stream needs (and any retry of an earlier one) is always
-// admitted so the sink can keep draining; so is a single part bigger than the
-// limit when the buffer is empty, to guarantee progress. Reserved bytes are
-// returned with release, or by the pump as the part is streamed.
+// The next part the stream needs is streamed straight into the sink, once
+// no other request is writing to it, so it needs no buffer. A part ahead of
+// it must wait until its bufferCharge fits within the reorder buffer limit,
+// which it then reserves, bounding the memory an upload can consume when
+// the client sends parts faster than the backend drains them. A part too big
+// for the limit waits until it is the next part. Reserved bytes are returned
+// with release, or by the pump as the part is streamed.
 //
 // A part which waits for longer than multipartWaitTimeout gets errSlowDown,
 // asking the client to retry it later, so a waiting request isn't held open
@@ -311,32 +394,40 @@ func bufferCharge(size int64) int64 {
 // size is the client-declared part length and is not trusted: a negative value
 // is rejected, and the admission test is written so a huge value can't overflow
 // the running total and wrongly admit further parts past the limit.
-func (up *multipartUpload) waitForTurn(ctx context.Context, partNumber int, size int64) error {
+func (up *multipartUpload) waitForTurn(ctx context.Context, partNumber int, size int64) (partTurn, error) {
 	if size < 0 {
-		return gofakes3.ErrInvalidArgument
+		return 0, gofakes3.ErrInvalidArgument
 	}
-	size = bufferCharge(size)
+	charge := bufferCharge(size)
 	timer := time.NewTimer(multipartWaitTimeout)
 	defer timer.Stop()
 	for {
 		up.mu.Lock()
 		if up.closed {
 			up.mu.Unlock()
-			return gofakes3.ErrNoSuchUpload
+			return 0, gofakes3.ErrNoSuchUpload
 		}
-		if up.bufferLimit <= 0 || partNumber <= up.nextPart || up.buffered == 0 || size <= up.bufferLimit-up.buffered {
-			up.buffered += size
+		switch {
+		case partNumber < up.nextPart:
 			up.mu.Unlock()
-			return nil
+			return turnVerify, nil
+		case partNumber == up.nextPart && !up.pumping:
+			up.pumping = true
+			up.mu.Unlock()
+			return turnStream, nil
+		case partNumber > up.nextPart && (up.bufferLimit <= 0 || charge <= up.bufferLimit-up.buffered):
+			up.buffered += charge
+			up.mu.Unlock()
+			return turnBuffer, nil
 		}
 		changed := up.changed
 		up.mu.Unlock()
 		select {
 		case <-changed:
 		case <-ctx.Done():
-			return ctx.Err()
+			return 0, ctx.Err()
 		case <-timer.C:
-			return errSlowDown
+			return 0, errSlowDown
 		}
 	}
 }
@@ -350,13 +441,146 @@ func (up *multipartUpload) release(size int64) {
 	up.mu.Unlock()
 }
 
-// streamPart records a part and streams the parts into the sink in order.
+// streamDirect streams body, the size bytes of partNumber, straight into
+// the sink, returning its MD5 sum. partNumber must be the next part the
+// stream needs and the caller must own the sink (up.pumping), which is
+// passed on to pump any buffered parts which follow, or given up.
 //
-// Parts must be uploaded in ascending, contiguous part-number order. A part
-// that arrives ahead of the next expected one is buffered until its turn; the
-// parts are then pumped into the sink in order. Whichever goroutine finds the
-// next part available does the pumping, so concurrent (but in-order) clients
-// are tolerated, with the buffering bounded by waitForTurn.
+// If the body fails part way, what reached the sink can't be taken back, so
+// the bytes streamed and the MD5 state after them are recorded instead. The
+// next attempt at the part - typically the client's retry - must start with
+// the same bytes, which are only hashed to check them, and then carries on
+// from where the failed one stopped.
+func (up *multipartUpload) streamDirect(partNumber int, size int64, body io.Reader) (md5Sum []byte, err error) {
+	up.mu.Lock()
+	resumeAt, resumeState := up.partialSize, up.partialMD5
+	up.mu.Unlock()
+
+	hasher := md5.New()
+	if resumeAt > size {
+		return nil, up.stopStreaming(errPartAlreadyStreamed(partNumber))
+	}
+	if resumeAt > 0 {
+		if _, err := io.CopyN(hasher, body, resumeAt); err != nil {
+			if err == io.EOF {
+				err = gofakes3.ErrIncompleteBody
+			}
+			return nil, up.stopStreaming(err)
+		}
+		if state, _ := hasher.(encoding.BinaryMarshaler).MarshalBinary(); !bytes.Equal(state, resumeState) {
+			return nil, up.stopStreaming(errPartAlreadyStreamed(partNumber))
+		}
+	}
+
+	n, sinkErr, bodyErr := copyToSink(up.fh, hasher, body)
+	if n > 0 {
+		state, _ := hasher.(encoding.BinaryMarshaler).MarshalBinary()
+		up.mu.Lock()
+		up.partialSize, up.partialMD5 = resumeAt+n, state
+		up.mu.Unlock()
+	}
+	if sinkErr != nil {
+		return nil, up.stopStreaming(sinkErr)
+	}
+	if bodyErr != nil {
+		if resumeAt+n == size {
+			// The whole part reached the sink but the client disowned it
+			// (for example it failed its Content-MD5 check), so the stream
+			// holds data which can neither be completed nor replaced.
+			return nil, up.poison(bodyErr)
+		}
+		return nil, up.stopStreaming(bodyErr)
+	}
+	if resumeAt+n != size {
+		return nil, up.stopStreaming(gofakes3.ErrIncompleteBody)
+	}
+
+	md5Sum = hasher.Sum(nil)
+	up.mu.Lock()
+	if up.closed {
+		up.pumping = false
+		up.mu.Unlock()
+		return nil, gofakes3.ErrNoSuchUpload
+	}
+	up.partMD5s[partNumber] = md5Sum
+	up.partSizes[partNumber] = size
+	up.partialSize, up.partialMD5 = 0, nil
+	up.nextPart++
+	up.broadcast()
+	return md5Sum, up.pump()
+}
+
+// poison marks the upload as one which can never be completed, because the
+// stream holds data which can't be taken back, then gives up the sink as
+// stopStreaming does.
+func (up *multipartUpload) poison(err error) error {
+	up.mu.Lock()
+	up.poisoned = true
+	up.mu.Unlock()
+	return up.stopStreaming(err)
+}
+
+// isPoisoned reports whether the upload can never be completed.
+func (up *multipartUpload) isPoisoned() bool {
+	up.mu.Lock()
+	defer up.mu.Unlock()
+	return up.poisoned
+}
+
+// stopStreaming gives up the sink after a part failed with err, returning
+// the error to report: ErrNoSuchUpload if the failure was because the
+// upload was aborted.
+func (up *multipartUpload) stopStreaming(err error) error {
+	up.mu.Lock()
+	defer up.mu.Unlock()
+	up.pumping = false
+	up.broadcast()
+	if up.closed {
+		// The write failed because the upload was aborted while this part
+		// was being written: report the upload gone rather than the sink's
+		// ECLOSED as an internal error.
+		return gofakes3.ErrNoSuchUpload
+	}
+	return err
+}
+
+// copyToSink copies body into sink and hasher, returning the number of
+// bytes written to the sink, which are also the bytes hashed, and the error
+// which stopped it, from either the sink or the body.
+func copyToSink(sink io.Writer, hasher hash.Hash, body io.Reader) (n int64, sinkErr, bodyErr error) {
+	buf := make([]byte, 32*1024)
+	for {
+		nr, err := body.Read(buf)
+		if nr > 0 {
+			nw, err := sink.Write(buf[:nr])
+			_, _ = hasher.Write(buf[:nw])
+			n += int64(nw)
+			if err == nil && nw != nr {
+				err = io.ErrShortWrite
+			}
+			if err != nil {
+				return n, err, nil
+			}
+		}
+		if err == io.EOF {
+			return n, nil, nil
+		}
+		if err != nil {
+			return n, nil, err
+		}
+	}
+}
+
+// bufferPart records a part received ahead of its turn, holding it in rw
+// until the stream reaches it, then streams the parts into the sink in
+// order.
+//
+// Parts must be uploaded in ascending, contiguous part-number order. Whichever
+// goroutine finds the next part available does the pumping, so concurrent
+// (but in-order) clients are tolerated, with the buffering bounded by
+// waitForTurn. If the stream has reached the part while it was being
+// received, it is streamed now, once any other request writing to the sink
+// has finished.
 //
 // A part number may be uploaded more than once - typically a client retrying
 // after its request timed out, but real S3 also allows replacing a part. If
@@ -364,47 +588,80 @@ func (up *multipartUpload) release(size int64) {
 // has already been streamed it can't be replaced: an identical re-upload is
 // accepted idempotently (the data is already in the stream) and a different
 // one is rejected.
-func (up *multipartUpload) streamPart(partNumber int, size int64, md5Sum []byte, rw *pool.RW) error {
+func (up *multipartUpload) bufferPart(ctx context.Context, partNumber int, size int64, md5Sum []byte, rw *pool.RW) error {
+	charge := bufferCharge(size)
+	// done releases the part's buffer. Call with up.mu held.
+	done := func() {
+		up.buffered -= charge
+		up.broadcast()
+		_ = rw.Close()
+	}
+	timer := time.NewTimer(multipartWaitTimeout)
+	defer timer.Stop()
 	up.mu.Lock()
-	if up.closed {
+	for partNumber == up.nextPart && up.pumping && !up.closed {
+		// Another request is writing this part to the sink: wait to see
+		// whether it gets there.
+		changed := up.changed
+		up.mu.Unlock()
+		var err error
+		select {
+		case <-changed:
+		case <-ctx.Done():
+			err = ctx.Err()
+		case <-timer.C:
+			err = errSlowDown
+		}
+		up.mu.Lock()
+		if err != nil {
+			done()
+			up.mu.Unlock()
+			return err
+		}
+	}
+	switch {
+	case up.closed:
 		// The upload was aborted or completed while the part body was
 		// being received.
-		up.buffered -= bufferCharge(size)
-		up.broadcast()
+		done()
 		up.mu.Unlock()
-		_ = rw.Close()
 		return gofakes3.ErrNoSuchUpload
-	}
-	if oldMD5, exists := up.partMD5s[partNumber]; exists {
-		if old, buffered := up.streamBuf[partNumber]; buffered {
-			_ = old.Close()
-			up.buffered -= bufferCharge(up.partSizes[partNumber])
-			up.broadcast()
-		} else {
-			// Already streamed (or streaming right now): the stream can't be
-			// rewritten, so accept an identical part and reject the rest.
-			same := bytes.Equal(md5Sum, oldMD5) && size == up.partSizes[partNumber]
-			up.buffered -= bufferCharge(size)
-			up.broadcast()
-			up.mu.Unlock()
-			_ = rw.Close()
-			if !same {
-				return errPartAlreadyStreamed(partNumber)
-			}
-			return nil
+	case partNumber < up.nextPart:
+		// Already streamed: the stream can't be rewritten, so accept an
+		// identical part and reject the rest.
+		same := bytes.Equal(md5Sum, up.partMD5s[partNumber]) && size == up.partSizes[partNumber]
+		done()
+		up.mu.Unlock()
+		if !same {
+			return errPartAlreadyStreamed(partNumber)
 		}
+		return nil
+	case partNumber == up.nextPart:
+		// The stream has reached this part while it was being received.
+		up.pumping = true
+		up.mu.Unlock()
+		_, err := up.streamDirect(partNumber, size, rw)
+		up.mu.Lock()
+		done()
+		up.mu.Unlock()
+		return err
+	}
+	if old, buffered := up.streamBuf[partNumber]; buffered {
+		_ = old.Close()
+		up.buffered -= bufferCharge(up.partSizes[partNumber])
+		up.broadcast()
 	}
 	up.partMD5s[partNumber] = md5Sum
 	up.partSizes[partNumber] = size
 	up.streamBuf[partNumber] = rw
+	up.mu.Unlock()
+	return nil
+}
 
-	if up.pumping {
-		// Another goroutine owns the sink and will pump this part in turn.
-		up.mu.Unlock()
-		return nil
-	}
-	up.pumping = true
-
+// pump streams buffered parts into the sink in order until it reaches one
+// which hasn't arrived, then gives up the sink. Call with up.mu held and
+// the sink owned (up.pumping); returns with up.mu released.
+func (up *multipartUpload) pump() error {
 	for {
 		if up.closed {
 			// Aborted while pumping: the sink is closed and any
@@ -417,6 +674,7 @@ func (up *multipartUpload) streamPart(partNumber int, size int64, md5Sum []byte,
 		prw, ok := up.streamBuf[up.nextPart]
 		if !ok {
 			up.pumping = false
+			up.broadcast()
 			up.mu.Unlock()
 			return nil
 		}
@@ -428,18 +686,9 @@ func (up *multipartUpload) streamPart(partNumber int, size int64, md5Sum []byte,
 		_ = prw.Close()
 		if err != nil {
 			up.mu.Lock()
-			up.pumping = false
 			up.buffered -= psize
-			closed := up.closed
-			up.broadcast()
 			up.mu.Unlock()
-			if closed {
-				// The write failed because the upload was aborted while
-				// this part was being pumped: report the upload gone
-				// rather than the sink's ECLOSED as an internal error.
-				return gofakes3.ErrNoSuchUpload
-			}
-			return err
+			return up.stopStreaming(err)
 		}
 
 		up.mu.Lock()
@@ -529,6 +778,18 @@ func (b *s3Backend) AbortMultipartUpload(ctx context.Context, bucketName, object
 	}
 	b.discardUpload(up)
 	return nil
+}
+
+// failUpload tears down an upload which can never be completed, so that
+// the client starts again instead of retrying a part which can't be
+// accepted.
+func (b *s3Backend) failUpload(uploadID gofakes3.UploadID, up *multipartUpload) {
+	fs.Errorf(up.fp, "failing multipart upload %s: %v", uploadID, errMultipartPoisoned)
+	b.multipartUploads.Delete(uploadID)
+	if err := up.abort(); err != nil {
+		fs.Errorf(up.fp, "aborting multipart upload: %v", err)
+	}
+	b.discardUpload(up)
 }
 
 // startReaper starts a goroutine which aborts incomplete multipart
@@ -652,7 +913,7 @@ func (up *multipartUpload) close() error {
 		}
 		return nil
 	}
-	if len(up.streamBuf) != 0 || up.nextPart-1 != len(up.partSizes) {
+	if len(up.streamBuf) != 0 || up.nextPart-1 != len(up.partSizes) || up.pumping || up.partialSize != 0 {
 		up.mu.Unlock()
 		return gofakes3.ErrInvalidPart
 	}
@@ -662,6 +923,10 @@ func (up *multipartUpload) close() error {
 
 	return up.fh.Close()
 }
+
+// errMultipartPoisoned is why an upload whose stream holds data it can
+// never complete with is failed.
+var errMultipartPoisoned = errors.New("a part was rejected after it had been streamed to the backend, so the upload must be started again")
 
 // errMultipartAborted is the reason an aborted upload's write is abandoned
 // with, so the streaming upload fails instead of committing what it has.
