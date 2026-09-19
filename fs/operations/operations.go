@@ -1594,7 +1594,7 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 		}
 		fs.Debugf(nil, "removing %d level %d directories", len(dirs), level)
 		sort.Strings(dirs)
-		g, gCtx := errgroup.WithContext(context.Background())
+		g, gCtx := errgroup.WithContext(ctx)
 		g.SetLimit(ci.Checkers)
 		for _, dir := range dirs {
 			// End early if error
@@ -2514,11 +2514,17 @@ func DirMove(ctx context.Context, f fs.Fs, srcRemote, dstRemote string) (err err
 			return nil
 		})
 	}
+sending:
 	for dir, entries := range tree {
 		dstPath := dstRemote + dir[len(srcRemote):]
 		for _, entry := range entries {
 			if o, ok := entry.(fs.Object); ok {
-				renames <- rename{o, path.Join(dstPath, path.Base(o.Remote()))}
+				select {
+				case renames <- rename{o, path.Join(dstPath, path.Base(o.Remote()))}:
+				case <-gCtx.Done():
+					// The workers have stopped so stop sending
+					break sending
+				}
 			}
 		}
 	}
