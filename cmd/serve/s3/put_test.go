@@ -19,6 +19,7 @@ import (
 	"github.com/rclone/gofakes3"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/vfs"
@@ -221,4 +222,35 @@ func TestPutObjectFailureCached(t *testing.T) {
 			})
 		}
 	}
+}
+
+// TestDeleteObjectForgetsMetadata checks that deleting an object forgets
+// its metadata, so it isn't kept in memory and doesn't reappear on a new
+// object at the same key.
+func TestDeleteObjectForgetsMetadata(t *testing.T) {
+	b, f, bucket := newPutTestBackend(t, "", nil)
+	ctx := context.Background()
+	const key = "meta.txt"
+
+	meta := map[string]string{"X-Amz-Meta-Colour": "blue"}
+	_, err := b.PutObject(ctx, bucket, key, meta, bytes.NewReader([]byte("one")), 3)
+	require.NoError(t, err)
+	obj, err := b.HeadObject(ctx, bucket, key)
+	require.NoError(t, err)
+	assert.Equal(t, "blue", obj.Metadata["X-Amz-Meta-Colour"])
+
+	_, err = b.DeleteObject(ctx, bucket, key)
+	require.NoError(t, err)
+
+	// Recreate the object without going through serve s3.
+	src := object.NewStaticObjectInfo(path.Join(bucket, key), time.Now(), 3, true, nil, nil)
+	_, err = f.Put(ctx, bytes.NewReader([]byte("two")), src)
+	require.NoError(t, err)
+	_vfs, err := b.s.getVFS(ctx)
+	require.NoError(t, err)
+	b.forgetPath(_vfs, path.Join(bucket, key))
+
+	obj, err = b.HeadObject(ctx, bucket, key)
+	require.NoError(t, err)
+	assert.NotContains(t, obj.Metadata, "X-Amz-Meta-Colour", "metadata of the deleted object reappeared")
 }
