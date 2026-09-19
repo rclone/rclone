@@ -244,7 +244,7 @@ func (m *Matcher) renameID(obj fs.Object) string {
 		var err error
 		sum, err = obj.Hash(m.ctx, m.hashType)
 		if err != nil {
-			fs.Debugf(obj, "Hash failed: %v", err)
+			fs.DebugfCtx(m.ctx, obj, "Hash failed: %v", err)
 			return ""
 		}
 	}
