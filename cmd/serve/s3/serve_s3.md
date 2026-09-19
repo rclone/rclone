@@ -189,12 +189,15 @@ remote as if it had completed.
 **Limitations**
 
 - Parts must arrive in ascending, contiguous part-number order
-  (1, 2, 3, ...). Parts the client uploads concurrently or out of order
-  are buffered until their turn. The memory used for this buffering is
+  (1, 2, 3, ...). The part the stream needs next is written straight
+  through as it arrives, so it is never buffered, whatever its size.
+  Parts the client uploads concurrently or out of order are buffered
+  until their turn. The memory used for this buffering is
   capped, per upload, by `--multipart-streaming-buffer-limit` (default
   `256M`, `0` for no limit), counting each buffered part in the whole
   1 MiB memory pages it occupies: a part that would take the buffer over the
-  limit is stalled until the stream drains, so a client that uploads
+  limit is stalled until the stream drains (or, if it is bigger than the
+  limit, until it is the next part), so a client that uploads
   faster than the remote can accept sees backpressure rather than
   unbounded server memory use. A part stalled for more than a minute
   is failed with a `SlowDown` error, which S3 clients retry. Since a stalled part holds its HTTP
@@ -206,8 +209,11 @@ remote as if it had completed.
 - A part uploaded again before completion - typically a client retrying
   after a timeout - is accepted: if the earlier copy is still buffered
   it is replaced, and if it has already been streamed an identical
-  re-upload is a no-op. What isn't possible is replacing a part that has
-  already been streamed with *different* content - that is rejected. A
+  re-upload is a no-op. If a part fails part way through being streamed
+  (for example the client's connection drops) the client's retry of it
+  carries on where it stopped, provided it has the same content. What
+  isn't possible is replacing a part that has already been streamed,
+  in whole or in part, with *different* content - that is rejected. A
   failure in the stream to the remote itself still aborts the whole
   upload and the client must start it again. (The remote's own upload
   still retries its internal chunks.)
