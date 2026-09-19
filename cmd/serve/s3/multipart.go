@@ -197,6 +197,12 @@ func (b *s3Backend) UploadPart(ctx context.Context, bucketName, objectName strin
 	up.startActivity()
 	defer up.endActivity()
 
+	// A re-upload of a part already in the stream is only hashed, to check
+	// it matches, so it needs no buffer.
+	if md5Sum, size, ok := up.streamedPart(partNumber); ok {
+		return verifyStreamedPart(partNumber, md5Sum, size, contentLength, body)
+	}
+
 	// Wait until there is room to buffer this part, bounding the memory a
 	// client which uploads faster than the backend drains can consume.
 	if err := up.waitForTurn(partNumber, contentLength); err != nil {
@@ -226,6 +232,41 @@ func (b *s3Backend) UploadPart(ctx context.Context, bucketName, objectName strin
 		return "", err
 	}
 	return etag, nil
+}
+
+// streamedPart returns the MD5 sum and size of partNumber if it has already
+// been streamed to the sink.
+func (up *multipartUpload) streamedPart(partNumber int) (md5Sum []byte, size int64, ok bool) {
+	up.mu.Lock()
+	defer up.mu.Unlock()
+	if partNumber >= up.nextPart {
+		return nil, 0, false
+	}
+	return up.partMD5s[partNumber], up.partSizes[partNumber], true
+}
+
+// verifyStreamedPart reads the body of a re-upload of partNumber, which has
+// already been streamed with md5Sum and size, returning its ETag if it is
+// identical and an error if not, since the stream can't be rewritten.
+func verifyStreamedPart(partNumber int, md5Sum []byte, size int64, contentLength int64, body io.Reader) (string, error) {
+	hasher := md5.New()
+	n, err := io.Copy(hasher, body)
+	if err != nil {
+		return "", err
+	}
+	if n != contentLength {
+		return "", gofakes3.ErrIncompleteBody
+	}
+	if n != size || !bytes.Equal(hasher.Sum(nil), md5Sum) {
+		return "", errPartAlreadyStreamed(partNumber)
+	}
+	return fmt.Sprintf("%q", hex.EncodeToString(md5Sum)), nil
+}
+
+// errPartAlreadyStreamed is returned for an attempt to replace partNumber
+// with different contents after it has been streamed.
+func errPartAlreadyStreamed(partNumber int) error {
+	return gofakes3.ErrorMessagef(gofakes3.ErrNotImplemented, "part %d has already been streamed to the backend and cannot be replaced with different contents", partNumber)
 }
 
 // bufferCharge returns the reorder buffer memory a part of size bytes
@@ -317,7 +358,7 @@ func (up *multipartUpload) streamPart(partNumber int, size int64, md5Sum []byte,
 			up.mu.Unlock()
 			_ = rw.Close()
 			if !same {
-				return gofakes3.ErrorMessagef(gofakes3.ErrNotImplemented, "part %d has already been streamed to the backend and cannot be replaced with different contents", partNumber)
+				return errPartAlreadyStreamed(partNumber)
 			}
 			return nil
 		}

@@ -1114,3 +1114,55 @@ func TestMultipartBufferLimitCountsPages(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, []byte("123456"), readObject(t, f, bucket, object))
 }
+
+// poolWatchReader is a part body which records the most pool pages in use,
+// above those in use when it was made, while it is being read.
+type poolWatchReader struct {
+	io.Reader
+	baseline int
+	maxPages int
+}
+
+func newPoolWatchReader(data []byte) *poolWatchReader {
+	return &poolWatchReader{Reader: bytes.NewReader(data), baseline: pool.Global().InUse()}
+}
+
+func (r *poolWatchReader) Read(p []byte) (int, error) {
+	r.maxPages = max(r.maxPages, pool.Global().InUse()-r.baseline)
+	n, err := r.Reader.Read(p)
+	r.maxPages = max(r.maxPages, pool.Global().InUse()-r.baseline)
+	return n, err
+}
+
+// TestMultipartRetryAfterStreamedNotBuffered checks that a re-upload of a
+// part which has already been streamed is only hashed to compare it with the
+// original, not buffered in memory.
+func TestMultipartRetryAfterStreamedNotBuffered(t *testing.T) {
+	b, f, bucket := newPutTestBackend(t, "", nil)
+	ctx := context.Background()
+	const object = "retry-not-buffered.bin"
+	const partSize = 8 * pool.BufferSize
+
+	uploadID, err := b.CreateMultipartUpload(ctx, bucket, object, nil)
+	require.NoError(t, err)
+	part1 := []byte(random.String(partSize))
+	etag, err := b.UploadPart(ctx, bucket, object, uploadID, 1, partSize, bytes.NewReader(part1))
+	require.NoError(t, err)
+
+	body := newPoolWatchReader(part1)
+	retryETag, err := b.UploadPart(ctx, bucket, object, uploadID, 1, partSize, body)
+	require.NoError(t, err)
+	assert.Equal(t, etag, retryETag)
+	assert.Less(t, body.maxPages, partSize/pool.BufferSize/2, "the retried part was buffered in memory")
+
+	// A different re-upload is still rejected.
+	other := []byte(random.String(partSize))
+	_, err = b.UploadPart(ctx, bucket, object, uploadID, 1, partSize, bytes.NewReader(other))
+	assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrNotImplemented), "want NotImplemented, got %v", err)
+
+	_, _, err = b.CompleteMultipartUpload(ctx, bucket, object, uploadID, &gofakes3.CompleteMultipartUploadRequest{
+		Parts: []gofakes3.CompletedPart{{PartNumber: 1, ETag: etag}},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, part1, readObject(t, f, bucket, object))
+}
