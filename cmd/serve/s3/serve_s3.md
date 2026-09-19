@@ -378,7 +378,10 @@ can take some time.
 Versioning is not currently supported.
 
 Metadata will only be saved in memory other than the rclone `mtime`
-metadata which will be set as the modification time of the file.
+metadata which will be set as the modification time of the file. The
+metadata of at most `--metadata-max-objects` objects (default `100000`,
+`0` for no limit) is kept; after that the metadata of the least
+recently used object is forgotten.
 
 ### Object names
 
