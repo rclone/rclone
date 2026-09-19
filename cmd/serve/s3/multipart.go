@@ -51,12 +51,6 @@ const multipartUploadPrefix = tempObjectPrefix + "multipart_"
 // buffer before the client is told to slow down and retry it.
 var multipartWaitTimeout = time.Minute
 
-// errSlowDown asks the client to retry the request later.
-//
-// FIXME gofakes3 sends this with status 500 rather than the 503 S3 uses,
-// though S3 clients retry either.
-const errSlowDown gofakes3.ErrorCode = "SlowDown"
-
 // multipartUpload tracks one in-flight S3 multipart upload. The parts are
 // written, in part-number order, into fh - a VFS file handle which either
 // streams straight through to the remote (the default) or is backed by the
@@ -193,8 +187,8 @@ func (b *s3Backend) loadUpload(uploadID gofakes3.UploadID) (*multipartUpload, er
 }
 
 // reserveUpload reserves a place for a new upload, failing with
-// errSlowDown if --multipart-max-uploads are already in progress. The
-// place is given back by releaseUpload or deleteUpload.
+// gofakes3.ErrSlowDown if --multipart-max-uploads are already in progress.
+// The place is given back by releaseUpload or deleteUpload.
 func (b *s3Backend) reserveUpload() error {
 	n := b.uploads.Add(1)
 	if maxUploads := int64(b.s.opt.MultipartMaxUploads); maxUploads > 0 && n > maxUploads {
@@ -202,7 +196,7 @@ func (b *s3Backend) reserveUpload() error {
 		b.warnMaxUploadsOnce.Do(func() {
 			fs.Logf(nil, "serve s3: telling clients to slow down as --multipart-max-uploads %d multipart uploads are in progress", maxUploads)
 		})
-		return errSlowDown
+		return gofakes3.ErrSlowDown
 	}
 	return nil
 }
@@ -250,7 +244,8 @@ func (b *s3Backend) deleteUpload(uploadID gofakes3.UploadID) {
 // The object the parts are written to is only created when the first part
 // arrives, so an upload with no parts holds no VFS or backend resources.
 // No more than --multipart-max-uploads can be in progress: after that
-// errSlowDown is returned before anything is created on the remote.
+// gofakes3.ErrSlowDown is returned before anything is created on the
+// remote.
 func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objectName string, meta map[string]string) (gofakes3.UploadID, error) {
 	_vfs, err := b.s.getVFS(ctx)
 	if err != nil {
@@ -484,9 +479,10 @@ const (
 // until it is the next part. Reserved bytes are returned
 // with release, or by the pump as the part is streamed.
 //
-// A part which waits for longer than multipartWaitTimeout gets errSlowDown,
-// asking the client to retry it later, so a waiting request isn't held open
-// indefinitely. The wait also ends if ctx is cancelled.
+// A part which waits for longer than multipartWaitTimeout gets
+// gofakes3.ErrSlowDown, asking the client to retry it later, so a waiting
+// request isn't held open indefinitely. The wait also ends if ctx is
+// cancelled.
 //
 // size is the client-declared part length and is not trusted: a negative value
 // is rejected, and the admission test is written so a huge value can't overflow
@@ -530,7 +526,7 @@ func (up *multipartUpload) waitForTurn(ctx context.Context, partNumber int, size
 		case <-ctx.Done():
 			return 0, ctx.Err()
 		case <-timer.C:
-			return 0, errSlowDown
+			return 0, gofakes3.ErrSlowDown
 		}
 	}
 }
@@ -733,7 +729,7 @@ func (up *multipartUpload) bufferPart(ctx context.Context, partNumber int, size 
 		case <-ctx.Done():
 			err = ctx.Err()
 		case <-timer.C:
-			err = errSlowDown
+			err = gofakes3.ErrSlowDown
 		}
 		up.mu.Lock()
 		if err != nil {
