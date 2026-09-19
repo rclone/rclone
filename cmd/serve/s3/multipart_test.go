@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/md5"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"math"
@@ -411,7 +412,7 @@ func TestMultipartReplaceBuffered(t *testing.T) {
 // missing part arrives and the buffer drains.
 func TestMultipartBufferLimit(t *testing.T) {
 	core, f, bucket := newMultipartTestServerOpt(t, "", false, func(opt *Options) {
-		opt.MultipartStreamingBufferLimit = 50 * 1024
+		opt.MultipartStreamingBufferLimit = pool.BufferSize
 	})
 	ctx := context.Background()
 	const object = "buffer-limit.bin"
@@ -427,8 +428,8 @@ func TestMultipartBufferLimit(t *testing.T) {
 	uploadID, err := core.NewMultipartUpload(ctx, bucket, object, minio.PutObjectOptions{})
 	require.NoError(t, err)
 
-	// Part 3 arrives first: the buffer is empty so it is admitted even though
-	// it must wait for its turn.
+	// Part 3 arrives first: it fits in the buffer so it is admitted even
+	// though it must wait for its turn.
 	p3, err := core.PutObjectPart(ctx, bucket, object, uploadID, 3, bytes.NewReader(datas[2]), int64(sizes[2]), minio.PutObjectPartOptions{})
 	require.NoError(t, err)
 
@@ -490,10 +491,10 @@ func (s *stubSink) CloseWithError(err error) error {
 	return nil
 }
 
-// TestMultipartAbortDuringUploadPart aborts the upload between a part's
-// waitForTurn and its streamPart - as happens when the abort arrives while
-// the part body is still being received from the client - and checks that
-// streamPart fails cleanly instead of panicking on the torn-down upload.
+// TestMultipartAbortDuringUploadPart aborts the upload between a buffered
+// part's waitForTurn and its bufferPart - as happens when the abort arrives
+// while the part body is still being received from the client - and checks
+// that bufferPart fails cleanly instead of panicking on the torn-down upload.
 func TestMultipartAbortDuringUploadPart(t *testing.T) {
 	up := newMultipartUpload("bucket", "key", "bucket/key", "bucket/key", nil, 0)
 	sink := &stubSink{}
@@ -502,19 +503,21 @@ func TestMultipartAbortDuringUploadPart(t *testing.T) {
 	// An UploadPart in progress: the part is admitted, then the abort lands
 	// while its body is still being received.
 	contents := []byte("hello")
-	require.NoError(t, up.waitForTurn(context.Background(), 1, int64(len(contents))))
+	turn, err := up.waitForTurn(context.Background(), 2, int64(len(contents)))
+	require.NoError(t, err)
+	require.Equal(t, turnBuffer, turn)
 	require.NoError(t, up.abort())
 
 	// The abort must abandon the write rather than committing it.
 	assert.True(t, sink.closed)
 	assert.Equal(t, errMultipartAborted, sink.abortErr)
 
-	// The UploadPart resumes: it buffers the part and calls streamPart.
+	// The UploadPart resumes: it buffers the part and calls bufferPart.
 	rw := multipart.NewRW()
-	_, err := rw.Write(contents)
+	_, err = rw.Write(contents)
 	require.NoError(t, err)
 	md5Sum := md5.Sum(contents)
-	err = up.streamPart(1, int64(len(contents)), md5Sum[:], rw)
+	err = up.bufferPart(context.Background(), 2, int64(len(contents)), md5Sum[:], rw)
 	require.ErrorIs(t, err, gofakes3.ErrNoSuchUpload)
 
 	// The reorder buffer reservation must have been returned
@@ -555,8 +558,10 @@ func TestMultipartCloseIncomplete(t *testing.T) {
 	_, err := rw.Write(contents)
 	require.NoError(t, err)
 	md5Sum := md5.Sum(contents)
-	require.NoError(t, up.waitForTurn(context.Background(), 2, int64(len(contents))))
-	require.NoError(t, up.streamPart(2, int64(len(contents)), md5Sum[:], rw))
+	turn, err := up.waitForTurn(context.Background(), 2, int64(len(contents)))
+	require.NoError(t, err)
+	require.Equal(t, turnBuffer, turn)
+	require.NoError(t, up.bufferPart(context.Background(), 2, int64(len(contents)), md5Sum[:], rw))
 
 	require.ErrorIs(t, up.close(), gofakes3.ErrInvalidPart)
 	assert.False(t, sink.closed)
@@ -1025,29 +1030,35 @@ func TestUploadPartNoReserveBeforeBody(t *testing.T) {
 }
 
 // TestWaitForTurnRejectsBogusSize checks that the reorder-buffer admission
-// rejects a negative client-declared part length and that a huge declared
-// length cannot overflow the running total so as to admit a further part past
-// the buffer limit.
+// rejects a negative client-declared part length, and that a huge declared
+// length is never admitted to the buffer - it must wait to be streamed - nor
+// can it overflow the running total.
 func TestWaitForTurnRejectsBogusSize(t *testing.T) {
 	up := newMultipartUpload("bucket", "key", "bucket/key", "bucket/key", nil, 1<<20)
+	ctx := context.Background()
 
 	// A part length can never be negative.
-	require.ErrorIs(t, up.waitForTurn(context.Background(), 1, -1), gofakes3.ErrInvalidArgument)
+	_, err := up.waitForTurn(ctx, 1, -1)
+	require.ErrorIs(t, err, gofakes3.ErrInvalidArgument)
 
-	// A huge out-of-order part is admitted once because the buffer is empty,
-	// driving buffered near the top of the int64 range.
-	require.NoError(t, up.waitForTurn(context.Background(), 2, math.MaxInt64))
+	// The next part is streamed, whatever its size, without touching the
+	// buffer.
+	turn, err := up.waitForTurn(ctx, 1, math.MaxInt64)
+	require.NoError(t, err)
+	assert.Equal(t, turnStream, turn)
+	up.mu.Lock()
+	assert.Equal(t, int64(0), up.buffered)
+	up.mu.Unlock()
 
-	// A further out-of-order part must wait, not be wrongly admitted by an
-	// overflow of buffered+size.
+	// A huge out-of-order part must wait for its turn, not be admitted.
 	admitted := make(chan struct{})
 	go func() {
-		_ = up.waitForTurn(context.Background(), 3, math.MaxInt64)
+		_, _ = up.waitForTurn(ctx, 2, math.MaxInt64)
 		close(admitted)
 	}()
 	select {
 	case <-admitted:
-		t.Fatal("out-of-order part admitted past the buffer limit via overflow")
+		t.Fatal("huge out-of-order part admitted past the buffer limit")
 	case <-time.After(50 * time.Millisecond):
 	}
 
@@ -1196,4 +1207,278 @@ func TestMultipartBufferWaitGivesUp(t *testing.T) {
 	assert.True(t, gofakes3.HasErrorCode(err, errSlowDown), "want SlowDown, got %v", err)
 
 	require.NoError(t, b.AbortMultipartUpload(ctx, bucket, object, uploadID))
+}
+
+// bufferSink is a multipartUpload sink which collects what is written to it.
+type bufferSink struct {
+	mu  sync.Mutex
+	buf bytes.Buffer
+}
+
+func (s *bufferSink) Write(p []byte) (int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.buf.Write(p)
+}
+
+func (s *bufferSink) Close() error { return nil }
+
+func (s *bufferSink) Bytes() []byte {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return bytes.Clone(s.buf.Bytes())
+}
+
+// newBufferSinkUpload starts a multipart upload on b whose parts are
+// collected in the returned sink instead of being written to the VFS, so the
+// memory used by the VFS upload doesn't hide the memory used by serve s3.
+func newBufferSinkUpload(t *testing.T, b *s3Backend, bucket, object string) (gofakes3.UploadID, *bufferSink) {
+	uploadID, err := b.CreateMultipartUpload(context.Background(), bucket, object, nil)
+	require.NoError(t, err)
+	up, err := b.loadUpload(uploadID)
+	require.NoError(t, err)
+	if up.fh != nil {
+		// This fails the VFS upload, returning errBoom
+		_ = up.fh.(interface{ CloseWithError(error) error }).CloseWithError(errBoom)
+	}
+	sink := &bufferSink{}
+	up.fh = sink
+	t.Cleanup(func() { _ = b.AbortMultipartUpload(context.Background(), bucket, object, uploadID) })
+	return uploadID, sink
+}
+
+// TestMultipartInOrderPartNotBuffered checks that the part the stream needs
+// is written straight to the sink rather than buffered in memory, however
+// big it is compared with the buffer limit.
+func TestMultipartInOrderPartNotBuffered(t *testing.T) {
+	b, _, bucket := newPutTestBackend(t, "", nil)
+	b.s.opt.MultipartStreamingBufferLimit = pool.BufferSize
+	ctx := context.Background()
+	const object = "in-order.bin"
+	const partSize = 8 * pool.BufferSize
+
+	uploadID, sink := newBufferSinkUpload(t, b, bucket, object)
+	data := []byte(random.String(partSize))
+	body := newPoolWatchReader(data)
+	_, err := b.UploadPart(ctx, bucket, object, uploadID, 1, partSize, body)
+	require.NoError(t, err)
+	assert.Equal(t, 0, body.maxPages, "the in-order part was buffered in memory")
+	assert.Equal(t, data, sink.Bytes())
+}
+
+// failAfterReader returns data and then fails with err.
+func failAfterReader(data []byte, err error) io.Reader {
+	return io.MultiReader(bytes.NewReader(data), iotestErrReader{err})
+}
+
+type iotestErrReader struct{ err error }
+
+func (r iotestErrReader) Read([]byte) (int, error) { return 0, r.err }
+
+// TestMultipartResumeFailedPart checks that when the body of a part being
+// streamed fails part way, a retry of the part with the same contents
+// carries on from where it stopped, while one with different contents is
+// rejected without disturbing the stream.
+func TestMultipartResumeFailedPart(t *testing.T) {
+	b, f, bucket := newPutTestBackend(t, "", nil)
+	ctx := context.Background()
+	const object = "resume.bin"
+
+	part1 := []byte(random.String(300 * 1024))
+	part2 := []byte(random.String(100 * 1024))
+	want := append(append([]byte(nil), part1...), part2...)
+
+	uploadID, err := b.CreateMultipartUpload(ctx, bucket, object, nil)
+	require.NoError(t, err)
+
+	// The first attempt at part 1 fails after 123457 bytes reach the sink.
+	_, err = b.UploadPart(ctx, bucket, object, uploadID, 1, int64(len(part1)), failAfterReader(part1[:123457], errBoom))
+	require.ErrorIs(t, err, errBoom)
+
+	// A retry which fails before the resume point changes nothing.
+	_, err = b.UploadPart(ctx, bucket, object, uploadID, 1, int64(len(part1)), failAfterReader(part1[:1000], errBoom))
+	require.ErrorIs(t, err, errBoom)
+
+	// A retry with different contents is rejected.
+	other := append([]byte(nil), part1...)
+	other[100] ^= 1
+	_, err = b.UploadPart(ctx, bucket, object, uploadID, 1, int64(len(other)), bytes.NewReader(other))
+	assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrNotImplemented), "want NotImplemented, got %v", err)
+
+	// As is a retry shorter than what is already in the stream.
+	_, err = b.UploadPart(ctx, bucket, object, uploadID, 1, 1000, bytes.NewReader(part1[:1000]))
+	assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrNotImplemented), "want NotImplemented, got %v", err)
+
+	// A second failure part way through extends what is in the stream.
+	_, err = b.UploadPart(ctx, bucket, object, uploadID, 1, int64(len(part1)), failAfterReader(part1[:200000], errBoom))
+	require.ErrorIs(t, err, errBoom)
+
+	// The whole retry completes the part.
+	p1, err := b.UploadPart(ctx, bucket, object, uploadID, 1, int64(len(part1)), bytes.NewReader(part1))
+	require.NoError(t, err)
+	p2, err := b.UploadPart(ctx, bucket, object, uploadID, 2, int64(len(part2)), bytes.NewReader(part2))
+	require.NoError(t, err)
+
+	_, _, err = b.CompleteMultipartUpload(ctx, bucket, object, uploadID, &gofakes3.CompleteMultipartUploadRequest{
+		Parts: []gofakes3.CompletedPart{{PartNumber: 1, ETag: p1}, {PartNumber: 2, ETag: p2}},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, want, readObject(t, f, bucket, object))
+}
+
+// TestMultipartCompleteWithPartialPart checks that an upload whose stream
+// holds part of a failed part can't be completed without it.
+func TestMultipartCompleteWithPartialPart(t *testing.T) {
+	b, f, bucket := newPutTestBackend(t, "", nil)
+	ctx := context.Background()
+	const object = "partial.bin"
+
+	uploadID, err := b.CreateMultipartUpload(ctx, bucket, object, nil)
+	require.NoError(t, err)
+	part1 := []byte(random.String(200 * 1024))
+	_, err = b.UploadPart(ctx, bucket, object, uploadID, 1, int64(len(part1)), failAfterReader(part1[:150000], errBoom))
+	require.ErrorIs(t, err, errBoom)
+
+	_, _, err = b.CompleteMultipartUpload(ctx, bucket, object, uploadID, &gofakes3.CompleteMultipartUploadRequest{})
+	require.ErrorIs(t, err, gofakes3.ErrInvalidPart)
+	_, err = f.NewObject(ctx, path.Join(bucket, object))
+	require.ErrorIs(t, err, fs.ErrorObjectNotFound)
+}
+
+// TestMultipartConcurrentDuplicateParts checks that further requests for the
+// part being streamed wait, without buffering it, for the first to finish,
+// then are checked against it.
+func TestMultipartConcurrentDuplicateParts(t *testing.T) {
+	b, _, bucket := newPutTestBackend(t, "", nil)
+	ctx := context.Background()
+	const object = "duplicates.bin"
+	const partSize = 8 * pool.BufferSize
+
+	uploadID, sink := newBufferSinkUpload(t, b, bucket, object)
+	data := []byte(random.String(partSize))
+
+	// The first request stalls half way through its body.
+	pr, pw := io.Pipe()
+	first := make(chan error, 1)
+	var firstETag string
+	go func() {
+		var err error
+		firstETag, err = b.UploadPart(ctx, bucket, object, uploadID, 1, partSize, pr)
+		first <- err
+	}()
+	_, err := pw.Write(data[:partSize/2])
+	require.NoError(t, err)
+
+	type result struct {
+		etag string
+		err  error
+	}
+	const duplicates = 4
+	bodies := make([]*poolWatchReader, duplicates)
+	results := make(chan result, duplicates)
+	for i := range bodies {
+		bodies[i] = newPoolWatchReader(data)
+		go func(body io.Reader) {
+			etag, err := b.UploadPart(ctx, bucket, object, uploadID, 1, partSize, body)
+			results <- result{etag, err}
+		}(bodies[i])
+	}
+	select {
+	case r := <-results:
+		t.Fatalf("a duplicate finished while the first request was streaming (err=%v)", r.err)
+	case <-time.After(200 * time.Millisecond):
+	}
+
+	_, err = pw.Write(data[partSize/2:])
+	require.NoError(t, err)
+	// The body must end, as a request body does, so that the part is
+	// read to its end.
+	require.NoError(t, pw.Close())
+	require.NoError(t, <-first)
+	for range duplicates {
+		r := <-results
+		require.NoError(t, r.err)
+		assert.Equal(t, firstETag, r.etag)
+	}
+	for _, body := range bodies {
+		assert.Equal(t, 0, body.maxPages, "a duplicate part was buffered in memory")
+	}
+	assert.Equal(t, data, sink.Bytes())
+}
+
+// TestMultipartPartFailsAfterWholeBody checks that a part whose body is
+// delivered in full but is then rejected - as gofakes3's Content-MD5 check
+// does, after every byte has reached the backend - fails the whole upload,
+// rather than leaving it in a state no retry of the part can escape.
+func TestMultipartPartFailsAfterWholeBody(t *testing.T) {
+	b, _, bucket := newPutTestBackend(t, "", nil)
+	ctx := context.Background()
+	const object = "bad-digest.bin"
+
+	uploadID, err := b.CreateMultipartUpload(ctx, bucket, object, nil)
+	require.NoError(t, err)
+	part1 := []byte(random.String(100 * 1024))
+
+	// The whole body arrives, then the integrity check rejects it.
+	_, err = b.UploadPart(ctx, bucket, object, uploadID, 1, int64(len(part1)),
+		failAfterReader(part1, gofakes3.ErrBadDigest))
+	require.Error(t, err)
+
+	// The upload is gone, so the client starts again rather than retrying
+	// a part which could never be accepted.
+	_, err = b.UploadPart(ctx, bucket, object, uploadID, 1, int64(len(part1)), bytes.NewReader(part1))
+	require.ErrorIs(t, err, gofakes3.ErrNoSuchUpload)
+	_, err = b.loadUpload(uploadID)
+	require.ErrorIs(t, err, gofakes3.ErrNoSuchUpload)
+}
+
+// TestMultipartPartBadMD5 checks that a part whose body doesn't match the
+// Content-MD5 the client declared is rejected, and that the upload it
+// corrupted is failed rather than left for the client to retry.
+func TestMultipartPartBadMD5(t *testing.T) {
+	core, f, bucket := newMultipartTestServer(t, false)
+	ctx := context.Background()
+	const object = "bad-md5.bin"
+
+	uploadID, err := core.NewMultipartUpload(ctx, bucket, object, minio.PutObjectOptions{})
+	require.NoError(t, err)
+
+	part1 := []byte(random.String(60 * 1024))
+	wrongMD5 := md5.Sum([]byte("not the part"))
+	_, err = core.PutObjectPart(ctx, bucket, object, uploadID, 1, bytes.NewReader(part1), int64(len(part1)),
+		minio.PutObjectPartOptions{Md5Base64: base64.StdEncoding.EncodeToString(wrongMD5[:])})
+	require.Error(t, err)
+
+	// Nothing was committed at the key and the upload is gone.
+	_, err = f.NewObject(ctx, path.Join(bucket, object))
+	require.ErrorIs(t, err, fs.ErrorObjectNotFound)
+	_, err = core.PutObjectPart(ctx, bucket, object, uploadID, 1, bytes.NewReader(part1), int64(len(part1)), minio.PutObjectPartOptions{})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "NoSuchUpload")
+	requireOnly(t, f, bucket)
+}
+
+// TestLimitedBody checks that a part body is read to its end, so that an
+// error reported there is not missed, and that a body longer than declared
+// is rejected.
+func TestLimitedBody(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		body io.Reader
+		want error
+	}{
+		{"EndError", failAfterReader([]byte("hello"), gofakes3.ErrBadDigest), gofakes3.ErrBadDigest},
+		{"TooLong", bytes.NewReader([]byte("hello world")), gofakes3.ErrIncompleteBody},
+		{"Exact", bytes.NewReader([]byte("hello")), nil},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			n, err := io.Copy(io.Discard, newLimitedBody(test.body, 5))
+			assert.Equal(t, int64(5), n)
+			if test.want == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.ErrorIs(t, err, test.want)
+			}
+		})
+	}
 }
