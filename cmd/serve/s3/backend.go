@@ -49,6 +49,9 @@ type s3Backend struct {
 	// upload falls back to being buffered in memory.
 	warnInMemoryOnce sync.Once
 
+	// budget limits the memory buffered by all multipart uploads.
+	budget *bufferBudget
+
 	reaperQuit chan struct{} // closed to stop the abandoned upload reaper
 	reaperStop sync.Once
 }
@@ -58,6 +61,7 @@ func newBackend(s *Server) *s3Backend {
 	return &s3Backend{
 		s:          s,
 		meta:       new(sync.Map),
+		budget:     newBufferBudget(int64(s.opt.MultipartStreamingBufferTotal)),
 		reaperQuit: make(chan struct{}),
 	}
 }

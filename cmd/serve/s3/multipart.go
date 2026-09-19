@@ -87,6 +87,52 @@ type multipartUpload struct {
 	partialMD5  []byte           // MD5 state after those partialSize bytes (encoding.BinaryMarshaler)
 	buffered    int64            // bytes of parts admitted but not yet streamed or released
 	bufferLimit int64            // max buffered before parts ahead of nextPart must wait (<= 0 for no limit)
+	budget      *bufferBudget    // limits buffered across all uploads (nil for no limit)
+}
+
+// bufferBudget limits the memory used by the reorder buffers of all the
+// multipart uploads of a server.
+type bufferBudget struct {
+	mu      sync.Mutex
+	limit   int64         // <= 0 for no limit
+	used    int64         // bytes reserved
+	changed chan struct{} // closed when used shrinks
+}
+
+// newBufferBudget makes a bufferBudget of limit bytes, <= 0 for no limit.
+func newBufferBudget(limit int64) *bufferBudget {
+	return &bufferBudget{
+		limit:   limit,
+		changed: make(chan struct{}),
+	}
+}
+
+// tryReserve reserves n bytes if they fit in the budget. If not it returns
+// a channel which is closed when some are released. A nil budget has no
+// limit.
+func (bb *bufferBudget) tryReserve(n int64) (ok bool, changed <-chan struct{}) {
+	if bb == nil {
+		return true, nil
+	}
+	bb.mu.Lock()
+	defer bb.mu.Unlock()
+	if bb.limit > 0 && n > bb.limit-bb.used {
+		return false, bb.changed
+	}
+	bb.used += n
+	return true, nil
+}
+
+// release returns n bytes reserved with tryReserve.
+func (bb *bufferBudget) release(n int64) {
+	if bb == nil || n == 0 {
+		return
+	}
+	bb.mu.Lock()
+	defer bb.mu.Unlock()
+	bb.used -= n
+	close(bb.changed)
+	bb.changed = make(chan struct{})
 }
 
 // newMultipartUpload allocates an upload struct.
@@ -112,6 +158,14 @@ func newMultipartUpload(bucket, key, fp, streamFp string, meta map[string]string
 func (up *multipartUpload) broadcast() {
 	close(up.changed)
 	up.changed = make(chan struct{})
+}
+
+// unbuffer returns charge bytes of buffer reserved by waitForTurn to the
+// upload's and the server's budgets. Call with up.mu held.
+func (up *multipartUpload) unbuffer(charge int64) {
+	up.buffered -= charge
+	up.budget.release(charge)
+	up.broadcast()
 }
 
 // startActivity marks the upload as having a request in flight.
@@ -198,6 +252,7 @@ func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objec
 	}
 
 	up := newMultipartUpload(bucketName, objectName, fp, streamFp, meta, int64(b.s.opt.MultipartStreamingBufferLimit))
+	up.budget = b.budget
 	fh, err := _vfs.Create(streamFp)
 	if err != nil {
 		return "", err
@@ -381,10 +436,11 @@ const (
 //
 // The next part the stream needs is streamed straight into the sink, once
 // no other request is writing to it, so it needs no buffer. A part ahead of
-// it must wait until its bufferCharge fits within the reorder buffer limit,
-// which it then reserves, bounding the memory an upload can consume when
-// the client sends parts faster than the backend drains them. A part too big
-// for the limit waits until it is the next part. Reserved bytes are returned
+// it must wait until its bufferCharge fits within both the upload's reorder
+// buffer limit and the server's budget for all uploads, which it then
+// reserves, bounding the memory uploads can consume when clients send parts
+// faster than the backend drains them. A part too big for the limits waits
+// until it is the next part. Reserved bytes are returned
 // with release, or by the pump as the part is streamed.
 //
 // A part which waits for longer than multipartWaitTimeout gets errSlowDown,
@@ -415,15 +471,21 @@ func (up *multipartUpload) waitForTurn(ctx context.Context, partNumber int, size
 			up.pumping = true
 			up.mu.Unlock()
 			return turnStream, nil
-		case partNumber > up.nextPart && (up.bufferLimit <= 0 || charge <= up.bufferLimit-up.buffered):
-			up.buffered += charge
-			up.mu.Unlock()
-			return turnBuffer, nil
+		}
+		var budgetChanged <-chan struct{}
+		if partNumber > up.nextPart && (up.bufferLimit <= 0 || charge <= up.bufferLimit-up.buffered) {
+			var ok bool
+			if ok, budgetChanged = up.budget.tryReserve(charge); ok {
+				up.buffered += charge
+				up.mu.Unlock()
+				return turnBuffer, nil
+			}
 		}
 		changed := up.changed
 		up.mu.Unlock()
 		select {
 		case <-changed:
+		case <-budgetChanged:
 		case <-ctx.Done():
 			return 0, ctx.Err()
 		case <-timer.C:
@@ -436,8 +498,7 @@ func (up *multipartUpload) waitForTurn(ctx context.Context, partNumber int, size
 // to the reorder buffer budget and wakes any parts waiting for room.
 func (up *multipartUpload) release(size int64) {
 	up.mu.Lock()
-	up.buffered -= bufferCharge(size)
-	up.broadcast()
+	up.unbuffer(bufferCharge(size))
 	up.mu.Unlock()
 }
 
@@ -592,8 +653,7 @@ func (up *multipartUpload) bufferPart(ctx context.Context, partNumber int, size 
 	charge := bufferCharge(size)
 	// done releases the part's buffer. Call with up.mu held.
 	done := func() {
-		up.buffered -= charge
-		up.broadcast()
+		up.unbuffer(charge)
 		_ = rw.Close()
 	}
 	timer := time.NewTimer(multipartWaitTimeout)
@@ -648,8 +708,7 @@ func (up *multipartUpload) bufferPart(ctx context.Context, partNumber int, size 
 	}
 	if old, buffered := up.streamBuf[partNumber]; buffered {
 		_ = old.Close()
-		up.buffered -= bufferCharge(up.partSizes[partNumber])
-		up.broadcast()
+		up.unbuffer(bufferCharge(up.partSizes[partNumber]))
 	}
 	up.partMD5s[partNumber] = md5Sum
 	up.partSizes[partNumber] = size
@@ -686,15 +745,14 @@ func (up *multipartUpload) pump() error {
 		_ = prw.Close()
 		if err != nil {
 			up.mu.Lock()
-			up.buffered -= psize
+			up.unbuffer(psize)
 			up.mu.Unlock()
 			return up.stopStreaming(err)
 		}
 
 		up.mu.Lock()
 		up.nextPart++
-		up.buffered -= psize
-		up.broadcast()
+		up.unbuffer(psize)
 	}
 }
 
@@ -948,6 +1006,9 @@ func (up *multipartUpload) abort() error {
 	up.aborted = true
 	streamBuf := up.streamBuf
 	up.streamBuf = nil
+	for _, rw := range streamBuf {
+		up.unbuffer(bufferCharge(rw.Size()))
+	}
 	up.broadcast()
 	up.mu.Unlock()
 
