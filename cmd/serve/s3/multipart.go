@@ -839,20 +839,19 @@ func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, obj
 	up.startActivity()
 	defer up.endActivity()
 
+	// gofakes3 keeps its record of an upload whose completion fails, so
+	// forgetUpload removes that too, as the upload can't be retried.
 	if err := up.validate(input); err != nil {
-		b.deleteUpload(uploadID)
-		_ = up.abort()
-		b.discardUpload(up)
+		b.forgetUpload(uploadID, up)
 		return "", "", err
 	}
 
 	// close commits the upload, failing with the upload left open if the
-	// streamed parts don't form the complete object; abort then tears it
-	// down. (After a successful or failed commit the abort is a no-op.)
+	// streamed parts don't form the complete object; forgetUpload then
+	// tears it down. (After a successful or failed commit the abort it
+	// does is a no-op.)
 	if err := up.close(); err != nil {
-		b.deleteUpload(uploadID)
-		_ = up.abort()
-		b.discardUpload(up)
+		b.forgetUpload(uploadID, up)
 		return "", "", err
 	}
 
@@ -905,11 +904,19 @@ func (b *s3Backend) AbortMultipartUpload(ctx context.Context, bucketName, object
 // accepted.
 func (b *s3Backend) failUpload(uploadID gofakes3.UploadID, up *multipartUpload) {
 	fs.Errorf(up.fp, "failing multipart upload %s: %v", uploadID, errMultipartPoisoned)
+	b.forgetUpload(uploadID, up)
+}
+
+// forgetUpload aborts up, discards what it wrote and removes every record
+// of it, ours and gofakes3's.
+func (b *s3Backend) forgetUpload(uploadID gofakes3.UploadID, up *multipartUpload) {
 	b.deleteUpload(uploadID)
 	if err := up.abort(); err != nil {
 		fs.Errorf(up.fp, "aborting multipart upload: %v", err)
 	}
 	b.discardUpload(up)
+	// gofakes3 doesn't know the upload has gone, so tell it
+	_ = b.s.faker.ForgetMultipartUpload(up.bucket, up.key, uploadID)
 }
 
 // startReaper starts a goroutine which aborts incomplete multipart
@@ -950,11 +957,7 @@ func (b *s3Backend) reapExpiredUploads(now time.Time, expiry time.Duration) {
 			return true
 		}
 		fs.Logf(up.fp, "aborting multipart upload %s idle for more than %v", uploadID, expiry)
-		b.deleteUpload(uploadID)
-		if err := up.abort(); err != nil {
-			fs.Errorf(up.fp, "aborting abandoned multipart upload: %v", err)
-		}
-		b.discardUpload(up)
+		b.forgetUpload(uploadID, up)
 		return true
 	})
 }
