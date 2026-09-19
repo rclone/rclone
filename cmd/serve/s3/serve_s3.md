@@ -188,22 +188,24 @@ remote as if it had completed.
 
 **Limitations**
 
-- Parts must arrive in ascending, contiguous part-number order
-  (1, 2, 3, ...). The part the stream needs next is written straight
-  through as it arrives, so it is never buffered, whatever its size.
-  Parts the client uploads concurrently or out of order are buffered
-  until their turn. The memory used for this buffering is
-  capped, per upload, by `--multipart-streaming-buffer-limit` (default
-  `256M`, `0` for no limit), counting each buffered part in the whole
-  1 MiB memory pages it occupies: a part that would take the buffer over the
-  limit is stalled until the stream drains (or, if it is bigger than the
-  limit, until it is the next part), so a client that uploads
-  faster than the remote can accept sees backpressure rather than
-  unbounded server memory use. A part stalled for more than a minute
-  is failed with a `SlowDown` error, which S3 clients retry. Since a stalled part holds its HTTP
-  request open, clients whose upload concurrency times chunk size
-  exceeds the limit may need a longer read timeout when the remote is
-  slow. Non-contiguous part numbers are rejected on completion.
+- Parts must arrive in ascending, contiguous part-number order (1, 2, 3,
+  ...). The part the stream needs next is written straight through as it
+  arrives, so it is never buffered, whatever its size. Parts the client
+  uploads concurrently or out of order are buffered until their turn.
+  The memory used for this buffering is capped, per upload, by
+  `--multipart-streaming-buffer-limit` (default `256M`, `0` for no
+  limit), and across all uploads by `--multipart-streaming-buffer-total`
+  (default `1G`, `0` for no limit), counting each buffered part in the
+  whole 1 MiB memory pages it occupies: a part that would take the
+  buffer over either limit is stalled until the stream drains (or, if it
+  is bigger than the limit, until it is the next part), so a client that
+  uploads faster than the remote can accept sees backpressure rather
+  than unbounded server memory use. A part stalled for more than a
+  minute is failed with a `SlowDown` error, which S3 clients retry.
+  Since a stalled part holds its HTTP request open, clients whose upload
+  concurrency times chunk size exceeds the limit may need a longer read
+  timeout when the remote is slow. Non-contiguous part numbers are
+  rejected on completion.
   Configure the client to upload in part order, ideally with low
   concurrency, for the lowest memory use.
 - A part uploaded again before completion - typically a client retrying
