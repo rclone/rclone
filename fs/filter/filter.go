@@ -583,7 +583,7 @@ func (f *Filter) IncludeObject(ctx context.Context, o fs.Object) bool {
 		var err error
 		metadata, err = fs.GetMetadata(ctx, o)
 		if err != nil {
-			fs.Errorf(o, "Failed to read metadata: %v", err)
+			fs.ErrorfCtx(ctx, o, "Failed to read metadata: %v", err)
 			metadata = nil
 		}
 
@@ -653,7 +653,7 @@ func (f *Filter) MakeListR(ctx context.Context, NewObject func(ctx context.Conte
 						// Count and log the error but carry on so that one
 						// unreadable file (e.g. permission denied) doesn't stop
 						// the other --files-from files being processed.
-						fs.Errorf(remote, "--files-from failed to read file: %v", err)
+						fs.ErrorfCtx(ctx, remote, "--files-from failed to read file: %v", err)
 						_ = fs.CountError(gCtx, err)
 					} else {
 						err = callback(entries)

@@ -45,10 +45,10 @@ func (c *copy) removeFailedCopy(ctx context.Context, o fs.Object) {
 	if o == nil {
 		return
 	}
-	fs.Infof(o, "Removing failed copy")
+	fs.InfofCtx(ctx, o, "Removing failed copy")
 	err := o.Remove(ctx)
 	if err != nil {
-		fs.Infof(o, "Failed to remove failed copy: %s", err)
+		fs.InfofCtx(ctx, o, "Failed to remove failed copy: %s", err)
 	}
 }
 
@@ -60,7 +60,7 @@ func (c *copy) removeFailedPartialCopy(ctx context.Context, f fs.Fs, remote stri
 		return
 	}
 	if err != nil {
-		fs.Infof(remote, "Failed to remove failed partial copy: %s", err)
+		fs.InfofCtx(ctx, remote, "Failed to remove failed partial copy: %s", err)
 		return
 	}
 	c.removeFailedCopy(ctx, o)
@@ -190,7 +190,7 @@ func (c *copy) rcat(ctx context.Context, in io.ReadCloser) (actionTaken string, 
 	if c.ci.Metadata {
 		meta, err = fs.GetMetadata(ctx, c.src)
 		if err != nil {
-			fs.Errorf(c.src, "Failed to read metadata: %v", err)
+			fs.ErrorfCtx(ctx, c.src, "Failed to read metadata: %v", err)
 		}
 	}
 
@@ -269,7 +269,7 @@ func (c *copy) manualCopy(ctx context.Context) (actionTaken string, newDst fs.Ob
 		if !errors.Is(err, fs.ErrorRangeIgnored) {
 			return actionTaken, newDst, err
 		}
-		fs.Logf(c.src, "multi-thread copy: %v: downloading in a single stream", err)
+		fs.LogfCtx(ctx, c.src, "multi-thread copy: %v: downloading in a single stream", err)
 		c.tr.Reset(ctx)
 	}
 
@@ -336,7 +336,7 @@ func (c *copy) copy(ctx context.Context) (newDst fs.Object, err error) {
 		if fserrors.IsRetryError(err) || fserrors.ShouldRetry(err) {
 			retry = true
 		} else if t, ok := pacer.IsRetryAfter(err); ok && tries+1 < c.maxTries {
-			fs.Debugf(c.src, "Sleeping for %v (as indicated by the server) to obey Retry-After error: %v", t, err)
+			fs.DebugfCtx(ctx, c.src, "Sleeping for %v (as indicated by the server) to obey Retry-After error: %v", t, err)
 			if sleepWithContext(ctx, t) {
 				retry = true
 			} else {
@@ -344,14 +344,14 @@ func (c *copy) copy(ctx context.Context) (newDst fs.Object, err error) {
 			}
 		}
 		if retry {
-			fs.Debugf(c.src, "Received error: %v - low level retry %d/%d", err, tries+1, c.maxTries)
+			fs.DebugfCtx(ctx, c.src, "Received error: %v - low level retry %d/%d", err, tries+1, c.maxTries)
 			c.tr.Reset(ctx) // skip incomplete accounting - will be overwritten by retry
 			continue
 		}
 	}
 	if err != nil {
 		err = fs.CountError(ctx, err)
-		fs.Errorf(c.src, "Failed to copy: %v", err)
+		fs.ErrorfCtx(ctx, c.src, "Failed to copy: %v", err)
 		if !c.inplace {
 			c.removeFailedPartialCopy(ctx, c.f, c.remoteForCopy)
 		}
@@ -361,7 +361,7 @@ func (c *copy) copy(ctx context.Context) (newDst fs.Object, err error) {
 	// Verify the copy
 	err = c.verify(ctx, newDst)
 	if err != nil {
-		fs.Errorf(newDst, "%v", err)
+		fs.ErrorfCtx(ctx, newDst, "%v", err)
 		err = fs.CountError(ctx, err)
 		c.removeFailedCopy(ctx, newDst)
 		return nil, err
@@ -371,12 +371,12 @@ func (c *copy) copy(ctx context.Context) (newDst fs.Object, err error) {
 	if !c.inplace && c.remoteForCopy != c.remote {
 		movedNewDst, err := c.dstFeatures.Move(ctx, newDst, c.remote)
 		if err != nil {
-			fs.Errorf(newDst, "partial file rename failed: %v", err)
+			fs.ErrorfCtx(ctx, newDst, "partial file rename failed: %v", err)
 			err = fs.CountError(ctx, err)
 			c.removeFailedCopy(ctx, newDst)
 			return nil, err
 		}
-		fs.Debugf(newDst, "renamed to: %s", c.remote)
+		fs.DebugfCtx(ctx, newDst, "renamed to: %s", c.remote)
 		newDst = movedNewDst
 	}
 
@@ -384,7 +384,7 @@ func (c *copy) copy(ctx context.Context) (newDst fs.Object, err error) {
 	if newDst != nil && c.src.String() != newDst.String() {
 		actionTaken = fmt.Sprintf("%s to: %s", actionTaken, newDst.String())
 	}
-	fs.Infof(c.src, "%s%s", actionTaken, fs.LogValueHide("size", fs.SizeSuffix(c.src.Size())))
+	fs.InfofCtx(ctx, c.src, "%s%s", actionTaken, fs.LogValueHide("size", fs.SizeSuffix(c.src.Size())))
 
 	return newDst, nil
 }

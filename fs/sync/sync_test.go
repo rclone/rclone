@@ -5,9 +5,11 @@ package sync
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"os/exec"
 	"runtime"
@@ -26,6 +28,7 @@ import (
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/transform"
@@ -62,6 +65,49 @@ func TestCopyWithDryRun(t *testing.T) {
 
 	r.CheckLocalItems(t, file1)
 	r.CheckRemoteItems(t)
+}
+
+// Check the per file logs from a copy are attributed to the stats group
+func TestCopyLogsAttributedToStatsGroup(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	r.WriteFile("sub dir/hello world", "hello world", t1)
+	r.Mkdir(ctx, r.Fremote)
+
+	// Log at INFO level so "Copied (new)" is logged
+	ci := fs.GetConfig(ctx)
+	oldLogLevel := ci.LogLevel
+	ci.LogLevel = fs.LogLevelInfo
+	oldSlogLevel := log.Handler.SetLevel(slog.LevelInfo)
+	defer func() {
+		ci.LogLevel = oldLogLevel
+		log.Handler.SetLevel(oldSlogLevel)
+	}()
+
+	// Capture the JSON logs
+	var mu mutex.Mutex
+	var entries []map[string]any
+	remove := log.Handler.AddOutput(true, func(level slog.Level, text string) {
+		var entry map[string]any
+		assert.NoError(t, json.Unmarshal([]byte(text), &entry), text)
+		mu.Lock()
+		entries = append(entries, entry)
+		mu.Unlock()
+	})
+	defer remove()
+
+	err := CopyDir(accounting.WithStatsGroup(ctx, "test-group"), r.Fremote, r.Flocal, false)
+	require.NoError(t, err)
+	remove()
+
+	found := false
+	for _, entry := range entries {
+		if entry["msg"] == "Copied (new)" && entry["object"] == "sub dir/hello world" {
+			assert.Equal(t, "test-group", entry["group"])
+			found = true
+		}
+	}
+	assert.True(t, found, "didn't find Copied log in %v", entries)
 }
 
 // Now without dry run
