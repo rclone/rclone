@@ -1405,6 +1405,85 @@ func TestListFormat(t *testing.T) {
 
 }
 
+// noDirMoveFs wraps an Fs removing DirMove so operations.DirMove has
+// to move the objects one by one, and allows Move to be made to fail.
+type noDirMoveFs struct {
+	fs.Fs
+	features *fs.Features
+	moveCtxs chan context.Context
+}
+
+func (f *noDirMoveFs) Features() *fs.Features { return f.features }
+
+func newNoDirMoveFs(t *testing.T, wrapped fs.Fs, failOn string) *noDirMoveFs {
+	move := wrapped.Features().Move
+	require.NotNil(t, move, "the test needs a backend with Move")
+	f := &noDirMoveFs{
+		Fs:       wrapped,
+		moveCtxs: make(chan context.Context, 100),
+	}
+	features := *wrapped.Features()
+	features.DirMove = nil
+	features.Move = func(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+		f.moveCtxs <- ctx
+		if src.Remote() == failOn {
+			return nil, errors.New("boom")
+		}
+		return move(ctx, src, remote)
+	}
+	f.features = &features
+	return f
+}
+
+// Check DirMove doesn't hang when moving the objects one by one and
+// one of the moves fails
+func TestDirMoveMoveError(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	ci.Checkers = 2
+	r := fstest.NewRun(t)
+	// More files than the renames channel can hold
+	for i := range 20 {
+		r.WriteObject(ctx, fmt.Sprintf("A/file%d", i), "x", t1)
+	}
+	f := newNoDirMoveFs(t, r.Fremote, "A/file0")
+
+	done := make(chan error, 1)
+	go func() {
+		done <- operations.DirMove(ctx, f, "A", "B")
+	}()
+	select {
+	case err := <-done:
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "boom")
+	case <-time.After(30 * time.Second):
+		t.Fatal("DirMove didn't return - deadlocked sending to the movers")
+	}
+}
+
+// Check the objects moved one by one by DirMove are moved with the
+// caller's context
+func TestDirMoveContext(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	ci.Checkers = 2
+	r := fstest.NewRun(t)
+	r.WriteObject(ctx, "A/one", "one", t1)
+	r.WriteObject(ctx, "A/two", "two", t1)
+	f := newNoDirMoveFs(t, r.Fremote, "")
+
+	require.NoError(t, operations.DirMove(accounting.WithStatsGroup(ctx, "test-dirmove"), f, "A", "B"))
+	close(f.moveCtxs)
+	moves := 0
+	for moveCtx := range f.moveCtxs {
+		group, ok := accounting.StatsGroupFromContext(moveCtx)
+		assert.True(t, ok, "move wasn't passed the caller's context")
+		assert.Equal(t, "test-dirmove", group)
+		moves++
+	}
+	assert.Equal(t, 2, moves)
+}
+
 func TestDirMove(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
