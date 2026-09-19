@@ -91,6 +91,7 @@ var logReplacements = []string{
 	`^NOTICE: too_many_(requests|write_operations)/\.*: Too many requests or write operations.*$`, dropMe,
 	`^NOTICE: .*?: Forced to upload files to set modification times on this backend.$`, dropMe,
 	`^INFO  : .*? Committing uploads - please wait...$`, dropMe,
+	`^INFO  : .*? Committing uploads - done$`, dropMe,
 	`^INFO  : .*?: src and dst identical but can't set mod time without deleting and re-uploading$`, dropMe,
 	`^INFO  : .*?: src and dst identical but can't set mod time without re-uploading$`, dropMe,
 	// ignore crypt info messages
