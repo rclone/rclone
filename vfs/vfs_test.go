@@ -249,6 +249,27 @@ func TestVFSStatParent(t *testing.T) {
 	assert.Equal(t, os.ErrExist, err)
 }
 
+func TestVFSAddVirtual(t *testing.T) {
+	_, vfs := newTestVFS(t)
+
+	require.NoError(t, vfs.AddVirtual("file", 17, false))
+	node, err := vfs.Stat("file")
+	require.NoError(t, err)
+	assert.True(t, node.IsFile())
+	assert.Equal(t, int64(17), node.Size())
+
+	require.NoError(t, vfs.AddVirtual("dir/", 0, true))
+	node, err = vfs.Stat("dir")
+	require.NoError(t, err)
+	assert.True(t, node.IsDir())
+
+	require.NoError(t, vfs.AddVirtual("dir/file2", 18, false))
+	node, err = vfs.Stat("dir/file2")
+	require.NoError(t, err)
+	assert.True(t, node.IsFile())
+	assert.Equal(t, int64(18), node.Size())
+}
+
 func TestVFSOpenFile(t *testing.T) {
 	r, vfs := newTestVFS(t)
 
