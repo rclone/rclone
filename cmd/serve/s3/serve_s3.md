@@ -192,7 +192,8 @@ remote as if it had completed.
   (1, 2, 3, ...). Parts the client uploads concurrently or out of order
   are buffered until their turn. The memory used for this buffering is
   capped, per upload, by `--multipart-streaming-buffer-limit` (default
-  `256M`, `0` for no limit): a part that would take the buffer over the
+  `256M`, `0` for no limit), counting each buffered part in the whole
+  1 MiB memory pages it occupies: a part that would take the buffer over the
   limit is stalled until the stream drains, so a client that uploads
   faster than the remote can accept sees backpressure rather than
   unbounded server memory use. Since a stalled part holds its HTTP
