@@ -140,11 +140,16 @@ func LogLevelToSlog(level LogLevel) slog.Level {
 	return slogLevel
 }
 
-func logSlog(level LogLevel, text string, attrs []any) {
-	logger.Log(context.Background(), LogLevelToSlog(level), text, attrs...)
+func logSlog(ctx context.Context, level LogLevel, text string, attrs []any) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	// ctx is passed to the log handler which uses it to attribute
+	// the log to the rc job and stats group it was made by.
+	logger.Log(ctx, LogLevelToSlog(level), text, attrs...)
 }
 
-func logSlogWithObject(level LogLevel, o any, text string, attrs []any) {
+func logSlogWithObject(ctx context.Context, level LogLevel, o any, text string, attrs []any) {
 	if o != nil {
 		var object string
 		switch o.(type) {
@@ -160,24 +165,46 @@ func logSlogWithObject(level LogLevel, o any, text string, attrs []any) {
 			"objectType", fmt.Sprintf("%T", o),
 		})
 	}
-	logSlog(level, text, attrs)
+	logSlog(ctx, level, text, attrs)
 }
 
-// LogPrint produces a log string from the arguments passed in
-func LogPrint(level LogLevel, o any, text string) {
-	logSlogWithObject(level, o, text, nil)
-}
-
-// LogPrintf produces a log string from the arguments passed in
-func LogPrintf(level LogLevel, o any, text string, args ...any) {
-	text = fmt.Sprintf(text, args...)
+func logPrintf(ctx context.Context, level LogLevel, o any, text string, args ...any) {
+	// Note that text isn't assigned to here so go vet can see this
+	// is a printf wrapper and check the format strings of the
+	// callers.
+	msg := fmt.Sprintf(text, args...)
 	var fields []any
 	for _, arg := range args {
 		if item, ok := arg.(LogValueItem); ok {
 			fields = append(fields, item.key, item.value)
 		}
 	}
-	logSlogWithObject(level, o, text, fields)
+	logSlogWithObject(ctx, level, o, msg, fields)
+}
+
+func logLevelPrintf(ctx context.Context, level LogLevel, o any, text string, args ...any) {
+	// This uses the global log level, not the one in ctx, as the
+	// log handler filters on the global log level.
+	if GetConfig(context.TODO()).LogLevel >= level {
+		logPrintf(ctx, level, o, text, args...)
+	}
+}
+
+// LogPrint produces a log string from the arguments passed in
+func LogPrint(level LogLevel, o any, text string) {
+	logSlogWithObject(context.Background(), level, o, text, nil)
+}
+
+// LogPrintf produces a log string from the arguments passed in
+func LogPrintf(level LogLevel, o any, text string, args ...any) {
+	logPrintf(context.Background(), level, o, text, args...)
+}
+
+// LogPrintfCtx produces a log string from the arguments passed in.
+//
+// The log is attributed to the stats group in ctx, if any.
+func LogPrintfCtx(ctx context.Context, level LogLevel, o any, text string, args ...any) {
+	logPrintf(ctx, level, o, text, args...)
 }
 
 // LogLevelPrint writes logs at the given level
@@ -189,9 +216,7 @@ func LogLevelPrint(level LogLevel, o any, text string) {
 
 // LogLevelPrintf writes logs at the given level
 func LogLevelPrintf(level LogLevel, o any, text string, args ...any) {
-	if GetConfig(context.TODO()).LogLevel >= level {
-		LogPrintf(level, o, text, args...)
-	}
+	logLevelPrintf(context.Background(), level, o, text, args...)
 }
 
 // Panic writes alert log output for this Object or Fs and calls panic().
@@ -273,6 +298,11 @@ func Errorf(o any, text string, args ...any) {
 	LogLevelPrintf(LogLevelError, o, text, args...)
 }
 
+// ErrorfCtx is Errorf with the log attributed to the stats group in ctx, if any.
+func ErrorfCtx(ctx context.Context, o any, text string, args ...any) {
+	logLevelPrintf(ctx, LogLevelError, o, text, args...)
+}
+
 // Print writes log output for this Object or Fs, same as Logf.
 func Print(o any, text string) {
 	LogLevelPrint(LogLevelNotice, o, text)
@@ -301,6 +331,11 @@ func Logf(o any, text string, args ...any) {
 	LogLevelPrintf(LogLevelNotice, o, text, args...)
 }
 
+// LogfCtx is Logf with the log attributed to the stats group in ctx, if any.
+func LogfCtx(ctx context.Context, o any, text string, args ...any) {
+	logLevelPrintf(ctx, LogLevelNotice, o, text, args...)
+}
+
 // Infoc writes info on transfers for this Object or Fs.  Use this
 // level for logging transfers, deletions and things which should
 // appear with the -v flag.
@@ -316,6 +351,11 @@ func Infof(o any, text string, args ...any) {
 	LogLevelPrintf(LogLevelInfo, o, text, args...)
 }
 
+// InfofCtx is Infof with the log attributed to the stats group in ctx, if any.
+func InfofCtx(ctx context.Context, o any, text string, args ...any) {
+	logLevelPrintf(ctx, LogLevelInfo, o, text, args...)
+}
+
 // Debug writes debugging output for this Object or Fs.  Use this for
 // debug only.  The user must have to specify -vv to see this.
 func Debug(o any, text string) {
@@ -326,6 +366,11 @@ func Debug(o any, text string) {
 // debug only.  The user must have to specify -vv to see this.
 func Debugf(o any, text string, args ...any) {
 	LogLevelPrintf(LogLevelDebug, o, text, args...)
+}
+
+// DebugfCtx is Debugf with the log attributed to the stats group in ctx, if any.
+func DebugfCtx(ctx context.Context, o any, text string, args ...any) {
+	logLevelPrintf(ctx, LogLevelDebug, o, text, args...)
 }
 
 // LogDirName returns an object for the logger, logging a root
