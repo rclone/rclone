@@ -79,6 +79,11 @@ To copy a local directory to a dosya directory called backup
 rclone copy /home/source remote:backup
 ```
 
+The dosya backend uploads large files in parts and stores them as single
+files that remain accessible through the web app and other clients. If you
+previously used a WebDAV remote with a chunker overlay for large uploads,
+you can use this backend without the overlay.
+
 ### Getting your API key
 
 1. Log in to [dosya.dev](https://dosya.dev)
