@@ -566,6 +566,54 @@ func TestRetry(t *testing.T) {
 
 }
 
+// Check the wait for a Retry-After error can be interrupted
+func TestRetryAfterContextCancel(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	retryAfter := pacer.RetryAfterError(errors.New("BANG"), time.Hour)
+	calls := 0
+	fn := func() error {
+		calls++
+		go cancel()
+		return retryAfter
+	}
+
+	done := make(chan error, 1)
+	go func() {
+		done <- operations.Retry(ctx, nil, 5, fn)
+	}()
+	select {
+	case err := <-done:
+		// The error from the call is returned, not the context error
+		assert.Equal(t, retryAfter, err)
+		assert.Equal(t, 1, calls)
+	case <-time.After(30 * time.Second):
+		t.Fatal("Retry didn't return - still sleeping for the Retry-After")
+	}
+}
+
+// Check we don't wait for a Retry-After error on the last try
+func TestRetryAfterLastTry(t *testing.T) {
+	ctx := context.Background()
+	retryAfter := pacer.RetryAfterError(errors.New("BANG"), time.Hour)
+	calls := 0
+	fn := func() error {
+		calls++
+		return retryAfter
+	}
+
+	done := make(chan error, 1)
+	go func() {
+		done <- operations.Retry(ctx, nil, 1, fn)
+	}()
+	select {
+	case err := <-done:
+		assert.Equal(t, retryAfter, err)
+		assert.Equal(t, 1, calls)
+	case <-time.After(30 * time.Second):
+		t.Fatal("Retry didn't return - slept for the Retry-After on the last try")
+	}
+}
+
 func TestCat(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)

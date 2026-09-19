@@ -743,6 +743,19 @@ func SameDir(fdst, fsrc fs.Info) bool {
 	return fdstRootFolded == fsrcRootFolded
 }
 
+// sleepWithContext sleeps for d returning true, or false if ctx
+// finishes first.
+func sleepWithContext(ctx context.Context, d time.Duration) bool {
+	timer := time.NewTimer(d)
+	defer timer.Stop()
+	select {
+	case <-timer.C:
+		return true
+	case <-ctx.Done():
+		return false
+	}
+}
+
 // Retry runs fn up to maxTries times if it returns a retriable error
 func Retry(ctx context.Context, o any, maxTries int, fn func() error) (err error) {
 	for tries := 1; tries <= maxTries; tries++ {
@@ -760,8 +773,14 @@ func Retry(ctx context.Context, o any, maxTries int, fn func() error) (err error
 			fs.Debugf(o, "Received error: %v - low level retry %d/%d", err, tries, maxTries)
 			continue
 		} else if t, ok := pacer.IsRetryAfter(err); ok {
+			if tries >= maxTries {
+				break
+			}
 			fs.Debugf(o, "Sleeping for %v (as indicated by the server) to obey Retry-After error: %v", t, err)
-			time.Sleep(t)
+			if !sleepWithContext(ctx, t) {
+				fserrors.ContextError(ctx, &err)
+				break
+			}
 			continue
 		}
 		break
