@@ -1058,3 +1058,59 @@ func TestWaitForTurnRejectsBogusSize(t *testing.T) {
 	up.mu.Unlock()
 	<-admitted
 }
+
+// TestMultipartBufferLimitCountsPages checks that the reorder buffer limit
+// is charged in the whole pool pages a buffered part occupies, not the part's
+// length, so a client can't pin a page per byte by sending tiny parts out of
+// order.
+func TestMultipartBufferLimitCountsPages(t *testing.T) {
+	b, f, bucket := newPutTestBackend(t, "", nil)
+	b.s.opt.MultipartStreamingBufferLimit = 4 * pool.BufferSize
+	ctx := context.Background()
+	const object = "tiny-parts.bin"
+
+	uploadID, err := b.CreateMultipartUpload(ctx, bucket, object, nil)
+	require.NoError(t, err)
+
+	// Parts 2 to 5 fill the buffer's 4 pages with one byte each.
+	upload := func(partNumber int) (string, error) {
+		body := []byte{byte('0' + partNumber)}
+		return b.UploadPart(ctx, bucket, object, uploadID, partNumber, 1, bytes.NewReader(body))
+	}
+	etags := make([]string, 7)
+	for partNumber := 2; partNumber <= 5; partNumber++ {
+		etags[partNumber], err = upload(partNumber)
+		require.NoError(t, err)
+	}
+
+	// Part 6 needs a fifth page so must wait for the buffer to drain.
+	done := make(chan error, 1)
+	go func() {
+		var err error
+		etags[6], err = upload(6)
+		done <- err
+	}()
+	select {
+	case err := <-done:
+		t.Fatalf("part 6 was not blocked by the buffer limit (err=%v)", err)
+	case <-time.After(200 * time.Millisecond):
+	}
+
+	// Part 1 lets the buffered parts stream, freeing the pages for part 6.
+	etags[1], err = upload(1)
+	require.NoError(t, err)
+	select {
+	case err := <-done:
+		require.NoError(t, err)
+	case <-time.After(10 * time.Second):
+		t.Fatal("part 6 was never unblocked")
+	}
+
+	parts := make([]gofakes3.CompletedPart, 0, 6)
+	for partNumber := 1; partNumber <= 6; partNumber++ {
+		parts = append(parts, gofakes3.CompletedPart{PartNumber: partNumber, ETag: etags[partNumber]})
+	}
+	_, _, err = b.CompleteMultipartUpload(ctx, bucket, object, uploadID, &gofakes3.CompleteMultipartUploadRequest{Parts: parts})
+	require.NoError(t, err)
+	assert.Equal(t, []byte("123456"), readObject(t, f, bucket, object))
+}
