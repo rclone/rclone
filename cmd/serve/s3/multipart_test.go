@@ -502,7 +502,7 @@ func TestMultipartAbortDuringUploadPart(t *testing.T) {
 	// An UploadPart in progress: the part is admitted, then the abort lands
 	// while its body is still being received.
 	contents := []byte("hello")
-	require.NoError(t, up.waitForTurn(1, int64(len(contents))))
+	require.NoError(t, up.waitForTurn(context.Background(), 1, int64(len(contents))))
 	require.NoError(t, up.abort())
 
 	// The abort must abandon the write rather than committing it.
@@ -555,7 +555,7 @@ func TestMultipartCloseIncomplete(t *testing.T) {
 	_, err := rw.Write(contents)
 	require.NoError(t, err)
 	md5Sum := md5.Sum(contents)
-	require.NoError(t, up.waitForTurn(2, int64(len(contents))))
+	require.NoError(t, up.waitForTurn(context.Background(), 2, int64(len(contents))))
 	require.NoError(t, up.streamPart(2, int64(len(contents)), md5Sum[:], rw))
 
 	require.ErrorIs(t, up.close(), gofakes3.ErrInvalidPart)
@@ -1032,17 +1032,17 @@ func TestWaitForTurnRejectsBogusSize(t *testing.T) {
 	up := newMultipartUpload("bucket", "key", "bucket/key", "bucket/key", nil, 1<<20)
 
 	// A part length can never be negative.
-	require.ErrorIs(t, up.waitForTurn(1, -1), gofakes3.ErrInvalidArgument)
+	require.ErrorIs(t, up.waitForTurn(context.Background(), 1, -1), gofakes3.ErrInvalidArgument)
 
 	// A huge out-of-order part is admitted once because the buffer is empty,
 	// driving buffered near the top of the int64 range.
-	require.NoError(t, up.waitForTurn(2, math.MaxInt64))
+	require.NoError(t, up.waitForTurn(context.Background(), 2, math.MaxInt64))
 
 	// A further out-of-order part must wait, not be wrongly admitted by an
 	// overflow of buffered+size.
 	admitted := make(chan struct{})
 	go func() {
-		_ = up.waitForTurn(3, math.MaxInt64)
+		_ = up.waitForTurn(context.Background(), 3, math.MaxInt64)
 		close(admitted)
 	}()
 	select {
@@ -1054,7 +1054,7 @@ func TestWaitForTurnRejectsBogusSize(t *testing.T) {
 	// Wake the blocked goroutine so it doesn't leak.
 	up.mu.Lock()
 	up.closed = true
-	up.cond.Broadcast()
+	up.broadcast()
 	up.mu.Unlock()
 	<-admitted
 }
@@ -1165,4 +1165,35 @@ func TestMultipartRetryAfterStreamedNotBuffered(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, part1, readObject(t, f, bucket, object))
+}
+
+// TestMultipartBufferWaitGivesUp checks that a part waiting for room in the
+// reorder buffer gives up when its request is cancelled, and tells the client
+// to slow down if it has waited too long, so a waiting request can't be held
+// open forever.
+func TestMultipartBufferWaitGivesUp(t *testing.T) {
+	b, _, bucket := newPutTestBackend(t, "", nil)
+	b.s.opt.MultipartStreamingBufferLimit = pool.BufferSize
+	oldTimeout := multipartWaitTimeout
+	multipartWaitTimeout = 100 * time.Millisecond
+	t.Cleanup(func() { multipartWaitTimeout = oldTimeout })
+	ctx := context.Background()
+	const object = "wait.bin"
+
+	uploadID, err := b.CreateMultipartUpload(ctx, bucket, object, nil)
+	require.NoError(t, err)
+
+	// Part 2 fills the buffer, so part 3 must wait.
+	_, err = b.UploadPart(ctx, bucket, object, uploadID, 2, 1, bytes.NewReader([]byte("2")))
+	require.NoError(t, err)
+
+	cancelCtx, cancel := context.WithCancel(ctx)
+	time.AfterFunc(10*time.Millisecond, cancel)
+	_, err = b.UploadPart(cancelCtx, bucket, object, uploadID, 3, 1, bytes.NewReader([]byte("3")))
+	require.ErrorIs(t, err, context.Canceled)
+
+	_, err = b.UploadPart(ctx, bucket, object, uploadID, 3, 1, bytes.NewReader([]byte("3")))
+	assert.True(t, gofakes3.HasErrorCode(err, errSlowDown), "want SlowDown, got %v", err)
+
+	require.NoError(t, b.AbortMultipartUpload(ctx, bucket, object, uploadID))
 }

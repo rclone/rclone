@@ -45,6 +45,16 @@ import (
 // a streamed multipart upload is written to before it is moved into place.
 const multipartUploadPrefix = tempObjectPrefix + "multipart_"
 
+// multipartWaitTimeout is how long a part waits for room in the reorder
+// buffer before the client is told to slow down and retry it.
+var multipartWaitTimeout = time.Minute
+
+// errSlowDown asks the client to retry the request later.
+//
+// FIXME gofakes3 sends this with status 500 rather than the 503 S3 uses,
+// though S3 clients retry either.
+const errSlowDown gofakes3.ErrorCode = "SlowDown"
+
 // multipartUpload tracks one in-flight S3 multipart upload. The parts are
 // written, in part-number order, into fh - a VFS file handle which either
 // streams straight through to the remote (the default) or is backed by the
@@ -59,7 +69,7 @@ type multipartUpload struct {
 	vfs *vfs.VFS       // the VFS fh was created on, used for all later operations
 
 	mu        sync.Mutex
-	cond      *sync.Cond     // signalled when buffered shrinks, nextPart advances or the upload closes
+	changed   chan struct{}  // closed when buffered shrinks, nextPart advances or the upload closes
 	partMD5s  map[int][]byte // raw MD5 sums per part (for the final S3 multipart ETag)
 	partSizes map[int]int64  // observed part sizes
 	closed    bool
@@ -88,9 +98,15 @@ func newMultipartUpload(bucket, key, fp, streamFp string, meta map[string]string
 		streamBuf:   map[int]*pool.RW{},
 		bufferLimit: bufferLimit,
 		lastUsed:    time.Now(),
+		changed:     make(chan struct{}),
 	}
-	up.cond = sync.NewCond(&up.mu)
 	return up
+}
+
+// broadcast wakes everything waiting on up.changed. Call with up.mu held.
+func (up *multipartUpload) broadcast() {
+	close(up.changed)
+	up.changed = make(chan struct{})
 }
 
 // startActivity marks the upload as having a request in flight.
@@ -205,7 +221,7 @@ func (b *s3Backend) UploadPart(ctx context.Context, bucketName, objectName strin
 
 	// Wait until there is room to buffer this part, bounding the memory a
 	// client which uploads faster than the backend drains can consume.
-	if err := up.waitForTurn(partNumber, contentLength); err != nil {
+	if err := up.waitForTurn(ctx, partNumber, contentLength); err != nil {
 		return "", err
 	}
 
@@ -288,25 +304,40 @@ func bufferCharge(size int64) int64 {
 // limit when the buffer is empty, to guarantee progress. Reserved bytes are
 // returned with release, or by the pump as the part is streamed.
 //
+// A part which waits for longer than multipartWaitTimeout gets errSlowDown,
+// asking the client to retry it later, so a waiting request isn't held open
+// indefinitely. The wait also ends if ctx is cancelled.
+//
 // size is the client-declared part length and is not trusted: a negative value
 // is rejected, and the admission test is written so a huge value can't overflow
 // the running total and wrongly admit further parts past the limit.
-func (up *multipartUpload) waitForTurn(partNumber int, size int64) error {
+func (up *multipartUpload) waitForTurn(ctx context.Context, partNumber int, size int64) error {
 	if size < 0 {
 		return gofakes3.ErrInvalidArgument
 	}
 	size = bufferCharge(size)
-	up.mu.Lock()
-	defer up.mu.Unlock()
+	timer := time.NewTimer(multipartWaitTimeout)
+	defer timer.Stop()
 	for {
+		up.mu.Lock()
 		if up.closed {
+			up.mu.Unlock()
 			return gofakes3.ErrNoSuchUpload
 		}
 		if up.bufferLimit <= 0 || partNumber <= up.nextPart || up.buffered == 0 || size <= up.bufferLimit-up.buffered {
 			up.buffered += size
+			up.mu.Unlock()
 			return nil
 		}
-		up.cond.Wait()
+		changed := up.changed
+		up.mu.Unlock()
+		select {
+		case <-changed:
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-timer.C:
+			return errSlowDown
+		}
 	}
 }
 
@@ -315,7 +346,7 @@ func (up *multipartUpload) waitForTurn(partNumber int, size int64) error {
 func (up *multipartUpload) release(size int64) {
 	up.mu.Lock()
 	up.buffered -= bufferCharge(size)
-	up.cond.Broadcast()
+	up.broadcast()
 	up.mu.Unlock()
 }
 
@@ -339,7 +370,7 @@ func (up *multipartUpload) streamPart(partNumber int, size int64, md5Sum []byte,
 		// The upload was aborted or completed while the part body was
 		// being received.
 		up.buffered -= bufferCharge(size)
-		up.cond.Broadcast()
+		up.broadcast()
 		up.mu.Unlock()
 		_ = rw.Close()
 		return gofakes3.ErrNoSuchUpload
@@ -348,13 +379,13 @@ func (up *multipartUpload) streamPart(partNumber int, size int64, md5Sum []byte,
 		if old, buffered := up.streamBuf[partNumber]; buffered {
 			_ = old.Close()
 			up.buffered -= bufferCharge(up.partSizes[partNumber])
-			up.cond.Broadcast()
+			up.broadcast()
 		} else {
 			// Already streamed (or streaming right now): the stream can't be
 			// rewritten, so accept an identical part and reject the rest.
 			same := bytes.Equal(md5Sum, oldMD5) && size == up.partSizes[partNumber]
 			up.buffered -= bufferCharge(size)
-			up.cond.Broadcast()
+			up.broadcast()
 			up.mu.Unlock()
 			_ = rw.Close()
 			if !same {
@@ -400,7 +431,7 @@ func (up *multipartUpload) streamPart(partNumber int, size int64, md5Sum []byte,
 			up.pumping = false
 			up.buffered -= psize
 			closed := up.closed
-			up.cond.Broadcast()
+			up.broadcast()
 			up.mu.Unlock()
 			if closed {
 				// The write failed because the upload was aborted while
@@ -414,7 +445,7 @@ func (up *multipartUpload) streamPart(partNumber int, size int64, md5Sum []byte,
 		up.mu.Lock()
 		up.nextPart++
 		up.buffered -= psize
-		up.cond.Broadcast()
+		up.broadcast()
 	}
 }
 
@@ -626,7 +657,7 @@ func (up *multipartUpload) close() error {
 		return gofakes3.ErrInvalidPart
 	}
 	up.closed = true
-	up.cond.Broadcast()
+	up.broadcast()
 	up.mu.Unlock()
 
 	return up.fh.Close()
@@ -652,7 +683,7 @@ func (up *multipartUpload) abort() error {
 	up.aborted = true
 	streamBuf := up.streamBuf
 	up.streamBuf = nil
-	up.cond.Broadcast()
+	up.broadcast()
 	up.mu.Unlock()
 
 	for _, rw := range streamBuf {
