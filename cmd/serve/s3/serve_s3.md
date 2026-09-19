@@ -319,7 +319,17 @@ clock, so the expiry only needs to outlast the client's pauses
 
 Late operations on an expired upload fail with `NoSuchUpload`, as they
 do on real S3 when a lifecycle rule has aborted the upload. Set
-`--multipart-expiry 0` to keep incomplete uploads forever.
+`--multipart-expiry 0` to keep incomplete uploads forever - but note
+that abandoned uploads are then never cleaned up and go on counting
+towards `--multipart-max-uploads` below, so enough of them will stop
+any new multipart upload being started until the server is restarted.
+
+Each multipart upload in progress holds server resources - for example
+the buffers the remote's own upload uses once the first part has
+arrived - so no more than `--multipart-max-uploads` (default `1000`,
+`0` for no limit) can be in progress at once. Starting another fails
+with a `SlowDown` error, which S3 clients retry, and a one-off `NOTICE`
+is logged.
 
 #### Disabling streaming
 

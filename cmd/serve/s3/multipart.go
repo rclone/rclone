@@ -192,6 +192,40 @@ func (b *s3Backend) loadUpload(uploadID gofakes3.UploadID) (*multipartUpload, er
 	return v.(*multipartUpload), nil
 }
 
+// reserveUpload reserves a place for a new upload, failing with
+// errSlowDown if --multipart-max-uploads are already in progress. The
+// place is given back by releaseUpload or deleteUpload.
+func (b *s3Backend) reserveUpload() error {
+	n := b.uploads.Add(1)
+	if maxUploads := int64(b.s.opt.MultipartMaxUploads); maxUploads > 0 && n > maxUploads {
+		b.uploads.Add(-1)
+		b.warnMaxUploadsOnce.Do(func() {
+			fs.Logf(nil, "serve s3: telling clients to slow down as --multipart-max-uploads %d multipart uploads are in progress", maxUploads)
+		})
+		return errSlowDown
+	}
+	return nil
+}
+
+// releaseUpload gives back a place reserved for an upload which was never
+// recorded with addUpload.
+func (b *s3Backend) releaseUpload() {
+	b.uploads.Add(-1)
+}
+
+// addUpload records a new in-flight upload, which must hold a place
+// reserved by reserveUpload.
+func (b *s3Backend) addUpload(uploadID gofakes3.UploadID, up *multipartUpload) {
+	b.multipartUploads.Store(uploadID, up)
+}
+
+// deleteUpload removes the record of an in-flight upload, if present.
+func (b *s3Backend) deleteUpload(uploadID gofakes3.UploadID) {
+	if _, ok := b.multipartUploads.LoadAndDelete(uploadID); ok {
+		b.uploads.Add(-1)
+	}
+}
+
 // CreateMultipartUpload begins a new multipart upload.
 //
 // The parts are written, in part-number order, through the VFS to a temporary
@@ -215,6 +249,8 @@ func (b *s3Backend) loadUpload(uploadID gofakes3.UploadID) (*multipartUpload, er
 //
 // The object the parts are written to is only created when the first part
 // arrives, so an upload with no parts holds no VFS or backend resources.
+// No more than --multipart-max-uploads can be in progress: after that
+// errSlowDown is returned before anything is created on the remote.
 func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objectName string, meta map[string]string) (gofakes3.UploadID, error) {
 	_vfs, err := b.s.getVFS(ctx)
 	if err != nil {
@@ -235,9 +271,16 @@ func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objec
 	if err != nil {
 		return "", err
 	}
+	// Reserve a place before doing anything with the remote, so a refused
+	// upload leaves nothing behind.
+	if err := b.reserveUpload(); err != nil {
+		return "", err
+	}
+
 	objectDir := path.Dir(fp)
 	if objectDir != "." {
 		if err := mkdirRecursive(objectDir, _vfs); err != nil {
+			b.releaseUpload()
 			return "", err
 		}
 	}
@@ -258,7 +301,7 @@ func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objec
 	up.budget = b.budget
 	up.vfs = _vfs
 
-	b.multipartUploads.Store(uploadID, up)
+	b.addUpload(uploadID, up)
 	return uploadID, nil
 }
 
@@ -801,7 +844,7 @@ func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, obj
 	defer up.endActivity()
 
 	if err := up.validate(input); err != nil {
-		b.multipartUploads.Delete(uploadID)
+		b.deleteUpload(uploadID)
 		_ = up.abort()
 		b.discardUpload(up)
 		return "", "", err
@@ -811,7 +854,7 @@ func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, obj
 	// streamed parts don't form the complete object; abort then tears it
 	// down. (After a successful or failed commit the abort is a no-op.)
 	if err := up.close(); err != nil {
-		b.multipartUploads.Delete(uploadID)
+		b.deleteUpload(uploadID)
 		_ = up.abort()
 		b.discardUpload(up)
 		return "", "", err
@@ -828,7 +871,7 @@ func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, obj
 			return "", "", err
 		}
 	}
-	b.multipartUploads.Delete(uploadID)
+	b.deleteUpload(uploadID)
 
 	b.meta.Store(up.fp, up.meta)
 	if val, ok := up.meta["X-Amz-Meta-Mtime"]; ok {
@@ -853,7 +896,7 @@ func (b *s3Backend) AbortMultipartUpload(ctx context.Context, bucketName, object
 	if err != nil {
 		return err
 	}
-	defer b.multipartUploads.Delete(uploadID)
+	defer b.deleteUpload(uploadID)
 	if err := up.abort(); err != nil {
 		fs.Errorf(up.fp, "aborting multipart upload: %v", err)
 	}
@@ -866,7 +909,7 @@ func (b *s3Backend) AbortMultipartUpload(ctx context.Context, bucketName, object
 // accepted.
 func (b *s3Backend) failUpload(uploadID gofakes3.UploadID, up *multipartUpload) {
 	fs.Errorf(up.fp, "failing multipart upload %s: %v", uploadID, errMultipartPoisoned)
-	b.multipartUploads.Delete(uploadID)
+	b.deleteUpload(uploadID)
 	if err := up.abort(); err != nil {
 		fs.Errorf(up.fp, "aborting multipart upload: %v", err)
 	}
@@ -911,7 +954,7 @@ func (b *s3Backend) reapExpiredUploads(now time.Time, expiry time.Duration) {
 			return true
 		}
 		fs.Logf(up.fp, "aborting multipart upload %s idle for more than %v", uploadID, expiry)
-		b.multipartUploads.Delete(uploadID)
+		b.deleteUpload(uploadID)
 		if err := up.abort(); err != nil {
 			fs.Errorf(up.fp, "aborting abandoned multipart upload: %v", err)
 		}
