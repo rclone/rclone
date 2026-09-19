@@ -17,7 +17,9 @@ Alternatively `--auth-proxy` can be used to look up the secret for each
 access key ID and choose the backend it maps to (see [Auth
 Proxy](#auth-proxy) below). When an auth proxy is in use `--auth-key`
 is ignored and every request must be signed with the secret the proxy
-returns for its access key ID.
+returns for its access key ID. Each access key ID is a separate user,
+whose multipart uploads and object metadata are private to it, even if
+the proxy maps several access key IDs to the same backend.
 
 Like all rclone flags `--auth-key` can be set via environment
 variables, in this case `RCLONE_AUTH_KEY`. Since this flag can be
@@ -126,8 +128,8 @@ never becomes visible under it.
 With the default `--vfs-cache-mode off` `serve s3` **streams** each
 multipart upload, in part-number order, into a single streaming upload
 to the underlying remote, so the whole file is never buffered in
-memory. Memory use stays bounded by the parts in flight. The remote
-then performs its own internal upload (for example its own multipart
+memory: only parts which arrive out of order are buffered, within the
+limits described below. The remote then performs its own internal upload (for example its own multipart
 upload, still with bounded memory). Remotes that don't support
 streaming uploads (those that must know the file size before the
 upload starts, such as `onedrive`, `pcloud`, `jottacloud`, `mailru`,
@@ -166,8 +168,8 @@ remote as if it had completed.
 
 **Features**
 
-- The whole object is never buffered in memory; memory use is bounded by
-  the parts in flight, not the upload size.
+- The whole object is never buffered in memory; only parts arriving out
+  of order are, within fixed limits, whatever the upload size.
 - Parts can be any size. Clients that don't produce uniform-sized parts
   work fine - for example PostgreSQL backup tools such as **pgBarman**
   and **pgBackRest**, which flush an upload buffer once it grows past
@@ -198,26 +200,30 @@ remote as if it had completed.
   (default `1G`, `0` for no limit), counting each buffered part in the
   whole 1 MiB memory pages it occupies: a part that would take the
   buffer over either limit is stalled until the stream drains (or, if it
-  is bigger than the limit, until it is the next part), so a client that
-  uploads faster than the remote can accept sees backpressure rather
-  than unbounded server memory use. A part stalled for more than a
-  minute is failed with a `SlowDown` error, which S3 clients retry.
-  Since a stalled part holds its HTTP request open, clients whose upload
-  concurrency times chunk size exceeds the limit may need a longer read
-  timeout when the remote is slow. Non-contiguous part numbers are
-  rejected on completion.
-  Configure the client to upload in part order, ideally with low
-  concurrency, for the lowest memory use.
+  is bigger than the limits, until it is the next part), so a client
+  that uploads faster than the remote can accept sees backpressure
+  rather than unbounded server memory use. A stalled part holds its HTTP
+  request open, and one stalled for more than a minute is failed with a
+  `SlowDown` error, which S3 clients retry. Clients whose upload
+  concurrency times part size exceeds the limits will see these stalls
+  and retries when the remote is slower than the client. Non-contiguous
+  part numbers are rejected on completion. Configure the client to
+  upload in part order, ideally with low concurrency, for the lowest
+  memory use.
 - A part uploaded again before completion - typically a client retrying
   after a timeout - is accepted: if the earlier copy is still buffered
   it is replaced, and if it has already been streamed an identical
-  re-upload is a no-op. If a part fails part way through being streamed
+  re-upload is a no-op (a re-upload which arrives while the part is
+  being streamed waits for it to finish first). If a part fails part way
+  through being streamed
   (for example the client's connection drops) the client's retry of it
   carries on where it stopped, provided it has the same content. What
   isn't possible is replacing a part that has already been streamed,
   in whole or in part, with *different* content - that is rejected. A
-  failure in the stream to the remote itself still aborts the whole
-  upload and the client must start it again. (The remote's own upload
+  part which arrives in full but is then rejected, for example because
+  it doesn't match the `Content-MD5` the client declared, has already
+  been streamed, so the whole upload is failed and the client must
+  start it again. So is a failure in the stream to the remote itself. (The remote's own upload
   still retries its internal chunks.)
 - Parts are serialised into one stream, so ingest from the client is
   effectively single-threaded. When streaming, the remote's own upload
@@ -342,9 +348,61 @@ use grows with the size of the upload**, so it is only suitable for
 small objects. A one-off `NOTICE` is logged the first time this
 happens. This flag is the only thing that makes multipart uploads
 buffer in memory - it is never done because of missing remote
-capabilities. Consider `--vfs-cache-mode writes` instead, which
-buffers the upload in the VFS cache on disk and takes precedence over
+capabilities. The limits on multipart uploads above
+(`--multipart-streaming-buffer-limit`,
+`--multipart-streaming-buffer-total` and `--multipart-max-uploads`) do
+not apply to uploads buffered in memory, so don't use this flag if the
+server is open to clients you don't trust. Consider
+`--vfs-cache-mode writes` instead, which buffers the upload in the VFS
+cache on disk and takes precedence over
 `--disable-multipart-streaming`.
+
+### Memory use
+
+`serve s3` never buffers whole objects in memory (except with
+`--disable-multipart-streaming`, above), and limits the memory each
+kind of request can use, so that a client, even a hostile one, can't
+make it use unbounded memory.
+
+- **Object data.** `PutObject` bodies and multipart parts arriving in
+  order are streamed straight through to the remote. Parts arriving out
+  of order are buffered, up to `--multipart-streaming-buffer-limit`
+  per upload and `--multipart-streaming-buffer-total` in all.
+- **Uploads in progress.** At most `--multipart-max-uploads` multipart
+  uploads can be in progress. An upload holds little memory until its
+  first part arrives. After that, with `--vfs-cache-mode off`, it holds
+  a `--streaming-upload-cutoff` sized buffer plus whatever the remote's
+  own upload buffers, which for many remotes is up to their chunk size
+  times their upload concurrency (for example `--s3-chunk-size` times
+  `--s3-upload-concurrency`). Plain `PutObject` uploads use the same
+  while they are in progress.
+- **Metadata.** The metadata of at most `--metadata-max-objects`
+  objects is kept, each limited to 2 KB.
+- **Request bodies.** The XML bodies of requests such as
+  `CompleteMultipartUpload` and `DeleteObjects` are limited to 10 MiB,
+  and `DeleteObjects` to 1000 keys. A browser form (`POST`) upload
+  holds at most 1 MiB in memory, spooling the rest to a temporary file,
+  and is limited to 5 GB.
+- **Listings.** Each page of a `ListObjects` listing reads only the
+  directories needed to fill it, and returns at most 1000 keys.
+  Directory listings are cached by the [VFS directory
+  cache](#vfs-directory-cache).
+
+The largest of these is usually the remote's upload buffers, which can
+be up to `--multipart-max-uploads` times the buffers of one upload if a
+client starts many uploads and sends part of each. To limit it, lower
+`--multipart-max-uploads`, the remote's chunk size or upload
+concurrency, or set `--max-buffer-memory` to limit the memory used by
+the buffers of all uploads to remotes which use rclone's buffer pool
+(including `s3`, `azureblob` and `b2`). Buffered multipart parts come
+from the same pool, so if you set `--max-buffer-memory` make it
+comfortably bigger than `--multipart-streaming-buffer-total`, otherwise
+buffered parts can use up all the memory the remote needs to upload the
+parts which would free them.
+
+The number of connections is not limited, so if the server is open to
+clients you don't trust, use `--auth-key` or `--auth-proxy` and
+consider putting it behind a reverse proxy which limits connections.
 
 ### Bugs
 
@@ -369,11 +427,10 @@ When using `PutObject` or `DeleteObject`, rclone will automatically
 create or clean up empty folders. If you don't want to clean up empty
 folders automatically, use `--no-cleanup`.
 
-When using `ListObjects`, rclone will use `/` when the delimiter is
-empty. This reduces backend requests with no effect on most
-operations, but if the delimiter is something other than `/` and
-empty, rclone will do a full recursive search of the backend, which
-can take some time.
+When using `ListObjects`, rclone treats any delimiter as `/`. Without a
+delimiter the listing is recursive: rclone walks the directory tree
+below the prefix, reading only as many directories as it needs to fill
+each page.
 
 Versioning is not currently supported.
 
@@ -381,7 +438,9 @@ Metadata will only be saved in memory other than the rclone `mtime`
 metadata which will be set as the modification time of the file. The
 metadata of at most `--metadata-max-objects` objects (default `100000`,
 `0` for no limit) is kept; after that the metadata of the least
-recently used object is forgotten.
+recently used object is forgotten. The metadata of an object is
+ignored once the object has been changed some other way, for example
+by another `--auth-proxy` user or directly on the backend.
 
 ### Object names
 
