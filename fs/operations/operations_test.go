@@ -2168,3 +2168,32 @@ func TestRemoveExisting(t *testing.T) {
 	cleanup(&returnedError)
 	r.CheckRemoteItems(t)
 }
+
+func TestRcatInputFailurePreservesDestination(t *testing.T) {
+	ctx := context.Background()
+	root := t.TempDir()
+	require.NoError(t, os.WriteFile(root+"/target", []byte("original"), 0600))
+	f, err := fs.NewFs(ctx, root)
+	require.NoError(t, err)
+	calls := 0
+	original := f.Features().PutStream
+	f.Features().PutStream = func(ctx context.Context, in io.Reader, src fs.ObjectInfo, opts ...fs.OpenOption) (fs.Object, error) {
+		calls++
+		return original(ctx, in, src, opts...)
+	}
+	inputErr := errors.New("source interrupted")
+	for _, name := range []string{"target", "missing"} {
+		_, err = operations.Rcat(ctx, f, name, io.NopCloser(io.MultiReader(strings.NewReader("prefix"), rcatFailedInput{inputErr})), time.Now(), nil)
+		require.ErrorIs(t, err, inputErr)
+		require.Zero(t, calls)
+		b, readErr := os.ReadFile(root + "/target")
+		require.NoError(t, readErr)
+		require.Equal(t, "original", string(b))
+		_, statErr := os.Stat(root + "/missing")
+		require.True(t, os.IsNotExist(statErr))
+	}
+}
+
+type rcatFailedInput struct{ err error }
+
+func (r rcatFailedInput) Read([]byte) (int, error) { return 0, r.err }

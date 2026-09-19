@@ -1433,6 +1433,8 @@ func rcatSrc(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClos
 	if n, err := io.ReadFull(trackingIn, buf); err == io.EOF || err == io.ErrUnexpectedEOF {
 		fileIsSmall = true
 		buf = buf[:n]
+	} else if err != nil {
+		return nil, fmt.Errorf("failed to read upload input: %w", err)
 	}
 
 	// Read the data we have already read in buf and any further unread
