@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/rclone/rclone/backend/overview"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
@@ -330,4 +331,27 @@ func TestOptionsNonDefaultRCMissingKey(t *testing.T) {
 	opts := Options{{Name: "missing", Default: ""}}
 	_, err := opts.NonDefaultRC(c)
 	assert.ErrorContains(t, err, "not found")
+}
+
+func TestRegisterOverview(t *testing.T) {
+	original := Registry
+	t.Cleanup(func() { Registry = original })
+
+	t.Run("explicit overview", func(t *testing.T) {
+		supplied := &overview.BackendConfig{Backend: "external-test", Name: "External test", IntegrationTests: "not run"}
+		info := &RegInfo{Name: "external-test", Overview: supplied, Aliases: []string{"external-alias"}}
+		Register(info)
+		require.Same(t, supplied, info.Overview)
+		alias, err := Find("external-alias")
+		require.NoError(t, err)
+		require.Same(t, supplied, alias.Overview)
+	})
+
+	t.Run("embedded overview", func(t *testing.T) {
+		info := &RegInfo{Name: "local"}
+		Register(info)
+		expected, err := overview.GetBackendConfig("local")
+		require.NoError(t, err)
+		require.Equal(t, expected, info.Overview)
+	})
 }
