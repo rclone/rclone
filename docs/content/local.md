@@ -213,6 +213,9 @@ $ rclone -L ls /tmp/a
         6 b/one
 ```
 
+Symlinks which point to a parent directory would loop forever, so
+rclone reports them as errors and skips them.
+
 #### --local-links, --links, -l
 
 Normally rclone will ignore symlinks or junction points (which behave
