@@ -427,6 +427,32 @@ func TestDelete(t *testing.T) {
 	r.CheckRemoteItems(t, file3)
 }
 
+// Check Delete doesn't hang when a fatal error stops the deletions
+// before all the objects have been sent to the deleters
+func TestDeleteFatalError(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	ci.Checkers = 2
+	ci.MaxDelete = 1
+	r := fstest.NewRun(t)
+	// More files than the deleters' channel can hold
+	for i := range 20 {
+		r.WriteObject(ctx, fmt.Sprintf("file%d", i), "x", t1)
+	}
+
+	done := make(chan error, 1)
+	go func() {
+		done <- operations.Delete(ctx, r.Fremote)
+	}()
+	select {
+	case err := <-done:
+		require.Error(t, err)
+		assert.True(t, fserrors.IsFatalError(err), err)
+	case <-time.After(30 * time.Second):
+		t.Fatal("Delete didn't return - deadlocked sending to the deleters")
+	}
+}
+
 func isChunker(f fs.Fs) bool {
 	return strings.HasPrefix(f.Name(), "TestChunker")
 }
