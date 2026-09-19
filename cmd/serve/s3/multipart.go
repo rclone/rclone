@@ -67,8 +67,8 @@ type multipartUpload struct {
 	streamFp    string // path the parts are written to (fp when the remote has no server-side move or copy)
 	meta        map[string]string
 
-	fh  io.WriteCloser // sink the in-order parts are written to
-	vfs *vfs.VFS       // the VFS fh was created on, used for all later operations
+	fh  io.WriteCloser // sink the in-order parts are written to, opened by sink (guarded by mu)
+	vfs *vfs.VFS       // the VFS fh is created on, used for all later operations
 
 	mu        sync.Mutex
 	changed   chan struct{}  // closed when buffered shrinks, nextPart advances or the upload closes
@@ -212,6 +212,9 @@ func (b *s3Backend) loadUpload(uploadID gofakes3.UploadID) (*multipartUpload, er
 // returned so that gofakes3 falls back to buffering the whole upload in
 // memory; a one-off NOTICE warns about the memory use. A caching VFS needs
 // no streaming support, so it ignores the flag.
+//
+// The object the parts are written to is only created when the first part
+// arrives, so an upload with no parts holds no VFS or backend resources.
 func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objectName string, meta map[string]string) (gofakes3.UploadID, error) {
 	_vfs, err := b.s.getVFS(ctx)
 	if err != nil {
@@ -253,11 +256,6 @@ func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objec
 
 	up := newMultipartUpload(bucketName, objectName, fp, streamFp, meta, int64(b.s.opt.MultipartStreamingBufferLimit))
 	up.budget = b.budget
-	fh, err := _vfs.Create(streamFp)
-	if err != nil {
-		return "", err
-	}
-	up.fh = fh
 	up.vfs = _vfs
 
 	b.multipartUploads.Store(uploadID, up)
@@ -533,7 +531,11 @@ func (up *multipartUpload) streamDirect(partNumber int, size int64, body io.Read
 		}
 	}
 
-	n, sinkErr, bodyErr := copyToSink(up.fh, hasher, body)
+	fh, err := up.sink()
+	if err != nil {
+		return nil, up.stopStreaming(err)
+	}
+	n, sinkErr, bodyErr := copyToSink(fh, hasher, body)
 	if n > 0 {
 		state, _ := hasher.(encoding.BinaryMarshaler).MarshalBinary()
 		up.mu.Lock()
@@ -603,6 +605,24 @@ func (up *multipartUpload) stopStreaming(err error) error {
 		return gofakes3.ErrNoSuchUpload
 	}
 	return err
+}
+
+// sink returns the handle the parts are written to, creating it on first
+// use. Call with the sink owned (up.pumping).
+func (up *multipartUpload) sink() (io.WriteCloser, error) {
+	up.mu.Lock()
+	defer up.mu.Unlock()
+	if up.closed {
+		return nil, gofakes3.ErrNoSuchUpload
+	}
+	if up.fh == nil {
+		fh, err := up.vfs.Create(up.streamFp)
+		if err != nil {
+			return nil, err
+		}
+		up.fh = fh
+	}
+	return up.fh, nil
 }
 
 // copyToSink copies body into sink and hasher, returning the number of
@@ -741,7 +761,10 @@ func (up *multipartUpload) pump() error {
 		psize := bufferCharge(prw.Size())
 		up.mu.Unlock()
 
-		err := pipePart(up.fh, prw)
+		fh, err := up.sink()
+		if err == nil {
+			err = pipePart(fh, prw)
+		}
 		_ = prw.Close()
 		if err != nil {
 			up.mu.Lock()
@@ -975,11 +998,21 @@ func (up *multipartUpload) close() error {
 		up.mu.Unlock()
 		return gofakes3.ErrInvalidPart
 	}
+	if up.fh == nil {
+		// Nothing was streamed so commit an empty object
+		fh, err := up.vfs.Create(up.streamFp)
+		if err != nil {
+			up.mu.Unlock()
+			return err
+		}
+		up.fh = fh
+	}
+	fh := up.fh
 	up.closed = true
 	up.broadcast()
 	up.mu.Unlock()
 
-	return up.fh.Close()
+	return fh.Close()
 }
 
 // errMultipartPoisoned is why an upload whose stream holds data it can
@@ -1009,6 +1042,7 @@ func (up *multipartUpload) abort() error {
 	for _, rw := range streamBuf {
 		up.unbuffer(bufferCharge(rw.Size()))
 	}
+	fh := up.fh
 	up.broadcast()
 	up.mu.Unlock()
 
@@ -1016,11 +1050,15 @@ func (up *multipartUpload) abort() error {
 		_ = rw.Close()
 	}
 
-	if aborter, ok := up.fh.(interface{ CloseWithError(error) error }); ok {
+	if fh == nil {
+		// Nothing was streamed so there is nothing to abandon
+		return nil
+	}
+	if aborter, ok := fh.(interface{ CloseWithError(error) error }); ok {
 		_ = aborter.CloseWithError(errMultipartAborted)
 		return nil
 	}
-	return up.fh.Close()
+	return fh.Close()
 }
 
 // multipartETag computes the S3 multipart ETag for the assembled object:
