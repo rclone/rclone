@@ -196,7 +196,8 @@ remote as if it had completed.
   1 MiB memory pages it occupies: a part that would take the buffer over the
   limit is stalled until the stream drains, so a client that uploads
   faster than the remote can accept sees backpressure rather than
-  unbounded server memory use. Since a stalled part holds its HTTP
+  unbounded server memory use. A part stalled for more than a minute
+  is failed with a `SlowDown` error, which S3 clients retry. Since a stalled part holds its HTTP
   request open, clients whose upload concurrency times chunk size
   exceeds the limit may need a longer read timeout when the remote is
   slow. Non-contiguous part numbers are rejected on completion.
