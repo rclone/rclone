@@ -1533,3 +1533,54 @@ func TestMultipartBufferTotal(t *testing.T) {
 	assert.Equal(t, int64(0), b.budget.used, "buffer total not all returned")
 	b.budget.mu.Unlock()
 }
+
+// TestMultipartSinkOpenedOnFirstPart checks that starting a multipart upload
+// doesn't open its VFS upload, so an upload with no parts holds no VFS or
+// backend resources, and that an upload completed without parts still
+// creates an empty object.
+func TestMultipartSinkOpenedOnFirstPart(t *testing.T) {
+	b, f, bucket := newPutTestBackend(t, "", nil)
+	ctx := context.Background()
+
+	sinkOpen := func(uploadID gofakes3.UploadID) bool {
+		up, err := b.loadUpload(uploadID)
+		require.NoError(t, err)
+		up.mu.Lock()
+		defer up.mu.Unlock()
+		return up.fh != nil
+	}
+
+	uploadID, err := b.CreateMultipartUpload(ctx, bucket, "parts.bin", nil)
+	require.NoError(t, err)
+	assert.False(t, sinkOpen(uploadID), "the sink was opened before any part arrived")
+
+	// A buffered part doesn't need the sink either.
+	part2 := []byte("world")
+	p2, err := b.UploadPart(ctx, bucket, "parts.bin", uploadID, 2, int64(len(part2)), bytes.NewReader(part2))
+	require.NoError(t, err)
+	assert.False(t, sinkOpen(uploadID), "the sink was opened for a buffered part")
+
+	part1 := []byte("hello ")
+	p1, err := b.UploadPart(ctx, bucket, "parts.bin", uploadID, 1, int64(len(part1)), bytes.NewReader(part1))
+	require.NoError(t, err)
+	assert.True(t, sinkOpen(uploadID))
+	_, _, err = b.CompleteMultipartUpload(ctx, bucket, "parts.bin", uploadID, &gofakes3.CompleteMultipartUploadRequest{
+		Parts: []gofakes3.CompletedPart{{PartNumber: 1, ETag: p1}, {PartNumber: 2, ETag: p2}},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, []byte("hello world"), readObject(t, f, bucket, "parts.bin"))
+
+	// An upload aborted without parts leaves nothing behind.
+	uploadID, err = b.CreateMultipartUpload(ctx, bucket, "aborted.bin", nil)
+	require.NoError(t, err)
+	require.NoError(t, b.AbortMultipartUpload(ctx, bucket, "aborted.bin", uploadID))
+
+	// An upload completed without parts makes an empty object.
+	uploadID, err = b.CreateMultipartUpload(ctx, bucket, "empty.bin", nil)
+	require.NoError(t, err)
+	_, _, err = b.CompleteMultipartUpload(ctx, bucket, "empty.bin", uploadID, &gofakes3.CompleteMultipartUploadRequest{})
+	require.NoError(t, err)
+	assert.Equal(t, []byte{}, readObject(t, f, bucket, "empty.bin"))
+
+	requireOnly(t, f, bucket, "parts.bin", "empty.bin")
+}
