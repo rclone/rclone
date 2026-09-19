@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"path"
 	"sort"
 	"strings"
@@ -227,9 +228,19 @@ func (b *s3Backend) UploadPart(ctx context.Context, bucketName, objectName strin
 	return etag, nil
 }
 
-// waitForTurn blocks until size bytes can be admitted to the reorder buffer,
-// then reserves them, bounding the memory an upload can consume when the
-// client sends parts faster than the backend drains them.
+// bufferCharge returns the reorder buffer memory a part of size bytes
+// takes: its pool.RW holds it in whole pool pages, however small it is.
+func bufferCharge(size int64) int64 {
+	if size > math.MaxInt64-pool.BufferSize {
+		return math.MaxInt64
+	}
+	return (size + pool.BufferSize - 1) / pool.BufferSize * pool.BufferSize
+}
+
+// waitForTurn blocks until a part of size bytes can be admitted to the
+// reorder buffer, then reserves its bufferCharge, bounding the memory an
+// upload can consume when the client sends parts faster than the backend
+// drains them.
 //
 // The next part the stream needs (and any retry of an earlier one) is always
 // admitted so the sink can keep draining; so is a single part bigger than the
@@ -243,6 +254,7 @@ func (up *multipartUpload) waitForTurn(partNumber int, size int64) error {
 	if size < 0 {
 		return gofakes3.ErrInvalidArgument
 	}
+	size = bufferCharge(size)
 	up.mu.Lock()
 	defer up.mu.Unlock()
 	for {
@@ -257,11 +269,11 @@ func (up *multipartUpload) waitForTurn(partNumber int, size int64) error {
 	}
 }
 
-// release returns size bytes reserved by waitForTurn to the reorder buffer
-// budget and wakes any parts waiting for room.
+// release returns the reservation waitForTurn made for a part of size bytes
+// to the reorder buffer budget and wakes any parts waiting for room.
 func (up *multipartUpload) release(size int64) {
 	up.mu.Lock()
-	up.buffered -= size
+	up.buffered -= bufferCharge(size)
 	up.cond.Broadcast()
 	up.mu.Unlock()
 }
@@ -285,7 +297,7 @@ func (up *multipartUpload) streamPart(partNumber int, size int64, md5Sum []byte,
 	if up.closed {
 		// The upload was aborted or completed while the part body was
 		// being received.
-		up.buffered -= size
+		up.buffered -= bufferCharge(size)
 		up.cond.Broadcast()
 		up.mu.Unlock()
 		_ = rw.Close()
@@ -294,13 +306,13 @@ func (up *multipartUpload) streamPart(partNumber int, size int64, md5Sum []byte,
 	if oldMD5, exists := up.partMD5s[partNumber]; exists {
 		if old, buffered := up.streamBuf[partNumber]; buffered {
 			_ = old.Close()
-			up.buffered -= up.partSizes[partNumber]
+			up.buffered -= bufferCharge(up.partSizes[partNumber])
 			up.cond.Broadcast()
 		} else {
 			// Already streamed (or streaming right now): the stream can't be
 			// rewritten, so accept an identical part and reject the rest.
 			same := bytes.Equal(md5Sum, oldMD5) && size == up.partSizes[partNumber]
-			up.buffered -= size
+			up.buffered -= bufferCharge(size)
 			up.cond.Broadcast()
 			up.mu.Unlock()
 			_ = rw.Close()
@@ -337,7 +349,7 @@ func (up *multipartUpload) streamPart(partNumber int, size int64, md5Sum []byte,
 			return nil
 		}
 		delete(up.streamBuf, up.nextPart)
-		psize := prw.Size()
+		psize := bufferCharge(prw.Size())
 		up.mu.Unlock()
 
 		err := pipePart(up.fh, prw)
