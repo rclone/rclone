@@ -173,7 +173,7 @@ func (p Params) GetInt64(key string) (int64, error) {
 		}
 		return int64(x), nil
 	case string:
-		i, err := strconv.ParseInt(x, 10, 0)
+		i, err := strconv.ParseInt(x, 10, 64)
 		if err != nil {
 			return 0, ErrParamInvalid{fmt.Errorf("couldn't parse key %q (%v) as int64: %w", key, value, err)}
 		}
