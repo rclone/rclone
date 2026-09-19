@@ -50,6 +50,10 @@ var OptionsInfo = fs.Options{{
 	Default: fs.SizeSuffix(1024 * 1024 * 1024),
 	Help:    "Maximum memory buffered by all streamed multipart uploads for parts arriving out of order, 0 for unlimited",
 }, {
+	Name:    "multipart_max_uploads",
+	Default: 1000,
+	Help:    "Maximum number of streamed multipart uploads in progress at once, 0 for unlimited",
+}, {
 	Name:    "multipart_expiry",
 	Default: fs.Duration(24 * time.Hour),
 	Help:    "Abort incomplete multipart uploads idle for longer than this, 0 to keep forever",
@@ -67,6 +71,7 @@ type Options struct {
 	DisableMultipartStreaming     bool          `config:"disable_multipart_streaming"`
 	MultipartStreamingBufferLimit fs.SizeSuffix `config:"multipart_streaming_buffer_limit"`
 	MultipartStreamingBufferTotal fs.SizeSuffix `config:"multipart_streaming_buffer_total"`
+	MultipartMaxUploads           int           `config:"multipart_max_uploads"`
 	MultipartExpiry               fs.Duration   `config:"multipart_expiry"`
 	Auth                          httplib.AuthConfig
 	HTTP                          httplib.Config
