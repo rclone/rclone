@@ -1760,6 +1760,62 @@ func TestOpenChunkWriterWriteChunkCloseRegistersUpload(t *testing.T) {
 	assert.Equal(t, int64(len(content)), uploaded.bytes)
 }
 
+// TestOpenChunkWriterNestedUploadPathUsesLeafFilename exercises uploading
+// into a virtual subdirectory under upload/. GoPro's API is flat - it has
+// no concept of directories - so the filename sent to createMedium must be
+// just the leaf, not the whole match[1] sub-path, which still contains a
+// "/" and can't match this backend's single-leaf patterns once listed back.
+func TestOpenChunkWriterNestedUploadPathUsesLeafFilename(t *testing.T) {
+	content := []byte("hello nested gopro upload")
+	var srv *httptest.Server
+	var gotFilename string
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /media", func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		require.NoError(t, json.NewDecoder(r.Body).Decode(&body))
+		gotFilename, _ = body["filename"].(string)
+		writeJSON(t, w, map[string]string{"id": "med1"})
+	})
+	mux.HandleFunc("POST /derivatives", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(t, w, map[string]string{"id": "der1"})
+	})
+	mux.HandleFunc("POST /user-uploads", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(t, w, map[string]string{"id": "up1"})
+	})
+	mux.HandleFunc("GET /user-uploads/der1", func(w http.ResponseWriter, r *http.Request) {
+		resp := api.UserUploadsResponse{}
+		resp.Embedded.Authorizations = []api.UploadAuthorization{{URL: srv.URL + "/chunk/1", Part: 1}}
+		writeJSON(t, w, resp)
+	})
+	mux.HandleFunc("PUT /chunk/1", func(w http.ResponseWriter, r *http.Request) {
+		_, err := io.ReadAll(r.Body)
+		require.NoError(t, err)
+		w.WriteHeader(http.StatusOK)
+	})
+	mux.HandleFunc("PUT /user-uploads/der1", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})
+	mux.HandleFunc("PUT /derivatives/der1", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})
+	mux.HandleFunc("PUT /media/med1", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})
+
+	f, srv := newTestUploadFlowFs(mux)
+	defer srv.Close()
+
+	src := mockobject.New("upload/dir/GX010001.MP4").WithContent(content, mockobject.SeekModeRegular)
+	ctx := context.Background()
+	_, writer, err := f.OpenChunkWriter(ctx, "upload/dir/GX010001.MP4", src)
+	require.NoError(t, err)
+	assert.Equal(t, "GX010001.MP4", gotFilename, "the filename sent to GoPro must be the leaf name, not the whole virtual sub-path")
+
+	_, err = writer.WriteChunk(ctx, 0, bytes.NewReader(content))
+	require.NoError(t, err)
+	require.NoError(t, writer.Close(ctx))
+}
+
 func TestOpenChunkWriterRejectsUnknownSize(t *testing.T) {
 	f := &Fs{}
 	src := mockobject.New("upload/x.mp4").WithContent(nil, mockobject.SeekModeRegular)
