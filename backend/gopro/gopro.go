@@ -1695,9 +1695,16 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	}
 	if pattern.isUpload {
 		f.uploadedMu.Lock()
-		err := f.uploaded.Prune(map[string]bool{dir: true})
-		f.uploadedMu.Unlock()
-		return err
+		defer f.uploadedMu.Unlock()
+		dirPath := strings.Trim(dir, "/")
+		// dirtree.Prune removes a subtree unconditionally, without
+		// enforcing emptiness, so an unchecked call here would silently
+		// drop any uploaded objects still under dirPath from this Fs's
+		// in-memory index.
+		if len(f.uploaded[dirPath]) > 0 {
+			return fs.ErrorDirectoryNotEmpty
+		}
+		return f.uploaded.Prune(map[string]bool{dirPath: true})
 	}
 	if !pattern.canMkdir {
 		return errCantRmdir

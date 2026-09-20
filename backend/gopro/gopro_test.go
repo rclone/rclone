@@ -1289,6 +1289,19 @@ func TestMkdirRmdirListUploads(t *testing.T) {
 		assert.Equal(t, errCantRmdir, f.Rmdir(ctx, "media/all"))
 	})
 
+	t.Run("Rmdir refuses a non-empty upload directory", func(t *testing.T) {
+		require.NoError(t, f.Mkdir(ctx, "upload/parent"))
+		require.NoError(t, f.Mkdir(ctx, "upload/parent/child"))
+
+		err := f.Rmdir(ctx, "upload/parent")
+		assert.Equal(t, fs.ErrorDirectoryNotEmpty, err)
+
+		entries, err := f.List(ctx, "upload/parent")
+		require.NoError(t, err)
+		require.Len(t, entries, 1, "the child must survive a refused Rmdir, not be silently pruned")
+		assert.Equal(t, "upload/parent/child", entries[0].Remote())
+	})
+
 	t.Run("listing an unknown directory is ErrorDirNotFound", func(t *testing.T) {
 		_, err := f.List(ctx, "not-a-real-directory")
 		assert.Equal(t, fs.ErrorDirNotFound, err)
