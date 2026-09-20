@@ -803,6 +803,42 @@ func TestSelectRendition(t *testing.T) {
 		_, _, err := selectRendition(dl, "source", 1)
 		assert.Error(t, err)
 	})
+
+	t.Run("explicit variation on a chaptered video matches by item_number, not the first match", func(t *testing.T) {
+		dl := makeDownloadResponse(
+			nil,
+			[]testFile{
+				{url: "https://cdn/ch1-1080p.mp4", label: "1080p", itemNumber: 1},
+				{url: "https://cdn/ch2-1080p.mp4", label: "1080p", itemNumber: 2},
+			},
+		)
+		u, _, err := selectRendition(dl, "1080p", 2)
+		require.NoError(t, err)
+		assert.Equal(t, "https://cdn/ch2-1080p.mp4", u, "must pick chapter 2's own rendition, not chapter 1's")
+	})
+
+	t.Run("explicit variation falls back to an unnumbered shared rendition", func(t *testing.T) {
+		dl := makeDownloadResponse(
+			nil,
+			[]testFile{{url: "https://cdn/shared-1080p.mp4", label: "1080p", itemNumber: 0}},
+		)
+		u, _, err := selectRendition(dl, "1080p", 2)
+		require.NoError(t, err)
+		assert.Equal(t, "https://cdn/shared-1080p.mp4", u)
+	})
+
+	t.Run("explicit variation falls back to the offered file for the item when no variation matches", func(t *testing.T) {
+		dl := makeDownloadResponse(
+			[]testFile{
+				{url: "https://cdn/1.jpg", itemNumber: 1},
+				{url: "https://cdn/2.jpg", itemNumber: 2},
+			},
+			[]testFile{{url: "https://cdn/cover.jpg", label: "source", itemNumber: 0}},
+		)
+		u, _, err := selectRendition(dl, "1080p", 2)
+		require.NoError(t, err, "the option contract promises a file fallback rather than erroring out")
+		assert.Equal(t, "https://cdn/2.jpg", u)
+	})
 }
 
 func TestProcessingStates(t *testing.T) {

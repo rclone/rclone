@@ -1775,9 +1775,31 @@ func selectRendition(dl *api.DownloadResponse, variation string, itemNumber int)
 		variation = "source"
 	}
 	if variation != "source" {
-		for _, v := range dl.Embedded.Variations {
-			if v.Label == variation || v.Quality == variation {
+		// An explicit variation can be chaptered exactly like "source" -
+		// one entry per item_number - or offered as a single shared
+		// rendition with no item_number of its own (ItemNumber 0), so
+		// prefer an exact item_number match, fall back to an unnumbered
+		// shared one, and finally to the item's own offered file, rather
+		// than erroring out despite the option's documented file
+		// fallback.
+		var shared *api.File
+		for i, v := range dl.Embedded.Variations {
+			if v.Label != variation && v.Quality != variation {
+				continue
+			}
+			if v.ItemNumber == itemNumber {
 				return v.URL, v.Head, nil
+			}
+			if v.ItemNumber == 0 && shared == nil {
+				shared = &dl.Embedded.Variations[i]
+			}
+		}
+		if shared != nil {
+			return shared.URL, shared.Head, nil
+		}
+		for _, file := range dl.Embedded.Files {
+			if file.ItemNumber == itemNumber {
+				return file.URL, file.Head, nil
 			}
 		}
 		return "", "", fmt.Errorf("no %q rendition found", variation)
