@@ -1750,6 +1750,31 @@ func TestRemoveDispatchesByTrashedOnly(t *testing.T) {
 	})
 }
 
+func TestRemoveClearsTheUploadedTreeEntry(t *testing.T) {
+	// Upload listings come solely from the in-memory f.uploaded tree, so
+	// a successful delete that doesn't also remove the tree entry would
+	// leave the object listed and resolvable for this Fs's lifetime.
+	f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(t, w, api.DeleteResponse{})
+	}))
+	defer srv.Close()
+	f.uploaded = dirtree.New()
+	f.opt.UseTrash = true // skips deletePermanentDelay's real-time wait
+
+	o := &Object{fs: f, id: "abc123", remote: "upload/x.mp4"}
+	f.uploaded.Add(o)
+
+	entries, err := f.List(context.Background(), "upload")
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
+
+	require.NoError(t, o.Remove(context.Background()))
+
+	entries, err = f.List(context.Background(), "upload")
+	require.NoError(t, err)
+	assert.Empty(t, entries, "a deleted upload object must be removed from the in-memory upload tree, not remain listed")
+}
+
 func TestRestoreCommand(t *testing.T) {
 	ctx := context.Background()
 

@@ -2239,10 +2239,39 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 // --gopro-use-trash - that option is about whether removing an *active*
 // file goes to trash, which doesn't apply to a file that's there already.
 func (o *Object) Remove(ctx context.Context) error {
+	var err error
 	if o.fs.opt.TrashedOnly {
-		return o.fs.doDeleteMedium(ctx, o.id, "permanent", "true")
+		err = o.fs.doDeleteMedium(ctx, o.id, "permanent", "true")
+	} else {
+		err = o.fs.deleteMedium(ctx, o.id, !o.fs.opt.UseTrash)
 	}
-	return o.fs.deleteMedium(ctx, o.id, !o.fs.opt.UseTrash)
+	if err != nil {
+		return err
+	}
+	// Upload listings come solely from the in-memory f.uploaded tree, not
+	// the API, so a deleted object must be removed from it here or it
+	// stays listed and resolvable under upload/ for this Fs's lifetime.
+	o.fs.removeUploadedEntry(o.remote)
+	return nil
+}
+
+// removeUploadedEntry removes remote's own entry (if any) from the
+// in-memory upload tree - a no-op for anything that was never in it
+// (every object outside upload/).
+func (f *Fs) removeUploadedEntry(remote string) {
+	f.uploadedMu.Lock()
+	defer f.uploadedMu.Unlock()
+	parent, entry := f.uploaded.Find(remote)
+	if entry == nil {
+		return
+	}
+	siblings := f.uploaded[parent]
+	for i, e := range siblings {
+		if e == entry {
+			f.uploaded[parent] = append(siblings[:i], siblings[i+1:]...)
+			return
+		}
+	}
 }
 
 // deleteMedium deletes the medium with the given id - shared by Remove and
