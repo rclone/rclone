@@ -2566,6 +2566,23 @@ type gpChunkWriter struct {
 	medium       *api.Medium               // set by Close
 }
 
+// rollbackOrphanedMedium deletes mediumID after a later multipart setup
+// step (createDerivative, createUpload, getUploadParts) fails.
+// gpChunkWriter isn't constructed - so its Abort can't be called - until
+// every one of those steps has already succeeded, so without this a
+// setup failure after createMedium leaves an orphaned, unusable medium
+// record on GoPro's side with nothing left able to clean it up.
+//
+// setupErr is always what's returned, even when cleanup itself fails -
+// a cleanup failure is logged rather than replacing the real cause of
+// the original failure.
+func (f *Fs) rollbackOrphanedMedium(ctx context.Context, mediumID string, setupErr error) error {
+	if delErr := f.deleteMedium(ctx, mediumID, true); delErr != nil {
+		fs.Logf(f, "gopro: couldn't roll back orphaned medium %q after upload setup failed: %v", mediumID, delErr)
+	}
+	return setupErr
+}
+
 // OpenChunkWriter returns the chunk size and a ChunkWriter for uploading
 // remote with the contents of src.
 //
@@ -2608,15 +2625,15 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	}
 	derivativeID, err := f.createDerivative(ctx, mediumID, ext, nParts)
 	if err != nil {
-		return info, nil, err
+		return info, nil, f.rollbackOrphanedMedium(ctx, mediumID, err)
 	}
 	uploadID, err := f.createUpload(ctx, derivativeID)
 	if err != nil {
-		return info, nil, err
+		return info, nil, f.rollbackOrphanedMedium(ctx, mediumID, err)
 	}
 	parts, err := f.getUploadParts(ctx, derivativeID, uploadID, size, chunkSize, nParts)
 	if err != nil {
-		return info, nil, err
+		return info, nil, f.rollbackOrphanedMedium(ctx, mediumID, err)
 	}
 	sort.Slice(parts, func(i, j int) bool { return parts[i].Part < parts[j].Part })
 

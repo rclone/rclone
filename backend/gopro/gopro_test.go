@@ -2496,6 +2496,10 @@ func TestNewObjectWithInfoUsesProvidedInfoWithoutAnyNetworkCall(t *testing.T) {
 }
 
 func TestOpenChunkWriterPropagatesEachProtocolStepsFailure(t *testing.T) {
+	old := deletePermanentDelay
+	deletePermanentDelay = time.Millisecond // rollback uses a permanent delete
+	defer func() { deletePermanentDelay = old }()
+
 	src := mockobject.New("upload/x.mp4").WithContent([]byte("hello"), mockobject.SeekModeRegular)
 
 	// A ServeMux request for a path with no registered handler gets Go's
@@ -2527,44 +2531,77 @@ func TestOpenChunkWriterPropagatesEachProtocolStepsFailure(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("createDerivative failing stops after createMedium succeeds", func(t *testing.T) {
-		f, srv := newFsWith(map[string]http.HandlerFunc{"POST /media": idJSON("med1")})
-		defer srv.Close()
-		_, _, err := f.OpenChunkWriter(context.Background(), "upload/x.mp4", src)
-		assert.Error(t, err)
-	})
+	// deleteHandler records every DELETE /media call's "ids" query value,
+	// for asserting that a later setup-step failure rolls back the medium
+	// createMedium already created. deleteMedium's rollback always
+	// finalises permanently (see TestAbortDeletesTheMedium, the same
+	// shape this reuses): one plain delete followed, after
+	// deletePermanentDelay, by one with permanent=true.
+	deleteHandler := func(calls *[]url.Values) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			*calls = append(*calls, r.URL.Query())
+			writeJSON(t, w, api.DeleteResponse{})
+		}
+	}
 
-	t.Run("createUpload failing stops after the first two steps succeed", func(t *testing.T) {
+	t.Run("createDerivative failing stops after createMedium succeeds, and rolls the medium back", func(t *testing.T) {
+		var deleteCalls []url.Values
 		f, srv := newFsWith(map[string]http.HandlerFunc{
-			"POST /media":       idJSON("med1"),
-			"POST /derivatives": idJSON("der1"),
+			"POST /media":   idJSON("med1"),
+			"DELETE /media": deleteHandler(&deleteCalls),
 		})
 		defer srv.Close()
 		_, _, err := f.OpenChunkWriter(context.Background(), "upload/x.mp4", src)
 		assert.Error(t, err)
+		require.Len(t, deleteCalls, 2, "the orphaned medium must be rolled back, permanently")
+		assert.Equal(t, "med1", deleteCalls[0].Get("ids"))
+		assert.Equal(t, "med1", deleteCalls[1].Get("ids"))
+		assert.Equal(t, "true", deleteCalls[1].Get("permanent"))
 	})
 
-	t.Run("getUploadParts failing stops after the first three steps succeed", func(t *testing.T) {
+	t.Run("createUpload failing stops after the first two steps succeed, and rolls the medium back", func(t *testing.T) {
+		var deleteCalls []url.Values
+		f, srv := newFsWith(map[string]http.HandlerFunc{
+			"POST /media":       idJSON("med1"),
+			"POST /derivatives": idJSON("der1"),
+			"DELETE /media":     deleteHandler(&deleteCalls),
+		})
+		defer srv.Close()
+		_, _, err := f.OpenChunkWriter(context.Background(), "upload/x.mp4", src)
+		assert.Error(t, err)
+		require.Len(t, deleteCalls, 2, "the orphaned medium must be rolled back, permanently")
+		assert.Equal(t, "med1", deleteCalls[0].Get("ids"))
+	})
+
+	t.Run("getUploadParts failing stops after the first three steps succeed, and rolls the medium back", func(t *testing.T) {
+		var deleteCalls []url.Values
 		f, srv := newFsWith(map[string]http.HandlerFunc{
 			"POST /media":        idJSON("med1"),
 			"POST /derivatives":  idJSON("der1"),
 			"POST /user-uploads": idJSON("up1"),
+			"DELETE /media":      deleteHandler(&deleteCalls),
 		})
 		defer srv.Close()
 		_, _, err := f.OpenChunkWriter(context.Background(), "upload/x.mp4", src)
 		assert.Error(t, err)
+		require.Len(t, deleteCalls, 2, "the orphaned medium must be rolled back, permanently")
+		assert.Equal(t, "med1", deleteCalls[0].Get("ids"))
 	})
 
-	t.Run("getUploadParts returning no authorizations at all is an error", func(t *testing.T) {
+	t.Run("getUploadParts returning no authorizations at all is an error, and rolls the medium back", func(t *testing.T) {
+		var deleteCalls []url.Values
 		f, srv := newFsWith(map[string]http.HandlerFunc{
 			"POST /media":            idJSON("med1"),
 			"POST /derivatives":      idJSON("der1"),
 			"POST /user-uploads":     idJSON("up1"),
 			"GET /user-uploads/der1": func(w http.ResponseWriter, r *http.Request) { writeJSON(t, w, api.UserUploadsResponse{}) },
+			"DELETE /media":          deleteHandler(&deleteCalls),
 		})
 		defer srv.Close()
 		_, _, err := f.OpenChunkWriter(context.Background(), "upload/x.mp4", src)
 		assert.Error(t, err)
+		require.Len(t, deleteCalls, 2, "the orphaned medium must be rolled back, permanently")
+		assert.Equal(t, "med1", deleteCalls[0].Get("ids"))
 	})
 }
 
