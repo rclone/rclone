@@ -1932,6 +1932,12 @@ func (o *Object) Size() int64 {
 		fs.Debugf(o, "Size: HEAD failed: %v", err)
 		return o.bytes
 	}
+	// A successful rest.Client.Call leaves resp.Body open unless
+	// NoResponse is set - unset here, since the Content-Length header is
+	// read from resp itself, not a JSON body. Close it explicitly or
+	// --gopro-verify-size=always/--gopro-read-size leaks one response
+	// body per Object.
+	defer fs.CheckClose(resp.Body, &err)
 	length, err := strconv.ParseInt(resp.Header.Get("Content-Length"), 10, 64)
 	if err != nil {
 		fs.Debugf(o, "Size: couldn't parse Content-Length: %v", err)

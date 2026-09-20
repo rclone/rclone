@@ -2006,6 +2006,58 @@ func TestSizeVerifiesAndCorrectsViaHead(t *testing.T) {
 	assert.Equal(t, 1, headCalls)
 }
 
+// closeTrackingBody wraps a response body to record whether the caller
+// closed it, for TestSizeClosesHeadResponseBody.
+type closeTrackingBody struct {
+	io.Reader
+	closed *bool
+}
+
+func (b *closeTrackingBody) Close() error {
+	*b.closed = true
+	return nil
+}
+
+// closeTrackingTransport wraps every response body it sees in a
+// closeTrackingBody.
+type closeTrackingTransport struct {
+	closed *bool
+}
+
+func (t *closeTrackingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	resp, err := http.DefaultTransport.RoundTrip(req)
+	if err != nil {
+		return resp, err
+	}
+	resp.Body = &closeTrackingBody{Reader: resp.Body, closed: t.closed}
+	return resp, nil
+}
+
+func TestSizeClosesHeadResponseBody(t *testing.T) {
+	var srv *httptest.Server
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /media/abc123/download", func(w http.ResponseWriter, r *http.Request) {
+		dl := makeDownloadResponse(nil, []testFile{{url: srv.URL + "/original.mp4", label: "source"}})
+		writeJSON(t, w, dl)
+	})
+	mux.HandleFunc("HEAD /original.mp4", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Length", "12345")
+		w.WriteHeader(http.StatusOK)
+	})
+	f, s := newTestAPIFs(mux)
+	srv = s
+	defer srv.Close()
+	f.opt.VerifySize = verifySizeAlways
+
+	var closed bool
+	f.unAuth = rest.NewClient(&http.Client{Transport: &closeTrackingTransport{closed: &closed}})
+	f.unAuth.SetErrorHandler(errorHandler)
+
+	o := &Object{fs: f, id: "abc123", bytes: 999, itemNumber: 1}
+	assert.Equal(t, int64(12345), o.Size())
+	assert.True(t, closed, "the HEAD response body must be closed after a successful call, or transport connections leak")
+}
+
 func TestSizeConcurrentCallsShareVerification(t *testing.T) {
 	var srv *httptest.Server
 	var headMu sync.Mutex
