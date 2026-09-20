@@ -362,16 +362,26 @@ func TestFindID(t *testing.T) {
 
 func TestStripSuffixID(t *testing.T) {
 	id := "68b22325df3cf752557ac6d7"
-	assert.Equal(t, "GX010294.MP4", stripSuffixID("GX010294 {"+id+"}.MP4"))
-	assert.Equal(t, "GX010294.MP4", stripSuffixID("GX010294.MP4"))
-	assert.Equal(t, ".MP4", stripSuffixID("{"+id+"}.MP4"))
+	assert.Equal(t, "GX010294.MP4", stripSuffixID("GX010294 {"+id+"}.MP4", id))
+	assert.Equal(t, "GX010294.MP4", stripSuffixID("GX010294.MP4", id))
+	assert.Equal(t, ".MP4", stripSuffixID("{"+id+"}.MP4", id))
 
 	t.Run("only strips the suffix, not an id-shaped substring elsewhere", func(t *testing.T) {
 		// A renamed medium can carry an arbitrary filename - an id-shaped
 		// substring that isn't in the exact " {id}" suffix position must
 		// survive untouched.
 		name := "note {" + id + "} halfway through.mp4"
-		assert.Equal(t, name, stripSuffixID(name))
+		assert.Equal(t, name, stripSuffixID(name, id))
+	})
+
+	t.Run("a trailing id-shaped suffix that isn't this object's own id is left alone", func(t *testing.T) {
+		// A legitimate rename to a name that happens to end in an
+		// unrelated id-shaped suffix must be sent to GoPro untouched,
+		// not have that suffix silently stripped as if this backend
+		// had added it.
+		other := "aaaaaaaaaaaaaaaaaaaaaaaa"
+		name := "clip {" + other + "}.mp4"
+		assert.Equal(t, name, stripSuffixID(name, id))
 	})
 }
 
