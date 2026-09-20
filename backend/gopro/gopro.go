@@ -1504,15 +1504,25 @@ func findID(name string) string {
 }
 
 // stripSuffixID removes a trailing " {id}" disambiguation suffix from a
-// leaf name, if present - the inverse of addFileID. This backend's own
-// listings always carry one under --gopro-always-add-id (or when a name
-// collides even without it), but it's never part of the real filename, so
-// a Move destination must have it stripped before being sent as the new
-// filename - GoPro assigns ids itself and doesn't accept one from a
-// rename request.
-func stripSuffixID(name string) string {
+// leaf name, if present and it equals id - the inverse of addFileID. This
+// backend's own listings always carry one under --gopro-always-add-id (or
+// when a name collides even without it), but it's never part of the real
+// filename, so a Move destination must have it stripped before being sent
+// as the new filename - GoPro assigns ids itself and doesn't accept one
+// from a rename request.
+//
+// A medium can now be renamed to an arbitrary filename, so a trailing
+// id-shaped suffix alone isn't proof this backend added it - only
+// stripping it when the braced id matches id (the object actually being
+// renamed) avoids mangling a legitimate name that happens to end that
+// way, e.g. "clip {0123456789abcdef01234567}.mp4" for an unrelated id.
+func stripSuffixID(name, id string) string {
 	ext := path.Ext(name)
 	base := strings.TrimSuffix(name, ext)
+	match := idSuffixRe.FindStringSubmatch(base)
+	if match == nil || match[1] != id {
+		return name
+	}
 	return idSuffixRe.ReplaceAllString(base, "") + ext
 }
 
@@ -2395,7 +2405,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if pattern == nil || !pattern.isFile || pattern.isUpload {
 		return nil, fs.ErrorCantMove
 	}
-	leaf := stripSuffixID(match[len(match)-1])
+	leaf := stripSuffixID(match[len(match)-1], srcObj.id)
 	filename := f.opt.Enc.FromStandardName(leaf)
 
 	upd := api.MediumUpdate{Filename: &filename, ContentTitle: &filename}
@@ -2478,7 +2488,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	title := f.opt.LinkTitle
 	if title == "" {
 		_, leaf := path.Split(remote)
-		title = stripSuffixID(leaf)
+		title = stripSuffixID(leaf, obj.id)
 	}
 	collectionID, err := f.createCollection(ctx, title, f.opt.LinkAllowDownload)
 	if err != nil {
