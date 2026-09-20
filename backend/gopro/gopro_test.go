@@ -1056,6 +1056,27 @@ func TestListDirShowsNullFileSizeTrashedItemsUnconditionally(t *testing.T) {
 	})
 }
 
+func TestListDirShowsFailedItemsWhenIncludeFailedIsSet(t *testing.T) {
+	// include_failed's whole point is to surface stuck failure/unknown
+	// media so it can be inspected or removed - such media is never
+	// confirmed to have a usable file_size, so the null-size skip must
+	// not undo what include_failed just opted into.
+	items := []api.Medium{
+		{ID: "1", Filename: "stuck.mp4", ItemCount: 1, ReadyToView: "failure", CapturedAt: fstest.Time("2024-01-01T00:00:00Z")},
+		{ID: "2", Filename: "unknown.mp4", ItemCount: 1, ReadyToView: "unknown", CapturedAt: fstest.Time("2024-01-01T00:00:00Z")},
+	}
+	f := newTestMediaFs(items)
+	f.opt.IncludeFailed = true
+
+	entries, err := f.List(context.Background(), "media/all")
+	require.NoError(t, err)
+	var names []string
+	for _, e := range entries {
+		names = append(names, e.Remote())
+	}
+	assert.ElementsMatch(t, []string{"media/all/stuck {1}.mp4", "media/all/unknown {2}.mp4"}, names)
+}
+
 func TestList(t *testing.T) {
 	items := []api.Medium{{ID: "1"}, {ID: "2"}}
 

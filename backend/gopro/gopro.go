@@ -1098,6 +1098,14 @@ func isEditType(t string) bool {
 	return t == "MultiClipEdit" || t == "Edit"
 }
 
+// isFailedState reports whether readyToView is one of the two states
+// --gopro-include-failed opts into ("failure" or "unknown") - only
+// reachable at all when that option is set, since the server-side
+// processing_states filter excludes them otherwise.
+func isFailedState(readyToView string) bool {
+	return readyToView == "failure" || readyToView == "unknown"
+}
+
 // processingStates returns the processing_states filter for /media/search -
 // see --gopro-include-processing and --gopro-include-failed for what each
 // added state means and why they're grouped this way.
@@ -1511,7 +1519,8 @@ func (f *Fs) listDir(ctx context.Context, prefix string, filter mediaFilter) (en
 		if !filter.matches(item.CapturedAt) {
 			return nil
 		}
-		if item.FileSize == nil && !isEditType(item.Type) && !f.opt.ShowAll && !f.opt.TrashedOnly {
+		if item.FileSize == nil && !isEditType(item.Type) && !f.opt.ShowAll && !f.opt.TrashedOnly &&
+			!(f.opt.IncludeFailed && isFailedState(item.ReadyToView)) {
 			// A ready medium can still have a null file_size beyond the
 			// MultiClipEdit/Edit types, which always have one (handled
 			// below via the same unknown-size path as a multi-item
@@ -1523,6 +1532,9 @@ func (f *Fs) listDir(ctx context.Context, prefix string, filter mediaFilter) (en
 			// view: the only things you can do with a trashed item are
 			// restore or permanently delete it, neither of which needs a
 			// usable size, so there's nothing to protect by hiding it.
+			// --gopro-include-failed's whole point is to surface a
+			// failure/unknown item so it can be inspected or removed, so
+			// it must not be undone by this same skip.
 			fs.Debugf(f, "Skipping %s: ready but file_size is null", item.ID)
 			return nil
 		}
