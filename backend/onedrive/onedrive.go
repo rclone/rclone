@@ -56,6 +56,7 @@ const (
 	driveTypeSharepoint         = "documentLibrary"
 	defaultChunkSize            = 10 * fs.Mebi
 	chunkSizeMultiple           = 320 * fs.Kibi
+	defaultTenantAPIVersion     = "v2.0"
 	// maxSinglePartSize is the size at which Graph stops accepting an upload in a
 	// single request (PUT /items/{id}/content). Microsoft documents this as
 	// "250 MB", see
@@ -166,7 +167,7 @@ See: https://github.com/rclone/rclone/issues/1716
 			Name: "tenant_url",
 			Help: `The tenant URL for non-admin OneDrive access.
 
-Set this to your SharePoint tenant URL to use the SharePoint v2.0 API
+Set this to your SharePoint tenant URL to use the SharePoint API
 endpoint instead of the standard Microsoft Graph API. This allows
 accessing business OneDrive without admin consent.
 
@@ -176,6 +177,16 @@ for "driveAccessToken" in the network requests. Look for the
 
 Example: https://your-tenant.sharepoint.com/_api`,
 			Default:  "",
+			Advanced: true,
+		}, {
+			Name: "tenant_api_version",
+			Help: `The SharePoint API version to use with tenant_url.
+
+Set this to the SharePoint API version matching the browser-extracted
+access token. For example, use v2.1 with a driveAccessTokenV21 token.
+
+This only applies when tenant_url is set.`,
+			Default:  defaultTenantAPIVersion,
 			Advanced: true,
 		}, {
 			Name: "chunk_size",
@@ -509,10 +520,18 @@ func getRegionURL(m configmap.Mapper) (region, graphURL string) {
 	// Check if tenant_url is provided for non-admin mode
 	tenantURL, _ := m.Get("tenant_url")
 	if tenantURL != "" {
-		graphURL = tenantURL + "/v2.0"
+		tenantAPIVersion, _ := m.Get("tenant_api_version")
+		graphURL = tenantAPIEndpoint(tenantURL, tenantAPIVersion)
 	}
 
 	return region, graphURL
+}
+
+func tenantAPIEndpoint(tenantURL, tenantAPIVersion string) string {
+	if tenantAPIVersion == "" {
+		tenantAPIVersion = defaultTenantAPIVersion
+	}
+	return strings.TrimRight(tenantURL, "/") + "/" + strings.TrimLeft(tenantAPIVersion, "/")
 }
 
 // Config for chooseDrive
@@ -808,6 +827,7 @@ type Options struct {
 	UploadCutoff            fs.SizeSuffix        `config:"upload_cutoff"`
 	ChunkSize               fs.SizeSuffix        `config:"chunk_size"`
 	TenantURL               string               `config:"tenant_url"`
+	TenantAPIVersion        string               `config:"tenant_api_version"`
 	DriveID                 string               `config:"drive_id"`
 	DriveType               string               `config:"drive_type"`
 	RootFolderID            string               `config:"root_folder_id"`
@@ -1115,7 +1135,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	rootURL := graphAPIEndpoint[opt.Region] + "/v1.0" + "/drives/" + opt.DriveID
 
 	if opt.TenantURL != "" {
-		rootURL = opt.TenantURL + "/v2.0" + "/drives/" + opt.DriveID
+		rootURL = tenantAPIEndpoint(opt.TenantURL, opt.TenantAPIVersion) + "/drives/" + opt.DriveID
 	}
 
 	oauthConfig, err := makeOauthConfig(ctx, opt)
@@ -2918,7 +2938,7 @@ func (o *Object) ID() string {
 func (f *Fs) parseNormalizedID(ID string) (string, string, string) {
 	var rootURL string
 	if f.opt.TenantURL != "" {
-		rootURL = f.opt.TenantURL + "/v2.0/drives"
+		rootURL = tenantAPIEndpoint(f.opt.TenantURL, f.opt.TenantAPIVersion) + "/drives"
 	} else {
 		rootURL = graphAPIEndpoint[f.opt.Region] + "/v1.0/drives"
 	}
@@ -3119,7 +3139,7 @@ func (f *Fs) changeNotifyNextChange(ctx context.Context, token string) (delta ap
 func (f *Fs) buildDriveDeltaOpts(token string) rest.Opts {
 	var rootURL string
 	if f.opt.TenantURL != "" {
-		rootURL = f.opt.TenantURL + "/v2.0/drives"
+		rootURL = tenantAPIEndpoint(f.opt.TenantURL, f.opt.TenantAPIVersion) + "/drives"
 	} else {
 		rootURL = graphAPIEndpoint[f.opt.Region] + "/v1.0/drives"
 	}
