@@ -1270,6 +1270,14 @@ func TestMkdirRmdirListUploads(t *testing.T) {
 		assert.Equal(t, errCantMkdir, f.Mkdir(ctx, "media/all"))
 	})
 
+	t.Run("Mkdir is idempotent - calling it again doesn't duplicate the entry", func(t *testing.T) {
+		require.NoError(t, f.Mkdir(ctx, "upload/dir"))
+		entries, err := f.List(ctx, "upload")
+		require.NoError(t, err)
+		require.Len(t, entries, 1, "a second Mkdir on the same directory must not add a duplicate listing entry")
+		assert.Equal(t, "upload/dir", entries[0].Remote())
+	})
+
 	t.Run("Rmdir removes an upload subdirectory again", func(t *testing.T) {
 		require.NoError(t, f.Rmdir(ctx, "upload/dir"))
 		entries, err := f.List(ctx, "upload")
