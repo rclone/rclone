@@ -2447,7 +2447,12 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	if size < 0 {
 		return info, nil, errors.New("gopro: can't upload a file of unknown size - the upload protocol needs it up front")
 	}
-	filename := match[1]
+	// match[1] is the whole virtual path below upload/, which can contain
+	// "/" when uploading into a synthetic subdirectory - GoPro's API is
+	// flat and has no concept of directories, so only the leaf is a valid
+	// filename to send; the full match[1] is kept in remote below for the
+	// virtual upload tree.
+	filename := path.Base(match[1])
 	ext := strings.ToUpper(strings.TrimPrefix(path.Ext(filename), "."))
 	mediumType := mediumTypeForFilename(filename)
 
