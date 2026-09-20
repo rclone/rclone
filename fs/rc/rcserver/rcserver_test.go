@@ -910,6 +910,48 @@ func TestAuthRequired(t *testing.T) {
 	testServer(t, tests, &opt)
 }
 
+// job/status returns the output of any job so it must need
+// authentication, e.g. so an unauthenticated user can't read the
+// output of config/dump started with _async by an authenticated one.
+func TestJobAuthRequired(t *testing.T) {
+	tests := []testRun{{
+		Name:        "status",
+		URL:         "job/status",
+		Method:      "POST",
+		Body:        `{"jobid":1}`,
+		ContentType: "application/json",
+		Status:      http.StatusForbidden,
+		Expected: `{
+	"error": "authentication must be set up on the rc server to use \"job/status\" or the --rc-no-auth flag must be in use",
+	"input": {
+		"jobid": 1
+	},
+	"path": "job/status",
+	"status": 403
+}
+`,
+	}, {
+		Name:        "list",
+		URL:         "job/list",
+		Method:      "POST",
+		Body:        `{}`,
+		ContentType: "application/json",
+		Status:      http.StatusForbidden,
+		Expected: `{
+	"error": "authentication must be set up on the rc server to use \"job/list\" or the --rc-no-auth flag must be in use",
+	"input": {},
+	"path": "job/list",
+	"status": 403
+}
+`,
+	}}
+	opt := newTestOpt()
+	opt.Serve = false
+	opt.Files = ""
+	opt.NoAuth = false
+	testServer(t, tests, &opt)
+}
+
 func TestNoAuth(t *testing.T) {
 	tests := []testRun{{
 		Name:        "auth",

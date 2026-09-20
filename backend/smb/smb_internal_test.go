@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/assert"
@@ -91,6 +93,33 @@ func TestUploadConnectionReuse(t *testing.T) {
 	pooled := len(f.pool)
 	f.poolMu.Unlock()
 	assert.Equal(t, 1, pooled, "upload should leave exactly one connection in the pool")
+}
+
+// TestOptionsWorkstationConfig verifies the workstation config key is backwards compatible
+func TestOptionsWorkstationConfig(t *testing.T) {
+	tests := []struct {
+		name        string
+		workstation string
+	}{
+		{"named workstation", "MYWORKSTATION"},
+		{"empty workstation sends no name", ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := configmap.Simple{
+				"host":        "example.com",
+				"workstation": tt.workstation,
+			}
+			opt := new(Options)
+			if err := configstruct.Set(m, opt); err != nil {
+				t.Fatalf("configstruct.Set failed: %v", err)
+			}
+			if opt.Workstation != tt.workstation {
+				t.Errorf("opt.Workstation = %q, want %q", opt.Workstation, tt.workstation)
+			}
+		})
+	}
 }
 
 // TestIsPathDir tests the isPathDir function logic
