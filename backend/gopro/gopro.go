@@ -693,8 +693,9 @@ func (f *Fs) dirTime() time.Time {
 
 // startYear returns the year to start "by-year" style listings from -
 // --gopro-start-year if set, otherwise the earliest captured_at year in
-// the library, or the current year if the library can't be listed or is
-// empty.
+// the library (or the trash under --gopro-trashed-only, matching
+// capturedDates), or the current year if that source can't be listed or
+// is empty.
 //
 // This scans every cached item rather than trusting sort order: the
 // "order_by": {"captured_at"} param elsewhere in this file turns out to
@@ -717,7 +718,13 @@ func (f *Fs) startYear(ctx context.Context) int {
 	if f.opt.StartYear != 0 {
 		return f.opt.StartYear
 	}
-	items, err := f.allMedia(ctx)
+	var items []api.Medium
+	var err error
+	if f.opt.TrashedOnly {
+		items, err = f.allTrash(ctx)
+	} else {
+		items, err = f.allMedia(ctx)
+	}
 	if err != nil || len(items) == 0 {
 		return f.dirTime().Year()
 	}

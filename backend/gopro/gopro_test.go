@@ -1085,6 +1085,20 @@ func TestStartYear(t *testing.T) {
 		f := &Fs{startTime: startTime, mediaCache: []api.Medium{}, mediaCacheAt: time.Now()}
 		assert.Equal(t, startTime.Year(), f.startYear(ctx))
 	})
+
+	t.Run("under trashed_only, scans the trash instead of the active library", func(t *testing.T) {
+		f := &Fs{
+			opt:          Options{TrashedOnly: true},
+			mediaCache:   []api.Medium{{CapturedAt: fstest.Time("2024-06-01T00:00:00Z")}},
+			mediaCacheAt: time.Now(),
+			trashCache: []api.Medium{
+				{CapturedAt: fstest.Time("2010-01-01T00:00:00Z")},
+				{CapturedAt: fstest.Time("2020-01-01T00:00:00Z")},
+			},
+			trashCacheAt: time.Now(),
+		}
+		assert.Equal(t, 2010, f.startYear(ctx), "the active library's 2024 item must not win over the trash's earlier 2010 one")
+	})
 }
 
 func TestShowEmptyDirsGetter(t *testing.T) {
