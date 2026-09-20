@@ -1284,6 +1284,13 @@ func (f *Fs) allTrash(ctx context.Context) (items []api.Medium, err error) {
 		}
 		page++
 	}
+	if items == nil {
+		// See allMedia's identical normalization: a nil items here would
+		// defeat the "f.trashCache != nil" cache-hit check above, and an
+		// empty trash would refetch /media/deleted on every call instead
+		// of honoring mediaCacheTTL.
+		items = []api.Medium{}
+	}
 	f.trashCache = items
 	f.trashCacheAt = time.Now()
 	return items, nil
