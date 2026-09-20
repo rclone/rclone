@@ -977,6 +977,11 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 		Used: fs.NewUsageValue(info.TotalStorage),
 	}
 	if info.NonExemptStorageLimit > 0 {
+		// Used must share the same non-exempt-only base as Total/Free -
+		// the combined TotalStorage can exceed NonExemptStorageLimit
+		// whenever most of the account's storage is exempt, which would
+		// otherwise report as using more than the total quota.
+		usage.Used = fs.NewUsageValue(info.NonExempt.TotalStorage)
 		usage.Total = fs.NewUsageValue(info.NonExemptStorageLimit)
 		free := info.NonExemptStorageLimit - info.NonExempt.TotalStorage
 		if free < 0 {

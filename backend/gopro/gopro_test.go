@@ -1399,7 +1399,10 @@ func TestGetUserInfoAndAbout(t *testing.T) {
 	require.NotNil(t, usage.Used)
 	require.NotNil(t, usage.Total)
 	require.NotNil(t, usage.Free)
-	assert.Equal(t, int64(1500), *usage.Used)
+	// Used must share NonExempt's base with Total/Free (1000, both
+	// non-exempt-only) rather than the combined 1500 TotalStorage, or
+	// usage reports as "used more than total".
+	assert.Equal(t, int64(400), *usage.Used)
 	assert.Equal(t, int64(1000), *usage.Total)
 	assert.Equal(t, int64(600), *usage.Free)
 }
