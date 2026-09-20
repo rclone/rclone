@@ -176,6 +176,57 @@ func TestNewFilterWithFilesFromRaw(t *testing.T) {
 	}
 }
 
+func TestNewFilterForbiddenMixOfFilesFrom0AndFilterRule(t *testing.T) {
+	Opt := Opt
+
+	// Set up the input
+	Opt.FilterRule = []string{"- filter1", "- filter1b"}
+	Opt.FilesFrom0 = []string{testFile(t, "#comment\x00files1\x00files2\x00")}
+
+	rm := func(p string) {
+		err := os.Remove(p)
+		if err != nil {
+			t.Logf("error removing %q: %v", p, err)
+		}
+	}
+	// Reset the input
+	defer func() {
+		rm(Opt.FilesFrom0[0])
+	}()
+
+	_, err := NewFilter(&Opt)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "the usage of --files-from0 overrides all other filters")
+}
+
+func TestNewFilterWithFilesFrom0(t *testing.T) {
+	Opt := Opt
+
+	// Set up the input: NUL-separated, with an embedded newline in one entry
+	Opt.FilesFrom0 = []string{testFile(t, "#comment\x00files1\nmore\x00files2\x00")}
+
+	rm := func(p string) {
+		err := os.Remove(p)
+		if err != nil {
+			t.Logf("error removing %q: %v", p, err)
+		}
+	}
+	// Reset the input
+	defer func() {
+		rm(Opt.FilesFrom0[0])
+	}()
+
+	f, err := NewFilter(&Opt)
+	require.NoError(t, err)
+	assert.Len(t, f.files, 3)
+	for _, name := range []string{"#comment", "files1\nmore", "files2"} {
+		_, ok := f.files[name]
+		if !ok {
+			t.Errorf("Didn't find file %q in f.files", name)
+		}
+	}
+}
+
 func TestNewFilterFullExceptFilesFromOpt(t *testing.T) {
 	Opt := Opt
 
@@ -391,19 +442,22 @@ func TestNewFilterMakeListR(t *testing.T) {
 	assert.Equal(t, want, newObjects)
 	assert.Equal(t, want, listRObjects)
 
-	// Now check an error is returned from NewObject
+	// Check that a file which errors on NewObject doesn't stop the
+	// others being listed - the error is counted and logged rather than
+	// being returned.
 	require.NoError(t, f.AddFile("error"))
 	err = listR(context.Background(), "", listRcallback)
-	require.EqualError(t, err, assert.AnError.Error())
+	require.NoError(t, err)
+	assert.Equal(t, want, listRObjects)
 
-	// The checker will exit by the error above
+	// The same with a single checker
 	ci := fs.GetConfig(context.Background())
 	ci.Checkers = 1
 
-	// Now check an error is returned from NewObject
 	require.NoError(t, f.AddFile("error"))
 	err = listR(context.Background(), "", listRcallback)
-	require.EqualError(t, err, assert.AnError.Error())
+	require.NoError(t, err)
+	assert.Equal(t, want, listRObjects)
 }
 
 func TestNewFilterMinSize(t *testing.T) {
@@ -767,7 +821,7 @@ five
 		}()
 		fileName = "-"
 	}
-	err := forEachLine(fileName, raw, func(s string) error {
+	err := forEachLine(fileName, raw, false, func(s string) error {
 		lines = append(lines, s)
 		return nil
 	})
@@ -794,6 +848,71 @@ func TestFilterForEachLineWithRaw(t *testing.T) {
 
 func TestFilterForEachLineStdinWithRaw(t *testing.T) {
 	testFilterForEachLine(t, true, true)
+}
+
+func testFilterForEachLineNul(t *testing.T, useStdin bool) {
+	file := testFile(t, "one\x00two\nthree\x00four\x00five\x00")
+	defer func() {
+		err := os.Remove(file)
+		require.NoError(t, err)
+	}()
+	lines := []string{}
+	fileName := file
+	if useStdin {
+		in, err := os.Open(file)
+		require.NoError(t, err)
+		oldStdin := os.Stdin
+		os.Stdin = in
+		defer func() {
+			os.Stdin = oldStdin
+			_ = in.Close()
+		}()
+		fileName = "-"
+	}
+	err := forEachLine(fileName, true, true, func(s string) error {
+		lines = append(lines, s)
+		return nil
+	})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"one", "two\nthree", "four", "five"}, lines)
+}
+
+func TestFilterForEachLineNul(t *testing.T) {
+	testFilterForEachLineNul(t, false)
+}
+
+func TestFilterForEachLineNulStdin(t *testing.T) {
+	testFilterForEachLineNul(t, true)
+}
+
+func TestFilterForEachLineNulNoTrailing(t *testing.T) {
+	file := testFile(t, "one\x00two\x00three")
+	defer func() {
+		err := os.Remove(file)
+		require.NoError(t, err)
+	}()
+	var lines []string
+	err := forEachLine(file, true, true, func(s string) error {
+		lines = append(lines, s)
+		return nil
+	})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"one", "two", "three"}, lines)
+}
+
+func TestFilterForEachLineNulConsecutive(t *testing.T) {
+	file := testFile(t, "one\x00\x00two\x00")
+	defer func() {
+		err := os.Remove(file)
+		require.NoError(t, err)
+	}()
+	var lines []string
+	err := forEachLine(file, true, true, func(s string) error {
+		lines = append(lines, s)
+		return nil
+	})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"one", "", "two"}, lines)
 }
 
 func TestFilterMatchesFromDocs(t *testing.T) {

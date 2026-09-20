@@ -2,28 +2,34 @@
 
 Current active maintainers of rclone are:
 
-| Name             | GitHub ID         | Specific Responsibilities    |
-| :--------------- | :---------------- | :--------------------------  |
-| Nick Craig-Wood  | @ncw              | overall project health       |
-| Stefan Breunig   | @breunigs         |                              |
-| Ishuah Kariuki   | @ishuah           |                              |
-| Remus Bunduc     | @remusb           | cache backend                |
-| Fabian Möller    | @B4dM4n           |                              |
-| Alex Chen        | @Cnly             | onedrive backend             |
-| Sandeep Ummadi   | @sandeepkru       | azureblob backend            |
-| Sebastian Bünger | @buengese         | jottacloud, yandex & compress backends |
-| Ivan Andreev     | @ivandeex         | chunker & mailru backends    |
-| Max Sum          | @Max-Sum          | union backend                |
-| Fred             | @creativeprojects | seafile backend              |
-| Caleb Case       | @calebcase        | storj backend                |
-| wiserain         | @wiserain         | pikpak backend               |
-| albertony        | @albertony        |                              |
-| Chun-Hung Tseng  | @henrybear327     | Proton Drive Backend         |
-| Hideo Aoyama     | @boukendesho      | snap packaging               |
-| nielash          | @nielash          | bisync                       |
-| Dan McArdle      | @dmcardle         | gitannex                     |
-| Sam Harrison     | @childish-sambino | filescom                     |
-| Enduriel         | @Enduriel         | filen backend                |
+| Name             | GitHub ID         |
+| :--------------- | :---------------- |
+| Nick Craig-Wood  | @ncw              |
+| Stefan Breunig   | @breunigs         |
+| Ishuah Kariuki   | @ishuah           |
+| Remus Bunduc     | @remusb           |
+| Fabian Möller    | @B4dM4n           |
+| Alex Chen        | @Cnly             |
+| Sandeep Ummadi   | @sandeepkru       |
+| Sebastian Bünger | @buengese         |
+| Ivan Andreev     | @ivandeex         |
+| Max Sum          | @Max-Sum          |
+| Fred             | @creativeprojects |
+| Caleb Case       | @calebcase        |
+| wiserain         | @wiserain         |
+| albertony        | @albertony        |
+| Chun-Hung Tseng  | @henrybear327     |
+| Hideo Aoyama     | @boukendesho      |
+| nielash          | @nielash          |
+| Dan McArdle      | @dmcardle         |
+| Sam Harrison     | @childish-sambino |
+| Enduriel         | @Enduriel         |
+
+Per-area ownership of code (which backend or command each maintainer looks
+after) is defined in [.github/CODEOWNERS](.github/CODEOWNERS), which GitHub uses
+to auto-request reviews. Two responsibilities don't map to a code path: @ncw
+looks after overall project health, and @boukendesho maintains the snap
+packaging.
 
 ## This is a work in progress draft
 

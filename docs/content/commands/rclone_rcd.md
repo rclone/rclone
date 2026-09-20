@@ -43,6 +43,10 @@ for a transfer.
 `--rc-max-header-bytes` controls the maximum number of bytes the server will
 accept in the HTTP header.
 
+`--rc-response-header` can be used to set an HTTP header for all responses,
+will overriding existing values. The flag may be repeated to add multiple
+headers. Use the format `Header-Name: value`.
+
 `--rc-baseurl` controls the URL prefix that rclone serves from.  By default
 rclone will serve from the root.  If you used `--rc-baseurl "/rclone"` then
 rclone would serve from a URL starting with "/rclone/".  This is
@@ -65,6 +69,11 @@ By default this will serve over http.  If you want you can serve over
 https.  You will need to supply the `--rc-cert` and `--rc-key` flags.
 If you wish to do client side certificate validation then you will need to
 supply `--rc-client-ca` also.
+
+When TLS is configured every listener given with `--rc-addr` serves TLS.
+An individual listener can be prefixed with `http://` to serve unencrypted
+HTTP on that address, or with `tls://` to state explicitly that it must serve
+TLS.  Using a `tls://` address without `--rc-cert` and `--rc-key` is an error.
 
 `--rc-cert` must be set to the path of a file containing
 either a PEM encoded certificate, or a concatenation of that with the CA
@@ -197,6 +206,7 @@ Flags to control the Remote Control API
       --rc-no-auth                         Don't require auth for certain methods
       --rc-pass string                     Password for authentication
       --rc-realm string                    Realm for authentication
+      --rc-response-header stringArray     Set HTTP header for all responses, overriding existing values
       --rc-salt string                     Password hashing salt (default "dlPL2MqE")
       --rc-serve                           Enable the serving of remote objects
       --rc-serve-no-modtime                Don't read the modification time (can speed things up)

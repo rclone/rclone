@@ -12,7 +12,6 @@ import (
 	"io"
 	"path"
 	"strings"
-	"time"
 	"unicode/utf8"
 
 	"github.com/rclone/rclone/fs"
@@ -266,7 +265,12 @@ func (c *copy) manualCopy(ctx context.Context) (actionTaken string, newDst fs.Ob
 	}
 
 	if doMultiThreadCopy(ctx, c.f, c.src) {
-		return c.multiThreadCopy(ctx, uploadOptions)
+		actionTaken, newDst, err = c.multiThreadCopy(ctx, uploadOptions)
+		if !errors.Is(err, fs.ErrorRangeIgnored) {
+			return actionTaken, newDst, err
+		}
+		fs.Logf(c.src, "multi-thread copy: %v: downloading in a single stream", err)
+		c.tr.Reset(ctx)
 	}
 
 	var in io.ReadCloser
@@ -331,13 +335,16 @@ func (c *copy) copy(ctx context.Context) (newDst fs.Object, err error) {
 		retry = false
 		if fserrors.IsRetryError(err) || fserrors.ShouldRetry(err) {
 			retry = true
-		} else if t, ok := pacer.IsRetryAfter(err); ok {
+		} else if t, ok := pacer.IsRetryAfter(err); ok && tries+1 < c.maxTries {
 			fs.Debugf(c.src, "Sleeping for %v (as indicated by the server) to obey Retry-After error: %v", t, err)
-			time.Sleep(t)
-			retry = true
+			if sleepWithContext(ctx, t) {
+				retry = true
+			} else {
+				fserrors.ContextError(ctx, &err)
+			}
 		}
 		if retry {
-			fs.Debugf(c.src, "Received error: %v - low level retry %d/%d", err, tries, c.maxTries)
+			fs.Debugf(c.src, "Received error: %v - low level retry %d/%d", err, tries+1, c.maxTries)
 			c.tr.Reset(ctx) // skip incomplete accounting - will be overwritten by retry
 			continue
 		}

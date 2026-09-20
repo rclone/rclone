@@ -305,6 +305,7 @@ func listR(ctx context.Context, f fs.Fs, path string, includeAll bool, listType 
 			}
 		}
 		listType.Filter(&entries)
+		entries = list.RemoveEscaping(entries)
 		if !includeAll {
 			filteredEntries := entries[:0]
 			for _, entry := range entries {
@@ -394,6 +395,13 @@ func walk(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel i
 		wg.Go(func() {
 			for {
 				select {
+				case <-ctx.Done():
+					closeQuit()
+					select {
+					case errs <- ctx.Err():
+					default:
+					}
+					return
 				case job, ok := <-in:
 					if !ok {
 						return
@@ -466,6 +474,7 @@ func walkRDirTree(ctx context.Context, f fs.Fs, startPath string, includeAll boo
 	var mu sync.Mutex
 	err := listR(ctx, startPath, func(entries fs.DirEntries) error {
 		accounting.Stats(ctx).Listed(int64(len(entries)))
+		entries = list.RemoveEscaping(entries)
 		mu.Lock()
 		defer mu.Unlock()
 		for _, entry := range entries {

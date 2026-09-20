@@ -17,6 +17,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -416,7 +417,9 @@ func SameObject(src, dst fs.Object) bool {
 // It returns the destination object if possible.  Note that this may
 // be nil.
 //
-// This is accounted as a check.
+// This is accounted as a check, unless Move falls back to Copy + Delete
+// (on backends without server-side move), in which case the Copy is
+// accounted as a transfer.
 func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
 	return move(ctx, fdst, dst, remote, src, false)
 }
@@ -546,7 +549,11 @@ func SuffixName(ctx context.Context, remote string) string {
 // and accumulating stats and errors.
 //
 // If backupDir is set then it moves the file to there instead of
-// deleting
+// deleting.
+//
+// Use BackupDir to find backupDir from --backup-dir. That lookup is
+// relatively expensive, so when deleting many files do it once outside
+// the loop rather than calling it for every object.
 func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs) (err error) {
 	tr := accounting.Stats(ctx).NewCheckingTransfer(dst, "deleting")
 	defer func() {
@@ -579,8 +586,8 @@ func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs
 
 // DeleteFile deletes a single file respecting --dry-run and accumulating stats and errors.
 //
-// If useBackupDir is set and --backup-dir is in effect then it moves
-// the file to there instead of deleting
+// DeleteFile does not honour --backup-dir: it always deletes. Call
+// DeleteFileWithBackupDir instead if --backup-dir support is required.
 func DeleteFile(ctx context.Context, dst fs.Object) (err error) {
 	return DeleteFileWithBackupDir(ctx, dst, nil)
 }
@@ -600,6 +607,8 @@ func DeleteFilesWithBackupDir(ctx context.Context, toBeDeleted fs.ObjectsChan, b
 	for range ci.Checkers {
 		go func() {
 			defer wg.Done()
+			// Every object must be received, even after a fatal error,
+			// otherwise the sender blocks when the channel fills up
 			for dst := range toBeDeleted {
 				err := DeleteFileWithBackupDir(ctx, dst, backupDir)
 				if err != nil {
@@ -609,7 +618,6 @@ func DeleteFilesWithBackupDir(ctx context.Context, toBeDeleted fs.ObjectsChan, b
 					if fserrors.IsFatalError(err) {
 						fs.Errorf(dst, "Got fatal error on delete: %s", err)
 						fatalErrorCount.Add(1)
-						return
 					}
 				}
 			}
@@ -735,6 +743,19 @@ func SameDir(fdst, fsrc fs.Info) bool {
 	return fdstRootFolded == fsrcRootFolded
 }
 
+// sleepWithContext sleeps for d returning true, or false if ctx
+// finishes first.
+func sleepWithContext(ctx context.Context, d time.Duration) bool {
+	timer := time.NewTimer(d)
+	defer timer.Stop()
+	select {
+	case <-timer.C:
+		return true
+	case <-ctx.Done():
+		return false
+	}
+}
+
 // Retry runs fn up to maxTries times if it returns a retriable error
 func Retry(ctx context.Context, o any, maxTries int, fn func() error) (err error) {
 	for tries := 1; tries <= maxTries; tries++ {
@@ -752,8 +773,14 @@ func Retry(ctx context.Context, o any, maxTries int, fn func() error) (err error
 			fs.Debugf(o, "Received error: %v - low level retry %d/%d", err, tries, maxTries)
 			continue
 		} else if t, ok := pacer.IsRetryAfter(err); ok {
+			if tries >= maxTries {
+				break
+			}
 			fs.Debugf(o, "Sleeping for %v (as indicated by the server) to obey Retry-After error: %v", t, err)
-			time.Sleep(t)
+			if !sleepWithContext(ctx, t) {
+				fserrors.ContextError(ctx, &err)
+				break
+			}
 			continue
 		}
 		break
@@ -1050,12 +1077,16 @@ func ListDir(ctx context.Context, f fs.Fs, w io.Writer) error {
 }
 
 // Mkdir makes a destination directory or container
-func Mkdir(ctx context.Context, f fs.Fs, dir string) error {
+func Mkdir(ctx context.Context, f fs.Fs, dir string) (err error) {
+	tr := accounting.Stats(ctx).NewCheckingTransferNoHistory(dirTransferEntry(f, nil, dir), "making directory")
+	defer func() {
+		tr.Done(ctx, err)
+	}()
 	if SkipDestructive(ctx, fs.LogDirName(f, dir), "make directory") {
 		return nil
 	}
 	fs.Infof(fs.LogDirName(f, dir), "Making directory")
-	err := f.Mkdir(ctx, dir)
+	err = f.Mkdir(ctx, dir)
 	if err != nil {
 		err = fs.CountError(ctx, err)
 		return err
@@ -1072,6 +1103,10 @@ func MkdirMetadata(ctx context.Context, f fs.Fs, dir string, metadata fs.Metadat
 	if do == nil {
 		return nil, Mkdir(ctx, f, dir)
 	}
+	tr := accounting.Stats(ctx).NewCheckingTransferNoHistory(dirTransferEntry(f, nil, dir), "making directory")
+	defer func() {
+		tr.Done(ctx, err)
+	}()
 	logName := fs.LogDirName(f, dir)
 	if SkipDestructive(ctx, logName, "make directory") {
 		return nil, nil
@@ -1082,6 +1117,7 @@ func MkdirMetadata(ctx context.Context, f fs.Fs, dir string, metadata fs.Metadat
 		err = fs.CountError(ctx, err)
 		return nil, err
 	}
+	accounting.Stats(ctx).UpdatedDirs(1)
 	if mtime, ok := metadata["mtime"]; ok {
 		fs.Infof(logName, "Made directory with metadata (mtime=%s)", mtime)
 	} else {
@@ -1099,32 +1135,32 @@ func MkdirMetadata(ctx context.Context, f fs.Fs, dir string, metadata fs.Metadat
 // If the directory was created with MkDir then it will attempt to use
 // Fs.DirSetModTime to update the directory modtime if available.
 func MkdirModTime(ctx context.Context, f fs.Fs, dir string, modTime time.Time) (newDst fs.Directory, err error) {
-	logName := fs.LogDirName(f, dir)
-	if SkipDestructive(ctx, logName, "make directory") {
-		return nil, nil
+	if f.Features().MkdirMetadata != nil {
+		// Make the directory with the modtime as metadata
+		metadata := fs.Metadata{
+			"mtime": modTime.Format(time.RFC3339Nano),
+		}
+		return MkdirMetadata(ctx, f, dir, metadata)
 	}
-	metadata := fs.Metadata{
-		"mtime": modTime.Format(time.RFC3339Nano),
-	}
-	newDst, err = MkdirMetadata(ctx, f, dir, metadata)
+	// Otherwise make the directory then set the modtime if possible
+	err = Mkdir(ctx, f, dir)
 	if err != nil {
 		return nil, err
 	}
-	if newDst != nil {
-		// The directory was created and we have logged already
-		return newDst, nil
+	if f.Features().DirSetModTime == nil {
+		return nil, nil
 	}
-	// The directory was created with Mkdir then we should try to set the time
-	if do := f.Features().DirSetModTime; do != nil {
-		err = do(ctx, dir, modTime)
-	}
-	fs.Infof(logName, "Made directory with modification time %v", modTime)
-	return newDst, err
+	return SetDirModTime(ctx, f, nil, dir, modTime)
 }
 
 // TryRmdir removes a container but not if not empty.  It doesn't
 // count errors but may return one.
 func TryRmdir(ctx context.Context, f fs.Fs, dir string) error {
+	tr := accounting.Stats(ctx).NewCheckingTransferNoHistory(dirTransferEntry(f, nil, dir), "removing directory")
+	defer func() {
+		// Pass nil error to Done as TryRmdir doesn't count errors
+		tr.Done(ctx, nil)
+	}()
 	accounting.Stats(ctx).DeletedDirs(1)
 	if SkipDestructive(ctx, fs.LogDirName(f, dir), "remove directory") {
 		return nil
@@ -1297,55 +1333,61 @@ type readCloser struct {
 // if count >= 0 then only that many characters will be output
 func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64, sep []byte) error {
 	var mu sync.Mutex
-	ci := fs.GetConfig(ctx)
 	return ListFn(ctx, f, func(o fs.Object) {
-		var err error
-		tr := accounting.Stats(ctx).NewTransfer(o, nil)
-		defer func() {
-			tr.Done(ctx, err)
-		}()
-		opt := fs.RangeOption{Start: offset, End: -1}
-		size := o.Size()
-		if opt.Start < 0 {
-			opt.Start += size
-		}
-		if count >= 0 {
-			opt.End = opt.Start + count - 1
-		}
-		var options []fs.OpenOption
-		if opt.Start > 0 || opt.End >= 0 {
-			options = append(options, &opt)
-		}
-		for _, option := range ci.DownloadHeaders {
-			options = append(options, option)
-		}
-		var in io.ReadCloser
-		in, err = Open(ctx, o, options...)
-		if err != nil {
-			err = fs.CountError(ctx, err)
-			fs.Errorf(o, "Failed to open: %v", err)
-			return
-		}
-		if count >= 0 {
-			in = &readCloser{Reader: &io.LimitedReader{R: in, N: count}, Closer: in}
-		}
-		in = tr.Account(ctx, in).WithBuffer() // account and buffer the transfer
-		// take the lock just before we output stuff, so at the last possible moment
 		mu.Lock()
 		defer mu.Unlock()
-		_, err = io.Copy(w, in)
+		err := catObject(ctx, o, w, offset, count)
 		if err != nil {
-			err = fs.CountError(ctx, err)
 			fs.Errorf(o, "Failed to send to output: %v", err)
+			return
 		}
 		if len(sep) > 0 {
-			_, err = w.Write(sep)
-			if err != nil {
+			if _, err := w.Write(sep); err != nil {
 				err = fs.CountError(ctx, err)
 				fs.Errorf(o, "Failed to send separator to output: %v", err)
 			}
 		}
 	})
+}
+
+// catObject sends an object or a range of it to the io.Writer
+func catObject(ctx context.Context, o fs.Object, w io.Writer, offset, count int64) (err error) {
+	tr := accounting.Stats(ctx).NewTransfer(o, nil)
+	defer func() {
+		tr.Done(ctx, err)
+	}()
+	opt := fs.RangeOption{Start: offset, End: -1}
+	size := o.Size()
+	if opt.Start < 0 && size >= 0 {
+		opt.Start += size
+	}
+	if count >= 0 {
+		opt.End = opt.Start + count - 1
+	}
+	var options []fs.OpenOption
+	if opt.Start > 0 || opt.End >= 0 {
+		options = append(options, &opt)
+	}
+	for _, option := range fs.GetConfig(ctx).DownloadHeaders {
+		options = append(options, option)
+	}
+	var in io.ReadCloser
+	in, err = Open(ctx, o, options...)
+	if err != nil {
+		err = fs.CountError(ctx, err)
+		return fmt.Errorf("failed to open file: %w", err)
+	}
+	if count >= 0 {
+		in = &readCloser{Reader: &io.LimitedReader{R: in, N: count}, Closer: in}
+	}
+	in = tr.Account(ctx, in).WithBuffer() // account and buffer the transfer
+	defer fs.CheckClose(in, &err)
+	_, err = io.Copy(w, in)
+	if err != nil {
+		err = fs.CountError(ctx, err)
+		return err
+	}
+	return nil
 }
 
 // Rcat reads data from the Reader until EOF and uploads it to a file on remote
@@ -1411,6 +1453,8 @@ func rcatSrc(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClos
 	if n, err := io.ReadFull(trackingIn, buf); err == io.EOF || err == io.ErrUnexpectedEOF {
 		fileIsSmall = true
 		buf = buf[:n]
+	} else if err != nil {
+		return nil, fmt.Errorf("failed to read upload input: %w", err)
 	}
 
 	// Read the data we have already read in buf and any further unread
@@ -1563,8 +1607,7 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 
 	errCount := errcount.New()
 	// Delete all directories at the same level in parallel
-	for level := len(toDelete) - 1; level >= 0; level-- {
-		dirs := toDelete[level]
+	for level, dirs := range slices.Backward(toDelete) {
 		if len(dirs) == 0 {
 			continue
 		}
@@ -1812,8 +1855,20 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 		defer func() {
 			tr.Done(ctx, err)
 		}()
-		body := io.NopCloser(in)    // we let the server close the body
-		in := tr.Account(ctx, body) // account the transfer (no buffering)
+		// The stream can only be read once, so hash it on the way past
+		// and compare with the destination afterwards.
+		hashType, hashOption := CommonHash(ctx, fdst, fdst)
+		var hasher *hash.MultiHasher
+		var streamIn io.Reader = in
+		if hashType != hash.None {
+			hasher, err = hash.NewMultiHasherTypes(hashOption.Hashes)
+			if err != nil {
+				return nil, err
+			}
+			streamIn = io.TeeReader(streamIn, hasher)
+		}
+		body := io.NopCloser(streamIn) // we let the server close the body
+		in := tr.Account(ctx, body)    // account the transfer (no buffering)
 
 		if SkipDestructive(ctx, dstFileName, "upload from pipe") {
 			// prevents "broken pipe" errors
@@ -1821,7 +1876,7 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 			return nil, err
 		}
 
-		var options []fs.OpenOption
+		options := []fs.OpenOption{hashOption}
 		for _, option := range fs.GetConfig(ctx).UploadHeaders {
 			options = append(options, option)
 		}
@@ -1830,6 +1885,27 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 		if err != nil {
 			fs.Errorf(dstFileName, "Post request put error: %v", err)
 
+			return nil, err
+		}
+
+		// Verify the upload
+		if sizeDiffers(ctx, info, obj) {
+			err = fmt.Errorf("corrupted on transfer: sizes differ src %d vs dst(%s) %d", size, obj.Fs(), obj.Size())
+		} else if hasher != nil {
+			src := object.NewStaticObjectInfo(dstFileName, modTime, size, true, hasher.Sums(), fdst)
+			// checkHashes logs and counts errors
+			same, _, srcHash, dstHash, _ := checkHashes(ctx, src, obj, hashType)
+			if !same {
+				err = fmt.Errorf("corrupted on transfer: %v hashes differ src %q vs dst(%s) %q", hashType, srcHash, obj.Fs(), dstHash)
+			}
+		}
+		if err != nil {
+			err = fs.CountError(ctx, err)
+			fs.Errorf(obj, "%v", err)
+			fs.Infof(obj, "Removing failed copy")
+			if removeErr := obj.Remove(ctx); removeErr != nil {
+				fs.Infof(obj, "Failed to remove failed copy: %s", removeErr)
+			}
 			return nil, err
 		}
 	} else {
@@ -2438,7 +2514,7 @@ func DirMove(ctx context.Context, f fs.Fs, srcRemote, dstRemote string) (err err
 		newPath string
 	}
 	renames := make(chan rename, ci.Checkers)
-	g, gCtx := errgroup.WithContext(context.Background())
+	g, gCtx := errgroup.WithContext(ctx)
 	for range ci.Checkers {
 		g.Go(func() error {
 			for job := range renames {
@@ -2457,11 +2533,17 @@ func DirMove(ctx context.Context, f fs.Fs, srcRemote, dstRemote string) (err err
 			return nil
 		})
 	}
+sending:
 	for dir, entries := range tree {
 		dstPath := dstRemote + dir[len(srcRemote):]
 		for _, entry := range entries {
 			if o, ok := entry.(fs.Object); ok {
-				renames <- rename{o, path.Join(dstPath, path.Base(o.Remote()))}
+				select {
+				case renames <- rename{o, path.Join(dstPath, path.Base(o.Remote()))}:
+				case <-gCtx.Done():
+					// The workers have stopped so stop sending
+					break sending
+				}
 			}
 		}
 	}
@@ -2472,8 +2554,8 @@ func DirMove(ctx context.Context, f fs.Fs, srcRemote, dstRemote string) (err err
 	}
 
 	// Remove the source directories in reverse order
-	for i := len(dirs) - 1; i >= 0; i-- {
-		err := f.Rmdir(ctx, dirs[i])
+	for _, dir := range slices.Backward(dirs) {
+		err := f.Rmdir(ctx, dir)
 		if err != nil {
 			return fmt.Errorf("RenameDir rmdir: %w", err)
 		}
@@ -2646,6 +2728,15 @@ func dirName(f fs.Fs, dst fs.Directory, dir string) any {
 	return f
 }
 
+// Return the best way of describing the directory as a DirEntry for
+// the progress display, describing the root directory as the Fs.
+func dirTransferEntry(f fs.Fs, dst fs.Directory, dir string) fs.DirEntry {
+	if dst != nil && dst.Remote() != "" {
+		return dst
+	}
+	return fs.NewDir(fmt.Sprint(fs.LogDirName(f, dir)), time.Time{})
+}
+
 // CopyDirMetadata copies the src directory to dst or f if nil.  If dst is nil then it uses
 // dir as the name of the new directory.
 //
@@ -2654,6 +2745,12 @@ func dirName(f fs.Fs, dst fs.Directory, dir string) any {
 func CopyDirMetadata(ctx context.Context, f fs.Fs, dst fs.Directory, dir string, src fs.Directory) (newDst fs.Directory, err error) {
 	ci := fs.GetConfig(ctx)
 	logName := dirName(f, dst, dir)
+	tr := accounting.Stats(ctx).NewCheckingTransferNoHistory(dirTransferEntry(f, dst, dir), "updating metadata")
+	defer func() {
+		// Count the error before Done so it is only counted once
+		err = fs.CountError(ctx, err)
+		tr.Done(ctx, err)
+	}()
 	if SkipDestructive(ctx, logName, "update directory metadata") {
 		return nil, nil
 	}
@@ -2696,6 +2793,7 @@ func CopyDirMetadata(ctx context.Context, f fs.Fs, dst fs.Directory, dir string,
 	if err != nil {
 		return nil, err
 	}
+	accounting.Stats(ctx).UpdatedDirs(1)
 	fs.Infof(logName, "Updated directory metadata")
 	return newDst, nil
 }
@@ -2715,6 +2813,12 @@ func SetDirModTime(ctx context.Context, f fs.Fs, dst fs.Directory, dir string, m
 		fs.Debugf(logName, "Skipping set directory modification time as --no-update-dir-modtime is set")
 		return nil, nil
 	}
+	tr := accounting.Stats(ctx).NewCheckingTransferNoHistory(dirTransferEntry(f, dst, dir), "setting modtime")
+	defer func() {
+		// Count the error before Done so it is only counted once
+		err = fs.CountError(ctx, err)
+		tr.Done(ctx, err)
+	}()
 	if SkipDestructive(ctx, logName, "set directory modification time") {
 		return nil, nil
 	}
@@ -2732,6 +2836,7 @@ func SetDirModTime(ctx context.Context, f fs.Fs, dst fs.Directory, dir string, m
 			} else if err != nil {
 				return dst, err
 			} else {
+				accounting.Stats(ctx).UpdatedDirs(1)
 				fs.Infof(logName, "Set directory modification time (using SetModTime)")
 				return dst, nil
 			}
@@ -2744,6 +2849,7 @@ func SetDirModTime(ctx context.Context, f fs.Fs, dst fs.Directory, dir string, m
 		if err != nil {
 			return dst, err
 		}
+		accounting.Stats(ctx).UpdatedDirs(1)
 		fs.Infof(logName, "Set directory modification time (using DirSetModTime)")
 		return dst, nil
 	}

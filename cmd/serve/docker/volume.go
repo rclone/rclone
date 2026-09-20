@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/rclone/rclone/cmd/mountlib"
@@ -20,27 +21,27 @@ import (
 // Errors
 var (
 	ErrVolumeNotFound   = errors.New("volume not found")
-	ErrVolumeExists     = errors.New("volume already exists")
 	ErrMountpointExists = errors.New("non-empty mountpoint already exists")
 )
 
 // Volume keeps volume runtime state
 // Public members get persisted in saved state
 type Volume struct {
-	Name       string    `json:"name"`
-	MountPoint string    `json:"mountpoint"`
-	CreatedAt  time.Time `json:"created"`
-	Fs         string    `json:"fs"`             // remote[,connectString]:path
-	Type       string    `json:"type,omitempty"` // same as ":backend:"
-	Path       string    `json:"path,omitempty"` // for "remote:path" or ":backend:path"
-	Options    VolOpts   `json:"options"`        // all options together
-	Mounts     []string  `json:"mounts"`         // mountReqs as a string list
-	mountReqs  map[string]any
-	fsString   string // result of merging Fs, Type and Options
-	persist    bool
-	mountType  string
-	drv        *Driver
-	mnt        *mountlib.MountPoint
+	Name          string    `json:"name"`
+	MountPoint    string    `json:"mountpoint"`
+	CreatedAt     time.Time `json:"created"`
+	Fs            string    `json:"fs"`             // remote[,connectString]:path
+	Type          string    `json:"type,omitempty"` // same as ":backend:"
+	Path          string    `json:"path,omitempty"` // for "remote:path" or ":backend:path"
+	Options       VolOpts   `json:"options"`        // all options together
+	Mounts        []string  `json:"mounts"`         // mountReqs as a string list
+	mountReqs     map[string]any
+	pendingMounts []string // mount IDs to restore after server starts
+	fsString      string   // result of merging Fs, Type and Options
+	persist       bool
+	mountType     string
+	drv           *Driver
+	mnt           *mountlib.MountPoint
 }
 
 // VolOpts keeps volume options
@@ -54,8 +55,26 @@ type VolInfo struct {
 	Status     map[string]any `json:",omitempty"`
 }
 
+// volumeMountPath returns the mountpoint for a volume called name below
+// root, together with whether that path is a strict descendant of root.
+//
+// filepath.Join cleans its result, collapsing any ".." components in the
+// volume name, so a crafted name could otherwise resolve to an arbitrary
+// host path outside root, or to root itself (for an empty or "." name)
+// where a mount would shadow every other volume. Callers must reject names
+// for which confined is false rather than creating a directory and mounting
+// there.
+func volumeMountPath(root, name string) (path string, confined bool) {
+	path = filepath.Join(root, name)
+	root = filepath.Clean(root)
+	return path, strings.HasPrefix(path, root+string(filepath.Separator))
+}
+
 func newVolume(ctx context.Context, name string, volOpt VolOpts, drv *Driver) (*Volume, error) {
-	path := filepath.Join(drv.root, name)
+	path, confined := volumeMountPath(drv.root, name)
+	if !confined {
+		return nil, fmt.Errorf("invalid volume name %q: resolves outside the base directory", name)
+	}
 	mnt := &mountlib.MountPoint{
 		MountPoint: path,
 	}
@@ -97,15 +116,33 @@ func (vol *Volume) prepareState() {
 	sort.Strings(vol.Mounts)
 }
 
-// restoreState updates volume from saved state
+// restoreState updates volume from saved state.
+//
+// It restores the volume configuration and filesystem but does not
+// perform FUSE mounts. The pending mount IDs are saved and can be
+// retrieved with getPendingMounts for deferred mounting.
 func (vol *Volume) restoreState(ctx context.Context, drv *Driver) error {
 	vol.drv = drv
-	vol.mnt = &mountlib.MountPoint{
-		MountPoint: vol.MountPoint,
+	// Re-derive the mountpoint from the base directory and name rather
+	// than trusting the persisted path, which an older rclone or a
+	// tampered state file could have left pointing outside the base
+	// directory.
+	path, confined := volumeMountPath(drv.root, vol.Name)
+	if !confined {
+		return fmt.Errorf("invalid volume name %q: resolves outside the base directory", vol.Name)
 	}
+	vol.MountPoint = path
+	vol.mnt = &mountlib.MountPoint{
+		MountPoint: path,
+	}
+	// Save pending mounts before applyOptions clears them
+	vol.pendingMounts = vol.Mounts
 	volOpt := vol.Options
 	volOpt["fs"] = vol.Fs
 	volOpt["type"] = vol.Type
+	// applyOptions consumes "path" into vol.Path rather than leaving it in
+	// vol.Options, so it must be fed back explicitly like fs and type.
+	volOpt["path"] = vol.Path
 	if err := vol.applyOptions(volOpt); err != nil {
 		return err
 	}
@@ -115,12 +152,15 @@ func (vol *Volume) restoreState(ctx context.Context, drv *Driver) error {
 	if err := vol.setup(ctx); err != nil {
 		return err
 	}
-	for _, id := range vol.Mounts {
-		if err := vol.mount(id); err != nil {
-			return err
-		}
-	}
 	return nil
+}
+
+// getPendingMounts returns and clears the list of mount IDs that
+// were saved from state and need to be re-mounted.
+func (vol *Volume) getPendingMounts() []string {
+	mounts := vol.pendingMounts
+	vol.pendingMounts = nil
+	return mounts
 }
 
 // validate volume

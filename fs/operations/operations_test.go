@@ -37,8 +37,10 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
@@ -65,9 +67,11 @@ func TestMkdir(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
 
+	checks := accounting.GlobalStats().GetChecks()
 	err := operations.Mkdir(ctx, r.Fremote, "")
 	require.NoError(t, err)
 	fstest.CheckListing(t, r.Fremote, []fstest.Item{})
+	assert.Equal(t, checks+1, accounting.GlobalStats().GetChecks(), "Mkdir should be counted as a check")
 
 	err = operations.Mkdir(ctx, r.Fremote, "")
 	require.NoError(t, err)
@@ -423,6 +427,32 @@ func TestDelete(t *testing.T) {
 	r.CheckRemoteItems(t, file3)
 }
 
+// Check Delete doesn't hang when a fatal error stops the deletions
+// before all the objects have been sent to the deleters
+func TestDeleteFatalError(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	ci.Checkers = 2
+	ci.MaxDelete = 1
+	r := fstest.NewRun(t)
+	// More files than the deleters' channel can hold
+	for i := range 20 {
+		r.WriteObject(ctx, fmt.Sprintf("file%d", i), "x", t1)
+	}
+
+	done := make(chan error, 1)
+	go func() {
+		done <- operations.Delete(ctx, r.Fremote)
+	}()
+	select {
+	case err := <-done:
+		require.Error(t, err)
+		assert.True(t, fserrors.IsFatalError(err), err)
+	case <-time.After(30 * time.Second):
+		t.Fatal("Delete didn't return - deadlocked sending to the deleters")
+	}
+}
+
 func isChunker(f fs.Fs) bool {
 	return strings.HasPrefix(f.Name(), "TestChunker")
 }
@@ -534,6 +564,54 @@ func TestRetry(t *testing.T) {
 	assert.Equal(t, fs.ErrorObjectNotFound, operations.Retry(ctx, nil, 5, fn))
 	assert.Equal(t, 9, i)
 
+}
+
+// Check the wait for a Retry-After error can be interrupted
+func TestRetryAfterContextCancel(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	retryAfter := pacer.RetryAfterError(errors.New("BANG"), time.Hour)
+	calls := 0
+	fn := func() error {
+		calls++
+		go cancel()
+		return retryAfter
+	}
+
+	done := make(chan error, 1)
+	go func() {
+		done <- operations.Retry(ctx, nil, 5, fn)
+	}()
+	select {
+	case err := <-done:
+		// The error from the call is returned, not the context error
+		assert.Equal(t, retryAfter, err)
+		assert.Equal(t, 1, calls)
+	case <-time.After(30 * time.Second):
+		t.Fatal("Retry didn't return - still sleeping for the Retry-After")
+	}
+}
+
+// Check we don't wait for a Retry-After error on the last try
+func TestRetryAfterLastTry(t *testing.T) {
+	ctx := context.Background()
+	retryAfter := pacer.RetryAfterError(errors.New("BANG"), time.Hour)
+	calls := 0
+	fn := func() error {
+		calls++
+		return retryAfter
+	}
+
+	done := make(chan error, 1)
+	go func() {
+		done <- operations.Retry(ctx, nil, 1, fn)
+	}()
+	select {
+	case err := <-done:
+		assert.Equal(t, retryAfter, err)
+		assert.Equal(t, 1, calls)
+	case <-time.After(30 * time.Second):
+		t.Fatal("Retry didn't return - slept for the Retry-After on the last try")
+	}
 }
 
 func TestCat(t *testing.T) {
@@ -1375,6 +1453,85 @@ func TestListFormat(t *testing.T) {
 
 }
 
+// noDirMoveFs wraps an Fs removing DirMove so operations.DirMove has
+// to move the objects one by one, and allows Move to be made to fail.
+type noDirMoveFs struct {
+	fs.Fs
+	features *fs.Features
+	moveCtxs chan context.Context
+}
+
+func (f *noDirMoveFs) Features() *fs.Features { return f.features }
+
+func newNoDirMoveFs(t *testing.T, wrapped fs.Fs, failOn string) *noDirMoveFs {
+	move := wrapped.Features().Move
+	require.NotNil(t, move, "the test needs a backend with Move")
+	f := &noDirMoveFs{
+		Fs:       wrapped,
+		moveCtxs: make(chan context.Context, 100),
+	}
+	features := *wrapped.Features()
+	features.DirMove = nil
+	features.Move = func(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+		f.moveCtxs <- ctx
+		if src.Remote() == failOn {
+			return nil, errors.New("boom")
+		}
+		return move(ctx, src, remote)
+	}
+	f.features = &features
+	return f
+}
+
+// Check DirMove doesn't hang when moving the objects one by one and
+// one of the moves fails
+func TestDirMoveMoveError(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	ci.Checkers = 2
+	r := fstest.NewRun(t)
+	// More files than the renames channel can hold
+	for i := range 20 {
+		r.WriteObject(ctx, fmt.Sprintf("A/file%d", i), "x", t1)
+	}
+	f := newNoDirMoveFs(t, r.Fremote, "A/file0")
+
+	done := make(chan error, 1)
+	go func() {
+		done <- operations.DirMove(ctx, f, "A", "B")
+	}()
+	select {
+	case err := <-done:
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "boom")
+	case <-time.After(30 * time.Second):
+		t.Fatal("DirMove didn't return - deadlocked sending to the movers")
+	}
+}
+
+// Check the objects moved one by one by DirMove are moved with the
+// caller's context
+func TestDirMoveContext(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	ci.Checkers = 2
+	r := fstest.NewRun(t)
+	r.WriteObject(ctx, "A/one", "one", t1)
+	r.WriteObject(ctx, "A/two", "two", t1)
+	f := newNoDirMoveFs(t, r.Fremote, "")
+
+	require.NoError(t, operations.DirMove(accounting.WithStatsGroup(ctx, "test-dirmove"), f, "A", "B"))
+	close(f.moveCtxs)
+	moves := 0
+	for moveCtx := range f.moveCtxs {
+		group, ok := accounting.StatsGroupFromContext(moveCtx)
+		assert.True(t, ok, "move wasn't passed the caller's context")
+		assert.Equal(t, "test-dirmove", group)
+		moves++
+	}
+	assert.Equal(t, 2, moves)
+}
+
 func TestDirMove(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
@@ -1637,6 +1794,18 @@ func TestRcatSize(t *testing.T) {
 	r.CheckRemoteItems(t, file1, file2)
 }
 
+func TestRcatSizeShortEOF(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+
+	const body = "------------------------------------------------------------"
+
+	// Upload declaring twice as many bytes as the source supplies
+	bodyReader := io.NopCloser(strings.NewReader(body))
+	_, err := operations.RcatSize(ctx, r.Fremote, "potato1", bodyReader, 2*int64(len(body)), t1, nil)
+	require.Error(t, err, "uploading a source which ends before its declared size must not succeed")
+}
+
 func TestRcatSizeMetadata(t *testing.T) {
 	r := fstest.NewRun(t)
 
@@ -1727,6 +1896,97 @@ func TestRcatSizeUploadHeaders(t *testing.T) {
 	assert.True(t, found, "X-Upload-Header not found in options passed to Put")
 }
 
+// corruptingFs wraps an fs.Fs, storing data which doesn't match the
+// data streamed into Put.
+type corruptingFs struct {
+	fs.Fs
+}
+
+func (f *corruptingFs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	n, err := io.Copy(io.Discard, in)
+	if err != nil {
+		return nil, err
+	}
+	return f.Fs.Put(ctx, bytes.NewReader(bytes.Repeat([]byte("!"), int(n))), src, options...)
+}
+
+// noHashFs wraps an fs.Fs, reporting that it supports no hashes.
+type noHashFs struct {
+	fs.Fs
+}
+
+func (f *noHashFs) Hashes() hash.Set {
+	return hash.NewHashSet()
+}
+
+// truncatingFs wraps an fs.Fs, storing one byte less than was streamed
+// into Put and reporting that it supports no hashes, so only the size
+// can reveal the corruption.
+type truncatingFs struct {
+	fs.Fs
+}
+
+func (f *truncatingFs) Hashes() hash.Set {
+	return hash.NewHashSet()
+}
+
+func (f *truncatingFs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	n, err := io.Copy(io.Discard, in)
+	if err != nil {
+		return nil, err
+	}
+	short := bytes.Repeat([]byte("!"), int(n)-1)
+	info := object.NewStaticObjectInfo(src.Remote(), src.ModTime(ctx), int64(len(short)), true, nil, f.Fs)
+	return f.Fs.Put(ctx, bytes.NewReader(short), info, options...)
+}
+
+func TestRcatSizeChecksum(t *testing.T) {
+	const body = "------------------------------------------------------------"
+
+	t.Run("Corrupted", func(t *testing.T) {
+		ctx := context.Background()
+		r := fstest.NewRun(t)
+		if r.Fremote.Hashes().Count() == 0 {
+			t.Skip("Skipping as destination doesn't support hashes")
+		}
+		bodyReader := io.NopCloser(strings.NewReader(body))
+		_, err := operations.RcatSize(ctx, &corruptingFs{Fs: r.Fremote}, "potato1", bodyReader, int64(len(body)), t1, nil)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "corrupted on transfer")
+		r.CheckRemoteItems(t)
+	})
+
+	// A destination which reports no hashes can only be checked by its
+	// size, so the size has to be compared as well as the hash.
+	t.Run("SizeDiffers", func(t *testing.T) {
+		ctx := context.Background()
+		r := fstest.NewRun(t)
+		bodyReader := io.NopCloser(strings.NewReader(body))
+		_, err := operations.RcatSize(ctx, &truncatingFs{Fs: r.Fremote}, "potato4", bodyReader, int64(len(body)), t1, nil)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "corrupted on transfer: sizes differ")
+		r.CheckRemoteItems(t)
+	})
+
+	t.Run("IgnoreChecksum", func(t *testing.T) {
+		ctx, ci := fs.AddConfig(context.Background())
+		ci.IgnoreChecksum = true
+		r := fstest.NewRun(t)
+		bodyReader := io.NopCloser(strings.NewReader(body))
+		_, err := operations.RcatSize(ctx, &corruptingFs{Fs: r.Fremote}, "potato2", bodyReader, int64(len(body)), t1, nil)
+		require.NoError(t, err)
+	})
+
+	t.Run("NoHashes", func(t *testing.T) {
+		ctx := context.Background()
+		r := fstest.NewRun(t)
+		bodyReader := io.NopCloser(strings.NewReader(body))
+		obj, err := operations.RcatSize(ctx, &noHashFs{Fs: r.Fremote}, "potato3", bodyReader, int64(len(body)), t1, nil)
+		require.NoError(t, err)
+		assert.Equal(t, int64(len(body)), obj.Size())
+	})
+}
+
 func TestTouchDir(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
@@ -1773,9 +2033,11 @@ func TestMkdirMetadata(t *testing.T) {
 		t.Skip("Skipping test as remote does not support MkdirMetadata")
 	}
 
+	updatedDirs := statsUpdatedDirs(t)
 	newDst, err := operations.MkdirMetadata(ctx, r.Fremote, name, testMetadata)
 	require.NoError(t, err)
 	require.NotNil(t, newDst)
+	assert.Equal(t, updatedDirs+1, statsUpdatedDirs(t), "MkdirMetadata should be counted as an updated dir")
 
 	require.True(t, features.ReadDirMetadata, "Expecting ReadDirMetadata to be supported if MkdirMetadata is supported")
 
@@ -1786,13 +2048,17 @@ func TestMkdirMetadata(t *testing.T) {
 
 func TestMkdirModTime(t *testing.T) {
 	const name = "directory with modtime"
-	ctx := context.Background()
+	ctx, ci := fs.AddConfig(context.Background())
 	r := fstest.NewRun(t)
 	if r.Fremote.Features().DirSetModTime == nil && r.Fremote.Features().MkdirMetadata == nil {
 		t.Skip("Skipping test as remote does not support DirSetModTime or MkdirMetadata")
 	}
+	updatedDirs := statsUpdatedDirs(t)
+	checks := accounting.GlobalStats().GetChecks()
 	newDst, err := operations.MkdirModTime(ctx, r.Fremote, name, t2)
 	require.NoError(t, err)
+	assert.Equal(t, updatedDirs+1, statsUpdatedDirs(t), "MkdirModTime should be counted as an updated dir")
+	realChecks := accounting.GlobalStats().GetChecks() - checks
 
 	// Check the returned directory and one read from the listing
 	// newDst may be nil here depending on how the modtime was set
@@ -1800,6 +2066,25 @@ func TestMkdirModTime(t *testing.T) {
 		fstest.CheckDirModTime(ctx, t, r.Fremote, newDst, t2)
 	}
 	fstest.CheckDirModTime(ctx, t, r.Fremote, fstest.NewDirectory(ctx, t, r.Fremote, name), t2)
+
+	// Check that --dry-run counts the same number of checks as the
+	// real run but doesn't update any dirs
+	updatedDirs = statsUpdatedDirs(t)
+	checks = accounting.GlobalStats().GetChecks()
+	ci.DryRun = true
+	newDst, err = operations.MkdirModTime(ctx, r.Fremote, "dry run "+name, t2)
+	ci.DryRun = false
+	require.NoError(t, err)
+	require.Nil(t, newDst)
+	assert.Equal(t, realChecks, accounting.GlobalStats().GetChecks()-checks, "--dry-run should count the same checks as the real run")
+	assert.Equal(t, updatedDirs, statsUpdatedDirs(t), "--dry-run should not count updated dirs")
+}
+
+// statsUpdatedDirs reads the updatedDirs stat from the global stats
+func statsUpdatedDirs(t *testing.T) int64 {
+	out, err := accounting.GlobalStats().RemoteStats(true)
+	require.NoError(t, err)
+	return out["updatedDirs"].(int64)
 }
 
 func TestCopyDirMetadata(t *testing.T) {
@@ -1819,9 +2104,11 @@ func TestCopyDirMetadata(t *testing.T) {
 	require.NotNil(t, newSrc)
 
 	// First try with the directory not existing
+	updatedDirs := statsUpdatedDirs(t)
 	newDst, err := operations.CopyDirMetadata(ctx, r.Fremote, nil, nameNonExistent, newSrc)
 	require.NoError(t, err)
 	require.NotNil(t, newDst)
+	assert.Equal(t, updatedDirs+1, statsUpdatedDirs(t), "CopyDirMetadata should be counted as an updated dir")
 
 	// Check the returned directory and one read from the listing
 	fstest.CheckEntryMetadata(ctx, t, r.Fremote, newDst, testMetadata)
@@ -1857,17 +2144,24 @@ func TestSetDirModTime(t *testing.T) {
 	ci.NoUpdateDirModTime = false
 
 	// First try with the directory not existing - should return an error
+	errs := accounting.GlobalStats().GetErrors()
 	newDst, err = operations.SetDirModTime(ctx, r.Fremote, nil, "set modtime on non existent directory", t2)
 	require.Error(t, err)
 	require.Nil(t, newDst)
+	assert.Equal(t, errs+1, accounting.GlobalStats().GetErrors(), "the error should be counted")
+	assert.True(t, fserrors.IsCounted(err), "the returned error should be marked as counted")
 
 	// Then try with the directory existing
 	require.NoError(t, r.Fremote.Mkdir(ctx, name))
 	existingDir := fstest.NewDirectory(ctx, t, r.Fremote, name)
 
+	checks := accounting.GlobalStats().GetChecks()
+	updatedDirs := statsUpdatedDirs(t)
 	newDst, err = operations.SetDirModTime(ctx, r.Fremote, existingDir, "SHOULD BE IGNORED", t2)
 	require.NoError(t, err)
 	require.NotNil(t, newDst)
+	assert.Equal(t, checks+1, accounting.GlobalStats().GetChecks(), "SetDirModTime should be counted as a check")
+	assert.Equal(t, updatedDirs+1, statsUpdatedDirs(t), "SetDirModTime should be counted as an updated dir")
 
 	// Check the returned directory and one read from the listing
 	// The modtime will only be correct on newDst if it had a SetModTime method
@@ -2027,3 +2321,32 @@ func TestRemoveExisting(t *testing.T) {
 	cleanup(&returnedError)
 	r.CheckRemoteItems(t)
 }
+
+func TestRcatInputFailurePreservesDestination(t *testing.T) {
+	ctx := context.Background()
+	root := t.TempDir()
+	require.NoError(t, os.WriteFile(root+"/target", []byte("original"), 0600))
+	f, err := fs.NewFs(ctx, root)
+	require.NoError(t, err)
+	calls := 0
+	original := f.Features().PutStream
+	f.Features().PutStream = func(ctx context.Context, in io.Reader, src fs.ObjectInfo, opts ...fs.OpenOption) (fs.Object, error) {
+		calls++
+		return original(ctx, in, src, opts...)
+	}
+	inputErr := errors.New("source interrupted")
+	for _, name := range []string{"target", "missing"} {
+		_, err = operations.Rcat(ctx, f, name, io.NopCloser(io.MultiReader(strings.NewReader("prefix"), rcatFailedInput{inputErr})), time.Now(), nil)
+		require.ErrorIs(t, err, inputErr)
+		require.Zero(t, calls)
+		b, readErr := os.ReadFile(root + "/target")
+		require.NoError(t, readErr)
+		require.Equal(t, "original", string(b))
+		_, statErr := os.Stat(root + "/missing")
+		require.True(t, os.IsNotExist(statErr))
+	}
+}
+
+type rcatFailedInput struct{ err error }
+
+func (r rcatFailedInput) Read([]byte) (int, error) { return 0, r.err }

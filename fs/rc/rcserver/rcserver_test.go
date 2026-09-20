@@ -376,7 +376,7 @@ func TestRemoteServing(t *testing.T) {
 	testServer(t, tests, &opt)
 }
 
-// checkServeRemote must reject request-derived backend instantiation on the
+// TestCheckServeRemote must reject request-derived backend instantiation on the
 // unauthenticated file-serving path, and global.* config mutation.
 func TestCheckServeRemote(t *testing.T) {
 	for _, test := range []struct {
@@ -787,6 +787,7 @@ func TestServingRoot(t *testing.T) {
 	opt := newTestOpt()
 	opt.Serve = true
 	opt.Files = testFs
+	opt.NoAuth = true
 	testServer(t, tests, &opt)
 }
 
@@ -800,6 +801,53 @@ func TestServingRootNoFiles(t *testing.T) {
 	opt := newTestOpt()
 	opt.Serve = true
 	opt.Files = ""
+	opt.NoAuth = true
+	testServer(t, tests, &opt)
+}
+
+// On a server with no authentication configured and without --rc-no-auth the
+// remote listing must not disclose the configured remote names.
+func TestServingRootFailClosed(t *testing.T) {
+	forbidden := regexp.MustCompile(`"status": 403`)
+	tests := []testRun{{
+		Name:     "rootlist-star",
+		URL:      "*",
+		Status:   http.StatusForbidden,
+		Contains: forbidden,
+	}, {
+		Name:     "rootlist-empty",
+		URL:      "",
+		Status:   http.StatusForbidden,
+		Contains: forbidden,
+	}}
+	opt := newTestOpt()
+	opt.Serve = true
+	opt.Files = ""
+	testServer(t, tests, &opt)
+}
+
+// With authentication configured the remote listing is available to
+// authenticated requests only.
+func TestServingRootWithAuth(t *testing.T) {
+	const user, pass = "user", "pass"
+	tests := []testRun{{
+		Name:     "rootlist-authed",
+		URL:      "",
+		User:     user,
+		Pass:     pass,
+		Status:   http.StatusOK,
+		Contains: matchRemoteDirListing,
+	}, {
+		Name:     "rootlist-unauthed",
+		URL:      "",
+		Status:   http.StatusUnauthorized,
+		Contains: regexp.MustCompile(`Unauthorized`),
+	}}
+	opt := newTestOpt()
+	opt.Serve = true
+	opt.Files = ""
+	opt.Auth.BasicUser = user
+	opt.Auth.BasicPass = pass
 	testServer(t, tests, &opt)
 }
 
@@ -851,6 +899,48 @@ func TestAuthRequired(t *testing.T) {
 	"error": "authentication must be set up on the rc server to use \"rc/noopauth\" or the --rc-no-auth flag must be in use",
 	"input": {},
 	"path": "rc/noopauth",
+	"status": 403
+}
+`,
+	}}
+	opt := newTestOpt()
+	opt.Serve = false
+	opt.Files = ""
+	opt.NoAuth = false
+	testServer(t, tests, &opt)
+}
+
+// job/status returns the output of any job so it must need
+// authentication, e.g. so an unauthenticated user can't read the
+// output of config/dump started with _async by an authenticated one.
+func TestJobAuthRequired(t *testing.T) {
+	tests := []testRun{{
+		Name:        "status",
+		URL:         "job/status",
+		Method:      "POST",
+		Body:        `{"jobid":1}`,
+		ContentType: "application/json",
+		Status:      http.StatusForbidden,
+		Expected: `{
+	"error": "authentication must be set up on the rc server to use \"job/status\" or the --rc-no-auth flag must be in use",
+	"input": {
+		"jobid": 1
+	},
+	"path": "job/status",
+	"status": 403
+}
+`,
+	}, {
+		Name:        "list",
+		URL:         "job/list",
+		Method:      "POST",
+		Body:        `{}`,
+		ContentType: "application/json",
+		Status:      http.StatusForbidden,
+		Expected: `{
+	"error": "authentication must be set up on the rc server to use \"job/list\" or the --rc-no-auth flag must be in use",
+	"input": {},
+	"path": "job/list",
 	"status": 403
 }
 `,
@@ -977,27 +1067,62 @@ func TestRCAsync(t *testing.T) {
 	testServer(t, tests, &opt)
 }
 
-// Check the debug handlers are attached
+// The debug/pprof handlers expose the process command line, heap and
+// goroutine dumps, so require auth.
 func TestRCDebug(t *testing.T) {
-	tests := []testRun{{
+	index := testRun{
 		Name:        "index",
 		URL:         "debug/pprof/",
 		Method:      "GET",
 		ContentType: "text/html",
 		Status:      http.StatusOK,
 		Contains:    regexp.MustCompile(`Types of profiles available`),
-	}, {
+	}
+	goroutines := testRun{
 		Name:        "goroutines",
 		URL:         "debug/pprof/goroutine?debug=1",
 		Method:      "GET",
 		ContentType: "text/html",
 		Status:      http.StatusOK,
 		Contains:    regexp.MustCompile(`goroutine profile`),
-	}}
-	opt := newTestOpt()
-	opt.Serve = true
-	opt.Files = ""
-	testServer(t, tests, &opt)
+	}
+
+	// With --rc-no-auth the debug handlers are attached and open
+	t.Run("NoAuth", func(t *testing.T) {
+		opt := newTestOpt()
+		opt.Serve = true
+		opt.Files = ""
+		opt.NoAuth = true
+		testServer(t, []testRun{index, goroutines}, &opt)
+	})
+
+	// With auth configured the debug handlers are attached but require credentials
+	t.Run("WithAuth", func(t *testing.T) {
+		authed := index
+		authed.User, authed.Pass = "user", "pass"
+		unauthed := index
+		unauthed.Name = "index-no-credentials"
+		unauthed.Status = http.StatusUnauthorized
+		unauthed.Contains = regexp.MustCompile(`Unauthorized`)
+		opt := newTestOpt()
+		opt.Serve = true
+		opt.Files = ""
+		opt.Auth.BasicUser = "user"
+		opt.Auth.BasicPass = "pass"
+		testServer(t, []testRun{authed, unauthed}, &opt)
+	})
+
+	// On a default unauthenticated server the debug handlers must not be
+	// mounted, so they bypass nothing - they simply aren't there
+	t.Run("FailClosed", func(t *testing.T) {
+		blocked := index
+		blocked.Status = http.StatusNotFound
+		blocked.Contains = regexp.MustCompile(`Not Found`)
+		opt := newTestOpt()
+		opt.Serve = true
+		opt.Files = ""
+		testServer(t, []testRun{blocked}, &opt)
+	})
 }
 
 func TestServeModTime(t *testing.T) {

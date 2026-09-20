@@ -581,3 +581,182 @@ func TestFsNoSlashRoots(t *testing.T) {
 		}
 	}
 }
+
+// readRedirected makes an http remote with the configured headers
+// pointing at url and reads file.txt from it, checking the content
+func readRedirected(t *testing.T, url string) {
+	configfile.Install()
+	m := configmap.Simple{
+		"type":    "http",
+		"url":     url + "/",
+		"headers": strings.Join(headers, ","),
+	}
+	f, err := NewFs(context.Background(), remoteName, "", m)
+	require.NoError(t, err)
+
+	o, err := f.NewObject(context.Background(), "file.txt")
+	require.NoError(t, err)
+	fd, err := o.Open(context.Background())
+	require.NoError(t, err)
+	data, err := io.ReadAll(fd)
+	require.NoError(t, err)
+	require.NoError(t, fd.Close())
+	assert.Equal(t, "hello", string(data))
+}
+
+func TestRedirectKeepsHeadersOnSameHost(t *testing.T) {
+	var got http.Header
+	var ts *httptest.Server
+	ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasPrefix(r.URL.Path, "/moved/") {
+			http.Redirect(w, r, ts.URL+"/moved"+r.URL.Path, http.StatusFound)
+			return
+		}
+		got = r.Header.Clone()
+		_, _ = w.Write([]byte("hello"))
+	}))
+	defer ts.Close()
+
+	readRedirected(t, ts.URL)
+
+	require.NotNil(t, got)
+	for i := 0; i < len(headers); i += 2 {
+		assert.Equal(t, headers[i+1], got.Get(headers[i]))
+	}
+}
+
+func TestRedirectRefusesHTTPSDowngrade(t *testing.T) {
+	// A plaintext server to be redirected to
+	target := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("hello"))
+	}))
+	defer target.Close()
+
+	// An HTTPS server which redirects to plaintext HTTP
+	ts := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, target.URL+r.URL.Path, http.StatusFound)
+	}))
+	defer ts.Close()
+
+	// open makes a remote pointing at ts with or without headers
+	// and opens file.txt on it
+	open := func(t *testing.T, withHeaders bool) (io.ReadCloser, error) {
+		configfile.Install()
+		m := configmap.Simple{
+			"type":    "http",
+			"url":     ts.URL + "/",
+			"no_head": "true",
+		}
+		if withHeaders {
+			m.Set("headers", strings.Join(headers, ","))
+		}
+		ctx, ci := fs.AddConfig(context.Background())
+		ci.InsecureSkipVerify = true
+		f, err := NewFs(ctx, remoteName, "", m)
+		require.NoError(t, err)
+
+		// no_head means NewObject doesn't make a request so use Open to make one
+		o, err := f.NewObject(ctx, "file.txt")
+		require.NoError(t, err)
+		return o.Open(ctx)
+	}
+
+	t.Run("WithHeaders", func(t *testing.T) {
+		// Headers could leak so the downgrade must be refused
+		_, err := open(t, true)
+		require.ErrorIs(t, err, rest.ErrHTTPSDowngrade)
+	})
+
+	t.Run("WithoutHeaders", func(t *testing.T) {
+		// Nothing to leak so the downgrade is followed
+		fd, err := open(t, false)
+		require.NoError(t, err)
+		data, err := io.ReadAll(fd)
+		require.NoError(t, err)
+		require.NoError(t, fd.Close())
+		assert.Equal(t, "hello", string(data))
+	})
+}
+
+func TestRedirectKeepsHeadersOnSameHostDifferentCase(t *testing.T) {
+	// The redirect spells the host differently but it is the same
+	// host so the headers must be kept
+	var got http.Header
+	var ts *httptest.Server
+	ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasPrefix(r.URL.Path, "/moved/") {
+			http.Redirect(w, r, "http://LOCALHOST:"+port(t, ts)+"/moved"+r.URL.Path, http.StatusFound)
+			return
+		}
+		got = r.Header.Clone()
+		_, _ = w.Write([]byte("hello"))
+	}))
+	defer ts.Close()
+
+	readRedirected(t, "http://localhost:"+port(t, ts))
+
+	require.NotNil(t, got)
+	for i := 0; i < len(headers); i += 2 {
+		assert.Equal(t, headers[i+1], got.Get(headers[i]))
+	}
+}
+
+// port returns the port ts is listening on
+func port(t *testing.T, ts *httptest.Server) string {
+	u, err := url.Parse(ts.URL)
+	require.NoError(t, err)
+	return u.Port()
+}
+
+func TestRedirectStripsHeadersAfterHostChange(t *testing.T) {
+	// The configured server redirects to a second server which
+	// redirects back to the configured server. The headers must not
+	// be sent on the way back as the other host chose the path.
+	var got http.Header
+	var ts *httptest.Server
+	bouncer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, ts.URL+"/moved"+r.URL.Path, http.StatusFound)
+	}))
+	defer bouncer.Close()
+
+	ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasPrefix(r.URL.Path, "/moved/") {
+			http.Redirect(w, r, bouncer.URL+r.URL.Path, http.StatusFound)
+			return
+		}
+		got = r.Header.Clone()
+		_, _ = w.Write([]byte("hello"))
+	}))
+	defer ts.Close()
+
+	readRedirected(t, ts.URL)
+
+	require.NotNil(t, got)
+	for i := 0; i < len(headers); i += 2 {
+		assert.Empty(t, got.Values(headers[i]), "header %q sent after cross-host redirect", headers[i])
+	}
+}
+
+func TestRedirectStripsHeadersOnHostChange(t *testing.T) {
+	// Serve the final response from a second server. httptest servers
+	// listen on 127.0.0.1:port so the two servers have different hosts
+	// for the purposes of the redirect check.
+	var got http.Header
+	target := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got = r.Header.Clone()
+		_, _ = w.Write([]byte("hello"))
+	}))
+	defer target.Close()
+
+	redirector := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, target.URL+r.URL.Path, http.StatusFound)
+	}))
+	defer redirector.Close()
+
+	readRedirected(t, redirector.URL)
+
+	require.NotNil(t, got)
+	for i := 0; i < len(headers); i += 2 {
+		assert.Empty(t, got.Values(headers[i]), "header %q leaked to redirect target", headers[i])
+	}
+}

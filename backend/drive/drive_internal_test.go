@@ -8,10 +8,14 @@ import (
 	"fmt"
 	"io"
 	"mime"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+	stdsync "sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -24,12 +28,113 @@ import (
 	"github.com/rclone/rclone/fs/sync"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/rclone/rclone/lib/dircache"
+	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/api/drive/v3"
 	"google.golang.org/api/googleapi"
+	"google.golang.org/api/option"
 )
+
+func newPermissionTestFs(t *testing.T, handler http.Handler) *Fs {
+	t.Helper()
+	server := httptest.NewServer(handler)
+	t.Cleanup(server.Close)
+	service, err := drive.NewService(
+		context.Background(),
+		option.WithHTTPClient(server.Client()),
+		option.WithEndpoint(server.URL+"/"),
+	)
+	require.NoError(t, err)
+	return &Fs{
+		svc:           service,
+		pacer:         fs.NewPacer(context.Background(), pacer.NewGoogleDrive()),
+		permissionsMu: new(stdsync.Mutex),
+		permissions:   make(map[string]*drive.Permission),
+	}
+}
+
+func TestInternalGetPermissionConcurrent(t *testing.T) {
+	const requestCount = 2
+	arrived := make(chan string, requestCount)
+	release := make(chan struct{})
+	var releaseOnce stdsync.Once
+	releaseRequests := func() {
+		releaseOnce.Do(func() { close(release) })
+	}
+	defer releaseRequests()
+
+	f := newPermissionTestFs(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		permissionID := path.Base(r.URL.Path)
+		arrived <- permissionID
+		<-release
+		w.Header().Set("Content-Type", "application/json")
+		_, err := fmt.Fprintf(w, `{"id":%q,"role":"reader","type":"user"}`, permissionID)
+		assert.NoError(t, err)
+	}))
+
+	type permissionResult struct {
+		permission *drive.Permission
+		inherited  bool
+		err        error
+	}
+	results := make(chan permissionResult, requestCount)
+	permissionIDs := []string{"permission-1", "permission-2"}
+	for _, permissionID := range permissionIDs {
+		go func() {
+			permission, inherited, err := f.getPermission(context.Background(), "file-id", permissionID, false)
+			results <- permissionResult{permission: permission, inherited: inherited, err: err}
+		}()
+	}
+
+	arrivedIDs := make(map[string]bool, requestCount)
+	timer := time.NewTimer(time.Second)
+	defer timer.Stop()
+	for len(arrivedIDs) < requestCount {
+		select {
+		case permissionID := <-arrived:
+			arrivedIDs[permissionID] = true
+		case <-timer.C:
+			releaseRequests()
+			t.Fatalf("timed out waiting for concurrent permission requests: got %d of %d", len(arrivedIDs), requestCount)
+		}
+	}
+	releaseRequests()
+
+	assert.Equal(t, map[string]bool{"permission-1": true, "permission-2": true}, arrivedIDs)
+	returnedIDs := make(map[string]bool, requestCount)
+	for range requestCount {
+		result := <-results
+		require.NoError(t, result.err)
+		require.NotNil(t, result.permission)
+		assert.False(t, result.inherited)
+		returnedIDs[result.permission.Id] = true
+	}
+	assert.Equal(t, arrivedIDs, returnedIDs)
+}
+
+func TestInternalGetPermissionCacheHit(t *testing.T) {
+	var requests atomic.Int32
+	f := newPermissionTestFs(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		permissionID := path.Base(r.URL.Path)
+		w.Header().Set("Content-Type", "application/json")
+		_, err := fmt.Fprintf(w, `{"id":%q,"role":"reader","type":"user"}`, permissionID)
+		assert.NoError(t, err)
+	}))
+
+	first, inherited, err := f.getPermission(context.Background(), "file-id", "permission-1", true)
+	require.NoError(t, err)
+	assert.False(t, inherited)
+	second, inherited, err := f.getPermission(context.Background(), "file-id", "permission-1", true)
+	require.NoError(t, err)
+	assert.False(t, inherited)
+
+	assert.Same(t, first, second)
+	assert.Equal(t, int32(1), requests.Load())
+}
 
 func TestDriveScopes(t *testing.T) {
 	for _, test := range []struct {
@@ -142,6 +247,34 @@ func TestInternalFindExportFormat(t *testing.T) {
 		}
 		assert.Equal(t, test.wantMimeType, gotMimeType)
 		assert.Equal(t, true, gotIsDocument)
+	}
+}
+
+func TestShortcutLoop(t *testing.T) {
+	f := &Fs{}
+	f.dirCache = dircache.New("", "root", f)
+	// root is FolderX with ID "X"
+	f.dirCache.Put("", "X")
+	// a real subfolder
+	f.dirCache.Put("sub", "sub-id")
+	// a nested subfolder reached via a shortcut, composite ID
+	f.dirCache.Put("sub/nested", joinID("nested-id", "shortcut-id"))
+
+	for _, test := range []struct {
+		name     string
+		remote   string
+		targetID string
+		want     bool
+	}{
+		{"shortcut to the root itself", "loop", "X", true},
+		{"shortcut to the parent", "sub/loop", "sub-id", true},
+		{"shortcut to a grandparent", "sub/nested/loop", "X", true},
+		{"shortcut to a composite ancestor", "sub/nested/loop", "nested-id", true},
+		{"shortcut to an unrelated folder", "sub/loop", "other-id", false},
+		{"shortcut to a sibling", "sub/loop", "sub-id2", false},
+	} {
+		got := f.shortcutLoop(test.remote, test.targetID)
+		assert.Equal(t, test.want, got, test.name)
 	}
 }
 

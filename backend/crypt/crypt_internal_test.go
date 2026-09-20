@@ -84,6 +84,10 @@ func testObjectInfo(t *testing.T, f *Fs, wrap bool) {
 
 	// Test ObjectInfo.Hash
 	wantHash := md5.Sum(outBuf.Bytes())
+	if f.opt.NoDataEncryption {
+		// If the data isn't encrypted, the hash should be that of the plaintext
+		wantHash = md5.Sum([]byte(contents))
+	}
 	gotHash, err := src.Hash(ctx, hash.MD5)
 	require.NoError(t, err)
 	assert.Equal(t, fmt.Sprintf("%x", wantHash), gotHash)

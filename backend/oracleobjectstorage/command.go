@@ -11,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/oracle/oci-go-sdk/v65/objectstorage"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/operations"
@@ -197,22 +196,7 @@ func (f *Fs) rename(ctx context.Context, remote, newName string) (any, error) {
 		}
 		return nil, fs.ErrorNotAFile
 	}
-	details := objectstorage.RenameObjectDetails{
-		SourceName: common.String(objectPath),
-		NewName:    common.String(newName),
-	}
-	request := objectstorage.RenameObjectRequest{
-		NamespaceName:       common.String(f.opt.Namespace),
-		BucketName:          common.String(bucketName),
-		RenameObjectDetails: details,
-		OpcClientRequestId:  nil,
-		RequestMetadata:     common.RequestMetadata{},
-	}
-	var response objectstorage.RenameObjectResponse
-	err = f.pacer.Call(func() (bool, error) {
-		response, err = f.srv.RenameObject(ctx, request)
-		return shouldRetry(ctx, response.HTTPResponse(), err)
-	})
+	err = f.renameObject(ctx, bucketName, objectPath, newName)
 	if err != nil {
 		return nil, err
 	}
@@ -284,8 +268,8 @@ func (f *Fs) listMultipartUploadsObject(ctx context.Context, bucketName, directo
 
 	uploads = []*objectstorage.MultipartUpload{}
 	req := objectstorage.ListMultipartUploadsRequest{
-		NamespaceName: common.String(f.opt.Namespace),
-		BucketName:    common.String(bucketName),
+		NamespaceName: new(f.opt.Namespace),
+		BucketName:    new(bucketName),
 	}
 
 	var response objectstorage.ListMultipartUploadsResponse
@@ -322,11 +306,11 @@ func (f *Fs) listMultipartUploadParts(ctx context.Context, bucketName, bucketPat
 	uploadedParts map[int]objectstorage.MultipartUploadPartSummary, err error) {
 	uploadedParts = make(map[int]objectstorage.MultipartUploadPartSummary)
 	req := objectstorage.ListMultipartUploadPartsRequest{
-		NamespaceName: common.String(f.opt.Namespace),
-		BucketName:    common.String(bucketName),
-		ObjectName:    common.String(bucketPath),
-		UploadId:      common.String(uploadID),
-		Limit:         common.Int(1000),
+		NamespaceName: new(f.opt.Namespace),
+		BucketName:    new(bucketName),
+		ObjectName:    new(bucketPath),
+		UploadId:      new(uploadID),
+		Limit:         new(1000),
 	}
 
 	var response objectstorage.ListMultipartUploadPartsResponse
@@ -351,7 +335,7 @@ func (f *Fs) listMultipartUploadParts(ctx context.Context, bucketName, bucketPat
 
 func (f *Fs) restore(ctx context.Context, opt map[string]string) (any, error) {
 	req := objectstorage.RestoreObjectsRequest{
-		NamespaceName:         common.String(f.opt.Namespace),
+		NamespaceName:         new(f.opt.Namespace),
 		RestoreObjectsDetails: objectstorage.RestoreObjectsDetails{},
 	}
 	if hours := opt["hours"]; hours != "" {

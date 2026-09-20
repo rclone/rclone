@@ -3,6 +3,7 @@ package rc
 import (
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -120,6 +121,13 @@ func TestParamsGetInt64(t *testing.T) {
 		{float64(14), 14, ""},
 		{float64(9.3e18), 0, "overflows int64"},
 		{float64(-9.3e18), 0, "overflows int64"},
+		{float64(math.MaxInt64), 0, "overflows int64"},
+		{math.Nextafter(float64(math.MaxInt64), 0), 9223372036854774784, ""},
+		{float64(math.MinInt64), math.MinInt64, ""},
+		{"3000000000", 3000000000, ""},
+		{"9223372036854775807", math.MaxInt64, ""},
+		{"-9223372036854775808", math.MinInt64, ""},
+		{"9223372036854775808", 0, "couldn't parse"},
 	} {
 		t.Run(fmt.Sprintf("%T=%v", test.value, test.value), func(t *testing.T) {
 			in := Params{

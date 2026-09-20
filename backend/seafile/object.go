@@ -12,7 +12,6 @@ import (
 // Object describes a seafile object (also commonly called a file)
 type Object struct {
 	fs            *Fs       // what this object is part of
-	id            string    // internal ID of object
 	remote        string    // The remote path (full path containing library name if target at root)
 	pathInLibrary string    // Path of the object without the library name
 	size          int64     // size of the object
@@ -89,39 +88,25 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 // But for unknown-sized objects (indicated by src.Size() == -1), Upload should either
 // return an error or update the object properly (rather than e.g. calling panic).
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	// The upload sometimes return a temporary 500 error
-	// We cannot use the pacer to retry uploading the file as the upload link is single use only
-	for retry := 0; retry <= 3; retry++ {
-		uploadLink, err := o.fs.getUploadLink(ctx, o.libraryID)
-		if err != nil {
-			return err
-		}
-
-		uploaded, err := o.fs.upload(ctx, in, uploadLink, o.pathInLibrary)
-		if err == ErrorInternalDuringUpload {
-			// This is a temporary error, try again with a new upload link
-			continue
-		}
-		if err != nil {
-			return err
-		}
-		// Set the properties from the upload back to the object
-		o.size = uploaded.Size
-		o.id = uploaded.ID
-
-		return nil
+	uploadLink, err := o.fs.getUploadLink(ctx, o.libraryID)
+	if err != nil {
+		return err
 	}
-	return ErrorInternalDuringUpload
+
+	// The upload can't be retried here as the input stream can't be re-read and
+	// the upload link is single use, so upload returns a retry
+	// error for the caller to retry with a fresh stream.
+	uploaded, err := o.fs.upload(ctx, in, uploadLink, o.pathInLibrary)
+	if err != nil {
+		return err
+	}
+	// Set the properties from the upload back to the object
+	o.size = uploaded.Size
+
+	return nil
 }
 
 // Remove this object
 func (o *Object) Remove(ctx context.Context) error {
 	return o.fs.deleteFile(ctx, o.libraryID, o.pathInLibrary)
-}
-
-// ==================== Optional Interface fs.IDer ====================
-
-// ID returns the ID of the Object if known, or "" if not
-func (o *Object) ID() string {
-	return o.id
 }

@@ -1,0 +1,17 @@
+name: ZeroServices
+description: Zero Services GmbH (ZERO-Z3)
+region:
+  zero-fra1: Frankfurt 1
+  zero-fra2: Frankfurt 2
+  zero-eyl1: Eyl 1
+endpoint:
+  fra1.s3.zeroservices.eu: Frankfurt 1
+  fra.s3.zeroservices.eu: Frankfurt 2
+  eyl1.s3.zeroservices.eu: Eyl 1
+location_constraint: {}
+acl: {}
+bucket_acl: true
+quirks:
+  force_path_style: true
+  list_url_encode: false
+  use_already_exists: false

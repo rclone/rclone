@@ -448,17 +448,6 @@ Properties:
 
 Here are the Advanced options specific to cache (Cache a remote).
 
-#### --cache-plex-token
-
-The plex token for authentication - auto set normally.
-
-Properties:
-
-- Config:      plex_token
-- Env Var:     RCLONE_CACHE_PLEX_TOKEN
-- Type:        string
-- Required:    false
-
 #### --cache-plex-insecure
 
 Skip all certificate verification when connecting to the Plex server.

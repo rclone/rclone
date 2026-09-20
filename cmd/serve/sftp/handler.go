@@ -3,8 +3,10 @@
 package sftp
 
 import (
+	"fmt"
 	"io"
 	"os"
+	"runtime/debug"
 	"syscall"
 	"time"
 
@@ -13,12 +15,42 @@ import (
 	"github.com/rclone/rclone/vfs"
 )
 
+// recoverPanic turns a panic into an error assigned through err.
+func recoverPanic(err *error) {
+	if r := recover(); r != nil {
+		fs.Errorf("sftp", "panic in request handler: %v\n%s", r, debug.Stack())
+		*err = fmt.Errorf("request handler: %v", r)
+	}
+}
+
+// recoveringHandle wraps a vfs.Handle so panics in ReadAt and WriteAt,
+// which pkg/sftp calls from its packet worker goroutines, are returned
+// as errors.
+type recoveringHandle struct {
+	vfs.Handle
+}
+
+func (h recoveringHandle) ReadAt(b []byte, off int64) (n int, err error) {
+	defer recoverPanic(&err)
+	return h.Handle.ReadAt(b, off)
+}
+
+func (h recoveringHandle) WriteAt(b []byte, off int64) (n int, err error) {
+	defer recoverPanic(&err)
+	return h.Handle.WriteAt(b, off)
+}
+
+func (h recoveringHandle) Close() (err error) {
+	defer recoverPanic(&err)
+	return h.Handle.Close()
+}
+
 // vfsHandler converts the VFS to be served by SFTP
 type vfsHandler struct {
 	*vfs.VFS
 }
 
-// vfsHandler returns a Handlers object with the test handlers.
+// newVFSHandler returns a Handlers object with the test handlers.
 func newVFSHandler(vfs *vfs.VFS) sftp.Handlers {
 	v := vfsHandler{VFS: vfs}
 	return sftp.Handlers{
@@ -29,15 +61,17 @@ func newVFSHandler(vfs *vfs.VFS) sftp.Handlers {
 	}
 }
 
-func (v vfsHandler) Fileread(r *sftp.Request) (io.ReaderAt, error) {
+func (v vfsHandler) Fileread(r *sftp.Request) (ra io.ReaderAt, err error) {
+	defer recoverPanic(&err)
 	file, err := v.OpenFile(r.Filepath, os.O_RDONLY, 0777)
 	if err != nil {
 		return nil, err
 	}
-	return file, nil
+	return recoveringHandle{file}, nil
 }
 
-func (v vfsHandler) Filewrite(r *sftp.Request) (io.WriterAt, error) {
+func (v vfsHandler) Filewrite(r *sftp.Request) (wa io.WriterAt, err error) {
+	defer recoverPanic(&err)
 	// Respect the flags requested in the SFTP OPEN packet
 	p := r.Pflags()
 	flags := os.O_WRONLY
@@ -57,10 +91,11 @@ func (v vfsHandler) Filewrite(r *sftp.Request) (io.WriterAt, error) {
 	if err != nil {
 		return nil, err
 	}
-	return file, nil
+	return recoveringHandle{file}, nil
 }
 
-func (v vfsHandler) Filecmd(r *sftp.Request) error {
+func (v vfsHandler) Filecmd(r *sftp.Request) (err error) {
+	defer recoverPanic(&err)
 	switch r.Method {
 	case "Setstat":
 		attr := r.Attributes()
@@ -119,7 +154,8 @@ func (v vfsHandler) Filecmd(r *sftp.Request) error {
 
 // StatVFS implements the statvfs@openssh.com extension, returning filesystem
 // usage information from the VFS. It satisfies sftp.StatVFSFileCmder.
-func (v vfsHandler) StatVFS(r *sftp.Request) (*sftp.StatVFS, error) {
+func (v vfsHandler) StatVFS(r *sftp.Request) (st *sftp.StatVFS, err error) {
+	defer recoverPanic(&err)
 	const blockSize = 4096
 	total, _, free := v.Statfs()
 	blocks := uint64(total) / blockSize
@@ -140,8 +176,8 @@ func (v vfsHandler) StatVFS(r *sftp.Request) (*sftp.StatVFS, error) {
 type listerat []os.FileInfo
 
 // Modeled after strings.Reader's ReadAt() implementation
-func (f listerat) ListAt(ls []os.FileInfo, offset int64) (int, error) {
-	var n int
+func (f listerat) ListAt(ls []os.FileInfo, offset int64) (n int, err error) {
+	defer recoverPanic(&err)
 	if offset >= int64(len(f)) {
 		return 0, io.EOF
 	}
@@ -153,6 +189,7 @@ func (f listerat) ListAt(ls []os.FileInfo, offset int64) (int, error) {
 }
 
 func (v vfsHandler) Filelist(r *sftp.Request) (l sftp.ListerAt, err error) {
+	defer recoverPanic(&err)
 	var node vfs.Node
 	var handle vfs.Handle
 	switch r.Method {

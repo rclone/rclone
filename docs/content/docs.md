@@ -1043,7 +1043,8 @@ will use this much memory for buffering.
 
 When using `mount` or `cmount` each open file descriptor will use this much
 memory for buffering.
-See the [mount](/commands/rclone_mount/#file-buffering) documentation for more details.
+See the [mount](/commands/rclone_mount/#vfs-file-buffering) documentation for
+more details.
 
 Set to `0` to disable the buffering for the minimum memory usage.
 
@@ -1701,7 +1702,7 @@ like symlinks under Windows). Ignored files won't be copied, moved or
 deleted in a sync.
 
 If you supply this flag then rclone will copy symbolic links from any
-supported backend backend, and store them as text files, with a
+supported backend, and store them as text files, with a
 `.rclonelink` suffix in the destination.
 
 The text file will contain the target of the symbolic link.
@@ -2233,7 +2234,7 @@ rclone will use multiple threads to transfer the file (default 256M).
 Capable backends are marked in the
 [overview](/overview/#optional-features) as `MultithreadUpload`. (They
 need to implement either the `OpenWriterAt` or `OpenChunkWriter`
-internal interfaces). These include include, `local`, `s3`,
+internal interfaces). These include `local`, `s3`,
 `azureblob`, `b2`, `oracleobjectstorage` and `smb` at the time of
 writing.
 
@@ -2260,7 +2261,7 @@ Most multi-thread transfers do not take additional memory, but some do
 at maximum `--transfers` \* `--multi-thread-chunk-size` \*
 `--multi-thread-streams` or specifically for the s3 backend
 `--transfers` \* `--s3-chunk-size` \* `--s3-concurrency`. However you
-can use the the [--max-buffer-memory](/docs/#max-buffer-memory) flag
+can use the [--max-buffer-memory](/docs/#max-buffer-memory) flag
 to control the maximum memory used here.
 
 **NB** that this **only** works with supported backends as the
@@ -2378,8 +2379,10 @@ describes what aspect is being measured:
 - `size` - order by the size of the files
 - `name` - order by the full path of the files
 - `modtime` - order by the modification date of the files
+- `pattern` - order by a list of path glob patterns
 
-This can have a modifier appended with a comma:
+The `size`, `name` and `modtime` comparisons can have a modifier appended with
+a comma:
 
 - `ascending` or `asc` - order so that the smallest (or oldest) is processed first
 - `descending` or `desc` - order so that the largest (or newest) is processed first
@@ -2398,11 +2401,18 @@ processed continuously.
 
 If no modifier is supplied then the order is `ascending`.
 
+For `pattern`, append one or more comma-separated patterns. Patterns use the
+[filter pattern syntax](/filtering/#patterns). Files matching the first pattern
+are processed first, followed by files matching the second pattern, and so on.
+Files which do not match a pattern are processed last. Within each group, files
+are ordered by full path. Patterns cannot contain a comma.
+
 For example
 
 - `--order-by size,desc` - send the largest files first
 - `--order-by modtime,ascending` - send the oldest files first
 - `--order-by name` - send the files with alphabetically by path first
+- `--order-by 'pattern,*.tar.gz,*.md5'` - send archives before checksum files
 
 If the `--order-by` flag is not supplied or it is supplied with an
 empty string then the default ordering will be used which is as
@@ -2444,8 +2454,9 @@ setting the config password for the first time.
 The argument to this should be a command with a space separated list
 of arguments. If one of the arguments has a space in then enclose it
 in `"`, if you want a literal `"` in an argument then enclose the
-argument in `"` and double the `"`. See [CSV encoding](https://godoc.org/encoding/csv)
-for more info.
+argument in `"` and double the `"`. This includes the command itself:
+if the path to the executable contains a space, it must be quoted too.
+See [CSV encoding](https://godoc.org/encoding/csv) for more info.
 
 Eg
 
@@ -2453,6 +2464,7 @@ Eg
 --password-command "echo hello"
 --password-command 'echo "hello with space"'
 --password-command 'echo "hello with ""quotes"" and space"'
+--password-command '"/path with a space/get-password.sh"'
 ```
 
 Note that when changing the configuration password the environment
@@ -3267,7 +3279,9 @@ The available flags are:
 - `auth` dumps HTTP headers like `headers`, but also includes any `Authorization:`
   headers. This means the output will probably contain sensitive information.
   Use `headers` to dump without `Authorization:` headers. Can be very verbose.
-  Useful for debugging only.
+  Useful for debugging only. This flag also makes the debug log of the config
+  process (e.g. `rclone config -vv`) show answers to questions, passwords and
+  tokens which are otherwise redacted.
 - `bodies` dumps HTTP headers and bodies. May contain sensitive info.
   Can be very verbose.  Useful for debugging only. Note that the bodies
   are buffered in memory so don't use this for enormous files.
@@ -3320,6 +3334,7 @@ For the filtering options
 - `--include-from`
 - `--files-from`
 - `--files-from-raw`
+- `--files-from0`
 - `--min-size`
 - `--max-size`
 - `--min-age`

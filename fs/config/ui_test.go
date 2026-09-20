@@ -250,6 +250,40 @@ func TestCreateUpdatePasswordRemote(t *testing.T) {
 	}
 }
 
+func TestUnsetRemote(t *testing.T) {
+	ctx := context.Background()
+	defer testConfigFile(t, simpleOptions, "unset.conf")()
+
+	_, err := config.CreateRemote(ctx, "test", "config_test_remote", rc.Params{
+		"bool":  true,
+		"spare": "spare",
+	}, config.UpdateRemoteOpt{})
+	require.NoError(t, err)
+	_, found := config.FileGetValue("test", "spare")
+	require.True(t, found)
+
+	// Unsetting a missing remote is an error
+	_, err = config.UnsetRemote("notfound", "spare")
+	assert.Error(t, err)
+
+	// Unsetting the type is an error and removes nothing
+	_, err = config.UnsetRemote("test", "type")
+	assert.Error(t, err)
+	assert.Equal(t, "config_test_remote", config.GetValue("test", "type"))
+
+	// Unset an existing key and a missing one - only the existing one
+	// is reported as removed
+	removed, err := config.UnsetRemote("test", "spare", "missing")
+	require.NoError(t, err)
+	assert.Equal(t, []string{"spare"}, removed)
+
+	// The key is gone entirely, not just set to empty
+	_, found = config.FileGetValue("test", "spare")
+	assert.False(t, found)
+	// Other keys are untouched
+	assert.Equal(t, "true", config.GetValue("test", "bool"))
+}
+
 func TestDefaultRequired(t *testing.T) {
 	// By default options are optional (sic), regardless if a default value is defined.
 	// Setting Required=true means empty string is no longer allowed, except when

@@ -13,6 +13,8 @@ import (
 	"fmt"
 	"io"
 	"math/bits"
+	"net"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -21,6 +23,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -28,6 +31,7 @@ import (
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
@@ -36,6 +40,7 @@ import (
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/testserver"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
@@ -146,7 +151,22 @@ func retry(t *testing.T, what string, f func() error) {
 	require.NoError(t, err, what)
 }
 
-// check interface
+// checkFingerprint checks that the fingerprint of the in-memory
+// object (memory) exactly matches the fingerprint of the same object
+// read back from the remote (reloaded).
+func checkFingerprint(ctx context.Context, t *testing.T, memory, reloaded fs.Object) {
+	t.Helper()
+	for _, test := range []struct {
+		fast bool
+		name string
+	}{
+		{fast: false, name: "slow"},
+		{fast: true, name: "fast"},
+	} {
+		memoryFingerprint, reloadedFingerprint := fs.Fingerprint(ctx, memory, test.fast), fs.Fingerprint(ctx, reloaded, test.fast)
+		assert.Equal(t, memoryFingerprint, reloadedFingerprint, "%s fingerprint of object in memory (%v) should exactly match fingerprint read back from the remote (%v)", test.name, memoryFingerprint, reloadedFingerprint)
+	}
+}
 
 // PutTestContentsMetadata puts file with given contents to the remote and checks it but unlike TestPutLarge doesn't remove
 //
@@ -198,8 +218,10 @@ func PutTestContentsMetadata(ctx context.Context, t *testing.T, f fs.Fs, file *f
 		}
 		file.Check(t, obj, f.Precision())
 		// Re-read the object and check again
+		liveObj := obj
 		obj = fstest.NewObject(ctx, t, f, file.Path)
 		file.Check(t, obj, f.Precision())
+		checkFingerprint(ctx, t, liveObj, obj)
 	}
 	return obj
 }
@@ -233,6 +255,7 @@ func testPutLarge(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item,
 		obj        fs.Object
 		uploadHash *hash.MultiHasher
 	)
+	inUse := pool.Global().InUse()
 	retry(t, "PutLarge", func() error {
 		r := readers.NewPatternReader(file.Size)
 		uploadHash = hash.NewMultiHasher()
@@ -249,12 +272,15 @@ func testPutLarge(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item,
 		}
 		return err
 	})
+	assert.Equal(t, inUse, pool.Global().InUse(), "buffers not returned to the global pool after upload")
 	file.Hashes = uploadHash.Sums()
 	file.Check(t, obj, f.Precision())
 
 	// Re-read the object and check again
+	liveObj := obj
 	obj = fstest.NewObject(ctx, t, f, file.Path)
 	file.Check(t, obj, f.Precision())
+	checkFingerprint(ctx, t, liveObj, obj)
 
 	// Download the object and check it is OK
 	downloadHash := hash.NewMultiHasher()
@@ -1276,6 +1302,7 @@ func Run(t *testing.T, opt *Opt) {
 
 				// Check dst lightly - list above has checked ModTime/Hashes
 				assert.Equal(t, file2Copy.Path, dst.Remote())
+				checkFingerprint(ctx, t, dst, fstest.NewObject(ctx, t, f, file2Copy.Path))
 
 				// check that mutating dst does not mutate src
 				if !strings.Contains(fs.ConfigStringFull(f), "copy_is_hardlink") {
@@ -1332,8 +1359,10 @@ func Run(t *testing.T, opt *Opt) {
 
 					// Check metadata is correct
 					fstest.CheckEntryMetadata(ctx, t, f, oDst, ci.MetadataSet)
+					liveObj := oDst
 					oDst = fstest.NewObject(ctx, t, f, dstName)
 					fstest.CheckEntryMetadata(ctx, t, f, oDst, ci.MetadataSet)
+					checkFingerprint(ctx, t, liveObj, oDst)
 
 					// Remove test files
 					require.NoError(t, oSrc.Remove(ctx))
@@ -1371,6 +1400,7 @@ func Run(t *testing.T, opt *Opt) {
 				fstest.CheckListing(t, f, []fstest.Item{file1, file2Move})
 				// Check dst lightly - list above has checked ModTime/Hashes
 				assert.Equal(t, file2Move.Path, dst.Remote())
+				checkFingerprint(ctx, t, dst, fstest.NewObject(ctx, t, f, file2Move.Path))
 				// 1: file name.txt
 				// 2: other.txt
 
@@ -1440,8 +1470,10 @@ func Run(t *testing.T, opt *Opt) {
 
 					// Check metadata is correct
 					fstest.CheckEntryMetadata(ctx, t, f, newO, ci.MetadataSet)
+					liveObj := newO
 					newO = fstest.NewObject(ctx, t, f, newName)
 					fstest.CheckEntryMetadata(ctx, t, f, newO, ci.MetadataSet)
+					checkFingerprint(ctx, t, liveObj, newO)
 
 					// Remove test file
 					require.NoError(t, newO.Remove(ctx))
@@ -1763,6 +1795,7 @@ func Run(t *testing.T, opt *Opt) {
 				require.NoError(t, err)
 				file1.ModTime = newModTime
 				file1.CheckModTime(t, obj, obj.ModTime(ctx), f.Precision())
+				checkFingerprint(ctx, t, obj, fstest.NewObject(ctx, t, f, file1.Path))
 				// And make a new object and read it from there too
 				TestObjectModTime(t)
 			})
@@ -1818,6 +1851,45 @@ func Run(t *testing.T, opt *Opt) {
 				assert.Equal(t, file1Contents[:50], ReadObject(ctx, t, obj, 50), "contents of file1 differ after limited read")
 			})
 
+			// TestObjectOpenFingerprint tests that opening an object - in particular
+			// with a range request - does not change its fingerprint.
+			//
+			// go test -v -run 'TestIntegration/FsMkdir/FsPutFiles/ObjectOpenFingerprint$'
+			t.Run("ObjectOpenFingerprint", func(t *testing.T) {
+				skipIfNotOk(t)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
+
+				// Read the whole object first so any lazily fetched hash
+				// is populated, then read a reference object to compare
+				// fingerprints against.
+				_ = ReadObject(ctx, t, obj, -1)
+				reference := fstest.NewObject(ctx, t, f, file1.Path)
+				_ = ReadObject(ctx, t, reference, -1)
+
+				// Opening the object in various ways must not change the fingerprint
+				for _, test := range []struct {
+					name    string
+					options []fs.OpenOption
+				}{
+					{name: "full read"},
+					{name: "seek read", options: []fs.OpenOption{&fs.SeekOption{Offset: 50}}},
+					{name: "range read", options: []fs.OpenOption{&fs.RangeOption{Start: 5, End: 15}}},
+					{name: "range read to end", options: []fs.OpenOption{&fs.RangeOption{Start: 80, End: -1}}},
+				} {
+					t.Run(test.name, func(t *testing.T) {
+						_ = ReadObject(ctx, t, obj, -1, test.options...)
+						checkFingerprint(ctx, t, obj, reference)
+					})
+				}
+
+				// A freshly fetched object must have the same fingerprint too
+				t.Run("refresh", func(t *testing.T) {
+					obj := fstest.NewObject(ctx, t, f, file1.Path)
+					_ = ReadObject(ctx, t, obj, -1)
+					checkFingerprint(ctx, t, obj, reference)
+				})
+			})
+
 			// TestObjectUpdate tests that Update works
 			t.Run("ObjectUpdate", func(t *testing.T) {
 				skipIfNotOk(t)
@@ -1842,8 +1914,10 @@ func Run(t *testing.T, opt *Opt) {
 				file1.Check(t, obj, f.Precision())
 
 				// Re-read the object and check again
+				liveObj := obj
 				obj = fstest.NewObject(ctx, t, f, file1.Path)
 				file1.Check(t, obj, f.Precision())
+				checkFingerprint(ctx, t, liveObj, obj)
 
 				// check contents correct
 				assert.Equal(t, contents, ReadObject(ctx, t, obj, -1), "contents of updated file1 differ")
@@ -2339,8 +2413,10 @@ func Run(t *testing.T, opt *Opt) {
 						file.Size = int64(contentSize) // use correct size when checking
 						file.Check(t, obj, f.Precision())
 						// Re-read the object and check again
+						liveObj := obj
 						obj = fstest.NewObject(ctx, t, f, file.Path)
 						file.Check(t, obj, f.Precision())
+						checkFingerprint(ctx, t, liveObj, obj)
 						require.NoError(t, obj.Remove(ctx))
 					})
 				}
@@ -2473,6 +2549,312 @@ func Run(t *testing.T, opt *Opt) {
 					}
 				})
 			}
+		})
+
+		// TestFsPutRetry tests that an upload survives a transient HTTP
+		// failure without corrupting the object
+		t.Run("FsPutRetry", func(t *testing.T) {
+			skipIfNotOk(t)
+
+			// faults are the transient failures injected into the
+			// first request carrying upload data
+			faults := []struct {
+				name       string
+				statusCode int
+				err        error
+			}{
+				{name: "Status500", statusCode: http.StatusInternalServerError},
+				// io.ErrUnexpectedEOF is in fserrors' portable list of
+				// retriable errors, unlike syscall.ECONNRESET which
+				// doesn't exist on plan9.
+				{name: "NetError", err: &net.OpError{Op: "write", Net: "tcp", Err: io.ErrUnexpectedEOF}},
+			}
+
+			// putRetry uploads size bytes to remote, failing the first
+			// request carrying at least minBody bytes of body with the
+			// given fault before it is sent. Put must then either
+			// succeed with the correct contents or fail cleanly, and
+			// any pooled buffers it used must be returned.
+			putRetry := func(t *testing.T, remote string, size, minBody int64, statusCode int, faultErr error) {
+				var faulted atomic.Bool
+				fshttp.SetFaultInjector(func(req *http.Request) (int, error) {
+					if faulted.Load() {
+						return 0, nil
+					}
+					if req.Body == nil || req.Body == http.NoBody {
+						return 0, nil
+					}
+					if req.ContentLength > 0 {
+						if req.ContentLength < minBody {
+							return 0, nil
+						}
+					} else {
+						// The length is unknown (e.g. a multipart
+						// form) so peek at the body to see whether it
+						// carries at least minBody bytes of data,
+						// replaying the peeked bytes if the request is
+						// sent on. This stops the fault being spent on
+						// a small API call sent with unknown length.
+						peek := make([]byte, minBody)
+						n, _ := io.ReadFull(req.Body, peek)
+						req.Body = struct {
+							io.Reader
+							io.Closer
+						}{io.MultiReader(bytes.NewReader(peek[:n]), req.Body), req.Body}
+						if int64(n) < minBody {
+							return 0, nil
+						}
+					}
+					if !faulted.CompareAndSwap(false, true) {
+						return 0, nil
+					}
+					return statusCode, faultErr
+				})
+				defer fshttp.SetFaultInjector(nil)
+
+				file := fstest.Item{
+					ModTime: fstest.Time("2001-02-03T04:05:06.499999999Z"),
+					Path:    remote,
+					Size:    size,
+				}
+				// Remove anything left behind if the test fails part way
+				t.Cleanup(func() {
+					obj, err := f.NewObject(ctx, remote)
+					if err == nil {
+						_ = obj.Remove(ctx)
+					}
+				})
+				inUse := pool.Global().InUse()
+				uploadHash := hash.NewMultiHasher()
+				in := io.TeeReader(readers.NewPatternReader(size), uploadHash)
+				obji := object.NewStaticObjectInfo(remote, file.ModTime, size, true, nil, nil)
+				obj, err := f.Put(ctx, in, obji)
+				fshttp.SetFaultInjector(nil)
+				assert.Equal(t, inUse, pool.Global().InUse(), "buffers not returned to the global pool after upload")
+				file.Hashes = uploadHash.Sums()
+
+				// checkAndRemove checks obj has the expected contents
+				// then removes it
+				checkAndRemove := func(obj fs.Object) {
+					file.Check(t, obj, f.Precision())
+					downloadHash := hash.NewMultiHasher()
+					download, err := obj.Open(ctx)
+					require.NoError(t, err)
+					n, err := io.Copy(downloadHash, download)
+					require.NoError(t, err)
+					assert.Equal(t, size, n)
+					require.NoError(t, download.Close())
+					assert.Equal(t, file.Hashes, downloadHash.Sums())
+					assert.NoError(t, obj.Remove(ctx))
+				}
+
+				if !faulted.Load() {
+					if err == nil {
+						assert.NoError(t, obj.Remove(ctx))
+					}
+					t.Skip("no upload request could be faulted")
+				}
+				if err != nil {
+					// A clean failure is acceptable but the object must
+					// not have been left behind with the wrong contents
+					t.Logf("Put returned an error after the injected failure (acceptable): %v", err)
+					obj, err := f.NewObject(ctx, remote)
+					if errors.Is(err, fs.ErrorObjectNotFound) {
+						return
+					}
+					require.NoError(t, err)
+					checkAndRemove(obj)
+					return
+				}
+				require.NotNil(t, obj)
+				file.Check(t, obj, f.Precision())
+				// Re-read the object, which waits for it to become visible
+				checkAndRemove(fstest.NewObject(ctx, t, f, remote))
+			}
+
+			t.Run("Simple", func(t *testing.T) {
+				var size int64 = 64 * 1024
+				if *fstest.SizeLimit > 0 && size > *fstest.SizeLimit {
+					size = *fstest.SizeLimit
+					t.Logf("Reduce file size due to limit %d", size)
+				}
+				for _, fault := range faults {
+					t.Run(fault.name, func(t *testing.T) {
+						putRetry(t, "retry-"+fault.name+".bin", size, size, fault.statusCode, fault.err)
+					})
+				}
+			})
+
+			t.Run("Chunked", func(t *testing.T) {
+				if testing.Short() {
+					t.Skip("not running with -short")
+				}
+				if opt.ChunkedUpload.Skip {
+					t.Skip("skipping as ChunkedUpload.Skip is set")
+				}
+				setUploadChunkSizer, _ := f.(SetUploadChunkSizer)
+				if setUploadChunkSizer == nil {
+					t.Skipf("%T does not implement SetUploadChunkSizer", f)
+				}
+				setUploadCutoffer, _ := f.(SetUploadCutoffer)
+
+				// Use a chunk size large enough that only chunk
+				// uploads, not API calls, carry enough body to fault
+				chunkSize := max(opt.ChunkedUpload.MinChunkSize, 64*fs.Kibi)
+				if opt.ChunkedUpload.MaxChunkSize > 0 && chunkSize > opt.ChunkedUpload.MaxChunkSize {
+					chunkSize = opt.ChunkedUpload.MaxChunkSize
+				}
+				if opt.ChunkedUpload.CeilChunkSize != nil {
+					chunkSize = opt.ChunkedUpload.CeilChunkSize(chunkSize)
+				}
+
+				oldChunkSize, err := setUploadChunkSizer.SetUploadChunkSize(chunkSize)
+				require.NoError(t, err)
+				var oldUploadCutoff fs.SizeSuffix
+				if setUploadCutoffer != nil {
+					oldUploadCutoff, err = setUploadCutoffer.SetUploadCutoff(chunkSize)
+					require.NoError(t, err)
+				}
+				defer func() {
+					_, err := setUploadChunkSizer.SetUploadChunkSize(oldChunkSize)
+					assert.NoError(t, err)
+					if setUploadCutoffer != nil {
+						_, err := setUploadCutoffer.SetUploadCutoff(oldUploadCutoff)
+						assert.NoError(t, err)
+					}
+				}()
+
+				for _, fault := range faults {
+					t.Run(fault.name, func(t *testing.T) {
+						putRetry(t, "retry-chunked-"+fault.name+".bin", int64(2*chunkSize+1), int64(chunkSize/2), fault.statusCode, fault.err)
+					})
+				}
+			})
+		})
+
+		// TestFsPutShortEOF tests uploading a file where the reader
+		// returns EOF before the declared size worth of data has been
+		// read.
+		//
+		// go test -v -run 'TestIntegration/FsMkdir/FsPutShortEOF'
+		t.Run("FsPutShortEOF", func(t *testing.T) {
+			skipIfNotOk(t)
+
+			const putTimeout = 5 * time.Minute
+
+			// putShortEOF uploads a file declaring declared bytes but
+			// supplying only actual bytes, then checks the upload
+			// terminates and removes anything it created.
+			putShortEOF := func(t *testing.T, remote string, declared, actual int64) {
+				contents := random.String(int(actual))
+				obji := object.NewStaticObjectInfo(remote, fstest.Time("2003-02-03T04:05:06.499999999Z"), declared, true, nil, nil)
+
+				type result struct {
+					obj      fs.Object
+					err      error
+					panicked any
+				}
+				putCtx, cancel := context.WithCancel(ctx)
+				defer cancel()
+				resultChan := make(chan result, 1)
+				go func() {
+					var res result
+					defer func() {
+						res.panicked = recover()
+						resultChan <- res
+					}()
+					res.obj, res.err = f.Put(putCtx, bytes.NewBufferString(contents), obji)
+				}()
+
+				var res result
+				select {
+				case res = <-resultChan:
+				case <-time.After(putTimeout):
+					t.Errorf("Put did not return within %v with a source %d bytes short of its declared size", putTimeout, declared-actual)
+					cancel()
+					select {
+					case res = <-resultChan:
+					case <-time.After(time.Minute):
+						t.Fatal("Put still did not return after cancelling the context - giving up")
+					}
+				}
+				require.Nil(t, res.panicked, "Put must not panic when the source returns EOF early")
+
+				if res.err != nil {
+					t.Logf("Put returned an error (acceptable): %v", res.err)
+					// Remove any partial object left behind
+					obj, err := f.NewObject(ctx, remote)
+					if err == nil {
+						assert.NoError(t, obj.Remove(ctx))
+					}
+					return
+				}
+
+				// Put claimed success so the object must exist and must
+				// contain only the bytes actually supplied.
+				var obj fs.Object
+				retry(t, "FsPutShortEOF: check uploaded object exists", func() error {
+					var err error
+					obj, err = f.NewObject(ctx, remote)
+					if errors.Is(err, fs.ErrorObjectNotFound) {
+						return fserrors.RetryErrorf("object not found yet")
+					}
+					return err
+				})
+				if size := obj.Size(); size >= 0 {
+					assert.Equal(t, actual, size, "object uploaded from a short source must contain the bytes actually supplied, not the declared size")
+				}
+				assert.NoError(t, obj.Remove(ctx))
+			}
+
+			t.Run("Simple", func(t *testing.T) {
+				var N int64 = 5 * 1024
+				if *fstest.SizeLimit > 0 && N > *fstest.SizeLimit {
+					N = *fstest.SizeLimit
+					t.Logf("Reduce file size due to limit %d", N)
+				}
+				putShortEOF(t, "short-eof.bin", 2*N, N)
+			})
+
+			t.Run("Chunked", func(t *testing.T) {
+				if testing.Short() {
+					t.Skip("not running with -short")
+				}
+				if opt.ChunkedUpload.Skip {
+					t.Skip("skipping as ChunkedUpload.Skip is set")
+				}
+				setUploadChunkSizer, _ := f.(SetUploadChunkSizer)
+				if setUploadChunkSizer == nil {
+					t.Skipf("%T does not implement SetUploadChunkSizer", f)
+				}
+				setUploadCutoffer, _ := f.(SetUploadCutoffer)
+
+				minChunkSize := max(opt.ChunkedUpload.MinChunkSize, 100)
+				if opt.ChunkedUpload.CeilChunkSize != nil {
+					minChunkSize = opt.ChunkedUpload.CeilChunkSize(minChunkSize)
+				}
+
+				// Set the minimum chunk size and upload cutoff, restoring them at the end
+				oldChunkSize, err := setUploadChunkSizer.SetUploadChunkSize(minChunkSize)
+				require.NoError(t, err)
+				var oldUploadCutoff fs.SizeSuffix
+				if setUploadCutoffer != nil {
+					oldUploadCutoff, err = setUploadCutoffer.SetUploadCutoff(minChunkSize)
+					require.NoError(t, err)
+				}
+				defer func() {
+					_, err := setUploadChunkSizer.SetUploadChunkSize(oldChunkSize)
+					assert.NoError(t, err)
+					if setUploadCutoffer != nil {
+						_, err := setUploadCutoffer.SetUploadCutoff(oldUploadCutoff)
+						assert.NoError(t, err)
+					}
+				}()
+
+				// Declare a size spanning 4 chunks but EOF after 1.5
+				cs := int64(minChunkSize)
+				putShortEOF(t, "short-eof-chunked.bin", 4*cs, cs+cs/2)
+			})
 		})
 
 		// Copy files with chunked copy if available

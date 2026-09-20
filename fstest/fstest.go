@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -515,8 +516,7 @@ func Purge(f fs.Fs) {
 			return nil
 		})
 		sort.Strings(dirs)
-		for i := len(dirs) - 1; i >= 0; i-- {
-			dir := dirs[i]
+		for _, dir := range slices.Backward(dirs) {
 			fs.Debugf(f, "Purge dir %q", dir)
 			err := f.Rmdir(ctx, dir)
 			if err != nil {

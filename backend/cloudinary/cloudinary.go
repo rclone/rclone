@@ -472,8 +472,8 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		if updateOptions, ok := option.(*api.UpdateOptions); ok {
 			if updateOptions.PublicID != "" {
 				updateObject = true
-				params.Overwrite = SDKApi.Bool(true)
-				params.Invalidate = SDKApi.Bool(true)
+				params.Overwrite = new(true)
+				params.Invalidate = new(true)
 				params.PublicID = updateOptions.PublicID
 				params.ResourceType = updateOptions.ResourceType
 				params.Type = SDKApi.DeliveryType(updateOptions.DeliveryType)
