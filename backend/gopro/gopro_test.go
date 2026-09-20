@@ -349,6 +349,15 @@ func TestFindID(t *testing.T) {
 	assert.Equal(t, id, findID("GX010294 {"+id+"}.MP4"))
 	assert.Equal(t, "", findID("GX010294.MP4"))
 	assert.Equal(t, "", findID("potato {too-short}.txt"))
+
+	t.Run("only the trailing suffix counts, not an id-shaped substring earlier in the name", func(t *testing.T) {
+		unrelated := "aaaaaaaaaaaaaaaaaaaaaaaa"
+		assert.Equal(t, id, findID("note {"+unrelated+"} clip {"+id+"}.mp4"))
+	})
+
+	t.Run("an id-shaped substring with nothing after it is not a trailing suffix", func(t *testing.T) {
+		assert.Equal(t, "", findID("note {"+id+"} halfway through.mp4"))
+	})
 }
 
 func TestStripSuffixID(t *testing.T) {
@@ -2181,6 +2190,27 @@ func TestReadMetaDataIDFastPath(t *testing.T) {
 		err := o.readMetaData(context.Background())
 		assert.Equal(t, fs.ErrorObjectNotFound, err, "a fabricated {id} suffix on an unrelated name must never resolve to that id's medium")
 		assert.Equal(t, 1, getMediumCalls)
+	})
+
+	t.Run("only the trailing generated suffix is trusted, not an id-shaped substring earlier in the name", func(t *testing.T) {
+		unrelatedID := "aaaaaaaaaaaaaaaaaaaaaaaa"
+		var requestedIDs []string
+		f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			gotID := strings.TrimPrefix(r.URL.Path, "/media/")
+			requestedIDs = append(requestedIDs, gotID)
+			if gotID != id {
+				http.Error(w, "not found", http.StatusNotFound)
+				return
+			}
+			writeJSON(t, w, api.Medium{ID: id, Filename: "note {" + unrelatedID + "} clip.mp4", ItemCount: 1})
+		}))
+		defer srv.Close()
+		f.opt.AlwaysAddID = true
+
+		o := &Object{fs: f, remote: "media/all/note {" + unrelatedID + "} clip {" + id + "}.mp4"}
+		require.NoError(t, o.readMetaData(context.Background()), "the real trailing suffix must still resolve even though an unrelated id-shaped substring appears earlier")
+		assert.Equal(t, id, o.id)
+		assert.NotContains(t, requestedIDs, unrelatedID, "the unrelated id-shaped substring earlier in the name must never be looked up")
 	})
 
 	t.Run("trashed_only always skips the fast path, since GET /media/{id} 404s for trashed items", func(t *testing.T) {

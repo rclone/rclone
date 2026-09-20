@@ -1472,26 +1472,31 @@ func itemLeaf(fileName string, itemNumber int) string {
 	return fmt.Sprintf("%s-%d%s", base, itemNumber, ext)
 }
 
-// idRe matches a GoPro medium id embedded in a deduped filename - 24
-// lowercase hex characters in braces, the shape addID/addFileID produce.
-//
-// A camera-generated filename can never coincidentally match this, but a
-// medium can now be renamed to an arbitrary filename (see the rename
-// support below), so a match here is no longer proof the id is one this
-// backend added - readMetaData's fast path verifies against the fetched
-// medium's own name (expectedIDSuffixedName) before trusting it, rather
-// than relying on this pattern alone.
-var idRe = regexp.MustCompile(`\{([0-9a-f]{24})\}`)
-
 // idSuffixRe matches the "name {id}" (or, for an empty name, just "{id}")
-// suffix addID appends - anchored to the end, unlike idRe, so it can be
-// stripped back off a leaf name (see stripSuffixID) without also matching
-// an id-shaped substring elsewhere in an arbitrary, user-chosen filename.
-var idSuffixRe = regexp.MustCompile(` ?\{[0-9a-f]{24}\}$`)
+// suffix addID appends - anchored to the end, so it can be stripped back
+// off a leaf name (see stripSuffixID) or extracted from one (see findID)
+// without also matching an id-shaped substring elsewhere in an arbitrary,
+// user-chosen filename.
+var idSuffixRe = regexp.MustCompile(` ?\{([0-9a-f]{24})\}$`)
 
-// findID finds an ID in a string if one is there, or ""
+// findID finds this backend's own generated {id} disambiguation suffix at
+// the end of name (before its extension), or "" if there isn't one.
+//
+// A camera-generated filename can never coincidentally end with this
+// shape, but a medium can now be renamed to an arbitrary filename (see
+// the rename support below), so a match here is still no proof the id is
+// one this backend added - readMetaData's fast path verifies against the
+// fetched medium's own name (expectedIDSuffixedName) before trusting it,
+// rather than relying on this pattern alone. Anchoring to the trailing
+// suffix (rather than matching anywhere in name) matters independently of
+// that verification: an unrelated id-shaped substring earlier in a
+// renamed file must never be looked up in its place, since a lookup that
+// 404s (as an arbitrary hex string usually will) would return that error
+// directly instead of falling through to the verified path below.
 func findID(name string) string {
-	match := idRe.FindStringSubmatch(name)
+	ext := path.Ext(name)
+	base := strings.TrimSuffix(name, ext)
+	match := idSuffixRe.FindStringSubmatch(base)
 	if match == nil {
 		return ""
 	}
@@ -2061,9 +2066,9 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	// chapter/burst item) would resolve to the wrong item here.
 	//
 	// GoPro media can now be renamed to an arbitrary filename (see the
-	// rename support below), so idRe matching a {24-hex} substring no
-	// longer proves it's a suffix this backend added - a renamed file
-	// could coincidentally (or deliberately) contain one. Fetching by
+	// rename support below), so findID matching a trailing {24-hex}
+	// suffix no longer proves it's one this backend added - a renamed
+	// file could coincidentally (or deliberately) end with one. Fetching by
 	// that id and trusting it unconditionally would silently serve a
 	// different medium's content under this name. Guard against that by
 	// only trusting the fast path when it's reconstructible: this backend
