@@ -1012,6 +1012,22 @@ func TestAllTrashAppliesNoFilteringAtAll(t *testing.T) {
 	}
 }
 
+func TestAllTrashCachesASuccessfulEmptyResult(t *testing.T) {
+	var calls int
+	srv := httptest.NewServer(jsonHandler(t, "/media/deleted", func(r *http.Request) any {
+		calls++
+		return &api.DeletedMediaResponse{DeletedMedia: nil, Pages: api.PageInfo{TotalPages: 1}}
+	}))
+	defer srv.Close()
+
+	f := newTestListFs(srv.URL)
+	_, err := f.allTrash(context.Background())
+	require.NoError(t, err)
+	_, err = f.allTrash(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, 1, calls, "an empty trash must still be cached, not refetched on every call")
+}
+
 func TestListDirShowsNullFileSizeTrashedItemsUnconditionally(t *testing.T) {
 	// A null file_size item is skipped in the active library by default,
 	// but never in a trashed listing - restoring or permanently deleting
