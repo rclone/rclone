@@ -390,35 +390,60 @@ func TestDestCapturedAt(t *testing.T) {
 
 	t.Run("media/all implies no date", func(t *testing.T) {
 		p := &dirPattern{re: `^media/all/([^/]+)$`}
-		_, ok := destCapturedAt(p, []string{"", "x.mp4"}, modTime)
+		_, ok, err := destCapturedAt(p, []string{"", "x.mp4"}, modTime)
+		require.NoError(t, err)
 		assert.False(t, ok)
 	})
 
 	t.Run("by-year changes only the year, keeps month/day/time-of-day", func(t *testing.T) {
 		p := &dirPattern{re: `^media/by-year/(\d{4})/([^/]+)$`}
-		got, ok := destCapturedAt(p, []string{"", "2026", "x.mp4"}, modTime)
+		got, ok, err := destCapturedAt(p, []string{"", "2026", "x.mp4"}, modTime)
+		require.NoError(t, err)
 		assert.True(t, ok)
 		assert.Equal(t, time.Date(2026, 3, 14, 9, 30, 15, 0, time.UTC), got)
 	})
 
 	t.Run("by-month changes year and month, keeps day/time-of-day", func(t *testing.T) {
 		p := &dirPattern{re: `^media/by-month/\d{4}/(\d{4})-(\d{2})/([^/]+)$`}
-		got, ok := destCapturedAt(p, []string{"", "2026", "07", "x.mp4"}, modTime)
+		got, ok, err := destCapturedAt(p, []string{"", "2026", "07", "x.mp4"}, modTime)
+		require.NoError(t, err)
 		assert.True(t, ok)
 		assert.Equal(t, time.Date(2026, 7, 14, 9, 30, 15, 0, time.UTC), got)
 	})
 
 	t.Run("by-day pins the whole date, keeps time-of-day", func(t *testing.T) {
 		p := &dirPattern{re: `^media/by-day/\d{4}/(\d{4})-(\d{2})-(\d{2})/([^/]+)$`}
-		got, ok := destCapturedAt(p, []string{"", "2026", "07", "04", "x.mp4"}, modTime)
+		got, ok, err := destCapturedAt(p, []string{"", "2026", "07", "04", "x.mp4"}, modTime)
+		require.NoError(t, err)
 		assert.True(t, ok)
 		assert.Equal(t, time.Date(2026, 7, 4, 9, 30, 15, 0, time.UTC), got)
 	})
 
 	t.Run("a destination date matching modTime already needs no change", func(t *testing.T) {
 		p := &dirPattern{re: `^media/by-day/\d{4}/(\d{4})-(\d{2})-(\d{2})/([^/]+)$`}
-		_, ok := destCapturedAt(p, []string{"", "2025", "03", "14", "x.mp4"}, modTime)
+		_, ok, err := destCapturedAt(p, []string{"", "2025", "03", "14", "x.mp4"}, modTime)
+		require.NoError(t, err)
 		assert.False(t, ok)
+	})
+
+	t.Run("an explicitly invalid by-day path is rejected, not normalized", func(t *testing.T) {
+		p := &dirPattern{re: `^media/by-day/\d{4}/(\d{4})-(\d{2})-(\d{2})/([^/]+)$`}
+		_, _, err := destCapturedAt(p, []string{"", "2026", "02", "31", "x.mp4"}, modTime)
+		assert.Error(t, err)
+	})
+
+	t.Run("moving a day-31 item to a by-month bucket with no 31st is rejected, not rolled into the next month", func(t *testing.T) {
+		p := &dirPattern{re: `^media/by-month/\d{4}/(\d{4})-(\d{2})/([^/]+)$`}
+		day31 := time.Date(2025, 3, 31, 9, 30, 15, 0, time.UTC)
+		_, _, err := destCapturedAt(p, []string{"", "2026", "02", "x.mp4"}, day31)
+		assert.Error(t, err)
+	})
+
+	t.Run("moving a leap-day item to a by-year bucket with no Feb 29 is rejected, not rolled into March", func(t *testing.T) {
+		p := &dirPattern{re: `^media/by-year/(\d{4})/([^/]+)$`}
+		leapDay := time.Date(2024, 2, 29, 9, 30, 15, 0, time.UTC)
+		_, _, err := destCapturedAt(p, []string{"", "2026", "x.mp4"}, leapDay)
+		assert.Error(t, err)
 	})
 }
 

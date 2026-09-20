@@ -2409,7 +2409,11 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	filename := f.opt.Enc.FromStandardName(leaf)
 
 	upd := api.MediumUpdate{Filename: &filename, ContentTitle: &filename}
-	if capturedAt, ok := destCapturedAt(pattern, match, srcObj.modTime); ok {
+	capturedAt, ok, err := destCapturedAt(pattern, match, srcObj.modTime)
+	if err != nil {
+		return nil, fmt.Errorf("gopro: can't move to %q: %w", remote, err)
+	}
+	if ok {
 		upd.CapturedAt = &capturedAt
 	}
 	if err := srcObj.fs.updateMedium(ctx, srcObj.id, upd); err != nil {
@@ -2431,7 +2435,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 // pattern, preserving whatever of modTime's own year/month/day/time isn't
 // pinned by the destination. ok is false for media/all (no date implied)
 // or when the implied date already matches modTime (nothing to change).
-func destCapturedAt(pattern *dirPattern, match []string, modTime time.Time) (t time.Time, ok bool) {
+func destCapturedAt(pattern *dirPattern, match []string, modTime time.Time) (t time.Time, ok bool, err error) {
 	var year, month, day int
 	switch pattern.re {
 	case `^media/by-year/(\d{4})/([^/]+)$`:
@@ -2447,12 +2451,21 @@ func destCapturedAt(pattern *dirPattern, match []string, modTime time.Time) (t t
 		d, _ := strconv.Atoi(match[3])
 		month, day = m, d
 	default:
-		return time.Time{}, false
+		return time.Time{}, false, nil
 	}
 	t = time.Date(year, time.Month(month), day,
 		modTime.Hour(), modTime.Minute(), modTime.Second(), modTime.Nanosecond(),
 		modTime.Location())
-	return t, !t.Equal(modTime)
+	// time.Date normalizes an out-of-range day (or month) instead of
+	// rejecting it - e.g. day 31 in a 30-day month rolls into the next
+	// month - so a round-trip check is needed to tell an invalid
+	// destination date apart from a valid one: if what came back doesn't
+	// have the year/month/day just asked for, it was never a real
+	// calendar date to begin with.
+	if t.Year() != year || int(t.Month()) != month || t.Day() != day {
+		return time.Time{}, false, fmt.Errorf("gopro: %04d-%02d-%02d is not a valid date", year, month, day)
+	}
+	return t, !t.Equal(modTime), nil
 }
 
 // PublicLink creates a public share (a "collection" holding just this one
