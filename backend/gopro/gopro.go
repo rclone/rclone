@@ -1668,8 +1668,15 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	}
 	if pattern.isUpload {
 		f.uploadedMu.Lock()
-		d := fs.NewDir(strings.Trim(prefix, "/"), f.dirTime())
-		f.uploaded.AddEntry(d)
+		dirPath := strings.Trim(prefix, "/")
+		// dirtree.Add (via AddEntry/AddDir) always appends, with no
+		// dedup of its own, so a repeat Mkdir on the same directory
+		// would otherwise add a duplicate entry to the parent's listing
+		// - and confirmed live, a duplicate here corrupts Rmdir's
+		// swap-delete in dirtree.Prune outright.
+		if _, entry := f.uploaded.Find(dirPath); entry == nil {
+			f.uploaded.AddEntry(fs.NewDir(dirPath, f.dirTime()))
+		}
 		f.uploadedMu.Unlock()
 		return nil
 	}
