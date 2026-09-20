@@ -1218,6 +1218,13 @@ func (f *Fs) allMedia(ctx context.Context) (items []api.Medium, err error) {
 		}
 		page++
 	}
+	if items == nil {
+		// A successful empty search must still be cached: the cache-hit
+		// check above is "f.mediaCache != nil", which a nil items would
+		// defeat, refetching the whole library on every listing instead
+		// of honoring mediaCacheTTL.
+		items = []api.Medium{}
+	}
 	f.mediaCache = items
 	f.mediaCacheAt = time.Now()
 	return items, nil

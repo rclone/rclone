@@ -955,6 +955,24 @@ func TestAllMediaCachesWithinTTLAndRefetchesAfter(t *testing.T) {
 	assert.Equal(t, 2, calls, "a call after the TTL has elapsed must refetch")
 }
 
+func TestAllMediaCachesASuccessfulEmptyResult(t *testing.T) {
+	var calls int
+	srv := httptest.NewServer(jsonHandler(t, "/media/search", func(r *http.Request) any {
+		calls++
+		resp := &api.SearchResponse{Pages: api.PageInfo{TotalPages: 1}}
+		resp.Embedded.Media = nil
+		return resp
+	}))
+	defer srv.Close()
+
+	f := newTestListFs(srv.URL)
+	_, err := f.allMedia(context.Background())
+	require.NoError(t, err)
+	_, err = f.allMedia(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, 1, calls, "an empty library must still be cached, not refetched on every call")
+}
+
 func TestAllTrashAppliesNoFilteringAtAll(t *testing.T) {
 	// Trash always shows everything, matching GoPro's own "Recently
 	// Deleted" view - none of include_edits/include_processing/
