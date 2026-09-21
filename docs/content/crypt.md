@@ -787,9 +787,9 @@ This uses a 32 byte (256 bit key) key derived from the user password.
 1 MiB (1048576 bytes) file will encrypt to
 
 - 32 bytes header
-- 16 chunks of 65568 bytes
+- 16 chunks of 65552 bytes
 
-1049120 bytes total (a 0.05% overhead). This is the overhead for big
+1048864 bytes total (a 0.03% overhead). This is the overhead for big
 files.
 
 ### Name encryption
@@ -812,6 +812,15 @@ This means that
 
 - filenames with the same name will encrypt the same
 - filenames which start the same won't have a common prefix
+
+A version string of the form `-vYYYY-MM-DD-HHMMSS-NNN` on the end of a
+file name (as added by `--b2-versions` / `--s3-versions`) is left in
+plain text so that versioned files can be found. Directory names are
+encrypted in full. Rclone before v1.76 left such a suffix in plain
+text on directory names too, so a directory named like this created by
+an older rclone will appear in listings with a warning but can't be
+opened or removed until renamed on the underlying remote to the name
+given in the warning.
 
 This uses a 32 byte key (256 bits) and a 16 byte (128 bits) IV both of
 which are derived from the user password.

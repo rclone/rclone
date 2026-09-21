@@ -82,6 +82,19 @@ func mapLogLevelNames(groups []string, a slog.Attr) slog.Attr {
 	return a
 }
 
+// isLogFrame reports whether frame belongs to the logging machinery
+// and so should be skipped when finding the real caller.
+//
+// rclone's own log packages are matched by file path, but the standard
+// library log/slog package is matched by function name: under -trimpath
+// its path is rewritten to "log/slog/logger.go", which neither file
+// check catches.
+func isLogFrame(frame runtime.Frame) bool {
+	file := frame.File
+	return strings.HasPrefix(frame.Function, "log/slog.") ||
+		strings.Contains(file, "/log/") || strings.HasSuffix(file, "log.go")
+}
+
 // get the file and line number of the caller skipping skip levels
 func getCaller(skip int) string {
 	var pc [64]uintptr
@@ -95,10 +108,10 @@ func getCaller(skip int) string {
 	for more {
 		frame, more = frames.Next()
 
-		file := frame.File
-		if strings.Contains(file, "/log/") || strings.HasSuffix(file, "log.go") {
+		if isLogFrame(frame) {
 			continue
 		}
+		file := frame.File
 		line := frame.Line
 
 		// shorten file name
@@ -347,17 +360,19 @@ func (h *OutputHandler) Handle(ctx context.Context, r slog.Record) (err error) {
 		buf     *bytes.Buffer
 	)
 
-	// Read the format under the mutex once so it is consistent
-	// throughout this call. The mutex is released before calling
-	// jsonLog/textLog (which may re-acquire it) to avoid deadlock.
+	// Read the format and the extra outputs under the mutex once
+	// so they are consistent throughout this call. The mutex is
+	// released before calling jsonLog/textLog (which may re-acquire
+	// it) to avoid deadlock.
 	h.mu.Lock()
 	format := h.format
+	outputExtra := h.outputExtra
 	h.mu.Unlock()
 
 	// Check whether we need to build Text or JSON logs or both
 	needJSON := format&logFormatJSON != 0
 	needText := !needJSON
-	for _, out := range h.outputExtra {
+	for _, out := range outputExtra {
 		if out.json {
 			needJSON = true
 		} else {
@@ -400,7 +415,7 @@ func (h *OutputHandler) Handle(ctx context.Context, r slog.Record) (err error) {
 	}
 
 	// Log to any additional destinations required
-	for _, out := range h.outputExtra {
+	for _, out := range outputExtra {
 		if out.json {
 			out.output(r.Level, bufJSON.String())
 		} else {

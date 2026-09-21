@@ -65,3 +65,13 @@ copy-as {datadir/}file1L.txt {path2/} file2.txt
 
 test bisync run with --conflict-resolve=newer --conflict-loser=delete
 bisync conflict-resolve=newer conflict-loser=delete
+
+test --conflict-resolve newer --conflict-loser pathname --conflict-suffix path
+touch-glob 2004-07-23 {datadir/} file1R.txt
+copy-as {datadir/}file1R.txt {path2/} file1.txt
+touch-glob 2004-07-25 {datadir/} file1L.txt
+copy-as {datadir/}file1L.txt {path1/} file1.txt
+
+test bisync run with --conflict-resolve=newer --conflict-loser=pathname --conflict-suffix=path
+# result should be -- "file1.txt", "file1.txt.path2"
+bisync conflict-resolve=newer conflict-loser=pathname conflict-suffix=path

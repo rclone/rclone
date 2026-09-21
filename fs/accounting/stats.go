@@ -33,7 +33,6 @@ var MaxCompletedTransfers = 100
 // to correctly count the updated fields
 type StatsInfo struct {
 	mu                    sync.RWMutex
-	ctx                   context.Context
 	ci                    *fs.ConfigInfo
 	bytes                 int64
 	errors                int64
@@ -56,6 +55,7 @@ type StatsInfo struct {
 	deletes               int64
 	deletesSize           int64
 	deletedDirs           int64
+	updatedDirs           int64
 	inProgress            *inProgress
 	startedTransfers      []*Transfer   // currently active transfers
 	oldTimeRanges         timeRanges    // a merged list of time ranges for the transfers
@@ -85,7 +85,6 @@ type averageValues struct {
 func NewStats(ctx context.Context) *StatsInfo {
 	ci := fs.GetConfig(ctx)
 	s := &StatsInfo{
-		ctx:                   ctx,
 		ci:                    ci,
 		checking:              newTransferMap(ci.Checkers, "checking"),
 		transferring:          newTransferMap(ci.Transfers, "transferring"),
@@ -130,6 +129,7 @@ func (s *StatsInfo) RemoteStats(short bool) (out rc.Params, err error) {
 	out["transfers"] = s.transfers
 	out["deletes"] = s.deletes
 	out["deletedDirs"] = s.deletedDirs
+	out["updatedDirs"] = s.updatedDirs
 	out["renames"] = s.renames
 	out["listed"] = s.listed
 	out["elapsedTime"] = time.Since(s.startTime).Seconds()
@@ -491,6 +491,9 @@ func (s *StatsInfo) String() string {
 		if s.deletes != 0 || s.deletedDirs != 0 {
 			_, _ = fmt.Fprintf(buf, "Deleted:       %10d (files), %d (dirs), %s (freed)\n", s.deletes, s.deletedDirs, fs.SizeSuffix(s.deletesSize).ByteUnit())
 		}
+		if s.updatedDirs != 0 {
+			_, _ = fmt.Fprintf(buf, "Updated dirs:  %10d\n", s.updatedDirs)
+		}
 		if s.renames != 0 {
 			_, _ = fmt.Fprintf(buf, "Renamed:       %10d\n", s.renames)
 		}
@@ -518,10 +521,10 @@ func (s *StatsInfo) String() string {
 	// Add per transfer stats if required
 	if !s.ci.StatsOneLine {
 		if !s.checking.empty() {
-			_, _ = fmt.Fprintf(buf, "Checking:\n%s\n", s.checking.String(s.ctx, s.inProgress, s.transferring))
+			_, _ = fmt.Fprintf(buf, "Checking:\n%s\n", s.checking.String(s.ci, s.inProgress, s.transferring))
 		}
 		if !s.transferring.empty() {
-			_, _ = fmt.Fprintf(buf, "Transferring:\n%s\n", s.transferring.String(s.ctx, s.inProgress, nil))
+			_, _ = fmt.Fprintf(buf, "Transferring:\n%s\n", s.transferring.String(s.ci, s.inProgress, nil))
 		}
 	}
 
@@ -694,6 +697,14 @@ func (s *StatsInfo) DeletedDirs(deletedDirs int64) int64 {
 	return s.deletedDirs
 }
 
+// UpdatedDirs updates the stats for updatedDirs
+func (s *StatsInfo) UpdatedDirs(updatedDirs int64) int64 {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.updatedDirs += updatedDirs
+	return s.updatedDirs
+}
+
 // Renames updates the stats for renames
 func (s *StatsInfo) Renames(renames int64) int64 {
 	s.mu.Lock()
@@ -725,14 +736,21 @@ func (s *StatsInfo) ResetCounters() {
 	s.deletes = 0
 	s.deletesSize = 0
 	s.deletedDirs = 0
+	s.updatedDirs = 0
 	s.renames = 0
 	s.listed = 0
 	s.startedTransfers = nil
 	s.oldDuration = 0
 
+	// Only restart the average loop if it was running. Otherwise
+	// ResetCounters would spawn a goroutine that pins the StatsInfo,
+	// leaking memory when called on stats that never started the loop.
+	wasStarted := s.average.started
 	s._stopAverageLoop()
 	s.average = averageValues{}
-	s._startAverageLoop()
+	if wasStarted {
+		s._startAverageLoop()
+	}
 }
 
 // ResetErrors sets the errors count to 0 and resets lastError, fatalError and retryError
@@ -794,11 +812,28 @@ func (s *StatsInfo) NewCheckingTransfer(obj fs.DirEntry, what string) *Transfer 
 	return tr
 }
 
+// NewCheckingTransferNoHistory adds a checking transfer to the stats,
+// from the object, which is shown while it is running but is not kept
+// in the completed transfers history (so never appears in
+// core/transferred).
+//
+// Use this for repeated bookkeeping operations (eg directory modtime
+// updates) which would otherwise crowd file transfers out of the
+// history.
+func (s *StatsInfo) NewCheckingTransferNoHistory(obj fs.DirEntry, what string) *Transfer {
+	tr := newCheckingTransferNoHistory(s, obj, what)
+	s.checking.add(tr)
+	return tr
+}
+
 // DoneChecking removes a check from the stats
 func (s *StatsInfo) DoneChecking(remote string) {
 	s.checking.del(remote)
 	s.mu.Lock()
 	s.checks++
+	if s.transferring.empty() && s.checking.empty() {
+		s._stopAverageLoop()
+	}
 	s.mu.Unlock()
 }
 
@@ -827,7 +862,7 @@ func (s *StatsInfo) NewTransfer(obj fs.DirEntry, dstFs fs.Fs) *Transfer {
 
 // NewTransferRemoteSize adds a transfer to the stats based on remote and size.
 func (s *StatsInfo) NewTransferRemoteSize(remote string, size int64, srcFs, dstFs fs.Fs) *Transfer {
-	tr := newTransferRemoteSize(s, remote, size, false, "", srcFs, dstFs)
+	tr := newTransferRemoteSize(s, remote, size, false, "", srcFs, dstFs, false)
 	s.transferring.add(tr)
 	s.startAverageLoop()
 	return tr

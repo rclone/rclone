@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Rclone Forum Community Support
+  - name: Rclone Forum - questions & support
     url: https://forum.rclone.org/
-    about: Please ask and answer questions here.
+    about: Have a question, need help, or not sure if it's a bug? Please ask here for a quick answer.
+  - name: Rclone Documentation
+    url: https://rclone.org/docs/
+    about: The docs answer many "how do I..." questions, including per-backend guides.

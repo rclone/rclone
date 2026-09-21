@@ -1,11 +1,5 @@
 # tests whether an md5sum file generated post-sync matches our pre-sync prediction
-
-# Filling src and dst with two different versions of rclone source!:
-exec rclone copyurl https://github.com/rclone/rclone/archive/refs/tags/v1.49.1.zip $SRC/src.zip
-exec rclone copyurl https://github.com/rclone/rclone/archive/refs/tags/v1.54.1.zip $DST/dst.zip
-exec unzip $SRC/src.zip -d $SRC
-exec unzip $DST/dst.zip -d $DST
-
+# src and dst are filled by the test Setup with two overlapping trees of files.
 
 # generating sumfiles:
 exec rclone md5sum $SRC --output-file $WORK/src-before.txt

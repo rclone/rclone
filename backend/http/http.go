@@ -57,7 +57,13 @@ The input format is comma separated list of key,value pairs.  Standard
 
 For example, to set a Cookie use 'Cookie,name=value', or '"Cookie","name=value"'.
 
-You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'.`,
+You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'.
+
+The headers are only sent to the host in the configured URL. If the
+server redirects to another host (including a subdomain or a different
+port) the headers are not sent to it, or to any further hop in that
+redirect chain. When headers are set, a redirect from https to http is
+refused as it would send them in cleartext.`,
 			Default:  fs.CommaSepList{},
 			Advanced: true,
 		}, {
@@ -156,6 +162,7 @@ type Fs struct {
 	endpoint    *url.URL
 	endpointURL string // endpoint as a string
 	httpClient  *http.Client
+	fileName    string // set if we are pointing to a file
 }
 
 // Object is a remote object that has been stat'd (so it exists, but is not necessarily open for reading)
@@ -282,6 +289,11 @@ func (f *Fs) httpConnection(ctx context.Context, opt *Options) (isFile bool, err
 	}
 
 	client := fshttp.NewClient(ctx)
+	// Without configured headers keep the default policy which
+	// public mirrors that redirect from https to http rely on.
+	if len(opt.Headers) > 0 {
+		client.CheckRedirect = checkRedirect(opt)
+	}
 
 	endpoint, isFile := getFsEndpoint(ctx, client, u.String(), opt)
 	fs.Debugf(nil, "Root: %s", endpoint)
@@ -297,6 +309,7 @@ func (f *Fs) httpConnection(ctx context.Context, opt *Options) (isFile bool, err
 
 	if isFile {
 		// Correct root if definitely pointing to a file
+		f.fileName = path.Base(f.root)
 		f.root = path.Dir(f.root)
 		if f.root == "." || f.root == "/" {
 			f.root = ""
@@ -508,6 +521,45 @@ func addHeaders(req *http.Request, opt *Options) {
 	}
 }
 
+// checkRedirect returns an http.Client.CheckRedirect function which
+// follows redirects but refuses an HTTPS to HTTP downgrade with
+// rest.ErrHTTPSDowngrade and strips the configured headers when the
+// redirect chain has left the originally requested host at any point.
+func checkRedirect(opt *Options) func(req *http.Request, via []*http.Request) error {
+	return func(req *http.Request, via []*http.Request) error {
+		if err := rest.RefuseHTTPSDowngradeRedirectFn(req, via); err != nil {
+			if errors.Is(err, rest.ErrHTTPSDowngrade) {
+				err = fmt.Errorf("%w (the configured headers would be sent to the plaintext target)", err)
+			}
+			return err
+		}
+		if redirectLeavesHost(req, via) {
+			for i := 0; i < len(opt.Headers); i += 2 {
+				req.Header.Del(opt.Headers[i])
+			}
+		}
+		return nil
+	}
+}
+
+// redirectLeavesHost reports whether any hop in the redirect chain
+// via plus the pending request req is to a different host from the
+// original request via[0].
+//
+// net/http copies the headers afresh from the original request for
+// every hop, so once the chain has visited another host the headers
+// must be stripped from every subsequent hop, even one back to the
+// original host, as the other host chose the URL.
+func redirectLeavesHost(req *http.Request, via []*http.Request) bool {
+	origin := via[0].URL
+	for _, hop := range via {
+		if !rest.SameHost(hop.URL, origin) {
+			return true
+		}
+	}
+	return !rest.SameHost(req.URL, origin)
+}
+
 // Adds the configured headers to the request if any
 func (f *Fs) addHeaders(req *http.Request) {
 	addHeaders(req, &f.opt)
@@ -541,7 +593,7 @@ func (f *Fs) readDir(ctx context.Context, dir string) (names []string, err error
 		return nil, fmt.Errorf("failed to readDir: %w", err)
 	}
 
-	contentType := strings.SplitN(res.Header.Get("Content-Type"), ";", 2)[0]
+	contentType, _, _ := strings.Cut(res.Header.Get("Content-Type"), ";")
 	switch contentType {
 	case "text/html":
 		names, err = parse(u, res.Body)
@@ -564,6 +616,17 @@ func (f *Fs) readDir(ctx context.Context, dir string) (names []string, err error
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	// pointed at a single file: only that file is visible
+	if f.fileName != "" {
+		if dir != "" {
+			return nil, fs.ErrorDirNotFound
+		}
+		obj, err := f.NewObject(ctx, f.fileName)
+		if err != nil {
+			return nil, err
+		}
+		return fs.DirEntries{obj}, nil
+	}
 	if !strings.HasSuffix(dir, "/") && dir != "" {
 		dir += "/"
 	}

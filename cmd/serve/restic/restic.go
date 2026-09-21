@@ -6,12 +6,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	iofs "io/fs"
 	"net"
 	"net/http"
 	"os"
 	"path"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -20,7 +22,6 @@ import (
 	cmdserve "github.com/rclone/rclone/cmd/serve"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
-	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/rc"
@@ -79,7 +80,7 @@ func init() {
 	cmdserve.AddRc("restic", func(ctx context.Context, f fs.Fs, in rc.Params) (cmdserve.Handle, error) {
 		// Read opts
 		var opt = Opt // set default opts
-		err := configstruct.SetAny(in, &opt)
+		err := rc.ParseOptions(in, "opt", &opt)
 		if err != nil {
 			return nil, err
 		}
@@ -244,6 +245,17 @@ func WithRemote(next http.Handler) http.Handler {
 			urlpath = r.URL.Path
 		}
 		urlpath = strings.Trim(urlpath, "/")
+		// Reject anything which isn't a canonical relative path free of "."
+		// and ".." elements. The backends join the path with the Fs root, so
+		// such elements could otherwise address objects outside it.
+		//
+		// The empty path is the root of the API so is allowed. "." is not a
+		// valid object name here, even though iofs.ValidPath accepts it as
+		// the root of an FS.
+		if urlpath != "" && (urlpath == "." || !iofs.ValidPath(urlpath)) {
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
 		parts := matchData.FindStringSubmatch(urlpath)
 		// if no data directory, layout is flat
 		if parts != nil {
@@ -272,19 +284,28 @@ func checkPrivate(next http.Handler) http.Handler {
 	})
 }
 
+// uploadLock serializes uploads to one remote.
+type uploadLock struct {
+	uploadingMu sync.Mutex
+	refs        int // protected by server.uploadLocksMu
+}
+
 // server contains everything to run the server
 type server struct {
-	server *libhttp.Server
-	f      fs.Fs
-	cache  *cache
-	opt    Options
+	server        *libhttp.Server
+	f             fs.Fs
+	cache         *cache
+	opt           Options
+	uploadLocksMu sync.Mutex
+	uploadLocks   map[string]*uploadLock
 }
 
 func newServer(ctx context.Context, f fs.Fs, opt *Options) (s *server, err error) {
 	s = &server{
-		f:     f,
-		cache: newCache(opt.CacheObjects),
-		opt:   *opt,
+		f:           f,
+		cache:       newCache(opt.CacheObjects),
+		opt:         *opt,
+		uploadLocks: make(map[string]*uploadLock),
 	}
 	// Don't bind any HTTP listeners if running with --stdio
 	if opt.Stdio {
@@ -300,6 +321,30 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (s *server, err error
 	router := s.server.Router()
 	s.Bind(router)
 	return s, nil
+}
+
+// lockUpload locks uploads to remote and returns its unlock function.
+func (s *server) lockUpload(remote string) func() {
+	s.uploadLocksMu.Lock()
+	lock := s.uploadLocks[remote]
+	if lock == nil {
+		lock = new(uploadLock)
+		s.uploadLocks[remote] = lock
+	}
+	lock.refs++
+	s.uploadLocksMu.Unlock()
+
+	lock.uploadingMu.Lock()
+	return func() {
+		lock.uploadingMu.Unlock()
+
+		s.uploadLocksMu.Lock()
+		lock.refs--
+		if lock.refs == 0 {
+			delete(s.uploadLocks, remote)
+		}
+		s.uploadLocksMu.Unlock()
+	}
 }
 
 // Serve restic until the server is shutdown
@@ -411,12 +456,19 @@ func (s *server) postObject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if s.opt.AppendOnly {
-		// make sure the file does not exist yet
+		unlock := s.lockUpload(remote)
+		defer unlock()
+
+		// Only a definitive not-found result permits creating the object.
 		_, err := s.newObject(r.Context(), remote)
 		if err == nil {
 			fs.Errorf(remote, "Post request: file already exists, refusing to overwrite in append-only mode")
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
-
+			return
+		}
+		if !errors.Is(err, fs.ErrorObjectNotFound) {
+			fs.Errorf(remote, "Post request: failed to check whether file exists: %v", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 	}

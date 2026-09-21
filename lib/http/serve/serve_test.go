@@ -70,6 +70,24 @@ func TestObjectRange(t *testing.T) {
 	assert.Equal(t, "345", string(body))
 }
 
+func TestObjectRangeSuffixLongerThanObject(t *testing.T) {
+	// Regression test for #6310: a suffix range request (e.g. "bytes=-90407")
+	// asking for more bytes than the object contains used to compute a
+	// negative offset and panic with "slice bounds out of range". Per
+	// RFC 7233 section 2.1, the entire object should be served instead.
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("GET", "http://example.com/aFile", nil)
+	r.Header.Add("Range", "bytes=-90407")
+	o := mockobject.New("aFile").WithContent([]byte("hello"), mockobject.SeekModeNone)
+	Object(w, r, o)
+	resp := w.Result()
+	assert.Equal(t, http.StatusPartialContent, resp.StatusCode)
+	assert.Equal(t, "5", resp.Header.Get("Content-Length"))
+	assert.Equal(t, "bytes 0-4/5", resp.Header.Get("Content-Range"))
+	body, _ := io.ReadAll(resp.Body)
+	assert.Equal(t, "hello", string(body))
+}
+
 func TestObjectBadRange(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "http://example.com/aFile", nil)

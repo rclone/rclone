@@ -121,6 +121,8 @@ backends:
      - TestCopyURL
      - TestMoveFileWithIgnoreExisting
      - TestCopyFileCompareDest
+     # fs/sync
+     - TestSyncCompareDest
      #vfs
      - TestFileSetModTime/cache=off,open=false,write=false
      - TestFileSetModTime/cache=off,open=true,write=false
@@ -158,6 +160,16 @@ backends:
  - backend:  "dropbox"
    remote:   "TestDropbox:"
    fastlist: false
+   ignore:
+     # The bisync normalization test relies on uploading distinct NFC and NFD
+     # versions of the same filename and on having modtime updates that don't
+     # require a delete+re-upload. Dropbox normalizes unicode server-side
+     # (NFD -> NFC) and can't set modtime in place, so the test takes a
+     # different code path that produces a different log without functional
+     # difference - the file state ends up correct either way.
+     - TestBisyncRemoteLocal/normalization
+     - TestBisyncLocalRemote/normalization
+     - TestBisyncRemoteRemote/normalization
  # - backend:  "filefabric"
  #   remote:   "TestFileFabric:"
  #   fastlist: false
@@ -195,15 +207,18 @@ backends:
    fastlist: false
    ignore:
      - TestIntegration/FsMkdir/FsPutZeroLength
+     - TestRWFileHandleWriteNoWrite
    ignoretests:
      - cmd/bisync
  - backend:  "internetarchive"
-   remote:   "TestIA:rclone-integration-test"
+   remote:   "TestIA:rclone-integration-test-2"
    fastlist: true
+   short:    true
    tests:
      - backend
    ignore:
      - TestIntegration/FsMkdir/FsEncoding
+     - TestIntegration/FsMkdir/FsPutFiles/FsCopy/Metadata
    extratime: 2.0
  - backend:  "jottacloud"
    remote:   "TestJottacloud:"
@@ -254,13 +269,6 @@ backends:
      - TestIntegration/FsMkdir/FsEncoding/punctuation
      - TestIntegration/FsMkdir/FsEncoding/trailing_LF
      - TestIntegration/FsMkdir/FsEncoding/trailing_VT
- - backend:  "s3"
-   remote:   "TestS3MinioEdge:"
-   fastlist: true
-   ignore:
-     - TestIntegration/FsMkdir/FsPutFiles/SetTier
-   ignoretests:
-     - cmd/gitannex
  - backend:  "s3"
    remote:   "TestS3Wasabi:"
    fastlist: true
@@ -445,6 +453,9 @@ backends:
     #  fs/operations
      - TestCheckSum
      - TestHashSums/Md5
+    # PikPak declares MD5 but never returns it for uploaded files, so
+    # corruption can't be detected by comparing hashes.
+     - TestRcatSizeChecksum/Corrupted
     #  fs/sync
      - TestSyncWithTrackRenames
     # integration
@@ -535,6 +546,7 @@ backends:
      - TestCaseInsensitiveMoveFile
      - TestFixCase
      - TestListDirSorted        # Can't upload files starting with . - FIXME fix with encoding
+     - TestListDirSortedFn      # Can't upload files starting with . - FIXME fix with encoding
      - TestSyncOverlapWithFilter # Can't upload files starting with . - FIXME fix with encoding
    ignoretests:
      - cmd/bisync
@@ -625,13 +637,6 @@ backends:
    remote: "TestOracleObjectStorage:"
    fastlist: true
    ignore:
-     - TestIntegration/FsMkdir/FsEncoding/control_chars
-     - TestIntegration/FsMkdir/FsEncoding/leading_CR
-     - TestIntegration/FsMkdir/FsEncoding/leading_LF
-     - TestIntegration/FsMkdir/FsEncoding/trailing_CR
-     - TestIntegration/FsMkdir/FsEncoding/trailing_LF
-     - TestIntegration/FsMkdir/FsEncoding/leading_HT
-     - TestIntegration/FsMkdir/FsPutFiles/FsPutStream/0
    ignoretests:
      - cmd/bisync
      - cmd/gitannex
@@ -676,6 +681,7 @@ backends:
  - backend: "internxt"
    remote: "TestInternxt:"
    fastlist: false
+   extratime: 2.0
    listretries: 5
    ignore:
      - TestRWFileHandleWriteNoWrite

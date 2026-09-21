@@ -380,20 +380,6 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 		tr := accounting.Stats(s.ctx).NewCheckingTransfer(src, "checking")
 		// Check to see if can store this
 		if src.Storable() {
-			// Fix case for case insensitive filesystems before checking
-			// whether a transfer is needed, since NeedTransfer may delete
-			// the destination (when content matches but modtime can't be
-			// set without re-upload), which would cause the rename below
-			// to fail with a "not found" error.
-			if s.ci.FixCase && !s.ci.Immutable && src.Remote() != pair.Dst.Remote() {
-				if newDst, err := operations.Move(s.ctx, s.fdst, nil, src.Remote(), pair.Dst); err != nil {
-					fs.Errorf(pair.Dst, "Error while attempting to rename to %s: %v", src.Remote(), err)
-					s.processError(err)
-				} else {
-					fs.Infof(pair.Dst, "Fixed case by renaming to: %s", src.Remote())
-					pair.Dst = newDst
-				}
-			}
 			needTransfer := operations.NeedTransfer(s.ctx, pair.Dst, pair.Src)
 			if needTransfer {
 				NoNeedTransfer, err := operations.CompareOrCopyDest(s.ctx, s.fdst, pair.Dst, pair.Src, s.compareCopyDest, s.backupDir)
@@ -403,6 +389,29 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 				}
 				if NoNeedTransfer {
 					needTransfer = false
+				}
+			}
+			// Fix case for case insensitive filesystems
+			if s.ci.FixCase && !s.ci.Immutable && pair.Dst != nil && src.Remote() != pair.Dst.Remote() {
+				// NeedTransfer's equality check may have deleted pair.Dst as a precursor
+				// to re-uploading it (the way modtime updates are done on backends like
+				// Dropbox that can't set modtime in place). If so, there is nothing to
+				// rename - nil out pair.Dst so the upload below recreates the file at
+				// src.Remote() (the correctly-cased name).
+				if needTransfer {
+					if _, statErr := s.fdst.NewObject(s.ctx, pair.Dst.Remote()); errors.Is(statErr, fs.ErrorObjectNotFound) {
+						fs.Debugf(pair.Dst, "Skipping fix-case rename: destination removed for re-upload, will recreate at %s", src.Remote())
+						pair.Dst = nil
+					}
+				}
+				if pair.Dst != nil {
+					if newDst, err := operations.Move(s.ctx, s.fdst, nil, src.Remote(), pair.Dst); err != nil {
+						fs.Errorf(pair.Dst, "Error while attempting to rename to %s: %v", src.Remote(), err)
+						s.processError(err)
+					} else {
+						fs.Infof(pair.Dst, "Fixed case by renaming to: %s", src.Remote())
+						pair.Dst = newDst
+					}
 				}
 			}
 			if needTransfer {
@@ -675,8 +684,7 @@ func (s *syncCopyMove) deleteEmptyDirectories(ctx context.Context, f fs.Fs, entr
 	sort.Sort(entries)
 	var errorCount int
 	var okCount int
-	for i := len(entries) - 1; i >= 0; i-- {
-		entry := entries[i]
+	for _, entry := range slices.Backward(entries) {
 		dir, ok := entry.(fs.Directory)
 		if ok {
 			// TryRmdir only deletes empty directories
@@ -952,6 +960,7 @@ func (s *syncCopyMove) run() error {
 		DstIncludeAll:          s.fi.Opt.DeleteExcluded,
 		NoCheckDest:            s.noCheckDest,
 		NoUnicodeNormalization: s.noUnicodeNormalization,
+		NoProcessDstOnly:       s.deleteMode == fs.DeleteModeOff && !s.usingLogger,
 	}
 	s.processError(m.Run(s.ctx))
 
@@ -1119,13 +1128,25 @@ func (s *syncCopyMove) copyDirMetadata(ctx context.Context, f fs.Fs, dst fs.Dire
 	newDst = dst
 	if !equal {
 		if s.setDirMetadata && s.copyEmptySrcDirs {
-			newDst, err = operations.CopyDirMetadata(ctx, f, dst, dir, src)
+			if dst != nil && s.setDirModTime && s.setDirModTimeAfter {
+				// Update the metadata in the delayed pass at the end of
+				// the sync in case transfers into the directory change it
+				s.markDirModified(dst.Remote())
+			} else {
+				newDst, err = operations.CopyDirMetadata(ctx, f, dst, dir, src)
+			}
 		} else if dst == nil && s.setDirModTime && s.copyEmptySrcDirs {
 			newDst, err = operations.MkdirModTime(ctx, f, dir, src.ModTime(ctx))
 		} else if dst == nil && s.copyEmptySrcDirs {
 			err = operations.Mkdir(ctx, f, dir)
 		} else if dst != nil && s.setDirModTime {
-			newDst, err = operations.SetDirModTime(ctx, f, dst, dir, src.ModTime(ctx))
+			if s.setDirModTimeAfter {
+				// Set the modtime in the delayed pass at the end of the
+				// sync in case transfers into the directory change it
+				s.markDirModified(dst.Remote())
+			} else {
+				newDst, err = operations.SetDirModTime(ctx, f, dst, dir, src.ModTime(ctx))
+			}
 		}
 	}
 	if transform.Transforming(ctx) && newDst != nil && src.Remote() != newDst.Remote() {
@@ -1188,7 +1209,9 @@ func (s *syncCopyMove) setDelayedDirModTimes(ctx context.Context) error {
 				continue
 			}
 			if !s.copyEmptySrcDirs {
-				if _, isEmpty := s.srcEmptyDirs[item.dir]; isEmpty {
+				// Skip empty source directories which were never
+				// created on the destination
+				if _, isEmpty := s.srcEmptyDirs[item.dir]; isEmpty && item.dst == nil {
 					continue
 				}
 			}
@@ -1208,7 +1231,6 @@ func (s *syncCopyMove) setDelayedDirModTimes(ctx context.Context) error {
 					_, err = operations.SetDirModTime(gCtx, s.fdst, item.dst, item.dir, item.modTime)
 				}
 				if err != nil {
-					err = fs.CountError(ctx, err)
 					fs.Errorf(item.dir, "Failed to update directory timestamp or metadata: %v", err)
 					errCount.Add(err)
 				}

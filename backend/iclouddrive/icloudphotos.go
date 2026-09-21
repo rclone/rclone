@@ -59,7 +59,7 @@ type PhotosObject struct {
 
 // NewFsPhotos constructs an Fs for Photos from the path, container:path
 func NewFsPhotos(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
-	icloud, opt, err := newICloudClient(ctx, name, m)
+	icloud, opt, err := newICloudClient(ctx, name, m, api.WsPhotos)
 	if err != nil {
 		return nil, err
 	}
@@ -376,8 +376,7 @@ func (f *PhotosFs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut
 		return "", false, nil
 	}
 
-	if strings.HasPrefix(pathID, "lib:") {
-		libraryName := strings.TrimPrefix(pathID, "lib:")
+	if libraryName, ok := strings.CutPrefix(pathID, "lib:"); ok {
 		libraries, err := photosService.GetLibraries(ctx)
 		if err != nil {
 			return "", false, err
@@ -736,10 +735,7 @@ func (f *PhotosFs) ListR(ctx context.Context, dir string, callback fs.ListRCallb
 	}
 	close(jobCh)
 
-	workers := fs.GetConfig(ctx).Checkers
-	if len(jobs) < workers {
-		workers = len(jobs)
-	}
+	workers := min(len(jobs), fs.GetConfig(ctx).Checkers)
 	errs := make(chan error, workers)
 
 	for range workers {

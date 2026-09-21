@@ -1,9 +1,9 @@
 backend: protondrive
 name: Proton Drive
-tier: Tier 5
-maintainers: None
+tier: Tier 4
+maintainers: Community
 features_score: 4
-integration_tests: Failing
+integration_tests: Passing
 data_integrity: Hash
 performance: High
 adoption: Often used

@@ -29,3 +29,21 @@ func TestGetConfig(t *testing.T) {
 	config2ctx := GetConfig(ctx2)
 	assert.Equal(t, config2, config2ctx)
 }
+
+// The rc request marker must survive CopyConfig, which is how rclone
+// does detach context but keep config.
+func TestRCRequestContext(t *testing.T) {
+	ctx := context.Background()
+	assert.False(t, IsRCRequest(ctx))
+
+	rcCtx := WithRCRequest(ctx)
+	assert.True(t, IsRCRequest(rcCtx))
+
+	// CopyConfig carries the marker even when there is no config to copy
+	assert.True(t, IsRCRequest(CopyConfig(context.Background(), rcCtx)))
+	// and when there is
+	rcCtx, _ = AddConfig(rcCtx)
+	assert.True(t, IsRCRequest(CopyConfig(context.Background(), rcCtx)))
+	// An unmarked context stays unmarked
+	assert.False(t, IsRCRequest(CopyConfig(context.Background(), ctx)))
+}

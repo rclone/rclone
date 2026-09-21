@@ -1,7 +1,6 @@
 package filelu
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -11,9 +10,11 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 	"strings"
 
 	"github.com/rclone/rclone/fs"
+	rclonemultipart "github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/rest"
 )
 
@@ -25,7 +26,9 @@ func (f *Fs) multipartUpload(ctx context.Context, in io.Reader, remote string) e
 	}
 
 	if dir != "" {
-		_ = f.Mkdir(ctx, dir)
+		if _, err := f.createFolder(ctx, dir); err != nil {
+			return fmt.Errorf("failed to create multipart folder: %w", err)
+		}
 	}
 
 	folder := strings.Trim(dir, "/")
@@ -45,39 +48,31 @@ func (f *Fs) multipartUpload(ctx context.Context, in io.Reader, remote string) e
 	server := initResp.Result.Server
 	objectPath := initResp.Result.ObjectPath
 
-	chunkSize := int(f.opt.ChunkSize)
-	buf := make([]byte, 0, chunkSize)
-	tmp := make([]byte, 1024*1024)
-	partNo := 1
-
-	for {
-		n, errRead := in.Read(tmp)
+	chunkSize := int64(f.opt.ChunkSize)
+	if chunkSize <= 0 {
+		return fmt.Errorf("multipart upload: chunk_size must be positive: %v", f.opt.ChunkSize)
+	}
+	for partNo := 1; ; partNo++ {
+		// Buffer the part in memory from the global pool so it can be
+		// re-sent on retry
+		rw := rclonemultipart.NewRW()
+		n, err := io.CopyN(rw, in, chunkSize)
+		if err != nil && err != io.EOF {
+			_ = rw.Close()
+			return fmt.Errorf("read failed: %w", err)
+		}
 		if n > 0 {
-			buf = append(buf, tmp[:n]...)
-
-			// If buffer reached chunkSize, upload a full part
-			if len(buf) >= chunkSize {
-				err = f.uploadPart(ctx, server, uploadID, sessID, objectPath, partNo, bytes.NewReader(buf))
-				if err != nil {
-					return fmt.Errorf("upload part %d failed: %w", partNo, err)
-				}
-				partNo++
-				buf = buf[:0]
+			uploadErr := f.uploadPart(ctx, server, uploadID, sessID, objectPath, partNo, rw, n)
+			if uploadErr != nil {
+				_ = rw.Close()
+				return fmt.Errorf("upload part %d failed: %w", partNo, uploadErr)
 			}
 		}
-
-		if errRead == io.EOF {
+		if closeErr := rw.Close(); closeErr != nil {
+			return closeErr
+		}
+		if err == io.EOF {
 			break
-		}
-		if errRead != nil {
-			return fmt.Errorf("read failed: %w", errRead)
-		}
-	}
-
-	if len(buf) > 0 {
-		err = f.uploadPart(ctx, server, uploadID, sessID, objectPath, partNo, bytes.NewReader(buf))
-		if err != nil {
-			return fmt.Errorf("upload part %d failed: %w", partNo, err)
 		}
 	}
 
@@ -89,31 +84,40 @@ func (f *Fs) multipartUpload(ctx context.Context, in io.Reader, remote string) e
 	return nil
 }
 
-// uploadPart sends a single multipart chunk to the upload server.
-func (f *Fs) uploadPart(ctx context.Context, server, uploadID, sessID, objectPath string, partNo int, r io.Reader) error {
-	url := fmt.Sprintf("%s?partNumber=%d&uploadId=%s", server, partNo, uploadID)
-
-	req, err := http.NewRequestWithContext(ctx, "PUT", url, r)
-	if err != nil {
-		return err
+// uploadPart sends a single multipart chunk of size bytes to the upload server.
+func (f *Fs) uploadPart(ctx context.Context, server, uploadID, sessID, objectPath string, partNo int, r io.ReadSeeker, size int64) error {
+	opts := rest.Opts{
+		Method:  "PUT",
+		RootURL: server,
+		Parameters: url.Values{
+			"partNumber": {strconv.Itoa(partNo)},
+			"uploadId":   {uploadID},
+		},
+		Body:          r,
+		ContentLength: &size,
+		ExtraHeaders: map[string]string{
+			"X-RC-Upload-Id": uploadID,
+			"X-RC-Part-No":   strconv.Itoa(partNo),
+			"X-Sess-ID":      sessID,
+			"X-Object-Path":  objectPath,
+		},
+		NoResponse: true,
 	}
-
-	req.Header.Set("X-RC-Upload-Id", uploadID)
-	req.Header.Set("X-RC-Part-No", fmt.Sprintf("%d", partNo))
-	req.Header.Set("X-Sess-ID", sessID)
-	req.Header.Set("X-Object-Path", objectPath)
-
-	resp, err := f.client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer func() { _ = resp.Body.Close() }()
-
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("uploadPart failed: %s", resp.Status)
-	}
-
-	return nil
+	return f.pacer.Call(func() (bool, error) {
+		// rewind the pooled buffer so each attempt sends the whole chunk
+		_, err := r.Seek(0, io.SeekStart)
+		if err != nil {
+			return false, err
+		}
+		resp, err := f.srv.Call(ctx, &opts)
+		if err != nil {
+			if resp != nil {
+				return shouldRetryHTTP(resp.StatusCode), fmt.Errorf("uploadPart failed: %w", err)
+			}
+			return shouldRetry(err), err
+		}
+		return false, nil
+	})
 }
 
 // uploadFile uploads a file to FileLu

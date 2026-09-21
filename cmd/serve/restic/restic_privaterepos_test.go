@@ -75,4 +75,16 @@ func TestResticPrivateRepositories(t *testing.T) {
 		checkRequest(t, router.ServeHTTP, req, []wantFunc{wantCode(http.StatusForbidden)})
 	}
 
+	// Reaching another user's repo via a ".." traversal in the path must be
+	// rejected even though the {userID} segment matches the authenticated user
+	// (GHSA-fqj9-69pf-6pjg).
+	reqs = []*http.Request{
+		newAuthenticatedRequest(t, "GET", "/test/../other_user/config", nil, opt.Auth.BasicUser, opt.Auth.BasicPass),
+		newAuthenticatedRequest(t, "POST", "/test/../other_user/config", strings.NewReader("evil"), opt.Auth.BasicUser, opt.Auth.BasicPass),
+		newAuthenticatedRequest(t, "DELETE", "/test/../other_user/config", nil, opt.Auth.BasicUser, opt.Auth.BasicPass),
+	}
+	for _, req := range reqs {
+		checkRequest(t, router.ServeHTTP, req, []wantFunc{wantCode(http.StatusBadRequest)})
+	}
+
 }

@@ -8,10 +8,14 @@ import (
 	"fmt"
 	"io"
 	"mime"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+	stdsync "sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -24,12 +28,113 @@ import (
 	"github.com/rclone/rclone/fs/sync"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/rclone/rclone/lib/dircache"
+	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/api/drive/v3"
 	"google.golang.org/api/googleapi"
+	"google.golang.org/api/option"
 )
+
+func newPermissionTestFs(t *testing.T, handler http.Handler) *Fs {
+	t.Helper()
+	server := httptest.NewServer(handler)
+	t.Cleanup(server.Close)
+	service, err := drive.NewService(
+		context.Background(),
+		option.WithHTTPClient(server.Client()),
+		option.WithEndpoint(server.URL+"/"),
+	)
+	require.NoError(t, err)
+	return &Fs{
+		svc:           service,
+		pacer:         fs.NewPacer(context.Background(), pacer.NewGoogleDrive()),
+		permissionsMu: new(stdsync.Mutex),
+		permissions:   make(map[string]*drive.Permission),
+	}
+}
+
+func TestInternalGetPermissionConcurrent(t *testing.T) {
+	const requestCount = 2
+	arrived := make(chan string, requestCount)
+	release := make(chan struct{})
+	var releaseOnce stdsync.Once
+	releaseRequests := func() {
+		releaseOnce.Do(func() { close(release) })
+	}
+	defer releaseRequests()
+
+	f := newPermissionTestFs(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		permissionID := path.Base(r.URL.Path)
+		arrived <- permissionID
+		<-release
+		w.Header().Set("Content-Type", "application/json")
+		_, err := fmt.Fprintf(w, `{"id":%q,"role":"reader","type":"user"}`, permissionID)
+		assert.NoError(t, err)
+	}))
+
+	type permissionResult struct {
+		permission *drive.Permission
+		inherited  bool
+		err        error
+	}
+	results := make(chan permissionResult, requestCount)
+	permissionIDs := []string{"permission-1", "permission-2"}
+	for _, permissionID := range permissionIDs {
+		go func() {
+			permission, inherited, err := f.getPermission(context.Background(), "file-id", permissionID, false)
+			results <- permissionResult{permission: permission, inherited: inherited, err: err}
+		}()
+	}
+
+	arrivedIDs := make(map[string]bool, requestCount)
+	timer := time.NewTimer(time.Second)
+	defer timer.Stop()
+	for len(arrivedIDs) < requestCount {
+		select {
+		case permissionID := <-arrived:
+			arrivedIDs[permissionID] = true
+		case <-timer.C:
+			releaseRequests()
+			t.Fatalf("timed out waiting for concurrent permission requests: got %d of %d", len(arrivedIDs), requestCount)
+		}
+	}
+	releaseRequests()
+
+	assert.Equal(t, map[string]bool{"permission-1": true, "permission-2": true}, arrivedIDs)
+	returnedIDs := make(map[string]bool, requestCount)
+	for range requestCount {
+		result := <-results
+		require.NoError(t, result.err)
+		require.NotNil(t, result.permission)
+		assert.False(t, result.inherited)
+		returnedIDs[result.permission.Id] = true
+	}
+	assert.Equal(t, arrivedIDs, returnedIDs)
+}
+
+func TestInternalGetPermissionCacheHit(t *testing.T) {
+	var requests atomic.Int32
+	f := newPermissionTestFs(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		permissionID := path.Base(r.URL.Path)
+		w.Header().Set("Content-Type", "application/json")
+		_, err := fmt.Fprintf(w, `{"id":%q,"role":"reader","type":"user"}`, permissionID)
+		assert.NoError(t, err)
+	}))
+
+	first, inherited, err := f.getPermission(context.Background(), "file-id", "permission-1", true)
+	require.NoError(t, err)
+	assert.False(t, inherited)
+	second, inherited, err := f.getPermission(context.Background(), "file-id", "permission-1", true)
+	require.NoError(t, err)
+	assert.False(t, inherited)
+
+	assert.Same(t, first, second)
+	assert.Equal(t, int32(1), requests.Load())
+}
 
 func TestDriveScopes(t *testing.T) {
 	for _, test := range []struct {
@@ -142,6 +247,34 @@ func TestInternalFindExportFormat(t *testing.T) {
 		}
 		assert.Equal(t, test.wantMimeType, gotMimeType)
 		assert.Equal(t, true, gotIsDocument)
+	}
+}
+
+func TestShortcutLoop(t *testing.T) {
+	f := &Fs{}
+	f.dirCache = dircache.New("", "root", f)
+	// root is FolderX with ID "X"
+	f.dirCache.Put("", "X")
+	// a real subfolder
+	f.dirCache.Put("sub", "sub-id")
+	// a nested subfolder reached via a shortcut, composite ID
+	f.dirCache.Put("sub/nested", joinID("nested-id", "shortcut-id"))
+
+	for _, test := range []struct {
+		name     string
+		remote   string
+		targetID string
+		want     bool
+	}{
+		{"shortcut to the root itself", "loop", "X", true},
+		{"shortcut to the parent", "sub/loop", "sub-id", true},
+		{"shortcut to a grandparent", "sub/nested/loop", "X", true},
+		{"shortcut to a composite ancestor", "sub/nested/loop", "nested-id", true},
+		{"shortcut to an unrelated folder", "sub/loop", "other-id", false},
+		{"shortcut to a sibling", "sub/loop", "sub-id2", false},
+	} {
+		got := f.shortcutLoop(test.remote, test.targetID)
+		assert.Equal(t, test.want, got, test.name)
 	}
 }
 
@@ -681,6 +814,83 @@ func (f *Fs) InternalTestSingleQuoteFolder(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// TestIntegration/FsMkdir/FsPutFiles/Internal/MoveDuplicateParent
+//
+// Check that moving a file removes it from its real parent even when there
+// are two directories with the same name and the directory cache resolves the
+// path to the wrong duplicate. Otherwise the file ends up with two parents
+// which fails on shared drives with a teamDrivesParentLimit error (#9472).
+func (f *Fs) InternalTestMoveDuplicateParent(t *testing.T) {
+	ctx := context.Background()
+	if f.Features().Move == nil {
+		t.Skip("Move not supported")
+	}
+
+	rootID, err := f.dirCache.RootID(ctx, false)
+	require.NoError(t, err)
+
+	const dupName = "dup9472"
+	const dstName = "dst9472"
+	const fileName = "michael.txt"
+
+	// Create the first "dup9472" directory - this is the one the directory
+	// cache will resolve the path to.
+	dirA, err := f.createDir(ctx, rootID, dupName, nil)
+	require.NoError(t, err)
+	f.dirCache.Put(dupName, dirA.Id)
+
+	// Create a second directory with the SAME name and parent: a duplicate
+	// the directory cache does not know about.
+	dirB, err := f.createDir(ctx, rootID, dupName, nil)
+	require.NoError(t, err)
+
+	// Destination directory
+	dirDst, err := f.createDir(ctx, rootID, dstName, nil)
+	require.NoError(t, err)
+
+	defer func() {
+		_ = f.delete(ctx, dirA.Id, false)
+		_ = f.delete(ctx, dirB.Id, false)
+		_ = f.delete(ctx, dirDst.Id, false)
+		f.dirCache.Flush()
+	}()
+
+	// Upload a file directly into dirB (the duplicate the cache doesn't know).
+	createInfo := &drive.File{
+		Name:    fileName,
+		Parents: []string{dirB.Id},
+	}
+	var fileInfo *drive.File
+	err = f.pacer.Call(func() (bool, error) {
+		fileInfo, err = f.svc.Files.Create(createInfo).
+			Media(strings.NewReader("9472 duplicate parent test")).
+			Fields(f.getFileFields(ctx)).
+			SupportsAllDrives(true).
+			Context(ctx).Do()
+		return f.shouldRetry(ctx, err)
+	})
+	require.NoError(t, err)
+	require.Equal(t, []string{dirB.Id}, fileInfo.Parents)
+
+	// Sanity check: the directory cache resolves the path to dirA, not the
+	// dirB the file actually lives in.
+	gotDirID, err := f.dirCache.FindDir(ctx, dupName, false)
+	require.NoError(t, err)
+	require.Equal(t, dirA.Id, gotDirID, "directory cache should resolve to the wrong duplicate")
+
+	// Build the source object pointing at the file in dirB and move it.
+	srcObj, err := f.newObjectWithInfo(ctx, dupName+"/"+fileName, fileInfo)
+	require.NoError(t, err)
+
+	dstObj, err := f.Move(ctx, srcObj, dstName+"/"+fileName)
+	require.NoError(t, err)
+
+	// The moved file must have exactly one parent: the destination.
+	movedInfo, err := f.getFile(ctx, dstObj.(fs.IDer).ID(), "id,parents")
+	require.NoError(t, err)
+	assert.Equal(t, []string{dirDst.Id}, movedInfo.Parents)
+}
+
 func (f *Fs) InternalTest(t *testing.T) {
 	// These tests all depend on each other so run them as nested tests
 	t.Run("DocumentImport", func(t *testing.T) {
@@ -701,6 +911,7 @@ func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("Query", f.InternalTestQuery)
 	t.Run("AgeQuery", f.InternalTestAgeQuery)
 	t.Run("SingleQuoteFolder", f.InternalTestSingleQuoteFolder)
+	t.Run("MoveDuplicateParent", f.InternalTestMoveDuplicateParent)
 	t.Run("ShouldRetry", f.InternalTestShouldRetry)
 }
 

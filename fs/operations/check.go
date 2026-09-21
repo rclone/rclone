@@ -481,24 +481,16 @@ func (c *checkMarch) checkSum(ctx context.Context, obj fs.Object, download bool,
 		return
 	}
 
-	var err error
 	tr := accounting.Stats(ctx).NewCheckingTransfer(obj, "hashing")
-	defer tr.Done(ctx, err)
 
 	if !sumFound {
-		err = errors.New("sum not found")
+		err := errors.New("sum not found")
 		_ = fs.CountError(ctx, err)
 		fs.Errorf(obj, "%v", err)
 		c.differences.Add(1)
 		c.srcFilesMissing.Add(1)
 		c.report(obj, c.opt.MissingOnSrc, '-')
-		return
-	}
-
-	if !download {
-		var objHash string
-		objHash, err = obj.Hash(ctx, hashType)
-		c.matchSum(ctx, sumHash, objHash, obj, err, hashType)
+		tr.Done(ctx, nil)
 		return
 	}
 
@@ -512,16 +504,21 @@ func (c *checkMarch) checkSum(ctx context.Context, obj fs.Object, download bool,
 		)
 		defer func() {
 			c.matchSum(ctx, sumHash, objHash, obj, err, hashType)
+			tr.Done(ctx, nil)
 			<-c.tokens // get the token back to free up a slot
 			c.wg.Done()
 		}()
+		if !download {
+			objHash, err = obj.Hash(ctx, hashType)
+			return
+		}
 		if in, err = Open(ctx, obj); err != nil {
 			return
 		}
-		tr := accounting.Stats(ctx).NewTransfer(obj, nil)
-		in = tr.Account(ctx, in).WithBuffer() // account and buffer the transfer
+		dlTr := accounting.Stats(ctx).NewTransfer(obj, nil)
+		in = dlTr.Account(ctx, in).WithBuffer() // account and buffer the transfer
 		defer func() {
-			tr.Done(ctx, nil) // will close the stream
+			dlTr.Done(ctx, nil) // will close the stream
 		}()
 		hashVals, err2 := hash.StreamTypes(in, hash.NewHashSet(hashType))
 		if err2 != nil {

@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"io/fs"
 	"sync"
 	"testing"
 	"time"
@@ -606,4 +607,46 @@ func TestRWConcurrency(t *testing.T) {
 		})
 	}
 
+}
+
+// Check that using an RW after Close returns an ErrClosed
+func TestRWUseAfterClose(t *testing.T) {
+	rw := NewRW(rwPool)
+	testData := []byte("Goodness!!")
+	n, err := rw.Write(testData)
+	require.NoError(t, err)
+	assert.Equal(t, len(testData), n)
+	require.NoError(t, rw.Close())
+
+	// Rewind and read as an HTTP retry would
+	_, err = rw.Seek(0, io.SeekStart)
+	assert.ErrorIs(t, err, ErrClosed)
+	buf := make([]byte, 16)
+	_, err = rw.Read(buf)
+	assert.ErrorIs(t, err, ErrClosed)
+	_, err = rw.WriteTo(io.Discard)
+	assert.ErrorIs(t, err, ErrClosed)
+	_, err = rw.Write(testData)
+	assert.ErrorIs(t, err, ErrClosed)
+	_, err = rw.ReadFrom(bytes.NewReader(testData))
+	assert.ErrorIs(t, err, ErrClosed)
+
+	// Check it matches the standard library sentinel too
+	assert.ErrorIs(t, err, fs.ErrClosed)
+
+	// Closing twice is fine
+	assert.NoError(t, rw.Close())
+
+	// Check a fully read RW still errors after Close rather than
+	// looking like an empty body
+	rw = NewRW(rwPool)
+	_, err = rw.Write(testData)
+	require.NoError(t, err)
+	_, err = rw.WriteTo(io.Discard)
+	require.NoError(t, err)
+	require.NoError(t, rw.Close())
+	_, err = rw.WriteTo(io.Discard)
+	assert.ErrorIs(t, err, ErrClosed)
+	_, err = rw.Read(buf)
+	assert.ErrorIs(t, err, ErrClosed)
 }

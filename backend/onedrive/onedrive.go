@@ -37,9 +37,9 @@ import (
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
-	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 )
 
@@ -56,7 +56,15 @@ const (
 	driveTypeSharepoint         = "documentLibrary"
 	defaultChunkSize            = 10 * fs.Mebi
 	chunkSizeMultiple           = 320 * fs.Kibi
-	maxSinglePartSize           = 4 * fs.Mebi
+	// maxSinglePartSize is the size at which Graph stops accepting an upload in a
+	// single request (PUT /items/{id}/content). Microsoft documents this as
+	// "250 MB", see
+	// https://learn.microsoft.com/en-us/graph/api/driveitem-put-content
+	// Measured against SharePoint Online the figure is binary and exclusive: a
+	// body of 262143999 bytes is accepted, one of 262144000 is not. That matches
+	// upload_cutoff being an exclusive threshold in Update below, so a cutoff of
+	// exactly 250Mi sends everything the server would refuse to multipart.
+	maxSinglePartSize = 250 * fs.Mebi
 
 	regionGlobal = "global"
 	regionUS     = "us"
@@ -153,6 +161,21 @@ new version.
 See: https://github.com/rclone/rclone/issues/1716
 `,
 			Default:  fs.SizeSuffix(-1),
+			Advanced: true,
+		}, {
+			Name: "tenant_url",
+			Help: `The tenant URL for non-admin OneDrive access.
+
+Set this to your SharePoint tenant URL to use the SharePoint v2.0 API
+endpoint instead of the standard Microsoft Graph API. This allows
+accessing business OneDrive without admin consent.
+
+The URL can be found in your browser's developer tools by searching
+for "driveAccessToken" in the network requests. Look for the
+".driveUrl" field which contains the tenant URL and drive ID.
+
+Example: https://your-tenant.sharepoint.com/_api`,
+			Default:  "",
 			Advanced: true,
 		}, {
 			Name: "chunk_size",
@@ -279,8 +302,7 @@ this flag there.
 Normally files will get sent to the recycle bin on deletion. Setting
 this flag causes them to be permanently deleted. Use with care.
 
-OneDrive personal accounts do not support the permanentDelete API,
-it only applies to OneDrive for Business and SharePoint document libraries.
+This works with OneDrive for Business, SharePoint document libraries, and OneDrive personal accounts, including free accounts.
 `,
 			Advanced: true,
 			Default:  false,
@@ -378,6 +400,16 @@ In this case you will see a message like this
 If you are 100% sure you want to download this file anyway then use
 the --onedrive-av-override flag, or av_override = true in the config
 file.
+
+When set, malware-flagged files are downloaded via Microsoft Graph
+beta APIs with Prefer: forceInfectedDownload (contentStream, then
+/content). Clean files continue to use the stable v1.0 endpoint.
+
+This is a beta API and may change. It works reliably with application
+permissions (client_credentials). With delegated (user) login on
+OneDrive for Business, Microsoft often still blocks the download.
+tenant_url configurations fall back to the legacy AVOverride query
+parameter.
 `,
 			Advanced: true,
 		}, {
@@ -471,7 +503,15 @@ isn't always desirable to set the permissions from the metadata.
 // Get the region and graphURL from the config
 func getRegionURL(m configmap.Mapper) (region, graphURL string) {
 	region, _ = m.Get("region")
+
 	graphURL = graphAPIEndpoint[region] + "/v1.0"
+
+	// Check if tenant_url is provided for non-admin mode
+	tenantURL, _ := m.Get("tenant_url")
+	if tenantURL != "" {
+		graphURL = tenantURL + "/v2.0"
+	}
+
 	return region, graphURL
 }
 
@@ -516,31 +556,34 @@ func chooseDrive(ctx context.Context, name string, m configmap.Mapper, srv *rest
 	// We don't have the final ID yet?
 	// query Microsoft Graph
 	if opt.finalDriveID == "" {
-		_, err := srv.CallJSON(ctx, &opt.opts, nil, &drives)
-		if err != nil {
-			return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available drives: %v", err))
+		_, drivesErr := srv.CallJSON(ctx, &opt.opts, nil, &drives)
+		if drivesErr != nil {
+			fs.Debugf(nil, "Failed to query /me/drives: %v - trying /me/drive", drivesErr)
 		}
-
 		// Also call /me/drive as sometimes /me/drives doesn't return it #4068
 		if opt.opts.Path == "/me/drives" {
-			opt.opts.Path = "/me/drive"
+			meDriveOpts := opt.opts
+			meDriveOpts.Path = "/me/drive"
 			meDrive := api.DriveResource{}
-			_, err := srv.CallJSON(ctx, &opt.opts, nil, &meDrive)
-			if err != nil {
-				return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available drives: %v", err))
-			}
-			found := false
-			for _, drive := range drives.Drives {
-				if drive.DriveID == meDrive.DriveID {
-					found = true
-					break
+			_, meDriveErr := srv.CallJSON(ctx, &meDriveOpts, nil, &meDrive)
+			if meDriveErr == nil {
+				found := false
+				for _, drive := range drives.Drives {
+					if drive.DriveID == meDrive.DriveID {
+						found = true
+						break
+					}
 				}
+				// add the me drive if not found already
+				if !found {
+					fs.Debugf(nil, "Adding %v to drives list from /me/drive", meDrive)
+					drives.Drives = append(drives.Drives, meDrive)
+				}
+			} else if drivesErr != nil {
+				return fs.ConfigError("driveid", fmt.Sprintf("Failed to query available drives: /me/drives: %v; /me/drive: %v\nEnter the drive ID manually instead", drivesErr, meDriveErr))
 			}
-			// add the me drive if not found already
-			if !found {
-				fs.Debugf(nil, "Adding %v to drives list from /me/drive", meDrive)
-				drives.Drives = append(drives.Drives, meDrive)
-			}
+		} else if drivesErr != nil {
+			return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available drives: %v", drivesErr))
 		}
 	} else {
 		drives.Drives = append(drives.Drives, api.DriveResource{
@@ -764,6 +807,7 @@ type Options struct {
 	Region                  string               `config:"region"`
 	UploadCutoff            fs.SizeSuffix        `config:"upload_cutoff"`
 	ChunkSize               fs.SizeSuffix        `config:"chunk_size"`
+	TenantURL               string               `config:"tenant_url"`
 	DriveID                 string               `config:"drive_id"`
 	DriveType               string               `config:"drive_type"`
 	RootFolderID            string               `config:"root_folder_id"`
@@ -1069,6 +1113,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	rootURL := graphAPIEndpoint[opt.Region] + "/v1.0" + "/drives/" + opt.DriveID
+
+	if opt.TenantURL != "" {
+		rootURL = opt.TenantURL + "/v2.0" + "/drives/" + opt.DriveID
+	}
 
 	oauthConfig, err := makeOauthConfig(ctx, opt)
 	if err != nil {
@@ -2378,25 +2426,120 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	}
 
 	fs.FixRangeOption(options, o.size)
-	var resp *http.Response
+	// Only malware-flagged files use Graph beta; clean files stay on stable v1.0.
+	if o.fs.opt.AVOverride && o.fs.opt.TenantURL == "" && o.malwareDetected() {
+		return o.openInfected(ctx, options...)
+	}
 	opts := o.fs.newOptsCall(o.id, "GET", "/content")
 	opts.Options = options
 	if o.fs.opt.AVOverride {
+		// SharePoint v2 (tenant_url) or non-flagged objects: keep legacy query.
 		opts.Parameters = url.Values{"AVOverride": {"1"}}
 	}
+	return o.openWithRedirect(ctx, &opts)
+}
+
+// malwareDetected reports whether metadata says this object is malware-flagged.
+func (o *Object) malwareDetected() bool {
+	return o.meta != nil && o.meta.malwareDetected
+}
+
+// openInfected downloads a malware-flagged file using Graph beta APIs.
+// contentStream applies Prefer for the whole transfer (needs application auth on many tenants);
+// beta /content + Prefer is tried next.
+func (o *Object) openInfected(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	in, err = o.openContentStream(ctx, options...)
+	if err == nil {
+		return in, nil
+	}
+	fs.Debugf(o, "contentStream download failed, trying beta /content: %v", err)
+	in, err2 := o.openContentPrefer(ctx, options...)
+	if err2 == nil {
+		return in, nil
+	}
+	return nil, fmt.Errorf("%w; beta /content also failed: %v (malware download often requires application permissions / client_credentials, or a tenant admin account)", err, err2)
+}
+
+// openContentStream streams the object via Graph beta contentStream.
+func (o *Object) openContentStream(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	var resp *http.Response
+	id, drive, _ := o.fs.parseNormalizedID(o.id)
+	if drive == "" {
+		drive = o.fs.driveID
+	}
+	opts := rest.Opts{
+		Method:  "GET",
+		RootURL: graphAPIEndpoint[o.fs.opt.Region] + "/beta/drives/" + drive,
+		Path:    "/items/" + id + "/contentStream",
+		Options: options,
+		ExtraHeaders: map[string]string{
+			"Prefer": "forceInfectedDownload",
+		},
+	}
+	err = o.fs.pacer.Call(func() (bool, error) {
+		resp, err = o.fs.srv.Call(ctx, &opts)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode == http.StatusOK && resp.ContentLength > 0 && resp.Header.Get("Content-Range") == "" {
+		o.size = resp.ContentLength
+	}
+	return resp.Body, nil
+}
+
+// openContentPrefer downloads via Graph beta /content with Prefer: forceInfectedDownload.
+func (o *Object) openContentPrefer(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	id, drive, _ := o.fs.parseNormalizedID(o.id)
+	if drive == "" {
+		drive = o.fs.driveID
+	}
+	opts := rest.Opts{
+		Method:  "GET",
+		RootURL: graphAPIEndpoint[o.fs.opt.Region] + "/beta/drives/" + drive,
+		Path:    "/items/" + id + "/content",
+		Options: options,
+		ExtraHeaders: map[string]string{
+			"Prefer": "forceInfectedDownload",
+		},
+	}
+	return o.openWithRedirect(ctx, &opts)
+}
+
+// openWithRedirect downloads via /content style endpoints that 302 to a preauthenticated URL.
+func (o *Object) openWithRedirect(ctx context.Context, opts *rest.Opts) (in io.ReadCloser, err error) {
+	var resp *http.Response
 	// Make a note of the redirect target as we need to call it without Auth
 	var redirectReq *http.Request
 	opts.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		if len(via) >= 10 {
 			return errors.New("stopped after 10 redirects")
 		}
-		req.Header.Del("Authorization") // remove Auth header
+		// Preauthenticated download URLs must not carry the Graph Authorization header.
+		req.Header.Del("Authorization")
+		// Keep Prefer on the redirect when forcing infected download; some SharePoint
+		// endpoints honor it only on the final download request.
+		// Do not delete Prefer here: users may set it via --header.
+		if o.fs.opt.AVOverride {
+			if req.Header.Get("Prefer") == "" {
+				req.Header.Set("Prefer", "forceInfectedDownload")
+			}
+			// Append AVOverride without re-encoding tempauth (re-encoding breaks the signature).
+			if !strings.Contains(req.URL.RawQuery, "AVOverride=") {
+				if req.URL.RawQuery == "" {
+					req.URL.RawQuery = "AVOverride=1"
+				} else {
+					req.URL.RawQuery += "&AVOverride=1"
+				}
+			}
+		}
 		redirectReq = req
 		return http.ErrUseLastResponse
 	}
 
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.Call(ctx, &opts)
+		resp, err = o.fs.srv.Call(ctx, opts)
 		if redirectReq != nil {
 			// It is a redirect which we are expecting
 			err = nil
@@ -2406,7 +2549,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if err != nil {
 		if resp != nil {
 			if virus := resp.Header.Get("X-Virus-Infected"); virus != "" {
-				err = fmt.Errorf("server reports this file is infected with a virus - use --onedrive-av-override to download anyway: %s: %w", virus, err)
+				err = malwareDownloadError(o.fs.opt.AVOverride, fmt.Errorf("%s: %w", virus, err))
 			}
 		}
 		return nil, err
@@ -2414,12 +2557,26 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if redirectReq != nil {
 		err = o.fs.pacer.Call(func() (bool, error) {
 			resp, err = o.fs.unAuth.Do(redirectReq)
+			if err != nil {
+				return shouldRetry(ctx, resp, err)
+			}
+			// unAuth.Do does not check status; treat non-2xx as failure so a malware
+			// JSON body is not written out as file content.
+			if resp.StatusCode < 200 || resp.StatusCode > 299 {
+				body, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
+				_ = resp.Body.Close()
+				err = fmt.Errorf("HTTP error %d (%s) %s", resp.StatusCode, resp.Status, strings.TrimSpace(string(body)))
+				if strings.Contains(string(body), "malwareDetected") || resp.Header.Get("X-Virus-Infected") != "" {
+					err = malwareDownloadError(o.fs.opt.AVOverride, err)
+				}
+				return shouldRetry(ctx, resp, err)
+			}
 			return shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
 			if resp != nil {
 				if virus := resp.Header.Get("X-Virus-Infected"); virus != "" {
-					err = fmt.Errorf("server reports this file is infected with a virus - use --onedrive-av-override to download anyway: %s: %w", virus, err)
+					err = malwareDownloadError(o.fs.opt.AVOverride, fmt.Errorf("%s: %w", virus, err))
 				}
 			}
 			return nil, err
@@ -2431,6 +2588,14 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		o.size = resp.ContentLength
 	}
 	return resp.Body, err
+}
+
+// malwareDownloadError formats an error when the server blocks a malware-flagged file.
+func malwareDownloadError(avOverride bool, err error) error {
+	if avOverride {
+		return fmt.Errorf("server reports this file is infected with a virus: %w (if downloads remain blocked, use application permissions / client_credentials or a tenant admin account)", err)
+	}
+	return fmt.Errorf("server reports this file is infected with a virus - use --onedrive-av-override to download anyway: %w", err)
 }
 
 // createUploadSession creates an upload session for the object
@@ -2523,9 +2688,8 @@ func (o *Object) uploadFragment(ctx context.Context, url string, start int64, to
 			}
 			return true, fmt.Errorf("retry this chunk skipping %d bytes: %w", skip, err)
 		} else if err != nil && resp != nil && resp.StatusCode == http.StatusNotFound {
-			fs.Debugf(o, "Received 404 error: assuming eventual consistency problem with session - retrying chunk: %v", err)
-			time.Sleep(5 * time.Second) // a little delay to help things along
-			return true, err
+			fs.Debugf(o, "Received 404 error: upload session not found - not retrying: %v", err)
+			return false, fserrors.NoLowLevelRetryError(err)
 		}
 		if err != nil {
 			return shouldRetry(ctx, resp, err)
@@ -2591,11 +2755,25 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 	position := int64(0)
 	for remaining > 0 {
 		n := min(remaining, int64(o.fs.opt.ChunkSize))
-		seg := readers.NewRepeatableReader(io.LimitReader(in, n))
+		// Buffer the chunk in memory from the global pool so it can be
+		// re-sent (or partly re-sent after a 416) on retry
+		rw := multipart.NewRW()
+		_, err = io.CopyN(rw, in, n)
+		if err != nil {
+			_ = rw.Close()
+			if err == io.EOF {
+				err = fmt.Errorf("expected %d bytes in input, but got %d: %w", size, position, io.ErrUnexpectedEOF)
+			}
+			return nil, err
+		}
 		fs.Debugf(o, "Uploading segment %d/%d size %d", position, size, n)
-		info, err = o.uploadFragment(ctx, uploadURL, position, size, seg, n, options...)
+		info, err = o.uploadFragment(ctx, uploadURL, position, size, rw, n, options...)
+		closeErr := rw.Close()
 		if err != nil {
 			return nil, err
+		}
+		if closeErr != nil {
+			return nil, closeErr
 		}
 		remaining -= n
 		position += n
@@ -2615,13 +2793,13 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 	return info, o.setMetaData(info)
 }
 
-// Update the content of a remote file within 4 MiB size in one single request
+// Update the content of a remote file smaller than maxSinglePartSize in one single request
 // (currently only used when size is exactly 0)
 // This function will set modtime and metadata after uploading, which will create a new version for the remote file
 func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (info *api.Item, err error) {
 	size := src.Size()
-	if size < 0 || size > int64(maxSinglePartSize) {
-		return nil, fmt.Errorf("size passed into uploadSinglepart must be >= 0 and <= %v", maxSinglePartSize)
+	if size < 0 || size >= int64(maxSinglePartSize) {
+		return nil, fmt.Errorf("size passed into uploadSinglepart must be >= 0 and < %v", maxSinglePartSize)
 	}
 
 	fs.Debugf(o, "Starting singlepart upload")
@@ -2738,7 +2916,13 @@ func (o *Object) ID() string {
 // and returns itemID, driveID, rootURL.
 // Such a normalized ID can come from (*Item).GetID()
 func (f *Fs) parseNormalizedID(ID string) (string, string, string) {
-	rootURL := graphAPIEndpoint[f.opt.Region] + "/v1.0/drives"
+	var rootURL string
+	if f.opt.TenantURL != "" {
+		rootURL = f.opt.TenantURL + "/v2.0/drives"
+	} else {
+		rootURL = graphAPIEndpoint[f.opt.Region] + "/v1.0/drives"
+	}
+
 	if strings.Contains(ID, "#") {
 		s := strings.Split(ID, "#")
 		return s[1], s[0], rootURL
@@ -2933,7 +3117,12 @@ func (f *Fs) changeNotifyNextChange(ctx context.Context, token string) (delta ap
 }
 
 func (f *Fs) buildDriveDeltaOpts(token string) rest.Opts {
-	rootURL := graphAPIEndpoint[f.opt.Region] + "/v1.0/drives"
+	var rootURL string
+	if f.opt.TenantURL != "" {
+		rootURL = f.opt.TenantURL + "/v2.0/drives"
+	} else {
+		rootURL = graphAPIEndpoint[f.opt.Region] + "/v1.0/drives"
+	}
 
 	return rest.Opts{
 		Method:     "GET",

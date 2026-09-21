@@ -7,6 +7,7 @@ import (
 	"mime"
 	"net/http"
 	"path"
+	"slices"
 	"testing"
 	"time"
 
@@ -18,14 +19,48 @@ import (
 	"github.com/rclone/rclone/lib/encoder"
 )
 
+// Limits on the chunk size accepted by the resumable upload API
+const (
+	minChunkSize = 256 * fs.Kibi
+	maxChunkSize = 64 * fs.Mebi
+)
+
 // TestIntegration runs integration tests against the remote
 func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
 		RemoteName:               "TestHuaweiDrive:",
 		NilObject:                (*Object)(nil),
 		SkipBadWindowsCharacters: true,
+		ChunkedUpload: fstests.ChunkedUploadConfig{
+			MinChunkSize:  minChunkSize,
+			MaxChunkSize:  maxChunkSize,
+			CeilChunkSize: fstests.NextPowerOfTwo,
+		},
 	})
 }
+
+// SetUploadChunkSize changes the configured chunk size, returning the old value.
+//
+// It is only called by the integration tests while no transfer is in progress.
+func (f *Fs) SetUploadChunkSize(cs fs.SizeSuffix) (fs.SizeSuffix, error) {
+	var old fs.SizeSuffix
+	old, f.opt.ChunkSize = f.opt.ChunkSize, cs
+	return old, nil
+}
+
+// SetUploadCutoff changes the configured upload cutoff, returning the old value.
+//
+// It is only called by the integration tests while no transfer is in progress.
+func (f *Fs) SetUploadCutoff(cutoff fs.SizeSuffix) (fs.SizeSuffix, error) {
+	var old fs.SizeSuffix
+	old, f.opt.UploadCutoff = f.opt.UploadCutoff, cutoff
+	return old, nil
+}
+
+var (
+	_ fstests.SetUploadChunkSizer = (*Fs)(nil)
+	_ fstests.SetUploadCutoffer   = (*Fs)(nil)
+)
 
 // TestNewFs tests the NewFs constructor
 func TestNewFs(t *testing.T) {
@@ -433,15 +468,7 @@ func TestMimeTypeDetection(t *testing.T) {
 			}
 
 			// Check if detected MIME type is in the list of expected types
-			found := false
-			for _, expected := range tc.expectedMimes {
-				if detected == expected {
-					found = true
-					break
-				}
-			}
-
-			if !found {
+			if !slices.Contains(tc.expectedMimes, detected) {
 				t.Errorf("expected one of MIME types %v for %q, got %q", tc.expectedMimes, tc.filename, detected)
 			}
 		})

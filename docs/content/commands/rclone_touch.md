@@ -24,9 +24,11 @@ This will touch `--transfers` files concurrently.
 If `--timestamp` is used then sets the modification time to that
 time instead of the current time. Times may be specified as one of:
 
-- 'YYMMDD' - e.g. 17.10.30
+- 'YYMMDD' - e.g. 171030
+- 'YYYY-MM-DD' - e.g. 2006-01-02
 - 'YYYY-MM-DDTHH:MM:SS' - e.g. 2006-01-02T15:04:05
 - 'YYYY-MM-DDTHH:MM:SS.SSS' - e.g. 2006-01-02T15:04:05.123456789
+- 'YYYY-MM-DDTHH:MM:SSZ' - e.g. 2006-01-02T15:04:05Z
 
 Note that value of `--timestamp` is in UTC. If you want local time
 then add the `--localtime` flag.
@@ -73,6 +75,7 @@ Flags for filtering directory listings
       --exclude-if-present stringArray      Exclude directories if filename is present
       --files-from stringArray              Read list of source-file names from file (use - to read from stdin)
       --files-from-raw stringArray          Read list of source-file names from file without any processing of lines (use - to read from stdin)
+      --files-from0 stringArray             Read list of source-file names from file using NUL as separator (use - to read from stdin)
   -f, --filter stringArray                  Add a file filtering rule
       --filter-from stringArray             Read file filtering patterns from a file (use - to read from stdin)
       --hash-filter string                  Partition filenames by hash k/n or randomly @/n

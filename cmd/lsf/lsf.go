@@ -80,6 +80,12 @@ T - tier of storage if known, e.g. "Hot" or "Cool"
 M - Metadata of object in JSON blob format, eg {"key":"value"}
 ` + "```" + `
 
+Some backends use composite IDs. In particular, Google Drive shortcuts are
+normally dereferenced, and their "i" field contains the target object's ID
+followed by the shortcut's ID, separated by a tab. This tab is part of the ID
+field and is not changed by ` + "`--separator`" + `. Use ` + "`--drive-skip-shortcuts`" + ` to omit
+shortcut entries.
+
 So if you wanted the path, size and modification time, you would use
 ` + "`--format \"pst\"`, or maybe `--format \"tsp\"`" + ` to put the path last.
 

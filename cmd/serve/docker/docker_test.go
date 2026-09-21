@@ -6,14 +6,17 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
@@ -94,7 +97,8 @@ func TestDockerPluginLogic(t *testing.T) {
 	assert.NoError(t, drv.Create(volReq))
 	path1 := filepath.Join(testDir, "vol1")
 
-	assert.ErrorIs(t, drv.Create(volReq), docker.ErrVolumeExists)
+	// Create is idempotent - creating the same volume again should succeed
+	assert.NoError(t, drv.Create(volReq))
 
 	getReq := &docker.GetRequest{Name: "vol1"}
 	getRes, err := drv.Get(getReq)
@@ -203,6 +207,101 @@ func TestDockerPluginLogic(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// TestDockerPluginVolumeNameConfined checks that a crafted volume name
+// containing ".." components cannot escape the base directory to create a
+// mountpoint at an arbitrary host path.
+func TestDockerPluginVolumeNameConfined(t *testing.T) {
+	ctx := context.Background()
+	oldCacheDir := config.GetCacheDir()
+	testDir, testFs := initialise(ctx, t)
+	err := config.SetCacheDir(testDir)
+	require.NoError(t, err)
+	defer func() {
+		_ = config.SetCacheDir(oldCacheDir)
+		if !t.Failed() {
+			fstest.Purge(testFs)
+			_ = os.RemoveAll(testDir)
+		}
+	}()
+
+	drv, err := docker.NewDriver(ctx, testDir, nil, nil, true, true)
+	require.NoError(t, err)
+	require.NotNil(t, drv)
+
+	// A volume name with ".." components resolves outside testDir, to a
+	// sibling path that does not exist so the test never touches a real
+	// system directory.
+	escape := filepath.Join("..", "docker-escape-target")
+	outside := filepath.Join(filepath.Dir(testDir), "docker-escape-target")
+	require.NoDirExists(t, outside)
+	volReq := &docker.CreateRequest{
+		Name:    escape,
+		Options: docker.VolOpts{"remote": testDir},
+	}
+	err = drv.Create(volReq)
+	assertErrorContains(t, err, "resolves outside the base directory")
+
+	// The escaping directory must not have been created.
+	_, statErr := os.Stat(outside)
+	assert.True(t, os.IsNotExist(statErr), "escaping mountpoint %q should not exist", outside)
+
+	// The volume must not have been registered.
+	_, err = drv.Get(&docker.GetRequest{Name: escape})
+	assert.Error(t, err)
+
+	// A name that resolves to the base directory itself (empty or ".")
+	// must also be rejected, since mounting there would shadow every
+	// other volume.
+	for _, name := range []string{"", ".", filepath.Join("a", "..")} {
+		volReq.Name = name
+		err = drv.Create(volReq)
+		assertErrorContains(t, err, "resolves outside the base directory",
+			"name %q should be rejected", name)
+	}
+}
+
+// TestDockerPluginRestoreStateConfined checks that a persisted state file
+// with a mountpoint escaping the base directory is not trusted verbatim on
+// restore: the mountpoint is re-derived from the base directory and name.
+func TestDockerPluginRestoreStateConfined(t *testing.T) {
+	ctx := context.Background()
+	oldCacheDir := config.GetCacheDir()
+	testDir, testFs := initialise(ctx, t)
+	err := config.SetCacheDir(testDir)
+	require.NoError(t, err)
+	defer func() {
+		_ = config.SetCacheDir(oldCacheDir)
+		if !t.Failed() {
+			fstest.Purge(testFs)
+			_ = os.RemoveAll(testDir)
+		}
+	}()
+
+	// Persist a state file as an older, vulnerable rclone might have: a
+	// benign name but a mountpoint that escapes the base directory.
+	escaped := filepath.Join(filepath.Dir(testDir), "docker-escape-restore")
+	require.NoDirExists(t, escaped)
+	state := fmt.Sprintf(`[{"name":"vol1","mountpoint":%q,"created":%q,"fs":%q,"options":{"remote":%q},"mounts":[]}]`,
+		escaped, time.Now().Format(time.RFC3339), testDir, testDir)
+	statePath := filepath.Join(testDir, "docker-plugin.state")
+	require.NoError(t, os.WriteFile(statePath, []byte(state), 0600))
+
+	// Restore the state into a new dummy driver.
+	drv, err := docker.NewDriver(ctx, testDir, nil, nil, true, false)
+	require.NoError(t, err)
+	require.NotNil(t, drv)
+
+	// The restored volume must point back inside the base directory, and
+	// the escaping directory must not have been created.
+	getRes, err := drv.Get(&docker.GetRequest{Name: "vol1"})
+	require.NoError(t, err)
+	require.NotNil(t, getRes)
+	assert.Equal(t, filepath.Join(testDir, "vol1"), getRes.Volume.Mountpoint)
+	assert.NotEqual(t, escaped, getRes.Volume.Mountpoint)
+	_, statErr := os.Stat(escaped)
+	assert.True(t, os.IsNotExist(statErr), "escaping mountpoint %q should not exist", escaped)
+}
+
 const (
 	httpTimeout = 2 * time.Second
 	tempDelay   = 10 * time.Millisecond
@@ -302,6 +401,50 @@ func (a *APIClient) request(path string, in, out any, wantErr bool) {
 	time.Sleep(tempDelay)
 }
 
+// writeMountedFile writes data to a file on a FUSE mount served by this
+// process.
+//
+// It avoids os.WriteFile as files opened with os.OpenFile are handed
+// to the Go runtime poller and the kernel then asks the FUSE server
+// to poll them from epoll_ctl and epoll_wait. The server lives in
+// this process and a thread waiting inside epoll cannot be preempted,
+// so a garbage collection starting while a poll is outstanding stops
+// the world for good. The poll is never answered, the process cannot
+// be killed even with SIGKILL and the mount is left behind.
+// See: https://github.com/golang/go/issues/21014
+//
+// os.NewFile only returns a pollable file for a descriptor which is
+// already in non-blocking mode, so a descriptor straight from open(2)
+// stays out of the poller.
+func writeMountedFile(path string, data []byte, perm uint32) (err error) {
+	fd, err := syscall.Open(path, syscall.O_WRONLY|syscall.O_CREAT|syscall.O_TRUNC, perm)
+	if err != nil {
+		return err
+	}
+	f := os.NewFile(uintptr(fd), path)
+	defer fs.CheckClose(f, &err)
+	// Deadlines work on polled files only
+	if err := f.SetDeadline(time.Time{}); !errors.Is(err, os.ErrNoDeadline) {
+		return fmt.Errorf("%s is being polled by the runtime which risks deadlocking the test: %w", path, err)
+	}
+	_, err = f.Write(data)
+	return err
+}
+
+// checkUnmounted fails the test and tears the mount down if mountpoint
+// is still mounted.
+func checkUnmounted(t *testing.T, mountpoint string) {
+	// CheckMountReady and fusermount are both Linux only
+	if !mountlib.CanCheckMountReady || mountlib.CheckMountReady(mountpoint) != nil {
+		return
+	}
+	assert.Fail(t, fmt.Sprintf("mountpoint %s was left mounted", mountpoint))
+	// Lazy unmount as the mount may still be busy
+	if out, err := exec.Command("fusermount", "-uz", mountpoint).CombinedOutput(); err != nil {
+		t.Logf("Failed to unmount %s: %v: %s", mountpoint, err, out)
+	}
+}
+
 func testMountAPI(t *testing.T, sockAddr string) {
 	// Disable tests under macOS and linux in the CI since they are locking up
 	if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
@@ -316,6 +459,7 @@ func testMountAPI(t *testing.T, sockAddr string) {
 	testDir, testFs := initialise(ctx, t)
 	err := config.SetCacheDir(testDir)
 	require.NoError(t, err)
+	mount1 := filepath.Join(testDir, "vol1")
 	defer func() {
 		_ = config.SetCacheDir(oldCacheDir)
 		if !t.Failed() {
@@ -323,6 +467,7 @@ func testMountAPI(t *testing.T, sockAddr string) {
 			_ = os.RemoveAll(testDir)
 		}
 	}()
+	defer checkUnmounted(t, mount1)
 
 	// Prepare API client
 	var cli *APIClient
@@ -361,7 +506,6 @@ func testMountAPI(t *testing.T, sockAddr string) {
 	// Run test sequence
 	path1 := filepath.Join(testDir, "path1")
 	require.NoError(t, file.MkdirAll(path1, 0755))
-	mount1 := filepath.Join(testDir, "vol1")
 	res := ""
 
 	cli.request("Activate", "{}", &res, false)
@@ -373,8 +517,9 @@ func testMountAPI(t *testing.T, sockAddr string) {
 	}
 	cli.request("Create", createReq, &res, false)
 	assert.Equal(t, "{}", res)
-	cli.request("Create", createReq, &res, true)
-	assert.Contains(t, res, "volume already exists")
+	// Create is idempotent - creating the same volume again should succeed
+	cli.request("Create", createReq, &res, false)
+	assert.Equal(t, "{}", res)
 
 	mountReq := docker.MountRequest{Name: "vol1", ID: "id1"}
 	var mountRes docker.MountResponse
@@ -388,7 +533,7 @@ func testMountAPI(t *testing.T, sockAddr string) {
 	assert.Contains(t, res, "volume is in use")
 
 	text := []byte("banana")
-	err = os.WriteFile(filepath.Join(mount1, "txt"), text, 0644)
+	err = writeMountedFile(filepath.Join(mount1, "txt"), text, 0644)
 	assert.NoError(t, err)
 	time.Sleep(tempDelay)
 
@@ -413,6 +558,76 @@ func testMountAPI(t *testing.T, sockAddr string) {
 	var listRes docker.ListResponse
 	cli.request("List", "{}", &listRes, false)
 	assert.Empty(t, listRes.Volumes)
+}
+
+func TestDockerPluginDeferredMounts(t *testing.T) {
+	ctx := context.Background()
+	oldCacheDir := config.GetCacheDir()
+	testDir, testFs := initialise(ctx, t)
+	err := config.SetCacheDir(testDir)
+	require.NoError(t, err)
+	defer func() {
+		_ = config.SetCacheDir(oldCacheDir)
+		if !t.Failed() {
+			fstest.Purge(testFs)
+			_ = os.RemoveAll(testDir)
+		}
+	}()
+
+	// Create dummy volume driver with volumes and mounts
+	drv, err := docker.NewDriver(ctx, testDir, nil, nil, true, true)
+	require.NoError(t, err)
+	require.NotNil(t, drv)
+	defer drv.Exit()
+
+	volReq := &docker.CreateRequest{
+		Name:    "vol1",
+		Options: docker.VolOpts{"remote": testDir},
+	}
+	assert.NoError(t, drv.Create(volReq))
+	volReq.Name = "vol2"
+	assert.NoError(t, drv.Create(volReq))
+
+	// Mount vol2 with two IDs
+	mountReq := &docker.MountRequest{Name: "vol2", ID: "id1"}
+	_, err = drv.Mount(mountReq)
+	assert.NoError(t, err)
+	mountReq.ID = "id2"
+	_, err = drv.Mount(mountReq)
+	assert.NoError(t, err)
+
+	// Simulate plugin restart - state is restored but mounts are deferred
+	// (Don't call drv.Exit() since that clears mounts from state, simulating a crash)
+	drv2, err := docker.NewDriver(ctx, testDir, nil, nil, true, false)
+	require.NoError(t, err)
+	require.NotNil(t, drv2)
+	defer drv2.Exit()
+
+	// Volumes should be listed (metadata restored)
+	listRes, err := drv2.List()
+	require.NoError(t, err)
+	require.Equal(t, 2, len(listRes.Volumes))
+
+	// vol2 should have no active mounts yet (deferred)
+	path2 := filepath.Join(testDir, "vol2")
+	assertVolumeInfo(t, listRes.Volumes[1], "vol2", path2)
+
+	// Now restore mounts
+	drv2.RestoreMounts()
+
+	// After RestoreMounts, vol2 should have its mounts back
+	listRes, err = drv2.List()
+	require.NoError(t, err)
+	require.Equal(t, 2, len(listRes.Volumes))
+	status := listRes.Volumes[1].Status
+	require.NotNil(t, status)
+	mounts, ok := status["Mounts"]
+	require.True(t, ok)
+	mountList, ok := mounts.([]string)
+	require.True(t, ok)
+	assert.Equal(t, 2, len(mountList))
+	assert.Contains(t, mountList, "id1")
+	assert.Contains(t, mountList, "id2")
 }
 
 func TestDockerPluginMountTCP(t *testing.T) {

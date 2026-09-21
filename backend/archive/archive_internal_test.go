@@ -3,9 +3,11 @@
 package archive
 
 import (
+	"archive/zip"
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path"
@@ -14,6 +16,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/rclone/rclone/backend/archive/archiver"
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
@@ -218,4 +221,185 @@ func TestArchiveSquashfs(t *testing.T) {
 	testArchive(t, "test.sqfs", func(t *testing.T, output, input string) {
 		run(t, "mksquashfs", input, output)
 	})
+}
+
+// TestArchiveSquashfsIssue9004 lists and reads squashfs images that exercise
+// two layouts go-diskfs used to choke on (fixed in go-diskfs v1.9.4):
+//
+//   - 1.sqfs: a single empty directory, so the image has no fragment table
+//     (its fragment-table start holds the "not present" sentinel).
+//   - 2.sqfs: a small tree whose superblock has the NO_XATTRS flag set while
+//     inodes still carry a (non-sentinel) xattr index - the shape squashfs-
+//     tools-ng can emit. Built by packing a two-file tree with xattrs via
+//     `gensquashfs -x`, then setting the NO_XATTRS superblock flag; the tree
+//     content is trivial placeholder data.
+//
+// Both images used to fail to list. Regression test for #9004.
+func TestArchiveSquashfsIssue9004(t *testing.T) {
+	fstest.Initialise()
+	ctx := context.Background()
+
+	testdata, err := filepath.Abs(filepath.Join("squashfs", "testdata"))
+	require.NoError(t, err)
+
+	archiveFor := func(t *testing.T, name string) fs.Fs {
+		f, err := cache.Get(ctx, ":archive:"+filepath.Join(testdata, name))
+		require.NoError(t, err)
+		return f
+	}
+
+	t.Run("EmptyDir", func(t *testing.T) {
+		// 1.sqfs is a single empty directory - it must list without error.
+		entries, err := archiveFor(t, "1.sqfs").List(ctx, "")
+		require.NoError(t, err)
+		assert.Equal(t, 0, len(entries))
+	})
+
+	t.Run("NoXattrTree", func(t *testing.T) {
+		f := archiveFor(t, "2.sqfs")
+		entries, err := f.List(ctx, "")
+		require.NoError(t, err)
+		names := make([]string, 0, len(entries))
+		for _, e := range entries {
+			names = append(names, path.Base(e.Remote()))
+		}
+		assert.Contains(t, names, "alpha")
+		assert.Contains(t, names, "beta")
+
+		// A file in the tree must be readable with its real content.
+		obj, err := f.NewObject(ctx, "beta/sample.xml")
+		require.NoError(t, err)
+		assert.Greater(t, obj.Size(), int64(0))
+		rc, err := obj.Open(ctx)
+		require.NoError(t, err)
+		data, err := io.ReadAll(rc)
+		require.NoError(t, err)
+		require.NoError(t, rc.Close())
+		assert.Equal(t, int(obj.Size()), len(data))
+		assert.True(t, bytes.HasPrefix(data, []byte("<?xml")))
+	})
+}
+
+// TestArchiveUncleanRoot checks that a path into an archive which isn't
+// in canonical form (with "./" or doubled slashes) still finds its
+// directory.
+func TestArchiveUncleanRoot(t *testing.T) {
+	fstest.Initialise()
+	ctx := context.Background()
+
+	var buf bytes.Buffer
+	zw := zip.NewWriter(&buf)
+	w, err := zw.Create("sub/dir/a.txt")
+	require.NoError(t, err)
+	_, err = w.Write([]byte("data"))
+	require.NoError(t, err)
+	require.NoError(t, zw.Close())
+	zipPath := filepath.Join(t.TempDir(), "test.zip")
+	require.NoError(t, os.WriteFile(zipPath, buf.Bytes(), 0600))
+
+	for _, root := range []string{"sub/dir", "sub/./dir", "sub//dir", "./sub/dir/", "sub/dir/."} {
+		t.Run(root, func(t *testing.T) {
+			f, err := cache.Get(ctx, ":archive:"+zipPath+"/"+root)
+			require.NoError(t, err)
+			entries, err := f.List(ctx, "")
+			require.NoError(t, err)
+			require.Len(t, entries, 1)
+			assert.Equal(t, "a.txt", entries[0].Remote())
+		})
+	}
+}
+
+// escapingObject is an object whose remote is not where it was asked for.
+type escapingObject struct {
+	fs.Object
+	remote string
+}
+
+func (o *escapingObject) Remote() string { return o.remote }
+func (o *escapingObject) String() string { return o.remote }
+
+// escapingFs stands in for a badly behaved archiver which exposes entry
+// names outside the directory being listed.
+type escapingFs struct {
+	fs.Fs
+	prefix string
+}
+
+func (f *escapingFs) Name() string           { return "escaping" }
+func (f *escapingFs) Root() string           { return "" }
+func (f *escapingFs) String() string         { return "escaping" }
+func (f *escapingFs) Features() *fs.Features { return &fs.Features{} }
+
+func (f *escapingFs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
+	return fs.DirEntries{
+		&escapingObject{remote: path.Join(dir, "good.txt")},
+		fs.NewDir(path.Join(dir, "gooddir"), fstest.Time("2001-02-03T04:05:06.499999999Z")),
+		&escapingObject{remote: path.Join(dir, "../escape.txt")},
+		&escapingObject{remote: "../../escape.txt"},
+		&escapingObject{remote: path.Join(dir, "sub/notachild.txt")},
+		fs.NewDir("../escapedir", fstest.Time("2001-02-03T04:05:06.499999999Z")),
+	}, nil
+}
+
+func (f *escapingFs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
+	return &escapingObject{remote: "../escape.txt"}, nil
+}
+
+// TestArchiveEscapingArchiver checks that the archive backend does not
+// pass on entries from an archiver which escape the directory being
+// listed, whatever the archiver does.
+func TestArchiveEscapingArchiver(t *testing.T) {
+	fstest.Initialise()
+	ctx := context.Background()
+
+	archiver.Register(archiver.Archiver{
+		New: func(ctx context.Context, f fs.Fs, remote, prefix, root string) (fs.Fs, error) {
+			return &escapingFs{prefix: prefix}, nil
+		},
+		Extension: ".escaping",
+	})
+
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "test.escaping"), []byte("x"), 0600))
+	f, err := cache.Get(ctx, ":archive:"+dir)
+	require.NoError(t, err)
+
+	// Archives are discovered when their parent directory is listed
+	_, err = f.List(ctx, "")
+	require.NoError(t, err)
+
+	entries, err := f.List(ctx, "test.escaping")
+	require.NoError(t, err)
+	var remotes []string
+	for _, entry := range entries {
+		remotes = append(remotes, entry.Remote())
+	}
+	assert.ElementsMatch(t, []string{"test.escaping/good.txt", "test.escaping/gooddir"}, remotes)
+
+	_, err = f.NewObject(ctx, "test.escaping/file.txt")
+	assert.ErrorIs(t, err, fs.ErrorObjectNotFound)
+}
+
+// TestIsDirectChild checks the guard which decides whether an entry
+// returned by an archiver belongs directly in the directory listed.
+func TestIsDirectChild(t *testing.T) {
+	for _, test := range []struct {
+		dir, remote string
+		want        bool
+	}{
+		{"", "a.txt", true},
+		{"", "/a.txt", false},
+		{"", "a.txt/", false},
+		{"", "../a.txt", false},
+		{"", "sub/a.txt", false},
+		{"d", "d/a.txt", true},
+		{"d", "d", false},
+		{"d", "d/", false},
+		{"d", "d//a.txt", false},
+		{"d", "d/../a.txt", false},
+		{"d", "dd/a.txt", false},
+		{"d", "a.txt", false},
+	} {
+		assert.Equal(t, test.want, isDirectChild(test.dir, test.remote), "dir=%q remote=%q", test.dir, test.remote)
+	}
 }

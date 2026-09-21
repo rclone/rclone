@@ -30,6 +30,8 @@ as described [below](#traditional):
 - MediaMarkt
   - MediaMarkt Cloud (mediamarkt.jottacloud.com)
   - Let's Go Cloud (letsgo.jotta.cloud)
+- Phonero
+  - Phonero Sky (sky.phonero.no)
 
 Paths are specified as `remote:path`
 

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest/mockfs"
@@ -340,5 +341,64 @@ func TestMultithreadCopyAbort(t *testing.T) {
 		o, err := r.Fremote.NewObject(ctx, fileName)
 		require.NoError(t, err)
 		require.NoError(t, o.Remove(ctx))
+	}
+}
+
+type errorWriterAtCloser struct {
+	writeErr error
+	closeErr error
+	closed   bool
+}
+
+func (w *errorWriterAtCloser) WriteAt(p []byte, _ int64) (int, error) {
+	if w.writeErr != nil {
+		return 0, w.writeErr
+	}
+	return len(p), nil
+}
+
+func (w *errorWriterAtCloser) Close() error {
+	w.closed = true
+	return w.closeErr
+}
+
+// Classification belongs to the backend; this checks propagation through the consumer.
+func TestMultithreadCopyWriterAtErrors(t *testing.T) {
+	for _, stage := range []string{"open", "write", "close"} {
+		for _, fatal := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/fatal=%v", stage, fatal), func(t *testing.T) {
+				ctx, ci := fs.AddConfig(context.Background())
+				ci.MultiThreadChunkSize = 4
+				ci.MultiThreadWriteBufferSize = 0
+				ci.MultiThreadStreams = 2
+				ci.MultiThreadSet = true
+				f, err := mockfs.NewFs(ctx, "destination", "", nil)
+				require.NoError(t, err)
+				src := mockobject.New("file.txt").WithContent([]byte("0123456789abcdef"), mockobject.SeekModeNone)
+				cause := errors.New("disk full")
+				injected := cause
+				if fatal {
+					injected = fserrors.FatalError(injected)
+				}
+				writer := &errorWriterAtCloser{}
+				f.Features().OpenWriterAt = func(context.Context, string, int64) (fs.WriterAtCloser, error) {
+					switch stage {
+					case "open":
+						return nil, injected
+					case "write":
+						writer.writeErr = injected
+					case "close":
+						writer.closeErr = injected
+					}
+					return writer, nil
+				}
+				tr := accounting.GlobalStats().NewTransfer(src, nil)
+				_, err = multiThreadCopy(ctx, f, src.Remote(), src, 2, tr)
+				tr.Done(ctx, err)
+				require.ErrorIs(t, err, cause)
+				assert.Equal(t, fatal, fserrors.IsFatalError(err))
+				assert.Equal(t, stage != "open", writer.closed)
+			})
+		}
 	}
 }

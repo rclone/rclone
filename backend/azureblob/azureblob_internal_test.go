@@ -1,4 +1,4 @@
-//go:build !plan9 && !solaris && !js
+//go:build !plan9 && !js
 
 package azureblob
 
@@ -52,6 +52,58 @@ func TestBlockIDCreator(t *testing.T) {
 	assert.ErrorContains(t, bic.checkID(chunkNumber, "AAAA"+got), "bad block ID length")
 	assert.ErrorContains(t, bic.checkID(chunkNumber+1, got), "expecting decoded")
 	assert.ErrorContains(t, bic2.checkID(chunkNumber, got), "random bytes")
+}
+
+func TestDecodeMetaDataFromDownloadResponse(t *testing.T) {
+	pInt64 := func(i int64) *int64 { return &i }
+	pString := func(s string) *string { return &s }
+	newTestObject := func() *Object {
+		return &Object{
+			fs:     &Fs{},
+			remote: "test.bin",
+			size:   -2, // sentinel to check it gets set
+		}
+	}
+
+	t.Run("WholeBlob", func(t *testing.T) {
+		o := newTestObject()
+		info := blob.DownloadStreamResponse{}
+		info.ContentLength = pInt64(12345)
+		require.NoError(t, o.decodeMetaDataFromDownloadResponse(&info))
+		assert.Equal(t, int64(12345), o.size)
+	})
+
+	t.Run("RangeRequest", func(t *testing.T) {
+		// On a ranged download Content-Length is the chunk length so the
+		// size must come from the total in Content-Range
+		o := newTestObject()
+		info := blob.DownloadStreamResponse{}
+		info.ContentLength = pInt64(67108864)
+		info.ContentRange = pString("bytes 67108864-134217727/169721004032")
+		require.NoError(t, o.decodeMetaDataFromDownloadResponse(&info))
+		assert.Equal(t, int64(169721004032), o.size)
+	})
+
+	t.Run("BadContentRange", func(t *testing.T) {
+		o := newTestObject()
+		info := blob.DownloadStreamResponse{}
+		info.ContentLength = pInt64(67108864)
+		info.ContentRange = pString("potato")
+		require.NoError(t, o.decodeMetaDataFromDownloadResponse(&info))
+		assert.Equal(t, int64(67108864), o.size)
+	})
+
+	t.Run("UnknownLength", func(t *testing.T) {
+		o := newTestObject()
+		info := blob.DownloadStreamResponse{}
+		require.NoError(t, o.decodeMetaDataFromDownloadResponse(&info))
+		assert.Equal(t, int64(-1), o.size)
+	})
+}
+
+func TestCopySASTimingConstants(t *testing.T) {
+	require.Greater(t, sasCopyStartSkew, time.Duration(0))
+	require.Greater(t, sasCopyValidity, sasCopyStartSkew)
 }
 
 func (f *Fs) testFeatures(t *testing.T) {
@@ -213,6 +265,7 @@ func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("WriteUncommittedBlocks", f.testWriteUncommittedBlocks)
 	t.Run("Metadata", f.testMetadataPaths)
 	t.Run("GzipEncoding", f.testGzipEncoding)
+	t.Run("ArrowList", f.testArrowList)
 }
 
 // helper to read blob properties for an object

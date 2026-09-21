@@ -60,23 +60,78 @@ type Cache interface {
 // Set the cache of the handler to the type required by the user
 func (h *Handler) getCache() (c Cache, err error) {
 	fs.Debugf("nfs", "Starting %v handle cache", h.opt.HandleCache)
+	var inner Cache
 	switch h.opt.HandleCache {
 	case cacheMemory:
-		return nfshelper.NewCachingHandler(h, h.opt.HandleLimit), nil
+		inner = nfshelper.NewCachingHandler(h, h.opt.HandleLimit)
 	case cacheDisk:
-		return newDiskHandler(h)
+		inner, err = newDiskHandler(h)
 	case cacheSymlink:
-		dh, err := newDiskHandler(h)
-		if err != nil {
-			return nil, err
+		var dh *diskHandler
+		dh, err = newDiskHandler(h)
+		if err == nil {
+			err = dh.makeSymlinkCache()
 		}
-		err = dh.makeSymlinkCache()
-		if err != nil {
-			return nil, err
-		}
-		return dh, nil
+		inner = dh
+	default:
+		return nil, errors.New("unknown handle cache type")
 	}
-	return nil, errors.New("unknown handle cache type")
+	if err != nil {
+		return nil, err
+	}
+	return &pathRewriter{inner: inner, rootFS: h.billyFS}, nil
+}
+
+// pathRewriter wraps a Cache so that all handles refer to absolute VFS
+// paths via the root FS, regardless of which subpath mount the request
+// came in through. This guarantees the same file always gets the same
+// handle, matching the traditional NFS expectation that a subpath mount
+// is just a "cd" into a subtree.
+type pathRewriter struct {
+	inner  Cache
+	rootFS *FS
+}
+
+// translate rewrites (f, splitPath) so calls into the inner cache always
+// see (rootFS, absoluteSplitPath). For the root FS the inputs are
+// returned unchanged, so root-only deployments keep the existing handle
+// format (and on-disk hashes) byte-for-byte.
+func (c *pathRewriter) translate(f billy.Filesystem, splitPath []string) (billy.Filesystem, []string) {
+	rfs, ok := f.(*FS)
+	if !ok || rfs.root == "" {
+		return f, splitPath
+	}
+	trimmed := strings.Trim(rfs.root, "/")
+	if trimmed == "" {
+		return c.rootFS, splitPath
+	}
+	prefix := strings.Split(trimmed, "/")
+	full := make([]string, 0, len(prefix)+len(splitPath))
+	full = append(full, prefix...)
+	full = append(full, splitPath...)
+	return c.rootFS, full
+}
+
+// ToHandle takes a file and represents it with an opaque handle to reference it.
+func (c *pathRewriter) ToHandle(f billy.Filesystem, splitPath []string) []byte {
+	f, splitPath = c.translate(f, splitPath)
+	return c.inner.ToHandle(f, splitPath)
+}
+
+// FromHandle converts from an opaque handle to the file it represents
+func (c *pathRewriter) FromHandle(fh []byte) (billy.Filesystem, []string, error) {
+	return c.inner.FromHandle(fh)
+}
+
+// InvalidateHandle invalidates the handle passed - used on rename and delete
+func (c *pathRewriter) InvalidateHandle(f billy.Filesystem, handle []byte) error {
+	f, _ = c.translate(f, nil)
+	return c.inner.InvalidateHandle(f, handle)
+}
+
+// HandleLimit exports how many file handles can be safely stored by this cache.
+func (c *pathRewriter) HandleLimit() int {
+	return c.inner.HandleLimit()
 }
 
 // diskHandler implements an on disk NFS file handle cache

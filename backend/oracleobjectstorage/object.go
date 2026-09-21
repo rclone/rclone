@@ -3,6 +3,7 @@
 package oracleobjectstorage
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/base64"
@@ -21,6 +22,7 @@ import (
 	"github.com/oracle/oci-go-sdk/v65/objectstorage"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/readers"
 )
 
 // ------------------------------------------------------------
@@ -82,9 +84,9 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 func (o *Object) headObject(ctx context.Context) (info *objectstorage.HeadObjectResponse, err error) {
 	bucketName, objectPath := o.split()
 	req := objectstorage.HeadObjectRequest{
-		NamespaceName: common.String(o.fs.opt.Namespace),
-		BucketName:    common.String(bucketName),
-		ObjectName:    common.String(objectPath),
+		NamespaceName: new(o.fs.opt.Namespace),
+		BucketName:    new(bucketName),
+		ObjectName:    new(objectPath),
 	}
 	useBYOKHeadObject(o.fs, &req)
 	var response objectstorage.HeadObjectResponse
@@ -110,6 +112,7 @@ func (o *Object) decodeMetaDataHead(info *objectstorage.HeadObjectResponse) (err
 	return o.setMetaData(
 		info.ContentLength,
 		info.ContentMd5,
+		info.ContentEncoding,
 		info.ContentType,
 		info.LastModified,
 		info.StorageTier,
@@ -120,6 +123,7 @@ func (o *Object) decodeMetaDataObject(info *objectstorage.GetObjectResponse) (er
 	return o.setMetaData(
 		info.ContentLength,
 		info.ContentMd5,
+		info.ContentEncoding,
 		info.ContentType,
 		info.LastModified,
 		info.StorageTier,
@@ -129,6 +133,7 @@ func (o *Object) decodeMetaDataObject(info *objectstorage.GetObjectResponse) (er
 func (o *Object) setMetaData(
 	contentLength *int64,
 	contentMd5 *string,
+	contentEncoding *string,
 	contentType *string,
 	lastModified *common.SDKTime,
 	storageTier any,
@@ -168,6 +173,11 @@ func (o *Object) setMetaData(
 	} else {
 		tier := strings.ToLower(fmt.Sprintf("%v", storageTier))
 		o.storageTier = storageTierMap[tier]
+	}
+	// If decompressing then size and md5sum are unknown
+	if o.fs.opt.Decompress && contentEncoding != nil && *contentEncoding == "gzip" {
+		o.bytes = -1
+		o.md5 = ""
 	}
 	return nil
 }
@@ -226,10 +236,10 @@ func (o *Object) SetTier(tier string) (err error) {
 	}
 
 	req := objectstorage.UpdateObjectStorageTierRequest{
-		NamespaceName: common.String(o.fs.opt.Namespace),
-		BucketName:    common.String(bucketName),
+		NamespaceName: new(o.fs.opt.Namespace),
+		BucketName:    new(bucketName),
 		UpdateObjectStorageTierDetails: objectstorage.UpdateObjectStorageTierDetails{
-			ObjectName:  common.String(bucketPath),
+			ObjectName:  new(bucketPath),
 			StorageTier: tierEnum,
 		},
 	}
@@ -312,9 +322,9 @@ func (o *Object) Storable() bool {
 func (o *Object) Remove(ctx context.Context) error {
 	bucketName, bucketPath := o.split()
 	req := objectstorage.DeleteObjectRequest{
-		NamespaceName: common.String(o.fs.opt.Namespace),
-		BucketName:    common.String(bucketName),
-		ObjectName:    common.String(bucketPath),
+		NamespaceName: new(o.fs.opt.Namespace),
+		BucketName:    new(bucketName),
+		ObjectName:    new(bucketPath),
 	}
 	err := o.fs.pacer.Call(func() (bool, error) {
 		resp, err := o.fs.srv.DeleteObject(ctx, req)
@@ -327,9 +337,9 @@ func (o *Object) Remove(ctx context.Context) error {
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
 	bucketName, bucketPath := o.split()
 	req := objectstorage.GetObjectRequest{
-		NamespaceName: common.String(o.fs.opt.Namespace),
-		BucketName:    common.String(bucketName),
-		ObjectName:    common.String(bucketPath),
+		NamespaceName: new(o.fs.opt.Namespace),
+		BucketName:    new(bucketName),
+		ObjectName:    new(bucketPath),
 	}
 	o.applyGetObjectOptions(&req, options...)
 	useBYOKGetObject(o.fs, &req)
@@ -362,7 +372,20 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	if err != nil {
 		return nil, err
 	}
-	o.bytes = *bytes
+	// Decompress body if necessary
+	if resp.ContentEncoding != nil && *resp.ContentEncoding == "gzip" {
+		if o.fs.opt.Decompress {
+			return readers.NewGzipReader(resp.HTTPResponse().Body)
+		}
+		o.fs.warnCompressed.Do(func() {
+			fs.Logf(o, "Not decompressing 'Content-Encoding: gzip' compressed file. Use --oos-decompress to override")
+		})
+	}
+	if bytes != nil {
+		o.bytes = *bytes
+	} else {
+		fs.Debugf(o, "Failed to find object length")
+	}
 	return resp.HTTPResponse().Body, nil
 }
 
@@ -374,6 +397,9 @@ func isZeroLength(streamReader io.Reader) bool {
 		return v.Len() == 0
 	case *strings.Reader:
 		return v.Len() == 0
+	case *bufio.Reader:
+		_, err := v.Peek(1)
+		return err == io.EOF
 	case *os.File:
 		fi, err := v.Stat()
 		if err != nil {
@@ -434,15 +460,15 @@ func (o *Object) applyPutOptions(req *objectstorage.PutObjectRequest, options ..
 		case "":
 			// ignore
 		case "cache-control":
-			req.CacheControl = common.String(value)
+			req.CacheControl = new(value)
 		case "content-disposition":
-			req.ContentDisposition = common.String(value)
+			req.ContentDisposition = new(value)
 		case "content-encoding":
-			req.ContentEncoding = common.String(value)
+			req.ContentEncoding = new(value)
 		case "content-language":
-			req.ContentLanguage = common.String(value)
+			req.ContentLanguage = new(value)
 		case "content-type":
-			req.ContentType = common.String(value)
+			req.ContentType = new(value)
 		default:
 			if strings.HasPrefix(lowerKey, ociMetaPrefix) {
 				req.OpcMeta[lowerKey] = value
@@ -474,15 +500,15 @@ func (o *Object) applyGetObjectOptions(req *objectstorage.GetObjectRequest, opti
 		case "":
 			// ignore
 		case "cache-control":
-			req.HttpResponseCacheControl = common.String(value)
+			req.HttpResponseCacheControl = new(value)
 		case "content-disposition":
-			req.HttpResponseContentDisposition = common.String(value)
+			req.HttpResponseContentDisposition = new(value)
 		case "content-encoding":
-			req.HttpResponseContentEncoding = common.String(value)
+			req.HttpResponseContentEncoding = new(value)
 		case "content-language":
-			req.HttpResponseContentLanguage = common.String(value)
+			req.HttpResponseContentLanguage = new(value)
 		case "content-type":
-			req.HttpResponseContentType = common.String(value)
+			req.HttpResponseContentType = new(value)
 		case "range":
 			// do nothing
 		default:

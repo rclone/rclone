@@ -343,7 +343,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	var item *api.DriveItem
 	if err = f.pacer.Call(func() (bool, error) {
-		item, resp, err = f.service.UpdateFile(ctx, &r)
+		item, resp, err = f.service.UpdateFile(ctx, &r, api.ZoneFromDriveID(pathID))
 		return retryResultUnknown(ctx, resp, err)
 	}); err != nil {
 		return nil, err
@@ -677,7 +677,7 @@ func retryResultUnknown(ctx context.Context, resp *http.Response, err error) (bo
 
 // NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
-	icloud, opt, err := newICloudClient(ctx, name, m)
+	icloud, opt, err := newICloudClient(ctx, name, m, api.WsDrive)
 	if err != nil {
 		return nil, err
 	}
@@ -949,7 +949,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// Create document
 	var uploadInfo *api.UploadResponse
 	if err = o.fs.pacer.Call(func() (bool, error) {
-		uploadInfo, resp, err = o.fs.service.CreateUpload(ctx, size, name)
+		uploadInfo, resp, err = o.fs.service.CreateUpload(ctx, size, name, api.ZoneFromDriveID(dirID))
 		return ignoreResultUnknown(ctx, resp, err)
 	}); err != nil {
 		return err
@@ -988,7 +988,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// Update metadata
 	var item *api.DriveItem
 	if err = o.fs.pacer.Call(func() (bool, error) {
-		item, resp, err = o.fs.service.UpdateFile(ctx, &r)
+		item, resp, err = o.fs.service.UpdateFile(ctx, &r, api.ZoneFromDriveID(dirID))
 		return ignoreResultUnknown(ctx, resp, err)
 	}); err != nil {
 		return err

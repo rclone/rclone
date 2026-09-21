@@ -121,6 +121,13 @@ func UploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.Reader, opt U
 		return nil, err
 	}
 
+	// Check the source supplied the number of bytes it declared before
+	// finalising, otherwise a truncated object would be created on the
+	// backend. Returning an error here aborts the upload.
+	if size >= 0 && off != size {
+		return nil, fmt.Errorf("multipart upload: expected %d bytes in input, but got %d: %w", size, off, io.ErrUnexpectedEOF)
+	}
+
 	err = chunkWriter.Close(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("multipart upload: failed to finalise: %w", err)

@@ -261,12 +261,6 @@ package is here.
 
 The rclone developers maintain a [docker image for rclone](https://hub.docker.com/r/rclone/rclone).
 
-**Note:** We also now offer a paid version of rclone with
-enterprise-grade security and zero CVEs through our partner
-[SecureBuild](https://securebuild.com/blog/introducing-securebuild).
-If you are interested, check out their website and the [Rclone
-SecureBuild Image](https://securebuild.com/images/rclone).
-
 These images are built as part of the release process based on a
 minimal Alpine Linux.
 
@@ -380,7 +374,7 @@ not the rclone developers so it may be out of date. Its current version is as be
 ## Source installation {#source}
 
 Make sure you have git and [Go](https://golang.org/) installed.
-Go version 1.25 or newer is required, the latest release is recommended.
+Go version 1.26 or newer is required, the latest release is recommended.
 You can get it from your package manager, or download it from
 [golang.org/dl](https://golang.org/dl/). Then you can run the following:
 
