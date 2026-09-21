@@ -115,6 +115,46 @@ func TestRcBwLimit(t *testing.T) {
 
 }
 
+// Check options/set applies a changed --bwlimit to the token bucket
+func TestBwLimitOptionsSet(t *testing.T) {
+	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
+	oldBwLimit, oldStarted, oldCurr, oldCurrLimit := ci.BwLimit, TokenBucket.started, TokenBucket.curr, TokenBucket.currLimit
+	defer func() {
+		ci.BwLimit = oldBwLimit
+		TokenBucket.started, TokenBucket.curr, TokenBucket.currLimit = oldStarted, oldCurr, oldCurrLimit
+	}()
+
+	setBwLimit := func(rate string) {
+		t.Helper()
+		call := rc.Calls.Get("options/set")
+		require.NotNil(t, call)
+		_, err := call.Fn(ctx, rc.Params{"main": rc.Params{"BwLimit": rate}})
+		require.NoError(t, err)
+	}
+
+	// Nothing happens before the token bucket is started
+	TokenBucket.started = false
+	TokenBucket.curr = buckets{}
+	setBwLimit("100k")
+	assert.Nil(t, TokenBucket.curr[TokenBucketSlotAccounting])
+
+	// Once started the limit is applied
+	TokenBucket.started = true
+	TokenBucket.currLimit = fs.BwTimeSlot{}
+	setBwLimit("200k")
+	require.NotNil(t, TokenBucket.curr[TokenBucketSlotTransportTx])
+	assert.Equal(t, rate.Limit(200*1024), TokenBucket.curr[TokenBucketSlotTransportTx].Limit())
+
+	// and changed again
+	setBwLimit("300k")
+	assert.Equal(t, rate.Limit(300*1024), TokenBucket.curr[TokenBucketSlotTransportTx].Limit())
+
+	// and turned off
+	setBwLimit("off")
+	assert.Nil(t, TokenBucket.curr[TokenBucketSlotTransportTx])
+}
+
 // Check setting the limit records it and respects the SIGUSR2 toggle
 func TestSetBwLimitToggledOff(t *testing.T) {
 	oldCurr, oldPrev, oldToggledOff, oldCurrLimit := TokenBucket.curr, TokenBucket.prev, TokenBucket.toggledOff, TokenBucket.currLimit

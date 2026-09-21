@@ -35,7 +35,28 @@ type tokenBucket struct {
 	curr       buckets
 	prev       buckets
 	toggledOff bool
+	started    bool
 	currLimit  fs.BwTimeSlot
+}
+
+func init() {
+	// Apply --bwlimit when the config is reloaded, e.g. by the rc
+	fs.BwLimitReload = TokenBucket.reload
+}
+
+// reload applies a changed --bwlimit to the token bucket.
+//
+// This does nothing before the token bucket is started as
+// StartTokenBucket reads the limit itself.
+func (tb *tokenBucket) reload(ci *fs.ConfigInfo) error {
+	limitNow := ci.BwLimit.LimitAt(time.Now())
+	tb.mu.Lock()
+	defer tb.mu.Unlock()
+	if !tb.started || tb.currLimit.Bandwidth == limitNow.Bandwidth {
+		return nil
+	}
+	tb._setBwLimit(limitNow.Bandwidth)
+	return nil
 }
 
 // Return true if limit is disabled
@@ -111,6 +132,7 @@ func (tb *tokenBucket) StartTokenBucket(ctx context.Context) {
 	tb.mu.Lock()
 	defer tb.mu.Unlock()
 	ci := fs.GetConfig(ctx)
+	tb.started = true
 	tb.currLimit = ci.BwLimit.LimitAt(time.Now())
 	if tb.currLimit.Bandwidth.IsSet() {
 		tb.curr = newTokenBucket(tb.currLimit.Bandwidth)

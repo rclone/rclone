@@ -713,6 +713,10 @@ func init() {
 // be there but we can't move due to them being visible here in the rc.
 var LogReload = func(*ConfigInfo) error { return nil }
 
+// BwLimitReload is written by fs/accounting to apply --bwlimit when
+// the config is reloaded, e.g. by the rc options/set.
+var BwLimitReload = func(*ConfigInfo) error { return nil }
+
 // Reload assumes the config has been edited and does what is necessary to make it live
 func (ci *ConfigInfo) Reload(ctx context.Context) error {
 	// Set -vv if --dump is in use
@@ -764,6 +768,10 @@ func (ci *ConfigInfo) Reload(ctx context.Context) error {
 	nonZero(&ci.LowLevelRetries)
 	nonZero(&ci.Transfers)
 	nonZero(&ci.Checkers)
+
+	if err := BwLimitReload(ci); err != nil {
+		return err
+	}
 
 	return LogReload(ci)
 }
