@@ -3,6 +3,7 @@ description: Fastly Object Storage
 region:
   au-east-1: AU East 1
   eu-central: EU Central
+  eu-central-1: EU Central 1
   eu-south-1: EU South 1
   jp-central-1: JP Central 1
   uk-east-1: UK East 1
@@ -12,6 +13,7 @@ region:
 endpoint:
   au-east-1.object.fastlystorage.app: AU East 1
   eu-central.object.fastlystorage.app: EU Central
+  eu-central-1.object.fastlystorage.app: EU Central 1
   eu-south-1.object.fastlystorage.app: EU South 1
   jp-central-1.object.fastlystorage.app: JP Central 1
   uk-east-1.object.fastlystorage.app: UK East 1
