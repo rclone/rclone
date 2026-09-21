@@ -87,8 +87,8 @@ func (job *Job) logs(since int64, limit int) rc.Params {
 		logEnd = job.logEnd
 	}
 	// Return the job's own logs and any which aren't attributed
-	filter := log.Filter{JobID: job.ID, Unattributed: true}
-	entries, next, lost := log.Recent.Get(since, logEnd, job.logLevel, filter, limit)
+	filter := log.Filter{Level: job.logLevel, JobID: job.ID, Unattributed: true}
+	entries, next, lost := log.Recent.Get(since, logEnd, filter, limit)
 	return rc.Params{
 		"entries": entries,
 		"next":    next,

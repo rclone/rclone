@@ -263,6 +263,15 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 		return
 	}
 
+	// A call which writes the response itself can't be run in the
+	// background as the response is gone by the time it runs.
+	if call.WritesResponse {
+		if async, err := in.GetBool("_async"); err == nil && async {
+			writeError(path, in, w, fmt.Errorf("can't use _async with %q", path), http.StatusBadRequest)
+			return
+		}
+	}
+
 	inOrig := in.Copy()
 
 	if call.NeedsRequest {
@@ -285,6 +294,11 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 	}
 	if out == nil {
 		out = make(rc.Params)
+	}
+
+	if call.WritesResponse {
+		// The call has written the response itself
+		return
 	}
 
 	fs.Debugf(nil, "rc: %q: reply %+v: %v", path, out, err)

@@ -22,6 +22,9 @@ type Call struct {
 	Help          string // multi-line markdown formatted help
 	NeedsRequest  bool   // if set then this call will be passed the original request object as _request
 	NeedsResponse bool   // if set then this call will be passed the original response object as _response
+	// if set then this call writes the HTTP response itself, so the
+	// server doesn't write the usual JSON reply after it
+	WritesResponse bool
 }
 
 // Registry holds the list of all the registered remote control functions

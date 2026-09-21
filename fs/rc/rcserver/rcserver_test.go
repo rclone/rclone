@@ -1249,3 +1249,29 @@ func normalizeJSON(t *testing.T, jsonStr string) string {
 	require.NoError(t, err, "JSON marshalling failed")
 	return string(normalizedJSON)
 }
+
+// A call which writes the response itself can't be run in the background
+func TestWritesResponseAsync(t *testing.T) {
+	tests := []testRun{{
+		Name:        "async",
+		URL:         "core/events",
+		Method:      "POST",
+		Body:        `{"_async":true}`,
+		ContentType: "application/json",
+		Status:      http.StatusBadRequest,
+		Expected: `{
+	"error": "can't use _async with \"core/events\"",
+	"input": {
+		"_async": true
+	},
+	"path": "core/events",
+	"status": 400
+}
+`,
+	}}
+	opt := newTestOpt()
+	opt.Serve = false
+	opt.Files = ""
+	opt.NoAuth = true
+	testServer(t, tests, &opt)
+}

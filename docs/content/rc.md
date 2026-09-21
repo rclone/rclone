@@ -635,6 +635,40 @@ Note that:
 - `_logs` can't be used on an rc server without authentication unless
   `--rc-no-auth` is in use.
 
+### Following the logs with core/events {#events}
+
+[core/events](#core-events) streams the logs over a single HTTP
+connection as they happen, which avoids polling
+[core/log](#core-log). It doesn't need `--log-buffer-size` to be set
+as nothing is stored - the logs are sent as they are made.
+
+The response is newline delimited JSON - one object per line, each
+with a `type`:
+
+```console
+$ curl -u user:pass -N -X POST http://127.0.0.1:5572/core/events
+{"type":"start","seq":42}
+{"type":"log","seq":42,"time":"2026-09-21T12:16:41.134507+01:00","level":"info","msg":"Copied (new)","object":"file.txt","objectType":"*local.Object","size":3,"source":"operations/copy.go:385","jobid":1,"group":"job/1"}
+{"type":"heartbeat","time":"2026-09-21T12:17:11.134507+01:00"}
+```
+
+The `log` events are in the same format as the entries returned by
+[core/log](#core-log), so they carry `jobid` and `group` where rclone
+can attribute them - see [_logs](#logs) for what can be attributed.
+
+The stream can be filtered with `level`, `group`, `jobid` and
+`unattributed` as `core/log` is.
+
+If the client doesn't read the stream fast enough then events are
+dropped and a `dropped` event says how many. If `--log-buffer-size` is
+set then passing `since` with the `seq` of the last entry seen sends
+the entries from the buffer first, so a client which reconnects
+doesn't miss anything.
+
+Note that every rc call is logged at `DEBUG` level, so a client
+streaming at that level sees the logs of its own polling. Use
+[--rc-log-calls=false](/docs/#rc-log-calls) to turn that off.
+
 ## Data types {#data-types}
 
 When the API returns types, these will mostly be straight forward

@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
@@ -36,25 +37,31 @@ type bufferEntry struct {
 
 // Filter selects which entries Buffer.Get returns.
 //
-// The zero value returns all the entries.
+// Note that the zero value of Level is INFO, so the zero value
+// returns the entries at INFO or more severe.
 type Filter struct {
-	JobID        int64  // if set, only return entries attributed to this rc job
-	Group        string // if set, only return entries attributed to this stats group
-	Unattributed bool   // if set with JobID or Group, also return entries which aren't attributed
+	Level        slog.Level // only return entries at this level or more severe - note the zero value is INFO
+	JobID        int64      // if set, only return entries attributed to this rc job
+	Group        string     // if set, only return entries attributed to this stats group
+	Unattributed bool       // if set with JobID or Group, also return entries which aren't attributed
 }
 
-// match returns true if the entry should be returned.
-func (f *Filter) match(entry *bufferEntry) bool {
+// match returns true if an entry at level attributed to attribution
+// should be returned.
+func (f *Filter) match(level slog.Level, attribution Attribution) bool {
+	if level < f.Level {
+		return false
+	}
 	if f.JobID == 0 && f.Group == "" {
 		return true
 	}
-	if f.JobID != 0 && entry.attribution.JobID == f.JobID {
+	if f.JobID != 0 && attribution.JobID == f.JobID {
 		return true
 	}
-	if f.Group != "" && entry.attribution.Group == f.Group {
+	if f.Group != "" && attribution.Group == f.Group {
 		return true
 	}
-	return f.Unattributed && !entry.attribution.Attributed()
+	return f.Unattributed && !attribution.Attributed()
 }
 
 // Entries is a list of log entries in JSON format as returned by Buffer.Get.
@@ -80,7 +87,6 @@ type Buffer struct {
 	entries []bufferEntry // oldest first in increasing sequence number
 	size    int64         // total size of the JSON in entries
 	maxSize int64         // drop old entries to keep size <= this - disabled if <= 0
-	nextSeq int64         // sequence number of the next entry to be added
 }
 
 // SetSize sets the maximum size in bytes of the log entries kept.
@@ -102,9 +108,7 @@ func (b *Buffer) Enabled() bool {
 
 // Seq returns the sequence number the next log entry will be given.
 func (b *Buffer) Seq() int64 {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-	return b.nextSeq
+	return nextSeq.Load()
 }
 
 // trim drops the oldest entries until the Buffer is within its size.
@@ -121,38 +125,15 @@ func (b *Buffer) trim() {
 	}
 }
 
-// output adds the JSON formatted log entry text for r to the Buffer.
+// add adds a log entry made by makeEntry to the Buffer.
 //
 // This is called with the log handler's mutex held so it must not log.
-func (b *Buffer) output(r slog.Record, attribution Attribution, text string) {
-	b.add(r.Level, attribution, text)
-}
-
-// add adds a JSON formatted log entry with what it is attributed to
-// (which may be nothing) to the Buffer.
-//
-// This is called with the log handler's mutex held so it must not log.
-func (b *Buffer) add(level slog.Level, attribution Attribution, text string) {
+func (b *Buffer) add(seq int64, level slog.Level, attribution Attribution, entry json.RawMessage) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if b.maxSize <= 0 {
 		return
 	}
-	seq := b.nextSeq
-	b.nextSeq++
-	text = strings.TrimSpace(text)
-	if !(strings.HasPrefix(text, `{"`) && strings.HasSuffix(text, "}")) {
-		// This shouldn't happen but make sure we always store valid JSON
-		msg, _ := json.Marshal(text)
-		text = `{"msg":` + string(msg) + `}`
-	}
-	// Build the entry with the sequence number added in a single allocation
-	const prefix = `{"seq":`
-	entry := make(json.RawMessage, 0, len(prefix)+20+len(text))
-	entry = append(entry, prefix...)
-	entry = strconv.AppendInt(entry, seq, 10)
-	entry = append(entry, ',')
-	entry = append(entry, text[1:]...)
 	// Don't store an entry bigger than the buffer as it would evict
 	// everything else - it will show up as lost
 	if int64(len(entry)) > b.maxSize {
@@ -164,7 +145,7 @@ func (b *Buffer) add(level slog.Level, attribution Attribution, text string) {
 }
 
 // Get returns the entries with sequence numbers from <= seq < to
-// which are at level or more severe and match filter, oldest first.
+// which match filter, oldest first.
 //
 // If limit > 0 then at most limit entries are returned and at most
 // maxExamine entries are looked at, so Get may return early with next
@@ -175,11 +156,14 @@ func (b *Buffer) add(level slog.Level, attribution Attribution, text string) {
 // number of entries in the range which are no longer in the Buffer,
 // either because they were dropped to make space or because they
 // were too big to store.
-func (b *Buffer) Get(from, to int64, level slog.Level, filter Filter, limit int) (entries Entries, next, lost int64) {
+func (b *Buffer) Get(from, to int64, filter Filter, limit int) (entries Entries, next, lost int64) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	to = min(to, b.nextSeq)
-	from = min(max(from, 0), b.nextSeq)
+	// Sequence numbers are given out for every log entry, whether
+	// it is stored or not, so use that as the end of the log
+	end := nextSeq.Load()
+	to = min(to, end)
+	from = min(max(from, 0), end)
 	entries = Entries{}
 	next = max(to, from)
 	// Find the first entry with seq >= from
@@ -197,7 +181,7 @@ func (b *Buffer) Get(from, to int64, level slog.Level, filter Filter, limit int)
 			break
 		}
 		examined++
-		if entry.level >= level && filter.match(entry) {
+		if filter.match(entry.level, entry.attribution) {
 			entries = append(entries, entry.json)
 		}
 	}
@@ -205,30 +189,66 @@ func (b *Buffer) Get(from, to int64, level slog.Level, filter Filter, limit int)
 	return entries, next, lost
 }
 
-// setBufferSize sets the size of Recent from the options and
-// connects it to the log output if it is enabled or disconnects it if
-// not.
+// setBufferSize sets the size of Recent from the options.
+func setBufferSize() {
+	Recent.SetSize(int64(Opt.BufferSize))
+	updateOutput()
+}
+
+// nextSeq is the sequence number the next log entry will be given.
+var nextSeq atomic.Int64
+
+// makeEntry makes the JSON for a log entry from the JSON formatted
+// log text, adding the sequence number to it.
+func makeEntry(seq int64, text string) json.RawMessage {
+	text = strings.TrimSpace(text)
+	if !(strings.HasPrefix(text, `{"`) && strings.HasSuffix(text, "}")) {
+		// This shouldn't happen but make sure we always make valid JSON
+		msg, _ := json.Marshal(text)
+		text = `{"msg":` + string(msg) + `}`
+	}
+	// Build the entry with the sequence number added in a single allocation
+	const prefix = `{"seq":`
+	entry := make(json.RawMessage, 0, len(prefix)+20+len(text))
+	entry = append(entry, prefix...)
+	entry = strconv.AppendInt(entry, seq, 10)
+	entry = append(entry, ',')
+	entry = append(entry, text[1:]...)
+	return entry
+}
+
+// logOutput is the log output which feeds the log buffer and the
+// core/events subscribers.
+//
+// This is called with the log handler's mutex held so it must not log.
+func logOutput(r slog.Record, attribution Attribution, text string) {
+	seq := nextSeq.Add(1) - 1
+	entry := makeEntry(seq, text)
+	Recent.add(seq, r.Level, attribution, entry)
+	publish(r.Level, attribution, entry)
+}
+
+// updateOutput connects logOutput to the log handler if the log
+// buffer or any subscriber needs it and disconnects it if not.
 //
 // The output is only connected when needed as it causes every log
 // entry to be formatted as JSON.
-func setBufferSize() {
-	bufferOutputMu.Lock()
-	defer bufferOutputMu.Unlock()
-	Recent.SetSize(int64(Opt.BufferSize))
-	if Opt.BufferSize > 0 && bufferOutputRemove == nil {
-		bufferOutputRemove = Handler.addRecordOutput(true, func(r slog.Record, attribution Attribution, text string) {
-			Recent.output(r, attribution, text)
-		})
-	} else if Opt.BufferSize <= 0 && bufferOutputRemove != nil {
-		bufferOutputRemove()
-		bufferOutputRemove = nil
+func updateOutput() {
+	outputMu.Lock()
+	defer outputMu.Unlock()
+	needed := Recent.Enabled() || subscribed()
+	if needed && outputRemove == nil {
+		outputRemove = Handler.addRecordOutput(true, logOutput)
+	} else if !needed && outputRemove != nil {
+		outputRemove()
+		outputRemove = nil
 	}
 }
 
-// bufferOutputRemove disconnects Recent from the log output if not nil.
+// outputRemove disconnects logOutput from the log handler if not nil.
 var (
-	bufferOutputMu     sync.Mutex
-	bufferOutputRemove func()
+	outputMu     sync.Mutex
+	outputRemove func()
 )
 
 func init() {
@@ -374,8 +394,8 @@ func rcLog(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	if rc.NotErrParamNotFound(err) {
 		return nil, err
 	}
-	filter := Filter{Group: group, JobID: jobID}
-	entries, next, lost := Recent.Get(since, math.MaxInt64, level, filter, int(min(limit, math.MaxInt32)))
+	filter := Filter{Level: level, Group: group, JobID: jobID}
+	entries, next, lost := Recent.Get(since, math.MaxInt64, filter, int(min(limit, math.MaxInt32)))
 	return rc.Params{
 		"entries": entries,
 		"next":    next,
