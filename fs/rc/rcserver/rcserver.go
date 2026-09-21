@@ -283,7 +283,7 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 		in["_response"] = w
 	}
 
-	fs.Debugf(nil, "rc: %q: with parameters %+v", path, in)
+	rc.LogCall("rc: %q: with parameters %+v", path, in)
 	job, out, err := jobs.NewJob(ctx, call.Fn, in)
 	if job != nil {
 		w.Header().Add("x-rclone-jobid", fmt.Sprintf("%d", job.ID))
@@ -301,7 +301,7 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 		return
 	}
 
-	fs.Debugf(nil, "rc: %q: reply %+v: %v", path, out, err)
+	rc.LogCall("rc: %q: reply %+v: %v", path, out, err)
 	w.Header().Set("Content-Type", "application/json")
 	if preferAsync {
 		w.Header().Set("Preference-Applied", "respond-async")

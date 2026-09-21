@@ -8,9 +8,11 @@
 package rc
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	_ "net/http/pprof" // install the pprof http handlers
+	"sync/atomic"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -42,6 +44,11 @@ var OptionsInfo = fs.Options{{
 	Name:    "rc_no_auth",
 	Default: false,
 	Help:    "Don't require auth for certain methods",
+	Groups:  "RC",
+}, {
+	Name:    "rc_log_calls",
+	Default: true,
+	Help:    "Log each rc call and its reply at DEBUG level",
 	Groups:  "RC",
 }, {
 	Name:    "rc_web_gui",
@@ -99,7 +106,27 @@ var OptionsInfo = fs.Options{{
 	SetDefault("metrics_addr", []string{})
 
 func init() {
-	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "rc", Opt: &Opt, Options: OptionsInfo})
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "rc", Opt: &Opt, Options: OptionsInfo, Reload: optReload})
+}
+
+// logCalls is Opt.LogCalls, kept here so it can be read without
+// racing with options/set changing the options.
+var logCalls atomic.Bool
+
+// optReload makes the options which can be changed at runtime live.
+func optReload(ctx context.Context) error {
+	logCalls.Store(Opt.LogCalls)
+	return nil
+}
+
+// LogCall logs an rc call at DEBUG level unless --rc-log-calls=false.
+//
+// This is used for the logs of each call and its reply which are
+// noise for a client reading the logs over the rc.
+func LogCall(text string, args ...any) {
+	if logCalls.Load() {
+		fs.Debugf(nil, text, args...)
+	}
 }
 
 // Options contains options for the remote control server
@@ -112,6 +139,7 @@ type Options struct {
 	Serve               bool                   `config:"rc_serve"`                   // set to serve files from remotes
 	ServeNoModTime      bool                   `config:"rc_serve_no_modtime"`        // don't read the modification time
 	NoAuth              bool                   `config:"rc_no_auth"`                 // set to disable auth checks on methods which require it
+	LogCalls            bool                   `config:"rc_log_calls"`               // set to log each rc call and its reply at DEBUG level
 	WebUI               bool                   `config:"rc_web_gui"`                 // set to launch the web ui **DEPRECATED**
 	WebGUIUpdate        bool                   `config:"rc_web_gui_update"`          // set to check new update **DEPRECATED**
 	WebGUIForceUpdate   bool                   `config:"rc_web_gui_force_update"`    // set to force download new update **DEPRECATED**

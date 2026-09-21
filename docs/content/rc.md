@@ -210,6 +210,24 @@ Expire finished async jobs older than DURATION (default 60s).
 
 Interval duration to check for expired async jobs (default 10s).
 
+### --rc-log-calls
+
+By default rclone logs each rc call and its reply at `DEBUG` level.
+
+A client which reads the logs over the rc, with
+[core/events](#core-events) or [core/log](#core-log), sees the logs of
+its own calls this way, which can drown out everything else. Set this
+to false to stop rclone logging the calls.
+
+This can be changed while rclone is running with
+[options/set](#options-set):
+
+```console
+$ rclone rc options/set --json '{"rc": {"LogCalls": false}}'
+```
+
+Default On.
+
 ### --rc-no-auth
 
 By default rclone will require authorisation to have been set up on
@@ -667,7 +685,7 @@ doesn't miss anything.
 
 Note that every rc call is logged at `DEBUG` level, so a client
 streaming at that level sees the logs of its own polling. Use
-[--rc-log-calls=false](/docs/#rc-log-calls) to turn that off.
+[--rc-log-calls=false](#--rc-log-calls) to turn that off.
 
 ## Data types {#data-types}
 

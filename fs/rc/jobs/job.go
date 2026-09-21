@@ -663,7 +663,7 @@ func NewJobFromParams(ctx context.Context, in rc.Params) (out rc.Params) {
 		}
 	}
 
-	fs.Debugf(nil, "rc: %q: with parameters %+v", path, in)
+	rc.LogCall("rc: %q: with parameters %+v", path, in)
 	_, out, err = NewJob(ctx, call.Fn, in)
 	if err != nil {
 		return rcError(err, http.StatusInternalServerError)
@@ -672,7 +672,7 @@ func NewJobFromParams(ctx context.Context, in rc.Params) (out rc.Params) {
 		out = make(rc.Params)
 	}
 
-	fs.Debugf(nil, "rc: %q: reply %+v: %v", path, out, err)
+	rc.LogCall("rc: %q: reply %+v: %v", path, out, err)
 	return out
 }
 

@@ -112,7 +112,7 @@ func RPC(method string, input string) (output string, status int) {
 		//in["_response"] = w
 	}
 
-	fs.Debugf(nil, "rc: %q: with parameters %+v", method, in)
+	rc.LogCall("rc: %q: with parameters %+v", method, in)
 
 	_, out, err := jobs.NewJob(context.Background(), call.Fn, in)
 	if err != nil {
@@ -122,7 +122,7 @@ func RPC(method string, input string) (output string, status int) {
 		out = make(rc.Params)
 	}
 
-	fs.Debugf(nil, "rc: %q: reply %+v: %v", method, out, err)
+	rc.LogCall("rc: %q: reply %+v: %v", method, out, err)
 
 	var w strings.Builder
 	err = rc.WriteJSON(&w, out)
