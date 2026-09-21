@@ -20,7 +20,9 @@ features:
 - GetTier
 - ListP
 - ListR
+- Move
 - OpenChunkWriter
+- Purge
 - PutStream
 - ReadMetadata
 - ReadMimeType

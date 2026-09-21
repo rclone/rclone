@@ -11,10 +11,12 @@ package linkbox
 */
 
 import (
-	"bytes"
 	"context"
 	"crypto/md5"
 	"crypto/tls"
+	"encoding/hex"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -33,7 +35,9 @@ import (
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
+	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/rest"
 )
 
@@ -44,7 +48,8 @@ const (
 	pacerBurst         = 1
 	linkboxAPIURL      = "https://www.linkbox.to/api/open/"
 	linkboxWebAPIURL   = "https://www.linkbox.to/api/"
-	rootID             = "0" // ID of root directory
+	rootID             = "0"              // ID of root directory
+	prefixSize         = 10 * 1024 * 1024 // the API wants the MD5 of the first 10 MiB of a file
 )
 
 func init() {
@@ -256,11 +261,8 @@ func (f *Fs) login(ctx context.Context) error {
 // so this refreshes the token and updates the request parameters for
 // the retry.
 func (f *Fs) shouldRetryWeb(ctx context.Context, resp *http.Response, err error, result responser, opts *rest.Opts) (bool, error) {
-	if fserrors.ContextError(ctx, &err) {
-		return false, err
-	}
-	if fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes) {
-		return true, err
+	if retry, err := f.shouldRetry(ctx, resp, err); retry || err != nil {
+		return retry, err
 	}
 	// If the web API returned an error, it may be due to an expired token.
 	// Refresh the token and retry.
@@ -668,6 +670,21 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	return res.Body, nil
 }
 
+// readPrefix reads up to prefixSize bytes of in into a buffer from the
+// global pool returning it along with the hex MD5 of what was read.
+//
+// The caller must Close the returned buffer when done with it.
+func readPrefix(in io.Reader) (rw *pool.RW, md5sum string, err error) {
+	rw = multipart.NewRW()
+	hasher := md5.New()
+	_, err = io.CopyN(rw, io.TeeReader(in, hasher), prefixSize)
+	if err != nil && err != io.EOF {
+		_ = rw.Close()
+		return nil, "", err
+	}
+	return rw, hex.EncodeToString(hasher.Sum(nil)), nil
+}
+
 // Update in to the object with the modTime given of the given size
 //
 // When called from outside an Fs by rclone, src.Size() will always be >= 0.
@@ -702,11 +719,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 	}
 
-	first10m := io.LimitReader(in, 10_485_760)
-	first10mBytes, err := io.ReadAll(first10m)
+	prefix, prefixMD5, err := readPrefix(in)
 	if err != nil {
 		return fmt.Errorf("Update err in reading file: %w", err)
 	}
+	defer func() {
+		_ = prefix.Close()
+	}()
 
 	// get upload authorization (step 1)
 	opts := &rest.Opts{
@@ -716,7 +735,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		Options: options,
 		Parameters: url.Values{
 			"token":           {o.fs.opt.Token},
-			"fileMd5ofPre10m": {fmt.Sprintf("%x", md5.Sum(first10mBytes))},
+			"fileMd5ofPre10m": {prefixMD5},
 			"fileSize":        {itoa64(size)},
 		},
 	}
@@ -758,7 +777,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			return fmt.Errorf("head upload URL: %w", err)
 		}
 
-		file := io.MultiReader(bytes.NewReader(first10mBytes), in)
+		file := io.MultiReader(prefix, in)
 
 		opts.Method = "PUT"
 		opts.Body = file
@@ -798,7 +817,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		Options: options,
 		Parameters: url.Values{
 			"token":           {o.fs.opt.Token},
-			"fileMd5ofPre10m": {fmt.Sprintf("%x", md5.Sum(first10mBytes))},
+			"fileMd5ofPre10m": {prefixMD5},
 			"fileSize":        {itoa64(size)},
 			"pid":             {dirID},
 			"diyName":         {leaf},
@@ -1015,6 +1034,13 @@ var retryErrorCodes = []int{
 func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
 	if fserrors.ContextError(ctx, &err) {
 		return false, err
+	}
+	// The API is fronted by bot protection which under load
+	// intermittently returns an HTML challenge page with a 200
+	// status instead of JSON. This surfaces as a JSON syntax error,
+	// so retry it to let the pacer back off until the block lifts.
+	if _, ok := errors.AsType[*json.SyntaxError](err); ok {
+		return true, err
 	}
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }

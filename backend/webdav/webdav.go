@@ -180,6 +180,10 @@ to an unknown webserver.
 However this is desirable in some circumstances. If you are getting
 an error like "401 Unauthorized" when rclone is attempting to read
 files from the webdav server then you can try this option.
+
+Note that enabling this also permits sending your credentials over a
+plaintext HTTP connection if the server redirects from HTTPS to HTTP,
+which rclone otherwise refuses to do.
 `,
 				Advanced: true,
 				Default:  false,
@@ -229,6 +233,7 @@ type Fs struct {
 	ntlmAuthMu         sync.Mutex    // mutex to serialize NTLM auth roundtrips
 	chunksUploadURL    string        // upload URL for nextcloud chunked
 	canChunk           bool          // set if nextcloud and nextcloud_chunk_size is set
+	canRecalcHash      bool          // set if the server can recalculate checksums with PATCH (nextcloud)
 	authSingleflight   *singleflight.Group
 }
 
@@ -360,7 +365,11 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Pr
 	var result api.Multistatus
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallXML(ctx, &opts, nil, &result)
+		var attempt api.Multistatus
+		resp, err = f.srv.CallXML(ctx, &opts, nil, &attempt)
+		if err == nil {
+			result = attempt
+		}
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if apiErr, ok := err.(*api.Error); ok {
@@ -511,6 +520,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			rt: ntlmssp.Negotiator{RoundTripper: t},
 		}
 	}
+	// Refuse redirects that downgrade HTTPS to plaintext HTTP.
+	client.CheckRedirect = rest.RefuseHTTPSDowngradeRedirectFn
 	f.srv = rest.NewClient(client).SetRoot(u.String())
 
 	f.features = (&fs.Features{
@@ -658,6 +669,7 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		f.propsetMtime = true
 		f.hasOCSHA1 = true
 		f.canChunk = true
+		f.canRecalcHash = true
 
 		if f.opt.ChunkSize == 0 {
 			fs.Logf(nil, "Chunked uploads are disabled because nextcloud_chunk_size is set to 0")
@@ -807,7 +819,11 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 	var result api.Multistatus
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallXML(ctx, &opts, nil, &result)
+		var attempt api.Multistatus
+		resp, err = f.srv.CallXML(ctx, &opts, nil, &attempt)
+		if err == nil {
+			result = attempt
+		}
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
@@ -1465,11 +1481,16 @@ var owncloudPropsetWithChecksum = `<?xml version="1.0" encoding="utf-8" ?>
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	if o.fs.propsetMtime {
+		// Setting the modification time discards the stored
+		// checksums so they are set again in the same request.
+		// Servers which can't do that recalculate them afterwards.
 		checksums := ""
-		if o.fs.hasOCSHA1 && o.sha1 != "" {
-			checksums = "SHA1:" + o.sha1
-		} else if o.fs.hasOCMD5 && o.md5 != "" {
-			checksums = "MD5:" + o.md5
+		if !o.fs.canRecalcHash {
+			if o.fs.hasOCSHA1 && o.sha1 != "" {
+				checksums = "SHA1:" + o.sha1
+			} else if o.fs.hasOCMD5 && o.md5 != "" {
+				checksums = "MD5:" + o.md5
+			}
 		}
 
 		opts := rest.Opts{
@@ -1499,8 +1520,17 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 		}
 		// FIXME check if response is valid
 		if len(result.Responses) == 1 && result.Responses[0].Props.StatusOK() {
-			// update cached modtime
-			o.modTime = modTime
+			// update cached modtime - the PROPPATCH sets it with
+			// second precision so truncate here too to keep the
+			// in-memory modtime identical to the one a fresh
+			// listing returns
+			o.modTime = modTime.Truncate(time.Second)
+			if o.fs.canRecalcHash && (o.sha1 != "" || o.md5 != "") {
+				err = o.recalculateHash(ctx)
+				if err != nil {
+					return fmt.Errorf("couldn't restore checksum after setting modified time: %w", err)
+				}
+			}
 			return nil
 		}
 		// got an error, but it's possible it actually worked, so double-check
@@ -1537,6 +1567,18 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
+		if err == nil {
+			err = rest.CheckContentRange(resp, options, o.size)
+			if err != nil {
+				if resp != nil && resp.Body != nil {
+					_ = resp.Body.Close()
+				}
+				if errors.Is(err, fs.ErrorRangeIgnored) {
+					return false, err
+				}
+				return true, fserrors.RetryError(err)
+			}
+		}
 		return o.fs.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
@@ -1587,7 +1629,54 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	// read metadata from remote
 	o.hasMetaData = false
-	return o.readMetaData(ctx)
+	err = o.readMetaData(ctx)
+	if err != nil {
+		return err
+	}
+	// The server only stores a checksum supplied with the upload,
+	// so ask the server to calculate one if it is missing.
+	if o.fs.canRecalcHash && o.sha1 == "" && o.md5 == "" {
+		err = o.recalculateHash(ctx)
+		if err != nil {
+			return fmt.Errorf("couldn't calculate checksum after upload: %w", err)
+		}
+	}
+	return nil
+}
+
+// recalculateHash asks the server to calculate and store the checksum
+// of the object's contents, updating the cached hash from the result.
+//
+// This uses the nextcloud PATCH extension with the X-Recalculate-Hash
+// header which returns the checksum in the OC-Checksum header.
+func (o *Object) recalculateHash(ctx context.Context) error {
+	hashName := ""
+	if o.fs.hasOCSHA1 {
+		hashName = "sha1"
+	} else if o.fs.hasOCMD5 {
+		hashName = "md5"
+	} else {
+		return nil
+	}
+	opts := rest.Opts{
+		Method:       "PATCH",
+		Path:         o.filePath(),
+		NoResponse:   true,
+		ExtraHeaders: map[string]string{"X-Recalculate-Hash": hashName},
+	}
+	var resp *http.Response
+	err := o.fs.pacer.Call(func() (bool, error) {
+		var err error
+		resp, err = o.fs.srv.Call(ctx, &opts)
+		return o.fs.shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return err
+	}
+	hashes := (&api.Prop{Checksums: []string{resp.Header.Get("OC-Checksum")}}).Hashes()
+	o.sha1 = hashes[hash.SHA1]
+	o.md5 = hashes[hash.MD5]
+	return nil
 }
 
 func (o *Object) extraHeaders(ctx context.Context, src fs.ObjectInfo) map[string]string {

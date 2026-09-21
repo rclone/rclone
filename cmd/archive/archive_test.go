@@ -1,7 +1,11 @@
 package archive_test
 
 import (
+	"archive/zip"
+	"bytes"
 	"context"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -132,6 +136,47 @@ func testArchiveRemote(t *testing.T, fromLocal bool, subDir string, extension st
 	fstest.CheckListingWithPrecision(t, src, items, nil, fs.ModTimeNotSupported)
 }
 
+// test archiving to stdout when no destination is given
+func TestArchiveStdout(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+
+	f1 := r.WriteObject(ctx, "file1.txt", "content 1", t1)
+	f2 := r.WriteObject(ctx, "dir1/sub1.txt", "sub content 1", t1)
+	fstest.CheckItems(t, r.Fremote, f1, f2)
+
+	// redirect stdout into a file on the local fs
+	archiveName := "stdout.zip"
+	require.NoError(t, r.Flocal.Mkdir(ctx, ""))
+	out, err := os.Create(filepath.Join(r.LocalName, archiveName))
+	require.NoError(t, err)
+	oldStdout := os.Stdout
+	os.Stdout = out
+	err = create.ArchiveCreate(ctx, nil, "", r.Fremote, "zip", "")
+	os.Stdout = oldStdout
+	require.NoError(t, out.Close())
+	require.NoError(t, err)
+
+	// check the archive written to stdout is readable
+	expected := map[string]bool{
+		"file1.txt":     true,
+		"dir1/":         true,
+		"dir1/sub1.txt": true,
+	}
+	listFile := func(ctx context.Context, f archives.FileInfo) error {
+		name := f.NameInArchive
+		if f.IsDir() && !strings.HasSuffix(name, "/") {
+			name += "/"
+		}
+		assert.True(t, expected[name], name)
+		delete(expected, name)
+		return nil
+	}
+	err = list.ArchiveList(ctx, r.Flocal, archiveName, listFile)
+	require.NoError(t, err)
+	assert.Equal(t, 0, len(expected), expected)
+}
+
 func testArchive(t *testing.T) {
 	var extensions = []string{
 		"zip",
@@ -168,6 +213,60 @@ func testArchive(t *testing.T) {
 
 func TestIntegration(t *testing.T) {
 	testArchive(t)
+}
+
+// craftZip builds an in-memory zip archive with the given entries, returning
+// it as a string. The entry names are written verbatim so they can include
+// crafted path traversal sequences that the archive create command would
+// never produce from real files.
+func craftZip(t *testing.T, entries []struct{ name, content string }) string {
+	var buf bytes.Buffer
+	zw := zip.NewWriter(&buf)
+	for _, e := range entries {
+		w, err := zw.CreateHeader(&zip.FileHeader{Name: e.name, Method: zip.Store})
+		require.NoError(t, err)
+		_, err = w.Write([]byte(e.content))
+		require.NoError(t, err)
+	}
+	require.NoError(t, zw.Close())
+	return buf.String()
+}
+
+// TestExtractPathTraversal checks that a crafted archive whose entries try to
+// escape the destination directory with ".." components is rejected and does
+// not write anything outside the destination (GHSA-4vr5-p2gc-h23p).
+func TestExtractPathTraversal(t *testing.T) {
+	ctx := context.Background()
+
+	for _, tc := range []struct {
+		name  string
+		entry string
+	}{
+		{name: "forward slash", entry: "../escaped.txt"},
+		{name: "backslash", entry: `..\escaped.txt`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			r := fstest.NewRun(t)
+
+			zipData := craftZip(t, []struct{ name, content string }{
+				{"safe.txt", "safe content"},
+				{tc.entry, "escaped content"},
+			})
+			r.WriteObject(ctx, "malicious.zip", zipData, t1)
+
+			// Extract into a subdirectory so a successful escape would land
+			// in "safe/escaped.txt", a sibling of the "safe/prefix" target.
+			err := extract.ArchiveExtract(ctx, r.Flocal, "safe/prefix", r.Fremote, "malicious.zip")
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "..")
+
+			// Nothing should have escaped the destination directory.
+			for _, escaped := range []string{"safe/escaped.txt", "escaped.txt"} {
+				_, err := r.Flocal.NewObject(ctx, escaped)
+				assert.ErrorIs(t, err, fs.ErrorObjectNotFound, escaped)
+			}
+		})
+	}
 }
 
 func TestMemory(t *testing.T) {

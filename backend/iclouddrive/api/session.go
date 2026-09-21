@@ -194,6 +194,22 @@ func (s *Session) Request(ctx context.Context, opts rest.Opts, request any, resp
 	return resp, nil
 }
 
+// acceptedDespiteConflict returns true when Apple signals a successful code
+// validation with HTTP 409. Since ~mid-2026, idmsa returns 409 on the
+// securitycode endpoints even when the code is accepted (body carries
+// securityCode.valid=true), but it still issues X-Apple-Session-Token on
+// success. Treat token issuance as ground truth and absorb the headers so
+// TrustSession can proceed.
+func (s *Session) acceptedDespiteConflict(resp *http.Response) bool {
+	if resp == nil || resp.StatusCode != 409 || resp.Header.Get("X-Apple-Session-Token") == "" {
+		return false
+	}
+	s.mu.Lock()
+	s.extractHeaders(resp)
+	s.mu.Unlock()
+	return true
+}
+
 // Requires2FA returns true if the session requires 2FA
 func (s *Session) Requires2FA() bool {
 	if s.needs2FA {
@@ -660,7 +676,10 @@ func (s *Session) Validate2FACode(ctx context.Context, code string) error {
 		NoResponse:   true,
 	}
 
-	_, err = s.Request(ctx, opts, nil, nil)
+	resp, err := s.Request(ctx, opts, nil, nil)
+	if err != nil && s.acceptedDespiteConflict(resp) {
+		err = nil
+	}
 	if err == nil {
 		if err := s.TrustSession(ctx); err != nil {
 			return err
@@ -699,7 +718,7 @@ func (s *Session) GetAuthState(ctx context.Context) (*AuthStateResponse, error) 
 		Path:          "",
 		ExtraHeaders:  s.GetAuthHeaders(map[string]string{}),
 		RootURL:       authEndpoint,
-		ContentLength: int64Ptr(0),
+		ContentLength: new(int64(0)),
 	}
 	// Use srv.Call directly to capture the raw response body for debugging
 	resp, err := s.srv.Call(ctx, &opts)
@@ -788,7 +807,10 @@ func (s *Session) ValidateSMSCode(ctx context.Context, code string, phoneID int,
 		Body:         body,
 		NoResponse:   true,
 	}
-	_, err = s.Request(ctx, opts, nil, nil)
+	resp, err := s.Request(ctx, opts, nil, nil)
+	if err != nil && s.acceptedDespiteConflict(resp) {
+		err = nil
+	}
 	if err == nil {
 		if err := s.TrustSession(ctx); err != nil {
 			return err
@@ -806,7 +828,7 @@ func (s *Session) TrustSession(ctx context.Context) error {
 		ExtraHeaders:  s.GetAuthHeaders(map[string]string{}),
 		RootURL:       authEndpoint,
 		NoResponse:    true,
-		ContentLength: int64Ptr(0),
+		ContentLength: new(int64(0)),
 	}
 
 	_, err := s.Request(ctx, opts, nil, nil)
@@ -824,7 +846,7 @@ func (s *Session) ValidateSession(ctx context.Context) error {
 		Path:          "/validate",
 		ExtraHeaders:  s.GetHeaders(map[string]string{}),
 		RootURL:       setupEndpoint,
-		ContentLength: int64Ptr(0),
+		ContentLength: new(int64(0)),
 	}
 	_, err := s.Request(ctx, opts, nil, &s.AccountInfo)
 	if err != nil {
@@ -881,8 +903,6 @@ func GetCommonHeaders(overwrite map[string]string) map[string]string {
 	maps.Copy(headers, overwrite)
 	return headers
 }
-
-func int64Ptr(v int64) *int64 { return &v }
 
 // NewSession creates a new Session instance with default values
 func NewSession() *Session {

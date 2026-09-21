@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"net/textproto"
 	"net/url"
+	"strings"
 	"sync"
 
 	"github.com/rclone/rclone/fs"
@@ -215,18 +216,76 @@ func ClientWithNoRedirects(c *http.Client) *http.Client {
 	return &clientCopy
 }
 
+// ErrHTTPSDowngrade is returned by the redirect handlers when a server tries to
+// redirect an HTTPS request to a plaintext HTTP URL. Following such a redirect
+// would replay any credentials over the network in cleartext, so rclone refuses.
+var ErrHTTPSDowngrade = errors.New("refusing to follow HTTPS to HTTP redirect: would send credentials in cleartext")
+
+// isHTTPSDowngrade reports whether following the redirect to req would
+// move a request which was originally made to an https:// URL to a
+// plaintext http:// URL.
+func isHTTPSDowngrade(req *http.Request, via []*http.Request) bool {
+	if len(via) == 0 {
+		return false
+	}
+	return via[0].URL.Scheme == "https" && req.URL.Scheme == "http"
+}
+
+// SameHost reports whether a and b address the same host and port.
+//
+// Host names are compared case insensitively and a port which is
+// the default for the URL's scheme is treated the same as no port,
+// so a server which redirects "https://example.com/" to
+// "https://EXAMPLE.com:443/" is not taken to be a different host.
+func SameHost(a, b *url.URL) bool {
+	return strings.EqualFold(a.Hostname(), b.Hostname()) && portOf(a) == portOf(b)
+}
+
+// portOf returns the port of u, filling in the default for the
+// scheme if none is given.
+func portOf(u *url.URL) string {
+	if port := u.Port(); port != "" {
+		return port
+	}
+	switch strings.ToLower(u.Scheme) {
+	case "http":
+		return "80"
+	case "https":
+		return "443"
+	}
+	return ""
+}
+
 // PreserveMethodRedirectFn is a CheckRedirect function that
 // preserves the original HTTP method on redirects.
 //
 // By default Go's http.Client changes the method to GET on 301, 302,
 // and 303 redirects. This function overrides that behaviour so the
 // original method (e.g. PROPFIND being preserved across a 307) is kept.
+//
+// It refuses an HTTPS to HTTP downgrade with ErrHTTPSDowngrade.
 func PreserveMethodRedirectFn(req *http.Request, via []*http.Request) error {
 	if len(via) >= 10 {
 		return errors.New("stopped after 10 redirects")
 	}
+	if isHTTPSDowngrade(req, via) {
+		return ErrHTTPSDowngrade
+	}
 	if len(via) > 0 {
 		req.Method = via[0].Method
+	}
+	return nil
+}
+
+// RefuseHTTPSDowngradeRedirectFn is a CheckRedirect function that follows
+// redirects like the default net/http client but refuses to follow one
+// that downgrades from HTTPS to plaintext HTTP, returning ErrHTTPSDowngrade.
+func RefuseHTTPSDowngradeRedirectFn(req *http.Request, via []*http.Request) error {
+	if len(via) >= 10 {
+		return errors.New("stopped after 10 redirects")
+	}
+	if isHTTPSDowngrade(req, via) {
+		return ErrHTTPSDowngrade
 	}
 	return nil
 }
@@ -289,7 +348,16 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 	if len(opts.Parameters) > 0 {
 		url += "?" + opts.Parameters.Encode()
 	}
-	body := readers.NoCloser(opts.Body)
+	var bodyClosed chan struct{}
+	body := opts.Body
+	if _, hasClose := body.(io.Closer); hasClose {
+		// Hide the body's Close method from the transport so it can't
+		// close the caller's body, arranging for the transport's Close
+		// to signal that it has finished with the body instead.
+		bodyClosed = make(chan struct{})
+		closed := bodyClosed
+		body = readers.NoCloserNotify(body, func() { close(closed) })
+	}
 	// If length is set and zero then nil out the body to stop use
 	// use of chunked encoding and insert a "Content-Length: 0"
 	// header.
@@ -298,6 +366,7 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 	// files except 0 length files.
 	if opts.ContentLength != nil && *opts.ContentLength == 0 {
 		body = nil
+		bodyClosed = nil
 	}
 	req, err := http.NewRequestWithContext(ctx, opts.Method, url, body)
 	if err != nil {
@@ -369,6 +438,14 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 	}
 	api.mu.RUnlock()
 	resp, err = c.Do(req)
+	if bodyClosed != nil {
+		// Wait for the transport to close the request body before
+		// returning. It always closes it, but is documented to
+		// possibly do so in a different goroutine even after Do has
+		// returned, and the caller may seek or close the body for a
+		// retry as soon as we return.
+		<-bodyClosed
+	}
 	api.mu.RLock()
 	if err != nil {
 		return nil, err
@@ -400,6 +477,25 @@ func CreateFormFile(w *multipart.Writer, fieldname, filename, contentType string
 	return w.CreatePart(h)
 }
 
+// multipartBody is the request body of a multipart upload as returned
+// by MultipartUpload.
+//
+// Close stops the goroutine writing the form and waits for it to
+// finish, so afterwards the file reader passed to MultipartUpload is
+// no longer being read from. It is safe to call multiple times.
+type multipartBody struct {
+	*io.PipeReader
+	done <-chan struct{}
+}
+
+// Close aborts reading the form and waits for the goroutine writing
+// it to stop.
+func (b *multipartBody) Close() error {
+	err := b.PipeReader.Close()
+	<-b.done
+	return err
+}
+
 // MultipartUpload creates an io.Reader which produces an encoded a
 // multipart form upload from the params passed in and the  passed in
 //
@@ -409,6 +505,11 @@ func CreateFormFile(w *multipart.Writer, fieldname, filename, contentType string
 // contentName - the name of the parameter for the file
 //
 // the int64 returned is the overhead in addition to the file contents, in case Content-Length is required
+//
+// Closing the returned reader stops the goroutine writing the form
+// and waits for it to finish, after which in is no longer being read
+// from. Callers which retry with a seekable in should close it after
+// each attempt.
 //
 // NB This doesn't allow setting the content type of the attachment
 func MultipartUpload(ctx context.Context, in io.Reader, params url.Values, contentName, fileName string, contentType string) (io.ReadCloser, string, int64, error) {
@@ -496,7 +597,7 @@ func MultipartUpload(ctx context.Context, in io.Reader, params url.Values, conte
 		_ = bodyWriter.Close()
 	}()
 
-	return bodyReader, formContentType, multipartLength, nil
+	return &multipartBody{PipeReader: bodyReader, done: quit}, formContentType, multipartLength, nil
 }
 
 // CallJSON runs Call and decodes the body as a JSON object into response (if not nil)
@@ -567,14 +668,20 @@ func (api *Client) callCodec(ctx context.Context, opts *Opts, request any, respo
 		}
 		opts = opts.Copy()
 
+		var mpBody io.ReadCloser
 		var overhead int64
-		opts.Body, opts.ContentType, overhead, err = MultipartUpload(ctx, opts.Body, params, opts.MultipartContentName, opts.MultipartFileName, opts.MultipartContentType)
+		mpBody, opts.ContentType, overhead, err = MultipartUpload(ctx, opts.Body, params, opts.MultipartContentName, opts.MultipartFileName, opts.MultipartContentType)
 		if err != nil {
 			return nil, err
 		}
+		opts.Body = mpBody
 		if opts.ContentLength != nil {
 			*opts.ContentLength += overhead
 		}
+		// Stop the multipart writer reading the body when the call has
+		// finished so the caller can seek or close the body (e.g. to
+		// retry) as soon as we return.
+		defer func() { _ = mpBody.Close() }()
 	}
 	resp, err = api.Call(ctx, opts)
 	if err != nil {

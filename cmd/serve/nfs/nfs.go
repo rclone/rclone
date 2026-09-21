@@ -16,7 +16,6 @@ import (
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/serve"
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/vfs"
@@ -83,6 +82,17 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.AddFlagsFromOptions(flagSet, "", OptionsInfo)
 }
 
+type nfsHandler struct {
+	*Server
+	vfs *vfs.VFS
+}
+
+func (h *nfsHandler) Shutdown() error {
+	err := h.Server.Shutdown()
+	h.vfs.Shutdown()
+	return err
+}
+
 func init() {
 	vfsflags.AddFlags(Command.Flags())
 	AddFlags(Command.Flags())
@@ -90,19 +100,25 @@ func init() {
 	serve.AddRc("nfs", func(ctx context.Context, f fs.Fs, in rc.Params) (serve.Handle, error) {
 		// Create VFS
 		var vfsOpt = vfscommon.Opt // set default opts
-		err := configstruct.SetAny(in, &vfsOpt)
+		err := rc.ParseOptions(in, "vfsOpt", &vfsOpt)
 		if err != nil {
 			return nil, err
 		}
 		VFS := vfs.New(ctx, f, &vfsOpt)
 		// Read opts
 		var opt = Opt // set default opts
-		err = configstruct.SetAny(in, &opt)
+		err = rc.ParseOptions(in, "opt", &opt)
 		if err != nil {
+			VFS.Shutdown()
 			return nil, err
 		}
 		// Create server
-		return NewServer(ctx, VFS, &opt)
+		s, err := NewServer(ctx, VFS, &opt)
+		if err != nil {
+			VFS.Shutdown()
+			return nil, err
+		}
+		return &nfsHandler{Server: s, vfs: VFS}, nil
 	})
 }
 
@@ -112,7 +128,9 @@ func Run(command *cobra.Command, args []string) {
 	cmd.CheckArgs(1, 1, command, args)
 	f = cmd.NewFsSrc(args)
 	cmd.Run(false, true, command, func() error {
-		s, err := NewServer(context.Background(), vfs.New(context.Background(), f, &vfscommon.Opt), &Opt)
+		VFS := vfs.New(context.Background(), f, &vfscommon.Opt)
+		defer VFS.Shutdown()
+		s, err := NewServer(context.Background(), VFS, &Opt)
 		if err != nil {
 			return err
 		}

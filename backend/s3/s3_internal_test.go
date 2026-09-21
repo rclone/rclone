@@ -5,8 +5,10 @@ import (
 	"compress/gzip"
 	"context"
 	"crypto/md5"
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
 	"path"
 	"strings"
 	"testing"
@@ -22,6 +24,7 @@ import (
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/rclone/rclone/lib/bucket"
+	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/version"
 	"github.com/stretchr/testify/assert"
@@ -142,6 +145,58 @@ func (f *Fs) InternalTestNoHead(t *testing.T) {
 	}()
 	// PutTestcontents checks the received object
 
+}
+
+func (f *Fs) InternalTestNoHeadObjectCopy(t *testing.T) {
+	ctx := context.Background()
+	contents := random.String(1000)
+	item := fstest.NewItem("test-no-head-object-copy-src", contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))
+	src := fstests.PutTestContents(ctx, t, f, &item, contents, true)
+	defer func() {
+		assert.NoError(t, src.Remove(ctx))
+	}()
+	// Set NoHeadObject for this test so the copied object's metadata is not read back
+	f.opt.NoHeadObject = true
+	defer func() {
+		f.opt.NoHeadObject = false
+	}()
+	dst, err := f.Copy(ctx, src, "test-no-head-object-copy-dst")
+	require.NoError(t, err)
+	defer func() {
+		assert.NoError(t, dst.Remove(ctx))
+	}()
+	assert.Equal(t, src.Size(), dst.Size())
+	srcHash, err := src.Hash(ctx, hash.MD5)
+	require.NoError(t, err)
+	dstHash, err := dst.Hash(ctx, hash.MD5)
+	require.NoError(t, err)
+	assert.Equal(t, srcHash, dstHash)
+	assert.NotEqual(t, "", dstHash)
+}
+
+func (f *Fs) InternalTestHasChildren(t *testing.T) {
+	ctx := context.Background()
+	contents := random.String(100)
+	item := fstest.NewItem("has-children/file.txt", contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))
+	obj := fstests.PutTestContents(ctx, t, f, &item, contents, true)
+	defer func() {
+		assert.NoError(t, obj.Remove(ctx))
+	}()
+
+	// A prefix with an object under it is a directory
+	found, err := f.hasChildren(ctx, "has-children")
+	require.NoError(t, err)
+	assert.True(t, found, "prefix with an object should report children")
+
+	// The object itself is a file so has no children
+	found, err = f.hasChildren(ctx, "has-children/file.txt")
+	require.NoError(t, err)
+	assert.False(t, found, "a file should not report children")
+
+	// A path which doesn't exist has no children
+	found, err = f.hasChildren(ctx, "has-children/does-not-exist")
+	require.NoError(t, err)
+	assert.False(t, found, "a missing path should not report children")
 }
 
 func TestVersionLess(t *testing.T) {
@@ -471,10 +526,9 @@ func (f *Fs) InternalTestVersions(t *testing.T) {
 			return f.shouldRetry(ctx, err)
 		})
 		var errString string
-		var awsError smithy.APIError
 		if err == nil {
 			errString = "No Error"
-		} else if errors.As(err, &awsError) {
+		} else if awsError, ok := errors.AsType[smithy.APIError](err); ok {
 			errString = awsError.ErrorCode()
 		} else {
 			assert.Fail(t, "Unknown error %T %v", err, err)
@@ -785,8 +839,55 @@ func (f *Fs) InternalTestObjectLock(t *testing.T) {
 func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("Metadata", f.InternalTestMetadata)
 	t.Run("NoHead", f.InternalTestNoHead)
+	t.Run("NoHeadObjectCopy", f.InternalTestNoHeadObjectCopy)
+	t.Run("HasChildren", f.InternalTestHasChildren)
 	t.Run("Versions", f.InternalTestVersions)
 	t.Run("ObjectLock", f.InternalTestObjectLock)
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)
+
+func TestBufferForObjectLockMD5(t *testing.T) {
+	content := []byte("object lock body")
+	md5sum := md5.Sum(content)
+	wantMD5 := base64.StdEncoding.EncodeToString(md5sum[:])
+
+	t.Run("NoObjectLock", func(t *testing.T) {
+		req := &s3.PutObjectInput{}
+		in := bytes.NewReader(content)
+		body, cleanup, err := bufferForObjectLockMD5(req, in)
+		defer cleanup()
+		require.NoError(t, err)
+		assert.Equal(t, io.Reader(in), body, "body should be passed through untouched")
+		assert.Nil(t, req.ContentMD5)
+	})
+
+	t.Run("SourceMD5", func(t *testing.T) {
+		req := &s3.PutObjectInput{
+			ObjectLockMode: types.ObjectLockModeCompliance,
+			ContentMD5:     aws.String(wantMD5),
+		}
+		in := bytes.NewReader(content)
+		body, cleanup, err := bufferForObjectLockMD5(req, in)
+		defer cleanup()
+		require.NoError(t, err)
+		assert.Equal(t, io.Reader(in), body, "body should not be buffered when the MD5 is known")
+		assert.Equal(t, wantMD5, *req.ContentMD5)
+	})
+
+	t.Run("Buffered", func(t *testing.T) {
+		inUse := pool.Global().InUse()
+		req := &s3.PutObjectInput{
+			ObjectLockLegalHoldStatus: types.ObjectLockLegalHoldStatusOn,
+		}
+		body, cleanup, err := bufferForObjectLockMD5(req, bytes.NewReader(content))
+		require.NoError(t, err)
+		require.NotNil(t, req.ContentMD5)
+		assert.Equal(t, wantMD5, *req.ContentMD5)
+		got, err := io.ReadAll(body)
+		require.NoError(t, err)
+		assert.Equal(t, content, got)
+		cleanup()
+		assert.Equal(t, inUse, pool.Global().InUse(), "pool buffers leaked")
+	})
+}

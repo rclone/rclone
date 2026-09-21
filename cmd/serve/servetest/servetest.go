@@ -17,6 +17,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/fstest/testserver"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -31,9 +32,13 @@ type StartFn func(f fs.Fs) (configmap.Simple, func())
 
 // run runs the server then runs the unit tests for the remote against
 // it.
-func run(t *testing.T, name string, start StartFn, useProxy bool) {
-	fremote, _, clean, err := fstest.RandomRemote()
-	assert.NoError(t, err)
+//
+// If backingRemote is non-empty (e.g. "TestS3Minio:") it is used as the
+// backing Fs that the server wraps, instead of a fresh local directory.
+// The matching fstest/testserver/init.d script is started automatically.
+func run(t *testing.T, name string, start StartFn, useProxy bool, backingRemote string) {
+	fremote, clean, err := makeBackingFs(backingRemote)
+	require.NoError(t, err)
 	defer clean()
 
 	err = fremote.Mkdir(context.Background(), "")
@@ -100,13 +105,61 @@ func run(t *testing.T, name string, start StartFn, useProxy bool) {
 }
 
 // Run runs the server then runs the unit tests for the remote against
-// it.
+// it. The backing Fs is a fresh local directory.
 func Run(t *testing.T, name string, start StartFn) {
+	RunWithBackend(t, name, start, "")
+}
+
+// RunWithBackend behaves like Run but uses the supplied remote (e.g.
+// "TestS3Minio:") as the backing Fs that the server wraps, instead of a
+// fresh local directory. When backingRemote is empty it is equivalent to
+// Run.
+//
+// AuthProxy is only run when backingRemote is empty: the test proxy in
+// proxy_code.go hardcodes type=local, so it cannot be used with a
+// non-local backing.
+func RunWithBackend(t *testing.T, name string, start StartFn, backingRemote string) {
 	fstest.Initialise()
 	t.Run("Normal", func(t *testing.T) {
-		run(t, name, start, false)
+		run(t, name, start, false, backingRemote)
 	})
-	t.Run("AuthProxy", func(t *testing.T) {
-		run(t, name, start, true)
-	})
+	if backingRemote == "" {
+		t.Run("AuthProxy", func(t *testing.T) {
+			run(t, name, start, true, backingRemote)
+		})
+	}
+}
+
+// makeBackingFs returns the Fs that the server should wrap, plus a
+// cleanup function. When backingRemote is empty a fresh local temporary
+// directory is used (current behaviour). Otherwise the matching test
+// server is started and a random subdirectory of that remote is used.
+func makeBackingFs(backingRemote string) (fs.Fs, func(), error) {
+	if backingRemote == "" {
+		fremote, _, clean, err := fstest.RandomRemote()
+		return fremote, clean, err
+	}
+
+	stopServer, err := testserver.Start(backingRemote)
+	if err != nil {
+		return nil, func() {}, fmt.Errorf("failed to start test server for %q: %w", backingRemote, err)
+	}
+
+	subRemoteName, _, err := fstest.RandomRemoteName(backingRemote)
+	if err != nil {
+		stopServer()
+		return nil, func() {}, err
+	}
+
+	fremote, err := fs.NewFs(context.Background(), subRemoteName)
+	if err != nil {
+		stopServer()
+		return nil, func() {}, err
+	}
+
+	clean := func() {
+		fstest.Purge(fremote)
+		stopServer()
+	}
+	return fremote, clean, nil
 }

@@ -54,8 +54,7 @@ func (f *Fs) shouldRetry(ctx context.Context, err error) (bool, error) {
 	if fserrors.ContextError(ctx, &err) {
 		return false, err
 	}
-	var httpErr *sdkerrors.HTTPError
-	if errors.As(err, &httpErr) {
+	if httpErr, ok := errors.AsType[*sdkerrors.HTTPError](err); ok {
 		switch httpErr.StatusCode() {
 		case 401:
 			if !f.authFailed {
@@ -343,7 +342,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			fs.Debugf(f, "getUserInfo returned 401, attempting re-auth")
 			authErr := f.refreshOrReLogin(ctx)
 			if authErr != nil {
-				return nil, fmt.Errorf("failed to fetch user info (re-auth failed): %w", err)
+				return nil, fmt.Errorf("failed to fetch user info (re-auth failed: %w): %w", authErr, err)
 			}
 			userInfo, err = getUserInfo(ctx, &userInfoConfig{Token: f.cfg.Token})
 			if err == nil {
@@ -366,6 +365,25 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.cfg.BasicAuthHeader = computeBasicAuthHeader(userInfo.BridgeUser, userInfo.UserID)
 	f.bridgeUser = userInfo.BridgeUser
 	f.userID = userInfo.UserID
+
+	// The refresh endpoint rotates the token on every successful call.
+	// Persist the rotated token so routine use keeps the stored token
+	// current; otherwise it keeps its original expiry and accounts that
+	// cannot re-login non-interactively (2FA) eventually strand.
+	if userInfo.NewToken != "" {
+		if rotated, rotErr := jwtToOAuth2Token(userInfo.NewToken); rotErr != nil {
+			fs.Debugf(f, "Not adopting rotated token from user info: %v", rotErr)
+		} else {
+			// Use the rotated token for this session even if saving it
+			// fails; persistence is best-effort.
+			f.cfg.Token = userInfo.NewToken
+			if putErr := oauthutil.PutToken(name, m, rotated, false); putErr != nil {
+				fs.Debugf(f, "Failed to save rotated token from user info: %v", putErr)
+			} else {
+				fs.Debugf(f, "Persisted rotated token from user info, expiry: %v", rotated.Expiry)
+			}
+		}
+	}
 
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
@@ -538,46 +556,95 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (string, error)
 	return resp.UUID, nil
 }
 
-// preUploadCheck checks if a file exists in the given directory
-// Returns the file metadata if it exists, nil if not
-func (f *Fs) preUploadCheck(ctx context.Context, leaf, directoryID string) (*folders.File, error) {
-	// Parse name and extension from the leaf
-	baseName := f.opt.Encoding.FromStandardName(leaf)
-	name := strings.TrimSuffix(baseName, path.Ext(baseName))
-	ext := strings.TrimPrefix(path.Ext(baseName), ".")
+// splitNameExt splits a basename into the (plainName, type) pair that Internxt
+// stores a file under.
+func splitNameExt(baseName string) (name, ext string) {
+	ext = path.Ext(baseName)
+	if ext == baseName {
+		return baseName, ""
+	}
+	return strings.TrimSuffix(baseName, ext), strings.TrimPrefix(ext, ".")
+}
 
-	checkResult, err := files.CheckFilesExistence(ctx, f.cfg, directoryID, []files.FileExistenceCheck{
-		{
-			PlainName:    name,
-			Type:         ext,
-			OriginalFile: struct{}{},
-		},
+// joinNameExt reassembles the basename a stored (plainName, type) pair
+// displays as, the way List builds its entries.
+func joinNameExt(name, ext string) string {
+	if ext == "" {
+		return name
+	}
+	return name + "." + ext
+}
+
+// legacyNameExt splits a basename at the final dot, the way this backend used
+// to before it adopted the convention the other clients share. It differs from
+// splitNameExt only for a name whose sole dot leads it: ".bashrc" splits into
+// an empty name of type "bashrc".
+func legacyNameExt(baseName string) (name, ext string) {
+	return strings.TrimSuffix(baseName, path.Ext(baseName)), strings.TrimPrefix(path.Ext(baseName), ".")
+}
+
+// existenceCheck builds a lookup criterion for one (plainName, type) spelling.
+func existenceCheck(name, ext string) files.FileExistenceCheck {
+	return files.FileExistenceCheck{
+		PlainName:    name,
+		Type:         ext,
+		OriginalFile: struct{}{},
+	}
+}
+
+// findFile looks up a single file by name within directoryID. Returns
+// (nil, nil) when the file does not exist; surfaces transport/API errors.
+func (f *Fs) findFile(ctx context.Context, leaf, directoryID string) (*folders.File, error) {
+	encodedName := f.opt.Encoding.FromStandardName(leaf)
+	name, ext := splitNameExt(encodedName)
+	checks := []files.FileExistenceCheck{existenceCheck(name, ext)}
+	if encodedName != name {
+		checks = append(checks, existenceCheck(encodedName, ""))
+	}
+	if legacyName, legacyExt := legacyNameExt(encodedName); legacyExt != "" && legacyName != name {
+		checks = append(checks, existenceCheck(legacyName, legacyExt))
+	}
+
+	var checkResult *files.CheckFilesExistenceResponse
+	err := f.pacer.Call(func() (bool, error) {
+		var err error
+		checkResult, err = files.CheckFilesExistence(ctx, f.cfg, directoryID, checks)
+		if isNotFoundError(err) {
+			return true, err
+		}
+		return f.shouldRetry(ctx, err)
 	})
-
 	if err != nil {
-		// If existence check fails, assume file doesn't exist to allow upload to proceed
+		return nil, err
+	}
+
+	var uuid string
+	for _, result := range checkResult.Files {
+		if !result.FileExists() || result.UUID == "" {
+			continue
+		}
+		if joinNameExt(result.PlainName, result.Type) == encodedName {
+			uuid = result.UUID
+			break
+		}
+	}
+	if uuid == "" {
 		return nil, nil
 	}
 
-	if len(checkResult.Files) > 0 && checkResult.Files[0].FileExists() {
-		result := checkResult.Files[0]
-		if result.Type != ext {
-			return nil, nil
-		}
-
-		existingUUID := result.UUID
-		if existingUUID != "" {
-			fileMeta, err := files.GetFileMeta(ctx, f.cfg, existingUUID)
-			if err == nil && fileMeta != nil {
-				return convertFileMetaToFile(fileMeta), nil
-			}
-
-			if err != nil {
-				return nil, err
-			}
-		}
+	var fileMeta *files.FileMeta
+	err = f.pacer.Call(func() (bool, error) {
+		var err error
+		fileMeta, err = files.GetFileMeta(ctx, f.cfg, uuid)
+		return f.shouldRetry(ctx, err)
+	})
+	if err != nil {
+		return nil, err
 	}
-	return nil, nil
+	if fileMeta == nil {
+		return nil, nil
+	}
+	return convertFileMetaToFile(fileMeta), nil
 }
 
 // convertFileMetaToFile converts files.FileMeta to folders.File
@@ -656,8 +723,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		return nil, err
 	}
 
-	// Check if file already exists
-	existingFile, err := f.preUploadCheck(ctx, leaf, directoryID)
+	existingFile, err := f.findFile(ctx, leaf, directoryID)
 	if err != nil {
 		return nil, err
 	}
@@ -709,40 +775,23 @@ func (f *Fs) Remove(ctx context.Context, remote string) error {
 	return nil
 }
 
-// NewObject creates a new object
+// NewObject creates a new object by looking up a single file's metadata.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	parentDir := path.Dir(remote)
-
-	if parentDir == "." {
-		parentDir = ""
-	}
-
-	dirID, err := f.dirCache.FindDir(ctx, parentDir, false)
+	leaf, directoryID, err := f.dirCache.FindPath(ctx, remote, false)
 	if err != nil {
-		return nil, fs.ErrorObjectNotFound
+		if err == fs.ErrorDirNotFound {
+			return nil, fs.ErrorObjectNotFound
+		}
+		return nil, err
 	}
-
-	var files []folders.File
-	err = f.pacer.Call(func() (bool, error) {
-		var err error
-		files, err = folders.ListAllFiles(ctx, f.cfg, dirID)
-		return f.shouldRetry(ctx, err)
-	})
+	file, err := f.findFile(ctx, leaf, directoryID)
 	if err != nil {
 		return nil, err
 	}
-	targetName := path.Base(remote)
-	for _, e := range files {
-		name := e.PlainName
-		if len(e.Type) > 0 {
-			name += "." + e.Type
-		}
-		decodedName := f.opt.Encoding.ToStandardName(name)
-		if decodedName == targetName {
-			return newObjectWithFile(f, remote, &e), nil
-		}
+	if file == nil {
+		return nil, fs.ErrorObjectNotFound
 	}
-	return nil, fs.ErrorObjectNotFound
+	return newObjectWithFile(f, remote, file), nil
 }
 
 // newObjectWithFile returns a new object by file info
@@ -830,6 +879,77 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	return usage, nil
 }
 
+// Move moves a file to a new location
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
+	if !ok {
+		return nil, fs.ErrorCantMove
+	}
+
+	if srcObj.uuid == "" {
+		return nil, fs.ErrorCantMove
+	}
+
+	leaf, directoryID, err := f.dirCache.FindPath(ctx, remote, true)
+	if err != nil {
+		return nil, err
+	}
+
+	newName, newType := splitNameExt(f.opt.Encoding.FromStandardName(leaf))
+
+	// Move the file server-side
+	err = f.pacer.Call(func() (bool, error) {
+		err := files.MoveFile(ctx, f.cfg, srcObj.uuid, directoryID, newName, newType)
+		return f.shouldRetry(ctx, err)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	dstObj := &Object{
+		f:       f,
+		remote:  remote,
+		id:      srcObj.id,
+		uuid:    srcObj.uuid,
+		size:    srcObj.size,
+		modTime: srcObj.modTime,
+	}
+
+	return dstObj, nil
+}
+
+// DirMove moves src, srcRemote to this remote at dstRemote
+// using server-side move operations.
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantDirMove
+//
+// If destination exists then return fs.ErrorDirExists
+func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
+	srcFs, ok := src.(*Fs)
+	if !ok {
+		return fs.ErrorCantDirMove
+	}
+
+	srcID, _, _, dstDirectoryID, dstLeaf, err := f.dirCache.DirMove(ctx, srcFs.dirCache, srcFs.root, srcRemote, f.root, dstRemote)
+	if err != nil {
+		return err
+	}
+
+	encodedLeaf := f.opt.Encoding.FromStandardName(dstLeaf)
+	err = f.pacer.Call(func() (bool, error) {
+		err := folders.MoveFolder(ctx, f.cfg, srcID, dstDirectoryID, encodedLeaf)
+		return f.shouldRetry(ctx, err)
+	})
+	if err != nil {
+		return err
+	}
+
+	srcFs.dirCache.FlushDir(srcRemote)
+	return nil
+}
+
 // Shutdown the backend, closing any background tasks and any cached
 // connections.
 func (f *Fs) Shutdown(ctx context.Context) error {
@@ -872,9 +992,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	remote := o.remote
 
-	origBaseName := path.Base(remote)
-	origName := strings.TrimSuffix(origBaseName, path.Ext(origBaseName))
-	origType := strings.TrimPrefix(path.Ext(origBaseName), ".")
+	origName, origType := splitNameExt(path.Base(remote))
 
 	// Create directory if it doesn't exist
 	_, dirID, err := o.f.dirCache.FindPath(ctx, remote, true)
@@ -891,11 +1009,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// Step 1: If file exists, rename to backup (preserves old file during upload)
 	if oldUUID != "" {
-		// Generate unique backup name
-		baseName := path.Base(remote)
-		name := strings.TrimSuffix(baseName, path.Ext(baseName))
-		ext := strings.TrimPrefix(path.Ext(baseName), ".")
-
+		name, ext := splitNameExt(path.Base(remote))
 		backupSuffix := fmt.Sprintf(".rclone-backup-%s", random.String(8))
 		backupName = o.f.opt.Encoding.FromStandardName(name + backupSuffix)
 		backupType = ext
@@ -934,6 +1048,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 				o.restoreBackupFile(ctx, backupUUID, origName, origType)
 				return fs.ErrorCantUploadEmptyFiles
 			}
+			if tooLarge := fileTooLargeError(uploadErr); tooLarge != nil {
+				o.restoreBackupFile(ctx, backupUUID, origName, origType)
+				return o.f.tooLargeError(remote, tooLarge)
+			}
 			o.restoreBackupFile(ctx, backupUUID, origName, origType)
 			return uploadErr
 		}
@@ -959,6 +1077,16 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			return fs.ErrorCantUploadEmptyFiles
 		}
 
+		if tooLarge := fileTooLargeError(err); tooLarge != nil {
+			o.restoreBackupFile(ctx, backupUUID, origName, origType)
+			return o.f.tooLargeError(remote, tooLarge)
+		}
+
+		if err != nil && isStaleReadError(err, backupUUID != "") {
+			o.restoreBackupFile(ctx, backupUUID, origName, origType)
+			return fserrors.RetryError(err)
+		}
+
 		if err != nil {
 			meta, err = o.recoverFromTimeoutConflict(ctx, err, remote, dirID)
 		}
@@ -981,8 +1109,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		err := o.f.pacer.Call(func() (bool, error) {
 			err := files.DeleteFile(ctx, o.f.cfg, backupUUID)
 			if err != nil {
-				var httpErr *sdkerrors.HTTPError
-				if errors.As(err, &httpErr) {
+				if httpErr, ok := errors.AsType[*sdkerrors.HTTPError](err); ok {
 					// Treat 404 (Not Found) and 204 (No Content) as success
 					switch httpErr.StatusCode() {
 					case 404, 204:
@@ -1016,6 +1143,19 @@ func isTimeoutError(err error) bool {
 	return false
 }
 
+// isNotFoundError reports whether err is a 404 from the API.
+func isNotFoundError(err error) bool {
+	var httpErr *sdkerrors.HTTPError
+	return errors.As(err, &httpErr) && httpErr.StatusCode() == 404
+}
+
+// isStaleReadError reports whether err is the API contradicting a write this
+// backend has already made, which it does because lookups are served by read
+// replicas that lag behind the primary.
+func isStaleReadError(err error, renamed bool) bool {
+	return isNotFoundError(err) || (renamed && isConflictError(err))
+}
+
 // isConflictError checks if an error indicates a file conflict (409)
 func isConflictError(err error) bool {
 	errMsg := err.Error()
@@ -1031,6 +1171,24 @@ func isEmptyFileLimitError(err error) bool {
 		strings.Contains(errMsg, "you can not have empty files")
 }
 
+// fileTooLargeError extracts the SDK's FileTooLargeError from a wrapped error
+// chain, returning it (or nil) so callers can branch on the size limit.
+func fileTooLargeError(err error) *sdkerrors.FileTooLargeError {
+	if tooLarge, ok := errors.AsType[*sdkerrors.FileTooLargeError](err); ok {
+		return tooLarge
+	}
+	return nil
+}
+
+// tooLargeError formats a per-file, non-retryable error for the sync engine.
+// fserrors.NoRetryError signals "skip this file but continue the sync."
+func (f *Fs) tooLargeError(remote string, tooLarge *sdkerrors.FileTooLargeError) error {
+	return fserrors.NoRetryError(fmt.Errorf("%s: file size %s exceeds account upload limit of %s",
+		remote,
+		fs.SizeSuffix(tooLarge.Size),
+		fs.SizeSuffix(tooLarge.MaxSize)))
+}
+
 // recoverFromTimeoutConflict attempts to recover from a timeout or conflict error
 func (o *Object) recoverFromTimeoutConflict(ctx context.Context, uploadErr error, remote, dirID string) (*buckets.CreateMetaResponse, error) {
 	if !isTimeoutError(uploadErr) && !isConflictError(uploadErr) {
@@ -1038,40 +1196,22 @@ func (o *Object) recoverFromTimeoutConflict(ctx context.Context, uploadErr error
 	}
 
 	baseName := path.Base(remote)
-	encodedName := o.f.opt.Encoding.FromStandardName(baseName)
 
-	var meta *buckets.CreateMetaResponse
-	checkErr := o.f.pacer.Call(func() (bool, error) {
-		existingFile, err := o.f.preUploadCheck(ctx, encodedName, dirID)
-		if err != nil {
-			return o.f.shouldRetry(ctx, err)
-		}
-		if existingFile != nil {
-			name := strings.TrimSuffix(baseName, path.Ext(baseName))
-			ext := strings.TrimPrefix(path.Ext(baseName), ".")
-
-			meta = &buckets.CreateMetaResponse{
-				UUID:      existingFile.UUID,
-				FileID:    existingFile.FileID,
-				Name:      name,
-				PlainName: name,
-				Type:      ext,
-				Size:      existingFile.Size,
-			}
-			o.id = existingFile.FileID
-		}
-		return false, nil
-	})
-
-	if checkErr != nil {
+	existingFile, err := o.f.findFile(ctx, baseName, dirID)
+	if err != nil || existingFile == nil {
 		return nil, uploadErr
 	}
 
-	if meta != nil {
-		return meta, nil
-	}
-
-	return nil, uploadErr
+	name, ext := splitNameExt(baseName)
+	o.id = existingFile.FileID
+	return &buckets.CreateMetaResponse{
+		UUID:      existingFile.UUID,
+		FileID:    existingFile.FileID,
+		Name:      name,
+		PlainName: name,
+		Type:      ext,
+		Size:      existingFile.Size,
+	}, nil
 }
 
 // restoreBackupFile restores a backup file after upload failure

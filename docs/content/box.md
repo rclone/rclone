@@ -323,19 +323,6 @@ Properties:
 - Type:        string
 - Required:    false
 
-#### --box-config-credentials
-
-Box App config.json contents.
-
-Leave blank normally.
-
-Properties:
-
-- Config:      config_credentials
-- Env Var:     RCLONE_BOX_CONFIG_CREDENTIALS
-- Type:        string
-- Required:    false
-
 #### --box-access-token
 
 Box App Primary Access Token

@@ -274,28 +274,6 @@ Properties:
 - Type:        string
 - Required:    true
 
-#### --iclouddrive-trust-token
-
-Trust token for session authentication.
-
-Properties:
-
-- Config:      trust_token
-- Env Var:     RCLONE_ICLOUDDRIVE_TRUST_TOKEN
-- Type:        string
-- Required:    false
-
-#### --iclouddrive-cookies
-
-Session cookies.
-
-Properties:
-
-- Config:      cookies
-- Env Var:     RCLONE_ICLOUDDRIVE_COOKIES
-- Type:        string
-- Required:    false
-
 ### Advanced options
 
 Here are the Advanced options specific to iclouddrive (iCloud Drive and Photos).

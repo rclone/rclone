@@ -210,20 +210,32 @@ type (
 
 // MountPoint represents a mount with options and runtime state
 type MountPoint struct {
-	MountPoint string
-	MountedOn  time.Time
-	MountOpt   Options
-	VFSOpt     vfscommon.Options
-	Fs         fs.Fs
-	VFS        *vfs.VFS
-	MountFn    MountFn
-	UnmountFn  UnmountFn
-	ErrChan    <-chan error
+	Ctx             context.Context
+	MountPoint      string
+	MountedOn       time.Time
+	MountOpt        Options
+	VFSOpt          vfscommon.Options
+	Fs              fs.Fs
+	VFS             *vfs.VFS
+	MountFn         MountFn
+	UnmountFn       UnmountFn
+	ErrChan         <-chan error
+	vfsShutdownOnce sync.Once
+}
+
+// shutdownVFS shuts down the VFS instance exactly once
+func (m *MountPoint) shutdownVFS() {
+	m.vfsShutdownOnce.Do(func() {
+		if m.VFS != nil {
+			m.VFS.Shutdown()
+		}
+	})
 }
 
 // NewMountPoint makes a new mounting structure
 func NewMountPoint(mount MountFn, mountPoint string, f fs.Fs, mountOpt *Options, vfsOpt *vfscommon.Options) *MountPoint {
 	return &MountPoint{
+		Ctx:        context.Background(),
 		MountFn:    mount,
 		MountPoint: mountPoint,
 		Fs:         f,
@@ -379,11 +391,12 @@ func (m *MountPoint) Mount() (mountDaemon *os.Process, err error) {
 		}
 	}
 
-	m.VFS = vfs.New(context.Background(), m.Fs, &m.VFSOpt)
+	m.VFS = vfs.New(m.Ctx, m.Fs, &m.VFSOpt)
 
 	var actualMountpoint string
 	m.ErrChan, m.UnmountFn, actualMountpoint, err = m.MountFn(m.VFS, m.MountPoint, &m.MountOpt)
 	if err != nil {
+		m.shutdownVFS()
 		if len(os.Args) > 0 && strings.HasPrefix(os.Args[0], "/snap/") {
 			return nil, fmt.Errorf("mounting is not supported when running from snap")
 		}
@@ -402,6 +415,7 @@ func (m *MountPoint) Wait() error {
 	var finaliseOnce sync.Once
 	finalise := func() {
 		finaliseOnce.Do(func() {
+			defer m.shutdownVFS()
 			// Unmount only if directory was mounted by rclone, e.g. don't unmount autofs hooks.
 			if err := CheckMountReady(m.MountPoint); err != nil {
 				fs.Debugf(m.MountPoint, "Unmounted externally. Just exit now.")
@@ -429,5 +443,9 @@ func (m *MountPoint) Wait() error {
 
 // Unmount the specified mountpoint
 func (m *MountPoint) Unmount() (err error) {
-	return m.UnmountFn()
+	defer m.shutdownVFS()
+	if m.UnmountFn != nil {
+		return m.UnmountFn()
+	}
+	return nil
 }

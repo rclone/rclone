@@ -46,6 +46,59 @@ STRIP_PATH_RE = re.compile(r"^(backend|fs)/")
 
 IS_FIX_RE = re.compile(r"\b(fix|fixes)\b", flags=re.I)
 
+CHERRY_PICK_RE = re.compile(r"\(cherry picked from commit ([0-9a-f]{40})\)")
+
+STABLE_BRANCH_RE = re.compile(r"^v\d+\.\d+-stable")
+
+VERSION_RE = re.compile(r"^v(\d+)\.(\d+)")
+
+def git(*args):
+    """Run a git command and return its output as a string"""
+    return subprocess.check_output(["git"] + list(args)).decode("utf-8")
+
+def previous_stable_branch(next_version):
+    """Return the ref of the stable branch for the release before next_version, or None if it can't be found"""
+    match = VERSION_RE.match(next_version)
+    if not match or int(match.group(2)) == 0:
+        return None
+    branch = "v%s.%d-stable" % (match.group(1), int(match.group(2)) - 1)
+    for ref in (branch, "origin/" + branch):
+        if subprocess.call(["git", "rev-parse", "--verify", "--quiet", ref],
+                           stdout=subprocess.DEVNULL) == 0:
+            return ref
+    return None
+
+def released_commits(version, next_version):
+    """
+    Return the set of commit hashes in version..next_version which have
+    already been released in a point release on the previous stable branch,
+    so their changelog entries can be omitted.
+
+    Returns the empty set when on a stable branch or when no previous
+    stable branch can be found.
+    """
+    branch = git("rev-parse", "--abbrev-ref", "HEAD").strip()
+    if STABLE_BRANCH_RE.match(branch):
+        return set()
+    stable_branch = previous_stable_branch(next_version)
+    if stable_branch is None:
+        print("Warning: previous stable branch not found - not removing already released commits", file=sys.stderr)
+        return set()
+    # Only consider commits up to the last release tag on the stable
+    # branch - anything after it hasn't been released yet.
+    stable_tag = git("describe", "--tags", "--abbrev=0", stable_branch).strip()
+    released = set()
+    # Hashes recorded by cherry-pick -x on the stable branch
+    bodies = git("log", "--pretty=format:%b", version + ".." + stable_tag)
+    released.update(CHERRY_PICK_RE.findall(bodies))
+    # Commits with a patch equivalent on the stable branch (catches
+    # cherry-picks made without -x)
+    for line in git("cherry", stable_tag, next_version, version).splitlines():
+        if line.startswith("- "):
+            released.add(line[2:].strip())
+    print("Removing commits already released in %s:" % stable_tag, file=sys.stderr)
+    return released
+
 def make_out(data, indent=""):
     """Return a out, lines the first being a function for output into the second"""
     out_lines = []
@@ -65,13 +118,16 @@ def make_out(data, indent=""):
     return out, out_lines
 
 
-def process_log(log):
-    """Process the incoming log into a category dict of lists"""
+def process_log(log, released=frozenset()):
+    """Process the incoming log into a category dict of lists, skipping commits whose hash is in released"""
     by_category = defaultdict(list)
     for log_line in reversed(log.split("\n")):
         log_line = log_line.strip()
         hash, author, timestamp, message = log_line.split("|", 3)
         message = message.strip()
+        if hash in released:
+            print("  " + message, file=sys.stderr)
+            continue
         if IGNORE_RE.search(message):
             continue
         match = CATEGORY.search(message)
@@ -99,9 +155,8 @@ def main():
         print("Syntax: %s vX.XX vX.XY" % sys.argv[0], file=sys.stderr)
         sys.exit(1)
     version, next_version = sys.argv[1], sys.argv[2]
-    log = subprocess.check_output(["git", "log", '''--pretty=format:%H|%an|%aI|%s'''] + [version+".."+next_version])
-    log = log.decode("utf-8")
-    by_category = process_log(log)
+    log = git("log", '''--pretty=format:%H|%an|%aI|%s''', version+".."+next_version)
+    by_category = process_log(log, released_commits(version, next_version))
 
     # Output backends first so remaining in by_category are core items
     out, backend_lines = make_out(by_category)

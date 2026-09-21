@@ -32,6 +32,7 @@ func init() {
 	configCommand.AddCommand(configCreateCommand)
 	configCommand.AddCommand(configUpdateCommand)
 	configCommand.AddCommand(configDeleteCommand)
+	configCommand.AddCommand(configUnsetCommand)
 	configCommand.AddCommand(configPasswordCommand)
 	configCommand.AddCommand(configReconnectCommand)
 	configCommand.AddCommand(configDisconnectCommand)
@@ -385,6 +386,40 @@ var configDeleteCommand = &cobra.Command{
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		config.DeleteRemote(args[0])
+	},
+}
+
+var configUnsetCommand = &cobra.Command{
+	Use:   "unset name [key]+",
+	Short: `Unset options in an existing remote.`,
+	Long: strings.ReplaceAll(`Remove one or more options from an existing remote. The options to
+remove should be passed in as a list of key names.
+
+For example, to remove the |client_id| and |client_secret| options from
+a remote of name myremote you would do:
+
+|||sh
+rclone config unset myremote client_id client_secret
+|||
+
+This removes the keys from the config file entirely, which is different
+from setting them to an empty string with |config update|. Removing a
+key restores rclone's default behaviour for that option, whereas setting
+it to an empty string overrides the default with an empty value.
+
+You can't unset the |type| of a remote - use |config delete| to remove
+the whole remote instead.`, "|", "`"),
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.75",
+	},
+	RunE: func(command *cobra.Command, args []string) error {
+		cmd.CheckArgs(2, 256, command, args)
+		_, err := config.UnsetRemote(args[0], args[1:]...)
+		if err != nil {
+			return err
+		}
+		config.ShowRemote(args[0])
+		return nil
 	},
 }
 

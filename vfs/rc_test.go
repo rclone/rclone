@@ -2,7 +2,9 @@ package vfs
 
 import (
 	"context"
+	"runtime"
 	"testing"
+	"time"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
@@ -89,6 +91,40 @@ func TestRcRefresh(t *testing.T) {
 	// FIXME needs more tests
 }
 
+func newTestPollVFS(t *testing.T, changeNotify func(context.Context, func(string, fs.EntryType), <-chan time.Duration)) (*fstest.Run, *VFS, *rc.Call) {
+	t.Helper()
+	r := fstest.NewRun(t)
+	features := r.Fremote.Features()
+	originalChangeNotify := features.ChangeNotify
+	features.ChangeNotify = changeNotify
+	t.Cleanup(func() {
+		features.ChangeNotify = originalChangeNotify
+	})
+	vfs := New(context.Background(), r.Fremote, nil)
+	t.Cleanup(func() {
+		if vfs.inUse.Load() > 0 {
+			vfs.Shutdown()
+		}
+	})
+	call := rc.Calls.Get("vfs/poll-interval")
+	require.NotNil(t, call)
+	return r, vfs, call
+}
+
+func waitForPollLock(t *testing.T, vfs *VFS) {
+	t.Helper()
+	deadline := time.Now().Add(time.Second)
+	for time.Now().Before(deadline) {
+		if vfs.pollMu.TryLock() {
+			vfs.pollMu.Unlock()
+			runtime.Gosched()
+			continue
+		}
+		return
+	}
+	t.Fatal("poll interval update did not acquire poll lock")
+}
+
 func TestRcPollInterval(t *testing.T) {
 	r, vfs, call := rcNewRun(t, "vfs/poll-interval")
 	_ = vfs
@@ -99,6 +135,133 @@ func TestRcPollInterval(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, rc.Params{}, out)
 	// FIXME needs more tests
+}
+
+func TestRcPollIntervalShutdown(t *testing.T) {
+	initialIntervalReceived := make(chan struct{})
+	r, vfs, call := newTestPollVFS(t, func(_ context.Context, _ func(string, fs.EntryType), pollInterval <-chan time.Duration) {
+		go func() {
+			<-pollInterval
+			close(initialIntervalReceived)
+		}()
+	})
+	<-initialIntervalReceived
+
+	originalInterval := vfs.Opt.PollInterval
+
+	type result struct {
+		out rc.Params
+		err error
+	}
+	resultCh := make(chan result, 1)
+	go func() {
+		out, err := call.Fn(context.Background(), rc.Params{
+			"fs":       fs.ConfigString(r.Fremote),
+			"interval": "1h",
+		})
+		resultCh <- result{out: out, err: err}
+	}()
+
+	waitForPollLock(t, vfs)
+
+	shutdownDone := make(chan struct{})
+	go func() {
+		vfs.Shutdown()
+		close(shutdownDone)
+	}()
+
+	select {
+	case <-shutdownDone:
+	case <-time.After(time.Second):
+		t.Fatal("VFS shutdown blocked behind poll interval update")
+	}
+
+	select {
+	case got := <-resultCh:
+		require.EqualError(t, got.err, "VFS is shutting down")
+		assert.Nil(t, got.out)
+	case <-time.After(time.Second):
+		t.Fatal("poll interval update did not return after shutdown")
+	}
+	assert.Equal(t, originalInterval, vfs.Opt.PollInterval)
+}
+
+func TestSetPollIntervalAfterShutdown(t *testing.T) {
+	initialIntervalReceived := make(chan struct{})
+	_, vfs, _ := newTestPollVFS(t, func(_ context.Context, _ func(string, fs.EntryType), pollInterval <-chan time.Duration) {
+		go func() {
+			<-pollInterval
+			close(initialIntervalReceived)
+			for range pollInterval {
+			}
+		}()
+	})
+	<-initialIntervalReceived
+	vfs.Shutdown()
+
+	timeoutHit, err := setPollInterval(vfs, time.Hour, 0)
+	require.EqualError(t, err, "VFS is shutting down")
+	assert.False(t, timeoutHit)
+}
+
+func TestRcPollIntervalUpdate(t *testing.T) {
+	intervals := make(chan time.Duration, 2)
+	r, vfs, call := newTestPollVFS(t, func(_ context.Context, _ func(string, fs.EntryType), pollInterval <-chan time.Duration) {
+		go func() {
+			for interval := range pollInterval {
+				intervals <- interval
+			}
+		}()
+	})
+
+	assert.Equal(t, time.Duration(vfs.Opt.PollInterval), <-intervals)
+	status, err := call.Fn(context.Background(), rc.Params{
+		"fs": fs.ConfigString(r.Fremote),
+	})
+	require.NoError(t, err)
+	assert.Equal(t, true, status["supported"])
+	assert.Equal(t, vfs.Opt.PollInterval != 0, status["enabled"])
+
+	out, err := call.Fn(context.Background(), rc.Params{
+		"fs":       fs.ConfigString(r.Fremote),
+		"interval": "1h",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, time.Hour, <-intervals)
+	assert.Equal(t, fs.Duration(time.Hour), vfs.Opt.PollInterval)
+	assert.Equal(t, false, out["timeout"])
+}
+
+func TestRcPollIntervalTimeout(t *testing.T) {
+	initialIntervalReceived := make(chan struct{})
+	r, vfs, call := newTestPollVFS(t, func(_ context.Context, _ func(string, fs.EntryType), pollInterval <-chan time.Duration) {
+		go func() {
+			<-pollInterval
+			close(initialIntervalReceived)
+		}()
+	})
+	<-initialIntervalReceived
+	originalInterval := vfs.Opt.PollInterval
+
+	out, err := call.Fn(context.Background(), rc.Params{
+		"fs":       fs.ConfigString(r.Fremote),
+		"interval": "1h",
+		"timeout":  "10ms",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, true, out["timeout"])
+	assert.Equal(t, originalInterval, vfs.Opt.PollInterval)
+}
+
+func TestRcPollIntervalUnsupported(t *testing.T) {
+	r, vfs, call := newTestPollVFS(t, nil)
+	out, err := call.Fn(context.Background(), rc.Params{
+		"fs":       fs.ConfigString(r.Fremote),
+		"interval": "1h",
+	})
+	require.EqualError(t, err, "poll-interval is not supported by this remote")
+	assert.Nil(t, out)
+	assert.Nil(t, vfs.pollChan)
 }
 
 func TestRcList(t *testing.T) {

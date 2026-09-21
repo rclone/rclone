@@ -92,6 +92,7 @@ Flags to control the Remote Control API
       --rc-no-auth                         Don't require auth for certain methods
       --rc-pass string                     Password for authentication
       --rc-realm string                    Realm for authentication
+      --rc-response-header stringArray     Set HTTP header for all responses, overriding existing values
       --rc-salt string                     Password hashing salt (default "dlPL2MqE")
       --rc-serve                           Enable the serving of remote objects
       --rc-serve-no-modtime                Don't read the modification time (can speed things up)

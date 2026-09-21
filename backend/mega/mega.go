@@ -272,7 +272,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			if err != nil {
 				return nil, fmt.Errorf("couldn't login: %w", err)
 			}
-			megaCache[opt.User] = srv
 			m.Set(sessionIDConfigKey, srv.GetSessionID())
 			encodedMasterKey := base64.StdEncoding.EncodeToString(srv.GetMasterKey())
 			m.Set(masterKeyConfigKey, encodedMasterKey)
@@ -287,6 +286,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 				return nil, fmt.Errorf("login with previous auth keys failed: %w", err)
 			}
 		}
+		// Cache the session so all Fs instances of this user share
+		// it - the move code relies on all objects being in the same
+		// in-memory tree.
+		megaCache[opt.User] = srv
 	}
 	f.srv = srv
 
@@ -770,6 +773,8 @@ func (f *Fs) move(ctx context.Context, dstRemote string, srcFs *Fs, srcRemote st
 		return fmt.Errorf("server-side move failed to lookup src parent dir: %w", err)
 	}
 
+	waitEvent := f.srv.WaitEventsStart()
+
 	// move the object into its new directory if required
 	if srcDirNode != dstDirNode && srcDirNode.GetHash() != dstDirNode.GetHash() {
 		//log.Printf("move src %p %q dst %p %q", srcDirNode, srcDirNode.GetName(), dstDirNode, dstDirNode.GetName())
@@ -781,8 +786,6 @@ func (f *Fs) move(ctx context.Context, dstRemote string, srcFs *Fs, srcRemote st
 			return fmt.Errorf("server-side move failed: %w", err)
 		}
 	}
-
-	waitEvent := f.srv.WaitEventsStart()
 
 	// rename the object if required
 	if srcLeaf != dstLeaf {
@@ -1216,6 +1219,8 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 	}
 
+	waitEvent := o.fs.srv.WaitEventsStart()
+
 	// Finish the upload
 	var info *mega.Node
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -1235,15 +1240,23 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		o.info = nil
 	}
 
+	// Wait for the server to confirm the new file
+	o.fs.srv.WaitEvents(waitEvent, eventWaitTime)
+
 	return o.setMetaData(info)
 }
 
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
+	waitEvent := o.fs.srv.WaitEventsStart()
+
 	err := o.fs.deleteNode(ctx, o.info)
 	if err != nil {
 		return fmt.Errorf("Remove object failed: %w", err)
 	}
+
+	// Wait for the server to confirm the deletion
+	o.fs.srv.WaitEvents(waitEvent, eventWaitTime)
 	return nil
 }
 
