@@ -1245,3 +1245,4 @@ put them back in again. -->
 - Kalin Stoyanov <kalin.stoyanov@kiteworks.com>
 - NytePlus <nyte_plus@sjtu.edu.cn>
 - Jeremy Schoemaker <jeremy@shoemoney.com>
+- solunolab <solunolab@outlook.com>
