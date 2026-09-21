@@ -114,3 +114,36 @@ func TestRcBwLimit(t *testing.T) {
 	}, out)
 
 }
+
+// Check setting the limit records it and respects the SIGUSR2 toggle
+func TestSetBwLimitToggledOff(t *testing.T) {
+	oldCurr, oldPrev, oldToggledOff, oldCurrLimit := TokenBucket.curr, TokenBucket.prev, TokenBucket.toggledOff, TokenBucket.currLimit
+	defer func() {
+		TokenBucket.curr, TokenBucket.prev = oldCurr, oldPrev
+		TokenBucket.toggledOff, TokenBucket.currLimit = oldToggledOff, oldCurrLimit
+	}()
+	TokenBucket.curr, TokenBucket.prev = buckets{}, buckets{}
+	TokenBucket.toggledOff, TokenBucket.currLimit = false, fs.BwTimeSlot{}
+
+	// Normally the limit is set straight away
+	TokenBucket.SetBwLimit(fs.BwPair{Tx: 1024, Rx: 1024})
+	require.NotNil(t, TokenBucket.curr[TokenBucketSlotTransportTx])
+	assert.Equal(t, rate.Limit(1024), TokenBucket.curr[TokenBucketSlotTransportTx].Limit())
+
+	// The limit is recorded, otherwise SIGUSR2 ignores it
+	assert.True(t, TokenBucket.currLimit.Bandwidth.IsSet())
+
+	// Toggled off with SIGUSR2 - curr is off and prev holds the limits
+	TokenBucket.toggledOff = true
+	TokenBucket.curr, TokenBucket.prev = TokenBucket.prev, TokenBucket.curr
+
+	// Setting a limit now must not turn the limits back on
+	TokenBucket.SetBwLimit(fs.BwPair{Tx: 2048, Rx: 2048})
+	assert.Nil(t, TokenBucket.curr[TokenBucketSlotTransportTx], "limits toggled off must stay off")
+
+	// It becomes active on the next toggle
+	TokenBucket.toggledOff = false
+	TokenBucket.curr, TokenBucket.prev = TokenBucket.prev, TokenBucket.curr
+	require.NotNil(t, TokenBucket.curr[TokenBucketSlotTransportTx])
+	assert.Equal(t, rate.Limit(2048), TokenBucket.curr[TokenBucketSlotTransportTx].Limit())
+}

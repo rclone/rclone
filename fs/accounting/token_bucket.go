@@ -190,13 +190,29 @@ func (tb *tokenBucket) LimitBandwidth(i TokenBucketSlot, n int) {
 func (tb *tokenBucket) SetBwLimit(bandwidth fs.BwPair) {
 	tb.mu.Lock()
 	defer tb.mu.Unlock()
+	tb._setBwLimit(bandwidth)
+}
+
+// Set the current bandwidth limit
+//
+// Call with lock held
+func (tb *tokenBucket) _setBwLimit(bandwidth fs.BwPair) {
+	// If the limits are toggled off then the change should only
+	// become active on the next toggle, which swaps curr and prev
+	targetBucket := &tb.curr
+	if tb.toggledOff {
+		targetBucket = &tb.prev
+	}
 	if bandwidth.IsSet() {
-		tb.curr = newTokenBucket(bandwidth)
+		*targetBucket = newTokenBucket(bandwidth)
 		fs.Logf(nil, "Bandwidth limit set to %v", bandwidth)
 	} else {
-		tb.curr._setOff()
+		targetBucket._setOff()
 		fs.Logf(nil, "Bandwidth limit reset to unlimited")
 	}
+	// Record the limit so the SIGUSR2 toggle knows there is one
+	// and a scheduled change knows what it is replacing
+	tb.currLimit.Bandwidth = bandwidth
 }
 
 // read and set the bandwidth limits
