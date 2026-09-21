@@ -1184,6 +1184,32 @@ func TestExecuteJobWithLogs(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, rc.IsErrParamInvalid(err), err)
 
+	// The object form gives control over what is returned
+	_, out, err = NewJob(ctx, jobFn, rc.Params{"_logs": rc.Params{"level": "ERROR"}})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"error from job"}, logMessages(t, out["_logs"]))
+
+	// Unattributed logs can be left out
+	unattributedFn := func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		fs.LogfCtx(ctx, nil, "attributed")
+		fs.Logf(nil, "unattributed")
+		return nil, nil
+	}
+	_, out, err = NewJob(ctx, unattributedFn, rc.Params{"_logs": true})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"attributed", "unattributed"}, logMessages(t, out["_logs"]))
+	_, out, err = NewJob(ctx, unattributedFn, rc.Params{"_logs": rc.Params{"unattributed": false}})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"attributed"}, logMessages(t, out["_logs"]))
+	_, out, err = NewJob(ctx, unattributedFn, rc.Params{"_logs": rc.Params{"level": "NOTICE", "unattributed": true}})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"attributed", "unattributed"}, logMessages(t, out["_logs"]))
+
+	// A bad level in the object form is an error
+	_, _, err = NewJob(ctx, jobFn, rc.Params{"_logs": rc.Params{"level": "potato"}})
+	require.Error(t, err)
+	assert.True(t, rc.IsErrParamInvalid(err), err)
+
 	// Logs made while parsing the request are included
 	_, out, err = NewJob(ctx, jobFn, rc.Params{
 		"_logs":   "ERROR",

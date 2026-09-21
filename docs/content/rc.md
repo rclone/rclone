@@ -591,6 +591,17 @@ otherwise the call will return an error.
 (e.g. `"INFO"` or `"ERROR"`) to return only the logs at that level or
 more severe.
 
+It can also be set to an object to control what is returned:
+
+- `level` - only return the logs at this level or more severe - optional
+- `unattributed` - set this to `false` to leave out the logs which
+  aren't attributed to a job - optional, defaults to `true`
+
+```console
+$ rclone rc sync/copy srcFs=/tmp/src dstFs=/tmp/dst \
+    --json '{"_logs": {"level": "INFO", "unattributed": false}}'
+```
+
 The logs are returned as a `_logs` key in the result of the call, or
 in the error response if the call failed. It has the following keys:
 
@@ -646,7 +657,8 @@ Note that:
 - `_logs` returns the entries for the job and the unattributed entries
   made **while** the job was running. The unattributed entries may have
   come from other jobs, or other rclone activity, running at the same
-  time. Entries attributed to other jobs are left out.
+  time - set `unattributed` to `false` to leave them out. Entries
+  attributed to other jobs are always left out.
 - The log buffer only contains logs at the current `--log-level`. This
   is currently a global setting so it can't be changed for a call with
   `_config`. Use [options/set](#options-set) to change it.

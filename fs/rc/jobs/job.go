@@ -56,10 +56,9 @@ type Job struct {
 	// string error message.
 	realErr error
 
-	wantLogs bool       // set if _logs was passed in
-	logLevel slog.Level // return logs of this level or more severe
-	logStart int64      // sequence number in log.Recent when the job started
-	logEnd   int64      // sequence number in log.Recent when the job finished
+	logsOpt  logsOpt // how the logs were asked for with _logs
+	logStart int64   // sequence number in log.Recent when the job started
+	logEnd   int64   // sequence number in log.Recent when the job finished
 }
 
 // logs returns the logs made while the job was running so far or nil
@@ -76,7 +75,7 @@ type Job struct {
 //
 // Call with job.mu held.
 func (job *Job) logs(since int64, limit int) rc.Params {
-	if !job.wantLogs {
+	if !job.logsOpt.wanted {
 		return nil
 	}
 	// Never read from before the job started, so since 0 means
@@ -86,8 +85,9 @@ func (job *Job) logs(since int64, limit int) rc.Params {
 	if job.Finished {
 		logEnd = job.logEnd
 	}
-	// Return the job's own logs and any which aren't attributed
-	filter := log.Filter{Level: job.logLevel, JobID: job.ID, Unattributed: true}
+	// Return the job's own logs, and any which aren't attributed
+	// unless they were turned off with _logs unattributed
+	filter := log.Filter{Level: job.logsOpt.level, JobID: job.ID, Unattributed: job.logsOpt.unattributed}
 	entries, next, lost := log.Recent.Get(since, logEnd, filter, limit)
 	return rc.Params{
 		"entries": entries,
@@ -311,36 +311,62 @@ func LogsRequested(in rc.Params) bool {
 	return err != nil || wantLogs
 }
 
-// See if _logs is set returning whether the logs are wanted and the
-// minimum level of logs to return.
+// logsOpt is how the logs of a job were asked for with _logs.
+type logsOpt struct {
+	wanted       bool
+	level        slog.Level
+	unattributed bool // return the logs which aren't attributed to a job too
+}
+
+// logsOptJSON is the object form of the _logs parameter.
+type logsOptJSON struct {
+	Level        string `json:"level"`
+	Unattributed *bool  `json:"unattributed"`
+}
+
+// See if _logs is set returning how the logs were asked for.
 //
-// _logs can be a boolean or a log level, e.g. "INFO".
-func getLogs(in rc.Params) (wantLogs bool, level slog.Level, err error) {
-	level = slog.LevelDebug
-	wantLogs = LogsRequested(in)
+// _logs can be a boolean, a log level, e.g. "INFO", or an object,
+// e.g. {"level": "INFO", "unattributed": false}.
+func getLogs(in rc.Params) (opt logsOpt, err error) {
+	opt = logsOpt{
+		wanted:       LogsRequested(in),
+		level:        slog.LevelDebug,
+		unattributed: true,
+	}
 	_, boolErr := in.GetBool("_logs")
 	levelString, levelErr := in.GetString("_logs")
+	var optJSON logsOptJSON
+	structErr := in.GetStruct("_logs", &optJSON)
 	delete(in, "_logs") // remove the logs parameter after parsing
-	if !wantLogs {
-		return false, level, nil
+	if !opt.wanted {
+		return logsOpt{}, nil
 	}
 	if !log.Recent.Enabled() {
-		return false, level, log.ErrBufferDisabled
+		return logsOpt{}, log.ErrBufferDisabled
 	}
-	// _logs is true or a level here
+	// _logs is true, a level or an object here
 	if boolErr != nil {
-		if levelErr != nil {
-			return false, level, levelErr
+		if structErr == nil && (optJSON.Level != "" || optJSON.Unattributed != nil) {
+			levelString = optJSON.Level
+			if optJSON.Unattributed != nil {
+				opt.unattributed = *optJSON.Unattributed
+			}
+			if levelString == "" {
+				return opt, nil
+			}
+		} else if levelErr != nil {
+			return logsOpt{}, levelErr
 		}
-		level, err = log.ParseLevel(levelString)
+		opt.level, err = log.ParseLevel(levelString)
 		if err != nil {
-			return false, level, rc.NewErrParamInvalid(fmt.Errorf("_logs must be a boolean or a log level: %w", err))
+			return logsOpt{}, rc.NewErrParamInvalid(fmt.Errorf("_logs must be a boolean, a log level or an object: %w", err))
 		}
-		if level >= fs.SlogLevelOff {
-			return false, level, rc.NewErrParamInvalid(fmt.Errorf("_logs level can't be %q", levelString))
+		if opt.level >= fs.SlogLevelOff {
+			return logsOpt{}, rc.NewErrParamInvalid(fmt.Errorf("_logs level can't be %q", levelString))
 		}
 	}
-	return wantLogs, level, nil
+	return opt, nil
 }
 
 // NewJob creates a Job and executes it, possibly in the background if _async is set
@@ -369,7 +395,7 @@ func (jobs *Jobs) NewJob(ctx context.Context, fn rc.Func, in rc.Params) (job *Jo
 		return nil, nil, err
 	}
 
-	wantLogs, logLevel, err := getLogs(in)
+	logsOpt, err := getLogs(in)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -386,8 +412,7 @@ func (jobs *Jobs) NewJob(ctx context.Context, fn rc.Func, in rc.Params) (job *Jo
 		Group:     group,
 		StartTime: time.Now(),
 		Stop:      stop,
-		wantLogs:  wantLogs,
-		logLevel:  logLevel,
+		logsOpt:   logsOpt,
 		logStart:  logStart,
 	}
 
@@ -411,7 +436,7 @@ func (jobs *Jobs) NewJob(ctx context.Context, fn rc.Func, in rc.Params) (job *Jo
 		job.run(ctx, fn, in)
 		out = job.Output
 		err = job.realErr
-		if wantLogs {
+		if logsOpt.wanted {
 			job.mu.Lock()
 			logs := job.logs(-1, 0)
 			job.mu.Unlock()
@@ -484,8 +509,9 @@ Results:
 - success - boolean - true for success false otherwise
 - output - output of the job as would have been returned if called synchronously
     - _logs - the logs of the job if it was started with _logs
-        - entries - array of log entries, oldest first - the job's own logs and
+        - entries - array of log entries, oldest first - the job's own logs, and
           the logs made while it was running which aren't attributed to a job
+          unless they were turned off with the _logs unattributed parameter
         - next - pass this as since to carry on reading the logs from where this call finished
         - lost - the number of log entries which had already been dropped from the log buffer
 - progress - output of the progress related to the underlying job
@@ -510,7 +536,7 @@ func rcJobStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("reshape failed in job status: %w", err)
 	}
-	if job.wantLogs {
+	if job.logsOpt.wanted {
 		since, err := in.GetInt64("since")
 		if rc.IsErrParamNotFound(err) {
 			since = -1
