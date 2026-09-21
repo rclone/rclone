@@ -158,6 +158,41 @@ func TestParamsGetInt64(t *testing.T) {
 	assert.Equal(t, true, IsErrParamInvalid(e3), e3.Error())
 }
 
+func TestParamsGetInt(t *testing.T) {
+	in := Params{
+		"int":      "123",
+		"bad":      "123x",
+		"notInt":   []string{"a", "b"},
+		"maxInt":   int64(math.MaxInt),
+		"minInt":   int64(math.MinInt),
+		"overflow": "9223372036854775808",
+	}
+	v, err := in.GetInt("int")
+	require.NoError(t, err)
+	assert.Equal(t, 123, v)
+	v, err = in.GetInt("maxInt")
+	require.NoError(t, err)
+	assert.Equal(t, math.MaxInt, v)
+	v, err = in.GetInt("minInt")
+	require.NoError(t, err)
+	assert.Equal(t, math.MinInt, v)
+	for _, key := range []string{"bad", "notInt", "overflow"} {
+		v, err = in.GetInt(key)
+		assert.True(t, IsErrParamInvalid(err), key)
+		assert.Equal(t, 0, v)
+	}
+	v, err = in.GetInt("notFound")
+	assert.Equal(t, ErrParamNotFound("notFound"), err)
+	assert.Equal(t, 0, v)
+	if math.MaxInt == math.MaxInt32 {
+		in["big"] = int64(math.MaxInt32) + 1
+		v, err = in.GetInt("big")
+		assert.True(t, IsErrParamInvalid(err))
+		assert.Contains(t, err.Error(), "overflows int")
+		assert.Equal(t, 0, v)
+	}
+}
+
 func TestParamsGetFloat64(t *testing.T) {
 	for _, test := range []struct {
 		value     any
