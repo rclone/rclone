@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
+	"io"
 	"mime"
 	"net"
 	"net/http"
@@ -395,7 +396,39 @@ func (w *WebDAV) postprocess(r *http.Request, remote string) {
 	}
 }
 
+type copyRequestKey struct{}
+
+type copyRequest struct {
+	input *copyBody
+}
+
+type copyBody struct {
+	io.ReadCloser
+	expected, received int64
+	complete           bool
+	err                error
+}
+
+func (b *copyBody) Read(p []byte) (int, error) {
+	n, err := b.ReadCloser.Read(p)
+	b.received += int64(n)
+	if err == io.EOF {
+		if b.received != b.expected {
+			err = io.ErrUnexpectedEOF
+		} else {
+			b.complete = true
+		}
+	}
+	if err != nil && err != io.EOF {
+		b.err = err
+	}
+	return n, err
+}
+
 func (w *WebDAV) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	if r.Method == "COPY" {
+		r = r.WithContext(context.WithValue(r.Context(), copyRequestKey{}, new(copyRequest)))
+	}
 	urlPath := r.URL.Path
 	isDir := strings.HasSuffix(urlPath, "/")
 	remote := strings.Trim(urlPath, "/")
@@ -540,7 +573,16 @@ func (w *WebDAV) OpenFile(ctx context.Context, name string, flags int, perm os.F
 	if err != nil {
 		return nil, err
 	}
-	return Handle{Handle: f, w: w, ctx: ctx}, nil
+	h := Handle{Handle: f, w: w, ctx: ctx}
+	if copying, ok := ctx.Value(copyRequestKey{}).(*copyRequest); ok {
+		if flags&(os.O_WRONLY|os.O_RDWR) != 0 {
+			h.copyInput = copying.input
+		} else if !f.Node().IsDir() {
+			copying.input = &copyBody{ReadCloser: f, expected: f.Node().Size()}
+			h.copyReader = copying.input
+		}
+	}
+	return h, nil
 }
 
 // RemoveAll removes a file or a directory and its contents
@@ -588,8 +630,37 @@ func (w *WebDAV) Stat(ctx context.Context, name string) (fi os.FileInfo, err err
 // Handle represents an open file
 type Handle struct {
 	vfs.Handle
-	w   *WebDAV
-	ctx context.Context
+	w          *WebDAV
+	ctx        context.Context
+	copyReader *copyBody
+	copyInput  *copyBody
+}
+
+// Read reads from the handle and tracks COPY source completion.
+func (h Handle) Read(p []byte) (int, error) {
+	if h.copyReader != nil {
+		return h.copyReader.Read(p)
+	}
+	return h.Handle.Read(p)
+}
+
+// Close closes the handle, abandoning a destination whose COPY source failed.
+func (h Handle) Close() error {
+	if body := h.copyInput; body != nil {
+		reason := body.err
+		if reason == nil {
+			reason = h.ctx.Err()
+		}
+		if reason == nil && !body.complete {
+			reason = io.ErrUnexpectedEOF
+		}
+		if reason != nil {
+			if closer, ok := h.Handle.(interface{ CloseWithError(error) error }); ok {
+				return closer.CloseWithError(reason)
+			}
+		}
+	}
+	return h.Handle.Close()
 }
 
 // Readdir reads directory entries from the handle
