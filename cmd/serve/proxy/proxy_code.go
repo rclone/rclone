@@ -53,16 +53,18 @@ func main() {
 	if out["_root"] == "" {
 		out["_root"] = ""
 	}
+	// A user or access key ID can be revoked
+	if revoked := os.Getenv("RCLONE_TEST_PROXY_REVOKED"); revoked != "" && in["user"] == revoked {
+		log.Fatalf("user %q revoked", in["user"])
+	}
 	// S3 access key auth has neither pass nor public_key and needs
 	// the secret returned, unless the user asks for it to be omitted
 	// or empty. The secret's suffix can be changed to simulate a
-	// rotation and an access key ID can be revoked.
+	// rotation.
 	_, havePass := in["pass"]
 	_, havePublicKey := in["public_key"]
 	switch {
 	case havePass || havePublicKey || in["user"] == "nosecret":
-	case in["user"] == os.Getenv("RCLONE_TEST_PROXY_REVOKED"):
-		log.Fatalf("access key ID %q revoked", in["user"])
 	case in["user"] == "emptysecret":
 		out["_secret_access_key"] = ""
 	default:

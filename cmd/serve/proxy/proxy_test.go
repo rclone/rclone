@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -217,7 +218,8 @@ func TestRun(t *testing.T) {
 		// If a cached entry's pwHash somehow doesn't match the supplied
 		// auth (eg a hash collision on the cache key), Call must reject
 		// it. Simulate by corrupting the cached pwHash.
-		entry := cacheEntry{vfs: vfs, pwHash: sha256.Sum256([]byte("tampered"))}
+		entry := cacheEntry{vfs: vfs, pwHash: sha256.Sum256([]byte("tampered")), refreshed: new(atomic.Int64)}
+		entry.refreshed.Store(time.Now().UnixNano())
 		p.vfsCache.Put(cacheKey, entry)
 		vfs, vfsKey, err = p.Call(testUser, testPass, false, testAddr)
 		require.Error(t, err)
@@ -236,6 +238,34 @@ func TestRun(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, vfs)
 		assert.Equal(t, generateCacheKey(testUser, testPass, authPassword, ""), vfsKey)
+		assert.Equal(t, 1, p.vfsCache.Entries())
+	})
+
+	t.Run("Call revalidates", func(t *testing.T) {
+		assert.Equal(t, 0, p.vfsCache.Entries())
+		defer p.vfsCache.Clear()
+		oldRevalidate := revalidateInterval
+		defer func() { revalidateInterval = oldRevalidate }()
+
+		VFS, _, err := p.Call(testUser, testPass, false, testAddr)
+		require.NoError(t, err)
+
+		// A recently confirmed entry is used without asking the proxy
+		t.Setenv("RCLONE_TEST_PROXY_REVOKED", testUser)
+		VFS2, _, err := p.Call(testUser, testPass, false, testAddr)
+		require.NoError(t, err, "cached entry should still be trusted")
+		assert.Same(t, VFS, VFS2)
+
+		// Once old enough the proxy is asked again and can revoke the user
+		revalidateInterval = 0
+		_, _, err = p.Call(testUser, testPass, false, testAddr)
+		require.ErrorContains(t, err, "revoked")
+
+		// A user the proxy still allows keeps the cached backend
+		t.Setenv("RCLONE_TEST_PROXY_REVOKED", "")
+		VFS3, _, err := p.Call(testUser, testPass, false, testAddr)
+		require.NoError(t, err)
+		assert.Same(t, VFS, VFS3)
 		assert.Equal(t, 1, p.vfsCache.Entries())
 	})
 
@@ -334,7 +364,8 @@ func TestRun(t *testing.T) {
 		// If a cached entry's pwHash somehow doesn't match the supplied
 		// auth (eg a hash collision on the cache key), Call must reject
 		// it. Simulate by corrupting the cached pwHash.
-		entry := cacheEntry{vfs: vfs, kind: authPublicKey, pwHash: sha256.Sum256([]byte("tampered"))}
+		entry := cacheEntry{vfs: vfs, kind: authPublicKey, pwHash: sha256.Sum256([]byte("tampered")), refreshed: new(atomic.Int64)}
+		entry.refreshed.Store(time.Now().UnixNano())
 		p.vfsCache.Put(cacheKey, entry)
 		vfs, vfsKey, err = p.Call(testUser, publicKeyString, true, testAddr)
 		require.Error(t, err)
@@ -369,7 +400,8 @@ func TestRun(t *testing.T) {
 
 		// A cached entry of the wrong kind must be rejected even if
 		// the cache key somehow matches (eg a hash collision).
-		entry := cacheEntry{vfs: vfs2, kind: authPublicKey, pwHash: sha256.Sum256([]byte(publicKeyString))}
+		entry := cacheEntry{vfs: vfs2, kind: authPublicKey, pwHash: sha256.Sum256([]byte(publicKeyString)), refreshed: new(atomic.Int64)}
+		entry.refreshed.Store(time.Now().UnixNano())
 		p.vfsCache.Put(vfsKey2, entry)
 		vfs2, vfsKey2, err = p.Call(testUser, publicKeyString, false, testAddr)
 		require.Error(t, err)
@@ -513,13 +545,13 @@ func TestCallAccessKey(t *testing.T) {
 
 	// Check a cached entry is revalidated with the proxy once it is
 	// old enough even without a refresh being asked for
-	oldRevalidate := accessKeyRevalidateInterval
-	defer func() { accessKeyRevalidateInterval = oldRevalidate }()
+	oldRevalidate := revalidateInterval
+	defer func() { revalidateInterval = oldRevalidate }()
 	t.Setenv("RCLONE_TEST_PROXY_REVOKED", "AKID")
 	_, secret8, err := p.CallAccessKey("AKID", remoteAddr, false)
 	require.NoError(t, err, "cached entry should still be trusted")
 	assert.Equal(t, "AKID-rotated-again", secret8)
-	accessKeyRevalidateInterval = 0
+	revalidateInterval = 0
 	_, _, err = p.CallAccessKey("AKID", remoteAddr, false)
 	require.ErrorContains(t, err, "revoked")
 }
