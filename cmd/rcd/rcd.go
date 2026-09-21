@@ -49,6 +49,10 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 			rc.Opt.Files = args[0]
 		}
 
+		// Print the stats periodically if --stats is in use, as
+		// the serve and mount commands do
+		defer cmd.StartStats()()
+
 		s, err := rcserver.Start(context.Background(), &rc.Opt)
 		if err != nil {
 			fs.Fatalf(nil, "Failed to start remote control: %v", err)
