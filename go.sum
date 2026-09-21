@@ -326,8 +326,8 @@ github.com/hashicorp/golang-lru/v2 v2.0.7 h1:a+bsQ5rvGLjzHuww6tVxozPZFVghXaHOwFs
 github.com/hashicorp/golang-lru/v2 v2.0.7/go.mod h1:QeFd9opnmA6QUJc5vARoKUSoFhyfM2/ZepoAG6RGpeM=
 github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
-github.com/internxt/rclone-adapter v0.0.0-20260708165336-dd6561bacfa2 h1:ZeebPK9Bnpy40uTuneEeVMYaMMerol3qsmIvzD0EIAk=
-github.com/internxt/rclone-adapter v0.0.0-20260708165336-dd6561bacfa2/go.mod h1:4jGLEnNHyWOVSGn89IeWUVqlKCEitOM3D32/XypGy/o=
+github.com/internxt/rclone-adapter v0.0.0-20260904121407-404a75f3d031 h1:l0apMNjUmo3E9wtiveXKkBL1gpvWb7OUawnn9ZsOS2I=
+github.com/internxt/rclone-adapter v0.0.0-20260904121407-404a75f3d031/go.mod h1:4jGLEnNHyWOVSGn89IeWUVqlKCEitOM3D32/XypGy/o=
 github.com/jcmturner/aescts/v2 v2.0.0 h1:9YKLH6ey7H4eDBXW8khjYslgyqG2xZikXP0EQFKrle8=
 github.com/jcmturner/aescts/v2 v2.0.0/go.mod h1:AiaICIRyfYg35RUkr8yESTqvSy7csK90qZ5xfvvsoNs=
 github.com/jcmturner/dnsutils/v2 v2.0.0 h1:lltnkeZGL0wILNvrNiVCR6Ro5PGU/SeBvVO/8c/iPbo=

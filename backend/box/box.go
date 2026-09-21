@@ -1461,7 +1461,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 					// Item in the cache has the same or newer SequenceID than
 					// this event. Ignore this event, it must be old.
 					f.itemMetaCacheMu.Unlock()
-					fs.Debugf(f, "%s ignored due to old SequenceID (%q)", eventDetails, itemMeta.SequenceID)
+					fs.Debugf(f, "%s ignored due to old SequenceID (%d)", eventDetails, itemMeta.SequenceID)
 					continue
 				}
 

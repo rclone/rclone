@@ -270,13 +270,6 @@ backends:
      - TestIntegration/FsMkdir/FsEncoding/trailing_LF
      - TestIntegration/FsMkdir/FsEncoding/trailing_VT
  - backend:  "s3"
-   remote:   "TestS3MinioEdge:"
-   fastlist: true
-   ignore:
-     - TestIntegration/FsMkdir/FsPutFiles/SetTier
-   ignoretests:
-     - cmd/gitannex
- - backend:  "s3"
    remote:   "TestS3Wasabi:"
    fastlist: true
    ignore:
@@ -644,13 +637,6 @@ backends:
    remote: "TestOracleObjectStorage:"
    fastlist: true
    ignore:
-     - TestIntegration/FsMkdir/FsEncoding/control_chars
-     - TestIntegration/FsMkdir/FsEncoding/leading_CR
-     - TestIntegration/FsMkdir/FsEncoding/leading_LF
-     - TestIntegration/FsMkdir/FsEncoding/trailing_CR
-     - TestIntegration/FsMkdir/FsEncoding/trailing_LF
-     - TestIntegration/FsMkdir/FsEncoding/leading_HT
-     - TestIntegration/FsMkdir/FsPutFiles/FsPutStream/0
    ignoretests:
      - cmd/bisync
      - cmd/gitannex
