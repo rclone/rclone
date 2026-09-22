@@ -1,8 +1,11 @@
 package dlna
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/rclone/rclone/cmd/bisync/bilib"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -45,4 +48,14 @@ func TestAdjustXML(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
+}
+
+func TestLoggingUnescapedPath(t *testing.T) {
+	handler := logging(http.NotFoundHandler())
+	req := httptest.NewRequest("GET", "/r/%D0%91%D0%B0%D1%80%D0%B4%D1%8B/file%20name.mp3", nil)
+	logged := bilib.CaptureOutput(func() {
+		handler.ServeHTTP(httptest.NewRecorder(), req)
+	})
+
+	assert.Contains(t, string(logged), "ERROR : /r/Барды/file name.mp3: ")
 }

@@ -1081,6 +1081,25 @@ func TestMoveFileWithIgnoreExisting(t *testing.T) {
 	r.CheckRemoteItems(t, file1)
 }
 
+func TestMoveFileImmutable(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	defer accounting.GlobalStats().ResetCounters()
+
+	ci.Immutable = true
+
+	file1 := r.WriteObject(ctx, "existing", "potato", t1)
+	r.CheckRemoteItems(t, file1)
+
+	// Should fail with ErrorImmutableModified and leave the source in place
+	file2 := r.WriteFile("existing", "tomatoes", t2)
+	err := operations.MoveFile(ctx, r.Fremote, r.Flocal, file2.Path, file2.Path)
+	assert.ErrorIs(t, err, fs.ErrorImmutableModified)
+	r.CheckLocalItems(t, file2)
+	r.CheckRemoteItems(t, file1)
+}
+
 func TestCaseInsensitiveMoveFile(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)

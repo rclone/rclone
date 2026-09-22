@@ -242,7 +242,7 @@ OneDrive files. Take care to safeguard these credentials.
 If you do not have admin access to your organization's OneDrive for
 Business, you can still connect by manually providing the SharePoint
 tenant URL and drive ID. This works by overriding the base API URL
-from the standard Microsoft Graph endpoint to the SharePoint v2.0
+from the standard Microsoft Graph endpoint to the SharePoint API
 endpoint.
 
 #### Steps to manually obtain credentials
@@ -256,6 +256,13 @@ endpoint.
    ".driveAccessToken": "access_token={access_token}"
    ```
 
+   In some guest access scenarios SharePoint may also expose a matching
+   v2.1 URL and token pair:
+   ```json
+   ".driveUrlV21": "{tenant_url}/v2.1/drives/{drive_id}",
+   ".driveAccessTokenV21": "access_token={access_token}"
+   ```
+
 #### Rclone configuration
 
 Use the extracted values to configure your remote:
@@ -267,6 +274,14 @@ drive_id = {drive_id}
 tenant_url = {tenant_url}
 drive_type = business
 ```
+
+If you use a v2.1 token, set the matching SharePoint API version:
+
+```ini
+tenant_api_version = v2.1
+```
+
+If `tenant_api_version` is omitted, rclone defaults to `v2.0`.
 
 Since the exact expiry time cannot be determined from web traffic,
 set the expiry to a future date. Note that the token will eventually

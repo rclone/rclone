@@ -51,8 +51,7 @@ func init() {
 			Sensitive: true,
 		}, {
 			Name:      "user",
-			Help:      "SMB username.",
-			Default:   currentUser,
+			Help:      "SMB username.\n\nLeave blank to use the current user name.",
 			Sensitive: true,
 		}, {
 			Name:    "port",
@@ -204,6 +203,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	err := configstruct.Set(m, opt)
 	if err != nil {
 		return nil, err
+	}
+	if opt.User == "" {
+		opt.User = currentUser
 	}
 
 	// if root is empty or ends with / (must be a directory)
