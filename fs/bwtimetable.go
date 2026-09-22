@@ -18,10 +18,10 @@ type BwPair struct {
 // String returns a printable representation of a BwPair
 func (bp *BwPair) String() string {
 	var out strings.Builder
-	out.WriteString(bp.Tx.String())
+	out.WriteString(bp.Tx.stringRoundTrip())
 	if bp.Rx != bp.Tx {
 		out.WriteRune(':')
-		out.WriteString(bp.Rx.String())
+		out.WriteString(bp.Rx.stringRoundTrip())
 	}
 	return out.String()
 }
