@@ -339,6 +339,29 @@ func TestBwTimetableSetReplaces(t *testing.T) {
 	}
 }
 
+func TestBwTimetableStringRoundTrip(t *testing.T) {
+	for _, in := range []string{
+		"1B",
+		"500B",
+		"1023B",
+		"1B:2B",
+		"Mon-10:00,500B",
+		"08:00,512B 12:00,10M 23:00,off",
+		"1M",
+		"1M:100k",
+		"off",
+		"0",
+	} {
+		var tt BwTimetable
+		require.NoError(t, tt.Set(in), in)
+		printed := tt.String()
+
+		var got BwTimetable
+		require.NoError(t, got.Set(printed), "%q printed as %q", in, printed)
+		assert.Equal(t, tt, got, "%q printed as %q", in, printed)
+	}
+}
+
 func TestBwTimetableSetErrorKeepsPrevious(t *testing.T) {
 	for _, in := range []string{
 		"Mon-11:00,333 bad",
