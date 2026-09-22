@@ -305,9 +305,31 @@ func TestMergeDeleteMarkers(t *testing.T) {
 			},
 		},
 	} {
-		got := mergeDeleteMarkers(test.versions, test.markers)
+		got := mergeDeleteMarkers(test.versions, test.markers, false)
 		assert.Equal(t, test.want, got, fmt.Sprintf("%d: %+v", n, test))
 	}
+}
+
+func TestMergeDeleteMarkersWithURLEncodedKeys(t *testing.T) {
+	plainKey := "images/reservations/photo.png"
+	encodedKey := "images/%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82-01.jpg"
+	t1 := fstest.Time("2022-01-21T12:00:00+01:00")
+	t2 := fstest.Time("2022-01-21T12:00:01+01:00")
+	versions := []types.ObjectVersion{
+		{Key: &plainKey, LastModified: &t2},
+		{Key: &encodedKey, LastModified: &t1},
+	}
+	markers := []types.DeleteMarkerEntry{
+		{Key: &encodedKey, LastModified: &t2},
+	}
+
+	got := mergeDeleteMarkers(versions, markers, true)
+	want := []types.ObjectVersion{
+		{Key: &plainKey, LastModified: &t2},
+		{Key: &encodedKey, LastModified: &t2, Size: isDeleteMarker},
+		{Key: &encodedKey, LastModified: &t1},
+	}
+	assert.Equal(t, want, got)
 }
 
 func TestRemoveAWSChunked(t *testing.T) {
