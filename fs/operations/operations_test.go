@@ -433,12 +433,13 @@ func TestDeleteFatalError(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
 	ci.Checkers = 2
-	ci.MaxDelete = 1
 	r := fstest.NewRun(t)
 	// More files than the deleters' channel can hold
 	for i := range 20 {
 		r.WriteObject(ctx, fmt.Sprintf("file%d", i), "x", t1)
 	}
+	// Set after writing the files as some backends (eg chunker) delete while uploading
+	ci.MaxDelete = 1
 
 	done := make(chan error, 1)
 	go func() {
@@ -1483,6 +1484,11 @@ type noDirMoveFs struct {
 func (f *noDirMoveFs) Features() *fs.Features { return f.features }
 
 func newNoDirMoveFs(t *testing.T, wrapped fs.Fs, failOn string) *noDirMoveFs {
+	// This tests the core DirMove logic, and on other backends the
+	// objects may not belong to wrapped or there may be no Move.
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping test on non local remote")
+	}
 	move := wrapped.Features().Move
 	require.NotNil(t, move, "the test needs a backend with Move")
 	f := &noDirMoveFs{
