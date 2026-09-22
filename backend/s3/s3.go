@@ -2315,7 +2315,31 @@ func versionLess(a, b *types.ObjectVersion) bool {
 // types.ObjectVersion with Size = isDeleteMarker to tell them apart
 //
 // We then merge them back into the Versions in the correct order
-func mergeDeleteMarkers(oldVersions []types.ObjectVersion, deleteMarkers []types.DeleteMarkerEntry) (newVersions []types.ObjectVersion) {
+func mergeDeleteMarkers(oldVersions []types.ObjectVersion, deleteMarkers []types.DeleteMarkerEntry, urlEncoded bool) (newVersions []types.ObjectVersion) {
+	encodedKeys := make(map[string]string)
+	if urlEncoded {
+		// URL encoding can change key order, so compare decoded keys and restore the encoded keys for the caller.
+		oldVersions = append([]types.ObjectVersion(nil), oldVersions...)
+		deleteMarkers = append([]types.DeleteMarkerEntry(nil), deleteMarkers...)
+		decodeKey := func(key **string) {
+			if *key == nil {
+				return
+			}
+			encodedKey := **key
+			decodedKey, err := url.QueryUnescape(encodedKey)
+			if err != nil {
+				return
+			}
+			encodedKeys[decodedKey] = encodedKey
+			*key = &decodedKey
+		}
+		for i := range oldVersions {
+			decodeKey(&oldVersions[i].Key)
+		}
+		for i := range deleteMarkers {
+			decodeKey(&deleteMarkers[i].Key)
+		}
+	}
 	newVersions = make([]types.ObjectVersion, 0, len(oldVersions)+len(deleteMarkers))
 	for _, deleteMarker := range deleteMarkers {
 		var obj types.ObjectVersion
@@ -2330,6 +2354,11 @@ func mergeDeleteMarkers(oldVersions []types.ObjectVersion, deleteMarkers []types
 	}
 	// Merge any remaining versions
 	newVersions = append(newVersions, oldVersions...)
+	for i := range newVersions {
+		if encodedKey, ok := encodedKeys[deref(newVersions[i].Key)]; ok {
+			newVersions[i].Key = &encodedKey
+		}
+	}
 	return newVersions
 }
 
@@ -2369,7 +2398,7 @@ func (ls *versionsList) List(ctx context.Context) (resp *s3.ListObjectsV2Output,
 
 	// Merge in delete Markers as types.ObjectVersion if we need them
 	if ls.hidden || ls.usingVersionAt {
-		respVersions.Versions = mergeDeleteMarkers(respVersions.Versions, respVersions.DeleteMarkers)
+		respVersions.Versions = mergeDeleteMarkers(respVersions.Versions, respVersions.DeleteMarkers, ls.req.EncodingType == types.EncodingTypeUrl)
 	}
 
 	// Convert the Versions and the DeleteMarkers into an array of types.Object
