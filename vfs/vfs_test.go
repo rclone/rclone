@@ -159,6 +159,21 @@ func TestVFSNew(t *testing.T) {
 	checkActiveCacheEntries(0)
 }
 
+// TestVFSHold checks a held VFS isn't shut down until it is released
+// and can't be held once shut down.
+func TestVFSHold(t *testing.T) {
+	r := fstest.NewRun(t)
+	vfs := New(context.Background(), r.Fremote, nil)
+
+	require.True(t, vfs.Hold())
+	vfs.Shutdown()
+	assert.NoError(t, vfs.ctx.Err(), "VFS shut down while held")
+
+	vfs.Shutdown()
+	assert.Error(t, vfs.ctx.Err(), "VFS not shut down when released")
+	assert.False(t, vfs.Hold(), "VFS held after being shut down")
+}
+
 // TestVFSNewWithOpts sees if the New command works properly
 func TestVFSNewWithOpts(t *testing.T) {
 	var opt = vfscommon.Opt
