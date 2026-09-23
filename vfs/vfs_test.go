@@ -174,6 +174,22 @@ func TestVFSHold(t *testing.T) {
 	assert.False(t, vfs.Hold(), "VFS held after being shut down")
 }
 
+// TestVFSNewShuttingDown checks New doesn't reuse a VFS which is being
+// shut down but hasn't yet removed itself from the active cache.
+func TestVFSNewShuttingDown(t *testing.T) {
+	r := fstest.NewRun(t)
+	vfs := New(context.Background(), r.Fremote, nil)
+
+	// The state Shutdown leaves the VFS in while it waits for activeMu
+	vfs.inUse.Store(0)
+	vfs2 := New(context.Background(), r.Fremote, nil)
+	assert.NotSame(t, vfs, vfs2, "reused a VFS being shut down")
+	assert.Equal(t, int32(0), vfs.inUse.Load())
+
+	vfs.Shutdown()
+	vfs2.Shutdown()
+}
+
 // TestVFSNewWithOpts sees if the New command works properly
 func TestVFSNewWithOpts(t *testing.T) {
 	var opt = vfscommon.Opt
