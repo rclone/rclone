@@ -1599,6 +1599,51 @@ func TestMultipartPartFailsAfterWholeBody(t *testing.T) {
 	require.ErrorIs(t, err, gofakes3.ErrNoSuchUpload)
 }
 
+// flakySink is a sink which fails the write which would take it past
+// failAt bytes, taking part of it, and accepts everything after that.
+type flakySink struct {
+	bufferSink
+	failAt int
+	failed bool
+}
+
+func (s *flakySink) Write(p []byte) (int, error) {
+	if s.failed || s.buf.Len()+len(p) <= s.failAt {
+		return s.bufferSink.Write(p)
+	}
+	s.failed = true
+	n, _ := s.bufferSink.Write(p[:s.failAt-s.buf.Len()])
+	return n, errBoom
+}
+
+// TestMultipartPumpFailure checks that an upload is failed when a part
+// which was buffered, and so already acknowledged to the client, can't be
+// written to the sink, rather than a resend of it being appended to what
+// the failed write left there.
+func TestMultipartPumpFailure(t *testing.T) {
+	b, _, bucket := newPutTestBackend(t, "", nil)
+	ctx := context.Background()
+	const object = "pump-failure.bin"
+
+	uploadID, _ := newBufferSinkUpload(t, b, bucket, object)
+	up, err := b.loadUpload(ctx, uploadID)
+	require.NoError(t, err)
+	part1 := []byte(random.String(1024))
+	part2 := []byte(random.String(1024))
+	up.fh = &flakySink{failAt: len(part1) + len(part2)/2}
+
+	// Part 2 arrives first so is buffered, then fails part way into the
+	// sink when part 1 arrives and it is pumped.
+	_, err = b.UploadPart(ctx, bucket, object, uploadID, 2, int64(len(part2)), bytes.NewReader(part2))
+	require.NoError(t, err)
+	_, err = b.UploadPart(ctx, bucket, object, uploadID, 1, int64(len(part1)), bytes.NewReader(part1))
+	require.ErrorIs(t, err, errBoom)
+
+	// The upload is gone rather than accepting part 2 again.
+	_, err = b.UploadPart(ctx, bucket, object, uploadID, 2, int64(len(part2)), bytes.NewReader(part2))
+	require.ErrorIs(t, err, gofakes3.ErrNoSuchUpload)
+}
+
 // TestMultipartPartBadMD5 checks that a part whose body doesn't match the
 // Content-MD5 the client declared is rejected, and that the upload it
 // corrupted is failed rather than left for the client to retry.
