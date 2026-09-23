@@ -163,7 +163,7 @@ func (b *s3Backend) HeadObject(ctx context.Context, bucketName, objectName strin
 	// to hashing the VFS cache when the backing object is not available yet.
 	entry := node.DirEntry()
 	size := node.Size()
-	hash := getFileHashByte(node, b.s.etagHashType)
+	hash := getFileHashByte(node, b.s.etagHash(_vfs))
 
 	mimeType := fs.MimeTypeFromName(objectName)
 	if fobj, ok := entry.(fs.Object); ok {
@@ -220,7 +220,7 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 	file := node.(*vfs.File)
 
 	size := node.Size()
-	hash := getFileHashByte(node, b.s.etagHashType)
+	hash := getFileHashByte(node, b.s.etagHash(_vfs))
 
 	in, err := file.Open(os.O_RDONLY)
 	if err != nil {
