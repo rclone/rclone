@@ -974,6 +974,12 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	// Move the file server-side
 	err = f.pacer.Call(func() (bool, error) {
 		err := files.MoveFile(ctx, f.cfg, srcObj.uuid, directoryID, newName, newType)
+		// The move is checked against lagging read replicas so it can
+		// fail with 404 if the destination directory was just created
+		// or 409 if a file at the destination was just deleted.
+		if err != nil && isStaleReadError(err, true) {
+			return true, err
+		}
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
