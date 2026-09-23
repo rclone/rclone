@@ -221,3 +221,17 @@ func TestEtagHashAuto(t *testing.T) {
 		assert.Equal(t, want[:], obj.Hash)
 	}
 }
+
+// TestCopyObjectMissingSource checks that copying an object which
+// doesn't exist fails with NoSuchKey, including a copy onto itself to
+// replace its metadata.
+func TestCopyObjectMissingSource(t *testing.T) {
+	b, _ := newTestBackend(t)
+	ctx := context.Background()
+	for _, dstKey := range []string{"missing.txt", "other.txt"} {
+		_, err := b.CopyObject(ctx, "bucket", "missing.txt", "bucket", dstKey, map[string]string{"X-Amz-Meta-Colour": "red"})
+		assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrNoSuchKey), "copy to %q: %v", dstKey, err)
+	}
+	_, err := b.HeadObject(ctx, "bucket", "other.txt")
+	assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrNoSuchKey))
+}
