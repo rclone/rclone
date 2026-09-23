@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"os"
 	"path"
@@ -35,6 +36,7 @@ import (
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/testy"
 	"github.com/rclone/rclone/lib/random"
+	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -525,6 +527,42 @@ func testAuthProxyUsersKeptApart(t *testing.T, opt Options) {
 	info, err = bob.StatObject(ctx, bucket, "meta", minio.StatObjectOptions{})
 	require.NoError(t, err)
 	assert.NotContains(t, info.UserMetadata, "Secret", "bob seeing alice's metadata")
+}
+
+// TestAuthProxyHoldsVFS checks the VFS the auth proxy gives a request is
+// held until the request finishes, so it isn't shut down under a long
+// upload or download if it expires from the proxy's cache.
+func TestAuthProxyHoldsVFS(t *testing.T) {
+	fstest.Initialise()
+	prog, err := filepath.Abs("../servetest/proxy_code.go")
+	require.NoError(t, err)
+	t.Setenv("RCLONE_TEST_PROXY_AUTH_KEY", "alice,secret")
+	opt := Opt
+	opt.HTTP.ListenAddr = []string{endpoint}
+	proxyOpt := proxy.Opt
+	proxyOpt.AuthProxy = "go run " + prog + " " + t.TempDir()
+	w, err := newServer(context.Background(), nil, &opt, &vfscommon.Opt, &proxyOpt)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = w.Shutdown() })
+
+	var VFS *vfs.VFS
+	var inUse any
+	handler := proxyAuthMiddleware(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		VFS, err = w.getVFS(r.Context())
+		require.NoError(t, err)
+		inUse = VFS.Stats()["inUse"]
+	}), w)
+
+	req, err := http.NewRequest("GET", "http://localhost/", nil)
+	require.NoError(t, err)
+	req.Header.Set("X-Amz-Content-Sha256", "UNSIGNED-PAYLOAD")
+	err = v4.NewSigner().SignHTTP(context.Background(), aws.Credentials{AccessKeyID: "alice", SecretAccessKey: "secret"}, req, "UNSIGNED-PAYLOAD", "s3", "us-east-1", time.Now())
+	require.NoError(t, err)
+	handler.ServeHTTP(httptest.NewRecorder(), req)
+
+	require.NotNil(t, VFS, "request not authenticated")
+	assert.Equal(t, int32(2), inUse, "VFS not held by the request")
+	assert.Equal(t, int32(1), VFS.Stats()["inUse"], "VFS still held after the request")
 }
 
 // TestAuthKeyPerServer checks that two servers in the same process

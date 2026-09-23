@@ -228,6 +228,8 @@ func (w *Server) Addr() net.Addr {
 func (w *Server) Shutdown() error {
 	w.backend.stopReaper()
 	err := w.server.Shutdown()
+	// Uploads in progress hold their VFS so must go first
+	w.backend.forgetAllUploads()
 	w.provider.Shutdown()
 	return err
 }
@@ -244,11 +246,22 @@ func proxyAuthMiddleware(next http.Handler, ws *Server) http.Handler {
 			return
 		}
 		VFS, err := ws.auth(r, accessKey)
+		// The proxy shuts down a VFS once unused in its cache for a while,
+		// so hold it for the whole request, which may stream a long
+		// upload or download. It may have been shut down before it could
+		// be held, in which case the proxy makes a new one.
+		if err == nil && !VFS.Hold() {
+			VFS, err = ws.auth(r, accessKey)
+			if err == nil && !VFS.Hold() {
+				err = errors.New("VFS shut down")
+			}
+		}
 		if err != nil {
 			fs.Infof(r.URL.Path, "%s: Auth failed: %v", r.RemoteAddr, err)
 			accessDenied(w)
 			return
 		}
+		defer VFS.Shutdown()
 		ctx := context.WithValue(r.Context(), ctxKeyID, VFS)
 		ctx = context.WithValue(ctx, ctxKeyAccessKeyID, accessKey)
 		next.ServeHTTP(w, r.WithContext(ctx))
