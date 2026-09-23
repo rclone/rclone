@@ -2,6 +2,7 @@ package swift
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -235,4 +236,41 @@ func TestAuthRedirectStripsCredentialsOnCrossHost(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, int32(1), originHits.Load())
 	assert.Equal(t, int32(1), otherHits.Load())
+}
+
+// TestAuthRedirectRefusesToResendPassword checks a v2 or v3 auth
+// request, which carries the password in its body, is not resent to
+// another host the auth server redirects it to.
+func TestAuthRedirectRefusesToResendPassword(t *testing.T) {
+	for _, authVersion := range []string{"2", "3"} {
+		t.Run("v"+authVersion, func(t *testing.T) {
+			var originHits, otherHits atomic.Int32
+			other := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				otherHits.Add(1)
+				body, _ := io.ReadAll(r.Body)
+				assert.NotContains(t, string(body), "test-key", "password was resent to another host")
+			}))
+			defer other.Close()
+
+			origin := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				originHits.Add(1)
+				body, _ := io.ReadAll(r.Body)
+				assert.Contains(t, string(body), "test-key")
+				http.Redirect(w, r, other.URL+r.URL.Path, http.StatusTemporaryRedirect)
+			}))
+			defer origin.Close()
+
+			m := configmap.Simple{
+				"auth":         origin.URL + "/v" + authVersion,
+				"auth_version": authVersion,
+				"user":         "test-user",
+				"key":          "test-key",
+				"chunk_size":   "5Gi",
+			}
+			_, err := NewFs(context.Background(), "swift-test", "container", m)
+			require.ErrorIs(t, err, errRedirectResendsBody)
+			assert.Equal(t, int32(1), originHits.Load())
+			assert.Equal(t, int32(0), otherHits.Load())
+		})
+	}
 }

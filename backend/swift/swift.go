@@ -490,15 +490,22 @@ func (o *Object) split() (container, containerPath string) {
 // forwarded when a redirect leaves the host of the original request.
 var authHeaders = []string{"X-Auth-Token", "X-Auth-Key", "X-Auth-User"}
 
+// errRedirectResendsBody is returned when following a redirect which
+// leaves the host of the original request would resend that request's
+// body, such as the password in a v2 or v3 auth request, to the new
+// host.
+var errRedirectResendsBody = errors.New("refusing to follow redirect which leaves the original host: would resend the request body")
+
 // transport is the http.RoundTripper for the swift connection.
 //
 // The swift library makes its own http.Client with the default
 // redirect policy and does not let the caller replace it, so the
 // redirect policy is applied here at the transport level instead. A
 // redirect which downgrades HTTPS to plaintext HTTP is refused with
-// rest.ErrHTTPSDowngrade and the auth headers are removed from any
-// hop once the redirect chain has left the host and port of the
-// original request.
+// rest.ErrHTTPSDowngrade. Once the redirect chain has left the host
+// and port of the original request the auth headers are removed from
+// every further hop, and a hop which would resend the request body is
+// refused with errRedirectResendsBody.
 type transport struct {
 	*fshttp.Transport
 }
@@ -521,6 +528,13 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 			return nil, fmt.Errorf("redirect to %s: %w", req.URL.Redacted(), rest.ErrHTTPSDowngrade)
 		}
 		if leftHost {
+			// net/http resends the body on a 307 or 308 if it
+			// can be rewound, which for an auth request means
+			// the password, so those redirects stop here.
+			if req.Body != nil && req.Body != http.NoBody {
+				_ = req.Body.Close()
+				return nil, fmt.Errorf("redirect to %s leaves %s: %w", req.URL.Redacted(), origin.URL.Redacted(), errRedirectResendsBody)
+			}
 			for _, header := range authHeaders {
 				if req.Header.Get(header) == "" {
 					continue
