@@ -692,13 +692,27 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 
 // deleteObject removes an object by ID
 func (f *Fs) deleteObject(ctx context.Context, id string) error {
+	if f.opt.HardDelete {
+		// Deleting forever doesn't invalidate the server's cache of
+		// the parent folder listing, so the entry keeps being listed
+		// for about a second. Moving to the trash first does.
+		err := f.deleteEntry(ctx, id, false)
+		if err != nil {
+			return err
+		}
+	}
+	return f.deleteEntry(ctx, id, f.opt.HardDelete)
+}
+
+// deleteEntry moves the entry with ID to the trash or deletes it forever
+func (f *Fs) deleteEntry(ctx context.Context, id string, deleteForever bool) error {
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/file-entries/delete",
 	}
 	request := api.DeleteRequest{
 		EntryIDs:      []string{id},
-		DeleteForever: f.opt.HardDelete,
+		DeleteForever: deleteForever,
 	}
 	var result api.DeleteResponse
 	err := f.pacer.Call(func() (bool, error) {
