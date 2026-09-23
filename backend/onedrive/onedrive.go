@@ -438,21 +438,12 @@ Setting this flag speeds up these things greatly:
     rclone size onedrive:
     rclone rc vfs/refresh recursive=true
 
-**However** the delta listing API **only** works at the root of the
-drive. If you use it not at the root then it recurses from the root
-and discards all the data that is not under the directory you asked
-for. So it will be correct but may not be very efficient.
-
-This is why this flag is not set as the default.
-
-As a rule of thumb if nearly all of your data is under rclone's root
-directory (the |root/directory| in |onedrive:root/directory|) then
-using this flag will be a big performance win. If your data is
-mostly not under the root then using this flag will be a big
-performance loss.
-
-It is recommended if you are mounting your onedrive at the root
-(or near the root when using crypt) and using rclone |rc vfs/refresh|.
+Rclone asks for the delta listing of the directory being listed. If
+the drive only supports delta listings at the root of the drive (as
+some older OneDrive for Business and SharePoint drives do) then
+rclone lists from the root and discards all the data that is not
+under the directory you asked for. So it will be correct but may not
+be very efficient.
 `, "|", "`"),
 			Advanced: true,
 		}, {
@@ -1511,10 +1502,6 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		return err
 	}
 
-	// ListR only works at the root of a onedrive, not on a folder
-	// So we have to filter things outside of the root which is
-	// inefficient.
-
 	list := list.NewHelper(callback)
 
 	// list a folder conventionally - used for shared folders
@@ -1590,17 +1577,26 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		return nil
 	}
 
-	opts := rest.Opts{
-		Method: "GET",
-		Path:   "/root/delta",
-		Parameters: map[string][]string{
-			// "token": {token},
+	listDelta := func(opts rest.Opts) error {
+		opts.Parameters = url.Values{
 			"$top": {fmt.Sprintf("%d", f.opt.ListChunk)},
-		},
+		}
+		var result api.DeltaResponse
+		return f._listAll(ctx, "", false, false, fn, &opts, &result, &result.Value, &result.NextLink)
 	}
 
-	var result api.DeltaResponse
-	err = f._listAll(ctx, "", false, false, fn, &opts, &result, &result.Value, &result.NextLink)
+	err = listDelta(f.newOptsCall(directoryID, "GET", "/delta"))
+	// Some drives only support delta listings at the root of the
+	// drive, in which case list the whole drive and filter out the
+	// items outside dir.
+	var apiErr *api.Error
+	if err != nil && len(seen) == 0 && errors.As(err, &apiErr) {
+		fs.Debugf(f, "Delta listing of directory failed, listing from the root of the drive instead: %v", err)
+		err = listDelta(rest.Opts{
+			Method: "GET",
+			Path:   "/root/delta",
+		})
+	}
 	if err != nil {
 		return err
 	}

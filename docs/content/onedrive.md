@@ -326,10 +326,11 @@ This can be useful with `rclone mount` and [rclone rc vfs/refresh
 recursive=true](/rc/#vfs-refresh)) to very quickly fill the mount with
 information about all the files.
 
-The API used for the recursive listing (`ListR`) only supports listing
-from the root of the drive. This will become increasingly inefficient
-the further away you get from the root as rclone will have to discard
-files outside of the directory you are using.
+Rclone asks for the delta listing of the directory being listed. Some
+drives only support delta listings from the root of the drive, in
+which case rclone lists the whole drive and discards the files outside
+of the directory you are using, which is increasingly inefficient the
+further away from the root you get.
 
 Some commands (like `rclone lsf -R`) will use `ListR` by default - you
 can turn this off with `--disable ListR` if you need to.
