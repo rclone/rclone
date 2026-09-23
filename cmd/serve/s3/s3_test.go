@@ -432,10 +432,10 @@ func TestAuthProxyKeysNotRegistered(t *testing.T) {
 	assert.NotEqual(t, signature.ErrNone, signature.V4SignVerify(sign()), "proxy secret was registered in the gofakes3 key store")
 }
 
-// serveS3AuthProxy serves root over s3 with an auth proxy which maps
-// every one of users (access key IDs) to root, returning a client for
-// each user.
-func serveS3AuthProxy(t *testing.T, root string, users ...string) map[string]*minio.Core {
+// serveS3AuthProxy serves root over s3 with opt and an auth proxy which
+// maps every one of users (access key IDs) to root, returning a client
+// for each user.
+func serveS3AuthProxy(t *testing.T, root string, opt Options, users ...string) map[string]*minio.Core {
 	fstest.Initialise()
 	prog, err := filepath.Abs("../servetest/proxy_code.go")
 	require.NoError(t, err)
@@ -447,7 +447,6 @@ func serveS3AuthProxy(t *testing.T, root string, users ...string) map[string]*mi
 	}
 	t.Setenv("RCLONE_TEST_PROXY_AUTH_KEY", strings.Join(pairs, ";"))
 
-	opt := Opt
 	opt.HTTP.ListenAddr = []string{endpoint}
 	proxyOpt := proxy.Opt
 	proxyOpt.AuthProxy = "go run " + prog + " " + root
@@ -474,15 +473,40 @@ func serveS3AuthProxy(t *testing.T, root string, users ...string) map[string]*mi
 // another user's multipart upload or see the metadata of their objects,
 // even when both are mapped to the same backend.
 func TestAuthProxyUsersKeptApart(t *testing.T) {
+	for _, disableStreaming := range []bool{false, true} {
+		t.Run(fmt.Sprintf("DisableMultipartStreaming=%v", disableStreaming), func(t *testing.T) {
+			opt := Opt
+			opt.DisableMultipartStreaming = disableStreaming
+			testAuthProxyUsersKeptApart(t, opt)
+		})
+	}
+}
+
+func testAuthProxyUsersKeptApart(t *testing.T, opt Options) {
 	ctx := context.Background()
 	root := t.TempDir()
 	const bucket = "bucket"
 	require.NoError(t, os.Mkdir(filepath.Join(root, bucket), 0777))
-	clients := serveS3AuthProxy(t, root, "alice", "bob")
+	clients := serveS3AuthProxy(t, root, opt, "alice", "bob")
 	alice, bob := clients["alice"], clients["bob"]
 
 	uploadID, err := alice.NewMultipartUpload(ctx, bucket, "upload", minio.PutObjectOptions{})
 	require.NoError(t, err)
+	listed := func(client *minio.Core) (uploadIDs []string) {
+		result, err := client.ListMultipartUploads(ctx, bucket, "", "", "", "/", 1000)
+		if minio.ToErrorResponse(err).Code == "NoSuchUpload" {
+			return nil
+		}
+		require.NoError(t, err)
+		for _, upload := range result.Uploads {
+			uploadIDs = append(uploadIDs, upload.UploadID)
+		}
+		return uploadIDs
+	}
+	assert.Equal(t, []string{uploadID}, listed(alice))
+	assert.Empty(t, listed(bob), "bob listing alice's upload")
+	_, err = bob.ListObjectParts(ctx, bucket, "upload", uploadID, 0, 1000)
+	assert.Equal(t, "NoSuchUpload", minio.ToErrorResponse(err).Code, "bob listing the parts of alice's upload")
 	data := []byte("alice's data")
 	_, err = bob.PutObjectPart(ctx, bucket, "upload", uploadID, 1, bytes.NewReader(data), int64(len(data)), minio.PutObjectPartOptions{})
 	assert.Equal(t, "NoSuchUpload", minio.ToErrorResponse(err).Code, "bob uploading a part to alice's upload")

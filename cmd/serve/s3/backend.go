@@ -131,6 +131,11 @@ func (b *s3Backend) allTenants() []*tenant {
 	return slices.Collect(maps.Values(b.tenants))
 }
 
+// context returns a context for requests made on behalf of t.
+func (t *tenant) context() context.Context {
+	return context.WithValue(context.Background(), ctxKeyAccessKeyID, t.id)
+}
+
 // getMeta returns the stored metadata of the object at fp.
 func (t *tenant) getMeta(fp string) (meta map[string]string, ok bool) {
 	return t.b.meta.Get(metaKey{tenant: t.id, fp: fp})

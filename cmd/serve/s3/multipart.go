@@ -919,7 +919,7 @@ func (b *s3Backend) forgetUpload(uploadID gofakes3.UploadID, up *multipartUpload
 	}
 	b.discardUpload(up)
 	// gofakes3 doesn't know the upload has gone, so tell it
-	_ = b.s.faker.ForgetMultipartUpload(up.bucket, up.key, uploadID)
+	_ = b.s.faker.ForgetMultipartUpload(up.tenant.context(), up.bucket, up.key, uploadID)
 }
 
 // startReaper starts a goroutine which aborts incomplete multipart
