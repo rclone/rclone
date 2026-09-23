@@ -222,6 +222,7 @@ func TestMultithreadCopy(t *testing.T) {
 
 				dst, err = multiThreadCopy(ctx, fDst, fileName, src, test.streams, tr)
 				if errors.Is(err, fs.ErrorFileTooSmall) {
+					require.NoError(t, src.Remove(ctx))
 					t.Skipf("file too small for multipart upload: %v", err)
 				}
 				require.NoError(t, err)
