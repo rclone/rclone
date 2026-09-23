@@ -474,8 +474,10 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	if err != nil {
 		return err
 	}
-	if len(childFolders) > 0 {
-		return fs.ErrorDirectoryNotEmpty
+	for _, e := range childFolders {
+		if !recent.stale(e.UUID, id, e.PlainName) {
+			return fs.ErrorDirectoryNotEmpty
+		}
 	}
 
 	var childFiles []folders.File
@@ -487,8 +489,10 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	if err != nil {
 		return err
 	}
-	if len(childFiles) > 0 {
-		return fs.ErrorDirectoryNotEmpty
+	for _, e := range childFiles {
+		if !recent.stale(e.UUID, id, joinNameExt(e.PlainName, e.Type)) {
+			return fs.ErrorDirectoryNotEmpty
+		}
 	}
 
 	// Delete the directory
@@ -502,6 +506,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	if err != nil {
 		return err
 	}
+	recent.deleted(id)
 
 	f.dirCache.FlushDir(dir)
 	return nil
@@ -520,6 +525,9 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, e
 		return "", false, err
 	}
 	for _, e := range entries {
+		if recent.stale(e.UUID, pathID, e.PlainName) {
+			continue
+		}
 		if f.opt.Encoding.ToStandardName(e.PlainName) == leaf {
 			return e.UUID, true, nil
 		}
@@ -753,6 +761,9 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		return nil, err
 	}
 	for _, e := range foldersList {
+		if recent.stale(e.UUID, dirID, e.PlainName) {
+			continue
+		}
 		remote := path.Join(dir, f.opt.Encoding.ToStandardName(e.PlainName))
 		out = append(out, fs.NewDir(remote, e.ModificationTime))
 	}
@@ -845,6 +856,7 @@ func (f *Fs) Remove(ctx context.Context, remote string) error {
 	if err != nil {
 		return err
 	}
+	recent.deleted(dirID)
 	f.dirCache.FlushDir(remote)
 	return nil
 }
@@ -1026,6 +1038,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	if err != nil {
 		return err
 	}
+	recent.moved(srcID, dstDirectoryID, encodedLeaf)
 
 	srcFs.dirCache.FlushDir(srcRemote)
 	return nil
