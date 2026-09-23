@@ -385,6 +385,9 @@ func (b *s3Backend) UploadPart(ctx context.Context, bucketName, objectName strin
 	etag := fmt.Sprintf("%q", hex.EncodeToString(md5Sum))
 
 	if err := up.bufferPart(ctx, partNumber, n, md5Sum, rw); err != nil {
+		if up.isPoisoned() {
+			b.failUpload(uploadID, up)
+		}
 		return "", err
 	}
 	return etag, nil
@@ -832,6 +835,10 @@ func (up *multipartUpload) pump() error {
 		if err != nil {
 			up.mu.Lock()
 			up.unbuffer(psize)
+			// The client was told this part succeeded so won't resend it,
+			// and the sink may hold some of it, so the upload can never
+			// complete.
+			up.poisoned = true
 			up.mu.Unlock()
 			return up.stopStreaming(err)
 		}
