@@ -370,7 +370,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 
 		// Create rest client for getAuthorizationToken
 		url := u.String()
-		if !strings.HasPrefix(url, "/") {
+		if !strings.HasSuffix(url, "/") {
 			url += "/"
 		}
 		srv := rest.NewClient(newClient(ctx)).SetRoot(url)

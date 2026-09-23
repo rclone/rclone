@@ -297,6 +297,27 @@ func TestUploadErrorReleasesSource(t *testing.T) {
 // field names of the authentication request.
 const testPassword = "s3cret-pass-4242"
 
+// Test2FAGetToken checks the 2FA config flow posts the credentials to
+// the auth token endpoint without doubling the slash when the
+// configured URL ends in one, and saves the token it gets back.
+func Test2FAGetToken(t *testing.T) {
+	var gotPath string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"token":"token123"}`))
+	}))
+	defer srv.Close()
+
+	m := configmap.Simple{"url": srv.URL + "/", "2fa": "true", "user": "username", "pass": obscure.MustObscure(testPassword)}
+	out, err := Config(context.Background(), "test", m, fs.ConfigIn{State: "2fa_do", Result: "123456"})
+	require.NoError(t, err)
+	assert.Nil(t, out)
+	assert.Equal(t, "/api2/auth-token/", gotPath)
+	assert.Equal(t, "token123", m["auth_token"])
+	assert.Equal(t, "", m["pass"])
+}
+
 // newDowngradeServers returns an HTTPS server which answers the server
 // info request itself and redirects every other request to a plaintext
 // HTTP server on the same machine. The returned flags record whether
