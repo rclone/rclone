@@ -476,7 +476,7 @@ func TestMultipartBufferLimit(t *testing.T) {
 // CreateMultipartUpload does.
 func storeTestUpload(t *testing.T, b *s3Backend, uploadID gofakes3.UploadID, up *multipartUpload) {
 	require.NoError(t, b.reserveUpload())
-	b.addUpload(b.tenant(context.Background()), uploadID, up)
+	require.NoError(t, b.addUpload(b.tenant(context.Background()), uploadID, up))
 }
 
 // stubSink is a multipartUpload sink which records how it was closed.
@@ -659,6 +659,48 @@ func TestMultipartOtherTenant(t *testing.T) {
 	assert.Equal(t, data, readObject(t, f, bucket, object))
 }
 
+// TestMultipartVFSShutDownBetweenParts checks that a multipart upload
+// survives the auth proxy shutting down the VFS it was started with, as
+// the proxy does once the VFS has been unused in its cache for a while.
+func TestMultipartVFSShutDownBetweenParts(t *testing.T) {
+	fstest.Initialise()
+	ctx := context.Background()
+	f, err := fs.NewFs(ctx, t.TempDir())
+	require.NoError(t, err)
+	const bucket, object = "bucket", "object"
+	require.NoError(t, f.Mkdir(ctx, bucket))
+	opt := Opt
+	opt.HTTP.ListenAddr = []string{endpoint}
+	proxyOpt := proxy.Opt
+	proxyOpt.AuthProxy = "/path/to/auth/proxy"
+	w, err := newServer(ctx, f, &opt, &vfscommon.Opt, &proxyOpt)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = w.Shutdown() })
+	b := w.backend
+
+	// requestCtx returns the context of a request with a VFS from the
+	// proxy's cache, which the proxy shuts down when it expires.
+	requestCtx := func() (context.Context, *vfs.VFS) {
+		VFS := vfs.New(ctx, f, &vfscommon.Opt)
+		return context.WithValue(tenantCtx("alice"), ctxKeyID, VFS), VFS
+	}
+
+	ctx1, vfs1 := requestCtx()
+	uploadID, err := b.CreateMultipartUpload(ctx1, bucket, object, nil)
+	require.NoError(t, err)
+	vfs1.Shutdown()
+
+	ctx2, vfs2 := requestCtx()
+	defer vfs2.Shutdown()
+	data := []byte(random.String(1024))
+	etag, err := b.UploadPart(ctx2, bucket, object, uploadID, 1, int64(len(data)), bytes.NewReader(data))
+	require.NoError(t, err)
+	input := &gofakes3.CompleteMultipartUploadRequest{Parts: []gofakes3.CompletedPart{{PartNumber: 1, ETag: etag}}}
+	_, _, err = b.CompleteMultipartUpload(ctx2, bucket, object, uploadID, input)
+	require.NoError(t, err)
+	assert.Equal(t, data, readObject(t, f, bucket, object))
+}
+
 // TestMultipartReaper checks that an incomplete multipart upload abandoned
 // by its client is aborted and cleaned up after --multipart-expiry, and that
 // late operations on it fail with NoSuchUpload.
@@ -747,7 +789,8 @@ func TestMultipartReapExpiredUploads(t *testing.T) {
 	newUp("fresh")
 	idle := newUp("idle")
 	busy := newUp("busy")
-	busy.startActivity()
+	require.NoError(t, busy.startActivity())
+	t.Cleanup(busy.endActivity)
 	for _, up := range []*multipartUpload{idle, busy} {
 		up.mu.Lock()
 		up.lastUsed = now.Add(-2 * expiry)
