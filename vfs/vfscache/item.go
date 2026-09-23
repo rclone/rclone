@@ -1227,8 +1227,8 @@ func (item *Item) FindMissing(r ranges.Range) (outr ranges.Range) {
 	item.mu.Lock()
 	defer item.mu.Unlock()
 	outr = item.info.Rs.FindMissing(r)
-	// Clip returned block to size of file
-	outr.Clip(item.info.Size)
+	// Clip returned range to size of remote object
+	outr.Clip(item.o.Size())
 	return outr
 }
 
