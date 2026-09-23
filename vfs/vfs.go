@@ -395,6 +395,21 @@ func (vfs *VFS) shutdownCache() {
 	}
 }
 
+// Hold takes another reference to the VFS so it isn't shut down until
+// a matching call to Shutdown. It returns false, taking no reference,
+// if the VFS has already been shut down.
+func (vfs *VFS) Hold() bool {
+	for {
+		n := vfs.inUse.Load()
+		if n <= 0 {
+			return false
+		}
+		if vfs.inUse.CompareAndSwap(n, n+1) {
+			return true
+		}
+	}
+}
+
 // Shutdown stops any background go-routines and removes the VFS from
 // the active ache.
 func (vfs *VFS) Shutdown() {
