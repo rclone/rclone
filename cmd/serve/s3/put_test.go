@@ -256,24 +256,34 @@ func TestDeleteObjectForgetsMetadata(t *testing.T) {
 }
 
 // TestMetadataMaxObjects checks that the metadata of no more than
-// --metadata-max-objects objects is kept, forgetting that of the least
-// recently used.
+// --metadata-max-objects objects of a user is kept, forgetting that of
+// the least recently used, and that one user's objects don't push out
+// the metadata of another's.
 func TestMetadataMaxObjects(t *testing.T) {
 	b, _, bucket := newPutTestBackend(t, "", nil)
-	b.meta = newMetadataStore(2)
-	ctx := context.Background()
+	b.s.opt.MetadataMaxObjects = 2
+	ctx, ctxOther := context.Background(), tenantCtx("other")
 
-	for _, key := range []string{"a", "b", "c"} {
+	put := func(ctx context.Context, key string) {
 		meta := map[string]string{"X-Amz-Meta-Key": key}
-		_, err := b.PutObject(ctx, bucket, key, meta, bytes.NewReader([]byte(key)), 1)
+		_, err := b.PutObject(ctx, bucket, key, meta, bytes.NewReader([]byte(key)), int64(len(key)))
 		require.NoError(t, err)
+	}
+	head := func(ctx context.Context, key string) string {
+		obj, err := b.HeadObject(ctx, bucket, key)
+		require.NoError(t, err)
+		return obj.Metadata["X-Amz-Meta-Key"]
+	}
+
+	put(ctxOther, "other")
+	for _, key := range []string{"a", "b", "c"} {
+		put(ctx, key)
 	}
 
 	for key, want := range map[string]string{"a": "", "b": "b", "c": "c"} {
-		obj, err := b.HeadObject(ctx, bucket, key)
-		require.NoError(t, err)
-		assert.Equal(t, want, obj.Metadata["X-Amz-Meta-Key"], key)
+		assert.Equal(t, want, head(ctx, key), key)
 	}
+	assert.Equal(t, "other", head(ctxOther, "other"), "another user's metadata was pushed out")
 }
 
 // TestMetadataAfterWriteback checks the metadata of an object written to

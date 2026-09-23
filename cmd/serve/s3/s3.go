@@ -56,7 +56,7 @@ var OptionsInfo = fs.Options{{
 }, {
 	Name:    "metadata_max_objects",
 	Default: 100000,
-	Help:    "Maximum number of objects whose metadata is kept in memory, 0 for unlimited",
+	Help:    "Maximum number of objects of a user whose metadata is kept in memory, 0 for unlimited",
 }, {
 	Name:    "multipart_expiry",
 	Default: fs.Duration(24 * time.Hour),
