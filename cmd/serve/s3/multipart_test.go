@@ -1180,6 +1180,63 @@ func TestWaitForTurnRejectsBogusSize(t *testing.T) {
 	<-admitted
 }
 
+// TestWaitForTurnRejectsOverflowingReservation checks that huge declared
+// lengths sent by concurrent requests for the next part can't overflow the
+// running totals negative and so admit out-of-order parts past the buffer
+// limits, whether the upload's own or the server's.
+func TestWaitForTurnRejectsOverflowingReservation(t *testing.T) {
+	const huge = 5_000_000_000_000_000_000
+	for _, tc := range []struct {
+		name        string
+		bufferLimit int64
+		budget      *bufferBudget
+	}{
+		{"UploadLimit", 1 << 20, nil},
+		{"ServerLimit", 0, newBufferBudget(1 << 20)},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			up := newMultipartUpload("bucket", "key", "bucket/key", "bucket/key", nil, tc.bufferLimit)
+			up.budget = tc.budget
+			ctx := context.Background()
+
+			// The first request for the next part streams it.
+			turn, err := up.waitForTurn(ctx, 1, huge)
+			require.NoError(t, err)
+			assert.Equal(t, turnStream, turn)
+
+			// Concurrent requests for the same part and one out of order
+			// must all wait rather than be charged to the buffer.
+			admitted := make(chan struct{}, 3)
+			for _, part := range []struct {
+				number int
+				size   int64
+			}{{1, huge}, {1, huge}, {3, 8 << 20}} {
+				go func() {
+					_, _ = up.waitForTurn(ctx, part.number, part.size)
+					admitted <- struct{}{}
+				}()
+			}
+			select {
+			case <-admitted:
+				t.Fatal("part admitted past the buffer limit")
+			case <-time.After(50 * time.Millisecond):
+			}
+			up.mu.Lock()
+			assert.Equal(t, int64(0), up.buffered)
+			up.mu.Unlock()
+
+			// Wake the blocked goroutines so they don't leak.
+			up.mu.Lock()
+			up.closed = true
+			up.broadcast()
+			up.mu.Unlock()
+			for range 3 {
+				<-admitted
+			}
+		})
+	}
+}
+
 // TestMultipartBufferLimitCountsPages checks that the reorder buffer limit
 // is charged in the whole pool pages a buffered part occupies, not the part's
 // length, so a client can't pin a page per byte by sending tiny parts out of
