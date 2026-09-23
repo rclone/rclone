@@ -9,6 +9,7 @@ import (
 	"math"
 	"os"
 	"path"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -42,13 +43,12 @@ const putObjectPrefix = tempObjectPrefix + "put_"
 // PutStream, instead of being buffered in memory by gofakes3.
 type s3Backend struct {
 	s    *Server
-	meta *lru.Cache[string, map[string]string] // object metadata by path
+	meta *lru.Cache[metaKey, map[string]string] // object metadata of all tenants
 
-	// multipartUploads tracks in-flight streaming multipart uploads,
-	// keyed by gofakes3.UploadID.
-	multipartUploads sync.Map
+	tenantsMu sync.Mutex
+	tenants   map[string]*tenant // per-user state by tenant ID
 
-	// uploads counts the entries in multipartUploads.
+	// uploads counts the in-flight uploads of all tenants.
 	uploads atomic.Int64
 
 	// warnMaxUploadsOnce logs a single NOTICE the first time a multipart
@@ -66,14 +66,34 @@ type s3Backend struct {
 	reaperStop sync.Once
 }
 
+// tenant is the state kept between requests for one user of the server.
+//
+// Anything remembered about a user's objects or uploads must be reached
+// through their tenant, as different users may be serving different
+// backends.
+type tenant struct {
+	b  *s3Backend
+	id string
+
+	// uploads tracks in-flight streaming multipart uploads,
+	// keyed by gofakes3.UploadID.
+	uploads sync.Map
+}
+
+// metaKey is the key of an object's metadata in s3Backend.meta.
+type metaKey struct {
+	tenant string // tenant ID
+	fp     string // object path
+}
+
 // newMetadataStore makes a store for the metadata of up to maxObjects
 // objects, forgetting that of the least recently used after that. If
 // maxObjects <= 0 there is no limit.
-func newMetadataStore(maxObjects int) *lru.Cache[string, map[string]string] {
+func newMetadataStore(maxObjects int) *lru.Cache[metaKey, map[string]string] {
 	if maxObjects <= 0 {
 		maxObjects = math.MaxInt
 	}
-	meta, err := lru.New[string, map[string]string](maxObjects)
+	meta, err := lru.New[metaKey, map[string]string](maxObjects)
 	if err != nil {
 		panic(err) // only fails if maxObjects <= 0
 	}
@@ -85,9 +105,45 @@ func newBackend(s *Server) *s3Backend {
 	return &s3Backend{
 		s:          s,
 		meta:       newMetadataStore(s.opt.MetadataMaxObjects),
+		tenants:    map[string]*tenant{},
 		budget:     newBufferBudget(int64(s.opt.MultipartStreamingBufferTotal)),
 		reaperQuit: make(chan struct{}),
 	}
+}
+
+// tenant returns the state of the user making the request in ctx.
+func (b *s3Backend) tenant(ctx context.Context) *tenant {
+	id := ""
+	b.tenantsMu.Lock()
+	defer b.tenantsMu.Unlock()
+	t, ok := b.tenants[id]
+	if !ok {
+		t = &tenant{b: b, id: id}
+		b.tenants[id] = t
+	}
+	return t
+}
+
+// allTenants returns the state of every user seen so far.
+func (b *s3Backend) allTenants() []*tenant {
+	b.tenantsMu.Lock()
+	defer b.tenantsMu.Unlock()
+	return slices.Collect(maps.Values(b.tenants))
+}
+
+// getMeta returns the stored metadata of the object at fp.
+func (t *tenant) getMeta(fp string) (meta map[string]string, ok bool) {
+	return t.b.meta.Get(metaKey{tenant: t.id, fp: fp})
+}
+
+// setMeta stores meta as the metadata of the object at fp.
+func (t *tenant) setMeta(fp string, meta map[string]string) {
+	t.b.meta.Add(metaKey{tenant: t.id, fp: fp}, meta)
+}
+
+// removeMeta forgets the metadata of the object at fp.
+func (t *tenant) removeMeta(fp string) {
+	t.b.meta.Remove(metaKey{tenant: t.id, fp: fp})
 }
 
 // ListBuckets always returns the default bucket.
@@ -203,7 +259,7 @@ func (b *s3Backend) HeadObject(ctx context.Context, bucketName, objectName strin
 		"Content-Type":  mimeType,
 	}
 
-	if metaMap, ok := b.meta.Get(fp); ok {
+	if metaMap, ok := b.tenant(ctx).getMeta(fp); ok {
 		maps.Copy(meta, metaMap)
 	}
 
@@ -283,7 +339,7 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 		"Content-Type":  mimeType,
 	}
 
-	if metaMap, ok := b.meta.Get(fp); ok {
+	if metaMap, ok := b.tenant(ctx).getMeta(fp); ok {
 		maps.Copy(meta, metaMap)
 	}
 
@@ -297,12 +353,12 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 	}, nil
 }
 
-// storeModtime sets both "mtime" and "X-Amz-Meta-Mtime" to val in b.meta.
-// Call this whenever modtime is updated.
-func (b *s3Backend) storeModtime(fp string, meta map[string]string, val string) {
+// storeModtime sets both "mtime" and "X-Amz-Meta-Mtime" to val in the
+// stored metadata. Call this whenever modtime is updated.
+func (t *tenant) storeModtime(fp string, meta map[string]string, val string) {
 	meta["X-Amz-Meta-Mtime"] = val
 	meta["mtime"] = val
-	b.meta.Add(fp, meta)
+	t.setMeta(fp, meta)
 }
 
 // TouchObject creates or updates meta on specified object.
@@ -328,12 +384,12 @@ func (b *s3Backend) TouchObject(ctx context.Context, fp string, meta map[string]
 		return result, err
 	}
 
-	b.meta.Add(fp, meta)
+	b.tenant(ctx).setMeta(fp, meta)
 
 	if val, ok := meta["X-Amz-Meta-Mtime"]; ok {
 		ti, err := swift.FloatStringToTime(val)
 		if err == nil {
-			b.storeModtime(fp, meta, val)
+			b.tenant(ctx).storeModtime(fp, meta, val)
 			return result, _vfs.Chtimes(fp, ti, ti)
 		}
 		// ignore error since the file is successfully created
@@ -342,7 +398,7 @@ func (b *s3Backend) TouchObject(ctx context.Context, fp string, meta map[string]
 	if val, ok := meta["mtime"]; ok {
 		ti, err := swift.FloatStringToTime(val)
 		if err == nil {
-			b.storeModtime(fp, meta, val)
+			b.tenant(ctx).storeModtime(fp, meta, val)
 			return result, _vfs.Chtimes(fp, ti, ti)
 		}
 		// ignore error since the file is successfully created
@@ -449,12 +505,12 @@ func (b *s3Backend) PutObject(
 		return result, err
 	}
 
-	b.meta.Add(fp, meta)
+	b.tenant(ctx).setMeta(fp, meta)
 
 	if val, ok := meta["X-Amz-Meta-Mtime"]; ok {
 		ti, err := swift.FloatStringToTime(val)
 		if err == nil {
-			b.storeModtime(fp, meta, val)
+			b.tenant(ctx).storeModtime(fp, meta, val)
 			return result, _vfs.Chtimes(fp, ti, ti)
 		}
 		// ignore error since the file is successfully created
@@ -463,7 +519,7 @@ func (b *s3Backend) PutObject(
 	if val, ok := meta["mtime"]; ok {
 		ti, err := swift.FloatStringToTime(val)
 		if err == nil {
-			b.storeModtime(fp, meta, val)
+			b.tenant(ctx).storeModtime(fp, meta, val)
 			return result, _vfs.Chtimes(fp, ti, ti)
 		}
 		// ignore error since the file is successfully created
@@ -517,7 +573,7 @@ func (b *s3Backend) deleteObject(ctx context.Context, bucketName, objectName str
 	if err := _vfs.Remove(fp); err != nil && !os.IsNotExist(err) {
 		return err
 	}
-	b.meta.Remove(fp)
+	b.tenant(ctx).removeMeta(fp)
 
 	// FIXME: unsafe operation
 	rmdirRecursive(fp, _vfs)
@@ -592,7 +648,7 @@ func (b *s3Backend) CopyObject(ctx context.Context, srcBucket, srcKey, dstBucket
 		return result, gofakes3.KeyNotFound(srcKey)
 	}
 	if srcBucket == dstBucket && srcKey == dstKey {
-		b.meta.Add(fp, meta)
+		b.tenant(ctx).setMeta(fp, meta)
 
 		val, ok := meta["X-Amz-Meta-Mtime"]
 		if !ok {
@@ -605,7 +661,7 @@ func (b *s3Backend) CopyObject(ctx context.Context, srcBucket, srcKey, dstBucket
 		if err != nil {
 			return result, nil
 		}
-		b.storeModtime(fp, meta, val)
+		b.tenant(ctx).storeModtime(fp, meta, val)
 
 		return result, _vfs.Chtimes(fp, ti, ti)
 	}
