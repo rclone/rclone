@@ -387,7 +387,7 @@ make it use unbounded memory.
   `--s3-upload-concurrency`). Plain `PutObject` uploads use the same
   while they are in progress.
 - **Metadata.** The metadata of at most `--metadata-max-objects`
-  objects is kept, each limited to 2 KB.
+  objects of each user is kept, each limited to 2 KB.
 - **Request bodies.** The XML bodies of requests such as
   `CompleteMultipartUpload` and `DeleteObjects` are limited to 10 MiB,
   and `DeleteObjects` to 1000 keys. A browser form (`POST`) upload
@@ -451,8 +451,8 @@ Versioning is not currently supported.
 Metadata will only be saved in memory other than the rclone `mtime`
 metadata which will be set as the modification time of the file. The
 metadata of at most `--metadata-max-objects` objects (default `100000`,
-`0` for no limit) is kept; after that the metadata of the least
-recently used object is forgotten. The metadata of an object is
+`0` for no limit) of each user (each access key) is kept; after that
+the metadata of the user's least recently used object is forgotten. The metadata of an object is
 ignored once the object has been changed some other way, for example
 by another `--auth-proxy` user or directly on the backend.
 
