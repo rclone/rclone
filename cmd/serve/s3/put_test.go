@@ -275,3 +275,28 @@ func TestMetadataMaxObjects(t *testing.T) {
 		assert.Equal(t, want, obj.Metadata["X-Amz-Meta-Key"], key)
 	}
 }
+
+// TestMetadataAfterWriteback checks the metadata of an object written to
+// the VFS cache is still returned once it has been written back to the
+// backend.
+func TestMetadataAfterWriteback(t *testing.T) {
+	b, _, bucket := newPutTestBackend(t, "", cacheWritesVFSOpt(100*time.Millisecond))
+	ctx := context.Background()
+	_vfs, err := b.s.getVFS(ctx)
+	require.NoError(t, err)
+
+	mtime := swift.TimeToFloatString(time.Now().Add(-time.Hour))
+	meta := map[string]string{"X-Amz-Meta-Colour": "red", "X-Amz-Meta-Mtime": mtime}
+	_, err = b.PutObject(ctx, bucket, "key", meta, bytes.NewReader([]byte("data")), 4)
+	require.NoError(t, err)
+
+	colour := func() string {
+		obj, err := b.HeadObject(ctx, bucket, "key")
+		require.NoError(t, err)
+		return obj.Metadata["X-Amz-Meta-Colour"]
+	}
+	assert.Equal(t, "red", colour(), "before writeback")
+	_vfs.WaitForWriters(10 * time.Second)
+	b.forgetPath(_vfs, path.Join(bucket, "key"))
+	assert.Equal(t, "red", colour(), "after writeback")
+}

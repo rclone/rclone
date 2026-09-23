@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/rclone/gofakes3"
 	_ "github.com/rclone/rclone/backend/crypt"
@@ -270,4 +271,39 @@ func TestMetadataOtherTenant(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, obj.Contents.Close())
 	assert.NotContains(t, obj.Metadata, secretKey)
+}
+
+// TestMetadataStale checks that the metadata stored for an object isn't
+// returned once the object has been changed by someone else: another
+// auth proxy user sharing the backend or a change to the backend itself.
+func TestMetadataStale(t *testing.T) {
+	b, root := newTestBackend(t)
+	ctxA, ctxB := tenantCtx("tenantA"), tenantCtx("tenantB")
+	const key = "X-Amz-Meta-Colour"
+	objPath := filepath.Join(root, "bucket", "meta.txt")
+
+	put := func(ctx context.Context, meta map[string]string, data string) {
+		_, err := b.PutObject(ctx, "bucket", "meta.txt", meta, strings.NewReader(data), int64(len(data)))
+		require.NoError(t, err)
+	}
+	colour := func(ctx context.Context) string {
+		_vfs, err := b.s.getVFS(ctx)
+		require.NoError(t, err)
+		b.forgetPath(_vfs, "bucket/meta.txt")
+		obj, err := b.HeadObject(ctx, "bucket", "meta.txt")
+		require.NoError(t, err)
+		return obj.Metadata[key]
+	}
+
+	put(ctxA, map[string]string{key: "red"}, "data")
+	assert.Equal(t, "red", colour(ctxA))
+
+	put(ctxB, map[string]string{}, "other data")
+	assert.Equal(t, "", colour(ctxA), "metadata kept after another user replaced the object")
+
+	put(ctxA, map[string]string{key: "blue"}, "data")
+	assert.Equal(t, "blue", colour(ctxA))
+	later := time.Now().Add(time.Hour)
+	require.NoError(t, os.Chtimes(objPath, later, later))
+	assert.Equal(t, "", colour(ctxA), "metadata kept after the object was changed on the backend")
 }

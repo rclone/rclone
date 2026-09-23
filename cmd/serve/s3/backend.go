@@ -43,7 +43,7 @@ const putObjectPrefix = tempObjectPrefix + "put_"
 // PutStream, instead of being buffered in memory by gofakes3.
 type s3Backend struct {
 	s    *Server
-	meta *lru.Cache[metaKey, map[string]string] // object metadata of all tenants
+	meta *lru.Cache[metaKey, objectMeta] // object metadata of all tenants
 
 	tenantsMu sync.Mutex
 	tenants   map[string]*tenant // per-user state by tenant ID
@@ -86,14 +86,22 @@ type metaKey struct {
 	fp     string // object path
 }
 
+// objectMeta is the metadata stored for an object, with the size and
+// modification time the object had when it was stored.
+type objectMeta struct {
+	meta    map[string]string
+	size    int64
+	modTime time.Time
+}
+
 // newMetadataStore makes a store for the metadata of up to maxObjects
 // objects, forgetting that of the least recently used after that. If
 // maxObjects <= 0 there is no limit.
-func newMetadataStore(maxObjects int) *lru.Cache[metaKey, map[string]string] {
+func newMetadataStore(maxObjects int) *lru.Cache[metaKey, objectMeta] {
 	if maxObjects <= 0 {
 		maxObjects = math.MaxInt
 	}
-	meta, err := lru.New[metaKey, map[string]string](maxObjects)
+	meta, err := lru.New[metaKey, objectMeta](maxObjects)
 	if err != nil {
 		panic(err) // only fails if maxObjects <= 0
 	}
@@ -136,14 +144,56 @@ func (t *tenant) context() context.Context {
 	return context.WithValue(context.Background(), ctxKeyAccessKeyID, t.id)
 }
 
-// getMeta returns the stored metadata of the object at fp.
-func (t *tenant) getMeta(fp string) (meta map[string]string, ok bool) {
-	return t.b.meta.Get(metaKey{tenant: t.id, fp: fp})
+// getMeta returns the stored metadata of node, the object at fp.
+//
+// Nothing is returned if the object has changed since the metadata was
+// stored, as it has been replaced by something other than this user.
+func (t *tenant) getMeta(ctx context.Context, fp string, node vfs.Node) (meta map[string]string, ok bool) {
+	om, ok := t.b.meta.Get(metaKey{tenant: t.id, fp: fp})
+	if !ok || om.size != node.Size() {
+		return nil, false
+	}
+	window := fs.GetModifyWindow(ctx, node.VFS().Fs())
+	if window != fs.ModTimeNotSupported {
+		if dt := node.ModTime().Sub(om.modTime); dt < -window || dt > window {
+			return nil, false
+		}
+	}
+	return om.meta, true
 }
 
-// setMeta stores meta as the metadata of the object at fp.
-func (t *tenant) setMeta(fp string, meta map[string]string) {
-	t.b.meta.Add(metaKey{tenant: t.id, fp: fp}, meta)
+// storeMeta stores meta as the metadata of the object at fp in _vfs.
+//
+// If meta has a modification time in "X-Amz-Meta-Mtime" or "mtime" the
+// object's modification time is set to it, returning any error, and
+// both are set to it in meta.
+func (t *tenant) storeMeta(_vfs *vfs.VFS, fp string, meta map[string]string) (err error) {
+	for _, key := range []string{"X-Amz-Meta-Mtime", "mtime"} {
+		val, ok := meta[key]
+		if !ok {
+			continue
+		}
+		ti, parseErr := swift.FloatStringToTime(val)
+		if parseErr != nil {
+			continue
+		}
+		meta["X-Amz-Meta-Mtime"] = val
+		meta["mtime"] = val
+		err = _vfs.Chtimes(fp, ti, ti)
+		break
+	}
+	// Stat after setting the modification time as getMeta compares with it
+	node, statErr := _vfs.Stat(fp)
+	if statErr != nil {
+		t.removeMeta(fp)
+		return err
+	}
+	t.b.meta.Add(metaKey{tenant: t.id, fp: fp}, objectMeta{
+		meta:    meta,
+		size:    node.Size(),
+		modTime: node.ModTime(),
+	})
+	return err
 }
 
 // removeMeta forgets the metadata of the object at fp.
@@ -264,7 +314,7 @@ func (b *s3Backend) HeadObject(ctx context.Context, bucketName, objectName strin
 		"Content-Type":  mimeType,
 	}
 
-	if metaMap, ok := b.tenant(ctx).getMeta(fp); ok {
+	if metaMap, ok := b.tenant(ctx).getMeta(ctx, fp, node); ok {
 		maps.Copy(meta, metaMap)
 	}
 
@@ -344,7 +394,7 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 		"Content-Type":  mimeType,
 	}
 
-	if metaMap, ok := b.tenant(ctx).getMeta(fp); ok {
+	if metaMap, ok := b.tenant(ctx).getMeta(ctx, fp, node); ok {
 		maps.Copy(meta, metaMap)
 	}
 
@@ -356,14 +406,6 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 		Range:    rnge,
 		Contents: rdr,
 	}, nil
-}
-
-// storeModtime sets both "mtime" and "X-Amz-Meta-Mtime" to val in the
-// stored metadata. Call this whenever modtime is updated.
-func (t *tenant) storeModtime(fp string, meta map[string]string, val string) {
-	meta["X-Amz-Meta-Mtime"] = val
-	meta["mtime"] = val
-	t.setMeta(fp, meta)
 }
 
 // TouchObject creates or updates meta on specified object.
@@ -389,27 +431,7 @@ func (b *s3Backend) TouchObject(ctx context.Context, fp string, meta map[string]
 		return result, err
 	}
 
-	b.tenant(ctx).setMeta(fp, meta)
-
-	if val, ok := meta["X-Amz-Meta-Mtime"]; ok {
-		ti, err := swift.FloatStringToTime(val)
-		if err == nil {
-			b.tenant(ctx).storeModtime(fp, meta, val)
-			return result, _vfs.Chtimes(fp, ti, ti)
-		}
-		// ignore error since the file is successfully created
-	}
-
-	if val, ok := meta["mtime"]; ok {
-		ti, err := swift.FloatStringToTime(val)
-		if err == nil {
-			b.tenant(ctx).storeModtime(fp, meta, val)
-			return result, _vfs.Chtimes(fp, ti, ti)
-		}
-		// ignore error since the file is successfully created
-	}
-
-	return result, nil
+	return result, b.tenant(ctx).storeMeta(_vfs, fp, meta)
 }
 
 // PutObject creates or overwrites the object with the given name.
@@ -510,27 +532,7 @@ func (b *s3Backend) PutObject(
 		return result, err
 	}
 
-	b.tenant(ctx).setMeta(fp, meta)
-
-	if val, ok := meta["X-Amz-Meta-Mtime"]; ok {
-		ti, err := swift.FloatStringToTime(val)
-		if err == nil {
-			b.tenant(ctx).storeModtime(fp, meta, val)
-			return result, _vfs.Chtimes(fp, ti, ti)
-		}
-		// ignore error since the file is successfully created
-	}
-
-	if val, ok := meta["mtime"]; ok {
-		ti, err := swift.FloatStringToTime(val)
-		if err == nil {
-			b.tenant(ctx).storeModtime(fp, meta, val)
-			return result, _vfs.Chtimes(fp, ti, ti)
-		}
-		// ignore error since the file is successfully created
-	}
-
-	return result, nil
+	return result, b.tenant(ctx).storeMeta(_vfs, fp, meta)
 }
 
 // DeleteMulti deletes multiple objects in a single request.
@@ -653,22 +655,7 @@ func (b *s3Backend) CopyObject(ctx context.Context, srcBucket, srcKey, dstBucket
 		return result, gofakes3.KeyNotFound(srcKey)
 	}
 	if srcBucket == dstBucket && srcKey == dstKey {
-		b.tenant(ctx).setMeta(fp, meta)
-
-		val, ok := meta["X-Amz-Meta-Mtime"]
-		if !ok {
-			if val, ok = meta["mtime"]; !ok {
-				return
-			}
-		}
-		// update modtime
-		ti, err := swift.FloatStringToTime(val)
-		if err != nil {
-			return result, nil
-		}
-		b.tenant(ctx).storeModtime(fp, meta, val)
-
-		return result, _vfs.Chtimes(fp, ti, ti)
+		return result, b.tenant(ctx).storeMeta(_vfs, fp, meta)
 	}
 
 	c, err := b.GetObject(ctx, srcBucket, srcKey, nil)
