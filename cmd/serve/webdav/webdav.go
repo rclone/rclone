@@ -451,7 +451,7 @@ func (w *WebDAV) serveDir(rw http.ResponseWriter, r *http.Request, dirRemote str
 		if dirRemote == "" {
 			zipName = "root"
 		}
-		rw.Header().Set("Content-Disposition", "attachment; filename=\""+zipName+".zip\"")
+		rw.Header().Set("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": zipName + ".zip"}))
 		rw.Header().Set("Content-Type", "application/zip")
 		rw.Header().Set("Last-Modified", time.Now().UTC().Format(http.TimeFormat))
 		err := vfs.CreateZip(ctx, dir, rw)
