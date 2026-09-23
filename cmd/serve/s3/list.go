@@ -8,6 +8,7 @@ import (
 
 	"github.com/rclone/gofakes3"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/vfs"
 )
 
@@ -27,8 +28,8 @@ var errPageFull = errors.New("listing page full")
 // so the cost of a page is proportional to the keys it returns rather than to
 // the size of the subtree below the prefix.
 type lister struct {
-	b         *s3Backend
 	vfs       *vfs.VFS
+	hashType  hash.Type // hash used for ETags
 	bucket    string
 	marker    string // keys at or before this one have already been returned
 	hasMarker bool
@@ -49,8 +50,8 @@ func newLister(b *s3Backend, _vfs *vfs.VFS, bucket string, page gofakes3.ListBuc
 		max = 1000
 	}
 	return &lister{
-		b:         b,
 		vfs:       _vfs,
+		hashType:  b.s.etagHash(_vfs),
 		bucket:    bucket,
 		marker:    page.Marker,
 		hasMarker: page.HasMarker,
@@ -114,7 +115,7 @@ func (l *lister) addObject(key string, entry vfs.Node) error {
 	l.response.Add(&gofakes3.Content{
 		Key:          key,
 		LastModified: gofakes3.NewContentTime(entry.ModTime()),
-		ETag:         getFileHash(entry, l.b.s.etagHashType),
+		ETag:         getFileHash(entry, l.hashType),
 		Size:         entry.Size(),
 		StorageClass: gofakes3.StorageStandard,
 	})
