@@ -1033,6 +1033,11 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	encodedLeaf := f.opt.Encoding.FromStandardName(dstLeaf)
 	err = f.pacer.Call(func() (bool, error) {
 		err := folders.MoveFolder(ctx, f.cfg, srcID, dstDirectoryID, encodedLeaf)
+		// Moving a large folder can outlast the gateway timeout (520/502)
+		// yet still complete, in which case the retry reports this.
+		if err != nil && isConflictError(err) && strings.Contains(err.Error(), "already moved to that location") {
+			return false, nil
+		}
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
