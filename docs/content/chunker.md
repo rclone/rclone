@@ -248,6 +248,17 @@ modification time of the metadata object on the wrapped remote.
 If file is chunked but metadata format is `none` then chunker will
 use modification time of the first data chunk.
 
+### File metadata
+
+With `--metadata`, chunker passes file metadata through to the wrapped remote.
+Supported system and user metadata depend on that remote. On upload, metadata
+is written to the data chunks and the metadata object, if present.
+
+Reading or updating metadata uses the same object as modification times:
+the wrapped file for a non-chunked file, the metadata object for a composite
+file, or the first data chunk when `meta_format` is `none`. File metadata is
+not stored inside chunker's JSON metadata format.
+
 ### Migrations
 
 The idiomatic way to migrate to a different chunk size, hash type, transaction

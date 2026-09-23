@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -899,8 +900,68 @@ func testMD5AllSlow(t *testing.T, f *Fs) {
 	require.NoError(t, operations.Purge(ctx, baseFs, ""))
 }
 
+func testObjectMetadata(t *testing.T, f *Fs) {
+	if !f.base.Features().ReadMetadata || !f.base.Features().WriteMetadata {
+		t.Skip("underlying backend does not support metadata")
+	}
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.Metadata = true
+	for _, test := range []struct {
+		name string
+		opts settings
+	}{
+		{"unchunked", settings{"chunk_size": "1M"}},
+		{"forced", settings{"chunk_size": "1M", "hash_type": "sha1all"}},
+		{"chunked", settings{"chunk_size": "10B"}},
+		{"no-meta", settings{"chunk_size": "10B", "meta_format": "none", "hash_type": "none"}},
+		{"no-rename", settings{"chunk_size": "10B", "transactions": "norename"}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			opts := settings{"meta_format": "simplejson", "hash_type": "md5", "transactions": "rename"}
+			for key, value := range test.opts {
+				opts[key] = value
+			}
+			f := deriveFs(ctx, t, f, "metadata-"+test.name, opts)
+			contents := strings.Repeat("metadata test\n", 10)
+			item := fstest.NewItem("file.txt", contents, mtime1)
+			metadata := fs.Metadata{"mtime": mtime1.Format(time.RFC3339Nano), "rclonetest": "source"}
+			obj := fstests.PutTestContentsMetadata(ctx, t, f, &item, false, contents, false, "", metadata)
+			defer func() { assert.NoError(t, operations.Purge(ctx, f, "")) }()
+			require.True(t, f.Features().ReadMetadata)
+			require.True(t, f.Features().WriteMetadata)
+			fstest.CheckEntryMetadata(ctx, t, f, obj, metadata)
+			obj = fstest.NewObject(ctx, t, f, item.Path)
+			fstest.CheckEntryMetadata(ctx, t, f, obj, metadata)
+
+			metadata["rclonetest"] = "override"
+			src := object.NewStaticObjectInfo(item.Path, mtime1, int64(len(contents)), true, nil, f)
+			err := obj.Update(ctx, strings.NewReader(contents), src, fs.MetadataOption(metadata))
+			require.NoError(t, err)
+			obj = fstest.NewObject(ctx, t, f, item.Path)
+			fstest.CheckEntryMetadata(ctx, t, f, obj, metadata)
+			reader, err := obj.Open(ctx)
+			require.NoError(t, err)
+			got, err := io.ReadAll(reader)
+			require.NoError(t, err)
+			require.NoError(t, reader.Close())
+			assert.Equal(t, contents, string(got))
+
+			if _, ok := obj.(*Object).mainChunk().(fs.SetMetadataer); ok {
+				metadata["rclonetest"] = "updated"
+				metadata["mtime"] = mtime1.Add(time.Hour).Format(time.RFC3339Nano)
+				require.NoError(t, obj.(fs.SetMetadataer).SetMetadata(ctx, metadata))
+				obj = fstest.NewObject(ctx, t, f, item.Path)
+				fstest.CheckEntryMetadata(ctx, t, f, obj, metadata)
+			}
+		})
+	}
+}
+
 // InternalTest dispatches all internal tests
 func (f *Fs) InternalTest(t *testing.T) {
+	t.Run("ObjectMetadata", func(t *testing.T) {
+		testObjectMetadata(t, f)
+	})
 	t.Run("PutLarge", func(t *testing.T) {
 		if *UploadKilobytes <= 0 {
 			t.Skip("-upload-kilobytes is not set")

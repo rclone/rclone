@@ -146,6 +146,11 @@ func init() {
 		Name:        "chunker",
 		Description: "Transparently chunk/split large files",
 		NewFs:       NewFs,
+		MetadataInfo: &fs.MetadataInfo{
+			Help: `Any metadata supported by the underlying remote is read and written.
+For chunked files, metadata is read and updated on the metadata object,
+or the first data chunk when meta_format is none.`,
+		},
 		Options: []fs.Option{{
 			Name:     "remote",
 			Required: true,
@@ -349,6 +354,9 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 		BucketBased:              true,
 		CanHaveEmptyDirectories:  true,
 		ServerSideAcrossConfigs:  true,
+		ReadMetadata:             true,
+		WriteMetadata:            true,
+		UserMetadata:             true,
 		ReadDirMetadata:          true,
 		WriteDirMetadata:         true,
 		WriteDirSetModTime:       true,
@@ -1324,7 +1332,13 @@ func (f *Fs) put(
 	}
 	if err == nil {
 		metaInfo := f.wrapInfo(src, baseRemote, int64(len(metadata)))
-		metaObject, err = basePut(ctx, bytes.NewReader(metadata), metaInfo)
+		var metaOptions []fs.OpenOption
+		for _, option := range options {
+			if _, ok := option.(fs.MetadataOption); ok {
+				metaOptions = append(metaOptions, option)
+			}
+		}
+		metaObject, err = basePut(ctx, bytes.NewReader(metadata), metaInfo, metaOptions...)
 	}
 	if err != nil {
 		return nil, err
@@ -2134,6 +2148,22 @@ func (o *Object) SetModTime(ctx context.Context, mtime time.Time) error {
 	return o.mainChunk().SetModTime(ctx, mtime)
 }
 
+// Metadata returns metadata from the same backing object that supplies ModTime.
+func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
+	return fs.GetMetadata(ctx, o.mainChunk())
+}
+
+// SetMetadata sets metadata on the backing object that supplies ModTime.
+func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
+	if err := o.readMetadata(ctx); err != nil {
+		return err
+	}
+	if do, ok := o.mainChunk().(fs.SetMetadataer); ok {
+		return do.SetMetadata(ctx, metadata)
+	}
+	return fs.ErrorNotImplemented
+}
+
 // Hash returns the selected checksum of the file.
 // If no checksum is available it returns "".
 //
@@ -2384,6 +2414,11 @@ func (oi *ObjectInfo) ModTime(ctx context.Context) time.Time {
 	return oi.src.ModTime(ctx)
 }
 
+// Metadata returns the source object's metadata.
+func (oi *ObjectInfo) Metadata(ctx context.Context) (fs.Metadata, error) {
+	return fs.GetMetadata(ctx, oi.src)
+}
+
 // Hash returns the selected checksum of the wrapped file
 // It returns "" if no checksum is available or if this
 // info doesn't wrap the complete file.
@@ -2586,7 +2621,10 @@ var (
 	_ fs.ChangeNotifier  = (*Fs)(nil)
 	_ fs.Shutdowner      = (*Fs)(nil)
 	_ fs.ObjectInfo      = (*ObjectInfo)(nil)
+	_ fs.Metadataer      = (*ObjectInfo)(nil)
 	_ fs.Object          = (*Object)(nil)
+	_ fs.Metadataer      = (*Object)(nil)
+	_ fs.SetMetadataer   = (*Object)(nil)
 	_ fs.ObjectUnWrapper = (*Object)(nil)
 	_ fs.IDer            = (*Object)(nil)
 )
