@@ -561,6 +561,10 @@ func (b *s3Backend) CopyObject(ctx context.Context, srcBucket, srcKey, dstBucket
 	if err != nil {
 		return result, err
 	}
+	cStat, err := _vfs.Stat(fp)
+	if err != nil || !cStat.IsFile() {
+		return result, gofakes3.KeyNotFound(srcKey)
+	}
 	if srcBucket == dstBucket && srcKey == dstKey {
 		b.meta.Store(fp, meta)
 
@@ -578,11 +582,6 @@ func (b *s3Backend) CopyObject(ctx context.Context, srcBucket, srcKey, dstBucket
 		b.storeModtime(fp, meta, val)
 
 		return result, _vfs.Chtimes(fp, ti, ti)
-	}
-
-	cStat, err := _vfs.Stat(fp)
-	if err != nil {
-		return
 	}
 
 	c, err := b.GetObject(ctx, srcBucket, srcKey, nil)
