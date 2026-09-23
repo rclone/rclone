@@ -61,8 +61,9 @@ type multipartUpload struct {
 	streamFp    string // path the parts are written to (fp when the remote has no server-side move or copy)
 	meta        map[string]string
 
-	fh  io.WriteCloser // sink the in-order parts are written to, opened by sink (guarded by mu)
-	vfs *vfs.VFS       // the VFS fh is created on, used for all later operations
+	fh     io.WriteCloser // sink the in-order parts are written to, opened by sink (guarded by mu)
+	vfs    *vfs.VFS       // the VFS fh is created on, used for all later operations
+	tenant *tenant        // the user the upload belongs to
 
 	mu        sync.Mutex
 	changed   chan struct{}  // closed when buffered shrinks, nextPart advances or the upload closes
@@ -177,9 +178,10 @@ func (up *multipartUpload) endActivity() {
 	up.mu.Unlock()
 }
 
-// loadUpload looks up an in-flight upload by ID.
-func (b *s3Backend) loadUpload(uploadID gofakes3.UploadID) (*multipartUpload, error) {
-	v, ok := b.multipartUploads.Load(uploadID)
+// loadUpload looks up an in-flight upload of the user making the request
+// in ctx by ID.
+func (b *s3Backend) loadUpload(ctx context.Context, uploadID gofakes3.UploadID) (*multipartUpload, error) {
+	v, ok := b.tenant(ctx).uploads.Load(uploadID)
 	if !ok {
 		return nil, gofakes3.ErrNoSuchUpload
 	}
@@ -207,15 +209,16 @@ func (b *s3Backend) releaseUpload() {
 	b.uploads.Add(-1)
 }
 
-// addUpload records a new in-flight upload, which must hold a place
+// addUpload records a new in-flight upload of t, which must hold a place
 // reserved by reserveUpload.
-func (b *s3Backend) addUpload(uploadID gofakes3.UploadID, up *multipartUpload) {
-	b.multipartUploads.Store(uploadID, up)
+func (b *s3Backend) addUpload(t *tenant, uploadID gofakes3.UploadID, up *multipartUpload) {
+	up.tenant = t
+	t.uploads.Store(uploadID, up)
 }
 
 // deleteUpload removes the record of an in-flight upload, if present.
-func (b *s3Backend) deleteUpload(uploadID gofakes3.UploadID) {
-	if _, ok := b.multipartUploads.LoadAndDelete(uploadID); ok {
+func (b *s3Backend) deleteUpload(uploadID gofakes3.UploadID, up *multipartUpload) {
+	if _, ok := up.tenant.uploads.LoadAndDelete(uploadID); ok {
 		b.uploads.Add(-1)
 	}
 }
@@ -296,7 +299,7 @@ func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objec
 	up.budget = b.budget
 	up.vfs = _vfs
 
-	b.addUpload(uploadID, up)
+	b.addUpload(b.tenant(ctx), uploadID, up)
 	return uploadID, nil
 }
 
@@ -307,7 +310,7 @@ func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objec
 // the stream reaches it, and a re-upload of a part already streamed is just
 // hashed to check it matches.
 func (b *s3Backend) UploadPart(ctx context.Context, bucketName, objectName string, uploadID gofakes3.UploadID, partNumber int, contentLength int64, body io.Reader) (string, error) {
-	up, err := b.loadUpload(uploadID)
+	up, err := b.loadUpload(ctx, uploadID)
 	if err != nil {
 		return "", err
 	}
@@ -832,7 +835,7 @@ func pipePart(w io.Writer, rw *pool.RW) error {
 // S3-style multipart ETag, and stores the user metadata so HeadObject and
 // GetObject see the same fields the in-memory PutObject path produces.
 func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, objectName string, uploadID gofakes3.UploadID, input *gofakes3.CompleteMultipartUploadRequest) (gofakes3.VersionID, string, error) {
-	up, err := b.loadUpload(uploadID)
+	up, err := b.loadUpload(ctx, uploadID)
 	if err != nil {
 		return "", "", err
 	}
@@ -866,17 +869,17 @@ func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, obj
 			return "", "", err
 		}
 	}
-	b.deleteUpload(uploadID)
+	b.deleteUpload(uploadID, up)
 
-	b.meta.Add(up.fp, up.meta)
+	up.tenant.setMeta(up.fp, up.meta)
 	if val, ok := up.meta["X-Amz-Meta-Mtime"]; ok {
 		if ti, err := swift.FloatStringToTime(val); err == nil {
-			b.storeModtime(up.fp, up.meta, val)
+			up.tenant.storeModtime(up.fp, up.meta, val)
 			_ = up.vfs.Chtimes(up.fp, ti, ti)
 		}
 	} else if val, ok := up.meta["mtime"]; ok {
 		if ti, err := swift.FloatStringToTime(val); err == nil {
-			b.storeModtime(up.fp, up.meta, val)
+			up.tenant.storeModtime(up.fp, up.meta, val)
 			_ = up.vfs.Chtimes(up.fp, ti, ti)
 		}
 	}
@@ -887,11 +890,11 @@ func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, obj
 // AbortMultipartUpload tears down an in-progress upload, discarding any data
 // already received.
 func (b *s3Backend) AbortMultipartUpload(ctx context.Context, bucketName, objectName string, uploadID gofakes3.UploadID) error {
-	up, err := b.loadUpload(uploadID)
+	up, err := b.loadUpload(ctx, uploadID)
 	if err != nil {
 		return err
 	}
-	defer b.deleteUpload(uploadID)
+	defer b.deleteUpload(uploadID, up)
 	if err := up.abort(); err != nil {
 		fs.Errorf(up.fp, "aborting multipart upload: %v", err)
 	}
@@ -910,7 +913,7 @@ func (b *s3Backend) failUpload(uploadID gofakes3.UploadID, up *multipartUpload) 
 // forgetUpload aborts up, discards what it wrote and removes every record
 // of it, ours and gofakes3's.
 func (b *s3Backend) forgetUpload(uploadID gofakes3.UploadID, up *multipartUpload) {
-	b.deleteUpload(uploadID)
+	b.deleteUpload(uploadID, up)
 	if err := up.abort(); err != nil {
 		fs.Errorf(up.fp, "aborting multipart upload: %v", err)
 	}
@@ -947,7 +950,15 @@ func (b *s3Backend) stopReaper() {
 // reapExpiredUploads aborts and cleans up multipart uploads which have had
 // no request activity for longer than expiry.
 func (b *s3Backend) reapExpiredUploads(now time.Time, expiry time.Duration) {
-	b.multipartUploads.Range(func(key, value any) bool {
+	for _, t := range b.allTenants() {
+		b.reapExpiredTenantUploads(t, now, expiry)
+	}
+}
+
+// reapExpiredTenantUploads aborts and cleans up the multipart uploads of
+// t which have had no request activity for longer than expiry.
+func (b *s3Backend) reapExpiredTenantUploads(t *tenant, now time.Time, expiry time.Duration) {
+	t.uploads.Range(func(key, value any) bool {
 		uploadID := key.(gofakes3.UploadID)
 		up := value.(*multipartUpload)
 		up.mu.Lock()
