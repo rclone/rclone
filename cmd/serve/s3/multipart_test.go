@@ -475,8 +475,9 @@ func TestMultipartBufferLimit(t *testing.T) {
 // storeTestUpload records up as an in-flight upload of b, as
 // CreateMultipartUpload does.
 func storeTestUpload(t *testing.T, b *s3Backend, uploadID gofakes3.UploadID, up *multipartUpload) {
-	require.NoError(t, b.reserveUpload())
-	require.NoError(t, b.addUpload(b.tenant(context.Background()), uploadID, up))
+	tenant := b.tenant(context.Background())
+	require.NoError(t, b.reserveUpload(tenant))
+	require.NoError(t, b.addUpload(tenant, uploadID, up))
 }
 
 // stubSink is a multipartUpload sink which records how it was closed.
@@ -1696,16 +1697,20 @@ func TestLimitedBody(t *testing.T) {
 }
 
 // TestMultipartBufferTotal checks that --multipart-streaming-buffer-total
-// limits the memory buffered across all uploads, and that an aborted
-// upload's buffered parts are returned to it.
+// limits the memory buffered across all the uploads of a user but not
+// those of other users, and that an aborted upload's buffered parts are
+// returned to it.
 func TestMultipartBufferTotal(t *testing.T) {
 	b, _, bucket := newPutTestBackend(t, "", nil)
-	b.budget = newBufferBudget(2 * pool.BufferSize)
+	b.s.opt.MultipartStreamingBufferTotal = 2 * pool.BufferSize
 	ctx := context.Background()
 
-	upload := func(object string, uploadID gofakes3.UploadID, partNumber int) (string, error) {
+	uploadAs := func(ctx context.Context, object string, uploadID gofakes3.UploadID, partNumber int) (string, error) {
 		body := []byte{byte('0' + partNumber)}
 		return b.UploadPart(ctx, bucket, object, uploadID, partNumber, 1, bytes.NewReader(body))
+	}
+	upload := func(object string, uploadID gofakes3.UploadID, partNumber int) (string, error) {
+		return uploadAs(ctx, object, uploadID, partNumber)
 	}
 
 	// Upload A buffers two out-of-order parts, using up the total.
@@ -1715,6 +1720,14 @@ func TestMultipartBufferTotal(t *testing.T) {
 		_, err = upload("a", idA, partNumber)
 		require.NoError(t, err)
 	}
+
+	// Another user's out-of-order part doesn't wait.
+	ctxOther := tenantCtx("other")
+	idOther, err := b.CreateMultipartUpload(ctxOther, bucket, "other", nil)
+	require.NoError(t, err)
+	_, err = uploadAs(ctxOther, "other", idOther, 2)
+	require.NoError(t, err)
+	require.NoError(t, b.AbortMultipartUpload(ctxOther, bucket, "other", idOther))
 
 	// Upload B's out-of-order part must wait although its own buffer is
 	// empty.
@@ -1741,9 +1754,10 @@ func TestMultipartBufferTotal(t *testing.T) {
 	}
 	require.NoError(t, b.AbortMultipartUpload(ctx, bucket, "b", idB))
 
-	b.budget.mu.Lock()
-	assert.Equal(t, int64(0), b.budget.used, "buffer total not all returned")
-	b.budget.mu.Unlock()
+	budget := b.tenant(ctx).budget
+	budget.mu.Lock()
+	assert.Equal(t, int64(0), budget.used, "buffer total not all returned")
+	budget.mu.Unlock()
 }
 
 // TestMultipartSinkOpenedOnFirstPart checks that starting a multipart upload
@@ -1797,9 +1811,10 @@ func TestMultipartSinkOpenedOnFirstPart(t *testing.T) {
 	requireOnly(t, f, bucket, "parts.bin", "empty.bin")
 }
 
-// TestMultipartMaxUploads checks that no more than --multipart-max-uploads
-// multipart uploads can be in progress at once, and that finished uploads
-// make room for more.
+// TestMultipartMaxUploads checks that a user can have no more than
+// --multipart-max-uploads multipart uploads in progress at once, that
+// other users can still start theirs, and that finished uploads make room
+// for more.
 func TestMultipartMaxUploads(t *testing.T) {
 	b, _, bucket := newPutTestBackend(t, "", nil)
 	b.s.opt.MultipartMaxUploads = 2
@@ -1811,6 +1826,12 @@ func TestMultipartMaxUploads(t *testing.T) {
 	require.NoError(t, err)
 	_, err = b.CreateMultipartUpload(ctx, bucket, "3", nil)
 	assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrSlowDown), "want SlowDown, got %v", err)
+
+	// Another user isn't limited by them.
+	ctxOther := tenantCtx("other")
+	idOther, err := b.CreateMultipartUpload(ctxOther, bucket, "other", nil)
+	require.NoError(t, err)
+	require.NoError(t, b.AbortMultipartUpload(ctxOther, bucket, "other", idOther))
 
 	// Aborting an upload makes room.
 	require.NoError(t, b.AbortMultipartUpload(ctx, bucket, "1", id1))

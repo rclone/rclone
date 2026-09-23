@@ -81,11 +81,11 @@ type multipartUpload struct {
 	partialMD5  []byte           // MD5 state after those partialSize bytes (encoding.BinaryMarshaler)
 	buffered    int64            // bytes of parts admitted but not yet streamed or released
 	bufferLimit int64            // max buffered before parts ahead of nextPart must wait (<= 0 for no limit)
-	budget      *bufferBudget    // limits buffered across all uploads (nil for no limit)
+	budget      *bufferBudget    // limits buffered across all the user's uploads (nil for no limit)
 }
 
 // bufferBudget limits the memory used by the reorder buffers of all the
-// multipart uploads of a server.
+// multipart uploads of a user.
 type bufferBudget struct {
 	mu      sync.Mutex
 	limit   int64         // <= 0 for no limit
@@ -155,7 +155,7 @@ func (up *multipartUpload) broadcast() {
 }
 
 // unbuffer returns charge bytes of buffer reserved by waitForTurn to the
-// upload's and the server's budgets. Call with up.mu held.
+// upload's and the user's budgets. Call with up.mu held.
 func (up *multipartUpload) unbuffer(charge int64) {
 	up.buffered -= charge
 	up.budget.release(charge)
@@ -194,25 +194,25 @@ func (b *s3Backend) loadUpload(ctx context.Context, uploadID gofakes3.UploadID) 
 	return v.(*multipartUpload), nil
 }
 
-// reserveUpload reserves a place for a new upload, failing with
-// gofakes3.ErrSlowDown if --multipart-max-uploads are already in progress.
-// The place is given back by releaseUpload or deleteUpload.
-func (b *s3Backend) reserveUpload() error {
-	n := b.uploads.Add(1)
+// reserveUpload reserves a place for a new upload of t, failing with
+// gofakes3.ErrSlowDown if t already has --multipart-max-uploads in
+// progress. The place is given back by releaseUpload or deleteUpload.
+func (b *s3Backend) reserveUpload(t *tenant) error {
+	n := t.nUploads.Add(1)
 	if maxUploads := int64(b.s.opt.MultipartMaxUploads); maxUploads > 0 && n > maxUploads {
-		b.uploads.Add(-1)
+		t.nUploads.Add(-1)
 		b.warnMaxUploadsOnce.Do(func() {
-			fs.Logf(nil, "serve s3: telling clients to slow down as --multipart-max-uploads %d multipart uploads are in progress", maxUploads)
+			fs.Logf(nil, "serve s3: telling a client to slow down as it has --multipart-max-uploads %d multipart uploads in progress", maxUploads)
 		})
 		return gofakes3.ErrSlowDown
 	}
 	return nil
 }
 
-// releaseUpload gives back a place reserved for an upload which was never
-// recorded with addUpload.
-func (b *s3Backend) releaseUpload() {
-	b.uploads.Add(-1)
+// releaseUpload gives back a place reserved for an upload of t which was
+// never recorded with addUpload.
+func (b *s3Backend) releaseUpload(t *tenant) {
+	t.nUploads.Add(-1)
 }
 
 // addUpload records a new in-flight upload of t, which must hold a place
@@ -234,7 +234,7 @@ func (b *s3Backend) addUpload(t *tenant, uploadID gofakes3.UploadID, up *multipa
 func (b *s3Backend) deleteUpload(uploadID gofakes3.UploadID, up *multipartUpload) {
 	if _, ok := up.tenant.uploads.LoadAndDelete(uploadID); ok {
 		up.vfs.Shutdown()
-		b.uploads.Add(-1)
+		up.tenant.nUploads.Add(-1)
 	}
 }
 
@@ -262,7 +262,7 @@ func (b *s3Backend) deleteUpload(uploadID gofakes3.UploadID, up *multipartUpload
 // The object the parts are written to is only created when the first part
 // arrives, so an upload with no parts holds no file handle or backend
 // upload, only a reference to its VFS.
-// No more than --multipart-max-uploads can be in progress: after that
+// No user can have more than --multipart-max-uploads in progress: after that
 // gofakes3.ErrSlowDown is returned before anything is created on the
 // remote.
 func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objectName string, meta map[string]string) (gofakes3.UploadID, error) {
@@ -287,14 +287,15 @@ func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objec
 	}
 	// Reserve a place before doing anything with the remote, so a refused
 	// upload leaves nothing behind.
-	if err := b.reserveUpload(); err != nil {
+	t := b.tenant(ctx)
+	if err := b.reserveUpload(t); err != nil {
 		return "", err
 	}
 
 	objectDir := path.Dir(fp)
 	if objectDir != "." {
 		if err := mkdirRecursive(objectDir, _vfs); err != nil {
-			b.releaseUpload()
+			b.releaseUpload(t)
 			return "", err
 		}
 	}
@@ -312,11 +313,11 @@ func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objec
 	}
 
 	up := newMultipartUpload(bucketName, objectName, fp, streamFp, meta, int64(b.s.opt.MultipartStreamingBufferLimit))
-	up.budget = b.budget
+	up.budget = t.budget
 	up.vfs = _vfs
 
-	if err := b.addUpload(b.tenant(ctx), uploadID, up); err != nil {
-		b.releaseUpload()
+	if err := b.addUpload(t, uploadID, up); err != nil {
+		b.releaseUpload(t)
 		return "", err
 	}
 	return uploadID, nil
@@ -500,7 +501,7 @@ const (
 // The next part the stream needs is streamed straight into the sink, once
 // no other request is writing to it, so it needs no buffer. A part ahead of
 // it must wait until its bufferCharge fits within both the upload's reorder
-// buffer limit and the server's budget for all uploads, which it then
+// buffer limit and the user's budget for all their uploads, which it then
 // reserves, bounding the memory uploads can consume when clients send parts
 // faster than the backend drains them. A part too big for the limits waits
 // until it is the next part. Reserved bytes are returned

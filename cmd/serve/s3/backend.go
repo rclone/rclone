@@ -48,9 +48,6 @@ type s3Backend struct {
 	tenantsMu sync.Mutex
 	tenants   map[string]*tenant // per-user state by tenant ID
 
-	// uploads counts the in-flight uploads of all tenants.
-	uploads atomic.Int64
-
 	// warnMaxUploadsOnce logs a single NOTICE the first time a multipart
 	// upload is refused by --multipart-max-uploads.
 	warnMaxUploadsOnce sync.Once
@@ -58,9 +55,6 @@ type s3Backend struct {
 	// warnInMemoryOnce logs a single NOTICE the first time a multipart
 	// upload falls back to being buffered in memory.
 	warnInMemoryOnce sync.Once
-
-	// budget limits the memory buffered by all multipart uploads.
-	budget *bufferBudget
 
 	reaperQuit chan struct{} // closed to stop the abandoned upload reaper
 	reaperStop sync.Once
@@ -78,6 +72,14 @@ type tenant struct {
 	// uploads tracks in-flight streaming multipart uploads,
 	// keyed by gofakes3.UploadID.
 	uploads sync.Map
+
+	// nUploads counts the in-flight uploads, limited by
+	// --multipart-max-uploads.
+	nUploads atomic.Int64
+
+	// budget limits the memory buffered by all the multipart uploads,
+	// set by --multipart-streaming-buffer-total.
+	budget *bufferBudget
 }
 
 // metaKey is the key of an object's metadata in s3Backend.meta.
@@ -114,7 +116,6 @@ func newBackend(s *Server) *s3Backend {
 		s:          s,
 		meta:       newMetadataStore(s.opt.MetadataMaxObjects),
 		tenants:    map[string]*tenant{},
-		budget:     newBufferBudget(int64(s.opt.MultipartStreamingBufferTotal)),
 		reaperQuit: make(chan struct{}),
 	}
 }
@@ -126,7 +127,11 @@ func (b *s3Backend) tenant(ctx context.Context) *tenant {
 	defer b.tenantsMu.Unlock()
 	t, ok := b.tenants[id]
 	if !ok {
-		t = &tenant{b: b, id: id}
+		t = &tenant{
+			b:      b,
+			id:     id,
+			budget: newBufferBudget(int64(b.s.opt.MultipartStreamingBufferTotal)),
+		}
 		b.tenants[id] = t
 	}
 	return t

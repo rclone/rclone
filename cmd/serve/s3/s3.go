@@ -48,11 +48,11 @@ var OptionsInfo = fs.Options{{
 }, {
 	Name:    "multipart_streaming_buffer_total",
 	Default: fs.SizeSuffix(1024 * 1024 * 1024),
-	Help:    "Maximum memory buffered by all streamed multipart uploads for parts arriving out of order, 0 for unlimited",
+	Help:    "Maximum memory buffered by all the streamed multipart uploads of a user for parts arriving out of order, 0 for unlimited",
 }, {
 	Name:    "multipart_max_uploads",
 	Default: 1000,
-	Help:    "Maximum number of streamed multipart uploads in progress at once, 0 for unlimited",
+	Help:    "Maximum number of streamed multipart uploads a user can have in progress at once, 0 for unlimited",
 }, {
 	Name:    "metadata_max_objects",
 	Default: 100000,
