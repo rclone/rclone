@@ -476,7 +476,7 @@ func TestMultipartBufferLimit(t *testing.T) {
 // CreateMultipartUpload does.
 func storeTestUpload(t *testing.T, b *s3Backend, uploadID gofakes3.UploadID, up *multipartUpload) {
 	require.NoError(t, b.reserveUpload())
-	b.addUpload(uploadID, up)
+	b.addUpload(b.tenant(context.Background()), uploadID, up)
 }
 
 // stubSink is a multipartUpload sink which records how it was closed.
@@ -627,7 +627,7 @@ func TestMultipartCompleteRenameFailureKeepsUpload(t *testing.T) {
 
 	_, _, err = b.CompleteMultipartUpload(ctx, bucket, "key", uploadID, &gofakes3.CompleteMultipartUploadRequest{})
 	require.Error(t, err)
-	_, err = b.loadUpload(uploadID)
+	_, err = b.loadUpload(context.Background(), uploadID)
 	require.NoError(t, err, "the upload record must survive a retryable Complete failure")
 }
 
@@ -728,11 +728,11 @@ func TestMultipartReapExpiredUploads(t *testing.T) {
 
 	b.reapExpiredUploads(now, expiry)
 
-	_, err = b.loadUpload("fresh")
+	_, err = b.loadUpload(context.Background(), "fresh")
 	assert.NoError(t, err, "a fresh upload must not be reaped")
-	_, err = b.loadUpload("busy")
+	_, err = b.loadUpload(context.Background(), "busy")
 	assert.NoError(t, err, "an upload with a request in flight must not be reaped")
-	_, err = b.loadUpload("idle")
+	_, err = b.loadUpload(context.Background(), "idle")
 	assert.ErrorIs(t, err, gofakes3.ErrNoSuchUpload, "an idle upload past the expiry must be reaped")
 
 	// The reaped upload was aborted, not committed.
@@ -1274,7 +1274,7 @@ func (s *bufferSink) Bytes() []byte {
 func newBufferSinkUpload(t *testing.T, b *s3Backend, bucket, object string) (gofakes3.UploadID, *bufferSink) {
 	uploadID, err := b.CreateMultipartUpload(context.Background(), bucket, object, nil)
 	require.NoError(t, err)
-	up, err := b.loadUpload(uploadID)
+	up, err := b.loadUpload(context.Background(), uploadID)
 	require.NoError(t, err)
 	if up.fh != nil {
 		// This fails the VFS upload, returning errBoom
@@ -1467,7 +1467,7 @@ func TestMultipartPartFailsAfterWholeBody(t *testing.T) {
 	// a part which could never be accepted.
 	_, err = b.UploadPart(ctx, bucket, object, uploadID, 1, int64(len(part1)), bytes.NewReader(part1))
 	require.ErrorIs(t, err, gofakes3.ErrNoSuchUpload)
-	_, err = b.loadUpload(uploadID)
+	_, err = b.loadUpload(context.Background(), uploadID)
 	require.ErrorIs(t, err, gofakes3.ErrNoSuchUpload)
 }
 
@@ -1582,7 +1582,7 @@ func TestMultipartSinkOpenedOnFirstPart(t *testing.T) {
 	ctx := context.Background()
 
 	sinkOpen := func(uploadID gofakes3.UploadID) bool {
-		up, err := b.loadUpload(uploadID)
+		up, err := b.loadUpload(context.Background(), uploadID)
 		require.NoError(t, err)
 		up.mu.Lock()
 		defer up.mu.Unlock()
@@ -1661,7 +1661,7 @@ func TestMultipartMaxUploads(t *testing.T) {
 	assert.ErrorIs(t, err, vfs.ENOENT, "a refused upload created directories")
 
 	// And so does expiring one.
-	up, err := b.loadUpload(id3)
+	up, err := b.loadUpload(context.Background(), id3)
 	require.NoError(t, err)
 	up.mu.Lock()
 	up.lastUsed = time.Now().Add(-2 * time.Hour)
