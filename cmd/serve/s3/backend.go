@@ -42,8 +42,7 @@ const putObjectPrefix = tempObjectPrefix + "put_"
 // multipart uploads stream straight through to the underlying Fs via
 // PutStream, instead of being buffered in memory by gofakes3.
 type s3Backend struct {
-	s    *Server
-	meta *lru.Cache[metaKey, objectMeta] // object metadata of all tenants
+	s *Server
 
 	tenantsMu sync.Mutex
 	tenants   map[string]*tenant // per-user state by tenant ID
@@ -80,12 +79,9 @@ type tenant struct {
 	// budget limits the memory buffered by all the multipart uploads,
 	// set by --multipart-streaming-buffer-total.
 	budget *bufferBudget
-}
 
-// metaKey is the key of an object's metadata in s3Backend.meta.
-type metaKey struct {
-	tenant string // tenant ID
-	fp     string // object path
+	// meta is the stored metadata of objects, by object path.
+	meta *lru.Cache[string, objectMeta]
 }
 
 // objectMeta is the metadata stored for an object, with the size and
@@ -99,11 +95,11 @@ type objectMeta struct {
 // newMetadataStore makes a store for the metadata of up to maxObjects
 // objects, forgetting that of the least recently used after that. If
 // maxObjects <= 0 there is no limit.
-func newMetadataStore(maxObjects int) *lru.Cache[metaKey, objectMeta] {
+func newMetadataStore(maxObjects int) *lru.Cache[string, objectMeta] {
 	if maxObjects <= 0 {
 		maxObjects = math.MaxInt
 	}
-	meta, err := lru.New[metaKey, objectMeta](maxObjects)
+	meta, err := lru.New[string, objectMeta](maxObjects)
 	if err != nil {
 		panic(err) // only fails if maxObjects <= 0
 	}
@@ -114,7 +110,6 @@ func newMetadataStore(maxObjects int) *lru.Cache[metaKey, objectMeta] {
 func newBackend(s *Server) *s3Backend {
 	return &s3Backend{
 		s:          s,
-		meta:       newMetadataStore(s.opt.MetadataMaxObjects),
 		tenants:    map[string]*tenant{},
 		reaperQuit: make(chan struct{}),
 	}
@@ -131,6 +126,7 @@ func (b *s3Backend) tenant(ctx context.Context) *tenant {
 			b:      b,
 			id:     id,
 			budget: newBufferBudget(int64(b.s.opt.MultipartStreamingBufferTotal)),
+			meta:   newMetadataStore(b.s.opt.MetadataMaxObjects),
 		}
 		b.tenants[id] = t
 	}
@@ -154,7 +150,7 @@ func (t *tenant) context() context.Context {
 // Nothing is returned if the object has changed since the metadata was
 // stored, as it has been replaced by something other than this user.
 func (t *tenant) getMeta(ctx context.Context, fp string, node vfs.Node) (meta map[string]string, ok bool) {
-	om, ok := t.b.meta.Get(metaKey{tenant: t.id, fp: fp})
+	om, ok := t.meta.Get(fp)
 	if !ok || om.size != node.Size() {
 		return nil, false
 	}
@@ -193,7 +189,7 @@ func (t *tenant) storeMeta(_vfs *vfs.VFS, fp string, meta map[string]string) (er
 		t.removeMeta(fp)
 		return err
 	}
-	t.b.meta.Add(metaKey{tenant: t.id, fp: fp}, objectMeta{
+	t.meta.Add(fp, objectMeta{
 		meta:    meta,
 		size:    node.Size(),
 		modTime: node.ModTime(),
@@ -203,7 +199,7 @@ func (t *tenant) storeMeta(_vfs *vfs.VFS, fp string, meta map[string]string) (er
 
 // removeMeta forgets the metadata of the object at fp.
 func (t *tenant) removeMeta(fp string) {
-	t.b.meta.Remove(metaKey{tenant: t.id, fp: fp})
+	t.meta.Remove(fp)
 }
 
 // ListBuckets always returns the default bucket.
