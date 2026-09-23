@@ -203,8 +203,9 @@ remote as if it had completed.
   uploads concurrently or out of order are buffered until their turn.
   The memory used for this buffering is capped, per upload, by
   `--multipart-streaming-buffer-limit` (default `256M`, `0` for no
-  limit), and across all uploads by `--multipart-streaming-buffer-total`
-  (default `1G`, `0` for no limit), counting each buffered part in the
+  limit), and across all the uploads of each user (each access key) by
+  `--multipart-streaming-buffer-total` (default `1G`, `0` for no
+  limit), counting each buffered part in the
   whole 1 MiB memory pages it occupies: a part that would take the
   buffer over either limit is stalled until the stream drains (or, if it
   is bigger than the limits, until it is the next part), so a client
@@ -335,14 +336,15 @@ do on real S3 when a lifecycle rule has aborted the upload. Set
 `--multipart-expiry 0` to keep incomplete uploads forever - but note
 that abandoned uploads are then never cleaned up and go on counting
 towards `--multipart-max-uploads` below, so enough of them will stop
-any new multipart upload being started until the server is restarted.
+the user starting any new multipart upload until the server is
+restarted.
 
 Each multipart upload in progress holds server resources - for example
 the buffers the remote's own upload uses once the first part has
-arrived - so no more than `--multipart-max-uploads` (default `1000`,
-`0` for no limit) can be in progress at once. Starting another fails
-with a `SlowDown` error, which S3 clients retry, and a one-off `NOTICE`
-is logged.
+arrived - so each user (each access key) can have no more than
+`--multipart-max-uploads` (default `1000`, `0` for no limit) in
+progress at once. Starting another fails with a `SlowDown` error,
+which S3 clients retry, and a one-off `NOTICE` is logged.
 
 #### Disabling streaming
 
@@ -374,9 +376,10 @@ make it use unbounded memory.
 - **Object data.** `PutObject` bodies and multipart parts arriving in
   order are streamed straight through to the remote. Parts arriving out
   of order are buffered, up to `--multipart-streaming-buffer-limit`
-  per upload and `--multipart-streaming-buffer-total` in all.
-- **Uploads in progress.** At most `--multipart-max-uploads` multipart
-  uploads can be in progress. An upload holds little memory until its
+  per upload and `--multipart-streaming-buffer-total` per user.
+- **Uploads in progress.** Each user can have at most
+  `--multipart-max-uploads` multipart uploads in progress. An upload
+  holds little memory until its
   first part arrives. After that, with `--vfs-cache-mode off`, it holds
   a `--streaming-upload-cutoff` sized buffer plus whatever the remote's
   own upload buffers, which for many remotes is up to their chunk size
@@ -396,14 +399,18 @@ make it use unbounded memory.
   cache](#vfs-directory-cache).
 
 The largest of these is usually the remote's upload buffers, which can
-be up to `--multipart-max-uploads` times the buffers of one upload if a
-client starts many uploads and sends part of each. To limit it, lower
+be up to `--multipart-max-uploads` times the buffers of one upload for
+each user if clients start many uploads and send part of each. The
+limits apply to each user separately, so that one user can't stop
+others uploading, which means the memory use grows with the number of
+users. To limit it, lower
 `--multipart-max-uploads`, the remote's chunk size or upload
 concurrency, or set `--max-buffer-memory` to limit the memory used by
 the buffers of all uploads to remotes which use rclone's buffer pool
 (including `s3`, `azureblob` and `b2`). Buffered multipart parts come
 from the same pool, so if you set `--max-buffer-memory` make it
-comfortably bigger than `--multipart-streaming-buffer-total`, otherwise
+comfortably bigger than `--multipart-streaming-buffer-total` times the
+number of users uploading at once, otherwise
 buffered parts can use up all the memory the remote needs to upload the
 parts which would free them.
 
