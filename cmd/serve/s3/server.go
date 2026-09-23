@@ -37,7 +37,7 @@ type Server struct {
 	backend      *s3Backend
 	handler      http.Handler
 	ctx          context.Context // for global config
-	etagHashType hash.Type
+	etagHashType hash.Type       // hash for ETags unless opt.EtagHash is "auto"
 }
 
 // Make a new S3 Server to serve the remote
@@ -58,9 +58,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		}
 	}()
 
-	if w.opt.EtagHash == "auto" {
-		w.etagHashType = f.Hashes().GetOne()
-	} else if w.opt.EtagHash != "" {
+	if w.opt.EtagHash != "" && w.opt.EtagHash != "auto" {
 		err := w.etagHashType.Set(w.opt.EtagHash)
 		if err != nil {
 			return nil, err
@@ -140,6 +138,17 @@ func (w *Server) getVFS(ctx context.Context) (VFS *vfs.VFS, err error) {
 		return nil, fmt.Errorf("context value is not VFS: %#v", value)
 	}
 	return VFS, nil
+}
+
+// etagHash returns the hash to use for the ETags of objects in _vfs.
+//
+// With --etag-hash auto this depends on the backend, which may be
+// different for each user of an auth proxy.
+func (w *Server) etagHash(_vfs *vfs.VFS) hash.Type {
+	if w.opt.EtagHash == "auto" {
+		return _vfs.Fs().Hashes().GetOne()
+	}
+	return w.etagHashType
 }
 
 // auth authenticates the request via the auth proxy.

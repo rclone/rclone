@@ -2,6 +2,7 @@ package s3
 
 import (
 	"context"
+	"crypto/md5"
 	"io"
 	"os"
 	"path/filepath"
@@ -9,10 +10,14 @@ import (
 	"testing"
 
 	"github.com/rclone/gofakes3"
+	_ "github.com/rclone/rclone/backend/crypt"
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -178,5 +183,41 @@ func TestBucketDirPath(t *testing.T) {
 			require.NoError(t, err, "bucket=%q dir=%q", test.bucket, test.dir)
 			assert.Equal(t, test.want, got, "bucket=%q dir=%q", test.bucket, test.dir)
 		}
+	}
+}
+
+// TestEtagHashAuto checks that --etag-hash auto uses the best hash of
+// the backend of each auth proxy user rather than of the remote the
+// server was started with, which may have none or not exist at all.
+func TestEtagHashAuto(t *testing.T) {
+	fstest.Initialise()
+	ctx := context.Background()
+	opt := Opt
+	opt.EtagHash = "auto"
+	opt.HTTP.ListenAddr = []string{endpoint}
+	proxyOpt := proxy.Opt
+	proxyOpt.AuthProxy = "/path/to/auth/proxy"
+
+	fCrypt, err := fs.NewFs(ctx, ":crypt,remote="+t.TempDir()+",password="+obscure.MustObscure("password")+":")
+	require.NoError(t, err)
+	require.Equal(t, hash.None, fCrypt.Hashes().GetOne(), "crypt has no hashes")
+	for _, f := range []fs.Fs{nil, fCrypt} {
+		w, err := newServer(ctx, f, &opt, &vfscommon.Opt, &proxyOpt)
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = w.Shutdown() })
+
+		fUser, err := fs.NewFs(ctx, t.TempDir())
+		require.NoError(t, err)
+		userVFS := vfs.New(ctx, fUser, &vfscommon.Opt)
+		t.Cleanup(userVFS.Shutdown)
+		ctx := context.WithValue(ctx, ctxKeyID, userVFS)
+		require.NoError(t, w.backend.CreateBucket(ctx, "bucket"))
+		_, err = w.backend.PutObject(ctx, "bucket", "object", nil, strings.NewReader("data"), 4)
+		require.NoError(t, err)
+
+		obj, err := w.backend.HeadObject(ctx, "bucket", "object")
+		require.NoError(t, err)
+		want := md5.Sum([]byte("data"))
+		assert.Equal(t, want[:], obj.Hash)
 	}
 }
