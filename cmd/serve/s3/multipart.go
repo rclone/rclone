@@ -163,11 +163,17 @@ func (up *multipartUpload) unbuffer(charge int64) {
 	up.broadcast()
 }
 
-// startActivity marks the upload as having a request in flight.
-func (up *multipartUpload) startActivity() {
+// startActivity marks the upload as having a request in flight, holding
+// its VFS until the matching endActivity. It returns ErrNoSuchUpload if
+// the upload has already gone.
+func (up *multipartUpload) startActivity() error {
+	if !up.vfs.Hold() {
+		return gofakes3.ErrNoSuchUpload
+	}
 	up.mu.Lock()
 	up.active++
 	up.mu.Unlock()
+	return nil
 }
 
 // endActivity marks the request done and restarts the upload's idle time.
@@ -176,6 +182,7 @@ func (up *multipartUpload) endActivity() {
 	up.active--
 	up.lastUsed = time.Now()
 	up.mu.Unlock()
+	up.vfs.Shutdown()
 }
 
 // loadUpload looks up an in-flight upload of the user making the request
@@ -211,14 +218,23 @@ func (b *s3Backend) releaseUpload() {
 
 // addUpload records a new in-flight upload of t, which must hold a place
 // reserved by reserveUpload.
-func (b *s3Backend) addUpload(t *tenant, uploadID gofakes3.UploadID, up *multipartUpload) {
+//
+// The upload holds its VFS until deleteUpload, as an auth proxy would
+// otherwise shut it down once unused for a while, even between the
+// requests of an upload.
+func (b *s3Backend) addUpload(t *tenant, uploadID gofakes3.UploadID, up *multipartUpload) error {
+	if !up.vfs.Hold() {
+		return errors.New("serve s3: VFS shut down while creating multipart upload")
+	}
 	up.tenant = t
 	t.uploads.Store(uploadID, up)
+	return nil
 }
 
 // deleteUpload removes the record of an in-flight upload, if present.
 func (b *s3Backend) deleteUpload(uploadID gofakes3.UploadID, up *multipartUpload) {
 	if _, ok := up.tenant.uploads.LoadAndDelete(uploadID); ok {
+		up.vfs.Shutdown()
 		b.uploads.Add(-1)
 	}
 }
@@ -245,7 +261,8 @@ func (b *s3Backend) deleteUpload(uploadID gofakes3.UploadID, up *multipartUpload
 // no streaming support, so it ignores the flag.
 //
 // The object the parts are written to is only created when the first part
-// arrives, so an upload with no parts holds no VFS or backend resources.
+// arrives, so an upload with no parts holds no file handle or backend
+// upload, only a reference to its VFS.
 // No more than --multipart-max-uploads can be in progress: after that
 // gofakes3.ErrSlowDown is returned before anything is created on the
 // remote.
@@ -299,7 +316,10 @@ func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objec
 	up.budget = b.budget
 	up.vfs = _vfs
 
-	b.addUpload(b.tenant(ctx), uploadID, up)
+	if err := b.addUpload(b.tenant(ctx), uploadID, up); err != nil {
+		b.releaseUpload()
+		return "", err
+	}
 	return uploadID, nil
 }
 
@@ -314,7 +334,9 @@ func (b *s3Backend) UploadPart(ctx context.Context, bucketName, objectName strin
 	if err != nil {
 		return "", err
 	}
-	up.startActivity()
+	if err := up.startActivity(); err != nil {
+		return "", err
+	}
 	defer up.endActivity()
 
 	// The sink must never get more than the declared length, and the body
@@ -839,7 +861,9 @@ func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, obj
 	if err != nil {
 		return "", "", err
 	}
-	up.startActivity()
+	if err := up.startActivity(); err != nil {
+		return "", "", err
+	}
 	defer up.endActivity()
 
 	// gofakes3 keeps its record of an upload whose completion fails, so
@@ -894,6 +918,10 @@ func (b *s3Backend) AbortMultipartUpload(ctx context.Context, bucketName, object
 	if err != nil {
 		return err
 	}
+	if err := up.startActivity(); err != nil {
+		return err
+	}
+	defer up.endActivity()
 	defer b.deleteUpload(uploadID, up)
 	if err := up.abort(); err != nil {
 		fs.Errorf(up.fp, "aborting multipart upload: %v", err)
@@ -913,6 +941,10 @@ func (b *s3Backend) failUpload(uploadID gofakes3.UploadID, up *multipartUpload) 
 // forgetUpload aborts up, discards what it wrote and removes every record
 // of it, ours and gofakes3's.
 func (b *s3Backend) forgetUpload(uploadID gofakes3.UploadID, up *multipartUpload) {
+	if up.startActivity() != nil {
+		return // already gone
+	}
+	defer up.endActivity()
 	b.deleteUpload(uploadID, up)
 	if err := up.abort(); err != nil {
 		fs.Errorf(up.fp, "aborting multipart upload: %v", err)
@@ -971,6 +1003,16 @@ func (b *s3Backend) reapExpiredTenantUploads(t *tenant, now time.Time, expiry ti
 		b.forgetUpload(uploadID, up)
 		return true
 	})
+}
+
+// forgetAllUploads aborts every in-flight upload, as forgetUpload does.
+func (b *s3Backend) forgetAllUploads() {
+	for _, t := range b.allTenants() {
+		t.uploads.Range(func(key, value any) bool {
+			b.forgetUpload(key.(gofakes3.UploadID), value.(*multipartUpload))
+			return true
+		})
+	}
 }
 
 // discardUpload cleans up after a failed or aborted upload, removing the
