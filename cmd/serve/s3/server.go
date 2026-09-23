@@ -25,6 +25,7 @@ type ctxKey int
 
 const (
 	ctxKeyID ctxKey = iota
+	ctxKeyAccessKeyID
 )
 
 // Server is a s3.FileSystem interface
@@ -154,6 +155,19 @@ func (w *Server) etagHash(_vfs *vfs.VFS) hash.Type {
 	return w.etagHashType
 }
 
+// getTenant returns the ID of the user making the request in ctx: the
+// access key ID the auth proxy authenticated the request with, or "" when
+// not using an auth proxy.
+//
+// The proxy may map each access key ID to a different backend, so state
+// kept across requests must be scoped to it. The *vfs.VFS can't be used
+// for this as the proxy may hand the same access key ID different ones,
+// for example from different client IPs or after its cache expires.
+func (w *Server) getTenant(ctx context.Context) string {
+	accessKeyID, _ := ctx.Value(ctxKeyAccessKeyID).(string)
+	return accessKeyID
+}
+
 // auth authenticates the request via the auth proxy.
 //
 // The proxy maps the access key ID to a VFS and a secret access key
@@ -234,8 +248,9 @@ func proxyAuthMiddleware(next http.Handler, ws *Server) http.Handler {
 			accessDenied(w)
 			return
 		}
-		r = r.WithContext(context.WithValue(r.Context(), ctxKeyID, VFS))
-		next.ServeHTTP(w, r)
+		ctx := context.WithValue(r.Context(), ctxKeyID, VFS)
+		ctx = context.WithValue(ctx, ctxKeyAccessKeyID, accessKey)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
