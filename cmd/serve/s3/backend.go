@@ -113,7 +113,7 @@ func newBackend(s *Server) *s3Backend {
 
 // tenant returns the state of the user making the request in ctx.
 func (b *s3Backend) tenant(ctx context.Context) *tenant {
-	id := ""
+	id := b.s.getTenant(ctx)
 	b.tenantsMu.Lock()
 	defer b.tenantsMu.Unlock()
 	t, ok := b.tenants[id]

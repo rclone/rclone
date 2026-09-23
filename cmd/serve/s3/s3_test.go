@@ -10,9 +10,11 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -428,6 +430,77 @@ func TestAuthProxyKeysNotRegistered(t *testing.T) {
 
 	// But the key it used must not be in the global key store
 	assert.NotEqual(t, signature.ErrNone, signature.V4SignVerify(sign()), "proxy secret was registered in the gofakes3 key store")
+}
+
+// serveS3AuthProxy serves root over s3 with an auth proxy which maps
+// every one of users (access key IDs) to root, returning a client for
+// each user.
+func serveS3AuthProxy(t *testing.T, root string, users ...string) map[string]*minio.Core {
+	fstest.Initialise()
+	prog, err := filepath.Abs("../servetest/proxy_code.go")
+	require.NoError(t, err)
+	secrets := map[string]string{}
+	var pairs []string
+	for _, user := range users {
+		secrets[user] = random.String(16)
+		pairs = append(pairs, user+","+secrets[user])
+	}
+	t.Setenv("RCLONE_TEST_PROXY_AUTH_KEY", strings.Join(pairs, ";"))
+
+	opt := Opt
+	opt.HTTP.ListenAddr = []string{endpoint}
+	proxyOpt := proxy.Opt
+	proxyOpt.AuthProxy = "go run " + prog + " " + root
+	w, err := newServer(context.Background(), nil, &opt, &vfscommon.Opt, &proxyOpt)
+	require.NoError(t, err)
+	go func() {
+		require.NoError(t, w.Serve())
+	}()
+	t.Cleanup(func() { _ = w.Shutdown() })
+	testURL, err := url.Parse(w.server.URLs()[0])
+	require.NoError(t, err)
+
+	clients := map[string]*minio.Core{}
+	for _, user := range users {
+		clients[user], err = minio.NewCore(testURL.Host, &minio.Options{
+			Creds: credentials.NewStaticV4(user, secrets[user], ""),
+		})
+		require.NoError(t, err)
+	}
+	return clients
+}
+
+// TestAuthProxyUsersKeptApart checks that one auth proxy user can't use
+// another user's multipart upload or see the metadata of their objects,
+// even when both are mapped to the same backend.
+func TestAuthProxyUsersKeptApart(t *testing.T) {
+	ctx := context.Background()
+	root := t.TempDir()
+	const bucket = "bucket"
+	require.NoError(t, os.Mkdir(filepath.Join(root, bucket), 0777))
+	clients := serveS3AuthProxy(t, root, "alice", "bob")
+	alice, bob := clients["alice"], clients["bob"]
+
+	uploadID, err := alice.NewMultipartUpload(ctx, bucket, "upload", minio.PutObjectOptions{})
+	require.NoError(t, err)
+	data := []byte("alice's data")
+	_, err = bob.PutObjectPart(ctx, bucket, "upload", uploadID, 1, bytes.NewReader(data), int64(len(data)), minio.PutObjectPartOptions{})
+	assert.Equal(t, "NoSuchUpload", minio.ToErrorResponse(err).Code, "bob uploading a part to alice's upload")
+	err = bob.AbortMultipartUpload(ctx, bucket, "upload", uploadID)
+	assert.Equal(t, "NoSuchUpload", minio.ToErrorResponse(err).Code, "bob aborting alice's upload")
+	part, err := alice.PutObjectPart(ctx, bucket, "upload", uploadID, 1, bytes.NewReader(data), int64(len(data)), minio.PutObjectPartOptions{})
+	require.NoError(t, err)
+	_, err = alice.CompleteMultipartUpload(ctx, bucket, "upload", uploadID, []minio.CompletePart{{PartNumber: 1, ETag: part.ETag}}, minio.PutObjectOptions{})
+	require.NoError(t, err)
+
+	_, err = alice.PutObject(ctx, bucket, "meta", bytes.NewReader(data), int64(len(data)), "", "", minio.PutObjectOptions{UserMetadata: map[string]string{"Secret": "alice's"}})
+	require.NoError(t, err)
+	info, err := alice.StatObject(ctx, bucket, "meta", minio.StatObjectOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, "alice's", info.UserMetadata["Secret"])
+	info, err = bob.StatObject(ctx, bucket, "meta", minio.StatObjectOptions{})
+	require.NoError(t, err)
+	assert.NotContains(t, info.UserMetadata, "Secret", "bob seeing alice's metadata")
 }
 
 // TestAuthKeyPerServer checks that two servers in the same process
