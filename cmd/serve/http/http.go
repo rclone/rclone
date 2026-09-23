@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
+	"mime"
 	"net"
 	"net/http"
 	"os"
@@ -295,7 +296,7 @@ func (s *HTTP) serveDir(w http.ResponseWriter, r *http.Request, dirRemote string
 		if dirRemote == "" {
 			zipName = "root"
 		}
-		w.Header().Set("Content-Disposition", "attachment; filename=\""+zipName+".zip\"")
+		w.Header().Set("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": zipName + ".zip"}))
 		w.Header().Set("Content-Type", "application/zip")
 		w.Header().Set("Last-Modified", time.Now().UTC().Format(http.TimeFormat))
 		err := vfs.CreateZip(ctx, dir, w)
