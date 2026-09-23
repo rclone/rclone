@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"maps"
+	"net/http"
 	"path"
 	"regexp"
 	"slices"
@@ -33,6 +34,7 @@ import (
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/readers"
+	"github.com/rclone/rclone/lib/rest"
 )
 
 // Constants
@@ -482,6 +484,76 @@ func (o *Object) split() (container, containerPath string) {
 	return o.fs.split(o.remote)
 }
 
+// authHeaders are the request headers which carry the Swift
+// credentials: the token sent on every storage request and the user
+// name and API key sent on a v1 auth request. They must not be
+// forwarded when a redirect leaves the host of the original request.
+var authHeaders = []string{"X-Auth-Token", "X-Auth-Key", "X-Auth-User"}
+
+// transport is the http.RoundTripper for the swift connection.
+//
+// The swift library makes its own http.Client with the default
+// redirect policy and does not let the caller replace it, so the
+// redirect policy is applied here at the transport level instead. A
+// redirect which downgrades HTTPS to plaintext HTTP is refused with
+// rest.ErrHTTPSDowngrade and the auth headers are removed from any
+// hop once the redirect chain has left the host and port of the
+// original request.
+type transport struct {
+	*fshttp.Transport
+}
+
+// newTransport returns the transport for the swift connection
+func newTransport(ctx context.Context) *transport {
+	return &transport{Transport: fshttp.NewTransport(ctx)}
+}
+
+// RoundTrip implements http.RoundTripper
+func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
+	// net/http fills in req.Response on the requests it makes to
+	// follow a redirect, so a request without one is not a redirect.
+	if req.Response != nil {
+		origin, leftHost := redirectOrigin(req)
+		if origin.URL.Scheme == "https" && req.URL.Scheme == "http" {
+			if req.Body != nil {
+				_ = req.Body.Close()
+			}
+			return nil, fmt.Errorf("redirect to %s: %w", req.URL.Redacted(), rest.ErrHTTPSDowngrade)
+		}
+		if leftHost {
+			for _, header := range authHeaders {
+				if req.Header.Get(header) == "" {
+					continue
+				}
+				fs.Debugf(nil, "redirect to %s leaves %s: not sending %s", req.URL.Redacted(), origin.URL.Redacted(), header)
+				req.Header.Del(header)
+			}
+		}
+	}
+	return t.Transport.RoundTrip(req)
+}
+
+// redirectOrigin walks back along the chain of redirects which led to
+// req and returns the original request and whether any hop, including
+// req, was to a different host or port from it.
+//
+// net/http copies the headers afresh from the original request for
+// every hop, so once the chain has visited another host the headers
+// must be stripped from every subsequent hop, even one back to the
+// original host, as the other host chose the URL.
+func redirectOrigin(req *http.Request) (origin *http.Request, leftHost bool) {
+	origin = req
+	for origin.Response != nil && origin.Response.Request != nil {
+		origin = origin.Response.Request
+	}
+	for hop := req; hop != origin; hop = hop.Response.Request {
+		if !rest.SameHost(hop.URL, origin.URL) {
+			leftHost = true
+		}
+	}
+	return origin, leftHost
+}
+
 // swiftConnection makes a connection to swift
 func swiftConnection(ctx context.Context, opt *Options, name string) (*swift.Connection, error) {
 	ci := fs.GetConfig(ctx)
@@ -505,7 +577,7 @@ func swiftConnection(ctx context.Context, opt *Options, name string) (*swift.Con
 		EndpointType:                swift.EndpointType(opt.EndpointType),
 		ConnectTimeout:              time.Duration(10 * ci.ConnectTimeout), // Use the timeouts in the transport
 		Timeout:                     time.Duration(10 * ci.Timeout),        // Use the timeouts in the transport
-		Transport:                   fshttp.NewTransport(ctx),
+		Transport:                   newTransport(ctx),
 		FetchUntilEmptyPage:         opt.FetchUntilEmptyPage,
 		PartialPageFetchThreshold:   opt.PartialPageFetchThreshold,
 	}
