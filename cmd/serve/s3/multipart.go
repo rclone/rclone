@@ -33,7 +33,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/ncw/swift/v2"
 	"github.com/rclone/gofakes3"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/operations"
@@ -895,18 +894,7 @@ func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, obj
 	}
 	b.deleteUpload(uploadID, up)
 
-	up.tenant.setMeta(up.fp, up.meta)
-	if val, ok := up.meta["X-Amz-Meta-Mtime"]; ok {
-		if ti, err := swift.FloatStringToTime(val); err == nil {
-			up.tenant.storeModtime(up.fp, up.meta, val)
-			_ = up.vfs.Chtimes(up.fp, ti, ti)
-		}
-	} else if val, ok := up.meta["mtime"]; ok {
-		if ti, err := swift.FloatStringToTime(val); err == nil {
-			up.tenant.storeModtime(up.fp, up.meta, val)
-			_ = up.vfs.Chtimes(up.fp, ti, ti)
-		}
-	}
+	_ = up.tenant.storeMeta(up.vfs, up.fp, up.meta)
 
 	return "", up.multipartETag(input), nil
 }
