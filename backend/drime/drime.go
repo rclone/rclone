@@ -1040,17 +1040,28 @@ func (f *Fs) copy(ctx context.Context, id, newDirID string) (item *api.Item, err
 }
 
 // copy and rename a file or folder to directoryID with leaf
-func (f *Fs) copyTo(ctx context.Context, srcID, srcLeaf, dstLeaf, dstDirectoryID string) (info *api.Item, err error) {
-	// Can have duplicates so don't have to be careful here
-
+//
+// If existing is set it is removed once the copy has succeeded.
+func (f *Fs) copyTo(ctx context.Context, srcID, dstLeaf, dstDirectoryID string, existing fs.Object) (info *api.Item, err error) {
 	// Copy to dstDirectoryID first
 	info, err = f.copy(ctx, srcID, dstDirectoryID)
 	if err != nil {
 		return nil, err
 	}
 
+	// The server names the copy "name (1)" if the destination
+	// directory already has an entry called "name" and refuses to
+	// rename it to "name" until that entry is removed.
+	if existing != nil {
+		fs.Debugf(existing, "Server side copy: removing existing object after successful copy")
+		err = existing.Remove(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// Rename if required
-	if srcLeaf != dstLeaf {
+	if info.Name != f.opt.Enc.FromStandardName(dstLeaf) {
 		info, err = f.rename(ctx, info.ID.String(), dstLeaf)
 		if err != nil {
 			return nil, err
@@ -1074,8 +1085,6 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
-	srcLeaf := path.Base(srcObj.remote)
-
 	srcPath := srcObj.fs.rootSlash() + srcObj.remote
 	dstPath := f.rootSlash() + remote
 	if srcPath == dstPath {
@@ -1084,15 +1093,8 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 
 	// Find existing object
 	existingObj, err := f.NewObject(ctx, remote)
-	if err == nil {
-		defer func() {
-			// Don't remove existing object if returning an error
-			if err != nil {
-				return
-			}
-			fs.Debugf(existingObj, "Server side copy: removing existing object after successful copy")
-			err = existingObj.Remove(ctx)
-		}()
+	if err != nil {
+		existingObj = nil
 	}
 
 	// Create temporary object
@@ -1102,7 +1104,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 	}
 
 	// Copy the object
-	info, err := f.copyTo(ctx, srcObj.id, srcLeaf, dstLeaf, dstDirectoryID)
+	info, err := f.copyTo(ctx, srcObj.id, dstLeaf, dstDirectoryID, existingObj)
 	if err != nil {
 		return nil, err
 	}
