@@ -132,7 +132,7 @@ func SprintList() string {
 	s += "```\n\n"
 
 	s += "Encoding masks:\n\n```text\n"
-	for _, v := range strings.Split(encoder.ValidStrings(), ", ") {
+	for v := range strings.SplitSeq(encoder.ValidStrings(), ", ") {
 		s += v + "\n"
 	}
 	s += "```\n\n"
