@@ -13,6 +13,8 @@ func init() {
 		syscall.ECONNREFUSED,
 		syscall.EHOSTDOWN,
 		syscall.EHOSTUNREACH,
+		syscall.ENETDOWN,
+		syscall.ENETUNREACH,
 		syscall.ECONNABORTED,
 		syscall.EAGAIN,
 		syscall.EWOULDBLOCK,
