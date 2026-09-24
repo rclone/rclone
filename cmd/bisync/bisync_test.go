@@ -1008,6 +1008,9 @@ func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (con
 	if b.testCase == "max_delete_track_renames" && (!operations.CanServerSideMove(b.fs1) || !operations.CanServerSideMove(b.fs2)) {
 		b.t.Skip("skipping test as at least one remote does not support server-side move or copy")
 	}
+	if b.testCase == "max_delete_track_renames" && b.fs1.Hashes().Overlap(b.fs2.Hashes()).GetOne() == hash.None {
+		b.t.Skip("skipping test as the two remotes have no hash in common")
+	}
 	if strings.Contains(strings.ToLower(fs.ConfigString(b.fs1)), "mailru") || strings.Contains(strings.ToLower(fs.ConfigString(b.fs2)), "mailru") {
 		fs.GetConfig(ctx).TPSLimit = 10 // https://github.com/rclone/rclone/issues/7768#issuecomment-2060888980
 	}
