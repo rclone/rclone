@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -83,6 +84,7 @@ type Object struct {
 	itemID      string    // item ID of the object
 	etag        string
 	downloadURL string
+	isPackage   atomic.Bool
 }
 
 // find item by path. Will not return any children for the item
@@ -811,6 +813,7 @@ func (o *Object) setMetaData(item *api.DriveItem) (err error) {
 	if item.IsFolder() {
 		return fs.ErrorIsDir
 	}
+	o.isPackage.Store(false)
 	o.size = item.Size
 	o.modTime = item.DateModified
 	o.createdTime = item.DateCreated
@@ -844,18 +847,18 @@ func (o *Object) ModTime(context.Context) time.Time {
 
 // Open implements fs.Object.
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
-	fs.FixRangeOption(options, o.size)
-
 	// Drive does not support empty files, so we cheat
-	if o.size == 0 {
+	if o.Size() == 0 {
 		return io.NopCloser(bytes.NewBufferString("")), nil
 	}
 
 	var resp *http.Response
 	var err error
+	var optionsFixed bool
 
 	if err = o.fs.pacer.Call(func() (bool, error) {
 		var url string
+		var isPackage bool
 
 		//var doc *api.Document
 		//if o.docID == "" {
@@ -863,7 +866,17 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		//}
 
 		// Can not get the download url on a item to work, so do it the hard way.
-		url, _, err = o.fs.service.GetDownloadURLByDriveID(ctx, o.driveID)
+		url, isPackage, resp, err = o.fs.service.GetDownloadURLByDriveID(ctx, o.driveID)
+		if err != nil {
+			return shouldRetry(ctx, resp, err)
+		}
+		if isPackage {
+			o.isPackage.Store(true)
+		}
+		if !optionsFixed {
+			fs.FixRangeOption(options, o.Size())
+			optionsFixed = true
+		}
 
 		resp, err = o.fs.service.DownloadFile(ctx, url, options)
 		return shouldRetry(ctx, resp, err)
@@ -904,6 +917,9 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 
 // Size implements fs.Object.
 func (o *Object) Size() int64 {
+	if o.isPackage.Load() {
+		return -1
+	}
 	return o.size
 }
 
