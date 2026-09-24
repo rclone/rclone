@@ -63,7 +63,8 @@ The headers are only sent to the host in the configured URL. If the
 server redirects to another host (including a subdomain or a different
 port) the headers are not sent to it, or to any further hop in that
 redirect chain. When headers are set, a redirect from https to http is
-refused as it would send them in cleartext.`,
+refused as it would send them in cleartext, even with
+--allow-https-downgrade.`,
 			Default:  fs.CommaSepList{},
 			Advanced: true,
 		}, {
@@ -315,8 +316,9 @@ func (f *Fs) httpConnection(ctx context.Context, opt *Options) (isFile bool, err
 	}
 
 	client := fshttp.NewClient(ctx)
-	// Without configured headers keep the default policy which
-	// public mirrors that redirect from https to http rely on.
+	// Without configured headers keep the default policy so
+	// --allow-https-downgrade can follow public mirrors that
+	// redirect from https to http.
 	if len(opt.Headers) > 0 {
 		client.CheckRedirect = checkRedirect(opt)
 	}

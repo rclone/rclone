@@ -494,6 +494,7 @@ Not all global variables make sense to be overridden like this as the config is
 only applied during the remote creation. Here is a non exhaustive list of ones
 which might be useful:
 
+- `allow_https_downgrade`
 - `bind_addr`
 - `ca_cert`
 - `client_cert`
@@ -994,6 +995,21 @@ the binary units, e.g. 1, 2\*\*10, 2\*\*20, 2\*\*30 respectively.
 See also [--human-readable](#human-readable).
 
 ## Main options
+
+### --allow-https-downgrade
+
+By default rclone refuses to follow a redirect from an `https://` URL
+to a plain `http://` URL, as any credentials or other headers in the
+request would then be sent unencrypted, and the response could be
+altered by anyone on the network path. The request fails with an error
+which mentions this flag.
+
+Set `--allow-https-downgrade` to follow such redirects, for example
+when downloading from a mirror which redirects to plain HTTP. Some
+backends still refuse to follow them, as doing so would send their
+credentials in cleartext.
+
+This option defaults to `false`.
 
 ### --backup-dir string
 
