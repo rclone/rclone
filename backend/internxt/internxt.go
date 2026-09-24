@@ -28,6 +28,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/multipart"
@@ -465,34 +466,37 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	}
 
 	// Check if directory is empty
-	var childFolders []folders.Folder
-	err = f.pacer.Call(func() (bool, error) {
-		var err error
-		childFolders, err = folders.ListAllFolders(ctx, f.cfg, id)
-		return f.shouldRetry(ctx, err)
+	notEmpty := false
+	err = listPages(ctx, f, id, folders.ListFolders, func(page []folders.Folder) (bool, error) {
+		for _, e := range page {
+			if !recent.stale(e.UUID, id, e.PlainName) {
+				notEmpty = true
+				return false, nil
+			}
+		}
+		return true, nil
 	})
 	if err != nil {
 		return err
 	}
-	for _, e := range childFolders {
-		if !recent.stale(e.UUID, id, e.PlainName) {
-			return fs.ErrorDirectoryNotEmpty
-		}
+	if notEmpty {
+		return fs.ErrorDirectoryNotEmpty
 	}
 
-	var childFiles []folders.File
-	err = f.pacer.Call(func() (bool, error) {
-		var err error
-		childFiles, err = folders.ListAllFiles(ctx, f.cfg, id)
-		return f.shouldRetry(ctx, err)
+	err = listPages(ctx, f, id, folders.ListFiles, func(page []folders.File) (bool, error) {
+		for _, e := range page {
+			if !recent.stale(e.UUID, id, joinNameExt(e.PlainName, e.Type)) {
+				notEmpty = true
+				return false, nil
+			}
+		}
+		return true, nil
 	})
 	if err != nil {
 		return err
 	}
-	for _, e := range childFiles {
-		if !recent.stale(e.UUID, id, joinNameExt(e.PlainName, e.Type)) {
-			return fs.ErrorDirectoryNotEmpty
-		}
+	if notEmpty {
+		return fs.ErrorDirectoryNotEmpty
 	}
 
 	// Delete the directory
@@ -515,24 +519,80 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 // FindLeaf looks for a sub‑folder named `leaf` under the Internxt folder `pathID`.
 // If found, it returns its UUID and true. If not found, returns "", false.
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, error) {
-	var entries []folders.Folder
+	encodedLeaf := f.opt.Encoding.FromStandardName(leaf)
+	var matches []folders.Folder
 	err := f.pacer.Call(func() (bool, error) {
 		var err error
-		entries, err = folders.ListAllFolders(ctx, f.cfg, pathID)
+		matches, err = folders.CheckFoldersExistence(ctx, f.cfg, pathID, []string{encodedLeaf})
 		return f.shouldRetry(ctx, err)
 	})
+	if isBadRequestError(err) {
+		return f.findLeafByListing(ctx, pathID, leaf)
+	}
 	if err != nil {
 		return "", false, err
 	}
-	for _, e := range entries {
+	for _, e := range matches {
 		if recent.stale(e.UUID, pathID, e.PlainName) {
 			continue
 		}
-		if f.opt.Encoding.ToStandardName(e.PlainName) == leaf {
+		if e.PlainName == encodedLeaf {
 			return e.UUID, true, nil
 		}
 	}
 	return "", false, nil
+}
+
+// findLeafByListing does the same as FindLeaf by listing the sub-folders of
+// pathID until it finds leaf.
+func (f *Fs) findLeafByListing(ctx context.Context, pathID, leaf string) (string, bool, error) {
+	var found string
+	err := listPages(ctx, f, pathID, folders.ListFolders, func(page []folders.Folder) (bool, error) {
+		for _, e := range page {
+			if recent.stale(e.UUID, pathID, e.PlainName) {
+				continue
+			}
+			if f.opt.Encoding.ToStandardName(e.PlainName) == leaf {
+				found = e.UUID
+				return false, nil
+			}
+		}
+		return true, nil
+	})
+	if err != nil {
+		return "", false, err
+	}
+	return found, found != "", nil
+}
+
+// listPages calls fn with each page that fetch returns for the folder dirID,
+// following the cursor until the last page or until fn returns false.
+func listPages[T any](ctx context.Context, f *Fs, dirID string,
+	fetch func(context.Context, *config.Config, string, folders.ListOptions) ([]T, string, error),
+	fn func(page []T) (more bool, err error)) error {
+	var cursor string
+	seen := make(map[string]struct{})
+	for {
+		var page []T
+		var next string
+		err := f.pacer.Call(func() (bool, error) {
+			var err error
+			page, next, err = fetch(ctx, f.cfg, dirID, folders.ListOptions{Cursor: cursor})
+			return f.shouldRetry(ctx, err)
+		})
+		if err != nil {
+			return err
+		}
+		more, err := fn(page)
+		if err != nil || !more || next == "" {
+			return err
+		}
+		if _, ok := seen[next]; ok {
+			return fmt.Errorf("server returned an already visited list cursor for folder %s", dirID)
+		}
+		seen[next] = struct{}{}
+		cursor = next
+	}
 }
 
 // CreateDir creates a new directory
@@ -745,49 +805,59 @@ func convertFileMetaToFile(meta *files.FileMeta) *folders.File {
 
 // List lists a directory
 func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
+	return list.WithListP(ctx, dir, f)
+}
+
+// ListP lists the objects and directories of the Fs starting
+// from dir non recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
 	dirID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	var out fs.DirEntries
-
-	var foldersList []folders.Folder
-	err = f.pacer.Call(func() (bool, error) {
-		var err error
-		foldersList, err = folders.ListAllFolders(ctx, f.cfg, dirID)
-		return f.shouldRetry(ctx, err)
+	lh := list.NewHelper(callback)
+	err = listPages(ctx, f, dirID, folders.ListFolders, func(page []folders.Folder) (bool, error) {
+		for _, e := range page {
+			if recent.stale(e.UUID, dirID, e.PlainName) {
+				continue
+			}
+			remote := path.Join(dir, f.opt.Encoding.ToStandardName(e.PlainName))
+			f.dirCache.Put(remote, e.UUID)
+			if err := lh.Add(fs.NewDir(remote, e.ModificationTime).SetID(e.UUID)); err != nil {
+				return false, err
+			}
+		}
+		return true, nil
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
-	for _, e := range foldersList {
-		if recent.stale(e.UUID, dirID, e.PlainName) {
-			continue
+	err = listPages(ctx, f, dirID, folders.ListFiles, func(page []folders.File) (bool, error) {
+		for _, e := range page {
+			remote := e.PlainName
+			if len(e.Type) > 0 {
+				remote += "." + e.Type
+			}
+			if recent.stale(e.UUID, dirID, remote) {
+				continue
+			}
+			remote = path.Join(dir, f.opt.Encoding.ToStandardName(remote))
+			if err := lh.Add(newObjectWithFile(f, remote, &e)); err != nil {
+				return false, err
+			}
 		}
-		remote := path.Join(dir, f.opt.Encoding.ToStandardName(e.PlainName))
-		out = append(out, fs.NewDir(remote, e.ModificationTime))
-	}
-	var filesList []folders.File
-	err = f.pacer.Call(func() (bool, error) {
-		var err error
-		filesList, err = folders.ListAllFiles(ctx, f.cfg, dirID)
-		return f.shouldRetry(ctx, err)
+		return true, nil
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
-	for _, e := range filesList {
-		remote := e.PlainName
-		if len(e.Type) > 0 {
-			remote += "." + e.Type
-		}
-		if recent.stale(e.UUID, dirID, remote) {
-			continue
-		}
-		remote = path.Join(dir, f.opt.Encoding.ToStandardName(remote))
-		out = append(out, newObjectWithFile(f, remote, &e))
-	}
-	return out, nil
+	return lh.Flush()
 }
 
 // Put uploads a file
@@ -1247,6 +1317,12 @@ func isTimeoutError(err error) bool {
 func isNotFoundError(err error) bool {
 	var httpErr *sdkerrors.HTTPError
 	return errors.As(err, &httpErr) && httpErr.StatusCode() == 404
+}
+
+// isBadRequestError reports whether err is a 400 from the API.
+func isBadRequestError(err error) bool {
+	var httpErr *sdkerrors.HTTPError
+	return errors.As(err, &httpErr) && httpErr.StatusCode() == 400
 }
 
 // isStaleReadError reports whether err is the API contradicting a write this
