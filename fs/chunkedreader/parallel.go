@@ -40,6 +40,8 @@ type stream struct {
 	readBytes int64           // bytes read from the stream
 	rw        *pool.RW        // buffer for read
 	err       chan error      // error returned from the read
+	done      chan struct{}   // closed when readFrom has finished
+	readErr   error           // error readFrom finished with - valid after done is closed
 	name      string          // name of this stream for debugging
 }
 
@@ -57,6 +59,7 @@ func (cr *parallel) newStream(ctx context.Context, offset, size int64) (s *strea
 		size:   size,
 		rw:     rw,
 		err:    make(chan error, 1),
+		done:   make(chan struct{}),
 	}
 	s.name = fmt.Sprintf("stream(%d,%d,%p)", s.offset, s.size, s)
 
@@ -69,13 +72,19 @@ func (cr *parallel) newStream(ctx context.Context, offset, size int64) (s *strea
 
 // read the file into the buffer
 func (s *stream) readFrom(ctx context.Context) {
+	var err error
+	defer func() {
+		s.readErr = err
+		close(s.done)
+		s.err <- err
+	}()
 	// Open the object at the correct range
 	fs.Debugf(s.cr.o, "%s: open", s.name)
 	rc, err := operations.Open(ctx, s.cr.o,
 		&fs.HashesOption{Hashes: hash.Set(hash.None)},
 		&fs.RangeOption{Start: s.offset, End: s.offset + s.size - 1})
 	if err != nil {
-		s.err <- fmt.Errorf("parallel chunked reader: failed to open stream at %d size %d: %w", s.offset, s.size, err)
+		err = fmt.Errorf("parallel chunked reader: failed to open stream at %d size %d: %w", s.offset, s.size, err)
 		return
 	}
 	s.rc = rc
@@ -83,7 +92,6 @@ func (s *stream) readFrom(ctx context.Context) {
 	fs.Debugf(s.cr.o, "%s: readfrom started", s.name)
 	_, err = s.rw.ReadFrom(s.rc)
 	fs.Debugf(s.cr.o, "%s: readfrom finished (%d bytes): %v", s.name, s.rw.Size(), err)
-	s.err <- err
 }
 
 // eof is true when we've read all the data we are expecting
@@ -100,6 +108,7 @@ func (s *stream) read(p []byte) (n int, err error) {
 	if len(p) == 0 {
 		return n, nil
 	}
+	finished := false // done seen once - one more Read drains the buffer
 	for {
 		var nn int
 		nn, err = s.rw.Read(p[n:])
@@ -115,6 +124,21 @@ func (s *stream) read(p []byte) (n int, err error) {
 		// Received a faux io.EOF because we haven't read all the data yet
 		if n >= len(p) {
 			break
+		}
+		// Once readFrom has finished no more data is coming: drain
+		// what it buffered, then return its error instead of waiting
+		// for a write that will never happen.
+		select {
+		case <-s.done:
+			if finished {
+				if s.readErr != nil && s.readErr != io.EOF {
+					return n, s.readErr
+				}
+				return n, io.ErrUnexpectedEOF
+			}
+			finished = true
+			continue
+		default:
 		}
 		// Wait for a write to happen to read more
 		s.rw.WaitWrite(s.ctx)
@@ -263,9 +287,11 @@ func (cr *parallel) Read(p []byte) (n int, err error) {
 			return n, io.EOF
 		}
 
-		// Read from the stream
+		// Read from the stream - assign to err (don't shadow it)
+		// so the error is returned below
 		stream := cr.streams[0]
-		nn, err := stream.read(p[n:])
+		var nn int
+		nn, err = stream.read(p[n:])
 		n += nn
 		cr.offset += int64(nn)
 		if err == io.EOF {
