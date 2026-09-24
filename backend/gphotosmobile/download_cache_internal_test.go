@@ -2,8 +2,10 @@ package gphotosmobile
 
 import (
 	"context"
+	"errors"
 	"os"
 	"runtime"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -141,6 +143,76 @@ func TestDownloadCacheStaleEvictionKeepsNewEntry(t *testing.T) {
 	require.Eventually(t, func() bool { return lookupEntry(dc, "key") == nil },
 		time.Second, 5*time.Millisecond)
 	assert.Empty(t, dirEntries(t, dir))
+}
+
+// stubFetch replaces the downloader and returns the number of downloads started
+func stubFetch(dc *downloadCache) *atomic.Int32 {
+	var started atomic.Int32
+	dc.fetch = func(ctx context.Context, entry *downloadEntry, mediaKey string) {
+		started.Add(1)
+	}
+	return &started
+}
+
+func TestDownloadCacheRetriesFailedDownload(t *testing.T) {
+	dir := useTempDir(t)
+	dc := newDownloadCache(nil)
+	started := stubFetch(dc)
+	t.Cleanup(dc.shutdown)
+
+	failed := addTestEntry(t, dc, "key")
+	failed.finish(errors.New("network error"))
+
+	fresh, err := dc.getOrStart(context.Background(), "key", 0)
+	require.NoError(t, err)
+	assert.NotSame(t, failed, fresh)
+	assert.Same(t, fresh, lookupEntry(dc, "key"))
+	assert.Eventually(t, func() bool { return started.Load() == 1 },
+		time.Second, 5*time.Millisecond, "new download started")
+
+	// The failed entry still has a reader, so it stays open until released
+	_, err = failed.tmpFile.Write([]byte("x"))
+	assert.NoError(t, err)
+	dc.release(failed)
+	_, err = failed.tmpFile.Write([]byte("x"))
+	assert.Error(t, err, "failed temp file closed on last release")
+	assert.Same(t, fresh, lookupEntry(dc, "key"))
+
+	dc.release(fresh)
+	dc.shutdown()
+	assert.Empty(t, dirEntries(t, dir))
+}
+
+func TestDownloadCacheRetryClosesUnreferencedFailedDownload(t *testing.T) {
+	useTempDir(t)
+	setGrace(t, time.Hour)
+	dc := newDownloadCache(nil)
+	stubFetch(dc)
+	t.Cleanup(dc.shutdown)
+
+	failed := addTestEntry(t, dc, "key")
+	failed.finish(errors.New("network error"))
+	dc.release(failed) // eviction pending, no readers
+
+	_, err := dc.getOrStart(context.Background(), "key", 0)
+	require.NoError(t, err)
+	_, err = failed.tmpFile.Write([]byte("x"))
+	assert.Error(t, err, "failed temp file closed immediately")
+}
+
+func TestDownloadCacheReusesFinishedDownload(t *testing.T) {
+	useTempDir(t)
+	dc := newDownloadCache(nil)
+	started := stubFetch(dc)
+	t.Cleanup(dc.shutdown)
+
+	complete := addTestEntry(t, dc, "key")
+	complete.finish(nil)
+
+	reused, err := dc.getOrStart(context.Background(), "key", 0)
+	require.NoError(t, err)
+	assert.Same(t, complete, reused)
+	assert.EqualValues(t, 0, started.Load())
 }
 
 func TestDownloadCacheShutdownRemovesFiles(t *testing.T) {

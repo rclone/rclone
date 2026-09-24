@@ -27,6 +27,8 @@
 //     the same media_key.
 //  6. Temp files are unlinked right after creation (except on Windows), so
 //     a crashed or killed rclone never leaves them behind.
+//  7. A failed download is never reused: the next Open() starts a fresh
+//     download, and the failed one is closed once its readers release it.
 //
 // # Known limitations
 //
@@ -59,6 +61,7 @@ type downloadCache struct {
 	mu      sync.Mutex
 	entries map[string]*downloadEntry
 	api     *MobileAPI
+	fetch   func(ctx context.Context, entry *downloadEntry, mediaKey string) // runs a download, replaceable in tests
 }
 
 // downloadEntry represents a single file being downloaded/cached
@@ -78,10 +81,12 @@ type downloadEntry struct {
 }
 
 func newDownloadCache(api *MobileAPI) *downloadCache {
-	return &downloadCache{
+	dc := &downloadCache{
 		entries: make(map[string]*downloadEntry),
 		api:     api,
 	}
+	dc.fetch = dc.download
+	return dc
 }
 
 // createTempFile creates the temp file backing a download.
@@ -106,12 +111,21 @@ func (dc *downloadCache) getOrStart(ctx context.Context, mediaKey string, totalS
 	defer dc.mu.Unlock()
 
 	if entry, ok := dc.entries[mediaKey]; ok {
-		// Reuse existing download and cancel any pending eviction
-		entry.refCount++
-		entry.evictGen++
-		fs.Debugf(nil, "Download cache hit for %s (written=%d, refs=%d)",
-			mediaKey, atomic.LoadInt64(&entry.written), entry.refCount)
-		return entry, nil
+		if !entry.failed() {
+			// Reuse existing download and cancel any pending eviction
+			entry.refCount++
+			entry.evictGen++
+			fs.Debugf(nil, "Download cache hit for %s (written=%d, refs=%d)",
+				mediaKey, atomic.LoadInt64(&entry.written), entry.refCount)
+			return entry, nil
+		}
+		// Don't hand out a failed download: detach it so it is closed
+		// once its remaining readers release it, and start a new one.
+		fs.Debugf(nil, "Download cache retrying failed download for %s", mediaKey)
+		delete(dc.entries, mediaKey)
+		if entry.refCount <= 0 {
+			entry.close()
+		}
 	}
 
 	// Start new download
@@ -136,7 +150,7 @@ func (dc *downloadCache) getOrStart(ctx context.Context, mediaKey string, totalS
 
 	dc.entries[mediaKey] = entry
 
-	go dc.download(dlCtx, entry, mediaKey)
+	go dc.fetch(dlCtx, entry, mediaKey)
 
 	return entry, nil
 }
@@ -196,6 +210,13 @@ func (e *downloadEntry) finish(err error) {
 	}
 }
 
+// failed reports whether the download finished with an error
+func (e *downloadEntry) failed() bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.done && e.dlErr != nil
+}
+
 // close stops the download and releases the temp file
 func (e *downloadEntry) close() {
 	e.cancel()
@@ -232,6 +253,13 @@ func (dc *downloadCache) release(entry *downloadEntry) {
 
 	entry.refCount--
 	if entry.refCount > 0 {
+		return
+	}
+
+	// A detached entry (failed and replaced, or shut down) has no reuse
+	// to wait for, so close it now
+	if dc.entries[entry.mediaKey] != entry {
+		entry.close()
 		return
 	}
 
