@@ -90,6 +90,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/encoder"
 )
 
@@ -330,16 +331,17 @@ type Options struct {
 
 // Fs represents a remote Google Photos storage via mobile API
 type Fs struct {
-	name      string         // name of this remote
-	root      string         // the path we are working on
-	opt       Options        // parsed options
-	features  *fs.Features   // optional features
-	api       *MobileAPI     // mobile API client (includes pacer for rate limiting/retry)
-	cache     *Cache         // SQLite cache
-	cacheMu   sync.Mutex     // protects cache operations
-	startTime time.Time      // time Fs was started
-	dlCache   *downloadCache // shared download cache for temp files
-	forceSync bool           // force next sync regardless of throttle
+	name      string          // name of this remote
+	root      string          // the path we are working on
+	opt       Options         // parsed options
+	features  *fs.Features    // optional features
+	api       *MobileAPI      // mobile API client (includes pacer for rate limiting/retry)
+	cache     *Cache          // SQLite cache
+	cacheMu   sync.Mutex      // protects cache operations
+	startTime time.Time       // time Fs was started
+	dlCache   *downloadCache  // shared download cache for temp files
+	dlExit    atexit.FnHandle // removes download cache temp files at exit
+	forceSync bool            // force next sync regardless of throttle
 }
 
 // Object describes a Google Photos media item
@@ -409,6 +411,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	if opt.DownloadCache {
 		f.dlCache = newDownloadCache(api)
+		f.dlExit = atexit.Register(f.dlCache.shutdown)
 	}
 
 	f.features = (&fs.Features{
@@ -698,6 +701,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 // cache temp files. Called by rclone when the Fs is no longer needed.
 func (f *Fs) Shutdown(ctx context.Context) error {
 	if f.dlCache != nil {
+		atexit.Unregister(f.dlExit)
 		f.dlCache.shutdown()
 	}
 	return f.cache.Close()
@@ -1127,9 +1131,8 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 
 	// Create a reader backed by the shared download
 	reader := &cachedReader{
-		entry:    entry,
-		mediaKey: o.media.MediaKey,
-		dc:       o.fs.dlCache,
+		entry: entry,
+		dc:    o.fs.dlCache,
 	}
 
 	// Apply initial seek from options

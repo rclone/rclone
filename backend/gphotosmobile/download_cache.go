@@ -22,7 +22,11 @@
 //     closing and re-opening. Seeking backwards is instant since the data
 //     is already on disk.
 //  5. When all readers close, a 30-second grace period allows for quick
-//     re-opens before the temp file is cleaned up.
+//     re-opens before the temp file is cleaned up. Eviction is tied to the
+//     entry itself, so a stale eviction never touches a newer download for
+//     the same media_key.
+//  6. Temp files are unlinked right after creation (except on Windows), so
+//     a crashed or killed rclone never leaves them behind.
 //
 // # Known limitations
 //
@@ -43,6 +47,10 @@ import (
 	"github.com/rclone/rclone/fs"
 )
 
+// downloadCacheGrace is how long an unreferenced download is kept so quick
+// re-opens (e.g. chunkedreader re-creating) can reuse it.
+var downloadCacheGrace = 30 * time.Second
+
 // downloadCache manages shared temp file downloads.
 // Multiple Open() calls for the same media key share a single download,
 // avoiding re-downloading the entire file when rclone's VFS creates
@@ -55,15 +63,17 @@ type downloadCache struct {
 
 // downloadEntry represents a single file being downloaded/cached
 type downloadEntry struct {
-	mu        sync.Mutex
+	mu        sync.Mutex // protects tmpFile, done and dlErr
 	mediaKey  string
 	tmpFile   *os.File
-	path      string
-	written   int64 // bytes written so far (atomic read OK)
-	totalSize int64 // expected total size (-1 if unknown)
-	done      bool  // download complete
-	dlErr     error // download error
-	refCount  int32 // number of active readers (atomic)
+	path      string             // temp file path if it could not be unlinked while open
+	cancel    context.CancelFunc // stops the background download
+	written   int64              // bytes written so far (atomic read OK)
+	totalSize int64              // expected total size (-1 if unknown)
+	done      bool               // download complete
+	dlErr     error              // download error
+	refCount  int                // number of active readers, protected by downloadCache.mu
+	evictGen  int                // invalidates pending evictions, protected by downloadCache.mu
 	startTime time.Time
 }
 
@@ -74,29 +84,51 @@ func newDownloadCache(api *MobileAPI) *downloadCache {
 	}
 }
 
+// createTempFile creates the temp file backing a download.
+//
+// The file is unlinked straight away so its space is reclaimed as soon as
+// it is closed, even if rclone is killed. Windows refuses to remove open
+// files, so there the path is returned and removed on close instead.
+func createTempFile() (*os.File, string, error) {
+	tmpFile, err := os.CreateTemp("", "gphotosmobile_*.tmp")
+	if err != nil {
+		return nil, "", err
+	}
+	if os.Remove(tmpFile.Name()) == nil {
+		return tmpFile, "", nil
+	}
+	return tmpFile, tmpFile.Name(), nil
+}
+
 // getOrStart returns an existing download entry or starts a new one
 func (dc *downloadCache) getOrStart(ctx context.Context, mediaKey string, totalSize int64) (*downloadEntry, error) {
 	dc.mu.Lock()
 	defer dc.mu.Unlock()
 
 	if entry, ok := dc.entries[mediaKey]; ok {
-		// Reuse existing download
-		atomic.AddInt32(&entry.refCount, 1)
-		fs.Debugf(nil, "Download cache hit for %s (written=%d, done=%v, refs=%d)",
-			mediaKey, atomic.LoadInt64(&entry.written), entry.done, atomic.LoadInt32(&entry.refCount))
+		// Reuse existing download and cancel any pending eviction
+		entry.refCount++
+		entry.evictGen++
+		fs.Debugf(nil, "Download cache hit for %s (written=%d, refs=%d)",
+			mediaKey, atomic.LoadInt64(&entry.written), entry.refCount)
 		return entry, nil
 	}
 
 	// Start new download
-	tmpFile, err := os.CreateTemp("", "gphotosmobile_*.tmp")
+	tmpFile, path, err := createTempFile()
 	if err != nil {
 		return nil, err
 	}
 
+	// Start background download with a detached context so that
+	// cancellation of the first reader doesn't abort the shared download.
+	// The context is cancelled when the entry is closed.
+	dlCtx, cancel := context.WithCancel(context.Background())
 	entry := &downloadEntry{
 		mediaKey:  mediaKey,
 		tmpFile:   tmpFile,
-		path:      tmpFile.Name(),
+		path:      path,
+		cancel:    cancel,
 		totalSize: totalSize,
 		refCount:  1,
 		startTime: time.Now(),
@@ -104,9 +136,7 @@ func (dc *downloadCache) getOrStart(ctx context.Context, mediaKey string, totalS
 
 	dc.entries[mediaKey] = entry
 
-	// Start background download with a detached context so that
-	// cancellation of the first reader doesn't abort the shared download.
-	go dc.download(context.Background(), entry, mediaKey)
+	go dc.download(dlCtx, entry, mediaKey)
 
 	return entry, nil
 }
@@ -115,19 +145,13 @@ func (dc *downloadCache) getOrStart(ctx context.Context, mediaKey string, totalS
 func (dc *downloadCache) download(ctx context.Context, entry *downloadEntry, mediaKey string) {
 	downloadURL, err := dc.api.GetDownloadURL(ctx, mediaKey)
 	if err != nil {
-		entry.mu.Lock()
-		entry.dlErr = err
-		entry.done = true
-		entry.mu.Unlock()
+		entry.finish(err)
 		return
 	}
 
 	body, err := dc.api.DownloadFile(ctx, downloadURL)
 	if err != nil {
-		entry.mu.Lock()
-		entry.dlErr = err
-		entry.done = true
-		entry.mu.Unlock()
+		entry.finish(err)
 		return
 	}
 	defer func() { _ = body.Close() }()
@@ -137,6 +161,11 @@ func (dc *downloadCache) download(ctx context.Context, entry *downloadEntry, med
 		n, readErr := body.Read(buf)
 		if n > 0 {
 			entry.mu.Lock()
+			if entry.done {
+				// Entry was closed by eviction or shutdown
+				entry.mu.Unlock()
+				return
+			}
 			_, werr := entry.tmpFile.Write(buf[:n])
 			if werr != nil {
 				entry.dlErr = werr
@@ -148,67 +177,86 @@ func (dc *downloadCache) download(ctx context.Context, entry *downloadEntry, med
 			entry.mu.Unlock()
 		}
 		if readErr != nil {
-			entry.mu.Lock()
-			if readErr != io.EOF {
-				entry.dlErr = readErr
+			if readErr == io.EOF {
+				readErr = nil
 			}
-			entry.done = true
-			entry.mu.Unlock()
+			entry.finish(readErr)
 			return
 		}
 	}
 }
 
+// finish marks the download complete with err unless it already finished
+func (e *downloadEntry) finish(err error) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if !e.done {
+		e.dlErr = err
+		e.done = true
+	}
+}
+
+// close stops the download and releases the temp file
+func (e *downloadEntry) close() {
+	e.cancel()
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if !e.done {
+		e.dlErr = errors.New("download cache entry closed")
+		e.done = true
+	}
+	_ = e.tmpFile.Close()
+	if e.path != "" {
+		_ = os.Remove(e.path)
+	}
+}
+
 // shutdown closes all temp files and removes them from disk.
-// Called during Fs.Shutdown to ensure no temp files are leaked.
+// Called during Fs.Shutdown and at exit to ensure no temp files are leaked.
 func (dc *downloadCache) shutdown() {
 	dc.mu.Lock()
 	defer dc.mu.Unlock()
 
 	for key, entry := range dc.entries {
-		_ = entry.tmpFile.Close()
-		_ = os.Remove(entry.path)
+		entry.close()
 		delete(dc.entries, key)
 	}
 }
 
-// release decrements ref count and cleans up if no readers remain
-func (dc *downloadCache) release(mediaKey string) {
+// release drops a reader's reference to entry and, once no readers
+// remain, evicts it after a grace period to allow for quick re-opens
+// (e.g. chunkedreader re-creating)
+func (dc *downloadCache) release(entry *downloadEntry) {
 	dc.mu.Lock()
 	defer dc.mu.Unlock()
 
-	entry, ok := dc.entries[mediaKey]
-	if !ok {
+	entry.refCount--
+	if entry.refCount > 0 {
 		return
 	}
 
-	refs := atomic.AddInt32(&entry.refCount, -1)
-	if refs <= 0 {
-		// No more readers - schedule cleanup after a delay
-		// to allow for quick re-opens (e.g. chunkedreader re-creating)
-		go func() {
-			time.Sleep(30 * time.Second)
-			dc.mu.Lock()
-			defer dc.mu.Unlock()
+	entry.evictGen++
+	gen := entry.evictGen
+	time.AfterFunc(downloadCacheGrace, func() {
+		dc.mu.Lock()
+		defer dc.mu.Unlock()
 
-			// Re-check: someone may have opened it again
-			if atomic.LoadInt32(&entry.refCount) <= 0 {
-				_ = entry.tmpFile.Close()
-				_ = os.Remove(entry.path)
-				delete(dc.entries, mediaKey)
-				fs.Debugf(nil, "Download cache evicted %s", mediaKey)
-			}
-		}()
-	}
+		// Skip if the entry was reopened or already removed
+		if entry.evictGen != gen || dc.entries[entry.mediaKey] != entry {
+			return
+		}
+		delete(dc.entries, entry.mediaKey)
+		entry.close()
+		fs.Debugf(nil, "Download cache evicted %s", entry.mediaKey)
+	})
 }
 
 // cachedReader reads from a shared downloadEntry
 type cachedReader struct {
-	entry    *downloadEntry
-	readPos  int64
-	mediaKey string
-	dc       *downloadCache
-	closed   bool
+	entry   *downloadEntry
+	readPos int64
+	dc      *downloadCache
+	closed  bool
 }
 
 // Read reads from the cached temp file, waiting for data if needed
@@ -288,6 +336,6 @@ func (r *cachedReader) Close() error {
 		return nil
 	}
 	r.closed = true
-	r.dc.release(r.mediaKey)
+	r.dc.release(r.entry)
 	return nil
 }
