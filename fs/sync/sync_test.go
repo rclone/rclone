@@ -2223,6 +2223,36 @@ func TestSyncMultipleCompareDest(t *testing.T) {
 	r.CheckRemoteItems(t, fdest1, fdest2, fdest3)
 }
 
+// Test with CopyDest and Immutable set
+func TestSyncCopyDestImmutable(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	defer accounting.GlobalStats().ResetCounters()
+
+	if r.Fremote.Features().Copy == nil {
+		t.Skip("Skipping test as remote does not support server-side copy")
+	}
+
+	ci.CopyDest = []string{r.FremoteName + "/CopyDest"}
+	ci.Immutable = true
+
+	fdst, err := fs.NewFs(ctx, r.FremoteName+"/dst")
+	require.NoError(t, err)
+
+	file1 := r.WriteObject(ctx, "dst/one", "one", t1)
+	file2 := r.WriteObject(ctx, "CopyDest/one", "onet2", t2)
+	file3 := r.WriteFile("one", "onet2", t2)
+	r.CheckRemoteItems(t, file1, file2)
+
+	// A match in --copy-dest must not replace a different destination
+	accounting.GlobalStats().ResetCounters()
+	err = CopyDir(ctx, fdst, r.Flocal, false)
+	assert.EqualError(t, err, fs.ErrorImmutableModified.Error())
+	r.CheckRemoteItems(t, file1, file2)
+	r.CheckLocalItems(t, file3)
+}
+
 // Test with CopyDest set
 func TestSyncCopyDest(t *testing.T) {
 	ctx := context.Background()
@@ -2833,6 +2863,39 @@ func TestSyncReplaceDirModTime(t *testing.T) {
 
 func TestSyncReplaceDirModTimeWithEmptyDirs(t *testing.T) {
 	testSyncReplaceDirModTime(t, true)
+}
+
+// Test that syncing a directory which needs its modtime updating and
+// which has files transferred into it only sets its modtime once
+func TestSyncSetDirModTimeOnce(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	if r.Fremote.Features().DirSetModTime == nil {
+		t.Skip("Skipping test as remote does not support DirSetModTime")
+	}
+
+	file1 := r.WriteFile("dir/file1", "file1 contents", t2)
+	_, err := operations.SetDirModTime(ctx, r.Flocal, nil, "dir", t2)
+	require.NoError(t, err)
+
+	// Initial sync creates the directory and sets its modtime
+	accounting.GlobalStats().ResetCounters()
+	require.NoError(t, Sync(ctx, r.Fremote, r.Flocal, false))
+	r.CheckRemoteItems(t, file1)
+	assert.Equal(t, int64(1), accounting.GlobalStats().UpdatedDirs(0), "expected directory modtime to be set exactly once")
+	r.CheckDirectoryModTimes(t, "dir")
+
+	// Change the contents of the directory and its modtime
+	file1 = r.WriteFile("dir/file1", "file1 changed contents", t1)
+	_, err = operations.SetDirModTime(ctx, r.Flocal, nil, "dir", t1)
+	require.NoError(t, err)
+
+	// Sync again and check the modtime is only set once
+	accounting.GlobalStats().ResetCounters()
+	require.NoError(t, Sync(ctx, r.Fremote, r.Flocal, false))
+	r.CheckRemoteItems(t, file1)
+	assert.Equal(t, int64(1), accounting.GlobalStats().UpdatedDirs(0), "expected directory modtime to be set exactly once")
+	r.CheckDirectoryModTimes(t, "dir")
 }
 
 // Tests that nothing is transferred when src and dst already match

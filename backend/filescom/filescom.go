@@ -19,6 +19,7 @@ import (
 	"github.com/Files-com/files-sdk-go/v3/file"
 	file_migration "github.com/Files-com/files-sdk-go/v3/filemigration"
 	"github.com/Files-com/files-sdk-go/v3/folder"
+	files_sdk_lib "github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/Files-com/files-sdk-go/v3/session"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
@@ -174,6 +175,13 @@ func shouldRetry(ctx context.Context, err error) (bool, error) {
 			fs.Debugf(nil, "Retrying API error %v", err)
 			return true, err
 		}
+	}
+
+	// Errors from the upload storage servers are of this type
+	var httpErr files_sdk_lib.ResponseError
+	if errors.As(err, &httpErr) && slices.Contains(retryErrorCodes, httpErr.StatusCode) {
+		fs.Debugf(nil, "Retrying HTTP error %v", err)
+		return true, err
 	}
 
 	return fserrors.ShouldRetry(err), err
@@ -853,7 +861,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		file.UploadWithProvidedMtime(src.ModTime(ctx)),
 	}
 
-	err := o.fs.pacer.Call(func() (bool, error) {
+	err := o.fs.pacer.CallNoRetry(func() (bool, error) {
 		err := o.fs.fileClient.Upload(uploadOpts...)
 		return shouldRetry(ctx, err)
 	})

@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/assert"
@@ -93,6 +95,33 @@ func TestUploadConnectionReuse(t *testing.T) {
 	assert.Equal(t, 1, pooled, "upload should leave exactly one connection in the pool")
 }
 
+// TestOptionsWorkstationConfig verifies the workstation config key is backwards compatible
+func TestOptionsWorkstationConfig(t *testing.T) {
+	tests := []struct {
+		name        string
+		workstation string
+	}{
+		{"named workstation", "MYWORKSTATION"},
+		{"empty workstation sends no name", ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := configmap.Simple{
+				"host":        "example.com",
+				"workstation": tt.workstation,
+			}
+			opt := new(Options)
+			if err := configstruct.Set(m, opt); err != nil {
+				t.Fatalf("configstruct.Set failed: %v", err)
+			}
+			if opt.Workstation != tt.workstation {
+				t.Errorf("opt.Workstation = %q, want %q", opt.Workstation, tt.workstation)
+			}
+		})
+	}
+}
+
 // TestIsPathDir tests the isPathDir function logic
 func TestIsPathDir(t *testing.T) {
 	tests := []struct {
@@ -128,4 +157,34 @@ func TestIsPathDir(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNewFsUser(t *testing.T) {
+	ctx := context.Background()
+	for _, test := range []struct {
+		user string
+		want string
+	}{
+		{user: "", want: currentUser},
+		{user: currentUser, want: currentUser},
+		{user: "someone", want: "someone"},
+	} {
+		m := configmap.Simple{"host": "localhost", "user": test.user}
+		f, err := NewFs(ctx, "TestSMB", "", m)
+		require.NoError(t, err)
+		assert.Equal(t, test.want, f.(*Fs).opt.User, "user=%q", test.user)
+	}
+
+	// No user in the config at all
+	f, err := NewFs(ctx, "TestSMB", "", configmap.Simple{"host": "localhost"})
+	require.NoError(t, err)
+	assert.Equal(t, currentUser, f.(*Fs).opt.User)
+}
+
+// The default is blank so that a user name which happens to match the
+// current user is still written to the config file.
+func TestUserDefault(t *testing.T) {
+	ri, err := fs.Find("smb")
+	require.NoError(t, err)
+	assert.Equal(t, "", ri.Options.Get("user").Default)
 }

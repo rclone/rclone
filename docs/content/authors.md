@@ -1222,3 +1222,27 @@ put them back in again. -->
 - no-hup <shauryaj.finance@gmail.com>
 - Dhevenddra <dhevg20020402@gmail.com>
 - Splainte <r.wycke@hotmail.fr>
+- PSR94 <88868390+PSR94@users.noreply.github.com>
+- Shane McCarron <shane.mccarron@corvexconnect.com>
+- Dhevenddra K G <121691114+Dhevenddra@users.noreply.github.com>
+- Vaibhav Mashal <110161673+vaibhavmashal@users.noreply.github.com>
+- Murat Topcu <murat-topcu@outlook.com>
+- tomaszni <tomaszni@users.noreply.github.com>
+- eliotee <17210244+eliotee@users.noreply.github.com>
+- Aditya <f20220497@goa.bits-pilani.ac.in>
+- Nicholas Velten <nikvelten@gmail.com>
+- youdie006 <xncb135@korea.ac.kr>
+- subomi <86053854+ubmids@users.noreply.github.com>
+- Can Arslan <138895927+mc2rcanarslan@users.noreply.github.com>
+- Can Arslan <carslan@viyaenv.com>
+- ZRHann <2829442630@qq.com>
+- enkvadrat <123565769+enkvadrat@users.noreply.github.com>
+- Vladimir Babin <vovababin@gmail.com>
+- Eugene <inbox@null.page>
+- Kunpeng Xie <68572236+pentaoa@users.noreply.github.com>
+- foecmke <221832573+foecmke@users.noreply.github.com>
+- Vasek Sraier <git@vakabus.cz>
+- Kalin Stoyanov <kalin.stoyanov@kiteworks.com>
+- NytePlus <nyte_plus@sjtu.edu.cn>
+- Jeremy Schoemaker <jeremy@shoemoney.com>
+- solunolab <solunolab@outlook.com>

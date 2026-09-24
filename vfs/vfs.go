@@ -901,7 +901,7 @@ func (vfs *VFS) AddVirtual(remote string, size int64, isDir bool) (err error) {
 	if err != nil {
 		return err
 	}
-	dir.AddVirtual(leaf, size, false)
+	dir.AddVirtual(leaf, size, isDir)
 	return nil
 }
 

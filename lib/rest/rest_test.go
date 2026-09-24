@@ -1,7 +1,9 @@
 package rest
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -65,11 +67,47 @@ func TestRefuseHTTPSDowngradeRedirectFn(t *testing.T) {
 		next := mkRedirectReq(t, "https://example.com/b", "GET")
 		assert.NoError(t, RefuseHTTPSDowngradeRedirectFn(next, []*http.Request{orig}))
 	})
+	t.Run("RefusesDowngradeViaOtherHost", func(t *testing.T) {
+		orig := mkRedirectReq(t, "https://example.com/a", "GET")
+		mid := mkRedirectReq(t, "https://other.example/b", "GET")
+		next := mkRedirectReq(t, "http://example.com/c", "GET")
+		assert.ErrorIs(t, RefuseHTTPSDowngradeRedirectFn(next, []*http.Request{orig, mid}), ErrHTTPSDowngrade)
+	})
+	t.Run("AllowsPlaintextOriginViaHTTPS", func(t *testing.T) {
+		orig := mkRedirectReq(t, "http://example.com/a", "GET")
+		mid := mkRedirectReq(t, "https://other.example/b", "GET")
+		next := mkRedirectReq(t, "http://example.com/c", "GET")
+		assert.NoError(t, RefuseHTTPSDowngradeRedirectFn(next, []*http.Request{orig, mid}))
+	})
 	t.Run("TooManyRedirects", func(t *testing.T) {
 		next := mkRedirectReq(t, "https://example.com/b", "GET")
 		via := make([]*http.Request, 10)
 		assert.Error(t, RefuseHTTPSDowngradeRedirectFn(next, via))
 	})
+}
+
+func TestSameHost(t *testing.T) {
+	for _, test := range []struct {
+		a, b string
+		want bool
+	}{
+		{"https://example.com/a", "https://example.com/b", true},
+		{"https://example.com/", "https://EXAMPLE.com/", true},
+		{"https://example.com/", "https://example.com:443/", true},
+		{"http://example.com/", "http://example.com:80/", true},
+		{"https://example.com/", "http://example.com/", false},
+		{"https://example.com:8443/", "https://example.com:8444/", false},
+		{"https://example.com/", "https://www.example.com/", false},
+		{"https://example.com/", "https://example.com.evil/", false},
+		{"http://[::1]:8080/", "http://[::1]:8080/", true},
+		{"http://[::1]:8080/", "http://[::1]:8081/", false},
+	} {
+		a, err := url.Parse(test.a)
+		require.NoError(t, err)
+		b, err := url.Parse(test.b)
+		require.NoError(t, err)
+		assert.Equal(t, test.want, SameHost(a, b), "%s vs %s", test.a, test.b)
+	}
 }
 
 // newDowngradeServers returns an HTTPS server that redirects every
@@ -142,5 +180,53 @@ func TestRefuseHTTPSDowngradeRedirectEndToEnd(t *testing.T) {
 		require.Error(t, err)
 		assert.ErrorIs(t, err, ErrHTTPSDowngrade)
 		assert.False(t, sawAuth.Load(), "plaintext hop must not receive credentials")
+	})
+}
+
+// TestReadBodyLimit checks that ReadBody refuses to buffer more than
+// drainLimit bytes, so a server streaming an endless response can't
+// make rclone allocate memory without bound.
+func TestReadBodyLimit(t *testing.T) {
+	newResp := func(body io.Reader) *http.Response {
+		return &http.Response{Body: io.NopCloser(body)}
+	}
+	t.Run("AtLimit", func(t *testing.T) {
+		want := bytes.Repeat([]byte("x"), drainLimit)
+		got, err := ReadBody(newResp(bytes.NewReader(want)))
+		require.NoError(t, err)
+		assert.Equal(t, want, got)
+	})
+	t.Run("OverLimit", func(t *testing.T) {
+		got, err := ReadBody(newResp(bytes.NewReader(make([]byte, drainLimit+1))))
+		assert.ErrorIs(t, err, ErrBodyTooLarge)
+		assert.Nil(t, got)
+	})
+
+	// A server which answers with an error status and then streams a
+	// body far bigger than drainLimit. The default error handler must
+	// give up at the limit rather than read it all.
+	t.Run("EndlessErrorBody", func(t *testing.T) {
+		const chunk = 1 << 20
+		const maxChunks = 64 // bounds the test if the client keeps reading
+		var written atomic.Int64
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+			buf := bytes.Repeat([]byte("x"), chunk)
+			for range maxChunks {
+				n, err := w.Write(buf)
+				written.Add(int64(n))
+				if err != nil {
+					return
+				}
+				w.(http.Flusher).Flush()
+			}
+		}))
+		t.Cleanup(srv.Close)
+
+		api := NewClient(srv.Client()).SetRoot(srv.URL)
+		_, err := api.Call(context.Background(), &Opts{Method: "GET", Path: "/"})
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrBodyTooLarge)
+		assert.Less(t, written.Load(), int64(maxChunks*chunk), "client should stop reading before the server stops sending")
 	})
 }

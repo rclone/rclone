@@ -15,6 +15,8 @@ import (
 	"net/netip"
 	"os/exec"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -54,9 +56,10 @@ This config generated must have this extra parameter
 
 - |_root| - root to use for the backend
 
-And it may have this parameter
+And it may have these parameters
 
 - |_obscure| - comma separated strings for parameters to obscure
+- |_secret_access_key| - the secret for S3 access key auth (see below)
 
 If password authentication was used by the client, input to the proxy
 process (on STDIN) would look similar to this:
@@ -79,6 +82,32 @@ proxy process (on STDIN) would look similar to this:
   "client_ip": "192.168.1.1"
 }
 |||
+
+If the client authenticated with an S3 access key (|rclone serve s3|),
+the client never sends its secret, only a signature made with it, so
+the input contains just the access key ID as the |user| with no |pass|
+or |public_key|:
+
+|||json
+{
+  "user": "AKIAIOSFODNN7EXAMPLE",
+  "client_ip": "192.168.1.1"
+}
+|||
+
+In this case the program must look up the secret access key for that
+access key ID and return it in the |_secret_access_key| field of the
+output. Rclone then uses that secret to verify the signature on the
+request, refusing the request if it does not match. This means the
+proxy program is the source of truth for both the credentials and the
+backend they map to. If the program does not return
+|_secret_access_key| or returns it empty the request is refused.
+
+The program's answer for an access key ID is cached (see below) but
+is checked with the program again after 5 minutes even if the access
+key ID is in constant use, so revoking an access key ID in the
+program takes effect within 5 minutes. A rotated secret takes effect
+on the first request signed with it.
 
 The |client_ip| key holds the IP address the client connected from,
 without a port number.  It can be used to restrict logins to certain
@@ -145,18 +174,47 @@ func init() {
 
 // Proxy represents a proxy to turn auth requests into a VFS
 type Proxy struct {
-	cmdLine  []string // broken down command line
-	vfsCache *libcache.Cache
-	ctx      context.Context // for global config
-	Opt      Options
-	vfsOpt   vfscommon.Options
+	cmdLine     []string // broken down command line
+	vfsCache    *libcache.Cache
+	ctx         context.Context // for global config
+	Opt         Options
+	vfsOpt      vfscommon.Options
+	accessKeyMu sync.Mutex // serialises replacing a cached access key entry
 }
 
 // cacheEntry is what is stored in the vfsCache
 type cacheEntry struct {
-	vfs    *vfs.VFS          // stored VFS
-	pwHash [sha256.Size]byte // sha256 hash of the password/publicKey
+	vfs       *vfs.VFS          // stored VFS
+	pwHash    [sha256.Size]byte // sha256 hash of the password/publicKey
+	secret    string            // secret access key returned by the proxy for access key auth
+	refreshed *atomic.Int64     // unix nanoseconds when the proxy last confirmed this entry
 }
+
+// accessKeyRefreshInterval is the minimum time between consulting the
+// proxy again for a cached access key ID whose secret failed to
+// verify a request, so a stream of bad signatures for a known access
+// key ID can't make the proxy run for every request.
+//
+// A variable so tests can adjust it.
+var accessKeyRefreshInterval = 10 * time.Second
+
+// accessKeyRevalidateInterval is how long a cached access key ID is
+// trusted before the proxy is asked about it again even though its
+// signatures are still verifying, so a revoked access key ID stops
+// working within this time rather than for as long as it stays in
+// use.
+//
+// A variable so tests can adjust it.
+var accessKeyRevalidateInterval = 5 * time.Minute
+
+// authKind is the kind of credential the client presented
+type authKind int
+
+const (
+	authPassword  authKind = iota // auth is a password
+	authPublicKey                 // auth is a public key
+	authAccessKey                 // user is an S3 access key ID and auth is empty
+)
 
 // New creates a new proxy with the Options passed in
 //
@@ -251,14 +309,15 @@ func generateCacheKey(user, auth, clientIP string) string {
 }
 
 // call runs the auth proxy and returns a cacheEntry and an error
-func (p *Proxy) call(user, auth string, isPublicKey bool, clientIP string) (value any, err error) {
+func (p *Proxy) call(user, auth string, kind authKind, clientIP string) (value any, err error) {
 	// Contact the proxy
 	in := map[string]string{
 		"user": user,
 	}
-	if isPublicKey {
+	switch kind {
+	case authPublicKey:
 		in["public_key"] = auth
-	} else {
+	case authPassword:
 		in["pass"] = auth
 	}
 	if clientIP != "" {
@@ -278,6 +337,19 @@ func (p *Proxy) call(user, auth string, isPublicKey bool, clientIP string) (valu
 	if !ok {
 		return nil, errors.New("proxy: _root not set in result")
 	}
+	var secret string
+	if kind == authAccessKey {
+		secret, ok = config.Get("_secret_access_key")
+		if !ok {
+			return nil, errors.New("proxy: _secret_access_key not set in result")
+		}
+		// An empty secret would let anyone sign for this access key ID
+		if secret == "" {
+			return nil, errors.New("proxy: _secret_access_key is empty in result")
+		}
+		// Keep the secret out of the backend config
+		delete(config, "_secret_access_key")
+	}
 
 	// Find the backend
 	fsInfo, err := fs.Find(fsName)
@@ -289,6 +361,28 @@ func (p *Proxy) call(user, auth string, isPublicKey bool, clientIP string) (valu
 	// changes to either (eg the proxy returning new config) create a
 	// fresh backend rather than reusing the cached one.
 	cacheKey := generateCacheKey(user, auth, clientIP)
+
+	// For access key auth the secret isn't part of the cache key as
+	// it isn't known until the proxy has been run, so retire any
+	// cached entry whose secret the proxy has since changed.
+	//
+	// The stale entry is moved to a key including its old secret
+	// rather than deleted so that its VFS isn't shut down under
+	// requests still using it - it expires with the rest of the cache
+	// once it has been unused for long enough.
+	//
+	// The check, rename and the creation below are done under a lock
+	// so that two concurrent refreshes during a rotation can't have
+	// the second retire the backend the first has just created.
+	if kind == authAccessKey {
+		p.accessKeyMu.Lock()
+		defer p.accessKeyMu.Unlock()
+		if old, ok := p.vfsCache.GetMaybe(cacheKey); ok {
+			if entry, ok := old.(cacheEntry); ok && entry.secret != secret {
+				p.vfsCache.Rename(cacheKey, generateCacheKey(user, entry.secret, clientIP))
+			}
+		}
+	}
 
 	// base name of config on user name and auth hash.  This may appear in logs
 	name := "proxy-" + cacheKey
@@ -315,13 +409,20 @@ func (p *Proxy) call(user, auth string, isPublicKey bool, clientIP string) (valu
 		// need to in memory. An attacker would find it easier to go
 		// after the unencrypted password in memory most likely.
 		entry := cacheEntry{
-			vfs:    vfs.New(p.ctx, f, &p.vfsOpt),
-			pwHash: sha256.Sum256([]byte(auth)),
+			vfs:       vfs.New(p.ctx, f, &p.vfsOpt),
+			pwHash:    sha256.Sum256([]byte(auth)),
+			secret:    secret,
+			refreshed: new(atomic.Int64),
 		}
 		return entry, true, nil
 	})
 	if err != nil {
 		return nil, fmt.Errorf("proxy: failed to create backend: %w", err)
+	}
+	// The proxy has just confirmed this entry whether it was created
+	// or reused
+	if entry, ok := value.(cacheEntry); ok {
+		entry.refreshed.Store(time.Now().UnixNano())
 	}
 	return value, nil
 }
@@ -344,7 +445,11 @@ func (p *Proxy) Call(user, auth string, isPublicKey bool, remoteAddr string) (VF
 
 	// If not found then call the proxy for a fresh answer
 	if !ok {
-		value, err = p.call(user, auth, isPublicKey, clientIP)
+		kind := authPassword
+		if isPublicKey {
+			kind = authPublicKey
+		}
+		value, err = p.call(user, auth, kind, clientIP)
 		if err != nil {
 			return nil, "", err
 		}
@@ -370,6 +475,53 @@ func (p *Proxy) Call(user, auth string, isPublicKey bool, remoteAddr string) (VF
 	}
 
 	return entry.vfs, cacheKey, nil
+}
+
+// CallAccessKey runs the auth proxy for an S3 access key ID returning
+// a *vfs.VFS and the secret access key the proxy supplied for it.
+//
+// The caller must verify the request's signature against the returned
+// secret - the proxy only maps the access key ID to a backend and
+// secret, it cannot authenticate the client itself.
+//
+// If refresh is true the proxy is consulted rather than using a cached
+// answer, unless it was consulted for this access key ID less than
+// accessKeyRefreshInterval ago. A refresh never shuts down a cached
+// backend, even if the proxy returns a different secret, so this is
+// safe to do when a signature fails to verify in case the secret has
+// been rotated.
+//
+// A cached answer older than accessKeyRevalidateInterval is always
+// checked with the proxy so a revoked access key ID is refused even
+// if it is in constant use.
+//
+// remoteAddr is the address of the client as returned by net.Addr.String().
+func (p *Proxy) CallAccessKey(accessKeyID, remoteAddr string, refresh bool) (VFS *vfs.VFS, secret string, err error) {
+	clientIP := ipFromAddr(remoteAddr)
+	cacheKey := generateCacheKey(accessKeyID, "", clientIP)
+	value, ok := p.vfsCache.GetMaybe(cacheKey)
+	if ok {
+		if entry, isEntry := value.(cacheEntry); isEntry {
+			age := time.Since(time.Unix(0, entry.refreshed.Load()))
+			switch {
+			case age >= accessKeyRevalidateInterval:
+				refresh = true
+			case age < accessKeyRefreshInterval:
+				refresh = false
+			}
+		}
+	}
+	if !ok || refresh {
+		value, err = p.call(accessKeyID, "", authAccessKey, clientIP)
+		if err != nil {
+			return nil, "", err
+		}
+	}
+	entry, ok := value.(cacheEntry)
+	if !ok {
+		return nil, "", fmt.Errorf("proxy: value is not cache entry: %#v", value)
+	}
+	return entry.vfs, entry.secret, nil
 }
 
 // Get VFS from the cache using key - returns nil if not found

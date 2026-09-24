@@ -474,8 +474,10 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	if err != nil {
 		return err
 	}
-	if len(childFolders) > 0 {
-		return fs.ErrorDirectoryNotEmpty
+	for _, e := range childFolders {
+		if !recent.stale(e.UUID, id, e.PlainName) {
+			return fs.ErrorDirectoryNotEmpty
+		}
 	}
 
 	var childFiles []folders.File
@@ -487,8 +489,10 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	if err != nil {
 		return err
 	}
-	if len(childFiles) > 0 {
-		return fs.ErrorDirectoryNotEmpty
+	for _, e := range childFiles {
+		if !recent.stale(e.UUID, id, joinNameExt(e.PlainName, e.Type)) {
+			return fs.ErrorDirectoryNotEmpty
+		}
 	}
 
 	// Delete the directory
@@ -502,6 +506,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	if err != nil {
 		return err
 	}
+	recent.deleted(id)
 
 	f.dirCache.FlushDir(dir)
 	return nil
@@ -520,6 +525,9 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, e
 		return "", false, err
 	}
 	for _, e := range entries {
+		if recent.stale(e.UUID, pathID, e.PlainName) {
+			continue
+		}
 		if f.opt.Encoding.ToStandardName(e.PlainName) == leaf {
 			return e.UUID, true, nil
 		}
@@ -556,46 +564,166 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (string, error)
 	return resp.UUID, nil
 }
 
-// preUploadCheck checks if a file exists in the given directory
-// Returns the file metadata if it exists, nil if not
-func (f *Fs) preUploadCheck(ctx context.Context, leaf, directoryID string) (*folders.File, error) {
-	// Parse name and extension from the leaf
-	baseName := f.opt.Encoding.FromStandardName(leaf)
-	name := strings.TrimSuffix(baseName, path.Ext(baseName))
-	ext := strings.TrimPrefix(path.Ext(baseName), ".")
+// splitNameExt splits a basename into the (plainName, type) pair that Internxt
+// stores a file under.
+func splitNameExt(baseName string) (name, ext string) {
+	ext = path.Ext(baseName)
+	if ext == baseName {
+		return baseName, ""
+	}
+	return strings.TrimSuffix(baseName, ext), strings.TrimPrefix(ext, ".")
+}
 
-	checkResult, err := files.CheckFilesExistence(ctx, f.cfg, directoryID, []files.FileExistenceCheck{
-		{
-			PlainName:    name,
-			Type:         ext,
-			OriginalFile: struct{}{},
-		},
+// joinNameExt reassembles the basename a stored (plainName, type) pair
+// displays as, the way List builds its entries.
+func joinNameExt(name, ext string) string {
+	if ext == "" {
+		return name
+	}
+	return name + "." + ext
+}
+
+// legacyNameExt splits a basename at the final dot, the way this backend used
+// to before it adopted the convention the other clients share. It differs from
+// splitNameExt only for a name whose sole dot leads it: ".bashrc" splits into
+// an empty name of type "bashrc".
+func legacyNameExt(baseName string) (name, ext string) {
+	return strings.TrimSuffix(baseName, path.Ext(baseName)), strings.TrimPrefix(path.Ext(baseName), ".")
+}
+
+// existenceCheck builds a lookup criterion for one (plainName, type) spelling.
+func existenceCheck(name, ext string) files.FileExistenceCheck {
+	return files.FileExistenceCheck{
+		PlainName:    name,
+		Type:         ext,
+		OriginalFile: struct{}{},
+	}
+}
+
+// staleWindow is how long the API may carry on returning an item from
+// where it was before this process moved or deleted it.
+const staleWindow = time.Minute
+
+// location is where this process last put an item. An empty parentUUID
+// means the item was deleted.
+type location struct {
+	parentUUID string
+	name       string // encoded name, including any extension
+	expires    time.Time
+}
+
+// recentChanges holds the files and folders this process has moved or
+// deleted recently, keyed by UUID.
+//
+// The API serves lookups and listings from read replicas which lag behind
+// writes, so an item can be returned from its old location for a while after
+// it was moved or deleted. Acting on such a stale entry can be destructive,
+// eg overwriting it would delete the file from where it was moved to.
+type recentChanges struct {
+	mu        sync.Mutex
+	items     map[string]location
+	lastPrune time.Time
+}
+
+// recent is shared by all the Fs in the process as UUIDs are global.
+var recent = recentChanges{items: map[string]location{}}
+
+// set records the new location of uuid, pruning expired entries.
+func (r *recentChanges) set(uuid string, loc location) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	now := time.Now()
+	if now.Sub(r.lastPrune) > staleWindow {
+		for k, v := range r.items {
+			if now.After(v.expires) {
+				delete(r.items, k)
+			}
+		}
+		r.lastPrune = now
+	}
+	loc.expires = now.Add(staleWindow)
+	r.items[uuid] = loc
+}
+
+// moved records that uuid was moved to name in parentUUID.
+func (r *recentChanges) moved(uuid, parentUUID, name string) {
+	r.set(uuid, location{parentUUID: parentUUID, name: name})
+}
+
+// deleted records that uuid was deleted.
+func (r *recentChanges) deleted(uuid string) {
+	r.set(uuid, location{})
+}
+
+// stale reports whether an API result saying uuid is called name in
+// parentUUID is out of date because of a change made by this process.
+func (r *recentChanges) stale(uuid, parentUUID, name string) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	loc, ok := r.items[uuid]
+	if !ok || time.Now().After(loc.expires) {
+		return false
+	}
+	return loc.parentUUID != parentUUID || loc.name != name
+}
+
+// findFile looks up a single file by name within directoryID. Returns
+// (nil, nil) when the file does not exist; surfaces transport/API errors.
+func (f *Fs) findFile(ctx context.Context, leaf, directoryID string) (*folders.File, error) {
+	encodedName := f.opt.Encoding.FromStandardName(leaf)
+	name, ext := splitNameExt(encodedName)
+	checks := []files.FileExistenceCheck{existenceCheck(name, ext)}
+	if encodedName != name {
+		checks = append(checks, existenceCheck(encodedName, ""))
+	}
+	if legacyName, legacyExt := legacyNameExt(encodedName); legacyExt != "" && legacyName != name {
+		checks = append(checks, existenceCheck(legacyName, legacyExt))
+	}
+
+	var checkResult *files.CheckFilesExistenceResponse
+	err := f.pacer.Call(func() (bool, error) {
+		var err error
+		checkResult, err = files.CheckFilesExistence(ctx, f.cfg, directoryID, checks)
+		if isNotFoundError(err) {
+			return true, err
+		}
+		return f.shouldRetry(ctx, err)
 	})
-
 	if err != nil {
-		// If existence check fails, assume file doesn't exist to allow upload to proceed
+		return nil, err
+	}
+
+	var uuid string
+	for _, result := range checkResult.Files {
+		if !result.FileExists() || result.UUID == "" {
+			continue
+		}
+		if recent.stale(result.UUID, directoryID, joinNameExt(result.PlainName, result.Type)) {
+			fs.Debugf(f, "Ignoring stale lookup of %q (UUID: %s) which was moved or deleted", leaf, result.UUID)
+			continue
+		}
+		if joinNameExt(result.PlainName, result.Type) == encodedName {
+			uuid = result.UUID
+			break
+		}
+	}
+	if uuid == "" {
 		return nil, nil
 	}
 
-	if len(checkResult.Files) > 0 && checkResult.Files[0].FileExists() {
-		result := checkResult.Files[0]
-		if result.Type != ext {
-			return nil, nil
-		}
-
-		existingUUID := result.UUID
-		if existingUUID != "" {
-			fileMeta, err := files.GetFileMeta(ctx, f.cfg, existingUUID)
-			if err == nil && fileMeta != nil {
-				return convertFileMetaToFile(fileMeta), nil
-			}
-
-			if err != nil {
-				return nil, err
-			}
-		}
+	var fileMeta *files.FileMeta
+	err = f.pacer.Call(func() (bool, error) {
+		var err error
+		fileMeta, err = files.GetFileMeta(ctx, f.cfg, uuid)
+		return f.shouldRetry(ctx, err)
+	})
+	if err != nil {
+		return nil, err
 	}
-	return nil, nil
+	if fileMeta == nil {
+		return nil, nil
+	}
+	return convertFileMetaToFile(fileMeta), nil
 }
 
 // convertFileMetaToFile converts files.FileMeta to folders.File
@@ -633,6 +761,9 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		return nil, err
 	}
 	for _, e := range foldersList {
+		if recent.stale(e.UUID, dirID, e.PlainName) {
+			continue
+		}
 		remote := path.Join(dir, f.opt.Encoding.ToStandardName(e.PlainName))
 		out = append(out, fs.NewDir(remote, e.ModificationTime))
 	}
@@ -649,6 +780,9 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		remote := e.PlainName
 		if len(e.Type) > 0 {
 			remote += "." + e.Type
+		}
+		if recent.stale(e.UUID, dirID, remote) {
+			continue
 		}
 		remote = path.Join(dir, f.opt.Encoding.ToStandardName(remote))
 		out = append(out, newObjectWithFile(f, remote, &e))
@@ -674,8 +808,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		return nil, err
 	}
 
-	// Check if file already exists
-	existingFile, err := f.preUploadCheck(ctx, leaf, directoryID)
+	existingFile, err := f.findFile(ctx, leaf, directoryID)
 	if err != nil {
 		return nil, err
 	}
@@ -723,44 +856,28 @@ func (f *Fs) Remove(ctx context.Context, remote string) error {
 	if err != nil {
 		return err
 	}
+	recent.deleted(dirID)
 	f.dirCache.FlushDir(remote)
 	return nil
 }
 
-// NewObject creates a new object
+// NewObject creates a new object by looking up a single file's metadata.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	parentDir := path.Dir(remote)
-
-	if parentDir == "." {
-		parentDir = ""
-	}
-
-	dirID, err := f.dirCache.FindDir(ctx, parentDir, false)
+	leaf, directoryID, err := f.dirCache.FindPath(ctx, remote, false)
 	if err != nil {
-		return nil, fs.ErrorObjectNotFound
+		if err == fs.ErrorDirNotFound {
+			return nil, fs.ErrorObjectNotFound
+		}
+		return nil, err
 	}
-
-	var files []folders.File
-	err = f.pacer.Call(func() (bool, error) {
-		var err error
-		files, err = folders.ListAllFiles(ctx, f.cfg, dirID)
-		return f.shouldRetry(ctx, err)
-	})
+	file, err := f.findFile(ctx, leaf, directoryID)
 	if err != nil {
 		return nil, err
 	}
-	targetName := path.Base(remote)
-	for _, e := range files {
-		name := e.PlainName
-		if len(e.Type) > 0 {
-			name += "." + e.Type
-		}
-		decodedName := f.opt.Encoding.ToStandardName(name)
-		if decodedName == targetName {
-			return newObjectWithFile(f, remote, &e), nil
-		}
+	if file == nil {
+		return nil, fs.ErrorObjectNotFound
 	}
-	return nil, fs.ErrorObjectNotFound
+	return newObjectWithFile(f, remote, file), nil
 }
 
 // newObjectWithFile returns a new object by file info
@@ -864,19 +981,23 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	// Parse name and extension from the leaf
-	baseName := f.opt.Encoding.FromStandardName(leaf)
-	newName := strings.TrimSuffix(baseName, path.Ext(baseName))
-	newType := strings.TrimPrefix(path.Ext(baseName), ".")
+	newName, newType := splitNameExt(f.opt.Encoding.FromStandardName(leaf))
 
 	// Move the file server-side
 	err = f.pacer.Call(func() (bool, error) {
 		err := files.MoveFile(ctx, f.cfg, srcObj.uuid, directoryID, newName, newType)
+		// The move is checked against lagging read replicas so it can
+		// fail with 404 if the destination directory was just created
+		// or 409 if a file at the destination was just deleted.
+		if err != nil && isStaleReadError(err, true) {
+			return true, err
+		}
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
 		return nil, err
 	}
+	recent.moved(srcObj.uuid, directoryID, joinNameExt(newName, newType))
 
 	dstObj := &Object{
 		f:       f,
@@ -912,11 +1033,17 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	encodedLeaf := f.opt.Encoding.FromStandardName(dstLeaf)
 	err = f.pacer.Call(func() (bool, error) {
 		err := folders.MoveFolder(ctx, f.cfg, srcID, dstDirectoryID, encodedLeaf)
+		// Moving a large folder can outlast the gateway timeout (520/502)
+		// yet still complete, in which case the retry reports this.
+		if err != nil && isConflictError(err) && strings.Contains(err.Error(), "already moved to that location") {
+			return false, nil
+		}
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
 		return err
 	}
+	recent.moved(srcID, dstDirectoryID, encodedLeaf)
 
 	srcFs.dirCache.FlushDir(srcRemote)
 	return nil
@@ -964,9 +1091,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	remote := o.remote
 
-	origBaseName := path.Base(remote)
-	origName := strings.TrimSuffix(origBaseName, path.Ext(origBaseName))
-	origType := strings.TrimPrefix(path.Ext(origBaseName), ".")
+	origName, origType := splitNameExt(path.Base(remote))
 
 	// Create directory if it doesn't exist
 	_, dirID, err := o.f.dirCache.FindPath(ctx, remote, true)
@@ -983,11 +1108,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// Step 1: If file exists, rename to backup (preserves old file during upload)
 	if oldUUID != "" {
-		// Generate unique backup name
-		baseName := path.Base(remote)
-		name := strings.TrimSuffix(baseName, path.Ext(baseName))
-		ext := strings.TrimPrefix(path.Ext(baseName), ".")
-
+		name, ext := splitNameExt(path.Base(remote))
 		backupSuffix := fmt.Sprintf(".rclone-backup-%s", random.String(8))
 		backupName = o.f.opt.Encoding.FromStandardName(name + backupSuffix)
 		backupType = ext
@@ -1060,6 +1181,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			return o.f.tooLargeError(remote, tooLarge)
 		}
 
+		if err != nil && isStaleReadError(err, backupUUID != "") {
+			o.restoreBackupFile(ctx, backupUUID, origName, origType)
+			return fserrors.RetryError(err)
+		}
+
 		if err != nil {
 			meta, err = o.recoverFromTimeoutConflict(ctx, err, remote, dirID)
 		}
@@ -1097,6 +1223,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 				backupName, backupType, backupUUID, err)
 			// Don't fail the upload just because backup deletion failed
 		} else {
+			recent.deleted(backupUUID)
 			fs.Debugf(o.f, "Successfully deleted backup file")
 		}
 	}
@@ -1114,6 +1241,19 @@ func isTimeoutError(err error) bool {
 		return true
 	}
 	return false
+}
+
+// isNotFoundError reports whether err is a 404 from the API.
+func isNotFoundError(err error) bool {
+	var httpErr *sdkerrors.HTTPError
+	return errors.As(err, &httpErr) && httpErr.StatusCode() == 404
+}
+
+// isStaleReadError reports whether err is the API contradicting a write this
+// backend has already made, which it does because lookups are served by read
+// replicas that lag behind the primary.
+func isStaleReadError(err error, renamed bool) bool {
+	return isNotFoundError(err) || (renamed && isConflictError(err))
 }
 
 // isConflictError checks if an error indicates a file conflict (409)
@@ -1156,40 +1296,22 @@ func (o *Object) recoverFromTimeoutConflict(ctx context.Context, uploadErr error
 	}
 
 	baseName := path.Base(remote)
-	encodedName := o.f.opt.Encoding.FromStandardName(baseName)
 
-	var meta *buckets.CreateMetaResponse
-	checkErr := o.f.pacer.Call(func() (bool, error) {
-		existingFile, err := o.f.preUploadCheck(ctx, encodedName, dirID)
-		if err != nil {
-			return o.f.shouldRetry(ctx, err)
-		}
-		if existingFile != nil {
-			name := strings.TrimSuffix(baseName, path.Ext(baseName))
-			ext := strings.TrimPrefix(path.Ext(baseName), ".")
-
-			meta = &buckets.CreateMetaResponse{
-				UUID:      existingFile.UUID,
-				FileID:    existingFile.FileID,
-				Name:      name,
-				PlainName: name,
-				Type:      ext,
-				Size:      existingFile.Size,
-			}
-			o.id = existingFile.FileID
-		}
-		return false, nil
-	})
-
-	if checkErr != nil {
+	existingFile, err := o.f.findFile(ctx, baseName, dirID)
+	if err != nil || existingFile == nil {
 		return nil, uploadErr
 	}
 
-	if meta != nil {
-		return meta, nil
-	}
-
-	return nil, uploadErr
+	name, ext := splitNameExt(baseName)
+	o.id = existingFile.FileID
+	return &buckets.CreateMetaResponse{
+		UUID:      existingFile.UUID,
+		FileID:    existingFile.FileID,
+		Name:      name,
+		PlainName: name,
+		Type:      ext,
+		Size:      existingFile.Size,
+	}, nil
 }
 
 // restoreBackupFile restores a backup file after upload failure
@@ -1207,8 +1329,13 @@ func (o *Object) restoreBackupFile(ctx context.Context, backupUUID, origName, or
 
 // Remove deletes a file
 func (o *Object) Remove(ctx context.Context) error {
-	return o.f.pacer.Call(func() (bool, error) {
+	err := o.f.pacer.Call(func() (bool, error) {
 		err := files.DeleteFile(ctx, o.f.cfg, o.uuid)
 		return o.f.shouldRetry(ctx, err)
 	})
+	if err != nil {
+		return err
+	}
+	recent.deleted(o.uuid)
+	return nil
 }

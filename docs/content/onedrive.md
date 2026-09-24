@@ -242,7 +242,7 @@ OneDrive files. Take care to safeguard these credentials.
 If you do not have admin access to your organization's OneDrive for
 Business, you can still connect by manually providing the SharePoint
 tenant URL and drive ID. This works by overriding the base API URL
-from the standard Microsoft Graph endpoint to the SharePoint v2.0
+from the standard Microsoft Graph endpoint to the SharePoint API
 endpoint.
 
 #### Steps to manually obtain credentials
@@ -256,6 +256,13 @@ endpoint.
    ".driveAccessToken": "access_token={access_token}"
    ```
 
+   In some guest access scenarios SharePoint may also expose a matching
+   v2.1 URL and token pair:
+   ```json
+   ".driveUrlV21": "{tenant_url}/v2.1/drives/{drive_id}",
+   ".driveAccessTokenV21": "access_token={access_token}"
+   ```
+
 #### Rclone configuration
 
 Use the extracted values to configure your remote:
@@ -267,6 +274,14 @@ drive_id = {drive_id}
 tenant_url = {tenant_url}
 drive_type = business
 ```
+
+If you use a v2.1 token, set the matching SharePoint API version:
+
+```ini
+tenant_api_version = v2.1
+```
+
+If `tenant_api_version` is omitted, rclone defaults to `v2.0`.
 
 Since the exact expiry time cannot be determined from web traffic,
 set the expiry to a future date. Note that the token will eventually
@@ -311,10 +326,11 @@ This can be useful with `rclone mount` and [rclone rc vfs/refresh
 recursive=true](/rc/#vfs-refresh)) to very quickly fill the mount with
 information about all the files.
 
-The API used for the recursive listing (`ListR`) only supports listing
-from the root of the drive. This will become increasingly inefficient
-the further away you get from the root as rclone will have to discard
-files outside of the directory you are using.
+Rclone asks for the delta listing of the directory being listed. Some
+drives only support delta listings from the root of the drive, in
+which case rclone lists the whole drive and discards the files outside
+of the directory you are using, which is increasingly inefficient the
+further away from the root you get.
 
 Some commands (like `rclone lsf -R`) will use `ListR` by default - you
 can turn this off with `--disable ListR` if you need to.
@@ -1154,11 +1170,6 @@ Or you can set the `no_versions` parameter to `true` and rclone will
 remove versions after operations which create new versions. This takes
 extra transactions so only enable it if you need it.
 
-**Note** At the time of writing Onedrive Personal creates versions
-(but not for setting the modification time) but the API for removing
-them returns "API not found" so cleanup and `no_versions` should not
-be used on Onedrive Personal.
-
 ### Disabling versioning
 
 Starting October 2018, users will no longer be able to
@@ -1212,8 +1223,6 @@ or `--dry-run` which is a great way to see what it would do.
 rclone cleanup --interactive remote:path/subdir # interactively remove all old version for path/subdir
 rclone cleanup remote:path/subdir               # unconditionally remove all old version for path/subdir
 ```
-
-**NB** Onedrive personal can't currently delete versions
 
 ## Troubleshooting
 
@@ -1317,6 +1326,27 @@ Shared with me files is not supported by rclone
    behaves like a normal folder/file.
     ![in_my_files](https://i.imgur.com/0S8H3li.png "Screenshot (My Files)")
     ![rclone_mount](https://i.imgur.com/2Iq66sW.png "Screenshot (rclone mount)")
+
+Listing such a shortcut may still fail with
+
+```text
+invalidRequest: The provided drive id appears to be malformed, or does not represent a valid drive.
+```
+
+as the drive it points to can't always be read with the drive ID the
+API supplies. `Personal Vault` is a shortcut of the same kind and
+fails to list in the same way, though it reports
+`invalidResourceId: ObjectHandle is Invalid`.
+
+A normal listing reports the error for that folder and carries on, so
+the rest of the drive is still listed, and excluding the folder (for
+example with `--exclude "/Personal Vault/**"`) avoids the error.
+
+A recursive listing with `--fast-list` stops at the first error, so
+listing the root of a drive which has one of these shortcuts in it
+will fail. Filters don't help here as the folder is listed by the
+backend before the filters are applied - use `--disable ListR` (or
+don't use `--fast-list`) on such a drive.
 
 ### Live Photos uploaded from iOS (small video clips in .heic files)
 

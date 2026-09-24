@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"net/textproto"
 	"net/url"
+	"strings"
 	"sync"
 
 	"github.com/rclone/rclone/fs"
@@ -42,10 +43,24 @@ func NewClient(c *http.Client) *Client {
 	return api
 }
 
+// ErrBodyTooLarge is returned by ReadBody when the response body is
+// bigger than the limit it will read into memory.
+var ErrBodyTooLarge = errors.New("response body too large")
+
 // ReadBody reads resp.Body into result, closing the body
+//
+// It reads at most drainLimit bytes and returns ErrBodyTooLarge if the
+// body is bigger than that, so a misbehaving server can't make rclone
+// buffer an unbounded response in memory. It is intended for small API
+// responses (error bodies, status documents, upload tokens), not for
+// file data.
 func ReadBody(resp *http.Response) (result []byte, err error) {
 	defer fs.CheckClose(resp.Body, &err)
-	return io.ReadAll(resp.Body)
+	result, err = io.ReadAll(io.LimitReader(resp.Body, drainLimit+1))
+	if err == nil && len(result) > drainLimit {
+		return nil, ErrBodyTooLarge
+	}
+	return result, err
 }
 
 // defaultErrorHandler doesn't attempt to parse the http body, just
@@ -163,6 +178,9 @@ func (o *Opts) Copy() *Opts {
 	return &newOpts
 }
 
+// drainLimit is the most of a response body that will be consumed
+// from the network, whether it is being read by ReadBody or discarded
+// by drainAndClose.
 const drainLimit = 10 * 1024 * 1024
 
 // drainAndClose discards up to drainLimit bytes from r and closes
@@ -221,13 +239,38 @@ func ClientWithNoRedirects(c *http.Client) *http.Client {
 var ErrHTTPSDowngrade = errors.New("refusing to follow HTTPS to HTTP redirect: would send credentials in cleartext")
 
 // isHTTPSDowngrade reports whether following the redirect to req would
-// move from an https:// URL to a plaintext http:// URL.
+// move a request which was originally made to an https:// URL to a
+// plaintext http:// URL.
 func isHTTPSDowngrade(req *http.Request, via []*http.Request) bool {
 	if len(via) == 0 {
 		return false
 	}
-	prev := via[len(via)-1]
-	return prev.URL.Scheme == "https" && req.URL.Scheme == "http"
+	return via[0].URL.Scheme == "https" && req.URL.Scheme == "http"
+}
+
+// SameHost reports whether a and b address the same host and port.
+//
+// Host names are compared case insensitively and a port which is
+// the default for the URL's scheme is treated the same as no port,
+// so a server which redirects "https://example.com/" to
+// "https://EXAMPLE.com:443/" is not taken to be a different host.
+func SameHost(a, b *url.URL) bool {
+	return strings.EqualFold(a.Hostname(), b.Hostname()) && portOf(a) == portOf(b)
+}
+
+// portOf returns the port of u, filling in the default for the
+// scheme if none is given.
+func portOf(u *url.URL) string {
+	if port := u.Port(); port != "" {
+		return port
+	}
+	switch strings.ToLower(u.Scheme) {
+	case "http":
+		return "80"
+	case "https":
+		return "443"
+	}
+	return ""
 }
 
 // PreserveMethodRedirectFn is a CheckRedirect function that

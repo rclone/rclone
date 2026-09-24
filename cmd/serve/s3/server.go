@@ -3,14 +3,11 @@ package s3
 
 import (
 	"context"
-	"crypto/md5"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"math/rand"
 	"net"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -40,7 +37,6 @@ type Server struct {
 	backend      *s3Backend
 	handler      http.Handler
 	ctx          context.Context // for global config
-	s3Secret     string
 	etagHashType hash.Type
 }
 
@@ -74,15 +70,21 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		fs.Debugf(f, "Using hash %v for ETag", w.etagHashType)
 	}
 
-	if len(opt.AuthKey) == 0 {
+	if len(opt.AuthKey) == 0 && !w.provider.IsProxy() {
 		fs.Logf("serve s3", "No auth provided so allowing anonymous access")
-	} else {
-		w.s3Secret = getAuthSecret(opt.AuthKey)
 	}
 
 	authList, err := authlistResolver(opt.AuthKey)
 	if err != nil {
 		return nil, fmt.Errorf("parsing auth list failed: %q", err)
+	}
+	if w.provider.IsProxy() {
+		// The proxy middleware authenticates every request itself so
+		// gofakes3's own auth must be left empty.
+		if len(authList) > 0 {
+			fs.Logf("serve s3", "--auth-key is ignored when --auth-proxy is set - the proxy must supply the secret for each access key ID")
+		}
+		authList = nil
 	}
 
 	w.backend = newBackend(w)
@@ -104,9 +106,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 	w.handler = w.faker.Server()
 
 	if w.provider.IsProxy() {
-		// proxy auth middleware
 		w.handler = proxyAuthMiddleware(w.handler, w)
-		w.handler = authPairMiddleware(w.handler, w)
 	} else if len(opt.AuthKey) > 0 {
 		w.faker.AddAuthKeys(authList)
 	}
@@ -142,13 +142,41 @@ func (w *Server) getVFS(ctx context.Context) (VFS *vfs.VFS, err error) {
 	return VFS, nil
 }
 
-// auth does proxy authorization
-func (w *Server) auth(r *http.Request, accessKeyID string) (value any, err error) {
-	VFS, _, err := w.provider.Proxy().Call(stringToMd5Hash(accessKeyID), accessKeyID, false, r.RemoteAddr)
+// auth authenticates the request via the auth proxy.
+//
+// The proxy maps the access key ID to a VFS and a secret access key
+// and the request's signature is verified against that secret. If it
+// fails against a cached secret the proxy is consulted again in case
+// the secret has been rotated.
+//
+// The secret is only ever used here and is never registered with
+// gofakes3, whose key store is shared by every instance in the
+// process.
+func (w *Server) auth(r *http.Request, accessKeyID string) (VFS *vfs.VFS, err error) {
+	p := w.provider.Proxy()
+	VFS, secret, err := p.CallAccessKey(accessKeyID, r.RemoteAddr, false)
 	if err != nil {
 		return nil, err
 	}
-	return VFS, err
+	errCode := signature.V4SignVerifyWithSecret(r, secret)
+	if errCode == signature.ErrNone {
+		return VFS, nil
+	}
+	// Only a signature mismatch can be cured by a rotated secret, so
+	// only then is the proxy worth consulting again - other failures
+	// (expired request, bad date, missing headers) must not make
+	// every bad request run the proxy.
+	if signature.GetAPIError(errCode).Code == "SignatureDoesNotMatch" {
+		VFS, secret, err = p.CallAccessKey(accessKeyID, r.RemoteAddr, true)
+		if err != nil {
+			return nil, err
+		}
+		errCode = signature.V4SignVerifyWithSecret(r, secret)
+		if errCode == signature.ErrNone {
+			return VFS, nil
+		}
+	}
+	return nil, fmt.Errorf("signature verification failed: %s", signature.GetAPIError(errCode).Code)
 }
 
 // Bind register the handler to http.Router
@@ -177,59 +205,49 @@ func (w *Server) Shutdown() error {
 	return err
 }
 
-func authPairMiddleware(next http.Handler, ws *Server) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		accessKey, _ := parseAccessKeyID(r)
-		// set the auth pair
-		authPair := map[string]string{
-			accessKey: ws.s3Secret,
-		}
-		ws.faker.AddAuthKeys(authPair)
-		next.ServeHTTP(w, r)
-	})
-}
-
+// proxyAuthMiddleware authenticates each request via the auth proxy,
+// storing the VFS it returns in the request context, and refuses
+// requests the proxy does not accept.
 func proxyAuthMiddleware(next http.Handler, ws *Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		accessKey, _ := parseAccessKeyID(r)
-		value, err := ws.auth(r, accessKey)
+		accessKey, errCode := parseAccessKeyID(r)
+		if errCode != signature.ErrNone {
+			fs.Infof(r.URL.Path, "%s: Auth failed: no access key ID in request", r.RemoteAddr)
+			accessDenied(w)
+			return
+		}
+		VFS, err := ws.auth(r, accessKey)
 		if err != nil {
 			fs.Infof(r.URL.Path, "%s: Auth failed: %v", r.RemoteAddr, err)
+			accessDenied(w)
+			return
 		}
-		if value != nil {
-			r = r.WithContext(context.WithValue(r.Context(), ctxKeyID, value))
-		}
-
+		r = r.WithContext(context.WithValue(r.Context(), ctxKeyID, VFS))
 		next.ServeHTTP(w, r)
 	})
 }
 
-func parseAccessKeyID(r *http.Request) (accessKey string, error signature.ErrorCode) {
+// accessDenied writes an S3 AccessDenied error response
+func accessDenied(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/xml")
+	w.WriteHeader(http.StatusForbidden)
+	_, _ = w.Write([]byte(`<?xml version="1.0" encoding="UTF-8"?><Error><Code>AccessDenied</Code><Message>Access Denied</Message></Error>`))
+}
+
+// parseAccessKeyID returns the access key ID from the request's
+// Authorization header or presigned URL query parameters
+func parseAccessKeyID(r *http.Request) (accessKey string, errCode signature.ErrorCode) {
 	v4Auth := r.Header.Get("Authorization")
-	req, err := signature.ParseSignV4(v4Auth)
-	if err != signature.ErrNone {
-		return "", err
+	if v4Auth == "" {
+		// Presigned URLs carry the credential in the query string
+		q := r.URL.Query()
+		if q.Get("X-Amz-Signature") != "" {
+			v4Auth = fmt.Sprintf("%s Credential=%s, SignedHeaders=%s, Signature=%s", q.Get("X-Amz-Algorithm"), q.Get("X-Amz-Credential"), q.Get("X-Amz-SignedHeaders"), q.Get("X-Amz-Signature"))
+		}
 	}
-
+	req, errCode := signature.ParseSignV4(v4Auth)
+	if errCode != signature.ErrNone {
+		return "", errCode
+	}
 	return req.Credential.GetAccessKey(), signature.ErrNone
-}
-
-func stringToMd5Hash(s string) string {
-	hasher := md5.New()
-	hasher.Write([]byte(s))
-	return hex.EncodeToString(hasher.Sum(nil))
-}
-
-func getAuthSecret(authPair []string) string {
-	if len(authPair) == 0 {
-		return ""
-	}
-
-	splited := strings.Split(authPair[0], ",")
-	if len(splited) != 2 {
-		return ""
-	}
-
-	secret := strings.TrimSpace(splited[1])
-	return secret
 }

@@ -105,7 +105,10 @@ func (o *Object) writeMetadataToFile(m fs.Metadata) (outErr error) {
 	}
 	if haveSetBTime {
 		if btimeOK {
-			if o.translatedLink {
+			// When translating symlinks, never follow the path. A planted symlink must
+			// not redirect the birth-time write out of the root. The NOFOLLOW open is a
+			// no-op on a real file or directory
+			if o.translatedLink || o.fs.opt.TranslateSymlinks {
 				err = lsetBTime(o.path, btime)
 			} else {
 				err = setBTime(o.path, btime)
@@ -128,7 +131,7 @@ func (o *Object) writeMetadataToFile(m fs.Metadata) (outErr error) {
 			if o.translatedLink {
 				err = os.Lchown(o.path, uid, gid)
 			} else {
-				err = os.Chown(o.path, uid, gid)
+				err = o.fs.chown(o.path, uid, gid)
 			}
 			if err != nil {
 				outErr = fmt.Errorf("failed to change ownership: %w", err)
@@ -155,7 +158,7 @@ func (o *Object) writeMetadataToFile(m fs.Metadata) (outErr error) {
 						err = nil
 					}
 				} else {
-					err = os.Chmod(o.path, fileMode)
+					err = o.fs.chmod(o.path, fileMode)
 				}
 				if err != nil {
 					outErr = fmt.Errorf("failed to change permissions: %w", err)

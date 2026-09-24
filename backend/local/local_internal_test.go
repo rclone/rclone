@@ -3,8 +3,10 @@ package local
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"path"
 	"path/filepath"
@@ -22,6 +24,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/file"
@@ -210,6 +213,32 @@ func TestSymlink(t *testing.T) {
 	require.NoError(t, in.Close())
 }
 
+// TestSymlinkRangeBeyondEnd checks range requests on a translated
+// symlink's target string don't panic.
+func TestSymlinkRangeBeyondEnd(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	f := r.Flocal.(*Fs)
+	linksMode(f)
+
+	const target = "file.txt"
+	require.NoError(t, putLink(ctx, f, "symlink.txt", target))
+
+	o, err := f.NewObject(ctx, "symlink.txt"+fs.LinkSuffix)
+	require.NoError(t, err)
+
+	// An offset just past the end and a wildly large offset must both read
+	// empty rather than panicking.
+	for _, start := range []int64{int64(len(target)), int64(len(target)) + 1, math.MaxInt64} {
+		in, err := o.Open(ctx, &fs.RangeOption{Start: start, End: -1})
+		require.NoError(t, err)
+		contents, err := io.ReadAll(in)
+		require.NoError(t, err)
+		require.Empty(t, string(contents))
+		require.NoError(t, in.Close())
+	}
+}
+
 func TestSymlinkError(t *testing.T) {
 	m := configmap.Simple{
 		"links":      "true",
@@ -354,6 +383,133 @@ func TestSymlinkInTreeWriteThroughWorks(t *testing.T) {
 	got, err := os.ReadFile(filepath.Join(f.root, "sub", "file.txt"))
 	require.NoError(t, err)
 	require.Equal(t, "world", string(got))
+}
+
+// TestDirMetadataThroughPlantedSymlinkBlocked checks metadata +
+// symlinks can't write outside the root.
+func TestDirMetadataThroughPlantedSymlinkBlocked(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("symlinks and unix modes not applicable on Windows")
+	}
+	ctx := context.Background()
+
+	// A directory outside the destination whose metadata the attacker targets.
+	evil := t.TempDir()
+	evilDir := filepath.Join(evil, "secret.d")
+	require.NoError(t, os.Mkdir(evilDir, 0700))
+	evilMtime := fstest.Time("2016-06-07T08:09:10Z")
+	require.NoError(t, os.Chtimes(evilDir, evilMtime, evilMtime))
+
+	r := fstest.NewRun(t)
+	f := r.Flocal.(*Fs)
+	linksMode(f)
+
+	// The planted symlink dst/pwn -> outside, faithfully reproduced by --links.
+	require.NoError(t, putLink(ctx, f, "pwn", evilDir))
+
+	// The source now presents "pwn" as a directory with attacker-chosen mode
+	// and mtime. Applying it must not reach through the planted symlink.
+	metadata := fs.Metadata{
+		"mode":  "0777",
+		"mtime": "2001-02-03T04:05:06Z",
+	}
+	_, err := f.MkdirMetadata(ctx, "pwn", metadata)
+	require.Error(t, err, "applying metadata through a planted symlink should be refused")
+
+	// The outside directory's mode and mtime must be unchanged.
+	fi, err := os.Stat(evilDir)
+	require.NoError(t, err)
+	require.Equal(t, os.FileMode(0700), fi.Mode().Perm(), "chmod escaped through planted symlink to %q", evilDir)
+	require.True(t, fi.ModTime().Equal(evilMtime), "chtimes escaped through planted symlink to %q", evilDir)
+}
+
+// TestDirSetModTimeThroughPlantedSymlinkBlocked checks we can't
+// chtimes outside the root with --links
+func TestDirSetModTimeThroughPlantedSymlinkBlocked(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("symlinks not applicable on Windows")
+	}
+	ctx := context.Background()
+
+	evil := t.TempDir()
+	evilDir := filepath.Join(evil, "secret.d")
+	require.NoError(t, os.Mkdir(evilDir, 0700))
+	evilMtime := fstest.Time("2016-06-07T08:09:10Z")
+	require.NoError(t, os.Chtimes(evilDir, evilMtime, evilMtime))
+
+	r := fstest.NewRun(t)
+	f := r.Flocal.(*Fs)
+	linksMode(f)
+
+	require.NoError(t, putLink(ctx, f, "pwn", evilDir))
+
+	err := f.DirSetModTime(ctx, "pwn", fstest.Time("2001-02-03T04:05:06Z"))
+	require.Error(t, err, "setting dir modtime through a planted symlink should be refused")
+
+	fi, err := os.Stat(evilDir)
+	require.NoError(t, err)
+	require.True(t, fi.ModTime().Equal(evilMtime), "chtimes escaped through planted symlink to %q", evilDir)
+}
+
+// TestDirMetadataInTreeWorks checks the root confinement doesn't
+// break legitimate dir metadata.
+func TestDirMetadataInTreeWorks(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("unix modes not applicable on Windows")
+	}
+	ctx := context.Background()
+
+	r := fstest.NewRun(t)
+	f := r.Flocal.(*Fs)
+	linksMode(f)
+
+	metadata := fs.Metadata{
+		"mode":  "0705",
+		"mtime": "2001-02-03T04:05:06Z",
+	}
+	_, err := f.MkdirMetadata(ctx, "sub", metadata)
+	require.NoError(t, err)
+
+	fi, err := os.Stat(filepath.Join(f.root, "sub"))
+	require.NoError(t, err)
+	require.Equal(t, os.FileMode(0705), fi.Mode().Perm())
+	require.True(t, fi.ModTime().Equal(fstest.Time("2001-02-03T04:05:06Z")))
+}
+
+// TestDirBTimeThroughPlantedSymlinkBlocked checks a btime write
+// through a symlink can't escape the root.
+func TestDirBTimeThroughPlantedSymlinkBlocked(t *testing.T) {
+	if !haveSetBTime {
+		t.Skip("birth time is not settable on this OS")
+	}
+	ctx := context.Background()
+
+	evil := t.TempDir()
+	evilDir := filepath.Join(evil, "secret.d")
+	require.NoError(t, os.Mkdir(evilDir, 0700))
+
+	// Read the outside dir's btime through a local Fs rooted at evil.
+	evilFsRaw, err := NewFs(ctx, "local", evil, configmap.Simple{})
+	require.NoError(t, err)
+	evilFs := evilFsRaw.(*Fs)
+	readBTime := func() string {
+		o, err := evilFs.newObject("secret.d")
+		require.NoError(t, err)
+		require.NoError(t, o.lstat())
+		m, err := o.Metadata(ctx)
+		require.NoError(t, err)
+		return m["btime"]
+	}
+	before := readBTime()
+
+	r := fstest.NewRun(t)
+	f := r.Flocal.(*Fs)
+	linksMode(f)
+	require.NoError(t, putLink(ctx, f, "pwn", evilDir))
+
+	_, _ = f.MkdirMetadata(ctx, "pwn", fs.Metadata{"btime": "2001-02-03T04:05:06Z"})
+
+	require.Equal(t, before, readBTime(), "btime escaped through planted symlink to %q", evilDir)
 }
 
 // TestEncodingEscapeBlocked checks that a name from a malicious source can't
@@ -1021,4 +1177,122 @@ func TestCopySymlink(t *testing.T) {
 	require.NotNil(t, dst)
 	want = fstest.NewItem("dst2/file.txt", "hello world", when)
 	fstest.CompareItems(t, []fs.DirEntry{dst}, []fstest.Item{want}, nil, f.precision, "")
+}
+
+// TestCopyLinksLoop checks that -L/--copy-links follows a symlink to a
+// sibling directory but skips symlinks which point to the directory
+// being listed or one of its parents, as these would loop forever.
+func TestCopyLinksLoop(t *testing.T) {
+	skipIfNoSymlinks(t)
+	dir := t.TempDir()
+
+	// folder-A/link-to-B and folder-B/link-to-A point at each other
+	// and folder-A/link-to-parent points at dir
+	require.NoError(t, os.Mkdir(filepath.Join(dir, "folder-A"), 0700))
+	require.NoError(t, os.Mkdir(filepath.Join(dir, "folder-B"), 0700))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "folder-A", "file-A"), []byte("A"), 0600))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "folder-B", "file-B"), []byte("B"), 0600))
+	require.NoError(t, os.Symlink(filepath.Join("..", "folder-B"), filepath.Join(dir, "folder-A", "link-to-B")))
+	require.NoError(t, os.Symlink(filepath.Join("..", "folder-A"), filepath.Join(dir, "folder-B", "link-to-A")))
+	require.NoError(t, os.Symlink("..", filepath.Join(dir, "folder-A", "link-to-parent")))
+
+	wantRoot := []string{
+		"folder-A",
+		"folder-A/file-A",
+		"folder-A/link-to-B",
+		"folder-A/link-to-B/file-B",
+		"folder-B",
+		"folder-B/file-B",
+		"folder-B/link-to-A",
+		"folder-B/link-to-A/file-A",
+	}
+	for _, test := range []struct {
+		name       string
+		root       string
+		exclude    string
+		want       []string
+		wantErrors int64
+	}{{
+		name: "Root",
+		root: dir,
+		want: wantRoot,
+		// folder-A/link-to-parent, folder-A/link-to-B/link-to-A,
+		// folder-B/link-to-A/link-to-B, folder-B/link-to-A/link-to-parent
+		wantErrors: 4,
+	}, {
+		// link-to-parent points above the root of the Fs
+		name: "SubDir",
+		root: filepath.Join(dir, "folder-A"),
+		want: []string{
+			"file-A",
+			"link-to-B",
+			"link-to-B/file-B",
+		},
+		// link-to-parent, link-to-B/link-to-A
+		wantErrors: 2,
+	}, {
+		// Excluded loops aren't reported
+		name:    "Excluded",
+		root:    dir,
+		exclude: "link-to-parent/**",
+		want:    wantRoot,
+		// folder-A/link-to-B/link-to-A, folder-B/link-to-A/link-to-B
+		wantErrors: 2,
+	}} {
+		t.Run(test.name, func(t *testing.T) {
+			ctx := context.Background()
+			if test.exclude != "" {
+				var fi *filter.Filter
+				ctx, fi = filter.AddConfig(ctx)
+				require.NoError(t, fi.AddRule("- "+test.exclude))
+			}
+			f, err := NewFs(ctx, "local", test.root, configmap.Simple{
+				"copy_links": "true",
+			})
+			require.NoError(t, err)
+
+			accounting.Stats(ctx).ResetErrors()
+			defer accounting.Stats(ctx).ResetErrors()
+
+			var got []string
+			err = walk.ListR(ctx, f, "", false, -1, walk.ListAll, func(entries fs.DirEntries) error {
+				for _, entry := range entries {
+					got = append(got, entry.Remote())
+				}
+				// Stop a runaway listing rather than waiting for ELOOP
+				if len(got) > 100 {
+					return errors.New("too many entries - symlink loop not detected")
+				}
+				return nil
+			})
+			require.NoError(t, err)
+
+			sort.Strings(got)
+			assert.Equal(t, test.want, got)
+			assert.Equal(t, test.wantErrors, accounting.Stats(ctx).GetErrors(), "global errors found")
+		})
+	}
+
+	// A single List reports and skips the link to a parent, but still
+	// returns the link to a sibling
+	t.Run("List", func(t *testing.T) {
+		ctx := context.Background()
+		f, err := NewFs(ctx, "local", dir, configmap.Simple{
+			"copy_links": "true",
+		})
+		require.NoError(t, err)
+
+		accounting.Stats(ctx).ResetErrors()
+		defer accounting.Stats(ctx).ResetErrors()
+
+		entries, err := f.List(ctx, "folder-A")
+		require.NoError(t, err)
+		var got []string
+		for _, entry := range entries {
+			got = append(got, entry.Remote())
+		}
+		sort.Strings(got)
+		assert.Equal(t, []string{"folder-A/file-A", "folder-A/link-to-B"}, got)
+		assert.Equal(t, int64(1), accounting.Stats(ctx).GetErrors(), "global errors found")
+	})
 }

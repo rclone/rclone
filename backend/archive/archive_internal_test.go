@@ -3,6 +3,7 @@
 package archive
 
 import (
+	"archive/zip"
 	"bytes"
 	"context"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/rclone/rclone/backend/archive/archiver"
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
@@ -276,4 +278,128 @@ func TestArchiveSquashfsIssue9004(t *testing.T) {
 		assert.Equal(t, int(obj.Size()), len(data))
 		assert.True(t, bytes.HasPrefix(data, []byte("<?xml")))
 	})
+}
+
+// TestArchiveUncleanRoot checks that a path into an archive which isn't
+// in canonical form (with "./" or doubled slashes) still finds its
+// directory.
+func TestArchiveUncleanRoot(t *testing.T) {
+	fstest.Initialise()
+	ctx := context.Background()
+
+	var buf bytes.Buffer
+	zw := zip.NewWriter(&buf)
+	w, err := zw.Create("sub/dir/a.txt")
+	require.NoError(t, err)
+	_, err = w.Write([]byte("data"))
+	require.NoError(t, err)
+	require.NoError(t, zw.Close())
+	zipPath := filepath.Join(t.TempDir(), "test.zip")
+	require.NoError(t, os.WriteFile(zipPath, buf.Bytes(), 0600))
+
+	for _, root := range []string{"sub/dir", "sub/./dir", "sub//dir", "./sub/dir/", "sub/dir/."} {
+		t.Run(root, func(t *testing.T) {
+			f, err := cache.Get(ctx, ":archive:"+zipPath+"/"+root)
+			require.NoError(t, err)
+			entries, err := f.List(ctx, "")
+			require.NoError(t, err)
+			require.Len(t, entries, 1)
+			assert.Equal(t, "a.txt", entries[0].Remote())
+		})
+	}
+}
+
+// escapingObject is an object whose remote is not where it was asked for.
+type escapingObject struct {
+	fs.Object
+	remote string
+}
+
+func (o *escapingObject) Remote() string { return o.remote }
+func (o *escapingObject) String() string { return o.remote }
+
+// escapingFs stands in for a badly behaved archiver which exposes entry
+// names outside the directory being listed.
+type escapingFs struct {
+	fs.Fs
+	prefix string
+}
+
+func (f *escapingFs) Name() string           { return "escaping" }
+func (f *escapingFs) Root() string           { return "" }
+func (f *escapingFs) String() string         { return "escaping" }
+func (f *escapingFs) Features() *fs.Features { return &fs.Features{} }
+
+func (f *escapingFs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
+	return fs.DirEntries{
+		&escapingObject{remote: path.Join(dir, "good.txt")},
+		fs.NewDir(path.Join(dir, "gooddir"), fstest.Time("2001-02-03T04:05:06.499999999Z")),
+		&escapingObject{remote: path.Join(dir, "../escape.txt")},
+		&escapingObject{remote: "../../escape.txt"},
+		&escapingObject{remote: path.Join(dir, "sub/notachild.txt")},
+		fs.NewDir("../escapedir", fstest.Time("2001-02-03T04:05:06.499999999Z")),
+	}, nil
+}
+
+func (f *escapingFs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
+	return &escapingObject{remote: "../escape.txt"}, nil
+}
+
+// TestArchiveEscapingArchiver checks that the archive backend does not
+// pass on entries from an archiver which escape the directory being
+// listed, whatever the archiver does.
+func TestArchiveEscapingArchiver(t *testing.T) {
+	fstest.Initialise()
+	ctx := context.Background()
+
+	archiver.Register(archiver.Archiver{
+		New: func(ctx context.Context, f fs.Fs, remote, prefix, root string) (fs.Fs, error) {
+			return &escapingFs{prefix: prefix}, nil
+		},
+		Extension: ".escaping",
+	})
+
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "test.escaping"), []byte("x"), 0600))
+	f, err := cache.Get(ctx, ":archive:"+dir)
+	require.NoError(t, err)
+
+	// Archives are discovered when their parent directory is listed
+	_, err = f.List(ctx, "")
+	require.NoError(t, err)
+
+	entries, err := f.List(ctx, "test.escaping")
+	require.NoError(t, err)
+	var remotes []string
+	for _, entry := range entries {
+		remotes = append(remotes, entry.Remote())
+	}
+	assert.ElementsMatch(t, []string{"test.escaping/good.txt", "test.escaping/gooddir"}, remotes)
+
+	_, err = f.NewObject(ctx, "test.escaping/file.txt")
+	assert.ErrorIs(t, err, fs.ErrorObjectNotFound)
+}
+
+// TestIsDirectChild checks the guard which decides whether an entry
+// returned by an archiver belongs directly in the directory listed.
+func TestIsDirectChild(t *testing.T) {
+	for _, test := range []struct {
+		dir, remote string
+		want        bool
+	}{
+		{"", "a.txt", true},
+		{"", "/a.txt", false},
+		{"", "a.txt/", false},
+		{"", "../a.txt", false},
+		{"", "sub/a.txt", false},
+		{"d", "d/a.txt", true},
+		{"d", "d", false},
+		{"d", "d/", false},
+		{"d", "d//a.txt", false},
+		{"d", "d/../a.txt", false},
+		{"d", "dd/a.txt", false},
+		{"d", "a.txt", false},
+	} {
+		assert.Equal(t, test.want, isDirectChild(test.dir, test.remote), "dir=%q remote=%q", test.dir, test.remote)
+	}
 }

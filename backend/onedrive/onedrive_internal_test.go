@@ -42,6 +42,40 @@ func TestMain(m *testing.M) {
 	fstest.TestMain(m)
 }
 
+func TestTenantAPIEndpoint(t *testing.T) {
+	for _, tc := range []struct {
+		name             string
+		tenantURL        string
+		tenantAPIVersion string
+		want             string
+	}{
+		{
+			name:      "default",
+			tenantURL: "https://example-my.sharepoint.com/_api",
+			want:      "https://example-my.sharepoint.com/_api/v2.0",
+		}, {
+			name:             "explicit v2.1",
+			tenantURL:        "https://example-my.sharepoint.com/_api",
+			tenantAPIVersion: "v2.1",
+			want:             "https://example-my.sharepoint.com/_api/v2.1",
+		}, {
+			name:             "future version",
+			tenantURL:        "https://example-my.sharepoint.com/_api",
+			tenantAPIVersion: "v2.2",
+			want:             "https://example-my.sharepoint.com/_api/v2.2",
+		}, {
+			name:             "trailing slash",
+			tenantURL:        "https://example-my.sharepoint.com/_api/",
+			tenantAPIVersion: "/v2.1",
+			want:             "https://example-my.sharepoint.com/_api/v2.1",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, tenantAPIEndpoint(tc.tenantURL, tc.tenantAPIVersion))
+		})
+	}
+}
+
 // sharingRefused caches whether the remote refuses sharing invitations.
 var sharingRefused *bool
 
@@ -514,6 +548,30 @@ func (f *Fs) resetTestDefaults(r *fstest.Run) {
 	ci.Metadata = false
 	_ = f.opt.MetadataPermissions.Set("off")
 	r.Finalise()
+}
+
+// TestCheckUploadCutoff checks the bounds of the --onedrive-upload-cutoff
+// validation, in particular that the documented API maximum is accepted.
+func TestCheckUploadCutoff(t *testing.T) {
+	for _, test := range []struct {
+		in      fs.SizeSuffix
+		wantErr bool
+	}{
+		{in: 0, wantErr: false},
+		{in: 4 * fs.Mebi, wantErr: false},
+		// maxSinglePartSize is a legal cutoff even though the server refuses a
+		// body of that size, because the cutoff is an exclusive threshold: at
+		// this setting a file of exactly maxSinglePartSize goes multipart.
+		{in: maxSinglePartSize, wantErr: false},
+		{in: maxSinglePartSize + 1, wantErr: true},
+	} {
+		err := checkUploadCutoff(test.in)
+		if test.wantErr {
+			assert.Error(t, err, test.in.String())
+		} else {
+			assert.NoError(t, err, test.in.String())
+		}
+	}
 }
 
 // InternalTest dispatches all internal tests
