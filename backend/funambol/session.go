@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -96,13 +97,29 @@ func (f *Fs) persistentLoginPresent() bool {
 // typed *api.Error so callers can recognise codes such as SEC-1003 (and read
 // the fresh validation key it carries in the data field).
 func sapiErrorHandler(resp *http.Response) error {
-	body, err := io.ReadAll(resp.Body)
+	body, _ := readReply(resp)
+	return replyError(resp, body)
+}
+
+// readReply reads at most maxReplyBody bytes of resp and closes it.
+func readReply(resp *http.Response) ([]byte, error) {
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxReplyBody))
 	_ = resp.Body.Close()
-	if err == nil {
-		var s api.Status
-		if jErr := json.Unmarshal(body, &s); jErr == nil && s.Err != nil && s.Err.Code != "" {
-			return s.Err
+	return body, err
+}
+
+// replyError turns a failed reply into its SAPI *api.Error, or into an HTTP
+// error quoting the start of a non-JSON body (the HTML error page).
+func replyError(resp *http.Response, body []byte) error {
+	var s api.Status
+	if json.Unmarshal(body, &s) == nil {
+		if err := s.AsErr(); err != nil {
+			return err
 		}
+	}
+
+	if len(body) > maxErrorBody {
+		body = append(body[:maxErrorBody:maxErrorBody], "..."...)
 	}
 	return fmt.Errorf("HTTP error %v (%v) returned body: %q", resp.StatusCode, resp.Status, body)
 }
@@ -163,29 +180,147 @@ func (f *Fs) persistSession() {
 	}
 }
 
-// loginGenerate performs the credentials step.  The web client posts the
-// username and password as a form to /sapi/login/otp/generate together with the
-// X-deviceid header; this authenticates and, when two-factor is enforced,
-// emails (or SMSes) a one-time code.  rememberme=true requests the persistent
-// login cookie so the session can be re-established later without a new code.
-// Set-Cookie headers (the provisional session) are captured by the jar
-// regardless of the two-factor outcome.
-func (f *Fs) loginGenerate(ctx context.Context) error {
+// SAPI codes the login calls answer with.
+const (
+	codeCodeSent     = "MFA-0001" // a verification code was sent
+	codeInvalidToken = "PRO-1001" // captcha token rejected
+)
+
+// The service answers auth failures with its whole HTML app (~300 KB), so
+// replies are read up to maxReplyBody and quoted up to maxErrorBody.
+const (
+	maxReplyBody = 64 << 10
+	maxErrorBody = 200
+)
+
+var errCaptcha = errors.New("the service wants a captcha - log in once via the web site")
+
+// loginStep is what the credentials calls leave to do next.
+type loginStep int
+
+const (
+	stepDone  loginStep = iota // validation key obtained
+	stepCode                   // a verification code was sent
+	stepLogin                  // no code needed: call /sapi/login
+)
+
+// loginReply is the reply of the credentials calls.
+type loginReply struct {
+	api.Status
+	Data struct {
+		ValidationKey string `json:"validationkey"`
+		CaptchaURL    string `json:"captchaurl"`
+	} `json:"data"`
+	status  int   // HTTP status
+	failure error // non-2xx reply as an error
+}
+
+// postCredentials posts the login form to path.  The web client posts the
+// username and password as a form together with the X-deviceid header;
+// rememberme=true requests the persistent login cookie so the session can be
+// re-established later without a new code.  Set-Cookie headers are captured
+// by the jar whatever the outcome.
+func (f *Fs) postCredentials(ctx context.Context, path string, params url.Values) (*loginReply, error) {
 	form := url.Values{"login": {f.opt.User}, "password": {f.opt.Pass}, "rememberme": {"true"}}.Encode()
-	opts := rest.Opts{
-		Method:       "POST",
-		Path:         "/sapi/login/otp/generate",
-		Body:         strings.NewReader(form),
-		ContentType:  "application/x-www-form-urlencoded",
-		ExtraHeaders: f.loginHeaders(),
-		NoResponse:   true,
-	}
 	var resp *http.Response
-	return f.pacer.Call(func() (bool, error) {
+	var body []byte
+	err := f.pacer.Call(func() (bool, error) {
+		// Fresh reader per attempt: a retry must resend the whole form.
+		opts := rest.Opts{
+			Method:       "POST",
+			Path:         path,
+			Parameters:   params,
+			Body:         strings.NewReader(form),
+			ContentType:  "application/x-www-form-urlencoded",
+			ExtraHeaders: f.loginHeaders(),
+			IgnoreStatus: true,
+		}
 		var err error
 		resp, err = f.srv.Call(ctx, &opts)
+		if err == nil {
+			body, err = readReply(resp)
+		}
 		return shouldRetry(ctx, resp, err)
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Non-JSON bodies (the HTML error page) leave the fields empty.
+	reply := &loginReply{status: resp.StatusCode}
+	jsonErr := json.Unmarshal(body, reply)
+	if resp.StatusCode >= http.StatusBadRequest || (jsonErr != nil && len(body) > 0) {
+		reply.failure = replyError(resp, body)
+	}
+	return reply, nil
+}
+
+// loginOutcome maps a credentials reply to the next step, mirroring the web
+// client's login page.  success is the step a plain success leads to.
+func (f *Fs) loginOutcome(reply *loginReply, success loginStep) (loginStep, error) {
+	sapiErr, _ := reply.AsErr().(*api.Error)
+	if sapiErr != nil && sapiErr.Code == codeCodeSent {
+		return stepCode, nil
+	}
+
+	switch reply.status {
+	case http.StatusUnauthorized:
+		return stepDone, errors.New("invalid username or password")
+	case http.StatusPaymentRequired:
+		return stepDone, errors.New("the account needs a paid subscription")
+	case http.StatusForbidden:
+		return stepDone, fmt.Errorf("the account is disabled or %w", errCaptcha)
+	}
+
+	if reply.Data.CaptchaURL != "" || (sapiErr != nil && sapiErr.Code == codeInvalidToken) {
+		return stepDone, errCaptcha
+	}
+
+	if reply.failure != nil {
+		return stepDone, reply.failure
+	}
+
+	if sapiErr != nil {
+		return stepDone, sapiErr
+	}
+
+	// Only a finished login keeps its key: the code step must mint its own
+	// so Config can tell whether it completed.
+	if success != stepDone {
+		return success, nil
+	}
+
+	// The key comes in the body or as a validationKey cookie.
+	f.setValidationKey(reply.Data.ValidationKey)
+	if f.validationKeyFromJar() == "" {
+		return stepDone, errors.New("no validation key in reply")
+	}
+	return stepDone, nil
+}
+
+// loginGenerate performs the credentials step.  With two-factor enforced,
+// /sapi/login/otp/generate emails (or SMSes) a one-time code; a 204 reply
+// means the service waived the code (e.g. a trusted device), in which case
+// the web client logs in with the same form via /sapi/login.
+func (f *Fs) loginGenerate(ctx context.Context) (loginStep, error) {
+	reply, err := f.postCredentials(ctx, "/sapi/login/otp/generate", nil)
+	if err != nil {
+		return stepDone, err
+	}
+
+	if reply.status == http.StatusNoContent {
+		return stepLogin, nil
+	}
+	return f.loginOutcome(reply, stepCode)
+}
+
+// loginPassword completes a login the service waived the code for.
+func (f *Fs) loginPassword(ctx context.Context) (loginStep, error) {
+	reply, err := f.postCredentials(ctx, "/sapi/login", url.Values{"action": {"login"}})
+	if err != nil {
+		return stepDone, err
+	}
+	return f.loginOutcome(reply, stepDone)
 }
 
 // otpRequest is the body of the OTP validation call.
@@ -304,11 +439,16 @@ func Config(ctx context.Context, name string, m configmap.Mapper, configIn fs.Co
 
 	switch configIn.State {
 	case "":
-		if err := f.loginGenerate(ctx); err != nil {
-			return nil, fmt.Errorf("login failed - check your username and password: %w", err)
+		step, err := f.loginGenerate(ctx)
+		if step == stepLogin {
+			step, err = f.loginPassword(ctx)
 		}
-		if f.validationKeyFromJar() != "" {
-			// Provider didn't require a second factor.
+
+		if err != nil {
+			return nil, fmt.Errorf("login failed: %w", err)
+		}
+
+		if step == stepDone {
 			f.persistSession()
 			return nil, nil
 		}
