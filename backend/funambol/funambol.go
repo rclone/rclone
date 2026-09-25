@@ -58,13 +58,12 @@ func init() {
 		CommandHelp: commandHelp,
 		Options: []fs.Option{{
 			Name:      "user",
-			Help:      "Username for the Funambol / OneMediaHub account.\n\nUsually the email address or mobile number (MSISDN) you log in with.",
+			Help:      "Username for the Funambol / OneMediaHub account.\n\nUsually the email address or mobile number (MSISDN) you log in with.\nFor SMS login (no password) this must be the mobile number.",
 			Required:  true,
 			Sensitive: true,
 		}, {
 			Name:       "pass",
-			Help:       "Password for the Funambol / OneMediaHub account.",
-			Required:   true,
+			Help:       "Password for the Funambol / OneMediaHub account.\n\nLeave empty for accounts without one (O2 Spain accounts that sign in\nvia Mi O2): rclone then logs in with an SMS code sent to the mobile\nnumber in user.",
 			IsPassword: true,
 		}, {
 			Name: "cookies",

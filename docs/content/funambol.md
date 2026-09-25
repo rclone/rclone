@@ -79,11 +79,17 @@ Copy a local directory to the remote
 
 ### Authentication
 
-Setup is interactive (`rclone config`).  You provide your username and
-password; rclone generates a device id, registers itself as a new device and
-completes a one-time login, sending a verification code if your account has
-two-factor authentication enabled.  The resulting persistent-login session is
+Setup is interactive (`rclone config`).  You provide your username and, if
+the account has one, password; rclone generates a device id, registers itself
+as a new device and completes a one-time login, sending a verification code if
+your account has two-factor authentication enabled.  The resulting session is
 stored in the config - no browser fingerprint or manual `device_id` is needed.
+
+O2 Spain accounts that sign in via Mi O2 have no password: leave `pass` empty
+and set `user` to the mobile number.  rclone then logs in like the web site,
+through Telefónica's identity provider, with a code sent by SMS.  Such a login
+may not receive the persistent-login cookie, in which case the session lasts a
+day or so before `rclone config reconnect remote:` is needed.
 
 From then on the backend runs unattended: it presents the persistent-login
 cookie, mints the rolling `validationkey` SAPI requires, and refreshes it
@@ -124,6 +130,7 @@ Here are the Standard options specific to funambol (Funambol / OneMediaHub (O2 C
 Username for the Funambol / OneMediaHub account.
 
 Usually the email address or mobile number (MSISDN) you log in with.
+For SMS login (no password) this must be the mobile number.
 
 Properties:
 
@@ -136,6 +143,10 @@ Properties:
 
 Password for the Funambol / OneMediaHub account.
 
+Leave empty for accounts without one (O2 Spain accounts that sign in
+via Mi O2): rclone then logs in with an SMS code sent to the mobile
+number in user.
+
 **NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
 
 Properties:
@@ -143,7 +154,7 @@ Properties:
 - Config:      pass
 - Env Var:     RCLONE_FUNAMBOL_PASS
 - Type:        string
-- Required:    true
+- Required:    false
 
 ### Advanced options
 
