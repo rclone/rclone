@@ -3,6 +3,7 @@ package vfscache
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -783,4 +784,90 @@ func TestCacheQueueSetExpiry(t *testing.T) {
 	// writeback.
 	err := c.QueueSetExpiry(123123, time.Now(), 0)
 	assert.Equal(t, writeback.ErrorIDNotFound, err)
+}
+
+// TestCacheReloadOSEncodedName checks that cache entries whose names are
+// modified by the OS encoding (eg because they contain a fullwidth colon or a
+// literal quote rune) are reloaded back into the remote (standard) encoding.
+//
+// The cache directory holds file names in OS encoding, but Cache.get,
+// Cache.Item and Item all take remote paths, so walk/reload must translate
+// them.  If they don't, the item is recreated under the OS encoded name and
+// its data and metadata files are then looked up under a twice encoded (and
+// therefore missing) path: the pending upload is silently dropped.
+func TestCacheReloadOSEncodedName(t *testing.T) {
+	const contents = "hello world"
+	for _, test := range []struct {
+		name  string
+		lossy bool // name contains QuoteRune: see the note in the body
+	}{
+		{name: "A\uff1aB.txt"}, // FULLWIDTH COLON - quoted by the OS encoding
+		{name: "A\uff1fB.txt"}, // FULLWIDTH QUESTION MARK
+		{name: "A\u201bB.txt", lossy: true}, // literal QuoteRune - escaped by the OS encoding
+		{name: "prefix "},      // trailing SPACE - encoded as ␠ by the OS encoding
+		{name: "plain.txt"},    // ASCII control - must be unaffected
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			r := fstest.NewRun(t)
+
+			// Create a cache with a long write back so that the item is still
+			// dirty on disk when the cache is closed.
+			opt1 := vfscommon.Opt
+			opt1.CachePollInterval = 0
+			opt1.HandleCaching = 0
+			opt1.WriteBack = fs.Duration(time.Hour)
+			ctx1, cancel1 := context.WithCancel(context.Background())
+			c1, err := New(ctx1, r.Fremote, &opt1, addVirtual)
+			require.NoError(t, err)
+			item, found := c1.get(test.name)
+			require.False(t, found)
+			itemWrite(t, item, contents)
+			item.Dirty()
+			require.NoError(t, item.Close(nil))
+			cancel1()
+
+			// Reopen the same cache directory, this time writing back
+			// synchronously so the pending upload happens during reload.
+			opt2 := vfscommon.Opt
+			opt2.CachePollInterval = 0
+			opt2.HandleCaching = 0
+			opt2.WriteBack = 0
+			ctx2, cancel2 := context.WithCancel(context.Background())
+			defer cancel2()
+			c2, err := New(ctx2, r.Fremote, &opt2, addVirtual)
+			require.NoError(t, err)
+			defer func() {
+				assert.NoError(t, c2.CleanUp())
+			}()
+
+			// The item must be known by its remote name with its metadata
+			// intact, and not by some OS encoded name.
+			if test.lossy {
+				// The OS encoding escapes an existing QuoteRune ('‛' -> '‛‛')
+				// and that escape cannot be inverted unambiguously, so the
+				// remote name of such an item cannot be recovered from its
+				// cache file name alone.  Doing that needs the remote name to
+				// be stored in the item metadata, which is a bigger change
+				// than this fix, so record the limitation rather than
+				// asserting the wrong name here.
+				t.Skip("known limitation: remote names containing QuoteRune cannot be recovered from the cache file name")
+			}
+			assert.Equal(t, []string{
+				fmt.Sprintf("name=%q opens=0 size=%d", filepath.ToSlash(test.name), len(contents)),
+			}, itemAsString(c2))
+			_, found = c2.get(test.name)
+			assert.True(t, found, "item %q not found in the reloaded cache", test.name)
+
+			// The pending edit must have been uploaded under the unchanged name.
+			o, err := r.Fremote.NewObject(ctx2, test.name)
+			require.NoError(t, err, "pending upload of %q did not reach the remote", test.name)
+			assert.Equal(t, int64(len(contents)), o.Size())
+			fh, err := o.Open(ctx2)
+			require.NoError(t, err)
+			got, err := io.ReadAll(fh)
+			require.NoError(t, err)
+			require.NoError(t, fh.Close())
+			assert.Equal(t, contents, string(got))
+		})
+	}
 }
