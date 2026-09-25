@@ -56,6 +56,7 @@ const (
 	driveTypeSharepoint         = "documentLibrary"
 	defaultChunkSize            = 10 * fs.Mebi
 	chunkSizeMultiple           = 320 * fs.Kibi
+	defaultTenantAPIVersion     = "v2.0"
 	// maxSinglePartSize is the size at which Graph stops accepting an upload in a
 	// single request (PUT /items/{id}/content). Microsoft documents this as
 	// "250 MB", see
@@ -166,7 +167,7 @@ See: https://github.com/rclone/rclone/issues/1716
 			Name: "tenant_url",
 			Help: `The tenant URL for non-admin OneDrive access.
 
-Set this to your SharePoint tenant URL to use the SharePoint v2.0 API
+Set this to your SharePoint tenant URL to use the SharePoint API
 endpoint instead of the standard Microsoft Graph API. This allows
 accessing business OneDrive without admin consent.
 
@@ -176,6 +177,16 @@ for "driveAccessToken" in the network requests. Look for the
 
 Example: https://your-tenant.sharepoint.com/_api`,
 			Default:  "",
+			Advanced: true,
+		}, {
+			Name: "tenant_api_version",
+			Help: `The SharePoint API version to use with tenant_url.
+
+Set this to the SharePoint API version matching the browser-extracted
+access token. For example, use v2.1 with a driveAccessTokenV21 token.
+
+This only applies when tenant_url is set.`,
+			Default:  defaultTenantAPIVersion,
 			Advanced: true,
 		}, {
 			Name: "chunk_size",
@@ -283,16 +294,13 @@ cases, rclone will fall back to normal copy (which will be slightly slower).`,
 			Default: false,
 			Help: `Remove all versions on modifying operations.
 
-Onedrive for business creates versions when rclone uploads new files
+Onedrive creates versions when rclone uploads new files
 overwriting an existing one and when it sets the modification time.
 
 These versions take up space out of the quota.
 
 This flag checks for versions after file upload and setting
 modification time and removes all but the last version.
-
-**NB** Onedrive personal can't currently delete versions so don't use
-this flag there.
 `,
 			Advanced: true,
 		}, {
@@ -331,14 +339,18 @@ This works with OneDrive for Business, SharePoint document libraries, and OneDri
 				Help:  "Creates a read-write link to the item.",
 			}, {
 				Value: "embed",
-				Help:  "Creates an embeddable link to the item.",
+				Help:  "Creates an embeddable link to the item.\nOnly available in OneDrive personal.",
 			}},
 		}, {
 			Name:    "link_password",
 			Default: "",
 			Help: `Set the password for links created by the link command.
 
-At the time of writing this only works with OneDrive personal paid accounts.
+At the time of writing this works with OneDrive for Business and
+OneDrive personal paid accounts.
+
+OneDrive personal free accounts can't set a password or an expiry time
+(with --expire) on links.
 `,
 			Advanced:  true,
 			Sensitive: true,
@@ -426,21 +438,12 @@ Setting this flag speeds up these things greatly:
     rclone size onedrive:
     rclone rc vfs/refresh recursive=true
 
-**However** the delta listing API **only** works at the root of the
-drive. If you use it not at the root then it recurses from the root
-and discards all the data that is not under the directory you asked
-for. So it will be correct but may not be very efficient.
-
-This is why this flag is not set as the default.
-
-As a rule of thumb if nearly all of your data is under rclone's root
-directory (the |root/directory| in |onedrive:root/directory|) then
-using this flag will be a big performance win. If your data is
-mostly not under the root then using this flag will be a big
-performance loss.
-
-It is recommended if you are mounting your onedrive at the root
-(or near the root when using crypt) and using rclone |rc vfs/refresh|.
+Rclone asks for the delta listing of the directory being listed. If
+the drive only supports delta listings at the root of the drive (as
+some older OneDrive for Business and SharePoint drives do) then
+rclone lists from the root and discards all the data that is not
+under the directory you asked for. So it will be correct but may not
+be very efficient.
 `, "|", "`"),
 			Advanced: true,
 		}, {
@@ -509,10 +512,18 @@ func getRegionURL(m configmap.Mapper) (region, graphURL string) {
 	// Check if tenant_url is provided for non-admin mode
 	tenantURL, _ := m.Get("tenant_url")
 	if tenantURL != "" {
-		graphURL = tenantURL + "/v2.0"
+		tenantAPIVersion, _ := m.Get("tenant_api_version")
+		graphURL = tenantAPIEndpoint(tenantURL, tenantAPIVersion)
 	}
 
 	return region, graphURL
+}
+
+func tenantAPIEndpoint(tenantURL, tenantAPIVersion string) string {
+	if tenantAPIVersion == "" {
+		tenantAPIVersion = defaultTenantAPIVersion
+	}
+	return strings.TrimRight(tenantURL, "/") + "/" + strings.TrimLeft(tenantAPIVersion, "/")
 }
 
 // Config for chooseDrive
@@ -808,6 +819,7 @@ type Options struct {
 	UploadCutoff            fs.SizeSuffix        `config:"upload_cutoff"`
 	ChunkSize               fs.SizeSuffix        `config:"chunk_size"`
 	TenantURL               string               `config:"tenant_url"`
+	TenantAPIVersion        string               `config:"tenant_api_version"`
 	DriveID                 string               `config:"drive_id"`
 	DriveType               string               `config:"drive_type"`
 	RootFolderID            string               `config:"root_folder_id"`
@@ -1115,7 +1127,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	rootURL := graphAPIEndpoint[opt.Region] + "/v1.0" + "/drives/" + opt.DriveID
 
 	if opt.TenantURL != "" {
-		rootURL = opt.TenantURL + "/v2.0" + "/drives/" + opt.DriveID
+		rootURL = tenantAPIEndpoint(opt.TenantURL, opt.TenantAPIVersion) + "/drives/" + opt.DriveID
 	}
 
 	oauthConfig, err := makeOauthConfig(ctx, opt)
@@ -1490,10 +1502,6 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		return err
 	}
 
-	// ListR only works at the root of a onedrive, not on a folder
-	// So we have to filter things outside of the root which is
-	// inefficient.
-
 	list := list.NewHelper(callback)
 
 	// list a folder conventionally - used for shared folders
@@ -1569,17 +1577,26 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		return nil
 	}
 
-	opts := rest.Opts{
-		Method: "GET",
-		Path:   "/root/delta",
-		Parameters: map[string][]string{
-			// "token": {token},
+	listDelta := func(opts rest.Opts) error {
+		opts.Parameters = url.Values{
 			"$top": {fmt.Sprintf("%d", f.opt.ListChunk)},
-		},
+		}
+		var result api.DeltaResponse
+		return f._listAll(ctx, "", false, false, fn, &opts, &result, &result.Value, &result.NextLink)
 	}
 
-	var result api.DeltaResponse
-	err = f._listAll(ctx, "", false, false, fn, &opts, &result, &result.Value, &result.NextLink)
+	err = listDelta(f.newOptsCall(directoryID, "GET", "/delta"))
+	// Some drives only support delta listings at the root of the
+	// drive, in which case list the whole drive and filter out the
+	// items outside dir.
+	var apiErr *api.Error
+	if err != nil && len(seen) == 0 && errors.As(err, &apiErr) {
+		fs.Debugf(f, "Delta listing of directory failed, listing from the root of the drive instead: %v", err)
+		err = listDelta(rest.Opts{
+			Method: "GET",
+			Path:   "/root/delta",
+		})
+	}
 	if err != nil {
 		return err
 	}
@@ -2918,7 +2935,7 @@ func (o *Object) ID() string {
 func (f *Fs) parseNormalizedID(ID string) (string, string, string) {
 	var rootURL string
 	if f.opt.TenantURL != "" {
-		rootURL = f.opt.TenantURL + "/v2.0/drives"
+		rootURL = tenantAPIEndpoint(f.opt.TenantURL, f.opt.TenantAPIVersion) + "/drives"
 	} else {
 		rootURL = graphAPIEndpoint[f.opt.Region] + "/v1.0/drives"
 	}
@@ -3119,7 +3136,7 @@ func (f *Fs) changeNotifyNextChange(ctx context.Context, token string) (delta ap
 func (f *Fs) buildDriveDeltaOpts(token string) rest.Opts {
 	var rootURL string
 	if f.opt.TenantURL != "" {
-		rootURL = f.opt.TenantURL + "/v2.0/drives"
+		rootURL = tenantAPIEndpoint(f.opt.TenantURL, f.opt.TenantAPIVersion) + "/drives"
 	} else {
 		rootURL = graphAPIEndpoint[f.opt.Region] + "/v1.0/drives"
 	}

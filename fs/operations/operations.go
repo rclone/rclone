@@ -607,6 +607,8 @@ func DeleteFilesWithBackupDir(ctx context.Context, toBeDeleted fs.ObjectsChan, b
 	for range ci.Checkers {
 		go func() {
 			defer wg.Done()
+			// Every object must be received, even after a fatal error,
+			// otherwise the sender blocks when the channel fills up
 			for dst := range toBeDeleted {
 				err := DeleteFileWithBackupDir(ctx, dst, backupDir)
 				if err != nil {
@@ -616,7 +618,6 @@ func DeleteFilesWithBackupDir(ctx context.Context, toBeDeleted fs.ObjectsChan, b
 					if fserrors.IsFatalError(err) {
 						fs.Errorf(dst, "Got fatal error on delete: %s", err)
 						fatalErrorCount.Add(1)
-						return
 					}
 				}
 			}
@@ -742,6 +743,19 @@ func SameDir(fdst, fsrc fs.Info) bool {
 	return fdstRootFolded == fsrcRootFolded
 }
 
+// sleepWithContext sleeps for d returning true, or false if ctx
+// finishes first.
+func sleepWithContext(ctx context.Context, d time.Duration) bool {
+	timer := time.NewTimer(d)
+	defer timer.Stop()
+	select {
+	case <-timer.C:
+		return true
+	case <-ctx.Done():
+		return false
+	}
+}
+
 // Retry runs fn up to maxTries times if it returns a retriable error
 func Retry(ctx context.Context, o any, maxTries int, fn func() error) (err error) {
 	for tries := 1; tries <= maxTries; tries++ {
@@ -759,8 +773,14 @@ func Retry(ctx context.Context, o any, maxTries int, fn func() error) (err error
 			fs.Debugf(o, "Received error: %v - low level retry %d/%d", err, tries, maxTries)
 			continue
 		} else if t, ok := pacer.IsRetryAfter(err); ok {
+			if tries >= maxTries {
+				break
+			}
 			fs.Debugf(o, "Sleeping for %v (as indicated by the server) to obey Retry-After error: %v", t, err)
-			time.Sleep(t)
+			if !sleepWithContext(ctx, t) {
+				fserrors.ContextError(ctx, &err)
+				break
+			}
 			continue
 		}
 		break
@@ -1433,6 +1453,8 @@ func rcatSrc(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClos
 	if n, err := io.ReadFull(trackingIn, buf); err == io.EOF || err == io.ErrUnexpectedEOF {
 		fileIsSmall = true
 		buf = buf[:n]
+	} else if err != nil {
+		return nil, fmt.Errorf("failed to read upload input: %w", err)
 	}
 
 	// Read the data we have already read in buf and any further unread
@@ -1699,6 +1721,10 @@ func copyDest(ctx context.Context, fdst fs.Fs, dst, src fs.Object, CopyDest, bac
 	opt.updateModTime = false
 	if equal(ctx, src, CopyDestFile, opt) {
 		if dst == nil || !Equal(ctx, src, dst) {
+			// Leave a different destination for the caller to reject
+			if dst != nil && fs.GetConfig(ctx).Immutable {
+				return false, nil
+			}
 			if dst != nil && backupDir != nil {
 				err = MoveBackupDir(ctx, backupDir, dst)
 				if err != nil {
@@ -2068,6 +2094,9 @@ func MoveCaseInsensitive(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileNam
 // moveOrCopyFile moves or copies a single file possibly to a new name
 func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFileName string, cp bool, allowOverlap bool) (err error) {
 	ci := fs.GetConfig(ctx)
+	if ci.NoCheckDest && ci.Immutable {
+		return errors.New("can't use --no-check-dest with --immutable")
+	}
 	logger, usingLogger := GetLogger(ctx)
 	dstFilePath := path.Join(fdst.Root(), dstFileName)
 	srcFilePath := path.Join(fsrc.Root(), srcFileName)
@@ -2149,6 +2178,13 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 		}
 	}
 	if needTransfer {
+		// If files are treated as immutable, fail if destination exists and does not match
+		if ci.Immutable && dstObj != nil {
+			err = fs.CountError(ctx, fserrors.NoRetryError(fs.ErrorImmutableModified))
+			fs.Errorf(dstObj, "Source and destination exist but do not match: %v", err)
+			logger(ctx, TransferError, srcObj, dstObj, err)
+			return err
+		}
 		// If destination already exists, then we must move it into --backup-dir if required
 		if dstObj != nil && backupDir != nil {
 			err = MoveBackupDir(ctx, backupDir, dstObj)
@@ -2492,7 +2528,7 @@ func DirMove(ctx context.Context, f fs.Fs, srcRemote, dstRemote string) (err err
 		newPath string
 	}
 	renames := make(chan rename, ci.Checkers)
-	g, gCtx := errgroup.WithContext(context.Background())
+	g, gCtx := errgroup.WithContext(ctx)
 	for range ci.Checkers {
 		g.Go(func() error {
 			for job := range renames {
@@ -2511,11 +2547,17 @@ func DirMove(ctx context.Context, f fs.Fs, srcRemote, dstRemote string) (err err
 			return nil
 		})
 	}
+sending:
 	for dir, entries := range tree {
 		dstPath := dstRemote + dir[len(srcRemote):]
 		for _, entry := range entries {
 			if o, ok := entry.(fs.Object); ok {
-				renames <- rename{o, path.Join(dstPath, path.Base(o.Remote()))}
+				select {
+				case renames <- rename{o, path.Join(dstPath, path.Base(o.Remote()))}:
+				case <-gCtx.Done():
+					// The workers have stopped so stop sending
+					break sending
+				}
 			}
 		}
 	}

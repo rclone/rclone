@@ -111,7 +111,7 @@ func (b *s3Backend) ListBucket(ctx context.Context, bucket string, prefix *gofak
 	response := gofakes3.NewObjectList()
 	path, remaining := prefixParser(prefix)
 
-	err = b.entryListR(_vfs, bucket, path, remaining, prefix.HasDelimiter, response)
+	err = b.listPage(_vfs, bucket, path, remaining, prefix.HasDelimiter, page, response)
 	if err == gofakes3.ErrNoSuchKey {
 		// AWS just returns an empty list
 		response = gofakes3.NewObjectList()
@@ -119,7 +119,7 @@ func (b *s3Backend) ListBucket(ctx context.Context, bucket string, prefix *gofak
 		return nil, err
 	}
 
-	return b.pager(response, page)
+	return response, nil
 }
 
 // formatHeaderTime makes an timestamp which is the same as that used by AWS.
@@ -163,7 +163,7 @@ func (b *s3Backend) HeadObject(ctx context.Context, bucketName, objectName strin
 	// to hashing the VFS cache when the backing object is not available yet.
 	entry := node.DirEntry()
 	size := node.Size()
-	hash := getFileHashByte(node, b.s.etagHashType)
+	hash := getFileHashByte(node, b.s.etagHash(_vfs))
 
 	mimeType := fs.MimeTypeFromName(objectName)
 	if fobj, ok := entry.(fs.Object); ok {
@@ -220,7 +220,7 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 	file := node.(*vfs.File)
 
 	size := node.Size()
-	hash := getFileHashByte(node, b.s.etagHashType)
+	hash := getFileHashByte(node, b.s.etagHash(_vfs))
 
 	in, err := file.Open(os.O_RDONLY)
 	if err != nil {
@@ -491,6 +491,7 @@ func (b *s3Backend) deleteObject(ctx context.Context, bucketName, objectName str
 	if err := _vfs.Remove(fp); err != nil && !os.IsNotExist(err) {
 		return err
 	}
+	b.meta.Delete(fp)
 
 	// FIXME: unsafe operation
 	rmdirRecursive(fp, _vfs)
@@ -560,6 +561,10 @@ func (b *s3Backend) CopyObject(ctx context.Context, srcBucket, srcKey, dstBucket
 	if err != nil {
 		return result, err
 	}
+	cStat, err := _vfs.Stat(fp)
+	if err != nil || !cStat.IsFile() {
+		return result, gofakes3.KeyNotFound(srcKey)
+	}
 	if srcBucket == dstBucket && srcKey == dstKey {
 		b.meta.Store(fp, meta)
 
@@ -577,11 +582,6 @@ func (b *s3Backend) CopyObject(ctx context.Context, srcBucket, srcKey, dstBucket
 		b.storeModtime(fp, meta, val)
 
 		return result, _vfs.Chtimes(fp, ti, ti)
-	}
-
-	cStat, err := _vfs.Stat(fp)
-	if err != nil {
-		return
 	}
 
 	c, err := b.GetObject(ctx, srcBucket, srcKey, nil)

@@ -1241,3 +1241,8 @@ put them back in again. -->
 - Eugene <inbox@null.page>
 - Kunpeng Xie <68572236+pentaoa@users.noreply.github.com>
 - foecmke <221832573+foecmke@users.noreply.github.com>
+- Vasek Sraier <git@vakabus.cz>
+- Kalin Stoyanov <kalin.stoyanov@kiteworks.com>
+- NytePlus <nyte_plus@sjtu.edu.cn>
+- Jeremy Schoemaker <jeremy@shoemoney.com>
+- solunolab <solunolab@outlook.com>
