@@ -4,6 +4,7 @@ package webdav
 import (
 	"context"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"mime"
 	"net"
@@ -622,9 +623,8 @@ func (h Handle) DeadProps() (map[xml.Name]webdav.Property, error) {
 		properties = make(map[xml.Name]webdav.Property)
 	)
 	if h.w.etagHashType != hash.None {
-		entry := h.Handle.Node().DirEntry()
-		if o, ok := entry.(fs.Object); ok {
-			hash, err := o.Hash(h.ctx, h.w.etagHashType)
+		if file, ok := h.Handle.Node().(*vfs.File); ok {
+			hash, err := file.Hash(h.ctx, h.w.etagHashType)
 			if err == nil {
 				xmlName.Space = "http://owncloud.org/ns"
 				xmlName.Local = "checksums"
@@ -635,7 +635,8 @@ func (h Handle) DeadProps() (map[xml.Name]webdav.Property, error) {
 				property.InnerXML = append(property.InnerXML, hash...)
 				property.InnerXML = append(property.InnerXML, "</checksum>"...)
 				properties[xmlName] = property
-			} else {
+			} else if !errors.Is(err, vfs.ENOENT) {
+				// ENOENT means the file is still being uploaded
 				fs.Errorf(nil, "failed to calculate hash: %v", err)
 			}
 		}
@@ -691,12 +692,11 @@ func (fi FileInfo) ETag(ctx context.Context) (etag string, err error) {
 		fs.Errorf(fi, "Expecting vfs.Node, got %T", fi.FileInfo)
 		return "", webdav.ErrNotImplemented
 	}
-	entry := node.DirEntry()
-	o, ok := entry.(fs.Object)
+	file, ok := node.(*vfs.File)
 	if !ok {
 		return "", webdav.ErrNotImplemented
 	}
-	hash, err := o.Hash(ctx, fi.w.etagHashType)
+	hash, err := file.Hash(ctx, fi.w.etagHashType)
 	if err != nil || hash == "" {
 		return "", webdav.ErrNotImplemented
 	}
