@@ -1546,12 +1546,12 @@ func (item *Item) rename(name string, newName string, newObj fs.Object) (err err
 	// id for writeback cancel
 	id := item.writeBackID
 
-	// Set internal state
-	item.name = newName
-	item.o = newObj
-	item._updateFingerprint()
-
-	// Rename cache file if it exists
+	// Rename cache file if it exists.
+	//
+	// Do this before changing any state: on Windows os.Rename can fail with
+	// Access is denied when the destination cache file is open (it is held open
+	// by the target's Item while it is cached) and the item, its files and its
+	// pending write back must all stay untouched in that case.
 	err = rename(item.c.toOSPath(name), item.c.toOSPath(newName)) // No locking in Cache
 
 	// Rename meta file if it exists
@@ -1559,6 +1559,19 @@ func (item *Item) rename(name string, newName string, newObj fs.Object) (err err
 	if err2 != nil {
 		err = err2
 	}
+
+	if err != nil {
+		item.mu.Unlock()
+		if downloaders != nil {
+			_ = downloaders.Close(nil)
+		}
+		return err
+	}
+
+	// Set internal state
+	item.name = newName
+	item.o = newObj
+	item._updateFingerprint()
 
 	item.mu.Unlock()
 
