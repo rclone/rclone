@@ -823,3 +823,35 @@ func TestItemHandleCachingReopenDuringGraceClose(t *testing.T) {
 	}
 	item.mu.Unlock()
 }
+
+// Reopening in the grace period after a remote modtime change must
+// read the remote data, not zeros from an unfetched recreated file.
+func TestItemHandleCachingStaleReopenReadsRemote(t *testing.T) {
+	r, c := newItemTestCacheHandleCaching(t, 10*time.Second)
+	ctx := context.Background()
+
+	contents, obj, item := newFile(t, r, c, "existing")
+
+	require.NoError(t, item.Open(obj))
+	buf := make([]byte, len(contents))
+	n, err := item.ReadAt(buf, 0)
+	require.NoError(t, err)
+	require.Equal(t, contents, string(buf[:n]))
+	require.NoError(t, item.Close(nil))
+
+	require.NoError(t, obj.SetModTime(ctx, time.Now().Add(time.Hour)))
+	obj, err = r.Fremote.NewObject(ctx, "existing")
+	require.NoError(t, err)
+
+	require.NoError(t, item.Open(obj))
+	defer func() { require.NoError(t, item.Close(nil)) }()
+
+	size, err := item.GetSize()
+	require.NoError(t, err)
+	assert.Equal(t, int64(len(contents)), size)
+
+	buf = make([]byte, len(contents))
+	n, err = item.ReadAt(buf, 0)
+	require.NoError(t, err)
+	assert.Equal(t, contents, string(buf[:n]))
+}
