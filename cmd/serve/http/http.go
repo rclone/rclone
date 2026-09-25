@@ -326,8 +326,14 @@ func (s *HTTP) serveDir(w http.ResponseWriter, r *http.Request, dirRemote string
 	orderParm := r.URL.Query().Get("order")
 	directory.ProcessQueryParams(sortParm, orderParm)
 
-	// Set the Last-Modified header to the timestamp
-	w.Header().Set("Last-Modified", dir.ModTime().UTC().Format(http.TimeFormat))
+	// Set the Last-Modified header to the timestamp, unless it is unknown,
+	// which would otherwise make every listing of this directory report
+	// the same static --default-time date
+	dirModTime := dir.ModTime()
+	if !dir.ModTimeValid() {
+		dirModTime = time.Now()
+	}
+	w.Header().Set("Last-Modified", dirModTime.UTC().Format(http.TimeFormat))
 
 	directory.DisableZip = s.opt.DisableZip
 
