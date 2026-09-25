@@ -1973,10 +1973,22 @@ func copyURLFn(ctx context.Context, dstFileName string, url string, autoFilename
 // CopyURL copies the data from the url to (fdst, dstFileName)
 func CopyURL(ctx context.Context, fdst fs.Fs, dstFileName string, url string, autoFilename, dstFileNameFromHeader bool, noClobber bool) (dst fs.Object, err error) {
 	err = copyURLFn(ctx, dstFileName, url, autoFilename, dstFileNameFromHeader, func(ctx context.Context, dstFileName string, in io.ReadCloser, size int64, modTime time.Time) (err error) {
-		if noClobber {
-			_, err = fdst.NewObject(ctx, dstFileName)
-			if err == nil {
-				return errors.New("CopyURL failed: file already exist")
+		sizeOnly := fs.GetConfig(ctx).SizeOnly && size >= 0
+		var existing fs.Object
+		if noClobber || sizeOnly {
+			existing, err = fdst.NewObject(ctx, dstFileName)
+		}
+		if noClobber && err == nil {
+			return errors.New("CopyURL failed: file already exist")
+		}
+		if sizeOnly {
+			if err == nil && existing.Size() == size {
+				dst = existing
+				fs.Debugf(existing, "Unchanged skipping")
+				return nil
+			}
+			if err != nil && !errors.Is(err, fs.ErrorObjectNotFound) {
+				return err
 			}
 		}
 		dst, err = RcatSize(ctx, fdst, dstFileName, in, size, modTime, nil)
