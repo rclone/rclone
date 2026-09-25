@@ -2,25 +2,31 @@ package obscure
 
 import (
 	"bytes"
-	"crypto/rand"
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/rclone/rclone/fs"
 )
 
 func TestObscure(t *testing.T) {
+	ci := fs.GetConfig(context.Background())
 	for _, test := range []struct {
-		in   string
-		want string
-		iv   string
+		in        string
+		want      string
+		iv        string
+		plaintext bool
 	}{
-		{"", "YWFhYWFhYWFhYWFhYWFhYQ", "aaaaaaaaaaaaaaaa"},
-		{"potato", "YWFhYWFhYWFhYWFhYWFhYXMaGgIlEQ", "aaaaaaaaaaaaaaaa"},
-		{"potato", "YmJiYmJiYmJiYmJiYmJiYp3gcEWbAw", "bbbbbbbbbbbbbbbb"},
+		{"", "YWFhYWFhYWFhYWFhYWFhYQ", "aaaaaaaaaaaaaaaa", false},
+		{"potato", "YWFhYWFhYWFhYWFhYWFhYXMaGgIlEQ", "aaaaaaaaaaaaaaaa", false},
+		{"potato", "YmJiYmJiYmJiYmJiYmJiYp3gcEWbAw", "bbbbbbbbbbbbbbbb", false},
+		{"", "", "", true},
+		{"potato", "potato", "", true},
 	} {
+		ci.PlaintextPasswords = test.plaintext
 		cryptRand = bytes.NewBufferString(test.iv)
 		got, err := Obscure(test.in)
-		cryptRand = rand.Reader
 		assert.NoError(t, err)
 		assert.Equal(t, test.want, got)
 		recoveredIn, err := Reveal(got)
@@ -29,7 +35,6 @@ func TestObscure(t *testing.T) {
 		// Now the Must variants
 		cryptRand = bytes.NewBufferString(test.iv)
 		got = MustObscure(test.in)
-		cryptRand = rand.Reader
 		assert.Equal(t, test.want, got)
 		recoveredIn = MustReveal(got)
 		assert.Equal(t, test.in, recoveredIn, "not bidirectional")
@@ -38,21 +43,23 @@ func TestObscure(t *testing.T) {
 }
 
 func TestReveal(t *testing.T) {
+	ci := fs.GetConfig(context.Background())
 	for _, test := range []struct {
-		in   string
-		want string
-		iv   string
+		in        string
+		want      string
+		plaintext bool
 	}{
-		{"YWFhYWFhYWFhYWFhYWFhYQ", "", "aaaaaaaaaaaaaaaa"},
-		{"YWFhYWFhYWFhYWFhYWFhYXMaGgIlEQ", "potato", "aaaaaaaaaaaaaaaa"},
-		{"YmJiYmJiYmJiYmJiYmJiYp3gcEWbAw", "potato", "bbbbbbbbbbbbbbbb"},
+		{"YWFhYWFhYWFhYWFhYWFhYQ", "", false},
+		{"YWFhYWFhYWFhYWFhYWFhYXMaGgIlEQ", "potato", false},
+		{"YmJiYmJiYmJiYmJiYmJiYp3gcEWbAw", "potato", false},
+		{"", "", true},
+		{"potato", "potato", true},
 	} {
-		cryptRand = bytes.NewBufferString(test.iv)
+		ci.PlaintextPasswords = test.plaintext
 		got, err := Reveal(test.in)
 		assert.NoError(t, err)
 		assert.Equal(t, test.want, got)
 		// Now the Must variants
-		cryptRand = bytes.NewBufferString(test.iv)
 		got = MustReveal(test.in)
 		assert.Equal(t, test.want, got)
 
@@ -61,6 +68,7 @@ func TestReveal(t *testing.T) {
 
 // Test some error cases
 func TestRevealErrors(t *testing.T) {
+	fs.GetConfig(context.Background()).PlaintextPasswords = false
 	for _, test := range []struct {
 		in      string
 		wantErr string
