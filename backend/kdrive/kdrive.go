@@ -362,12 +362,9 @@ func (f *Fs) computeRootID() (rootID string, err error) {
 		}
 
 		if err != nil {
-			fs.Debugf(nil, " ** ERROR: %w", err)
 			return rootID, err
 		}
 	}
-
-	fs.Debugf(nil, "ROOTFOLDERID %w ROOTID %s", f.opt.RootFolderID, rootID)
 
 	return
 }
@@ -407,8 +404,6 @@ func (f *Fs) getItem(ctx context.Context, id string) (*api.Item, error) {
 
 // findItemInDir retrieves a file or directory by its name in a specific directory using the API.
 func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string) (*api.Item, error) {
-	fs.Infof(nil, "directoryID %s leaf %s", directoryID, leaf)
-
 	cacheKey := directoryID + "|" + leaf
 
 	// if entry, entryExists := f.cacheNotFound[cacheKey]; entryExists {
@@ -848,7 +843,10 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 	nonEmpty, err := f.listAll(ctx, rootID, false, false, false, func(i *api.Item) bool {
 		return true
 	})
-	if (nonEmpty || err != nil) && check {
+	if err != nil {
+		return err
+	}
+	if (nonEmpty && check) {
 		return fmt.Errorf("rmdir failed: directory %s not empty", dir)
 	}
 
@@ -1000,10 +998,11 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	opts.Parameters.Set("name", f.opt.Enc.FromStandardName(norm.NFC.String(leaf)))
 	var resp *http.Response
 	var result api.CancellableResponse
+	var apiErr *api.ResultStatus
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
 		err = result.ResultStatus.Update(err)
-		if err != nil && err.(*api.ResultStatus) != nil {
+		if err != nil && errors.As(err, &apiErr) {
 			if err.(*api.ResultStatus).ErrorDetail.Result == "conflict_error" {
 				// Destination already exists => remove if and retry
 				err = moveDst.readMetaData(ctx)
@@ -1435,7 +1434,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	})
 
 	if err != nil {
-		return fs.ErrorCantSetModTime
+		return err
 	}
 
 	// Update Object modTime: the server stores modtimes with second precision so truncate

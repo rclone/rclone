@@ -77,7 +77,7 @@ func (f *Fs) newChunkWriter(ctx context.Context, remote string, src fs.ObjectInf
 	}{
 		Conflict:       "version",
 		DirectoryID:    parentID,
-		FileName:       leaf,
+		FileName:       f.opt.Enc.FromStandardName(leaf),
 		LastModifiedAt: lastModifiedAt,
 		TotalChunks:    totalChunks,
 		TotalSize:      fileSize,
