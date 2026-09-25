@@ -138,11 +138,16 @@ func (f *Fs) loginHeaders() map[string]string {
 
 // dumpCookies serialises the current session cookies to a base64 JSON blob.
 func (f *Fs) dumpCookies() string {
+	return f.dumpCookiesFor(f.jarURL())
+}
+
+// dumpCookiesFor serialises the jar's cookies for u to a base64 JSON blob.
+func (f *Fs) dumpCookiesFor(u *url.URL) string {
 	if f.client == nil || f.client.Jar == nil {
 		return ""
 	}
 	var pairs []cookiePair
-	for _, c := range f.client.Jar.Cookies(f.jarURL()) {
+	for _, c := range f.client.Jar.Cookies(u) {
 		pairs = append(pairs, cookiePair{c.Name, c.Value})
 	}
 	b, err := json.Marshal(pairs)
@@ -154,6 +159,11 @@ func (f *Fs) dumpCookies() string {
 
 // restoreCookies loads cookies previously produced by dumpCookies into the jar.
 func (f *Fs) restoreCookies(s string) {
+	f.restoreCookiesFor(f.jarURL(), s)
+}
+
+// restoreCookiesFor loads cookies produced by dumpCookiesFor(u) into the jar.
+func (f *Fs) restoreCookiesFor(u *url.URL, s string) {
 	raw, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
 		return
@@ -166,7 +176,7 @@ func (f *Fs) restoreCookies(s string) {
 	for _, p := range pairs {
 		cookies = append(cookies, &http.Cookie{Name: p.N, Value: p.V})
 	}
-	f.client.Jar.SetCookies(f.jarURL(), cookies)
+	f.client.Jar.SetCookies(u, cookies)
 }
 
 // persistSession writes the current cookies back to the config so they survive
@@ -433,12 +443,27 @@ func Config(ctx context.Context, name string, m configmap.Mapper, configIn fs.Co
 	if err != nil {
 		return nil, err
 	}
-	if f.opt.User == "" || f.opt.Pass == "" {
-		return fs.ConfigError("", "user and pass must be set before continuing")
+	if f.opt.User == "" {
+		return fs.ConfigError("", "user must be set before continuing")
 	}
 
 	switch configIn.State {
 	case "":
+		// Without a password, log in by SMS via Telefónica (O2 Spain).
+		if f.opt.Pass == "" {
+			p, err := f.smsSend(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("login failed: %w", err)
+			}
+
+			b, err := json.Marshal(p)
+			if err != nil {
+				return nil, err
+			}
+			m.Set(configTmpSMS, string(b))
+			return fs.ConfigInput("sms", "config_sms", "A code has been sent to your phone by SMS.\nEnter the code (leave empty for a new one)")
+		}
+
 		step, err := f.loginGenerate(ctx)
 		if step == stepLogin {
 			step, err = f.loginPassword(ctx)
@@ -469,6 +494,30 @@ func Config(ctx context.Context, name string, m configmap.Mapper, configIn fs.Co
 			return fs.ConfigError("", "login did not complete; please start again")
 		}
 		m.Set(configTmpSession, "")
+		f.persistSession()
+		return nil, nil
+	case "sms":
+		code := strings.TrimSpace(configIn.Result)
+		if code == "" {
+			return fs.ConfigError("", "sending a new code")
+		}
+
+		raw, _ := m.Get(configTmpSMS)
+		var p smsPending
+		if err := json.Unmarshal([]byte(raw), &p); err != nil {
+			return fs.ConfigError("", "login state lost - sending a new code")
+		}
+
+		// A mistyped code can be retried; anything else needs a new SMS.
+		err := f.smsVerify(ctx, &p, code)
+		if errors.Is(err, errCodeRejected) {
+			return fs.ConfigError("sms", fmt.Sprintf("%v - enter it again, or leave empty for a new one", err))
+		}
+
+		m.Set(configTmpSMS, "")
+		if err != nil {
+			return fs.ConfigError("", fmt.Sprintf("login failed: %v - sending a new code", err))
+		}
 		f.persistSession()
 		return nil, nil
 	}
