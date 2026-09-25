@@ -3,6 +3,8 @@ package transform
 import (
 	"context"
 	"errors"
+	"fmt"
+	"regexp"
 	"slices"
 	"strings"
 	"sync"
@@ -11,9 +13,10 @@ import (
 )
 
 type transform struct {
-	key   Algo   // for example, "prefix"
-	value string // for example, "some_prefix_"
-	tag   tag    // file, dir, or all
+	key   Algo           // for example, "prefix"
+	value string         // for example, "some_prefix_"
+	tag   tag            // file, dir, or all
+	re    *regexp.Regexp // compiled pattern, for regex only
 }
 
 // tag controls which part of the file path is affected (file, dir, all)
@@ -135,6 +138,35 @@ func (t *transform) parseKeyVal(s string) (err error) {
 		return err
 	}
 	t.value = split[1]
+	if err := t.parseValue(); err != nil {
+		return err
+	}
+	return nil
+}
+
+// parseValue validates the value of those algorithms that pack more than one
+// operand into it, and precompiles the regex so that it is compiled once
+// instead of once per path segment.
+//
+// Doing this while the flag is parsed means an invalid value is reported
+// before any transfer starts, rather than failing on every file.
+func (t *transform) parseValue() error {
+	switch t.key {
+	case ConvFindReplace:
+		if len(strings.Split(t.value, ":")) != 2 {
+			return fmt.Errorf("wrong number of values: %v", t.value)
+		}
+	case ConvRegex:
+		split := strings.Split(t.value, "/")
+		if len(split) != 2 {
+			return fmt.Errorf("regex syntax error: %v", t.value)
+		}
+		re, err := regexp.Compile(split[0])
+		if err != nil {
+			return fmt.Errorf("regex syntax error: %v: %w", t.value, err)
+		}
+		t.re = re
+	}
 	return nil
 }
 
