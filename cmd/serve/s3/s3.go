@@ -49,6 +49,10 @@ var OptionsInfo = fs.Options{{
 	Name:    "multipart_expiry",
 	Default: fs.Duration(24 * time.Hour),
 	Help:    "Abort incomplete multipart uploads idle for longer than this, 0 to keep forever",
+}, {
+	Name:    "meta_db",
+	Default: "",
+	Help:    "Path to a database file to persist object metadata in, or empty to keep it in memory",
 }}.
 	Add(httplib.ConfigInfo).
 	Add(httplib.AuthConfigInfo)
@@ -63,6 +67,7 @@ type Options struct {
 	DisableMultipartStreaming     bool          `config:"disable_multipart_streaming"`
 	MultipartStreamingBufferLimit fs.SizeSuffix `config:"multipart_streaming_buffer_limit"`
 	MultipartExpiry               fs.Duration   `config:"multipart_expiry"`
+	MetaDB                        string        `config:"meta_db"`
 	Auth                          httplib.AuthConfig
 	HTTP                          httplib.Config
 }

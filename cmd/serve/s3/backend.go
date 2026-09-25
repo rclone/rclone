@@ -4,6 +4,7 @@ package s3
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"maps"
 	"os"
@@ -39,7 +40,7 @@ const putObjectPrefix = tempObjectPrefix + "put_"
 // PutStream, instead of being buffered in memory by gofakes3.
 type s3Backend struct {
 	s    *Server
-	meta *sync.Map
+	meta metadataStore
 
 	// multipartUploads tracks in-flight streaming multipart uploads,
 	// keyed by gofakes3.UploadID.
@@ -54,12 +55,20 @@ type s3Backend struct {
 }
 
 // newBackend creates a new SimpleBucketBackend.
-func newBackend(s *Server) *s3Backend {
+func newBackend(s *Server) (*s3Backend, error) {
+	var meta metadataStore = newMemoryMetaStore()
+	if s.opt.MetaDB != "" {
+		var err error
+		meta, err = newBoltMetaStore(s.opt.MetaDB)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open metadata database: %w", err)
+		}
+	}
 	return &s3Backend{
 		s:          s,
-		meta:       new(sync.Map),
+		meta:       meta,
 		reaperQuit: make(chan struct{}),
-	}
+	}, nil
 }
 
 // ListBuckets always returns the default bucket.
@@ -175,10 +184,11 @@ func (b *s3Backend) HeadObject(ctx context.Context, bucketName, objectName strin
 		"Content-Type":  mimeType,
 	}
 
-	if val, ok := b.meta.Load(fp); ok {
-		metaMap := val.(map[string]string)
-		maps.Copy(meta, metaMap)
+	metaMap, err := b.loadMeta(ctx, _vfs, fp, node)
+	if err != nil {
+		return nil, err
 	}
+	maps.Copy(meta, metaMap)
 
 	return &gofakes3.Object{
 		Name:     objectName,
@@ -256,10 +266,11 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 		"Content-Type":  mimeType,
 	}
 
-	if val, ok := b.meta.Load(fp); ok {
-		metaMap := val.(map[string]string)
-		maps.Copy(meta, metaMap)
+	metaMap, err := b.loadMeta(ctx, _vfs, fp, node)
+	if err != nil {
+		return nil, err
 	}
+	maps.Copy(meta, metaMap)
 
 	return &gofakes3.Object{
 		Name:     objectName,
@@ -271,12 +282,12 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 	}, nil
 }
 
-// storeModtime sets both "mtime" and "X-Amz-Meta-Mtime" to val in b.meta.
-// Call this whenever modtime is updated.
-func (b *s3Backend) storeModtime(fp string, meta map[string]string, val string) {
+// storeModtime sets both "mtime" and "X-Amz-Meta-Mtime" to val in meta and
+// stores it. Call this whenever modtime is updated, after setting it on fp.
+func (b *s3Backend) storeModtime(ctx context.Context, _vfs *vfs.VFS, fp string, meta map[string]string, val string) error {
 	meta["X-Amz-Meta-Mtime"] = val
 	meta["mtime"] = val
-	b.meta.Store(fp, meta)
+	return b.saveMeta(ctx, _vfs, fp, meta)
 }
 
 // TouchObject creates or updates meta on specified object.
@@ -302,13 +313,18 @@ func (b *s3Backend) TouchObject(ctx context.Context, fp string, meta map[string]
 		return result, err
 	}
 
-	b.meta.Store(fp, meta)
+	if err := b.saveMeta(ctx, _vfs, fp, meta); err != nil {
+		return result, err
+	}
 
 	if val, ok := meta["X-Amz-Meta-Mtime"]; ok {
 		ti, err := swift.FloatStringToTime(val)
 		if err == nil {
-			b.storeModtime(fp, meta, val)
-			return result, _vfs.Chtimes(fp, ti, ti)
+			chErr := _vfs.Chtimes(fp, ti, ti)
+			if err := b.storeModtime(ctx, _vfs, fp, meta, val); err != nil {
+				return result, err
+			}
+			return result, chErr
 		}
 		// ignore error since the file is successfully created
 	}
@@ -316,8 +332,11 @@ func (b *s3Backend) TouchObject(ctx context.Context, fp string, meta map[string]
 	if val, ok := meta["mtime"]; ok {
 		ti, err := swift.FloatStringToTime(val)
 		if err == nil {
-			b.storeModtime(fp, meta, val)
-			return result, _vfs.Chtimes(fp, ti, ti)
+			chErr := _vfs.Chtimes(fp, ti, ti)
+			if err := b.storeModtime(ctx, _vfs, fp, meta, val); err != nil {
+				return result, err
+			}
+			return result, chErr
 		}
 		// ignore error since the file is successfully created
 	}
@@ -423,13 +442,18 @@ func (b *s3Backend) PutObject(
 		return result, err
 	}
 
-	b.meta.Store(fp, meta)
+	if err := b.saveMeta(ctx, _vfs, fp, meta); err != nil {
+		return result, err
+	}
 
 	if val, ok := meta["X-Amz-Meta-Mtime"]; ok {
 		ti, err := swift.FloatStringToTime(val)
 		if err == nil {
-			b.storeModtime(fp, meta, val)
-			return result, _vfs.Chtimes(fp, ti, ti)
+			chErr := _vfs.Chtimes(fp, ti, ti)
+			if err := b.storeModtime(ctx, _vfs, fp, meta, val); err != nil {
+				return result, err
+			}
+			return result, chErr
 		}
 		// ignore error since the file is successfully created
 	}
@@ -437,8 +461,11 @@ func (b *s3Backend) PutObject(
 	if val, ok := meta["mtime"]; ok {
 		ti, err := swift.FloatStringToTime(val)
 		if err == nil {
-			b.storeModtime(fp, meta, val)
-			return result, _vfs.Chtimes(fp, ti, ti)
+			chErr := _vfs.Chtimes(fp, ti, ti)
+			if err := b.storeModtime(ctx, _vfs, fp, meta, val); err != nil {
+				return result, err
+			}
+			return result, chErr
 		}
 		// ignore error since the file is successfully created
 	}
@@ -491,7 +518,9 @@ func (b *s3Backend) deleteObject(ctx context.Context, bucketName, objectName str
 	if err := _vfs.Remove(fp); err != nil && !os.IsNotExist(err) {
 		return err
 	}
-	b.meta.Delete(fp)
+	if err := b.meta.Delete(metaNamespace(ctx, _vfs), fp); err != nil {
+		return fmt.Errorf("failed to delete metadata for %q: %w", fp, err)
+	}
 
 	// FIXME: unsafe operation
 	rmdirRecursive(fp, _vfs)
@@ -533,6 +562,11 @@ func (b *s3Backend) DeleteBucket(ctx context.Context, name string) error {
 	if err := _vfs.Remove(name); err != nil {
 		return gofakes3.ErrBucketNotEmpty
 	}
+	// The bucket is already gone so failing the request would only confuse
+	// the client, and any records left behind no longer match a file.
+	if err := b.meta.DeleteAll(metaNamespace(ctx, _vfs), name); err != nil {
+		fs.Errorf(name, "failed to delete metadata for bucket: %v", err)
+	}
 
 	return nil
 }
@@ -566,7 +600,9 @@ func (b *s3Backend) CopyObject(ctx context.Context, srcBucket, srcKey, dstBucket
 		return result, gofakes3.KeyNotFound(srcKey)
 	}
 	if srcBucket == dstBucket && srcKey == dstKey {
-		b.meta.Store(fp, meta)
+		if err := b.saveMeta(ctx, _vfs, fp, meta); err != nil {
+			return result, err
+		}
 
 		val, ok := meta["X-Amz-Meta-Mtime"]
 		if !ok {
@@ -579,9 +615,11 @@ func (b *s3Backend) CopyObject(ctx context.Context, srcBucket, srcKey, dstBucket
 		if err != nil {
 			return result, nil
 		}
-		b.storeModtime(fp, meta, val)
-
-		return result, _vfs.Chtimes(fp, ti, ti)
+		chErr := _vfs.Chtimes(fp, ti, ti)
+		if err := b.storeModtime(ctx, _vfs, fp, meta, val); err != nil {
+			return result, err
+		}
+		return result, chErr
 	}
 
 	c, err := b.GetObject(ctx, srcBucket, srcKey, nil)
