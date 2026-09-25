@@ -14,8 +14,10 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/cmd/serve/proxy"
@@ -354,9 +356,15 @@ func TestRc(t *testing.T) {
 }
 
 // startWritableServer starts a webdav server backed by a fresh temp
-// directory and returns the server URL. It is used by the Overwrite tests
-// which need to exercise mutating verbs such as MKCOL and MOVE.
-func startWritableServer(t *testing.T) string {
+// directory and returns the server and its URL. It is used by the tests
+// which need to exercise mutating verbs such as MKCOL, PUT and MOVE.
+func startWritableServer(t *testing.T) (*WebDAV, string) {
+	return startWritableServerWithBaseURL(t, "")
+}
+
+// startWritableServerWithBaseURL is startWritableServer with the server
+// mounted under baseURL.
+func startWritableServerWithBaseURL(t *testing.T, baseURL string) (*WebDAV, string) {
 	t.Helper()
 
 	f, err := fs.NewFs(context.Background(), t.TempDir())
@@ -364,6 +372,7 @@ func startWritableServer(t *testing.T) string {
 
 	opt := Opt
 	opt.HTTP.ListenAddr = []string{testBindAddress}
+	opt.HTTP.BaseURL = baseURL
 
 	w, err := newWebDAV(context.Background(), f, &opt, &vfscommon.Opt, &proxy.Opt)
 	require.NoError(t, err)
@@ -374,7 +383,7 @@ func startWritableServer(t *testing.T) string {
 		assert.NoError(t, w.Shutdown())
 	})
 
-	return w.server.URLs()[0]
+	return w, w.server.URLs()[0]
 }
 
 func mkcol(t *testing.T, baseURL, path string) {
@@ -396,7 +405,7 @@ func mkcol(t *testing.T, baseURL, path string) {
 // the MOVE case (see https://github.com/golang/go/issues/66059), so rclone
 // normalises the header before delegating so the default matches the RFC.
 func TestMoveDefaultsToOverwrite(t *testing.T) {
-	testURL := startWritableServer(t)
+	_, testURL := startWritableServer(t)
 
 	mkcol(t, testURL, "dir1")
 	mkcol(t, testURL, "dir2")
@@ -421,7 +430,7 @@ func TestMoveDefaultsToOverwrite(t *testing.T) {
 // fills in a missing Overwrite header and never overrides an explicit
 // Overwrite: F sent by the client.
 func TestMoveOverwriteFalseStillRejects(t *testing.T) {
-	testURL := startWritableServer(t)
+	_, testURL := startWritableServer(t)
 
 	mkcol(t, testURL, "dir1")
 	mkcol(t, testURL, "dir2")
@@ -437,6 +446,57 @@ func TestMoveOverwriteFalseStillRejects(t *testing.T) {
 
 	assert.Equal(t, http.StatusPreconditionFailed, resp.StatusCode,
 		"MOVE with explicit Overwrite: F must still return 412 when destination exists")
+}
+
+// put uploads body to path and checks the server accepted it.
+func put(t *testing.T, baseURL, path, body string) {
+	t.Helper()
+	req, err := http.NewRequest("PUT", baseURL+path, strings.NewReader(body))
+	require.NoError(t, err)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	_ = resp.Body.Close()
+	require.True(t, resp.StatusCode >= 200 && resp.StatusCode < 300, "PUT %s returned %d", path, resp.StatusCode)
+}
+
+// TestCopyMoveSetsModTimeOnDestination is a regression test for
+// https://github.com/rclone/rclone/issues/8725
+//
+// The X-OC-Mtime header names the modification time the client wants the
+// resource to end up with. For COPY and MOVE that resource is the
+// destination named in the Destination header, not the request URL: after
+// a MOVE the request URL no longer exists.
+func TestCopyMoveSetsModTimeOnDestination(t *testing.T) {
+	modTime := time.Date(2001, 2, 3, 4, 5, 6, 0, time.UTC)
+
+	// The --baseurl case exercises the prefix stripping: the Destination
+	// header carries the prefix but VFS paths do not.
+	for _, baseURL := range []string{"", "/prefix"} {
+		for _, method := range []string{"COPY", "MOVE"} {
+			t.Run(method+baseURL, func(t *testing.T) {
+				w, testURL := startWritableServerWithBaseURL(t, baseURL)
+
+				put(t, testURL, "src.txt", "hello")
+
+				req, err := http.NewRequest(method, testURL+"src.txt", nil)
+				require.NoError(t, err)
+				req.Header.Set("Destination", testURL+"dst.txt")
+				req.Header.Set("X-OC-Mtime", strconv.FormatInt(modTime.Unix(), 10))
+
+				resp, err := http.DefaultClient.Do(req)
+				require.NoError(t, err)
+				_ = resp.Body.Close()
+				require.True(t, resp.StatusCode >= 200 && resp.StatusCode < 300,
+					"%s returned %d", method, resp.StatusCode)
+
+				VFS, err := w.getVFS(context.Background())
+				require.NoError(t, err)
+				node, err := VFS.Stat("dst.txt")
+				require.NoError(t, err)
+				assert.Equal(t, modTime.Unix(), node.ModTime().Unix())
+			})
+		}
+	}
 }
 
 // TestNewWebDAVError checks that a server initialisation failure is
