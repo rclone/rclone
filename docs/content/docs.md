@@ -54,6 +54,7 @@ See the following for detailed instructions for
 - [Google Cloud Storage](/googlecloudstorage/)
 - [Google Drive](/drive/)
 - [Google Photos](/googlephotos/)
+- [GoPro Media Library](/gopro/)
 - [Hasher](/hasher/) - to handle checksums for other remotes
 - [HDFS](/hdfs/)
 - [Hetzner Storage Box](/sftp/#hetzner-storage-box)

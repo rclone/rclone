@@ -55,6 +55,7 @@ docs = [
     "googlecloudstorage.md",
     "drive.md",
     "googlephotos.md",
+    "gopro.md",
     "hasher.md",
     "huaweidrive.md",
     "hdfs.md",
