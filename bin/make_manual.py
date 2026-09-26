@@ -78,6 +78,7 @@ docs = [
     "oracleobjectstorage/_index.md",
     "qingstor.md",
     "quatrix.md",
+    "rs.md",
     "sia.md",
     "swift.md",
     "pcloud.md",
