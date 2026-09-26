@@ -844,7 +844,7 @@ as a number of seconds. The following suffixes are valid:
 - `M`  - Months
 - `y`  - Years
 
-Examples: "10", "300ms", "-1.5h" or "2h45m".
+Examples: "10", "300ms", "-1.5h", "2h45m" or "1d12h".
 
 ### Size options
 
