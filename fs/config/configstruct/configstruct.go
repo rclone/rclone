@@ -3,6 +3,7 @@ package configstruct
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -306,6 +307,32 @@ func setIfSameType(aPtr any, b any) bool {
 	return false
 }
 
+// setIfNumber sets aPtr from b if b is a number, decoding it as JSON so
+// it is read the same way as in a JSON object, eg a size as bytes,
+// rather than with the default units of a command line value.
+func setIfNumber(aPtr *any, b any) bool {
+	switch reflect.ValueOf(b).Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+		reflect.Float32, reflect.Float64:
+	default:
+		return false
+	}
+	if *aPtr == nil {
+		return false
+	}
+	in, err := json.Marshal(b)
+	if err != nil {
+		return false
+	}
+	newValue := reflect.New(reflect.TypeOf(*aPtr))
+	if json.Unmarshal(in, newValue.Interface()) != nil {
+		return false
+	}
+	*aPtr = newValue.Elem().Interface()
+	return true
+}
+
 // SetAny interprets the field names in defaults and looks up config
 // values in the config passed in.  Any values found in config will be
 // set in the opt structure.
@@ -328,7 +355,7 @@ func SetAny(config map[string]any, opt any) (err error) {
 	for _, defaultItem := range defaultItems {
 		newValue := defaultItem.Value
 		if configValue, ok := config[defaultItem.Name]; ok {
-			if !setIfSameType(&newValue, configValue) {
+			if !setIfSameType(&newValue, configValue) && !setIfNumber(&newValue, configValue) {
 				// Convert the config value to be a string
 				stringConfigValue, err := InterfaceToString(configValue)
 				if err != nil {
