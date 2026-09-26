@@ -670,7 +670,7 @@ func (s *Session) RequestPushNotification(ctx context.Context) error {
 	opts := rest.Opts{
 		Method:       "PUT",
 		Path:         "/verify/trusteddevice/securitycode",
-		ExtraHeaders: s.GetAuthHeaders(map[string]string{}),
+		ExtraHeaders: s.getVerifyHeaders(map[string]string{}),
 		RootURL:      authEndpoint,
 		NoResponse:   true,
 	}
@@ -693,7 +693,7 @@ func (s *Session) Validate2FACode(ctx context.Context, code string) error {
 	opts := rest.Opts{
 		Method:       "POST",
 		Path:         "/verify/trusteddevice/securitycode",
-		ExtraHeaders: s.GetAuthHeaders(map[string]string{}),
+		ExtraHeaders: s.getVerifyHeaders(map[string]string{}),
 		RootURL:      authEndpoint,
 		Body:         body,
 		IgnoreStatus: true,
@@ -834,7 +834,7 @@ func (s *Session) ValidateSMSCode(ctx context.Context, code string, phoneID int,
 	opts := rest.Opts{
 		Method:       "POST",
 		Path:         "/verify/phone/securitycode",
-		ExtraHeaders: s.GetAuthHeaders(map[string]string{}),
+		ExtraHeaders: s.getVerifyHeaders(map[string]string{}),
 		RootURL:      authEndpoint,
 		Body:         body,
 		IgnoreStatus: true,
@@ -865,7 +865,7 @@ func (s *Session) TrustSession(ctx context.Context) error {
 	opts := rest.Opts{
 		Method:        "GET",
 		Path:          "/2sv/trust",
-		ExtraHeaders:  s.GetAuthHeaders(map[string]string{}),
+		ExtraHeaders:  s.getVerifyHeaders(map[string]string{}),
 		RootURL:       authEndpoint,
 		NoResponse:    true,
 		ContentLength: new(int64(0)),
@@ -901,6 +901,24 @@ func (s *Session) ValidateSession(ctx context.Context) error {
 // Used for 2FA validation and trust requests to idmsa.apple.com
 func (s *Session) GetAuthHeaders(overwrite map[string]string) map[string]string {
 	headers := s.getSRPAuthHeaders()
+	maps.Copy(headers, overwrite)
+	return headers
+}
+
+// getVerifyHeaders returns headers for the 2FA "verify" calls that
+// complete authentication: requesting/submitting a securitycode on the
+// trusted-device and phone paths, and trusting the session at /2sv/trust.
+// idmsa treats these requests differently depending on whether they look
+// like they came from icloud.com's own web client rather than the idmsa
+// sign-in page: Origin and Referer point at icloud.com instead of
+// idmsa.apple.com, and the sign-in-only headers X-Apple-I-FD-Client-Info
+// and X-Apple-Auth-Attributes are dropped.
+func (s *Session) getVerifyHeaders(overwrite map[string]string) map[string]string {
+	headers := s.getSRPAuthHeaders()
+	headers["Origin"] = baseEndpoint
+	headers["Referer"] = baseEndpoint + "/"
+	delete(headers, "X-Apple-I-FD-Client-Info")
+	delete(headers, "X-Apple-Auth-Attributes")
 	maps.Copy(headers, overwrite)
 	return headers
 }

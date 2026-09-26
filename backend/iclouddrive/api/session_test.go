@@ -114,3 +114,29 @@ func TestVerifyAccepted(t *testing.T) {
 		})
 	}
 }
+
+// TestGetVerifyHeaders checks that the securitycode/2sv-trust header
+// overrides are applied: Origin and Referer point at icloud.com instead of
+// idmsa.apple.com, the two idmsa-sign-in-only headers are absent, and
+// auth-correlation headers (scnt, session id) are preserved.
+func TestGetVerifyHeaders(t *testing.T) {
+	s := NewSession()
+	s.ClientID = "test-client-id"
+	s.Scnt = "test-scnt"
+	s.SessionID = "test-session-id"
+	s.AuthAttributes = "test-auth-attrs"
+
+	headers := s.getVerifyHeaders(map[string]string{})
+
+	assert.Equal(t, baseEndpoint, headers["Origin"])
+	assert.Equal(t, baseEndpoint+"/", headers["Referer"])
+	assert.NotContains(t, headers, "X-Apple-I-FD-Client-Info")
+	assert.NotContains(t, headers, "X-Apple-Auth-Attributes")
+	// auth-correlation headers must survive the override
+	assert.Equal(t, "test-scnt", headers["scnt"])
+	assert.Equal(t, "test-session-id", headers["X-Apple-ID-Session-Id"])
+
+	// overwrite still wins
+	overridden := s.getVerifyHeaders(map[string]string{"Origin": "https://example.com"})
+	assert.Equal(t, "https://example.com", overridden["Origin"])
+}
