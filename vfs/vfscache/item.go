@@ -830,8 +830,11 @@ func (item *Item) _actualClose(storeFn StoreFn, syncWriteBack bool) (err error) 
 			// asynchronous writeback
 			item.c.writeback.SetID(&item.writeBackID)
 			id := item.writeBackID
+			// Read the fields writeback.Add needs while the lock is still held:
+			// once it is released another method (Item.GetSize, say) may write them.
+			name, size, modified := item.name, item.info.Size, item.modified
 			item.mu.Unlock()
-			item.c.writeback.Add(id, item.name, item.info.Size, item.modified, func(ctx context.Context) error {
+			item.c.writeback.Add(id, name, size, modified, func(ctx context.Context) error {
 				return item.store(ctx, storeFn)
 			})
 			item.mu.Lock()
