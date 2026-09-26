@@ -111,6 +111,9 @@ func (c *copy) checkPartial(ctx context.Context) (remoteForCopy string, inplace 
 	} else {
 		remoteForCopy += suffix
 	}
+	if c.ci.PartialDir != "" {
+		remoteForCopy = path.Join(c.ci.PartialDir, remoteForCopy)
+	}
 	return remoteForCopy, false, nil
 }
 
