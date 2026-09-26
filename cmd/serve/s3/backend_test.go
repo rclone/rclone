@@ -198,7 +198,7 @@ func TestEtagHashAuto(t *testing.T) {
 	proxyOpt := proxy.Opt
 	proxyOpt.AuthProxy = "/path/to/auth/proxy"
 
-	fCrypt, err := fs.NewFs(ctx, ":crypt,remote="+t.TempDir()+",password="+obscure.MustObscure("password")+":")
+	fCrypt, err := fs.NewFs(ctx, ":crypt,remote='"+t.TempDir()+"',password="+obscure.MustObscure("password")+":")
 	require.NoError(t, err)
 	require.Equal(t, hash.None, fCrypt.Hashes().GetOne(), "crypt has no hashes")
 	for _, f := range []fs.Fs{nil, fCrypt} {
