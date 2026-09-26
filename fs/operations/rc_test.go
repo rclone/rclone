@@ -954,6 +954,16 @@ func TestRcGetFile(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "Operation!", out["result"])
 
+	// A suffix longer than the file represents the whole file.
+	in = rc.Params{
+		"fs":     r.FremoteName,
+		"remote": file1.Path,
+		"tail":   int64(operations.DefaultGetFileMaxSize + 1),
+	}
+	out, err = call.Fn(ctx, in)
+	require.NoError(t, err)
+	assert.Equal(t, file1Contents, out["result"])
+
 	// 6. Negative offset
 	in = rc.Params{
 		"fs":     r.FremoteName,
