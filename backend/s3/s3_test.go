@@ -3,8 +3,10 @@ package s3
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"path"
 	"testing"
 	"time"
 
@@ -495,6 +497,64 @@ func TestParseRetainUntilDate(t *testing.T) {
 			if tt.checkFunc != nil {
 				tt.checkFunc(t, result)
 			}
+		})
+	}
+}
+
+func TestOpenRestoreFirstError(t *testing.T) {
+	errorBodies := map[string]string{
+		"DeepArchive":        `<Error><Code>InvalidObjectState</Code><StorageClass>DEEP_ARCHIVE</StorageClass></Error>`,
+		"IntelligentTiering": `<Error><Code>InvalidObjectState</Code><StorageClass>INTELLIGENT_TIERING</StorageClass><AccessTier>DEEP_ARCHIVE_ACCESS</AccessTier></Error>`,
+		"FromObject":         `<Error><Code>InvalidObjectState</Code></Error>`,
+		"Unknown":            `<Error><Code>InvalidObjectState</Code></Error>`,
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusForbidden)
+		_, _ = io.WriteString(w, errorBodies[path.Base(r.URL.Path)])
+	}))
+	defer server.Close()
+
+	ctx, opt, client := SetupS3Test(t)
+	opt.Endpoint = server.URL
+	opt.ForcePathStyle = true
+	opt.Region = "us-east-1"
+	opt.AccessKeyID = "test-access-key"
+	opt.SecretAccessKey = "test-secret-key"
+	c, _, err := s3Connection(ctx, opt, client)
+	require.NoError(t, err)
+	f := &Fs{
+		name:  "s3test",
+		opt:   *opt,
+		ctx:   ctx,
+		c:     c,
+		pacer: fs.NewPacer(ctx, pacer.NewS3(pacer.MinSleep(minSleep))),
+		cache: bucket.NewCache(),
+	}
+	f.setRoot("bucket")
+
+	for _, test := range []struct {
+		name         string
+		storageClass *string
+		want         string
+	}{{
+		name: "DeepArchive",
+		want: "Object in DEEP_ARCHIVE, restore first",
+	}, {
+		name: "IntelligentTiering",
+		want: "Object in INTELLIGENT_TIERING (DEEP_ARCHIVE_ACCESS tier), restore first",
+	}, {
+		name:         "FromObject",
+		storageClass: aws.String("DEEP_ARCHIVE"),
+		want:         "Object in DEEP_ARCHIVE, restore first",
+	}, {
+		name: "Unknown",
+		want: "Object in GLACIER, restore first",
+	}} {
+		t.Run(test.name, func(t *testing.T) {
+			o := &Object{fs: f, remote: test.name, storageClass: test.storageClass}
+			_, err := o.Open(ctx)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), test.want)
 		})
 	}
 }
