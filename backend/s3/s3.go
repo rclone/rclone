@@ -4527,7 +4527,16 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	})
 	if awsError, ok := errors.AsType[smithy.APIError](err); ok {
 		if awsError.ErrorCode() == "InvalidObjectState" {
-			return nil, fmt.Errorf("Object in GLACIER, restore first: bucket=%q, key=%q", bucket, bucketPath)
+			storageClass := "GLACIER"
+			if stateErr, ok := errors.AsType[*types.InvalidObjectState](err); ok && stateErr.StorageClass != "" {
+				storageClass = string(stateErr.StorageClass)
+				if stateErr.AccessTier != "" {
+					storageClass += " (" + string(stateErr.AccessTier) + " tier)"
+				}
+			} else if o.storageClass != nil && *o.storageClass != "" {
+				storageClass = *o.storageClass
+			}
+			return nil, fmt.Errorf("Object in %s, restore first: bucket=%q, key=%q", storageClass, bucket, bucketPath)
 		}
 	}
 	if err != nil {
