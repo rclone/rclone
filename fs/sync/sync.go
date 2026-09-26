@@ -19,6 +19,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/march"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/sync/trackrenames"
 	"github.com/rclone/rclone/lib/errcount"
 	"github.com/rclone/rclone/lib/transform"
 	"golang.org/x/sync/errgroup"
@@ -54,7 +55,7 @@ type syncCopyMove struct {
 	deletersWg             sync.WaitGroup         // for delete before go routine
 	deleteFilesCh          chan fs.Object         // channel to receive deletes if delete before
 	trackRenames           bool                   // set if we should do server-side renames
-	trackRenamesStrategy   trackRenamesStrategy   // strategies used for tracking renames
+	trackRenamesStrategy   trackrenames.Strategy  // strategies used for tracking renames
 	dstFilesMu             sync.Mutex             // protect dstFiles
 	dstFiles               map[string]fs.Object   // dst files, always filled
 	srcFiles               map[string]fs.Object   // src files, only used if deleteBefore
@@ -76,8 +77,7 @@ type syncCopyMove struct {
 	fatalErr               error                  // fatal error
 	commonHash             hash.Type              // common hash type between src and dst
 	modifyWindow           time.Duration          // modify window between fsrc, fdst
-	renameMapMu            sync.Mutex             // mutex to protect the below
-	renameMap              map[string][]fs.Object // dst files by hash - only used by trackRenames
+	renameMatcher          *trackrenames.Matcher  // dst files indexed for trackRenames
 	renamerWg              sync.WaitGroup         // wait for renamers
 	toBeRenamed            *pipe                  // renamers channel
 	trackRenamesWg         sync.WaitGroup         // wg for background track renames
@@ -106,26 +106,6 @@ type setDirModTime struct {
 	dir     string
 	modTime time.Time
 	level   int // the level of the directory, 0 is root
-}
-
-type trackRenamesStrategy byte
-
-const (
-	trackRenamesStrategyHash trackRenamesStrategy = 1 << iota
-	trackRenamesStrategyModtime
-	trackRenamesStrategyLeaf
-)
-
-func (strategy trackRenamesStrategy) hash() bool {
-	return (strategy & trackRenamesStrategyHash) != 0
-}
-
-func (strategy trackRenamesStrategy) modTime() bool {
-	return (strategy & trackRenamesStrategyModtime) != 0
-}
-
-func (strategy trackRenamesStrategy) leaf() bool {
-	return (strategy & trackRenamesStrategyLeaf) != 0
 }
 
 func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, deleteEmptySrcDirs bool, copyEmptySrcDirs bool, allowOverlap bool) (*syncCopyMove, error) {
@@ -222,7 +202,7 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		}
 		s.noTraverse = false
 	}
-	s.trackRenamesStrategy, err = parseTrackRenamesStrategy(ci.TrackRenamesStrategy)
+	s.trackRenamesStrategy, err = trackrenames.ParseStrategy(ci.TrackRenamesStrategy)
 	if err != nil {
 		return nil, err
 	}
@@ -238,18 +218,11 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		}
 	}
 	if s.trackRenames {
-		// Don't track renames for remotes without server-side move support.
-		if !operations.CanServerSideMove(fdst) {
-			fs.Errorf(fdst, "Ignoring --track-renames as the destination does not support server-side move or copy")
-			s.trackRenames = false
-		}
-		if s.trackRenamesStrategy.hash() && s.commonHash == hash.None {
-			fs.Errorf(fdst, "Ignoring --track-renames as the source and destination do not have a common hash")
-			s.trackRenames = false
-		}
-
-		if s.trackRenamesStrategy.modTime() && s.modifyWindow == fs.ModTimeNotSupported {
-			fs.Errorf(fdst, "Ignoring --track-renames as either the source or destination do not support modtime")
+		commonHash, modifyWindow, unsupported := trackrenames.CheckCapabilities(ctx, fsrc, fdst, s.trackRenamesStrategy)
+		s.commonHash = commonHash
+		s.modifyWindow = modifyWindow
+		for _, reason := range unsupported {
+			fs.Errorf(fdst, "Ignoring --track-renames as %s", reason)
 			s.trackRenames = false
 		}
 
@@ -746,109 +719,6 @@ func (s *syncCopyMove) markParentNotEmpty(entry fs.DirEntry) {
 	}
 }
 
-// parseTrackRenamesStrategy turns a config string into a trackRenamesStrategy
-func parseTrackRenamesStrategy(strategies string) (strategy trackRenamesStrategy, err error) {
-	if len(strategies) == 0 {
-		return strategy, nil
-	}
-	for s := range strings.SplitSeq(strategies, ",") {
-		switch s {
-		case "hash":
-			strategy |= trackRenamesStrategyHash
-		case "modtime":
-			strategy |= trackRenamesStrategyModtime
-		case "leaf":
-			strategy |= trackRenamesStrategyLeaf
-		case "size":
-			// ignore
-		default:
-			return strategy, fmt.Errorf("unknown track renames strategy %q", s)
-		}
-	}
-	return strategy, nil
-}
-
-// renameID makes a string with the size and the other identifiers of the requested rename strategies
-//
-// it may return an empty string in which case no hash could be made
-func (s *syncCopyMove) renameID(obj fs.Object, renamesStrategy trackRenamesStrategy, precision time.Duration) string {
-	var builder strings.Builder
-
-	fmt.Fprintf(&builder, "%d", obj.Size())
-
-	if renamesStrategy.hash() {
-		var err error
-		hash, err := obj.Hash(s.ctx, s.commonHash)
-		if err != nil {
-			fs.Debugf(obj, "Hash failed: %v", err)
-			return ""
-		}
-		if hash == "" {
-			return ""
-		}
-
-		builder.WriteRune(',')
-		builder.WriteString(hash)
-	}
-
-	// for renamesStrategy.modTime() we don't add to the hash but we check the times in
-	// popRenameMap
-
-	if renamesStrategy.leaf() {
-		builder.WriteRune(',')
-		builder.WriteString(path.Base(obj.Remote()))
-	}
-
-	return builder.String()
-}
-
-// pushRenameMap adds the object with hash to the rename map
-func (s *syncCopyMove) pushRenameMap(hash string, obj fs.Object) {
-	s.renameMapMu.Lock()
-	s.renameMap[hash] = append(s.renameMap[hash], obj)
-	s.renameMapMu.Unlock()
-}
-
-// popRenameMap finds the object with hash and pop the first match from
-// renameMap or returns nil if not found.
-func (s *syncCopyMove) popRenameMap(hash string, src fs.Object) (dst fs.Object) {
-	s.renameMapMu.Lock()
-	defer s.renameMapMu.Unlock()
-	dsts, ok := s.renameMap[hash]
-	if ok && len(dsts) > 0 {
-		// Element to remove
-		i := 0
-
-		// If using track renames strategy modtime then we need to check the modtimes here
-		if s.trackRenamesStrategy.modTime() {
-			i = -1
-			srcModTime := src.ModTime(s.ctx)
-			for j, dst := range dsts {
-				dstModTime := dst.ModTime(s.ctx)
-				dt := dstModTime.Sub(srcModTime)
-				if dt < s.modifyWindow && dt > -s.modifyWindow {
-					i = j
-					break
-				}
-			}
-			// If nothing matched then return nil
-			if i < 0 {
-				return nil
-			}
-		}
-
-		// Remove the entry and return it
-		dst = dsts[i]
-		dsts = slices.Delete(dsts, i, i+1)
-		if len(dsts) > 0 {
-			s.renameMap[hash] = dsts
-		} else {
-			delete(s.renameMap, hash)
-		}
-	}
-	return dst
-}
-
 // makeRenameMap builds a map of the destination files by hash that
 // match sizes in the slice of objects in s.renameCheck
 func (s *syncCopyMove) makeRenameMap() {
@@ -865,7 +735,7 @@ func (s *syncCopyMove) makeRenameMap() {
 	go s.pumpMapToChan(s.dstFiles, in)
 
 	// now make a map of size,hash for all dstFiles
-	s.renameMap = make(map[string][]fs.Object)
+	s.renameMatcher = trackrenames.NewMatcher(s.ctx, s.trackRenamesStrategy, s.commonHash, s.modifyWindow)
 	var wg sync.WaitGroup
 	wg.Add(s.ci.Checkers)
 	for range s.ci.Checkers {
@@ -875,12 +745,7 @@ func (s *syncCopyMove) makeRenameMap() {
 				// only create hash for dst fs.Object if its size could match
 				if _, found := possibleSizes[obj.Size()]; found {
 					tr := accounting.Stats(s.ctx).NewCheckingTransfer(obj, "renaming")
-					hash := s.renameID(obj, s.trackRenamesStrategy, s.modifyWindow)
-
-					if hash != "" {
-						s.pushRenameMap(hash, obj)
-					}
-
+					s.renameMatcher.Add(obj)
 					tr.Done(s.ctx, nil)
 				}
 			}
@@ -893,15 +758,8 @@ func (s *syncCopyMove) makeRenameMap() {
 // tryRename renames an src object when doing track renames if
 // possible, it returns true if the object was renamed.
 func (s *syncCopyMove) tryRename(src fs.Object) bool {
-	// Calculate the hash of the src object
-	hash := s.renameID(src, s.trackRenamesStrategy, fs.GetModifyWindow(s.ctx, s.fsrc, s.fdst))
-
-	if hash == "" {
-		return false
-	}
-
 	// Get a match on fdst
-	dst := s.popRenameMap(hash, src)
+	dst := s.renameMatcher.Match(src)
 	if dst == nil {
 		return false
 	}

@@ -39,6 +39,7 @@ type Options struct {
 	CreateEmptySrcDirs    bool
 	RemoveEmptyDirs       bool
 	MaxDelete             int // percentage from 0 to 100
+	MaxDeleteRenamesAware bool
 	Force                 bool
 	FiltersFile           string
 	Workdir               string
@@ -130,6 +131,7 @@ func init() {
 	flags.BoolVarP(cmdFlags, &Opt.CheckAccess, "check-access", "", Opt.CheckAccess, MakeHelp("Ensure expected {CHECKFILE} files are found on both Path1 and Path2 filesystems, else abort."), "")
 	flags.StringVarP(cmdFlags, &Opt.CheckFilename, "check-filename", "", Opt.CheckFilename, MakeHelp("Filename for --check-access (default: {CHECKFILE})"), "")
 	flags.BoolVarP(cmdFlags, &Opt.Force, "force", "", Opt.Force, "Bypass --max-delete safety check and run the sync. Consider using with --verbose", "")
+	flags.BoolVarP(cmdFlags, &Opt.MaxDeleteRenamesAware, "max-delete-renames-aware", "", Opt.MaxDeleteRenamesAware, "Exclude tracked renames from the --max-delete safety check (requires --track-renames)", "")
 	flags.FVarP(cmdFlags, &Opt.CheckSync, "check-sync", "", "Controls comparison of final listings: true|false|only (default: true)", "")
 	flags.BoolVarP(cmdFlags, &Opt.CreateEmptySrcDirs, "create-empty-src-dirs", "", Opt.CreateEmptySrcDirs, "Sync creation and deletion of empty directories. (Not compatible with --remove-empty-dirs)", "")
 	flags.BoolVarP(cmdFlags, &Opt.RemoveEmptyDirs, "remove-empty-dirs", "", Opt.RemoveEmptyDirs, "Remove ALL empty directories at the final cleanup step.", "")
