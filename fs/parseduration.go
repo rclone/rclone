@@ -69,6 +69,63 @@ func parseDurationSuffixes(age string) (time.Duration, error) {
 	return time.Duration(period), nil
 }
 
+// parseDurationSequence parses a possibly signed sequence of numbers each
+// with a unit, eg "1d12h", where a unit is one of the ageSuffixes or one
+// accepted by time.ParseDuration.
+func parseDurationSequence(age string) (time.Duration, error) {
+	s := age
+	sign := 1.0
+	if s != "" && (s[0] == '-' || s[0] == '+') {
+		if s[0] == '-' {
+			sign = -1
+		}
+		s = s[1:]
+	}
+	if s == "" {
+		return 0, fmt.Errorf("invalid duration %q", age)
+	}
+	isNumber := func(c byte) bool { return c == '.' || (c >= '0' && c <= '9') }
+	var total float64
+	for s != "" {
+		i := 0
+		for i < len(s) && isNumber(s[i]) {
+			i++
+		}
+		j := i
+		for j < len(s) && !isNumber(s[j]) {
+			j++
+		}
+		number, unit := s[:i], s[i:j]
+		s = s[j:]
+		if number == "" || unit == "" {
+			return 0, fmt.Errorf("invalid duration %q", age)
+		}
+		value, err := strconv.ParseFloat(number, 64)
+		if err != nil {
+			return 0, fmt.Errorf("invalid duration %q: %w", age, err)
+		}
+		found := false
+		for _, ageSuffix := range ageSuffixes {
+			if ageSuffix.Suffix != "" && unit == ageSuffix.Suffix {
+				total += value * float64(ageSuffix.Multiplier)
+				found = true
+				break
+			}
+		}
+		if !found {
+			d, err := time.ParseDuration(number + unit)
+			if err != nil {
+				return 0, fmt.Errorf("invalid duration %q: %w", age, err)
+			}
+			total += float64(d)
+		}
+	}
+	if total >= math.MaxInt64 {
+		return 0, fmt.Errorf("duration %q is too long", age)
+	}
+	return time.Duration(sign * total), nil
+}
+
 // time formats to try parsing ages as - in order
 var timeFormats = []string{
 	time.RFC3339,
@@ -113,6 +170,11 @@ func parseDurationFromNow(age string, getNow func() time.Time) (d time.Duration,
 	}
 
 	d, err = parseDurationSuffixes(age)
+	if err == nil {
+		return d, nil
+	}
+
+	d, err = parseDurationSequence(age)
 	if err == nil {
 		return d, nil
 	}
