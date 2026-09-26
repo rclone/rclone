@@ -46,6 +46,7 @@ See the following for detailed instructions for
 - [Drime](/drime/)
 - [Dropbox](/dropbox/)
 - [Enterprise File Fabric](/filefabric/)
+- [FebBox](/febbox/)
 - [FileLu Cloud Storage](/filelu/)
 - [Filen](/filen/)
 - [Files.com](/filescom/)
