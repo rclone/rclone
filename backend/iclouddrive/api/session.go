@@ -194,20 +194,40 @@ func (s *Session) Request(ctx context.Context, opts rest.Opts, request any, resp
 	return resp, nil
 }
 
-// acceptedDespiteConflict returns true when Apple signals a successful code
-// validation with HTTP 409. Since ~mid-2026, idmsa returns 409 on the
-// securitycode endpoints even when the code is accepted (body carries
-// securityCode.valid=true), but it still issues X-Apple-Session-Token on
-// success. Treat token issuance as ground truth and absorb the headers so
-// TrustSession can proceed.
-func (s *Session) acceptedDespiteConflict(resp *http.Response) bool {
-	if resp == nil || resp.StatusCode != 409 || resp.Header.Get("X-Apple-Session-Token") == "" {
+// securityCodeResponse is the subset of Apple's JSON body on the
+// securitycode "enter" endpoints that tells us whether a 409 actually
+// reflects an accepted code.
+type securityCodeResponse struct {
+	SecurityCode *struct {
+		Valid bool `json:"valid"`
+	} `json:"securityCode"`
+}
+
+// verifyAccepted reports whether a response from a securitycode "enter"
+// call (trusted-device or SMS) is a successful 2FA submission. idmsa can
+// answer a correct code with HTTP 409 instead of 2xx: treat that as
+// success when the response carries X-Apple-Session-Token, or when the
+// JSON body reports securityCode.valid. A malformed or negative body on a
+// 409 is a genuine rejection. Callers are responsible for absorbing
+// response headers.
+func verifyAccepted(resp *http.Response, body []byte) bool {
+	if resp == nil {
 		return false
 	}
-	s.mu.Lock()
-	s.extractHeaders(resp)
-	s.mu.Unlock()
-	return true
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		return true
+	}
+	if resp.StatusCode != http.StatusConflict {
+		return false
+	}
+	if resp.Header.Get("X-Apple-Session-Token") != "" {
+		return true
+	}
+	var parsed securityCodeResponse
+	if err := json.Unmarshal(body, &parsed); err != nil {
+		return false
+	}
+	return parsed.SecurityCode != nil && parsed.SecurityCode.Valid
 }
 
 // Requires2FA returns true if the session requires 2FA
@@ -667,28 +687,37 @@ func (s *Session) Validate2FACode(ctx context.Context, code string) error {
 		return err
 	}
 
+	// IgnoreStatus and a manual body read (instead of NoResponse) let
+	// verifyAccepted inspect the JSON payload on a 409: NoResponse would let
+	// rest.Client's default error handler drain and close the body first.
 	opts := rest.Opts{
 		Method:       "POST",
 		Path:         "/verify/trusteddevice/securitycode",
 		ExtraHeaders: s.GetAuthHeaders(map[string]string{}),
 		RootURL:      authEndpoint,
 		Body:         body,
-		NoResponse:   true,
+		IgnoreStatus: true,
 	}
 
-	resp, err := s.Request(ctx, opts, nil, nil)
-	if err != nil && s.acceptedDespiteConflict(resp) {
-		err = nil
+	resp, err := s.srv.Call(ctx, &opts)
+	if err != nil {
+		return fmt.Errorf("validate2FACode failed: %w", err)
 	}
-	if err == nil {
-		if err := s.TrustSession(ctx); err != nil {
-			return err
-		}
-
-		return nil
+	respBody, readErr := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	if readErr != nil {
+		return fmt.Errorf("validate2FACode failed: reading response body: %w", readErr)
 	}
 
-	return fmt.Errorf("validate2FACode failed: %w", err)
+	if !verifyAccepted(resp, respBody) {
+		return fmt.Errorf("validate2FACode failed: HTTP error %d (%s) returned body: %q", resp.StatusCode, resp.Status, respBody)
+	}
+
+	s.mu.Lock()
+	s.extractHeaders(resp)
+	s.mu.Unlock()
+
+	return s.TrustSession(ctx)
 }
 
 // TrustedPhoneNumber represents a phone number that can receive SMS verification codes
@@ -799,25 +828,36 @@ func (s *Session) ValidateSMSCode(ctx context.Context, code string, phoneID int,
 	if err != nil {
 		return err
 	}
+	// See the comment in Validate2FACode: IgnoreStatus + a manual body read
+	// (instead of NoResponse) is needed so verifyAccepted can inspect the
+	// JSON payload on a 409.
 	opts := rest.Opts{
 		Method:       "POST",
 		Path:         "/verify/phone/securitycode",
 		ExtraHeaders: s.GetAuthHeaders(map[string]string{}),
 		RootURL:      authEndpoint,
 		Body:         body,
-		NoResponse:   true,
+		IgnoreStatus: true,
 	}
-	resp, err := s.Request(ctx, opts, nil, nil)
-	if err != nil && s.acceptedDespiteConflict(resp) {
-		err = nil
+	resp, err := s.srv.Call(ctx, &opts)
+	if err != nil {
+		return fmt.Errorf("validateSMSCode: %w", err)
 	}
-	if err == nil {
-		if err := s.TrustSession(ctx); err != nil {
-			return err
-		}
-		return nil
+	respBody, readErr := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	if readErr != nil {
+		return fmt.Errorf("validateSMSCode: reading response body: %w", readErr)
 	}
-	return fmt.Errorf("validateSMSCode: %w", err)
+
+	if !verifyAccepted(resp, respBody) {
+		return fmt.Errorf("validateSMSCode: HTTP error %d (%s) returned body: %q", resp.StatusCode, resp.Status, respBody)
+	}
+
+	s.mu.Lock()
+	s.extractHeaders(resp)
+	s.mu.Unlock()
+
+	return s.TrustSession(ctx)
 }
 
 // TrustSession trusts the session
