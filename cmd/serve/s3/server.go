@@ -25,6 +25,9 @@ type ctxKey int
 
 const (
 	ctxKeyID ctxKey = iota
+	// ctxKeyAccessKey holds the access key ID an auth proxy authenticated
+	// the request with.
+	ctxKeyAccessKey
 )
 
 // Server is a s3.FileSystem interface
@@ -53,6 +56,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		if err != nil {
 			if w.backend != nil {
 				w.backend.stopReaper()
+				_ = w.backend.meta.Close()
 			}
 			w.provider.Shutdown()
 		}
@@ -85,7 +89,10 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		authList = nil
 	}
 
-	w.backend = newBackend(w)
+	w.backend, err = newBackend(w)
+	if err != nil {
+		return nil, err
+	}
 	if w.opt.MultipartExpiry > 0 {
 		w.backend.startReaper(time.Duration(w.opt.MultipartExpiry))
 	}
@@ -211,6 +218,9 @@ func (w *Server) Shutdown() error {
 	w.backend.stopReaper()
 	err := w.server.Shutdown()
 	w.provider.Shutdown()
+	if metaErr := w.backend.meta.Close(); err == nil {
+		err = metaErr
+	}
 	return err
 }
 
@@ -231,7 +241,9 @@ func proxyAuthMiddleware(next http.Handler, ws *Server) http.Handler {
 			accessDenied(w)
 			return
 		}
-		r = r.WithContext(context.WithValue(r.Context(), ctxKeyID, VFS))
+		ctx := context.WithValue(r.Context(), ctxKeyID, VFS)
+		ctx = context.WithValue(ctx, ctxKeyAccessKey, accessKey)
+		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})
 }

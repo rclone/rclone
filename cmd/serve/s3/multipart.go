@@ -416,16 +416,19 @@ func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, obj
 	}
 	b.multipartUploads.Delete(uploadID)
 
-	b.meta.Store(up.fp, up.meta)
-	if val, ok := up.meta["X-Amz-Meta-Mtime"]; ok {
+	if err := b.saveMeta(ctx, up.vfs, up.fp, up.meta); err != nil {
+		return "", "", err
+	}
+	val, ok := up.meta["X-Amz-Meta-Mtime"]
+	if !ok {
+		val, ok = up.meta["mtime"]
+	}
+	if ok {
 		if ti, err := swift.FloatStringToTime(val); err == nil {
-			b.storeModtime(up.fp, up.meta, val)
 			_ = up.vfs.Chtimes(up.fp, ti, ti)
-		}
-	} else if val, ok := up.meta["mtime"]; ok {
-		if ti, err := swift.FloatStringToTime(val); err == nil {
-			b.storeModtime(up.fp, up.meta, val)
-			_ = up.vfs.Chtimes(up.fp, ti, ti)
+			if err := b.storeModtime(ctx, up.vfs, up.fp, up.meta, val); err != nil {
+				return "", "", err
+			}
 		}
 	}
 

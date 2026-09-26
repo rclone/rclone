@@ -357,8 +357,22 @@ can take some time.
 
 Versioning is not currently supported.
 
-Metadata will only be saved in memory other than the rclone `mtime`
-metadata which will be set as the modification time of the file.
+By default, metadata (custom `X-Amz-Meta-*` headers, `Content-Type`,
+etc.) is only kept in memory and will be lost on restart. The rclone
+`mtime` metadata is the exception - it is always persisted as the
+file modification time. Use `--meta-db /path/to/meta.db` to persist
+all metadata to a database file on local disk so that it survives
+restarts.
+
+The database can only be opened by one rclone process at a time.
+Metadata is kept separately for each remote served, and with
+`--auth-proxy` for each access key ID, so users can't see or delete
+each other's metadata. An upload whose metadata can't be stored fails.
+
+Metadata is stored with the size and modification time of the file it
+was set for. If the file is changed without going through `serve s3`
+the metadata no longer matches and is ignored. On remotes which don't
+support modification times only the size is checked.
 
 ### Object names
 

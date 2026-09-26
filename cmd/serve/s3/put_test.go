@@ -70,7 +70,7 @@ func newPutTestBackend(t *testing.T, backing string, vfsOpt *vfscommon.Options) 
 	w, err := newServer(ctx, f, &opt, vfsOpt, &proxy.Opt)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = w.Shutdown() })
-	return newBackend(w), f, bucket
+	return w.backend, f, bucket
 }
 
 var errBoom = errors.New("boom")
