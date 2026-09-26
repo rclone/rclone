@@ -379,7 +379,11 @@ func (c *Cache) Exists(name string) bool {
 	return item.Exists()
 }
 
-// rename with os.Rename and more checking
+// rename with file.Rename and more checking
+//
+// file.Rename is like os.Rename but on Windows it can replace a
+// destination which has open handles, which happens whenever the target
+// of the rename is itself cached (see issue #9943).
 func rename(osOldPath, osNewPath string) error {
 	sfi, err := os.Stat(osOldPath)
 	if err != nil {
@@ -411,7 +415,7 @@ func rename(osOldPath, osNewPath string) error {
 			return nil
 		}
 	}
-	if err = os.Rename(osOldPath, osNewPath); err != nil {
+	if err = file.Rename(osOldPath, osNewPath); err != nil {
 		return fmt.Errorf("failed to rename in cache: %s to %s: %w", osOldPath, osNewPath, err)
 	}
 	return nil
