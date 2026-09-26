@@ -2427,6 +2427,8 @@ func (ls *versionsList) List(ctx context.Context) (resp *s3.ListObjectsV2Output,
 		var obj types.Object
 		//structs.SetFrom(obj, objVersion)
 		setFrom_typesObject_typesObjectVersion(&obj, &objVersion)
+		// StorageClass has a different type in ObjectVersion so isn't copied by setFrom
+		obj.StorageClass = types.ObjectStorageClass(objVersion.StorageClass)
 		// Adjust the file names
 		if !ls.usingVersionAt && (!deref(objVersion.IsLatest) || objVersion.Size == isDeleteMarker) {
 			if obj.Key != nil && objVersion.LastModified != nil {
