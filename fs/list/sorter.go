@@ -97,7 +97,9 @@ func (ls *Sorter) entryToKey(entry fs.DirEntry) string {
 
 // Turn an exsort key back into a directory entry
 func (ls *Sorter) keyToEntry(ctx context.Context, key string) (entry fs.DirEntry, err error) {
-	null := strings.IndexRune(key, '\x00')
+	// The final NUL separates the sort key from the remote so KeyFn may
+	// use NUL to delimit parts of its own key.
+	null := strings.LastIndex(key, "\x00")
 	if null < 0 {
 		return nil, errors.New("sorter: failed to deserialize: missing null")
 	}
