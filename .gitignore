@@ -10,6 +10,7 @@ rclone.iml
 .idea
 .history
 .vscode
+rclone.code-workspace
 *.test
 *.iml
 fuzz-build.zip
