@@ -1235,6 +1235,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	f.dirCache.FlushDir(f.sanitizePath(src.Remote()))
+	f.dirCache.FlushDir(f.sanitizePath(remote))
 
 	return f.NewObject(ctx, remote)
 }
@@ -1267,6 +1268,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 
 	srcFs.dirCache.FlushDir(f.sanitizePath(srcRemote))
+	f.dirCache.FlushDir(f.sanitizePath(dstRemote))
 
 	return nil
 }
