@@ -271,12 +271,24 @@ func (b *Batcher[Item, Result]) Commit(ctx context.Context, name string, item It
 		return entry, fserrors.FatalError(errors.New("batcher is shutting down"))
 	default:
 	}
+	select {
+	case <-ctx.Done():
+		b.admitMu.Unlock()
+		return entry, ctx.Err()
+	default:
+	}
 	fs.Debugf(b.f, "Adding %q to batch", name)
 	resp := make(chan response[Result], 1)
-	b.in <- request[Item, Result]{
+	req := request[Item, Result]{
 		item:   item,
 		name:   name,
 		result: resp,
+	}
+	select {
+	case b.in <- req:
+	case <-ctx.Done():
+		b.admitMu.Unlock()
+		return entry, ctx.Err()
 	}
 	b.admitMu.Unlock()
 	// If running async then don't wait for the result
