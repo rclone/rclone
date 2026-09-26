@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fstest"
@@ -74,7 +75,6 @@ func TestRcForget(t *testing.T) {
 	assert.Equal(t, rc.Params{
 		"forgotten": []string{},
 	}, out)
-	// FIXME needs more tests
 }
 
 func TestRcRefresh(t *testing.T) {
@@ -88,7 +88,6 @@ func TestRcRefresh(t *testing.T) {
 			"": "OK",
 		},
 	}, out)
-	// FIXME needs more tests
 }
 
 func newTestPollVFS(t *testing.T, changeNotify func(context.Context, func(string, fs.EntryType), <-chan time.Duration)) (*fstest.Run, *VFS, *rc.Call) {
@@ -134,7 +133,6 @@ func TestRcPollInterval(t *testing.T) {
 	out, err := call.Fn(context.Background(), nil)
 	require.NoError(t, err)
 	assert.Equal(t, rc.Params{}, out)
-	// FIXME needs more tests
 }
 
 func TestRcPollIntervalShutdown(t *testing.T) {
