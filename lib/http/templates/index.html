@@ -318,10 +318,11 @@ tr.file:hover td .zip {
 					</tr>
 					</thead>
 					<tbody>
+					{{- if not (and .Static .IsRoot)}}
 					<tr>
 						<td></td>
 						<td>
-							<a href="..">
+							<a href="{{html .UpLink}}">
 								<span class="goup">Go up</span>
 							</a>
 						</td>
@@ -329,6 +330,7 @@ tr.file:hover td .zip {
 						<td class="hideable">&mdash;</td>
 						<td class="hideable"></td>
 					</tr>
+					{{- end}}
 					{{- range .Entries}}
 					<tr class="file{{if .IsDir}} dir{{end}}">
 						<td>
