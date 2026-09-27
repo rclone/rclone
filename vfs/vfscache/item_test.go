@@ -823,3 +823,107 @@ func TestItemHandleCachingReopenDuringGraceClose(t *testing.T) {
 	}
 	item.mu.Unlock()
 }
+
+// recordingFs wraps an fs.Fs and records the modtime of every source
+// passed to Put, Copy or Move, so tests can see what modtime an upload
+// carries to the server.
+type recordingFs struct {
+	fs.Fs
+	mu   sync.Mutex
+	puts []time.Time
+}
+
+func (f *recordingFs) record(mt time.Time) {
+	f.mu.Lock()
+	f.puts = append(f.puts, mt)
+	f.mu.Unlock()
+}
+
+func (f *recordingFs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	f.record(src.ModTime(ctx))
+	return f.Fs.Put(ctx, in, src, options...)
+}
+
+func (f *recordingFs) putTimes() []time.Time {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return append([]time.Time(nil), f.puts...)
+}
+
+// Features wraps the server-side copy and move features so the modtime
+// the upload is about to carry gets recorded. The vfs cache uploads via
+// operations.Copy which takes the server-side copy path for same-config
+// remotes (local test remotes are both local), so recording in Put or
+// Update would miss the upload entirely.
+func (f *recordingFs) Features() *fs.Features {
+	features := *f.Fs.Features()
+	cp, mv := features.Copy, features.Move
+	features.Copy = func(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+		f.record(src.ModTime(ctx))
+		return cp(ctx, src, remote)
+	}
+	features.Move = func(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+		f.record(src.ModTime(ctx))
+		return mv(ctx, src, remote)
+	}
+	return &features
+}
+
+// TestItemStoreModTime checks that an upload carries the item's logical
+// modtime (info.ModTime), not whatever modtime the cache file happens
+// to have on disk at upload time. Issue #9637: reopening and closing a
+// file after its writeback has been queued can reset the cache file's
+// modtime to the old remote modtime (_actualClose sets it from
+// item.o.ModTime for non-dirty items), and the pending upload then
+// sends that stale time to the server. Nextcloud in particular cannot
+// fix this up afterwards - its SetModTime returns ErrorCantSetModTime -
+// so the upload itself must carry the right time.
+func TestItemStoreModTime(t *testing.T) {
+	r := fstest.NewRun(t)
+	rec := &recordingFs{Fs: r.Fremote}
+
+	opt := vfscommon.Opt
+	opt.CachePollInterval = 0
+	opt.WriteBack = 0
+
+	ctx, cancel := context.WithCancel(context.Background())
+	c, err := New(ctx, rec, &opt, addVirtual)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		err := c.CleanUp()
+		require.NoError(t, err)
+		assertPathNotExist(t, c.root)
+		cancel()
+	})
+
+	_, obj, item := newFile(t, r, c, "existing")
+
+	// Give the remote object an old modtime, like a file which has
+	// been on the remote for a while
+	oldTime := time.Now().Add(-time.Hour).Truncate(time.Second)
+	require.NoError(t, obj.SetModTime(ctx, oldTime))
+
+	// Open the item, write new content and set a fresh logical modtime
+	// (what the kernel does for utimens)
+	require.NoError(t, item.Open(obj))
+	_, err = item.WriteAt([]byte("new content"), 0)
+	require.NoError(t, err)
+	newTime := time.Now().Truncate(time.Second)
+	item.setModTime(newTime)
+
+	// Closing stores the file - this upload must carry newTime
+	require.NoError(t, item.Close(nil))
+
+	// Now simulate what a reopen/close does to the cache file in the
+	// buggy scenario (issue #9637): the cache file's OS modtime gets
+	// reset to the old remote modtime while an upload is still pending.
+	// The next store must not be poisoned by it.
+	item._setModTime(oldTime)
+	require.NoError(t, item.store(ctx, nil))
+
+	puts := rec.putTimes()
+	require.GreaterOrEqual(t, len(puts), 2, "expected at least the two uploads to have happened")
+	got := puts[len(puts)-1]
+	assert.False(t, got.Equal(oldTime), "store carried stale modtime %v instead of the new time %v", got, newTime)
+	assert.WithinDuration(t, newTime, got, time.Second)
+}
