@@ -113,8 +113,11 @@ th {
 th a {
 	color: black;
 }
-th svg {
-	vertical-align: middle;
+th[aria-sort="ascending"] a::after {
+	content: " \2191";
+}
+th[aria-sort="descending"] a::after {
+	content: " \2193";
 }
 td {
 	white-space: nowrap;
@@ -142,23 +145,6 @@ td .goup {
 }
 .icon {
 	margin-right: 5px;
-}
-.icon.sort {
-	display: inline-block;
-	width: 1em;
-	height: 1em;
-	position: relative;
-	top: .2em;
-}
-.icon.sort .top {
-	position: absolute;
-	left: 0;
-	top: -1px;
-}
-.icon.sort .bottom {
-	position: absolute;
-	bottom: -1px;
-	left: 0;
 }
 footer {
 	padding: 40px 20px;
@@ -260,7 +246,7 @@ tr.file:hover td .zip {
 }
 </style>
 	</head>
-	<body onload='filter();toggle("order");changeSize()'>
+	<body onload='filter();changeSize()'>
 		<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" height="0" width="0" style="position: absolute;">
 			<defs>
 				<!-- Folder -->
@@ -294,14 +280,6 @@ tr.file:hover td .zip {
 						<path d="M47.803141,294.093878 C48.4999811,295.177551 48.9495553,296.095918 49.4216083,296.995918 C50.1184484,297.895918 50.5680227,298.630612 51.2873415,299.365306 C52.2089688,300.44898 53.3778619,301 54.7490634,301 C56.1427436,301 57.0643709,300.632653 57.761211,299.916327 C58.4580511,299.365306 58.9076254,298.465306 58.9076254,297.381633 C58.9076254,296.830612 58.9076254,295.930612 58.6828382,294.828571 C58.4355724,293.561224 58.2107852,292.844898 58.2107852,292.477551 C57.7387323,287.757143 57.5139451,283.753061 57.5139451,279.95102 C57.5139451,273.228571 58.4355724,267.057143 59.8292526,261.602041 C61.44772,256.165306 63.5382403,251.610204 66.0783349,247.62449 C68.8656954,243.620408 72.3274172,240.35102 76.4859792,237.44898 C80.6445412,234.546939 85.2751561,232.177551 90.1305582,230.359184 C94.9859603,228.540816 100.76299,227.089796 107.236859,226.006122 C113.710728,225.087755 120.409385,224.371429 127.13052,223.820408 C133.829177,223.453061 141.247152,223.269388 149.811542,223.269388 L167.704598,223.269388 L167.704598,249.057143 C167.704598,250.87551 168.401438,252.326531 170.019905,253.593878 C171.86316,254.861224 173.728893,255.595918 176.021722,255.595918 C178.112242,255.595918 180.180284,254.861224 181.82123,253.593878 L247.751296,201.834694 C249.369763,200.567347 250.291391,199.116327 250.291391,197.297959 C250.291391,195.479592 249.369763,194.028571 247.751296,192.761224 L181.82123,141.002041 C180.202763,139.734694 178.112242,139 176.044201,139 C173.728893,139 171.885639,139.734694 170.042384,141.002041 C168.423917,142.269388 167.727077,143.720408 167.727077,145.538776 L167.727077,171.326531 L149.811542,171.326531 C88.5120908,171.326531 50.8152886,184.955102 36.9234437,212.193878 C32.3153075,221.267347 30,232.526531 30,245.971429 C30,257.046939 35.5522422,272.291837 46.4094607,291.540816 C46.6567266,292.091837 47.1063009,292.826531 47.803141,294.093878 Z" id="Shape-Copy" fill="#000000" fill-rule="nonzero" transform="translate(140.145695, 220.000000) scale(-1, 1) translate(-140.145695, -220.000000) "></path>
 					</g>
 				</g>
-				<!-- Up arrow -->
-				<g id="up-arrow" transform="translate(-279.22 -208.12)">
-					<path transform="matrix(.22413 0 0 .12089 335.67 164.35)" stroke-width="0" d="m-194.17 412.01h-28.827-28.827l14.414-24.965 14.414-24.965 14.414 24.965z"/>
-				</g>
-				<!-- Down arrow -->
-				<g id="down-arrow" transform="translate(-279.22 -208.12)">
-					<path transform="matrix(.22413 0 0 -.12089 335.67 257.93)" stroke-width="0" d="m-194.17 412.01h-28.827-28.827l14.414-24.965 14.414-24.965 14.414 24.965z"/>
-				</g>
 			</defs>
 		</svg>
 		<header>
@@ -327,15 +305,14 @@ tr.file:hover td .zip {
 					<thead>
 					<tr>
 						<th></th>
-						<th>
-							<a href="?sort=namedirfirst&order=asc" class="icon sort order"><svg class="top" width="1em" height=".5em" version="1.1" viewBox="0 0 12.922194 6.0358899"><use xlink:href="#up-arrow"></use></svg><svg class="bottom" width="1em" height=".5em" version="1.1" viewBox="0 0 12.922194 6.0358899"><use xlink:href="#down-arrow"></use></svg></a>
-							<a href="?sort=name&order=asc" class="order">Name</a>
+						<th data-key="name">
+							<a href="#" onclick="return sortBy(this.parentNode)">Name</a>
 						</th>
-						<th>
-							<a href="?sort=size&order=asc" class="order">Size</a>
+						<th data-key="size">
+							<a href="#" onclick="return sortBy(this.parentNode)">Size</a>
 						</th>
-						<th class="hideable">
-							<a href="?sort=time&order=asc" class="order">Modified</a>
+						<th class="hideable" data-key="time">
+							<a href="#" onclick="return sortBy(this.parentNode)">Modified</a>
 						</th>
 						<th class="hideable"></th>
 					</tr>
@@ -353,7 +330,7 @@ tr.file:hover td .zip {
 						<td class="hideable"></td>
 					</tr>
 					{{- range .Entries}}
-					<tr class="file">
+					<tr class="file{{if .IsDir}} dir{{end}}">
 						<td>
 						</td>
 						<td>
@@ -431,21 +408,32 @@ tr.file:hover td .zip {
 					}
 				}
 			};
-			function toggle(className) {
-				var order = getUrlParameter('order');
-				var elements = document.getElementsByClassName(className);
-				for(var i = 0, length = elements.length; i < length; i++) {
-					var currHref = elements[i].href;
-					if(order=='desc') {
-						var chg = currHref.replace('desc', 'asc');
-						elements[i].href = chg;
-					}
-					if(order=='asc') {
-						var chg = currHref.replace('asc', 'desc');
-						elements[i].href = chg;
-					}
-				}
-			};
+			// Sort the listing by the column of th, toggling the direction on repeated clicks
+			function sortBy(th) {
+				var key = th.getAttribute('data-key');
+				var asc = th.getAttribute('aria-sort') != 'ascending';
+				document.querySelectorAll('th[aria-sort]').forEach(function(el) { el.removeAttribute('aria-sort'); });
+				th.setAttribute('aria-sort', asc ? 'ascending' : 'descending');
+				var value = function(tr) {
+					if (key == 'name') return tr.querySelector('.name').textContent.trim();
+					if (key == 'size') return Number(tr.children[2].getAttribute('data-order'));
+					var time = tr.querySelector('time');
+					return time ? time.getAttribute('datetime') : '';
+				};
+				var rows = Array.prototype.slice.call(document.querySelectorAll('tr.file'));
+				rows.sort(function(a, b) {
+					// Directories first when sorting by name
+					var byDir = key == 'name' ? b.classList.contains('dir') - a.classList.contains('dir') : 0;
+					var va = value(a), vb = value(b);
+					var cmp = typeof va == 'string' ? va.localeCompare(vb, undefined, {numeric: true, sensitivity: 'base'}) : va - vb;
+					return byDir || (asc ? cmp : -cmp);
+				});
+				rows.forEach(function(tr) { tr.parentNode.appendChild(tr); });
+				return false;
+			}
+			// Show how the server sorted the listing from the ?sort= and ?order= parameters
+			var sorted = document.querySelector('th[data-key="' + (getUrlParameter('sort') || 'name').replace('dirfirst', '') + '"]');
+			if (sorted) sorted.setAttribute('aria-sort', getUrlParameter('order') == 'desc' ? 'descending' : 'ascending');
 			function readableFileSize(size) {
 				var units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
 				var i = 0;
