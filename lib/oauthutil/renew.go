@@ -87,7 +87,12 @@ func (r *Renew) Shutdown() {
 	// closing a channel can only be done once
 	r.shutdown.Do(func() {
 		if r.ts != nil {
-			r.ts.expiryTimer.Stop()
+			// expiryTimer is created under ts.mu by OnExpiry; may still be nil.
+			r.ts.mu.Lock()
+			if r.ts.expiryTimer != nil {
+				r.ts.expiryTimer.Stop()
+			}
+			r.ts.mu.Unlock()
 		}
 		close(r.done)
 	})
