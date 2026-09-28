@@ -3,6 +3,7 @@ package operations_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"mime"
 	"os"
 	"path/filepath"
@@ -386,4 +387,158 @@ func TestIndexNoHash(t *testing.T) {
 	transfers, _ = r.index(t)
 	assert.Equal(t, int64(1), transfers)
 	assert.Contains(t, r.read(t, "sub/index.html"), "file4.txt")
+}
+
+func TestIndexChanged(t *testing.T) {
+	r := newIndexRun(t)
+	r.WriteObject(r.ctx, "other/notes.md", "notes", t1)
+	r.index(t)
+
+	// Add files in sub/deep and in other but only declare the one in sub/deep
+	r.WriteObject(r.ctx, "sub/deep/file4.txt", "hello4", t1)
+	r.WriteObject(r.ctx, "other/undeclared.txt", "hello", t1)
+	r.opt.Changed = []string{"sub/deep/file4.txt"}
+	transfers, _ := r.index(t)
+	assert.Equal(t, int64(1), transfers)
+	assert.Contains(t, r.read(t, "sub/deep/index.html"), "file4.txt")
+	assert.NotContains(t, r.read(t, "other/index.html"), "undeclared.txt")
+
+	// A new directory changes its parent's listing too
+	r.WriteObject(r.ctx, "sub/new/file5.txt", "hello5", t1)
+	r.opt.Changed = []string{"sub/new/file5.txt"}
+	transfers, _ = r.index(t)
+	assert.Equal(t, int64(2), transfers)
+	assert.Contains(t, r.read(t, "sub/index.html"), `<a href="new/">new/</a>`)
+	assert.Contains(t, r.read(t, "sub/new/index.html"), "file5.txt")
+
+	// A changed directory is walked whether or not it has a trailing slash
+	for i, changed := range []string{"other/", "other"} {
+		name := fmt.Sprintf("other/undeclared%d.txt", i)
+		r.WriteObject(r.ctx, name, "hello", t1)
+		r.opt.Changed = []string{changed}
+		transfers, _ = r.index(t)
+		assert.Equal(t, int64(1), transfers, changed)
+		assert.Contains(t, r.read(t, "other/index.html"), name[6:])
+	}
+
+	// An empty change list does nothing
+	r.WriteObject(r.ctx, "sub/file6.txt", "hello6", t1)
+	r.opt.Changed = nil
+	r.opt.ChangedFrom = []string{filepath.Join(t.TempDir(), "empty.txt")}
+	require.NoError(t, os.WriteFile(r.opt.ChangedFrom[0], nil, 0600))
+	transfers, _ = r.index(t)
+	assert.Equal(t, int64(0), transfers)
+	assert.NotContains(t, r.read(t, "sub/index.html"), "file6.txt")
+
+	// Naming the root does a full run
+	r.opt.ChangedFrom = nil
+	r.opt.Changed = []string{"/"}
+	transfers, _ = r.index(t)
+	assert.Equal(t, int64(1), transfers)
+	assert.Contains(t, r.read(t, "sub/index.html"), "file6.txt")
+
+	// So does exceeding --changed-max-dirs
+	r.WriteObject(r.ctx, "sub/file7.txt", "hello7", t1)
+	r.opt.Changed = []string{"other/notes.md"}
+	r.opt.ChangedMaxDirs = 1
+	transfers, _ = r.index(t)
+	assert.Equal(t, int64(1), transfers)
+	assert.Contains(t, r.read(t, "sub/index.html"), "file7.txt")
+	r.opt.ChangedMaxDirs = 0
+
+	// Paths are cleaned, and nested changed directories are walked once
+	r.WriteObject(r.ctx, "sub/deep/file8.txt", "hello8", t1)
+	r.opt.Changed = []string{"./sub/", "sub//deep/", "sub/deep/"}
+	transfers, _ = r.index(t)
+	assert.Equal(t, int64(1), transfers)
+	assert.Contains(t, r.read(t, "sub/deep/index.html"), "file8.txt")
+
+	// A partial run doesn't write listings a full run wouldn't
+	ctx, ci := fs.AddConfig(r.ctx)
+	ci.MaxDepth = 2
+	r.WriteObject(r.ctx, "sub/deep/file9.txt", "hello9", t1)
+	r.WriteObject(r.ctx, "sub/file10.txt", "hello10", t1)
+	r.opt.Changed = []string{"sub/deep/file9.txt", "sub/file10.txt"}
+	require.NoError(t, operations.Index(ctx, r.Fremote, &r.opt))
+	assert.NotContains(t, r.read(t, "sub/deep/index.html"), "file9.txt")
+	assert.Contains(t, r.read(t, "sub/index.html"), "file10.txt")
+}
+
+func TestIndexChangedDelete(t *testing.T) {
+	r := newIndexRun(t)
+	r.index(t)
+
+	// Delete the only file in sub/deep and declare it
+	o, err := r.Fremote.NewObject(r.ctx, "sub/deep/file3.txt")
+	require.NoError(t, err)
+	require.NoError(t, o.Remove(r.ctx))
+	r.opt.Changed = []string{"sub/deep/file3.txt"}
+	transfers, deletes := r.index(t)
+	if r.Fremote.Features().CanHaveEmptyDirectories {
+		assert.Equal(t, int64(1), transfers)
+		assert.Equal(t, int64(0), deletes)
+		assert.NotContains(t, r.read(t, "sub/deep/index.html"), "file3.txt")
+	} else {
+		assert.Equal(t, int64(1), transfers)
+		assert.Equal(t, int64(1), deletes)
+		assert.NotContains(t, r.read(t, "sub/index.html"), "deep/")
+		r.checkFiles(t, "file1.txt", "index.html", "sub/file2.txt", "sub/index.html")
+
+		// Declaring a directory which has gone is harmless
+		r.opt.Changed = []string{"sub/deep/"}
+		transfers, deletes = r.index(t)
+		assert.Equal(t, int64(0), transfers)
+		assert.Equal(t, int64(0), deletes)
+	}
+}
+
+func TestIndexChangedFiles(t *testing.T) {
+	r := newIndexRun(t)
+	r.WriteObject(r.ctx, "- odd/file.txt", "odd", t1)
+	r.index(t)
+	dir := t.TempDir()
+
+	// --changed-from takes paths exactly as written
+	r.WriteObject(r.ctx, "- odd/file8.txt", "hello8", t1)
+	r.WriteObject(r.ctx, "sub/file9.txt", "hello9", t1)
+	from := filepath.Join(dir, "from.txt")
+	require.NoError(t, os.WriteFile(from, []byte("- odd/file8.txt\n\n"), 0600))
+	r.opt.ChangedFrom = []string{from}
+	transfers, _ := r.index(t)
+	assert.Equal(t, int64(1), transfers)
+	assert.Contains(t, r.read(t, "- odd/index.html"), "file8.txt")
+	assert.NotContains(t, r.read(t, "sub/index.html"), "file9.txt")
+
+	// --changed-combined strips the prefixes and skips unchanged files
+	combined := filepath.Join(dir, "combined.txt")
+	require.NoError(t, os.WriteFile(combined, []byte("= file1.txt\n+ sub/file9.txt\n- sub/deep/gone.txt\n* - odd/file.txt\n! sub/deep/file3.txt\n"), 0600))
+	r.opt.ChangedFrom = nil
+	r.opt.ChangedCombined = []string{combined}
+	transfers, _ = r.index(t)
+	assert.Equal(t, int64(1), transfers)
+	assert.Contains(t, r.read(t, "sub/index.html"), "file9.txt")
+
+	// Malformed combined lines are an error
+	require.NoError(t, os.WriteFile(combined, []byte("sub/file9.txt\n"), 0600))
+	assert.Error(t, operations.Index(r.ctx, r.Fremote, &r.opt))
+}
+
+func TestIndexChangedDirTime(t *testing.T) {
+	r := newIndexRun(t)
+	r.opt.NoModTime = false
+	r.opt.DirTime = operations.IndexDirTimeNewest
+	r.opt.Outputs = []string{"index.json=json"}
+	r.WriteObject(r.ctx, "other/notes.md", "notes", t2)
+	r.index(t)
+	precision := r.Fremote.Precision()
+
+	// A partial run gets the time of the unchanged directory other
+	// from its listing, and the changed directory sub from the walk
+	r.WriteObject(r.ctx, "sub/deep/file4.txt", "hello4", fstest.Time("2030-01-01T00:00:00Z"))
+	r.opt.Changed = []string{"sub/deep/file4.txt"}
+	transfers, _ := r.index(t)
+	assert.Equal(t, int64(3), transfers)
+	modTimes := r.indexModTimes(t, "index.json")
+	fstest.AssertTimeEqualWithPrecision(t, "sub", fstest.Time("2030-01-01T00:00:00Z"), modTimes["sub"], precision)
+	fstest.AssertTimeEqualWithPrecision(t, "other", t2, modTimes["other"], precision)
 }

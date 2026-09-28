@@ -33,6 +33,10 @@ func init() {
 	flags.FVarP(cmdFlags, &opt.DirTime, "dir-time", "", "How to work out the time shown for a directory", "")
 	flags.BoolVarP(cmdFlags, &opt.NoModTime, "no-modtime", "", opt.NoModTime, "Don't show modification times in listings", "")
 	flags.BoolVarP(cmdFlags, &opt.Rewrite, "index-rewrite", "", opt.Rewrite, "Write every listing even if it is unchanged", "")
+	flags.StringArrayVarP(cmdFlags, &opt.Changed, "changed", "", nil, "Only re-index directories affected by this changed path (directories end in /)", "")
+	flags.StringArrayVarP(cmdFlags, &opt.ChangedFrom, "changed-from", "", nil, "Read changed paths from file, one per line (use - to read from stdin)", "")
+	flags.StringArrayVarP(cmdFlags, &opt.ChangedCombined, "changed-combined", "", nil, "Read changed paths from a sync --combined report (use - to read from stdin)", "")
+	flags.IntVarP(cmdFlags, &opt.ChangedMaxDirs, "changed-max-dirs", "", opt.ChangedMaxDirs, "Do a full index if a partial one would list more than this many directories (0 for no limit)", "")
 	flags.StringVarP(cmdFlags, &printTemplate, "print-template", "", "", "Print the built-in template for FORMAT and exit", "")
 }
 
