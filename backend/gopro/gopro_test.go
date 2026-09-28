@@ -1875,6 +1875,121 @@ func TestUpdateMediumInvalidatesMediaCache(t *testing.T) {
 	assert.Nil(t, f.media.items, "a change to a medium must invalidate the cached listing")
 }
 
+// newTestLinkFs serves a share-link API that records every created share's
+// title and media, and GET /media/{id} for the "link" command.
+func newTestLinkFs(t *testing.T, items []api.Medium) (*Fs, *httptest.Server, *[]api.CollectionCreate, *[][]string) {
+	var created []api.CollectionCreate
+	var added [][]string
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /collections", func(w http.ResponseWriter, r *http.Request) {
+		var c api.CollectionCreate
+		require.NoError(t, json.NewDecoder(r.Body).Decode(&c))
+		created = append(created, c)
+		writeJSON(t, w, api.Collection{ID: fmt.Sprintf("col%d", len(created))})
+	})
+	mux.HandleFunc("PUT /collections/{id}", func(w http.ResponseWriter, r *http.Request) {
+		var u api.CollectionMediaUpdate
+		require.NoError(t, json.NewDecoder(r.Body).Decode(&u))
+		added = append(added, u.MediaIDs)
+		w.WriteHeader(http.StatusNoContent)
+	})
+	mux.HandleFunc("GET /media/{id}", func(w http.ResponseWriter, r *http.Request) {
+		for _, m := range items {
+			if m.ID == r.PathValue("id") {
+				writeJSON(t, w, m)
+				return
+			}
+		}
+		http.Error(w, "not found", http.StatusNotFound)
+	})
+	f, srv := newTestAPIFs(mux)
+	f.opt.AlwaysAddID = true
+	f.media = cachedList(items)
+	return f, srv, &created, &added
+}
+
+func TestPublicLinkOfPartsIsRefused(t *testing.T) {
+	ctx := context.Background()
+	const series, pair = "6abac128b02933d265c1f3d8", "6a306a51ececc5d9c2b55749"
+	size := int64(100)
+	items := []api.Medium{
+		{ID: series, Filename: "GX012010.MP4", FileExtension: "mp4", Type: "Video", ReadyToView: "ready", FileSize: &size, ItemCount: 2, CapturedAt: startTime},
+		{ID: pair, Filename: "GP012013.JPG", FileExtension: "jpg", Type: "Photo", ReadyToView: "ready", FileSize: &size, ItemCount: 1, CapturedAt: startTime, AvailableLabels: rawPhotoLabels},
+	}
+	for _, tc := range []struct {
+		remote string
+		ok     bool
+	}{
+		{"media/all/GX012010-1 {" + series + "}.MP4", false},
+		{"media/all/GX012010-2 {" + series + "}.MP4", false},
+		{"media/all/GP012013 {" + pair + "}.GPR", false},
+		{"media/all/GP012013 {" + pair + "}.JPG", true},
+	} {
+		t.Run(tc.remote, func(t *testing.T) {
+			f, srv, created, _ := newTestLinkFs(t, items)
+			defer srv.Close()
+			_, err := f.PublicLink(ctx, tc.remote, fs.DurationOff, false)
+			if tc.ok {
+				require.NoError(t, err)
+				assert.Len(t, *created, 1)
+			} else {
+				assert.ErrorContains(t, err, "rclone backend link")
+				assert.Empty(t, *created, "no share may be created for the whole medium")
+			}
+		})
+	}
+}
+
+func TestLinkCommandSharesWholeMedia(t *testing.T) {
+	ctx := context.Background()
+	const series, unnamed = "6abac128b02933d265c1f3d8", "6a9362c0b7d89053ceb33de9"
+	size := int64(100)
+	items := []api.Medium{
+		{ID: series, Filename: "GX012010.MP4", Type: "Video", ReadyToView: "ready", FileSize: &size, ItemCount: 2, CapturedAt: startTime},
+		{ID: unnamed, Filename: "", Type: "MultiClipEdit", ReadyToView: "ready", ItemCount: 1, CapturedAt: startTime},
+	}
+
+	t.Run("by ID or file name, titled with the medium's name", func(t *testing.T) {
+		f, srv, created, added := newTestLinkFs(t, items)
+		defer srv.Close()
+		f.opt.LinkAllowDownload = true
+		res, err := f.Command(ctx, "link", []string{series + "/2", "{" + unnamed + "}.mp4"}, nil)
+		require.NoError(t, err)
+		assert.Equal(t, []string{"https://gopro.com/v/col1", "https://gopro.com/v/col2"}, res)
+		require.Len(t, *created, 2)
+		assert.Equal(t, "GX012010.MP4", (*created)[0].Title)
+		assert.Equal(t, "", (*created)[1].Title, "an unnamed medium gets no title")
+		assert.True(t, (*created)[0].Cloneable, "link_allow_download applies")
+		assert.Equal(t, [][]string{{series}, {unnamed}}, *added)
+	})
+
+	t.Run("link_title applies", func(t *testing.T) {
+		f, srv, created, _ := newTestLinkFs(t, items)
+		defer srv.Close()
+		f.opt.LinkTitle = "holiday"
+		_, err := f.Command(ctx, "link", []string{series}, nil)
+		require.NoError(t, err)
+		assert.Equal(t, "holiday", (*created)[0].Title)
+	})
+
+	t.Run("dry-run creates nothing", func(t *testing.T) {
+		f, srv, created, _ := newTestLinkFs(t, items)
+		defer srv.Close()
+		dctx, ci := fs.AddConfig(ctx)
+		ci.DryRun = true
+		_, err := f.Command(dctx, "link", []string{series}, nil)
+		require.NoError(t, err)
+		assert.Empty(t, *created)
+	})
+
+	t.Run("needs an argument", func(t *testing.T) {
+		f, srv, _, _ := newTestLinkFs(t, items)
+		defer srv.Close()
+		_, err := f.Command(ctx, "link", nil, nil)
+		assert.Error(t, err)
+	})
+}
+
 func TestCreateCollectionAddToCollectionAndPublicLink(t *testing.T) {
 	var gotCreate api.CollectionCreate
 	var gotAdd api.CollectionMediaUpdate

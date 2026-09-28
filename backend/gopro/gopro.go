@@ -1226,6 +1226,20 @@ of its files as listed by this backend:
     rclone backend delete gopro: 6a29a4bcfe314c5af39cfcbe "GX012010-2 {6a29a4bcfe314c5af39cfcbe}.MP4"
 
 With --dry-run, it only logs what would be deleted.`,
+}, {
+	Name:  "link",
+	Short: "Create public share links for whole media",
+	Long: `This creates a public share link for each medium named, following
+--gopro-link-title and --gopro-link-allow-download, and prints the links.
+
+GoPro shares whole media, so "rclone link" refuses a single chapter,
+frame or RAW file - this shares every file of the medium instead. Each
+argument names one medium, either by its id or by the name of any of its
+files as listed by this backend:
+
+    rclone backend link gopro: "GX012010-2 {6a29a4bcfe314c5af39cfcbe}.MP4"
+
+With --dry-run, it only logs what would be shared.`,
 }}
 
 // Command the backend to run a named command
@@ -1243,6 +1257,8 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		return f.restore(ctx, arg)
 	case "delete":
 		return f.deleteCommand(ctx, arg)
+	case "link":
+		return f.linkCommand(ctx, arg)
 	}
 	return nil, fs.ErrorCommandNotFound
 }
@@ -2452,24 +2468,57 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	if !ok {
 		return "", fs.ErrorObjectNotFound
 	}
+	// GoPro shares whole media, so a link to one chapter, frame or RAW
+	// file would share all of them.
+	if obj.itemCount > 1 || obj.raw {
+		return "", fmt.Errorf("gopro: can't share %q on its own - GoPro only shares it together with the other files of its item: use \"rclone backend link\" to share them all", remote)
+	}
+	_, leaf := path.Split(remote)
+	return f.shareMedium(ctx, obj.id, stripSuffixID(leaf, obj.id))
+}
+
+// shareMedium creates a public share of the medium id and returns its URL,
+// titled with --gopro-link-title or else name
+func (f *Fs) shareMedium(ctx context.Context, id, name string) (string, error) {
 	title := f.opt.LinkTitle
-	if title == "" {
-		_, leaf := path.Split(remote)
-		title = stripSuffixID(leaf, obj.id)
-		if isUnnamedLeaf(title) {
-			// Without a title GoPro's share page shows none, which reads
-			// better than a bare extension.
-			title = ""
-		}
+	if title == "" && !isUnnamedLeaf(name) {
+		// Without a title GoPro's share page shows none, which reads
+		// better than a bare extension.
+		title = name
 	}
 	collectionID, err := f.createCollection(ctx, title, f.opt.LinkAllowDownload)
 	if err != nil {
 		return "", err
 	}
-	if err := f.addToCollection(ctx, collectionID, obj.id); err != nil {
+	if err := f.addToCollection(ctx, collectionID, id); err != nil {
 		return "", err
 	}
 	return "https://gopro.com/v/" + collectionID, nil
+}
+
+// linkCommand implements the "link" backend command
+func (f *Fs) linkCommand(ctx context.Context, arg []string) (any, error) {
+	if len(arg) == 0 {
+		return nil, errors.New("name at least one medium to share")
+	}
+	var links []string
+	for _, a := range arg {
+		id := restoreArg(a)
+		if fs.GetConfig(ctx).DryRun {
+			fs.Logf(f, "Would share medium %s", id)
+			continue
+		}
+		item, err := f.getMedium(ctx, id)
+		if err != nil {
+			return links, err
+		}
+		link, err := f.shareMedium(ctx, id, f.opt.Enc.ToStandardName(item.Filename))
+		if err != nil {
+			return links, err
+		}
+		links = append(links, link)
+	}
+	return links, nil
 }
 
 // MimeType of an Object if known, "" otherwise
