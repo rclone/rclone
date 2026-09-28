@@ -30,6 +30,9 @@ type Medium struct {
 	Token         string    `json:"token"`
 	ContentTitle  string    `json:"content_title"`
 	Resolution    string    `json:"resolution"`
+	// AvailableLabels names the renditions and sidecar files GoPro has
+	// for this medium, e.g. "raw_photo" for a photo shot with RAW.
+	AvailableLabels []string `json:"available_labels"`
 	// ReprocessedAt is set once GoPro has reprocessed a medium after its
 	// initial upload (null if it never has been). A live account probe
 	// found this uniquely set on the one medium (out of hundreds checked)

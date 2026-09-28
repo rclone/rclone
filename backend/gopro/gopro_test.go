@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -210,6 +211,56 @@ func TestIntegration(t *testing.T) {
 		// doesn't appear in a browsed listing under the default remote.
 		_, err = f.List(ctx, "media/by-day/2000/2000-01-01")
 		assert.NoError(t, err)
+	})
+
+	t.Run("RawFilesDownload", func(t *testing.T) {
+		entries, err := f.List(ctx, "media/all")
+		require.NoError(t, err)
+		var raw fs.Object
+		for _, e := range entries {
+			if o, ok := e.(fs.Object); ok && strings.EqualFold(path.Ext(o.Remote()), ".gpr") {
+				raw = o
+				break
+			}
+		}
+		if raw == nil {
+			t.Skip("no RAW photos in this account")
+		}
+		in, err := raw.Open(ctx)
+		require.NoError(t, err)
+		head := make([]byte, 4)
+		_, err = io.ReadFull(in, head)
+		require.NoError(t, err)
+		require.NoError(t, in.Close())
+		// GPR is DNG, which is TIFF-based.
+		assert.Contains(t, []string{"II*\x00", "MM\x00*"}, string(head), "%s isn't a RAW file", raw.Remote())
+	})
+
+	t.Run("PhotoFormatOnlyDropsOneHalfOfEachPair", func(t *testing.T) {
+		list := func(format string) map[string]bool {
+			entries, err := remoteWithOptions(t, "photo_format="+format).List(ctx, "media/all")
+			require.NoError(t, err)
+			names := map[string]bool{}
+			for _, e := range entries {
+				names[e.Remote()] = true
+			}
+			return names
+		}
+		both, jpegs, raws := list("both"), list("jpeg"), list("raw")
+		wantJPEG, wantRaw := map[string]bool{}, map[string]bool{}
+		for name := range both {
+			base, ext := strings.TrimSuffix(name, path.Ext(name)), strings.ToLower(path.Ext(name))
+			paired := (ext == ".gpr" && (both[base+".JPG"] || both[base+".jpg"])) ||
+				(ext == ".jpg" && (both[base+".GPR"] || both[base+".gpr"]))
+			if !paired || ext == ".jpg" {
+				wantJPEG[name] = true
+			}
+			if !paired || ext == ".gpr" {
+				wantRaw[name] = true
+			}
+		}
+		assert.Equal(t, wantJPEG, jpegs)
+		assert.Equal(t, wantRaw, raws)
 	})
 
 	t.Run("BadDirectory", func(t *testing.T) {
@@ -2423,6 +2474,256 @@ func TestOpenDownloadsContentAndFixesSize(t *testing.T) {
 	assert.Equal(t, want, got)
 	assert.Equal(t, int64(len(want)), o.bytes, "Open must resolve an unknown size from the response it already has")
 	assert.True(t, o.sizeChecked)
+}
+
+// rawPhotoLabels are the available_labels of a photo shot with RAW, as
+// returned live by /media/search
+var rawPhotoLabels = []string{"source", "raw_photo", "mediainfo"}
+
+func TestListDirListsRawFilesNextToTheirPhotos(t *testing.T) {
+	const single, series, plain = "6a306a51ececc5d9c2b55749", "6abac128b02933d265c1f3d8", "6a1af2c79e010fb1373a5700"
+	size := int64(100)
+	f := newTestMediaFs([]api.Medium{
+		{ID: single, Filename: "GP012013.JPG", FileExtension: "jpg", Type: "Photo", FileSize: &size, ItemCount: 1, CapturedAt: startTime, AvailableLabels: rawPhotoLabels},
+		{ID: series, Filename: "GPAA2158.JPG", FileExtension: "jpg", Type: "TimeLapse", FileSize: &size, ItemCount: 2, CapturedAt: startTime, AvailableLabels: append([]string{"zip"}, rawPhotoLabels...)},
+		{ID: plain, Filename: "GP012002.JPG", FileExtension: "jpg", Type: "Photo", FileSize: &size, ItemCount: 1, CapturedAt: startTime, AvailableLabels: []string{"source"}},
+	})
+	entries, err := f.listDir(context.Background(), "media/all/", mediaFilter{})
+	require.NoError(t, err)
+	got := map[string]*Object{}
+	for _, e := range entries {
+		got[e.Remote()] = e.(*Object)
+	}
+	var names []string
+	for name := range got {
+		names = append(names, name)
+	}
+	assert.ElementsMatch(t, []string{
+		"media/all/GP012013 {" + single + "}.JPG",
+		"media/all/GP012013 {" + single + "}.GPR",
+		"media/all/GPAA2158-1 {" + series + "}.JPG",
+		"media/all/GPAA2158-1 {" + series + "}.GPR",
+		"media/all/GPAA2158-2 {" + series + "}.JPG",
+		"media/all/GPAA2158-2 {" + series + "}.GPR",
+		"media/all/GP012002 {" + plain + "}.JPG",
+	}, names)
+
+	raw := got["media/all/GPAA2158-2 {"+series+"}.GPR"]
+	assert.True(t, raw.raw)
+	assert.Equal(t, 2, raw.itemNumber)
+	assert.Equal(t, int64(-1), raw.bytes, "file_size doesn't cover RAW files")
+	assert.Equal(t, rawMimeType, raw.mimeType)
+	photo := got["media/all/GP012013 {"+single+"}.JPG"]
+	assert.False(t, photo.raw)
+	assert.Equal(t, int64(100), photo.bytes)
+}
+
+func TestListDirPhotoFormat(t *testing.T) {
+	const pair, jpegOnly, rawOnly = "6a306a51ececc5d9c2b55749", "6a1af2c79e010fb1373a5700", "6a1af2c79e010fb1373a5711"
+	size := int64(100)
+	items := []api.Medium{
+		{ID: pair, Filename: "GP012013.JPG", FileExtension: "jpg", Type: "Photo", FileSize: &size, ItemCount: 1, CapturedAt: startTime, AvailableLabels: rawPhotoLabels},
+		{ID: jpegOnly, Filename: "GP012002.JPG", FileExtension: "jpg", Type: "Photo", FileSize: &size, ItemCount: 1, CapturedAt: startTime, AvailableLabels: []string{"source"}},
+		// e.g. a RAW file uploaded on its own - it is the photo itself
+		{ID: rawOnly, Filename: "GP019999.GPR", FileExtension: "gpr", Type: "Photo", FileSize: &size, ItemCount: 1, CapturedAt: startTime, AvailableLabels: []string{"source"}},
+	}
+	for _, tc := range []struct {
+		format string
+		want   []string
+	}{
+		{photoFormatBoth, []string{"GP012013 {" + pair + "}.JPG", "GP012013 {" + pair + "}.GPR", "GP012002 {" + jpegOnly + "}.JPG", "GP019999 {" + rawOnly + "}.GPR"}},
+		{photoFormatJPEG, []string{"GP012013 {" + pair + "}.JPG", "GP012002 {" + jpegOnly + "}.JPG", "GP019999 {" + rawOnly + "}.GPR"}},
+		{photoFormatRaw, []string{"GP012013 {" + pair + "}.GPR", "GP012002 {" + jpegOnly + "}.JPG", "GP019999 {" + rawOnly + "}.GPR"}},
+	} {
+		t.Run(tc.format, func(t *testing.T) {
+			f := newTestMediaFs(items)
+			f.opt.PhotoFormat = tc.format
+			entries, err := f.listDir(context.Background(), "", mediaFilter{})
+			require.NoError(t, err)
+			var names []string
+			for _, e := range entries {
+				names = append(names, e.Remote())
+			}
+			assert.ElementsMatch(t, tc.want, names, "a photo with only one format must always be listed")
+		})
+	}
+}
+
+func TestCheckPhotoFormat(t *testing.T) {
+	for _, ok := range []string{photoFormatBoth, photoFormatJPEG, photoFormatRaw} {
+		assert.NoError(t, checkPhotoFormat(ok))
+	}
+	assert.Error(t, checkPhotoFormat("png"))
+	_, err := NewFs(context.Background(), "photo-format-test", "", configmap.Simple{
+		"access_token": "test-token", "verify_size": verifySizeReprocessed, "photo_format": "png",
+	})
+	assert.Error(t, err)
+}
+
+func TestReadMetaDataFastPathFollowsPhotoFormat(t *testing.T) {
+	const id = "6a306a51ececc5d9c2b55749"
+	for _, tc := range []struct {
+		format, leaf string
+		found        bool
+	}{
+		{photoFormatJPEG, "GP012013 {" + id + "}.JPG", true},
+		{photoFormatJPEG, "GP012013 {" + id + "}.GPR", false},
+		{photoFormatRaw, "GP012013 {" + id + "}.JPG", false},
+		{photoFormatRaw, "GP012013 {" + id + "}.GPR", true},
+	} {
+		t.Run(tc.format+" "+tc.leaf, func(t *testing.T) {
+			f, srv, _ := newTestRawFs(t, id, false)
+			defer srv.Close()
+			f.opt.PhotoFormat = tc.format
+			f.media = cachedList([]api.Medium{})
+			_, err := f.NewObject(context.Background(), "media/all/"+tc.leaf)
+			if tc.found {
+				assert.NoError(t, err)
+			} else {
+				assert.Equal(t, fs.ErrorObjectNotFound, err)
+			}
+		})
+	}
+}
+
+func TestRawLeaf(t *testing.T) {
+	assert.Equal(t, "GP012013.GPR", rawLeaf("GP012013.JPG"))
+	assert.Equal(t, "GPAA2158-1 {abc}.GPR", rawLeaf("GPAA2158-1 {abc}.JPG"))
+	assert.Equal(t, "holiday.gpr", rawLeaf("holiday.jpg"))
+}
+
+func TestSelectRaw(t *testing.T) {
+	sidecar := func(url string, item int) api.SidecarFile {
+		return api.SidecarFile{URL: url, Head: url + "?head", Label: "raw_photo", Type: "gpr", ItemNumber: item}
+	}
+
+	t.Run("a single photo's RAW has no item_number", func(t *testing.T) {
+		dl := &api.DownloadResponse{}
+		dl.Embedded.SidecarFiles = []api.SidecarFile{{URL: "https://cdn/1.json", Label: "mediainfo"}, sidecar("https://cdn/1.gpr", 0)}
+		u, head, err := selectRaw(dl, 1)
+		require.NoError(t, err)
+		assert.Equal(t, "https://cdn/1.gpr", u)
+		assert.Equal(t, "https://cdn/1.gpr?head", head)
+	})
+
+	t.Run("a photo series has one RAW per item_number", func(t *testing.T) {
+		dl := &api.DownloadResponse{}
+		dl.Embedded.SidecarFiles = []api.SidecarFile{{URL: "https://cdn/1.zip", Label: "zip"}, sidecar("https://cdn/1.gpr", 1), sidecar("https://cdn/2.gpr", 2)}
+		u, _, err := selectRaw(dl, 2)
+		require.NoError(t, err)
+		assert.Equal(t, "https://cdn/2.gpr", u)
+	})
+
+	t.Run("no RAW is an error", func(t *testing.T) {
+		_, _, err := selectRaw(&api.DownloadResponse{}, 1)
+		assert.Error(t, err)
+	})
+}
+
+// newTestRawFs serves medium id as a single photo with a RAW file, and
+// records DELETE /media requests. gone makes GET /media/{id} 404.
+func newTestRawFs(t *testing.T, id string, gone bool) (f *Fs, srv *httptest.Server, deletes *int) {
+	deletes = new(int)
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /media/"+id, func(w http.ResponseWriter, r *http.Request) {
+		if gone {
+			http.Error(w, "not found", http.StatusNotFound)
+			return
+		}
+		writeJSON(t, w, api.Medium{ID: id, Filename: "GP012013.JPG", FileExtension: "jpg", Type: "Photo", ItemCount: 1, AvailableLabels: rawPhotoLabels})
+	})
+	mux.HandleFunc("GET /media/"+id+"/download", func(w http.ResponseWriter, r *http.Request) {
+		dl := makeDownloadResponse([]testFile{{url: srv.URL + "/1.jpg", itemNumber: 1}}, []testFile{{url: srv.URL + "/1.jpg", label: "source"}})
+		dl.Embedded.SidecarFiles = []api.SidecarFile{{URL: srv.URL + "/1.gpr", Head: srv.URL + "/1.gpr", Label: "raw_photo"}}
+		writeJSON(t, w, dl)
+	})
+	for name, body := range map[string]string{"/1.jpg": "jpeg bytes", "/1.gpr": "raw bytes, rather more of them"} {
+		mux.HandleFunc(name, func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Length", strconv.Itoa(len(body)))
+			if r.Method != http.MethodHead {
+				_, err := w.Write([]byte(body))
+				require.NoError(t, err)
+			}
+		})
+	}
+	mux.HandleFunc("DELETE /media", func(w http.ResponseWriter, r *http.Request) {
+		*deletes++
+		writeJSON(t, w, api.DeleteResponse{})
+	})
+	f, srv = newTestAPIFs(mux)
+	f.opt.AlwaysAddID = true
+	return f, srv, deletes
+}
+
+func TestRawObjects(t *testing.T) {
+	ctx := context.Background()
+	const id = "6a306a51ececc5d9c2b55749"
+	rawRemote := "media/all/GP012013 {" + id + "}.GPR"
+
+	t.Run("a RAW file resolves by path and downloads the RAW", func(t *testing.T) {
+		f, srv, _ := newTestRawFs(t, id, false)
+		defer srv.Close()
+		o, err := f.NewObject(ctx, rawRemote)
+		require.NoError(t, err)
+		obj := o.(*Object)
+		assert.True(t, obj.raw)
+		assert.Equal(t, rawMimeType, obj.MimeType(ctx))
+
+		rc, err := o.Open(ctx)
+		require.NoError(t, err)
+		got, err := io.ReadAll(rc)
+		require.NoError(t, err)
+		require.NoError(t, rc.Close())
+		assert.Equal(t, "raw bytes, rather more of them", string(got))
+		assert.Equal(t, int64(len(got)), o.Size())
+	})
+
+	t.Run("read_size reads the RAW's own size", func(t *testing.T) {
+		f, srv, _ := newTestRawFs(t, id, false)
+		defer srv.Close()
+		f.opt.ReadSize = true
+		o := &Object{fs: f, remote: rawRemote, raw: true}
+		o.setMetaData(&api.Medium{ID: id, Filename: "GP012013.JPG", ItemCount: 1, CapturedAt: startTime, AvailableLabels: rawPhotoLabels}, 1)
+		assert.Equal(t, int64(len("raw bytes, rather more of them")), o.Size())
+	})
+
+	t.Run("deleting a RAW on its own is refused, since it would delete the photo too", func(t *testing.T) {
+		f, srv, deletes := newTestRawFs(t, id, false)
+		defer srv.Close()
+		o := &Object{fs: f, remote: rawRemote, id: id, raw: true, itemCount: 1, modTime: startTime}
+		assert.Error(t, o.Remove(ctx))
+		assert.Equal(t, 0, *deletes)
+	})
+
+	t.Run("deleting a RAW whose photo is already deleted succeeds", func(t *testing.T) {
+		f, srv, deletes := newTestRawFs(t, id, true)
+		defer srv.Close()
+		o := &Object{fs: f, remote: rawRemote, id: id, raw: true, itemCount: 1, modTime: startTime}
+		require.NoError(t, o.Remove(ctx))
+		assert.Equal(t, 0, *deletes)
+	})
+
+	t.Run("renaming a RAW on its own is refused", func(t *testing.T) {
+		f := &Fs{}
+		src := &Object{fs: f, id: id, raw: true, itemCount: 1, remote: "media/all/GP012013 {" + id + "}.GPR", modTime: startTime}
+		_, err := f.Move(ctx, src, "media/all/renamed {"+id+"}.GPR")
+		assert.Error(t, err)
+	})
+
+	t.Run("moving a RAW to another date keeps its name", func(t *testing.T) {
+		var gotUpdate api.MediumUpdate
+		f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&gotUpdate))
+			w.WriteHeader(http.StatusNoContent)
+		}))
+		defer srv.Close()
+		src := &Object{fs: f, id: id, raw: true, itemCount: 1, remote: "media/by-day/2025/2025-03-14/GP012013 {" + id + "}.GPR", modTime: time.Date(2025, 3, 14, 9, 0, 0, 0, time.UTC)}
+		dst, err := f.Move(ctx, src, "media/by-day/2026/2026-07-04/GP012013 {"+id+"}.GPR")
+		require.NoError(t, err)
+		assert.Nil(t, gotUpdate.Filename)
+		require.NotNil(t, gotUpdate.CapturedAt)
+		assert.True(t, dst.(*Object).raw)
+	})
 }
 
 func TestReadMetaDataAlreadyResolvedIsANoOp(t *testing.T) {

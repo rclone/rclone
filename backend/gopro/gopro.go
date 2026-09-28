@@ -18,6 +18,7 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -75,6 +76,17 @@ const (
 	// enforces for every part but the last.
 	minUploadChunkSize = fs.SizeSuffix(5 * 1024 * 1024)
 
+	// rawLabel is the sidecar label of a photo's RAW file
+	rawLabel = "raw_photo"
+
+	// rawMimeType is the MIME type of RAW files - GPR is DNG-based
+	rawMimeType = "image/x-adobe-dng"
+
+	// photo_format values - see that option's Help text.
+	photoFormatBoth = "both"
+	photoFormatJPEG = "jpeg"
+	photoFormatRaw  = "raw"
+
 	// verify_size modes - see that option's Help text.
 	verifySizeReprocessed = "reprocessed"
 	verifySizeAlways      = "always"
@@ -103,6 +115,16 @@ func checkVerifySizeMode(mode string) error {
 		return nil
 	default:
 		return fmt.Errorf("unknown verify_size %q (must be %q, %q or %q)", mode, verifySizeReprocessed, verifySizeAlways, verifySizeOff)
+	}
+}
+
+// checkPhotoFormat checks that format is a legal photo_format value
+func checkPhotoFormat(format string) error {
+	switch format {
+	case "", photoFormatBoth, photoFormatJPEG, photoFormatRaw:
+		return nil
+	default:
+		return fmt.Errorf("unknown photo_format %q (must be %q, %q or %q)", format, photoFormatBoth, photoFormatJPEG, photoFormatRaw)
 	}
 }
 
@@ -136,7 +158,7 @@ const (
 	collectionsAcceptHeader = "application/vnd.gopro.jk.collections+json; version=2.0.0"
 
 	// mediaFields is the set of /media/search fields this backend reads.
-	mediaFields = "id,filename,file_extension,type,captured_at,created_at,file_size,width,height,camera_model,item_count,moments_count,ready_to_view,token,content_title,resolution,reprocessed_at"
+	mediaFields = "id,filename,file_extension,type,captured_at,created_at,file_size,width,height,camera_model,item_count,moments_count,ready_to_view,token,content_title,resolution,reprocessed_at,available_labels"
 
 	// includedTypes is the type filter for camera media - see mediaTypes.
 	includedTypes = "Photo,Video,TimeLapse,TimeLapseVideo,Burst,BurstVideo,Chaptered,Continuous,Livestream,Looped,LoopedVideo,ExternalVideo,Session,Audio"
@@ -386,6 +408,25 @@ only those are checked.`,
 				Help:  "Never verify - fastest, trusts file_size from the API as-is",
 			}},
 		}, {
+			Name:     "photo_format",
+			Advanced: true,
+			Default:  photoFormatBoth,
+			Help: `Which files to list for photos shot with both JPEG and RAW.
+
+A photo shot in RAW mode has a RAW (.gpr) file next to its JPEG, listed
+under the same name. A photo with only one of the two is always listed,
+whatever this is set to.`,
+			Examples: []fs.OptionExample{{
+				Value: photoFormatBoth,
+				Help:  "List both the JPEG and the RAW file",
+			}, {
+				Value: photoFormatJPEG,
+				Help:  "List only the JPEG",
+			}, {
+				Value: photoFormatRaw,
+				Help:  "List only the RAW file",
+			}},
+		}, {
 			Name:     "read_size",
 			Advanced: true,
 			Default:  false,
@@ -442,6 +483,7 @@ type Options struct {
 	TrashedOnly       bool                 `config:"trashed_only"`
 	AlwaysAddID       bool                 `config:"always_add_id"`
 	VerifySize        string               `config:"verify_size"`
+	PhotoFormat       string               `config:"photo_format"`
 	ReadSize          bool                 `config:"read_size"`
 	UploadChunkSize   fs.SizeSuffix        `config:"upload_chunk_size"`
 	UploadConcurrency int                  `config:"upload_concurrency"`
@@ -523,6 +565,7 @@ type Object struct {
 	sizeChecked bool // true once bytes has been confirmed (or corrected) against a live response
 	sizeMu      sync.Mutex
 	reprocessed bool // true if the parent medium's reprocessed_at is set - see verify_size's "reprocessed" mode
+	raw         bool // true if this is the RAW (.gpr) file of a photo rather than the photo itself
 	modTime     time.Time
 	mimeType    string
 }
@@ -643,6 +686,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 	}
 	if err := checkVerifySizeMode(opt.VerifySize); err != nil {
+		return nil, fmt.Errorf("gopro: %w", err)
+	}
+	if err := checkPhotoFormat(opt.PhotoFormat); err != nil {
 		return nil, fmt.Errorf("gopro: %w", err)
 	}
 
@@ -1268,9 +1314,16 @@ func (f *Fs) listDir(ctx context.Context, prefix string, filter mediaFilter) (en
 			if itemCount > 1 {
 				remote = itemLeaf(leaf, n)
 			}
-			o := &Object{fs: f, remote: prefix + remote}
-			o.setMetaData(item, n)
-			entries = append(entries, o)
+			if f.listPhoto(item) {
+				o := &Object{fs: f, remote: prefix + remote}
+				o.setMetaData(item, n)
+				entries = append(entries, o)
+			}
+			if f.listRaw(item) {
+				r := &Object{fs: f, remote: prefix + rawLeaf(remote), raw: true}
+				r.setMetaData(item, n)
+				entries = append(entries, r)
+			}
 		}
 	}
 	dupes := map[string]int{}
@@ -1587,6 +1640,58 @@ func isSourceLabel(label string) bool {
 	return label == "source" || label == "baked_source"
 }
 
+// selectURL picks o's download URL and HEAD-able URL from dl
+func (o *Object) selectURL(dl *api.DownloadResponse) (dlURL, head string, err error) {
+	if o.raw {
+		return selectRaw(dl, o.itemNumber)
+	}
+	return selectRendition(dl, o.fs.opt.DownloadVariation, o.itemNumber)
+}
+
+// selectRaw picks the download URL and HEAD-able URL of the RAW file for
+// itemNumber - unnumbered for a single photo, numbered for a series.
+func selectRaw(dl *api.DownloadResponse, itemNumber int) (dlURL, head string, err error) {
+	for _, s := range dl.Embedded.SidecarFiles {
+		if s.Label == rawLabel && (s.ItemNumber == itemNumber || s.ItemNumber == 0 && itemNumber <= 1) {
+			return s.URL, s.Head, nil
+		}
+	}
+	return "", "", fmt.Errorf("no RAW file found for item %d", itemNumber)
+}
+
+// hasRaw reports whether item's photos come with RAW (.gpr) files
+func hasRaw(item *api.Medium) bool {
+	return slices.Contains(item.AvailableLabels, rawLabel)
+}
+
+// listPhoto reports whether item's photo (or video) files are listed -
+// always, unless it has RAW files and --gopro-photo-format is "raw"
+func (f *Fs) listPhoto(item *api.Medium) bool {
+	return f.opt.PhotoFormat != photoFormatRaw || !hasRaw(item)
+}
+
+// listRaw reports whether item's RAW files are listed next to its photos
+func (f *Fs) listRaw(item *api.Medium) bool {
+	return f.opt.PhotoFormat != photoFormatJPEG && hasRaw(item)
+}
+
+// rawLeaf returns the name of the RAW file next to the photo leaf,
+// matching the case of its extension
+func rawLeaf(leaf string) string {
+	ext := path.Ext(leaf)
+	rawExt := ".gpr"
+	if ext == strings.ToUpper(ext) {
+		rawExt = ".GPR"
+	}
+	return strings.TrimSuffix(leaf, ext) + rawExt
+}
+
+// isNotFound reports whether err is a 404 from the API
+func isNotFound(err error) bool {
+	var apiErr *api.Error
+	return errors.As(err, &apiErr) && apiErr.Status == http.StatusNotFound
+}
+
 // getDownload fetches (and caches) the download descriptor for a medium
 func (f *Fs) getDownload(ctx context.Context, id string) (*api.DownloadResponse, error) {
 	f.dlCacheMu.Lock()
@@ -1647,7 +1752,7 @@ func (o *Object) Size() int64 {
 		fs.Debugf(o, "Size: %v", err)
 		return o.bytes
 	}
-	_, head, err := selectRendition(dl, o.fs.opt.DownloadVariation, o.itemNumber)
+	_, head, err := o.selectURL(dl)
 	if err != nil || head == "" {
 		fs.Debugf(o, "Size: %v", err)
 		return o.bytes
@@ -1708,6 +1813,7 @@ func (o *Object) copyFrom(src *Object) {
 	o.reprocessed = src.reprocessed
 	o.modTime = src.modTime
 	o.mimeType = src.mimeType
+	o.raw = src.raw
 }
 
 // setMetaData sets the Object data from a Medium
@@ -1746,6 +1852,11 @@ func (o *Object) setMetaDataLocked(item *api.Medium, itemNumber int) {
 	}
 	o.mimeType = mime.TypeByExtension(strings.ToLower(ext))
 	o.reprocessed = item.ReprocessedAt != nil
+	if o.raw {
+		// file_size only covers the photos.
+		o.bytes = -1
+		o.mimeType = rawMimeType
+	}
 }
 
 // readMetaData gets the metadata if it hasn't already been fetched
@@ -1765,21 +1876,24 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 		return fs.ErrorNotAFile
 	}
 	// With an {id} suffix, fetch the medium directly - but only trust it
-	// if its own name, suffixed the same way, is exactly fileName, since
-	// a renamed file can end in any id. Only item 1 of a multi-item
-	// medium can match; the others fall through to the listing.
+	// if its own name (or its RAW's), suffixed the same way, is exactly
+	// fileName, since a renamed file can end in any id. Only item 1 of a
+	// multi-item medium can match; the others fall through to the listing.
 	// GET /media/{id} 404s for trashed media, so this is skipped under
 	// --gopro-trashed-only.
 	if id := findID(fileName); id != "" && o.fs.opt.AlwaysAddID && !o.fs.opt.TrashedOnly {
 		item, err := o.fs.getMedium(ctx, id)
-		var apiErr *api.Error
 		switch {
-		case errors.As(err, &apiErr) && apiErr.Status == http.StatusNotFound:
+		case isNotFound(err):
 			// Deleted or trashed since it was listed - let the listing
 			// below decide, which reports fs.ErrorObjectNotFound.
 		case err != nil:
 			return err
-		case expectedIDSuffixedName(o.fs, item) == fileName:
+		case o.fs.listPhoto(item) && expectedIDSuffixedName(o.fs, item) == fileName:
+			o.setMetaData(item, 1)
+			return nil
+		case o.fs.listRaw(item) && rawLeaf(expectedIDSuffixedName(o.fs, item)) == fileName:
+			o.raw = true
 			o.setMetaData(item, 1)
 			return nil
 		}
@@ -1838,7 +1952,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	if err != nil {
 		return nil, err
 	}
-	dlURL, _, err := selectRendition(dl, o.fs.opt.DownloadVariation, o.itemNumber)
+	dlURL, _, err := o.selectURL(dl)
 	if err != nil {
 		return nil, err
 	}
@@ -1923,6 +2037,9 @@ func (f *Fs) deleteReplaced(ctx context.Context, id string) {
 // Under --gopro-trashed-only the object is already in the trash, where a
 // plain delete fails, so it's purged directly.
 func (o *Object) Remove(ctx context.Context) error {
+	if o.raw {
+		return o.removeRaw(ctx)
+	}
 	var err error
 	if o.fs.opt.TrashedOnly {
 		err = o.fs.doDeleteMedium(ctx, o.id, "permanent", "true")
@@ -1933,6 +2050,33 @@ func (o *Object) Remove(ctx context.Context) error {
 		return err
 	}
 	o.fs.removeUploadedEntry(o.remote)
+	return nil
+}
+
+// removeRaw removes a RAW file, which GoPro can only delete together with
+// its photo - so this only succeeds once the photo has been deleted, as
+// when deleting a whole directory.
+func (o *Object) removeRaw(ctx context.Context) error {
+	var exists bool
+	if o.fs.opt.TrashedOnly {
+		o.fs.invalidateTrashCache()
+		items, err := o.fs.allTrash(ctx)
+		if err != nil {
+			return err
+		}
+		for i := range items {
+			exists = exists || items[i].ID == o.id
+		}
+	} else {
+		_, err := o.fs.getMedium(ctx, o.id)
+		if err != nil && !isNotFound(err) {
+			return err
+		}
+		exists = err == nil
+	}
+	if exists {
+		return fmt.Errorf("gopro: can't delete %q on its own - GoPro only deletes it together with its photo", o.remote)
+	}
 	return nil
 }
 
@@ -2042,6 +2186,9 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	// "{id}.ext" would come back as a filename of just ".ext".
 	var upd api.MediumUpdate
 	if dstLeaf != srcLeaf {
+		if srcObj.raw {
+			return nil, fmt.Errorf("gopro: can't rename %q on its own - rename its photo instead", srcObj.remote)
+		}
 		if isUnnamedLeaf(dstLeaf) {
 			return nil, fmt.Errorf("gopro: can't move to %q: no name before the extension", remote)
 		}
