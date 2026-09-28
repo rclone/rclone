@@ -14,7 +14,7 @@ import (
 
 // logger represents the slog logging facility and should be overridden by
 // the fs/log handling code.
-var logger *slog.Logger = slog.Default()
+var logger = slog.Default()
 
 // LogLevel describes rclone's logs.  These are a subset of the syslog log levels.
 type LogLevel = Enum[logLevelChoices]
