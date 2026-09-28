@@ -192,6 +192,8 @@ type bisyncTest struct {
 	step        int
 	stopped     bool
 	stepStr     string
+	stepName    string
+	testTitle   string
 	testCase    string
 	sessionName string
 	// test dirs
@@ -544,6 +546,10 @@ func (b *bisyncTest) runTestCase(ctx context.Context, t *testing.T, testCase str
 		b.step++
 		b.stepStr = fmt.Sprintf("(%02d)  :", b.step)
 		line = scenReplacer.Replace(line)
+		if strings.HasPrefix(line, "test ") {
+			b.testTitle = line
+		}
+		b.stepName = fmt.Sprintf("%s (%02d) %s", b.testTitle, b.step, line)
 		if err = b.runTestStep(ctx, line); err != nil {
 			require.Failf(b.t, "test step failed", "step %d failed: %v", b.step, err)
 			return
@@ -609,6 +615,10 @@ func (b *bisyncTest) runTestCase(ctx context.Context, t *testing.T, testCase str
 			msg += " (expected failure on bucket remotes)"
 			passed = true
 		}
+	}
+	if passed && b.t.Failed() {
+		msg = color(terminal.RedFg, fmt.Sprintf("TEST %s FAILED - see errors above", b.testCase))
+		passed = false
 	}
 	b.t.Log(msg)
 	if !passed {
@@ -1241,7 +1251,49 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 	if err != nil {
 		b.logPrintf("Bisync error: %v", err)
 	}
+	if err == nil && !opt.DryRun && opt.TestFn == nil && opt.FiltersFile == "" {
+		b.checkListingsMatchRemotes(ctx, fs1, fs2)
+	}
 	return nil
+}
+
+// checkListingsMatchRemotes checks that after a successful run the files
+// named in each listing are exactly the files on that path.
+func (b *bisyncTest) checkListingsMatchRemotes(ctx context.Context, fs1, fs2 fs.Fs) {
+	session := bilib.SessionName(fs1, fs2)
+	for i, f := range []fs.Fs{fs1, fs2} {
+		listing := filepath.Join(b.workDir, fmt.Sprintf("%s.path%d.lst", session, i+1))
+		data, err := os.ReadFile(listing)
+		if err != nil {
+			listing = filepath.Join(b.workDir, fmt.Sprintf("%s.path%d.lst", norm.NFC.String(session), i+1))
+			if data, err = os.ReadFile(listing); err != nil {
+				b.t.Logf("invariant: skipping, can't read listing: %v", err)
+				return
+			}
+		}
+		inListing := bilib.Names{}
+		for line := range strings.SplitSeq(string(data), "\n") {
+			if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, "d ") {
+				continue
+			}
+			q := strings.Index(line, `"`)
+			name, err := strconv.Unquote(line[q:])
+			require.NoError(b.t, err, "parsing listing line %q", line)
+			inListing.Add(name)
+		}
+		onRemote := bilib.Names{}
+		require.NoError(b.t, operations.ListFn(ctx, f, func(o fs.Object) { onRemote.Add(o.Remote()) }))
+		for _, name := range onRemote.ToList() {
+			if !inListing.Has(name) {
+				b.t.Errorf("invariant: step %q: Path%d has %q but its listing does not", b.stepName, i+1, name)
+			}
+		}
+		for _, name := range inListing.ToList() {
+			if !onRemote.Has(name) {
+				b.t.Errorf("invariant: step %q: Path%d listing has %q but the path does not", b.stepName, i+1, name)
+			}
+		}
+	}
 }
 
 // saveTestListings creates a copy of test artifacts with given prefix
