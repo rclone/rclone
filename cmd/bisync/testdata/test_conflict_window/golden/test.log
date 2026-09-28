@@ -59,13 +59,10 @@ NOTICE: {path2String}: 0 differences found
 NOTICE: {path2String}: 1 matching files
 INFO  : Finished checking the potential conflicts. %!s(<nil>)
 NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfile1.txt[0m
-INFO  : Files are equal! Skipping: file1.txt
+INFO  : Files are equal but changed after the listing was made, so will check again next run: file1.txt
 INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-ERROR : - [34m[0m         [35mModtime not equal in listing. Path1: 2001-01-02 00:00:00 +0000 UTC, Path2: 2001-03-04 00:00:00 +0000 UTC[0m - [36mfile1.txt[0m
-ERROR : [31mBisync critical error: path1 and path2 are out of sync, run --resync to recover[0m
-ERROR : [31mBisync aborted. Must run --resync to recover.[0m
-Bisync error: bisync aborted
+INFO  : [32mBisync successful[0m
 
 [36m(12)  :[0m [34mtest bisync after file1 changed before the check[0m
 [36m(13)  :[0m [34mbisync[0m
@@ -80,14 +77,28 @@ INFO  : Bisyncing with Comparison Settings:
 "DownloadHash": false
 }
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-ERROR : [31mBisync critical error: cannot find prior Path1 or Path2 listings, likely due to critical error on prior run
-[35mTip: here are the filenames we were looking for. Do they exist?
-[0m[36mPath1: [94m{workdir/}{session}.path1.lst[0m
-[0m[36mPath2: [94m{workdir/}{session}.path2.lst[0m
-[0m[35mTry running this command to inspect the work dir:
-[0m[96mrclone lsl "{workdir}"[0m[0m
-ERROR : [31mBisync aborted. Must run --resync to recover.[0m
-Bisync error: bisync aborted
+INFO  : Building Path1 and Path2 listings
+INFO  : Path1 checking for diffs
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile1.txt[0m
+INFO  : Path1:    1 changes: [32m   0 new[0m, [33m   1 modified[0m, [31m   0 deleted[0m
+INFO  : ([33mModified[0m: [36m   1 newer[0m, [34m   0 older[0m, [36m   1 larger[0m, [34m   0 smaller[0m)
+INFO  : Path2 checking for diffs
+INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile1.txt[0m
+INFO  : Path2:    1 changes: [32m   0 new[0m, [33m   1 modified[0m, [31m   0 deleted[0m
+INFO  : ([33mModified[0m: [36m   1 newer[0m, [34m   0 older[0m, [36m   1 larger[0m, [34m   0 smaller[0m)
+INFO  : Applying changes
+INFO  : Checking potential conflicts...
+NOTICE: {path2String}: 0 differences found
+NOTICE: {path2String}: 1 matching files
+INFO  : Finished checking the potential conflicts. %!s(<nil>)
+NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfile1.txt[0m
+INFO  : file1.txt: Files are equal but will copy anyway to update modtime (will not rename)
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file1.txt[0m
+INFO  : - [34mPath2[0m    [35mDo queued copies to[0m                - [36mPath1[0m
+INFO  : There was nothing to transfer
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m
 
 [36m(14)  :[0m [34mtest recover with --resync if the previous runs failed[0m
 [36m(15)  :[0m [34mbisync resync[0m
@@ -149,7 +160,7 @@ NOTICE: {path2String}: 0 differences found
 NOTICE: {path2String}: 1 matching files
 INFO  : Finished checking the potential conflicts. %!s(<nil>)
 NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfile2.txt[0m
-INFO  : Files are equal! Skipping: file2.txt
+INFO  : Files are equal but changed after the listing was made, so will check again next run: file2.txt
 INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
 INFO  : [32mBisync successful[0m
@@ -172,12 +183,25 @@ INFO  : Bisyncing with Comparison Settings:
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile2.txt[0m
+INFO  : Path1:    1 changes: [32m   0 new[0m, [33m   1 modified[0m, [31m   0 deleted[0m
+INFO  : ([33mModified[0m: [36m   1 newer[0m, [34m   0 older[0m, [36m   1 larger[0m, [34m   0 smaller[0m)
 INFO  : Path2 checking for diffs
-INFO  : No changes found
+INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile2.txt[0m
+INFO  : Path2:    1 changes: [32m   0 new[0m, [33m   1 modified[0m, [31m   0 deleted[0m
+INFO  : ([33mModified[0m: [36m   1 newer[0m, [34m   0 older[0m, [36m   1 larger[0m, [34m   0 smaller[0m)
+INFO  : Applying changes
+NOTICE: [36mhook before-check:[0m [34mcopy-as {datadir/}file2C.txt {path1/} file2.txt[0m
+NOTICE: [36mhook before-check:[0m [34mcopy-as {datadir/}file2C.txt {path2/} file2.txt[0m
+INFO  : Checking potential conflicts...
+NOTICE: {path2String}: 0 differences found
+NOTICE: {path2String}: 1 matching files
+INFO  : Finished checking the potential conflicts. %!s(<nil>)
+NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfile2.txt[0m
+INFO  : Files are equal but changed after the listing was made, so will check again next run: file2.txt
 INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
 INFO  : [32mBisync successful[0m
-hook before-check did not run, discarding 2 steps
 
 [36m(30)  :[0m [34mtest bisync after file2 stops changing[0m
 [36m(31)  :[0m [34mbisync[0m
@@ -194,8 +218,20 @@ INFO  : Bisyncing with Comparison Settings:
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile2.txt[0m
+INFO  : Path1:    1 changes: [32m   0 new[0m, [33m   1 modified[0m, [31m   0 deleted[0m
+INFO  : ([33mModified[0m: [36m   1 newer[0m, [34m   0 older[0m, [36m   1 larger[0m, [34m   0 smaller[0m)
 INFO  : Path2 checking for diffs
-INFO  : No changes found
+INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile2.txt[0m
+INFO  : Path2:    1 changes: [32m   0 new[0m, [33m   1 modified[0m, [31m   0 deleted[0m
+INFO  : ([33mModified[0m: [36m   1 newer[0m, [34m   0 older[0m, [36m   1 larger[0m, [34m   0 smaller[0m)
+INFO  : Applying changes
+INFO  : Checking potential conflicts...
+NOTICE: {path2String}: 0 differences found
+NOTICE: {path2String}: 1 matching files
+INFO  : Finished checking the potential conflicts. %!s(<nil>)
+NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfile2.txt[0m
+INFO  : Files are equal! Skipping: file2.txt
 INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
 INFO  : [32mBisync successful[0m

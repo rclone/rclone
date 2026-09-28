@@ -62,10 +62,7 @@ NOTICE: [36mhook before-check:[0m [34mcopy-as {datadir/}fileC.txt {path1/} fi
 NOTICE: [36mhook before-check:[0m [34mcopy-as {datadir/}fileC.txt {path2/} file1.txt[0m
 NOTICE: [36mhook before-check:[0m [34mcopy-as {datadir/}fileC.txt {path1/} file2.txt[0m
 NOTICE: [36mhook before-check:[0m [34mcopy-as {datadir/}fileC.txt {path2/} file2.txt[0m
-INFO  : Checking potential conflicts...
-NOTICE: {path2String}: 0 differences found
-NOTICE: {path2String}: 2 matching files
-INFO  : Finished checking the potential conflicts. %!s(<nil>)
+INFO  : Not checking potential conflicts, as only their sizes could be compared, and those already match.
 NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfile1.txt[0m
 INFO  : Files are equal! Skipping: file1.txt
 NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfile2.txt[0m
@@ -94,21 +91,16 @@ INFO  : Bisyncing with Comparison Settings:
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
-INFO  : - [36mPath1[0m    [35m[33mFile changed: [35msize (smaller)[0m[0m[0m - [36mfile1.txt[0m
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35msize (larger)[0m[0m[0m - [36mfile2.txt[0m
 INFO  : Path1:    1 changes: [32m   0 new[0m, [33m   1 modified[0m, [31m   0 deleted[0m
-INFO  : ([33mModified[0m: [36m   0 larger[0m, [34m   1 smaller[0m)
+INFO  : ([33mModified[0m: [36m   1 larger[0m, [34m   0 smaller[0m)
 INFO  : Path2 checking for diffs
-INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (smaller)[0m[0m[0m - [36mfile1.txt[0m
-INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (smaller)[0m[0m[0m - [36mfile2.txt[0m
-INFO  : Path2:    2 changes: [32m   0 new[0m, [33m   2 modified[0m, [31m   0 deleted[0m
-INFO  : ([33mModified[0m: [36m   0 larger[0m, [34m   2 smaller[0m)
+INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m[0m[0m - [36mfile1.txt[0m
+INFO  : Path2:    1 changes: [32m   0 new[0m, [33m   1 modified[0m, [31m   0 deleted[0m
+INFO  : ([33mModified[0m: [36m   1 larger[0m, [34m   0 smaller[0m)
 INFO  : Applying changes
-NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfile1.txt[0m
-NOTICE: - [36mPath1[0m    [35mRenaming Path1 copy[0m                - [36m{path1/}file1.txt.conflict1[0m
-NOTICE: - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.txt.conflict1[0m
-NOTICE: - [34mPath2[0m    [35mRenaming Path2 copy[0m                - [36m{path2/}file1.txt.conflict2[0m
-NOTICE: - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file1.txt.conflict2[0m
-INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file2.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file2.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file1.txt[0m
 INFO  : - [34mPath2[0m    [35mDo queued copies to[0m                - [36mPath1[0m
 INFO  : - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
 INFO  : Updating listings

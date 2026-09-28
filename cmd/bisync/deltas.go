@@ -296,8 +296,8 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (result
 	handled := bilib.Names{}
 	renameSkipped := bilib.Names{}
 	deletedonboth := bilib.Names{}
-	skippedDirs1 := newFileList()
-	skippedDirs2 := newFileList()
+	skipped1 := newFileList()
+	skipped2 := newFileList()
 	b.renames = renames{}
 
 	ctxMove := b.opt.setDryRun(ctx)
@@ -367,7 +367,7 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (result
 	}
 
 	// if there are potential conflicts to check, check them all here (outside the loop) in one fell swoop
-	matches, err := b.checkconflicts(ctxCheck, filterCheck, b.fs1, b.fs2)
+	matches, matches1, matches2, err := b.checkconflicts(ctxCheck, filterCheck, b.fs1, b.fs2)
 
 	for _, file := range ds1.sort() {
 		alias := b.aliases.Alias(file)
@@ -394,8 +394,8 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (result
 				// if files are identical, leave them alone instead of renaming
 				if (dirs1.has(file) || dirs1.has(alias)) && (dirs2.has(file) || dirs2.has(alias)) {
 					fs.Infof(nil, "This is a directory, not a file. Skipping equality check and will not rename: %s", file)
-					b.march.ls1.getPut(file, skippedDirs1)
-					b.march.ls2.getPut(file, skippedDirs2)
+					b.march.ls1.getPut(file, skipped1)
+					b.march.ls2.getPut(file, skipped2)
 					b.debugFn(file, func() {
 						b.debug(file, fmt.Sprintf("deltas dir: %s, ls1 has name?: %v, ls2 has name?: %v", file, b.march.ls1.has(b.DebugName), b.march.ls2.has(b.DebugName)))
 					})
@@ -421,10 +421,14 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (result
 								b.indent("Path1", p2, "Queue copy to Path2")
 								copy1to2.Add(b.march.ls1.getTryAlias(file, alias))
 							}
-						} else {
+						} else if b.sameCompared(b.march.ls1, matches1, b.march.ls1.getTryAlias(file, alias), b.fs1) &&
+							b.sameCompared(b.march.ls2, matches2, b.march.ls2.getTryAlias(file, alias), b.fs2) {
 							fs.Infof(nil, "Files are equal! Skipping: %s", file)
-							renameSkipped.Add(file)
-							renameSkipped.Add(alias)
+							b.march.ls1.getPut(b.march.ls1.getTryAlias(file, alias), skipped1)
+							b.march.ls2.getPut(b.march.ls2.getTryAlias(file, alias), skipped2)
+						} else {
+							// the snapshot isn't the state we found equal, so leave the prior listing for the next run
+							fs.Infof(nil, "Files are equal but changed after the listing was made, so will check again next run: %s", file)
 						}
 					} else {
 						fs.Debugf(nil, "Files are NOT equal: %s", file)
@@ -536,8 +540,8 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (result
 	queues.copy2to1 = copy2to1
 	queues.renameSkipped = renameSkipped
 	queues.deletedonboth = deletedonboth
-	queues.skippedDirs1 = skippedDirs1
-	queues.skippedDirs2 = skippedDirs2
+	queues.skipped1 = skipped1
+	queues.skipped2 = skipped2
 
 	return
 }
@@ -637,4 +641,13 @@ func (b *bisyncRun) updateAliases(ctx context.Context, ds1, ds2 *deltaSet) {
 	}
 	addAliases(delMap1, fullMap2)
 	addAliases(delMap2, fullMap1)
+}
+
+// sameCompared reports whether file has the same values in the listing
+// snapshot and in the checked list, in every field bisync compares.
+func (b *bisyncRun) sameCompared(snapshot, checked *fileList, file string, f fs.Info) bool {
+	if !checked.has(file) {
+		return false
+	}
+	return len(b.fileInfoDiffs(file, file, snapshot, checked, f, f, snapshot.hash, snapshot.hash)) == 0
 }
