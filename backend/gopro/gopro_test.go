@@ -774,6 +774,81 @@ func TestObjectReportSizeMismatch(t *testing.T) {
 // touching the network - each uses a bare &Fs{} with a nil srv/unAuth/pacer,
 // so an unwanted network attempt panics on a nil dereference instead of
 // silently passing.
+func TestVariationSizeIsNotTheOriginals(t *testing.T) {
+	var heads int
+	var cdn string
+	f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "HEAD" {
+			heads++
+			w.Header().Set("Content-Length", "100")
+			return
+		}
+		dl := api.DownloadResponse{}
+		dl.Embedded.Variations = []api.File{
+			{Label: "source", URL: cdn, Head: cdn},
+			{Label: "1080p", URL: cdn, Head: cdn},
+		}
+		writeJSON(t, w, dl)
+	}))
+	defer srv.Close()
+	cdn = srv.URL + "/file"
+	size := int64(1000)
+	item := &api.Medium{ID: "video", Filename: "video.mp4", Type: "Video", FileSize: &size, ItemCount: 1, CapturedAt: startTime}
+	f.opt.VerifySize = verifySizeReprocessed
+
+	t.Run("the source keeps file_size", func(t *testing.T) {
+		f.opt.DownloadVariation = "source"
+		o := &Object{fs: f}
+		o.setMetaData(item, 1)
+		assert.Equal(t, size, o.Size())
+	})
+
+	f.opt.DownloadVariation = "1080p"
+	t.Run("another rendition's size is unknown", func(t *testing.T) {
+		o := &Object{fs: f}
+		o.setMetaData(item, 1)
+		assert.Equal(t, int64(-1), o.Size())
+		assert.Zero(t, heads, "read_size is off")
+	})
+
+	t.Run("and read with read_size", func(t *testing.T) {
+		f.opt.ReadSize = true
+		defer func() { f.opt.ReadSize = false }()
+		o := &Object{fs: f}
+		o.setMetaData(item, 1)
+		assert.Equal(t, int64(100), o.Size())
+		assert.Equal(t, 1, heads)
+	})
+}
+
+func TestSizeCheckIsBounded(t *testing.T) {
+	defer func(d time.Duration) { sizeCheckTimeout = d }(sizeCheckTimeout)
+	sizeCheckTimeout = 50 * time.Millisecond
+	release := make(chan struct{})
+	defer close(release)
+	var cdn string
+	f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "HEAD" {
+			select { // a HEAD that never answers
+			case <-r.Context().Done():
+			case <-release:
+			}
+			return
+		}
+		dl := api.DownloadResponse{}
+		dl.Embedded.Variations = []api.File{{Label: "source", URL: cdn, Head: cdn}}
+		writeJSON(t, w, dl)
+	}))
+	defer srv.Close()
+	cdn = srv.URL + "/file"
+	f.opt.VerifySize = verifySizeAlways
+	o := &Object{fs: f, id: "video", itemNumber: 1, itemCount: 1, bytes: 1000}
+
+	start := time.Now()
+	assert.Equal(t, int64(1000), o.Size(), "the listed size stays when the check times out")
+	assert.Less(t, time.Since(start), 5*time.Second)
+}
+
 func TestObjectSizeFastPaths(t *testing.T) {
 	t.Run("verify_size off skips the check for a known size", func(t *testing.T) {
 		o := &Object{fs: &Fs{opt: Options{VerifySize: verifySizeOff}}, bytes: 12345}
@@ -2815,6 +2890,43 @@ func TestListDirNamesTheJPEGGeneratedForAnUploadedRaw(t *testing.T) {
 	}
 	f := newTestMediaFs(nil)
 	assert.Equal(t, "rclone-test-raw {"+id+"}.JPG", expectedIDSuffixedName(f, &item), "the {id} fast path must agree with the listing")
+}
+
+func TestUploadedRawReadsBackTheRaw(t *testing.T) {
+	ctx := context.Background()
+	content := []byte("original RAW data")
+	withRaw := &api.DownloadResponse{}
+	withRaw.Embedded.Variations = []api.File{{Label: "source", URL: "https://example.invalid/generated.jpg"}}
+	withRaw.Embedded.SidecarFiles = []api.SidecarFile{{Label: rawLabel, URL: "https://example.invalid/original.gpr"}}
+	unprocessed := &api.DownloadResponse{}
+	unprocessed.Embedded.Variations = []api.File{{Label: "source", URL: "https://example.invalid/uploaded.gpr"}}
+
+	for _, name := range []string{"photo.GPR", "photo.gpr"} {
+		t.Run(name, func(t *testing.T) {
+			f, srv, deletes := newTestReplaceFs(t)
+			defer srv.Close()
+			f.opt.DeleteParts = deletePartsRefuse
+			remote := "upload/" + name
+			src := mockobject.New(remote).WithContent(content, mockobject.SeekModeRegular)
+			put, err := f.Put(ctx, bytes.NewReader(content), src)
+			require.NoError(t, err)
+			listed, err := f.NewObject(ctx, remote)
+			require.NoError(t, err)
+			for _, o := range []*Object{put.(*Object), listed.(*Object)} {
+				u, _, err := o.selectURL(withRaw)
+				require.NoError(t, err)
+				assert.Equal(t, "https://example.invalid/original.gpr", u, "not the JPEG GoPro generates")
+				u, _, err = o.selectURL(unprocessed)
+				require.NoError(t, err)
+				assert.Equal(t, "https://example.invalid/uploaded.gpr", u, "before processing the source is the upload")
+				assert.Equal(t, int64(len(content)), o.Size())
+				assert.Equal(t, rawMimeType, o.MimeType(ctx))
+				assert.Equal(t, "new", o.ID(), "it's the medium's only file")
+			}
+			require.NoError(t, listed.Remove(ctx), "deleting it isn't deleting a part")
+			assert.Len(t, *deletes, 1)
+		})
+	}
 }
 
 func TestCheckPhotoFormat(t *testing.T) {

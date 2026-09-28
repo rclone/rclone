@@ -286,7 +286,9 @@ flow.`,
 rendered video for Highlights and Edits. Any other value is matched
 against the label or quality of the renditions GoPro offers (for
 example "1080p" or "high_res_proxy_mp4"), falling back to the first
-file offered if nothing matches.`,
+file offered if nothing matches. GoPro only reports the size of the
+original, so any other rendition's size is unknown unless
+[--gopro-read-size](#gopro-read-size) is set.`,
 		}, {
 			Name:     "include_edits",
 			Advanced: true,
@@ -647,6 +649,7 @@ type Object struct {
 	reprocessed bool // true if the parent medium's reprocessed_at is set - see verify_size's "reprocessed" mode
 	raw         bool // true if this is the RAW (.gpr) file of a photo rather than the photo itself
 	hasRaw      bool // true if the parent medium has RAW files next to its photos
+	rawUpload   bool // true if this is a RAW file uploaded on its own - see selectURL
 	modTime     time.Time
 	mimeType    string
 }
@@ -1843,6 +1846,13 @@ func (o *Object) selectURL(dl *api.DownloadResponse) (dlURL, head string, err er
 	if o.raw {
 		return selectRaw(dl, o.itemNumber)
 	}
+	if o.rawUpload {
+		// Once processed, the source is a JPEG GoPro generated and the
+		// upload its RAW file; before that the source is the upload.
+		if dlURL, head, err := selectRaw(dl, o.itemNumber); err == nil {
+			return dlURL, head, nil
+		}
+	}
 	return selectRendition(dl, o.fs.opt.DownloadVariation, o.itemNumber)
 }
 
@@ -1930,6 +1940,10 @@ func (f *Fs) getDownload(ctx context.Context, id string) (*api.DownloadResponse,
 	return &result, nil
 }
 
+// sizeCheckTimeout bounds the requests Size makes. A var so tests can
+// shrink it.
+var sizeCheckTimeout = time.Minute
+
 // Size returns the size of an object in bytes
 //
 // file_size from the API can be stale, which breaks multi-thread
@@ -1952,7 +1966,9 @@ func (o *Object) Size() int64 {
 	if o.sizeChecked {
 		return o.bytes
 	}
-	ctx := context.TODO()
+	// Size has no context to follow, so bound what it waits for.
+	ctx, cancel := context.WithTimeout(context.Background(), sizeCheckTimeout)
+	defer cancel()
 	dl, err := o.fs.getDownload(ctx, o.id)
 	if err != nil {
 		fs.Debugf(o, "Size: %v", err)
@@ -2021,6 +2037,7 @@ func (o *Object) copyFrom(src *Object) {
 	o.mimeType = src.mimeType
 	o.raw = src.raw
 	o.hasRaw = src.hasRaw
+	o.rawUpload = src.rawUpload
 }
 
 // setMetaData sets the Object data from a Medium
@@ -2054,6 +2071,16 @@ func (o *Object) setMetaDataLocked(item *api.Medium, itemNumber int) {
 	o.mimeType = mime.TypeByExtension(strings.ToLower(photoExt(item)))
 	o.reprocessed = item.ReprocessedAt != nil
 	o.hasRaw = hasRaw(item)
+	if o.fs != nil && o.fs.opt.DownloadVariation != "" && o.fs.opt.DownloadVariation != "source" {
+		// file_size is the original's, not the rendition's.
+		o.bytes = -1
+	}
+	// What this backend uploads keeps its extension here, while GoPro
+	// lists a processed RAW upload as the JPEG it generates for it.
+	o.rawUpload = item.FileExtension == "gpr"
+	if o.rawUpload {
+		o.mimeType = rawMimeType
+	}
 	if o.raw {
 		// file_size only covers the photos.
 		o.bytes = -1
