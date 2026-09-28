@@ -1,6 +1,7 @@
 package operations
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -12,6 +13,7 @@ import (
 	"path"
 	"sort"
 	"strings"
+	"sync"
 	texttemplate "text/template"
 	"time"
 
@@ -56,6 +58,13 @@ type IndexOpt struct {
 	DirTime   IndexDirTime    `json:"dirTime"`   // how to work out directory times
 	NoModTime bool            `json:"noModTime"` // don't show modification times
 	Rewrite   bool            `json:"rewrite"`   // write every listing even if it is unchanged
+
+	// Partial runs only re-index the directories affected by these
+	// changed paths and their ancestors. Empty means a full run.
+	Changed         []string `json:"changed"`         // changed files or directories, directories with a trailing /
+	ChangedFrom     []string `json:"changedFrom"`     // files of changed paths, one per line
+	ChangedCombined []string `json:"changedCombined"` // files in the sync --combined report format
+	ChangedMaxDirs  int      `json:"changedMaxDirs"`  // do a full run if a partial run would list more directories than this, 0 for no limit
 }
 
 // IndexOptDefault are the default options for Index
@@ -119,6 +128,8 @@ type index struct {
 	dirTime      IndexDirTime
 	now          time.Time
 	dirs         map[string]*indexDir
+	unwalkedMu   sync.Mutex
+	unwalked     map[string]time.Time // newest times of directories which weren't walked
 	transfers    errgroup.Group
 	ec           *errcount.ErrCount
 }
@@ -148,6 +159,7 @@ func newIndex(ctx context.Context, f fs.Fs, opt *IndexOpt) (*index, error) {
 		dirTime:  opt.DirTime,
 		now:      time.Now(),
 		dirs:     map[string]*indexDir{},
+		unwalked: map[string]time.Time{},
 		ec:       errcount.New(),
 	}
 	if ix.opt.NoModTime {
@@ -241,11 +253,18 @@ func newIndexTextTemplate(text string) (*texttemplate.Template, error) {
 // run does the work of Index
 func (ix *index) run(ctx context.Context) error {
 	ci := fs.GetConfig(ctx)
-	err := walk.Walk(ctx, ix.f, "", true, ConfigMaxDepth(ctx, true), ix.walkFn(ctx))
+	changed, err := ix.changedPaths()
 	if err != nil {
 		return err
 	}
-	ix.prune()
+	if changed == nil {
+		err = ix.walkAll(ctx)
+	} else {
+		err = ix.walkChanged(ctx, changed)
+	}
+	if err != nil {
+		return err
+	}
 
 	// Directories deepest first so that a directory's subdirectories
 	// are done before it.
@@ -256,6 +275,7 @@ func (ix *index) run(ctx context.Context) error {
 	sort.Slice(dirs, func(i, j int) bool {
 		return dirs[i].depth > dirs[j].depth
 	})
+	ix.prune(dirs)
 
 	// Read the modification times --checkers at a time as they may
 	// need a transaction each on some backends, and count them as
@@ -271,6 +291,17 @@ func (ix *index) run(ctx context.Context) error {
 					tr.Done(ctx, nil)
 					return nil
 				})
+			}
+			if ix.dirTime != IndexDirTimeNewest {
+				continue
+			}
+			for _, sub := range d.subdirs {
+				if ix.dirs[sub.Remote()] == nil {
+					g.Go(func() error {
+						ix.readUnwalkedTime(ctx, sub)
+						return nil
+					})
+				}
 			}
 		}
 		_ = g.Wait()
@@ -293,9 +324,222 @@ func (ix *index) run(ctx context.Context) error {
 	return ix.ec.Err("index")
 }
 
+// walkAll collects every directory for a full run
+func (ix *index) walkAll(ctx context.Context) error {
+	return walk.Walk(ctx, ix.f, "", true, ConfigMaxDepth(ctx, true), ix.walkFn(ctx))
+}
+
+// changedPaths returns the changed paths from the options, or nil
+// for a full run. Directories have a trailing slash.
+func (ix *index) changedPaths() (changed []string, err error) {
+	opt := ix.opt
+	if len(opt.Changed) == 0 && len(opt.ChangedFrom) == 0 && len(opt.ChangedCombined) == 0 {
+		return nil, nil
+	}
+	changed = []string{}
+	add := func(p string) {
+		isDir := strings.HasSuffix(p, "/")
+		p = strings.Trim(path.Clean("/"+p), "/")
+		if isDir {
+			p += "/"
+		}
+		changed = append(changed, p)
+	}
+	for _, p := range opt.Changed {
+		add(p)
+	}
+	for _, name := range opt.ChangedFrom {
+		err = forEachIndexLine(name, func(line string) error {
+			if line != "" {
+				add(line)
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+	for _, name := range opt.ChangedCombined {
+		err = forEachIndexLine(name, func(line string) error {
+			if line == "" {
+				return nil
+			}
+			if len(line) < 2 || line[1] != ' ' || !strings.ContainsRune("+-*!=", rune(line[0])) {
+				return fmt.Errorf("malformed line %q in combined report %q", line, name)
+			}
+			if line[0] != '=' {
+				add(line[2:])
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+	return changed, nil
+}
+
+// forEachIndexLine calls fn with every line of the file name, or of
+// stdin if name is "-", exactly as read
+func forEachIndexLine(name string, fn func(string) error) (err error) {
+	in := os.Stdin
+	if name != "-" {
+		in, err = os.Open(name)
+		if err != nil {
+			return err
+		}
+		defer fs.CheckClose(in, &err)
+	}
+	scanner := bufio.NewScanner(in)
+	for scanner.Scan() {
+		if err := fn(scanner.Text()); err != nil {
+			return err
+		}
+	}
+	return scanner.Err()
+}
+
+// walkChanged collects the directories a partial run needs: the
+// parent of every changed path and all of its ancestors, listed one
+// level deep, and every changed directory walked in full.
+//
+// Directories deeper than --max-depth are left alone as a full run
+// wouldn't walk them either.
+func (ix *index) walkChanged(ctx context.Context, changed []string) error {
+	if len(changed) == 0 {
+		fs.Infof(ix.f, "Nothing changed so nothing to index")
+		return nil
+	}
+	maxDepth := ConfigMaxDepth(ctx, true)
+	inDepth := func(dir string) bool {
+		return maxDepth < 0 || indexDepth(dir) < maxDepth
+	}
+	var subtrees []string
+	for _, p := range changed {
+		if p == "/" {
+			fs.Infof(ix.f, "Root changed so doing a full index")
+			return ix.walkAll(ctx)
+		}
+		if strings.HasSuffix(p, "/") {
+			subtrees = append(subtrees, strings.TrimSuffix(p, "/"))
+		}
+	}
+	subtrees = indexOuterDirs(subtrees)
+	// A changed directory's walk covers everything below it
+	inSubtree := func(dir string) bool {
+		for _, sub := range subtrees {
+			if dir == sub || strings.HasPrefix(dir, sub+"/") {
+				return true
+			}
+		}
+		return false
+	}
+	list := map[string]bool{}
+	for _, p := range changed {
+		for dir := indexParent(strings.TrimSuffix(p, "/")); ; dir = indexParent(dir) {
+			if inDepth(dir) && !inSubtree(dir) {
+				list[dir] = true
+			}
+			if dir == "" {
+				break
+			}
+		}
+	}
+	if ix.opt.ChangedMaxDirs > 0 && len(list)+len(subtrees) > ix.opt.ChangedMaxDirs {
+		fs.Infof(ix.f, "Partial index would list %d directories, more than %d, so doing a full index", len(list)+len(subtrees), ix.opt.ChangedMaxDirs)
+		return ix.walkAll(ctx)
+	}
+	fs.Infof(ix.f, "Partial index: listing %d directories and walking %d changed directories", len(list), len(subtrees))
+	walkFn := ix.walkFn(ctx)
+	for dir := range list {
+		err := walk.Walk(ctx, ix.f, dir, true, 1, walkFn)
+		if err != nil {
+			return err
+		}
+	}
+	// Changed paths which turn out to be directories are walked too
+	for _, p := range changed {
+		if d := ix.dirs[indexParent(p)]; d != nil && !strings.HasSuffix(p, "/") {
+			for _, sub := range d.subdirs {
+				if sub.Remote() == p {
+					subtrees = append(subtrees, p)
+				}
+			}
+		}
+	}
+	for _, dir := range indexOuterDirs(subtrees) {
+		if !inDepth(dir) {
+			continue
+		}
+		depth := maxDepth
+		if maxDepth >= 0 {
+			depth = maxDepth - indexDepth(dir)
+		}
+		err := walk.Walk(ctx, ix.f, dir, true, depth, walkFn)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// indexOuterDirs sorts dirs and drops any which is the same as, or
+// inside, another so that walking the result covers each once
+func indexOuterDirs(dirs []string) (outer []string) {
+	sort.Strings(dirs)
+	for _, dir := range dirs {
+		if n := len(outer); n > 0 && (dir == outer[n-1] || strings.HasPrefix(dir, outer[n-1]+"/")) {
+			continue
+		}
+		outer = append(outer, dir)
+	}
+	return outer
+}
+
+// indexDepth returns how many directories deep remote is, 0 for the root
+func indexDepth(remote string) int {
+	if remote == "" {
+		return 0
+	}
+	return strings.Count(remote, "/") + 1
+}
+
+// indexParent returns the parent directory of p, "" for the root
+func indexParent(p string) string {
+	dir := path.Dir(p)
+	if dir == "." {
+		return ""
+	}
+	return dir
+}
+
+// readUnwalkedTime finds the newest time of a directory which wasn't
+// walked from the modification time of its listing, which is set to
+// the directory's newest time when it is written
+func (ix *index) readUnwalkedTime(ctx context.Context, sub fs.Directory) {
+	o, err := ix.f.NewObject(ctx, path.Join(sub.Remote(), ix.outputs[0].name))
+	if err != nil {
+		if !errors.Is(err, fs.ErrorObjectNotFound) {
+			fs.Debugf(sub, "Failed to read listing modtime: %v", err)
+		}
+		return
+	}
+	tr := accounting.Stats(ctx).NewCheckingTransfer(o, "reading modtime")
+	t := o.ModTime(ctx)
+	tr.Done(ctx, nil)
+	ix.unwalkedMu.Lock()
+	ix.unwalked[sub.Remote()] = t
+	ix.unwalkedMu.Unlock()
+}
+
 // walkFn returns the function which collects the directories
 func (ix *index) walkFn(ctx context.Context) walk.Func {
 	return func(remote string, entries fs.DirEntries, err error) error {
+		if errors.Is(err, fs.ErrorDirNotFound) {
+			// A changed directory which no longer exists
+			ix.dirs[remote] = &indexDir{remote: remote, depth: indexDepth(remote), gone: true}
+			return nil
+		}
 		if err != nil {
 			return err
 		}
@@ -318,11 +562,9 @@ func (ix *index) walkFn(ctx context.Context) walk.Func {
 		}
 		d := &indexDir{
 			remote:   remote,
+			depth:    indexDepth(remote),
 			outputs:  map[string]fs.Object{},
 			excluded: !included,
-		}
-		if remote != "" {
-			d.depth = strings.Count(remote, "/") + 1
 		}
 		for _, entry := range entries {
 			switch x := entry.(type) {
@@ -358,28 +600,21 @@ func (ix *index) walkFn(ctx context.Context) walk.Func {
 // On backends which can't have empty directories these will cease to
 // exist once their outputs are deleted, so they are removed from their
 // parent's listing, which may in turn leave the parent with nothing
-// but outputs.
-func (ix *index) prune() {
+// but outputs. dirs must be deepest first.
+func (ix *index) prune(dirs []*indexDir) {
 	if ix.f.Features().CanHaveEmptyDirectories {
 		return
 	}
-	var pruneDir func(d *indexDir)
-	pruneDir = func(d *indexDir) {
+	for _, d := range dirs {
 		kept := d.subdirs[:0]
 		for _, sub := range d.subdirs {
-			if sd := ix.dirs[sub.Remote()]; sd != nil {
-				pruneDir(sd)
-				if sd.gone {
-					continue
-				}
+			if sd := ix.dirs[sub.Remote()]; sd != nil && sd.gone {
+				continue
 			}
 			kept = append(kept, sub)
 		}
 		d.subdirs = kept
 		d.gone = !d.hasContent && len(d.subdirs) == 0
-	}
-	if root := ix.dirs[""]; root != nil {
-		pruneDir(root)
 	}
 }
 
@@ -392,10 +627,19 @@ func (ix *index) setNewest(ctx context.Context, d *indexDir) {
 		}
 	}
 	for _, sub := range d.subdirs {
-		if sd := ix.dirs[sub.Remote()]; sd != nil && sd.newest.After(d.newest) {
-			d.newest = sd.newest
+		if t := ix.subdirNewest(sub); t.After(d.newest) {
+			d.newest = t
 		}
 	}
+}
+
+// subdirNewest returns the newest time of a subdirectory, which was
+// either walked or had its listing's modification time read
+func (ix *index) subdirNewest(sub fs.Directory) time.Time {
+	if sd := ix.dirs[sub.Remote()]; sd != nil {
+		return sd.newest
+	}
+	return ix.unwalked[sub.Remote()]
 }
 
 // processDir brings the outputs of d up to date
@@ -468,9 +712,7 @@ func (ix *index) render(ctx context.Context, d *indexDir) *serve.Directory {
 		case IndexDirTimeDir:
 			t = sub.ModTime(ctx)
 		case IndexDirTimeNewest:
-			if sd := ix.dirs[sub.Remote()]; sd != nil {
-				t = sd.newest
-			}
+			t = ix.subdirNewest(sub)
 		}
 		// Not sub.Size() as some backends, eg local on macOS, report a
 		// directory size which changes when the listings are written

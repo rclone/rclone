@@ -85,6 +85,49 @@ nginx and Apache, and R2 custom domains with a URL rewrite rule. For
 hosts that don't (plain S3 REST URLs, B2 friendly URLs) use
 `--link-index` to make directory links `dir/index.html` instead.
 
+### Partial runs
+
+After a sync which changed a known set of files there is no need to
+walk the whole remote. Tell `rclone index` what changed and it re-indexes
+only the directories that could be affected:
+
+    rclone index r2:bucket --changed v1.76.0/ --changed version.txt
+    rclone index r2:bucket --changed-from changes.txt
+    rclone sync ./public r2:bucket --exclude index.html --combined - | rclone index r2:bucket --changed-combined -
+
+- `--changed PATH` names a changed file or directory relative to
+  `remote:path` and can be repeated. A directory, given with a trailing
+  slash or found to be one, is re-indexed completely.
+- `--changed-from FILE` reads one path per line exactly as written.
+- `--changed-combined FILE` reads the `--combined` report of
+  `rclone sync`: lines starting with `+`, `-`, `*` and `!` are changes and
+  `=` lines are ignored.
+- Both files accept `-` for standard input and all three flags can be
+  combined.
+
+A changed file re-indexes its directory and every directory above it,
+since their times and their listings can change too, and on bucket
+based storage a directory can cease to exist. Each of those is one
+directory listing. With `--dir-time newest` the directories above also
+need the times of their unchanged subdirectories, which are read from
+the modification times of those subdirectories' listings at the cost
+of one small request each. With `--use-server-modtime` that is the time
+the listing was written rather than the time of the newest file, so
+partial runs can drift by the indexing delay until the next full run.
+`--dir-time dir` and `none` need no such lookups.
+
+Directories which are neither named nor above a named path are left
+alone, as are directories deeper than `--max-depth`. An empty change
+list does nothing, and naming the root does a full run. There is no
+automatic cutover to a full run since that depends on the size of the
+whole remote: a partial run costs one listing per affected directory,
+a full run one request per thousand objects on S3-like storage or one
+per directory elsewhere. The number
+of directories a partial run will list is logged with `-v`, and
+`--changed-max-dirs` makes it fall back to a full run above that
+number. A good pattern is a partial run after each upload and a
+scheduled full run to catch anything missed.
+
 ### Site icon
 
 The listings carry no icon or branding of their own. To give a site an

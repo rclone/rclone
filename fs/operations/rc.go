@@ -712,6 +712,10 @@ func init() {
     - dirTime - how to work out directory times: "newest", "dir" or "none"
     - noModTime - don't show modification times
     - rewrite - write every listing even if it is unchanged
+    - changed - list of changed paths for a partial run, directories ending in "/"
+    - changedFrom - list of files of changed paths, one per line
+    - changedCombined - list of files in the sync --combined report format
+    - changedMaxDirs - do a full run if a partial one would list more directories than this
 
 See the [index](/commands/rclone_index/) command for more information on the above.
 `,
