@@ -2744,6 +2744,8 @@ type gpChunkWriter struct {
 // createMedium fails, before there's a gpChunkWriter to Abort. It returns
 // setupErr, only logging a failure to delete.
 func (f *Fs) rollbackOrphanedMedium(ctx context.Context, mediumID string, setupErr error) error {
+	ctx, cancel := cleanupContext(ctx)
+	defer cancel()
 	if delErr := f.deleteMedium(ctx, mediumID, true); delErr != nil {
 		fs.Logf(f, "gopro: couldn't roll back orphaned medium %q after upload setup failed: %v", mediumID, delErr)
 	}
@@ -2795,7 +2797,6 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	if err != nil {
 		return info, nil, f.rollbackOrphanedMedium(ctx, mediumID, err)
 	}
-	sort.Slice(parts, func(i, j int) bool { return parts[i].Part < parts[j].Part })
 
 	info = fs.ChunkWriterInfo{
 		ChunkSize:   chunkSize,
@@ -2902,7 +2903,18 @@ func (w *gpChunkWriter) Close(ctx context.Context) error {
 
 // Abort deletes the medium created for this upload
 func (w *gpChunkWriter) Abort(ctx context.Context) error {
+	ctx, cancel := cleanupContext(ctx)
+	defer cancel()
 	return w.f.deleteMedium(ctx, w.mediumID, true)
+}
+
+// cleanupTimeout bounds cleaning up after a failed upload
+const cleanupTimeout = 2 * time.Minute
+
+// cleanupContext returns a context for cleaning up after a failed upload,
+// which often failed because ctx was cancelled
+func cleanupContext(ctx context.Context) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.WithoutCancel(ctx), cleanupTimeout)
 }
 
 // createMedium is step 1: POST /media
@@ -3024,35 +3036,52 @@ func (f *Fs) createUpload(ctx context.Context, derivativeID string) (string, err
 
 // getUploadParts is step 3b: GET /user-uploads/{derivativeID}, returning
 // one pre-signed authorization per chunk
+//
+// It returns them sorted by part number, checking there's exactly one for
+// each part. GoPro returned all of 250 parts on one page, but further
+// pages are fetched should it ever cap them.
 func (f *Fs) getUploadParts(ctx context.Context, derivativeID, uploadID string, size, chunkSize int64, nParts int) ([]api.UploadAuthorization, error) {
-	opts := rest.Opts{
-		Method:       "GET",
-		Path:         "/user-uploads/" + derivativeID,
-		ExtraHeaders: map[string]string{"Accept": userUploadsAcceptHeader},
-		Parameters: url.Values{
-			"id":              {uploadID},
-			"page":            {"1"},
-			"per_page":        {strconv.Itoa(nParts)},
-			"item_number":     {"1"},
-			"camera_position": {"default"},
-			"file_size":       {strconv.FormatInt(size, 10)},
-			"part_size":       {strconv.FormatInt(chunkSize, 10)},
-		},
+	var parts []api.UploadAuthorization
+	for page := 1; len(parts) < nParts; page++ {
+		opts := rest.Opts{
+			Method:       "GET",
+			Path:         "/user-uploads/" + derivativeID,
+			ExtraHeaders: map[string]string{"Accept": userUploadsAcceptHeader},
+			Parameters: url.Values{
+				"id":              {uploadID},
+				"page":            {strconv.Itoa(page)},
+				"per_page":        {strconv.Itoa(nParts)},
+				"item_number":     {"1"},
+				"camera_position": {"default"},
+				"file_size":       {strconv.FormatInt(size, 10)},
+				"part_size":       {strconv.FormatInt(chunkSize, 10)},
+			},
+		}
+		var result api.UserUploadsResponse
+		var resp *http.Response
+		var err error
+		err = f.pacer.Call(func() (bool, error) {
+			resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
+			return shouldRetry(ctx, resp, err)
+		})
+		if err != nil {
+			return nil, fmt.Errorf("couldn't get upload authorizations: %w", err)
+		}
+		if len(result.Embedded.Authorizations) == 0 {
+			break
+		}
+		parts = append(parts, result.Embedded.Authorizations...)
 	}
-	var result api.UserUploadsResponse
-	var resp *http.Response
-	var err error
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		return nil, fmt.Errorf("couldn't get upload authorizations: %w", err)
+	sort.Slice(parts, func(i, j int) bool { return parts[i].Part < parts[j].Part })
+	if len(parts) != nParts {
+		return nil, fmt.Errorf("couldn't get upload authorizations: got %d for %d parts", len(parts), nParts)
 	}
-	if len(result.Embedded.Authorizations) == 0 {
-		return nil, errors.New("couldn't get upload authorizations: none returned")
+	for i, part := range parts {
+		if part.Part != i+1 {
+			return nil, fmt.Errorf("couldn't get upload authorizations: part %d missing", i+1)
+		}
 	}
-	return result.Embedded.Authorizations, nil
+	return parts, nil
 }
 
 // completeUpload is the second half of step 4: PUT /user-uploads/{derivativeID}

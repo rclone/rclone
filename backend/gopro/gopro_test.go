@@ -4233,6 +4233,106 @@ func TestNewObjectWithInfoUsesProvidedInfoWithoutAnyNetworkCall(t *testing.T) {
 	assert.Equal(t, int64(42), gpObj.bytes)
 }
 
+// newTestUploadPartsFs serves the upload protocol for a 3 byte file in 1 byte
+// parts, answering GET /user-uploads page n with the part numbers
+// pages[n-1] (none past the end), and records DELETE /media requests
+func newTestUploadPartsFs(t *testing.T, pages ...[]int) (f *Fs, srv *httptest.Server, deletes *[]string) {
+	deletes = &[]string{}
+	var mu sync.Mutex
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /media", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(t, w, map[string]string{"id": "new"})
+	})
+	mux.HandleFunc("POST /derivatives", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(t, w, map[string]string{"id": "der1"})
+	})
+	mux.HandleFunc("POST /user-uploads", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(t, w, map[string]string{"id": "up1"})
+	})
+	mux.HandleFunc("GET /user-uploads/der1", func(w http.ResponseWriter, r *http.Request) {
+		page, err := strconv.Atoi(r.URL.Query().Get("page"))
+		require.NoError(t, err)
+		resp := api.UserUploadsResponse{}
+		if page >= 1 && page <= len(pages) {
+			for _, n := range pages[page-1] {
+				resp.Embedded.Authorizations = append(resp.Embedded.Authorizations, api.UploadAuthorization{URL: srv.URL + "/chunk/" + strconv.Itoa(n), Part: n})
+			}
+		}
+		writeJSON(t, w, resp)
+	})
+	mux.HandleFunc("DELETE /media", func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		*deletes = append(*deletes, r.URL.Query().Get("ids"))
+		mu.Unlock()
+		writeJSON(t, w, api.DeleteResponse{})
+	})
+	f, srv = newTestUploadFlowFs(mux)
+	f.opt.UploadChunkSize = 1
+	return f, srv, deletes
+}
+
+func TestOpenChunkWriterChecksItGotEveryPart(t *testing.T) {
+	defer func(d time.Duration) { deletePermanentDelay = d }(deletePermanentDelay)
+	deletePermanentDelay = time.Millisecond
+	ctx := context.Background()
+	src := mockobject.New("upload/x.mp4").WithContent([]byte("abc"), mockobject.SeekModeRegular)
+	for _, tc := range []struct {
+		name  string
+		pages [][]int
+		ok    bool
+	}{
+		{"all on one page", [][]int{{1, 2, 3}}, true},
+		{"in any order", [][]int{{3, 1, 2}}, true},
+		{"over several pages", [][]int{{1, 2}, {3}}, true},
+		{"one missing", [][]int{{1, 2}}, false},
+		{"a gap", [][]int{{1, 2, 4}}, false},
+		{"a duplicate", [][]int{{1, 2, 2}}, false},
+		{"none", nil, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f, srv, deletes := newTestUploadPartsFs(t, tc.pages...)
+			defer srv.Close()
+			_, writer, err := f.OpenChunkWriter(ctx, "upload/x.mp4", src)
+			if tc.ok {
+				require.NoError(t, err)
+				w := writer.(*gpChunkWriter)
+				for i, part := range w.parts {
+					assert.Equal(t, i+1, part.Part)
+					assert.Equal(t, srv.URL+"/chunk/"+strconv.Itoa(i+1), part.URL)
+				}
+				assert.Len(t, w.parts, 3)
+				assert.Empty(t, *deletes)
+			} else {
+				assert.ErrorContains(t, err, "upload authorizations")
+				assert.Equal(t, []string{"new", "new"}, *deletes, "the medium created for it is purged")
+			}
+		})
+	}
+}
+
+func TestUploadCleanupOutlivesACancelledContext(t *testing.T) {
+	defer func(d time.Duration) { deletePermanentDelay = d }(deletePermanentDelay)
+	deletePermanentDelay = time.Millisecond
+	cancelled, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	t.Run("rollback", func(t *testing.T) {
+		f, srv, deletes := newTestUploadPartsFs(t)
+		defer srv.Close()
+		setupErr := errors.New("setup failed")
+		assert.Equal(t, setupErr, f.rollbackOrphanedMedium(cancelled, "new", setupErr))
+		assert.Equal(t, []string{"new", "new"}, *deletes, "trashed, then purged")
+	})
+
+	t.Run("abort", func(t *testing.T) {
+		f, srv, deletes := newTestUploadPartsFs(t)
+		defer srv.Close()
+		w := &gpChunkWriter{f: f, mediumID: "new"}
+		assert.NoError(t, w.Abort(cancelled))
+		assert.Equal(t, []string{"new", "new"}, *deletes, "trashed, then purged")
+	})
+}
+
 func TestOpenChunkWriterPropagatesEachProtocolStepsFailure(t *testing.T) {
 	old := deletePermanentDelay
 	deletePermanentDelay = time.Millisecond // rollback uses a permanent delete
