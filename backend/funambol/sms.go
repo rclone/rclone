@@ -260,14 +260,13 @@ func (f *Fs) smsSend(ctx context.Context) (*smsPending, error) {
 		return nil, err
 	}
 
-	// The web client sends only platform and deviceid.  rememberme and
-	// access_type are guesses to ask for a persistent login, which the
-	// server does not otherwise give to SMS logins.
+	// The web client sends only platform and deviceid.  rememberme is a
+	// guess to ask for a persistent login, which the server does not
+	// otherwise give to SMS logins.
 	start := f.opt.Endpoint + pkcePath + "?" + url.Values{
-		"platform":    {"web"},
-		"deviceid":    {f.opt.DeviceID},
-		"rememberme":  {"true"},
-		"access_type": {"offline"},
+		"platform":   {"web"},
+		"deviceid":   {f.opt.DeviceID},
+		"rememberme": {"true"},
 	}.Encode()
 	page, err := f.loginPage(ctx, start)
 	if err != nil {
