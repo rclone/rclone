@@ -2173,13 +2173,56 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 	w := chunkWriter.(*gpChunkWriter)
-	oldID := o.id
-	o.setMetaData(w.medium, 1)
 	// Close has already replaced whatever was listed at this remote.
-	if oldID != "" && oldID != w.mediumID && oldID != w.replacedID {
-		o.fs.deleteReplaced(ctx, oldID)
+	if o.id != "" && o.id != w.mediumID && o.id != w.replacedID {
+		if err := o.fs.replaceMedium(ctx, o.id, w.mediumID); err != nil {
+			o.fs.removeUploadedEntry(o.remote)
+			return err
+		}
 	}
+	o.setMetaData(w.medium, 1)
 	return nil
+}
+
+// replaceCheckInterval and replaceTimeout bound how often and how long
+// replaceMedium waits for GoPro to process a replacement. vars so tests
+// can shrink them.
+var (
+	replaceCheckInterval = 2 * time.Second
+	replaceTimeout       = 2 * time.Minute
+)
+
+// replaceMedium deletes oldID once its replacement newID is safely
+// stored, following --gopro-use-trash.
+//
+// GoPro removes an upload whose image content matches media already in
+// the library while processing it, not straight away, so this waits for
+// processing to finish. If GoPro removes the replacement, oldID is kept
+// and an error returned; if processing outlasts replaceTimeout, oldID is
+// kept and only logged about.
+func (f *Fs) replaceMedium(ctx context.Context, oldID, newID string) error {
+	deadline := time.Now().Add(replaceTimeout)
+	for {
+		item, err := f.getMedium(ctx, newID)
+		switch {
+		case isNotFound(err):
+			return fmt.Errorf("gopro: GoPro removed the upload as a duplicate of media already in the library - kept medium %q it was to replace", oldID)
+		case err != nil:
+			return err
+		case item.ReadyToView == "ready" || isFailedState(item.ReadyToView):
+			f.deleteReplaced(ctx, oldID)
+			return nil
+		}
+		if time.Now().After(deadline) {
+			fs.Logf(f, "GoPro is still processing upload %q - kept medium %q it replaces, delete it once the upload is processed", newID, oldID)
+			return nil
+		}
+		select {
+		case <-time.After(replaceCheckInterval):
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
 }
 
 // deleteReplaced deletes the medium id an upload has just replaced,
@@ -2724,14 +2767,19 @@ func (w *gpChunkWriter) Close(ctx context.Context) error {
 	o := &Object{fs: w.f, remote: w.remote}
 	o.setMetaData(w.medium, 1)
 	w.f.uploadedMu.Lock()
-	replaced := w.f.removeUploadedEntryLocked(w.remote)
+	_, entry := w.f.uploaded.Find(w.remote)
+	w.f.uploadedMu.Unlock()
+	if replaced, ok := entry.(*Object); ok && replaced.id != w.mediumID {
+		w.replacedID = replaced.id
+		if err := w.f.replaceMedium(ctx, replaced.id, w.mediumID); err != nil {
+			return err
+		}
+	}
+	w.f.uploadedMu.Lock()
+	w.f.removeUploadedEntryLocked(w.remote)
 	w.f.uploaded.AddEntry(o)
 	w.f.uploadedMu.Unlock()
 	w.f.invalidateMediaCache()
-	if replaced != nil && replaced.id != w.mediumID {
-		w.replacedID = replaced.id
-		w.f.deleteReplaced(ctx, replaced.id)
-	}
 	return nil
 }
 

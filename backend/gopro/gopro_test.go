@@ -3535,10 +3535,28 @@ func TestPutAndUpdateDriveTheFullUploadProtocol(t *testing.T) {
 
 // newTestReplaceFs builds an Fs whose mocked upload protocol always
 // creates medium "new", recording every DELETE /media request's query.
-func newTestReplaceFs(t *testing.T) (f *Fs, srv *httptest.Server, deletes *[]url.Values) {
+// GET /media/new returns states in turn, repeating the last - "ready" if
+// none are given, and "404" for a medium GoPro has removed.
+func newTestReplaceFs(t *testing.T, states ...string) (f *Fs, srv *httptest.Server, deletes *[]url.Values) {
 	deletes = &[]url.Values{}
 	var mu sync.Mutex
+	if len(states) == 0 {
+		states = []string{"ready"}
+	}
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /media/new", func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		state := states[0]
+		if len(states) > 1 {
+			states = states[1:]
+		}
+		mu.Unlock()
+		if state == "404" {
+			http.Error(w, "not found", http.StatusNotFound)
+			return
+		}
+		writeJSON(t, w, api.Medium{ID: "new", ReadyToView: state})
+	})
 	mux.HandleFunc("POST /media", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(t, w, map[string]string{"id": "new"})
 	})
@@ -3640,6 +3658,102 @@ func TestUpdateReplacesTheExistingUpload(t *testing.T) {
 		defer srv.Close()
 		_, err := f.Put(ctx, bytes.NewReader(content), src)
 		require.NoError(t, err)
+		assert.Empty(t, *deletes)
+	})
+}
+
+func TestReplacingWaitsUntilTheReplacementIsProcessed(t *testing.T) {
+	ctx := context.Background()
+	defer func(i, d time.Duration) { replaceCheckInterval, replaceTimeout = i, d }(replaceCheckInterval, replaceTimeout)
+	replaceCheckInterval, replaceTimeout = time.Millisecond, time.Second
+	content := []byte("new content")
+	const remote = "upload/GX010001.MP4"
+	src := func() *mockobject.ContentMockObject {
+		return mockobject.New(remote).WithContent(content, mockobject.SeekModeRegular)
+	}
+	listed := func(t *testing.T, f *Fs) []string {
+		entries, err := f.List(ctx, "upload")
+		require.NoError(t, err)
+		var ids []string
+		for _, e := range entries {
+			ids = append(ids, e.(*Object).id)
+		}
+		return ids
+	}
+	oldDeleted := func(deletes *[]url.Values) bool {
+		for _, q := range *deletes {
+			if q.Get("ids") == "old" {
+				return true
+			}
+		}
+		return false
+	}
+
+	for _, final := range []string{"ready", "failure", "unknown"} {
+		t.Run("the original is deleted once the replacement is "+final, func(t *testing.T) {
+			f, srv, deletes := newTestReplaceFs(t, "uploading", "transcoding", final)
+			defer srv.Close()
+			old := &Object{fs: f, remote: remote, id: "old", itemCount: 1}
+			f.uploaded.AddEntry(old)
+			require.NoError(t, old.Update(ctx, bytes.NewReader(content), src()))
+			assert.True(t, oldDeleted(deletes))
+			assert.Equal(t, []string{"new"}, listed(t, f))
+		})
+	}
+
+	t.Run("a replacement GoPro removes as a duplicate fails and keeps the original", func(t *testing.T) {
+		f, srv, deletes := newTestReplaceFs(t, "transcoding", "404")
+		defer srv.Close()
+		old := &Object{fs: f, remote: remote, id: "old", itemCount: 1}
+		f.uploaded.AddEntry(old)
+		err := old.Update(ctx, bytes.NewReader(content), src())
+		assert.ErrorContains(t, err, "duplicate")
+		assert.False(t, oldDeleted(deletes), "the original must be kept")
+		assert.Equal(t, "old", old.id)
+		assert.Equal(t, []string{"old"}, listed(t, f))
+	})
+
+	t.Run("the same for an object that isn't in the upload tree", func(t *testing.T) {
+		f, srv, deletes := newTestReplaceFs(t, "transcoding", "404")
+		defer srv.Close()
+		old := &Object{fs: f, remote: remote, id: "old", itemCount: 1}
+		err := old.Update(ctx, bytes.NewReader(content), src())
+		assert.ErrorContains(t, err, "duplicate")
+		assert.False(t, oldDeleted(deletes))
+		assert.Equal(t, "old", old.id)
+		assert.Empty(t, listed(t, f), "the removed upload must not be listed")
+	})
+
+	t.Run("the same for a multi-thread copy", func(t *testing.T) {
+		f, srv, deletes := newTestReplaceFs(t, "transcoding", "404")
+		defer srv.Close()
+		f.uploaded.AddEntry(&Object{fs: f, remote: remote, id: "old", itemCount: 1})
+		_, writer, err := f.OpenChunkWriter(ctx, remote, src())
+		require.NoError(t, err)
+		_, err = writer.WriteChunk(ctx, 0, bytes.NewReader(content))
+		require.NoError(t, err)
+		assert.ErrorContains(t, writer.Close(ctx), "duplicate")
+		assert.False(t, oldDeleted(deletes))
+		assert.Equal(t, []string{"old"}, listed(t, f))
+	})
+
+	t.Run("a replacement still processing at the timeout keeps the original", func(t *testing.T) {
+		f, srv, deletes := newTestReplaceFs(t, "transcoding")
+		defer srv.Close()
+		replaceTimeout = 20 * time.Millisecond
+		defer func() { replaceTimeout = time.Second }()
+		old := &Object{fs: f, remote: remote, id: "old", itemCount: 1}
+		f.uploaded.AddEntry(old)
+		require.NoError(t, old.Update(ctx, bytes.NewReader(content), src()), "the upload itself succeeded")
+		assert.False(t, oldDeleted(deletes), "the original must be kept")
+		assert.Equal(t, []string{"new"}, listed(t, f))
+	})
+
+	t.Run("a new upload doesn't wait for processing", func(t *testing.T) {
+		f, srv, deletes := newTestReplaceFs(t, "404")
+		defer srv.Close()
+		_, err := f.Put(ctx, bytes.NewReader(content), src())
+		require.NoError(t, err, "nothing is replaced, so nothing is checked")
 		assert.Empty(t, *deletes)
 	})
 }
