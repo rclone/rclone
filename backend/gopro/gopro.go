@@ -40,6 +40,7 @@ import (
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/oauth2"
+	"golang.org/x/sync/errgroup"
 )
 
 // Constants
@@ -58,6 +59,14 @@ const (
 	// rather than one per by-year/by-month/by-day directory, while a
 	// long-running mount still picks up changes made elsewhere.
 	mediaCacheTTL = 5 * time.Minute
+
+	// listPageSize is the largest per_page /media/search and
+	// /media/deleted accept - they silently cap anything larger.
+	listPageSize = 200
+
+	// listConcurrency is how many /media/search pages allMedia fetches
+	// at once
+	listConcurrency = 4
 
 	defaultUploadChunkSize   = fs.SizeSuffix(6 * 1024 * 1024) // matches the reference client
 	defaultUploadConcurrency = 4
@@ -439,6 +448,38 @@ type Options struct {
 	Enc               encoder.MultiEncoder `config:"encoding"`
 }
 
+// listCache holds a full library or trash listing
+type listCache struct {
+	mu    sync.Mutex
+	items []api.Medium // nil means not (yet) cached
+	at    time.Time
+}
+
+// invalidate makes the next read of c fetch fresh data
+func (c *listCache) invalidate() {
+	c.mu.Lock()
+	c.items = nil
+	c.mu.Unlock()
+}
+
+var (
+	listCachesMu sync.Mutex
+	listCaches   = map[string]*listCache{}
+)
+
+// sharedListCache returns the listCache for key, so that every Fs of one
+// remote - rclone makes one per root - shares a single listing
+func sharedListCache(key string) *listCache {
+	listCachesMu.Lock()
+	defer listCachesMu.Unlock()
+	c := listCaches[key]
+	if c == nil {
+		c = &listCache{}
+		listCaches[key] = c
+	}
+	return c
+}
+
 // dlCacheEntry caches a download descriptor, which carries short-lived
 // signed CDN URLs
 type dlCacheEntry struct {
@@ -464,13 +505,8 @@ type Fs struct {
 	dlCacheMu sync.Mutex
 	dlCache   map[string]*dlCacheEntry
 
-	mediaCacheMu sync.Mutex
-	mediaCache   []api.Medium // cached result of allMedia; nil means not (yet) cached
-	mediaCacheAt time.Time
-
-	trashCacheMu sync.Mutex
-	trashCache   []api.Medium // cached result of allTrash; nil means not (yet) cached
-	trashCacheAt time.Time
+	media *listCache // cached result of allMedia, shared - see sharedListCache
+	trash *listCache // cached result of allTrash, shared - see sharedListCache
 
 	uploadedMu sync.Mutex
 	uploaded   dirtree.DirTree // record of items uploaded this run
@@ -624,6 +660,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		dlCache:   map[string]*dlCacheEntry{},
 		uploaded:  dirtree.New(),
 	}
+	f.media = sharedListCache("media:" + name + "?" + f.searchParams().Encode())
+	f.trash = sharedListCache("trash:" + name)
 	// upload/ always exists, even with nothing uploaded to it yet. Seed its
 	// listing when this Fs is at the top level; an Fs rooted at upload already
 	// uses the empty key for its own root and must not gain upload/upload.
@@ -897,24 +935,13 @@ func (f *Fs) listedMedia(ctx context.Context) ([]api.Medium, error) {
 	return f.allMedia(ctx)
 }
 
-// allMedia returns every medium in the library that passes the type and
-// processing filters, fetching /media/search in full and caching the
-// result for mediaCacheTTL. Every media/ view is narrowed from this by
-// listDir, so a recursive listing costs a single fetch.
-func (f *Fs) allMedia(ctx context.Context) (items []api.Medium, err error) {
-	f.mediaCacheMu.Lock()
-	defer f.mediaCacheMu.Unlock()
-	if f.mediaCache != nil && time.Since(f.mediaCacheAt) < mediaCacheTTL {
-		return f.mediaCache, nil
-	}
-	const perPage = 100
-	page := 1
-	totalPages := 0
-	lastID := ""
+// searchParams returns the /media/search parameters selecting what is
+// listed, without the page
+func (f *Fs) searchParams() url.Values {
 	params := url.Values{
 		"fields":   {mediaFields},
 		"order_by": {"captured_at"},
-		"per_page": {strconv.Itoa(perPage)},
+		"per_page": {strconv.Itoa(listPageSize)},
 	}
 	if !f.opt.ShowAll {
 		params.Set("type", f.mediaTypes())
@@ -923,44 +950,73 @@ func (f *Fs) allMedia(ctx context.Context) (items []api.Medium, err error) {
 		// /media/{id}/export), which GoPro's own app never lists.
 		params.Set("xcomposition", "export")
 	}
-	for {
-		params.Set("page", strconv.Itoa(page))
-		opts := rest.Opts{
-			Method:     "GET",
-			Path:       "/media/search",
-			Parameters: params,
-		}
-		var result api.SearchResponse
-		var resp *http.Response
-		err = f.pacer.Call(func() (bool, error) {
-			resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-			return shouldRetry(ctx, resp, err)
+	return params
+}
+
+// searchPage fetches one page of /media/search, returning its media and
+// the total number of pages
+func (f *Fs) searchPage(ctx context.Context, page int) ([]api.Medium, int, error) {
+	params := f.searchParams()
+	params.Set("page", strconv.Itoa(page))
+	opts := rest.Opts{
+		Method:     "GET",
+		Path:       "/media/search",
+		Parameters: params,
+	}
+	var result api.SearchResponse
+	var resp *http.Response
+	err := f.pacer.Call(func() (bool, error) {
+		var err error
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return nil, 0, fmt.Errorf("couldn't list media: %w", err)
+	}
+	return result.Embedded.Media, result.Pages.TotalPages, nil
+}
+
+// allMedia returns every medium in the library that passes the type and
+// processing filters, fetching /media/search in full and caching the
+// result for mediaCacheTTL. Every media/ view is narrowed from this by
+// listDir, so a recursive listing costs a single fetch.
+func (f *Fs) allMedia(ctx context.Context) ([]api.Medium, error) {
+	c := f.media
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.items != nil && time.Since(c.at) < mediaCacheTTL {
+		return c.items, nil
+	}
+	first, totalPages, err := f.searchPage(ctx, 1)
+	if err != nil {
+		return nil, err
+	}
+	pages := make([][]api.Medium, max(totalPages, 1))
+	pages[0] = first
+	g, gCtx := errgroup.WithContext(ctx)
+	g.SetLimit(listConcurrency)
+	for page := 2; page <= totalPages; page++ {
+		g.Go(func() (err error) {
+			pages[page-1], _, err = f.searchPage(gCtx, page)
+			return err
 		})
-		if err != nil {
-			return nil, fmt.Errorf("couldn't list media: %w", err)
-		}
-		pageItems := result.Embedded.Media
-		if len(pageItems) > 0 && pageItems[0].ID == lastID {
-			// skip first if ID duplicated from last page
-			pageItems = pageItems[1:]
-		}
-		if len(pageItems) > 0 {
-			lastID = pageItems[len(pageItems)-1].ID
-		}
-		items = append(items, pageItems...)
-		if totalPages == 0 {
-			totalPages = result.Pages.TotalPages
-		}
-		if len(result.Embedded.Media) == 0 || page >= totalPages {
-			break
-		}
-		page++
 	}
-	if items == nil {
-		items = []api.Medium{} // nil means "not cached"
+	if err := g.Wait(); err != nil {
+		return nil, err
 	}
-	f.mediaCache = items
-	f.mediaCacheAt = time.Now()
+	// A medium can turn up on two pages, e.g. when the library changes
+	// while they're fetched.
+	items := []api.Medium{}
+	seen := map[string]bool{}
+	for _, pageItems := range pages {
+		for _, item := range pageItems {
+			if !seen[item.ID] {
+				seen[item.ID] = true
+				items = append(items, item)
+			}
+		}
+	}
+	c.items, c.at = items, time.Now()
 	return items, nil
 }
 
@@ -969,27 +1025,27 @@ func (f *Fs) allMedia(ctx context.Context) (items []api.Medium, err error) {
 //
 // Nothing is filtered, matching GoPro's own "Recently Deleted" view -
 // /media/deleted ignores /media/search's filter parameters anyway.
-func (f *Fs) allTrash(ctx context.Context) (items []api.Medium, err error) {
-	f.trashCacheMu.Lock()
-	defer f.trashCacheMu.Unlock()
-	if f.trashCache != nil && time.Since(f.trashCacheAt) < mediaCacheTTL {
-		return f.trashCache, nil
+func (f *Fs) allTrash(ctx context.Context) ([]api.Medium, error) {
+	c := f.trash
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.items != nil && time.Since(c.at) < mediaCacheTTL {
+		return c.items, nil
 	}
-	const perPage = 100
-	page := 1
-	totalPages := 0
-	for {
+	items := []api.Medium{}
+	for page := 1; ; page++ {
 		opts := rest.Opts{
 			Method: "GET",
 			Path:   "/media/deleted",
 			Parameters: url.Values{
 				"page":     {strconv.Itoa(page)},
-				"per_page": {strconv.Itoa(perPage)},
+				"per_page": {strconv.Itoa(listPageSize)},
 			},
 		}
 		var result api.DeletedMediaResponse
 		var resp *http.Response
-		err = f.pacer.Call(func() (bool, error) {
+		err := f.pacer.Call(func() (bool, error) {
+			var err error
 			resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
 			return shouldRetry(ctx, resp, err)
 		})
@@ -997,35 +1053,23 @@ func (f *Fs) allTrash(ctx context.Context) (items []api.Medium, err error) {
 			return nil, fmt.Errorf("couldn't list trash: %w", err)
 		}
 		items = append(items, result.DeletedMedia...)
-		if totalPages == 0 {
-			totalPages = result.Pages.TotalPages
-		}
-		if len(result.DeletedMedia) == 0 || page >= totalPages {
+		if len(result.DeletedMedia) == 0 || page >= result.Pages.TotalPages {
 			break
 		}
-		page++
 	}
-	if items == nil {
-		items = []api.Medium{} // nil means "not cached"
-	}
-	f.trashCache = items
-	f.trashCacheAt = time.Now()
+	c.items, c.at = items, time.Now()
 	return items, nil
 }
 
 // invalidateMediaCache makes the next allMedia fetch fresh data - call it
 // after anything that changes the library
 func (f *Fs) invalidateMediaCache() {
-	f.mediaCacheMu.Lock()
-	f.mediaCache = nil
-	f.mediaCacheMu.Unlock()
+	f.media.invalidate()
 }
 
 // invalidateTrashCache makes the next allTrash fetch fresh data
 func (f *Fs) invalidateTrashCache() {
-	f.trashCacheMu.Lock()
-	f.trashCache = nil
-	f.trashCacheMu.Unlock()
+	f.trash.invalidate()
 }
 
 // commandHelp documents this backend's "rclone backend" commands - see
@@ -1844,8 +1888,8 @@ func (o *Object) fixSize(resp *http.Response) {
 // Update the object with the contents of the io.Reader, modTime and size.
 // The new object may have been created if an error is returned.
 //
-// GoPro can't replace a medium's content, so this always uploads a new
-// medium.
+// GoPro can't replace a medium's content, so this uploads a new medium
+// and then deletes the one it replaces - see deleteReplaced.
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	chunkWriter, err := multipart.UploadMultipart(ctx, src, in, multipart.UploadMultipartOptions{
 		Open:        o.fs,
@@ -1854,8 +1898,23 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		return err
 	}
-	o.setMetaData(chunkWriter.(*gpChunkWriter).medium, 1)
+	w := chunkWriter.(*gpChunkWriter)
+	oldID := o.id
+	o.setMetaData(w.medium, 1)
+	// Close has already replaced whatever was listed at this remote.
+	if oldID != "" && oldID != w.mediumID && oldID != w.replacedID {
+		o.fs.deleteReplaced(ctx, oldID)
+	}
 	return nil
+}
+
+// deleteReplaced deletes the medium id an upload has just replaced,
+// following --gopro-use-trash. A failure is only logged, as the new
+// content is already in place.
+func (f *Fs) deleteReplaced(ctx context.Context, id string) {
+	if err := f.deleteMedium(ctx, id, !f.opt.UseTrash); err != nil {
+		fs.Errorf(f, "couldn't delete medium %q replaced by an upload: %v", id, err)
+	}
 }
 
 // Remove an object
@@ -1876,22 +1935,30 @@ func (o *Object) Remove(ctx context.Context) error {
 	return nil
 }
 
-// removeUploadedEntry removes remote from the in-memory upload tree, if
-// it's there
+// removeUploadedEntry removes the object at remote from the in-memory
+// upload tree, if it's there
 func (f *Fs) removeUploadedEntry(remote string) {
 	f.uploadedMu.Lock()
 	defer f.uploadedMu.Unlock()
+	f.removeUploadedEntryLocked(remote)
+}
+
+// removeUploadedEntryLocked is removeUploadedEntry with f.uploadedMu
+// held, returning the removed object or nil
+func (f *Fs) removeUploadedEntryLocked(remote string) *Object {
 	parent, entry := f.uploaded.Find(remote)
-	if entry == nil {
-		return
+	o, ok := entry.(*Object)
+	if !ok {
+		return nil
 	}
 	siblings := f.uploaded[parent]
 	for i, e := range siblings {
 		if e == entry {
 			f.uploaded[parent] = append(siblings[:i], siblings[i+1:]...)
-			return
+			return o
 		}
 	}
+	return nil
 }
 
 // deleteMedium moves the active medium id to the trash, or with permanent
@@ -2114,6 +2181,7 @@ type gpChunkWriter struct {
 	size         int64
 	parts        []api.UploadAuthorization // sorted by Part; parts[i] is part i+1
 	medium       *api.Medium               // set by Close
+	replacedID   string                    // medium Close replaced at remote, if any
 }
 
 // rollbackOrphanedMedium deletes mediumID when an upload setup step after
@@ -2233,9 +2301,10 @@ func (w *gpChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 // derivative and medium available.
 //
 // The new medium isn't listed by /media/search until GoPro has processed
-// it, so a synthetic one is registered under upload/ instead. This
-// happens here rather than in Update because multi-thread copies call
-// OpenChunkWriter and Close directly, then NewObject.
+// it, so a synthetic one is registered under upload/ instead, replacing
+// (and deleting) one already there. This happens here rather than in
+// Update because multi-thread copies call OpenChunkWriter and Close
+// directly, then NewObject.
 func (w *gpChunkWriter) Close(ctx context.Context) error {
 	if err := w.f.completeUpload(ctx, w.derivativeID, w.uploadID, w.size, w.chunkSize); err != nil {
 		return err
@@ -2259,9 +2328,14 @@ func (w *gpChunkWriter) Close(ctx context.Context) error {
 	o := &Object{fs: w.f, remote: w.remote}
 	o.setMetaData(w.medium, 1)
 	w.f.uploadedMu.Lock()
+	replaced := w.f.removeUploadedEntryLocked(w.remote)
 	w.f.uploaded.AddEntry(o)
 	w.f.uploadedMu.Unlock()
 	w.f.invalidateMediaCache()
+	if replaced != nil && replaced.id != w.mediumID {
+		w.replacedID = replaced.id
+		w.f.deleteReplaced(ctx, replaced.id)
+	}
 	return nil
 }
 

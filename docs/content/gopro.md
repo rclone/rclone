@@ -7,20 +7,17 @@ versionIntroduced: "v1.76"
 # GoPro Media Library
 
 [GoPro Media Library](https://gopro.com/media-library/) is GoPro's cloud
-storage for photos and video. GoPro does not publish an API for it: this
-backend is built by reverse engineering the gopro.com web app,
-cross-checked against several community clients
-([dustin/gopro-plus](https://github.com/dustin/gopro-plus),
+storage for photos and video. GoPro doesn't publish an API for it - this
+backend uses the one behind the gopro.com web app, as do several community
+clients ([dustin/gopro-plus](https://github.com/dustin/gopro-plus),
 [mvisonneau/gpcd](https://github.com/mvisonneau/gpcd),
 [aricha/GoProcure](https://github.com/aricha/GoProcure),
-[itsankoff/gopro-plus](https://github.com/itsankoff/gopro-plus)) and
-verified against a live account. **GoPro can change or remove this API at
-any time without notice** - if this backend suddenly stops working, that is
-likely why.
+[itsankoff/gopro-plus](https://github.com/itsankoff/gopro-plus)).
+**GoPro can change or remove this API at any time without notice.**
 
-Paths are specified as `remote:path`. The layout is virtual (see
-[Directory layout](#directory-layout) below) rather than a container/path
-scheme, so most paths will just be `remote:media/all` or similar.
+Paths are specified as `remote:path`. The layout is virtual - see
+[Directory layout](#directory-layout) - so most paths look like
+`remote:media/all`.
 
 ## Configuration
 
@@ -75,19 +72,12 @@ Keep this "remote" remote?
 y/e/d> y
 ```
 
-This runs a standard OAuth2 password grant against GoPro's own token
-endpoint and stores a refresh token, so it does not need to be repeated -
-`rclone` will renew the access token automatically. If GoPro rejects that
-refresh outright (confirmed live: a stored token can end up blacklisted
-server-side, not just expired), this backend automatically falls back to
-running the same password grant again using the stored username/password,
-the same recovery `rclone config reconnect` performs manually, so a normal
-command self-heals instead of failing until someone runs that by hand. If
-your account can't complete the password grant at all (for example because
-it requires interactive 2FA that this flow doesn't support), see
-[`--gopro-access-token`](#gopro-access-token) for a fallback - static
-tokens have no refresh or recovery of any kind, so expect to paste in a new
-one by hand periodically.
+rclone stores a refresh token and renews the access token automatically.
+If GoPro revokes the stored token, rclone logs in again with the stored
+user name and password. If your account can't log in this way (for
+example because of two-factor authentication), see
+[`--gopro-access-token`](#gopro-access-token); such a token can't be
+renewed and has to be replaced by hand when it expires.
 
 Once configured you can use it like any other remote:
 
@@ -99,237 +89,126 @@ rclone mount remote:media/all /mnt/gopro
 
 ## Directory layout
 
-GoPro Media Library has no folders of its own - it's a flat, ID-keyed library.
-This backend presents a virtual directory tree over it, in the same style
-as the [Google Photos](/googlephotos/#layout) backend:
+GoPro Media Library has no folders. This backend shows a virtual tree over
+it, like the [Google Photos](/googlephotos/#layout) backend:
 
 ```text
 media/
-├── all/                       every ready media item, flat
+├── all/                       every media item, flat
 ├── by-year/YYYY/
 ├── by-month/YYYY/YYYY-MM/
 └── by-day/YYYY/YYYY-MM-DD/
-upload/                        files rclone has uploaded this run
+upload/                        files uploaded by this rclone process
 ```
 
-`by-year`/`by-month`/`by-day` are filtered by `captured_at`, in UTC - not
-the timezone the camera recorded in, since the API gives no way to filter
-on that. `media/all` and the date-filtered views all show the same
-underlying items; nothing needs to be uploaded more than once to appear in
-more than one of them.
+The date directories are based on `captured_at` in UTC and only list
+years, months and days that have media in them (see
+[`--gopro-show-empty-dirs`](#gopro-show-empty-dirs)). The same item shows
+up in `media/all` and in its date directories.
 
-None of these directories can be created, renamed or removed - `rclone
-mkdir`/`rmdir` on anything under `media/` fails, since they already exist
-whenever there is a matching pattern and there's nothing real underneath to
-delete. Only `upload/` accepts new files, and only `upload/` supports
-`mkdir`/`rmdir` for organising them into subdirectories.
+Directories under `media/` can't be created or removed. Only `upload/`
+accepts new files, and subdirectories can be made there to organise
+them.
 
 ### Duplicate filenames
 
-GoPro cameras recycle filenames constantly (`GX010123.MP4` turns up over
-and over across different recording sessions). Whenever a directory listing
-contains two items with the same name, both are renamed to
-`name {id}.ext`, where `id` is the item's GoPro media ID. This mirrors how
-the Google Photos backend handles the same problem.
-
-By default ([`--gopro-always-add-id`](#gopro-always-add-id)) every file
-gets this treatment, not just ones actually colliding in a given listing.
-Whether a particular file collides depends on what else happens to exist
-in the library at listing time, which isn't stable from one run to the
-next - a file uploaded today as `GX010123.MP4` can silently become
-`GX010123 {id}.MP4` the moment some unrelated second `GX010123.MP4` turns
-up elsewhere, with nothing about the original file itself having changed.
-rclone has no way to know the old and new names are the same file, so
-`sync` would delete and re-transfer it, and `copy` would leave a stale
-duplicate behind under the old name, forever. Always including the ID
-makes a file's name a stable function of the file itself, not of whatever
-else happens to be in the library that day. Turn this off for cleaner
-names if the library is small/static enough that a same-name collision is
-not a realistic concern.
+GoPro cameras reuse file names (`GX010123.MP4` turns up again and again),
+so files are named `name {id}.ext`, where `id` is the GoPro media ID. With
+[`--gopro-always-add-id=false`](#gopro-always-add-id) only names that
+collide within a listing get the ID - but whether a name collides can
+change as the library changes, and then `sync` sees a renamed file and
+transfers it again.
 
 ### Chaptered videos and burst photos
 
-A single library entry can be made of several files: GoPro splits a long
-continuous recording into numbered chapters, and a burst photo shoot is
-stored as one entry with dozens (sometimes 100+) of numbered frames. This
-backend exposes each one as a separate file, named `name-N.ext` (for
-example `GX010294-1.MP4`, `GX010294-2.MP4`).
+GoPro stores long recordings as several chapters and burst shots as one
+item with many frames. Each is shown as its own file, named `name-N.ext`
+(for example `GX010294-1.MP4`, `GX010294-2.MP4`).
 
-Because the size reported by the API for a multi-item entry is the *total*
-across every item, not any one item's size, `rclone size` and `rclone
-ls`/`lsl` show `-1` (unknown) for these files by default rather than a
-guess - an inaccurate guess would make rclone's own transfer integrity
-check fail on every download. Set
-[`--gopro-read-size`](#gopro-read-size) if you need exact sizes for these
-(for example for `rclone mount`), at the cost of one extra request per
-file.
+GoPro only reports the total size of such an item, so each file's size
+is shown as `-1` (unknown) rather than guessed. Set
+[`--gopro-read-size`](#gopro-read-size) to read exact sizes (for example
+for `rclone mount`), at the cost of one request per file.
 
 ### Highlights and Edits
 
-GoPro-generated Highlight reels and user-made Edits (`MultiClipEdit`
-and `Edit` media types) are composed from other clips rather than being
-their own camera-original recording. They're included by default,
-matching what GoPro's own web/app library shows - see
-[`--gopro-include-edits`](#gopro-include-edits) to exclude them.
-
-These behave differently enough from ordinary media to be worth calling
-out even once included: their own `file_extension` is that of an
-internal Edit Decision List (typically `json`), not of what actually
-gets downloaded - GoPro serves the rendered video (a `baked_source`
-rendition) for these, never the EDL, and this backend's reported
-Content-Type follows the filename's own extension (usually `.mp4`)
-rather than `file_extension`, to match what's actually served. Their
-`file_size` is always null, reported the same way as the multi-item
-files above (`-1`, unknown, resolved on demand via
-[`--gopro-read-size`](#gopro-read-size)) rather than skipped.
-Auto-generated Highlights often have no filename at all; these are
-listed as `{id}.mp4`.
+Highlights generated by GoPro and Edits made in its app (`MultiClipEdit`
+and `Edit` media) are listed by default, as in GoPro's own app - see
+[`--gopro-include-edits`](#gopro-include-edits). The rendered video is
+downloaded, and they're listed with an `.mp4` extension. Auto-generated
+Highlights often have no name and are listed as `{id}.mp4`. GoPro
+reports no size for them, so their size is unknown unless
+[`--gopro-read-size`](#gopro-read-size) is set.
 
 ### Size verification
 
-The `file_size` GoPro's API reports for a media item can be wrong - seen
-live, a few KB larger than the size its "source" rendition actually
-serves. This isn't just cosmetic: `rclone copy`'s multi-thread downloader
-divides a file into ranged chunks using the size known *before* the
-download starts, so a too-large size makes it request a chunk that runs
-past the real end of the file and fails the whole transfer (`failed to
-write chunk: expected ... but wrote ...`); and a sync that only ever saw
-the stale size would re-download an already-correct file on every single
-run, forever, since the sizes would never match.
-
-[`--gopro-verify-size`](#gopro-verify-size) controls which files get
-checked against a live response before relying on their size, correcting
-and logging a `NOTICE`-level warning whenever one is wrong (the file is
-still downloaded either way - the size actually served is trustworthy).
-By default this only checks files GoPro has reprocessed since upload,
-the one thing a live account probe found in common with the one affected
-file out of hundreds checked - colder storage alone isn't enough, most
-archived files still report correctly. Set it to `always` for the
-strongest guarantee at the cost of one extra request per file, or `off`
-to skip the check entirely and trust `file_size` as-is. Either way this
-is on top of what [`--gopro-read-size`](#gopro-read-size) already costs
-for a multi-item file.
+The size GoPro reports for a file is occasionally a few KB off. That
+fails rclone's integrity check, breaks multi-thread downloads and makes
+`sync` transfer the file again on every run.
+[`--gopro-verify-size`](#gopro-verify-size) checks sizes with an extra
+request and logs a notice when one is wrong. By default only files GoPro
+has reprocessed since upload are checked, as those are the only ones
+seen affected.
 
 ## Modification times and hashes
 
-GoPro Media Library reports a `captured_at` timestamp for every item,
-which this backend uses as the modification time. Confirmed live, this
-isn't actually fixed at upload time the way most backends' equivalent is
-- `PUT /media/{id}` can change it - so `SetModTime` is implemented
-(`rclone touch` and similar work). This changes GoPro's own record of
-when the medium was captured, not just a local label, so treat it
-accordingly.
+The modification time is the item's `captured_at`, which is also what the
+date directories are based on. `rclone touch` changes it, rewriting
+GoPro's record of when the item was captured. The precision is reported
+as unsupported, so `sync` and `copy` never change it on their own.
 
-That said, this backend still reports its modtime precision as
-unsupported, deliberately: `rclone sync`/`copy` don't use modification
-time to decide what needs transferring here, so an ordinary sync run
-never calls `SetModTime` as a side effect and won't silently rewrite
-capture dates just because a local file's timestamp doesn't exactly
-match. It's only invoked when something asks for it directly - `rclone
-touch`, or a `Move` across a `by-year`/`by-month`/`by-day` boundary (see
-"Renaming and moving files" below).
-
-There is no supported hash algorithm, so `--checksum` cannot be used;
-`rclone sync` falls back to comparing size alone, which for the
-multi-item files described above means it's unavailable unless
-`--gopro-read-size` is set.
+There is no hash, so `--checksum` can't be used and `sync` compares sizes
+only.
 
 ## Which file gets downloaded
 
-`_embedded.files[]` in GoPro's API is a transcoded proxy, not the camera
-original - confirmed on a real account, where it resolved to a 1080p
-rendition of a video actually shot in 4K. By default
-(`--gopro-download-variation source`) this backend instead downloads the
-rendition labelled `"source"`, which is the true original. Set
-`--gopro-download-variation` to something else (for example `1080p`, or a
-proxy label like `high_res_proxy_mp4`) to download a transcoded rendition
-instead, if you want smaller/faster transfers and don't need the original.
+By default (`--gopro-download-variation source`) the original camera file
+is downloaded, or the rendered video of a Highlight or Edit. Set
+[`--gopro-download-variation`](#gopro-download-variation) to, for example,
+`1080p` to download a smaller transcoded version instead.
 
 ## Renaming and moving files
 
-`Move` is implemented (`rclone moveto`, and `rclone move`/`sync` for
-files that already exist at the destination under a different name) -
-confirmed live, a medium's filename isn't fixed after upload the way it
-is on most backends: `PUT /media/{id}` renames it in place.
+Files under `media/` can be renamed and moved (`rclone moveto`,
+`rclone move`). Moving a file to a different `by-year`, `by-month` or
+`by-day` directory changes its `captured_at` to that date. A chapter or
+burst frame can't be moved on its own.
 
-Moving within `media/all`, or within the same `by-year`/`by-month`/`by-day`
-bucket, only renames the file. Moving across a `by-year`, `by-month` or
-`by-day` boundary (for example `media/by-day/2026/2026-08-28/x.mp4` to
-`media/by-day/2026/2026-08-29/x.mp4`) also changes `captured_at` to match
-the destination date, since those directories are views computed from it
-- this is the one way a move can actually reposition a file between them,
-not just cosmetic, so treat it with the same care as
-[`SetModTime`](#modification-times-and-hashes) above. A multi-item file
-(a chaptered video or burst photo set item) can't be moved individually -
-the API renames the whole medium, not one chapter or frame of it.
-
-GoPro stores the name as both the filename and the title shown in its
-app, so a move that keeps the name (only changing the date) leaves both
-untouched. A file can't be renamed to a name with nothing before its
-extension.
-
-`Copy` and `DirMove` remain unimplemented - see "Limitations" below.
+GoPro uses the name as both the filename and the title shown in its app.
+A move that keeps the name leaves both unchanged, and a file can't be
+renamed to a name with nothing before its extension.
 
 ## Link sharing
 
-`PublicLink` is implemented (`rclone link remote:path`), creating a
-public share that needs no authentication to view or download from -
-confirmed live with a fresh upload and a plain unauthenticated request
-against the returned URL. GoPro calls the underlying object a
-"collection" internally; this backend always creates one holding just
-the single file being shared, and the link is
-`https://gopro.com/v/{collection-id}`.
-
-The link's title defaults to the file's own name (with this backend's
-own `{id}` disambiguation suffix stripped, since that's never meant to
-be shown outside this backend) - set
-[`--gopro-link-title`](#gopro-link-title) for a custom one; `rclone
-link` itself has no way to pass a one-off title per call, so this
-applies for the remote's lifetime, not just the next link created.
-[`--gopro-link-allow-download`](#gopro-link-allow-download) controls
-whether the link also allows downloading the original file and sharing
-any GPS data embedded in it - off by default; GoPro's API has one
-field for both, confirmed against its own web UI, so they can't be set
-independently.
-
-`--expire` and `--unlink` are not supported and are silently ignored,
-per this command's own documented behaviour for backends that can't:
-GoPro's collections API exposes no expiry field, so links don't expire,
-and a medium can be referenced by any number of independent shares with
-no way to look up which ones from the medium's own record, so there's
-no single reliable "the" link to remove on request.
+`rclone link` creates a public share of a file at
+`https://gopro.com/v/{id}`, titled with the file's name (see
+[`--gopro-link-title`](#gopro-link-title)).
+[`--gopro-link-allow-download`](#gopro-link-allow-download) lets
+recipients download the original, which also shares any GPS data in it.
+`--expire` and `--unlink` aren't supported: shares don't expire, and
+there's no way to find the shares containing a file.
 
 ## Deleting files
 
-By default, `rclone delete`/`rclone rmdir`/removing a file during
-`rclone sync` doesn't actually make GoPro forget about it - confirmed
-live, GoPro moves it to what its own web/app UI calls "Recently
-Deleted" instead. It's recoverable there for up to 60 days, and still
-counts against your storage quota, even though every listing and
-`NewObject` lookup this backend does already correctly treats it as
-gone. Set [`--gopro-use-trash=false`](#gopro-use-trash) to skip that
-and delete permanently instead - confirmed live, this still takes
-GoPro roughly a minute to actually process in the background, not
-instant, but it's gone for good once it does, unlike the 60-day
-recoverable default.
+By default deleted files go to GoPro's "Recently Deleted", where they
+can be restored for 60 days (see
+[`--gopro-trashed-only`](#gopro-trashed-only) and
+[`rclone backend restore`](#restore)) and still count against the
+storage quota. Set [`--gopro-use-trash=false`](#gopro-use-trash) to
+delete permanently instead; GoPro takes about a minute to process that.
 
 ## Uploading
 
-Files uploaded to `upload/` are always sent in chunks (there's no
-single-shot upload endpoint), read from the source in order but PUT to
-GoPro concurrently - `--gopro-upload-concurrency` chunks in flight at
-once, `--gopro-upload-chunk-size` bytes each. GoPro's chunk upload
-accepts parts in any order, so this is safe; it mainly speeds up large
-single-file uploads, since each chunk is a separate HTTP round trip.
-`--gopro-upload-chunk-size` can't go below 5Mi: GoPro's upload endpoint
-is S3-backed and enforces that as the minimum part size (except for the
-last part of a file). `PutStream` isn't supported - the protocol needs
-the file size before the first chunk is requested.
+Files are uploaded to `upload/` in chunks of
+[`--gopro-upload-chunk-size`](#gopro-upload-chunk-size) (at least 5Mi),
+with [`--gopro-upload-concurrency`](#gopro-upload-concurrency) in flight
+at once. Chunk buffers count towards
+[`--max-buffer-memory`](/docs/#max-buffer-memory). The size has to be
+known up front, so streaming uploads (`rclone rcat`) aren't supported.
 
-Chunk buffers come from rclone's shared memory pool rather than being
-allocated per chunk, so an upload's buffer memory is subject to
-[`--max-buffer-memory`](/docs/#max-buffer-memory) and
-[`--use-mmap`](/docs/#use-mmap) like any other chunked-upload backend's.
+GoPro can't replace a file's content, so overwriting a file in `upload/`
+(for example in `rclone mount`) uploads a new item and deletes the old
+one, following `--gopro-use-trash`.
 
 <!-- autogenerated options start - DO NOT EDIT - instead edit fs.RegInfo in backend/gopro/gopro.go and run make backenddocs to verify --> <!-- markdownlint-disable-line line-length -->
 ### Standard options
@@ -726,20 +605,12 @@ doesn't at all. Check with --gopro-trashed-only if one is missing.
 
 ## Limitations
 
-- No `ListR`: the directory tree above is several overlapping views of the
-  same flat media list, so a full recursive listing wouldn't be any faster
-  than rclone's default directory-by-directory walk.
-- `Copy` and `DirMove` aren't implemented: GoPro Media Library has no
-  server-side copy operation to build `Copy` on, and `DirMove` has nothing
-  real to rename - every directory in the tree above is synthetic. `Move`
-  is implemented; see "Renaming and moving files" below.
-- Only `Video` and `Burst` media have been confirmed to use the two
-  chapter/burst addressing schemes described above; other multi-item types
-  (`TimeLapse`, `Continuous`, ...) may follow either one.
-- Albums, moments, livestreams and sidecar files (GPMF/GPS telemetry, RAW
-  `.GPR` companions from RAW+JPEG capture, an Edit's own Edit Decision
-  List, etc.) aren't exposed by this backend - only the main rendition of
-  each item is. Highlights and Edits themselves can be included with
-  [`--gopro-include-edits`](#gopro-include-edits).
-- This is an unofficial, reverse-engineered API. Use it with the
-  expectation that GoPro could change or remove it at any time.
+- `Copy` and `DirMove` aren't supported: GoPro has no server-side copy,
+  and the directories are virtual.
+- Chapters and bursts have only been tested with `Video` and `Burst`
+  media. Other multi-item types such as `TimeLapse` may not download
+  correctly.
+- Albums, moments and sidecar files (GPS/telemetry, `.GPR` RAW files)
+  aren't shown - only the main file of each item.
+- `upload/` only lists files uploaded by the running rclone process;
+  uploaded files appear under `media/` once GoPro has processed them.

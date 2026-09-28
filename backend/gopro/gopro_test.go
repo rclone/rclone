@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -50,10 +52,17 @@ func newTestAPIFs(handler http.Handler) (*Fs, *httptest.Server) {
 		pacer:    fs.NewPacer(context.Background(), pacer.NewDefault(pacer.MinSleep(time.Millisecond), pacer.MaxSleep(5*time.Millisecond))),
 		dlCache:  map[string]*dlCacheEntry{},
 		uploaded: dirtree.New(),
+		media:    &listCache{},
+		trash:    &listCache{},
 	}
 	f.srv.SetErrorHandler(errorHandler)
 	f.unAuth.SetErrorHandler(errorHandler)
 	return f, srv
+}
+
+// cachedList returns a listCache already holding items, fetched just now
+func cachedList(items []api.Medium) *listCache {
+	return &listCache{items: items, at: time.Now()}
 }
 
 const fileNameUpload = "rclone-test-image2.jpg"
@@ -286,7 +295,86 @@ func TestIntegration(t *testing.T) {
 
 		t.Run("Remove", func(t *testing.T) {
 			require.NoError(t, dstObj.Remove(ctx))
+			// Remove only trashes it by default - purge it so test runs
+			// don't fill the trash.
+			time.Sleep(deletePermanentDelay)
+			require.NoError(t, f.(*Fs).doDeleteMedium(ctx, gpObj.id, "permanent", "true"))
 		})
+	})
+
+	t.Run("UpdateReplacesTheExistingUpload", func(t *testing.T) {
+		gf, ok := f.(*Fs)
+		require.True(t, ok)
+		localFs, err := fs.NewFs(ctx, "testfiles")
+		require.NoError(t, err)
+		put := func(name string, update fs.Object) fs.Object {
+			srcObj, err := localFs.NewObject(ctx, name)
+			require.NoError(t, err)
+			in, err := srcObj.Open(ctx)
+			require.NoError(t, err)
+			defer func() { _ = in.Close() }()
+			src := fs.NewOverrideRemote(srcObj, "upload/rclone-test-update.jpg")
+			if update != nil {
+				require.NoError(t, update.Update(ctx, in, src))
+				return update
+			}
+			o, err := f.Put(ctx, in, src)
+			require.NoError(t, err)
+			return o
+		}
+		readLocal := func(name string) []byte {
+			b, err := os.ReadFile(filepath.Join("testfiles", name))
+			require.NoError(t, err)
+			return b
+		}
+		isNotFound := func(err error) bool {
+			var apiErr *api.Error
+			return errors.As(err, &apiErr) && apiErr.Status == http.StatusNotFound
+		}
+
+		o := put("rclone-test-image1.jpg", nil)
+		oldID := o.(*Object).id
+		// Purge whatever this test leaves behind, active or trashed.
+		defer func() {
+			for _, id := range []string{oldID, o.(*Object).id} {
+				if _, err := gf.getMedium(ctx, id); err == nil {
+					_ = gf.deleteMedium(ctx, id, true)
+				} else {
+					_ = gf.doDeleteMedium(ctx, id, "permanent", "true")
+				}
+			}
+		}()
+
+		put("rclone-test-image2.jpg", o)
+		newID := o.(*Object).id
+		assert.NotEqual(t, oldID, newID, "Update must upload a new medium")
+
+		_, err = gf.getMedium(ctx, oldID)
+		assert.True(t, isNotFound(err), "the replaced medium must be gone from the library, got %v", err)
+		trash, err := gf.allTrash(ctx)
+		require.NoError(t, err)
+		var trashed bool
+		for _, m := range trash {
+			trashed = trashed || m.ID == oldID
+		}
+		assert.True(t, trashed, "with use_trash the replaced medium must be in the trash")
+
+		entries, err := f.List(ctx, "upload")
+		require.NoError(t, err)
+		var ids []string
+		for _, e := range entries {
+			if e.Remote() == "upload/rclone-test-update.jpg" {
+				ids = append(ids, e.(*Object).id)
+			}
+		}
+		assert.Equal(t, []string{newID}, ids, "only the new upload must be listed")
+
+		in, err := o.Open(ctx)
+		require.NoError(t, err)
+		got, err := io.ReadAll(in)
+		require.NoError(t, err)
+		require.NoError(t, in.Close())
+		assert.Equal(t, readLocal("rclone-test-image2.jpg"), got, "the new content must be served")
 	})
 }
 
@@ -932,18 +1020,16 @@ func TestProcessingStates(t *testing.T) {
 
 func TestInvalidateCaches(t *testing.T) {
 	f := &Fs{
-		mediaCache:   []api.Medium{{ID: "1"}},
-		mediaCacheAt: time.Now(),
-		trashCache:   []api.Medium{{ID: "2"}},
-		trashCacheAt: time.Now(),
+		media: cachedList([]api.Medium{{ID: "1"}}),
+		trash: cachedList([]api.Medium{{ID: "2"}}),
 	}
 
 	f.invalidateMediaCache()
-	assert.Nil(t, f.mediaCache)
-	assert.NotNil(t, f.trashCache, "invalidating the media cache must leave the trash cache alone")
+	assert.Nil(t, f.media.items)
+	assert.NotNil(t, f.trash.items, "invalidating the media cache must leave the trash cache alone")
 
 	f.invalidateTrashCache()
-	assert.Nil(t, f.trashCache)
+	assert.Nil(t, f.trash.items)
 }
 
 func TestAllMediaCacheHit(t *testing.T) {
@@ -951,7 +1037,7 @@ func TestAllMediaCacheHit(t *testing.T) {
 	// dereferencing it, so a nil-pointer panic here means the TTL check is
 	// broken, not that the assertion below failed.
 	want := []api.Medium{{ID: "cached"}}
-	f := &Fs{mediaCache: want, mediaCacheAt: time.Now()}
+	f := &Fs{media: cachedList(want)}
 	got, err := f.allMedia(context.Background())
 	require.NoError(t, err)
 	assert.Equal(t, want, got)
@@ -959,7 +1045,7 @@ func TestAllMediaCacheHit(t *testing.T) {
 
 func TestAllTrashCacheHit(t *testing.T) {
 	want := []api.Medium{{ID: "cached"}}
-	f := &Fs{trashCache: want, trashCacheAt: time.Now()}
+	f := &Fs{trash: cachedList(want)}
 	got, err := f.allTrash(context.Background())
 	require.NoError(t, err)
 	assert.Equal(t, want, got)
@@ -972,6 +1058,8 @@ func newTestListFs(baseURL string) *Fs {
 	f := &Fs{
 		srv:   rest.NewClient(&http.Client{}).SetRoot(baseURL),
 		pacer: fs.NewPacer(context.Background(), pacer.NewDefault(pacer.MinSleep(time.Millisecond), pacer.MaxSleep(5*time.Millisecond))),
+		media: &listCache{},
+		trash: &listCache{},
 	}
 	f.srv.SetErrorHandler(errorHandler)
 	return f
@@ -1052,7 +1140,7 @@ func TestAllMediaCachesWithinTTLAndRefetchesAfter(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, calls, "a second call within the TTL must be served from cache, not refetched")
 
-	f.mediaCacheAt = time.Now().Add(-mediaCacheTTL - time.Second)
+	f.media.at = time.Now().Add(-mediaCacheTTL - time.Second)
 	_, err = f.allMedia(context.Background())
 	require.NoError(t, err)
 	assert.Equal(t, 2, calls, "a call after the TTL has elapsed must refetch")
@@ -1131,6 +1219,72 @@ func TestAllTrashCachesASuccessfulEmptyResult(t *testing.T) {
 	assert.Equal(t, 1, calls, "an empty trash must still be cached, not refetched on every call")
 }
 
+func TestAllMediaFetchesTheRemainingPagesConcurrently(t *testing.T) {
+	const nPages = 5
+	var mu sync.Mutex
+	var inFlight, maxInFlight int
+	var perPage []string
+	srv := httptest.NewServer(jsonHandler(t, "/media/search", func(r *http.Request) any {
+		mu.Lock()
+		inFlight++
+		maxInFlight = max(maxInFlight, inFlight)
+		perPage = append(perPage, r.URL.Query().Get("per_page"))
+		mu.Unlock()
+		time.Sleep(50 * time.Millisecond)
+		mu.Lock()
+		inFlight--
+		mu.Unlock()
+		page, err := strconv.Atoi(r.URL.Query().Get("page"))
+		require.NoError(t, err)
+		resp := &api.SearchResponse{Pages: api.PageInfo{TotalPages: nPages}}
+		resp.Embedded.Media = []api.Medium{{ID: strconv.Itoa(page)}}
+		return resp
+	}))
+	defer srv.Close()
+
+	f := newTestListFs(srv.URL)
+	items, err := f.allMedia(context.Background())
+	require.NoError(t, err)
+	var ids []string
+	for _, m := range items {
+		ids = append(ids, m.ID)
+	}
+	assert.Equal(t, []string{"1", "2", "3", "4", "5"}, ids, "items must stay in page order")
+	assert.Greater(t, maxInFlight, 1, "pages after the first must be fetched concurrently")
+	for _, pp := range perPage {
+		assert.Equal(t, strconv.Itoa(listPageSize), pp)
+	}
+}
+
+func TestListCacheIsSharedBetweenFsOfTheSameRemote(t *testing.T) {
+	ctx := context.Background()
+	newFs := func(name, root string, extra configmap.Simple) *Fs {
+		m := configmap.Simple{"access_token": "test-token", "verify_size": verifySizeReprocessed}
+		for k, v := range extra {
+			m[k] = v
+		}
+		f, err := NewFs(ctx, name, root, m)
+		require.NoError(t, err)
+		return f.(*Fs)
+	}
+	a := newFs("shared-cache-test", "", nil)
+	b := newFs("shared-cache-test", "media/by-year", nil)
+	assert.Same(t, a.media, b.media, "different roots of one remote must share the library listing")
+	assert.Same(t, a.trash, b.trash)
+
+	other := newFs("shared-cache-test-other", "", nil)
+	assert.NotSame(t, a.media, other.media, "different remotes must not share a listing")
+	assert.NotSame(t, a.trash, other.trash)
+
+	showAll := newFs("shared-cache-test", "", configmap.Simple{"show_all": "true"})
+	assert.NotSame(t, a.media, showAll.media, "options that change the listing must not share it")
+	assert.Same(t, a.trash, showAll.trash, "the trash is unfiltered, so it's shared regardless")
+
+	a.media.items = []api.Medium{}
+	b.invalidateMediaCache()
+	assert.Nil(t, a.media.items, "invalidating through one Fs must invalidate them all")
+}
+
 func TestListDirNamesUnnamedEditsAsMP4(t *testing.T) {
 	// Auto-generated Highlights, as served live: empty filename, the EDL's
 	// "json" file_extension, null file_size - but the download is an MP4.
@@ -1185,8 +1339,7 @@ func TestListDirShowsNullFileSizeTrashedItemsUnconditionally(t *testing.T) {
 	t.Run("a trashed listing shows it unconditionally", func(t *testing.T) {
 		f := newTestMediaFs(nil)
 		f.opt.TrashedOnly = true
-		f.trashCache = items
-		f.trashCacheAt = time.Now()
+		f.trash = cachedList(items)
 		entries, err := f.List(context.Background(), "media/all")
 		require.NoError(t, err)
 		require.Len(t, entries, 1)
@@ -1221,14 +1374,14 @@ func TestListedMedia(t *testing.T) {
 	trash := []api.Medium{{ID: "2"}}
 
 	t.Run("reads the library by default", func(t *testing.T) {
-		f := &Fs{mediaCache: media, mediaCacheAt: time.Now(), trashCache: trash, trashCacheAt: time.Now()}
+		f := &Fs{media: cachedList(media), trash: cachedList(trash)}
 		got, err := f.listedMedia(ctx)
 		require.NoError(t, err)
 		assert.Equal(t, media, got)
 	})
 
 	t.Run("reads the trash under trashed_only", func(t *testing.T) {
-		f := &Fs{opt: Options{TrashedOnly: true}, mediaCache: media, mediaCacheAt: time.Now(), trashCache: trash, trashCacheAt: time.Now()}
+		f := &Fs{opt: Options{TrashedOnly: true}, media: cachedList(media), trash: cachedList(trash)}
 		got, err := f.listedMedia(ctx)
 		require.NoError(t, err)
 		assert.Equal(t, trash, got)
@@ -1240,37 +1393,34 @@ func TestStartYear(t *testing.T) {
 
 	t.Run("an explicit start_year override always wins, even over library content", func(t *testing.T) {
 		f := &Fs{
-			opt:          Options{StartYear: 1999},
-			mediaCache:   []api.Medium{{CapturedAt: fstest.Time("2020-01-01T00:00:00Z")}},
-			mediaCacheAt: time.Now(),
+			opt:   Options{StartYear: 1999},
+			media: cachedList([]api.Medium{{CapturedAt: fstest.Time("2020-01-01T00:00:00Z")}}),
 		}
 		assert.Equal(t, 1999, f.startYear(ctx))
 	})
 
 	t.Run("without an override, scans every cached item for the true minimum regardless of position", func(t *testing.T) {
-		f := &Fs{mediaCache: []api.Medium{
+		f := &Fs{media: cachedList([]api.Medium{
 			{CapturedAt: fstest.Time("2024-06-01T00:00:00Z")},
 			{CapturedAt: fstest.Time("2016-01-01T00:00:00Z")}, // earliest - neither first nor last
 			{CapturedAt: fstest.Time("2020-01-01T00:00:00Z")},
-		}, mediaCacheAt: time.Now()}
+		})}
 		assert.Equal(t, 2016, f.startYear(ctx))
 	})
 
 	t.Run("an empty library falls back to the current year", func(t *testing.T) {
-		f := &Fs{startTime: startTime, mediaCache: []api.Medium{}, mediaCacheAt: time.Now()}
+		f := &Fs{startTime: startTime, media: cachedList([]api.Medium{})}
 		assert.Equal(t, startTime.Year(), f.startYear(ctx))
 	})
 
 	t.Run("under trashed_only, scans the trash instead of the active library", func(t *testing.T) {
 		f := &Fs{
-			opt:          Options{TrashedOnly: true},
-			mediaCache:   []api.Medium{{CapturedAt: fstest.Time("2024-06-01T00:00:00Z")}},
-			mediaCacheAt: time.Now(),
-			trashCache: []api.Medium{
+			opt:   Options{TrashedOnly: true},
+			media: cachedList([]api.Medium{{CapturedAt: fstest.Time("2024-06-01T00:00:00Z")}}),
+			trash: cachedList([]api.Medium{
 				{CapturedAt: fstest.Time("2010-01-01T00:00:00Z")},
 				{CapturedAt: fstest.Time("2020-01-01T00:00:00Z")},
-			},
-			trashCacheAt: time.Now(),
+			}),
 		}
 		assert.Equal(t, 2010, f.startYear(ctx), "the active library's 2024 item must not win over the trash's earlier 2010 one")
 	})
@@ -1287,7 +1437,7 @@ func TestCapturedDates(t *testing.T) {
 	trashTime := fstest.Time("2021-01-01T00:00:00Z")
 
 	t.Run("reads the library by default", func(t *testing.T) {
-		f := &Fs{mediaCache: []api.Medium{{CapturedAt: mediaTime}}, mediaCacheAt: time.Now()}
+		f := &Fs{media: cachedList([]api.Medium{{CapturedAt: mediaTime}})}
 		got, err := f.capturedDates(ctx)
 		require.NoError(t, err)
 		assert.Equal(t, []time.Time{mediaTime}, got)
@@ -1295,9 +1445,8 @@ func TestCapturedDates(t *testing.T) {
 
 	t.Run("reads the trash instead under trashed_only", func(t *testing.T) {
 		f := &Fs{
-			opt:          Options{TrashedOnly: true},
-			trashCache:   []api.Medium{{CapturedAt: trashTime}},
-			trashCacheAt: time.Now(),
+			opt:   Options{TrashedOnly: true},
+			trash: cachedList([]api.Medium{{CapturedAt: trashTime}}),
 		}
 		got, err := f.capturedDates(ctx)
 		require.NoError(t, err)
@@ -1445,11 +1594,10 @@ func TestUploadRootDoesNotCreateNestedUploadDirectory(t *testing.T) {
 // would panic rather than silently pass.
 func newTestMediaFs(items []api.Medium) *Fs {
 	return &Fs{
-		startTime:    startTime,
-		opt:          Options{AlwaysAddID: true},
-		uploaded:     dirtree.New(),
-		mediaCache:   items,
-		mediaCacheAt: time.Now(),
+		startTime: startTime,
+		opt:       Options{AlwaysAddID: true},
+		uploaded:  dirtree.New(),
+		media:     cachedList(items),
 	}
 }
 
@@ -1638,13 +1786,12 @@ func TestUpdateMediumInvalidatesMediaCache(t *testing.T) {
 		w.WriteHeader(http.StatusNoContent)
 	}))
 	defer srv.Close()
-	f.mediaCache = []api.Medium{{ID: "stale"}}
-	f.mediaCacheAt = time.Now()
+	f.media = cachedList([]api.Medium{{ID: "stale"}})
 
 	name := "new-name"
 	err := f.updateMedium(context.Background(), "abc123", api.MediumUpdate{Filename: &name})
 	require.NoError(t, err)
-	assert.Nil(t, f.mediaCache, "a change to a medium must invalidate the cached listing")
+	assert.Nil(t, f.media.items, "a change to a medium must invalidate the cached listing")
 }
 
 func TestCreateCollectionAddToCollectionAndPublicLink(t *testing.T) {
@@ -1675,8 +1822,7 @@ func TestCreateCollectionAddToCollectionAndPublicLink(t *testing.T) {
 
 	t.Run("PublicLink orchestrates both calls and defaults the title to the file's own name", func(t *testing.T) {
 		size := int64(100)
-		f.mediaCache = []api.Medium{{ID: "med1", Filename: "clip.mp4", FileSize: &size, ItemCount: 1, CapturedAt: startTime}}
-		f.mediaCacheAt = time.Now()
+		f.media = cachedList([]api.Medium{{ID: "med1", Filename: "clip.mp4", FileSize: &size, ItemCount: 1, CapturedAt: startTime}})
 		link, err := f.PublicLink(context.Background(), "media/all/clip.mp4", fs.Duration(0), false)
 		require.NoError(t, err)
 		assert.Equal(t, "https://gopro.com/v/col1", link)
@@ -1685,8 +1831,7 @@ func TestCreateCollectionAddToCollectionAndPublicLink(t *testing.T) {
 
 	t.Run("PublicLink titles an unnamed medium with its listed name, not a bare extension", func(t *testing.T) {
 		id := "6a9362c0b7d89053ceb33de9"
-		f.mediaCache = append(f.mediaCache, api.Medium{ID: id, Filename: "", FileExtension: "json", Type: "MultiClipEdit", ItemCount: 1, CapturedAt: startTime})
-		f.mediaCacheAt = time.Now()
+		f.media = cachedList(append(f.media.items, api.Medium{ID: id, Filename: "", FileExtension: "json", Type: "MultiClipEdit", ItemCount: 1, CapturedAt: startTime}))
 		_, err := f.PublicLink(context.Background(), "media/all/{"+id+"}.mp4", fs.Duration(0), false)
 		require.NoError(t, err)
 		assert.Equal(t, "{"+id+"}.mp4", gotCreate.Title)
@@ -1742,14 +1887,12 @@ func TestDoDeleteMediumInvalidatesCachesAndReportsAPIErrors(t *testing.T) {
 			writeJSON(t, w, api.DeleteResponse{})
 		}))
 		defer srv.Close()
-		f.mediaCache = []api.Medium{{ID: "stale"}}
-		f.mediaCacheAt = time.Now()
-		f.trashCache = []api.Medium{{ID: "stale"}}
-		f.trashCacheAt = time.Now()
+		f.media = cachedList([]api.Medium{{ID: "stale"}})
+		f.trash = cachedList([]api.Medium{{ID: "stale"}})
 
 		require.NoError(t, f.doDeleteMedium(context.Background(), "abc123"))
-		assert.Nil(t, f.mediaCache)
-		assert.Nil(t, f.trashCache)
+		assert.Nil(t, f.media.items)
+		assert.Nil(t, f.trash.items)
 	})
 
 	t.Run("an error embedded in a 200 response is surfaced as a Go error", func(t *testing.T) {
@@ -1886,18 +2029,16 @@ func TestRestoreCommand(t *testing.T) {
 			w.WriteHeader(http.StatusNoContent)
 		}))
 		defer srv.Close()
-		f.mediaCache = []api.Medium{{ID: "stale"}}
-		f.mediaCacheAt = time.Now()
-		f.trashCache = []api.Medium{{ID: "stale"}}
-		f.trashCacheAt = time.Now()
+		f.media = cachedList([]api.Medium{{ID: "stale"}})
+		f.trash = cachedList([]api.Medium{{ID: "stale"}})
 
 		id := "68b22325df3cf752557ac6d7"
 		result, err := f.Command(ctx, "restore", []string{"GX010294 {" + id + "}.MP4"}, nil)
 		require.NoError(t, err)
 		assert.Equal(t, &restoreResult{Restored: 1}, result)
 		assert.Equal(t, []string{id}, gotIDs)
-		assert.Nil(t, f.mediaCache)
-		assert.Nil(t, f.trashCache)
+		assert.Nil(t, f.media.items)
+		assert.Nil(t, f.trash.items)
 	})
 
 	t.Run("no arguments restores everything currently in the trash", func(t *testing.T) {
@@ -1909,8 +2050,7 @@ func TestRestoreCommand(t *testing.T) {
 			w.WriteHeader(http.StatusNoContent)
 		}))
 		defer srv.Close()
-		f.trashCache = []api.Medium{{ID: "t1"}, {ID: "t2"}}
-		f.trashCacheAt = time.Now()
+		f.trash = cachedList([]api.Medium{{ID: "t1"}, {ID: "t2"}})
 
 		result, err := f.restore(ctx, nil)
 		require.NoError(t, err)
@@ -1919,7 +2059,7 @@ func TestRestoreCommand(t *testing.T) {
 	})
 
 	t.Run("an empty trash with no arguments is a no-op, not an error", func(t *testing.T) {
-		f := &Fs{trashCache: []api.Medium{}, trashCacheAt: time.Now()}
+		f := &Fs{trash: cachedList([]api.Medium{})}
 		result, err := f.restore(ctx, nil)
 		require.NoError(t, err)
 		assert.Equal(t, &restoreResult{}, result)
@@ -1995,8 +2135,7 @@ func TestOpenChunkWriterWriteChunkCloseRegistersUpload(t *testing.T) {
 
 	f, srv := newTestUploadFlowFs(mux)
 	defer srv.Close()
-	f.mediaCache = []api.Medium{{ID: "stale"}}
-	f.mediaCacheAt = time.Now()
+	f.media = cachedList([]api.Medium{{ID: "stale"}})
 
 	src := mockobject.New("upload/GX010001.MP4").WithContent(content, mockobject.SeekModeRegular)
 	ctx := context.Background()
@@ -2010,7 +2149,7 @@ func TestOpenChunkWriterWriteChunkCloseRegistersUpload(t *testing.T) {
 	assert.Equal(t, content, gotChunk)
 
 	require.NoError(t, writer.Close(ctx))
-	assert.Nil(t, f.mediaCache, "a completed upload must invalidate the cached library listing")
+	assert.Nil(t, f.media.items, "a completed upload must invalidate the cached library listing")
 
 	entries, err := f.List(ctx, "upload")
 	require.NoError(t, err)
@@ -2307,8 +2446,7 @@ func TestReadMetaDataIDFastPath(t *testing.T) {
 		}))
 		defer srv.Close()
 		f.opt.AlwaysAddID = true
-		f.mediaCache = []api.Medium{} // an empty, but cached (non-nil), library
-		f.mediaCacheAt = time.Now()
+		f.media = cachedList([]api.Medium{}) // an empty, but cached (non-nil), library
 
 		o := &Object{fs: f, remote: "media/all/some-renamed-file {" + id + "}.mp4"}
 		err := o.readMetaData(context.Background())
@@ -2343,8 +2481,7 @@ func TestReadMetaDataIDFastPath(t *testing.T) {
 		}))
 		defer srv.Close()
 		f.opt.AlwaysAddID = true
-		f.mediaCache = []api.Medium{}
-		f.mediaCacheAt = time.Now()
+		f.media = cachedList([]api.Medium{})
 
 		o := &Object{fs: f, remote: "media/all/deleted {" + id + "}.mp4"}
 		err := o.readMetaData(context.Background())
@@ -2359,8 +2496,7 @@ func TestReadMetaDataIDFastPath(t *testing.T) {
 		defer srv.Close()
 		f.opt.AlwaysAddID = true
 		f.opt.TrashedOnly = true
-		f.trashCache = []api.Medium{}
-		f.trashCacheAt = time.Now()
+		f.trash = cachedList([]api.Medium{})
 
 		o := &Object{fs: f, remote: "media/all/x {" + id + "}.mp4"}
 		err := o.readMetaData(context.Background())
@@ -2441,6 +2577,117 @@ func TestPutAndUpdateDriveTheFullUploadProtocol(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, entries, 1)
 	assert.Equal(t, "upload/GX010001.MP4", entries[0].Remote())
+}
+
+// newTestReplaceFs builds an Fs whose mocked upload protocol always
+// creates medium "new", recording every DELETE /media request's query.
+func newTestReplaceFs(t *testing.T) (f *Fs, srv *httptest.Server, deletes *[]url.Values) {
+	deletes = &[]url.Values{}
+	var mu sync.Mutex
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /media", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(t, w, map[string]string{"id": "new"})
+	})
+	mux.HandleFunc("POST /derivatives", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(t, w, map[string]string{"id": "der1"})
+	})
+	mux.HandleFunc("POST /user-uploads", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(t, w, map[string]string{"id": "up1"})
+	})
+	mux.HandleFunc("GET /user-uploads/der1", func(w http.ResponseWriter, r *http.Request) {
+		resp := api.UserUploadsResponse{}
+		resp.Embedded.Authorizations = []api.UploadAuthorization{{URL: srv.URL + "/chunk/1", Part: 1}}
+		writeJSON(t, w, resp)
+	})
+	noContent := func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusNoContent) }
+	mux.HandleFunc("PUT /chunk/1", noContent)
+	mux.HandleFunc("PUT /user-uploads/der1", noContent)
+	mux.HandleFunc("PUT /derivatives/der1", noContent)
+	mux.HandleFunc("PUT /media/new", noContent)
+	mux.HandleFunc("DELETE /media", func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		*deletes = append(*deletes, r.URL.Query())
+		mu.Unlock()
+		writeJSON(t, w, api.DeleteResponse{})
+	})
+	f, srv = newTestUploadFlowFs(mux)
+	f.opt.UseTrash = true
+	return f, srv, deletes
+}
+
+func TestUpdateReplacesTheExistingUpload(t *testing.T) {
+	ctx := context.Background()
+	content := []byte("new content")
+	const remote = "upload/GX010001.MP4"
+	src := mockobject.New(remote).WithContent(content, mockobject.SeekModeRegular)
+
+	t.Run("Update deletes the medium it replaces and keeps one entry", func(t *testing.T) {
+		f, srv, deletes := newTestReplaceFs(t)
+		defer srv.Close()
+		old := &Object{fs: f, remote: remote, id: "old", itemCount: 1, bytes: 3}
+		f.uploaded.AddEntry(old)
+
+		require.NoError(t, old.Update(ctx, bytes.NewReader(content), src))
+		assert.Equal(t, "new", old.id)
+		require.Len(t, *deletes, 1)
+		assert.Equal(t, "old", (*deletes)[0].Get("ids"))
+		assert.Empty(t, (*deletes)[0].Get("permanent"), "use_trash sends the replaced medium to the trash")
+
+		entries, err := f.List(ctx, "upload")
+		require.NoError(t, err)
+		require.Len(t, entries, 1, "the replaced entry must not be listed alongside the new one")
+		assert.Equal(t, "new", entries[0].(*Object).id)
+	})
+
+	t.Run("an object not in the upload tree is replaced too", func(t *testing.T) {
+		f, srv, deletes := newTestReplaceFs(t)
+		defer srv.Close()
+		old := &Object{fs: f, remote: remote, id: "old", itemCount: 1}
+
+		require.NoError(t, old.Update(ctx, bytes.NewReader(content), src))
+		require.Len(t, *deletes, 1)
+		assert.Equal(t, "old", (*deletes)[0].Get("ids"))
+	})
+
+	t.Run("without use_trash the replaced medium is deleted permanently", func(t *testing.T) {
+		defer func(d time.Duration) { deletePermanentDelay = d }(deletePermanentDelay)
+		deletePermanentDelay = time.Millisecond
+		f, srv, deletes := newTestReplaceFs(t)
+		defer srv.Close()
+		f.opt.UseTrash = false
+		old := &Object{fs: f, remote: remote, id: "old", itemCount: 1}
+
+		require.NoError(t, old.Update(ctx, bytes.NewReader(content), src))
+		require.Len(t, *deletes, 2)
+		assert.Equal(t, "true", (*deletes)[1].Get("permanent"))
+	})
+
+	t.Run("a multi-thread copy over an existing upload replaces it", func(t *testing.T) {
+		f, srv, deletes := newTestReplaceFs(t)
+		defer srv.Close()
+		f.uploaded.AddEntry(&Object{fs: f, remote: remote, id: "old", itemCount: 1})
+
+		_, writer, err := f.OpenChunkWriter(ctx, remote, src)
+		require.NoError(t, err)
+		_, err = writer.WriteChunk(ctx, 0, bytes.NewReader(content))
+		require.NoError(t, err)
+		require.NoError(t, writer.Close(ctx))
+
+		require.Len(t, *deletes, 1)
+		assert.Equal(t, "old", (*deletes)[0].Get("ids"))
+		entries, err := f.List(ctx, "upload")
+		require.NoError(t, err)
+		require.Len(t, entries, 1)
+		assert.Equal(t, "new", entries[0].(*Object).id)
+	})
+
+	t.Run("a new upload deletes nothing", func(t *testing.T) {
+		f, srv, deletes := newTestReplaceFs(t)
+		defer srv.Close()
+		_, err := f.Put(ctx, bytes.NewReader(content), src)
+		require.NoError(t, err)
+		assert.Empty(t, *deletes)
+	})
 }
 
 func TestMoveSucceeds(t *testing.T) {
@@ -2558,13 +2805,12 @@ func TestMoveSucceeds(t *testing.T) {
 		}))
 		defer srv.Close()
 		dstFs := &Fs{root: "media/by-day/2026/2026-07-04"}
-		dstFs.mediaCache = []api.Medium{}
-		dstFs.mediaCacheAt = time.Now()
+		dstFs.media = cachedList([]api.Medium{})
 
 		src := &Object{fs: srcFs, id: id, itemCount: 1, remote: "old.mp4", modTime: modTime}
 		_, err := dstFs.Move(context.Background(), src, "new.mp4")
 		require.NoError(t, err)
-		assert.Nil(t, dstFs.mediaCache)
+		assert.Nil(t, dstFs.media.items)
 	})
 
 	t.Run("a move into upload/ is refused - there's no medium to rename until an upload completes", func(t *testing.T) {
