@@ -1566,16 +1566,16 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 //   - A chaptered video (item_count > 1): files[] still holds only one
 //     (proxy) entry, but variations[] holds one "source" entry per
 //     chapter, keyed by item_number.
-//   - A burst or time lapse photo set (item_count > 1): the reverse -
-//     files[] holds one entry per photo, keyed by item_number, while
-//     variations[] holds a single "source" entry with no item_number,
-//     which is a cover image representing the set, not any individual
-//     photo.
+//   - A burst, continuous or time lapse photo set (item_count > 1): the
+//     reverse - files[] holds one entry per photo, keyed by item_number,
+//     while variations[] holds a single "source" entry with no
+//     item_number, which is a cover image representing the set, not any
+//     individual photo.
 //
 // This is told apart at runtime by counting "source"-labelled variations
-// rather than switching on the medium's "type": only Video, Burst and
-// TimeLapse are verified against real examples, and other types
-// (Continuous, ...) may follow either shape.
+// rather than switching on the medium's "type": only Video, Burst,
+// Continuous and TimeLapse are verified against real examples, and other
+// types may follow either shape.
 func selectRendition(dl *api.DownloadResponse, variation string, itemNumber int) (dlURL, head string, err error) {
 	if variation == "" {
 		variation = "source"

@@ -645,8 +645,8 @@ doesn't at all. Check with --gopro-trashed-only if one is missing.
 
 - `Copy` and `DirMove` aren't supported: GoPro has no server-side copy,
   and the directories are virtual.
-- Multi-item media has only been tested with `Video`, `Burst` and
-  `TimeLapse` items. Other types such as `Continuous` may not download
+- Multi-item media has only been tested with `Video`, `Burst`,
+  `Continuous` and `TimeLapse` items. Other types may not download
   correctly.
 - Albums, moments and sidecar files other than RAW photos (such as
   GPS/telemetry) aren't shown.
