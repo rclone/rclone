@@ -182,9 +182,6 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 	for _, file := range old.list {
 		// REMEMBER: this section is only concerned with comparing listings from the same side (not different sides)
 		d := deltaZero
-		s := int64(0)
-		h := ""
-		var t time.Time
 		if !now.has(file) {
 			b.indent(msg, file, Color(terminal.RedFg, "File was deleted"))
 			ds.deleted++
@@ -202,7 +199,6 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 						whatchanged = append(whatchanged, Color(terminal.MagentaFg, "size (smaller)"))
 						d |= deltaSmaller
 					}
-					s = now.getSize(file)
 				}
 			}
 			if b.opt.Compare.Modtime {
@@ -216,7 +212,6 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 						whatchanged = append(whatchanged, Color(terminal.MagentaFg, "time (older)"))
 						d |= deltaOlder
 					}
-					t = now.getTime(file)
 				}
 			}
 			if b.opt.Compare.Checksum {
@@ -224,7 +219,6 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 					fs.Debugf(file, "(old: %v current: %v)", old.getHash(file), now.getHash(file))
 					whatchanged = append(whatchanged, Color(terminal.MagentaFg, "hash"))
 					d |= deltaHash
-					h = now.getHash(file)
 				}
 			}
 			// concat changes and print log
@@ -237,13 +231,13 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 		if d.is(deltaModified) {
 			ds.deltas[file] = d
 			if b.opt.Compare.Size {
-				ds.size[file] = s
+				ds.size[file] = now.getSize(file)
 			}
 			if b.opt.Compare.Modtime {
-				ds.time[file] = t
+				ds.time[file] = now.getTime(file)
 			}
 			if b.opt.Compare.Checksum {
-				ds.hash[file] = h
+				ds.hash[file] = now.getHash(file)
 			}
 		} else if d.is(deltaDeleted) {
 			ds.deltas[file] = d
