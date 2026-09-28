@@ -53,6 +53,7 @@ type Options struct {
 	Resilient             bool
 	Recover               bool
 	TestFn                TestFunc // test-only option, for mocking errors
+	TestFnConflictCheck   TestFunc // test-only option, called before checking potential conflicts
 	Compare               CompareOpt
 	CompareFlag           string
 	DebugName             string
