@@ -21,396 +21,283 @@ Modifications:  Adapted to rclone markup -->
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<meta name="google" content="notranslate">
-<style>/
-* { padding: 0; margin: 0; }
+<style>
+:root {
+	--page: #f3f4f6;
+	--card: #ffffff;
+	--text: #1f2328;
+	--muted: #6b7280;
+	--faint: #9ca3af;
+	--rule: #e5e7eb;
+	--rule-soft: #eef0f3;
+	--hover: #fbfbe6;
+	--link: #006ed3;
+	--link-hover: #319cff;
+	--folder: #f4b400;
+	--file: #8b95a5;
+	--input: #ffffff;
+	--input-border: #cfd4dc;
+	--shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .1);
+}
+@media (prefers-color-scheme: dark) {
+	:root {
+		color-scheme: dark;
+		--page: #111114;
+		--card: #18181b;
+		--text: #f4f4f5;
+		--muted: #a1a1aa;
+		--faint: #71717a;
+		--rule: #3f3f46;
+		--rule-soft: #27272a;
+		--hover: #27272a;
+		--link: #99c7fb;
+		--link-hover: #cce3fd;
+		--file: #a1a1aa;
+		--input: #27272a;
+		--input-border: #52525b;
+		--shadow: 0 1px 2px rgba(0, 0, 0, .5);
+	}
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+[hidden] { display: none !important; }
 body {
-	font-family: sans-serif;
-	text-rendering: optimizespeed;
-	background-color: #ffffff;
+	font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+	font-size: 14px;
+	line-height: 1.4;
+	color: var(--text);
+	background: var(--page);
 }
-a {
-	color: #006ed3;
-	text-decoration: none;
-}
-a:hover,
-h1 a:hover {
-	color: #319cff;
-}
-header,
-#summary {
-	padding-left: 5%;
-	padding-right: 5%;
-}
-th:first-child,
-td:first-child {
-	width: 1%; /* tighter for mobile */
-}
-th:last-child,
-td:last-child {
-	width: 1%; /* tighter for mobile */
-}
+a { color: var(--link); text-decoration: none; }
+a:hover { color: var(--link-hover); }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+svg { fill: currentColor; }
+
+/* Header: folder path */
 header {
-	padding-top: 25px;
-	padding-bottom: 15px;
-	background-color: #f2f2f2;
+	background: var(--card);
+	border-bottom: 1px solid var(--rule);
+	padding: 14px 5% 12px;
+}
+.eyebrow {
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: .08em;
+	text-transform: uppercase;
+	color: var(--muted);
 }
 h1 {
 	font-size: 20px;
-	font-weight: normal;
+	font-weight: 400;
+	color: var(--faint);
 	white-space: nowrap;
-	overflow-x: hidden;
-	text-overflow: ellipsis;
-	color: #999;
+	overflow-x: auto;
+	margin-top: 4px;
 }
-h1 a {
-	color: #000;
-	margin: 0 4px;
+h1 a { color: var(--text); margin: 0 3px; }
+h1 a:first-child { margin-left: 0; }
+h1 a:hover { text-decoration: underline; }
+.zip-root { margin-left: 8px; vertical-align: middle; }
+.zip-root svg { width: 1.3em; height: 1.3em; }
+
+/* The listing card */
+main { padding: 24px 5% 40px; }
+.card {
+	background: var(--card);
+	border: 1px solid var(--rule);
+	border-radius: 8px;
+	box-shadow: var(--shadow);
+	overflow: hidden;
 }
-h1 a:hover {
-	text-decoration: underline;
+#summary {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 10px;
+	padding: 10px 16px;
+	border-bottom: 1px solid var(--rule);
+	color: var(--muted);
 }
-h1 a:first-child {
-	margin: 0;
+#summary b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.toggle {
+	font: inherit;
+	color: var(--text);
+	background: var(--rule-soft);
+	border: 1px solid var(--rule);
+	border-radius: 999px;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 3px 12px 3px 9px;
 }
-main {
-	display: block;
+.toggle svg { width: 1.15em; height: 1.15em; }
+#toggle-dirs svg { color: var(--folder); }
+#toggle-files svg { color: var(--file); }
+.toggle:hover { border-color: var(--faint); }
+.toggle[aria-pressed="false"] { background: none; color: var(--faint); text-decoration: line-through; }
+.toggle[aria-pressed="false"] b { color: var(--faint); font-weight: 400; }
+.toggle[aria-pressed="false"] svg { opacity: .35; }
+.total { margin-left: auto; }
+
+.listing { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 9px 12px; white-space: nowrap; }
+th {
+	font-size: 13px;
+	font-weight: 600;
+	letter-spacing: .04em;
+	text-transform: uppercase;
+	color: var(--text);
+	border-bottom: 1px solid var(--rule);
 }
-.meta {
-	font-size: 12px;
-	font-family: Verdana, sans-serif;
-	border-bottom: 1px solid #9C9C9C;
-	padding-top: 10px;
-	padding-bottom: 10px;
+th a { color: inherit; }
+th[aria-sort="ascending"] a::after { content: " \25B4"; }
+th[aria-sort="descending"] a::after { content: " \25BE"; }
+th.name { display: flex; align-items: center; gap: 14px; }
+.search {
+	position: relative;
+	font-weight: 400;
+	letter-spacing: 0;
+	text-transform: none;
 }
-.meta-item {
-	margin-right: 1em;
+.search svg {
+	position: absolute;
+	left: 8px;
+	top: 50%;
+	width: 13px;
+	height: 13px;
+	margin-top: -6.5px;
+	color: var(--faint);
+	pointer-events: none;
 }
 #filter {
-	padding: 4px;
-	border: 1px solid #CCC;
+	font: inherit;
+	font-size: 13px;
+	width: 220px;
+	max-width: 100%;
+	padding: 5px 8px 5px 26px;
+	border: 1px solid var(--input-border);
+	border-radius: 6px;
+	background: var(--input);
+	color: var(--text);
 }
-table {
-	width: 100%;
-	border-collapse: collapse;
+#filter::placeholder { color: var(--faint); }
+th.size, td.size { text-align: right; font-variant-numeric: tabular-nums; }
+tbody tr { border-bottom: 1px solid var(--rule-soft); }
+tbody tr:last-child { border-bottom: 0; }
+tbody tr:hover { background: var(--hover); }
+td.name { width: 100%; white-space: normal; word-break: break-all; }
+td.name svg { width: 1.15em; height: 1.15em; vertical-align: -.2em; margin-right: 8px; }
+tr.dir td.name svg { color: var(--folder); }
+tr:not(.dir) td.name svg { color: var(--file); }
+td.time { font-variant-numeric: tabular-nums; }
+td.name .zip { opacity: 0; margin: 0 0 0 6px; transition: opacity 0.15s ease-in-out; }
+tr.file:hover td.name .zip { opacity: 1; }
+tr.empty td { text-align: center; color: var(--muted); padding: 28px 12px; }
+.goup a { color: var(--muted); }
+.goup a:hover { color: var(--link-hover); }
+@media (prefers-reduced-motion: reduce) {
+	td.name .zip { transition: none; }
 }
-tr {
-	border-bottom: 1px dashed #dadada;
-}
-tbody tr:hover {
-	background-color: #ffffec;
-}
-th,
-td {
-	text-align: left;
-	padding: 10px 2px; /* Changed from 0 to 2 */
-}
-th {
-	padding-top: 10px;
-	padding-bottom: 10px;
-	font-size: 16px;
-	white-space: nowrap;
-}
-th a {
-	color: black;
-}
-th[aria-sort="ascending"] a::after {
-	content: " \2191";
-}
-th[aria-sort="descending"] a::after {
-	content: " \2193";
-}
-td {
-	white-space: nowrap;
-	font-size: 14px;
-}
-td:nth-child(2) {
-	width: 80%;
-}
-td:nth-child(3) {
-	padding: 0 20px 0 20px;
-}
-th:nth-child(4),
-td:nth-child(4) {
-	text-align: right;
-}
-td:nth-child(2) svg {
-	position: absolute;
-}
-td .name,
-td .goup {
-	margin-left: 1.75em;
-	word-break: break-all;
-	overflow-wrap: break-word;
-	white-space: pre-wrap;
-}
-.icon {
-	margin-right: 5px;
-}
-footer {
-	padding: 40px 20px;
-	font-size: 12px;
-	text-align: center;
-}
-@media (max-width: 600px) {
-/*	.hideable {
-		display: none;
-	} removed to keep dates on mobile */
-	td:nth-child(2) {
-		width: auto;
-	}
-	th:nth-child(3),
-	td:nth-child(3) {
-		padding-right: 5%;
-		text-align: right;
-	}
-	h1 {
-		color: #000;
-	}
-	h1 a {
-		margin: 0;
-	}
-	#filter {
-		max-width: 100px;
-	}
-}
-@media (prefers-color-scheme: dark) {
-	body {
-		background-color: #18181B;
-		color: #F4F4F5;
-		color-scheme: dark;
-	}
-	a {
-		color: #99C7FB;
-	}
-	a:hover,
-	h1 a:hover {
-		color: #CCE3FD;
-	}
-	header {
-		background-color: #27272A;
-	}
-	h1 {
-		color: #A1A1AA;
-	}
-	h1 a {
-		color: #FAFAFA;
-	}
-	.meta {
-		border-bottom: 1px solid #52525B;
-	}
-	#filter {
-		background-color: #27272A;
-		border: 1px solid #71717A;
-		color: #F4F4F5;
-	}
-	#filter::placeholder {
-		color: #A1A1AA;
-	}
-	tr {
-		border-bottom: 1px dashed #3F3F46;
-	}
-	tbody tr:hover {
-		background-color: #3F3F46;
-	}
-	th a {
-		color: #FAFAFA;
-	}
-	a svg {
-		color: #D4D4D8;
-	}
-	a:hover svg {
-		color: #CCE3FD;
-	}
-	a svg use,
-	a svg path:not([fill]),
-	a svg path[fill="#000"],
-	a svg path[fill="#000000"],
-	a svg [stroke="#000"],
-	a svg [stroke="#000000"] {
-		fill: currentColor;
-		stroke: currentColor;
-	}
-}
-td .zip {
-	opacity: 0;
-	margin-left: 6px;
-	transition: opacity 0.15s ease-in-out;
-}
-tr.file:hover td .zip {
-	opacity: 1;
-}
-.zip-root {
-	margin-left: 8px;
-	vertical-align: middle;
-	opacity: 1;
+@media (max-width: 640px) {
+	header, main { padding-left: 16px; padding-right: 16px; }
+	main { padding-top: 16px; }
+	th, td { padding: 8px 6px; }
+	th.name { gap: 10px; }
+	#filter { width: 130px; }
+	.total { margin-left: 0; }
 }
 </style>
 	</head>
-	<body onload='filter();changeSize()'>
-		<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" height="0" width="0" style="position: absolute;">
+	<body>
+		<svg width="0" height="0" style="position:absolute" aria-hidden="true">
 			<defs>
-				<!-- Folder -->
-				<g id="folder" fill-rule="nonzero" fill="none">
-					<path d="M285.22 37.55h-142.6L110.9 0H31.7C14.25 0 0 16.9 0 37.55v75.1h316.92V75.1c0-20.65-14.26-37.55-31.7-37.55z" fill="#FFA000"/>
-					<path d="M285.22 36H31.7C14.25 36 0 50.28 0 67.74v158.7c0 17.47 14.26 31.75 31.7 31.75H285.2c17.44 0 31.7-14.3 31.7-31.75V67.75c0-17.47-14.26-31.75-31.7-31.75z" fill="#FFCA28"/>
-				</g>
-				<g id="folder-shortcut" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-					<g id="folder-shortcut-group" fill-rule="nonzero">
-						<g id="folder-shortcut-shape">
-							<path d="M285.224876,37.5486902 L142.612438,37.5486902 L110.920785,0 L31.6916529,0 C14.2612438,0 0,16.8969106 0,37.5486902 L0,112.646071 L316.916529,112.646071 L316.916529,75.0973805 C316.916529,54.4456008 302.655285,37.5486902 285.224876,37.5486902 Z" id="Shape" fill="#FFA000"></path>
-							<path d="M285.224876,36 L31.6916529,36 C14.2612438,36 0,50.2838568 0,67.7419039 L0,226.451424 C0,243.909471 14.2612438,258.193328 31.6916529,258.193328 L285.224876,258.193328 C302.655285,258.193328 316.916529,243.909471 316.916529,226.451424 L316.916529,67.7419039 C316.916529,50.2838568 302.655285,36 285.224876,36 Z" id="Shape" fill="#FFCA28"></path>
-						</g>
-						<path d="M126.154134,250.559184 C126.850974,251.883673 127.300549,253.006122 127.772602,254.106122 C128.469442,255.206122 128.919016,256.104082 129.638335,257.002041 C130.559962,258.326531 131.728855,259 133.100057,259 C134.493737,259 135.415364,258.55102 136.112204,257.67551 C136.809044,257.002041 137.258619,255.902041 137.258619,254.577551 C137.258619,253.904082 137.258619,252.804082 137.033832,251.457143 C136.786566,249.908163 136.561779,249.032653 136.561779,248.583673 C136.089726,242.814286 135.864939,237.920408 135.864939,233.273469 C135.864939,225.057143 136.786566,217.514286 138.180246,210.846939 C139.798713,204.202041 141.889234,198.634694 144.429328,193.763265 C147.216689,188.869388 150.678411,184.873469 154.836973,181.326531 C158.995535,177.779592 163.626149,174.883673 168.481552,172.661224 C173.336954,170.438776 179.113983,168.665306 185.587852,167.340816 C192.061722,166.218367 198.760378,165.342857 205.481514,164.669388 C212.18017,164.220408 219.598146,163.995918 228.162535,163.995918 L246.055591,163.995918 L246.055591,195.514286 C246.055591,197.736735 246.752431,199.510204 248.370899,201.059184 C250.214153,202.608163 252.079886,203.506122 254.372715,203.506122 C256.463236,203.506122 258.531277,202.608163 260.172223,201.059184 L326.102289,137.797959 C327.720757,136.24898 328.642384,134.47551 328.642384,132.253061 C328.642384,130.030612 327.720757,128.257143 326.102289,126.708163 L260.172223,63.4469388 C258.553756,61.8979592 256.463236,61 254.395194,61 C252.079886,61 250.236632,61.8979592 248.393377,63.4469388 C246.77491,64.9959184 246.07807,66.7693878 246.07807,68.9918367 L246.07807,100.510204 L228.162535,100.510204 C166.863084,100.510204 129.166282,117.167347 115.274437,150.459184 C110.666301,161.54898 108.350993,175.310204 108.350993,191.742857 C108.350993,205.279592 113.903236,223.912245 124.760454,247.438776 C125.00772,248.112245 125.457294,249.010204 126.154134,250.559184 Z" id="Shape" fill="#FFFFFF" transform="translate(218.496689, 160.000000) scale(-1, 1) translate(-218.496689, -160.000000) "></path>
-					</g>
-				</g>
-				<g id="zip-folder">
-					<path d="M640-480v-80h80v80h-80Zm0 80h-80v-80h80v80Zm0 80v-80h80v80h-80ZM447-640l-80-80H160v480h400v-80h80v80h160v-400H640v80h-80v-80H447ZM160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h240l80 80h320q33 0 56.5 23.5T880-640v400q0 33-23.5 56.5T800-160H160Zm0-80v-480 480Z"/>
-				</g>
-				<!-- File -->
-				<g id="file" stroke="#000" stroke-width="25" fill="#FFF" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round">
-					<path d="M13 24.12v274.76c0 6.16 5.87 11.12 13.17 11.12H239c7.3 0 13.17-4.96 13.17-11.12V136.15S132.6 13 128.37 13H26.17C18.87 13 13 17.96 13 24.12z"/>
-					<path d="M129.37 13L129 113.9c0 10.58 7.26 19.1 16.27 19.1H249L129.37 13z"/>
-				</g>
-				<g id="file-shortcut" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-					<g id="file-shortcut-group" transform="translate(13.000000, 13.000000)">
-						<g id="file-shortcut-shape" stroke="#000000" stroke-width="25" fill="#FFFFFF" stroke-linecap="round" stroke-linejoin="round">
-							<path d="M0,11.1214886 L0,285.878477 C0,292.039924 5.87498876,296.999983 13.1728373,296.999983 L225.997983,296.999983 C233.295974,296.999983 239.17082,292.039942 239.17082,285.878477 L239.17082,123.145388 C239.17082,123.145388 119.58541,2.84217094e-14 115.369423,2.84217094e-14 L13.1728576,2.84217094e-14 C5.87500907,-1.71479982e-05 0,4.96022995 0,11.1214886 Z" id="rect1171"></path>
-							<path d="M116.37005,0 L116,100.904964 C116,111.483663 123.258008,120 132.273377,120 L236,120 L116.37005,0 L116.37005,0 Z" id="rect1794"></path>
-						</g>
-						<path d="M47.803141,294.093878 C48.4999811,295.177551 48.9495553,296.095918 49.4216083,296.995918 C50.1184484,297.895918 50.5680227,298.630612 51.2873415,299.365306 C52.2089688,300.44898 53.3778619,301 54.7490634,301 C56.1427436,301 57.0643709,300.632653 57.761211,299.916327 C58.4580511,299.365306 58.9076254,298.465306 58.9076254,297.381633 C58.9076254,296.830612 58.9076254,295.930612 58.6828382,294.828571 C58.4355724,293.561224 58.2107852,292.844898 58.2107852,292.477551 C57.7387323,287.757143 57.5139451,283.753061 57.5139451,279.95102 C57.5139451,273.228571 58.4355724,267.057143 59.8292526,261.602041 C61.44772,256.165306 63.5382403,251.610204 66.0783349,247.62449 C68.8656954,243.620408 72.3274172,240.35102 76.4859792,237.44898 C80.6445412,234.546939 85.2751561,232.177551 90.1305582,230.359184 C94.9859603,228.540816 100.76299,227.089796 107.236859,226.006122 C113.710728,225.087755 120.409385,224.371429 127.13052,223.820408 C133.829177,223.453061 141.247152,223.269388 149.811542,223.269388 L167.704598,223.269388 L167.704598,249.057143 C167.704598,250.87551 168.401438,252.326531 170.019905,253.593878 C171.86316,254.861224 173.728893,255.595918 176.021722,255.595918 C178.112242,255.595918 180.180284,254.861224 181.82123,253.593878 L247.751296,201.834694 C249.369763,200.567347 250.291391,199.116327 250.291391,197.297959 C250.291391,195.479592 249.369763,194.028571 247.751296,192.761224 L181.82123,141.002041 C180.202763,139.734694 178.112242,139 176.044201,139 C173.728893,139 171.885639,139.734694 170.042384,141.002041 C168.423917,142.269388 167.727077,143.720408 167.727077,145.538776 L167.727077,171.326531 L149.811542,171.326531 C88.5120908,171.326531 50.8152886,184.955102 36.9234437,212.193878 C32.3153075,221.267347 30,232.526531 30,245.971429 C30,257.046939 35.5522422,272.291837 46.4094607,291.540816 C46.6567266,292.091837 47.1063009,292.826531 47.803141,294.093878 Z" id="Shape-Copy" fill="#000000" fill-rule="nonzero" transform="translate(140.145695, 220.000000) scale(-1, 1) translate(-140.145695, -220.000000) "></path>
-					</g>
-				</g>
+				<symbol id="folder" viewBox="0 0 24 24"><path d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2z"/></symbol>
+				<symbol id="file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></symbol>
+				<symbol id="search" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M10.5 4a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13zm5 11.5L20 20"/></symbol>
+				<symbol id="zip-folder" viewBox="0 -960 960 960"><path d="M640-480v-80h80v80h-80Zm0 80h-80v-80h80v80Zm0 80v-80h80v80h-80ZM447-640l-80-80H160v480h400v-80h80v80h160v-400H640v80h-80v-80H447ZM160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h240l80 80h320q33 0 56.5 23.5T880-640v400q0 33-23.5 56.5T800-160H160Zm0-80v-480 480Z"/></symbol>
 			</defs>
 		</svg>
 		<header>
+			<div class="eyebrow">Folder path</div>
 			<h1>
-				{{range $i, $crumb := .Breadcrumb}}<a href="{{html $crumb.Link}}">{{html $crumb.Text}}</a>{{if ne $i 0}}/{{end}}{{end}}
+				{{- range $i, $crumb := .Breadcrumb}}<a href="{{html $crumb.Link}}">{{html $crumb.Text}}</a>{{if ne $i 0}}/{{end}}{{end}}
 				{{- if not .DisableZip}}
-				<a class="zip-root" href="{{html .ZipURL}}" title="Download root as .zip">
-				<svg width="1.5em" height="1.5em" viewBox="0 -960 960 960">
-					<use xlink:href="#zip-folder"></use>
-				</svg>
-				</a>
+				<a class="zip-root" href="{{html .ZipURL}}" title="Download root as .zip"><svg><use href="#zip-folder"></use></svg></a>
 				{{- end}}
 			</h1>
 		</header>
 		<main>
-			<div class="meta">
+			<div class="card">
 				<div id="summary">
-					<span class="meta-item"><input type="text" placeholder="filter" id="filter" onkeyup='filter()'></span>
+					<button class="toggle" id="toggle-dirs" aria-pressed="true" title="Show or hide directories"><svg><use href="#folder"></use></svg><b id="ndirs">{{.NumDirs}}</b> directories</button>
+					<button class="toggle" id="toggle-files" aria-pressed="true" title="Show or hide files"><svg><use href="#file"></use></svg><b id="nfiles">{{.NumFiles}}</b> files</button>
+					<span class="total"><b><size>{{.TotalSize}}</size></b> total</span>
 				</div>
-			</div>
-			<div class="listing">
-				<table aria-describedby="summary">
-					<thead>
-					<tr>
-						<th></th>
-						<th data-key="name">
-							<a href="#" onclick="return sortBy(this.parentNode)">Name</a>
-						</th>
-						<th data-key="size">
-							<a href="#" onclick="return sortBy(this.parentNode)">Size</a>
-						</th>
-						<th class="hideable" data-key="time">
-							<a href="#" onclick="return sortBy(this.parentNode)">Modified</a>
-						</th>
-						<th class="hideable"></th>
-					</tr>
-					</thead>
-					<tbody>
-					{{- if not (and .Static .IsRoot)}}
-					<tr>
-						<td></td>
-						<td>
-							<a href="{{html .UpLink}}">
-								<span class="goup">Go up</span>
-							</a>
-						</td>
-						<td>&mdash;</td>
-						<td class="hideable">&mdash;</td>
-						<td class="hideable"></td>
-					</tr>
-					{{- end}}
-					{{- range .Entries}}
-					<tr class="file{{if .IsDir}} dir{{end}}">
-						<td>
-						</td>
-						<td>
-							{{- if .IsDir}}
-							<svg width="1.5em" height="1em" version="1.1" viewBox="0 0 317 259"><use xlink:href="#folder"></use></svg>
-							{{- else}}
-							<svg width="1.5em" height="1em" version="1.1" viewBox="0 0 265 323"><use xlink:href="#file"></use></svg>
+				<div class="listing">
+					<table aria-describedby="summary">
+						<thead>
+							<tr>
+								<th class="name" data-key="name">
+									<a href="#" onclick="return sortBy(this.parentNode)">Name</a>
+									<span class="search"><svg><use href="#search"></use></svg><input type="search" id="filter" placeholder="Search" aria-label="Search this directory" autocomplete="off" oninput="filter()"></span>
+								</th>
+								<th class="size" data-key="size"><a href="#" onclick="return sortBy(this.parentNode)">Size</a></th>
+								<th class="time" data-key="time"><a href="#" onclick="return sortBy(this.parentNode)">Modified</a></th>
+							</tr>
+						</thead>
+						<tbody>
+							{{- if not (and .Static .IsRoot)}}
+							<tr class="goup"><td class="name"><a href="{{html .UpLink}}">Go up</a></td><td class="size">&mdash;</td><td class="time">&mdash;</td></tr>
 							{{- end}}
-							<span class="name"><a href="{{html .URL}}">{{html .Leaf}}</a></span>
-							{{- if and .IsDir (not $.DisableZip)}}
-							<a class="zip" href="{{html .ZipURL}}" title="Download folder as .zip">
-							<svg width="1.5em" height="1.5em" viewBox="0 -960 960 960">
-								<use xlink:href="#zip-folder"></use>
-							</svg>
-							</a>
+							{{- range .Entries}}
+							<tr class="file{{if .IsDir}} dir{{end}}" data-size="{{.Size}}" data-time="{{if .ModTime | afterEpoch}}{{.ModTime}}{{end}}">
+								<td class="name">
+									{{- if .IsDir}}<svg><use href="#folder"></use></svg>{{else}}<svg><use href="#file"></use></svg>{{end -}}
+									<a href="{{html .URL}}">{{html .Leaf}}</a>
+									{{- if and .IsDir (not $.DisableZip)}}
+									<a class="zip" href="{{html .ZipURL}}" title="Download folder as .zip"><svg><use href="#zip-folder"></use></svg></a>
+									{{- end}}
+								</td>
+								<td class="size">{{if .IsDir}}&mdash;{{else}}<size>{{.Size}}</size>{{end}}</td>
+								<td class="time">{{if .ModTime | afterEpoch}}<time datetime="{{.ModTime}}">{{.ModTime}}</time>{{else}}&mdash;{{end}}</td>
+							</tr>
 							{{- end}}
-						</td>
-						{{- if .IsDir}}
-						<td data-order="-1">&mdash;</td>
-						{{- else}}
-						<td data-order="{{.Size}}"><size>{{.Size}}</size></td>
-						{{- end}}
-						{{- if .ModTime | afterEpoch }}
-						<td class="hideable"><time datetime="{{.ModTime }}">{{.ModTime }}</time></td>
-						{{- else}}
-						<td class="hideable">—</td>
-						{{- end}}
-						<td class="hideable"></td>
-					</tr>
-					{{- end}}
-					</tbody>
-				</table>
+							<tr class="empty" hidden><td colspan="3"></td></tr>
+						</tbody>
+					</table>
+				</div>
 			</div>
 		</main>
 		<script>
 			var filterEl = document.getElementById('filter');
+			var toggles = {dirs: document.getElementById('toggle-dirs'), files: document.getElementById('toggle-files')};
+			var rows = function() { return Array.prototype.slice.call(document.querySelectorAll('tr.file')); };
+			// Apply the search text and the directory and file toggles to the rows
 			function filter() {
 				var q = filterEl.value.trim().toLowerCase();
-				var elems = document.querySelectorAll('tr.file');
-				elems.forEach(function(el) {
-					if (!q) {
-						el.style.display = '';
-						return;
-					}
-					var nameEl = el.querySelector('.name');
-					var nameVal = nameEl.textContent.trim().toLowerCase();
-					if (nameVal.indexOf(q) !== -1) {
-						el.style.display = '';
-					} else {
-						el.style.display = 'none';
-					}
+				var shown = {dirs: 0, files: 0}, total = {dirs: 0, files: 0};
+				rows().forEach(function(tr) {
+					var kind = tr.classList.contains('dir') ? 'dirs' : 'files';
+					var show = toggles[kind].getAttribute('aria-pressed') == 'true' && (!q || tr.querySelector('.name').textContent.toLowerCase().indexOf(q) != -1);
+					tr.hidden = !show;
+					total[kind]++;
+					if (show) shown[kind]++;
 				});
+				['dirs', 'files'].forEach(function(kind) {
+					document.getElementById('n' + kind).textContent = shown[kind] == total[kind] ? total[kind] : shown[kind] + ' of ' + total[kind];
+				});
+				var empty = document.querySelector('tr.empty');
+				empty.hidden = shown.dirs + shown.files > 0;
+				empty.firstChild.textContent = total.dirs + total.files ? 'No matching entries' : 'Empty directory';
 			}
-			function localizeDatetime(e, index, ar) {
-				if (e.textContent === undefined) {
-					return;
-				}
-				var d = new Date(e.getAttribute('datetime'));
-				if (isNaN(d)) {
-					d = new Date(e.textContent);
-					if (isNaN(d)) {
-						return;
-					}
-				}
-				e.textContent = d.toLocaleString([], {day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit"});
+			function toggle(kind) {
+				toggles[kind].setAttribute('aria-pressed', toggles[kind].getAttribute('aria-pressed') == 'true' ? 'false' : 'true');
+				filter();
 			}
-			var timeList = Array.prototype.slice.call(document.getElementsByTagName("time"));
-			timeList.forEach(localizeDatetime);
-			var getUrlParameter = function getUrlParameter(sParam) {
-				var sPageURL = window.location.search.substring(1), sURLVariables = sPageURL.split('&')
-				for (var i = 0; i < sURLVariables.length; i++) {
-					var sParameterName = sURLVariables[i].split('=');
-					if (sParameterName[0] === sParam) {
-						return sParameterName[1] === undefined ? true : decodeURIComponent(sParameterName[1]);
-					}
-				}
-			};
-			// Sort the listing by the column of th, toggling the direction on repeated clicks
+			toggles.dirs.onclick = function() { toggle('dirs'); };
+			toggles.files.onclick = function() { toggle('files'); };
+			// Sort by the column of th, toggling the direction on repeated clicks
 			function sortBy(th) {
 				var key = th.getAttribute('data-key');
 				var asc = th.getAttribute('aria-sort') != 'ascending';
@@ -418,40 +305,51 @@ tr.file:hover td .zip {
 				th.setAttribute('aria-sort', asc ? 'ascending' : 'descending');
 				var value = function(tr) {
 					if (key == 'name') return tr.querySelector('.name').textContent.trim();
-					if (key == 'size') return Number(tr.children[2].getAttribute('data-order'));
-					var time = tr.querySelector('time');
-					return time ? time.getAttribute('datetime') : '';
+					if (key == 'size') return Number(tr.getAttribute('data-size'));
+					return tr.getAttribute('data-time');
 				};
-				var rows = Array.prototype.slice.call(document.querySelectorAll('tr.file'));
-				rows.sort(function(a, b) {
+				var sorted = rows().sort(function(a, b) {
 					// Directories first when sorting by name
 					var byDir = key == 'name' ? b.classList.contains('dir') - a.classList.contains('dir') : 0;
 					var va = value(a), vb = value(b);
 					var cmp = typeof va == 'string' ? va.localeCompare(vb, undefined, {numeric: true, sensitivity: 'base'}) : va - vb;
 					return byDir || (asc ? cmp : -cmp);
 				});
-				rows.forEach(function(tr) { tr.parentNode.appendChild(tr); });
+				var empty = document.querySelector('tr.empty');
+				sorted.forEach(function(tr) { empty.parentNode.insertBefore(tr, empty); });
 				return false;
 			}
 			// Show how the server sorted the listing from the ?sort= and ?order= parameters
+			var getUrlParameter = function(name) {
+				var params = window.location.search.substring(1).split('&');
+				for (var i = 0; i < params.length; i++) {
+					var param = params[i].split('=');
+					if (param[0] === name) return param[1] === undefined ? true : decodeURIComponent(param[1]);
+				}
+			};
 			var sorted = document.querySelector('th[data-key="' + (getUrlParameter('sort') || 'name').replace('dirfirst', '') + '"]');
 			if (sorted) sorted.setAttribute('aria-sort', getUrlParameter('order') == 'desc' ? 'descending' : 'ascending');
+			// Press / to search
+			document.addEventListener('keydown', function(e) {
+				if (e.key == '/' && document.activeElement != filterEl) { filterEl.focus(); e.preventDefault(); }
+			});
+			function localizeDatetime(e) {
+				var d = new Date(e.getAttribute('datetime'));
+				if (isNaN(d)) {
+					d = new Date(e.textContent);
+					if (isNaN(d)) return;
+				}
+				e.textContent = d.toLocaleString([], {day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit"});
+			}
+			Array.prototype.slice.call(document.getElementsByTagName("time")).forEach(localizeDatetime);
 			function readableFileSize(size) {
 				var units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
 				var i = 0;
-				while(size >= 1024) {
-					size /= 1024;
-					++i;
-				}
-				return parseFloat(size).toFixed(2) + ' ' + units[i];
+				while (size >= 1024) { size /= 1024; ++i; }
+				return (i ? size.toFixed(1) : size) + ' ' + units[i];
 			}
-			function changeSize() {
-				var sizes = document.getElementsByTagName("size");
-				for (var i = 0; i < sizes.length; i++) {
-					humanSize = readableFileSize(sizes[i].innerHTML);
-					sizes[i].innerHTML = humanSize
-				}
-			}
+			Array.prototype.slice.call(document.getElementsByTagName("size")).forEach(function(el) { el.textContent = readableFileSize(Number(el.textContent)); });
+			filter();
 		</script>
 	</body>
 </html>
