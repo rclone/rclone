@@ -149,15 +149,13 @@ const (
 	// mediaFields is the set of /media/search fields this backend reads.
 	mediaFields = "id,filename,file_extension,type,captured_at,created_at,file_size,width,height,camera_model,item_count,moments_count,ready_to_view,token,content_title,resolution,reprocessed_at"
 
-	// includedTypes is the default type filter - it excludes "MultiClipEdit"
-	// and "Edit" (server-generated Highlights and user-made Edits), which
-	// --gopro-include-edits opts back into - see editTypes and mediaTypes.
+	// includedTypes is the type filter for camera media - see mediaTypes.
 	includedTypes = "Photo,Video,TimeLapse,TimeLapseVideo,Burst,BurstVideo,Chaptered,Continuous,Livestream,Looped,LoopedVideo,ExternalVideo,Session,Audio"
 
-	// editTypes are the composed/derived media types --gopro-include-edits
-	// opts into - not included by default because they carry a null
-	// file_size and a file_extension that doesn't match what's actually
-	// downloaded (see setMetaData and selectRendition).
+	// editTypes are the composed media types (Highlights and user-made
+	// Edits) added by --gopro-include-edits. They carry a null file_size
+	// and a file_extension that doesn't match what's actually downloaded
+	// (see setMetaData and selectRendition).
 	editTypes = "MultiClipEdit,Edit"
 )
 
@@ -1597,7 +1595,12 @@ func (f *Fs) listDir(ctx context.Context, prefix string, filter mediaFilter) (en
 // option or count, since there's nothing else to show.
 func shouldAddID(alwaysAddID bool, remote string, count int) bool {
 	leaf := remote[strings.LastIndex(remote, "/")+1:]
-	return alwaysAddID || count > 1 || strings.TrimSuffix(leaf, path.Ext(leaf)) == ""
+	return alwaysAddID || count > 1 || isUnnamedLeaf(leaf)
+}
+
+// isUnnamedLeaf reports whether leaf has nothing before its extension
+func isUnnamedLeaf(leaf string) bool {
+	return strings.TrimSuffix(leaf, path.Ext(leaf)) == ""
 }
 
 // downloadExtension returns the extension (without the dot) of what's
@@ -1910,6 +1913,11 @@ func (f *Fs) getDownload(ctx context.Context, id string) (*api.DownloadResponse,
 	}
 
 	f.dlCacheMu.Lock()
+	for k, e := range f.dlCache {
+		if time.Since(e.fetched) >= dlCacheTTL {
+			delete(f.dlCache, k)
+		}
+	}
 	f.dlCache[id] = &dlCacheEntry{resp: &result, fetched: time.Now()}
 	f.dlCacheMu.Unlock()
 	return &result, nil
@@ -2129,10 +2137,14 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	// correctly goes through listTrash.
 	if id := findID(fileName); id != "" && o.fs.opt.AlwaysAddID && !o.fs.opt.TrashedOnly {
 		item, err := o.fs.getMedium(ctx, id)
-		if err != nil {
+		var apiErr *api.Error
+		switch {
+		case errors.As(err, &apiErr) && apiErr.Status == http.StatusNotFound:
+			// Deleted or trashed since it was listed - let the listing
+			// below decide, which reports fs.ErrorObjectNotFound.
+		case err != nil:
 			return err
-		}
-		if expectedIDSuffixedName(o.fs, item) == fileName {
+		case expectedIDSuffixedName(o.fs, item) == fileName:
 			o.setMetaData(item, 1)
 			return nil
 		}
@@ -2438,10 +2450,21 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if pattern == nil || !pattern.isFile || pattern.isUpload {
 		return nil, fs.ErrorCantMove
 	}
-	leaf := stripSuffixID(match[len(match)-1], srcObj.id)
-	filename := f.opt.Enc.FromStandardName(leaf)
+	srcLeaf := stripSuffixID(path.Base(srcObj.remote), srcObj.id)
+	dstLeaf := stripSuffixID(match[len(match)-1], srcObj.id)
 
-	upd := api.MediumUpdate{Filename: &filename, ContentTitle: &filename}
+	// Only send a new name when it actually changes: filename and
+	// content_title are set together, so resending an unchanged name would
+	// overwrite a title set in GoPro's own app, and an unnamed medium's
+	// "{id}.ext" would come back as a filename of just ".ext".
+	var upd api.MediumUpdate
+	if dstLeaf != srcLeaf {
+		if isUnnamedLeaf(dstLeaf) {
+			return nil, fmt.Errorf("gopro: can't move to %q: no name before the extension", remote)
+		}
+		filename := f.opt.Enc.FromStandardName(dstLeaf)
+		upd.Filename, upd.ContentTitle = &filename, &filename
+	}
 	capturedAt, ok, err := destCapturedAt(pattern, match, srcObj.modTime)
 	if err != nil {
 		return nil, fmt.Errorf("gopro: can't move to %q: %w", remote, err)
@@ -2449,8 +2472,13 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if ok {
 		upd.CapturedAt = &capturedAt
 	}
-	if err := srcObj.fs.updateMedium(ctx, srcObj.id, upd); err != nil {
-		return nil, err
+	if upd.Filename != nil || upd.CapturedAt != nil {
+		if err := srcObj.fs.updateMedium(ctx, srcObj.id, upd); err != nil {
+			return nil, err
+		}
+		// updateMedium only invalidates srcObj.fs, which is a separate
+		// instance with its own cache when the roots differ.
+		f.invalidateMediaCache()
 	}
 
 	dstObj := &Object{}
@@ -2535,6 +2563,9 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	if title == "" {
 		_, leaf := path.Split(remote)
 		title = stripSuffixID(leaf, obj.id)
+		if isUnnamedLeaf(title) {
+			title = leaf
+		}
 	}
 	collectionID, err := f.createCollection(ctx, title, f.opt.LinkAllowDownload)
 	if err != nil {

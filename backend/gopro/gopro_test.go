@@ -1701,6 +1701,15 @@ func TestCreateCollectionAddToCollectionAndPublicLink(t *testing.T) {
 		assert.Equal(t, "clip.mp4", gotCreate.Title)
 	})
 
+	t.Run("PublicLink titles an unnamed medium with its listed name, not a bare extension", func(t *testing.T) {
+		id := "6a9362c0b7d89053ceb33de9"
+		f.mediaCache = append(f.mediaCache, api.Medium{ID: id, Filename: "", FileExtension: "json", Type: "MultiClipEdit", ItemCount: 1, CapturedAt: startTime})
+		f.mediaCacheAt = time.Now()
+		_, err := f.PublicLink(context.Background(), "media/all/{"+id+"}.mp4", fs.Duration(0), false)
+		require.NoError(t, err)
+		assert.Equal(t, "{"+id+"}.mp4", gotCreate.Title)
+	})
+
 	t.Run("PublicLink prefers an explicit link_title over the file's own name", func(t *testing.T) {
 		f.opt.LinkTitle = "custom title"
 		_, err := f.PublicLink(context.Background(), "media/all/clip.mp4", fs.Duration(0), false)
@@ -1726,6 +1735,21 @@ func TestGetDownloadCachesResult(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "x.mp4", dl2.Filename)
 	assert.Equal(t, 1, calls, "a second call within the TTL must be served from cache")
+}
+
+func TestGetDownloadPrunesExpiredEntries(t *testing.T) {
+	f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(t, w, api.DownloadResponse{Filename: "x.mp4"})
+	}))
+	defer srv.Close()
+	f.dlCache["expired"] = &dlCacheEntry{resp: &api.DownloadResponse{}, fetched: time.Now().Add(-2 * dlCacheTTL)}
+	f.dlCache["fresh"] = &dlCacheEntry{resp: &api.DownloadResponse{}, fetched: time.Now()}
+
+	_, err := f.getDownload(context.Background(), "new")
+	require.NoError(t, err)
+	assert.NotContains(t, f.dlCache, "expired", "expired entries must not accumulate for the Fs's lifetime")
+	assert.Contains(t, f.dlCache, "fresh")
+	assert.Contains(t, f.dlCache, "new")
 }
 
 func TestDoDeleteMediumInvalidatesCachesAndReportsAPIErrors(t *testing.T) {
@@ -2331,6 +2355,20 @@ func TestReadMetaDataIDFastPath(t *testing.T) {
 		assert.NotContains(t, requestedIDs, unrelatedID, "the unrelated id-shaped substring earlier in the name must never be looked up")
 	})
 
+	t.Run("a 404 from the fast path means not found, not an error", func(t *testing.T) {
+		f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, "not found", http.StatusNotFound)
+		}))
+		defer srv.Close()
+		f.opt.AlwaysAddID = true
+		f.mediaCache = []api.Medium{}
+		f.mediaCacheAt = time.Now()
+
+		o := &Object{fs: f, remote: "media/all/deleted {" + id + "}.mp4"}
+		err := o.readMetaData(context.Background())
+		assert.Equal(t, fs.ErrorObjectNotFound, err, "a medium deleted (or trashed) since listing must read as not found")
+	})
+
 	t.Run("trashed_only always skips the fast path, since GET /media/{id} 404s for trashed items", func(t *testing.T) {
 		var getMediumCalls int
 		f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2466,6 +2504,85 @@ func TestMoveSucceeds(t *testing.T) {
 		dstObj, ok := dst.(*Object)
 		require.True(t, ok)
 		assert.True(t, gotUpdate.CapturedAt.Equal(dstObj.modTime))
+	})
+
+	id := "68b22325df3cf752557ac6d7"
+	modTime := time.Date(2025, 3, 14, 9, 30, 15, 0, time.UTC)
+
+	t.Run("a date-only move leaves filename and content_title alone", func(t *testing.T) {
+		var gotUpdate api.MediumUpdate
+		f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&gotUpdate))
+			w.WriteHeader(http.StatusNoContent)
+		}))
+		defer srv.Close()
+
+		src := &Object{fs: f, id: id, itemCount: 1, remote: "media/by-day/2025/2025-03-14/clip {" + id + "}.mp4", modTime: modTime}
+		_, err := f.Move(context.Background(), src, "media/by-day/2026/2026-07-04/clip {"+id+"}.mp4")
+		require.NoError(t, err)
+		assert.Nil(t, gotUpdate.Filename, "an unchanged name must not be resent")
+		assert.Nil(t, gotUpdate.ContentTitle, "an unchanged name must not overwrite a custom title")
+		require.NotNil(t, gotUpdate.CapturedAt)
+	})
+
+	t.Run("an unnamed medium moved to another day keeps its empty filename", func(t *testing.T) {
+		var gotUpdate api.MediumUpdate
+		f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&gotUpdate))
+			w.WriteHeader(http.StatusNoContent)
+		}))
+		defer srv.Close()
+
+		src := &Object{fs: f, id: id, itemCount: 1, remote: "media/by-day/2025/2025-03-14/{" + id + "}.mp4", modTime: modTime}
+		_, err := f.Move(context.Background(), src, "media/by-day/2026/2026-07-04/{"+id+"}.mp4")
+		require.NoError(t, err)
+		assert.Nil(t, gotUpdate.Filename, "an unnamed medium must not be renamed to \".mp4\"")
+		assert.Nil(t, gotUpdate.ContentTitle)
+		require.NotNil(t, gotUpdate.CapturedAt)
+	})
+
+	t.Run("renaming to an unnamed leaf is refused", func(t *testing.T) {
+		var calls int
+		f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			calls++
+			w.WriteHeader(http.StatusNoContent)
+		}))
+		defer srv.Close()
+
+		src := &Object{fs: f, id: id, itemCount: 1, remote: "media/all/old.mp4", modTime: modTime}
+		_, err := f.Move(context.Background(), src, "media/all/{"+id+"}.mp4")
+		assert.Error(t, err)
+		assert.Equal(t, 0, calls)
+	})
+
+	t.Run("a move that changes nothing makes no request", func(t *testing.T) {
+		var calls int
+		f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			calls++
+			w.WriteHeader(http.StatusNoContent)
+		}))
+		defer srv.Close()
+
+		src := &Object{fs: f, id: id, itemCount: 1, remote: "media/all/clip {" + id + "}.mp4", modTime: modTime}
+		dst, err := f.Move(context.Background(), src, "media/all/clip {"+id+"}.mp4")
+		require.NoError(t, err)
+		assert.Equal(t, "media/all/clip {"+id+"}.mp4", dst.Remote())
+		assert.Equal(t, 0, calls)
+	})
+
+	t.Run("the destination Fs's cache is invalidated as well as the source's", func(t *testing.T) {
+		srcFs, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusNoContent)
+		}))
+		defer srv.Close()
+		dstFs := &Fs{root: "media/by-day/2026/2026-07-04"}
+		dstFs.mediaCache = []api.Medium{}
+		dstFs.mediaCacheAt = time.Now()
+
+		src := &Object{fs: srcFs, id: id, itemCount: 1, remote: "old.mp4", modTime: modTime}
+		_, err := dstFs.Move(context.Background(), src, "new.mp4")
+		require.NoError(t, err)
+		assert.Nil(t, dstFs.mediaCache)
 	})
 
 	t.Run("a move into upload/ is refused - there's no medium to rename until an upload completes", func(t *testing.T) {
