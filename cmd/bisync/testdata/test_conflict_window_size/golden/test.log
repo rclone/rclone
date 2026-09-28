@@ -1,0 +1,116 @@
+[36m(01)  :[0m [34mtest conflict window size[0m
+
+
+[36m(02)  :[0m [34mtest initial bisync[0m
+[36m(03)  :[0m [34mbisync resync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying Path2 files to Path1
+INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : There was nothing to transfer
+INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
+INFO  : There was nothing to transfer
+INFO  : Resync updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m
+
+[36m(04)  :[0m [34mtest new on both paths, same size, different content - file1 and file2 (fileA, fileB)[0m
+[36m(05)  :[0m [34mcopy-as {datadir/}fileA.txt {path1/} file1.txt[0m
+[36m(06)  :[0m [34mcopy-as {datadir/}fileB.txt {path2/} file1.txt[0m
+[36m(07)  :[0m [34mcopy-as {datadir/}fileA.txt {path1/} file2.txt[0m
+[36m(08)  :[0m [34mcopy-as {datadir/}fileB.txt {path2/} file2.txt[0m
+
+[36m(09)  :[0m [34mtest bisync with both paths changing file1 and file2 to fileC before the check[0m
+[36m(10)  :[0m [34mhook before-check copy-as {datadir/}fileC.txt {path1/} file1.txt[0m
+[36m(11)  :[0m [34mhook before-check copy-as {datadir/}fileC.txt {path2/} file1.txt[0m
+[36m(12)  :[0m [34mhook before-check copy-as {datadir/}fileC.txt {path1/} file2.txt[0m
+[36m(13)  :[0m [34mhook before-check copy-as {datadir/}fileC.txt {path2/} file2.txt[0m
+[36m(14)  :[0m [34mbisync size-only[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": false,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
+INFO  : Path1 checking for diffs
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35msize (larger)[0m[0m[0m - [36mfile1.txt[0m
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35msize (larger)[0m[0m[0m - [36mfile2.txt[0m
+INFO  : Path1:    2 changes: [32m   0 new[0m, [33m   2 modified[0m, [31m   0 deleted[0m
+INFO  : ([33mModified[0m: [36m   2 larger[0m, [34m   0 smaller[0m)
+INFO  : Path2 checking for diffs
+INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m[0m[0m - [36mfile1.txt[0m
+INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m[0m[0m - [36mfile2.txt[0m
+INFO  : Path2:    2 changes: [32m   0 new[0m, [33m   2 modified[0m, [31m   0 deleted[0m
+INFO  : ([33mModified[0m: [36m   2 larger[0m, [34m   0 smaller[0m)
+INFO  : Applying changes
+NOTICE: [36mhook before-check:[0m [34mcopy-as {datadir/}fileC.txt {path1/} file1.txt[0m
+NOTICE: [36mhook before-check:[0m [34mcopy-as {datadir/}fileC.txt {path2/} file1.txt[0m
+NOTICE: [36mhook before-check:[0m [34mcopy-as {datadir/}fileC.txt {path1/} file2.txt[0m
+NOTICE: [36mhook before-check:[0m [34mcopy-as {datadir/}fileC.txt {path2/} file2.txt[0m
+INFO  : Checking potential conflicts...
+NOTICE: {path2String}: 0 differences found
+NOTICE: {path2String}: 2 matching files
+INFO  : Finished checking the potential conflicts. %!s(<nil>)
+NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfile1.txt[0m
+INFO  : Files are equal! Skipping: file1.txt
+NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfile2.txt[0m
+INFO  : Files are equal! Skipping: file2.txt
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m
+
+[36m(15)  :[0m [34mtest file1 changes to size 6 on Path1 and size 7 on Path2, and file2 changes to size 6 on Path2 (fileD, fileE)[0m
+[36m(16)  :[0m [34mcopy-as {datadir/}fileD.txt {path1/} file1.txt[0m
+[36m(17)  :[0m [34mcopy-as {datadir/}fileE.txt {path2/} file1.txt[0m
+[36m(18)  :[0m [34mcopy-as {datadir/}fileD.txt {path2/} file2.txt[0m
+
+[36m(19)  :[0m [34mtest bisync after the changes[0m
+[36m(20)  :[0m [34mbisync size-only[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": false,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
+INFO  : Path1 checking for diffs
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35msize (smaller)[0m[0m[0m - [36mfile1.txt[0m
+INFO  : Path1:    1 changes: [32m   0 new[0m, [33m   1 modified[0m, [31m   0 deleted[0m
+INFO  : ([33mModified[0m: [36m   0 larger[0m, [34m   1 smaller[0m)
+INFO  : Path2 checking for diffs
+INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (smaller)[0m[0m[0m - [36mfile1.txt[0m
+INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (smaller)[0m[0m[0m - [36mfile2.txt[0m
+INFO  : Path2:    2 changes: [32m   0 new[0m, [33m   2 modified[0m, [31m   0 deleted[0m
+INFO  : ([33mModified[0m: [36m   0 larger[0m, [34m   2 smaller[0m)
+INFO  : Applying changes
+NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfile1.txt[0m
+NOTICE: - [36mPath1[0m    [35mRenaming Path1 copy[0m                - [36m{path1/}file1.txt.conflict1[0m
+NOTICE: - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.txt.conflict1[0m
+NOTICE: - [34mPath2[0m    [35mRenaming Path2 copy[0m                - [36m{path2/}file1.txt.conflict2[0m
+NOTICE: - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file1.txt.conflict2[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file2.txt[0m
+INFO  : - [34mPath2[0m    [35mDo queued copies to[0m                - [36mPath1[0m
+INFO  : - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m
