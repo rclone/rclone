@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"testing"
@@ -22,6 +23,7 @@ import (
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/sync"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/stretchr/testify/assert"
@@ -414,4 +416,104 @@ func TestIsDirectChild(t *testing.T) {
 	} {
 		assert.Equal(t, test.want, isDirectChild(test.dir, test.remote), "dir=%q remote=%q", test.dir, test.remote)
 	}
+}
+
+// A symlink in a squashfs image is skipped unless -l/--links is in use,
+// as it is on the other backends.  With the flag it is exposed under its
+// name with the link suffix and reads back as its target.
+//
+// Note that this uses mksquashfs as an external binary.
+func TestArchiveSquashfsSymlink(t *testing.T) {
+	fstest.Initialise()
+	skipIfNoExe(t, "mksquashfs")
+	ctx := context.Background()
+
+	dir := t.TempDir()
+	input := filepath.Join(dir, "input")
+	require.NoError(t, os.Mkdir(input, 0777))
+	require.NoError(t, os.WriteFile(filepath.Join(input, "file.txt"), []byte("hello"), 0600))
+	require.NoError(t, os.Symlink("file.txt", filepath.Join(input, "link.txt")))
+	// a regular file which happens to carry the link suffix must stay
+	// readable under the flag, not be taken for a symlink
+	require.NoError(t, os.WriteFile(filepath.Join(input, "note"+fs.LinkSuffix), []byte("plain"), 0600))
+	image := filepath.Join(dir, "test.sqfs")
+	run(t, "mksquashfs", input, image)
+
+	remotes := func(t *testing.T, f fs.Fs) []string {
+		entries, err := f.List(ctx, "")
+		require.NoError(t, err)
+		names := make([]string, 0, len(entries))
+		for _, entry := range entries {
+			names = append(names, entry.Remote())
+		}
+		sort.Strings(names)
+		return names
+	}
+
+	read := func(t *testing.T, f fs.Fs, remote string) string {
+		o, err := f.NewObject(ctx, remote)
+		require.NoError(t, err)
+		rc, err := o.Open(ctx)
+		require.NoError(t, err)
+		contents, err := io.ReadAll(rc)
+		require.NoError(t, err)
+		require.NoError(t, rc.Close())
+		assert.Equal(t, o.Size(), int64(len(contents)))
+		return string(contents)
+	}
+
+	f, err := fs.NewFs(ctx, ":archive:"+image)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"file.txt", "note" + fs.LinkSuffix}, remotes(t, f))
+
+	ctx, ci := fs.AddConfig(ctx)
+	ci.Links = true
+
+	f, err = fs.NewFs(ctx, ":archive:"+image)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"file.txt", "link.txt" + fs.LinkSuffix, "note" + fs.LinkSuffix}, remotes(t, f))
+
+	assert.Equal(t, "file.txt", read(t, f, "link.txt"+fs.LinkSuffix))
+	assert.Equal(t, "plain", read(t, f, "note"+fs.LinkSuffix))
+}
+
+// A hostile archive must not be able to write outside the destination.
+// A symlink pointing above the root with a member inside it is the
+// classic way to try it, and the refusal comes from the local backend,
+// so pin it from end to end here rather than trusting it stays.
+func TestArchiveZipSymlinkEscape(t *testing.T) {
+	fstest.Initialise()
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	ci.Links = true
+
+	var buf bytes.Buffer
+	zw := zip.NewWriter(&buf)
+	hdr := &zip.FileHeader{Name: "a"}
+	hdr.SetMode(os.ModeSymlink | 0777)
+	w, err := zw.CreateHeader(hdr)
+	require.NoError(t, err)
+	_, err = w.Write([]byte("../outside"))
+	require.NoError(t, err)
+	w, err = zw.Create("a/pwned.txt")
+	require.NoError(t, err)
+	_, err = w.Write([]byte("pwned"))
+	require.NoError(t, err)
+	require.NoError(t, zw.Close())
+
+	dir := t.TempDir()
+	zipPath := filepath.Join(dir, "evil.zip")
+	require.NoError(t, os.WriteFile(zipPath, buf.Bytes(), 0600))
+	dst := filepath.Join(dir, "dst")
+	require.NoError(t, os.Mkdir(dst, 0777))
+
+	fsrc, err := fs.NewFs(ctx, ":archive:"+zipPath)
+	require.NoError(t, err)
+	fdst, err := fs.NewFs(ctx, dst)
+	require.NoError(t, err)
+
+	assert.Error(t, sync.CopyDir(ctx, fdst, fsrc, false))
+
+	_, err = os.Stat(filepath.Join(dir, "outside", "pwned.txt"))
+	assert.True(t, os.IsNotExist(err), "the archive wrote outside the destination")
 }
