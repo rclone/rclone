@@ -196,8 +196,8 @@ renamed to a name with nothing before its extension.
 ## Link sharing
 
 `rclone link` creates a public share of a file at
-`https://gopro.com/v/{id}`, titled with the file's name (see
-[`--gopro-link-title`](#gopro-link-title)).
+`https://gopro.com/v/{id}`, titled with the file's name, or untitled for
+media without a name (see [`--gopro-link-title`](#gopro-link-title)).
 [`--gopro-link-allow-download`](#gopro-link-allow-download) lets
 recipients download the original, which also shares any GPS data in it.
 `--expire` and `--unlink` aren't supported: shares don't expire, and
@@ -415,8 +415,9 @@ Properties:
 
 Title for public share links.
 
-Defaults to the file's name without its {id} suffix. As "rclone link"
-can't pass a title, this applies to every link created.
+Defaults to the file's name without its {id} suffix, or no title for
+media without a name. As "rclone link" can't pass a title, this applies
+to every link created.
 
 Properties:
 

@@ -1899,12 +1899,15 @@ func TestCreateCollectionAddToCollectionAndPublicLink(t *testing.T) {
 		assert.Equal(t, "clip.mp4", gotCreate.Title)
 	})
 
-	t.Run("PublicLink titles an unnamed medium with its listed name, not a bare extension", func(t *testing.T) {
+	t.Run("PublicLink sends no title for an unnamed medium", func(t *testing.T) {
+		// GoPro's share page then shows no title, rather than "{id}.mp4"
+		// or a bare ".mp4".
 		id := "6a9362c0b7d89053ceb33de9"
 		f.media = cachedList(append(f.media.items, api.Medium{ID: id, Filename: "", FileExtension: "json", Type: "MultiClipEdit", ItemCount: 1, CapturedAt: startTime}))
+		gotCreate = api.CollectionCreate{Title: "stale"}
 		_, err := f.PublicLink(context.Background(), "media/all/{"+id+"}.mp4", fs.Duration(0), false)
 		require.NoError(t, err)
-		assert.Equal(t, "{"+id+"}.mp4", gotCreate.Title)
+		assert.Equal(t, "stale", gotCreate.Title, "the request must carry no title field at all")
 	})
 
 	t.Run("PublicLink prefers an explicit link_title over the file's own name", func(t *testing.T) {
@@ -2547,6 +2550,42 @@ func TestListDirPhotoFormat(t *testing.T) {
 			assert.ElementsMatch(t, tc.want, names, "a photo with only one format must always be listed")
 		})
 	}
+}
+
+// A RAW file uploaded on its own, once GoPro has processed it: it keeps
+// its .GPR filename, but GoPro has generated a JPEG as its photo.
+func TestListDirNamesTheJPEGGeneratedForAnUploadedRaw(t *testing.T) {
+	const id = "6abad7629832ef7f676cecf8"
+	size := int64(586170)
+	item := api.Medium{ID: id, Filename: "rclone-test-raw.GPR", FileExtension: "jpg", Type: "Photo", FileSize: &size, ItemCount: 1, CapturedAt: startTime, AvailableLabels: []string{"source", "mediainfo", "raw_photo"}}
+	lower := item
+	lower.ID, lower.Filename = "6abad7629832ef7f676cecf9", "holiday.gpr"
+	for _, tc := range []struct {
+		format string
+		want   []string
+	}{
+		{photoFormatBoth, []string{"rclone-test-raw {" + id + "}.JPG", "rclone-test-raw {" + id + "}.GPR", "holiday {" + lower.ID + "}.jpg", "holiday {" + lower.ID + "}.gpr"}},
+		{photoFormatJPEG, []string{"rclone-test-raw {" + id + "}.JPG", "holiday {" + lower.ID + "}.jpg"}},
+		{photoFormatRaw, []string{"rclone-test-raw {" + id + "}.GPR", "holiday {" + lower.ID + "}.gpr"}},
+	} {
+		t.Run(tc.format, func(t *testing.T) {
+			f := newTestMediaFs([]api.Medium{item, lower})
+			f.opt.PhotoFormat = tc.format
+			entries, err := f.listDir(context.Background(), "", mediaFilter{})
+			require.NoError(t, err)
+			var names []string
+			for _, e := range entries {
+				names = append(names, e.Remote())
+				if o := e.(*Object); !o.raw {
+					assert.Equal(t, "image/jpeg", o.mimeType, "the generated JPEG must be typed as one")
+					assert.Equal(t, size, o.bytes)
+				}
+			}
+			assert.ElementsMatch(t, tc.want, names)
+		})
+	}
+	f := newTestMediaFs(nil)
+	assert.Equal(t, "rclone-test-raw {"+id+"}.JPG", expectedIDSuffixedName(f, &item), "the {id} fast path must agree with the listing")
 }
 
 func TestCheckPhotoFormat(t *testing.T) {

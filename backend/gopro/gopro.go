@@ -349,8 +349,9 @@ that location data with recipients too.`,
 			Advanced: true,
 			Help: `Title for public share links.
 
-Defaults to the file's name without its {id} suffix. As "rclone link"
-can't pass a title, this applies to every link created.`,
+Defaults to the file's name without its {id} suffix, or no title for
+media without a name. As "rclone link" can't pass a title, this applies
+to every link created.`,
 		}, {
 			Name:     "use_trash",
 			Advanced: true,
@@ -1369,15 +1370,27 @@ func downloadExtension(item *api.Medium) string {
 }
 
 // mediumLeaf returns the leaf name listDir gives item, before any item
-// number or ID suffix: its filename, with downloadExtension appended when
-// the filename has no extension of its own - GoPro's auto-generated
-// Highlights often have an empty filename.
+// number or ID suffix: its filename, with the extension from photoExt.
 func mediumLeaf(f *Fs, item *api.Medium) string {
 	leaf := f.opt.Enc.ToStandardName(item.Filename)
-	if ext := downloadExtension(item); path.Ext(leaf) == "" && ext != "" {
-		leaf += "." + ext
+	return strings.TrimSuffix(leaf, path.Ext(leaf)) + photoExt(item)
+}
+
+// photoExt returns the extension (with the dot) of what's downloaded as
+// item's photo or video - usually that of its filename, but:
+//
+//   - GoPro's auto-generated Highlights often have no filename at all.
+//   - A RAW file uploaded on its own keeps its .gpr filename, but GoPro
+//     generates a JPEG as its photo, and lists the RAW as a sidecar.
+func photoExt(item *api.Medium) string {
+	ext := path.Ext(item.Filename)
+	switch {
+	case ext == "" && downloadExtension(item) != "":
+		return "." + downloadExtension(item)
+	case strings.EqualFold(ext, ".gpr") && hasRaw(item) && item.FileExtension != "":
+		return withExtLike("."+item.FileExtension, ext)
 	}
-	return leaf
+	return ext
 }
 
 // expectedIDSuffixedName reconstructs the id-suffixed leaf listDir would
@@ -1679,11 +1692,15 @@ func (f *Fs) listRaw(item *api.Medium) bool {
 // matching the case of its extension
 func rawLeaf(leaf string) string {
 	ext := path.Ext(leaf)
-	rawExt := ".gpr"
-	if ext == strings.ToUpper(ext) {
-		rawExt = ".GPR"
+	return strings.TrimSuffix(leaf, ext) + withExtLike(".gpr", ext)
+}
+
+// withExtLike returns ext in upper case if like is, else in lower case
+func withExtLike(ext, like string) string {
+	if like == strings.ToUpper(like) {
+		return strings.ToUpper(ext)
 	}
-	return strings.TrimSuffix(leaf, ext) + rawExt
+	return strings.ToLower(ext)
 }
 
 // isNotFound reports whether err is a 404 from the API
@@ -1844,13 +1861,7 @@ func (o *Object) setMetaDataLocked(item *api.Medium, itemNumber int) {
 	if o.modTime.IsZero() {
 		o.modTime = item.CreatedAt
 	}
-	// The filename's extension matches what's served better than
-	// file_extension, which is "json" for edits.
-	ext := path.Ext(item.Filename)
-	if ext == "" {
-		ext = "." + downloadExtension(item)
-	}
-	o.mimeType = mime.TypeByExtension(strings.ToLower(ext))
+	o.mimeType = mime.TypeByExtension(strings.ToLower(photoExt(item)))
 	o.reprocessed = item.ReprocessedAt != nil
 	if o.raw {
 		// file_size only covers the photos.
@@ -2272,7 +2283,9 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		_, leaf := path.Split(remote)
 		title = stripSuffixID(leaf, obj.id)
 		if isUnnamedLeaf(title) {
-			title = leaf
+			// Without a title GoPro's share page shows none, which reads
+			// better than a bare extension.
+			title = ""
 		}
 	}
 	collectionID, err := f.createCollection(ctx, title, f.opt.LinkAllowDownload)
