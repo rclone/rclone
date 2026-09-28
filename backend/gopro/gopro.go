@@ -445,7 +445,7 @@ whatever this is set to.`,
 		}, {
 			Name:     "delete_parts",
 			Advanced: true,
-			Default:  deletePartsFirst,
+			Default:  deletePartsRefuse,
 			Help: `How to delete a single chapter, frame or RAW file.
 
 GoPro only deletes whole items: a chaptered video, a burst, continuous
@@ -453,20 +453,23 @@ or time lapse photo series, or a photo together with its RAW file.
 Deleting just one of the files rclone lists for such an item would
 delete all of them.
 
-With the default, only the item's first file (chapter or frame 1, or
-the JPEG of a RAW photo) deletes it, and deleting any other file on its
-own fails. Deleting a whole directory still works, as the other files
-are gone by the time they're deleted. Whole items can also be deleted
-with "rclone backend delete".`,
+By default none of these files can be deleted on its own, so deleting
+or moving one fails and the item is kept. Delete whole items with
+"rclone backend delete" instead.
+
+The other modes delete the whole item, so use them with care: rclone
+deletes each file on its own, for example straight after moving it to
+another remote, so the item's other files are deleted with it even if
+they were never transferred.`,
 			Examples: []fs.OptionExample{{
-				Value: deletePartsFirst,
-				Help:  "Deleting the first file deletes the whole item, other files can't be deleted on their own",
-			}, {
 				Value: deletePartsRefuse,
 				Help:  "No file of such an item can be deleted on its own - use \"rclone backend delete\"",
 			}, {
+				Value: deletePartsFirst,
+				Help:  "Deleting the item's first file (chapter or frame 1, or the JPEG of a RAW photo) deletes the whole item",
+			}, {
 				Value: deletePartsAny,
-				Help:  "Deleting any file deletes the whole item",
+				Help:  "Deleting any file of the item deletes the whole item",
 			}},
 		}, {
 			Name:     "read_size",
@@ -1241,7 +1244,14 @@ func (f *Fs) deleteCommand(ctx context.Context, arg []string) (any, error) {
 	}
 	res := &deleteResult{}
 	for _, id := range ids {
-		if err := f.deleteMedium(ctx, id, !f.opt.UseTrash); err != nil {
+		var err error
+		if f.opt.TrashedOnly {
+			// A trashed medium can only be purged - see Object.Remove.
+			err = f.doDeleteMedium(ctx, id, "permanent", "true")
+		} else {
+			err = f.deleteMedium(ctx, id, !f.opt.UseTrash)
+		}
+		if err != nil {
 			return res, err
 		}
 		res.Deleted++
@@ -1257,11 +1267,17 @@ type restoreResult struct {
 // restoreArg resolves one "restore" argument - a bare id or a
 // "name {id}.ext" leaf - to a medium id
 func restoreArg(arg string) string {
+	if m := fileIDRe.FindStringSubmatch(arg); m != nil {
+		return m[1]
+	}
 	if id := findID(path.Base(arg)); id != "" {
 		return id
 	}
 	return arg
 }
+
+// fileIDRe matches an Object's ID(), capturing its medium's id
+var fileIDRe = regexp.MustCompile(`^([0-9a-f]{24})(?:/[0-9]+)?(?:/raw)?$`)
 
 // restore implements the "restore" backend command
 func (f *Fs) restore(ctx context.Context, arg []string) (any, error) {
@@ -2141,8 +2157,14 @@ func (f *Fs) deleteReplaced(ctx context.Context, id string) {
 // --gopro-trashed-only the object is already in the trash, where a plain
 // delete fails, so it's purged directly.
 func (o *Object) Remove(ctx context.Context) error {
-	if o.isPart() && !o.deletesWhole() {
-		return o.removePart(ctx)
+	if o.isPart() {
+		if !o.deletesWhole() {
+			return o.removePart(ctx)
+		}
+		// Another part of the medium may have deleted it already.
+		if exists, err := o.mediumExists(ctx); err != nil || !exists {
+			return err
+		}
 	}
 	var err error
 	if o.fs.opt.TrashedOnly {
@@ -2170,38 +2192,48 @@ func (o *Object) deletesWhole() bool {
 	switch o.fs.opt.DeleteParts {
 	case deletePartsAny:
 		return true
-	case deletePartsRefuse:
-		return false
+	case deletePartsFirst:
+		firstIsRaw := o.hasRaw && o.fs.opt.PhotoFormat == photoFormatRaw
+		return o.itemNumber <= 1 && o.raw == firstIsRaw
 	}
-	firstIsRaw := o.hasRaw && o.fs.opt.PhotoFormat == photoFormatRaw
-	return o.itemNumber <= 1 && o.raw == firstIsRaw
+	return false
+}
+
+// mediumExists reports whether o's medium is still where o is listed -
+// in the library, or in the trash under --gopro-trashed-only
+func (o *Object) mediumExists(ctx context.Context) (bool, error) {
+	if o.fs.opt.TrashedOnly {
+		o.fs.invalidateTrashCache()
+		items, err := o.fs.allTrash(ctx)
+		if err != nil {
+			return false, err
+		}
+		for i := range items {
+			if items[i].ID == o.id {
+				return true, nil
+			}
+		}
+		return false, nil
+	}
+	_, err := o.fs.getMedium(ctx, o.id)
+	if isNotFound(err) {
+		return false, nil
+	}
+	return err == nil, err
 }
 
 // removePart removes a part of a medium that can't delete it - so this
 // only succeeds once the medium has been deleted, as when deleting a
 // whole directory.
 func (o *Object) removePart(ctx context.Context) error {
-	var exists bool
-	if o.fs.opt.TrashedOnly {
-		o.fs.invalidateTrashCache()
-		items, err := o.fs.allTrash(ctx)
-		if err != nil {
-			return err
-		}
-		for i := range items {
-			exists = exists || items[i].ID == o.id
-		}
-	} else {
-		_, err := o.fs.getMedium(ctx, o.id)
-		if err != nil && !isNotFound(err) {
-			return err
-		}
-		exists = err == nil
+	exists, err := o.mediumExists(ctx)
+	if err != nil {
+		return err
 	}
 	if exists {
-		how := "delete its first file to delete them all, or use \"rclone backend delete\""
-		if o.fs.opt.DeleteParts == deletePartsRefuse {
-			how = "use \"rclone backend delete\" to delete them all"
+		how := "use \"rclone backend delete\" to delete them all"
+		if o.fs.opt.DeleteParts == deletePartsFirst {
+			how = "delete its first file to delete them all, or use \"rclone backend delete\""
 		}
 		return fmt.Errorf("gopro: can't delete %q on its own - GoPro only deletes it together with the other files of its item: %s", o.remote, how)
 	}
@@ -2421,8 +2453,20 @@ func (o *Object) MimeType(ctx context.Context) string {
 }
 
 // ID of an Object if known, "" otherwise
+//
+// Every file of a medium has its own ID: "{medium}" for a single file
+// or photo, "{medium}/{n}" for item n of a chaptered video or photo
+// series, with "/raw" added for a RAW file. The medium's own id is the
+// first 24 characters.
 func (o *Object) ID() string {
-	return o.id
+	id := o.id
+	if o.itemCount > 1 {
+		id += "/" + strconv.Itoa(o.itemNumber)
+	}
+	if o.raw {
+		id += "/raw"
+	}
+	return id
 }
 
 // ------------------------------------------------------------

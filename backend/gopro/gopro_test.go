@@ -25,6 +25,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/dirtree"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/mockobject"
 	"github.com/rclone/rclone/lib/encoder"
@@ -1582,6 +1583,8 @@ func TestRestoreArg(t *testing.T) {
 	assert.Equal(t, id, restoreArg("GX010294 {"+id+"}.MP4"))
 	assert.Equal(t, id, restoreArg("trash/GX010294 {"+id+"}.MP4"))
 	assert.Equal(t, "not-an-id", restoreArg("not-an-id"))
+	assert.Equal(t, id, restoreArg(id+"/2"), "a chapter's ID() names its medium")
+	assert.Equal(t, id, restoreArg(id+"/2/raw"))
 }
 
 // newTestUploadFs builds a minimal *Fs with a real, empty upload/ dirtree -
@@ -2712,7 +2715,7 @@ func TestRemoveOfPartsFollowsDeleteParts(t *testing.T) {
 		mode, photoFormat string
 		deletes           map[string]bool // parts that delete the whole medium; the rest are refused
 	}{
-		{"", "", map[string]bool{"chapter 1": true, "JPEG of a pair": true, "single file": true}},
+		{"", "", map[string]bool{"single file": true}},
 		{deletePartsFirst, "", map[string]bool{"chapter 1": true, "JPEG of a pair": true, "single file": true}},
 		{deletePartsFirst, photoFormatRaw, map[string]bool{"chapter 1": true, "RAW of a pair": true, "single file": true}},
 		{deletePartsRefuse, "", map[string]bool{"single file": true}},
@@ -2787,6 +2790,228 @@ func TestDeleteCommand(t *testing.T) {
 		assert.Equal(t, &deleteResult{}, res)
 		assert.Empty(t, *deleted)
 	})
+}
+
+func TestObjectIDIsUniquePerFile(t *testing.T) {
+	const id = "68b22325df3cf752557ac6d7"
+	for _, tc := range []struct {
+		o    *Object
+		want string
+	}{
+		{&Object{id: id, itemNumber: 1, itemCount: 1}, id},
+		{&Object{id: id, itemNumber: 1, itemCount: 1, hasRaw: true}, id},
+		{&Object{id: id, itemNumber: 1, itemCount: 1, hasRaw: true, raw: true}, id + "/raw"},
+		{&Object{id: id, itemNumber: 1, itemCount: 3}, id + "/1"},
+		{&Object{id: id, itemNumber: 2, itemCount: 3}, id + "/2"},
+		{&Object{id: id, itemNumber: 2, itemCount: 3, hasRaw: true, raw: true}, id + "/2/raw"},
+	} {
+		assert.Equal(t, tc.want, tc.o.ID())
+	}
+}
+
+// testMedium serves one multi-part medium (a 2-chapter video) that stays
+// listed until it is deleted, and counts the deletes. Deleting it again
+// once gone gets GoPro's embedded not_found error, as live.
+type testMedium struct {
+	mu      sync.Mutex
+	gone    bool
+	deletes int
+}
+
+const testMediumID = "6a29a4bcfe314c5af39cfcbe"
+
+func newTestMediumFs(t *testing.T) (*Fs, *httptest.Server, *testMedium) {
+	m := &testMedium{}
+	var srv *httptest.Server
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /media/{id}", func(w http.ResponseWriter, r *http.Request) {
+		m.mu.Lock()
+		gone := m.gone
+		m.mu.Unlock()
+		if gone {
+			http.Error(w, "not found", http.StatusNotFound)
+			return
+		}
+		writeJSON(t, w, api.Medium{ID: testMediumID})
+	})
+	mux.HandleFunc("GET /media/{id}/download", func(w http.ResponseWriter, r *http.Request) {
+		dl := makeDownloadResponse([]testFile{{url: srv.URL + "/proxy", itemNumber: 1}}, []testFile{
+			{url: srv.URL + "/chapter/1", label: "source", itemNumber: 1},
+			{url: srv.URL + "/chapter/2", label: "source", itemNumber: 2},
+		})
+		writeJSON(t, w, dl)
+	})
+	mux.HandleFunc("GET /chapter/{n}", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Length", "9")
+		_, err := io.WriteString(w, "chapter "+r.PathValue("n"))
+		require.NoError(t, err)
+	})
+	mux.HandleFunc("DELETE /media", func(w http.ResponseWriter, r *http.Request) {
+		m.mu.Lock()
+		defer m.mu.Unlock()
+		resp := api.DeleteResponse{}
+		if m.gone && r.URL.Query().Get("permanent") == "" {
+			resp.Embedded.Errors = []api.EmbeddedError{{Reason: "not_found", Code: 5022, Description: "was either not found or is inaccessible"}}
+		} else {
+			m.gone = true
+			m.deletes++
+		}
+		writeJSON(t, w, resp)
+	})
+	f, s := newTestAPIFs(mux)
+	srv = s
+	f.name = "delete-parts-test"
+	f.opt.UseTrash = true
+	f.features = (&fs.Features{}).Fill(context.Background(), f)
+	return f, srv, m
+}
+
+func (m *testMedium) state() (gone bool, deletes int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.gone, m.deletes
+}
+
+func testChapter(f *Fs, n int) *Object {
+	return &Object{fs: f, id: testMediumID, remote: fmt.Sprintf("media/all/GX012010-%d {%s}.MP4", n, testMediumID), itemNumber: n, itemCount: 2, bytes: 9, modTime: startTime}
+}
+
+// TestDeletePartsThroughRcloneOperations drives each --gopro-delete-parts
+// mode through rclone's own move and delete operations, which call Remove
+// per file with no notion of the medium the files belong to.
+func TestDeletePartsThroughRcloneOperations(t *testing.T) {
+	moveChapter := func(t *testing.T, f *Fs, n int) (localPath string, err error) {
+		dir := t.TempDir()
+		dst, err := fs.NewFs(context.Background(), dir)
+		require.NoError(t, err)
+		_, err = operations.Move(context.Background(), dst, nil, fmt.Sprintf("chapter-%d.mp4", n), testChapter(f, n))
+		return filepath.Join(dir, fmt.Sprintf("chapter-%d.mp4", n)), err
+	}
+	deleteChapters := func(f *Fs, order ...int) error {
+		ctx, ci := fs.AddConfig(context.Background())
+		ci.Checkers = 1
+		ch := make(fs.ObjectsChan, len(order))
+		for _, n := range order {
+			ch <- testChapter(f, n)
+		}
+		close(ch)
+		return operations.DeleteFiles(ctx, ch)
+	}
+
+	for _, mode := range []string{"", deletePartsRefuse} {
+		t.Run(fmt.Sprintf("mode %q moving chapter 1 keeps the whole medium and reports it", mode), func(t *testing.T) {
+			f, srv, m := newTestMediumFs(t)
+			defer srv.Close()
+			f.opt.DeleteParts = mode
+			local, err := moveChapter(t, f, 1)
+			assert.ErrorContains(t, err, "on its own", "the source can't be removed, which rclone must hear about")
+			got, readErr := os.ReadFile(local)
+			require.NoError(t, readErr)
+			assert.Equal(t, "chapter 1", string(got), "the copy itself still happens")
+			gone, deletes := m.state()
+			assert.False(t, gone)
+			assert.Equal(t, 0, deletes)
+		})
+
+		t.Run(fmt.Sprintf("mode %q deleting every chapter deletes nothing and reports it", mode), func(t *testing.T) {
+			f, srv, m := newTestMediumFs(t)
+			defer srv.Close()
+			f.opt.DeleteParts = mode
+			assert.Error(t, deleteChapters(f, 1, 2))
+			gone, deletes := m.state()
+			assert.False(t, gone)
+			assert.Equal(t, 0, deletes)
+		})
+	}
+
+	t.Run("mode first: moving chapter 1 deletes the whole medium, untransferred chapter 2 included", func(t *testing.T) {
+		f, srv, m := newTestMediumFs(t)
+		defer srv.Close()
+		f.opt.DeleteParts = deletePartsFirst
+		_, err := moveChapter(t, f, 1)
+		require.NoError(t, err)
+		gone, deletes := m.state()
+		assert.True(t, gone)
+		assert.Equal(t, 1, deletes)
+	})
+
+	t.Run("mode first: moving chapter 2 alone is refused", func(t *testing.T) {
+		f, srv, m := newTestMediumFs(t)
+		defer srv.Close()
+		f.opt.DeleteParts = deletePartsFirst
+		_, err := moveChapter(t, f, 2)
+		assert.ErrorContains(t, err, "on its own")
+		gone, _ := m.state()
+		assert.False(t, gone)
+	})
+
+	t.Run("mode first: deleting a directory works when chapter 1 comes first", func(t *testing.T) {
+		f, srv, m := newTestMediumFs(t)
+		defer srv.Close()
+		f.opt.DeleteParts = deletePartsFirst
+		require.NoError(t, deleteChapters(f, 1, 2))
+		_, deletes := m.state()
+		assert.Equal(t, 1, deletes)
+	})
+
+	t.Run("mode first: deleting a directory fails for chapter 2 if it comes first", func(t *testing.T) {
+		f, srv, m := newTestMediumFs(t)
+		defer srv.Close()
+		f.opt.DeleteParts = deletePartsFirst
+		assert.Error(t, deleteChapters(f, 2, 1), "the order dependency the docs warn about")
+		gone, deletes := m.state()
+		assert.True(t, gone, "chapter 1 still deletes the medium")
+		assert.Equal(t, 1, deletes)
+	})
+
+	t.Run("mode any: moving chapter 2 deletes the whole medium", func(t *testing.T) {
+		f, srv, m := newTestMediumFs(t)
+		defer srv.Close()
+		f.opt.DeleteParts = deletePartsAny
+		_, err := moveChapter(t, f, 2)
+		require.NoError(t, err)
+		gone, deletes := m.state()
+		assert.True(t, gone)
+		assert.Equal(t, 1, deletes)
+	})
+
+	t.Run("mode any: deleting a directory succeeds in any order", func(t *testing.T) {
+		for _, order := range [][]int{{1, 2}, {2, 1}} {
+			f, srv, m := newTestMediumFs(t)
+			f.opt.DeleteParts = deletePartsAny
+			require.NoError(t, deleteChapters(f, order...), "a part whose medium is already gone counts as deleted")
+			_, deletes := m.state()
+			assert.Equal(t, 1, deletes)
+			srv.Close()
+		}
+	})
+
+	t.Run("backend delete deletes the whole medium in every mode", func(t *testing.T) {
+		for _, mode := range []string{"", deletePartsRefuse, deletePartsFirst, deletePartsAny} {
+			f, srv, m := newTestMediumFs(t)
+			f.opt.DeleteParts = mode
+			_, err := f.Command(context.Background(), "delete", []string{testChapter(f, 2).ID()}, nil)
+			require.NoError(t, err)
+			gone, _ := m.state()
+			assert.True(t, gone, "mode %q", mode)
+			srv.Close()
+		}
+	})
+}
+
+func TestDeleteCommandPurgesTrashDirectly(t *testing.T) {
+	var queries []url.Values
+	f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		queries = append(queries, r.URL.Query())
+		writeJSON(t, w, api.DeleteResponse{})
+	}))
+	defer srv.Close()
+	f.opt.UseTrash = true
+	f.opt.TrashedOnly = true
+	_, err := f.Command(context.Background(), "delete", []string{"111111111111111111111111"}, nil)
+	require.NoError(t, err)
+	require.Len(t, queries, 1, "a trashed medium can only be purged, a plain delete fails")
+	assert.Equal(t, "true", queries[0].Get("permanent"))
 }
 
 func TestRawLeaf(t *testing.T) {
