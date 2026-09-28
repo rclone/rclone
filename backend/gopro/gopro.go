@@ -2371,7 +2371,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	}
 	// Subdirectories of upload/ only exist in this Fs's upload tree -
 	// GoPro just gets the leaf.
-	filename := path.Base(match[1])
+	filename := f.opt.Enc.FromStandardName(path.Base(match[1]))
 	ext := strings.ToUpper(strings.TrimPrefix(path.Ext(filename), "."))
 	mediumType := mediumTypeForFilename(filename)
 

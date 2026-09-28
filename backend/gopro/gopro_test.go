@@ -27,6 +27,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/mockobject"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 	"github.com/stretchr/testify/assert"
@@ -2239,6 +2240,45 @@ func TestOpenChunkWriterWriteChunkCloseRegistersUpload(t *testing.T) {
 // no concept of directories - so the filename sent to createMedium must be
 // just the leaf, not the whole match[1] sub-path, which still contains a
 // "/" and can't match this backend's single-leaf patterns once listed back.
+// TestOpenChunkWriterDecodesTheLeafFilename checks the filename sent to
+// GoPro is the leaf decoded from rclone's standard encoding, so that the
+// listing (which encodes GoPro's filenames) gives back the uploaded name.
+func TestOpenChunkWriterDecodesTheLeafFilename(t *testing.T) {
+	var srv *httptest.Server
+	var gotFilename string
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /media", func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		require.NoError(t, json.NewDecoder(r.Body).Decode(&body))
+		gotFilename, _ = body["filename"].(string)
+		writeJSON(t, w, map[string]string{"id": "med1"})
+	})
+	mux.HandleFunc("POST /derivatives", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(t, w, map[string]string{"id": "der1"})
+	})
+	mux.HandleFunc("POST /user-uploads", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(t, w, map[string]string{"id": "up1"})
+	})
+	mux.HandleFunc("GET /user-uploads/der1", func(w http.ResponseWriter, r *http.Request) {
+		resp := api.UserUploadsResponse{}
+		resp.Embedded.Authorizations = []api.UploadAuthorization{{URL: srv.URL + "/chunk/1", Part: 1}}
+		writeJSON(t, w, resp)
+	})
+	f, s := newTestUploadFlowFs(mux)
+	srv = s
+	defer srv.Close()
+	f.opt.Enc = encoder.Base | encoder.EncodeCrLf | encoder.EncodeInvalidUtf8
+
+	// "a␁b.jpg" is the standard encoding of a name with a control
+	// character, which this backend's encoding leaves as it is.
+	const leaf = "a\u2401b.jpg"
+	src := mockobject.New("upload/dir/"+leaf).WithContent([]byte("x"), mockobject.SeekModeRegular)
+	_, _, err := f.OpenChunkWriter(context.Background(), "upload/dir/"+leaf, src)
+	require.NoError(t, err)
+	assert.Equal(t, "a\x01b.jpg", gotFilename)
+	assert.Equal(t, leaf, f.opt.Enc.ToStandardName(gotFilename), "listing the upload must give back its name")
+}
+
 func TestOpenChunkWriterNestedUploadPathUsesLeafFilename(t *testing.T) {
 	content := []byte("hello nested gopro upload")
 	var srv *httptest.Server
