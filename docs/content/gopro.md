@@ -73,7 +73,8 @@ y/e/d> y
 ```
 
 rclone stores a refresh token and renews the access token automatically.
-If GoPro revokes the stored token, rclone logs in again with the stored
+If GoPro revokes the stored token, even while rclone is running (for
+example in a mount), rclone logs in again with the stored
 user name and password. If your account can't log in this way (for
 example because of two-factor authentication), see
 [`--gopro-access-token`](#gopro-access-token); such a token can't be

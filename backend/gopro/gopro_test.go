@@ -30,10 +30,12 @@ import (
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/mockobject"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2"
 )
 
 // writeJSON writes v as the JSON body of a mocked API response, matching
@@ -3018,6 +3020,81 @@ func TestEditsAreNamedAsTheirRenderedVideo(t *testing.T) {
 		}
 	}
 	assert.Equal(t, "notes.json", mediumLeaf(f, &api.Medium{Filename: "notes.json", Type: "Video"}), "only edits")
+}
+
+func TestTokenClientLogsInAgainWhenTheRefreshFails(t *testing.T) {
+	ctx := context.Background()
+	const name = "reauth-test"
+	// GoPro revokes refresh tokens it has blacklisted like this.
+	tokenSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = io.WriteString(w, `{"error":"invalid_grant","error_description":"token_blacklisted"}`)
+	}))
+	defer tokenSrv.Close()
+	var mu sync.Mutex
+	var auths []string
+	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		auths = append(auths, r.Header.Get("Authorization"))
+		mu.Unlock()
+	}))
+	defer apiSrv.Close()
+	cfg := &oauthutil.Config{ClientID: "id", TokenURL: tokenSrv.URL, AuthStyle: oauth2.AuthStyleInParams}
+	newConfig := func(t *testing.T) configmap.Simple {
+		m := configmap.Simple{}
+		// A token that needs refreshing, as in a mount running for a while
+		expired := &oauth2.Token{AccessToken: "old", RefreshToken: "revoked", Expiry: time.Now().Add(-time.Hour)}
+		require.NoError(t, oauthutil.PutToken(name, m, expired, false))
+		return m
+	}
+	get := func(client *http.Client) error {
+		resp, err := client.Get(apiSrv.URL)
+		if err == nil {
+			_ = resp.Body.Close()
+		}
+		return err
+	}
+
+	t.Run("with user/pass it logs in again", func(t *testing.T) {
+		m := newConfig(t)
+		auths = nil
+		logins := 0
+		login := func(ctx context.Context) error {
+			logins++
+			return oauthutil.PutToken(name, m, &oauth2.Token{AccessToken: "fresh", RefreshToken: "new", Expiry: time.Now().Add(time.Hour)}, false)
+		}
+		client, src, err := newTokenClient(ctx, name, m, cfg, http.DefaultClient, login)
+		require.NoError(t, err)
+		require.NoError(t, get(client))
+		require.NoError(t, get(client))
+		assert.Equal(t, []string{"Bearer fresh", "Bearer fresh"}, auths)
+		assert.Equal(t, 1, logins)
+		tok, err := src.Token()
+		require.NoError(t, err)
+		assert.Equal(t, "fresh", tok.AccessToken)
+	})
+
+	t.Run("without user/pass it fails", func(t *testing.T) {
+		m := newConfig(t)
+		client, _, err := newTokenClient(ctx, name, m, cfg, http.DefaultClient, nil)
+		require.NoError(t, err)
+		assert.ErrorContains(t, get(client), "invalid_grant")
+	})
+
+	t.Run("a failed login isn't retried straight away", func(t *testing.T) {
+		m := newConfig(t)
+		logins := 0
+		login := func(ctx context.Context) error {
+			logins++
+			return errors.New("wrong password")
+		}
+		client, _, err := newTokenClient(ctx, name, m, cfg, http.DefaultClient, login)
+		require.NoError(t, err)
+		assert.ErrorContains(t, get(client), "wrong password")
+		assert.Error(t, get(client))
+		assert.Equal(t, 1, logins)
+	})
 }
 
 func TestCheckPhotoFormat(t *testing.T) {

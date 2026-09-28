@@ -618,8 +618,8 @@ type Fs struct {
 	opt       Options
 	features  *fs.Features
 	srv       *rest.Client
-	unAuth    *rest.Client           // no Authorization header - required for pre-signed chunk upload URLs
-	ts        *oauthutil.TokenSource // nil when using a static access_token
+	unAuth    *rest.Client       // no Authorization header - required for pre-signed chunk upload URLs
+	ts        oauth2.TokenSource // nil when using a static access_token
 	pacer     *fs.Pacer
 	startTime time.Time // time Fs was started - used for datestamps
 
@@ -806,29 +806,23 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.srv = rest.NewClient(baseClient).SetRoot(rootURL)
 		f.srv.SetHeader("Authorization", "Bearer "+opt.AccessToken)
 	} else {
-		oAuthClient, ts, err := oauthutil.NewClientWithBaseClient(ctx, name, m, oauthConfig, baseClient)
+		// GoPro can revoke a stored token (refresh fails with
+		// "token_blacklisted"), so log in again with user/pass rather
+		// than fail until "rclone config reconnect" is run.
+		var login func(context.Context) error
+		if opt.User != "" && opt.Pass != "" {
+			loginOpt := *opt
+			login = func(loginCtx context.Context) error {
+				return gproAuthorize(fs.CopyConfig(loginCtx, ctx), &loginOpt, name, m)
+			}
+		}
+		oAuthClient, ts, err := newTokenClient(ctx, name, m, oauthConfig, baseClient, login)
 		if err != nil {
 			return nil, fmt.Errorf("failed to configure gopro: %w", err)
 		}
-		// GoPro can revoke a stored token (refresh fails with
-		// "token_blacklisted"), so re-authenticate with user/pass rather
-		// than fail until "rclone config reconnect" is run. Token() only
-		// makes a request when a refresh is due.
-		if _, tokErr := ts.Token(); tokErr != nil {
-			if opt.User == "" || opt.Pass == "" {
-				return nil, fmt.Errorf("failed to configure gopro: %w", tokErr)
-			}
-			fs.Logf(name, "stored token can't be used (%v) - re-authenticating with user/pass", tokErr)
-			if authErr := gproAuthorize(ctx, opt, name, m); authErr != nil {
-				return nil, fmt.Errorf("failed to configure gopro: stored token invalid (%v) and re-authentication failed: %w", tokErr, authErr)
-			}
-			oAuthClient, ts, err = oauthutil.NewClientWithBaseClient(ctx, name, m, oauthConfig, baseClient)
-			if err != nil {
-				return nil, fmt.Errorf("failed to configure gopro: %w", err)
-			}
-			if _, tokErr = ts.Token(); tokErr != nil {
-				return nil, fmt.Errorf("failed to configure gopro: re-authenticated but token still unusable: %w", tokErr)
-			}
+		// Token() only makes a request when a refresh is due.
+		if _, err := ts.Token(); err != nil {
+			return nil, fmt.Errorf("failed to configure gopro: %w", err)
 		}
 		f.ts = ts
 		f.srv = rest.NewClient(oAuthClient).SetRoot(rootURL)
@@ -858,6 +852,60 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.root = oldRoot
 	}
 	return f, nil
+}
+
+// reloginInterval is how long a failed login keeps reloginTokenSource
+// from trying again
+const reloginInterval = time.Minute
+
+// reloginTokenSource hands out the tokens of ts, logging in again when ts
+// can't refresh them: GoPro revokes refresh tokens ("token_blacklisted"),
+// also while a mount runs for days.
+type reloginTokenSource struct {
+	name  string
+	ts    *oauthutil.TokenSource
+	login func(context.Context) error // stores a new token in the config; nil without user/pass
+
+	mu        sync.Mutex
+	lastLogin time.Time
+	loginErr  error // of the login at lastLogin
+}
+
+// Token returns a valid token or an error
+func (r *reloginTokenSource) Token() (*oauth2.Token, error) {
+	tok, err := r.ts.Token()
+	if err == nil || r.login == nil {
+		return tok, err
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if time.Since(r.lastLogin) >= reloginInterval {
+		fs.Logf(r.name, "can't refresh the token (%v) - logging in again with user/pass", err)
+		r.lastLogin = time.Now()
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		r.loginErr = r.login(ctx)
+		cancel()
+	} else if r.loginErr == nil {
+		// Someone else just logged in - use that token.
+		return r.ts.Token()
+	}
+	if r.loginErr != nil {
+		return nil, fmt.Errorf("%w - and logging in again with user/pass failed: %w", err, r.loginErr)
+	}
+	// ts reads the new token from the config as its own has expired.
+	return r.ts.Token()
+}
+
+// newTokenClient returns an HTTP client authorized with the token stored
+// for name, and its token source. With login, it logs in again when the
+// token can't be refreshed.
+func newTokenClient(ctx context.Context, name string, m configmap.Mapper, cfg *oauthutil.Config, baseClient *http.Client, login func(context.Context) error) (*http.Client, oauth2.TokenSource, error) {
+	_, ts, err := oauthutil.NewClientWithBaseClient(ctx, name, m, cfg, baseClient)
+	if err != nil {
+		return nil, nil, err
+	}
+	src := &reloginTokenSource{name: name, ts: ts, login: login}
+	return oauth2.NewClient(oauthutil.Context(ctx, baseClient), src), src, nil
 }
 
 // currentAccessToken returns the bearer token currently in use, whether it
