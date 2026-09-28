@@ -141,6 +141,7 @@ func (f *Fs) get(ctx context.Context, rawURL string) (string, error) {
 	}
 	_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, maxRedirectBody))
 	_ = resp.Body.Close()
+	f.keepPersistentLogin(resp)
 
 	if resp.StatusCode >= http.StatusBadRequest {
 		return "", fmt.Errorf("%s%s: HTTP %d", req.URL.Host, req.URL.Path, resp.StatusCode)
@@ -156,6 +157,31 @@ func (f *Fs) get(ctx context.Context, rawURL string) (string, error) {
 		return "", err
 	}
 	return next.String(), nil
+}
+
+// keepPersistentLogin logs the cookies a login hop sets - attributes only,
+// never values - and files the persistent login cookie under the endpoint
+// root, so a PLC scoped to a narrower path or another host is still stored.
+func (f *Fs) keepPersistentLogin(resp *http.Response) {
+	u := resp.Request.URL
+	fs.Debugf(nil, "funambol: %s%s: HTTP %d, redirect to %s", u.Host, u.Path, resp.StatusCode, redirectTarget(resp))
+	for _, c := range resp.Cookies() {
+		fs.Debugf(nil, "funambol:   sets cookie %s (domain %q, path %q, expires %v, max-age %d, empty %v)",
+			c.Name, c.Domain, c.Path, c.Expires, c.MaxAge, c.Value == "")
+		if c.Name == persistentLoginCookie && c.Value != "" {
+			f.client.Jar.SetCookies(f.jarURL(), []*http.Cookie{{Name: c.Name, Value: c.Value}})
+		}
+	}
+}
+
+// redirectTarget is the host and path of resp's Location, without the query
+// or fragment, which may carry an OAuth code or session.
+func redirectTarget(resp *http.Response) string {
+	next, err := resp.Location()
+	if err != nil {
+		return "none"
+	}
+	return next.Host + next.Path
 }
 
 // loginPage follows redirects from rawURL until the T3 login page.
@@ -234,7 +260,15 @@ func (f *Fs) smsSend(ctx context.Context) (*smsPending, error) {
 		return nil, err
 	}
 
-	start := f.opt.Endpoint + pkcePath + "?" + url.Values{"platform": {"web"}, "deviceid": {f.opt.DeviceID}}.Encode()
+	// The web client sends only platform and deviceid.  rememberme and
+	// access_type are guesses to ask for a persistent login, which the
+	// server does not otherwise give to SMS logins.
+	start := f.opt.Endpoint + pkcePath + "?" + url.Values{
+		"platform":    {"web"},
+		"deviceid":    {f.opt.DeviceID},
+		"rememberme":  {"true"},
+		"access_type": {"offline"},
+	}.Encode()
 	page, err := f.loginPage(ctx, start)
 	if err != nil {
 		return nil, err
@@ -284,6 +318,12 @@ func (f *Fs) smsVerify(ctx context.Context, p *smsPending, code string) error {
 		return fmt.Errorf("unexpected callback %s://%s%s", callback.Scheme, callback.Host, callback.Path)
 	}
 
+	// The callback is a SAPI login, which gives the persistent login
+	// cookie to a password login that asks with rememberme.
+	q := callback.Query()
+	q.Set("rememberme", "true")
+	callback.RawQuery = q.Encode()
+
 	if _, err := f.get(ctx, callback.String()); err != nil {
 		return err
 	}
@@ -293,6 +333,10 @@ func (f *Fs) smsVerify(ctx context.Context, p *smsPending, code string) error {
 	}
 
 	// Without the persistent login cookie the session can't be renewed.
-	fs.Debugf(nil, "funambol: SMS login persistent cookie present: %v", f.persistentLoginPresent())
+	if f.persistentLoginPresent() {
+		fs.Debugf(nil, "funambol: SMS login persistent cookie present: true")
+	} else {
+		fs.Logf(nil, "funambol: SMS login gave no persistent login cookie, so the session will expire in a few hours")
+	}
 	return nil
 }

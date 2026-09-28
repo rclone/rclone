@@ -21,6 +21,7 @@ const (
 	smsNewID   = "sid-2"
 	smsNewData = "data-2"
 	smsPKCE    = "pkce-session"
+	smsPLC     = "persistent-login"
 	t3Consumer = "O2CLOUD_WEB" // client_name the O2 web client logs in as
 )
 
@@ -38,6 +39,7 @@ func newSMSServer(t *testing.T, callback func(srvURL string) string) configmap.S
 	// The server keeps the PKCE verifier in the session this cookie names.
 	mux.HandleFunc("/sapi/oauth/pkce/authorize", func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "web", r.URL.Query().Get("platform"))
+		assert.Equal(t, "true", r.URL.Query().Get("rememberme"))
 		http.SetCookie(w, &http.Cookie{Name: "JSESSIONID", Value: smsPKCE, Path: "/sapi"})
 		http.Redirect(w, r, srv.URL+"/authorize", http.StatusFound)
 	})
@@ -80,6 +82,10 @@ func newSMSServer(t *testing.T, callback func(srvURL string) string) configmap.S
 			return
 		}
 		http.SetCookie(w, &http.Cookie{Name: "validationKey", Value: testKey, Path: "/"})
+		// Scoped below "/", where a jar lookup of the root would miss it.
+		if r.URL.Query().Get("rememberme") == "true" && r.URL.Query().Get("code") == "c" {
+			http.SetCookie(w, &http.Cookie{Name: persistentLoginCookie, Value: smsPLC, Path: oauthPath})
+		}
 		http.Redirect(w, r, "/", http.StatusFound)
 	})
 
@@ -106,6 +112,7 @@ func TestConfigSMS(t *testing.T) {
 	cookies, _ := m.Get("cookies")
 	f.restoreCookies(cookies)
 	assert.Equal(t, testKey, f.validationKeyFromJar())
+	assert.True(t, f.persistentLoginPresent(), "the PLC must be stored even when scoped below the root")
 }
 
 // A redirectUri off the endpoint is refused rather than followed.
