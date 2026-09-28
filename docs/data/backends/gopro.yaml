@@ -13,7 +13,10 @@ virtual: false
 remote: 'TestGoPro:'
 features:
 - About
+- Command
+- Move
+- OpenChunkWriter
+- PublicLink
 - ReadMimeType
-- Remove
 hashes: []
-precision: 1000000000
+precision: 3153600000000000000
