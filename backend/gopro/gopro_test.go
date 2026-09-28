@@ -6,7 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"image"
+	"image/jpeg"
 	"io"
+	"math/rand/v2"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -26,6 +29,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/dirtree"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/mockobject"
@@ -77,6 +81,18 @@ const fileNameUpload = "rclone-test-image2.jpg"
 // TestIntegration runs against a real account (TestGoPro: by default). It
 // is read-only except for the Upload sub-test, which uploads and then
 // removes one small test image.
+// randomJPEG returns a JPEG no library has yet, as GoPro removes uploads
+// whose image matches media it already has
+func randomJPEG(t *testing.T) []byte {
+	img := image.NewRGBA(image.Rect(0, 0, 64, 64))
+	for i := range img.Pix {
+		img.Pix[i] = byte(rand.IntN(256))
+	}
+	var buf bytes.Buffer
+	require.NoError(t, jpeg.Encode(&buf, img, nil))
+	return buf.Bytes()
+}
+
 func TestIntegration(t *testing.T) {
 	ctx := context.Background()
 	fstest.Initialise()
@@ -357,6 +373,53 @@ func TestIntegration(t *testing.T) {
 			time.Sleep(deletePermanentDelay)
 			require.NoError(t, f.(*Fs).doDeleteMedium(ctx, gpObj.id, "permanent", "true"))
 		})
+	})
+
+	t.Run("OverwritingWithTheSameContentKeepsTheOriginal", func(t *testing.T) {
+		gf, ok := f.(*Fs)
+		require.True(t, ok)
+		const remote = "upload/rclone-test-duplicate.jpg"
+		content := randomJPEG(t)
+		src := object.NewStaticObjectInfo(remote, time.Now(), int64(len(content)), true, nil, nil)
+		start := time.Now()
+		o, err := f.Put(ctx, bytes.NewReader(content), src)
+		require.NoError(t, err)
+		oldID := o.(*Object).id
+		// Purge the original and the duplicate GoPro trashed.
+		defer func() {
+			_ = gf.deleteMedium(ctx, oldID, true)
+			gf.invalidateTrashCache()
+			trash, err := gf.allTrash(ctx)
+			require.NoError(t, err)
+			for _, m := range trash {
+				if m.Filename == path.Base(remote) && m.CreatedAt.After(start.Add(-time.Minute)) {
+					_ = gf.doDeleteMedium(ctx, m.ID, "permanent", "true")
+				}
+			}
+		}()
+
+		// GoPro only detects duplicates of media it has processed.
+		require.Eventually(t, func() bool {
+			m, err := gf.getMedium(ctx, oldID)
+			return err == nil && m.ReadyToView == "ready"
+		}, 3*time.Minute, 5*time.Second, "the original must get processed")
+
+		err = o.Update(ctx, bytes.NewReader(content), src)
+		assert.ErrorContains(t, err, "duplicate")
+		assert.Equal(t, oldID, o.(*Object).id)
+		// Past GoPro's delete delay, the original must still be there.
+		time.Sleep(30 * time.Second)
+		_, err = gf.getMedium(ctx, oldID)
+		assert.NoError(t, err, "the original must be kept")
+		entries, err := f.List(ctx, "upload")
+		require.NoError(t, err)
+		var ids []string
+		for _, e := range entries {
+			if e.Remote() == remote {
+				ids = append(ids, e.(*Object).id)
+			}
+		}
+		assert.Equal(t, []string{oldID}, ids, "the original stays listed")
 	})
 
 	t.Run("UpdateReplacesTheExistingUpload", func(t *testing.T) {
