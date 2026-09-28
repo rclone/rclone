@@ -18,6 +18,7 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"runtime"
 	"slices"
 	"sort"
 	"strconv"
@@ -550,22 +551,55 @@ func (c *listCache) invalidate() {
 	c.mu.Unlock()
 }
 
+// sharedCache is a listCache shared by refs Fs
+type sharedCache struct {
+	cache *listCache
+	refs  int
+}
+
 var (
 	listCachesMu sync.Mutex
-	listCaches   = map[string]*listCache{}
+	listCaches   = map[string]*sharedCache{}
 )
 
-// sharedListCache returns the listCache for key, so that every Fs of one
-// remote - rclone makes one per root - shares a single listing
-func sharedListCache(key string) *listCache {
+// acquireListCache returns the listCache for key, so that every Fs of one
+// remote - rclone makes one per root - shares a single listing. Each call
+// must be paired with a releaseListCache.
+func acquireListCache(key string) *listCache {
 	listCachesMu.Lock()
 	defer listCachesMu.Unlock()
 	c := listCaches[key]
 	if c == nil {
-		c = &listCache{}
+		c = &sharedCache{cache: &listCache{}}
 		listCaches[key] = c
 	}
-	return c
+	c.refs++
+	return c.cache
+}
+
+// releaseListCache drops a reference taken by acquireListCache, freeing
+// the listing once no Fs uses it
+func releaseListCache(key string) {
+	listCachesMu.Lock()
+	defer listCachesMu.Unlock()
+	if c := listCaches[key]; c != nil {
+		c.refs--
+		if c.refs <= 0 {
+			delete(listCaches, key)
+		}
+	}
+}
+
+// useSharedListCaches points f at the shared listCaches for mediaKey and
+// trashKey, releasing them once f is garbage collected - long-running
+// processes like rclone rc create many short-lived Fs.
+func (f *Fs) useSharedListCaches(mediaKey, trashKey string) {
+	f.media = acquireListCache(mediaKey)
+	f.trash = acquireListCache(trashKey)
+	runtime.AddCleanup(f, func(keys [2]string) {
+		releaseListCache(keys[0])
+		releaseListCache(keys[1])
+	}, [2]string{mediaKey, trashKey})
 }
 
 // dlCacheEntry caches a download descriptor, which carries short-lived
@@ -756,8 +790,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		dlCache:   map[string]*dlCacheEntry{},
 		uploaded:  dirtree.New(),
 	}
-	f.media = sharedListCache("media:" + name + "?" + f.searchParams().Encode())
-	f.trash = sharedListCache("trash:" + name)
+	f.useSharedListCaches("media:"+name+"?"+f.searchParams().Encode(), "trash:"+name)
 	// upload/ always exists, even with nothing uploaded to it yet. Seed its
 	// listing when this Fs is at the top level; an Fs rooted at upload already
 	// uses the empty key for its own root and must not gain upload/upload.
@@ -1604,8 +1637,13 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	o := &Object{fs: f, remote: src.Remote()}
-	return o, o.Update(ctx, in, src, options...)
+	o := &Object{fs: f, remote: src.Remote(), bytes: -1}
+	if err := o.Update(ctx, in, src, options...); err != nil {
+		// Update only records a medium once it's stored, so there's
+		// nothing to return.
+		return nil, err
+	}
+	return o, nil
 }
 
 // Mkdir creates the upload directory if it doesn't exist; every other
@@ -1636,16 +1674,24 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 // Rmdir removes an empty upload directory; every other directory in the
 // tree is synthetic and can't be removed.
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	_, _, pattern := patterns.match(f.root, dir, false)
+	match, prefix, pattern := patterns.match(f.root, dir, false)
 	if pattern == nil {
 		return fs.ErrorDirNotFound
 	}
 	if pattern.isUpload {
+		if match[0] == "upload" {
+			// upload/ itself always exists.
+			return errCantRmdir
+		}
 		f.uploadedMu.Lock()
 		defer f.uploadedMu.Unlock()
-		dirPath := strings.Trim(dir, "/")
+		dirPath := strings.Trim(prefix, "/")
+		entries, ok := f.uploaded[dirPath]
+		if !ok {
+			return fs.ErrorDirNotFound
+		}
 		// dirtree.Prune doesn't check for emptiness itself.
-		if len(f.uploaded[dirPath]) > 0 {
+		if len(entries) > 0 {
 			return fs.ErrorDirectoryNotEmpty
 		}
 		return f.uploaded.Prune(map[string]bool{dirPath: true})
@@ -1841,6 +1887,10 @@ func withExtLike(ext, like string) string {
 	}
 	return strings.ToLower(ext)
 }
+
+// errNoMedium is returned for an Object with no medium behind it, such as
+// one a failed upload left, rather than sending an empty medium id
+var errNoMedium = fmt.Errorf("gopro: no medium stored: %w", fs.ErrorObjectNotFound)
 
 // isNotFound reports whether err is a 404 from the API
 func isNotFound(err error) bool {
@@ -2089,6 +2139,9 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 // by-year/by-month/by-day directories are based on. All items of a
 // multi-item medium share it.
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
+	if o.id == "" {
+		return errNoMedium
+	}
 	if err := o.fs.updateMedium(ctx, o.id, api.MediumUpdate{CapturedAt: &modTime}); err != nil {
 		return err
 	}
@@ -2106,6 +2159,9 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	if err := o.readMetaData(ctx); err != nil {
 		fs.Debugf(o, "Open: Failed to read metadata: %v", err)
 		return nil, err
+	}
+	if o.id == "" {
+		return nil, errNoMedium
 	}
 	dl, err := o.fs.getDownload(ctx, o.id)
 	if err != nil {
@@ -2241,6 +2297,9 @@ func (f *Fs) deleteReplaced(ctx context.Context, id string) {
 // --gopro-trashed-only the object is already in the trash, where a plain
 // delete fails, so it's purged directly.
 func (o *Object) Remove(ctx context.Context) error {
+	if o.id == "" {
+		return errNoMedium
+	}
 	if o.isPart() {
 		if !o.deletesWhole() {
 			return o.removePart(ctx)

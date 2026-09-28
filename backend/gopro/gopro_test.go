@@ -13,6 +13,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -1598,6 +1599,36 @@ func newTestUploadFs(root string) *Fs {
 	return f
 }
 
+func TestFailedPutReturnsNoObject(t *testing.T) {
+	ctx := context.Background()
+	f := newTestUploadFs("")
+	src := mockobject.New("media/all/x.mp4").WithContent([]byte("x"), mockobject.SeekModeRegular)
+	o, err := f.Put(ctx, bytes.NewReader([]byte("x")), src)
+	assert.ErrorIs(t, err, errCantUpload)
+	assert.Nil(t, o, "no medium was created, so there is no object to return")
+}
+
+func TestObjectWithoutMediumIsRefused(t *testing.T) {
+	ctx := context.Background()
+	var requests []string
+	f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests = append(requests, r.Method+" "+r.URL.String())
+		http.Error(w, "unexpected", http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+	f.opt.UseTrash = true
+	f.root = ""
+	f.uploaded["upload"] = nil
+	// What a failed Update leaves behind: an object with no medium.
+	o := &Object{fs: f, remote: "upload/x.mp4"}
+
+	assert.ErrorIs(t, o.Remove(ctx), fs.ErrorObjectNotFound)
+	assert.ErrorIs(t, o.SetModTime(ctx, startTime), fs.ErrorObjectNotFound)
+	_, err := o.Open(ctx)
+	assert.ErrorIs(t, err, fs.ErrorObjectNotFound)
+	assert.Empty(t, requests, "nothing may be sent for an empty medium id")
+}
+
 func TestMkdirRmdirListUploads(t *testing.T) {
 	f := newTestUploadFs("")
 	ctx := context.Background()
@@ -1655,6 +1686,39 @@ func TestMkdirRmdirListUploads(t *testing.T) {
 	t.Run("listing an unknown directory is ErrorDirNotFound", func(t *testing.T) {
 		_, err := f.List(ctx, "not-a-real-directory")
 		assert.Equal(t, fs.ErrorDirNotFound, err)
+	})
+}
+
+func TestRmdirOnlyRemovesExistingUploadSubdirectories(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("a directory that was never created is ErrorDirNotFound", func(t *testing.T) {
+		f := newTestUploadFs("")
+		assert.ErrorIs(t, f.Rmdir(ctx, "upload/never-created"), fs.ErrorDirNotFound)
+		assert.ErrorIs(t, f.Rmdir(ctx, "upload/a/b"), fs.ErrorDirNotFound)
+	})
+
+	for _, tc := range []struct{ root, dir string }{
+		{"", "upload"},
+		{"upload", ""},
+	} {
+		t.Run(fmt.Sprintf("the upload root can't be removed (root %q)", tc.root), func(t *testing.T) {
+			f := newTestUploadFs(tc.root)
+			assert.Equal(t, errCantRmdir, f.Rmdir(ctx, tc.dir))
+			entries, err := f.List(ctx, tc.dir)
+			require.NoError(t, err, "the upload root must still list")
+			assert.Empty(t, entries)
+		})
+	}
+
+	t.Run("an upload subdirectory under an Fs rooted at upload", func(t *testing.T) {
+		f := newTestUploadFs("upload")
+		require.NoError(t, f.Mkdir(ctx, "dir"))
+		require.NoError(t, f.Rmdir(ctx, "dir"))
+		assert.ErrorIs(t, f.Rmdir(ctx, "dir"), fs.ErrorDirNotFound, "it's gone now")
+		entries, err := f.List(ctx, "")
+		require.NoError(t, err)
+		assert.Empty(t, entries)
 	})
 }
 
@@ -4115,4 +4179,35 @@ func TestCloseFinalizationFailurePreventsRegistration(t *testing.T) {
 		w := &gpChunkWriter{f: f, derivativeID: "der1", uploadID: "up1", mediumID: "med1", remote: "upload/x.mp4"}
 		assert.Error(t, w.Close(context.Background()))
 	})
+}
+
+func TestSharedListCachesAreReleasedWithTheirFs(t *testing.T) {
+	count := func() int {
+		listCachesMu.Lock()
+		defer listCachesMu.Unlock()
+		return len(listCaches)
+	}
+	before := count()
+
+	keep, other := &Fs{}, &Fs{}
+	keep.useSharedListCaches("media:keep?", "trash:keep")
+	other.useSharedListCaches("media:keep?", "trash:keep")
+	assert.Same(t, keep.media, other.media, "Fs of one remote share its listing")
+	assert.Same(t, keep.trash, other.trash)
+
+	for i := range 1000 {
+		f := &Fs{}
+		f.useSharedListCaches("media:short-lived-"+strconv.Itoa(i)+"?", "trash:short-lived-"+strconv.Itoa(i))
+	}
+	other = nil
+	assert.Eventually(t, func() bool {
+		runtime.GC()
+		return count() == before+2
+	}, 10*time.Second, 10*time.Millisecond, "the caches of unreachable Fs must be released")
+
+	again := &Fs{}
+	again.useSharedListCaches("media:keep?", "trash:keep")
+	assert.Same(t, keep.media, again.media, "a cache still in use stays shared")
+	runtime.KeepAlive(keep)
+	runtime.KeepAlive(again)
 }
