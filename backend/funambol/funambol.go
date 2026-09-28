@@ -305,6 +305,7 @@ func (f *Fs) callJSON(ctx context.Context, opts *rest.Opts, request, response an
 			}
 			var ae *api.Error
 			if errors.As(err, &ae) && (resp != nil && resp.StatusCode == http.StatusUnauthorized || isReauthCode(ae.Code)) {
+				fs.Debugf(f, "session expired: %s (persistent login cookie present: %v)", ae.Code, f.persistentLoginPresent())
 				return errReconnect(f.name)
 			}
 			return wrapFatal(err)
