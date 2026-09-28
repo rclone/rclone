@@ -1548,6 +1548,14 @@ func downloadExtension(item *api.Medium) string {
 // number or ID suffix: its filename, with the extension from photoExt.
 func mediumLeaf(f *Fs, item *api.Medium) string {
 	leaf := f.opt.Enc.ToStandardName(item.Filename)
+	if isEditType(item.Type) {
+		// An edit's filename is the title given in GoPro's app, which
+		// may contain dots, so it's kept whole.
+		if strings.EqualFold(path.Ext(leaf), ".mp4") {
+			return leaf
+		}
+		return leaf + ".mp4"
+	}
 	return strings.TrimSuffix(leaf, path.Ext(leaf)) + photoExt(item)
 }
 
@@ -1560,6 +1568,8 @@ func mediumLeaf(f *Fs, item *api.Medium) string {
 func photoExt(item *api.Medium) string {
 	ext := path.Ext(item.Filename)
 	switch {
+	case isEditType(item.Type):
+		return "." + downloadExtension(item)
 	case ext == "" && downloadExtension(item) != "":
 		return "." + downloadExtension(item)
 	case strings.EqualFold(ext, ".gpr") && hasRaw(item) && item.FileExtension != "":
@@ -1944,6 +1954,13 @@ func (f *Fs) getDownload(ctx context.Context, id string) (*api.DownloadResponse,
 // shrink it.
 var sizeCheckTimeout = time.Minute
 
+// forgetDownload drops the cached download descriptor of medium id
+func (f *Fs) forgetDownload(id string) {
+	f.dlCacheMu.Lock()
+	delete(f.dlCache, id)
+	f.dlCacheMu.Unlock()
+}
+
 // Size returns the size of an object in bytes
 //
 // file_size from the API can be stale, which breaks multi-thread
@@ -2190,6 +2207,24 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	if o.id == "" {
 		return nil, errNoMedium
 	}
+	resp, err := o.download(ctx, options)
+	var apiErr *api.Error
+	if errors.As(err, &apiErr) && apiErr.Status == http.StatusForbidden {
+		// The CDN refuses signed URLs once they expire, which a cached
+		// download descriptor's may have - try once with a fresh one.
+		fs.Debugf(o, "Open: fetching a fresh download URL after: %v", err)
+		o.fs.forgetDownload(o.id)
+		resp, err = o.download(ctx, options)
+	}
+	if err != nil {
+		return nil, err
+	}
+	o.fixSize(resp)
+	return resp.Body, nil
+}
+
+// download starts downloading o
+func (o *Object) download(ctx context.Context, options []fs.OpenOption) (*http.Response, error) {
 	dl, err := o.fs.getDownload(ctx, o.id)
 	if err != nil {
 		return nil, err
@@ -2208,11 +2243,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		resp, err = o.fs.unAuth.Call(ctx, &opts)
 		return shouldRetry(ctx, resp, err)
 	})
-	if err != nil {
-		return nil, err
-	}
-	o.fixSize(resp)
-	return resp.Body, nil
+	return resp, err
 }
 
 // fixSize resolves o.bytes from a download response, if Size hasn't

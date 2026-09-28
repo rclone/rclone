@@ -2755,6 +2755,74 @@ func TestSizeVerifyOffNeverChecks(t *testing.T) {
 	assert.Equal(t, int64(999), o.Size())
 }
 
+// newTestExpiringFs serves download descriptors pointing at /expired
+// (403) until fresh is set, then at /fresh, which records the Range it got
+func newTestExpiringFs(t *testing.T) (f *Fs, srv *httptest.Server, descriptors *int, fresh *bool, ranges *[]string) {
+	descriptors, fresh, ranges = new(int), new(bool), &[]string{}
+	var mu sync.Mutex
+	f, srv = newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		defer mu.Unlock()
+		switch r.URL.Path {
+		case "/expired":
+			http.Error(w, "<Error><Code>AccessDenied</Code><Message>Request has expired</Message></Error>", http.StatusForbidden)
+		case "/fresh":
+			*ranges = append(*ranges, r.Header.Get("Range"))
+			_, _ = io.WriteString(w, "hello")
+		default:
+			*descriptors++
+			url := srv.URL + "/expired"
+			if *fresh {
+				url = srv.URL + "/fresh"
+			}
+			dl := api.DownloadResponse{}
+			dl.Embedded.Variations = []api.File{{Label: "source", URL: url}}
+			writeJSON(t, w, dl)
+		}
+	}))
+	return f, srv, descriptors, fresh, ranges
+}
+
+func TestOpenRefreshesAnExpiredDownloadURL(t *testing.T) {
+	ctx := context.Background()
+	newObject := func(f *Fs) *Object {
+		return &Object{fs: f, id: "video", remote: "media/all/clip.mp4", itemNumber: 1, itemCount: 1, modTime: startTime, bytes: 5}
+	}
+
+	t.Run("a cached URL GoPro no longer accepts is fetched again", func(t *testing.T) {
+		f, srv, descriptors, fresh, ranges := newTestExpiringFs(t)
+		defer srv.Close()
+		// Cache a descriptor with the expired URL, then serve fresh ones.
+		_, err := f.getDownload(ctx, "video")
+		require.NoError(t, err)
+		*fresh = true
+		rc, err := newObject(f).Open(ctx, &fs.RangeOption{Start: 1, End: 3})
+		require.NoError(t, err)
+		body, err := io.ReadAll(rc)
+		require.NoError(t, rc.Close())
+		require.NoError(t, err)
+		assert.Equal(t, "hello", string(body))
+		assert.Equal(t, 2, *descriptors, "one fresh descriptor")
+		assert.Equal(t, []string{"bytes=1-3"}, *ranges, "the retry keeps the options")
+
+		// The fresh descriptor replaced the cached one.
+		rc, err = newObject(f).Open(ctx)
+		require.NoError(t, err)
+		require.NoError(t, rc.Close())
+		assert.Equal(t, 2, *descriptors)
+	})
+
+	t.Run("it's retried only once", func(t *testing.T) {
+		f, srv, descriptors, _, _ := newTestExpiringFs(t)
+		defer srv.Close()
+		_, err := newObject(f).Open(ctx)
+		var apiErr *api.Error
+		require.ErrorAs(t, err, &apiErr)
+		assert.Equal(t, http.StatusForbidden, apiErr.Status)
+		assert.Equal(t, 2, *descriptors)
+	})
+}
+
 func TestOpenDownloadsContentAndFixesSize(t *testing.T) {
 	var srv *httptest.Server
 	want := []byte("the actual file contents")
@@ -2927,6 +2995,29 @@ func TestUploadedRawReadsBackTheRaw(t *testing.T) {
 			assert.Len(t, *deletes, 1)
 		})
 	}
+}
+
+func TestEditsAreNamedAsTheirRenderedVideo(t *testing.T) {
+	f := newTestMediaFs(nil)
+	for _, tc := range []struct{ filename, want string }{
+		{"", ".mp4"},
+		{"Summer", "Summer.mp4"},
+		{"holiday.mp4", "holiday.mp4"},
+		{"holiday.MP4", "holiday.MP4"},
+		// An edit's filename is the title given in GoPro's app, which
+		// may contain dots or name the Edit Decision List.
+		{"holiday.json", "holiday.json.mp4"},
+		{"Trip v1.5", "Trip v1.5.mp4"},
+	} {
+		for _, typ := range []string{"MultiClipEdit", "Edit"} {
+			item := &api.Medium{ID: "e", Filename: tc.filename, FileExtension: "json", Type: typ}
+			assert.Equal(t, tc.want, mediumLeaf(f, item), "%s %q", typ, tc.filename)
+			o := &Object{fs: f}
+			o.setMetaData(item, 1)
+			assert.Equal(t, "video/mp4", o.mimeType, "%s %q", typ, tc.filename)
+		}
+	}
+	assert.Equal(t, "notes.json", mediumLeaf(f, &api.Medium{Filename: "notes.json", Type: "Video"}), "only edits")
 }
 
 func TestCheckPhotoFormat(t *testing.T) {
