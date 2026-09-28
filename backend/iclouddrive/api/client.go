@@ -25,6 +25,15 @@ const (
 	authEndpoint  = "https://idmsa.apple.com/appleauth/auth"
 )
 
+type endpoints struct{ base, setup, auth string }
+
+func endpointsForDomain(domain string) endpoints {
+	if strings.EqualFold(domain, "iCloud.com.cn") {
+		return endpoints{"https://www.icloud.com.cn", "https://setup.icloud.com.cn/setup/ws/1", "https://idmsa.apple.com.cn/appleauth/auth"}
+	}
+	return endpoints{baseEndpoint, setupEndpoint, authEndpoint}
+}
+
 // Webservice keys in AccountInfo.Webservices map
 const (
 	WsDrive  = "drivews"
@@ -126,16 +135,16 @@ func (c *Client) Authenticate(ctx context.Context) error {
 func (c *Client) authenticateSession(ctx context.Context) error {
 	// Skip /validate round-trip when saved session has cookies + service endpoints
 	// Native client behavior: use cached session, reauth lazily on 401/421
-	if c.Session.Cookies != nil && len(c.Session.AccountInfo.Webservices) > 0 {
+	if len(c.Session.Cookies) > 0 && len(c.Session.AccountInfo.Webservices) > 0 {
 		fs.Debugf(nil, "iclouddrive: reusing saved session")
 		return nil
 	}
 	// Try loading cached service endpoints to avoid /validate round-trip (~5s)
-	if c.Session.Cookies != nil && c.loadCachedWebservices() {
+	if len(c.Session.Cookies) > 0 && c.loadCachedWebservices() {
 		fs.Debugf(nil, "iclouddrive: reusing session with cached endpoints")
 		return nil
 	}
-	if c.Session.Cookies != nil {
+	if len(c.Session.Cookies) > 0 {
 		if err := c.Session.ValidateSession(ctx); err == nil {
 			fs.Debugf(nil, "iclouddrive: valid session, no need to reauth")
 			c.saveCachedWebservices()
@@ -145,24 +154,29 @@ func (c *Client) authenticateSession(ctx context.Context) error {
 	}
 
 	fs.Debugf(nil, "iclouddrive: authenticating")
-	err := c.Session.SignIn(ctx, c.appleID, c.password)
-	if err != nil {
-		return err
-	}
-
-	// If 2FA is required, skip AuthWithToken - caller must complete 2FA first
-	if c.Session.Requires2FA() {
-		return nil
-	}
-
-	err = c.Session.AuthWithToken(ctx)
-	if err == nil {
-		c.saveCachedWebservices()
-		if c.sessionSaveCallback != nil {
-			c.sessionSaveCallback(c.Session)
+	for range 2 {
+		if err := c.Session.SignIn(ctx, c.appleID, c.password); err != nil {
+			return err
 		}
+		// The caller completes 2FA before accountLogin.
+		if c.Session.Requires2FA() {
+			return nil
+		}
+		err := c.Session.AuthWithToken(ctx)
+		if err == nil {
+			c.saveCachedWebservices()
+			if c.sessionSaveCallback != nil {
+				c.sessionSaveCallback(c.Session)
+			}
+			return nil
+		}
+		if !errors.Is(err, ErrDomainChanged) {
+			return err
+		}
+		c.Session.Cookies = nil
+		c.Session.AccountInfo = AccountInfo{}
 	}
-	return err
+	return errors.New("iCloud account domain changed repeatedly")
 }
 
 // loadCachedWebservices loads service endpoints from disk cache
