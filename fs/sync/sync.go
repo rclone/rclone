@@ -1271,7 +1271,13 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 				// No need to check since doesn't exist
 				fs.Debugf(src, "Need to transfer - File not found at Destination")
 				s.markDirModifiedObject(x)
-				ok := s.toBeChecked.Put(s.inCtx, fs.ObjectPair{Src: x, Dst: nil})
+				var out *pipe
+				if s.ci.PrepareChecksumInChecker {
+					out = s.toBeChecked
+				} else {
+					out = s.toBeUploaded
+				}
+				ok := out.Put(s.inCtx, fs.ObjectPair{Src: x, Dst: nil})
 				if !ok {
 					return
 				}
