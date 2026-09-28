@@ -173,7 +173,7 @@ const (
 	collectionsAcceptHeader = "application/vnd.gopro.jk.collections+json; version=2.0.0"
 
 	// mediaFields is the set of /media/search fields this backend reads.
-	mediaFields = "id,filename,file_extension,type,captured_at,created_at,file_size,width,height,camera_model,item_count,moments_count,ready_to_view,token,content_title,resolution,reprocessed_at,available_labels"
+	mediaFields = "id,filename,file_extension,type,captured_at,created_at,file_size,width,height,camera_model,item_count,moments_count,ready_to_view,token,content_title,resolution,reprocessed_at,available_labels,composition"
 
 	// includedTypes is the type filter for camera media - see mediaTypes.
 	includedTypes = "Photo,Video,TimeLapse,TimeLapseVideo,Burst,BurstVideo,Chaptered,Continuous,Livestream,Looped,LoopedVideo,ExternalVideo,Session,Audio"
@@ -1022,6 +1022,29 @@ func (f *Fs) processingStates() string {
 	return strings.Join(states, ",")
 }
 
+// skipsNullSize reports whether listDir skips item for its null file_size.
+// Beyond edits (which always have one) there is no usable size or content
+// to list. The trash and --gopro-show-all/--gopro-include-failed list it
+// anyway, as there it's shown to be restored, inspected or removed.
+func (f *Fs) skipsNullSize(item *api.Medium) bool {
+	return item.FileSize == nil && !isEditType(item.Type) && !f.opt.ShowAll && !f.opt.TrashedOnly &&
+		!(f.opt.IncludeFailed && isFailedState(item.ReadyToView))
+}
+
+// inListing reports whether the active library's listings include item,
+// applying the filters /media/search applies (see searchParams) as well
+// as listDir's own
+func (f *Fs) inListing(item *api.Medium) bool {
+	if !f.opt.ShowAll {
+		if !slices.Contains(strings.Split(f.mediaTypes(), ","), item.Type) ||
+			!slices.Contains(strings.Split(f.processingStates(), ","), item.ReadyToView) ||
+			item.Composition == "export" {
+			return false
+		}
+	}
+	return !f.skipsNullSize(item)
+}
+
 // listedMedia returns what the media/ listings show: the cached trash
 // under --gopro-trashed-only, otherwise the cached library.
 func (f *Fs) listedMedia(ctx context.Context) ([]api.Medium, error) {
@@ -1401,12 +1424,7 @@ func (f *Fs) listDir(ctx context.Context, prefix string, filter mediaFilter) (en
 		if !filter.matches(item.CapturedAt) {
 			continue
 		}
-		if item.FileSize == nil && !isEditType(item.Type) && !f.opt.ShowAll && !f.opt.TrashedOnly &&
-			!(f.opt.IncludeFailed && isFailedState(item.ReadyToView)) {
-			// Beyond edits (which always have a null file_size) there is no
-			// usable size or content to list here. The trash and
-			// --gopro-show-all/--gopro-include-failed list it anyway, as
-			// there it's shown to be restored, inspected or removed.
+		if f.skipsNullSize(item) {
 			fs.Debugf(f, "Skipping %s: ready but file_size is null", item.ID)
 			continue
 		}
@@ -1986,7 +2004,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	}
 	dir, fileName := path.Split(o.remote)
 	dir = strings.Trim(dir, "/")
-	_, _, pattern := patterns.match(o.fs.root, o.remote, true)
+	match, _, pattern := patterns.match(o.fs.root, o.remote, true)
 	if pattern == nil {
 		return fs.ErrorObjectNotFound
 	}
@@ -1994,19 +2012,26 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 		return fs.ErrorNotAFile
 	}
 	// With an {id} suffix, fetch the medium directly - but only trust it
-	// if its own name (or its RAW's), suffixed the same way, is exactly
-	// fileName, since a renamed file can end in any id. Only item 1 of a
-	// multi-item medium can match; the others fall through to the listing.
-	// GET /media/{id} 404s for trashed media, so this is skipped under
-	// --gopro-trashed-only.
-	if id := findID(fileName); id != "" && o.fs.opt.AlwaysAddID && !o.fs.opt.TrashedOnly {
+	// if the listing of this directory would show it under exactly this
+	// name, since a renamed file can end in any id, and rclone takes the
+	// same medium found under another path for a different file. Only
+	// item 1 of a multi-item medium can match; the others fall through to
+	// the listing. upload/ only lists this run's uploads, and GET
+	// /media/{id} 404s for trashed media, so neither uses this.
+	if id := findID(fileName); id != "" && o.fs.opt.AlwaysAddID && !o.fs.opt.TrashedOnly && !pattern.isUpload {
+		filter, err := viewFilter(match)
+		if err != nil {
+			return fs.ErrorObjectNotFound
+		}
 		item, err := o.fs.getMedium(ctx, id)
+		inView := err == nil && o.fs.inListing(item) && filter.matches(item.CapturedAt)
 		switch {
 		case isNotFound(err):
 			// Deleted or trashed since it was listed - let the listing
 			// below decide, which reports fs.ErrorObjectNotFound.
 		case err != nil:
 			return err
+		case !inView:
 		case o.fs.listPhoto(item) && expectedIDSuffixedName(o.fs, item) == fileName:
 			o.setMetaData(item, 1)
 			return nil

@@ -30,6 +30,8 @@ type Medium struct {
 	Token         string    `json:"token"`
 	ContentTitle  string    `json:"content_title"`
 	Resolution    string    `json:"resolution"`
+	// Composition is "export" for renders made for sharing
+	Composition string `json:"composition"`
 	// AvailableLabels names the renditions and sidecar files GoPro has
 	// for this medium, e.g. "raw_photo" for a photo shot with RAW.
 	AvailableLabels []string `json:"available_labels"`

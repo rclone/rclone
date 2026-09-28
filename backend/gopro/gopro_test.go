@@ -3058,7 +3058,8 @@ func newTestRawFs(t *testing.T, id string, gone bool) (f *Fs, srv *httptest.Serv
 			http.Error(w, "not found", http.StatusNotFound)
 			return
 		}
-		writeJSON(t, w, api.Medium{ID: id, Filename: "GP012013.JPG", FileExtension: "jpg", Type: "Photo", ItemCount: 1, AvailableLabels: rawPhotoLabels})
+		size := int64(100)
+		writeJSON(t, w, api.Medium{ID: id, Filename: "GP012013.JPG", FileExtension: "jpg", Type: "Photo", ReadyToView: "ready", FileSize: &size, ItemCount: 1, AvailableLabels: rawPhotoLabels})
 	})
 	mux.HandleFunc("GET /media/"+id+"/download", func(w http.ResponseWriter, r *http.Request) {
 		dl := makeDownloadResponse([]testFile{{url: srv.URL + "/1.jpg", itemNumber: 1}}, []testFile{{url: srv.URL + "/1.jpg", label: "source"}})
@@ -3170,13 +3171,103 @@ func TestReadMetaDataRejectsAnUnmatchedPath(t *testing.T) {
 	assert.Equal(t, fs.ErrorObjectNotFound, err)
 }
 
+// listedVideo is a medium as the active library lists it by default
+func listedVideo(id, filename string) api.Medium {
+	size := int64(5)
+	return api.Medium{ID: id, Filename: filename, FileExtension: "mp4", Type: "Video", ReadyToView: "ready", FileSize: &size, ItemCount: 1, CapturedAt: time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)}
+}
+
+func TestReadMetaDataFastPathFollowsTheListing(t *testing.T) {
+	const id = "111111111111111111111111"
+	leaf := "clip {" + id + "}.mp4"
+	for _, tc := range []struct {
+		name   string
+		remote string
+		edit   func(m *api.Medium)
+		opt    func(o *Options)
+		found  bool
+	}{
+		{name: "media/all", remote: "media/all/" + leaf, found: true},
+		{name: "its own year", remote: "media/by-year/2025/" + leaf, found: true},
+		{name: "its own day", remote: "media/by-day/2025/2025-01-01/" + leaf, found: true},
+		{name: "another year", remote: "media/by-year/2026/" + leaf},
+		{name: "another month", remote: "media/by-month/2025/2025-02/" + leaf},
+		{name: "another day", remote: "media/by-day/2025/2025-01-02/" + leaf},
+		{name: "under upload/", remote: "upload/" + leaf},
+		{name: "an edit without include_edits", remote: "media/all/" + leaf, edit: func(m *api.Medium) { m.Type = "MultiClipEdit" }},
+		{name: "an edit with include_edits", remote: "media/all/" + leaf, edit: func(m *api.Medium) { m.Type = "MultiClipEdit" }, opt: func(o *Options) { o.IncludeEdits = true }, found: true},
+		{name: "still processing", remote: "media/all/" + leaf, edit: func(m *api.Medium) { m.ReadyToView = "transcoding" }},
+		{name: "still processing with include_processing", remote: "media/all/" + leaf, edit: func(m *api.Medium) { m.ReadyToView = "transcoding" }, opt: func(o *Options) { o.IncludeProcessing = true }, found: true},
+		{name: "an export", remote: "media/all/" + leaf, edit: func(m *api.Medium) { m.Composition = "export" }},
+		{name: "an export with show_all", remote: "media/all/" + leaf, edit: func(m *api.Medium) { m.Composition = "export" }, opt: func(o *Options) { o.ShowAll = true }, found: true},
+		{name: "a null file_size", remote: "media/all/" + leaf, edit: func(m *api.Medium) { m.FileSize = nil }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			item := listedVideo(id, "clip.mp4")
+			if tc.edit != nil {
+				tc.edit(&item)
+			}
+			f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				writeJSON(t, w, item)
+			}))
+			defer srv.Close()
+			f.opt.AlwaysAddID = true
+			if tc.opt != nil {
+				tc.opt(&f.opt)
+			}
+			f.media = cachedList([]api.Medium{}) // so only the fast path can find it
+			_, err := f.NewObject(context.Background(), tc.remote)
+			if tc.found {
+				assert.NoError(t, err)
+			} else {
+				assert.Equal(t, fs.ErrorObjectNotFound, err, "the fast path must not find what the listing doesn't show")
+			}
+		})
+	}
+}
+
+// TestMoveFileToAnotherDateRedatesInsteadOfDeleting drives rclone's own
+// moveto: a destination under another date must not resolve to the
+// source medium itself, or rclone takes the source for an already
+// transferred copy and deletes it.
+func TestMoveFileToAnotherDateRedatesInsteadOfDeleting(t *testing.T) {
+	ctx := context.Background()
+	const id = "111111111111111111111111"
+	item := listedVideo(id, "clip.mp4")
+	var deleted bool
+	var update api.MediumUpdate
+	f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodDelete:
+			deleted = true
+			writeJSON(t, w, api.DeleteResponse{})
+		case http.MethodPut:
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&update))
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			writeJSON(t, w, item)
+		}
+	}))
+	defer srv.Close()
+	f.name = "moveto-test"
+	f.opt.AlwaysAddID = true
+	f.opt.UseTrash = true
+	f.features = (&fs.Features{Move: f.Move}).Fill(ctx, f)
+	f.media = cachedList([]api.Medium{item})
+	err := operations.MoveFile(ctx, f, f, "media/by-year/2026/clip {"+id+"}.mp4", "media/by-year/2025/clip {"+id+"}.mp4")
+	require.NoError(t, err)
+	assert.False(t, deleted, "moveto must not delete its source")
+	require.NotNil(t, update.CapturedAt)
+	assert.Equal(t, 2026, update.CapturedAt.Year())
+}
+
 func TestReadMetaDataIDFastPath(t *testing.T) {
 	id := "68b22325df3cf752557ac6d7"
 
 	t.Run("a name that reconstructs exactly is trusted without listing", func(t *testing.T) {
 		f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, "/media/"+id, r.URL.Path)
-			writeJSON(t, w, api.Medium{ID: id, Filename: "GX010294.MP4", ItemCount: 1})
+			writeJSON(t, w, listedVideo(id, "GX010294.MP4"))
 		}))
 		defer srv.Close()
 		f.opt.AlwaysAddID = true
@@ -3190,7 +3281,7 @@ func TestReadMetaDataIDFastPath(t *testing.T) {
 		var getMediumCalls int
 		f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			getMediumCalls++
-			writeJSON(t, w, api.Medium{ID: id, Filename: "totally-different-name.mp4", ItemCount: 1})
+			writeJSON(t, w, listedVideo(id, "totally-different-name.mp4"))
 		}))
 		defer srv.Close()
 		f.opt.AlwaysAddID = true
@@ -3212,7 +3303,7 @@ func TestReadMetaDataIDFastPath(t *testing.T) {
 				http.Error(w, "not found", http.StatusNotFound)
 				return
 			}
-			writeJSON(t, w, api.Medium{ID: id, Filename: "note {" + unrelatedID + "} clip.mp4", ItemCount: 1})
+			writeJSON(t, w, listedVideo(id, "note {"+unrelatedID+"} clip.mp4"))
 		}))
 		defer srv.Close()
 		f.opt.AlwaysAddID = true

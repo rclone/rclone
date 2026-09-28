@@ -328,6 +328,15 @@ func daysPresent(ctx context.Context, f lister, year int) (map[int]bool, error) 
 	return present, nil
 }
 
+// viewFilter builds the mediaFilter of the media/ directory a file pattern
+// matched - its captured groups other than the trailing leaf
+func viewFilter(match []string) (mediaFilter, error) {
+	if len(match) <= 2 {
+		return mediaFilter{}, nil // media/all
+	}
+	return yearMonthDayFilter(match[:len(match)-1])
+}
+
 // yearMonthDayFilter builds a mediaFilter from the year[/month[/day]]
 // captured by a by-year/by-month/by-day pattern
 func yearMonthDayFilter(match []string) (mf mediaFilter, err error) {
