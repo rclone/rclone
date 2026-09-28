@@ -402,15 +402,22 @@ func TestIntegration(t *testing.T) {
 		newID := o.(*Object).id
 		assert.NotEqual(t, oldID, newID, "Update must upload a new medium")
 
-		_, err = gf.getMedium(ctx, oldID)
-		assert.True(t, isNotFound(err), "the replaced medium must be gone from the library, got %v", err)
-		trash, err := gf.allTrash(ctx)
-		require.NoError(t, err)
-		var trashed bool
-		for _, m := range trash {
-			trashed = trashed || m.ID == oldID
-		}
-		assert.True(t, trashed, "with use_trash the replaced medium must be in the trash")
+		// GoPro applies a delete after a delay - typically around 15s.
+		assert.Eventually(t, func() bool {
+			_, err := gf.getMedium(ctx, oldID)
+			return isNotFound(err)
+		}, time.Minute, 5*time.Second, "the replaced medium must be gone from the library")
+		assert.Eventually(t, func() bool {
+			gf.invalidateTrashCache()
+			trash, err := gf.allTrash(ctx)
+			require.NoError(t, err)
+			for _, m := range trash {
+				if m.ID == oldID {
+					return true
+				}
+			}
+			return false
+		}, time.Minute, 5*time.Second, "with use_trash the replaced medium must be in the trash")
 
 		entries, err := f.List(ctx, "upload")
 		require.NoError(t, err)

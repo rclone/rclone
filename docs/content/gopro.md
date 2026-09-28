@@ -216,6 +216,8 @@ can be restored for 60 days (see
 [`rclone backend restore`](#restore)) and still count against the
 storage quota. Set [`--gopro-use-trash=false`](#gopro-use-trash) to
 delete permanently instead; GoPro takes about a minute to process that.
+GoPro also applies an ordinary delete with a delay - typically around 15
+seconds - so a listing straight after it may still show the file.
 
 GoPro only deletes whole items: a chaptered video, a burst, continuous or
 time lapse photo series, or a photo together with its RAW file. Its API
