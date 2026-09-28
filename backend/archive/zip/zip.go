@@ -43,6 +43,7 @@ type Fs struct {
 	prefix      string          // position for objects
 	prefixSlash string          // position for objects with a slash on
 	root        string          // position to read from within the archive
+	links       bool            // read symlinks as .rclonelink files
 	dt          dirtree.DirTree // read from zipfile
 }
 
@@ -67,6 +68,7 @@ func New(ctx context.Context, wrappedFs fs.Fs, remote, prefix, root string) (fs.
 		node:        node,
 		remote:      remote,
 		root:        root,
+		links:       fs.GetConfig(ctx).Links,
 		prefix:      prefix,
 		prefixSlash: prefix + "/",
 	}
@@ -138,6 +140,7 @@ func (f *Fs) readZip() (singleObject bool, err error) {
 	}
 	dt := dirtree.New()
 	skipped := 0
+	skippedLinks := 0
 	for _, file := range zr.File {
 		// Skip entries whose name escapes the archive's own namespace
 		remote, err := sanitize.Path(file.Name)
@@ -151,6 +154,15 @@ func (f *Fs) readZip() (singleObject bool, err error) {
 		if !isDir && sanitize.Leaf(path.Base(file.Name)) != nil {
 			skipped++
 			continue
+		}
+		if !isDir && file.Mode()&os.ModeSymlink != 0 {
+			if !f.links {
+				skippedLinks++
+				continue
+			}
+			// The member holds the link target, so it reads back
+			// like a .rclonelink file
+			remote += fs.LinkSuffix
 		}
 		remote = path.Join(f.prefix, remote)
 		if f.root != "" {
@@ -190,6 +202,9 @@ func (f *Fs) readZip() (singleObject bool, err error) {
 	}
 	if skipped > 0 {
 		fs.Logf(f, "Skipped %d zip entries which escape the archive", skipped)
+	}
+	if skippedLinks > 0 {
+		fs.Logf(f, "Skipped %d symlinks - use -l/--links to read them", skippedLinks)
 	}
 	dt.CheckParents("")
 	dt.Sort()
