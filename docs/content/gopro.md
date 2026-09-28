@@ -182,6 +182,8 @@ rather than `file_extension`, to match what's actually served. Their
 `file_size` is always null, reported the same way as the multi-item
 files above (`-1`, unknown, resolved on demand via
 [`--gopro-read-size`](#gopro-read-size)) rather than skipped.
+Auto-generated Highlights often have no filename at all; these are
+listed as `{id}.mp4`.
 
 ### Size verification
 
@@ -260,6 +262,11 @@ not just cosmetic, so treat it with the same care as
 [`SetModTime`](#modification-times-and-hashes) above. A multi-item file
 (a chaptered video or burst photo set item) can't be moved individually -
 the API renames the whole medium, not one chapter or frame of it.
+
+GoPro stores the name as both the filename and the title shown in its
+app, so a move that keeps the name (only changing the date) leaves both
+untouched. A file can't be renamed to a name with nothing before its
+extension.
 
 `Copy` and `DirMove` remain unimplemented - see "Limitations" below.
 
@@ -382,11 +389,11 @@ Properties:
 
 Which rendition to download.
 
-"source" (the default) downloads the original camera file. Any other
-value is matched against the label or quality of the renditions GoPro
-offers for that media item (for example "1080p", or a proxy label such
-as "high_res_proxy_mp4"); if no match is found the backend falls back
-to the first file offered.
+"source" (the default) downloads the original camera file, or the
+rendered video for Highlights and Edits. Any other value is matched
+against the label or quality of the renditions GoPro offers (for
+example "1080p" or "high_res_proxy_mp4"), falling back to the first
+file offered if nothing matches.
 
 Properties:
 
@@ -399,27 +406,13 @@ Properties:
 
 Include Highlights and user-made Edits in listings.
 
-On by default, matching what GoPro's own web/app library shows. These
-"MultiClipEdit"/"Edit" media are composed from other clips rather than
-being their own camera-original recording, and behave differently
-enough that it's worth knowing what this backend already does about
-it before turning this off:
+These "MultiClipEdit"/"Edit" media are rendered from other clips.
+GoPro reports no size for them, so their size is unknown unless
+[--gopro-read-size](#gopro-read-size) is set (e.g. for rclone mount).
+The rendered video is downloaded and they are listed as ".mp4" -
+unnamed auto-generated Highlights as "{id}.mp4".
 
-- file_size is always null for these - this backend reports their
-  size as unknown (like a chaptered video or burst photo set) rather
-  than skipping them, so [--gopro-read-size](#gopro-read-size) is
-  needed for an exact size (e.g. for rclone mount).
-- Their own file_extension is that of an internal Edit Decision List
-  (typically "json"), not of what's actually downloaded - GoPro
-  serves the rendered video (the "baked_source" rendition) for these,
-  not the EDL, and this backend's Content-Type follows the filename's
-  own extension (usually ".mp4") to match what's actually served.
-  Auto-generated Highlights often have no filename at all - these are
-  listed as "{id}.mp4".
-
-Turn this off if you only want camera-original recordings, or to skip
-what's often a redundant rendering of content the library already has
-natively.
+Turn this off to list only camera originals.
 
 Properties:
 
@@ -432,24 +425,10 @@ Properties:
 
 Include media GoPro hasn't finished processing yet.
 
-Off by default: only media with ready_to_view "ready" is listed, since
-that's the only state GoPro's own API documents as done. Turning this
-on also includes "uploading", "registered", "transcoding" and
-"stabilizing" - every state on the way to "ready" - but not "failure"
-or "unknown", which aren't on the way to anything.
-
-Confirmed live: a medium already has its file_size (and, in that one
-confirmed case, its camera-original file) available while
-"transcoding", not just once "ready" - "ready" mainly means every
-extra rendition (proxies, thumbnails) GoPro generates is also done,
-not that the medium is otherwise unusable before then. That's not
-confirmed for every state this option adds, though - a medium with no
-usable file_size yet (still true for at least "uploading" and
-"registered", most of the time) is still skipped by the same check
-that already skips one with file_size null for any other reason, so
-turning this on surfaces whatever's actually downloadable while still
-processing, not a guarantee that every added state has something to
-show.
+By default only media in the "ready" state is listed. This adds the
+"uploading", "registered", "transcoding" and "stabilizing" states.
+Media in these states is often downloadable already, but items with no
+file size yet are still skipped.
 
 Properties:
 
@@ -460,15 +439,10 @@ Properties:
 
 #### --gopro-include-failed
 
-Include media stuck in a "failure" or "unknown" ready_to_view state.
+Include media stuck in a "failure" or "unknown" state.
 
-Off by default, and separate from --gopro-include-processing: unlike
-that option's states, these two aren't on the way to "ready" - they're
-what a medium ends up in instead, and there's no live-confirmed
-guarantee either one has a usable file_size or rendition to serve.
-Mainly useful to see that something is stuck at all (e.g. to remove
-it) rather than to actually read its content, which may well not be
-there.
+Such media may have no usable content. This is mainly useful to find
+and remove stuck items.
 
 Properties:
 
@@ -479,29 +453,17 @@ Properties:
 
 #### --gopro-show-all
 
-Bypass every type/composition/processing filter this backend applies
-to the active library.
+List everything in the library, bypassing all filters.
 
-Off by default. With this on, /media/search is listed exactly as
-returned, with none of --gopro-include-edits,
---gopro-include-processing, --gopro-include-failed, or the
-unconditional exclusion of "export" composition media (internal
-rendered artifacts, not user content) applied - every one of those
-becomes irrelevant while this is on, active or not.
+This ignores [--gopro-include-edits](#gopro-include-edits),
+[--gopro-include-processing](#gopro-include-processing) and
+[--gopro-include-failed](#gopro-include-failed), and also lists
+"export" media (internal renders GoPro's own app never shows). It can
+surface media this backend doesn't know how to handle, so use it for
+troubleshooting rather than normal browsing.
 
-This only affects the active library - a trashed listing under
-[--gopro-trashed-only](#gopro-trashed-only) already shows everything
-unconditionally, with or without this set.
-
-This is a raw escape hatch, not a normal browsing mode: it can surface
-media types, compositions or processing states this backend has never
-been tested against, and nothing guarantees rclone can make sense of
-what comes back - at best a file with no usable size or rendition
-(already handled the same way an Edit's null file_size is elsewhere),
-at worst a confusing failure partway through a listing, download or
-sync. Turn this on to see something --gopro-include-processing and
---gopro-include-failed still don't cover, not as a default way to
-browse the library.
+It has no effect with [--gopro-trashed-only](#gopro-trashed-only),
+which always lists everything.
 
 Properties:
 
@@ -512,24 +474,11 @@ Properties:
 
 #### --gopro-show-empty-dirs
 
-Show every media/by-year, by-month and by-day directory, not just
-the ones with something in them.
+Show every media/by-year, by-month and by-day directory.
 
-Off by default: media/by-year, media/by-month and media/by-day only
-list years/months/days with at least one included item captured in
-them - cheap to check now that the whole library is cached (see
---gopro-start-year), and considerably less noisy than the fixed
-1-year-to-today range this backend used to always show regardless of
-content.
-
-Turn this on to get that full range back - mainly for scripts that
-rely on a specific by-day directory always being addressable to move
-or upload a file into it (setting its captured_at in the process, as
-this backend's Move already does) even before anything is captured on
-that day: with this off, a day with nothing in it doesn't appear in a
-listing, but a path under it is still a perfectly valid destination to
-move or upload to directly, exactly as before - this only changes what
-shows up when listing, not what's addressable.
+By default only years, months and days with media in them are listed.
+A path under an unlisted day can still be used as a move destination
+either way - this only changes what is listed.
 
 Properties:
 
@@ -542,14 +491,9 @@ Properties:
 
 Year to start media/by-year, by-month and by-day listings from.
 
-0 (the default) auto-detects it from the library's own earliest
-captured_at year, refreshed whenever the cached listing is (see
---gopro-show-empty-dirs's mention of caching) - which is also, on its
-own, almost exactly what --gopro-show-empty-dirs=false already narrows
-the range down to. Set this explicitly to widen the range on purpose
-regardless of content - together with --gopro-show-empty-dirs=true, to
-address a specific day before this account has anything in it at all,
-for example one before its own earliest media.
+0 (the default) uses the year of the earliest media in the library.
+Set it together with [--gopro-show-empty-dirs](#gopro-show-empty-dirs)
+to list earlier years.
 
 Properties:
 
@@ -562,16 +506,9 @@ Properties:
 
 Allow downloading the original file from a public share link.
 
-Off by default. Confirmed live against GoPro's own web UI: this is
-its "Allow Download" toggle when creating a share link, and enabling
-it does two things at once, not just one - per that UI's own warning
-text, if the shared file has embedded GPS data, that gets shared with
-recipients too, not just download access. GoPro's API has one field
-for both; there is no way to control them separately.
-
-Turn this on if you want recipients to be able to download the
-original file, and are fine with any embedded location data going
-out with it.
+This is the "Allow Download" toggle in GoPro's web app. GoPro ties it
+to sharing any GPS data embedded in the file, so enabling it shares
+that location data with recipients too.
 
 Properties:
 
@@ -582,14 +519,10 @@ Properties:
 
 #### --gopro-link-title
 
-Title for a public share link.
+Title for public share links.
 
-Defaults to the file's own name (its --gopro-always-add-id {id}
-suffix stripped, since that's never meant to be shown outside this
-backend) if left blank - rclone's own "rclone link" command has no
-way to pass a one-off title per call, so this is the only way to set
-one, and it applies to every link this backend creates for the
-remote's lifetime, not just the next one.
+Defaults to the file's name without its {id} suffix. As "rclone link"
+can't pass a title, this applies to every link created.
 
 Properties:
 
@@ -600,30 +533,13 @@ Properties:
 
 #### --gopro-use-trash
 
-Send deleted files to GoPro's own trash instead of deleting permanently.
+Send deleted files to GoPro's trash instead of deleting permanently.
 
-Confirmed live: without "permanent=true" on the delete request,
-GoPro only moves a medium to what its own UI calls "Recently
-Deleted" - it's not actually gone, remains recoverable there for up
-to 60 days (rclone backend restore, or GoPro's own web/app UI, can
-bring it back - see [--gopro-trashed-only](#gopro-trashed-only)),
-and still counts against your storage quota even while it sits
-there, even though every listing this backend does (and the
-medium's own record) already correctly treats it as absent.
-
-Defaults to true, matching the drive backend's --drive-use-trash and
-GoPro's own web/app default ("delete" there is also recoverable) -
-safer than a mistaken or scripted delete being unrecoverable by
-default. Set to false to skip the trash and delete permanently
-instead - matches what "rclone delete" usually means on backends
-without a trash concept at all. This costs nothing extra for
-GoPro-branded camera media specifically: it's "exempt" from any
-storage quota ("Unlimited Storage" in the account dashboard), so
-there's no space to reclaim by skipping the trash either way.
-Anything uploaded here that isn't GoPro-camera footage is
-"non_exempt" and capped instead ("Additional Storage: x/100GB" in
-the dashboard) - for that content, turning this off still trades a
-recoverable delete for an immediately-final one.
+Trashed media shows as "Recently Deleted" in GoPro's app, can be
+restored for up to 60 days (see "rclone backend restore" and
+[--gopro-trashed-only](#gopro-trashed-only)) and still counts against
+the storage quota. Media from GoPro cameras doesn't count against any
+quota, so there's nothing to gain by skipping the trash for it.
 
 Properties:
 
@@ -634,45 +550,16 @@ Properties:
 
 #### --gopro-trashed-only
 
-Only show media in GoPro's trash in listings, for restoring it.
+Only show media in GoPro's trash.
 
-Matches the drive backend's --drive-trashed-only: with this on, every
-listing under media/ shows what's currently in GoPro's "Recently
-Deleted" (see [--gopro-use-trash](#gopro-use-trash)) instead of the
-active library, so it can be inspected or copied out before GoPro
-auto-purges it (confirmed live, roughly 60 days after deletion).
+With this set, every listing under media/ shows "Recently Deleted"
+instead of the active library, including items the other filters would
+hide. Deleting a file here removes it permanently, regardless of
+[--gopro-use-trash](#gopro-use-trash). Use "rclone backend restore" to
+move it back to the library.
 
-GET /media/deleted (what this reads from) doesn't support the same
-server-side type or date-range filtering /media/search does -
-confirmed live, it always returns the entire trash regardless of
-these parameters - so this backend fetches the whole trash to narrow
-down even a single media/by-year, media/by-month or media/by-day
-listing. That fetch is cached in memory for a few minutes, so only the
-first trashed listing in a given run pays for it - the rest, however
-many different by-year/by-month/by-day views they ask for, are free.
-
-Every trashed item is shown, regardless of
-[--gopro-include-edits](#gopro-include-edits),
-[--gopro-include-processing](#gopro-include-processing),
-[--gopro-include-failed](#gopro-include-failed) or an unusable
-file_size - matching GoPro's own web/app "Recently Deleted" view, which
-applies none of its own library's filters either. The only things you
-can do with a trashed item are restore it or delete it for good, so
-there's no browsing-safety reason to hide any of it the way this
-backend hides an unfinished or unrecognised item from the active
-library by default.
-
-This changes what every listing shows, not just one path - use an
-on-the-fly connection string (e.g. ":gopro,trashed_only=true:media/all")
-rather than setting it globally in the remote's config if a normal,
-non-trashed view of the same remote is still needed side by side. To
-restore trashed media back to the active library, see "rclone backend
-restore".
-
-Deleting a file shown here (e.g. via "rclone delete") always purges it
-permanently, regardless of --gopro-use-trash - confirmed live, GoPro's
-API rejects a second ordinary delete on a medium that's already in the
-trash, so there is nothing "soft" left to do to it.
+To view the trash next to the normal library, override this per
+command, e.g. "gopro,trashed_only=true:media/all".
 
 Properties:
 
@@ -683,27 +570,13 @@ Properties:
 
 #### --gopro-always-add-id
 
-Always name files "name {id}.ext" instead of just "name.ext".
+Always add the media ID to file names, as "name {id}.ext".
 
-Without this, a file only gets its GoPro media ID appended to its name
-when it collides with another file of the same name in the same
-listing - but GoPro cameras recycle filenames constantly, so whether a
-given file collides depends on what else happens to exist at listing
-time, which can change from one run to the next with no change to the
-file itself. That makes a plain name unstable: a file uploaded earlier
-under "GX010123.MP4" can silently become "GX010123 {id}.MP4" the
-moment a second "GX010123.MP4" turns up elsewhere in the library, and
-rclone has no way to know the two names refer to the same file -
-"sync" would delete and re-transfer it under the new name, and "copy"
-would leave a stale duplicate behind under the old one, forever.
-
-On by default because that failure mode is silent and only shows up
-intermittently, on whichever run happens to introduce a colliding
-name - a normal-looking successful sync/copy today doesn't mean this
-won't bite on some future run. Turn it off only if you want clean
-names and are confident this library won't hit a same-name collision
-(a small, static library of hand-picked clips, say), or don't mind the
-occasional renamed-and-re-transferred file.
+GoPro cameras reuse file names, so names that collide within a listing
+always get the ID. Without this option whether a file collides can
+change from one run to the next, renaming it - sync then deletes and
+re-transfers it. Only turn this off for a library without duplicate
+names.
 
 Properties:
 
@@ -714,27 +587,12 @@ Properties:
 
 #### --gopro-verify-size
 
-Verify a file's size with a live request before relying on it.
+Verify file sizes with a HEAD request before relying on them.
 
-file_size from the search API can be wrong - confirmed live, a few KB
-larger than the size actually served, specifically for a video whose
-"source" rendition had been moved to colder S3 storage. A wrong size
-here does more than look odd: it fails rclone's post-transfer
-integrity check (discarding an otherwise-complete download and
-restarting it), can corrupt rclone's multi-thread downloader (which
-divides a file into ranged chunks using this size before the transfer
-starts), and makes "sync" re-download an already-correct file on every
-single run, since the sizes would never match.
-
-GoPro's API exposes no storage class or anything else that reliably
-predicts which files are affected - checked live, colder storage alone
-isn't enough, most files there still report their size correctly. The
-one thing a live account probe did find in common with the one
-affected file, out of hundreds checked, is that GoPro had reprocessed
-it after upload (a non-null reprocessed_at). That's a single data
-point, not a proven rule, but it's free to check - the same listing
-already fetches it - so it's the default: cheaper than checking every
-file, safer than checking none.
+The size GoPro reports can be wrong, which fails rclone's integrity
+check and makes sync re-transfer the file on every run. The only files
+seen affected had been reprocessed by GoPro after upload, so by default
+only those are checked.
 
 Properties:
 
@@ -752,16 +610,12 @@ Properties:
 
 #### --gopro-read-size
 
-Read the exact size of a chaptered video or burst photo set item.
+Read the exact size of chaptered videos, burst photos and edits.
 
-file_size from the search API is only the total across every item of a
-chaptered video or burst photo set, not any single one, so an
-individual item's size is normally left unknown (-1) rather than
-guessed at by dividing it evenly. Set this if you need an exact size
-for one of these, for example for rclone mount. This does one extra
-request per file, on top of what --gopro-verify-size already costs -
-so listing a large library with lots of chaptered/burst items will be
-slower still.
+GoPro only reports the total size of a chaptered video or burst photo
+set, and none for Highlights and Edits, so their size is unknown by
+default. Set this if you need exact sizes, e.g. for rclone mount. This
+costs one extra request per file.
 
 Properties:
 
@@ -850,32 +704,23 @@ Restore media from GoPro's trash
 rclone backend restore remote: [options] [<arguments>+]
 ```
 
-This restores media out of GoPro's trash and back into the active
-library - confirmed live, undocumented API. It always operates on the
-trash regardless of --gopro-trashed-only, since there would otherwise be
-no way to run it without reconfiguring the remote first.
+This restores media from GoPro's trash to the active library,
+whether or not --gopro-trashed-only is set.
 
-With no arguments, it restores everything currently in the trash:
+With no arguments, it restores everything in the trash:
 
     rclone backend restore gopro:
 
-Given one or more arguments, each one names a single medium to restore
-instead - either a bare id, or a trashed listing's own "name {id}.ext"
-leaf (see --gopro-trashed-only and --gopro-always-add-id) pasted straight
-from "rclone lsf":
+Otherwise each argument names one medium to restore, either by its id
+or by its "name {id}.ext" file name as listed with --gopro-trashed-only:
 
     rclone backend restore gopro: 6a99f18a239bf36f4c2377cf "photo {6a99f18a239bf36f4c2377cf}.jpg"
 
-Nothing is restored if --dry-run is set; the command logs what would be
-restored instead.
+With --dry-run, it only logs what would be restored.
 
-GoPro's API accepts the request (202 Accepted) before actually
-restoring anything - confirmed live, this backend's own cache is
-updated straight away, but GoPro's side can lag behind that, and for a
-handful of media that had sat in trash across several sessions it
-never completed at all even minutes later and after being retried,
-with no error to explain why. Re-check with --gopro-trashed-only if a
-restored item doesn't show up in the active library right away.
+GoPro restores asynchronously and reports no failures, so a restored
+item can take a while to reappear in the library, and occasionally
+doesn't at all. Check with --gopro-trashed-only if one is missing.
 
 <!-- autogenerated options stop -->
 

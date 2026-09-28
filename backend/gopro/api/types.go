@@ -38,10 +38,8 @@ type Medium struct {
 	ReprocessedAt *time.Time `json:"reprocessed_at"`
 }
 
-// MediumUpdate is the request body for PUT /media/{id}, which updates a
-// medium in place - only the fields set here are changed. Confirmed live:
-// this can rename a medium (Filename/ContentTitle) and change its
-// CapturedAt, both normally fixed at upload time.
+// MediumUpdate is the request body for PUT /media/{id}, which changes
+// only the fields set here
 type MediumUpdate struct {
 	Filename     *string    `json:"filename,omitempty"`
 	ContentTitle *string    `json:"content_title,omitempty"`
@@ -66,38 +64,27 @@ type SearchResponse struct {
 }
 
 // DeletedMediaResponse is returned from GET /media/deleted
-//
-// Confirmed live: each item here carries every field Medium does (plus
-// several deletion-specific ones this backend has no use for, such as
-// delete_scheduled_at and associations) under the same names, so it
-// decodes directly into Medium.
 type DeletedMediaResponse struct {
 	DeletedMedia []Medium `json:"deleted_media"`
 	Pages        PageInfo `json:"_pages"`
 }
 
 // RestoreRequest is the request body for POST /media/restore, which moves
-// media back out of GoPro's trash to the active library - confirmed live,
-// undocumented.
+// media from the trash back to the library
 type RestoreRequest struct {
 	IDs []string `json:"ids"`
 }
 
-// CollectionCreate is the request body for POST /collections, which creates
-// a public share link (GoPro calls it a "collection" internally, though it
-// always holds exactly one medium as used by this backend). Cloneable is
-// GoPro's own field name for what its web UI labels "Allow Download" -
-// confirmed live via that UI, enabling it also shares any GPS data embedded
-// in the file, not just download access - there's one field for both.
+// CollectionCreate is the request body for POST /collections, which
+// creates a public share. Cloneable is the web app's "Allow Download",
+// which also shares any GPS data embedded in the file.
 type CollectionCreate struct {
 	Title     string `json:"title,omitempty"`
 	Cloneable bool   `json:"cloneable"`
 }
 
-// Collection is returned from POST /collections and PUT /collections/{id} -
-// id is a UUID (a distinct id space from a medium's 24-hex-character id),
-// and is also the path segment of the collection's public share URL,
-// https://gopro.com/v/{id} - confirmed live, readable with no authentication.
+// Collection is returned from POST /collections - its public URL is
+// https://gopro.com/v/{ID}
 type Collection struct {
 	ID        string `json:"id"`
 	Title     string `json:"title"`

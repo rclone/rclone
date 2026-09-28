@@ -1215,41 +1215,23 @@ func TestListDirShowsFailedItemsWhenIncludeFailedIsSet(t *testing.T) {
 	assert.ElementsMatch(t, []string{"media/all/stuck {1}.mp4", "media/all/unknown {2}.mp4"}, names)
 }
 
-func TestList(t *testing.T) {
-	items := []api.Medium{{ID: "1"}, {ID: "2"}}
+func TestListedMedia(t *testing.T) {
+	ctx := context.Background()
+	media := []api.Medium{{ID: "1"}}
+	trash := []api.Medium{{ID: "2"}}
 
-	t.Run("reads the media cache by default", func(t *testing.T) {
-		f := &Fs{mediaCache: items, mediaCacheAt: time.Now()}
-		var got []string
-		err := f.list(context.Background(), mediaFilter{}, false, func(item *api.Medium) error {
-			got = append(got, item.ID)
-			return nil
-		})
+	t.Run("reads the library by default", func(t *testing.T) {
+		f := &Fs{mediaCache: media, mediaCacheAt: time.Now(), trashCache: trash, trashCacheAt: time.Now()}
+		got, err := f.listedMedia(ctx)
 		require.NoError(t, err)
-		assert.Equal(t, []string{"1", "2"}, got)
+		assert.Equal(t, media, got)
 	})
 
-	t.Run("reads the trash cache when trashedOnly is true", func(t *testing.T) {
-		f := &Fs{trashCache: items, trashCacheAt: time.Now()}
-		var got []string
-		err := f.list(context.Background(), mediaFilter{}, true, func(item *api.Medium) error {
-			got = append(got, item.ID)
-			return nil
-		})
+	t.Run("reads the trash under trashed_only", func(t *testing.T) {
+		f := &Fs{opt: Options{TrashedOnly: true}, mediaCache: media, mediaCacheAt: time.Now(), trashCache: trash, trashCacheAt: time.Now()}
+		got, err := f.listedMedia(ctx)
 		require.NoError(t, err)
-		assert.Equal(t, []string{"1", "2"}, got)
-	})
-
-	t.Run("stops and propagates fn's error instead of visiting the rest", func(t *testing.T) {
-		f := &Fs{mediaCache: items, mediaCacheAt: time.Now()}
-		wantErr := errors.New("boom")
-		var calls int
-		err := f.list(context.Background(), mediaFilter{}, false, func(item *api.Medium) error {
-			calls++
-			return wantErr
-		})
-		assert.Equal(t, wantErr, err)
-		assert.Equal(t, 1, calls)
+		assert.Equal(t, trash, got)
 	})
 }
 
