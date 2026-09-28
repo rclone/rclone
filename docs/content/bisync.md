@@ -1937,6 +1937,8 @@ about *Unison* and synchronization in general.
 
 - Added `--max-delete-renames-aware` to exclude guaranteed tracked renames from
 the `--max-delete` safety check when used with `--track-renames`.
+- Fixed an issue causing the conflict winner to be missing from listings when
+Path2 won.
 
 ### `v1.74.2`
 
