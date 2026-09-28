@@ -194,6 +194,7 @@ type bisyncTest struct {
 	stepStr     string
 	testCase    string
 	sessionName string
+	hooks       map[string][]string // scenario steps to run once when the named hook fires
 	// test dirs
 	testDir    string
 	dataDir    string
@@ -794,6 +795,19 @@ func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 	case "test-func":
 		b.TestFn = testFunc
 		return
+	case "hook":
+		// hook <when> <step> queues a scenario step to run once, when the next bisync reaches <when>
+		b.checkArgs(args, 2, 0)
+		when := args[1]
+		if when != "before-check" && when != "during-sync" {
+			return fmt.Errorf("unknown hook %q (want before-check or during-sync)", when)
+		}
+		step := strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(strings.TrimPrefix(line, args[0])), when))
+		if b.hooks == nil {
+			b.hooks = map[string][]string{}
+		}
+		b.hooks[when] = append(b.hooks[when], step)
+		return nil
 	case "concurrent-func":
 		b.TestFn = func() {
 			src := filepath.Join(b.dataDir, "file7.txt")
@@ -1117,8 +1131,9 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 		MaxDelete:     bisync.DefaultMaxDelete,
 		CheckFilename: bisync.DefaultCheckFilename,
 		CheckSync:     bisync.CheckSyncTrue,
-		TestFn:        b.TestFn,
 	}
+	opt.TestFn = b.hookFn(ctx, "during-sync", b.TestFn)
+	opt.TestFnConflictCheck = b.hookFn(ctx, "before-check", nil)
 	ctx, opt = b.checkPreReqs(ctx, opt)
 	octx, ci := fs.AddConfig(ctx)
 	fs1, fs2 := b.fs1, b.fs2
@@ -1241,7 +1256,37 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 	if err != nil {
 		b.logPrintf("Bisync error: %v", err)
 	}
+	for _, when := range []string{"before-check", "during-sync"} {
+		if len(b.hooks[when]) > 0 {
+			b.logPrintf("hook %s did not run, discarding %d steps", when, len(b.hooks[when]))
+		}
+	}
+	b.hooks = nil
 	return nil
+}
+
+// hookFn returns a test hook that calls fn, if set, and then runs the
+// scenario steps queued for the hook named when, the first time it is called.
+func (b *bisyncTest) hookFn(ctx context.Context, when string, fn bisync.TestFunc) bisync.TestFunc {
+	if len(b.hooks[when]) == 0 {
+		return fn
+	}
+	return func() {
+		if fn != nil {
+			fn()
+		}
+		steps := b.hooks[when]
+		b.hooks[when] = nil
+		// log only through the captured bisync output, so hook steps appear once and in order
+		logFile, stepStr := b.logFile, b.stepStr
+		b.logFile, b.stepStr = nil, "hook "+when+":"
+		defer func() { b.logFile, b.stepStr = logFile, stepStr }()
+		for _, step := range steps {
+			if err := b.runTestStep(ctx, step); err != nil {
+				fs.Errorf(nil, "hook %s: %q failed: %v", when, step, err)
+			}
+		}
+	}
 }
 
 // saveTestListings creates a copy of test artifacts with given prefix

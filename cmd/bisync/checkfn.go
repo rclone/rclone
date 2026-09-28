@@ -138,6 +138,9 @@ func (b *bisyncRun) checkconflicts(ctxCheck context.Context, filterCheck *filter
 	matches := bilib.Names{}
 	if filterCheck.HaveFilesFrom() {
 		fs.Debugf(nil, "There are potential conflicts to check.")
+		if b.opt.TestFnConflictCheck != nil {
+			b.opt.TestFnConflictCheck()
+		}
 
 		opt, close, checkopterr := check.GetCheckOpt(fs1, fs2)
 		if checkopterr != nil {
