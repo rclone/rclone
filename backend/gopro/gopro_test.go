@@ -2665,6 +2665,123 @@ func TestReadMetaDataFastPathFollowsPhotoFormat(t *testing.T) {
 	}
 }
 
+// newTestPartsFs serves GET /media/{id} (404 if gone) and records the ids
+// of DELETE /media requests.
+func newTestPartsFs(t *testing.T, gone bool) (f *Fs, srv *httptest.Server, deleted *[]string) {
+	deleted = &[]string{}
+	var mu sync.Mutex
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /media/{id}", func(w http.ResponseWriter, r *http.Request) {
+		if gone {
+			http.Error(w, "not found", http.StatusNotFound)
+			return
+		}
+		writeJSON(t, w, api.Medium{ID: r.PathValue("id")})
+	})
+	mux.HandleFunc("DELETE /media", func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		*deleted = append(*deleted, r.URL.Query().Get("ids"))
+		mu.Unlock()
+		writeJSON(t, w, api.DeleteResponse{})
+	})
+	f, srv = newTestAPIFs(mux)
+	f.opt.UseTrash = true
+	return f, srv, deleted
+}
+
+func TestRemoveOfPartsFollowsDeleteParts(t *testing.T) {
+	ctx := context.Background()
+	const id = "6abade4d9fa31467cb180359"
+	parts := map[string]func(f *Fs) *Object{
+		"chapter 1":      func(f *Fs) *Object { return &Object{fs: f, id: id, itemNumber: 1, itemCount: 3} },
+		"chapter 2":      func(f *Fs) *Object { return &Object{fs: f, id: id, itemNumber: 2, itemCount: 3} },
+		"JPEG of a pair": func(f *Fs) *Object { return &Object{fs: f, id: id, itemNumber: 1, itemCount: 1, hasRaw: true} },
+		"RAW of a pair": func(f *Fs) *Object {
+			return &Object{fs: f, id: id, itemNumber: 1, itemCount: 1, hasRaw: true, raw: true}
+		},
+		"single file": func(f *Fs) *Object { return &Object{fs: f, id: id, itemNumber: 1, itemCount: 1} },
+	}
+	for _, tc := range []struct {
+		mode, photoFormat string
+		deletes           map[string]bool // parts that delete the whole medium; the rest are refused
+	}{
+		{"", "", map[string]bool{"chapter 1": true, "JPEG of a pair": true, "single file": true}},
+		{deletePartsFirst, "", map[string]bool{"chapter 1": true, "JPEG of a pair": true, "single file": true}},
+		{deletePartsFirst, photoFormatRaw, map[string]bool{"chapter 1": true, "RAW of a pair": true, "single file": true}},
+		{deletePartsRefuse, "", map[string]bool{"single file": true}},
+		{deletePartsAny, "", map[string]bool{"chapter 1": true, "chapter 2": true, "JPEG of a pair": true, "RAW of a pair": true, "single file": true}},
+	} {
+		for name, part := range parts {
+			t.Run(fmt.Sprintf("mode %q photo_format %q %s", tc.mode, tc.photoFormat, name), func(t *testing.T) {
+				f, srv, deleted := newTestPartsFs(t, false)
+				defer srv.Close()
+				f.opt.DeleteParts, f.opt.PhotoFormat = tc.mode, tc.photoFormat
+				err := part(f).Remove(ctx)
+				if tc.deletes[name] {
+					require.NoError(t, err)
+					assert.Equal(t, []string{id}, *deleted)
+				} else {
+					assert.ErrorContains(t, err, "on its own")
+					assert.Empty(t, *deleted)
+				}
+			})
+		}
+	}
+
+	t.Run("a refused part whose medium is already deleted succeeds, so deleting a directory works", func(t *testing.T) {
+		for _, mode := range []string{deletePartsFirst, deletePartsRefuse} {
+			f, srv, deleted := newTestPartsFs(t, true)
+			f.opt.DeleteParts = mode
+			require.NoError(t, parts["chapter 2"](f).Remove(ctx))
+			assert.Empty(t, *deleted)
+			srv.Close()
+		}
+	})
+}
+
+func TestCheckDeleteParts(t *testing.T) {
+	for _, ok := range []string{"", deletePartsFirst, deletePartsRefuse, deletePartsAny} {
+		assert.NoError(t, checkDeleteParts(ok))
+	}
+	assert.Error(t, checkDeleteParts("some"))
+	_, err := NewFs(context.Background(), "delete-parts-test", "", configmap.Simple{
+		"access_token": "test-token", "verify_size": verifySizeReprocessed, "delete_parts": "some",
+	})
+	assert.Error(t, err)
+}
+
+func TestDeleteCommand(t *testing.T) {
+	const id1, id2 = "6abade4d9fa31467cb180359", "6a29a4bcfe314c5af39cfcbe"
+
+	t.Run("deletes whole media named by id or listed name", func(t *testing.T) {
+		f, srv, deleted := newTestPartsFs(t, false)
+		defer srv.Close()
+		res, err := f.Command(context.Background(), "delete", []string{id1, "media/all/GX012010-2 {" + id2 + "}.MP4"}, nil)
+		require.NoError(t, err)
+		assert.Equal(t, &deleteResult{Deleted: 2}, res)
+		assert.ElementsMatch(t, []string{id1, id2}, *deleted)
+	})
+
+	t.Run("needs at least one argument", func(t *testing.T) {
+		f, srv, deleted := newTestPartsFs(t, false)
+		defer srv.Close()
+		_, err := f.Command(context.Background(), "delete", nil, nil)
+		assert.Error(t, err)
+		assert.Empty(t, *deleted)
+	})
+
+	t.Run("dry-run deletes nothing", func(t *testing.T) {
+		f, srv, deleted := newTestPartsFs(t, false)
+		defer srv.Close()
+		ctx, ci := fs.AddConfig(context.Background())
+		ci.DryRun = true
+		res, err := f.Command(ctx, "delete", []string{id1}, nil)
+		require.NoError(t, err)
+		assert.Equal(t, &deleteResult{}, res)
+		assert.Empty(t, *deleted)
+	})
+}
+
 func TestRawLeaf(t *testing.T) {
 	assert.Equal(t, "GP012013.GPR", rawLeaf("GP012013.JPG"))
 	assert.Equal(t, "GPAA2158-1 {abc}.GPR", rawLeaf("GPAA2158-1 {abc}.JPG"))

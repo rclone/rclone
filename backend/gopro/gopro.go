@@ -82,6 +82,11 @@ const (
 	// rawMimeType is the MIME type of RAW files - GPR is DNG-based
 	rawMimeType = "image/x-adobe-dng"
 
+	// delete_parts values - see that option's Help text.
+	deletePartsFirst  = "first"
+	deletePartsRefuse = "refuse"
+	deletePartsAny    = "any"
+
 	// photo_format values - see that option's Help text.
 	photoFormatBoth = "both"
 	photoFormatJPEG = "jpeg"
@@ -115,6 +120,16 @@ func checkVerifySizeMode(mode string) error {
 		return nil
 	default:
 		return fmt.Errorf("unknown verify_size %q (must be %q, %q or %q)", mode, verifySizeReprocessed, verifySizeAlways, verifySizeOff)
+	}
+}
+
+// checkDeleteParts checks that mode is a legal delete_parts value
+func checkDeleteParts(mode string) error {
+	switch mode {
+	case "", deletePartsFirst, deletePartsRefuse, deletePartsAny:
+		return nil
+	default:
+		return fmt.Errorf("unknown delete_parts %q (must be %q, %q or %q)", mode, deletePartsFirst, deletePartsRefuse, deletePartsAny)
 	}
 }
 
@@ -428,6 +443,32 @@ whatever this is set to.`,
 				Help:  "List only the RAW file",
 			}},
 		}, {
+			Name:     "delete_parts",
+			Advanced: true,
+			Default:  deletePartsFirst,
+			Help: `How to delete a single chapter, frame or RAW file.
+
+GoPro only deletes whole items: a chaptered video, a burst, continuous
+or time lapse photo series, or a photo together with its RAW file.
+Deleting just one of the files rclone lists for such an item would
+delete all of them.
+
+With the default, only the item's first file (chapter or frame 1, or
+the JPEG of a RAW photo) deletes it, and deleting any other file on its
+own fails. Deleting a whole directory still works, as the other files
+are gone by the time they're deleted. Whole items can also be deleted
+with "rclone backend delete".`,
+			Examples: []fs.OptionExample{{
+				Value: deletePartsFirst,
+				Help:  "Deleting the first file deletes the whole item, other files can't be deleted on their own",
+			}, {
+				Value: deletePartsRefuse,
+				Help:  "No file of such an item can be deleted on its own - use \"rclone backend delete\"",
+			}, {
+				Value: deletePartsAny,
+				Help:  "Deleting any file deletes the whole item",
+			}},
+		}, {
 			Name:     "read_size",
 			Advanced: true,
 			Default:  false,
@@ -485,6 +526,7 @@ type Options struct {
 	AlwaysAddID       bool                 `config:"always_add_id"`
 	VerifySize        string               `config:"verify_size"`
 	PhotoFormat       string               `config:"photo_format"`
+	DeleteParts       string               `config:"delete_parts"`
 	ReadSize          bool                 `config:"read_size"`
 	UploadChunkSize   fs.SizeSuffix        `config:"upload_chunk_size"`
 	UploadConcurrency int                  `config:"upload_concurrency"`
@@ -567,6 +609,7 @@ type Object struct {
 	sizeMu      sync.Mutex
 	reprocessed bool // true if the parent medium's reprocessed_at is set - see verify_size's "reprocessed" mode
 	raw         bool // true if this is the RAW (.gpr) file of a photo rather than the photo itself
+	hasRaw      bool // true if the parent medium has RAW files next to its photos
 	modTime     time.Time
 	mimeType    string
 }
@@ -690,6 +733,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, fmt.Errorf("gopro: %w", err)
 	}
 	if err := checkPhotoFormat(opt.PhotoFormat); err != nil {
+		return nil, fmt.Errorf("gopro: %w", err)
+	}
+	if err := checkDeleteParts(opt.DeleteParts); err != nil {
 		return nil, fmt.Errorf("gopro: %w", err)
 	}
 
@@ -1141,6 +1187,19 @@ With --dry-run, it only logs what would be restored.
 GoPro restores asynchronously and reports no failures, so a restored
 item can take a while to reappear in the library, and occasionally
 doesn't at all. Check with --gopro-trashed-only if one is missing.`,
+}, {
+	Name:  "delete",
+	Short: "Delete whole media, with all their files",
+	Long: `This deletes whole media, including every chapter, frame and RAW
+file of each, following --gopro-use-trash. See --gopro-delete-parts for
+why deleting one of those files on its own may not be possible.
+
+Each argument names one medium, either by its id or by the name of any
+of its files as listed by this backend:
+
+    rclone backend delete gopro: 6a29a4bcfe314c5af39cfcbe "GX012010-2 {6a29a4bcfe314c5af39cfcbe}.MP4"
+
+With --dry-run, it only logs what would be deleted.`,
 }}
 
 // Command the backend to run a named command
@@ -1156,8 +1215,38 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 	switch name {
 	case "restore":
 		return f.restore(ctx, arg)
+	case "delete":
+		return f.deleteCommand(ctx, arg)
 	}
 	return nil, fs.ErrorCommandNotFound
+}
+
+// deleteResult is returned by the "delete" backend command
+type deleteResult struct {
+	Deleted int
+}
+
+// deleteCommand implements the "delete" backend command
+func (f *Fs) deleteCommand(ctx context.Context, arg []string) (any, error) {
+	if len(arg) == 0 {
+		return nil, errors.New("name at least one medium to delete")
+	}
+	ids := make([]string, len(arg))
+	for i, a := range arg {
+		ids[i] = restoreArg(a)
+	}
+	if fs.GetConfig(ctx).DryRun {
+		fs.Logf(f, "Would delete %d medium(s): %v", len(ids), ids)
+		return &deleteResult{}, nil
+	}
+	res := &deleteResult{}
+	for _, id := range ids {
+		if err := f.deleteMedium(ctx, id, !f.opt.UseTrash); err != nil {
+			return res, err
+		}
+		res.Deleted++
+	}
+	return res, nil
 }
 
 // restoreResult is returned by the "restore" backend command
@@ -1831,6 +1920,7 @@ func (o *Object) copyFrom(src *Object) {
 	o.modTime = src.modTime
 	o.mimeType = src.mimeType
 	o.raw = src.raw
+	o.hasRaw = src.hasRaw
 }
 
 // setMetaData sets the Object data from a Medium
@@ -1863,6 +1953,7 @@ func (o *Object) setMetaDataLocked(item *api.Medium, itemNumber int) {
 	}
 	o.mimeType = mime.TypeByExtension(strings.ToLower(photoExt(item)))
 	o.reprocessed = item.ReprocessedAt != nil
+	o.hasRaw = hasRaw(item)
 	if o.raw {
 		// file_size only covers the photos.
 		o.bytes = -1
@@ -2045,11 +2136,13 @@ func (f *Fs) deleteReplaced(ctx context.Context, id string) {
 
 // Remove an object
 //
-// Under --gopro-trashed-only the object is already in the trash, where a
-// plain delete fails, so it's purged directly.
+// GoPro only deletes whole media, so removing one part of a medium with
+// several (see isPart) follows --gopro-delete-parts. Under
+// --gopro-trashed-only the object is already in the trash, where a plain
+// delete fails, so it's purged directly.
 func (o *Object) Remove(ctx context.Context) error {
-	if o.raw {
-		return o.removeRaw(ctx)
+	if o.isPart() && !o.deletesWhole() {
+		return o.removePart(ctx)
 	}
 	var err error
 	if o.fs.opt.TrashedOnly {
@@ -2064,10 +2157,30 @@ func (o *Object) Remove(ctx context.Context) error {
 	return nil
 }
 
-// removeRaw removes a RAW file, which GoPro can only delete together with
-// its photo - so this only succeeds once the photo has been deleted, as
-// when deleting a whole directory.
-func (o *Object) removeRaw(ctx context.Context) error {
+// isPart reports whether o is one of several files of its medium - a
+// chapter, a frame of a photo series, or a photo or its RAW file
+func (o *Object) isPart() bool {
+	return o.itemCount > 1 || o.hasRaw || o.raw
+}
+
+// deletesWhole reports whether removing o may delete its whole medium,
+// following --gopro-delete-parts. The first part is the first item's
+// photo, or its RAW file when only RAW files are listed.
+func (o *Object) deletesWhole() bool {
+	switch o.fs.opt.DeleteParts {
+	case deletePartsAny:
+		return true
+	case deletePartsRefuse:
+		return false
+	}
+	firstIsRaw := o.hasRaw && o.fs.opt.PhotoFormat == photoFormatRaw
+	return o.itemNumber <= 1 && o.raw == firstIsRaw
+}
+
+// removePart removes a part of a medium that can't delete it - so this
+// only succeeds once the medium has been deleted, as when deleting a
+// whole directory.
+func (o *Object) removePart(ctx context.Context) error {
 	var exists bool
 	if o.fs.opt.TrashedOnly {
 		o.fs.invalidateTrashCache()
@@ -2086,7 +2199,11 @@ func (o *Object) removeRaw(ctx context.Context) error {
 		exists = err == nil
 	}
 	if exists {
-		return fmt.Errorf("gopro: can't delete %q on its own - GoPro only deletes it together with its photo", o.remote)
+		how := "delete its first file to delete them all, or use \"rclone backend delete\""
+		if o.fs.opt.DeleteParts == deletePartsRefuse {
+			how = "use \"rclone backend delete\" to delete them all"
+		}
+		return fmt.Errorf("gopro: can't delete %q on its own - GoPro only deletes it together with the other files of its item: %s", o.remote, how)
 	}
 	return nil
 }
