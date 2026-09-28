@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -926,6 +927,24 @@ func TestSelectRendition(t *testing.T) {
 		u2, _, err := selectRendition(dl, "source", 2)
 		require.NoError(t, err)
 		assert.Equal(t, "https://cdn/2.jpg", u2)
+	})
+
+	// A TimeLapse photo series (play_as "multi_shot_photo"), as served live
+	// from a HERO13 Black: the burst shape, with the lone "source"
+	// variation being item 1 again.
+	t.Run("time lapse photo series addresses every frame by item_number", func(t *testing.T) {
+		var files []testFile
+		for n := 1; n <= 6; n++ {
+			files = append(files, testFile{url: fmt.Sprintf("https://cdn/source/default/%d.jpg", n), itemNumber: n})
+		}
+		dl := makeDownloadResponse(files,
+			[]testFile{{url: "https://cdn/source/default/1.jpg", label: "source", quality: "4872p"}},
+		)
+		for n := 1; n <= 6; n++ {
+			u, _, err := selectRendition(dl, "source", n)
+			require.NoError(t, err)
+			assert.Equal(t, fmt.Sprintf("https://cdn/source/default/%d.jpg", n), u)
+		}
 	})
 
 	t.Run("explicit variation matches by label or quality", func(t *testing.T) {

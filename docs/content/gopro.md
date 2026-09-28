@@ -119,11 +119,12 @@ collide within a listing get the ID - but whether a name collides can
 change as the library changes, and then `sync` sees a renamed file and
 transfers it again.
 
-### Chaptered videos and burst photos
+### Chaptered videos, burst and time lapse photos
 
-GoPro stores long recordings as several chapters and burst shots as one
-item with many frames. Each is shown as its own file, named `name-N.ext`
-(for example `GX010294-1.MP4`, `GX010294-2.MP4`).
+GoPro stores long recordings as several chapters, and burst or time lapse
+photos as one item with many frames. Each is shown as its own file, named
+`name-N.ext` (for example `GX010294-1.MP4`, `GX010294-2.MP4`). Time lapse
+videos are ordinary single files.
 
 GoPro only reports the total size of such an item, so each file's size
 is shown as `-1` (unknown) rather than guessed. Set
@@ -607,8 +608,8 @@ doesn't at all. Check with --gopro-trashed-only if one is missing.
 
 - `Copy` and `DirMove` aren't supported: GoPro has no server-side copy,
   and the directories are virtual.
-- Chapters and bursts have only been tested with `Video` and `Burst`
-  media. Other multi-item types such as `TimeLapse` may not download
+- Multi-item media has only been tested with `Video`, `Burst` and
+  `TimeLapse` items. Other types such as `Continuous` may not download
   correctly.
 - Albums, moments and sidecar files (GPS/telemetry, `.GPR` RAW files)
   aren't shown - only the main file of each item.
