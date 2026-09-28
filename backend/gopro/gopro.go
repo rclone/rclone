@@ -283,6 +283,8 @@ it before turning this off:
   serves the rendered video (the "baked_source" rendition) for these,
   not the EDL, and this backend's Content-Type follows the filename's
   own extension (usually ".mp4") to match what's actually served.
+  Auto-generated Highlights often have no filename at all - these are
+  listed as "{id}.mp4".
 
 Turn this off if you only want camera-original recordings, or to skip
 what's often a redundant rendering of content the library already has
@@ -1448,11 +1450,11 @@ func (f *Fs) restoreMedia(ctx context.Context, ids []string) error {
 	return nil
 }
 
-// addID adds the ID to name
+// addID adds the ID to name, which may be a path whose leaf is empty
 func addID(name string, ID string) string {
 	idStr := "{" + ID + "}"
-	if name == "" {
-		return idStr
+	if name == "" || strings.HasSuffix(name, "/") {
+		return name + idStr
 	}
 	return name + " " + idStr
 }
@@ -1557,7 +1559,7 @@ func (f *Fs) listDir(ctx context.Context, prefix string, filter mediaFilter) (en
 		if itemCount < 1 {
 			itemCount = 1
 		}
-		leaf := f.opt.Enc.ToStandardName(item.Filename)
+		leaf := mediumLeaf(f, item)
 		for n := 1; n <= itemCount; n++ {
 			remote := leaf
 			if itemCount > 1 {
@@ -1590,18 +1592,42 @@ func (f *Fs) listDir(ctx context.Context, prefix string, filter mediaFilter) (en
 
 // shouldAddID decides whether a listed entry's remote should have its
 // medium ID appended, given --gopro-always-add-id and how many entries in
-// this same listing share that remote (count). An empty remote always
-// gets one regardless of the option or count, since there's nothing else
-// to show.
+// this same listing share that remote (count). A leaf with no name before
+// its extension (an unnamed medium) always gets one regardless of the
+// option or count, since there's nothing else to show.
 func shouldAddID(alwaysAddID bool, remote string, count int) bool {
-	return alwaysAddID || count > 1 || remote == ""
+	leaf := remote[strings.LastIndex(remote, "/")+1:]
+	return alwaysAddID || count > 1 || strings.TrimSuffix(leaf, path.Ext(leaf)) == ""
+}
+
+// downloadExtension returns the extension (without the dot) of what's
+// actually downloaded for item. A MultiClipEdit/Edit's own file_extension
+// is that of its Edit Decision List ("json"), but what's served is the
+// rendered video.
+func downloadExtension(item *api.Medium) string {
+	if isEditType(item.Type) {
+		return "mp4"
+	}
+	return item.FileExtension
+}
+
+// mediumLeaf returns the leaf name listDir gives item, before any item
+// number or ID suffix: its filename, with downloadExtension appended when
+// the filename has no extension of its own - GoPro's auto-generated
+// Highlights often have an empty filename.
+func mediumLeaf(f *Fs, item *api.Medium) string {
+	leaf := f.opt.Enc.ToStandardName(item.Filename)
+	if ext := downloadExtension(item); path.Ext(leaf) == "" && ext != "" {
+		leaf += "." + ext
+	}
+	return leaf
 }
 
 // expectedIDSuffixedName reconstructs the id-suffixed leaf listDir would
 // give item's first item when --gopro-always-add-id is set, for verifying
 // a name found via the readMetaData fast path actually belongs to it.
 func expectedIDSuffixedName(f *Fs, item *api.Medium) string {
-	leaf := f.opt.Enc.ToStandardName(item.Filename)
+	leaf := mediumLeaf(f, item)
 	if item.ItemCount > 1 {
 		leaf = itemLeaf(leaf, 1)
 	}
@@ -1822,14 +1848,14 @@ func selectRendition(dl *api.DownloadResponse, variation string, itemNumber int)
 
 	sourceVariations := 0
 	for _, v := range dl.Embedded.Variations {
-		if v.Label == "source" {
+		if isSourceLabel(v.Label) {
 			sourceVariations++
 		}
 	}
 	if sourceVariations > 1 {
 		// Chaptered-video shape: one "source" variation per item_number.
 		for _, v := range dl.Embedded.Variations {
-			if v.Label == "source" && v.ItemNumber == itemNumber {
+			if isSourceLabel(v.Label) && v.ItemNumber == itemNumber {
 				return v.URL, v.Head, nil
 			}
 		}
@@ -1844,7 +1870,7 @@ func selectRendition(dl *api.DownloadResponse, variation string, itemNumber int)
 	} else {
 		// Ordinary single-item medium.
 		for _, v := range dl.Embedded.Variations {
-			if v.Label == "source" {
+			if isSourceLabel(v.Label) {
 				return v.URL, v.Head, nil
 			}
 		}
@@ -1853,6 +1879,13 @@ func selectRendition(dl *api.DownloadResponse, variation string, itemNumber int)
 		}
 	}
 	return "", "", fmt.Errorf("no source rendition found for item %d", itemNumber)
+}
+
+// isSourceLabel reports whether a variation label names the original:
+// "source" for camera media, "baked_source" (the rendered video) for a
+// MultiClipEdit/Edit, which has no "source" variation at all.
+func isSourceLabel(label string) bool {
+	return label == "source" || label == "baked_source"
 }
 
 // getDownload fetches (and caches) the download descriptor for a medium
@@ -2043,11 +2076,11 @@ func (o *Object) setMetaDataLocked(item *api.Medium, itemNumber int) {
 	// file_extension is "json" (its Edit Decision List), but its filename
 	// still ends in ".mp4" and selectRendition serves the rendered video,
 	// not the EDL - so the filename's own extension is what actually
-	// matches the bytes served here. Only fall back to file_extension
+	// matches the bytes served here. Only fall back to downloadExtension
 	// when the filename has none to go on.
 	ext := path.Ext(item.Filename)
 	if ext == "" {
-		ext = "." + item.FileExtension
+		ext = "." + downloadExtension(item)
 	}
 	o.mimeType = mime.TypeByExtension(strings.ToLower(ext))
 	o.reprocessed = item.ReprocessedAt != nil

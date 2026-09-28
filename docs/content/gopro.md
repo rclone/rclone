@@ -414,6 +414,8 @@ it before turning this off:
   serves the rendered video (the "baked_source" rendition) for these,
   not the EDL, and this backend's Content-Type follows the filename's
   own extension (usually ".mp4") to match what's actually served.
+  Auto-generated Highlights often have no filename at all - these are
+  listed as "{id}.mp4".
 
 Turn this off if you only want camera-original recordings, or to skip
 what's often a redundant rendering of content the library already has

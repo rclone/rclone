@@ -299,6 +299,8 @@ func TestAddFileID(t *testing.T) {
 	assert.Equal(t, "potato {123}.txt", addFileID("potato.txt", "123"))
 	assert.Equal(t, "potato {123}", addFileID("potato", "123"))
 	assert.Equal(t, "{123}", addFileID("", "123"))
+	assert.Equal(t, "media/all/{123}.mp4", addFileID("media/all/.mp4", "123"))
+	assert.Equal(t, "media/all/{123}", addFileID("media/all/", "123"))
 }
 
 func TestShouldAddID(t *testing.T) {
@@ -312,6 +314,15 @@ func TestShouldAddID(t *testing.T) {
 
 	t.Run("an empty remote always forces it, even alone", func(t *testing.T) {
 		assert.True(t, shouldAddID(false, "", 1))
+	})
+
+	t.Run("an unnamed leaf under a directory prefix forces it, even alone", func(t *testing.T) {
+		assert.True(t, shouldAddID(false, "media/all/.mp4", 1))
+		assert.True(t, shouldAddID(false, "media/all/", 1))
+	})
+
+	t.Run("a named leaf under a directory prefix is left alone", func(t *testing.T) {
+		assert.False(t, shouldAddID(false, "media/all/GX010123.MP4", 1))
 	})
 
 	t.Run("no collision and the option off leaves the name alone", func(t *testing.T) {
@@ -842,6 +853,18 @@ func TestSelectRendition(t *testing.T) {
 		assert.Equal(t, "https://cdn/1080p.mp4", u)
 	})
 
+	// A MultiClipEdit's descriptor, as served live: no "source" variation,
+	// just the rendered video labelled "baked_source".
+	t.Run("edit picks the baked_source variation over files", func(t *testing.T) {
+		dl := makeDownloadResponse(
+			[]testFile{{url: "https://cdn/file.mp4", itemNumber: 1}},
+			[]testFile{{url: "https://cdn/baked.mp4", label: "baked_source"}},
+		)
+		u, _, err := selectRendition(dl, "source", 1)
+		require.NoError(t, err)
+		assert.Equal(t, "https://cdn/baked.mp4", u)
+	})
+
 	t.Run("no rendition found returns an error", func(t *testing.T) {
 		dl := makeDownloadResponse(nil, nil)
 		_, _, err := selectRendition(dl, "source", 1)
@@ -1106,6 +1129,41 @@ func TestAllTrashCachesASuccessfulEmptyResult(t *testing.T) {
 	_, err = f.allTrash(context.Background())
 	require.NoError(t, err)
 	assert.Equal(t, 1, calls, "an empty trash must still be cached, not refetched on every call")
+}
+
+func TestListDirNamesUnnamedEditsAsMP4(t *testing.T) {
+	// Auto-generated Highlights, as served live: empty filename, the EDL's
+	// "json" file_extension, null file_size - but the download is an MP4.
+	const id = "6a9362c0b7d89053ceb33de9"
+	items := []api.Medium{
+		{ID: id, Type: "MultiClipEdit", FileExtension: "json", ItemCount: 1, CapturedAt: fstest.Time("2024-01-01T00:00:00Z")},
+		{ID: "6a9362c08c23f474301c0899", Type: "MultiClipEdit", Filename: "named", FileExtension: "json", ItemCount: 1, CapturedAt: fstest.Time("2024-01-01T00:00:00Z")},
+	}
+	f := newTestMediaFs(items)
+	f.opt.AlwaysAddID = false
+	entries, err := f.List(context.Background(), "media/all")
+	require.NoError(t, err)
+	require.Len(t, entries, 2)
+
+	got := map[string]string{}
+	for _, entry := range entries {
+		got[entry.Remote()] = entry.(*Object).MimeType(context.Background())
+	}
+	assert.Equal(t, map[string]string{
+		"media/all/{" + id + "}.mp4": "video/mp4",
+		"media/all/named.mp4":        "video/mp4",
+	}, got)
+
+	t.Run("the always_add_id fast path expects the same name", func(t *testing.T) {
+		assert.Equal(t, "{"+id+"}.mp4", expectedIDSuffixedName(f, &items[0]))
+		assert.Equal(t, id, findID("{"+id+"}.mp4"))
+	})
+
+	t.Run("a non-edit without a filename extension gets its file_extension", func(t *testing.T) {
+		assert.Equal(t, "GX010001.MP4", mediumLeaf(f, &api.Medium{Filename: "GX010001.MP4", FileExtension: "mp4"}))
+		assert.Equal(t, "GX010001.jpg", mediumLeaf(f, &api.Medium{Filename: "GX010001", FileExtension: "jpg"}))
+		assert.Equal(t, "GX010001", mediumLeaf(f, &api.Medium{Filename: "GX010001"}))
+	})
 }
 
 func TestListDirShowsNullFileSizeTrashedItemsUnconditionally(t *testing.T) {
