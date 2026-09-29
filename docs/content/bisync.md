@@ -1941,6 +1941,9 @@ the `--max-delete` safety check when used with `--track-renames`.
 Path2 won.
 - Fixed an issue causing `--conflict-resolve` to compare a zero size or modtime.
 - Fixed an issue causing an endless retry loop for certain skipped files.
+- When a file changed on both sides has an unexpectedly blank hash (for example,
+an S3 multipart object without an MD5), bisync now compares it by downloading
+it, as with `--download`, instead of by size alone.
 
 ### `v1.74.2`
 
