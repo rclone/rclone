@@ -644,7 +644,8 @@ func (h Handle) DeadProps() (map[xml.Name]webdav.Property, error) {
 	xmlName.Space = "DAV:"
 	xmlName.Local = "lastmodified"
 	property.XMLName = xmlName
-	property.InnerXML = strconv.AppendInt(nil, h.Handle.Node().ModTime().Unix(), 10)
+	node := h.Handle.Node()
+	property.InnerXML = strconv.AppendInt(nil, modTime(node, node.ModTime()).Unix(), 10)
 	properties[xmlName] = property
 
 	return properties, nil
@@ -678,6 +679,30 @@ func (h Handle) Patch(proppatches []webdav.Proppatch) ([]webdav.Propstat, error)
 type FileInfo struct {
 	os.FileInfo
 	w *WebDAV
+}
+
+// ModTime returns the modification time, substituting the current time for
+// a directory whose modtime isn't known to the backend, so that the
+// DAV: getlastmodified property doesn't freeze at the configured
+// --default-time fallback
+func (fi FileInfo) ModTime() time.Time {
+	return modTime(fi.FileInfo, fi.FileInfo.ModTime())
+}
+
+// modTimeValid, if fi implements it, reports whether fi has a genuine
+// modTime rather than an unknown one masked by a fallback value
+type modTimeValider interface {
+	ModTimeValid() bool
+}
+
+// modTime returns t, unless fi's modtime is unknown, in which case it
+// returns the current time instead - a static, unchanging modtime is
+// actively misleading since it looks like real cache validation data
+func modTime(fi os.FileInfo, t time.Time) time.Time {
+	if v, ok := fi.(modTimeValider); ok && !v.ModTimeValid() {
+		return time.Now()
+	}
+	return t
 }
 
 // ETag returns an ETag for the FileInfo

@@ -38,8 +38,9 @@ type Dir struct {
 	items   map[string]Node   // directory entries - can be empty but not nil
 	virtual map[string]vState // virtual directory entries - may be nil
 
-	modTimeMu sync.Mutex // protects the following
-	modTime   time.Time
+	modTimeMu    sync.Mutex // protects the following
+	modTime      time.Time
+	modTimeValid bool // false if modTime is the --default-time fallback rather than a genuine value
 
 	_virtuals atomic.Int32 // number of virtual directory entries in this directory and children
 }
@@ -56,16 +57,32 @@ const (
 	vDel                   // removed file or directory
 )
 
+// dirModTimeValid, if a fs.Directory implements it, reports whether it
+// has a genuine modTime rather than an unknown one masked by a fallback
+type dirModTimeValid interface {
+	ModTimeValid() bool
+}
+
+// modTimeValid reports whether fsDir has a genuine modTime, treating
+// directories that don't say otherwise as valid
+func modTimeValid(fsDir fs.Directory) bool {
+	if v, ok := fsDir.(dirModTimeValid); ok {
+		return v.ModTimeValid()
+	}
+	return true
+}
+
 func newDir(vfs *VFS, f fs.Fs, parent *Dir, fsDir fs.Directory) *Dir {
 	d := &Dir{
-		vfs:     vfs,
-		f:       f,
-		parent:  parent,
-		entry:   fsDir,
-		path:    fsDir.Remote(),
-		modTime: fsDir.ModTime(vfs.ctx),
-		inode:   newInode(),
-		items:   make(map[string]Node),
+		vfs:          vfs,
+		f:            f,
+		parent:       parent,
+		entry:        fsDir,
+		path:         fsDir.Remote(),
+		modTime:      fsDir.ModTime(vfs.ctx),
+		modTimeValid: modTimeValid(fsDir),
+		inode:        newInode(),
+		items:        make(map[string]Node),
 	}
 	// Set timer up like this to avoid race of d.cacheCleanup being called
 	// before d.cleanupTimer is assigned to
@@ -394,6 +411,7 @@ func (d *Dir) rename(newParent *Dir, fsDir fs.Directory) {
 
 	d.modTimeMu.Lock()
 	d.modTime = fsDir.ModTime(d.vfs.ctx)
+	d.modTimeValid = modTimeValid(fsDir)
 	d.modTimeMu.Unlock()
 	d.mu.Lock()
 	oldPath := d.path
@@ -751,6 +769,7 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 			dir := node.(*Dir)
 			dir.mu.Lock()
 			dir.modTime = item.ModTime(d.vfs.ctx)
+			dir.modTimeValid = modTimeValid(item)
 			dir.entry = item
 			if dirTree != nil {
 				err = dir._readDirFromDirTree(dirTree, when)
@@ -927,6 +946,15 @@ func (d *Dir) ModTime() time.Time {
 	return d.modTime
 }
 
+// ModTimeValid returns false if the backend doesn't know the
+// modification time of this directory, so ModTime is returning the
+// configured --default-time fallback rather than a genuine value
+func (d *Dir) ModTimeValid() bool {
+	d.modTimeMu.Lock()
+	defer d.modTimeMu.Unlock()
+	return d.modTimeValid
+}
+
 // Size of the directory
 func (d *Dir) Size() int64 {
 	return 0
@@ -939,6 +967,7 @@ func (d *Dir) SetModTime(modTime time.Time) error {
 	}
 	d.modTimeMu.Lock()
 	d.modTime = modTime
+	d.modTimeValid = true
 	d.modTimeMu.Unlock()
 	return nil
 }

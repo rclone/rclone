@@ -16,10 +16,12 @@ import (
 	"time"
 
 	_ "github.com/rclone/rclone/backend/local"
+	_ "github.com/rclone/rclone/backend/memory"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/servetest"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/filter"
+	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/rc"
 	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/vfs/vfscommon"
@@ -534,6 +536,40 @@ func TestDisableDirList(t *testing.T) {
 		status, _ := do(t, true, "three/a.txt")
 		assert.Equal(t, http.StatusOK, status)
 	})
+}
+
+// TestDirectoryListingLastModifiedUnknownModTime checks that a directory
+// whose modtime isn't known to the backend (e.g. a bucket-style backend
+// like swift or s3, simulated here with the memory backend) doesn't report
+// the static --default-time fallback as its Last-Modified header.
+func TestDirectoryListingLastModifiedUnknownModTime(t *testing.T) {
+	ctx := context.Background()
+	f, err := fs.NewFs(ctx, ":memory:TestDirectoryListingLastModifiedUnknownModTime")
+	require.NoError(t, err)
+
+	before := time.Now().Add(-time.Minute)
+	_, err = f.Put(ctx, strings.NewReader("hello world\n"), object.NewStaticObjectInfo("subdir/hello.txt", time.Now(), 12, true, nil, nil))
+	require.NoError(t, err)
+
+	s, testURL := start(ctx, t, f)
+	defer func() { assert.NoError(t, s.server.Shutdown()) }()
+
+	req, err := http.NewRequest("GET", testURL+"subdir/", nil)
+	require.NoError(t, err)
+	req.SetBasicAuth(testUser, testPass)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer func() { _ = resp.Body.Close() }()
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	lastModified := resp.Header.Get("Last-Modified")
+	require.NotEqual(t, "", lastModified)
+	modTime, err := http.ParseTime(lastModified)
+	require.NoError(t, err)
+
+	defaultTime := time.Time(fs.GetConfig(ctx).DefaultTime)
+	assert.False(t, modTime.Equal(defaultTime), "Last-Modified should not be the static --default-time fallback")
+	assert.True(t, modTime.After(before), "Last-Modified should be close to the current time")
 }
 
 func TestRc(t *testing.T) {
