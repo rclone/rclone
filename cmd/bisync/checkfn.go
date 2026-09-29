@@ -80,7 +80,7 @@ func CheckFn(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool,
 		return true, false, err
 	}
 	if ht == hash.None {
-		return false, true, nil
+		return missingHashFn(ctx, dst, src)
 	}
 	if !same {
 		err = fmt.Errorf("%v differ", ht)
@@ -99,14 +99,14 @@ func (b *bisyncRun) CryptCheckFn(ctx context.Context, dst, src fs.Object) (diffe
 		return true, false, fmt.Errorf("error reading hash from underlying %v: %w", underlyingDst, err)
 	}
 	if underlyingHash == "" {
-		return false, true, nil
+		return missingHashFn(ctx, dst, src)
 	}
 	cryptHash, err := b.check.fcrypt.ComputeHash(ctx, cryptDst, src, b.check.hashType)
 	if err != nil {
 		return true, false, fmt.Errorf("error computing hash: %w", err)
 	}
 	if cryptHash == "" {
-		return false, true, nil
+		return missingHashFn(ctx, dst, src)
 	}
 	if cryptHash != underlyingHash {
 		err = fmt.Errorf("hashes differ (%s:%s) %q vs (%s:%s) %q", b.check.fdst.Name(), b.check.fdst.Root(), cryptHash, b.check.fsrc.Name(), b.check.fsrc.Root(), underlyingHash)
@@ -123,6 +123,15 @@ func (b *bisyncRun) CryptCheckFn(ctx context.Context, dst, src fs.Object) (diffe
 // result: src is crypt, dst is non-crypt
 func (b *bisyncRun) ReverseCryptCheckFn(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool, err error) {
 	return b.CryptCheckFn(ctx, src, dst)
+}
+
+func missingHashFn(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool, err error) {
+	ci := fs.GetConfig(ctx)
+	if ci.SizeOnly || ci.IgnoreChecksum {
+		return false, true, nil
+	}
+	fs.Debugf(src, "hash is missing, so using --download")
+	return DownloadCheckFn(ctx, dst, src)
 }
 
 // DownloadCheckFn is a slightly modified version of Check with --download
