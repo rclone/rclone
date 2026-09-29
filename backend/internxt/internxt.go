@@ -1145,7 +1145,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		if uploadErr != nil {
 			if isEmptyFileLimitError(uploadErr) {
 				o.restoreBackupFile(ctx, backupUUID, origName, origType)
-				return fs.ErrorCantUploadEmptyFiles
+				return fserrors.NoRetryError(fmt.Errorf("%w: %w", fs.ErrorCantUploadEmptyFiles, uploadErr))
 			}
 			if tooLarge := fileTooLargeError(uploadErr); tooLarge != nil {
 				o.restoreBackupFile(ctx, backupUUID, origName, origType)
@@ -1173,7 +1173,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 		if err != nil && isEmptyFileLimitError(err) {
 			o.restoreBackupFile(ctx, backupUUID, origName, origType)
-			return fs.ErrorCantUploadEmptyFiles
+			return fserrors.NoRetryError(fmt.Errorf("%w: %w", fs.ErrorCantUploadEmptyFiles, err))
 		}
 
 		if tooLarge := fileTooLargeError(err); tooLarge != nil {
