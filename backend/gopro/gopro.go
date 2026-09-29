@@ -2359,9 +2359,9 @@ var (
 //
 // GoPro removes an upload whose image content matches media already in
 // the library while processing it, not straight away, so this waits for
-// processing to finish. If GoPro removes the replacement, oldID is kept
-// and an error returned; if processing outlasts replaceTimeout, oldID is
-// kept and only logged about.
+// processing to finish. If GoPro removes the replacement or fails to
+// process it, oldID is kept and an error returned; if processing outlasts
+// replaceTimeout, oldID is kept and only logged about.
 func (f *Fs) replaceMedium(ctx context.Context, oldID, newID string) error {
 	deadline := time.Now().Add(replaceTimeout)
 	for {
@@ -2371,9 +2371,11 @@ func (f *Fs) replaceMedium(ctx context.Context, oldID, newID string) error {
 			return fmt.Errorf("gopro: GoPro removed the upload as a duplicate of media already in the library - kept medium %q it was to replace", oldID)
 		case err != nil:
 			return err
-		case item.ReadyToView == "ready" || isFailedState(item.ReadyToView):
+		case item.ReadyToView == "ready":
 			f.deleteReplaced(ctx, oldID)
 			return nil
+		case isFailedState(item.ReadyToView):
+			return fmt.Errorf("gopro: GoPro couldn't process the upload (state %q) - kept medium %q it was to replace", item.ReadyToView, oldID)
 		}
 		if time.Now().After(deadline) {
 			fs.Logf(f, "GoPro is still processing upload %q - kept medium %q it replaces, delete it once the upload is processed", newID, oldID)

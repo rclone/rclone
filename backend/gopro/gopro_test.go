@@ -4119,6 +4119,8 @@ func TestReplacingWaitsUntilTheReplacementIsProcessed(t *testing.T) {
 	ctx := context.Background()
 	defer func(i, d time.Duration) { replaceCheckInterval, replaceTimeout = i, d }(replaceCheckInterval, replaceTimeout)
 	replaceCheckInterval, replaceTimeout = time.Millisecond, time.Second
+	defer func(d time.Duration) { deletePermanentDelay = d }(deletePermanentDelay)
+	deletePermanentDelay = time.Millisecond // for aborting a failed upload
 	content := []byte("new content")
 	const remote = "upload/GX010001.MP4"
 	src := func() *mockobject.ContentMockObject {
@@ -4142,15 +4144,40 @@ func TestReplacingWaitsUntilTheReplacementIsProcessed(t *testing.T) {
 		return false
 	}
 
-	for _, final := range []string{"ready", "failure", "unknown"} {
-		t.Run("the original is deleted once the replacement is "+final, func(t *testing.T) {
-			f, srv, deletes := newTestReplaceFs(t, "uploading", "transcoding", final)
+	t.Run("the original is deleted once the replacement is ready", func(t *testing.T) {
+		f, srv, deletes := newTestReplaceFs(t, "uploading", "transcoding", "ready")
+		defer srv.Close()
+		old := &Object{fs: f, remote: remote, id: "old", itemCount: 1}
+		f.uploaded.AddEntry(old)
+		require.NoError(t, old.Update(ctx, bytes.NewReader(content), src()))
+		assert.True(t, oldDeleted(deletes))
+		assert.Equal(t, []string{"new"}, listed(t, f))
+	})
+
+	for _, final := range []string{"failure", "unknown"} {
+		t.Run("a replacement whose processing ends in "+final+" fails and keeps the original", func(t *testing.T) {
+			f, srv, deletes := newTestReplaceFs(t, "transcoding", final)
 			defer srv.Close()
 			old := &Object{fs: f, remote: remote, id: "old", itemCount: 1}
 			f.uploaded.AddEntry(old)
-			require.NoError(t, old.Update(ctx, bytes.NewReader(content), src()))
-			assert.True(t, oldDeleted(deletes))
-			assert.Equal(t, []string{"new"}, listed(t, f))
+			err := old.Update(ctx, bytes.NewReader(content), src())
+			assert.ErrorContains(t, err, final)
+			assert.False(t, oldDeleted(deletes), "the original must be kept")
+			assert.Equal(t, "old", old.id)
+			assert.Equal(t, []string{"old"}, listed(t, f))
+		})
+
+		t.Run("the same for a multi-thread copy ending in "+final, func(t *testing.T) {
+			f, srv, deletes := newTestReplaceFs(t, "transcoding", final)
+			defer srv.Close()
+			f.uploaded.AddEntry(&Object{fs: f, remote: remote, id: "old", itemCount: 1})
+			_, writer, err := f.OpenChunkWriter(ctx, remote, src())
+			require.NoError(t, err)
+			_, err = writer.WriteChunk(ctx, 0, bytes.NewReader(content))
+			require.NoError(t, err)
+			assert.ErrorContains(t, writer.Close(ctx), final)
+			assert.False(t, oldDeleted(deletes))
+			assert.Equal(t, []string{"old"}, listed(t, f))
 		})
 	}
 
