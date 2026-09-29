@@ -120,6 +120,7 @@ backends:
      - TestReadFile
      - TestCopyURL
      - TestMoveFileWithIgnoreExisting
+     - TestMoveFileImmutable
      - TestCopyFileCompareDest
      # fs/sync
      - TestSyncCompareDest

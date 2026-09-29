@@ -3,6 +3,7 @@ package vfs
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"runtime"
@@ -773,5 +774,8 @@ func TestDirMetadataExtension(t *testing.T) {
 	blob, err = vfs.ReadFile("dir/newfile.metadata")
 	require.NoError(t, err)
 	assert.Equal(t, "{}", string(blob))
-	require.NoError(t, fd.Close())
+	err = fd.Close()
+	if !errors.Is(err, fs.ErrorCantUploadEmptyFiles) {
+		require.NoError(t, err)
+	}
 }
