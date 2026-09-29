@@ -129,12 +129,6 @@ func (ls *fileList) put(file string, size int64, modtime time.Time, hash, id str
 	fi := ls.get(file)
 	if fi != nil {
 		fi.size = size
-		// if already have higher precision of same time, avoid overwriting it
-		if fi.time != modtime {
-			if modtime.Before(fi.time) && fi.time.Sub(modtime) < time.Second {
-				modtime = fi.time
-			}
-		}
 		fi.time = modtime
 		fi.hash = hash
 		fi.id = id
