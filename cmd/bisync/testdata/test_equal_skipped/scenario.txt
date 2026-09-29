@@ -4,6 +4,7 @@ test equal skipped
 # - Changed on both paths and identical, then changed on Path2 during the sync,
 #   keeping the same size and modtime                                                   file3 (file3B)
 # - New on both paths with --size-only, same size and different content                file10 (file10L, file10R)
+# - New on both paths with --ignore-checksum and identical                             file11
 
 test initial bisync
 bisync resync
@@ -51,3 +52,13 @@ bisync size-only
 test delete file10 on Path1
 delete-file {path1/}file10.txt
 bisync size-only
+
+test new on both paths with --ignore-checksum and identical - file11
+touch-glob 2001-05-06 {datadir/} file11.txt
+copy-as {datadir/}file11.txt {path1/} file11.txt
+copy-as {datadir/}file11.txt {path2/} file11.txt
+bisync ignore-checksum
+
+test delete file11 on Path1
+delete-file {path1/}file11.txt
+bisync ignore-checksum
