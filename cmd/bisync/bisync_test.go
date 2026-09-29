@@ -19,6 +19,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	mutex "sync" // renamed as "sync" already in use
 	"testing"
 	"time"
 	"unicode/utf8"
@@ -60,6 +61,12 @@ const (
 )
 
 var initDate = time.Date(2000, time.January, 1, 0, 0, 0, 0, bisync.TZ)
+
+// modtimeProbes holds the SetModTime error for each remote already probed by checkPreReqs
+var (
+	modtimeProbesMu mutex.Mutex
+	modtimeProbes   = map[string]error{}
+)
 
 /* Useful Command Shortcuts */
 // go test ./cmd/bisync -remote local -race
@@ -1028,7 +1035,7 @@ func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (con
 		b.ignoreModtime = true
 	}
 	// test if modtimes are writeable
-	testSetModtime := func(f fs.Fs) {
+	probeSetModtime := func(f fs.Fs) error {
 		ctx := accounting.WithStatsGroup(ctx, random.String(8)) // keep stats separate
 		in := bytes.NewBufferString("modtime_write_test")
 		objinfo := object.NewStaticObjectInfo("modtime_write_test", initDate, int64(len("modtime_write_test")), true, nil, nil)
@@ -1039,7 +1046,7 @@ func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (con
 		}
 		err = obj.SetModTime(ctx, initDate)
 		if err == fs.ErrorCantSetModTime {
-			b.t.Skip("skipping test as at least one remote does not support setting modtime")
+			return err
 		}
 		if err == fs.ErrorCantSetModTimeWithoutDelete { // transfers stats expected to differ on this backend
 			logReplacements = append(logReplacements, `^.*There was nothing to transfer.*$`, dropMe)
@@ -1049,8 +1056,21 @@ func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (con
 		if !f.Features().IsLocal {
 			time.Sleep(time.Second) // avoid GoogleCloudStorage Error 429 rateLimitExceeded
 		}
-		err = obj.Remove(ctx)
-		require.NoError(b.t, err)
+		require.NoError(b.t, obj.Remove(ctx))
+		return err
+	}
+	// probing on every bisync step would sleep for minutes on non-local remotes
+	testSetModtime := func(f fs.Fs) {
+		modtimeProbesMu.Lock()
+		defer modtimeProbesMu.Unlock()
+		err, probed := modtimeProbes[f.Name()]
+		if !probed {
+			err = probeSetModtime(f)
+			modtimeProbes[f.Name()] = err
+		}
+		if err == fs.ErrorCantSetModTime {
+			b.t.Skip("skipping test as at least one remote does not support setting modtime")
+		}
 	}
 	if b.testCase != "nomodtime" {
 		testSetModtime(b.fs1)
