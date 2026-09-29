@@ -3,11 +3,14 @@ package mega
 import (
 	"bytes"
 	"context"
+	"errors"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest/fstests"
+	mega "github.com/t3rm1n4l/go-mega"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -52,3 +55,30 @@ func (f *Fs) InternalTest(t *testing.T) {
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)
+
+// TestIsSessionExpiredErr pins down which go-mega error sentinels we treat as
+// a stale stored session. The backend falls back to the username and password
+// only for these.
+func TestIsSessionExpiredErr(t *testing.T) {
+	testCases := []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{"nil", nil, false},
+		{"EAGAIN", mega.EAGAIN, true},
+		{"ESID", mega.ESID, true},
+		{"wrapped EAGAIN", fmt.Errorf("login: %w", mega.EAGAIN), true},
+		{"wrapped ESID", fmt.Errorf("login: %w", mega.ESID), true},
+		{"EACCESS", mega.EACCESS, false},
+		{"EARGS", mega.EARGS, false},
+		{"EOVERQUOTA", mega.EOVERQUOTA, false},
+		{"other", errors.New("some other error"), false},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := isSessionExpiredErr(tc.err)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}

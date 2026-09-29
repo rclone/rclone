@@ -206,6 +206,52 @@ func shouldRetry(ctx context.Context, err error) (bool, error) {
 	return false, err
 }
 
+// isSessionExpiredErr returns true if err indicates the cached session is no
+// longer valid and authenticating again with the username and password can
+// recover.
+func isSessionExpiredErr(err error) bool {
+	return errors.Is(err, mega.EAGAIN) || errors.Is(err, mega.ESID)
+}
+
+// login authenticates srv, using the stored session if one is set or the
+// username and password otherwise.
+//
+// If the stored session turns out to be invalid, it falls back to the
+// username and password rather than failing. It stores the fresh session in
+// the config so the next run doesn't repeat the failed login.
+func (f *Fs) login(srv *mega.Mega, opt *Options, m configmap.Mapper) error {
+	if opt.SessionID == "" {
+		fs.Debugf(f, "Using username and password to initialize the Mega API")
+		err := srv.MultiFactorLogin(opt.User, opt.Pass, opt.TwoFA)
+		if err != nil {
+			return fmt.Errorf("couldn't login: %w", err)
+		}
+		m.Set(sessionIDConfigKey, srv.GetSessionID())
+		m.Set(masterKeyConfigKey, base64.StdEncoding.EncodeToString(srv.GetMasterKey()))
+		return nil
+	}
+	fs.Debugf(f, "Using previously stored session ID and master key to initialize the Mega API")
+	decodedMasterKey, err := base64.StdEncoding.DecodeString(opt.MasterKey)
+	if err != nil {
+		return fmt.Errorf("couldn't decode master key: %w", err)
+	}
+	err = srv.LoginWithKeys(opt.SessionID, decodedMasterKey)
+	if err == nil {
+		return nil
+	}
+	if !isSessionExpiredErr(err) {
+		return fmt.Errorf("login with previous auth keys failed: %w", err)
+	}
+	fs.Debugf(f, "Stored session is invalid (%v); re-authenticating with username and password", err)
+	err = srv.MultiFactorLogin(opt.User, opt.Pass, opt.TwoFA)
+	if err != nil {
+		return fmt.Errorf("stored session was invalid and login with username and password failed: %w", err)
+	}
+	m.Set(sessionIDConfigKey, srv.GetSessionID())
+	m.Set(masterKeyConfigKey, base64.StdEncoding.EncodeToString(srv.GetMasterKey()))
+	return nil
+}
+
 // readMetaDataForPath reads the metadata from the path
 func (f *Fs) readMetaDataForPath(ctx context.Context, remote string) (info *mega.Node, err error) {
 	rootNode, err := f.findRoot(ctx, false)
@@ -266,25 +312,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			})
 		}
 
-		if opt.SessionID == "" {
-			fs.Debugf(f, "Using username and password to initialize the Mega API")
-			err := srv.MultiFactorLogin(opt.User, opt.Pass, opt.TwoFA)
-			if err != nil {
-				return nil, fmt.Errorf("couldn't login: %w", err)
-			}
-			m.Set(sessionIDConfigKey, srv.GetSessionID())
-			encodedMasterKey := base64.StdEncoding.EncodeToString(srv.GetMasterKey())
-			m.Set(masterKeyConfigKey, encodedMasterKey)
-		} else {
-			fs.Debugf(f, "Using previously stored session ID and master key to initialize the Mega API")
-			decodedMasterKey, err := base64.StdEncoding.DecodeString(opt.MasterKey)
-			if err != nil {
-				return nil, fmt.Errorf("couldn't decode master key: %w", err)
-			}
-			err = srv.LoginWithKeys(opt.SessionID, decodedMasterKey)
-			if err != nil {
-				return nil, fmt.Errorf("login with previous auth keys failed: %w", err)
-			}
+		if err := f.login(srv, opt, m); err != nil {
+			return nil, err
 		}
 		// Cache the session so all Fs instances of this user share
 		// it - the move code relies on all objects being in the same
