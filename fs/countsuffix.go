@@ -75,6 +75,19 @@ func (x CountSuffix) String() string {
 	return val + suffix
 }
 
+// stringRoundTrip turns CountSuffix into a string which Set parses back to the
+// same value. A bare number is read by Set as thousands, so values below 1k get
+// a "B" suffix to stop them being scaled up.
+func (x CountSuffix) stringRoundTrip() string {
+	str := x.String()
+	if len(str) > 0 && str != "0" {
+		if lastDigit := str[len(str)-1]; lastDigit >= '0' && lastDigit <= '9' {
+			str += "B"
+		}
+	}
+	return str
+}
+
 // Unit turns CountSuffix into a string with a unit
 func (x CountSuffix) Unit(unit string) string {
 	val, suffix := x.string()
