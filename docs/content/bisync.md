@@ -1944,6 +1944,9 @@ Path2 won.
 - When a file changed on both sides has an unexpectedly blank hash (for example,
 an S3 multipart object without an MD5), bisync now compares it by downloading
 it, as with `--download`, instead of by size alone.
+- Fixed an issue causing a `--resync` to fail with "path1 and path2 are out of
+sync", or later runs to report changes that didn't happen, when a file's new
+modtime was less than a second earlier than the one in the listing.
 
 ### `v1.74.2`
 
