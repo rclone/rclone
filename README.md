@@ -130,6 +130,7 @@ directories to and from different cloud storage providers.
 - US3 Object Storage [:page_facing_up:](https://rclone.org/s3/#us3)
 - Wasabi [:page_facing_up:](https://rclone.org/s3/#wasabi)
 - WebDAV [:page_facing_up:](https://rclone.org/webdav/)
+- WebHDFS (Hadoop Distributed Filesystem over HTTP) [:page_facing_up:](https://rclone.org/webhdfs/)
 - Yandex Disk [:page_facing_up:](https://rclone.org/yandex/)
 - Zadara Object Storage [:page_facing_up:](https://rclone.org/s3/#zadara)
 - Zero Services (ZERO-Z3) [:page_facing_up:](https://rclone.org/s3/#zero-z3)

@@ -1,0 +1,20 @@
+backend: webhdfs
+name: WebHDFS
+tier: Tier 3
+maintainers: Community
+features_score: 3
+integration_tests: Untested
+data_integrity: Modtime
+performance: Medium
+adoption: Some use
+docs: Full
+security: Medium
+virtual: false
+remote: 'TestWebHDFS:'
+features:
+- CanHaveEmptyDirectories
+- DirMove
+- Move
+- Purge
+hashes: []
+precision: 1000000
