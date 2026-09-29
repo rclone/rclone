@@ -107,11 +107,9 @@ years, months and days that have media in them (see
 [`--gopro-show-empty-dirs`](#gopro-show-empty-dirs)). The same item shows
 up in `media/all` and in its date directories.
 
-rclone takes these for different files, so don't move a file to another
-directory showing the same item, such as from `media/all` to its own
-`by-day` directory: rclone finds it already there and deletes the
-"source" - the item itself. Moving it to a different date is fine (see
-[Renaming and moving files](#renaming-and-moving-files)).
+rclone recognises them as the same file by its ID, so moving a file to
+another directory showing the same item, such as from `media/all` to
+its own `by-day` directory, changes nothing.
 
 Directories under `media/` can't be created or removed. Only `upload/`
 accepts new files, and subdirectories can be made there to organise
@@ -219,8 +217,9 @@ recipients download the original, which also shares any GPS data in it.
 `--expire` and `--unlink` aren't supported: shares don't expire, and
 there's no way to find the shares containing a file.
 
-GoPro shares whole items, so `rclone link` refuses a single chapter,
-frame or RAW file, which would share all the others with it.
+GoPro shares whole items, so `rclone link` refuses a single chapter or
+frame, or the JPEG or RAW file of a RAW photo, which would share all the
+others with it.
 [`rclone backend link`](#link) shares whole items instead.
 
 ## Deleting files
@@ -265,8 +264,8 @@ file name doesn't make it count as a different item.
 GoPro can't replace a file's content, so overwriting a file in `upload/`
 (for example in `rclone mount`) uploads a new item and, once GoPro has
 processed it, deletes the old one, following `--gopro-use-trash`. If
-GoPro drops the new upload as a duplicate, the overwrite fails and the
-old item is kept; if processing takes more than two minutes, the old
+GoPro drops the new upload as a duplicate or can't process it, the
+overwrite fails and the old item is kept; if processing takes more than two minutes, the old
 item is kept too and a notice logged. As there are no hashes or
 modification times to compare, `rclone copy` only sees a changed file
 if its size changed too - use `--ignore-times` to upload it anyway.
@@ -749,8 +748,9 @@ rclone backend link remote: [options] [<arguments>+]
 This creates a public share link for each medium named, following
 --gopro-link-title and --gopro-link-allow-download, and prints the links.
 
-GoPro shares whole media, so "rclone link" refuses a single chapter,
-frame or RAW file - this shares every file of the medium instead. Each
+GoPro shares whole media, so "rclone link" refuses a single chapter or
+frame, or the JPEG or RAW file of a RAW photo - this shares every file
+of the medium instead. Each
 argument names one medium, either by its id or by the name of any of its
 files as listed by this backend:
 
