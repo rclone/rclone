@@ -231,6 +231,7 @@ type bisyncTest struct {
 	TestFn          bisync.TestFunc
 	ignoreModtime   bool // ignore modtimes when comparing final listings, for backends without support
 	ignoreBlankHash bool // ignore blank hashes for backends where we allow them to be blank
+	ignoreChecksum  bool // a step of this test case used --ignore-checksum
 }
 
 var color = bisync.Color
@@ -436,6 +437,7 @@ func (b *bisyncTest) cleanupAll() {
 func (b *bisyncTest) runTestCase(ctx context.Context, t *testing.T, testCase string) {
 	b.t = t
 	b.testCase = testCase
+	b.ignoreChecksum = false
 	var err error
 
 	b.fs1, b.parent1, b.path1, b.canonPath1 = b.makeTempRemote(ctx, b.argRemote1, "path1")
@@ -1197,6 +1199,9 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 			ci.SizeOnly = true
 		case "ignore-size":
 			ci.IgnoreSize = true
+		case "ignore-checksum":
+			ci.IgnoreChecksum = true
+			b.ignoreChecksum = true
 		case "checksum":
 			ci.CheckSum = true
 			opt.Compare.DownloadHash = true // allows us to test crypt and the like
@@ -1766,6 +1771,16 @@ func (b *bisyncTest) mangleResult(dir, file string, golden bool) string {
 	}
 	if b.testCase == "dry_run" {
 		rep = append(rep, dryrunReplacements...)
+	}
+	if b.ignoreChecksum && b.fs1.Hashes().Overlap(b.fs2.Hashes()).Count() == 0 {
+		// with no hash in common, --ignore-checksum skips the check for identical files instead of running it
+		rep = append(rep,
+			`^.*Checking potential conflicts\.\.\.$`, dropMe,
+			`^.*: \d+ differences found$`, dropMe,
+			`^.*: \d+ matching files$`, dropMe,
+			`^.*Finished checking the potential conflicts.*$`, dropMe,
+			`^.*Not checking potential conflicts.*$`, dropMe,
+		)
 	}
 	repFrom := make([]*regexp.Regexp, len(rep)/2)
 	repTo := make([]string, len(rep)/2)
