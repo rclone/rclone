@@ -3699,6 +3699,52 @@ func listedVideo(id, filename string) api.Medium {
 	return api.Medium{ID: id, Filename: filename, FileExtension: "mp4", Type: "Video", ReadyToView: "ready", FileSize: &size, ItemCount: 1, CapturedAt: time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)}
 }
 
+func TestMoveToAnotherViewOfTheSameItemChangesNothing(t *testing.T) {
+	const id = "111111111111111111111111"
+	for _, tc := range []struct {
+		name     string
+		edit     func(m *api.Medium)
+		src, dst string
+	}{
+		{"a video", nil, "media/all/clip {" + id + "}.mp4", "media/by-year/2025/clip {" + id + "}.mp4"},
+		{"between date views", nil, "media/by-month/2025/2025-01/clip {" + id + "}.mp4", "media/by-day/2025/2025-01-01/clip {" + id + "}.mp4"},
+		{"a chapter", func(m *api.Medium) { m.ItemCount = 2 }, "media/all/clip-2 {" + id + "}.mp4", "media/by-year/2025/clip-2 {" + id + "}.mp4"},
+		{"a RAW file", func(m *api.Medium) {
+			m.Filename, m.FileExtension, m.Type, m.AvailableLabels = "photo.JPG", "jpg", "Photo", rawPhotoLabels
+		}, "media/all/photo {" + id + "}.GPR", "media/by-day/2025/2025-01-01/photo {" + id + "}.GPR"},
+	} {
+		for _, ignoreTimes := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s, ignore-times %v", tc.name, ignoreTimes), func(t *testing.T) {
+				ctx, ci := fs.AddConfig(context.Background())
+				ci.IgnoreTimes = ignoreTimes
+				item := listedVideo(id, "clip.mp4")
+				if tc.edit != nil {
+					tc.edit(&item)
+				}
+				var changes []string
+				f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					if r.Method != http.MethodGet {
+						changes = append(changes, r.Method+" "+r.URL.String())
+						w.WriteHeader(http.StatusNoContent)
+						return
+					}
+					writeJSON(t, w, item)
+				}))
+				defer srv.Close()
+				f.name = "alias-test"
+				f.opt.AlwaysAddID, f.opt.UseTrash = true, true
+				f.opt.DeleteParts = deletePartsAny
+				f.features = (&fs.Features{Move: f.Move}).Fill(ctx, f)
+				f.media = cachedList([]api.Medium{item})
+				_, err := f.NewObject(ctx, tc.dst)
+				require.NoError(t, err, "the destination shows the same file already")
+				require.NoError(t, operations.MoveFile(ctx, f, f, tc.dst, tc.src))
+				assert.Empty(t, changes, "nothing may be deleted or changed")
+			})
+		}
+	}
+}
+
 func TestReadMetaDataFastPathFollowsTheListing(t *testing.T) {
 	const id = "111111111111111111111111"
 	leaf := "clip {" + id + "}.mp4"

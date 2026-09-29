@@ -2578,10 +2578,6 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	// srcObj.fs may be a different instance of the same remote (with a
 	// different root), so don't compare it to f - rclone has already
 	// checked the config matches.
-	if srcObj.itemCount > 1 {
-		// Only the whole medium can be renamed, not one of its items.
-		return nil, fs.ErrorCantMove
-	}
 	match, _, pattern := patterns.match(f.root, remote, true)
 	if pattern == nil || !pattern.isFile || pattern.isUpload {
 		return nil, fs.ErrorCantMove
@@ -2612,6 +2608,10 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		upd.CapturedAt = &capturedAt
 	}
 	if upd.Filename != nil || upd.CapturedAt != nil {
+		if srcObj.itemCount > 1 {
+			// Only the whole medium can be renamed, not one of its items.
+			return nil, fs.ErrorCantMove
+		}
 		if err := srcObj.fs.updateMedium(ctx, srcObj.id, upd); err != nil {
 			return nil, err
 		}
