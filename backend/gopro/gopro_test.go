@@ -20,6 +20,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -3401,6 +3402,55 @@ func testChapter(f *Fs, n int) *Object {
 // TestDeletePartsThroughRcloneOperations drives each --gopro-delete-parts
 // mode through rclone's own move and delete operations, which call Remove
 // per file with no notion of the medium the files belong to.
+func TestDeletingPartsDeletesTheirMediumOnce(t *testing.T) {
+	// GoPro keeps showing a deleted medium for a while, then answers a
+	// delete of it with not_found.
+	for _, checkers := range []int{1, 4} {
+		for _, trashedOnly := range []bool{false, true} {
+			t.Run(fmt.Sprintf("checkers %d, trashed_only %v", checkers, trashedOnly), func(t *testing.T) {
+				ctx, ci := fs.AddConfig(context.Background())
+				ci.Checkers = checkers
+				var deletes atomic.Int32
+				item := listedVideo(testMediumID, "clip.mp4")
+				item.ItemCount = 4
+				mux := http.NewServeMux()
+				mux.HandleFunc("GET /media/{id}", func(w http.ResponseWriter, r *http.Request) {
+					writeJSON(t, w, item)
+				})
+				mux.HandleFunc("GET /media/deleted", func(w http.ResponseWriter, r *http.Request) {
+					resp := api.DeletedMediaResponse{DeletedMedia: []api.Medium{item}}
+					resp.Pages.TotalPages = 1
+					writeJSON(t, w, resp)
+				})
+				mux.HandleFunc("DELETE /media", func(w http.ResponseWriter, r *http.Request) {
+					result := api.DeleteResponse{}
+					if deletes.Add(1) > 1 {
+						result.Embedded.Errors = []api.EmbeddedError{{Reason: "not_found", Code: 5022, Description: "was either not found or is inaccessible"}}
+					}
+					writeJSON(t, w, result)
+				})
+				f, srv := newTestAPIFs(mux)
+				defer srv.Close()
+				f.opt.UseTrash = true
+				f.opt.TrashedOnly = trashedOnly
+				f.opt.DeleteParts = deletePartsAny
+				f.media = cachedList([]api.Medium{item})
+				f.trash = cachedList([]api.Medium{item})
+				entries, err := f.listDir(ctx, "", mediaFilter{})
+				require.NoError(t, err)
+				require.Len(t, entries, 4)
+				ch := make(fs.ObjectsChan, len(entries))
+				for _, e := range entries {
+					ch <- e.(fs.Object)
+				}
+				close(ch)
+				require.NoError(t, operations.DeleteFiles(ctx, ch))
+				assert.Equal(t, int32(1), deletes.Load())
+			})
+		}
+	}
+}
+
 func TestDeletePartsThroughRcloneOperations(t *testing.T) {
 	moveChapter := func(t *testing.T, f *Fs, n int) (localPath string, err error) {
 		dir := t.TempDir()

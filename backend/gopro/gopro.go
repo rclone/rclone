@@ -43,6 +43,7 @@ import (
 	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/oauth2"
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/sync/singleflight"
 )
 
 // Constants
@@ -629,8 +630,12 @@ type Fs struct {
 	dlCacheMu sync.Mutex
 	dlCache   map[string]*dlCacheEntry
 
-	media *listCache // cached result of allMedia, shared - see sharedListCache
-	trash *listCache // cached result of allTrash, shared - see sharedListCache
+	media *listCache // cached result of allMedia, shared - see acquireListCache
+	trash *listCache // cached result of allTrash, shared - see acquireListCache
+
+	partDeletes  singleflight.Group // see removeWhole
+	deletedMu    sync.Mutex
+	deletedMedia map[string]bool // ids removeWhole deleted
 
 	uploadedMu sync.Mutex
 	uploaded   dirtree.DirTree // record of items uploaded this run
@@ -1427,6 +1432,11 @@ func (f *Fs) restore(ctx context.Context, arg []string) (any, error) {
 	if err := f.restoreMedia(ctx, ids); err != nil {
 		return nil, err
 	}
+	f.deletedMu.Lock()
+	for _, id := range ids {
+		delete(f.deletedMedia, id)
+	}
+	f.deletedMu.Unlock()
 	return &restoreResult{Restored: len(ids)}, nil
 }
 
@@ -2412,22 +2422,54 @@ func (o *Object) Remove(ctx context.Context) error {
 		if !o.deletesWhole() {
 			return o.removePart(ctx)
 		}
-		// Another part of the medium may have deleted it already.
-		if exists, err := o.mediumExists(ctx); err != nil || !exists {
-			return err
-		}
+		return o.removeWhole(ctx)
 	}
-	var err error
-	if o.fs.opt.TrashedOnly {
-		err = o.fs.doDeleteMedium(ctx, o.id, "permanent", "true")
-	} else {
-		err = o.fs.deleteMedium(ctx, o.id, !o.fs.opt.UseTrash)
-	}
-	if err != nil {
+	if err := o.fs.deleteMediumFollowingOptions(ctx, o.id); err != nil {
 		return err
 	}
 	o.fs.removeUploadedEntry(o.remote)
 	return nil
+}
+
+// deleteMediumFollowingOptions deletes medium id following
+// --gopro-trashed-only and --gopro-use-trash
+func (f *Fs) deleteMediumFollowingOptions(ctx context.Context, id string) error {
+	if f.opt.TrashedOnly {
+		return f.doDeleteMedium(ctx, id, "permanent", "true")
+	}
+	return f.deleteMedium(ctx, id, !f.opt.UseTrash)
+}
+
+// removeWhole deletes the whole medium of part o, once for all of its
+// parts: rclone deletes them concurrently, and GoPro keeps showing a
+// deleted medium for a while, then refuses to delete it again.
+func (o *Object) removeWhole(ctx context.Context) error {
+	f := o.fs
+	_, err, _ := f.partDeletes.Do(o.id, func() (any, error) {
+		f.deletedMu.Lock()
+		deleted := f.deletedMedia[o.id]
+		f.deletedMu.Unlock()
+		if deleted {
+			return nil, nil
+		}
+		exists, err := o.mediumExists(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if exists {
+			if err := f.deleteMediumFollowingOptions(ctx, o.id); err != nil {
+				return nil, err
+			}
+		}
+		f.deletedMu.Lock()
+		if f.deletedMedia == nil {
+			f.deletedMedia = map[string]bool{}
+		}
+		f.deletedMedia[o.id] = true
+		f.deletedMu.Unlock()
+		return nil, nil
+	})
+	return err
 }
 
 // isPart reports whether o is one of several files of its medium - a
