@@ -915,6 +915,33 @@ func TestSizeCheckIsBounded(t *testing.T) {
 	assert.Less(t, time.Since(start), 5*time.Second)
 }
 
+func TestObjectMetadataIsSafeForConcurrentUse(t *testing.T) {
+	ctx := context.Background()
+	f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer srv.Close()
+	f.media = cachedList([]api.Medium{listedVideo("111111111111111111111111", "clip.mp4")})
+	entries, err := f.List(ctx, "media/all")
+	require.NoError(t, err)
+	o := entries[0].(fs.Object)
+	var wg sync.WaitGroup
+	for worker := range 4 {
+		wg.Go(func() {
+			for n := range 50 {
+				if worker == 0 {
+					assert.NoError(t, o.SetModTime(ctx, startTime.Add(time.Duration(n)*time.Second)))
+				} else {
+					_ = o.ModTime(ctx)
+					_ = o.Size()
+				}
+			}
+		})
+	}
+	wg.Wait()
+	assert.Equal(t, startTime.Add(49*time.Second), o.ModTime(ctx))
+}
+
 func TestObjectSizeFastPaths(t *testing.T) {
 	t.Run("verify_size off skips the check for a known size", func(t *testing.T) {
 		o := &Object{fs: &Fs{opt: Options{VerifySize: verifySizeOff}}, bytes: 12345}
@@ -1721,12 +1748,39 @@ func TestMediumTypeForFilename(t *testing.T) {
 
 func TestRestoreArg(t *testing.T) {
 	id := "68b22325df3cf752557ac6d7"
-	assert.Equal(t, id, restoreArg(id))
-	assert.Equal(t, id, restoreArg("GX010294 {"+id+"}.MP4"))
-	assert.Equal(t, id, restoreArg("trash/GX010294 {"+id+"}.MP4"))
-	assert.Equal(t, "not-an-id", restoreArg("not-an-id"))
-	assert.Equal(t, id, restoreArg(id+"/2"), "a chapter's ID() names its medium")
-	assert.Equal(t, id, restoreArg(id+"/2/raw"))
+	for _, arg := range []string{
+		id,
+		"GX010294 {" + id + "}.MP4",
+		"trash/GX010294 {" + id + "}.MP4",
+		id + "/2", // a chapter's ID() names its medium
+		id + "/2/raw",
+	} {
+		got, err := restoreArg(arg)
+		require.NoError(t, err, arg)
+		assert.Equal(t, id, got, arg)
+	}
+	for _, arg := range []string{"", "not-an-id", "GX010294.MP4", id + "0", "../../etc/passwd"} {
+		_, err := restoreArg(arg)
+		assert.ErrorContains(t, err, fmt.Sprintf("%q", arg), "the error names the argument")
+	}
+}
+
+func TestCommandsCheckEveryArgumentFirst(t *testing.T) {
+	const id = "111111111111111111111111"
+	for _, cmd := range []string{"restore", "delete", "link"} {
+		t.Run(cmd, func(t *testing.T) {
+			var requests []string
+			f, srv := newTestAPIFs(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				requests = append(requests, r.Method+" "+r.URL.Path)
+				http.Error(w, "unexpected", http.StatusInternalServerError)
+			}))
+			defer srv.Close()
+			f.opt.UseTrash = true
+			_, err := f.Command(context.Background(), cmd, []string{id, "not-a-medium-id"}, nil)
+			assert.ErrorContains(t, err, "not-a-medium-id")
+			assert.Empty(t, requests, "nothing may be done before every argument is checked")
+		})
+	}
 }
 
 // newTestUploadFs builds a minimal *Fs with a real, empty upload/ dirtree -
@@ -1884,6 +1938,30 @@ func newTestMediaFs(items []api.Medium) *Fs {
 		opt:       Options{AlwaysAddID: true},
 		uploaded:  dirtree.New(),
 		media:     cachedList(items),
+	}
+}
+
+func TestDateDirectoriesMustBeRealDates(t *testing.T) {
+	for _, tc := range []struct {
+		dir   string
+		valid bool
+	}{
+		{"media/by-day/2024/2024-02-29", true},
+		{"media/by-day/2023/2023-02-28", true},
+		{"media/by-day/2024/2024-12-31", true},
+		{"media/by-day/2023/2023-02-29", false},
+		{"media/by-day/2024/2024-04-31", false},
+		{"media/by-day/2024/2024-02-30", false},
+	} {
+		t.Run(tc.dir, func(t *testing.T) {
+			f := newTestMediaFs([]api.Medium{})
+			_, err := f.List(context.Background(), tc.dir)
+			if tc.valid {
+				assert.NoError(t, err)
+			} else {
+				assert.ErrorContains(t, err, "bad day", "like a bad month")
+			}
+		})
 	}
 }
 
@@ -2115,11 +2193,12 @@ func newTestLinkFs(t *testing.T, items []api.Medium) (*Fs, *httptest.Server, *[]
 
 func TestPublicLinkOfPartsIsRefused(t *testing.T) {
 	ctx := context.Background()
-	const series, pair = "6abac128b02933d265c1f3d8", "6a306a51ececc5d9c2b55749"
+	const series, pair, photo = "6abac128b02933d265c1f3d8", "6a306a51ececc5d9c2b55749", "6a306a51ececc5d9c2b5574a"
 	size := int64(100)
 	items := []api.Medium{
 		{ID: series, Filename: "GX012010.MP4", FileExtension: "mp4", Type: "Video", ReadyToView: "ready", FileSize: &size, ItemCount: 2, CapturedAt: startTime},
 		{ID: pair, Filename: "GP012013.JPG", FileExtension: "jpg", Type: "Photo", ReadyToView: "ready", FileSize: &size, ItemCount: 1, CapturedAt: startTime, AvailableLabels: rawPhotoLabels},
+		{ID: photo, Filename: "GP012014.JPG", FileExtension: "jpg", Type: "Photo", ReadyToView: "ready", FileSize: &size, ItemCount: 1, CapturedAt: startTime},
 	}
 	for _, tc := range []struct {
 		remote string
@@ -2128,7 +2207,8 @@ func TestPublicLinkOfPartsIsRefused(t *testing.T) {
 		{"media/all/GX012010-1 {" + series + "}.MP4", false},
 		{"media/all/GX012010-2 {" + series + "}.MP4", false},
 		{"media/all/GP012013 {" + pair + "}.GPR", false},
-		{"media/all/GP012013 {" + pair + "}.JPG", true},
+		{"media/all/GP012013 {" + pair + "}.JPG", false},
+		{"media/all/GP012014 {" + photo + "}.JPG", true},
 	} {
 		t.Run(tc.remote, func(t *testing.T) {
 			f, srv, created, _ := newTestLinkFs(t, items)
@@ -2478,7 +2558,7 @@ func TestRestoreCommand(t *testing.T) {
 
 		dryCtx, ci := fs.AddConfig(ctx)
 		ci.DryRun = true
-		result, err := f.restore(dryCtx, []string{"abc123"})
+		result, err := f.restore(dryCtx, []string{"68b22325df3cf752557ac6d7"})
 		require.NoError(t, err)
 		assert.Equal(t, &restoreResult{}, result)
 		assert.False(t, called, "dry-run must not issue the restore request")

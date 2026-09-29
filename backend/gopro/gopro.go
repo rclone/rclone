@@ -1321,8 +1321,9 @@ With --dry-run, it only logs what would be deleted.`,
 	Long: `This creates a public share link for each medium named, following
 --gopro-link-title and --gopro-link-allow-download, and prints the links.
 
-GoPro shares whole media, so "rclone link" refuses a single chapter,
-frame or RAW file - this shares every file of the medium instead. Each
+GoPro shares whole media, so "rclone link" refuses a single chapter or
+frame, or the JPEG or RAW file of a RAW photo - this shares every file
+of the medium instead. Each
 argument names one medium, either by its id or by the name of any of its
 files as listed by this backend:
 
@@ -1362,9 +1363,9 @@ func (f *Fs) deleteCommand(ctx context.Context, arg []string) (any, error) {
 	if len(arg) == 0 {
 		return nil, errors.New("name at least one medium to delete")
 	}
-	ids := make([]string, len(arg))
-	for i, a := range arg {
-		ids[i] = restoreArg(a)
+	ids, err := commandIDs(arg)
+	if err != nil {
+		return nil, err
 	}
 	if fs.GetConfig(ctx).DryRun {
 		fs.Logf(f, "Would delete %d medium(s): %v", len(ids), ids)
@@ -1372,14 +1373,7 @@ func (f *Fs) deleteCommand(ctx context.Context, arg []string) (any, error) {
 	}
 	res := &deleteResult{}
 	for _, id := range ids {
-		var err error
-		if f.opt.TrashedOnly {
-			// A trashed medium can only be purged - see Object.Remove.
-			err = f.doDeleteMedium(ctx, id, "permanent", "true")
-		} else {
-			err = f.deleteMedium(ctx, id, !f.opt.UseTrash)
-		}
-		if err != nil {
+		if err := f.deleteMediumFollowingOptions(ctx, id); err != nil {
 			return res, err
 		}
 		res.Deleted++
@@ -1392,16 +1386,30 @@ type restoreResult struct {
 	Restored int
 }
 
-// restoreArg resolves one "restore" argument - a bare id or a
-// "name {id}.ext" leaf - to a medium id
-func restoreArg(arg string) string {
+// restoreArg resolves one argument of a backend command - an id, a file's
+// ID() or a "name {id}.ext" file name - to a medium id
+func restoreArg(arg string) (string, error) {
 	if m := fileIDRe.FindStringSubmatch(arg); m != nil {
-		return m[1]
+		return m[1], nil
 	}
 	if id := findID(path.Base(arg)); id != "" {
-		return id
+		return id, nil
 	}
-	return arg
+	return "", fmt.Errorf("gopro: %q names no medium - give its id (24 hex digits) or a file name ending in {id}", arg)
+}
+
+// commandIDs returns the medium ids named by the arguments of a backend
+// command - see restoreArg
+func commandIDs(arg []string) ([]string, error) {
+	ids := make([]string, len(arg))
+	for i, a := range arg {
+		id, err := restoreArg(a)
+		if err != nil {
+			return nil, err
+		}
+		ids[i] = id
+	}
+	return ids, nil
 }
 
 // fileIDRe matches an Object's ID(), capturing its medium's id
@@ -1409,9 +1417,9 @@ var fileIDRe = regexp.MustCompile(`^([0-9a-f]{24})(?:/[0-9]+)?(?:/raw)?$`)
 
 // restore implements the "restore" backend command
 func (f *Fs) restore(ctx context.Context, arg []string) (any, error) {
-	ids := make([]string, len(arg))
-	for i, a := range arg {
-		ids[i] = restoreArg(a)
+	ids, err := commandIDs(arg)
+	if err != nil {
+		return nil, err
 	}
 	if len(ids) == 0 {
 		items, err := f.allTrash(ctx)
@@ -2167,7 +2175,7 @@ func (o *Object) setMetaDataLocked(item *api.Medium, itemNumber int) {
 //
 // it also sets the info
 func (o *Object) readMetaData(ctx context.Context) (err error) {
-	if !o.modTime.IsZero() {
+	if !o.cachedModTime().IsZero() {
 		return nil
 	}
 	dir, fileName := path.Split(o.remote)
@@ -2234,6 +2242,13 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 		fs.Debugf(o, "ModTime: Failed to read metadata: %v", err)
 		return time.Now()
 	}
+	return o.cachedModTime()
+}
+
+// cachedModTime returns o.modTime, which SetModTime may change meanwhile
+func (o *Object) cachedModTime() time.Time {
+	o.sizeMu.Lock()
+	defer o.sizeMu.Unlock()
 	return o.modTime
 }
 
@@ -2247,7 +2262,9 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	if err := o.fs.updateMedium(ctx, o.id, api.MediumUpdate{CapturedAt: &modTime}); err != nil {
 		return err
 	}
+	o.sizeMu.Lock()
 	o.modTime = modTime
+	o.sizeMu.Unlock()
 	return nil
 }
 
@@ -2435,6 +2452,7 @@ func (o *Object) Remove(ctx context.Context) error {
 // --gopro-trashed-only and --gopro-use-trash
 func (f *Fs) deleteMediumFollowingOptions(ctx context.Context, id string) error {
 	if f.opt.TrashedOnly {
+		// A trashed medium can only be purged.
 		return f.doDeleteMedium(ctx, id, "permanent", "true")
 	}
 	return f.deleteMedium(ctx, id, !f.opt.UseTrash)
@@ -2720,9 +2738,10 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	if !ok {
 		return "", fs.ErrorObjectNotFound
 	}
-	// GoPro shares whole media, so a link to one chapter, frame or RAW
+	// GoPro shares whole media, so a link to one chapter, frame, or the
+	// JPEG or RAW file of a RAW photo
 	// file would share all of them.
-	if obj.itemCount > 1 || obj.raw {
+	if obj.isPart() {
 		return "", fmt.Errorf("gopro: can't share %q on its own - GoPro only shares it together with the other files of its item: use \"rclone backend link\" to share them all", remote)
 	}
 	_, leaf := path.Split(remote)
@@ -2753,9 +2772,12 @@ func (f *Fs) linkCommand(ctx context.Context, arg []string) (any, error) {
 	if len(arg) == 0 {
 		return nil, errors.New("name at least one medium to share")
 	}
+	ids, err := commandIDs(arg)
+	if err != nil {
+		return nil, err
+	}
 	var links []string
-	for _, a := range arg {
-		id := restoreArg(a)
+	for _, id := range ids {
 		if fs.GetConfig(ctx).DryRun {
 			fs.Logf(f, "Would share medium %s", id)
 			continue

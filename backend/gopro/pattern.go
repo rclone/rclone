@@ -354,7 +354,8 @@ func yearMonthDayFilter(match []string) (mf mediaFilter, err error) {
 	}
 	if len(match) >= 4 {
 		day, err := strconv.Atoi(match[3])
-		if err != nil || day < 1 || day > 31 {
+		// time.Date normalizes a day past the month's end into the next.
+		if err != nil || day < 1 || time.Date(mf.year, time.Month(mf.month), day, 0, 0, 0, 0, time.UTC).Day() != day {
 			return mf, fmt.Errorf("bad day %q", match[3])
 		}
 		mf.day = day
