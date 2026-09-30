@@ -1596,6 +1596,54 @@ func TestSyncWithTrackRenames(t *testing.T) {
 	}
 }
 
+// TestSyncWithTrackRenamesOverwrite tests that a local rename which
+// overwrites an existing file in the destination is detected as a
+// server-side rename rather than an upload. See #5022.
+func TestSyncWithTrackRenamesOverwrite(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+
+	ci.TrackRenames = true
+	defer func() {
+		ci.TrackRenames = false
+	}()
+
+	haveHash := r.Fremote.Hashes().Overlap(r.Flocal.Hashes()).GetOne() != hash.None
+	canTrackRenames := haveHash && operations.CanServerSideMove(r.Fremote)
+	t.Logf("Can track renames: %v", canTrackRenames)
+
+	f1 := r.WriteFile("file1.txt", "hello", t1)
+	f2 := r.WriteFile("file2.txt", "hello2", t2)
+
+	accounting.GlobalStats().ResetCounters()
+	ctx = predictDstFromLogger(ctx)
+	require.NoError(t, Sync(ctx, r.Fremote, r.Flocal, false))
+
+	r.CheckRemoteItems(t, f1, f2)
+	r.CheckLocalItems(t, f1, f2)
+
+	// Simulate renaming file1 over file2 locally: file1 disappears
+	// and file2 takes its content (and modtime).
+	o1, err := r.Flocal.NewObject(ctx, "file1.txt")
+	require.NoError(t, err)
+	require.NoError(t, o1.Remove(ctx))
+	f2 = r.WriteFile("file2.txt", "hello", t1)
+	r.CheckLocalItems(t, f2)
+
+	accounting.GlobalStats().ResetCounters()
+	ctx = predictDstFromLogger(ctx)
+	require.NoError(t, Sync(ctx, r.Fremote, r.Flocal, false))
+
+	r.CheckRemoteItems(t, f2)
+
+	// The rename should have been done server-side, not re-uploaded
+	if canTrackRenames {
+		renames := accounting.GlobalStats().Renames(0)
+		assert.NotZero(t, renames, fmt.Sprintf("canTrackRenames=%v, renames=%d", canTrackRenames, renames))
+	}
+}
+
 func TestParseRenamesStrategyModtime(t *testing.T) {
 	for _, test := range []struct {
 		in      string
