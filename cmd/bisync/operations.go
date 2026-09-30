@@ -74,7 +74,9 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 	opt := *optArg // ensure that input is never changed
 	// applyContext changes the config, so give it a copy
 	ctx, _ = fs.AddConfig(ctx)
-	opt.applyContext(ctx)
+	if err = opt.applyContext(ctx); err != nil {
+		return err
+	}
 	b := &bisyncRun{
 		fs1:       fs1,
 		fs2:       fs2,

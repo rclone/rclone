@@ -203,22 +203,23 @@ var commandDefinition = &cobra.Command{
 	},
 }
 
-func (opt *Options) applyContext(ctx context.Context) {
+func (opt *Options) applyContext(ctx context.Context) error {
 	maxDelete := DefaultMaxDelete
 	ci := fs.GetConfig(ctx)
+	if ci.MaxDelete > 100 {
+		return fmt.Errorf("--max-delete is a percentage for bisync and must be from 0 to 100, not %d", ci.MaxDelete)
+	}
 	if ci.MaxDelete >= 0 {
 		maxDelete = int(ci.MaxDelete)
 	}
 	if maxDelete < 0 {
 		maxDelete = 0
 	}
-	if maxDelete > 100 {
-		maxDelete = 100
-	}
 	opt.MaxDelete = maxDelete
 	// reset MaxDelete for fs/operations, bisync handles this parameter specially
 	ci.MaxDelete = -1
 	opt.DryRun = ci.DryRun
+	return nil
 }
 
 func (opt *Options) setDryRun(ctx context.Context) context.Context {
