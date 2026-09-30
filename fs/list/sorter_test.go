@@ -107,6 +107,26 @@ func TestSorterKeyFn(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestSorterKeyFnWithNull(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	ci.ListCutoff = 1
+	object := mockobject.Object("a")
+	f := &testFs{t: t, entriesMap: map[string]fs.DirEntry{"a": object}}
+	callback := func(entries fs.DirEntries) error {
+		require.Equal(t, fs.DirEntries{object}, entries)
+		return nil
+	}
+	keyFn := func(fs.DirEntry) string { return "a\x00F" }
+
+	ls, err := NewSorter(ctx, f, callback, keyFn)
+	require.NoError(t, err)
+	defer ls.CleanUp()
+	require.NoError(t, ls.Add(fs.DirEntries{object}))
+	require.True(t, ls.extSort)
+	require.NoError(t, ls.Send())
+}
+
 // testFs implements enough of the fs.Fs interface for Sorter
 type testFs struct {
 	t          *testing.T
