@@ -5,13 +5,16 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fs/rc/jobs"
 	"github.com/rclone/rclone/fstest"
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -42,7 +45,9 @@ func newRcBisyncCtx(ctx context.Context, t *testing.T, n int) (path1, path2 stri
 	runIn := func(ctx context.Context, in rc.Params) error {
 		in["path1"] = path1
 		in["path2"] = path2
-		in["workdir"] = workdir
+		if _, ok := in["workdir"]; !ok {
+			in["workdir"] = workdir
+		}
 		_, _, err := jobs.NewJob(ctx, call.Fn, in)
 		return err
 	}
@@ -230,5 +235,32 @@ func TestRcEnums(t *testing.T) {
 		require.NoError(t, os.WriteFile(filepath.Join(path1, "new.txt"), []byte("new"), 0o644))
 		require.NoError(t, run(rc.Params{"checkSync": "only"}))
 		assert.NoFileExists(t, filepath.Join(path2, "new.txt"))
+	})
+}
+
+// rcParamName returns the rc parameter name for a flag, as help.go does for rc.md
+func rcParamName(flag string) string {
+	words := strings.Split(flag, "-")
+	for i := 1; i < len(words); i++ {
+		words[i] = strings.ToUpper(words[i][:1]) + words[i][1:]
+	}
+	return strings.Join(words, "")
+}
+
+// Test every bisync flag can be set through the rc
+func TestRcFlagParity(t *testing.T) {
+	bisyncCmd, _, err := cmd.Root.Find([]string{"bisync"})
+	require.NoError(t, err)
+	bisyncCmd.Flags().VisitAll(func(flag *pflag.Flag) {
+		if flag.Hidden {
+			return
+		}
+		key := rcParamName(flag.Name)
+		t.Run(key, func(t *testing.T) {
+			_, _, run := newRcBisync(t, 1)
+			// no rc getter accepts a map, so this only fails if rcBisync reads the param
+			err := run(rc.Params{key: rc.Params{"wrong": "type"}})
+			assert.ErrorContains(t, err, key, "no rc parameter for --%s", flag.Name)
+		})
 	})
 }
