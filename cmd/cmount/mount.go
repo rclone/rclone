@@ -105,17 +105,23 @@ func mountOptions(VFS *vfs.VFS, device string, mountpoint string, opt *mountlib.
 }
 
 // waitFor runs fn() until it returns true or the timeout expires
-func waitFor(fn func() bool) (ok bool) {
-	const totalWait = 10 * time.Second
-	const individualWait = 10 * time.Millisecond
-	for range int(totalWait / individualWait) {
-		ok = fn()
-		if ok {
-			return ok
+func waitFor(fn func() chan bool) bool {
+	const timeout = 10 * time.Second
+	const poll = 10 * time.Millisecond
+	ticker := time.NewTicker(poll)
+	defer ticker.Stop()
+
+	timeoutC := time.After(timeout)
+	for {
+		select {
+		case <-timeoutC:
+			return false
+		case <-ticker.C:
+			if <-fn() {
+				return true
+			}
 		}
-		time.Sleep(individualWait)
 	}
-	return false
 }
 
 // mount the file system
@@ -185,10 +191,17 @@ func mount(VFS *vfs.VFS, mountPath string, opt *mountlib.Options) (<-chan error,
 		if umountOK {
 			fs.Debugf(nil, "Unmounted successfully")
 			if runtime.GOOS == "windows" {
-				if !waitFor(func() bool {
-					_, err := os.Stat(mountpoint)
-					return err != nil
-				}) {
+				// os.Stat can block in some cases, so it should be run
+				// in a goroutine to avoid blocking the unmount process.
+				unmounted := func() chan bool {
+					c := make(chan bool, 1)
+					go func() {
+						_, err := os.Stat(mountpoint)
+						c <- err != nil
+					}()
+					return c
+				}
+				if !waitFor(unmounted) {
 					fs.Errorf(nil, "mountpoint %q didn't disappear after unmount - continuing anyway", mountpoint)
 				}
 			}
@@ -210,11 +223,16 @@ func mount(VFS *vfs.VFS, mountPath string, opt *mountlib.Options) (<-chan error,
 	// Wait for the mount point to be available on Windows
 	// On Windows the Init signal comes slightly before the mount is ready
 	if runtime.GOOS == "windows" {
-		if !waitFor(func() bool {
-			_, err := os.Stat(mountpoint)
-			return err == nil
-		}) {
-			fs.Errorf(nil, "mountpoint %q didn't became available on mount - continuing anyway", mountpoint)
+		mounted := func() chan bool {
+			c := make(chan bool, 1)
+			go func() {
+				_, err := os.Stat(mountpoint)
+				c <- err == nil
+			}()
+			return c
+		}
+		if !waitFor(mounted) {
+			fs.Errorf(nil, "mountpoint %q didn't become available on mount - continuing anyway", mountpoint)
 		}
 	}
 
