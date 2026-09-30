@@ -1951,6 +1951,7 @@ modtime was less than a second earlier than the one in the listing.
 `_config` or the flat `dry_run` option.
 - Fixed an issue causing the rc `sync/bisync` call to ignore the global
 `--max-delete` and use a limit of 0% when `maxDelete` was not set.
+- `--max-delete` now enforces a maximum of 100.
 
 ### `v1.74.2`
 

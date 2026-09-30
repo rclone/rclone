@@ -21,9 +21,8 @@ func newRcBisync(t *testing.T, n int) (path1, path2 string, run func(in rc.Param
 }
 
 // newRcBisyncCtx creates Path1 with n files, resyncs it to Path2, and returns
-// the paths and a function which runs sync/bisync on them as an rc job. The
-// jobs run in ctx, whose config stands in for the flags the rcd was started
-// with.
+// the paths and a function which runs sync/bisync on them as an rc job in
+// ctx, whose config stands in for the flags the rcd was started with
 func newRcBisyncCtx(ctx context.Context, t *testing.T, n int) (path1, path2 string, run func(in rc.Params) error) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping test on non local remote")
@@ -39,15 +38,15 @@ func newRcBisyncCtx(ctx context.Context, t *testing.T, n int) (path1, path2 stri
 	}
 	call := rc.Calls.Get("sync/bisync")
 	require.NotNil(t, call)
-	run = func(in rc.Params) error {
+	runIn := func(ctx context.Context, in rc.Params) error {
 		in["path1"] = path1
 		in["path2"] = path2
 		in["workdir"] = workdir
 		_, _, err := jobs.NewJob(ctx, call.Fn, in)
 		return err
 	}
-	require.NoError(t, run(rc.Params{"resync": true}))
-	return path1, path2, run
+	require.NoError(t, runIn(context.Background(), rc.Params{"resync": true}))
+	return path1, path2, func(in rc.Params) error { return runIn(ctx, in) }
 }
 
 func TestRcDryRun(t *testing.T) {
@@ -80,20 +79,21 @@ func TestRcMaxDelete(t *testing.T) {
 	for _, test := range []struct {
 		name    string
 		in      rc.Params
-		wantErr bool
+		wantErr string
 	}{
-		{"default", rc.Params{}, false},
-		{"maxDelete", rc.Params{"maxDelete": 5}, true},
-		{"max_delete allows", rc.Params{"max_delete": 20}, false},
-		{"max_delete aborts", rc.Params{"max_delete": 5}, true},
-		{"_config MaxDelete aborts", rc.Params{"_config": rc.Params{"MaxDelete": 5}}, true},
+		{"default", rc.Params{}, ""},
+		{"maxDelete", rc.Params{"maxDelete": 5}, "too many deletes"},
+		{"max_delete allows", rc.Params{"max_delete": 20}, ""},
+		{"max_delete aborts", rc.Params{"max_delete": 5}, "too many deletes"},
+		{"_config MaxDelete aborts", rc.Params{"_config": rc.Params{"MaxDelete": 5}}, "too many deletes"},
+		{"max_delete over 100", rc.Params{"max_delete": 500}, "--max-delete"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			path1, path2, run := newRcBisync(t, 10)
 			require.NoError(t, os.Remove(filepath.Join(path1, "file0.txt")))
 			err := run(test.in)
-			if test.wantErr {
-				assert.ErrorContains(t, err, "too many deletes")
+			if test.wantErr != "" {
+				assert.ErrorContains(t, err, test.wantErr)
 				assert.FileExists(t, filepath.Join(path2, "file0.txt"))
 			} else {
 				require.NoError(t, err)
@@ -105,10 +105,20 @@ func TestRcMaxDelete(t *testing.T) {
 
 // Test a --max-delete the rcd was started with applies, as on the command line
 func TestRcMaxDeleteFromRcd(t *testing.T) {
-	ctx, ci := fs.AddConfig(context.Background())
-	ci.MaxDelete = 5
-	path1, path2, run := newRcBisyncCtx(ctx, t, 10)
-	require.NoError(t, os.Remove(filepath.Join(path1, "file0.txt")))
-	assert.ErrorContains(t, run(rc.Params{}), "too many deletes")
-	assert.FileExists(t, filepath.Join(path2, "file0.txt"))
+	for _, test := range []struct {
+		maxDelete int64
+		wantErr   string
+	}{
+		{5, "too many deletes"},
+		{500, "--max-delete"},
+	} {
+		t.Run(fmt.Sprint(test.maxDelete), func(t *testing.T) {
+			ctx, ci := fs.AddConfig(context.Background())
+			ci.MaxDelete = test.maxDelete
+			path1, path2, run := newRcBisyncCtx(ctx, t, 10)
+			require.NoError(t, os.Remove(filepath.Join(path1, "file0.txt")))
+			assert.ErrorContains(t, run(rc.Params{}), test.wantErr)
+			assert.FileExists(t, filepath.Join(path2, "file0.txt"))
+		})
+	}
 }
