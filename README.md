@@ -110,6 +110,7 @@ directories to and from different cloud storage providers.
 - Quatrix [:page_facing_up:](https://rclone.org/quatrix/)
 - Rackspace Cloud Files [:page_facing_up:](https://rclone.org/swift/)
 - RackCorp Object Storage [:page_facing_up:](https://rclone.org/s3/#RackCorp)
+- RelAix.Storage [:page_facing_up:](https://rclone.org/s3/#relaix)
 - rsync.net [:page_facing_up:](https://rclone.org/sftp/#rsync-net)
 - Scaleway [:page_facing_up:](https://rclone.org/s3/#scaleway)
 - Scality (RING / ARTESCA) [:page_facing_up:](https://rclone.org/s3/#scality)
