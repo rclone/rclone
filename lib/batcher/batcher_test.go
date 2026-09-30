@@ -310,6 +310,54 @@ func TestBatcherCommitRacingShutdown(t *testing.T) {
 	}
 }
 
+func TestBatcherCommitContextCanceledWhileWaitingToEnqueue(t *testing.T) {
+	ctx := context.Background()
+	commitStarted := make(chan struct{})
+	releaseCommit := make(chan struct{})
+	var commitStartedOnce sync.Once
+	commitBatch := func(ctx context.Context, items []Item, results []Result, errors []error) error {
+		commitStartedOnce.Do(func() { close(commitStarted) })
+		<-releaseCommit
+		return nil
+	}
+	b, err := New[Item, Result](ctx, nil, commitBatch, Options{
+		Mode:         "async",
+		Size:         1,
+		Timeout:      time.Hour,
+		MaxBatchSize: 1000,
+	})
+	require.NoError(t, err)
+	defer b.Shutdown()
+	defer close(releaseCommit)
+
+	_, err = b.Commit(ctx, "first", Item("first"))
+	require.NoError(t, err)
+	select {
+	case <-commitStarted:
+	case <-time.After(time.Second):
+		t.Fatal("first commit did not start")
+	}
+
+	// Fill the input buffer while the first batch is being committed.
+	_, err = b.Commit(ctx, "second", Item("second"))
+	require.NoError(t, err)
+
+	canceledCtx, cancel := context.WithCancel(ctx)
+	commitDone := make(chan error, 1)
+	go func() {
+		_, err := b.Commit(canceledCtx, "third", Item("third"))
+		commitDone <- err
+	}()
+	cancel()
+
+	select {
+	case err := <-commitDone:
+		require.ErrorIs(t, err, context.Canceled)
+	case <-time.After(time.Second):
+		t.Fatal("commit did not stop after its context was canceled")
+	}
+}
+
 func TestBatcherCommitAsync(t *testing.T) {
 	ctx := context.Background()
 
