@@ -95,7 +95,7 @@ var logReplacements = []string{
 	// ignore SFTP host key messages
 	`^NOTICE: .*?No host key validation is being performed.*$`, dropMe,
 	// ignore dropbox info messages
-	`^NOTICE: too_many_(requests|write_operations)/\.*: Too many requests or write operations.*$`, dropMe,
+	`^NOTICE: .*Too many requests or write operations.*$`, dropMe,
 	`^NOTICE: .*?: Forced to upload files to set modification times on this backend.$`, dropMe,
 	`^INFO  : .*? Committing uploads - please wait...$`, dropMe,
 	`^INFO  : .*?: src and dst identical but can't set mod time without deleting and re-uploading$`, dropMe,
