@@ -1937,6 +1937,10 @@ about *Unison* and synchronization in general.
 
 - Added `--max-delete-renames-aware` to exclude guaranteed tracked renames from
 the `--max-delete` safety check when used with `--track-renames`.
+- Fixed an issue causing the rc `sync/bisync` call to ignore a dry run set with
+`_config` or the flat `dry_run` option.
+- Fixed an issue causing the rc `sync/bisync` call to ignore the global
+`--max-delete` and use a limit of 0% when `maxDelete` was not set.
 
 ### `v1.74.2`
 

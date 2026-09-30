@@ -38,7 +38,7 @@ type Options struct {
 	CheckSync             CheckSyncMode
 	CreateEmptySrcDirs    bool
 	RemoveEmptyDirs       bool
-	MaxDelete             int // percentage from 0 to 100
+	MaxDelete             int // percentage from 0 to 100, set by Bisync from --max-delete
 	MaxDeleteRenamesAware bool
 	Force                 bool
 	FiltersFile           string
@@ -46,7 +46,7 @@ type Options struct {
 	OrigBackupDir         string
 	BackupDir1            string
 	BackupDir2            string
-	DryRun                bool
+	DryRun                bool // set by Bisync from --dry-run
 	NoCleanup             bool
 	SaveQueues            bool // save extra debugging files (test only flag)
 	IgnoreListingChecksum bool
@@ -178,7 +178,6 @@ var commandDefinition = &cobra.Command{
 
 		ctx := context.Background()
 		opt := Opt
-		opt.applyContext(ctx)
 		if tzLocal {
 			TZ = time.Local
 		}

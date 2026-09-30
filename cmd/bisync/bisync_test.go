@@ -1114,7 +1114,6 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 		Workdir:       b.workDir,
 		NoCleanup:     true,
 		SaveQueues:    true,
-		MaxDelete:     bisync.DefaultMaxDelete,
 		CheckFilename: bisync.DefaultCheckFilename,
 		CheckSync:     bisync.CheckSyncTrue,
 		TestFn:        b.TestFn,
@@ -1159,7 +1158,7 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 		case "filters-file":
 			opt.FiltersFile = val
 		case "max-delete":
-			opt.MaxDelete, err = strconv.Atoi(val)
+			ci.MaxDelete, err = strconv.ParseInt(val, 10, 64)
 			require.NoError(b.t, err, "parsing max-delete=%q", val)
 		case "max-delete-renames-aware":
 			opt.MaxDeleteRenamesAware = true
