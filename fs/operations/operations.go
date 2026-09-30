@@ -1601,6 +1601,14 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 			dir := dir
 			g.Go(func() error {
 				err := TryRmdir(gCtx, f, dir)
+				if errors.Is(err, fs.ErrorDirectoryNotEmpty) {
+					// The listing above showed this directory as empty but the
+					// backend disagrees, either because it hides some files from
+					// listings or because something was written in the meantime.
+					// Leaving it in place is what was asked for.
+					fs.Infof(dir, "Not removing directory as it is not empty")
+					return nil
+				}
 				if err != nil {
 					err = fs.CountError(ctx, err)
 					fs.Errorf(dir, "Failed to rmdir: %v", err)
