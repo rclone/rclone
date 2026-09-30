@@ -121,16 +121,16 @@ func TestIndex(t *testing.T) {
 	assert.Equal(t, `[{"name":"sub/","size":4096,"url":"./sub/","mod_time":"0001-01-01T00:00:00Z","mode":2147484141,"is_dir":true,"is_symlink":false},{"name":"file1.txt","size":5,"url":"./file1.txt","mod_time":"0001-01-01T00:00:00Z","mode":420,"is_dir":false,"is_symlink":false}]
 `, r.read(t, "caddy.json"))
 	html := r.read(t, "index.html")
-	assert.Contains(t, html, `<a href="sub/">sub/</a>`)
-	assert.Contains(t, html, `<a href="file1.txt">file1.txt</a>`)
+	assert.Contains(t, html, `<a href="./sub/">sub/</a>`)
+	assert.Contains(t, html, `<a href="./file1.txt">file1.txt</a>`)
 	assert.NotContains(t, html, "Go up")
 	assert.Contains(t, html, "sortBy")
 	assert.NotContains(t, html, "download=zip")
 
 	// The listings never show the outputs and link up below the root
 	html = r.read(t, "sub/index.html")
-	assert.Contains(t, html, `<a href="deep/">deep/</a>`)
-	assert.Contains(t, html, `<a href="file2.txt">file2.txt</a>`)
+	assert.Contains(t, html, `<a href="./deep/">deep/</a>`)
+	assert.Contains(t, html, `<a href="./file2.txt">file2.txt</a>`)
 	assert.NotContains(t, html, "index.html")
 	assert.Contains(t, html, "Go up")
 
@@ -219,7 +219,7 @@ func TestIndexFilter(t *testing.T) {
 	assert.NotContains(t, r.read(t, "sub/index.html"), "deep/")
 	other := r.read(t, "other/index.html")
 	assert.NotContains(t, other, "notes.md")
-	assert.Contains(t, r.read(t, "index.html"), `<a href="other/">other/</a>`)
+	assert.Contains(t, r.read(t, "index.html"), `<a href="./other/">other/</a>`)
 
 	// A second run changes nothing, in particular it doesn't delete
 	// other/index.html even though other/ has no visible content
@@ -238,7 +238,7 @@ func TestIndexRules(t *testing.T) {
 	r.index(t)
 	r.checkFiles(t, "file1.txt", "index.html", "sub/file2.txt", "sub/index.html", "sub/deep/file3.txt", "sub/deep/index.html")
 	assert.Equal(t, "hand written", r.read(t, "sub/deep/index.html"))
-	assert.Contains(t, r.read(t, "sub/index.html"), `<a href="deep/">deep/</a>`)
+	assert.Contains(t, r.read(t, "sub/index.html"), `<a href="./deep/">deep/</a>`)
 
 	// Include rules imply excluding everything else
 	r.opt.Rules = filter.RulesOpt{IncludeRule: []string{"/sub/**"}}
@@ -256,16 +256,16 @@ func TestIndexMaxDepth(t *testing.T) {
 	r.opt.MaxDepth = 1
 	r.index(t)
 	r.checkFiles(t, "file1.txt", "index.html", "sub/file2.txt", "sub/deep/file3.txt")
-	assert.Contains(t, r.read(t, "index.html"), `<a href="sub/">sub/</a>`)
+	assert.Contains(t, r.read(t, "index.html"), `<a href="./sub/">sub/</a>`)
 }
 
 func TestIndexLinkIndex(t *testing.T) {
 	r := newIndexRun(t)
 	r.opt.LinkIndex = true
 	r.index(t)
-	assert.Contains(t, r.read(t, "index.html"), `<a href="sub/index.html">sub/</a>`)
+	assert.Contains(t, r.read(t, "index.html"), `<a href="./sub/index.html">sub/</a>`)
 	html := r.read(t, "sub/index.html")
-	assert.Contains(t, html, `<a href="deep/index.html">deep/</a>`)
+	assert.Contains(t, html, `<a href="./deep/index.html">deep/</a>`)
 	assert.Contains(t, html, `<a href="../index.html">`)
 }
 
@@ -408,7 +408,7 @@ func TestIndexChanged(t *testing.T) {
 	r.opt.Changed = []string{"sub/new/file5.txt"}
 	transfers, _ = r.index(t)
 	assert.Equal(t, int64(2), transfers)
-	assert.Contains(t, r.read(t, "sub/index.html"), `<a href="new/">new/</a>`)
+	assert.Contains(t, r.read(t, "sub/index.html"), `<a href="./new/">new/</a>`)
 	assert.Contains(t, r.read(t, "sub/new/index.html"), "file5.txt")
 
 	// A changed directory is walked whether or not it has a trailing slash
