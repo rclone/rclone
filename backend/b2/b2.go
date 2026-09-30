@@ -272,7 +272,7 @@ See: [rclone backend lifecycle](#lifecycle) for setting lifecycles after bucket 
 			Name: "sse_customer_key",
 			Help: `To use SSE-C, you may provide the secret encryption key encoded in a UTF-8 compatible string to encrypt/decrypt your data
 
-Alternatively you can provide --sse-customer-key-base64.`,
+Alternatively you can provide --b2-sse-customer-key-base64.`,
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "",
@@ -283,7 +283,7 @@ Alternatively you can provide --sse-customer-key-base64.`,
 			Name: "sse_customer_key_base64",
 			Help: `To use SSE-C, you may provide the secret encryption key encoded in Base64 format to encrypt/decrypt your data
 
-Alternatively you can provide --sse-customer-key.`,
+Alternatively you can provide --b2-sse-customer-key.`,
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "",
