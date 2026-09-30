@@ -65,9 +65,9 @@ func rcBisync(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	opt := &Options{}
 	octx, ci := fs.AddConfig(ctx)
 
-	if dryRun, err := in.GetBool("dryRun"); err == nil {
-		ci.DryRun = dryRun
-		opt.DryRun = dryRun
+	if dryRun, err := in.GetBool("dryRun"); err == nil && dryRun {
+		// dryRun can ask for a dry run, but not cancel one from the global config
+		ci.DryRun = true
 	} else if rc.NotErrParamNotFound(err) {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func rcBisync(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		if maxDelete < 0 || maxDelete > 100 {
 			return nil, rc.NewErrParamInvalid(errors.New("maxDelete must be a percentage between 0 and 100"))
 		}
-		opt.MaxDelete = int(maxDelete)
+		ci.MaxDelete = maxDelete
 	} else if rc.NotErrParamNotFound(err) {
 		return nil, err
 	}

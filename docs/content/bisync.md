@@ -1947,6 +1947,10 @@ it, as with `--download`, instead of by size alone.
 - Fixed an issue causing a `--resync` to fail with "path1 and path2 are out of
 sync", or later runs to report changes that didn't happen, when a file's new
 modtime was less than a second earlier than the one in the listing.
+- Fixed an issue causing the rc `sync/bisync` call to ignore a dry run set with
+`_config` or the flat `dry_run` option.
+- Fixed an issue causing the rc `sync/bisync` call to ignore the global
+`--max-delete` and use a limit of 0% when `maxDelete` was not set.
 
 ### `v1.74.2`
 
