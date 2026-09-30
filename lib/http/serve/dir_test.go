@@ -48,10 +48,10 @@ func TestAddHTMLEntry(t *testing.T) {
 	d.AddHTMLEntry("\"quotes\".txt", false, 64, modtime)
 	assert.Equal(t, []DirEntry{
 		{remote: "", URL: "/", ZipURL: "/?download=zip", Leaf: "/", IsDir: true, Size: 0, ModTime: modtime, MimeType: "inode/directory"},
-		{remote: "dir", URL: "dir/", ZipURL: "dir/?download=zip", Leaf: "dir/", IsDir: true, Size: 0, ModTime: modtime, MimeType: "inode/directory"},
-		{remote: "a/b/c/d.txt", URL: "d.txt", ZipURL: "", Leaf: "d.txt", IsDir: false, Size: 64, ModTime: modtime, MimeType: "text/plain; charset=utf-8"},
+		{remote: "dir", URL: "./dir/", ZipURL: "./dir/?download=zip", Leaf: "dir/", IsDir: true, Size: 0, ModTime: modtime, MimeType: "inode/directory"},
+		{remote: "a/b/c/d.txt", URL: "./d.txt", ZipURL: "", Leaf: "d.txt", IsDir: false, Size: 64, ModTime: modtime, MimeType: "text/plain; charset=utf-8"},
 		{remote: "a/b/c/colon:colon.txt", URL: "./colon:colon.txt", ZipURL: "", Leaf: "colon:colon.txt", IsDir: false, Size: 64, ModTime: modtime, MimeType: "text/plain; charset=utf-8"},
-		{remote: "\"quotes\".txt", URL: "%22quotes%22.txt", ZipURL: "", Leaf: "\"quotes\".txt", Size: 64, IsDir: false, ModTime: modtime, MimeType: "text/plain; charset=utf-8"},
+		{remote: "\"quotes\".txt", URL: "./%22quotes%22.txt", ZipURL: "", Leaf: "\"quotes\".txt", Size: 64, IsDir: false, ModTime: modtime, MimeType: "text/plain; charset=utf-8"},
 	}, d.Entries)
 
 	// Now test with a query parameter
@@ -59,8 +59,8 @@ func TestAddHTMLEntry(t *testing.T) {
 	d.AddHTMLEntry("file", false, 64, modtime)
 	d.AddHTMLEntry("dir", true, 0, modtime)
 	assert.Equal(t, []DirEntry{
-		{remote: "file", URL: "file?potato=42", ZipURL: "", Leaf: "file", IsDir: false, Size: 64, ModTime: modtime, MimeType: "application/octet-stream"},
-		{remote: "dir", URL: "dir/?potato=42", ZipURL: "dir/?download=zip", Leaf: "dir/", IsDir: true, Size: 0, ModTime: modtime, MimeType: "inode/directory"},
+		{remote: "file", URL: "./file?potato=42", ZipURL: "", Leaf: "file", IsDir: false, Size: 64, ModTime: modtime, MimeType: "application/octet-stream"},
+		{remote: "dir", URL: "./dir/?potato=42", ZipURL: "./dir/?download=zip", Leaf: "dir/", IsDir: true, Size: 0, ModTime: modtime, MimeType: "inode/directory"},
 	}, d.Entries)
 
 	// Now test with a link index
@@ -68,8 +68,8 @@ func TestAddHTMLEntry(t *testing.T) {
 	d.AddHTMLEntry("file", false, 64, modtime)
 	d.AddHTMLEntry("dir", true, 0, modtime)
 	assert.Equal(t, []DirEntry{
-		{remote: "file", URL: "file", ZipURL: "", Leaf: "file", IsDir: false, Size: 64, ModTime: modtime, MimeType: "application/octet-stream"},
-		{remote: "dir", URL: "dir/index.html", ZipURL: "dir/?download=zip", Leaf: "dir/", IsDir: true, Size: 0, ModTime: modtime, MimeType: "inode/directory"},
+		{remote: "file", URL: "./file", ZipURL: "", Leaf: "file", IsDir: false, Size: 64, ModTime: modtime, MimeType: "application/octet-stream"},
+		{remote: "dir", URL: "./dir/index.html", ZipURL: "./dir/?download=zip", Leaf: "dir/", IsDir: true, Size: 0, ModTime: modtime, MimeType: "inode/directory"},
 	}, d.Entries)
 	assert.Equal(t, []Crumb{{Link: "../index.html", Text: "/"}, {Link: "index.html", Text: "z"}}, d.Breadcrumb)
 	assert.Equal(t, "../index.html", d.UpLink())
