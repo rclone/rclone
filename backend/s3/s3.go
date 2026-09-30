@@ -190,7 +190,7 @@ header is added and the default (private) will be used.
 			Name: "sse_customer_key",
 			Help: `To use SSE-C you may provide the secret encryption key used to encrypt/decrypt your data.
 
-Alternatively you can provide --sse-customer-key-base64.`,
+Alternatively you can provide --s3-sse-customer-key-base64.`,
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "",
@@ -201,7 +201,7 @@ Alternatively you can provide --sse-customer-key-base64.`,
 			Name: "sse_customer_key_base64",
 			Help: `If using SSE-C you must provide the secret encryption key encoded in base64 format to encrypt/decrypt your data.
 
-Alternatively you can provide --sse-customer-key.`,
+Alternatively you can provide --s3-sse-customer-key.`,
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "",
