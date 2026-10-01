@@ -679,6 +679,16 @@ func (f *Fs) uploadParts(ctx context.Context, in *readers.CountingReader, sessio
 
 // uploadFile handles the full upload flow (small or multipart)
 func (f *Fs) uploadFile(ctx context.Context, in io.Reader, remote string, size int64, modTime time.Time, folderID string, fileID *string) (*api.UploadCompleteResponse, error) {
+	// Both refusals live here so a new file and a new version of an existing
+	// one answer the same way: upload/init needs a byte count up front, and
+	// the server stores no zero-length object.
+	if size < 0 {
+		return nil, errors.New("can't upload files with unknown size")
+	}
+	if size == 0 {
+		return nil, fs.ErrorCantUploadEmptyFiles
+	}
+
 	leaf := f.opt.Enc.FromStandardName(path.Base(remote))
 
 	mimeType := fs.MimeTypeFromName(remote)

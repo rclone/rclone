@@ -3,7 +3,6 @@ package dosya
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -186,9 +185,12 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant), pacer.AttackConstant(attackConstant))),
 	}
 
+	// No DuplicateFiles: an upload that names no existing file but whose
+	// (workspace, folder, name) is already taken becomes a new VERSION of
+	// that file rather than a second row, so a name is unique within a
+	// folder and the same upload twice returns the same file id.
 	f.features = (&fs.Features{
 		CaseInsensitive:         false,
-		DuplicateFiles:          true,
 		CanHaveEmptyDirectories: true,
 		ReadMimeType:            true,
 	}).Fill(ctx, f)
@@ -303,29 +305,23 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	case nil:
 		return existingObj, existingObj.Update(ctx, in, src, options...)
 	case fs.ErrorObjectNotFound:
-		return f.PutUnchecked(ctx, in, src, options...)
+		return f.put(ctx, in, src, options...)
 	default:
 		return nil, err
 	}
 }
 
-// PutUnchecked uploads without checking for duplicates
-func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+// put uploads src as a new file
+func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	remote := src.Remote()
-	size := src.Size()
 
-	if size == 0 {
-		return nil, fs.ErrorCantUploadEmptyFiles
-	}
-
-	leaf, directoryID, err := f.dirCache.FindPath(ctx, remote, true)
+	_, directoryID, err := f.dirCache.FindPath(ctx, remote, true)
 	if err != nil {
 		return nil, err
 	}
-	_ = leaf
 
 	modTime := src.ModTime(ctx)
-	resp, err := f.uploadFile(ctx, in, remote, size, modTime, directoryID, nil)
+	resp, err := f.uploadFile(ctx, in, remote, src.Size(), modTime, directoryID, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -721,11 +717,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 
 // Update replaces the file content
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	size := src.Size()
-	if size < 0 {
-		return errors.New("can't upload files with unknown size")
-	}
-
 	// Find the directory ID for this file
 	_, directoryID, err := o.fs.dirCache.FindPath(ctx, o.remote, false)
 	if err != nil {
@@ -735,7 +726,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// Upload as new version of existing file
 	fileID := o.file.ID
 	modTime := src.ModTime(ctx)
-	resp, err := o.fs.uploadFile(ctx, in, o.remote, size, modTime, directoryID, &fileID)
+	resp, err := o.fs.uploadFile(ctx, in, o.remote, src.Size(), modTime, directoryID, &fileID)
 	if err != nil {
 		return err
 	}
@@ -778,7 +769,6 @@ var (
 	_ fs.ListRer         = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
-	_ fs.PutUncheckeder  = (*Fs)(nil)
 	_ dircache.DirCacher = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.MimeTyper       = (*Object)(nil)
