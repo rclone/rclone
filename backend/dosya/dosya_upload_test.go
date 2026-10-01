@@ -60,6 +60,7 @@ type fakeUploadServer struct {
 	puts       [][]byte         // bodies of PUT /api/upload/<id>
 	parts      map[int][][]byte // bodies of PUT /api/upload/<id>/part/<n>, per part, per attempt
 	completes  int
+	aborts     int             // DELETE /api/upload/<id>
 	failFirst  map[string]bool // path -> answer the first request with a 502
 	seenBefore map[string]bool
 }
@@ -113,6 +114,9 @@ func (s *fakeUploadServer) roundTrip(r *http.Request) (*http.Response, error) {
 	case r.Method == "POST" && path == "/api/upload/upl_1/complete":
 		s.completes++
 		return jsonResp(http.StatusOK, `{"ok":true,"file":{"id":"fil_1","name":"file.txt","size_bytes":10}}`), nil
+	case r.Method == "DELETE" && path == "/api/upload/upl_1":
+		s.aborts++
+		return jsonResp(http.StatusOK, `{"ok":true}`), nil
 	}
 	s.t.Fatalf("unexpected request %s %s", r.Method, path)
 	return nil, nil
@@ -202,4 +206,42 @@ func TestUploadMultipartRetriesPartWithFullBody(t *testing.T) {
 	assert.Equal(t, "4567", string(srv.parts[2][1]))
 	assert.Equal(t, "89", string(srv.parts[3][0]))
 	assert.Equal(t, 1, srv.completes)
+}
+
+// An upload that fails after init has to hand its session back: the session
+// holds one of the workspace's upload slots for ten minutes otherwise, and
+// rclone's high-level retry opens a new one rather than resuming it.
+func TestUploadAbortsTheSessionOnFailure(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		resumable string
+		content   string
+		size      int64
+	}{
+		{"small file short source", "", "0123", 10},
+		{"multipart short source", `{"part_size":5,"total_parts":4}`, "aabbccddeeffggh", 20},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			srv := newFakeUploadServer(t, tc.resumable)
+			f := newFakeFs(rtFunc(srv.roundTrip))
+
+			_, err := f.uploadFile(context.Background(), strings.NewReader(tc.content),
+				"file.txt", tc.size, time.Time{}, "text/plain; charset=utf-8", "", nil)
+
+			require.Error(t, err)
+			assert.Equal(t, 1, srv.aborts)
+		})
+	}
+}
+
+// A successful upload must not abort anything
+func TestUploadDoesNotAbortOnSuccess(t *testing.T) {
+	srv := newFakeUploadServer(t, "")
+	f := newFakeFs(rtFunc(srv.roundTrip))
+
+	_, err := f.uploadFile(context.Background(), strings.NewReader(strings.Repeat("a", 10)),
+		"file.txt", 10, time.Time{}, "text/plain; charset=utf-8", "", nil)
+
+	require.NoError(t, err)
+	assert.Equal(t, 0, srv.aborts)
 }

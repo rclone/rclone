@@ -35,6 +35,7 @@ type parallelUploadServer struct {
 	earlyParts []int // parts that started before part 1 finished
 	parts      map[int]string
 	completes  int
+	aborts     int
 }
 
 func (s *parallelUploadServer) roundTrip(r *http.Request) (*http.Response, error) {
@@ -81,6 +82,11 @@ func (s *parallelUploadServer) roundTrip(r *http.Request) (*http.Response, error
 		s.completes++
 		s.mu.Unlock()
 		return jsonResp(http.StatusOK, `{"ok":true,"file":{"id":"fil_1","name":"file.txt","size_bytes":20}}`), nil
+	case r.Method == "DELETE" && path == "/api/upload/upl_1":
+		s.mu.Lock()
+		s.aborts++
+		s.mu.Unlock()
+		return jsonResp(http.StatusOK, `{"ok":true}`), nil
 	}
 	s.t.Fatalf("unexpected request %s %s", r.Method, path)
 	return nil, nil

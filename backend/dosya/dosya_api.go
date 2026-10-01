@@ -130,6 +130,11 @@ var (
 	concurrentUploadWaitMax    = 10 * time.Minute
 )
 
+// abortUploadTimeout bounds the abort of a session the client is giving up on,
+// which runs outside the transfer's context so a cancelled transfer still
+// sends it
+const abortUploadTimeout = 10 * time.Second
+
 // isConcurrentUploadLimit reports whether err is the API refusing an
 // upload because the workspace's concurrent upload limit is reached
 func isConcurrentUploadLimit(err error) bool {
@@ -688,8 +693,32 @@ func (f *Fs) uploadParts(ctx context.Context, in *readers.CountingReader, sessio
 	return err
 }
 
+// abortUpload retires an upload session the client is giving up on.
+//
+// Best effort: the server reclaims an abandoned session itself, so a failure
+// here - including an older server with no such route - costs the slot the
+// wait it would have cost anyway and is not worth failing an upload over.
+// Sent on a context of its own so a cancelled transfer still gives its slot
+// back rather than leaving it to the sweep.
+func (f *Fs) abortUpload(ctx context.Context, sessionID string) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), abortUploadTimeout)
+	defer cancel()
+	opts := rest.Opts{
+		Method:     "DELETE",
+		Path:       "/api/upload/" + sessionID,
+		NoResponse: true,
+	}
+	err := f.pacer.CallNoRetry(func() (bool, error) {
+		resp, err := f.rest.Call(ctx, &opts)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		fs.Debugf(f, "Couldn't abort upload session %q: %v", sessionID, err)
+	}
+}
+
 // uploadFile handles the full upload flow (small or multipart)
-func (f *Fs) uploadFile(ctx context.Context, in io.Reader, remote string, size int64, modTime time.Time, mimeType string, folderID string, fileID *string) (*api.UploadCompleteResponse, error) {
+func (f *Fs) uploadFile(ctx context.Context, in io.Reader, remote string, size int64, modTime time.Time, mimeType string, folderID string, fileID *string) (resp *api.UploadCompleteResponse, err error) {
 	// Both refusals live here so a new file and a new version of an existing
 	// one answer the same way: upload/init needs a byte count up front, and
 	// the server stores no zero-length object.
@@ -706,6 +735,15 @@ func (f *Fs) uploadFile(ctx context.Context, in io.Reader, remote string, size i
 	if err != nil {
 		return nil, err
 	}
+	// A session abandoned here holds one of the workspace's upload slots
+	// until the server's sweep retires it ten minutes later, and rclone's
+	// high-level retry opens a fresh session rather than resuming this one -
+	// so without this, a few failed attempts use up every slot.
+	defer func() {
+		if err != nil {
+			f.abortUpload(ctx, initResp.SessionID)
+		}
+	}()
 
 	// Count what the source actually supplies, so a source which ends
 	// early is reported as an error rather than stored as a truncated
@@ -714,7 +752,7 @@ func (f *Fs) uploadFile(ctx context.Context, in io.Reader, remote string, size i
 
 	// Small file upload (single PUT, no resumable)
 	if initResp.Resumable == nil {
-		resp, err := f.uploadSmallFile(ctx, counter, initResp.SessionID, size, modTime)
+		resp, err = f.uploadSmallFile(ctx, counter, initResp.SessionID, size, modTime)
 		if err != nil {
 			return nil, err
 		}
@@ -736,7 +774,7 @@ func (f *Fs) uploadFile(ctx context.Context, in io.Reader, remote string, size i
 	if partSize <= 0 || totalParts <= 0 || partSize*int64(totalParts-1) >= size || size > partSize*int64(totalParts) {
 		return nil, fmt.Errorf("invalid multipart layout from server: %d parts of %d bytes for %d bytes", totalParts, partSize, size)
 	}
-	if err := f.uploadParts(ctx, counter, initResp.SessionID, size, partSize, totalParts); err != nil {
+	if err = f.uploadParts(ctx, counter, initResp.SessionID, size, partSize, totalParts); err != nil {
 		return nil, err
 	}
 
