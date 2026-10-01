@@ -325,14 +325,20 @@ func (f *Fs) deleteFile(ctx context.Context, fileID string) error {
 		return fmt.Errorf("API error: %s", result.Error)
 	}
 
-	// If not permanently deleted, call again for permanent deletion
+	// The first DELETE soft-deletes; a second one on an already soft-deleted
+	// file purges it from the database and R2. Answered into its own value so
+	// a field the second response omits can't be read off the first.
 	if !result.Permanent {
+		var permanent api.DeleteFileResponse
 		err = f.pacer.Call(func() (bool, error) {
-			resp, err := f.rest.CallJSON(ctx, &opts, nil, &result)
+			resp, err := f.rest.CallJSON(ctx, &opts, nil, &permanent)
 			return shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
 			return fmt.Errorf("couldn't permanently delete file: %w", err)
+		}
+		if !permanent.OK {
+			return fmt.Errorf("API error: %s", permanent.Error)
 		}
 	}
 	return nil
