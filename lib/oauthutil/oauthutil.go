@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -169,29 +170,9 @@ var SharedOptions = []fs.Option{{
 }}
 
 // SharedOptionsPKCE are shared between backends that use PKCE OAuth2 flow, without Client Secret.
-var SharedOptionsPKCE = []fs.Option{{
-	Name:      config.ConfigClientID,
-	Help:      "OAuth Client Id.\n\nLeave blank normally.",
-	Sensitive: true,
-}, {
-	Name:      config.ConfigToken,
-	Help:      "OAuth Access Token as a JSON blob.",
-	Advanced:  true,
-	Sensitive: true,
-}, {
-	Name:     config.ConfigAuthURL,
-	Help:     "Auth server URL.\n\nLeave blank to use the provider defaults.",
-	Advanced: true,
-}, {
-	Name:     config.ConfigTokenURL,
-	Help:     "Token server url.\n\nLeave blank to use the provider defaults.",
-	Advanced: true,
-}, {
-	Name:     config.ConfigClientCredentials,
-	Default:  false,
-	Help:     "Use client credentials OAuth flow.\n\nThis will use the OAUTH2 client Credentials Flow as described in RFC 6749.\n\nNote that this option is NOT supported by all backends.",
-	Advanced: true,
-}}
+var SharedOptionsPKCE = slices.DeleteFunc(slices.Clone(SharedOptions), func(o fs.Option) bool {
+	return o.Name == config.ConfigClientSecret || o.Name == config.ConfigClientCredentials
+})
 
 // oldToken contains an end-user's tokens.
 // This is the data you must store to persist authentication.

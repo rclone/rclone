@@ -1,184 +1,6 @@
 package khash
 
-import (
-	"bytes"
-	"encoding/hex"
-	"io"
-	"testing"
-
-	"github.com/rclone/rclone/backend/kdrive/chunksize"
-	"github.com/zeebo/xxh3"
-)
-
-func TestNew(t *testing.T) {
-	h := New()
-	if h == nil {
-		t.Fatal("New() returned nil")
-	}
-	if h.Size() != 8 {
-		t.Errorf("Expected Size() = 8, got %d", h.Size())
-	}
-}
-
-func TestWriteAndSum(t *testing.T) {
-	tests := []struct {
-		name     string
-		data     []byte
-		expected string // hex string of expected hash
-	}{
-		{
-			name:     "empty data",
-			data:     []byte{},
-			expected: "2d06800538d394c2", // XXH3 of empty data (64-bit)
-		},
-		{
-			name:     "small data",
-			data:     []byte("hello world"),
-			expected: "d447b1ea40e6988b", // XXH3 of "hello world"
-		},
-		{
-			name:     "1 MB data",
-			data:     bytes.Repeat([]byte("a"), 1024*1024),
-			expected: "", // Will validate against direct xxh3
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			h := NewWithChunkSize(chunksize.ChunkSizeConfig.DefaultChunkSize)
-			n, err := h.Write(tt.data)
-			if err != nil {
-				t.Fatalf("Write failed: %v", err)
-			}
-			if n != len(tt.data) {
-				t.Errorf("Write returned %d, expected %d", n, len(tt.data))
-			}
-
-			sum := h.Sum(nil)
-			sumHex := hex.EncodeToString(sum)
-
-			// For empty and small data, compare with expected
-			if tt.expected != "" {
-				if sumHex != tt.expected {
-					t.Errorf("Hash mismatch: got %s, expected %s", sumHex, tt.expected)
-				}
-			} else {
-				// Compare with direct xxh3 calculation
-				hasher := xxh3.New()
-				_, err = hasher.Write(tt.data)
-				if err != nil {
-					t.Fatalf("Write failed: %v", err)
-				}
-				expected := hex.EncodeToString(hasher.Sum(nil))
-				if sumHex != expected {
-					t.Errorf("Hash mismatch: got %s, expected %s", sumHex, expected)
-				}
-			}
-		})
-	}
-}
-
-func TestWriteAndSumSimple(t *testing.T) {
-	// Test that New() creates a simple (non-chunked) hasher
-	tests := []struct {
-		name     string
-		data     []byte
-		expected string
-	}{
-		{
-			name:     "empty data",
-			data:     []byte{},
-			expected: "2d06800538d394c2", // XXH3 of empty data (64-bit)
-		},
-		{
-			name:     "small data",
-			data:     []byte("hello world"),
-			expected: "d447b1ea40e6988b", // XXH3 of "hello world"
-		},
-		{
-			name:     "large data",
-			data:     bytes.Repeat([]byte("a"), 1024*1024),
-			expected: "", // Will validate against direct xxh3
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			h := New()
-			n, err := h.Write(tt.data)
-			if err != nil {
-				t.Fatalf("Write failed: %v", err)
-			}
-			if n != len(tt.data) {
-				t.Errorf("Write returned %d, expected %d", n, len(tt.data))
-			}
-
-			sum := h.Sum(nil)
-			sumHex := hex.EncodeToString(sum)
-
-			if tt.expected != "" {
-				if sumHex != tt.expected {
-					t.Errorf("Hash mismatch: got %s, expected %s", sumHex, tt.expected)
-				}
-			} else {
-				hasher := xxh3.New()
-				_, err = hasher.Write(tt.data)
-				if err != nil {
-					t.Fatalf("Write failed: %v", err)
-				}
-				expected := hex.EncodeToString(hasher.Sum(nil))
-				if sumHex != expected {
-					t.Errorf("Hash mismatch: got %s, expected %s", sumHex, expected)
-				}
-			}
-
-			// Verify it's a simple hasher (no chunking)
-			d := h.(*digest)
-			if d.chunkSize != nil {
-				t.Error("New() should create a simple hasher with nil chunkSize")
-			}
-		})
-	}
-}
-
-func TestNestedHash(t *testing.T) {
-	// Test that files larger than chunk size produce nested hash
-	smallChunkSize := int64(1024) // 1KB for testing
-
-	// Data exactly 1 chunk
-	data1Chunk := bytes.Repeat([]byte("a"), 1024)
-	h1 := NewWithChunkSize(smallChunkSize)
-	h1.Write(data1Chunk)
-	sum1 := hex.EncodeToString(h1.Sum(nil))
-
-	// Data spanning 2 chunks
-	data2Chunks := bytes.Repeat([]byte("a"), 1024+512)
-	h2 := NewWithChunkSize(smallChunkSize)
-	h2.Write(data2Chunks)
-	sum2 := hex.EncodeToString(h2.Sum(nil))
-
-	// Data spanning 3 chunks
-	data3Chunks := bytes.Repeat([]byte("a"), 2048)
-	h3 := NewWithChunkSize(smallChunkSize)
-	h3.Write(data3Chunks)
-	sum3 := hex.EncodeToString(h3.Sum(nil))
-
-	// Verify they're different
-	if sum1 == sum2 || sum2 == sum3 {
-		t.Error("Hashes for different chunk counts should be different")
-	}
-
-	// Verify single chunk matches direct XXH3
-	directHash := xxh3.New()
-	_, err := directHash.Write(data1Chunk)
-	if err != nil {
-		t.Fatalf("Write failed: %v", err)
-	}
-	expected1 := hex.EncodeToString(directHash.Sum(nil))
-	if sum1 != expected1 {
-		t.Errorf("Single chunk hash mismatch: got %s, expected %s", sum1, expected1)
-	}
-}
+import "testing"
 
 func TestParseHash(t *testing.T) {
 	tests := []struct {
@@ -195,7 +17,7 @@ func TestParseHash(t *testing.T) {
 			isNested:     false,
 		},
 		{
-			name:         "hash with chunk count 1",
+			name:         "nested hash",
 			input:        "N:xxh3:877abf3579f0a5c0",
 			expectedHash: "877abf3579f0a5c0",
 			isNested:     true,
@@ -238,7 +60,7 @@ func TestParseHash(t *testing.T) {
 				t.Errorf("Hash: got %q, expected %q", hash, tt.expectedHash)
 			}
 			if isNested != tt.isNested {
-				t.Errorf("ChunkCount: got %t, expected %t", isNested, tt.isNested)
+				t.Errorf("IsNested: got %t, expected %t", isNested, tt.isNested)
 			}
 		})
 	}
@@ -306,77 +128,85 @@ func TestValidateHash(t *testing.T) {
 	}
 }
 
-func TestReset(t *testing.T) {
-	h := New()
-	h.Write([]byte("some data"))
-	sum1 := hex.EncodeToString(h.Sum(nil))
+func TestNestedChunkHash(t *testing.T) {
+	// Golden values: the nested hash is the XXH3 of the concatenated
+	// lowercase hex strings of the chunk hashes, in order
+	chunk1 := "xxh3:d447b1ea40e6988b" // XXH3 of "hello world"
+	chunk2 := "2d06800538d394c2"      // XXH3 of ""
 
-	h.Reset()
-	h.Write([]byte("some data"))
-	sum2 := hex.EncodeToString(h.Sum(nil))
+	tests := []struct {
+		name        string
+		chunkHashes []string
+		expected    string
+		expectError bool
+	}{
+		{
+			name:        "two chunks in order",
+			chunkHashes: []string{chunk1, chunk2},
+			expected:    "6d51edccc9c05a8b",
+		},
+		{
+			name:        "order matters",
+			chunkHashes: []string{chunk2, chunk1},
+			expected:    "596c127c7bcc8820",
+		},
+		{
+			name:        "single chunk",
+			chunkHashes: []string{chunk1},
+			expected:    "b73081dff8fe443c",
+		},
+		{
+			name:        "mixed prefixes",
+			chunkHashes: []string{chunk1, "xxh3:" + chunk2, chunk1},
+			expected:    "ca0b13abcdcd1661",
+		},
+		{
+			name:        "no chunks",
+			chunkHashes: []string{},
+			expectError: true,
+		},
+		{
+			name:        "invalid chunk hash",
+			chunkHashes: []string{chunk1, "notahexvalue"},
+			expectError: true,
+		},
+	}
 
-	if sum1 != sum2 {
-		t.Errorf("Reset failed: got %s, expected %s", sum2, sum1)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			nested, err := NestedChunkHash(tt.chunkHashes)
+
+			if tt.expectError {
+				if err == nil {
+					t.Error("Expected error but got none")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+
+			if nested != tt.expected {
+				t.Errorf("NestedChunkHash: got %q, expected %q", nested, tt.expected)
+			}
+		})
 	}
 }
 
-func TestBlockSize(t *testing.T) {
-	h := New()
-	bs := h.BlockSize()
-	if bs <= 0 {
-		t.Errorf("BlockSize returned %d, expected positive value", bs)
-	}
-}
+func TestNestedChunkHashAcceptsPrefixedHashes(t *testing.T) {
+	plain := []string{"d447b1ea40e6988b", "2d06800538d394c2"}
+	prefixed := []string{"xxh3:d447b1ea40e6988b", "N:xxh3:2d06800538d394c2"}
 
-func TestEmptyData(t *testing.T) {
-	h := New()
-	sum := h.Sum(nil)
-
-	// Should produce a valid hash even for empty data (XXH3 of empty is not zero)
-	if len(sum) != 8 {
-		t.Errorf("Empty data sum has wrong length: %d", len(sum))
-	}
-}
-
-func TestChunkSizeBoundary(t *testing.T) {
-	// Test exactly at chunk boundary
-	data := bytes.Repeat([]byte("x"), int(chunksize.ChunkSizeConfig.DefaultChunkSize))
-
-	h := NewWithChunkSize(chunksize.ChunkSizeConfig.DefaultChunkSize)
-	h.Write(data)
-	sum := h.Sum(nil)
-
-	// Should be a single hash (not nested) since it's exactly one chunk
-	d := h.(*digest)
-	if len(d.chunkHashes) != 8 {
-		t.Errorf("Expected 1 chunk (8 bytes) at exact boundary, got %d", len(d.chunkHashes))
-	}
-
-	// Verify it matches direct XXH3
-	hasher := xxh3.New()
-	_, err := hasher.Write(data)
+	gotPlain, err := NestedChunkHash(plain)
 	if err != nil {
-		t.Fatalf("Write failed: %v", err)
+		t.Fatalf("Unexpected error: %v", err)
 	}
-	expected := hasher.Sum(nil)
-
-	if !bytes.Equal(sum, expected) {
-		t.Errorf("Boundary hash mismatch")
-	}
-}
-
-func TestLargeFile(t *testing.T) {
-	// Simulate a 100MB file
-	data := bytes.Repeat([]byte("large file content "), 100*1024*1024/18)
-
-	h := New()
-	_, err := io.Copy(h, bytes.NewReader(data))
+	gotPrefixed, err := NestedChunkHash(prefixed)
 	if err != nil {
-		t.Fatalf("Failed to hash large file: %v", err)
+		t.Fatalf("Unexpected error: %v", err)
 	}
-
-	sum := h.Sum(nil)
-	if len(sum) != 8 {
-		t.Errorf("Large file hash has wrong length: %d", len(sum))
+	if gotPlain != gotPrefixed {
+		t.Errorf("Prefixed hashes should give the same nested hash: %q != %q", gotPlain, gotPrefixed)
 	}
 }

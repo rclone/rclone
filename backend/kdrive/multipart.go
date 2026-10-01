@@ -1,47 +1,53 @@
-//go:build !plan9 && !js
-
 package kdrive
 
 import (
-	"bytes"
 	"context"
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"hash"
 	"io"
 	"net/url"
 	"path"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/rclone/rclone/backend/kdrive/api"
-	"github.com/rclone/rclone/backend/kdrive/chunksize"
 	"github.com/rclone/rclone/backend/kdrive/khash"
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/accounting"
-	"github.com/rclone/rclone/lib/atexit"
-	"github.com/rclone/rclone/lib/pacer"
-	"github.com/rclone/rclone/lib/pool"
+	"github.com/rclone/rclone/fs/chunksize"
 	"github.com/rclone/rclone/lib/rest"
 	"github.com/zeebo/xxh3"
-	"golang.org/x/sync/errgroup"
+	"golang.org/x/text/unicode/norm"
+)
+
+const (
+	// maxUploadParts is the maximum number of chunks the kDrive API accepts per file
+	maxUploadParts = 10000
+
+	// maxChunkSize is the largest chunk size the kDrive API accepts
+	maxChunkSize = 1 * 1000 * 1000 * 1000
 )
 
 // uploadSession implements fs.ChunkWriter for kdrive multipart uploads
 type uploadSession struct {
-	f          *Fs
-	parentID   string
-	fileName   string
-	token      string
-	uploadURL  string
-	fileInfo   *api.Item
-	chunkCount int
+	f         *Fs
+	token     string
+	uploadURL string
+	fileInfo  *api.Item
+	fileSize  int64 // total size of the file being uploaded
+	chunkSize int64 // size of the chunks of this session
+
+	mu          sync.Mutex
+	chunkHashes map[int64]string // chunk number -> hash of the chunk contents
 }
 
-// newChunkWriter returns chunk writer info and the upload session
+// OpenChunkWriter returns the chunk size and a ChunkWriter
+//
+// Pass in the remote and the src object
+// You can also use options to hint at the desired chunk size
 // @see https://developer.infomaniak.com/docs/api/post/3/drive/%7Bdrive_id%7D/upload/session/start
-func (f *Fs) newChunkWriter(ctx context.Context, remote string, src fs.ObjectInfo, options ...fs.OpenOption) (info fs.ChunkWriterInfo, writer fs.ChunkWriter, err error) {
+func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectInfo, options ...fs.OpenOption) (info fs.ChunkWriterInfo, writer fs.ChunkWriter, err error) {
 	fileSize := src.Size()
 	if fileSize < 0 {
 		return info, nil, errors.New("kdrive can't upload files with unknown size")
@@ -56,16 +62,20 @@ func (f *Fs) newChunkWriter(ctx context.Context, remote string, src fs.ObjectInf
 		return info, nil, fmt.Errorf("failed to find parent directory: %w", err)
 	}
 
-	var preferredChunkSize int64
+	// Calculate the chunk size, honouring any fs.ChunkOption hint
+	chunkSize := f.opt.ChunkSize
 	for _, opt := range options {
-		if chunkOpt, ok := opt.(*fs.ChunkOption); ok {
-			preferredChunkSize = chunkOpt.ChunkSize
+		if chunkOpt, ok := opt.(*fs.ChunkOption); ok && chunkOpt.ChunkSize > 0 {
+			chunkSize = fs.SizeSuffix(chunkOpt.ChunkSize)
 		}
 	}
+	chunkSize = chunksize.Calculator(src, fileSize, maxUploadParts, chunkSize)
+	if chunkSize > maxChunkSize {
+		chunkSize = maxChunkSize
+	}
 
-	chunkSize := chunksize.CalculateChunkSize(fileSize, preferredChunkSize)
-	totalChunks := chunksize.CalculateTotalChunks(fileSize, chunkSize)
-	lastModifiedAt := fmt.Sprintf("%d", uint64(src.ModTime(ctx).Unix()))
+	// Calculate the total number of chunks
+	totalChunks := max((fileSize+int64(chunkSize)-1)/int64(chunkSize), 1)
 
 	sessionReq := struct {
 		Conflict       string `json:"conflict"`
@@ -77,12 +87,13 @@ func (f *Fs) newChunkWriter(ctx context.Context, remote string, src fs.ObjectInf
 	}{
 		Conflict:       "version",
 		DirectoryID:    parentID,
-		FileName:       f.opt.Enc.FromStandardName(leaf),
-		LastModifiedAt: lastModifiedAt,
+		FileName:       f.opt.Enc.FromStandardName(norm.NFC.String(leaf)),
+		LastModifiedAt: fmt.Sprintf("%d", uint64(src.ModTime(ctx).Unix())),
 		TotalChunks:    totalChunks,
 		TotalSize:      fileSize,
 	}
 
+	// https://developer.infomaniak.com/docs/api/post/3/drive/%7Bdrive_id%7D/upload/session/start
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   fmt.Sprintf("/3/drive/%s/upload/session/start", f.opt.DriveID),
@@ -90,25 +101,25 @@ func (f *Fs) newChunkWriter(ctx context.Context, remote string, src fs.ObjectInf
 	var sessionResp api.SessionStartResponse
 	_, err = f.srv.CallJSON(ctx, &opts, &sessionReq, &sessionResp)
 	if err != nil {
-		fs.Debugf(nil, "REQUEST : %s %w", opts.Path, &sessionReq)
 		return info, nil, fmt.Errorf("failed to start upload session: %w", err)
 	}
 
-	chunkWriter := &uploadSession{
-		f:         f,
-		parentID:  parentID,
-		fileName:  leaf,
-		token:     sessionResp.Data.Token,
-		uploadURL: sessionResp.Data.UploadURL,
-	}
-
 	info = fs.ChunkWriterInfo{
-		ChunkSize:   chunkSize,
-		Concurrency: 4,
+		ChunkSize:   int64(chunkSize),
+		Concurrency: f.opt.UploadConcurrency,
 	}
 
-	fs.Debugf(&Object{fs: f, remote: remote}, "open chunk writer: started upload session: %v", sessionResp.Data.Token)
-	return info, chunkWriter, nil
+	writer = &uploadSession{
+		f:           f,
+		token:       sessionResp.Data.Token,
+		uploadURL:   sessionResp.Data.UploadURL,
+		fileSize:    fileSize,
+		chunkSize:   int64(chunkSize),
+		chunkHashes: make(map[int64]string),
+	}
+
+	fs.Debugf(f, "open chunk writer: started upload session for %d chunks of %v", totalChunks, chunkSize)
+	return info, writer, nil
 }
 
 // WriteChunk uploads a single chunk
@@ -118,37 +129,36 @@ func (u *uploadSession) WriteChunk(ctx context.Context, chunkNumber int, reader 
 		return -1, fmt.Errorf("invalid chunk number provided: %v", chunkNumber)
 	}
 
-	// Read the chunk data
-	var buf bytes.Buffer
-	n, err := io.Copy(&buf, reader)
-	if err != nil {
-		return -1, fmt.Errorf("failed to read chunk data: %w", err)
+	// Calculate the size of this chunk from the session parameters so
+	// the chunk can be streamed to the API in a single pass
+	chunkLen := u.chunkSize
+	if remaining := u.fileSize - int64(chunkNumber)*u.chunkSize; remaining < chunkLen {
+		chunkLen = remaining
 	}
-
-	if n == 0 {
+	if chunkLen <= 0 {
 		return 0, nil
 	}
 
-	chunkData := buf.Bytes()
-	sourceChunkNumber := chunkNumber + 1 // KDive API uses 1-based numbering
+	sourceChunkNumber := chunkNumber + 1 // kDrive API uses 1-based numbering
 
-	// Calculate chunk hash
+	// The chunk_hash parameter is optional, so the chunk is streamed
+	// in a single pass, hashing the contents on the way with a
+	// TeeReader. The server returns the hash of the chunk it received,
+	// which is checked below.
 	chunkHasher := xxh3.New()
-	_, _ = chunkHasher.Write(chunkData)
-	chunkHash := fmt.Sprintf("xxh3:%x", chunkHasher.Sum(nil))
 
-	uploadPath := fmt.Sprintf("/3/drive/%s/upload/session/%s/chunk", u.f.opt.DriveID, u.token)
+	// https://developer.infomaniak.com/docs/api/post/3/drive/%7Bdrive_id%7D/upload/session/%7Bsession_token%7D/chunk
 	chunkOpts := rest.Opts{
 		Method:  "POST",
 		RootURL: u.uploadURL,
-		Path:    uploadPath,
+		Path:    fmt.Sprintf("/3/drive/%s/upload/session/%s/chunk", u.f.opt.DriveID, u.token),
 		Parameters: url.Values{
 			"chunk_number": {fmt.Sprintf("%d", sourceChunkNumber)},
-			"chunk_size":   {fmt.Sprintf("%d", n)},
+			"chunk_size":   {fmt.Sprintf("%d", chunkLen)},
 			"with":         {"hash"},
-			"chunk_hash":   {chunkHash},
 		},
-		Body: bytes.NewReader(chunkData),
+		Body:          io.TeeReader(reader, chunkHasher),
+		ContentLength: &chunkLen,
 	}
 
 	var chunkResp api.ChunkUploadResponse
@@ -157,23 +167,33 @@ func (u *uploadSession) WriteChunk(ctx context.Context, chunkNumber int, reader 
 		return -1, fmt.Errorf("failed to upload chunk %d: %w", sourceChunkNumber, err)
 	}
 
-	// Verify server returned matching hash (optional but good for debugging)
+	chunkHash := hex.EncodeToString(chunkHasher.Sum(nil))
+
+	u.mu.Lock()
+	u.chunkHashes[int64(chunkNumber)] = chunkHash
+	u.mu.Unlock()
+
+	// The server hashed the chunk it received, so compare with what we
+	// sent to detect any corruption immediately
 	if chunkResp.Data.Hash != "" {
-		serverHash, _, _ := khash.ParseHash(chunkResp.Data.Hash)
-		clientHash, _, _ := khash.ParseHash(chunkHash)
-		if serverHash != clientHash {
-			fs.Debugf(u, "chunk %d hash mismatch: client=%s, server=%s", sourceChunkNumber, clientHash, serverHash)
+		if serverHash, _, parseErr := khash.ParseHash(chunkResp.Data.Hash); parseErr == nil {
+			if !strings.EqualFold(chunkHash, serverHash) {
+				return -1, fmt.Errorf("chunk %d hash mismatch: client=%s, server=%s", sourceChunkNumber, chunkHash, serverHash)
+			}
+		} else {
+			fs.Debugf(u, "Failed to parse server chunk hash %q: %v", chunkResp.Data.Hash, parseErr)
 		}
 	}
 
-	u.chunkCount++
-	fs.Debugf(u, "uploaded chunk %d (size: %d, hash: %s)", sourceChunkNumber, n, chunkHash)
-	return n, nil
+	fs.Debugf(u, "uploaded chunk %d (size: %d, hash: %s)", sourceChunkNumber, chunkLen, chunkHash)
+	return chunkLen, nil
 }
 
-// Close finalizes the upload session and returns the created file info
+// Close finalizes the upload session, verifies the hash of the uploaded
+// file and returns the created file info
 // @see https://developer.infomaniak.com/docs/api/post/3/drive/%7Bdrive_id%7D/upload/session/%7Bsession_token%7D/finish
 func (u *uploadSession) Close(ctx context.Context) error {
+	// https://developer.infomaniak.com/docs/api/post/3/drive/%7Bdrive_id%7D/upload/session/%7Bsession_token%7D/finish
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   fmt.Sprintf("/3/drive/%s/upload/session/%s/finish", u.f.opt.DriveID, u.token),
@@ -186,12 +206,96 @@ func (u *uploadSession) Close(ctx context.Context) error {
 
 	u.fileInfo = &resp.Data.File
 	fs.Debugf(u, "multipart upload completed: file id %d", resp.Data.File.ID)
+
+	return u.verifyHash(ctx)
+}
+
+// verifyHash checks the hash of the uploaded file against the hashes of
+// the chunks we uploaded, deleting the file if it is corrupted
+func (u *uploadSession) verifyHash(ctx context.Context) (err error) {
+	remoteHash := u.fileInfo.Hash
+	if remoteHash == "" {
+		// Hash might be missing in the finish response, try to fetch it
+		obj := &Object{
+			fs: u.f,
+			id: strconv.Itoa(u.fileInfo.ID),
+		}
+		var hashErr error
+		if remoteHash, hashErr = obj.retrieveHash(ctx); hashErr != nil {
+			// skip verification
+			fs.Debugf(u, "Failed to retrieve hash for verification: %v", hashErr)
+			return nil
+		}
+	}
+	parsedRemoteHash, isNested, err := khash.ParseHash(remoteHash)
+	if err != nil {
+		fs.Debugf(u, "Failed to parse server hash %q: %v", remoteHash, err)
+		return nil
+	}
+
+	u.mu.Lock()
+	defer u.mu.Unlock()
+
+	// Rebuild the hash the server should have stored from the chunk
+	// hashes we uploaded, in order
+	chunkCount := int64(len(u.chunkHashes))
+	if chunkCount == 0 {
+		return nil
+	}
+	chunkHashes := make([]string, 0, chunkCount)
+	for i := int64(0); i < chunkCount; i++ {
+		chunkHash, ok := u.chunkHashes[i]
+		if !ok {
+			fs.Debugf(u, "Chunk %d hash missing, skipping hash verification", i)
+			return nil
+		}
+		chunkHashes = append(chunkHashes, chunkHash)
+	}
+
+	var localHash string
+	if isNested {
+		if localHash, err = khash.NestedChunkHash(chunkHashes); err != nil {
+			fs.Debugf(u, "Failed to compute nested hash: %v", err)
+			return nil
+		}
+	} else if chunkCount == 1 {
+		localHash, _, _ = khash.ParseHash(chunkHashes[0])
+	} else {
+		// The server returned a simple hash for a multi chunk upload,
+		// nothing to compare it against
+		fs.Debugf(u, "Server returned a simple hash for a %d chunk upload, skipping hash verification", chunkCount)
+		return nil
+	}
+
+	if !strings.EqualFold(localHash, parsedRemoteHash) {
+		err = fmt.Errorf(
+			"multipart upload hash mismatch: local=%s, remote=%s",
+			localHash, parsedRemoteHash,
+		)
+		fs.Errorf(u, "%v", err)
+
+		// Remove the corrupted file
+		obj := &Object{
+			fs: u.f,
+			id: strconv.Itoa(u.fileInfo.ID),
+		}
+		if delErr := obj.Remove(ctx); delErr != nil {
+			fs.Errorf(nil, "Failed to remove corrupted file after hash mismatch: %v", delErr)
+		} else {
+			fs.Debugf(nil, "Removed corrupted file after hash mismatch")
+		}
+
+		return err
+	}
+	fs.Debugf(u, "Multipart upload hash verified: %s", localHash)
+
 	return nil
 }
 
 // Abort the upload session
 // @see  https://developer.infomaniak.com/docs/api/delete/2/drive/%7Bdrive_id%7D/upload/session/%7Bsession_token%7D
 func (u *uploadSession) Abort(ctx context.Context) error {
+	// https://developer.infomaniak.com/docs/api/delete/2/drive/%7Bdrive_id%7D/upload/session/%7Bsession_token%7D
 	opts := rest.Opts{
 		Method: "DELETE",
 		Path:   fmt.Sprintf("/2/drive/%s/upload/session/%s", u.f.opt.DriveID, u.token),
@@ -212,175 +316,5 @@ func (u *uploadSession) String() string {
 	return fmt.Sprintf("kdrive upload session %s", u.token)
 }
 
-// NewRW gets a pool.RW using the global pool
-func NewRW() *pool.RW {
-	return pool.NewRW(pool.Global())
-}
-
-// UploadMultipart does a generic multipart upload from src using f as newChunkWriter.
-//
-// in is read seqentially and chunks from it are uploaded in parallel.
-//
-// It returns the chunkWriter used in case the caller needs to extract any private info from it.
-func (f *Fs) UploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.Reader, opt []fs.OpenOption) (chunkWriterOut fs.ChunkWriter, err error) {
-	info, chunkWriter, err := f.newChunkWriter(ctx, src.Remote(), src, opt...)
-	if err != nil {
-		return nil, fmt.Errorf("multipart upload failed to initialise: %w", err)
-	}
-
-	// make concurrency machinery
-	concurrency := max(info.Concurrency, 1)
-	tokens := pacer.NewTokenDispenser(concurrency)
-
-	uploadCtx, cancel := context.WithCancel(ctx)
-	defer cancel()
-	defer atexit.OnError(&err, func() {
-		cancel()
-		if info.LeavePartsOnError {
-			return
-		}
-		fs.Debugf(src, "Cancelling multipart upload")
-		errCancel := chunkWriter.Abort(ctx)
-		if errCancel != nil {
-			fs.Debugf(src, "Failed to cancel multipart upload: %v", errCancel)
-		}
-	})()
-
-	var (
-		g, gCtx   = errgroup.WithContext(uploadCtx)
-		finished  = false
-		off       int64
-		size      = src.Size()
-		chunkSize = info.ChunkSize
-	)
-
-	// Do the accounting manually
-	in, acc := accounting.UnWrapAccounting(in)
-
-	// Calculate both simple and nested hashes so we can validate against
-	// the server's current format (simple) as well as the future format (nested).
-	nestedHasher := khash.NewWithChunkSize(chunkSize)
-	simpleHasher := khash.New()
-	in = io.TeeReader(in, io.MultiWriter(nestedHasher, simpleHasher))
-
-	for partNum := int64(0); !finished; partNum++ {
-		// Get a block of memory from the pool and token which limits concurrency.
-		tokens.Get()
-		rw := NewRW().Reserve(chunkSize)
-		if acc != nil {
-			rw.SetAccounting(acc.AccountRead)
-		}
-
-		free := func() {
-			// return the memory and token
-			_ = rw.Close() // Can't return an error
-			tokens.Put()
-		}
-
-		// Fail fast, in case an errgroup managed function returns an error
-		// gCtx is cancelled. There is no point in uploading all the other parts.
-		if gCtx.Err() != nil {
-			free()
-			break
-		}
-
-		// Read the chunk
-		var n int64
-		n, err = io.CopyN(rw, in, chunkSize)
-		if err == io.EOF {
-			if n == 0 && partNum != 0 { // end if no data and if not first chunk
-				free()
-				break
-			}
-			finished = true
-		} else if err != nil {
-			free()
-			return nil, fmt.Errorf("multipart upload: failed to read source: %w", err)
-		}
-
-		partNum := partNum
-		partOff := off
-		off += n
-		g.Go(func() (err error) {
-			defer free()
-			fs.Debugf(src, "multipart upload: starting chunk %d size %v offset %v/%v", partNum, fs.SizeSuffix(n), fs.SizeSuffix(partOff), fs.SizeSuffix(size))
-			_, err = chunkWriter.WriteChunk(gCtx, int(partNum), rw)
-			return err
-		})
-	}
-
-	err = g.Wait()
-	if err != nil {
-		return nil, err
-	}
-
-	err = chunkWriter.Close(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("multipart upload: failed to finalise: %w", err)
-	}
-
-	// Verify the hash
-	if session, ok := chunkWriter.(*uploadSession); ok && session.fileInfo != nil {
-		err = session.CheckHash(ctx, info, nestedHasher, simpleHasher)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return chunkWriter, nil
-}
-
-func (u uploadSession) CheckHash(ctx context.Context, info fs.ChunkWriterInfo, nestedHasher hash.Hash, simpleHasher hash.Hash) (err error) {
-	remoteHash := u.fileInfo.Hash
-
-	if remoteHash == "" {
-		// Hash might be missing in finish response, try to fetch it
-		obj := &Object{
-			fs: u.f,
-			id: strconv.Itoa(u.fileInfo.ID),
-		}
-
-		var hashErr error
-		remoteHash, hashErr = obj.retrieveHash(ctx)
-		if hashErr != nil {
-			// skip validation
-			fs.Debugf(u, "Failed to retrieve hash for verification: %v", hashErr)
-			return nil
-		}
-	}
-
-	// Choose the correct local hash depending on the server's hash format.
-	// If the server uses nested hashes we validate against the nested hasher,
-	// otherwise we validate against the simple (global) hasher.
-	var localHash string
-	if khash.IsNestedHash(remoteHash) {
-		localHash = hex.EncodeToString(nestedHasher.Sum(nil))
-	} else {
-		localHash = hex.EncodeToString(simpleHasher.Sum(nil))
-	}
-
-	if valid, _ := khash.ValidateHash(localHash, remoteHash); !valid {
-		err = fmt.Errorf(
-			"multipart upload hash mismatch: using chunk size %v, local=%s, remote=%s",
-			fs.SizeSuffix(info.ChunkSize), localHash, remoteHash,
-		)
-		fs.Errorf(u, "%v", err)
-
-		// Attempt to remove the corrupted file
-		obj := &Object{
-			fs: u.f,
-			id: strconv.Itoa(u.fileInfo.ID),
-		}
-		delErr := obj.Remove(ctx)
-		if delErr != nil {
-			fs.Errorf(nil, "Failed to remove corrupted file after hash mismatch: %v", delErr)
-		} else {
-			fs.Debugf(nil, "Removed corrupted file after hash mismatch")
-		}
-
-		return err
-	}
-	fs.Debugf(u, "Multipart upload hash verified: %s", localHash)
-
-	return nil
-}
+// Verify interface compliance
+var _ fs.ChunkWriter = (*uploadSession)(nil)

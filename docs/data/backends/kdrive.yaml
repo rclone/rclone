@@ -10,12 +10,21 @@ adoption: Rare
 docs: Basic
 security: Unknown
 virtual: false
-remote: 'TestKDrives:'
+remote: 'TestKdrive:'
 features:
 - About
+- CanHaveEmptyDirectories
+- CleanUp
 - Copy
+- DirCacheFlush
+- DirMove
+- ListP
+- ListR
 - Move
+- OpenChunkWriter
+- PublicLink
+- Purge
+- Shutdown
 hashes:
-- kdrivehash
-precision: 1000000
-
+- xxh3
+precision: 1000000000

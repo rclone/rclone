@@ -3,7 +3,6 @@
 package kdrive
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -16,28 +15,24 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/backend/kdrive/api"
-	"github.com/rclone/rclone/backend/kdrive/chunksize"
 	"github.com/rclone/rclone/backend/kdrive/khash"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
-	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
-	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 	"github.com/zeebo/xxh3"
 	"golang.org/x/text/unicode/norm"
 )
-
-// kDriveHashType is the hash type for kDrive's XXH3 implementation
-var kDriveHashType hash.Type
 
 const (
 	rcloneClientID  = "EB9BE55E-C6EA-43BB-8719-262EE2BAED0E"
@@ -63,7 +58,6 @@ var (
 
 // Register with Fs
 func init() {
-	kDriveHashType = hash.RegisterHash("kdrivehash", "khash", 16, khash.New)
 	fs.Register(&fs.RegInfo{
 		Name:        "kdrive",
 		Description: "Infomaniak kDrive",
@@ -97,13 +91,19 @@ When showing a folder on kdrive, you can find the drive_id here:
 https://ksuite.infomaniak.com/{account_id}/kdrive/app/drive/{drive_id}/files/...`,
 			Default: "",
 		}, {
-			Name: "access_token",
-			Help: `[Deprecated] Access token generated in Infomaniak profile manager.
-Use OAuth2 authentication instead.
-This option is deprecated and will be removed in the future.`,
-			Advanced:   true,
-			IsPassword: true,
-			Sensitive:  true,
+			Name: "chunk_size",
+			Help: `Files above this size are uploaded in chunks of this size.
+
+The kDrive API accepts chunks up to 1 GiB and up to 10,000 chunks per
+file. The chunk size is raised automatically for very large files to
+stay within the 10,000 chunks limit.`,
+			Default:  fs.SizeSuffix(20 * 1024 * 1024),
+			Advanced: true,
+		}, {
+			Name:     "upload_concurrency",
+			Help:     `Concurrency for chunked uploads.`,
+			Default:  4,
+			Advanced: true,
 		}, {
 			Name: "endpoint",
 			Help: `The API endpoint to use.
@@ -116,24 +116,23 @@ Leave blank normally. There is no reason to change the endpoint except for inter
 
 // Options defines the configuration for this backend
 type Options struct {
-	Enc          encoder.MultiEncoder `config:"encoding"`
-	RootFolderID string               `config:"root_folder_id"`
-	DriveID      string               `config:"drive_id"`
-	AccessToken  string               `config:"access_token"`
-	Endpoint     string               `config:"endpoint"`
+	Enc               encoder.MultiEncoder `config:"encoding"`
+	RootFolderID      string               `config:"root_folder_id"`
+	DriveID           string               `config:"drive_id"`
+	ChunkSize         fs.SizeSuffix        `config:"chunk_size"`
+	UploadConcurrency int                  `config:"upload_concurrency"`
+	Endpoint          string               `config:"endpoint"`
 }
 
 // Fs represents a remote kdrive
 type Fs struct {
-	name          string             // name of this remote
-	root          string             // the path we are working on
-	opt           Options            // parsed options
-	features      *fs.Features       // optional features
-	srv           *rest.Client       // the connection to the server
-	cleanupSrv    *rest.Client       // the connection used for the cleanup method
-	dirCache      *dircache.DirCache // Map of directory path to directory id
-	pacer         *fs.Pacer          // pacer for API calls
-	cacheNotFound map[string]cacheEntry
+	name     string             // name of this remote
+	root     string             // the path we are working on
+	opt      Options            // parsed options
+	features *fs.Features       // optional features
+	srv      *rest.Client       // the connection to the server
+	dirCache *dircache.DirCache // Map of directory path to directory id
+	pacer    *fs.Pacer          // pacer for API calls
 }
 
 // Object describes a kdrive object
@@ -149,17 +148,6 @@ type Object struct {
 	xxh3        string    // XXH3 if known
 	nestedHash  bool      // if XXH3 is a nested hash
 }
-
-type cacheEntry struct {
-	item *api.Item
-	err  error
-}
-
-type kdriveInitCacheKey int
-
-const (
-	kdriveInitCache kdriveInitCacheKey = iota
-)
 
 // ------------------------------------------------------------
 
@@ -181,11 +169,6 @@ func (f *Fs) String() string {
 // Features returns the optional features of this Fs
 func (f *Fs) Features() *fs.Features {
 	return f.features
-}
-
-// clearNotFoundCache removes all entries from the not-found cache
-func (f *Fs) clearNotFoundCache() {
-	f.cacheNotFound = make(map[string]cacheEntry)
 }
 
 // parsePath parses a kdrive 'url'
@@ -255,22 +238,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		opt.Endpoint = defaultEndpoint
 	}
 
-	var client *http.Client
-	var accessToken string
-	if opt.AccessToken != "" {
-		// Legacy token-based auth for backward compatibility
-		var err error
-		accessToken, err = obscure.Reveal(opt.AccessToken)
-		if err != nil {
-			return nil, fmt.Errorf("couldn't decrypt access token: %w", err)
-		}
-		client = fshttp.NewClient(ctx)
-	} else {
-		oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
-		if err != nil {
-			return nil, fmt.Errorf("failed to configure kDrive: %w", err)
-		}
-		client = oAuthClient
+	oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to configure kDrive: %w", err)
 	}
 
 	root = parsePath(root)
@@ -278,21 +248,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	fs.Debugf(ctx, "NewFs: for root=%s", root)
 
 	f := &Fs{
-		name:          name,
-		root:          root,
-		opt:           *opt,
-		srv:           rest.NewClient(client).SetRoot(opt.Endpoint),
-		pacer:         fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
-		cacheNotFound: make(map[string]cacheEntry),
-	}
-
-	if accessToken != "" {
-		f.srv.SetHeader("Authorization", "Bearer "+accessToken)
-	}
-
-	f.cleanupSrv = rest.NewClient(client).SetRoot(opt.Endpoint)
-	if accessToken != "" {
-		f.cleanupSrv.SetHeader("Authorization", "Bearer "+accessToken)
+		name:  name,
+		root:  root,
+		opt:   *opt,
+		srv:   rest.NewClient(oAuthClient).SetRoot(opt.Endpoint),
+		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 
 	f.features = (&fs.Features{
@@ -302,12 +262,15 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}).Fill(ctx, f)
 	f.srv.SetErrorHandler(errorHandler)
 
-	rootID, err := f.computeRootID()
-	if err != nil {
+	// Make sure the drive_id exists before doing anything else
+	if err := f.validateDriveID(ctx); err != nil {
 		return nil, err
 	}
 
-	ctx = context.WithValue(ctx, kdriveInitCache, make(map[string]cacheEntry))
+	rootID, err := f.computeRootID(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	f.dirCache = dircache.New(root, rootID, f)
 	// Find the current root
@@ -343,30 +306,54 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	return f, nil
 }
 
+// validateDriveID checks that the configured drive_id exists
+func (f *Fs) validateDriveID(ctx context.Context) error {
+	// https://developer.infomaniak.com/docs/api/get/2/drive/%7Bdrive_id%7D
+	opts := rest.Opts{
+		Method:     "GET",
+		Path:       fmt.Sprintf("/2/drive/%s", f.opt.DriveID),
+		Parameters: url.Values{},
+	}
+	opts.Parameters.Set("only", "size")
+	var q api.QuotaInfo
+	err := f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(ctx, &opts, nil, &q)
+		err = q.ResultStatus.Update(err)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return fmt.Errorf("couldn't get drive %q: %w", f.opt.DriveID, err)
+	}
+	return nil
+}
+
 // computeRootID finds the real RootId of the configured RootFolderID.
-func (f *Fs) computeRootID() (rootID string, err error) {
-	ctx := context.Background()
-
+func (f *Fs) computeRootID(ctx context.Context) (rootID string, err error) {
+	// A numeric root_folder_id is the ID of the folder itself
 	if _, err := strconv.Atoi(f.opt.RootFolderID); err == nil {
-		rootID = f.opt.RootFolderID
-	} else {
-		switch f.opt.RootFolderID {
-		case "private":
-			rootID, _, err = f.FindLeaf(ctx, "1", "Private")
-		case "common":
-			rootID, _, err = f.FindLeaf(ctx, "1", "Common documents")
-		case "":
-			rootID, _, err = f.FindLeaf(ctx, "1", "Private")
-		default:
-			rootID, _, err = f.FindLeaf(ctx, "1", f.opt.RootFolderID)
-		}
-
-		if err != nil {
-			return rootID, err
-		}
+		return f.opt.RootFolderID, nil
 	}
 
-	return
+	var leaf string
+	switch f.opt.RootFolderID {
+	case "private", "":
+		leaf = "Private"
+	case "common":
+		leaf = "Common documents"
+	default:
+		leaf = f.opt.RootFolderID
+	}
+
+	var found bool
+	rootID, found, err = f.FindLeaf(ctx, "1", leaf)
+	if err != nil {
+		return "", fmt.Errorf("failed to find root folder %q: %w", leaf, err)
+	}
+	if !found {
+		return "", fmt.Errorf("root folder %q not found", leaf)
+	}
+
+	return rootID, nil
 }
 
 // getItem retrieves a file or directory by its ID.
@@ -404,19 +391,6 @@ func (f *Fs) getItem(ctx context.Context, id string) (*api.Item, error) {
 
 // findItemInDir retrieves a file or directory by its name in a specific directory using the API.
 func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string) (*api.Item, error) {
-	cacheKey := directoryID + "|" + leaf
-
-	// if entry, entryExists := f.cacheNotFound[cacheKey]; entryExists {
-	// 	return entry.item, entry.err
-	// }
-
-	cacheInit, cacheInitExist := ctx.Value("kdriveInitCache").(map[string]cacheEntry)
-	if cacheInitExist {
-		if entry, entryExists := cacheInit[cacheKey]; entryExists {
-			return entry.item, entry.err
-		}
-	}
-
 	// https://developer.infomaniak.com/docs/api/get/3/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D/name
 	opts := rest.Opts{
 		Method:     "GET",
@@ -436,7 +410,6 @@ func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string)
 	})
 	if err != nil {
 		if isNotFoundError(err) {
-			// f.cacheNotFound[cacheKey] = cacheEntry{nil, fs.ErrorObjectNotFound}
 			return nil, fs.ErrorObjectNotFound
 		}
 		return nil, fmt.Errorf("couldn't find item in dir: %w", err)
@@ -449,10 +422,6 @@ func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string)
 	}
 	// Normalize the name
 	item.Name = f.opt.Enc.ToStandardName(norm.NFC.String(item.Name))
-
-	if cacheInitExist {
-		cacheInit[cacheKey] = cacheEntry{&item, nil}
-	}
 
 	return &item, nil
 }
@@ -480,19 +449,6 @@ func (f *Fs) findItemByPath(ctx context.Context, remote string) (*api.Item, erro
 	}
 
 	return f.findItemInDir(ctx, directoryID, leaf)
-}
-
-// readMetaDataForPath reads the metadata from the path
-func (f *Fs) readMetaDataForPath(ctx context.Context, remote string) (*api.Item, error) {
-	// fs.Debugf(ctx, "readMetaDataForPath: remote=%s", remote)
-
-	// Try the new API endpoint first
-	info, err := f.findItemByPath(ctx, remote)
-	if err != nil {
-		return nil, err
-	}
-
-	return info, nil
 }
 
 // Return an Object from a path
@@ -563,7 +519,6 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 		return "", err
 	}
 
-	f.clearNotFoundCache()
 	return strconv.Itoa(result.Data.ID), nil
 }
 
@@ -593,7 +548,7 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 			Parameters: url.Values{},
 		}
 		opts.Parameters.Set("limit", "1000")
-		opts.Parameters.Set("with", "path")
+		opts.Parameters.Set("with", "path,hash")
 		if recursive {
 			opts.Parameters.Set("depth", "unlimited")
 		}
@@ -619,7 +574,7 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 	var recursiveContents func(currentDirID string, currentSubDir string, fromCursor string)
 
 	recursiveContents = func(currentDirID string, currentSubDir string, fromCursor string) {
-		if listErr != nil {
+		if listErr != nil || found {
 			return
 		}
 		result, err := listSomeFiles(currentDirID, fromCursor)
@@ -646,11 +601,14 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 
 			if fn(item) {
 				found = true
-				break
+				return
 			}
 
 			if recursive && currentDirID == "1" && item.Type == "dir" {
 				recursiveContents(strconv.Itoa(item.ID), path.Join(currentSubDir, item.Name), "" /*reset cursor*/)
+				if found {
+					return
+				}
 			}
 		}
 
@@ -846,7 +804,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 	if err != nil {
 		return err
 	}
-	if (nonEmpty && check) {
+	if nonEmpty && check {
 		return fmt.Errorf("rmdir failed: directory %s not empty", dir)
 	}
 
@@ -863,9 +821,6 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 		err = result.ResultStatus.Update(err)
 		return shouldRetry(ctx, resp, err)
 	})
-
-	f.clearNotFoundCache()
-
 	if err != nil {
 		return fmt.Errorf("rmdir failed: %w", err)
 	}
@@ -936,7 +891,6 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	f.clearNotFoundCache()
 	return dstObj, nil
 }
 
@@ -961,7 +915,7 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 	var result api.ResultStatus
 	var err error
 	return f.pacer.Call(func() (bool, error) {
-		resp, err = f.cleanupSrv.CallJSON(ctx, &opts, nil, &result)
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
 		err = result.Update(err)
 		return shouldRetry(ctx, resp, err)
 	})
@@ -1003,7 +957,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
 		err = result.ResultStatus.Update(err)
 		if err != nil && errors.As(err, &apiErr) {
-			if err.(*api.ResultStatus).ErrorDetail.Result == "conflict_error" {
+			if apiErr.ErrorDetail.Result == "conflict_error" {
 				// Destination already exists => remove if and retry
 				err = moveDst.readMetaData(ctx)
 				if err != nil {
@@ -1014,7 +968,6 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 					return false, err
 				}
 
-				f.clearNotFoundCache()
 				return true, nil
 			}
 		}
@@ -1029,7 +982,6 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	f.clearNotFoundCache()
 	return dstObj, nil
 }
 
@@ -1072,8 +1024,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 
 	srcFs.dirCache.FlushDir(srcRemote)
-	srcFs.dirCache.FlushDir(dstRemote)
-	f.clearNotFoundCache()
+	f.dirCache.FlushDir(dstRemote)
 	return nil
 }
 
@@ -1081,7 +1032,6 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 // optional interface
 func (f *Fs) DirCacheFlush() {
 	f.dirCache.ResetRoot()
-	f.clearNotFoundCache()
 }
 
 func (f *Fs) getPublicLink(ctx context.Context, fileID int) (string, bool, error) {
@@ -1275,7 +1225,7 @@ func (f *Fs) Shutdown(_ context.Context) error {
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
-	return hash.NewHashSet(kDriveHashType)
+	return hash.NewHashSet(hash.XXH3)
 }
 
 // ------------------------------------------------------------
@@ -1320,12 +1270,14 @@ func (o *Object) retrieveHash(ctx context.Context) (hash string, err error) {
 	return result.Data.Hash, nil
 }
 
-// Hash returns the kDrive hash of an object as a lowercase hex string.
-// Only kDriveHashType is supported; standard hash.XXH3 is intentionally not
-// handled because the kDrive hash is a nested hash (hash-of-chunk-hashes)
-// and is NOT equivalent to a plain XXH3 of the file content.
+// Hash returns the XXH3 hash of an object as a lowercase hex string.
+//
+// Files which kDrive stores as a nested hash (files uploaded in chunks,
+// either by rclone or by the kDrive apps which use their own chunk
+// sizes) can't be compared with a plain XXH3 of the contents, so no
+// hash is returned for those.
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
-	if t != kDriveHashType {
+	if t != hash.XXH3 {
 		return "", hash.ErrUnsupported
 	}
 
@@ -1363,7 +1315,9 @@ func (o *Object) setMetaData(info *api.Item) (err error) {
 	o.size = info.Size
 	o.modTime = info.ModTime()
 	o.id = strconv.Itoa(info.ID)
-	if len(o.xxh3) == 0 && len(info.Hash) > 0 {
+	// The hash from the API is fresh, so it must replace any stale
+	// hash from a previous version of the object (e.g. after Update)
+	if len(info.Hash) > 0 {
 		o.setHash(info.Hash)
 	}
 	return nil
@@ -1387,7 +1341,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	if o.hasMetaData {
 		return nil
 	}
-	info, err := o.fs.readMetaDataForPath(ctx, o.remote)
+	info, err := o.fs.findItemByPath(ctx, o.remote)
 	if err != nil {
 		return err
 	}
@@ -1409,10 +1363,6 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // SetModTime sets the modification time of the object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	if modTime.Unix() == 0 {
-		return fs.ErrorCantSetModTime
-	}
-
 	var result api.ResultStatus
 
 	modTimeReq := struct {
@@ -1499,8 +1449,8 @@ func (o *Object) update(ctx context.Context, in io.Reader, src fs.ObjectInfo, di
 		return errors.New("can't upload unknown sizes objects")
 	}
 
-	// if file size is less than the threshold, upload direct
-	if size <= chunksize.ChunkSizeConfig.DefaultChunkSize {
+	// if file size is less than the chunk size, upload direct
+	if size <= int64(o.fs.opt.ChunkSize) {
 		return o.updateDirect(ctx, in, directoryID, leaf, src, options...)
 	}
 	// else, use multipart upload with parallelism
@@ -1514,28 +1464,23 @@ func (o *Object) updateDirect(ctx context.Context, in io.Reader, directoryID, le
 
 	// Attempt to get the hash from the source object without reading the content
 	totalHash, err := src.Hash(ctx, hash.XXH3)
-	var body io.Reader
 	size := src.Size()
+
+	// The body is wrapped in a RepeatableReader so transient failures can
+	// be retried by seeking back to the start of the cached content
+	body := readers.NewRepeatableReaderSized(in, int(size))
 
 	if err == nil && totalHash != "" {
 		// Hash is already known (e.g., local file)
-		// Stream directly without loading into memory
-		body = in
 		totalHash = "xxh3:" + totalHash
 	} else {
-		// Hash unknown, need to read content to calculate it
-		content, err := io.ReadAll(in)
-		if err != nil {
+		// Hash unknown: read the content once to calculate it. The
+		// RepeatableReader caches it, so the same content is then sent.
+		hasher := xxh3.New()
+		if _, err := io.Copy(hasher, body); err != nil {
 			return fmt.Errorf("failed to read file content: %w", err)
 		}
-
-		// Calculate xxh3 hash
-		hasher := xxh3.New()
-		_, _ = hasher.Write(content)
-		sum := hasher.Sum(nil)
-		totalHash = fmt.Sprintf("xxh3:%x", sum)
-
-		body = bytes.NewReader(content)
+		totalHash = fmt.Sprintf("xxh3:%x", hasher.Sum(nil))
 	}
 
 	// https://developer.infomaniak.com/docs/api/post/3/drive/%7Bdrive_id%7D/upload
@@ -1559,28 +1504,32 @@ func (o *Object) updateDirect(ctx context.Context, in io.Reader, directoryID, le
 	opts.Parameters.Set("with", "hash")
 	opts.Parameters.Set("total_chunk_hash", totalHash)
 
+	// The body is replayable, so transient failures are retried
 	err = o.fs.pacer.Call(func() (bool, error) {
+		if _, seekErr := body.Seek(0, io.SeekStart); seekErr != nil {
+			return false, seekErr
+		}
 		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &result)
 		err = result.ResultStatus.Update(err)
 		return shouldRetry(ctx, resp, err)
 	})
-
 	if err != nil {
 		return err
 	}
 
-	o.size = size
-	o.setHash(result.Data.Hash)
+	if err := o.setMetaData(&result.Data); err != nil {
+		return err
+	}
 
-	o.fs.clearNotFoundCache()
-	return o.readMetaData(ctx)
+	return nil
 }
 
 // updateMultipart uploads large files using chunked upload with parallel streaming
 func (o *Object) updateMultipart(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	f := o.fs
-
-	chunkWriter, err := f.UploadMultipart(ctx, src, in, options)
+	chunkWriter, err := multipart.UploadMultipart(ctx, src, in, multipart.UploadMultipartOptions{
+		Open:        o.fs,
+		OpenOptions: options,
+	})
 	if err != nil {
 		return err
 	}
@@ -1588,10 +1537,8 @@ func (o *Object) updateMultipart(ctx context.Context, in io.Reader, src fs.Objec
 	// Extract the file info from the chunk writer
 	session := chunkWriter.(*uploadSession)
 	if session.fileInfo == nil {
-		return fmt.Errorf("upload failed: no file info returned")
+		return errors.New("upload failed: no file info returned")
 	}
-
-	o.fs.clearNotFoundCache()
 	return o.setMetaData(session.fileInfo)
 }
 
@@ -1629,6 +1576,7 @@ var (
 	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.Shutdowner      = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
+	_ fs.OpenChunkWriter = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.IDer            = (*Object)(nil)
 )
