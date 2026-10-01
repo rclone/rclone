@@ -19,6 +19,7 @@ import (
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/rest"
 )
 
@@ -501,27 +502,36 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, fs.ErrorCantCopy
 	}
 
-	_, dstDirID, err := f.dirCache.FindPath(ctx, remote, true)
+	dstLeaf, dstDirID, err := f.dirCache.FindPath(ctx, remote, true)
 	if err != nil {
 		return nil, err
 	}
 
-	// Remove any existing object at the destination first: the copy API
-	// creates a new row named after the source file when copying across
-	// folders, which collides with one already there. rclone's own Move
-	// framework code (fs/operations/operations.go) applies this identical
-	// delete-stale-destination-first pattern before a server-side Move;
-	// server-side Copy has no such framework-level step, so it's on us.
-	if existingObj, err := f.NewObject(ctx, remote); err == nil {
+	// The copy API creates a new row named after the source file when
+	// copying across folders, which collides with one already at the
+	// destination. Copy under a temporary name, then delete the old
+	// destination, then move the copy onto the name - so a copy that fails
+	// leaves the destination as it was. Deleting it up front lost it
+	// (prior art: backend/box).
+	existingObj, err := f.NewObject(ctx, remote)
+	switch err {
+	case nil:
+		tempRemote := remote + "-rclone-copy-" + random.String(8)
+		fs.Debugf(remote, "dst already exists, copying to temp name %v", tempRemote)
+		tempObj, err := f.Copy(ctx, src, tempRemote)
+		if err != nil {
+			return nil, err
+		}
+		fs.Debugf(tempRemote, "moving to real name %v", remote)
 		if err := existingObj.Remove(ctx); err != nil {
 			return nil, fmt.Errorf("couldn't remove existing destination file: %w", err)
 		}
-	}
-
-	dstLeaf, _, err := f.dirCache.FindPath(ctx, remote, false)
-	if err != nil {
+		return f.Move(ctx, tempObj, remote)
+	case fs.ErrorObjectNotFound:
+	default:
 		return nil, err
 	}
+
 	dstName := f.opt.Enc.FromStandardName(dstLeaf)
 
 	resp, err := f.copyFile(ctx, srcObj.file.ID, dstDirID, dstName)
