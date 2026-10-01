@@ -687,7 +687,6 @@ backends:
      - TestRWFileHandleWriteNoWrite
  - backend:  "dosya"
    remote:   "TestDosya:"
-   fastlist: true
    # Every upload is a metadata round trip of several seconds regardless
    # of size, so fs/sync (TestTransform alone is 11 x ~3.5 min) needs
    # well over the default 1h budget.

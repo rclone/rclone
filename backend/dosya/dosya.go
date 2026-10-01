@@ -586,46 +586,6 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	return nil
 }
 
-// ListR lists the objects and directories of the Fs starting
-// from dir recursively into out.
-//
-// It uses the existing List method recursively to ensure paths
-// are always relative to the Fs root.
-func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) error {
-	var listR func(dir string) error
-	listR = func(dir string) error {
-		entries, err := f.List(ctx, dir)
-		if err != nil {
-			return err
-		}
-		// Collect the subdirectories BEFORE handing entries to the
-		// callback. The callback is allowed to filter the slice in place
-		// (walk.ListR does exactly that for ListObjects/ListDirs, via
-		// ListType.Filter), which overwrites the directory entries in the
-		// backing array - iterating entries afterwards would then never
-		// recurse, silently truncating the listing to the top level.
-		var subdirs []string
-		for _, entry := range entries {
-			if d, ok := entry.(fs.Directory); ok {
-				subdirs = append(subdirs, d.Remote())
-			}
-		}
-		err = callback(entries)
-		if err != nil {
-			return err
-		}
-		// Recurse into subdirectories
-		for _, subdir := range subdirs {
-			err = listR(subdir)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-	return listR(dir)
-}
-
 // PublicLink generates a public link to the remote path
 func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (string, error) {
 	o, err := f.NewObject(ctx, remote)
@@ -640,6 +600,12 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	}
 
 	return resp.Link.URL, nil
+}
+
+// DirCacheFlush resets the directory cache - used in testing as an
+// optional interface
+func (f *Fs) DirCacheFlush() {
+	f.dirCache.ResetRoot()
 }
 
 // About gets quota information from the Fs
@@ -766,9 +732,9 @@ var (
 	_ fs.DirMover        = (*Fs)(nil)
 	_ fs.Copier          = (*Fs)(nil)
 	_ fs.Purger          = (*Fs)(nil)
-	_ fs.ListRer         = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
+	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ dircache.DirCacher = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.MimeTyper       = (*Object)(nil)
