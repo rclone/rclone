@@ -638,6 +638,10 @@ func (f *Fs) uploadParts(ctx context.Context, in *readers.CountingReader, sessio
 	}
 	buffers <- first
 
+	// A failed read has to take the parts already in flight down with it,
+	// or they upload to completion while the error waits on Wait.
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	g, gCtx := errgroup.WithContext(ctx)
 	var readErr error
 	for partNum := 2; partNum <= totalParts; partNum++ {
@@ -662,6 +666,7 @@ func (f *Fs) uploadParts(ctx context.Context, in *readers.CountingReader, sessio
 		part, err := readPart(buf, partNum)
 		if err != nil {
 			readErr = err
+			cancel()
 			break
 		}
 		g.Go(func() error {
@@ -723,7 +728,11 @@ func (f *Fs) uploadFile(ctx context.Context, in io.Reader, remote string, size i
 	// part which has to be retried is resent with all of its bytes.
 	partSize := initResp.Resumable.PartSize
 	totalParts := initResp.Resumable.TotalParts
-	if partSize <= 0 || totalParts <= 0 || partSize*int64(totalParts-1) >= size {
+	// Both bounds matter. partSize*(totalParts-1) >= size means a part would
+	// have nothing to carry; size > partSize*totalParts means the last part
+	// is bigger than partSize, and readPart would slice past its buffer and
+	// panic.
+	if partSize <= 0 || totalParts <= 0 || partSize*int64(totalParts-1) >= size || size > partSize*int64(totalParts) {
 		return nil, fmt.Errorf("invalid multipart layout from server: %d parts of %d bytes for %d bytes", totalParts, partSize, size)
 	}
 	if err := f.uploadParts(ctx, counter, initResp.SessionID, size, partSize, totalParts); err != nil {
