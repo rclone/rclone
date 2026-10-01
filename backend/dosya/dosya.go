@@ -283,13 +283,9 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 	for _, file := range listing.Files {
 		if f.opt.Enc.ToStandardName(file.Name) == leaf {
-			path, ok := f.dirCache.GetInv(directoryID)
-			if !ok {
-				return nil, fmt.Errorf("cannot find dir in dircache")
-			}
 			return &Object{
 				fs:     f,
-				remote: getRemote(path, f.opt.Enc.ToStandardName(file.Name)),
+				remote: remote,
 				file:   file,
 			}, nil
 		}
