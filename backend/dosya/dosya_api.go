@@ -419,84 +419,56 @@ func (f *Fs) copyFile(ctx context.Context, fileID string, folderID string, name 
 
 // downloadFile downloads a file by its ID
 //
-// The download endpoint returns a 302 redirect to a presigned R2 URL.
-// We use a raw HTTP client to get the redirect Location, then fetch
-// the file from the presigned URL with Range support.
+// The download endpoint answers 302 with a presigned R2 URL in Location, so
+// this is two calls. Both go through the rest client, which is built on
+// fshttp, so --timeout, --contimeout, --ca-cert, --no-check-certificate,
+// --user-agent, --bind, --dump and the proxy settings apply to downloads as
+// they do to every other call, and errorHandler and shouldRetry decide the
+// errors and the retries uniformly.
 func (f *Fs) downloadFile(ctx context.Context, fileID string, options []fs.OpenOption) (io.ReadCloser, error) {
-	// Build the download URL
-	baseURL := strings.TrimSuffix(f.opt.APIURL, "/")
-	downloadEndpoint := baseURL + "/api/files/" + fileID + "/download"
-
-	// Use raw http to get the 302 redirect without following it
-	req, err := http.NewRequestWithContext(ctx, "GET", downloadEndpoint, nil)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't create download request: %w", err)
+	// NoRedirect stops the client following the 302 with the API's
+	// Authorization header attached. A 302 is not a 2xx, so Call reports it
+	// as an error (having read and closed the body); the Location header
+	// is what actually matters, and finding it clears the error, as in
+	// backend/linkbox.
+	opts := rest.Opts{
+		Method:       "GET",
+		Path:         "/api/files/" + fileID + "/download",
+		ExtraHeaders: f.byIDHeaders(),
+		NoRedirect:   true,
 	}
-	req.Header.Set("Authorization", "Bearer "+f.opt.APIKey)
-	if f.opt.WorkspaceID != "" {
-		req.Header.Set(workspaceHintHeader, f.opt.WorkspaceID)
-	}
-
-	noRedirectClient := &http.Client{
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
-	}
-
-	var redirectResp *http.Response
-	err = f.pacer.Call(func() (bool, error) {
-		var err error
-		redirectResp, err = noRedirectClient.Do(req)
-		if err != nil {
-			return shouldRetry(ctx, redirectResp, err)
+	var downloadURL string
+	err := f.pacer.Call(func() (bool, error) {
+		resp, err := f.rest.Call(ctx, &opts)
+		if resp != nil {
+			if location := resp.Header.Get("Location"); location != "" {
+				downloadURL, err = location, nil
+			}
 		}
-		if redirectResp.StatusCode == http.StatusFound || redirectResp.StatusCode == http.StatusTemporaryRedirect {
-			return false, nil
-		}
-		// Unexpected status code
-		if redirectResp.StatusCode >= 500 {
-			return true, fmt.Errorf("server error %d", redirectResp.StatusCode)
-		}
-		return false, fmt.Errorf("expected redirect, got %d", redirectResp.StatusCode)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("couldn't get download URL: %w", err)
 	}
-	if redirectResp.Body != nil {
-		// Only the Location header matters; a close error on the empty
-		// redirect body is not a download failure.
-		_ = redirectResp.Body.Close()
-	}
-
-	downloadURL := redirectResp.Header.Get("Location")
 	if downloadURL == "" {
-		return nil, fmt.Errorf("no download URL in redirect response")
+		return nil, errors.New("no download URL in redirect response")
 	}
 
-	// Fetch the actual file from the presigned R2 URL
-	// Use a plain HTTP client — no auth headers, as the presigned URL
-	// already contains credentials and R2 rejects extra Authorization headers.
-	dlReq, err := http.NewRequestWithContext(ctx, "GET", downloadURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't create download request: %w", err)
+	// Fetch the object from the presigned URL. It carries its own
+	// credentials and R2 refuses a request that also has an Authorization
+	// header, so the client-level bearer token is removed by setting the
+	// header empty: the rest client skips a header with an empty value.
+	opts = rest.Opts{
+		Method:       "GET",
+		RootURL:      downloadURL,
+		Options:      options,
+		ExtraHeaders: map[string]string{"Authorization": ""},
 	}
-	// Apply range options for partial downloads
-	fs.OpenOptionAddHTTPHeaders(dlReq.Header, options)
-
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		var err error
-		resp, err = http.DefaultClient.Do(dlReq)
-		if err != nil {
-			return shouldRetry(ctx, resp, err)
-		}
-		if resp.StatusCode >= 500 {
-			return true, fmt.Errorf("server error %d", resp.StatusCode)
-		}
-		if resp.StatusCode >= 400 {
-			return false, fmt.Errorf("download error %d", resp.StatusCode)
-		}
-		return false, nil
+		resp, err = f.rest.Call(ctx, &opts)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("couldn't download file: %w", err)
