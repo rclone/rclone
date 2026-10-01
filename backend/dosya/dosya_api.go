@@ -775,6 +775,28 @@ func (f *Fs) createShareLink(ctx context.Context, fileID string, expire fs.Durat
 }
 
 // getWorkspaceInfo fetches workspace storage info
+// listWorkspaces lists the workspaces this credential can reach. An API key
+// pinned to a workspace sees exactly one: its own.
+func (f *Fs) listWorkspaces(ctx context.Context) ([]api.Workspace, error) {
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/api/workspaces",
+	}
+
+	var result api.WorkspaceListResponse
+	err := f.pacer.Call(func() (bool, error) {
+		resp, err := f.rest.CallJSON(ctx, &opts, nil, &result)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("couldn't list workspaces: %w", err)
+	}
+	if !result.OK {
+		return nil, fmt.Errorf("API error: %s", result.Error)
+	}
+	return result.Workspaces, nil
+}
+
 func (f *Fs) getWorkspaceInfo(ctx context.Context) (*api.WorkspaceInfoResponse, error) {
 	opts := rest.Opts{
 		Method: "GET",

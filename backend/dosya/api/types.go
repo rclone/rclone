@@ -236,6 +236,18 @@ type ShareLinkResponse struct {
 	} `json:"link"`
 }
 
+// Workspace is one entry of the workspace list
+type Workspace struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+// WorkspaceListResponse is the response from GET /api/workspaces
+type WorkspaceListResponse struct {
+	Response
+	Workspaces []Workspace `json:"workspaces"`
+}
+
 // WorkspaceInfoResponse is the response from GET /api/workspaces/:id
 type WorkspaceInfoResponse struct {
 	Response

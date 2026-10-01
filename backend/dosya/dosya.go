@@ -3,6 +3,7 @@ package dosya
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -42,9 +43,13 @@ func init() {
 			Sensitive: true,
 			Required:  true,
 		}, {
-			Help:     "Your workspace ID.",
-			Name:     "workspace_id",
-			Required: true,
+			Name: "workspace_id",
+			Help: `Your workspace ID.
+
+Leave this blank to use the one workspace the API key can reach, which
+is what a key restricted to a single workspace does. If the key can
+reach several, rclone will refuse and list their IDs for you to choose
+from.`,
 		}, {
 			Help:     "API base URL.",
 			Name:     "api_url",
@@ -108,6 +113,34 @@ type Object struct {
 	fs     *Fs
 	remote string
 	file   api.FileItem
+}
+
+// findWorkspace fills in the workspace ID when the config leaves it blank.
+//
+// The ID is not shown anywhere in the dosya.dev web interface, so requiring
+// it meant asking people to find it in a developer console. A key restricted
+// to one workspace can only mean that one, and an account with a single
+// workspace has only one possible answer; anything else genuinely has to be
+// chosen, so list the choices in the error.
+func (f *Fs) findWorkspace(ctx context.Context) error {
+	workspaces, err := f.listWorkspaces(ctx)
+	if err != nil {
+		return err
+	}
+	switch len(workspaces) {
+	case 0:
+		return errors.New("no workspaces found for this API key")
+	case 1:
+		f.opt.WorkspaceID = workspaces[0].ID
+		fs.Debugf(f, "Using workspace %q (%s)", workspaces[0].Name, workspaces[0].ID)
+		return nil
+	}
+	var choices strings.Builder
+	for _, w := range workspaces {
+		fmt.Fprintf(&choices, "\n    %s (%s)", w.ID, w.Name)
+	}
+	return fmt.Errorf("this API key can reach %d workspaces, so workspace_id must be set to one of:%s",
+		len(workspaces), choices.String())
 }
 
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
@@ -198,6 +231,13 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 	client := fshttp.NewClient(ctx)
 	f.rest = rest.NewClient(client).SetRoot(strings.TrimSuffix(opt.APIURL, "/")).SetErrorHandler(errorHandler)
 	f.rest.SetHeader("Authorization", "Bearer "+f.opt.APIKey)
+
+	if f.opt.WorkspaceID == "" {
+		err = f.findWorkspace(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	f.dirCache = dircache.New(root, rootID, f)
 
