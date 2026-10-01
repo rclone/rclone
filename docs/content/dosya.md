@@ -1,7 +1,7 @@
 ---
 title: "dosya.dev"
 description: "Rclone docs for dosya.dev"
-versionIntroduced: "v1.74"
+versionIntroduced: "v1.76"
 ---
 
 # dosya.dev
@@ -38,14 +38,19 @@ XX / dosya.dev
 Storage> dosya
 
 Option api_key.
-Your API Key, get it from https://dosya.dev/settings/api-keys.
+Your API Key, get it from https://dosya.dev/profile under "API keys".
 Enter a value.
 api_key> dos_YOURAPIKEY
 
 Option workspace_id.
 Your workspace ID.
-Enter a value.
-workspace_id> ws_YOURWORKSPACEID
+
+Leave this blank to use the one workspace the API key can reach, which
+is what a key restricted to a single workspace does. If the key can
+reach several, rclone will refuse and list their IDs for you to choose
+from.
+Enter a value. Press Enter to leave empty.
+workspace_id>
 
 Edit advanced config?
 y) Yes
@@ -56,7 +61,6 @@ Configuration complete.
 Options:
 - type: dosya
 - api_key: dos_YOURAPIKEY
-- workspace_id: ws_YOURWORKSPACEID
 Keep this "remote" remote?
 y) Yes this is OK (default)
 e) Edit this remote
@@ -87,19 +91,29 @@ you can use this backend without the overlay.
 ### Getting your API key
 
 1. Log in to [dosya.dev](https://dosya.dev)
-2. Go to **Settings** > **API Keys**
+2. Go to [Profile](https://dosya.dev/profile) > **API keys**
 3. Create a new API key
 4. Copy the key (starts with `dos_`)
 
-### Getting your workspace ID
+A key can be restricted to a single workspace when you create it, which
+is the simplest thing to do for rclone: `workspace_id` can then be left
+out of the config entirely.
 
-1. Log in to [dosya.dev](https://dosya.dev)
-2. Go to your workspace
-3. The workspace ID is shown in **Settings** > **General** (starts with `ws_`)
+### Workspaces
 
-### Multiple workspaces
+Leave `workspace_id` blank and rclone asks which workspaces the key can
+reach. A key restricted to one workspace, and an account that has only
+one, both resolve without any configuration. If the key can reach
+several, rclone refuses and lists their IDs so you can set the one you
+want:
 
-To access multiple workspaces, create a separate remote for each:
+```text
+this API key can reach 2 workspaces, so workspace_id must be set to one of:
+    ws_AAAAAAAA (Work)
+    ws_BBBBBBBB (Personal)
+```
+
+To access several workspaces at once, create a separate remote for each:
 
 ```console
 rclone config create work dosya api_key=dos_XXX workspace_id=ws_WORK
@@ -161,7 +175,7 @@ Here are the Standard options specific to dosya (dosya.dev).
 
 #### --dosya-api-key
 
-Your API Key, get it from https://dosya.dev/settings/api-keys.
+Your API Key, get it from https://dosya.dev/profile under "API keys".
 
 Properties:
 
@@ -174,12 +188,17 @@ Properties:
 
 Your workspace ID.
 
+Leave this blank to use the one workspace the API key can reach, which
+is what a key restricted to a single workspace does. If the key can
+reach several, rclone will refuse and list their IDs for you to choose
+from.
+
 Properties:
 
 - Config:      workspace_id
 - Env Var:     RCLONE_DOSYA_WORKSPACE_ID
 - Type:        string
-- Required:    true
+- Required:    false
 
 ### Advanced options
 

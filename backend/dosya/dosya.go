@@ -38,7 +38,7 @@ func init() {
 		Description: "dosya.dev",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
-			Help:      "Your API Key, get it from https://dosya.dev/settings/api-keys.",
+			Help:      "Your API Key, get it from https://dosya.dev/profile under \"API keys\".",
 			Name:      "api_key",
 			Sensitive: true,
 			Required:  true,
@@ -137,7 +137,7 @@ func (f *Fs) findWorkspace(ctx context.Context) error {
 	}
 	var choices strings.Builder
 	for _, w := range workspaces {
-		fmt.Fprintf(&choices, "\n    %s (%s)", w.ID, w.Name)
+		_, _ = fmt.Fprintf(&choices, "\n    %s (%s)", w.ID, w.Name)
 	}
 	return fmt.Errorf("this API key can reach %d workspaces, so workspace_id must be set to one of:%s",
 		len(workspaces), choices.String())
@@ -560,6 +560,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		}
 		return f.Move(ctx, tempObj, remote)
 	case fs.ErrorObjectNotFound:
+		// nothing at the destination, so copy straight onto the name
 	default:
 		return nil, err
 	}

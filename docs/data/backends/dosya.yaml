@@ -1,7 +1,7 @@
 backend: dosya
 name: dosya.dev
 tier: Tier 1
-maintainers: dosya.dev team
+maintainers: External
 features_score: 5
 integration_tests: Passing
 data_integrity: Hash
@@ -17,12 +17,9 @@ features:
 - Copy
 - DirCacheFlush
 - DirMove
-- DuplicateFiles
-- ListR
 - Move
 - PublicLink
 - Purge
-- PutUnchecked
 - ReadMimeType
 hashes:
 - sha256
