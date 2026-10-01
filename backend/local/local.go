@@ -723,6 +723,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 						if useFilter {
 							newRemote := f.cleanRemote(dir, name)
 							if !filter.IncludeRemote(newRemote) {
+								fs.Debugf(newRemote, "Excluded (Backend Filter)")
 								continue
 							}
 						}
@@ -762,6 +763,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 						// the layer above wouldn't recurse into them
 						if useFilter {
 							if include, dirErr := filter.IncludeDirectory(ctx, f)(newRemote); dirErr == nil && !include {
+								fs.Debugf(newRemote, "Excluded (Backend Filter)")
 								continue
 							}
 						}
@@ -770,6 +772,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				}
 				// Quietly skip errors on excluded files and directories
 				if err != nil && useFilter && !filter.IncludeRemote(newRemote) {
+					fs.Debugf(newRemote, "Excluded (Backend Filter)")
 					continue
 				}
 				if os.IsNotExist(err) || isCircularSymlinkError(err) || errors.Is(err, errSymlinkLoop) {
@@ -802,6 +805,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				// Don't include non directory if not included
 				// we leave directory filtering to the layer above
 				if useFilter && !filter.IncludeRemote(newRemote) {
+					fs.Debugf(newRemote, "Excluded (Backend Filter)")
 					continue
 				}
 				fso, err := f.newObjectWithInfo(newRemote, fi)
