@@ -4,8 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"slices"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -15,7 +18,9 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
+	"github.com/rclone/rclone/lib/rest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -608,3 +613,131 @@ func (f *Fs) InternalTest(t *testing.T) {
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)
+
+// newChangeNotifyTestFs returns an Fs whose delta listing is served by
+// handler on a local test server, plus the server itself. The tenant URL
+// is pointed at the server so no request leaves the test.
+func newChangeNotifyTestFs(t *testing.T, handler http.Handler) (*Fs, *httptest.Server) {
+	t.Helper()
+	server := httptest.NewServer(handler)
+	t.Cleanup(server.Close)
+
+	ctx := context.Background()
+	f := &Fs{
+		ci:      fs.GetConfig(ctx),
+		root:    "",
+		driveID: "testdrive",
+		srv:     rest.NewClient(server.Client()).SetRoot(server.URL),
+		pacer:   fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(time.Millisecond), pacer.MaxSleep(10*time.Millisecond))),
+	}
+	f.opt.TenantURL = server.URL
+	f.opt.TenantAPIVersion = defaultTenantAPIVersion
+	return f, server
+}
+
+// deltaItem builds a delta entry for a file named name inside a folder.
+func deltaItem(name, folder string) api.Item {
+	return api.Item{
+		ID:   name,
+		Name: name,
+		File: &api.FileFacet{},
+		ParentReference: &api.ItemReference{
+			ID:   "parentid",
+			Path: "driveid:/" + folder,
+		},
+	}
+}
+
+// TestChangeNotifyRetriesAndKeepsToken covers a transient failure of the
+// delta poll: the request must go through the pacer so it is retried, and
+// a poll which fails outright must not hand back an empty token, since the
+// caller stores whatever it returns. An empty token would reset the delta
+// listing to the start and silently lose every change in between.
+func TestChangeNotifyRetriesAndKeepsToken(t *testing.T) {
+	ctx := context.Background()
+	var attempts atomic.Int32
+	var tokens []string
+	fail := true
+	f, _ := newChangeNotifyTestFs(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		attempts.Add(1)
+		tokens = append(tokens, r.URL.Query().Get("token"))
+		if fail {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusServiceUnavailable)
+			_ = json.NewEncoder(w).Encode(map[string]any{"error": map[string]any{
+				"code":    "serviceNotAvailable",
+				"message": "Service unavailable",
+			}})
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(api.DeltaResponse{
+			Value:     []api.Item{deltaItem("file1.txt", "folder")},
+			DeltaLink: "https://example.com/delta?token=newtoken",
+		})
+	}))
+
+	var notified []string
+	notifyFunc := func(path string, entryType fs.EntryType) {
+		notified = append(notified, path)
+	}
+
+	// The poll fails, but is retried by the pacer first
+	token, err := f.changeNotifyRunner(ctx, notifyFunc, "tok1")
+	require.Error(t, err)
+	assert.Empty(t, token, "a failed poll must not return a token")
+	assert.Equal(t, fs.GetConfig(ctx).LowLevelRetries, int(attempts.Load()), "the failed poll should have been retried by the pacer")
+	assert.Equal(t, slices.Repeat([]string{"tok1"}, int(attempts.Load())), tokens, "every retry should resume from the same token")
+	assert.Empty(t, notified)
+
+	// Keeping the previous token (as ChangeNotify does) resumes correctly
+	fail = false
+	attempts.Store(0)
+	tokens = nil
+	token, err = f.changeNotifyRunner(ctx, notifyFunc, "tok1")
+	require.NoError(t, err)
+	assert.Equal(t, "newtoken", token)
+	assert.Equal(t, []string{"tok1"}, tokens, "the second poll should resume from the retained token")
+	assert.Equal(t, []string{"folder/file1.txt"}, notified)
+}
+
+// TestChangeNotifyFollowsNextLink covers a change set which spans more than
+// one page. Graph returns @odata.nextLink and no @odata.deltaLink until the
+// last page, so a runner which stops after the first page both loses the
+// remaining changes and ends up with an empty resume token.
+func TestChangeNotifyFollowsNextLink(t *testing.T) {
+	ctx := context.Background()
+	var urls []string
+	var server *httptest.Server
+	f, server := newChangeNotifyTestFs(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		urls = append(urls, r.URL.RequestURI())
+		w.Header().Set("Content-Type", "application/json")
+		switch len(urls) {
+		case 1:
+			_ = json.NewEncoder(w).Encode(api.DeltaResponse{
+				Value:    []api.Item{deltaItem("page1.txt", "folder")},
+				NextLink: server.URL + "/nextpage?$skiptoken=abc",
+			})
+		case 2:
+			_ = json.NewEncoder(w).Encode(api.DeltaResponse{
+				Value:     []api.Item{deltaItem("page2.txt", "folder")},
+				DeltaLink: "https://example.com/delta?token=lasttoken",
+			})
+		default:
+			t.Errorf("unexpected extra request to %s", r.URL)
+		}
+	}))
+
+	var notified []string
+	token, err := f.changeNotifyRunner(ctx, func(path string, entryType fs.EntryType) {
+		notified = append(notified, path)
+	}, "tok1")
+	require.NoError(t, err)
+
+	assert.Equal(t, "lasttoken", token, "the resume token should come from the last page")
+	assert.Equal(t, []string{"folder/page1.txt", "folder/page2.txt"}, notified, "changes from every page should be notified")
+	require.Len(t, urls, 2, "the nextLink page should have been fetched")
+	assert.Contains(t, urls[0], "/testdrive/root/delta")
+	assert.Contains(t, urls[0], "token=tok1")
+	assert.Equal(t, "/nextpage?$skiptoken=abc", urls[1], "the nextLink should be used as-is, without the delta token")
+}

@@ -3103,9 +3103,15 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 				}
 			case <-tickerC:
 				fs.Debugf(f, "Checking for changes on remote")
-				nextDeltaToken, err = f.changeNotifyRunner(ctx, notifyFunc, nextDeltaToken)
+				var newDeltaToken string
+				newDeltaToken, err = f.changeNotifyRunner(ctx, notifyFunc, nextDeltaToken)
 				if err != nil {
+					// Keep the token we already have: replacing it with the
+					// empty token from a failed poll would reset the delta
+					// listing to the start and lose every change in between.
 					fs.Infof(f, "Change notify listener failure: %s", err)
+				} else {
+					nextDeltaToken = newDeltaToken
 				}
 			}
 		}
@@ -3113,7 +3119,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 }
 
 func (f *Fs) changeNotifyStartPageToken(ctx context.Context) (nextDeltaToken string, err error) {
-	delta, err := f.changeNotifyNextChange(ctx, "latest")
+	delta, err := f.changeNotifyNextChange(ctx, "latest", "")
 	if err != nil {
 		return
 	}
@@ -3125,15 +3131,34 @@ func (f *Fs) changeNotifyStartPageToken(ctx context.Context) (nextDeltaToken str
 	return
 }
 
-func (f *Fs) changeNotifyNextChange(ctx context.Context, token string) (delta api.DeltaResponse, err error) {
-	opts := f.buildDriveDeltaOpts(token)
+// changeNotifyNextChange fetches one page of the drive delta listing.
+//
+// Pass the delta token to resume from in token, or the @odata.nextLink URL
+// returned by the previous page in nextLink. Exactly one of the two should
+// be set.
+func (f *Fs) changeNotifyNextChange(ctx context.Context, token, nextLink string) (delta api.DeltaResponse, err error) {
+	opts := f.buildDriveDeltaOpts(token, nextLink)
 
-	_, err = f.srv.CallJSON(ctx, &opts, nil, &delta)
+	err = f.pacer.Call(func() (bool, error) {
+		var resp *http.Response
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &delta)
+		return shouldRetry(ctx, resp, err)
+	})
 
 	return
 }
 
-func (f *Fs) buildDriveDeltaOpts(token string) rest.Opts {
+// buildDriveDeltaOpts builds the request for one page of the drive delta
+// listing. nextLink, when set, is the complete @odata.nextLink URL from the
+// previous page and is used as-is, overriding the drive root.
+func (f *Fs) buildDriveDeltaOpts(token, nextLink string) rest.Opts {
+	if nextLink != "" {
+		return rest.Opts{
+			Method:  "GET",
+			RootURL: nextLink,
+		}
+	}
+
 	var rootURL string
 	if f.opt.TenantURL != "" {
 		rootURL = tenantAPIEndpoint(f.opt.TenantURL, f.opt.TenantAPIVersion) + "/drives"
@@ -3149,46 +3174,58 @@ func (f *Fs) buildDriveDeltaOpts(token string) rest.Opts {
 	}
 }
 
-func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.EntryType), deltaToken string) (nextDeltaToken string, err error) {
-	delta, err := f.changeNotifyNextChange(ctx, deltaToken)
-	if err != nil {
-		return
-	}
-	parsedURL, err := url.Parse(delta.DeltaLink)
-	if err != nil {
-		return
-	}
-	nextDeltaToken = parsedURL.Query().Get("token")
-
-	for _, item := range delta.Value {
-		isDriveRootFolder := item.GetParentReference().ID == ""
-		if isDriveRootFolder {
-			continue
-		}
-
-		fullPath, err := getItemFullPath(&item)
+// changeNotifyRunner polls for changes and calls notifyFunc for each one.
+//
+// It walks every page of the change set and returns the token to resume from
+// next time. The returned token is only valid when err is nil: the caller
+// must keep the token it passed in on error, otherwise a failed poll would
+// reset the delta listing to the start and lose the changes in between.
+func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.EntryType), deltaToken string) (string, error) {
+	token, nextLink := deltaToken, ""
+	for {
+		delta, err := f.changeNotifyNextChange(ctx, token, nextLink)
 		if err != nil {
-			fs.Errorf(f, "Could not get item full path: %s", err)
-			continue
+			return "", err
 		}
 
-		if fullPath == f.root {
-			continue
+		for _, item := range delta.Value {
+			isDriveRootFolder := item.GetParentReference().ID == ""
+			if isDriveRootFolder {
+				continue
+			}
+
+			fullPath, err := getItemFullPath(&item)
+			if err != nil {
+				fs.Errorf(f, "Could not get item full path: %s", err)
+				continue
+			}
+
+			if fullPath == f.root {
+				continue
+			}
+
+			relName, insideRoot := getRelativePathInsideBase(f.root, fullPath)
+			if !insideRoot {
+				continue
+			}
+
+			if item.GetFile() != nil {
+				notifyFunc(relName, fs.EntryObject)
+			} else if item.GetFolder() != nil {
+				notifyFunc(relName, fs.EntryDirectory)
+			}
 		}
 
-		relName, insideRoot := getRelativePathInsideBase(f.root, fullPath)
-		if !insideRoot {
-			continue
+		if delta.NextLink == "" {
+			// end of the change set - the deltaLink carries the resume token
+			parsedURL, err := url.Parse(delta.DeltaLink)
+			if err != nil {
+				return "", err
+			}
+			return parsedURL.Query().Get("token"), nil
 		}
-
-		if item.GetFile() != nil {
-			notifyFunc(relName, fs.EntryObject)
-		} else if item.GetFolder() != nil {
-			notifyFunc(relName, fs.EntryDirectory)
-		}
+		nextLink = delta.NextLink
 	}
-
-	return
 }
 
 func getItemFullPath(item *api.Item) (fullPath string, err error) {
