@@ -689,7 +689,7 @@ func (f *Fs) uploadParts(ctx context.Context, in *readers.CountingReader, sessio
 }
 
 // uploadFile handles the full upload flow (small or multipart)
-func (f *Fs) uploadFile(ctx context.Context, in io.Reader, remote string, size int64, modTime time.Time, folderID string, fileID *string) (*api.UploadCompleteResponse, error) {
+func (f *Fs) uploadFile(ctx context.Context, in io.Reader, remote string, size int64, modTime time.Time, mimeType string, folderID string, fileID *string) (*api.UploadCompleteResponse, error) {
 	// Both refusals live here so a new file and a new version of an existing
 	// one answer the same way: upload/init needs a byte count up front, and
 	// the server stores no zero-length object.
@@ -701,11 +701,6 @@ func (f *Fs) uploadFile(ctx context.Context, in io.Reader, remote string, size i
 	}
 
 	leaf := f.opt.Enc.FromStandardName(path.Base(remote))
-
-	mimeType := fs.MimeTypeFromName(remote)
-	if mimeType == "" {
-		mimeType = "application/octet-stream"
-	}
 
 	initResp, err := f.initUpload(ctx, leaf, size, mimeType, folderID, fileID)
 	if err != nil {

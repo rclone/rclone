@@ -98,7 +98,7 @@ func TestUploadMultipartSendsPartsConcurrently(t *testing.T) {
 	f.opt.UploadConcurrency = 4
 	content := "aabbccddeeffgghhiijj"
 
-	_, err := f.uploadFile(context.Background(), strings.NewReader(content), "file.txt", 20, time.Time{}, "", nil)
+	_, err := f.uploadFile(context.Background(), strings.NewReader(content), "file.txt", 20, time.Time{}, "text/plain; charset=utf-8", "", nil)
 	require.NoError(t, err)
 
 	assert.Equal(t, 4, srv.maxFlight, "parts after the first should use the whole concurrency")
@@ -114,7 +114,7 @@ func TestUploadMultipartConcurrencyOneIsSequential(t *testing.T) {
 	f := newFakeFs(rtFunc(srv.roundTrip))
 	f.opt.UploadConcurrency = 1
 
-	_, err := f.uploadFile(context.Background(), strings.NewReader("aabbccddeeffgghhiijj"), "file.txt", 20, time.Time{}, "", nil)
+	_, err := f.uploadFile(context.Background(), strings.NewReader("aabbccddeeffgghhiijj"), "file.txt", 20, time.Time{}, "text/plain; charset=utf-8", "", nil)
 	require.NoError(t, err)
 	assert.Equal(t, 1, srv.maxFlight)
 	assert.Equal(t, 1, srv.completes)
@@ -126,7 +126,7 @@ func TestUploadMultipartFailedPartIsNotCompleted(t *testing.T) {
 	f := newFakeFs(rtFunc(srv.roundTrip))
 	f.opt.UploadConcurrency = 4
 
-	_, err := f.uploadFile(context.Background(), strings.NewReader("aabbccddeeffgghhiijj"), "file.txt", 20, time.Time{}, "", nil)
+	_, err := f.uploadFile(context.Background(), strings.NewReader("aabbccddeeffgghhiijj"), "file.txt", 20, time.Time{}, "text/plain; charset=utf-8", "", nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "part 6")
 	assert.Equal(t, 0, srv.completes, "an upload with a failed part must not be completed")
@@ -139,7 +139,7 @@ func TestUploadMultipartParallelRejectsShortSource(t *testing.T) {
 	f := newFakeFs(rtFunc(srv.roundTrip))
 	f.opt.UploadConcurrency = 4
 
-	_, err := f.uploadFile(context.Background(), strings.NewReader("aabbccddeeffggh"), "file.txt", 20, time.Time{}, "", nil)
+	_, err := f.uploadFile(context.Background(), strings.NewReader("aabbccddeeffggh"), "file.txt", 20, time.Time{}, "text/plain; charset=utf-8", "", nil)
 	require.Error(t, err)
 	assert.ErrorIs(t, err, io.ErrUnexpectedEOF)
 	assert.Equal(t, 0, srv.completes)

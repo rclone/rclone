@@ -123,7 +123,7 @@ func TestUploadSmallSendsWholeBody(t *testing.T) {
 	f := newFakeFs(rtFunc(srv.roundTrip))
 	content := strings.Repeat("a", 100)
 
-	resp, err := f.uploadFile(context.Background(), strings.NewReader(content), "file.txt", 100, time.Time{}, "", nil)
+	resp, err := f.uploadFile(context.Background(), strings.NewReader(content), "file.txt", 100, time.Time{}, "text/plain; charset=utf-8", "", nil)
 	require.NoError(t, err)
 	assert.Equal(t, "fil_1", resp.File.ID)
 	require.Len(t, srv.puts, 1)
@@ -136,7 +136,7 @@ func TestUploadSmallRejectsShortSource(t *testing.T) {
 	srv := newFakeUploadServer(t, "")
 	f := newFakeFs(rtFunc(srv.roundTrip))
 
-	_, err := f.uploadFile(context.Background(), strings.NewReader(strings.Repeat("a", 60)), "file.txt", 100, time.Time{}, "", nil)
+	_, err := f.uploadFile(context.Background(), strings.NewReader(strings.Repeat("a", 60)), "file.txt", 100, time.Time{}, "text/plain; charset=utf-8", "", nil)
 	require.Error(t, err)
 	assert.ErrorIs(t, err, io.ErrUnexpectedEOF)
 	assert.Contains(t, err.Error(), "expected 100 bytes in input, but got 60")
@@ -151,7 +151,7 @@ func TestUploadSmallDoesNotResendDrainedBody(t *testing.T) {
 	f := newFakeFs(rtFunc(srv.roundTrip))
 
 	content := strings.Repeat("a", 100)
-	_, err := f.uploadFile(context.Background(), strings.NewReader(content), "file.txt", 100, time.Time{}, "", nil)
+	_, err := f.uploadFile(context.Background(), strings.NewReader(content), "file.txt", 100, time.Time{}, "text/plain; charset=utf-8", "", nil)
 	require.Error(t, err)
 	require.Len(t, srv.puts, 1, "the PUT must not be retried with a drained body")
 	assert.Equal(t, content, string(srv.puts[0]))
@@ -164,7 +164,7 @@ func TestUploadMultipartAssemblesAllBytes(t *testing.T) {
 	f := newFakeFs(rtFunc(srv.roundTrip))
 	content := "0123456789"
 
-	resp, err := f.uploadFile(context.Background(), strings.NewReader(content), "file.txt", 10, time.Time{}, "", nil)
+	resp, err := f.uploadFile(context.Background(), strings.NewReader(content), "file.txt", 10, time.Time{}, "text/plain; charset=utf-8", "", nil)
 	require.NoError(t, err)
 	assert.Equal(t, "fil_1", resp.File.ID)
 	assert.Equal(t, 1, srv.completes)
@@ -180,7 +180,7 @@ func TestUploadMultipartRejectsShortSource(t *testing.T) {
 	srv := newFakeUploadServer(t, threeParts)
 	f := newFakeFs(rtFunc(srv.roundTrip))
 
-	_, err := f.uploadFile(context.Background(), strings.NewReader("01234567"), "file.txt", 10, time.Time{}, "", nil)
+	_, err := f.uploadFile(context.Background(), strings.NewReader("01234567"), "file.txt", 10, time.Time{}, "text/plain; charset=utf-8", "", nil)
 	require.Error(t, err)
 	assert.ErrorIs(t, err, io.ErrUnexpectedEOF)
 	assert.Contains(t, err.Error(), "expected 10 bytes in input, but got 8")
@@ -195,7 +195,7 @@ func TestUploadMultipartRetriesPartWithFullBody(t *testing.T) {
 	srv.failFirst["/api/upload/upl_1/part/2"] = true
 	f := newFakeFs(rtFunc(srv.roundTrip))
 
-	_, err := f.uploadFile(context.Background(), strings.NewReader("0123456789"), "file.txt", 10, time.Time{}, "", nil)
+	_, err := f.uploadFile(context.Background(), strings.NewReader("0123456789"), "file.txt", 10, time.Time{}, "text/plain; charset=utf-8", "", nil)
 	require.NoError(t, err)
 	require.Len(t, srv.parts[2], 2, "part 2 should have been sent twice")
 	assert.Equal(t, "4567", string(srv.parts[2][0]))

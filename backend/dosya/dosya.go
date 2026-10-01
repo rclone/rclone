@@ -321,7 +321,7 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	}
 
 	modTime := src.ModTime(ctx)
-	resp, err := f.uploadFile(ctx, in, remote, src.Size(), modTime, directoryID, nil)
+	resp, err := f.uploadFile(ctx, in, remote, src.Size(), modTime, fs.MimeType(ctx, src), directoryID, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -692,7 +692,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// Upload as new version of existing file
 	fileID := o.file.ID
 	modTime := src.ModTime(ctx)
-	resp, err := o.fs.uploadFile(ctx, in, o.remote, src.Size(), modTime, directoryID, &fileID)
+	resp, err := o.fs.uploadFile(ctx, in, o.remote, src.Size(), modTime, fs.MimeType(ctx, src), directoryID, &fileID)
 	if err != nil {
 		return err
 	}

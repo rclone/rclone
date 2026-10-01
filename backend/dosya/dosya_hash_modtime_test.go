@@ -98,7 +98,7 @@ func TestUploadSendsSourceMTimeHeader(t *testing.T) {
 	f := newFakeFs(rt)
 
 	mt := time.Date(2003, 2, 3, 4, 5, 6, 0, time.UTC)
-	resp, err := f.uploadFile(context.Background(), strings.NewReader("hello"), "file.txt", 5, mt, "", nil)
+	resp, err := f.uploadFile(context.Background(), strings.NewReader("hello"), "file.txt", 5, mt, "text/plain; charset=utf-8", "", nil)
 	require.NoError(t, err)
 	assert.Equal(t, "h", resp.File.ContentHash)
 	assert.Equal(t, strconv.FormatInt(mt.Unix(), 10), putMTime, "the PUT must carry the source-mtime header")
@@ -128,7 +128,7 @@ func TestMultipartCompleteSendsSourceMTimeHeader(t *testing.T) {
 	f := newFakeFs(rt)
 
 	mt := time.Date(2003, 2, 3, 4, 5, 6, 0, time.UTC)
-	_, err := f.uploadFile(context.Background(), strings.NewReader("0123456789"), "file.txt", 10, mt, "", nil)
+	_, err := f.uploadFile(context.Background(), strings.NewReader("0123456789"), "file.txt", 10, mt, "text/plain; charset=utf-8", "", nil)
 	require.NoError(t, err)
 	assert.Equal(t, strconv.FormatInt(mt.Unix(), 10), completeMTime, "the complete call must carry the source-mtime header")
 }
