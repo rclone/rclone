@@ -98,10 +98,11 @@ func init() {
 			Default:  maxUploadParts,
 			Advanced: true,
 		}, {
-			Name:     "token",
-			Help:     "JWT Token for performing Shade FS operations. Don't set this value - rclone will set it automatically",
-			Default:  "",
-			Advanced: true,
+			Name:      "token",
+			Help:      "JWT Token for performing Shade FS operations. Don't set this value - rclone will set it automatically",
+			Default:   "",
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name:     "token_expiry",
 			Help:     "JWT Token Expiration time. Don't set this value - rclone will set it automatically",
