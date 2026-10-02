@@ -1043,6 +1043,39 @@ func TestNewFilterUsesDirectoryFilters(t *testing.T) {
 	}
 }
 
+func TestAddConfigRulesIndependent(t *testing.T) {
+	for _, ignoreCase := range []bool{false, true} {
+		t.Run(fmt.Sprintf("ignoreCase=%t", ignoreCase), func(t *testing.T) {
+			opt := Opt
+			opt.IgnoreCase = ignoreCase
+			for i := range minIndexedRules {
+				opt.FilterRule = append(opt.FilterRule, fmt.Sprintf("- /old_%d/**", i))
+				opt.MetaRules.FilterRule = append(opt.MetaRules.FilterRule, fmt.Sprintf("- /old_%d/**", i))
+			}
+			original, err := NewFilter(&opt)
+			require.NoError(t, err)
+			ctx := ReplaceConfig(context.Background(), original)
+			_, cloned := AddConfig(ctx)
+			require.NoError(t, cloned.Add(false, "/new/**"))
+			require.NoError(t, cloned.metaRules.Add(false, "/new/**"))
+			assert.False(t, cloned.IncludeRemote("new/file"))
+			assert.True(t, original.IncludeRemote("new/file"))
+			assert.False(t, cloned.metaRules.include("new/file"))
+			assert.True(t, original.metaRules.include("new/file"))
+			include := original.IncludeDirectory(ctx, nil)
+			got, err := include("new")
+			require.NoError(t, err)
+			assert.True(t, got)
+			// The original must not inherit the clone's deduplication state.
+			require.NoError(t, original.Add(false, "/new/**"))
+			assert.False(t, original.IncludeRemote("new/file"))
+			cloned.Clear()
+			assert.True(t, cloned.IncludeRemote("old_0/file"))
+			assert.False(t, original.IncludeRemote("old_0/file"))
+		})
+	}
+}
+
 func TestGetConfig(t *testing.T) {
 	ctx := context.Background()
 
