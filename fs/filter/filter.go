@@ -724,13 +724,15 @@ func CopyConfig(dstCtx, srcCtx context.Context) context.Context {
 	return context.WithValue(dstCtx, configContextKey, c)
 }
 
-// AddConfig returns a mutable config structure based on a shallow
-// copy of that found in ctx and returns a new context with that added
-// to it.
+// AddConfig returns a mutable copy of the config in ctx with independent
+// rule sets and a new context containing it. Other fields are shallow-copied.
 func AddConfig(ctx context.Context) (context.Context, *Filter) {
 	c := GetConfig(ctx)
 	cCopy := new(Filter)
 	*cCopy = *c
+	cCopy.fileRules = c.fileRules.clone()
+	cCopy.dirRules = c.dirRules.clone()
+	cCopy.metaRules = c.metaRules.clone()
 	newCtx := context.WithValue(ctx, configContextKey, cCopy)
 	return newCtx, cCopy
 }
