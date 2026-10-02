@@ -192,6 +192,16 @@ func init() {
 			Advanced:  true,
 			Sensitive: true,
 		}, {
+			Name:      "captcha_token",
+			Help:      "Captcha token - set automatically.",
+			Hide:      fs.OptionHideBoth,
+			Sensitive: true,
+		}, {
+			Name:      config.ConfigToken,
+			Help:      "OAuth Access Token as a JSON blob - set automatically.",
+			Hide:      fs.OptionHideBoth,
+			Sensitive: true,
+		}, {
 			Name:     "user_agent",
 			Default:  defaultUserAgent,
 			Advanced: true,
