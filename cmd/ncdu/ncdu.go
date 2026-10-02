@@ -626,7 +626,16 @@ func (u *UI) deleteSelected() {
 		positionsToDelete := make([]int, len(u.selectedEntries))
 		i := 0
 
+		// the menu has been handled, so don't draw it over the progress
+		u.boxMenu = []string{}
+
 		for key, cursorPos := range u.selectedEntries {
+
+			u.popupBox([]string{
+				"Deleting selected items...",
+				fmt.Sprintf("%d of %d", i+1, len(positionsToDelete))})
+			u.Draw()
+			u.s.Show()
 
 			dirPos := u.sortPerm[cursorPos.entry]
 			dirEntry := u.entries[dirPos]
@@ -662,7 +671,7 @@ func (u *UI) deleteSelected() {
 			u.move(-1)
 		}
 
-		return "Successfully deleted all items!", nil
+		return fmt.Sprintf("Successfully deleted %d items!", i), nil
 	}
 	u.popupBox([]string{
 		"Delete selected items?",
