@@ -108,24 +108,36 @@ func (s *Storage) Save() error {
 	}
 	configDir, configName := filepath.Split(configPath)
 
-	info, err := os.Lstat(configPath)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			return fmt.Errorf("failed to resolve config file path: %w", err)
+	visited := make(map[string]bool)
+	info := (os.FileInfo)(nil)
+	for {
+		_, isVisited := visited[configPath]
+		if isVisited {
+			return fmt.Errorf("failed to resolve config path: symlink loop")
 		}
-	} else {
-		if info.Mode()&os.ModeSymlink != 0 {
-			configPath, err = os.Readlink(configPath)
-			if err != nil {
-				return fmt.Errorf("failed to resolve config file symbolic link: %w", err)
+		visited[configPath] = true
+		info, err := os.Lstat(configPath)
+		if err != nil {
+			if !os.IsNotExist(err) {
+				return fmt.Errorf("failed to resolve config file path: %w", err)
 			}
-			if !filepath.IsAbs(configPath) {
-				configPath = filepath.Join(configDir, configPath)
+			break
+		} else {
+			if info.Mode()&os.ModeSymlink != 0 {
+				configPath, err = os.Readlink(configPath)
+				if err != nil {
+					return fmt.Errorf("failed to resolve config file symbolic link: %w", err)
+				}
+				if !filepath.IsAbs(configPath) {
+					configPath = filepath.Join(configDir, configPath)
+				}
+				configDir = filepath.Dir(configPath)
+			} else {
+				break
 			}
-			configDir = filepath.Dir(configPath)
 		}
 	}
-	err = file.MkdirAll(configDir, os.ModePerm)
+	err := file.MkdirAll(configDir, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
