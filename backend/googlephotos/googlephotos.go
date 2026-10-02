@@ -524,6 +524,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.Med
 	o := &Object{
 		fs:     f,
 		remote: remote,
+		bytes:  -1,
 	}
 	if info != nil {
 		o.setMetaData(info)
@@ -692,6 +693,7 @@ func (f *Fs) itemToDirEntry(ctx context.Context, remote string, item *api.MediaI
 	o := &Object{
 		fs:     f,
 		remote: remote,
+		bytes:  -1,
 	}
 	o.setMetaData(item)
 	return o, nil
@@ -774,6 +776,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	o := &Object{
 		fs:     f,
 		remote: src.Remote(),
+		bytes:  -1,
 	}
 	return o, o.Update(ctx, in, src, options...)
 }
@@ -952,11 +955,18 @@ func (o *Object) Size() int64 {
 	return o.bytes
 }
 
-// setMetaData sets the fs data from a storage.Object
+// setMetaData sets the fs data from a storage.Object.
+// If info is nil (e.g. when using async batch_mode and the item has not yet
+// been committed), only o.bytes is set to -1 so the caller knows size is
+// unknown; all other fields retain their existing values.
 func (o *Object) setMetaData(info *api.MediaItem) {
+	if info == nil {
+		o.bytes = -1
+		return
+	}
 	o.url = info.BaseURL
 	o.id = info.ID
-	o.bytes = -1 // FIXME
+	o.bytes = -1 // FIXME: Google Photos API does not return size
 	o.mimeType = info.MimeType
 	o.modTime = info.MediaMetadata.CreationTime
 }
@@ -1237,7 +1247,15 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return fmt.Errorf("failed to commit batch: %w", err)
 	}
 
-	o.setMetaData(info)
+	// In async batch_mode, info is nil until the batch is flushed later.
+	// setMetaData handles nil gracefully; we pre-populate bytes with the
+	// source size so the hasher overlay can cache the correct fingerprint
+	// without waiting for eventual consistency.
+	if info == nil {
+		o.bytes = src.Size()
+	} else {
+		o.setMetaData(info)
+	}
 
 	// Add upload to internal storage
 	if pattern.isUpload {
