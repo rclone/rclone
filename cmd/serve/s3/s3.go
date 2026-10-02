@@ -30,9 +30,10 @@ var OptionsInfo = fs.Options{{
 	Default: "MD5",
 	Help:    "Which hash to use for the ETag, or auto or blank for off",
 }, {
-	Name:    "auth_key",
-	Default: []string{},
-	Help:    "Set key pair for v4 authorization: access_key_id,secret_access_key",
+	Name:      "auth_key",
+	Default:   []string{},
+	Help:      "Set key pair for v4 authorization: access_key_id,secret_access_key",
+	Sensitive: true,
 }, {
 	Name:    "no_cleanup",
 	Default: false,
