@@ -159,7 +159,7 @@ func triggerSMSFlow(ctx context.Context, icloud *api.Client, phones []api.Truste
 		}
 		saveAuthSession(m, icloud.Session, nil)
 		nextState := fmt.Sprintf("2fa_sms_%d_%s", p.ID, p.Mode)
-		return fs.ConfigInput(nextState, "config_2fa_sms", fmt.Sprintf("Enter the verification code sent to %s", p.Num))
+		return fs.ConfigInputSensitive(nextState, "config_2fa_sms", fmt.Sprintf("Enter the verification code sent to %s", p.Num))
 	}
 
 	// Multiple phones - save session and present picker
@@ -194,7 +194,7 @@ func finishConfigAuthentication(ctx context.Context, name string, m configmap.Ma
 		// Push codes are account-scoped so session reuse is not strictly required,
 		// but it avoids a redundant SRP roundtrip and a second push on pre-26.4
 		saveAuthSession(m, icloud.Session, nil)
-		return fs.ConfigInput("2fa_do", "config_2fa", "Two-factor authentication: enter your 2FA code or type 'sms' for a text message")
+		return fs.ConfigInputSensitive("2fa_do", "config_2fa", "Two-factor authentication: enter your 2FA code or type 'sms' for a text message")
 	}
 	saveAuthCredentials(m, icloud, name)
 	return nil, nil
@@ -437,7 +437,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		}
 		saveAuthSession(m, icloud.Session, nil)
 		nextState := fmt.Sprintf("2fa_sms_%d_%s", phoneID, mode)
-		return fs.ConfigInput(nextState, "config_2fa_sms", fmt.Sprintf("Enter the verification code sent to %s", phoneNum))
+		return fs.ConfigInputSensitive(nextState, "config_2fa_sms", fmt.Sprintf("Enter the verification code sent to %s", phoneNum))
 
 	case strings.HasPrefix(config.State, "2fa_sms_"):
 		code := config.Result

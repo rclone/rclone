@@ -209,7 +209,7 @@ used. You will be asked for your account's username and password.`,
 		return fs.ConfigGoto(conf.Result)
 	case "standard": // configure a jottacloud backend using the modern JottaCli token based authentication
 		m.Set("configVersion", fmt.Sprint(configVersion))
-		return fs.ConfigInput("standard_token", "config_login_token", `Personal login token.
+		return fs.ConfigInputSensitive("standard_token", "config_login_token", `Personal login token.
 Generate it from the account security settings in the web interface of your
 service, for the official service on https://www.jottacloud.com/web/secure.`)
 	case "standard_token":
@@ -326,7 +326,7 @@ machines.`)
 		}
 		token, err := doLegacyAuth(ctx, srv, oauthConfig, username, password, authCode)
 		if err == errAuthCodeRequired {
-			return fs.ConfigInput("legacy_auth_code", "config_auth_code", "Verification code.\nThis account uses 2 factor authentication you will receive a verification code via SMS.")
+			return fs.ConfigInputSensitive("legacy_auth_code", "config_auth_code", "Verification code.\nThis account uses 2 factor authentication you will receive a verification code via SMS.")
 		}
 		m.Set("password", "")
 		m.Set("auth_code", "")

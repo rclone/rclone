@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestStatePush(t *testing.T) {
@@ -35,6 +36,16 @@ func TestStatePop(t *testing.T) {
 	state, value = StatePop("1，2，3,a")
 	assert.Equal(t, "1,2,3", value)
 	assert.Equal(t, "a", state)
+}
+
+func TestConfigInputSensitive(t *testing.T) {
+	out, err := ConfigInputSensitive("next", "config_token", "Paste the token")
+	require.NoError(t, err)
+	assert.Equal(t, "next", out.State)
+	assert.Equal(t, "config_token", out.Option.Name)
+	assert.True(t, out.Option.Required)
+	assert.True(t, out.Option.Sensitive)
+	assert.False(t, out.Option.IsPassword)
 }
 
 func TestRedactValue(t *testing.T) {

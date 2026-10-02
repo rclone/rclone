@@ -111,6 +111,20 @@ func ConfigInput(state string, name string, help string) (*ConfigOut, error) {
 	return out, nil
 }
 
+// ConfigInputSensitive asks the user for a non-empty string which is
+// a secret, such as a token, a client secret or a 2FA code.
+//
+// Unlike ConfigPassword the value is not obscured.
+//
+// state should be the next state required
+// name is the config name for this item
+// help should be the help shown to the user
+func ConfigInputSensitive(state string, name string, help string) (*ConfigOut, error) {
+	out, _ := ConfigInput(state, name, help)
+	out.Option.Sensitive = true
+	return out, nil
+}
+
 // ConfigPassword asks the user for a password
 //
 // state should be the next state required

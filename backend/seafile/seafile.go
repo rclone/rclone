@@ -374,7 +374,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		m.Set(configPassword, obscure.MustObscure(password))
 		return fs.ConfigGoto("2fa")
 	case "2fa":
-		return fs.ConfigInput("2fa_do", "config_2fa", "Two-factor authentication: please enter your 2FA code")
+		return fs.ConfigInputSensitive("2fa_do", "config_2fa", "Two-factor authentication: please enter your 2FA code")
 	case "2fa_do":
 		code := config.Result
 		if code == "" {
