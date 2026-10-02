@@ -2,7 +2,7 @@ name: SeaweedFS
 description: SeaweedFS S3
 region: {}
 endpoint:
-  localhost:8333: SeaweedFS S3 localhost
+  http://localhost:8333: SeaweedFS S3 localhost
 location_constraint: {}
 acl: {}
 bucket_acl: true
