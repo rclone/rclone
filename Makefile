@@ -234,6 +234,7 @@ check_sign:
 upload:
 	rclone -P copy build/ downloads.rclone.org:/$(TAG)
 	rclone lsf build --files-only --include '*.{zip,deb,rpm}' --include version.txt | xargs -i bash -c 'i={}; j="$$i"; [[ $$i =~ (.*)(-v[0-9\.]+-)(.*) ]] && j=$${BASH_REMATCH[1]}-current-$${BASH_REMATCH[3]}; rclone copyto -v "downloads.rclone.org:/$(TAG)/$$i" "downloads.rclone.org:/$$j"'
+	rclone -P index downloads.rclone.org: --changed /$(TAG)/ --checkers 16 --output index.html=html --output index.json=caddy --header-upload "Cache-Control: public, max-age=60" --exclude /favicon.ico
 
 upload_github:
 	./bin/upload-github $(TAG)
