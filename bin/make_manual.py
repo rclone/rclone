@@ -47,6 +47,7 @@ docs = [
     "drime.md",
     "dropbox.md",
     "filefabric.md",
+    "febbox.md",
     "filelu.md",
     "filen.md",
     "filescom.md",

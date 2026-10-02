@@ -46,6 +46,7 @@ directories to and from different cloud storage providers.
 - Exaba [:page_facing_up:](https://rclone.org/s3/#exaba)
 - Fastly Object Storage [:page_facing_up:](https://rclone.org/s3/#fastly)
 - Fastmail Files [:page_facing_up:](https://rclone.org/webdav/#fastmail-files)
+- FebBox [:page_facing_up:](https://rclone.org/febbox/)
 - FileLu [:page_facing_up:](https://rclone.org/filelu/)
 - Filen [:page_facing_up:](https://rclone.org/filen/)
 - Files.com [:page_facing_up:](https://rclone.org/filescom/)
