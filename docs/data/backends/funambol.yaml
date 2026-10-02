@@ -1,0 +1,25 @@
+backend: funambol
+name: Funambol
+tier: Tier 4
+maintainers: External
+features_score: 2
+integration_tests: N/A
+data_integrity: Modtime
+performance: Medium
+adoption: Some use
+docs: Full
+security: High
+virtual: false
+remote: 'TestFunambol:'
+features:
+- About
+- CanHaveEmptyDirectories
+- CaseInsensitive
+- CleanUp
+- Command
+- DirCacheFlush
+- DirMove
+- DuplicateFiles
+- Purge
+hashes: []
+precision: 1000000000
