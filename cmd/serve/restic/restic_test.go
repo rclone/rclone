@@ -10,6 +10,8 @@ import (
 	"net/http/httptest"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	_ "github.com/rclone/rclone/backend/all"
@@ -106,6 +108,17 @@ func TestMakeRemote(t *testing.T) {
 		{"/data/12", "data/12/12"},
 		{"/data/123", "data/12/123"},
 		{"/data/123/", "data/12/123"},
+		{"/data/abcdef", "data/ab/abcdef"},
+		{"/data/config", "data/config"},
+		{"/data/data/", "data/data"},
+		{"/data/index/", "data/index"},
+		{"/data/keys/", "data/keys"},
+		{"/data/locks/", "data/locks"},
+		{"/data/snapshots/", "data/snapshots"},
+		{"/data/data/abcdef", "data/data/ab/abcdef"},
+		{"/repo/data/config", "repo/data/config"},
+		{"/repo/data/keys/", "repo/data/keys"},
+		{"/repo/data/data/abcdef", "repo/data/data/ab/abcdef"},
 		{"/keys", "keys"},
 		{"/keys/1", "keys/1"},
 		{"/keys/12", "keys/12"},
@@ -120,6 +133,46 @@ func TestMakeRemote(t *testing.T) {
 		})
 		got := WithRemote(next)
 		got.ServeHTTP(w, r)
+	}
+}
+
+func TestResticDataRepository(t *testing.T) {
+	for _, repo := range []string{"data", "repo/data"} {
+		t.Run(repo, func(t *testing.T) {
+			tempdir := t.TempDir()
+			f := cmd.NewFsSrc([]string{tempdir})
+			opt := newOpt()
+			s, err := newServer(context.Background(), f, &opt)
+			require.NoError(t, err)
+			handler := s.server.Router().ServeHTTP
+			checkRequest(t, handler, newRequest(t, "POST", "/"+repo+"/?create=true", nil),
+				[]wantFunc{wantCode(http.StatusOK)})
+
+			const id = "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+			for _, object := range []struct {
+				url, remote string
+			}{
+				{"config", "config"},
+				{"keys/" + id, "keys/" + id},
+				{"data/" + id, "data/ab/" + id},
+			} {
+				url := "/" + repo + "/" + object.url
+				checkRequest(t, handler, newRequest(t, "POST", url, strings.NewReader("test content")),
+					[]wantFunc{wantCode(http.StatusOK)})
+				checkRequest(t, handler, newRequest(t, "GET", url, nil),
+					[]wantFunc{wantCode(http.StatusOK), wantBody("test content")})
+				content, err := os.ReadFile(filepath.Join(tempdir, repo, object.remote))
+				require.NoError(t, err)
+				assert.Equal(t, "test content", string(content))
+			}
+
+			for _, dir := range []string{"keys", "data"} {
+				checkRequest(t, handler, newRequest(t, "GET", "/"+repo+"/"+dir+"/", nil),
+					[]wantFunc{wantCode(http.StatusOK), func(t testing.TB, res *httptest.ResponseRecorder) {
+						assert.JSONEq(t, `[{"name":"`+id+`","size":12}]`, res.Body.String())
+					}})
+			}
+		})
 	}
 }
 
