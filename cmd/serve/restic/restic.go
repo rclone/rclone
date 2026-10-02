@@ -411,7 +411,8 @@ func (s *server) Bind(router chi.Router) {
 	}
 }
 
-var matchData = regexp.MustCompile("(?:^|/)data/([^/]{2,})$")
+// Restic pack names are lowercase hexadecimal storage IDs.
+var matchData = regexp.MustCompile("(?:^|/)data/([0-9a-f]{2,})$")
 
 // newObject returns an object with the remote given either from the
 // cache or directly
