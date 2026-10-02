@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/rclone/rclone/fs"
@@ -58,6 +59,19 @@ func (f *Fs) testUploadFromCrypt(t *testing.T) {
 	dst, err := f.Put(ctx, in, src)
 	require.NoError(t, err)
 	assert.NotNil(t, dst)
+
+	// Verify fingerprint respects SlowHash (tests the double-download fix).
+	// With SlowHash=true and fast=true, fingerprint should skip hash computation.
+	if f.Features().SlowHash {
+		hobj, err := f.NewObject(ctx, fileName)
+		require.NoError(t, err)
+		fp := fs.Fingerprint(ctx, hobj, true)
+		// Fingerprint format is "size,modtime,hash" - with SlowHash=true and fast=true,
+		// hash should be omitted, so we expect at most 2 comma-separated parts.
+		parts := strings.Split(fp, ",")
+		assert.LessOrEqual(t, len(parts), 2,
+			"fast fingerprint should skip hash when SlowHash=true, got: %s", fp)
+	}
 
 	// check that hash was created
 	if f.opt.MaxAge > 0 {
