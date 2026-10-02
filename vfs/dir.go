@@ -13,6 +13,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/dirtree"
+	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/object"
@@ -1021,6 +1022,29 @@ func (d *Dir) Open(flags int) (fd Handle, err error) {
 	return newDirHandle(d), nil
 }
 
+// checkFilter verifies if a remote path is allowed by the current filter rules.
+func (d *Dir) checkFilter(remote string, isDir bool) error {
+	ctx := context.TODO()
+	fi := filter.GetConfig(ctx)
+	if fi.InActive() {
+		return nil
+	}
+	if isDir {
+		include, err := fi.IncludeDirectory(ctx, d.f)(remote)
+		if err != nil {
+			return err
+		}
+		if !include {
+			return ENOENT
+		}
+		return nil
+	}
+	if !fi.IncludeRemote(remote) {
+		return ENOENT
+	}
+	return nil
+}
+
 // Create makes a new file node
 func (d *Dir) Create(name string, flags int) (*File, error) {
 	// fs.Debugf(path, "Dir.Create")
@@ -1038,6 +1062,9 @@ func (d *Dir) Create(name string, flags int) (*File, error) {
 	default:
 		// a different error - report
 		fs.Errorf(d, "Dir.Create stat failed: %v", err)
+		return nil, err
+	}
+	if err = d.checkFilter(path.Join(d.path, name), false); err != nil {
 		return nil, err
 	}
 	// node doesn't exist so create it
@@ -1071,6 +1098,9 @@ func (d *Dir) Mkdir(name string) (*Dir, error) {
 	default:
 		// a different error - report
 		fs.Errorf(d, "Dir.Mkdir failed to read directory: %v", err)
+		return nil, err
+	}
+	if err = d.checkFilter(path, true); err != nil {
 		return nil, err
 	}
 	// fs.Debugf(path, "Dir.Mkdir")
@@ -1176,6 +1206,9 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 	oldNode, err := d.stat(oldName)
 	if err != nil {
 		fs.Errorf(oldPath, "Dir.Rename error: %v", err)
+		return err
+	}
+	if err = d.checkFilter(newPath, oldNode.IsDir()); err != nil {
 		return err
 	}
 	switch x := oldNode.DirEntry().(type) {
