@@ -27,6 +27,7 @@ import (
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 )
 
@@ -1444,9 +1445,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// Do the upload
 	var resp *http.Response
 	var result api.UploadResponse
+	counter := readers.NewCountingReader(in)
 	opts := rest.Opts{
 		Method: "POST",
-		Body:   in,
+		Body:   counter,
 		MultipartParams: url.Values{
 			"folderId": {directoryID},
 			"modTime":  {strconv.FormatInt(modTime.Unix(), 10)},
@@ -1462,6 +1464,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	})
 	if err = result.Err(err); err != nil {
 		return fmt.Errorf("failed to upload file: %w", err)
+	}
+
+	// Check the source supplied the number of bytes it declared
+	// otherwise a truncated file would be stored as a good upload.
+	if size := src.Size(); size >= 0 && int64(counter.BytesRead()) != size {
+		return fmt.Errorf("expected %d bytes in input, but got %d: %w", size, counter.BytesRead(), io.ErrUnexpectedEOF)
 	}
 	return o.setMetaData(&result.Data)
 }
