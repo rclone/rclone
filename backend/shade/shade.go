@@ -353,7 +353,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		resp, err := f.srv.Call(ctx, &opts)
 
 		if err != nil && resp != nil && resp.StatusCode == http.StatusBadRequest {
-			fs.Debugf(f, "Bad token from server: %v", token)
+			fs.Debugf(f, "Bad token from server: %s", fs.RedactValue(fs.GetConfig(ctx), token))
 		}
 
 		return shouldRetry(ctx, resp, err)
