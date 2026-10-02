@@ -22,5 +22,5 @@ contents:
     dst: /usr/share/doc/rclone/README.html
   - src: ./README.txt
     dst: /usr/share/doc/rclone/README.txt
-  - src: ./rclone.1
-    dst: /usr/share/man/man1/rclone.1
+  - src: ./man/rclone*.1
+    dst: /usr/share/man/man1/
