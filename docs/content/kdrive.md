@@ -4,7 +4,7 @@ description: "Rclone docs for kDrive"
 versionIntroduced: "v1.76"
 ---
 
-# {{< icon "fa fa-cloud" >}} kDrive
+# kDrive
 
 Paths are specified as `remote:path`
 
