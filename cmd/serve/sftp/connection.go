@@ -208,30 +208,13 @@ func (c *conn) handleHashsumCommand(ctx context.Context, out io.Writer, ht hash.
 		if node.IsDir() {
 			return errors.New("can't hash directory")
 		}
-		o, ok := node.DirEntry().(fs.ObjectInfo)
+		file, ok := node.(*vfs.File)
 		if !ok {
-			fs.Debugf(args, "File uploading - reading hash from VFS cache")
-			in, err := node.Open(os.O_RDONLY)
-			if err != nil {
-				return fmt.Errorf("hash vfs open failed: %w", err)
-			}
-			defer func() {
-				_ = in.Close()
-			}()
-			h, err := hash.NewMultiHasherTypes(hash.NewHashSet(ht))
-			if err != nil {
-				return fmt.Errorf("hash vfs create multi-hasher failed: %w", err)
-			}
-			_, err = io.Copy(h, in)
-			if err != nil {
-				return fmt.Errorf("hash vfs copy failed: %w", err)
-			}
-			hashSum = h.Sums()[ht]
-		} else {
-			hashSum, err = o.Hash(ctx, ht)
-			if err != nil {
-				return fmt.Errorf("hash failed: %w", err)
-			}
+			return errors.New("unexpected non file")
+		}
+		hashSum, err = file.Hash(ctx, ht)
+		if err != nil {
+			return fmt.Errorf("hash failed: %w", err)
 		}
 	}
 	_, err = fmt.Fprintf(out, "%s  %s\n", hashSum, args)

@@ -14,8 +14,10 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/cmd/serve/proxy"
@@ -451,4 +453,53 @@ func TestNewWebDAVError(t *testing.T) {
 	w, err := newWebDAV(context.Background(), f, &opt, &vfscommon.Opt, &proxy.Opt)
 	require.Error(t, err)
 	assert.Nil(t, w)
+}
+
+// TestEtagWhileUploading checks that the ETag reported for a file describes
+// the data just uploaded while the VFS cache holds it for writeback and the
+// remote still has the old contents.
+func TestEtagWhileUploading(t *testing.T) {
+	ctx := context.Background()
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "file.txt"), []byte("one"), 0600))
+
+	f, err := fs.NewFs(ctx, dir)
+	require.NoError(t, err)
+
+	opt := Opt
+	opt.HTTP.ListenAddr = []string{testBindAddress}
+	opt.EtagHash = "MD5"
+
+	// A long writeback keeps the file in the cache waiting to be uploaded
+	vfsOpt := vfscommon.Opt
+	vfsOpt.CacheMode = vfscommon.CacheModeWrites
+	vfsOpt.WriteBack = fs.Duration(time.Hour)
+
+	w, err := newWebDAV(ctx, f, &opt, &vfsOpt, &proxy.Opt)
+	require.NoError(t, err)
+	go func() {
+		require.NoError(t, w.Serve())
+	}()
+	t.Cleanup(func() {
+		assert.NoError(t, w.Shutdown())
+	})
+
+	testURL := w.server.URLs()[0] + "file.txt"
+
+	req, err := http.NewRequest("PUT", testURL, strings.NewReader("two"))
+	require.NoError(t, err)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	_ = resp.Body.Close()
+	require.True(t, resp.StatusCode >= 200 && resp.StatusCode < 300, "PUT returned %d", resp.StatusCode)
+
+	resp, err = http.Head(testURL)
+	require.NoError(t, err)
+	_ = resp.Body.Close()
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	// The size of the new file next to the ETag of the old one would be
+	// self contradictory - md5 of "two", not of "one"
+	assert.Equal(t, "3", resp.Header.Get("Content-Length"))
+	assert.Equal(t, `"b8a9f715dbb64fd5c56e7783c6820a61"`, resp.Header.Get("ETag"))
 }

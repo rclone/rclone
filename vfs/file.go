@@ -15,6 +15,7 @@ import (
 	"slices"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/vfs/vfscommon"
@@ -440,6 +441,50 @@ func (f *File) Size() int64 {
 		return f.size.Load()
 	}
 	return nonNegative(f.o.Size())
+}
+
+// Hash returns the hash of type ht for the file
+//
+// If the file has been modified in the cache but not written back yet then
+// the hash is calculated from the cached copy, otherwise it is read from the
+// remote object. It returns ENOENT if there is neither, e.g. while the file
+// is being uploaded without a cache.
+func (f *File) Hash(ctx context.Context, ht hash.Type) (string, error) {
+	f.mu.RLock()
+	o := f.o
+	d := f.d
+	dirty := d.vfs.Opt.CacheMode >= vfscommon.CacheModeMinimal && d.vfs.cache.DirtyItem(f._cachePath()) != nil
+	f.mu.RUnlock()
+
+	if !dirty {
+		if o == nil {
+			return "", ENOENT
+		}
+		return o.Hash(ctx, ht)
+	}
+	if !d.Fs().Hashes().Contains(ht) {
+		return "", hash.ErrUnsupported
+	}
+
+	// Read the file back through the VFS so the hash describes the data
+	// which will be uploaded
+	fs.Debugf(f, "Hash: reading %v from the VFS cache", ht)
+	fd, err := f.Open(os.O_RDONLY)
+	if err != nil {
+		return "", fmt.Errorf("hash open failed: %w", err)
+	}
+	defer func() {
+		_ = fd.Close()
+	}()
+	hasher, err := hash.NewMultiHasherTypes(hash.NewHashSet(ht))
+	if err != nil {
+		return "", fmt.Errorf("hash create multi-hasher failed: %w", err)
+	}
+	_, err = io.Copy(hasher, fd)
+	if err != nil {
+		return "", fmt.Errorf("hash read failed: %w", err)
+	}
+	return hasher.Sums()[ht], nil
 }
 
 // SetModTime sets the modtime for the file
