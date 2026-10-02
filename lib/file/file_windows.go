@@ -8,6 +8,9 @@ import (
 	"path/filepath"
 	"regexp"
 	"syscall"
+	"unsafe"
+
+	"golang.org/x/sys/windows"
 )
 
 // OpenFile is the generalized open call; most users will use Open or Create
@@ -97,6 +100,78 @@ func IsReserved(path string) error {
 	// (https://docs.microsoft.com/en-gb/windows/win32/fileio/naming-a-file)
 	if reserved, _ := regexp.MatchString(`^(?i:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)`, base); reserved {
 		return errors.New("base file name is reserved windows device name (CON, PRN, AUX, NUL, COM[1-9], LPT[1-9])")
+	}
+	return nil
+}
+
+// fileRenameInfo mirrors the Windows FILE_RENAME_INFO structure as used with
+// the FileRenameInfoEx information class. Its first field holds the rename
+// flags (a union with the BOOLEAN ReplaceIfExists used by the older
+// FileRenameInfo class).
+type fileRenameInfo struct {
+	Flags          uint32
+	RootDirectory  windows.Handle
+	FileNameLength uint32
+	FileName       [1]uint16
+}
+
+// Rename renames (moves) oldPath to newPath, replacing newPath if it exists.
+//
+// Unlike os.Rename, on Windows this uses POSIX rename semantics
+// (SetFileInformationByHandle with FileRenameInfoEx and
+// FILE_RENAME_POSIX_SEMANTICS) so the rename succeeds even when another handle
+// has the source or destination open, provided those handles were opened with
+// FILE_SHARE_DELETE (as OpenFile above does). This matches the behaviour of
+// os.Rename on Unix.
+//
+// If the POSIX rename is not supported (e.g. an older Windows release or a
+// non-NTFS filesystem) it falls back to os.Rename.
+func Rename(oldPath, newPath string) error {
+	linkErr := func(err error) error {
+		return &os.LinkError{Op: "rename", Old: oldPath, New: newPath, Err: err}
+	}
+
+	namep, err := windows.UTF16PtrFromString(UNCPath(oldPath))
+	if err != nil {
+		return linkErr(err)
+	}
+
+	// Open the source with DELETE access and full sharing so the rename can
+	// proceed even while other handles are open.
+	handle, err := windows.CreateFile(
+		namep,
+		windows.DELETE,
+		windows.FILE_SHARE_READ|windows.FILE_SHARE_WRITE|windows.FILE_SHARE_DELETE,
+		nil,
+		windows.OPEN_EXISTING,
+		windows.FILE_FLAG_BACKUP_SEMANTICS,
+		0,
+	)
+	if err != nil {
+		return linkErr(err)
+	}
+
+	targetp, err := windows.UTF16FromString(UNCPath(newPath))
+	if err != nil {
+		_ = windows.CloseHandle(handle)
+		return linkErr(err)
+	}
+
+	// FileNameLength is in bytes and excludes the terminating NUL.
+	nameLen := (len(targetp) - 1) * 2
+	bufLen := int(unsafe.Offsetof(fileRenameInfo{}.FileName)) + nameLen
+	buf := make([]byte, bufLen)
+	info := (*fileRenameInfo)(unsafe.Pointer(&buf[0]))
+	info.Flags = windows.FILE_RENAME_REPLACE_IF_EXISTS | windows.FILE_RENAME_POSIX_SEMANTICS
+	info.FileNameLength = uint32(nameLen)
+	copy(unsafe.Slice(&info.FileName[0], len(targetp)-1), targetp[:len(targetp)-1])
+
+	err = windows.SetFileInformationByHandle(handle, windows.FileRenameInfoEx, &buf[0], uint32(bufLen))
+	_ = windows.CloseHandle(handle)
+	if err != nil {
+		// POSIX rename is unsupported here (pre Windows 10 1607 or a non-NTFS
+		// filesystem); fall back to a plain rename.
+		return os.Rename(oldPath, newPath)
 	}
 	return nil
 }
