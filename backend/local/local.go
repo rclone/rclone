@@ -37,6 +37,10 @@ import (
 const (
 	devUnset   = 0xdeadbeefcafebabe                                     // a device id meaning it is unset
 	useReadDir = (runtime.GOOS == "windows" || runtime.GOOS == "plan9") // these OSes read FileInfos directly
+	// maxLinkTargetSize is the largest symlink target accepted when
+	// translating a .rclonelink object, comfortably above any OS path
+	// limit (Windows allows 32767 UTF-16 units).
+	maxLinkTargetSize = 128 * 1024
 )
 
 // timeType allows the user to choose what exactly ModTime() returns
@@ -440,6 +444,7 @@ var (
 	errLinksNeedsSuffix  = errors.New("need \"" + fs.LinkSuffix + "\" suffix to refer to symlink when using -l/--links")
 	errPathEscapes       = errors.New("file name is not a path within the local root - check the encoding")
 	errSymlinkLoop       = errors.New("loop detected: points to a parent directory")
+	errLinkTargetTooLong = errors.New("symlink target is too long to be a path")
 )
 
 // NewFs constructs an Fs from the path
@@ -1736,6 +1741,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 		out = f
 	} else {
+		// The target is buffered in memory, so stop reading just past
+		// the longest acceptable one rather than trust the source
+		in = io.LimitReader(in, maxLinkTargetSize+1)
 		out = nopWriterCloser{&symlinkData}
 	}
 
@@ -1752,6 +1760,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	if o.translatedLink {
+		if err == nil && symlinkData.Len() > maxLinkTargetSize {
+			err = fserrors.NoRetryError(errLinkTargetTooLong)
+		}
 		if err == nil {
 			// Use the contents of the copied object to create a symlink,
 			// without following or creating it through a planted symlink

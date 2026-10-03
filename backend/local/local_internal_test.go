@@ -272,6 +272,29 @@ func linksMode(f *Fs) {
 	f.lstat = os.Lstat
 }
 
+// TestSymlinkTargetTooLong checks that a .rclonelink object whose body is
+// far bigger than any path is refused without being buffered in memory,
+// and that nothing is created at the destination.
+func TestSymlinkTargetTooLong(t *testing.T) {
+	skipIfNoSymlinks(t)
+	ctx := context.Background()
+
+	r := fstest.NewRun(t)
+	f := r.Flocal.(*Fs)
+	linksMode(f)
+
+	// A source which never ends, so the read must be bounded
+	src := object.NewStaticObjectInfo("big"+fs.LinkSuffix, fstest.Time("2001-02-03T04:05:10Z"), -1, true, nil, nil)
+	in := readers.NewCountingReader(readers.NewPatternReader(1 << 40))
+	_, err := f.Put(ctx, in, src)
+	require.ErrorIs(t, err, errLinkTargetTooLong)
+	assert.True(t, fserrors.IsNoRetryError(err))
+	assert.LessOrEqual(t, in.BytesRead(), uint64(maxLinkTargetSize+1), "read more of the body than needed")
+
+	_, err = os.Lstat(filepath.Join(f.root, "big"))
+	assert.True(t, os.IsNotExist(err), "nothing should be created for a refused symlink")
+}
+
 // TestSymlinkEscapeWriteThroughBlocked mirrors the GHSA-cf44-9pgv-m4xc PoC: a
 // malicious --links source serves "pwn.rclonelink" whose body is a path outside
 // the destination, plus a sibling "pwn/authkeys" that sorts after it and would

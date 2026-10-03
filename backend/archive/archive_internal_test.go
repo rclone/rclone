@@ -175,6 +175,18 @@ func testArchive(t *testing.T, archiveName string, archiveFn func(t *testing.T, 
 	checkTree(ctx, "SubDir", t, ":archive:"+zipFile+"/"+subDir, filepath.Join(input, subDir), 0)
 
 	// Now check a single file
+	//
+	// The filter below applies to both sides, so check first that the
+	// archive exposes only that file without it
+	Fsingle, err := cache.Get(ctx, ":archive:"+zipFile+"/"+aFile)
+	require.NoError(t, err)
+	entries, err := Fsingle.List(ctx, "")
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
+	_, err = Fsingle.List(ctx, subDir)
+	assert.Equal(t, fs.ErrorDirNotFound, err)
+	_, err = Fsingle.NewObject(ctx, subDir)
+	assert.Equal(t, fs.ErrorObjectNotFound, err)
 	fiCtx, fi := filter.AddConfig(ctx)
 	require.NoError(t, fi.AddRule("+ "+aFile))
 	require.NoError(t, fi.AddRule("- *"))
