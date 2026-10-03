@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetConfig(t *testing.T) {
@@ -28,6 +29,47 @@ func TestGetConfig(t *testing.T) {
 	// Check can get config back
 	config2ctx := GetConfig(ctx2)
 	assert.Equal(t, config2, config2ctx)
+}
+
+func TestAddReloadCallback(t *testing.T) {
+	ctx := context.Background()
+	_, ci := AddConfig(ctx)
+
+	var calls int
+	var gotCi *ConfigInfo
+	remove := ci.AddReloadCallback(func(ci *ConfigInfo) {
+		calls++
+		gotCi = ci
+	})
+
+	// Check the callback is called on Reload with the right ConfigInfo
+	require.NoError(t, ci.Reload(ctx))
+	assert.Equal(t, 1, calls)
+	assert.Equal(t, ci, gotCi)
+
+	// Check a reload of a different ConfigInfo doesn't call the callback
+	_, ci2 := AddConfig(ctx)
+	require.NoError(t, ci2.Reload(ctx))
+	assert.Equal(t, 1, calls)
+
+	// Check multiple callbacks are called
+	var calls2 int
+	remove2 := ci.AddReloadCallback(func(*ConfigInfo) {
+		calls2++
+	})
+	require.NoError(t, ci.Reload(ctx))
+	assert.Equal(t, 2, calls)
+	assert.Equal(t, 1, calls2)
+
+	// Check the callbacks aren't called after remove
+	remove()
+	remove2()
+	require.NoError(t, ci.Reload(ctx))
+	assert.Equal(t, 2, calls)
+	assert.Equal(t, 1, calls2)
+
+	// Check remove is safe to call twice
+	remove()
 }
 
 // The rc request marker must survive CopyConfig, which is how rclone

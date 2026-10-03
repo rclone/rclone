@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -749,7 +750,68 @@ func (ci *ConfigInfo) Reload(ctx context.Context) error {
 	nonZero(&ci.Transfers)
 	nonZero(&ci.Checkers)
 
-	return LogReload(ci)
+	if err := LogReload(ci); err != nil {
+		return err
+	}
+
+	// Tell anyone interested that the config has changed
+	ci.callReloadCallbacks()
+
+	return nil
+}
+
+// Reload callbacks are called when a ConfigInfo is reloaded, eg after
+// it has been changed by the rc options/set command.
+var (
+	reloadCallbacksMu sync.Mutex
+	reloadCallbacks   = map[*ConfigInfo]map[int]func(*ConfigInfo){}
+	reloadCallbackKey int
+)
+
+// AddReloadCallback registers fn to be called whenever ci is reloaded,
+// eg after it has been changed by the rc options/set command.
+//
+// This can be used to adjust long running operations when the config
+// changes.
+//
+// The callback is called from the goroutine which reloaded the config
+// so it should not block.
+//
+// It returns a function which should be called to remove the callback
+// when it is no longer needed.
+func (ci *ConfigInfo) AddReloadCallback(fn func(*ConfigInfo)) (remove func()) {
+	reloadCallbacksMu.Lock()
+	defer reloadCallbacksMu.Unlock()
+	callbacks := reloadCallbacks[ci]
+	if callbacks == nil {
+		callbacks = map[int]func(*ConfigInfo){}
+		reloadCallbacks[ci] = callbacks
+	}
+	key := reloadCallbackKey
+	reloadCallbackKey++
+	callbacks[key] = fn
+	return func() {
+		reloadCallbacksMu.Lock()
+		defer reloadCallbacksMu.Unlock()
+		delete(callbacks, key)
+		if len(callbacks) == 0 {
+			delete(reloadCallbacks, ci)
+		}
+	}
+}
+
+// callReloadCallbacks calls any callbacks registered for ci with
+// AddReloadCallback.
+func (ci *ConfigInfo) callReloadCallbacks() {
+	reloadCallbacksMu.Lock()
+	fns := make([]func(*ConfigInfo), 0, len(reloadCallbacks[ci]))
+	for _, fn := range reloadCallbacks[ci] {
+		fns = append(fns, fn)
+	}
+	reloadCallbacksMu.Unlock()
+	for _, fn := range fns {
+		fn(ci)
+	}
 }
 
 // InitialLogLevel performs a simple check for debug flags to enable
