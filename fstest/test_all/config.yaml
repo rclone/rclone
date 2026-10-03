@@ -200,6 +200,10 @@ backends:
    remote:   "TestGooglePhotos:"
    tests:
      - backend
+ - backend:  "gopro"
+   remote:   "TestGoPro:"
+   tests:
+     - backend
  - backend: "hidrive"
    remote:   "TestHiDrive:"
    fastlist: false

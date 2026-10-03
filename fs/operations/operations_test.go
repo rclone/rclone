@@ -44,6 +44,8 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/rclone/rclone/fstest/mockfs"
+	"github.com/rclone/rclone/fstest/mockobject"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -2375,3 +2377,39 @@ func TestRcatInputFailurePreservesDestination(t *testing.T) {
 type rcatFailedInput struct{ err error }
 
 func (r rcatFailedInput) Read([]byte) (int, error) { return 0, r.err }
+
+// idObject is a mock object with an Fs and an ID
+type idObject struct {
+	mockobject.Object
+	f  fs.Info
+	id string
+}
+
+func (o idObject) Fs() fs.Info { return o.f }
+func (o idObject) ID() string  { return o.id }
+
+func TestSameObjectComparesIDs(t *testing.T) {
+	ctx := context.Background()
+	newFs := func(name, root string) fs.Fs {
+		f, err := mockfs.NewFs(ctx, name, root, nil)
+		require.NoError(t, err)
+		return f
+	}
+	all, byYear, other := newFs("remote", "media/all"), newFs("remote", "media/by-year/2025"), newFs("other", "media/all")
+	for _, tc := range []struct {
+		name     string
+		src, dst fs.Object
+		want     bool
+	}{
+		{"same path", idObject{"a", all, ""}, idObject{"a", all, ""}, true},
+		{"another path with the same ID", idObject{"a", all, "1"}, idObject{"a", byYear, "1"}, true},
+		{"another path with another ID", idObject{"a", all, "1"}, idObject{"a", byYear, "2"}, false},
+		{"another path without IDs", idObject{"a", all, ""}, idObject{"a", byYear, ""}, false},
+		{"another remote with the same ID", idObject{"a", all, "1"}, idObject{"a", other, "1"}, true},
+		{"another remote with another ID", idObject{"a", all, "1"}, idObject{"a", other, "2"}, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, operations.SameObject(tc.src, tc.dst))
+		})
+	}
+}
