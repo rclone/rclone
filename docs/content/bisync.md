@@ -1937,6 +1937,9 @@ about *Unison* and synchronization in general.
 
 - Added `--max-delete-renames-aware` to exclude guaranteed tracked renames from
 the `--max-delete` safety check when used with `--track-renames`.
+- Fixed an issue causing a `--resync` to fail with "path1 and path2 are out of
+sync", or later runs to report changes that didn't happen, when a file's new
+modtime was less than a second earlier than the one in the listing.
 
 ### `v1.74.2`
 
