@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 	"testing"
 
@@ -37,4 +38,14 @@ func TestExtractHeadersDeletesEmptyCookies(t *testing.T) {
 	require.Len(t, s.Cookies, 1)
 	assert.Equal(t, "keep", s.Cookies[0].Name)
 	assert.Equal(t, "keep=value", s.GetCookieString())
+}
+
+func TestAccountInfoCheckTerms(t *testing.T) {
+	var info AccountInfo
+	require.NoError(t, json.Unmarshal([]byte(`{"hsaChallengeRequired":false,"termsUpdateNeeded":true}`), &info))
+	assert.ErrorIs(t, info.checkTerms(), errTermsUpdateNeeded)
+
+	info = AccountInfo{}
+	require.NoError(t, json.Unmarshal([]byte(`{"hsaChallengeRequired":false,"termsUpdateNeeded":false}`), &info))
+	assert.NoError(t, info.checkTerms())
 }
