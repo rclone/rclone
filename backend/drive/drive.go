@@ -568,7 +568,7 @@ recommended usage is using the flag form --drive-size-as-quota when
 doing rclone ls/lsl/lsf/lsjson/etc only.
 
 If you do use this flag for syncing (not recommended) then you will
-need to use --ignore size also.`,
+need to use --ignore-size also.`,
 			Advanced: true,
 			Hide:     fs.OptionHideConfigurator,
 		}, {

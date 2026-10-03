@@ -79,7 +79,7 @@ This is required and is the name of the share to access.
 			Help: `Upload chunk size.
 
 Note that this is stored in memory and there may be up to
-"--transfers" * "--azurefile-upload-concurrency" chunks stored at once
+"--transfers" * "--azurefiles-upload-concurrency" chunks stored at once
 in memory.`,
 			Default:  defaultChunkSize,
 			Advanced: true,
@@ -95,7 +95,7 @@ links and these uploads do not fully utilize your bandwidth, then
 increasing this may help to speed up the transfers.
 
 Note that chunks are stored in memory and there may be up to
-"--transfers" * "--azurefile-upload-concurrency" chunks stored at once
+"--transfers" * "--azurefiles-upload-concurrency" chunks stored at once
 in memory.`,
 			Default:  16,
 			Advanced: true,
