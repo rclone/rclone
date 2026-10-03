@@ -8,11 +8,20 @@ import (
 	"time"
 )
 
+// createWait is an in-flight Get(create) so concurrent callers of the
+// same missing key share one create instead of all running it.
+type createWait struct {
+	wg    sync.WaitGroup
+	value any
+	err   error
+}
+
 // Cache holds values indexed by string, but expired after a given (5
 // minutes by default).
 type Cache struct {
 	mu             sync.Mutex
 	cache          map[string]*cacheEntry
+	creating       map[string]*createWait
 	expireRunning  bool
 	expireDuration time.Duration // expire the cache entry when it is older than this
 	expireInterval time.Duration // interval to run the cache expire
@@ -23,6 +32,7 @@ type Cache struct {
 func New() *Cache {
 	return &Cache{
 		cache:          map[string]*cacheEntry{},
+		creating:       map[string]*createWait{},
 		expireRunning:  false,
 		expireDuration: 300 * time.Second,
 		expireInterval: 60 * time.Second,
@@ -80,27 +90,51 @@ func (c *Cache) used(entry *cacheEntry) {
 
 // Get gets a value named key either from the cache or creates it
 // afresh with the create function.
+//
+// Concurrent Get calls for a missing key share a single create. The
+// previous implementation unlocked around create, so a thundering herd
+// (rclone rcd hitting the same remote) ran NewFs N times — fatal for
+// backends whose construction is memory-hard, such as Proton Drive
+// Argon2 (#9816).
 func (c *Cache) Get(key string, create CreateFunc) (value any, err error) {
 	c.mu.Lock()
-	entry, ok := c.cache[key]
-	if !ok {
-		c.mu.Unlock() // Unlock in case Get is called recursively
-		value, ok, err = create(key)
-		if err != nil && !ok {
-			return value, err
-		}
-		entry = &cacheEntry{
-			value: value,
-			key:   key,
-			err:   err,
-		}
-		c.mu.Lock()
-		if !c.noCache() {
-			c.cache[key] = entry
-		}
+	if entry, ok := c.cache[key]; ok {
+		c.used(entry)
+		c.mu.Unlock()
+		return entry.value, entry.err
 	}
-	defer c.mu.Unlock()
+	if w, ok := c.creating[key]; ok {
+		c.mu.Unlock()
+		w.wg.Wait()
+		return w.value, w.err
+	}
+	w := &createWait{}
+	w.wg.Add(1)
+	c.creating[key] = w
+	c.mu.Unlock() // Unlock in case Get is called recursively for a different key
+
+	value, ok, err := create(key)
+	w.value, w.err = value, err
+	if err != nil && !ok {
+		c.mu.Lock()
+		delete(c.creating, key)
+		c.mu.Unlock()
+		w.wg.Done()
+		return value, err
+	}
+	entry := &cacheEntry{
+		value: value,
+		key:   key,
+		err:   err,
+	}
+	c.mu.Lock()
+	if !c.noCache() {
+		c.cache[key] = entry
+	}
+	delete(c.creating, key)
 	c.used(entry)
+	c.mu.Unlock()
+	w.wg.Done()
 	return entry.value, entry.err
 }
 
