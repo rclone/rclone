@@ -379,6 +379,27 @@ func StartStats() func() {
 	}
 }
 
+var (
+	rcServer      *rcserver.Server
+	metricsServer *rcserver.MetricsServer
+)
+
+// StopRemoteControl shuts down the remote control and metrics servers started by initConfig.
+func StopRemoteControl() {
+	if rcServer != nil {
+		if err := rcServer.Shutdown(); err != nil {
+			fs.Errorf(nil, "Failed to stop remote control: %v", err)
+		}
+		rcServer = nil
+	}
+	if metricsServer != nil {
+		if err := metricsServer.Shutdown(); err != nil {
+			fs.Errorf(nil, "Failed to stop metrics server: %v", err)
+		}
+		metricsServer = nil
+	}
+}
+
 // initConfig is run by cobra after initialising the flags
 func initConfig() {
 	// Set the global options from the flags
@@ -422,14 +443,14 @@ func initConfig() {
 	}
 
 	// Start the remote control server if configured
-	_, err = rcserver.Start(ctx, &rc.Opt)
+	rcServer, err = rcserver.Start(ctx, &rc.Opt)
 	if err != nil {
 		fs.Fatalf(nil, "Failed to start remote control: %v", err)
 	}
 
 	// Start the metrics server if configured and not running the "rc" command
 	if len(os.Args) >= 2 && os.Args[1] != "rc" {
-		_, err = rcserver.MetricsStart(ctx, &rc.Opt)
+		metricsServer, err = rcserver.MetricsStart(ctx, &rc.Opt)
 		if err != nil {
 			fs.Fatalf(nil, "Failed to start metrics server: %v", err)
 		}
