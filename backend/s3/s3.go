@@ -470,6 +470,8 @@ rclone does if you know the bucket exists already.
 It can also be needed if the user you are using does not have bucket
 creation permissions. Before v1.52.0 this would have passed silently
 due to a bug.
+
+Some providers (e.g. Abrha Storage) set this automatically.
 `,
 			Default:  false,
 			Advanced: true,
@@ -1766,6 +1768,12 @@ func setQuirks(opt *Options, provider *Provider) {
 	}
 	if virtualHostStyle || opt.UseAccelerateEndpoint {
 		opt.ForcePathStyle = false
+	}
+
+	// Some providers reject HeadBucket and CreateBucket for keys that can
+	// still read and write objects. Skip that check when required.
+	if provider.Quirks.NoCheckBucket != nil && *provider.Quirks.NoCheckBucket {
+		opt.NoCheckBucket = true
 	}
 
 	// Set the correct list version if not manually set
