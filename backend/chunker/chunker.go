@@ -294,14 +294,10 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 	}
 	// Look for a file first
 	remotePath := fspath.JoinRootPath(basePath, rpath)
-	baseFs, err := cache.Get(ctx, baseName+remotePath)
+	baseFs, err := getBaseFs(ctx, baseName+remotePath)
 	if err != fs.ErrorIsFile && err != nil {
 		return nil, fmt.Errorf("failed to make remote %q to wrap: %w", baseName+remotePath, err)
 	}
-	if !operations.CanServerSideMove(baseFs) {
-		return nil, errors.New("can't use chunker on a backend which doesn't support server-side move or copy")
-	}
-
 	f := &Fs{
 		base: baseFs,
 		name: name,
@@ -310,24 +306,23 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 	}
 	f.dirSort = true // processEntries requires that meta Objects prerun data chunks atm.
 
-	if err := f.configure(opt.NameFormat, opt.MetaFormat, opt.HashType, opt.Transactions); err != nil {
-		return nil, err
-	}
-
 	// Handle the tricky case detected by FsMkdir/FsPutFiles/FsIsFile
 	// when `rpath` points to a composite multi-chunk file without metadata,
 	// i.e. `rpath` does not exist in the wrapped remote, but chunker
 	// detects a composite file because it finds the first chunk!
 	// (yet can't satisfy fstest.CheckListing, will ignore)
-	if err == nil && !f.useMeta {
+	if err == nil && opt.MetaFormat == "none" {
+		if formatErr := f.setChunkNameFormat(opt.NameFormat); formatErr != nil {
+			return nil, fmt.Errorf("invalid name format '%s': %w", opt.NameFormat, formatErr)
+		}
 		firstChunkPath := f.makeChunkName(remotePath, 0, "", "")
-		newBase, testErr := cache.Get(ctx, baseName+firstChunkPath)
+		newBase, testErr := getBaseFs(ctx, baseName+firstChunkPath)
 		if testErr == fs.ErrorIsFile {
+			baseFs = newBase
 			f.base = newBase
 			err = testErr
 		}
 	}
-	cache.PinUntilFinalized(f.base, f)
 
 	// Correct root if definitely pointing to a file
 	if err == fs.ErrorIsFile {
@@ -336,6 +331,14 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 			f.root = ""
 		}
 	}
+
+	if !operations.CanServerSideMove(baseFs) {
+		return nil, errors.New("can't use chunker on a backend which doesn't support server-side move or copy")
+	}
+	if err := f.configure(opt.NameFormat, opt.MetaFormat, opt.HashType, opt.Transactions); err != nil {
+		return nil, err
+	}
+	cache.PinUntilFinalized(baseFs, f)
 
 	// Note 1: the features here are ones we could support, and they are
 	// ANDed with the ones from wrappedFs.
@@ -360,6 +363,24 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 	f.features.ListP = nil // ListP not supported yet
 
 	return f, err
+}
+
+// getBaseFs opens the full parent of a file, including siblings on other upstreams.
+func getBaseFs(ctx context.Context, remote string) (fs.Fs, error) {
+	parent, leaf, err := fspath.Split(remote)
+	if err != nil {
+		return nil, err
+	}
+	if leaf != "" {
+		// Detect files through their parent: a file-rooted backend can
+		// restrict which siblings are accessible, e.g. union upstreams.
+		if f, err := cache.Get(ctx, parent); err == nil {
+			if _, err := f.NewObject(ctx, leaf); err == nil {
+				return f, fs.ErrorIsFile
+			}
+		}
+	}
+	return cache.Get(ctx, remote)
 }
 
 // Options defines the configuration for this backend
