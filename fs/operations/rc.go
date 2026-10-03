@@ -11,6 +11,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"path"
+	"slices"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -693,6 +694,48 @@ func rcDu(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		"info": info,
 	}
 	return out, nil
+}
+
+func init() {
+	rc.Add(rc.Call{
+		Path:  "operations/index",
+		Fn:    rcIndex,
+		Title: "Write static directory listings into a remote",
+		Help: `This takes the following parameters:
+
+- fs - a remote name string e.g. "drive:"
+- opt - a dictionary of options to control the indexing (optional)
+    - output - list of listings to write in each directory as "NAME=FORMAT" (default ["index.html=html"])
+    - rules - which directories get listings, e.g. {"ExcludeRule": ["/private/**"]}
+    - maxDepth - only make listings this many directories deep (default -1 for no limit)
+    - linkIndex - link to "dir/NAME" rather than "dir/"
+    - dirTime - how to work out directory times: "newest", "dir" or "none"
+    - noModTime - don't show modification times
+    - rewrite - write every listing even if it is unchanged
+    - changed - list of changed paths for a partial run, directories ending in "/"
+    - changedFrom - list of files of changed paths, one per line
+    - changedCombined - list of files in the sync --combined report format
+    - changedMaxDirs - do a full run if a partial one would list more directories than this
+
+See the [index](/commands/rclone_index/) command for more information on the above.
+`,
+	})
+}
+
+// Index a remote
+func rcIndex(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	f, err := rc.GetFs(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+	opt := IndexOptDefault
+	// Decoding into a slice reuses its backing array so don't share it with the defaults
+	opt.Outputs = slices.Clone(opt.Outputs)
+	err = in.GetStruct("opt", &opt)
+	if rc.NotErrParamNotFound(err) {
+		return nil, err
+	}
+	return nil, Index(ctx, f, &opt)
 }
 
 func init() {

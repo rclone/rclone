@@ -266,9 +266,9 @@ func TestRemoteServing(t *testing.T) {
 </head>
 <body>
 <h1>Directory listing of /</h1>
-<a href="dir/">dir/</a><br />
-<a href="modtime/">modtime/</a><br />
-<a href="file.txt">file.txt</a><br />
+<a href="./dir/">dir/</a><br />
+<a href="./modtime/">modtime/</a><br />
+<a href="./file.txt">file.txt</a><br />
 </body>
 </html>
 `,
@@ -317,7 +317,7 @@ func TestRemoteServing(t *testing.T) {
 </head>
 <body>
 <h1>Directory listing of /dir</h1>
-<a href="file2.txt">file2.txt</a><br />
+<a href="./file2.txt">file2.txt</a><br />
 </body>
 </html>
 `,
