@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"mime"
 	"net/http"
@@ -208,7 +209,8 @@ func (d *DriveService) GetItemsInFolder(ctx context.Context, id string, limit in
 }
 
 // GetDownloadURLByDriveID retrieves the download URL for a file in the DriveService.
-func (d *DriveService) GetDownloadURLByDriveID(ctx context.Context, id string) (string, *http.Response, error) {
+// It also reports whether the URL contains a package rather than the file data.
+func (d *DriveService) GetDownloadURLByDriveID(ctx context.Context, id string) (string, bool, *http.Response, error) {
 	_, zone, docid := DeconstructDriveID(id)
 	values := url.Values{}
 	values.Set("document_id", docid)
@@ -229,17 +231,20 @@ func (d *DriveService) GetDownloadURLByDriveID(ctx context.Context, id string) (
 	resp, err := d.icloud.Request(ctx, opts, nil, &filer)
 
 	if err != nil {
-		return "", resp, err
+		return "", false, resp, err
 	}
 
-	var url string
+	if filer == nil {
+		return "", false, resp, errors.New("download response is empty")
+	}
 	if filer.DataToken != nil {
-		url = filer.DataToken.URL
-	} else {
-		url = filer.PackageToken.URL
+		return filer.DataToken.URL, false, resp, nil
+	}
+	if filer.PackageToken != nil {
+		return filer.PackageToken.URL, true, resp, nil
 	}
 
-	return url, resp, err
+	return "", false, resp, errors.New("download response contains no token")
 }
 
 // DownloadFile downloads a file from the given URL using the provided options.
