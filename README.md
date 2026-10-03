@@ -39,6 +39,7 @@ directories to and from different cloud storage providers.
 - Cubbit DS3 [:page_facing_up:](https://rclone.org/s3/#Cubbit)
 - DigitalOcean Spaces [:page_facing_up:](https://rclone.org/s3/#digitalocean-spaces)
 - Digi Storage [:page_facing_up:](https://rclone.org/koofr/#digi-storage)
+- dosya.dev [:page_facing_up:](https://rclone.org/dosya/)
 - Dreamhost [:page_facing_up:](https://rclone.org/s3/#dreamhost)
 - Drime [:page_facing_up:](https://rclone.org/s3/#drime)
 - Dropbox [:page_facing_up:](https://rclone.org/dropbox/)
