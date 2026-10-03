@@ -1937,6 +1937,7 @@ about *Unison* and synchronization in general.
 
 - Added `--max-delete-renames-aware` to exclude guaranteed tracked renames from
 the `--max-delete` safety check when used with `--track-renames`.
+- Fixed an issue causing an endless retry loop for certain skipped files.
 
 ### `v1.74.2`
 
