@@ -41,6 +41,7 @@ const (
 	configClientID   = "client_id"
 	configCookies    = "cookies"
 	configTrustToken = "trust_token"
+	configDomain     = "domain_to_use"
 
 	minSleep      = 10 * time.Millisecond
 	maxSleep      = 2 * time.Second
@@ -52,6 +53,7 @@ type Options struct {
 	AppleID    string               `config:"apple_id"`
 	Password   string               `config:"password"`
 	TrustToken string               `config:"trust_token"`
+	Domain     string               `config:"domain_to_use"`
 	Cookies    string               `config:"cookies"`
 	ClientID   string               `config:"client_id"`
 	Enc        encoder.MultiEncoder `config:"encoding"`
