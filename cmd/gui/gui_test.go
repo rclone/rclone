@@ -15,6 +15,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -44,6 +45,21 @@ func TestBuildLoginURL(t *testing.T) {
 			want:   "http://localhost:5580/login?pass=secret&url=http%3A%2F%2Flocalhost%3A5572%2F&user=gui",
 		},
 		{
+			name:   "without password",
+			guiURL: "http://localhost:5580/",
+			rcURL:  "http://localhost:5572/",
+			user:   "gui",
+			noAuth: false,
+			want:   "http://localhost:5580/login?url=http%3A%2F%2Flocalhost%3A5572%2F&user=gui",
+		},
+		{
+			name:   "without credentials",
+			guiURL: "http://localhost:5580/",
+			rcURL:  "http://localhost:5572/",
+			noAuth: false,
+			want:   "http://localhost:5580/login?url=http%3A%2F%2Flocalhost%3A5572%2F",
+		},
+		{
 			name:   "no auth",
 			guiURL: "http://localhost:5580/",
 			rcURL:  "http://localhost:5572/",
@@ -66,6 +82,82 @@ func TestBuildLoginURL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := buildLoginURL(tt.guiURL, tt.rcURL, tt.user, tt.pass, tt.noAuth)
 			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestEnsureCredentials(t *testing.T) {
+	t.Run("htpasswd does not generate defaults", func(t *testing.T) {
+		auth := libhttp.AuthConfig{HtPasswd: "users"}
+		generated, err := ensureCredentials(&auth, false)
+		require.NoError(t, err)
+		assert.False(t, generated)
+		assert.Empty(t, auth.BasicUser)
+		assert.Empty(t, auth.BasicPass)
+	})
+
+	t.Run("existing password is preserved", func(t *testing.T) {
+		auth := libhttp.AuthConfig{BasicUser: "admin", BasicPass: "secret"}
+		generated, err := ensureCredentials(&auth, false)
+		require.NoError(t, err)
+		assert.False(t, generated)
+		assert.Equal(t, "admin", auth.BasicUser)
+		assert.Equal(t, "secret", auth.BasicPass)
+	})
+
+	t.Run("missing password is generated", func(t *testing.T) {
+		auth := libhttp.AuthConfig{}
+		generated, err := ensureCredentials(&auth, false)
+		require.NoError(t, err)
+		assert.True(t, generated)
+		assert.Equal(t, "gui", auth.BasicUser)
+		assert.NotEmpty(t, auth.BasicPass)
+	})
+
+	t.Run("no auth does not generate defaults", func(t *testing.T) {
+		auth := libhttp.AuthConfig{}
+		generated, err := ensureCredentials(&auth, true)
+		require.NoError(t, err)
+		assert.False(t, generated)
+		assert.Empty(t, auth.BasicUser)
+		assert.Empty(t, auth.BasicPass)
+	})
+}
+
+func TestCredentialsForLoginURL(t *testing.T) {
+	tests := []struct {
+		name              string
+		auth              libhttp.AuthConfig
+		passwordGenerated bool
+		wantUser          string
+		wantPass          string
+	}{
+		{
+			name:              "generated password enables automatic login",
+			auth:              libhttp.AuthConfig{BasicUser: "gui", BasicPass: "secret"},
+			passwordGenerated: true,
+			wantUser:          "gui",
+			wantPass:          "secret",
+		},
+		{
+			name:              "supplied password is not added to URL",
+			auth:              libhttp.AuthConfig{BasicUser: "gui", BasicPass: "secret"},
+			passwordGenerated: false,
+			wantUser:          "gui",
+		},
+		{
+			name:              "htpasswd credentials are not added to URL",
+			auth:              libhttp.AuthConfig{HtPasswd: "users", BasicUser: "admin", BasicPass: "secret"},
+			passwordGenerated: false,
+			wantUser:          "",
+			wantPass:          "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			user, pass := credentialsForLoginURL(tt.auth, tt.passwordGenerated)
+			assert.Equal(t, tt.wantUser, user)
+			assert.Equal(t, tt.wantPass, pass)
 		})
 	}
 }
