@@ -102,6 +102,11 @@ func init() {
 			Sensitive: true,
 			Hide:      fs.OptionHideBoth,
 		}, {
+			Name:      rclone_config.ConfigToken,
+			Help:      "OAuth Access Token as a JSON blob - set automatically.",
+			Sensitive: true,
+			Hide:      fs.OptionHideBoth,
+		}, {
 			Name:     "skip_hash_validation",
 			Default:  true,
 			Advanced: true,

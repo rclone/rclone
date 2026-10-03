@@ -89,9 +89,10 @@ var AuthConfigInfo = fs.Options{{
 	Default: "",
 	Help:    "User name for authentication",
 }, {
-	Name:    "pass",
-	Default: "",
-	Help:    "Password for authentication",
+	Name:      "pass",
+	Default:   "",
+	Help:      "Password for authentication",
+	Sensitive: true,
 }, {
 	Name:    "salt",
 	Default: "dlPL2MqE",

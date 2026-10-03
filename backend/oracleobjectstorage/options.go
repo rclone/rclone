@@ -314,6 +314,7 @@ needed. For more information, see Using Your Own Keys for Server-Side Encryption
 			Value: "",
 			Help:  "None",
 		}},
+		Sensitive: true,
 	}, {
 		Name: "sse_customer_key_sha256",
 		Help: `If using SSE-C, The optional header that specifies the base64-encoded SHA256 hash of the encryption
@@ -335,6 +336,7 @@ Please note only one of sse_customer_key_file|sse_customer_key|sse_kms_key_id is
 			Value: "",
 			Help:  "None",
 		}},
+		Sensitive: true,
 	}, {
 		Name: "sse_customer_algorithm",
 		Help: `If using SSE-C, the optional header that specifies "AES256" as the encryption algorithm.

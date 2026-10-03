@@ -285,7 +285,7 @@ machines.`)
 			}
 			m.Set(configClientID, deviceRegistration.ClientID)
 			m.Set(configClientSecret, obscure.MustObscure(deviceRegistration.ClientSecret))
-			fs.Debugf(nil, "Got clientID %q and clientSecret %q", deviceRegistration.ClientID, deviceRegistration.ClientSecret)
+			fs.Debugf(nil, "Got clientID %q and clientSecret %s", deviceRegistration.ClientID, fs.RedactValue(fs.GetConfig(ctx), deviceRegistration.ClientSecret))
 		}
 		return fs.ConfigInput("legacy_username", "config_username", "Username (e-mail address) of your account.")
 	case "legacy_username":

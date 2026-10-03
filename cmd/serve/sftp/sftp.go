@@ -41,9 +41,10 @@ var OptionsInfo = fs.Options{{
 	Default: "",
 	Help:    "User name for authentication",
 }, {
-	Name:    "pass",
-	Default: "",
-	Help:    "Password for authentication",
+	Name:      "pass",
+	Default:   "",
+	Help:      "Password for authentication",
+	Sensitive: true,
 }, {
 	Name:    "no_auth",
 	Default: false,
