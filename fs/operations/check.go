@@ -38,6 +38,7 @@ type CheckOpt struct {
 	Fdst, Fsrc   fs.Fs     // fses to check
 	Check        checkFn   // function to use for checking
 	OneWay       bool      // one way only?
+	ReportDirs   bool      // report dir differences in addition to files
 	Combined     io.Writer // a file with file names with leading sigils
 	MissingOnSrc io.Writer // files only in the destination
 	MissingOnDst io.Writer // files only in the source
@@ -57,6 +58,8 @@ type checkMarch struct {
 	noHashes        atomic.Int32
 	srcFilesMissing atomic.Int32
 	dstFilesMissing atomic.Int32
+	srcDirsMissing  atomic.Int32
+	dstDirsMissing  atomic.Int32
 	matches         atomic.Int32
 	opt             CheckOpt
 }
@@ -93,6 +96,13 @@ func (c *checkMarch) DstOnly(dst fs.DirEntry) (recurse bool) {
 		if c.opt.OneWay {
 			return false
 		}
+		if c.opt.ReportDirs {
+			err := fmt.Errorf("directory not in %v", c.opt.Fsrc)
+			fs.Errorf(dst, "%v", err)
+			_ = fs.CountError(err)
+			c.differences.Add(1)
+			c.srcDirsMissing.Add(1)
+		}
 		return true
 	default:
 		panic("Bad object in DirEntries")
@@ -112,6 +122,13 @@ func (c *checkMarch) SrcOnly(src fs.DirEntry) (recurse bool) {
 		c.report(src, c.opt.MissingOnDst, '+')
 	case fs.Directory:
 		// Do the same thing to the entire contents of the directory
+		if c.opt.ReportDirs {
+			err := fmt.Errorf("directory not in %v", c.opt.Fdst)
+			fs.Errorf(src, "%v", err)
+			_ = fs.CountError(err)
+			c.differences.Add(1)
+			c.dstDirsMissing.Add(1)
+		}
 		return true
 	default:
 		panic("Bad object in DirEntries")
@@ -185,8 +202,11 @@ func (c *checkMarch) Match(ctx context.Context, dst, src fs.DirEntry) (recurse b
 		}
 	case fs.Directory:
 		// Do the same thing to the entire contents of the directory
-		_, ok := dst.(fs.Directory)
+		dstX, ok := dst.(fs.Directory)
 		if ok {
+			if c.opt.ReportDirs {
+				fs.Debugf(dstX, "OK (no hash to check for directories)")
+			}
 			return true
 		}
 		err := fmt.Errorf("is file on %v but directory on %v", c.opt.Fdst, c.opt.Fsrc)
@@ -247,6 +267,14 @@ func (c *checkMarch) reportResults(ctx context.Context, err error) error {
 			entity = "hashes"
 		}
 		fs.Logf(c.opt.Fsrc, "%d %s missing", c.srcFilesMissing.Load(), entity)
+	}
+	if c.opt.ReportDirs {
+		if c.dstDirsMissing.Load() > 0 {
+			fs.Logf(c.opt.Fdst, "%d directories missing", c.dstDirsMissing.Load())
+		}
+		if c.srcDirsMissing.Load() > 0 {
+			fs.Logf(c.opt.Fsrc, "%d directories missing", c.srcDirsMissing.Load())
+		}
 	}
 
 	fs.Logf(c.opt.Fdst, "%d differences found", c.differences.Load())
@@ -421,6 +449,10 @@ func CheckSum(ctx context.Context, fsrc, fsum fs.Fs, sumFile string, hashType ha
 
 	if !download && (hashType == hash.None || !opt.Fdst.Hashes().Contains(hashType)) {
 		return fmt.Errorf("%s: hash type is not supported by file system: %s", hashType, opt.Fdst)
+	}
+
+	if options.ReportDirs {
+		fs.Logf(nil, "ignoring --report-dirs as --checkfile is in use.")
 	}
 
 	if sumFile == "" {
