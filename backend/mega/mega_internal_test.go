@@ -10,9 +10,9 @@ import (
 
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest/fstests"
-	mega "github.com/t3rm1n4l/go-mega"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	mega "github.com/t3rm1n4l/go-mega"
 )
 
 // InternalTestGhostAfterRemove checks that a file removed in a long-running
