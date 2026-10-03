@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"regexp/syntax"
 	"slices"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/rclone/rclone/fs"
 )
@@ -44,9 +46,14 @@ func (r *rule) String() string {
 
 // rules is a slice of rules
 type rules struct {
-	rules    []rule
-	existing map[string]struct{}
+	rules       []rule
+	existing    map[string]struct{}
+	byDirectory map[string][]int
+	otherRules  []int
 }
+
+// Small rule sets are faster to scan without maintaining an index.
+const minIndexedRules = 64
 
 type addFn func(Include bool, glob string) error
 
@@ -65,6 +72,31 @@ func (rs *rules) add(Include bool, re *regexp.Regexp) {
 	}
 	rs.rules = append(rs.rules, newRule)
 	rs.existing[newRuleString] = struct{}{}
+	if rs.byDirectory != nil {
+		rs.index(len(rs.rules) - 1)
+	} else if len(rs.rules) == minIndexedRules {
+		rs.byDirectory = make(map[string][]int)
+		for i := range rs.rules {
+			rs.index(i)
+		}
+	}
+}
+
+// index groups anchored, case-sensitive rules by their first literal directory.
+func (rs *rules) index(i int) {
+	re := rs.rules[i].Regexp.String()
+	if strings.HasPrefix(re, "^") {
+		parsed, err := syntax.Parse(re, syntax.Perl)
+		if err == nil && parsed.Op == syntax.OpConcat && len(parsed.Sub) >= 2 &&
+			parsed.Sub[0].Op == syntax.OpBeginText && parsed.Sub[1].Op == syntax.OpLiteral &&
+			parsed.Sub[1].Flags&syntax.FoldCase == 0 {
+			if directory, _, ok := strings.Cut(string(parsed.Sub[1].Rune), "/"); ok {
+				rs.byDirectory[directory] = append(rs.byDirectory[directory], i)
+				return
+			}
+		}
+	}
+	rs.otherRules = append(rs.otherRules, i)
 }
 
 // Add adds a filter rule with include or exclude status indicated
@@ -83,6 +115,8 @@ type clearFn func()
 func (rs *rules) clear() {
 	rs.rules = nil
 	rs.existing = nil
+	rs.byDirectory = nil
+	rs.otherRules = nil
 }
 
 // len returns the number of rules
@@ -92,6 +126,34 @@ func (rs *rules) len() int {
 
 // include returns whether this remote passes the filter rules.
 func (rs *rules) include(remote string) bool {
+	if len(rs.byDirectory) != 0 {
+		directory, _, _ := strings.Cut(remote, "/")
+		// The syntax package normalizes invalid UTF-8 in literals. Keep the
+		// original scan for paths that cannot be looked up without changing
+		// their bytes.
+		if !utf8.ValidString(directory) {
+			for _, rule := range rs.rules {
+				if rule.Match(remote) {
+					return rule.Include
+				}
+			}
+			return true
+		}
+		indexed, other := rs.byDirectory[directory], rs.otherRules
+		for len(indexed) != 0 || len(other) != 0 {
+			var i int
+			// Merge both sorted lists to preserve first-match precedence.
+			if len(other) == 0 || (len(indexed) != 0 && indexed[0] < other[0]) {
+				i, indexed = indexed[0], indexed[1:]
+			} else {
+				i, other = other[0], other[1:]
+			}
+			if rs.rules[i].Match(remote) {
+				return rs.rules[i].Include
+			}
+		}
+		return true
+	}
 	for _, rule := range rs.rules {
 		if rule.Match(remote) {
 			return rule.Include
