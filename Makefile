@@ -38,6 +38,9 @@ BETA_PATH := $(BRANCH_PATH)$(TAG)$(BETA_SUBDIR)
 BETA_URL := https://beta.rclone.org/$(BETA_PATH)/
 BETA_UPLOAD_ROOT := beta.rclone.org:
 BETA_UPLOAD := $(BETA_UPLOAD_ROOT)/$(BETA_PATH)
+# Update the beta site's directory listings after an upload - add
+# --changed for the uploaded directories
+BETA_INDEX := --config bin/ci.rclone.conf -v index $(BETA_UPLOAD_ROOT) --use-server-modtime --checkers 16 --output index.html=html --output index.json=caddy --header-upload "Cache-Control: public, max-age=60" --exclude /favicon.ico
 # Pass in GOTAGS=xyz on the make command line to set build tags
 ifdef GOTAGS
 BUILDTAGS=-tags "$(GOTAGS)"
@@ -267,6 +270,7 @@ ci_upload:
 ifeq ($(or $(BRANCH_PATH),$(RELEASE_TAG)),)
 	./rclone --no-check-dest --config bin/ci.rclone.conf -v copy build/ $(BETA_UPLOAD_ROOT)/test/testbuilds-latest
 endif
+	./rclone $(BETA_INDEX) --changed $(BETA_PATH)/testbuilds/ $(if $(or $(BRANCH_PATH),$(RELEASE_TAG)),,--changed test/testbuilds-latest/)
 	@echo Beta release ready at $(BETA_URL)/testbuilds
 
 ci_beta:
@@ -276,6 +280,7 @@ ci_beta:
 ifeq ($(or $(BRANCH_PATH),$(RELEASE_TAG)),)
 	rclone --no-check-dest --config bin/ci.rclone.conf -v copy --include '*beta-latest*' --include version.txt build/ $(BETA_UPLOAD_ROOT)$(BETA_SUBDIR)
 endif
+	rclone $(BETA_INDEX) --changed $(BETA_PATH)/ $(if $(or $(BRANCH_PATH),$(RELEASE_TAG)),,$(if $(BETA_SUBDIR),--changed $(BETA_SUBDIR)/))
 	@echo Beta release ready at $(BETA_URL)
 
 # Fetch the binary builds from GitHub actions
