@@ -10,11 +10,15 @@ package webdav
 import (
 	"compress/gzip"
 	"context"
+	"errors"
 	"flag"
+	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	_ "github.com/rclone/rclone/backend/local"
@@ -437,6 +441,82 @@ func TestMoveOverwriteFalseStillRejects(t *testing.T) {
 
 	assert.Equal(t, http.StatusPreconditionFailed, resp.StatusCode,
 		"MOVE with explicit Overwrite: F must still return 412 when destination exists")
+}
+
+func TestCopySourceFailureDoesNotPublishPartialTarget(t *testing.T) {
+	for _, short := range []bool{false, true} {
+		t.Run(fmt.Sprint(short), func(t *testing.T) {
+			root := t.TempDir()
+			require.NoError(t, os.WriteFile(root+"/source", []byte("replacement"), 0600))
+			f, err := fs.NewFs(context.Background(), root)
+			require.NoError(t, err)
+			wrapped := &copyFaultFs{Fs: f, short: short}
+			opt := Opt
+			opt.HTTP.ListenAddr = []string{testBindAddress}
+			w, err := newWebDAV(context.Background(), wrapped, &opt, &vfscommon.Opt, &proxy.Opt)
+			require.NoError(t, err)
+			defer func() { assert.NoError(t, w.Shutdown()) }()
+			req := httptest.NewRequest("COPY", "http://fixture/source", nil)
+			req.Header.Set("Destination", "http://fixture/target")
+			out := httptest.NewRecorder()
+			w.ServeHTTP(out, req)
+			require.Positive(t, wrapped.opens.Load())
+			require.GreaterOrEqual(t, out.Code, 400)
+			_, err = os.Stat(root + "/target")
+			require.True(t, os.IsNotExist(err))
+		})
+	}
+}
+
+type copyFaultFs struct {
+	fs.Fs
+	short bool
+	opens atomic.Int32
+}
+
+func (f *copyFaultFs) wrap(o fs.Object) fs.Object {
+	if o.Remote() == "source" {
+		return &copyFaultObject{Object: o, short: f.short, owner: f}
+	}
+	return o
+}
+
+func (f *copyFaultFs) NewObject(ctx context.Context, name string) (fs.Object, error) {
+	o, err := f.Fs.NewObject(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	return f.wrap(o), nil
+}
+
+func (f *copyFaultFs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
+	entries, err := f.Fs.List(ctx, dir)
+	for i, entry := range entries {
+		if o, ok := entry.(fs.Object); ok {
+			entries[i] = f.wrap(o)
+		}
+	}
+	return entries, err
+}
+
+type copyFaultObject struct {
+	fs.Object
+	short bool
+	owner *copyFaultFs
+}
+
+func (o *copyFaultObject) Open(context.Context, ...fs.OpenOption) (io.ReadCloser, error) {
+	o.owner.opens.Add(1)
+	if o.short {
+		return io.NopCloser(strings.NewReader("part")), nil
+	}
+	return io.NopCloser(io.MultiReader(strings.NewReader("part"), copyFailedInput{})), nil
+}
+
+type copyFailedInput struct{}
+
+func (copyFailedInput) Read([]byte) (int, error) {
+	return 0, errors.New("injected source read failure")
 }
 
 // TestNewWebDAVError checks that a server initialisation failure is
