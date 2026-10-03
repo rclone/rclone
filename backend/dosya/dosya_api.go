@@ -221,24 +221,43 @@ func (f *Fs) createFolder(ctx context.Context, name string, parentID string) (*a
 }
 
 // removeFolder deletes a folder
-func (f *Fs) removeFolder(ctx context.Context, folderID string) error {
+//
+// ?permanent=1 trashes and purges a live folder in one request on today's
+// API. ifEmpty also sends ?if_empty=1, which asks the server to refuse with
+// HTTP 409 "Folder is not empty" instead of purging a folder that still
+// holds a live file or a live child folder; that 409 is turned into
+// fs.ErrorDirectoryNotEmpty here rather than treated as a generic API
+// error, and it is never retried (409 is not one of retryErrorCodes). A big
+// subtree is purged in bounded passes (202, complete=false), so keep
+// calling until the purge is complete. An older server that ignores
+// permanent=1 only trashes on the first call (answering permanent=false),
+// so the loop's second pass sends the plain DELETE that purges it.
+func (f *Fs) removeFolder(ctx context.Context, folderID string, ifEmpty bool) error {
+	parameters := map[string][]string{"permanent": {"1"}}
+	if ifEmpty {
+		parameters["if_empty"] = []string{"1"}
+	}
 	opts := rest.Opts{
 		Method:       "DELETE",
 		Path:         "/api/folders/" + folderID,
+		Parameters:   parameters,
 		ExtraHeaders: f.byIDHeaders(),
 	}
 
-	// The first DELETE moves the folder to the trash, where its files still
-	// count against the workspace quota. A DELETE on the trashed folder
-	// purges it permanently, but a big subtree is purged in bounded passes
-	// (202, complete=false), so keep calling until the purge is complete.
 	for pass := 0; ; pass++ {
 		var result api.DeleteFolderResponse
+		var statusCode int
 		err := f.pacer.Call(func() (bool, error) {
 			resp, err := f.rest.CallJSON(ctx, &opts, nil, &result)
+			if resp != nil {
+				statusCode = resp.StatusCode
+			}
 			return shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
+			if ifEmpty && statusCode == http.StatusConflict {
+				return fs.ErrorDirectoryNotEmpty
+			}
 			if pass == 0 {
 				return fmt.Errorf("couldn't remove folder: %w", err)
 			}
@@ -310,11 +329,17 @@ func (f *Fs) moveFolder(ctx context.Context, folderID string, newParentID string
 	return newName != "" && result.Name == newName, nil
 }
 
-// deleteFile deletes a file (soft delete first, then permanent)
+// deleteFile deletes a file
+//
+// ?permanent=1 trashes and purges it in one request on today's API. An
+// older server that ignores the flag only soft-deletes it, answering
+// permanent=false, so a second DELETE on the now soft-deleted file purges
+// it from the database and R2, as it always has.
 func (f *Fs) deleteFile(ctx context.Context, fileID string) error {
 	opts := rest.Opts{
 		Method:       "DELETE",
 		Path:         "/api/files/" + fileID,
+		Parameters:   map[string][]string{"permanent": {"1"}},
 		ExtraHeaders: f.byIDHeaders(),
 	}
 
@@ -330,9 +355,8 @@ func (f *Fs) deleteFile(ctx context.Context, fileID string) error {
 		return fmt.Errorf("API error: %s", result.Error)
 	}
 
-	// The first DELETE soft-deletes; a second one on an already soft-deleted
-	// file purges it from the database and R2. Answered into its own value so
-	// a field the second response omits can't be read off the first.
+	// Answered into its own value so a field the second response omits
+	// can't be read off the first.
 	if !result.Permanent {
 		var permanent api.DeleteFileResponse
 		err = f.pacer.Call(func() (bool, error) {

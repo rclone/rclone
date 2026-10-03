@@ -280,6 +280,7 @@ for up to 10 minutes.
 
 ### Deleting files and directories
 
-rclone deletes files and directories permanently. dosya.dev first moves
-an item to the workspace trash, so rclone deletes it a second time to
-remove it from the trash and free the storage it uses.
+rclone deletes files and directories permanently, in a single request
+(`DELETE ?permanent=1`), bypassing the workspace trash. Removing a
+directory also asks the server whether it is empty (`?if_empty=1`)
+rather than listing it first.

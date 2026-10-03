@@ -29,7 +29,7 @@ func TestByIDCallsSendWorkspaceHint(t *testing.T) {
 	}))
 	ctx := context.Background()
 
-	require.NoError(t, f.removeFolder(ctx, "fld_1"))
+	require.NoError(t, f.removeFolder(ctx, "fld_1", false))
 	require.NoError(t, f.renameFolder(ctx, "fld_1", "n"))
 	_, err := f.moveFolder(ctx, "fld_1", "fld_2", "n")
 	require.NoError(t, err)

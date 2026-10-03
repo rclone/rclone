@@ -3,11 +3,14 @@ package dosya
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"testing"
 	"time"
 
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -55,12 +58,12 @@ func TestShouldRetryDoesNotRetryConflict(t *testing.T) {
 }
 
 func TestRemoveFolderPurgesPermanently(t *testing.T) {
-	// trash, then a purge that needs two bounded passes
+	// a big subtree purges in bounded passes: 202 complete=false repeats
+	// the same request until complete=true
 	answers := []struct {
 		status int
 		body   string
 	}{
-		{http.StatusOK, `{"ok":true,"permanent":false,"files_affected":3,"folders_removed":2}`},
 		{http.StatusAccepted, `{"ok":true,"permanent":true,"complete":false,"remaining":1}`},
 		{http.StatusOK, `{"ok":true,"permanent":true,"complete":true,"remaining":0}`},
 	}
@@ -68,13 +71,15 @@ func TestRemoveFolderPurgesPermanently(t *testing.T) {
 	f := newFakeFs(rtFunc(func(r *http.Request) (*http.Response, error) {
 		require.Equal(t, "DELETE", r.Method)
 		require.Equal(t, "/api/folders/fld_1", r.URL.Path)
+		assert.Equal(t, "1", r.URL.Query().Get("permanent"))
+		assert.Equal(t, "", r.URL.Query().Get("if_empty"))
 		require.Less(t, calls, len(answers), "DELETE sent after the purge completed")
 		a := answers[calls]
 		calls++
 		return jsonResp(a.status, a.body), nil
 	}))
 
-	require.NoError(t, f.removeFolder(context.Background(), "fld_1"))
+	require.NoError(t, f.removeFolder(context.Background(), "fld_1", false))
 	assert.Equal(t, len(answers), calls)
 }
 
@@ -82,16 +87,96 @@ func TestRemoveFolderStopsOnPurgeError(t *testing.T) {
 	calls := 0
 	f := newFakeFs(rtFunc(func(r *http.Request) (*http.Response, error) {
 		calls++
-		if calls == 1 {
-			return jsonResp(http.StatusOK, `{"ok":true,"permanent":false}`), nil
-		}
 		return jsonResp(http.StatusForbidden, `{"ok":false,"error":"This folder contains a locked file and cannot be purged"}`), nil
 	}))
 
-	err := f.removeFolder(context.Background(), "fld_1")
+	err := f.removeFolder(context.Background(), "fld_1", false)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "locked file")
-	assert.Equal(t, 2, calls)
+	assert.Equal(t, 1, calls)
+}
+
+func TestRemoveFolderIfEmptyRejectsNonEmptyWithoutRetry(t *testing.T) {
+	calls := 0
+	f := newFakeFs(rtFunc(func(r *http.Request) (*http.Response, error) {
+		calls++
+		assert.Equal(t, "/api/folders/fld_1", r.URL.Path)
+		assert.Equal(t, "1", r.URL.Query().Get("permanent"))
+		assert.Equal(t, "1", r.URL.Query().Get("if_empty"))
+		return jsonResp(http.StatusConflict, `{"ok":false,"error":"Folder is not empty"}`), nil
+	}))
+
+	err := f.removeFolder(context.Background(), "fld_1", true)
+	assert.ErrorIs(t, err, fs.ErrorDirectoryNotEmpty)
+	assert.Equal(t, 1, calls, "a 409 must not be retried by the pacer")
+}
+
+func TestRemoveFolderIfEmptyPurgesEmptyFolderInOneCall(t *testing.T) {
+	calls := 0
+	f := newFakeFs(rtFunc(func(r *http.Request) (*http.Response, error) {
+		calls++
+		assert.Equal(t, "1", r.URL.Query().Get("permanent"))
+		assert.Equal(t, "1", r.URL.Query().Get("if_empty"))
+		return jsonResp(http.StatusOK, `{"ok":true,"permanent":true,"complete":true}`), nil
+	}))
+
+	require.NoError(t, f.removeFolder(context.Background(), "fld_1", true))
+	assert.Equal(t, 1, calls)
+}
+
+func TestRmdirMakesOneRequest(t *testing.T) {
+	calls := 0
+	f := newFakeFs(rtFunc(func(r *http.Request) (*http.Response, error) {
+		calls++
+		assert.Equal(t, "DELETE", r.Method)
+		assert.Equal(t, "/api/folders/fld_1", r.URL.Path)
+		assert.Equal(t, "1", r.URL.Query().Get("permanent"))
+		assert.Equal(t, "1", r.URL.Query().Get("if_empty"))
+		return jsonResp(http.StatusOK, `{"ok":true,"permanent":true,"complete":true}`), nil
+	}))
+	f.dirCache = dircache.New("", rootID, f)
+	require.NoError(t, f.dirCache.FindRoot(context.Background(), false))
+	f.dirCache.Put("sub", "fld_1")
+
+	require.NoError(t, f.Rmdir(context.Background(), "sub"))
+	assert.Equal(t, 1, calls, "Rmdir must not list the directory before removing it")
+}
+
+func TestRmdirMapsNonEmptyConflict(t *testing.T) {
+	f := newFakeFs(rtFunc(func(r *http.Request) (*http.Response, error) {
+		return jsonResp(http.StatusConflict, `{"ok":false,"error":"Folder is not empty"}`), nil
+	}))
+	f.dirCache = dircache.New("", rootID, f)
+	require.NoError(t, f.dirCache.FindRoot(context.Background(), false))
+	f.dirCache.Put("sub", "fld_1")
+
+	err := f.Rmdir(context.Background(), "sub")
+	assert.ErrorIs(t, err, fs.ErrorDirectoryNotEmpty)
+}
+
+func TestDeleteFileSendsPermanentFlag(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		permanent bool
+		wantCalls int
+	}{
+		{"today's API purges in one call", true, 1},
+		{"an older server ignores the flag and still gets a second DELETE", false, 2},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			calls := 0
+			f := newFakeFs(rtFunc(func(r *http.Request) (*http.Response, error) {
+				calls++
+				assert.Equal(t, "DELETE", r.Method)
+				assert.Equal(t, "/api/files/fil_1", r.URL.Path)
+				assert.Equal(t, "1", r.URL.Query().Get("permanent"))
+				return jsonResp(http.StatusOK, fmt.Sprintf(`{"ok":true,"permanent":%t}`, tc.permanent)), nil
+			}))
+
+			require.NoError(t, f.deleteFile(context.Background(), "fil_1"))
+			assert.Equal(t, tc.wantCalls, calls)
+		})
+	}
 }
 
 // decodeBody reads a JSON request body into a map

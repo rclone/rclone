@@ -405,16 +405,9 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		return err
 	}
 
-	// Check if directory is empty before removing
-	listing, err := f.listFilesAndFolders(ctx, directoryID)
-	if err != nil {
-		return err
-	}
-	if len(listing.Files) > 0 || len(listing.Folders) > 0 {
-		return fs.ErrorDirectoryNotEmpty
-	}
-
-	err = f.removeFolder(ctx, directoryID)
+	// The server checks emptiness itself (?if_empty=1) and answers
+	// fs.ErrorDirectoryNotEmpty's 409 without a separate listing call.
+	err = f.removeFolder(ctx, directoryID, true)
 	if err != nil {
 		return err
 	}
@@ -613,8 +606,8 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 		return err
 	}
 
-	// DELETE /api/folders/:id recursively deletes all contents
-	err = f.removeFolder(ctx, directoryID)
+	// DELETE /api/folders/:id?permanent=1 recursively deletes all contents
+	err = f.removeFolder(ctx, directoryID, false)
 	if err != nil {
 		return err
 	}
