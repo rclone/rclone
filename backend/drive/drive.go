@@ -2784,7 +2784,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 			return err
 		}
 		if found {
-			return fmt.Errorf("directory not empty")
+			return fs.ErrorDirectoryNotEmpty
 		}
 	}
 	if root != "" {
