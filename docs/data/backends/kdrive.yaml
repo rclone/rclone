@@ -1,0 +1,30 @@
+backend: kdrive
+name: kdrive
+tier: Tier 2
+maintainers: Community
+features_score: 5
+integration_tests: Unknown
+data_integrity: Unknown
+performance: Unknown
+adoption: Rare
+docs: Basic
+security: Unknown
+virtual: false
+remote: 'TestKdrive:'
+features:
+- About
+- CanHaveEmptyDirectories
+- CleanUp
+- Copy
+- DirCacheFlush
+- DirMove
+- ListP
+- ListR
+- Move
+- OpenChunkWriter
+- PublicLink
+- Purge
+- Shutdown
+hashes:
+- xxh3
+precision: 1000000000
