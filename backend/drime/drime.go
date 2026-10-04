@@ -321,10 +321,13 @@ func (f *Fs) getItem(ctx context.Context, id string, dirID string, leaf string) 
 		}
 		return false
 	})
+	if err != nil {
+		return nil, err
+	}
 	if !found {
 		return nil, fs.ErrorObjectNotFound
 	}
-	return info, err
+	return info, nil
 }
 
 // errorHandler parses a non 2xx error response into an error
@@ -545,6 +548,11 @@ OUTER:
 		})
 		if err != nil {
 			return found, fmt.Errorf("couldn't list files: %w", err)
+		}
+		// Drime won't page past a fixed number of entries (20,000 for
+		// rclone) and serves the last page it allows again instead
+		if result.CurrentPage != page {
+			return found, errors.New("couldn't list files: directory has more entries than drime will list")
 		}
 		for _, item := range result.Data {
 			if item.Type == api.ItemTypeFolder {
