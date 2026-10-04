@@ -536,7 +536,17 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 		opts.Parameters.Set("workspaceId", f.opt.WorkspaceID)
 	}
 	opts.Parameters.Set("perPage", strconv.Itoa(f.opt.ListChunk))
+	// Drime won't page past a fixed number of entries (20,000 for rclone)
+	// and serves the last page it allows again instead, so list oldest
+	// first and then newest first to list up to twice as many. Entries
+	// created in the same second don't come back in a consistent order,
+	// so the newest first pass can't stop at the first entry already seen.
+	opts.Parameters.Set("orderBy", "created_at")
+	opts.Parameters.Set("orderDir", "asc")
 	page := 1
+	newestFirst := false
+	seen := map[string]struct{}{}
+	var newestSeen time.Time // created_at of the last entry listed oldest first
 OUTER:
 	for {
 		opts.Parameters.Set("page", strconv.Itoa(page))
@@ -549,12 +559,32 @@ OUTER:
 		if err != nil {
 			return found, fmt.Errorf("couldn't list files: %w", err)
 		}
-		// Drime won't page past a fixed number of entries (20,000 for
-		// rclone) and serves the last page it allows again instead
+		// Drime served an earlier page again so this is the limit
 		if result.CurrentPage != page {
-			return found, errors.New("couldn't list files: directory has more entries than drime will list")
+			if newestFirst {
+				if result.KnownTotal > 0 && len(seen) >= result.KnownTotal {
+					break
+				}
+				return found, fmt.Errorf("couldn't list files: directory has more entries than drime will list (listed %d of %d)", len(seen), result.KnownTotal)
+			}
+			newestFirst = true
+			opts.Parameters.Set("orderDir", "desc")
+			page = 1
+			continue
 		}
 		for _, item := range result.Data {
+			id := item.ID.String()
+			if newestFirst {
+				if item.CreatedAt.Before(newestSeen) {
+					break OUTER
+				}
+				if _, ok := seen[id]; ok {
+					continue
+				}
+			} else {
+				newestSeen = item.CreatedAt
+			}
+			seen[id] = struct{}{}
 			if item.Type == api.ItemTypeFolder {
 				if filesOnly {
 					continue

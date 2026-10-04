@@ -317,3 +317,6 @@ Properties:
 Drime only supports filenames up to 255 bytes in length, where filenames are
 encoded in UTF8.
 
+Drime only lists the first 20,000 entries of a directory in any one order.
+Rclone lists the oldest entries and then the newest, so it can list directories
+with up to about 40,000 entries. Listing a larger directory gives an error.

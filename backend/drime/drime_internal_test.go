@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strconv"
 	"sync/atomic"
 	"testing"
@@ -31,6 +32,9 @@ const (
 // entries. Asking for a later page returns the last page it allows
 // again, with last_page one beyond it.
 //
+// If asked, it sorts by created_at, putting entries created in the same
+// second in ID order whichever the direction.
+//
 // It counts the requests made in requests.
 func listingServer(t *testing.T, entries []api.Item, requests *atomic.Int64) *httptest.Server {
 	t.Helper()
@@ -40,6 +44,19 @@ func listingServer(t *testing.T, entries []api.Item, requests *atomic.Int64) *ht
 		params := r.URL.Query()
 		page, err := strconv.Atoi(params.Get("page"))
 		require.NoError(t, err)
+		entries := slices.Clone(entries)
+		if params.Get("orderBy") == "created_at" {
+			desc := params.Get("orderDir") == "desc"
+			slices.SortStableFunc(entries, func(a, b api.Item) int {
+				if desc {
+					return b.CreatedAt.Compare(a.CreatedAt)
+				}
+				return a.CreatedAt.Compare(b.CreatedAt)
+			})
+		} else {
+			// Drime's default order isn't the creation order
+			slices.Reverse(entries)
+		}
 		maxPage := testLimit / testPerPage
 		currentPage := min(page, maxPage)
 		start := min((currentPage-1)*testPerPage, len(entries))
@@ -54,19 +71,26 @@ func listingServer(t *testing.T, entries []api.Item, requests *atomic.Int64) *ht
 			"last_page":    lastPage,
 			"per_page":     testPerPage,
 			"total":        (currentPage + 1) * testPerPage,
+			"known_total":  len(entries),
 			"data":         entries[start:end],
 		}))
 	}))
 }
 
-// makeEntries makes n file entries
+// makeEntries makes n file entries in creation order, three created in
+// each second.
+//
+// This means file00018, file00019 and file00020 share a second, so
+// testLimit falls inside it.
 func makeEntries(n int) []api.Item {
 	entries := make([]api.Item, n)
+	created := time.Date(2026, 4, 27, 0, 0, 0, 0, time.UTC)
 	for i := range entries {
 		entries[i] = api.Item{
-			ID:   json.Number(strconv.Itoa(1000 + i)),
-			Name: fmt.Sprintf("file%05d", i),
-			Type: "text",
+			ID:        json.Number(strconv.Itoa(1000 + i)),
+			Name:      fmt.Sprintf("file%05d", i),
+			Type:      "text",
+			CreatedAt: created.Add(time.Duration(i/3) * time.Second),
 		}
 	}
 	return entries
@@ -104,6 +128,11 @@ func TestListAll(t *testing.T) {
 		{name: "ExactPages", entries: 10},
 		{name: "PartialLastPage", entries: 13},
 		{name: "AtLimit", entries: testLimit},
+		{name: "OverLimit", entries: testLimit + 1},
+		{name: "WellOverLimit", entries: testLimit + 10},
+		// Listing newest first reaches the last unseen entry exactly
+		// at the limit
+		{name: "NearlyTwiceLimit", entries: 2*testLimit - 2},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -127,19 +156,34 @@ func TestListAll(t *testing.T) {
 
 // TestListAllTooManyEntries checks that listAll returns an error for a
 // directory with more entries than the server will list, rather than
-// looping forever.
+// looping forever or returning some of them.
 func TestListAllTooManyEntries(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	var requests atomic.Int64
-	server := listingServer(t, makeEntries(2*testLimit), &requests)
-	defer server.Close()
-	f := testFs(t, server)
+	for _, test := range []struct {
+		name    string
+		entries int
+		listed  int
+	}{
+		// Listing newest first, the server returns file00018 and
+		// file00019 before file00020, so file00020 is past the limit
+		// in both orders.
+		{name: "SameSecondAtLimit", entries: 2 * testLimit, listed: 2*testLimit - 1},
+		{name: "OverTwiceLimit", entries: 2*testLimit + 1, listed: 2 * testLimit},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			var requests atomic.Int64
+			server := listingServer(t, makeEntries(test.entries), &requests)
+			defer server.Close()
+			f := testFs(t, server)
 
-	_, err := listNames(ctx, f)
-	require.Error(t, err)
-	assert.NoError(t, ctx.Err(), "listing didn't finish")
-	assert.LessOrEqual(t, requests.Load(), int64(testLimit/testPerPage+1))
+			_, err := listNames(ctx, f)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), fmt.Sprintf("listed %d of %d", test.listed, test.entries))
+			assert.NoError(t, ctx.Err(), "listing didn't finish")
+			assert.LessOrEqual(t, requests.Load(), int64(2*(testLimit/testPerPage+1)))
+		})
+	}
 }
 
 // TestGetItemListError checks that getItem returns listing errors
