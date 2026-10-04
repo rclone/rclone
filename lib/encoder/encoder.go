@@ -682,6 +682,21 @@ func (mask MultiEncoder) Encode(in string) string {
 	return out.String()
 }
 
+// quoteLen is the length in bytes of QuoteRune
+var quoteLen = utf8.RuneLen(QuoteRune)
+
+// endsWithQuote returns true if in ends with a QuoteRune which quotes
+// the following character, rather than one which is part of an
+// escaped QuoteRune (QuoteRune QuoteRune).
+func endsWithQuote(in string) bool {
+	n := 0
+	for strings.HasSuffix(in, string(QuoteRune)) {
+		in = in[:len(in)-quoteLen]
+		n++
+	}
+	return n%2 == 1
+}
+
 // Decode takes a name and undoes any substitutions made by Encode
 func (mask MultiEncoder) Decode(in string) string {
 	if mask == EncodeRaw {
@@ -727,22 +742,22 @@ func (mask MultiEncoder) Decode(in string) string {
 	suffix := ""
 	if r, l := utf8.DecodeLastRuneInString(in); mask.Has(EncodeRightSpace) && r == '␠' { // SYMBOL FOR SPACE
 		in = in[:len(in)-l]
-		if q, l2 := utf8.DecodeLastRuneInString(in); q == QuoteRune {
-			suffix, in = "␠", in[:len(in)-l2]
+		if endsWithQuote(in) {
+			suffix, in = "␠", in[:len(in)-quoteLen]
 		} else {
 			suffix = " "
 		}
 	} else if mask.Has(EncodeRightPeriod) && r == '．' { // FULLWIDTH FULL STOP
 		in = in[:len(in)-l]
-		if q, l2 := utf8.DecodeLastRuneInString(in); q == QuoteRune {
-			suffix, in = "．", in[:len(in)-l2]
+		if endsWithQuote(in) {
+			suffix, in = "．", in[:len(in)-quoteLen]
 		} else {
 			suffix = "."
 		}
 	} else if mask.Has(EncodeRightCrLfHtVt) && (r == '␀'+'\t' || r == '␀'+'\n' || r == '␀'+'\v' || r == '␀'+'\r') {
 		in = in[:len(in)-l]
-		if q, l2 := utf8.DecodeLastRuneInString(in); q == QuoteRune {
-			suffix, in = string(r), in[:len(in)-l2]
+		if endsWithQuote(in) {
+			suffix, in = string(r), in[:len(in)-quoteLen]
 		} else {
 			suffix = string(r - '␀')
 		}

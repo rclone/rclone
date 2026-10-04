@@ -255,6 +255,44 @@ func TestDecodeHalf(t *testing.T) {
 	}
 }
 
+func TestEncodeQuoteBeforeRightEdge(t *testing.T) {
+	for i, tc := range []testCase{
+		{
+			mask: EncodeRightSpace,
+			in:   "a‛ ",
+			out:  "a‛‛␠",
+		}, {
+			mask: EncodeRightSpace,
+			in:   "‛‛ ",
+			out:  "‛‛‛‛␠",
+		}, {
+			mask: EncodeRightSpace,
+			in:   "a‛␠",
+			out:  "a‛‛‛␠",
+		}, {
+			mask: EncodeRightPeriod,
+			in:   "a‛.",
+			out:  "a‛‛．",
+		}, {
+			mask: EncodeRightCrLfHtVt,
+			in:   "a‛\t",
+			out:  "a‛‛␉",
+		},
+	} {
+		e := tc.mask
+		t.Run(strconv.FormatInt(int64(i), 10), func(t *testing.T) {
+			got := e.Encode(tc.in)
+			if got != tc.out {
+				t.Errorf("Encode(%q) want %q got %q", tc.in, tc.out, got)
+			}
+			got2 := e.Decode(got)
+			if got2 != tc.in {
+				t.Errorf("Decode(%q) want %q got %q", got, tc.in, got2)
+			}
+		})
+	}
+}
+
 const oneDrive = (Standard |
 	EncodeWin |
 	EncodeBackSlash |
