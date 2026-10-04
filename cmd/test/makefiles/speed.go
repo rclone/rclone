@@ -60,7 +60,7 @@ This command runs a series of uploads and downloads to the remote, measuring
 and printing the speed of each test using varying file sizes and numbers of
 files.
 
-Test time can be innaccurate with small file caps and large files. As it
+Test time can be inaccurate with small file caps and large files. As it
 uses the results of an initial test to determine how many files to use in
 each subsequent test.
 
