@@ -527,6 +527,17 @@ backends:
  - backend:  "opendrive"
    remote:   "TestOpenDrive:"
    fastlist: false
+   ignore:
+     # downloading the HTML listings is refused with 403 Forbidden
+     - TestIndex
+     - TestIndexDelete
+     - TestIndexFilter
+     - TestIndexRules
+     - TestIndexMaxDepth
+     - TestIndexLinkIndex
+     - TestIndexChanged
+     - TestIndexChangedDelete
+     - TestIndexChangedFiles
    ignoretests:
      - cmd/bisync
  - backend:  "union"
@@ -535,6 +546,17 @@ backends:
  - backend:  "koofr"
    remote:   "TestKoofr:"
    fastlist: false
+   ignore:
+     # downloading the HTML listings is refused with FileBlocked
+     - TestIndex
+     - TestIndexDelete
+     - TestIndexFilter
+     - TestIndexRules
+     - TestIndexMaxDepth
+     - TestIndexLinkIndex
+     - TestIndexChanged
+     - TestIndexChangedDelete
+     - TestIndexChangedFiles
  # - backend:  "koofr"
  #   remote:   "TestDigiStorage:"
  #   fastlist: false
