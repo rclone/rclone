@@ -2832,6 +2832,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	_, err = file.ReadFrom(&sizeReader{Reader: in, size: src.Size()})
 	if err != nil {
+		_ = file.Close()
 		o.fs.putSftpConnection(&c, err)
 		remove()
 		return fmt.Errorf("Update ReadFrom failed: %w", err)
