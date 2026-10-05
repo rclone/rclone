@@ -2425,6 +2425,8 @@ func (ls *versionsList) List(ctx context.Context) (resp *s3.ListObjectsV2Output,
 		var obj types.Object
 		//structs.SetFrom(obj, objVersion)
 		setFrom_typesObject_typesObjectVersion(&obj, &objVersion)
+		// StorageClass has a different type in ObjectVersion so isn't copied by setFrom
+		obj.StorageClass = types.ObjectStorageClass(objVersion.StorageClass)
 		// Adjust the file names
 		if !ls.usingVersionAt && (!deref(objVersion.IsLatest) || objVersion.Size == isDeleteMarker) {
 			if obj.Key != nil && objVersion.LastModified != nil {
@@ -4527,7 +4529,16 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	})
 	if awsError, ok := errors.AsType[smithy.APIError](err); ok {
 		if awsError.ErrorCode() == "InvalidObjectState" {
-			return nil, fmt.Errorf("Object in GLACIER, restore first: bucket=%q, key=%q", bucket, bucketPath)
+			storageClass := "GLACIER"
+			if stateErr, ok := errors.AsType[*types.InvalidObjectState](err); ok && stateErr.StorageClass != "" {
+				storageClass = string(stateErr.StorageClass)
+				if stateErr.AccessTier != "" {
+					storageClass += " (" + string(stateErr.AccessTier) + " tier)"
+				}
+			} else if o.storageClass != nil && *o.storageClass != "" {
+				storageClass = *o.storageClass
+			}
+			return nil, fmt.Errorf("Object in %s, restore first: bucket=%q, key=%q", storageClass, bucket, bucketPath)
 		}
 	}
 	if err != nil {
@@ -4784,7 +4795,7 @@ func (w *s3ChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 
 	w.addCompletedPart(s3PartNumber, uout.ETag)
 
-	fs.Debugf(w.o, "multipart upload wrote chunk %d with %v bytes and etag %v", chunkNumber+1, currentChunkSize, *uout.ETag)
+	fs.Debugf(w.o, "multipart upload wrote chunk %d with %v bytes, etag %v and md5 %v", chunkNumber+1, currentChunkSize, *uout.ETag, hex.EncodeToString(md5sumBinary))
 	return currentChunkSize, err
 }
 

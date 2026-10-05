@@ -579,6 +579,13 @@ func (item *Item) open(o fs.Object) (err error) {
 			_ = dls.Close(nil)
 			item.mu.Lock()
 		}
+		// _checkObject sized the old fd, so size the new file here
+		// or GetSize reads 0 and ReadAt returns unfetched zeros.
+		err = item._truncateToCurrentSize()
+		if err != nil {
+			item.opens--
+			return fmt.Errorf("vfs cache item: recreate cache file failed: %w", err)
+		}
 	}
 
 	err = item._createFile(osPath)
