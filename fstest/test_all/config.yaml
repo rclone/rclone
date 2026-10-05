@@ -183,6 +183,11 @@ backends:
  - backend:  "filescom"
    remote:   "TestFilesCom:"
    fastlist: false
+   ignore:
+     # Files.com rejects the replacements for ".", "..", "/" and "\"
+     - TestIntegration/FsMkdir/FsEncoding/dot
+     - TestIntegration/FsMkdir/FsEncoding/dot_dot
+     - TestIntegration/FsMkdir/FsEncoding/punctuation
    ignoretests:
      - cmd/bisync
  - backend:  "googlecloudstorage"
