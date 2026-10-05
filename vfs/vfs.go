@@ -234,9 +234,10 @@ func New(ctx context.Context, f fs.Fs, opt *vfscommon.Options) *VFS {
 	defer activeMu.Unlock()
 	configName := fs.ConfigString(f)
 	for _, activeVFS := range active[configName] {
-		if vfs.Opt == activeVFS.Opt {
+		// A VFS whose last reference has gone is being shut down
+		// but may not have removed itself from the cache yet.
+		if vfs.Opt == activeVFS.Opt && activeVFS.Hold() {
 			fs.Debugf(f, "Reusing VFS from active cache")
-			activeVFS.inUse.Add(1)
 			cancel()
 			return activeVFS
 		}
@@ -392,6 +393,21 @@ func (vfs *VFS) shutdownCache() {
 	if vfs.cancelCache != nil {
 		vfs.cancelCache()
 		vfs.cancelCache = nil
+	}
+}
+
+// Hold takes another reference to the VFS so it isn't shut down until
+// a matching call to Shutdown. It returns false, taking no reference,
+// if the VFS has already been shut down.
+func (vfs *VFS) Hold() bool {
+	for {
+		n := vfs.inUse.Load()
+		if n <= 0 {
+			return false
+		}
+		if vfs.inUse.CompareAndSwap(n, n+1) {
+			return true
+		}
 	}
 }
 
@@ -901,7 +917,7 @@ func (vfs *VFS) AddVirtual(remote string, size int64, isDir bool) (err error) {
 	if err != nil {
 		return err
 	}
-	dir.AddVirtual(leaf, size, false)
+	dir.AddVirtual(leaf, size, isDir)
 	return nil
 }
 

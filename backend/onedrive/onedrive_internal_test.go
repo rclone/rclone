@@ -42,6 +42,40 @@ func TestMain(m *testing.M) {
 	fstest.TestMain(m)
 }
 
+func TestTenantAPIEndpoint(t *testing.T) {
+	for _, tc := range []struct {
+		name             string
+		tenantURL        string
+		tenantAPIVersion string
+		want             string
+	}{
+		{
+			name:      "default",
+			tenantURL: "https://example-my.sharepoint.com/_api",
+			want:      "https://example-my.sharepoint.com/_api/v2.0",
+		}, {
+			name:             "explicit v2.1",
+			tenantURL:        "https://example-my.sharepoint.com/_api",
+			tenantAPIVersion: "v2.1",
+			want:             "https://example-my.sharepoint.com/_api/v2.1",
+		}, {
+			name:             "future version",
+			tenantURL:        "https://example-my.sharepoint.com/_api",
+			tenantAPIVersion: "v2.2",
+			want:             "https://example-my.sharepoint.com/_api/v2.2",
+		}, {
+			name:             "trailing slash",
+			tenantURL:        "https://example-my.sharepoint.com/_api/",
+			tenantAPIVersion: "/v2.1",
+			want:             "https://example-my.sharepoint.com/_api/v2.1",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, tenantAPIEndpoint(tc.tenantURL, tc.tenantAPIVersion))
+		})
+	}
+}
+
 // sharingRefused caches whether the remote refuses sharing invitations.
 var sharingRefused *bool
 

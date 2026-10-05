@@ -1245,3 +1245,8 @@ put them back in again. -->
 - Kalin Stoyanov <kalin.stoyanov@kiteworks.com>
 - NytePlus <nyte_plus@sjtu.edu.cn>
 - Jeremy Schoemaker <jeremy@shoemoney.com>
+- solunolab <solunolab@outlook.com>
+- Mattias Michaux <mattias.michaux@gmail.com>
+- jxj <xinjun.jiang@daocloud.io>
+- Harsh Raj Singhania <40535627+HarshRajSinghania@users.noreply.github.com>
+- Roland <vv22345@163.com>

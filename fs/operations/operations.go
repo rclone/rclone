@@ -1721,6 +1721,10 @@ func copyDest(ctx context.Context, fdst fs.Fs, dst, src fs.Object, CopyDest, bac
 	opt.updateModTime = false
 	if equal(ctx, src, CopyDestFile, opt) {
 		if dst == nil || !Equal(ctx, src, dst) {
+			// Leave a different destination for the caller to reject
+			if dst != nil && fs.GetConfig(ctx).Immutable {
+				return false, nil
+			}
 			if dst != nil && backupDir != nil {
 				err = MoveBackupDir(ctx, backupDir, dst)
 				if err != nil {
@@ -2090,6 +2094,9 @@ func MoveCaseInsensitive(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileNam
 // moveOrCopyFile moves or copies a single file possibly to a new name
 func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFileName string, cp bool, allowOverlap bool) (err error) {
 	ci := fs.GetConfig(ctx)
+	if ci.NoCheckDest && ci.Immutable {
+		return errors.New("can't use --no-check-dest with --immutable")
+	}
 	logger, usingLogger := GetLogger(ctx)
 	dstFilePath := path.Join(fdst.Root(), dstFileName)
 	srcFilePath := path.Join(fsrc.Root(), srcFileName)
@@ -2171,6 +2178,13 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 		}
 	}
 	if needTransfer {
+		// If files are treated as immutable, fail if destination exists and does not match
+		if ci.Immutable && dstObj != nil {
+			err = fs.CountError(ctx, fserrors.NoRetryError(fs.ErrorImmutableModified))
+			fs.Errorf(dstObj, "Source and destination exist but do not match: %v", err)
+			logger(ctx, TransferError, srcObj, dstObj, err)
+			return err
+		}
 		// If destination already exists, then we must move it into --backup-dir if required
 		if dstObj != nil && backupDir != nil {
 			err = MoveBackupDir(ctx, backupDir, dstObj)

@@ -2315,7 +2315,31 @@ func versionLess(a, b *types.ObjectVersion) bool {
 // types.ObjectVersion with Size = isDeleteMarker to tell them apart
 //
 // We then merge them back into the Versions in the correct order
-func mergeDeleteMarkers(oldVersions []types.ObjectVersion, deleteMarkers []types.DeleteMarkerEntry) (newVersions []types.ObjectVersion) {
+func mergeDeleteMarkers(oldVersions []types.ObjectVersion, deleteMarkers []types.DeleteMarkerEntry, urlEncoded bool) (newVersions []types.ObjectVersion) {
+	encodedKeys := make(map[string]string)
+	if urlEncoded {
+		// URL encoding can change key order, so compare decoded keys and restore the encoded keys for the caller.
+		oldVersions = append([]types.ObjectVersion(nil), oldVersions...)
+		deleteMarkers = append([]types.DeleteMarkerEntry(nil), deleteMarkers...)
+		decodeKey := func(key **string) {
+			if *key == nil {
+				return
+			}
+			encodedKey := **key
+			decodedKey, err := url.QueryUnescape(encodedKey)
+			if err != nil {
+				return
+			}
+			encodedKeys[decodedKey] = encodedKey
+			*key = &decodedKey
+		}
+		for i := range oldVersions {
+			decodeKey(&oldVersions[i].Key)
+		}
+		for i := range deleteMarkers {
+			decodeKey(&deleteMarkers[i].Key)
+		}
+	}
 	newVersions = make([]types.ObjectVersion, 0, len(oldVersions)+len(deleteMarkers))
 	for _, deleteMarker := range deleteMarkers {
 		var obj types.ObjectVersion
@@ -2330,6 +2354,11 @@ func mergeDeleteMarkers(oldVersions []types.ObjectVersion, deleteMarkers []types
 	}
 	// Merge any remaining versions
 	newVersions = append(newVersions, oldVersions...)
+	for i := range newVersions {
+		if encodedKey, ok := encodedKeys[deref(newVersions[i].Key)]; ok {
+			newVersions[i].Key = &encodedKey
+		}
+	}
 	return newVersions
 }
 
@@ -2369,7 +2398,7 @@ func (ls *versionsList) List(ctx context.Context) (resp *s3.ListObjectsV2Output,
 
 	// Merge in delete Markers as types.ObjectVersion if we need them
 	if ls.hidden || ls.usingVersionAt {
-		respVersions.Versions = mergeDeleteMarkers(respVersions.Versions, respVersions.DeleteMarkers)
+		respVersions.Versions = mergeDeleteMarkers(respVersions.Versions, respVersions.DeleteMarkers, ls.req.EncodingType == types.EncodingTypeUrl)
 	}
 
 	// Convert the Versions and the DeleteMarkers into an array of types.Object
@@ -2396,6 +2425,8 @@ func (ls *versionsList) List(ctx context.Context) (resp *s3.ListObjectsV2Output,
 		var obj types.Object
 		//structs.SetFrom(obj, objVersion)
 		setFrom_typesObject_typesObjectVersion(&obj, &objVersion)
+		// StorageClass has a different type in ObjectVersion so isn't copied by setFrom
+		obj.StorageClass = types.ObjectStorageClass(objVersion.StorageClass)
 		// Adjust the file names
 		if !ls.usingVersionAt && (!deref(objVersion.IsLatest) || objVersion.Size == isDeleteMarker) {
 			if obj.Key != nil && objVersion.LastModified != nil {
@@ -4498,7 +4529,16 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	})
 	if awsError, ok := errors.AsType[smithy.APIError](err); ok {
 		if awsError.ErrorCode() == "InvalidObjectState" {
-			return nil, fmt.Errorf("Object in GLACIER, restore first: bucket=%q, key=%q", bucket, bucketPath)
+			storageClass := "GLACIER"
+			if stateErr, ok := errors.AsType[*types.InvalidObjectState](err); ok && stateErr.StorageClass != "" {
+				storageClass = string(stateErr.StorageClass)
+				if stateErr.AccessTier != "" {
+					storageClass += " (" + string(stateErr.AccessTier) + " tier)"
+				}
+			} else if o.storageClass != nil && *o.storageClass != "" {
+				storageClass = *o.storageClass
+			}
+			return nil, fmt.Errorf("Object in %s, restore first: bucket=%q, key=%q", storageClass, bucket, bucketPath)
 		}
 	}
 	if err != nil {
@@ -4755,7 +4795,7 @@ func (w *s3ChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 
 	w.addCompletedPart(s3PartNumber, uout.ETag)
 
-	fs.Debugf(w.o, "multipart upload wrote chunk %d with %v bytes and etag %v", chunkNumber+1, currentChunkSize, *uout.ETag)
+	fs.Debugf(w.o, "multipart upload wrote chunk %d with %v bytes, etag %v and md5 %v", chunkNumber+1, currentChunkSize, *uout.ETag, hex.EncodeToString(md5sumBinary))
 	return currentChunkSize, err
 }
 

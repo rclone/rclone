@@ -689,10 +689,10 @@ func rcBatch(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 
 	// Read concurrency
-	concurrency, err := in.GetInt64("concurrency")
+	concurrency, err := in.GetInt("concurrency")
 	if rc.IsErrParamNotFound(err) {
 		ci := fs.GetConfig(ctx)
-		concurrency = int64(ci.Transfers)
+		concurrency = ci.Transfers
 	} else if err != nil {
 		return nil, err
 	}
@@ -702,7 +702,7 @@ func rcBatch(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	out["results"] = results
 
 	g, gCtx := errgroup.WithContext(ctx)
-	g.SetLimit(int(concurrency))
+	g.SetLimit(concurrency)
 	for i, inputAny := range inputs {
 		input, ok := inputAny.(map[string]any)
 		if !ok {

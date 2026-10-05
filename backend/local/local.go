@@ -12,6 +12,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -36,6 +37,10 @@ import (
 const (
 	devUnset   = 0xdeadbeefcafebabe                                     // a device id meaning it is unset
 	useReadDir = (runtime.GOOS == "windows" || runtime.GOOS == "plan9") // these OSes read FileInfos directly
+	// maxLinkTargetSize is the largest symlink target accepted when
+	// translating a .rclonelink object, comfortably above any OS path
+	// limit (Windows allows 32767 UTF-16 units).
+	maxLinkTargetSize = 128 * 1024
 )
 
 // timeType allows the user to choose what exactly ModTime() returns
@@ -438,6 +443,8 @@ var (
 	errLinksAndCopyLinks = errors.New("can't use -l/--links with -L/--copy-links")
 	errLinksNeedsSuffix  = errors.New("need \"" + fs.LinkSuffix + "\" suffix to refer to symlink when using -l/--links")
 	errPathEscapes       = errors.New("file name is not a path within the local root - check the encoding")
+	errSymlinkLoop       = errors.New("loop detected: points to a parent directory")
+	errLinkTargetTooLong = errors.New("symlink target is too long to be a path")
 )
 
 // NewFs constructs an Fs from the path
@@ -668,6 +675,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if err != nil {
 		return nil, fs.ErrorDirNotFound
 	}
+	var parents []os.FileInfo // fsDirPath and its parents, read on first use
 
 	fd, err := os.Open(fsDirPath)
 	if err != nil {
@@ -748,11 +756,28 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			if f.opt.FollowSymlinks && (mode&symlinkFlag) != 0 {
 				localPath := filepath.Join(fsDirPath, name)
 				fi, err = os.Stat(localPath)
+				// A directory symlink pointing to a parent would be followed
+				// until the OS returns ELOOP, which can take a very long time
+				if err == nil && fi.IsDir() {
+					if parents == nil {
+						parents = statParents(fsDirPath)
+					}
+					if slices.ContainsFunc(parents, func(parent os.FileInfo) bool { return os.SameFile(fi, parent) }) {
+						// Quietly skip loops the directory filters exclude as
+						// the layer above wouldn't recurse into them
+						if useFilter {
+							if include, dirErr := filter.IncludeDirectory(ctx, f)(newRemote); dirErr == nil && !include {
+								continue
+							}
+						}
+						err = errSymlinkLoop
+					}
+				}
 				// Quietly skip errors on excluded files and directories
 				if err != nil && useFilter && !filter.IncludeRemote(newRemote) {
 					continue
 				}
-				if os.IsNotExist(err) || isCircularSymlinkError(err) {
+				if os.IsNotExist(err) || isCircularSymlinkError(err) || errors.Is(err, errSymlinkLoop) {
 					// Skip bad symlinks and circular symlinks
 					err = fserrors.NoRetryError(fmt.Errorf("symlink: %w", err))
 					fs.Errorf(newRemote, "Listing error: %v", err)
@@ -795,6 +820,21 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		}
 	}
 	return entries, nil
+}
+
+// statParents returns the info for dirPath and each of its parents up
+// to the root of the file system, skipping any which can't be read.
+func statParents(dirPath string) (parents []os.FileInfo) {
+	for {
+		if fi, err := os.Stat(dirPath); err == nil {
+			parents = append(parents, fi)
+		}
+		parent := filepath.Dir(dirPath)
+		if parent == dirPath {
+			return parents
+		}
+		dirPath = parent
+	}
 }
 
 func (f *Fs) cleanRemote(dir, filename string) (remote string) {
@@ -1701,6 +1741,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 		out = f
 	} else {
+		// The target is buffered in memory, so stop reading just past
+		// the longest acceptable one rather than trust the source
+		in = io.LimitReader(in, maxLinkTargetSize+1)
 		out = nopWriterCloser{&symlinkData}
 	}
 
@@ -1717,6 +1760,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	if o.translatedLink {
+		if err == nil && symlinkData.Len() > maxLinkTargetSize {
+			err = fserrors.NoRetryError(errLinkTargetTooLong)
+		}
 		if err == nil {
 			// Use the contents of the copied object to create a symlink,
 			// without following or creating it through a planted symlink

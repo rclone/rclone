@@ -433,12 +433,13 @@ func TestDeleteFatalError(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
 	ci.Checkers = 2
-	ci.MaxDelete = 1
 	r := fstest.NewRun(t)
 	// More files than the deleters' channel can hold
 	for i := range 20 {
 		r.WriteObject(ctx, fmt.Sprintf("file%d", i), "x", t1)
 	}
+	// Set after writing the files as some backends (eg chunker) delete while uploading
+	ci.MaxDelete = 1
 
 	done := make(chan error, 1)
 	go func() {
@@ -1081,6 +1082,25 @@ func TestMoveFileWithIgnoreExisting(t *testing.T) {
 	r.CheckRemoteItems(t, file1)
 }
 
+func TestMoveFileImmutable(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	defer accounting.GlobalStats().ResetCounters()
+
+	ci.Immutable = true
+
+	file1 := r.WriteObject(ctx, "existing", "potato", t1)
+	r.CheckRemoteItems(t, file1)
+
+	// Should fail with ErrorImmutableModified and leave the source in place
+	file2 := r.WriteFile("existing", "tomatoes", t2)
+	err := operations.MoveFile(ctx, r.Fremote, r.Flocal, file2.Path, file2.Path)
+	assert.ErrorIs(t, err, fs.ErrorImmutableModified)
+	r.CheckLocalItems(t, file2)
+	r.CheckRemoteItems(t, file1)
+}
+
 func TestCaseInsensitiveMoveFile(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
@@ -1464,6 +1484,11 @@ type noDirMoveFs struct {
 func (f *noDirMoveFs) Features() *fs.Features { return f.features }
 
 func newNoDirMoveFs(t *testing.T, wrapped fs.Fs, failOn string) *noDirMoveFs {
+	// This tests the core DirMove logic, and on other backends the
+	// objects may not belong to wrapped or there may be no Move.
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping test on non local remote")
+	}
 	move := wrapped.Features().Move
 	require.NotNil(t, move, "the test needs a backend with Move")
 	f := &noDirMoveFs{

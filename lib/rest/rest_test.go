@@ -1,7 +1,9 @@
 package rest
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -178,5 +180,53 @@ func TestRefuseHTTPSDowngradeRedirectEndToEnd(t *testing.T) {
 		require.Error(t, err)
 		assert.ErrorIs(t, err, ErrHTTPSDowngrade)
 		assert.False(t, sawAuth.Load(), "plaintext hop must not receive credentials")
+	})
+}
+
+// TestReadBodyLimit checks that ReadBody refuses to buffer more than
+// drainLimit bytes, so a server streaming an endless response can't
+// make rclone allocate memory without bound.
+func TestReadBodyLimit(t *testing.T) {
+	newResp := func(body io.Reader) *http.Response {
+		return &http.Response{Body: io.NopCloser(body)}
+	}
+	t.Run("AtLimit", func(t *testing.T) {
+		want := bytes.Repeat([]byte("x"), drainLimit)
+		got, err := ReadBody(newResp(bytes.NewReader(want)))
+		require.NoError(t, err)
+		assert.Equal(t, want, got)
+	})
+	t.Run("OverLimit", func(t *testing.T) {
+		got, err := ReadBody(newResp(bytes.NewReader(make([]byte, drainLimit+1))))
+		assert.ErrorIs(t, err, ErrBodyTooLarge)
+		assert.Nil(t, got)
+	})
+
+	// A server which answers with an error status and then streams a
+	// body far bigger than drainLimit. The default error handler must
+	// give up at the limit rather than read it all.
+	t.Run("EndlessErrorBody", func(t *testing.T) {
+		const chunk = 1 << 20
+		const maxChunks = 64 // bounds the test if the client keeps reading
+		var written atomic.Int64
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+			buf := bytes.Repeat([]byte("x"), chunk)
+			for range maxChunks {
+				n, err := w.Write(buf)
+				written.Add(int64(n))
+				if err != nil {
+					return
+				}
+				w.(http.Flusher).Flush()
+			}
+		}))
+		t.Cleanup(srv.Close)
+
+		api := NewClient(srv.Client()).SetRoot(srv.URL)
+		_, err := api.Call(context.Background(), &Opts{Method: "GET", Path: "/"})
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrBodyTooLarge)
+		assert.Less(t, written.Load(), int64(maxChunks*chunk), "client should stop reading before the server stops sending")
 	})
 }

@@ -213,6 +213,9 @@ $ rclone -L ls /tmp/a
         6 b/one
 ```
 
+Symlinks which point to a parent directory would loop forever, so
+rclone reports them as errors and skips them.
+
 #### --local-links, --links, -l
 
 Normally rclone will ignore symlinks or junction points (which behave
@@ -268,6 +271,9 @@ $ tree /tmp/b
 ├── file1 -> ./file4
 └── file2 -> /home/user/file3
 ```
+
+A `.rclonelink` file whose contents are too long to be a path (more
+than 128 KiB) is refused rather than turned into a symlink.
 
 However, if copied back without '-l'
 

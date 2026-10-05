@@ -43,10 +43,24 @@ func NewClient(c *http.Client) *Client {
 	return api
 }
 
+// ErrBodyTooLarge is returned by ReadBody when the response body is
+// bigger than the limit it will read into memory.
+var ErrBodyTooLarge = errors.New("response body too large")
+
 // ReadBody reads resp.Body into result, closing the body
+//
+// It reads at most drainLimit bytes and returns ErrBodyTooLarge if the
+// body is bigger than that, so a misbehaving server can't make rclone
+// buffer an unbounded response in memory. It is intended for small API
+// responses (error bodies, status documents, upload tokens), not for
+// file data.
 func ReadBody(resp *http.Response) (result []byte, err error) {
 	defer fs.CheckClose(resp.Body, &err)
-	return io.ReadAll(resp.Body)
+	result, err = io.ReadAll(io.LimitReader(resp.Body, drainLimit+1))
+	if err == nil && len(result) > drainLimit {
+		return nil, ErrBodyTooLarge
+	}
+	return result, err
 }
 
 // defaultErrorHandler doesn't attempt to parse the http body, just
@@ -164,6 +178,9 @@ func (o *Opts) Copy() *Opts {
 	return &newOpts
 }
 
+// drainLimit is the most of a response body that will be consumed
+// from the network, whether it is being read by ReadBody or discarded
+// by drainAndClose.
 const drainLimit = 10 * 1024 * 1024
 
 // drainAndClose discards up to drainLimit bytes from r and closes
