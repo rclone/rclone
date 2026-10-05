@@ -122,6 +122,16 @@ backends:
      - TestMoveFileWithIgnoreExisting
      - TestMoveFileImmutable
      - TestCopyFileCompareDest
+     - TestLsWithFilesFrom
+     - TestIndex
+     - TestIndexFilter
+     - TestIndexRules
+     - TestIndexMaxDepth
+     - TestIndexLinkIndex
+     - TestIndexDirTime
+     - TestIndexTemplate
+     - TestIndexChanged
+     - TestIndexChangedFiles
      # fs/sync
      - TestSyncCompareDest
      #vfs
