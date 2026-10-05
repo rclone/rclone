@@ -6,10 +6,14 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 
+	auth "github.com/abbot/go-http-auth"
 	"github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/backend/webdav"
 	"github.com/rclone/rclone/fs"
@@ -19,6 +23,7 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	netwebdav "golang.org/x/net/webdav"
 )
 
 var (
@@ -353,4 +358,261 @@ func TestListAllRetryDoesNotConcatenate(t *testing.T) {
 		want = append(want, fmt.Sprintf("file-%03d.bin", i))
 	}
 	assert.ElementsMatch(t, want, remotes)
+}
+
+// digestServer runs a WebDAV server on dir which only accepts digest
+// authentication and returns a count of the requests it received.
+func digestServer(t *testing.T, dir string, testUser, testPass, testDigestRealm string) (*httptest.Server, *atomic.Int32) {
+	t.Helper()
+	var requests atomic.Int32
+	authenticator := auth.NewDigestAuthenticator(testDigestRealm, func(user, realm string) string {
+		if user == testUser {
+			return testPass
+		}
+		return ""
+	})
+	authenticator.PlainTextSecrets = true // the callback returns the password, not an HA1 hash
+	handler := &netwebdav.Handler{
+		FileSystem: netwebdav.Dir(dir),
+		LockSystem: netwebdav.NewMemLS(),
+	}
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		authenticator.Wrap(func(w http.ResponseWriter, ar *auth.AuthenticatedRequest) {
+			handler.ServeHTTP(w, &ar.Request)
+		})(w, r)
+	}))
+	t.Cleanup(ts.Close)
+	return ts, &requests
+}
+
+// TestDigestAuth checks that a server which only accepts digest authentication
+// can be listed, and that each listing after the first costs a single request.
+//
+// The nonce count must increase for every signed request: a server which sees
+// one repeated treats it as a replay, answers 401 with a fresh nonce, and the
+// listing costs two round trips instead of one.
+func TestDigestAuth(t *testing.T) {
+	testDigestFilename := "testDigestAuthFile.txt"
+	testDigestFilenameContent := []byte("hello world")
+
+	testDigestAuthUser := "user"
+	testDigestAuthPwd := "pwd"
+	testDigestAuthRealm := "test"
+
+	ctx := context.Background()
+
+	dir := t.TempDir()
+	err := os.WriteFile(filepath.Join(dir, testDigestFilename), testDigestFilenameContent, 0600)
+	require.NoError(t, err)
+	configfile.Install()
+
+	ts, requests := digestServer(t, dir, testDigestAuthUser, testDigestAuthPwd, testDigestAuthRealm)
+	f, err := webdav.NewFs(ctx, remoteName, "", configmap.Simple{
+		"type": "webdav",
+		"url":  ts.URL,
+		"user": testDigestAuthUser,
+		"pass": obscure.MustObscure(testDigestAuthPwd),
+	})
+	require.NoError(t, err)
+
+	reqCount := 3
+	for range reqCount {
+		entries, err := f.List(ctx, "")
+		require.NoError(t, err)
+		require.Len(t, entries, 1)
+		assert.Equal(t, testDigestFilename, entries[0].Remote())
+		assert.Equal(t, int64(len(testDigestFilenameContent)), entries[0].Size())
+	}
+
+	// 1 unsigned request to get the challenge, then one signed request for each
+	assert.Equal(t, int32(reqCount+1), requests.Load())
+}
+
+// TestDigestAuthWrongPassword checks that bad credentials fail after a single
+// signed attempt rather than being retried against the server ten times.
+//
+// Every 401 carries a challenge, including the ones rejecting a signature, so
+// the retry has to tell a first challenge from a rejection.
+func TestDigestAuthWrongPassword(t *testing.T) {
+	testDigestAuthUser := "user"
+	testDigestAuthPwd := "pwd"
+	testDigestAuthRealm := "test"
+
+	ctx := context.Background()
+
+	configfile.Install()
+
+	ts, requests := digestServer(t, t.TempDir(), testDigestAuthUser, testDigestAuthPwd, testDigestAuthRealm)
+	f, err := webdav.NewFs(ctx, remoteName, "", configmap.Simple{
+		"type": "webdav",
+		"url":  ts.URL,
+		"user": testDigestAuthUser,
+		"pass": obscure.MustObscure("wrong" + testDigestAuthPwd),
+	})
+	require.NoError(t, err)
+
+	_, err = f.List(ctx, "")
+	require.Error(t, err)
+
+	// 1 unsigned request to get the challenge, then 1 signed attempt which the
+	// server rejects because of the wrong password
+	assert.Equal(t, int32(2), requests.Load())
+}
+
+// TestDigestAuthStaleNonce checks that a request signed with an expired nonce
+// is signed again with the replacement the server sends.
+//
+// A server only sets stale=true when the credentials were correct and the
+// nonce had expired, so unlike any other 401 to a signed request, it is worth
+// retrying.
+func TestDigestAuthStaleNonce(t *testing.T) {
+	ctx := context.Background()
+
+	var requests atomic.Int32
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authorisation := r.Header.Get("Authorization")
+		switch n := requests.Add(1); {
+		case n == 1:
+			// rclone sends basic authentication until it knows better
+			assert.False(t, strings.HasPrefix(authorisation, "Digest "), "first request can't be signed yet")
+			w.Header().Set("WWW-Authenticate", `Digest realm="test", nonce="nonce-1", algorithm=MD5, qop="auth"`)
+			w.WriteHeader(http.StatusUnauthorized)
+		case n == 2:
+			// the nonce has expired, so ask for a signature made with a new one
+			assert.Contains(t, authorisation, `nonce="nonce-1"`)
+			w.Header().Set("WWW-Authenticate", `Digest realm="test", nonce="nonce-2", algorithm=MD5, qop="auth", stale=true`)
+			w.WriteHeader(http.StatusUnauthorized)
+		default:
+			assert.Contains(t, authorisation, `nonce="nonce-2"`, "the stale nonce should have been replaced")
+			_, err := fmt.Fprint(w, `<d:multistatus xmlns:d="DAV:"></d:multistatus>`)
+			require.NoError(t, err)
+		}
+	}))
+	defer ts.Close()
+
+	configfile.Install()
+	f, err := webdav.NewFs(ctx, remoteName, "", configmap.Simple{
+		"type": "webdav",
+		"url":  ts.URL,
+		"user": "user",
+		"pass": obscure.MustObscure("pwd"),
+	})
+	require.NoError(t, err)
+
+	_, err = f.List(ctx, "")
+	require.NoError(t, err)
+
+	// 1 unsigned, 1 signed with the expired nonce, 1 signed with the new nonce
+	assert.Equal(t, int32(3), requests.Load())
+}
+
+// TestDigestAuthRedirectToOtherHost checks that a redirect somewhere else is
+// sent unsigned, so the credentials only reach the host which asked for them.
+func TestDigestAuthRedirectToOtherHost(t *testing.T) {
+	ctx := context.Background()
+
+	// the redirect target, which should never see a digest signature
+	var otherAuth atomic.Value
+	otherAuth.Store("")
+	other := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		otherAuth.Store(r.Header.Get("Authorization"))
+		_, err := fmt.Fprint(w, `<d:multistatus xmlns:d="DAV:"></d:multistatus>`)
+		require.NoError(t, err)
+	}))
+	defer other.Close()
+
+	// challenges once, then redirects the signed retry to the other host
+	var originAuth atomic.Value
+	originAuth.Store("")
+	var requests atomic.Int32
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if requests.Add(1) == 1 {
+			w.Header().Set("WWW-Authenticate", `Digest realm="test", nonce="nonce-1", algorithm=MD5, qop="auth"`)
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		originAuth.Store(r.Header.Get("Authorization"))
+		http.Redirect(w, r, other.URL+"/", http.StatusFound)
+	}))
+	defer ts.Close()
+
+	configfile.Install()
+	f, err := webdav.NewFs(ctx, remoteName, "", configmap.Simple{
+		"type": "webdav",
+		"url":  ts.URL,
+		"user": "user",
+		"pass": obscure.MustObscure("pwd"),
+	})
+	require.NoError(t, err)
+
+	_, err = f.List(ctx, "")
+	require.NoError(t, err)
+
+	assert.Contains(t, originAuth.Load(), "Digest ", "the challenging host should be signed")
+	assert.NotContains(t, otherAuth.Load(), "Digest ", "another host shouldn't be sent the credentials")
+}
+
+// TestDigestAuthUpload checks that a file can be uploaded to a server which
+// only accepts digest authentication.
+//
+// The signature covers the request URI but not the body, so the body
+// is streamed rather than held in memory to be sent a second time.
+func TestDigestAuthUpload(t *testing.T) {
+	testDigestAuthUser := "user"
+	testDigestAuthPwd := "pwd"
+	testDigestAuthRealm := "test"
+
+	testDigestFilename := "testDigestAuthFile.txt"
+	testDigestFilenameContent := "hello world"
+
+	ctx := context.Background()
+
+	dir := t.TempDir()
+	configfile.Install()
+
+	ts, _ := digestServer(t, dir, testDigestAuthUser, testDigestAuthPwd, testDigestAuthRealm)
+	f, err := webdav.NewFs(ctx, remoteName, "", configmap.Simple{
+		"type": "webdav",
+		"url":  ts.URL,
+		"user": testDigestAuthUser,
+		"pass": obscure.MustObscure(testDigestAuthPwd),
+	})
+	require.NoError(t, err)
+
+	_, err = operations.Rcat(ctx, f, testDigestFilename,
+		io.NopCloser(strings.NewReader(testDigestFilenameContent)), time.Now(), nil)
+	require.NoError(t, err)
+
+	written, err := os.ReadFile(filepath.Join(dir, testDigestFilename))
+	require.NoError(t, err)
+	assert.Equal(t, testDigestFilenameContent, string(written))
+}
+
+// TestBasicAuthNotRetried checks that a 401 from a server which doesn't offer
+// digest authentication is reported straight away
+func TestBasicAuthNotRetried(t *testing.T) {
+	ctx := context.Background()
+
+	var requests atomic.Int32
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		w.Header().Set("WWW-Authenticate", `Basic realm="test"`)
+		w.WriteHeader(http.StatusUnauthorized)
+	}))
+	defer ts.Close()
+
+	configfile.Install()
+	f, err := webdav.NewFs(ctx, remoteName, "", configmap.Simple{
+		"type": "webdav",
+		"url":  ts.URL,
+		"user": "user",
+		"pass": obscure.MustObscure("pwd"),
+	})
+	require.NoError(t, err)
+
+	_, err = f.List(ctx, "")
+	require.Error(t, err)
+	assert.Equal(t, int32(1), requests.Load(), "a 401 without a digest challenge shouldn't be retried")
 }
