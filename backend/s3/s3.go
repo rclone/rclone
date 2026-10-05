@@ -1446,10 +1446,15 @@ func fixupRequest(o *s3.Options, opt *Options) {
 	)
 
 	o.APIOptions = append(o.APIOptions, func(stack *middleware.Stack) error {
-		if err := stack.Finalize.Insert(fixup, "Signing", middleware.Before); err != nil {
+		// Presigning replaces the "Signing" middleware before APIOptions run
+		signing := "Signing"
+		if _, ok := stack.Finalize.Get(signing); !ok {
+			signing = "PresignHTTPRequest"
+		}
+		if err := stack.Finalize.Insert(fixup, signing, middleware.Before); err != nil {
 			return err
 		}
-		if err := stack.Finalize.Insert(restore, "Signing", middleware.After); err != nil {
+		if err := stack.Finalize.Insert(restore, signing, middleware.After); err != nil {
 			return err
 		}
 		return nil
