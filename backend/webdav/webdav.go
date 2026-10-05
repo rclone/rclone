@@ -548,6 +548,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if !f.findHeader(opt.Headers, "Referer") {
 		f.srv.SetHeader("Referer", u.String())
 	}
+	// Nextcloud public shares reject requests without this header
+	if opt.Vendor == "nextcloud" && strings.Contains(u.Path, "public.php/dav/files") && !f.findHeader(opt.Headers, "X-Requested-With") {
+		f.srv.SetHeader("X-Requested-With", "XMLHttpRequest")
+	}
 
 	if root != "" && !rootIsDir {
 		// Check to see if the root actually an existing file
