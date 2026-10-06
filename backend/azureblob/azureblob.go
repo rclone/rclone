@@ -1318,6 +1318,13 @@ func (f *Fs) listBlobsPager(ctx context.Context, containerName, directory, prefi
 				fs.Debugf(f, "Nil name received")
 				continue
 			}
+			// Storage accounts with a hierarchical namespace return
+			// the file "dir" when listing "dir/"
+			if !strings.HasPrefix(*file.Name, directory) {
+				fs.Debugf(f, "Ignoring %q not in directory %q", *file.Name, directory)
+				foundItems--
+				continue
+			}
 			remote := f.opt.Enc.ToStandardPath(*file.Name)
 			if !strings.HasPrefix(remote, prefix) {
 				fs.Debugf(f, "Odd name received %q", remote)
