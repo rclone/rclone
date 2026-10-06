@@ -28,6 +28,7 @@ import (
 	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
+	"golang.org/x/sync/singleflight"
 )
 
 // Help contains text describing how to use the proxy
@@ -180,7 +181,8 @@ type Proxy struct {
 	ctx         context.Context // for global config
 	Opt         Options
 	vfsOpt      vfscommon.Options
-	accessKeyMu sync.Mutex // serialises replacing a cached access key entry
+	accessKeyMu sync.Mutex         // serialises replacing a cached access key entry
+	calls       singleflight.Group // shares the calls made by logins which arrive together
 }
 
 // cacheEntry is what is stored in the vfsCache
@@ -457,7 +459,13 @@ func (p *Proxy) Call(user, auth string, isPublicKey bool, remoteAddr string) (VF
 		if isPublicKey {
 			kind = authPublicKey
 		}
-		value, err = p.call(user, auth, kind, clientIP)
+		// Logins with the same credentials which arrive together
+		// share one call, as each call which made its own cache
+		// entry would take a reference to the VFS but only the
+		// last entry made would be kept to give its reference back.
+		value, err, _ = p.calls.Do(cacheKey, func() (any, error) {
+			return p.call(user, auth, kind, clientIP)
+		})
 		if err != nil {
 			return nil, "", err
 		}

@@ -6,6 +6,8 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/base64"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -500,4 +502,36 @@ func TestBusyVFSNotExpired(t *testing.T) {
 		return p.vfsCache.Entries() == 0
 	}, 10*time.Second, 10*time.Millisecond, "VFS not expired once it had nothing to write")
 	assert.Equal(t, int32(0), VFS.Stats()["inUse"], "VFS not shut down once it had nothing to write")
+}
+
+// TestSimultaneousLogins checks logins with the same credentials which
+// arrive together share one run of the proxy and one reference to the
+// VFS, so the VFS is shut down when it expires from the cache.
+func TestSimultaneousLogins(t *testing.T) {
+	runLog := filepath.Join(t.TempDir(), "runs")
+	t.Setenv("RCLONE_TEST_PROXY_RUN_LOG", runLog)
+	opt := Opt
+	opt.AuthProxy = "go run proxy_code.go"
+	p := New(context.Background(), &opt, &vfscommon.Opt)
+	defer p.Shutdown()
+
+	var wg sync.WaitGroup
+	VFSes := make([]*vfs.VFS, 4)
+	for i := range VFSes {
+		wg.Go(func() {
+			var err error
+			VFSes[i], _, err = p.Call("user", "pass", false, "192.0.2.1:1024")
+			assert.NoError(t, err)
+		})
+	}
+	wg.Wait()
+
+	runs, err := os.ReadFile(runLog)
+	require.NoError(t, err)
+	assert.Equal(t, "user\n", string(runs), "proxy run more than once")
+	for _, VFS := range VFSes {
+		require.Same(t, VFSes[0], VFS)
+	}
+	assert.Equal(t, 1, p.vfsCache.Entries())
+	assert.Equal(t, int32(1), VFSes[0].Stats()["inUse"], "VFS referenced more than once")
 }
