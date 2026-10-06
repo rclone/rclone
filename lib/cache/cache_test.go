@@ -383,3 +383,64 @@ func TestCacheFinalize(t *testing.T) {
 	c.cacheExpire() // "ok" and "new" fall out of cache
 	assert.Equal(t, 6, numCalled)
 }
+
+func TestCacheCanExpire(t *testing.T) {
+	c := New()
+	finalized := 0
+	c.SetFinalizer(func(v any) {
+		finalized++
+	})
+	busy := true
+	c.SetCanExpire(func(v any) bool {
+		// Must be callable without the lock
+		assert.Equal(t, 2, c.Entries())
+		return v != "busy" || !busy
+	})
+	create := func(path string) (any, bool, error) {
+		return path, true, nil
+	}
+	c.expireDuration = 1 * time.Millisecond
+	_, _ = c.Get("busy", create)
+	_, _ = c.Get("pinned", create)
+	c.Pin("pinned")
+	time.Sleep(2 * time.Millisecond)
+
+	// Neither the busy nor the pinned entry expire
+	c.cacheExpire()
+	assert.Equal(t, 2, c.Entries())
+	assert.Equal(t, 0, finalized)
+	assert.Equal(t, true, c.expireRunning)
+
+	// The busy entry expires as soon as it is no longer busy
+	busy = false
+	c.cacheExpire()
+	assert.Equal(t, 1, c.Entries())
+	assert.Equal(t, 1, finalized)
+	_, found := c.GetMaybe("pinned")
+	assert.True(t, found)
+}
+
+func TestCacheCanExpireUsed(t *testing.T) {
+	c := New()
+	finalized := 0
+	c.SetFinalizer(func(v any) {
+		finalized++
+	})
+	create := func(path string) (any, bool, error) {
+		return path, true, nil
+	}
+	// Use the entry while it is being asked about
+	c.SetCanExpire(func(v any) bool {
+		_, _ = c.Get("/", create)
+		return true
+	})
+	c.expireDuration = 1 * time.Second
+	_, _ = c.Get("/", create)
+	c.mu.Lock()
+	c.cache["/"].lastUsed = time.Now().Add(-time.Minute)
+	c.mu.Unlock()
+
+	c.cacheExpire()
+	assert.Equal(t, 1, c.Entries())
+	assert.Equal(t, 0, finalized)
+}
