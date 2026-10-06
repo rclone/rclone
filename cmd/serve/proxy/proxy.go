@@ -233,6 +233,13 @@ func New(ctx context.Context, opt *Options, vfsOpt *vfscommon.Options) *Proxy {
 			entry.vfs.Shutdown()
 		}
 	})
+	// Shutting down a VFS stops it writing, so keep one which still
+	// has data to write, e.g. files in the VFS cache waiting to be
+	// uploaded after the transfer which wrote them has finished.
+	p.vfsCache.SetCanExpire(func(value any) bool {
+		entry, ok := value.(cacheEntry)
+		return !ok || entry.vfs == nil || !entry.vfs.Busy()
+	})
 	return p
 }
 

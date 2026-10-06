@@ -475,3 +475,29 @@ func TestCallAccessKey(t *testing.T) {
 	_, _, err = p.CallAccessKey("AKID", remoteAddr, false)
 	require.ErrorContains(t, err, "revoked")
 }
+
+// TestBusyVFSNotExpired checks a VFS which still has data to write
+// isn't expired from the cache, and so shut down, until it is written.
+func TestBusyVFSNotExpired(t *testing.T) {
+	opt := Opt
+	opt.AuthProxy = "go run ../servetest/proxy_code.go " + t.TempDir()
+	p := New(context.Background(), &opt, &vfscommon.Opt)
+	defer p.Shutdown()
+	p.vfsCache.SetExpireDuration(time.Millisecond).SetExpireInterval(10 * time.Millisecond)
+
+	VFS, _, err := p.Call("user", "pass", false, "192.0.2.1:1024")
+	require.NoError(t, err)
+	fh, err := VFS.Create("file.txt")
+	require.NoError(t, err)
+
+	assert.Never(t, func() bool {
+		return p.vfsCache.Entries() == 0
+	}, 250*time.Millisecond, 10*time.Millisecond, "VFS expired with a file open for write")
+	assert.Equal(t, int32(1), VFS.Stats()["inUse"], "VFS shut down with a file open for write")
+
+	require.NoError(t, fh.Close())
+	assert.Eventually(t, func() bool {
+		return p.vfsCache.Entries() == 0
+	}, 10*time.Second, 10*time.Millisecond, "VFS not expired once it had nothing to write")
+	assert.Equal(t, int32(0), VFS.Stats()["inUse"], "VFS not shut down once it had nothing to write")
+}
