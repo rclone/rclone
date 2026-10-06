@@ -155,21 +155,37 @@ as necessary.
 ### Quota Relevant Policies
 
 Some policies rely on quota information. These policies should be used only if
-your upstreams support the respective quota fields. To check if your upstream supports the field,
-run `rclone about remote: [flags]` and see if the required field exists.
+your upstreams support the respective quota fields.
 
-| Policy     |   Required Field   |
-|------------|--------------------|
-| lfs, eplfs | Free               |
-| mfs, epmfs | Free               |
-| lus, eplus | Used               |
-| lno, eplno | Objects, Used¹     |
+| Policy     | Required Field |
+|------------|----------------|
+| lfs, eplfs | Free           |
+| mfs, epmfs | Free           |
+| lus, eplus | Used           |
+| lno, eplno | Objects        |
 
-¹ Objects are only available for S3-based upstreams. For better compatibility, since
-rclone v1.72.0 there is a fallback to normal listing (the same one performed by `rclone size`).
-When that happens, the following log message will appear on each operation:
-`WARNING: Number of objects not supported for upstream X, falling back to listing (this will be slower)...`.
-This usually consumes more API requests on the underlying remote. To avoid that, use another policy.
+To check if your upstream supports the field, run `rclone about remote: [flags]`
+and see if the required field exists.
+
+Few remotes report the number of objects and some don't report the used
+space either. If an upstream doesn't report the required field it is
+treated as 0, so the policy won't work as expected, and a notice is logged.
+
+For the **lus**, **eplus**, **lno** and **eplno** policies you can set
+`usage_by_listing = true` (`--union-usage-by-listing`) to find the used space
+and the number of objects of these upstreams by listing them instead, in the
+same way as `rclone size`. Be aware that:
+
+- Each upstream is listed in full the first time one of these policies needs
+  it, which can take a long time and use a lot of API calls on large
+  upstreams. Remotes which can list recursively are listed faster.
+- Objects created, updated and removed through the union are accounted for
+  without listing the upstream again.
+- To pick up changes made outside the union, the upstreams are listed again
+  in the background every `usage_by_listing_cache_time`, which defaults to
+  `cache_time`. For long running commands such as `rclone mount` on large
+  upstreams, raise it (for example to `1h`) or set it to `off` to only list
+  each upstream once.
 
 ### Filters
 

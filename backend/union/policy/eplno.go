@@ -19,10 +19,13 @@ type EpLno struct {
 }
 
 func (p *EpLno) lno(upstreams []*upstream.Fs) (*upstream.Fs, error) {
+	numObjs := usages(len(upstreams), func(i int) (int64, error) {
+		return upstreams[i].GetNumObjects()
+	})
 	var minNumObj int64 = math.MaxInt64
 	var lnoUpstream *upstream.Fs
-	for _, u := range upstreams {
-		numObj := u.GetNumObjects()
+	for i, u := range upstreams {
+		numObj := numObjs[i]
 		if minNumObj > numObj {
 			minNumObj = numObj
 			lnoUpstream = u
@@ -35,10 +38,13 @@ func (p *EpLno) lno(upstreams []*upstream.Fs) (*upstream.Fs, error) {
 }
 
 func (p *EpLno) lnoEntries(entries []upstream.Entry) (upstream.Entry, error) {
+	numObjs := usages(len(entries), func(i int) (int64, error) {
+		return entries[i].UpstreamFs().GetNumObjects()
+	})
 	var minNumObj int64 = math.MaxInt64
 	var lnoEntry upstream.Entry
-	for _, e := range entries {
-		numObj := e.UpstreamFs().GetNumObjects()
+	for i, e := range entries {
+		numObj := numObjs[i]
 		if minNumObj > numObj {
 			minNumObj = numObj
 			lnoEntry = e
