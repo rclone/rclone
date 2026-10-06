@@ -190,6 +190,28 @@ func TestVFSNewShuttingDown(t *testing.T) {
 	vfs2.Shutdown()
 }
 
+// TestVFSBusy checks Busy reports files open for write and cached
+// files which haven't been uploaded yet.
+func TestVFSBusy(t *testing.T) {
+	opt := vfscommon.Opt
+	opt.CacheMode = vfscommon.CacheModeWrites
+	opt.WriteBack = 10 * writeBackDelay
+	_, vfs := newTestVFSOpt(t, &opt)
+	assert.False(t, vfs.Busy())
+
+	fh, err := vfs.Create("file.txt")
+	require.NoError(t, err)
+	assert.True(t, vfs.Busy(), "not busy with a file open for write")
+
+	_, err = fh.WriteString("hello")
+	require.NoError(t, err)
+	require.NoError(t, fh.Close())
+	assert.True(t, vfs.Busy(), "not busy with a file waiting to be uploaded")
+
+	vfs.WaitForWriters(waitForWritersDelay)
+	assert.False(t, vfs.Busy(), "busy after the file was uploaded")
+}
+
 // TestVFSNewWithOpts sees if the New command works properly
 func TestVFSNewWithOpts(t *testing.T) {
 	var opt = vfscommon.Opt
