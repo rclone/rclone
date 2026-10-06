@@ -1838,7 +1838,7 @@ The result is a JSON array of matches, for example:
         "webViewLink": "https://drive.google.com/file/d/0AxBe_CDEF4zkGHI4d0FjYko2QkD/view?usp=drivesdk\u0026resourcekey=0-ABCDEFGHIXJQpIGqBJq3MC"
     }
 ]
-```console
+```
 
 ### rescue
 
