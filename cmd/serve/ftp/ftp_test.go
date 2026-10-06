@@ -9,8 +9,14 @@ package ftp
 
 import (
 	"context"
+	"io"
+	"os"
+	"path/filepath"
+	"sync"
 	"testing"
+	"time"
 
+	ftpclient "github.com/jlaffaye/ftp"
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/servetest"
@@ -19,6 +25,7 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/lib/israce"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
@@ -148,4 +155,96 @@ func TestNewServerError(t *testing.T) {
 	require.Error(t, err)
 	assert.Nil(t, d)
 	assert.Equal(t, before, vfs.ActiveCount(), "VFS leaked after failed server creation")
+}
+
+// TestAuthProxyTransferOutlivesCache checks transfers in progress
+// carry on working when the auth proxy drops their VFS from its cache,
+// as it does when a transfer takes longer than the cache expiry time.
+func TestAuthProxyTransferOutlivesCache(t *testing.T) {
+	const addr = "127.0.0.1:" + testPORT
+	root := t.TempDir()
+	contents := random.String(32 * 1024 * 1024)
+	require.NoError(t, os.WriteFile(filepath.Join(root, "download.bin"), []byte(contents), 0666))
+
+	prog, err := filepath.Abs("../servetest/proxy_code.go")
+	require.NoError(t, err)
+	opt := Opt
+	opt.ListenAddr = addr
+	opt.PassivePorts = testPASSIVEPORTRANGE
+	proxyOpt := proxy.Opt
+	proxyOpt.AuthProxy = "go run " + prog + " " + root
+	d, err := newServer(context.Background(), nil, &opt, &vfscommon.Opt, &proxyOpt)
+	require.NoError(t, err)
+	quit := make(chan struct{})
+	go func() {
+		assert.NoError(t, d.Serve())
+		close(quit)
+	}()
+	defer func() {
+		assert.NoError(t, d.Shutdown())
+		<-quit
+	}()
+
+	var c *ftpclient.ServerConn
+	require.Eventually(t, func() bool {
+		c, err = ftpclient.Dial(addr)
+		return err == nil
+	}, 10*time.Second, 10*time.Millisecond)
+	defer func() { _ = c.Quit() }()
+	require.NoError(t, c.Login(testUSER, testPASS))
+
+	// Only the IP of the address is used, which is the same as the client's
+	_, vfsKey, err := d.provider.Proxy().Call(testUSER, testPASS, false, addr)
+	require.NoError(t, err)
+
+	// expire waits for a transfer to be using the VFS, then drops
+	// everything from the proxy's cache as if it had expired.
+	expire := func(t *testing.T) {
+		var VFS *vfs.VFS
+		require.Eventually(t, func() bool {
+			VFS = d.provider.Proxy().Get(vfsKey)
+			return VFS != nil && VFS.Stats()["inUse"] == int32(2)
+		}, 10*time.Second, 10*time.Millisecond, "transfer isn't holding the VFS")
+		d.provider.Proxy().Shutdown()
+		assert.Equal(t, int32(1), VFS.Stats()["inUse"], "VFS not held by the transfer alone")
+	}
+
+	t.Run("Download", func(t *testing.T) {
+		resp, err := c.Retr("download.bin")
+		require.NoError(t, err)
+		defer func() { _ = resp.Close() }()
+		start := make([]byte, 1024)
+		_, err = io.ReadFull(resp, start)
+		require.NoError(t, err)
+		expire(t)
+		rest, err := io.ReadAll(resp)
+		require.NoError(t, err)
+		require.NoError(t, resp.Close())
+		assert.True(t, contents == string(start)+string(rest), "download corrupted")
+	})
+
+	t.Run("Upload", func(t *testing.T) {
+		pr, pw := io.Pipe()
+		var storErr error
+		var wg sync.WaitGroup
+		wg.Go(func() {
+			storErr = c.Stor("upload.bin", pr)
+		})
+		// Finish the upload before the connection is used again
+		defer func() {
+			_ = pw.Close()
+			wg.Wait()
+		}()
+		_, err := io.WriteString(pw, contents[:1024*1024])
+		require.NoError(t, err)
+		expire(t)
+		_, err = io.WriteString(pw, contents[1024*1024:])
+		require.NoError(t, err)
+		require.NoError(t, pw.Close())
+		wg.Wait()
+		require.NoError(t, storErr)
+		got, err := os.ReadFile(filepath.Join(root, "upload.bin"))
+		require.NoError(t, err)
+		assert.True(t, contents == string(got), "upload corrupted")
+	})
 }
