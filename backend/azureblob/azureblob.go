@@ -850,7 +850,12 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *contain
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error fs.ErrorObjectNotFound.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	return f.newObjectWithInfo(ctx, remote, nil)
+	o, err := f.newObjectWithInfo(ctx, remote, nil)
+	if err == fs.ErrorNotAFile {
+		// The blob is a directory
+		return nil, fs.ErrorObjectNotFound
+	}
+	return o, err
 }
 
 // getBlobSVC creates a blob client
