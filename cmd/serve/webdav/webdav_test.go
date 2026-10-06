@@ -14,6 +14,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -25,6 +26,7 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -451,4 +453,44 @@ func TestNewWebDAVError(t *testing.T) {
 	w, err := newWebDAV(context.Background(), f, &opt, &vfscommon.Opt, &proxy.Opt)
 	require.Error(t, err)
 	assert.Nil(t, w)
+}
+
+// TestAuthProxyDownloadOutlivesCache checks a download in progress
+// carries on working when the auth proxy drops its VFS from its cache,
+// as it does when a download takes longer than the cache expiry time.
+func TestAuthProxyDownloadOutlivesCache(t *testing.T) {
+	root := t.TempDir()
+	contents := random.String(32 * 1024 * 1024)
+	require.NoError(t, os.WriteFile(filepath.Join(root, "download.bin"), []byte(contents), 0666))
+
+	prog, err := filepath.Abs("../servetest/proxy_code.go")
+	require.NoError(t, err)
+	opt := Opt
+	opt.HTTP.ListenAddr = []string{testBindAddress}
+	proxyOpt := proxy.Opt
+	proxyOpt.AuthProxy = "go run " + prog + " " + root
+	w, err := newWebDAV(context.Background(), nil, &opt, &vfscommon.Opt, &proxyOpt)
+	require.NoError(t, err)
+	go func() {
+		require.NoError(t, w.Serve())
+	}()
+	defer func() { assert.NoError(t, w.Shutdown()) }()
+
+	req, err := http.NewRequest("GET", w.server.URLs()[0]+"download.bin", nil)
+	require.NoError(t, err)
+	req.SetBasicAuth(testUser, testPass)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer func() { _ = resp.Body.Close() }()
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+	start := make([]byte, 1024)
+	_, err = io.ReadFull(resp.Body, start)
+	require.NoError(t, err)
+
+	// Drop everything from the proxy's cache as if it had expired
+	w.provider.Proxy().Shutdown()
+
+	rest, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	assert.True(t, contents == string(start)+string(rest), "download corrupted")
 }
