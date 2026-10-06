@@ -345,6 +345,41 @@ func itemIsDir(item *api.Response) bool {
 	return false
 }
 
+// sabreNotFound is the exception SabreDAV based servers report for a
+// path which doesn't exist
+var sabreNotFound = []byte(`Sabre\DAV\Exception\NotFound`)
+
+// callPropfind does the PROPFIND in opts and decodes the response into result
+//
+// ownCloud 10.16 starts a 207 Multi-Status response before it finds
+// that the path doesn't exist, then appends a Sabre NotFound error to
+// it which makes it invalid XML. This is returned as the 404 *api.Error
+// which servers normally give for a path which doesn't exist.
+func (f *Fs) callPropfind(ctx context.Context, opts *rest.Opts, result *api.Multistatus) (resp *http.Response, err error) {
+	resp, err = f.srv.Call(ctx, opts)
+	if err != nil {
+		return resp, err
+	}
+	// Keep the start of the body to look for the error in
+	start := make([]byte, 4096)
+	n, _ := io.ReadFull(resp.Body, start)
+	start = start[:n]
+	body := resp.Body
+	resp.Body = struct {
+		io.Reader
+		io.Closer
+	}{io.MultiReader(bytes.NewReader(start), body), body}
+	err = rest.DecodeXML(resp, result)
+	if err != nil && bytes.Contains(start, sabreNotFound) {
+		return resp, &api.Error{
+			Exception:  string(sabreNotFound),
+			Status:     http.StatusText(http.StatusNotFound),
+			StatusCode: http.StatusNotFound,
+		}
+	}
+	return resp, err
+}
+
 // readMetaDataForPath reads the metadata from the path
 func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Prop, err error) {
 	// FIXME how do we read back additional properties?
@@ -366,7 +401,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Pr
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		var attempt api.Multistatus
-		resp, err = f.srv.CallXML(ctx, &opts, nil, &attempt)
+		resp, err = f.callPropfind(ctx, &opts, &attempt)
 		if err == nil {
 			result = attempt
 		}
@@ -824,7 +859,7 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		var attempt api.Multistatus
-		resp, err = f.srv.CallXML(ctx, &opts, nil, &attempt)
+		resp, err = f.callPropfind(ctx, &opts, &attempt)
 		if err == nil {
 			result = attempt
 		}

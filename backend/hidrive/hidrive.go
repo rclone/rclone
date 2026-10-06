@@ -522,7 +522,7 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	if size := src.Size(); size >= 0 && size < prefixSize {
 		prefixSize = size
 	}
-	cutoffReader, bytesRead, err := readerForChunk(in, prefixSize)
+	cutoffReader, bytesRead, err := readerForChunk(in, prefixSize, false)
 	if err != nil {
 		return nil, err
 	}
@@ -980,7 +980,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		info, metaErr = o.fs.fetchMetadataForPath(ctx, resolvedPath, api.HiDriveObjectWithMetadataFields)
 	} else {
 		var content *pool.RW
-		content, _, err = readerForChunk(in, src.Size())
+		content, _, err = readerForChunk(in, src.Size(), false)
 		if err == nil {
 			info, err = o.fs.overwriteFile(ctx, resolvedPath, content, modTime)
 			_ = content.Close()

@@ -391,3 +391,49 @@ func TestNextcloudPublicShareHeader(t *testing.T) {
 		})
 	}
 }
+
+// TestNotFoundInMultistatus checks that a missing path is detected when the
+// server reports it by appending a Sabre NotFound error to a 207 response it
+// has already started, as ownCloud 10.16 does, rather than by returning 404.
+func TestNotFoundInMultistatus(t *testing.T) {
+	head := `<?xml version="1.0"?>` + "\n" + `<d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:oc="http://owncloud.org/ns"`
+	root := head + `><d:response><d:href>/</d:href><d:propstat><d:prop><d:resourcetype><d:collection/></d:resourcetype></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response></d:multistatus>`
+	notFound := head + `<?xml version="1.0" encoding="utf-8"?>
+<d:error xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns">
+  <s:exception>Sabre\DAV\Exception\NotFound</s:exception>
+  <s:message>File with name missing could not be located</s:message>
+</d:error>
+`
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, "PROPFIND", r.Method)
+		w.Header().Set("Content-Type", "application/xml; charset=utf-8")
+		w.WriteHeader(207)
+		body := notFound
+		if r.URL.Path == "/" {
+			body = root
+		}
+		_, err := fmt.Fprint(w, body)
+		require.NoError(t, err)
+	}))
+	defer ts.Close()
+
+	configfile.Install()
+	m := configmap.Simple{
+		"type": "webdav",
+		"url":  ts.URL,
+	}
+	ctx := context.Background()
+
+	// A root which doesn't exist yet
+	_, err := webdav.NewFs(ctx, remoteName, "missing", m)
+	require.NoError(t, err)
+
+	f, err := webdav.NewFs(ctx, remoteName, "", m)
+	require.NoError(t, err)
+
+	_, err = f.NewObject(ctx, "missing")
+	assert.Equal(t, fs.ErrorObjectNotFound, err)
+
+	_, err = f.List(ctx, "missing")
+	assert.Equal(t, fs.ErrorDirNotFound, err)
+}
