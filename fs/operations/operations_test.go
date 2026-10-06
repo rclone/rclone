@@ -1201,7 +1201,7 @@ func (i *testFsInfo) Precision() time.Duration { return i.precision }
 // Returns the supported hash types of the filesystem
 func (i *testFsInfo) Hashes() hash.Set { return i.hashes }
 
-// Returns the supported hash types of the filesystem
+// Features returns the optional features of this Fs.
 func (i *testFsInfo) Features() *fs.Features { return &i.features }
 
 func TestSameConfig(t *testing.T) {
