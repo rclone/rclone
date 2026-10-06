@@ -205,18 +205,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	if err != nil {
 		return o, err
 	}
-	f.cacheMutex.Lock()
-	defer f.cacheMutex.Unlock()
-	size := src.Size()
-	if f.usage.Used != nil {
-		*f.usage.Used += size
-	}
-	if f.usage.Free != nil {
-		*f.usage.Free -= size
-	}
-	if f.usage.Objects != nil {
-		*f.usage.Objects++
-	}
+	f.AddUsage(1, objectSize(o))
 	return o, nil
 }
 
@@ -234,9 +223,18 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	if err != nil {
 		return o, err
 	}
+	f.AddUsage(1, objectSize(o))
+	return o, nil
+}
+
+// AddUsage adjusts the cached usage of the fs by the number of
+// objects and bytes given, which may be negative
+//
+// This is used to keep the cached usage up to date with the changes
+// made through the union without having to read it again.
+func (f *Fs) AddUsage(objects, size int64) {
 	f.cacheMutex.Lock()
 	defer f.cacheMutex.Unlock()
-	size := o.Size()
 	if f.usage.Used != nil {
 		*f.usage.Used += size
 	}
@@ -244,9 +242,16 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 		*f.usage.Free -= size
 	}
 	if f.usage.Objects != nil {
-		*f.usage.Objects++
+		*f.usage.Objects += objects
 	}
-	return o, nil
+}
+
+// objectSize returns the size of o or 0 if it isn't known
+func objectSize(o fs.Object) int64 {
+	if o == nil {
+		return 0
+	}
+	return max(o.Size(), 0)
 }
 
 // Update in to the object with the modTime given of the given size
@@ -255,23 +260,23 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 // But for unknown-sized objects (indicated by src.Size() == -1), Upload should either
 // return an error or update the object properly (rather than e.g. calling panic).
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	size := o.Size()
+	size := objectSize(o.Object)
 	err := o.Object.Update(ctx, in, src, options...)
 	if err != nil {
 		return err
 	}
-	o.f.cacheMutex.Lock()
-	defer o.f.cacheMutex.Unlock()
-	delta := o.Size() - size
-	if delta <= 0 {
-		return nil
+	o.f.AddUsage(0, objectSize(o.Object)-size)
+	return nil
+}
+
+// Remove an object
+func (o *Object) Remove(ctx context.Context) error {
+	size := objectSize(o.Object)
+	err := o.Object.Remove(ctx)
+	if err != nil {
+		return err
 	}
-	if o.f.usage.Used != nil {
-		*o.f.usage.Used += size
-	}
-	if o.f.usage.Free != nil {
-		*o.f.usage.Free -= size
-	}
+	o.f.AddUsage(-1, -size)
 	return nil
 }
 
@@ -370,10 +375,11 @@ func (e *Directory) SetModTime(ctx context.Context, t time.Time) error {
 //
 // If it returns nil, nil then the original object is OK
 func (o *Object) Writeback(ctx context.Context) (*Object, error) {
-	if o.f.writebackFs == nil {
+	wf := o.f.writebackFs
+	if wf == nil {
 		return nil, nil
 	}
-	newObj, err := operations.Copy(ctx, o.f.writebackFs.Fs, nil, o.Object.Remote(), o.Object)
+	newObj, err := operations.Copy(ctx, wf.Fs, nil, o.Object.Remote(), o.Object)
 	if err != nil {
 		return nil, err
 	}
@@ -382,10 +388,8 @@ func (o *Object) Writeback(ctx context.Context) (*Object, error) {
 		fs.Errorf(o, "nil Object returned from operations.Copy")
 		return nil, nil
 	}
-	return &Object{
-		Object: newObj,
-		f:      o.f,
-	}, err
+	wf.AddUsage(1, objectSize(newObj))
+	return wf.WrapObject(newObj), nil
 }
 
 // About gets quota information from the Fs

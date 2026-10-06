@@ -298,6 +298,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil || co == nil {
 		return nil, err
 	}
+	du.AddUsage(1, max(co.Size(), 0))
 	wo, err := f.wrapEntries(du.WrapObject(co))
 	return wo.(*Object), err
 }
@@ -544,7 +545,7 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, stream bo
 		var o fs.Object
 		var err error
 		if stream {
-			o, err = u.Features().PutStream(ctx, in, src, options...)
+			o, err = u.PutStream(ctx, in, src, options...)
 		} else {
 			o, err = u.Put(ctx, in, src, options...)
 		}
@@ -563,7 +564,7 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, stream bo
 		var o fs.Object
 		var err error
 		if stream {
-			o, err = u.Features().PutStream(ctx, readers[i], src, options...)
+			o, err = u.PutStream(ctx, readers[i], src, options...)
 		} else {
 			o, err = u.Put(ctx, readers[i], src, options...)
 		}
