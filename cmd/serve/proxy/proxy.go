@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/netip"
 	"os/exec"
 	"strings"
@@ -575,6 +576,26 @@ func (p *Provider) Get(ctx context.Context) (*vfs.VFS, error) {
 		return nil, fmt.Errorf("context value is not VFS: %#v", value)
 	}
 	return VFS, nil
+}
+
+// HoldVFS is HTTP middleware which holds the VFS for the request until
+// the request has been served.
+//
+// An auth proxy shuts down a VFS when it expires from its cache, which
+// a long upload or download can outlast as only the start of a request
+// counts as a use of the VFS.
+func (p *Provider) HoldVFS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Requests which don't need auth, eg CORS preflight, have no VFS
+		if VFS, err := p.Get(r.Context()); err == nil {
+			if !VFS.Hold() {
+				http.Error(w, "VFS has been shut down", http.StatusServiceUnavailable)
+				return
+			}
+			defer VFS.Shutdown()
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 // VFS returns the fixed VFS, or nil if using an auth proxy.
