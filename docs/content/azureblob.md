@@ -123,6 +123,24 @@ when `--metadata` is enabled (or when using `--metadata-set` / `--metadata-mappe
 Notes:
 - Rclone ignores reserved `x-ms-*` keys (except `x-ms-tags`) for user metadata.
 
+### Hierarchical namespace
+
+Storage accounts with hierarchical namespace enabled (Azure Data Lake
+Storage Gen2) have real directories. On these accounts rclone supports
+empty directories, creating them with `rclone mkdir` and removing
+them with `rclone rmdir`, whatever the `--azureblob-directory-markers`
+setting.
+
+Note that deleting the last file in a directory leaves the directory
+behind. Use `rclone rmdirs` or `--delete-empty-src-dirs` to remove
+empty directories.
+
+Rclone reads whether the storage account has a hierarchical namespace
+when it first uses the remote and saves it as the `hns` option in the
+config file. Set `--azureblob-hns` to override this.
+
+Blob tags (`x-ms-tags` metadata) aren't supported on these accounts.
+
 ### Performance
 
 When uploading large files, increasing the value of
