@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/rclone/rclone/fs"
 	_ "github.com/rclone/rclone/fs/accounting"
@@ -776,6 +777,28 @@ b/c/d/
 	}
 	// Set to default value, to avoid side effects
 	fi.Opt.ExcludeFile = nil
+}
+
+func TestWalkRDirTreeManyExcludedFiles(t *testing.T) {
+	const n = 100000
+	entries := make(fs.DirEntries, 0, 2*n)
+	for i := 0; i < n; i++ {
+		entries = append(entries, mockobject.Object(fmt.Sprintf("keep%05d.txt", i)))
+		entries = append(entries, mockobject.Object(fmt.Sprintf("skip%05d.tmp", i)))
+	}
+	fi, err := filter.NewFilter(nil)
+	require.NoError(t, err)
+	require.NoError(t, fi.Add(false, "*.tmp"))
+	ctx := filter.ReplaceConfig(context.Background(), fi)
+
+	start := time.Now()
+	r, err := walkRDirTree(ctx, nil, "", false, -1, makeListRCallback(entries, nil))
+	elapsed := time.Since(start)
+	require.NoError(t, err)
+	assert.Len(t, r[""], n)
+	// Resolving the parent directory of every excluded file must not
+	// scan the entries already collected each time.
+	assert.Less(t, elapsed, 5*time.Second)
 }
 
 func TestListType(t *testing.T) {
