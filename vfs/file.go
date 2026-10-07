@@ -679,11 +679,18 @@ func (f *File) Remove() (err error) {
 	f.mu.Unlock()
 	f.muRW.Unlock()
 	if err != nil {
-		if wasWriting {
+		switch {
+		case wasWriting:
 			// Ignore error deleting file if was writing it as it may not be uploaded yet
 			err = nil
 			fs.Debugf(f._path(), "Ignoring File.Remove file error as uploading: %v", err)
-		} else {
+		case errors.Is(err, fs.ErrorObjectNotFound) || errors.Is(err, os.ErrNotExist):
+			// The file went from the backend behind the VFS's back since the
+			// directory was last read, which is what was asked for; forget it, or the
+			// stale entry would keep the directory from being removed.
+			err = nil
+			fs.Debugf(f._path(), "File.Remove: already gone from the backend")
+		default:
 			fs.Debugf(f._path(), "File.Remove file error: %v", err)
 		}
 	}

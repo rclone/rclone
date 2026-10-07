@@ -260,6 +260,29 @@ func TestFileRemove(t *testing.T) {
 	assert.Equal(t, EROFS, err)
 }
 
+// TestFileRemoveGone checks that removing a file which has already gone from
+// the backend behind the VFS's back succeeds and drops it from the directory
+// listing, so the directory can be removed in turn.
+func TestFileRemoveGone(t *testing.T) {
+	r, vfs, file, _ := fileCreate(t, vfscommon.CacheModeOff)
+
+	obj, err := r.Fremote.NewObject(context.Background(), "dir/file1")
+	require.NoError(t, err)
+	require.NoError(t, obj.Remove(context.Background()))
+	r.CheckRemoteItems(t)
+
+	err = file.Remove()
+	require.NoError(t, err)
+
+	node, err := vfs.Stat("dir")
+	require.NoError(t, err)
+	dir := node.(*Dir)
+	nodes, err := dir.ReadDirAll()
+	require.NoError(t, err)
+	assert.Empty(t, nodes)
+	require.NoError(t, dir.Remove())
+}
+
 func TestFileRemoveAll(t *testing.T) {
 	r, vfs, file, _ := fileCreate(t, vfscommon.CacheModeOff)
 
