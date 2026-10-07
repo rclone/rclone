@@ -2,6 +2,7 @@ package vfs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -275,6 +276,35 @@ func TestFileRemove(t *testing.T) {
 	vfs.Opt.ReadOnly = true
 	err = file.Remove()
 	assert.Equal(t, EROFS, err)
+}
+
+// TestFileRemoveGone checks that removing a file which has already gone from
+// the backend behind the VFS's back succeeds and drops it from the directory
+// listing, so the directory can be removed in turn.
+func TestFileRemoveGone(t *testing.T) {
+	r, vfs, file, _ := fileCreate(t, vfscommon.CacheModeOff)
+
+	obj, err := r.Fremote.NewObject(context.Background(), "dir/file1")
+	require.NoError(t, err)
+	require.NoError(t, obj.Remove(context.Background()))
+	r.CheckRemoteItems(t)
+
+	err = file.Remove()
+	if err != nil && !errors.Is(err, fs.ErrorObjectNotFound) && !errors.Is(err, os.ErrNotExist) {
+		t.Skipf("backend doesn't report removing a missing object as not found: %v", err)
+	}
+	require.NoError(t, err)
+
+	node, err := vfs.Stat("dir")
+	require.NoError(t, err)
+	dir := node.(*Dir)
+	nodes, err := dir.ReadDirAll()
+	require.NoError(t, err)
+	assert.Empty(t, nodes)
+	// A backend without empty directories dropped this one with its last object.
+	if r.Fremote.Features().CanHaveEmptyDirectories {
+		require.NoError(t, dir.Remove())
+	}
 }
 
 func TestFileRemoveAll(t *testing.T) {
