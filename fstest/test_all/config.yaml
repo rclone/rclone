@@ -457,6 +457,13 @@ backends:
      # It just isn't possible to preserve the existing file with azure blob
      # and make sure we don't leak uncommitted blocks.
      - TestMultithreadCopyAbort
+ - backend:  "azureblob"
+   remote:   "TestAzureBlobHierarchical:"
+   fastlist: true
+   ignore:
+     # It just isn't possible to preserve the existing file with azure blob
+     # and make sure we don't leak uncommitted blocks.
+     - TestMultithreadCopyAbort
  - backend:  "azurefiles"
    remote:   "TestAzureFiles:"
  - backend:  "pcloud"
