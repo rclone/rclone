@@ -801,6 +801,28 @@ func TestWalkRDirTreeManyExcludedFiles(t *testing.T) {
 	assert.Less(t, elapsed, 5*time.Second)
 }
 
+func TestWalkRDirTreeManyDirsWithExcludedFiles(t *testing.T) {
+	const n = 100000
+	entries := make(fs.DirEntries, 0, n)
+	for i := 0; i < n; i++ {
+		entries = append(entries, mockobject.Object(fmt.Sprintf("d%05d/skip.tmp", i)))
+	}
+	fi, err := filter.NewFilter(nil)
+	require.NoError(t, err)
+	require.NoError(t, fi.Add(false, "*.tmp"))
+	ctx := filter.ReplaceConfig(context.Background(), fi)
+
+	start := time.Now()
+	r, err := walkRDirTree(ctx, nil, "", false, -1, makeListRCallback(entries, nil))
+	elapsed := time.Since(start)
+	require.NoError(t, err)
+	assert.Len(t, r[""], n)
+	// Every excluded file has a different parent directory, so a
+	// per-directory cache alone is not enough: resolving each parent
+	// must not scan the entries already collected each time.
+	assert.Less(t, elapsed, 5*time.Second)
+}
+
 func TestListType(t *testing.T) {
 	assert.Equal(t, true, ListObjects.Objects())
 	assert.Equal(t, false, ListObjects.Dirs())
