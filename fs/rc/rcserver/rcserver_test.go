@@ -266,9 +266,9 @@ func TestRemoteServing(t *testing.T) {
 </head>
 <body>
 <h1>Directory listing of /</h1>
-<a href="dir/">dir/</a><br />
-<a href="modtime/">modtime/</a><br />
-<a href="file.txt">file.txt</a><br />
+<a href="./dir/">dir/</a><br />
+<a href="./modtime/">modtime/</a><br />
+<a href="./file.txt">file.txt</a><br />
 </body>
 </html>
 `,
@@ -317,7 +317,7 @@ func TestRemoteServing(t *testing.T) {
 </head>
 <body>
 <h1>Directory listing of /dir</h1>
-<a href="file2.txt">file2.txt</a><br />
+<a href="./file2.txt">file2.txt</a><br />
 </body>
 </html>
 `,
@@ -899,6 +899,48 @@ func TestAuthRequired(t *testing.T) {
 	"error": "authentication must be set up on the rc server to use \"rc/noopauth\" or the --rc-no-auth flag must be in use",
 	"input": {},
 	"path": "rc/noopauth",
+	"status": 403
+}
+`,
+	}}
+	opt := newTestOpt()
+	opt.Serve = false
+	opt.Files = ""
+	opt.NoAuth = false
+	testServer(t, tests, &opt)
+}
+
+// job/status returns the output of any job so it must need
+// authentication, e.g. so an unauthenticated user can't read the
+// output of config/dump started with _async by an authenticated one.
+func TestJobAuthRequired(t *testing.T) {
+	tests := []testRun{{
+		Name:        "status",
+		URL:         "job/status",
+		Method:      "POST",
+		Body:        `{"jobid":1}`,
+		ContentType: "application/json",
+		Status:      http.StatusForbidden,
+		Expected: `{
+	"error": "authentication must be set up on the rc server to use \"job/status\" or the --rc-no-auth flag must be in use",
+	"input": {
+		"jobid": 1
+	},
+	"path": "job/status",
+	"status": 403
+}
+`,
+	}, {
+		Name:        "list",
+		URL:         "job/list",
+		Method:      "POST",
+		Body:        `{}`,
+		ContentType: "application/json",
+		Status:      http.StatusForbidden,
+		Expected: `{
+	"error": "authentication must be set up on the rc server to use \"job/list\" or the --rc-no-auth flag must be in use",
+	"input": {},
+	"path": "job/list",
 	"status": 403
 }
 `,

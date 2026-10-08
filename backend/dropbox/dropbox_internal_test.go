@@ -2,7 +2,9 @@ package dropbox
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -12,9 +14,11 @@ import (
 
 	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/files"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/sharing"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/rclone/rclone/lib/batcher"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -82,6 +86,71 @@ func TestInternalGetMetadataCancellation(t *testing.T) {
 	}
 }
 
+type changeNotifyClient struct {
+	files.ContextClient
+	entries []files.IsMetadata
+}
+
+func (c changeNotifyClient) ListFolderLongpollContext(context.Context, *files.ListFolderLongpollArg) (*files.ListFolderLongpollResult, error) {
+	return files.NewListFolderLongpollResult(true), nil
+}
+
+func (c changeNotifyClient) ListFolderContinueContext(context.Context, *files.ListFolderContinueArg) (*files.ListFolderResult, error) {
+	return files.NewListFolderResult(c.entries, "next", false), nil
+}
+
+func TestTrimPrefixFold(t *testing.T) {
+	for _, test := range []struct {
+		name   string
+		path   string
+		prefix string
+		want   string
+	}{
+		{name: "exact casing", path: "/Docs/Sub", prefix: "/Docs/", want: "Sub"},
+		{name: "different casing", path: "/docs/Sub", prefix: "/Docs/", want: "Sub"},
+		{name: "different UTF-8 lengths", path: "/K/Sub", prefix: "/K/", want: "Sub"},
+		{name: "exact root", path: "/docs", prefix: "/Docs/", want: ""},
+		{name: "sibling boundary", path: "/Docs2/File", prefix: "/Docs/", want: "/Docs2/File"},
+		{name: "root remote", path: "/File", prefix: "/", want: "File"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.want, trimPrefixFold(test.path, test.prefix))
+		})
+	}
+}
+
+func TestChangeNotifyTrimsRootCaseInsensitively(t *testing.T) {
+	ctx := context.Background()
+	client := changeNotifyClient{entries: []files.IsMetadata{
+		&files.FolderMetadata{Metadata: files.Metadata{PathDisplay: "/docs/Sub"}},
+		&files.FileMetadata{Metadata: files.Metadata{PathDisplay: "/docs/Sub/File.TXT"}},
+		&files.DeletedMetadata{Metadata: files.Metadata{PathDisplay: "/docs/Gone.md"}},
+	}}
+	f := &Fs{
+		ci:             fs.GetConfig(ctx),
+		srv:            client,
+		svc:            client,
+		slashRootSlash: "/Docs/",
+		pacer:          fs.NewPacer(ctx, pacer.NewDefault()),
+	}
+
+	type notification struct {
+		path      string
+		entryType fs.EntryType
+	}
+	var notifications []notification
+	cursor, err := f.changeNotifyRunner(ctx, func(path string, entryType fs.EntryType) {
+		notifications = append(notifications, notification{path: path, entryType: entryType})
+	}, "start")
+	require.NoError(t, err)
+	assert.Equal(t, "next", cursor)
+	assert.Equal(t, []notification{
+		{path: "Sub", entryType: fs.EntryDirectory},
+		{path: "Sub/File.TXT", entryType: fs.EntryObject},
+		{path: "Gone.md", entryType: fs.EntryObject},
+	}, notifications)
+}
+
 func TestInternalCheckPathLength(t *testing.T) {
 	rep := func(n int, r rune) (out string) {
 		rs := make([]rune, n)
@@ -116,6 +185,21 @@ func TestInternalCheckPathLength(t *testing.T) {
 
 		err := checkPathLength(test.in)
 		assert.Equal(t, test.ok, err == nil, test.in)
+	}
+}
+
+func TestInternalSharedFolderName(t *testing.T) {
+	for _, test := range []struct {
+		root string
+		want string
+	}{
+		{root: "", want: ""},
+		{root: "SharedFolder", want: "SharedFolder"},
+		{root: "SharedFolder/subdir", want: "SharedFolder"},
+		{root: "SharedFolder/subdir/deeper", want: "SharedFolder"},
+		{root: "SharedFolder/subdir/deeper/deepest", want: "SharedFolder"},
+	} {
+		assert.Equal(t, test.want, sharedFolderName(test.root), test.root)
 	}
 }
 
@@ -318,3 +402,136 @@ func (f *Fs) InternalTest(t *testing.T) {
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)
+
+// newSharingTestFs builds a minimal *Fs whose sharing client talks to a
+// local mock server instead of the real Dropbox API.
+func newSharingTestFs(t *testing.T, handler http.HandlerFunc) *Fs {
+	t.Helper()
+	ts := httptest.NewServer(handler)
+	t.Cleanup(ts.Close)
+
+	cfg := dropbox.Config{
+		Client: &http.Client{Transport: http.DefaultTransport},
+		URLGenerator: func(hostType, namespace, route string) string {
+			return fmt.Sprintf("%s/2/%s/%s", ts.URL, namespace, route)
+		},
+	}
+
+	return &Fs{
+		opt: Options{
+			Enc: encoder.Base |
+				encoder.EncodeBackSlash |
+				encoder.EncodeDel |
+				encoder.EncodeRightSpace |
+				encoder.EncodeInvalidUtf8,
+		},
+		sharing: sharing.NewContext(cfg),
+		pacer:   fs.NewPacer(context.Background(), pacer.NewDefault(pacer.MinSleep(time.Millisecond))),
+	}
+}
+
+func mustParseDBXTime(t *testing.T, s string) *dropbox.DBXTime {
+	t.Helper()
+	tm, err := time.Parse(time.RFC3339, s)
+	require.NoError(t, err)
+	return (*dropbox.DBXTime)(&tm)
+}
+
+func receivedFilesHandler(t *testing.T, rawName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !strings.Contains(r.URL.Path, "list_received_files") {
+			http.NotFound(w, r)
+			return
+		}
+		resp := sharing.ListFilesResult{
+			Entries: []*sharing.SharedFileMetadata{{
+				Id:          "id:123",
+				Name:        rawName,
+				PreviewUrl:  "https://dropbox.com/preview/123",
+				Policy:      &sharing.FolderPolicy{},
+				TimeInvited: mustParseDBXTime(t, "2024-01-01T00:00:00Z"),
+			}},
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(resp)
+	}
+}
+
+// TestListReceivedFilesDecodesName confirms received-file names are decoded
+// via Enc.ToStandardName before being returned, matching listSharedFolders'
+// handling of shared-folder names.
+func TestListReceivedFilesDecodesName(t *testing.T) {
+	const rawName = "report.txt␠"
+	f := newSharingTestFs(t, receivedFilesHandler(t, rawName))
+
+	wantName := f.opt.Enc.ToStandardName(rawName)
+	require.NotEqual(t, rawName, wantName)
+
+	var gotNames []string
+	err := f.listReceivedFiles(context.Background(), func(entry fs.DirEntry) error {
+		gotNames = append(gotNames, entry.Remote())
+		return nil
+	})
+	require.NoError(t, err)
+	require.Len(t, gotNames, 1)
+	assert.Equal(t, wantName, gotNames[0])
+}
+
+// TestFindSharedFileResolvesDecodedName confirms findSharedFile can look up
+// a received file by its standard, decoded rclone-visible name.
+func TestFindSharedFileResolvesDecodedName(t *testing.T) {
+	const rawName = "report.txt␠"
+	f := newSharingTestFs(t, receivedFilesHandler(t, rawName))
+
+	encodedName := f.opt.Enc.ToStandardName(rawName)
+	require.NotEqual(t, rawName, encodedName)
+
+	o, err := f.findSharedFile(context.Background(), encodedName)
+	require.NoError(t, err)
+	assert.Equal(t, encodedName, o.remote)
+}
+
+// sharedFoldersHandler serves a single shared folder from list_folders.
+func sharedFoldersHandler(name, id string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !strings.Contains(r.URL.Path, "list_folders") {
+			http.NotFound(w, r)
+			return
+		}
+		resp := sharing.ListFoldersResult{
+			Entries: []*sharing.SharedFolderMetadata{{Name: name, SharedFolderId: id}},
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(resp)
+	}
+}
+
+// The Dropbox backend advertises CaseInsensitive: true, so a shared folder
+// lookup must match regardless of the case of the requested name.
+func TestInternalFindSharedFolderCaseInsensitive(t *testing.T) {
+	f := newSharingTestFs(t, sharedFoldersHandler("TestFolder", "folder-id"))
+
+	for _, name := range []string{"TestFolder", "testfolder", "TESTFOLDER"} {
+		id, err := f.findSharedFolder(context.Background(), name)
+		require.NoError(t, err, name)
+		assert.Equal(t, "folder-id", id, name)
+	}
+
+	_, err := f.findSharedFolder(context.Background(), "no-such-folder")
+	assert.ErrorIs(t, err, fs.ErrorDirNotFound)
+}
+
+// The Dropbox backend advertises CaseInsensitive: true, so a received file
+// lookup must match regardless of the case of the requested name.
+func TestInternalFindSharedFileCaseInsensitive(t *testing.T) {
+	f := newSharingTestFs(t, receivedFilesHandler(t, "TestFile.txt"))
+
+	for _, name := range []string{"TestFile.txt", "testfile.txt", "TESTFILE.TXT"} {
+		o, err := f.findSharedFile(context.Background(), name)
+		require.NoError(t, err, name)
+		assert.Equal(t, "TestFile.txt", o.remote, name)
+	}
+
+	_, err := f.findSharedFile(context.Background(), "no-such-file.txt")
+	assert.ErrorIs(t, err, fs.ErrorObjectNotFound)
+}

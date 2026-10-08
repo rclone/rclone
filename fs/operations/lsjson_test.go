@@ -12,6 +12,8 @@ import (
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/fstest/mockfs"
+	"github.com/rclone/rclone/fstest/mockobject"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -461,4 +463,35 @@ func TestStatJSONMemory(t *testing.T) {
 		require.NoError(t, err)
 		assert.Nil(t, got)
 	})
+}
+
+// TestStatJSONConfinement checks that StatJSON never returns an item whose
+// remote escapes the Fs root. StatJSON calls List/NewObject directly and so
+// bypasses the confinement in fs/list and fs/walk - the escaping objects added
+// below would be returned without the guard in StatJSON.
+func TestStatJSONConfinement(t *testing.T) {
+	ctx := context.Background()
+	ff, err := mockfs.NewFs(ctx, "mock", "/", nil)
+	require.NoError(t, err)
+	f := ff.(*mockfs.Fs)
+	f.AddObject(mockobject.Object("ok"))
+	f.AddObject(mockobject.Object(".."))
+	f.AddObject(mockobject.Object("../evil"))
+	f.AddObject(mockobject.Object("/../slashevil"))
+	f.AddObject(mockobject.Object("//../../slashevil2"))
+	f.AddObject(mockobject.Object("/../../etc/passwd"))
+
+	// Escaping remotes are treated as not found, including the leading-slash
+	// variants that path.Clean would anchor as absolute and miss.
+	for _, remote := range []string{"..", "../evil", "/../slashevil", "//../../slashevil2", "/../../etc/passwd"} {
+		got, err := operations.StatJSON(ctx, f, remote, &operations.ListJSONOpt{})
+		require.NoError(t, err, remote)
+		assert.Nil(t, got, remote)
+	}
+
+	// A legitimate remote is still returned.
+	got, err := operations.StatJSON(ctx, f, "ok", &operations.ListJSONOpt{})
+	require.NoError(t, err)
+	require.NotNil(t, got)
+	assert.Equal(t, "ok", got.Path)
 }

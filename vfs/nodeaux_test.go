@@ -58,16 +58,14 @@ func TestAuxConcurrent(t *testing.T) {
 		wg sync.WaitGroup
 	)
 	for i := range owners {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			owner := &i
 			for j := range iterations {
 				value := fmt.Sprintf("%d-%d", i, j)
 				a.SetAux(owner, value)
 				assert.Equal(t, value, a.Aux(owner))
 			}
-		}()
+		})
 	}
 	wg.Wait()
 }

@@ -76,6 +76,19 @@ func (x SizeSuffix) String() string {
 	return val + suffix
 }
 
+// stringRoundTrip turns SizeSuffix into a string which Set parses back to the
+// same value. A bare number is read by Set as KiB, so values below 1 KiB get a
+// "B" suffix to stop them being scaled up.
+func (x SizeSuffix) stringRoundTrip() string {
+	str := x.String()
+	if len(str) > 0 && str != "0" {
+		if lastDigit := str[len(str)-1]; lastDigit >= '0' && lastDigit <= '9' {
+			str += "B"
+		}
+	}
+	return str
+}
+
 // Unit turns SizeSuffix into a string with a unit
 func (x SizeSuffix) unit(unit string) string {
 	val, suffix := x.string()
@@ -181,6 +194,9 @@ func (x *SizeSuffix) Set(s string) error {
 		return fmt.Errorf("size can't be negative %q", s)
 	}
 	value *= multiplier
+	if value >= float64(SizeSuffixMaxValue) {
+		return fmt.Errorf("value can't be greater than %d", int64(SizeSuffixMaxValue))
+	}
 	*x = SizeSuffix(value)
 	return nil
 }

@@ -54,7 +54,7 @@ type RegInfo struct {
 	Hide bool
 	// MetadataInfo help about the metadata in use in this backend
 	MetadataInfo *MetadataInfo
-	// Overview about the backend
+	// Overview about the backend; nil loads the embedded backend metadata
 	Overview *overview.BackendConfig
 }
 
@@ -305,16 +305,7 @@ func (o *Option) String() string {
 		// The default Go encoding can't be decoded uniquely
 		return CommaSepList(x).String()
 	case SizeSuffix:
-		str := x.String()
-		// Suffix bare numbers with "B" unless they are 0
-		//
-		// This makes sure that fs.SizeSuffix roundtrips through string
-		if len(str) > 0 && str != "0" {
-			if lastDigit := str[len(str)-1]; lastDigit >= '0' && lastDigit <= '9' {
-				str += "B"
-			}
-		}
-		return str
+		return x.stringRoundTrip()
 	}
 	return fmt.Sprint(v)
 }
@@ -434,11 +425,13 @@ func Register(info *RegInfo) {
 	}
 	info.Options = append(info.Options, optDescription)
 	Registry = append(Registry, info)
-	var err error
-	info.Overview, err = overview.GetBackendConfig(strings.ReplaceAll(info.Name, " ", ""))
-	if err != nil {
-		Errorf(nil, "internal error: no overview data found for %q", info.Name)
-		info.Overview = new(overview.BackendConfig)
+	if info.Overview == nil {
+		var err error
+		info.Overview, err = overview.GetBackendConfig(strings.ReplaceAll(info.Name, " ", ""))
+		if err != nil {
+			Errorf(nil, "internal error: no overview data found for %q", info.Name)
+			info.Overview = new(overview.BackendConfig)
+		}
 	}
 	for _, alias := range info.Aliases {
 		// Copy the info block and rename and hide the alias and options

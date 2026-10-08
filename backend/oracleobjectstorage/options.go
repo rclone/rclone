@@ -257,7 +257,8 @@ to start uploading.`,
 		// so that OSS keys are always valid file names
 		Default: encoder.EncodeInvalidUtf8 |
 			encoder.EncodeSlash |
-			encoder.EncodeDot,
+			encoder.EncodeDot |
+			encoder.EncodeCrLf,
 	}, {
 		Name: "leave_parts_on_error",
 		Help: `If true avoid calling abort upload on a failure, leaving all successfully uploaded parts for manual recovery.

@@ -17,6 +17,16 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Note each run in a file if asked to
+	if runLog := os.Getenv("RCLONE_TEST_PROXY_RUN_LOG"); runLog != "" {
+		f, err := os.OpenFile(runLog, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+		if err != nil {
+			log.Fatal(err)
+		}
+		_, _ = f.WriteString(in["user"] + "\n")
+		_ = f.Close()
+	}
+
 	// Write the output
 	var out = map[string]string{}
 	for k, v := range in {
@@ -33,6 +43,25 @@ func main() {
 	}
 	if out["_root"] == "" {
 		out["_root"] = ""
+	}
+	// S3 access key auth has neither pass nor public_key and needs
+	// the secret returned, unless the user asks for it to be omitted
+	// or empty. The secret's suffix can be changed to simulate a
+	// rotation and an access key ID can be revoked.
+	_, havePass := in["pass"]
+	_, havePublicKey := in["public_key"]
+	switch {
+	case havePass || havePublicKey || in["user"] == "nosecret":
+	case in["user"] == os.Getenv("RCLONE_TEST_PROXY_REVOKED"):
+		log.Fatalf("access key ID %q revoked", in["user"])
+	case in["user"] == "emptysecret":
+		out["_secret_access_key"] = ""
+	default:
+		suffix := os.Getenv("RCLONE_TEST_PROXY_SECRET_SUFFIX")
+		if suffix == "" {
+			suffix = "-secret"
+		}
+		out["_secret_access_key"] = in["user"] + suffix
 	}
 	json.NewEncoder(os.Stdout).Encode(&out)
 	if err != nil {

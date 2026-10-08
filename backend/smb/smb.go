@@ -13,6 +13,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/cloudsoda/go-smb2"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -21,6 +22,7 @@ import (
 	"github.com/rclone/rclone/lib/bucket"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/env"
+	"github.com/rclone/rclone/lib/filepool"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
 )
@@ -49,8 +51,7 @@ func init() {
 			Sensitive: true,
 		}, {
 			Name:      "user",
-			Help:      "SMB username.",
-			Default:   currentUser,
+			Help:      "SMB username.\n\nLeave blank to use the current user name.",
 			Sensitive: true,
 		}, {
 			Name:    "port",
@@ -76,6 +77,17 @@ authentication, and it often needs to be set for clusters. For example:
 
 Leave blank if not sure.
 `,
+			Sensitive: true,
+		}, {
+			Name: "workstation",
+			Help: `Workstation name sent in NTLM authentication.
+
+The NetBIOS name sent as the client workstation in the NTLM AUTHENTICATE
+message. Some servers (e.g. domain-joined Windows servers with per-account
+workstation restrictions or NTLM allow-lists) require this to match a
+specific name. Leave blank to send no workstation name (the default).
+`,
+			Advanced:  true,
 			Sensitive: true,
 		}, {
 			Name: "use_kerberos",
@@ -151,6 +163,7 @@ type Options struct {
 	Pass            string      `config:"pass"`
 	Domain          string      `config:"domain"`
 	SPN             string      `config:"spn"`
+	Workstation     string      `config:"workstation"`
 	UseKerberos     bool        `config:"use_kerberos"`
 	KerberosCCache  string      `config:"kerberos_ccache"`
 	HideSpecial     bool        `config:"hide_special_share"`
@@ -190,6 +203,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	err := configstruct.Set(m, opt)
 	if err != nil {
 		return nil, err
+	}
+	if opt.User == "" {
+		opt.User = currentUser
 	}
 
 	// if root is empty or ends with / (must be a directory)
@@ -514,8 +530,15 @@ func (f *Fs) About(ctx context.Context) (_ *fs.Usage, err error) {
 	return usage, nil
 }
 
+// file is a pooled write handle together with the connection it lives on.
+type file struct {
+	*smb2.File
+	c *conn
+}
+
 type smbWriterAt struct {
-	pool    *filePool
+	fs      *Fs
+	pool    *filepool.Pool[*file]
 	closed  bool
 	closeMu sync.Mutex
 	wg      sync.WaitGroup
@@ -531,13 +554,13 @@ func (w *smbWriterAt) WriteAt(p []byte, off int64) (int, error) {
 	w.closeMu.Unlock()
 	defer w.wg.Done()
 
-	f, err := w.pool.get()
+	f, err := w.pool.Get()
 	if err != nil {
 		return 0, fmt.Errorf("failed to get file from pool: %w", err)
 	}
 
 	n, writeErr := f.WriteAt(p, off)
-	w.pool.put(f, writeErr)
+	w.pool.Put(f, writeErr)
 
 	if writeErr != nil {
 		return n, fmt.Errorf("failed to write at offset %d: %w", off, writeErr)
@@ -561,18 +584,44 @@ func (w *smbWriterAt) Close() error {
 	var errs []error
 
 	// Drain the pool
-	if err := w.pool.drain(); err != nil {
+	if err := w.pool.Drain(); err != nil {
 		errs = append(errs, fmt.Errorf("failed to drain file pool: %w", err))
 	}
 
 	// Remove session
-	w.pool.fs.removeSession()
+	w.fs.removeSession()
 
 	if len(errs) > 0 {
 		return errors.Join(errs...)
 	}
 
 	return nil
+}
+
+// openPoolFile opens a fresh write handle on its own connection for share/path.
+func (f *Fs) openPoolFile(share, path string) func(context.Context) (*file, error) {
+	return func(ctx context.Context) (*file, error) {
+		c, err := f.getConnection(ctx, share)
+		if err != nil {
+			return nil, err
+		}
+		fl, err := c.smbShare.OpenFile(path, os.O_WRONLY, 0o644)
+		if err != nil {
+			f.putConnection(&c, err)
+			return nil, fmt.Errorf("failed to open: %w", err)
+		}
+		return &file{File: fl, c: c}, nil
+	}
+}
+
+// releasePoolFile closes a pooled handle and returns its connection.
+func (f *Fs) releasePoolFile(fl *file, err error) error {
+	closeErr := fl.Close()
+	if err == nil {
+		err = closeErr
+	}
+	f.putConnection(&fl.c, err)
+	return closeErr
 }
 
 // OpenWriterAt opens with a handle for random access writes
@@ -624,7 +673,8 @@ func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.Wr
 	o.fs.addSession()
 
 	return &smbWriterAt{
-		pool: newFilePool(ctx, o.fs, share, smbPath),
+		fs:   o.fs,
+		pool: filepool.New(ctx, o.fs.openPoolFile(share, smbPath), o.fs.releasePoolFile),
 	}, nil
 }
 

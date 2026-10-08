@@ -20,6 +20,8 @@ The core parts of rclone under `fs` and `vfs` need to work with all backends and
 
 Make sure added tests **actually test the code you have written** and test the intention behind the change. If you are fixing a problem, write the tests first to reproduce the problem before starting on the fix.
 
+Tests in `fs/operations`, `fs/sync`, `cmd/bisync`, `cmd/gitannex` and `vfs` (the definitive list is in `fstest/test_all/config.yaml`) are run on the integration test machine against **all** the backends, so they **must be prepared to run on backends with limited functionality**. Ideally tests, or parts of tests, should be skipped using the `Fs.Features()` flags on backends which can't support them.
+
 ## Build and Test Commands
 
 ```bash

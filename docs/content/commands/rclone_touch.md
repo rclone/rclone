@@ -24,9 +24,11 @@ This will touch `--transfers` files concurrently.
 If `--timestamp` is used then sets the modification time to that
 time instead of the current time. Times may be specified as one of:
 
-- 'YYMMDD' - e.g. 17.10.30
+- 'YYMMDD' - e.g. 171030
+- 'YYYY-MM-DD' - e.g. 2006-01-02
 - 'YYYY-MM-DDTHH:MM:SS' - e.g. 2006-01-02T15:04:05
 - 'YYYY-MM-DDTHH:MM:SS.SSS' - e.g. 2006-01-02T15:04:05.123456789
+- 'YYYY-MM-DDTHH:MM:SSZ' - e.g. 2006-01-02T15:04:05Z
 
 Note that value of `--timestamp` is in UTC. If you want local time
 then add the `--localtime` flag.

@@ -521,9 +521,17 @@ type accountWriteTo struct {
 func (awt *accountWriteTo) Write(p []byte) (n int, err error) {
 	bytesUntilLimit, err := awt.acc.checkReadBefore()
 	if err == nil {
+		// Truncate the write to the transfer limit
+		truncated := int64(len(p)) > bytesUntilLimit
+		if truncated {
+			p = p[:bytesUntilLimit]
+		}
 		n, err = awt.w.Write(p)
 		n, err = awt.acc.checkReadAfter(bytesUntilLimit, n, err)
 		awt.acc.accountRead(n)
+		if truncated && err == nil {
+			err = ErrorMaxTransferLimitReachedFatal
+		}
 	}
 	return n, err
 }

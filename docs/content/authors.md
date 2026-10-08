@@ -1202,3 +1202,59 @@ put them back in again. -->
 - Morax <james20081204@gmail.com>
 - Shurong Cao <170531907+CAOShurong@users.noreply.github.com>
 - Dave <davixk83@gmail.com>
+- max <max@maxmax.ch>
+- Hakan İSMAİL <hakanismail53@gmail.com>
+- Shantanav Mukherjee <shantanav7@gmail.com>
+- VXNCXNX <VXNCXNX@users.noreply.github.com>
+- Rohit Behera <126186063+r0h1tb@users.noreply.github.com>
+- Rahman Yilmaz <85690773+Sudo-Rahman@users.noreply.github.com>
+- Sanjay Kanth A <sanjaykanthsk09@gmail.com>
+- machsix <28209092+machsix@users.noreply.github.com>
+- CAOShurong <3502119616@qq.com>
+- shaurya <shauryajaiswal.dev@gmail.com>
+- water <672684719@qq.com>
+- Rayan Salhab <r.salhab@aiyexpertsolutions.com>
+- Vijay Misal <misalvijay153@gmail.com>
+- Sune Mølgaard <sune@molgaard.org>
+- Anatoly Tarnavsky <anatolyt@gmail.com>
+- cyphercodes <cyphercodes@users.noreply.github.com>
+- shaurya <19599684+no-hup@users.noreply.github.com>
+- no-hup <shauryaj.finance@gmail.com>
+- Dhevenddra <dhevg20020402@gmail.com>
+- Splainte <r.wycke@hotmail.fr>
+- PSR94 <88868390+PSR94@users.noreply.github.com>
+- Shane McCarron <shane.mccarron@corvexconnect.com>
+- Dhevenddra K G <121691114+Dhevenddra@users.noreply.github.com>
+- Vaibhav Mashal <110161673+vaibhavmashal@users.noreply.github.com>
+- Murat Topcu <murat-topcu@outlook.com>
+- tomaszni <tomaszni@users.noreply.github.com>
+- eliotee <17210244+eliotee@users.noreply.github.com>
+- Aditya <f20220497@goa.bits-pilani.ac.in>
+- Nicholas Velten <nikvelten@gmail.com>
+- youdie006 <xncb135@korea.ac.kr>
+- subomi <86053854+ubmids@users.noreply.github.com>
+- Can Arslan <138895927+mc2rcanarslan@users.noreply.github.com>
+- Can Arslan <carslan@viyaenv.com>
+- ZRHann <2829442630@qq.com>
+- enkvadrat <123565769+enkvadrat@users.noreply.github.com>
+- Vladimir Babin <vovababin@gmail.com>
+- Eugene <inbox@null.page>
+- Kunpeng Xie <68572236+pentaoa@users.noreply.github.com>
+- foecmke <221832573+foecmke@users.noreply.github.com>
+- Vasek Sraier <git@vakabus.cz>
+- Kalin Stoyanov <kalin.stoyanov@kiteworks.com>
+- NytePlus <nyte_plus@sjtu.edu.cn>
+- Jeremy Schoemaker <jeremy@shoemoney.com>
+- solunolab <solunolab@outlook.com>
+- Mattias Michaux <mattias.michaux@gmail.com>
+- jxj <xinjun.jiang@daocloud.io>
+- Harsh Raj Singhania <40535627+HarshRajSinghania@users.noreply.github.com>
+- Roland <vv22345@163.com>
+- interested.tortoise <interested.tortoise@proton.me>
+- hsdfat <118717478+hsdfat@users.noreply.github.com>
+- Dirk Petersen <dirkpetersen@users.noreply.github.com>
+- TastyHeadphones <76083688+TastyHeadphones@users.noreply.github.com>
+- Neil Cawse <8085959+neilcawse@users.noreply.github.com>
+- Lev Devaev <102860715+Exxxxpo@users.noreply.github.com>
+- GhostCoder6969 <ahmadbannout191999@gmail.com>
+- bounty-agent <bounty@example.com>

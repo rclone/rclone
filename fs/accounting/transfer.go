@@ -71,15 +71,23 @@ type Transfer struct {
 
 // newCheckingTransfer instantiates new checking of the object.
 func newCheckingTransfer(stats *StatsInfo, obj fs.DirEntry, what string) *Transfer {
-	return newTransferRemoteSize(stats, obj.Remote(), obj.Size(), true, what, nil, nil)
+	return newTransferRemoteSize(stats, obj.Remote(), obj.Size(), true, what, nil, nil, false)
+}
+
+// newCheckingTransferNoHistory instantiates new checking of the
+// object which is not kept in the completed transfers history.
+func newCheckingTransferNoHistory(stats *StatsInfo, obj fs.DirEntry, what string) *Transfer {
+	return newTransferRemoteSize(stats, obj.Remote(), obj.Size(), true, what, nil, nil, true)
 }
 
 // newTransfer instantiates new transfer.
 func newTransfer(stats *StatsInfo, obj fs.DirEntry, srcFs, dstFs fs.Fs) *Transfer {
-	return newTransferRemoteSize(stats, obj.Remote(), obj.Size(), false, "", srcFs, dstFs)
+	return newTransferRemoteSize(stats, obj.Remote(), obj.Size(), false, "", srcFs, dstFs, false)
 }
 
-func newTransferRemoteSize(stats *StatsInfo, remote string, size int64, checking bool, what string, srcFs, dstFs fs.Fs) *Transfer {
+// If noHistory is set the transfer is not kept in the completed
+// transfers history after it is done.
+func newTransferRemoteSize(stats *StatsInfo, remote string, size int64, checking bool, what string, srcFs, dstFs fs.Fs, noHistory bool) *Transfer {
 	tr := &Transfer{
 		stats:     stats,
 		remote:    remote,
@@ -90,7 +98,9 @@ func newTransferRemoteSize(stats *StatsInfo, remote string, size int64, checking
 		srcFs:     srcFs,
 		dstFs:     dstFs,
 	}
-	stats.AddTransfer(tr)
+	if !noHistory {
+		stats.AddTransfer(tr)
+	}
 	return tr
 }
 

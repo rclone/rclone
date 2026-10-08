@@ -31,6 +31,7 @@ import (
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/lib/multipart"
 )
 
 // Globals
@@ -563,15 +564,19 @@ type compressionResult[T sgzip.GzipMetadata | SzstdMetadata] struct {
 func (f *Fs) rcat(ctx context.Context, dstFileName string, in io.ReadCloser, modTime time.Time, options []fs.OpenOption) (o fs.Object, err error) {
 
 	// cache small files in memory and do normal upload
-	buf := make([]byte, f.opt.RAMCacheLimit)
-	if n, err := io.ReadFull(in, buf); err == io.EOF || err == io.ErrUnexpectedEOF {
-		src := object.NewStaticObjectInfo(dstFileName, modTime, int64(len(buf[:n])), false, nil, f.Fs)
-		return f.Fs.Put(ctx, bytes.NewBuffer(buf[:n]), src, options...)
+	rw := multipart.NewRW()
+	defer fs.CheckClose(rw, &err)
+	_, err = io.CopyN(rw, in, int64(f.opt.RAMCacheLimit))
+	if err == io.EOF {
+		src := object.NewStaticObjectInfo(dstFileName, modTime, rw.Size(), false, nil, f.Fs)
+		return f.Fs.Put(ctx, rw, src, options...)
+	} else if err != nil {
+		return nil, err
 	}
 
 	// Need to include what we already read
 	in = &ReadCloserWrapper{
-		Reader: io.MultiReader(bytes.NewReader(buf), in),
+		Reader: io.MultiReader(rw, in),
 		Closer: in,
 	}
 
@@ -1080,6 +1085,35 @@ type ObjectMetadata struct {
 	CompressionMetadataZstd *SzstdMetadata      // Metadata for Zstd compression
 }
 
+// validate checks metadata read from the wrapped remote before it is used to
+// construct a compressed reader.
+func (meta *ObjectMetadata) validate() error {
+	if meta.Mode != Gzip {
+		return nil
+	}
+	if meta.CompressionMetadataGzip == nil {
+		return errors.New("missing gzip metadata")
+	}
+	if meta.CompressionMetadataGzip.BlockSize <= 0 {
+		return fmt.Errorf("invalid gzip block size %d", meta.CompressionMetadataGzip.BlockSize)
+	}
+	if meta.Size != meta.CompressionMetadataGzip.Size {
+		return errors.New("gzip metadata size does not match object size")
+	}
+	if meta.Size < 0 {
+		return errors.New("invalid gzip object size")
+	}
+	blockSize := int64(meta.CompressionMetadataGzip.BlockSize)
+	blocks := meta.Size / blockSize
+	if meta.Size%blockSize != 0 {
+		blocks++
+	}
+	if int64(len(meta.CompressionMetadataGzip.BlockData)) < blocks {
+		return errors.New("gzip block data is incomplete")
+	}
+	return nil
+}
+
 // Object with external metadata
 type Object struct {
 	fs.Object                 // Wraps around data object for this object
@@ -1103,6 +1137,9 @@ func readMetadata(ctx context.Context, mo fs.Object) (meta *ObjectMetadata, err 
 	if err = jr.Decode(meta); err != nil {
 		return nil, err
 	}
+	if err = meta.validate(); err != nil {
+		return nil, err
+	}
 	return meta, nil
 }
 
@@ -1118,6 +1155,15 @@ func (o *Object) Remove(ctx context.Context) error {
 		return err
 	}
 	return objErr
+}
+
+// countingDiscard is an io.Writer which discards its input and counts
+// the bytes written
+type countingDiscard int64
+
+func (c *countingDiscard) Write(p []byte) (int, error) {
+	*c += countingDiscard(len(p))
+	return len(p), nil
 }
 
 // ReadCloserWrapper combines a Reader and a Closer to a ReadCloser

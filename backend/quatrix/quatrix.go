@@ -1126,12 +1126,14 @@ func (o *Object) dynamicUpload(ctx context.Context, size int64, modTime time.Tim
 
 		_, err := io.CopyN(rw, in, localChunk)
 		if err != nil {
+			_ = rw.Close()
 			return fmt.Errorf("read chunk with offset %d size %d: %w", offset, localChunk, err)
 		}
 
 		start := time.Now()
 
 		err = o.upload(ctx, uploadSession.UploadKey, rw, size, offset, localChunk, options...)
+		_ = rw.Close()
 		if err != nil {
 			return fmt.Errorf("upload chunk with offset %d size %d: %w", offset, localChunk, err)
 		}
@@ -1218,7 +1220,7 @@ func (o *Object) uploadSession(ctx context.Context, parentID, name string) (uplo
 	return o.fs.uploadLink(ctx, parentID, encName)
 }
 
-func (o *Object) upload(ctx context.Context, uploadKey string, chunk io.Reader, fullSize int64, offset int64, chunkSize int64, options ...fs.OpenOption) (err error) {
+func (o *Object) upload(ctx context.Context, uploadKey string, chunk io.ReadSeeker, fullSize int64, offset int64, chunkSize int64, options ...fs.OpenOption) (err error) {
 	opts := rest.Opts{
 		Method:        "POST",
 		RootURL:       fmt.Sprintf(uploadURL, o.fs.opt.Host) + uploadKey,
@@ -1231,6 +1233,11 @@ func (o *Object) upload(ctx context.Context, uploadKey string, chunk io.Reader, 
 	var fileID string
 
 	err = o.fs.pacer.Call(func() (bool, error) {
+		// Rewind the chunk so a retry re-sends it in full
+		_, err := chunk.Seek(0, io.SeekStart)
+		if err != nil {
+			return false, err
+		}
 		resp, err := o.fs.srv.CallJSON(ctx, &opts, nil, &fileID)
 		return shouldRetry(ctx, resp, err)
 	})

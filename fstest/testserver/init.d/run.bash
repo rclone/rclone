@@ -49,7 +49,15 @@ case "${1:-}" in
       if _is_running; then
         stop || true
       fi
-      if ! out="$(start)"; then
+      # Run start in a subshell with errexit on so a failing command
+      # (eg docker run) aborts it. The subshell's status is only
+      # honoured if it is not part of an if/|| condition, as bash
+      # ignores errexit inside those, so capture it separately.
+      set +e
+      out="$(set -e; start)"
+      start_rc=$?
+      set -e
+      if (( start_rc != 0 )); then
         echo "failed to start" >&2
         exit 1
       fi

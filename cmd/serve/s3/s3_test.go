@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"path"
 	"path/filepath"
@@ -15,8 +16,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/rclone/gofakes3/signature"
 	_ "github.com/rclone/rclone/backend/local"
 	_ "github.com/rclone/rclone/backend/s3" // for TestS3Minio backing remote
 	"github.com/rclone/rclone/cmd/serve/proxy"
@@ -39,11 +43,19 @@ const (
 )
 
 // Configure and serve the server
+//
+// If f is nil the server is expected to be using an auth proxy, in
+// which case the credentials are handed to the test proxy via the
+// environment rather than --auth-key.
 func serveS3(t *testing.T, f fs.Fs) (testURL string, keyid string, keysec string, w *Server) {
 	keyid = random.String(16)
 	keysec = random.String(16)
 	opt := Opt // copy default options
-	opt.AuthKey = []string{fmt.Sprintf("%s,%s", keyid, keysec)}
+	if f == nil {
+		t.Setenv("RCLONE_TEST_PROXY_AUTH_KEY", fmt.Sprintf("%s,%s", keyid, keysec))
+	} else {
+		opt.AuthKey = []string{fmt.Sprintf("%s,%s", keyid, keysec)}
+	}
 	opt.HTTP.ListenAddr = []string{endpoint}
 	w, _ = newServer(context.Background(), f, &opt, &vfscommon.Opt, &proxy.Opt)
 	go func() {
@@ -283,9 +295,6 @@ func TestListBucketsAuthProxy(t *testing.T) {
 		{
 			description: "list buckets",
 			bucket:      "mybucket",
-			// request with random keyid
-			// instead of what was set in 'authPair'
-			keyID: random.String(16),
 			files: []FileStuct{
 				{
 					path:     "",
@@ -298,6 +307,12 @@ func TestListBucketsAuthProxy(t *testing.T) {
 			},
 		},
 		{
+			description: "list buckets: unknown s3 key",
+			bucket:      "mybucket",
+			keyID:       random.String(16),
+			shouldFail:  true,
+		},
+		{
 			description: "list buckets: wrong s3 secret",
 			bucket:      "mybucket",
 			keySec:      "invalid",
@@ -306,6 +321,252 @@ func TestListBucketsAuthProxy(t *testing.T) {
 	}
 
 	testListBuckets(t, cases, true)
+}
+
+// TestNewServerPerServerAuthProxy checks that a per-server proxyOpt.AuthProxy
+// enables proxy mode even when the process-global proxy.Opt.AuthProxy is empty,
+// which is the normal case when the server is configured via serve/start.
+func TestNewServerPerServerAuthProxy(t *testing.T) {
+	fstest.Initialise()
+
+	// Ensure the global is empty so we only test the per-server option.
+	assert.Equal(t, "", proxy.Opt.AuthProxy)
+
+	f, err := fs.NewFs(context.Background(), "testdata")
+	require.NoError(t, err)
+
+	opt := Opt
+	opt.AuthKey = []string{"access-key,secret-key"}
+	opt.HTTP.ListenAddr = []string{endpoint}
+
+	proxyOpt := proxy.Opt
+	proxyOpt.AuthProxy = "/path/to/auth/proxy"
+
+	w, err := newServer(context.Background(), f, &opt, &vfscommon.Opt, &proxyOpt)
+	require.NoError(t, err)
+	defer func() {
+		assert.NoError(t, w.Shutdown())
+	}()
+	assert.True(t, w.provider.IsProxy(), "expected auth proxy to be enabled by per-server option")
+	assert.Nil(t, w.provider.VFS(), "expected no fixed VFS when auth proxy is in use")
+}
+
+// TestAuthProxyEmptySecret checks that a request for an arbitrary
+// access key ID signed with an empty secret is refused when using an
+// auth proxy without --auth-key.
+func TestAuthProxyEmptySecret(t *testing.T) {
+	fstest.Initialise()
+
+	prog, err := filepath.Abs("../servetest/proxy_code.go")
+	require.NoError(t, err)
+	files, err := filepath.Abs("testdata")
+	require.NoError(t, err)
+	proxy.Opt.AuthProxy = "go run " + prog + " " + files
+	defer func() {
+		proxy.Opt.AuthProxy = ""
+	}()
+
+	endpoint, keyid, _, s := serveS3(t, nil)
+	defer func() {
+		assert.NoError(t, s.server.Shutdown())
+	}()
+
+	for _, accessKeyID := range []string{keyid, random.String(16)} {
+		req, err := http.NewRequest("GET", endpoint+"/", nil)
+		require.NoError(t, err)
+		req.Header.Set("X-Amz-Content-Sha256", "UNSIGNED-PAYLOAD")
+		signer := v4.NewSigner()
+		err = signer.SignHTTP(context.Background(), aws.Credentials{AccessKeyID: accessKeyID, SecretAccessKey: ""}, req, "UNSIGNED-PAYLOAD", "s3", "us-east-1", time.Now())
+		require.NoError(t, err)
+
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		body, _ := io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode, string(body))
+		assert.NotContains(t, string(body), "ListAllMyBucketsResult")
+	}
+}
+
+// TestAuthProxyKeysNotRegistered checks that secrets supplied by the
+// auth proxy are never registered in gofakes3's process wide key
+// store where any other serve s3 instance in the process would honour
+// them.
+func TestAuthProxyKeysNotRegistered(t *testing.T) {
+	fstest.Initialise()
+
+	prog, err := filepath.Abs("../servetest/proxy_code.go")
+	require.NoError(t, err)
+	files, err := filepath.Abs("testdata")
+	require.NoError(t, err)
+	proxy.Opt.AuthProxy = "go run " + prog + " " + files
+	defer func() {
+		proxy.Opt.AuthProxy = ""
+	}()
+
+	endpoint, keyid, keysec, s := serveS3(t, nil)
+	defer func() {
+		assert.NoError(t, s.server.Shutdown())
+	}()
+
+	sign := func() *http.Request {
+		req, err := http.NewRequest("GET", endpoint+"/", nil)
+		require.NoError(t, err)
+		req.Header.Set("X-Amz-Content-Sha256", "UNSIGNED-PAYLOAD")
+		signer := v4.NewSigner()
+		err = signer.SignHTTP(context.Background(), aws.Credentials{AccessKeyID: keyid, SecretAccessKey: keysec}, req, "UNSIGNED-PAYLOAD", "s3", "us-east-1", time.Now())
+		require.NoError(t, err)
+		return req
+	}
+
+	// A correctly signed request is accepted by the server
+	resp, err := http.DefaultClient.Do(sign())
+	require.NoError(t, err)
+	body, _ := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	assert.Equal(t, http.StatusOK, resp.StatusCode, string(body))
+
+	// But the key it used must not be in the global key store
+	assert.NotEqual(t, signature.ErrNone, signature.V4SignVerify(sign()), "proxy secret was registered in the gofakes3 key store")
+}
+
+// TestAuthKeyPerServer checks that two servers in the same process
+// with different --auth-key pairs only accept their own credentials.
+func TestAuthKeyPerServer(t *testing.T) {
+	fstest.Initialise()
+	f, err := fs.NewFs(context.Background(), "testdata")
+	require.NoError(t, err)
+
+	urlA, keyA, secA, sA := serveS3(t, f)
+	defer func() { assert.NoError(t, sA.server.Shutdown()) }()
+	urlB, keyB, secB, sB := serveS3(t, f)
+	defer func() { assert.NoError(t, sB.server.Shutdown()) }()
+
+	signedGet := func(url, accessKeyID, secret string) int {
+		req, err := http.NewRequest("GET", url+"/", nil)
+		require.NoError(t, err)
+		req.Header.Set("X-Amz-Content-Sha256", "UNSIGNED-PAYLOAD")
+		err = v4.NewSigner().SignHTTP(context.Background(), aws.Credentials{AccessKeyID: accessKeyID, SecretAccessKey: secret}, req, "UNSIGNED-PAYLOAD", "s3", "us-east-1", time.Now())
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		_, _ = io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+		return resp.StatusCode
+	}
+
+	assert.Equal(t, http.StatusOK, signedGet(urlA, keyA, secA), "A with A's key")
+	assert.Equal(t, http.StatusOK, signedGet(urlB, keyB, secB), "B with B's key")
+	assert.Equal(t, http.StatusForbidden, signedGet(urlA, keyB, secB), "A with B's key")
+	assert.Equal(t, http.StatusForbidden, signedGet(urlB, keyA, secA), "B with A's key")
+}
+
+// newMinioClient serves f and returns a minio client connected to it.
+func newMinioClient(t *testing.T, f fs.Fs) *minio.Client {
+	endpoint, keyid, keysec, _ := serveS3(t, f)
+	testURL, err := url.Parse(endpoint)
+	require.NoError(t, err)
+	minioClient, err := minio.New(testURL.Host, &minio.Options{
+		Creds:  credentials.NewStaticV4(keyid, keysec, ""),
+		Secure: false,
+	})
+	require.NoError(t, err)
+	return minioClient
+}
+
+// putTestObject puts an object with the given key into bucket on f.
+func putTestObject(t *testing.T, f fs.Fs, bucket, key string) {
+	contents := "contents"
+	obji := object.NewStaticObjectInfo(path.Join(bucket, key), time.Now(), int64(len(contents)), true, nil, nil)
+	_, err := f.Put(context.Background(), bytes.NewBufferString(contents), obji)
+	require.NoError(t, err)
+}
+
+// listKeysWithMinioClient pages through a listing with the given options and
+// returns the keys it yields, common prefixes included.
+func listKeysWithMinioClient(t *testing.T, minioClient *minio.Client, bucket string, opts minio.ListObjectsOptions) (keys []string) {
+	for object := range minioClient.ListObjects(context.Background(), bucket, opts) {
+		require.NoError(t, object.Err)
+		keys = append(keys, object.Key)
+	}
+	return keys
+}
+
+// TestListObjectsPagingWithMinioClient checks that a client paging through a
+// deep hierarchy with a small max-keys sees every key exactly once, in order,
+// exercising the continuation tokens end to end.
+func TestListObjectsPagingWithMinioClient(t *testing.T) {
+	fstest.Initialise()
+	f, _, clean, err := fstest.RandomRemote()
+	require.NoError(t, err)
+	defer clean()
+
+	// A chunk store shaped like the one Proxmox Backup Server lists:
+	// many directories, each holding a few objects, listed with a prefix
+	// and no delimiter.
+	var want []string
+	for dir := range 20 {
+		for file := range 5 {
+			key := fmt.Sprintf(".chunks/%04x/chunk%d", dir, file)
+			want = append(want, key)
+			putTestObject(t, f, "mybucket", key)
+		}
+	}
+	slices.Sort(want)
+
+	minioClient := newMinioClient(t, f)
+	for _, useV1 := range []bool{false, true} {
+		t.Run(fmt.Sprintf("UseV1=%v", useV1), func(t *testing.T) {
+			got := listKeysWithMinioClient(t, minioClient, "mybucket", minio.ListObjectsOptions{
+				Prefix:    ".chunks",
+				Recursive: true,
+				MaxKeys:   7,
+				UseV1:     useV1,
+			})
+			assert.Equal(t, want, got)
+		})
+	}
+}
+
+// TestListObjectsDelimitedPagingWithMinioClient checks that a client paging
+// through a delimited listing sees every common prefix and every object key
+// exactly once, whichever side of a page boundary they fall.
+func TestListObjectsDelimitedPagingWithMinioClient(t *testing.T) {
+	fstest.Initialise()
+	f, _, clean, err := fstest.RandomRemote()
+	require.NoError(t, err)
+	defer clean()
+
+	// Directories and objects which interleave in key order, so that a page
+	// boundary has to fall between a common prefix and an object key.
+	var want []string
+	for i := range 20 {
+		if i%2 == 0 {
+			putTestObject(t, f, "mybucket", fmt.Sprintf("a%02d/object", i))
+			want = append(want, fmt.Sprintf("a%02d/", i))
+		} else {
+			key := fmt.Sprintf("a%02d.txt", i)
+			putTestObject(t, f, "mybucket", key)
+			want = append(want, key)
+		}
+	}
+	slices.Sort(want)
+
+	minioClient := newMinioClient(t, f)
+	for _, maxKeys := range []int{1, 3, 7, 20} {
+		for _, useV1 := range []bool{false, true} {
+			t.Run(fmt.Sprintf("MaxKeys%d/UseV1=%v", maxKeys, useV1), func(t *testing.T) {
+				got := listKeysWithMinioClient(t, minioClient, "mybucket", minio.ListObjectsOptions{
+					MaxKeys: maxKeys,
+					UseV1:   useV1,
+				})
+				// The client yields the objects of a page before its common
+				// prefixes, so only the keys of the whole listing are sorted.
+				slices.Sort(got)
+				assert.Equal(t, want, got)
+			})
+		}
+	}
 }
 
 func TestRc(t *testing.T) {

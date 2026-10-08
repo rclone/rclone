@@ -18,24 +18,20 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container"
-	"github.com/rclone/rclone/backend/azureblob/arrowlist"
 	"github.com/rclone/rclone/fs"
 	"golang.org/x/sync/errgroup"
 )
+
+// arrowContentType is the Content-Type of an Apache Arrow IPC stream listing
+// response, used to tell whether the service honoured an Arrow request.
+const arrowContentType = "application/vnd.apache.arrow.stream"
 
 // listArrowParallel lists (containerName, directory) by splitting the blob name
 // keyspace into shards and listing them concurrently. opts must already request
 // the Arrow format; it is cloned per shard with StartFrom/EndBefore set. It
 // returns the number of raw items seen. directory/prefix are already normalised
 // by the caller.
-func (f *Fs) listArrowParallel(ctx context.Context, containerName, directory, prefix string, addContainer bool, opts *arrowlist.ListBlobsHierarchyOptions, delimiter string, fn listFn) (int, error) {
-	// Parallel listing needs the arrowlist client (server-side endBefore is
-	// only honoured on the Arrow path) - without it fall back to sequential.
-	if _, err := f.arrowCntSVC(containerName); err != nil {
-		fs.Debugf(f, "Not using parallel Arrow listing: %v", err)
-		return f.listBlobsPager(ctx, containerName, directory, prefix, addContainer, opts, delimiter, fn)
-	}
-
+func (f *Fs) listArrowParallel(ctx context.Context, containerName, directory, prefix string, addContainer bool, opts *container.ListBlobsHierarchyOptions, delimiter string, fn listFn) (int, error) {
 	// Split the keyspace by a single-case character ladder (see
 	// arrowLadderBoundaries for why single-case matters).
 	points := arrowLadderBoundaries(directory, arrowShardTarget(f.opt.ListParallelism))
@@ -66,7 +62,7 @@ func (f *Fs) listArrowParallel(ctx context.Context, containerName, directory, pr
 
 	// Schedule every shard; SetLimit bounds concurrency, so more shards than
 	// workers gives free load balancing as workers pick up the next shard.
-	var total int64
+	var total atomic.Int64
 	g, gCtx := errgroup.WithContext(ctx)
 	g.SetLimit(f.opt.ListParallelism)
 	for _, sh := range shards {
@@ -89,12 +85,12 @@ func (f *Fs) listArrowParallel(ctx context.Context, containerName, directory, pr
 				shardOpts.EndBefore = nil
 			}
 			n, err := f.listBlobsPager(gCtx, containerName, directory, prefix, addContainer, &shardOpts, delimiter, safeFn)
-			atomic.AddInt64(&total, int64(n))
+			total.Add(int64(n))
 			return err
 		})
 	}
 	err := g.Wait()
-	found := int(atomic.LoadInt64(&total))
+	found := int(total.Load())
 	if isEndBeforeUnsupported(err) {
 		// The account can't honour the shards' endBefore bounds, so parallel
 		// listing can't be used on it.
@@ -115,16 +111,13 @@ func (f *Fs) listArrowParallel(ctx context.Context, containerName, directory, pr
 // isEndBeforeUnsupported reports whether err means the service can't honour
 // the endBefore listing bound, so sharded parallel listing must not be used.
 //
-// This happens two ways: the arrowlist pager's ErrEndBeforeXMLFallback (the
-// server answered XML with endBefore set), or the service rejecting the
-// endBefore parameter with 400 OperationNotSupportedWithFeatureMissing "The
-// requested operation is not allowed as EndBefore parameter support is
-// missing on this account" - endBefore is only supported on the Arrow
-// listing path of accounts with Blob Listing with Apache Arrow enabled.
+// The service rejects the endBefore parameter with 400
+// OperationNotSupportedWithFeatureMissing "The requested operation is not
+// allowed as EndBefore parameter support is missing on this account" -
+// endBefore is only supported on the Arrow listing path of accounts with
+// Blob Listing with Apache Arrow enabled. (The SDK pager would silently
+// accept an XML page with endBefore set, but the service never sends one.)
 func isEndBeforeUnsupported(err error) bool {
-	if errors.Is(err, arrowlist.ErrEndBeforeXMLFallback) {
-		return true
-	}
 	var respErr *azcore.ResponseError
 	return errors.As(err, &respErr) && respErr.ErrorCode == "OperationNotSupportedWithFeatureMissing"
 }

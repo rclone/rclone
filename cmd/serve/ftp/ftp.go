@@ -166,16 +166,22 @@ You can set a single username and password with the --user and --pass flags.
 
 // driver contains everything to run the driver for the FTP server
 type driver struct {
-	f          fs.Fs
-	srv        *ftp.Server
-	ctx        context.Context // for global config
-	opt        Options
-	globalVFS  *vfs.VFS     // the VFS if not using auth proxy
-	proxy      *proxy.Proxy // may be nil if not in use
-	useTLS     bool
-	userPassMu sync.Mutex        // to protect userPass
-	userPass   map[string]string // cache of username => password when using vfs proxy
+	f        fs.Fs
+	srv      *ftp.Server
+	ctx      context.Context // for global config
+	opt      Options
+	provider *proxy.Provider
+	useTLS   bool
 }
+
+// sessionObscuredPassKey is the key under which the obscured password is
+// stored in the per-session ftp.Session.Data map when using the auth proxy.
+//
+// The credential must be bound to the FTP session, not to the username: two
+// sessions can share a username but resolve to different proxy backends, so a
+// username-keyed store would let a later login rebind an earlier session's
+// operations to the later session's backend.
+const sessionObscuredPassKey = "rclone-obscured-pass"
 
 func init() {
 	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "ftp", Opt: &Opt, Options: OptionsInfo})
@@ -184,7 +190,7 @@ func init() {
 var passivePortsRe = regexp.MustCompile(`^\s*\d+\s*-\s*\d+\s*$`)
 
 // Make a new FTP to serve the remote
-func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Options, proxyOpt *proxy.Options) (*driver, error) {
+func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Options, proxyOpt *proxy.Options) (_ *driver, err error) {
 	host, port, err := net.SplitHostPort(opt.ListenAddr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse host:port from %q", opt.ListenAddr)
@@ -195,16 +201,17 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 	}
 
 	d := &driver{
-		f:   f,
-		ctx: ctx,
-		opt: *opt,
+		f:        f,
+		ctx:      ctx,
+		opt:      *opt,
+		provider: proxy.NewProvider(ctx, f, vfsOpt, proxyOpt),
 	}
-	if proxy.Opt.AuthProxy != "" {
-		d.proxy = proxy.New(ctx, proxyOpt, vfsOpt)
-		d.userPass = make(map[string]string, 16)
-	} else {
-		d.globalVFS = vfs.New(ctx, f, vfsOpt)
-	}
+	defer func() {
+		if err != nil {
+			d.provider.Shutdown()
+		}
+	}()
+
 	d.useTLS = d.opt.TLSKey != ""
 
 	// Check PassivePorts format since the server library doesn't!
@@ -250,7 +257,9 @@ func (d *driver) Serve() error {
 //lint:ignore U1000 unused when not building linux
 func (d *driver) Shutdown() error {
 	fs.Logf(d.f, "Stopping FTP on %s", d.srv.Hostname+":"+strconv.Itoa(d.srv.Port))
-	return d.srv.Shutdown()
+	err := d.srv.Shutdown()
+	d.provider.Shutdown()
+	return err
 }
 
 // Return the first address of the server
@@ -316,23 +325,24 @@ func (l *Logger) PrintResponse(sessionID string, code int, message string) {
 
 // CheckPasswd handle auth based on configuration
 func (d *driver) CheckPasswd(sctx *ftp.Context, user, pass string) (ok bool, err error) {
-	if d.proxy != nil {
-		_, _, err = d.proxy.Call(user, pass, false, sctx.Sess.RemoteAddr().String())
+	if d.provider.IsProxy() {
+		_, _, err = d.provider.Proxy().Call(user, pass, false, sctx.Sess.RemoteAddr().String())
 		if err != nil {
 			fs.Infof(nil, "proxy login failed: %v", err)
 			return false, nil
 		}
-		// Cache obscured password for later lookup.
+		// Cache the obscured password on the session for later lookup.
 		//
-		// We don't cache the VFS directly in the driver as we want them
-		// to be expired and the auth proxy does that for us.
+		// We don't cache the VFS directly as we want it to be expired and
+		// the auth proxy does that for us. We bind the credential to this
+		// FTP session rather than to the username so a later login with the
+		// same username but a different credential can't rebind this
+		// session's operations to a different backend.
 		oPass, err := obscure.Obscure(pass)
 		if err != nil {
 			return false, err
 		}
-		d.userPassMu.Lock()
-		d.userPass[user] = oPass
-		d.userPassMu.Unlock()
+		sctx.Sess.Data[sessionObscuredPassKey] = oPass
 	} else {
 		userOK := subtle.ConstantTimeCompare([]byte(d.opt.User), []byte(user))
 		// No password configured means any password is accepted
@@ -349,16 +359,33 @@ func (d *driver) CheckPasswd(sctx *ftp.Context, user, pass string) (ok bool, err
 	return true, nil
 }
 
-// Get the VFS for this connection
+// getVFS returns the VFS for this connection, held so it can't be
+// shut down while it is in use. The caller must call Shutdown on it
+// when it has finished with it.
+//
+// In proxy mode, getVFS calls proxy.Call on each FTP command which
+// refreshes the proxy cache timer (like http/webdav). The proxy shuts
+// the VFS down when that timer expires, which a single transfer can
+// outlast, so the timer alone isn't enough to keep the VFS alive.
 func (d *driver) getVFS(sctx *ftp.Context) (VFS *vfs.VFS, err error) {
-	if d.proxy == nil {
+	VFS, err = d.findVFS(sctx)
+	if err != nil {
+		return nil, err
+	}
+	if !VFS.Hold() {
+		return nil, errors.New("VFS has been shut down")
+	}
+	return VFS, nil
+}
+
+// findVFS returns the VFS for this connection without holding it.
+func (d *driver) findVFS(sctx *ftp.Context) (VFS *vfs.VFS, err error) {
+	if !d.provider.IsProxy() {
 		// If no proxy always use the same VFS
-		return d.globalVFS, nil
+		return d.provider.VFS(), nil
 	}
 	user := sctx.Sess.LoginUser()
-	d.userPassMu.Lock()
-	oPass, ok := d.userPass[user]
-	d.userPassMu.Unlock()
+	oPass, ok := sctx.Sess.Data[sessionObscuredPassKey].(string)
 	if !ok {
 		return nil, fmt.Errorf("proxy user not logged in")
 	}
@@ -366,7 +393,7 @@ func (d *driver) getVFS(sctx *ftp.Context) (VFS *vfs.VFS, err error) {
 	if err != nil {
 		return nil, err
 	}
-	VFS, _, err = d.proxy.Call(user, pass, false, sctx.Sess.RemoteAddr().String())
+	VFS, _, err = d.provider.Proxy().Call(user, pass, false, sctx.Sess.RemoteAddr().String())
 	if err != nil {
 		return nil, fmt.Errorf("proxy login failed: %w", err)
 	}
@@ -380,6 +407,7 @@ func (d *driver) Stat(sctx *ftp.Context, path string) (fi iofs.FileInfo, err err
 	if err != nil {
 		return nil, err
 	}
+	defer VFS.Shutdown()
 	n, err := VFS.Stat(path)
 	if err != nil {
 		return nil, err
@@ -394,6 +422,7 @@ func (d *driver) ChangeDir(sctx *ftp.Context, path string) (err error) {
 	if err != nil {
 		return err
 	}
+	defer VFS.Shutdown()
 	n, err := VFS.Stat(path)
 	if err != nil {
 		return err
@@ -411,6 +440,7 @@ func (d *driver) ListDir(sctx *ftp.Context, path string, callback func(iofs.File
 	if err != nil {
 		return err
 	}
+	defer VFS.Shutdown()
 	node, err := VFS.Stat(path)
 	if err == vfs.ENOENT {
 		return errors.New("directory not found")
@@ -449,6 +479,7 @@ func (d *driver) DeleteDir(sctx *ftp.Context, path string) (err error) {
 	if err != nil {
 		return err
 	}
+	defer VFS.Shutdown()
 	node, err := VFS.Stat(path)
 	if err != nil {
 		return err
@@ -470,6 +501,7 @@ func (d *driver) DeleteFile(sctx *ftp.Context, path string) (err error) {
 	if err != nil {
 		return err
 	}
+	defer VFS.Shutdown()
 	node, err := VFS.Stat(path)
 	if err != nil {
 		return err
@@ -491,6 +523,7 @@ func (d *driver) Rename(sctx *ftp.Context, oldName, newName string) (err error) 
 	if err != nil {
 		return err
 	}
+	defer VFS.Shutdown()
 	return VFS.Rename(oldName, newName)
 }
 
@@ -501,6 +534,7 @@ func (d *driver) MakeDir(sctx *ftp.Context, path string) (err error) {
 	if err != nil {
 		return err
 	}
+	defer VFS.Shutdown()
 	dir, leaf, err := VFS.StatParent(path)
 	if err != nil {
 		return err
@@ -516,6 +550,12 @@ func (d *driver) GetFile(sctx *ftp.Context, path string, offset int64) (size int
 	if err != nil {
 		return 0, nil, err
 	}
+	// The returned file takes over the hold on the VFS
+	defer func() {
+		if err != nil {
+			VFS.Shutdown()
+		}
+	}()
 	node, err := VFS.Stat(path)
 	if err == vfs.ENOENT {
 		fs.Infof(path, "File not found")
@@ -540,7 +580,20 @@ func (d *driver) GetFile(sctx *ftp.Context, path string, offset int64) (size int
 	tr := accounting.GlobalStats().NewTransferRemoteSize(path, node.Size(), d.f, nil)
 	defer tr.Done(d.ctx, nil)
 
-	return node.Size(), handle, nil
+	return node.Size(), &heldFile{ReadCloser: handle, VFS: VFS}, nil
+}
+
+// heldFile is an open file which holds its VFS until it is closed.
+type heldFile struct {
+	io.ReadCloser
+	VFS     *vfs.VFS
+	release sync.Once
+}
+
+// Close closes the file and releases the hold on the VFS.
+func (f *heldFile) Close() error {
+	defer f.release.Do(f.VFS.Shutdown)
+	return f.ReadCloser.Close()
 }
 
 // PutFile upload a file
@@ -552,6 +605,7 @@ func (d *driver) PutFile(sctx *ftp.Context, path string, data io.Reader, offset 
 	if err != nil {
 		return 0, err
 	}
+	defer VFS.Shutdown()
 	fi, err := VFS.Stat(path)
 	if err == nil {
 		isExist = true

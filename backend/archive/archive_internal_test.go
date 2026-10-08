@@ -3,6 +3,7 @@
 package archive
 
 import (
+	"archive/zip"
 	"bytes"
 	"context"
 	"fmt"
@@ -11,15 +12,18 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"testing"
 
+	"github.com/rclone/rclone/backend/archive/archiver"
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/sync"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/stretchr/testify/assert"
@@ -173,6 +177,18 @@ func testArchive(t *testing.T, archiveName string, archiveFn func(t *testing.T, 
 	checkTree(ctx, "SubDir", t, ":archive:"+zipFile+"/"+subDir, filepath.Join(input, subDir), 0)
 
 	// Now check a single file
+	//
+	// The filter below applies to both sides, so check first that the
+	// archive exposes only that file without it
+	Fsingle, err := cache.Get(ctx, ":archive:"+zipFile+"/"+aFile)
+	require.NoError(t, err)
+	entries, err := Fsingle.List(ctx, "")
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
+	_, err = Fsingle.List(ctx, subDir)
+	assert.Equal(t, fs.ErrorDirNotFound, err)
+	_, err = Fsingle.NewObject(ctx, subDir)
+	assert.Equal(t, fs.ErrorObjectNotFound, err)
 	fiCtx, fi := filter.AddConfig(ctx)
 	require.NoError(t, fi.AddRule("+ "+aFile))
 	require.NoError(t, fi.AddRule("- *"))
@@ -276,4 +292,228 @@ func TestArchiveSquashfsIssue9004(t *testing.T) {
 		assert.Equal(t, int(obj.Size()), len(data))
 		assert.True(t, bytes.HasPrefix(data, []byte("<?xml")))
 	})
+}
+
+// TestArchiveUncleanRoot checks that a path into an archive which isn't
+// in canonical form (with "./" or doubled slashes) still finds its
+// directory.
+func TestArchiveUncleanRoot(t *testing.T) {
+	fstest.Initialise()
+	ctx := context.Background()
+
+	var buf bytes.Buffer
+	zw := zip.NewWriter(&buf)
+	w, err := zw.Create("sub/dir/a.txt")
+	require.NoError(t, err)
+	_, err = w.Write([]byte("data"))
+	require.NoError(t, err)
+	require.NoError(t, zw.Close())
+	zipPath := filepath.Join(t.TempDir(), "test.zip")
+	require.NoError(t, os.WriteFile(zipPath, buf.Bytes(), 0600))
+
+	for _, root := range []string{"sub/dir", "sub/./dir", "sub//dir", "./sub/dir/", "sub/dir/."} {
+		t.Run(root, func(t *testing.T) {
+			f, err := cache.Get(ctx, ":archive:"+zipPath+"/"+root)
+			require.NoError(t, err)
+			entries, err := f.List(ctx, "")
+			require.NoError(t, err)
+			require.Len(t, entries, 1)
+			assert.Equal(t, "a.txt", entries[0].Remote())
+		})
+	}
+}
+
+// escapingObject is an object whose remote is not where it was asked for.
+type escapingObject struct {
+	fs.Object
+	remote string
+}
+
+func (o *escapingObject) Remote() string { return o.remote }
+func (o *escapingObject) String() string { return o.remote }
+
+// escapingFs stands in for a badly behaved archiver which exposes entry
+// names outside the directory being listed.
+type escapingFs struct {
+	fs.Fs
+	prefix string
+}
+
+func (f *escapingFs) Name() string           { return "escaping" }
+func (f *escapingFs) Root() string           { return "" }
+func (f *escapingFs) String() string         { return "escaping" }
+func (f *escapingFs) Features() *fs.Features { return &fs.Features{} }
+
+func (f *escapingFs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
+	return fs.DirEntries{
+		&escapingObject{remote: path.Join(dir, "good.txt")},
+		fs.NewDir(path.Join(dir, "gooddir"), fstest.Time("2001-02-03T04:05:06.499999999Z")),
+		&escapingObject{remote: path.Join(dir, "../escape.txt")},
+		&escapingObject{remote: "../../escape.txt"},
+		&escapingObject{remote: path.Join(dir, "sub/notachild.txt")},
+		fs.NewDir("../escapedir", fstest.Time("2001-02-03T04:05:06.499999999Z")),
+	}, nil
+}
+
+func (f *escapingFs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
+	return &escapingObject{remote: "../escape.txt"}, nil
+}
+
+// TestArchiveEscapingArchiver checks that the archive backend does not
+// pass on entries from an archiver which escape the directory being
+// listed, whatever the archiver does.
+func TestArchiveEscapingArchiver(t *testing.T) {
+	fstest.Initialise()
+	ctx := context.Background()
+
+	archiver.Register(archiver.Archiver{
+		New: func(ctx context.Context, f fs.Fs, remote, prefix, root string) (fs.Fs, error) {
+			return &escapingFs{prefix: prefix}, nil
+		},
+		Extension: ".escaping",
+	})
+
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "test.escaping"), []byte("x"), 0600))
+	f, err := cache.Get(ctx, ":archive:"+dir)
+	require.NoError(t, err)
+
+	// Archives are discovered when their parent directory is listed
+	_, err = f.List(ctx, "")
+	require.NoError(t, err)
+
+	entries, err := f.List(ctx, "test.escaping")
+	require.NoError(t, err)
+	var remotes []string
+	for _, entry := range entries {
+		remotes = append(remotes, entry.Remote())
+	}
+	assert.ElementsMatch(t, []string{"test.escaping/good.txt", "test.escaping/gooddir"}, remotes)
+
+	_, err = f.NewObject(ctx, "test.escaping/file.txt")
+	assert.ErrorIs(t, err, fs.ErrorObjectNotFound)
+}
+
+// TestIsDirectChild checks the guard which decides whether an entry
+// returned by an archiver belongs directly in the directory listed.
+func TestIsDirectChild(t *testing.T) {
+	for _, test := range []struct {
+		dir, remote string
+		want        bool
+	}{
+		{"", "a.txt", true},
+		{"", "/a.txt", false},
+		{"", "a.txt/", false},
+		{"", "../a.txt", false},
+		{"", "sub/a.txt", false},
+		{"d", "d/a.txt", true},
+		{"d", "d", false},
+		{"d", "d/", false},
+		{"d", "d//a.txt", false},
+		{"d", "d/../a.txt", false},
+		{"d", "dd/a.txt", false},
+		{"d", "a.txt", false},
+	} {
+		assert.Equal(t, test.want, isDirectChild(test.dir, test.remote), "dir=%q remote=%q", test.dir, test.remote)
+	}
+}
+
+// A symlink in a squashfs image is skipped unless -l/--links is in use,
+// as it is on the other backends.  With the flag it is exposed under its
+// name with the link suffix and reads back as its target.
+//
+// Note that this uses mksquashfs as an external binary.
+func TestArchiveSquashfsSymlink(t *testing.T) {
+	fstest.Initialise()
+	skipIfNoExe(t, "mksquashfs")
+	ctx := context.Background()
+
+	dir := t.TempDir()
+	input := filepath.Join(dir, "input")
+	require.NoError(t, os.Mkdir(input, 0777))
+	require.NoError(t, os.WriteFile(filepath.Join(input, "file.txt"), []byte("hello"), 0600))
+	require.NoError(t, os.Symlink("file.txt", filepath.Join(input, "link.txt")))
+	// a regular file which happens to carry the link suffix must stay
+	// readable under the flag, not be taken for a symlink
+	require.NoError(t, os.WriteFile(filepath.Join(input, "note"+fs.LinkSuffix), []byte("plain"), 0600))
+	image := filepath.Join(dir, "test.sqfs")
+	run(t, "mksquashfs", input, image)
+
+	remotes := func(t *testing.T, f fs.Fs) []string {
+		entries, err := f.List(ctx, "")
+		require.NoError(t, err)
+		names := make([]string, 0, len(entries))
+		for _, entry := range entries {
+			names = append(names, entry.Remote())
+		}
+		sort.Strings(names)
+		return names
+	}
+
+	read := func(t *testing.T, f fs.Fs, remote string) string {
+		o, err := f.NewObject(ctx, remote)
+		require.NoError(t, err)
+		rc, err := o.Open(ctx)
+		require.NoError(t, err)
+		contents, err := io.ReadAll(rc)
+		require.NoError(t, err)
+		require.NoError(t, rc.Close())
+		assert.Equal(t, o.Size(), int64(len(contents)))
+		return string(contents)
+	}
+
+	f, err := fs.NewFs(ctx, ":archive:"+image)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"file.txt", "note" + fs.LinkSuffix}, remotes(t, f))
+
+	ctx, ci := fs.AddConfig(ctx)
+	ci.Links = true
+
+	f, err = fs.NewFs(ctx, ":archive:"+image)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"file.txt", "link.txt" + fs.LinkSuffix, "note" + fs.LinkSuffix}, remotes(t, f))
+
+	assert.Equal(t, "file.txt", read(t, f, "link.txt"+fs.LinkSuffix))
+	assert.Equal(t, "plain", read(t, f, "note"+fs.LinkSuffix))
+}
+
+// A hostile archive must not be able to write outside the destination.
+// A symlink pointing above the root with a member inside it is the
+// classic way to try it, and the refusal comes from the local backend,
+// so pin it from end to end here rather than trusting it stays.
+func TestArchiveZipSymlinkEscape(t *testing.T) {
+	fstest.Initialise()
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	ci.Links = true
+
+	var buf bytes.Buffer
+	zw := zip.NewWriter(&buf)
+	hdr := &zip.FileHeader{Name: "a"}
+	hdr.SetMode(os.ModeSymlink | 0777)
+	w, err := zw.CreateHeader(hdr)
+	require.NoError(t, err)
+	_, err = w.Write([]byte("../outside"))
+	require.NoError(t, err)
+	w, err = zw.Create("a/pwned.txt")
+	require.NoError(t, err)
+	_, err = w.Write([]byte("pwned"))
+	require.NoError(t, err)
+	require.NoError(t, zw.Close())
+
+	dir := t.TempDir()
+	zipPath := filepath.Join(dir, "evil.zip")
+	require.NoError(t, os.WriteFile(zipPath, buf.Bytes(), 0600))
+	dst := filepath.Join(dir, "dst")
+	require.NoError(t, os.Mkdir(dst, 0777))
+
+	fsrc, err := fs.NewFs(ctx, ":archive:"+zipPath)
+	require.NoError(t, err)
+	fdst, err := fs.NewFs(ctx, dst)
+	require.NoError(t, err)
+
+	assert.Error(t, sync.CopyDir(ctx, fdst, fsrc, false))
+
+	_, err = os.Stat(filepath.Join(dir, "outside", "pwned.txt"))
+	assert.True(t, os.IsNotExist(err), "the archive wrote outside the destination")
 }

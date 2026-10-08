@@ -22,6 +22,7 @@ import (
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/rc"
 	libhttp "github.com/rclone/rclone/lib/http"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -541,4 +542,58 @@ func TestRc(t *testing.T) {
 		"type":           "http",
 		"vfs_cache_mode": "off",
 	})
+}
+
+// TestNewServerError checks that a server initialisation failure is
+// returned as an error rather than panicking in the cleanup.
+func TestNewServerError(t *testing.T) {
+	ctx := context.Background()
+	f, err := fs.NewFs(ctx, "testdata/files")
+	require.NoError(t, err)
+
+	opts := Options{
+		HTTP: libhttp.DefaultCfg(),
+	}
+	opts.HTTP.ListenAddr = []string{"localhost:-1"}
+
+	s, err := newServer(ctx, f, &opts, &vfscommon.Opt, &proxy.Opt)
+	require.Error(t, err)
+	assert.Nil(t, s)
+}
+
+// TestAuthProxyDownloadOutlivesCache checks a download in progress
+// carries on working when the auth proxy drops its VFS from its cache,
+// as it does when a download takes longer than the cache expiry time.
+func TestAuthProxyDownloadOutlivesCache(t *testing.T) {
+	root := t.TempDir()
+	contents := random.String(32 * 1024 * 1024)
+	require.NoError(t, os.WriteFile(filepath.Join(root, "download.bin"), []byte(contents), 0666))
+
+	prog, err := filepath.Abs("../servetest/proxy_code.go")
+	require.NoError(t, err)
+	// FIXME this is untidy setting a global variable!
+	proxy.Opt.AuthProxy = "go run " + prog + " " + root
+	defer func() {
+		proxy.Opt.AuthProxy = ""
+	}()
+	s, testURL := start(context.Background(), t, nil)
+	defer func() { assert.NoError(t, s.Shutdown()) }()
+
+	req, err := http.NewRequest("GET", testURL+"download.bin", nil)
+	require.NoError(t, err)
+	req.SetBasicAuth(testUser, testPass)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer func() { _ = resp.Body.Close() }()
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+	start := make([]byte, 1024)
+	_, err = io.ReadFull(resp.Body, start)
+	require.NoError(t, err)
+
+	// Drop everything from the proxy's cache as if it had expired
+	s.provider.Proxy().Shutdown()
+
+	rest, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	assert.True(t, contents == string(start)+string(rest), "download corrupted")
 }

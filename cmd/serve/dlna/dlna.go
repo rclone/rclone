@@ -244,6 +244,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 	}
 	listener, err := net.Listen(network, s.httpListenAddr)
 	if err != nil {
+		s.vfs.Shutdown()
 		return nil, err
 	}
 	s.HTTPConn = listener
@@ -306,8 +307,7 @@ func (s *server) serviceControlHandler(w http.ResponseWriter, r *http.Request) {
 	var env soap.Envelope
 	r.Body = http.MaxBytesReader(w, r.Body, maxSOAPBodySize)
 	if err := xml.NewDecoder(r.Body).Decode(&env); err != nil {
-		var maxBytesErr *http.MaxBytesError
-		if errors.As(err, &maxBytesErr) {
+		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
 			http.Error(w, "SOAP request body too large", http.StatusRequestEntityTooLarge)
 			return
 		}
@@ -402,6 +402,7 @@ func (s *server) Wait() {
 // Shutdown the DLNA server
 func (s *server) Shutdown() error {
 	err := s.HTTPConn.Close()
+	s.vfs.Shutdown()
 	close(s.waitChan)
 	if err != nil {
 		return fmt.Errorf("failed to shutdown DLNA server: %w", err)

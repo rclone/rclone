@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	mutex "sync"
 
 	"github.com/rclone/rclone/fs"
@@ -302,12 +303,96 @@ func WinningSide(ctx context.Context, sigil Sigil, src, dst fs.DirEntry, err err
 	return winner
 }
 
+// ReportFile pairs the name of a file a report is written to with
+// the writer to set when it is opened.
+type ReportFile struct {
+	Name string     // file name, "" for no report or "-" for stdout
+	Out  *io.Writer // set to the opened file
+}
+
+// OpenReportFiles opens the report files for writing and returns a
+// function to close them.
+//
+// For each file an empty Name leaves Out unchanged so the report is
+// not written, "-" sets it to stdout and any other Name is created as
+// a file, truncating it if it exists.
+func OpenReportFiles(files ...ReportFile) (close func(), err error) {
+	closers := []io.Closer{}
+	close = func() {
+		for _, closer := range closers {
+			err := closer.Close()
+			if err != nil {
+				fs.Errorf(nil, "Failed to close report output: %v", err)
+			}
+		}
+	}
+	for _, file := range files {
+		switch file.Name {
+		case "":
+			continue
+		case "-":
+			*file.Out = os.Stdout
+		default:
+			out, err := os.Create(file.Name)
+			if err != nil {
+				close()
+				return nil, err
+			}
+			*file.Out = out
+			closers = append(closers, out)
+		}
+	}
+	return close, nil
+}
+
+// NewSyncLoggerOpt returns a LoggerOpt with no report writers set and
+// the default listing options for the DestAfter report.
+func NewSyncLoggerOpt() LoggerOpt {
+	return LoggerOpt{
+		Format:    "p",
+		Separator: ";",
+		DirSlash:  true,
+		HashType:  hash.MD5,
+		FilesOnly: true,
+	}
+}
+
+// Init prepares opt for logging a sync to fdst once its report writers
+// have been set.
+//
+// It configures the DestAfter listing from the lsf options and warns
+// about reports which --no-traverse prevents being complete. cmdFlags
+// may be nil if the options did not come from command line flags.
+func (opt *LoggerOpt) Init(ctx context.Context, fdst fs.Fs, cmdFlags *pflag.FlagSet) {
+	if opt.TimeFormat == "max" {
+		opt.TimeFormat = FormatForLSFPrecision(fdst.Precision())
+	}
+	opt.SetListFormat(ctx, cmdFlags)
+	opt.NewListJSON(ctx, fdst, "")
+
+	ci := fs.GetConfig(ctx)
+	if ci.NoTraverse && opt.Combined != nil {
+		fs.LogPrintf(fs.LogLevelWarning, nil, "--no-traverse does not list any deletes (-) in --combined output\n")
+	}
+	if ci.NoTraverse && opt.MissingOnSrc != nil {
+		fs.LogPrintf(fs.LogLevelWarning, nil, "--no-traverse makes --missing-on-src produce empty output\n")
+	}
+	if ci.NoTraverse && opt.DestAfter != nil {
+		fs.LogPrintf(fs.LogLevelWarning, nil, "--no-traverse makes --dest-after produce incomplete output\n")
+	}
+}
+
 // SetListFormat sets opt.ListFormat for destAfter
+//
+// cmdFlags may be nil if the options did not come from command line flags.
 // TODO: possibly refactor duplicate code from cmd/lsf, where this is mostly copied from
 func (opt *LoggerOpt) SetListFormat(ctx context.Context, cmdFlags *pflag.FlagSet) {
 	// Work out if the separatorFlag was supplied or not
-	separatorFlag := cmdFlags.Lookup("separator")
-	separatorFlagSupplied := separatorFlag != nil && separatorFlag.Changed
+	separatorFlagSupplied := false
+	if cmdFlags != nil {
+		separatorFlag := cmdFlags.Lookup("separator")
+		separatorFlagSupplied = separatorFlag != nil && separatorFlag.Changed
+	}
 	// Default the separator to , if using CSV
 	if opt.Csv && !separatorFlagSupplied {
 		opt.Separator = ","

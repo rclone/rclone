@@ -25,6 +25,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/lib/rest"
 	"github.com/rclone/rclone/lib/structs"
 	"github.com/youmark/pkcs8"
 	"golang.org/x/net/publicsuffix"
@@ -591,6 +592,22 @@ func newClientTrace(req *http.Request) *httptrace.ClientTrace {
 	}
 }
 
+// redirectLeavesHost reports whether req is a redirect hop in a
+// chain which has visited a host other than that of the original
+// request at any point.
+func redirectLeavesHost(req *http.Request) bool {
+	origin := req
+	for origin.Response != nil && origin.Response.Request != nil {
+		origin = origin.Response.Request
+	}
+	for hop := req; hop != origin; hop = hop.Response.Request {
+		if !rest.SameHost(hop.URL, origin.URL) {
+			return true
+		}
+	}
+	return false
+}
+
 // RoundTrip implements the RoundTripper interface.
 func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
 	// Check if certificates are being used and the certificates are expired
@@ -602,9 +619,15 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	accounting.LimitTPS(req.Context())
 	// Force user agent
 	req.Header.Set("User-Agent", t.userAgent)
-	// Set user defined headers
-	for _, option := range t.headers {
-		req.Header.Set(option.Key, option.Value)
+	// Set user defined headers, unless redirected elsewhere
+	if redirectLeavesHost(req) {
+		for _, option := range t.headers {
+			req.Header.Del(option.Key)
+		}
+	} else {
+		for _, option := range t.headers {
+			req.Header.Set(option.Key, option.Value)
+		}
 	}
 	// Filter the request if required
 	if t.filterRequest != nil {
@@ -671,8 +694,11 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	if t.dump&fs.DumpTrace != 0 {
 		traceReq = req.WithContext(httptrace.WithClientTrace(req.Context(), newClientTrace(req)))
 	}
-	// Do round trip
-	resp, err = t.Transport.RoundTrip(traceReq)
+	// Do round trip unless a fault is being injected
+	resp, err = injectFault(traceReq)
+	if resp == nil && err == nil {
+		resp, err = t.Transport.RoundTrip(traceReq)
+	}
 	// Dump response, and the request too if we deferred it for --dump errors
 	if wantDump && (!onError || isRetryableResponse(resp, err)) {
 		logMutex.Lock()

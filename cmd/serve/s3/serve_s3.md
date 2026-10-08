@@ -13,6 +13,12 @@ docs](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html)).
 `--auth-key` is not provided then `serve s3` will allow anonymous
 access.
 
+Alternatively `--auth-proxy` can be used to look up the secret for each
+access key ID and choose the backend it maps to (see [Auth
+Proxy](#auth-proxy) below). When an auth proxy is in use `--auth-key`
+is ignored and every request must be signed with the secret the proxy
+returns for its access key ID.
+
 Like all rclone flags `--auth-key` can be set via environment
 variables, in this case `RCLONE_AUTH_KEY`. Since this flag can be
 repeated, the input to `RCLONE_AUTH_KEY` is CSV encoded. Because the
@@ -47,6 +53,8 @@ part of the hostname (such as mybucket.local)
 Use `--etag-hash` if you want to change the hash uses for the `ETag`.
 Note that using anything other than `MD5` (the default) is likely to
 cause problems for S3 clients which rely on the Etag being the MD5.
+Use `--etag-hash auto` to use the best hash the backend supports - with
+`--auth-proxy` that of each user's backend.
 
 ### Quickstart
 

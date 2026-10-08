@@ -87,6 +87,25 @@ func TestTransfer(t *testing.T) {
 		}, out)
 	})
 
+	t.Run("NoHistory", func(t *testing.T) {
+		s := NewStats(ctx)
+
+		// A normal checking transfer is kept in the history
+		tr := s.NewCheckingTransfer(o, "checking")
+		tr.Done(ctx, nil)
+		assert.Equal(t, 1, len(s.Transferred()))
+
+		// A no history checking transfer is shown while running but
+		// is not kept in the history
+		tr = s.NewCheckingTransferNoHistory(o, "setting modtime")
+		assert.Equal(t, 1, s.checking.count())
+		assert.Equal(t, 1, len(s.Transferred()))
+		tr.Done(ctx, nil)
+		assert.Equal(t, 0, s.checking.count())
+		assert.Equal(t, 1, len(s.Transferred()))
+		assert.Equal(t, int64(2), s.GetChecks())
+	})
+
 	t.Run("Snapshot checking transfer", func(t *testing.T) {
 		ctr := newCheckingTransfer(s, o, "checking")
 		snap := ctr.Snapshot()
