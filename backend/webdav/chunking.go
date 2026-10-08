@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 )
@@ -133,7 +134,26 @@ func (o *Object) uploadChunks(ctx context.Context, in0 io.Reader, size int64, pa
 			return io.NopCloser(in), nil
 		}
 
-		err := partObj.updateSimple(ctx, in, getBody, partObj.remote, contentLength, "application/x-www-form-urlencoded", nil, o.fs.chunksUploadURL, options...)
+		// Retry this chunk in place so a transient failure does not make the caller
+		// restart the whole upload and resend chunks that were already accepted.
+		maxTries := max(fs.GetConfig(ctx).LowLevelRetries, 1)
+		var err error
+		for try := 1; try <= maxTries; try++ {
+			retryBody, bodyErr := getBody()
+			if bodyErr != nil {
+				return fmt.Errorf("rewinding chunk for retry failed: %w", bodyErr)
+			}
+			err = partObj.updateSimple(ctx, retryBody, getBody, partObj.remote, contentLength, "application/x-www-form-urlencoded", nil, o.fs.chunksUploadURL, options...)
+			_ = retryBody.Close()
+			if err == nil || (!fserrors.IsRetryError(err) && !fserrors.ShouldRetry(err)) {
+				break
+			}
+			if try == maxTries {
+				// The chunk retry budget is exhausted. Do not let the outer
+				// low-level retry restart the upload from its first chunk.
+				err = fserrors.NoLowLevelRetryError(errors.New(err.Error()))
+			}
+		}
 		if err != nil {
 			return fmt.Errorf("uploading chunk failed: %w", err)
 		}
