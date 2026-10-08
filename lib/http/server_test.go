@@ -13,7 +13,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"golang.org/x/net/http2"
 )
 
 func testEchoHandler(data []byte) http.Handler {
@@ -652,12 +651,11 @@ func TestH2CServer(t *testing.T) {
 	require.True(t, strings.HasPrefix(url, "http://"), "url should have http scheme (no TLS)")
 
 	// Create an HTTP/2 cleartext client
+	var protocols http.Protocols
+	protocols.SetUnencryptedHTTP2(true)
 	client := &http.Client{
-		Transport: &http2.Transport{
-			AllowHTTP: true,
-			DialTLSContext: func(ctx context.Context, network, addr string, _ *tls.Config) (net.Conn, error) {
-				return net.Dial(network, addr)
-			},
+		Transport: &http.Transport{
+			Protocols: &protocols,
 		},
 	}
 
