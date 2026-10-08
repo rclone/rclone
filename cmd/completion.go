@@ -12,6 +12,7 @@ import (
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 // Make a debug message while doing the completion.
@@ -169,4 +170,42 @@ func validArgs(cmd *cobra.Command, args []string, toComplete string) ([]string, 
 	}
 
 	return completions, result
+}
+
+// registerEnumFlagCompletions adds value completion for scalar enums.
+func registerEnumFlagCompletions(root *cobra.Command) (err error) {
+	// Cobra normally merges these flags during Execute, after registration.
+	root.PersistentFlags().AddFlagSet(pflag.CommandLine)
+	seen := make(map[*pflag.Flag]bool)
+	traverseCommands(root, func(command *cobra.Command) {
+		register := func(flag *pflag.Flag) {
+			if err != nil || seen[flag] || flag.Hidden {
+				return
+			}
+			seen[flag] = true
+			var value any = flag.Value
+			if option, ok := value.(*fs.Option); ok {
+				value = option.Default
+			}
+			choices, ok := value.(fs.Choices)
+			if !ok {
+				return
+			}
+			if _, exists := command.GetFlagCompletionFunc(flag.Name); exists {
+				return
+			}
+			err = command.RegisterFlagCompletionFunc(flag.Name, func(_ *cobra.Command, _ []string, prefix string) ([]string, cobra.ShellCompDirective) {
+				var matches []string
+				for _, choice := range choices.Choices() {
+					if strings.HasPrefix(strings.ToLower(choice), strings.ToLower(prefix)) {
+						matches = append(matches, choice)
+					}
+				}
+				return matches, cobra.ShellCompDirectiveNoFileComp
+			})
+		}
+		command.Flags().VisitAll(register)
+		command.PersistentFlags().VisitAll(register)
+	})
+	return err
 }
