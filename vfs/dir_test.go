@@ -1002,6 +1002,55 @@ assert.True(t, inCache, "Dir node should be cached in d.items")
 assert.True(t, readIsZero, "d.read must stay zero — only a bounded List was issued")
 }
 
+// listPCountingFs fakes ListP, delivering one entry per tranche, so tests
+// can check a caller stops early instead of draining the whole listing.
+type listPCountingFs struct {
+	fs.Fs
+	entriesDelivered int
+}
+
+func (f *listPCountingFs) Features() *fs.Features {
+	ftCopy := *f.Fs.Features()
+	ftCopy.ListP = f.listP
+	return &ftCopy
+}
+
+func (f *listPCountingFs) listP(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	entries, err := f.Fs.List(ctx, dir)
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		f.entriesDelivered++
+		if err := callback(fs.DirEntries{entry}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// TestStatLazyDirListPEarlyAbort checks statLazy stops after the first
+// ListP tranche instead of draining the whole prefix.
+func TestStatLazyDirListPEarlyAbort(t *testing.T) {
+	r, root := statLazySetup(t)
+
+	// Several files under the same prefix - a full listing would see all of them.
+	r.WriteObject(context.Background(), "manyfiles/a.txt", "a", t1)
+	r.WriteObject(context.Background(), "manyfiles/b.txt", "b", t1)
+	r.WriteObject(context.Background(), "manyfiles/c.txt", "c", t1)
+
+	wrapped := &listPCountingFs{Fs: root.f}
+	root.f = wrapped
+
+	node, err := root.statLazy("manyfiles")
+	require.NoError(t, err)
+	_, isDir := node.(*Dir)
+	assert.True(t, isDir, "expected *Dir node for virtual directory prefix")
+
+	assert.Equal(t, 1, wrapped.entriesDelivered,
+		"statLazy should stop after the first ListP tranche instead of listing the whole prefix")
+}
+
 // TestStatLazyCacheHitNoop verifies that a second call to statLazy for the
 // same leaf is a pure cache hit — the node is returned from d.items with no
 // additional network round-trip (d.read stays zero throughout).

@@ -982,10 +982,26 @@ func (d *Dir) statLazy(leaf string) (Node, error) {
 		return nil, err
 	}
 
-	// 3. Not found as a file. Check whether the leaf is a virtual directory by
-	// doing a bounded list. This issues a ListObjectsV2 with prefix="leaf/" and
-	// stops after the first result — it does NOT list the whole directory.
-	entries, listErr := d.f.List(context.TODO(), fullPath)
+	// 3. Not found as a file. Check for a virtual directory, using ListP (if
+	// supported) to stop after the first tranche rather than listing the
+	// whole prefix.
+	var entries fs.DirEntries
+	var listErr error
+	if doListP := d.f.Features().ListP; doListP != nil {
+		listErr = doListP(context.TODO(), fullPath, func(newEntries fs.DirEntries) error {
+			if len(newEntries) > 0 {
+				entries = newEntries
+				return fs.ErrorListAborted
+			}
+			return nil
+		})
+		if listErr == fs.ErrorListAborted {
+			listErr = nil
+		}
+	} else {
+		// Fallback: unbounded, may list the whole directory.
+		entries, listErr = d.f.List(context.TODO(), fullPath)
+	}
 	if listErr == nil && len(entries) > 0 {
 		// The leaf exists as a directory prefix. Find or create the Dir node.
 		d.mu.Lock()
