@@ -386,6 +386,9 @@ func TestStripHeadersOnCrossHostRedirectFn(t *testing.T) {
 				require.NoError(t, err)
 				http.Redirect(w, r, "http://LOCALHOST:"+u.Port()+"/redirected", http.StatusTemporaryRedirect)
 			case "/redirected":
+				// Before go1.27 net/http compares hosts case
+				// sensitively and drops Authorization itself here.
+				r.Header.Set("Authorization", stripTestHeaders["Authorization"])
 				assertKept(r)
 				w.WriteHeader(http.StatusOK)
 			default:
