@@ -557,6 +557,9 @@ func AddBackendFlags() {
 func Main() {
 	setupRootCommand(Root)
 	AddBackendFlags()
+	if err := registerEnumFlagCompletions(Root); err != nil {
+		fs.Fatalf(nil, "Failed to register flag completions: %v", err)
+	}
 	if err := Root.Execute(); err != nil {
 		if strings.HasPrefix(err.Error(), "unknown command") && selfupdateEnabled {
 			Root.PrintErrf("You could use '%s selfupdate' to get latest features.\n\n", Root.CommandPath())
