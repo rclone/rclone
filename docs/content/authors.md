@@ -1258,3 +1258,12 @@ put them back in again. -->
 - Lev Devaev <102860715+Exxxxpo@users.noreply.github.com>
 - GhostCoder6969 <ahmadbannout191999@gmail.com>
 - bounty-agent <bounty@example.com>
+- mygrexit <33792951+mygrexit@users.noreply.github.com>
+- Kaya <firat.kaya@mail.com>
+- somaz <genius5711@gmail.com>
+- xiaozou-wine <243062178+xiaozou-wine@users.noreply.github.com>
+- Roman Butor <rbutor@gmail.com>
+- kaii9 <107882135+kaii9@users.noreply.github.com>
+- Stochastic <138764723+Asthenia0412@users.noreply.github.com>
+- James Truitt <80006053+jtruitt1@users.noreply.github.com>
+- firatkaya <firat@netiket.com.tr>
