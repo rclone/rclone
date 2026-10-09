@@ -553,6 +553,24 @@ func TestDirRemove(t *testing.T) {
 	assert.Equal(t, EROFS, err)
 }
 
+// Removing a directory leaves no virtual entries counted in its parent, so the
+// parent can still forget its cache.
+func TestDirRemoveVirtuals(t *testing.T) {
+	_, vfs, dir, _ := dirCreate(t)
+	root, err := vfs.Root()
+	require.NoError(t, err)
+
+	// Remove the directory's contents and then the directory, before a
+	// listing has confirmed the contents are gone.
+	require.NoError(t, dir.RemoveName("file1"))
+	require.NoError(t, root.RemoveName("dir"))
+
+	assert.False(t, root.ForgetAll(), "root holds virtual entries after rmdir")
+
+	dir.ForgetAll()
+	assert.False(t, root.ForgetAll(), "root holds virtual entries after the removed dir is forgotten")
+}
+
 func TestDirRemoveAll(t *testing.T) {
 	r, vfs, dir, _ := dirCreate(t)
 
