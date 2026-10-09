@@ -17,10 +17,11 @@ import (
 
 // Global hashsum flags for reuse in hashsum, md5sum, sha1sum
 var (
-	OutputBase64   = false
-	DownloadFlag   = false
-	HashsumOutfile = ""
-	ChecksumFile   = ""
+	OutputBase64          = false
+	DownloadFlag          = false
+	DownloadIfMissingFlag = false
+	HashsumOutfile        = ""
+	ChecksumFile          = ""
 )
 
 func init() {
@@ -29,12 +30,13 @@ func init() {
 	AddHashsumFlags(cmdFlags)
 }
 
-// AddHashsumFlags is a convenience function to add the command flags OutputBase64 and DownloadFlag to hashsum, md5sum, sha1sum
+// AddHashsumFlags is a convenience function to add the command flags OutputBase64, DownloadFlag, and DownloadIfMissingFlag to hashsum, md5sum, sha1sum
 func AddHashsumFlags(cmdFlags *pflag.FlagSet) {
 	flags.BoolVarP(cmdFlags, &OutputBase64, "base64", "", OutputBase64, "Output base64 encoded hashsum", "")
 	flags.StringVarP(cmdFlags, &HashsumOutfile, "output-file", "", HashsumOutfile, "Output hashsums to a file rather than the terminal", "")
 	flags.StringVarP(cmdFlags, &ChecksumFile, "checkfile", "C", ChecksumFile, "Validate hashes against a given SUM file instead of printing them", "")
 	flags.BoolVarP(cmdFlags, &DownloadFlag, "download", "", DownloadFlag, "Download the file and hash it locally; if this flag is not specified, the hash is requested from the remote", "")
+	flags.BoolVarP(cmdFlags, &DownloadIfMissingFlag, "download-if-missing", "", DownloadIfMissingFlag, "Download the file and hash it locally only if the remote doesn't provide a hash", "")
 }
 
 // GetHashsumOutput opens and closes the output file when using the output-file flag
@@ -91,7 +93,10 @@ md5sum/sha1sum tool.
 By default, the hash is requested from the remote.  If the hash is
 not supported by the remote, no hash will be returned.  With the
 download flag, the file will be downloaded from the remote and
-hashed locally enabling any hash for any remote.
+hashed locally enabling any hash for any remote.  With the
+download-if-missing flag, the hash will be requested from the remote
+first, and the file will only be downloaded if the remote cannot
+provide a hash.
 
 For the MD5 and SHA1 algorithms there are also dedicated commands,
 [md5sum](/commands/rclone_md5sum/) and [sha1sum](/commands/rclone_sha1sum/).
@@ -137,17 +142,17 @@ Note that hash names are case insensitive and values are output in lower case.`,
 		cmd.Run(false, false, command, func() error {
 			if ChecksumFile != "" {
 				fsum, sumFile := cmd.NewFsFile(ChecksumFile)
-				return operations.CheckSum(context.Background(), fsrc, fsum, sumFile, ht, nil, DownloadFlag)
+				return operations.CheckSum(context.Background(), fsrc, fsum, sumFile, ht, nil, DownloadFlag, DownloadIfMissingFlag)
 			}
 			if HashsumOutfile == "" {
-				return operations.HashLister(context.Background(), ht, OutputBase64, DownloadFlag, fsrc, nil)
+				return operations.HashLister(context.Background(), ht, OutputBase64, DownloadFlag, fsrc, nil, DownloadIfMissingFlag)
 			}
 			output, close, err := GetHashsumOutput(HashsumOutfile)
 			if err != nil {
 				return err
 			}
 			defer close()
-			return operations.HashLister(context.Background(), ht, OutputBase64, DownloadFlag, fsrc, output)
+			return operations.HashLister(context.Background(), ht, OutputBase64, DownloadFlag, fsrc, output, DownloadIfMissingFlag)
 		})
 		return nil
 	},

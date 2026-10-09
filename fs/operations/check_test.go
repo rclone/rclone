@@ -659,6 +659,50 @@ func TestCheckSumDownloadConcurrency(t *testing.T) {
 	testCheckSumConcurrency(t, true)
 }
 
+func TestCheckSumDownloadIfMissing(t *testing.T) {
+	ctx := context.Background()
+	content := "check content"
+	contentHash := "f3800b0d78a087a9746efd98427d07f5" // MD5 of "check content"
+	sumFile := "sums.txt"
+
+	// Create sum fs
+	f, err := mockfs.NewFs(ctx, "sums", "sums", nil)
+	require.NoError(t, err)
+	fsum := f.(*mockfs.Fs)
+	sumLine := fmt.Sprintf("%s  file1.txt\n", contentHash)
+	fsum.AddObject(mockobject.New(sumFile).WithContent([]byte(sumLine), mockobject.SeekModeNone))
+
+	// 1. Remote provides hash directly -> passes without downloading
+	fsrcRaw, err := mockfs.NewFs(ctx, "src", "src", nil)
+	require.NoError(t, err)
+	fsrc := fsrcRaw.(*mockfs.Fs)
+	fsrc.SetHashes(hash.NewHashSet(hash.MD5))
+	probe := newHashProbe(t, 1, 5*time.Second)
+	o := mockobject.New("file1.txt").WithContent([]byte(content), mockobject.SeekModeNone)
+	probeObj := &probeObject{ContentMockObject: o, probe: probe}
+	fsrc.AddObject(probeObj)
+
+	opt := operations.CheckOpt{Combined: new(bytes.Buffer)}
+	accounting.GlobalStats().ResetCounters()
+	err = operations.CheckSum(ctx, fsrc, fsum, sumFile, hash.MD5, &opt, false, true)
+	require.NoError(t, err)
+
+	// 2. Remote filesystem does not support hash (e.g. SHA1 not in Hashes())
+	// Without downloadIfMissing: fails because hash type is not supported
+	accounting.GlobalStats().ResetCounters()
+	err = operations.CheckSum(ctx, fsrc, fsum, sumFile, hash.SHA1, &opt, false, false)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "hash type is not supported by file system")
+
+	// With downloadIfMissing: succeeds by downloading and hashing!
+	sha1SumLine := "b6be4fc269390ae2ea2faee27167f506f814cae8  file1.txt\n"
+	sha1SumFile := "sums-sha1.txt"
+	fsum.AddObject(mockobject.New(sha1SumFile).WithContent([]byte(sha1SumLine), mockobject.SeekModeNone))
+	accounting.GlobalStats().ResetCounters()
+	err = operations.CheckSum(ctx, fsrc, fsum, sha1SumFile, hash.SHA1, &opt, false, true)
+	require.NoError(t, err)
+}
+
 func TestApplyTransforms(t *testing.T) {
 	var (
 		hashType        = hash.MD5
