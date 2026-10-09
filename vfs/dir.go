@@ -1142,6 +1142,15 @@ func (d *Dir) Remove() error {
 		fs.Errorf(d, "Dir.Remove failed to remove directory: %v", err)
 		return err
 	}
+	// The directory is gone, so no listing will resolve its virtual
+	// entries, which can only be deletes as it was empty. They must be
+	// removed now, or they will be counted in every parent and
+	// cache forgets blocked as a consequence
+	d.mu.Lock()
+	for leaf := range d.virtual {
+		d._deleteVirtual(leaf)
+	}
+	d.mu.Unlock()
 	// Remove the item from the parent directory listing
 	if d.parent != nil {
 		d.parent.delObject(d.Name())
