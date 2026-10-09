@@ -12,7 +12,7 @@ description: "Rclone Changelog"
 
 - Security
   - archive
-    - Fix zip slip path traversal in untrusted zip files GHSA-66hp-wgxq-6f5q CVE-PENDING (Nick Craig-Wood)
+    - Fix zip slip path traversal in untrusted zip files GHSA-66hp-wgxq-6f5q CVE-2026-88014 (Nick Craig-Wood)
     - Hide any archive entry which escapes the directory being listed GHSA-66hp-wgxq-6f5q (Nick Craig-Wood)
     - Reject unsafe entry names when mounting squashfs images GHSA-66hp-wgxq-6f5q (Nick Craig-Wood)
     - Fix zip subdirectory root matching sibling directories GHSA-66hp-wgxq-6f5q (Nick Craig-Wood)
@@ -34,27 +34,27 @@ description: "Rclone Changelog"
       - CVE-2026-56855: ssh: a malicious peer could send crafted messages on an established channel, deadlocking the connection
     - Update golang.org/x/image to v0.45.0 to fix CVE-2026-46603 (Nick Craig-Wood)
       - CVE-2026-46603: excessive memory allocation during VP8L decoding
-  - fs: Confine directory listing entries that escape the root GHSA-3vxh-3pcx-9m8q GHSA-38xv-hf3p-h7mq CVE-PENDING (Nick Craig-Wood)
-  - fshttp: Don't send `--header` values to other hosts on redirect GHSA-486v-q2wf-fp2r CVE-PENDING (Nick Craig-Wood)
-  - http: Don't leak configured headers to other hosts or over plaintext on redirect GHSA-486v-q2wf-fp2r CVE-PENDING (Nick Craig-Wood)
-  - lib/rest: Check HTTPS downgrades against the original request on redirect GHSA-486v-q2wf-fp2r CVE-PENDING (Nick Craig-Wood)
+  - fs: Confine directory listing entries that escape the root GHSA-3vxh-3pcx-9m8q GHSA-38xv-hf3p-h7mq CVE-2026-88046 (Nick Craig-Wood)
+  - fshttp: Don't send `--header` values to other hosts on redirect GHSA-486v-q2wf-fp2r CVE-2026-88013 (Nick Craig-Wood)
+  - http: Don't leak configured headers to other hosts or over plaintext on redirect GHSA-486v-q2wf-fp2r CVE-2026-88013 (Nick Craig-Wood)
+  - lib/rest: Check HTTPS downgrades against the original request on redirect GHSA-486v-q2wf-fp2r CVE-2026-88013 (Nick Craig-Wood)
   - local
-    - Fix dir metadata escaping the root through a planted symlink GHSA-f8g7-2xjc-7mfh CVE-PENDING (Nick Craig-Wood)
-    - Fix btime escaping the root via a planted symlink GHSA-f8g7-2xjc-7mfh CVE-PENDING (Nick Craig-Wood)
-    - Fix panic on Range request past the end of a symlink GHSA-p6m2-r3w9-mpxw CVE-PENDING (Nick Craig-Wood)
+    - Fix dir metadata escaping the root through a planted symlink GHSA-f8g7-2xjc-7mfh CVE-2026-88016 (Nick Craig-Wood)
+    - Fix btime escaping the root via a planted symlink GHSA-f8g7-2xjc-7mfh CVE-2026-88016 (Nick Craig-Wood)
+    - Fix panic on Range request past the end of a symlink GHSA-p6m2-r3w9-mpxw CVE-2026-88015 (Nick Craig-Wood)
   - serve docker
     - Reject volume names that escape the base directory GHSA-p6vx-hf7p-98j6 (Nick Craig-Wood)
     - Reject volume names resolving to the base directory itself GHSA-p6vx-hf7p-98j6 (Nick Craig-Wood)
     - Re-derive volume mountpoint from name when restoring state GHSA-p6vx-hf7p-98j6 (Nick Craig-Wood)
-  - serve ftp: Fix auth-proxy sessions sharing credentials by username GHSA-c476-6w5q-jw77 CVE-PENDING (Nick Craig-Wood)
+  - serve ftp: Fix auth-proxy sessions sharing credentials by username GHSA-c476-6w5q-jw77 CVE-2026-88017 (Nick Craig-Wood)
   - serve s3
-    - Fix memory exhaustion from client-declared multipart part size GHSA-2p48-j3qc-rx9f CVE-PENDING (Nick Craig-Wood)
+    - Fix memory exhaustion from client-declared multipart part size GHSA-2p48-j3qc-rx9f CVE-2026-88045 (Nick Craig-Wood)
     - Reject bogus multipart part sizes in the reorder buffer GHSA-2p48-j3qc-rx9f (Nick Craig-Wood)
-    - Fix auth proxy accepting any request signed with an empty secret GHSA-xwwr-4h3p-r22c CVE-PENDING (Nick Craig-Wood)
+    - Fix auth proxy accepting any request signed with an empty secret GHSA-xwwr-4h3p-r22c CVE-2026-88018 (Nick Craig-Wood)
       - **NB** the auth proxy protocol for `serve s3` has changed - the proxy program is now given the access key ID as `user` and must return the secret as `_secret_access_key`
     - Fix each server accepting the `--auth-key` credentials of all the others (Nick Craig-Wood)
-    - Fix misleading anonymous access log when using an auth proxy via rc GHSA-p569-5gjg-9cmj CVE-PENDING (Nick Craig-Wood)
-  - serve sftp: Fix auth proxy configured via rc being silently ignored GHSA-p569-5gjg-9cmj CVE-PENDING (Nick Craig-Wood)
+    - Fix misleading anonymous access log when using an auth proxy via rc GHSA-p569-5gjg-9cmj CVE-2026-88044 (Nick Craig-Wood)
+  - serve sftp: Fix auth proxy configured via rc being silently ignored GHSA-p569-5gjg-9cmj CVE-2026-88044 (Nick Craig-Wood)
 - Bug Fixes
   - accounting
     - Fix memory leak on long-running rcd (nielash)

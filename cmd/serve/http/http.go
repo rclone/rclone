@@ -199,6 +199,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 
 	router := s.server.Router()
 	router.Use(
+		s.provider.HoldVFS,
 		middleware.Compress(5),
 		middleware.SetHeader("Accept-Ranges", "bytes"),
 		middleware.SetHeader("Server", "rclone/"+fs.Version),

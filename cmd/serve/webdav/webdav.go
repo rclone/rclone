@@ -310,6 +310,7 @@ func newWebDAV(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 
 	router := w.server.Router()
 	router.Use(
+		w.provider.HoldVFS,
 		webDAVCompressMiddleware(),
 		middleware.SetHeader("Accept-Ranges", "bytes"),
 		middleware.SetHeader("Server", "rclone/"+fs.Version),

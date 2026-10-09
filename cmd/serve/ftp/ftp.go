@@ -16,6 +16,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rclone/rclone/cmd"
@@ -358,13 +359,27 @@ func (d *driver) CheckPasswd(sctx *ftp.Context, user, pass string) (ok bool, err
 	return true, nil
 }
 
-// getVFS returns the VFS for this connection.
+// getVFS returns the VFS for this connection, held so it can't be
+// shut down while it is in use. The caller must call Shutdown on it
+// when it has finished with it.
 //
-// In proxy mode, getVFS calls proxy.Call on each FTP command which refreshes
-// the proxy cache timer (like http/webdav). Therefore, connection-level pinning
-// is not used; only individual transfers exceeding the cache expiry window
-// could be affected.
+// In proxy mode, getVFS calls proxy.Call on each FTP command which
+// refreshes the proxy cache timer (like http/webdav). The proxy shuts
+// the VFS down when that timer expires, which a single transfer can
+// outlast, so the timer alone isn't enough to keep the VFS alive.
 func (d *driver) getVFS(sctx *ftp.Context) (VFS *vfs.VFS, err error) {
+	VFS, err = d.findVFS(sctx)
+	if err != nil {
+		return nil, err
+	}
+	if !VFS.Hold() {
+		return nil, errors.New("VFS has been shut down")
+	}
+	return VFS, nil
+}
+
+// findVFS returns the VFS for this connection without holding it.
+func (d *driver) findVFS(sctx *ftp.Context) (VFS *vfs.VFS, err error) {
 	if !d.provider.IsProxy() {
 		// If no proxy always use the same VFS
 		return d.provider.VFS(), nil
@@ -392,6 +407,7 @@ func (d *driver) Stat(sctx *ftp.Context, path string) (fi iofs.FileInfo, err err
 	if err != nil {
 		return nil, err
 	}
+	defer VFS.Shutdown()
 	n, err := VFS.Stat(path)
 	if err != nil {
 		return nil, err
@@ -406,6 +422,7 @@ func (d *driver) ChangeDir(sctx *ftp.Context, path string) (err error) {
 	if err != nil {
 		return err
 	}
+	defer VFS.Shutdown()
 	n, err := VFS.Stat(path)
 	if err != nil {
 		return err
@@ -423,6 +440,7 @@ func (d *driver) ListDir(sctx *ftp.Context, path string, callback func(iofs.File
 	if err != nil {
 		return err
 	}
+	defer VFS.Shutdown()
 	node, err := VFS.Stat(path)
 	if err == vfs.ENOENT {
 		return errors.New("directory not found")
@@ -461,6 +479,7 @@ func (d *driver) DeleteDir(sctx *ftp.Context, path string) (err error) {
 	if err != nil {
 		return err
 	}
+	defer VFS.Shutdown()
 	node, err := VFS.Stat(path)
 	if err != nil {
 		return err
@@ -482,6 +501,7 @@ func (d *driver) DeleteFile(sctx *ftp.Context, path string) (err error) {
 	if err != nil {
 		return err
 	}
+	defer VFS.Shutdown()
 	node, err := VFS.Stat(path)
 	if err != nil {
 		return err
@@ -503,6 +523,7 @@ func (d *driver) Rename(sctx *ftp.Context, oldName, newName string) (err error) 
 	if err != nil {
 		return err
 	}
+	defer VFS.Shutdown()
 	return VFS.Rename(oldName, newName)
 }
 
@@ -513,6 +534,7 @@ func (d *driver) MakeDir(sctx *ftp.Context, path string) (err error) {
 	if err != nil {
 		return err
 	}
+	defer VFS.Shutdown()
 	dir, leaf, err := VFS.StatParent(path)
 	if err != nil {
 		return err
@@ -528,6 +550,12 @@ func (d *driver) GetFile(sctx *ftp.Context, path string, offset int64) (size int
 	if err != nil {
 		return 0, nil, err
 	}
+	// The returned file takes over the hold on the VFS
+	defer func() {
+		if err != nil {
+			VFS.Shutdown()
+		}
+	}()
 	node, err := VFS.Stat(path)
 	if err == vfs.ENOENT {
 		fs.Infof(path, "File not found")
@@ -552,7 +580,20 @@ func (d *driver) GetFile(sctx *ftp.Context, path string, offset int64) (size int
 	tr := accounting.GlobalStats().NewTransferRemoteSize(path, node.Size(), d.f, nil)
 	defer tr.Done(d.ctx, nil)
 
-	return node.Size(), handle, nil
+	return node.Size(), &heldFile{ReadCloser: handle, VFS: VFS}, nil
+}
+
+// heldFile is an open file which holds its VFS until it is closed.
+type heldFile struct {
+	io.ReadCloser
+	VFS     *vfs.VFS
+	release sync.Once
+}
+
+// Close closes the file and releases the hold on the VFS.
+func (f *heldFile) Close() error {
+	defer f.release.Do(f.VFS.Shutdown)
+	return f.ReadCloser.Close()
 }
 
 // PutFile upload a file
@@ -564,6 +605,7 @@ func (d *driver) PutFile(sctx *ftp.Context, path string, data io.Reader, offset 
 	if err != nil {
 		return 0, err
 	}
+	defer VFS.Shutdown()
 	fi, err := VFS.Stat(path)
 	if err == nil {
 		isExist = true

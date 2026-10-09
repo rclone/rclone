@@ -128,6 +128,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Cubbit DS3" home="https://cubbit.io/ds3-cloud" config="/s3/#Cubbit" >}}
 {{< provider name="DigitalOcean Spaces" home="https://www.digitalocean.com/products/object-storage/" config="/s3/#digitalocean-spaces" >}}
 {{< provider name="Digi Storage" home="https://storage.rcs-rds.ro/" config="/koofr/#digi-storage" >}}
+{{< provider name="dosya.dev" home="https://dosya.dev/" config="/dosya/" >}}
 {{< provider name="Dreamhost" home="https://www.dreamhost.com/cloud/storage/" config="/s3/#dreamhost" >}}
 {{< provider name="Drime" home="https://www.drime.cloud/" config="/drime/" >}}
 {{< provider name="Dropbox" home="https://www.dropbox.com/" config="/dropbox/" >}}
@@ -202,6 +203,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="RackCorp Object Storage" home="https://www.rackcorp.com/" config="/s3/#RackCorp" >}}
 {{< provider name="Rackspace Cloud Files" home="https://www.rackspace.com/cloud/files" config="/swift/" >}}
 {{< provider name="Rclone Serve S3" home="/commands/rclone_serve_s3/" config="/s3/#rclone" >}}
+{{< provider name="RelAix.Storage" home="https://www.relaix.net/" config="/s3/#relaix" >}}
 {{< provider name="rsync.net" home="https://rsync.net/products/rclone.html" config="/sftp/#rsync-net" >}}
 {{< provider name="Scaleway" home="https://www.scaleway.com/object-storage/" config="/s3/#scaleway" >}}
 {{< provider name="Scality (RING / ARTESCA)" home="https://www.scality.com/" config="/s3/#scality" >}}

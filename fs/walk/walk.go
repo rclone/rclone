@@ -503,10 +503,12 @@ func walkRDirTree(ctx context.Context, f fs.Fs, startPath string, includeAll boo
 						return err
 					}
 					if inc || includeAll {
-						// If the directory doesn't exist already, create it
-						_, obj := dirs.Find(dirPath)
-						if obj == nil {
-							dirs.AddDir(fs.NewDir(dirPath, time.Now()))
+						// Make sure the directory is in the tree. Its
+						// entry in the parent is added by CheckParents
+						// if not listed, as directories can be listed
+						// after the objects in them.
+						if _, ok := dirs[dirPath]; !ok {
+							dirs[dirPath] = nil
 						}
 					}
 				}
