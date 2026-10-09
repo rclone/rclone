@@ -9,8 +9,12 @@ package sftp
 
 import (
 	"context"
+	"crypto/ed25519"
+	"crypto/rand"
+	"encoding/base64"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/pkg/sftp"
 	_ "github.com/rclone/rclone/backend/local"
@@ -23,6 +27,7 @@ import (
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/ssh"
 )
 
 const (
@@ -102,6 +107,59 @@ func TestNewServerPerServerAuthProxy(t *testing.T) {
 	}()
 	assert.True(t, w.provider.IsProxy(), "expected auth proxy to be enabled by per-server option")
 	assert.Nil(t, w.provider.VFS(), "expected no fixed VFS when auth proxy is in use")
+}
+
+// TestAuthProxyPublicKeyAsPassword checks that a public key which has
+// just been used to log in through the auth proxy can't be sent as a
+// password from the same address to get the same backend without the
+// proxy being asked.
+func TestAuthProxyPublicKeyAsPassword(t *testing.T) {
+	// The proxy accepts any public key but refuses every password, so
+	// a password login can only succeed by skipping the proxy
+	t.Setenv("RCLONE_TEST_PROXY_KEY_ONLY", "1")
+	proxyOpt := proxy.Opt
+	proxyOpt.AuthProxy = "go run ../proxy/proxy_code.go"
+
+	opt := Opt
+	opt.ListenAddr = testBindAddress
+	w, err := newServer(context.Background(), nil, &opt, &vfscommon.Opt, &proxyOpt)
+	require.NoError(t, err)
+	go func() {
+		assert.NoError(t, w.Serve())
+	}()
+	defer func() {
+		assert.NoError(t, w.Shutdown())
+	}()
+	addr := w.Addr().String()
+
+	_, privateKey, err := ed25519.GenerateKey(rand.Reader)
+	require.NoError(t, err)
+	signer, err := ssh.NewSignerFromKey(privateKey)
+	require.NoError(t, err)
+	publicKeyString := base64.StdEncoding.EncodeToString(signer.PublicKey().Marshal())
+
+	login := func(auth ssh.AuthMethod) error {
+		client, err := ssh.Dial("tcp", addr, &ssh.ClientConfig{
+			User:            "victim",
+			Auth:            []ssh.AuthMethod{auth},
+			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+			Timeout:         30 * time.Second,
+		})
+		if err != nil {
+			return err
+		}
+		_ = client.Close()
+		return nil
+	}
+
+	// Check the proxy refuses the public key as a password on a cold cache
+	require.ErrorContains(t, login(ssh.Password(publicKeyString)), "unable to authenticate")
+
+	// The owner of the key logs in with it
+	require.NoError(t, login(ssh.PublicKeys(signer)))
+
+	// Now the public key must still be refused as a password
+	require.ErrorContains(t, login(ssh.Password(publicKeyString)), "unable to authenticate")
 }
 
 func TestRc(t *testing.T) {

@@ -35,6 +35,11 @@ func main() {
 			v += "-test"
 		case "error":
 			log.Fatal(v)
+		case "pass":
+			// Simulate a key-only policy which refuses every password
+			if os.Getenv("RCLONE_TEST_PROXY_KEY_ONLY") != "" {
+				log.Fatalf("password refused for %q", in["user"])
+			}
 		}
 		out[k] = v
 	}

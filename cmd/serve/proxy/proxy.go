@@ -143,12 +143,15 @@ to make proxy to many different sftp backends, you could make the
 in the output and the user to |user|. For security you'd probably want
 to restrict the |host| to a limited list.
 
-An internal cache of backends is keyed on the |user|, a hash of the
-|pass| or |public_key|, and the |client_ip|.  This means that if a
-user's password or public-key changes, the client connects from a new IP
-address, or the proxy returns different config parameters (eg a rotated
-|api_key|), a fresh backend will be created on the next request rather
-than the cached one being reused.
+An internal cache of backends is keyed on the |user|, the kind of
+credential presented, a hash of the |pass| or |public_key|, and the
+|client_ip|.  This means that if a user's password or public-key
+changes, the client connects from a new IP address, or the proxy
+returns different config parameters (eg a rotated |api_key|), a fresh
+backend will be created on the next request rather than the cached one
+being reused.  A backend created for a public key login is never
+reused for a password login, so a public key cannot be sent as a
+password to skip the program.
 
 This can be used to build general purpose proxies to any kind of
 backend that rclone supports.
@@ -188,6 +191,7 @@ type Proxy struct {
 // cacheEntry is what is stored in the vfsCache
 type cacheEntry struct {
 	vfs       *vfs.VFS          // stored VFS
+	kind      authKind          // kind of credential the entry was created for
 	pwHash    [sha256.Size]byte // sha256 hash of the password/publicKey
 	secret    string            // secret access key returned by the proxy for access key auth
 	refreshed *atomic.Int64     // unix nanoseconds when the proxy last confirmed this entry
@@ -308,9 +312,14 @@ func ipFromAddr(addr string) string {
 }
 
 // generateCacheKey creates a composite cache key from the user, the auth
-// credentials and the client's IP address.
-func generateCacheKey(user, auth, clientIP string) string {
+// credentials, the kind of credential and the client's IP address.
+//
+// The kind is part of the key so that a public key, which is not a
+// secret, presented as a password can't hit the entry created when its
+// owner logged in with it.
+func generateCacheKey(user, auth string, kind authKind, clientIP string) string {
 	mac := hmac.New(sha256.New, cacheKeyHMACKey)
+	mac.Write([]byte{byte(kind)})
 	mac.Write([]byte(auth))
 	// Separate the two so ("ab", "c") can't collide with ("a", "bc")
 	mac.Write([]byte{0})
@@ -370,7 +379,7 @@ func (p *Proxy) call(user, auth string, kind authKind, clientIP string) (value a
 	// Make the cache key include the auth and the client IP so that
 	// changes to either (eg the proxy returning new config) create a
 	// fresh backend rather than reusing the cached one.
-	cacheKey := generateCacheKey(user, auth, clientIP)
+	cacheKey := generateCacheKey(user, auth, kind, clientIP)
 
 	// For access key auth the secret isn't part of the cache key as
 	// it isn't known until the proxy has been run, so retire any
@@ -389,7 +398,7 @@ func (p *Proxy) call(user, auth string, kind authKind, clientIP string) (value a
 		defer p.accessKeyMu.Unlock()
 		if old, ok := p.vfsCache.GetMaybe(cacheKey); ok {
 			if entry, ok := old.(cacheEntry); ok && entry.secret != secret {
-				p.vfsCache.Rename(cacheKey, generateCacheKey(user, entry.secret, clientIP))
+				p.vfsCache.Rename(cacheKey, generateCacheKey(user, entry.secret, kind, clientIP))
 			}
 		}
 	}
@@ -420,6 +429,7 @@ func (p *Proxy) call(user, auth string, kind authKind, clientIP string) (value a
 		// after the unencrypted password in memory most likely.
 		entry := cacheEntry{
 			vfs:       vfs.New(p.ctx, f, &p.vfsOpt),
+			kind:      kind,
 			pwHash:    sha256.Sum256([]byte(auth)),
 			secret:    secret,
 			refreshed: new(atomic.Int64),
@@ -445,20 +455,20 @@ func (p *Proxy) call(user, auth string, kind authKind, clientIP string) (value a
 // connecting over a unix socket.
 func (p *Proxy) Call(user, auth string, isPublicKey bool, remoteAddr string) (VFS *vfs.VFS, vfsKey string, err error) {
 	clientIP := ipFromAddr(remoteAddr)
+	kind := authPassword
+	if isPublicKey {
+		kind = authPublicKey
+	}
 
-	// Cache key includes the auth and the client IP so credential or
-	// address changes don't hit a stale entry
-	cacheKey := generateCacheKey(user, auth, clientIP)
+	// Cache key includes the auth, its kind and the client IP so
+	// credential, method or address changes don't hit a stale entry
+	cacheKey := generateCacheKey(user, auth, kind, clientIP)
 
 	// Look in the cache first with the credential-aware key
 	value, ok := p.vfsCache.GetMaybe(cacheKey)
 
 	// If not found then call the proxy for a fresh answer
 	if !ok {
-		kind := authPassword
-		if isPublicKey {
-			kind = authPublicKey
-		}
 		// Logins with the same credentials which arrive together
 		// share one call, as each call which made its own cache
 		// entry would take a reference to the VFS but only the
@@ -477,13 +487,14 @@ func (p *Proxy) Call(user, auth string, isPublicKey bool, remoteAddr string) (VF
 		return nil, "", fmt.Errorf("proxy: value is not cache entry: %#v", value)
 	}
 
-	// Check the password / public key matches the cached entry. The
-	// cache key already includes a hash of the auth, so a changed
-	// credential lands on a fresh key rather than this entry; this
-	// check is a final guard against a hash collision on the key
-	// returning a backend created with different auth.
+	// Check the password / public key and its kind match the cached
+	// entry. The cache key already includes a hash of the auth and its
+	// kind, so a changed credential or method lands on a fresh key
+	// rather than this entry; this check is a final guard against a
+	// hash collision on the key returning a backend created with
+	// different auth.
 	authHash := sha256.Sum256([]byte(auth))
-	if subtle.ConstantTimeCompare(authHash[:], entry.pwHash[:]) != 1 {
+	if entry.kind != kind || subtle.ConstantTimeCompare(authHash[:], entry.pwHash[:]) != 1 {
 		if isPublicKey {
 			return nil, "", errors.New("proxy: incorrect public key")
 		}
@@ -514,7 +525,7 @@ func (p *Proxy) Call(user, auth string, isPublicKey bool, remoteAddr string) (VF
 // remoteAddr is the address of the client as returned by net.Addr.String().
 func (p *Proxy) CallAccessKey(accessKeyID, remoteAddr string, refresh bool) (VFS *vfs.VFS, secret string, err error) {
 	clientIP := ipFromAddr(remoteAddr)
-	cacheKey := generateCacheKey(accessKeyID, "", clientIP)
+	cacheKey := generateCacheKey(accessKeyID, "", authAccessKey, clientIP)
 	value, ok := p.vfsCache.GetMaybe(cacheKey)
 	if ok {
 		if entry, isEntry := value.(cacheEntry); isEntry {
