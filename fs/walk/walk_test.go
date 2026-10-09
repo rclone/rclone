@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/rclone/rclone/fs"
@@ -975,6 +977,68 @@ func TestListR(t *testing.T) {
 	err = listR(ctx, f, "dir", false, ListDirs, callback, doListR, true)
 	require.NoError(t, err)
 	require.Equal(t, []string{"dir/subdir"}, got)
+}
+
+// noListFs wraps an fs.Fs and records whether List was ever called on
+// it. This is used to prove that walk.ListR takes the --files-from fast
+// path (resolving each file directly via NewObject) instead of falling
+// back to a directory listing, which would be catastrophic on backends
+// with large flat namespaces (e.g. S3 buckets with millions of objects).
+//
+// List is recorded via an atomic flag (rather than calling t.Fatal
+// directly) because Walk may invoke List from worker goroutines, where
+// t.Fatal would only abort that goroutine and hang the test.
+type noListFs struct {
+	fs.Fs
+	listCalled atomic.Bool
+}
+
+func (f *noListFs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
+	f.listCalled.Store(true)
+	return nil, fs.ErrorDirNotFound
+}
+
+// TestListRHaveFilesFrom checks that ListR uses the fast --files-from
+// path (via filter.MakeListR / NewObject) rather than doing a directory
+// listing when --files-from is active. This is a regression test for
+// the fix that made walk.ListR honour HaveFilesFrom() unconditionally
+// (previously only walk.Walk did this, and only when --no-traverse was
+// also set).
+func TestListRHaveFilesFrom(t *testing.T) {
+	ctx := context.Background()
+
+	baseFs, err := mockfs.NewFs(ctx, "mock", "/", nil)
+	require.NoError(t, err)
+	base := baseFs.(*mockfs.Fs)
+	base.AddObject(mockobject.Object("file1.png"))
+	base.AddObject(mockobject.Object("file2.png"))
+	f := &noListFs{Fs: base}
+
+	fi, err := filter.NewFilter(nil)
+	require.NoError(t, err)
+	require.NoError(t, fi.AddFile("file1.png"))
+	require.NoError(t, fi.AddFile("file2.png"))
+	require.NoError(t, fi.AddFile("notfound.png"))
+	require.True(t, fi.HaveFilesFrom())
+
+	ctx = filter.ReplaceConfig(ctx, fi)
+
+	var got []string
+	var mu sync.Mutex
+	callback := func(entries fs.DirEntries) error {
+		mu.Lock()
+		defer mu.Unlock()
+		for _, entry := range entries {
+			got = append(got, entry.Remote())
+		}
+		return nil
+	}
+
+	err = ListR(ctx, f, "", true, -1, ListAll, callback)
+	require.NoError(t, err)
+	sort.Strings(got)
+	require.Equal(t, []string{"file1.png", "file2.png"}, got)
+	require.False(t, f.listCalled.Load(), "List should never be called when --files-from is active")
 }
 
 func TestDirMapAdd(t *testing.T) {
