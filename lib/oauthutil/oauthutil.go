@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -109,6 +110,7 @@ type Config struct {
 	RedirectURL          string
 	ClientCredentialFlow bool
 	AuthStyle            oauth2.AuthStyle
+	UsePKCE              bool // If set, use PKCE (RFC 7636) for the authorization code flow
 }
 
 // MakeOauth2Config makes an oauth2.Config from our config
@@ -166,6 +168,11 @@ var SharedOptions = []fs.Option{{
 	Help:     "Use client credentials OAuth flow.\n\nThis will use the OAUTH2 client Credentials Flow as described in RFC 6749.\n\nNote that this option is NOT supported by all backends.",
 	Advanced: true,
 }}
+
+// SharedOptionsPKCE are shared between backends that use PKCE OAuth2 flow, without Client Secret.
+var SharedOptionsPKCE = slices.DeleteFunc(slices.Clone(SharedOptions), func(o fs.Option) bool {
+	return o.Name == config.ConfigClientSecret || o.Name == config.ConfigClientCredentials
+})
 
 // oldToken contains an end-user's tokens.
 // This is the data you must store to persist authentication.
@@ -696,7 +703,7 @@ func ConfigOAuth(ctx context.Context, name string, m configmap.Mapper, ri *fs.Re
 			return nil, err
 		}
 		if noWebserverNeeded(opt.OAuth2Config) {
-			authURL, _, err := getAuthURL(name, m, opt.OAuth2Config, opt)
+			authURL, _, _, err := getAuthURL(name, m, opt.OAuth2Config, opt)
 			if err != nil {
 				return nil, err
 			}
@@ -784,6 +791,7 @@ version recommended):
 		if changed {
 			fs.Logf(nil, "Make sure your Redirect URL is set to %q in your custom config.\n", oauthConfig.RedirectURL)
 		}
+		var pkceVerifier string
 		if oauthConfig.ClientCredentialFlow {
 			err = clientCredentialsFlowGetToken(ctx, name, m, oauthConfig, opt)
 			if err != nil {
@@ -792,12 +800,12 @@ version recommended):
 		} else {
 			if code == "" {
 				oauthConfig = fixRedirect(oauthConfig)
-				code, err = configSetup(ctx, ri.Name, name, m, oauthConfig, opt)
+				code, pkceVerifier, err = configSetup(ctx, ri.Name, name, m, oauthConfig, opt)
 				if err != nil {
 					return nil, fmt.Errorf("config failed to refresh token: %w", err)
 				}
 			}
-			err = configExchange(ctx, name, m, oauthConfig, code)
+			err = configExchange(ctx, name, m, oauthConfig, code, pkceVerifier)
 			if err != nil {
 				return nil, err
 			}
@@ -881,14 +889,21 @@ func noWebserverNeeded(oauthConfig *Config) bool {
 	return oauthConfig.RedirectURL == TitleBarRedirectURL
 }
 
+// generatePKCE generates a PKCE verifier and challenge for the auth code flow.
+func generatePKCE() (verifier string, challenge string) {
+	verifier = oauth2.GenerateVerifier()
+	challenge = oauth2.S256ChallengeFromVerifier(verifier)
+	return verifier, challenge
+}
+
 // get the URL we need to send the user to
-func getAuthURL(name string, m configmap.Mapper, oauthConfig *Config, opt *Options) (authURL string, state string, err error) {
+func getAuthURL(name string, m configmap.Mapper, oauthConfig *Config, opt *Options) (authURL string, state string, pkceVerifier string, err error) {
 	oauthConfig, _ = OverrideCredentials(name, m, oauthConfig)
 
 	// Make random state
 	state, err = random.Password(128)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 
 	// Create the configuration required for the OAuth flow
@@ -899,8 +914,19 @@ func getAuthURL(name string, m configmap.Mapper, oauthConfig *Config, opt *Optio
 	if !opt.NoOffline {
 		opts = append(opts, oauth2.AccessTypeOffline)
 	}
+
+	// Generate PKCE challenge if needed
+	if oauthConfig.UsePKCE {
+		var challenge string
+		pkceVerifier, challenge = generatePKCE()
+		opts = append(opts,
+			oauth2.SetAuthURLParam("code_challenge", challenge),
+			oauth2.SetAuthURLParam("code_challenge_method", "S256"),
+		)
+	}
+
 	authURL = oauth2Conf.AuthCodeURL(state, opts...)
-	return authURL, state, nil
+	return authURL, state, pkceVerifier, nil
 }
 
 // If TitleBarRedirect is set but we are doing a real oauth, then
@@ -942,23 +968,23 @@ func clientCredentialsFlowGetToken(ctx context.Context, name string, m configmap
 // If opt is nil it will use the default Options.
 //
 // It will run an internal webserver to receive the results
-func configSetup(ctx context.Context, id, name string, m configmap.Mapper, oauthConfig *Config, opt *Options) (string, error) {
+func configSetup(ctx context.Context, id, name string, m configmap.Mapper, oauthConfig *Config, opt *Options) (code string, pkceVerifier string, err error) {
 	if opt == nil {
 		opt = &Options{}
 	}
 	authorizeNoAutoBrowserValue, ok := m.Get(config.ConfigAuthNoBrowser)
 	authorizeNoAutoBrowser := ok && authorizeNoAutoBrowserValue != ""
 
-	authURL, state, err := getAuthURL(name, m, oauthConfig, opt)
+	authURL, state, pkceVerifier, err := getAuthURL(name, m, oauthConfig, opt)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	// Prepare webserver
 	server := newAuthServer(opt, bindAddress, state, authURL)
 	err = server.Init()
 	if err != nil {
-		return "", fmt.Errorf("failed to start auth webserver: %w", err)
+		return "", "", fmt.Errorf("failed to start auth webserver: %w", err)
 	}
 	authURL = "http://" + bindAddress + "/auth?state=" + state
 
@@ -997,29 +1023,36 @@ func configSetup(ctx context.Context, id, name string, m configmap.Mapper, oauth
 	select {
 	case auth = <-server.result:
 	case <-oauthCtx.Done():
-		return "", errors.New("oauth authentication was cancelled")
+		return "", "", errors.New("oauth authentication was cancelled")
 	}
 	if !auth.OK || auth.Code == "" {
-		return "", auth
+		return "", "", auth
 	}
 	fs.Logf(nil, "Got code\n")
 	if opt.CheckAuth != nil {
 		err = opt.CheckAuth(oauthConfig, auth)
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
 	}
-	return auth.Code, nil
+	return auth.Code, pkceVerifier, nil
 }
 
 // Exchange the code for a token
-func configExchange(ctx context.Context, name string, m configmap.Mapper, oauthConfig *Config, code string) error {
+func configExchange(ctx context.Context, name string, m configmap.Mapper, oauthConfig *Config, code string, pkceVerifier string) error {
 	ctx = Context(ctx, fshttp.NewClient(ctx))
 
 	// Create the configuration required for the OAuth flow
 	oauth2Conf := oauthConfig.MakeOauth2Config()
 
-	token, err := oauth2Conf.Exchange(ctx, code)
+	var token *oauth2.Token
+	var err error
+	if pkceVerifier != "" {
+		token, err = oauth2Conf.Exchange(ctx, code, oauth2.VerifierOption(pkceVerifier))
+	} else {
+		token, err = oauth2Conf.Exchange(ctx, code)
+	}
+
 	if err != nil {
 		return fmt.Errorf("failed to get token: %w", err)
 	}
