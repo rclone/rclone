@@ -118,7 +118,6 @@ will make an archive with the contents:
 			cmd.CheckArgs(1, 2, command, args)
 		}
 		cmd.Run(false, false, command, func() error {
-			fmt.Printf("dst=%v, dstFile=%q, src=%v, format=%q, prefix=%q\n", dst, dstFile, src, format, prefix)
 			if prefix != "" {
 				return ArchiveCreate(context.Background(), dst, dstFile, src, format, prefix)
 			} else if fullPath {
@@ -301,10 +300,12 @@ func ArchiveCreate(ctx context.Context, dst fs.Fs, dstFile string, src fs.Fs, fo
 	var compArchive archives.CompressedArchive
 	var totalLength int64
 
-	// check id dst is valid
-	err = CheckValidDestination(ctx, dst, dstFile)
-	if err != nil {
-		return err
+	// check if dst is valid, nil dst means write to stdout
+	if dst != nil {
+		err = CheckValidDestination(ctx, dst, dstFile)
+		if err != nil {
+			return err
+		}
 	}
 
 	ci := fs.GetConfig(ctx)

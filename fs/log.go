@@ -14,7 +14,7 @@ import (
 
 // logger represents the slog logging facility and should be overridden by
 // the fs/log handling code.
-var logger *slog.Logger = slog.Default()
+var logger = slog.Default()
 
 // LogLevel describes rclone's logs.  These are a subset of the syslog log levels.
 type LogLevel = Enum[logLevelChoices]
@@ -146,8 +146,17 @@ func logSlog(level LogLevel, text string, attrs []any) {
 
 func logSlogWithObject(level LogLevel, o any, text string, attrs []any) {
 	if o != nil {
+		var object string
+		switch o.(type) {
+		case fmt.Stringer, string:
+			object = fmt.Sprint(o)
+		default:
+			// Don't render the fields of arbitrary objects as they
+			// may contain sensitive data such as credentials.
+			object = fmt.Sprintf("%T", o)
+		}
 		attrs = slices.Concat(attrs, []any{
-			"object", fmt.Sprintf("%+v", o),
+			"object", object,
 			"objectType", fmt.Sprintf("%T", o),
 		})
 	}

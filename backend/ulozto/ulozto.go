@@ -572,15 +572,17 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 
 // Move implements the optional method fs.Mover.Move.
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-	if remote == src.Remote() {
-		// Already there, do nothing
-		return src, nil
-	}
-
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debugf(src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
+	}
+
+	// src may be on a differently rooted Fs (eg with --backup-dir) so
+	// compare the full paths including the Fs roots
+	if path.Join(srcObj.fs.root, srcObj.remote) == path.Join(f.root, remote) {
+		// Already there, do nothing
+		return src, nil
 	}
 
 	filename, folderSlug, err := f.dirCache.FindPath(ctx, remote, true)

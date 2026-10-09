@@ -69,6 +69,8 @@ type Node interface {
 	Truncate(size int64) error
 	Path() string
 	SetSys(any)
+	Aux(owner any) any
+	SetAux(owner, value any)
 }
 
 // Check interfaces
@@ -186,6 +188,7 @@ type VFS struct {
 	usageMu     sync.Mutex
 	usageTime   time.Time
 	usage       *fs.Usage
+	pollMu      sync.Mutex
 	pollChan    chan time.Duration
 	inUse       atomic.Int32 // count of number of opens
 }
@@ -231,9 +234,10 @@ func New(ctx context.Context, f fs.Fs, opt *vfscommon.Options) *VFS {
 	defer activeMu.Unlock()
 	configName := fs.ConfigString(f)
 	for _, activeVFS := range active[configName] {
-		if vfs.Opt == activeVFS.Opt {
+		// A VFS whose last reference has gone is being shut down
+		// but may not have removed itself from the cache yet.
+		if vfs.Opt == activeVFS.Opt && activeVFS.Hold() {
 			fs.Debugf(f, "Reusing VFS from active cache")
-			activeVFS.inUse.Add(1)
 			cancel()
 			return activeVFS
 		}
@@ -285,6 +289,7 @@ func New(ctx context.Context, f fs.Fs, opt *vfscommon.Options) *VFS {
 
 // refresh the directory cache for all directories
 func (vfs *VFS) refresh() {
+	defer vfscommon.RecoverPanic(vfs.f, nil)
 	fs.Debugf(vfs.f, "Refreshing VFS directory cache")
 	err := vfs.root.readDirTree()
 	if err != nil {
@@ -353,6 +358,12 @@ func activeCacheEntries() (vfs *VFS, count int) {
 	return vfs, count
 }
 
+// ActiveCount returns the total number of VFS instances in the active cache.
+func ActiveCount() int {
+	_, count := activeCacheEntries()
+	return count
+}
+
 // Fs returns the Fs passed into the New call
 func (vfs *VFS) Fs() fs.Fs {
 	return vfs.f
@@ -385,6 +396,21 @@ func (vfs *VFS) shutdownCache() {
 	}
 }
 
+// Hold takes another reference to the VFS so it isn't shut down until
+// a matching call to Shutdown. It returns false, taking no reference,
+// if the VFS has already been shut down.
+func (vfs *VFS) Hold() bool {
+	for {
+		n := vfs.inUse.Load()
+		if n <= 0 {
+			return false
+		}
+		if vfs.inUse.CompareAndSwap(n, n+1) {
+			return true
+		}
+	}
+}
+
 // Shutdown stops any background go-routines and removes the VFS from
 // the active ache.
 func (vfs *VFS) Shutdown() {
@@ -407,13 +433,15 @@ func (vfs *VFS) Shutdown() {
 
 	vfs.shutdownCache()
 
+	// Cancel any background go routines
+	vfs.cancel()
+
+	vfs.pollMu.Lock()
 	if vfs.pollChan != nil {
 		close(vfs.pollChan)
 		vfs.pollChan = nil
 	}
-
-	// Cancel any background go routines
-	vfs.cancel()
+	vfs.pollMu.Unlock()
 }
 
 // CleanUp deletes the contents of the on disk cache
@@ -429,6 +457,25 @@ func (vfs *VFS) FlushDirCache() {
 	vfs.root.ForgetAll()
 }
 
+// countInUse returns the number of files open for write and the
+// number of cached files which are open or waiting to be uploaded.
+func (vfs *VFS) countInUse() (writers, cacheInUse int) {
+	writers = vfs.root.countActiveWriters()
+	if vfs.cache != nil {
+		cacheInUse = vfs.cache.TotalInUse()
+	}
+	return writers, cacheInUse
+}
+
+// Busy returns true if the VFS has files open for write or cached
+// files which are open or waiting to be uploaded.
+//
+// It may block while a directory is being read from the remote.
+func (vfs *VFS) Busy() bool {
+	writers, cacheInUse := vfs.countInUse()
+	return writers != 0 || cacheInUse != 0
+}
+
 // WaitForWriters sleeps until all writers have finished or
 // time.Duration has elapsed
 func (vfs *VFS) WaitForWriters(timeout time.Duration) {
@@ -440,11 +487,7 @@ func (vfs *VFS) WaitForWriters(timeout time.Duration) {
 	defer tick.Stop()
 	tick.Stop()
 	for {
-		writers := vfs.root.countActiveWriters()
-		cacheInUse := 0
-		if vfs.cache != nil {
-			cacheInUse = vfs.cache.TotalInUse()
-		}
+		writers, cacheInUse := vfs.countInUse()
 		if writers == 0 && cacheInUse == 0 {
 			return
 		}
@@ -742,6 +785,38 @@ func (vfs *VFS) Chtimes(name string, atime time.Time, mtime time.Time) error {
 	return nil
 }
 
+// Chmod changes the mode of the named file.
+//
+// If name is a symlink the mode of the link itself is changed, not
+// its target (like lchmod). It does not follow the link, so it works
+// on symlinks whose target doesn't exist.
+//
+// The VFS doesn't store file permissions so currently this returns
+// ENOSYS if the file exists and ENOENT if it doesn't.
+func (vfs *VFS) Chmod(name string, mode os.FileMode) error {
+	_, err := vfs.Stat(name)
+	if err != nil {
+		return err
+	}
+	return ENOSYS
+}
+
+// Chown changes the uid and gid of the named file.
+//
+// If name is a symlink the ownership of the link itself is changed,
+// not its target (like lchown). It does not follow the link, so it
+// works on symlinks whose target doesn't exist.
+//
+// The VFS doesn't store file ownership so currently this returns
+// ENOSYS if the file exists and ENOENT if it doesn't.
+func (vfs *VFS) Chown(name string, uid, gid int) error {
+	_, err := vfs.Stat(name)
+	if err != nil {
+		return err
+	}
+	return ENOSYS
+}
+
 // mkdir creates a new directory with the specified name and permission bits
 // (before umask) returning the new directory node.
 func (vfs *VFS) mkdir(name string, perm os.FileMode) (*Dir, error) {
@@ -857,7 +932,7 @@ func (vfs *VFS) AddVirtual(remote string, size int64, isDir bool) (err error) {
 	if err != nil {
 		return err
 	}
-	dir.AddVirtual(leaf, size, false)
+	dir.AddVirtual(leaf, size, isDir)
 	return nil
 }
 

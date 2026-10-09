@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -564,8 +565,7 @@ func TestSyncSetDelayedModTimes(t *testing.T) {
 
 	// Timestamp the directories in reverse order
 	ts := t1
-	for i := len(dirs) - 1; i >= 0; i-- {
-		dir := dirs[i]
+	for _, dir := range slices.Backward(dirs) {
 		_, err := operations.SetDirModTime(ctx, r.Flocal, nil, dir, ts)
 		require.NoError(t, err)
 		ts = ts.Add(time.Minute)
@@ -1596,39 +1596,6 @@ func TestSyncWithTrackRenames(t *testing.T) {
 	}
 }
 
-func TestParseRenamesStrategyModtime(t *testing.T) {
-	for _, test := range []struct {
-		in      string
-		want    trackRenamesStrategy
-		wantErr bool
-	}{
-		{"", 0, false},
-		{"modtime", trackRenamesStrategyModtime, false},
-		{"hash", trackRenamesStrategyHash, false},
-		{"size", 0, false},
-		{"modtime,hash", trackRenamesStrategyModtime | trackRenamesStrategyHash, false},
-		{"hash,modtime,size", trackRenamesStrategyModtime | trackRenamesStrategyHash, false},
-		{"size,boom", 0, true},
-	} {
-		got, err := parseTrackRenamesStrategy(test.in)
-		assert.Equal(t, test.want, got, test.in)
-		assert.Equal(t, test.wantErr, err != nil, test.in)
-	}
-}
-
-func TestRenamesStrategyModtime(t *testing.T) {
-	both := trackRenamesStrategyHash | trackRenamesStrategyModtime
-	hash := trackRenamesStrategyHash
-	modTime := trackRenamesStrategyModtime
-
-	assert.True(t, both.hash())
-	assert.True(t, both.modTime())
-	assert.True(t, hash.hash())
-	assert.False(t, hash.modTime())
-	assert.False(t, modTime.hash())
-	assert.True(t, modTime.modTime())
-}
-
 func TestSyncWithTrackRenamesStrategyModtime(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
@@ -2256,6 +2223,36 @@ func TestSyncMultipleCompareDest(t *testing.T) {
 	r.CheckRemoteItems(t, fdest1, fdest2, fdest3)
 }
 
+// Test with CopyDest and Immutable set
+func TestSyncCopyDestImmutable(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	defer accounting.GlobalStats().ResetCounters()
+
+	if r.Fremote.Features().Copy == nil {
+		t.Skip("Skipping test as remote does not support server-side copy")
+	}
+
+	ci.CopyDest = []string{r.FremoteName + "/CopyDest"}
+	ci.Immutable = true
+
+	fdst, err := fs.NewFs(ctx, r.FremoteName+"/dst")
+	require.NoError(t, err)
+
+	file1 := r.WriteObject(ctx, "dst/one", "one", t1)
+	file2 := r.WriteObject(ctx, "CopyDest/one", "onet2", t2)
+	file3 := r.WriteFile("one", "onet2", t2)
+	r.CheckRemoteItems(t, file1, file2)
+
+	// A match in --copy-dest must not replace a different destination
+	accounting.GlobalStats().ResetCounters()
+	err = CopyDir(ctx, fdst, r.Flocal, false)
+	assert.EqualError(t, err, fs.ErrorImmutableModified.Error())
+	r.CheckRemoteItems(t, file1, file2)
+	r.CheckLocalItems(t, file3)
+}
+
 // Test with CopyDest set
 func TestSyncCopyDest(t *testing.T) {
 	ctx := context.Background()
@@ -2868,6 +2865,39 @@ func TestSyncReplaceDirModTimeWithEmptyDirs(t *testing.T) {
 	testSyncReplaceDirModTime(t, true)
 }
 
+// Test that syncing a directory which needs its modtime updating and
+// which has files transferred into it only sets its modtime once
+func TestSyncSetDirModTimeOnce(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	if r.Fremote.Features().DirSetModTime == nil {
+		t.Skip("Skipping test as remote does not support DirSetModTime")
+	}
+
+	file1 := r.WriteFile("dir/file1", "file1 contents", t2)
+	_, err := operations.SetDirModTime(ctx, r.Flocal, nil, "dir", t2)
+	require.NoError(t, err)
+
+	// Initial sync creates the directory and sets its modtime
+	accounting.GlobalStats().ResetCounters()
+	require.NoError(t, Sync(ctx, r.Fremote, r.Flocal, false))
+	r.CheckRemoteItems(t, file1)
+	assert.Equal(t, int64(1), accounting.GlobalStats().UpdatedDirs(0), "expected directory modtime to be set exactly once")
+	r.CheckDirectoryModTimes(t, "dir")
+
+	// Change the contents of the directory and its modtime
+	file1 = r.WriteFile("dir/file1", "file1 changed contents", t1)
+	_, err = operations.SetDirModTime(ctx, r.Flocal, nil, "dir", t1)
+	require.NoError(t, err)
+
+	// Sync again and check the modtime is only set once
+	accounting.GlobalStats().ResetCounters()
+	require.NoError(t, Sync(ctx, r.Fremote, r.Flocal, false))
+	r.CheckRemoteItems(t, file1)
+	assert.Equal(t, int64(1), accounting.GlobalStats().UpdatedDirs(0), "expected directory modtime to be set exactly once")
+	r.CheckDirectoryModTimes(t, "dir")
+}
+
 // Tests that nothing is transferred when src and dst already match
 // Run the same sync twice, ensure no action is taken the second time
 func testNothingToTransfer(t *testing.T, copyEmptySrcDirs bool) {
@@ -3101,7 +3131,36 @@ func testLoggerVsLsf(ctx context.Context, fdst, fsrc fs.Fs, logger *bytes.Buffer
 
 	if fsrc.Precision() == fdst.Precision() && fsrc.Hashes().Contains(hash.MD5) && canTestHash {
 		lsf := DstLsf(ctx, fdst)
+		blankMissingHashes(&newlogger, lsf)
 		err := LoggerMatchesLsf(&newlogger, lsf)
 		require.NoError(t, err)
 	}
+}
+
+// blankMissingHashes clears the hash in logger lines for paths where
+// the lsf listing has an empty hash. An empty hash from a backend
+// means the hash is unknown, not wrong - for example ownCloud does
+// not carry the checksum over on a server-side copy - so it should
+// not be compared against the hash the logger predicted.
+func blankMissingHashes(logger, lsf *bytes.Buffer) {
+	noHash := map[string]bool{}
+	for line := range bytes.SplitSeq(lsf.Bytes(), []byte("\n")) {
+		elements := bytes.SplitN(line, []byte(";"), 4)
+		if len(elements) == 4 && len(elements[1]) == 0 {
+			noHash[string(elements[3])] = true
+		}
+	}
+	if len(noHash) == 0 {
+		return
+	}
+	loggerSplit := bytes.Split(logger.Bytes(), []byte("\n"))
+	for i, line := range loggerSplit {
+		elements := bytes.SplitN(line, []byte(";"), 4)
+		if len(elements) == 4 && noHash[string(elements[3])] {
+			elements[1] = nil
+			loggerSplit[i] = bytes.Join(elements, []byte(";"))
+		}
+	}
+	logger.Reset()
+	logger.Write(bytes.Join(loggerSplit, []byte("\n")))
 }

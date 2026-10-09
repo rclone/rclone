@@ -126,6 +126,40 @@ func TestCopyFile(t *testing.T) {
 	r.CheckRemoteItems(t, file2)
 }
 
+func TestCopyFileImmutable(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	defer accounting.GlobalStats().ResetCounters()
+
+	ci.Immutable = true
+
+	file1 := r.WriteFile("existing", "potato", t1)
+	r.CheckLocalItems(t, file1)
+
+	err := operations.CopyFile(ctx, r.Fremote, r.Flocal, file1.Path, file1.Path)
+	require.NoError(t, err)
+	r.CheckRemoteItems(t, file1)
+
+	// Copying an unchanged file again is fine
+	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file1.Path, file1.Path)
+	require.NoError(t, err)
+	r.CheckRemoteItems(t, file1)
+
+	// Should fail with ErrorImmutableModified and not modify local or remote files
+	file2 := r.WriteFile("existing", "tomatoes", t2)
+	r.CheckLocalItems(t, file2)
+	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file2.Path)
+	assert.ErrorIs(t, err, fs.ErrorImmutableModified)
+	r.CheckLocalItems(t, file2)
+	r.CheckRemoteItems(t, file1)
+
+	ci.NoCheckDest = true
+	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file2.Path)
+	assert.EqualError(t, err, "can't use --no-check-dest with --immutable")
+	r.CheckRemoteItems(t, file1)
+}
+
 // Find the longest file name for writing to local
 func maxLengthFileName(t *testing.T, r *fstest.Run) string {
 	require.NoError(t, r.Flocal.Mkdir(context.Background(), "")) // create the root
@@ -265,6 +299,35 @@ func TestCopyFileCompareDest(t *testing.T) {
 	file5bdst.Path = "dst/two"
 
 	r.CheckRemoteItems(t, file2, file3, file4, file5bdst)
+}
+
+// Test with CopyDest and Immutable set
+func TestCopyFileCopyDestImmutable(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	defer accounting.GlobalStats().ResetCounters()
+
+	if r.Fremote.Features().Copy == nil {
+		t.Skip("Skipping test as remote does not support server-side copy")
+	}
+
+	ci.CopyDest = []string{r.FremoteName + "/CopyDest"}
+	ci.Immutable = true
+
+	fdst, err := fs.NewFs(ctx, r.FremoteName+"/dst")
+	require.NoError(t, err)
+
+	file1 := r.WriteObject(ctx, "dst/one", "one", t1)
+	file2 := r.WriteObject(ctx, "CopyDest/one", "onet2", t2)
+	file3 := r.WriteFile("one", "onet2", t2)
+	r.CheckRemoteItems(t, file1, file2)
+
+	// A match in --copy-dest must not replace a different destination
+	err = operations.CopyFile(ctx, fdst, r.Flocal, file3.Path, file3.Path)
+	assert.ErrorIs(t, err, fs.ErrorImmutableModified)
+	r.CheckRemoteItems(t, file1, file2)
+	r.CheckLocalItems(t, file3)
 }
 
 // Test with CopyDest set

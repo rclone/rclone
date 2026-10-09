@@ -77,7 +77,8 @@ func TestShouldRetry(t *testing.T) {
 	}{
 		{"nil error", ctx, nil, false},
 		{"cancelled context", cancelledCtx, errors.New("some error"), false},
-		{"storage block error Code=200501", ctx, apiErr(422, 200501), true},
+		{"permanent validation error Code=200501 Status=422 (not retried)", ctx, apiErr(422, 200501), false},
+		{"transient storage block error Code=200501 Status=500 (retried)", ctx, apiErr(500, 200501), true},
 		{"server error Status=500", ctx, apiErr(500, 0), true},
 		{"server error Status=502", ctx, apiErr(502, 0), true},
 		{"server error Status=504", ctx, apiErr(504, 0), true},
@@ -85,7 +86,7 @@ func TestShouldRetry(t *testing.T) {
 		{"rate limit Status=429 (handled by SDK, not retried here)", ctx, apiErr(429, 0), false},
 		{"client error Status=400", ctx, apiErr(400, 0), false},
 		{"client error Status=404", ctx, apiErr(404, 0), false},
-		{"wrapped API error retried via errors.As", ctx, fmt.Errorf("wrapped: %w", &proton.APIError{Status: 500}), true},
+		{"wrapped API error retried via errors.As", ctx, fmt.Errorf("wrapped: %w", apiErr(500, 0)), true},
 		{"non-API error falls back to fserrors.ShouldRetry", ctx, errors.New("plain error"), false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

@@ -1050,14 +1050,15 @@ func (o *Object) netStorageUploadRequest(ctx context.Context, in io.Reader, src 
 
 	// Invalidate stat cache
 	o.fs.deleteStatCache(URL)
-	if o.size == -1 {
-		files, err := o.fs.netStorageStatRequest(ctx, URL, false)
-		if err != nil {
-			return nil
-		}
-		if files != nil {
-			o.size = files[0].Size
-		}
+	// Stat the uploaded file to get the md5 the server computed and
+	// the size for streaming uploads.
+	files, err := o.fs.netStorageStatRequest(ctx, URL, false)
+	if err != nil {
+		return nil
+	}
+	if files != nil {
+		o.size = files[0].Size
+		o.md5sum = files[0].Md5
 	}
 	return nil
 }

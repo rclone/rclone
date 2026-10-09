@@ -1,8 +1,10 @@
 package fs
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"testing"
 
@@ -30,6 +32,30 @@ func TestLogValue(t *testing.T) {
 	assert.Equal(t, "hello", x.String())
 	x = LogValueHide("x", withString{})
 	assert.Equal(t, "", x.String())
+}
+
+func TestLogSlogWithObject(t *testing.T) {
+	var buf bytes.Buffer
+	oldLogger := logger
+	defer func() { logger = oldLogger }()
+	SetLogger(slog.NewTextHandler(&buf, nil))
+
+	// Objects with a String method are rendered with it
+	logSlogWithObject(LogLevelError, withString{}, "message", nil)
+	assert.Contains(t, buf.String(), "object=hello")
+
+	// Plain strings are rendered as themselves
+	buf.Reset()
+	logSlogWithObject(LogLevelError, "potato", "message", nil)
+	assert.Contains(t, buf.String(), "object=potato")
+
+	// Anything else shows only its type as it may contain
+	// sensitive data such as credentials
+	buf.Reset()
+	type secrets struct{ Password string }
+	logSlogWithObject(LogLevelError, &secrets{Password: "SECRET"}, "message", nil)
+	assert.Contains(t, buf.String(), "object=*fs.secrets")
+	assert.NotContains(t, buf.String(), "SECRET")
 }
 
 func TestLogLevelString(t *testing.T) {

@@ -498,7 +498,7 @@ func (d *DriveService) CopyDocByItemID(ctx context.Context, itemID string) (*Dri
 }
 
 // CreateUpload creates an url for an upload.
-func (d *DriveService) CreateUpload(ctx context.Context, size int64, name string) (*UploadResponse, *http.Response, error) {
+func (d *DriveService) CreateUpload(ctx context.Context, size int64, name, zone string) (*UploadResponse, *http.Response, error) {
 	// first we need to request an upload url
 	values := map[string]any{
 		"filename":     name,
@@ -513,7 +513,7 @@ func (d *DriveService) CreateUpload(ctx context.Context, size int64, name string
 
 	opts := rest.Opts{
 		Method:       "POST",
-		Path:         "/ws/" + defaultZone + "/upload/web",
+		Path:         "/ws/" + zone + "/upload/web",
 		ExtraHeaders: d.icloud.Session.GetHeaders(map[string]string{}),
 		RootURL:      d.docsEndpoint,
 		Body:         body,
@@ -552,14 +552,14 @@ func (d *DriveService) Upload(ctx context.Context, in io.Reader, size int64, nam
 // ctx: the context.Context object for the request.
 // r: a pointer to the UpdateFileInfo struct containing the information for the file update.
 // Returns a pointer to the DriveItem struct representing the updated file, the http.Response object, and an error if any.
-func (d *DriveService) UpdateFile(ctx context.Context, r *UpdateFileInfo) (*DriveItem, *http.Response, error) {
+func (d *DriveService) UpdateFile(ctx context.Context, r *UpdateFileInfo, zone string) (*DriveItem, *http.Response, error) {
 	body, err := IntoReader(r)
 	if err != nil {
 		return nil, nil, err
 	}
 	opts := rest.Opts{
 		Method:       "POST",
-		Path:         "/ws/" + defaultZone + "/update/documents",
+		Path:         "/ws/" + zone + "/update/documents",
 		ExtraHeaders: d.icloud.Session.GetHeaders(map[string]string{}),
 		RootURL:      d.docsEndpoint,
 		Body:         body,
@@ -572,7 +572,7 @@ func (d *DriveService) UpdateFile(ctx context.Context, r *UpdateFileInfo) (*Driv
 
 	doc := responseInfo.Results[0].Document
 	item := DriveItem{
-		Drivewsid:    "FILE::com.apple.CloudDocs::" + doc.DocumentID,
+		Drivewsid:    ConstructDriveID(doc.DocumentID, zone, "FILE"),
 		Docwsid:      doc.DocumentID,
 		Itemid:       doc.ItemID,
 		Etag:         doc.Etag,
@@ -890,6 +890,18 @@ func DeconstructDriveID(id string) (docType, zone, docid string) {
 		return "", "", id
 	}
 	return split[0], split[1], split[2]
+}
+
+// ZoneFromDriveID returns the zone a drive ID belongs to, or the default zone
+// for an ID that carries none. Items in an app container -- Obsidian, Pages,
+// Shortcuts -- live in that app's zone rather than com.apple.CloudDocs, and a
+// write addressed to the wrong zone cannot resolve its parent.
+func ZoneFromDriveID(id string) string {
+	_, zone, _ := DeconstructDriveID(id)
+	if zone == "" {
+		return defaultZone
+	}
+	return zone
 }
 
 // ConstructDriveID constructs a drive ID from the given components.

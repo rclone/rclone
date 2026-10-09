@@ -58,6 +58,9 @@ const (
 	maxFileSize           = 4 * fs.Tebi
 	defaultChunkSize      = 4 * fs.Mebi
 	storageDefaultBaseURL = "file.core.windows.net"
+	// smbTimePrecision is the precision the server stores
+	// modtimes with (100 ns FILETIME ticks)
+	smbTimePrecision = 100 * time.Nanosecond
 )
 
 func init() {
@@ -250,10 +253,10 @@ func (f *Fs) Features() *fs.Features {
 
 // Precision return the precision of this Fs
 //
-// One second. FileREST API times are in RFC1123 which in the example shows a precision of seconds
+// The SMB last write time properties are ISO 8601 with 100 ns (FILETIME) precision
 // Source: https://learn.microsoft.com/en-us/rest/api/storageservices/representation-of-date-time-values-in-headers
 func (f *Fs) Precision() time.Duration {
-	return time.Second
+	return smbTimePrecision
 }
 
 // Hashes returns the supported hash sets.
@@ -598,7 +601,10 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	if err != nil {
 		return fmt.Errorf("unable to set modTime: %w", err)
 	}
-	o.modTime = t
+	// Truncate to the precision the server stores the modtime with
+	// to keep the in-memory modtime identical to the one a fresh
+	// listing returns.
+	o.modTime = t.Truncate(smbTimePrecision)
 	return nil
 }
 
@@ -644,11 +650,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	return resp.Body, nil
 }
 
-// Returns a pointer to t - useful for returning pointers to constants
-func ptr[T any](t T) *T {
-	return &t
-}
-
 var warnStreamUpload sync.Once
 
 // Update the object with the contents of the io.Reader, modTime, size and MD5 hash
@@ -690,11 +691,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 	}
 
-	// Measure the size if it is unknown
-	if sizeUnknown {
-		counter = readers.NewCountingReader(in)
-		in = counter
-	}
+	// Count the bytes read so short reads from the source can be detected
+	counter = readers.NewCountingReader(in)
+	in = counter
 
 	// Check we have a source MD5 hash...
 	if hashStr, err := src.Hash(ctx, hash.MD5); err == nil && hashStr != "" {
@@ -729,6 +728,21 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if sizeUnknown {
 		// Read the uploaded size - the file will be truncated to that size by updateSizeHashModTime
 		size = int64(counter.BytesRead())
+	} else if bytesRead := int64(counter.BytesRead()); bytesRead != size {
+		// The file was created at the declared size so a short source
+		// leaves the remainder padded with zeroes
+		if isNewlyCreated {
+			if _, delErr := fc.Delete(ctx, nil); delErr != nil {
+				fs.Errorf(o, "failed to delete partially uploaded file: %v", delErr)
+			}
+		} else if bytesRead < size {
+			// Truncate the file to the bytes actually received so it
+			// is not left padded to the declared size with zeroes
+			if _, resizeErr := fc.Resize(ctx, bytesRead, nil); resizeErr != nil {
+				fs.Errorf(o, "failed to truncate partially updated file: %v", resizeErr)
+			}
+		}
+		return fmt.Errorf("update: expected %d bytes in input, but got %d: %w", size, bytesRead, io.ErrUnexpectedEOF)
 	}
 	if hashUnknown {
 		md5Hash = hasher.Sum(nil)
@@ -769,10 +783,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return fmt.Errorf("update: failed to set properties: %w", err)
 	}
 
-	// Make sure Object is in sync
+	// Make sure Object is in sync, truncating the modtime to the
+	// precision the server stores it with so it is identical to the
+	// one a fresh listing returns
 	o.size = size
 	o.md5 = md5Hash
-	o.modTime = modTime
+	o.modTime = modTime.Truncate(smbTimePrecision)
 	o.contentType = contentType
 	return nil
 }
@@ -797,8 +813,8 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, fmt.Errorf("Move: mkParentDir failed: %w", err)
 	}
 	opt := file.RenameOptions{
-		IgnoreReadOnly:  ptr(true),
-		ReplaceIfExists: ptr(true),
+		IgnoreReadOnly:  new(true),
+		ReplaceIfExists: new(true),
 	}
 	dstAbsPath := f.absPath(remote)
 	fc := srcObj.fileClient()
@@ -843,8 +859,8 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 
 	opt := directory.RenameOptions{
-		IgnoreReadOnly:  ptr(false),
-		ReplaceIfExists: ptr(false),
+		IgnoreReadOnly:  new(false),
+		ReplaceIfExists: new(false),
 	}
 	dstAbsPath := dstFs.absPath(dstRemote)
 	dirClient := srcFs.dirClient(srcRemote)
@@ -883,8 +899,8 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 			ChangeTime:         file.SourceCopyFileChangeTime{},
 			CreationTime:       file.SourceCopyFileCreationTime{},
 			LastWriteTime:      file.SourceCopyFileLastWriteTime{},
-			PermissionCopyMode: ptr(file.PermissionCopyModeTypeSource),
-			IgnoreReadOnly:     ptr(true),
+			PermissionCopyMode: new(file.PermissionCopyModeTypeSource),
+			IgnoreReadOnly:     new(true),
 		},
 	}
 	srcURL := srcObj.fileClient().URL()

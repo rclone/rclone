@@ -19,7 +19,7 @@ func (f *Fs) finishBatch(ctx context.Context, items []*files.UploadSessionFinish
 		Entries: items,
 	}
 	err = f.pacer.Call(func() (bool, error) {
-		complete, err = f.srv.UploadSessionFinishBatchV2(arg)
+		complete, err = f.srv.UploadSessionFinishBatchV2Context(ctx, arg)
 		if retry, err := shouldRetryExclude(ctx, err); !retry {
 			return retry, err
 		}

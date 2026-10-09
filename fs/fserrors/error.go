@@ -386,6 +386,7 @@ var retriableErrorStrings = []string{
 	"server closed idle connection",    // net/http/transport.go
 	"bad record MAC",                   // crypto/tls/alert.go
 	"stream error:",                    // net/http/h2_bundle.go
+	"http2: server sent GOAWAY",        // net/http/h2_bundle.go
 	"tls: use of closed connection",    // crypto/tls/conn.go
 }
 

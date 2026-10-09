@@ -24,6 +24,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 )
 
@@ -176,11 +177,12 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 // Update the object with the contents of the io.Reader
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	size := src.Size()
+	counter := readers.NewCountingReader(in)
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:        "POST",
 		Path:          path.Join("/renter/uploadstream/", o.fs.opt.Enc.FromStandardPath(path.Join(o.fs.root, o.remote))),
-		Body:          in,
+		Body:          counter,
 		ContentLength: &size,
 		Parameters:    url.Values{},
 	}
@@ -190,6 +192,14 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		resp, err = o.fs.srv.Call(ctx, &opts)
 		return o.fs.shouldRetry(resp, err)
 	})
+
+	// Check the source supplied the number of bytes it declared
+	// otherwise a truncated file would be stored as a good upload.
+	// The partially uploaded file is cleaned up by Put which copes
+	// with it appearing asynchronously after the failed upload.
+	if err == nil && size >= 0 && int64(counter.BytesRead()) != size {
+		return fmt.Errorf("expected %d bytes in input, but got %d: %w", size, counter.BytesRead(), io.ErrUnexpectedEOF)
+	}
 
 	if err == nil {
 		err = o.readMetaData(ctx)

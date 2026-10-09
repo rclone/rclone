@@ -368,6 +368,34 @@ Properties:
 - Type:        string
 - Required:    false
 
+#### --dropbox-impersonate-admin
+
+Team admin ID to use when performing actions as a team administrator.
+
+This sets the Dropbox-API-Select-Admin header with the given team
+member ID (for example "dbmid:...").
+
+This takes a team member ID directly rather than an email address.
+
+Note that if you want to use impersonate_admin, you should make sure this
+flag is set when running "rclone config" as this will cause rclone to
+request the "team_data.member" scope which it won't normally.
+
+Using the "team_data.member" scope will require a Dropbox Team Admin
+to approve during the OAuth flow.
+
+You will have to use your own App (setting your own client_id and
+client_secret) to use this option as currently rclone's default set of
+permissions doesn't include "team_data.member".
+
+
+Properties:
+
+- Config:      impersonate_admin
+- Env Var:     RCLONE_DROPBOX_IMPERSONATE_ADMIN
+- Type:        string
+- Required:    false
+
 #### --dropbox-shared-files
 
 Instructs rclone to work on individual shared files.
@@ -405,6 +433,48 @@ Properties:
 
 - Config:      shared_folders
 - Env Var:     RCLONE_DROPBOX_SHARED_FOLDERS
+- Type:        bool
+- Default:     false
+
+#### --dropbox-skip-shared-folders
+
+Instructs rclone to skip all shared folders.
+
+When set, any folder that is a shared folder mount point will be
+excluded from directory listings, regardless of ownership.
+This is useful if you prefer to back up shared folders separately
+using a separate remote configured with the shared folder namespace.
+
+Properties:
+
+- Config:      skip_shared_folders
+- Env Var:     RCLONE_DROPBOX_SKIP_SHARED_FOLDERS
+- Type:        bool
+- Default:     false
+
+#### --dropbox-skip-unowned-folders
+
+Instructs rclone to skip shared folders not owned by the current user.
+
+When set, any folder that is a shared folder mount point and not
+owned by the current user will be excluded from directory listings.
+This is useful when backing up multiple Dropbox accounts that share
+common folders, to avoid duplicating the shared data across accounts.
+
+Note: In Dropbox Business, 'Team Folders' are owned by the Team.
+For standard team members, these folders evaluate as 'unowned'
+(editor/viewer access) and will be excluded by this flag. To back up
+Team Folders, do not use this flag or run the backup using a Team Admin
+account.
+
+If --dropbox-skip-shared-folders is also enabled, this flag has no effect.
+
+This makes an extra API call per shared folder mount point.
+
+Properties:
+
+- Config:      skip_unowned_folders
+- Env Var:     RCLONE_DROPBOX_SKIP_UNOWNED_FOLDERS
 - Type:        bool
 - Default:     false
 
@@ -567,17 +637,6 @@ Properties:
 - Env Var:     RCLONE_DROPBOX_BATCH_TIMEOUT
 - Type:        Duration
 - Default:     0s
-
-#### --dropbox-batch-commit-timeout
-
-Max time to wait for a batch to finish committing. (no longer used)
-
-Properties:
-
-- Config:      batch_commit_timeout
-- Env Var:     RCLONE_DROPBOX_BATCH_COMMIT_TIMEOUT
-- Type:        Duration
-- Default:     10m0s
 
 #### --dropbox-description
 

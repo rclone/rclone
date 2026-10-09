@@ -37,28 +37,24 @@ import (
 type server struct {
 	f        fs.Fs
 	opt      Options
-	vfs      *vfs.VFS
+	provider *proxy.Provider
 	ctx      context.Context // for global config
 	config   *ssh.ServerConfig
 	listener net.Listener
 	stopped  chan struct{} // for waiting on the listener to stop
-	proxy    *proxy.Proxy
 }
 
 func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Options, proxyOpt *proxy.Options) (*server, error) {
 	s := &server{
-		f:       f,
-		ctx:     ctx,
-		opt:     *opt,
-		stopped: make(chan struct{}),
-	}
-	if proxy.Opt.AuthProxy != "" {
-		s.proxy = proxy.New(ctx, proxyOpt, vfsOpt)
-	} else {
-		s.vfs = vfs.New(ctx, f, vfsOpt)
+		f:        f,
+		ctx:      ctx,
+		opt:      *opt,
+		provider: proxy.NewProvider(ctx, f, vfsOpt, proxyOpt),
+		stopped:  make(chan struct{}),
 	}
 	err := s.configure()
 	if err != nil {
+		s.provider.Shutdown()
 		return nil, fmt.Errorf("sftp configuration failed: %w", err)
 	}
 	return s, nil
@@ -66,8 +62,8 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 
 // getVFS gets the vfs from s or the proxy
 func (s *server) getVFS(what string, sshConn *ssh.ServerConn) (VFS *vfs.VFS) {
-	if s.proxy == nil {
-		return s.vfs
+	if !s.provider.IsProxy() {
+		return s.provider.VFS()
 	}
 	if sshConn.Permissions == nil || sshConn.Permissions.Extensions == nil {
 		fs.Infof(what, "SSH Permissions Extensions not found")
@@ -78,7 +74,7 @@ func (s *server) getVFS(what string, sshConn *ssh.ServerConn) (VFS *vfs.VFS) {
 		fs.Infof(what, "VFS key not found")
 		return nil
 	}
-	VFS = s.proxy.Get(key)
+	VFS = s.provider.Proxy().Get(key)
 	if VFS == nil {
 		fs.Infof(what, "failed to read VFS from cache")
 		return nil
@@ -103,6 +99,13 @@ func (s *server) acceptConnection(nConn net.Conn) {
 	// Discard all global out-of-band Requests
 	go ssh.DiscardRequests(reqs)
 
+	if sshConn.Permissions != nil && sshConn.Permissions.Extensions != nil {
+		if vfsKey := sshConn.Permissions.Extensions["_vfsKey"]; vfsKey != "" {
+			s.provider.Pin(vfsKey)
+			defer s.provider.Unpin(vfsKey)
+		}
+	}
+
 	c := &conn{
 		what: what,
 		vfs:  s.getVFS(what, sshConn),
@@ -115,7 +118,7 @@ func (s *server) acceptConnection(nConn net.Conn) {
 	c.handlers = newVFSHandler(c.vfs)
 
 	// Accept all channels
-	go c.handleChannels(chans)
+	c.handleChannels(chans)
 }
 
 // Accept connections and call them in a go routine
@@ -140,12 +143,12 @@ func (s *server) configure() (err error) {
 	var authorizedKeysMap map[string]struct{}
 
 	// ensure the user isn't trying to use conflicting flags
-	if proxy.Opt.AuthProxy != "" && s.opt.AuthorizedKeys != "" && s.opt.AuthorizedKeys != Opt.AuthorizedKeys {
+	if s.provider.IsProxy() && s.opt.AuthorizedKeys != "" && s.opt.AuthorizedKeys != Opt.AuthorizedKeys {
 		return errors.New("--auth-proxy and --authorized-keys cannot be used at the same time")
 	}
 
 	// Load the authorized keys
-	if s.opt.AuthorizedKeys != "" && proxy.Opt.AuthProxy == "" {
+	if s.opt.AuthorizedKeys != "" && !s.provider.IsProxy() {
 		authKeysFile := env.ShellExpand(s.opt.AuthorizedKeys)
 		authorizedKeysMap, err = loadAuthorizedKeys(authKeysFile)
 		// If user set the flag away from the default then report an error
@@ -160,7 +163,7 @@ func (s *server) configure() (err error) {
 		fs.Logf(nil, "Loaded %d authorized keys from %q", len(authorizedKeysMap), authKeysFile)
 	}
 
-	if !s.opt.NoAuth && len(authorizedKeysMap) == 0 && s.opt.User == "" && s.opt.Pass == "" && s.proxy == nil {
+	if !s.opt.NoAuth && len(authorizedKeysMap) == 0 && s.opt.User == "" && s.opt.Pass == "" && !s.provider.IsProxy() {
 		return errors.New("no authorization found, use --user/--pass or --authorized-keys or --no-auth or --auth-proxy")
 	}
 
@@ -170,9 +173,9 @@ func (s *server) configure() (err error) {
 		ServerVersion: "SSH-2.0-" + fs.GetConfig(s.ctx).UserAgent,
 		PasswordCallback: func(c ssh.ConnMetadata, pass []byte) (*ssh.Permissions, error) {
 			fs.Debugf(describeConn(c), "Password login attempt for %s", c.User())
-			if s.proxy != nil {
+			if s.provider.IsProxy() {
 				// query the proxy for the config
-				_, vfsKey, err := s.proxy.Call(c.User(), string(pass), false)
+				_, vfsKey, err := s.provider.Proxy().Call(c.User(), string(pass), false, c.RemoteAddr().String())
 				if err != nil {
 					return nil, err
 				}
@@ -193,12 +196,13 @@ func (s *server) configure() (err error) {
 		},
 		PublicKeyCallback: func(c ssh.ConnMetadata, pubKey ssh.PublicKey) (*ssh.Permissions, error) {
 			fs.Debugf(describeConn(c), "Public key login attempt for %s", c.User())
-			if s.proxy != nil {
+			if s.provider.IsProxy() {
 				//query the proxy for the config
-				_, vfsKey, err := s.proxy.Call(
+				_, vfsKey, err := s.provider.Proxy().Call(
 					c.User(),
 					base64.StdEncoding.EncodeToString(pubKey.Marshal()),
 					true,
+					c.RemoteAddr().String(),
 				)
 				if err != nil {
 					return nil, err
@@ -326,6 +330,7 @@ func (s *server) Shutdown() error {
 	if errors.Is(err, io.ErrUnexpectedEOF) {
 		err = nil
 	}
+	s.provider.Shutdown()
 	s.Wait()
 	return err
 }

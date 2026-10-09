@@ -2,6 +2,7 @@ package operations_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -244,6 +245,43 @@ func TestDeduplicateRename(t *testing.T) {
 		})
 		return nil
 	}))
+}
+
+// Check rename finds a free name when many numbered names already exist
+func TestDeduplicateRenameManyExisting(t *testing.T) {
+	r := fstest.NewRun(t)
+	skipIfCantDedupe(t, r.Fremote)
+
+	// Fill in one-1.txt to one-105.txt so the search has to go past 100
+	const existing = 105
+	var items []fstest.Item
+	for i := 1; i <= existing; i++ {
+		items = append(items, r.WriteObject(context.Background(), fmt.Sprintf("one-%d.txt", i), "This is not a duplicate", t1))
+	}
+	file1 := r.WriteUncheckedObject(context.Background(), "one.txt", "This is one", t1)
+	file2 := r.WriteUncheckedObject(context.Background(), "one.txt", "This is one too", t2)
+	items = append(items, file1, file2)
+	r.CheckWithDuplicates(t, items...)
+
+	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateRename, false)
+	require.NoError(t, err)
+
+	// The duplicates are renamed in listing order which isn't
+	// defined, so accept either assignment of the two new names
+	sizes := map[string]int64{}
+	require.NoError(t, walk.ListR(context.Background(), r.Fremote, "", true, -1, walk.ListObjects, func(entries fs.DirEntries) error {
+		entries.ForObject(func(o fs.Object) {
+			sizes[o.Remote()] = o.Size()
+		})
+		return nil
+	}))
+	assert.Equal(t, existing+2, len(sizes))
+	for i := 1; i <= existing; i++ {
+		assert.Equal(t, items[i-1].Size, sizes[fmt.Sprintf("one-%d.txt", i)])
+	}
+	size1 := sizes[fmt.Sprintf("one-%d.txt", existing+1)]
+	size2 := sizes[fmt.Sprintf("one-%d.txt", existing+2)]
+	assert.ElementsMatch(t, []int64{file1.Size, file2.Size}, []int64{size1, size2})
 }
 
 // This should really be a unit test, but the test framework there

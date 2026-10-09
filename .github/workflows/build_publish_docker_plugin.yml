@@ -33,7 +33,7 @@ jobs:
           sudo rm -rf /usr/share/dotnet || true
           df -h .
       - name: Checkout master
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Build and publish docker plugin

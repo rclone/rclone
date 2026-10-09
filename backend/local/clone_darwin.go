@@ -42,7 +42,10 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	// Create destination
-	dstObj := f.newObject(remote)
+	dstObj, err := f.newObject(remote)
+	if err != nil {
+		return nil, err
+	}
 	err = dstObj.mkdirAll()
 	if err != nil {
 		return nil, err
@@ -56,7 +59,11 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		}
 	}
 
-	err = Clone(srcPath, f.localPath(remote))
+	dstPath, err := f.localPath(remote)
+	if err != nil {
+		return nil, err
+	}
+	err = Clone(srcPath, dstPath)
 	if err != nil {
 		return nil, err
 	}

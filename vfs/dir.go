@@ -24,6 +24,7 @@ import (
 
 // Dir represents a directory entry
 type Dir struct {
+	aux                      // values attached by users of the VFS
 	vfs          *VFS        // read only
 	inode        uint64      // read only: inode number
 	f            fs.Fs       // read only
@@ -36,7 +37,6 @@ type Dir struct {
 	read    time.Time         // time directory entry last read
 	items   map[string]Node   // directory entries - can be empty but not nil
 	virtual map[string]vState // virtual directory entries - may be nil
-	sys     atomic.Value      // user defined info to be attached here
 
 	modTimeMu sync.Mutex // protects the following
 	modTime   time.Time
@@ -179,16 +179,6 @@ func (d *Dir) Path() (name string) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	return d.path
-}
-
-// Sys returns underlying data source (can be nil) - satisfies Node interface
-func (d *Dir) Sys() any {
-	return d.sys.Load()
-}
-
-// SetSys sets the underlying data source (can be nil) - satisfies Node interface
-func (d *Dir) SetSys(x any) {
-	d.sys.Store(x)
 }
 
 // Inode returns the inode number - satisfies Node interface
@@ -855,7 +845,7 @@ func (d *Dir) statMetadata(leaf, baseLeaf string) (metaNode Node, err error) {
 	}
 	// Make a memory based file with metadataDump in
 	remote := path.Join(d.path, leaf)
-	o := object.NewMemoryObject(remote, entry.ModTime(d.vfs.ctx), metadataDump)
+	o := object.NewMemoryObject(remote, node.ModTime(), metadataDump)
 	f := newFile(d, d.path, o, leaf)
 	// Base the metadata inode number off the real file inode number
 	// to keep it constant

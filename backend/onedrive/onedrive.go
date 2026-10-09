@@ -37,9 +37,9 @@ import (
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
-	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 )
 
@@ -56,7 +56,16 @@ const (
 	driveTypeSharepoint         = "documentLibrary"
 	defaultChunkSize            = 10 * fs.Mebi
 	chunkSizeMultiple           = 320 * fs.Kibi
-	maxSinglePartSize           = 4 * fs.Mebi
+	defaultTenantAPIVersion     = "v2.0"
+	// maxSinglePartSize is the size at which Graph stops accepting an upload in a
+	// single request (PUT /items/{id}/content). Microsoft documents this as
+	// "250 MB", see
+	// https://learn.microsoft.com/en-us/graph/api/driveitem-put-content
+	// Measured against SharePoint Online the figure is binary and exclusive: a
+	// body of 262143999 bytes is accepted, one of 262144000 is not. That matches
+	// upload_cutoff being an exclusive threshold in Update below, so a cutoff of
+	// exactly 250Mi sends everything the server would refuse to multipart.
+	maxSinglePartSize = 250 * fs.Mebi
 
 	regionGlobal = "global"
 	regionUS     = "us"
@@ -158,7 +167,7 @@ See: https://github.com/rclone/rclone/issues/1716
 			Name: "tenant_url",
 			Help: `The tenant URL for non-admin OneDrive access.
 
-Set this to your SharePoint tenant URL to use the SharePoint v2.0 API
+Set this to your SharePoint tenant URL to use the SharePoint API
 endpoint instead of the standard Microsoft Graph API. This allows
 accessing business OneDrive without admin consent.
 
@@ -168,6 +177,16 @@ for "driveAccessToken" in the network requests. Look for the
 
 Example: https://your-tenant.sharepoint.com/_api`,
 			Default:  "",
+			Advanced: true,
+		}, {
+			Name: "tenant_api_version",
+			Help: `The SharePoint API version to use with tenant_url.
+
+Set this to the SharePoint API version matching the browser-extracted
+access token. For example, use v2.1 with a driveAccessTokenV21 token.
+
+This only applies when tenant_url is set.`,
+			Default:  defaultTenantAPIVersion,
 			Advanced: true,
 		}, {
 			Name: "chunk_size",
@@ -275,16 +294,13 @@ cases, rclone will fall back to normal copy (which will be slightly slower).`,
 			Default: false,
 			Help: `Remove all versions on modifying operations.
 
-Onedrive for business creates versions when rclone uploads new files
+Onedrive creates versions when rclone uploads new files
 overwriting an existing one and when it sets the modification time.
 
 These versions take up space out of the quota.
 
 This flag checks for versions after file upload and setting
 modification time and removes all but the last version.
-
-**NB** Onedrive personal can't currently delete versions so don't use
-this flag there.
 `,
 			Advanced: true,
 		}, {
@@ -294,8 +310,7 @@ this flag there.
 Normally files will get sent to the recycle bin on deletion. Setting
 this flag causes them to be permanently deleted. Use with care.
 
-OneDrive personal accounts do not support the permanentDelete API,
-it only applies to OneDrive for Business and SharePoint document libraries.
+This works with OneDrive for Business, SharePoint document libraries, and OneDrive personal accounts, including free accounts.
 `,
 			Advanced: true,
 			Default:  false,
@@ -324,14 +339,18 @@ it only applies to OneDrive for Business and SharePoint document libraries.
 				Help:  "Creates a read-write link to the item.",
 			}, {
 				Value: "embed",
-				Help:  "Creates an embeddable link to the item.",
+				Help:  "Creates an embeddable link to the item.\nOnly available in OneDrive personal.",
 			}},
 		}, {
 			Name:    "link_password",
 			Default: "",
 			Help: `Set the password for links created by the link command.
 
-At the time of writing this only works with OneDrive personal paid accounts.
+At the time of writing this works with OneDrive for Business and
+OneDrive personal paid accounts.
+
+OneDrive personal free accounts can't set a password or an expiry time
+(with --expire) on links.
 `,
 			Advanced:  true,
 			Sensitive: true,
@@ -393,6 +412,16 @@ In this case you will see a message like this
 If you are 100% sure you want to download this file anyway then use
 the --onedrive-av-override flag, or av_override = true in the config
 file.
+
+When set, malware-flagged files are downloaded via Microsoft Graph
+beta APIs with Prefer: forceInfectedDownload (contentStream, then
+/content). Clean files continue to use the stable v1.0 endpoint.
+
+This is a beta API and may change. It works reliably with application
+permissions (client_credentials). With delegated (user) login on
+OneDrive for Business, Microsoft often still blocks the download.
+tenant_url configurations fall back to the legacy AVOverride query
+parameter.
 `,
 			Advanced: true,
 		}, {
@@ -409,21 +438,12 @@ Setting this flag speeds up these things greatly:
     rclone size onedrive:
     rclone rc vfs/refresh recursive=true
 
-**However** the delta listing API **only** works at the root of the
-drive. If you use it not at the root then it recurses from the root
-and discards all the data that is not under the directory you asked
-for. So it will be correct but may not be very efficient.
-
-This is why this flag is not set as the default.
-
-As a rule of thumb if nearly all of your data is under rclone's root
-directory (the |root/directory| in |onedrive:root/directory|) then
-using this flag will be a big performance win. If your data is
-mostly not under the root then using this flag will be a big
-performance loss.
-
-It is recommended if you are mounting your onedrive at the root
-(or near the root when using crypt) and using rclone |rc vfs/refresh|.
+Rclone asks for the delta listing of the directory being listed. If
+the drive only supports delta listings at the root of the drive (as
+some older OneDrive for Business and SharePoint drives do) then
+rclone lists from the root and discards all the data that is not
+under the directory you asked for. So it will be correct but may not
+be very efficient.
 `, "|", "`"),
 			Advanced: true,
 		}, {
@@ -492,10 +512,18 @@ func getRegionURL(m configmap.Mapper) (region, graphURL string) {
 	// Check if tenant_url is provided for non-admin mode
 	tenantURL, _ := m.Get("tenant_url")
 	if tenantURL != "" {
-		graphURL = tenantURL + "/v2.0"
+		tenantAPIVersion, _ := m.Get("tenant_api_version")
+		graphURL = tenantAPIEndpoint(tenantURL, tenantAPIVersion)
 	}
 
 	return region, graphURL
+}
+
+func tenantAPIEndpoint(tenantURL, tenantAPIVersion string) string {
+	if tenantAPIVersion == "" {
+		tenantAPIVersion = defaultTenantAPIVersion
+	}
+	return strings.TrimRight(tenantURL, "/") + "/" + strings.TrimLeft(tenantAPIVersion, "/")
 }
 
 // Config for chooseDrive
@@ -539,31 +567,34 @@ func chooseDrive(ctx context.Context, name string, m configmap.Mapper, srv *rest
 	// We don't have the final ID yet?
 	// query Microsoft Graph
 	if opt.finalDriveID == "" {
-		_, err := srv.CallJSON(ctx, &opt.opts, nil, &drives)
-		if err != nil {
-			return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available drives: %v", err))
+		_, drivesErr := srv.CallJSON(ctx, &opt.opts, nil, &drives)
+		if drivesErr != nil {
+			fs.Debugf(nil, "Failed to query /me/drives: %v - trying /me/drive", drivesErr)
 		}
-
 		// Also call /me/drive as sometimes /me/drives doesn't return it #4068
 		if opt.opts.Path == "/me/drives" {
-			opt.opts.Path = "/me/drive"
+			meDriveOpts := opt.opts
+			meDriveOpts.Path = "/me/drive"
 			meDrive := api.DriveResource{}
-			_, err := srv.CallJSON(ctx, &opt.opts, nil, &meDrive)
-			if err != nil {
-				return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available drives: %v", err))
-			}
-			found := false
-			for _, drive := range drives.Drives {
-				if drive.DriveID == meDrive.DriveID {
-					found = true
-					break
+			_, meDriveErr := srv.CallJSON(ctx, &meDriveOpts, nil, &meDrive)
+			if meDriveErr == nil {
+				found := false
+				for _, drive := range drives.Drives {
+					if drive.DriveID == meDrive.DriveID {
+						found = true
+						break
+					}
 				}
+				// add the me drive if not found already
+				if !found {
+					fs.Debugf(nil, "Adding %v to drives list from /me/drive", meDrive)
+					drives.Drives = append(drives.Drives, meDrive)
+				}
+			} else if drivesErr != nil {
+				return fs.ConfigError("driveid", fmt.Sprintf("Failed to query available drives: /me/drives: %v; /me/drive: %v\nEnter the drive ID manually instead", drivesErr, meDriveErr))
 			}
-			// add the me drive if not found already
-			if !found {
-				fs.Debugf(nil, "Adding %v to drives list from /me/drive", meDrive)
-				drives.Drives = append(drives.Drives, meDrive)
-			}
+		} else if drivesErr != nil {
+			return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available drives: %v", drivesErr))
 		}
 	} else {
 		drives.Drives = append(drives.Drives, api.DriveResource{
@@ -788,6 +819,7 @@ type Options struct {
 	UploadCutoff            fs.SizeSuffix        `config:"upload_cutoff"`
 	ChunkSize               fs.SizeSuffix        `config:"chunk_size"`
 	TenantURL               string               `config:"tenant_url"`
+	TenantAPIVersion        string               `config:"tenant_api_version"`
 	DriveID                 string               `config:"drive_id"`
 	DriveType               string               `config:"drive_type"`
 	RootFolderID            string               `config:"root_folder_id"`
@@ -1095,7 +1127,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	rootURL := graphAPIEndpoint[opt.Region] + "/v1.0" + "/drives/" + opt.DriveID
 
 	if opt.TenantURL != "" {
-		rootURL = opt.TenantURL + "/v2.0" + "/drives/" + opt.DriveID
+		rootURL = tenantAPIEndpoint(opt.TenantURL, opt.TenantAPIVersion) + "/drives/" + opt.DriveID
 	}
 
 	oauthConfig, err := makeOauthConfig(ctx, opt)
@@ -1470,10 +1502,6 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		return err
 	}
 
-	// ListR only works at the root of a onedrive, not on a folder
-	// So we have to filter things outside of the root which is
-	// inefficient.
-
 	list := list.NewHelper(callback)
 
 	// list a folder conventionally - used for shared folders
@@ -1549,17 +1577,26 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		return nil
 	}
 
-	opts := rest.Opts{
-		Method: "GET",
-		Path:   "/root/delta",
-		Parameters: map[string][]string{
-			// "token": {token},
+	listDelta := func(opts rest.Opts) error {
+		opts.Parameters = url.Values{
 			"$top": {fmt.Sprintf("%d", f.opt.ListChunk)},
-		},
+		}
+		var result api.DeltaResponse
+		return f._listAll(ctx, "", false, false, fn, &opts, &result, &result.Value, &result.NextLink)
 	}
 
-	var result api.DeltaResponse
-	err = f._listAll(ctx, "", false, false, fn, &opts, &result, &result.Value, &result.NextLink)
+	err = listDelta(f.newOptsCall(directoryID, "GET", "/delta"))
+	// Some drives only support delta listings at the root of the
+	// drive, in which case list the whole drive and filter out the
+	// items outside dir.
+	var apiErr *api.Error
+	if err != nil && len(seen) == 0 && errors.As(err, &apiErr) {
+		fs.Debugf(f, "Delta listing of directory failed, listing from the root of the drive instead: %v", err)
+		err = listDelta(rest.Opts{
+			Method: "GET",
+			Path:   "/root/delta",
+		})
+	}
 	if err != nil {
 		return err
 	}
@@ -2406,25 +2443,120 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	}
 
 	fs.FixRangeOption(options, o.size)
-	var resp *http.Response
+	// Only malware-flagged files use Graph beta; clean files stay on stable v1.0.
+	if o.fs.opt.AVOverride && o.fs.opt.TenantURL == "" && o.malwareDetected() {
+		return o.openInfected(ctx, options...)
+	}
 	opts := o.fs.newOptsCall(o.id, "GET", "/content")
 	opts.Options = options
 	if o.fs.opt.AVOverride {
+		// SharePoint v2 (tenant_url) or non-flagged objects: keep legacy query.
 		opts.Parameters = url.Values{"AVOverride": {"1"}}
 	}
+	return o.openWithRedirect(ctx, &opts)
+}
+
+// malwareDetected reports whether metadata says this object is malware-flagged.
+func (o *Object) malwareDetected() bool {
+	return o.meta != nil && o.meta.malwareDetected
+}
+
+// openInfected downloads a malware-flagged file using Graph beta APIs.
+// contentStream applies Prefer for the whole transfer (needs application auth on many tenants);
+// beta /content + Prefer is tried next.
+func (o *Object) openInfected(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	in, err = o.openContentStream(ctx, options...)
+	if err == nil {
+		return in, nil
+	}
+	fs.Debugf(o, "contentStream download failed, trying beta /content: %v", err)
+	in, err2 := o.openContentPrefer(ctx, options...)
+	if err2 == nil {
+		return in, nil
+	}
+	return nil, fmt.Errorf("%w; beta /content also failed: %v (malware download often requires application permissions / client_credentials, or a tenant admin account)", err, err2)
+}
+
+// openContentStream streams the object via Graph beta contentStream.
+func (o *Object) openContentStream(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	var resp *http.Response
+	id, drive, _ := o.fs.parseNormalizedID(o.id)
+	if drive == "" {
+		drive = o.fs.driveID
+	}
+	opts := rest.Opts{
+		Method:  "GET",
+		RootURL: graphAPIEndpoint[o.fs.opt.Region] + "/beta/drives/" + drive,
+		Path:    "/items/" + id + "/contentStream",
+		Options: options,
+		ExtraHeaders: map[string]string{
+			"Prefer": "forceInfectedDownload",
+		},
+	}
+	err = o.fs.pacer.Call(func() (bool, error) {
+		resp, err = o.fs.srv.Call(ctx, &opts)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode == http.StatusOK && resp.ContentLength > 0 && resp.Header.Get("Content-Range") == "" {
+		o.size = resp.ContentLength
+	}
+	return resp.Body, nil
+}
+
+// openContentPrefer downloads via Graph beta /content with Prefer: forceInfectedDownload.
+func (o *Object) openContentPrefer(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	id, drive, _ := o.fs.parseNormalizedID(o.id)
+	if drive == "" {
+		drive = o.fs.driveID
+	}
+	opts := rest.Opts{
+		Method:  "GET",
+		RootURL: graphAPIEndpoint[o.fs.opt.Region] + "/beta/drives/" + drive,
+		Path:    "/items/" + id + "/content",
+		Options: options,
+		ExtraHeaders: map[string]string{
+			"Prefer": "forceInfectedDownload",
+		},
+	}
+	return o.openWithRedirect(ctx, &opts)
+}
+
+// openWithRedirect downloads via /content style endpoints that 302 to a preauthenticated URL.
+func (o *Object) openWithRedirect(ctx context.Context, opts *rest.Opts) (in io.ReadCloser, err error) {
+	var resp *http.Response
 	// Make a note of the redirect target as we need to call it without Auth
 	var redirectReq *http.Request
 	opts.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		if len(via) >= 10 {
 			return errors.New("stopped after 10 redirects")
 		}
-		req.Header.Del("Authorization") // remove Auth header
+		// Preauthenticated download URLs must not carry the Graph Authorization header.
+		req.Header.Del("Authorization")
+		// Keep Prefer on the redirect when forcing infected download; some SharePoint
+		// endpoints honor it only on the final download request.
+		// Do not delete Prefer here: users may set it via --header.
+		if o.fs.opt.AVOverride {
+			if req.Header.Get("Prefer") == "" {
+				req.Header.Set("Prefer", "forceInfectedDownload")
+			}
+			// Append AVOverride without re-encoding tempauth (re-encoding breaks the signature).
+			if !strings.Contains(req.URL.RawQuery, "AVOverride=") {
+				if req.URL.RawQuery == "" {
+					req.URL.RawQuery = "AVOverride=1"
+				} else {
+					req.URL.RawQuery += "&AVOverride=1"
+				}
+			}
+		}
 		redirectReq = req
 		return http.ErrUseLastResponse
 	}
 
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.Call(ctx, &opts)
+		resp, err = o.fs.srv.Call(ctx, opts)
 		if redirectReq != nil {
 			// It is a redirect which we are expecting
 			err = nil
@@ -2434,7 +2566,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if err != nil {
 		if resp != nil {
 			if virus := resp.Header.Get("X-Virus-Infected"); virus != "" {
-				err = fmt.Errorf("server reports this file is infected with a virus - use --onedrive-av-override to download anyway: %s: %w", virus, err)
+				err = malwareDownloadError(o.fs.opt.AVOverride, fmt.Errorf("%s: %w", virus, err))
 			}
 		}
 		return nil, err
@@ -2442,12 +2574,26 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if redirectReq != nil {
 		err = o.fs.pacer.Call(func() (bool, error) {
 			resp, err = o.fs.unAuth.Do(redirectReq)
+			if err != nil {
+				return shouldRetry(ctx, resp, err)
+			}
+			// unAuth.Do does not check status; treat non-2xx as failure so a malware
+			// JSON body is not written out as file content.
+			if resp.StatusCode < 200 || resp.StatusCode > 299 {
+				body, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
+				_ = resp.Body.Close()
+				err = fmt.Errorf("HTTP error %d (%s) %s", resp.StatusCode, resp.Status, strings.TrimSpace(string(body)))
+				if strings.Contains(string(body), "malwareDetected") || resp.Header.Get("X-Virus-Infected") != "" {
+					err = malwareDownloadError(o.fs.opt.AVOverride, err)
+				}
+				return shouldRetry(ctx, resp, err)
+			}
 			return shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
 			if resp != nil {
 				if virus := resp.Header.Get("X-Virus-Infected"); virus != "" {
-					err = fmt.Errorf("server reports this file is infected with a virus - use --onedrive-av-override to download anyway: %s: %w", virus, err)
+					err = malwareDownloadError(o.fs.opt.AVOverride, fmt.Errorf("%s: %w", virus, err))
 				}
 			}
 			return nil, err
@@ -2459,6 +2605,14 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		o.size = resp.ContentLength
 	}
 	return resp.Body, err
+}
+
+// malwareDownloadError formats an error when the server blocks a malware-flagged file.
+func malwareDownloadError(avOverride bool, err error) error {
+	if avOverride {
+		return fmt.Errorf("server reports this file is infected with a virus: %w (if downloads remain blocked, use application permissions / client_credentials or a tenant admin account)", err)
+	}
+	return fmt.Errorf("server reports this file is infected with a virus - use --onedrive-av-override to download anyway: %w", err)
 }
 
 // createUploadSession creates an upload session for the object
@@ -2551,9 +2705,8 @@ func (o *Object) uploadFragment(ctx context.Context, url string, start int64, to
 			}
 			return true, fmt.Errorf("retry this chunk skipping %d bytes: %w", skip, err)
 		} else if err != nil && resp != nil && resp.StatusCode == http.StatusNotFound {
-			fs.Debugf(o, "Received 404 error: assuming eventual consistency problem with session - retrying chunk: %v", err)
-			time.Sleep(5 * time.Second) // a little delay to help things along
-			return true, err
+			fs.Debugf(o, "Received 404 error: upload session not found - not retrying: %v", err)
+			return false, fserrors.NoLowLevelRetryError(err)
 		}
 		if err != nil {
 			return shouldRetry(ctx, resp, err)
@@ -2619,11 +2772,25 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 	position := int64(0)
 	for remaining > 0 {
 		n := min(remaining, int64(o.fs.opt.ChunkSize))
-		seg := readers.NewRepeatableReader(io.LimitReader(in, n))
+		// Buffer the chunk in memory from the global pool so it can be
+		// re-sent (or partly re-sent after a 416) on retry
+		rw := multipart.NewRW()
+		_, err = io.CopyN(rw, in, n)
+		if err != nil {
+			_ = rw.Close()
+			if err == io.EOF {
+				err = fmt.Errorf("expected %d bytes in input, but got %d: %w", size, position, io.ErrUnexpectedEOF)
+			}
+			return nil, err
+		}
 		fs.Debugf(o, "Uploading segment %d/%d size %d", position, size, n)
-		info, err = o.uploadFragment(ctx, uploadURL, position, size, seg, n, options...)
+		info, err = o.uploadFragment(ctx, uploadURL, position, size, rw, n, options...)
+		closeErr := rw.Close()
 		if err != nil {
 			return nil, err
+		}
+		if closeErr != nil {
+			return nil, closeErr
 		}
 		remaining -= n
 		position += n
@@ -2643,13 +2810,13 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 	return info, o.setMetaData(info)
 }
 
-// Update the content of a remote file within 4 MiB size in one single request
+// Update the content of a remote file smaller than maxSinglePartSize in one single request
 // (currently only used when size is exactly 0)
 // This function will set modtime and metadata after uploading, which will create a new version for the remote file
 func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (info *api.Item, err error) {
 	size := src.Size()
-	if size < 0 || size > int64(maxSinglePartSize) {
-		return nil, fmt.Errorf("size passed into uploadSinglepart must be >= 0 and <= %v", maxSinglePartSize)
+	if size < 0 || size >= int64(maxSinglePartSize) {
+		return nil, fmt.Errorf("size passed into uploadSinglepart must be >= 0 and < %v", maxSinglePartSize)
 	}
 
 	fs.Debugf(o, "Starting singlepart upload")
@@ -2768,7 +2935,7 @@ func (o *Object) ID() string {
 func (f *Fs) parseNormalizedID(ID string) (string, string, string) {
 	var rootURL string
 	if f.opt.TenantURL != "" {
-		rootURL = f.opt.TenantURL + "/v2.0/drives"
+		rootURL = tenantAPIEndpoint(f.opt.TenantURL, f.opt.TenantAPIVersion) + "/drives"
 	} else {
 		rootURL = graphAPIEndpoint[f.opt.Region] + "/v1.0/drives"
 	}
@@ -2936,9 +3103,15 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 				}
 			case <-tickerC:
 				fs.Debugf(f, "Checking for changes on remote")
-				nextDeltaToken, err = f.changeNotifyRunner(ctx, notifyFunc, nextDeltaToken)
+				var newDeltaToken string
+				newDeltaToken, err = f.changeNotifyRunner(ctx, notifyFunc, nextDeltaToken)
 				if err != nil {
+					// Keep the token we already have: replacing it with the
+					// empty token from a failed poll would reset the delta
+					// listing to the start and lose every change in between.
 					fs.Infof(f, "Change notify listener failure: %s", err)
+				} else {
+					nextDeltaToken = newDeltaToken
 				}
 			}
 		}
@@ -2946,7 +3119,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 }
 
 func (f *Fs) changeNotifyStartPageToken(ctx context.Context) (nextDeltaToken string, err error) {
-	delta, err := f.changeNotifyNextChange(ctx, "latest")
+	delta, err := f.changeNotifyNextChange(ctx, "latest", "")
 	if err != nil {
 		return
 	}
@@ -2958,18 +3131,37 @@ func (f *Fs) changeNotifyStartPageToken(ctx context.Context) (nextDeltaToken str
 	return
 }
 
-func (f *Fs) changeNotifyNextChange(ctx context.Context, token string) (delta api.DeltaResponse, err error) {
-	opts := f.buildDriveDeltaOpts(token)
+// changeNotifyNextChange fetches one page of the drive delta listing.
+//
+// Pass the delta token to resume from in token, or the @odata.nextLink URL
+// returned by the previous page in nextLink. Exactly one of the two should
+// be set.
+func (f *Fs) changeNotifyNextChange(ctx context.Context, token, nextLink string) (delta api.DeltaResponse, err error) {
+	opts := f.buildDriveDeltaOpts(token, nextLink)
 
-	_, err = f.srv.CallJSON(ctx, &opts, nil, &delta)
+	err = f.pacer.Call(func() (bool, error) {
+		var resp *http.Response
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &delta)
+		return shouldRetry(ctx, resp, err)
+	})
 
 	return
 }
 
-func (f *Fs) buildDriveDeltaOpts(token string) rest.Opts {
+// buildDriveDeltaOpts builds the request for one page of the drive delta
+// listing. nextLink, when set, is the complete @odata.nextLink URL from the
+// previous page and is used as-is, overriding the drive root.
+func (f *Fs) buildDriveDeltaOpts(token, nextLink string) rest.Opts {
+	if nextLink != "" {
+		return rest.Opts{
+			Method:  "GET",
+			RootURL: nextLink,
+		}
+	}
+
 	var rootURL string
 	if f.opt.TenantURL != "" {
-		rootURL = f.opt.TenantURL + "/v2.0/drives"
+		rootURL = tenantAPIEndpoint(f.opt.TenantURL, f.opt.TenantAPIVersion) + "/drives"
 	} else {
 		rootURL = graphAPIEndpoint[f.opt.Region] + "/v1.0/drives"
 	}
@@ -2982,46 +3174,58 @@ func (f *Fs) buildDriveDeltaOpts(token string) rest.Opts {
 	}
 }
 
-func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.EntryType), deltaToken string) (nextDeltaToken string, err error) {
-	delta, err := f.changeNotifyNextChange(ctx, deltaToken)
-	if err != nil {
-		return
-	}
-	parsedURL, err := url.Parse(delta.DeltaLink)
-	if err != nil {
-		return
-	}
-	nextDeltaToken = parsedURL.Query().Get("token")
-
-	for _, item := range delta.Value {
-		isDriveRootFolder := item.GetParentReference().ID == ""
-		if isDriveRootFolder {
-			continue
-		}
-
-		fullPath, err := getItemFullPath(&item)
+// changeNotifyRunner polls for changes and calls notifyFunc for each one.
+//
+// It walks every page of the change set and returns the token to resume from
+// next time. The returned token is only valid when err is nil: the caller
+// must keep the token it passed in on error, otherwise a failed poll would
+// reset the delta listing to the start and lose the changes in between.
+func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.EntryType), deltaToken string) (string, error) {
+	token, nextLink := deltaToken, ""
+	for {
+		delta, err := f.changeNotifyNextChange(ctx, token, nextLink)
 		if err != nil {
-			fs.Errorf(f, "Could not get item full path: %s", err)
-			continue
+			return "", err
 		}
 
-		if fullPath == f.root {
-			continue
+		for _, item := range delta.Value {
+			isDriveRootFolder := item.GetParentReference().ID == ""
+			if isDriveRootFolder {
+				continue
+			}
+
+			fullPath, err := getItemFullPath(&item)
+			if err != nil {
+				fs.Errorf(f, "Could not get item full path: %s", err)
+				continue
+			}
+
+			if fullPath == f.root {
+				continue
+			}
+
+			relName, insideRoot := getRelativePathInsideBase(f.root, fullPath)
+			if !insideRoot {
+				continue
+			}
+
+			if item.GetFile() != nil {
+				notifyFunc(relName, fs.EntryObject)
+			} else if item.GetFolder() != nil {
+				notifyFunc(relName, fs.EntryDirectory)
+			}
 		}
 
-		relName, insideRoot := getRelativePathInsideBase(f.root, fullPath)
-		if !insideRoot {
-			continue
+		if delta.NextLink == "" {
+			// end of the change set - the deltaLink carries the resume token
+			parsedURL, err := url.Parse(delta.DeltaLink)
+			if err != nil {
+				return "", err
+			}
+			return parsedURL.Query().Get("token"), nil
 		}
-
-		if item.GetFile() != nil {
-			notifyFunc(relName, fs.EntryObject)
-		} else if item.GetFolder() != nil {
-			notifyFunc(relName, fs.EntryDirectory)
-		}
+		nextLink = delta.NextLink
 	}
-
-	return
 }
 
 func getItemFullPath(item *api.Item) (fullPath string, err error) {

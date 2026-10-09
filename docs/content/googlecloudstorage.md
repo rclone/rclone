@@ -428,20 +428,6 @@ Properties:
 - Type:        string
 - Required:    false
 
-#### --gcs-service-account-credentials
-
-Service Account Credentials JSON blob.
-
-Leave blank normally.
-Needed only if you want use SA instead of interactive login.
-
-Properties:
-
-- Config:      service_account_credentials
-- Env Var:     RCLONE_GCS_SERVICE_ACCOUNT_CREDENTIALS
-- Type:        string
-- Required:    false
-
 #### --gcs-anonymous
 
 Access public buckets and objects without credentials.

@@ -99,18 +99,96 @@ provider = Rclone
 endpoint = http://127.0.0.1:8080/
 access_key_id = ACCESS_KEY_ID
 secret_access_key = SECRET_ACCESS_KEY
-use_multipart_uploads = false
 ```
 
-Note that setting `use_multipart_uploads = false` is to work around
-[a bug](#bugs) which will be fixed in due course.
+## Multipart uploads
+
+By default `serve s3` **streams** each multipart upload, in part-number
+order, into a single `PutStream` upload to the underlying remote, so the
+whole file is never buffered in memory - memory use stays bounded by the
+parts in flight. The remote then performs its own internal upload (for
+example its own multipart upload, still with bounded memory). This works
+for any remote that supports `PutStream`, which is nearly all of them,
+including through `crypt`.
+
+The upload is atomic so the destination object only ever changes on a
+successful completion. A failed or aborted upload never affects any
+object already stored under that name. Remotes that upload atomically
+already (object stores such as `s3`) are streamed straight to the
+destination. On remotes where a partial upload would otherwise be visible
+(such as `local`), the parts are streamed to a temporary object that is
+moved into place, server-side, on completion; these remotes therefore
+also need to support a server-side move or copy.
+
+**Features**
+
+- The whole object is never buffered in memory; memory use is bounded by
+  the parts in flight, not the upload size.
+- Parts can be any size. Clients that don't produce uniform-sized parts
+  work fine - for example PostgreSQL backup tools such as **pgBarman**
+  and **pgBackRest**, which flush an upload buffer once it grows past
+  the chunk size, so each part is the chunk size plus a variable
+  overshoot.
+- Works through `crypt` for any part size, since the object is encrypted
+  as one continuous stream.
+- The destination object only ever changes atomically, on completion: an
+  aborted or failed upload leaves any pre-existing object of the same
+  name untouched, and a partly-uploaded object never becomes visible.
+- Backend-agnostic - it only needs the remote to support `PutStream`
+  (plus a server-side move or copy on remotes that don't upload
+  atomically).
+
+**Limitations**
+
+- Parts must arrive in ascending, contiguous part-number order
+  (1, 2, 3, ...). Parts the client uploads concurrently or out of order
+  are buffered until their turn. The memory used for this buffering is
+  capped, per upload, by `--multipart-streaming-buffer-limit` (default
+  `256M`, `0` for no limit): a part that would take the buffer over the
+  limit is stalled until the stream drains, so a client that uploads
+  faster than the remote can accept sees backpressure rather than
+  unbounded server memory use. Since a stalled part holds its HTTP
+  request open, clients whose upload concurrency times chunk size
+  exceeds the limit may need a longer read timeout when the remote is
+  slow. Non-contiguous part numbers are rejected on completion.
+  Configure the client to upload in part order, ideally with low
+  concurrency, for the lowest memory use.
+- A part uploaded again before completion - typically a client retrying
+  after a timeout - is accepted: if the earlier copy is still buffered
+  it is replaced, and if it has already been streamed an identical
+  re-upload is a no-op. What isn't possible is replacing a part that has
+  already been streamed with *different* content - that is rejected. A
+  failure in the stream to the remote itself still aborts the whole
+  upload and the client must start it again. (The remote's own upload
+  still retries its internal chunks.)
+- Parts are serialised into one stream, so ingest from the client is
+  effectively single-threaded, although the remote's own upload still
+  runs concurrently.
+- On remotes that don't upload atomically (such as `local`), the
+  completed object is moved into place with a server-side operation.
+  This is a cheap rename on most such remotes. On these remotes, if
+  `serve s3` is killed part-way through an upload the temporary object
+  (named with a leading `.rclone_multipart_upload_`) may be left behind;
+  it is hidden from S3 listings but must be removed manually.
+
+### Disabling streaming
+
+If you pass `--disable-multipart-streaming`, or the remote doesn't
+support `PutStream` (or doesn't upload atomically and can't move or copy
+server-side), multipart uploads are instead **buffered in memory**
+by the underlying S3 library: every part is held in memory and the whole
+object is written out in one go when the upload completes (the previous
+behaviour). This removes the in-order/contiguous-part restriction above,
+so parts can be uploaded in any order, but **memory use grows with the
+size of the upload**, so it is only suitable for small objects. A one-off
+`NOTICE` is logged the first time this happens.
+
+Alternatively, if the client is an rclone `s3` remote (like the
+`[serves3]` example above), you can set `use_multipart_uploads = false`
+on it so it uploads each object as a single stream and skips multipart
+uploads altogether.
 
 ## Bugs
-
-When uploading multipart files `serve s3` holds all the parts in
-memory (see [#7453](https://github.com/rclone/rclone/issues/7453)).
-This is a limitaton of the library rclone uses for serving S3 and will
-hopefully be fixed at some point.
 
 Multipart server side copies do not work (see
 [#7454](https://github.com/rclone/rclone/issues/7454)). These take a
@@ -143,6 +221,17 @@ Versioning is not currently supported.
 
 Metadata will only be saved in memory other than the rclone `mtime`
 metadata which will be set as the modification time of the file.
+
+## Object names
+
+`serve s3` stores objects as files in the backend, so object keys are
+mapped to file paths rather than treated as the opaque strings AWS S3
+allows. Keys must be in canonical path form: keys that contain `..` or
+`.` path segments, repeated slashes (`//`), or a leading or trailing
+slash are rejected with a `400 Bad Request` (`InvalidArgument`)
+instead of being normalised, since normalising them could alias two
+distinct keys to the same file or resolve a key outside its bucket.
+This matches the behaviour of other S3 servers such as MinIO.
 
 ## Supported operations
 
@@ -224,6 +313,10 @@ for a transfer.
 `--max-header-bytes` controls the maximum number of bytes the server will
 accept in the HTTP header.
 
+`--response-header` can be used to set an HTTP header for all responses,
+will overriding existing values. The flag may be repeated to add multiple
+headers. Use the format `Header-Name: value`.
+
 `--baseurl` controls the URL prefix that rclone serves from.  By default
 rclone will serve from the root.  If you used `--baseurl "/rclone"` then
 rclone would serve from a URL starting with "/rclone/".  This is
@@ -246,6 +339,11 @@ By default this will serve over http.  If you want you can serve over
 https.  You will need to supply the `--cert` and `--key` flags.
 If you wish to do client side certificate validation then you will need to
 supply `--client-ca` also.
+
+When TLS is configured every listener given with `--addr` serves TLS.
+An individual listener can be prefixed with `http://` to serve unencrypted
+HTTP on that address, or with `tls://` to state explicitly that it must serve
+TLS.  Using a `tls://` address without `--cert` and `--key` is an error.
 
 `--cert` must be set to the path of a file containing
 either a PEM encoded certificate, or a concatenation of that with the CA
@@ -771,61 +869,64 @@ rclone serve s3 remote:path [flags]
 ## Options
 
 ```
-      --addr stringArray                       IPaddress:Port or :Port to bind server to (default 127.0.0.1:8080)
-      --allow-origin string                    Origin which cross-domain request (CORS) can be executed from
-      --auth-key stringArray                   Set key pair for v4 authorization: access_key_id,secret_access_key
-      --auth-proxy string                      A program to use to create the backend from the auth
-      --baseurl string                         Prefix for URLs - leave blank for root
-      --cert string                            TLS PEM key (concatenation of certificate and CA certificate)
-      --client-ca string                       Client certificate authority to verify clients with
-      --dir-cache-time Duration                Time to cache directory entries for (default 5m0s)
-      --dir-perms FileMode                     Directory permissions (default 777)
-      --etag-hash string                       Which hash to use for the ETag, or auto or blank for off (default "MD5")
-      --file-perms FileMode                    File permissions (default 666)
-      --force-path-style                       If true use path style access if false use virtual hosted style (default true)
-      --gid uint32                             Override the gid field set by the filesystem (not supported on Windows) (default 1000)
-  -h, --help                                   help for s3
-      --htpasswd string                        A htpasswd file - if not provided no authentication is done
-      --key string                             TLS PEM Private key
-      --link-perms FileMode                    Link permissions (default 666)
-      --max-header-bytes int                   Maximum size of request header (default 4096)
-      --min-tls-version string                 Minimum TLS version that is acceptable (default "tls1.0")
-      --no-checksum                            Don't compare checksums on up/download
-      --no-cleanup                             Not to cleanup empty folder after object is deleted
-      --no-modtime                             Don't read/write the modification time (can speed things up)
-      --no-seek                                Don't allow seeking in files
-      --pass string                            Password for authentication
-      --poll-interval Duration                 Time to wait between polling for changes, must be smaller than dir-cache-time and only on supported remotes (set 0 to disable) (default 1m0s)
-      --read-only                              Only allow read-only access
-      --realm string                           Realm for authentication
-      --salt string                            Password hashing salt (default "dlPL2MqE")
-      --server-read-timeout Duration           Timeout for server reading data (default 1h0m0s)
-      --server-write-timeout Duration          Timeout for server writing data (default 1h0m0s)
-      --uid uint32                             Override the uid field set by the filesystem (not supported on Windows) (default 1000)
-      --umask FileMode                         Override the permission bits set by the filesystem (not supported on Windows) (default 002)
-      --user string                            User name for authentication
-      --user-from-header string                User name from a defined HTTP header
-      --vfs-block-norm-dupes                   If duplicate filenames exist in the same directory (after normalization), log an error and hide the duplicates (may have a performance cost)
-      --vfs-cache-max-age Duration             Max time since last access of objects in the cache (default 1h0m0s)
-      --vfs-cache-max-size SizeSuffix          Max total size of objects in the cache (default off)
-      --vfs-cache-min-free-space SizeSuffix    Target minimum free space on the disk containing the cache (default off)
-      --vfs-cache-mode CacheMode               Cache mode off|minimal|writes|full (default off)
-      --vfs-cache-poll-interval Duration       Interval to poll the cache for stale objects (default 1m0s)
-      --vfs-case-insensitive                   If a file name not found, find a case insensitive match
-      --vfs-disk-space-total-size SizeSuffix   Specify the total space of disk (default off)
-      --vfs-fast-fingerprint                   Use fast (less accurate) fingerprints for change detection
-      --vfs-handle-caching Duration            Time to keep file handle and downloaders alive after last close (default 5s)
-      --vfs-links                              Translate symlinks to/from regular files with a '.rclonelink' extension for the VFS
-      --vfs-metadata-extension string          Set the extension to read metadata from
-      --vfs-read-ahead SizeSuffix              Extra read ahead over --buffer-size when using cache-mode full
-      --vfs-read-chunk-size SizeSuffix         Read the source objects in chunks (default 128Mi)
-      --vfs-read-chunk-size-limit SizeSuffix   If greater than --vfs-read-chunk-size, double the chunk size after each chunk read, until the limit is reached ('off' is unlimited) (default off)
-      --vfs-read-chunk-streams int             The number of parallel streams to read at once
-      --vfs-read-wait Duration                 Time to wait for in-sequence read before seeking (default 20ms)
-      --vfs-refresh                            Refreshes the directory cache recursively in the background on start
-      --vfs-used-is-size rclone size           Use the rclone size algorithm for Used size
-      --vfs-write-back Duration                Time to writeback files after last use when using cache (default 5s)
-      --vfs-write-wait Duration                Time to wait for in-sequence write before giving error (default 1s)
+      --addr stringArray                              IPaddress:Port or :Port to bind server to (default 127.0.0.1:8080)
+      --allow-origin string                           Origin which cross-domain request (CORS) can be executed from
+      --auth-key stringArray                          Set key pair for v4 authorization: access_key_id,secret_access_key
+      --auth-proxy string                             A program to use to create the backend from the auth
+      --baseurl string                                Prefix for URLs - leave blank for root
+      --cert string                                   TLS PEM key (concatenation of certificate and CA certificate)
+      --client-ca string                              Client certificate authority to verify clients with
+      --dir-cache-time Duration                       Time to cache directory entries for (default 5m0s)
+      --dir-perms FileMode                            Directory permissions (default 777)
+      --disable-multipart-streaming                   Buffer multipart uploads in memory instead of streaming them to the backend (see the Multipart uploads docs section)
+      --etag-hash string                              Which hash to use for the ETag, or auto or blank for off (default "MD5")
+      --file-perms FileMode                           File permissions (default 666)
+      --force-path-style                              If true use path style access if false use virtual hosted style (default true)
+      --gid uint32                                    Override the gid field set by the filesystem (not supported on Windows) (default 1000)
+  -h, --help                                          help for s3
+      --htpasswd string                               A htpasswd file - if not provided no authentication is done
+      --key string                                    TLS PEM Private key
+      --link-perms FileMode                           Link permissions (default 666)
+      --max-header-bytes int                          Maximum size of request header (default 4096)
+      --min-tls-version string                        Minimum TLS version that is acceptable (default "tls1.0")
+      --multipart-streaming-buffer-limit SizeSuffix   Maximum memory buffered per streamed multipart upload for parts arriving out of order, 0 for unlimited (see the Multipart uploads docs section) (default 256Mi)
+      --no-checksum                                   Don't compare checksums on up/download
+      --no-cleanup                                    Not to cleanup empty folder after object is deleted
+      --no-modtime                                    Don't read/write the modification time (can speed things up)
+      --no-seek                                       Don't allow seeking in files
+      --pass string                                   Password for authentication
+      --poll-interval Duration                        Time to wait between polling for changes, must be smaller than dir-cache-time and only on supported remotes (set 0 to disable) (default 1m0s)
+      --read-only                                     Only allow read-only access
+      --realm string                                  Realm for authentication
+      --response-header stringArray                   Set HTTP header for all responses, overriding existing values
+      --salt string                                   Password hashing salt (default "dlPL2MqE")
+      --server-read-timeout Duration                  Timeout for server reading data (default 1h0m0s)
+      --server-write-timeout Duration                 Timeout for server writing data (default 1h0m0s)
+      --uid uint32                                    Override the uid field set by the filesystem (not supported on Windows) (default 1000)
+      --umask FileMode                                Override the permission bits set by the filesystem (not supported on Windows) (default 002)
+      --user string                                   User name for authentication
+      --user-from-header string                       User name from a defined HTTP header
+      --vfs-block-norm-dupes                          If duplicate filenames exist in the same directory (after normalization), log an error and hide the duplicates (may have a performance cost)
+      --vfs-cache-max-age Duration                    Max time since last access of objects in the cache (default 1h0m0s)
+      --vfs-cache-max-size SizeSuffix                 Max total size of objects in the cache (default off)
+      --vfs-cache-min-free-space SizeSuffix           Target minimum free space on the disk containing the cache (default off)
+      --vfs-cache-mode CacheMode                      Cache mode off|minimal|writes|full (default off)
+      --vfs-cache-poll-interval Duration              Interval to poll the cache for stale objects (default 1m0s)
+      --vfs-case-insensitive                          If a file name not found, find a case insensitive match
+      --vfs-disk-space-total-size SizeSuffix          Specify the total space of disk (default off)
+      --vfs-fast-fingerprint                          Use fast (less accurate) fingerprints for change detection
+      --vfs-handle-caching Duration                   Time to keep file handle and downloaders alive after last close (default 5s)
+      --vfs-links                                     Translate symlinks to/from regular files with a '.rclonelink' extension for the VFS
+      --vfs-metadata-extension string                 Set the extension to read metadata from
+      --vfs-read-ahead SizeSuffix                     Extra read ahead over --buffer-size when using cache-mode full
+      --vfs-read-chunk-size SizeSuffix                Read the source objects in chunks (default 128Mi)
+      --vfs-read-chunk-size-limit SizeSuffix          If greater than --vfs-read-chunk-size, double the chunk size after each chunk read, until the limit is reached ('off' is unlimited) (default off)
+      --vfs-read-chunk-streams int                    The number of parallel streams to read at once
+      --vfs-read-wait Duration                        Time to wait for in-sequence read before seeking (default 20ms)
+      --vfs-refresh                                   Refreshes the directory cache recursively in the background on start
+      --vfs-used-is-size rclone size                  Use the rclone size algorithm for Used size
+      --vfs-write-back Duration                       Time to writeback files after last use when using cache (default 5s)
+      --vfs-write-wait Duration                       Time to wait for in-sequence write before giving error (default 1s)
 ```
 
 Options shared with other commands are described next.
@@ -842,6 +943,7 @@ Flags for filtering directory listings
       --exclude-if-present stringArray      Exclude directories if filename is present
       --files-from stringArray              Read list of source-file names from file (use - to read from stdin)
       --files-from-raw stringArray          Read list of source-file names from file without any processing of lines (use - to read from stdin)
+      --files-from0 stringArray             Read list of source-file names from file using NUL as separator (use - to read from stdin)
   -f, --filter stringArray                  Add a file filtering rule
       --filter-from stringArray             Read file filtering patterns from a file (use - to read from stdin)
       --hash-filter string                  Partition filenames by hash k/n or randomly @/n

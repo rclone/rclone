@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/oracle/oci-go-sdk/v65/objectstorage"
 	"github.com/rclone/rclone/fs"
 )
@@ -41,6 +40,55 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	return f.NewObject(ctx, remote)
 }
 
+// ------------------------------------------------------------
+// Implement Mover is an optional interface for Fs
+//------------------------------------------------------------
+
+// Move src to this remote using server-side rename operations.
+//
+// This is stored with the remote path given.
+// It returns the destination Object and a possible error.
+// Will only be called if src.Fs().Name() == f.Name().
+// If it isn't possible then return fs.ErrorCantMove.
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
+	if !ok {
+		return nil, fs.ErrorCantMove
+	}
+	srcBucket, srcPath := srcObj.split()
+	dstBucket, dstPath := f.split(remote)
+	if srcBucket != dstBucket {
+		return nil, fs.ErrorCantMove
+	}
+	err := f.renameObject(ctx, srcBucket, srcPath, dstPath)
+	if err != nil {
+		return nil, err
+	}
+	return f.NewObject(ctx, remote)
+}
+
+// renameObject renames sourceName to newName in bucketName.
+func (f *Fs) renameObject(ctx context.Context, bucketName, sourceName, newName string) error {
+	req := objectstorage.RenameObjectRequest{
+		NamespaceName: new(f.opt.Namespace),
+		BucketName:    new(bucketName),
+		RenameObjectDetails: objectstorage.RenameObjectDetails{
+			SourceName: new(sourceName),
+			NewName:    new(newName),
+		},
+	}
+	var resp objectstorage.RenameObjectResponse
+	err := f.pacer.Call(func() (bool, error) {
+		var err error
+		resp, err = f.srv.RenameObject(ctx, req)
+		return shouldRetry(ctx, resp.HTTPResponse(), err)
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // copy does a server-side copy from dstObj <- srcObj
 //
 // If newInfo is nil then the metadata will be copied otherwise it
@@ -61,16 +109,16 @@ func (f *Fs) copy(ctx context.Context, dstObj *Object, srcObj *Object) (err erro
 		}
 	}
 	copyObjectDetails := objectstorage.CopyObjectDetails{
-		SourceObjectName:          common.String(srcPath),
-		DestinationRegion:         common.String(dstObj.fs.opt.Region),
-		DestinationNamespace:      common.String(dstObj.fs.opt.Namespace),
-		DestinationBucket:         common.String(dstBucket),
-		DestinationObjectName:     common.String(dstPath),
+		SourceObjectName:          new(srcPath),
+		DestinationRegion:         new(dstObj.fs.opt.Region),
+		DestinationNamespace:      new(dstObj.fs.opt.Namespace),
+		DestinationBucket:         new(dstBucket),
+		DestinationObjectName:     new(dstPath),
 		DestinationObjectMetadata: metadataWithOpcPrefix(srcObj.meta),
 	}
 	req := objectstorage.CopyObjectRequest{
-		NamespaceName:     common.String(srcObj.fs.opt.Namespace),
-		BucketName:        common.String(srcBucket),
+		NamespaceName:     new(srcObj.fs.opt.Namespace),
+		BucketName:        new(srcBucket),
 		CopyObjectDetails: copyObjectDetails,
 	}
 	useBYOKCopyObject(f, &req)

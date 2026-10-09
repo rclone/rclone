@@ -34,6 +34,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
@@ -1451,7 +1452,7 @@ func (f *Fs) createOrUpdate(ctx context.Context, file string, createTime time.Ti
 	return info, nil
 }
 
-// copyOrMoves copies or moves directories or files depending on the method parameter
+// copyOrMove copies or moves directories or files depending on the method parameter
 func (f *Fs) copyOrMove(ctx context.Context, method, src, dest string) (info *api.JottaFile, err error) {
 	opts := rest.Opts{
 		Method:     "POST",
@@ -1876,8 +1877,10 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 		return err
 	}
 
-	// update local metadata
-	o.modTime = modTime
+	// update local metadata - the server stores modtimes with second
+	// precision so truncate here too to keep the in-memory modtime
+	// identical to the one a fresh listing returns
+	o.modTime = modTime.Truncate(time.Second)
 	return nil
 }
 
@@ -1922,8 +1925,9 @@ func readMD5(in io.Reader, size, threshold int64) (md5sum string, out io.Reader,
 	// nothing to clean up by default
 	cleanup = func() {}
 
-	// don't cache small files on disk to reduce wear of the disk
-	if size > threshold {
+	// don't cache small files on disk to reduce wear of the disk, but
+	// spool unknown sized streams there as they can't be bounded in memory
+	if size > threshold || size < 0 {
 		var tempFile *os.File
 
 		// create the cache file
@@ -1953,15 +1957,15 @@ func readMD5(in io.Reader, size, threshold int64) (md5sum string, out io.Reader,
 		// replace the already read source with a reader of our cached file
 		out = tempFile
 	} else {
-		// that's a small file, just read it into memory
-		var inData []byte
-		inData, err = io.ReadAll(teeReader)
-		if err != nil {
+		// that's a small file, just read it into memory from the global pool
+		rw := multipart.NewRW()
+		cleanup = func() {
+			_ = rw.Close()
+		}
+		if _, err = io.Copy(rw, teeReader); err != nil {
 			return
 		}
-
-		// set the reader to our read memory block
-		out = bytes.NewReader(inData)
+		out = rw
 	}
 	return hex.EncodeToString(md5Hasher.Sum(nil)), out, cleanup, nil
 }

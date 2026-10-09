@@ -250,6 +250,41 @@ func TestNewLess(t *testing.T) {
 		assert.Contains(t, err.Error(), "unknown --order-by sort direction")
 	})
 
+	t.Run("patternNeedsGlob", func(t *testing.T) {
+		_, _, err := newLess("pattern")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "pattern requires at least one glob")
+	})
+
+	t.Run("patternRejectsEmptyGlob", func(t *testing.T) {
+		_, _, err := newLess("pattern,")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "empty pattern glob")
+	})
+
+	t.Run("patternRejectsBadGlob", func(t *testing.T) {
+		_, _, err := newLess("pattern,[")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "bad pattern glob")
+	})
+
+	t.Run("patternOrder", func(t *testing.T) {
+		less, fraction, err := newLess("pattern,*.tar.gz,*.md5")
+		require.NoError(t, err)
+		assert.Equal(t, -1, fraction)
+
+		archiveA := fs.ObjectPair{Src: mockobject.New("a/archive.tar.gz")}
+		archiveB := fs.ObjectPair{Src: mockobject.New("b/archive.tar.gz")}
+		checksum := fs.ObjectPair{Src: mockobject.New("a/archive.md5")}
+		unmatched := fs.ObjectPair{Src: mockobject.New("a/README")}
+
+		assert.True(t, less(archiveA, checksum))
+		assert.True(t, less(checksum, unmatched))
+		assert.False(t, less(unmatched, archiveA))
+		assert.True(t, less(archiveA, archiveB))
+		assert.False(t, less(archiveB, archiveA))
+	})
+
 	var (
 		obj1  = mockobject.New("b").WithContent([]byte("1"), mockobject.SeekModeNone)
 		obj2  = mockobject.New("a").WithContent([]byte("22"), mockobject.SeekModeNone)

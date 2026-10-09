@@ -1104,7 +1104,7 @@ func (o *Object) Remote() string {
 	newPath, err := o.u.pathAdjustment.do(o.Object.String())
 	if err != nil {
 		fs.Errorf(o.Object, "Bad object: %v", err)
-		return err.Error()
+		return ""
 	}
 	return newPath
 }

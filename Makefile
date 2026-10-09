@@ -38,6 +38,9 @@ BETA_PATH := $(BRANCH_PATH)$(TAG)$(BETA_SUBDIR)
 BETA_URL := https://beta.rclone.org/$(BETA_PATH)/
 BETA_UPLOAD_ROOT := beta.rclone.org:
 BETA_UPLOAD := $(BETA_UPLOAD_ROOT)/$(BETA_PATH)
+# Update the beta site's directory listings after an upload - add
+# --changed for the uploaded directories
+BETA_INDEX := --config bin/ci.rclone.conf -v index $(BETA_UPLOAD_ROOT) --use-server-modtime --checkers 16 --output index.html=html --output index.json=caddy --header-upload "Cache-Control: public, max-age=60" --exclude /favicon.ico
 # Pass in GOTAGS=xyz on the make command line to set build tags
 ifdef GOTAGS
 BUILDTAGS=-tags "$(GOTAGS)"
@@ -93,11 +96,15 @@ test:	rclone test_all
 	@echo "Written logs in test_all.log"
 
 # Quick test
+#
+# The timeout is raised above the go test default of 10m as the
+# cmd/gitannex end to end tests can take longer than that on slow CI
+# runners.
 quicktest:
-	RCLONE_CONFIG="/notfound" go test $(LDFLAGS) $(BUILDTAGS) ./...
+	RCLONE_CONFIG="/notfound" go test $(LDFLAGS) $(BUILDTAGS) -timeout 20m ./...
 
 racequicktest:
-	RCLONE_CONFIG="/notfound" go test $(LDFLAGS) $(BUILDTAGS) -cpu=2 -race ./...
+	RCLONE_CONFIG="/notfound" go test $(LDFLAGS) $(BUILDTAGS) -cpu=2 -race -timeout 20m ./...
 
 compiletest:
 	RCLONE_CONFIG="/notfound" go test $(LDFLAGS) $(BUILDTAGS) -run XXX ./...
@@ -230,6 +237,7 @@ check_sign:
 upload:
 	rclone -P copy build/ downloads.rclone.org:/$(TAG)
 	rclone lsf build --files-only --include '*.{zip,deb,rpm}' --include version.txt | xargs -i bash -c 'i={}; j="$$i"; [[ $$i =~ (.*)(-v[0-9\.]+-)(.*) ]] && j=$${BASH_REMATCH[1]}-current-$${BASH_REMATCH[3]}; rclone copyto -v "downloads.rclone.org:/$(TAG)/$$i" "downloads.rclone.org:/$$j"'
+	rclone -P index downloads.rclone.org: --changed /$(TAG)/ --checkers 16 --output index.html=html --output index.json=caddy --header-upload "Cache-Control: public, max-age=60" --exclude /favicon.ico
 
 upload_github:
 	./bin/upload-github $(TAG)
@@ -262,6 +270,7 @@ ci_upload:
 ifeq ($(or $(BRANCH_PATH),$(RELEASE_TAG)),)
 	./rclone --no-check-dest --config bin/ci.rclone.conf -v copy build/ $(BETA_UPLOAD_ROOT)/test/testbuilds-latest
 endif
+	./rclone $(BETA_INDEX) --changed $(BETA_PATH)/testbuilds/ $(if $(or $(BRANCH_PATH),$(RELEASE_TAG)),,--changed test/testbuilds-latest/)
 	@echo Beta release ready at $(BETA_URL)/testbuilds
 
 ci_beta:
@@ -271,6 +280,7 @@ ci_beta:
 ifeq ($(or $(BRANCH_PATH),$(RELEASE_TAG)),)
 	rclone --no-check-dest --config bin/ci.rclone.conf -v copy --include '*beta-latest*' --include version.txt build/ $(BETA_UPLOAD_ROOT)$(BETA_SUBDIR)
 endif
+	rclone $(BETA_INDEX) --changed $(BETA_PATH)/ $(if $(or $(BRANCH_PATH),$(RELEASE_TAG)),,$(if $(BETA_SUBDIR),--changed $(BETA_SUBDIR)/))
 	@echo Beta release ready at $(BETA_URL)
 
 # Fetch the binary builds from GitHub actions

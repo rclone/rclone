@@ -111,6 +111,7 @@ Returns the following values:
 	"totalTransfers": total number of transfers in the group,
 	"transferTime" : total time spent on running jobs,
 	"transfers": number of transferred files,
+	"updatedDirs": number of directories updated (modtime or metadata set),
 	"transferring": an array of currently active file transfers:
 		[
 			{
@@ -301,9 +302,16 @@ func GlobalStats() *StatsInfo {
 }
 
 // NewStatsGroup creates new stats under named group.
+//
+// The averageLoop is intentionally NOT started here: it is started on
+// demand by NewTransfer / NewTransferRemoteSize when real transfer
+// activity begins and stopped by DoneTransferring when the last
+// transfer completes. Starting it eagerly leaked one goroutine per
+// group that never performed a transfer (issue #9567) - e.g. rcd
+// daemons driven by frequent rc sync/move calls where each call gets
+// a fresh job/N group and the source is often empty.
 func NewStatsGroup(ctx context.Context, group string) *StatsInfo {
 	stats := NewStats(ctx)
-	stats.startAverageLoop()
 	stats.group = group
 	groups.set(ctx, group, stats)
 	return stats
@@ -398,6 +406,7 @@ func (sg *statsGroups) sum(ctx context.Context) *StatsInfo {
 			sum.deletes += stats.deletes
 			sum.deletesSize += stats.deletesSize
 			sum.deletedDirs += stats.deletedDirs
+			sum.updatedDirs += stats.updatedDirs
 			sum.inProgress.merge(stats.inProgress)
 			sum.startedTransfers = append(sum.startedTransfers, stats.startedTransfers...)
 			sum.oldTimeRanges = append(sum.oldTimeRanges, stats.oldTimeRanges...)

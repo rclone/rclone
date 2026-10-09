@@ -66,19 +66,28 @@ type Transfer struct {
 	acc         *Account
 	err         error
 	completedAt time.Time
+	doneBytes   int64
 }
 
 // newCheckingTransfer instantiates new checking of the object.
 func newCheckingTransfer(stats *StatsInfo, obj fs.DirEntry, what string) *Transfer {
-	return newTransferRemoteSize(stats, obj.Remote(), obj.Size(), true, what, nil, nil)
+	return newTransferRemoteSize(stats, obj.Remote(), obj.Size(), true, what, nil, nil, false)
+}
+
+// newCheckingTransferNoHistory instantiates new checking of the
+// object which is not kept in the completed transfers history.
+func newCheckingTransferNoHistory(stats *StatsInfo, obj fs.DirEntry, what string) *Transfer {
+	return newTransferRemoteSize(stats, obj.Remote(), obj.Size(), true, what, nil, nil, true)
 }
 
 // newTransfer instantiates new transfer.
 func newTransfer(stats *StatsInfo, obj fs.DirEntry, srcFs, dstFs fs.Fs) *Transfer {
-	return newTransferRemoteSize(stats, obj.Remote(), obj.Size(), false, "", srcFs, dstFs)
+	return newTransferRemoteSize(stats, obj.Remote(), obj.Size(), false, "", srcFs, dstFs, false)
 }
 
-func newTransferRemoteSize(stats *StatsInfo, remote string, size int64, checking bool, what string, srcFs, dstFs fs.Fs) *Transfer {
+// If noHistory is set the transfer is not kept in the completed
+// transfers history after it is done.
+func newTransferRemoteSize(stats *StatsInfo, remote string, size int64, checking bool, what string, srcFs, dstFs fs.Fs, noHistory bool) *Transfer {
 	tr := &Transfer{
 		stats:     stats,
 		remote:    remote,
@@ -89,7 +98,9 @@ func newTransferRemoteSize(stats *StatsInfo, remote string, size int64, checking
 		srcFs:     srcFs,
 		dstFs:     dstFs,
 	}
-	stats.AddTransfer(tr)
+	if !noHistory {
+		stats.AddTransfer(tr)
+	}
 	return tr
 }
 
@@ -116,12 +127,20 @@ func (tr *Transfer) Done(ctx context.Context, err error) {
 		}
 		// Signal done with accounting
 		acc.Done()
-		// free the account since we may keep the transfer
-		acc = nil
+	}
+
+	var doneBytes int64
+	if acc != nil {
+		doneBytes, _ = acc.progress()
 	}
 
 	tr.mu.Lock()
 	tr.completedAt = time.Now()
+	if acc != nil {
+		tr.doneBytes = doneBytes
+	}
+	// free the account since we may keep the transfer
+	tr.acc = nil
 	tr.mu.Unlock()
 
 	if tr.checking {
@@ -181,7 +200,7 @@ func (tr *Transfer) Snapshot() TransferSnapshot {
 	tr.mu.RLock()
 	defer tr.mu.RUnlock()
 
-	var s, b int64 = tr.size, 0
+	b, s := tr.doneBytes, tr.size
 	if tr.acc != nil {
 		b, s = tr.acc.progress()
 	}

@@ -23,8 +23,8 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/pacer"
-	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 )
 
@@ -413,9 +413,14 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	size, _ := strconv.ParseInt(response.Size, 10, 64)
 	dstObj.id = response.FileID
-	dstObj.size = size
+
+	// Read the metadata back so the object returned matches what a
+	// fresh listing would return, in particular modtime and hash
+	err = dstObj.readMetaData(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	return dstObj, nil
 }
@@ -520,9 +525,14 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	size, _ := strconv.ParseInt(response.Size, 10, 64)
 	dstObj.id = response.FileID
-	dstObj.size = size
+
+	// Read the metadata back so the object returned matches what a
+	// fresh listing would return, in particular modtime and hash
+	err = dstObj.readMetaData(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	return dstObj, nil
 }
@@ -963,7 +973,8 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 		return o.fs.shouldRetry(ctx, resp, err)
 	})
 
-	o.modTime = modTime
+	// The server only stores second precision modtimes
+	o.modTime = time.Unix(modTime.Unix(), 0)
 
 	return err
 }
@@ -1036,7 +1047,6 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// resp.Body.Close()
 	// fs.Debugf(nil, "PostOpen: %#v", openResponse)
 
-	buf := make([]byte, o.fs.opt.ChunkSize)
 	chunkOffset := int64(0)
 	remainingBytes := size
 	chunkCounter := 0
@@ -1046,17 +1056,27 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		remainingBytes -= currentChunkSize
 		fs.Debugf(o, "Uploading chunk %d, size=%d, remain=%d", chunkCounter, currentChunkSize, remainingBytes)
 
-		chunk := readers.NewRepeatableLimitReaderBuffer(in, buf, currentChunkSize)
+		// Buffer the chunk in memory from the global pool so reads are
+		// repeatable for retries
+		rw := multipart.NewRW()
+		_, err = io.CopyN(rw, in, currentChunkSize)
+		if err != nil {
+			_ = rw.Close()
+			if err == io.EOF {
+				err = fmt.Errorf("short read of chunk %d: %w", chunkCounter, io.ErrUnexpectedEOF)
+			}
+			return fmt.Errorf("failed to create file: %w", err)
+		}
 		var reply uploadFileChunkReply
 		err = o.fs.pacer.Call(func() (bool, error) {
 			// seek to the start in case this is a retry
-			if _, err = chunk.Seek(0, io.SeekStart); err != nil {
+			if _, err = rw.Seek(0, io.SeekStart); err != nil {
 				return false, err
 			}
 			opts := rest.Opts{
 				Method: "POST",
 				Path:   "/upload/upload_file_chunk.json",
-				Body:   chunk,
+				Body:   rw,
 				MultipartParams: url.Values{
 					"session_id":    []string{o.fs.session.SessionID},
 					"file_id":       []string{o.id},
@@ -1071,8 +1091,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &reply)
 			return o.fs.shouldRetry(ctx, resp, err)
 		})
+		closeErr := rw.Close()
 		if err != nil {
 			return fmt.Errorf("failed to create file: %w", err)
+		}
+		if closeErr != nil {
+			return fmt.Errorf("failed to create file: %w", closeErr)
 		}
 		if reply.TotalWritten != currentChunkSize {
 			return fmt.Errorf("failed to create file: incomplete write of %d/%d bytes", reply.TotalWritten, currentChunkSize)
@@ -1138,46 +1162,44 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	var resp *http.Response
 	fileInfo := File{}
 
-	// If we know the object id perform a direct lookup
-	// because the /folder/itembyname.json endpoint is unreliable:
-	// newly created objects take an arbitrary amount of time to show up
-	if o.id != "" {
+	// Find the object id with /folder/itembyname.json if we don't
+	// know it already. Note that this endpoint is unreliable:
+	// newly created objects take an arbitrary amount of time to show up.
+	if o.id == "" {
+		folderList := FolderList{}
 		opts := rest.Opts{
 			Method: "GET",
-			Path: fmt.Sprintf("/file/info.json/%s?session_id=%s",
-				o.id, o.fs.session.SessionID),
+			Path: fmt.Sprintf("/folder/itembyname.json/%s/%s?name=%s",
+				o.fs.session.SessionID, directoryID, url.QueryEscape(o.fs.opt.Enc.FromStandardName(leaf))),
 		}
 		err = o.fs.pacer.Call(func() (bool, error) {
-			resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &fileInfo)
+			resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &folderList)
 			return o.fs.shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
-			return fmt.Errorf("failed to get fileinfo: %w", err)
+			return fmt.Errorf("failed to get folder list: %w", err)
 		}
-
-		o.id = fileInfo.FileID
-		o.modTime = time.Unix(fileInfo.DateModified, 0)
-		o.md5 = fileInfo.FileHash
-		o.size = fileInfo.Size
-		return nil
+		if len(folderList.Files) == 0 {
+			return fs.ErrorObjectNotFound
+		}
+		o.id = folderList.Files[0].FileID
 	}
-	folderList := FolderList{}
+
+	// Read the metadata using a direct lookup as, unlike
+	// /folder/itembyname.json, it returns the FileHash
 	opts := rest.Opts{
 		Method: "GET",
-		Path: fmt.Sprintf("/folder/itembyname.json/%s/%s?name=%s",
-			o.fs.session.SessionID, directoryID, url.QueryEscape(o.fs.opt.Enc.FromStandardName(leaf))),
+		Path: fmt.Sprintf("/file/info.json/%s?session_id=%s",
+			o.id, o.fs.session.SessionID),
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &folderList)
+		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &fileInfo)
 		return o.fs.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return fmt.Errorf("failed to get folder list: %w", err)
+		return fmt.Errorf("failed to get fileinfo: %w", err)
 	}
-	if len(folderList.Files) == 0 {
-		return fs.ErrorObjectNotFound
-	}
-	fileInfo = folderList.Files[0]
+
 	o.id = fileInfo.FileID
 	o.modTime = time.Unix(fileInfo.DateModified, 0)
 	o.md5 = fileInfo.FileHash

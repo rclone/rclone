@@ -297,6 +297,13 @@ func (tr transporter) Do(req *http.Request) (*http.Response, error) {
 	return tr.RoundTripper.RoundTrip(req)
 }
 
+// Transporter returns the policy.Transporter rclone uses for Azure SDK
+// clients (an fshttp based transport with the APN user agent), for callers
+// which build their own azcore pipelines.
+func Transporter(ctx context.Context) policy.Transporter {
+	return newTransporter(ctx)
+}
+
 // NewClientOpts should be passed to configure NewClient
 type NewClientOpts[Client, ClientOptions, SharedKeyCredential any] struct {
 	DefaultBaseURL                   string // Base URL, eg blob.core.windows.net

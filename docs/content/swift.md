@@ -151,7 +151,7 @@ rclone sync --interactive /home/local/directory remote:container
 
 ### Configuration from an OpenStack credentials file
 
-An OpenStack credentials file typically looks something something
+An OpenStack credentials file typically looks something
 like this (without the comments)
 
 ```sh
@@ -709,7 +709,7 @@ Request" error rather than a more sensible error when the
 authentication fails for Swift.
 
 So this most likely means your username / password is wrong.  You can
-investigate further with the `--dump-bodies` flag.
+investigate further with the `--dump bodies` flag.
 
 This may also be caused by specifying the region when you shouldn't
 have (e.g. OVH).

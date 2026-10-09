@@ -1,4 +1,4 @@
-//go:build !plan9 && !solaris && !js
+//go:build !plan9 && !js
 
 // Package azureblob provides an interface to the Microsoft Azure blob object storage system
 package azureblob
@@ -22,6 +22,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
@@ -48,6 +49,7 @@ import (
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/readers"
+	"github.com/rclone/rclone/lib/rest"
 	"github.com/rclone/rclone/lib/transferaccounter"
 	"golang.org/x/sync/errgroup"
 )
@@ -66,6 +68,7 @@ const (
 	defaultChunkSize      = 4 * fs.Mebi
 	defaultAccessTier     = blob.AccessTier("") // FIXME AccessTierNone
 	sasCopyValidity       = time.Hour           // how long SAS should last when doing server side copy
+	sasCopyStartSkew      = 15 * time.Minute    // how far back SAS should start to allow for clock skew
 )
 
 // setAcceptEncodingGzip is a per-call policy that sets Accept-Encoding: gzip
@@ -236,6 +239,40 @@ avoid the time out.`,
 			Default:  maxListChunkSize,
 			Advanced: true,
 		}, {
+			Name: "use_arrow_list",
+			Help: `Use the Apache Arrow listing format.
+
+If set, directory listings are fetched using the ListBlobs Apache
+Arrow response format instead of XML. Arrow responses are smaller and
+much cheaper to parse, making listings of large containers several
+times faster. Combine with "list_parallelism" for the biggest gains.
+
+"Blob Listing with Apache Arrow" is in public preview at Microsoft and
+is only supported on flat namespace accounts. On accounts with a
+hierarchical namespace (ADLS Gen2), or where the feature is otherwise
+unavailable, the server returns XML and the listing transparently
+falls back to the normal XML path (logged at debug level).`,
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name: "list_parallelism",
+			Help: `Number of parallel shards to list a directory with.
+
+If set greater than 1, the blob name keyspace of each directory is
+split into ranges which are listed concurrently using the Arrow
+startFrom/endBefore range parameters. This can dramatically speed up
+listing containers with millions of objects, for both recursive
+(ListR) and single directory listings. Speed keeps improving up to a
+parallelism of around 30.
+
+This has no effect unless "use_arrow_list" is also set, as Arrow is the
+only listing path that supports server-side name ranges. If the
+account does not support range listing (e.g. it has a hierarchical
+namespace) the listing falls back to sequential. The default of 0 (or
+1) lists sequentially.`,
+			Default:  0,
+			Advanced: true,
+		}, {
 			Name: "access_tier",
 			Help: `Access tier of blob: hot, cool, cold or archive.
 
@@ -328,7 +365,22 @@ creates an empty object ending with "/", to persist the folder.
 
 This object also has the metadata "` + dirMetaKey + ` = ` + dirMetaValue + `" to conform to
 the Microsoft standard.
+
+This is not needed on storage accounts with a hierarchical namespace
+(see the hns option) as these always support empty directories.
  `,
+		}, {
+			Name:     "hns",
+			Default:  fs.Tristate{},
+			Advanced: true,
+			Help: `Set if the storage account has a hierarchical namespace.
+
+Storage accounts with hierarchical namespace enabled (Azure Data Lake
+Storage Gen2) have real directories which can be empty.
+
+If this is unset then rclone will read it from the storage account
+and save it in the config file.
+`,
 		}, {
 			Name: "no_check_container",
 			Help: `If set, don't attempt to check the container exists or create it.
@@ -388,12 +440,15 @@ type Options struct {
 	UseCopyBlob          bool                 `config:"use_copy_blob"`
 	UploadConcurrency    int                  `config:"upload_concurrency"`
 	ListChunkSize        uint                 `config:"list_chunk"`
+	UseArrowList         bool                 `config:"use_arrow_list"`
+	ListParallelism      int                  `config:"list_parallelism"`
 	AccessTier           string               `config:"access_tier"`
 	ArchiveTierDelete    bool                 `config:"archive_tier_delete"`
 	DisableCheckSum      bool                 `config:"disable_checksum"`
 	Enc                  encoder.MultiEncoder `config:"encoding"`
 	PublicAccess         string               `config:"public_access"`
 	DirectoryMarkers     bool                 `config:"directory_markers"`
+	HNS                  fs.Tristate          `config:"hns"`
 	NoCheckContainer     bool                 `config:"no_check_container"`
 	NoHeadObject         bool                 `config:"no_head_object"`
 	DeleteSnapshots      string               `config:"delete_snapshots"`
@@ -409,6 +464,7 @@ type Fs struct {
 	features           *fs.Features                 // optional features
 	cntSVCcacheMu      sync.Mutex                   // mutex to protect cntSVCcache
 	cntSVCcache        map[string]*container.Client // reference to containerClient per container
+	arrowXMLFallback   atomic.Bool                  // set once the server answers XML so parallel listing is not retried
 	svc                *service.Client              // client to access azblob
 	cred               azcore.TokenCredential       // how to generate tokens (may be nil)
 	usingSharedKeyCred bool                         // set if using shared key credentials
@@ -416,6 +472,7 @@ type Fs struct {
 	rootContainer      string                       // container part of root (if any)
 	rootDirectory      string                       // directory part of root (if any)
 	isLimited          bool                         // if limited to one container
+	hns                bool                         // if the storage account has a hierarchical namespace
 	cache              *bucket.Cache                // cache for container creation status
 	pacer              *fs.Pacer                    // To pace and retry the API calls
 	uploadToken        *pacer.TokenDispenser        // control concurrency
@@ -482,7 +539,7 @@ func parsePath(path string) (root string) {
 // relative to f.root
 func (f *Fs) split(rootRelativePath string) (containerName, containerPath string) {
 	containerName, containerPath = bucket.Split(bucket.Join(f.root, rootRelativePath))
-	if f.opt.DirectoryMarkers && strings.HasSuffix(containerPath, "//") {
+	if f.dirMarkers() && strings.HasSuffix(containerPath, "//") {
 		containerPath = containerPath[:len(containerPath)-1]
 	}
 	return f.opt.Enc.FromStandardName(containerName), f.opt.Enc.FromStandardPath(containerPath)
@@ -530,8 +587,7 @@ func (f *Fs) shouldRetry(ctx context.Context, err error) (bool, error) {
 	if fserrors.ContextError(ctx, &err) {
 		return false, err
 	}
-	var storageErr *azcore.ResponseError
-	if errors.As(err, &storageErr) {
+	if storageErr, ok := errors.AsType[*azcore.ResponseError](err); ok {
 		// General errors from:
 		// https://learn.microsoft.com/en-us/rest/api/storageservices/common-rest-api-error-codes
 		// Blob specific errors from:
@@ -608,6 +664,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.ListChunkSize > maxListChunkSize {
 		return nil, fmt.Errorf("blob list size can't be greater than %v - was %v", maxListChunkSize, opt.ListChunkSize)
 	}
+	if opt.ListParallelism > 1 && !opt.UseArrowList {
+		fs.Logf(nil, "azureblob: list_parallelism has no effect without use_arrow_list - listing sequentially")
+	}
 
 	if opt.AccessTier == "" {
 		opt.AccessTier = string(defaultAccessTier)
@@ -647,10 +706,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		ServerSideAcrossConfigs: true,
 		DoubleSlash:             true,
 	}).Fill(ctx, f)
-	if opt.DirectoryMarkers {
-		f.features.CanHaveEmptyDirectories = true
-		fs.Debugf(f, "Using directory markers")
-	}
 
 	conf := auth.NewClientOpts[service.Client, service.ClientOptions, service.SharedKeyCredential]{
 		DefaultBaseURL:                   storageDefaultBaseURL,
@@ -683,6 +738,28 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.isLimited = true
 	}
 
+	if opt.HNS.Valid {
+		f.hns = opt.HNS.Value
+	} else if !f.anonymous {
+		containerName := f.rootContainer
+		if containerName == "" {
+			containerName = res.Container
+		}
+		f.hns, err = f.readHNS(ctx, containerName)
+		if err != nil {
+			fs.Debugf(f, "Failed to read whether storage account has a hierarchical namespace - assuming not: %v", err)
+		} else {
+			m.Set("hns", strconv.FormatBool(f.hns))
+		}
+	}
+	if f.hns {
+		fs.Debugf(f, "Storage account has a hierarchical namespace")
+	}
+	if f.dirMarkers() {
+		f.features.CanHaveEmptyDirectories = true
+		fs.Debugf(f, "Using directory markers")
+	}
+
 	if f.rootContainer != "" && f.rootDirectory != "" {
 		// Check to see if the (container,directory) is actually an existing file
 		oldRoot := f.root
@@ -701,6 +778,39 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return f, fs.ErrorIsFile
 	}
 	return f, nil
+}
+
+// readHNS reads whether the storage account has a hierarchical namespace
+//
+// If containerName is set then the container client is used which works
+// with credentials limited to that container.
+func (f *Fs) readHNS(ctx context.Context, containerName string) (hns bool, err error) {
+	var isHNS *bool
+	err = f.pacer.Call(func() (bool, error) {
+		var err error
+		if containerName != "" {
+			var resp container.GetAccountInfoResponse
+			resp, err = f.cntSVC(containerName).GetAccountInfo(ctx, nil)
+			isHNS = resp.IsHierarchicalNamespaceEnabled
+		} else {
+			var resp service.GetAccountInfoResponse
+			resp, err = f.svc.GetAccountInfo(ctx, nil)
+			isHNS = resp.IsHierarchicalNamespaceEnabled
+		}
+		return f.shouldRetry(ctx, err)
+	})
+	if err != nil {
+		return false, err
+	}
+	if isHNS == nil {
+		return false, errors.New("not returned by server")
+	}
+	return *isHNS, nil
+}
+
+// dirMarkers returns true if directories are persisted with directory markers
+func (f *Fs) dirMarkers() bool {
+	return f.opt.DirectoryMarkers || f.hns
 }
 
 // return the container client for the container passed in
@@ -740,7 +850,12 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *contain
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error fs.ErrorObjectNotFound.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	return f.newObjectWithInfo(ctx, remote, nil)
+	o, err := f.newObjectWithInfo(ctx, remote, nil)
+	if err == fs.ErrorNotAFile {
+		// The blob is a directory
+		return nil, fs.ErrorObjectNotFound
+	}
+	return o, err
 }
 
 // getBlobSVC creates a blob client
@@ -809,15 +924,15 @@ func mapMetadataToAzure(meta map[string]string, logf func(string, ...any)) (head
 		lowerKey := strings.ToLower(k)
 		switch lowerKey {
 		case "cache-control":
-			headers.BlobCacheControl = pString(v)
+			headers.BlobCacheControl = new(v)
 		case "content-disposition":
-			headers.BlobContentDisposition = pString(v)
+			headers.BlobContentDisposition = new(v)
 		case "content-encoding":
-			headers.BlobContentEncoding = pString(v)
+			headers.BlobContentEncoding = new(v)
 		case "content-language":
-			headers.BlobContentLanguage = pString(v)
+			headers.BlobContentLanguage = new(v)
 		case "content-type":
-			headers.BlobContentType = pString(v)
+			headers.BlobContentType = new(v)
 		case "x-ms-tags":
 			parsed, perr := parseXMsTags(v)
 			if perr != nil {
@@ -1054,16 +1169,31 @@ func isDirectoryMarker(size int64, metadata map[string]*string, remote string) b
 		if endsWithSlash || remote == "" {
 			return true
 		}
-		// Note that metadata with hdi_isfolder = true seems to be a
-		// defacto standard for marking blobs as directories.
-		// Note also that the metadata hasn't been normalised to lower case yet
-		for k, v := range metadata {
-			if v != nil && strings.EqualFold(k, dirMetaKey) && *v == dirMetaValue {
-				return true
-			}
+		return hasDirMetadata(metadata)
+	}
+	return false
+}
+
+// Returns whether the metadata marks the blob as a directory
+func hasDirMetadata(metadata map[string]*string) bool {
+	// Note that metadata with hdi_isfolder = true seems to be a
+	// defacto standard for marking blobs as directories.
+	// Note also that the metadata hasn't been normalised to lower case yet
+	for k, v := range metadata {
+		if v != nil && strings.EqualFold(k, dirMetaKey) && *v == dirMetaValue {
+			return true
 		}
 	}
 	return false
+}
+
+// Returns whether props are for a directory on a storage account with
+// a hierarchical namespace
+//
+// These ignore a trailing "/" on the name so a file can be returned
+// when looking for a directory.
+func isHNSDirectory(props *blob.GetPropertiesResponse) bool {
+	return props.ContentLength != nil && *props.ContentLength == 0 && hasDirMetadata(props.Metadata)
 }
 
 // listFn is called from list to handle an object
@@ -1091,7 +1221,7 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 		delimiter = "/"
 	}
 
-	pager := f.cntSVC(containerName).NewListBlobsHierarchyPager(delimiter, &container.ListBlobsHierarchyOptions{
+	opts := &container.ListBlobsHierarchyOptions{
 		// Copy, Metadata, Snapshots, UncommittedBlobs, Deleted, Tags, Versions, LegalHold, ImmutabilityPolicy, DeletedWithVersions bool
 		Include: container.ListBlobsInclude{
 			Copy:             false,
@@ -1102,8 +1232,53 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 		},
 		Prefix:     &directory,
 		MaxResults: &maxResults,
-	})
-	foundItems := 0
+	}
+	// Request the Apache Arrow listing format. The SDK pager requests an
+	// Arrow IPC stream and decodes it, falling back to XML if the account
+	// doesn't have Arrow listing enabled. Skip the maxResults==1 probe
+	// (isEmpty) which doesn't benefit.
+	useArrow := f.opt.UseArrowList && maxResults != 1
+	if useArrow {
+		opts.ResponseFormat = container.StorageResponseFormatArrow
+	}
+
+	var foundItems int
+	var err error
+	if useArrow && f.opt.ListParallelism > 1 && !f.arrowXMLFallback.Load() {
+		// Arrow exposes server-side startFrom/endBefore name ranges, so the
+		// keyspace can be sharded and listed concurrently.
+		foundItems, err = f.listArrowParallel(ctx, containerName, directory, prefix, addContainer, opts, delimiter, fn)
+	} else {
+		foundItems, err = f.listBlobsPager(ctx, containerName, directory, prefix, addContainer, opts, delimiter, fn)
+	}
+	if err != nil {
+		return err
+	}
+	if f.dirMarkers() && foundItems == 0 && directory != "" {
+		// Determine whether the directory exists or not by whether it has a marker
+		props, err := f.readMetaData(ctx, containerName, directory)
+		if err != nil {
+			if err == fs.ErrorObjectNotFound {
+				return fs.ErrorDirNotFound
+			}
+			return err
+		}
+		if f.hns && !isHNSDirectory(props) {
+			return fs.ErrorDirNotFound
+		}
+	}
+	return nil
+}
+
+// listBlobsPager runs the hierarchy listing described by opts, calling fn for
+// each blob and subdirectory, and returns the number of raw items seen.
+// delimiter selects flat (recurse) vs hierarchical listing. If opts requests
+// the Apache Arrow format and the service answers with XML (Arrow listing
+// not enabled) a debug message is logged.
+func (f *Fs) listBlobsPager(ctx context.Context, containerName, directory, prefix string, addContainer bool, opts *container.ListBlobsHierarchyOptions, delimiter string, fn listFn) (foundItems int, err error) {
+	useArrow := opts.ResponseFormat == container.StorageResponseFormatArrow
+	pager := f.cntSVC(containerName).NewListBlobsHierarchyPager(delimiter, opts)
+	checkedArrow := false
 	for pager.More() {
 		var response container.ListBlobsHierarchyResponse
 		err := f.pacer.Call(func() (bool, error) {
@@ -1113,12 +1288,22 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 			return f.shouldRetry(ctx, err)
 		})
 
+		// If Arrow was requested but the service answered with XML, Arrow
+		// listing is not enabled on this account; the listing is still correct
+		// but not accelerated.
+		if useArrow && !checkedArrow && err == nil {
+			checkedArrow = true
+			if response.ContentType == nil || !strings.HasPrefix(*response.ContentType, arrowContentType) {
+				fs.Debugf(f, "Apache Arrow listing requested but server returned XML - Blob Listing with Apache Arrow may not be enabled on this account")
+			}
+		}
+
 		if err != nil {
 			// Check http error code along with service code, current SDK doesn't populate service code correctly sometimes
 			if storageErr, ok := err.(*azcore.ResponseError); ok && (storageErr.ErrorCode == string(bloberror.ContainerNotFound) || storageErr.StatusCode == http.StatusNotFound) {
-				return fs.ErrorDirNotFound
+				return foundItems, fs.ErrorDirNotFound
 			}
-			return err
+			return foundItems, err
 		}
 		// Advance marker to next
 		// marker = response.NextMarker
@@ -1133,12 +1318,24 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 				fs.Debugf(f, "Nil name received")
 				continue
 			}
+			// Storage accounts with a hierarchical namespace return
+			// the file "dir" when listing "dir/"
+			if !strings.HasPrefix(*file.Name, directory) {
+				fs.Debugf(f, "Ignoring %q not in directory %q", *file.Name, directory)
+				foundItems--
+				continue
+			}
 			remote := f.opt.Enc.ToStandardPath(*file.Name)
 			if !strings.HasPrefix(remote, prefix) {
 				fs.Debugf(f, "Odd name received %q", remote)
 				continue
 			}
-			isDirectory := isDirectoryMarker(*file.Properties.ContentLength, file.Metadata, remote)
+			// ContentLength is documented as nullable in the Arrow listing schema
+			size := int64(-1)
+			if file.Properties.ContentLength != nil {
+				size = *file.Properties.ContentLength
+			}
+			isDirectory := isDirectoryMarker(size, file.Metadata, remote)
 			if isDirectory {
 				// Don't insert the root directory
 				if remote == f.opt.Enc.ToStandardPath(directory) {
@@ -1154,7 +1351,7 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 			// Send object
 			err = fn(remote, file, isDirectory)
 			if err != nil {
-				return err
+				return foundItems, err
 			}
 		}
 		// Send the subdirectories
@@ -1169,6 +1366,13 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 				fs.Debugf(f, "Odd directory name received %q", remote)
 				continue
 			}
+			// Don't insert the root directory. The Arrow listing returns a
+			// directory marker blob with the same name as the listed directory
+			// as a BlobPrefix, whereas XML returns it as a blob (handled
+			// above).
+			if remote == f.opt.Enc.ToStandardPath(directory) {
+				continue
+			}
 			remote = remote[len(prefix):]
 			// Trim one slash off the remote name
 			remote, _ = strings.CutSuffix(remote, "/")
@@ -1181,21 +1385,11 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 			// Send object
 			err = fn(remote, nil, true)
 			if err != nil {
-				return err
+				return foundItems, err
 			}
 		}
 	}
-	if f.opt.DirectoryMarkers && foundItems == 0 && directory != "" {
-		// Determine whether the directory exists or not by whether it has a marker
-		_, err := f.readMetaData(ctx, containerName, directory)
-		if err != nil {
-			if err == fs.ErrorObjectNotFound {
-				return fs.ErrorDirNotFound
-			}
-			return err
-		}
-	}
-	return nil
+	return foundItems, nil
 }
 
 // Convert a list item into a DirEntry
@@ -1442,7 +1636,7 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 
 // Create directory marker file and parents
 func (f *Fs) createDirectoryMarker(ctx context.Context, container, dir string) error {
-	if !f.opt.DirectoryMarkers || container == "" {
+	if !f.dirMarkers() || container == "" {
 		return nil
 	}
 
@@ -1499,6 +1693,11 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 
 // mkdirParent creates the parent bucket/directory if it doesn't exist
 func (f *Fs) mkdirParent(ctx context.Context, remote string) error {
+	if f.hns {
+		// Parent directories are created by the upload
+		container, _ := f.split(remote)
+		return f.makeContainer(ctx, container)
+	}
 	remote, _ = strings.CutSuffix(remote, "/")
 	dir := path.Dir(remote)
 	if dir == "/" || dir == "." {
@@ -1604,6 +1803,9 @@ func (f *Fs) deleteContainer(ctx context.Context, containerName string) error {
 // Returns an error if it isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	container, directory := f.split(dir)
+	if f.hns && container != "" && directory != "" {
+		return f.rmdirHNS(ctx, container, directory)
+	}
 	// Remove directory marker file
 	if f.opt.DirectoryMarkers && container != "" && directory != "" {
 		o := &Object{
@@ -1624,6 +1826,39 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		return err
 	}
 	return f.deleteContainer(ctx, container)
+}
+
+// rmdirHNS removes the directory on a storage account with a
+// hierarchical namespace
+//
+// The directory must be deleted without a trailing "/" and the server
+// refuses to delete it if it isn't empty.
+func (f *Fs) rmdirHNS(ctx context.Context, container, directory string) error {
+	directory, _ = strings.CutSuffix(directory, "/")
+	// Check it is a directory as deleting a file would succeed
+	props, err := f.readMetaData(ctx, container, directory)
+	if err == fs.ErrorObjectNotFound {
+		return fs.ErrorDirNotFound
+	} else if err != nil {
+		return err
+	}
+	if !isHNSDirectory(props) {
+		return fs.ErrorIsFile
+	}
+	blb := f.getBlobSVC(container, directory)
+	err = f.pacer.Call(func() (bool, error) {
+		_, err := blb.Delete(ctx, nil)
+		return f.shouldRetry(ctx, err)
+	})
+	if storageErr, ok := errors.AsType[*azcore.ResponseError](err); ok {
+		if storageErr.ErrorCode == "DirectoryIsNotEmpty" {
+			return fs.ErrorDirectoryNotEmpty
+		}
+		if storageErr.StatusCode == http.StatusNotFound {
+			return fs.ErrorDirNotFound
+		}
+	}
+	return err
 }
 
 // Precision of the remote
@@ -1661,7 +1896,7 @@ func (f *Fs) getUserDelegation(ctx context.Context) (*service.UserDelegationCred
 	}
 
 	// Validity window
-	start := time.Now().UTC()
+	start := time.Now().UTC().Add(-sasCopyStartSkew)
 	expiry := start.Add(2 * sasCopyValidity)
 	startStr := start.Format(time.RFC3339)
 	expiryStr := expiry.Format(time.RFC3339)
@@ -1710,7 +1945,7 @@ func (o *Object) getAuth(ctx context.Context, noAuth bool) (srcURL string, err e
 		// Build the SAS values
 		perms := sas.BlobPermissions{Read: true}
 		container, containerPath := o.split()
-		start := time.Now().UTC()
+		start := time.Now().UTC().Add(-sasCopyStartSkew)
 		expiry := start.Add(sasCopyValidity)
 		vals := sas.BlobSignatureValues{
 			StartTime:     start,
@@ -2180,12 +2415,31 @@ func (o *Object) decodeMetaDataFromDownloadResponse(info *blob.DownloadStreamRes
 	} else {
 		size = *info.ContentLength
 	}
+	// On a range request Content-Length is the length of the range, not the object, so take the
+	// object's size from the total in Content-Range instead.
+	if info.ContentRange != nil {
+		contentRange, err := rest.ParseContentRange(*info.ContentRange)
+		if err != nil {
+			fs.Debugf(o, "Failed to parse Content-Range %q: %v", *info.ContentRange, err)
+		} else if contentRange.Size >= 0 {
+			size = contentRange.Size
+		}
+	}
 	if isDirectoryMarker(size, metadata, o.remote) {
 		return fs.ErrorNotAFile
 	}
 	// NOTE - Client library always returns MD5 as base64 decoded string, Object needs to maintain
 	// this as base64 encoded string.
-	o.md5 = base64.StdEncoding.EncodeToString(info.ContentMD5)
+	//
+	// On a range request the service returns the whole-blob MD5 in the
+	// x-ms-blob-content-md5 header (BlobContentMD5) and leaves Content-MD5
+	// (ContentMD5) empty, so prefer BlobContentMD5. Never overwrite a known
+	// hash with an empty one, or a ranged read would drop the object's MD5.
+	if md5 := info.BlobContentMD5; len(md5) > 0 {
+		o.md5 = base64.StdEncoding.EncodeToString(md5)
+	} else if len(info.ContentMD5) > 0 {
+		o.md5 = base64.StdEncoding.EncodeToString(info.ContentMD5)
+	}
 	if info.ContentType == nil {
 		o.mimeType = ""
 	} else {
@@ -2204,22 +2458,6 @@ func (o *Object) decodeMetaDataFromDownloadResponse(info *blob.DownloadStreamRes
 	// 	o.accessTier = blob.AccessTier(*info.AccessTier)
 	// }
 	o.setMetadata(metadata)
-
-	// If it was a Range request, the size is wrong, so correct it
-	if info.ContentRange != nil {
-		contentRange := *info.ContentRange
-		slash := strings.IndexRune(contentRange, '/')
-		if slash >= 0 {
-			i, err := strconv.ParseInt(contentRange[slash+1:], 10, 64)
-			if err == nil {
-				o.size = i
-			} else {
-				fs.Debugf(o, "Failed to find parse integer from in %q: %v", contentRange, err)
-			}
-		} else {
-			fs.Debugf(o, "Failed to find length in %q", contentRange)
-		}
-	}
 	o.contentEncoding = info.ContentEncoding
 
 	// If decompressing then size and md5sum are unknown
@@ -2461,11 +2699,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	return downloadResponse.Body, nil
 }
 
-// Converts a string into a pointer to a string
-func pString(s string) *string {
-	return &s
-}
-
 // readSeekCloser joins an io.Reader and an io.Seeker and provides a no-op io.Closer
 type readSeekCloser struct {
 	io.Reader
@@ -2620,8 +2853,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 // isInvalidBlockOrBlob looks for the InvalidBlockOrBlob error in err
 // returning true if it is found
 func isInvalidBlockOrBlob(err error) bool {
-	var storageErr *azcore.ResponseError
-	if errors.As(err, &storageErr) {
+	if storageErr, ok := errors.AsType[*azcore.ResponseError](err); ok {
 		return storageErr.ErrorCode == string(bloberror.InvalidBlobOrBlock)
 	}
 	return false
@@ -2993,7 +3225,7 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 
 	// Start with default content-type based on source
 	ui.httpHeaders = blob.HTTPHeaders{
-		BlobContentType: pString(fs.MimeType(ctx, src)),
+		BlobContentType: new(fs.MimeType(ctx, src)),
 	}
 
 	// Apply mapped metadata/headers/tags if requested
@@ -3039,15 +3271,15 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 				o.tags[parts[0]] = parts[1]
 			}
 		case "cache-control":
-			ui.httpHeaders.BlobCacheControl = pString(value)
+			ui.httpHeaders.BlobCacheControl = new(value)
 		case "content-disposition":
-			ui.httpHeaders.BlobContentDisposition = pString(value)
+			ui.httpHeaders.BlobContentDisposition = new(value)
 		case "content-encoding":
-			ui.httpHeaders.BlobContentEncoding = pString(value)
+			ui.httpHeaders.BlobContentEncoding = new(value)
 		case "content-language":
-			ui.httpHeaders.BlobContentLanguage = pString(value)
+			ui.httpHeaders.BlobContentLanguage = new(value)
 		case "content-type":
-			ui.httpHeaders.BlobContentType = pString(value)
+			ui.httpHeaders.BlobContentType = new(value)
 		}
 	}
 

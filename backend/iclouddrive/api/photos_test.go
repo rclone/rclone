@@ -1191,7 +1191,7 @@ func TestFlushCaches_NoPendingDeltaRace(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			lib.deltaMu.Lock()
 			lib.pendingDelta = &deltaPayload{
 				records:   []json.RawMessage{json.RawMessage(`{"recordName":"m1","recordType":"CPLMaster"}`)},
@@ -1201,7 +1201,7 @@ func TestFlushCaches_NoPendingDeltaRace(t *testing.T) {
 			lib.applyPendingDelta(context.Background())
 		}
 	}()
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		ps.FlushCaches()
 		// Re-add the library since FlushCaches clears it
 		ps.mu.Lock()
@@ -1282,4 +1282,35 @@ func TestAlbumCacheKey(t *testing.T) {
 	for _, c := range k1 {
 		assert.True(t, (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'), "key should be hex: %c", c)
 	}
+}
+
+func TestCkBoolFieldUnmarshal(t *testing.T) {
+	for _, test := range []struct {
+		in      string
+		want    bool
+		wantErr bool
+	}{
+		{`{"value": true}`, true, false},
+		{`{"value": false}`, false, false},
+		{`{"value": 1}`, true, false},
+		{`{"value": 0}`, false, false},
+		{`{"value": "INVALID"}`, false, true},
+	} {
+		var field ckBoolField
+		err := json.Unmarshal([]byte(test.in), &field)
+		if test.wantErr {
+			assert.Error(t, err, test.in)
+			continue
+		}
+		require.NoError(t, err, test.in)
+		assert.Equal(t, test.want, field.Value, test.in)
+	}
+
+	// isDeleted arrives as a number (0/1) on some accounts and as a
+	// boolean on others, so album records must parse both
+	var record albumRecord
+	err := json.Unmarshal([]byte(`{"recordName": "album1", "fields": {"isDeleted": {"value": 1}}}`), &record)
+	require.NoError(t, err)
+	require.NotNil(t, record.Fields.IsDeleted)
+	assert.True(t, record.Fields.IsDeleted.Value)
 }

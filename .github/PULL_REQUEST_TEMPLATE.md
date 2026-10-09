@@ -46,8 +46,9 @@ and https://github.com/rclone/rclone/blob/master/CONTRIBUTING.md#integration-tes
 
 - [ ] This change is trivial **OR** it has been discussed and agreed in the linked issue.
 - [ ] I have read the [contribution guidelines](https://github.com/rclone/rclone/blob/master/CONTRIBUTING.md#submitting-a-new-feature-or-bug-fix).
+- [ ] **(If I used AI tools to help write this code)** I have read and understood the [AI-assisted contributions guidance](https://github.com/rclone/rclone/blob/master/CONTRIBUTING.md#ai-assisted-contributions), and I have tested and take ownership of this change myself.
 - [ ] I have added tests for all changes in this PR if appropriate.
 - [ ] I have added documentation for the changes if appropriate.
 - [ ] All commit messages are in [house style](https://github.com/rclone/rclone/blob/master/CONTRIBUTING.md#commit-messages).
-- [ ] **(Backend changes only)** `test_all` passes for this backend and I can provide a test account for the integration tester - see [CONTRIBUTING.md](https://github.com/rclone/rclone/blob/master/CONTRIBUTING.md#integration-tests).
+- [ ] **(Backend changes only)** `test_all` passes for this backend and if submitting a new backend can provide a test account for the integration tester - see [CONTRIBUTING.md](https://github.com/rclone/rclone/blob/master/CONTRIBUTING.md#integration-tests).
 - [ ] This Pull Request is ready for review.

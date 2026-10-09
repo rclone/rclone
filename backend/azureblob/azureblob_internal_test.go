@@ -1,4 +1,4 @@
-//go:build !plan9 && !solaris && !js
+//go:build !plan9 && !js
 
 package azureblob
 
@@ -52,6 +52,58 @@ func TestBlockIDCreator(t *testing.T) {
 	assert.ErrorContains(t, bic.checkID(chunkNumber, "AAAA"+got), "bad block ID length")
 	assert.ErrorContains(t, bic.checkID(chunkNumber+1, got), "expecting decoded")
 	assert.ErrorContains(t, bic2.checkID(chunkNumber, got), "random bytes")
+}
+
+func TestDecodeMetaDataFromDownloadResponse(t *testing.T) {
+	pInt64 := func(i int64) *int64 { return &i }
+	pString := func(s string) *string { return &s }
+	newTestObject := func() *Object {
+		return &Object{
+			fs:     &Fs{},
+			remote: "test.bin",
+			size:   -2, // sentinel to check it gets set
+		}
+	}
+
+	t.Run("WholeBlob", func(t *testing.T) {
+		o := newTestObject()
+		info := blob.DownloadStreamResponse{}
+		info.ContentLength = pInt64(12345)
+		require.NoError(t, o.decodeMetaDataFromDownloadResponse(&info))
+		assert.Equal(t, int64(12345), o.size)
+	})
+
+	t.Run("RangeRequest", func(t *testing.T) {
+		// On a ranged download Content-Length is the chunk length so the
+		// size must come from the total in Content-Range
+		o := newTestObject()
+		info := blob.DownloadStreamResponse{}
+		info.ContentLength = pInt64(67108864)
+		info.ContentRange = pString("bytes 67108864-134217727/169721004032")
+		require.NoError(t, o.decodeMetaDataFromDownloadResponse(&info))
+		assert.Equal(t, int64(169721004032), o.size)
+	})
+
+	t.Run("BadContentRange", func(t *testing.T) {
+		o := newTestObject()
+		info := blob.DownloadStreamResponse{}
+		info.ContentLength = pInt64(67108864)
+		info.ContentRange = pString("potato")
+		require.NoError(t, o.decodeMetaDataFromDownloadResponse(&info))
+		assert.Equal(t, int64(67108864), o.size)
+	})
+
+	t.Run("UnknownLength", func(t *testing.T) {
+		o := newTestObject()
+		info := blob.DownloadStreamResponse{}
+		require.NoError(t, o.decodeMetaDataFromDownloadResponse(&info))
+		assert.Equal(t, int64(-1), o.size)
+	})
+}
+
+func TestCopySASTimingConstants(t *testing.T) {
+	require.Greater(t, sasCopyStartSkew, time.Duration(0))
+	require.Greater(t, sasCopyValidity, sasCopyStartSkew)
 }
 
 func (f *Fs) testFeatures(t *testing.T) {
@@ -213,6 +265,7 @@ func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("WriteUncommittedBlocks", f.testWriteUncommittedBlocks)
 	t.Run("Metadata", f.testMetadataPaths)
 	t.Run("GzipEncoding", f.testGzipEncoding)
+	t.Run("ArrowList", f.testArrowList)
 }
 
 // helper to read blob properties for an object
@@ -272,6 +325,14 @@ func assertHeadersAndMetadata(t *testing.T, props *blob.GetPropertiesResponse, w
 }
 
 // helper to read blob tags for an object
+// skipIfHNS skips the test if the storage account has a hierarchical
+// namespace as these don't support blob tags
+func skipIfHNS(t *testing.T, f *Fs) {
+	if f.hns {
+		t.Skip("blob tags not supported with hierarchical namespace")
+	}
+}
+
 func getTagsMap(ctx context.Context, t *testing.T, o fs.Object) map[string]string {
 	ao := o.(*Object)
 	blb := ao.getBlobSVC()
@@ -357,6 +418,7 @@ func (f *Fs) testMetadataPaths(t *testing.T) {
 
 		// Tags: Singlepart upload
 		t.Run("PutSinglepartTags", func(t *testing.T) {
+			skipIfHNS(t, f)
 			contents := random.String(int(f.opt.ChunkSize / 2))
 			item := fstest.NewItem("tags-single.txt", contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))
 			meta := fs.Metadata{
@@ -372,6 +434,7 @@ func (f *Fs) testMetadataPaths(t *testing.T) {
 
 		// Tags: Multipart upload
 		t.Run("PutMultipartTags", func(t *testing.T) {
+			skipIfHNS(t, f)
 			contents := random.String(int(f.opt.ChunkSize + 2048))
 			item := fstest.NewItem("tags-multipart.txt", contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))
 			meta := fs.Metadata{
@@ -559,6 +622,7 @@ func (f *Fs) testMetadataPaths(t *testing.T) {
 
 	// Tags: Singlepart copy
 	t.Run("CopySinglepartTags", func(t *testing.T) {
+		skipIfHNS(t, f)
 		// create small source
 		contents := random.String(int(f.opt.ChunkSize / 2))
 		srcItem := fstest.NewItem("tags-copy-single-src.txt", contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))
@@ -584,6 +648,7 @@ func (f *Fs) testMetadataPaths(t *testing.T) {
 
 	// Tags: Multipart copy
 	t.Run("CopyMultipartTags", func(t *testing.T) {
+		skipIfHNS(t, f)
 		// create large source to force multipart
 		contents := random.String(int(f.opt.CopyCutoff + 4096))
 		srcItem := fstest.NewItem("tags-copy-multi-src.txt", contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))

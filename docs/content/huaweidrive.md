@@ -123,9 +123,18 @@ Before accessing Drive service, developers need to create a server application f
 
 #### Enable Drive Application Switch
 
-1. Log in to the AppGallery Connect website and click "My Projects".
-2. Find your project in the project list, select the application that needs to access Drive in the project, and click "API Management".
-3. In the "API Management" area of the "Project Settings" page, click the switch on the right side of Drive Kit to ensure the switch is in the open state.
+1. Log in to AppGallery Connect with your Huawei account.
+2. Create a project or select an existing project.
+3. Add a web application to the project.
+4. Open "Project settings" for the application and copy the OAuth 2.0 Client
+   ID and Client Secret from the "General" tab.
+5. Open "API Management" for the project and enable "Cloud Drive".
+6. Add `http://127.0.0.1:53682/` as a redirect URI for the OAuth 2.0 Client
+   ID.
+
+The older Huawei Developer Console may show some of the same credential
+information, but AppGallery Connect is the place to create the project,
+application, API permission, and redirect URI used by rclone.
 
 #### Sign Huawei Cloud Drive Privacy Notice and User Agreement
 
@@ -137,23 +146,12 @@ Applications accessing Drive should use authentication credential Access Token. 
 
 Key steps summary:
 
-1. Log into the [Huawei Developer Console](https://developer.huawei.com/consumer/en/console) with your Huawei account.
-
-2. Create a new project or select an existing project.
-
-3. Go to "Manage APIs" and enable the "Drive Kit" API.
-
-4. Click on "Credentials" in the left side panel.
-
-5. Click "Create Credentials" and choose "OAuth client ID".
-
-6. Choose "Web application" as the application type.
-
-7. Add `http://localhost:53682/` to the "Authorized redirect URIs".
-
-8. Click "Create" and note down the Client ID and Client Secret.
-
-9. Provide the noted client ID and client secret to rclone during configuration.
+1. Create or select a project in AppGallery Connect.
+2. Add a web application to the project.
+3. Enable Cloud Drive in API Management.
+4. Configure `http://127.0.0.1:53682/` as the OAuth redirect URI.
+5. Copy the OAuth 2.0 Client ID and Client Secret from the application.
+6. Provide the client ID and client secret to rclone during configuration.
 
 ### Scopes
 

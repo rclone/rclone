@@ -52,9 +52,10 @@ type ResourceListResponse struct {
 
 // AsyncInfo struct is returned by the API for various async operations.
 type AsyncInfo struct {
-	HRef      string `json:"href"`
-	Method    string `json:"method"`
-	Templated bool   `json:"templated"`
+	HRef        string `json:"href"`
+	Method      string `json:"method"`
+	Templated   bool   `json:"templated"`
+	OperationID string `json:"operation_id"`
 }
 
 // AsyncStatus is returned when requesting the status of an async operations. Possible values in-progress, success, failure

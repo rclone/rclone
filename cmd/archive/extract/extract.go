@@ -17,6 +17,7 @@ import (
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/lib/sanitize"
 	"github.com/spf13/cobra"
 )
 
@@ -150,19 +151,13 @@ func ArchiveExtract(ctx context.Context, dst fs.Fs, dstDir string, src fs.Fs, sr
 	}
 	// extract files
 	err = ex.Extract(ctx, in, func(ctx context.Context, f archives.FileInfo) error {
-		remote := f.NameInArchive
-		// Strip leading "./" from archive paths. Tar files created with
-		// relative paths (e.g. "tar -czf archive.tar.gz .") use "./" prefixed
-		// entries. Without stripping, rclone encodes the "." as a full-width
-		// dot character creating a spurious directory. We only strip "./"
-		// specifically to avoid enabling path traversal attacks via "../".
-		remote = strings.TrimPrefix(remote, "./")
-		// If the entry was exactly "./" (the root dir), skip it
-		if remote == "" && f.IsDir() {
-			return nil
+		remote, err := destPath(f.NameInArchive, dstDir)
+		if err != nil {
+			return err
 		}
-		if dstDir != "" {
-			remote = path.Join(dstDir, remote)
+		// Skip the archive root entry ("./") which has no name of its own.
+		if remote == "" {
+			return nil
 		}
 		// check if file should be extracted
 		if !fi.Include(remote, f.Size(), f.ModTime(), fs.Metadata{}) {
@@ -202,4 +197,31 @@ func ArchiveExtract(ctx context.Context, dst fs.Fs, dstDir string, src fs.Fs, sr
 	fs.Infof(nil, "Total files extracted %d", filesExtracted)
 
 	return err
+}
+
+// destPath maps an archive entry name onto its destination remote within
+// dstDir, returning an error if the name is unsafe.
+//
+// Archive entry names are attacker controlled so they are sanitized with
+// sanitize.Path before being joined onto dstDir. This cleans the name
+// (stripping the "./" prefix which tar archives created with relative
+// paths, e.g. "tar -czf archive.tar.gz .", put on their entries) and
+// rejects any name with a ".." path component which would otherwise
+// escape the destination directory (a path traversal, or "Zip Slip",
+// attack).
+//
+// The returned remote is empty for the archive root entry ("./"), which the
+// caller should skip.
+func destPath(nameInArchive, dstDir string) (string, error) {
+	remote, err := sanitize.Path(nameInArchive)
+	if err != nil {
+		return "", fmt.Errorf("refusing to extract archive entry: %w", err)
+	}
+	if remote == "" {
+		return "", nil
+	}
+	if dstDir != "" {
+		remote = path.Join(dstDir, remote)
+	}
+	return remote, nil
 }

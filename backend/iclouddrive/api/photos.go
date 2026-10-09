@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"os"
 	"path"
@@ -1617,9 +1618,7 @@ func (ps *PhotosService) GetLibraryAlbumCounts(ctx context.Context) (map[string]
 		if err := ps.requestForArea(ctx, area, "internal/records/query/batch", map[string]any{"batch": batch}, &response); err != nil {
 			return nil, fmt.Errorf("failed to get library album counts: %w", err)
 		}
-		for k, v := range response.toCounts(order) {
-			counts[k] = v
-		}
+		maps.Copy(counts, response.toCounts(order))
 	}
 	return counts, nil
 }
@@ -1647,6 +1646,29 @@ type ckResourceField struct {
 
 type ckBoolField struct {
 	Value bool `json:"value"`
+}
+
+// UnmarshalJSON parses a CloudKit boolean field, accepting both the
+// boolean (true/false) and numeric (0/1) encodings the server uses
+func (b *ckBoolField) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		Value json.RawMessage `json:"value"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	if len(raw.Value) == 0 {
+		return nil
+	}
+	if err := json.Unmarshal(raw.Value, &b.Value); err == nil {
+		return nil
+	}
+	var n float64
+	if err := json.Unmarshal(raw.Value, &n); err != nil {
+		return fmt.Errorf("cannot unmarshal %q as CloudKit bool", raw.Value)
+	}
+	b.Value = n != 0
+	return nil
 }
 
 type ckReferenceField struct {
@@ -2009,7 +2031,7 @@ func (album *Album) fetchPhotosParallel(ctx context.Context, totalPhotos int64) 
 	sem := make(chan struct{}, workers)
 	var wg sync.WaitGroup
 
-	for i := 0; i < numPartitions; i++ {
+	for i := range numPartitions {
 		wg.Add(1)
 		go func(idx int) {
 			defer wg.Done()

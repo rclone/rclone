@@ -46,6 +46,11 @@ linters:
         - -ST1022
         # Disable quickfix checks
         - -QF*
+        # Disabled because its dataflow analysis (new in staticcheck
+        # 0.8.0) makes linting large packages more than 10x slower,
+        # which takes the CI lint job past its timeout, and it
+        # produces false positives (eg on operations.Delete).
+        - -SA4023
     gocritic:
       # With gocritic there are different settings, but since enabled-checks
       # and disabled-checks cannot both be set, for full customization the

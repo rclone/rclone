@@ -24,3 +24,8 @@ endpoint:
   us-iad-10.linodeobjects.com: Washington, DC, US (us-iad-10)
 acl: {}
 bucket_acl: true
+quirks:
+  # Linode Object Storage is Ceph-backed; signing Accept-Encoding causes
+  # SignatureDoesNotMatch with rclone 1.68+. Match the Ceph quirk.
+  # See: https://github.com/rclone/rclone/issues/8206
+  sign_accept_encoding: false

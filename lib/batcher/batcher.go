@@ -47,6 +47,7 @@ type Batcher[Item, Result any] struct {
 	in       chan request[Item, Result]  // incoming items to batch
 	closed   chan struct{}               // close to indicate batcher shut down
 	atexit   atexit.FnHandle             // atexit handle
+	admitMu  sync.Mutex                  // serializes Commit admission with shutdown
 	shutOnce sync.Once                   // make sure we shutdown once only
 	wg       sync.WaitGroup              // wait for shutdown
 }
@@ -239,6 +240,7 @@ func (b *Batcher[Item, Result]) Shutdown() {
 	b.shutOnce.Do(func() {
 		atexit.Unregister(b.atexit)
 		fs.Infof(b.f, "Committing uploads - please wait...")
+		b.admitMu.Lock()
 		// show that batcher is shutting down
 		close(b.closed)
 		// quit the commitLoop by sending a quitRequest message
@@ -247,6 +249,7 @@ func (b *Batcher[Item, Result]) Shutdown() {
 		// cause write to closed channel in Commit when we are
 		// exiting due to a signal.
 		b.in <- request[Item, Result]{quit: true}
+		b.admitMu.Unlock()
 		b.wg.Wait()
 	})
 }
@@ -261,8 +264,10 @@ func (b *Batcher[Item, Result]) Shutdown() {
 // This should not be called if batching is off - check first with
 // IsBatching.
 func (b *Batcher[Item, Result]) Commit(ctx context.Context, name string, item Item) (entry Result, err error) {
+	b.admitMu.Lock()
 	select {
 	case <-b.closed:
+		b.admitMu.Unlock()
 		return entry, fserrors.FatalError(errors.New("batcher is shutting down"))
 	default:
 	}
@@ -273,6 +278,7 @@ func (b *Batcher[Item, Result]) Commit(ctx context.Context, name string, item It
 		name:   name,
 		result: resp,
 	}
+	b.admitMu.Unlock()
 	// If running async then don't wait for the result
 	if b.async {
 		return entry, nil
