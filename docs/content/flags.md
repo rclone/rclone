@@ -121,7 +121,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.75.1")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.75.2")
 ```
 
 
@@ -370,6 +370,7 @@ Backend-only flags (these can be set in the config file also).
       --azureblob-env-auth                                  Read credentials from runtime (environment variables, CLI or MSI)
       --azureblob-key string                                Storage Account Shared Key
       --azureblob-list-chunk int                            Size of blob list (default 5000)
+      --azureblob-list-parallelism int                      Number of parallel shards to list a directory with
       --azureblob-msi-client-id string                      Object ID of the user-assigned MSI to use, if any
       --azureblob-msi-mi-res-id string                      Azure resource ID of the user-assigned MSI to use, if any
       --azureblob-msi-object-id string                      Object ID of the user-assigned MSI to use, if any
@@ -382,6 +383,7 @@ Backend-only flags (these can be set in the config file also).
       --azureblob-tenant string                             ID of the service principal's tenant. Also called its directory ID
       --azureblob-upload-concurrency int                    Concurrency for multipart uploads (default 16)
       --azureblob-upload-cutoff string                      Cutoff for switching to chunked upload (<= 256 MiB) (deprecated)
+      --azureblob-use-arrow-list                            Use the Apache Arrow listing format
       --azureblob-use-az                                    Use Azure CLI tool az for authentication
       --azureblob-use-copy-blob                             Whether to use the Copy Blob API when copying to the same storage account (default true)
       --azureblob-use-emulator                              Uses local storage emulator if provided as 'true'
@@ -1166,7 +1168,7 @@ Backend-only flags (these can be set in the config file also).
       --smb-port int                                        SMB port number (default 445)
       --smb-spn string                                      Service principal name
       --smb-use-kerberos                                    Use Kerberos authentication
-      --smb-user string                                     SMB username (default "$USER")
+      --smb-user string                                     SMB username
       --storj-access-grant string                           Access grant
       --storj-api-key string                                API key
       --storj-description string                            Description of the remote

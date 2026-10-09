@@ -49,6 +49,13 @@ accept in the HTTP header.
 will overriding existing values. The flag may be repeated to add multiple
 headers. Use the format `Header-Name: value`.
 
+`--allow-origin` enables cross-origin (CORS) requests from browsers
+by setting the `Access-Control-Allow-Origin` header on every response to the
+origin given, e.g. `--allow-origin https://app.example.com`. Browser
+CORS preflight OPTIONS requests are answered by rclone without needing
+authentication as browsers never send credentials with them. Setting this
+to `*` allows any origin which is a security risk on an authenticated server.
+
 `--baseurl` controls the URL prefix that rclone serves from.  By default
 rclone will serve from the root.  If you used `--baseurl "/rclone"` then
 rclone would serve from a URL starting with "/rclone/".  This is
@@ -168,6 +175,14 @@ htpasswd -B htpasswd anotherUser
 ```
 
 The password file can be updated while rclone is running.
+
+When authentication is enabled every request must be authenticated,
+including HTTP OPTIONS requests, as the answer to an OPTIONS request can
+reveal whether a path exists. Health checks or monitoring which use
+unauthenticated OPTIONS requests will need to send credentials. The
+exception is browser CORS preflight requests when `--allow-origin`
+is set, which are answered without authentication as browsers never send
+credentials with them.
 
 Use `--realm` to set the authentication realm.
 
@@ -446,7 +461,7 @@ Rclone reads `--vfs-read-chunk-streams` chunks of size
 `--vfs-read-chunk-size` concurrently. The size for each read will stay
 constant.
 
-This improves performance performance massively on high latency links
+This improves performance massively on high latency links
 or very high bandwidth links to high performance object stores.
 
 Some experimentation will be needed to find the optimum values of

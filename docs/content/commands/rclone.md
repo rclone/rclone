@@ -52,6 +52,7 @@ rclone [flags]
       --azureblob-env-auth                                  Read credentials from runtime (environment variables, CLI or MSI)
       --azureblob-key string                                Storage Account Shared Key
       --azureblob-list-chunk int                            Size of blob list (default 5000)
+      --azureblob-list-parallelism int                      Number of parallel shards to list a directory with
       --azureblob-msi-client-id string                      Object ID of the user-assigned MSI to use, if any
       --azureblob-msi-mi-res-id string                      Azure resource ID of the user-assigned MSI to use, if any
       --azureblob-msi-object-id string                      Object ID of the user-assigned MSI to use, if any
@@ -64,6 +65,7 @@ rclone [flags]
       --azureblob-tenant string                             ID of the service principal's tenant. Also called its directory ID
       --azureblob-upload-concurrency int                    Concurrency for multipart uploads (default 16)
       --azureblob-upload-cutoff string                      Cutoff for switching to chunked upload (<= 256 MiB) (deprecated)
+      --azureblob-use-arrow-list                            Use the Apache Arrow listing format
       --azureblob-use-az                                    Use Azure CLI tool az for authentication
       --azureblob-use-copy-blob                             Whether to use the Copy Blob API when copying to the same storage account (default true)
       --azureblob-use-emulator                              Uses local storage emulator if provided as 'true'
@@ -1023,7 +1025,7 @@ rclone [flags]
       --smb-port int                                        SMB port number (default 445)
       --smb-spn string                                      Service principal name
       --smb-use-kerberos                                    Use Kerberos authentication
-      --smb-user string                                     SMB username (default "$USER")
+      --smb-user string                                     SMB username
       --stats Duration                                      Interval between printing stats, e.g. 500ms, 60s, 5m (0 to disable) (default 1m0s)
       --stats-file-name-length int                          Max file name length in stats (0 for no limit) (default 45)
       --stats-log-level LogLevel                            Log level to show --stats output DEBUG|INFO|NOTICE|ERROR (default INFO)
@@ -1107,7 +1109,7 @@ rclone [flags]
       --use-json-log                                        Use json log format
       --use-mmap                                            Use mmap allocator (see docs)
       --use-server-modtime                                  Use server modified time instead of object metadata
-      --user-agent string                                   Set the user-agent to a specified string (default "rclone/v1.75.1")
+      --user-agent string                                   Set the user-agent to a specified string (default "rclone/v1.75.2")
   -v, --verbose count                                       Print lots more stuff (repeat for more)
   -V, --version                                             Print the version number
       --webdav-auth-redirect                                Preserve authentication on redirect

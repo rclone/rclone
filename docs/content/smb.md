@@ -137,12 +137,14 @@ Properties:
 
 SMB username.
 
+Leave blank to use the current user name.
+
 Properties:
 
 - Config:      user
 - Env Var:     RCLONE_SMB_USER
 - Type:        string
-- Default:     "$USER"
+- Required:    false
 
 #### --smb-port
 

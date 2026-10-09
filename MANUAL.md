@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Sep 04, 2026
+% Oct 09, 2026
 
 # NAME
 
@@ -587,12 +587,6 @@ package is here.
 ## Docker installation {#docker}
 
 The rclone developers maintain a [docker image for rclone](https://hub.docker.com/r/rclone/rclone).
-
-**Note:** We also now offer a paid version of rclone with
-enterprise-grade security and zero CVEs through our partner
-[SecureBuild](https://securebuild.com/blog/introducing-securebuild).
-If you are interested, check out their website and the [Rclone
-SecureBuild Image](https://securebuild.com/images/rclone).
 
 These images are built as part of the release process based on a
 minimal Alpine Linux.
@@ -2334,6 +2328,10 @@ Note that `ls` and `lsl` recurse by default - use `--max-depth 1` to stop the re
 The other list commands `lsd`,`lsf`,`lsjson` do not recurse by default -
 use `-R` to make them recurse.
 
+On the bucket-based remotes (e.g. s3, gcs, b2) a directory is a key prefix
+rather than an object, so a listing without `-R` shows each prefix as one
+directory entry and not the objects stored under it.
+
 List commands prefer a recursive method that uses more memory but fewer
 transactions by default. Use `--disable ListR` to suppress the behavior.
 See [`--fast-list`](https://rclone.org/docs/#fast-list) for more details.
@@ -2455,6 +2453,10 @@ Note that `ls` and `lsl` recurse by default - use `--max-depth 1` to stop the re
 The other list commands `lsd`,`lsf`,`lsjson` do not recurse by default -
 use `-R` to make them recurse.
 
+On the bucket-based remotes (e.g. s3, gcs, b2) a directory is a key prefix
+rather than an object, so a listing without `-R` shows each prefix as one
+directory entry and not the objects stored under it.
+
 List commands prefer a recursive method that uses more memory but fewer
 transactions by default. Use `--disable ListR` to suppress the behavior.
 See [`--fast-list`](https://rclone.org/docs/#fast-list) for more details.
@@ -2564,6 +2566,10 @@ Note that `ls` and `lsl` recurse by default - use `--max-depth 1` to stop the re
 
 The other list commands `lsd`,`lsf`,`lsjson` do not recurse by default -
 use `-R` to make them recurse.
+
+On the bucket-based remotes (e.g. s3, gcs, b2) a directory is a key prefix
+rather than an object, so a listing without `-R` shows each prefix as one
+directory entry and not the objects stored under it.
 
 List commands prefer a recursive method that uses more memory but fewer
 transactions by default. Use `--disable ListR` to suppress the behavior.
@@ -5479,12 +5485,12 @@ rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,command=e
 
 ```console
 rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{YYYYMMDD}"
-// Output: stories/The Quick Brown Fox!-20260904
+// Output: stories/The Quick Brown Fox!-20261009
 ```
 
 ```console
 rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{macfriendlytime}"
-// Output: stories/The Quick Brown Fox!-2026-09-04 0450PM
+// Output: stories/The Quick Brown Fox!-2026-10-09 1021AM
 ```
 
 ```console
@@ -6844,6 +6850,10 @@ Note that `ls` and `lsl` recurse by default - use `--max-depth 1` to stop the re
 The other list commands `lsd`,`lsf`,`lsjson` do not recurse by default -
 use `-R` to make them recurse.
 
+On the bucket-based remotes (e.g. s3, gcs, b2) a directory is a key prefix
+rather than an object, so a listing without `-R` shows each prefix as one
+directory entry and not the objects stored under it.
+
 List commands prefer a recursive method that uses more memory but fewer
 transactions by default. Use `--disable ListR` to suppress the behavior.
 See [`--fast-list`](https://rclone.org/docs/#fast-list) for more details.
@@ -7031,6 +7041,10 @@ Note that `ls` and `lsl` recurse by default - use `--max-depth 1` to stop the re
 
 The other list commands `lsd`,`lsf`,`lsjson` do not recurse by default -
 use `-R` to make them recurse.
+
+On the bucket-based remotes (e.g. s3, gcs, b2) a directory is a key prefix
+rather than an object, so a listing without `-R` shows each prefix as one
+directory entry and not the objects stored under it.
 
 List commands prefer a recursive method that uses more memory but fewer
 transactions by default. Use `--disable ListR` to suppress the behavior.
@@ -7954,7 +7968,7 @@ Rclone reads `--vfs-read-chunk-streams` chunks of size
 `--vfs-read-chunk-size` concurrently. The size for each read will stay
 constant.
 
-This improves performance performance massively on high latency links
+This improves performance massively on high latency links
 or very high bandwidth links to high performance object stores.
 
 Some experimentation will be needed to find the optimum values of
@@ -9466,7 +9480,7 @@ Rclone reads `--vfs-read-chunk-streams` chunks of size
 `--vfs-read-chunk-size` concurrently. The size for each read will stay
 constant.
 
-This improves performance performance massively on high latency links
+This improves performance massively on high latency links
 or very high bandwidth links to high performance object stores.
 
 Some experimentation will be needed to find the optimum values of
@@ -10070,6 +10084,13 @@ accept in the HTTP header.
 will overriding existing values. The flag may be repeated to add multiple
 headers. Use the format `Header-Name: value`.
 
+`--rc-allow-origin` enables cross-origin (CORS) requests from browsers
+by setting the `Access-Control-Allow-Origin` header on every response to the
+origin given, e.g. `--rc-allow-origin https://app.example.com`. Browser
+CORS preflight OPTIONS requests are answered by rclone without needing
+authentication as browsers never send credentials with them. Setting this
+to `*` allows any origin which is a security risk on an authenticated server.
+
 `--rc-baseurl` controls the URL prefix that rclone serves from.  By default
 rclone will serve from the root.  If you used `--rc-baseurl "/rclone"` then
 rclone would serve from a URL starting with "/rclone/".  This is
@@ -10189,6 +10210,14 @@ htpasswd -B htpasswd anotherUser
 ```
 
 The password file can be updated while rclone is running.
+
+When authentication is enabled every request must be authenticated,
+including HTTP OPTIONS requests, as the answer to an OPTIONS request can
+reveal whether a path exists. Health checks or monitoring which use
+unauthenticated OPTIONS requests will need to send credentials. The
+exception is browser CORS preflight requests when `--rc-allow-origin`
+is set, which are answered without authentication as browsers never send
+credentials with them.
 
 Use `--rc-realm` to set the authentication realm.
 
@@ -10756,7 +10785,7 @@ Rclone reads `--vfs-read-chunk-streams` chunks of size
 `--vfs-read-chunk-size` concurrently. The size for each read will stay
 constant.
 
-This improves performance performance massively on high latency links
+This improves performance massively on high latency links
 or very high bandwidth links to high performance object stores.
 
 Some experimentation will be needed to find the optimum values of
@@ -11433,7 +11462,7 @@ Rclone reads `--vfs-read-chunk-streams` chunks of size
 `--vfs-read-chunk-size` concurrently. The size for each read will stay
 constant.
 
-This improves performance performance massively on high latency links
+This improves performance massively on high latency links
 or very high bandwidth links to high performance object stores.
 
 Some experimentation will be needed to find the optimum values of
@@ -12063,7 +12092,7 @@ Rclone reads `--vfs-read-chunk-streams` chunks of size
 `--vfs-read-chunk-size` concurrently. The size for each read will stay
 constant.
 
-This improves performance performance massively on high latency links
+This improves performance massively on high latency links
 or very high bandwidth links to high performance object stores.
 
 Some experimentation will be needed to find the optimum values of
@@ -12541,6 +12570,13 @@ accept in the HTTP header.
 will overriding existing values. The flag may be repeated to add multiple
 headers. Use the format `Header-Name: value`.
 
+`--allow-origin` enables cross-origin (CORS) requests from browsers
+by setting the `Access-Control-Allow-Origin` header on every response to the
+origin given, e.g. `--allow-origin https://app.example.com`. Browser
+CORS preflight OPTIONS requests are answered by rclone without needing
+authentication as browsers never send credentials with them. Setting this
+to `*` allows any origin which is a security risk on an authenticated server.
+
 `--baseurl` controls the URL prefix that rclone serves from.  By default
 rclone will serve from the root.  If you used `--baseurl "/rclone"` then
 rclone would serve from a URL starting with "/rclone/".  This is
@@ -12660,6 +12696,14 @@ htpasswd -B htpasswd anotherUser
 ```
 
 The password file can be updated while rclone is running.
+
+When authentication is enabled every request must be authenticated,
+including HTTP OPTIONS requests, as the answer to an OPTIONS request can
+reveal whether a path exists. Health checks or monitoring which use
+unauthenticated OPTIONS requests will need to send credentials. The
+exception is browser CORS preflight requests when `--allow-origin`
+is set, which are answered without authentication as browsers never send
+credentials with them.
 
 Use `--realm` to set the authentication realm.
 
@@ -12938,7 +12982,7 @@ Rclone reads `--vfs-read-chunk-streams` chunks of size
 `--vfs-read-chunk-size` concurrently. The size for each read will stay
 constant.
 
-This improves performance performance massively on high latency links
+This improves performance massively on high latency links
 or very high bandwidth links to high performance object stores.
 
 Some experimentation will be needed to find the optimum values of
@@ -13756,7 +13800,7 @@ Rclone reads `--vfs-read-chunk-streams` chunks of size
 `--vfs-read-chunk-size` concurrently. The size for each read will stay
 constant.
 
-This improves performance performance massively on high latency links
+This improves performance massively on high latency links
 or very high bandwidth links to high performance object stores.
 
 Some experimentation will be needed to find the optimum values of
@@ -14186,6 +14230,13 @@ accept in the HTTP header.
 will overriding existing values. The flag may be repeated to add multiple
 headers. Use the format `Header-Name: value`.
 
+`--allow-origin` enables cross-origin (CORS) requests from browsers
+by setting the `Access-Control-Allow-Origin` header on every response to the
+origin given, e.g. `--allow-origin https://app.example.com`. Browser
+CORS preflight OPTIONS requests are answered by rclone without needing
+authentication as browsers never send credentials with them. Setting this
+to `*` allows any origin which is a security risk on an authenticated server.
+
 `--baseurl` controls the URL prefix that rclone serves from.  By default
 rclone will serve from the root.  If you used `--baseurl "/rclone"` then
 rclone would serve from a URL starting with "/rclone/".  This is
@@ -14272,6 +14323,14 @@ htpasswd -B htpasswd anotherUser
 
 The password file can be updated while rclone is running.
 
+When authentication is enabled every request must be authenticated,
+including HTTP OPTIONS requests, as the answer to an OPTIONS request can
+reveal whether a path exists. Health checks or monitoring which use
+unauthenticated OPTIONS requests will need to send credentials. The
+exception is browser CORS preflight requests when `--allow-origin`
+is set, which are answered without authentication as browsers never send
+credentials with them.
+
 Use `--realm` to set the authentication realm.
 
 Use `--salt` to change the password hashing salt from the default.
@@ -14344,7 +14403,16 @@ Alternatively `--auth-proxy` can be used to look up the secret for each
 access key ID and choose the backend it maps to (see [Auth
 Proxy](#auth-proxy) below). When an auth proxy is in use `--auth-key`
 is ignored and every request must be signed with the secret the proxy
-returns for its access key ID.
+returns for its access key ID. Each access key ID is a separate user,
+whose multipart uploads and object metadata are private to it, even if
+the proxy maps several access key IDs to the same backend.
+
+As on AWS, every `x-amz-*` header in an authenticated request must be
+in its signed headers list; a request with an unsigned `x-amz-*`
+header is refused with `AccessDenied`. S3 clients sign these headers
+as a matter of course, but a header added after signing (for example
+by a proxy in front of the server, or `x-amz-meta-*` headers sent
+with a presigned URL which only signs the host) is refused.
 
 Like all rclone flags `--auth-key` can be set via environment
 variables, in this case `RCLONE_AUTH_KEY`. Since this flag can be
@@ -14380,6 +14448,8 @@ part of the hostname (such as mybucket.local)
 Use `--etag-hash` if you want to change the hash uses for the `ETag`.
 Note that using anything other than `MD5` (the default) is likely to
 cause problems for S3 clients which rely on the Etag being the MD5.
+Use `--etag-hash auto` to use the best hash the backend supports - with
+`--auth-proxy` that of each user's backend.
 
 ## Quickstart
 
@@ -14451,8 +14521,8 @@ never becomes visible under it.
 With the default `--vfs-cache-mode off` `serve s3` **streams** each
 multipart upload, in part-number order, into a single streaming upload
 to the underlying remote, so the whole file is never buffered in
-memory. Memory use stays bounded by the parts in flight. The remote
-then performs its own internal upload (for example its own multipart
+memory: only parts which arrive out of order are buffered, within the
+limits described below. The remote then performs its own internal upload (for example its own multipart
 upload, still with bounded memory). Remotes that don't support
 streaming uploads (those that must know the file size before the
 upload starts, such as `onedrive`, `pcloud`, `jottacloud`, `mailru`,
@@ -14491,8 +14561,8 @@ remote as if it had completed.
 
 **Features**
 
-- The whole object is never buffered in memory; memory use is bounded by
-  the parts in flight, not the upload size.
+- The whole object is never buffered in memory; only parts arriving out
+  of order are, within fixed limits, whatever the upload size.
 - Parts can be any size. Clients that don't produce uniform-sized parts
   work fine - for example PostgreSQL backup tools such as **pgBarman**
   and **pgBackRest**, which flush an upload buffer once it grows past
@@ -14513,26 +14583,41 @@ remote as if it had completed.
 
 **Limitations**
 
-- Parts must arrive in ascending, contiguous part-number order
-  (1, 2, 3, ...). Parts the client uploads concurrently or out of order
-  are buffered until their turn. The memory used for this buffering is
-  capped, per upload, by `--multipart-streaming-buffer-limit` (default
-  `256M`, `0` for no limit): a part that would take the buffer over the
-  limit is stalled until the stream drains, so a client that uploads
-  faster than the remote can accept sees backpressure rather than
-  unbounded server memory use. Since a stalled part holds its HTTP
-  request open, clients whose upload concurrency times chunk size
-  exceeds the limit may need a longer read timeout when the remote is
-  slow. Non-contiguous part numbers are rejected on completion.
-  Configure the client to upload in part order, ideally with low
-  concurrency, for the lowest memory use.
+- Parts must arrive in ascending, contiguous part-number order (1, 2, 3,
+  ...). The part the stream needs next is written straight through as it
+  arrives, so it is never buffered, whatever its size. Parts the client
+  uploads concurrently or out of order are buffered until their turn.
+  The memory used for this buffering is capped, per upload, by
+  `--multipart-streaming-buffer-limit` (default `256M`, `0` for no
+  limit), and across all the uploads of each user (each access key) by
+  `--multipart-streaming-buffer-total` (default `1G`, `0` for no
+  limit), counting each buffered part in the
+  whole 1 MiB memory pages it occupies: a part that would take the
+  buffer over either limit is stalled until the stream drains (or, if it
+  is bigger than the limits, until it is the next part), so a client
+  that uploads faster than the remote can accept sees backpressure
+  rather than unbounded server memory use. A stalled part holds its HTTP
+  request open, and one stalled for more than a minute is failed with a
+  `SlowDown` error, which S3 clients retry. Clients whose upload
+  concurrency times part size exceeds the limits will see these stalls
+  and retries when the remote is slower than the client. Non-contiguous
+  part numbers are rejected on completion. Configure the client to
+  upload in part order, ideally with low concurrency, for the lowest
+  memory use.
 - A part uploaded again before completion - typically a client retrying
   after a timeout - is accepted: if the earlier copy is still buffered
   it is replaced, and if it has already been streamed an identical
-  re-upload is a no-op. What isn't possible is replacing a part that has
-  already been streamed with *different* content - that is rejected. A
-  failure in the stream to the remote itself still aborts the whole
-  upload and the client must start it again. (The remote's own upload
+  re-upload is a no-op (a re-upload which arrives while the part is
+  being streamed waits for it to finish first). If a part fails part way
+  through being streamed
+  (for example the client's connection drops) the client's retry of it
+  carries on where it stopped, provided it has the same content. What
+  isn't possible is replacing a part that has already been streamed,
+  in whole or in part, with *different* content - that is rejected. A
+  part which arrives in full but is then rejected, for example because
+  it doesn't match the `Content-MD5` the client declared, has already
+  been streamed, so the whole upload is failed and the client must
+  start it again. So is a failure in the stream to the remote itself. (The remote's own upload
   still retries its internal chunks.)
 - Parts are serialised into one stream, so ingest from the client is
   effectively single-threaded. When streaming, the remote's own upload
@@ -14634,7 +14719,18 @@ clock, so the expiry only needs to outlast the client's pauses
 
 Late operations on an expired upload fail with `NoSuchUpload`, as they
 do on real S3 when a lifecycle rule has aborted the upload. Set
-`--multipart-expiry 0` to keep incomplete uploads forever.
+`--multipart-expiry 0` to keep incomplete uploads forever - but note
+that abandoned uploads are then never cleaned up and go on counting
+towards `--multipart-max-uploads` below, so enough of them will stop
+the user starting any new multipart upload until the server is
+restarted.
+
+Each multipart upload in progress holds server resources - for example
+the buffers the remote's own upload uses once the first part has
+arrived - so each user (each access key) can have no more than
+`--multipart-max-uploads` (default `1000`, `0` for no limit) in
+progress at once. Starting another fails with a `SlowDown` error,
+which S3 clients retry, and a one-off `NOTICE` is logged.
 
 ### Disabling streaming
 
@@ -14647,9 +14743,66 @@ use grows with the size of the upload**, so it is only suitable for
 small objects. A one-off `NOTICE` is logged the first time this
 happens. This flag is the only thing that makes multipart uploads
 buffer in memory - it is never done because of missing remote
-capabilities. Consider `--vfs-cache-mode writes` instead, which
-buffers the upload in the VFS cache on disk and takes precedence over
+capabilities. The limits on multipart uploads above
+(`--multipart-streaming-buffer-limit`,
+`--multipart-streaming-buffer-total` and `--multipart-max-uploads`) do
+not apply to uploads buffered in memory, so don't use this flag if the
+server is open to clients you don't trust. Consider
+`--vfs-cache-mode writes` instead, which buffers the upload in the VFS
+cache on disk and takes precedence over
 `--disable-multipart-streaming`.
+
+## Memory use
+
+`serve s3` never buffers whole objects in memory (except with
+`--disable-multipart-streaming`, above), and limits the memory each
+kind of request can use, so that a client, even a hostile one, can't
+make it use unbounded memory.
+
+- **Object data.** `PutObject` bodies and multipart parts arriving in
+  order are streamed straight through to the remote. Parts arriving out
+  of order are buffered, up to `--multipart-streaming-buffer-limit`
+  per upload and `--multipart-streaming-buffer-total` per user.
+- **Uploads in progress.** Each user can have at most
+  `--multipart-max-uploads` multipart uploads in progress. An upload
+  holds little memory until its
+  first part arrives. After that, with `--vfs-cache-mode off`, it holds
+  a `--streaming-upload-cutoff` sized buffer plus whatever the remote's
+  own upload buffers, which for many remotes is up to their chunk size
+  times their upload concurrency (for example `--s3-chunk-size` times
+  `--s3-upload-concurrency`). Plain `PutObject` uploads use the same
+  while they are in progress.
+- **Metadata.** The metadata of at most `--metadata-max-objects`
+  objects of each user is kept, each limited to 2 KB.
+- **Request bodies.** The XML bodies of requests such as
+  `CompleteMultipartUpload` and `DeleteObjects` are limited to 10 MiB,
+  and `DeleteObjects` to 1000 keys. A browser form (`POST`) upload
+  holds at most 1 MiB in memory, spooling the rest to a temporary file,
+  and is limited to 5 GB.
+- **Listings.** Each page of a `ListObjects` listing reads only the
+  directories needed to fill it, and returns at most 1000 keys.
+  Directory listings are cached by the [VFS directory
+  cache](#vfs-directory-cache).
+
+The largest of these is usually the remote's upload buffers, which can
+be up to `--multipart-max-uploads` times the buffers of one upload for
+each user if clients start many uploads and send part of each. The
+limits apply to each user separately, so that one user can't stop
+others uploading, which means the memory use grows with the number of
+users. To limit it, lower
+`--multipart-max-uploads`, the remote's chunk size or upload
+concurrency, or set `--max-buffer-memory` to limit the memory used by
+the buffers of all uploads to remotes which use rclone's buffer pool
+(including `s3`, `azureblob` and `b2`). Buffered multipart parts come
+from the same pool, so if you set `--max-buffer-memory` make it
+comfortably bigger than `--multipart-streaming-buffer-total` times the
+number of users uploading at once, otherwise
+buffered parts can use up all the memory the remote needs to upload the
+parts which would free them.
+
+The number of connections is not limited, so if the server is open to
+clients you don't trust, use `--auth-key` or `--auth-proxy` and
+consider putting it behind a reverse proxy which limits connections.
 
 ## Bugs
 
@@ -14674,16 +14827,20 @@ When using `PutObject` or `DeleteObject`, rclone will automatically
 create or clean up empty folders. If you don't want to clean up empty
 folders automatically, use `--no-cleanup`.
 
-When using `ListObjects`, rclone will use `/` when the delimiter is
-empty. This reduces backend requests with no effect on most
-operations, but if the delimiter is something other than `/` and
-empty, rclone will do a full recursive search of the backend, which
-can take some time.
+When using `ListObjects`, rclone treats any delimiter as `/`. Without a
+delimiter the listing is recursive: rclone walks the directory tree
+below the prefix, reading only as many directories as it needs to fill
+each page.
 
 Versioning is not currently supported.
 
 Metadata will only be saved in memory other than the rclone `mtime`
-metadata which will be set as the modification time of the file.
+metadata which will be set as the modification time of the file. The
+metadata of at most `--metadata-max-objects` objects (default `100000`,
+`0` for no limit) of each user (each access key) is kept; after that
+the metadata of the user's least recently used object is forgotten. The metadata of an object is
+ignored once the object has been changed some other way, for example
+by another `--auth-proxy` user or directly on the backend.
 
 ## Object names
 
@@ -14749,6 +14906,14 @@ htpasswd -B htpasswd anotherUser
 
 The password file can be updated while rclone is running.
 
+When authentication is enabled every request must be authenticated,
+including HTTP OPTIONS requests, as the answer to an OPTIONS request can
+reveal whether a path exists. Health checks or monitoring which use
+unauthenticated OPTIONS requests will need to send credentials. The
+exception is browser CORS preflight requests when `--allow-origin`
+is set, which are answered without authentication as browsers never send
+credentials with them.
+
 Use `--realm` to set the authentication realm.
 
 Use `--salt` to change the password hashing salt from the default.
@@ -14779,6 +14944,13 @@ accept in the HTTP header.
 `--response-header` can be used to set an HTTP header for all responses,
 will overriding existing values. The flag may be repeated to add multiple
 headers. Use the format `Header-Name: value`.
+
+`--allow-origin` enables cross-origin (CORS) requests from browsers
+by setting the `Access-Control-Allow-Origin` header on every response to the
+origin given, e.g. `--allow-origin https://app.example.com`. Browser
+CORS preflight OPTIONS requests are answered by rclone without needing
+authentication as browsers never send credentials with them. Setting this
+to `*` allows any origin which is a security risk on an authenticated server.
 
 `--baseurl` controls the URL prefix that rclone serves from.  By default
 rclone will serve from the root.  If you used `--baseurl "/rclone"` then
@@ -15109,7 +15281,7 @@ Rclone reads `--vfs-read-chunk-streams` chunks of size
 `--vfs-read-chunk-size` concurrently. The size for each read will stay
 constant.
 
-This improves performance performance massively on high latency links
+This improves performance massively on high latency links
 or very high bandwidth links to high performance object stores.
 
 Some experimentation will be needed to find the optimum values of
@@ -15473,9 +15645,12 @@ rclone serve s3 remote:path [flags]
       --key string                                    TLS PEM Private key
       --link-perms FileMode                           Link permissions (default 666)
       --max-header-bytes int                          Maximum size of request header (default 4096)
+      --metadata-max-objects int                      Maximum number of objects of a user whose metadata is kept in memory, 0 for unlimited (default 100000)
       --min-tls-version string                        Minimum TLS version that is acceptable (default "tls1.0")
       --multipart-expiry Duration                     Abort incomplete multipart uploads idle for longer than this, 0 to keep forever (default 1d)
+      --multipart-max-uploads int                     Maximum number of streamed multipart uploads a user can have in progress at once, 0 for unlimited (default 1000)
       --multipart-streaming-buffer-limit SizeSuffix   Maximum memory buffered per streamed multipart upload for parts arriving out of order, 0 for unlimited (default 256Mi)
+      --multipart-streaming-buffer-total SizeSuffix   Maximum memory buffered by all the streamed multipart uploads of a user for parts arriving out of order, 0 for unlimited (default 1Gi)
       --no-checksum                                   Don't compare checksums on up/download
       --no-cleanup                                    Not to cleanup empty folder after object is deleted
       --no-modtime                                    Don't read/write the modification time (can speed things up)
@@ -15905,7 +16080,7 @@ Rclone reads `--vfs-read-chunk-streams` chunks of size
 `--vfs-read-chunk-size` concurrently. The size for each read will stay
 constant.
 
-This improves performance performance massively on high latency links
+This improves performance massively on high latency links
 or very high bandwidth links to high performance object stores.
 
 Some experimentation will be needed to find the optimum values of
@@ -16460,6 +16635,13 @@ accept in the HTTP header.
 will overriding existing values. The flag may be repeated to add multiple
 headers. Use the format `Header-Name: value`.
 
+`--allow-origin` enables cross-origin (CORS) requests from browsers
+by setting the `Access-Control-Allow-Origin` header on every response to the
+origin given, e.g. `--allow-origin https://app.example.com`. Browser
+CORS preflight OPTIONS requests are answered by rclone without needing
+authentication as browsers never send credentials with them. Setting this
+to `*` allows any origin which is a security risk on an authenticated server.
+
 `--baseurl` controls the URL prefix that rclone serves from.  By default
 rclone will serve from the root.  If you used `--baseurl "/rclone"` then
 rclone would serve from a URL starting with "/rclone/".  This is
@@ -16579,6 +16761,14 @@ htpasswd -B htpasswd anotherUser
 ```
 
 The password file can be updated while rclone is running.
+
+When authentication is enabled every request must be authenticated,
+including HTTP OPTIONS requests, as the answer to an OPTIONS request can
+reveal whether a path exists. Health checks or monitoring which use
+unauthenticated OPTIONS requests will need to send credentials. The
+exception is browser CORS preflight requests when `--allow-origin`
+is set, which are answered without authentication as browsers never send
+credentials with them.
 
 Use `--realm` to set the authentication realm.
 
@@ -16857,7 +17047,7 @@ Rclone reads `--vfs-read-chunk-streams` chunks of size
 `--vfs-read-chunk-size` concurrently. The size for each read will stay
 constant.
 
-This improves performance performance massively on high latency links
+This improves performance massively on high latency links
 or very high bandwidth links to high performance object stores.
 
 Some experimentation will be needed to find the optimum values of
@@ -17619,7 +17809,7 @@ This command runs a series of uploads and downloads to the remote, measuring
 and printing the speed of each test using varying file sizes and numbers of
 files.
 
-Test time can be innaccurate with small file caps and large files. As it
+Test time can be inaccurate with small file caps and large files. As it
 uses the results of an initial test to determine how many files to use in
 each subsequent test.
 
@@ -18695,7 +18885,7 @@ example:
 Is equivalent to this:
 
 ```text
---bwlimit "Mon-00:00,512Mon-12:00,1M Tue-12:00,1M Wed-12:00,1M Thu-12:00,1M Fri-12:00,1M Sat-12:00,1M Sun-12:00,1M Sun-20:00,off"
+--bwlimit "Mon-00:00,512 Mon-12:00,1M Tue-12:00,1M Wed-12:00,1M Thu-12:00,1M Fri-12:00,1M Sat-12:00,1M Sun-12:00,1M Sun-20:00,off"
 ```
 
 Bandwidth limit apply to the data transfer for all backends. For most
@@ -19169,6 +19359,12 @@ This flag is supported for all HTTP based backends even those not
 supported by `--header-upload` and `--header-download` so may be used
 as a workaround for those with care.
 
+The headers are only sent to the host of the original request. If the
+server redirects to another host (including a subdomain or a different
+port), or redirects an `https` request to `http`, the headers are not
+sent to it, or to any further hop in that redirect chain. Rclone logs
+this at debug level (`-vv`).
+
 ```console
 rclone ls remote:test --header "X-Rclone: Foo" --header "X-LetMeIn: Yes"
 ```
@@ -19407,7 +19603,7 @@ like symlinks under Windows). Ignored files won't be copied, moved or
 deleted in a sync.
 
 If you supply this flag then rclone will copy symbolic links from any
-supported backend backend, and store them as text files, with a
+supported backend, and store them as text files, with a
 `.rclonelink` suffix in the destination.
 
 The text file will contain the target of the symbolic link.
@@ -19939,7 +20135,7 @@ rclone will use multiple threads to transfer the file (default 256M).
 Capable backends are marked in the
 [overview](https://rclone.org/overview/#optional-features) as `MultithreadUpload`. (They
 need to implement either the `OpenWriterAt` or `OpenChunkWriter`
-internal interfaces). These include include, `local`, `s3`,
+internal interfaces). These include `local`, `s3`,
 `azureblob`, `b2`, `oracleobjectstorage` and `smb` at the time of
 writing.
 
@@ -20150,8 +20346,9 @@ setting the config password for the first time.
 The argument to this should be a command with a space separated list
 of arguments. If one of the arguments has a space in then enclose it
 in `"`, if you want a literal `"` in an argument then enclose the
-argument in `"` and double the `"`. See [CSV encoding](https://godoc.org/encoding/csv)
-for more info.
+argument in `"` and double the `"`. This includes the command itself:
+if the path to the executable contains a space, it must be quoted too.
+See [CSV encoding](https://godoc.org/encoding/csv) for more info.
 
 Eg
 
@@ -20159,6 +20356,7 @@ Eg
 --password-command "echo hello"
 --password-command 'echo "hello with space"'
 --password-command 'echo "hello with ""quotes"" and space"'
+--password-command '"/path with a space/get-password.sh"'
 ```
 
 Note that when changing the configuration password the environment
@@ -22699,9 +22897,20 @@ Default Off.
 
 Set the allowed Access-Control-Allow-Origin for rc requests.
 
-Can be used with --rc-web-gui if the rclone is running on different IP than the web-gui.
+This enables cross-origin (CORS) requests from browsers on the origin
+given, for example `--rc-allow-origin https://app.example.com`. Browser
+CORS preflight OPTIONS requests are answered by rclone without
+authentication as browsers never send credentials with them. All other
+requests, including other OPTIONS requests, must be authenticated when
+authentication is enabled.
 
-Default is IP address on which rc is running.
+The `rclone gui` command sets this automatically to the origin the GUI
+is served from if it is not set explicitly.
+
+Setting this to `*` allows any origin which is a security risk on an
+authenticated server.
+
+Default is off (no CORS).
 
 ### --rc-web-fetch-url
 
@@ -23967,8 +24176,6 @@ Results:
 - runningIds - array of integer job ids that are running
 - finishedIds - array of integer job ids that are finished
 
-**Authentication is not required for this call.**
-
 ### job/status: Reads the status of the job ID {#job-status}
 
 Parameters:
@@ -23988,8 +24195,6 @@ Results:
 - success - boolean - true for success false otherwise
 - output - output of the job as would have been returned if called synchronously
 - progress - output of the progress related to the underlying job
-
-**Authentication is not required for this call.**
 
 ### job/stop: Stop the running job {#job-stop}
 
@@ -25191,9 +25396,11 @@ The keys in the error response are:
 
 ### CORS
 
-The sever implements basic CORS support and allows all origins for that.
-The response to a preflight OPTIONS request will echo the requested
-"Access-Control-Request-Headers" back.
+The server implements basic CORS support when `--rc-allow-origin` is
+set. Browser CORS preflight OPTIONS requests are then answered by
+rclone without authentication with the `Access-Control-*` headers.
+Without `--rc-allow-origin` no CORS headers are sent and a preflight
+request is authenticated like any other request.
 
 ### Using POST with URL parameters only
 
@@ -26043,7 +26250,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.75.1")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.75.2")
 ```
 
 
@@ -26292,6 +26499,7 @@ Backend-only flags (these can be set in the config file also).
       --azureblob-env-auth                                  Read credentials from runtime (environment variables, CLI or MSI)
       --azureblob-key string                                Storage Account Shared Key
       --azureblob-list-chunk int                            Size of blob list (default 5000)
+      --azureblob-list-parallelism int                      Number of parallel shards to list a directory with
       --azureblob-msi-client-id string                      Object ID of the user-assigned MSI to use, if any
       --azureblob-msi-mi-res-id string                      Azure resource ID of the user-assigned MSI to use, if any
       --azureblob-msi-object-id string                      Object ID of the user-assigned MSI to use, if any
@@ -26304,6 +26512,7 @@ Backend-only flags (these can be set in the config file also).
       --azureblob-tenant string                             ID of the service principal's tenant. Also called its directory ID
       --azureblob-upload-concurrency int                    Concurrency for multipart uploads (default 16)
       --azureblob-upload-cutoff string                      Cutoff for switching to chunked upload (<= 256 MiB) (deprecated)
+      --azureblob-use-arrow-list                            Use the Apache Arrow listing format
       --azureblob-use-az                                    Use Azure CLI tool az for authentication
       --azureblob-use-copy-blob                             Whether to use the Copy Blob API when copying to the same storage account (default true)
       --azureblob-use-emulator                              Uses local storage emulator if provided as 'true'
@@ -27088,7 +27297,7 @@ Backend-only flags (these can be set in the config file also).
       --smb-port int                                        SMB port number (default 445)
       --smb-spn string                                      Service principal name
       --smb-use-kerberos                                    Use Kerberos authentication
-      --smb-user string                                     SMB username (default "$USER")
+      --smb-user string                                     SMB username
       --storj-access-grant string                           Access grant
       --storj-api-key string                                API key
       --storj-description string                            Description of the remote
@@ -28120,7 +28329,7 @@ Time stamps and file contents for `RCLONE_TEST` files are not important, just
 the names and locations. If you have symbolic links in your sync tree it is
 recommended to place `RCLONE_TEST` files in the linked-to directory tree to
 protect against bisync assuming a bunch of deleted files if the linked-to tree
-should not be accessible. See also the [--check-filename](--check-filename) flag.
+should not be accessible. See also the [--check-filename](#check-filename) flag.
 
 ### --check-filename
 
@@ -28853,15 +29062,16 @@ The following backends have known issues that need more investigation:
 - `TestHuaweiDrive` (`huaweidrive`)
   - [`TestBisyncRemoteLocal/ext_paths`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
   - [`TestBisyncRemoteLocal/extended_filenames`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
-  - [`TestBisyncRemoteLocal/normalization`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
   - [`TestBisyncLocalRemote/ext_paths`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
   - [`TestBisyncLocalRemote/extended_filenames`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
-  - [3 more](https://pub.rclone.org/integration-tests/current/)
+  - [`TestBisyncRemoteRemote/ext_paths`](https://pub.rclone.org/integration-tests/current/huaweidrive-cmd.bisync-TestHuaweiDrive-1.txt)
+  - [2 more](https://pub.rclone.org/integration-tests/current/)
 - `TestPcloud` (`pcloud`)
-  - [`TestBisyncRemoteLocal/createemptysrcdirs`](https://pub.rclone.org/integration-tests/current/pcloud-cmd.bisync-TestPcloud-1.txt)
+  - [`TestBisyncLocalRemote/check_access_filters`](https://pub.rclone.org/integration-tests/current/pcloud-cmd.bisync-TestPcloud-1.txt)
+  - [`TestBisyncLocalRemote/createemptysrcdirs`](https://pub.rclone.org/integration-tests/current/pcloud-cmd.bisync-TestPcloud-1.txt)
   - [`TestBisyncLocalRemote/resolve`](https://pub.rclone.org/integration-tests/current/pcloud-cmd.bisync-TestPcloud-1.txt)
   - [`TestBisyncRemoteRemote/createemptysrcdirs`](https://pub.rclone.org/integration-tests/current/pcloud-cmd.bisync-TestPcloud-1.txt)
-- Updated: 2026-09-04-010006
+- Updated: 2026-10-08-010019
 <!--- end list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
 
 The following backends either have not been tested recently or have known issues
@@ -29772,7 +29982,7 @@ for performance improvements and less
 options as in `sync`)
 - Equality checks before a sync conflict rename now fall back to `cryptcheck`
 (when possible) or `--download`,
-instead of of `--size-only`, when `check` is not available.
+instead of `--size-only`, when `check` is not available.
 - Bisync no longer fails to find the correct listing file when configs are
 overridden with backend-specific flags.
 - Bisync now fully supports comparing based on any combination of size, modtime,
@@ -29941,19 +30151,23 @@ Repeat for `MD5SUMS` and `SHA1SUMS` if desired.
 Now that we know the signatures on the hashes are OK we can verify the
 binaries match the hashes, completing the verification.
 
+Extract the signed data with:
+
 ```console
-$ sha256sum -c SHA256SUMS 2>&1 | grep OK
+$ gpg --output SHA256SUMS.signed --decrypt SHA256SUMS
+```
+
+Then check the binaries:
+
+```console
+$ sha256sum -c --ignore-missing SHA256SUMS.signed
 rclone-v1.63.1-windows-amd64.zip: OK
 ```
 
 Or do the check with rclone
 
 ```console
-$ rclone hashsum sha256 -C SHA256SUMS rclone-v1.63.1-windows-amd64.zip 
-2023/09/11 10:53:58 NOTICE: SHA256SUMS: improperly formatted checksum line 0
-2023/09/11 10:53:58 NOTICE: SHA256SUMS: improperly formatted checksum line 1
-2023/09/11 10:53:58 NOTICE: SHA256SUMS: improperly formatted checksum line 49
-2023/09/11 10:53:58 NOTICE: SHA256SUMS: 4 warning(s) suppressed...
+$ rclone hashsum sha256 -C SHA256SUMS.signed rclone-v1.63.1-windows-amd64.zip
 = rclone-v1.63.1-windows-amd64.zip
 2023/09/11 10:53:58 NOTICE: Local file system at /tmp/check: 0 differences found
 2023/09/11 10:53:58 NOTICE: Local file system at /tmp/check: 1 matching files
@@ -35495,6 +35709,12 @@ parameter `--s3-upload-cutoff 0` or put this in the config file as
 `upload_cutoff 0` to work around a bug which causes uploading of small
 files to fail.
 
+Rclone defaults `sign_accept_encoding` to false for the Ceph provider.
+That avoids `SignatureDoesNotMatch` errors when a reverse proxy (for
+example Cloudflare) rewrites the `Accept-Encoding` request header. You
+can override this with `--s3-sign-accept-encoding` / `sign_accept_encoding`
+if needed.
+
 Note also that Ceph sometimes puts `/` in the passwords it gives
 users.  If you read the secret access key using the command line tools
 you will get a JSON blob with the `/` escaped as `\/`.  Make sure you
@@ -37812,6 +38032,10 @@ access_key_id = ACCESS_KEY
 secret_access_key = SECRET_ACCESS_KEY
 endpoint = eu-central-1.linodeobjects.com
 ```
+
+Linode Object Storage is Ceph-backed. Rclone defaults
+`sign_accept_encoding` to false for this provider so SigV4 requests do
+not fail with `SignatureDoesNotMatch` (see the [Ceph](#ceph) section).
 
 ### Magalu {#magalu}
 
@@ -41811,6 +42035,11 @@ Rclone works with private buckets by sending an "Authorization" header.
 If the custom endpoint rewrites the requests for authentication,
 e.g., in Cloudflare Workers, this header needs to be handled properly.
 Leave blank if you want to use the endpoint provided by Backblaze.
+
+Rclone will not follow a redirect from this endpoint which downgrades
+HTTPS to HTTP, and will not send the "Authorization" header or the
+SSE-C key headers once a redirect has left the host and port of this
+endpoint.
 
 The URL provided here SHOULD have the protocol and SHOULD NOT have
 a trailing slash or specify the /file/bucket subpath as rclone will
@@ -47817,6 +48046,34 @@ excess files in the directory.
 rclone sync --interactive /home/local/directory remote:dir
 ```
 
+### Restricted filename characters
+
+In addition to the [default restricted characters set](https://rclone.org/overview/#restricted-characters)
+the following characters are also replaced:
+
+| Character | Value | Replacement |
+| --------- |:-----:|:-----------:|
+| \         | 0x5C  | ＼           |
+
+File names can also not end with the following characters.
+These only get replaced if they are the last character in the name:
+
+| Character | Value | Replacement |
+| --------- |:-----:|:-----------:|
+| SP        | 0x20  | ␠           |
+| LF        | 0x0A  | ␊           |
+| CR        | 0x0D  | ␍           |
+| HT        | 0x09  | ␉           |
+| VT        | 0x0B  | ␋           |
+
+Invalid UTF-8 bytes will also be [replaced](https://rclone.org/overview/#invalid-utf8).
+
+Files.com treats the replacements `／` and `＼` as if they were `/`
+and `\`, and the names `．` and `．．` as if they were `.` and `..`,
+and rejects them with `Invalid path`. This means that files with `/`
+or `\` in their names, or which are called `.` or `..`, can't be
+stored on Files.com.
+
 ### Hashes
 
 In December 2024 `files.com`  started [supporting more checksums](https://www.files.com/blog/2024/11/01/new-modern-checksum-options-now-available-with-opt).
@@ -51647,6 +51904,15 @@ Scroll down and click "+ Add users". Add yourself as a test user and press save.
 9. Go to "Audience" and then click "PUBLISH APP" button and confirm.
    Add yourself as a test user if you haven't already.
 
+    (If the "PUBLISH APP" button is greyed out, Google now requires a
+    homepage URL and a privacy policy URL before publishing, even for a
+    personal single-user app. Go to "Branding" in the left panel, fill in
+    "Application home page" and "Application privacy policy link" - a free
+    GitHub Pages site is fine for these if you don't have a domain of your
+    own - then "Authorized domains" with the domain you used, and click
+    Save. Return to "Audience" and the "PUBLISH APP" button should now be
+    available.)
+
 10. Provide the noted client ID and client secret to rclone.
 
 11. Run the web-based authorization flow from within `rclone config`, by answering
@@ -52865,9 +53131,18 @@ Before accessing Drive service, developers need to create a server application f
 
 #### Enable Drive Application Switch
 
-1. Log in to the AppGallery Connect website and click "My Projects".
-2. Find your project in the project list, select the application that needs to access Drive in the project, and click "API Management".
-3. In the "API Management" area of the "Project Settings" page, click the switch on the right side of Drive Kit to ensure the switch is in the open state.
+1. Log in to AppGallery Connect with your Huawei account.
+2. Create a project or select an existing project.
+3. Add a web application to the project.
+4. Open "Project settings" for the application and copy the OAuth 2.0 Client
+   ID and Client Secret from the "General" tab.
+5. Open "API Management" for the project and enable "Cloud Drive".
+6. Add `http://127.0.0.1:53682/` as a redirect URI for the OAuth 2.0 Client
+   ID.
+
+The older Huawei Developer Console may show some of the same credential
+information, but AppGallery Connect is the place to create the project,
+application, API permission, and redirect URI used by rclone.
 
 #### Sign Huawei Cloud Drive Privacy Notice and User Agreement
 
@@ -52879,23 +53154,12 @@ Applications accessing Drive should use authentication credential Access Token. 
 
 Key steps summary:
 
-1. Log into the [Huawei Developer Console](https://developer.huawei.com/consumer/en/console) with your Huawei account.
-
-2. Create a new project or select an existing project.
-
-3. Go to "Manage APIs" and enable the "Drive Kit" API.
-
-4. Click on "Credentials" in the left side panel.
-
-5. Click "Create Credentials" and choose "OAuth client ID".
-
-6. Choose "Web application" as the application type.
-
-7. Add `http://localhost:53682/` to the "Authorized redirect URIs".
-
-8. Click "Create" and note down the Client ID and Client Secret.
-
-9. Provide the noted client ID and client secret to rclone during configuration.
+1. Create or select a project in AppGallery Connect.
+2. Add a web application to the project.
+3. Enable Cloud Drive in API Management.
+4. Configure `http://127.0.0.1:53682/` as the OAuth redirect URI.
+5. Copy the OAuth 2.0 Client ID and Client Secret from the application.
+6. Provide the client ID and client secret to rclone during configuration.
 
 ### Scopes
 
@@ -54008,7 +54272,9 @@ it will be resolved relative to this url, according to the URL standard. This
 means with remote url `https://beta.rclone.org/branch` and path `fix`, the
 resolved URL will be `https://beta.rclone.org/branch/fix`, while with path
 `/fix` the resolved URL will be `https://beta.rclone.org/fix` as the absolute
-path is resolved from the root of the domain.
+path is resolved from the root of the domain. The path can't change the scheme,
+host or user of the configured url, so a path such as `//other.example.com/fix`
+is rejected.
 
 If the path following the `remote:` ends with `/` it will be assumed to point
 to a directory. If the path does not end with `/`, then a HEAD request is sent
@@ -58175,13 +58441,13 @@ be explicitly specified using exactly one of the `msi_object_id`,
 `msi_client_id`, or `msi_mi_res_id` parameters.
 
 If none of `msi_object_id`, `msi_client_id`, or `msi_mi_res_id` is
-set, this is is equivalent to using `env_auth`.
+set, this is equivalent to using `env_auth`.
 
 #### Federated Identity Credentials
 
 If these variables are set, rclone will authenticate with federated identity.
 
-- `tenant`: tenant ID of of the storage
+- `tenant`: tenant ID of the storage
 - `client_id`: client ID of the application the user will authenticate to storage
 - `msi_client_id`: managed identity client ID of the application the user will
   authenticate to
@@ -58721,6 +58987,52 @@ Properties:
 - Env Var:     RCLONE_AZUREBLOB_LIST_CHUNK
 - Type:        int
 - Default:     5000
+
+#### --azureblob-use-arrow-list
+
+Use the Apache Arrow listing format.
+
+If set, directory listings are fetched using the ListBlobs Apache
+Arrow response format instead of XML. Arrow responses are smaller and
+much cheaper to parse, making listings of large containers several
+times faster. Combine with "list_parallelism" for the biggest gains.
+
+"Blob Listing with Apache Arrow" is in public preview at Microsoft and
+is only supported on flat namespace accounts. On accounts with a
+hierarchical namespace (ADLS Gen2), or where the feature is otherwise
+unavailable, the server returns XML and the listing transparently
+falls back to the normal XML path (logged at debug level).
+
+Properties:
+
+- Config:      use_arrow_list
+- Env Var:     RCLONE_AZUREBLOB_USE_ARROW_LIST
+- Type:        bool
+- Default:     false
+
+#### --azureblob-list-parallelism
+
+Number of parallel shards to list a directory with.
+
+If set greater than 1, the blob name keyspace of each directory is
+split into ranges which are listed concurrently using the Arrow
+startFrom/endBefore range parameters. This can dramatically speed up
+listing containers with millions of objects, for both recursive
+(ListR) and single directory listings. Speed keeps improving up to a
+parallelism of around 30.
+
+This has no effect unless "use_arrow_list" is also set, as Arrow is the
+only listing path that supports server-side name ranges. If the
+account does not support range listing (e.g. it has a hierarchical
+namespace) the listing falls back to sequential. The default of 0 (or
+1) lists sequentially.
+
+Properties:
+
+- Config:      list_parallelism
+- Env Var:     RCLONE_AZUREBLOB_LIST_PARALLELISM
+- Type:        int
+- Default:     0
 
 #### --azureblob-access-tier
 
@@ -59293,13 +59605,13 @@ be explicitly specified using exactly one of the `msi_object_id`,
 `msi_client_id`, or `msi_mi_res_id` parameters.
 
 If none of `msi_object_id`, `msi_client_id`, or `msi_mi_res_id` is
-set, this is is equivalent to using `env_auth`.
+set, this is equivalent to using `env_auth`.
 
 #### Federated Identity Credentials
 
 If these variables are set, rclone will authenticate with federated identity.
 
-- `tenant`: tenant ID of of the storage
+- `tenant`: tenant ID of the storage
 - `client_id`: client ID of the application the user will authenticate to storage
 - `msi_client_id`: managed identity client ID of the application the user will
   authenticate to
@@ -60449,16 +60761,13 @@ Properties:
 
 Remove all versions on modifying operations.
 
-Onedrive for business creates versions when rclone uploads new files
+Onedrive creates versions when rclone uploads new files
 overwriting an existing one and when it sets the modification time.
 
 These versions take up space out of the quota.
 
 This flag checks for versions after file upload and setting
 modification time and removes all but the last version.
-
-**NB** Onedrive personal can't currently delete versions so don't use
-this flag there.
 
 
 Properties:
@@ -60475,8 +60784,7 @@ Permanently delete files on removal.
 Normally files will get sent to the recycle bin on deletion. Setting
 this flag causes them to be permanently deleted. Use with care.
 
-OneDrive personal accounts do not support the permanentDelete API,
-it only applies to OneDrive for Business and SharePoint document libraries.
+This works with OneDrive for Business, SharePoint document libraries, and OneDrive personal accounts, including free accounts.
 
 
 Properties:
@@ -60522,12 +60830,17 @@ Properties:
     - Creates a read-write link to the item.
   - "embed"
     - Creates an embeddable link to the item.
+    - Only available in OneDrive personal.
 
 #### --onedrive-link-password
 
 Set the password for links created by the link command.
 
-At the time of writing this only works with OneDrive personal paid accounts.
+At the time of writing this works with OneDrive for Business and
+OneDrive personal paid accounts.
+
+OneDrive personal free accounts can't set a password or an expiry time
+(with --expire) on links.
 
 
 Properties:
@@ -60838,7 +61151,7 @@ Here are the possible system metadata items for the onedrive backend.
 
 | Name | Help | Type | Example | Read Only |
 |------|------|------|---------|-----------|
-| btime | Time of file birth (creation) with S accuracy (mS for OneDrive Personal). | RFC 3339 | 2006-01-02T15:04:05Z | N |
+| btime | Time of file birth (creation) with S accuracy. | RFC 3339 | 2006-01-02T15:04:05Z | N |
 | content-type | The MIME type of the file. | string | text/plain | **Y** |
 | created-by-display-name | Display name of the user that created the item. | string | John Doe | **Y** |
 | created-by-id | ID of the user that created the item. | string | 48d31887-5fad-4d73-a9f5-3c356e68a038 | **Y** |
@@ -60847,14 +61160,14 @@ Here are the possible system metadata items for the onedrive backend.
 | last-modified-by-display-name | Display name of the user that last modified the item. | string | John Doe | **Y** |
 | last-modified-by-id | ID of the user that last modified the item. | string | 48d31887-5fad-4d73-a9f5-3c356e68a038 | **Y** |
 | malware-detected | Whether OneDrive has detected that the item contains malware. | boolean | true | **Y** |
-| mtime | Time of last modification with S accuracy (mS for OneDrive Personal). | RFC 3339 | 2006-01-02T15:04:05Z | N |
+| mtime | Time of last modification with S accuracy. | RFC 3339 | 2006-01-02T15:04:05Z | N |
 | package-type | If present, indicates that this item is a package instead of a folder or file. Packages are treated like files in some contexts and folders in others. | string | oneNote | **Y** |
 | permissions | Permissions in a JSON dump of OneDrive format. Enable with --onedrive-metadata-permissions. Properties: id, grantedTo, grantedToIdentities, invitation, inheritedFrom, link, roles, shareId | JSON | {} | N |
 | shared-by-id | ID of the user that shared the item (if shared). | string | 48d31887-5fad-4d73-a9f5-3c356e68a038 | **Y** |
 | shared-owner-id | ID of the owner of the shared item (if shared). | string | 48d31887-5fad-4d73-a9f5-3c356e68a038 | **Y** |
 | shared-scope | If shared, indicates the scope of how the item is shared: anonymous, organization, or users. | string | users | **Y** |
-| shared-time | Time when the item was shared, with S accuracy (mS for OneDrive Personal). | RFC 3339 | 2006-01-02T15:04:05Z | **Y** |
-| utime | Time of upload with S accuracy (mS for OneDrive Personal). | RFC 3339 | 2006-01-02T15:04:05Z | **Y** |
+| shared-time | Time when the item was shared, with S accuracy. | RFC 3339 | 2006-01-02T15:04:05Z | **Y** |
+| utime | Time of upload with S accuracy. | RFC 3339 | 2006-01-02T15:04:05Z | **Y** |
 
 See the [metadata](https://rclone.org/docs/#metadata) docs for more info.
 
@@ -60952,11 +61265,6 @@ Or you can set the `no_versions` parameter to `true` and rclone will
 remove versions after operations which create new versions. This takes
 extra transactions so only enable it if you need it.
 
-**Note** At the time of writing Onedrive Personal creates versions
-(but not for setting the modification time) but the API for removing
-them returns "API not found" so cleanup and `no_versions` should not
-be used on Onedrive Personal.
-
 ### Disabling versioning
 
 Starting October 2018, users will no longer be able to
@@ -61010,8 +61318,6 @@ or `--dry-run` which is a great way to see what it would do.
 rclone cleanup --interactive remote:path/subdir # interactively remove all old version for path/subdir
 rclone cleanup remote:path/subdir               # unconditionally remove all old version for path/subdir
 ```
-
-**NB** Onedrive personal can't currently delete versions
 
 ## Troubleshooting
 
@@ -61115,6 +61421,27 @@ Shared with me files is not supported by rclone
    behaves like a normal folder/file.
     ![in_my_files](https://i.imgur.com/0S8H3li.png "Screenshot (My Files)")
     ![rclone_mount](https://i.imgur.com/2Iq66sW.png "Screenshot (rclone mount)")
+
+Listing such a shortcut may still fail with
+
+```text
+invalidRequest: The provided drive id appears to be malformed, or does not represent a valid drive.
+```
+
+as the drive it points to can't always be read with the drive ID the
+API supplies. `Personal Vault` is a shortcut of the same kind and
+fails to list in the same way, though it reports
+`invalidResourceId: ObjectHandle is Invalid`.
+
+A normal listing reports the error for that folder and carries on, so
+the rest of the drive is still listed, and excluding the folder (for
+example with `--exclude "/Personal Vault/**"`) avoids the error.
+
+A recursive listing with `--fast-list` stops at the first error, so
+listing the root of a drive which has one of these shortcuts in it
+will fail. Filters don't help here as the folder is listed by the
+backend before the filters are applied - use `--disable ListR` (or
+don't use `--fast-list`) on such a drive.
 
 ### Live Photos uploaded from iOS (small video clips in .heic files)
 
@@ -63321,7 +63648,7 @@ rclone sync --interactive /home/local/directory remote:container
 
 ### Configuration from an OpenStack credentials file
 
-An OpenStack credentials file typically looks something something
+An OpenStack credentials file typically looks something
 like this (without the comments)
 
 ```sh
@@ -68261,12 +68588,14 @@ Properties:
 
 SMB username.
 
+Leave blank to use the current user name.
+
 Properties:
 
 - Config:      user
 - Env Var:     RCLONE_SMB_USER
 - Type:        string
-- Default:     "$USER"
+- Required:    false
 
 #### --smb-port
 
@@ -70076,6 +70405,13 @@ The input format is comma separated list of key,value pairs.  Standard
 For example, to set a Cookie use 'Cookie,name=value', or '"Cookie","name=value"'.
 
 You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'.
+
+The headers are only sent to the host in the configured URL. If the
+server redirects to another host (including a subdomain or a different
+port) the headers are not sent to it, or to any further hop in that
+redirect chain. The exception is the directory listing and file
+download requests when auth_redirect is set, as that keeps all
+credentials across redirects.
 
 
 Properties:
@@ -71948,6 +72284,201 @@ Options:
 <!-- markdownlint-disable line-length -->
 
 # Changelog
+
+## v1.75.2 - 2026-10-09
+
+[See commits](https://github.com/rclone/rclone/compare/v1.75.1...v1.75.2)
+
+- Security
+  - b2: Fix account token and SSE-C key leaking on redirects from `--b2-download-url` GHSA-gpw7-77cq-9f72 CVE-PENDING (Nick Craig-Wood)
+  - build
+    - Fix multiple CVEs by upgrading to go1.26.9 (Nick Craig-Wood)
+      - CVE-2026-97032: net/http: HTTP/2 server crash due to HPACK encoder race
+      - CVE-2026-78659: net/http: HTTP/2 server memory exhaustion due to Trailer headers
+      - CVE-2026-97031: crypto/tls: reject malformed ECH outer extension references
+      - CVE-2026-94444: cmd/go: checksum bypass for golang.org/fips140
+      - CVE-2026-94447: cmd/go: checksum database bypass for golang.org/toolchain
+      - CVE-2026-94448: html/template: reset context tracking on consecutive template expressions
+      - CVE-2026-97030: html/template: recognize |yield| as regexp preceder keyword
+      - CVE-2026-94440: net/textproto, mime/multipart: memory limit bypass when parsing MIME headers
+      - CVE-2026-56866: net/http: HTTP/1 client connection desynchronization after CONNECT rejection
+      - CVE-2026-94439: net/http: HTTP/1 server connection desynchronization after 2xx CONNECT response
+      - CVE-2026-78669: net/http: excessive CPU consumption from repeated initial window changes
+      - CVE-2026-78660: net/http: HTTP/2 transport accepts malformed framing-related headers
+      - CVE-2026-56857: os: Root.Mkdir(All) can follow junctions out of the root on Windows
+      - CVE-2026-78667: net/http: lack of limit on size of parsed Range headers
+      - CVE-2026-78663: net/http: double flow control refund on HTTP/2 server streams
+    - Update golang.org/x/net to v0.60.0 to fix multiple CVEs (Nick Craig-Wood)
+      - CVE-2026-78659: net/http: HTTP/2 server memory exhaustion due to Trailer headers
+      - CVE-2026-78669: net/http: excessive CPU consumption from repeated initial window changes
+      - CVE-2026-78663: net/http: double flow control refund on HTTP/2 server streams
+      - CVE-2026-97032: net/http: HTTP/2 server crash due to HPACK encoder race
+    - Update google.golang.org/grpc to fix CVE-2026-84445 (dependabot[bot])
+      - CVE-2026-84445: xds: server panic on a request missing both :authority and Host headers
+  - fshttp: Drop `--header` values over HTTP after HTTPS downgrade GHSA-rrwf-2qr6-p832 CVE-PENDING (Nick Craig-Wood)
+  - http: Stop a path starting with // moving the remote to another host GHSA-xqmq-v4wj-rw5m CVE-PENDING (Nick Craig-Wood)
+  - lib/http: Require authentication for OPTIONS requests GHSA-gj73-fh6v-92fj CVE-PENDING (Nick Craig-Wood)
+  - local: Fix .rclonelink names escaping the root with `--links` GHSA-55qp-jrwr-x827 CVE-PENDING (Nick Craig-Wood)
+  - netstorage
+    - Stop a path starting with // moving the remote to another host GHSA-xqmq-v4wj-rw5m CVE-PENDING (Nick Craig-Wood)
+    - Stop a listing resume token moving signed requests to another host GHSA-xqmq-v4wj-rw5m CVE-PENDING (Nick Craig-Wood)
+  - pcloud
+    - Fix OAuth config accepting callbacks without state GHSA-hvpr-p4pv-4f46 CVE-PENDING (Nick Craig-Wood)
+    - Only accept pCloud hosts from the hostname in the OAuth callback GHSA-hvpr-p4pv-4f46 (Nick Craig-Wood)
+  - selfupdate
+    - Fix hash check trusting unsigned data in the signed SHA256SUMS GHSA-w33h-3qgq-8mv8 CVE-PENDING (Nick Craig-Wood)
+    - Fix release verification instructions trusting unsigned hashes GHSA-w33h-3qgq-8mv8 (Nick Craig-Wood)
+  - serve nfs: Fix path traversal by refusing unsafe file names in the VFS GHSA-44pm-2q5p-fm63 CVE-PENDING (Nick Craig-Wood)
+  - serve s3
+    - Fix presigned URL being turned into a copy of any object GHSA-w3h7-jxxq-vfrp CVE-PENDING (Nick Craig-Wood)
+    - Stop auth proxy users listing or using each other's multipart uploads and metadata GHSA-35g6-9fjv-rmx5 CVE-PENDING (Nick Craig-Wood)
+    - Fix multipart buffer limits being bypassed by overflowing part sizes GHSA-qjw8-8hmp-c3m6 (Nick Craig-Wood)
+    - Add `--multipart-max-uploads` to limit uploads in progress (Nick Craig-Wood)
+    - Add `--multipart-streaming-buffer-total` to limit memory across uploads (Nick Craig-Wood)
+    - Add `--metadata-max-objects` to limit the metadata kept in memory (Nick Craig-Wood)
+  - serve webdav: Fix path traversal above the served directory GHSA-44pm-2q5p-fm63 CVE-PENDING (Nick Craig-Wood)
+  - webdav: Fix headers option leaking to other hosts on redirect GHSA-3rqf-7h69-gg5v CVE-PENDING (Nick Craig-Wood)
+- Bug Fixes
+  - accounting
+    - Stop averaging when the last check finishes (Kunpeng Xie)
+    - Keep speed averaging active when transfers overlap (kaii9)
+  - dedupe: Fix rename mode giving up after 100 names and make it faster (Nick Craig-Wood)
+  - doc fixes (Dhevenddra K G, enkvadrat, GhostCoder6969, James Truitt, maximilize, n4n5, Nick Craig-Wood, PSR94, Rohit Behera, shaurya, subomi)
+  - docker: Fix files uploaded with the wrong mime type (hsdfat)
+  - fs
+    - Fix about showing a negative total when a quota reaches the int64 maximum (youdie006)
+    - Fix bandwidth limits below 1 KiB being multiplied by 1024 (Roland)
+    - Fix `--bwlimit` timetables written out of order using the wrong limit (Rohit Behera)
+    - Make BwTimetable.Set replace the timetable instead of appending to it (youdie006)
+    - Retry "network is unreachable" and "network is down" errors (nielash)
+  - fserrors: Fix out of space detection on Windows (ferrumclaudepilgrim)
+  - lib/rest: Limit the size of HTTP response bodies read into memory (Nick Craig-Wood)
+  - log: Fix race when adding a log output while logging (Nick Craig-Wood)
+  - oauthutil: Fix Renew.Shutdown nil timer panic and race (TastyHeadphones)
+  - operations
+    - Stop `--copy-dest` replacing files with `--immutable` (phatlc)
+    - Fix ignored error in rcat probe reads (Wang Chencheng)
+    - Fix hang when deleting files and a fatal error occurs (Nick Craig-Wood)
+    - Fix hang and lost context when moving a directory file by file (Nick Craig-Wood)
+    - Don't sleep for a Retry-After error when the transfer is cancelled (Nick Craig-Wood)
+  - rc
+    - Make job/status and job/list require authentication (Nick Craig-Wood)
+    - Fix rc API accepting an out of range number and overflowing 64 bits (KBS)
+    - Reject out of range integer parameters instead of truncating them (Nick Craig-Wood)
+    - Fix large numeric parameters being rejected on 32 bit builds (Jeremy Schoemaker)
+  - selfupdate: Fix `--version X.Y` depending on ./ in the download site links (Nick Craig-Wood)
+  - serve
+    - Fix `--auth-proxy` stopping VFS cache uploads after 5 minutes (Nick Craig-Wood)
+    - Fix `--auth-proxy` backends never being shut down after simultaneous logins (Nick Craig-Wood)
+  - serve dlna: Log unescaped paths (phatlc)
+  - serve docker: Fix volume path being lost when the plugin restarts (phatlc)
+  - serve ftp
+    - Fix transfers failing after 5 minutes with `--auth-proxy` (Nick Craig-Wood)
+    - Fix VFS leak when the server fails to start (Nick Craig-Wood)
+  - serve http
+    - Fix downloads failing after 5 minutes with `--auth-proxy` (Nick Craig-Wood)
+    - Escape filename in zip download Content-Disposition header (Harsh Raj Singhania)
+  - serve restic
+    - Fix repositories named data (kaii9)
+    - Prevent concurrent append-only overwrites (Vasek Sraier)
+  - serve s3
+    - Apply the multipart upload limits and `--metadata-max-objects` to each user separately (Nick Craig-Wood)
+    - Stream in-order multipart parts without buffering them (Nick Craig-Wood)
+    - Start the upload to the backend on the first multipart part (Nick Craig-Wood)
+    - Don't buffer re-uploads of multipart parts already streamed (Nick Craig-Wood)
+    - Count buffered multipart parts in whole memory pages (Nick Craig-Wood)
+    - Time out multipart parts waiting for buffer space (Nick Craig-Wood)
+    - Limit the memory requests can use (Nick Craig-Wood)
+    - Forget expired multipart uploads completely (Nick Craig-Wood)
+    - Forget the metadata of deleted objects (Nick Craig-Wood)
+    - List objects lazily so paging a deep hierarchy is fast (Nick Craig-Wood)
+    - Fix multipart upload corruption if the backend write of an early part fails (Nick Craig-Wood)
+    - Fix uploads failing when the auth proxy expires the user's backend (Nick Craig-Wood)
+    - Fix stale metadata being returned for objects changed elsewhere (Nick Craig-Wood)
+    - Fix `--etag-hash auto` crashing or using the wrong hash with `--auth-proxy` (Nick Craig-Wood)
+    - Fix CopyObject of a missing object not returning NoSuchKey (Nick Craig-Wood)
+    - Fix log messages with bad format strings (Nick Craig-Wood)
+    - Document memory use and bring the docs up to date (Nick Craig-Wood)
+  - serve webdav
+    - Fix transfers failing after 5 minutes with `--auth-proxy` (Nick Craig-Wood)
+    - Fix crash when the server fails to start (Nick Craig-Wood)
+    - Escape filename in zip download Content-Disposition header (Harsh Raj Singhania)
+  - vfscache: Fix hang when the cache cleaner is disabled (ferrumclaudepilgrim)
+- Mount
+  - Fix `--daemon` failing when `--rc` is enabled (somaz)
+  - Ignore com.apple.* xattrs on the macOS FSKit backend (Eugene)
+- VFS
+  - Fix reads returning zeros after a file changes during handle caching (Neil Cawse)
+  - Stop setting a file's modtime from discarding its cached data (Neil Cawse)
+  - Fix crash reading the metadata of a file which is being written (Nick Craig-Wood)
+  - Fix a VFS being reused while it is being shut down (Nick Craig-Wood)
+  - Fix AddVirtual ignoring isDir (phatlc)
+  - Stop `--links` objects called "...rclonelink" appearing as ".." in directory listings (Nick Craig-Wood)
+- Local
+  - Fix directories named *.rclonelink being treated as links with `--links` (Nick Craig-Wood)
+- Archive
+  - Fix corrupt listings when listing a zip directory more than once (Nick Craig-Wood)
+  - Fix zip file entries named for a directory causing confusion (Nick Craig-Wood)
+  - Fix listing entries with a leading slash as if they were in the root (Nick Craig-Wood)
+  - Fix crash when creating archive to stdout (Vladimir Babin)
+  - Fix a squashfs path to a single file listing its whole directory (Nick Craig-Wood)
+- Azure Blob
+  - Use the released Azure SDK for Apache Arrow listing (Nick Craig-Wood)
+- Box
+  - Fix log messages with bad format strings (Nick Craig-Wood)
+- Chunker
+  - Fix panic listing a directory after an interrupted upload with meta_format none (Nick Craig-Wood)
+- Compress
+  - Fix crash on ranged reads when gzip metadata is corrupted (Acts1631)
+- Drime
+  - Fix server-side copy over an existing file leaving a "name (1)" copy (Nick Craig-Wood)
+  - Fix deleted files and directories still being listed with hard_delete (Nick Craig-Wood)
+- Drive
+  - Document the Branding step needed to publish your own client_id (Sanjay Kanth A)
+- Dropbox
+  - Fix shared folder mount for roots nested more than one level deep (phatlc)
+  - Match shared-folder and received-file names case-insensitively (phatlc)
+- Filescom
+  - Fix corrupted uploads after a retried upload error (Nick Craig-Wood)
+  - Document that names with / or \ in can't be stored (Nick Craig-Wood)
+- HTTP
+  - Fix crash when the server fails to start (Nick Craig-Wood)
+- Iclouddrive
+  - Fix potential crash looking up items (Nick Craig-Wood)
+- Imagekit
+  - Fix potential crash in rmdir and purge (Nick Craig-Wood)
+- Internxt
+  - Fix lookups of files starting with a dot and dropped uploads (jzunigax2)
+  - Fix sync with `--backup-dir` or `--suffix` deleting the backed up file (Nick Craig-Wood)
+  - Fix server-side moves failing with "Not Found" or "already exists" (Nick Craig-Wood)
+  - Fix "directory not empty" and stale directories after moves and deletes (Nick Craig-Wood)
+  - Fix server-side directory move failing after a gateway timeout (Nick Craig-Wood)
+- Onedrive
+  - Update docs for versions, links and time precision on personal accounts (Nick Craig-Wood)
+  - Document that shared with me shortcuts may fail to list on personal (Nick Craig-Wood)
+  - Update `--onedrive-hard-delete` docs to mention personal account support (foecmke)
+- Oracleobjectstorage
+  - Fix SSE-C server-side copies (tomaszni)
+  - Upload empty streams without multipart (tomaszni)
+- Pixeldrain
+  - Fix corrupted uploads after a retried upload error (Nick Craig-Wood)
+- Premiumizeme
+  - Fix uploading files with ";" in their names (Nick Craig-Wood)
+- S3
+  - Disable signing Accept-Encoding for Ceph and Linode (Aditya)
+  - Fix version-at listings with URL encoded keys (jxj)
+  - Fix storage class missing from `--s3-versions` listings (Dirk Petersen)
+- Seafile
+  - Fix corrupted uploads after a retried upload error (Nick Craig-Wood)
+- SFTP
+  - Fix failed uploads leaving disk space in use on the server (Nick Craig-Wood)
+- Shade
+  - Fix potential crash in directory move (Nick Craig-Wood)
+- Smb
+  - Save the user name in the config even if it matches the current user (phatlc)
+- WebDAV
+  - Fix duplicated listing entries after retried PROPFIND (ZRHann)
+  - Fix "XML syntax error" on paths which don't exist with ownCloud 10.16 (Nick Craig-Wood)
 
 ## v1.75.1 - 2026-09-04
 

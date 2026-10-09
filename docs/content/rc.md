@@ -1453,8 +1453,6 @@ Results:
 - runningIds - array of integer job ids that are running
 - finishedIds - array of integer job ids that are finished
 
-**Authentication is not required for this call.**
-
 ### job/status: Reads the status of the job ID {#job-status}
 
 Parameters:
@@ -1474,8 +1472,6 @@ Results:
 - success - boolean - true for success false otherwise
 - output - output of the job as would have been returned if called synchronously
 - progress - output of the progress related to the underlying job
-
-**Authentication is not required for this call.**
 
 ### job/stop: Stop the running job {#job-stop}
 
