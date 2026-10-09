@@ -595,6 +595,29 @@ func TestDirRemoveName(t *testing.T) {
 	assert.Equal(t, EROFS, err)
 }
 
+// Moving a directory into another one leaves an entry there which has the
+// moved directory's old name alone.
+func TestDirRenameIntoDirWithSameName(t *testing.T) {
+	r, vfs := newTestVFS(t)
+
+	features := r.Fremote.Features()
+	if features.DirMove == nil && features.Move == nil && features.Copy == nil {
+		t.Skip("can't rename directories")
+	}
+
+	r.WriteObject(context.Background(), "dir/file1", "file1 contents", t1)
+	r.WriteObject(context.Background(), "other/dir", "other/dir contents", t1)
+	node, err := vfs.Stat("other")
+	require.NoError(t, err)
+	other := node.(*Dir)
+	checkListing(t, other, []string{"dir,18,false"})
+
+	root, err := vfs.Root()
+	require.NoError(t, err)
+	require.NoError(t, root.Rename("dir", "moved", other))
+	checkListing(t, other, []string{"dir,18,false", "moved,0,true"})
+}
+
 func TestDirRename(t *testing.T) {
 	r, vfs, dir, file1 := dirCreate(t)
 

@@ -402,7 +402,6 @@ func (d *Dir) rename(newParent *Dir, fsDir fs.Directory) {
 	d.entry = fsDir
 	d.path = fsDir.Remote()
 	newPath := d.path
-	delete(d.parent.items, name(oldPath))
 	d.parent.items[name(d.path)] = d
 	d.read = time.Time{}
 	d.mu.Unlock()
