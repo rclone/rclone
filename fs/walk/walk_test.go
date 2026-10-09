@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/rclone/rclone/fs"
 	_ "github.com/rclone/rclone/fs/accounting"
@@ -16,6 +17,7 @@ import (
 	"github.com/rclone/rclone/fstest/mockdir"
 	"github.com/rclone/rclone/fstest/mockfs"
 	"github.com/rclone/rclone/fstest/mockobject"
+	"github.com/rclone/rclone/lib/israce"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -776,6 +778,58 @@ b/c/d/
 	}
 	// Set to default value, to avoid side effects
 	fi.Opt.ExcludeFile = nil
+}
+
+func TestWalkRDirTreeManyExcludedFiles(t *testing.T) {
+	const n = 100000
+	entries := make(fs.DirEntries, 0, 2*n)
+	for i := 0; i < n; i++ {
+		entries = append(entries, mockobject.Object(fmt.Sprintf("keep%05d.txt", i)))
+		entries = append(entries, mockobject.Object(fmt.Sprintf("skip%05d.tmp", i)))
+	}
+	fi, err := filter.NewFilter(nil)
+	require.NoError(t, err)
+	require.NoError(t, fi.Add(false, "*.tmp"))
+	ctx := filter.ReplaceConfig(context.Background(), fi)
+
+	start := time.Now()
+	r, err := walkRDirTree(ctx, nil, "", false, -1, makeListRCallback(entries, nil))
+	elapsed := time.Since(start)
+	require.NoError(t, err)
+	assert.Len(t, r[""], n)
+	// Resolving the parent directory of every excluded file must not
+	// scan the entries already collected each time.
+	// The race detector makes this over 10x slower, so only check
+	// the time without it.
+	if !israce.Enabled {
+		assert.Less(t, elapsed, 5*time.Second)
+	}
+}
+
+func TestWalkRDirTreeManyDirsWithExcludedFiles(t *testing.T) {
+	const n = 100000
+	entries := make(fs.DirEntries, 0, n)
+	for i := 0; i < n; i++ {
+		entries = append(entries, mockobject.Object(fmt.Sprintf("d%05d/skip.tmp", i)))
+	}
+	fi, err := filter.NewFilter(nil)
+	require.NoError(t, err)
+	require.NoError(t, fi.Add(false, "*.tmp"))
+	ctx := filter.ReplaceConfig(context.Background(), fi)
+
+	start := time.Now()
+	r, err := walkRDirTree(ctx, nil, "", false, -1, makeListRCallback(entries, nil))
+	elapsed := time.Since(start)
+	require.NoError(t, err)
+	assert.Len(t, r[""], n)
+	// Every excluded file has a different parent directory, so a
+	// per-directory cache alone is not enough: resolving each parent
+	// must not scan the entries already collected each time.
+	// The race detector makes this over 10x slower, so only check
+	// the time without it.
+	if !israce.Enabled {
+		assert.Less(t, elapsed, 5*time.Second)
+	}
 }
 
 func TestListType(t *testing.T) {
