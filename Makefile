@@ -302,21 +302,26 @@ retag:
 	@echo "Version is $(VERSION)"
 	git tag -f -s -m "Version $(VERSION)" $(VERSION)
 
+# Start development of the next version after a release: the next
+# minor version on master or the next patch version on a stable branch.
 startdev:
-	@echo "Version is $(VERSION)"
-	@echo "Next version is $(NEXT_VERSION)"
-	echo -e "package fs\n\n// VersionTag of rclone\nvar VersionTag = \"$(NEXT_VERSION)\"\n" | gofmt > fs/versiontag.go
-	echo -n "$(NEXT_VERSION)" > docs/layouts/partials/version.html
-	echo "$(NEXT_VERSION)" > VERSION
-	git commit -m "Start $(NEXT_VERSION)-DEV development" fs/versiontag.go VERSION docs/layouts/partials/version.html
+	@branch=$$(git rev-parse --abbrev-ref HEAD); \
+	case "$$branch" in \
+	master) next="$(NEXT_VERSION)" ;; \
+	v*-stable) next="$(NEXT_PATCH_VERSION)" ;; \
+	*) echo "Branch $$branch isn't master or a stable branch" >&2; exit 1 ;; \
+	esac; \
+	if ! git rev-parse -q --verify "refs/tags/$(VERSION)" >/dev/null; then \
+		echo "$(VERSION) hasn't been tagged yet - has development already been started?" >&2; exit 1; \
+	fi; \
+	echo "Version is $(VERSION)"; \
+	echo "Next version is $$next"; \
+	echo -e "package fs\n\n// VersionTag of rclone\nvar VersionTag = \"$$next\"\n" | gofmt > fs/versiontag.go; \
+	echo -n "$$next" > docs/layouts/partials/version.html; \
+	echo "$$next" > VERSION; \
+	git commit -m "Start $$next-DEV development" fs/versiontag.go VERSION docs/layouts/partials/version.html
 
-startstable:
-	@echo "Version is $(VERSION)"
-	@echo "Next stable version is $(NEXT_PATCH_VERSION)"
-	echo -e "package fs\n\n// VersionTag of rclone\nvar VersionTag = \"$(NEXT_PATCH_VERSION)\"\n" | gofmt > fs/versiontag.go
-	echo -n "$(NEXT_PATCH_VERSION)" > docs/layouts/partials/version.html
-	echo "$(NEXT_PATCH_VERSION)" > VERSION
-	git commit -m "Start $(NEXT_PATCH_VERSION)-DEV development" fs/versiontag.go VERSION docs/layouts/partials/version.html
+startstable: startdev
 
 winzip:
 	zip -9 rclone-$(TAG).zip rclone.exe
