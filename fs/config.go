@@ -566,6 +566,21 @@ var ConfigOptionsInfo = Options{{
 	Default: "",
 	Help:    "HTTP proxy URL.",
 	Groups:  "Networking",
+}, {
+	Name:    "prepare_checksum_in_checker",
+	Default: false,
+	Help:    "Prepare checksum in the checker before transfer",
+	Groups:  "Copy",
+}, {
+	Name:    "prepare_checksum_in_checker_hash_type",
+	Default: "MD5",
+	Help:    "Hash type to use when preparing checksum in the checker before transfer",
+	Groups:  "Copy",
+}, {
+	Name:    "prepare_checksum_in_checker_cut_off",
+	Default: SizeSuffix(128 * 1024 * 1024),
+	Help:    "Object/file larger than the cut off size will have checksum prepared in the checker before transfer",
+	Groups:  "Copy",
 }}
 
 // ConfigInfo is filesystem config options
@@ -680,6 +695,10 @@ type ConfigInfo struct {
 	MaxConnections             int               `config:"max_connections"`
 	NameTransform              []string          `config:"name_transform"`
 	HTTPProxy                  string            `config:"http_proxy"`
+
+	PrepareChecksumInChecker         bool       `config:"prepare_checksum_in_checker"`
+	PrepareChecksumInCheckerHashType string     `config:"prepare_checksum_in_checker_hash_type"`
+	PrepareChecksumInCheckerCutOff   SizeSuffix `config:"prepare_checksum_in_checker_cut_off"`
 }
 
 func init() {

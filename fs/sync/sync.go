@@ -97,6 +97,7 @@ type syncCopyMove struct {
 	setDirModTimesMaxLevel int                    // max level of the directories to set
 	modifiedDirs           map[string]struct{}    // dirs with changed contents (if s.setDirModTimeAfter)
 	allowOverlap           bool                   // whether we allow src and dst to overlap (i.e. for convmv)
+	hashTypeInChecker      hash.Type              // hash type used in the checker
 }
 
 // For keeping track of delayed modtime sets
@@ -262,6 +263,13 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 			return nil, err
 		}
 	}
+	if ci.PrepareChecksumInChecker {
+		var ht hash.Type
+		if err := ht.Set(ci.PrepareChecksumInCheckerHashType); err != nil {
+			return nil, fmt.Errorf("failed to set hash type %s in checker: %w", ci.PrepareChecksumInCheckerHashType, err)
+		}
+		s.hashTypeInChecker = ht
+	}
 	return s, nil
 }
 
@@ -408,12 +416,14 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 						} else {
 							// If successful zero out the dst as it is no longer there and copy the file
 							pair.Dst = nil
+							s.prepareChecksum(s.inCtx, src)
 							ok = out.Put(s.inCtx, pair)
 							if !ok {
 								return
 							}
 						}
 					} else {
+						s.prepareChecksum(s.inCtx, src)
 						ok = out.Put(s.inCtx, pair)
 						if !ok {
 							return
@@ -461,6 +471,7 @@ func (s *syncCopyMove) pairRenamer(in *pipe, out *pipe, fraction int, wg *sync.W
 		if !s.tryRename(src) {
 			// pass on if not renamed
 			fs.Debugf(src, "Need to transfer - No matching file found at Destination")
+			s.prepareChecksum(s.inCtx, src)
 			ok = out.Put(s.inCtx, pair)
 			if !ok {
 				return
@@ -1131,7 +1142,13 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 				// No need to check since doesn't exist
 				fs.Debugf(src, "Need to transfer - File not found at Destination")
 				s.markDirModifiedObject(x)
-				ok := s.toBeUploaded.Put(s.inCtx, fs.ObjectPair{Src: x, Dst: nil})
+				var out *pipe
+				if s.ci.PrepareChecksumInChecker {
+					out = s.toBeChecked
+				} else {
+					out = s.toBeUploaded
+				}
+				ok := out.Put(s.inCtx, fs.ObjectPair{Src: x, Dst: nil})
 				if !ok {
 					return
 				}
@@ -1150,6 +1167,25 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 		panic("Bad object in DirEntries")
 	}
 	return false
+}
+
+func (s *syncCopyMove) prepareChecksum(ctx context.Context, src fs.Object) {
+	if !s.ci.PrepareChecksumInChecker {
+		return
+	}
+	if !src.Fs().Hashes().Contains(s.hashTypeInChecker) {
+		fs.Debugf(src, "hashType not supported by src: %v", s.hashTypeInChecker)
+		return
+	}
+	size := src.Size()
+	multipart := size < 0 || size > int64(s.ci.PrepareChecksumInCheckerCutOff)
+	if multipart {
+		_, err := src.Hash(ctx, s.hashTypeInChecker)
+		if err != nil {
+			fs.Infof(src, "Failed to prepare checksum in checker: %v", err)
+			return
+		}
+	}
 }
 
 // Match is called when src and dst are present, so sync src to dst
