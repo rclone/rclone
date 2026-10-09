@@ -17,6 +17,7 @@ import (
 	"github.com/rclone/rclone/fstest/mockdir"
 	"github.com/rclone/rclone/fstest/mockfs"
 	"github.com/rclone/rclone/fstest/mockobject"
+	"github.com/rclone/rclone/lib/israce"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -798,7 +799,11 @@ func TestWalkRDirTreeManyExcludedFiles(t *testing.T) {
 	assert.Len(t, r[""], n)
 	// Resolving the parent directory of every excluded file must not
 	// scan the entries already collected each time.
-	assert.Less(t, elapsed, 5*time.Second)
+	// The race detector makes this over 10x slower, so only check
+	// the time without it.
+	if !israce.Enabled {
+		assert.Less(t, elapsed, 5*time.Second)
+	}
 }
 
 func TestWalkRDirTreeManyDirsWithExcludedFiles(t *testing.T) {
@@ -820,7 +825,11 @@ func TestWalkRDirTreeManyDirsWithExcludedFiles(t *testing.T) {
 	// Every excluded file has a different parent directory, so a
 	// per-directory cache alone is not enough: resolving each parent
 	// must not scan the entries already collected each time.
-	assert.Less(t, elapsed, 5*time.Second)
+	// The race detector makes this over 10x slower, so only check
+	// the time without it.
+	if !israce.Enabled {
+		assert.Less(t, elapsed, 5*time.Second)
+	}
 }
 
 func TestListType(t *testing.T) {
