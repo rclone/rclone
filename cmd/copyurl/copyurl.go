@@ -56,6 +56,10 @@ printed.
 Setting |--no-clobber| will prevent overwriting file on the
 destination if there is one with the same name.
 
+With |--size-only|, an existing destination file is skipped when its
+size matches the HTTP Content-Length. If the server does not provide a
+known content length, the content is copied as usual.
+
 Setting |--stdout| or making the output file name |-|
 will cause the output to be written to standard output.
 
