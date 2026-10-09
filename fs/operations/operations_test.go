@@ -890,6 +890,41 @@ func TestRmdirsWithFilter(t *testing.T) {
 	)
 }
 
+// dirNotEmptyFs is an Fs whose directories always refuse to be removed,
+// standing in for a backend which hides some files from its listings.
+type dirNotEmptyFs struct {
+	fs.Fs
+}
+
+// Rmdir reports the directory as not empty
+func (f dirNotEmptyFs) Rmdir(ctx context.Context, dir string) error {
+	return fs.ErrorDirectoryNotEmpty
+}
+
+func TestRmdirsDirectoryNotEmpty(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	r.Mkdir(ctx, r.Fremote)
+
+	r.ForceMkdir(ctx, r.Fremote)
+
+	require.NoError(t, operations.Mkdir(ctx, r.Fremote, "A1"))
+
+	accounting.Stats(ctx).ResetErrors()
+	require.NoError(t, operations.Rmdirs(ctx, dirNotEmptyFs{r.Fremote}, "", false))
+	assert.Equal(t, int64(0), accounting.Stats(ctx).GetErrors())
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		[]fstest.Item{},
+		[]string{
+			"A1",
+		},
+		fs.GetModifyWindow(ctx, r.Fremote),
+	)
+}
+
 func TestCopyURL(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
