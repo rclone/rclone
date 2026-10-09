@@ -40,6 +40,10 @@ func main() {
 			if os.Getenv("RCLONE_TEST_PROXY_KEY_ONLY") != "" {
 				log.Fatalf("password refused for %q", in["user"])
 			}
+		case "public_key":
+			if os.Getenv("RCLONE_TEST_PROXY_REFUSE_KEYS") != "" {
+				log.Fatalf("public key refused for %q", in["user"])
+			}
 		}
 		out[k] = v
 	}
