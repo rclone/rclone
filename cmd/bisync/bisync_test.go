@@ -194,6 +194,7 @@ type bisyncTest struct {
 	stepStr     string
 	testCase    string
 	sessionName string
+	hooks       map[string][]string // scenario steps to run once when the named hook fires
 	// test dirs
 	testDir    string
 	dataDir    string
@@ -227,6 +228,7 @@ type bisyncTest struct {
 	TestFn          bisync.TestFunc
 	ignoreModtime   bool // ignore modtimes when comparing final listings, for backends without support
 	ignoreBlankHash bool // ignore blank hashes for backends where we allow them to be blank
+	ignoreChecksum  bool // a step of this test case used --ignore-checksum
 }
 
 var color = bisync.Color
@@ -432,6 +434,7 @@ func (b *bisyncTest) cleanupAll() {
 func (b *bisyncTest) runTestCase(ctx context.Context, t *testing.T, testCase string) {
 	b.t = t
 	b.testCase = testCase
+	b.ignoreChecksum = false
 	var err error
 
 	b.fs1, b.parent1, b.path1, b.canonPath1 = b.makeTempRemote(ctx, b.argRemote1, "path1")
@@ -794,6 +797,19 @@ func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 	case "test-func":
 		b.TestFn = testFunc
 		return
+	case "hook":
+		// hook <when> <step> queues a scenario step to run once, when the next bisync reaches <when>
+		b.checkArgs(args, 2, 0)
+		when := args[1]
+		if when != "before-check" && when != "during-sync" {
+			return fmt.Errorf("unknown hook %q (want before-check or during-sync)", when)
+		}
+		step := strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(strings.TrimPrefix(line, args[0])), when))
+		if b.hooks == nil {
+			b.hooks = map[string][]string{}
+		}
+		b.hooks[when] = append(b.hooks[when], step)
+		return nil
 	case "concurrent-func":
 		b.TestFn = func() {
 			src := filepath.Join(b.dataDir, "file7.txt")
@@ -1117,8 +1133,9 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 		MaxDelete:     bisync.DefaultMaxDelete,
 		CheckFilename: bisync.DefaultCheckFilename,
 		CheckSync:     bisync.CheckSyncTrue,
-		TestFn:        b.TestFn,
 	}
+	opt.TestFn = b.hookFn(ctx, "during-sync", b.TestFn)
+	opt.TestFnConflictCheck = b.hookFn(ctx, "before-check", nil)
 	ctx, opt = b.checkPreReqs(ctx, opt)
 	octx, ci := fs.AddConfig(ctx)
 	fs1, fs2 := b.fs1, b.fs2
@@ -1171,6 +1188,9 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 			ci.SizeOnly = true
 		case "ignore-size":
 			ci.IgnoreSize = true
+		case "ignore-checksum":
+			ci.IgnoreChecksum = true
+			b.ignoreChecksum = true
 		case "checksum":
 			ci.CheckSum = true
 			opt.Compare.DownloadHash = true // allows us to test crypt and the like
@@ -1241,7 +1261,37 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 	if err != nil {
 		b.logPrintf("Bisync error: %v", err)
 	}
+	for _, when := range []string{"before-check", "during-sync"} {
+		if len(b.hooks[when]) > 0 {
+			b.logPrintf("hook %s did not run, discarding %d steps", when, len(b.hooks[when]))
+		}
+	}
+	b.hooks = nil
 	return nil
+}
+
+// hookFn returns a test hook that calls fn, if set, and then runs the
+// scenario steps queued for the hook named when, the first time it is called.
+func (b *bisyncTest) hookFn(ctx context.Context, when string, fn bisync.TestFunc) bisync.TestFunc {
+	if len(b.hooks[when]) == 0 {
+		return fn
+	}
+	return func() {
+		if fn != nil {
+			fn()
+		}
+		steps := b.hooks[when]
+		b.hooks[when] = nil
+		// log only through the captured bisync output, so hook steps appear once and in order
+		logFile, stepStr := b.logFile, b.stepStr
+		b.logFile, b.stepStr = nil, "hook "+when+":"
+		defer func() { b.logFile, b.stepStr = logFile, stepStr }()
+		for _, step := range steps {
+			if err := b.runTestStep(ctx, step); err != nil {
+				fs.Errorf(nil, "hook %s: %q failed: %v", when, step, err)
+			}
+		}
+	}
 }
 
 // saveTestListings creates a copy of test artifacts with given prefix
@@ -1668,6 +1718,16 @@ func (b *bisyncTest) mangleResult(dir, file string, golden bool) string {
 	}
 	if b.testCase == "dry_run" {
 		rep = append(rep, dryrunReplacements...)
+	}
+	if b.ignoreChecksum && b.fs1.Hashes().Overlap(b.fs2.Hashes()).Count() == 0 {
+		// with no hash in common, --ignore-checksum skips the check for identical files instead of running it
+		rep = append(rep,
+			`^.*Checking potential conflicts\.\.\.$`, dropMe,
+			`^.*: \d+ differences found$`, dropMe,
+			`^.*: \d+ matching files$`, dropMe,
+			`^.*Finished checking the potential conflicts.*$`, dropMe,
+			`^.*Not checking potential conflicts.*$`, dropMe,
+		)
 	}
 	repFrom := make([]*regexp.Regexp, len(rep)/2)
 	repTo := make([]string, len(rep)/2)
