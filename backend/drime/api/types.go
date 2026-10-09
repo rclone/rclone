@@ -81,6 +81,7 @@ type Listing struct {
 	PrevPageURL string `json:"prev_page_url"`
 	To          int    `json:"to"`
 	Total       int    `json:"total"`
+	KnownTotal  int    `json:"known_total"`
 }
 
 // UploadResponse for a file
