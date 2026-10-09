@@ -7,11 +7,13 @@ import "github.com/rclone/rclone/fs"
 
 // Options defines the configuration for this backend
 type Options struct {
-	Upstreams    fs.SpaceSepList `config:"upstreams"`
-	Remotes      fs.SpaceSepList `config:"remotes"` // Deprecated
-	ActionPolicy string          `config:"action_policy"`
-	CreatePolicy string          `config:"create_policy"`
-	SearchPolicy string          `config:"search_policy"`
-	CacheTime    int             `config:"cache_time"`
-	MinFreeSpace fs.SizeSuffix   `config:"min_free_space"`
+	Upstreams               fs.SpaceSepList `config:"upstreams"`
+	Remotes                 fs.SpaceSepList `config:"remotes"` // Deprecated
+	ActionPolicy            string          `config:"action_policy"`
+	CreatePolicy            string          `config:"create_policy"`
+	SearchPolicy            string          `config:"search_policy"`
+	CacheTime               int             `config:"cache_time"`
+	MinFreeSpace            fs.SizeSuffix   `config:"min_free_space"`
+	UsageByListing          bool            `config:"usage_by_listing"`
+	UsageByListingCacheTime fs.Duration     `config:"usage_by_listing_cache_time"`
 }

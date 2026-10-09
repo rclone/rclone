@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rclone/rclone/backend/union/upstream"
@@ -82,6 +83,25 @@ func filterNCEntries(ue []upstream.Entry) (wue []upstream.Entry) {
 		}
 	}
 	return wue
+}
+
+// usages calls get for each of n upstreams in parallel and returns
+// the results.
+//
+// This is so that upstreams which need to be listed to find their
+// usage are listed at the same time.
+func usages(n int, get func(i int) (int64, error)) []int64 {
+	values := make([]int64, n)
+	var wg sync.WaitGroup
+	for i := range n {
+		wg.Go(func() {
+			// An error means the value isn't supported which is
+			// treated as 0 and logged by the upstream
+			values[i], _ = get(i)
+		})
+	}
+	wg.Wait()
+	return values
 }
 
 func parentDir(absPath string) string {
