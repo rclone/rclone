@@ -65,9 +65,9 @@ func rcBisync(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	opt := &Options{}
 	octx, ci := fs.AddConfig(ctx)
 
-	if dryRun, err := in.GetBool("dryRun"); err == nil {
-		ci.DryRun = dryRun
-		opt.DryRun = dryRun
+	if dryRun, err := in.GetBool("dryRun"); err == nil && dryRun {
+		// dryRun can ask for a dry run, but not cancel one from the global config
+		ci.DryRun = true
 	} else if rc.NotErrParamNotFound(err) {
 		return nil, err
 	}
@@ -76,60 +76,58 @@ func rcBisync(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		if maxDelete < 0 || maxDelete > 100 {
 			return nil, rc.NewErrParamInvalid(errors.New("maxDelete must be a percentage between 0 and 100"))
 		}
-		opt.MaxDelete = int(maxDelete)
+		ci.MaxDelete = maxDelete
 	} else if rc.NotErrParamNotFound(err) {
 		return nil, err
 	}
 
 	if opt.Resync, err = in.GetBool("resync"); rc.NotErrParamNotFound(err) {
-		fs.Debugf("resync", "optional parameter is missing. using default value: %v", opt.Resync)
+		return nil, err
 	}
 	if opt.CheckAccess, err = in.GetBool("checkAccess"); rc.NotErrParamNotFound(err) {
-		fs.Debugf("checkAccess", "optional parameter is missing. using default value: %v", opt.CheckAccess)
+		return nil, err
 	}
 	if opt.Force, err = in.GetBool("force"); rc.NotErrParamNotFound(err) {
-		fs.Debugf("force", "optional parameter is missing. using default value: %v", opt.Force)
+		return nil, err
 	}
 	if opt.MaxDeleteRenamesAware, err = in.GetBool("maxDeleteRenamesAware"); rc.NotErrParamNotFound(err) {
-		fs.Debugf("maxDeleteRenamesAware", "optional parameter is missing. using default value: %v", opt.MaxDeleteRenamesAware)
+		return nil, err
 	}
 	if opt.CreateEmptySrcDirs, err = in.GetBool("createEmptySrcDirs"); rc.NotErrParamNotFound(err) {
-		fs.Debugf("createEmptySrcDirs", "optional parameter is missing. using default value: %v", opt.CreateEmptySrcDirs)
+		return nil, err
 	}
 	if opt.RemoveEmptyDirs, err = in.GetBool("removeEmptyDirs"); rc.NotErrParamNotFound(err) {
-		fs.Debugf("removeEmptyDirs", "optional parameter is missing. using default value: %v", opt.RemoveEmptyDirs)
+		return nil, err
 	}
 	if opt.NoCleanup, err = in.GetBool("noCleanup"); rc.NotErrParamNotFound(err) {
-		fs.Debugf("noCleanup", "optional parameter is missing. using default value: %v", opt.NoCleanup)
+		return nil, err
 	}
 	if opt.IgnoreListingChecksum, err = in.GetBool("ignoreListingChecksum"); rc.NotErrParamNotFound(err) {
-		fs.Debugf("ignoreListingChecksum", "optional parameter is missing. using default value: %v", opt.IgnoreListingChecksum)
+		return nil, err
 	}
 	if opt.Resilient, err = in.GetBool("resilient"); rc.NotErrParamNotFound(err) {
-		fs.Debugf("resilient", "optional parameter is missing. using default value: %v", opt.Resilient)
+		return nil, err
 	}
 	if opt.CheckFilename, err = in.GetString("checkFilename"); rc.NotErrParamNotFound(err) {
-		opt.CheckFilename = DefaultCheckFilename
-		fs.Debugf("checkFilename", "optional parameter is missing. using default value: %v", opt.CheckFilename)
+		return nil, err
 	}
 	if opt.FiltersFile, err = in.GetString("filtersFile"); rc.NotErrParamNotFound(err) {
-		fs.Debugf("filtersFile", "optional parameter is missing. using default value: %v", opt.FiltersFile)
+		return nil, err
 	}
 	if opt.Workdir, err = in.GetString("workdir"); rc.NotErrParamNotFound(err) {
-		// "" sets correct default later
-		fs.Debugf("workdir", "optional parameter is missing. using default value: %v", opt.Workdir)
+		return nil, err
 	}
-	if opt.BackupDir1, err = in.GetString("backupDir1"); rc.NotErrParamNotFound(err) {
-		// we accept an alternate capitalization here for backward compatibility.
-		if opt.BackupDir1, err = in.GetString("backupdir1"); rc.NotErrParamNotFound(err) {
-			fs.Debugf("backupDir1", "optional parameter is missing. using default value: %v", opt.BackupDir1)
-		}
+	if opt.BackupDir1, err = in.GetString("backupDir1"); rc.IsErrParamNotFound(err) {
+		opt.BackupDir1, err = in.GetString("backupdir1") // the name before v1.74
 	}
-	if opt.BackupDir2, err = in.GetString("backupDir2"); rc.NotErrParamNotFound(err) {
-		// we accept an alternate capitalization here for backward compatibility.
-		if opt.BackupDir2, err = in.GetString("backupdir2"); rc.NotErrParamNotFound(err) {
-			fs.Debugf("backupDir2", "optional parameter is missing. using default value: %v", opt.BackupDir2)
-		}
+	if rc.NotErrParamNotFound(err) {
+		return nil, err
+	}
+	if opt.BackupDir2, err = in.GetString("backupDir2"); rc.IsErrParamNotFound(err) {
+		opt.BackupDir2, err = in.GetString("backupdir2") // the name before v1.74
+	}
+	if rc.NotErrParamNotFound(err) {
+		return nil, err
 	}
 	if err = setEnum(in, "checkSync", "true", opt.CheckSync.Set); err != nil {
 		return nil, err
@@ -144,26 +142,25 @@ func rcBisync(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		return nil, err
 	}
 	if opt.ConflictSuffixFlag, err = in.GetString("conflictSuffix"); rc.NotErrParamNotFound(err) {
-		fs.Debugf("conflictSuffix", "optional parameter is missing. using default value: %v", opt.ConflictSuffixFlag)
+		return nil, err
 	}
 	if opt.Recover, err = in.GetBool("recover"); rc.NotErrParamNotFound(err) {
-		fs.Debugf("recover", "optional parameter is missing. using default value: %v", opt.Recover)
+		return nil, err
 	}
 	if opt.CompareFlag, err = in.GetString("compare"); rc.NotErrParamNotFound(err) {
-		fs.Debugf("compare", "optional parameter is missing. using default value: %v", opt.CompareFlag)
+		return nil, err
 	}
 	if opt.Compare.NoSlowHash, err = in.GetBool("noSlowHash"); rc.NotErrParamNotFound(err) {
-		fs.Debugf("noSlowHash", "optional parameter is missing. using default value: %v", opt.Compare.NoSlowHash)
+		return nil, err
 	}
 	if opt.Compare.SlowHashSyncOnly, err = in.GetBool("slowHashSyncOnly"); rc.NotErrParamNotFound(err) {
-		fs.Debugf("slowHashSyncOnly", "optional parameter is missing. using default value: %v", opt.Compare.SlowHashSyncOnly)
+		return nil, err
 	}
 	if opt.Compare.DownloadHash, err = in.GetBool("downloadHash"); rc.NotErrParamNotFound(err) {
-		fs.Debugf("downloadHash", "optional parameter is missing. using default value: %v", opt.Compare.DownloadHash)
+		return nil, err
 	}
 	if opt.MaxLock, err = in.GetFsDuration("maxLock"); rc.NotErrParamNotFound(err) {
-		opt.MaxLock = 0
-		fs.Debugf("maxLock", "optional parameter is missing. using default value: %v", opt.MaxLock)
+		return nil, err
 	}
 
 	fs1, err := rc.GetFsNamed(octx, in, "path1")
@@ -200,12 +197,11 @@ func rcBisync(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 func setEnum(in rc.Params, name string, defaultVal string, set func(s string) error) error {
 	v, err := in.GetString(name)
-	if rc.NotErrParamNotFound(err) || v == "" {
-		v = defaultVal
-		fs.Debugf(name, "optional parameter is missing. using default value: %v", v)
-	}
-	if err := set(v); err != nil {
+	if rc.NotErrParamNotFound(err) {
 		return err
 	}
-	return nil
+	if v == "" {
+		v = defaultVal
+	}
+	return set(v)
 }
