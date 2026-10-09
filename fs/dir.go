@@ -7,13 +7,14 @@ import (
 
 // Dir describes an unspecialized directory for directory/container/bucket lists
 type Dir struct {
-	f       Info      // Fs this directory is part of
-	remote  string    // name of the directory
-	modTime time.Time // modification or creation time - IsZero for unknown
-	size    int64     // size of directory and contents or -1 if unknown
-	items   int64     // number of objects or -1 for unknown
-	id      string    // optional ID
-	parent  string    // optional parent directory ID
+	f            Info      // Fs this directory is part of
+	remote       string    // name of the directory
+	modTime      time.Time // modification or creation time - IsZero for unknown
+	modTimeValid bool      // false if modTime is unknown, rather than genuinely zero
+	size         int64     // size of directory and contents or -1 if unknown
+	items        int64     // number of objects or -1 for unknown
+	id           string    // optional ID
+	parent       string    // optional parent directory ID
 }
 
 // NewDir creates an unspecialized Directory object
@@ -21,23 +22,35 @@ type Dir struct {
 // If the modTime is unknown pass in time.Time{}
 func NewDir(remote string, modTime time.Time) *Dir {
 	return &Dir{
-		f:       Unknown,
-		remote:  remote,
-		modTime: modTime,
-		size:    -1,
-		items:   -1,
+		f:            Unknown,
+		remote:       remote,
+		modTime:      modTime,
+		modTimeValid: !modTime.IsZero(),
+		size:         -1,
+		items:        -1,
 	}
+}
+
+// dirModTimeValid, if d implements it, reports whether d has a genuine
+// modTime rather than an unknown one masked by a fallback value
+type dirModTimeValid interface {
+	ModTimeValid() bool
 }
 
 // NewDirCopy creates an unspecialized copy of the Directory object passed in
 func NewDirCopy(ctx context.Context, d Directory) *Dir {
+	modTimeValid := true
+	if v, ok := d.(dirModTimeValid); ok {
+		modTimeValid = v.ModTimeValid()
+	}
 	return &Dir{
-		f:       d.Fs(),
-		remote:  d.Remote(),
-		modTime: d.ModTime(ctx),
-		size:    d.Size(),
-		items:   d.Items(),
-		id:      d.ID(),
+		f:            d.Fs(),
+		remote:       d.Remote(),
+		modTime:      d.ModTime(ctx),
+		modTimeValid: modTimeValid,
+		size:         d.Size(),
+		items:        d.Items(),
+		id:           d.ID(),
 	}
 }
 
@@ -86,13 +99,20 @@ func (d *Dir) SetParentID(parent string) *Dir {
 
 // ModTime returns the modification date of the file
 //
-// If one isn't available it returns the configured --default-dir-time
+// If one isn't available it returns the configured --default-time
 func (d *Dir) ModTime(ctx context.Context) time.Time {
 	if !d.modTime.IsZero() {
 		return d.modTime
 	}
 	ci := GetConfig(ctx)
 	return time.Time(ci.DefaultTime)
+}
+
+// ModTimeValid returns false if the backend doesn't know the
+// modification time of this directory, so ModTime is returning the
+// configured --default-time fallback rather than a genuine value
+func (d *Dir) ModTimeValid() bool {
+	return d.modTimeValid
 }
 
 // Size returns the size of the file
