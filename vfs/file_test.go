@@ -435,3 +435,24 @@ func TestFileRename(t *testing.T) {
 func TestFileStructSize(t *testing.T) {
 	t.Logf("File struct has size %d bytes", unsafe.Sizeof(File{}))
 }
+
+func TestFileRenameErrorRollback(t *testing.T) {
+	_, _, file, _ := fileCreate(t, vfscommon.CacheModeOff)
+	dir := file.Dir()
+
+	// Create a destination directory to cause a rename collision
+	_, err := dir.Mkdir("dest_dir")
+	require.NoError(t, err)
+
+	// Keep track of the original state
+	originalName := file.Name()
+	originalPath := file.Path()
+
+	// Rename should fail and error out
+	err = dir.Rename(originalName, "dest_dir", dir)
+	require.Error(t, err)
+
+	// Verify that the file's internal state rolled back
+	assert.Equal(t, originalName, file.Name())
+	assert.Equal(t, originalPath, file.Path())
+}
