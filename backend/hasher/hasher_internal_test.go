@@ -122,6 +122,49 @@ func (f *Fs) testUpdateStoresHash(t *testing.T) {
 	_ = operations.Purge(ctx, f, dirName)
 }
 
+func (f *Fs) testSetModTimeKeepsHash(t *testing.T) {
+	ctx := context.Background()
+
+	const dirName = "setmodtime_hash_1"
+	const fileName = dirName + "/file_setmodtime_1"
+	const longTime = fs.ModTimeNotSupported
+	hashType := f.keepHashes.GetOne()
+
+	// upload a file to hasher via Put
+	src := putFile(ctx, t, f, fileName, "setmodtime content")
+	dst, err := f.NewObject(ctx, fileName)
+	require.NoError(t, err)
+	require.NotNil(t, dst)
+	_ = src
+
+	// verify hash was stored after Put
+	if f.opt.MaxAge <= 0 {
+		t.Skip("hash cache is disabled")
+	}
+	hash1, err := f.getRawHash(ctx, hashType, fileName, anyFingerprint, longTime)
+	require.NoError(t, err)
+	require.NotEmpty(t, hash1)
+
+	// change only the modification time, as operations does when it
+	// syncs the modtime of an otherwise unchanged destination file
+	newTime := fstest.Time("2002-03-04T05:06:07.499999999Z")
+	require.NoError(t, dst.SetModTime(ctx, newTime))
+
+	// the cached hash must survive a pure modtime change
+	hash2, err := f.getRawHash(ctx, hashType, fileName, anyFingerprint, longTime)
+	assert.NoError(t, err)
+	assert.Equal(t, hash1, hash2, "hash should be kept after SetModTime")
+
+	// and it must be found via the fingerprint-checked lookup too
+	dst2, err := f.NewObject(ctx, fileName)
+	require.NoError(t, err)
+	hashVal, err := dst2.Hash(ctx, hashType)
+	assert.NoError(t, err)
+	assert.Equal(t, hash1, hashVal, "hash should be returned after SetModTime")
+
+	_ = operations.Purge(ctx, f, dirName)
+}
+
 // InternalTest dispatches all internal tests
 func (f *Fs) InternalTest(t *testing.T) {
 	if !kv.Supported() {
@@ -129,6 +172,7 @@ func (f *Fs) InternalTest(t *testing.T) {
 	}
 	t.Run("UploadFromCrypt", f.testUploadFromCrypt)
 	t.Run("UpdateStoresHash", f.testUpdateStoresHash)
+	t.Run("SetModTimeKeepsHash", f.testSetModTimeKeepsHash)
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)

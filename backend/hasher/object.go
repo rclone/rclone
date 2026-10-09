@@ -56,6 +56,23 @@ func (o *Object) putHashes(ctx context.Context, rawHashes hashMap) error {
 	return o.f.putRawHashes(ctx, key, fp, hashes)
 }
 
+// updateFingerprint rewrites the fingerprint of the cached hash
+// record for remote from oldFp to newFp, keeping the hashes. It is
+// used when only the modification time of an object changes, so the
+// cached hashes remain valid under the new fingerprint.
+func (f *Fs) updateFingerprint(ctx context.Context, remote, oldFp, newFp string) error {
+	if oldFp == "" || newFp == "" || oldFp == newFp || f.opt.MaxAge <= 0 {
+		return nil
+	}
+	key := path.Join(f.Fs.Root(), remote)
+	return f.db.Do(true, &kvUpdateFingerprint{
+		key:   key,
+		oldFp: oldFp,
+		newFp: newFp,
+		age:   time.Duration(f.opt.MaxAge),
+	})
+}
+
 // set hashes for a path without any validation
 func (f *Fs) putRawHashes(ctx context.Context, key, fp string, hashes operations.HashSums) error {
 	return f.db.Do(true, &kvPut{
@@ -196,14 +213,27 @@ func (o *Object) Remove(ctx context.Context) error {
 }
 
 // SetModTime sets the modification time of the file.
-// Also prunes the cache entry when modtime changes so that
-// touching a file will trigger checksum recalculation even
-// on backends that don't provide modTime with fingerprint.
+//
+// When the fingerprint includes the modtime, the contents have not
+// changed, so the cached hashes are carried over to the fingerprint
+// for the new modtime. Otherwise the cache entry is pruned when the
+// modtime changes so that touching a file will trigger checksum
+// recalculation even on backends that don't provide modTime with
+// fingerprint.
 func (o *Object) SetModTime(ctx context.Context, mtime time.Time) error {
-	if mtime != o.Object.ModTime(ctx) {
-		_ = o.f.pruneHash(o.Remote())
+	if mtime == o.Object.ModTime(ctx) {
+		return o.Object.SetModTime(ctx, mtime)
 	}
-	return o.Object.SetModTime(ctx, mtime)
+	if !o.f.fpTime {
+		_ = o.f.pruneHash(o.Remote())
+		return o.Object.SetModTime(ctx, mtime)
+	}
+	oldFp := o.fingerprint(ctx)
+	if err := o.Object.SetModTime(ctx, mtime); err != nil {
+		return err
+	}
+	_ = o.f.updateFingerprint(ctx, o.Remote(), oldFp, o.fingerprint(ctx))
+	return nil
 }
 
 // Open opens the file for read.
