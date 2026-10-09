@@ -28,6 +28,14 @@ func TestParseSizeFromHeaders(t *testing.T) {
 		"12", "bytes 22-33/*", -1,
 	}, {
 		"0", "bytes */42", 42,
+	}, {
+		"-5", "", -1,
+	}, {
+		"-5", "bytes 22-33/42", -1,
+	}, {
+		"", "bytes 0-1/-5", -1,
+	}, {
+		"12", "bytes 22-33/-5", -1,
 	}}
 	for _, testCase := range testCases {
 		headers := make(http.Header, 2)
