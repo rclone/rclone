@@ -1,0 +1,773 @@
+---
+title: "GoPro Media Library"
+description: "Rclone docs for GoPro Media Library"
+versionIntroduced: "v1.76"
+---
+
+# GoPro Media Library
+
+[GoPro Media Library](https://gopro.com/media-library/) is GoPro's cloud
+storage for photos and video. GoPro doesn't publish an API for it - this
+backend uses the one behind the gopro.com web app, as do several community
+clients ([dustin/gopro-plus](https://github.com/dustin/gopro-plus),
+[mvisonneau/gpcd](https://github.com/mvisonneau/gpcd),
+[aricha/GoProcure](https://github.com/aricha/GoProcure),
+[itsankoff/gopro-plus](https://github.com/itsankoff/gopro-plus)).
+**GoPro can change or remove this API at any time without notice.**
+
+Paths are specified as `remote:path`. The layout is virtual - see
+[Directory layout](#directory-layout) - so most paths look like
+`remote:media/all`.
+
+## Configuration
+
+Here is an example of making a remote for GoPro Media Library.
+
+First run:
+
+```console
+rclone config
+```
+
+This will guide you through an interactive setup process:
+
+```text
+No remotes found, make a new one?
+n) New remote
+s) Set configuration password
+q) Quit config
+n/s/q> n
+
+Enter name for new remote.
+name> remote
+
+Option Storage.
+Type of storage to configure.
+Choose a number from below, or type in your own value.
+XX / GoPro Media Library
+   \ (gopro)
+Storage> gopro
+
+Option user.
+GoPro account email.
+Enter a value. Press Enter to leave empty.
+user> you@example.com
+
+Option pass.
+GoPro account password.
+Enter a value. Press Enter to leave empty.
+y) Yes, type in my own password
+g) Generate random password
+n) No, leave this optional password blank
+y/g/n> y
+Enter the password:
+password:
+Confirm the password:
+password:
+
+Edit advanced config?
+y/n> n
+
+Keep this "remote" remote?
+y/e/d> y
+```
+
+rclone stores a refresh token and renews the access token automatically.
+If GoPro revokes the stored token, even while rclone is running (for
+example in a mount), rclone logs in again with the stored
+user name and password. If your account can't log in this way (for
+example because of two-factor authentication), see
+[`--gopro-access-token`](#gopro-access-token); such a token can't be
+renewed and has to be replaced by hand when it expires.
+
+Once configured you can use it like any other remote:
+
+```console
+rclone lsd remote:media
+rclone copy remote:media/by-year/2026 /path/to/backup
+rclone mount remote:media/all /mnt/gopro
+```
+
+## Directory layout
+
+GoPro Media Library has no folders. This backend shows a virtual tree over
+it, like the [Google Photos](/googlephotos/#layout) backend:
+
+```text
+media/
+├── all/                       every media item, flat
+├── by-year/YYYY/
+├── by-month/YYYY/YYYY-MM/
+└── by-day/YYYY/YYYY-MM-DD/
+upload/                        files uploaded by this rclone process
+```
+
+The date directories are based on `captured_at` in UTC and only list
+years, months and days that have media in them (see
+[`--gopro-show-empty-dirs`](#gopro-show-empty-dirs)). The same item shows
+up in `media/all` and in its date directories.
+
+rclone recognises them as the same file by its ID, so moving a file to
+another directory showing the same item, such as from `media/all` to
+its own `by-day` directory, changes nothing.
+
+Directories under `media/` can't be created or removed. Only `upload/`
+accepts new files, and subdirectories can be made there to organise
+them.
+
+### Duplicate filenames
+
+GoPro cameras reuse file names (`GX010123.MP4` turns up again and again),
+so files are named `name {id}.ext`, where `id` is the GoPro media ID. With
+[`--gopro-always-add-id=false`](#gopro-always-add-id) only names that
+collide within a listing get the ID - but whether a name collides can
+change as the library changes, and then `sync` sees a renamed file and
+transfers it again.
+
+### Chaptered videos, burst and time lapse photos
+
+GoPro stores long recordings as several chapters, and burst or time lapse
+photos as one item with many frames. Each is shown as its own file, named
+`name-N.ext` (for example `GX010294-1.MP4`, `GX010294-2.MP4`). Time lapse
+videos are ordinary single files.
+
+GoPro only reports the total size of such an item, so each file's size
+is shown as `-1` (unknown) rather than guessed. Set
+[`--gopro-read-size`](#gopro-read-size) to read exact sizes (for example
+for `rclone mount`), at the cost of one request per file.
+
+### RAW photos
+
+Photos shot in RAW mode have a RAW (`.gpr`) file next to the JPEG, and
+both are listed under the same name, for example `GP012013 {id}.JPG` and
+`GP012013 {id}.GPR` - for a photo series, one pair per frame.
+[`--gopro-photo-format`](#gopro-photo-format) lists only the JPEG or only
+the RAW file instead; a photo with only one of the two is always listed.
+
+GoPro reports no size for RAW files, so their size is unknown unless
+[`--gopro-read-size`](#gopro-read-size) is set. GoPro can only rename or
+delete a photo together with its RAW file, so a RAW file can't be
+renamed on its own, and deleting one follows
+[`--gopro-delete-parts`](#gopro-delete-parts) - see
+[Deleting files](#deleting-files).
+
+A RAW file uploaded on its own keeps its `.gpr` name in GoPro, but GoPro
+generates a JPEG for it once processed, so it's then listed as a pair
+like any other RAW photo. In `upload/` it's still the uploaded RAW file.
+
+### Highlights and Edits
+
+Highlights generated by GoPro and Edits made in its app (`MultiClipEdit`
+and `Edit` media) are listed by default, as in GoPro's own app - see
+[`--gopro-include-edits`](#gopro-include-edits). The rendered video is
+downloaded, and they're listed with an `.mp4` extension, added to their
+whole name if it has another one (`Trip v1.5` is listed as
+`Trip v1.5.mp4`). Auto-generated Highlights often have no name and are
+listed as `{id}.mp4`. GoPro
+reports no size for them, so their size is unknown unless
+[`--gopro-read-size`](#gopro-read-size) is set.
+
+### Size verification
+
+The size GoPro reports for a file is occasionally a few KB off. That
+fails rclone's integrity check, breaks multi-thread downloads and makes
+`sync` transfer the file again on every run.
+[`--gopro-verify-size`](#gopro-verify-size) checks sizes with an extra
+request and logs a notice when one is wrong. By default only files GoPro
+has reprocessed since upload are checked, as those are the only ones
+seen affected.
+
+## Modification times and hashes
+
+The modification time is the item's `captured_at`, which is also what the
+date directories are based on. `rclone touch` changes it, rewriting
+GoPro's record of when the item was captured. The precision is reported
+as unsupported, so `sync` and `copy` never change it on their own.
+
+There is no hash, so `--checksum` can't be used and `sync` compares sizes
+only.
+
+## Which file gets downloaded
+
+By default (`--gopro-download-variation source`) the original camera file
+is downloaded, or the rendered video of a Highlight or Edit. Set
+[`--gopro-download-variation`](#gopro-download-variation) to, for example,
+`1080p` to download a smaller transcoded version instead. GoPro only
+reports the size of the original, so sizes are then unknown unless
+[`--gopro-read-size`](#gopro-read-size) is set.
+
+## Renaming and moving files
+
+Files under `media/` can be renamed and moved (`rclone moveto`,
+`rclone move`). Moving a file to a different `by-year`, `by-month` or
+`by-day` directory changes its `captured_at` to that date. A chapter or
+burst frame can't be moved on its own.
+
+GoPro uses the name as both the filename and the title shown in its app.
+A move that keeps the name leaves both unchanged, and a file can't be
+renamed to a name with nothing before its extension.
+
+## Link sharing
+
+`rclone link` creates a public share of a file at
+`https://gopro.com/v/{id}`, titled with the file's name, or untitled for
+media without a name (see [`--gopro-link-title`](#gopro-link-title)).
+[`--gopro-link-allow-download`](#gopro-link-allow-download) lets
+recipients download the original, which also shares any GPS data in it.
+`--expire` and `--unlink` aren't supported: shares don't expire, and
+there's no way to find the shares containing a file.
+
+GoPro shares whole items, so `rclone link` refuses a single chapter or
+frame, or the JPEG or RAW file of a RAW photo, which would share all the
+others with it.
+[`rclone backend link`](#link) shares whole items instead.
+
+## Deleting files
+
+By default deleted files go to GoPro's "Recently Deleted", where they
+can be restored for 60 days (see
+[`--gopro-trashed-only`](#gopro-trashed-only) and
+[`rclone backend restore`](#restore)) and still count against the
+storage quota. Set [`--gopro-use-trash=false`](#gopro-use-trash) to
+delete permanently instead; GoPro takes about a minute to process that.
+GoPro also applies an ordinary delete with a delay - typically around 15
+seconds - so a listing straight after it may still show the file.
+
+GoPro only deletes whole items: a chaptered video, a burst, continuous or
+time lapse photo series, or a photo together with its RAW file. Its API
+has no way to delete one chapter or frame - it ignores a part number
+sent with a delete and deletes the whole item. Since rclone lists each
+of these parts as its own file,
+[`--gopro-delete-parts`](#gopro-delete-parts) decides what deleting one
+of them does. By default none of them can be deleted, so a `move` or
+`delete` fails for them and the item is kept - rclone deletes files one
+at a time, even when deleting a whole directory, and can't tell GoPro
+that all parts of an item are meant.
+[`rclone backend delete`](#delete) deletes whole items instead.
+
+## Uploading
+
+Files are uploaded to `upload/` in chunks of
+[`--gopro-upload-chunk-size`](#gopro-upload-chunk-size) (at least 5Mi),
+with [`--gopro-upload-concurrency`](#gopro-upload-concurrency) in flight
+at once. Chunk buffers count towards
+[`--max-buffer-memory`](/docs/#max-buffer-memory). The size has to be
+known up front, so `rclone rcat` stores the stream in a temporary file
+first.
+
+GoPro detects duplicates by their image content: a new upload that
+matches an item already in the library is moved to "Recently Deleted"
+by GoPro itself, a few seconds after the upload completes, even though
+the upload succeeded. Changed metadata (for example the capture time) or
+file name doesn't make it count as a different item.
+
+GoPro can't replace a file's content, so overwriting a file in `upload/`
+(for example in `rclone mount`) uploads a new item and, once GoPro has
+processed it, deletes the old one, following `--gopro-use-trash`. If
+GoPro drops the new upload as a duplicate or can't process it, the
+overwrite fails and the old item is kept; if processing takes more than two minutes, the old
+item is kept too and a notice logged. As there are no hashes or
+modification times to compare, `rclone copy` only sees a changed file
+if its size changed too - use `--ignore-times` to upload it anyway.
+
+<!-- autogenerated options start - DO NOT EDIT - instead edit fs.RegInfo in backend/gopro/gopro.go and run make backenddocs to verify --> <!-- markdownlint-disable-line line-length -->
+### Standard options
+
+Here are the Standard options specific to gopro (GoPro Media Library).
+
+#### --gopro-user
+
+GoPro account email.
+
+Leave blank if using access_token instead.
+
+Properties:
+
+- Config:      user
+- Env Var:     RCLONE_GOPRO_USER
+- Type:        string
+- Required:    false
+
+#### --gopro-pass
+
+GoPro account password.
+
+Leave blank if using access_token instead.
+
+**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
+
+Properties:
+
+- Config:      pass
+- Env Var:     RCLONE_GOPRO_PASS
+- Type:        string
+- Required:    false
+
+### Advanced options
+
+Here are the Advanced options specific to gopro (GoPro Media Library).
+
+#### --gopro-access-token
+
+Static bearer token, as an alternative to user/pass.
+
+Copy the value of the gp_access_token cookie from a browser session
+logged into gopro.com/media-library. This does not refresh, so it
+will stop working (typically within a few hours) and need pasting in
+again - prefer user/pass unless your account can't complete that
+flow.
+
+Properties:
+
+- Config:      access_token
+- Env Var:     RCLONE_GOPRO_ACCESS_TOKEN
+- Type:        string
+- Required:    false
+
+#### --gopro-download-variation
+
+Which rendition to download.
+
+"source" (the default) downloads the original camera file, or the
+rendered video for Highlights and Edits. Any other value is matched
+against the label or quality of the renditions GoPro offers (for
+example "1080p" or "high_res_proxy_mp4"), falling back to the first
+file offered if nothing matches. GoPro only reports the size of the
+original, so any other rendition's size is unknown unless
+[--gopro-read-size](#gopro-read-size) is set.
+
+Properties:
+
+- Config:      download_variation
+- Env Var:     RCLONE_GOPRO_DOWNLOAD_VARIATION
+- Type:        string
+- Default:     "source"
+
+#### --gopro-include-edits
+
+Include Highlights and user-made Edits in listings.
+
+These "MultiClipEdit"/"Edit" media are rendered from other clips.
+GoPro reports no size for them, so their size is unknown unless
+[--gopro-read-size](#gopro-read-size) is set (e.g. for rclone mount).
+The rendered video is downloaded and they are listed as ".mp4" -
+unnamed auto-generated Highlights as "{id}.mp4".
+
+Turn this off to list only camera originals.
+
+Properties:
+
+- Config:      include_edits
+- Env Var:     RCLONE_GOPRO_INCLUDE_EDITS
+- Type:        bool
+- Default:     true
+
+#### --gopro-include-processing
+
+Include media GoPro hasn't finished processing yet.
+
+By default only media in the "ready" state is listed. This adds the
+"uploading", "registered", "transcoding" and "stabilizing" states.
+Media in these states is often downloadable already, but items with no
+file size yet are still skipped.
+
+Properties:
+
+- Config:      include_processing
+- Env Var:     RCLONE_GOPRO_INCLUDE_PROCESSING
+- Type:        bool
+- Default:     false
+
+#### --gopro-include-failed
+
+Include media stuck in a "failure" or "unknown" state.
+
+Such media may have no usable content. This is mainly useful to find
+and remove stuck items.
+
+Properties:
+
+- Config:      include_failed
+- Env Var:     RCLONE_GOPRO_INCLUDE_FAILED
+- Type:        bool
+- Default:     false
+
+#### --gopro-show-all
+
+List everything in the library, bypassing all filters.
+
+This ignores [--gopro-include-edits](#gopro-include-edits),
+[--gopro-include-processing](#gopro-include-processing) and
+[--gopro-include-failed](#gopro-include-failed), and also lists
+"export" media (internal renders GoPro's own app never shows). It can
+surface media this backend doesn't know how to handle, so use it for
+troubleshooting rather than normal browsing.
+
+It has no effect with [--gopro-trashed-only](#gopro-trashed-only),
+which always lists everything.
+
+Properties:
+
+- Config:      show_all
+- Env Var:     RCLONE_GOPRO_SHOW_ALL
+- Type:        bool
+- Default:     false
+
+#### --gopro-show-empty-dirs
+
+Show every media/by-year, by-month and by-day directory.
+
+By default only years, months and days with media in them are listed.
+A path under an unlisted day can still be used as a move destination
+either way - this only changes what is listed.
+
+Properties:
+
+- Config:      show_empty_dirs
+- Env Var:     RCLONE_GOPRO_SHOW_EMPTY_DIRS
+- Type:        bool
+- Default:     false
+
+#### --gopro-start-year
+
+Year to start media/by-year, by-month and by-day listings from.
+
+0 (the default) uses the year of the earliest media in the library.
+Set it together with [--gopro-show-empty-dirs](#gopro-show-empty-dirs)
+to list earlier years.
+
+Properties:
+
+- Config:      start_year
+- Env Var:     RCLONE_GOPRO_START_YEAR
+- Type:        int
+- Default:     0
+
+#### --gopro-link-allow-download
+
+Allow downloading the original file from a public share link.
+
+This is the "Allow Download" toggle in GoPro's web app. GoPro ties it
+to sharing any GPS data embedded in the file, so enabling it shares
+that location data with recipients too.
+
+Properties:
+
+- Config:      link_allow_download
+- Env Var:     RCLONE_GOPRO_LINK_ALLOW_DOWNLOAD
+- Type:        bool
+- Default:     false
+
+#### --gopro-link-title
+
+Title for public share links.
+
+Defaults to the file's name without its {id} suffix, or no title for
+media without a name. As "rclone link" can't pass a title, this applies
+to every link created.
+
+Properties:
+
+- Config:      link_title
+- Env Var:     RCLONE_GOPRO_LINK_TITLE
+- Type:        string
+- Required:    false
+
+#### --gopro-use-trash
+
+Send deleted files to GoPro's trash instead of deleting permanently.
+
+Trashed media shows as "Recently Deleted" in GoPro's app, can be
+restored for up to 60 days (see "rclone backend restore" and
+[--gopro-trashed-only](#gopro-trashed-only)) and still counts against
+the storage quota. Media from GoPro cameras doesn't count against any
+quota, so there's nothing to gain by skipping the trash for it.
+
+Properties:
+
+- Config:      use_trash
+- Env Var:     RCLONE_GOPRO_USE_TRASH
+- Type:        bool
+- Default:     true
+
+#### --gopro-trashed-only
+
+Only show media in GoPro's trash.
+
+With this set, every listing under media/ shows "Recently Deleted"
+instead of the active library, including items the other filters would
+hide. Deleting a file here removes it permanently, regardless of
+[--gopro-use-trash](#gopro-use-trash). Use "rclone backend restore" to
+move it back to the library.
+
+To view the trash next to the normal library, override this per
+command, e.g. "gopro,trashed_only=true:media/all".
+
+Properties:
+
+- Config:      trashed_only
+- Env Var:     RCLONE_GOPRO_TRASHED_ONLY
+- Type:        bool
+- Default:     false
+
+#### --gopro-always-add-id
+
+Always add the media ID to file names, as "name {id}.ext".
+
+GoPro cameras reuse file names, so names that collide within a listing
+always get the ID. Without this option whether a file collides can
+change from one run to the next, renaming it - sync then deletes and
+re-transfers it. Only turn this off for a library without duplicate
+names.
+
+Properties:
+
+- Config:      always_add_id
+- Env Var:     RCLONE_GOPRO_ALWAYS_ADD_ID
+- Type:        bool
+- Default:     true
+
+#### --gopro-verify-size
+
+Verify file sizes with a HEAD request before relying on them.
+
+The size GoPro reports can be wrong, which fails rclone's integrity
+check and makes sync re-transfer the file on every run. The only files
+seen affected had been reprocessed by GoPro after upload, so by default
+only those are checked.
+
+Properties:
+
+- Config:      verify_size
+- Env Var:     RCLONE_GOPRO_VERIFY_SIZE
+- Type:        string
+- Default:     "reprocessed"
+- Examples:
+  - "reprocessed"
+    - Verify only files GoPro has reprocessed since upload
+  - "always"
+    - Verify every file - safest, one extra request per file
+  - "off"
+    - Never verify - fastest, trusts file_size from the API as-is
+
+#### --gopro-photo-format
+
+Which files to list for photos shot with both JPEG and RAW.
+
+A photo shot in RAW mode has a RAW (.gpr) file next to its JPEG, listed
+under the same name. A photo with only one of the two is always listed,
+whatever this is set to.
+
+Properties:
+
+- Config:      photo_format
+- Env Var:     RCLONE_GOPRO_PHOTO_FORMAT
+- Type:        string
+- Default:     "both"
+- Examples:
+  - "both"
+    - List both the JPEG and the RAW file
+  - "jpeg"
+    - List only the JPEG
+  - "raw"
+    - List only the RAW file
+
+#### --gopro-delete-parts
+
+How to delete a single chapter, frame or RAW file.
+
+GoPro only deletes whole items: a chaptered video, a burst, continuous
+or time lapse photo series, or a photo together with its RAW file.
+Deleting just one of the files rclone lists for such an item would
+delete all of them.
+
+By default none of these files can be deleted on its own, so deleting
+or moving one fails and the item is kept. Delete whole items with
+"rclone backend delete" instead.
+
+The other modes delete the whole item, so use them with care: rclone
+deletes each file on its own, for example straight after moving it to
+another remote, so the item's other files are deleted with it even if
+they were never transferred.
+
+Properties:
+
+- Config:      delete_parts
+- Env Var:     RCLONE_GOPRO_DELETE_PARTS
+- Type:        string
+- Default:     "refuse"
+- Examples:
+  - "refuse"
+    - No file of such an item can be deleted on its own - use "rclone backend delete"
+  - "first"
+    - Deleting the item's first file (chapter or frame 1, or the JPEG of a RAW photo) deletes the whole item
+  - "any"
+    - Deleting any file of the item deletes the whole item
+
+#### --gopro-read-size
+
+Read the exact size of chaptered videos, burst photos and edits.
+
+GoPro only reports the total size of a chaptered video or burst photo
+set, and none for Highlights and Edits, so their size is unknown by
+default. Set this if you need exact sizes, e.g. for rclone mount. This
+costs one extra request per file.
+
+Properties:
+
+- Config:      read_size
+- Env Var:     RCLONE_GOPRO_READ_SIZE
+- Type:        bool
+- Default:     false
+
+#### --gopro-upload-chunk-size
+
+Chunk size for uploads to the upload/ directory.
+
+Must be at least 5Mi: GoPro's upload endpoint is S3-backed and rejects
+anything smaller for every part but the last.
+
+Properties:
+
+- Config:      upload_chunk_size
+- Env Var:     RCLONE_GOPRO_UPLOAD_CHUNK_SIZE
+- Type:        SizeSuffix
+- Default:     6Mi
+
+#### --gopro-upload-concurrency
+
+Concurrency for multipart uploads.
+
+GoPro's chunk upload protocol accepts parts in any order, so chunks of
+a single file are PUT concurrently once read. Note that chunks are
+buffered in memory, so total memory use can be up to
+upload_chunk_size * upload_concurrency.
+
+Properties:
+
+- Config:      upload_concurrency
+- Env Var:     RCLONE_GOPRO_UPLOAD_CONCURRENCY
+- Type:        int
+- Default:     4
+
+#### --gopro-encoding
+
+The encoding for the backend.
+
+See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
+
+- Config:      encoding
+- Env Var:     RCLONE_GOPRO_ENCODING
+- Type:        Encoding
+- Default:     Slash,CrLf,InvalidUtf8,Dot
+
+#### --gopro-description
+
+Description of the remote.
+
+Properties:
+
+- Config:      description
+- Env Var:     RCLONE_GOPRO_DESCRIPTION
+- Type:        string
+- Required:    false
+
+## Backend commands
+
+Here are the commands specific to the gopro backend.
+
+Run them with:
+
+```console
+rclone backend COMMAND remote:
+```
+
+The help below will explain what arguments each command takes.
+
+See the [backend](/commands/rclone_backend/) command for more
+info on how to pass options and arguments.
+
+These can be run on a running backend using the rc command
+[backend/command](/rc/#backend-command).
+
+### restore
+
+Restore media from GoPro's trash
+
+```console
+rclone backend restore remote: [options] [<arguments>+]
+```
+
+This restores media from GoPro's trash to the active library,
+whether or not --gopro-trashed-only is set.
+
+With no arguments, it restores everything in the trash:
+
+    rclone backend restore gopro:
+
+Otherwise each argument names one medium to restore, either by its id
+or by its "name {id}.ext" file name as listed with --gopro-trashed-only:
+
+    rclone backend restore gopro: 6a99f18a239bf36f4c2377cf "photo {6a99f18a239bf36f4c2377cf}.jpg"
+
+With --dry-run, it only logs what would be restored.
+
+GoPro restores asynchronously and reports no failures, so a restored
+item can take a while to reappear in the library, and occasionally
+doesn't at all. Check with --gopro-trashed-only if one is missing.
+
+### delete
+
+Delete whole media, with all their files
+
+```console
+rclone backend delete remote: [options] [<arguments>+]
+```
+
+This deletes whole media, including every chapter, frame and RAW
+file of each, following --gopro-use-trash. See --gopro-delete-parts for
+why deleting one of those files on its own may not be possible.
+
+Each argument names one medium, either by its id or by the name of any
+of its files as listed by this backend:
+
+    rclone backend delete gopro: 6a29a4bcfe314c5af39cfcbe "GX012010-2 {6a29a4bcfe314c5af39cfcbe}.MP4"
+
+With --dry-run, it only logs what would be deleted.
+
+### link
+
+Create public share links for whole media
+
+```console
+rclone backend link remote: [options] [<arguments>+]
+```
+
+This creates a public share link for each medium named, following
+--gopro-link-title and --gopro-link-allow-download, and prints the links.
+
+GoPro shares whole media, so "rclone link" refuses a single chapter or
+frame, or the JPEG or RAW file of a RAW photo - this shares every file
+of the medium instead. Each
+argument names one medium, either by its id or by the name of any of its
+files as listed by this backend:
+
+    rclone backend link gopro: "GX012010-2 {6a29a4bcfe314c5af39cfcbe}.MP4"
+
+With --dry-run, it only logs what would be shared.
+
+<!-- autogenerated options stop -->
+
+## Limitations
+
+- `Copy` and `DirMove` aren't supported: GoPro has no server-side copy,
+  and the directories are virtual.
+- Multi-item media has only been tested with `Video`, `Burst`,
+  `Continuous` and `TimeLapse` items. Other types may not download
+  correctly.
+- Albums, moments and sidecar files other than RAW photos (such as
+  GPS/telemetry) aren't shown.
+- `upload/` only lists files uploaded by the running rclone process;
+  uploaded files appear under `media/` once GoPro has processed them.
