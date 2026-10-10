@@ -4,19 +4,24 @@ package googlephotos
 // FIXME Resumable uploads not implemented - rclone can't resume uploads in general
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/bep/imagemeta"
 
 	"github.com/rclone/rclone/backend/googlephotos/api"
 	"github.com/rclone/rclone/fs"
@@ -243,6 +248,15 @@ rclone use the proxy.
 `, "|", "`"),
 			Advanced: true,
 		}, {
+			Name:    "upload_exif_description",
+			Default: false,
+			Help:    "Upload EXIF/IPTC/XMP metadata from the file as the Google Photos description.",
+		}, {
+			Name:     "exif_description_fields",
+			Default:  "Description,Caption-Abstract,ImageDescription,Title,ObjectName",
+			Help:     "EXIF/IPTC/XMP fields to search for description metadata, in priority order.",
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -255,15 +269,18 @@ rclone use the proxy.
 
 // Options defines the configuration for this backend
 type Options struct {
-	ReadOnly        bool                 `config:"read_only"`
-	ReadSize        bool                 `config:"read_size"`
-	StartYear       int                  `config:"start_year"`
-	IncludeArchived bool                 `config:"include_archived"`
-	Enc             encoder.MultiEncoder `config:"encoding"`
-	BatchMode       string               `config:"batch_mode"`
-	BatchSize       int                  `config:"batch_size"`
-	BatchTimeout    fs.Duration          `config:"batch_timeout"`
-	Proxy           string               `config:"proxy"`
+	ReadOnly              bool                 `config:"read_only"`
+	ReadSize              bool                 `config:"read_size"`
+	StartYear             int                  `config:"start_year"`
+	IncludeArchived       bool                 `config:"include_archived"`
+	Enc                   encoder.MultiEncoder `config:"encoding"`
+	BatchMode             string               `config:"batch_mode"`
+	BatchSize             int                  `config:"batch_size"`
+	BatchTimeout          fs.Duration          `config:"batch_timeout"`
+	Proxy                 string               `config:"proxy"`
+	ReadExifDescription   bool                 `config:"read_exif_description"`
+	UploadExifDescription bool                 `config:"upload_exif_description"`
+	ExifDescriptionFields string               `config:"exif_description_fields"`
 }
 
 // Fs represents a remote storage server
@@ -1076,10 +1093,153 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	return resp.Body, err
 }
 
+// extractEXIFDescription reads up to 512 KB of the image file, extracts description tags,
+// and returns the extracted description, a restored reader containing the full data, and any error.
+func extractEXIFDescription(in io.Reader, fileName string, fieldsList string) (string, io.Reader, error) {
+	// Determine the image format
+	ext := strings.ToLower(filepath.Ext(fileName))
+	var format imagemeta.ImageFormat
+	switch ext {
+	case ".jpg", ".jpeg":
+		format = imagemeta.JPEG
+	case ".png":
+		format = imagemeta.PNG
+	case ".webp":
+		format = imagemeta.WebP
+	case ".tif", ".tiff":
+		format = imagemeta.TIFF
+	default:
+		// Unsupported or not an image format that we handle EXIF mapping for
+		return "", in, nil
+	}
+
+	// Parse fieldsList into a priority list of tags
+	fields := strings.Split(fieldsList, ",")
+	for i := range fields {
+		fields[i] = strings.TrimSpace(fields[i])
+	}
+
+	// Read the first 512 KB into a buffer
+	const peekSize = 512 * 1024
+	buf := make([]byte, peekSize)
+	n, err := io.ReadFull(in, buf)
+	if err != nil && err != io.ErrUnexpectedEOF && err != io.EOF {
+		return "", in, fmt.Errorf("failed to read header for EXIF parsing: %w", err)
+	}
+	buf = buf[:n]
+
+	// Restore the original stream using MultiReader
+	restoredReader := io.MultiReader(bytes.NewReader(buf), in)
+
+	// If buffer is too small to contain meaningful metadata, return early
+	if len(buf) < 16 {
+		return "", restoredReader, nil
+	}
+
+	// Map to accumulate the tags
+	tags := make(map[string]string)
+
+	opts := imagemeta.Options{
+		R:           bytes.NewReader(buf),
+		ImageFormat: format,
+		// We want EXIF, IPTC, and XMP sources
+		Sources: imagemeta.EXIF | imagemeta.IPTC | imagemeta.XMP,
+		// We don't want to skip EXIF tags in non-IFD0 blocks, so allow all tags we care about
+		ShouldHandleTag: func(tag imagemeta.TagInfo) bool {
+			for _, field := range fields {
+				if tag.Tag == field {
+					return true
+				}
+			}
+			return false
+		},
+		HandleTag: func(tag imagemeta.TagInfo) error {
+			if strVal, ok := tag.Value.(string); ok {
+				tags[tag.Tag] = strVal
+			} else if tag.Value != nil {
+				tags[tag.Tag] = fmt.Sprint(tag.Value)
+			}
+			return nil
+		},
+		HandleXMP: func(r io.Reader) error {
+			dec := xml.NewDecoder(r)
+			var currentTag string
+			var inAltLi bool
+			for {
+				tok, err := dec.Token()
+				if err != nil {
+					if err == io.EOF {
+						break
+					}
+					return err
+				}
+				switch se := tok.(type) {
+				case xml.StartElement:
+					name := strings.ToLower(se.Name.Local)
+					if name == "title" || name == "description" {
+						// Only match if namespace is Dublin Core
+						if se.Name.Space == "http://purl.org/dc/elements/1.1/" {
+							currentTag = name
+						}
+					} else if name == "li" && currentTag != "" {
+						inAltLi = true
+					}
+				case xml.CharData:
+					if inAltLi && currentTag != "" {
+						val := strings.TrimSpace(string(se))
+						if val != "" {
+							if currentTag == "title" {
+								tags["Title"] = val
+							} else if currentTag == "description" {
+								tags["Description"] = val
+							}
+						}
+					}
+				case xml.EndElement:
+					name := strings.ToLower(se.Name.Local)
+					if name == "title" || name == "description" {
+						if se.Name.Space == "http://purl.org/dc/elements/1.1/" {
+							currentTag = ""
+						}
+					} else if name == "li" {
+						inAltLi = false
+					}
+				}
+			}
+			return nil
+		},
+	}
+
+	// Decode (ignore error if format decoding fails or is partial)
+	_ = imagemeta.Decode(opts)
+
+	// Prioritize fields in the specified order
+	var description string
+	for _, field := range fields {
+		if val, ok := tags[field]; ok && strings.TrimSpace(val) != "" {
+			description = val
+			break
+		}
+	}
+
+	// Truncate to Google Photos API maximum limit of 1000 characters
+	if len(description) > 1000 {
+		runes := []rune(description)
+		if len(runes) > 1000 {
+			description = string(runes[:1000])
+		} else {
+			description = description[:1000]
+		}
+	}
+
+	return description, restoredReader, nil
+}
+
 // input to the batcher
 type uploadedItem struct {
 	AlbumID     string // desired album
 	UploadToken string // upload ID
+	Description string // EXIF description/caption
 }
 
 // Commit a batch of items to albumID returning the errors in errors
@@ -1096,6 +1256,7 @@ func (f *Fs) commitBatchAlbumID(ctx context.Context, items []uploadedItem, resul
 	for i := range items {
 		if items[i].AlbumID == albumID {
 			request.NewMediaItems = append(request.NewMediaItems, api.NewMediaItem{
+				Description: items[i].Description,
 				SimpleMediaItem: api.SimpleMediaItem{
 					UploadToken: items[i].UploadToken,
 				},
@@ -1186,6 +1347,15 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		albumID = album.ID
 	}
 
+	var description string
+	if o.fs.opt.UploadExifDescription {
+		var extractErr error
+		description, in, extractErr = extractEXIFDescription(in, fileName, o.fs.opt.ExifDescriptionFields)
+		if extractErr != nil {
+			fs.Errorf(o, "Failed to extract EXIF description: %v", extractErr)
+		}
+	}
+
 	// Upload the media item in exchange for an UploadToken
 	opts := rest.Opts{
 		Method:  "POST",
@@ -1218,6 +1388,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	uploaded := uploadedItem{
 		AlbumID:     albumID,
 		UploadToken: uploadToken,
+		Description: description,
 	}
 
 	// Save the upload into an album
