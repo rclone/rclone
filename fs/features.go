@@ -90,6 +90,15 @@ type Features struct {
 	// It returns the directory that was created.
 	MkdirMetadata func(ctx context.Context, dir string, metadata Metadata) (Directory, error)
 
+	// CreateSnapshot creates a point-in-time snapshot of a Fs,
+	// which may be used for copy operations.
+	//
+	// Any required cleanup function should be saved within each
+	// backend's Fs struct and called in Shutdown().
+	//
+	// It returns the Fs snapshot and a possible error.
+	CreateSnapshot func(ctx context.Context) (Fs, error)
+
 	// ChangeNotify calls the passed function with a path
 	// that has had changes. If the implementation
 	// uses polling, it should adhere to the given interval.
@@ -310,6 +319,9 @@ func (ft *Features) Fill(ctx context.Context, f Fs) *Features {
 	if do, ok := f.(ChangeNotifier); ok {
 		ft.ChangeNotify = do.ChangeNotify
 	}
+	if do, ok := f.(CreateSnapshotter); ok {
+		ft.CreateSnapshot = do.CreateSnapshot
+	}
 	if do, ok := f.(UnWrapper); ok {
 		ft.UnWrap = do.UnWrap
 	}
@@ -419,6 +431,9 @@ func (ft *Features) Mask(ctx context.Context, f Fs) *Features {
 	}
 	if mask.MkdirMetadata == nil {
 		ft.MkdirMetadata = nil
+	}
+	if mask.CreateSnapshot == nil {
+		ft.CreateSnapshot = nil
 	}
 	if mask.ChangeNotify == nil {
 		ft.ChangeNotify = nil
@@ -564,6 +579,18 @@ type MkdirMetadataer interface {
 	//
 	// It returns the directory that was created.
 	MkdirMetadata(ctx context.Context, dir string, metadata Metadata) (Directory, error)
+}
+
+// CreateSnapshotter is an optional interface for Fs
+type CreateSnapshotter interface {
+	// CreateSnapshot creates a point-in-time snapshot of a Fs,
+	// which may be used for copy operations.
+	//
+	// Any required cleanup function should be saved within each
+	// backend's Fs struct and called in Shutdown().
+	//
+	// It returns the Fs snapshot and a possible error.
+	CreateSnapshot(ctx context.Context) (Fs, error)
 }
 
 // ChangeNotifier is an optional interface for Fs
