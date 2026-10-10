@@ -1586,7 +1586,7 @@ type listContainerFn func(Name string, LastModified time.Time) error
 func (f *Fs) listContainersToFn(fn listContainerFn) error {
 	max := int32(f.opt.ListChunkSize)
 	pager := f.svc.NewListContainersPager(&service.ListContainersOptions{
-		Include:    service.ListContainersInclude{Metadata: true, Deleted: true},
+		Include:    service.ListContainersInclude{Metadata: true},
 		MaxResults: &max,
 	})
 	ctx := context.Background()
