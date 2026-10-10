@@ -48,6 +48,7 @@ import (
 	"github.com/rclone/rclone/lib/readers"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+	"golang.org/x/sync/errgroup"
 	drive_v2 "google.golang.org/api/drive/v2"
 	drive "google.golang.org/api/drive/v3"
 	"google.golang.org/api/googleapi"
@@ -1017,8 +1018,15 @@ func (f *Fs) getRootID(ctx context.Context) (string, error) {
 //
 // If the user fn ever returns true then it early exits with found = true
 //
+// Set stopEarly if fn is expected to return true before the whole
+// directory has been listed (eg because it only wants to know if the
+// directory is non-empty) so that shortcuts are resolved one at a
+// time rather than concurrently for the whole page - this preserves
+// laziness so fn can stop the listing without paying for resolving
+// shortcuts it will never see.
+//
 // Search params: https://developers.google.com/drive/search-parameters
-func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directoriesOnly, filesOnly, trashedOnly, includeAll bool, fn listFn) (found bool, err error) {
+func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directoriesOnly, filesOnly, trashedOnly, includeAll, stopEarly bool, fn listFn) (found bool, err error) {
 	var query []string
 	if !includeAll {
 		q := "trashed=" + strconv.FormatBool(trashedOnly)
@@ -1152,44 +1160,115 @@ OUTER:
 		}
 		for _, item := range files.Files {
 			item.Name = f.opt.Enc.ToStandardName(item.Name)
-			if isShortcut(item) {
-				// ignore shortcuts if directed
-				if f.opt.SkipShortcuts {
+		}
+		// skipShortcut reports whether a shortcut item should be
+		// ignored without resolving its target.
+		skipShortcut := func(item *drive.File) bool {
+			switch {
+			case f.opt.SkipShortcuts:
+				return true
+			case directoriesOnly && item.ShortcutDetails.TargetMimeType != driveFolderType:
+				return true
+			case filesOnly && item.ShortcutDetails.TargetMimeType == driveFolderType:
+				return true
+			}
+			return false
+		}
+		// checkItem applies the title match (if any) and calls fn,
+		// returning true if fn signals to stop.
+		checkItem := func(item *drive.File) bool {
+			// Check the case of items is correct since
+			// the `=` operator is case insensitive.
+			if title != "" && title != item.Name {
+				found := slices.Contains(stems, item.Name)
+				if !found {
+					return false
+				}
+				_, exportName, _, _ := f.findExportFormat(ctx, item)
+				if exportName == "" || exportName != title {
+					return false
+				}
+			}
+			return fn(item)
+		}
+		if title != "" || stopEarly {
+			// Single item lookup (eg FindLeaf, NewObject), or a
+			// caller whose fn is expected to stop before the whole
+			// page is processed (eg purgeCheck checking for a
+			// non-empty directory) - resolve shortcuts one at a time
+			// so we can stop at the first match without resolving
+			// the rest of the page.
+			for _, item := range files.Files {
+				if isShortcut(item) {
+					if skipShortcut(item) {
+						continue
+					}
+					item, err = f.resolveShortcut(ctx, item)
+					if err != nil {
+						return false, fmt.Errorf("list: %w", err)
+					}
+					// leave the dangling shortcut out of the listings
+					// we've already logged about the dangling shortcut in resolveShortcut
+					if f.opt.SkipDanglingShortcuts && item.MimeType == shortcutMimeTypeDangling {
+						continue
+					}
+				}
+				if checkItem(item) {
+					found = true
+					break OUTER
+				}
+			}
+		} else if hasShortcutToResolve(files.Files, skipShortcut) {
+			// Bulk listing with at least one shortcut to resolve -
+			// resolve shortcut targets concurrently, bounded by
+			// --checkers, since each resolution is a separate API
+			// call.
+			g, gCtx := errgroup.WithContext(ctx)
+			g.SetLimit(f.ci.Checkers)
+			for i, item := range files.Files {
+				if !isShortcut(item) || skipShortcut(item) {
 					continue
 				}
-				// skip file shortcuts if directory only
-				if directoriesOnly && item.ShortcutDetails.TargetMimeType != driveFolderType {
+				g.Go(func() error {
+					newItem, err := f.resolveShortcut(gCtx, item)
+					if err != nil {
+						return fmt.Errorf("list: %w", err)
+					}
+					files.Files[i] = newItem
+					return nil
+				})
+			}
+			if err = g.Wait(); err != nil {
+				return false, err
+			}
+			for _, item := range files.Files {
+				if isShortcut(item) && skipShortcut(item) {
 					continue
-				}
-				// skip directory shortcuts if file only
-				if filesOnly && item.ShortcutDetails.TargetMimeType == driveFolderType {
-					continue
-				}
-				item, err = f.resolveShortcut(ctx, item)
-				if err != nil {
-					return false, fmt.Errorf("list: %w", err)
 				}
 				// leave the dangling shortcut out of the listings
 				// we've already logged about the dangling shortcut in resolveShortcut
 				if f.opt.SkipDanglingShortcuts && item.MimeType == shortcutMimeTypeDangling {
 					continue
 				}
-			}
-			// Check the case of items is correct since
-			// the `=` operator is case insensitive.
-			if title != "" && title != item.Name {
-				found := slices.Contains(stems, item.Name)
-				if !found {
-					continue
-				}
-				_, exportName, _, _ := f.findExportFormat(ctx, item)
-				if exportName == "" || exportName != title {
-					continue
+				if checkItem(item) {
+					found = true
+					break OUTER
 				}
 			}
-			if fn(item) {
-				found = true
-				break OUTER
+		} else {
+			// Bulk listing with no shortcuts to resolve on this page -
+			// skip the errgroup setup entirely. Shortcuts can still be
+			// present here if every one of them is skip-eligible (eg
+			// --drive-skip-shortcuts), so they still need filtering
+			// out rather than being passed to fn unresolved.
+			for _, item := range files.Files {
+				if isShortcut(item) && skipShortcut(item) {
+					continue
+				}
+				if checkItem(item) {
+					found = true
+					break OUTER
+				}
 			}
 		}
 		if files.NextPageToken == "" {
@@ -1753,7 +1832,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
 	// Find the leaf in pathID
 	pathID = actualID(pathID)
-	found, err = f.list(ctx, []string{pathID}, leaf, true, false, f.opt.TrashedOnly, false, func(item *drive.File) bool {
+	found, err = f.list(ctx, []string{pathID}, leaf, true, false, f.opt.TrashedOnly, false, false, func(item *drive.File) bool {
 		if !f.opt.SkipGdocs {
 			_, exportName, _, isDocument := f.findExportFormat(ctx, item)
 			if exportName == leaf {
@@ -2030,7 +2109,7 @@ func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) e
 	directoryID = actualID(directoryID)
 
 	var iErr error
-	_, err = f.list(ctx, []string{directoryID}, "", false, false, f.opt.TrashedOnly, false, func(item *drive.File) bool {
+	_, err = f.list(ctx, []string{directoryID}, "", false, false, f.opt.TrashedOnly, false, false, func(item *drive.File) bool {
 		entry, err := f.itemToDirEntry(ctx, path.Join(dir, item.Name), item)
 		if err != nil {
 			iErr = err
@@ -2120,7 +2199,7 @@ func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in chan listRE
 		listRSlices{dirs, paths}.Sort()
 		var iErr error
 		foundItems := false
-		_, err := f.list(ctx, dirs, "", false, false, f.opt.TrashedOnly, false, func(item *drive.File) bool {
+		_, err := f.list(ctx, dirs, "", false, false, f.opt.TrashedOnly, false, false, func(item *drive.File) bool {
 			// shared with me items have no parents when at the root
 			if f.opt.SharedWithMe && len(item.Parents) == 0 && len(paths) == 1 && paths[0] == "" {
 				item.Parents = dirs
@@ -2400,6 +2479,17 @@ func isShortcut(item *drive.File) bool {
 	return item.MimeType == shortcutMimeType && item.ShortcutDetails != nil
 }
 
+// hasShortcutToResolve returns true if any item in items is a
+// shortcut that skip doesn't want ignored.
+func hasShortcutToResolve(items []*drive.File, skip func(*drive.File) bool) bool {
+	for _, item := range items {
+		if isShortcut(item) && !skip(item) {
+			return true
+		}
+	}
+	return false
+}
+
 // Dereference shortcut if required. It returns the newItem (which may
 // be just item).
 //
@@ -2635,7 +2725,7 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 	for _, srcDir := range dirs[1:] {
 		// list the objects
 		infos := []*drive.File{}
-		_, err := f.list(ctx, []string{srcDir.ID()}, "", false, false, f.opt.TrashedOnly, true, func(info *drive.File) bool {
+		_, err := f.list(ctx, []string{srcDir.ID()}, "", false, false, f.opt.TrashedOnly, true, false, func(info *drive.File) bool {
 			infos = append(infos, info)
 			return false
 		})
@@ -2771,7 +2861,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 		// to enumerate trashed children: let the server filter them out instead of
 		// paging through them. Hard deletes still need to see them (#1040).
 		includeAll := !f.opt.UseTrash || f.opt.TrashedOnly
-		found, err := f.list(ctx, []string{directoryID}, "", false, false, f.opt.TrashedOnly, includeAll, func(item *drive.File) bool {
+		found, err := f.list(ctx, []string{directoryID}, "", false, false, f.opt.TrashedOnly, includeAll, true, func(item *drive.File) bool {
 			if !item.Trashed {
 				fs.Debugf(dir, "Rmdir: contains file: %q", item.Name)
 				return true
@@ -2960,7 +3050,7 @@ func (r cleanupResult) Error() string {
 }
 
 func (f *Fs) cleanupTeamDrive(ctx context.Context, dir string, directoryID string) (r cleanupResult, err error) {
-	_, err = f.list(ctx, []string{directoryID}, "", false, false, true, false, func(item *drive.File) bool {
+	_, err = f.list(ctx, []string{directoryID}, "", false, false, true, false, false, func(item *drive.File) bool {
 		remote := path.Join(dir, item.Name)
 		if item.ExplicitlyTrashed { // description is wrong - can also be set for folders - no need to recurse them
 			err := f.delete(ctx, item.Id, false)
@@ -3559,7 +3649,7 @@ func (r unTrashResult) Error() string {
 func (f *Fs) unTrash(ctx context.Context, dir string, directoryID string, recurse bool) (r unTrashResult, err error) {
 	directoryID = actualID(directoryID)
 	fs.Debugf(dir, "finding trash to restore in directory %q", directoryID)
-	_, err = f.list(ctx, []string{directoryID}, "", false, false, f.opt.TrashedOnly, true, func(item *drive.File) bool {
+	_, err = f.list(ctx, []string{directoryID}, "", false, false, f.opt.TrashedOnly, true, false, func(item *drive.File) bool {
 		remote := path.Join(dir, item.Name)
 		if item.ExplicitlyTrashed {
 			fs.Infof(remote, "restoring %q", item.Id)
@@ -4230,7 +4320,7 @@ func (f *Fs) getRemoteInfoWithExport(ctx context.Context, remote string) (
 	}
 	directoryID = actualID(directoryID)
 
-	found, err := f.list(ctx, []string{directoryID}, leaf, false, false, f.opt.TrashedOnly, false, func(item *drive.File) bool {
+	found, err := f.list(ctx, []string{directoryID}, leaf, false, false, f.opt.TrashedOnly, false, false, func(item *drive.File) bool {
 		if !f.opt.SkipGdocs {
 			extension, exportName, exportMimeType, isDocument = f.findExportFormat(ctx, item)
 			if exportName == leaf {
