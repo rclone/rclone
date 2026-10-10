@@ -25,6 +25,7 @@ type ctxKey int
 
 const (
 	ctxKeyID ctxKey = iota
+	ctxKeyAccessKeyID
 )
 
 // Server is a s3.FileSystem interface
@@ -86,9 +87,6 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 	}
 
 	w.backend = newBackend(w)
-	if w.opt.MultipartExpiry > 0 {
-		w.backend.startReaper(time.Duration(w.opt.MultipartExpiry))
-	}
 
 	var newLogger logger
 	w.faker = gofakes3.New(
@@ -99,7 +97,14 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		gofakes3.WithoutVersioning(),
 		gofakes3.WithV4Auth(authList),
 		gofakes3.WithIntegrityCheck(true), // Check Content-MD5 if supplied
+		gofakes3.WithUploadOwner(w.getTenant),
 	)
+	// The reaper uses w.faker so must start after it is set
+	if w.opt.MultipartExpiry > 0 {
+		w.backend.startReaper(time.Duration(w.opt.MultipartExpiry))
+	} else if w.opt.MultipartMaxUploads > 0 {
+		fs.Logf("serve s3", "--multipart-expiry 0 means abandoned multipart uploads are never cleaned up and go on counting towards --multipart-max-uploads %d", w.opt.MultipartMaxUploads)
+	}
 
 	w.handler = w.faker.Server()
 
@@ -149,6 +154,19 @@ func (w *Server) etagHash(_vfs *vfs.VFS) hash.Type {
 		return _vfs.Fs().Hashes().GetOne()
 	}
 	return w.etagHashType
+}
+
+// getTenant returns the ID of the user making the request in ctx: the
+// access key ID the auth proxy authenticated the request with, or "" when
+// not using an auth proxy.
+//
+// The proxy may map each access key ID to a different backend, so state
+// kept across requests must be scoped to it. The *vfs.VFS can't be used
+// for this as the proxy may hand the same access key ID different ones,
+// for example from different client IPs or after its cache expires.
+func (w *Server) getTenant(ctx context.Context) string {
+	accessKeyID, _ := ctx.Value(ctxKeyAccessKeyID).(string)
+	return accessKeyID
 }
 
 // auth authenticates the request via the auth proxy.
@@ -210,6 +228,8 @@ func (w *Server) Addr() net.Addr {
 func (w *Server) Shutdown() error {
 	w.backend.stopReaper()
 	err := w.server.Shutdown()
+	// Uploads in progress hold their VFS so must go first
+	w.backend.forgetAllUploads()
 	w.provider.Shutdown()
 	return err
 }
@@ -226,13 +246,25 @@ func proxyAuthMiddleware(next http.Handler, ws *Server) http.Handler {
 			return
 		}
 		VFS, err := ws.auth(r, accessKey)
+		// The proxy shuts down a VFS once unused in its cache for a while,
+		// so hold it for the whole request, which may stream a long
+		// upload or download. It may have been shut down before it could
+		// be held, in which case the proxy makes a new one.
+		if err == nil && !VFS.Hold() {
+			VFS, err = ws.auth(r, accessKey)
+			if err == nil && !VFS.Hold() {
+				err = errors.New("VFS shut down")
+			}
+		}
 		if err != nil {
 			fs.Infof(r.URL.Path, "%s: Auth failed: %v", r.RemoteAddr, err)
 			accessDenied(w)
 			return
 		}
-		r = r.WithContext(context.WithValue(r.Context(), ctxKeyID, VFS))
-		next.ServeHTTP(w, r)
+		defer VFS.Shutdown()
+		ctx := context.WithValue(r.Context(), ctxKeyID, VFS)
+		ctx = context.WithValue(ctx, ctxKeyAccessKeyID, accessKey)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 

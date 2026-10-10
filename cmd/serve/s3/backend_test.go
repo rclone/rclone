@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/rclone/gofakes3"
 	_ "github.com/rclone/rclone/backend/crypt"
@@ -234,4 +235,75 @@ func TestCopyObjectMissingSource(t *testing.T) {
 	}
 	_, err := b.HeadObject(ctx, "bucket", "other.txt")
 	assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrNoSuchKey))
+}
+
+// tenantCtx returns the context of a request authenticated by the auth
+// proxy as accessKeyID.
+func tenantCtx(accessKeyID string) context.Context {
+	return context.WithValue(context.Background(), ctxKeyAccessKeyID, accessKeyID)
+}
+
+// TestMetadataOtherTenant checks that with an auth proxy the metadata
+// one user (access key ID) stores for an object isn't returned for
+// another user's object at the same path.
+func TestMetadataOtherTenant(t *testing.T) {
+	b, _ := newTestBackend(t)
+	ctxA, ctxB := tenantCtx("tenantA"), tenantCtx("tenantB")
+	const secretKey = "X-Amz-Meta-Secret"
+
+	put := func(ctx context.Context, meta map[string]string) {
+		_, err := b.PutObject(ctx, "bucket", "meta.txt", meta, strings.NewReader("data"), 4)
+		require.NoError(t, err)
+	}
+	head := func(ctx context.Context) map[string]string {
+		obj, err := b.HeadObject(ctx, "bucket", "meta.txt")
+		require.NoError(t, err)
+		return obj.Metadata
+	}
+
+	put(ctxB, map[string]string{})
+	put(ctxA, map[string]string{secretKey: "tenantA's"})
+
+	assert.Equal(t, "tenantA's", head(ctxA)[secretKey])
+	assert.NotContains(t, head(ctxB), secretKey)
+
+	obj, err := b.GetObject(ctxB, "bucket", "meta.txt", nil)
+	require.NoError(t, err)
+	require.NoError(t, obj.Contents.Close())
+	assert.NotContains(t, obj.Metadata, secretKey)
+}
+
+// TestMetadataStale checks that the metadata stored for an object isn't
+// returned once the object has been changed by someone else: another
+// auth proxy user sharing the backend or a change to the backend itself.
+func TestMetadataStale(t *testing.T) {
+	b, root := newTestBackend(t)
+	ctxA, ctxB := tenantCtx("tenantA"), tenantCtx("tenantB")
+	const key = "X-Amz-Meta-Colour"
+	objPath := filepath.Join(root, "bucket", "meta.txt")
+
+	put := func(ctx context.Context, meta map[string]string, data string) {
+		_, err := b.PutObject(ctx, "bucket", "meta.txt", meta, strings.NewReader(data), int64(len(data)))
+		require.NoError(t, err)
+	}
+	colour := func(ctx context.Context) string {
+		_vfs, err := b.s.getVFS(ctx)
+		require.NoError(t, err)
+		b.forgetPath(_vfs, "bucket/meta.txt")
+		obj, err := b.HeadObject(ctx, "bucket", "meta.txt")
+		require.NoError(t, err)
+		return obj.Metadata[key]
+	}
+
+	put(ctxA, map[string]string{key: "red"}, "data")
+	assert.Equal(t, "red", colour(ctxA))
+
+	put(ctxB, map[string]string{}, "other data")
+	assert.Equal(t, "", colour(ctxA), "metadata kept after another user replaced the object")
+
+	put(ctxA, map[string]string{key: "blue"}, "data")
+	assert.Equal(t, "blue", colour(ctxA))
+	later := time.Now().Add(time.Hour)
+	require.NoError(t, os.Chtimes(objPath, later, later))
+	assert.Equal(t, "", colour(ctxA), "metadata kept after the object was changed on the backend")
 }

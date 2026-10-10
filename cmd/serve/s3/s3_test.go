@@ -9,10 +9,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
+	"os"
 	"path"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -31,8 +34,10 @@ import (
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/rclone/rclone/fstest/testy"
 	"github.com/rclone/rclone/lib/random"
+	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -430,6 +435,137 @@ func TestAuthProxyKeysNotRegistered(t *testing.T) {
 	assert.NotEqual(t, signature.ErrNone, signature.V4SignVerify(sign()), "proxy secret was registered in the gofakes3 key store")
 }
 
+// serveS3AuthProxy serves root over s3 with opt and an auth proxy which
+// maps every one of users (access key IDs) to root, returning a client
+// for each user.
+func serveS3AuthProxy(t *testing.T, root string, opt Options, users ...string) map[string]*minio.Core {
+	fstest.Initialise()
+	prog, err := filepath.Abs("../servetest/proxy_code.go")
+	require.NoError(t, err)
+	secrets := map[string]string{}
+	var pairs []string
+	for _, user := range users {
+		secrets[user] = random.String(16)
+		pairs = append(pairs, user+","+secrets[user])
+	}
+	t.Setenv("RCLONE_TEST_PROXY_AUTH_KEY", strings.Join(pairs, ";"))
+
+	opt.HTTP.ListenAddr = []string{endpoint}
+	proxyOpt := proxy.Opt
+	proxyOpt.AuthProxy = "go run " + prog + " " + root
+	w, err := newServer(context.Background(), nil, &opt, &vfscommon.Opt, &proxyOpt)
+	require.NoError(t, err)
+	go func() {
+		require.NoError(t, w.Serve())
+	}()
+	t.Cleanup(func() { _ = w.Shutdown() })
+	testURL, err := url.Parse(w.server.URLs()[0])
+	require.NoError(t, err)
+
+	clients := map[string]*minio.Core{}
+	for _, user := range users {
+		clients[user], err = minio.NewCore(testURL.Host, &minio.Options{
+			Creds: credentials.NewStaticV4(user, secrets[user], ""),
+		})
+		require.NoError(t, err)
+	}
+	return clients
+}
+
+// TestAuthProxyUsersKeptApart checks that one auth proxy user can't use
+// another user's multipart upload or see the metadata of their objects,
+// even when both are mapped to the same backend.
+func TestAuthProxyUsersKeptApart(t *testing.T) {
+	for _, disableStreaming := range []bool{false, true} {
+		t.Run(fmt.Sprintf("DisableMultipartStreaming=%v", disableStreaming), func(t *testing.T) {
+			opt := Opt
+			opt.DisableMultipartStreaming = disableStreaming
+			testAuthProxyUsersKeptApart(t, opt)
+		})
+	}
+}
+
+func testAuthProxyUsersKeptApart(t *testing.T, opt Options) {
+	ctx := context.Background()
+	root := t.TempDir()
+	const bucket = "bucket"
+	require.NoError(t, os.Mkdir(filepath.Join(root, bucket), 0777))
+	clients := serveS3AuthProxy(t, root, opt, "alice", "bob")
+	alice, bob := clients["alice"], clients["bob"]
+
+	uploadID, err := alice.NewMultipartUpload(ctx, bucket, "upload", minio.PutObjectOptions{})
+	require.NoError(t, err)
+	listed := func(client *minio.Core) (uploadIDs []string) {
+		result, err := client.ListMultipartUploads(ctx, bucket, "", "", "", "/", 1000)
+		if minio.ToErrorResponse(err).Code == "NoSuchUpload" {
+			return nil
+		}
+		require.NoError(t, err)
+		for _, upload := range result.Uploads {
+			uploadIDs = append(uploadIDs, upload.UploadID)
+		}
+		return uploadIDs
+	}
+	assert.Equal(t, []string{uploadID}, listed(alice))
+	assert.Empty(t, listed(bob), "bob listing alice's upload")
+	_, err = bob.ListObjectParts(ctx, bucket, "upload", uploadID, 0, 1000)
+	assert.Equal(t, "NoSuchUpload", minio.ToErrorResponse(err).Code, "bob listing the parts of alice's upload")
+	data := []byte("alice's data")
+	_, err = bob.PutObjectPart(ctx, bucket, "upload", uploadID, 1, bytes.NewReader(data), int64(len(data)), minio.PutObjectPartOptions{})
+	assert.Equal(t, "NoSuchUpload", minio.ToErrorResponse(err).Code, "bob uploading a part to alice's upload")
+	err = bob.AbortMultipartUpload(ctx, bucket, "upload", uploadID)
+	assert.Equal(t, "NoSuchUpload", minio.ToErrorResponse(err).Code, "bob aborting alice's upload")
+	part, err := alice.PutObjectPart(ctx, bucket, "upload", uploadID, 1, bytes.NewReader(data), int64(len(data)), minio.PutObjectPartOptions{})
+	require.NoError(t, err)
+	_, err = alice.CompleteMultipartUpload(ctx, bucket, "upload", uploadID, []minio.CompletePart{{PartNumber: 1, ETag: part.ETag}}, minio.PutObjectOptions{})
+	require.NoError(t, err)
+
+	_, err = alice.PutObject(ctx, bucket, "meta", bytes.NewReader(data), int64(len(data)), "", "", minio.PutObjectOptions{UserMetadata: map[string]string{"Secret": "alice's"}})
+	require.NoError(t, err)
+	info, err := alice.StatObject(ctx, bucket, "meta", minio.StatObjectOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, "alice's", info.UserMetadata["Secret"])
+	info, err = bob.StatObject(ctx, bucket, "meta", minio.StatObjectOptions{})
+	require.NoError(t, err)
+	assert.NotContains(t, info.UserMetadata, "Secret", "bob seeing alice's metadata")
+}
+
+// TestAuthProxyHoldsVFS checks the VFS the auth proxy gives a request is
+// held until the request finishes, so it isn't shut down under a long
+// upload or download if it expires from the proxy's cache.
+func TestAuthProxyHoldsVFS(t *testing.T) {
+	fstest.Initialise()
+	prog, err := filepath.Abs("../servetest/proxy_code.go")
+	require.NoError(t, err)
+	t.Setenv("RCLONE_TEST_PROXY_AUTH_KEY", "alice,secret")
+	opt := Opt
+	opt.HTTP.ListenAddr = []string{endpoint}
+	proxyOpt := proxy.Opt
+	proxyOpt.AuthProxy = "go run " + prog + " " + t.TempDir()
+	w, err := newServer(context.Background(), nil, &opt, &vfscommon.Opt, &proxyOpt)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = w.Shutdown() })
+
+	var VFS *vfs.VFS
+	var inUse any
+	handler := proxyAuthMiddleware(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		VFS, err = w.getVFS(r.Context())
+		require.NoError(t, err)
+		inUse = VFS.Stats()["inUse"]
+	}), w)
+
+	req, err := http.NewRequest("GET", "http://localhost/", nil)
+	require.NoError(t, err)
+	req.Header.Set("X-Amz-Content-Sha256", "UNSIGNED-PAYLOAD")
+	err = v4.NewSigner().SignHTTP(context.Background(), aws.Credentials{AccessKeyID: "alice", SecretAccessKey: "secret"}, req, "UNSIGNED-PAYLOAD", "s3", "us-east-1", time.Now())
+	require.NoError(t, err)
+	handler.ServeHTTP(httptest.NewRecorder(), req)
+
+	require.NotNil(t, VFS, "request not authenticated")
+	assert.Equal(t, int32(2), inUse, "VFS not held by the request")
+	assert.Equal(t, int32(1), VFS.Stats()["inUse"], "VFS still held after the request")
+}
+
 // TestAuthKeyPerServer checks that two servers in the same process
 // with different --auth-key pairs only accept their own credentials.
 func TestAuthKeyPerServer(t *testing.T) {
@@ -567,6 +703,112 @@ func TestListObjectsDelimitedPagingWithMinioClient(t *testing.T) {
 			})
 		}
 	}
+}
+
+// testUnsignedAmzHeader checks that a request carrying an x-amz-*
+// header which is not in its signed headers list is refused, as AWS
+// does. Otherwise a presigned PUT URL for one object, which signs only
+// the host header, could be turned into a copy from any object the
+// server can reach by adding an unsigned x-amz-copy-source header.
+func testUnsignedAmzHeader(t *testing.T, useProxy bool) {
+	fstest.Initialise()
+	root := t.TempDir()
+	f, err := fs.NewFs(context.Background(), root)
+	require.NoError(t, err)
+
+	const (
+		secret   = "THIS-IS-THE-VICTIM-FILE"
+		original = "PLACEHOLDER-ORIGINAL-CONTENT"
+		uploaded = "UPLOADED-WITH-PRESIGNED-URL"
+	)
+	ctx := context.Background()
+	fstests.PutTestContents(ctx, t, f, &fstest.Item{Path: "src/secret.txt", ModTime: time.Now()}, secret, true)
+	fstests.PutTestContents(ctx, t, f, &fstest.Item{Path: "dst/target.txt", ModTime: time.Now()}, original, true)
+	readFile := func(name string) string {
+		return fstests.ReadObject(ctx, t, fstest.NewObject(ctx, t, f, name), -1)
+	}
+
+	serveFs := f
+	if useProxy {
+		prog, err := filepath.Abs("../servetest/proxy_code.go")
+		require.NoError(t, err)
+		proxy.Opt.AuthProxy = "go run " + prog + " " + root
+		defer func() {
+			proxy.Opt.AuthProxy = ""
+		}()
+		serveFs = nil
+	}
+	endpoint, keyid, keysec, s := serveS3(t, serveFs)
+	defer func() {
+		assert.NoError(t, s.server.Shutdown())
+	}()
+
+	creds := aws.Credentials{AccessKeyID: keyid, SecretAccessKey: keysec}
+	do := func(req *http.Request) (int, string) {
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		body, _ := io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+		return resp.StatusCode, string(body)
+	}
+	sign := func(req *http.Request) {
+		req.Header.Set("X-Amz-Content-Sha256", "UNSIGNED-PAYLOAD")
+		err := v4.NewSigner().SignHTTP(context.Background(), creds, req, "UNSIGNED-PAYLOAD", "s3", "us-east-1", time.Now())
+		require.NoError(t, err)
+	}
+
+	// A presigned PUT URL for dst/target.txt which signs only the host header
+	req, err := http.NewRequest("PUT", endpoint+"/dst/target.txt", nil)
+	require.NoError(t, err)
+	presigned, _, err := v4.NewSigner().PresignHTTP(context.Background(), creds, req, "UNSIGNED-PAYLOAD", "s3", "us-east-1", time.Now())
+	require.NoError(t, err)
+	presignedURL, err := url.Parse(presigned)
+	require.NoError(t, err)
+	require.Equal(t, "host", presignedURL.Query().Get("X-Amz-SignedHeaders"))
+
+	// It works as intended
+	req, err = http.NewRequest("PUT", presigned, strings.NewReader(uploaded))
+	require.NoError(t, err)
+	status, body := do(req)
+	assert.Equal(t, http.StatusOK, status, body)
+	assert.Equal(t, uploaded, readFile("dst/target.txt"))
+
+	// But must not become a copy from an object the URL does not name
+	req, err = http.NewRequest("PUT", presigned, nil)
+	require.NoError(t, err)
+	req.Header.Set("x-amz-copy-source", "/src/secret.txt")
+	status, body = do(req)
+	assert.Equal(t, http.StatusForbidden, status, body)
+	assert.Contains(t, body, "AccessDenied")
+	assert.Equal(t, uploaded, readFile("dst/target.txt"))
+
+	// Nor may an unsigned header be added to a request signed with an
+	// Authorization header
+	req, err = http.NewRequest("PUT", endpoint+"/dst/target.txt", nil)
+	require.NoError(t, err)
+	sign(req)
+	req.Header.Set("x-amz-copy-source", "/src/secret.txt")
+	status, body = do(req)
+	assert.Equal(t, http.StatusForbidden, status, body)
+	assert.Contains(t, body, "AccessDenied")
+	assert.Equal(t, uploaded, readFile("dst/target.txt"))
+
+	// Whereas a copy whose x-amz-copy-source header is signed is allowed
+	req, err = http.NewRequest("PUT", endpoint+"/dst/target.txt", nil)
+	require.NoError(t, err)
+	req.Header.Set("x-amz-copy-source", "/src/secret.txt")
+	sign(req)
+	status, body = do(req)
+	assert.Equal(t, http.StatusOK, status, body)
+	assert.Equal(t, secret, readFile("dst/target.txt"))
+}
+
+func TestUnsignedAmzHeader(t *testing.T) {
+	testUnsignedAmzHeader(t, false)
+}
+
+func TestUnsignedAmzHeaderAuthProxy(t *testing.T) {
+	testUnsignedAmzHeader(t, true)
 }
 
 func TestRc(t *testing.T) {

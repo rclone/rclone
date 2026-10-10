@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -206,6 +207,100 @@ func TestListAllAuthRedirect(t *testing.T) {
 
 	assert.GreaterOrEqual(t, targetHits, 1, "redirect target should receive the request")
 	assert.NotEmpty(t, targetAuth, "Authorization header should be preserved across redirect")
+}
+
+// redirectTestHeaders are the headers option for the redirect tests.
+// The one starting with "*" is sent without canonicalising.
+var redirectTestHeaders = []string{"X-Potato", "sausage", "*x-marrow", "pea"}
+
+// redirectHeaders makes a webdav remote with redirectTestHeaders
+// pointing at a server which redirects every request to a second
+// server on hostname, or back to itself if hostname is empty, and
+// exercises each of the backend's redirect policies against it: the
+// PROPFIND used to look up an object, the GET used to read it and the
+// PROPFIND used to list a directory. It returns the headers the
+// redirect target saw on each of those requests.
+func redirectHeaders(t *testing.T, hostname string) []http.Header {
+	var target string
+	var mu sync.Mutex
+	var seen []http.Header
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasPrefix(r.URL.Path, "/moved/") {
+			http.Redirect(w, r, target+"/moved"+r.URL.Path, http.StatusTemporaryRedirect)
+			return
+		}
+		mu.Lock()
+		seen = append(seen, r.Header.Clone())
+		mu.Unlock()
+		switch r.Method {
+		case "PROPFIND":
+			w.WriteHeader(http.StatusMultiStatus)
+			_, err := fmt.Fprint(w, fileInfoResponse)
+			assert.NoError(t, err)
+		case http.MethodGet:
+			_, err := fmt.Fprint(w, "hello")
+			assert.NoError(t, err)
+		default:
+			http.Error(w, "unexpected method", http.StatusMethodNotAllowed)
+		}
+	})
+	ts := httptest.NewServer(handler)
+	defer ts.Close()
+	if hostname == "" {
+		target = ts.URL
+	} else {
+		// Serve the final response from a second server on a different host
+		other := httptest.NewServer(handler)
+		defer other.Close()
+		target = strings.Replace(other.URL, "127.0.0.1", hostname, 1)
+	}
+
+	configfile.Install()
+	m := configmap.Simple{
+		"type":    "webdav",
+		"url":     ts.URL,
+		"headers": strings.Join(redirectTestHeaders, ","),
+	}
+	ctx := context.Background()
+	f, err := webdav.NewFs(ctx, remoteName, "", m)
+	require.NoError(t, err)
+
+	// PROPFIND with Depth 0 uses rest.PreserveMethodRedirectFn
+	o, err := f.NewObject(ctx, "file.txt")
+	require.NoError(t, err)
+	// GET uses the client's default redirect policy
+	fd, err := o.Open(ctx)
+	require.NoError(t, err)
+	data, err := io.ReadAll(fd)
+	require.NoError(t, err)
+	require.NoError(t, fd.Close())
+	assert.Equal(t, "hello", string(data))
+	// PROPFIND with Depth 1 uses the client's default redirect policy
+	_, err = f.List(ctx, "")
+	require.NoError(t, err)
+
+	mu.Lock()
+	defer mu.Unlock()
+	require.Len(t, seen, 3, "expected the redirect target to see all three requests")
+	return seen
+}
+
+func TestRedirectKeepsHeadersOnSameHost(t *testing.T) {
+	for _, got := range redirectHeaders(t, "") {
+		for i := 0; i < len(redirectTestHeaders); i += 2 {
+			assert.Equal(t, redirectTestHeaders[i+1], got.Get(strings.TrimPrefix(redirectTestHeaders[i], "*")))
+		}
+	}
+}
+
+func TestRedirectStripsHeadersOnHostChange(t *testing.T) {
+	// Redirect to a different host name and port. net/http strips
+	// Authorization on its own here so this checks the custom headers.
+	for _, got := range redirectHeaders(t, "localhost") {
+		for i := 0; i < len(redirectTestHeaders); i += 2 {
+			assert.Empty(t, got.Values(strings.TrimPrefix(redirectTestHeaders[i], "*")), "header %q leaked to redirect target", redirectTestHeaders[i])
+		}
+	}
 }
 
 // TestReservedCharactersInPathAreEscaped verifies that reserved characters

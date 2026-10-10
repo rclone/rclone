@@ -130,6 +130,32 @@ func TestNewServerPerServerAuthProxy(t *testing.T) {
 	assert.Nil(t, d.provider.VFS(), "expected no fixed VFS when auth proxy is in use")
 }
 
+// TestMakeDirRoot checks that "MKD /" makes the directory being
+// served. The ftp backend never sends this so TestFTP doesn't cover it.
+func TestMakeDirRoot(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "root")
+	f, err := fs.NewFs(context.Background(), root)
+	require.NoError(t, err)
+
+	opt := Opt
+	opt.ListenAddr = testHOST + ":" + testPORT
+	opt.PassivePorts = testPASSIVEPORTRANGE
+
+	d, err := newServer(context.Background(), f, &opt, &vfscommon.Opt, &proxy.Opt)
+	require.NoError(t, err)
+	defer d.provider.Shutdown()
+
+	require.NoError(t, d.MakeDir(nil, "/"))
+	fi, err := os.Stat(root)
+	require.NoError(t, err)
+	assert.True(t, fi.IsDir())
+
+	require.NoError(t, d.MakeDir(nil, "/dir"))
+	fi, err = os.Stat(filepath.Join(root, "dir"))
+	require.NoError(t, err)
+	assert.True(t, fi.IsDir())
+}
+
 func TestRc(t *testing.T) {
 	if israce.Enabled {
 		t.Skip("Skipping under race detector as underlying library is racy")

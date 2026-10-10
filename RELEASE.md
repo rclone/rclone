@@ -6,27 +6,37 @@ This file describes how to make the various kinds of releases
 
 - [gh the github cli](https://github.com/cli/cli) for uploading packages
 - pandoc for making the html and man pages
+- hugo for building the website
+- golangci-lint and docker for `make check` (markdownlint runs in docker)
+- a gpg key for signing the tag and the checksums
+- rclone remotes `beta.rclone.org:`, `downloads.rclone.org:`,
+  `www.rclone.org:` and `test-rclone-org:`
+- the sponsor logos - see [Sponsor logos](#sponsor-logos)
 
 ## Making a release
 
+- Enable the [release freeze rule](https://github.com/rclone/rclone/settings/rules/24751862)
 - git checkout master # see below for stable branch
 - git pull # IMPORTANT
 - make fetch-gui-and-commit # bump the embedded GUI if rclone-web has a newer release
 - git status - make sure everything is checked in
 - Check GitHub actions build for master is Green
-- make test # see integration test server or run locally
-- make tag
-- edit docs/content/changelog.md # duplicate logs from point rels removed automatically
-  releases
+- Check the integration tests at <https://integration.rclone.org>
+- cat VERSION # check this is the version being released
+- make tag # signed tag on HEAD + new changelog entry + docs
+- edit docs/content/changelog.md # entries already in point releases are
+  removed automatically
 - make tidy
-- make doc
-- git status - to check for new man pages - git add them
+- make doc # again to pick up the changelog edits
+- git status - to check for new command docs in docs/content/commands - git add them
 - git commit -a -v -m "Version v1.XX.0"
-- make check
-- make retag
+- make check # if this fails, fix, git commit --amend and run it again
+- make retag # moves the tag onto the Version commit
 - git push origin # without --follow-tags so it doesn't push the tag if it fails
 - git push --follow-tags origin
 - \# Wait for the GitHub builds to complete then...
+- \# Don't commit anything until after make upload_github as these steps
+  use the tag on HEAD to find the version
 - make fetch_binaries
 - make tarball
 - make vendorball
@@ -35,9 +45,17 @@ This file describes how to make the various kinds of releases
 - make upload
 - make upload_test_website # check sponsors are correct/unchanged
 - make upload_website
-- make upload_github
-- make startdev # make startstable for stable branch
-- \# announce with forum post, twitter post, and post to annoucements list
+- make upload_github # this triggers the docker plugin and winget workflows
+- Check the docker image, docker plugin and winget GitHub actions succeeded
+- make startdev # works out the next version for master or a stable branch
+- git push
+- Disable the release freeze rule
+- Release any security advisories
+  - request a CVE for each advisory if not done already
+  - set the patched version on each advisory and publish it
+  - when the CVEs are assigned replace `CVE-PENDING` in the changelog on
+    master and the stable branch then `make upload_website`
+- \# announce with forum post, twitter post, and post to announcements list
 
 ## Update dependencies
 
@@ -190,20 +208,53 @@ First make the release branch.  If this is a second point release then
 this will be done already.
 
 - git co -b ${BASE_TAG}-stable ${BASE_TAG}.0
-- make startstable
+- make startdev # sets the version to ${BASE_TAG}.1
+- git push -u origin ${BASE_TAG}-stable
 
 Now
 
-- git co ${BASE_TAG}-stable
-- `git cherry-pick -x` any fixes
-- make startstable
-- Do the steps as above
+- Enable release freeze rule
 - git co master
-- `#` cherry pick the changes to the changelog - check the diff to make sure it
-  is correct
-- git checkout ${BASE_TAG}-stable docs/content/changelog.md
-- git commit -a -v -m "Changelog updates from Version ${NEW_TAG}"
+- git pull --rebase
+- make fetch-gui-and-commit # update the GUI on master first
 - git push
+- git co ${BASE_TAG}-stable
+- git pull
+- cat VERSION # check this is ${NEW_TAG} - if not run make startdev
+- `git cherry-pick -x` any fixes, including the GUI update if there was one
+  - for security releases consider updating the Go patch version in
+    `.github/workflows/build.yml` and dependencies with CVE fixes
+  - fixes may depend on commits which weren't picked so push to CI
+    and check it is green before tagging
+- Do the steps in "Making a release" above, except
+  - stay on ${BASE_TAG}-stable - don't checkout master or run
+    make fetch-gui-and-commit
+  - check the GitHub actions build for ${BASE_TAG}-stable not master
+  - run the integration tests on ${BASE_TAG}-stable as described below
+  - the release freeze rule is already enabled - leave it until the end
+- git co master
+- git pull --rebase
+- git checkout ${BASE_TAG}-stable docs/content/changelog.md
+- git diff --cached # check only the ${NEW_TAG} entry has changed
+- git commit -v -m "Changelog updates from Version ${NEW_TAG}" docs/content/changelog.md
+- git push
+- Disable release freeze rule
+
+Point releases are only made for the latest release. Once v1.(XX+1).0
+is out the ${BASE_TAG}-stable branch is abandoned.
+
+### Running the integration tests on the stable branch
+
+The integration tests at <https://integration.rclone.org> test master.
+To test the stable branch push it to the testing server and run the
+tests there in `screen` as they take a while.
+
+```console
+git push -f rclone@rclone-testing:private-rclone.git ${BASE_TAG}-stable
+ssh rclone@rclone-testing
+screen
+cd ~/integration-test && go run integration-test.go -repo /home/rclone/private-rclone.git -branch v1.XX-stable
+```
 
 ## Sponsor logos
 

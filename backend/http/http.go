@@ -283,7 +283,7 @@ func (f *Fs) httpConnection(ctx context.Context, opt *Options) (isFile bool, err
 	if err != nil {
 		return false, err
 	}
-	u, err := rest.URLJoin(base, rest.URLPathEscape(f.root))
+	u, err := rest.URLJoinRoot(base, f.root)
 	if err != nil {
 		return false, err
 	}
@@ -526,38 +526,18 @@ func addHeaders(req *http.Request, opt *Options) {
 // rest.ErrHTTPSDowngrade and strips the configured headers when the
 // redirect chain has left the originally requested host at any point.
 func checkRedirect(opt *Options) func(req *http.Request, via []*http.Request) error {
+	headers := make([]string, 0, len(opt.Headers)/2)
+	for i := 0; i < len(opt.Headers); i += 2 {
+		headers = append(headers, opt.Headers[i])
+	}
+	stripHeaders := rest.StripHeadersOnCrossHostRedirectFn(headers...)
 	return func(req *http.Request, via []*http.Request) error {
-		if err := rest.RefuseHTTPSDowngradeRedirectFn(req, via); err != nil {
-			if errors.Is(err, rest.ErrHTTPSDowngrade) {
-				err = fmt.Errorf("%w (the configured headers would be sent to the plaintext target)", err)
-			}
-			return err
+		err := stripHeaders(req, via)
+		if errors.Is(err, rest.ErrHTTPSDowngrade) {
+			err = fmt.Errorf("%w (the configured headers would be sent to the plaintext target)", err)
 		}
-		if redirectLeavesHost(req, via) {
-			for i := 0; i < len(opt.Headers); i += 2 {
-				req.Header.Del(opt.Headers[i])
-			}
-		}
-		return nil
+		return err
 	}
-}
-
-// redirectLeavesHost reports whether any hop in the redirect chain
-// via plus the pending request req is to a different host from the
-// original request via[0].
-//
-// net/http copies the headers afresh from the original request for
-// every hop, so once the chain has visited another host the headers
-// must be stripped from every subsequent hop, even one back to the
-// original host, as the other host chose the URL.
-func redirectLeavesHost(req *http.Request, via []*http.Request) bool {
-	origin := via[0].URL
-	for _, hop := range via {
-		if !rest.SameHost(hop.URL, origin) {
-			return true
-		}
-	}
-	return !rest.SameHost(req.URL, origin)
 }
 
 // Adds the configured headers to the request if any
