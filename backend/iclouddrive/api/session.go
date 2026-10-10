@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"maps"
@@ -30,6 +31,7 @@ type Session struct {
 	Scnt           string         `json:"scnt"`
 	SessionID      string         `json:"session_id"`
 	AccountCountry string         `json:"account_country"`
+	DomainToUse    string         `json:"domain_to_use,omitempty"`
 	TrustToken     string         `json:"trust_token"`
 	ClientID       string         `json:"client_id"`
 	AuthAttributes string         `json:"auth_attributes"`
@@ -41,6 +43,18 @@ type Session struct {
 	srv      *rest.Client `json:"-"`
 	needs2FA bool         `json:"-"` // set when SRP signin returns 409
 }
+
+// SetDomainToUse selects the endpoints named by Apple's account login response.
+func (s *Session) SetDomainToUse(domain string) error {
+	if !strings.EqualFold(domain, "iCloud.com.cn") {
+		return fmt.Errorf("unsupported iCloud account domain %q", domain)
+	}
+	s.DomainToUse = "iCloud.com.cn"
+	s.srv.SetRoot(s.endpoints().base)
+	return nil
+}
+
+func (s *Session) endpoints() endpoints { return endpointsForDomain(s.DomainToUse) }
 
 // srpInitResponse is the server response from /auth/signin/init
 type srpInitResponse struct {
@@ -220,6 +234,7 @@ func (s *Session) Requires2FA() bool {
 
 // SignIn performs SRP-based authentication against Apple's idmsa endpoint
 func (s *Session) SignIn(ctx context.Context, appleID, password string) error {
+	s.needs2FA = false
 	// Step 1: Initialize the auth session
 	if err := s.authStart(ctx); err != nil {
 		return fmt.Errorf("authStart: %w", err)
@@ -285,7 +300,7 @@ func (s *Session) authStart(ctx context.Context) error {
 	params.Set("skVersion", "7")
 	params.Set("iframeId", frameTag)
 	params.Set("client_id", s.ClientID)
-	params.Set("redirect_uri", "https://www.icloud.com")
+	params.Set("redirect_uri", s.endpoints().base)
 	params.Set("response_type", "code")
 	params.Set("response_mode", "web_message")
 	params.Set("state", frameTag)
@@ -299,7 +314,7 @@ func (s *Session) authStart(ctx context.Context) error {
 			"Accept":     "*/*",
 			"User-Agent": iCloudUserAgent,
 		},
-		RootURL:    authEndpoint,
+		RootURL:    s.endpoints().auth,
 		NoResponse: true,
 	}
 
@@ -333,7 +348,7 @@ func (s *Session) authFederate(ctx context.Context, accountName string) error {
 		Path:         "/federate",
 		Parameters:   url.Values{"isRememberMeEnabled": {"true"}},
 		ExtraHeaders: s.getSRPAuthHeaders(),
-		RootURL:      authEndpoint,
+		RootURL:      s.endpoints().auth,
 		Body:         body,
 		NoResponse:   true,
 	}
@@ -368,7 +383,7 @@ func (s *Session) authSRPInit(ctx context.Context, aBase64, accountName string) 
 		Method:       "POST",
 		Path:         "/signin/init",
 		ExtraHeaders: s.getSRPAuthHeaders(),
-		RootURL:      authEndpoint,
+		RootURL:      s.endpoints().auth,
 		Body:         body,
 	}
 
@@ -408,7 +423,7 @@ func (s *Session) authSRPComplete(ctx context.Context, accountName, m1Base64, m2
 		Path:         "/signin/complete",
 		Parameters:   url.Values{"isRememberMeEnabled": {"true"}},
 		ExtraHeaders: s.getSRPAuthHeaders(),
-		RootURL:      authEndpoint,
+		RootURL:      s.endpoints().auth,
 		IgnoreStatus: true,
 		Body:         body,
 	}
@@ -417,7 +432,7 @@ func (s *Session) authSRPComplete(ctx context.Context, accountName, m1Base64, m2
 	if err != nil {
 		return err
 	}
-	respBody, _ := io.ReadAll(resp.Body)
+	_, _ = io.Copy(io.Discard, resp.Body)
 	_ = resp.Body.Close()
 
 	s.extractHeaders(resp)
@@ -428,7 +443,7 @@ func (s *Session) authSRPComplete(ctx context.Context, accountName, m1Base64, m2
 		return nil
 	case http.StatusConflict:
 		// 409 = 2FA required
-		fs.Debugf(nil, "iclouddrive: SRP sign in requires 2FA, response: %s", respBody)
+		fs.Debugf(nil, "iclouddrive: SRP sign in requires 2FA")
 		s.needs2FA = true
 		return nil
 	case http.StatusPreconditionFailed:
@@ -438,7 +453,7 @@ func (s *Session) authSRPComplete(ctx context.Context, accountName, m1Base64, m2
 	case http.StatusForbidden:
 		return fmt.Errorf("sign in failed: incorrect username or password")
 	default:
-		return fmt.Errorf("sign in failed: %s: %s", resp.Status, respBody)
+		return fmt.Errorf("sign in failed: %s", resp.Status)
 	}
 }
 
@@ -452,7 +467,7 @@ func (s *Session) authRepairComplete(ctx context.Context) error {
 		Method:       "POST",
 		Path:         "/repair/complete",
 		ExtraHeaders: s.getSRPAuthHeaders(),
-		RootURL:      authEndpoint,
+		RootURL:      s.endpoints().auth,
 		IgnoreStatus: true,
 		NoResponse:   true,
 		Body:         body,
@@ -471,14 +486,14 @@ func (s *Session) authRepairComplete(ctx context.Context) error {
 
 // getAuthOrigin returns the origin URL for auth requests
 // Supports both global (idmsa.apple.com) and China (idmsa.apple.com.cn) endpoints
-func getAuthOrigin() string {
-	return strings.TrimSuffix(authEndpoint, "/appleauth/auth")
+func (s *Session) getAuthOrigin() string {
+	return strings.TrimSuffix(s.endpoints().auth, "/appleauth/auth")
 }
 
 // getSRPAuthHeaders returns headers needed for SRP auth requests
 func (s *Session) getSRPAuthHeaders() map[string]string {
 	frameTag := "auth-" + s.FrameID
-	authOrigin := getAuthOrigin()
+	authOrigin := s.getAuthOrigin()
 	headers := map[string]string{
 		"Accept":                           "application/json",
 		"Content-Type":                     "application/json",
@@ -488,7 +503,7 @@ func (s *Session) getSRPAuthHeaders() map[string]string {
 		"X-Apple-Widget-Key":               s.ClientID,
 		"X-Apple-OAuth-Client-Id":          s.ClientID,
 		"X-Apple-OAuth-Client-Type":        "firstPartyAuth",
-		"X-Apple-OAuth-Redirect-URI":       "https://www.icloud.com",
+		"X-Apple-OAuth-Redirect-URI":       s.endpoints().base,
 		"X-Apple-OAuth-Require-Grant-Code": "true",
 		"X-Apple-OAuth-Response-Mode":      "web_message",
 		"X-Apple-OAuth-Response-Type":      "code",
@@ -526,20 +541,37 @@ func (s *Session) AuthWithToken(ctx context.Context) error {
 	opts := rest.Opts{
 		Method:       "POST",
 		Path:         "/accountLogin",
-		ExtraHeaders: GetCommonHeaders(map[string]string{}),
-		RootURL:      setupEndpoint,
+		ExtraHeaders: s.getCommonHeaders(nil),
+		RootURL:      s.endpoints().setup,
+		IgnoreStatus: true,
 		Body:         body,
 	}
-
-	resp, err := s.Request(ctx, opts, nil, &s.AccountInfo)
+	var login struct {
+		AccountInfo
+		DomainToUse string `json:"domainToUse"`
+	}
+	resp, err := s.Request(ctx, opts, nil, &login)
 	if err != nil {
 		return err
 	}
-	fs.Debugf(nil, "iclouddrive: accountLogin response cookies: %v", cookieDebugSummaries(resp.Cookies()))
-	fs.Debugf(nil, "iclouddrive: session cookie jar after accountLogin: %v", cookieJarDebugSummaries(s.Cookies))
-
-	return nil
+	switch resp.StatusCode {
+	case http.StatusOK:
+		s.AccountInfo = login.AccountInfo
+		fs.Debugf(nil, "iclouddrive: accountLogin response cookies: %v", cookieDebugSummaries(resp.Cookies()))
+		fs.Debugf(nil, "iclouddrive: session cookie jar after accountLogin: %v", cookieJarDebugSummaries(s.Cookies))
+		return nil
+	case http.StatusFound:
+		if err := s.SetDomainToUse(login.DomainToUse); err != nil {
+			return err
+		}
+		return ErrDomainChanged
+	default:
+		return fmt.Errorf("accountLogin returned HTTP %d", resp.StatusCode)
+	}
 }
+
+// ErrDomainChanged indicates that Apple requires authentication on another iCloud domain.
+var ErrDomainChanged = errors.New("iCloud account domain changed")
 
 type pcsService struct {
 	wsKey   string
@@ -608,7 +640,7 @@ func (s *Session) acquirePCSCookiesFor(ctx context.Context, appName string, cook
 			Method:       "POST",
 			Path:         "/requestPCS",
 			ExtraHeaders: s.GetHeaders(map[string]string{}),
-			RootURL:      setupEndpoint,
+			RootURL:      s.endpoints().setup,
 			Body:         body,
 		}
 		var pcsResp struct {
@@ -651,7 +683,7 @@ func (s *Session) RequestPushNotification(ctx context.Context) error {
 		Method:       "PUT",
 		Path:         "/verify/trusteddevice/securitycode",
 		ExtraHeaders: s.GetAuthHeaders(map[string]string{}),
-		RootURL:      authEndpoint,
+		RootURL:      s.endpoints().auth,
 		NoResponse:   true,
 	}
 
@@ -671,7 +703,7 @@ func (s *Session) Validate2FACode(ctx context.Context, code string) error {
 		Method:       "POST",
 		Path:         "/verify/trusteddevice/securitycode",
 		ExtraHeaders: s.GetAuthHeaders(map[string]string{}),
-		RootURL:      authEndpoint,
+		RootURL:      s.endpoints().auth,
 		Body:         body,
 		NoResponse:   true,
 	}
@@ -717,7 +749,7 @@ func (s *Session) GetAuthState(ctx context.Context) (*AuthStateResponse, error) 
 		Method:        "GET",
 		Path:          "",
 		ExtraHeaders:  s.GetAuthHeaders(map[string]string{}),
-		RootURL:       authEndpoint,
+		RootURL:       s.endpoints().auth,
 		ContentLength: new(int64(0)),
 	}
 	// Use srv.Call directly to capture the raw response body for debugging
@@ -777,7 +809,7 @@ func (s *Session) RequestSMSCode(ctx context.Context, phoneID int, mode string) 
 		Method:       "PUT",
 		Path:         "/verify/phone",
 		ExtraHeaders: s.GetAuthHeaders(map[string]string{}),
-		RootURL:      authEndpoint,
+		RootURL:      s.endpoints().auth,
 		Body:         body,
 		NoResponse:   true,
 	}
@@ -803,7 +835,7 @@ func (s *Session) ValidateSMSCode(ctx context.Context, code string, phoneID int,
 		Method:       "POST",
 		Path:         "/verify/phone/securitycode",
 		ExtraHeaders: s.GetAuthHeaders(map[string]string{}),
-		RootURL:      authEndpoint,
+		RootURL:      s.endpoints().auth,
 		Body:         body,
 		NoResponse:   true,
 	}
@@ -826,7 +858,7 @@ func (s *Session) TrustSession(ctx context.Context) error {
 		Method:        "GET",
 		Path:          "/2sv/trust",
 		ExtraHeaders:  s.GetAuthHeaders(map[string]string{}),
-		RootURL:       authEndpoint,
+		RootURL:       s.endpoints().auth,
 		NoResponse:    true,
 		ContentLength: new(int64(0)),
 	}
@@ -845,7 +877,7 @@ func (s *Session) ValidateSession(ctx context.Context) error {
 		Method:        "POST",
 		Path:          "/validate",
 		ExtraHeaders:  s.GetHeaders(map[string]string{}),
-		RootURL:       setupEndpoint,
+		RootURL:       s.endpoints().setup,
 		ContentLength: new(int64(0)),
 	}
 	_, err := s.Request(ctx, opts, nil, &s.AccountInfo)
@@ -867,7 +899,7 @@ func (s *Session) GetAuthHeaders(overwrite map[string]string) map[string]string 
 
 // GetHeaders returns the authentication headers required for a request
 func (s *Session) GetHeaders(overwrite map[string]string) map[string]string {
-	headers := GetCommonHeaders(map[string]string{})
+	headers := s.getCommonHeaders(map[string]string{})
 	headers["Cookie"] = s.GetCookieString()
 	maps.Copy(headers, overwrite)
 	return headers
@@ -892,12 +924,12 @@ func (s *Session) GetCookieString() string {
 	return b.String()
 }
 
-// GetCommonHeaders generates common HTTP headers with optional overwrite
-func GetCommonHeaders(overwrite map[string]string) map[string]string {
+// getCommonHeaders generates common HTTP headers with optional overwrite
+func (s *Session) getCommonHeaders(overwrite map[string]string) map[string]string {
 	headers := map[string]string{
 		"Content-Type": "application/json",
-		"Origin":       baseEndpoint,
-		"Referer":      fmt.Sprintf("%s/", baseEndpoint),
+		"Origin":       s.endpoints().base,
+		"Referer":      fmt.Sprintf("%s/", s.endpoints().base),
 		"User-Agent":   iCloudUserAgent,
 	}
 	maps.Copy(headers, overwrite)
