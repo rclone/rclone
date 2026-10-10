@@ -115,13 +115,19 @@ func (e Error) Error() string {
 // Check Error satisfies the error interface
 var _ error = (*Error)(nil)
 
-// DeleteRequest is the input to DELETE /file-entries
+// DeleteRequest is the input to POST /file-entries/delete
 type DeleteRequest struct {
 	EntryIDs      []string `json:"entryIds"`
 	DeleteForever bool     `json:"deleteForever"`
 }
 
-// DeleteResponse is the input to DELETE /file-entries
+// EmptyTrashRequest is the input to POST /file-entries/delete when emptying the trash
+type EmptyTrashRequest struct {
+	EntryIDs   []string `json:"entryIds"`
+	EmptyTrash bool     `json:"emptyTrash"`
+}
+
+// DeleteResponse is returned by POST /file-entries/delete
 type DeleteResponse struct {
 	Status  string            `json:"status"`
 	Message string            `json:"message"`
@@ -138,6 +144,24 @@ type UpdateItemRequest struct {
 type UpdateItemResponse struct {
 	Status    string `json:"status"`
 	FileEntry Item   `json:"fileEntry"`
+}
+
+// SimpleUploadPresignRequest is the input to POST /s3/simple/presign
+type SimpleUploadPresignRequest struct {
+	Filename    string      `json:"filename"`
+	Mime        string      `json:"mime"`
+	Size        int64       `json:"size"`
+	Extension   string      `json:"extension"`
+	WorkspaceID json.Number `json:"workspaceId"`
+	ParentID    json.Number `json:"parentId"`
+}
+
+// SimpleUploadPresignResponse is returned by POST /s3/simple/presign
+type SimpleUploadPresignResponse struct {
+	URL    string `json:"url"`
+	Key    string `json:"key"`
+	ACL    string `json:"acl"`
+	Status string `json:"status"`
 }
 
 // MoveRequest is the input to /file-entries/move
@@ -214,20 +238,20 @@ type MultiPartCompleteResponse struct {
 	Location string `json:"location"`
 }
 
-// MultiPartEntriesRequest is the input to POST /s3/entries
-type MultiPartEntriesRequest struct {
+// S3EntriesRequest is the input to POST /s3/entries
+type S3EntriesRequest struct {
 	ClientMime      string      `json:"clientMime"`
 	ClientName      string      `json:"clientName"`
 	Filename        string      `json:"filename"`
 	Size            int64       `json:"size"`
 	ClientExtension string      `json:"clientExtension"`
 	ParentID        json.Number `json:"parentId"`
-	RelativePath    string      `json:"relativePath"`
-	WorkspaceID     string      `json:"workspaceId,omitempty"`
+	RelativePath    string      `json:"relativePath,omitempty"`
+	WorkspaceID     json.Number `json:"workspaceId"`
 }
 
-// MultiPartEntriesResponse is the result of POST /s3/entries
-type MultiPartEntriesResponse struct {
+// S3EntriesResponse is the result of POST /s3/entries
+type S3EntriesResponse struct {
 	FileEntry Item `json:"fileEntry"`
 }
 
