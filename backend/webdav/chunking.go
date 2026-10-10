@@ -2,7 +2,10 @@ package webdav
 
 /*
 	chunked update for Nextcloud
-	see https://docs.nextcloud.com/server/20/developer_manual/client_apis/WebDAV/chunking.html
+	see https://docs.nextcloud.com/server/28/developer_manual/client_apis/WebDAV/chunking.html
+	chunk v2 appears in Nextcloud from version 28. It allows S3 direct upload if it is used as primary or external backend.
+	For Nextcloud < 28, the server will accept chunks as if it is v1 mode (because only additional headers are added for v2).
+  For Nextcloud >= 28, the server will accept chunk v2 mode if the prerequisites at server are met. Otherwise it fallbacks to v1.
 */
 
 import (
@@ -14,11 +17,23 @@ import (
 	"io"
 	"net/http"
 	"path"
+	"strconv"
 	"time"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
+)
+
+const (
+	// See https://docs.nextcloud.com/server/28/developer_manual/client_apis/WebDAV/chunking.html#introduction
+
+	// Nextcloud Chunking v2 requires chunks to be between 5 MiB and 5 GiB, except for the final chunk which may be smaller.
+	nextcloudV2ChunkSizeMin = fs.SizeSuffix(5 * 1024 * 1024)
+	nextcloudV2ChunkSizeMax = fs.SizeSuffix(5 * 1024 * 1024 * 1024)
+
+	// Nextcloud Chunking v2 supports at most 10000 chunks.
+	nextcloudV2ChunkNbMax = int64(10000)
 )
 
 func (f *Fs) shouldRetryChunkMerge(ctx context.Context, resp *http.Response, err error, sleepTime *time.Duration, wasLocked *bool) (bool, error) {
@@ -78,8 +93,30 @@ func (o *Object) shouldUseChunkedUpload(src fs.ObjectInfo) bool {
 func (o *Object) updateChunked(ctx context.Context, in0 io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	var uploadDir string
 
-	// see https://docs.nextcloud.com/server/24/developer_manual/client_apis/WebDAV/chunking.html#starting-a-chunked-upload
-	uploadDir, err = o.createChunksUploadDirectory(ctx)
+	// Nextcloud Chunking v2 requires the final destination URL to be supplied during MKCOL, PUT  and MOVE of chunk upload.
+	destinationURL, err := rest.URLJoin(o.fs.endpoint, o.filePath())
+	if err != nil {
+		return fmt.Errorf("finalize chunked upload couldn't join URL: %w", err)
+	}
+
+	chunkSize := o.fs.opt.ChunkSize
+	if chunkSize < nextcloudV2ChunkSizeMin {
+		return fmt.Errorf("chunked upload chunk size %s is too small for Nextcloud Chunking v2; minimum is %s", chunkSize, nextcloudV2ChunkSizeMin)
+	}
+	if chunkSize > nextcloudV2ChunkSizeMax {
+		return fmt.Errorf("chunked upload chunk size %s is too large for Nextcloud Chunking v2; maximum is %s", chunkSize, nextcloudV2ChunkSizeMax)
+	}
+
+	size := src.Size()
+	// This is equivalent to chunkCount = ceil(size / chunkSize) for intergers.
+	// See https://stackoverflow.com/questions/2745074/fast-ceiling-of-an-integer-division-in-c-c
+	chunkCount := 1 + (size-1)/int64(chunkSize)
+	if chunkCount > nextcloudV2ChunkNbMax {
+		return fmt.Errorf("chunked upload requires %d chunks, but Nextcloud Chunking v2 supports at most %d chunks; increase the chunk size", chunkCount, nextcloudV2ChunkNbMax)
+	}
+
+	// see https://docs.nextcloud.com/server/28/developer_manual/client_apis/WebDAV/chunking.html#starting-a-chunked-upload
+	uploadDir, err = o.createChunksUploadDirectory(ctx, destinationURL.String())
 	if err != nil {
 		return err
 	}
@@ -88,14 +125,14 @@ func (o *Object) updateChunked(ctx context.Context, in0 io.Reader, src fs.Object
 		fs: o.fs,
 	}
 
-	// see https://docs.nextcloud.com/server/24/developer_manual/client_apis/WebDAV/chunking.html#uploading-chunks
-	err = o.uploadChunks(ctx, in0, src.Size(), partObj, uploadDir, options)
+	// see https://docs.nextcloud.com/server/28/developer_manual/client_apis/WebDAV/chunking.html#uploading-chunks
+	err = o.uploadChunks(ctx, in0, size, partObj, uploadDir, destinationURL.String(), options)
 	if err != nil {
 		return err
 	}
 
-	// see https://docs.nextcloud.com/server/24/developer_manual/client_apis/WebDAV/chunking.html#assembling-the-chunks
-	err = o.mergeChunks(ctx, uploadDir, options, src)
+	// see https://docs.nextcloud.com/server/28/developer_manual/client_apis/WebDAV/chunking.html#assembling-the-chunks
+	err = o.mergeChunks(ctx, uploadDir, destinationURL.String(), options, src)
 	if err != nil {
 		return err
 	}
@@ -103,21 +140,24 @@ func (o *Object) updateChunked(ctx context.Context, in0 io.Reader, src fs.Object
 	return nil
 }
 
-func (o *Object) uploadChunks(ctx context.Context, in0 io.Reader, size int64, partObj *Object, uploadDir string, options []fs.OpenOption) error {
+func (o *Object) uploadChunks(ctx context.Context, in0 io.Reader, size int64, partObj *Object, uploadDir string, destinationURL string, options []fs.OpenOption) error {
 	chunkSize := int64(partObj.fs.opt.ChunkSize)
 
 	// TODO: upload chunks in parallel for faster transfer speeds
+	chunkNumber := int64(1)
 	for offset := int64(0); offset < size; offset += chunkSize {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
 
-		// Last chunk may be smaller
+		// Last chunk may be smaller.
 		contentLength := min(size-offset, chunkSize)
 
-		endOffset := offset + contentLength - 1
+		// Nextcloud Chunking v2 requires chunk names to be numeric, in
+		// ascending order, between 1 and 10000.
+		partObj.remote = fmt.Sprintf("%s/%05d", uploadDir, chunkNumber)
+		chunkNumber++
 
-		partObj.remote = fmt.Sprintf("%s/%015d-%015d", uploadDir, offset, endOffset)
 		// Enable low-level HTTP 2 retries.
 		// 2022-04-28 15:59:06 ERROR : stuff/video.avi: Failed to copy: uploading chunk failed: Put "https://censored.com/remote.php/dav/uploads/Admin/rclone-chunked-upload-censored/000006113198080-000006123683840": http2: Transport: cannot retry err [http2: Transport received Server's graceful shutdown GOAWAY] after Request.Body was written; define Request.GetBody to avoid this error
 
@@ -133,7 +173,12 @@ func (o *Object) uploadChunks(ctx context.Context, in0 io.Reader, size int64, pa
 			return io.NopCloser(in), nil
 		}
 
-		err := partObj.updateSimple(ctx, in, getBody, partObj.remote, contentLength, "application/x-www-form-urlencoded", nil, o.fs.chunksUploadURL, options...)
+		headers := map[string]string{
+			"Destination":     destinationURL,
+			"OC-Total-Length": strconv.FormatInt(size, 10),
+		}
+
+		err := partObj.updateSimple(ctx, in, getBody, partObj.remote, contentLength, "application/x-www-form-urlencoded", headers, o.fs.chunksUploadURL, options...)
 		if err != nil {
 			return fmt.Errorf("uploading chunk failed: %w", err)
 		}
@@ -141,7 +186,7 @@ func (o *Object) uploadChunks(ctx context.Context, in0 io.Reader, size int64, pa
 	return nil
 }
 
-func (o *Object) createChunksUploadDirectory(ctx context.Context) (string, error) {
+func (o *Object) createChunksUploadDirectory(ctx context.Context, destinationURL string) (string, error) {
 	uploadDir, err := o.getChunksUploadDir()
 	if err != nil {
 		return uploadDir, err
@@ -157,6 +202,9 @@ func (o *Object) createChunksUploadDirectory(ctx context.Context) (string, error
 		Path:       uploadDir + "/",
 		NoResponse: true,
 		RootURL:    o.fs.chunksUploadURL,
+		ExtraHeaders: map[string]string{
+			"Destination": destinationURL,
+		},
 	}
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		resp, err := o.fs.srv.Call(ctx, &opts)
@@ -168,10 +216,8 @@ func (o *Object) createChunksUploadDirectory(ctx context.Context) (string, error
 	return uploadDir, err
 }
 
-func (o *Object) mergeChunks(ctx context.Context, uploadDir string, options []fs.OpenOption, src fs.ObjectInfo) error {
-	var resp *http.Response
-
-	// see https://docs.nextcloud.com/server/24/developer_manual/client_apis/WebDAV/chunking.html?highlight=chunk#assembling-the-chunks
+func (o *Object) mergeChunks(ctx context.Context, uploadDir string, destinationURL string, options []fs.OpenOption, src fs.ObjectInfo) error {
+	// see https://docs.nextcloud.com/server/latest/developer_manual/client_apis/WebDAV/chunking.html#assembling-the-chunks
 	opts := rest.Opts{
 		Method:     "MOVE",
 		Path:       path.Join(uploadDir, ".file"),
@@ -179,16 +225,14 @@ func (o *Object) mergeChunks(ctx context.Context, uploadDir string, options []fs
 		Options:    options,
 		RootURL:    o.fs.chunksUploadURL,
 	}
-	destinationURL, err := rest.URLJoin(o.fs.endpoint, o.filePath())
-	if err != nil {
-		return fmt.Errorf("finalize chunked upload couldn't join URL: %w", err)
-	}
 	opts.ExtraHeaders = o.extraHeaders(ctx, src)
-	opts.ExtraHeaders["Destination"] = destinationURL.String()
+	opts.ExtraHeaders["Destination"] = destinationURL
+	opts.ExtraHeaders["OC-Total-Length"] = strconv.FormatInt(src.Size(), 10)
+	opts.ExtraHeaders["X-OC-Mtime"] = strconv.FormatInt(src.ModTime(ctx).Unix(), 10)
 	sleepTime := 5 * time.Second
 	wasLocked := false
-	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.Call(ctx, &opts)
+	err := o.fs.pacer.Call(func() (bool, error) {
+		resp, err := o.fs.srv.Call(ctx, &opts)
 		return o.fs.shouldRetryChunkMerge(ctx, resp, err, &sleepTime, &wasLocked)
 	})
 	if err != nil {
