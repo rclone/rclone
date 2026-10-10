@@ -1,0 +1,23 @@
+backend: febbox
+name: FebBox
+tier: Tier 4
+maintainers: External
+features_score: 2
+integration_tests: Failing
+data_integrity: Modtime
+performance: Medium
+adoption: Some use
+docs: Full
+security: High
+virtual: false
+remote: 'TestFebBox:'
+features:
+- CanHaveEmptyDirectories
+- Command
+- Copy
+- DirCacheFlush
+- DirMove
+- Move
+- ReadMimeType
+hashes: []
+precision: 1000000000
