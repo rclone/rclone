@@ -142,6 +142,23 @@ func TestOptionsInfo(t *testing.T) {
 	assert.Equal(t, Params{}, out)
 }
 
+// TestOptionsInfoNoDuplicates locks in the invariant that the global
+// rc OptionsInfo list contains no two entries with the same Name.
+// A duplicate is a user-visible bug in `options/info` (a JSON object
+// or slice of entries that any client decoding into a map silently
+// loses, and any client decoding into a slice surfaces twice).
+// Regression guard for commit acda43a74 which removed a duplicate
+// metrics_addr entry caused by an overlapping AddPrefix chain.
+func TestOptionsInfoNoDuplicates(t *testing.T) {
+	seen := map[string]int{}
+	for _, o := range OptionsInfo {
+		seen[o.Name]++
+	}
+	for name, n := range seen {
+		assert.Equalf(t, 1, n, "rc option %q registered %d times", name, n)
+	}
+}
+
 func TestOptionsSet(t *testing.T) {
 	defer clearOptionBlock()()
 	var reloaded int
