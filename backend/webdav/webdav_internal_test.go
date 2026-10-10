@@ -534,6 +534,43 @@ func TestListAllRetryDoesNotConcatenate(t *testing.T) {
 	assert.ElementsMatch(t, want, remotes)
 }
 
+// TestNextcloudPublicShareHeader checks X-Requested-With is sent for
+// Nextcloud public shares unless the user overrides it.
+func TestNextcloudPublicShareHeader(t *testing.T) {
+	for _, test := range []struct {
+		name    string
+		path    string
+		headers string
+		want    string
+	}{
+		{"public share", "/public.php/dav/files/token", "", "XMLHttpRequest"},
+		{"user override", "/public.php/dav/files/token", "X-Requested-With,custom", "custom"},
+		{"regular nextcloud", "/remote.php/dav/files/user", "", ""},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var got atomic.Value
+			got.Store("")
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				got.Store(r.Header.Get("X-Requested-With"))
+				w.WriteHeader(http.StatusMultiStatus)
+				_, _ = io.WriteString(w, `<d:multistatus xmlns:d="DAV:"></d:multistatus>`)
+			}))
+			defer ts.Close()
+			configfile.Install()
+			m := configmap.Simple{
+				"type":    "webdav",
+				"url":     ts.URL + test.path,
+				"vendor":  "nextcloud",
+				"headers": test.headers,
+			}
+			f, err := webdav.NewFs(context.Background(), remoteName, "", m)
+			require.NoError(t, err)
+			_, _ = f.List(context.Background(), "")
+			assert.Equal(t, test.want, got.Load().(string))
+		})
+	}
+}
+
 // TestNotFoundInMultistatus checks that a missing path is detected when the
 // server reports it by appending a Sabre NotFound error to a 207 response it
 // has already started, as ownCloud 10.16 does, rather than by returning 404.
