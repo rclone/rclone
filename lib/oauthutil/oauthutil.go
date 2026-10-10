@@ -1143,6 +1143,9 @@ func (s *authServer) Init() error {
 	var err error
 	s.listener, err = net.Listen("tcp", s.bindAddress)
 	if err != nil {
+		if hint := bindErrorHint(err); hint != "" {
+			return fmt.Errorf("%w\n\n%s", err, hint)
+		}
 		return err
 	}
 	return nil
