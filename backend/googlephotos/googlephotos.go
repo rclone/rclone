@@ -182,6 +182,18 @@ IMPORTANT: Due to Google policy changes rclone can now only download photos it u
 If you choose read only then rclone will only request read only access
 to your photos, otherwise rclone will request full access.`,
 		}, {
+			Name:    "trash_album_name",
+			Default: "",
+			Help: `Name of the album to use as a trash bin for deleted and overwritten files.
+
+The Google Photos API does not support deleting media permanently.
+Instead rclone moves removed items into this album so they can be
+reviewed and deleted manually from the Google Photos UI.
+
+Set this to an empty string to disable the trash workaround (removed
+items will not be added to any album, but will remain in your library).`,
+			Advanced: true,
+		}, {
 			Name:    "read_size",
 			Default: false,
 			Help: `Set to read the size of media items.
@@ -264,25 +276,27 @@ type Options struct {
 	BatchSize       int                  `config:"batch_size"`
 	BatchTimeout    fs.Duration          `config:"batch_timeout"`
 	Proxy           string               `config:"proxy"`
+	TrashAlbumName  string               `config:"trash_album_name"`
 }
 
 // Fs represents a remote storage server
 type Fs struct {
-	name       string                 // name of this remote
-	root       string                 // the path we are working on if any
-	opt        Options                // parsed options
-	features   *fs.Features           // optional features
-	unAuth     *rest.Client           // unauthenticated http client
-	srv        *rest.Client           // the connection to the server
-	ts         *oauthutil.TokenSource // token source for oauth2
-	pacer      *fs.Pacer              // To pace the API calls
-	startTime  time.Time              // time Fs was started - used for datestamps
-	albumsMu   sync.Mutex             // protect albums (but not contents)
-	albums     map[bool]*albums       // albums, shared or not
-	uploadedMu sync.Mutex             // to protect the below
-	uploaded   dirtree.DirTree        // record of uploaded items
-	createMu   sync.Mutex             // held when creating albums to prevent dupes
-	batcher    *batcher.Batcher[uploadedItem, *api.MediaItem]
+	name         string                 // name of this remote
+	root         string                 // the path we are working on if any
+	opt          Options                // parsed options
+	features     *fs.Features           // optional features
+	unAuth       *rest.Client           // unauthenticated http client
+	srv          *rest.Client           // the connection to the server
+	ts           *oauthutil.TokenSource // token source for oauth2
+	pacer        *fs.Pacer              // To pace the API calls
+	startTime    time.Time              // time Fs was started - used for datestamps
+	albumsMu     sync.Mutex             // protect albums (but not contents)
+	albums       map[bool]*albums       // albums, shared or not
+	uploadedMu   sync.Mutex             // to protect the below
+	uploaded     dirtree.DirTree        // record of uploaded items
+	createMu     sync.Mutex             // held when creating albums to prevent dupes
+	batcher      *batcher.Batcher[uploadedItem, *api.MediaItem]
+	trashAlbumID string // Cache for rclone_Trash album ID
 }
 
 // Object describes a storage object
@@ -524,6 +538,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.Med
 	o := &Object{
 		fs:     f,
 		remote: remote,
+		bytes:  -1,
 	}
 	if info != nil {
 		o.setMetaData(info)
@@ -692,6 +707,7 @@ func (f *Fs) itemToDirEntry(ctx context.Context, remote string, item *api.MediaI
 	o := &Object{
 		fs:     f,
 		remote: remote,
+		bytes:  -1,
 	}
 	o.setMetaData(item)
 	return o, nil
@@ -774,6 +790,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	o := &Object{
 		fs:     f,
 		remote: src.Remote(),
+		bytes:  -1,
 	}
 	return o, o.Update(ctx, in, src, options...)
 }
@@ -818,6 +835,75 @@ func (f *Fs) getOrCreateAlbum(ctx context.Context, albumTitle string) (album *ap
 		return album, nil
 	}
 	return f.createAlbum(ctx, albumTitle)
+}
+
+// findOrCreateTrashAlbum gets the trash album ID or retrieves it/creates it if it hasn't been cached yet.
+// Returns an empty string (no error) when TrashAlbumName is empty, meaning the trash workaround is disabled.
+func (f *Fs) findOrCreateTrashAlbum(ctx context.Context) (string, error) {
+	if f.opt.TrashAlbumName == "" {
+		return "", nil
+	}
+	if f.trashAlbumID != "" {
+		return f.trashAlbumID, nil
+	}
+	album, err := f.getOrCreateAlbum(ctx, f.opt.TrashAlbumName)
+	if err != nil {
+		return "", err
+	}
+	f.trashAlbumID = album.ID
+	return f.trashAlbumID, nil
+}
+
+// trashMediaItem moves a media item to the configured trash album and removes it from a specified album.
+func (f *Fs) trashMediaItem(ctx context.Context, mediaItemID string, currentAlbumID string) error {
+	trashAlbumID, err := f.findOrCreateTrashAlbum(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to find or create trash album: %w", err)
+	}
+
+	var resp *http.Response
+
+	// 1. Add to trash album (skip when trash is disabled)
+	if trashAlbumID != "" {
+		fs.Infof(f, "Adding media item %q to trash album %q", mediaItemID, f.opt.TrashAlbumName)
+		addOpts := rest.Opts{
+			Method:     "POST",
+			Path:       "/albums/" + trashAlbumID + ":batchAddMediaItems",
+			NoResponse: true,
+		}
+		addRequest := api.BatchAddItems{
+			MediaItemIDs: []string{mediaItemID},
+		}
+		err = f.pacer.Call(func() (bool, error) {
+			resp, err = f.srv.CallJSON(ctx, &addOpts, &addRequest, nil)
+			return shouldRetry(ctx, resp, err)
+		})
+		if err != nil {
+			return fmt.Errorf("failed to add item to trash album: %w", err)
+		}
+	}
+
+	// 2. Remove from current album if applicable
+	if currentAlbumID != "" && currentAlbumID != trashAlbumID {
+		fs.Infof(f, "Removing media item %q from album ID %q", mediaItemID, currentAlbumID)
+		removeOpts := rest.Opts{
+			Method:     "POST",
+			Path:       "/albums/" + currentAlbumID + ":batchRemoveMediaItems",
+			NoResponse: true,
+		}
+		removeRequest := api.BatchRemoveItems{
+			MediaItemIDs: []string{mediaItemID},
+		}
+		err = f.pacer.Call(func() (bool, error) {
+			resp, err = f.srv.CallJSON(ctx, &removeOpts, &removeRequest, nil)
+			return shouldRetry(ctx, resp, err)
+		})
+		if err != nil {
+			return fmt.Errorf("failed to remove item from current album: %w", err)
+		}
+	}
+
+	return nil
 }
 
 // Mkdir creates the album if it doesn't exist
@@ -952,11 +1038,18 @@ func (o *Object) Size() int64 {
 	return o.bytes
 }
 
-// setMetaData sets the fs data from a storage.Object
+// setMetaData sets the fs data from a storage.Object.
+// If info is nil (e.g. when using async batch_mode and the item has not yet
+// been committed), only o.bytes is set to -1 so the caller knows size is
+// unknown; all other fields retain their existing values.
 func (o *Object) setMetaData(info *api.MediaItem) {
+	if info == nil {
+		o.bytes = -1
+		return
+	}
 	o.url = info.BaseURL
 	o.id = info.ID
-	o.bytes = -1 // FIXME
+	o.bytes = -1 // FIXME: Google Photos API does not return size
 	o.mimeType = info.MimeType
 	o.modTime = info.MediaMetadata.CreationTime
 }
@@ -1157,6 +1250,7 @@ func (f *Fs) commitBatch(ctx context.Context, items []uploadedItem, results []*a
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	// defer log.Trace(o, "src=%+v", src)("err=%v", &err)
+	oldID := o.id
 	match, _, pattern := patterns.match(o.fs.root, o.remote, true)
 	if pattern == nil || !pattern.isFile || !pattern.canUpload {
 		return errCantUpload
@@ -1237,7 +1331,23 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return fmt.Errorf("failed to commit batch: %w", err)
 	}
 
-	o.setMetaData(info)
+	// In async batch_mode, info is nil until the batch is flushed later.
+	// setMetaData handles nil gracefully; we pre-populate bytes with the
+	// source size so the hasher overlay can cache the correct fingerprint
+	// without waiting for eventual consistency.
+	if info == nil {
+		o.bytes = src.Size()
+	} else {
+		o.setMetaData(info)
+	}
+
+	// If this was an overwrite (update), trash the old media item
+	if oldID != "" {
+		err = o.fs.trashMediaItem(ctx, oldID, albumID)
+		if err != nil {
+			return fmt.Errorf("failed to trash old duplicate media item %q: %w", oldID, err)
+		}
+	}
 
 	// Add upload to internal storage
 	if pattern.isUpload {
@@ -1251,31 +1361,28 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 // Remove an object
 func (o *Object) Remove(ctx context.Context) (err error) {
 	match, _, pattern := patterns.match(o.fs.root, o.remote, true)
-	if pattern == nil || !pattern.isFile || !pattern.canUpload || pattern.isUpload {
+	if pattern == nil || !pattern.isFile {
 		return errRemove
 	}
-	albumTitle, fileName := match[1], match[2]
-	album, ok := o.fs.albums[false].get(albumTitle)
-	if !ok {
-		return fmt.Errorf("couldn't file %q in album %q for delete", fileName, albumTitle)
+
+	var currentAlbumID string
+	if len(match) >= 3 {
+		albumTitle := match[1]
+		if albums := o.fs.albums[false]; albums != nil {
+			if album, ok := albums.get(albumTitle); ok {
+				currentAlbumID = album.ID
+			}
+		}
+		if currentAlbumID == "" {
+			if albums := o.fs.albums[true]; albums != nil {
+				if album, ok := albums.get(albumTitle); ok {
+					currentAlbumID = album.ID
+				}
+			}
+		}
 	}
-	opts := rest.Opts{
-		Method:     "POST",
-		Path:       "/albums/" + album.ID + ":batchRemoveMediaItems",
-		NoResponse: true,
-	}
-	request := api.BatchRemoveItems{
-		MediaItemIDs: []string{o.id},
-	}
-	var resp *http.Response
-	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.CallJSON(ctx, &opts, &request, nil)
-		return shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		return fmt.Errorf("couldn't delete item from album: %w", err)
-	}
-	return nil
+
+	return o.fs.trashMediaItem(ctx, o.id, currentAlbumID)
 }
 
 // MimeType of an Object if known, "" otherwise
