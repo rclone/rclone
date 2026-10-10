@@ -413,6 +413,12 @@ func isZeroLength(streamReader io.Reader) bool {
 
 // Update an object if it has changed
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
+	if !strings.HasSuffix(o.remote, "/") {
+		err = o.fs.mkdirParent(ctx, o.remote)
+		if err != nil {
+			return err
+		}
+	}
 	bucketName, _ := o.split()
 	err = o.fs.makeBucket(ctx, bucketName)
 	if err != nil {

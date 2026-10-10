@@ -67,6 +67,7 @@ type Options struct {
 	LeavePartsOnError    bool                 `config:"leave_parts_on_error"`
 	AttemptResumeUpload  bool                 `config:"attempt_resume_upload"`
 	NoCheckBucket        bool                 `config:"no_check_bucket"`
+	DirectoryMarkers     bool                 `config:"directory_markers"`
 	SSEKMSKeyID          string               `config:"sse_kms_key_id"`
 	SSECustomerAlgorithm string               `config:"sse_customer_algorithm"`
 	SSECustomerKey       string               `config:"sse_customer_key"`
@@ -153,6 +154,15 @@ func newOptions() []fs.Option {
 			Value: "Archive",
 			Help:  "Archive storage tier",
 		}},
+	}, {
+		Name:     "directory_markers",
+		Default:  false,
+		Advanced: true,
+		Help: `Upload an empty object with a trailing slash when a new directory is created
+
+Empty folders are unsupported for bucket based remotes, this option creates an empty
+object ending with "/", to persist the folder.
+`,
 	}, {
 		Name: "upload_cutoff",
 		Help: `Cutoff for switching to chunked upload.
