@@ -1,0 +1,592 @@
+---
+title: "SmugMug"
+description: "Rclone docs for SmugMug backend"
+versionIntroduced: "v1.76"
+---
+
+# SmugMug
+
+This backend works with [SmugMug](https://www.smugmug.com/) in two modes:
+
+- album mode uploads, lists, downloads, replaces, and deletes media in one
+  configured album.
+- library mode lists SmugMug folders and albums as a filesystem tree. It is the
+  default mode for newly configured remotes.
+
+## Configuration
+
+First, request a SmugMug API key from the
+[SmugMug API key page](https://api.smugmug.com/api/developer). You must be
+logged in with a SmugMug account. SmugMug issues an API key and an API key
+secret for the application; keep the secret private.
+
+Create a remote with:
+
+```console
+rclone config
+```
+
+Choose `smugmug` and enter your SmugMug API key and API key secret. By default
+rclone uses library mode with `root_node = root`, which lists the authenticated
+user's SmugMug folders and albums.
+
+For album mode, set `album_uri` to the album URI, album key, or a SmugMug web
+URL. The album URI looks like `/api/v2/album/AbCdEf`; the key is the final
+`AbCdEf` part. For web URLs, rclone resolves the URL to its parent album, so
+image URLs such as `https://photos.example.com/2023/My-Album/i-AbCdEf/A` are
+accepted. Custom-domain URLs must match an album path in the authenticated
+user's library.
+
+For a different library root, set `root_node` to a node URI such as
+`/api/v2/node/AbCdEf`, a node ID such as `AbCdEf`, or `root` for the
+authenticated user's root node. In this mode folders and albums appear as
+directories. Uploads must target an existing album path.
+
+During setup, rclone opens SmugMug's OAuth authorization page and asks for the
+six-digit verification code.
+
+## Usage
+
+The examples below use `smug:` for an album-mode remote and `smuglib:` for a
+library-mode remote. Library mode is the default and starts at the authenticated
+user's root folder.
+
+List the library root or a folder:
+
+```console
+rclone lsf smuglib:
+rclone lsf smuglib:Projects
+rclone lsjson smuglib:Projects
+```
+
+List an album-mode remote or a virtual album subdirectory:
+
+```console
+rclone lsf smug:
+rclone lsf smug:prints
+rclone lsjson smug: -M
+```
+
+List only SmugMug folders or albums under a path:
+
+```console
+rclone backend list-folders smuglib: Projects
+rclone backend list-albums smuglib: Projects
+rclone backend list smuglib: Projects -o recursive=true
+```
+
+Upload a single image to an exact destination file name:
+
+```console
+rclone copyto photo.jpg smug:photo.jpg
+rclone copyto photo.jpg smuglib:Projects/RiverLight/photo.jpg
+```
+
+Upload a directory of images to an existing album:
+
+```console
+rclone copy ./photos smug:
+rclone copy ./photos smuglib:Projects/RiverLight
+```
+
+Show upload progress and per-file logging from the terminal:
+
+```console
+rclone copy ./photos smuglib:Projects/RiverLight -P --stats 5s
+rclone copy ./photos smuglib:Projects/RiverLight -v
+```
+
+Synchronize files to or from an existing album:
+
+```console
+rclone sync ./photos smuglib:Projects/RiverLight -P
+rclone sync smuglib:Projects/RiverLight ./photos-backup -P
+```
+
+Download images from SmugMug:
+
+```console
+rclone copy smuglib:Projects/RiverLight ./downloads
+rclone copyto smuglib:Projects/RiverLight/photo.jpg ./photo.jpg
+```
+
+Use `copy` when the destination is a directory or album. Use `copyto` when the
+destination is the exact file path or when you want to rename one image:
+
+```console
+rclone copy ./photos smuglib:Projects/RiverLight
+rclone copyto photo.jpg smuglib:Projects/RiverLight/cover.jpg
+```
+
+Create a SmugMug folder under an existing SmugMug folder:
+
+```console
+rclone mkdir smuglib:Projects/NewFolder
+rclone mkdir smuglib:Projects/NewFolder/NestedFolder
+```
+
+Remove an empty SmugMug folder in library mode:
+
+```console
+rclone rmdir smuglib:Projects/NewFolder
+```
+
+`rmdir` removes SmugMug folders only. It does not remove albums.
+
+Delete uploaded images:
+
+```console
+rclone deletefile smug:photo.jpg
+rclone deletefile smuglib:Projects/RiverLight/photo.jpg
+rclone delete smuglib:Projects/RiverLight --include "*.jpg"
+```
+
+Check hashes and compare local files with an album:
+
+```console
+rclone md5sum smuglib:Projects/RiverLight
+rclone check ./photos smuglib:Projects/RiverLight
+```
+
+Get the SmugMug web URL for an image, folder, or album:
+
+```console
+rclone link smug:
+rclone link smuglib:Projects/BlueMesa/photo.jpg
+rclone link smuglib:Projects/BlueMesa
+rclone link smuglib:Projects/RiverLight
+```
+
+## Backend command examples
+
+Show the authenticated user and root node:
+
+```console
+rclone backend root smug:
+```
+
+List folders and albums:
+
+```console
+rclone backend list smug: Projects -o recursive=true
+rclone backend list-albums smug: -o node=/api/v2/node/AbCdEf
+rclone backend list-folders smug: Projects
+```
+
+Create folders and albums:
+
+```console
+rclone backend create-folder smug: BlueMesa -o path=Projects
+rclone backend create-album smug: RiverLight -o path=Projects/BlueMesa -o privacy=Private
+```
+
+Creation commands return node and album URIs. Use the returned album URI as
+`album_uri`, or browse it through a library-mode remote.
+
+## Creating folders and albums
+
+Use `mkdir` for SmugMug folders:
+
+```console
+rclone mkdir smuglib:Projects/NewFolder
+```
+
+The parent must be a SmugMug folder. SmugMug albums are media collections, so
+empty directories inside an album path are virtual and cannot be created.
+
+Use `create-album` with a parent folder path:
+
+```console
+rclone backend create-album smug: RiverLight -o path=Projects
+```
+
+Or use the parent folder node URI directly:
+
+```console
+rclone backend create-album smug: RiverLight -o parent=/api/v2/node/AbCdEf
+```
+
+Set optional SmugMug fields with `-o` options:
+
+```console
+rclone backend create-album smug: RiverLight -o path=Projects \
+  -o privacy=Unlisted -o url_name=river-light
+```
+
+The command returns the new album's `node_uri`, `album_uri`, and `web_uri`.
+Verify the album with:
+
+```console
+rclone backend list-albums smug:Projects
+```
+
+Then upload to the new album by using a library-mode remote:
+
+```console
+rclone copyto photo.jpg smuglib:Projects/RiverLight/photo.jpg
+```
+
+Or configure another album-mode remote with the returned `album_uri`.
+
+## Copying and moving images
+
+Use normal rclone commands to copy or move an image between albums in a
+library-mode remote:
+
+```console
+rclone copyto smuglib:Projects/BlueMesa/photo.jpg smuglib:Projects/RiverLight/photo.jpg
+rclone moveto smuglib:Projects/BlueMesa/photo.jpg smuglib:Projects/RiverLight/photo.jpg
+```
+
+SmugMug's exposed `CopyImage` API does not accept a destination album, so
+cross-album copies stream through rclone and upload to the destination. Moves
+delete the source image only after the destination upload succeeds.
+
+SmugMug's v2 API exposes collected images as album-image relationships, but it
+does not expose a public destination-album collect endpoint that rclone can use.
+Use `copy`, `copyto`, `move`, or `moveto` for filesystem behavior rather than a
+SmugMug-native collect operation.
+
+## Metadata
+
+SmugMug supports rclone metadata for image fields. Use `-M` to preserve
+metadata during copies, or set fields on upload with `--metadata-set`:
+
+```console
+rclone copyto photo.jpg smuglib:Projects/BlueMesa/photo.jpg \
+  --metadata-set title="Cover"
+rclone copyto photo.jpg smuglib:Projects/BlueMesa/photo.jpg \
+  --metadata-set keywords="travel,landscape"
+rclone lsjson smuglib:Projects/BlueMesa -M
+```
+
+Supported metadata keys are `title`, `caption`, `keywords`, `hidden`,
+`latitude`, `longitude`, `altitude`, and `format` (read-only). Unsupported
+metadata keys are ignored when writing.
+
+## Limitations
+
+SmugMug albums are flat media collections. In album mode, rclone represents
+paths virtually by encoding slashes in uploaded file names. In library mode,
+`mkdir` and `rmdir` manage real SmugMug folders only. Virtual album subpaths
+cannot store empty directories. Use `rclone backend create-album` when you need
+a new album.
+
+This backend does not remove SmugMug albums. Delete images with `delete` or
+`deletefile`, and remove empty SmugMug folders with `rmdir`.
+
+SmugMug requires a `Content-MD5` header for uploads. When rclone must calculate
+the MD5 or cache a non-seekable upload body for retry, files larger than
+`--smugmug-md5-memory-limit` are cached on disk.
+
+<!-- autogenerated options start - DO NOT EDIT - instead edit fs.RegInfo in backend/smugmug/smugmug.go and run make backenddocs to verify --> <!-- markdownlint-disable-line line-length -->
+### Standard options
+
+Here are the Standard options specific to smugmug (SmugMug).
+
+#### --smugmug-album-uri
+
+SmugMug album API URI, album key, or web URL to upload into.
+
+Use values like `/api/v2/album/AbCdEf`, `AbCdEf`, or `https://photos.example.com/2023/My-Album/i-AbCdEf/A`. Custom-domain URLs must match an album path in the authenticated user's library.
+
+Leave blank to use library mode.
+
+Properties:
+
+- Config:      album_uri
+- Env Var:     RCLONE_SMUGMUG_ALBUM_URI
+- Type:        string
+- Required:    false
+
+#### --smugmug-root-node
+
+SmugMug root node API URI or node ID for library mode.
+
+By default rclone presents the authenticated user's SmugMug folders and albums as a filesystem tree. Use `root` or `authuser` for the authenticated user's root node.
+
+Properties:
+
+- Config:      root_node
+- Env Var:     RCLONE_SMUGMUG_ROOT_NODE
+- Type:        string
+- Default:     "root"
+
+#### --smugmug-api-key
+
+SmugMug API key.
+
+Properties:
+
+- Config:      api_key
+- Env Var:     RCLONE_SMUGMUG_API_KEY
+- Type:        string
+- Required:    true
+
+#### --smugmug-api-secret
+
+SmugMug API key secret.
+
+**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
+
+Properties:
+
+- Config:      api_secret
+- Env Var:     RCLONE_SMUGMUG_API_SECRET
+- Type:        string
+- Required:    true
+
+### Advanced options
+
+Here are the Advanced options specific to smugmug (SmugMug).
+
+#### --smugmug-access-token
+
+OAuth access token.
+
+This is normally set by `rclone config`.
+
+Properties:
+
+- Config:      access_token
+- Env Var:     RCLONE_SMUGMUG_ACCESS_TOKEN
+- Type:        string
+- Required:    false
+
+#### --smugmug-access-token-secret
+
+OAuth access token secret.
+
+This is normally set by `rclone config`.
+
+**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
+
+Properties:
+
+- Config:      access_token_secret
+- Env Var:     RCLONE_SMUGMUG_ACCESS_TOKEN_SECRET
+- Type:        string
+- Required:    false
+
+#### --smugmug-md5-memory-limit
+
+Files bigger than this will be cached on disk when rclone must cache an upload body before sending it.
+
+Properties:
+
+- Config:      md5_memory_limit
+- Env Var:     RCLONE_SMUGMUG_MD5_MEMORY_LIMIT
+- Type:        SizeSuffix
+- Default:     32Mi
+
+#### --smugmug-encoding
+
+The encoding for the backend.
+
+See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
+
+- Config:      encoding
+- Env Var:     RCLONE_SMUGMUG_ENCODING
+- Type:        Encoding
+- Default:     Slash,Question,Hash,Percent,BackSlash,Del,Ctl,InvalidUtf8,Dot
+
+#### --smugmug-description
+
+Description of the remote.
+
+Properties:
+
+- Config:      description
+- Env Var:     RCLONE_SMUGMUG_DESCRIPTION
+- Type:        string
+- Required:    false
+
+### Metadata
+
+SmugMug image metadata is mapped to SmugMug image fields. Unsupported metadata keys are ignored when writing.
+
+Here are the possible system metadata items for the smugmug backend.
+
+| Name | Help | Type | Example | Read Only |
+|------|------|------|---------|-----------|
+| altitude | Image altitude in meters | float | 12.5 | N |
+| caption | SmugMug image caption | string | Taken from the trail | N |
+| format | SmugMug image format | string | JPEG | Y |
+| hidden | Whether the image is hidden in SmugMug | bool | false | N |
+| keywords | SmugMug image keywords | string | travel,landscape | N |
+| latitude | Image latitude in decimal degrees | float | 35.681236 | N |
+| longitude | Image longitude in decimal degrees | float | 139.767125 | N |
+| title | SmugMug image title | string | Trip cover | N |
+
+See the [metadata](/docs/#metadata) docs for more info.
+
+## Backend commands
+
+Here are the commands specific to the smugmug backend.
+
+Run them with:
+
+```console
+rclone backend COMMAND remote:
+```
+
+The help below will explain what arguments each command takes.
+
+See the [backend](/commands/rclone_backend/) command for more
+info on how to pass options and arguments.
+
+These can be run on a running backend using the rc command
+[backend/command](/rc/#backend-command).
+
+### root
+
+Show the authenticated SmugMug user and root node.
+
+```console
+rclone backend root remote: [options] [<arguments>+]
+```
+
+This command shows the authenticated SmugMug account and the root node
+URI used for library mode.
+
+Usage examples:
+
+```console
+rclone backend root smug:
+```
+
+### list
+
+List SmugMug folders and albums under a node or path.
+
+```console
+rclone backend list remote: [options] [<arguments>+]
+```
+
+This command lists SmugMug folder and album nodes.
+
+By default it lists the configured root_node, or the authenticated user's root
+node if root_node is not configured. Use -o node=/api/v2/node/abc123 to list a
+specific node, or pass a path relative to the root node.
+
+Usage examples:
+
+```console
+rclone backend list smug:
+rclone backend list smug: Projects -o recursive=true
+rclone backend list smug: -o node=/api/v2/node/abc123
+```
+
+Options:
+
+- "node": Node URI or node ID to list.
+- "path": Path relative to the root node to list.
+- "recursive": Recursively list folders.
+
+### list-folders
+
+List SmugMug folders under a node or path.
+
+```console
+rclone backend list-folders remote: [options] [<arguments>+]
+```
+
+This is like the list command, but only returns folder nodes.
+
+Usage example:
+
+```console
+rclone backend list-folders smug: Projects -o recursive=true
+```
+
+Options:
+
+- "node": Node URI or node ID to list.
+- "path": Path relative to the root node to list.
+- "recursive": Recursively list folders.
+
+### list-albums
+
+List SmugMug albums under a node or path.
+
+```console
+rclone backend list-albums remote: [options] [<arguments>+]
+```
+
+This is like the list command, but only returns album nodes.
+
+Usage example:
+
+```console
+rclone backend list-albums smug: Projects -o recursive=true
+```
+
+Options:
+
+- "node": Node URI or node ID to list.
+- "path": Path relative to the root node to list.
+- "recursive": Recursively list folders.
+
+### create-album
+
+Create a SmugMug album under a folder node.
+
+```console
+rclone backend create-album remote: [options] [<arguments>+]
+```
+
+This command creates an album below a SmugMug folder node and returns the
+new node URI, album URI, and web URL.
+
+Pass the album name as the first argument or with -o name=. Pass the parent
+folder with -o parent=/api/v2/node/abc123 or -o path=Projects. Privacy defaults to
+Private if not supplied.
+
+Usage examples:
+
+```console
+rclone backend create-album smug: "BlueMesa" -o path=Projects
+rclone backend create-album smug: -o parent=/api/v2/node/abc123 -o name="New Album" -o privacy=Unlisted
+```
+
+Options:
+
+- "name": Album display name.
+- "parent": Parent folder node URI or node ID.
+- "path": Parent folder path relative to the root node.
+- "privacy": Album privacy: Private, Unlisted, or Public. Defaults to Private.
+- "url_name": Album URL name.
+
+### create-folder
+
+Create a SmugMug folder under a folder node.
+
+```console
+rclone backend create-folder remote: [options] [<arguments>+]
+```
+
+This command creates a folder below a SmugMug folder node and returns the
+new node URI and web URL.
+
+Pass the folder name as the first argument or with -o name=. Pass the parent
+folder with -o parent=/api/v2/node/abc123 or -o path=Projects. Privacy defaults to
+Private if not supplied.
+
+Usage examples:
+
+```console
+rclone backend create-folder smug: "BlueMesa" -o path=Projects
+rclone backend create-folder smug: -o parent=/api/v2/node/abc123 -o name="BlueMesa"
+```
+
+Options:
+
+- "name": Folder display name.
+- "parent": Parent folder node URI or node ID.
+- "path": Parent folder path relative to the root node.
+- "privacy": Folder privacy: Private, Unlisted, or Public. Defaults to Private.
+- "url_name": Folder URL name.
+
+<!-- autogenerated options stop -->
