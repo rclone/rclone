@@ -1,0 +1,13 @@
+name: AbrhaStorage
+description: Abrha Storage (ParsPack)
+region: {}
+endpoint: {}
+quirks:
+  list_version: 1
+  force_path_style: true # per-bucket hosts, e.g. https://c123456.parspack.net
+  list_url_encode: false
+  use_multipart_etag: false
+  use_already_exists: false
+  # ParsPack documents --s3-no-check-bucket for bucket check access errors.
+  # https://parspack.com/blog/hosting/connecting-to-s3-bucket-with-cloud-storage
+  no_check_bucket: true
