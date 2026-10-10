@@ -36,6 +36,28 @@ func TestCountSuffixString(t *testing.T) {
 	}
 }
 
+func TestCountSuffixStringRoundTrip(t *testing.T) {
+	for _, test := range []struct {
+		in   CountSuffix
+		want string
+	}{
+		{0, "0"},
+		{1, "1B"},
+		{102, "102B"},
+		{999, "999B"},
+		{1000, "1k"},
+		{1000 * 1000, "1M"},
+		{-1, "off"},
+	} {
+		got := test.in.stringRoundTrip()
+		assert.Equal(t, test.want, got)
+
+		var back CountSuffix
+		require.NoError(t, back.Set(got), got)
+		assert.Equal(t, test.in, back, "%v printed as %q", int64(test.in), got)
+	}
+}
+
 func TestCountSuffixUnit(t *testing.T) {
 	for _, test := range []struct {
 		in   float64
