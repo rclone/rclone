@@ -89,6 +89,7 @@ func RunTests(t *testing.T, useVFS bool, minimumRequiredCacheMode vfscommon.Cach
 			t.Run("TestDirRewind", TestDirRewind)
 			if enableCacheTests {
 				t.Run("TestDirCacheFlush", TestDirCacheFlush)
+				t.Run("TestDirCacheFlushCreatedFile", TestDirCacheFlushCreatedFile)
 			}
 			t.Run("TestDirCacheFlushOnDirRename", TestDirCacheFlushOnDirRename)
 			t.Run("TestFileModTime", TestFileModTime)
