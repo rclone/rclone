@@ -265,6 +265,9 @@ browser.`,
 			}, {
 				Value: "com.au",
 				Help:  "Australia",
+			}, {
+				Value: "ca",
+				Help:  "Canada",
 			}},
 		}, {
 			Name:      "root_folder_id",
@@ -552,17 +555,27 @@ type Object struct {
 
 // ------------------------------------------------------------
 
+// regionDomain returns the base domain for the given region. Canada uses
+// the zohocloud.ca domain family rather than zoho.<region>.
+func regionDomain(region string) string {
+	if region == "ca" {
+		return "zohocloud.ca"
+	}
+	return "zoho." + region
+}
+
 func setupRegion(m configmap.Mapper) error {
 	region, ok := m.Get("region")
 	if !ok || region == "" {
 		return errors.New("no region set")
 	}
-	rootURL = fmt.Sprintf("https://workdrive.zoho.%s/api/v1", region)
-	downloadURL = fmt.Sprintf("https://download.zoho.%s/v1/workdrive", region)
-	uploadURL = fmt.Sprintf("https://upload.zoho.%s/workdrive-api/v1", region)
-	accountsURL = fmt.Sprintf("https://accounts.zoho.%s", region)
-	oauthConfig.AuthURL = fmt.Sprintf("https://accounts.zoho.%s/oauth/v2/auth", region)
-	oauthConfig.TokenURL = fmt.Sprintf("https://accounts.zoho.%s/oauth/v2/token", region)
+	domain := regionDomain(region)
+	rootURL = fmt.Sprintf("https://workdrive.%s/api/v1", domain)
+	downloadURL = fmt.Sprintf("https://download.%s/v1/workdrive", domain)
+	uploadURL = fmt.Sprintf("https://upload.%s/workdrive-api/v1", domain)
+	accountsURL = fmt.Sprintf("https://accounts.%s", domain)
+	oauthConfig.AuthURL = fmt.Sprintf("https://accounts.%s/oauth/v2/auth", domain)
+	oauthConfig.TokenURL = fmt.Sprintf("https://accounts.%s/oauth/v2/token", domain)
 	return nil
 }
 
