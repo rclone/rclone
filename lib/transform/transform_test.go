@@ -149,3 +149,43 @@ func TestVarious(t *testing.T) {
 		assert.Equal(t, test.want, got)
 	}
 }
+
+// an invalid value must be rejected when the flag is parsed, so that the
+// command fails before transferring anything instead of failing per file
+func TestInvalidValueRejectedWhenParsed(t *testing.T) {
+	for _, test := range []struct {
+		flag string
+		want string
+	}{
+		{"all,replace=10:30:10-30", "wrong number of values: 10:30:10-30"},
+		{"all,replace=onlyone", "wrong number of values: onlyone"},
+		{"all,regex=a/b/c", "regex syntax error: a/b/c"},
+		{"all,regex=[/x", "regex syntax error: [/x: error parsing regexp: missing closing ]: `[`"},
+	} {
+		_, err := newOptions(test.flag)
+		require.Error(t, err, test.flag)
+		assert.Equal(t, test.want, err.Error())
+	}
+}
+
+// a valid regex is compiled once when parsed, not once per path segment
+func TestRegexCompiledOnce(t *testing.T) {
+	tr, err := parse("all,regex=[0-9]/#")
+	require.NoError(t, err)
+	require.NotNil(t, tr.re)
+	assert.Equal(t, "[0-9]", tr.re.String())
+}
+
+// a failing transform must leave the name alone rather than return an empty
+// one, which would then be used as the destination name
+//
+// The existing "number of path segments must match" check only catches this
+// for a path containing a separator: a bare file name has as many segments as
+// the empty string, so it used to pass straight through.
+func TestFailedTransformKeepsOriginalName(t *testing.T) {
+	for _, path := range []string{"file.txt", "dir/file.txt"} {
+		ctx, err := newOptions("all,truncate=notanumber")
+		require.NoError(t, err) // truncate takes any value at parse time
+		assert.Equal(t, path, Path(ctx, path, false))
+	}
+}
