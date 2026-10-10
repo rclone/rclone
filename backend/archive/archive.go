@@ -194,8 +194,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 		}
 		// Path to the archive
 		archiveRemote := remote[:len(foundArchive.remote)]
-		// Remote is archive leaf name
-		foundArchive.remote = path.Base(archiveRemote)
+		// Remote is archive leaf name. This must understand remote
+		// names as the archive may be in the root, e.g. "remote:file.zip"
+		_, foundArchive.remote, err = fspath.Split(archiveRemote)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse archive path %q: %w", archiveRemote, err)
+		}
 		foundArchive.prefix = ""
 		// Point remote to archive file
 		remote = archiveRemote

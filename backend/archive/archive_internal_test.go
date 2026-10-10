@@ -17,6 +17,7 @@ import (
 	"strings"
 	"testing"
 
+	_ "github.com/rclone/rclone/backend/alias"
 	"github.com/rclone/rclone/backend/archive/archiver"
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs"
@@ -320,6 +321,50 @@ func TestArchiveUncleanRoot(t *testing.T) {
 			require.Len(t, entries, 1)
 			assert.Equal(t, "a.txt", entries[0].Remote())
 		})
+	}
+}
+
+// TestArchiveInRemoteRoot checks that an archive in the root of a
+// remote, with no "/" between the remote name and the archive name, can
+// be read, as can a path within it.
+func TestArchiveInRemoteRoot(t *testing.T) {
+	fstest.Initialise()
+	ctx := context.Background()
+
+	var buf bytes.Buffer
+	zw := zip.NewWriter(&buf)
+	w, err := zw.Create("sub/a.txt")
+	require.NoError(t, err)
+	_, err = w.Write([]byte("data"))
+	require.NoError(t, err)
+	require.NoError(t, zw.Close())
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "test.zip"), buf.Bytes(), 0600))
+	t.Chdir(dir)
+
+	for _, test := range []struct {
+		name   string
+		remote string
+	}{
+		{name: "plain", remote: ":local:test.zip"},
+		{name: "slash in remote name", remote: ":alias,remote='" + dir + "':test.zip"},
+	} {
+		for _, sub := range []struct {
+			path string
+			want string
+		}{
+			{path: "", want: "sub"},
+			{path: "/sub", want: "a.txt"},
+		} {
+			t.Run(test.name+sub.path, func(t *testing.T) {
+				f, err := cache.Get(ctx, ":archive:"+test.remote+sub.path)
+				require.NoError(t, err)
+				entries, err := f.List(ctx, "")
+				require.NoError(t, err)
+				require.Len(t, entries, 1)
+				assert.Equal(t, sub.want, entries[0].Remote())
+			})
+		}
 	}
 }
 
