@@ -1473,6 +1473,17 @@ func (item *Item) WriteAt(b []byte, off int64) (n int, err error) {
 func (item *Item) WriteAtNoOverwrite(b []byte, off int64) (n int, skipped int, err error) {
 	item.mu.Lock()
 
+	// Don't write past the end of the item. If the file was shrunk
+	// with Truncate while the remote object is still longer, the
+	// downloader would otherwise grow the cache file back to the
+	// size of the remote object.
+	beyond := 0
+	if end := off + int64(len(b)); end > item.info.Size {
+		keep := max(item.info.Size-off, 0)
+		beyond = len(b) - int(keep)
+		b = b[:keep]
+	}
+
 	var (
 		// Range we wish to write
 		r = ranges.Range{Pos: off, Size: int64(len(b))}
@@ -1514,6 +1525,10 @@ func (item *Item) WriteAtNoOverwrite(b []byte, off int64) (n int, skipped int, e
 		}
 	}
 	item.mu.Unlock()
+	if err == nil {
+		n += beyond
+		skipped += beyond
+	}
 	return n, skipped, err
 }
 
