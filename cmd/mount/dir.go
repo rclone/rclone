@@ -157,6 +157,7 @@ func (d *Dir) Create(ctx context.Context, req *fuse.CreateRequest, resp *fuse.Cr
 	if err != nil {
 		return nil, nil, translateError(err)
 	}
+	resp.EntryValid = time.Duration(d.fsys.opt.AttrTimeout)
 	node = &File{file, d.fsys}
 	file.SetAux(d.fsys, node) // cache the FUSE node for later
 	return node, &FileHandle{fh}, err
