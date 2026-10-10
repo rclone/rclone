@@ -94,6 +94,7 @@ See the following for detailed instructions for
 - [SugarSync](/sugarsync/)
 - [Union](/union/)
 - [Uloz.to](/ulozto/)
+- [Voltn](/voltn/)
 - [WebDAV](/webdav/)
 - [Yandex Disk](/yandex/)
 - [Zoho WorkDrive](/zoho/)
