@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/lib/terminal"
@@ -59,7 +60,7 @@ func startProgress() func() {
 					log.Handler.ResetOutput()
 				}
 				operations.SyncPrintf = oldSyncPrint
-				fmt.Println("")
+				_, _ = fmt.Fprintln(config.PasswordPromptOutput, "")
 				return
 			}
 		}
@@ -115,5 +116,5 @@ func printProgress(logMessage string) {
 			out("\n")
 		}
 	}
-	terminal.Write(buf.Bytes())
+	_, _ = config.PasswordPromptOutput.Write(buf.Bytes())
 }
