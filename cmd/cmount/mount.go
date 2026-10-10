@@ -92,9 +92,8 @@ func mountOptions(VFS *vfs.VFS, device string, mountpoint string, opt *mountlib.
 			if opt.NoAppleDouble {
 				options = append(options, "-o", "noappledouble")
 			}
-			if opt.NoAppleXattr {
-				options = append(options, "-o", "noapplexattr")
-			}
+			// Apple attributes are ignored by FS rather than macFUSE, whose
+			// noapplexattr option can reject Finder copies with EPERM.
 		}
 	}
 	for _, option := range opt.ExtraOptions {

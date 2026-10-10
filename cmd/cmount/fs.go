@@ -539,25 +539,42 @@ func (fsys *FS) Fsyncdir(path string, datasync bool, fh uint64) (errc int) {
 // Setxattr sets extended attributes.
 func (fsys *FS) Setxattr(path string, name string, value []byte, flags int) (errc int) {
 	defer log.Trace(path, "name=%q, value=%q, flags=%d", name, value, flags)("errc=%d", &errc)
+	if fsys.ignoreAppleXattr(name) {
+		return 0
+	}
 	return -fuse.ENOSYS
 }
 
 // Getxattr gets extended attributes.
 func (fsys *FS) Getxattr(path string, name string) (errc int, value []byte) {
 	defer log.Trace(path, "name=%q", name)("errc=%d, value=%q", &errc, &value)
+	if fsys.ignoreAppleXattr(name) {
+		return -fuse.ENOATTR, nil
+	}
 	return -fuse.ENOSYS, nil
 }
 
 // Removexattr removes extended attributes.
 func (fsys *FS) Removexattr(path string, name string) (errc int) {
 	defer log.Trace(path, "name=%q", name)("errc=%d", &errc)
+	if fsys.ignoreAppleXattr(name) {
+		return 0
+	}
 	return -fuse.ENOSYS
 }
 
 // Listxattr lists extended attributes.
 func (fsys *FS) Listxattr(path string, fill func(name string) bool) (errc int) {
 	defer log.Trace(path, "fill=%p", fill)("errc=%d", &errc)
+	if runtime.GOOS == "darwin" && fsys.opt.NoAppleXattr {
+		return 0
+	}
 	return -fuse.ENOSYS
+}
+
+// ignoreAppleXattr discards Mac metadata without triggering AppleDouble fallback.
+func (fsys *FS) ignoreAppleXattr(name string) bool {
+	return runtime.GOOS == "darwin" && fsys.opt.NoAppleXattr && strings.HasPrefix(name, "com.apple.")
 }
 
 // Getpath allows a case-insensitive file system to report the correct case of
