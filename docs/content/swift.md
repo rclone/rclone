@@ -248,6 +248,27 @@ amongst others) for storing the modification time for an object.
 
 The MD5 hash algorithm is supported.
 
+### Metadata support
+
+Rclone reads and writes Swift object metadata when `--metadata` is
+enabled.
+
+- User metadata: all other keys are stored as `X-Object-Meta-*` headers.
+- System metadata: the keys `cache-control`, `content-disposition`,
+  `content-language`, `content-type` and `mtime` are mapped to the
+  corresponding Swift object headers. `content-encoding` is read only,
+  as rclone can't read gzip encoded objects back.
+
+For example, to sync a local directory to a container preserving the
+metadata:
+
+```console
+rclone sync --metadata /home/local/directory remote:container
+```
+
+Note that Swift metadata keys are case insensitive and are always
+returned in lower case.
+
 ### Restricted filename characters
 
 | Character | Value | Replacement |
