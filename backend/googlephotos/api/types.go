@@ -184,6 +184,12 @@ type BatchCreateResponse struct {
 	} `json:"newMediaItemResults"`
 }
 
+// BatchAddItems adds existing media items to an album.
+type BatchAddItems struct {
+	AlbumID      string   `json:"albumId,omitempty"`
+	MediaItemIDs []string `json:"mediaItemIds"`
+}
+
 // BatchRemoveItems is for removing items from an album
 type BatchRemoveItems struct {
 	MediaItemIDs []string `json:"mediaItemIds"`
