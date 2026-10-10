@@ -57,26 +57,54 @@ func TestRc(t *testing.T, in rc.Params) {
 	initialActive := vfs.ActiveCount()
 
 	// Start the server
-	in["fs"] = dir
-	in["addr"] = addr
-	out, err := serveStart.Fn(ctx, in)
+	in1 := in.Copy()
+	in1["fs"] = dir
+	in1["addr"] = addr
+	out, err := serveStart.Fn(ctx, in1)
 	require.NoError(t, err)
 	id := out["id"].(string)
 	assert.True(t, strings.HasPrefix(id, name+"-"))
 	gotAddr := out["addr"].(string)
 	assert.Equal(t, addr, gotAddr)
+	vfsID, ok := out["vfsId"].(string)
+	assert.True(t, ok)
 
 	// Check we can make a TCP connection to the server
 	t.Logf("Checking connection on %q", addr)
 	err = checkTCP(addr)
 	assert.NoError(t, err)
 
-	// Stop the server
+	// Test starting a second server reusing the same VFS ID (if server uses VFS)
+	if vfsID != "" {
+		addr2 := GetEphemeralPort(t)
+		in2 := in.Copy()
+		in2["fs"] = dir
+		in2["addr"] = addr2
+		in2["vfsId"] = vfsID
+		out2, err := serveStart.Fn(ctx, in2)
+		require.NoError(t, err)
+		id2 := out2["id"].(string)
+		vfsID2, ok := out2["vfsId"].(string)
+		assert.True(t, ok)
+		assert.Equal(t, vfsID, vfsID2)
+		assert.Equal(t, initialActive+1, vfs.ActiveCount(), "ActiveCount should remain same when reusing VFS")
+
+		// Stop the second server
+		_, err = serveStop.Fn(ctx, rc.Params{"id": id2})
+		require.NoError(t, err)
+		assert.Equal(t, initialActive+1, vfs.ActiveCount(), "VFS should still be active for first server")
+
+		// Check we can no longer make connections to second server
+		err = checkTCP(addr2)
+		assert.Error(t, err)
+	}
+
+	// Stop the first server
 	_, err = serveStop.Fn(ctx, rc.Params{"id": id})
 	require.NoError(t, err)
 
 	// Check the VFS was properly released
-	assert.Equal(t, initialActive, vfs.ActiveCount(), "VFS should have been shut down after server stop")
+	assert.Equal(t, initialActive, vfs.ActiveCount(), "VFS should have been shut down after all servers stop")
 
 	// Check we can no longer make connections to the server
 	err = checkTCP(addr)
