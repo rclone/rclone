@@ -16,8 +16,9 @@ import (
 )
 
 func init() {
-	mountlib.NewMountCommand("mount2", true, mount)
+	cmd := mountlib.NewMountCommand("mount2", true, mount)
 	mountlib.AddRc("mount2", mount)
+	cmd.Flags().BoolVar(&mountlib.Opt.DirectMount, "direct-mount", false, "Use direct mount via syscall.Mount instead of fusermount (avoids SELinux restrictions)")
 }
 
 // mountOptions configures the options from the command line flags
@@ -34,6 +35,8 @@ func mountOptions(fsys *FS, f fs.Fs, opt *mountlib.Options) (mountOpts *fuse.Mou
 		MaxWrite:           1024 * 1024, // Linux v4.20+ caps requests at 1 MiB
 		DisableReadDirPlus: true,
 		IDMappedMount:      opt.AllowIDMap,
+		DirectMount:        opt.DirectMount,
+		DirectMountStrict:  opt.DirectMount,
 
 		// RememberInodes: true,
 		// SingleThreaded: true,

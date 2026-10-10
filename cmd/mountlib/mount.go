@@ -178,6 +178,7 @@ type Options struct {
 	AllowRoot          bool          `config:"allow_root"`
 	AllowOther         bool          `config:"allow_other"`
 	AllowIDMap         bool          `config:"allow_idmap"`
+	DirectMount        bool          `config:"direct_mount"`
 	DefaultPermissions bool          `config:"default_permissions"`
 	WritebackCache     bool          `config:"write_back_cache"`
 	Daemon             bool          `config:"daemon"`
