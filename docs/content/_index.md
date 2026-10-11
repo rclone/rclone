@@ -121,7 +121,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Box" home="https://www.box.com/" config="/box/" >}}
 {{< provider name="Ceph" home="http://ceph.com/" config="/s3/#ceph" >}}
 {{< provider name="China Mobile Ecloud Elastic Object Storage (EOS)" home="https://ecloud.10086.cn/home/product-introduction/eos/" config="/s3/#china-mobile-ecloud-eos" >}}
-{{< provider name="Arvan Cloud Object Storage (AOS)" home="https://www.arvancloud.ir/en/products/cloud-storage" config="/s3/#arvan-cloud-object-storage-aos" >}}
+{{< provider name="Arvan Cloud Object Storage (AOS)" home="https://www.arvancloud.ir/en/products/cloud-storage" config="/s3/#arvan-cloud" >}}
 {{< provider name="Citrix ShareFile" home="http://sharefile.com/" config="/sharefile/" >}}
 {{< provider name="Cloudflare R2" home="https://blog.cloudflare.com/r2-open-beta/" config="/s3/#cloudflare-r2" >}}
 {{< provider name="Cloudinary" home="https://cloudinary.com/" config="/cloudinary/" >}}
@@ -166,7 +166,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="IONOS Cloud" home="https://cloud.ionos.com/storage/object-storage" config="/s3/#ionos" >}}
 {{< provider name="Koofr" home="https://koofr.eu/" config="/koofr/" >}}
 {{< provider name="Leviia Object Storage" home="https://www.leviia.com/object-storage" config="/s3/#leviia" >}}
-{{< provider name="Liara Object Storage" home="https://liara.ir/landing/object-storage" config="/s3/#liara-object-storage" >}}
+{{< provider name="Liara Object Storage" home="https://liara.ir/landing/object-storage" config="/s3/#liara-cloud" >}}
 {{< provider name="Linkbox" home="https://linkbox.to/" config="/linkbox/" >}}
 {{< provider name="Linode Object Storage" home="https://www.linode.com/products/object-storage/" config="/s3/#linode" >}}
 {{< provider name="Magalu" home="https://magalu.cloud/object-storage/" config="/s3/#magalu" >}}
