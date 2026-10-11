@@ -916,3 +916,61 @@ func (f *Fs) InternalTest(t *testing.T) {
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)
+
+func TestRefillListRInputStopsWhenInputClosed(t *testing.T) {
+	mu := stdsync.Mutex{}
+	wg := stdsync.WaitGroup{}
+	in := make(chan listREntry, listRInputBuffer)
+	overflow := []listREntry{{id: "folder", path: "folder"}}
+
+	mu.Lock()
+	close(in)
+	in = nil
+	mu.Unlock()
+
+	done := make(chan bool, 1)
+	go func() {
+		done <- refillListRInput(&mu, &in, &overflow, &wg)
+	}()
+	select {
+	case ok := <-done:
+		if ok {
+			t.Fatal("refill continued after the input channel was closed")
+		}
+	case <-time.After(time.Second):
+		t.Fatal("refill blocked after the input channel was closed")
+	}
+	if len(overflow) != 1 {
+		t.Fatalf("overflow = %d entries, want 1", len(overflow))
+	}
+
+	finished := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(finished)
+	}()
+	select {
+	case <-finished:
+	case <-time.After(time.Second):
+		t.Fatal("refill incremented the wait group after the input channel was closed")
+	}
+}
+
+func TestRefillListRInputSendsQueuedDirectory(t *testing.T) {
+	mu := stdsync.Mutex{}
+	wg := stdsync.WaitGroup{}
+	in := make(chan listREntry, listRInputBuffer)
+	overflow := []listREntry{{id: "folder", path: "folder"}}
+
+	if !refillListRInput(&mu, &in, &overflow, &wg) {
+		t.Fatal("refill stopped while the input channel was open")
+	}
+	if len(overflow) != 0 {
+		t.Fatalf("overflow = %d entries, want 0", len(overflow))
+	}
+	got := <-in
+	if got.id != "folder" || got.path != "folder" {
+		t.Fatalf("sent %+v", got)
+	}
+	wg.Done()
+}
