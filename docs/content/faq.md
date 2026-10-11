@@ -156,7 +156,7 @@ file.
 The FTP and SFTP backends have their own `http_proxy` settings to
 support an HTTP CONNECT proxy (
 [--ftp-http-proxy](https://rclone.org/ftp/#ftp-http-proxy) and
-[--sftp-http-proxy](https://rclone.org/ftp/#sftp-http-proxy) )
+[--sftp-http-proxy](https://rclone.org/sftp/#sftp-http-proxy) )
 
 ### Rclone gives x509 SSL root certificates error
 
