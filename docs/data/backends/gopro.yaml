@@ -4,7 +4,7 @@ tier: Tier 4
 maintainers: J0s3f
 features_score: 2
 integration_tests: Not yet run in CI
-data_integrity: Modtime
+data_integrity: Other
 performance: Anecdotal
 adoption: New
 docs: Full
