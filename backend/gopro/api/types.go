@@ -196,7 +196,6 @@ type DeleteResponse struct {
 type UploadAuthorization struct {
 	URL           string `json:"url"`
 	Part          int    `json:"part"`
-	ContentLength string `json:"Content-Length"`
 }
 
 // UserUploadsResponse is returned from GET /user-uploads/{derivativeID}

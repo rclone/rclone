@@ -2405,6 +2405,8 @@ func TestSameObjectComparesIDs(t *testing.T) {
 		{"another path with the same ID", idObject{"a", all, "1"}, idObject{"a", byYear, "1"}, true},
 		{"another path with another ID", idObject{"a", all, "1"}, idObject{"a", byYear, "2"}, false},
 		{"another path without IDs", idObject{"a", all, ""}, idObject{"a", byYear, ""}, false},
+		{"another path with ID only on src", idObject{"a", all, "1"}, idObject{"a", byYear, ""}, false},
+		{"another path with ID only on dst", idObject{"a", all, ""}, idObject{"a", byYear, "1"}, false},
 		{"another remote with the same ID", idObject{"a", all, "1"}, idObject{"a", other, "1"}, true},
 		{"another remote with another ID", idObject{"a", all, "1"}, idObject{"a", other, "2"}, false},
 	} {
