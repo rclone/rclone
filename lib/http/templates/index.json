@@ -1,0 +1,5 @@
+[
+{{- range $i, $e := .Entries}}{{if $i}},{{end}}
+{"Path":{{json (trimSuffix $e.Leaf "/")}},"Name":{{json (trimSuffix $e.Leaf "/")}},"Size":{{if $e.IsDir}}-1{{else}}{{$e.Size}}{{end}},"MimeType":{{json $e.MimeType}},"ModTime":{{if $e.ModTime | afterEpoch}}{{json $e.ModTime}}{{else}}""{{end}},"IsDir":{{$e.IsDir}}}
+{{- end}}
+]

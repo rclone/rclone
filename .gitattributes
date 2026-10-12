@@ -2,6 +2,9 @@
 go.mod text eol=lf
 go.sum text eol=lf
 
+# Embedded templates must render the same on every OS
+lib/http/templates/** text eol=lf
+
 # Ignore generated files in GitHub language statistics and diffs
 /MANUAL.* linguist-generated=true
 /rclone.1 linguist-generated=true

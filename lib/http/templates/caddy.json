@@ -1,0 +1,1 @@
+[{{range $i, $e := .Entries}}{{if $i}},{{end}}{"name":{{json $e.Leaf}},"size":{{if $e.IsDir}}4096{{else}}{{$e.Size}}{{end}},"url":{{if hasPrefix $e.URL "./"}}{{json $e.URL}}{{else}}{{json (print "./" $e.URL)}}{{end}},"mod_time":{{json $e.ModTime}},"mode":{{if $e.IsDir}}2147484141{{else}}420{{end}},"is_dir":{{$e.IsDir}},"is_symlink":false}{{end}}]
