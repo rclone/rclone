@@ -16,13 +16,16 @@ import (
 
 // multipartInit starts a new multipart upload and returns server details.
 func (f *Fs) multipartInit(ctx context.Context, folderPath, filename string) (*api.MultipartInitResponse, error) {
+	encodedFolderPath := f.fromStandardPath(folderPath)
+	encodedFilename := f.fromStandardPath(filename)
+
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   "/multipart/init",
 		Parameters: url.Values{
 			"key":         {f.opt.Key},
-			"filename":    {filename},
-			"folder_path": {folderPath},
+			"filename":    {encodedFilename},
+			"folder_path": {encodedFolderPath},
 		},
 	}
 
