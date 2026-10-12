@@ -725,53 +725,69 @@ func (f *Fs) listM1(ctx context.Context, dirPath string, offset int, limit int) 
 		return nil, err
 	}
 
-	params := url.Values{}
-	params.Set("access_token", token)
-	params.Set("offset", strconv.Itoa(offset))
-	params.Set("limit", strconv.Itoa(limit))
+	listed := 0
+	currentOffset := offset
+	for listed < limit {
+		params := url.Values{}
+		params.Set("access_token", token)
+		params.Set("offset", strconv.Itoa(currentOffset))
+		params.Set("limit", strconv.Itoa(limit-listed))
 
-	data := url.Values{}
-	data.Set("home", f.opt.Enc.FromStandardPath(dirPath))
+		data := url.Values{}
+		data.Set("home", f.opt.Enc.FromStandardPath(dirPath))
 
-	opts := rest.Opts{
-		Method:      "POST",
-		Path:        "/api/m1/folder",
-		Parameters:  params,
-		Body:        strings.NewReader(data.Encode()),
-		ContentType: api.BinContentType,
-	}
-
-	var (
-		info api.FolderInfoResponse
-		res  *http.Response
-	)
-	err = f.pacer.Call(func() (bool, error) {
-		res, err = f.srv.CallJSON(ctx, &opts, nil, &info)
-		return shouldRetry(ctx, res, err, f, &opts)
-	})
-
-	if err != nil {
-		apiErr, ok := err.(*api.FileErrorResponse)
-		if ok && apiErr.Status == 404 {
-			return nil, fs.ErrorDirNotFound
+		opts := rest.Opts{
+			Method:      "POST",
+			Path:        "/api/m1/folder",
+			Parameters:  params,
+			Body:        strings.NewReader(data.Encode()),
+			ContentType: api.BinContentType,
 		}
-		return nil, err
-	}
 
-	isDir, err := f.isDir(info.Body.Kind, dirPath)
-	if err != nil {
-		return nil, err
-	}
-	if !isDir {
-		return nil, fs.ErrorIsFile
-	}
+		var (
+			info api.FolderInfoResponse
+			res  *http.Response
+		)
+		err = f.pacer.Call(func() (bool, error) {
+			res, err = f.srv.CallJSON(ctx, &opts, nil, &info)
+			return shouldRetry(ctx, res, err, f, &opts)
+		})
 
-	for _, item := range info.Body.List {
-		entry, _, err := f.itemToDirEntry(ctx, &item)
-		if err == nil {
-			entries = append(entries, entry)
-		} else {
-			fs.Debugf(f, "Excluding path %q from list: %v", item.Home, err)
+		if err != nil {
+			apiErr, ok := err.(*api.FileErrorResponse)
+			if ok && apiErr.Status == 404 {
+				return nil, fs.ErrorDirNotFound
+			}
+			return nil, err
+		}
+
+		isDir, err := f.isDir(info.Body.Kind, dirPath)
+		if err != nil {
+			return nil, err
+		}
+		if !isDir {
+			return nil, fs.ErrorIsFile
+		}
+
+		for _, item := range info.Body.List {
+			entry, _, err := f.itemToDirEntry(ctx, &item)
+			if err == nil {
+				entries = append(entries, entry)
+			} else {
+				fs.Debugf(f, "Excluding path %q from list: %v", item.Home, err)
+			}
+		}
+
+		pageSize := len(info.Body.List)
+		if pageSize == 0 {
+			break
+		}
+
+		listed += pageSize
+		currentOffset += pageSize
+		total := info.Body.Count.Files + info.Body.Count.Folders
+		if currentOffset >= total {
+			break
 		}
 	}
 	return entries, nil
