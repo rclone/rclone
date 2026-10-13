@@ -63,9 +63,9 @@ type bisyncRun struct {
 type queues struct {
 	copy1to2      bilib.Names
 	copy2to1      bilib.Names
-	renameSkipped bilib.Names // not renamed because it was equal
-	skippedDirs1  *fileList
-	skippedDirs2  *fileList
+	renameSkipped bilib.Names // not renamed due to --dry-run
+	skipped1      *fileList   // dirs and equal files not renamed, from the Path1 snapshot
+	skipped2      *fileList   // dirs and equal files not renamed, from the Path2 snapshot
 	deletedonboth bilib.Names
 }
 

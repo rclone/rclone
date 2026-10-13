@@ -1,0 +1,43 @@
+test conflict window
+# Check identical files when the paths change between the listing snapshot and the check for identical files
+# - Path2 becomes identical to Path1 before the check, with a newer modtime            file1 (file1A, file1B)
+# - Both paths change identically before the check on two runs in a row, then stop     file2 (file2A, file2B, file2C)
+
+test initial bisync
+bisync resync
+
+test new on both paths, same size and modtime, different content - file1 (file1A, file1B)
+touch-glob 2001-01-02 {datadir/} file1*.txt
+copy-as {datadir/}file1A.txt {path1/} file1.txt
+copy-as {datadir/}file1B.txt {path2/} file1.txt
+
+test bisync with Path2 becoming identical to Path1 before the check, with a newer modtime
+touch-glob 2001-03-04 {datadir/} file1A.txt
+hook before-check copy-as {datadir/}file1A.txt {path2/} file1.txt
+bisync
+
+test bisync after file1 changed before the check
+bisync
+
+test recover with --resync if the previous runs failed
+bisync resync
+
+test new on both paths and identical - file2 (file2A)
+touch-glob 2002-01-02 {datadir/} file2A.txt
+copy-as {datadir/}file2A.txt {path1/} file2.txt
+copy-as {datadir/}file2A.txt {path2/} file2.txt
+
+test bisync with both paths changing file2 identically before the check
+touch-glob 2002-03-04 {datadir/} file2B.txt
+hook before-check copy-as {datadir/}file2B.txt {path1/} file2.txt
+hook before-check copy-as {datadir/}file2B.txt {path2/} file2.txt
+bisync
+
+test bisync with both paths changing file2 identically before the check again
+touch-glob 2002-05-06 {datadir/} file2C.txt
+hook before-check copy-as {datadir/}file2C.txt {path1/} file2.txt
+hook before-check copy-as {datadir/}file2C.txt {path2/} file2.txt
+bisync
+
+test bisync after file2 stops changing
+bisync
