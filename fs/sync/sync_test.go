@@ -2793,7 +2793,7 @@ func TestSyncConcurrentTruncate(t *testing.T) {
 // Test that sync replaces dir modtimes in dst if they've changed
 func testSyncReplaceDirModTime(t *testing.T, copyEmptySrcDirs bool) {
 	accounting.GlobalStats().ResetCounters()
-	ctx, _ := fs.AddConfig(context.Background())
+	ctx, ci := fs.AddConfig(context.Background())
 	r := fstest.NewRun(t)
 
 	file1 := r.WriteFile("file1", "file1", t2)
@@ -2812,10 +2812,7 @@ func testSyncReplaceDirModTime(t *testing.T, copyEmptySrcDirs bool) {
 
 	// set logging
 	// (this checks log output as DirModtime operations do not yet have stats, and r.CheckDirectoryModTimes also does not tell us what actions were taken)
-	oldLogLevel := fs.GetConfig(context.Background()).LogLevel
-	defer func() { fs.GetConfig(context.Background()).LogLevel = oldLogLevel }() // reset to old val after test
-	// need to do this as fs.Infof only respects the globalConfig
-	fs.GetConfig(context.Background()).LogLevel = fs.LogLevelInfo
+	ci.LogLevel = fs.LogLevelInfo
 
 	// First run
 	accounting.GlobalStats().ResetCounters()
@@ -2902,7 +2899,7 @@ func TestSyncSetDirModTimeOnce(t *testing.T) {
 // Run the same sync twice, ensure no action is taken the second time
 func testNothingToTransfer(t *testing.T, copyEmptySrcDirs bool) {
 	accounting.GlobalStats().ResetCounters()
-	ctx, _ := fs.AddConfig(context.Background())
+	ctx, ci := fs.AddConfig(context.Background())
 	r := fstest.NewRun(t)
 	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
 	file2 := r.WriteFile("sub dir2/very/very/very/very/very/nested/subdir/hello world", "hello world", t1)
@@ -2917,10 +2914,7 @@ func testNothingToTransfer(t *testing.T, copyEmptySrcDirs bool) {
 
 	// set logging
 	// (this checks log output as DirModtime operations do not yet have stats, and r.CheckDirectoryModTimes also does not tell us what actions were taken)
-	oldLogLevel := fs.GetConfig(context.Background()).LogLevel
-	defer func() { fs.GetConfig(context.Background()).LogLevel = oldLogLevel }() // reset to old val after test
-	// need to do this as fs.Infof only respects the globalConfig
-	fs.GetConfig(context.Background()).LogLevel = fs.LogLevelInfo
+	ci.LogLevel = fs.LogLevelInfo
 
 	accounting.GlobalStats().ResetCounters()
 	ctx = predictDstFromLogger(ctx)
