@@ -1,4 +1,7 @@
 // Test Voltn filesystem interface
+
+//go:build !plan9 && !js
+
 package voltn_test
 
 import (

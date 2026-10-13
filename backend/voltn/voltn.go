@@ -1,3 +1,6 @@
+//go:build !plan9 && !js
+
+// Package voltn provides an interface to the Voltn file sharing platform.
 package voltn
 
 import (
