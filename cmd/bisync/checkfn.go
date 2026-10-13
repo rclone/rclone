@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/rclone/rclone/backend/crypt"
 	"github.com/rclone/rclone/cmd/bisync/bilib"
@@ -134,12 +135,29 @@ func DownloadCheckFn(ctx context.Context, dst, src fs.Object) (equal bool, noHas
 }
 
 // check potential conflicts (to avoid renaming if already identical)
-func (b *bisyncRun) checkconflicts(ctxCheck context.Context, filterCheck *filter.Filter, fs1, fs2 fs.Fs) (bilib.Names, error) {
-	matches := bilib.Names{}
+func (b *bisyncRun) checkconflicts(ctxCheck context.Context, filterCheck *filter.Filter, fs1, fs2 fs.Fs) (matches bilib.Names, matches1, matches2 *fileList, err error) {
+	matches = bilib.Names{}
+	matches1, matches2 = newFileList(), newFileList()
 	if filterCheck.HaveFilesFrom() {
 		fs.Debugf(nil, "There are potential conflicts to check.")
 		if b.opt.TestFnConflictCheck != nil {
 			b.opt.TestFnConflictCheck()
+		}
+
+		// the sizes already match, and they are all a check could compare here
+		ci := fs.GetConfig(ctxCheck)
+		if ci.SizeOnly || (ci.IgnoreChecksum && fs1.Hashes().Overlap(fs2.Hashes()).Count() == 0) {
+			fs.Infof(nil, "Not checking potential conflicts, as only their sizes could be compared, and those already match.")
+			for file := range filterCheck.Files() {
+				matches.Add(file)
+				if b.march.ls1.has(file) {
+					b.march.ls1.getPut(file, matches1)
+				}
+				if b.march.ls2.has(file) {
+					b.march.ls2.getPut(file, matches2)
+				}
+			}
+			return matches, matches1, matches2, nil
 		}
 
 		opt, close, checkopterr := check.GetCheckOpt(fs1, fs2)
@@ -147,13 +165,29 @@ func (b *bisyncRun) checkconflicts(ctxCheck context.Context, filterCheck *filter
 			b.critical = true
 			b.retryable = true
 			fs.Debugf(nil, "GetCheckOpt error: %v", checkopterr)
-			return matches, checkopterr
+			return matches, matches1, matches2, checkopterr
 		}
 		defer close()
 
 		opt.Match = new(bytes.Buffer)
 
 		opt = b.WhichCheck(ctxCheck, opt)
+
+		// record the objects found identical, so they can be compared with the listing snapshot
+		var mu sync.Mutex
+		checkFn := opt.Check
+		opt.Check = func(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool, err error) {
+			differ, noHash, err = checkFn(ctx, dst, src)
+			if err == nil && !differ {
+				f1 := b.comparedFields(ctx, src, b.march.ls1.hash)
+				f2 := b.comparedFields(ctx, dst, b.march.ls2.hash)
+				mu.Lock()
+				matches1.put(src.Remote(), f1.size, f1.time, f1.hash, "", "-")
+				matches2.put(dst.Remote(), f2.size, f2.time, f2.hash, "", "-")
+				mu.Unlock()
+			}
+			return differ, noHash, err
+		}
 
 		fs.Infof(nil, "Checking potential conflicts...")
 		check := operations.CheckFn(ctxCheck, opt)
@@ -171,9 +205,22 @@ func (b *bisyncRun) checkconflicts(ctxCheck context.Context, filterCheck *filter
 		} else {
 			fs.Debugf(nil, "None of the conflicts were determined to be identical.")
 		}
-
 	}
-	return matches, nil
+	return matches, matches1, matches2, nil
+}
+
+// comparedFields returns the fields of o that bisync compares, the same way
+// the listing records them.
+func (b *bisyncRun) comparedFields(ctx context.Context, o fs.Object, hashType hash.Type) (fi fileInfo) {
+	fi.size = o.Size()
+	if b.opt.Compare.Modtime {
+		fi.time = o.ModTime(ctx).In(TZ)
+	}
+	if b.opt.Compare.Checksum && hashType != hash.None {
+		fi.hash, _ = o.Hash(ctx, hashType)
+		fi.hash, _ = b.tryDownloadHash(ctx, o, fi.hash)
+	}
+	return fi
 }
 
 // WhichEqual is similar to WhichCheck, but checks a single object.
