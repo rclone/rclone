@@ -183,9 +183,7 @@ func logPrintf(ctx context.Context, level LogLevel, o any, text string, args ...
 }
 
 func logLevelPrintf(ctx context.Context, level LogLevel, o any, text string, args ...any) {
-	// This uses the global log level, not the one in ctx, as the
-	// log handler filters on the global log level.
-	if GetConfig(context.TODO()).LogLevel >= level {
+	if GetConfig(ctx).LogLevel >= level {
 		logPrintf(ctx, level, o, text, args...)
 	}
 }
