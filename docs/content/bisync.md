@@ -1940,6 +1940,7 @@ the `--max-delete` safety check when used with `--track-renames`.
 - Fixed an issue causing the conflict winner to be missing from listings when
 Path2 won.
 - Fixed an issue causing `--conflict-resolve` to compare a zero size or modtime.
+- Fixed an issue causing an endless retry loop for certain skipped files.
 
 ### `v1.74.2`
 

@@ -1,0 +1,30 @@
+test conflict window size
+# Check identical files with --size-only when both paths change between the listing snapshot and the
+# check for identical files, and then change again before the next run
+# - New on both paths (size 6, different content), both change to fileC (size 10) before the check,
+#   then Path1 changes back to size 6 and Path2 to size 7                               file1 (fileA-E)
+# - Same, then only Path2 changes back to size 6                                        file2 (fileA-D)
+
+test initial bisync
+bisync resync
+
+test new on both paths, same size, different content - file1 and file2 (fileA, fileB)
+copy-as {datadir/}fileA.txt {path1/} file1.txt
+copy-as {datadir/}fileB.txt {path2/} file1.txt
+copy-as {datadir/}fileA.txt {path1/} file2.txt
+copy-as {datadir/}fileB.txt {path2/} file2.txt
+
+test bisync with both paths changing file1 and file2 to fileC before the check
+hook before-check copy-as {datadir/}fileC.txt {path1/} file1.txt
+hook before-check copy-as {datadir/}fileC.txt {path2/} file1.txt
+hook before-check copy-as {datadir/}fileC.txt {path1/} file2.txt
+hook before-check copy-as {datadir/}fileC.txt {path2/} file2.txt
+bisync size-only
+
+test file1 changes to size 6 on Path1 and size 7 on Path2, and file2 changes to size 6 on Path2 (fileD, fileE)
+copy-as {datadir/}fileD.txt {path1/} file1.txt
+copy-as {datadir/}fileE.txt {path2/} file1.txt
+copy-as {datadir/}fileD.txt {path2/} file2.txt
+
+test bisync after the changes
+bisync size-only
