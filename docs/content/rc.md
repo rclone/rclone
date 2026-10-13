@@ -480,6 +480,16 @@ Or flat:
 If you wish to check the `_config` assignment has worked properly then
 calling `options/local` will show what the value got set to.
 
+Setting `LogLevel` sets the log level for the logs made by the rc call
+only, for example to debug a single call.
+
+```json
+"_config":{"LogLevel": "DEBUG"}
+```
+
+Note that not all of rclone's logs support this yet. In particular the
+backends log at the global log level.
+
 ### Setting filter flags with _filter
 
 If you wish to set filters for the duration of an rc call only then

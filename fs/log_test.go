@@ -196,3 +196,31 @@ func TestLogCtx(t *testing.T) {
 	InfofCtx(groupCtx, nil, "dropped")
 	assert.Equal(t, "", buf.String())
 }
+
+// The log level in the config in the context overrides the global one
+func TestLogCtxLogLevel(t *testing.T) {
+	var buf bytes.Buffer
+	oldLogger := logger
+	defer func() { logger = oldLogger }()
+	SetLogger(slog.NewJSONHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	ci := GetConfig(context.Background())
+	oldLogLevel := ci.LogLevel
+	ci.LogLevel = LogLevelNotice
+	defer func() { ci.LogLevel = oldLogLevel }()
+
+	// More verbose than the global log level
+	ctx, ctxCi := AddConfig(context.Background())
+	ctxCi.LogLevel = LogLevelDebug
+	DebugfCtx(ctx, nil, "debug")
+	assert.Contains(t, buf.String(), `"msg":"debug"`)
+	buf.Reset()
+	Debugf(nil, "dropped")
+	assert.Equal(t, "", buf.String())
+
+	// Less verbose than the global log level
+	ctxCi.LogLevel = LogLevelError
+	LogfCtx(ctx, nil, "dropped")
+	assert.Equal(t, "", buf.String())
+	ErrorfCtx(ctx, nil, "error")
+	assert.Contains(t, buf.String(), `"msg":"error"`)
+}

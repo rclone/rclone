@@ -258,10 +258,16 @@ func (h *OutputHandler) setFormatFlags(bitMask logFormat) {
 }
 
 // Enabled returns whether this logger is enabled for this level.
-func (h *OutputHandler) Enabled(_ context.Context, level slog.Level) bool {
+//
+// A log level in the config in ctx which differs from the global one
+// overrides the level of the handler.
+func (h *OutputHandler) Enabled(ctx context.Context, level slog.Level) bool {
 	minLevel := slog.LevelInfo
 	if h.opts.Level != nil {
 		minLevel = h.opts.Level.Level()
+	}
+	if ctxLevel := fs.GetConfig(ctx).LogLevel; ctxLevel != fs.GetConfig(context.Background()).LogLevel {
+		minLevel = fs.LogLevelToSlog(ctxLevel)
 	}
 	return level >= minLevel
 }
