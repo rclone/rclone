@@ -1414,6 +1414,8 @@ func (f *Fs) itemToDirEntry(ctx context.Context, dir string, info *api.Item) (en
 		id := info.GetID()
 		f.dirCache.Put(remote, id)
 		d := f.newDir(id, remote)
+		// OneDrive reports the total size of a folder's contents
+		d.size = info.GetSize()
 		d.items = folder.ChildCount
 		f.setSystemMetadata(info, d.meta, remote, dirMimeType)
 		entry = d
