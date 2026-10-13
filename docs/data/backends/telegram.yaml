@@ -1,0 +1,16 @@
+backend: telegram
+name: Telegram
+tier: Tier 5
+maintainers: PhateValleyman
+features_score: 0
+integration_tests: N/A
+data_integrity: Other
+performance: Low
+adoption: N/A
+docs: Basic
+security: Works
+virtual: false
+remote: 'TestTelegram:'
+features: []
+hashes: []
+precision: 3153600000000000000
