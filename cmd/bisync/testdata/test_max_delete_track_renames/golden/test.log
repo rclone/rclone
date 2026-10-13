@@ -3,26 +3,8 @@
 
 [36m(02)  :[0m [34mtest resync bypasses rename-aware hash preflight with ignored listing checksums[0m
 [36m(03)  :[0m [34mbisync resync track-renames max-delete-renames-aware ignore-listing-checksum[0m
-INFO  : Bisyncing with Comparison Settings:
-{
-"Modtime": true,
-"Size": true,
-"Checksum": false,
-"NoSlowHash": false,
-"SlowHashSyncOnly": false,
-"DownloadHash": false
-}
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Copying Path2 files to Path1
-INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
 ERROR : {path1String}: Ignoring --track-renames as it doesn't work with copy or move, only sync
-INFO  : There was nothing to transfer
-INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
 ERROR : {path2String}: Ignoring --track-renames as it doesn't work with copy or move, only sync
-INFO  : There was nothing to transfer
-INFO  : Resync updating listings
-INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : [32mBisync successful[0m
 
 [36m(04)  :[0m [34mtest rename-aware max-delete requires track-renames[0m
 [36m(05)  :[0m [34mbisync max-delete-renames-aware[0m
@@ -53,19 +35,6 @@ Bisync error: --max-delete-renames-aware with a hash strategy is incompatible wi
 
 [36m(24)  :[0m [34mtest track-renames alone should retain the max-delete safety abort[0m
 [36m(25)  :[0m [34mbisync track-renames[0m
-INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
-INFO  : Bisyncing with Comparison Settings:
-{
-"Modtime": true,
-"Size": true,
-"Checksum": false,
-"NoSlowHash": false,
-"SlowHashSyncOnly": false,
-"DownloadHash": false
-}
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Building Path1 and Path2 listings
-INFO  : Path1 checking for diffs
 INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mfile1.txt[0m
 INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mfile2.txt[0m
 INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mfile3.txt[0m
@@ -77,7 +46,6 @@ INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mr
 INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mrenamed-file4.txt[0m
 INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mrenamed-file5.txt[0m
 INFO  : Path1:   10 changes: [32m   5 new[0m, [33m   0 modified[0m, [31m   5 deleted[0m
-INFO  : Path2 checking for diffs
 ERROR : Safety abort: too many deletes (>50%, 5 of 9) on Path1 "{path1/}". Run with --force if desired.
 NOTICE: [31mBisync aborted. Please try again.[0m
 Bisync error: too many deletes
@@ -85,18 +53,6 @@ Bisync error: too many deletes
 
 [36m(27)  :[0m [34mtest rename-aware max-delete should permit tracked renames[0m
 [36m(28)  :[0m [34mbisync track-renames max-delete-renames-aware[0m
-INFO  : Bisyncing with Comparison Settings:
-{
-"Modtime": true,
-"Size": true,
-"Checksum": false,
-"NoSlowHash": false,
-"SlowHashSyncOnly": false,
-"DownloadHash": false
-}
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Building Path1 and Path2 listings
-INFO  : Path1 checking for diffs
 INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mfile1.txt[0m
 INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mfile2.txt[0m
 INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mfile3.txt[0m
@@ -108,9 +64,7 @@ INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mr
 INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mrenamed-file4.txt[0m
 INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mrenamed-file5.txt[0m
 INFO  : Path1:   10 changes: [32m   5 new[0m, [33m   0 modified[0m, [31m   5 deleted[0m
-INFO  : Path2 checking for diffs
 INFO  : Path1: excluding 5 tracked renames from --max-delete
-INFO  : Applying changes
 INFO  : - [34mPath2[0m    [35m[31mQueue delete[0m[0m              - [36m{path2/}file1.txt[0m
 INFO  : - [34mPath2[0m    [35m[31mQueue delete[0m[0m              - [36m{path2/}file2.txt[0m
 INFO  : - [34mPath2[0m    [35m[31mQueue delete[0m[0m              - [36m{path2/}file3.txt[0m
@@ -121,7 +75,6 @@ INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{
 INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}renamed-file3.txt[0m
 INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}renamed-file4.txt[0m
 INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}renamed-file5.txt[0m
-INFO  : - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
 INFO  : {path2String}: Making map for --track-renames
 INFO  : {path2String}: Finished making map for --track-renames
 INFO  : renamed-file1.txt: Renamed from "file1.txt"
@@ -129,10 +82,6 @@ INFO  : renamed-file2.txt: Renamed from "file2.txt"
 INFO  : renamed-file3.txt: Renamed from "file3.txt"
 INFO  : renamed-file4.txt: Renamed from "file4.txt"
 INFO  : renamed-file5.txt: Renamed from "file5.txt"
-INFO  : There was nothing to transfer
-INFO  : Updating listings
-INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : [32mBisync successful[0m
 
 [36m(29)  :[0m [34mtest rename-aware max-delete should work from Path2[0m
 [36m(30)  :[0m [34mcopy-as {path2/}renamed-file1.txt {path2/} renamed2-file1.txt[0m
@@ -146,19 +95,6 @@ INFO  : [32mBisync successful[0m
 [36m(38)  :[0m [34mcopy-as {path2/}renamed-file5.txt {path2/} renamed2-file5.txt[0m
 [36m(39)  :[0m [34mdelete-file {path2/}renamed-file5.txt[0m
 [36m(40)  :[0m [34mbisync track-renames max-delete-renames-aware[0m
-INFO  : Bisyncing with Comparison Settings:
-{
-"Modtime": true,
-"Size": true,
-"Checksum": false,
-"NoSlowHash": false,
-"SlowHashSyncOnly": false,
-"DownloadHash": false
-}
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Building Path1 and Path2 listings
-INFO  : Path1 checking for diffs
-INFO  : Path2 checking for diffs
 INFO  : - [34mPath2[0m    [35m[31mFile was deleted[0m[0m          - [36mrenamed-file1.txt[0m
 INFO  : - [34mPath2[0m    [35m[31mFile was deleted[0m[0m          - [36mrenamed-file2.txt[0m
 INFO  : - [34mPath2[0m    [35m[31mFile was deleted[0m[0m          - [36mrenamed-file3.txt[0m
@@ -171,7 +107,6 @@ INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mr
 INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mrenamed2-file5.txt[0m
 INFO  : Path2:   10 changes: [32m   5 new[0m, [33m   0 modified[0m, [31m   5 deleted[0m
 INFO  : Path2: excluding 5 tracked renames from --max-delete
-INFO  : Applying changes
 INFO  : - [36mPath1[0m    [35m[31mQueue delete[0m[0m              - [36m{path1/}renamed-file1.txt[0m
 INFO  : - [36mPath1[0m    [35m[31mQueue delete[0m[0m              - [36m{path1/}renamed-file2.txt[0m
 INFO  : - [36mPath1[0m    [35m[31mQueue delete[0m[0m              - [36m{path1/}renamed-file3.txt[0m
@@ -182,7 +117,6 @@ INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{
 INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}renamed2-file3.txt[0m
 INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}renamed2-file4.txt[0m
 INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}renamed2-file5.txt[0m
-INFO  : - [34mPath2[0m    [35mDo queued copies to[0m                - [36mPath1[0m
 INFO  : {path1String}: Making map for --track-renames
 INFO  : {path1String}: Finished making map for --track-renames
 INFO  : renamed2-file1.txt: Renamed from "renamed-file1.txt"
@@ -190,10 +124,6 @@ INFO  : renamed2-file2.txt: Renamed from "renamed-file2.txt"
 INFO  : renamed2-file3.txt: Renamed from "renamed-file3.txt"
 INFO  : renamed2-file4.txt: Renamed from "renamed-file4.txt"
 INFO  : renamed2-file5.txt: Renamed from "renamed-file5.txt"
-INFO  : There was nothing to transfer
-INFO  : Updating listings
-INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : [32mBisync successful[0m
 
 [36m(41)  :[0m [34mtest unmatched deletes should still exceed max-delete[0m
 [36m(42)  :[0m [34mcopy-as {path1/}renamed2-file1.txt {path1/} moved-file1.txt[0m
@@ -205,18 +135,6 @@ INFO  : [32mBisync successful[0m
 [36m(48)  :[0m [34mdelete-file {path1/}file6.txt[0m
 [36m(49)  :[0m [34mdelete-file {path1/}file7.txt[0m
 [36m(50)  :[0m [34mbisync track-renames max-delete-renames-aware[0m
-INFO  : Bisyncing with Comparison Settings:
-{
-"Modtime": true,
-"Size": true,
-"Checksum": false,
-"NoSlowHash": false,
-"SlowHashSyncOnly": false,
-"DownloadHash": false
-}
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Building Path1 and Path2 listings
-INFO  : Path1 checking for diffs
 INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mfile6.txt[0m
 INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mfile7.txt[0m
 INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mrenamed2-file1.txt[0m
@@ -226,7 +144,6 @@ INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mr
 INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mrenamed2-file5.txt[0m
 INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mmoved-file1.txt[0m
 INFO  : Path1:    8 changes: [32m   1 new[0m, [33m   0 modified[0m, [31m   7 deleted[0m
-INFO  : Path2 checking for diffs
 INFO  : Path1: excluding 1 tracked renames from --max-delete
 ERROR : Safety abort: too many deletes (>50%, 6 of 9 after excluding 1 tracked renames) on Path1 "{path1/}". Run with --force if desired.
 NOTICE: [31mBisync aborted. Please try again.[0m
@@ -235,18 +152,6 @@ Bisync error: too many deletes
 
 [36m(52)  :[0m [34mtest force bypasses max-delete and rename-aware hash preflight[0m
 [36m(53)  :[0m [34mbisync track-renames max-delete-renames-aware ignore-listing-checksum force[0m
-INFO  : Bisyncing with Comparison Settings:
-{
-"Modtime": true,
-"Size": true,
-"Checksum": false,
-"NoSlowHash": false,
-"SlowHashSyncOnly": false,
-"DownloadHash": false
-}
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Building Path1 and Path2 listings
-INFO  : Path1 checking for diffs
 INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mfile6.txt[0m
 INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mfile7.txt[0m
 INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mrenamed2-file1.txt[0m
@@ -256,8 +161,6 @@ INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mr
 INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mrenamed2-file5.txt[0m
 INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mmoved-file1.txt[0m
 INFO  : Path1:    8 changes: [32m   1 new[0m, [33m   0 modified[0m, [31m   7 deleted[0m
-INFO  : Path2 checking for diffs
-INFO  : Applying changes
 INFO  : - [34mPath2[0m    [35m[31mQueue delete[0m[0m              - [36m{path2/}file6.txt[0m
 INFO  : - [34mPath2[0m    [35m[31mQueue delete[0m[0m              - [36m{path2/}file7.txt[0m
 INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}moved-file1.txt[0m
@@ -266,11 +169,6 @@ INFO  : - [34mPath2[0m    [35m[31mQueue delete[0m[0m              - [36m{
 INFO  : - [34mPath2[0m    [35m[31mQueue delete[0m[0m              - [36m{path2/}renamed2-file3.txt[0m
 INFO  : - [34mPath2[0m    [35m[31mQueue delete[0m[0m              - [36m{path2/}renamed2-file4.txt[0m
 INFO  : - [34mPath2[0m    [35m[31mQueue delete[0m[0m              - [36m{path2/}renamed2-file5.txt[0m
-INFO  : - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
 INFO  : {path2String}: Making map for --track-renames
 INFO  : {path2String}: Finished making map for --track-renames
 INFO  : moved-file1.txt: Renamed from "renamed2-file1.txt"
-INFO  : There was nothing to transfer
-INFO  : Updating listings
-INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : [32mBisync successful[0m

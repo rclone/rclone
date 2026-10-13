@@ -2,25 +2,6 @@
 
 [36m(02)  :[0m [34mtest initial bisync[0m
 [36m(03)  :[0m [34mbisync resync[0m
-INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
-INFO  : Bisyncing with Comparison Settings:
-{
-"Modtime": true,
-"Size": true,
-"Checksum": false,
-"NoSlowHash": false,
-"SlowHashSyncOnly": false,
-"DownloadHash": false
-}
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Copying Path2 files to Path1
-INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
-INFO  : There was nothing to transfer
-INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
-INFO  : There was nothing to transfer
-INFO  : Resync updating listings
-INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : [32mBisync successful[0m
 
 [36m(04)  :[0m [34mtest changed on both paths - file5 (file5R, file5L)[0m
 [36m(05)  :[0m [34mtouch-glob 2001-01-02 {datadir/} file5R.txt[0m
@@ -32,42 +13,20 @@ INFO  : [32mBisync successful[0m
 [36m(10)  :[0m [34mtest bisync with 50 files created during - should ignore new files[0m
 [36m(11)  :[0m [34mtest-func[0m
 [36m(12)  :[0m [34mbisync[0m
-INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
-INFO  : Bisyncing with Comparison Settings:
-{
-"Modtime": true,
-"Size": true,
-"Checksum": false,
-"NoSlowHash": false,
-"SlowHashSyncOnly": false,
-"DownloadHash": false
-}
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Building Path1 and Path2 listings
-INFO  : Path1 checking for diffs
 INFO  : - [36mPath1[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile5.txt[0m
 INFO  : Path1:    1 changes: [32m   0 new[0m, [33m   1 modified[0m, [31m   0 deleted[0m
 INFO  : ([33mModified[0m: [36m   1 newer[0m, [34m   0 older[0m, [36m   1 larger[0m, [34m   0 smaller[0m)
-INFO  : Path2 checking for diffs
 INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile5.txt[0m
 INFO  : Path2:    1 changes: [32m   0 new[0m, [33m   1 modified[0m, [31m   0 deleted[0m
 INFO  : ([33mModified[0m: [36m   1 newer[0m, [34m   0 older[0m, [36m   1 larger[0m, [34m   0 smaller[0m)
-INFO  : Applying changes
-INFO  : Checking potential conflicts...
 ERROR : file5.txt: {hashtype} differ
 NOTICE: {path2String}: 1 differences found
 NOTICE: {path2String}: 1 errors while checking
-INFO  : Finished checking the potential conflicts. 1 differences found
 NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfile5.txt[0m
 NOTICE: - [36mPath1[0m    [35mRenaming Path1 copy[0m                - [36m{path1/}file5.txt.conflict1[0m
 NOTICE: - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file5.txt.conflict1[0m
 NOTICE: - [34mPath2[0m    [35mRenaming Path2 copy[0m                - [36m{path2/}file5.txt.conflict2[0m
 NOTICE: - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file5.txt.conflict2[0m
-INFO  : - [34mPath2[0m    [35mDo queued copies to[0m                - [36mPath1[0m
-INFO  : - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
-INFO  : Updating listings
-INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : [32mBisync successful[0m
 
 [36m(13)  :[0m [34mtest changed on both paths - file5 (file5R, file5L)[0m
 [36m(14)  :[0m [34mtouch-glob 2001-01-02 {datadir/} file5R.txt[0m
@@ -78,19 +37,6 @@ INFO  : [32mBisync successful[0m
 [36m(18)  :[0m [34mtest next bisync - should now notice new files[0m
 [36m(19)  :[0m [34mtest-func[0m
 [36m(20)  :[0m [34mbisync[0m
-INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
-INFO  : Bisyncing with Comparison Settings:
-{
-"Modtime": true,
-"Size": true,
-"Checksum": false,
-"NoSlowHash": false,
-"SlowHashSyncOnly": false,
-"DownloadHash": false
-}
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Building Path1 and Path2 listings
-INFO  : Path1 checking for diffs
 INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile100.txt[0m
 INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile5.txt[0m
 INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile51.txt[0m
@@ -143,7 +89,6 @@ INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mf
 INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile98.txt[0m
 INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile99.txt[0m
 INFO  : Path1:   51 changes: [32m  51 new[0m, [33m   0 modified[0m, [31m   0 deleted[0m
-INFO  : Path2 checking for diffs
 INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile1.txt[0m
 INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile2.txt[0m
 INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile3.txt[0m
@@ -196,12 +141,9 @@ INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mf
 INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile9.txt[0m
 INFO  : Path2:   50 changes: [32m  43 new[0m, [33m   7 modified[0m, [31m   0 deleted[0m
 INFO  : ([33mModified[0m: [36m   7 newer[0m, [34m   0 older[0m, [36m   7 larger[0m, [34m   0 smaller[0m)
-INFO  : Applying changes
-INFO  : Checking potential conflicts...
 ERROR : file5.txt: {hashtype} differ
 NOTICE: {path2String}: 1 differences found
 NOTICE: {path2String}: 1 errors while checking
-INFO  : Finished checking the potential conflicts. 1 differences found
 INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file100.txt[0m
 NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfile5.txt[0m
 NOTICE: - [36mPath1[0m    [35mRenaming Path1 copy[0m                - [36m{path1/}file5.txt.conflict3[0m
@@ -306,11 +248,6 @@ INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{
 INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file7.txt[0m
 INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file8.txt[0m
 INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file9.txt[0m
-INFO  : - [34mPath2[0m    [35mDo queued copies to[0m                - [36mPath1[0m
-INFO  : - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
-INFO  : Updating listings
-INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : [32mBisync successful[0m
 
 [36m(21)  :[0m [34mtest changed on both paths - file5 (file5R, file5L)[0m
 [36m(22)  :[0m [34mtouch-glob 2001-01-02 {datadir/} file5R.txt[0m
@@ -321,37 +258,15 @@ INFO  : [32mBisync successful[0m
 [36m(26)  :[0m [34mtest next bisync - should be no changes except dummy[0m
 [36m(27)  :[0m [34mtest-func[0m
 [36m(28)  :[0m [34mbisync[0m
-INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
-INFO  : Bisyncing with Comparison Settings:
-{
-"Modtime": true,
-"Size": true,
-"Checksum": false,
-"NoSlowHash": false,
-"SlowHashSyncOnly": false,
-"DownloadHash": false
-}
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Building Path1 and Path2 listings
-INFO  : Path1 checking for diffs
 INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile5.txt[0m
 INFO  : Path1:    1 changes: [32m   1 new[0m, [33m   0 modified[0m, [31m   0 deleted[0m
-INFO  : Path2 checking for diffs
 INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile5.txt[0m
 INFO  : Path2:    1 changes: [32m   1 new[0m, [33m   0 modified[0m, [31m   0 deleted[0m
-INFO  : Applying changes
-INFO  : Checking potential conflicts...
 ERROR : file5.txt: {hashtype} differ
 NOTICE: {path2String}: 1 differences found
 NOTICE: {path2String}: 1 errors while checking
-INFO  : Finished checking the potential conflicts. 1 differences found
 NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfile5.txt[0m
 NOTICE: - [36mPath1[0m    [35mRenaming Path1 copy[0m                - [36m{path1/}file5.txt.conflict5[0m
 NOTICE: - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file5.txt.conflict5[0m
 NOTICE: - [34mPath2[0m    [35mRenaming Path2 copy[0m                - [36m{path2/}file5.txt.conflict6[0m
 NOTICE: - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file5.txt.conflict6[0m
-INFO  : - [34mPath2[0m    [35mDo queued copies to[0m                - [36mPath1[0m
-INFO  : - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
-INFO  : Updating listings
-INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : [32mBisync successful[0m

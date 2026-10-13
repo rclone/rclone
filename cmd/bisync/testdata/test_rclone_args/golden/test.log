@@ -5,24 +5,6 @@
 
 [36m(03)  :[0m [34mtest initial bisync[0m
 [36m(04)  :[0m [34mbisync resync checksum[0m
-INFO  : Bisyncing with Comparison Settings:
-{
-"Modtime": false,
-"Size": true,
-"Checksum": true,
-"NoSlowHash": false,
-"SlowHashSyncOnly": false,
-"DownloadHash": true
-}
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Copying Path2 files to Path1
-INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
-INFO  : There was nothing to transfer
-INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
-INFO  : There was nothing to transfer
-INFO  : Resync updating listings
-INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : [32mBisync successful[0m
 
 [36m(05)  :[0m [34mtest place newer files on both paths[0m
 [36m(06)  :[0m [34mcopy-file {datadir/}file1.txt {path1/}[0m
@@ -38,33 +20,14 @@ INFO  : [32mBisync successful[0m
 
 [36m(14)  :[0m [34mtest run bisync with custom options[0m
 [36m(15)  :[0m [34mbisync checksum[0m
-INFO  : Bisyncing with Comparison Settings:
-{
-"Modtime": false,
-"Size": true,
-"Checksum": true,
-"NoSlowHash": false,
-"SlowHashSyncOnly": false,
-"DownloadHash": true
-}
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Building Path1 and Path2 listings
-INFO  : Path1 checking for diffs
 INFO  : - [36mPath1[0m    [35m[33mFile changed: [35mhash[0m[0m[0m - [36mfile1.txt[0m
 INFO  : Path1:    1 changes: [32m   0 new[0m, [33m   1 modified[0m, [31m   0 deleted[0m
 INFO  : ([33mModified[0m: [36m   1 hash differs[0m)
-INFO  : Path2 checking for diffs
 INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mhash[0m[0m[0m - [36mfile2.txt[0m
 INFO  : Path2:    1 changes: [32m   0 new[0m, [33m   1 modified[0m, [31m   0 deleted[0m
 INFO  : ([33mModified[0m: [36m   1 larger[0m, [34m   0 smaller[0m, [36m   1 hash differs[0m)
-INFO  : Applying changes
 INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.txt[0m
 INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file2.txt[0m
-INFO  : - [34mPath2[0m    [35mDo queued copies to[0m                - [36mPath1[0m
-INFO  : - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
-INFO  : Updating listings
-INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : [32mBisync successful[0m
 
 [36m(16)  :[0m [34mtouch-glob 2007-07-23 {datadir/} *[0m
 
@@ -80,49 +43,11 @@ INFO  : [32mBisync successful[0m
 [36m(24)  :[0m [34mtouch-glob 2007-07-23 {path2/}subdir/ file21.txt[0m
 
 [36m(25)  :[0m [34mbisync size-only[0m
-INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
-INFO  : Bisyncing with Comparison Settings:
-{
-"Modtime": false,
-"Size": true,
-"Checksum": false,
-"NoSlowHash": false,
-"SlowHashSyncOnly": false,
-"DownloadHash": false
-}
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Building Path1 and Path2 listings
-INFO  : Path1 checking for diffs
-INFO  : Path2 checking for diffs
 INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (smaller)[0m[0m[0m - [36mfile1.txt[0m
 INFO  : Path2:    1 changes: [32m   0 new[0m, [33m   1 modified[0m, [31m   0 deleted[0m
 INFO  : ([33mModified[0m: [36m   0 larger[0m, [34m   1 smaller[0m)
-INFO  : Applying changes
 INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file1.txt[0m
-INFO  : - [34mPath2[0m    [35mDo queued copies to[0m                - [36mPath1[0m
-INFO  : Updating listings
-INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : [32mBisync successful[0m
 [36m(26)  :[0m [34mbisync resync[0m
-INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
-INFO  : Bisyncing with Comparison Settings:
-{
-"Modtime": true,
-"Size": true,
-"Checksum": false,
-"NoSlowHash": false,
-"SlowHashSyncOnly": false,
-"DownloadHash": false
-}
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Copying Path2 files to Path1
-INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
-INFO  : There was nothing to transfer
-INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
-INFO  : There was nothing to transfer
-INFO  : Resync updating listings
-INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : [32mBisync successful[0m
 
 [36m(27)  :[0m [34mcopy-file {datadir/}file1.txt {path1/}[0m
 [36m(28)  :[0m [34mcopy-file {datadir/}file2.txt {path2/}[0m
@@ -136,51 +61,14 @@ INFO  : [32mBisync successful[0m
 [36m(34)  :[0m [34mtouch-glob 2007-07-23 {path2/}subdir/ file21.txt[0m
 
 [36m(35)  :[0m [34mbisync ignore-size[0m
-INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
-INFO  : Bisyncing with Comparison Settings:
-{
-"Modtime": true,
-"Size": false,
-"Checksum": false,
-"NoSlowHash": false,
-"SlowHashSyncOnly": false,
-"DownloadHash": false
-}
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Building Path1 and Path2 listings
-INFO  : Path1 checking for diffs
-INFO  : Path2 checking for diffs
 INFO  : - [34mPath2[0m    [35m[33mFile changed: [35mtime (newer)[0m[0m[0m - [36mfile2.txt[0m
 INFO  : - [34mPath2[0m    [35m[33mFile changed: [35mtime (newer)[0m[0m[0m - [36msubdir/file21.txt[0m
 INFO  : Path2:    2 changes: [32m   0 new[0m, [33m   2 modified[0m, [31m   0 deleted[0m
 INFO  : ([33mModified[0m: [36m   2 newer[0m, [34m   0 older[0m)
-INFO  : Applying changes
 INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file2.txt[0m
 INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}subdir/file21.txt[0m
-INFO  : - [34mPath2[0m    [35mDo queued copies to[0m                - [36mPath1[0m
-INFO  : There was nothing to transfer
-INFO  : Updating listings
-INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : [32mBisync successful[0m
 
 [36m(36)  :[0m [34mbisync resync compare-all[0m
-INFO  : Bisyncing with Comparison Settings:
-{
-"Modtime": true,
-"Size": true,
-"Checksum": true,
-"NoSlowHash": false,
-"SlowHashSyncOnly": false,
-"DownloadHash": true
-}
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Copying Path2 files to Path1
-INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
-INFO  : There was nothing to transfer
-INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
-INFO  : Resync updating listings
-INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : [32mBisync successful[0m
 
 [36m(37)  :[0m [34mcopy-as {datadir/}file21.txt {path2/} file2.txt[0m
 
@@ -198,34 +86,15 @@ INFO  : [32mBisync successful[0m
 [36m(45)  :[0m [34mtouch-glob 2023-08-26 {path2/}subdir/ file21.txt[0m
 
 [36m(46)  :[0m [34mbisync compare-all[0m
-INFO  : Bisyncing with Comparison Settings:
-{
-"Modtime": true,
-"Size": true,
-"Checksum": true,
-"NoSlowHash": false,
-"SlowHashSyncOnly": false,
-"DownloadHash": true
-}
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Building Path1 and Path2 listings
-INFO  : Path1 checking for diffs
 INFO  : - [36mPath1[0m    [35m[33mFile changed: [35mtime (newer)[0m[0m[0m - [36mfile1.txt[0m
 INFO  : - [36mPath1[0m    [35m[33mFile changed: [35mtime (newer)[0m[0m[0m - [36msubdir/file20.txt[0m
 INFO  : Path1:    2 changes: [32m   0 new[0m, [33m   2 modified[0m, [31m   0 deleted[0m
 INFO  : ([33mModified[0m: [36m   2 newer[0m, [34m   0 older[0m)
-INFO  : Path2 checking for diffs
 INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (smaller)[0m, [35mhash[0m[0m[0m - [36mfile2.txt[0m
 INFO  : - [34mPath2[0m    [35m[33mFile changed: [35mtime (newer)[0m[0m[0m - [36msubdir/file21.txt[0m
 INFO  : Path2:    2 changes: [32m   0 new[0m, [33m   2 modified[0m, [31m   0 deleted[0m
 INFO  : ([33mModified[0m: [36m   1 newer[0m, [34m   0 older[0m, [36m   0 larger[0m, [34m   1 smaller[0m, [36m   1 hash differs[0m)
-INFO  : Applying changes
 INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.txt[0m
 INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}subdir/file20.txt[0m
 INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file2.txt[0m
 INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}subdir/file21.txt[0m
-INFO  : - [34mPath2[0m    [35mDo queued copies to[0m                - [36mPath1[0m
-INFO  : - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
-INFO  : Updating listings
-INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : [32mBisync successful[0m

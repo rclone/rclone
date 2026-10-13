@@ -159,6 +159,40 @@ var logHoppers = []string{
 	`INFO  : .*: Renamed from .*`,
 }
 
+// fullLogCases are the test cases whose golden log is compared in full.
+//
+// These pin the wording and order of the log messages common to every
+// bisync run. All other test cases compare only the lines matching
+// logKeepers so that a change to a common message does not change
+// every golden log.
+var fullLogCases = map[string]bool{
+	"basic":        true,
+	"check_access": true,
+	"dry_run":      true,
+	"filters":      true,
+	"resync":       true,
+}
+
+// logKeepers match the log lines which are specific to a test case.
+// Lines must match in full, ignoring any terminal colors.
+var logKeepers = []string{
+	// test steps and their output
+	`\(\d\d\)  :.*`,
+	`Bisync error: .*`,
+	`.* - filename hash: .*`,
+	// anything logged above INFO level
+	`(?:NOTICE|ERROR ):.*`,
+	// changes found and queued for individual files
+	`INFO  : - +Path[12] +(?:File|Queue) .* - .*`,
+	// anything logged about a named file, directory or path
+	`INFO  : [^:]+: .+`,
+}
+
+var (
+	regexLogKeepers = regexp.MustCompile("^(?:" + strings.Join(logKeepers, "|") + ")$")
+	regexColor      = regexp.MustCompile(`\x1b\[[0-9;]*m`)
+)
+
 // Some log lines can contain Windows path separator that must be
 // converted to "/" in every matching token to match golden logs.
 var logLinesWithSlash = []string{
@@ -1709,12 +1743,15 @@ func (b *bisyncTest) mangleResult(dir, file string, golden bool) string {
 			s = regexBackslash.ReplaceAllString(s, "/")
 		}
 
+		// Dropping a line here rather than above ends any group being sorted below
+		dropped := s != "" && !fullLogCases[b.testCase] && !regexLogKeepers.MatchString(regexColor.ReplaceAllString(s, ""))
+
 		// Sort consecutive groups of naturally unordered lines.
 		// Any such group must end before the log ends or it might be lost.
 		absorbed := false
 		for i := range dampers {
 			match := false
-			if s != "" && !absorbed {
+			if s != "" && !absorbed && !dropped {
 				match = hoppers[i].MatchString(s)
 			}
 			if match {
@@ -1726,7 +1763,7 @@ func (b *bisyncTest) mangleResult(dir, file string, golden bool) string {
 				dampers[i] = nil
 			}
 		}
-		if absorbed {
+		if absorbed || dropped {
 			continue
 		}
 

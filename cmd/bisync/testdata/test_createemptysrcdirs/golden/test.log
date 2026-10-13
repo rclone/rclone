@@ -10,25 +10,6 @@
 [36m(08)  :[0m [34mcopy-as {datadir/}placeholder.txt {path1/} file1.copy4.txt[0m
 [36m(09)  :[0m [34mcopy-as {datadir/}placeholder.txt {path1/} file1.copy5.txt[0m
 [36m(10)  :[0m [34mbisync resync[0m
-INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
-INFO  : Bisyncing with Comparison Settings:
-{
-"Modtime": true,
-"Size": true,
-"Checksum": false,
-"NoSlowHash": false,
-"SlowHashSyncOnly": false,
-"DownloadHash": false
-}
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Copying Path2 files to Path1
-INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
-INFO  : There was nothing to transfer
-INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
-INFO  : There was nothing to transfer
-INFO  : Resync updating listings
-INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : [32mBisync successful[0m
 
 [36m(11)  :[0m [34mtest 1. Create an empty dir on Path1 by creating subdir/placeholder.txt and then deleting the placeholder[0m
 [36m(12)  :[0m [34mcopy-as {datadir/}placeholder.txt {path1/} subdir/placeholder.txt[0m
@@ -37,24 +18,6 @@ INFO  : [32mBisync successful[0m
 
 [36m(15)  :[0m [34mtest 2. Run bisync without --create-empty-src-dirs[0m
 [36m(16)  :[0m [34mbisync[0m
-INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
-INFO  : Bisyncing with Comparison Settings:
-{
-"Modtime": true,
-"Size": true,
-"Checksum": false,
-"NoSlowHash": false,
-"SlowHashSyncOnly": false,
-"DownloadHash": false
-}
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Building Path1 and Path2 listings
-INFO  : Path1 checking for diffs
-INFO  : Path2 checking for diffs
-INFO  : No changes found
-INFO  : Updating listings
-INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : [32mBisync successful[0m
 
 [36m(17)  :[0m [34mtest 3. Confirm the subdir exists only on Path1 and not Path2[0m
 [36m(18)  :[0m [34mlist-dirs {path1/}[0m
@@ -63,29 +26,9 @@ subdir/ - filename hash: 86ae37b338459868804e9697025ba4c2
 
 [36m(20)  :[0m [34mtest 4.Run bisync WITH --create-empty-src-dirs[0m
 [36m(21)  :[0m [34mbisync create-empty-src-dirs[0m
-INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
-INFO  : Bisyncing with Comparison Settings:
-{
-"Modtime": true,
-"Size": true,
-"Checksum": false,
-"NoSlowHash": false,
-"SlowHashSyncOnly": false,
-"DownloadHash": false
-}
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Building Path1 and Path2 listings
-INFO  : Path1 checking for diffs
 INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36msubdir[0m
 INFO  : Path1:    1 changes: [32m   1 new[0m, [33m   0 modified[0m, [31m   0 deleted[0m
-INFO  : Path2 checking for diffs
-INFO  : Applying changes
 INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}subdir[0m
-INFO  : - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
-INFO  : There was nothing to transfer
-INFO  : Updating listings
-INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : [32mBisync successful[0m
 
 [36m(22)  :[0m [34mtest 5. Confirm the subdir exists on both paths[0m
 [36m(23)  :[0m [34mlist-dirs {path1/}[0m
@@ -104,32 +47,12 @@ subdir/ - filename hash: 86ae37b338459868804e9697025ba4c2
 
 [36m(33)  :[0m [34mtest 7. Run bisync without --create-empty-src-dirs[0m
 [36m(34)  :[0m [34mbisync[0m
-INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
-INFO  : Bisyncing with Comparison Settings:
-{
-"Modtime": true,
-"Size": true,
-"Checksum": false,
-"NoSlowHash": false,
-"SlowHashSyncOnly": false,
-"DownloadHash": false
-}
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Building Path1 and Path2 listings
-INFO  : Path1 checking for diffs
 INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mRCLONE_TEST[0m
 INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36msubdir[0m
 INFO  : Path1:    2 changes: [32m   0 new[0m, [33m   0 modified[0m, [31m   2 deleted[0m
-INFO  : Path2 checking for diffs
 INFO  : - [34mPath2[0m    [35m[31mFile was deleted[0m[0m          - [36msubdir[0m
 INFO  : Path2:    1 changes: [32m   0 new[0m, [33m   0 modified[0m, [31m   1 deleted[0m
-INFO  : Applying changes
 INFO  : - [34mPath2[0m    [35m[31mQueue delete[0m[0m              - [36m{path2/}RCLONE_TEST[0m
-INFO  : - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
-INFO  : There was nothing to transfer
-INFO  : Updating listings
-INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : [32mBisync successful[0m
 
 [36m(35)  :[0m [34mtest 8. Confirm the subdir exists only on Path2 and not Path1[0m
 [36m(36)  :[0m [34mlist-dirs {path1/}[0m
@@ -138,25 +61,6 @@ subdir/ - filename hash: 86ae37b338459868804e9697025ba4c2
 
 [36m(38)  :[0m [34mtest 9. Reset, do the delete again, and run bisync WITH --create-empty-src-dirs[0m
 [36m(39)  :[0m [34mbisync resync create-empty-src-dirs[0m
-INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
-INFO  : Bisyncing with Comparison Settings:
-{
-"Modtime": true,
-"Size": true,
-"Checksum": false,
-"NoSlowHash": false,
-"SlowHashSyncOnly": false,
-"DownloadHash": false
-}
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Copying Path2 files to Path1
-INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
-INFO  : There was nothing to transfer
-INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
-INFO  : There was nothing to transfer
-INFO  : Resync updating listings
-INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : [32mBisync successful[0m
 [36m(40)  :[0m [34mlist-dirs {path1/}[0m
 subdir/ - filename hash: 86ae37b338459868804e9697025ba4c2
 [36m(41)  :[0m [34mlist-dirs {path2/}[0m
@@ -174,30 +78,10 @@ subdir/ - filename hash: 86ae37b338459868804e9697025ba4c2
 subdir/ - filename hash: 86ae37b338459868804e9697025ba4c2
 
 [36m(51)  :[0m [34mbisync create-empty-src-dirs[0m
-INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
-INFO  : Bisyncing with Comparison Settings:
-{
-"Modtime": true,
-"Size": true,
-"Checksum": false,
-"NoSlowHash": false,
-"SlowHashSyncOnly": false,
-"DownloadHash": false
-}
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Building Path1 and Path2 listings
-INFO  : Path1 checking for diffs
 INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36msubdir[0m
 INFO  : Path1:    1 changes: [32m   0 new[0m, [33m   0 modified[0m, [31m   1 deleted[0m
-INFO  : Path2 checking for diffs
-INFO  : Applying changes
 INFO  : - [34mPath2[0m    [35m[31mQueue delete[0m[0m              - [36m{path2/}subdir[0m
-INFO  : - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
-INFO  : There was nothing to transfer
 INFO  : subdir: Removing directory
-INFO  : Updating listings
-INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : [32mBisync successful[0m
 
 [36m(52)  :[0m [34mtest 10. Confirm the subdir has been removed on both paths[0m
 [36m(53)  :[0m [34mlist-dirs {path1/}[0m
@@ -205,21 +89,3 @@ INFO  : [32mBisync successful[0m
 
 [36m(55)  :[0m [34mtest 11. bisync again (because if we leave subdir in listings, test will fail due to mismatched modtime)[0m
 [36m(56)  :[0m [34mbisync create-empty-src-dirs[0m
-INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
-INFO  : Bisyncing with Comparison Settings:
-{
-"Modtime": true,
-"Size": true,
-"Checksum": false,
-"NoSlowHash": false,
-"SlowHashSyncOnly": false,
-"DownloadHash": false
-}
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Building Path1 and Path2 listings
-INFO  : Path1 checking for diffs
-INFO  : Path2 checking for diffs
-INFO  : No changes found
-INFO  : Updating listings
-INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : [32mBisync successful[0m
