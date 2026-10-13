@@ -2494,6 +2494,7 @@ func closeBody(res *http.Response) {
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs           = (*Fs)(nil)
+	_ fs.ListPer      = (*Fs)(nil)
 	_ fs.Purger       = (*Fs)(nil)
 	_ fs.Copier       = (*Fs)(nil)
 	_ fs.Mover        = (*Fs)(nil)
