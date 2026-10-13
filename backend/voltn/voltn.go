@@ -131,18 +131,6 @@ type Voltn struct {
 	opt         *Options
 }
 
-// a node in the folder tree returned by depth>1
-type folderNode struct {
-	ID           int       `json:"id"`
-	Name         string    `json:"name"`
-	Creation     time.Time `json:"creation"`
-	Modification time.Time `json:"modification"`
-	Content      struct {
-		Folders []folderNode `json:"folders"`
-		Files   []APIFile    `json:"files"`
-	} `json:"content"`
-}
-
 // CreateFolderResponse models the JSON response from POST /folders
 type CreateFolderResponse struct {
 	ID       int    `json:"id"`
@@ -749,13 +737,6 @@ func (f *Fs) cacheFolderMetadata(folderID string, folderInfo *APIFolder) {
 	f.folderMetaCache.mu.Lock()
 	defer f.folderMetaCache.mu.Unlock()
 	f.folderMetaCache.cache[folderID] = folderInfo
-}
-
-func (f *Fs) getCachedFolderMetadata(folderID string) (*APIFolder, bool) {
-	f.folderMetaCache.mu.RLock()
-	defer f.folderMetaCache.mu.RUnlock()
-	folderInfo, exists := f.folderMetaCache.cache[folderID]
-	return folderInfo, exists
 }
 
 // smartHydrateFile uses exponential backoff and limited retries for file hydration
@@ -3759,172 +3740,9 @@ uploadSession:
 	return nil, errTusRestartSession
 }
 
-// UploadFile uploads data into folderID.
-// If fileSize <= 16 MiB it uses the classic one-shot endpoint.
-// Otherwise it streams the file in 16 MiB blocks with the
-//
-//	chunk / chunks / chunksSize / fileSize protocol required by Voltn.
-//
-// streamInit asks the server for a sessionKey to stream the bytes with a PUT.
-func (ne *Voltn) streamInit(folderID, targetPath string, size int64, modTime time.Time, createdTime time.Time) (string, *APIFile, error) {
-	url := ne.BaseURL + "/api/file/upload"
-	base := path.Base(targetPath)
-	fs.Debugf(nil, "STREAM_INIT: POST %s folder=%s targetPath=%q size=%d method=stream", url, folderID, base, size)
-
-	payload := map[string]any{
-		"fileSize":     size,
-		"folderId":     folderID,
-		"targetPath":   base,
-		"uploadMethod": "stream",
-	}
-
-	// Add dates if available
-	if !modTime.IsZero() {
-		modTimeUTC := modTime.UTC()
-		payload["modification"] = modTimeUTC.Format(time.RFC3339)
-	}
-	if !createdTime.IsZero() {
-		createdTimeUTC := createdTime.UTC()
-		payload["creation"] = createdTimeUTC.Format(time.RFC3339)
-	}
-
-	b, _ := json.Marshal(payload)
-	fs.Debugf(nil, "STREAM_INIT: request payload: %s", string(b))
-
-	start := time.Now()
-	resp, err := ne.doRequestWithReauth(func(token string) (*http.Request, error) {
-		req, err := http.NewRequest("POST", url, bytes.NewReader(b))
-		if err != nil {
-			return nil, err
-		}
-		req.Header.Set("Authorization", "Bearer "+token)
-		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("Accept", "application/json")
-		return req, nil
-	}, false)
-	dt := time.Since(start)
-	if err != nil {
-		fs.Debugf(nil, "STREAM_INIT: HTTP error after %v: %v", dt, err)
-		return "", nil, err
-	}
-	defer closeResponseBody(resp)
-	fs.Debugf(nil, "STREAM_INIT: status=%d in %v", resp.StatusCode, dt)
-
-	raw, _ := io.ReadAll(resp.Body)
-	if len(raw) > 0 {
-		fs.Debugf(nil, "STREAM_INIT: server response body: %s", string(raw))
-	} else {
-		fs.Debugf(nil, "STREAM_INIT: server response body: (empty)")
-	}
-
-	if resp.StatusCode/100 != 2 {
-		return "", nil, fmt.Errorf("stream init failed %d: %s", resp.StatusCode, string(raw))
-	}
-
-	var generic map[string]any
-	if err := json.Unmarshal(raw, &generic); err == nil {
-		if sk, ok := generic["sessionKey"].(string); ok && sk != "" {
-			fs.Debugf(nil, "STREAM_INIT: received sessionKey=%s...", sk[:4]+"...")
-			return sk, nil, nil
-		}
-		if _, hasID := generic["id"]; hasID {
-			fi := &APIFile{}
-			if v, ok := generic["id"].(float64); ok {
-				fi.ID = int(v)
-			}
-			if v, ok := generic["name"].(string); ok {
-				fi.Name = v
-			}
-			if v, ok := generic["size"].(float64); ok {
-				fi.Size = int64(v)
-			}
-			if v, ok := generic["hash"].(string); ok && v != "" {
-				fi.MD5 = v
-			}
-			if fi.ID != 0 {
-				fs.Debugf(nil, "STREAM_INIT: server returned file object id=%d name=%q size=%d md5=%q", fi.ID, fi.Name, fi.Size, fi.MD5)
-				return "", fi, nil
-			}
-			fs.Debugf(nil, "STREAM_INIT: unexpected response keys: %v", generic)
-		}
-	} else {
-		fs.Debugf(nil, "STREAM_INIT: JSON decode error: %v (raw=%d bytes)", err, len(raw))
-	}
-	return "", nil, fmt.Errorf("stream init: no session key or file object in response")
-}
-
-// putStream streams the raw bytes using the sessionKey returned by streamInit.
-// Server may respond with JSON metadata or an empty body; handle both.
-func (ne *Voltn) putStream(sessionKey string, data io.Reader, size int64) (*APIFile, error) {
-	// Common pattern is the same endpoint with a query param; adjust if your API differs.
-	url := ne.BaseURL + "/api/file/upload?sessionKey=" + url.QueryEscape(sessionKey)
-	fs.Debugf(nil, "PUT_STREAM: PUT %s (size=%d)", url, size)
-
-	start := time.Now()
-	buildCount := 0
-	resp, err := ne.doRequestWithReauth(func(token string) (*http.Request, error) {
-		if buildCount > 0 {
-			seeker, ok := data.(io.Seeker)
-			if !ok {
-				return nil, fserrors.RetryError(errors.New("cannot retry stream upload after reauth - reader is not seekable"))
-			}
-			if _, err := seeker.Seek(0, io.SeekStart); err != nil {
-				return nil, fmt.Errorf("failed to rewind stream upload after reauth: %w", err)
-			}
-		}
-		buildCount++
-
-		req, err := http.NewRequest("PUT", url, data)
-		if err != nil {
-			return nil, err
-		}
-		req.Header.Set("Authorization", "Bearer "+token)
-		req.Header.Set("Content-Type", "application/octet-stream")
-		req.Header.Set("Accept", "application/json")
-		req.Header.Del("Expect")
-		if size >= 0 {
-			req.ContentLength = size
-		}
-		return req, nil
-	}, false)
-	dt := time.Since(start)
-	if err != nil {
-		fs.Debugf(nil, "PUT_STREAM: HTTP error after %v: %v", dt, err)
-		return nil, err
-	}
-	defer closeResponseBody(resp)
-	if timing := responseTimingHeaders(resp); timing != "" {
-		fs.Debugf(nil, "PUT_STREAM: status=%d in %v (%s)", resp.StatusCode, dt, timing)
-	} else {
-		fs.Debugf(nil, "PUT_STREAM: status=%d in %v", resp.StatusCode, dt)
-	}
-
-	// Read response body for logging
-	bodyBytes, _ := io.ReadAll(resp.Body)
-	if len(bodyBytes) > 0 {
-		fs.Debugf(nil, "PUT_STREAM: server response body: %s", string(bodyBytes))
-	} else {
-		fs.Debugf(nil, "PUT_STREAM: server response body: (empty)")
-	}
-
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusNoContent {
-		return nil, fmt.Errorf("putStream failed %d: %s", resp.StatusCode, string(bodyBytes))
-	}
-
-	// Try to decode metadata if present
-	var fi APIFile
-	if err := json.Unmarshal(bodyBytes, &fi); err == nil && fi.ID != 0 {
-		if fi.MD5 == "" && fi.Hash != "" {
-			fi.MD5 = fi.Hash
-		}
-		fs.Debugf(nil, "PUT_STREAM: parsed response - id=%d name=%q size=%d md5=%q creation=%v modification=%v", fi.ID, fi.Name, fi.Size, fi.MD5, fi.Creation, fi.Modification)
-		return &fi, nil
-	}
-	// No JSON body -> caller will hydrate later
-	fs.Debugf(nil, "PUT_STREAM: no JSON metadata returned; will rely on hydrate to find id")
-	return nil, nil
-}
-
+// UploadFile uploads data as fileName into folderID. Files smaller than
+// 16 MiB or of unknown size are sent in a single request, larger files
+// use a resumable tus upload.
 func (ne *Voltn) UploadFile(ctx context.Context, folderID, fileName string, data io.Reader, fileSize int64, modTime time.Time, createdTime time.Time, sourceObject fs.Object) (*APIFile, error) {
 	const smallFileThreshold = 16 * 1024 * 1024 // 16 MiB
 
@@ -3951,22 +3769,6 @@ func (ne *Voltn) UploadFile(ctx context.Context, folderID, fileName string, data
 
 	fs.Debugf(nil, "UploadFile(%q): large file (%d bytes), using TUS upload", fileName, fileSize)
 	return ne.uploadTus(ctx, folderID, fileName, data, fileSize, modTime, createdTime, sourceObject)
-}
-
-// parseChunkReportMissing parses a chunk upload report response and returns
-// the next missing chunk index when present.
-func parseChunkReportMissing(body []byte) (missing int, ok bool) {
-	type reportEntry struct {
-		Missing int `json:"missing"`
-	}
-	var report []reportEntry
-	if err := json.Unmarshal(body, &report); err != nil || len(report) == 0 {
-		return 0, false
-	}
-	if report[0].Missing < 0 {
-		return 0, false
-	}
-	return report[0].Missing, true
 }
 
 // returns the metadata of the freshly-created file
