@@ -10,7 +10,6 @@ import (
 	"io"
 	"path"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -32,6 +31,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
 
@@ -698,31 +698,43 @@ func (f *Fs) isDir(kind, path string) (bool, error) {
 // dir should be "" to list the root, and should not have trailing slashes.
 // This should return ErrDirNotFound if the directory isn't found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	// fs.Debugf(f, ">>> List: %q", dir)
+	return list.WithListP(ctx, dir, f)
+}
 
+// ListP lists the objects and directories of the Fs starting
+// from dir non recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order. If
+// callback returns an error then the listing will stop
+// immediately.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	dirPath := f.absPath(dir)
 	if f.quirks.binlist {
-		entries, err = f.listBin(ctx, f.absPath(dir), 1)
-	} else {
-		entries, err = f.listM1(ctx, f.absPath(dir), 0, maxInt32)
-	}
-
-	if err == nil && f.ci.LogLevel >= fs.LogLevelDebug {
-		names := []string{}
-		for _, entry := range entries {
-			names = append(names, entry.Remote())
+		entries, err := f.listBin(ctx, dirPath, 1)
+		if err != nil {
+			return err
 		}
-		sort.Strings(names)
-		// fs.Debugf(f, "List(%q): %v", dir, names)
+		if len(entries) == 0 {
+			return nil
+		}
+		return callback(entries)
 	}
 
-	return
+	return f.listM1(ctx, dirPath, 0, maxInt32, callback)
 }
 
 // list using protocol "m1"
-func (f *Fs) listM1(ctx context.Context, dirPath string, offset int, limit int) (entries fs.DirEntries, err error) {
+func (f *Fs) listM1(ctx context.Context, dirPath string, offset int, limit int, callback fs.ListRCallback) error {
 	token, err := f.accessToken()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	listed := 0
@@ -756,25 +768,31 @@ func (f *Fs) listM1(ctx context.Context, dirPath string, offset int, limit int) 
 		if err != nil {
 			apiErr, ok := err.(*api.FileErrorResponse)
 			if ok && apiErr.Status == 404 {
-				return nil, fs.ErrorDirNotFound
+				return fs.ErrorDirNotFound
 			}
-			return nil, err
+			return err
 		}
 
 		isDir, err := f.isDir(info.Body.Kind, dirPath)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		if !isDir {
-			return nil, fs.ErrorIsFile
+			return fs.ErrorIsFile
 		}
 
+		entries := make(fs.DirEntries, 0, len(info.Body.List))
 		for _, item := range info.Body.List {
 			entry, _, err := f.itemToDirEntry(ctx, &item)
 			if err == nil {
 				entries = append(entries, entry)
 			} else {
 				fs.Debugf(f, "Excluding path %q from list: %v", item.Home, err)
+			}
+		}
+		if len(entries) > 0 {
+			if err := callback(entries); err != nil {
+				return err
 			}
 		}
 
@@ -790,7 +808,7 @@ func (f *Fs) listM1(ctx context.Context, dirPath string, offset int, limit int) 
 			break
 		}
 	}
-	return entries, nil
+	return nil
 }
 
 // list using protocol "bin"
