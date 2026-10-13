@@ -390,6 +390,9 @@ func (d *Dir) renameTree(dirPath string) {
 //
 // Reset the directory to new state, discarding all the objects and
 // reading everything again
+//
+// The caller must move the entry between the old and the new parent's
+// directory entries itself, holding each parent's lock as it does so.
 func (d *Dir) rename(newParent *Dir, fsDir fs.Directory) {
 	d.ForgetAll()
 
@@ -402,8 +405,6 @@ func (d *Dir) rename(newParent *Dir, fsDir fs.Directory) {
 	d.entry = fsDir
 	d.path = fsDir.Remote()
 	newPath := d.path
-	delete(d.parent.items, name(oldPath))
-	d.parent.items[name(d.path)] = d
 	d.read = time.Time{}
 	d.mu.Unlock()
 
