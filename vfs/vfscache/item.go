@@ -71,6 +71,7 @@ type Item struct {
 	beingReset      bool                     // cache cleaner is resetting the cache file, access not allowed
 	graceTimer      *time.Timer              // timer for delayed close after grace period
 	closing         chan struct{}            // non-nil while a grace-period close is tearing the handle down, closed when done
+	deleted         bool                     // file was deleted so its cache files may belong to a new item now
 }
 
 // Info is persisted to backing store
@@ -211,6 +212,9 @@ func (item *Item) load() (exists bool, err error) {
 //
 // call with the lock held
 func (item *Item) _save() (err error) {
+	if item.deleted {
+		return nil
+	}
 	osPathMeta := item.c.toOSPathMeta(item.name) // No locking in Cache
 	out, err := os.Create(osPathMeta)
 	if err != nil {
@@ -642,6 +646,10 @@ func unlockMutexForCall(mu *sync.Mutex, f func()) {
 func (item *Item) _store(ctx context.Context, storeFn StoreFn) (err error) {
 	// defer log.Trace(item.name, "item=%p", item)("err=%v", &err)
 
+	if item.deleted {
+		return nil
+	}
+
 	// Transfer the temp file to the remote
 	cacheObj, err := item.c.fcache.NewObject(ctx, item.name)
 	if err != nil && err != fs.ErrorObjectNotFound {
@@ -773,7 +781,7 @@ func (item *Item) _actualClose(storeFn StoreFn, syncWriteBack bool) (err error) 
 	// FIXME It would be nice to do this asynchronously however it
 	// would require keeping the downloaders alive after the item
 	// has been closed
-	if item.info.Dirty && item.o != nil {
+	if item.info.Dirty && item.o != nil && !item.deleted {
 		err = item._ensure(0, item.info.Size)
 		if err != nil {
 			return fmt.Errorf("vfs cache: failed to download missing parts of cache file: %w", err)
@@ -828,7 +836,7 @@ func (item *Item) _actualClose(storeFn StoreFn, syncWriteBack bool) (err error) 
 	}
 
 	// upload the file to backing store if changed
-	if item.info.Dirty {
+	if item.info.Dirty && !item.deleted {
 		fs.Infof(item.name, "vfs cache: queuing for upload in %v", item.c.opt.WriteBack)
 		if syncWriteBack {
 			// do synchronous writeback
@@ -993,6 +1001,29 @@ func (item *Item) _remove(reason string) (wasWriting bool) {
 	item.info.clean()
 	item._removeFile(reason)
 	item._removeMeta(reason)
+	return wasWriting
+}
+
+// removeDeleted removes the cache files of an item whose file has been
+// deleted from the VFS.
+//
+// Handles opened before the delete may still be using the item. A file
+// created with the same name gets a new item with the same cache paths, so
+// this one is marked deleted and no longer writes to them. Its info is kept
+// so the open handles can read the unlinked cache file like a local file.
+//
+// This returns true if the file was in the transfer queue so may not
+// have completely uploaded yet.
+func (item *Item) removeDeleted() (wasWriting bool) {
+	item.mu.Lock()
+	defer item.mu.Unlock()
+	item.deleted = true
+	// Cancel writeback, if any
+	item.mu.Unlock()
+	wasWriting = item.c.writeback.Remove(item.writeBackID)
+	item.mu.Lock()
+	item._removeFile("file deleted")
+	item._removeMeta("file deleted")
 	return wasWriting
 }
 
@@ -1332,6 +1363,9 @@ func (item *Item) _updateFingerprint() {
 //
 // call with lock held
 func (item *Item) _setModTime(modTime time.Time) {
+	if item.deleted {
+		return
+	}
 	fs.Debugf(item.name, "vfs cache: setting modification time to %v", modTime)
 	osPath := item.c.toOSPath(item.name) // No locking in Cache
 	err := os.Chtimes(osPath, modTime, modTime)

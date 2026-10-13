@@ -59,6 +59,7 @@ type File struct {
 	nwriters         atomic.Int32                    // len(writers)
 	appendMode       bool                            // file was opened with O_APPEND
 	isLink           bool                            // file represents a symlink
+	removed          bool                            // file has been removed so must not be opened or added to the directory again
 }
 
 // newFile creates a new File
@@ -542,7 +543,12 @@ func (f *File) setObject(o fs.Object) {
 	f._setIsLink()
 	_ = f._applyPendingModTime()
 	d := f.d
+	removed := f.removed
 	f.mu.Unlock()
+
+	if removed {
+		return
+	}
 
 	// Release File.mu before calling Dir method
 	d.addObject(f)
@@ -670,19 +676,27 @@ func (f *File) Remove() (err error) {
 		return EROFS
 	}
 
+	// The File stays reachable after it is removed, eg by a FUSE open of
+	// an inode looked up before the unlink. Opening it would add it back to
+	// the directory pointing at the deleted object, so hold muRW for the
+	// whole removal and mark it removed for the opens waiting on muRW.
+	//
+	// muRW must be locked before mu to avoid deadlock in
+	// RWFileHandle.openPending and .close
+	f.muRW.Lock()
+	defer f.muRW.Unlock()
+
 	// Remove the object from the cache
 	wasWriting := false
 	if d.vfs.cache != nil && d.vfs.cache.Exists(f.CachePath()) {
 		wasWriting = d.vfs.cache.Remove(f.CachePath())
 	}
 
-	f.muRW.Lock() // muRW must be locked before mu to avoid
-	f.mu.Lock()   // deadlock in RWFileHandle.openPending and .close
+	f.mu.Lock()
 	if f.o != nil {
 		err = f.o.Remove(f.ctx)
 	}
 	f.mu.Unlock()
-	f.muRW.Unlock()
 	if err != nil {
 		if wasWriting {
 			// Ignore error deleting file if was writing it as it may not be uploaded yet
@@ -696,9 +710,19 @@ func (f *File) Remove() (err error) {
 	// Remove the item from the directory listing
 	// called with File.mu released when there is no error removing the underlying file
 	if err == nil {
+		f.mu.Lock()
+		f.removed = true
+		f.mu.Unlock()
 		d.delObject(f.Name())
 	}
 	return err
+}
+
+// isRemoved returns true if the file has been removed
+func (f *File) isRemoved() bool {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+	return f.removed
 }
 
 // RemoveAll the file - same as remove for files
@@ -843,6 +867,11 @@ func (f *File) Open(flags int) (fd Handle, err error) {
 		return target.Open(flags)
 	}
 	flags &^= o_SYMLINK
+
+	// The file may have been removed since it was looked up
+	if f.isRemoved() {
+		return nil, ENOENT
+	}
 
 	// http://pubs.opengroup.org/onlinepubs/7908799/xsh/open.html
 	// The result of using O_TRUNC with O_RDONLY is undefined.

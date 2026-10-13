@@ -135,5 +135,6 @@ var _ fusefs.NodeReadlinker = (*File)(nil)
 // Readlink read symbolic link target.
 func (f *File) Readlink(ctx context.Context, req *fuse.ReadlinkRequest) (ret string, err error) {
 	defer log.Trace(f, "")("ret=%v, err=%v", &ret, &err)
-	return f.VFS().Readlink(f.Path())
+	ret, err = f.VFS().Readlink(f.Path())
+	return ret, translateError(err)
 }
