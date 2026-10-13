@@ -442,6 +442,11 @@ possible to write in all of them. This is mostly a problem on Windows, where
 the console traditionally uses a non-Unicode character set - defined
 by the so-called "code page".
 
+If you want to configure a remote using environment variables then its name
+becomes part of the environment variable name, which in practice restricts the
+characters you can use in it. See the [Config file](#config-file) section
+under Environment variables for details.
+
 Do not use single character names on Windows as it creates ambiguity with Windows
 drives' names, e.g.: remote called `C` is indistinguishable from `C` drive. Rclone
 will always assume that single letter name refers to a drive.
@@ -3634,9 +3639,11 @@ for each backend.
 To find the name of the environment variable, you need to set, take
 `RCLONE_CONFIG_` + name of remote + `_` + name of config file option
 and make it all uppercase.
-Note one implication here is the remote's name must be
-convertible into a valid environment variable name,
-so it can only contain letters, digits, or the `_` (underscore) character.
+Note that the name of the remote is only converted to uppercase - characters
+such as `-` and `.` are not changed to `_` - so a remote called `my-remote`
+needs `RCLONE_CONFIG_MY-REMOTE_TYPE`. Many shells only allow letters, digits
+and `_` (underscore) in environment variable names, so it is best to use only
+those characters in the name of a remote you want to configure this way.
 
 For example, to configure an S3 remote named `mys3:` without a config
 file (using unix ways of setting environment variables):
