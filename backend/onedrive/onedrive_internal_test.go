@@ -18,6 +18,7 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/rest"
@@ -740,4 +741,32 @@ func TestChangeNotifyFollowsNextLink(t *testing.T) {
 	assert.Contains(t, urls[0], "/testdrive/root/delta")
 	assert.Contains(t, urls[0], "token=tok1")
 	assert.Equal(t, "/nextpage?$skiptoken=abc", urls[1], "the nextLink should be used as-is, without the delta token")
+}
+
+// TestListDirectorySize checks that a listed directory carries the size
+// OneDrive reports for it, the total size of its contents, instead of -1.
+func TestListDirectorySize(t *testing.T) {
+	ctx := context.Background()
+	f, _ := newChangeNotifyTestFs(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "/items/rootid/children", r.URL.Path)
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(api.ListChildrenResponse{
+			Value: []api.Item{{
+				ID:     "dirid",
+				Name:   "photos",
+				Size:   2646204760,
+				Folder: &api.FolderFacet{ChildCount: 3},
+			}},
+		})
+	}))
+	f.dirCache = dircache.New("", "rootid", f)
+
+	entries, err := f.List(ctx, "")
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
+	dir, ok := entries[0].(fs.Directory)
+	require.True(t, ok, "entry should be a directory")
+	assert.Equal(t, "photos", dir.Remote())
+	assert.Equal(t, int64(2646204760), dir.Size())
+	assert.Equal(t, int64(3), dir.Items())
 }
