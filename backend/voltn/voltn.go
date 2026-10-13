@@ -302,6 +302,7 @@ func sanitizeFileName(fileName string) (string, bool) {
 	return fileName, changes
 }
 
+// NewVoltn returns a Voltn API client using the default base URL.
 func NewVoltn() *Voltn {
 	return &Voltn{
 		BaseURL: defaultBaseURL,
@@ -1424,6 +1425,7 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
+// Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
 	return f.hashes
 }
@@ -1440,6 +1442,7 @@ func (f *Fs) PrintRenameSummary() {
 	}
 }
 
+// Hash returns the MD5 of the object, or hash.ErrUnsupported for other types.
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if t != hash.MD5 {
 		return "", hash.ErrUnsupported
@@ -1619,6 +1622,7 @@ func (ne *Voltn) ListRoots() ([]APIFolder, error) {
 	return roots, nil
 }
 
+// GetFile returns the metadata of the file with the given ID.
 func (ne *Voltn) GetFile(fileID string) (*APIFile, error) {
 	url := fmt.Sprintf("%s/api/file/%s", ne.BaseURL, fileID)
 	fs.Debugf(nil, "GetFile: GET %s", url)
@@ -2416,6 +2420,7 @@ func (f *Fs) Precision() time.Duration {
 // Object implements fs.Object
 // ------------------------------------------------------------
 
+// Object describes a Voltn file
 type Object struct {
 	fs       *Fs
 	id       int
@@ -2717,15 +2722,8 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 					return fmt.Errorf("folder not found after %d retries: %w", maxRetries, err)
 				}
 			case 423:
-				// File still being transferred - this often means the upload succeeded but API is processing
-				fs.Debugf(o.fs, "Update(%q): got 423 'file still being transferred' - upload likely succeeded, treating as success", relPath)
-
-				// Don't retry 423 errors - they usually indicate successful upload with eventual consistency
-				// Set a placeholder ID to indicate successful upload
-				o.id = -2 // Use -2 to indicate successful upload with 423 response
-				fs.Debugf(o.fs, "Update(%q): treating 423 as successful upload with eventual consistency", relPath)
-				uploadSuccess = true
-				// Exit the retry loop
+				// File still being transferred - return the error so the caller retries the upload
+				fs.Debugf(o.fs, "Update(%q): got 423 'file still being transferred', not retrying", relPath)
 			case 429:
 				// Rate limiting - retry with exponential backoff
 				if attempt < maxRetries {
@@ -2764,7 +2762,6 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
-	// Check if we had a successful upload (either normal success or 423)
 	if uploadSuccess {
 		o.size = src.Size()
 		o.modTime = modTime // Use the potentially overridden modTime
@@ -2892,7 +2889,7 @@ func (o *Object) Storable() bool {
 // Voltn API methods
 // ------------------------------------------------------------
 
-// Create a new sub-folder under parentID
+// CreateFolder creates a new sub-folder under parentID
 func (ne *Voltn) CreateFolder(parentID, name string, modTime time.Time, createdTime time.Time) (string, bool, error) {
 	url := fmt.Sprintf("%s/api/folder", ne.BaseURL)
 	fs.Debugf(nil, "CreateFolder: POST %s (parent=%s name=%q)", url, parentID, name)
@@ -3010,6 +3007,7 @@ func (ne *Voltn) CreateFolder(parentID, name string, modTime time.Time, createdT
 	}
 }
 
+// RemoveFolder deletes the folder with the given ID.
 func (ne *Voltn) RemoveFolder(folderID, _ string) error {
 	url := fmt.Sprintf("%s/api/folder/%s", ne.BaseURL, folderID)
 	fs.Debugf(nil, "RemoveFolder: DELETE %s", url)
@@ -3477,11 +3475,11 @@ func (ne *Voltn) uploadTus(ctx context.Context, folderID, fileName string, data 
 			return nil
 		}
 		if seeker, ok := data.(io.Seeker); ok {
-			if _, err := seeker.Seek(targetOffset, io.SeekStart); err == nil {
+			_, err := seeker.Seek(targetOffset, io.SeekStart)
+			if err == nil {
 				return nil
-			} else {
-				fs.Debugf(nil, "uploadTus(%q): absolute seek to offset %d failed, falling back to stream discard: %v", fileName, targetOffset, err)
 			}
+			fs.Debugf(nil, "uploadTus(%q): absolute seek to offset %d failed, falling back to stream discard: %v", fileName, targetOffset, err)
 		}
 		skipped, err := io.CopyN(io.Discard, data, targetOffset)
 		if err != nil {
@@ -3497,11 +3495,11 @@ func (ne *Voltn) uploadTus(ctx context.Context, folderID, fileName string, data 
 			return errors.New("relative advance is not supported when source reopen is available")
 		}
 		if seeker, ok := data.(io.Seeker); ok {
-			if _, err := seeker.Seek(delta, io.SeekCurrent); err == nil {
+			_, err := seeker.Seek(delta, io.SeekCurrent)
+			if err == nil {
 				return nil
-			} else {
-				fs.Debugf(nil, "uploadTus(%q): relative seek by %d bytes failed, falling back to stream discard: %v", fileName, delta, err)
 			}
+			fs.Debugf(nil, "uploadTus(%q): relative seek by %d bytes failed, falling back to stream discard: %v", fileName, delta, err)
 		}
 		skipped, err := io.CopyN(io.Discard, data, delta)
 		if err != nil {
@@ -3632,7 +3630,6 @@ uploadSession:
 						}
 						fs.Debugf(nil, "uploadTus(%q): mismatch moved server offset to %d beyond current chunk [%d,%d), reopening source there", fileName, serverOffset, chunkStart, chunkEnd)
 						offset = serverOffset
-						chunkOffset = chunkEnd
 						break
 					}
 					chunkOffset = serverOffset
@@ -3939,7 +3936,7 @@ func (ne *Voltn) uploadSingle(ctx context.Context, folderID, fileName string, da
 	return &fi, nil
 }
 
-// GET /file/{fileId}/download
+// DownloadFile opens the content of the file with the given ID.
 func (ne *Voltn) DownloadFile(fileID, _ string) (io.ReadCloser, error) {
 	url := fmt.Sprintf("%s/api/file/%s/download", ne.BaseURL, fileID)
 	fs.Debugf(nil, "DownloadFile: GET %s", url)
@@ -3968,7 +3965,7 @@ func (ne *Voltn) DownloadFile(fileID, _ string) (io.ReadCloser, error) {
 	return resp.Body, nil
 }
 
-// Download by folder ID + file name
+// DownloadFileByName opens the content of the file called fileName in folderID.
 func (ne *Voltn) DownloadFileByName(folderID, fileName string) (io.ReadCloser, error) {
 	fs.Debugf(nil, "DownloadFileByName: folderID=%s name=%q", folderID, fileName)
 	files, err := ne.ListFiles(folderID)
@@ -4033,7 +4030,7 @@ func (f *Fs) deleteByName(ctx context.Context, folderPath, folderID, name string
 	return fmt.Errorf("file %q not found in folder %s", name, folderID)
 }
 
-// DELETE /file/{fileId}
+// DeleteFile deletes the file with the given ID.
 func (ne *Voltn) DeleteFile(fileID, _ string) error {
 	url := fmt.Sprintf("%s/api/file/%s", ne.BaseURL, fileID)
 	fs.Debugf(nil, "DeleteFile: DELETE %s", url)
@@ -4059,6 +4056,7 @@ func (ne *Voltn) DeleteFile(fileID, _ string) error {
 	return nil
 }
 
+// DeleteFileByName deletes the file called fileName in folderID.
 func (ne *Voltn) DeleteFileByName(folderID, fileName string) error {
 	fs.Debugf(nil, "DeleteFileByName: folderID=%s name=%q", folderID, fileName)
 	files, err := ne.ListFiles(folderID)
@@ -4087,6 +4085,7 @@ func (ne *Voltn) ListFolders(folderID string) ([]APIFolder, error) {
 	return folders, err
 }
 
+// ListFiles returns the files directly inside the given folder.
 func (ne *Voltn) ListFiles(fileID string) ([]APIFile, error) {
 	fs.Debugf(nil, "ListFiles: folderID=%s", fileID)
 	_, files, err := ne.ListFolder(fileID)
