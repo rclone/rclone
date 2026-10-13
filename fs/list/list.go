@@ -67,7 +67,7 @@ func DirSorted(ctx context.Context, f fs.Fs, includeAll bool, dir string) (entri
 	// called.
 	fi := filter.GetConfig(ctx)
 	if !includeAll && fi.ListContainsExcludeFile(entries) {
-		fs.Debugf(dir, "Excluded")
+		fs.Debugf(dir, "Excluded (Directory List Filter)")
 		return nil, nil
 	}
 	return filterAndSortDir(ctx, entries, includeAll, dir, fi.IncludeObject, fi.IncludeDirectory(ctx, f))
@@ -113,7 +113,7 @@ func DirSortedFn(ctx context.Context, f fs.Fs, includeAll bool, dir string, call
 		// starting directory, otherwise ListDirSorted should not be
 		// called.
 		if !includeAll && fi.ListContainsExcludeFile(entries) {
-			fs.Debugf(dir, "Excluded")
+			fs.Debugf(dir, "Excluded (Directory List Filter)")
 			return nil
 		}
 
@@ -150,7 +150,7 @@ func filterDir(ctx context.Context, entries fs.DirEntries, includeAll bool, dir 
 			// Make sure we don't delete excluded files if not required
 			if !includeAll && !IncludeObject(ctx, x) {
 				ok = false
-				fs.Debugf(x, "Excluded")
+				fs.Debugf(x, "Excluded (Directory List Filter)")
 			}
 		case fs.Directory:
 			if !includeAll {
@@ -160,7 +160,7 @@ func filterDir(ctx context.Context, entries fs.DirEntries, includeAll bool, dir 
 				}
 				if !include {
 					ok = false
-					fs.Debugf(x, "Excluded")
+					fs.Debugf(x, "Excluded (Directory List Filter)")
 				}
 			}
 		default:
