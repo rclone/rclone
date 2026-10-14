@@ -648,11 +648,18 @@ func TestRWFileTruncateShrinkUncached(t *testing.T) {
 			require.NoError(t, err)
 			require.NoError(t, node.(*File).Truncate(5))
 
-			vfs.WaitForWriters(10 * time.Second)
+			vfs.WaitForWriters(waitForWritersDelay)
 
 			obj, err := r.Fremote.NewObject(context.Background(), "file1")
 			require.NoError(t, err)
 			assert.Equal(t, int64(5), obj.Size())
+
+			rc, err := obj.Open(context.Background())
+			require.NoError(t, err)
+			contents, err := io.ReadAll(rc)
+			require.NoError(t, err)
+			require.NoError(t, rc.Close())
+			assert.Equal(t, "01234", string(contents))
 		})
 	}
 }

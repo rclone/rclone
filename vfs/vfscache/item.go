@@ -1468,6 +1468,9 @@ func (item *Item) WriteAt(b []byte, off int64) (n int, err error) {
 //
 // This is used by the downloader to write bytes to the file.
 //
+// Bytes past the end of the item are not written; they are counted
+// as processed and skipped.
+//
 // It returns n the total bytes processed and skipped the number of
 // bytes which were processed but not actually written to the file.
 func (item *Item) WriteAtNoOverwrite(b []byte, off int64) (n int, skipped int, err error) {
