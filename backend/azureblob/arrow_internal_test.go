@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
-	"github.com/rclone/rclone/backend/azureblob/arrowlist"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
@@ -212,9 +211,8 @@ func TestArrowLadderBoundaries(t *testing.T) {
 }
 
 func TestIsEndBeforeUnsupported(t *testing.T) {
-	assert.True(t, isEndBeforeUnsupported(arrowlist.ErrEndBeforeXMLFallback))
-	assert.True(t, isEndBeforeUnsupported(fmt.Errorf("wrapped: %w", arrowlist.ErrEndBeforeXMLFallback)))
 	assert.True(t, isEndBeforeUnsupported(&azcore.ResponseError{ErrorCode: "OperationNotSupportedWithFeatureMissing"}))
+	assert.True(t, isEndBeforeUnsupported(fmt.Errorf("wrapped: %w", &azcore.ResponseError{ErrorCode: "OperationNotSupportedWithFeatureMissing"})))
 	assert.False(t, isEndBeforeUnsupported(&azcore.ResponseError{ErrorCode: "ContainerNotFound"}))
 	assert.False(t, isEndBeforeUnsupported(errors.New("some other error")))
 	assert.False(t, isEndBeforeUnsupported(nil))

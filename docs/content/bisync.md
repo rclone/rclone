@@ -184,7 +184,7 @@ will (by default) be overwritten by the Path1 filesystem version.
 (Note that this is [NOT entirely symmetrical](https://github.com/rclone/rclone/issues/5681#issuecomment-938761815),
 and more symmetrical options can be specified with the
 [`--resync-mode`](#resync-mode) flag.)
-Carefully evaluate deltas using [--dry-run](/flags/#non-backend-flags).
+Carefully evaluate deltas using [--dry-run](/docs/#n-dry-run).
 
 For a resync run, one of the paths may be empty (no files in the path tree).
 The resync run should result in files on both paths, else a normal non-resync
@@ -716,7 +716,7 @@ other, if there were changes during or after the run. This is normal, and any
 differences will be detected and synced on the next run.
 
 For a robust integrity check of the current state of the remotes (as opposed to
-just their listing snapshots), consider using [`check`](commands/rclone_check/)
+just their listing snapshots), consider using [`check`](/commands/rclone_check/)
 (or [`cryptcheck`](/commands/rclone_cryptcheck/), if at least one path is a
 `crypt` remote) instead of `--check-sync`, keeping in mind that differences are
 expected if files changed during or after your last bisync run.
@@ -950,7 +950,7 @@ conflicts, which would previously have resulted in unnecessary renames and
 duplicates. Now, when bisync comes to a file that it wants to rename (because it
 is new/changed on both sides), it first checks whether the Path1 and Path2
 versions are currently *identical* (using the same underlying function as
-[`check`](commands/rclone_check/).) If bisync concludes that the files are
+[`check`](/commands/rclone_check/).) If bisync concludes that the files are
 identical, it will skip them and move on. Otherwise, it will create renamed
 duplicates, as before. This behavior also [improves the experience of renaming
 directories](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=Renamed%20directories),
@@ -1937,6 +1937,9 @@ about *Unison* and synchronization in general.
 
 - Added `--max-delete-renames-aware` to exclude guaranteed tracked renames from
 the `--max-delete` safety check when used with `--track-renames`.
+- Fixed an issue causing the conflict winner to be missing from listings when
+Path2 won.
+- Fixed an issue causing `--conflict-resolve` to compare a zero size or modtime.
 
 ### `v1.74.2`
 
@@ -1984,7 +1987,7 @@ and far less prone to critical errors / undetected changes
 - Bisync is now capable of rolling a file listing back in cases of uncertainty,
 essentially marking the file as needing to be rechecked next time.
 - A few basic terminal colors are now supported, controllable with
-[`--color`](/docs/#color-autoneveralways) (`AUTO`|`NEVER`|`ALWAYS`)
+[`--color`](/docs/#color-auto-never-always) (`AUTO`|`NEVER`|`ALWAYS`)
 - Initial listing snapshots of Path1 and Path2 are now generated concurrently,
 using the same "march" infrastructure as `check` and `sync`,
 for performance improvements and less

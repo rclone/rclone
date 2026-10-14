@@ -597,6 +597,51 @@ func Run(t *testing.T, opt *Opt) {
 		}
 	})
 
+	// TestFsRootCannotChangeHost tests that a root beginning with //
+	// is treated as a path and can't move the remote to a host of the
+	// attacker's choosing.
+	//
+	// A root beginning with // is a network-path reference under the
+	// URL standard so a backend which resolves its root as a URL
+	// reference against a configured URL could send requests, and
+	// whatever credentials go with them, to the host named in the root.
+	t.Run("FsRootCannotChangeHost", func(t *testing.T) {
+		skipIfNotOk(t)
+		if !strings.HasSuffix(remoteName, ":") {
+			t.Skip("root of a path based remote can't be a network-path reference")
+		}
+		ln, err := net.Listen("tcp", "127.0.0.1:0")
+		require.NoError(t, err)
+		defer func() { _ = ln.Close() }()
+		var connections atomic.Int32
+		go func() {
+			for {
+				conn, err := ln.Accept()
+				if err != nil {
+					return
+				}
+				connections.Add(1)
+				// Reply with junk so the client fails at once rather than retrying a closed connection
+				_, _ = conn.Write([]byte("\x00\xff\x00\xff junk\n"))
+				_ = conn.Close()
+			}
+		}()
+		host := ln.Addr().String()
+		for _, root := range []string{
+			"//" + host + "/",
+			"//" + host + "/" + subRemoteLeaf + "/",
+			"//user:pass@" + host + "/",
+		} {
+			remote := remoteName + root
+			f, err := fs.NewFs(context.Background(), remote)
+			if err == nil {
+				// Not all backends contact the remote in NewFs
+				_, _ = f.List(context.Background(), "")
+			}
+			assert.Equal(t, int32(0), connections.Load(), "remote %q connected to the host named in its root", remote)
+		}
+	})
+
 	// TestFsRmdirEmpty tests deleting an empty directory
 	t.Run("FsRmdirEmpty", func(t *testing.T) {
 		skipIfNotOk(t)
@@ -838,6 +883,10 @@ func Run(t *testing.T, opt *Opt) {
 
 		// TestFsOpenChunkWriter tests writing in chunks to fs
 		// then reads back the contents and check if they match
+		//
+		// The chunks are the size the chunk writer asks for, the
+		// last one short, as a multi-thread copy writes them
+		//
 		// go test -v -run 'TestIntegration/FsMkdir/FsOpenChunkWriter'
 		t.Run("FsOpenChunkWriter", func(t *testing.T) {
 			skipIfNotOk(t)
@@ -849,35 +898,64 @@ func Run(t *testing.T, opt *Opt) {
 			size1MB := 1 * 1024 * 1024
 			totalSize := int64(size5MBs*2 + size1MB)
 
+			// Ask for small chunks where the backend lets us so the
+			// file takes several of them
+			if setUploadChunkSizer, ok := f.(SetUploadChunkSizer); ok {
+				oldChunkSize, err := setUploadChunkSizer.SetUploadChunkSize(fs.SizeSuffix(size5MBs))
+				if err != nil {
+					t.Logf("Can't set the chunk size to %v: %v", fs.SizeSuffix(size5MBs), err)
+				} else {
+					defer func() {
+						_, err := setUploadChunkSizer.SetUploadChunkSize(oldChunkSize)
+						assert.NoError(t, err)
+					}()
+				}
+			}
+
 			path := "writer-at-subdir/writer-at-file"
-			objSrc := object.NewStaticObjectInfo(path+"-WRONG-REMOTE", file1.ModTime, totalSize, true, nil, nil)
-			_, out, err := openChunkWriter(ctx, path, objSrc, &fs.ChunkOption{
-				ChunkSize: int64(size5MBs),
-			})
+			open := func(size int64) (fs.ChunkWriterInfo, fs.ChunkWriter, error) {
+				objSrc := object.NewStaticObjectInfo(path+"-WRONG-REMOTE", file1.ModTime, size, true, nil, nil)
+				return openChunkWriter(ctx, path, objSrc, &fs.ChunkOption{
+					ChunkSize: int64(size5MBs),
+				})
+			}
+			info, out, err := open(totalSize)
 			if errors.Is(err, fs.ErrorFileTooSmall) {
 				t.Skipf("file too small for multipart upload: %v", err)
 			}
 			require.NoError(t, err)
+			require.Greater(t, info.ChunkSize, int64(0), "chunk writer returned no chunk size")
 
-			contents1 := random.String(size5MBs)
-			contents2 := random.String(size5MBs)
-			contents3 := random.String(size1MB)
+			// A backend whose chunk size couldn't be made small takes the
+			// file in fewer than three chunks, so start again with a file
+			// of two full chunks and a short one - unless the chunks are
+			// too big to hold in memory
+			if 2*info.ChunkSize >= totalSize && info.ChunkSize <= int64(128*fs.Mebi) {
+				require.NoError(t, out.Abort(ctx))
+				t.Logf("Chunk size %v leaves the file in fewer than three chunks, writing %v instead", fs.SizeSuffix(info.ChunkSize), fs.SizeSuffix(2*info.ChunkSize+int64(size1MB)))
+				totalSize = 2*info.ChunkSize + int64(size1MB)
+				info, out, err = open(totalSize)
+				require.NoError(t, err)
+			}
 
-			var n int64
-			n, err = out.WriteChunk(ctx, 1, strings.NewReader(contents2))
-			assert.NoError(t, err)
-			assert.Equal(t, int64(size5MBs), n)
-			n, err = out.WriteChunk(ctx, 2, strings.NewReader(contents3))
-			assert.NoError(t, err)
-			assert.Equal(t, int64(size1MB), n)
-			n, err = out.WriteChunk(ctx, 0, strings.NewReader(contents1))
-			assert.NoError(t, err)
-			assert.Equal(t, int64(size5MBs), n)
+			// Cut the file into chunks of the size the writer asked for
+			var contents []string
+			for offset := int64(0); offset < totalSize; offset += info.ChunkSize {
+				contents = append(contents, random.String(int(min(info.ChunkSize, totalSize-offset))))
+			}
+
+			// Write the chunks out of order, chunk 0 last
+			for i := 1; i <= len(contents); i++ {
+				chunkNumber := i % len(contents)
+				n, err := out.WriteChunk(ctx, chunkNumber, strings.NewReader(contents[chunkNumber]))
+				assert.NoError(t, err)
+				assert.Equal(t, int64(len(contents[chunkNumber])), n)
+			}
 
 			assert.NoError(t, out.Close(ctx))
 
 			obj := fstest.NewObject(ctx, t, f, path)
-			originalContents := contents1 + contents2 + contents3
+			originalContents := strings.Join(contents, "")
 			fileContents := ReadObject(ctx, t, obj, -1)
 			isEqual := originalContents == fileContents
 			assert.True(t, isEqual, "contents of file differ")

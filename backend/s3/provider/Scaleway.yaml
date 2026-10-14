@@ -4,10 +4,12 @@ region:
   nl-ams: Amsterdam, The Netherlands
   fr-par: Paris, France
   pl-waw: Warsaw, Poland
+  it-mil: Milan, Italy
 endpoint:
   s3.nl-ams.scw.cloud: Amsterdam Endpoint
   s3.fr-par.scw.cloud: Paris Endpoint
   s3.pl-waw.scw.cloud: Warsaw Endpoint
+  s3.it-mil.scw.cloud: Milan Endpoint
 acl: {}
 storage_class:
   '': Default.

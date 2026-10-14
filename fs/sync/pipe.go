@@ -56,7 +56,7 @@ func (p *pipe) Len() int {
 	return len(p.queue)
 }
 
-// Len satisfy heap.Interface - must be called with lock held
+// Less satisfies heap.Interface and must be called with the lock held.
 func (p *pipe) Less(i, j int) bool {
 	return p.less(p.queue[i], p.queue[j])
 }

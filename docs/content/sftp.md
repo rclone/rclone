@@ -1426,8 +1426,8 @@ Properties:
 
 On some SFTP servers (e.g. Synology) the paths are different
 for SSH and SFTP so the hashes can't be calculated properly.
-You can either use [`--sftp-path-override`](#--sftp-path-override)
-or [`disable_hashcheck`](#--sftp-disable-hashcheck).
+You can either use [`--sftp-path-override`](#sftp-path-override)
+or [`disable_hashcheck`](#sftp-disable-hashcheck).
 
 The only ssh agent supported under Windows is Putty's pageant.
 

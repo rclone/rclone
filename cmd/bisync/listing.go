@@ -617,10 +617,11 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 				srcList.put(srcNewName, new.size, new.time, new.hash, new.id, new.flags)
 				dstList.put(srcNewName, new.size, new.time, new.hash, new.id, new.flags)
 			}
-			if srcNewName != srcOldName {
+			// the winner of a conflict keeps the old name and is copied to the other side
+			if srcNewName != srcOldName && dstNewName != srcOldName {
 				srcList.remove(srcOldName)
 			}
-			if srcNewName != dstOldName {
+			if srcNewName != dstOldName && dstNewName != dstOldName {
 				dstList.remove(dstOldName)
 			}
 		}

@@ -627,6 +627,22 @@ func testChunkNumberOverflow(t *testing.T, f *Fs) {
 	_ = file.Remove(ctx)
 }
 
+// testOrphanTempChunks checks that temporary chunks left behind by an
+// interrupted upload are not listed and don't break the listing
+func testOrphanTempChunks(t *testing.T, f *Fs) {
+	const dir = "orphan"
+	ctx := context.Background()
+	defer func() {
+		_ = operations.Purge(ctx, f.base, dir)
+	}()
+
+	modTime := fstest.Time("2001-02-03T04:05:06.499999999Z")
+	item := fstest.Item{Path: f.makeChunkName(path.Join(dir, "interrupted"), 0, "", "abc123"), ModTime: modTime}
+	fstests.PutTestContents(ctx, t, f.base, &item, "data", true)
+
+	fstest.CheckListingWithRoot(t, f, dir, nil, nil, f.Precision())
+}
+
 func testMetadataInput(t *testing.T, f *Fs) {
 	const minChunkForTest = 50
 	if f.opt.ChunkSize < minChunkForTest {
@@ -927,6 +943,9 @@ func (f *Fs) InternalTest(t *testing.T) {
 	})
 	t.Run("BackwardsCompatibility", func(t *testing.T) {
 		testBackwardsCompatibility(t, f)
+	})
+	t.Run("OrphanTempChunks", func(t *testing.T) {
+		testOrphanTempChunks(t, f)
 	})
 	t.Run("ChunkerServerSideMove", func(t *testing.T) {
 		testChunkerServerSideMove(t, f)

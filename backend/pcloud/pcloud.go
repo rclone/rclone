@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -56,11 +57,28 @@ var (
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
 	}
+
+	// hostnameRe matches a lower case API hostname within pCloud's
+	// domain, eg api.pcloud.com or eapi.pcloud.com
+	hostnameRe = regexp.MustCompile(`^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+pcloud\.com$`)
 )
 
 // Update the TokenURL with the actual hostname
 func updateTokenURL(oauthConfig *oauthutil.Config, hostname string) {
 	oauthConfig.TokenURL = "https://" + hostname + "/oauth2_token"
+}
+
+// callbackHostname checks and returns the API hostname pCloud sent back in the
+// OAuth callback, lower cased, or defaultHostname if it sent none.
+func callbackHostname(hostname string) (string, error) {
+	if hostname == "" {
+		return defaultHostname, nil
+	}
+	hostname = strings.ToLower(hostname)
+	if !hostnameRe.MatchString(hostname) {
+		return "", fmt.Errorf("invalid hostname %q in oauth response", hostname)
+	}
+	return hostname, nil
 }
 
 // Register with Fs
@@ -81,9 +99,9 @@ func init() {
 				if auth == nil || auth.Form == nil {
 					return errors.New("form not found in response")
 				}
-				hostname := auth.Form.Get("hostname")
-				if hostname == "" {
-					hostname = defaultHostname
+				hostname, err := callbackHostname(auth.Form.Get("hostname"))
+				if err != nil {
+					return err
 				}
 				// Save the hostname in the config
 				m.Set("hostname", hostname)
@@ -95,7 +113,6 @@ func init() {
 			return oauthutil.ConfigOut("", &oauthutil.Options{
 				OAuth2Config: oauthConfig,
 				CheckAuth:    checkAuth,
-				StateBlankOK: true, // pCloud seems to drop the state parameter now - see #4210
 			})
 		},
 		Options: append(oauthutil.SharedOptions, []fs.Option{{

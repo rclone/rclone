@@ -121,13 +121,14 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Box" home="https://www.box.com/" config="/box/" >}}
 {{< provider name="Ceph" home="http://ceph.com/" config="/s3/#ceph" >}}
 {{< provider name="China Mobile Ecloud Elastic Object Storage (EOS)" home="https://ecloud.10086.cn/home/product-introduction/eos/" config="/s3/#china-mobile-ecloud-eos" >}}
-{{< provider name="Arvan Cloud Object Storage (AOS)" home="https://www.arvancloud.ir/en/products/cloud-storage" config="/s3/#arvan-cloud-object-storage-aos" >}}
+{{< provider name="Arvan Cloud Object Storage (AOS)" home="https://www.arvancloud.ir/en/products/cloud-storage" config="/s3/#arvan-cloud" >}}
 {{< provider name="Citrix ShareFile" home="http://sharefile.com/" config="/sharefile/" >}}
 {{< provider name="Cloudflare R2" home="https://blog.cloudflare.com/r2-open-beta/" config="/s3/#cloudflare-r2" >}}
 {{< provider name="Cloudinary" home="https://cloudinary.com/" config="/cloudinary/" >}}
 {{< provider name="Cubbit DS3" home="https://cubbit.io/ds3-cloud" config="/s3/#Cubbit" >}}
 {{< provider name="DigitalOcean Spaces" home="https://www.digitalocean.com/products/object-storage/" config="/s3/#digitalocean-spaces" >}}
 {{< provider name="Digi Storage" home="https://storage.rcs-rds.ro/" config="/koofr/#digi-storage" >}}
+{{< provider name="dosya.dev" home="https://dosya.dev/" config="/dosya/" >}}
 {{< provider name="Dreamhost" home="https://www.dreamhost.com/cloud/storage/" config="/s3/#dreamhost" >}}
 {{< provider name="Drime" home="https://www.drime.cloud/" config="/drime/" >}}
 {{< provider name="Dropbox" home="https://www.dropbox.com/" config="/dropbox/" >}}
@@ -165,7 +166,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="IONOS Cloud" home="https://cloud.ionos.com/storage/object-storage" config="/s3/#ionos" >}}
 {{< provider name="Koofr" home="https://koofr.eu/" config="/koofr/" >}}
 {{< provider name="Leviia Object Storage" home="https://www.leviia.com/object-storage" config="/s3/#leviia" >}}
-{{< provider name="Liara Object Storage" home="https://liara.ir/landing/object-storage" config="/s3/#liara-object-storage" >}}
+{{< provider name="Liara Object Storage" home="https://liara.ir/landing/object-storage" config="/s3/#liara-cloud" >}}
 {{< provider name="Linkbox" home="https://linkbox.to/" config="/linkbox/" >}}
 {{< provider name="Linode Object Storage" home="https://www.linode.com/products/object-storage/" config="/s3/#linode" >}}
 {{< provider name="Magalu" home="https://magalu.cloud/object-storage/" config="/s3/#magalu" >}}
@@ -202,6 +203,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="RackCorp Object Storage" home="https://www.rackcorp.com/" config="/s3/#RackCorp" >}}
 {{< provider name="Rackspace Cloud Files" home="https://www.rackspace.com/cloud/files" config="/swift/" >}}
 {{< provider name="Rclone Serve S3" home="/commands/rclone_serve_s3/" config="/s3/#rclone" >}}
+{{< provider name="RelAix.Storage" home="https://www.relaix.net/" config="/s3/#relaix" >}}
 {{< provider name="rsync.net" home="https://rsync.net/products/rclone.html" config="/sftp/#rsync-net" >}}
 {{< provider name="Scaleway" home="https://www.scaleway.com/object-storage/" config="/s3/#scaleway" >}}
 {{< provider name="Scality (RING / ARTESCA)" home="https://www.scality.com/" config="/s3/#scality" >}}

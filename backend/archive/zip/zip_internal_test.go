@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -31,6 +32,26 @@ func writeZip(t *testing.T, dir, name string, names ...string) string {
 			require.NoError(t, err)
 		}
 	}
+	require.NoError(t, zw.Close())
+	require.NoError(t, os.WriteFile(filepath.Join(dir, name), buf.Bytes(), 0600))
+	return name
+}
+
+// writeZipSymlink builds a zip holding file and a symlink entry link
+// pointing at target, and returns its leaf name.
+func writeZipSymlink(t *testing.T, dir, name, file, link, target string) string {
+	var buf bytes.Buffer
+	zw := zip.NewWriter(&buf)
+	w, err := zw.Create(file)
+	require.NoError(t, err)
+	_, err = w.Write([]byte("data for " + file))
+	require.NoError(t, err)
+	hdr := &zip.FileHeader{Name: link}
+	hdr.SetMode(os.ModeSymlink | 0777)
+	w, err = zw.CreateHeader(hdr)
+	require.NoError(t, err)
+	_, err = w.Write([]byte(target))
+	require.NoError(t, err)
 	require.NoError(t, zw.Close())
 	require.NoError(t, os.WriteFile(filepath.Join(dir, name), buf.Bytes(), 0600))
 	return name
@@ -169,4 +190,38 @@ func TestListCacheNotAliased(t *testing.T) {
 		remotes = append(remotes, entry.Remote())
 	}
 	assert.Equal(t, []string{"a.txt", "b.txt", "c.txt"}, remotes)
+}
+
+// A symlink stored in the archive is skipped unless -l/--links is in
+// use, as it is on the other backends.  With the flag it is exposed
+// under its name with the link suffix and reads back as its target.
+func TestReadZipSymlink(t *testing.T) {
+	ctx := context.Background()
+	dir := t.TempDir()
+	name := writeZipSymlink(t, dir, "links.zip", "file.txt", "link.txt", "file.txt")
+
+	localFs, err := cache.Get(ctx, dir)
+	require.NoError(t, err)
+
+	f, err := New(ctx, localFs, name, "", "")
+	require.NoError(t, err)
+	assert.Equal(t, []string{"file.txt"}, allRemotes(t, f))
+
+	ctx, ci := fs.AddConfig(ctx)
+	ci.Links = true
+
+	f, err = New(ctx, localFs, name, "", "")
+	require.NoError(t, err)
+	assert.Equal(t, []string{"file.txt", "link.txt" + fs.LinkSuffix}, allRemotes(t, f))
+
+	o, err := f.NewObject(ctx, "link.txt"+fs.LinkSuffix)
+	require.NoError(t, err)
+	assert.Equal(t, int64(len("file.txt")), o.Size())
+
+	rc, err := o.Open(ctx)
+	require.NoError(t, err)
+	target, err := io.ReadAll(rc)
+	require.NoError(t, err)
+	require.NoError(t, rc.Close())
+	assert.Equal(t, "file.txt", string(target))
 }

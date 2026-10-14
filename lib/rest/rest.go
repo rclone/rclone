@@ -307,6 +307,60 @@ func RefuseHTTPSDowngradeRedirectFn(req *http.Request, via []*http.Request) erro
 	return nil
 }
 
+// StripHeadersOnCrossHostRedirectFn returns a CheckRedirect function
+// which follows redirects like the default net/http client but refuses
+// an HTTPS to HTTP downgrade with ErrHTTPSDowngrade and removes the
+// named headers from the request once the redirect chain has left the
+// host of the original request.
+//
+// Start a header with "*" to match it without canonicalising, as
+// SetHeader and Opts.ExtraHeaders do.
+//
+// Go strips Authorization on a hostname change but keeps it for a
+// subdomain or a different port, and has no idea which custom headers
+// carry secrets, so a backend which sends credentials in headers to a
+// host it does not control uses this to keep them at home.
+func StripHeadersOnCrossHostRedirectFn(headers ...string) func(req *http.Request, via []*http.Request) error {
+	return func(req *http.Request, via []*http.Request) error {
+		err := RefuseHTTPSDowngradeRedirectFn(req, via)
+		if err != nil {
+			return err
+		}
+		if redirectLeavesHost(req, via) {
+			fs.Debugf(nil, "redirect to %s leaves %s: not sending %s", req.URL.Redacted(), via[0].URL.Redacted(), strings.Join(headers, ", "))
+			for _, header := range headers {
+				if strings.HasPrefix(header, "*") {
+					delete(req.Header, header[1:])
+				} else {
+					req.Header.Del(header)
+				}
+			}
+		}
+		return nil
+	}
+}
+
+// redirectLeavesHost reports whether any hop in the redirect chain
+// via plus the pending request req is to a different host from the
+// original request via[0].
+//
+// net/http copies the headers afresh from the original request for
+// every hop, so once the chain has visited another host the headers
+// must be stripped from every subsequent hop, even one back to the
+// original host, as the other host chose the URL.
+func redirectLeavesHost(req *http.Request, via []*http.Request) bool {
+	if len(via) == 0 {
+		return false
+	}
+	origin := via[0].URL
+	for _, hop := range via[1:] {
+		if !SameHost(hop.URL, origin) {
+			return true
+		}
+	}
+	return !SameHost(req.URL, origin)
+}
+
 // Do calls the internal http.Client.Do method
 func (api *Client) Do(req *http.Request) (*http.Response, error) {
 	return api.c.Do(req)

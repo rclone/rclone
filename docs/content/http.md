@@ -20,7 +20,9 @@ it will be resolved relative to this url, according to the URL standard. This
 means with remote url `https://beta.rclone.org/branch` and path `fix`, the
 resolved URL will be `https://beta.rclone.org/branch/fix`, while with path
 `/fix` the resolved URL will be `https://beta.rclone.org/fix` as the absolute
-path is resolved from the root of the domain.
+path is resolved from the root of the domain. The path can't change the scheme,
+host or user of the configured url, so a path such as `//other.example.com/fix`
+is rejected.
 
 If the path following the `remote:` ends with `/` it will be assumed to point
 to a directory. If the path does not end with `/`, then a HEAD request is sent

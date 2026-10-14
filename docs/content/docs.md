@@ -43,6 +43,7 @@ See the following for detailed instructions for
 - [Crypt](/crypt/) - to encrypt other remotes
 - [DigitalOcean Spaces](/s3/#digitalocean-spaces)
 - [Digi Storage](/koofr/#digi-storage)
+- [dosya.dev](/dosya/)
 - [Drime](/drime/)
 - [Dropbox](/dropbox/)
 - [Enterprise File Fabric](/filefabric/)
@@ -1463,6 +1464,12 @@ if you want to add headers only for downloads use `--header-download`.
 This flag is supported for all HTTP based backends even those not
 supported by `--header-upload` and `--header-download` so may be used
 as a workaround for those with care.
+
+The headers are only sent to the host of the original request. If the
+server redirects to another host (including a subdomain or a different
+port), or redirects an `https` request to `http`, the headers are not
+sent to it, or to any further hop in that redirect chain. Rclone logs
+this at debug level (`-vv`).
 
 ```console
 rclone ls remote:test --header "X-Rclone: Foo" --header "X-LetMeIn: Yes"
