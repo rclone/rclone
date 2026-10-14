@@ -934,15 +934,11 @@ func TestRefillListRInputStopsWhenInputClosed(t *testing.T) {
 	}()
 	select {
 	case ok := <-done:
-		if ok {
-			t.Fatal("refill continued after the input channel was closed")
-		}
+		require.False(t, ok, "refill continued after the input channel was closed")
 	case <-time.After(time.Second):
 		t.Fatal("refill blocked after the input channel was closed")
 	}
-	if len(overflow) != 1 {
-		t.Fatalf("overflow = %d entries, want 1", len(overflow))
-	}
+	require.Len(t, overflow, 1)
 
 	finished := make(chan struct{})
 	go func() {
@@ -962,15 +958,9 @@ func TestRefillListRInputSendsQueuedDirectory(t *testing.T) {
 	in := make(chan listREntry, listRInputBuffer)
 	overflow := []listREntry{{id: "folder", path: "folder"}}
 
-	if !refillListRInput(&mu, &in, &overflow, &wg) {
-		t.Fatal("refill stopped while the input channel was open")
-	}
-	if len(overflow) != 0 {
-		t.Fatalf("overflow = %d entries, want 0", len(overflow))
-	}
+	require.True(t, refillListRInput(&mu, &in, &overflow, &wg), "refill stopped while the input channel was open")
+	require.Empty(t, overflow)
 	got := <-in
-	if got.id != "folder" || got.path != "folder" {
-		t.Fatalf("sent %+v", got)
-	}
+	require.Equal(t, listREntry{id: "folder", path: "folder"}, got)
 	wg.Done()
 }
