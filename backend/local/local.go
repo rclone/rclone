@@ -12,6 +12,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -36,6 +37,10 @@ import (
 const (
 	devUnset   = 0xdeadbeefcafebabe                                     // a device id meaning it is unset
 	useReadDir = (runtime.GOOS == "windows" || runtime.GOOS == "plan9") // these OSes read FileInfos directly
+	// maxLinkTargetSize is the largest symlink target accepted when
+	// translating a .rclonelink object, comfortably above any OS path
+	// limit (Windows allows 32767 UTF-16 units).
+	maxLinkTargetSize = 128 * 1024
 )
 
 // timeType allows the user to choose what exactly ModTime() returns
@@ -311,10 +316,10 @@ set this flag.`,
 				Name: "fatal_if_no_space",
 				Help: `Make out-of-space errors fatal during transfers.
 
-When enabled, an ENOSPC error during a write returns a fatal error so
-that rclone aborts rather than retrying the operation. Useful for
-backup scripts that should halt loudly on a full disk rather than spin
-retrying.`,
+When enabled, an out of space error while writing, creating a directory,
+or creating a file returns a fatal error so that rclone aborts rather
+than retrying the operation. Useful for backup scripts that should halt
+loudly on a full disk rather than spin retrying.`,
 				Default:  false,
 				Advanced: true,
 			},
@@ -437,6 +442,10 @@ type Directory struct {
 var (
 	errLinksAndCopyLinks = errors.New("can't use -l/--links with -L/--copy-links")
 	errLinksNeedsSuffix  = errors.New("need \"" + fs.LinkSuffix + "\" suffix to refer to symlink when using -l/--links")
+	errPathEscapes       = errors.New("file name is not a path within the local root - check the encoding")
+	errSymlinkLoop       = errors.New("loop detected: points to a parent directory")
+	errLinkTargetTooLong = errors.New("symlink target is too long to be a path")
+	errLinkNameInvalid   = errors.New("translated link needs a file name before the \"" + fs.LinkSuffix + "\" suffix")
 )
 
 // NewFs constructs an Fs from the path
@@ -564,25 +573,24 @@ func (f *Fs) caseInsensitive() bool {
 	return runtime.GOOS == "windows" || runtime.GOOS == "darwin"
 }
 
-// translateLink checks whether the remote is a translated link
-// and returns a new path, removing the suffix as needed,
-// It also returns whether this is a translated link at all
-//
-// for regular files, localPath is returned unchanged
-func translateLink(remote, localPath string) (newLocalPath string, isTranslatedLink bool) {
-	isTranslatedLink = strings.HasSuffix(remote, fs.LinkSuffix)
-	newLocalPath = strings.TrimSuffix(localPath, fs.LinkSuffix)
-	return newLocalPath, isTranslatedLink
-}
-
 // newObject makes a half completed Object
-func (f *Fs) newObject(remote string) *Object {
-	translatedLink := false
-	localPath := f.localPath(remote)
-
+func (f *Fs) newObject(remote string) (*Object, error) {
+	name, translatedLink := remote, false
 	if f.opt.TranslateSymlinks {
-		// Possibly receive a new name for localPath
-		localPath, translatedLink = translateLink(remote, localPath)
+		name, translatedLink = strings.CutSuffix(remote, fs.LinkSuffix)
+	}
+	if translatedLink {
+		// Check this makes a valid native file name
+		native := f.nativePath(name)
+		switch native[strings.LastIndex(native, string(filepath.Separator))+1:] {
+		case "", ".", "..":
+			return nil, fserrors.NoRetryError(fmt.Errorf("%q: %w", remote, errLinkNameInvalid))
+		}
+	}
+	// Check the name after any suffix removal
+	localPath, err := f.localPath(name)
+	if err != nil {
+		return nil, err
 	}
 
 	return &Object{
@@ -590,14 +598,17 @@ func (f *Fs) newObject(remote string) *Object {
 		remote:         remote,
 		path:           localPath,
 		translatedLink: translatedLink,
-	}
+	}, nil
 }
 
 // Return an Object from a path
 //
 // May return nil if an error occurred
 func (f *Fs) newObjectWithInfo(remote string, info os.FileInfo) (fs.Object, error) {
-	o := f.newObject(remote)
+	o, err := f.newObject(remote)
+	if err != nil {
+		return nil, err
+	}
 	if info != nil {
 		o.setMetadata(info)
 	} else {
@@ -630,12 +641,23 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 }
 
 // Create new directory object from the info passed in
-func (f *Fs) newDirectory(dir string, fi os.FileInfo) *Directory {
-	o := f.newObject(dir)
-	o.setMetadata(fi)
-	return &Directory{
-		Object: *o,
+//
+// Directories are never translated links, so the name is used as is
+// whatever suffix it has.
+func (f *Fs) newDirectory(dir string, fi os.FileInfo) (*Directory, error) {
+	localPath, err := f.localPath(dir)
+	if err != nil {
+		return nil, err
 	}
+	d := &Directory{
+		Object: Object{
+			fs:     f,
+			remote: dir,
+			path:   localPath,
+		},
+	}
+	d.setMetadata(fi)
+	return d, nil
 }
 
 // List the objects and directories in dir into entries.  The
@@ -650,11 +672,15 @@ func (f *Fs) newDirectory(dir string, fi os.FileInfo) *Directory {
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	filter, useFilter := filter.GetConfig(ctx), filter.GetUseFilter(ctx)
 
-	fsDirPath := f.localPath(dir)
+	fsDirPath, err := f.localPath(dir)
+	if err != nil {
+		return nil, err
+	}
 	_, err = os.Stat(fsDirPath)
 	if err != nil {
 		return nil, fs.ErrorDirNotFound
 	}
+	var parents []os.FileInfo // fsDirPath and its parents, read on first use
 
 	fd, err := os.Open(fsDirPath)
 	if err != nil {
@@ -675,6 +701,9 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}()
 
 	for {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return nil, ctxErr
+		}
 		var fis []os.FileInfo
 		if useReadDir {
 			// Windows and Plan9 read the directory entries with the stat information in which
@@ -732,11 +761,28 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			if f.opt.FollowSymlinks && (mode&symlinkFlag) != 0 {
 				localPath := filepath.Join(fsDirPath, name)
 				fi, err = os.Stat(localPath)
+				// A directory symlink pointing to a parent would be followed
+				// until the OS returns ELOOP, which can take a very long time
+				if err == nil && fi.IsDir() {
+					if parents == nil {
+						parents = statParents(fsDirPath)
+					}
+					if slices.ContainsFunc(parents, func(parent os.FileInfo) bool { return os.SameFile(fi, parent) }) {
+						// Quietly skip loops the directory filters exclude as
+						// the layer above wouldn't recurse into them
+						if useFilter {
+							if include, dirErr := filter.IncludeDirectory(ctx, f)(newRemote); dirErr == nil && !include {
+								continue
+							}
+						}
+						err = errSymlinkLoop
+					}
+				}
 				// Quietly skip errors on excluded files and directories
 				if err != nil && useFilter && !filter.IncludeRemote(newRemote) {
 					continue
 				}
-				if os.IsNotExist(err) || isCircularSymlinkError(err) {
+				if os.IsNotExist(err) || isCircularSymlinkError(err) || errors.Is(err, errSymlinkLoop) {
 					// Skip bad symlinks and circular symlinks
 					err = fserrors.NoRetryError(fmt.Errorf("symlink: %w", err))
 					fs.Errorf(newRemote, "Listing error: %v", err)
@@ -752,7 +798,10 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				// Ignore directories which are symlinks.  These are junction points under windows which
 				// are kind of a souped up symlink. Unix doesn't have directories which are symlinks.
 				if (mode&symlinkFlag) == 0 && f.dev == readDevice(fi, f.opt.OneFileSystem) {
-					d := f.newDirectory(newRemote, fi)
+					d, err := f.newDirectory(newRemote, fi)
+					if err != nil {
+						return nil, err
+					}
 					entries = append(entries, d)
 				}
 			} else {
@@ -766,6 +815,12 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 					continue
 				}
 				fso, err := f.newObjectWithInfo(newRemote, fi)
+				if errors.Is(err, errLinkNameInvalid) {
+					// Skip a badly named ".rclonelink" file
+					fs.Errorf(newRemote, "Listing error: %v", err)
+					_ = accounting.Stats(ctx).Error(err)
+					continue
+				}
 				if err != nil {
 					return nil, err
 				}
@@ -776,6 +831,21 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		}
 	}
 	return entries, nil
+}
+
+// statParents returns the info for dirPath and each of its parents up
+// to the root of the file system, skipping any which can't be read.
+func statParents(dirPath string) (parents []os.FileInfo) {
+	for {
+		if fi, err := os.Stat(dirPath); err == nil {
+			parents = append(parents, fi)
+		}
+		parent := filepath.Dir(dirPath)
+		if parent == dirPath {
+			return parents
+		}
+		dirPath = parent
+	}
 }
 
 func (f *Fs) cleanRemote(dir, filename string) (remote string) {
@@ -795,15 +865,34 @@ func (f *Fs) cleanRemote(dir, filename string) (remote string) {
 	return
 }
 
-func (f *Fs) localPath(name string) string {
-	return filepath.Join(f.root, filepath.FromSlash(f.opt.Enc.FromStandardPath(name)))
+// nativePath returns name in the OS encoding with OS path separators,
+// relative to f.root, without cleaning it.
+func (f *Fs) nativePath(name string) string {
+	return filepath.FromSlash(f.opt.Enc.FromStandardPath(name))
+}
+
+// localPath returns the OS path for the object called name, which is
+// always underneath f.root.
+//
+// It returns errPathEscapes if name resolves outside f.root which can
+// happen depending on the encoding.
+func (f *Fs) localPath(name string) (string, error) {
+	localPath := filepath.Join(f.root, f.nativePath(name))
+	rel, err := filepath.Rel(f.root, localPath)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return "", fserrors.NoRetryError(fmt.Errorf("%q: %w", name, errPathEscapes))
+	}
+	return localPath, nil
 }
 
 // Put the Object to the local filesystem
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	// Temporary Object under construction - info filled in by Update()
-	o := f.newObject(src.Remote())
-	err := o.Update(ctx, in, src, options...)
+	o, err := f.newObject(src.Remote())
+	if err != nil {
+		return nil, err
+	}
+	err = o.Update(ctx, in, src, options...)
 	if err != nil {
 		return nil, err
 	}
@@ -817,8 +906,11 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 
 // Mkdir creates the directory if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	localPath := f.localPath(dir)
-	err := f.mkdirAll(localPath)
+	localPath, err := f.localPath(dir)
+	if err != nil {
+		return err
+	}
+	err = f.mkdirAll(localPath)
 	if err != nil {
 		return err
 	}
@@ -834,10 +926,14 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 
 // DirSetModTime sets the directory modtime for dir
 func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) error {
+	localPath, err := f.localPath(dir)
+	if err != nil {
+		return err
+	}
 	o := Object{
 		fs:     f,
 		remote: dir,
-		path:   f.localPath(dir),
+		path:   localPath,
 	}
 	return o.SetModTime(ctx, modTime)
 }
@@ -851,7 +947,10 @@ func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) e
 // It returns the directory that was created.
 func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata) (fs.Directory, error) {
 	// Find and or create the directory
-	localPath := f.localPath(dir)
+	localPath, err := f.localPath(dir)
+	if err != nil {
+		return nil, err
+	}
 	fi, err := f.lstat(localPath)
 	if errors.Is(err, os.ErrNotExist) {
 		err := f.Mkdir(ctx, dir)
@@ -867,7 +966,10 @@ func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata
 	}
 
 	// Create directory object
-	d := f.newDirectory(dir, fi)
+	d, err := f.newDirectory(dir, fi)
+	if err != nil {
+		return nil, err
+	}
 
 	// Set metadata on the directory object if provided
 	if metadata != nil {
@@ -888,13 +990,16 @@ func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata
 //
 // If it isn't empty it will return an error
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	localPath := f.localPath(dir)
+	localPath, err := f.localPath(dir)
+	if err != nil {
+		return err
+	}
 	if fi, err := os.Stat(localPath); err != nil {
 		return err
 	} else if !fi.IsDir() {
 		return fs.ErrorIsFile
 	}
-	err := os.Remove(localPath)
+	err = os.Remove(localPath)
 	if runtime.GOOS == "windows" && errors.Is(err, iofs.ErrPermission) { // https://github.com/golang/go/issues/26295
 		if os.Chmod(localPath, 0o600) == nil {
 			err = os.Remove(localPath)
@@ -984,13 +1089,16 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	// Temporary Object under construction
-	dstObj := f.newObject(remote)
+	dstObj, err := f.newObject(remote)
+	if err != nil {
+		return nil, err
+	}
 	dstObj.fs.objectMetaMu.RLock()
 	dstObjMode := dstObj.mode
 	dstObj.fs.objectMetaMu.RUnlock()
 
 	// Check it is a file if it exists
-	err := dstObj.lstat()
+	err = dstObj.lstat()
 	if os.IsNotExist(err) {
 		// OK
 	} else if err != nil {
@@ -1056,11 +1164,17 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		fs.Debugf(srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
-	srcPath := srcFs.localPath(srcRemote)
-	dstPath := f.localPath(dstRemote)
+	srcPath, err := srcFs.localPath(srcRemote)
+	if err != nil {
+		return err
+	}
+	dstPath, err := f.localPath(dstRemote)
+	if err != nil {
+		return err
+	}
 
 	// Check if destination exists
-	_, err := os.Lstat(dstPath)
+	_, err = os.Lstat(dstPath)
 	if !os.IsNotExist(err) {
 		return fs.ErrorDirExists
 	}
@@ -1260,7 +1374,7 @@ func (o *Object) setTimes(atime, mtime time.Time) (err error) {
 	if o.translatedLink {
 		err = lChtimes(o.path, atime, mtime)
 	} else {
-		err = os.Chtimes(o.path, atime, mtime)
+		err = o.fs.chtimes(o.path, atime, mtime)
 	}
 	return err
 }
@@ -1364,6 +1478,13 @@ func (o *Object) openTranslatedLink(offset, limit int64) (lrc io.ReadCloser, err
 	linkdst, err := os.Readlink(o.path)
 	if err != nil {
 		return nil, err
+	}
+	// Clamp offset into range to avoid panic
+	if offset < 0 {
+		offset = 0
+	}
+	if offset > int64(len(linkdst)) {
+		offset = int64(len(linkdst))
 	}
 	return readers.NewLimitedReadCloser(io.NopCloser(strings.NewReader(linkdst[offset:])), limit), nil
 }
@@ -1510,6 +1631,45 @@ func (f *Fs) symlink(target, localPath string) (err error) {
 	return root.Symlink(target, rel)
 }
 
+// chmod changes the mode of localPath.
+func (f *Fs) chmod(localPath string, mode os.FileMode) (err error) {
+	if !f.opt.TranslateSymlinks {
+		return os.Chmod(localPath, mode)
+	}
+	root, rel, err := f.osRoot(localPath)
+	if err != nil {
+		return err
+	}
+	defer fs.CheckClose(root, &err)
+	return root.Chmod(rel, mode)
+}
+
+// chown changes the ownership of localPath.
+func (f *Fs) chown(localPath string, uid, gid int) (err error) {
+	if !f.opt.TranslateSymlinks {
+		return os.Chown(localPath, uid, gid)
+	}
+	root, rel, err := f.osRoot(localPath)
+	if err != nil {
+		return err
+	}
+	defer fs.CheckClose(root, &err)
+	return root.Chown(rel, uid, gid)
+}
+
+// chtimes changes the atime and mtime of localPath.
+func (f *Fs) chtimes(localPath string, atime, mtime time.Time) (err error) {
+	if !f.opt.TranslateSymlinks {
+		return os.Chtimes(localPath, atime, mtime)
+	}
+	root, rel, err := f.osRoot(localPath)
+	if err != nil {
+		return err
+	}
+	defer fs.CheckClose(root, &err)
+	return root.Chtimes(rel, atime, mtime)
+}
+
 // mkdirAll makes all the directories needed to store the object
 func (o *Object) mkdirAll() error {
 	return o.fs.mkdirAll(filepath.Dir(o.path))
@@ -1530,12 +1690,17 @@ func isDiskFullError(err error) bool {
 	return errors.Is(err, file.ErrDiskFull) || fserrors.IsErrNoSpace(err)
 }
 
+func wrapFatalIfNoSpace(err error, enabled bool) error {
+	if err != nil && enabled && isDiskFullError(err) {
+		return fserrors.FatalError(err)
+	}
+	return err
+}
+
 // Update the object from in with modTime and size
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	defer func() {
-		if err != nil && o.fs.opt.FatalIfNoSpace && isDiskFullError(err) {
-			err = fserrors.FatalError(err)
-		}
+		err = wrapFatalIfNoSpace(err, o.fs.opt.FatalIfNoSpace)
 	}()
 	var out io.WriteCloser
 	var hasher *hash.MultiHasher
@@ -1592,21 +1757,28 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 		out = f
 	} else {
+		// The target is buffered in memory, so stop reading just past
+		// the longest acceptable one rather than trust the source
+		in = io.LimitReader(in, maxLinkTargetSize+1)
 		out = nopWriterCloser{&symlinkData}
 	}
 
-	// Calculate the hash of the object we are reading as we go along
+	// Calculate the hash of the object as we write it
+	var w io.Writer = out
 	if hasher != nil {
-		in = io.TeeReader(in, hasher)
+		w = io.MultiWriter(w, hasher)
 	}
 
-	_, err = io.Copy(out, in)
+	_, err = io.Copy(w, in)
 	closeErr := out.Close()
 	if err == nil {
 		err = closeErr
 	}
 
 	if o.translatedLink {
+		if err == nil && symlinkData.Len() > maxLinkTargetSize {
+			err = fserrors.NoRetryError(errLinkTargetTooLong)
+		}
 		if err == nil {
 			// Use the contents of the copied object to create a symlink,
 			// without following or creating it through a planted symlink
@@ -1657,16 +1829,37 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 var sparseWarning sync.Once
 
+type fatalIfNoSpaceWriterAt struct {
+	fs.WriterAtCloser
+	enabled bool
+}
+
+func (w *fatalIfNoSpaceWriterAt) WriteAt(p []byte, off int64) (n int, err error) {
+	n, err = w.WriterAtCloser.WriteAt(p, off)
+	return n, wrapFatalIfNoSpace(err, w.enabled)
+}
+
+func (w *fatalIfNoSpaceWriterAt) Close() error {
+	return wrapFatalIfNoSpace(w.WriterAtCloser.Close(), w.enabled)
+}
+
 // OpenWriterAt opens with a handle for random access writes
 //
 // Pass in the remote desired and the size if known.
 //
 // It truncates any existing object
-func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.WriterAtCloser, error) {
-	// Temporary Object under construction
-	o := f.newObject(remote)
+func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (writer fs.WriterAtCloser, err error) {
+	defer func() {
+		err = wrapFatalIfNoSpace(err, f.opt.FatalIfNoSpace)
+	}()
 
-	err := o.mkdirAll()
+	// Temporary Object under construction
+	o, err := f.newObject(remote)
+	if err != nil {
+		return nil, err
+	}
+
+	err = o.mkdirAll()
 	if err != nil {
 		return nil, err
 	}
@@ -1697,7 +1890,10 @@ func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.Wr
 		}
 	}
 
-	return out, nil
+	return &fatalIfNoSpaceWriterAt{
+		WriterAtCloser: out,
+		enabled:        f.opt.FatalIfNoSpace,
+	}, nil
 }
 
 // setMetadata sets the file info from the os.FileInfo passed in

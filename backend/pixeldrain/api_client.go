@@ -213,7 +213,7 @@ func (f *Fs) put(
 	// exist yet
 	params.Set("make_parents", "true")
 
-	return node, f.pacer.Call(func() (bool, error) {
+	return node, f.pacer.CallNoRetry(func() (bool, error) {
 		resp, err := f.srv.CallJSON(
 			ctx,
 			&rest.Opts{

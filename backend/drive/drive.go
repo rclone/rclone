@@ -2766,7 +2766,12 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 	}
 	trashedFiles := false
 	if check {
-		found, err := f.list(ctx, []string{directoryID}, "", false, false, f.opt.TrashedOnly, true, func(item *drive.File) bool {
+		// trashedFiles is only consulted to decide between trashing and hard deleting
+		// below, so when the directory is going to be trashed anyway there is no reason
+		// to enumerate trashed children: let the server filter them out instead of
+		// paging through them. Hard deletes still need to see them (#1040).
+		includeAll := !f.opt.UseTrash || f.opt.TrashedOnly
+		found, err := f.list(ctx, []string{directoryID}, "", false, false, f.opt.TrashedOnly, includeAll, func(item *drive.File) bool {
 			if !item.Trashed {
 				fs.Debugf(dir, "Rmdir: contains file: %q", item.Name)
 				return true

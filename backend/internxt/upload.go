@@ -7,7 +7,6 @@ import (
 	"io"
 	"path"
 	"sort"
-	"strings"
 	"sync"
 
 	"github.com/internxt/rclone-adapter/buckets"
@@ -263,9 +262,7 @@ func (w *internxtChunkWriter) Close(ctx context.Context) error {
 	}
 
 	// Create file metadata in Internxt Drive
-	baseName := w.f.opt.Encoding.FromStandardName(path.Base(w.remote))
-	name := strings.TrimSuffix(baseName, path.Ext(baseName))
-	ext := strings.TrimPrefix(path.Ext(baseName), ".")
+	name, ext := splitNameExt(w.f.opt.Encoding.FromStandardName(path.Base(w.remote)))
 
 	var meta *buckets.CreateMetaResponse
 	err = w.f.pacer.Call(func() (bool, error) {

@@ -258,10 +258,16 @@ func (h *OutputHandler) setFormatFlags(bitMask logFormat) {
 }
 
 // Enabled returns whether this logger is enabled for this level.
-func (h *OutputHandler) Enabled(_ context.Context, level slog.Level) bool {
+//
+// A log level in the config in ctx which differs from the global one
+// overrides the level of the handler.
+func (h *OutputHandler) Enabled(ctx context.Context, level slog.Level) bool {
 	minLevel := slog.LevelInfo
 	if h.opts.Level != nil {
 		minLevel = h.opts.Level.Level()
+	}
+	if ctxLevel := fs.GetConfig(ctx).LogLevel; ctxLevel != fs.GetConfig(context.Background()).LogLevel {
+		minLevel = fs.LogLevelToSlog(ctxLevel)
 	}
 	return level >= minLevel
 }
@@ -360,17 +366,19 @@ func (h *OutputHandler) Handle(ctx context.Context, r slog.Record) (err error) {
 		buf     *bytes.Buffer
 	)
 
-	// Read the format under the mutex once so it is consistent
-	// throughout this call. The mutex is released before calling
-	// jsonLog/textLog (which may re-acquire it) to avoid deadlock.
+	// Read the format and the extra outputs under the mutex once
+	// so they are consistent throughout this call. The mutex is
+	// released before calling jsonLog/textLog (which may re-acquire
+	// it) to avoid deadlock.
 	h.mu.Lock()
 	format := h.format
+	outputExtra := h.outputExtra
 	h.mu.Unlock()
 
 	// Check whether we need to build Text or JSON logs or both
 	needJSON := format&logFormatJSON != 0
 	needText := !needJSON
-	for _, out := range h.outputExtra {
+	for _, out := range outputExtra {
 		if out.json {
 			needJSON = true
 		} else {
@@ -413,7 +421,7 @@ func (h *OutputHandler) Handle(ctx context.Context, r slog.Record) (err error) {
 	}
 
 	// Log to any additional destinations required
-	for _, out := range h.outputExtra {
+	for _, out := range outputExtra {
 		if out.json {
 			out.output(r.Level, bufJSON.String())
 		} else {

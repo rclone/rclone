@@ -38,20 +38,22 @@ type Options struct {
 	CheckSync             CheckSyncMode
 	CreateEmptySrcDirs    bool
 	RemoveEmptyDirs       bool
-	MaxDelete             int // percentage from 0 to 100
+	MaxDelete             int // percentage from 0 to 100, set by Bisync from --max-delete
+	MaxDeleteRenamesAware bool
 	Force                 bool
 	FiltersFile           string
 	Workdir               string
 	OrigBackupDir         string
 	BackupDir1            string
 	BackupDir2            string
-	DryRun                bool
+	DryRun                bool // set by Bisync from --dry-run
 	NoCleanup             bool
 	SaveQueues            bool // save extra debugging files (test only flag)
 	IgnoreListingChecksum bool
 	Resilient             bool
 	Recover               bool
 	TestFn                TestFunc // test-only option, for mocking errors
+	TestFnConflictCheck   TestFunc // test-only option, called before checking potential conflicts
 	Compare               CompareOpt
 	CompareFlag           string
 	DebugName             string
@@ -130,6 +132,7 @@ func init() {
 	flags.BoolVarP(cmdFlags, &Opt.CheckAccess, "check-access", "", Opt.CheckAccess, MakeHelp("Ensure expected {CHECKFILE} files are found on both Path1 and Path2 filesystems, else abort."), "")
 	flags.StringVarP(cmdFlags, &Opt.CheckFilename, "check-filename", "", Opt.CheckFilename, MakeHelp("Filename for --check-access (default: {CHECKFILE})"), "")
 	flags.BoolVarP(cmdFlags, &Opt.Force, "force", "", Opt.Force, "Bypass --max-delete safety check and run the sync. Consider using with --verbose", "")
+	flags.BoolVarP(cmdFlags, &Opt.MaxDeleteRenamesAware, "max-delete-renames-aware", "", Opt.MaxDeleteRenamesAware, "Exclude tracked renames from the --max-delete safety check (requires --track-renames)", "")
 	flags.FVarP(cmdFlags, &Opt.CheckSync, "check-sync", "", "Controls comparison of final listings: true|false|only (default: true)", "")
 	flags.BoolVarP(cmdFlags, &Opt.CreateEmptySrcDirs, "create-empty-src-dirs", "", Opt.CreateEmptySrcDirs, "Sync creation and deletion of empty directories. (Not compatible with --remove-empty-dirs)", "")
 	flags.BoolVarP(cmdFlags, &Opt.RemoveEmptyDirs, "remove-empty-dirs", "", Opt.RemoveEmptyDirs, "Remove ALL empty directories at the final cleanup step.", "")
@@ -176,7 +179,6 @@ var commandDefinition = &cobra.Command{
 
 		ctx := context.Background()
 		opt := Opt
-		opt.applyContext(ctx)
 		if tzLocal {
 			TZ = time.Local
 		}
@@ -202,22 +204,23 @@ var commandDefinition = &cobra.Command{
 	},
 }
 
-func (opt *Options) applyContext(ctx context.Context) {
+func (opt *Options) applyContext(ctx context.Context) error {
 	maxDelete := DefaultMaxDelete
 	ci := fs.GetConfig(ctx)
+	if ci.MaxDelete > 100 {
+		return fmt.Errorf("--max-delete is a percentage for bisync and must be from 0 to 100, not %d", ci.MaxDelete)
+	}
 	if ci.MaxDelete >= 0 {
 		maxDelete = int(ci.MaxDelete)
 	}
 	if maxDelete < 0 {
 		maxDelete = 0
 	}
-	if maxDelete > 100 {
-		maxDelete = 100
-	}
 	opt.MaxDelete = maxDelete
 	// reset MaxDelete for fs/operations, bisync handles this parameter specially
 	ci.MaxDelete = -1
 	opt.DryRun = ci.DryRun
+	return nil
 }
 
 func (opt *Options) setDryRun(ctx context.Context) context.Context {

@@ -1191,7 +1191,7 @@ func TestFlushCaches_NoPendingDeltaRace(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			lib.deltaMu.Lock()
 			lib.pendingDelta = &deltaPayload{
 				records:   []json.RawMessage{json.RawMessage(`{"recordName":"m1","recordType":"CPLMaster"}`)},
@@ -1201,7 +1201,7 @@ func TestFlushCaches_NoPendingDeltaRace(t *testing.T) {
 			lib.applyPendingDelta(context.Background())
 		}
 	}()
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		ps.FlushCaches()
 		// Re-add the library since FlushCaches clears it
 		ps.mu.Lock()

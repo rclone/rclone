@@ -2,13 +2,37 @@ package accounting
 
 import (
 	"context"
+	"math"
 	"testing"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/time/rate"
 )
+
+func TestTokenBucketBurstScalesLargeBandwidthWithoutOverflow(t *testing.T) {
+	bandwidth := 4 * fs.Tebi
+	want := bandwidth / tokenBucketBurstScale
+	if want > fs.SizeSuffix(math.MaxInt) {
+		want = fs.SizeSuffix(math.MaxInt)
+	}
+
+	tb := newEmptyTokenBucket(bandwidth)
+	require.NotNil(t, tb)
+	assert.Equal(t, rate.Limit(bandwidth), tb.Limit())
+	assert.Equal(t, int(want), tb.Burst())
+}
+
+func TestTokenBucketBurstCapsAtMaxInt(t *testing.T) {
+	want := fs.SizeSuffix(fs.SizeSuffixMaxValue / tokenBucketBurstScale)
+	if want > fs.SizeSuffix(math.MaxInt) {
+		want = fs.SizeSuffix(math.MaxInt)
+	}
+
+	assert.Equal(t, int(want), tokenBucketBurst(fs.SizeSuffixMaxValue))
+}
 
 func TestRcBwLimit(t *testing.T) {
 	call := rc.Calls.Get("core/bwlimit")

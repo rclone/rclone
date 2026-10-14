@@ -142,11 +142,11 @@ func prefixParser(p *gofakes3.Prefix) (path, remaining string) {
 func mkdirRecursive(path string, VFS *vfs.VFS) error {
 	path = strings.Trim(path, "/")
 	dirs := strings.Split(path, "/")
-	dir := ""
+	var dir strings.Builder
 	for _, d := range dirs {
-		dir += "/" + d
-		if _, err := VFS.Stat(dir); err != nil {
-			err := VFS.Mkdir(dir, 0777)
+		dir.WriteString("/" + d)
+		if _, err := VFS.Stat(dir.String()); err != nil {
+			err := VFS.Mkdir(dir.String(), 0777)
 			if err != nil {
 				return err
 			}

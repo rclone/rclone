@@ -43,6 +43,7 @@ See the following for detailed instructions for
 - [Crypt](/crypt/) - to encrypt other remotes
 - [DigitalOcean Spaces](/s3/#digitalocean-spaces)
 - [Digi Storage](/koofr/#digi-storage)
+- [dosya.dev](/dosya/)
 - [Drime](/drime/)
 - [Dropbox](/dropbox/)
 - [Enterprise File Fabric](/filefabric/)
@@ -777,6 +778,135 @@ modification time of the source object.
 Hashes are not included in system metadata as there is a well defined
 way of reading those already.
 
+## Performance {#performance}
+
+Rclone's defaults are fairly conservative. They are chosen to work on
+small machines, slow links and with cloud providers which rate limit
+heavily. If you have plenty of bandwidth, memory and a fast storage
+system then rclone can usually be made to run a great deal faster by
+adjusting a few flags.
+
+The right values depend on the size of your files, your network and
+the storage systems at each end, so treat the numbers below as
+starting points. Change one thing at a time and measure the result.
+
+### Measuring
+
+Use `rclone copy` with [-P/--progress](#p-progress) to watch the
+transfer rate while you are experimenting. For unattended runs log the
+stats instead, e.g. `--stats 1m --stats-one-line --stats-log-level
+NOTICE`.
+
+A transfer is always limited by something: the network bandwidth, the
+rate at which the storage system will accept requests, disk IO, CPU or
+memory. Tuning is working out which limit you are hitting and raising
+it until you hit the next one. Watch the network, disk, CPU and memory
+use of the machine rclone is running on as well as rclone's stats.
+
+### Lots of files
+
+The time taken to transfer small files is dominated by the round trip
+time of the requests rather than by the bandwidth, so the way to make
+them go faster is to do more of them at once.
+
+[--transfers](#transfers-int) sets the number of files transferred in
+parallel. The default is 4. Double this until the transfer rate stops
+increasing or the storage system starts returning errors. Values of 32
+to 64 are common and values in the hundreds work well with the large
+object storage systems (e.g. s3, azureblob, googlecloudstorage, b2)
+when transferring lots of small files.
+
+[--checkers](#checkers-int) sets the number of directory listings and
+file comparisons done in parallel. The default is 8. Raising this
+speeds up syncs where most of the files are already present on the
+destination and stops the checking being the bottleneck when
+`--transfers` is large. 16 to 64 is a reasonable range.
+
+Not all storage systems like lots of parallel requests. If you see rate
+limiting errors (e.g. HTTP 429 or 503 errors) or lots of low level
+retries in the log then you have gone too far, so reduce `--transfers`
+and `--checkers` or use [--tpslimit](#tpslimit-float) to cap the
+request rate. Local disks, especially spinning ones, and network file
+systems may get slower rather than faster with too much parallelism.
+
+### Large files
+
+A single stream often won't fill a fast link, so rclone can transfer a
+large file as several chunks in parallel. These are called multi-thread
+transfers and are used for files bigger than
+[--multi-thread-cutoff](#multi-thread-cutoff) on backends which
+support them.
+
+The number of chunks transferred in parallel is set by
+[--multi-thread-streams](#multi-thread-streams-int) (default 4) and
+this works for all backends so increase this first to make large files
+transfer faster.
+
+The size of the chunks is set by the backend, usually with a
+`--backend-chunk-size` flag, e.g. `--s3-chunk-size`. Backends without
+a natural chunk size (e.g. local, smb) use
+[--multi-thread-chunk-size](#multi-thread-chunk-size-sizesuffix).
+Larger chunks mean fewer requests which increases throughput on big
+files. See the docs for the backend you are using for details.
+
+Chunked uploads are usually buffered in memory, so in the worst case
+rclone will use
+
+```text
+--transfers * upload concurrency * chunk size
+```
+
+of memory for buffers. For example `--transfers 256` with an upload
+concurrency of 8 and a chunk size of 16 MiB could use up to 32 GiB.
+When you raise `--transfers` to speed up small files you may therefore
+need to lower the upload concurrency, or set
+[--max-buffer-memory](#max-buffer-memory) which limits the total
+memory used for buffers and makes transfers wait when the limit is
+reached.
+
+[--use-mmap](#use-mmap) makes rclone return buffer memory to the OS as
+soon as it has finished with it which is helpful when using lots of
+transfers or large chunks.
+
+### A mixture of large and small files
+
+By default rclone transfers files in roughly the order it finds them.
+With a mixture of file sizes this means that at times all the
+transfers are large files, which fill the bandwidth but make few
+requests, and at other times all the transfers are small files, which
+make lots of requests but use little of the bandwidth.
+
+Using [--order-by](#order-by-string) `size,mixed,50` makes half of the
+transfers take the smallest files in the backlog and half of them take
+the largest. This keeps both large and small files moving at once so
+the bandwidth and the request rate are both kept full for the whole of
+the run.
+
+This works best if rclone has lots of files to choose from so use it
+with a big [--max-backlog](#max-backlog-int), e.g. `--max-backlog
+2000000`. Each item in the backlog uses in the order of 1 KiB of memory.
+
+### Doing less work
+
+Fewer requests to the storage system means a faster transfer.
+
+- If the source and destination are on the same remote then rclone
+  will use [server-side copy](#server-side-copy) where it is supported
+  so the data doesn't need to be downloaded and uploaded again.
+- [--fast-list](#fast-list) lists bucket-based remotes with fewer
+  transactions at the cost of using more memory. This may be faster or
+  slower than the default so it is worth testing.
+- [--no-traverse](#no-traverse) stops rclone listing the destination
+  which helps when copying a small number of files into a large
+  destination.
+- [--size-only](#size-only) or [--checksum](#c-checksum) avoid reading
+  the modification time. On some object storage systems (e.g. s3,
+  swift) this needs an extra request for each file. Alternatively use
+  [--use-server-modtime](#use-server-modtime) with `--update`.
+- [--no-check-dest](#no-check-dest) skips checking the destination
+  entirely. Only use this if you know that none of the files are
+  there already.
+
 ## Options
 
 Rclone has a number of options to control its behaviour. These are
@@ -844,7 +974,7 @@ as a number of seconds. The following suffixes are valid:
 - `M`  - Months
 - `y`  - Years
 
-Examples: "10", "300ms", "-1.5h" or "2h45m".
+Examples: "10", "300ms", "-1.5h", "2h45m" or "1d12h".
 
 ### Size options
 
@@ -990,7 +1120,7 @@ example:
 Is equivalent to this:
 
 ```text
---bwlimit "Mon-00:00,512Mon-12:00,1M Tue-12:00,1M Wed-12:00,1M Thu-12:00,1M Fri-12:00,1M Sat-12:00,1M Sun-12:00,1M Sun-20:00,off"
+--bwlimit "Mon-00:00,512 Mon-12:00,1M Tue-12:00,1M Wed-12:00,1M Thu-12:00,1M Fri-12:00,1M Sat-12:00,1M Sun-12:00,1M Sun-20:00,off"
 ```
 
 Bandwidth limit apply to the data transfer for all backends. For most
@@ -1043,7 +1173,8 @@ will use this much memory for buffering.
 
 When using `mount` or `cmount` each open file descriptor will use this much
 memory for buffering.
-See the [mount](/commands/rclone_mount/#file-buffering) documentation for more details.
+See the [mount](/commands/rclone_mount/#vfs-file-buffering) documentation for
+more details.
 
 Set to `0` to disable the buffering for the minimum memory usage.
 
@@ -1463,6 +1594,12 @@ This flag is supported for all HTTP based backends even those not
 supported by `--header-upload` and `--header-download` so may be used
 as a workaround for those with care.
 
+The headers are only sent to the host of the original request. If the
+server redirects to another host (including a subdomain or a different
+port), or redirects an `https` request to `http`, the headers are not
+sent to it, or to any further hop in that redirect chain. Rclone logs
+this at debug level (`-vv`).
+
 ```console
 rclone ls remote:test --header "X-Rclone: Foo" --header "X-LetMeIn: Yes"
 ```
@@ -1701,7 +1838,7 @@ like symlinks under Windows). Ignored files won't be copied, moved or
 deleted in a sync.
 
 If you supply this flag then rclone will copy symbolic links from any
-supported backend backend, and store them as text files, with a
+supported backend, and store them as text files, with a
 `.rclonelink` suffix in the destination.
 
 The text file will contain the target of the symbolic link.
@@ -2233,7 +2370,7 @@ rclone will use multiple threads to transfer the file (default 256M).
 Capable backends are marked in the
 [overview](/overview/#optional-features) as `MultithreadUpload`. (They
 need to implement either the `OpenWriterAt` or `OpenChunkWriter`
-internal interfaces). These include include, `local`, `s3`,
+internal interfaces). These include `local`, `s3`,
 `azureblob`, `b2`, `oracleobjectstorage` and `smb` at the time of
 writing.
 
@@ -2260,7 +2397,7 @@ Most multi-thread transfers do not take additional memory, but some do
 at maximum `--transfers` \* `--multi-thread-chunk-size` \*
 `--multi-thread-streams` or specifically for the s3 backend
 `--transfers` \* `--s3-chunk-size` \* `--s3-concurrency`. However you
-can use the the [--max-buffer-memory](/docs/#max-buffer-memory) flag
+can use the [--max-buffer-memory](/docs/#max-buffer-memory) flag
 to control the maximum memory used here.
 
 **NB** that this **only** works with supported backends as the
@@ -2378,8 +2515,10 @@ describes what aspect is being measured:
 - `size` - order by the size of the files
 - `name` - order by the full path of the files
 - `modtime` - order by the modification date of the files
+- `pattern` - order by a list of path glob patterns
 
-This can have a modifier appended with a comma:
+The `size`, `name` and `modtime` comparisons can have a modifier appended with
+a comma:
 
 - `ascending` or `asc` - order so that the smallest (or oldest) is processed first
 - `descending` or `desc` - order so that the largest (or newest) is processed first
@@ -2398,11 +2537,18 @@ processed continuously.
 
 If no modifier is supplied then the order is `ascending`.
 
+For `pattern`, append one or more comma-separated patterns. Patterns use the
+[filter pattern syntax](/filtering/#patterns). Files matching the first pattern
+are processed first, followed by files matching the second pattern, and so on.
+Files which do not match a pattern are processed last. Within each group, files
+are ordered by full path. Patterns cannot contain a comma.
+
 For example
 
 - `--order-by size,desc` - send the largest files first
 - `--order-by modtime,ascending` - send the oldest files first
 - `--order-by name` - send the files with alphabetically by path first
+- `--order-by 'pattern,*.tar.gz,*.md5'` - send archives before checksum files
 
 If the `--order-by` flag is not supplied or it is supplied with an
 empty string then the default ordering will be used which is as
@@ -2444,8 +2590,9 @@ setting the config password for the first time.
 The argument to this should be a command with a space separated list
 of arguments. If one of the arguments has a space in then enclose it
 in `"`, if you want a literal `"` in an argument then enclose the
-argument in `"` and double the `"`. See [CSV encoding](https://godoc.org/encoding/csv)
-for more info.
+argument in `"` and double the `"`. This includes the command itself:
+if the path to the executable contains a space, it must be quoted too.
+See [CSV encoding](https://godoc.org/encoding/csv) for more info.
 
 Eg
 
@@ -2453,6 +2600,7 @@ Eg
 --password-command "echo hello"
 --password-command 'echo "hello with space"'
 --password-command 'echo "hello with ""quotes"" and space"'
+--password-command '"/path with a space/get-password.sh"'
 ```
 
 Note that when changing the configuration password the environment

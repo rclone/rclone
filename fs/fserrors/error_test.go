@@ -38,6 +38,8 @@ func wrap(err error, message string) error {
 
 var errUseOfClosedNetworkConnection = errors.New("use of closed network connection")
 
+var errHTTP2GoAway = errors.New(`http2: server sent GOAWAY and closed the connection; LastStreamID=19999, ErrCode=NO_ERROR, debug=""`)
+
 type myError1 struct {
 	Err error
 }
@@ -135,6 +137,8 @@ func TestShouldRetry(t *testing.T) {
 		{&url.Error{Op: "post", URL: "/", Err: io.EOF}, true},
 		{&url.Error{Op: "post", URL: "/", Err: errUseOfClosedNetworkConnection}, true},
 		{&url.Error{Op: "post", URL: "/", Err: fmt.Errorf("net/http: HTTP/1.x transport connection broken: %v", fmt.Errorf("http: ContentLength=%d with Body length %d", 100663336, 99590598))}, true},
+		{errHTTP2GoAway, true},
+		{fmt.Errorf("operation error S3: ListObjectsV2, deserialization failed, failed to decode response body: %w", errHTTP2GoAway), true},
 	} {
 		got := ShouldRetry(test.err)
 		assert.Equal(t, test.want, got, fmt.Sprintf("test #%d: %v", i, test.err))

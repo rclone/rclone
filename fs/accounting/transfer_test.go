@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"strings"
 	"testing"
 
 	"github.com/rclone/rclone/fs/rc"
@@ -56,6 +57,26 @@ func TestTransfer(t *testing.T) {
 		assert.Equal(t, "dstFs:dstFs", snap.DstFs)
 	})
 
+	t.Run("DoneReleasesAccount", func(t *testing.T) {
+		content := "hello world"
+		o := mockobject.New("obj").WithContent([]byte(content), mockobject.SeekModeNone)
+		tr := newTransfer(s, o, srcFs, dstFs)
+		in := tr.Account(ctx, io.NopCloser(strings.NewReader(content)))
+		_, err := io.Copy(io.Discard, in)
+		require.NoError(t, err)
+
+		tr.Done(ctx, nil)
+
+		tr.mu.RLock()
+		acc := tr.acc
+		tr.mu.RUnlock()
+		assert.Nil(t, acc)
+
+		snap := tr.Snapshot()
+		assert.Equal(t, int64(len(content)), snap.Bytes)
+		assert.Equal(t, int64(len(content)), snap.Size)
+	})
+
 	t.Run("rcStats", func(t *testing.T) {
 		out := tr.rcStats()
 		assert.Equal(t, rc.Params{
@@ -64,6 +85,25 @@ func TestTransfer(t *testing.T) {
 			"srcFs": "srcFs:srcFs",
 			"dstFs": "dstFs:dstFs",
 		}, out)
+	})
+
+	t.Run("NoHistory", func(t *testing.T) {
+		s := NewStats(ctx)
+
+		// A normal checking transfer is kept in the history
+		tr := s.NewCheckingTransfer(o, "checking")
+		tr.Done(ctx, nil)
+		assert.Equal(t, 1, len(s.Transferred()))
+
+		// A no history checking transfer is shown while running but
+		// is not kept in the history
+		tr = s.NewCheckingTransferNoHistory(o, "setting modtime")
+		assert.Equal(t, 1, s.checking.count())
+		assert.Equal(t, 1, len(s.Transferred()))
+		tr.Done(ctx, nil)
+		assert.Equal(t, 0, s.checking.count())
+		assert.Equal(t, 1, len(s.Transferred()))
+		assert.Equal(t, int64(2), s.GetChecks())
 	})
 
 	t.Run("Snapshot checking transfer", func(t *testing.T) {

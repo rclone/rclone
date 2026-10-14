@@ -103,7 +103,7 @@ func TestFolderWindowLimiterShape(t *testing.T) {
 	}
 
 	// Window 1: the first burst grants pass immediately...
-	for i := 0; i < defaultListFolderBurst; i++ {
+	for i := range defaultListFolderBurst {
 		assert.Equal(t, base, reserve(base), "burst grant %d passes immediately", i+1)
 	}
 	// ...then the paced phase spends the rest of the budget one interval apart
@@ -149,14 +149,14 @@ func TestFolderWindowLimiterIdleResume(t *testing.T) {
 	var grants []time.Time
 	g := base
 	// Spend window 1's full budget greedily.
-	for i := 0; i < defaultListFolderLimit; i++ {
+	for range defaultListFolderLimit {
 		g = lim.reserve(g)
 		grants = append(grants, g)
 	}
 	// Resume mid-window-2 after an idle gap and hammer across the 2->3
 	// boundary: a fresh burst fires on resume and again at the boundary.
 	g = base.Add(window + window/2)
-	for i := 0; i < defaultListFolderLimit; i++ {
+	for range defaultListFolderLimit {
 		g = lim.reserve(g)
 		grants = append(grants, g)
 	}
@@ -187,7 +187,7 @@ func TestFolderWindowLimiterClamps(t *testing.T) {
 
 	// burst >= limit clamps to limit-1, leaving one paced token per window.
 	lim = newFs(5, 99).folderListLimiter("Y")
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		assert.Equal(t, base, lim.reserve(base), "clamped burst grant %d", i+1)
 	}
 	assert.Equal(t, base.Add(window), lim.reserve(base), "5th grant rolls into the next window")

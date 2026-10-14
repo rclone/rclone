@@ -26,7 +26,7 @@ type BackendConfig struct {
 	Remote           string   `yaml:"remote"`
 	Features         []string `yaml:"features"`
 	Hashes           []string `yaml:"hashes"`
-	Precision        int      `yaml:"precision"`
+	Precision        int64    `yaml:"precision"`
 }
 
 // GetBackendConfig from docs/data/backends

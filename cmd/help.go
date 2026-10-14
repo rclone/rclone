@@ -292,6 +292,10 @@ func showBackend(name string) {
 			continue
 		}
 		done[opt.Name] = struct{}{}
+		// Skip options hidden from both the command line and the configurator
+		if opt.Hide&fs.OptionHideBoth == fs.OptionHideBoth {
+			continue
+		}
 		if opt.Advanced {
 			advancedOptions = append(advancedOptions, opt)
 		} else {

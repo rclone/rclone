@@ -630,10 +630,37 @@ remote or an fs.
 - **Remember** we have >50 backends to maintain so keeping them as similar as
   possible to each other is a high priority!
 
+### Managing memory
+
+Use rclone's memory pool for upload buffers rather than allocating them
+yourself. This will enable `--max-buffer-memory` and `--use-mmap` and will make
+rclone's memory usage smaller.
+
+- If the provider supports multipart or parallel chunk uploads, implement
+  [fs.OpenChunkWriter](https://pkg.go.dev/github.com/rclone/rclone/fs#OpenChunkWriter)
+  and drive it with
+  [multipart.UploadMultipart](https://pkg.go.dev/github.com/rclone/rclone/lib/multipart#UploadMultipart).
+  This gives you pooled chunk buffers, concurrency, retries and
+  `--multi-thread-streams` support for free. See s3/b2 backends for examples.
+- If you must buffer data yourself take the buffer from the global pool with
+  [multipart.NewRW](https://pkg.go.dev/github.com/rclone/rclone/lib/multipart#NewRW)
+  and fill it with `io.CopyN`. The `pool.RW` is seekable so the same buffer can
+  be rewound for a retry.
+- When using a pooled buffer `Close()` it on all paths so its pages go back to
+  the pool, `Seek(0, io.SeekStart)` inside the retry closure before each
+  attempt, set the request's `ContentLength` explicitly, and if the buffer
+  reaches `http.NewRequest` or an SDK without going through `lib/rest`, wrap it
+  in [readers.NoCloser](https://pkg.go.dev/github.com/rclone/rclone/lib/readers#NoCloser)
+  so the transport can't close it and free its pages before the retry.
+
 ### Unit tests
 
 - Create a config entry called `TestRemote` for the unit tests to use
 - Create a `backend/remote/remote_test.go` - copy and adjust your example remote
+- If your backend does chunked uploads, set `ChunkedUpload` in the
+  `fstests.Opt` and implement `SetUploadChunkSize` (and `SetUploadCutoff`)
+  on your `Fs` in the test file so the `FsPutChunked`, `FsPutShortEOF` and
+  `FsPutRetry` tests can run the chunked path with small chunks.
 - Make sure all tests pass with `go test -v`
 
 ### Integration tests

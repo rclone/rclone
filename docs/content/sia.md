@@ -22,7 +22,7 @@ Before you can use rclone with Sia, you will need to have a running copy of
 network (e.g. a NAS). Please follow the [Get started](https://sia.tech/get-started)
 guide and install one.
 
-rclone interacts with Sia network by talking to the Sia daemon via [HTTP API](https://sia.tech/docs/)
+rclone interacts with Sia network by talking to the Sia daemon via [HTTP API](https://docs.sia.tech/)
 which is usually available on port *9980*. By default you will run the daemon
 locally on the same computer so it's safe to leave the API password blank
 (the API URL will be `http://127.0.0.1:9980` making external access impossible).

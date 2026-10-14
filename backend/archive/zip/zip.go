@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"slices"
 	"strings"
 	"time"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/lib/readers"
+	"github.com/rclone/rclone/lib/sanitize"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 )
@@ -41,6 +43,7 @@ type Fs struct {
 	prefix      string          // position for objects
 	prefixSlash string          // position for objects with a slash on
 	root        string          // position to read from within the archive
+	links       bool            // read symlinks as .rclonelink files
 	dt          dirtree.DirTree // read from zipfile
 }
 
@@ -65,6 +68,7 @@ func New(ctx context.Context, wrappedFs fs.Fs, remote, prefix, root string) (fs.
 		node:        node,
 		remote:      remote,
 		root:        root,
+		links:       fs.GetConfig(ctx).Links,
 		prefix:      prefix,
 		prefixSlash: prefix + "/",
 	}
@@ -135,15 +139,37 @@ func (f *Fs) readZip() (singleObject bool, err error) {
 		return singleObject, fmt.Errorf("failed to read zip file: %w", err)
 	}
 	dt := dirtree.New()
+	skipped := 0
+	skippedLinks := 0
 	for _, file := range zr.File {
-		remote := strings.Trim(path.Clean(file.Name), "/")
-		if remote == "." {
-			remote = ""
+		// Skip entries whose name escapes the archive's own namespace
+		remote, err := sanitize.Path(file.Name)
+		if err != nil {
+			skipped++
+			continue
+		}
+		isDir := strings.HasSuffix(file.Name, "/")
+		// A file entry whose last component is "", "." or ".." names
+		// a directory rather than a file, so skip
+		if !isDir && sanitize.Leaf(path.Base(file.Name)) != nil {
+			skipped++
+			continue
+		}
+		if !isDir && file.Mode()&os.ModeSymlink != 0 {
+			if !f.links {
+				skippedLinks++
+				continue
+			}
+			// The member holds the link target, so it reads back
+			// like a .rclonelink file
+			remote += fs.LinkSuffix
 		}
 		remote = path.Join(f.prefix, remote)
 		if f.root != "" {
-			// Ignore all files outside the root
-			if !strings.HasPrefix(remote, f.root) {
+			// Ignore all files outside the root, requiring a path
+			// boundary so that root "foo" does not also match a
+			// sibling entry such as "foobar"
+			if remote != f.root && !strings.HasPrefix(remote, f.root+"/") {
 				continue
 			}
 			if remote == f.root {
@@ -152,11 +178,12 @@ func (f *Fs) readZip() (singleObject bool, err error) {
 				remote = strings.TrimPrefix(remote, f.root+"/")
 			}
 		}
-		if strings.HasSuffix(file.Name, "/") {
+		if isDir {
 			dir := fs.NewDir(remote, file.Modified)
 			dt.AddDir(dir)
 		} else {
 			if remote == "" {
+				// A file at the root is the archive member f.root points at
 				remote = path.Base(f.root)
 				singleObject = true
 				dt = dirtree.New()
@@ -172,6 +199,12 @@ func (f *Fs) readZip() (singleObject bool, err error) {
 				break
 			}
 		}
+	}
+	if skipped > 0 {
+		fs.Logf(f, "Skipped %d zip entries which escape the archive", skipped)
+	}
+	if skippedLinks > 0 {
+		fs.Logf(f, "Skipped %d symlinks - use -l/--links to read them", skippedLinks)
 	}
 	dt.CheckParents("")
 	dt.Sort()
@@ -200,7 +233,8 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return nil, fs.ErrorDirNotFound
 	}
 	fs.Debugf(f, "dir=%q, entries=%v", dir, entries)
-	return entries, nil
+	// Return a copy as callers may filter the listing in place
+	return slices.Clone(entries), nil
 }
 
 // NewObject finds the Object at remote.

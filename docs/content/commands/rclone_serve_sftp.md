@@ -641,10 +641,11 @@ to make proxy to many different sftp backends, you could make the
 in the output and the user to `user`. For security you'd probably want
 to restrict the `host` to a limited list.
 
-Note that an internal cache is keyed on `user` so only use that for
-configuration, don't use `pass` or `public_key`.  This also means that if a user's
-password or public-key is changed the cache will need to expire (which takes 5 mins)
-before it takes effect.
+An internal cache of backends is keyed on the `user` and a hash of the
+`pass` or `public_key`.  This means that if a user's password or
+public-key changes, or the proxy returns different config parameters
+(eg a rotated `api_key`), a fresh backend will be created on the next
+request rather than the cached one being reused.
 
 This can be used to build general purpose proxies to any kind of
 backend that rclone supports.
@@ -714,6 +715,7 @@ Flags for filtering directory listings
       --exclude-if-present stringArray      Exclude directories if filename is present
       --files-from stringArray              Read list of source-file names from file (use - to read from stdin)
       --files-from-raw stringArray          Read list of source-file names from file without any processing of lines (use - to read from stdin)
+      --files-from0 stringArray             Read list of source-file names from file using NUL as separator (use - to read from stdin)
   -f, --filter stringArray                  Add a file filtering rule
       --filter-from stringArray             Read file filtering patterns from a file (use - to read from stdin)
       --hash-filter string                  Partition filenames by hash k/n or randomly @/n

@@ -141,13 +141,12 @@ func TestEnvironmentVariables(t *testing.T) {
 	// Reference: https://rclone.org/docs/#precedence
 	// Create a symlink in test data
 	err = os.Symlink(testdataPath+"/folderA", testdataPath+"/symlinkA")
-	if runtime.GOOS == "windows" {
-		errNote := "The policy settings on Windows often prohibit the creation of symlinks due to security issues.\n"
-		errNote += "You can safely ignore this test, if your change didn't affect environment variables."
-		require.NoError(t, err, errNote)
-	} else {
-		require.NoError(t, err)
+	if err != nil && runtime.GOOS == "windows" {
+		// Windows grants the privilege only to an elevated process or one
+		// running with Developer Mode enabled.
+		t.Skipf("Skipping as symlinks are unavailable: %v", err)
 	}
+	require.NoError(t, err)
 
 	// Create a local remote with explicit skip_links=false
 	out, err = rclone("config", "create", "myLocal", "local", "skip_links", "false")

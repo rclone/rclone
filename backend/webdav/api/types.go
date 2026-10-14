@@ -4,6 +4,7 @@ package api
 import (
 	"encoding/xml"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -107,12 +108,7 @@ func (p *Prop) StatusOK() bool {
 	if len(p.Status) == 0 {
 		return true
 	}
-	for _, statusStr := range p.Status {
-		if parseStatus2XX.MatchString(statusStr) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(p.Status, parseStatus2XX.MatchString)
 }
 
 // Hashes returns a map of all checksums - may be nil

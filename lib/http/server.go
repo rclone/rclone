@@ -55,6 +55,13 @@ accept in the HTTP header.
 will overriding existing values. The flag may be repeated to add multiple
 headers. Use the format ` + "`Header-Name: value`" + `.
 
+` + "`--{{ .Prefix }}allow-origin`" + ` enables cross-origin (CORS) requests from browsers
+by setting the ` + "`Access-Control-Allow-Origin`" + ` header on every response to the
+origin given, e.g. ` + "`--{{ .Prefix }}allow-origin https://app.example.com`" + `. Browser
+CORS preflight OPTIONS requests are answered by rclone without needing
+authentication as browsers never send credentials with them. Setting this
+to ` + "`*`" + ` allows any origin which is a security risk on an authenticated server.
+
 ` + "`--{{ .Prefix }}baseurl`" + ` controls the URL prefix that rclone serves from.  By default
 rclone will serve from the root.  If you used ` + "`--{{ .Prefix }}baseurl \"/rclone\"`" + ` then
 rclone would serve from a URL starting with "/rclone/".  This is
@@ -77,6 +84,11 @@ By default this will serve over http.  If you want you can serve over
 https.  You will need to supply the ` + "`--{{ .Prefix }}cert` and `--{{ .Prefix }}key`" + ` flags.
 If you wish to do client side certificate validation then you will need to
 supply ` + "`--{{ .Prefix }}client-ca`" + ` also.
+
+When TLS is configured every listener given with ` + "`--{{ .Prefix }}addr`" + ` serves TLS.
+An individual listener can be prefixed with ` + "`http://`" + ` to serve unencrypted
+HTTP on that address, or with ` + "`tls://`" + ` to state explicitly that it must serve
+TLS.  Using a ` + "`tls://`" + ` address without ` + "`--{{ .Prefix }}cert` and `--{{ .Prefix }}key`" + ` is an error.
 
 ` + "`--{{ .Prefix }}cert`" + ` must be set to the path of a file containing
 either a PEM encoded certificate, or a concatenation of that with the CA
@@ -404,7 +416,12 @@ func NewServer(ctx context.Context, options ...Option) (*Server, error) {
 				return nil, err
 			}
 			instance = newInstance(ctx, s, listener, s.tlsConfig, addr)
-		} else if strings.HasPrefix(addr, "tls://") || (len(s.cfg.ListenAddr) == 1 && s.tlsConfig != nil) {
+		} else if strings.HasPrefix(addr, "tls://") || (!strings.HasPrefix(addr, "http://") && s.tlsConfig != nil) {
+			// If TLS is configured all listeners serve TLS unless
+			// explicitly marked http://.
+			if s.tlsConfig == nil {
+				return nil, fmt.Errorf("can't listen on %q: %w", addr, ErrTLSConfigRequired)
+			}
 			addr = strings.TrimPrefix(addr, "tls://")
 			listener, err := net.Listen("tcp", addr)
 			if err != nil {
@@ -486,6 +503,8 @@ var (
 	ErrTLSFileMismatch = errors.New("need both --cert and --key to use TLS")
 	// ErrTLSParseCA - hard coded errors, allowing for easier testing
 	ErrTLSParseCA = errors.New("unable to parse client certificate authority")
+	// ErrTLSConfigRequired - hard coded errors, allowing for easier testing
+	ErrTLSConfigRequired = errors.New("need both --cert and --key to use a tls:// address")
 )
 
 func (s *Server) initTLS() error {

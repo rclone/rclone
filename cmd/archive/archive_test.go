@@ -4,6 +4,8 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -132,6 +134,47 @@ func testArchiveRemote(t *testing.T, fromLocal bool, subDir string, extension st
 		}
 	}
 	fstest.CheckListingWithPrecision(t, src, items, nil, fs.ModTimeNotSupported)
+}
+
+// test archiving to stdout when no destination is given
+func TestArchiveStdout(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+
+	f1 := r.WriteObject(ctx, "file1.txt", "content 1", t1)
+	f2 := r.WriteObject(ctx, "dir1/sub1.txt", "sub content 1", t1)
+	fstest.CheckItems(t, r.Fremote, f1, f2)
+
+	// redirect stdout into a file on the local fs
+	archiveName := "stdout.zip"
+	require.NoError(t, r.Flocal.Mkdir(ctx, ""))
+	out, err := os.Create(filepath.Join(r.LocalName, archiveName))
+	require.NoError(t, err)
+	oldStdout := os.Stdout
+	os.Stdout = out
+	err = create.ArchiveCreate(ctx, nil, "", r.Fremote, "zip", "")
+	os.Stdout = oldStdout
+	require.NoError(t, out.Close())
+	require.NoError(t, err)
+
+	// check the archive written to stdout is readable
+	expected := map[string]bool{
+		"file1.txt":     true,
+		"dir1/":         true,
+		"dir1/sub1.txt": true,
+	}
+	listFile := func(ctx context.Context, f archives.FileInfo) error {
+		name := f.NameInArchive
+		if f.IsDir() && !strings.HasSuffix(name, "/") {
+			name += "/"
+		}
+		assert.True(t, expected[name], name)
+		delete(expected, name)
+		return nil
+	}
+	err = list.ArchiveList(ctx, r.Flocal, archiveName, listFile)
+	require.NoError(t, err)
+	assert.Equal(t, 0, len(expected), expected)
 }
 
 func testArchive(t *testing.T) {

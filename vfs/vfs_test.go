@@ -159,6 +159,59 @@ func TestVFSNew(t *testing.T) {
 	checkActiveCacheEntries(0)
 }
 
+// TestVFSHold checks a held VFS isn't shut down until it is released
+// and can't be held once shut down.
+func TestVFSHold(t *testing.T) {
+	r := fstest.NewRun(t)
+	vfs := New(context.Background(), r.Fremote, nil)
+
+	require.True(t, vfs.Hold())
+	vfs.Shutdown()
+	assert.NoError(t, vfs.ctx.Err(), "VFS shut down while held")
+
+	vfs.Shutdown()
+	assert.Error(t, vfs.ctx.Err(), "VFS not shut down when released")
+	assert.False(t, vfs.Hold(), "VFS held after being shut down")
+}
+
+// TestVFSNewShuttingDown checks New doesn't reuse a VFS which is being
+// shut down but hasn't yet removed itself from the active cache.
+func TestVFSNewShuttingDown(t *testing.T) {
+	r := fstest.NewRun(t)
+	vfs := New(context.Background(), r.Fremote, nil)
+
+	// The state Shutdown leaves the VFS in while it waits for activeMu
+	vfs.inUse.Store(0)
+	vfs2 := New(context.Background(), r.Fremote, nil)
+	assert.NotSame(t, vfs, vfs2, "reused a VFS being shut down")
+	assert.Equal(t, int32(0), vfs.inUse.Load())
+
+	vfs.Shutdown()
+	vfs2.Shutdown()
+}
+
+// TestVFSBusy checks Busy reports files open for write and cached
+// files which haven't been uploaded yet.
+func TestVFSBusy(t *testing.T) {
+	opt := vfscommon.Opt
+	opt.CacheMode = vfscommon.CacheModeWrites
+	opt.WriteBack = 10 * writeBackDelay
+	_, vfs := newTestVFSOpt(t, &opt)
+	assert.False(t, vfs.Busy())
+
+	fh, err := vfs.Create("file.txt")
+	require.NoError(t, err)
+	assert.True(t, vfs.Busy(), "not busy with a file open for write")
+
+	_, err = fh.WriteString("hello")
+	require.NoError(t, err)
+	require.NoError(t, fh.Close())
+	assert.True(t, vfs.Busy(), "not busy with a file waiting to be uploaded")
+
+	vfs.WaitForWriters(waitForWritersDelay)
+	assert.False(t, vfs.Busy(), "busy after the file was uploaded")
+}
+
 // TestVFSNewWithOpts sees if the New command works properly
 func TestVFSNewWithOpts(t *testing.T) {
 	var opt = vfscommon.Opt
@@ -247,6 +300,27 @@ func TestVFSStatParent(t *testing.T) {
 
 	_, _, err = vfs.StatParent("file1/under a file")
 	assert.Equal(t, os.ErrExist, err)
+}
+
+func TestVFSAddVirtual(t *testing.T) {
+	_, vfs := newTestVFS(t)
+
+	require.NoError(t, vfs.AddVirtual("file", 17, false))
+	node, err := vfs.Stat("file")
+	require.NoError(t, err)
+	assert.True(t, node.IsFile())
+	assert.Equal(t, int64(17), node.Size())
+
+	require.NoError(t, vfs.AddVirtual("dir/", 0, true))
+	node, err = vfs.Stat("dir")
+	require.NoError(t, err)
+	assert.True(t, node.IsDir())
+
+	require.NoError(t, vfs.AddVirtual("dir/file2", 18, false))
+	node, err = vfs.Stat("dir/file2")
+	require.NoError(t, err)
+	assert.True(t, node.IsFile())
+	assert.Equal(t, int64(18), node.Size())
 }
 
 func TestVFSOpenFile(t *testing.T) {
@@ -404,6 +478,12 @@ func TestVFSMkdir(t *testing.T) {
 	require.NoError(t, err)
 
 	r.CheckRemoteListing(t, nil, []string{"a", "b", "c", "d"})
+
+	vfs.Opt.ReadOnly = true
+	err = vfs.Mkdir("", 0777)
+	assert.Equal(t, EROFS, err)
+	err = vfs.Mkdir("e", 0777)
+	assert.Equal(t, EROFS, err)
 }
 
 func TestVFSMkdirAll(t *testing.T) {

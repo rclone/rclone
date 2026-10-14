@@ -40,6 +40,7 @@ import (
 
 // File represents a file or a symlink
 type File struct {
+	aux                   // values attached by users of the VFS
 	inode uint64          // inode number - read only
 	size  atomic.Int64    // size of file
 	ctx   context.Context // context for VFS operations - read only
@@ -55,7 +56,6 @@ type File struct {
 	virtualModTime   *time.Time                      // modtime for backends with Precision == fs.ModTimeNotSupported
 	pendingModTime   time.Time                       // will be applied once o becomes available, i.e. after file was written
 	pendingRenameFun func(ctx context.Context) error // will be run/renamed after all writers close
-	sys              atomic.Value                    // user defined info to be attached here
 	nwriters         atomic.Int32                    // len(writers)
 	appendMode       bool                            // file was opened with O_APPEND
 	isLink           bool                            // file represents a symlink
@@ -182,16 +182,6 @@ func (f *File) CachePath() string {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
 	return f._cachePath()
-}
-
-// Sys returns underlying data source (can be nil) - satisfies Node interface
-func (f *File) Sys() any {
-	return f.sys.Load()
-}
-
-// SetSys sets the underlying data source (can be nil) - satisfies Node interface
-func (f *File) SetSys(x any) {
-	f.sys.Store(x)
 }
 
 // Inode returns the inode number - satisfies Node interface
@@ -505,6 +495,11 @@ func (f *File) _applyPendingModTime() error {
 	switch err {
 	case nil:
 		fs.Debugf(f.o, "Applied pending mod time %v OK", f.pendingModTime)
+		// The cache fingerprint predates the new modtime, so refresh
+		// it or the next open discards the cached data as stale.
+		if f.d.vfs.cache != nil && f.d.vfs.cache.Exists(f._cachePath()) {
+			f.d.vfs.cache.SetModTime(f._cachePath(), f.pendingModTime)
+		}
 	case fs.ErrorCantSetModTime, fs.ErrorCantSetModTimeWithoutDelete:
 		// do nothing, in order to not break "touch somefile" if it exists already
 	default:

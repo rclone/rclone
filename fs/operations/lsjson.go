@@ -12,6 +12,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/walk"
 )
 
@@ -167,7 +168,7 @@ func (lj *listJSON) entry(ctx context.Context, entry fs.DirEntry) (*ListJSONItem
 			return nil, nil
 		}
 	default:
-		fs.Errorf(nil, "Unknown type %T in listing", entry)
+		fs.ErrorfCtx(ctx, nil, "Unknown type %T in listing", entry)
 	}
 
 	item := &ListJSONItem{
@@ -191,14 +192,14 @@ func (lj *listJSON) entry(ctx context.Context, entry fs.DirEntry) (*ListJSONItem
 		case fs.Object:
 			item.EncryptedPath = lj.cipher.EncryptFileName(entry.Remote())
 		default:
-			fs.Errorf(nil, "Unknown type %T in listing", entry)
+			fs.ErrorfCtx(ctx, nil, "Unknown type %T in listing", entry)
 		}
 		item.Encrypted = path.Base(item.EncryptedPath)
 	}
 	if lj.opt.Metadata {
 		metadata, err := fs.GetMetadata(ctx, entry)
 		if err != nil {
-			fs.Errorf(entry, "Failed to read metadata: %v", err)
+			fs.ErrorfCtx(ctx, entry, "Failed to read metadata: %v", err)
 		} else if metadata != nil {
 			item.Metadata = metadata
 		}
@@ -222,7 +223,7 @@ func (lj *listJSON) entry(ctx context.Context, entry fs.DirEntry) (*ListJSONItem
 			for _, hashType := range lj.hashTypes {
 				hash, err := x.Hash(ctx, hashType)
 				if err != nil {
-					fs.Errorf(x, "Failed to read hash: %v", err)
+					fs.ErrorfCtx(ctx, x, "Failed to read hash: %v", err)
 				} else if hash != "" {
 					item.Hashes[hashType.String()] = hash
 				}
@@ -234,7 +235,7 @@ func (lj *listJSON) entry(ctx context.Context, entry fs.DirEntry) (*ListJSONItem
 			}
 		}
 	default:
-		fs.Errorf(nil, "Unknown type %T in listing in ListJSON", entry)
+		fs.ErrorfCtx(ctx, nil, "Unknown type %T in listing in ListJSON", entry)
 	}
 	return item, nil
 }
@@ -275,6 +276,14 @@ func StatJSON(ctx context.Context, fsrc fs.Fs, remote string, opt *ListJSONOpt) 
 	lj, err := newListJSON(ctx, fsrc, remote, opt)
 	if err != nil {
 		return nil, err
+	}
+
+	// A remote that climbs above the Fs root can never be a valid item.
+	// StatJSON calls List/NewObject directly, bypassing the confinement in
+	// fs/list and fs/walk, so treat it as not found here rather than stat
+	// something outside the configured root.
+	if list.RemoteEscapesRoot(remote) {
+		return nil, nil
 	}
 
 	// Root is always a directory. When we have a NewDirEntry

@@ -82,13 +82,15 @@ Other parameters are as described in the documentation for the
 relevant [rclone serve](/commands/rclone_serve/) command line options.
 To translate a command line option to an rc parameter, remove the
 leading |--| and replace |-| with |_|, so |--vfs-cache-mode| becomes
-|vfs_cache_mode|. Note that global parameters must be set with
-|_config| and |_filter| as described above.
+|vfs_cache_mode|.
+
+Option parameters (such as VFS, proxy, and protocol-specific options) can be passed flat at the top level of the parameter map or inside nested JSON objects under the |vfsOpt|, |proxyOpt|, and |opt| keys (e.g. |vfsOpt='{"CacheMode": 2}'|, |proxyOpt='{"AuthProxy": "http://127.0.0.1:8080"}'|). If both flat parameters and nested blocks are supplied, the parameters in the nested blocks will take precedence. Note that global parameters must be set with |_config| and |_filter| as described above.
 
 Examples:
 
     rclone rc serve/start type=nfs fs=remote: addr=:4321 vfs_cache_mode=full
     rclone rc serve/start --json '{"type":"nfs","fs":"remote:","addr":":1234","vfs_cache_mode":"full"}'
+    rclone rc serve/start type=webdav fs=remote: vfsOpt='{"CacheMode": 2}' proxyOpt='{"AuthProxy": "http://127.0.0.1:8080"}'
 
 This will give the reply
 
@@ -108,6 +110,9 @@ Stop the server with |serve/stop| and list the running servers with |serve/list|
 
 // startRc allows the serve command to be run from rc
 func startRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	// Make a copy of input parameters to store in runningServer before parsing/deletion
+	paramsCopy := in.Copy()
+
 	serveType, err := in.GetString("type")
 
 	serveMu.Lock()
@@ -135,6 +140,14 @@ func startRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		return nil, fmt.Errorf("could not start serve %q: %w", serveType, err)
 	}
 
+	delete(in, "type")
+	delete(in, "fs")
+	err = rc.CheckParamsUsed(in)
+	if err != nil {
+		_ = h.Shutdown()
+		return nil, err
+	}
+
 	// Start the server running in the background
 	errChan := make(chan error, 1)
 	go func() {
@@ -158,7 +171,7 @@ func startRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	// Store it for later
 	runningServer := server{
 		ID:      fmt.Sprintf("%s-%08x", serveType, rand.Uint32()),
-		Params:  in,
+		Params:  paramsCopy,
 		Addr:    h.Addr().String(),
 		h:       h,
 		errChan: errChan,

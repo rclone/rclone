@@ -64,7 +64,13 @@ func NewHandler(ctx context.Context, vfs *vfs.VFS, opt *Options) (handler nfs.Ha
 // looked up and must be a plain directory (not a regular file, symlink or
 // other special node).
 func (h *Handler) Mount(ctx context.Context, conn net.Conn, req nfs.MountRequest) (status nfs.MountStatus, hndl billy.Filesystem, auths []nfs.AuthFlavor) {
-	auths = []nfs.AuthFlavor{nfs.AuthFlavorNull}
+	// Advertise both AUTH_NULL and AUTH_UNIX. The server doesn't inspect the
+	// credential either way (there is no per-user access control here), but the
+	// *BSD kernel NFS clients refuse to mount a server that only offers
+	// AUTH_NULL and require AUTH_UNIX to be on offer, so listing it lets them
+	// mount. The AUTH_UNIX credential they then send is read as an opaque blob
+	// and ignored, exactly as the AUTH_NULL one was.
+	auths = []nfs.AuthFlavor{nfs.AuthFlavorNull, nfs.AuthFlavorUnix}
 	cleaned := path.Clean("/" + string(req.Dirpath))
 	if cleaned == "/" {
 		return nfs.MountStatusOk, h.billyFS, auths

@@ -19,3 +19,7 @@ quirks:
   force_path_style: true
   list_url_encode: false
   use_already_exists: false
+  # Ceph RGW (and reverse proxies such as Cloudflare in front of it) can
+  # mutate Accept-Encoding and break SigV4 when that header is signed.
+  # See: https://github.com/rclone/rclone/issues/8206
+  sign_accept_encoding: false

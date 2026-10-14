@@ -49,6 +49,8 @@ func TestWithSyscallShouldRetry(t *testing.T) {
 		want bool
 	}{
 		{makeNetErr(syscall.EAGAIN), true},
+		{makeNetErr(syscall.ENETDOWN), true},
+		{makeNetErr(syscall.ENETUNREACH), true},
 		{makeNetErr(syscall.Errno(123123123)), false},
 		{
 			wrap(&url.Error{

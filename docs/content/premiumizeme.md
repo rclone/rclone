@@ -144,20 +144,6 @@ Properties:
 - Type:        string
 - Required:    false
 
-#### --premiumizeme-api-key
-
-API Key.
-
-This is not normally used - use oauth instead.
-
-
-Properties:
-
-- Config:      api_key
-- Env Var:     RCLONE_PREMIUMIZEME_API_KEY
-- Type:        string
-- Required:    false
-
 ### Advanced options
 
 Here are the Advanced options specific to premiumizeme (premiumize.me).

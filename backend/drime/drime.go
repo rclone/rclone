@@ -321,10 +321,13 @@ func (f *Fs) getItem(ctx context.Context, id string, dirID string, leaf string) 
 		}
 		return false
 	})
+	if err != nil {
+		return nil, err
+	}
 	if !found {
 		return nil, fs.ErrorObjectNotFound
 	}
-	return info, err
+	return info, nil
 }
 
 // errorHandler parses a non 2xx error response into an error
@@ -418,6 +421,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return f, fs.ErrorIsFile
 	}
 	return f, nil
+}
+
+// rootSlash returns root with a slash on if it is empty, otherwise empty string
+func (f *Fs) rootSlash() string {
+	if f.root == "" {
+		return f.root
+	}
+	return f.root + "/"
 }
 
 // Return an Object from a path
@@ -537,6 +548,11 @@ OUTER:
 		})
 		if err != nil {
 			return found, fmt.Errorf("couldn't list files: %w", err)
+		}
+		// Drime won't page past a fixed number of entries (20,000 for
+		// rclone) and serves the last page it allows again instead
+		if result.CurrentPage != page {
+			return found, errors.New("couldn't list files: directory has more entries than drime will list")
 		}
 		for _, item := range result.Data {
 			if item.Type == api.ItemTypeFolder {
@@ -684,13 +700,27 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 
 // deleteObject removes an object by ID
 func (f *Fs) deleteObject(ctx context.Context, id string) error {
+	if f.opt.HardDelete {
+		// Deleting forever doesn't invalidate the server's cache of
+		// the parent folder listing, so the entry keeps being listed
+		// for about a second. Moving to the trash first does.
+		err := f.deleteEntry(ctx, id, false)
+		if err != nil {
+			return err
+		}
+	}
+	return f.deleteEntry(ctx, id, f.opt.HardDelete)
+}
+
+// deleteEntry moves the entry with ID to the trash or deletes it forever
+func (f *Fs) deleteEntry(ctx context.Context, id string, deleteForever bool) error {
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/file-entries/delete",
 	}
 	request := api.DeleteRequest{
 		EntryIDs:      []string{id},
-		DeleteForever: f.opt.HardDelete,
+		DeleteForever: deleteForever,
 	}
 	var result api.DeleteResponse
 	err := f.pacer.Call(func() (bool, error) {
@@ -1002,6 +1032,110 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 	srcFs.dirCache.FlushDir(srcRemote)
 	return nil
+}
+
+// copy a file or a folder to a new directory
+func (f *Fs) copy(ctx context.Context, id, newDirID string) (item *api.Item, err error) {
+	var resp *http.Response
+	var request = api.CopyRequest{
+		EntryIDs:      []string{id},
+		DestinationID: newDirID,
+	}
+	var result api.CopyResponse
+	opts := rest.Opts{
+		Method:     "POST",
+		Path:       "/file-entries/duplicate",
+		Parameters: url.Values{},
+	}
+	if f.opt.WorkspaceID != "" {
+		opts.Parameters.Set("workspaceId", f.opt.WorkspaceID)
+	}
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallJSON(ctx, &opts, &request, &result)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to copy item: %w", err)
+	}
+	itemResult := result.Entries[0]
+	return &itemResult, nil
+}
+
+// copy and rename a file or folder to directoryID with leaf
+//
+// If existing is set it is removed once the copy has succeeded.
+func (f *Fs) copyTo(ctx context.Context, srcID, dstLeaf, dstDirectoryID string, existing fs.Object) (info *api.Item, err error) {
+	// Copy to dstDirectoryID first
+	info, err = f.copy(ctx, srcID, dstDirectoryID)
+	if err != nil {
+		return nil, err
+	}
+
+	// The server names the copy "name (1)" if the destination
+	// directory already has an entry called "name" and refuses to
+	// rename it to "name" until that entry is removed.
+	if existing != nil {
+		fs.Debugf(existing, "Server side copy: removing existing object after successful copy")
+		err = existing.Remove(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Rename if required
+	if info.Name != f.opt.Enc.FromStandardName(dstLeaf) {
+		info, err = f.rename(ctx, info.ID.String(), dstLeaf)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return info, nil
+}
+
+// Copy src to this remote using server-side copy operations.
+//
+// This is stored with the remote path given.
+//
+// It returns the destination Object and a possible error.
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantCopy
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Object, err error) {
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debugf(src, "Can't copy - not same remote type")
+		return nil, fs.ErrorCantCopy
+	}
+	srcPath := srcObj.fs.rootSlash() + srcObj.remote
+	dstPath := f.rootSlash() + remote
+	if srcPath == dstPath {
+		return nil, fmt.Errorf("can't copy %q -> %q as are same name", srcPath, dstPath)
+	}
+
+	// Find existing object
+	existingObj, err := f.NewObject(ctx, remote)
+	if err != nil {
+		existingObj = nil
+	}
+
+	// Create temporary object
+	dstObj, dstLeaf, dstDirectoryID, err := f.createObject(ctx, remote, srcObj.modTime, srcObj.size)
+	if err != nil {
+		return nil, err
+	}
+
+	// Copy the object
+	info, err := f.copyTo(ctx, srcObj.id, dstLeaf, dstDirectoryID, existingObj)
+	if err != nil {
+		return nil, err
+	}
+	err = dstObj.setMetaData(info)
+	if err != nil {
+		return nil, err
+	}
+
+	return dstObj, nil
 }
 
 // DirCacheFlush resets the directory cache - used in testing as an
@@ -1562,6 +1696,7 @@ var (
 	_ fs.Fs              = (*Fs)(nil)
 	_ fs.Purger          = (*Fs)(nil)
 	_ fs.PutStreamer     = (*Fs)(nil)
+	_ fs.Copier          = (*Fs)(nil)
 	_ fs.Mover           = (*Fs)(nil)
 	_ fs.DirMover        = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)

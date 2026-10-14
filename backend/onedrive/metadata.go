@@ -20,7 +20,7 @@ import (
 const (
 	dirMimeType   = "inode/directory"
 	timeFormatIn  = time.RFC3339
-	timeFormatOut = "2006-01-02T15:04:05.999Z" // mS for OneDrive Personal, otherwise only S
+	timeFormatOut = "2006-01-02T15:04:05.999Z" // keeps mS if present, though OneDrive only stores S
 )
 
 // system metadata keys which this backend owns
@@ -32,17 +32,17 @@ var systemMetadataInfo = map[string]fs.MetadataHelp{
 		ReadOnly: true,
 	},
 	"mtime": {
-		Help:    "Time of last modification with S accuracy (mS for OneDrive Personal).",
+		Help:    "Time of last modification with S accuracy.",
 		Type:    "RFC 3339",
 		Example: "2006-01-02T15:04:05Z",
 	},
 	"btime": {
-		Help:    "Time of file birth (creation) with S accuracy (mS for OneDrive Personal).",
+		Help:    "Time of file birth (creation) with S accuracy.",
 		Type:    "RFC 3339",
 		Example: "2006-01-02T15:04:05Z",
 	},
 	"utime": {
-		Help:     "Time of upload with S accuracy (mS for OneDrive Personal).",
+		Help:     "Time of upload with S accuracy.",
 		Type:     "RFC 3339",
 		Example:  "2006-01-02T15:04:05Z",
 		ReadOnly: true,
@@ -113,7 +113,7 @@ var systemMetadataInfo = map[string]fs.MetadataHelp{
 		ReadOnly: true,
 	},
 	"shared-time": {
-		Help:     "Time when the item was shared, with S accuracy (mS for OneDrive Personal).",
+		Help:     "Time when the item was shared, with S accuracy.",
 		Type:     "RFC 3339",
 		Example:  "2006-01-02T15:04:05Z",
 		ReadOnly: true,

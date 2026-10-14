@@ -4,6 +4,7 @@ package list
 import (
 	"context"
 	"fmt"
+	"path"
 	"sort"
 	"strings"
 
@@ -12,6 +13,39 @@ import (
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/lib/bucket"
 )
+
+// RemoteEscapesRoot reports whether remote, taken as a path relative to an Fs
+// root, climbs above that root when joined onto it.
+//
+// It mirrors what the backends actually do - path.Join(root, remote) - by
+// joining remote onto a sentinel root and checking whether the result is still
+// under the sentinel.
+//
+// A well behaved backend never produces such a name; one can arise from a
+// malicious or buggy server (an object store permits keys containing ".."),
+// and acting on it would let a listing or transfer escape the configured root.
+func RemoteEscapesRoot(remote string) bool {
+	const sentinel = "\x00rootsentinel"
+	joined := path.Join(sentinel, remote)
+	return joined != sentinel && !strings.HasPrefix(joined, sentinel+"/")
+}
+
+// RemoveEscaping drops - and logs - any entries whose Remote escapes the Fs
+// root (see RemoteEscapesRoot), filtering the slice in place. It is applied to
+// every listing unconditionally, independent of the include/exclude filters, so
+// that names which cannot be safely confined are never surfaced to any
+// operation.
+func RemoveEscaping(entries fs.DirEntries) fs.DirEntries {
+	kept := entries[:0]
+	for _, entry := range entries {
+		if RemoteEscapesRoot(entry.Remote()) {
+			fs.Errorf(entry, "Entry %q escapes the root - ignoring", entry.Remote())
+			continue
+		}
+		kept = append(kept, entry)
+	}
+	return kept
+}
 
 // DirSorted reads Object and *Dir into entries for the given Fs.
 //
@@ -33,7 +67,7 @@ func DirSorted(ctx context.Context, f fs.Fs, includeAll bool, dir string) (entri
 	// called.
 	fi := filter.GetConfig(ctx)
 	if !includeAll && fi.ListContainsExcludeFile(entries) {
-		fs.Debugf(dir, "Excluded")
+		fs.DebugfCtx(ctx, dir, "Excluded")
 		return nil, nil
 	}
 	return filterAndSortDir(ctx, entries, includeAll, dir, fi.IncludeObject, fi.IncludeDirectory(ctx, f))
@@ -79,7 +113,7 @@ func DirSortedFn(ctx context.Context, f fs.Fs, includeAll bool, dir string, call
 		// starting directory, otherwise ListDirSorted should not be
 		// called.
 		if !includeAll && fi.ListContainsExcludeFile(entries) {
-			fs.Debugf(dir, "Excluded")
+			fs.DebugfCtx(ctx, dir, "Excluded")
 			return nil
 		}
 
@@ -99,6 +133,7 @@ func DirSortedFn(ctx context.Context, f fs.Fs, includeAll bool, dir string, call
 func filterDir(ctx context.Context, entries fs.DirEntries, includeAll bool, dir string,
 	IncludeObject func(ctx context.Context, o fs.Object) bool,
 	IncludeDirectory func(remote string) (bool, error)) (newEntries fs.DirEntries, err error) {
+	entries = RemoveEscaping(entries)
 	newEntries = entries[:0] // in place filter
 	prefix := ""
 	if dir != "" {
@@ -115,7 +150,7 @@ func filterDir(ctx context.Context, entries fs.DirEntries, includeAll bool, dir 
 			// Make sure we don't delete excluded files if not required
 			if !includeAll && !IncludeObject(ctx, x) {
 				ok = false
-				fs.Debugf(x, "Excluded")
+				fs.DebugfCtx(ctx, x, "Excluded")
 			}
 		case fs.Directory:
 			if !includeAll {
@@ -125,7 +160,7 @@ func filterDir(ctx context.Context, entries fs.DirEntries, includeAll bool, dir 
 				}
 				if !include {
 					ok = false
-					fs.Debugf(x, "Excluded")
+					fs.DebugfCtx(ctx, x, "Excluded")
 				}
 			}
 		default:
@@ -138,13 +173,13 @@ func filterDir(ctx context.Context, entries fs.DirEntries, includeAll bool, dir 
 			// ignore
 		case !strings.HasPrefix(remote, prefix):
 			ok = false
-			fs.Errorf(entry, "Entry doesn't belong in directory %q (too short) - ignoring", dir)
+			fs.ErrorfCtx(ctx, entry, "Entry doesn't belong in directory %q (too short) - ignoring", dir)
 		case remote == dir:
 			ok = false
-			fs.Errorf(entry, "Entry doesn't belong in directory %q (same as directory) - ignoring", dir)
+			fs.ErrorfCtx(ctx, entry, "Entry doesn't belong in directory %q (same as directory) - ignoring", dir)
 		case strings.ContainsRune(remote[len(prefix):], '/') && !bucket.IsAllSlashes(remote[len(prefix):]):
 			ok = false
-			fs.Errorf(entry, "Entry doesn't belong in directory %q (contains subdir) - ignoring", dir)
+			fs.ErrorfCtx(ctx, entry, "Entry doesn't belong in directory %q (contains subdir) - ignoring", dir)
 		default:
 			// ok
 		}

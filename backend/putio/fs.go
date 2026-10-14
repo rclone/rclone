@@ -21,6 +21,7 @@ import (
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
+	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
@@ -330,17 +331,31 @@ func (f *Fs) sendUpload(ctx context.Context, location string, size int64, in io.
 	}
 	var clientOffset int64
 	var offsetMismatch bool
-	buf := make([]byte, defaultChunkSize)
 	for clientOffset < size {
 		chunkSize := min(size-clientOffset, int64(defaultChunkSize))
-		chunk := readers.NewRepeatableLimitReaderBuffer(in, buf, chunkSize)
 		chunkStart := clientOffset
 		reqSize := chunkSize
 		transferOffset := clientOffset
 		fs.Debugf(f, "chunkStart: %d, reqSize: %d", chunkStart, reqSize)
 
+		// Buffer the chunk in memory from the global pool so reads are
+		// repeatable for retries
+		rw := multipart.NewRW()
+		_, err = io.CopyN(rw, in, chunkSize)
+		if err != nil {
+			_ = rw.Close()
+			if err == io.EOF {
+				err = fmt.Errorf("short read of chunk at %d: %w", chunkStart, io.ErrUnexpectedEOF)
+			}
+			return
+		}
+
 		// Transfer the chunk
 		err = f.pacer.Call(func() (bool, error) {
+			_, err = rw.Seek(0, io.SeekStart)
+			if err != nil {
+				return false, err
+			}
 			if offsetMismatch {
 				// Get file offset and seek to the position
 				offset, err := f.getServerOffset(ctx, location)
@@ -349,7 +364,7 @@ func (f *Fs) sendUpload(ctx context.Context, location string, size int64, in io.
 				}
 				sentBytes := offset - chunkStart
 				fs.Debugf(f, "sentBytes: %d", sentBytes)
-				_, err = chunk.Seek(sentBytes, io.SeekStart)
+				_, err = rw.Seek(sentBytes, io.SeekStart)
 				if err != nil {
 					return shouldRetry(ctx, err)
 				}
@@ -359,7 +374,7 @@ func (f *Fs) sendUpload(ctx context.Context, location string, size int64, in io.
 			}
 			fs.Debugf(f, "Sending chunk. transferOffset: %d length: %d", transferOffset, reqSize)
 			var serverOffset int64
-			serverOffset, fileID, err = f.transferChunk(ctx, location, transferOffset, chunk, reqSize)
+			serverOffset, fileID, err = f.transferChunk(ctx, location, transferOffset, rw, reqSize)
 			if cerr, ok := err.(*statusCodeError); ok && cerr.response.StatusCode == 409 {
 				offsetMismatch = true
 				return true, err
@@ -370,8 +385,12 @@ func (f *Fs) sendUpload(ctx context.Context, location string, size int64, in io.
 			}
 			return shouldRetry(ctx, err)
 		})
+		closeErr := rw.Close()
 		if err != nil {
 			return
+		}
+		if closeErr != nil {
+			return 0, closeErr
 		}
 
 		clientOffset += chunkSize
@@ -436,11 +455,19 @@ func (f *Fs) makeUploadHeadRequest(ctx context.Context, location string) (*http.
 	return req, nil
 }
 
+// makeUploadPatchRequest makes the tus PATCH request sending length bytes
+// of in at offset.
+//
+// The body is wrapped in readers.NoCloser so the transport can't upgrade it
+// to an io.Closer and close it after each attempt — the chunk buffer is
+// pool-backed, so an early close would free its pages and a retry would then
+// read a dead buffer. The upload loop owns the buffer's lifetime.
 func (f *Fs) makeUploadPatchRequest(ctx context.Context, location string, in io.Reader, offset, length int64) (*http.Request, error) {
-	req, err := http.NewRequestWithContext(ctx, "PATCH", location, in)
+	req, err := http.NewRequestWithContext(ctx, "PATCH", location, readers.NoCloser(in))
 	if err != nil {
 		return nil, err
 	}
+	req.ContentLength = length
 	req.Header.Set("tus-resumable", "1.0.0")
 	req.Header.Set("upload-offset", strconv.FormatInt(offset, 10))
 	req.Header.Set("content-length", strconv.FormatInt(length, 10))

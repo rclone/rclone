@@ -3,6 +3,7 @@ package vfs
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"runtime"
@@ -15,6 +16,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,6 +32,41 @@ func dirCreate(t *testing.T) (r *fstest.Run, vfs *VFS, dir *Dir, item fstest.Ite
 	require.True(t, node.IsDir())
 
 	return r, vfs, node.(*Dir), file1
+}
+
+// TestDirLinksInvalidName checks that with --links an object called
+// "...rclonelink" doesn't become a directory entry called "..", which
+// would address the parent, whether it comes from a listing or from
+// the cache.
+func TestDirLinksInvalidName(t *testing.T) {
+	opt := vfscommon.Opt
+	opt.Links = true
+	r, vfs := newTestVFSOpt(t, &opt)
+
+	file1 := r.WriteObject(context.Background(), "dir/.."+fs.LinkSuffix, "target", t1)
+	file2 := r.WriteObject(context.Background(), "dir/file1", "file1 contents", t1)
+	r.CheckRemoteItems(t, file1, file2)
+
+	node, err := vfs.Stat("dir")
+	require.NoError(t, err)
+	dir := node.(*Dir)
+
+	checkEntries := func() {
+		t.Helper()
+		entries, err := dir.ReadDirAll()
+		require.NoError(t, err)
+		var names []string
+		for _, entry := range entries {
+			names = append(names, entry.Name())
+		}
+		assert.Equal(t, []string{"file1"}, names)
+	}
+	checkEntries()
+
+	for _, leaf := range []string{".." + fs.LinkSuffix, "." + fs.LinkSuffix, fs.LinkSuffix} {
+		dir.AddVirtual(leaf, 6, false)
+	}
+	checkEntries()
 }
 
 func TestDirMethods(t *testing.T) {
@@ -434,6 +471,48 @@ func TestDirMkdirSub(t *testing.T) {
 	assert.Equal(t, EROFS, err)
 }
 
+// TestDirUnsafeName checks that a name which isn't a single safe path
+// element is refused by everything which creates a node, so it can't
+// build a path outside the directory. At the root path.Join("", "..")
+// preserves the "..", so this would otherwise make a node whose path is
+// outside the VFS root.
+func TestDirUnsafeName(t *testing.T) {
+	r, vfs, dir, file1 := dirCreate(t)
+
+	root, err := vfs.Root()
+	require.NoError(t, err)
+
+	for _, d := range []*Dir{root, dir} {
+		for _, name := range []string{"", ".", "..", "sub/dir", "../escape", "escape/.."} {
+			t.Run(fmt.Sprintf("%q in %q", name, d.Path()), func(t *testing.T) {
+				_, err := d.Mkdir(name)
+				assert.Equal(t, EINVAL, err, "Mkdir")
+
+				_, err = d.Create(name, os.O_WRONLY|os.O_CREATE)
+				assert.Equal(t, EINVAL, err, "Create")
+
+				err = dir.Rename("file1", name, d)
+				assert.Equal(t, EINVAL, err, "Rename")
+
+				// The source name is only looked up so isn't found
+				err = d.Rename(name, "renamed", dir)
+				assert.Equal(t, ENOENT, err, "Rename source")
+			})
+		}
+	}
+
+	// such a name can't be looked up either
+	_, err = vfs.Stat("..")
+	assert.Equal(t, ENOENT, err)
+	_, err = vfs.Stat("../escape")
+	assert.Equal(t, ENOENT, err)
+
+	// check nothing was made in the vfs or the underlying r.Fremote
+	checkListing(t, root, []string{"dir,0,true"})
+	checkListing(t, dir, []string{"file1,14,false"})
+	r.CheckRemoteItems(t, file1)
+}
+
 func TestDirRemove(t *testing.T) {
 	r, vfs, dir, _ := dirCreate(t)
 
@@ -761,5 +840,20 @@ func TestDirMetadataExtension(t *testing.T) {
 	require.NoError(t, err)
 	if features.ReadDirMetadata {
 		assert.Equal(t, modTime.Format(time.RFC3339Nano), metadata["mtime"])
+	}
+
+	// Check metadata for a file being written, which has no object
+	// yet, exists and is empty
+	fd, err := vfs.OpenFile("dir/newfile", os.O_WRONLY|os.O_CREATE, 0666)
+	require.NoError(t, err)
+	node, err = vfs.Stat("dir/newfile.metadata")
+	require.NoError(t, err)
+	require.True(t, node.IsFile())
+	blob, err = vfs.ReadFile("dir/newfile.metadata")
+	require.NoError(t, err)
+	assert.Equal(t, "{}", string(blob))
+	err = fd.Close()
+	if !errors.Is(err, fs.ErrorCantUploadEmptyFiles) {
+		require.NoError(t, err)
 	}
 }

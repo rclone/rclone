@@ -247,28 +247,6 @@ Properties:
 
 Here are the Advanced options specific to mega (Mega).
 
-#### --mega-session-id
-
-Session (internal use only)
-
-Properties:
-
-- Config:      session_id
-- Env Var:     RCLONE_MEGA_SESSION_ID
-- Type:        string
-- Required:    false
-
-#### --mega-master-key
-
-Master key (internal use only)
-
-Properties:
-
-- Config:      master_key
-- Env Var:     RCLONE_MEGA_MASTER_KEY
-- Type:        string
-- Required:    false
-
 #### --mega-debug
 
 Output more debug from Mega.

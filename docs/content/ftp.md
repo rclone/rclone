@@ -119,7 +119,7 @@ string as a password, although it is common to use either the password
 "anonymous" or "guest". Some servers require the use of a valid e-mail
 address as password.
 
-Using [on-the-fly](#backend-path-to-dir) or
+Using [on-the-fly](/docs/#backend-path-to-dir) or
 [connection string](/docs/#connection-strings) remotes makes it easy to access
 such servers, without requiring any configuration in advance. The following
 are examples of that:

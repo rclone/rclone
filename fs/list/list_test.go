@@ -15,6 +15,57 @@ import (
 // NB integration tests for DirSorted are in
 // fs/operations/listdirsorted_test.go
 
+func TestRemoteEscapesRoot(t *testing.T) {
+	for _, test := range []struct {
+		in     string
+		escape bool
+	}{
+		// non-escaping
+		{"", false},
+		{".", false},
+		{"a", false},
+		{"a/b", false},
+		{"a/../b", false}, // cleans to "b" - does not climb
+		{"foo/..", false}, // cleans back to root
+		{"..foo", false},  // not a ".." segment
+		{"a/..bar/c", false},
+		{"...", false}, // three dots is an ordinary name
+		{"/", false},   // absolute, but does not climb
+		{"/a/b", false},
+		{"//a", false},
+		// climbing with a relative prefix
+		{"..", true},
+		{"../b", true},
+		{"a/../../b", true}, // cleans to "../b"
+		{"../../etc/passwd", true},
+		// climbing hidden behind a leading slash - path.Clean would anchor
+		// these as absolute and miss them, but path.Join(root, ...) escapes
+		{"/..", true},
+		{"/../x", true},
+		{"//../../x", true},
+		{"/../../etc/passwd", true},
+		{"/./../x", true},
+	} {
+		assert.Equal(t, test.escape, RemoteEscapesRoot(test.in), test.in)
+	}
+}
+
+func TestFilterAndSortConfinement(t *testing.T) {
+	ok := mockobject.Object("ok.txt")
+	dotdot := mockobject.Object("..")        // bare ".." - missed by the belongs-in-dir check
+	up := mockobject.Object("../escape.txt") // climbs one level
+	upDir := mockdir.New("../evildir")       // climbing directory
+	deepUp := mockobject.Object("a/../../x") // cleans to "../x"
+	entries := fs.DirEntries{ok, dotdot, up, upDir, deepUp}
+	includeObject := func(ctx context.Context, o fs.Object) bool { return true }
+	includeDirectory := func(remote string) (bool, error) { return true, nil }
+
+	// Even with includeAll, entries that escape the root are dropped.
+	newEntries, err := filterAndSortDir(context.Background(), entries, true, "", includeObject, includeDirectory)
+	require.NoError(t, err)
+	assert.Equal(t, fs.DirEntries{ok}, newEntries)
+}
+
 func TestFilterAndSortIncludeAll(t *testing.T) {
 	da := mockdir.New("a")
 	oA := mockobject.Object("A")

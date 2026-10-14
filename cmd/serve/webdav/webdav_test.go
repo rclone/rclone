@@ -13,18 +13,24 @@ import (
 	"flag"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	_ "github.com/rclone/rclone/backend/local"
+	_ "github.com/rclone/rclone/backend/memory"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/servetest"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/filter"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -36,6 +42,7 @@ const (
 	testUser        = "user"
 	testPass        = "pass"
 	testTemplate    = "../http/testdata/golden/testindex.html"
+	testAllowOrigin = "http://test.rclone.org"
 )
 
 // check interfaces
@@ -253,6 +260,12 @@ func HelpTestGET(t *testing.T, testURL string) {
 // the test files directory, starts it, waits for it to be ready, and returns
 // the base URL. It registers cleanup to shut the server down.
 func startAuthenticatedServer(t *testing.T) string {
+	return startAuthenticatedServerAllowOrigin(t, "")
+}
+
+// startAuthenticatedServerAllowOrigin is startAuthenticatedServer
+// with CORS enabled for allowOrigin if it is non-empty.
+func startAuthenticatedServerAllowOrigin(t *testing.T, allowOrigin string) string {
 	t.Helper()
 
 	f, err := fs.NewFs(context.Background(), "../http/testdata/files")
@@ -260,6 +273,7 @@ func startAuthenticatedServer(t *testing.T) string {
 
 	opt := Opt
 	opt.HTTP.ListenAddr = []string{testBindAddress}
+	opt.HTTP.AllowOrigin = allowOrigin
 	opt.Template.Path = testTemplate
 	opt.Auth.BasicUser = testUser
 	opt.Auth.BasicPass = testPass
@@ -275,6 +289,64 @@ func startAuthenticatedServer(t *testing.T) string {
 
 	testURL := w.server.URLs()[0]
 	return testURL
+}
+
+// TestOPTIONSRequiresAuth checks OPTIONS can't be used to discover
+// whether a path exists, and whether it is a file or a directory,
+// without authenticating.
+func TestOPTIONSRequiresAuth(t *testing.T) {
+	doOPTIONS := func(url string, setup func(req *http.Request)) *http.Response {
+		req, err := http.NewRequest("OPTIONS", url, nil)
+		require.NoError(t, err)
+		if setup != nil {
+			setup(req)
+		}
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		_ = resp.Body.Close()
+		return resp
+	}
+
+	testURL := startAuthenticatedServer(t)
+
+	// The Allow header the WebDAV handler returns differs for an
+	// existing file, an existing directory and a missing path so
+	// it must not be visible without credentials.
+	allows := map[string]string{}
+	for _, path := range []string{"two.txt", "three/", "doesnotexist"} {
+		t.Run(path, func(t *testing.T) {
+			resp := doOPTIONS(testURL+path, nil)
+			assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+			assert.Empty(t, resp.Header.Get("Allow"))
+			assert.Empty(t, resp.Header.Get("DAV"))
+			assert.NotEmpty(t, resp.Header.Get("WWW-Authenticate"))
+
+			resp = doOPTIONS(testURL+path, func(req *http.Request) {
+				req.SetBasicAuth(testUser, testPass)
+			})
+			assert.Equal(t, http.StatusOK, resp.StatusCode)
+			assert.NotEmpty(t, resp.Header.Get("Allow"))
+			assert.Equal(t, "1, 2", resp.Header.Get("DAV"))
+			allows[path] = resp.Header.Get("Allow")
+		})
+	}
+	assert.NotEqual(t, allows["two.txt"], allows["three/"])
+	assert.NotEqual(t, allows["three/"], allows["doesnotexist"])
+	assert.NotEqual(t, allows["two.txt"], allows["doesnotexist"])
+
+	// A browser CORS preflight can't carry credentials so it must
+	// succeed, but it mustn't reach the WebDAV handler
+	t.Run("Preflight", func(t *testing.T) {
+		testURL := startAuthenticatedServerAllowOrigin(t, testAllowOrigin)
+		resp := doOPTIONS(testURL+"two.txt", func(req *http.Request) {
+			req.Header.Set("Origin", testAllowOrigin)
+			req.Header.Set("Access-Control-Request-Method", "PROPFIND")
+		})
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.Empty(t, resp.Header.Get("Allow"))
+		assert.Empty(t, resp.Header.Get("DAV"))
+		assert.Equal(t, testAllowOrigin, resp.Header.Get("Access-Control-Allow-Origin"))
+	})
 }
 
 func TestCompressedTextFile(t *testing.T) {
@@ -437,4 +509,217 @@ func TestMoveOverwriteFalseStillRejects(t *testing.T) {
 
 	assert.Equal(t, http.StatusPreconditionFailed, resp.StatusCode,
 		"MOVE with explicit Overwrite: F must still return 412 when destination exists")
+}
+
+// TestNewWebDAVError checks that a server initialisation failure is
+// returned as an error rather than panicking in the cleanup.
+func TestNewWebDAVError(t *testing.T) {
+	f, err := fs.NewFs(context.Background(), t.TempDir())
+	require.NoError(t, err)
+
+	opt := Opt
+	opt.HTTP.ListenAddr = []string{"localhost:-1"}
+
+	w, err := newWebDAV(context.Background(), f, &opt, &vfscommon.Opt, &proxy.Opt)
+	require.Error(t, err)
+	assert.Nil(t, w)
+}
+
+// TestAuthProxyDownloadOutlivesCache checks a download in progress
+// carries on working when the auth proxy drops its VFS from its cache,
+// as it does when a download takes longer than the cache expiry time.
+func TestAuthProxyDownloadOutlivesCache(t *testing.T) {
+	root := t.TempDir()
+	contents := random.String(32 * 1024 * 1024)
+	require.NoError(t, os.WriteFile(filepath.Join(root, "download.bin"), []byte(contents), 0666))
+
+	prog, err := filepath.Abs("../servetest/proxy_code.go")
+	require.NoError(t, err)
+	opt := Opt
+	opt.HTTP.ListenAddr = []string{testBindAddress}
+	proxyOpt := proxy.Opt
+	proxyOpt.AuthProxy = "go run " + prog + " " + root
+	w, err := newWebDAV(context.Background(), nil, &opt, &vfscommon.Opt, &proxyOpt)
+	require.NoError(t, err)
+	go func() {
+		require.NoError(t, w.Serve())
+	}()
+	defer func() { assert.NoError(t, w.Shutdown()) }()
+
+	req, err := http.NewRequest("GET", w.server.URLs()[0]+"download.bin", nil)
+	require.NoError(t, err)
+	req.SetBasicAuth(testUser, testPass)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer func() { _ = resp.Body.Close() }()
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+	start := make([]byte, 1024)
+	_, err = io.ReadFull(resp.Body, start)
+	require.NoError(t, err)
+
+	// Drop everything from the proxy's cache as if it had expired
+	w.provider.Proxy().Shutdown()
+
+	rest, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	assert.True(t, contents == string(start)+string(rest), "download corrupted")
+}
+
+// TestWebDavPathTraversal checks that request paths with "." or ".."
+// components are rejected with 400 before they reach the VFS, so they
+// can't be joined with the Fs root to reach objects outside the
+// directory served.
+//
+// It is run with and without a BaseURL as the webdav handler strips
+// the BaseURL from the Destination header itself.
+func TestWebDavPathTraversal(t *testing.T) {
+	for _, baseURL := range []string{"", "/base"} {
+		t.Run("BaseURL="+baseURL, func(t *testing.T) {
+			testPathTraversal(t, baseURL)
+		})
+	}
+}
+
+// testPathTraversal runs the path traversal checks against a server
+// with the BaseURL given.
+//
+// The memory backend is used because it resolves ".." by joining paths,
+// unlike the local backend which encodes the components as file names.
+func testPathTraversal(t *testing.T, baseURL string) {
+	ctx := context.Background()
+	bucket := ":memory:webdav-traversal-test" + strings.ReplaceAll(baseURL, "/", "-")
+	modTime := fstest.Time("2001-02-03T04:05:06.499999999Z")
+
+	// outside is the parent of the directory served and holds an object
+	// which must stay unreachable through the server.
+	outside, err := fs.NewFs(ctx, bucket)
+	require.NoError(t, err)
+	_, err = operations.Rcat(ctx, outside, "outside-secret.txt", io.NopCloser(strings.NewReader("SECRET")), modTime, nil)
+	require.NoError(t, err)
+
+	f, err := fs.NewFs(ctx, bucket+"/served-root")
+	require.NoError(t, err)
+	_, err = operations.Rcat(ctx, f, "inside.txt", io.NopCloser(strings.NewReader("INSIDE")), modTime, nil)
+	require.NoError(t, err)
+	_, err = operations.Rcat(ctx, f, "dir/inside-dir.txt", io.NopCloser(strings.NewReader("INSIDE DIR")), modTime, nil)
+	require.NoError(t, err)
+
+	opt := Opt
+	opt.HTTP.ListenAddr = []string{"localhost:0"}
+	opt.HTTP.BaseURL = baseURL
+	w, err := newWebDAV(ctx, f, &opt, &vfscommon.Opt, &proxy.Opt)
+	require.NoError(t, err)
+	// The requests are made directly to the router, but the server
+	// must be serving for Shutdown to close its listener.
+	w.server.Serve()
+	defer func() {
+		assert.NoError(t, w.Shutdown())
+	}()
+	router := w.server.Router()
+
+	// do makes a request for urlPath, and for COPY and MOVE with the
+	// Destination dest, both of which have the baseURL added.
+	do := func(method, urlPath, dest string) *httptest.ResponseRecorder {
+		body := ""
+		switch method {
+		case "PUT":
+			body = "EVIL"
+		case "LOCK":
+			body = `<?xml version="1.0" encoding="utf-8"?><D:lockinfo xmlns:D="DAV:"><D:lockscope><D:exclusive/></D:lockscope><D:locktype><D:write/></D:locktype></D:lockinfo>`
+		}
+		req := httptest.NewRequest(method, baseURL+urlPath, strings.NewReader(body))
+		switch method {
+		case "COPY", "MOVE":
+			req.Header.Set("Destination", baseURL+dest)
+		case "LOCK":
+			req.Header.Set("Depth", "0")
+		case "PROPFIND":
+			req.Header.Set("Depth", "1")
+		}
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, req)
+		return rec
+	}
+
+	// A path inside the served root is unaffected
+	rec := do("GET", "/inside.txt", "")
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, "INSIDE", rec.Body.String())
+
+	// The root itself can be made
+	rec = do("MKCOL", "/", "")
+	assert.Equal(t, http.StatusCreated, rec.Code)
+
+	type request struct {
+		method  string
+		urlPath string
+		dest    string
+	}
+	// Every request naming a path with a "." or ".." element must fail.
+	//
+	// The MKCOL requests come first so that, should one succeed, the
+	// later requests are routed through the directory node it made.
+	requests := []request{
+		{"MKCOL", "/..", ""},
+		{"MKCOL", "/../", ""},
+		{"MKCOL", "/../new-dir", ""},
+		{"MKCOL", "/a/../../new-dir", ""},
+		{"MKCOL", "/.", ""},
+		{"MKCOL", "/./new-dir", ""},
+		{"PUT", "/../outside-write.txt", ""},
+		{"PUT", "/../outside-secret.txt", ""},
+		{"PUT", "/%2e%2e/outside-write.txt", ""},
+		{"PUT", "/a/../../outside-write.txt", ""},
+		{"LOCK", "/../outside-lock.txt", ""},
+		{"COPY", "/inside.txt", "/../outside-copy.txt"},
+		{"COPY", "/inside.txt", "/../outside-secret.txt"},
+		{"COPY", "/inside.txt", "/%2e%2e/outside-copy.txt"},
+		{"MOVE", "/inside.txt", "/../outside-move.txt"},
+		{"MOVE", "/inside.txt", "/a/../../outside-move.txt"},
+		{"MKCOL", "/../outside-dir", ""},
+		{"MOVE", "/../outside-dir", "/stolen-dir"},
+		{"COPY", "/../outside-dir", "/copied-dir"},
+		{"MOVE", "/../outside-secret.txt", "/stolen.txt"},
+		{"COPY", "/../outside-secret.txt", "/copied.txt"},
+		{"PROPPATCH", "/../outside-secret.txt", ""},
+		{"PROPFIND", "/..", ""},
+		{"GET", "/../outside-secret.txt", ""},
+		{"GET", "/../", ""},
+		{"GET", "/../?download=zip", ""},
+		{"HEAD", "/../", ""},
+		{"DELETE", "/../outside-secret.txt", ""},
+		{"DELETE", "/..", ""},
+	}
+	if baseURL != "" {
+		// Stripping the BaseURL as a string prefix from these
+		// destinations leaves a path starting with a ".." element.
+		//
+		// The directory COPY comes first so that, should it succeed,
+		// the later requests are routed through the node it made.
+		requests = append([]request{
+			{"COPY", "/dir", ".."},
+			{"COPY", "/inside.txt", "../outside-copy.txt"},
+			{"COPY", "/inside.txt", "../outside-secret.txt"},
+			{"COPY", "/inside.txt", "%2e%2e/outside-copy.txt"},
+			{"MOVE", "/inside.txt", "../outside-move.txt"},
+		}, requests...)
+	}
+	for _, test := range requests {
+		name := test.method + " " + test.urlPath
+		if test.dest != "" {
+			name += " to " + test.dest
+		}
+		t.Run(name, func(t *testing.T) {
+			rec := do(test.method, test.urlPath, test.dest)
+			assert.Equal(t, http.StatusBadRequest, rec.Code)
+		})
+	}
+
+	// Nothing was created, modified, moved or removed, either outside
+	// the served root or inside it.
+	fstest.CheckListingWithPrecision(t, outside, []fstest.Item{
+		fstest.NewItem("outside-secret.txt", "SECRET", modTime),
+		fstest.NewItem("served-root/inside.txt", "INSIDE", modTime),
+		fstest.NewItem("served-root/dir/inside-dir.txt", "INSIDE DIR", modTime),
+	}, []string{"served-root", "served-root/dir"}, fs.GetModifyWindow(ctx, outside))
 }

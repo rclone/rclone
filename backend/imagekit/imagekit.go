@@ -477,7 +477,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
 			FolderPath: f.EncodePath(path.Join(f.root, dir)),
 		})
 
-		if res.StatusCode == http.StatusNotFound {
+		if res != nil && res.StatusCode == http.StatusNotFound {
 			return false, fs.ErrorDirNotFound
 		}
 
@@ -502,7 +502,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) (err error) {
 			FolderPath: f.EncodePath(remote),
 		})
 
-		if res.StatusCode == http.StatusNotFound {
+		if res != nil && res.StatusCode == http.StatusNotFound {
 			return false, fs.ErrorDirNotFound
 		}
 

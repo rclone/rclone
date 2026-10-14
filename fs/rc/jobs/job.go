@@ -108,7 +108,11 @@ func (job *Job) OnFinish(fn func()) func() {
 func (job *Job) run(ctx context.Context, fn rc.Func, in rc.Params) {
 	defer func() {
 		if r := recover(); r != nil {
-			job.finish(nil, fmt.Errorf("panic received: %v \n%s", r, string(debug.Stack())))
+			// Log the full stack trace server-side only - it must not
+			// be returned to the rc caller as it leaks internal paths,
+			// dependency versions and memory addresses.
+			fs.Errorf(nil, "rc: job %d panic: %v\n%s", job.ID, r, string(debug.Stack()))
+			job.finish(nil, fmt.Errorf("panic received: %v", r))
 		}
 	}()
 	job.finish(fn(ctx, in))
@@ -342,10 +346,9 @@ func GetJobID(ctx context.Context) (jobID int64, ok bool) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:   "job/status",
-		NoAuth: true,
-		Fn:     rcJobStatus,
-		Title:  "Reads the status of the job ID",
+		Path:  "job/status",
+		Fn:    rcJobStatus,
+		Title: "Reads the status of the job ID",
 		Help: `Parameters:
 
 - jobid - id of the job (integer).
@@ -389,10 +392,9 @@ func rcJobStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	rc.Add(rc.Call{
-		Path:   "job/list",
-		NoAuth: true,
-		Fn:     rcJobList,
-		Title:  "Lists the IDs of the running jobs",
+		Path:  "job/list",
+		Fn:    rcJobList,
+		Title: "Lists the IDs of the running jobs",
 		Help: `Parameters: None.
 
 Results:
@@ -687,10 +689,10 @@ func rcBatch(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 
 	// Read concurrency
-	concurrency, err := in.GetInt64("concurrency")
+	concurrency, err := in.GetInt("concurrency")
 	if rc.IsErrParamNotFound(err) {
 		ci := fs.GetConfig(ctx)
-		concurrency = int64(ci.Transfers)
+		concurrency = ci.Transfers
 	} else if err != nil {
 		return nil, err
 	}
@@ -700,7 +702,7 @@ func rcBatch(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	out["results"] = results
 
 	g, gCtx := errgroup.WithContext(ctx)
-	g.SetLimit(int(concurrency))
+	g.SetLimit(concurrency)
 	for i, inputAny := range inputs {
 		input, ok := inputAny.(map[string]any)
 		if !ok {

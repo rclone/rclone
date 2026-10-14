@@ -19,6 +19,7 @@ import (
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/sync/trackrenames"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/terminal"
 )
@@ -28,48 +29,54 @@ var ErrBisyncAborted = errors.New("bisync aborted")
 
 // bisyncRun keeps bisync runtime state
 type bisyncRun struct {
-	fs1                fs.Fs
-	fs2                fs.Fs
-	abort              bool
-	critical           bool
-	retryable          bool
-	basePath           string
-	workDir            string
-	listing1           string
-	listing2           string
-	newListing1        string
-	newListing2        string
-	aliases            bilib.AliasMap
-	opt                *Options
-	octx               context.Context
-	fctx               context.Context
-	InGracefulShutdown bool
-	CleanupCompleted   bool
-	SyncCI             *fs.ConfigInfo
-	CancelSync         context.CancelFunc
-	DebugName          string
-	lockFile           string
-	renames            renames
-	resyncIs1to2       bool
-	march              bisyncMarch
-	check              bisyncCheck
-	queueOpt           bisyncQueueOpt
-	downloadHashOpt    downloadHashOpt
-	lockFileOpt        lockFileOpt
+	fs1                  fs.Fs
+	fs2                  fs.Fs
+	abort                bool
+	critical             bool
+	retryable            bool
+	basePath             string
+	workDir              string
+	listing1             string
+	listing2             string
+	newListing1          string
+	newListing2          string
+	aliases              bilib.AliasMap
+	opt                  *Options
+	octx                 context.Context
+	fctx                 context.Context
+	InGracefulShutdown   bool
+	CleanupCompleted     bool
+	SyncCI               *fs.ConfigInfo
+	CancelSync           context.CancelFunc
+	DebugName            string
+	lockFile             string
+	renames              renames
+	resyncIs1to2         bool
+	march                bisyncMarch
+	check                bisyncCheck
+	queueOpt             bisyncQueueOpt
+	downloadHashOpt      downloadHashOpt
+	lockFileOpt          lockFileOpt
+	trackRenamesStrategy trackrenames.Strategy
 }
 
 type queues struct {
 	copy1to2      bilib.Names
 	copy2to1      bilib.Names
-	renameSkipped bilib.Names // not renamed because it was equal
-	skippedDirs1  *fileList
-	skippedDirs2  *fileList
+	renameSkipped bilib.Names // not renamed due to --dry-run
+	skipped1      *fileList   // dirs and equal files not renamed, from the Path1 snapshot
+	skipped2      *fileList   // dirs and equal files not renamed, from the Path2 snapshot
 	deletedonboth bilib.Names
 }
 
 // Bisync handles lock file, performs bisync run and checks exit status
 func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 	opt := *optArg // ensure that input is never changed
+	// applyContext changes the config, so give it a copy
+	ctx, _ = fs.AddConfig(ctx)
+	if err = opt.applyContext(ctx); err != nil {
+		return err
+	}
 	b := &bisyncRun{
 		fs1:       fs1,
 		fs2:       fs2,
@@ -85,6 +92,15 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 	}
 	ci := fs.GetConfig(ctx)
 	opt.OrigBackupDir = ci.BackupDir
+	if opt.MaxDeleteRenamesAware {
+		if !ci.TrackRenames {
+			return errors.New("--max-delete-renames-aware requires --track-renames")
+		}
+		b.trackRenamesStrategy, err = trackrenames.ParseStrategy(ci.TrackRenamesStrategy)
+		if err != nil {
+			return err
+		}
+	}
 
 	if ci.TerminalColorMode == fs.TerminalColorModeAlways || (ci.TerminalColorMode == fs.TerminalColorModeAuto && !log.Redirected()) {
 		ColorsLock.Lock()
@@ -346,6 +362,18 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 	// Check for too many deleted files - possible error condition.
 	// Don't want to start deleting on the other side!
 	if !opt.Force {
+		if b.trackRenamesPreflight() && (ds1.exceedsDeletes() || ds2.exceedsDeletes()) {
+			ds1.renameExemptions, ds2.renameExemptions, err = b.trackedRenameExemptions(fctx, ds1, ds2)
+			if err != nil {
+				return err
+			}
+			if ds1.renameExemptions > 0 {
+				fs.Infof(nil, "Path1: excluding %d tracked renames from --max-delete", ds1.renameExemptions)
+			}
+			if ds2.renameExemptions > 0 {
+				fs.Infof(nil, "Path2: excluding %d tracked renames from --max-delete", ds2.renameExemptions)
+			}
+		}
 		if ds1.excessDeletes() || ds2.excessDeletes() {
 			b.abort = true
 			return errors.New("too many deletes")

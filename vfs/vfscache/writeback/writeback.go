@@ -352,7 +352,9 @@ func (wb *WriteBack) upload(ctx context.Context, wbItem *writeBackItem) {
 	fs.Debugf(wbItem.name, "vfs cache: starting upload")
 
 	wb.mu.Unlock()
-	err := putFn(ctx)
+	// Recover around the upload itself rather than the whole goroutine, so a
+	// panicking backend is retried like any other upload failure below.
+	err := vfscommon.RecoverCall(wbItem.name, func() error { return putFn(ctx) })
 	wb.mu.Lock()
 
 	wbItem.cancel() // cancel context to release resources since store done

@@ -801,9 +801,12 @@ func (f *Fs) processEntries(ctx context.Context, origEntries fs.DirEntries, dirP
 				fs.Debugf(f, "skip orphan data chunk %q", remote)
 				break
 			}
-			if mainObject == nil && !f.useMeta {
+			if mainObject == nil && !f.useMeta && !isSpecial {
 				// this is the "nometa" case
 				// create dummy chunked object without metadata
+				//
+				// not for temporary or control chunks as they may be all
+				// that is left of an interrupted upload
 				mainObject = f.newObject(mainRemote, nil, nil)
 				byRemote[mainRemote] = mainObject
 				if !badEntry[mainRemote] {

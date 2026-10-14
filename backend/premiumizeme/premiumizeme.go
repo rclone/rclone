@@ -993,6 +993,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}()
 	}
 
+	// The upload server truncates the file name at the first ";" so
+	// upload under a temporary name and rename it afterwards.
+	uploadLeaf := leaf
+	if strings.Contains(leaf, ";") {
+		uploadLeaf = "rclone-upload-" + random.String(16)
+	}
+
 	opts = rest.Opts{
 		Method:  "POST",
 		RootURL: info.URL,
@@ -1000,8 +1007,8 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		MultipartParams: url.Values{
 			"token": {info.Token},
 		},
-		MultipartContentName: "file", // ..name of the parameter which is the attached file
-		MultipartFileName:    leaf,   // ..name of the file for the attached file
+		MultipartContentName: "file",     // ..name of the parameter which is the attached file
+		MultipartFileName:    uploadLeaf, // ..name of the file for the attached file
 		ContentLength:        &size,
 	}
 	var result api.Response
@@ -1014,6 +1021,29 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	if err = result.AsErr(); err != nil {
 		return fmt.Errorf("upload file: %w", err)
+	}
+
+	if uploadLeaf != leaf {
+		var newID string
+		var found bool
+		_, found, err = o.fs.listAll(ctx, directoryID, false, true, func(item *api.Item) bool {
+			if item.Name == uploadLeaf {
+				newID = item.ID
+				return true
+			}
+			return false
+		})
+		if err != nil {
+			return fmt.Errorf("upload find temporary file: %w", err)
+		}
+		if !found {
+			return fmt.Errorf("upload find temporary file %q: %w", uploadLeaf, fs.ErrorObjectNotFound)
+		}
+		err = o.fs.renameLeaf(ctx, true, newID, leaf)
+		if err != nil {
+			_ = o.fs.remove(ctx, newID)
+			return fmt.Errorf("upload rename temporary file: %w", err)
+		}
 	}
 
 	// on successful upload, remove old file if it exists
