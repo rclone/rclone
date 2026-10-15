@@ -27,7 +27,6 @@ import (
 	"io"
 	"math"
 	"path"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -926,23 +925,27 @@ func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, obj
 	}
 	b.deleteUpload(uploadID, up)
 
-	// The ETag is the MD5 of the object when that is the hash used
-	// for ETags, so it is the same as HEAD returns for it, otherwise
-	// the S3 multipart ETag. It is stored, with the part sizes, so
-	// HEAD returns it while the object is unchanged.
-	etag := up.multipartETag(input)
+	// The ETag is the one HEAD returns for the object. With MD5
+	// ETags the MD5 of the object, which the backend may not have, is
+	// stored with the part sizes so HEAD returns it while the object
+	// is unchanged.
 	var etagHash []byte
 	if b.s.etagHash(up.vfs) == fshash.MD5 {
 		etagHash = up.objectMD5.Sum(nil)
-		etag = fmt.Sprintf("%q", hex.EncodeToString(etagHash))
 	}
 	_ = up.tenant.storeObjectMeta(up.vfs, up.fp, objectMeta{
 		meta:      up.meta,
 		hash:      etagHash,
 		partSizes: up.listedPartSizes(input),
 	})
+	if etagHash == nil {
+		// The upload is complete, so isn't failed if the object can't be read
+		if node, err := up.vfs.Stat(up.fp); err == nil {
+			etagHash = b.objectHash(ctx, up.vfs, up.fp, node)
+		}
+	}
 
-	return "", etag, nil
+	return "", quoteETag(etagHash), nil
 }
 
 // listedPartSizes returns the sizes of the parts listed in input, in
@@ -1209,25 +1212,4 @@ func (up *multipartUpload) abort() error {
 		return nil
 	}
 	return fh.Close()
-}
-
-// multipartETag computes the S3 multipart ETag for the assembled object:
-//
-//	hex(md5(concat(part_md5s_in_order))) + "-" + N
-func (up *multipartUpload) multipartETag(input *gofakes3.CompleteMultipartUploadRequest) string {
-	partNumbers := make([]int, 0, len(input.Parts))
-	for _, p := range input.Parts {
-		partNumbers = append(partNumbers, p.PartNumber)
-	}
-	sort.Ints(partNumbers)
-
-	up.mu.Lock()
-	concat := make([]byte, 0, len(partNumbers)*md5.Size)
-	for _, n := range partNumbers {
-		concat = append(concat, up.partMD5s[n]...)
-	}
-	up.mu.Unlock()
-
-	sum := md5.Sum(concat)
-	return fmt.Sprintf("%q", fmt.Sprintf("%s-%d", hex.EncodeToString(sum[:]), len(partNumbers)))
 }

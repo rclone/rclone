@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/md5"
+	"crypto/sha1"
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
@@ -13,6 +14,7 @@ import (
 	"math"
 	"net/url"
 	"path"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -24,6 +26,7 @@ import (
 	_ "github.com/rclone/rclone/backend/memory"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
@@ -1954,5 +1957,86 @@ func TestMultipartETagAndParts(t *testing.T) {
 				start += size
 			}
 		})
+	}
+}
+
+// TestETagHashConsistent checks the ETags returned when objects are
+// made are the same as HEAD and listings return for them, whatever
+// --etag-hash is.
+func TestETagHashConsistent(t *testing.T) {
+	for _, etagHash := range []string{"", "SHA1"} {
+		for _, tc := range testRemotes {
+			t.Run(fmt.Sprintf("%s/%q", tc.name, etagHash), func(t *testing.T) {
+				// A directory marker on a memory remote is a virtual
+				// directory, which stops the VFS shared by the servers
+				// of plain ":memory:" seeing new buckets, so this needs
+				// its own.
+				backing := tc.backing
+				if backing == ":memory:" {
+					backing = fmt.Sprintf(":memory,description=etag%d:", testBackingCounter.Add(1))
+				}
+				core, f, bucket := newMultipartTestServerOpt(t, backing, false, func(opt *Options) {
+					opt.EtagHash = etagHash
+				})
+				ctx := context.Background()
+				sha1Hex := func(data []byte) string {
+					if etagHash == "" {
+						return ""
+					}
+					sum := sha1.Sum(data)
+					return hex.EncodeToString(sum[:])
+				}
+				// The backend gives the hashes of objects, but not of
+				// directory markers
+				wantETag := func(data []byte) string {
+					if !f.Hashes().Contains(hash.SHA1) {
+						return ""
+					}
+					return sha1Hex(data)
+				}
+				etags := map[string]string{}
+
+				data := []byte("put object")
+				info, err := core.PutObject(ctx, bucket, "put.txt", bytes.NewReader(data), int64(len(data)), "", "", minio.PutObjectOptions{})
+				require.NoError(t, err)
+				assert.Equal(t, wantETag(data), info.ETag, "put")
+				etags["put.txt"] = info.ETag
+
+				info, err = core.PutObject(ctx, bucket, "dir/", bytes.NewReader(nil), 0, "", "", minio.PutObjectOptions{})
+				require.NoError(t, err)
+				assert.Equal(t, sha1Hex(nil), info.ETag, "directory marker")
+				etags["dir/"] = info.ETag
+
+				uploadID, err := core.NewMultipartUpload(ctx, bucket, "multipart.bin", minio.PutObjectOptions{})
+				require.NoError(t, err)
+				var all []byte
+				var parts []minio.CompletePart
+				for i, size := range []int{100 * 1024, 30 * 1024} {
+					data := []byte(random.String(size))
+					all = append(all, data...)
+					p, err := core.PutObjectPart(ctx, bucket, "multipart.bin", uploadID, i+1, bytes.NewReader(data), int64(size), minio.PutObjectPartOptions{})
+					require.NoError(t, err)
+					parts = append(parts, minio.CompletePart{PartNumber: i + 1, ETag: p.ETag})
+				}
+				complete, err := core.CompleteMultipartUpload(ctx, bucket, "multipart.bin", uploadID, parts, minio.PutObjectOptions{})
+				require.NoError(t, err)
+				assert.Equal(t, wantETag(all), complete.ETag, "multipart")
+				etags["multipart.bin"] = complete.ETag
+
+				for key, etag := range etags {
+					stat, err := core.StatObject(ctx, bucket, key, minio.StatObjectOptions{})
+					require.NoError(t, err, key)
+					assert.Equal(t, etag, stat.ETag, "HEAD %s", key)
+				}
+				listed := map[string]string{}
+				result, err := core.ListObjects(bucket, "", "", "", 1000)
+				require.NoError(t, err)
+				for _, obj := range result.Contents {
+					listed[obj.Key] = strings.Trim(obj.ETag, `"`)
+				}
+				delete(etags, "dir/")
+				assert.Equal(t, etags, listed)
+			})
+		}
 	}
 }
