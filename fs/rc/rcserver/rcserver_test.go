@@ -193,6 +193,7 @@ func TestFileServing(t *testing.T) {
 		URL:    "",
 		Status: http.StatusOK,
 		Expected: `<pre>
+<a href="%5Bsub%5D/">[sub]/</a>
 <a href="dir/">dir/</a>
 <a href="file.txt">file.txt</a>
 <a href="modtime/">modtime/</a>
@@ -266,6 +267,7 @@ func TestRemoteServing(t *testing.T) {
 </head>
 <body>
 <h1>Directory listing of /</h1>
+<a href="./%5Bsub%5D/">[sub]/</a><br />
 <a href="./dir/">dir/</a><br />
 <a href="./modtime/">modtime/</a><br />
 <a href="./file.txt">file.txt</a><br />
@@ -343,6 +345,11 @@ func TestRemoteServing(t *testing.T) {
 			Status:   http.StatusOK,
 			Expected: "this is dir/file2.txt\n",
 		}, {
+			Name:     "file under a remote path containing ]",
+			URL:      "[" + testFs + "/[sub]]/file3.txt",
+			Status:   http.StatusOK,
+			Expected: "this is [sub]/file3.txt\n",
+		}, {
 			Name:     "file-head",
 			URL:      remoteURL + "file.txt",
 			Method:   "HEAD",
@@ -410,6 +417,35 @@ func TestCheckServeRemote(t *testing.T) {
 			} else {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), test.wantErr)
+			}
+		})
+	}
+}
+
+// TestSplitFsMatch checks fs names are split out from the rest of the path
+// correctly, including when the fs name itself contains "]".
+func TestSplitFsMatch(t *testing.T) {
+	for _, test := range []struct {
+		name       string
+		path       string
+		wantFsName string
+		wantRest   string
+		wantOK     bool
+	}{
+		{name: "simple", path: "[remote:]path", wantFsName: "remote:", wantRest: "path", wantOK: true},
+		{name: "no rest", path: "[remote:]", wantFsName: "remote:", wantRest: "", wantOK: true},
+		{name: "nested bracket", path: "[local:[sub]]/file.txt", wantFsName: "local:[sub]", wantRest: "/file.txt", wantOK: true},
+		{name: "doubly nested bracket", path: "[local:[a[b]c]]/file.txt", wantFsName: "local:[a[b]c]", wantRest: "/file.txt", wantOK: true},
+		{name: "no leading bracket", path: "remote:path", wantOK: false},
+		{name: "empty", path: "", wantOK: false},
+		{name: "unbalanced", path: "[remote:path", wantOK: false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			fsName, rest, ok := splitFsMatch(test.path)
+			assert.Equal(t, test.wantOK, ok)
+			if test.wantOK {
+				assert.Equal(t, test.wantFsName, fsName)
+				assert.Equal(t, test.wantRest, rest)
 			}
 		})
 	}
