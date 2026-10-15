@@ -133,6 +133,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		GetTier:           true,
 		SlowModTime:       true,
 	}).Fill(ctx, f)
+	if opt.DirectoryMarkers {
+		f.features.CanHaveEmptyDirectories = true
+	}
 	if f.rootBucket != "" && f.rootDirectory != "" && !strings.HasSuffix(root, "/") {
 		// Check to see if the (bucket,directory) is actually an existing file
 		oldRoot := f.root
@@ -244,7 +247,11 @@ func parsePath(path string) (root string) {
 // split returns bucket and bucketPath from the rootRelativePath
 // relative to f.root
 func (f *Fs) split(rootRelativePath string) (bucketName, bucketPath string) {
-	bucketName, bucketPath = bucket.Split(path.Join(f.root, rootRelativePath))
+	fullPath := path.Join(f.root, rootRelativePath)
+	if f.opt.DirectoryMarkers && strings.HasSuffix(rootRelativePath, "/") {
+		fullPath += "/"
+	}
+	bucketName, bucketPath = bucket.Split(fullPath)
 	return f.opt.Enc.FromStandardName(bucketName), f.opt.Enc.FromStandardPath(bucketPath)
 }
 
@@ -352,6 +359,7 @@ func (f *Fs) list(
 		request.Delimiter = new(delimiter)
 	}
 
+	foundItems := 0
 	for {
 		var resp objectstorage.ListObjectsResponse
 		err = f.pacer.Call(func() (bool, error) {
@@ -380,6 +388,7 @@ func (f *Fs) list(
 			return err
 		}
 		if !recurse {
+			foundItems += len(resp.ListObjects.Prefixes)
 			for _, commonPrefix := range resp.ListObjects.Prefixes {
 				if commonPrefix == "" {
 					fs.Logf(f, "Nil common prefix received")
@@ -402,6 +411,7 @@ func (f *Fs) list(
 				}
 			}
 		}
+		foundItems += len(resp.Objects)
 		for i := range resp.Objects {
 			object := &resp.Objects[i]
 			// Finish if file name no longer has prefix
@@ -409,6 +419,10 @@ func (f *Fs) list(
 			//	return nil
 			//}
 			remote := *object.Name
+			// Don't insert the marker for the directory being listed.
+			if remote == directory && !includeDirectoryMarkers {
+				continue
+			}
 			remote = f.opt.Enc.ToStandardPath(remote)
 			if !strings.HasPrefix(remote, prefix) {
 				continue
@@ -416,15 +430,15 @@ func (f *Fs) list(
 			remote = remote[len(prefix):]
 			// Check for directory
 			isDirectory := remote == "" || strings.HasSuffix(remote, "/")
-			if addBucket {
-				remote = path.Join(bucket, remote)
-			}
 			// is this a directory marker?
-			if isDirectory && object.Size != nil && *object.Size == 0 && !includeDirectoryMarkers {
+			if isDirectory && !f.opt.DirectoryMarkers && !includeDirectoryMarkers && object.Size != nil && *object.Size == 0 {
 				continue // skip directory marker
 			}
 			if isDirectory && len(remote) > 1 {
 				remote = remote[:len(remote)-1]
+			}
+			if addBucket {
+				remote = path.Join(bucket, remote)
 			}
 			err = fn(remote, object, isDirectory)
 			if err != nil {
@@ -436,6 +450,35 @@ func (f *Fs) list(
 			break
 		}
 		request.Start = resp.NextStartWith
+	}
+	if f.opt.DirectoryMarkers && foundItems == 0 && directory != "" {
+		err := f.markerExists(ctx, bucket, directory)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// markerExists returns ErrorDirNotFound if directory has no directory marker.
+func (f *Fs) markerExists(ctx context.Context, bucket, directory string) error {
+	req := objectstorage.HeadObjectRequest{
+		NamespaceName: new(f.opt.Namespace),
+		BucketName:    new(bucket),
+		ObjectName:    new(directory),
+	}
+	useBYOKHeadObject(f, &req)
+	var resp objectstorage.HeadObjectResponse
+	err := f.pacer.Call(func() (bool, error) {
+		var err error
+		resp, err = f.srv.HeadObject(ctx, req)
+		return shouldRetry(ctx, resp.HTTPResponse(), err)
+	})
+	if err != nil {
+		if svcErr, ok := err.(common.ServiceError); ok && svcErr.GetHTTPStatusCode() == http.StatusNotFound {
+			return fs.ErrorDirNotFound
+		}
+		return err
 	}
 	return nil
 }
@@ -569,10 +612,87 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	return f.Put(ctx, bufio.NewReader(in), src, options...)
 }
 
-// Mkdir creates the bucket if it doesn't exist
+// createDirectoryMarkerObject conditionally creates o, returning nil if it already exists.
+func (f *Fs) createDirectoryMarkerObject(ctx context.Context, o *Object) error {
+	ui, err := o.prepareUpload(ctx, o, nil)
+	if err != nil {
+		return fmt.Errorf("failed to prepare directory marker: %w", err)
+	}
+	ui.req.IfNoneMatch = new("*")
+	var resp objectstorage.PutObjectResponse
+	err = f.pacer.Call(func() (bool, error) {
+		ui.req.PutObjectBody = io.NopCloser(strings.NewReader(""))
+		resp, err = f.srv.PutObject(ctx, *ui.req)
+		return shouldRetry(ctx, resp.HTTPResponse(), err)
+	})
+	if err == nil {
+		return nil
+	}
+	if svcErr, ok := err.(common.ServiceError); ok {
+		if svcErr.GetHTTPStatusCode() == http.StatusPreconditionFailed {
+			return nil
+		}
+		if svcErr.GetCode() == "ConcurrentObjectUpdate" {
+			_, headErr := o.headObject(ctx)
+			if headErr == nil {
+				return nil
+			}
+		}
+	}
+	return err
+}
+
+// createDirectoryMarker creates a directory marker and its parents.
+func (f *Fs) createDirectoryMarker(ctx context.Context, bucketName, dir string) error {
+	if !f.opt.DirectoryMarkers || bucketName == "" {
+		return nil
+	}
+
+	o := &Object{
+		fs: f,
+		meta: map[string]string{
+			metaMtime: swift.TimeToFloatString(time.Now()),
+		},
+	}
+	for {
+		_, bucketPath := f.split(dir)
+		if bucketPath == "" {
+			break
+		}
+		o.remote = dir + "/"
+		fs.Debugf(o, "Creating directory marker")
+		if err := f.createDirectoryMarkerObject(ctx, o); err != nil {
+			return fmt.Errorf("creating directory marker failed: %w", err)
+		}
+		dir = path.Dir(dir)
+		if dir == "/" || dir == "." {
+			break
+		}
+	}
+	return nil
+}
+
+// Mkdir creates the bucket if it doesn't exist.
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	bucketName, _ := f.split(dir)
-	return f.makeBucket(ctx, bucketName)
+	err := f.makeBucket(ctx, bucketName)
+	if err != nil {
+		return err
+	}
+	return f.createDirectoryMarker(ctx, bucketName, dir)
+}
+
+// mkdirParent creates the parent bucket/directory if it doesn't exist.
+func (f *Fs) mkdirParent(ctx context.Context, remote string) error {
+	if !f.opt.DirectoryMarkers {
+		return nil
+	}
+	remote, _ = strings.CutSuffix(remote, "/")
+	dir := path.Dir(remote)
+	if dir == "/" || dir == "." {
+		dir = ""
+	}
+	return f.Mkdir(ctx, dir)
 }
 
 // makeBucket creates the bucket if it doesn't exist
@@ -632,9 +752,21 @@ func (f *Fs) bucketExists(ctx context.Context, bucketName string) (bool, error) 
 	return false, err
 }
 
-// Rmdir delete an empty bucket. if bucket is not empty this is will fail with appropriate error
+// Rmdir deletes an empty bucket.
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	bucketName, directory := f.split(dir)
+	if f.opt.DirectoryMarkers && bucketName != "" && dir != "" {
+		o := &Object{
+			fs:     f,
+			remote: dir + "/",
+		}
+		fs.Debugf(o, "Removing directory marker")
+		if err := o.Remove(ctx); err != nil {
+			if svcErr, ok := err.(common.ServiceError); !ok || svcErr.GetHTTPStatusCode() != http.StatusNotFound {
+				return fmt.Errorf("removing directory marker failed: %w", err)
+			}
+		}
+	}
 	if bucketName == "" || directory != "" {
 		return nil
 	}
