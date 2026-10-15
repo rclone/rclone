@@ -230,3 +230,31 @@ type DiffResult struct {
 	Entries []map[string]any `json:"entries"`
 	Error   string           `json:"error"`
 }
+
+// UploadCreateResponse is the response from /upload_create
+type UploadCreateResponse struct {
+	Error
+	UploadID int64 `json:"uploadid"`
+}
+
+// UploadInfoResponse is the response from /upload_info
+type UploadInfoResponse struct {
+	Error
+	Size int64 `json:"size"`
+}
+
+// UploadWriteResponse is the response from /upload_write
+type UploadWriteResponse struct {
+	Error
+}
+
+// UploadSaveResponse is the response from /upload_save
+type UploadSaveResponse struct {
+	Error
+	Metadata Item `json:"metadata"`
+}
+
+// UploadDeleteResponse is the response from /upload_delete
+type UploadDeleteResponse struct {
+	Error
+}
