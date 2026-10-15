@@ -13,6 +13,7 @@
       <th align="center">LinkSharing</th>
       <th align="center">About</th>
       <th align="center">EmptyDir</th>
+      <th align="center">CreateSnapshot</th>
     </tr>
   </thead>
   <tbody>
@@ -34,6 +35,7 @@
       <td align="center">{{ partial "bool.html" (in .features "PublicLink") }}</td>
       <td align="center">{{ partial "bool.html" (in .features "About") }}</td>
       <td align="center">{{ partial "bool.html" (in .features "CanHaveEmptyDirectories") }}</td>
+      <td align="center">{{ partial "bool.html" (in .features "CreateSnapshot") }}</td>
     </tr>
     {{ end }}
   </tbody>

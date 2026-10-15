@@ -14,7 +14,9 @@ remote: .
 features:
 - About
 - CanHaveEmptyDirectories
+- CaseInsensitive
 - Command
+- CreateSnapshot
 - DirModTimeUpdatesOnWrite
 - DirMove
 - DirSetModTime
@@ -27,9 +29,8 @@ features:
 - PutStream
 - ReadDirMetadata
 - ReadMetadata
+- Shutdown
 - SlowHash
-- UserDirMetadata
-- UserMetadata
 - WriteDirMetadata
 - WriteDirSetModTime
 - WriteMetadata
@@ -47,4 +48,4 @@ hashes:
 - hidrive
 - mailru
 - quickxor
-precision: 1
+precision: 100

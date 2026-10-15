@@ -16,6 +16,11 @@ import (
 	"github.com/rclone/rclone/fstest/fstests"
 )
 
+var (
+	unimplementableFsMethods     = []string{"OpenWriterAt", "OpenChunkWriter", "CreateSnapshot"}
+	unimplementableObjectMethods = []string{"MimeType"}
+)
+
 // TestIntegration runs integration tests against the remote
 func TestIntegration(t *testing.T) {
 	if *fstest.RemoteName == "" {
@@ -24,8 +29,8 @@ func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
 		RemoteName:                   *fstest.RemoteName,
 		NilObject:                    (*crypt.Object)(nil),
-		UnimplementableFsMethods:     []string{"OpenWriterAt", "OpenChunkWriter"},
-		UnimplementableObjectMethods: []string{"MimeType"},
+		UnimplementableFsMethods:     unimplementableFsMethods,
+		UnimplementableObjectMethods: unimplementableObjectMethods,
 	})
 }
 
@@ -45,8 +50,8 @@ func TestStandardBase32(t *testing.T) {
 			{Name: name, Key: "password", Value: obscure.MustObscure("potato")},
 			{Name: name, Key: "filename_encryption", Value: "standard"},
 		},
-		UnimplementableFsMethods:     []string{"OpenWriterAt", "OpenChunkWriter"},
-		UnimplementableObjectMethods: []string{"MimeType"},
+		UnimplementableFsMethods:     unimplementableFsMethods,
+		UnimplementableObjectMethods: unimplementableObjectMethods,
 		QuickTestOK:                  true,
 	})
 }
@@ -67,8 +72,8 @@ func TestStandardBase64(t *testing.T) {
 			{Name: name, Key: "filename_encryption", Value: "standard"},
 			{Name: name, Key: "filename_encoding", Value: "base64"},
 		},
-		UnimplementableFsMethods:     []string{"OpenWriterAt", "OpenChunkWriter"},
-		UnimplementableObjectMethods: []string{"MimeType"},
+		UnimplementableFsMethods:     unimplementableFsMethods,
+		UnimplementableObjectMethods: unimplementableObjectMethods,
 		QuickTestOK:                  true,
 	})
 }
@@ -89,8 +94,8 @@ func TestStandardBase32768(t *testing.T) {
 			{Name: name, Key: "filename_encryption", Value: "standard"},
 			{Name: name, Key: "filename_encoding", Value: "base32768"},
 		},
-		UnimplementableFsMethods:     []string{"OpenWriterAt", "OpenChunkWriter"},
-		UnimplementableObjectMethods: []string{"MimeType"},
+		UnimplementableFsMethods:     unimplementableFsMethods,
+		UnimplementableObjectMethods: unimplementableObjectMethods,
 		QuickTestOK:                  true,
 	})
 }
@@ -111,8 +116,8 @@ func TestOff(t *testing.T) {
 			{Name: name, Key: "password", Value: obscure.MustObscure("potato2")},
 			{Name: name, Key: "filename_encryption", Value: "off"},
 		},
-		UnimplementableFsMethods:     []string{"OpenWriterAt", "OpenChunkWriter"},
-		UnimplementableObjectMethods: []string{"MimeType"},
+		UnimplementableFsMethods:     unimplementableFsMethods,
+		UnimplementableObjectMethods: unimplementableObjectMethods,
 		QuickTestOK:                  true,
 	})
 }
@@ -137,8 +142,8 @@ func TestObfuscate(t *testing.T) {
 			{Name: name, Key: "filename_encryption", Value: "obfuscate"},
 		},
 		SkipBadWindowsCharacters:     true,
-		UnimplementableFsMethods:     []string{"OpenWriterAt", "OpenChunkWriter"},
-		UnimplementableObjectMethods: []string{"MimeType"},
+		UnimplementableFsMethods:     unimplementableFsMethods,
+		UnimplementableObjectMethods: unimplementableObjectMethods,
 		QuickTestOK:                  true,
 	})
 }
@@ -164,8 +169,8 @@ func TestNoDataObfuscate(t *testing.T) {
 			{Name: name, Key: "no_data_encryption", Value: "true"},
 		},
 		SkipBadWindowsCharacters:     true,
-		UnimplementableFsMethods:     []string{"OpenWriterAt", "OpenChunkWriter"},
-		UnimplementableObjectMethods: []string{"MimeType"},
+		UnimplementableFsMethods:     unimplementableFsMethods,
+		UnimplementableObjectMethods: unimplementableObjectMethods,
 		QuickTestOK:                  true,
 	})
 }
