@@ -82,3 +82,21 @@ func TestSSHExternalCloseMultipleCalls(t *testing.T) {
 	// Verify the process has exited
 	assert.True(t, session.exited())
 }
+
+// TestSSHExternalExitedWhileWaiting verifies that exited() can be called
+// while another goroutine is waiting for the process. Run with -race.
+func TestSSHExternalExitedWhileWaiting(t *testing.T) {
+	f := &Fs{
+		opt: Options{
+			SSH: fs.SpaceSepList{"echo", "test"},
+		},
+	}
+	session := f.newSSHSessionExternal()
+	assert.NoError(t, session.Start("exit 0"))
+
+	go func() {
+		_ = session.Wait()
+	}()
+
+	assert.Eventually(t, session.exited, 10*time.Second, time.Millisecond)
+}
