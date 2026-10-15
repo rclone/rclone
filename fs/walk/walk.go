@@ -151,9 +151,16 @@ func ListR(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel 
 	// FIXME disable this with --no-fast-list ??? `--disable ListR` will do it...
 	doListR := f.Features().ListR
 
+	// When a specific files list is active (--files-from or single-file filter),
+	// resolve each file via NewObject instead of walking directories. This avoids
+	// a full directory listing on backends with large flat namespaces (e.g. S3).
+	if fi.HaveFilesFrom() {
+		fastListR := fi.MakeListR(ctx, f.NewObject)
+		return listR(ctx, f, path, true, listType, fn, fastListR, false)
+	}
+
 	// Can't use ListR if...
 	if doListR == nil || // ...no ListR
-		fi.HaveFilesFrom() || // ...using --files-from
 		maxLevel >= 0 || // ...using bounded recursion
 		len(fi.Opt.ExcludeFile) > 0 || // ...using --exclude-file
 		fi.UsesDirectoryFilters() { // ...using any directory filters
