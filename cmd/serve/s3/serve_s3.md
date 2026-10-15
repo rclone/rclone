@@ -65,6 +65,12 @@ cause problems for S3 clients which rely on the Etag being the MD5.
 Use `--etag-hash auto` to use the best hash the backend supports - with
 `--auth-proxy` that of each user's backend.
 
+With `--etag-hash MD5`, the `ETag` of an object made by a multipart
+upload is the MD5 of the whole object, like any other object, rather
+than the `-N` suffixed `ETag` AWS S3 gives these. With another hash
+it is the AWS S3 style multipart `ETag`, but `HeadObject` only
+returns that while the object's metadata is kept (see below).
+
 ### Quickstart
 
 For a simple set up, to serve `remote:path` over s3, run the server

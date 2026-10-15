@@ -88,9 +88,11 @@ type tenant struct {
 // objectMeta is the metadata stored for an object, with the size and
 // modification time the object had when it was stored.
 type objectMeta struct {
-	meta    map[string]string
-	size    int64
-	modTime time.Time
+	meta      map[string]string
+	hash      []byte  // the ETag of the object, if not its hash
+	partSizes []int64 // the sizes of the parts of an object made by a multipart upload
+	size      int64
+	modTime   time.Time
 }
 
 // newMetadataStore makes a store for the metadata of up to maxObjects
@@ -150,18 +152,18 @@ func (t *tenant) context() context.Context {
 //
 // Nothing is returned if the object has changed since the metadata was
 // stored, as it has been replaced by something other than this user.
-func (t *tenant) getMeta(ctx context.Context, fp string, node vfs.Node) (meta map[string]string, ok bool) {
-	om, ok := t.meta.Get(fp)
+func (t *tenant) getMeta(ctx context.Context, fp string, node vfs.Node) (om objectMeta, ok bool) {
+	om, ok = t.meta.Get(fp)
 	if !ok || om.size != node.Size() {
-		return nil, false
+		return objectMeta{}, false
 	}
 	window := fs.GetModifyWindow(ctx, node.VFS().Fs())
 	if window != fs.ModTimeNotSupported {
 		if dt := node.ModTime().Sub(om.modTime); dt < -window || dt > window {
-			return nil, false
+			return objectMeta{}, false
 		}
 	}
-	return om.meta, true
+	return om, true
 }
 
 // storeMeta stores meta as the metadata of the object at fp in _vfs.
@@ -171,6 +173,13 @@ func (t *tenant) getMeta(ctx context.Context, fp string, node vfs.Node) (meta ma
 // is set to it, returning any error. "mtime" isn't user metadata so it
 // is removed from meta.
 func (t *tenant) storeMeta(_vfs *vfs.VFS, fp string, meta map[string]string) (err error) {
+	return t.storeObjectMeta(_vfs, fp, objectMeta{meta: meta})
+}
+
+// storeObjectMeta stores om as the metadata of the object at fp in
+// _vfs, as storeMeta does.
+func (t *tenant) storeObjectMeta(_vfs *vfs.VFS, fp string, om objectMeta) (err error) {
+	meta := om.meta
 	mtime, ok := meta["X-Amz-Meta-Mtime"]
 	if !ok {
 		mtime = meta["mtime"]
@@ -185,11 +194,8 @@ func (t *tenant) storeMeta(_vfs *vfs.VFS, fp string, meta map[string]string) (er
 		t.removeMeta(fp)
 		return err
 	}
-	t.meta.Add(fp, objectMeta{
-		meta:    meta,
-		size:    node.Size(),
-		modTime: node.ModTime(),
-	})
+	om.size, om.modTime = node.Size(), node.ModTime()
+	t.meta.Add(fp, om)
 	return err
 }
 
@@ -212,16 +218,18 @@ func (b *s3Backend) SetObjectTagging(ctx context.Context, bucketName, objectName
 		return gofakes3.KeyNotFound(objectName)
 	}
 	t := b.tenant(ctx)
-	meta := map[string]string{}
-	if stored, ok := t.getMeta(ctx, fp, node); ok {
-		maps.Copy(meta, stored)
+	om, _ := t.getMeta(ctx, fp, node)
+	meta := maps.Clone(om.meta)
+	if meta == nil {
+		meta = map[string]string{}
 	}
 	if tagging == "" {
 		delete(meta, gofakes3.TaggingMetadataKey)
 	} else {
 		meta[gofakes3.TaggingMetadataKey] = tagging
 	}
-	return t.storeMeta(_vfs, fp, meta)
+	om.meta = meta
+	return t.storeObjectMeta(_vfs, fp, om)
 }
 
 // removeMeta forgets the metadata of the object at fp.
@@ -343,16 +351,22 @@ func (b *s3Backend) HeadObject(ctx context.Context, bucketName, objectName strin
 		"Content-Type":  mimeType,
 	}
 
-	if metaMap, ok := b.tenant(ctx).getMeta(ctx, fp, node); ok {
-		maps.Copy(meta, metaMap)
+	var partSizes []int64
+	if om, ok := b.tenant(ctx).getMeta(ctx, fp, node); ok {
+		maps.Copy(meta, om.meta)
+		if om.hash != nil {
+			hash = om.hash
+		}
+		partSizes = om.partSizes
 	}
 
 	return &gofakes3.Object{
-		Name:     objectName,
-		Hash:     hash,
-		Metadata: meta,
-		Size:     size,
-		Contents: noOpReadCloser{},
+		Name:      objectName,
+		Hash:      hash,
+		Metadata:  meta,
+		Size:      size,
+		Contents:  noOpReadCloser{},
+		PartSizes: partSizes,
 	}, nil
 }
 
@@ -432,17 +446,23 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 		"Content-Type":  mimeType,
 	}
 
-	if metaMap, ok := b.tenant(ctx).getMeta(ctx, fp, node); ok {
-		maps.Copy(meta, metaMap)
+	var partSizes []int64
+	if om, ok := b.tenant(ctx).getMeta(ctx, fp, node); ok {
+		maps.Copy(meta, om.meta)
+		if om.hash != nil {
+			hash = om.hash
+		}
+		partSizes = om.partSizes
 	}
 
 	return &gofakes3.Object{
-		Name:     objectName,
-		Hash:     hash,
-		Metadata: meta,
-		Size:     size,
-		Range:    rnge,
-		Contents: rdr,
+		Name:      objectName,
+		Hash:      hash,
+		Metadata:  meta,
+		Size:      size,
+		Range:     rnge,
+		Contents:  rdr,
+		PartSizes: partSizes,
 	}, nil
 }
 
