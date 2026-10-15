@@ -27,7 +27,6 @@ import (
 	"io"
 	"math"
 	"path"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -66,7 +65,7 @@ type multipartUpload struct {
 
 	mu        sync.Mutex
 	changed   chan struct{}  // closed when buffered shrinks, nextPart advances or the upload closes
-	partMD5s  map[int][]byte // raw MD5 sums per part (for the final S3 multipart ETag)
+	partMD5s  map[int][]byte // raw MD5 sums for part validation and retries
 	partSizes map[int]int64  // observed part sizes
 	closed    bool
 	aborted   bool      // closed by abort, so nothing was committed
@@ -860,8 +859,8 @@ func pipePart(w io.Writer, rw *pool.RW) error {
 }
 
 // CompleteMultipartUpload finalises a multipart upload. It closes the sink,
-// committing the upload, renames the temporary object into place, computes the
-// S3-style multipart ETag, and stores the user metadata so HeadObject and
+// committing the upload, renames the temporary object into place, and returns
+// its configured ETag hash. It stores the user metadata so HeadObject and
 // GetObject see the same fields the in-memory PutObject path produces.
 func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, objectName string, uploadID gofakes3.UploadID, input *gofakes3.CompleteMultipartUploadRequest) (gofakes3.VersionID, string, error) {
 	up, err := b.loadUpload(ctx, uploadID)
@@ -888,6 +887,10 @@ func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, obj
 		b.forgetUpload(uploadID, up)
 		return "", "", err
 	}
+	node, err := up.vfs.Stat(up.streamFp)
+	if err != nil {
+		return "", "", err
+	}
 
 	// Rename the temporary object into place: on a caching VFS the
 	// write-back then uploads it under the final name, otherwise it is
@@ -904,7 +907,7 @@ func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, obj
 
 	_ = up.tenant.storeMeta(up.vfs, up.fp, up.meta)
 
-	return "", up.multipartETag(input), nil
+	return "", fmt.Sprintf("%q", getFileHash(node, b.s.etagHash(up.vfs))), nil
 }
 
 // AbortMultipartUpload tears down an in-progress upload, discarding any data
@@ -1150,25 +1153,4 @@ func (up *multipartUpload) abort() error {
 		return nil
 	}
 	return fh.Close()
-}
-
-// multipartETag computes the S3 multipart ETag for the assembled object:
-//
-//	hex(md5(concat(part_md5s_in_order))) + "-" + N
-func (up *multipartUpload) multipartETag(input *gofakes3.CompleteMultipartUploadRequest) string {
-	partNumbers := make([]int, 0, len(input.Parts))
-	for _, p := range input.Parts {
-		partNumbers = append(partNumbers, p.PartNumber)
-	}
-	sort.Ints(partNumbers)
-
-	up.mu.Lock()
-	concat := make([]byte, 0, len(partNumbers)*md5.Size)
-	for _, n := range partNumbers {
-		concat = append(concat, up.partMD5s[n]...)
-	}
-	up.mu.Unlock()
-
-	sum := md5.Sum(concat)
-	return fmt.Sprintf("%q", fmt.Sprintf("%s-%d", hex.EncodeToString(sum[:]), len(partNumbers)))
 }
