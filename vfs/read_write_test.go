@@ -631,6 +631,39 @@ func testRWFileHandleOpenTest(t *testing.T, vfs *VFS, test *openTest) {
 	assert.Equal(t, test.contents, contents)
 }
 
+// Shrinking an uncached file with Truncate (what a mount does for
+// truncate(2) with no open handle) must stick after the upload.
+func TestRWFileTruncateShrinkUncached(t *testing.T) {
+	for _, cacheMode := range []vfscommon.CacheMode{vfscommon.CacheModeWrites, vfscommon.CacheModeFull} {
+		t.Run(cacheMode.String(), func(t *testing.T) {
+			opt := vfscommon.Opt
+			opt.CacheMode = cacheMode
+			opt.WriteBack = writeBackDelay
+			r, vfs := newTestVFSOpt(t, &opt)
+
+			file1 := r.WriteObject(context.Background(), "file1", "0123456789abcdef", t1)
+			r.CheckRemoteItems(t, file1)
+
+			node, err := vfs.Stat("file1")
+			require.NoError(t, err)
+			require.NoError(t, node.(*File).Truncate(5))
+
+			vfs.WaitForWriters(waitForWritersDelay)
+
+			obj, err := r.Fremote.NewObject(context.Background(), "file1")
+			require.NoError(t, err)
+			assert.Equal(t, int64(5), obj.Size())
+
+			rc, err := obj.Open(context.Background())
+			require.NoError(t, err)
+			contents, err := io.ReadAll(rc)
+			require.NoError(t, err)
+			require.NoError(t, rc.Close())
+			assert.Equal(t, "01234", string(contents))
+		})
+	}
+}
+
 func TestRWFileHandleOpenTests(t *testing.T) {
 	for _, cacheMode := range []vfscommon.CacheMode{vfscommon.CacheModeWrites, vfscommon.CacheModeFull} {
 		t.Run(cacheMode.String(), func(t *testing.T) {
