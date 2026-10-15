@@ -138,8 +138,12 @@ func prefixParser(p *gofakes3.Prefix) (path, remaining string) {
 	return p.Prefix[:idx], p.Prefix[idx+1:]
 }
 
+// mkdirRecursive makes the directory path and any of its parents which
+// don't exist, returning the top-most directory it made, or "" if path
+// existed already.
+//
 // FIXME this could be implemented by VFS.MkdirAll()
-func mkdirRecursive(path string, VFS *vfs.VFS) error {
+func mkdirRecursive(path string, VFS *vfs.VFS) (made string, err error) {
 	path = strings.Trim(path, "/")
 	dirs := strings.Split(path, "/")
 	var dir strings.Builder
@@ -148,26 +152,86 @@ func mkdirRecursive(path string, VFS *vfs.VFS) error {
 		if _, err := VFS.Stat(dir.String()); err != nil {
 			err := VFS.Mkdir(dir.String(), 0777)
 			if err != nil {
-				return err
+				return made, err
+			}
+			if made == "" {
+				made = strings.TrimPrefix(dir.String(), "/")
 			}
 		}
 	}
-	return nil
+	return made, nil
 }
 
+// isEmptyDir reports whether dir is an empty directory.
+func isEmptyDir(dir string, VFS *vfs.VFS) bool {
+	entries, err := VFS.ReadDir(dir)
+	return err == nil && len(entries) == 0
+}
+
+// rmdirRecursive removes the parent directories of p which are empty,
+// stopping at the bucket.
 func rmdirRecursive(p string, VFS *vfs.VFS) {
 	dir := path.Dir(p)
 	if !strings.ContainsAny(dir, "/\\") {
 		// might be bucket(root)
 		return
 	}
-	if _, err := VFS.Stat(dir); err == nil {
-		err := VFS.Remove(dir)
-		if err != nil {
-			return
-		}
-		rmdirRecursive(dir, VFS)
+	// Check the directory is empty first as the VFS logs an error
+	// removing one which isn't
+	if !isEmptyDir(dir, VFS) {
+		return
 	}
+	if err := VFS.Remove(dir); err != nil {
+		return
+	}
+	rmdirRecursive(dir, VFS)
+}
+
+// errNotEmpty is returned by removeEmptyTree for a directory holding
+// files.
+var errNotEmpty = errors.New("directory not empty")
+
+// isEmptyTree reports whether dir holds nothing but empty directories,
+// returning errNotEmpty if it holds any files.
+func isEmptyTree(dir string, VFS *vfs.VFS) error {
+	entries, err := VFS.ReadDir(dir)
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			return errNotEmpty
+		}
+		if err := isEmptyTree(path.Join(dir, entry.Name()), VFS); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// removeEmptyTree removes dir if it holds nothing but empty
+// directories, along with them, returning errNotEmpty if it holds any
+// files.
+func removeEmptyTree(dir string, VFS *vfs.VFS) error {
+	// Check the whole tree first so nothing is removed if it isn't
+	// empty
+	if err := isEmptyTree(dir, VFS); err != nil {
+		return err
+	}
+	var remove func(dir string) error
+	remove = func(dir string) error {
+		entries, err := VFS.ReadDir(dir)
+		if err != nil {
+			return err
+		}
+		for _, entry := range entries {
+			if err := remove(path.Join(dir, entry.Name())); err != nil {
+				return err
+			}
+		}
+		return VFS.Remove(dir)
+	}
+	return remove(dir)
 }
 
 func authlistResolver(list []string) (map[string]string, error) {

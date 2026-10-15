@@ -58,6 +58,7 @@ type multipartUpload struct {
 	bucket, key string
 	fp          string // final object path
 	streamFp    string // path the parts are written to (fp when the remote has no server-side move or copy)
+	madeDir     string // top-most directory made for the upload, or "" if none
 	meta        map[string]string
 
 	fh     io.WriteCloser // sink the in-order parts are written to, opened by sink (guarded by mu)
@@ -293,8 +294,10 @@ func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objec
 	}
 
 	objectDir := path.Dir(fp)
+	var madeDir string
 	if objectDir != "." {
-		if err := mkdirRecursive(objectDir, _vfs); err != nil {
+		madeDir, err = mkdirRecursive(objectDir, _vfs)
+		if err != nil {
 			b.releaseUpload(t)
 			return "", err
 		}
@@ -315,6 +318,7 @@ func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objec
 	up := newMultipartUpload(bucketName, objectName, fp, streamFp, meta, int64(b.s.opt.MultipartStreamingBufferLimit))
 	up.budget = t.budget
 	up.vfs = _vfs
+	up.madeDir = madeDir
 
 	if err := b.addUpload(t, uploadID, up); err != nil {
 		b.releaseUpload(t)
@@ -1020,10 +1024,19 @@ func (b *s3Backend) forgetAllUploads() {
 // remote commits the partial data instead - see abort.)
 func (b *s3Backend) discardUpload(up *multipartUpload) {
 	b.forgetPath(up.vfs, up.streamFp)
-	if up.streamFp == up.fp {
-		return
+	if up.streamFp != up.fp {
+		_ = up.vfs.Remove(up.streamFp)
 	}
-	_ = up.vfs.Remove(up.streamFp)
+	// Remove the directories made for the upload if they are still
+	// empty, as an empty directory left behind would stop the bucket
+	// being deleted.
+	if up.madeDir != "" {
+		for dir := path.Dir(up.fp); isEmptyDir(dir, up.vfs); dir = path.Dir(dir) {
+			if up.vfs.Remove(dir) != nil || dir == up.madeDir {
+				break
+			}
+		}
+	}
 }
 
 // forgetPath invalidates the parent directory's cached VFS listing so that
