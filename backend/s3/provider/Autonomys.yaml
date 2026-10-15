@@ -1,0 +1,10 @@
+name: Autonomys
+description: Autonomys Auto Drive
+endpoint:
+  s3.auto-drive.autonomys.xyz: Auto Drive mainnet S3 endpoint
+quirks:
+  force_path_style: true
+  # UploadPartCopy is not supported, so copy in a single request
+  copy_cutoff: 9223372036854775807
+  # Object Lock is always on in COMPLIANCE mode and can't be set by clients
+  object_lock_supported: false
