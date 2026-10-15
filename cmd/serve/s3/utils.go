@@ -130,14 +130,6 @@ func bucketDirPath(bucketName, dirName string) (string, error) {
 	return bucketObjectPath(bucketName, dirName)
 }
 
-func prefixParser(p *gofakes3.Prefix) (path, remaining string) {
-	idx := strings.LastIndexByte(p.Prefix, '/')
-	if idx < 0 {
-		return "", p.Prefix
-	}
-	return p.Prefix[:idx], p.Prefix[idx+1:]
-}
-
 // mkdirRecursive makes the directory path and any of its parents which
 // don't exist, returning the top-most directory it made, or "" if path
 // existed already.
