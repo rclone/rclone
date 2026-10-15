@@ -68,8 +68,8 @@ Use `--etag-hash auto` to use the best hash the backend supports - with
 The `ETag` of an object made by a multipart upload is its hash, like
 any other object, rather than the `-N` suffixed `ETag` AWS S3 gives
 these. If the remote doesn't have the MD5 of objects, `HeadObject`
-only returns the MD5 of these while the object's metadata is kept (see
-below).
+and listings only return the MD5 of objects uploaded through `serve
+s3` while the object's metadata is kept (see below).
 
 ### Quickstart
 

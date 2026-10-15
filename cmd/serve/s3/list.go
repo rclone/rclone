@@ -1,6 +1,7 @@
 package s3
 
 import (
+	"context"
 	"errors"
 	"path"
 	"slices"
@@ -29,7 +30,8 @@ var errPageFull = errors.New("listing page full")
 // the size of the subtree below the prefix.
 type lister struct {
 	vfs       *vfs.VFS
-	hashType  hash.Type // hash used for ETags
+	hashType  hash.Type                              // hash used for ETags
+	etag      func(fp string, entry vfs.Node) []byte // returns the ETag of the object at fp
 	bucket    string
 	marker    string // keys at or before this one have already been returned
 	hasMarker bool
@@ -49,7 +51,7 @@ type lister struct {
 
 // newLister makes a lister which fills response with at most one page of the
 // listing of bucket, as described by page.
-func newLister(b *s3Backend, _vfs *vfs.VFS, bucket string, page gofakes3.ListBucketPage, response *gofakes3.ObjectList) *lister {
+func newLister(ctx context.Context, b *s3Backend, _vfs *vfs.VFS, bucket string, page gofakes3.ListBucketPage, response *gofakes3.ObjectList) *lister {
 	max := int(page.MaxKeys)
 	if max <= 0 {
 		// A missing or zero max-keys means the client didn't ask for a
@@ -64,6 +66,9 @@ func newLister(b *s3Backend, _vfs *vfs.VFS, bucket string, page gofakes3.ListBuc
 		hasMarker: page.HasMarker,
 		max:       max,
 		response:  response,
+		etag: func(fp string, entry vfs.Node) []byte {
+			return b.objectHash(ctx, _vfs, fp, entry)
+		},
 	}
 }
 
@@ -122,7 +127,7 @@ func (l *lister) addObject(key string, entry vfs.Node) error {
 	l.response.Add(&gofakes3.Content{
 		Key:          key,
 		LastModified: gofakes3.NewContentTime(entry.ModTime()),
-		ETag:         quoteETag(getFileHashByte(entry, l.hashType)),
+		ETag:         quoteETag(l.etag(path.Join(l.bucket, key), entry)),
 		Size:         entry.Size(),
 		StorageClass: gofakes3.StorageStandard,
 	})
@@ -325,8 +330,8 @@ func (l *lister) list(fdPath, name string, addPrefix bool) error {
 //
 // It returns gofakes3.ErrNoSuchKey if the directory the prefix is in
 // doesn't exist.
-func (b *s3Backend) listPage(_vfs *vfs.VFS, bucket, prefix, delimiter string, page gofakes3.ListBucketPage, response *gofakes3.ObjectList) error {
-	l := newLister(b, _vfs, bucket, page, response)
+func (b *s3Backend) listPage(ctx context.Context, _vfs *vfs.VFS, bucket, prefix, delimiter string, page gofakes3.ListBucketPage, response *gofakes3.ObjectList) error {
+	l := newLister(ctx, b, _vfs, bucket, page, response)
 	// The prefix is split into the directory to list and the start of
 	// the names in it to list.
 	fdPath, name := "", prefix

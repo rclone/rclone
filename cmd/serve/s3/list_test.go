@@ -170,7 +170,7 @@ func countDirs(t *testing.T, b *s3Backend, page gofakes3.ListBucketPage) (dirsRe
 	_vfs, err := b.s.getVFS(context.Background())
 	require.NoError(t, err)
 	list = gofakes3.NewObjectList()
-	l := newLister(b, _vfs, "bucket", page, list)
+	l := newLister(context.Background(), b, _vfs, "bucket", page, list)
 	err = l.list("", "", false)
 	if err != nil && !errors.Is(err, errPageFull) {
 		require.NoError(t, err)
