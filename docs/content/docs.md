@@ -90,6 +90,7 @@ See the following for detailed instructions for
 - [Shade](/shade/)
 - [Sia](/sia/)
 - [SMB](/smb/)
+- [SmugMug](/smugmug/)
 - [Storj](/storj/)
 - [SugarSync](/sugarsync/)
 - [Union](/union/)
