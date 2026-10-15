@@ -21,6 +21,7 @@ import (
 	"github.com/ncw/swift/v2"
 	"github.com/rclone/gofakes3"
 	"github.com/rclone/rclone/fs"
+	fshash "github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
@@ -555,6 +556,9 @@ func (b *s3Backend) PutObject(
 		if err != nil {
 			return result, err
 		}
+		if b.s.etagHash(_vfs) != fshash.MD5 {
+			result.ETag = quoteETag(emptyHash(b.s.etagHash(_vfs)))
+		}
 		return result, putDirMarker(_vfs, fp, objectName, input)
 	}
 	fp, err := bucketObjectPath(bucketName, objectName)
@@ -634,12 +638,26 @@ func (b *s3Backend) PutObject(
 		}
 	}
 
-	_, err = _vfs.Stat(fp)
+	node, err := _vfs.Stat(fp)
 	if err != nil {
 		return result, err
 	}
 
-	return result, b.tenant(ctx).storeMeta(_vfs, fp, meta)
+	if err := b.tenant(ctx).storeMeta(_vfs, fp, meta); err != nil {
+		return result, err
+	}
+
+	// gofakes3 returns the MD5 of the data as the ETag, so another
+	// hash must be given to match what HeadObject returns.
+	if b.s.etagHash(_vfs) != fshash.MD5 {
+		result.ETag = quoteETag(b.objectHash(ctx, _vfs, fp, node))
+	}
+	return result, nil
+}
+
+// quoteETag returns hash as an ETag.
+func quoteETag(hash []byte) string {
+	return `"` + hex.EncodeToString(hash) + `"`
 }
 
 // commitObject moves the object written to tmpFp into place at fp,
@@ -837,7 +855,7 @@ func (b *s3Backend) CopyObject(ctx context.Context, srcBucket, srcKey, dstBucket
 	}
 
 	return gofakes3.CopyObjectResult{
-		ETag:         `"` + hex.EncodeToString(c.Hash) + `"`,
+		ETag:         quoteETag(c.Hash),
 		LastModified: gofakes3.NewContentTime(cStat.ModTime()),
 	}, nil
 }
