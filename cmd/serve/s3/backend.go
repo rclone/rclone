@@ -198,6 +198,37 @@ func (t *tenant) storeMeta(_vfs *vfs.VFS, fp string, meta map[string]string) (er
 	return err
 }
 
+// Check s3Backend satisfies the optional interface
+var _ gofakes3.ObjectTaggingBackend = (*s3Backend)(nil)
+
+// SetObjectTagging sets the tags of an existing object, which are kept
+// with its metadata.
+func (b *s3Backend) SetObjectTagging(ctx context.Context, bucketName, objectName string, tagging string) error {
+	_vfs, err := b.s.getVFS(ctx)
+	if err != nil {
+		return err
+	}
+	fp, err := bucketObjectPath(bucketName, objectName)
+	if err != nil {
+		return err
+	}
+	node, err := _vfs.Stat(fp)
+	if err != nil || !node.IsFile() {
+		return gofakes3.KeyNotFound(objectName)
+	}
+	t := b.tenant(ctx)
+	meta := map[string]string{}
+	if stored, ok := t.getMeta(ctx, fp, node); ok {
+		maps.Copy(meta, stored)
+	}
+	if tagging == "" {
+		delete(meta, gofakes3.TaggingMetadataKey)
+	} else {
+		meta[gofakes3.TaggingMetadataKey] = tagging
+	}
+	return t.storeMeta(_vfs, fp, meta)
+}
+
 // removeMeta forgets the metadata of the object at fp.
 func (t *tenant) removeMeta(fp string) {
 	t.meta.Remove(fp)
