@@ -916,3 +916,51 @@ func (f *Fs) InternalTest(t *testing.T) {
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)
+
+func TestRefillListRInputStopsWhenInputClosed(t *testing.T) {
+	mu := stdsync.Mutex{}
+	wg := stdsync.WaitGroup{}
+	in := make(chan listREntry, listRInputBuffer)
+	overflow := []listREntry{{id: "folder", path: "folder"}}
+
+	mu.Lock()
+	close(in)
+	in = nil
+	mu.Unlock()
+
+	done := make(chan bool, 1)
+	go func() {
+		done <- refillListRInput(&mu, &in, &overflow, &wg)
+	}()
+	select {
+	case ok := <-done:
+		require.False(t, ok, "refill continued after the input channel was closed")
+	case <-time.After(time.Second):
+		t.Fatal("refill blocked after the input channel was closed")
+	}
+	require.Len(t, overflow, 1)
+
+	finished := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(finished)
+	}()
+	select {
+	case <-finished:
+	case <-time.After(time.Second):
+		t.Fatal("refill incremented the wait group after the input channel was closed")
+	}
+}
+
+func TestRefillListRInputSendsQueuedDirectory(t *testing.T) {
+	mu := stdsync.Mutex{}
+	wg := stdsync.WaitGroup{}
+	in := make(chan listREntry, listRInputBuffer)
+	overflow := []listREntry{{id: "folder", path: "folder"}}
+
+	require.True(t, refillListRInput(&mu, &in, &overflow, &wg), "refill stopped while the input channel was open")
+	require.Empty(t, overflow)
+	got := <-in
+	require.Equal(t, listREntry{id: "folder", path: "folder"}, got)
+	wg.Done()
+}

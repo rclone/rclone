@@ -2298,15 +2298,9 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		wg.Wait()
 		// if the input channel overflowed add the collected entries to the channel now
 		for len(overflow) > 0 {
-			mu.Lock()
-			// only fill half of the channel to prevent entries being put into overflow again
-			l := min(len(overflow), listRInputBuffer/2)
-			wg.Add(l)
-			for _, d := range overflow[:l] {
-				in <- d
+			if !refillListRInput(&mu, &in, &overflow, &wg) {
+				return
 			}
-			overflow = overflow[l:]
-			mu.Unlock()
 
 			// wait again for the completion of all directories
 			wg.Wait()
@@ -2352,6 +2346,25 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	}
 
 	return nil
+}
+
+// refillListRInput moves queued directory jobs back onto in.
+// It returns false when a listing error has already closed in.
+// Sending on that nil channel would block forever while holding mu.
+func refillListRInput(mu *sync.Mutex, in *chan listREntry, overflow *[]listREntry, wg *sync.WaitGroup) bool {
+	mu.Lock()
+	defer mu.Unlock()
+	if *in == nil {
+		return false
+	}
+	// only fill half of the channel to prevent entries being put into overflow again
+	l := min(len(*overflow), listRInputBuffer/2)
+	wg.Add(l)
+	for _, d := range (*overflow)[:l] {
+		*in <- d
+	}
+	*overflow = (*overflow)[l:]
+	return true
 }
 
 const shortcutSeparator = '\t'
