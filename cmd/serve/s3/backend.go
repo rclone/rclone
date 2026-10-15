@@ -575,8 +575,11 @@ func (b *s3Backend) PutObject(
 	// 	return result, gofakes3.KeyNotFound(objectName)
 	// }
 
+	var madeDir string
 	if objectDir != "." {
-		if _, err := mkdirRecursive(objectDir, _vfs); err != nil {
+		madeDir, err = mkdirRecursive(objectDir, _vfs)
+		if err != nil {
+			removeMadeDirs(objectDir, madeDir, _vfs)
 			return result, err
 		}
 	}
@@ -592,7 +595,9 @@ func (b *s3Backend) PutObject(
 	}
 
 	// cleanup discards a failed upload, removing the temporary object
-	// (never the object at fp) and any stale VFS state for fp.
+	// (never the object at fp), any stale VFS state for fp and the
+	// directories made for it, which would be listed as directory
+	// markers.
 	cleanup := func() {
 		if tmpFp != fp {
 			b.forgetPath(_vfs, tmpFp)
@@ -600,10 +605,12 @@ func (b *s3Backend) PutObject(
 		} else {
 			b.forgetPath(_vfs, fp)
 		}
+		removeMadeDirs(objectDir, madeDir, _vfs)
 	}
 
 	f, err := _vfs.Create(tmpFp)
 	if err != nil {
+		cleanup()
 		return result, err
 	}
 

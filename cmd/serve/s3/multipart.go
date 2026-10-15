@@ -304,6 +304,7 @@ func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objec
 	if objectDir != "." {
 		madeDir, err = mkdirRecursive(objectDir, _vfs)
 		if err != nil {
+			removeMadeDirs(objectDir, madeDir, _vfs)
 			b.releaseUpload(t)
 			return "", err
 		}
@@ -327,6 +328,7 @@ func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objec
 	up.madeDir = madeDir
 
 	if err := b.addUpload(t, uploadID, up); err != nil {
+		removeMadeDirs(objectDir, madeDir, _vfs)
 		b.releaseUpload(t)
 		return "", err
 	}
@@ -1079,13 +1081,7 @@ func (b *s3Backend) discardUpload(up *multipartUpload) {
 	// Remove the directories made for the upload if they are still
 	// empty, as an empty directory left behind would stop the bucket
 	// being deleted.
-	if up.madeDir != "" {
-		for dir := path.Dir(up.fp); isEmptyDir(dir, up.vfs); dir = path.Dir(dir) {
-			if up.vfs.Remove(dir) != nil || dir == up.madeDir {
-				break
-			}
-		}
-	}
+	removeMadeDirs(path.Dir(up.fp), up.madeDir, up.vfs)
 }
 
 // forgetPath invalidates the parent directory's cached VFS listing so that

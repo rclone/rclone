@@ -156,6 +156,30 @@ func TestPutObjectFailureNewKey(t *testing.T) {
 	}
 }
 
+// TestPutObjectFailureNewDir checks that a failed PUT to a key in
+// directories which don't exist removes the directories it made, which
+// would otherwise be listed as directory markers.
+func TestPutObjectFailureNewDir(t *testing.T) {
+	for _, tc := range testRemotes {
+		t.Run(tc.name, func(t *testing.T) {
+			b, _, bucket := newPutTestBackend(t, tc.backing, nil)
+			ctx := context.Background()
+			_, err := b.PutObject(ctx, bucket, "existing/file.txt", map[string]string{}, bytes.NewReader([]byte("hello")), 5)
+			require.NoError(t, err)
+
+			failPut(t, b, bucket, "existing/new/dirs/new.txt", errBoom, errBoom)
+
+			list, err := b.ListBucket(ctx, bucket, nil, gofakes3.ListBucketPage{})
+			require.NoError(t, err)
+			var keys []string
+			for _, content := range list.Contents {
+				keys = append(keys, content.Key)
+			}
+			assert.Equal(t, []string{"existing/file.txt"}, keys)
+		})
+	}
+}
+
 // TestPutObjectMtime checks that the object's modtime is set from the
 // "X-Amz-Meta-Mtime" or "mtime" metadata supplied with the PUT.
 func TestPutObjectMtime(t *testing.T) {
