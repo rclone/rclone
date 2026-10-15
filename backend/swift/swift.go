@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"maps"
+	"net/http"
 	"path"
 	"regexp"
 	"slices"
@@ -33,6 +34,7 @@ import (
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/readers"
+	"golang.org/x/net/http/httpguts"
 )
 
 // Constants
@@ -45,6 +47,128 @@ const (
 	segmentsDirectory          = ".file-segments"
 	segmentsDirectorySlash     = segmentsDirectory + "/"
 )
+
+// systemMetadataInfo describes the Swift headers exposed as rclone metadata.
+var systemMetadataInfo = map[string]fs.MetadataHelp{
+	"cache-control": {
+		Help:    "Cache-Control header",
+		Type:    "string",
+		Example: "no-cache",
+	},
+	"content-disposition": {
+		Help:    "Content-Disposition header",
+		Type:    "string",
+		Example: "inline",
+	},
+	"content-encoding": {
+		Help:     "Content-Encoding header",
+		Type:     "string",
+		Example:  "gzip",
+		ReadOnly: true,
+	},
+	"content-language": {
+		Help:    "Content-Language header",
+		Type:    "string",
+		Example: "en-US",
+	},
+	"content-type": {
+		Help:    "Content-Type header",
+		Type:    "string",
+		Example: "text/plain",
+	},
+	"mtime": {
+		Help:    "Time of last modification, read from rclone metadata",
+		Type:    "RFC 3339",
+		Example: "2006-01-02T15:04:05.999999999Z07:00",
+	},
+}
+
+type metadataOptions struct {
+	headers     swift.Headers
+	contentType string
+}
+
+// These source-backend fields are not Swift user metadata. mtime is handled
+// separately for Swift compatibility.
+var ignoredMetadataKeys = map[string]struct{}{
+	"btime": {},
+	"tier":  {},
+}
+
+// metadataToHeaders converts rclone metadata into the Swift headers and
+// content type to set on an object. Invalid keys and values are dropped.
+func metadataToHeaders(metadata fs.Metadata) metadataOptions {
+	options := metadataOptions{headers: swift.Headers{}}
+	objectMetadata := swift.Metadata{}
+	for key, value := range metadata {
+		key = strings.ToLower(key)
+		if _, ok := ignoredMetadataKeys[key]; ok {
+			continue
+		}
+		// Read only system metadata can't be written
+		if help, ok := systemMetadataInfo[key]; ok && help.ReadOnly {
+			continue
+		}
+		if !httpguts.ValidHeaderFieldValue(value) {
+			fs.Errorf(nil, "Dropping invalid metadata value %q for key %q", value, key)
+			continue
+		}
+		switch key {
+		case "mtime":
+			modTime, err := time.Parse(time.RFC3339Nano, value)
+			if err != nil {
+				fs.Debugf(nil, "metadata: couldn't parse mtime %q: %v", value, err)
+				continue
+			}
+			objectMetadata.SetModTime(modTime)
+		case "content-type":
+			options.contentType = value
+		default:
+			if _, ok := systemMetadataInfo[key]; ok {
+				options.headers[http.CanonicalHeaderKey(key)] = value
+				continue
+			}
+			if !httpguts.ValidHeaderFieldName(key) {
+				fs.Errorf(nil, "Dropping invalid metadata key %q", key)
+				continue
+			}
+			objectMetadata[key] = value
+		}
+	}
+	maps.Copy(options.headers, objectMetadata.ObjectHeaders())
+	return options
+}
+
+func metadataHeadersFromOptions(ctx context.Context, dstFs *Fs, src fs.ObjectInfo, options []fs.OpenOption) (metadataOptions, error) {
+	metadata, err := fs.GetMetadataOptions(ctx, dstFs, src, options)
+	if err != nil || metadata == nil {
+		return metadataOptions{}, err
+	}
+	return metadataToHeaders(metadata), nil
+}
+
+// mergeObjectHeaders returns a copy of src with metadata merged on top.
+func mergeObjectHeaders(src, metadata swift.Headers) swift.Headers {
+	headers := maps.Clone(src)
+	if headers == nil {
+		headers = swift.Headers{}
+	}
+	maps.Copy(headers, metadata)
+	return headers
+}
+
+// withoutObjectMetadata returns a copy of headers with the user metadata
+// (X-Object-Meta-*) entries removed.
+func withoutObjectMetadata(headers swift.Headers) swift.Headers {
+	filtered := make(swift.Headers, len(headers))
+	for key, value := range headers {
+		if strings.HasPrefix(http.CanonicalHeaderKey(key), "X-Object-Meta-") {
+			continue
+		}
+		filtered[key] = value
+	}
+	return filtered
+}
 
 // Auth URLs which imply using fileSegmentsDirectory
 var needFileSegmentsDirectory = regexp.MustCompile(`(?s)\.(ain?\.net|blomp\.com|praetector\.com|signmy\.name|rackfactory\.com)($|/)`)
@@ -148,6 +272,10 @@ func init() {
 		Name:        "swift",
 		Description: "OpenStack Swift (Rackspace Cloud Files, Blomp Cloud Storage, Memset Memstore, OVH)",
 		NewFs:       NewFs,
+		MetadataInfo: &fs.MetadataInfo{
+			System: systemMetadataInfo,
+			Help:   `User metadata is stored as X-Object-Meta- keys. Swift metadata keys are case insensitive and are always returned in lower case.`,
+		},
 		Options: append([]fs.Option{{
 			Name:    "env_auth",
 			Help:    "Get swift credentials from environment variables in standard OpenStack form.",
@@ -596,6 +724,9 @@ func NewFsWithConnection(ctx context.Context, opt *Options, name, root string, c
 	f.features = (&fs.Features{
 		ReadMimeType:      true,
 		WriteMimeType:     true,
+		ReadMetadata:      true,
+		WriteMetadata:     true,
+		UserMetadata:      true,
 		BucketBased:       true,
 		BucketBasedRootOK: true,
 		SlowModTime:       true,
@@ -1115,18 +1246,40 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
+	ci := fs.GetConfig(ctx)
+	// Apply --header-upload and then the metadata, with the metadata taking
+	// precedence, as it does in Update
+	uploadOptions := fs.MetadataAsOpenOptions(ctx)
+	for _, option := range ci.UploadHeaders {
+		uploadOptions = append(uploadOptions, option)
+	}
+	metadata, err := metadataHeadersFromOptions(ctx, f, src, uploadOptions)
+	if err != nil {
+		return nil, err
+	}
+	headers := swift.Headers{}
+	fs.OpenOptionAddHeaders(uploadOptions, headers)
+	maps.Copy(headers, metadata.headers)
+	if metadata.contentType != "" {
+		headers["Content-Type"] = metadata.contentType
+	}
 	isLargeObject, err := srcObj.isLargeObject(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if isLargeObject {
-		// handle large object
-		err = f.copyLargeObject(ctx, srcObj, dstContainer, dstPath)
+		err = f.copyLargeObject(ctx, srcObj, dstContainer, dstPath, headers, ci.Metadata)
 	} else {
+		if ci.Metadata {
+			// Tell Swift to replace the metadata rather than merge it with
+			// the source's, so keys removed by --metadata-mapper are not
+			// copied
+			headers["X-Fresh-Metadata"] = "true"
+		}
 		srcContainer, srcPath := srcObj.split()
 		err = f.pacer.Call(func() (bool, error) {
 			var rxHeaders swift.Headers
-			rxHeaders, err = f.c.ObjectCopy(ctx, srcContainer, srcPath, dstContainer, dstPath, nil)
+			rxHeaders, err = f.c.ObjectCopy(ctx, srcContainer, srcPath, dstContainer, dstPath, headers)
 			return shouldRetryHeaders(ctx, rxHeaders, err)
 		})
 	}
@@ -1235,7 +1388,10 @@ func (su *segmentedUpload) uploadManifest(ctx context.Context, contentType strin
 }
 
 // Copy a large object src into (dstContainer, dstPath)
-func (f *Fs) copyLargeObject(ctx context.Context, src *Object, dstContainer string, dstPath string) (err error) {
+//
+// If replaceMetadata is set then the metadata in headers replaces the source
+// object's metadata, otherwise the source metadata is preserved.
+func (f *Fs) copyLargeObject(ctx context.Context, src *Object, dstContainer string, dstPath string, headers swift.Headers, replaceMetadata bool) (err error) {
 	su, err := f.newSegmentedUpload(ctx, dstContainer, dstPath)
 	if err != nil {
 		return err
@@ -1260,7 +1416,18 @@ func (f *Fs) copyLargeObject(ctx context.Context, src *Object, dstContainer stri
 		}
 		su.uploaded(dstSegment)
 	}
-	return su.uploadManifest(ctx, src.contentType, src.headers)
+	base := src.headers
+	if replaceMetadata {
+		// Don't inherit the source metadata, otherwise keys removed by
+		// --metadata-mapper would still be copied
+		base = withoutObjectMetadata(src.headers)
+	}
+	manifestHeaders := mergeObjectHeaders(base, headers)
+	contentType := src.contentType
+	if headerContentType := manifestHeaders["Content-Type"]; headerContentType != "" {
+		contentType = headerContentType
+	}
+	return su.uploadManifest(ctx, contentType, manifestHeaders)
 }
 
 // Hashes returns the supported hash sets.
@@ -1416,6 +1583,39 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	return nil
 }
 
+// Metadata returns the metadata for the object.
+func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
+	if err := o.readMetaData(ctx); err != nil {
+		return nil, err
+	}
+
+	metadata := fs.Metadata{}
+	objectMetadata := o.headers.ObjectMetadata()
+	for key, value := range objectMetadata {
+		if key != "mtime" {
+			metadata[key] = value
+		}
+	}
+	if modTime, err := objectMetadata.GetModTime(); err == nil {
+		metadata["mtime"] = modTime.Format(time.RFC3339Nano)
+	} else if !o.lastModified.IsZero() {
+		metadata["mtime"] = o.lastModified.Format(time.RFC3339Nano)
+	}
+	if o.contentType != "" {
+		metadata["content-type"] = o.contentType
+	}
+	for metadataKey := range systemMetadataInfo {
+		if metadataKey == "mtime" || metadataKey == "content-type" {
+			continue
+		}
+		headerKey := http.CanonicalHeaderKey(metadataKey)
+		if value, ok := o.headers[headerKey]; ok {
+			metadata[metadataKey] = value
+		}
+	}
+	return metadata, nil
+}
+
 // ModTime returns the modification time of the object
 //
 // It attempts to read the objects mtime and if that isn't present the
@@ -1529,7 +1729,9 @@ func urlEncode(str string) string {
 
 // updateChunks updates the existing object using chunks to a separate
 // container.
-func (o *Object) updateChunks(ctx context.Context, in0 io.Reader, headers swift.Headers, size int64, contentType string) (err error) {
+// The headers are applied to each segment, while manifestHeaders are
+// applied to the manifest object which holds the user metadata.
+func (o *Object) updateChunks(ctx context.Context, in0 io.Reader, headers, manifestHeaders swift.Headers, size int64, contentType string) (err error) {
 	container, containerPath := o.split()
 	su, err := o.fs.newSegmentedUpload(ctx, container, containerPath)
 	if err != nil {
@@ -1569,7 +1771,7 @@ func (o *Object) updateChunks(ctx context.Context, in0 io.Reader, headers swift.
 		su.uploaded(segmentPath)
 		i++
 	}
-	return su.uploadManifest(ctx, contentType, headers)
+	return su.uploadManifest(ctx, contentType, manifestHeaders)
 }
 
 // Update the object with the contents of the io.Reader, modTime and size
@@ -1604,16 +1806,26 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	m := swift.Metadata{}
 	m.SetModTime(modTime)
 	contentType := fs.MimeType(ctx, src)
+	metadataOpts, err := metadataHeadersFromOptions(ctx, o.fs, src, options)
+	if err != nil {
+		return err
+	}
+	if metadataOpts.contentType != "" {
+		contentType = metadataOpts.contentType
+	}
 	headers := m.ObjectHeaders()
 	fs.OpenOptionAddHeaders(options, headers)
 
 	if (size > int64(o.fs.opt.ChunkSize) || (size == -1 && !o.fs.opt.NoChunk)) && !o.fs.opt.NoLargeObjects {
-		err = o.updateChunks(ctx, in, headers, size, contentType)
+		// Only the manifest carries the metadata, the segments are internal
+		manifestHeaders := mergeObjectHeaders(headers, metadataOpts.headers)
+		err = o.updateChunks(ctx, in, headers, manifestHeaders, size, contentType)
 		if err != nil {
 			return err
 		}
 		o.headers = nil // wipe old metadata
 	} else {
+		maps.Copy(headers, metadataOpts.headers)
 		var inCount *readers.CountingReader
 		if size >= 0 {
 			headers["Content-Length"] = strconv.FormatInt(size, 10) // set Content-Length if we know it
@@ -1721,4 +1933,5 @@ var (
 	_ fs.ListPer     = &Fs{}
 	_ fs.Object      = &Object{}
 	_ fs.MimeTyper   = &Object{}
+	_ fs.Metadataer  = &Object{}
 )
