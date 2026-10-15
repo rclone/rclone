@@ -1,0 +1,14 @@
+# Pinned Python dependencies for ceph/s3-tests. boto3 changes its
+# defaults (e.g. checksums) between releases, so bump these deliberately.
+boto3==1.43.114
+botocore==1.43.114
+gevent==26.9.0
+httplib2==0.32.0
+isodate==0.7.2
+lxml==6.1.3
+munch==4.0.0
+pytest==9.1.1
+pytest-timeout==2.4.0
+pytz==2026.5
+PyYAML==6.0.3
+requests==2.34.2
