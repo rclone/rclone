@@ -1,0 +1,22 @@
+backend: adb
+name: ADB
+tier: Tier 4
+maintainers: External
+features_score: 5
+integration_tests: Passing
+data_integrity: Modtime
+performance: High
+adoption: Niche
+docs: Full
+security: Local
+virtual: false
+remote: 'TestADB:'
+features:
+- About
+- CanHaveEmptyDirectories
+- Copy
+- DirMove
+- Move
+- Purge
+hashes: []
+precision: 1000000000

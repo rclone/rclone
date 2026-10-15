@@ -17,6 +17,9 @@ tests:
  - path: cmd/selfupdate
    localonly: true
 backends:
+ - backend:  "adb"
+   remote:   "TestADB:/sdcard/rclone-test"
+   fastlist: false
  - backend:  "local"
    remote:   ""
    fastlist: false
