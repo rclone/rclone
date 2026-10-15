@@ -11,6 +11,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -80,8 +81,9 @@ type sshSessionExternal struct {
 	cancel      func()
 	startCalled bool
 	runningSFTP bool
-	waitOnce    sync.Once // ensure Wait() is only called once
-	waitErr     error     // result of the Wait() call
+	waitOnce    sync.Once   // ensure Wait() is only called once
+	waitErr     error       // result of the Wait() call
+	hasExited   atomic.Bool // set once Wait() has returned
 }
 
 func (f *Fs) newSSHSessionExternal() *sshSessionExternal {
@@ -176,7 +178,8 @@ func (s *sshSessionExternal) StdoutPipe() (io.Reader, error) {
 
 // Return whether the command has finished or not
 func (s *sshSessionExternal) exited() bool {
-	return s.cmd.ProcessState != nil
+	// Don't read s.cmd.ProcessState as Wait() writes it from another goroutine
+	return s.hasExited.Load()
 }
 
 // Wait for the command to exit
@@ -185,6 +188,7 @@ func (s *sshSessionExternal) Wait() error {
 	// This is safe even if Wait() is called from multiple goroutines.
 	s.waitOnce.Do(func() {
 		s.waitErr = s.cmd.Wait()
+		s.hasExited.Store(true)
 		if s.waitErr == nil {
 			fs.Debugf(s.f, "ssh external: command exited OK")
 		} else {
