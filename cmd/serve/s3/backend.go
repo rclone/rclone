@@ -166,28 +166,23 @@ func (t *tenant) getMeta(ctx context.Context, fp string, node vfs.Node) (meta ma
 
 // storeMeta stores meta as the metadata of the object at fp in _vfs.
 //
-// If meta has a modification time in "X-Amz-Meta-Mtime" or "mtime" the
-// object's modification time is set to it, returning any error, and
-// both are set to it in meta.
+// If meta has a modification time in the "X-Amz-Meta-Mtime" user
+// metadata, or failing that in "mtime", the object's modification time
+// is set to it, returning any error. "mtime" isn't user metadata so it
+// is removed from meta.
 //
 // Any "Last-Modified" in meta is dropped: gofakes3 sets it to the time
 // of the request, and caching it would make HeadObject and GetObject
 // report that instead of the object's modification time.
 func (t *tenant) storeMeta(_vfs *vfs.VFS, fp string, meta map[string]string) (err error) {
 	delete(meta, "Last-Modified")
-	for _, key := range []string{"X-Amz-Meta-Mtime", "mtime"} {
-		val, ok := meta[key]
-		if !ok {
-			continue
-		}
-		ti, parseErr := swift.FloatStringToTime(val)
-		if parseErr != nil {
-			continue
-		}
-		meta["X-Amz-Meta-Mtime"] = val
-		meta["mtime"] = val
+	mtime, ok := meta["X-Amz-Meta-Mtime"]
+	if !ok {
+		mtime = meta["mtime"]
+	}
+	delete(meta, "mtime")
+	if ti, parseErr := swift.FloatStringToTime(mtime); mtime != "" && parseErr == nil {
 		err = _vfs.Chtimes(fp, ti, ti)
-		break
 	}
 	// Stat after setting the modification time as getMeta compares with it
 	node, statErr := _vfs.Stat(fp)
@@ -678,12 +673,9 @@ func (b *s3Backend) CopyObject(ctx context.Context, srcBucket, srcKey, dstBucket
 		_ = c.Contents.Close()
 	}()
 
-	for k, v := range c.Metadata {
-		if _, found := meta[k]; !found && k != "X-Amz-Acl" {
-			meta[k] = v
-		}
-	}
-	if _, ok := meta["mtime"]; !ok {
+	// meta is the complete metadata of the copy. It keeps the source's
+	// modification time unless the metadata sets one.
+	if _, ok := meta["X-Amz-Meta-Mtime"]; !ok {
 		meta["mtime"] = swift.TimeToFloatString(cStat.ModTime())
 	}
 

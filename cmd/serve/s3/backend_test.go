@@ -307,3 +307,32 @@ func TestMetadataStale(t *testing.T) {
 	require.NoError(t, os.Chtimes(objPath, later, later))
 	assert.Equal(t, "", colour(ctxA), "metadata kept after the object was changed on the backend")
 }
+
+// TestCopyObjectMetadata checks a copy gets exactly the metadata given,
+// as worked out by gofakes3 from the metadata directive, and keeps the
+// source's modification time without adding it to the metadata.
+func TestCopyObjectMetadata(t *testing.T) {
+	b, root := newTestBackend(t)
+	ctx := context.Background()
+	srcTime := time.Date(2011, 12, 25, 12, 59, 59, 0, time.UTC)
+	require.NoError(t, os.Chtimes(filepath.Join(root, "bucket", "object.txt"), srcTime, srcTime))
+
+	_, err := b.CopyObject(ctx, "bucket", "object.txt", "bucket", "copy.txt", map[string]string{"X-Amz-Meta-Colour": "red"})
+	require.NoError(t, err)
+	obj, err := b.HeadObject(ctx, "bucket", "copy.txt")
+	require.NoError(t, err)
+	assert.Equal(t, "red", obj.Metadata["X-Amz-Meta-Colour"])
+	assert.NotContains(t, obj.Metadata, "X-Amz-Meta-Mtime")
+	assert.NotContains(t, obj.Metadata, "mtime")
+	info, err := os.Stat(filepath.Join(root, "bucket", "copy.txt"))
+	require.NoError(t, err)
+	assert.True(t, srcTime.Equal(info.ModTime()), "modification time %v", info.ModTime())
+
+	// Copying again with other metadata replaces it all
+	_, err = b.CopyObject(ctx, "bucket", "copy.txt", "bucket", "copy2.txt", map[string]string{"X-Amz-Meta-Size": "big"})
+	require.NoError(t, err)
+	obj, err = b.HeadObject(ctx, "bucket", "copy2.txt")
+	require.NoError(t, err)
+	assert.Equal(t, "big", obj.Metadata["X-Amz-Meta-Size"])
+	assert.NotContains(t, obj.Metadata, "X-Amz-Meta-Colour")
+}
