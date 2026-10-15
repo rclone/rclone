@@ -223,6 +223,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Tencent Cloud Object Storage (COS)" home="https://intl.cloud.tencent.com/product/cos" config="/s3/#tencent-cos" >}}
 {{< provider name="Uloz.to" home="https://uloz.to" config="/ulozto/" >}}
 {{< provider name="US3" home="https://www.ucloud.cn/site/product/ufile.html" config="/s3/#us3" >}}
+{{< provider name="Voltn" home="https://www.voltn.eu/" config="/voltn/" >}}
 {{< provider name="Wasabi" home="https://wasabi.com/" config="/s3/#wasabi" >}}
 {{< provider name="WebDAV" home="https://en.wikipedia.org/wiki/WebDAV" config="/webdav/" >}}
 {{< provider name="Yandex Disk" home="https://disk.yandex.com/" config="/yandex/" >}}

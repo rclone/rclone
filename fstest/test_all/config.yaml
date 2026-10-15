@@ -546,6 +546,9 @@ backends:
      - TestFileRename
    ignoretests:
      - cmd/bisync
+ - backend:  "voltn"
+   remote:   "TestVoltn:"
+   fastlist: false
  - backend:  "opendrive"
    remote:   "TestOpenDrive:"
    fastlist: false
