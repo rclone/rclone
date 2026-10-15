@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/rclone/gofakes3"
@@ -261,6 +262,74 @@ func TestListSkipDir(t *testing.T) {
 		l := &lister{marker: test.marker, hasMarker: test.marker != ""}
 		assert.Equal(t, test.want, l.skipDir(test.dir), "marker %q dir %q", test.marker, test.dir)
 	}
+}
+
+// TestListAnyDelimiter checks listings with any delimiter, and with a
+// prefix, against the keys an S3 listing of the same flat keyspace has,
+// whatever the page size.
+func TestListAnyDelimiter(t *testing.T) {
+	files := []string{
+		"a.txt", "a/b/c", "a/bc", "a0",
+		"b%ar", "b ar", "b.ar", "bar", "bazar", "baz/qux", "baz/q ux/x",
+		"cab", "c/a/b/z", "c/ab", "dir/sub/file", "foo",
+	}
+	var paths []string
+	for _, file := range files {
+		paths = append(paths, "bucket/"+file)
+	}
+	b := newListBackend(t, paths...)
+	// An empty directory has no keys, so mustn't be a common prefix
+	// for delimiters other than "/"
+	require.NoError(t, os.MkdirAll(filepath.Join(b.s.f.Root(), "bucket", "empty", "abc"), 0777))
+
+	// want returns the keys and common prefixes S3 lists
+	want := func(prefix, delimiter string) (keys []string) {
+		seen := map[string]bool{}
+		keySpace := files
+		if delimiter == "/" {
+			// Listing directories with "/" shows empty ones too, as
+			// it always has
+			keySpace = append(slices.Clone(files), "empty/abc/")
+		}
+		for _, key := range keySpace {
+			if !strings.HasPrefix(key, prefix) {
+				continue
+			}
+			if delimiter != "" {
+				if i := strings.Index(key[len(prefix):], delimiter); i >= 0 {
+					key = key[:len(prefix)+i+len(delimiter)]
+				}
+			}
+			if !seen[key] {
+				seen[key] = true
+				keys = append(keys, key)
+			}
+		}
+		slices.Sort(keys)
+		return keys
+	}
+
+	for _, prefix := range []string{"", "b", "ba", "baz/", "c", "c/a", "e", "x"} {
+		for _, delimiter := range []string{"", "/", "a", "ba", " ", ".", "%", "/a", "b/", "z"} {
+			t.Run(fmt.Sprintf("prefix=%q,delimiter=%q", prefix, delimiter), func(t *testing.T) {
+				expected := want(prefix, delimiter)
+				for _, maxKeys := range []int{1, 2, 3, 1000} {
+					got := listPages(t, b, listPrefix(prefix, delimiter), maxKeys)
+					assert.Equal(t, expected, got, "max-keys %d", maxKeys)
+				}
+			})
+		}
+	}
+}
+
+// TestListPrefixLeadingSlash checks a prefix starting with "/" matches
+// nothing, as no key starts with "/".
+func TestListPrefixLeadingSlash(t *testing.T) {
+	b := newListBackend(t, "bucket/a/b", "bucket/c")
+	keys, _ := listOnce(t, b, listPrefix("/", ""), gofakes3.ListBucketPage{MaxKeys: 1000})
+	assert.Empty(t, keys)
+	keys, _ = listOnce(t, b, listPrefix("/a", "/"), gofakes3.ListBucketPage{MaxKeys: 1000})
+	assert.Empty(t, keys)
 }
 
 // TestListETagQuoted checks the ETags in listings are quoted as on S3

@@ -267,18 +267,13 @@ func (b *s3Backend) ListBucket(ctx context.Context, bucket string, prefix *gofak
 		prefix = emptyPrefix
 	}
 
-	// workaround
-	if strings.TrimSpace(prefix.Prefix) == "" {
-		prefix.HasPrefix = false
-	}
-	if strings.TrimSpace(prefix.Delimiter) == "" {
-		prefix.HasDelimiter = false
-	}
-
 	response := gofakes3.NewObjectList()
-	path, remaining := prefixParser(prefix)
+	// Keys can't start with "/" so such a prefix matches nothing
+	if strings.HasPrefix(prefix.Prefix, "/") {
+		return response, nil
+	}
 
-	err = b.listPage(_vfs, bucket, path, remaining, prefix.HasDelimiter, page, response)
+	err = b.listPage(_vfs, bucket, prefix.Prefix, prefix.Delimiter, page, response)
 	if err == gofakes3.ErrNoSuchKey {
 		// AWS just returns an empty list
 		response = gofakes3.NewObjectList()

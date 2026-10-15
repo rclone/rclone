@@ -441,10 +441,13 @@ When using `PutObject` or `DeleteObject`, rclone will automatically
 create or clean up empty folders. If you don't want to clean up empty
 folders automatically, use `--no-cleanup`.
 
-When using `ListObjects`, rclone treats any delimiter as `/`. Without a
-delimiter the listing is recursive: rclone walks the directory tree
-below the prefix, reading only as many directories as it needs to fill
-each page.
+When using `ListObjects` with the delimiter `/`, rclone lists the
+directory the prefix is in, showing its subdirectories as common
+prefixes, including empty ones. Without a delimiter the listing is
+recursive: rclone walks the directory tree below the prefix, reading
+only as many directories as it needs to fill each page. Any other
+delimiter is supported too, but needs the whole directory tree below
+the prefix walking, unless the delimiter is in the directory names.
 
 Versioning is not currently supported.
 
