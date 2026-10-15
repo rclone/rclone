@@ -213,6 +213,20 @@ func isEmptyDir(dir string, VFS *vfs.VFS) bool {
 	return err == nil && len(entries) == 0
 }
 
+// removeMadeDirs removes the directory dir, which mkdirRecursive
+// returned made for, and its parents while they are empty, up to and
+// including made. It does nothing if made is "".
+func removeMadeDirs(dir, made string, VFS *vfs.VFS) {
+	if made == "" {
+		return
+	}
+	for ; isEmptyDir(dir, VFS); dir = path.Dir(dir) {
+		if VFS.Remove(dir) != nil || dir == made {
+			return
+		}
+	}
+}
+
 // rmdirRecursive removes the parent directories of p which are empty,
 // stopping at the bucket.
 func rmdirRecursive(p string, VFS *vfs.VFS) {
