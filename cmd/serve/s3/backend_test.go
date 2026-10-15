@@ -336,3 +336,34 @@ func TestCopyObjectMetadata(t *testing.T) {
 	assert.Equal(t, "big", obj.Metadata["X-Amz-Meta-Size"])
 	assert.NotContains(t, obj.Metadata, "X-Amz-Meta-Colour")
 }
+
+// TestSetObjectTagging checks the tags of an object can be changed
+// without changing its other metadata.
+func TestSetObjectTagging(t *testing.T) {
+	b, _ := newTestBackend(t)
+	ctx := context.Background()
+	_, err := b.PutObject(ctx, "bucket", "tagged.txt", map[string]string{"X-Amz-Meta-Colour": "red"}, strings.NewReader("data"), 4)
+	require.NoError(t, err)
+	meta := func() map[string]string {
+		obj, err := b.HeadObject(ctx, "bucket", "tagged.txt")
+		require.NoError(t, err)
+		return obj.Metadata
+	}
+
+	require.NoError(t, b.SetObjectTagging(ctx, "bucket", "tagged.txt", "a=1&b=2"))
+	assert.Equal(t, "a=1&b=2", meta()[gofakes3.TaggingMetadataKey])
+	assert.Equal(t, "red", meta()["X-Amz-Meta-Colour"])
+
+	require.NoError(t, b.SetObjectTagging(ctx, "bucket", "tagged.txt", ""))
+	assert.NotContains(t, meta(), gofakes3.TaggingMetadataKey)
+	assert.Equal(t, "red", meta()["X-Amz-Meta-Colour"])
+
+	// An object without stored metadata can be tagged
+	require.NoError(t, b.SetObjectTagging(ctx, "bucket", "object.txt", "c=3"))
+	obj, err := b.HeadObject(ctx, "bucket", "object.txt")
+	require.NoError(t, err)
+	assert.Equal(t, "c=3", obj.Metadata[gofakes3.TaggingMetadataKey])
+
+	err = b.SetObjectTagging(ctx, "bucket", "missing.txt", "a=1")
+	assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrNoSuchKey), "%v", err)
+}

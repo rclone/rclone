@@ -454,7 +454,8 @@ metadata of at most `--metadata-max-objects` objects (default `100000`,
 `0` for no limit) of each user (each access key) is kept; after that
 the metadata of the user's least recently used object is forgotten. The metadata of an object is
 ignored once the object has been changed some other way, for example
-by another `--auth-proxy` user or directly on the backend.
+by another `--auth-proxy` user or directly on the backend. Object tags
+are kept with the metadata in the same way.
 
 ### Object names
 
