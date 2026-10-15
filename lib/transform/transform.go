@@ -14,7 +14,6 @@ import (
 	"net/url"
 	"os/exec"
 	"path"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -63,7 +62,11 @@ func Path(ctx context.Context, s string, isDir bool) string {
 		}
 		if err != nil {
 			err = fs.CountError(ctx, fserrors.NoRetryError(err))
-			fs.Errorf(s, "Failed to transform: %v", err)
+			fs.Errorf(old, "Failed to transform: %v", err)
+			// keep the original name: a failed transform can leave s empty or
+			// half converted, and copying to that name is worse than not
+			// transforming at all (same as the segment count check below)
+			return old
 		}
 	}
 	if old != s {
@@ -226,11 +229,10 @@ func transformPathSegment(s string, t transform) (string, error) {
 		return s + AppyTimeGlobs(t.value, time.Now()), nil
 	case ConvRegex:
 		split := strings.Split(t.value, "/")
-		if len(split) != 2 {
+		if len(split) != 2 || t.re == nil {
 			return s, fmt.Errorf("regex syntax error: %v", t.value)
 		}
-		re := regexp.MustCompile(split[0])
-		return re.ReplaceAllString(s, split[1]), nil
+		return t.re.ReplaceAllString(s, split[1]), nil
 	case ConvCommand:
 		return mapper(s, t.value)
 	default:
