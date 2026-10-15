@@ -4,6 +4,7 @@ package deletefile
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
@@ -18,25 +19,37 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "deletefile remote:path",
 	Short: `Remove a single file from remote.`,
-	Long: `Remove a single file from remote.  Unlike ` + "`" + `delete` + "`" + ` it cannot be used to
+	// Warning! "|" will be replaced by backticks below
+	Long: strings.ReplaceAll(`Remove a single file from remote. Unlike |delete| it cannot be used to
 remove a directory and it doesn't obey include/exclude filters - if the
-specified file exists, it will always be removed.`,
+specified file exists, it will always be removed from its original location.
+
+The |--backup-dir| and |--suffix| flags are honored when set.`, "|", "`"),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.42",
-		"groups":            "Important",
+		"groups":            "Important,Sync",
 	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		f, fileName := cmd.NewFsFile(args[0])
 		cmd.Run(true, false, command, func() error {
+			ctx := context.Background()
 			if fileName == "" {
 				return fmt.Errorf("%s is a directory or doesn't exist: %w", args[0], fs.ErrorObjectNotFound)
 			}
-			fileObj, err := f.NewObject(context.Background(), fileName)
+			fileObj, err := f.NewObject(ctx, fileName)
 			if err != nil {
 				return err
 			}
-			return operations.DeleteFile(context.Background(), fileObj)
+			ci := fs.GetConfig(ctx)
+			var backupDir fs.Fs
+			if ci.BackupDir != "" || ci.Suffix != "" {
+				backupDir, err = operations.BackupDir(ctx, f, f, fileName)
+				if err != nil {
+					return err
+				}
+			}
+			return operations.DeleteFileWithBackupDir(ctx, fileObj, backupDir)
 		})
 	},
 }
