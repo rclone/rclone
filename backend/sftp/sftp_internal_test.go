@@ -146,6 +146,23 @@ func TestRemoteShellPathEncodesPathOverrideNames(t *testing.T) {
 	assert.Equal(t, "/volume/srv/root/dir/file\uFF1Aname", f.remoteShellPath("dir/file:name"))
 }
 
+func TestRemoteShellPathRelativePathOverrideLeadingDash(t *testing.T) {
+	f := &Fs{
+		absRoot: "/",
+		opt: Options{
+			Enc:          encoder.Display,
+			PathOverride: "@.",
+		},
+	}
+
+	assert.Equal(t, "./-file", f.remoteShellPath("-file"))
+	assert.Equal(t, "dir/-file", f.remoteShellPath("dir/-file"))
+	assert.Equal(t, "file", f.remoteShellPath("file"))
+
+	f.opt.PathOverride = "."
+	assert.Equal(t, "./-file", f.remoteShellPath("-file"))
+}
+
 func TestParseHash(t *testing.T) {
 	for i, test := range []struct {
 		sshOutput, checksum string
