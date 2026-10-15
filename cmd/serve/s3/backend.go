@@ -4,6 +4,7 @@ package s3
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"io"
 	"maps"
 	"math"
@@ -466,7 +467,7 @@ func (b *s3Backend) PutObject(
 	// }
 
 	if objectDir != "." {
-		if err := mkdirRecursive(objectDir, _vfs); err != nil {
+		if _, err := mkdirRecursive(objectDir, _vfs); err != nil {
 			return result, err
 		}
 	}
@@ -620,8 +621,13 @@ func (b *s3Backend) DeleteBucket(ctx context.Context, name string) error {
 		return gofakes3.BucketNotFound(name)
 	}
 
-	if err := _vfs.Remove(name); err != nil {
-		return gofakes3.ErrBucketNotEmpty
+	// The bucket may hold empty directories, which S3 clients can't
+	// see, so is removed if it has nothing else.
+	if err := removeEmptyTree(name, _vfs); err != nil {
+		if errors.Is(err, errNotEmpty) {
+			return gofakes3.ErrBucketNotEmpty
+		}
+		return err
 	}
 
 	return nil

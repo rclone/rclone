@@ -1864,3 +1864,49 @@ func TestMultipartMaxUploads(t *testing.T) {
 	_, err = b.CreateMultipartUpload(ctx, bucket, "5", nil)
 	require.NoError(t, err)
 }
+
+// TestMultipartAbortRemovesDirs checks that aborting an upload removes
+// the directories made for it, but not those which existed already, so
+// the bucket can be deleted.
+func TestMultipartAbortRemovesDirs(t *testing.T) {
+	core, f, bucket := newMultipartTestServer(t, false)
+	ctx := context.Background()
+
+	// A directory which exists already with an object in
+	putTestObject(t, f, bucket, "existing/keep.txt")
+
+	for _, object := range []string{"new/dir/aborted.bin", "existing/dir/aborted.bin"} {
+		uploadID, err := core.NewMultipartUpload(ctx, bucket, object, minio.PutObjectOptions{})
+		require.NoError(t, err)
+		data := []byte(random.String(1024))
+		_, err = core.PutObjectPart(ctx, bucket, object, uploadID, 1, bytes.NewReader(data), int64(len(data)), minio.PutObjectPartOptions{})
+		require.NoError(t, err)
+		require.NoError(t, core.AbortMultipartUpload(ctx, bucket, object, uploadID))
+	}
+	requireOnly(t, f, bucket, "existing")
+	requireOnly(t, f, path.Join(bucket, "existing"), "keep.txt")
+
+	// Once the object is gone the bucket can be deleted
+	require.NoError(t, core.RemoveObject(ctx, bucket, "existing/keep.txt", minio.RemoveObjectOptions{}))
+	require.NoError(t, core.RemoveBucket(ctx, bucket))
+}
+
+// TestDeleteBucketEmptyDirs checks a bucket holding only empty
+// directories, which S3 clients can't see, can be deleted, but not one
+// holding an object.
+func TestDeleteBucketEmptyDirs(t *testing.T) {
+	core, f, bucket := newMultipartTestServer(t, false)
+	ctx := context.Background()
+
+	putTestObject(t, f, bucket, "a/b/object.txt")
+	require.NoError(t, f.Mkdir(ctx, path.Join(bucket, "c/d")))
+	err := core.RemoveBucket(ctx, bucket)
+	require.Error(t, err)
+	assert.Equal(t, "BucketNotEmpty", minio.ToErrorResponse(err).Code)
+	requireOnly(t, f, bucket, "a", "c")
+
+	require.NoError(t, core.RemoveObject(ctx, bucket, "a/b/object.txt", minio.RemoveObjectOptions{}))
+	require.NoError(t, core.RemoveBucket(ctx, bucket))
+	_, err = f.List(ctx, bucket)
+	assert.ErrorIs(t, err, fs.ErrorDirNotFound)
+}
