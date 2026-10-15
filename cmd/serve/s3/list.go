@@ -193,8 +193,8 @@ func (l *lister) addRolledUp(prefix string) error {
 	return nil
 }
 
-// hasKeys reports whether the directory fp in the bucket has any keys
-// below it.
+// hasKeys reports whether the directory fdPath in the bucket has any
+// keys below it.
 func (l *lister) hasKeys(fdPath string) bool {
 	fp, err := bucketDirPath(l.bucket, fdPath)
 	if err != nil {
@@ -292,7 +292,9 @@ func (l *lister) list(fdPath, name string, addPrefix bool) error {
 			// key below it rolls up into the same common prefix,
 			// so the directory needn't be read.
 			if prefix, ok := l.commonPrefix(prefixWithTrailingSlash); ok {
-				if l.hasKeys(objectPath) {
+				// Only look for keys if the prefix isn't on the page
+				// already or on an earlier one
+				if prefix != l.lastPrefix && !l.skipKey(prefix) && l.hasKeys(objectPath) {
 					if err := l.addRolledUp(prefix); err != nil {
 						return err
 					}
