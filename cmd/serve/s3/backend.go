@@ -3,8 +3,10 @@ package s3
 
 import (
 	"context"
+	"crypto/md5"
 	"encoding/hex"
 	"errors"
+	"hash"
 	"io"
 	"maps"
 	"math"
@@ -289,7 +291,7 @@ func (b *s3Backend) ListBucket(ctx context.Context, bucket string, prefix *gofak
 		return response, nil
 	}
 
-	err = b.listPage(_vfs, bucket, prefix.Prefix, prefix.Delimiter, page, response)
+	err = b.listPage(ctx, _vfs, bucket, prefix.Prefix, prefix.Delimiter, page, response)
 	if err == gofakes3.ErrNoSuchKey {
 		// AWS just returns an empty list
 		response = gofakes3.NewObjectList()
@@ -613,6 +615,15 @@ func (b *s3Backend) PutObject(
 		removeMadeDirs(objectDir, madeDir, _vfs)
 	}
 
+	// With MD5 ETags gofakes3 returns the MD5 of the data, which is
+	// kept with the metadata if the remote can't give it, so HEAD
+	// returns it too.
+	var md5Hasher hash.Hash
+	if b.s.etagHash(_vfs) == fshash.MD5 && !fsys.Hashes().Contains(fshash.MD5) {
+		md5Hasher = md5.New()
+		input = io.TeeReader(input, md5Hasher)
+	}
+
 	f, err := _vfs.Create(tmpFp)
 	if err != nil {
 		cleanup()
@@ -655,7 +666,11 @@ func (b *s3Backend) PutObject(
 		return result, err
 	}
 
-	if err := b.tenant(ctx).storeMeta(_vfs, fp, meta); err != nil {
+	om := objectMeta{meta: meta}
+	if md5Hasher != nil {
+		om.hash = md5Hasher.Sum(nil)
+	}
+	if err := b.tenant(ctx).storeObjectMeta(_vfs, fp, om); err != nil {
 		return result, err
 	}
 
@@ -847,7 +862,12 @@ func (b *s3Backend) CopyObject(ctx context.Context, srcBucket, srcKey, dstBucket
 			// Directory markers have no metadata to replace
 			return result, nil
 		}
-		return result, b.tenant(ctx).storeMeta(_vfs, fp, meta)
+		// The data is unchanged, so its stored ETag and part sizes
+		// still apply
+		t := b.tenant(ctx)
+		om, _ := t.getMeta(ctx, fp, cStat)
+		om.meta = meta
+		return result, t.storeObjectMeta(_vfs, fp, om)
 	}
 
 	c, err := b.GetObject(ctx, srcBucket, srcKey, nil)

@@ -26,6 +26,7 @@ import (
 	_ "github.com/rclone/rclone/backend/memory"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
@@ -2038,4 +2039,67 @@ func TestETagHashConsistent(t *testing.T) {
 			})
 		}
 	}
+}
+
+// TestETagMD5WithoutRemoteMD5 checks that with MD5 ETags on a remote
+// which can't give the MD5 of objects, the ETags returned when objects
+// are made are the same as HEAD and listings return for them, and are
+// kept when an object is copied onto itself.
+func TestETagMD5WithoutRemoteMD5(t *testing.T) {
+	backing := ":crypt,remote='" + t.TempDir() + "',password=" + obscure.MustObscure("password") + ":"
+	core, f, bucket := newMultipartTestServerBacking(t, backing, false)
+	require.False(t, f.Hashes().Contains(hash.MD5))
+	ctx := context.Background()
+	md5Hex := func(data []byte) string {
+		sum := md5.Sum(data)
+		return hex.EncodeToString(sum[:])
+	}
+	etags := map[string]string{}
+
+	data := []byte("put object")
+	info, err := core.PutObject(ctx, bucket, "put.txt", bytes.NewReader(data), int64(len(data)), "", "", minio.PutObjectOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, md5Hex(data), info.ETag, "put")
+	etags["put.txt"] = info.ETag
+
+	uploadID, err := core.NewMultipartUpload(ctx, bucket, "multipart.bin", minio.PutObjectOptions{})
+	require.NoError(t, err)
+	var all []byte
+	var parts []minio.CompletePart
+	for i, size := range []int{100 * 1024, 30 * 1024} {
+		data := []byte(random.String(size))
+		all = append(all, data...)
+		p, err := core.PutObjectPart(ctx, bucket, "multipart.bin", uploadID, i+1, bytes.NewReader(data), int64(size), minio.PutObjectPartOptions{})
+		require.NoError(t, err)
+		parts = append(parts, minio.CompletePart{PartNumber: i + 1, ETag: p.ETag})
+	}
+	complete, err := core.CompleteMultipartUpload(ctx, bucket, "multipart.bin", uploadID, parts, minio.PutObjectOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, md5Hex(all), complete.ETag, "multipart")
+	etags["multipart.bin"] = complete.ETag
+
+	// Replacing the metadata of an object leaves its data and so its
+	// ETag unchanged
+	_, err = core.CopyObject(ctx, bucket, "multipart.bin", bucket, "multipart.bin", map[string]string{
+		"x-amz-metadata-directive": "REPLACE",
+		"x-amz-meta-potato":        "jersey royal",
+	}, minio.CopySrcOptions{}, minio.PutObjectOptions{})
+	require.NoError(t, err)
+
+	for key, etag := range etags {
+		stat, err := core.StatObject(ctx, bucket, key, minio.StatObjectOptions{})
+		require.NoError(t, err, key)
+		assert.Equal(t, etag, stat.ETag, "HEAD %s", key)
+	}
+	stat, err := core.StatObject(ctx, bucket, "multipart.bin", minio.StatObjectOptions{PartNumber: 2})
+	require.NoError(t, err)
+	assert.Equal(t, int64(30*1024), stat.Size, "part 2 size after copy")
+
+	listed := map[string]string{}
+	result, err := core.ListObjects(bucket, "", "", "", 1000)
+	require.NoError(t, err)
+	for _, obj := range result.Contents {
+		listed[obj.Key] = strings.Trim(obj.ETag, `"`)
+	}
+	assert.Equal(t, etags, listed)
 }
