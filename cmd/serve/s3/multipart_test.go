@@ -2034,7 +2034,6 @@ func TestETagHashConsistent(t *testing.T) {
 				for _, obj := range result.Contents {
 					listed[obj.Key] = strings.Trim(obj.ETag, `"`)
 				}
-				delete(etags, "dir/")
 				assert.Equal(t, etags, listed)
 			})
 		}

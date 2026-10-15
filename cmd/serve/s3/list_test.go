@@ -277,19 +277,22 @@ func TestListAnyDelimiter(t *testing.T) {
 	for _, file := range files {
 		paths = append(paths, "bucket/"+file)
 	}
+	// A directory holding only the temporary object of an upload has
+	// no keys
+	paths = append(paths, "bucket/pending/"+putObjectPrefix+"x")
 	b := newListBackend(t, paths...)
-	// An empty directory has no keys, so mustn't be a common prefix
-	// for delimiters other than "/"
+	// An empty directory has its directory marker as its key
 	require.NoError(t, os.MkdirAll(filepath.Join(b.s.f.Root(), "bucket", "empty", "abc"), 0777))
+	files = append(files, "empty/abc/")
 
 	// want returns the keys and common prefixes S3 lists
 	want := func(prefix, delimiter string) (keys []string) {
 		seen := map[string]bool{}
 		keySpace := files
-		if delimiter == "/" {
-			// Listing directories with "/" shows empty ones too, as
-			// it always has
-			keySpace = append(slices.Clone(files), "empty/abc/")
+		if delimiter == "/" && prefix != "pending/" {
+			// Listing directories with "/" shows every directory
+			// as a common prefix, as it always has
+			keySpace = append(slices.Clone(files), "pending/")
 		}
 		for _, key := range keySpace {
 			if !strings.HasPrefix(key, prefix) {
@@ -309,7 +312,7 @@ func TestListAnyDelimiter(t *testing.T) {
 		return keys
 	}
 
-	for _, prefix := range []string{"", "b", "ba", "baz/", "c", "c/a", "e", "x"} {
+	for _, prefix := range []string{"", "b", "ba", "baz/", "c", "c/a", "e", "empty/", "empty/abc", "empty/abc/", "p", "pending/", "x"} {
 		for _, delimiter := range []string{"", "/", "a", "ba", " ", ".", "%", "/a", "b/", "z"} {
 			t.Run(fmt.Sprintf("prefix=%q,delimiter=%q", prefix, delimiter), func(t *testing.T) {
 				expected := want(prefix, delimiter)

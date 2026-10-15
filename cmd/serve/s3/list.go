@@ -131,6 +131,32 @@ func (l *lister) addObject(key string, entry vfs.Node) error {
 	return nil
 }
 
+// addDirMarker adds the directory marker key of the empty directory
+// fp to the page, returning errPageFull if the page is now complete.
+func (l *lister) addDirMarker(key, fp string) error {
+	if l.skipKey(key) {
+		return nil
+	}
+	node, err := l.vfs.Stat(fp)
+	if err != nil {
+		// The directory went away while we were listing it
+		return nil
+	}
+	if l.keys >= l.max {
+		return l.truncate()
+	}
+	l.response.Add(&gofakes3.Content{
+		Key:          key,
+		LastModified: gofakes3.NewContentTime(node.ModTime()),
+		ETag:         quoteETag(emptyHash(l.hashType)),
+		Size:         0,
+		StorageClass: gofakes3.StorageStandard,
+	})
+	l.keys++
+	l.lastKey = key
+	return nil
+}
+
 // commonPrefix returns the common prefix key rolls up into, if the
 // listing has a delimiter other than "/" and key has it after the
 // listing's prefix.
@@ -173,6 +199,10 @@ func (l *lister) hasKeys(fdPath string) bool {
 	if err != nil {
 		return false
 	}
+	if len(dirEntries) == 0 {
+		// An empty directory has its directory marker key
+		return true
+	}
 	for _, entry := range dirEntries {
 		if isTempObject(entry.Name()) {
 			continue
@@ -210,6 +240,13 @@ func (l *lister) list(fdPath, name string, addPrefix bool) error {
 		return err
 	}
 	l.dirsRead++
+
+	// An empty directory is listed as its directory marker, which is
+	// the only key below it, as S3 would list the marker which made
+	// it. Other directories may have been made implicitly, so aren't.
+	if len(dirEntries) == 0 && name == "" && fdPath != "" {
+		return l.addDirMarker(fdPath+"/", fp)
+	}
 
 	// Emit the entries in the order their keys have in a flat keyspace,
 	// which is not the plain name order getDirEntries returns.
