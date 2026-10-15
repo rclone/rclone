@@ -36,7 +36,7 @@ type StartFn func(f fs.Fs) (configmap.Simple, func())
 // If backingRemote is non-empty (e.g. "TestS3Minio:") it is used as the
 // backing Fs that the server wraps, instead of a fresh local directory.
 // The matching fstest/testserver/init.d script is started automatically.
-func run(t *testing.T, name string, start StartFn, useProxy bool, backingRemote string) {
+func run(t *testing.T, name string, start StartFn, useProxy bool, backingRemote, root string) {
 	fremote, clean, err := makeBackingFs(backingRemote)
 	require.NoError(t, err)
 	defer clean()
@@ -81,7 +81,10 @@ func run(t *testing.T, name string, start StartFn, useProxy bool, backingRemote 
 	if *fstest.Verbose {
 		args = append(args, "-verbose")
 	}
-	remoteName := "serve" + name + "test:"
+	// root lets a server that exports a named prefix (e.g. an smb share) run the
+	// backend tests under that prefix rather than at the connection root.
+	configName := "serve" + name + "test"
+	remoteName := configName + ":" + root
 	if *subRun != "" {
 		args = append(args, "-run", *subRun)
 	}
@@ -91,7 +94,7 @@ func run(t *testing.T, name string, start StartFn, useProxy bool, backingRemote 
 
 	// Configure the backend with environment variables
 	cmd.Env = os.Environ()
-	prefix := "RCLONE_CONFIG_" + strings.ToUpper(remoteName[:len(remoteName)-1]) + "_"
+	prefix := "RCLONE_CONFIG_" + strings.ToUpper(configName) + "_"
 	for k, v := range config {
 		cmd.Env = append(cmd.Env, prefix+strings.ToUpper(k)+"="+v)
 	}
@@ -121,13 +124,24 @@ func Run(t *testing.T, name string, start StartFn) {
 func RunWithBackend(t *testing.T, name string, start StartFn, backingRemote string) {
 	fstest.Initialise()
 	t.Run("Normal", func(t *testing.T) {
-		run(t, name, start, false, backingRemote)
+		run(t, name, start, false, backingRemote, "")
 	})
 	if backingRemote == "" {
 		t.Run("AuthProxy", func(t *testing.T) {
-			run(t, name, start, true, backingRemote)
+			run(t, name, start, true, backingRemote, "")
 		})
 	}
+}
+
+// RunNoAuthProxy runs the server then the backend integration tests against it,
+// but without the auth-proxy sub-test. Use it for a server that does not (yet)
+// implement the auth proxy. root is the remote prefix the tests run under (e.g.
+// an smb share name), or "" for the connection root.
+func RunNoAuthProxy(t *testing.T, name, root string, start StartFn) {
+	fstest.Initialise()
+	t.Run("Normal", func(t *testing.T) {
+		run(t, name, start, false, "", root)
+	})
 }
 
 // makeBackingFs returns the Fs that the server should wrap, plus a
