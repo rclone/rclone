@@ -14,6 +14,15 @@ import "os"
 // renamed and or deleted.
 var OpenFile = os.OpenFile
 
+// Rename renames (moves) oldpath to newpath, replacing newpath if it
+// exists.
+//
+// On Unix this is os.Rename. On Windows it is a rename which can replace
+// a destination which has open handles - see file_windows.go.
+func Rename(oldpath, newpath string) error {
+	return os.Rename(oldpath, newpath)
+}
+
 // IsReserved checks if path contains a reserved name
 func IsReserved(path string) error {
 	return nil
