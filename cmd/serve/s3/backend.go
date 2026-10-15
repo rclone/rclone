@@ -309,6 +309,12 @@ func (b *s3Backend) HeadObject(ctx context.Context, bucketName, objectName strin
 		return nil, gofakes3.BucketNotFound(bucketName)
 	}
 
+	if fp, isMarker, err := bucketDirMarkerPath(bucketName, objectName); isMarker {
+		if err != nil {
+			return nil, err
+		}
+		return b.dirMarkerObject(_vfs, fp, objectName)
+	}
 	fp, err := bucketObjectPath(bucketName, objectName)
 	if err != nil {
 		return nil, err
@@ -366,6 +372,15 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 		return nil, gofakes3.BucketNotFound(bucketName)
 	}
 
+	if fp, isMarker, err := bucketDirMarkerPath(bucketName, objectName); isMarker {
+		if err != nil {
+			return nil, err
+		}
+		if _, err := rangeRequest.Range(0); err != nil {
+			return nil, err
+		}
+		return b.dirMarkerObject(_vfs, fp, objectName)
+	}
 	fp, err := bucketObjectPath(bucketName, objectName)
 	if err != nil {
 		return nil, err
@@ -436,6 +451,44 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 	}, nil
 }
 
+// dirMarkerObject returns the empty object the directory marker key
+// objectName stands for if its directory fp exists.
+func (b *s3Backend) dirMarkerObject(_vfs *vfs.VFS, fp, objectName string) (*gofakes3.Object, error) {
+	node, err := _vfs.Stat(fp)
+	if err != nil || !node.IsDir() {
+		return nil, gofakes3.KeyNotFound(objectName)
+	}
+	return &gofakes3.Object{
+		Name: objectName,
+		Hash: emptyHash(b.s.etagHash(_vfs)),
+		Metadata: map[string]string{
+			"Last-Modified": formatHeaderTime(node.ModTime()),
+			"Content-Type":  "application/x-directory",
+		},
+		Size:     0,
+		Contents: noOpReadCloser{},
+	}, nil
+}
+
+// putDirMarker makes the directory fp the directory marker key
+// objectName stands for. A directory marker can't hold data.
+func putDirMarker(_vfs *vfs.VFS, fp, objectName string, input io.Reader) error {
+	// Read to the end of an empty input so any checksum of it is
+	// checked, but no further.
+	n, err := io.Copy(io.Discard, io.LimitReader(input, 1))
+	if err != nil {
+		return err
+	}
+	if n != 0 {
+		return gofakes3.ErrorMessagef(gofakes3.ErrInvalidArgument, "Directory marker %q must be empty", objectName)
+	}
+	if node, err := _vfs.Stat(fp); err == nil && !node.IsDir() {
+		return errParentIsObject(strings.TrimSuffix(objectName, "/"))
+	}
+	_, err = mkdirRecursive(fp, _vfs)
+	return err
+}
+
 // TouchObject creates or updates meta on specified object.
 func (b *s3Backend) TouchObject(ctx context.Context, fp string, meta map[string]string) (result gofakes3.PutObjectResult, err error) {
 	_vfs, err := b.s.getVFS(ctx)
@@ -481,9 +534,18 @@ func (b *s3Backend) PutObject(
 		return result, gofakes3.BucketNotFound(bucketName)
 	}
 
+	if fp, isMarker, err := bucketDirMarkerPath(bucketName, objectName); isMarker {
+		if err != nil {
+			return result, err
+		}
+		return result, putDirMarker(_vfs, fp, objectName, input)
+	}
 	fp, err := bucketObjectPath(bucketName, objectName)
 	if err != nil {
 		return result, err
+	}
+	if node, err := _vfs.Stat(fp); err == nil && node.IsDir() {
+		return result, errIsDirectory(objectName)
 	}
 	objectDir := path.Dir(fp)
 	// _, err = db.fs.Stat(objectDir)
@@ -599,6 +661,20 @@ func (b *s3Backend) deleteObject(ctx context.Context, bucketName, objectName str
 		return gofakes3.BucketNotFound(bucketName)
 	}
 
+	if fp, isMarker, err := bucketDirMarkerPath(bucketName, objectName); isMarker {
+		if err != nil {
+			return err
+		}
+		// Deleting a directory marker leaves the objects in its
+		// directory, so the directory is only removed if empty.
+		if isEmptyDir(fp, _vfs) {
+			if err := _vfs.Remove(fp); err != nil {
+				return err
+			}
+			rmdirRecursive(fp, _vfs)
+		}
+		return nil
+	}
 	fp, err := bucketObjectPath(bucketName, objectName)
 	if err != nil {
 		return err

@@ -286,6 +286,9 @@ func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objec
 	if err != nil {
 		return "", err
 	}
+	if node, err := _vfs.Stat(fp); err == nil && node.IsDir() {
+		return "", errIsDirectory(objectName)
+	}
 	// Reserve a place before doing anything with the remote, so a refused
 	// upload leaves nothing behind.
 	t := b.tenant(ctx)

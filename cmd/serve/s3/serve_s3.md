@@ -465,11 +465,23 @@ are kept with the metadata in the same way.
 `serve s3` stores objects as files in the backend, so object keys are
 mapped to file paths rather than treated as the opaque strings AWS S3
 allows. Keys must be in canonical path form: keys that contain `..` or
-`.` path segments, repeated slashes (`//`), or a leading or trailing
-slash are rejected with a `400 Bad Request` (`InvalidArgument`)
-instead of being normalised, since normalising them could alias two
-distinct keys to the same file or resolve a key outside its bucket.
-This matches the behaviour of other S3 servers such as MinIO.
+`.` path segments, repeated slashes (`//`), or a leading slash are
+rejected with a `400 Bad Request` (`InvalidArgument`) instead of being
+normalised, since normalising them could alias two distinct keys to
+the same file or resolve a key outside its bucket. This matches the
+behaviour of other S3 servers such as MinIO.
+
+A key ending in `/`, such as `dir/`, is a directory marker, standing
+for the directory `dir`. Putting an empty directory marker creates the
+directory (one with data is rejected with `400 Bad Request`), and
+deleting it removes the directory if it is empty. Directory markers
+are found by `HeadObject` and `GetObject` for any directory, but
+aren't listed as objects.
+
+As keys are file paths, a key can't be both an object and a directory
+holding other objects, for example `a/b` and `a/b/c`. Writing an
+object which would need this fails with `400 Bad Request`
+(`InvalidRequest`).
 
 ### Supported operations
 
