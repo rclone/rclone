@@ -58,6 +58,8 @@ type s3Backend struct {
 
 	reaperQuit chan struct{} // closed to stop the abandoned upload reaper
 	reaperStop sync.Once
+
+	commitLocks pathLocks // serialises moving objects into place, see commitObject
 }
 
 // tenant is the state kept between requests for one user of the server.
@@ -629,9 +631,9 @@ func (b *s3Backend) PutObject(
 		return result, err
 	}
 
-	// Rename the temporary object into place
+	// Move the temporary object into place
 	if tmpFp != fp {
-		if err := _vfs.Rename(tmpFp, fp); err != nil {
+		if err := b.commitObject(ctx, _vfs, tmpFp, fp); err != nil {
 			cleanup()
 			return result, err
 		}
@@ -643,6 +645,35 @@ func (b *s3Backend) PutObject(
 	}
 
 	return result, b.tenant(ctx).storeMeta(_vfs, fp, meta)
+}
+
+// commitObject moves the object written to tmpFp into place at fp,
+// first checking the request's conditions on writing it.
+//
+// Moving objects into place through this server is serialised per
+// object, so the check and the move are atomic against other writes
+// through it, though not against changes made some other way.
+func (b *s3Backend) commitObject(ctx context.Context, _vfs *vfs.VFS, tmpFp, fp string) error {
+	unlock := b.commitLocks.lock(fs.ConfigString(_vfs.Fs()) + "\x00" + fp)
+	defer unlock()
+	if gofakes3.HasWriteConditions(ctx) {
+		exists, etag := false, ""
+		if node, err := _vfs.Stat(fp); err == nil && node.IsFile() {
+			exists, etag = true, hex.EncodeToString(b.objectHash(ctx, _vfs, fp, node))
+		}
+		if err := gofakes3.CheckWriteConditions(ctx, exists, etag); err != nil {
+			return err
+		}
+	}
+	return _vfs.Rename(tmpFp, fp)
+}
+
+// objectHash returns the hash returned as the ETag of the object at fp.
+func (b *s3Backend) objectHash(ctx context.Context, _vfs *vfs.VFS, fp string, node vfs.Node) []byte {
+	if om, ok := b.tenant(ctx).getMeta(ctx, fp, node); ok && om.hash != nil {
+		return om.hash
+	}
+	return getFileHashByte(node, b.s.etagHash(_vfs))
 }
 
 // DeleteMulti deletes multiple objects in a single request.
