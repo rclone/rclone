@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"sync"
 
 	"github.com/rclone/gofakes3"
 	"github.com/rclone/rclone/fs"
@@ -229,6 +230,43 @@ func rmdirRecursive(p string, VFS *vfs.VFS) {
 		return
 	}
 	rmdirRecursive(dir, VFS)
+}
+
+// pathLocks are locks on paths, made as needed.
+type pathLocks struct {
+	mu    sync.Mutex
+	locks map[string]*pathLock
+}
+
+// pathLock is a lock on a path wanted by refs users.
+type pathLock struct {
+	mu   sync.Mutex
+	refs int
+}
+
+// lock locks path, returning a function to unlock it.
+func (p *pathLocks) lock(path string) (unlock func()) {
+	p.mu.Lock()
+	if p.locks == nil {
+		p.locks = map[string]*pathLock{}
+	}
+	l := p.locks[path]
+	if l == nil {
+		l = &pathLock{}
+		p.locks[path] = l
+	}
+	l.refs++
+	p.mu.Unlock()
+	l.mu.Lock()
+	return func() {
+		l.mu.Unlock()
+		p.mu.Lock()
+		l.refs--
+		if l.refs == 0 {
+			delete(p.locks, path)
+		}
+		p.mu.Unlock()
+	}
 }
 
 // errNotEmpty is returned by removeEmptyTree for a directory holding

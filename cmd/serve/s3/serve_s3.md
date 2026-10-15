@@ -457,6 +457,17 @@ the prefix walking, unless the delimiter is in the directory names.
 
 Versioning is not currently supported.
 
+Conditional writes, `PutObject` and `CompleteMultipartUpload` with
+`If-None-Match` or `If-Match`, are supported. The conditions are
+checked before the object is written, and again as it is moved into
+place when it is written to a temporary object first. This happens for
+multipart uploads and, for `PutObject`, with remotes which can upload
+partial files (such as local disk) or with `--vfs-cache-mode minimal`
+or above. The second check is atomic against other writes through
+`serve s3`, but neither is atomic against changes made to the remote
+some other way. If the remote doesn't support the `--etag-hash`,
+objects have no `ETag` so `If-Match` with an `ETag` always fails.
+
 Metadata will only be saved in memory other than the rclone `mtime`
 metadata which will be set as the modification time of the file. The
 metadata of at most `--metadata-max-objects` objects (default `100000`,

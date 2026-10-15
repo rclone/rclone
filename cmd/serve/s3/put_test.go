@@ -12,9 +12,11 @@ import (
 	"fmt"
 	"io"
 	"path"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/minio/minio-go/v7"
 	"github.com/ncw/swift/v2"
 	"github.com/rclone/gofakes3"
 	"github.com/rclone/rclone/cmd/serve/proxy"
@@ -309,4 +311,44 @@ func TestMetadataAfterWriteback(t *testing.T) {
 	_vfs.WaitForWriters(10 * time.Second)
 	b.forgetPath(_vfs, path.Join(bucket, "key"))
 	assert.Equal(t, "red", colour(), "after writeback")
+}
+
+// TestConditionalPutRace checks that of many concurrent PUTs of a new
+// object with If-None-Match: *, which all find the object missing when
+// they start, only one writes it.
+func TestConditionalPutRace(t *testing.T) {
+	core, f, bucket := newMultipartTestServer(t, false)
+	ctx := context.Background()
+	const object = "race.bin"
+	const n = 20
+	data := []byte(random.String(256 * 1024))
+
+	var wg sync.WaitGroup
+	var start sync.WaitGroup
+	start.Add(1)
+	errs := make([]error, n)
+	for i := range n {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			opts := minio.PutObjectOptions{}
+			opts.SetMatchETagExcept("*")
+			start.Wait()
+			_, errs[i] = core.PutObject(ctx, bucket, object, bytes.NewReader(data), int64(len(data)), "", "", opts)
+		}()
+	}
+	start.Done()
+	wg.Wait()
+
+	succeeded := 0
+	for _, err := range errs {
+		if err == nil {
+			succeeded++
+		} else {
+			assert.Equal(t, "PreconditionFailed", minio.ToErrorResponse(err).Code, "%v", err)
+		}
+	}
+	assert.Equal(t, 1, succeeded)
+	assert.Equal(t, data, readObject(t, f, bucket, object))
+	requireOnly(t, f, bucket, object)
 }

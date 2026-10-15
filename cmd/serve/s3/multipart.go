@@ -920,7 +920,7 @@ func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, obj
 	// so that the client can retry the CompleteMultipartUpload: the
 	// committed close is idempotent, so the retry just renames again.
 	if up.streamFp != up.fp {
-		if err := up.vfs.Rename(up.streamFp, up.fp); err != nil {
+		if err := b.commitObject(ctx, up.vfs, up.streamFp, up.fp); err != nil {
 			return "", "", err
 		}
 	}
