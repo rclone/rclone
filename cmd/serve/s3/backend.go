@@ -819,15 +819,22 @@ func (b *s3Backend) CopyObject(ctx context.Context, srcBucket, srcKey, dstBucket
 	if err != nil {
 		return result, err
 	}
-	fp, err := bucketObjectPath(srcBucket, srcKey)
+	fp, isMarker, err := bucketDirMarkerPath(srcBucket, srcKey)
+	if !isMarker {
+		fp, err = bucketObjectPath(srcBucket, srcKey)
+	}
 	if err != nil {
 		return result, err
 	}
 	cStat, err := _vfs.Stat(fp)
-	if err != nil || !cStat.IsFile() {
+	if err != nil || cStat.IsDir() != isMarker {
 		return result, gofakes3.KeyNotFound(srcKey)
 	}
 	if srcBucket == dstBucket && srcKey == dstKey {
+		if isMarker {
+			// Directory markers have no metadata to replace
+			return result, nil
+		}
 		return result, b.tenant(ctx).storeMeta(_vfs, fp, meta)
 	}
 
