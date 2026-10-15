@@ -65,7 +65,7 @@ type multipartUpload struct {
 	vfs    *vfs.VFS       // the VFS fh is created on, used for all later operations
 	tenant *tenant        // the user the upload belongs to
 
-	objectMD5 hash.Hash // MD5 of the data written to the sink, so of the whole object once complete
+	objectMD5 hash.Hash // MD5 of the data written to the sink, so of the whole object once complete, or nil if not needed for the ETag
 
 	mu        sync.Mutex
 	changed   chan struct{}  // closed when buffered shrinks, nextPart advances or the upload closes
@@ -140,7 +140,6 @@ func newMultipartUpload(bucket, key, fp, streamFp string, meta map[string]string
 		fp:          fp,
 		streamFp:    streamFp,
 		meta:        meta,
-		objectMD5:   md5.New(),
 		partMD5s:    map[int][]byte{},
 		partSizes:   map[int]int64{},
 		nextPart:    1,
@@ -326,6 +325,9 @@ func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objec
 	up.budget = t.budget
 	up.vfs = _vfs
 	up.madeDir = madeDir
+	if b.s.etagHash(_vfs) == fshash.MD5 {
+		up.objectMD5 = md5.New()
+	}
 
 	if err := b.addUpload(t, uploadID, up); err != nil {
 		removeMadeDirs(objectDir, madeDir, _vfs)
@@ -701,6 +703,9 @@ func (up *multipartUpload) sink() (io.Writer, error) {
 		}
 		up.fh = fh
 	}
+	if up.objectMD5 == nil {
+		return up.fh, nil
+	}
 	return hashingWriter{w: up.fh, hash: up.objectMD5}, nil
 }
 
@@ -932,7 +937,7 @@ func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, obj
 	// stored with the part sizes so HEAD returns it while the object
 	// is unchanged.
 	var etagHash []byte
-	if b.s.etagHash(up.vfs) == fshash.MD5 {
+	if up.objectMD5 != nil {
 		etagHash = up.objectMD5.Sum(nil)
 	}
 	_ = up.tenant.storeObjectMeta(up.vfs, up.fp, objectMeta{
