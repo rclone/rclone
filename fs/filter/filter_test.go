@@ -460,6 +460,57 @@ func TestNewFilterMakeListR(t *testing.T) {
 	assert.Equal(t, want, listRObjects)
 }
 
+func TestFilesFromStrictFilterMakeListR(t *testing.T) {
+	f, err := NewFilter(nil)
+	f.Opt.FilesFromStrict = true
+	require.NoError(t, err)
+
+	// Add some files
+	for _, path := range []string{
+		"path/to/dir/file1.png",
+		"/path/to/dir/file2.png",
+		"/path/to/file3.png",
+		"/path/to/dir2/file4.png",
+		"notfound",
+	} {
+		err = f.AddFile(path)
+		require.NoError(t, err)
+	}
+
+	assert.Equal(t, 5, len(f.files))
+
+	// NewObject function for MakeListR
+	newObjects := FilesMap{}
+	var newObjectMu sync.Mutex
+	NewObject := func(ctx context.Context, remote string) (fs.Object, error) {
+		newObjectMu.Lock()
+		defer newObjectMu.Unlock()
+		if remote == "notfound" {
+			return nil, fs.ErrorObjectNotFound
+		}
+		newObjects[remote] = struct{}{}
+		return mockobject.New(remote), nil
+	}
+
+	// Callback for ListRFn
+	listRObjects := FilesMap{}
+	var callbackMu sync.Mutex
+	listRcallback := func(entries fs.DirEntries) error {
+		callbackMu.Lock()
+		defer callbackMu.Unlock()
+		for _, entry := range entries {
+			listRObjects[entry.Remote()] = struct{}{}
+		}
+		return nil
+	}
+
+	// Make the listR and call it
+	listR := f.MakeListR(context.Background(), NewObject)
+	err = listR(context.Background(), "", listRcallback)
+
+	require.Error(t, err, "expected: fs.ErrorObjectNotFound, got: %v", err)
+}
+
 func TestNewFilterMinSize(t *testing.T) {
 	f, err := NewFilter(nil)
 	require.NoError(t, err)
