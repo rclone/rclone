@@ -2103,3 +2103,32 @@ func TestETagMD5WithoutRemoteMD5(t *testing.T) {
 	}
 	assert.Equal(t, etags, listed)
 }
+
+// TestMultipartObjectMD5OnlyForMD5ETags checks that a multipart upload only
+// hashes the object as it is written when the ETag is its MD5.
+func TestMultipartObjectMD5OnlyForMD5ETags(t *testing.T) {
+	ctx := context.Background()
+	for _, tc := range []struct {
+		etagHash string
+		want     bool
+	}{
+		{"MD5", true},
+		{"", false},
+		{"SHA1", false},
+	} {
+		t.Run(fmt.Sprintf("%q", tc.etagHash), func(t *testing.T) {
+			b, _ := newTestBackend(t)
+			b.s.opt.EtagHash = tc.etagHash
+			b.s.etagHashType = hash.None
+			if tc.etagHash != "" {
+				require.NoError(t, b.s.etagHashType.Set(tc.etagHash))
+			}
+			uploadID, err := b.CreateMultipartUpload(ctx, "bucket", "key", nil)
+			require.NoError(t, err)
+			up, err := b.loadUpload(ctx, uploadID)
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, up.objectMD5 != nil)
+			require.NoError(t, b.AbortMultipartUpload(ctx, "bucket", "key", uploadID))
+		})
+	}
+}
