@@ -97,6 +97,9 @@ func TestRc(t *testing.T) {
 		returnedMountPoint, err := out.GetString("mountPoint")
 		require.NoError(t, err)
 		assert.Equal(t, mountPoint, returnedMountPoint)
+		vfsID, err := out.GetString("vfsId")
+		require.NoError(t, err)
+		assert.NotEmpty(t, vfsID)
 
 		// check file.txt is there now
 		fi, err := os.Stat(filePath)
@@ -120,7 +123,8 @@ func TestRc(t *testing.T) {
 		}
 		mountPoints := checkMountList()
 		require.Equal(t, 1, len(mountPoints))
-		require.Equal(t, mountPoint, mountPoints[0].MountPoint)
+		assert.Equal(t, mountPoint, mountPoints[0].MountPoint)
+		assert.Equal(t, vfsID, mountPoints[0].VfsID)
 
 		// FIXME the OS sometimes appears to be using the mount
 		// immediately after it appears so wait a moment
@@ -175,12 +179,12 @@ func TestRc(t *testing.T) {
 			t.Skipf("Mount failed - skipping test: %v", err)
 		}
 		t.Cleanup(func() {
+			// FIXME wait a moment for the OS to release the mount point
+			time.Sleep(150 * time.Millisecond)
 			_, err = unmount.Fn(ctx, rc.Params{
 				"mountPoint": filterMountPoint,
 			})
 			assert.NoError(t, err)
-
-			// FIXME wait a moment for the OS to release the mount point
 			time.Sleep(100 * time.Millisecond)
 		})
 
@@ -198,6 +202,64 @@ func TestRc(t *testing.T) {
 		_, err = os.Stat(excludedPath)
 		require.Error(t, err)
 		require.True(t, os.IsNotExist(err))
+	})
+
+	t.Run("MountVfsIdReuse", func(t *testing.T) {
+		if len(mountTypes) == 0 {
+			t.Skip("Can't mount")
+		}
+		mountPoint1 := t.TempDir()
+		mountPoint2 := t.TempDir()
+		if runtime.GOOS == "windows" {
+			require.NoError(t, os.RemoveAll(mountPoint1))
+			require.NoError(t, os.RemoveAll(mountPoint2))
+		}
+
+		initialActive := vfs.ActiveCount()
+
+		// Mount first point
+		out1, err := mount.Fn(ctx, rc.Params{
+			"fs":         localDir,
+			"mountPoint": mountPoint1,
+		})
+		if err != nil {
+			t.Skipf("Mount failed - skipping test: %v", err)
+		}
+		vfsID1, err := out1.GetString("vfsId")
+		require.NoError(t, err)
+		assert.NotEmpty(t, vfsID1)
+
+		// Mount second point with vfsId
+		out2, err := mount.Fn(ctx, rc.Params{
+			"fs":         localDir,
+			"mountPoint": mountPoint2,
+			"vfsId":      vfsID1,
+		})
+		require.NoError(t, err)
+		vfsID2, err := out2.GetString("vfsId")
+		require.NoError(t, err)
+		assert.Equal(t, vfsID1, vfsID2)
+
+		// Check ActiveCount increased by 1 (shared instance)
+		assert.Equal(t, initialActive+1, vfs.ActiveCount())
+
+		// FIXME the OS sometimes appears to be using the mount
+		// immediately after it appears so wait a moment
+		time.Sleep(100 * time.Millisecond)
+
+		// Unmount second point - VFS should still be active
+		_, err = unmount.Fn(ctx, rc.Params{"mountPoint": mountPoint2})
+		require.NoError(t, err)
+		assert.Equal(t, initialActive+1, vfs.ActiveCount())
+
+		time.Sleep(100 * time.Millisecond)
+
+		// Unmount first point - VFS should now be released
+		_, err = unmount.Fn(ctx, rc.Params{"mountPoint": mountPoint1})
+		require.NoError(t, err)
+		assert.Equal(t, initialActive, vfs.ActiveCount())
+
+		time.Sleep(100 * time.Millisecond)
 	})
 }
 
