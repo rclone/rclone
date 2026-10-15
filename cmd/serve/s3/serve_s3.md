@@ -451,7 +451,8 @@ When using `ListObjects` with the delimiter `/`, rclone lists the
 directory the prefix is in, showing its subdirectories as common
 prefixes, including empty ones. Without a delimiter the listing is
 recursive: rclone walks the directory tree below the prefix, reading
-only as many directories as it needs to fill each page. Any other
+only as many directories as it needs to fill each page, and lists
+empty directories as their directory markers (see below). Any other
 delimiter is supported too, but needs the whole directory tree below
 the prefix walking, unless the delimiter is in the directory names.
 
@@ -492,8 +493,9 @@ A key ending in `/`, such as `dir/`, is a directory marker, standing
 for the directory `dir`. Putting an empty directory marker creates the
 directory (one with data is rejected with `400 Bad Request`), and
 deleting it removes the directory if it is empty. Directory markers
-are found by `HeadObject` and `GetObject` for any directory, but
-aren't listed as objects.
+are found by `HeadObject` and `GetObject` for any directory, but only
+the markers of empty directories are listed as objects, as other
+directories may not have been made by putting a marker.
 
 As keys are file paths, a key can't be both an object and a directory
 holding other objects, for example `a/b` and `a/b/c`. Writing an
