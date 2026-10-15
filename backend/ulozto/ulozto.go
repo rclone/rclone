@@ -860,7 +860,7 @@ type RenamingObjectInfoProxy struct {
 	remote   string
 }
 
-// Remote implements fs.ObjectInfo.Remote by delegating to the wrapped instance.
+// String implements fs.ObjectInfo.String by delegating to the wrapped instance.
 func (s *RenamingObjectInfoProxy) String() string {
 	return s.delegate.String()
 }

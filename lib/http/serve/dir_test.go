@@ -1,6 +1,7 @@
 package serve
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"html/template"
@@ -46,11 +47,11 @@ func TestAddHTMLEntry(t *testing.T) {
 	d.AddHTMLEntry("a/b/c/colon:colon.txt", false, 64, modtime)
 	d.AddHTMLEntry("\"quotes\".txt", false, 64, modtime)
 	assert.Equal(t, []DirEntry{
-		{remote: "", URL: "/", ZipURL: "/?download=zip", Leaf: "/", IsDir: true, Size: 0, ModTime: modtime},
-		{remote: "dir", URL: "dir/", ZipURL: "dir/?download=zip", Leaf: "dir/", IsDir: true, Size: 0, ModTime: modtime},
-		{remote: "a/b/c/d.txt", URL: "d.txt", ZipURL: "", Leaf: "d.txt", IsDir: false, Size: 64, ModTime: modtime},
-		{remote: "a/b/c/colon:colon.txt", URL: "./colon:colon.txt", ZipURL: "", Leaf: "colon:colon.txt", IsDir: false, Size: 64, ModTime: modtime},
-		{remote: "\"quotes\".txt", URL: "%22quotes%22.txt", ZipURL: "", Leaf: "\"quotes\".txt", Size: 64, IsDir: false, ModTime: modtime},
+		{remote: "", URL: "/", ZipURL: "/?download=zip", Leaf: "/", IsDir: true, Size: 0, ModTime: modtime, MimeType: "inode/directory"},
+		{remote: "dir", URL: "./dir/", ZipURL: "./dir/?download=zip", Leaf: "dir/", IsDir: true, Size: 0, ModTime: modtime, MimeType: "inode/directory"},
+		{remote: "a/b/c/d.txt", URL: "./d.txt", ZipURL: "", Leaf: "d.txt", IsDir: false, Size: 64, ModTime: modtime, MimeType: "text/plain; charset=utf-8"},
+		{remote: "a/b/c/colon:colon.txt", URL: "./colon:colon.txt", ZipURL: "", Leaf: "colon:colon.txt", IsDir: false, Size: 64, ModTime: modtime, MimeType: "text/plain; charset=utf-8"},
+		{remote: "\"quotes\".txt", URL: "./%22quotes%22.txt", ZipURL: "", Leaf: "\"quotes\".txt", Size: 64, IsDir: false, ModTime: modtime, MimeType: "text/plain; charset=utf-8"},
 	}, d.Entries)
 
 	// Now test with a query parameter
@@ -58,9 +59,65 @@ func TestAddHTMLEntry(t *testing.T) {
 	d.AddHTMLEntry("file", false, 64, modtime)
 	d.AddHTMLEntry("dir", true, 0, modtime)
 	assert.Equal(t, []DirEntry{
-		{remote: "file", URL: "file?potato=42", ZipURL: "", Leaf: "file", IsDir: false, Size: 64, ModTime: modtime},
-		{remote: "dir", URL: "dir/?potato=42", ZipURL: "dir/?download=zip", Leaf: "dir/", IsDir: true, Size: 0, ModTime: modtime},
+		{remote: "file", URL: "./file?potato=42", ZipURL: "", Leaf: "file", IsDir: false, Size: 64, ModTime: modtime, MimeType: "application/octet-stream"},
+		{remote: "dir", URL: "./dir/?potato=42", ZipURL: "./dir/?download=zip", Leaf: "dir/", IsDir: true, Size: 0, ModTime: modtime, MimeType: "inode/directory"},
 	}, d.Entries)
+
+	// Now test with a link index
+	d = NewDirectory("z", GetTemplate(t)).SetLinkIndex("index.html")
+	d.AddHTMLEntry("file", false, 64, modtime)
+	d.AddHTMLEntry("dir", true, 0, modtime)
+	assert.Equal(t, []DirEntry{
+		{remote: "file", URL: "./file", ZipURL: "", Leaf: "file", IsDir: false, Size: 64, ModTime: modtime, MimeType: "application/octet-stream"},
+		{remote: "dir", URL: "./dir/index.html", ZipURL: "./dir/?download=zip", Leaf: "dir/", IsDir: true, Size: 0, ModTime: modtime, MimeType: "inode/directory"},
+	}, d.Entries)
+	assert.Equal(t, []Crumb{{Link: "../index.html", Text: "/"}, {Link: "index.html", Text: "z"}}, d.Breadcrumb)
+	assert.Equal(t, "../index.html", d.UpLink())
+}
+
+func TestDirectoryPath(t *testing.T) {
+	d := NewDirectory("", GetTemplate(t))
+	assert.Equal(t, "/", d.Path())
+	assert.True(t, d.IsRoot())
+	assert.Equal(t, "..", d.UpLink())
+
+	d = NewDirectory("a/b", GetTemplate(t))
+	assert.Equal(t, "/a/b/", d.Path())
+	assert.False(t, d.IsRoot())
+
+	d = NewDirectory("a/b/", GetTemplate(t))
+	assert.Equal(t, "/a/b/", d.Path())
+}
+
+func TestDirectorySummary(t *testing.T) {
+	d := NewDirectory("z", GetTemplate(t))
+	d.AddHTMLEntry("file1", false, 64, time.Time{})
+	d.AddHTMLEntry("file2", false, 100, time.Time{})
+	d.AddHTMLEntry("dir", true, 0, time.Time{})
+	assert.Equal(t, 1, d.NumDirs())
+	assert.Equal(t, 2, d.NumFiles())
+	assert.Equal(t, int64(164), d.TotalSize())
+}
+
+func TestRenderStatic(t *testing.T) {
+	htmlTemplate, err := libhttp.GetTemplate("")
+	require.NoError(t, err)
+	render := func(dirRemote string, static bool) string {
+		d := NewDirectory(dirRemote, htmlTemplate)
+		d.Static = static
+		d.AddHTMLEntry(dirRemote+"/file", false, 64, time.Time{})
+		var buf bytes.Buffer
+		require.NoError(t, d.Render(&buf))
+		return buf.String()
+	}
+
+	// serve http output has an up link everywhere
+	assert.Contains(t, render("z", false), "Go up")
+	assert.Contains(t, render("", false), "Go up")
+
+	// static output has no up link at the root but has one below it
+	assert.NotContains(t, render("", true), "Go up")
+	assert.Contains(t, render("z", true), "Go up")
 }
 
 func TestAddEntry(t *testing.T) {

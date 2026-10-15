@@ -612,7 +612,6 @@ type Options struct {
 	NoOffline    bool                    // If set then "access_type=offline" parameter is not passed
 	CheckAuth    CheckAuthFn             // When the AuthResult is known the checkAuth function is called if set
 	OAuth2Opts   []oauth2.AuthCodeOption // extra oauth2 options
-	StateBlankOK bool                    // If set, state returned as "" is deemed to be OK
 }
 
 // ConfigOut returns a config item suitable for the backend config
@@ -1097,8 +1096,13 @@ func (s *authServer) handleAuth(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// check state
+	//
+	// This is the only thing which ties the callback to the flow
+	// rclone started, so a request without it must be rejected -
+	// any web page open in the browser can make a request to the
+	// local auth server.
 	state := req.Form.Get("state")
-	if state != s.state && !(state == "" && s.opt.StateBlankOK) {
+	if state != s.state {
 		reply(http.StatusBadRequest, &AuthResult{
 			Name:        "Auth state doesn't match",
 			Description: fmt.Sprintf("Expecting %q got %q", s.state, state),

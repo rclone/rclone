@@ -17,6 +17,12 @@ func TestParseSizeFromHeaders(t *testing.T) {
 	}, {
 		"42", "", 42,
 	}, {
+		"0", "", 0,
+	}, {
+		"-5", "", -1,
+	}, {
+		"-5", "bytes 0-1/42", -1,
+	}, {
 		"42", "invalid", -1,
 	}, {
 		"", "bytes 22-33/42", 42,
@@ -26,6 +32,12 @@ func TestParseSizeFromHeaders(t *testing.T) {
 		"12", "otherUnit 22-33/42", -1,
 	}, {
 		"12", "bytes 22-33/*", -1,
+	}, {
+		"", "bytes 0-1/-5", -1,
+	}, {
+		"2", "bytes 0-1/-5", -1,
+	}, {
+		"", "bytes */0", 0,
 	}, {
 		"0", "bytes */42", 42,
 	}}

@@ -310,3 +310,13 @@ func TestNewStatsGroupDoesNotStartAverageLoop(t *testing.T) {
 	assert.False(t, startedAfterDone,
 		"averageLoop should stop when the last transfer is done")
 }
+
+// Check fs can read the stats group to attribute logs to it
+func TestFsStatsGroupFromContext(t *testing.T) {
+	ctx := context.Background()
+	_, ok := fs.StatsGroupFromContext(ctx)
+	assert.False(t, ok)
+	group, ok := fs.StatsGroupFromContext(WithStatsGroup(ctx, "job/1"))
+	assert.True(t, ok)
+	assert.Equal(t, "job/1", group)
+}
