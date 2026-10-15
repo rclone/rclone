@@ -35,6 +35,7 @@ directories to and from different cloud storage providers.
 - Ceph [:page_facing_up:](https://rclone.org/s3/#ceph)
 - China Mobile Ecloud Elastic Object Storage (EOS) [:page_facing_up:](https://rclone.org/s3/#china-mobile-ecloud-eos)
 - Citrix ShareFile [:page_facing_up:](https://rclone.org/sharefile/)
+- Clever Cloud Cellar [:page_facing_up:](https://rclone.org/s3/#clever-cloud-cellar)
 - Cloudflare R2 [:page_facing_up:](https://rclone.org/s3/#cloudflare-r2)
 - Cloudinary [:page_facing_up:](https://rclone.org/cloudinary/)
 - Cubbit DS3 [:page_facing_up:](https://rclone.org/s3/#Cubbit)
