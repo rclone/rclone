@@ -45,6 +45,22 @@ func getFileHashByte(node any, hashType hash.Type) []byte {
 	return b
 }
 
+// emptyHash returns the hash of no data.
+func emptyHash(hashType hash.Type) []byte {
+	if hashType == hash.None {
+		return nil
+	}
+	hasher, err := hash.NewMultiHasherTypes(hash.NewHashSet(hashType))
+	if err != nil {
+		return nil
+	}
+	b, err := hex.DecodeString(hasher.Sums()[hashType])
+	if err != nil {
+		return nil
+	}
+	return b
+}
+
 func getFileHash(node any, hashType hash.Type) string {
 	if hashType == hash.None {
 		return ""
@@ -118,6 +134,34 @@ func bucketObjectPath(bucketName, objectName string) (string, error) {
 	return path.Join(bucketName, objectName), nil
 }
 
+// bucketDirMarkerPath returns the backend path of the directory a
+// directory marker key, one ending in "/" such as "dir/", stands for.
+// isMarker is false if objectName isn't a directory marker key.
+func bucketDirMarkerPath(bucketName, objectName string) (fp string, isMarker bool, err error) {
+	dir, isMarker := strings.CutSuffix(objectName, "/")
+	if !isMarker {
+		return "", false, nil
+	}
+	fp, err = bucketObjectPath(bucketName, dir)
+	if err != nil {
+		return "", true, errInvalidObjectName(objectName)
+	}
+	return fp, true, nil
+}
+
+// errIsDirectory is returned for an object key which is the name of a
+// directory, which can't be an object too.
+func errIsDirectory(key string) error {
+	return gofakes3.ErrorMessagef(gofakes3.ErrInvalidRequest, "Object name %q is the name of a directory", key)
+}
+
+// errParentIsObject is returned for an object key whose directory, or
+// one of its parents, is the name of an object, so can't be a directory
+// too.
+func errParentIsObject(dir string) error {
+	return gofakes3.ErrorMessagef(gofakes3.ErrInvalidRequest, "Directory %q is the name of an object", dir)
+}
+
 // bucketDirPath joins the bucket name and a directory path (a listing prefix)
 // into a backend path. It is like bucketObjectPath except that the empty path
 // is allowed and addresses the bucket root. Every other non-canonical path,
@@ -134,6 +178,8 @@ func bucketDirPath(bucketName, dirName string) (string, error) {
 // don't exist, returning the top-most directory it made, or "" if path
 // existed already.
 //
+// It returns errParentIsObject if path or one of its parents is a file.
+//
 // FIXME this could be implemented by VFS.MkdirAll()
 func mkdirRecursive(path string, VFS *vfs.VFS) (made string, err error) {
 	path = strings.Trim(path, "/")
@@ -141,7 +187,13 @@ func mkdirRecursive(path string, VFS *vfs.VFS) (made string, err error) {
 	var dir strings.Builder
 	for _, d := range dirs {
 		dir.WriteString("/" + d)
-		if _, err := VFS.Stat(dir.String()); err != nil {
+		if node, err := VFS.Stat(dir.String()); err == nil {
+			if !node.IsDir() {
+				// Report the directory without its bucket
+				_, inBucket, _ := strings.Cut(strings.TrimPrefix(dir.String(), "/"), "/")
+				return made, errParentIsObject(inBucket)
+			}
+		} else {
 			err := VFS.Mkdir(dir.String(), 0777)
 			if err != nil {
 				return made, err

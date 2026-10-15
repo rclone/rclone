@@ -3,6 +3,7 @@ package s3
 import (
 	"context"
 	"crypto/md5"
+	"encoding/hex"
 	"io"
 	"os"
 	"path/filepath"
@@ -366,4 +367,95 @@ func TestSetObjectTagging(t *testing.T) {
 
 	err = b.SetObjectTagging(ctx, "bucket", "missing.txt", "a=1")
 	assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrNoSuchKey), "%v", err)
+}
+
+// TestDirMarkers checks directory marker keys, which end in "/", stand
+// for directories.
+func TestDirMarkers(t *testing.T) {
+	b, root := newTestBackend(t)
+	ctx := context.Background()
+	put := func(key, data string) error {
+		_, err := b.PutObject(ctx, "bucket", key, nil, strings.NewReader(data), int64(len(data)))
+		return err
+	}
+	isDir := func(dir string) bool {
+		info, err := os.Stat(filepath.Join(root, "bucket", dir))
+		return err == nil && info.IsDir()
+	}
+
+	// Putting an empty marker makes the directory
+	require.NoError(t, put("dir/sub/", ""))
+	assert.True(t, isDir("dir/sub"))
+	obj, err := b.HeadObject(ctx, "bucket", "dir/sub/")
+	require.NoError(t, err)
+	assert.Equal(t, int64(0), obj.Size)
+	assert.Equal(t, "d41d8cd98f00b204e9800998ecf8427e", hex.EncodeToString(obj.Hash)) // md5("")
+	obj, err = b.GetObject(ctx, "bucket", "dir/", nil)
+	require.NoError(t, err)
+	data, err := io.ReadAll(obj.Contents)
+	require.NoError(t, err)
+	assert.Empty(t, data)
+
+	// A marker with data is refused
+	err = put("data/", "x")
+	assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrInvalidArgument), "%v", err)
+	assert.False(t, isDir("data"))
+
+	// A marker for a directory which doesn't exist isn't found, nor is
+	// a directory without the "/"
+	for _, key := range []string{"missing/", "dir"} {
+		_, err = b.HeadObject(ctx, "bucket", key)
+		assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrNoSuchKey), "%s: %v", key, err)
+	}
+
+	// Deleting a marker removes its directory only if empty
+	require.NoError(t, put("dir/sub/file.txt", "data"))
+	require.NoError(t, b.deleteObject(ctx, "bucket", "dir/sub/"))
+	assert.True(t, isDir("dir/sub"))
+	require.NoError(t, b.deleteObject(ctx, "bucket", "dir/sub/file.txt"))
+	require.NoError(t, put("dir/sub/", ""))
+	require.NoError(t, b.deleteObject(ctx, "bucket", "dir/sub/"))
+	assert.False(t, isDir("dir/sub"))
+
+	// Markers must be in canonical form apart from the "/"
+	for _, key := range []string{"/", "a//", "a/./"} {
+		err = put(key, "")
+		assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrInvalidArgument), "%s: %v", key, err)
+	}
+}
+
+// TestFileDirConflicts checks keys which conflict with directories or
+// files are refused with a client error rather than an internal one,
+// which clients would retry.
+func TestFileDirConflicts(t *testing.T) {
+	b, _ := newTestBackend(t)
+	ctx := context.Background()
+	put := func(key string) error {
+		_, err := b.PutObject(ctx, "bucket", key, nil, strings.NewReader("data"), 4)
+		return err
+	}
+	require.NoError(t, put("dir/file.txt"))
+
+	for _, test := range []struct {
+		key  string
+		call func(key string) error
+	}{
+		{"object.txt/below", put},
+		{"object.txt/", func(key string) error {
+			_, err := b.PutObject(ctx, "bucket", key, nil, strings.NewReader(""), 0)
+			return err
+		}},
+		{"dir", put},
+		{"dir", func(key string) error {
+			_, err := b.CreateMultipartUpload(ctx, "bucket", key, nil)
+			return err
+		}},
+		{"object.txt/below", func(key string) error {
+			_, err := b.CreateMultipartUpload(ctx, "bucket", key, nil)
+			return err
+		}},
+	} {
+		err := test.call(test.key)
+		assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrInvalidRequest), "%s: %v", test.key, err)
+	}
 }
