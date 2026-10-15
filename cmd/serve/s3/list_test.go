@@ -2,6 +2,7 @@ package s3
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -260,4 +261,15 @@ func TestListSkipDir(t *testing.T) {
 		l := &lister{marker: test.marker, hasMarker: test.marker != ""}
 		assert.Equal(t, test.want, l.skipDir(test.dir), "marker %q dir %q", test.marker, test.dir)
 	}
+}
+
+// TestListETagQuoted checks the ETags in listings are quoted as on S3
+// and in HEAD responses.
+func TestListETagQuoted(t *testing.T) {
+	b := newListBackend(t, "bucket/a")
+	_, list := listOnce(t, b, listPrefix("", ""), gofakes3.ListBucketPage{MaxKeys: 1000})
+	require.Len(t, list.Contents, 1)
+	obj, err := b.HeadObject(context.Background(), "bucket", "a")
+	require.NoError(t, err)
+	assert.Equal(t, `"`+hex.EncodeToString(obj.Hash)+`"`, list.Contents[0].ETag)
 }

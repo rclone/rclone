@@ -112,10 +112,14 @@ func (l *lister) addObject(key string, entry vfs.Node) error {
 	if l.keys >= l.max {
 		return l.truncate()
 	}
+	etag := getFileHash(entry, l.hashType)
+	if etag != "" {
+		etag = `"` + etag + `"`
+	}
 	l.response.Add(&gofakes3.Content{
 		Key:          key,
 		LastModified: gofakes3.NewContentTime(entry.ModTime()),
-		ETag:         getFileHash(entry, l.hashType),
+		ETag:         etag,
 		Size:         entry.Size(),
 		StorageClass: gofakes3.StorageStandard,
 	})
