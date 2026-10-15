@@ -408,6 +408,25 @@ func TestDirMarkers(t *testing.T) {
 		assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrNoSuchKey), "%s: %v", key, err)
 	}
 
+	// Copying a marker makes the directory of another marker, or an
+	// empty object
+	_, err = b.CopyObject(ctx, "bucket", "dir/sub/", "bucket", "copy/", map[string]string{})
+	require.NoError(t, err)
+	assert.True(t, isDir("copy"))
+	_, err = b.CopyObject(ctx, "bucket", "dir/sub/", "bucket", "empty.txt", map[string]string{})
+	require.NoError(t, err)
+	obj, err = b.HeadObject(ctx, "bucket", "empty.txt")
+	require.NoError(t, err)
+	assert.Equal(t, int64(0), obj.Size)
+	_, err = b.CopyObject(ctx, "bucket", "dir/", "bucket", "dir/", map[string]string{})
+	require.NoError(t, err)
+
+	// A copy needs the "/" for a directory and none for an object
+	for _, key := range []string{"dir", "empty.txt/", "missing/"} {
+		_, err = b.CopyObject(ctx, "bucket", key, "bucket", "other.txt", map[string]string{})
+		assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrNoSuchKey), "%s: %v", key, err)
+	}
+
 	// Deleting a marker removes its directory only if empty
 	require.NoError(t, put("dir/sub/file.txt", "data"))
 	require.NoError(t, b.deleteObject(ctx, "bucket", "dir/sub/"))

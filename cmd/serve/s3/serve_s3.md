@@ -493,9 +493,10 @@ A key ending in `/`, such as `dir/`, is a directory marker, standing
 for the directory `dir`. Putting an empty directory marker creates the
 directory (one with data is rejected with `400 Bad Request`), and
 deleting it removes the directory if it is empty. Directory markers
-are found by `HeadObject` and `GetObject` for any directory, but only
-the markers of empty directories are listed as objects, as other
-directories may not have been made by putting a marker.
+are found by `HeadObject`, `GetObject` and `CopyObject` for any
+directory, but only the markers of empty directories are listed as
+objects, as other directories may not have been made by putting a
+marker.
 
 As keys are file paths, a key can't be both an object and a directory
 holding other objects, for example `a/b` and `a/b/c`. Writing an
