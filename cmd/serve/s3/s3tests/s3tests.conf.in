@@ -13,11 +13,13 @@ bucket prefix = rclone-{random}-
 iam name prefix = s3-tests-
 iam path prefix = /s3-tests/
 
+# The user_id and display_name are those gofakes3 gives the owner of
+# every bucket and object. There is no api_name, as serve s3 doesn't
+# store bucket locations.
 [s3 main]
-display_name = M. Tester
-user_id = testid
+display_name = GoFakeS3
+user_id = fe7272ea58be830e56fe1663b10fafef
 email = tester@ceph.com
-api_name = default
 access_key = 0555b35654ad1656d804
 secret_key = h7GhxuBLTrlhVUyxSPUKUV8r/2EI4ngqJxD7iBdBYLhwluN30JaT3Q==
 
