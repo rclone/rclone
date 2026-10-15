@@ -7,6 +7,7 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"math"
@@ -1909,4 +1910,49 @@ func TestDeleteBucketEmptyDirs(t *testing.T) {
 	require.NoError(t, core.RemoveBucket(ctx, bucket))
 	_, err = f.List(ctx, bucket)
 	assert.ErrorIs(t, err, fs.ErrorDirNotFound)
+}
+
+// TestMultipartETagAndParts checks the ETag of a completed multipart
+// upload is the MD5 of the object, so is the same as HEAD returns, and
+// that its parts can be read with partNumber.
+func TestMultipartETagAndParts(t *testing.T) {
+	for _, tc := range testRemotes {
+		t.Run(tc.name, func(t *testing.T) {
+			core, _, bucket := newMultipartTestServerBacking(t, tc.backing, false)
+			ctx := context.Background()
+			const object = "multipart.bin"
+			partSizes := []int{120 * 1024, 100 * 1024, 53 * 1024}
+
+			uploadID, err := core.NewMultipartUpload(ctx, bucket, object, minio.PutObjectOptions{})
+			require.NoError(t, err)
+			var want []byte
+			var parts []minio.CompletePart
+			for i, size := range partSizes {
+				data := []byte(random.String(size))
+				want = append(want, data...)
+				p, err := core.PutObjectPart(ctx, bucket, object, uploadID, i+1, bytes.NewReader(data), int64(size), minio.PutObjectPartOptions{})
+				require.NoError(t, err)
+				parts = append(parts, minio.CompletePart{PartNumber: i + 1, ETag: p.ETag})
+			}
+			info, err := core.CompleteMultipartUpload(ctx, bucket, object, uploadID, parts, minio.PutObjectOptions{})
+			require.NoError(t, err)
+			wantMD5 := md5.Sum(want)
+			assert.Equal(t, hex.EncodeToString(wantMD5[:]), info.ETag)
+
+			stat, err := core.StatObject(ctx, bucket, object, minio.StatObjectOptions{})
+			require.NoError(t, err)
+			assert.Equal(t, info.ETag, stat.ETag)
+
+			var start int
+			for i, size := range partSizes {
+				obj, _, _, err := core.GetObject(ctx, bucket, object, minio.GetObjectOptions{PartNumber: i + 1})
+				require.NoError(t, err)
+				data, err := io.ReadAll(obj)
+				require.NoError(t, err)
+				require.NoError(t, obj.Close())
+				assert.Equal(t, want[start:start+size], data, "part %d", i+1)
+				start += size
+			}
+		})
+	}
 }

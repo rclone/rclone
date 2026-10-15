@@ -35,6 +35,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rclone/gofakes3"
 	"github.com/rclone/rclone/fs"
+	fshash "github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/pool"
@@ -64,6 +65,8 @@ type multipartUpload struct {
 	fh     io.WriteCloser // sink the in-order parts are written to, opened by sink (guarded by mu)
 	vfs    *vfs.VFS       // the VFS fh is created on, used for all later operations
 	tenant *tenant        // the user the upload belongs to
+
+	objectMD5 hash.Hash // MD5 of the data written to the sink, so of the whole object once complete
 
 	mu        sync.Mutex
 	changed   chan struct{}  // closed when buffered shrinks, nextPart advances or the upload closes
@@ -138,6 +141,7 @@ func newMultipartUpload(bucket, key, fp, streamFp string, meta map[string]string
 		fp:          fp,
 		streamFp:    streamFp,
 		meta:        meta,
+		objectMD5:   md5.New(),
 		partMD5s:    map[int][]byte{},
 		partSizes:   map[int]int64{},
 		nextPart:    1,
@@ -681,9 +685,9 @@ func (up *multipartUpload) stopStreaming(err error) error {
 	return err
 }
 
-// sink returns the handle the parts are written to, creating it on first
-// use. Call with the sink owned (up.pumping).
-func (up *multipartUpload) sink() (io.WriteCloser, error) {
+// sink returns the writer the parts are written to, creating the handle
+// it writes to on first use. Call with the sink owned (up.pumping).
+func (up *multipartUpload) sink() (io.Writer, error) {
 	up.mu.Lock()
 	defer up.mu.Unlock()
 	if up.closed {
@@ -696,7 +700,20 @@ func (up *multipartUpload) sink() (io.WriteCloser, error) {
 		}
 		up.fh = fh
 	}
-	return up.fh, nil
+	return hashingWriter{w: up.fh, hash: up.objectMD5}, nil
+}
+
+// hashingWriter writes to w, adding what is written to hash.
+type hashingWriter struct {
+	w    io.Writer
+	hash hash.Hash
+}
+
+// Write writes p to w, adding the bytes written to hash.
+func (h hashingWriter) Write(p []byte) (n int, err error) {
+	n, err = h.w.Write(p)
+	_, _ = h.hash.Write(p[:n])
+	return n, err
 }
 
 // copyToSink copies body into sink and hasher, returning the number of
@@ -909,9 +926,35 @@ func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, obj
 	}
 	b.deleteUpload(uploadID, up)
 
-	_ = up.tenant.storeMeta(up.vfs, up.fp, up.meta)
+	// The ETag is the MD5 of the object when that is the hash used
+	// for ETags, so it is the same as HEAD returns for it, otherwise
+	// the S3 multipart ETag. It is stored, with the part sizes, so
+	// HEAD returns it while the object is unchanged.
+	etag := up.multipartETag(input)
+	var etagHash []byte
+	if b.s.etagHash(up.vfs) == fshash.MD5 {
+		etagHash = up.objectMD5.Sum(nil)
+		etag = fmt.Sprintf("%q", hex.EncodeToString(etagHash))
+	}
+	_ = up.tenant.storeObjectMeta(up.vfs, up.fp, objectMeta{
+		meta:      up.meta,
+		hash:      etagHash,
+		partSizes: up.listedPartSizes(input),
+	})
 
-	return "", up.multipartETag(input), nil
+	return "", etag, nil
+}
+
+// listedPartSizes returns the sizes of the parts listed in input, in
+// order.
+func (up *multipartUpload) listedPartSizes(input *gofakes3.CompleteMultipartUploadRequest) []int64 {
+	up.mu.Lock()
+	defer up.mu.Unlock()
+	sizes := make([]int64, 0, len(input.Parts))
+	for _, p := range input.Parts {
+		sizes = append(sizes, up.partSizes[p.PartNumber])
+	}
+	return sizes
 }
 
 // AbortMultipartUpload tears down an in-progress upload, discarding any data
