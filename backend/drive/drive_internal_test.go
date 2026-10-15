@@ -250,6 +250,105 @@ func TestInternalFindExportFormat(t *testing.T) {
 	}
 }
 
+// TestInternalUnexportableGdocHiddenFromListing checks that a Google Doc type
+// with no export format (e.g. a Google Form) is invisible to normal listings
+// unless --drive-show-all-gdocs is set.
+func TestInternalUnexportableGdocHiddenFromListing(t *testing.T) {
+	// Load the real export formats (as returned by the Drive API) so that
+	// findExportFormat sees a Google Form has no matching export format,
+	// without triggering a live network fetch.
+	fetchFormatsOnce.Do(func() {})
+	buf, err := os.ReadFile(filepath.FromSlash("test/about.json"))
+	require.NoError(t, err)
+	var about struct {
+		ExportFormats map[string][]string `json:"exportFormats,omitempty"`
+	}
+	require.NoError(t, json.Unmarshal(buf, &about))
+	_exportFormats = fixMimeTypeMap(about.ExportFormats)
+
+	ctx := context.Background()
+	item := &drive.File{
+		Id:       "form-id",
+		Name:     "form",
+		MimeType: "application/vnd.google-apps.form",
+	}
+
+	f := new(Fs)
+	// Use the real default export extensions so this test tracks actual
+	// default behaviour rather than an empty extension list.
+	f.exportExtensions, _, err = parseExtensions(defaultExportExtensions)
+	require.NoError(t, err)
+	extension, exportName, exportMimeType, isDocument := f.findExportFormat(ctx, item)
+	require.Equal(t, "", extension, "a form has no export format")
+	require.True(t, isDocument)
+
+	// Without --drive-show-all-gdocs the object is hidden: newObjectWithExportInfo
+	// returns (nil, fs.ErrorObjectNotFound), and itemToDirEntry turns that into
+	// (nil, nil) so the file never becomes a listable fs.DirEntry.
+	obj, err := f.newObjectWithExportInfo(ctx, "form", item, extension, exportName, exportMimeType, isDocument)
+	assert.Nil(t, obj)
+	assert.Equal(t, fs.ErrorObjectNotFound, err)
+
+	// With --drive-show-all-gdocs the object becomes visible, so operations
+	// that list the directory (including rmdir/rmdirs' emptiness check) will
+	// see it and correctly treat the directory as non-empty.
+	f.opt.ShowAllGdocs = true
+	obj, err = f.newObjectWithExportInfo(ctx, "form", item, extension, exportName, exportMimeType, isDocument)
+	assert.NoError(t, err)
+	require.NotNil(t, obj)
+	assert.Equal(t, "form", obj.Remote())
+}
+
+// TestInternalGdocsWarnOnceIndependent checks that the "unrecognised
+// document type" and "no export format" branches of newObjectWithExportInfo
+// warn independently of each other.
+func TestInternalGdocsWarnOnceIndependent(t *testing.T) {
+	fetchFormatsOnce.Do(func() {})
+	buf, err := os.ReadFile(filepath.FromSlash("test/about.json"))
+	require.NoError(t, err)
+	var about struct {
+		ExportFormats map[string][]string `json:"exportFormats,omitempty"`
+	}
+	require.NoError(t, json.Unmarshal(buf, &about))
+	_exportFormats = fixMimeTypeMap(about.ExportFormats)
+
+	ctx := context.Background()
+	f := new(Fs)
+	f.exportExtensions, _, err = parseExtensions(defaultExportExtensions)
+	require.NoError(t, err)
+
+	// A mime type absent from _exportFormats: isDocument is false, so this
+	// hits the "unrecognised document type" branch (gdocsUnknownTypeWarnOnce).
+	unknownTypeItem := &drive.File{Id: "unknown-id", Name: "unknown", MimeType: "application/vnd.google-apps.unknown-test-type"}
+	extension, exportName, exportMimeType, isDocument := f.findExportFormat(ctx, unknownTypeItem)
+	require.False(t, isDocument)
+
+	gdocsUnknownTypeWarnOnce = stdsync.Once{}
+	gdocsNoExportWarnOnce = stdsync.Once{}
+
+	obj, err := f.newObjectWithExportInfo(ctx, "unknown", unknownTypeItem, extension, exportName, exportMimeType, isDocument)
+	assert.Nil(t, obj)
+	assert.Equal(t, fs.ErrorObjectNotFound, err)
+
+	// A Google Form: isDocument is true but there is no matching export
+	// format, so this hits the separate "no export format" branch
+	// (gdocsNoExportWarnOnce).
+	formItem := &drive.File{Id: "form-id", Name: "form", MimeType: "application/vnd.google-apps.form"}
+	extension, exportName, exportMimeType, isDocument = f.findExportFormat(ctx, formItem)
+	require.True(t, isDocument)
+	require.Equal(t, "", extension)
+
+	obj, err = f.newObjectWithExportInfo(ctx, "form", formItem, extension, exportName, exportMimeType, isDocument)
+	assert.Nil(t, obj)
+	assert.Equal(t, fs.ErrorObjectNotFound, err)
+
+	// gdocsNoExportWarnOnce must already have fired inside the call above,
+	// independently of gdocsUnknownTypeWarnOnce having fired earlier.
+	noExportFired := false
+	gdocsNoExportWarnOnce.Do(func() { noExportFired = true })
+	assert.False(t, noExportFired, "gdocsNoExportWarnOnce should already have fired inside newObjectWithExportInfo for the form")
+}
+
 func TestShortcutLoop(t *testing.T) {
 	f := &Fs{}
 	f.dirCache = dircache.New("", "root", f)
