@@ -3,6 +3,7 @@ package list
 import (
 	"cmp"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -283,6 +284,31 @@ func TestSorterExtTempFileError(t *testing.T) {
 		err = ls.Send()
 	}
 	require.Error(t, err)
+}
+
+// Test that Send returns the error from the ext sort when the ext
+// sort closes its output and error channels before Send reads them.
+func TestSorterExtSendError(t *testing.T) {
+	ctx := context.Background()
+	callback := func(entries fs.DirEntries) error {
+		return nil
+	}
+	// select picks randomly between ready channels so try many times
+	for range 100 {
+		ls, err := NewSorter(ctx, nil, callback, nil)
+		require.NoError(t, err)
+		outputChan := make(chan string)
+		close(outputChan)
+		errChan := make(chan error, 1)
+		errChan <- errors.New("sort failed")
+		close(errChan)
+		ls.extSort = true
+		ls.inputChan = make(chan string)
+		ls.outputChan = outputChan
+		ls.errChan = errChan
+		require.EqualError(t, ls.Send(), "sort failed")
+		ls.CleanUp()
+	}
 }
 
 // benchFs implements enough of the fs.Fs interface for Sorter
