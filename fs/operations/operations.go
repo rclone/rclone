@@ -509,6 +509,9 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 		}
 	}
 	// Move not found or didn't work so copy dst <- src
+	if SameConfig(src.Fs(), fdst) && needsMoveCaseInsensitive(fdst, fdst, remote, src.Remote(), false) {
+		return MoveCaseInsensitive(ctx, fdst, fdst, origRemote, src.Remote(), false, src)
+	}
 	if origRemote != remote {
 		dst = nil
 	}
