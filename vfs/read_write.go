@@ -98,6 +98,11 @@ func (fh *RWFileHandle) openPending() (err error) {
 	fh.file.muRW.Lock()
 	defer fh.file.muRW.Unlock()
 
+	// The file may have been removed since the handle was made
+	if fh.file.isRemoved() {
+		return ENOENT
+	}
+
 	o := fh.file.getObject()
 	err = fh.item.Open(o)
 	if err != nil {
@@ -262,11 +267,14 @@ func (fh *RWFileHandle) _readAt(b []byte, off int64, release bool) (n int, err e
 	if fh.writeOnly() {
 		return n, EBADF
 	}
-	if off >= fh._size() {
-		return n, io.EOF
-	}
+	// Open before reading the size, which can be 0 for a file being
+	// removed, so a symlink being replaced would read as empty. Opening
+	// waits for the removal and fails instead.
 	if err = fh.openPending(); err != nil {
 		return n, err
+	}
+	if off >= fh._size() {
+		return n, io.EOF
 	}
 	if release {
 		// Do the writing with fh.mu unlocked
