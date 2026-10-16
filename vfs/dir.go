@@ -1223,6 +1223,8 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 		fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 		return err
 	}
+	// oldName may only match oldNode with case or unicode normalization
+	oldLeaf := oldNode.Name()
 	switch x := oldNode.DirEntry().(type) {
 	case nil:
 		if oldFile, ok := oldNode.(*File); ok {
@@ -1274,7 +1276,7 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 	}
 
 	// Show moved - delete from old dir and add to new
-	d.delObject(oldName)
+	d.delObject(oldLeaf)
 	destDir.addObject(oldNode)
 	if err = d.SetModTime(time.Now()); err != nil {
 		fs.Errorf(d, "Dir.Rename failed to set modtime on parent dir: %v", err)
