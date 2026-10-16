@@ -376,21 +376,29 @@ func CommonHash(ctx context.Context, fa, fb fs.Info) (hash.Type, *fs.HashesOptio
 	return hashType, &fs.HashesOption{Hashes: common}
 }
 
+// sameID returns true if src and dst both have the same non-empty ID
+func sameID(src, dst fs.Object) bool {
+	doSrcID, srcIDOK := src.(fs.IDer)
+	doDstID, dstIDOK := dst.(fs.IDer)
+	if !srcIDOK || !dstIDOK {
+		return false
+	}
+	srcID, dstID := doSrcID.ID(), doDstID.ID()
+	return srcID != "" && srcID == dstID
+}
+
 // SameObject returns true if src and dst could be pointing to the
 // same object.
 func SameObject(src, dst fs.Object) bool {
 	srcFs, dstFs := src.Fs(), dst.Fs()
 	if !SameConfig(srcFs, dstFs) {
 		// If same remote type then check ID of objects if available
-		doSrcID, srcIDOK := src.(fs.IDer)
-		doDstID, dstIDOK := dst.(fs.IDer)
-		if srcIDOK && dstIDOK && SameRemoteType(srcFs, dstFs) {
-			srcID, dstID := doSrcID.ID(), doDstID.ID()
-			if srcID != "" && srcID == dstID {
-				return true
-			}
-		}
-		return false
+		return SameRemoteType(srcFs, dstFs) && sameID(src, dst)
+	}
+	// Some remotes show one object under several paths, such as
+	// the virtual directories of googlephotos and gopro.
+	if sameID(src, dst) {
+		return true
 	}
 	srcPath := path.Join(srcFs.Root(), src.Remote())
 	dstPath := path.Join(dstFs.Root(), dst.Remote())
