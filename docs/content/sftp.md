@@ -522,6 +522,24 @@ upload (for example, certain configurations of ProFTPd with mod_sftp). If you
 are using one of these servers, you can set the option `set_modtime = false` in
 your RClone backend configuration to disable this behaviour.
 
+### Restricted filename characters
+
+SFTP servers on Unix-like systems can store any character in a file name
+except NUL and `/`, so by default only these are replaced:
+
+| Character | Value | Replacement |
+| --------- |:-----:|:-----------:|
+| NUL       | 0x00  | ␀           |
+| /         | 0x2F  | ／           |
+
+If the server runs on Windows, which can't store many more characters,
+add the Windows restricted characters with `--sftp-encoding`, as in the
+[FTP example](/overview/#encoding-example-ftp):
+
+```text
+--sftp-encoding "Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot"
+```
+
 ### About command
 
 The `about` command returns the total space, free space, and used
