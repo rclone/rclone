@@ -135,6 +135,13 @@ The input format is comma separated list of key,value pairs.  Standard
 For example, to set a Cookie use 'Cookie,name=value', or '"Cookie","name=value"'.
 
 You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'.
+
+The headers are only sent to the host in the configured URL. If the
+server redirects to another host (including a subdomain or a different
+port) the headers are not sent to it, or to any further hop in that
+redirect chain. The exception is the directory listing and file
+download requests when auth_redirect is set, as that keeps all
+credentials across redirects.
 `,
 			Default:  fs.CommaSepList{},
 			Advanced: true,
@@ -235,6 +242,8 @@ type Fs struct {
 	canChunk           bool          // set if nextcloud and nextcloud_chunk_size is set
 	canRecalcHash      bool          // set if the server can recalculate checksums with PATCH (nextcloud)
 	authSingleflight   *singleflight.Group
+	// redirect policy which keeps opt.Headers on the configured host
+	checkRedirect func(req *http.Request, via []*http.Request) error
 }
 
 // Object describes a webdav object
@@ -345,6 +354,41 @@ func itemIsDir(item *api.Response) bool {
 	return false
 }
 
+// sabreNotFound is the exception SabreDAV based servers report for a
+// path which doesn't exist
+var sabreNotFound = []byte(`Sabre\DAV\Exception\NotFound`)
+
+// callPropfind does the PROPFIND in opts and decodes the response into result
+//
+// ownCloud 10.16 starts a 207 Multi-Status response before it finds
+// that the path doesn't exist, then appends a Sabre NotFound error to
+// it which makes it invalid XML. This is returned as the 404 *api.Error
+// which servers normally give for a path which doesn't exist.
+func (f *Fs) callPropfind(ctx context.Context, opts *rest.Opts, result *api.Multistatus) (resp *http.Response, err error) {
+	resp, err = f.srv.Call(ctx, opts)
+	if err != nil {
+		return resp, err
+	}
+	// Keep the start of the body to look for the error in
+	start := make([]byte, 4096)
+	n, _ := io.ReadFull(resp.Body, start)
+	start = start[:n]
+	body := resp.Body
+	resp.Body = struct {
+		io.Reader
+		io.Closer
+	}{io.MultiReader(bytes.NewReader(start), body), body}
+	err = rest.DecodeXML(resp, result)
+	if err != nil && bytes.Contains(start, sabreNotFound) {
+		return resp, &api.Error{
+			Exception:  string(sabreNotFound),
+			Status:     http.StatusText(http.StatusNotFound),
+			StatusCode: http.StatusNotFound,
+		}
+	}
+	return resp, err
+}
+
 // readMetaDataForPath reads the metadata from the path
 func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Prop, err error) {
 	// FIXME how do we read back additional properties?
@@ -354,7 +398,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Pr
 		ExtraHeaders: map[string]string{
 			"Depth": "0",
 		},
-		CheckRedirect: rest.PreserveMethodRedirectFn,
+		CheckRedirect: f.preserveMethodRedirect,
 	}
 	if f.hasOCMD5 || f.hasOCSHA1 {
 		opts.Body = bytes.NewBuffer(owncloudProps)
@@ -366,7 +410,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Pr
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		var attempt api.Multistatus
-		resp, err = f.srv.CallXML(ctx, &opts, nil, &attempt)
+		resp, err = f.callPropfind(ctx, &opts, &attempt)
 		if err == nil {
 			result = attempt
 		}
@@ -520,8 +564,17 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			rt: ntlmssp.Negotiator{RoundTripper: t},
 		}
 	}
-	// Refuse redirects that downgrade HTTPS to plaintext HTTP.
-	client.CheckRedirect = rest.RefuseHTTPSDowngradeRedirectFn
+	// Refuse redirects that downgrade HTTPS to plaintext HTTP and
+	// don't send the configured headers to another host.
+	//
+	// The auth_redirect option bypasses this for the requests it applies
+	// to as it is an explicit opt-in to keep credentials across redirects.
+	headerNames := make([]string, 0, len(opt.Headers)/2)
+	for i := 0; i < len(opt.Headers); i += 2 {
+		headerNames = append(headerNames, opt.Headers[i])
+	}
+	f.checkRedirect = rest.StripHeadersOnCrossHostRedirectFn(headerNames...)
+	client.CheckRedirect = f.checkRedirect
 	f.srv = rest.NewClient(client).SetRoot(u.String())
 
 	f.features = (&fs.Features{
@@ -547,6 +600,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	if !f.findHeader(opt.Headers, "Referer") {
 		f.srv.SetHeader("Referer", u.String())
+	}
+	// Nextcloud public shares reject requests without this header
+	if opt.Vendor == "nextcloud" && strings.Contains(u.Path, "public.php/dav/files") && !f.findHeader(opt.Headers, "X-Requested-With") {
+		f.srv.SetHeader("X-Requested-With", "XMLHttpRequest")
 	}
 
 	if root != "" && !rootIsDir {
@@ -598,6 +655,16 @@ func (f *Fs) fetchBearerToken(cmd fs.SpaceSepList) (string, error) {
 		return "", fmt.Errorf("failed to get bearer token using %q: %s: %w", f.opt.BearerTokenCommand, stderrString, err)
 	}
 	return stdoutString, nil
+}
+
+// preserveMethodRedirect is an http.Client.CheckRedirect function
+// which applies f.checkRedirect and then preserves the original HTTP
+// method like rest.PreserveMethodRedirectFn.
+func (f *Fs) preserveMethodRedirect(req *http.Request, via []*http.Request) error {
+	if err := f.checkRedirect(req, via); err != nil {
+		return err
+	}
+	return rest.PreserveMethodRedirectFn(req, via)
 }
 
 // Adds the configured headers to the request if any
@@ -820,7 +887,7 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		var attempt api.Multistatus
-		resp, err = f.srv.CallXML(ctx, &opts, nil, &attempt)
+		resp, err = f.callPropfind(ctx, &opts, &attempt)
 		if err == nil {
 			result = attempt
 		}

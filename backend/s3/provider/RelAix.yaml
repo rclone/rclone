@@ -1,0 +1,7 @@
+name: RelAix
+description: RelAix.Storage
+endpoint:
+  s3-gw1.relaix.net: Aachen-1, Germany
+  s3-gw2.relaix.net: Aachen-2, Germany
+acl: {}
+bucket_acl: true

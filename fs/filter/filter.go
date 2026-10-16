@@ -583,7 +583,7 @@ func (f *Filter) IncludeObject(ctx context.Context, o fs.Object) bool {
 		var err error
 		metadata, err = fs.GetMetadata(ctx, o)
 		if err != nil {
-			fs.Errorf(o, "Failed to read metadata: %v", err)
+			fs.ErrorfCtx(ctx, o, "Failed to read metadata: %v", err)
 			metadata = nil
 		}
 
@@ -653,7 +653,7 @@ func (f *Filter) MakeListR(ctx context.Context, NewObject func(ctx context.Conte
 						// Count and log the error but carry on so that one
 						// unreadable file (e.g. permission denied) doesn't stop
 						// the other --files-from files being processed.
-						fs.Errorf(remote, "--files-from failed to read file: %v", err)
+						fs.ErrorfCtx(ctx, remote, "--files-from failed to read file: %v", err)
 						_ = fs.CountError(gCtx, err)
 					} else {
 						err = callback(entries)
@@ -724,13 +724,15 @@ func CopyConfig(dstCtx, srcCtx context.Context) context.Context {
 	return context.WithValue(dstCtx, configContextKey, c)
 }
 
-// AddConfig returns a mutable config structure based on a shallow
-// copy of that found in ctx and returns a new context with that added
-// to it.
+// AddConfig returns a mutable copy of the config in ctx with independent
+// rule sets and a new context containing it. Other fields are shallow-copied.
 func AddConfig(ctx context.Context) (context.Context, *Filter) {
 	c := GetConfig(ctx)
 	cCopy := new(Filter)
 	*cCopy = *c
+	cCopy.fileRules = c.fileRules.clone()
+	cCopy.dirRules = c.dirRules.clone()
+	cCopy.metaRules = c.metaRules.clone()
 	newCtx := context.WithValue(ctx, configContextKey, cCopy)
 	return newCtx, cCopy
 }

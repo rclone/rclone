@@ -487,7 +487,7 @@ Rclone uses the "Last Modified" datetime property to compare your documents:
 ## Rclone
 
 Use this option if you are hosting remotes over WebDAV provided by rclone.
-Read [rclone serve webdav](commands/rclone_serve_webdav/) for more details.
+Read [rclone serve webdav](/commands/rclone_serve_webdav/) for more details.
 
 rclone serve supports modified times using the `X-OC-Mtime` header.
 
