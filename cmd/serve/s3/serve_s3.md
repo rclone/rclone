@@ -426,12 +426,6 @@ consider putting it behind a reverse proxy which limits connections.
 
 ### Bugs
 
-Multipart server side copies do not work (see
-[#7454](https://github.com/rclone/rclone/issues/7454)). These take a
-very long time and eventually fail. The default threshold for
-multipart server side copies is 5G which is the maximum it can be, so
-files above this side will fail to be server side copied.
-
 For a current list of `serve s3` bugs see the [serve
 s3](https://github.com/rclone/rclone/labels/serve%20s3) bug category
 on GitHub.
@@ -503,25 +497,39 @@ holding other objects, for example `a/b` and `a/b/c`. Writing an
 object which would need this fails with `400 Bad Request`
 (`InvalidRequest`).
 
-### Supported operations
+### Compatibility
 
-`serve s3` currently supports the following operations.
+`serve s3` implements the parts of the S3 API that S3 clients commonly
+use to store and fetch objects. Features it doesn't support are
+refused with `501 NotImplemented`, or answered as AWS S3 answers for a
+bucket without that feature configured, rather than being silently
+ignored.
 
-- Bucket
-  - `ListBuckets`
-  - `CreateBucket`
-  - `DeleteBucket`
-- Object
-  - `HeadObject`
-  - `ListObjects`
-  - `GetObject`
-  - `PutObject`
-  - `DeleteObject`
-  - `DeleteObjects`
-  - `CreateMultipartUpload`
-  - `CompleteMultipartUpload`
-  - `AbortMultipartUpload`
-  - `CopyObject`
-  - `UploadPart`
+| Feature | Supported | Notes |
+| ------- | --------- | ----- |
+| `ListBuckets`, `CreateBucket`, `DeleteBucket`, `HeadBucket`, `GetBucketLocation` | Yes | Buckets are the directories in the root of the remote. |
+| `ListObjects`, `ListObjectsV2` | Yes | Prefixes, delimiters, markers, `start-after`, continuation tokens, `fetch-owner` and `encoding-type=url` all work. Delimiters other than `/` need the whole directory tree walking. |
+| `HeadObject`, `GetObject` | Yes | Including `Range`, `partNumber`, the `response-*` header overrides and the `If-Match`, `If-None-Match`, `If-Modified-Since` and `If-Unmodified-Since` conditions. |
+| `PutObject` | Yes | Including `Content-MD5`, `aws-chunked` uploads and uploads with no `Content-Length`. |
+| `CopyObject` | Yes | Including the metadata and tagging directives and the `x-amz-copy-source-if-*` conditions. |
+| `DeleteObject`, `DeleteObjects` | Yes | |
+| Multipart uploads | Yes | `CreateMultipartUpload`, `UploadPart`, `UploadPartCopy`, `CompleteMultipartUpload`, `AbortMultipartUpload`, `ListMultipartUploads` and `ListParts`. The `ETag` of the object is its hash, not the `-N` suffixed one AWS gives. The 5 MiB minimum part size isn't enforced. |
+| Conditional writes | Partial | `If-Match` and `If-None-Match` on `PutObject` and `CompleteMultipartUpload` are checked, but not atomically against changes made to the remote some other way (see [Limitations](#limitations)). |
+| Authentication | Partial | AWS Signature Version 4, in headers, presigned URLs and browser form (`POST`) uploads. Signature Version 2 isn't supported. |
+| Anonymous access | Partial | All requests are allowed without `--auth-key` or `--auth-proxy`, and none are with them, as buckets and objects can't be made public. |
+| Metadata | Partial | `x-amz-meta-*` and the standard headers such as `Content-Type` are kept in memory only (see [Limitations](#limitations)), except the modification time. |
+| Checksums | Partial | The `x-amz-checksum-*` of a `PutObject` (CRC32, CRC32C, CRC64NVME, SHA1 or SHA256) is checked and returned with the metadata. The checksums of multipart uploads aren't supported. |
+| `GetObjectAttributes` | Partial | Everything but the checksums of multipart uploads. |
+| Object tagging | Partial | `GetObjectTagging`, `PutObjectTagging` and `DeleteObjectTagging` work, but tags are kept in memory with the metadata. |
+| ACLs | Partial | `GetBucketAcl` and `GetObjectAcl` give the owner full control. Only the `private` ACL can be set. |
+| CORS | Partial | Preflight (`OPTIONS`) requests are answered, allowing any origin. CORS configuration (`PutBucketCors`) isn't supported. |
+| Server side encryption | No | SSE-S3 (`AES256`) is accepted but the data isn't encrypted. SSE-KMS and SSE-C are refused. |
+| Versioning | No | Buckets are reported as unversioned and `ListObjectVersions` lists each object as version `null`. Enabling versioning is refused. |
+| Object lock, retention and legal hold | No | |
+| Bucket configuration | No | Bucket policies, tagging, lifecycle, logging, encryption, website, replication, notifications and the like. Getting them fails as for a bucket without them configured. |
+| `SelectObjectContent`, `RestoreObject`, torrents | No | |
 
-Other operations will return error `Unimplemented`.
+The [ceph s3-tests](https://github.com/ceph/s3-tests) can be run
+against `serve s3` to check its compatibility. See
+[cmd/serve/s3/s3tests](https://github.com/rclone/rclone/tree/master/cmd/serve/s3/s3tests)
+for how.
