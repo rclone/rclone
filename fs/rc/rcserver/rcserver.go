@@ -132,7 +132,7 @@ func (s *Server) Serve() error {
 				loginToken := user + ":" + pass
 				parameters := url.Values{}
 				encodedToken := base64.URLEncoding.EncodeToString([]byte(loginToken))
-				fs.Debugf(nil, "login_token %q", encodedToken)
+				fs.Debugf(nil, "login_token %s", fs.RedactValue(fs.GetConfig(s.ctx), encodedToken))
 				parameters.Add("login_token", encodedToken)
 				openURL.RawQuery = parameters.Encode()
 				openURL.RawPath = "/#/login"
