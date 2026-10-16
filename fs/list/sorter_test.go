@@ -234,7 +234,7 @@ func TestSorterExt(t *testing.T) {
 	}
 }
 
-// Test that startExtSort returns an error instead of panicking when
+// Test that the Sorter returns an error instead of panicking when
 // temp file creation fails (e.g. due to permissions or apparmor).
 // See: https://github.com/rclone/rclone/issues/9244
 func TestSorterExtTempFileError(t *testing.T) {
@@ -250,8 +250,7 @@ func TestSorterExtTempFileError(t *testing.T) {
 	defer ls.CleanUp()
 
 	// Override tempDir to a path where os.MkdirAll will fail,
-	// simulating apparmor or permission denial. This makes
-	// extsort.Strings return a nil sorter.
+	// simulating apparmor or permission denial.
 	if runtime.GOOS == "windows" {
 		// On Windows, create a regular file and use a child path.
 		// os.MkdirAll fails because an intermediate component is a file.
@@ -272,11 +271,18 @@ func TestSorterExtTempFileError(t *testing.T) {
 		ls.tempDir = filepath.Join(parent, "child")
 	}
 
-	// Add enough entries to trigger ext sort. Before the fix this
-	// would panic with nil pointer dereference.
-	err = ls.Add(fs.DirEntries{mockobject.Object("a"), mockobject.Object("b")})
+	// Add more entries than fit in one ext sort chunk so temp files
+	// are needed. Before the fix this would panic with nil pointer
+	// dereference.
+	entries := make(fs.DirEntries, 64*1024)
+	for i := range entries {
+		entries[i] = mockobject.Object(fmt.Sprintf("%08d", i))
+	}
+	err = ls.Add(entries)
+	if err == nil {
+		err = ls.Send()
+	}
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "sorter:")
 }
 
 // benchFs implements enough of the fs.Fs interface for Sorter
