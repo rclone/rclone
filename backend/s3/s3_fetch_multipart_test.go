@@ -358,6 +358,43 @@ func TestDirectFetchSinglePartUpToDirectFetchChunkSize(t *testing.T) {
 	assert.Empty(t, captures)
 }
 
+func TestDirectFetchHonoursMultipartUploadsDisabled(t *testing.T) {
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.LowLevelRetries = 1
+	disabled := configmap.Simple{
+		"use_multipart_uploads":   "false",
+		"direct_fetch_chunk_size": minChunkSize.String(),
+	}
+
+	t.Run("single request", func(t *testing.T) {
+		size := 2*int64(minChunkSize) + 1
+		captures := make(chan directFetchWireCapture, 4)
+		f := newDirectFetchTestFsWithConfig(ctx, t, "Fastly", directFetchSuccessHandler(captures, &size), disabled)
+
+		got, err := f.ServerSideFetchURL(ctx, "target", "https://source.example/object", directFetchSource(size, nil))
+		require.NoError(t, err)
+		require.NotNil(t, got)
+
+		put := <-captures
+		assert.Equal(t, http.MethodPut, put.request.Method)
+		assert.False(t, put.request.URL.Query().Has("uploadId"), "multipart uploads are disabled")
+		assertDirectFetchWireRequest(t, put, "https://source.example/object", "")
+		assertDirectFetchPin(t, put, directFetchTestSourceETag)
+		assert.Equal(t, http.MethodHead, (<-captures).request.Method)
+		assert.Empty(t, captures)
+	})
+
+	t.Run("over single request limit", func(t *testing.T) {
+		captures := make(chan directFetchWireCapture, 4)
+		f := newDirectFetchTestFsWithConfig(ctx, t, "Fastly", directFetchSuccessHandler(captures, nil), disabled)
+
+		got, err := f.ServerSideFetchURL(ctx, "target", "https://source.example/object", directFetchSource(directFetchMaxSize+1, nil))
+		assert.Nil(t, got)
+		assert.ErrorIs(t, err, fs.ErrorCantCopy)
+		assert.Empty(t, captures, "no destination request may be sent")
+	})
+}
+
 func TestDirectFetchMultipartUsesDirectFetchConcurrency(t *testing.T) {
 	ctx, ci := fs.AddConfig(context.Background())
 	ci.LowLevelRetries = 1
@@ -475,7 +512,7 @@ func TestDirectFetchMultipartSuccess(t *testing.T) {
 		"storage_class":            "STANDARD_IA",
 		"requester_pays":           "true",
 		"sse_customer_algorithm":   "AES256",
-		"direct_fetch_chunk_size":  strconv.FormatInt(directFetchMaxSize, 10),
+		"direct_fetch_chunk_size":  fs.SizeSuffix(directFetchMaxSize).String(),
 		"direct_fetch_concurrency": "2",
 	})
 	f.opt.Versions = true

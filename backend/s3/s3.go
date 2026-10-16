@@ -1578,6 +1578,13 @@ func (f *Fs) ServerSideFetchURL(ctx context.Context, remote, sourceURL string, s
 		return nil, err
 	}
 	multipart := size > directFetchMaxSize || size > int64(f.opt.DirectFetchChunkSize)
+	if multipart && !f.opt.UseMultipartUploads.Value {
+		if size > directFetchMaxSize {
+			return nil, fmt.Errorf("direct fetch needs multipart uploads to fetch more than %d bytes: %w", directFetchMaxSize, fs.ErrorCantCopy)
+		}
+		fs.Debugf(src, "server-side URL fetch: multipart uploads are disabled, fetching it in a single request")
+		multipart = false
+	}
 	if multipart && pin == "" {
 		// Each part fetches the source again, so without an ETag to pin
 		// them the parts could come from different versions of it
