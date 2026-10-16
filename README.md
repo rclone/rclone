@@ -72,6 +72,7 @@ directories to and from different cloud storage providers.
 - Impossible Cloud [:page_facing_up:](https://rclone.org/s3/#impossible-cloud)
 - Intercolo Object Storage [:page_facing_up:](https://rclone.org/s3/#intercolo)
 - IONOS Cloud [:page_facing_up:](https://rclone.org/s3/#ionos)
+- kDrive [:page_facing_up:](https://rclone.org/kdrive/)
 - Koofr [:page_facing_up:](https://rclone.org/koofr/)
 - Leviia Object Storage [:page_facing_up:](https://rclone.org/s3/#leviia)
 - Liara Object Storage [:page_facing_up:](https://rclone.org/s3/#liara-object-storage)
