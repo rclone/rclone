@@ -229,6 +229,7 @@ func TestDirectFetchCopyThroughS3SDK(t *testing.T) {
 			ci.Inplace = true
 			ci.LowLevelRetries = 1
 			ci.MultiThreadStreams = 0
+			ci.LogLevel = fs.LogLevelDebug
 			group := "direct-fetch-copy-" + random.String(12)
 			ctx = accounting.WithStatsGroup(ctx, group)
 			accounting.NewStatsGroup(ctx, group)
