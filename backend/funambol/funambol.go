@@ -13,6 +13,8 @@ import (
 	"net/http/cookiejar"
 	"net/url"
 	"path"
+	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -129,7 +131,67 @@ type Fs struct {
 	rootID   string           // numeric id of the account root folder
 	m        configmap.Mapper // for persisting refreshed session cookies
 
-	auth *authState // shared session state (pointer so *Fs stays copyable)
+	auth    *authState   // shared session state (pointer so *Fs stays copyable)
+	uploads *uploadCache // items uploaded too recently to be listed
+}
+
+// recentUploadTTL is how long a finished upload stays in the uploadCache.
+const recentUploadTTL = 5 * time.Minute
+
+// uploadCache remembers recently uploaded items by path.  The server lists a
+// new item only after a delay, so a lookup straight after an upload (restic
+// deletes its lock files within the same second) would otherwise miss it.
+type uploadCache struct {
+	mu    sync.Mutex
+	items map[string]uploadEntry // keyed by lower-cased absolute path
+}
+
+type uploadEntry struct {
+	item api.Item
+	at   time.Time
+}
+
+func newUploadCache() *uploadCache {
+	return &uploadCache{items: make(map[string]uploadEntry)}
+}
+
+// put records item as uploaded to p and drops expired entries.
+func (c *uploadCache) put(p string, item api.Item) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	now := time.Now()
+	for k, e := range c.items {
+		if now.Sub(e.at) > recentUploadTTL {
+			delete(c.items, k)
+		}
+	}
+	c.items[strings.ToLower(p)] = uploadEntry{item: item, at: now}
+}
+
+// get returns the item uploaded to p, if it is recent enough.
+func (c *uploadCache) get(p string) (api.Item, bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	e, ok := c.items[strings.ToLower(p)]
+	if !ok || time.Since(e.at) > recentUploadTTL {
+		return api.Item{}, false
+	}
+	return e.item, true
+}
+
+// remove forgets the item uploaded to p.
+func (c *uploadCache) remove(p string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	delete(c.items, strings.ToLower(p))
+}
+
+// clear forgets every item.  Directory moves and purges call it, since they
+// change or remove items under paths the cache does not track.
+func (c *uploadCache) clear() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	clear(c.items)
 }
 
 // authState serialises (re-)authentication.  The session itself lives in the
@@ -221,7 +283,9 @@ func isTransientCode(code string) bool {
 	switch code {
 	// "Unknown exception in folder handling" — an internal server hiccup, seen
 	// when several transfers create/list the same folder tree concurrently.
-	case "FOL-1000":
+	// "Unknown exception in media handling" — seen in bursts together with
+	// HTTP 408/503; the official app retries save-metadata on it.
+	case "FOL-1000", "MED-1000":
 		return true
 	}
 	return false
@@ -274,7 +338,8 @@ func (f *Fs) callJSON(ctx context.Context, opts *rest.Opts, request, response an
 		if opts.Parameters == nil {
 			opts.Parameters = url.Values{}
 		}
-		if vk := f.key(); vk != "" {
+		vk := f.key()
+		if vk != "" {
 			opts.Parameters.Set("validationkey", vk)
 		} else {
 			opts.Parameters.Del("validationkey")
@@ -282,7 +347,13 @@ func (f *Fs) callJSON(ctx context.Context, opts *rest.Opts, request, response an
 		var resp *http.Response
 		err := f.pacer.Call(func() (bool, error) {
 			var err error
+			// Decoding leaves fields the reply doesn't carry untouched, so a
+			// retry must not see the error envelope of the previous attempt.
+			if v := reflect.ValueOf(response); v.Kind() == reflect.Pointer && !v.IsNil() {
+				v.Elem().SetZero()
+			}
 			resp, err = f.srv.CallJSON(ctx, opts, request, response)
+			err = redactKey(err)
 			if retry, rErr := shouldRetry(ctx, resp, err); retry || err != nil {
 				return retry, rErr
 			}
@@ -300,11 +371,16 @@ func (f *Fs) callJSON(ctx context.Context, opts *rest.Opts, request, response an
 			return false, nil
 		})
 		if err != nil {
-			if f.refreshOnError(err) && attempt < 2 {
+			if f.refreshOnError(err, vk) && attempt < 2 {
 				continue
 			}
 			var ae *api.Error
 			if errors.As(err, &ae) && (resp != nil && resp.StatusCode == http.StatusUnauthorized || isReauthCode(ae.Code)) {
+				// A concurrent call rotated the session while this one was
+				// in flight, so the rejection may only concern the old key.
+				if f.key() != vk && attempt < 2 {
+					continue
+				}
 				fs.Debugf(f, "session expired: %s (persistent login cookie present: %v)", ae.Code, f.persistentLoginPresent())
 				return errReconnect(f.name)
 			}
@@ -313,7 +389,7 @@ func (f *Fs) callJSON(ctx context.Context, opts *rest.Opts, request, response an
 		// SAPI may signal failure with HTTP 200 + an error envelope.
 		if er, ok := response.(interface{ AsErr() error }); ok {
 			if aErr := er.AsErr(); aErr != nil {
-				if f.refreshOnError(aErr) && attempt < 2 {
+				if f.refreshOnError(aErr, vk) && attempt < 2 {
 					continue
 				}
 				return wrapFatal(aErr)
@@ -324,17 +400,60 @@ func (f *Fs) callJSON(ctx context.Context, opts *rest.Opts, request, response an
 	return errors.New("funambol: authentication retry exhausted")
 }
 
-// refreshOnError handles a SEC-1003 ("invalid mandatory validation key") by
-// adopting the fresh key the server hands back and persisting the renewed
-// cookies.  It reports whether the caller should retry.
-func (f *Fs) refreshOnError(err error) bool {
+// refreshOnError handles a SEC-1003 ("invalid mandatory validation key") for
+// a request sent with the key sent, by adopting the fresh key the server
+// hands back and persisting the renewed cookies.  It reports whether the
+// caller should retry.
+//
+// If another call has replaced the key since sent was read, that key is
+// newer than the one in this reply (a long upload can return long after
+// other calls rotated the key), so it is kept and the caller just retries.
+func (f *Fs) refreshOnError(err error, sent string) bool {
 	var ae *api.Error
-	if !errors.As(err, &ae) || ae.Code != "SEC-1003" || ae.Data == "" {
+	if !errors.As(err, &ae) || ae.Code != "SEC-1003" {
+		return false
+	}
+	f.auth.mu.Lock()
+	defer f.auth.mu.Unlock()
+	if f.key() != sent {
+		return true
+	}
+	if ae.Data == "" {
 		return false
 	}
 	f.setValidationKey(ae.Data)
 	f.persistSession() // the 401 also renewed the persistent login cookie
 	return true
+}
+
+// redactKey hides the validation key in the URL that net/http errors quote,
+// so the key does not end up in the logs.
+func redactKey(err error) error {
+	var ue *url.Error
+	if errors.As(err, &ue) {
+		if u, pErr := url.Parse(ue.URL); pErr == nil && u.Query().Has("validationkey") {
+			q := u.Query()
+			q.Set("validationkey", "REDACTED")
+			u.RawQuery = q.Encode()
+			ue.URL = u.String()
+		}
+	}
+	return err
+}
+
+// downloadURL returns raw with the current validation key added, as the
+// official app does on every SAPI call.  URLs on other hosts are returned
+// unchanged: they may be signed, and an extra parameter would break that.
+func (f *Fs) downloadURL(raw string) string {
+	u, err := url.Parse(raw)
+	key := f.key()
+	if err != nil || key == "" || !strings.EqualFold(u.Host, f.jarURL().Host) {
+		return raw
+	}
+	q := u.Query()
+	q.Set("validationkey", key)
+	u.RawQuery = q.Encode()
+	return u.String()
 }
 
 // ---- dircache.DirCacher ----
@@ -570,20 +689,39 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, remote string) (*api.Item,
 		return nil, err
 	}
 	lcLeaf := strings.ToLower(leaf)
-	var found *api.Item
+	cached, isCached := f.uploads.get(f.absPath(remote))
+	var found, exact *api.Item
 	err = f.listMedia(ctx, dirID, func(item *api.Item) {
-		if found == nil && strings.ToLower(f.opt.Enc.ToStandardName(item.Name)) == lcLeaf {
-			it := *item
+		if strings.ToLower(f.opt.Enc.ToStandardName(item.Name)) != lcLeaf {
+			return
+		}
+		it := *item
+		if found == nil {
 			found = &it
+		}
+		if isCached && exact == nil && it.ID == cached.ID {
+			exact = &it
 		}
 	})
 	if err != nil {
 		return nil, err
 	}
-	if found == nil {
-		return nil, fs.ErrorObjectNotFound
+	// Prefer what this Fs uploaded last: the listing may not show it yet.
+	switch {
+	case exact != nil:
+		return exact, nil
+	case isCached:
+		return &cached, nil
+	case found != nil:
+		return found, nil
 	}
-	return found, nil
+	return nil, fs.ErrorObjectNotFound
+}
+
+// absPath returns the path of remote from the account root, the key for
+// the uploadCache.
+func (f *Fs) absPath(remote string) string {
+	return path.Join(f.root, remote)
 }
 
 func (o *Object) setMetaData(info *api.Item) error {
@@ -668,6 +806,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	if err != nil {
 		return err
 	}
+	f.uploads.clear()
 	if err := f.purgeDir(ctx, dirID); err != nil {
 		return fmt.Errorf("purge: %w", err)
 	}
@@ -884,6 +1023,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	if err != nil {
 		return err
 	}
+	srcFs.uploads.clear()
 	if err := f.saveFolder(ctx, srcID, dstLeaf, &dstDirectoryID); err != nil {
 		return fmt.Errorf("DirMove: %w", err)
 	}
@@ -946,34 +1086,67 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	if err := o.readMetaData(ctx); err != nil {
 		return nil, err
 	}
-	if o.url == "" {
-		return nil, errors.New("can't download - no URL")
-	}
 	if err := o.fs.ensureLogin(ctx); err != nil {
 		return nil, err
 	}
 	fs.FixRangeOption(options, o.size)
-	opts := rest.Opts{Method: "GET", RootURL: o.url, Options: options}
 	// The download streams from a direct URL and so bypasses callJSON's
-	// SEC-1003 handling.  Replicate it: if the validation key has rotated,
-	// adopt the fresh one the server returns, persist the renewed cookies and
-	// retry once.  Retrying is safe here because the body hasn't been read yet.
+	// session handling.  Replicate it and retry once, which is safe because
+	// the body hasn't been read yet: on SEC-1003 adopt the fresh key, and on
+	// any other refusal (the service may answer 403 with its HTML app page)
+	// read the metadata again, which renews the key and the URL.
 	for attempt := 0; attempt < 2; attempt++ {
+		if o.url == "" {
+			if err := o.fetchURL(ctx); err != nil {
+				return nil, err
+			}
+		}
+		vk := o.fs.key()
+		opts := rest.Opts{Method: "GET", RootURL: o.fs.downloadURL(o.url), Options: options}
 		var resp *http.Response
 		err := o.fs.pacer.Call(func() (bool, error) {
 			var err error
 			resp, err = o.fs.srv.Call(ctx, &opts)
-			return shouldRetry(ctx, resp, err)
+			return shouldRetry(ctx, resp, redactKey(err))
 		})
 		if err == nil {
 			return resp.Body, nil
 		}
-		if attempt == 0 && o.fs.refreshOnError(err) {
+		if attempt > 0 {
+			return nil, err
+		}
+		if o.fs.refreshOnError(err, vk) {
+			continue
+		}
+		if resp != nil && (resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden) {
+			fs.Debugf(o, "download refused, reading metadata again: %v", err)
+			o.hasMetaData = false
+			o.url = ""
+			if err := o.readMetaData(ctx); err != nil {
+				return nil, err
+			}
 			continue
 		}
 		return nil, err
 	}
 	return nil, errors.New("funambol: download authentication retry exhausted")
+}
+
+// fetchURL looks up the download URL by id.  An item known only from its
+// upload reply has no URL, and the folder listing may not show it yet.
+func (o *Object) fetchURL(ctx context.Context) error {
+	if o.id == "" {
+		return errors.New("can't download - no URL")
+	}
+	items, err := o.fs.getMediaByIDs(ctx, []string{o.id}, []string{"url"})
+	if err != nil {
+		return err
+	}
+	if len(items) == 0 || items[0].URL == "" {
+		return errors.New("can't download - no URL")
+	}
+	o.url = items[0].URL
+	return nil
 }
 
 // Update the object with the contents of the io.Reader
@@ -999,10 +1172,15 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if o.id != "" {
 		ids = append(ids, o.id)
 	}
+	absPath := o.fs.absPath(o.remote)
+	if cached, ok := o.fs.uploads.get(absPath); ok && cached.ID.String() != o.id {
+		ids = append(ids, cached.ID.String())
+	}
+	o.fs.uploads.remove(absPath)
 	lcLeaf := strings.ToLower(leaf)
 	lErr := o.fs.listMedia(ctx, dirID, func(item *api.Item) {
 		id := item.ID.String()
-		if id == "" || (o.id != "" && id == o.id) {
+		if id == "" || slices.Contains(ids, id) {
 			return
 		}
 		if strings.ToLower(o.fs.opt.Enc.ToStandardName(item.Name)) == lcLeaf {
@@ -1047,10 +1225,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 	var upRes api.UploadResponse
+	vk := o.fs.key()
 	upOpts := rest.Opts{
 		Method:        "POST",
 		Path:          "/sapi/upload/" + uploadMediaType,
-		Parameters:    url.Values{"action": {"save"}, "validationkey": {o.fs.key()}},
+		Parameters:    url.Values{"action": {"save"}, "validationkey": {vk}},
 		Body:          in,
 		ContentType:   "application/octet-stream",
 		ContentLength: &size,
@@ -1062,7 +1241,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		resp, err := o.fs.srv.CallJSON(ctx, &upOpts, nil, &upRes)
-		return shouldRetry(ctx, resp, err)
+		return shouldRetry(ctx, resp, redactKey(err))
 	})
 	if err == nil {
 		err = upRes.AsErr()
@@ -1074,7 +1253,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		// been consumed and can't be replayed here, so operations.Copy re-runs
 		// Update with a freshly-opened reader (its phase-1 metadata call now
 		// uses the new key).
-		if o.fs.refreshOnError(err) {
+		if o.fs.refreshOnError(err, vk) {
 			return fserrors.RetryError(fmt.Errorf("upload bytes: validation key rotated, retrying: %w", err))
 		}
 		return fmt.Errorf("upload bytes: %w", err)
@@ -1087,7 +1266,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	o.id = upRes.ID.String()
 	o.size = size
 	o.modTime = mod
+	o.url = ""
 	o.hasMetaData = true
+	if o.id != "" {
+		o.fs.uploads.put(absPath, api.Item{ID: upRes.ID, Name: name, Size: size, ModificationDate: mod.UnixMilli()})
+	}
 	return nil
 }
 
@@ -1096,7 +1279,11 @@ func (o *Object) Remove(ctx context.Context) error {
 	if err := o.readMetaData(ctx); err != nil {
 		return err
 	}
-	return o.fs.deleteMedia(ctx, o.id)
+	if err := o.fs.deleteMedia(ctx, o.id); err != nil {
+		return err
+	}
+	o.fs.uploads.remove(o.fs.absPath(o.remote))
+	return nil
 }
 
 // ---- construction ----
@@ -1134,14 +1321,15 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	srv.SetHeader("X-deviceid", opt.DeviceID)
 
 	f := &Fs{
-		name:   name,
-		root:   parsePath(root),
-		opt:    *opt,
-		m:      m,
-		client: client,
-		srv:    srv,
-		pacer:  fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
-		auth:   new(authState),
+		name:    name,
+		root:    parsePath(root),
+		opt:     *opt,
+		m:       m,
+		client:  client,
+		srv:     srv,
+		pacer:   fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		auth:    new(authState),
+		uploads: newUploadCache(),
 	}
 	f.features = (&fs.Features{
 		CaseInsensitive:         true,
