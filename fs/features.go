@@ -23,6 +23,7 @@ type Features struct {
 	SetTier                  bool // allows set tier functionality on objects
 	GetTier                  bool // allows to retrieve storage tier of objects
 	ServerSideAcrossConfigs  bool // can server-side copy between different remotes of the same type
+	PublicLinkIsDirect       bool // means a public link is equivalent to a normal logical download: URL-only authorization supplies the bytes without changing persistent sharing, private-object authorization remains bounded by provider and credential expiry, and property/hash access does not require reading the body.
 	IsLocal                  bool // is the local backend
 	SlowModTime              bool // if calling ModTime() generally takes an extra transaction
 	SlowHash                 bool // if calling Hash() generally takes an extra transaction
@@ -110,6 +111,9 @@ type Features struct {
 
 	// PublicLink generates a public link to the remote path (usually readable by anyone)
 	PublicLink func(ctx context.Context, remote string, expire Duration, unlink bool) (string, error)
+
+	// ServerSideFetchURL fetches source bytes directly into this remote without a source body transfer; see ServerSideFetchURLer for the contract.
+	ServerSideFetchURL func(ctx context.Context, remote, sourceURL string, src ObjectInfo, options ...OpenOption) (Object, error)
 
 	// Put in to the remote path with the modTime given of the given size
 	//
@@ -324,6 +328,9 @@ func (ft *Features) Fill(ctx context.Context, f Fs) *Features {
 	if do, ok := f.(PublicLinker); ok {
 		ft.PublicLink = do.PublicLink
 	}
+	if do, ok := f.(ServerSideFetchURLer); ok {
+		ft.ServerSideFetchURL = do.ServerSideFetchURL
+	}
 	if do, ok := f.(PutUncheckeder); ok {
 		ft.PutUnchecked = do.PutUnchecked
 	}
@@ -395,6 +402,7 @@ func (ft *Features) Mask(ctx context.Context, f Fs) *Features {
 	ft.SetTier = ft.SetTier && mask.SetTier
 	ft.GetTier = ft.GetTier && mask.GetTier
 	ft.ServerSideAcrossConfigs = ft.ServerSideAcrossConfigs && mask.ServerSideAcrossConfigs
+	ft.PublicLinkIsDirect = ft.PublicLinkIsDirect && mask.PublicLinkIsDirect
 	// ft.IsLocal = ft.IsLocal && mask.IsLocal Don't propagate IsLocal
 	ft.SlowModTime = ft.SlowModTime && mask.SlowModTime
 	ft.SlowHash = ft.SlowHash && mask.SlowHash
@@ -434,6 +442,9 @@ func (ft *Features) Mask(ctx context.Context, f Fs) *Features {
 	}
 	if mask.PublicLink == nil {
 		ft.PublicLink = nil
+	}
+	if mask.ServerSideFetchURL == nil {
+		ft.ServerSideFetchURL = nil
 	}
 	if mask.PutUnchecked == nil {
 		ft.PutUnchecked = nil
@@ -633,6 +644,15 @@ type PutStreamer interface {
 	// will return the object and the error, otherwise will return
 	// nil and the error
 	PutStream(ctx context.Context, in io.Reader, src ObjectInfo, options ...OpenOption) (Object, error)
+}
+
+// ServerSideFetchURLer is an optional interface for Fs.
+// The source URL must identify the same logical bytes as src; destinations may fall back when unsupported.
+type ServerSideFetchURLer interface {
+	// ServerSideFetchURL fetches sourceURL directly into remote without opening src.
+	// It honors the same upload options as a normal upload, leaves partitioning and cleanup to the destination, and returns a non-nil object on success.
+	// Only errors.Is(err, ErrorCantCopy) authorizes fallback; context, fatal, and destination errors must not match it and retain their identity for safe diagnostics.
+	ServerSideFetchURL(ctx context.Context, remote, sourceURL string, src ObjectInfo, options ...OpenOption) (Object, error)
 }
 
 // PublicLinker is an optional interface for Fs
