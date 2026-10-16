@@ -445,6 +445,7 @@ var (
 	errPathEscapes       = errors.New("file name is not a path within the local root - check the encoding")
 	errSymlinkLoop       = errors.New("loop detected: points to a parent directory")
 	errLinkTargetTooLong = errors.New("symlink target is too long to be a path")
+	errLinkNameInvalid   = errors.New("translated link needs a file name before the \"" + fs.LinkSuffix + "\" suffix")
 )
 
 // NewFs constructs an Fs from the path
@@ -572,28 +573,24 @@ func (f *Fs) caseInsensitive() bool {
 	return runtime.GOOS == "windows" || runtime.GOOS == "darwin"
 }
 
-// translateLink checks whether the remote is a translated link
-// and returns a new path, removing the suffix as needed,
-// It also returns whether this is a translated link at all
-//
-// for regular files, localPath is returned unchanged
-func translateLink(remote, localPath string) (newLocalPath string, isTranslatedLink bool) {
-	isTranslatedLink = strings.HasSuffix(remote, fs.LinkSuffix)
-	newLocalPath = strings.TrimSuffix(localPath, fs.LinkSuffix)
-	return newLocalPath, isTranslatedLink
-}
-
 // newObject makes a half completed Object
 func (f *Fs) newObject(remote string) (*Object, error) {
-	translatedLink := false
-	localPath, err := f.localPath(remote)
+	name, translatedLink := remote, false
+	if f.opt.TranslateSymlinks {
+		name, translatedLink = strings.CutSuffix(remote, fs.LinkSuffix)
+	}
+	if translatedLink {
+		// Check this makes a valid native file name
+		native := f.nativePath(name)
+		switch native[strings.LastIndex(native, string(filepath.Separator))+1:] {
+		case "", ".", "..":
+			return nil, fserrors.NoRetryError(fmt.Errorf("%q: %w", remote, errLinkNameInvalid))
+		}
+	}
+	// Check the name after any suffix removal
+	localPath, err := f.localPath(name)
 	if err != nil {
 		return nil, err
-	}
-
-	if f.opt.TranslateSymlinks {
-		// Possibly receive a new name for localPath
-		localPath, translatedLink = translateLink(remote, localPath)
 	}
 
 	return &Object{
@@ -644,15 +641,23 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 }
 
 // Create new directory object from the info passed in
+//
+// Directories are never translated links, so the name is used as is
+// whatever suffix it has.
 func (f *Fs) newDirectory(dir string, fi os.FileInfo) (*Directory, error) {
-	o, err := f.newObject(dir)
+	localPath, err := f.localPath(dir)
 	if err != nil {
 		return nil, err
 	}
-	o.setMetadata(fi)
-	return &Directory{
-		Object: *o,
-	}, nil
+	d := &Directory{
+		Object: Object{
+			fs:     f,
+			remote: dir,
+			path:   localPath,
+		},
+	}
+	d.setMetadata(fi)
+	return d, nil
 }
 
 // List the objects and directories in dir into entries.  The
@@ -810,6 +815,12 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 					continue
 				}
 				fso, err := f.newObjectWithInfo(newRemote, fi)
+				if errors.Is(err, errLinkNameInvalid) {
+					// Skip a badly named ".rclonelink" file
+					fs.Errorf(newRemote, "Listing error: %v", err)
+					_ = accounting.Stats(ctx).Error(err)
+					continue
+				}
 				if err != nil {
 					return nil, err
 				}
@@ -854,14 +865,19 @@ func (f *Fs) cleanRemote(dir, filename string) (remote string) {
 	return
 }
 
+// nativePath returns name in the OS encoding with OS path separators,
+// relative to f.root, without cleaning it.
+func (f *Fs) nativePath(name string) string {
+	return filepath.FromSlash(f.opt.Enc.FromStandardPath(name))
+}
+
 // localPath returns the OS path for the object called name, which is
 // always underneath f.root.
 //
 // It returns errPathEscapes if name resolves outside f.root which can
 // happen depending on the encoding.
 func (f *Fs) localPath(name string) (string, error) {
-	native := filepath.FromSlash(f.opt.Enc.FromStandardPath(name))
-	localPath := filepath.Join(f.root, native)
+	localPath := filepath.Join(f.root, f.nativePath(name))
 	rel, err := filepath.Rel(f.root, localPath)
 	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
 		return "", fserrors.NoRetryError(fmt.Errorf("%q: %w", name, errPathEscapes))

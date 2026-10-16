@@ -1,0 +1,64 @@
+test equal skipped
+# Check how identical files that are skipped instead of renamed are recorded in the listings
+# - Changed on both paths and identical, then changed on Path2 during the sync          file1
+# - Changed on both paths and identical, then changed on Path2 during the sync,
+#   keeping the same size and modtime                                                   file3 (file3B)
+# - New on both paths with --size-only, same size and different content                file10 (file10L, file10R)
+# - New on both paths with --ignore-checksum and identical                             file11
+
+test initial bisync
+bisync resync
+
+test changed on both paths and identical - file1
+touch-glob 2001-01-02 {datadir/} file1.txt
+copy-as {datadir/}file1.txt {path1/} file1.txt
+copy-as {datadir/}file1.txt {path2/} file1.txt
+
+test changed on Path1 - file2
+touch-glob 2001-01-02 {datadir/} file2.txt
+copy-as {datadir/}file2.txt {path1/} file2.txt
+
+test bisync with file1 changed on Path2 during the sync
+touch-glob 2023-08-26 {datadir/} file7.txt
+hook during-sync copy-as {datadir/}file7.txt {path2/} file1.txt
+bisync
+
+test bisync after file1 changed on Path2 during the sync
+bisync
+
+test changed on both paths and identical - file3
+touch-glob 2002-02-02 {datadir/} file3*.txt
+copy-as {datadir/}file3.txt {path1/} file3.txt
+copy-as {datadir/}file3.txt {path2/} file3.txt
+
+test changed on Path1 - file4
+copy-as {datadir/}file2.txt {path1/} file4.txt
+
+test bisync with file3 changed on Path2 during the sync, keeping its size and modtime
+hook during-sync delete-file {path2/}file3.txt
+hook during-sync copy-as {datadir/}file3B.txt {path2/} file3.txt
+bisync
+
+test bisync after file3 changed on Path2 during the sync
+bisync
+
+test new on both paths with --size-only, same size and different content - file10 (file10L, file10R)
+touch-glob 2001-01-02 {datadir/} file10L.txt
+touch-glob 2001-03-04 {datadir/} file10R.txt
+copy-as {datadir/}file10L.txt {path1/} file10.txt
+copy-as {datadir/}file10R.txt {path2/} file10.txt
+bisync size-only
+
+test delete file10 on Path1
+delete-file {path1/}file10.txt
+bisync size-only
+
+test new on both paths with --ignore-checksum and identical - file11
+touch-glob 2001-05-06 {datadir/} file11.txt
+copy-as {datadir/}file11.txt {path1/} file11.txt
+copy-as {datadir/}file11.txt {path2/} file11.txt
+bisync ignore-checksum
+
+test delete file11 on Path1
+delete-file {path1/}file11.txt
+bisync ignore-checksum

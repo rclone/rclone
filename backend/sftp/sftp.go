@@ -2547,6 +2547,10 @@ func (f *Fs) remoteShellPath(remote string) string {
 		if f.opt.PathOverride[0] == '@' {
 			shellPath = path.Join(strings.TrimPrefix(f.opt.PathOverride, "@"), f.absRoot, encodedRemote)
 		}
+		// A relative path starting with "-" would be parsed as an option by the hash command
+		if strings.HasPrefix(shellPath, "-") {
+			shellPath = "./" + shellPath
+		}
 		fs.Debugf(f, "Shell path redirected to %q with option path_override", shellPath)
 		return shellPath
 	}
@@ -2832,6 +2836,8 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	_, err = file.ReadFrom(&sizeReader{Reader: in, size: src.Size()})
 	if err != nil {
+		// Close the handle otherwise the server keeps the removed file's space allocated
+		_ = file.Close()
 		o.fs.putSftpConnection(&c, err)
 		remove()
 		return fmt.Errorf("Update ReadFrom failed: %w", err)

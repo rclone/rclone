@@ -760,3 +760,34 @@ func TestRedirectStripsHeadersOnHostChange(t *testing.T) {
 		assert.Empty(t, got.Values(headers[i]), "header %q leaked to redirect target", headers[i])
 	}
 }
+
+func TestRootCannotChangeHost(t *testing.T) {
+	// A root starting with "//" is a network-path reference under the
+	// URL standard. It must not be able to move the remote (and the
+	// configured headers) to a host other than the configured one.
+	var requests int
+	other := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		_, _ = w.Write([]byte("hello"))
+	}))
+	defer other.Close()
+
+	m := prepareServer(t)
+	otherHost := strings.TrimPrefix(other.URL, "http://")
+	for _, root := range []string{
+		"//" + otherHost + "/",
+		"//" + otherHost + "/one%.txt",
+		"//" + otherHost,
+		"//user:pass@" + otherHost + "/",
+	} {
+		f, err := NewFs(context.Background(), remoteName, root, m)
+		assert.ErrorContains(t, err, "must not change the scheme, host or user", root)
+		assert.Nil(t, f, root)
+	}
+	assert.Equal(t, 0, requests, "request sent to the other host")
+
+	// A same-origin absolute path must still work
+	f, err := NewFs(context.Background(), remoteName, "/", m)
+	require.NoError(t, err)
+	assert.Equal(t, m["url"]+"/", f.String())
+}

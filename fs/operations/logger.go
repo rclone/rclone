@@ -137,7 +137,7 @@ func NewDefaultLoggerFn(opt *LoggerOpt) LoggerFn {
 		}
 		if opt.Combined != nil {
 			SyncFprintf(opt.Combined, "%c %s\n", sigil, filename)
-			fs.Debugf(nil, "Sync Logger: %s: %c %s\n", sigil.String(), sigil, filename)
+			fs.DebugfCtx(ctx, nil, "Sync Logger: %s: %c %s\n", sigil.String(), sigil, filename)
 		}
 		if opt.DestAfter != nil {
 			opt.PrintDestAfter(ctx, sigil, src, dst, err)
@@ -299,7 +299,7 @@ func WinningSide(ctx context.Context, sigil Sigil, src, dst fs.DirEntry, err err
 	// should only make it this far if it's TransferError and both src and dst are nil
 	winner.Side = "none"
 	winner.Err = fmt.Errorf("unknown case -- can't determine winner. %v", err)
-	fs.Debugf(winner.Obj, "%v", winner.Err)
+	fs.DebugfCtx(ctx, winner.Obj, "%v", winner.Err)
 	return winner
 }
 
@@ -372,13 +372,13 @@ func (opt *LoggerOpt) Init(ctx context.Context, fdst fs.Fs, cmdFlags *pflag.Flag
 
 	ci := fs.GetConfig(ctx)
 	if ci.NoTraverse && opt.Combined != nil {
-		fs.LogPrintf(fs.LogLevelWarning, nil, "--no-traverse does not list any deletes (-) in --combined output\n")
+		fs.LogPrintfCtx(ctx, fs.LogLevelWarning, nil, "--no-traverse does not list any deletes (-) in --combined output\n")
 	}
 	if ci.NoTraverse && opt.MissingOnSrc != nil {
-		fs.LogPrintf(fs.LogLevelWarning, nil, "--no-traverse makes --missing-on-src produce empty output\n")
+		fs.LogPrintfCtx(ctx, fs.LogLevelWarning, nil, "--no-traverse makes --missing-on-src produce empty output\n")
 	}
 	if ci.NoTraverse && opt.DestAfter != nil {
-		fs.LogPrintf(fs.LogLevelWarning, nil, "--no-traverse makes --dest-after produce incomplete output\n")
+		fs.LogPrintfCtx(ctx, fs.LogLevelWarning, nil, "--no-traverse makes --dest-after produce incomplete output\n")
 	}
 }
 
@@ -441,7 +441,7 @@ func (opt *LoggerOpt) SetListFormat(ctx context.Context, cmdFlags *pflag.FlagSet
 			list.AddMetadata()
 			JSONOpt.Metadata = true
 		default:
-			fs.Errorf(nil, "unknown format character %q", char)
+			fs.ErrorfCtx(ctx, nil, "unknown format character %q", char)
 		}
 	}
 	opt.ListFormat = list

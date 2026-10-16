@@ -1355,10 +1355,10 @@ func getClient(ctx context.Context, opt *Options) *http.Client {
 }
 
 // s3RedirectSecretHeaders are the request headers carrying origin-bound
-// secrets that must not be forwarded when a redirect crosses a host or
-// downgrades the scheme. Go strips Authorization on a hostname change but not
-// on a scheme downgrade, and has no knowledge that the SSE-C headers hold raw
-// encryption keys, so we strip them all ourselves.
+// secrets that must not be forwarded when a redirect leaves the original
+// host. Go strips Authorization on a hostname change but keeps it for a
+// subdomain or a different port, and has no knowledge that the SSE-C
+// headers hold raw encryption keys, so we strip them all ourselves.
 var s3RedirectSecretHeaders = []string{
 	"X-Amz-Security-Token",  // AWS STS session token
 	"X-Amz-S3session-Token", // S3 Express (directory bucket) session token
@@ -1373,36 +1373,10 @@ var s3RedirectSecretHeaders = []string{
 	"Referer", // may be a presigned request
 }
 
-func s3CheckRedirect(req *http.Request, via []*http.Request) error {
-	if len(via) >= 10 {
-		return errors.New("stopped after 10 redirects")
-	}
-	// Never follow a redirect that downgrades the transport from HTTPS to
-	// HTTP. An S3 endpoint has no legitimate reason to do this, and replaying
-	// the request over plaintext would expose whatever credential it carries.
-	if via[len(via)-1].URL.Scheme == "https" && req.URL.Scheme == "http" {
-		return fmt.Errorf("refusing to follow insecure redirect from HTTPS to HTTP: %s", req.URL.Redacted())
-	}
-	if s3RedirectCrossesHost(req, via) {
-		for _, header := range s3RedirectSecretHeaders {
-			req.Header.Del(header)
-		}
-	}
-	return nil
-}
-
-func s3RedirectCrossesHost(req *http.Request, via []*http.Request) bool {
-	if len(via) == 0 {
-		return false
-	}
-	scheme, host := via[0].URL.Scheme, via[0].URL.Host
-	for _, redirect := range via[1:] {
-		if redirect.URL.Host != host || redirect.URL.Scheme != scheme {
-			return true
-		}
-	}
-	return host != req.URL.Host || scheme != req.URL.Scheme
-}
+// s3CheckRedirect is the http.Client CheckRedirect policy for S3. It
+// refuses HTTPS to HTTP downgrades and strips s3RedirectSecretHeaders
+// once a redirect has left the original host.
+var s3CheckRedirect = rest.StripHeadersOnCrossHostRedirectFn(s3RedirectSecretHeaders...)
 
 // Fixup the request if needed.
 //
@@ -1930,6 +1904,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	if opt.Provider == "Rabata" {
 		f.features.Copy = nil
+	}
+	if opt.Provider == "Autonomys" {
+		// Versions are permanent, so Purge's version deletes are always refused.
+		f.features.Purge = nil
+		// There are no bucket endpoints: CreateBucket would be stored as an object.
+		f.opt.NoCheckBucket = true
 	}
 	if opt.Provider == "TencentCOS" && strings.Contains(opt.Endpoint, "cos.accelerate.myqcloud.com") {
 		// Global Acceleration endpoint does not support bucket creation.
@@ -4727,8 +4707,23 @@ func (w *s3ChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 	// create checksum of buffer for integrity checking
 	// currently there is no way to calculate the md5 without reading the chunk a 2nd time (1st read is in uploadMultipart)
 	// possible in AWS SDK v2 with trailers?
+	//
+	// io.Copy reads with a 32 KiB buffer from a reader that implements
+	// neither WriterTo nor a memory backed Read - which is what a local
+	// file opened by a multi-thread copy is - so give it a bigger one to
+	// keep the source reads a useful size. It isn't taken from the pool,
+	// where it could wait for ever on --max-buffer-memory. A reader with
+	// WriterTo, such as a pool.RW, doesn't need one.
 	m := md5.New()
-	currentChunkSize, err := io.Copy(m, reader)
+	var (
+		currentChunkSize int64
+		err              error
+	)
+	if _, ok := reader.(io.WriterTo); ok {
+		currentChunkSize, err = io.Copy(m, reader)
+	} else {
+		currentChunkSize, err = io.CopyBuffer(m, reader, make([]byte, multipart.BufferSize))
+	}
 	if err != nil {
 		return -1, err
 	}

@@ -129,12 +129,6 @@ func (ls *fileList) put(file string, size int64, modtime time.Time, hash, id str
 	fi := ls.get(file)
 	if fi != nil {
 		fi.size = size
-		// if already have higher precision of same time, avoid overwriting it
-		if fi.time != modtime {
-			if modtime.Before(fi.time) && fi.time.Sub(modtime) < time.Second {
-				modtime = fi.time
-			}
-		}
 		fi.time = modtime
 		fi.hash = hash
 		fi.id = id
@@ -186,29 +180,35 @@ func (ls *fileList) getHash(file string) string {
 }
 
 func (b *bisyncRun) fileInfoEqual(file1, file2 string, ls1, ls2 *fileList) bool {
-	equal := true
 	if ls1.isDir(file1) && ls2.isDir(file2) {
-		return equal
+		return true
 	}
+	diffs := b.fileInfoDiffs(file1, file2, ls1, ls2, b.fs1, b.fs2, b.opt.Compare.HashType1, b.opt.Compare.HashType2)
+	for _, diff := range diffs {
+		b.indent("ERROR", file1, diff)
+	}
+	return len(diffs) == 0
+}
+
+// fileInfoDiffs describes each field bisync compares where file1 in ls1
+// (on f1, with hash type ht1) differs from file2 in ls2 (on f2, with ht2).
+func (b *bisyncRun) fileInfoDiffs(file1, file2 string, ls1, ls2 *fileList, f1, f2 fs.Info, ht1, ht2 hash.Type) (diffs []string) {
 	if b.opt.Compare.Size {
 		if sizeDiffers(ls1.getSize(file1), ls2.getSize(file2)) {
-			b.indent("ERROR", file1, fmt.Sprintf("Size not equal in listing. Path1: %v, Path2: %v", ls1.getSize(file1), ls2.getSize(file2)))
-			equal = false
+			diffs = append(diffs, fmt.Sprintf("Size not equal in listing. Path1: %v, Path2: %v", ls1.getSize(file1), ls2.getSize(file2)))
 		}
 	}
 	if b.opt.Compare.Modtime {
-		if timeDiffers(b.fctx, ls1.getTime(file1), ls2.getTime(file2), b.fs1, b.fs2) {
-			b.indent("ERROR", file1, fmt.Sprintf("Modtime not equal in listing. Path1: %v, Path2: %v", ls1.getTime(file1), ls2.getTime(file2)))
-			equal = false
+		if timeDiffers(b.fctx, ls1.getTime(file1), ls2.getTime(file2), f1, f2) {
+			diffs = append(diffs, fmt.Sprintf("Modtime not equal in listing. Path1: %v, Path2: %v", ls1.getTime(file1), ls2.getTime(file2)))
 		}
 	}
 	if b.opt.Compare.Checksum && !b.queueOpt.ignoreListingChecksum {
-		if b.hashDiffers(ls1.getHash(file1), ls2.getHash(file2), b.opt.Compare.HashType1, b.opt.Compare.HashType2, ls1.getSize(file1), ls2.getSize(file2)) {
-			b.indent("ERROR", file1, fmt.Sprintf("Checksum not equal in listing. Path1: %v, Path2: %v", ls1.getHash(file1), ls2.getHash(file2)))
-			equal = false
+		if b.hashDiffers(ls1.getHash(file1), ls2.getHash(file2), ht1, ht2, ls1.getSize(file1), ls2.getSize(file2)) {
+			diffs = append(diffs, fmt.Sprintf("Checksum not equal in listing. Path1: %v, Path2: %v", ls1.getHash(file1), ls2.getHash(file2)))
 		}
 	}
-	return equal
+	return diffs
 }
 
 // also returns false if not found
@@ -617,18 +617,17 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 				srcList.put(srcNewName, new.size, new.time, new.hash, new.id, new.flags)
 				dstList.put(srcNewName, new.size, new.time, new.hash, new.id, new.flags)
 			}
-			if srcNewName != srcOldName {
+			// the winner of a conflict keeps the old name and is copied to the other side
+			if srcNewName != srcOldName && dstNewName != srcOldName {
 				srcList.remove(srcOldName)
 			}
-			if srcNewName != dstOldName {
+			if srcNewName != dstOldName && dstNewName != dstOldName {
 				dstList.remove(dstOldName)
 			}
 		}
 	}
 
-	// recheck the ones we skipped because they were equal
-	// we never got their info because they were never synced.
-	// TODO: add flag to skip this? (since it re-lists)
+	// recheck the ones we didn't rename due to --dry-run
 	if queues.renameSkipped.NotEmpty() {
 		skippedList := queues.renameSkipped.ToList()
 		for _, file := range skippedList {
@@ -637,7 +636,7 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 			}
 		}
 	}
-	// skipped dirs -- nothing to recheck, just add them
+	// skipped dirs and equal files -- nothing to recheck, just add them from the snapshot
 	// (they are not necessarily there already, if they are new)
 	path1List := srcList
 	path2List := dstList
@@ -645,11 +644,11 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 		path1List = dstList
 		path2List = srcList
 	}
-	if !queues.skippedDirs1.empty() {
-		queues.skippedDirs1.getPutAll(path1List)
+	if !queues.skipped1.empty() {
+		queues.skipped1.getPutAll(path1List)
 	}
-	if !queues.skippedDirs2.empty() {
-		queues.skippedDirs2.getPutAll(path2List)
+	if !queues.skipped2.empty() {
+		queues.skipped2.getPutAll(path2List)
 	}
 
 	if filterRecheck.HaveFilesFrom() {

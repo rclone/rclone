@@ -1818,6 +1818,34 @@ func TestMoveWithoutDeleteEmptySrcDirs(t *testing.T) {
 	r.CheckRemoteItems(t, file1, file2)
 }
 
+// TestMoveWithDeleteEmptySrcDirsAfterPriorError checks that --delete-empty-src-dirs
+// still removes the empty source directories when the stats group carries an error
+// from an earlier operation, as happens when a long-running rcd reuses a stats group.
+func TestMoveWithDeleteEmptySrcDirsAfterPriorError(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
+	file2 := r.WriteFile("nested/sub dir/file", "nested", t1)
+	r.Mkdir(ctx, r.Fremote)
+
+	// Leave an error in the stats group, as a prior operation on a reused rcd
+	// _group would, then run an otherwise clean move.
+	ctx = predictDstFromLogger(ctx)
+	accounting.GlobalStats().ResetCounters()
+	_ = fs.CountError(ctx, errors.New("boom"))
+	err := MoveDir(ctx, r.Fremote, r.Flocal, true, false)
+	require.NoError(t, err)
+	testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
+	accounting.GlobalStats().ResetCounters()
+
+	r.CheckLocalListing(
+		t,
+		nil,
+		[]string{},
+	)
+	r.CheckRemoteItems(t, file1, file2)
+}
+
 func TestMoveWithIgnoreExisting(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
@@ -2793,7 +2821,7 @@ func TestSyncConcurrentTruncate(t *testing.T) {
 // Test that sync replaces dir modtimes in dst if they've changed
 func testSyncReplaceDirModTime(t *testing.T, copyEmptySrcDirs bool) {
 	accounting.GlobalStats().ResetCounters()
-	ctx, _ := fs.AddConfig(context.Background())
+	ctx, ci := fs.AddConfig(context.Background())
 	r := fstest.NewRun(t)
 
 	file1 := r.WriteFile("file1", "file1", t2)
@@ -2812,10 +2840,7 @@ func testSyncReplaceDirModTime(t *testing.T, copyEmptySrcDirs bool) {
 
 	// set logging
 	// (this checks log output as DirModtime operations do not yet have stats, and r.CheckDirectoryModTimes also does not tell us what actions were taken)
-	oldLogLevel := fs.GetConfig(context.Background()).LogLevel
-	defer func() { fs.GetConfig(context.Background()).LogLevel = oldLogLevel }() // reset to old val after test
-	// need to do this as fs.Infof only respects the globalConfig
-	fs.GetConfig(context.Background()).LogLevel = fs.LogLevelInfo
+	ci.LogLevel = fs.LogLevelInfo
 
 	// First run
 	accounting.GlobalStats().ResetCounters()
@@ -2902,7 +2927,7 @@ func TestSyncSetDirModTimeOnce(t *testing.T) {
 // Run the same sync twice, ensure no action is taken the second time
 func testNothingToTransfer(t *testing.T, copyEmptySrcDirs bool) {
 	accounting.GlobalStats().ResetCounters()
-	ctx, _ := fs.AddConfig(context.Background())
+	ctx, ci := fs.AddConfig(context.Background())
 	r := fstest.NewRun(t)
 	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
 	file2 := r.WriteFile("sub dir2/very/very/very/very/very/nested/subdir/hello world", "hello world", t1)
@@ -2917,10 +2942,7 @@ func testNothingToTransfer(t *testing.T, copyEmptySrcDirs bool) {
 
 	// set logging
 	// (this checks log output as DirModtime operations do not yet have stats, and r.CheckDirectoryModTimes also does not tell us what actions were taken)
-	oldLogLevel := fs.GetConfig(context.Background()).LogLevel
-	defer func() { fs.GetConfig(context.Background()).LogLevel = oldLogLevel }() // reset to old val after test
-	// need to do this as fs.Infof only respects the globalConfig
-	fs.GetConfig(context.Background()).LogLevel = fs.LogLevelInfo
+	ci.LogLevel = fs.LogLevelInfo
 
 	accounting.GlobalStats().ResetCounters()
 	ctx = predictDstFromLogger(ctx)
