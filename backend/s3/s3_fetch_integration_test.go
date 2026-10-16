@@ -506,7 +506,14 @@ func runDirectFetchLiveErrorCases(ctx context.Context, t *testing.T, source, des
 			dest.opt.DirectFetchChunkSize = oldChunkSize
 			dest.opt.DirectFetchConcurrency = oldConcurrency
 		}()
-		synthetic := object.NewStaticObjectInfo(name, src.ModTime(ctx), directFetchMaxSize+1, true, nil, source)
+		tagger, ok := src.(fs.ETagger)
+		if !ok || tagger.ETag(ctx) == "" {
+			t.Fatal("source fixture has no ETag to pin the multipart fetch")
+		}
+		synthetic := fetchSourceInfo{
+			StaticObjectInfo: object.NewStaticObjectInfo(name, src.ModTime(ctx), directFetchMaxSize+1, true, nil, source),
+			etag:             tagger.ETag(ctx),
+		}
 		got, fetchErr := dest.ServerSideFetchURL(ctx, name, corruptURL, synthetic)
 		assert.Nil(t, got)
 		if fetchErr == nil {

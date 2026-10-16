@@ -232,6 +232,8 @@ func (f *directFetchMultipartFixture) ServeHTTP(w http.ResponseWriter, r *http.R
 		switch f.partModes[part] {
 		case "source":
 			writeDirectFetchMultipartError(w, http.StatusBadRequest, "DirectFetchSourceStatus", "503", "DirectFetchSourceStatus 503")
+		case "changed":
+			writeDirectFetchMultipartError(w, http.StatusBadRequest, "DirectFetchSourceStatus", "412", "DirectFetchSourceStatus 412")
 		case "auth":
 			writeDirectFetchMultipartError(w, http.StatusForbidden, "AccessDenied", "part denied", "")
 		case "empty-etag":
@@ -530,6 +532,10 @@ func TestDirectFetchMultipartSuccess(t *testing.T) {
 	assertDirectFetchWireRequest(t, byPart["1"], sourceURL, "bytes=0-5368709119")
 	assertDirectFetchWireRequest(t, byPart["2"], sourceURL, "bytes=5368709120-5368709120")
 	for _, put := range puts {
+		assertDirectFetchPin(t, put, directFetchTestSourceETag)
+	}
+	assertDirectFetchPin(t, create, "")
+	for _, put := range puts {
 		assert.Equal(t, "requester", put.request.Header.Get("X-Amz-Request-Payer"))
 		assert.Equal(t, "AES256", put.request.Header.Get("X-Amz-Server-Side-Encryption-Customer-Algorithm"))
 	}
@@ -539,6 +545,7 @@ func TestDirectFetchMultipartSuccess(t *testing.T) {
 	assert.Equal(t, "requester", complete.request.Header.Get("X-Amz-Request-Payer"))
 	assert.Equal(t, "AES256", complete.request.Header.Get("X-Amz-Server-Side-Encryption-Customer-Algorithm"))
 	assert.Empty(t, complete.request.Header.Get(directFetchSourceHeader))
+	assertDirectFetchPin(t, complete, "")
 	heads := directFetchMultipartCaptures(captures, http.MethodHead)
 	require.Len(t, heads, 1)
 	assert.Equal(t, "version-multipart", heads[0].request.URL.Query().Get("versionId"))
@@ -574,6 +581,14 @@ func TestDirectFetchMultipartFailureCleanup(t *testing.T) {
 			name: "source status part failure",
 			configure: func(fixture *directFetchMultipartFixture, _ *Fs) {
 				fixture.partModes = map[int]string{1: "source"}
+			},
+			wantPart: true, wantAbort: true, wantCantCopy: true,
+			wantOperations: []string{"UploadPart"},
+		},
+		{
+			name: "source changed part failure",
+			configure: func(fixture *directFetchMultipartFixture, _ *Fs) {
+				fixture.partModes = map[int]string{1: "changed"}
 			},
 			wantPart: true, wantAbort: true, wantCantCopy: true,
 			wantOperations: []string{"UploadPart"},

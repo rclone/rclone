@@ -1,7 +1,9 @@
 package s3
 
 import (
+	"bytes"
 	"context"
+	"crypto/md5"
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
@@ -22,6 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/fshttp"
@@ -169,26 +172,64 @@ func assertDirectFetchWireRequest(t *testing.T, capture directFetchWireCapture, 
 	}
 }
 
+func assertDirectFetchPin(t *testing.T, capture directFetchWireCapture, etag string) {
+	t.Helper()
+	request := capture.request
+	if etag == "" {
+		assert.Empty(t, request.Header.Values(directFetchSourceRequestHeader))
+		return
+	}
+	assert.Equal(t, []string{"if-match=" + etag}, request.Header.Values(directFetchSourceRequestHeader))
+	authorization := request.Header.Get("Authorization")
+	assert.Contains(t, directFetchSignedHeaders(t, authorization), directFetchSourceRequestHeader)
+	assert.NotEqual(t, directFetchAuthorizationSignature(t, authorization),
+		recomputeDirectFetchSignature(t, request, func(changed *http.Request) {
+			changed.Header.Set(directFetchSourceRequestHeader, `if-match="changed"`)
+		}))
+}
+
 func TestDirectFetchWireOptionsSignEmptyRequestsAndStayLocal(t *testing.T) {
 	ctx, ci := fs.AddConfig(context.Background())
 	ci.LowLevelRetries = 1
-	captures := make(chan directFetchWireCapture, 3)
+	captures := make(chan directFetchWireCapture, 5)
 	f := newDirectFetchTestFs(ctx, t, "Fastly", directFetchWireHandler(captures, nil))
 	sourceURL := "https://source.example/a%20b?X-Amz-Signature=secret%2Bvalue"
 
 	_, err := f.c.PutObject(ctx, &awss3.PutObjectInput{
 		Bucket: aws.String("bucket"), Key: aws.String("key"),
 		Body: nil, ContentLength: aws.Int64(0),
-	}, directFetchOptions(sourceURL, ""))
+	}, directFetchOptions(sourceURL, "", ""))
 	require.NoError(t, err)
-	assertDirectFetchWireRequest(t, <-captures, sourceURL, "")
+	unpinnedPut := <-captures
+	assertDirectFetchWireRequest(t, unpinnedPut, sourceURL, "")
+	assertDirectFetchPin(t, unpinnedPut, "")
 
 	_, err = f.c.UploadPart(ctx, &awss3.UploadPartInput{
 		Bucket: aws.String("bucket"), Key: aws.String("key"), UploadId: aws.String("upload-1"), PartNumber: aws.Int32(1),
 		Body: nil, ContentLength: aws.Int64(0),
-	}, directFetchOptions(sourceURL, "bytes=10-19"))
+	}, directFetchOptions(sourceURL, "bytes=10-19", ""))
 	require.NoError(t, err)
-	assertDirectFetchWireRequest(t, <-captures, sourceURL, "bytes=10-19")
+	unpinnedPart := <-captures
+	assertDirectFetchWireRequest(t, unpinnedPart, sourceURL, "bytes=10-19")
+	assertDirectFetchPin(t, unpinnedPart, "")
+
+	_, err = f.c.PutObject(ctx, &awss3.PutObjectInput{
+		Bucket: aws.String("bucket"), Key: aws.String("pinned"),
+		Body: nil, ContentLength: aws.Int64(0),
+	}, directFetchOptions(sourceURL, "", directFetchTestSourceETag))
+	require.NoError(t, err)
+	pinnedPut := <-captures
+	assertDirectFetchWireRequest(t, pinnedPut, sourceURL, "")
+	assertDirectFetchPin(t, pinnedPut, directFetchTestSourceETag)
+
+	_, err = f.c.UploadPart(ctx, &awss3.UploadPartInput{
+		Bucket: aws.String("bucket"), Key: aws.String("pinned"), UploadId: aws.String("upload-1"), PartNumber: aws.Int32(2),
+		Body: nil, ContentLength: aws.Int64(0),
+	}, directFetchOptions(sourceURL, "bytes=20-29", directFetchTestSourceETag))
+	require.NoError(t, err)
+	pinnedPart := <-captures
+	assertDirectFetchWireRequest(t, pinnedPart, sourceURL, "bytes=20-29")
+	assertDirectFetchPin(t, pinnedPart, directFetchTestSourceETag)
 
 	_, err = f.c.PutObject(ctx, &awss3.PutObjectInput{
 		Bucket: aws.String("bucket"), Key: aws.String("ordinary"),
@@ -199,6 +240,7 @@ func TestDirectFetchWireOptionsSignEmptyRequestsAndStayLocal(t *testing.T) {
 	assert.Empty(t, ordinary.request.Header.Get(directFetchSourceHeader))
 	assert.Empty(t, ordinary.request.Header.Get("Range"))
 	assert.NotContains(t, directFetchSignedHeaders(t, ordinary.request.Header.Get("Authorization")), directFetchSourceHeader)
+	assertDirectFetchPin(t, ordinary, "")
 }
 
 func TestDirectFetchWireSDKRetryPreservesSignedEmptyRequest(t *testing.T) {
@@ -212,11 +254,53 @@ func TestDirectFetchWireSDKRetryPreservesSignedEmptyRequest(t *testing.T) {
 	_, err := f.c.PutObject(ctx, &awss3.PutObjectInput{
 		Bucket: aws.String("bucket"), Key: aws.String("key"),
 		Body: nil, ContentLength: aws.Int64(0),
-	}, directFetchOptions(sourceURL, ""))
+	}, directFetchOptions(sourceURL, "", directFetchTestSourceETag))
 	require.NoError(t, err)
 	assert.Equal(t, int32(2), attempts.Load())
-	assertDirectFetchWireRequest(t, <-captures, sourceURL, "")
-	assertDirectFetchWireRequest(t, <-captures, sourceURL, "")
+	for range 2 {
+		capture := <-captures
+		assertDirectFetchWireRequest(t, capture, sourceURL, "")
+		assertDirectFetchPin(t, capture, directFetchTestSourceETag)
+	}
+}
+
+func TestDirectFetchPin(t *testing.T) {
+	ctx := context.Background()
+	withETag := func(etag string) fs.ObjectInfo {
+		src := directFetchSource(1, nil)
+		src.etag = etag
+		return src
+	}
+	maxLength := `"` + strings.Repeat("a", 1022) + `"`
+	for _, etag := range []string{
+		directFetchTestSourceETag,
+		`"0123456789abcdef0123456789abcdef"`,
+		`"0x8DCB1234ABCD5678"`,
+		`"a=b,c;d"`,
+		maxLength,
+	} {
+		assert.Equal(t, etag, directFetchPin(ctx, withETag(etag)), "%q", etag)
+	}
+	for _, etag := range []string{
+		"",
+		"*",
+		`""`,
+		`"`,
+		`W/"abc"`,
+		`0123456789abcdef0123456789abcdef`,
+		`"abc"; x`,
+		`"a"b"`,
+		`"a b"`,
+		"\"abc\"\r\nX-Injected: yes",
+		"\"a\tb\"",
+		"\"a\x7fb\"",
+		`"é"`,
+		`"` + strings.Repeat("a", 1023) + `"`,
+	} {
+		assert.Empty(t, directFetchPin(ctx, withETag(etag)), "%q", etag)
+	}
+	assert.Empty(t, directFetchPin(ctx, object.NewStaticObjectInfo("source.txt", time.Unix(10, 0), 1, true, nil, nil)),
+		"a source without ETagger is unpinned")
 }
 
 func TestDirectPublicLinkEligibility(t *testing.T) {
@@ -459,11 +543,19 @@ func TestDirectPublicLinkConfiguredPresigning(t *testing.T) {
 
 type fetchSourceInfo struct {
 	*object.StaticObjectInfo
+	etag string
 }
 
 func (s fetchSourceInfo) Hash(context.Context, hash.Type) (string, error) {
 	panic("Direct Fetch must not request a source content hash")
 }
+
+func (s fetchSourceInfo) ETag(context.Context) string {
+	return s.etag
+}
+
+// directFetchTestSourceETag is the ETag directFetchSource reports
+const directFetchTestSourceETag = `"0123456789abcdef0123456789abcdef-2"`
 
 type directFetchFailingCredentialsProvider struct {
 	err error
@@ -474,8 +566,11 @@ func (p directFetchFailingCredentialsProvider) Retrieve(context.Context) (aws.Cr
 }
 
 func directFetchSource(size int64, metadata fs.Metadata) fetchSourceInfo {
-	return fetchSourceInfo{object.NewStaticObjectInfo("source.txt", time.Unix(10, 0), size, true, nil, nil).
-		WithMimeType("text/source").WithMetadata(metadata)}
+	return fetchSourceInfo{
+		StaticObjectInfo: object.NewStaticObjectInfo("source.txt", time.Unix(10, 0), size, true, nil, nil).
+			WithMimeType("text/source").WithMetadata(metadata),
+		etag: directFetchTestSourceETag,
+	}
 }
 
 func directFetchSuccessHandler(captures chan<- directFetchWireCapture, headSize *int64) http.Handler {
@@ -535,12 +630,81 @@ func TestDirectFetchSingle(t *testing.T) {
 	assert.Equal(t, "test", put.request.Header.Get("X-Amz-Meta-Owner"))
 	assert.NotEmpty(t, put.request.Header.Get("X-Amz-Meta-Mtime"))
 	assertDirectFetchWireRequest(t, put, sourceURL, "")
+	assertDirectFetchPin(t, put, directFetchTestSourceETag)
 	head := <-captures
 	assert.Equal(t, http.MethodHead, head.request.Method)
 	assert.Equal(t, "/bucket/target", head.request.URL.Path)
 	assert.Equal(t, "version-1", head.request.URL.Query().Get("versionId"))
 	assert.Empty(t, head.request.Header.Get(directFetchSourceHeader))
+	assertDirectFetchPin(t, head, "")
 	assert.Empty(t, captures)
+}
+
+func TestDirectFetchUnpinnedSource(t *testing.T) {
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.LowLevelRetries = 1
+	unpinned := func(size int64, etag string) fs.ObjectInfo {
+		src := directFetchSource(size, nil)
+		src.etag = etag
+		return src
+	}
+	partSize := int64(minChunkSize)
+	for _, tt := range []struct {
+		name string
+		size int64
+		src  func(size int64) fs.ObjectInfo
+	}{
+		{name: "no ETagger", size: 2*partSize + 1, src: func(size int64) fs.ObjectInfo {
+			return object.NewStaticObjectInfo("source.txt", time.Unix(10, 0), size, true, nil, nil)
+		}},
+		{name: "empty ETag", size: 2*partSize + 1, src: func(size int64) fs.ObjectInfo { return unpinned(size, "") }},
+		{name: "header injection", size: 2*partSize + 1, src: func(size int64) fs.ObjectInfo {
+			return unpinned(size, "\"abc\"\r\nX-Injected: yes")
+		}},
+		{name: "non-ASCII", size: 2*partSize + 1, src: func(size int64) fs.ObjectInfo { return unpinned(size, `"é"`) }},
+		{name: "weak ETag", size: 2*partSize + 1, src: func(size int64) fs.ObjectInfo { return unpinned(size, `W/"abc"`) }},
+		{name: "any version", size: 2*partSize + 1, src: func(size int64) fs.ObjectInfo { return unpinned(size, "*") }},
+		{name: "at single request limit", size: directFetchMaxSize, src: func(size int64) fs.ObjectInfo { return unpinned(size, "") }},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			captures := make(chan directFetchWireCapture, 4)
+			headSize := tt.size
+			f := newDirectFetchTestFs(ctx, t, "Fastly", directFetchSuccessHandler(captures, &headSize))
+			f.opt.DirectFetchChunkSize = minChunkSize
+
+			got, err := f.ServerSideFetchURL(ctx, "target", "https://source.example/object", tt.src(tt.size))
+			require.NoError(t, err)
+			require.NotNil(t, got)
+
+			put := <-captures
+			assert.Equal(t, http.MethodPut, put.request.Method)
+			assert.False(t, put.request.URL.Query().Has("uploadId"), "an unpinned source must not be fetched in parts")
+			assertDirectFetchWireRequest(t, put, "https://source.example/object", "")
+			assertDirectFetchPin(t, put, "")
+			assert.Equal(t, http.MethodHead, (<-captures).request.Method)
+			assert.Empty(t, captures)
+		})
+	}
+
+	t.Run("over single request limit", func(t *testing.T) {
+		captures := make(chan directFetchWireCapture, 4)
+		f := newDirectFetchTestFs(ctx, t, "Fastly", directFetchSuccessHandler(captures, nil))
+		got, err := f.ServerSideFetchURL(ctx, "target", "https://source.example/object", unpinned(directFetchMaxSize+1, ""))
+		assert.Nil(t, got)
+		assert.ErrorIs(t, err, fs.ErrorCantCopy)
+		assert.Empty(t, captures, "no destination request may be sent")
+	})
+}
+
+func TestDirectFetchSingleSourceChangedFallsBack(t *testing.T) {
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.LowLevelRetries = 1
+	f := newDirectFetchTestFs(ctx, t, "Fastly", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		writeDirectFetchMultipartError(w, http.StatusBadRequest, "DirectFetchSourceStatus", "412", "DirectFetchSourceStatus 412")
+	}))
+	got, err := f.ServerSideFetchURL(ctx, "target", "https://source.example/object", directFetchSource(7, nil))
+	assert.Nil(t, got)
+	assert.ErrorIs(t, err, fs.ErrorCantCopy)
 }
 
 func TestDirectFetchBoundary(t *testing.T) {
@@ -594,7 +758,7 @@ func TestDirectFetchSourceContentEncoding(t *testing.T) {
 		return newDirectFetchTestFs(ctx, t, provider, http.NotFoundHandler())
 	}
 	source := func(f fs.Info, metadata fs.Metadata) fetchSourceInfo {
-		return fetchSourceInfo{object.NewStaticObjectInfo("source.txt", time.Unix(10, 0), 7, true, nil, f).WithMetadata(metadata)}
+		return fetchSourceInfo{StaticObjectInfo: object.NewStaticObjectInfo("source.txt", time.Unix(10, 0), 7, true, nil, f).WithMetadata(metadata)}
 	}
 	gzipped := fs.Metadata{"content-encoding": "gzip"}
 	for _, tt := range []struct {
@@ -1144,4 +1308,101 @@ func TestDirectFetchResultErrors(t *testing.T) {
 			assert.NotContains(t, err.Error(), "token=secret")
 		})
 	}
+}
+
+func TestObjectETag(t *testing.T) {
+	ctx := context.Background()
+	f := newDirectFetchTestFs(ctx, t, "AWS", http.NotFoundHandler())
+	for _, etag := range []string{
+		`"0123456789abcdef0123456789abcdef"`,
+		`"0123456789abcdef0123456789abcdef-5"`,
+	} {
+		listed, err := f.newObjectWithInfo(ctx, "listed", &types.Object{
+			ETag:         aws.String(etag),
+			Size:         aws.Int64(1),
+			LastModified: aws.Time(time.Unix(1, 0)),
+		}, nil)
+		require.NoError(t, err)
+		tagger, ok := listed.(fs.ETagger)
+		require.True(t, ok, "s3 Object must implement fs.ETagger")
+		assert.Equal(t, etag, tagger.ETag(ctx), "from listing")
+
+		headed := &Object{fs: f, remote: "headed"}
+		headed.setMetaData(&awss3.HeadObjectOutput{ETag: aws.String(etag), LastModified: aws.Time(time.Unix(1, 0))})
+		assert.Equal(t, etag, headed.ETag(ctx), "from HEAD")
+	}
+
+	multipart := &Object{fs: f, remote: "multipart"}
+	multipart.setMetaData(&awss3.HeadObjectOutput{ETag: aws.String(`"0123456789abcdef0123456789abcdef-5"`), LastModified: aws.Time(time.Unix(1, 0))})
+	assert.Empty(t, multipart.md5, "a multipart ETag is not an MD5")
+	assert.Equal(t, `"0123456789abcdef0123456789abcdef-5"`, multipart.ETag(ctx))
+}
+
+// fetchRefreshingSource refreshes its ETag when its metadata is read,
+// like an s3 Object that HEADs a source which has since changed
+type fetchRefreshingSource struct {
+	*fetchSourceInfo
+}
+
+func (s fetchRefreshingSource) Metadata(context.Context) (fs.Metadata, error) {
+	s.etag = `"refreshed"`
+	return nil, nil
+}
+
+func TestDirectFetchPinMatchesListedSize(t *testing.T) {
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.LowLevelRetries = 1
+	captures := make(chan directFetchWireCapture, 2)
+	headSize := int64(7)
+	f := newDirectFetchTestFs(ctx, t, "Fastly", directFetchSuccessHandler(captures, &headSize))
+	listed := directFetchSource(7, nil)
+	src := fetchRefreshingSource{&listed}
+
+	got, err := f.ServerSideFetchURL(ctx, "target", "https://source.example/object", src)
+	require.NoError(t, err)
+	require.NotNil(t, got)
+	put := <-captures
+	assert.Equal(t, http.MethodPut, put.request.Method)
+	assertDirectFetchPin(t, put, directFetchTestSourceETag)
+}
+
+func TestObjectETagClearedBySetModTime(t *testing.T) {
+	ctx := context.Background()
+	f := newDirectFetchTestFs(ctx, t, "AWS", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.Copy(io.Discard, r.Body)
+		switch {
+		case r.Method == http.MethodHead:
+			w.Header().Set("Content-Length", "1")
+			w.Header().Set("Last-Modified", "Wed, 01 Jan 2025 00:00:00 GMT")
+			w.Header().Set("ETag", `"old"`)
+		case r.Method == http.MethodPut && r.Header.Get("X-Amz-Copy-Source") != "":
+			w.Header().Set("Content-Type", "application/xml")
+			_, _ = io.WriteString(w, `<CopyObjectResult><ETag>&quot;new&quot;</ETag><LastModified>2025-01-02T00:00:00.000Z</LastModified></CopyObjectResult>`)
+		default:
+			http.Error(w, "unexpected request", http.StatusBadRequest)
+		}
+	}))
+	obj, err := f.NewObject(ctx, "object")
+	require.NoError(t, err)
+	o := obj.(*Object)
+	require.Equal(t, `"old"`, o.ETag(ctx))
+	require.NoError(t, o.SetModTime(ctx, time.Unix(1700000000, 0)))
+	assert.Empty(t, o.ETag(ctx), "copying the object onto itself gives it a new ETag")
+}
+
+func TestObjectETagNoHeadUpload(t *testing.T) {
+	ctx := context.Background()
+	f := newDirectFetchTestFsWithConfig(ctx, t, "AWS", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.Copy(io.Discard, r.Body)
+		if r.Method != http.MethodPut {
+			http.Error(w, "unexpected request", http.StatusBadRequest)
+		}
+	}), configmap.Simple{"use_unsigned_payload": "true"})
+	f.opt.NoHead = true
+	data := []byte("pin me")
+	md5Hex := fmt.Sprintf("%x", md5.Sum(data))
+	src := object.NewStaticObjectInfo("object", time.Unix(1, 0), int64(len(data)), true, map[hash.Type]string{hash.MD5: md5Hex}, nil)
+	obj, err := f.Put(ctx, bytes.NewReader(data), src)
+	require.NoError(t, err)
+	assert.Equal(t, `"`+md5Hex+`"`, obj.(*Object).ETag(ctx), "an ETag includes its quotes")
 }

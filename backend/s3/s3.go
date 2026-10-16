@@ -373,6 +373,10 @@ this may help to speed up the transfers.`,
 Objects larger than this are fetched as a multipart upload in parts of
 this size. Objects up to this size are fetched in a single request.
 
+The parts are only kept to one version of the source by its ETag, so a
+source without a usable ETag is fetched in a single request up to 5 GiB
+whatever this is set to.
+
 Direct Fetch parts are not buffered by rclone, so unlike chunk_size
 this does not affect memory use.
 
@@ -1215,6 +1219,7 @@ type Object struct {
 	fs           *Fs               // what this object is part of
 	remote       string            // The remote path
 	md5          string            // md5sum of the object
+	etag         string            // ETag as returned by the server
 	bytes        int64             // size of the object
 	lastModified time.Time         // Last modified
 	meta         map[string]string // The object metadata if known - may be nil - with lower case keys
@@ -1300,10 +1305,11 @@ func (f *Fs) Features() *fs.Features {
 }
 
 const (
-	directFetchSourceHeader   = "fastly-object-storage-source-url"
-	directFetchErrorHeader    = "fastly-object-storage-df-error"
-	directFetchMaxSize        = int64(5 * fs.Gibi)
-	directFetchCleanupTimeout = 60 * time.Second
+	directFetchSourceHeader        = "fastly-object-storage-source-url"
+	directFetchSourceRequestHeader = "fastly-object-storage-source-header"
+	directFetchErrorHeader         = "fastly-object-storage-df-error"
+	directFetchMaxSize             = int64(5 * fs.Gibi)
+	directFetchCleanupTimeout      = 60 * time.Second
 )
 
 type directFetchRange struct {
@@ -1364,14 +1370,42 @@ func (e *directFetchError) Unwrap() error {
 	return e.cause
 }
 
-func directFetchOptions(sourceURL, byteRange string) func(*s3.Options) {
+func directFetchOptions(sourceURL, byteRange, pin string) func(*s3.Options) {
 	return func(options *s3.Options) {
 		options.RequestChecksumCalculation = aws.RequestChecksumCalculationWhenRequired
 		options.APIOptions = append(options.APIOptions, smithyhttp.SetHeaderValue(directFetchSourceHeader, sourceURL))
 		if byteRange != "" {
 			options.APIOptions = append(options.APIOptions, smithyhttp.SetHeaderValue("Range", byteRange))
 		}
+		if pin != "" {
+			// Fastly sends this header with each source fetch, so a
+			// source that has changed fails with 412 instead of
+			// returning bytes from another version
+			options.APIOptions = append(options.APIOptions, smithyhttp.SetHeaderValue(directFetchSourceRequestHeader, "if-match="+pin))
+		}
 	}
+}
+
+// directFetchPin returns the source ETag to send as If-Match, or "" if
+// src has no strong ETag that can safely go in a request header
+func directFetchPin(ctx context.Context, src fs.ObjectInfo) string {
+	do, ok := src.(fs.ETagger)
+	if !ok {
+		return ""
+	}
+	etag := do.ETag(ctx)
+	// Only a non-empty strong entity-tag (RFC 9110 section 8.8.3) pins
+	// a version: If-Match uses strong comparison so a weak ETag never
+	// matches, and "*" matches any version
+	if len(etag) < 3 || len(etag) > 1024 || etag[0] != '"' || etag[len(etag)-1] != '"' {
+		return ""
+	}
+	for i := 1; i < len(etag)-1; i++ {
+		if c := etag[i]; c < 0x21 || c == '"' || c > 0x7e {
+			return ""
+		}
+	}
+	return etag
 }
 
 func directFetchCredentialQueryKey(key string) bool {
@@ -1533,6 +1567,9 @@ func (f *Fs) ServerSideFetchURL(ctx context.Context, remote, sourceURL string, s
 	if size < 0 {
 		return nil, fmt.Errorf("direct fetch requires a known source size: %w", fs.ErrorCantCopy)
 	}
+	// Read the pin with the size: reading source metadata below can
+	// refresh src, and a newer ETag would pin a different version
+	pin := directFetchPin(ctx, src)
 	parsedSource, err := url.Parse(sourceURL)
 	if err != nil || (parsedSource.Scheme != "http" && parsedSource.Scheme != "https") || parsedSource.Host == "" || parsedSource.User != nil || parsedSource.Fragment != "" {
 		return nil, fmt.Errorf("direct fetch requires an HTTP(S) source URL without user information or a fragment: %w", fs.ErrorCantCopy)
@@ -1540,11 +1577,20 @@ func (f *Fs) ServerSideFetchURL(ctx context.Context, remote, sourceURL string, s
 	if err := checkDirectFetchSourceEncoding(ctx, src); err != nil {
 		return nil, err
 	}
+	multipart := size > directFetchMaxSize || size > int64(f.opt.DirectFetchChunkSize)
+	if multipart && pin == "" {
+		// Each part fetches the source again, so without an ETag to pin
+		// them the parts could come from different versions of it
+		if size > directFetchMaxSize {
+			return nil, fmt.Errorf("direct fetch needs a source ETag to fetch more than %d bytes in parts: %w", directFetchMaxSize, fs.ErrorCantCopy)
+		}
+		fs.Debugf(src, "server-side URL fetch: source has no usable ETag, fetching it in a single request")
+		multipart = false
+	}
 
 	o := &Object{fs: f, remote: remote}
-	// noHash because rclone never sees the bytes and doesn't pin the
-	// source, so storing src's MD5 could make a corrupted copy pass a
-	// hash check
+	// noHash because rclone never sees the bytes, so storing src's MD5
+	// could make a corrupted copy pass a hash check
 	ui, err := o.prepareUpload(ctx, src, options, true)
 	if err != nil {
 		return nil, err
@@ -1555,8 +1601,8 @@ func (f *Fs) ServerSideFetchURL(ctx context.Context, remote, sourceURL string, s
 	ui.req.Body = nil
 	ui.req.ContentLength = aws.Int64(0)
 	ui.req.ContentMD5 = nil
-	if size > directFetchMaxSize || size > int64(f.opt.DirectFetchChunkSize) {
-		versionID, err := o.fetchMultipart(ctx, sourceURL, size, ui.req)
+	if multipart {
+		versionID, err := o.fetchMultipart(ctx, sourceURL, size, ui.req, pin)
 		if err != nil {
 			return nil, err
 		}
@@ -1565,7 +1611,7 @@ func (f *Fs) ServerSideFetchURL(ctx context.Context, remote, sourceURL string, s
 	var out *s3.PutObjectOutput
 	err = f.directFetchCall(ctx, "PutObject", sourceURL, func() error {
 		var callErr error
-		out, callErr = f.c.PutObject(ctx, ui.req, directFetchOptions(sourceURL, ""))
+		out, callErr = f.c.PutObject(ctx, ui.req, directFetchOptions(sourceURL, "", pin))
 		return callErr
 	})
 	if err != nil {
@@ -1580,7 +1626,7 @@ func (f *Fs) ServerSideFetchURL(ctx context.Context, remote, sourceURL string, s
 	return o.finishDirectFetch(ctx, sourceURL, ui.req, out.VersionId)
 }
 
-func (o *Object) fetchMultipart(ctx context.Context, sourceURL string, size int64, req *s3.PutObjectInput) (versionID *string, err error) {
+func (o *Object) fetchMultipart(ctx context.Context, sourceURL string, size int64, req *s3.PutObjectInput, pin string) (versionID *string, err error) {
 	ranges, err := directFetchRanges(size, o.fs.opt.DirectFetchChunkSize, o.fs.opt.MaxUploadParts)
 	if err != nil {
 		return nil, err
@@ -1663,7 +1709,7 @@ func (o *Object) fetchMultipart(ctx context.Context, sourceURL string, size int6
 			var output *s3.UploadPartOutput
 			err := o.fs.directFetchCall(gCtx, "UploadPart", sourceURL, func() error {
 				var callErr error
-				output, callErr = o.fs.c.UploadPart(gCtx, input, directFetchOptions(sourceURL, byteRange))
+				output, callErr = o.fs.c.UploadPart(gCtx, input, directFetchOptions(sourceURL, byteRange, pin))
 				return callErr
 			})
 			if err != nil {
@@ -2639,6 +2685,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *types.O
 			o.lastModified = *info.LastModified
 		}
 		o.setMD5FromEtag(deref(info.ETag))
+		o.etag = deref(info.ETag)
 		o.bytes = deref(info.Size)
 		o.storageClass = stringClone(string(info.StorageClass))
 		o.versionID = stringClonePointer(versionID)
@@ -4835,6 +4882,7 @@ func (o *Object) setMetaData(resp *s3.HeadObjectOutput) {
 		o.bytes = *resp.ContentLength
 	}
 	o.setMD5FromEtag(deref(resp.ETag))
+	o.etag = deref(resp.ETag)
 	o.meta = s3MetadataToMap(resp.Metadata)
 	// Read MD5 from metadata if present
 	if md5sumBase64, ok := o.meta[metaMD5Hash]; ok {
@@ -4951,7 +4999,12 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	if o.fs.opt.RequesterPays {
 		req.RequestPayer = types.RequestPayerRequester
 	}
-	return o.fs.copy(ctx, &req, bucket, bucketPath, bucket, bucketPath, o)
+	err = o.fs.copy(ctx, &req, bucket, bucketPath, bucket, bucketPath, o)
+	if err == nil {
+		// The copy gives the object a new ETag
+		o.etag = ""
+	}
+	return err
 }
 
 // Storable raturns a boolean indicating if this object is storable
@@ -5873,7 +5926,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		head = new(s3.HeadObjectOutput)
 		//structs.SetFrom(head, &req)
 		setFrom_s3HeadObjectOutput_s3PutObjectInput(head, ui.req)
-		head.ETag = &ui.md5sumHex // doesn't matter quotes are missing
+		if ui.md5sumHex != "" {
+			head.ETag = aws.String(`"` + ui.md5sumHex + `"`)
+		}
 		head.ContentLength = &size
 		// We get etag back from single and multipart upload so fill it in here
 		if gotETag != "" {
@@ -6061,6 +6116,12 @@ func (o *Object) MimeType(ctx context.Context) string {
 	return o.mimeType
 }
 
+// ETag returns the ETag of the object as last read from the server,
+// or "" if not known
+func (o *Object) ETag(ctx context.Context) string {
+	return o.etag
+}
+
 // SetTier performs changing storage class
 func (o *Object) SetTier(tier string) (err error) {
 	ctx := context.TODO()
@@ -6157,6 +6218,7 @@ var (
 	_ fs.ServerSideFetchURLer = &Fs{}
 	_ fs.Object               = &Object{}
 	_ fs.MimeTyper            = &Object{}
+	_ fs.ETagger              = &Object{}
 	_ fs.GetTierer            = &Object{}
 	_ fs.SetTierer            = &Object{}
 	_ fs.Metadataer           = &Object{}

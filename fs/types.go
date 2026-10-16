@@ -163,6 +163,15 @@ type MimeTyper interface {
 	MimeType(ctx context.Context) string
 }
 
+// ETagger is an optional interface for Object
+type ETagger interface {
+	// ETag returns the entity tag, as sent in an HTTP ETag header
+	// (quotes included), of the version of the Object that Size and
+	// ModTime describe, or "" if not known. It must not refresh the
+	// Object to read a newer value.
+	ETag(ctx context.Context) string
+}
+
 // IDer is an optional interface for Object
 type IDer interface {
 	// ID returns the ID of the Object if known, or "" if not
