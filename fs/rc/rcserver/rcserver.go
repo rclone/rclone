@@ -408,9 +408,15 @@ func (s *Server) serveRemote(w http.ResponseWriter, r *http.Request, path string
 
 // splitFsMatch splits a path of the form "[fs]rest" into fs and rest. The fs
 // name ends at the "]" that closes the leading "[", counting nested brackets
-// so a remote or local path containing "]" (e.g. a directory named "[sub]")
-// doesn't truncate it at the first "]" found. ok is false if path doesn't
-// start with "[" or the brackets in it are unbalanced.
+// so a remote or local path containing a balanced bracket pair (e.g. a
+// directory named "[sub]") doesn't truncate it at the first "]" found. ok is
+// false if path doesn't start with "[" or no "]" closes the leading "[" at
+// depth 0.
+//
+// A "]" in the fs name that isn't preceded by a matching "[" still closes
+// the split early, same as it did before this function counted brackets at
+// all: there's no way to tell that case apart from the real closing "]"
+// without parsing the result as an fs name, which is left to the caller.
 func splitFsMatch(path string) (fsName, rest string, ok bool) {
 	if !strings.HasPrefix(path, "[") {
 		return "", "", false

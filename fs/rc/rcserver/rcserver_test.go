@@ -439,6 +439,14 @@ func TestSplitFsMatch(t *testing.T) {
 		{name: "no leading bracket", path: "remote:path", wantOK: false},
 		{name: "empty", path: "", wantOK: false},
 		{name: "unbalanced", path: "[remote:path", wantOK: false},
+		{name: "unclosed nested bracket", path: "[local:/a[br]/f.txt", wantOK: false},
+		{name: "bracket in rest", path: "[remote:]/dir/a]/f.txt", wantFsName: "remote:", wantRest: "/dir/a]/f.txt", wantOK: true},
+		{name: "bracket pair in rest", path: "[remote:]/dir/file[1].txt", wantFsName: "remote:", wantRest: "/dir/file[1].txt", wantOK: true},
+		// Pins the current behaviour for an fs name holding a "]" with no
+		// matching "[": it still closes the split early, same limitation
+		// the old code had for every "]" before this function counted
+		// nested brackets at all.
+		{name: "unmatched bracket in fs name", path: "[local:/data/a]b]/file.txt", wantFsName: "local:/data/a", wantRest: "b]/file.txt", wantOK: true},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			fsName, rest, ok := splitFsMatch(test.path)
