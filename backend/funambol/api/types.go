@@ -87,7 +87,7 @@ type Item struct {
 	Date             int64       `json:"date"`             // upload date, epoch millis
 	CreationDate     int64       `json:"creationdate"`     // epoch millis
 	ModificationDate int64       `json:"modificationdate"` // epoch millis
-	Etag             string      `json:"etag"`             // base64 of the MD5 digest
+	Etag             string      `json:"etag"`             // assigned per upload, not a content hash
 	URL              string      `json:"url"`              // absolute download URL
 	Favorite         bool        `json:"favorite"`
 	Thumbnails       []Thumbnail `json:"thumbnails"`
