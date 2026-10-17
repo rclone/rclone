@@ -24,7 +24,7 @@ func Fingerprint(ctx context.Context, o ObjectInfo, fast bool) string {
 		f        = o.Fs()
 		features = f.Features()
 	)
-	fmt.Fprintf(&out, "%d", o.Size())
+	fmt.Fprintf(&out, "%s|%d", o.Remote(), o.Size())
 	// Whether we want to do a slow operation or not
 	//
 	//  fast     true  false true  false
