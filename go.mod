@@ -277,7 +277,6 @@ require (
 	github.com/IBM/go-sdk-core/v5 v5.25.1
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.5.2
-	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/pkg/xattr v0.4.12
 	github.com/pquerna/otp v1.5.0
 	golang.org/x/mobile v0.0.0-20261011034528-197770444867
