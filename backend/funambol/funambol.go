@@ -1310,6 +1310,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		m.Set("device_id", opt.DeviceID)
 	}
 
+	// The service rejects any User-Agent starting with "rclone" (HTTP 401
+	// from the CDN, before SAPI), so every call must look like a browser.
+	ctx, ci := fs.AddConfig(ctx)
+	ci.UserAgent = browserUA
+
 	client := fshttp.NewClient(ctx)
 	jar, err := cookiejar.New(nil)
 	if err != nil {
