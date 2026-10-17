@@ -177,7 +177,7 @@ func (s *fakeFTPServer) serve() {
 	s.mu.Lock()
 	s.conn = conn
 	s.mu.Unlock()
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	_, _ = fmt.Fprint(conn, "220 fake FTP server\r\n")
 	scanner := bufio.NewScanner(conn)
 	for scanner.Scan() {
