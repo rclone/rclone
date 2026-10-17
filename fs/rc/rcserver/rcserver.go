@@ -11,7 +11,6 @@ import (
 	"mime"
 	"net/http"
 	"net/url"
-	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -407,17 +406,44 @@ func (s *Server) serveRemote(w http.ResponseWriter, r *http.Request, path string
 	}
 }
 
-// Match URLS of the form [fs]/remote
-var fsMatch = regexp.MustCompile(`^\[(.*?)\](.*)$`)
+// splitFsMatch splits a path of the form "[fs]rest" into fs and rest. The fs
+// name ends at the "]" that closes the leading "[", counting nested brackets
+// so a remote or local path containing a balanced bracket pair (e.g. a
+// directory named "[sub]") doesn't truncate it at the first "]" found. ok is
+// false if path doesn't start with "[" or no "]" closes the leading "[" at
+// depth 0.
+//
+// A "]" in the fs name that isn't preceded by a matching "[" still closes
+// the split early, same as it did before this function counted brackets at
+// all: there's no way to tell that case apart from the real closing "]"
+// without parsing the result as an fs name, which is left to the caller.
+func splitFsMatch(path string) (fsName, rest string, ok bool) {
+	if !strings.HasPrefix(path, "[") {
+		return "", "", false
+	}
+	depth := 0
+	for i, c := range path {
+		switch c {
+		case '[':
+			depth++
+		case ']':
+			depth--
+			if depth == 0 {
+				return path[1:i], path[i+1:], true
+			}
+		}
+	}
+	return "", "", false
+}
 
 func (s *Server) handleGet(w http.ResponseWriter, r *http.Request, path string) {
 	// Look to see if this has an fs in the path
-	fsMatchResult := fsMatch.FindStringSubmatch(path)
+	fsName, rest, fsOK := splitFsMatch(path)
 
 	switch {
-	case fsMatchResult != nil && s.opt.Serve:
+	case fsOK && s.opt.Serve:
 		// Serve /[fs]/remote files
-		s.serveRemote(w, r, fsMatchResult[2], fsMatchResult[1])
+		s.serveRemote(w, r, rest, fsName)
 		return
 	case path == "metrics" && s.opt.EnableMetrics:
 		promHandlerFunc(w, r)
