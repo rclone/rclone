@@ -35,6 +35,7 @@ type configAuthState struct {
 	SessionToken   string     `json:"t"`
 	ClientID       string     `json:"c"`
 	AccountCountry string     `json:"ac"`
+	DomainToUse    string     `json:"d,omitempty"`
 	Phones         []smsPhone `json:"p,omitempty"`
 }
 
@@ -53,6 +54,7 @@ func saveAuthSession(m configmap.Mapper, s *api.Session, phones []smsPhone) {
 		SessionToken:   s.SessionToken,
 		ClientID:       s.ClientID,
 		AccountCountry: s.AccountCountry,
+		DomainToUse:    s.DomainToUse,
 		Phones:         phones,
 	}
 	data, err := json.Marshal(st)
@@ -79,7 +81,7 @@ func loadAuthSession(m configmap.Mapper) (*configAuthState, error) {
 	return &st, nil
 }
 
-func restoreAuthSession(icloud *api.Client, st *configAuthState) {
+func restoreAuthSession(icloud *api.Client, st *configAuthState) error {
 	icloud.Session.Scnt = st.Scnt
 	icloud.Session.SessionID = st.SessionID
 	icloud.Session.AuthAttributes = st.AuthAttributes
@@ -87,6 +89,10 @@ func restoreAuthSession(icloud *api.Client, st *configAuthState) {
 	icloud.Session.SessionToken = st.SessionToken
 	icloud.Session.ClientID = st.ClientID
 	icloud.Session.AccountCountry = st.AccountCountry
+	if st.DomainToUse != "" {
+		return icloud.Session.SetDomainToUse(st.DomainToUse)
+	}
+	return nil
 }
 
 // resumeConfigClient recreates an API client and restores session state saved
@@ -100,7 +106,9 @@ func resumeConfigClient(m configmap.Mapper, appleid, password, trustToken, clien
 	if err != nil {
 		return nil, nil, err
 	}
-	restoreAuthSession(icloud, st)
+	if err := restoreAuthSession(icloud, st); err != nil {
+		return nil, nil, err
+	}
 	return icloud, st, nil
 }
 
@@ -108,6 +116,7 @@ func resumeConfigClient(m configmap.Mapper, appleid, password, trustToken, clien
 // after successful 2FA validation
 func saveAuthCredentials(m configmap.Mapper, icloud *api.Client, name string) {
 	m.Set(configTrustToken, icloud.Session.TrustToken)
+	m.Set(configDomain, icloud.Session.DomainToUse)
 	m.Set(configCookies, icloud.Session.GetCookieString())
 	m.Set(configAuthSession, "")
 	api.ClearCacheDir(name)
@@ -146,6 +155,43 @@ func triggerSMSFlow(ctx context.Context, icloud *api.Client, phones []api.Truste
 		}
 	}
 	return fs.ConfigChooseExclusiveFixed("2fa_sms_select", "config_2fa_phone", "Select phone number for SMS verification", items)
+}
+
+func finishConfigAuthentication(ctx context.Context, name string, m configmap.Mapper, icloud *api.Client) (*fs.ConfigOut, error) {
+	m.Set(configCookies, icloud.Session.GetCookieString())
+	m.Set(configDomain, icloud.Session.DomainToUse)
+	if icloud.Session.Requires2FA() {
+		authState, err := icloud.Session.GetAuthState(ctx)
+		if err == nil && authState.NoTrustedDevices && len(authState.TrustedPhoneNumbers) > 0 {
+			return triggerSMSFlow(ctx, icloud, authState.TrustedPhoneNumbers, m)
+		}
+		if err := icloud.Session.RequestPushNotification(ctx); err != nil {
+			fs.Debugf(nil, "iclouddrive: push notification request failed (SMS fallback available): %v", err)
+		} else {
+			fs.Debugf(nil, "iclouddrive: push notification requested to trusted devices")
+		}
+		saveAuthSession(m, icloud.Session, nil)
+		return fs.ConfigInput("2fa_do", "config_2fa", "Two-factor authentication: enter your 2FA code or type 'sms' for a text message")
+	}
+	saveAuthCredentials(m, icloud, name)
+	return nil, nil
+}
+
+func retryConfigDomain(ctx context.Context, name string, m configmap.Mapper, previous *api.Client, appleid, password, clientID string) (*fs.ConfigOut, error) {
+	domain := previous.Session.DomainToUse
+	m.Set(configDomain, domain)
+	m.Set(configAuthSession, "")
+	icloud, err := api.New(appleid, password, previous.Session.TrustToken, clientID, nil, nil, "_config", "")
+	if err != nil {
+		return nil, err
+	}
+	if err := icloud.Session.SetDomainToUse(domain); err != nil {
+		return nil, err
+	}
+	if err := icloud.Authenticate(ctx); err != nil {
+		return nil, err
+	}
+	return finishConfigAuthentication(ctx, name, m, icloud)
 }
 
 const (
@@ -230,6 +276,14 @@ func init() {
 			Sensitive:  true,
 			Hide:       fs.OptionHideBoth,
 		}, {
+			Name:     configDomain,
+			Help:     "iCloud account domain. Leave blank to detect it from Apple's account login response.",
+			Advanced: true,
+			Examples: []fs.OptionExample{{
+				Value: "iCloud.com.cn",
+				Help:  "China Mainland (GCBD).",
+			}},
+		}, {
 			Name:      configCookies,
 			Help:      "Session cookies.",
 			Required:  false,
@@ -273,6 +327,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 	trustToken, _ := m.Get(configTrustToken)
 	cookieRaw, _ := m.Get(configCookies)
 	clientID, _ := m.Get(configClientID)
+	domain, _ := m.Get(configDomain)
 	cookies := ReadCookies(cookieRaw)
 
 	switch {
@@ -284,34 +339,15 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		if err != nil {
 			return nil, err
 		}
+		if domain != "" {
+			if err := icloud.Session.SetDomainToUse(domain); err != nil {
+				return nil, err
+			}
+		}
 		if err := icloud.Authenticate(ctx); err != nil {
 			return nil, err
 		}
-		m.Set(configCookies, icloud.Session.GetCookieString())
-		if icloud.Session.Requires2FA() {
-			// Check if user has no trusted devices - auto-trigger SMS if so
-			authState, err := icloud.Session.GetAuthState(ctx)
-			if err == nil && authState.NoTrustedDevices && len(authState.TrustedPhoneNumbers) > 0 {
-				return triggerSMSFlow(ctx, icloud, authState.TrustedPhoneNumbers, m)
-			}
-			// Explicitly request push to trusted devices - required for iOS 26.4+
-			// where the SRP 409 no longer auto-pushes. GET /appleauth/auth above
-			// may also trigger a push (cosmetic double on pre-26.4, harmless)
-			if err := icloud.Session.RequestPushNotification(ctx); err != nil {
-				fs.Debugf(nil, "iclouddrive: push notification request failed (SMS fallback available): %v", err)
-			} else {
-				fs.Debugf(nil, "iclouddrive: push notification requested to trusted devices")
-			}
-			// Save session state so 2fa_do can validate without re-authenticating
-			// Push codes are account-scoped so session reuse is not strictly required,
-			// but it avoids a redundant SRP roundtrip and a second push on pre-26.4
-			saveAuthSession(m, icloud.Session, nil)
-			return fs.ConfigInput("2fa_do", "config_2fa", "Two-factor authentication: enter your 2FA code or type 'sms' for a text message")
-		}
-		// Auth succeeded without 2FA - save updated credentials and clear stale cache
-		m.Set(configTrustToken, icloud.Session.TrustToken)
-		api.ClearCacheDir(name)
-		return nil, nil
+		return finishConfigAuthentication(ctx, name, m, icloud)
 
 	case config.State == "2fa_do":
 		code := config.Result
@@ -338,6 +374,9 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		}
 
 		if err := icloud.Session.Validate2FACode(ctx, code); err != nil {
+			if errors.Is(err, api.ErrDomainChanged) {
+				return retryConfigDomain(ctx, name, m, icloud, appleid, password, clientID)
+			}
 			return nil, err
 		}
 		saveAuthCredentials(m, icloud, name)
@@ -397,6 +436,9 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		}
 
 		if err := icloud.Session.ValidateSMSCode(ctx, code, phoneID, mode); err != nil {
+			if errors.Is(err, api.ErrDomainChanged) {
+				return retryConfigDomain(ctx, name, m, icloud, appleid, password, clientID)
+			}
 			m.Set(configAuthSession, "")
 			return nil, err
 		}
@@ -433,6 +475,7 @@ func newICloudClient(ctx context.Context, name string, m configmap.Mapper, pcsWS
 
 	callback := func(session *api.Session) {
 		m.Set(configCookies, session.GetCookieString())
+		m.Set(configDomain, session.DomainToUse)
 	}
 
 	icloud, err := api.New(
@@ -447,6 +490,11 @@ func newICloudClient(ctx context.Context, name string, m configmap.Mapper, pcsWS
 	)
 	if err != nil {
 		return nil, nil, err
+	}
+	if opt.Domain != "" {
+		if err := icloud.Session.SetDomainToUse(opt.Domain); err != nil {
+			return nil, nil, err
+		}
 	}
 
 	if err := icloud.Authenticate(ctx); err != nil {
@@ -465,6 +513,7 @@ func newICloudClient(ctx context.Context, name string, m configmap.Mapper, pcsWS
 func disconnectClient(m configmap.Mapper, icloud *api.Client) error {
 	m.Set(configTrustToken, "")
 	m.Set(configCookies, "")
+	m.Set(configDomain, "")
 	m.Set(configAuthSession, "")
 	return os.RemoveAll(icloud.CacheDir())
 }
