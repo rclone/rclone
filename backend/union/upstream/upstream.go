@@ -40,6 +40,10 @@ type Fs struct {
 	cacheUpdate bool // if the cache is updating
 	writeback   bool // writeback to this upstream
 	writebackFs *Fs  // if non zero, writeback to this upstream
+
+	counter           *listCounter // if set, count usage by listing when About doesn't return it
+	noObjectsNotified sync.Once    // to only log that Objects isn't supported once
+	noUsedNotified    sync.Once    // to only log that Used isn't supported once
 }
 
 // Directory describes a wrapped Directory
@@ -99,6 +103,17 @@ func New(ctx context.Context, remote, root string, opt *common.Options) (*Fs, er
 		return nil, err
 	}
 	f.RootFs = rFs
+	if opt.UsageByListing {
+		interval := f.cacheTime
+		if opt.UsageByListingCacheTime == fs.DurationOff {
+			interval = -1
+		} else if opt.UsageByListingCacheTime > 0 {
+			interval = time.Duration(opt.UsageByListingCacheTime)
+		}
+		f.counter = newListCounter(remote, func(ctx context.Context) (int64, int64, error) {
+			return listUsage(ctx, rFs)
+		}, interval)
+	}
 	rootString := fspath.JoinRootPath(remote, root)
 	myFs, err := cache.Get(ctx, rootString)
 	if err != nil && err != fs.ErrorIsFile {
@@ -205,18 +220,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	if err != nil {
 		return o, err
 	}
-	f.cacheMutex.Lock()
-	defer f.cacheMutex.Unlock()
-	size := src.Size()
-	if f.usage.Used != nil {
-		*f.usage.Used += size
-	}
-	if f.usage.Free != nil {
-		*f.usage.Free -= size
-	}
-	if f.usage.Objects != nil {
-		*f.usage.Objects++
-	}
+	f.AddUsage(1, objectSize(o))
 	return o, nil
 }
 
@@ -234,9 +238,17 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	if err != nil {
 		return o, err
 	}
+	f.AddUsage(1, objectSize(o))
+	return o, nil
+}
+
+// AddUsage adjusts the cached usage of the fs by the number of
+// objects and bytes given, which may be negative
+//
+// This is used to keep the cached usage up to date with the changes
+// made through the union without having to read it again.
+func (f *Fs) AddUsage(objects, size int64) {
 	f.cacheMutex.Lock()
-	defer f.cacheMutex.Unlock()
-	size := o.Size()
 	if f.usage.Used != nil {
 		*f.usage.Used += size
 	}
@@ -244,9 +256,30 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 		*f.usage.Free -= size
 	}
 	if f.usage.Objects != nil {
-		*f.usage.Objects++
+		*f.usage.Objects += objects
 	}
-	return o, nil
+	f.cacheMutex.Unlock()
+	if f.counter != nil {
+		f.counter.add(objects, size)
+	}
+}
+
+// MarkUsageStale makes the next request for the usage of the fs read
+// it again, for use when changes have been made which can't be
+// accounted with AddUsage.
+func (f *Fs) MarkUsageStale() {
+	f.cacheExpiry.Store(time.Now().Unix())
+	if f.counter != nil {
+		f.counter.markStale()
+	}
+}
+
+// objectSize returns the size of o or 0 if it isn't known
+func objectSize(o fs.Object) int64 {
+	if o == nil {
+		return 0
+	}
+	return max(o.Size(), 0)
 }
 
 // Update in to the object with the modTime given of the given size
@@ -255,23 +288,23 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 // But for unknown-sized objects (indicated by src.Size() == -1), Upload should either
 // return an error or update the object properly (rather than e.g. calling panic).
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	size := o.Size()
+	size := objectSize(o.Object)
 	err := o.Object.Update(ctx, in, src, options...)
 	if err != nil {
 		return err
 	}
-	o.f.cacheMutex.Lock()
-	defer o.f.cacheMutex.Unlock()
-	delta := o.Size() - size
-	if delta <= 0 {
-		return nil
+	o.f.AddUsage(0, objectSize(o.Object)-size)
+	return nil
+}
+
+// Remove an object
+func (o *Object) Remove(ctx context.Context) error {
+	size := objectSize(o.Object)
+	err := o.Object.Remove(ctx)
+	if err != nil {
+		return err
 	}
-	if o.f.usage.Used != nil {
-		*o.f.usage.Used += size
-	}
-	if o.f.usage.Free != nil {
-		*o.f.usage.Free -= size
-	}
+	o.f.AddUsage(-1, -size)
 	return nil
 }
 
@@ -370,10 +403,11 @@ func (e *Directory) SetModTime(ctx context.Context, t time.Time) error {
 //
 // If it returns nil, nil then the original object is OK
 func (o *Object) Writeback(ctx context.Context) (*Object, error) {
-	if o.f.writebackFs == nil {
+	wf := o.f.writebackFs
+	if wf == nil {
 		return nil, nil
 	}
-	newObj, err := operations.Copy(ctx, o.f.writebackFs.Fs, nil, o.Object.Remote(), o.Object)
+	newObj, err := operations.Copy(ctx, wf.Fs, nil, o.Object.Remote(), o.Object)
 	if err != nil {
 		return nil, err
 	}
@@ -382,10 +416,8 @@ func (o *Object) Writeback(ctx context.Context) (*Object, error) {
 		fs.Errorf(o, "nil Object returned from operations.Copy")
 		return nil, nil
 	}
-	return &Object{
-		Object: newObj,
-		f:      o.f,
-	}, err
+	wf.AddUsage(1, objectSize(newObj))
+	return wf.WrapObject(newObj), nil
 }
 
 // About gets quota information from the Fs
@@ -421,36 +453,59 @@ func (f *Fs) GetFreeSpace() (int64, error) {
 
 // GetUsedSpace get the used space of the fs
 //
+// If About doesn't return it and the usage_by_listing option is set
+// then it is found by listing the upstream.
+//
 // This is returned as 0..math.MaxInt64-1 leaving math.MaxInt64 as a sentinel
 func (f *Fs) GetUsedSpace() (int64, error) {
-	if f.cacheExpiry.Load() <= time.Now().Unix() {
-		err := f.updateUsage()
-		if err != nil {
-			return 0, ErrUsageFieldNotSupported
-		}
+	if used, ok := f.usageField(func(u *fs.Usage) *int64 { return u.Used }); ok {
+		return used, nil
 	}
-	f.cacheMutex.RLock()
-	defer f.cacheMutex.RUnlock()
-	if f.usage.Used == nil {
+	if f.counter == nil {
+		f.noUsedNotified.Do(func() {
+			fs.Logf(nil, "Used space is not supported for upstream %s, treating as 0 - set the usage_by_listing option to find it by listing", fs.ConfigString(f.RootFs))
+		})
 		return 0, ErrUsageFieldNotSupported
 	}
-	return *f.usage.Used, nil
+	_, used, err := f.counter.get()
+	return used, err
 }
 
 // GetNumObjects get the number of objects of the fs
+//
+// If About doesn't return it and the usage_by_listing option is set
+// then it is found by listing the upstream.
 func (f *Fs) GetNumObjects() (int64, error) {
+	if objects, ok := f.usageField(func(u *fs.Usage) *int64 { return u.Objects }); ok {
+		return objects, nil
+	}
+	if f.counter == nil {
+		f.noObjectsNotified.Do(func() {
+			fs.Logf(nil, "Number of objects is not supported for upstream %s, treating as 0 - set the usage_by_listing option to find it by listing", fs.ConfigString(f.RootFs))
+		})
+		return 0, ErrUsageFieldNotSupported
+	}
+	objects, _, err := f.counter.get()
+	return objects, err
+}
+
+// usageField returns the field of the usage selected by field,
+// reading the usage with About if the cached copy has expired.
+//
+// It returns false if the field isn't available.
+func (f *Fs) usageField(field func(*fs.Usage) *int64) (int64, bool) {
 	if f.cacheExpiry.Load() <= time.Now().Unix() {
 		err := f.updateUsage()
 		if err != nil {
-			return 0, ErrUsageFieldNotSupported
+			return 0, false
 		}
 	}
 	f.cacheMutex.RLock()
 	defer f.cacheMutex.RUnlock()
-	if f.usage.Objects == nil {
-		return 0, ErrUsageFieldNotSupported
+	if value := field(f.usage); value != nil {
+		return *value, true
 	}
-	return *f.usage.Objects, nil
+	return 0, false
 }
 
 func (f *Fs) updateUsage() (err error) {
