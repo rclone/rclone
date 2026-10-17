@@ -979,6 +979,10 @@ func splitLine(line string) (args []string) {
 		b := []byte(whitespaceReplacer.Replace(s))
 		b = regexChar.ReplaceAllFunc(b, func(b []byte) []byte {
 			c, _ := strconv.ParseUint(string(b[5:7]), 16, 8)
+			if c <= 0x1f || c == 0x7f {
+				// control characters are spelled with their glyph in rclone names
+				return []byte(encoder.Standard.Encode(string(rune(c))))
+			}
 			return []byte{byte(c)}
 		})
 		args = append(args, string(b))
@@ -988,8 +992,8 @@ func splitLine(line string) (args []string) {
 
 var whitespaceReplacer = strings.NewReplacer(
 	"{spc}", " ",
-	"{tab}", "\t",
-	"{eol}", eol,
+	"{tab}", "␉",
+	"{eol}", "␊",
 )
 var regexChar = regexp.MustCompile(`\{chr:([0-9a-f]{2})\}`)
 
