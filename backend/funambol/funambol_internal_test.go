@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -17,6 +18,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/object"
+	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -88,6 +90,45 @@ func TestNewObjectFindsRecentUpload(t *testing.T) {
 
 	_, err = f.NewObject(ctx, "locks/a")
 	assert.ErrorIs(t, err, fs.ErrorObjectNotFound)
+}
+
+// Large uploads need asynchronous processing to avoid a gateway timeout
+// after the server has received the entire file.
+func TestUploadLargeFileAsynchronously(t *testing.T) {
+	const cutoff = int64(200 * 1024 * 1024)
+	for _, size := range []int64{8, cutoff, cutoff + 1} {
+		t.Run(fmt.Sprint(size), func(t *testing.T) {
+			f, _ := newSAPIServer(t, map[string]http.HandlerFunc{
+				"/sapi/media": func(w http.ResponseWriter, r *http.Request) {
+					_, _ = io.WriteString(w, `{"data":{"media":[],"more":false}}`)
+				},
+				"/sapi/upload/file": func(w http.ResponseWriter, r *http.Request) {
+					if r.URL.Query().Get("action") == "save-metadata" {
+						_, _ = io.WriteString(w, `{"id":"guid"}`)
+						return
+					}
+					n, err := io.Copy(io.Discard, r.Body)
+					assert.NoError(t, err)
+					assert.Equal(t, size, n)
+					async := r.URL.Query().Get("acceptasynchronous")
+					if size > cutoff {
+						if !assert.Equal(t, "true", async) {
+							w.WriteHeader(http.StatusGatewayTimeout)
+							return
+						}
+					} else {
+						assert.Empty(t, async)
+					}
+					_, _ = io.WriteString(w, `{"id":42,"status":"U"}`)
+				},
+			})
+			src := object.NewStaticObjectInfo("test.bin", time.Now(), size, true, nil, nil)
+			o, err := f.Put(context.Background(), readers.NewPatternReader(size), src)
+			require.NoError(t, err)
+			assert.Equal(t, "42", o.(*Object).ID())
+			assert.Equal(t, size, o.Size())
+		})
+	}
 }
 
 // MED-1000 is a transient server fault and must be retried.

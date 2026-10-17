@@ -36,12 +36,13 @@ import (
 )
 
 const (
-	defaultEndpoint = "https://cloud.o2online.es"
-	minSleep        = 10 * time.Millisecond
-	maxSleep        = 2 * time.Second
-	decayConstant   = 2
-	listChunk       = 200    // media items per page
-	uploadMediaType = "file" // store everything as a generic file (no transcoding)
+	defaultEndpoint   = "https://cloud.o2online.es"
+	minSleep          = 10 * time.Millisecond
+	maxSleep          = 2 * time.Second
+	decayConstant     = 2
+	listChunk         = 200    // media items per page
+	uploadMediaType   = "file" // store everything as a generic file (no transcoding)
+	asyncUploadCutoff = 200 * 1024 * 1024
 )
 
 // mediaFields are the item fields we ask the listing endpoint to return.
@@ -1238,6 +1239,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			"x-funambol-file-size": strconv.FormatInt(size, 10),
 		},
 		Options: options,
+	}
+	// Match the web client's large-file uploads so server-side processing
+	// does not keep the request open until the gateway times out.
+	if size > asyncUploadCutoff {
+		upOpts.Parameters.Set("acceptasynchronous", "true")
 	}
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		resp, err := o.fs.srv.CallJSON(ctx, &upOpts, nil, &upRes)
