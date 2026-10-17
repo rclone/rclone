@@ -509,7 +509,11 @@ func (s *server) deleteObject(w http.ResponseWriter, r *http.Request) {
 	o, err := s.newObject(r.Context(), remote)
 	if err != nil {
 		fs.Debugf(remote, "Delete request error: %v", err)
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		if errors.Is(err, fs.ErrorObjectNotFound) {
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		} else {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
 		return
 	}
 
