@@ -223,7 +223,7 @@ func getBoxConfig(m configmap.Mapper) (boxConfig *api.ConfigJSON, err error) {
 
 	if configFileCredentials == "" {
 		configFile, _ := m.Get("box_config_file")
-		configFileBytes, err = os.ReadFile(configFile)
+		configFileBytes, err = os.ReadFile(env.ShellExpand(configFile))
 		if err != nil {
 			return nil, fmt.Errorf("box: failed to read Box config: %w", err)
 		}
