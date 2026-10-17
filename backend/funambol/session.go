@@ -29,10 +29,11 @@ import (
 // backend mint fresh validation keys (via SEC-1003) without a new code.
 const persistentLoginCookie = "PLC"
 
-// browserUA is sent on the login calls.  The service's bot protection rejects
+// browserUA is sent on every call.  The service's bot protection rejects
 // a login from an unknown device id unless the request looks like a browser;
 // presenting a browser User-Agent (plus Origin/Referer) lets a freshly
 // generated device id register itself on first login, just like the web app.
+// It also rejects any User-Agent starting with "rclone" on all calls.
 const browserUA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
 
 // newDeviceID generates a fresh "web-<hex>" device id in the format the service
