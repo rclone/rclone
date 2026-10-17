@@ -234,7 +234,6 @@ func TestSymlinks(t *testing.T) {
 
 	// Move symlink -> regular file
 	t.Run("MoveSymlinkToFile", func(t *testing.T) {
-		t.Skip("FIXME not implemented")
 		link1Name := "link1.txt"
 
 		run.symlink(t, ".", link1Name)
@@ -251,7 +250,6 @@ func TestSymlinks(t *testing.T) {
 
 	// Move regular file -> symlink
 	t.Run("MoveFileToSymlink", func(t *testing.T) {
-		t.Skip("FIXME not implemented")
 		link1Name := "link1.txt"
 
 		run.createFile(t, link1Name, "")
@@ -268,7 +266,6 @@ func TestSymlinks(t *testing.T) {
 
 	// Move symlink -> directory
 	t.Run("MoveSymlinkToDirectory", func(t *testing.T) {
-		t.Skip("FIXME not implemented")
 		link1Name := "link1"
 
 		run.symlink(t, ".", link1Name)
@@ -285,7 +282,6 @@ func TestSymlinks(t *testing.T) {
 
 	// Move directory -> symlink
 	t.Run("MoveDirectoryToSymlink", func(t *testing.T) {
-		t.Skip("FIXME not implemented")
 		link1Name := "dir1/link1"
 
 		run.mkdir(t, "link1")
@@ -296,6 +292,23 @@ func TestSymlinks(t *testing.T) {
 		assert.Error(t, err)
 
 		run.rm(t, "link1")
+		run.rm(t, link1Name)
+		checkBaseState()
+	})
+
+	// Move regular file -> symlink, same directory (issue #8245 demo)
+	t.Run("MoveFileToSymlinkSameDir", func(t *testing.T) {
+		link1Name := "link1.txt"
+		file1Name := "file3.txt"
+
+		run.symlink(t, ".", link1Name)
+		run.createFile(t, file1Name, "")
+		run.checkDir(t, baseState+"|file3.txt 0|link1.txt 1")
+
+		err := run.os.Rename(run.path(file1Name), run.path(link1Name))
+		assert.Error(t, err)
+
+		run.rm(t, file1Name)
 		run.rm(t, link1Name)
 		checkBaseState()
 	})
