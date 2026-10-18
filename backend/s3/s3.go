@@ -299,6 +299,32 @@ to start uploading.`,
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name: "hashes",
+			Help: `Comma separated list of the hashes this remote supports.
+
+This can contain md5 and crc32c.
+
+The crc32c is the CRC32C checksum the provider stores for objects
+uploaded with a CRC32C of type FULL_OBJECT, such as single part uploads
+with a CRC32C and multipart uploads with a full object CRC32C. It is
+empty for multipart uploads with a CRC32C of type COMPOSITE and for
+objects without a CRC32C. It isn't returned in listings, so reading it
+takes a HEAD request per object.
+
+rclone hashsum crc32c and lsjson --hash-type crc32c read it even if it
+isn't listed here. Add crc32c to use it with rclone check, sync
+--checksum and hashsum --checkfile. If both sides support md5 and
+crc32c rclone compares the md5, so set this to crc32c to compare the
+crc32c instead.
+
+With crc32c listed rclone asks for the checksums in every HEAD request,
+which for SSE-KMS encrypted objects needs the kms:Decrypt permission.
+Some S3 compatible providers reject requests with the
+x-amz-checksum-mode header, so check that rclone hashsum crc32c works
+against your provider before listing crc32c here.`,
+			Default:  fs.CommaSepList{"md5"},
+			Advanced: true,
+		}, {
 			Name: "shared_credentials_file",
 			Help: `Path to the shared credentials file.
 
@@ -1098,6 +1124,7 @@ type Options struct {
 	ChunkSize                   fs.SizeSuffix        `config:"chunk_size"`
 	MaxUploadParts              int                  `config:"max_upload_parts"`
 	DisableChecksum             bool                 `config:"disable_checksum"`
+	Hashes                      fs.CommaSepList      `config:"hashes"`
 	SharedCredentialsFile       string               `config:"shared_credentials_file"`
 	Profile                     string               `config:"profile"`
 	SessionToken                string               `config:"session_token"`
@@ -1167,6 +1194,7 @@ type Fs struct {
 	srv            *http.Client    // a plain http client
 	srvRest        *rest.Client    // the rest connection to the server
 	etagIsNotMD5   bool            // if set ETags are not MD5s
+	hashes         hash.Set        // the hashes we support
 	versioningMu   sync.Mutex
 	versioning     fs.Tristate // if set bucket is using versions
 	warnCompressed sync.Once   // warn once about compressed files
@@ -1181,6 +1209,7 @@ type Object struct {
 	fs           *Fs               // what this object is part of
 	remote       string            // The remote path
 	md5          string            // md5sum of the object
+	crc32c       *string           // FULL_OBJECT CRC32C as hex, "" if none, nil if not read yet
 	bytes        int64             // size of the object
 	lastModified time.Time         // Last modified
 	meta         map[string]string // The object metadata if known - may be nil - with lower case keys
@@ -1883,6 +1912,17 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		// The normal API doesn't work for creating directory buckets, so don't try
 		f.opt.NoCheckBucket = true
 	}
+	for _, hashName := range opt.Hashes {
+		var ht hash.Type
+		err := ht.Set(hashName)
+		if err != nil {
+			return nil, err
+		}
+		if ht != hash.MD5 && ht != hash.CRC32C {
+			return nil, fmt.Errorf("hash %v is not supported: use md5 or crc32c", ht)
+		}
+		f.hashes.Add(ht)
+	}
 	f.setRoot(root)
 	f.features = (&fs.Features{
 		ReadMimeType:      true,
@@ -1895,6 +1935,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		SetTier:           provider.StorageClass.Len() > 0,
 		GetTier:           provider.StorageClass.Len() > 0,
 		SlowModTime:       true,
+		SlowHash:          f.hashes.GetOne() == hash.CRC32C,
 	}).Fill(ctx, f)
 	if opt.Provider == "AWS" {
 		f.features.DoubleSlash = true
@@ -2075,6 +2116,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *types.O
 		// If is delete marker, show that metadata has been read as there is none to read
 		if info.Size == isDeleteMarker {
 			o.meta = map[string]string{}
+			o.crc32c = new(string)
 		}
 	} else if !o.fs.opt.NoHeadObject {
 		err := o.readMetaData(ctx) // reads info and meta, returning an error
@@ -3109,6 +3151,10 @@ func (f *Fs) copyMultipart(ctx context.Context, copyReq *s3.CopyObjectInput, dst
 	//structs.SetFrom(req, info)
 	setFrom_s3CreateMultipartUploadInput_s3HeadObjectOutput(req, info)
 
+	// The head info has the ChecksumType if it read the checksums,
+	// but not the algorithm, and S3 rejects a type without one
+	req.ChecksumType = ""
+
 	// If copy metadata was set then set the Metadata to that read
 	// from the head request
 	if copyReq.MetadataDirective == types.MetadataDirectiveCopy {
@@ -3309,7 +3355,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
-	return hash.Set(hash.MD5)
+	return f.hashes
 }
 
 // PublicLink generates a public link to the remote path (usually readable by anyone)
@@ -4123,14 +4169,39 @@ func (o *Object) setMD5FromEtag(etag string) {
 	o.md5 = hash
 }
 
-// Hash returns the Md5sum of an object returning a lowercase hex string
+// Set the CRC32C from the x-amz-checksum-crc32c header
+//
+// This is only returned if requested, so nil means unknown.
+func (o *Object) setCRC32C(crc32cBase64 *string, checksumType types.ChecksumType) {
+	if crc32cBase64 == nil {
+		o.crc32c = nil
+		return
+	}
+	crc32c := ""
+	// A COMPOSITE checksum is a checksum of the part checksums,
+	// shown as "<base64>-<parts>", so isn't the CRC32C of the data
+	if *crc32cBase64 != "" && checksumType != types.ChecksumTypeComposite && !strings.Contains(*crc32cBase64, "-") {
+		sum, err := base64.StdEncoding.DecodeString(*crc32cBase64)
+		if err != nil || len(sum) != 4 {
+			fs.Debugf(o, "Failed to read CRC32C %q", *crc32cBase64)
+		} else {
+			crc32c = hex.EncodeToString(sum)
+		}
+	}
+	o.crc32c = &crc32c
+}
+
+// Hash returns the MD5 or CRC32C of an object returning a lowercase hex string
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
-	if t != hash.MD5 {
+	if t != hash.MD5 && t != hash.CRC32C {
 		return "", hash.ErrUnsupported
 	}
 	// If decompressing, erase the hash
 	if o.bytes < 0 {
 		return "", nil
+	}
+	if t == hash.CRC32C {
+		return o.getCRC32C(ctx)
 	}
 	// If we haven't got an MD5, then check the metadata
 	if o.md5 == "" {
@@ -4142,19 +4213,52 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	return o.md5, nil
 }
 
+// getCRC32C returns the CRC32C of the object, reading it with a HEAD
+// request if it isn't known
+func (o *Object) getCRC32C(ctx context.Context) (string, error) {
+	if o.crc32c == nil {
+		resp, err := o.headObjectChecksum(ctx, true)
+		if err != nil {
+			return "", err
+		}
+		o.setMetaData(resp)
+		// If decompressing, erase the hash
+		if o.bytes < 0 {
+			return "", nil
+		}
+	}
+	return *o.crc32c, nil
+}
+
 // Size returns the size of an object in bytes
 func (o *Object) Size() int64 {
 	return o.bytes
 }
 
 func (o *Object) headObject(ctx context.Context) (resp *s3.HeadObjectOutput, err error) {
+	// Only read the checksums if the CRC32C is in use as for
+	// SSE-KMS objects this needs kms:Decrypt permission
+	return o.headObjectChecksum(ctx, o.fs.hashes.Contains(hash.CRC32C))
+}
+
+// headObjectChecksum does a HEAD on the object, reading its checksums
+// too if checksum is set
+func (o *Object) headObjectChecksum(ctx context.Context, checksum bool) (resp *s3.HeadObjectOutput, err error) {
 	bucket, bucketPath := o.split()
 	req := s3.HeadObjectInput{
 		Bucket:    &bucket,
 		Key:       &bucketPath,
 		VersionId: o.versionID,
 	}
-	return o.fs.headObject(ctx, &req)
+	if checksum {
+		req.ChecksumMode = types.ChecksumModeEnabled
+	}
+	resp, err = o.fs.headObject(ctx, &req)
+	if err == nil && checksum && resp.ChecksumCRC32C == nil {
+		// Mark the CRC32C as read but not present
+		resp.ChecksumCRC32C = aws.String("")
+	}
+	return resp, err
 }
 
 func (f *Fs) headObject(ctx context.Context, req *s3.HeadObjectInput) (resp *s3.HeadObjectOutput, err error) {
@@ -4225,6 +4329,7 @@ func (o *Object) setMetaData(resp *s3.HeadObjectOutput) {
 		o.bytes = *resp.ContentLength
 	}
 	o.setMD5FromEtag(deref(resp.ETag))
+	o.setCRC32C(resp.ChecksumCRC32C, resp.ChecksumType)
 	o.meta = s3MetadataToMap(resp.Metadata)
 	// Read MD5 from metadata if present
 	if md5sumBase64, ok := o.meta[metaMD5Hash]; ok {
@@ -4334,7 +4439,10 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	if o.fs.opt.RequesterPays {
 		req.RequestPayer = types.RequestPayerRequester
 	}
-	return o.fs.copy(ctx, &req, bucket, bucketPath, bucket, bucketPath, o)
+	err = o.fs.copy(ctx, &req, bucket, bucketPath, bucket, bucketPath, o)
+	// A multipart copy doesn't keep the CRC32C, so read it again if needed
+	o.crc32c = nil
+	return err
 }
 
 // Storable raturns a boolean indicating if this object is storable
