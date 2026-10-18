@@ -33,6 +33,7 @@ type oauthServer struct {
 	state     string       // state of the last authorization request
 	challenge string       // PKCE challenge of the last authorization request
 	refused   string       // access token the SAPI login refuses
+	expired   string       // access token the SAPI login renews with a redirect
 	logins    atomic.Int32 // SAPI logins
 	refreshes atomic.Int32 // refresh token grants
 }
@@ -128,6 +129,10 @@ func newOAuthServer(t *testing.T) *oauthServer {
 		}
 		s.logins.Add(1)
 		w.Header().Set("Authorization", renewedHeader(access))
+		if access == s.expired {
+			http.Redirect(w, r, "/elsewhere", http.StatusFound)
+			return
+		}
 		_, _ = io.WriteString(w, `{"data":{"jsessionid":"js-1","validationkey":"`+testKey+`"}}`)
 	})
 	mux.HandleFunc("/sapi/media/folder/root", func(w http.ResponseWriter, r *http.Request) {
@@ -212,6 +217,21 @@ func TestOAuthRefreshesRefusedToken(t *testing.T) {
 	assert.Equal(t, int32(1), s.refreshes.Load())
 	access, _ := savedToken(t, m)
 	assert.Equal(t, "at3r", access)
+}
+
+// A login that renews an expired token with a redirect is sent again with the
+// renewed token.
+func TestOAuthReloginAfterRedirectRenewsToken(t *testing.T) {
+	s := newOAuthServer(t)
+	s.expired = "at1"
+	m := s.config(t, `{"access_token":"at1","refresh_token":"rt1"}`)
+
+	_, err := NewFs(context.Background(), "test", "", m)
+	require.NoError(t, err)
+	assert.Equal(t, int32(2), s.logins.Load())
+	assert.Equal(t, int32(0), s.refreshes.Load())
+	access, _ := savedToken(t, m)
+	assert.Equal(t, "at1rr", access)
 }
 
 // A token that can't be renewed asks for "rclone config reconnect".

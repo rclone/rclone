@@ -202,7 +202,14 @@ func (f *Fs) oauthLogin(ctx context.Context) error {
 	if _, err := oauthutil.GetToken(f.name, f.m); err != nil {
 		return errReconnect(f.name)
 	}
+	_, sent := f.oauthHeader()
 	resp, err := f.sapiOAuthLogin(ctx)
+	// The server answers a login with an expired access token with a redirect
+	// that carries the renewed token, so log in again with it.
+	if _, access := f.oauthHeader(); err != nil && access != sent {
+		fs.Debugf(f, "OAuth login renewed the token, logging in again: %v", err)
+		resp, err = f.sapiOAuthLogin(ctx)
+	}
 	if !isAuthFailure(resp, err) {
 		return err
 	}
@@ -226,6 +233,7 @@ func (f *Fs) sapiOAuthLogin(ctx context.Context) (*http.Response, error) {
 		Path:        oauthPath,
 		Parameters:  url.Values{"action": {"login"}, "responsetime": {"true"}},
 		ContentType: "application/x-www-form-urlencoded; charset=UTF-8",
+		NoRedirect:  true,
 	}
 	var res otpValidateResponse
 	var resp *http.Response
