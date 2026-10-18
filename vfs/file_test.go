@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 	"unsafe"
@@ -490,6 +491,81 @@ func TestFileReadAfterRemove(t *testing.T) {
 
 	_, err = vfs.Stat("dir/file1")
 	assert.Equal(t, ENOENT, err, "removed file came back into the directory")
+}
+
+func TestFileOpenAfterFailedRemove(t *testing.T) {
+	for _, handleCaching := range []fs.Duration{0, fs.Duration(time.Second)} {
+		t.Run(fmt.Sprintf("HandleCaching=%v", handleCaching), func(t *testing.T) {
+			testFileOpenAfterFailedRemove(t, handleCaching)
+		})
+	}
+}
+
+func testFileOpenAfterFailedRemove(t *testing.T, handleCaching fs.Duration) {
+	r := fstest.NewRun(t)
+	ctx := context.Background()
+	opt := vfscommon.Opt
+	opt.CacheMode = vfscommon.CacheModeFull
+	opt.WriteBack = writeBackDelay
+	opt.HandleCaching = handleCaching
+	// Use the local backend so the delete failure doesn't depend on remote permissions.
+	vfs := New(ctx, r.Flocal, &opt)
+	t.Cleanup(func() { cleanupVFS(t, vfs) })
+	r.WriteFile("dir/file1", "file1 contents", t1)
+
+	warm, err := vfs.ReadFile("dir/file1")
+	require.NoError(t, err)
+	require.Equal(t, "file1 contents", string(warm))
+	vfs.WaitForWriters(waitForWritersDelay)
+
+	node, err := vfs.Stat("dir/file1")
+	require.NoError(t, err)
+	fd, err := node.Open(os.O_RDONLY)
+	require.NoError(t, err)
+	writer, err := node.Open(os.O_RDWR)
+	require.NoError(t, err)
+
+	// A non-directory parent makes deletion fail even on Windows or as root,
+	// where chmod cannot reliably deny deletion.
+	dirPath := filepath.Join(r.LocalName, "dir")
+	require.NoError(t, os.Rename(dirPath, dirPath+".saved"))
+	require.NoError(t, os.WriteFile(dirPath, nil, 0600))
+	err = node.Remove()
+	require.NoError(t, os.Remove(dirPath))
+	require.NoError(t, os.Rename(dirPath+".saved", dirPath))
+	require.Error(t, err)
+
+	_, err = vfs.Stat("dir/file1")
+	require.NoError(t, err)
+
+	// The deferred open must not revive a deleted item, whose writes cannot upload.
+	_, err = io.ReadAll(fd)
+	assert.Error(t, err)
+	n, err := writer.Write([]byte("stale write"))
+	assert.Zero(t, n)
+	assert.Error(t, err)
+	assert.Error(t, writer.Truncate(0))
+	require.NoError(t, writer.Close())
+
+	require.NoError(t, vfs.WriteFile("dir/file1", []byte("new contents"), 0600))
+	vfs.WaitForWriters(waitForWritersDelay)
+
+	// The stale handle must also leave a replacement item's data and metadata alone.
+	_, err = io.ReadAll(fd)
+	assert.Error(t, err)
+	require.NoError(t, fd.Close())
+	got, err := vfs.ReadFile("dir/file1")
+	require.NoError(t, err)
+	assert.Equal(t, "new contents", string(got))
+
+	o, err := r.Flocal.NewObject(ctx, "dir/file1")
+	require.NoError(t, err)
+	in, err := o.Open(ctx)
+	require.NoError(t, err)
+	remote, err := io.ReadAll(in)
+	require.NoError(t, err)
+	require.NoError(t, in.Close())
+	assert.Equal(t, "new contents", string(remote))
 }
 
 // The same for a file which hasn't been uploaded yet, so has no object.

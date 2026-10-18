@@ -538,6 +538,11 @@ func (item *Item) open(o fs.Object) (err error) {
 		item.mu.Lock()
 	}
 
+	// A deleted item's cache files are gone or belong to a newer item.
+	if item.deleted {
+		return errors.New("vfs cache item: file has been deleted")
+	}
+
 	item.info.ATime = time.Now()
 
 	osPath, err := item.c.createItemDir(item.name) // No locking in Cache
