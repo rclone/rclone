@@ -89,8 +89,13 @@ func (cr *sequential) Read(p []byte) (n int, err error) {
 		n += rn
 		cr.offset += int64(rn)
 		if err != nil {
-			if err == io.ErrUnexpectedEOF {
-				err = io.EOF
+			if err == io.EOF || err == io.ErrUnexpectedEOF {
+				// Only a short read at the advertised end is a normal EOF.
+				if size := cr.o.Size(); size >= 0 && cr.offset < size {
+					err = io.ErrUnexpectedEOF
+				} else {
+					err = io.EOF
+				}
 			}
 			return
 		}
