@@ -52,6 +52,11 @@ func ParseTime(date string) (t time.Time, err error) {
 		return now.Add(-d), nil
 	}
 
+	d, err = parseDurationSequence(date)
+	if err == nil {
+		return now.Add(-d), nil
+	}
+
 	return t, err
 }
 
