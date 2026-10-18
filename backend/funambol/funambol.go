@@ -66,7 +66,7 @@ func init() {
 			Sensitive: true,
 		}, {
 			Name:       "pass",
-			Help:       "Password for the Funambol / OneMediaHub account.\n\nLeave empty for accounts without one (O2 Spain accounts that sign in\nvia Mi O2): rclone then logs in with an SMS code sent to the mobile\nnumber in user.",
+			Help:       "Password for the Funambol / OneMediaHub account.\n\nLeave empty for accounts without one (O2 Spain accounts that sign in\nvia Mi O2): rclone then logs in with an SMS code sent to the mobile\nnumber in user.  Set client_id too to get a session that renews itself.",
 			IsPassword: true,
 		}, {
 			Name: "cookies",
@@ -84,8 +84,8 @@ two-factor step) so it can be reused.  When it expires, reconnect with
 
 This identifies the rclone "device" to the service and appears in your
 account's device list.  Leave it empty: rclone generates a stable
-"web-<hex>" id on first login and saves it here, registering itself just
-like the official app.  Set it only to reuse a specific existing id.`,
+"web-<hex>" id ("fol-<base64>" with client_id) on first login and saves it
+here, registering itself just like the official app.  Set it only to reuse a specific existing id.`,
 			Advanced:  true,
 			Sensitive: true,
 		}, {
@@ -97,6 +97,38 @@ this set to the default for O2 Spain, or point it at another tenant,
 e.g. https://www.cloud.example.com`,
 			Default:  defaultEndpoint,
 			Advanced: true,
+		}, {
+			Name: "client_id",
+			Help: `OAuth client ID of an O2 Spain desktop app.
+
+Only for O2 Spain accounts without a password.  When set, the SMS login
+gets an OAuth refresh token, so rclone creates new sessions unattended
+and no new SMS code is needed when a session expires.  rclone does not
+include a client ID: you must supply one.`,
+			Advanced:  true,
+			Sensitive: true,
+		}, {
+			Name:       "client_secret",
+			Help:       "OAuth client secret that goes with client_id, if it has one.",
+			IsPassword: true,
+			Advanced:   true,
+		}, {
+			Name:     "oauth_platform",
+			Help:     "Platform of the app that client_id belongs to, e.g. \"windows\" or \"macos\".",
+			Default:  defaultOAuthPlatform,
+			Advanced: true,
+		}, {
+			Name:      config.ConfigToken,
+			Help:      "OAuth token (set automatically by rclone config).",
+			Hide:      fs.OptionHideBoth,
+			Sensitive: true,
+			Advanced:  true,
+		}, {
+			Name:      configOAuthCreds,
+			Help:      "OAuth token envelope last returned by the server (set automatically).",
+			Hide:      fs.OptionHideBoth,
+			Sensitive: true,
+			Advanced:  true,
 		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
@@ -111,12 +143,15 @@ e.g. https://www.cloud.example.com`,
 
 // Options defines the configuration for this backend
 type Options struct {
-	User     string               `config:"user"`
-	Pass     string               `config:"pass"`
-	Endpoint string               `config:"endpoint"`
-	Cookies  string               `config:"cookies"`
-	DeviceID string               `config:"device_id"`
-	Enc      encoder.MultiEncoder `config:"encoding"`
+	User          string               `config:"user"`
+	Pass          string               `config:"pass"`
+	Endpoint      string               `config:"endpoint"`
+	Cookies       string               `config:"cookies"`
+	DeviceID      string               `config:"device_id"`
+	ClientID      string               `config:"client_id"`
+	ClientSecret  string               `config:"client_secret"`
+	OAuthPlatform string               `config:"oauth_platform"`
+	Enc           encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote Funambol / OneMediaHub
@@ -198,8 +233,10 @@ func (c *uploadCache) clear() {
 // authState serialises (re-)authentication.  The session itself lives in the
 // http.Client cookie jar (JSESSIONID + persistent-login cookie) and the
 // validation key, so only a mutex is needed to guard concurrent refreshes.
+// tokenMu guards the saved OAuth token, which every SAPI reply may renew.
 type authState struct {
-	mu sync.Mutex
+	mu      sync.Mutex
+	tokenMu sync.Mutex
 }
 
 // Object describes a Funambol / OneMediaHub file
@@ -313,15 +350,19 @@ func wrapFatal(err error) error {
 	return err
 }
 
-// ensureSession makes sure we have something to authenticate with: either a
-// live validation key or the persistent login cookie that can mint one.
-// Logging in from scratch needs the emailed verification code, so it can only
-// happen interactively via "rclone config".
+// ensureLogin makes sure we have something to authenticate with: either a
+// live validation key or the persistent login cookie that can mint one, or
+// else a new session from the OAuth token.  Logging in from scratch needs the
+// emailed verification code, so it can only happen interactively via
+// "rclone config".
 func (f *Fs) ensureLogin(ctx context.Context) error {
 	f.auth.mu.Lock()
 	defer f.auth.mu.Unlock()
 	if f.validationKeyFromJar() != "" || f.persistentLoginPresent() {
 		return nil
+	}
+	if f.opt.usesOAuth() {
+		return f.oauthLogin(ctx)
 	}
 	return errReconnect(f.name)
 }
@@ -375,6 +416,13 @@ func (f *Fs) callJSON(ctx context.Context, opts *rest.Opts, request, response an
 			if f.refreshOnError(err, vk) && attempt < 2 {
 				continue
 			}
+			if attempt < 2 {
+				if retry, rErr := f.reloginOnError(ctx, resp, err, vk); rErr != nil {
+					return rErr
+				} else if retry {
+					continue
+				}
+			}
 			var ae *api.Error
 			if errors.As(err, &ae) && (resp != nil && resp.StatusCode == http.StatusUnauthorized || isReauthCode(ae.Code)) {
 				// A concurrent call rotated the session while this one was
@@ -392,6 +440,13 @@ func (f *Fs) callJSON(ctx context.Context, opts *rest.Opts, request, response an
 			if aErr := er.AsErr(); aErr != nil {
 				if f.refreshOnError(aErr, vk) && attempt < 2 {
 					continue
+				}
+				if attempt < 2 {
+					if retry, rErr := f.reloginOnError(ctx, nil, aErr, vk); rErr != nil {
+						return rErr
+					} else if retry {
+						continue
+					}
 				}
 				return wrapFatal(aErr)
 			}
@@ -1119,6 +1174,11 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		if o.fs.refreshOnError(err, vk) {
 			continue
 		}
+		if retry, rErr := o.fs.reloginOnError(ctx, resp, err, vk); rErr != nil {
+			return nil, rErr
+		} else if retry {
+			continue
+		}
 		if resp != nil && (resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden) {
 			fs.Debugf(o, "download refused, reading metadata again: %v", err)
 			o.hasMetaData = false
@@ -1245,8 +1305,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if size > asyncUploadCutoff {
 		upOpts.Parameters.Set("acceptasynchronous", "true")
 	}
+	var resp *http.Response
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
-		resp, err := o.fs.srv.CallJSON(ctx, &upOpts, nil, &upRes)
+		var err error
+		resp, err = o.fs.srv.CallJSON(ctx, &upOpts, nil, &upRes)
 		return shouldRetry(ctx, resp, redactKey(err))
 	})
 	if err == nil {
@@ -1261,6 +1323,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		// uses the new key).
 		if o.fs.refreshOnError(err, vk) {
 			return fserrors.RetryError(fmt.Errorf("upload bytes: validation key rotated, retrying: %w", err))
+		}
+		if retry, rErr := o.fs.reloginOnError(ctx, resp, err, vk); rErr != nil {
+			return rErr
+		} else if retry {
+			return fserrors.RetryError(fmt.Errorf("upload bytes: session renewed, retrying: %w", err))
 		}
 		return fmt.Errorf("upload bytes: %w", err)
 	}
@@ -1312,7 +1379,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	opt.Endpoint = strings.TrimRight(opt.Endpoint, "/")
 	if opt.DeviceID == "" {
-		opt.DeviceID = newDeviceID()
+		opt.DeviceID = newDeviceID(opt.usesOAuth())
 		m.Set("device_id", opt.DeviceID)
 	}
 
@@ -1351,6 +1418,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		// that to rclone and make "rclone dedupe" usable for repair.
 		DuplicateFiles: true,
 	}).Fill(ctx, f)
+	f.useOAuthTransport()
 
 	// Restore the session established during config (survives 2FA).
 	if opt.Cookies != "" {

@@ -36,12 +36,17 @@ const persistentLoginCookie = "PLC"
 // It also rejects any User-Agent starting with "rclone" on all calls.
 const browserUA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
 
-// newDeviceID generates a fresh "web-<hex>" device id in the format the service
-// expects.  A brand-new id registers itself during the first (two-factor)
-// login as long as the login request carries browser-like headers.
-func newDeviceID() string {
+// newDeviceID generates a fresh device id in the format the service expects:
+// "web-<hex>" like the web app, or "fol-<base64>" like the desktop apps whose
+// OAuth client the OAuth login uses.  A brand-new id registers itself during
+// the first (two-factor) login as long as the login request carries
+// browser-like headers.
+func newDeviceID(oauth bool) string {
 	b := make([]byte, 16)
 	_, _ = rand.Read(b)
+	if oauth {
+		return "fol-" + base64.StdEncoding.EncodeToString(b)
+	}
 	return "web-" + hex.EncodeToString(b)
 }
 
@@ -407,7 +412,7 @@ func newSessionFs(ctx context.Context, name string, m configmap.Mapper) (*Fs, er
 	// Generate and persist a device id on first use; a fresh one registers
 	// itself during the login below thanks to the browser-like headers.
 	if opt.DeviceID == "" {
-		opt.DeviceID = newDeviceID()
+		opt.DeviceID = newDeviceID(opt.usesOAuth())
 		m.Set("device_id", opt.DeviceID)
 	}
 
@@ -426,7 +431,7 @@ func newSessionFs(ctx context.Context, name string, m configmap.Mapper) (*Fs, er
 	srv := rest.NewClient(client).SetRoot(opt.Endpoint)
 	srv.SetErrorHandler(sapiErrorHandler)
 	srv.SetHeader("X-deviceid", opt.DeviceID)
-	return &Fs{
+	f := &Fs{
 		name:   name,
 		opt:    *opt,
 		m:      m,
@@ -434,7 +439,9 @@ func newSessionFs(ctx context.Context, name string, m configmap.Mapper) (*Fs, er
 		srv:    srv,
 		pacer:  fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 		auth:   new(authState),
-	}, nil
+	}
+	f.useOAuthTransport()
+	return f, nil
 }
 
 // Config drives interactive configuration, handling the emailed verification
@@ -450,7 +457,8 @@ func Config(ctx context.Context, name string, m configmap.Mapper, configIn fs.Co
 
 	switch configIn.State {
 	case "":
-		// Without a password, log in by SMS via Telefónica (O2 Spain).
+		// Without a password, log in by SMS via Telefónica (O2 Spain),
+		// with OAuth if client_id is set.
 		if f.opt.Pass == "" {
 			p, err := f.smsSend(ctx)
 			if err != nil {
