@@ -17,9 +17,11 @@ features:
 - CaseInsensitive
 - CleanUp
 - Command
+- Copy
 - DirCacheFlush
 - DirMove
 - DuplicateFiles
+- Move
 - Purge
 hashes: []
 precision: 1000000000
