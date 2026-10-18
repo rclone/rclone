@@ -243,9 +243,19 @@ Properties:
 
 ## Limitations
 
-Server-side `copy` and server-side file `move`/`rename` are not implemented —
-rclone falls back to download-then-upload for those.  Server-side directory
-move/rename **is** supported.
+Server-side file copy and move/rename are supported for generic `file` items
+on the same configured remote, including all files uploaded by this backend.
+Existing picture, video and audio items use rclone's download/upload fallback.
+Directory move/rename is also supported.
+
+Native file rename preserves the original extension on O2. When the requested
+extension changes, rclone uses server-side copy followed by deletion instead.
+File operations wait up to two minutes for server-side validation and metadata
+to become available. Existing destinations are removed before replacement.
+
+The backend can be wrapped by [chunker](/chunker/) and then [crypt](/crypt/).
+Server-side copy and move do not encrypt existing plaintext files; migrating
+those files to crypt still requires downloading and uploading their contents.
 
 This backend was developed against the O2 Spain tenant; other Funambol /
 OneMediaHub operators should work by setting `endpoint`, but have not all been
