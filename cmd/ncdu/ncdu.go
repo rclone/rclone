@@ -12,9 +12,11 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/atotto/clipboard"
-	"github.com/gdamore/tcell/v2"
+	"github.com/gdamore/tcell/v3"
+	"github.com/gdamore/tcell/v3/color"
 	runewidth "github.com/mattn/go-runewidth"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/ncdu/scan"
@@ -283,7 +285,7 @@ func (u *UI) Box() {
 	ymax := y + len(u.boxText)
 
 	// draw text
-	style := tcell.StyleDefault.Background(tcell.ColorRed).Reverse(true)
+	style := tcell.StyleDefault.Background(color.Red).Reverse(true)
 	for i, s := range u.boxText {
 		u.Line(x, y+i, xmax, style, ' ', s)
 		style = tcell.StyleDefault.Reverse(true)
@@ -408,13 +410,13 @@ func (u *UI) Draw() {
 			_, isSelected := u.selectedEntries[entry.String()]
 			style := tcell.StyleDefault
 			if attrs.EntriesHaveErrors {
-				style = style.Foreground(tcell.ColorYellow)
+				style = style.Foreground(color.Yellow)
 			}
 			if err != nil {
-				style = style.Foreground(tcell.ColorRed)
+				style = style.Foreground(color.Red)
 			}
 			if isSelected {
-				style = style.Foreground(tcell.ColorLightYellow)
+				style = style.Foreground(color.LightYellow)
 			}
 			if n == dirPos.entry {
 				style = style.Reverse(true)
@@ -961,9 +963,7 @@ func (u *UI) Run() error {
 	// scan the disk in the background
 	rootChan, errChan, updated := u.scan()
 
-	// Poll the events into a channel
-	events := make(chan tcell.Event)
-	go u.s.ChannelEvents(events, nil)
+	events := u.s.EventQ()
 
 	// Main loop, waiting for events and channels
 outer:
@@ -989,7 +989,7 @@ outer:
 			case *tcell.EventKey:
 				var c rune
 				if k := ev.Key(); k == tcell.KeyRune {
-					c = ev.Rune()
+					c, _ = utf8.DecodeRuneInString(ev.Str())
 				} else {
 					c = key(k)
 				}
