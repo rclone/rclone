@@ -17,6 +17,7 @@ import (
 	"github.com/rclone/rclone/backend/funambol/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
@@ -129,6 +130,45 @@ func TestUploadLargeFileAsynchronously(t *testing.T) {
 			assert.Equal(t, size, o.Size())
 		})
 	}
+}
+
+// A file bigger than the limit the server publishes fails before the upload,
+// with an error that is not retried.
+func TestUploadRejectsFileOverServerLimit(t *testing.T) {
+	const limit = int64(1024 * 1024)
+	var infos, uploads atomic.Int32
+	f, _ := newSAPIServer(t, map[string]http.HandlerFunc{
+		"/sapi/system/information": func(w http.ResponseWriter, r *http.Request) {
+			infos.Add(1)
+			_, _ = io.WriteString(w, `{"sapi.upload.max-size-in-mb":"1"}`)
+		},
+		"/sapi/media": func(w http.ResponseWriter, r *http.Request) {
+			_, _ = io.WriteString(w, `{"data":{"media":[],"more":false}}`)
+		},
+		"/sapi/upload/file": func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Query().Get("action") == "save-metadata" {
+				uploads.Add(1)
+				_, _ = io.WriteString(w, `{"id":"guid"}`)
+				return
+			}
+			_, _ = io.Copy(io.Discard, r.Body)
+			_, _ = io.WriteString(w, `{"id":42,"status":"U"}`)
+		},
+	})
+	ctx := context.Background()
+
+	src := object.NewStaticObjectInfo("ok.bin", time.Now(), limit, true, nil, nil)
+	_, err := f.Put(ctx, readers.NewPatternReader(limit), src)
+	require.NoError(t, err)
+
+	src = object.NewStaticObjectInfo("big.bin", time.Now(), limit+1, true, nil, nil)
+	_, err = f.Put(ctx, readers.NewPatternReader(limit+1), src)
+	require.Error(t, err)
+	assert.True(t, fserrors.IsNoRetryError(err), err)
+	assert.Contains(t, err.Error(), "chunker")
+
+	assert.Equal(t, int32(1), uploads.Load())
+	assert.Equal(t, int32(1), infos.Load(), "the limit is read once")
 }
 
 // MED-1000 is a transient server fault and must be retried.

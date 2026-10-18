@@ -439,6 +439,7 @@ func newSessionFs(ctx context.Context, name string, m configmap.Mapper) (*Fs, er
 		srv:    srv,
 		pacer:  fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 		auth:   new(authState),
+		limit:  new(uploadLimit),
 	}
 	f.useOAuthTransport()
 	return f, nil
