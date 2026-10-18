@@ -51,6 +51,29 @@ func newSMSServer(t *testing.T, callback func(srvURL string) string) configmap.S
 			"&sessionID="+smsSession+"&sessionData="+smsData, http.StatusFound)
 	})
 
+	addT3Handlers(t, mux, func() string { return callback(srv.URL) })
+
+	// The callback only completes the session that started the PKCE flow.
+	mux.HandleFunc("/sapi/login/oauth", func(w http.ResponseWriter, r *http.Request) {
+		c, err := r.Cookie("JSESSIONID")
+		if err != nil || c.Value != smsPKCE {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		http.SetCookie(w, &http.Cookie{Name: "validationKey", Value: testKey, Path: "/"})
+		// Scoped below "/", where a jar lookup of the root would miss it.
+		if r.URL.Query().Get("rememberme") == "true" && r.URL.Query().Get("code") == "c" {
+			http.SetCookie(w, &http.Cookie{Name: persistentLoginCookie, Value: smsPLC, Path: oauthPath})
+		}
+		http.Redirect(w, r, "/", http.StatusFound)
+	})
+
+	return configmap.Simple{"user": "+34 612 34 56 78", "endpoint": srv.URL}
+}
+
+// addT3Handlers fakes the T3 credential API on mux.  redirect returns the
+// redirectUri verify answers with.
+func addT3Handlers(t *testing.T, mux *http.ServeMux, redirect func() string) {
 	mux.HandleFunc("/t3/manageCredentialMobileO2", func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, t3Consumer+"/loginAppO2", r.Header.Get("COCO.idOrigen"))
 
@@ -71,25 +94,8 @@ func newSMSServer(t *testing.T, callback func(srvURL string) string) configmap.S
 		assert.Equal(t, map[string]string{
 			"otp": smsCode, "sessionID": smsNewID, "sessionData": smsNewData, "Mobile": smsPhone,
 		}, req)
-		_, _ = w.Write([]byte(`{"redirectUri":"` + callback(srv.URL) + `"}`))
+		_, _ = w.Write([]byte(`{"redirectUri":"` + redirect() + `"}`))
 	})
-
-	// The callback only completes the session that started the PKCE flow.
-	mux.HandleFunc("/sapi/login/oauth", func(w http.ResponseWriter, r *http.Request) {
-		c, err := r.Cookie("JSESSIONID")
-		if err != nil || c.Value != smsPKCE {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-		http.SetCookie(w, &http.Cookie{Name: "validationKey", Value: testKey, Path: "/"})
-		// Scoped below "/", where a jar lookup of the root would miss it.
-		if r.URL.Query().Get("rememberme") == "true" && r.URL.Query().Get("code") == "c" {
-			http.SetCookie(w, &http.Cookie{Name: persistentLoginCookie, Value: smsPLC, Path: oauthPath})
-		}
-		http.Redirect(w, r, "/", http.StatusFound)
-	})
-
-	return configmap.Simple{"user": "+34 612 34 56 78", "endpoint": srv.URL}
 }
 
 // Without a password, rclone logs in with an SMS code via Telefónica's T3.

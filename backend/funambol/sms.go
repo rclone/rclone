@@ -14,7 +14,8 @@ package funambol
 //	  |-- redirectUri ----------->|  (exchanges code, sets session cookies)
 //
 // The server holds the OAuth secrets, so rclone needs none: it only keeps
-// one cookie jar from the first call to the last.
+// one cookie jar from the first call to the last.  With client_id set, rclone
+// runs the OAuth flow itself instead (oauth.go).
 
 import (
 	"context"
@@ -62,8 +63,10 @@ type smsPending struct {
 	SessionData string `json:"session_data"`
 	Consumer    string `json:"consumer"`
 	Mobile      string `json:"mobile"`
-	Cookies     string `json:"cookies"` // T3 API cookies, from dumpCookiesFor
-	Session     string `json:"session"` // endpoint cookies holding the PKCE verifier
+	Cookies     string `json:"cookies"`            // T3 API cookies, from dumpCookiesFor
+	Session     string `json:"session"`            // login session cookies, from sessionURL
+	State       string `json:"state,omitempty"`    // OAuth login only
+	Verifier    string `json:"verifier,omitempty"` // OAuth login only: PKCE verifier
 }
 
 type smsSendRequest struct {
@@ -124,6 +127,17 @@ func (f *Fs) oauthURL() *url.URL {
 	u := *f.jarURL()
 	u.Path = oauthPath
 	return &u
+}
+
+// sessionURL is where the jar keys the cookies that tie the code check to the
+// login that sent the code: the endpoint's PKCE session, or the authorization
+// server's session for the OAuth login.
+func (f *Fs) sessionURL() *url.URL {
+	if f.opt.usesOAuth() {
+		u, _ := url.Parse(o2AuthURL)
+		return u
+	}
+	return f.oauthURL()
 }
 
 // get GETs rawURL without following redirects - following would drop the
@@ -268,6 +282,12 @@ func (f *Fs) smsSend(ctx context.Context) (*smsPending, error) {
 		"deviceid":   {f.opt.DeviceID},
 		"rememberme": {"true"},
 	}.Encode()
+	var oauth smsPending
+	if f.opt.usesOAuth() {
+		if start, err = f.oauthStart(&oauth); err != nil {
+			return nil, err
+		}
+	}
 	page, err := f.loginPage(ctx, start)
 	if err != nil {
 		return nil, err
@@ -279,6 +299,7 @@ func (f *Fs) smsSend(ctx context.Context) (*smsPending, error) {
 	}
 
 	p.Mobile = mobile
+	p.State, p.Verifier = oauth.State, oauth.Verifier
 	req := smsSendRequest{Mobile: p.Mobile, SessionID: p.SessionID, SessionData: p.SessionData, ConsumerID: p.Consumer}
 	var reply smsSendResponse
 	if err := f.t3Call(ctx, "manageCredentialMobileO2", p.Consumer, &req, &reply); err != nil {
@@ -290,7 +311,7 @@ func (f *Fs) smsSend(ctx context.Context) (*smsPending, error) {
 	}
 	p.SessionID, p.SessionData = reply.NewSessionID, reply.NewSessionData
 	p.Cookies = f.dumpCookiesFor(t3URL())
-	p.Session = f.dumpCookiesFor(f.oauthURL())
+	p.Session = f.dumpCookiesFor(f.sessionURL())
 	return p, nil
 }
 
@@ -298,12 +319,16 @@ func (f *Fs) smsSend(ctx context.Context) (*smsPending, error) {
 // it returns, which leaves the session cookies in the jar.
 func (f *Fs) smsVerify(ctx context.Context, p *smsPending, code string) error {
 	f.restoreCookiesFor(t3URL(), p.Cookies)
-	f.restoreCookiesFor(f.oauthURL(), p.Session)
+	f.restoreCookiesFor(f.sessionURL(), p.Session)
 
 	req := smsVerifyRequest{OTP: code, SessionData: p.SessionData, SessionID: p.SessionID, Mobile: p.Mobile}
 	var reply smsVerifyResponse
 	if err := f.t3Call(ctx, "verifyCredentialMobileO2", p.Consumer, &req, &reply); err != nil {
 		return fmt.Errorf("%w: %v", errCodeRejected, err)
+	}
+
+	if f.opt.usesOAuth() {
+		return f.oauthFinish(ctx, p, reply.RedirectURI)
 	}
 
 	// Only hand the code to our own endpoint, over the same scheme.

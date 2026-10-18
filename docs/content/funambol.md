@@ -91,6 +91,15 @@ through Telefónica's identity provider, with a code sent by SMS.  Such a login
 may not receive the persistent-login cookie, in which case the session lasts a
 day or so before `rclone config reconnect remote:` is needed.
 
+To keep such an account logged in unattended, set `client_id` (and
+`client_secret`, if it has one) in the advanced config to the OAuth client
+credentials of an O2 Spain desktop app, and `oauth_platform` to that app's
+platform (`windows` by default, or `macos`).  rclone does not include these
+credentials.  The SMS login then runs the OAuth flow itself and saves an OAuth
+refresh token: when the session expires, rclone creates a new one from the
+token, and the server renews the token as it is used, so no new SMS code is
+needed.  If the token itself is revoked, run `rclone config reconnect remote:`.
+
 From then on the backend runs unattended: it presents the persistent-login
 cookie, mints the rolling `validationkey` SAPI requires, and refreshes it
 automatically as it rotates - **no further verification codes are needed**.
