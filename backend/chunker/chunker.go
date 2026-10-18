@@ -1710,7 +1710,8 @@ func (f *Fs) copyOrMove(ctx context.Context, o *Object, remote string, do copyMo
 			break
 		}
 		chunkSuffix := chunkRemote[len(mainRemote):]
-		chunkResult, err := do(ctx, chunk, remote+chunkSuffix)
+		var chunkResult fs.Object
+		chunkResult, err = do(ctx, chunk, remote+chunkSuffix)
 		if err != nil {
 			break
 		}
@@ -1724,9 +1725,7 @@ func (f *Fs) copyOrMove(ctx context.Context, o *Object, remote string, do copyMo
 		metaObject, err = do(ctx, o.main, remote)
 	}
 	if err != nil {
-		for _, chunk := range newChunks {
-			silentlyRemove(ctx, chunk)
-		}
+		f.rollbackCopyOrMove(ctx, opName, o, metaObject, newChunks)
 		return nil, err
 	}
 
@@ -1734,7 +1733,7 @@ func (f *Fs) copyOrMove(ctx context.Context, o *Object, remote string, do copyMo
 	newObj := f.newObject(remote, metaObject, newChunks)
 	err = newObj.validate()
 	if err != nil {
-		silentlyRemove(ctx, newObj)
+		f.rollbackCopyOrMove(ctx, opName, o, metaObject, newChunks)
 		return nil, err
 	}
 
@@ -1755,10 +1754,38 @@ func (f *Fs) copyOrMove(ctx context.Context, o *Object, remote string, do copyMo
 
 	// Return the composite object
 	if err != nil {
-		silentlyRemove(ctx, newObj)
+		f.rollbackCopyOrMove(ctx, opName, o, metaObject, newChunks)
 		return nil, err
 	}
 	return newObj, nil
+}
+
+// rollbackCopyOrMove undoes the chunks and meta object a failed copyOrMove
+// already created at the destination, using the original object o to find
+// where each one came from. For a copy, o is untouched at the source, so
+// the new objects are simply deleted. For a move, o's chunks no longer
+// exist at the source, so the new objects are moved back there instead, to
+// avoid losing data that would otherwise only exist at the destination.
+func (f *Fs) rollbackCopyOrMove(ctx context.Context, opName string, o *Object, metaObject fs.Object, newChunks []fs.Object) {
+	for i, newChunk := range newChunks {
+		f.rollbackChunk(ctx, opName, o.chunks[i], newChunk)
+	}
+	if metaObject != nil {
+		f.rollbackChunk(ctx, opName, o.main, metaObject)
+	}
+}
+
+// rollbackChunk undoes a single chunk or meta object that a failed copy or
+// move already created at the destination, given the original object orig
+// it was copied or moved from.
+func (f *Fs) rollbackChunk(ctx context.Context, opName string, orig, created fs.Object) {
+	if opName != "move" {
+		silentlyRemove(ctx, created)
+		return
+	}
+	if _, err := operations.Move(ctx, f.base, nil, orig.Remote(), created); err != nil {
+		fs.Errorf(created, "Failed to move chunk back to %q after failed %s: %v", orig.Remote(), opName, err)
+	}
 }
 
 type copyMoveFn func(context.Context, fs.Object, string) (fs.Object, error)
