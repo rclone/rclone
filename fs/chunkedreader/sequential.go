@@ -93,11 +93,10 @@ func (cr *sequential) Read(p []byte) (n int, err error) {
 		if err != nil {
 			if err == io.EOF || err == io.ErrUnexpectedEOF {
 				// ReadFull also reports healthy short final chunks as unexpected EOF.
-				// Keep normal EOF only when no known bytes remain.
-				if cr.expectedSize >= 0 && cr.offset < cr.expectedSize {
+				// An unknown (negative) size cannot prove that bytes are missing.
+				err = io.EOF
+				if cr.offset < cr.expectedSize {
 					err = io.ErrUnexpectedEOF
-				} else {
-					err = io.EOF
 				}
 			}
 			return
@@ -219,7 +218,7 @@ func (cr *sequential) openRange() error {
 	if err != nil {
 		return err
 	}
-	// Some backends learn the size only after opening the source.
+	// Capture sizes learned on Open before another chunk can refresh them.
 	if cr.expectedSize < 0 {
 		cr.expectedSize = cr.o.Size()
 	}

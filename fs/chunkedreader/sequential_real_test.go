@@ -16,6 +16,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/chunkedreader"
 	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/stretchr/testify/require"
 )
 
@@ -48,9 +49,7 @@ func TestSequentialRealFileEOF(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
 			dir := t.TempDir()
-			payload := make([]byte, tc.size)
-			_, err := rand.New(rand.NewSource(42)).Read(payload)
-			require.NoError(t, err)
+			payload := []byte(random.StringFn(tc.size, rand.New(rand.NewSource(42))))
 			path := filepath.Join(dir, "payload")
 			require.NoError(t, os.WriteFile(path, payload, 0600))
 			f, err := fs.NewFs(ctx, dir)
@@ -92,9 +91,7 @@ func TestSequentialHTTPSizeRefresh(t *testing.T) {
 		t.Run("no-head="+noHead, func(t *testing.T) {
 			ctx := context.Background()
 			dir := t.TempDir()
-			payload := make([]byte, 4096)
-			_, err := rand.New(rand.NewSource(42)).Read(payload)
-			require.NoError(t, err)
+			payload := []byte(random.StringFn(4096, rand.New(rand.NewSource(42))))
 			path := filepath.Join(dir, "payload")
 			require.NoError(t, os.WriteFile(path, payload, 0600))
 			server := httptest.NewServer(http.FileServer(http.Dir(dir)))
