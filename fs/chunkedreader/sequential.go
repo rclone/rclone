@@ -17,6 +17,7 @@ type sequential struct {
 	ctx              context.Context
 	mu               sync.Mutex    // protects following fields
 	o                fs.Object     // source to read from
+	expectedSize     int64         // fixed once known: reopening chunks can refresh o.Size and hide truncation
 	rc               io.ReadCloser // reader for the current open chunk
 	offset           int64         // offset the next Read will start. -1 forces a reopen of o
 	chunkOffset      int64         // beginning of the current or next chunk
@@ -32,6 +33,7 @@ func newSequential(ctx context.Context, o fs.Object, initialChunkSize int64, max
 	return &sequential{
 		ctx:              ctx,
 		o:                o,
+		expectedSize:     o.Size(),
 		offset:           -1,
 		chunkSize:        initialChunkSize,
 		initialChunkSize: initialChunkSize,
@@ -90,8 +92,9 @@ func (cr *sequential) Read(p []byte) (n int, err error) {
 		cr.offset += int64(rn)
 		if err != nil {
 			if err == io.EOF || err == io.ErrUnexpectedEOF {
-				// Only a short read at the advertised end is a normal EOF.
-				if size := cr.o.Size(); size >= 0 && cr.offset < size {
+				// ReadFull also reports healthy short final chunks as unexpected EOF.
+				// Keep normal EOF only when no known bytes remain.
+				if cr.expectedSize >= 0 && cr.offset < cr.expectedSize {
 					err = io.ErrUnexpectedEOF
 				} else {
 					err = io.EOF
@@ -215,6 +218,10 @@ func (cr *sequential) openRange() error {
 	}
 	if err != nil {
 		return err
+	}
+	// Some backends learn the size only after opening the source.
+	if cr.expectedSize < 0 {
+		cr.expectedSize = cr.o.Size()
 	}
 	return cr.resetReader(rc, offset)
 }
