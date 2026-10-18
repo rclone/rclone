@@ -100,7 +100,8 @@ sizes of any files, and some files that don't exist may be in the listing.`,
 
 When HEAD requests are disabled, rclone normally reports an unknown file size.
 Set this option to a non-negative value to report that size for every file,
-including 0. Leave it at -1 to keep reporting an unknown size.
+including 0. Leave it unset (the default, shown as "off") to keep reporting
+an unknown size.
 
 The configured size is authoritative. If it does not match the actual file
 size, transfers may fail their size check and retry unless --ignore-size is
