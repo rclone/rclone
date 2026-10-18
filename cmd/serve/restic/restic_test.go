@@ -229,6 +229,28 @@ func TestServeErrors(t *testing.T) {
 	checkRequest(t, router.ServeHTTP, req, []wantFunc{wantCode(http.StatusNotFound)})
 }
 
+func TestDeleteErrors(t *testing.T) {
+	ctx := context.Background()
+	// setup rclone with a local backend in a temporary directory
+	tempdir := t.TempDir()
+	opt := newOpt()
+
+	// make a new file system in the temp dir
+	f := &newObjectErrorFs{Fs: cmd.NewFsSrc([]string{tempdir})}
+	s, err := newServer(ctx, f, &opt)
+	require.NoError(t, err)
+	router := s.server.Router()
+
+	// a lookup failure that is not "not found" must be a 500 so
+	// restic retries the delete instead of treating it as final
+	f.err = errors.New("oops")
+	req := newRequest(t, "DELETE", "/test/locks/0123456789abcdef", nil)
+	checkRequest(t, router.ServeHTTP, req, []wantFunc{wantCode(http.StatusInternalServerError)})
+
+	f.err = fs.ErrorObjectNotFound
+	checkRequest(t, router.ServeHTTP, req, []wantFunc{wantCode(http.StatusNotFound)})
+}
+
 func TestRc(t *testing.T) {
 	servetest.TestRc(t, rc.Params{
 		"type": "restic",
