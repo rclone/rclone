@@ -1,6 +1,7 @@
 package filter
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -163,8 +164,11 @@ func TestGlobToDirGlobs(t *testing.T) {
 		{`a/b/*.{jpg,png,gif}`, []string{"a/b/", "a/"}},
 		{`/a/{jpg,png,gif}/*.{jpg,png,gif}`, []string{"/a/{jpg,png,gif}/", "/a/", "/"}},
 		{`a/{b,{c,d}}/*.jpg`, []string{"/**"}},
-		{`a/{a,a*b,a**c}/d/`, []string{"/**"}},
-		{`/a/{a,a*b,a/c,d}/d/`, []string{"/**"}},
+		{`a/{b\/c,d}/e`, []string{"/**"}},
+		{`a/{[b/c],d}/e`, []string{"/**"}},
+		{`a/{a,a*b,a**c}/d/`, []string{"a/a/d/", "a/a/", "a/", "a/a*b/d/", "a/a*b/", "a/a**c/d/", "a/a**c/", "a/a**/"}},
+		{`/a/{a,a*b,a/c,d}/d/`, []string{"/a/a/d/", "/a/a/", "/a/", "/", "/a/a*b/d/", "/a/a*b/", "/a/a/c/d/", "/a/a/c/", "/a/d/d/", "/a/d/"}},
+		{`/ssh/{config,vault/keys/**}`, []string{"/ssh/", "/", "/ssh/vault/keys/**/", "/ssh/vault/keys/", "/ssh/vault/"}},
 		{`/a/{{.*}}/d/`, []string{"/**"}},
 		{`**`, []string{"**/"}},
 		{`a**`, []string{"a**/"}},
@@ -188,5 +192,19 @@ func TestGlobToDirGlobs(t *testing.T) {
 		assert.NoError(t, err)
 		got := globToDirGlobs(test.in)
 		assert.Equal(t, test.want, got, test.in)
+	}
+}
+
+func TestGlobToDirGlobsExpansionLimit(t *testing.T) {
+	// 6 path brace groups expand to exactly maxPathBraceGlobs globs
+	glob := strings.Repeat(`{a,b/}`, 6) + `c`
+	assert.Len(t, expandPathBraceGlobs(glob), maxPathBraceGlobs)
+	assert.NotEqual(t, []string{"/**"}, globToDirGlobs(glob))
+
+	// Any more and we fall back to looking in all directories
+	for _, n := range []int{7, 20, 100} {
+		glob := strings.Repeat(`{a,b/}`, n) + `c`
+		assert.Nil(t, expandPathBraceGlobs(glob), n)
+		assert.Equal(t, []string{"/**"}, globToDirGlobs(glob), n)
 	}
 }
