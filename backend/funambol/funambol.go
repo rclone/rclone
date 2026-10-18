@@ -169,6 +169,13 @@ type Fs struct {
 
 	auth    *authState   // shared session state (pointer so *Fs stays copyable)
 	uploads *uploadCache // items uploaded too recently to be listed
+	limit   *uploadLimit // largest file the server accepts
+}
+
+// uploadLimit holds the largest file size the server accepts, read once.
+type uploadLimit struct {
+	once sync.Once
+	size int64 // 0 if unknown
 }
 
 // recentUploadTTL is how long a finished upload stays in the uploadCache.
@@ -1096,6 +1103,23 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	return usage, nil
 }
 
+// maxUploadSize returns the largest file size the server accepts, or 0 if it
+// is unknown.
+func (f *Fs) maxUploadSize(ctx context.Context) int64 {
+	f.limit.once.Do(func() {
+		var res api.SystemInformation
+		opts := rest.Opts{Method: "GET", Path: "/sapi/system/information", Parameters: url.Values{"action": {"get"}}}
+		if err := f.callJSON(ctx, &opts, nil, &res); err != nil {
+			fs.Debugf(f, "couldn't read the upload size limit: %v", err)
+			return
+		}
+		if mb, err := strconv.ParseFloat(res.MaxUploadSizeMB, 64); err == nil && mb > 0 {
+			f.limit.size = int64(mb * 1024 * 1024)
+		}
+	})
+	return f.limit.size
+}
+
 // DirCacheFlush resets the directory cache
 func (f *Fs) DirCacheFlush() { f.dirCache.ResetRoot() }
 
@@ -1464,6 +1488,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if size < 0 {
 		return errors.New("funambol: can't upload unknown-sized objects")
 	}
+	if limit := o.fs.maxUploadSize(ctx); limit > 0 && size > limit {
+		return fserrors.NoRetryError(fmt.Errorf("funambol: file size %v is over the server limit of %v - use the chunker backend to split it", fs.SizeSuffix(size), fs.SizeSuffix(limit)))
+	}
 	leaf, dirID, err := o.fs.dirCache.FindPath(ctx, o.remote, true)
 	if err != nil {
 		return err
@@ -1656,6 +1683,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		pacer:   fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 		auth:    new(authState),
 		uploads: newUploadCache(),
+		limit:   new(uploadLimit),
 	}
 	f.features = (&fs.Features{
 		CaseInsensitive:         true,

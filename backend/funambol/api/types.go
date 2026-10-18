@@ -187,6 +187,13 @@ type StorageSpace struct {
 	} `json:"data"`
 }
 
+// SystemInformation is returned by /sapi/system/information?action=get.  It
+// has no "data" wrapper.
+type SystemInformation struct {
+	Status
+	MaxUploadSizeMB string `json:"sapi.upload.max-size-in-mb"` // e.g. "4096"
+}
+
 // ---- request bodies (all wrapped in {"data": …}) ----
 
 // CopyFileRequest copies a generic file into a folder using numeric IDs.

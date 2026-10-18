@@ -253,6 +253,10 @@ extension changes, rclone uses server-side copy followed by deletion instead.
 File operations wait up to two minutes for server-side validation and metadata
 to become available. Existing destinations are removed before replacement.
 
+The server limits the size of one file (4 GiB on O2 Spain). The backend reads
+the limit from the server and refuses a bigger file before the upload starts.
+To store bigger files, wrap the backend with [chunker](/chunker/).
+
 The backend can be wrapped by [chunker](/chunker/) and then [crypt](/crypt/).
 Server-side copy and move do not encrypt existing plaintext files; migrating
 those files to crypt still requires downloading and uploading their contents.
