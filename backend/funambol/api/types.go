@@ -84,6 +84,7 @@ type Item struct {
 	MediaType        string      `json:"mediatype"` // picture|video|audio|file
 	Status           string      `json:"status"`
 	FolderID         ID          `json:"folderid"`
+	Folder           ID          `json:"folder,omitempty"` // older generic-media parent field
 	Date             int64       `json:"date"`             // upload date, epoch millis
 	CreationDate     int64       `json:"creationdate"`     // epoch millis
 	ModificationDate int64       `json:"modificationdate"` // epoch millis
@@ -157,6 +158,15 @@ type UploadMetadataResponse struct {
 	ID ID `json:"id"` // GUID to send in the bytes request
 }
 
+// CopyFileResponse identifies the new file created by a server-side copy.
+type CopyFileResponse struct {
+	Status
+	Data struct {
+		ID   ID     `json:"id"`
+		Name string `json:"name"`
+	} `json:"data"`
+}
+
 // UploadResponse is returned by /sapi/upload/{type}?action=save
 type UploadResponse struct {
 	Status
@@ -178,6 +188,25 @@ type StorageSpace struct {
 }
 
 // ---- request bodies (all wrapped in {"data": …}) ----
+
+// CopyFileRequest copies a generic file into a folder using numeric IDs.
+type CopyFileRequest struct {
+	Data struct {
+		ID       json.Number `json:"id"`
+		ParentID json.Number `json:"parentid"`
+		Name     string      `json:"name"`
+	} `json:"data"`
+}
+
+// MoveFileRequest updates an existing file's name, parent and modification time.
+type MoveFileRequest struct {
+	Data struct {
+		ID               ID          `json:"id"`
+		Name             string      `json:"name"`
+		FolderID         json.Number `json:"folderid"`
+		ModificationDate string      `json:"modificationdate"`
+	} `json:"data"`
+}
 
 // SaveFolderRequest creates / renames / moves a folder.  Parent is a *ID so it
 // can be omitted on rename.

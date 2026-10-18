@@ -179,7 +179,7 @@ const recentUploadTTL = 5 * time.Minute
 // deletes its lock files within the same second) would otherwise miss it.
 type uploadCache struct {
 	mu    sync.Mutex
-	items map[string]uploadEntry // keyed by lower-cased absolute path
+	items map[string]uploadEntry // keyed by lower-cased absolute path; empty IDs mark removals
 }
 
 type uploadEntry struct {
@@ -209,17 +209,32 @@ func (c *uploadCache) get(p string) (api.Item, bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	e, ok := c.items[strings.ToLower(p)]
-	if !ok || time.Since(e.at) > recentUploadTTL {
+	if !ok || e.item.ID == "" || time.Since(e.at) > recentUploadTTL {
 		return api.Item{}, false
 	}
 	return e.item, true
 }
 
-// remove forgets the item uploaded to p.
+// remove hides stale listings of a removed or moved item until indexing catches up.
 func (c *uploadCache) remove(p string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	delete(c.items, strings.ToLower(p))
+	c.items[strings.ToLower(p)] = uploadEntry{at: time.Now()}
+}
+
+// snapshot returns recent writes and removals, pruning expired entries.
+func (c *uploadCache) snapshot() map[string]uploadEntry {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	items := make(map[string]uploadEntry, len(c.items))
+	for p, e := range c.items {
+		if time.Since(e.at) > recentUploadTTL {
+			delete(c.items, p)
+		} else {
+			items[p] = e
+		}
+	}
+	return items
 }
 
 // clear forgets every item.  Directory moves and purges call it, since they
@@ -394,7 +409,17 @@ func (f *Fs) callJSON(ctx context.Context, opts *rest.Opts, request, response an
 			if v := reflect.ValueOf(response); v.Kind() == reflect.Pointer && !v.IsNil() {
 				v.Elem().SetZero()
 			}
-			resp, err = f.srv.CallJSON(ctx, opts, request, response)
+			requestOpts := opts
+			if opts.GetBody != nil {
+				body, bodyErr := opts.GetBody()
+				if bodyErr != nil {
+					return false, bodyErr
+				}
+				defer fs.CheckClose(body, &err)
+				requestOpts = opts.Copy()
+				requestOpts.Body = body
+			}
+			resp, err = f.srv.CallJSON(ctx, requestOpts, request, response)
 			err = redactKey(err)
 			if retry, rErr := shouldRetry(ctx, resp, err); retry || err != nil {
 				return retry, rErr
@@ -696,11 +721,19 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		entries = append(entries, fs.NewDir(remote, time.UnixMilli(fl.Date)).SetID(fl.ID.String()))
 	}
 	var iErr error
+	recent := f.uploads.snapshot()
 	err = f.listMedia(ctx, dirID, func(item *api.Item) {
 		if item.Name == "" {
 			return
 		}
 		remote := path.Join(dir, f.opt.Enc.ToStandardName(item.Name))
+		key := strings.ToLower(f.absPath(remote))
+		if cached, ok := recent[key]; ok {
+			if cached.item.ID == "" || cached.item.ID != item.ID {
+				return
+			}
+			delete(recent, key)
+		}
 		o, oErr := f.newObjectWithInfo(ctx, remote, item)
 		if oErr != nil {
 			iErr = oErr
@@ -713,6 +746,17 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 	if iErr != nil {
 		return nil, iErr
+	}
+	for key, e := range recent {
+		if e.item.ID == "" || path.Dir(key) != strings.ToLower(path.Clean(f.absPath(dir))) {
+			continue
+		}
+		remote := path.Join(dir, f.opt.Enc.ToStandardName(e.item.Name))
+		o, err := f.newObjectWithInfo(ctx, remote, &e.item)
+		if err != nil {
+			return nil, err
+		}
+		entries = append(entries, o)
 	}
 	return entries, nil
 }
@@ -737,6 +781,9 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 }
 
 func (f *Fs) readMetaDataForPath(ctx context.Context, remote string) (*api.Item, error) {
+	if cached, ok := f.uploads.snapshot()[strings.ToLower(f.absPath(remote))]; ok && cached.item.ID == "" {
+		return nil, fs.ErrorObjectNotFound
+	}
 	leaf, dirID, err := f.dirCache.FindPath(ctx, remote, false)
 	if err != nil {
 		if err == fs.ErrorDirNotFound {
@@ -1067,6 +1114,199 @@ func (f *Fs) saveFolder(ctx context.Context, id, name string, parent *string) er
 	return f.callJSON(ctx, &opts, &req, &res)
 }
 
+// waitForFile waits for validation and, after a move/copy, the expected metadata.
+func (f *Fs) waitForFile(ctx context.Context, id, name, folderID string, size int64) (*api.Item, error) {
+	for {
+		items, err := f.getMediaByIDs(ctx, []string{id}, []string{"name", "size", "url", "folderid", "modificationdate"})
+		if err != nil {
+			return nil, err
+		}
+		for _, item := range items {
+			if item.ID.String() != id {
+				continue
+			}
+			if item.FolderID == "" {
+				item.FolderID = item.Folder
+			}
+			if item.MediaType != "" && item.MediaType != uploadMediaType {
+				return &item, nil
+			}
+			if (item.Status == "U" || item.Status == "N") && item.URL != "" &&
+				(name == "" || item.Name == name) && (folderID == "" || item.FolderID.String() == folderID) &&
+				(size < 0 || item.Size == size) {
+				return &item, nil
+			}
+		}
+		if err := waitFileOperation(ctx); err != nil {
+			return nil, fmt.Errorf("waiting for file %s validation or metadata: %w", id, err)
+		}
+	}
+}
+
+func waitFileOperation(ctx context.Context) error {
+	timer := time.NewTimer(time.Second)
+	defer timer.Stop()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		return nil
+	}
+}
+
+// callFileOperation also retries validation races, within the operation's deadline.
+func (f *Fs) callFileOperation(ctx context.Context, opts *rest.Opts, req, res any) error {
+	for {
+		err := f.callJSON(ctx, opts, req, res)
+		var ae *api.Error
+		if !errors.As(err, &ae) || ae.Code != "MED-1017" {
+			return err
+		}
+		if err := waitFileOperation(ctx); err != nil {
+			return err
+		}
+	}
+}
+
+// fileOperationSource rejects other accounts and untested media types before any writes.
+func (f *Fs) fileOperationSource(ctx context.Context, src fs.Object, cant error) (*Object, *api.Item, error) {
+	o, ok := src.(*Object)
+	if !ok || o.fs.name != f.name || o.fs.opt.Endpoint != f.opt.Endpoint || o.fs.rootID == "" || o.fs.rootID != f.rootID {
+		return nil, nil, cant
+	}
+	if err := o.readMetaData(ctx); err != nil {
+		return nil, nil, err
+	}
+	if id, err := strconv.ParseInt(o.id, 10, 64); err != nil || id <= 0 {
+		return nil, nil, errors.New("invalid source media ID")
+	}
+	item, err := o.fs.waitForFile(ctx, o.id, "", "", -1)
+	if err != nil {
+		return nil, nil, err
+	}
+	if item.MediaType != "" && item.MediaType != uploadMediaType {
+		return nil, nil, cant
+	}
+	return o, item, nil
+}
+
+// removeFileDestination prevents SAPI from silently adding a duplicate-name suffix.
+func (f *Fs) removeFileDestination(ctx context.Context, remote, dirID, leaf, sourceID string) error {
+	ids := []string{}
+	if cached, ok := f.uploads.get(f.absPath(remote)); ok && cached.ID.String() != sourceID {
+		ids = append(ids, cached.ID.String())
+	}
+	if err := f.listMedia(ctx, dirID, func(item *api.Item) {
+		id := item.ID.String()
+		if id != "" && id != sourceID && strings.EqualFold(f.opt.Enc.ToStandardName(item.Name), leaf) && !slices.Contains(ids, id) {
+			ids = append(ids, id)
+		}
+	}); err != nil {
+		return err
+	}
+	if len(ids) != 0 {
+		if err := f.deleteMedia(ctx, ids...); err != nil {
+			return err
+		}
+		f.uploads.remove(f.absPath(remote))
+	}
+	return nil
+}
+
+// Copy copies generic files on the same configured remote without transferring their contents.
+// Unsupported sources return fs.ErrorCantCopy.
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	defer cancel()
+	o, item, err := f.fileOperationSource(ctx, src, fs.ErrorCantCopy)
+	if err != nil {
+		return nil, err
+	}
+	leaf, dirID, err := f.dirCache.FindPath(ctx, remote, true)
+	if err != nil {
+		return nil, err
+	}
+	name := f.opt.Enc.FromStandardName(leaf)
+	if item.FolderID.String() == dirID && strings.EqualFold(item.Name, name) {
+		return nil, errors.New("can't copy a file onto itself")
+	}
+	if err := f.removeFileDestination(ctx, remote, dirID, leaf, o.id); err != nil {
+		return nil, err
+	}
+	var req api.CopyFileRequest
+	req.Data.ID, req.Data.ParentID, req.Data.Name = json.Number(o.id), json.Number(dirID), name
+	var res api.CopyFileResponse
+	opts := rest.Opts{Method: "POST", Path: "/sapi/media/file", Parameters: url.Values{"action": {"copy"}}}
+	if err := f.callFileOperation(ctx, &opts, &req, &res); err != nil {
+		return nil, fmt.Errorf("copy file: %w", err)
+	}
+	id := res.Data.ID.String()
+	if n, err := strconv.ParseInt(id, 10, 64); err != nil || n <= 0 || id == o.id || res.Data.Name != name {
+		return nil, fmt.Errorf("copy file: invalid result (ID %q, name %q)", id, res.Data.Name)
+	}
+	copied, err := f.waitForFile(ctx, id, name, dirID, item.Size)
+	if err != nil {
+		return nil, err
+	}
+	f.uploads.put(f.absPath(remote), *copied)
+	return f.newObjectWithInfo(ctx, remote, copied)
+}
+
+// Move moves generic files on the same configured remote using metadata only.
+// Extension changes return fs.ErrorCantMove so rclone can use server-side copy/delete.
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	defer cancel()
+	o, item, err := f.fileOperationSource(ctx, src, fs.ErrorCantMove)
+	if err != nil {
+		return nil, err
+	}
+	name := f.opt.Enc.FromStandardName(path.Base(remote))
+	// SAPI silently retains the old extension when updating metadata.
+	if path.Ext(item.Name) != path.Ext(name) {
+		return nil, fs.ErrorCantMove
+	}
+	leaf, dirID, err := f.dirCache.FindPath(ctx, remote, true)
+	if err != nil {
+		return nil, err
+	}
+	if item.FolderID.String() == dirID && item.Name == name {
+		return f.newObjectWithInfo(ctx, remote, item)
+	}
+	if err := f.removeFileDestination(ctx, remote, dirID, leaf, o.id); err != nil {
+		return nil, err
+	}
+	var req api.MoveFileRequest
+	req.Data.ID, req.Data.Name, req.Data.FolderID = api.ID(o.id), name, json.Number(dirID)
+	req.Data.ModificationDate = item.ModTime().UTC().Format("20060102T150405Z")
+	encoded, err := json.Marshal(&req)
+	if err != nil {
+		return nil, err
+	}
+	body := url.Values{"data": {string(encoded)}}.Encode()
+	opts := rest.Opts{
+		Method: "POST", Path: "/sapi/upload/file", Parameters: url.Values{"action": {"save-metadata"}},
+		ContentType: "application/x-www-form-urlencoded;charset=UTF-8",
+		GetBody:     func() (io.ReadCloser, error) { return io.NopCloser(strings.NewReader(body)), nil },
+	}
+	var res api.UploadMetadataResponse
+	if err := f.callFileOperation(ctx, &opts, nil, &res); err != nil {
+		return nil, fmt.Errorf("move file: %w", err)
+	}
+	if res.ID.String() != o.id {
+		return nil, errors.New("move file: server returned a different media ID")
+	}
+	moved, err := f.waitForFile(ctx, o.id, name, dirID, item.Size)
+	if err != nil {
+		return nil, err
+	}
+	o.fs.uploads.remove(o.fs.absPath(o.remote))
+	f.uploads.remove(o.fs.absPath(o.remote))
+	o.fs.uploads.put(f.absPath(remote), *moved)
+	f.uploads.put(f.absPath(remote), *moved)
+	return f.newObjectWithInfo(ctx, remote, moved)
+}
+
 // DirMove moves and/or renames the directory srcRemote in srcFs to dstRemote in
 // f using a server-side folder save.
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
@@ -1199,15 +1439,23 @@ func (o *Object) fetchURL(ctx context.Context) error {
 	if o.id == "" {
 		return errors.New("can't download - no URL")
 	}
-	items, err := o.fs.getMediaByIDs(ctx, []string{o.id}, []string{"url"})
-	if err != nil {
-		return err
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	defer cancel()
+	for {
+		items, err := o.fs.getMediaByIDs(ctx, []string{o.id}, []string{"url"})
+		if err != nil {
+			return err
+		}
+		for _, item := range items {
+			if item.ID.String() == o.id && item.URL != "" {
+				o.url = item.URL
+				return nil
+			}
+		}
+		if err := waitFileOperation(ctx); err != nil {
+			return fmt.Errorf("waiting for download URL: %w", err)
+		}
 	}
-	if len(items) == 0 || items[0].URL == "" {
-		return errors.New("can't download - no URL")
-	}
-	o.url = items[0].URL
-	return nil
 }
 
 // Update the object with the contents of the io.Reader
@@ -1473,6 +1721,8 @@ var (
 	_ fs.CleanUpper      = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.DirMover        = (*Fs)(nil)
+	_ fs.Copier          = (*Fs)(nil)
+	_ fs.Mover           = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.IDer            = (*Object)(nil)
