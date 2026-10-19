@@ -109,6 +109,27 @@ func TestDirTagOnDir(t *testing.T) {
 	}
 }
 
+// The date in the name comes from the clock when Path runs, so the test
+// accepts the date before and after the call (a minute can end between them).
+func TestDate(t *testing.T) {
+	const path = "stories/The Quick Brown Fox!.txt"
+	for _, test := range []struct {
+		flag   string
+		layout string
+	}{
+		{"date=-{YYYYMMDD}", "20060102"},
+		{"date=-{macfriendlytime}", "2006-01-02 0304PM"},
+	} {
+		ctx, err := newOptions(test.flag)
+		require.NoError(t, err)
+
+		before := time.Now().Local()
+		got := Path(ctx, path, false)
+		after := time.Now().Local()
+		assert.Contains(t, []string{path + "-" + before.Format(test.layout), path + "-" + after.Format(test.layout)}, got, test.flag)
+	}
+}
+
 func TestVarious(t *testing.T) {
 	for _, test := range []struct {
 		path  string
@@ -138,8 +159,6 @@ func TestVarious(t *testing.T) {
 		{"stories/photo.jpeg", "stories/photo.jpeg", []string{"all,truncate_keep_extension=3"}},
 		{"stories/a.tar.gz", "stories/a.tar.gz", []string{"all,truncate_keep_extension=2"}},
 		{"stories/The Quick Brown Fox!.txt", "stories/The Quick Brown Fox!.txt", []string{"all,command=echo"}},
-		{"stories/The Quick Brown Fox!.txt", "stories/The Quick Brown Fox!.txt-" + time.Now().Local().Format("20060102"), []string{"date=-{YYYYMMDD}"}},
-		{"stories/The Quick Brown Fox!.txt", "stories/The Quick Brown Fox!.txt-" + time.Now().Local().Format("2006-01-02 0304PM"), []string{"date=-{macfriendlytime}"}},
 		{"stories/The Quick Brown Fox!.txt", "ababababababab/ababab ababababab ababababab ababab!abababab", []string{"all,regex=[\\.\\w]/ab"}},
 	} {
 		ctx, err := newOptions(test.flags...)
