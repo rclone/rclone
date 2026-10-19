@@ -260,6 +260,98 @@ func TestOpenRetriesAfterForbidden(t *testing.T) {
 	assert.Equal(t, int32(2), downloads.Load())
 }
 
+// genByte is the content of the synthetic file served by TestOpenRangeBeyondServerLimit.
+func genByte(i int64) byte { return byte(i % 251) }
+
+// The download server answers a Range starting at 2,000,000,000 or later with
+// two zero bytes.  Open must not send such a range, and must still return the
+// bytes that were asked for.
+func TestOpenRangeBeyondServerLimit(t *testing.T) {
+	const size = int64(2000000300)
+	var badRanges atomic.Int32
+	var srvURL string
+	f, srv := newSAPIServer(t, map[string]http.HandlerFunc{
+		"/dl/7": func(w http.ResponseWriter, r *http.Request) {
+			ro, err := fs.ParseRangeOption(r.Header.Get("Range"))
+			require.NoError(t, err)
+			if ro.Start >= 2000000000 { // the real server's limit, independent of maxRangeStart
+				badRanges.Add(1)
+				w.Header().Set("Content-Range", fmt.Sprintf("bytes 1-2/%d", size))
+				w.WriteHeader(http.StatusPartialContent)
+				_, _ = w.Write([]byte{0, 0})
+				return
+			}
+			end := size - 1
+			if ro.End >= 0 && ro.End < end {
+				end = ro.End
+			}
+			w.Header().Set("Content-Range", fmt.Sprintf("bytes %d-%d/%d", ro.Start, end, size))
+			w.WriteHeader(http.StatusPartialContent)
+			buf := make([]byte, 0, end-ro.Start+1)
+			for i := ro.Start; i <= end; i++ {
+				buf = append(buf, genByte(i))
+			}
+			_, _ = w.Write(buf)
+		},
+	})
+	srvURL = srv.URL
+	o := &Object{fs: f, remote: "big", id: "7", hasMetaData: true, size: size, url: srvURL + "/dl/7?x=1"}
+
+	want := func(start, end int64) []byte {
+		b := make([]byte, 0, end-start+1)
+		for i := start; i <= end; i++ {
+			b = append(b, genByte(i))
+		}
+		return b
+	}
+	for _, tc := range []struct {
+		name       string
+		opt        fs.OpenOption
+		start, end int64
+	}{
+		{"below the limit", &fs.RangeOption{Start: 1999999900, End: 1999999999}, 1999999900, 1999999999},
+		{"crossing the limit", &fs.RangeOption{Start: 1999999900, End: 2000000099}, 1999999900, 2000000099},
+		{"exactly at the limit", &fs.RangeOption{Start: 2000000000, End: 2000000099}, 2000000000, 2000000099},
+		{"beyond the limit", &fs.RangeOption{Start: 2000000100, End: 2000000199}, 2000000100, 2000000199},
+		{"open ended", &fs.RangeOption{Start: 2000000100, End: -1}, 2000000100, size - 1},
+		{"last bytes", &fs.RangeOption{Start: -1, End: 50}, size - 50, size - 1},
+		{"seek", &fs.SeekOption{Offset: 2000000250}, 2000000250, size - 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			rc, err := o.Open(context.Background(), tc.opt)
+			require.NoError(t, err)
+			got, err := io.ReadAll(rc)
+			require.NoError(t, rc.Close())
+			require.NoError(t, err)
+			assert.Equal(t, want(tc.start, tc.end), got)
+		})
+	}
+	assert.Zero(t, badRanges.Load(), "a range beyond the server limit was sent")
+}
+
+func TestClampRangeStart(t *testing.T) {
+	in := []fs.OpenOption{&fs.HTTPOption{Key: "k", Value: "v"}, &fs.RangeOption{Start: 2500000000, End: 2500000099}}
+	out, skip := clampRangeStart(in)
+	assert.Equal(t, int64(2500000000-maxRangeStart), skip)
+	assert.Equal(t, &fs.RangeOption{Start: maxRangeStart, End: 2500000099}, out[1])
+	assert.Equal(t, &fs.RangeOption{Start: 2500000000, End: 2500000099}, in[1], "input must not be modified")
+
+	same := []fs.OpenOption{&fs.RangeOption{Start: maxRangeStart, End: -1}}
+	out, skip = clampRangeStart(same)
+	assert.Zero(t, skip)
+	assert.Equal(t, same, out)
+
+	out, skip = clampRangeStart(nil)
+	assert.Zero(t, skip)
+	assert.Empty(t, out)
+}
+
+// Multi-thread downloads would read ranges beyond the server limit.
+func TestNoMultiThreading(t *testing.T) {
+	f, _ := newSAPIServer(t, nil)
+	assert.True(t, f.Features().NoMultiThreading)
+}
+
 func TestDownloadURL(t *testing.T) {
 	f, srv := newSAPIServer(t, nil)
 	got, err := url.Parse(f.downloadURL(srv.URL + "/sapi/download/file?id=7"))

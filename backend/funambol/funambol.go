@@ -4,6 +4,7 @@
 package funambol
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -1275,8 +1276,27 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	req.Data.ID, req.Data.ParentID, req.Data.Name = json.Number(o.id), json.Number(dirID), name
 	var res api.CopyFileResponse
 	opts := rest.Opts{Method: "POST", Path: "/sapi/media/file", Parameters: url.Values{"action": {"copy"}}}
-	if err := f.callFileOperation(ctx, &opts, &req, &res); err != nil {
-		return nil, fmt.Errorf("copy file: %w", err)
+	for attempt := 0; ; attempt++ {
+		err := f.callFileOperation(ctx, &opts, &req, &res)
+		if err == nil {
+			break
+		}
+		if attempt > 0 || !isMediaExists(err) {
+			return nil, fmt.Errorf("copy file: %w", err)
+		}
+		// The destination exists although we removed any earlier one. A copy
+		// that timed out at the gateway (504) usually still completes on the
+		// server, and the retry then finds its own result.
+		adopted, aErr := f.adoptCopy(ctx, o, item, remote, dirID, leaf)
+		if aErr != nil {
+			return nil, fmt.Errorf("copy file: %w (adopting the existing destination: %v)", err, aErr)
+		}
+		if adopted != nil {
+			f.uploads.put(f.absPath(remote), *adopted)
+			return f.newObjectWithInfo(ctx, remote, adopted)
+		}
+		// Only stale destinations were found, and adoptCopy removed them.
+		res = api.CopyFileResponse{}
 	}
 	id := res.Data.ID.String()
 	if n, err := strconv.ParseInt(id, 10, 64); err != nil || n <= 0 || id == o.id || res.Data.Name != name {
@@ -1288,6 +1308,114 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	f.uploads.put(f.absPath(remote), *copied)
 	return f.newObjectWithInfo(ctx, remote, copied)
+}
+
+// copyAdoptTimeout bounds how long Copy waits for a destination that the
+// server says exists to show up in the folder listing, which lags the server.
+var copyAdoptTimeout = 2 * time.Minute
+
+// sampleSize is how many bytes sameContent compares at each sample point.
+const sampleSize = 64 * 1024
+
+// isMediaExists reports whether err is the server's "Media already exists".
+func isMediaExists(err error) bool {
+	var ae *api.Error
+	return errors.As(err, &ae) && ae.Code == "MED-1031"
+}
+
+// adoptCopy looks for the destination of a copy that the server reports as
+// already existing and returns it if it holds the same content as the
+// source, so that a copy which completed despite a gateway timeout counts
+// as done. Same-named destinations with other content are stale leftovers:
+// they are deleted and (nil, nil) is returned so that the caller copies again.
+//
+// The content is compared, not just the size, because a destination left by
+// an earlier upload of the same name can differ (encrypted data, for one,
+// differs on every run) and must never be mistaken for this copy.
+func (f *Fs) adoptCopy(ctx context.Context, o *Object, src *api.Item, remote, dirID, leaf string) (*api.Item, error) {
+	ctx, cancel := context.WithTimeout(ctx, copyAdoptTimeout)
+	defer cancel()
+	var candidates []api.Item
+	for len(candidates) == 0 {
+		if err := f.listMedia(ctx, dirID, func(item *api.Item) {
+			if item.ID.String() != o.id && strings.EqualFold(f.opt.Enc.ToStandardName(item.Name), leaf) {
+				candidates = append(candidates, *item)
+			}
+		}); err != nil {
+			return nil, err
+		}
+		if len(candidates) == 0 {
+			if err := waitFileOperation(ctx); err != nil {
+				return nil, fmt.Errorf("no existing destination listed: %w", err)
+			}
+		}
+	}
+	var stale []string
+	for i := range candidates {
+		c := &candidates[i]
+		if c.Size == src.Size {
+			cand, err := f.newObjectWithInfo(ctx, remote, c)
+			if err != nil {
+				return nil, err
+			}
+			same, err := sameContent(ctx, o, cand, src.Size)
+			if err != nil {
+				// Can't tell, so delete nothing.
+				return nil, fmt.Errorf("comparing with the existing destination: %w", err)
+			}
+			if same {
+				return f.waitForFile(ctx, c.ID.String(), f.opt.Enc.FromStandardName(leaf), dirID, src.Size)
+			}
+		}
+		stale = append(stale, c.ID.String())
+	}
+	fs.Logf(o, "Removing %d stale destination(s) named %q that differ from the source", len(stale), leaf)
+	if err := f.deleteMedia(ctx, stale...); err != nil {
+		return nil, err
+	}
+	f.uploads.remove(f.absPath(remote))
+	return nil, nil
+}
+
+// sameContent compares a and b, which both have the given size, at the
+// start, middle and end. Offsets beyond maxRangeStart are not sampled
+// because reading them means downloading everything before them.
+func sameContent(ctx context.Context, a, b fs.Object, size int64) (bool, error) {
+	var offsets []int64
+	for _, off := range []int64{0, size / 2, size - sampleSize} {
+		off = max(min(off, maxRangeStart), 0)
+		if !slices.Contains(offsets, off) {
+			offsets = append(offsets, off)
+		}
+	}
+	read := func(o fs.Object, off, n int64) (buf []byte, err error) {
+		rc, err := o.Open(ctx, &fs.RangeOption{Start: off, End: off + n - 1})
+		if err != nil {
+			return nil, err
+		}
+		defer fs.CheckClose(rc, &err)
+		buf = make([]byte, n)
+		_, err = io.ReadFull(rc, buf)
+		return buf, err
+	}
+	for _, off := range offsets {
+		n := min(sampleSize, size-off)
+		if n <= 0 {
+			continue
+		}
+		x, err := read(a, off, n)
+		if err != nil {
+			return false, err
+		}
+		y, err := read(b, off, n)
+		if err != nil {
+			return false, err
+		}
+		if !bytes.Equal(x, y) {
+			return false, nil
+		}
+	}
+	return true, nil
 }
 
 // Move moves generic files on the same configured remote using metadata only.
@@ -1424,6 +1552,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		return nil, err
 	}
 	fs.FixRangeOption(options, o.size)
+	options, skip := clampRangeStart(options)
 	// The download streams from a direct URL and so bypasses callJSON's
 	// session handling.  Replicate it and retry once, which is safe because
 	// the body hasn't been read yet: on SEC-1003 adopt the fresh key, and on
@@ -1444,6 +1573,9 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			return shouldRetry(ctx, resp, redactKey(err))
 		})
 		if err == nil {
+			if skip > 0 {
+				return &skipReader{ReadCloser: resp.Body, skip: skip}, nil
+			}
 			return resp.Body, nil
 		}
 		if attempt > 0 {
@@ -1469,6 +1601,57 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		return nil, err
 	}
 	return nil, errors.New("funambol: download authentication retry exhausted")
+}
+
+// maxRangeStart is the largest range start offset the download server
+// honours.  A Range request starting at 2,000,000,000 bytes or later is
+// answered with "Content-Range: bytes 1-2/<size>" and two zero bytes
+// instead of an error, although a range that starts below this offset may
+// run on past it.
+const maxRangeStart = 1999999999
+
+// clampRangeStart returns options with any RangeOption that starts beyond
+// maxRangeStart moved back to maxRangeStart, along with how many leading
+// bytes of the response the caller must discard to reach the requested
+// start.  The options passed in are not modified.
+func clampRangeStart(options []fs.OpenOption) (clamped []fs.OpenOption, skip int64) {
+	for i, option := range options {
+		x, ok := option.(*fs.RangeOption)
+		if !ok || x.Start <= maxRangeStart {
+			continue
+		}
+		if clamped == nil {
+			clamped = slices.Clone(options)
+		}
+		clamped[i] = &fs.RangeOption{Start: maxRangeStart, End: x.End}
+		skip = x.Start - maxRangeStart
+	}
+	if clamped == nil {
+		return options, 0
+	}
+	return clamped, skip
+}
+
+// skipReader discards the first skip bytes of the stream on the first Read.
+// The skip is done lazily so that Open returns without waiting for it.
+type skipReader struct {
+	io.ReadCloser
+	skip int64
+}
+
+// Read implements io.Reader
+func (r *skipReader) Read(p []byte) (int, error) {
+	if r.skip > 0 {
+		n, err := io.CopyN(io.Discard, r.ReadCloser, r.skip)
+		r.skip -= n
+		if err != nil {
+			if err == io.EOF {
+				err = io.ErrUnexpectedEOF
+			}
+			return 0, err
+		}
+	}
+	return r.ReadCloser.Read(p)
 }
 
 // fetchURL looks up the download URL by id.  An item known only from its
@@ -1707,6 +1890,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		// folder (e.g. when an upload is retried after a timeout), so expose
 		// that to rclone and make "rclone dedupe" usable for repair.
 		DuplicateFiles: true,
+		// Multi-thread downloads read ranges at several offsets, and the
+		// server mishandles any range starting beyond maxRangeStart; Open
+		// works around that, but only by re-reading from maxRangeStart.
+		NoMultiThreading: true,
 	}).Fill(ctx, f)
 	f.useOAuthTransport()
 

@@ -257,6 +257,13 @@ The server limits the size of one file (4 GiB on O2 Spain). The backend reads
 the limit from the server and refuses a bigger file before the upload starts.
 To store bigger files, wrap the backend with [chunker](/chunker/).
 
+The download server mishandles a range request that starts at 2,000,000,000
+bytes or later: it answers with two zero bytes instead of the data. Reads
+that start earlier are fine, including ones that continue past that offset.
+To work around this, rclone reads from byte 1,999,999,999 and discards the
+extra bytes, so seeking far into a very large file downloads (and throws away)
+up to the difference. Multi-thread downloads are disabled for the same reason.
+
 The backend can be wrapped by [chunker](/chunker/) and then [crypt](/crypt/).
 Server-side copy and move do not encrypt existing plaintext files; migrating
 those files to crypt still requires downloading and uploading their contents.
