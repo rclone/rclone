@@ -176,3 +176,24 @@ func TestConcurrentGetPut(t *testing.T) {
 	assert.Empty(t, p.free)
 	assert.Equal(t, h.opens, h.releases)
 }
+
+func TestGetRetriesOnErrRetry(t *testing.T) {
+	var p *Pool[*handle]
+	calls := 0
+	open := func(context.Context) (*handle, error) {
+		calls++
+		// Simulate a blocked open which is woken because a handle was put back
+		p.Put(&handle{id: 42}, nil)
+		return nil, ErrRetry
+	}
+	p = New(context.Background(), open, func(*handle, error) error { return nil })
+	got, err := p.Get()
+	require.NoError(t, err)
+	assert.Equal(t, 42, got.id)
+	assert.Equal(t, 1, calls)
+	select {
+	case <-p.Avail():
+	default:
+		t.Fatal("expected Avail to be signalled by Put")
+	}
+}
