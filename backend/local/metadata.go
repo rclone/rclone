@@ -5,7 +5,9 @@ import (
 	"math"
 	"os"
 	"runtime"
+	"slices"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -121,13 +123,15 @@ func (o *Object) writeMetadataToFile(m fs.Metadata) (outErr error) {
 	uid, hasUID := o.parseMetadataInt(m, "uid", 10)
 	gid, hasGID := o.parseMetadataInt(m, "gid", 10)
 	if hasUID {
-		// FIXME should read UID and GID of current user and only attempt to set it if different
 		if !hasGID {
 			gid = uid
 		}
 		if runtime.GOOS == "windows" || runtime.GOOS == "plan9" {
 			fs.Debugf(o, "Ignoring request to set ownership %o.%o on this OS", gid, uid)
+		} else if setUID, setGID := ownerToSet(uid, gid); setUID < 0 && setGID < 0 {
+			fs.Debugf(o, "Not setting ownership %d.%d: only root can", uid, gid)
 		} else {
+			uid, gid = setUID, setGID
 			if o.translatedLink {
 				err = os.Lchown(o.path, uid, gid)
 			} else {
@@ -168,4 +172,28 @@ func (o *Object) writeMetadataToFile(m fs.Metadata) (outErr error) {
 	}
 	// FIXME not parsing rdev yet
 	return outErr
+}
+
+// processGroups are the supplementary groups of this process
+var processGroups = sync.OnceValue(func() []int {
+	groups, _ := os.Getgroups()
+	return groups
+})
+
+// ownerToSet returns the uid and gid to pass to chown for the wanted
+// ownership: unchanged for root, else -1 (leave it as it is) for a uid
+// other than our own and for a group we are not a member of, which
+// only root may set.
+func ownerToSet(uid, gid int) (setUID, setGID int) {
+	euid := os.Geteuid()
+	if euid <= 0 {
+		return uid, gid
+	}
+	if uid != euid {
+		uid = -1
+	}
+	if gid != os.Getegid() && !slices.Contains(processGroups(), gid) {
+		gid = -1
+	}
+	return uid, gid
 }
