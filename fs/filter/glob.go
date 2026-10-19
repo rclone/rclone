@@ -85,6 +85,8 @@ func globToRegexp(glob string, pathMode bool, addAnchors bool, ignoreCase bool) 
 	}
 	braceDepth := 0
 	inBrackets := 0
+	bracketStart := false   // just opened a character class
+	bracketNegated := false // just read the ! of a [! character class
 	slashed := false
 	inRegexp := false    // inside {{ ... }}
 	inRegexpEnd := false // have received }} waiting for more
@@ -125,6 +127,23 @@ func globToRegexp(glob string, pathMode bool, addAnchors bool, ignoreCase bool) 
 			}
 		}
 		if inBrackets > 0 {
+			if bracketStart && c == '!' {
+				// [!...] is a negated character class in glob
+				// syntax, which is [^...] in a regexp. Like ?, it
+				// does not match the / separator in path mode.
+				bracketStart = false
+				bracketNegated = true
+				_ = re.WriteByte('^')
+				if pathMode {
+					_ = re.WriteByte('/')
+				}
+				continue
+			}
+			if bracketNegated && c == ']' {
+				return nil, fmt.Errorf("empty character class in glob %q", glob)
+			}
+			bracketStart = false
+			bracketNegated = false
 			_, _ = re.WriteRune(c)
 			if c == '[' {
 				inBrackets++
@@ -149,6 +168,7 @@ func globToRegexp(glob string, pathMode bool, addAnchors bool, ignoreCase bool) 
 		case '[':
 			_, _ = re.WriteRune(c)
 			inBrackets++
+			bracketStart = true
 		case ']':
 			return nil, fmt.Errorf("mismatched ']' in glob %q", glob)
 		case '{':

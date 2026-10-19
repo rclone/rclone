@@ -626,6 +626,25 @@ func TestNewFilterMatchesRegexp(t *testing.T) {
 	assert.False(t, f.InActive())
 }
 
+func TestNewFilterMatchesNegatedCharacterClass(t *testing.T) {
+	f, err := NewFilter(nil)
+	require.NoError(t, err)
+	add := func(s string) {
+		err := f.AddRule(s)
+		require.NoError(t, err)
+	}
+	add("+ file[!a].txt")
+	add("- *")
+	testInclude(t, f, []includeTest{
+		{"fileb.txt", 100, 0, true},
+		{"sub/fileb.txt", 100, 0, true},
+		{"filea.txt", 100, 0, false},
+		{"file!.txt", 100, 0, true},
+		{"file/.txt", 100, 0, false},
+	})
+	assert.False(t, f.InActive())
+}
+
 func TestNewFilterHashFilter(t *testing.T) {
 	const e1 = "filé1.jpg" // one of the unicode E characters
 	const e2 = "filé1.jpg"  // a different unicode E character
