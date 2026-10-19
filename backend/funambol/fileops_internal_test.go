@@ -1,11 +1,13 @@
 package funambol
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -32,11 +34,15 @@ type fileOpsFixture struct {
 	moveID       string
 	pending      bool
 	legacyParent bool
+	srv          *httptest.Server
+	content      map[string][]byte // downloadable content by item ID, see addItem
+	// copyHook, if set, may handle a copy request itself and return true.
+	copyHook func(w http.ResponseWriter, d map[string]any) bool
 }
 
 func newFileOpsFixture(t *testing.T) *fileOpsFixture {
 	t.Helper()
-	s := &fileOpsFixture{items: map[string]api.Item{}}
+	s := &fileOpsFixture{items: map[string]api.Item{}, content: map[string][]byte{}}
 	s.items["10"] = api.Item{ID: "10", Name: "source.bin", FolderID: "1", MediaType: "file", Status: "U", URL: "https://example.invalid/content", Size: 17, ModificationDate: time.Date(2026, 10, 18, 12, 34, 56, 0, time.UTC).UnixMilli()}
 	decode := func(r *http.Request) map[string]any {
 		t.Helper()
@@ -67,7 +73,15 @@ func newFileOpsFixture(t *testing.T) *fileOpsFixture {
 		}
 		return true
 	}
-	s.f, _ = newSAPIServer(t, map[string]http.HandlerFunc{
+	s.f, s.srv = newSAPIServer(t, map[string]http.HandlerFunc{
+		"/dl/": func(w http.ResponseWriter, r *http.Request) {
+			data, ok := s.content[strings.TrimPrefix(r.URL.Path, "/dl/")]
+			if !ok {
+				http.NotFound(w, r)
+				return
+			}
+			http.ServeContent(w, r, "", time.Time{}, bytes.NewReader(data))
+		},
 		"/sapi/media/folder": func(w http.ResponseWriter, r *http.Request) {
 			_, _ = io.WriteString(w, `{"data":{"folders":[]}}`)
 		},
@@ -118,6 +132,9 @@ func newFileOpsFixture(t *testing.T) *fileOpsFixture {
 			assert.IsType(t, float64(0), d["parentid"])
 			s.requests = append(s.requests, "copy")
 			if fail(w) {
+				return
+			}
+			if s.copyHook != nil && s.copyHook(w, d) {
 				return
 			}
 			item := s.items[fmt.Sprint(d["id"])]
@@ -386,6 +403,135 @@ func TestOpenWaitsForDownloadURL(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "chunker metadata", string(data))
 	assert.EqualValues(t, 2, reads.Load())
+}
+
+// addItem registers an item with downloadable content, and lists it if asked.
+func (s *fileOpsFixture) addItem(id, name, folder string, data []byte, listed bool) api.Item {
+	item := api.Item{ID: api.ID(id), Name: name, FolderID: api.ID(folder), MediaType: "file", Status: "U",
+		URL: s.srv.URL + "/dl/" + id, Size: int64(len(data)), ModificationDate: s.items["10"].ModificationDate}
+	s.items[id] = item
+	s.content[id] = data
+	if listed {
+		s.listed = append(s.listed, item)
+	}
+	return item
+}
+
+func testData(n int, seed byte) []byte {
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = byte(i*7) + seed
+	}
+	return b
+}
+
+const mediaExistsReply = `{"error":{"code":"MED-1031","message":"Media already exists"}}`
+
+// A copy that timed out at the gateway still completes on the server, and its
+// retry is then refused because the destination exists: that destination is
+// the result of the copy and is used as such.
+func TestCopyAdoptsCompletedCopy(t *testing.T) {
+	s := newFileOpsFixture(t)
+	data := testData(300000, 1)
+	s.addItem("10", "source.bin", "1", data, false)
+	s.copyHook = func(w http.ResponseWriter, d map[string]any) bool {
+		s.addItem("30", d["name"].(string), fmt.Sprint(d["parentid"]), data, true)
+		_, _ = io.WriteString(w, mediaExistsReply)
+		return true
+	}
+	dst, err := s.f.Copy(context.Background(), s.source(t), "dest/copy.dat")
+	require.NoError(t, err)
+	assert.Equal(t, "dest/copy.dat", dst.Remote())
+	assert.Equal(t, "30", dst.(*Object).id)
+	assert.Equal(t, int64(len(data)), dst.Size())
+	assert.Equal(t, []string{"copy"}, s.requests)
+	assert.Empty(t, s.deleted)
+}
+
+// A same-named destination with other content, which a lagging listing hid
+// from the removal before the copy, must not be adopted: it is removed and
+// the copy is made again.
+func TestCopyReplacesStaleDestination(t *testing.T) {
+	for name, stale := range map[string][]byte{
+		"same size, other content": testData(300000, 2),
+		"other size":               testData(1000, 1),
+	} {
+		t.Run(name, func(t *testing.T) {
+			s := newFileOpsFixture(t)
+			s.addItem("10", "source.bin", "1", testData(300000, 1), false)
+			calls := 0
+			s.copyHook = func(w http.ResponseWriter, d map[string]any) bool {
+				calls++
+				if calls > 1 {
+					return false
+				}
+				s.addItem("31", d["name"].(string), fmt.Sprint(d["parentid"]), stale, true)
+				_, _ = io.WriteString(w, mediaExistsReply)
+				return true
+			}
+			dst, err := s.f.Copy(context.Background(), s.source(t), "dest/copy.dat")
+			require.NoError(t, err)
+			assert.Equal(t, "30", dst.(*Object).id)
+			assert.Equal(t, []string{"31"}, s.deleted)
+			assert.Equal(t, []string{"copy", "copy"}, s.requests)
+		})
+	}
+}
+
+// Nothing is deleted or retried when no destination turns up to adopt.
+func TestCopyMediaExistsWithoutDestination(t *testing.T) {
+	old := copyAdoptTimeout
+	copyAdoptTimeout = 50 * time.Millisecond
+	t.Cleanup(func() { copyAdoptTimeout = old })
+	s := newFileOpsFixture(t)
+	s.addItem("10", "source.bin", "1", testData(1000, 1), false)
+	s.copyHook = func(w http.ResponseWriter, d map[string]any) bool {
+		_, _ = io.WriteString(w, mediaExistsReply)
+		return true
+	}
+	_, err := s.f.Copy(context.Background(), s.source(t), "dest/copy.dat")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "MED-1031")
+	assert.Equal(t, []string{"copy"}, s.requests)
+	assert.Empty(t, s.deleted)
+}
+
+func TestSameContent(t *testing.T) {
+	const size = 300000
+	s := newFileOpsFixture(t)
+	base := testData(size, 1)
+	open := func(id string, data []byte) fs.Object {
+		item := s.addItem(id, id+".bin", "1", data, false)
+		o, err := s.f.newObjectWithInfo(context.Background(), id+".bin", &item)
+		require.NoError(t, err)
+		return o
+	}
+	ref := open("40", base)
+	differAt := func(pos int) []byte {
+		d := bytes.Clone(base)
+		d[pos] ^= 0xff
+		return d
+	}
+	for _, tc := range []struct {
+		name string
+		data []byte
+		same bool
+	}{
+		{"identical", base, true},
+		{"differs at the start", differAt(5), false},
+		{"differs in the middle", differAt(size/2 + 100), false},
+		{"differs at the end", differAt(size - 5), false},
+		{"differs between samples", differAt(100000), true}, // not sampled, by design
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := sameContent(context.Background(), ref, open("41", tc.data), size)
+			require.NoError(t, err)
+			assert.Equal(t, tc.same, got)
+		})
+	}
+	// A short read means the content can't be compared.
+	_, err := sameContent(context.Background(), ref, open("42", base[:1000]), size)
+	assert.Error(t, err)
 }
 
 func TestDownloadURLWaitIsBounded(t *testing.T) {
