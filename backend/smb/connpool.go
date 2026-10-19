@@ -162,31 +162,135 @@ func (c *conn) mountShare(share string) (err error) {
 	return nil
 }
 
-// Get a SMB connection from the pool, or open a new one
-func (f *Fs) getConnection(ctx context.Context, share string) (c *conn, err error) {
-	accounting.LimitTPS(ctx)
+// connWaitTimeout is how long getConnection waits for a free slot when
+// --max-connections is reached before giving up with an error.
+const connWaitTimeout = 60 * time.Second
+
+// errConnWoken is returned by getConnectionWake when it stopped waiting
+// for a connection slot because its wake channel fired.
+var errConnWoken = errors.New("smb: woken while waiting for a connection")
+
+// notifyConnFree wakes one goroutine waiting for a connection slot
+func (f *Fs) notifyConnFree() {
+	select {
+	case f.connFree <- struct{}{}:
+	default:
+	}
+}
+
+// connLimit returns the --max-connections limit, 0 meaning unlimited.
+//
+// It is read on every call so a change made with rc options/set
+// applies to the running backend.
+func (f *Fs) connLimit() int {
+	if f.ci != nil {
+		return f.ci.MaxConnections
+	}
+	return f.maxConns
+}
+
+// releaseSlot gives back the slot of a connection that was closed or
+// never opened.
+func (f *Fs) releaseSlot() {
 	f.poolMu.Lock()
-	for len(f.pool) > 0 {
-		c = f.pool[0]
-		f.pool = f.pool[1:]
-		err = c.mountShare(share)
-		if err == nil {
+	f.live--
+	f.poolMu.Unlock()
+	f.notifyConnFree()
+}
+
+// Get a SMB connection from the pool, or open a new one
+//
+// When --max-connections is set, the total number of live SMB
+// connections (pooled + in use) never exceeds it: callers wait for one
+// to be returned instead of dialling another session. Servers such as
+// Windows desktops only accept around 20 sessions per client.
+//
+// Callers must not hold a connection while asking for another one,
+// or they can deadlock against each other once the limit is reached.
+func (f *Fs) getConnection(ctx context.Context, share string) (c *conn, err error) {
+	return f.getConnectionWake(ctx, share, nil)
+}
+
+// getConnectionWake is getConnection which also stops waiting for a
+// free slot, returning errConnWoken, when wake fires. This lets a caller
+// that has another way to get a connection (eg a filepool.Pool with a
+// handle returned to it) stop waiting.
+func (f *Fs) getConnectionWake(ctx context.Context, share string, wake <-chan struct{}) (c *conn, err error) {
+	accounting.LimitTPS(ctx)
+	var waitStart time.Time
+	var timer *time.Timer
+	defer func() {
+		if timer != nil {
+			timer.Stop()
+		}
+	}()
+	for {
+		var discard []*conn
+		f.poolMu.Lock()
+		for len(f.pool) > 0 {
+			c = f.pool[0]
+			f.pool = f.pool[1:]
+			err = c.mountShare(share)
+			if err == nil {
+				break
+			}
+			fs.Debugf(f, "Discarding unusable SMB connection: %v", err)
+			discard = append(discard, c)
+			f.live--
+			c = nil
+		}
+		gotSlot := false
+		limit := f.connLimit()
+		if c == nil && (limit <= 0 || f.live < limit) {
+			f.live++
+			gotSlot = true
+		}
+		f.poolMu.Unlock()
+		for _, d := range discard {
+			go func(d *conn) { _ = d.close() }(d)
+		}
+		if c != nil {
+			return c, nil
+		}
+		if gotSlot {
 			break
 		}
-		fs.Debugf(f, "Discarding unusable SMB connection: %v", err)
-		c = nil
-	}
-	f.poolMu.Unlock()
-	if c != nil {
-		return c, nil
+		if waitStart.IsZero() {
+			waitStart = time.Now()
+			fs.Debugf(f, "Waiting for a free SMB connection (limit %d)", limit)
+		} else if time.Since(waitStart) > connWaitTimeout {
+			return nil, fmt.Errorf("SMB connection limit (%d) reached: no connection became free in %v", limit, connWaitTimeout)
+		}
+		// Poll as well as waiting for a signal since the signal
+		// wakes only one of several waiters.
+		if timer == nil {
+			timer = time.NewTimer(100 * time.Millisecond)
+		} else {
+			timer.Reset(100 * time.Millisecond)
+		}
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-wake:
+			return nil, errConnWoken
+		case <-f.connFree:
+		case <-timer.C:
+		}
 	}
 	err = f.pacer.Call(func() (bool, error) {
-		c, err = f.newConnection(ctx, share)
+		if f.dialConn != nil {
+			c, err = f.dialConn(ctx, share)
+		} else {
+			c, err = f.newConnection(ctx, share)
+		}
 		if err != nil {
 			return true, err
 		}
 		return false, nil
 	})
+	if err != nil {
+		f.releaseSlot()
+	}
 	return c, err
 }
 
@@ -212,6 +316,7 @@ func (f *Fs) putConnection(pc **conn, err error) {
 			if echoErr != nil {
 				fs.Debugf(f, "Connection failed, closing: %v", echoErr)
 				_ = c.close()
+				f.releaseSlot()
 				return
 			}
 			fs.Debugf(f, "Connection OK after error: %v", err)
@@ -224,6 +329,7 @@ func (f *Fs) putConnection(pc **conn, err error) {
 		f.drain.Reset(time.Duration(f.opt.IdleTimeout)) // nudge on the pool emptying timer
 	}
 	f.poolMu.Unlock()
+	f.notifyConnFree()
 }
 
 // Drain the pool of any connections
@@ -255,6 +361,8 @@ func (f *Fs) drainPool(ctx context.Context) (err error) {
 		})
 	}
 	err = g.Wait()
+	f.live -= len(f.pool)
 	f.pool = nil
+	f.notifyConnFree()
 	return err
 }

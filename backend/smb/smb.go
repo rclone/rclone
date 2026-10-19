@@ -184,7 +184,14 @@ type Fs struct {
 	sessions atomic.Int32
 	poolMu   sync.Mutex
 	pool     []*conn
-	drain    *time.Timer // used to drain the pool when we stop using the connections
+	drain    *time.Timer    // used to drain the pool when we stop using the connections
+	live     int            // live connections (pooled + in use), under poolMu
+	ci       *fs.ConfigInfo // for --max-connections, read live so rc options/set applies
+	maxConns int            // limit used when ci is nil (tests), 0 = unlimited
+	connFree chan struct{}  // signalled when a connection is returned or closed
+
+	// dialConn, if set, replaces newConnection (used in tests)
+	dialConn func(ctx context.Context, share string) (*conn, error)
 
 	ctx context.Context
 }
@@ -227,6 +234,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}).Fill(ctx, f)
 
 	f.pacer = fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant)))
+	f.ci = fs.GetConfig(ctx)
+	f.connFree = make(chan struct{}, 1)
 	// set the pool drainer timer going
 	if opt.IdleTimeout > 0 {
 		f.drain = time.AfterFunc(time.Duration(opt.IdleTimeout), func() { _ = f.drainPool(ctx) })
@@ -599,9 +608,16 @@ func (w *smbWriterAt) Close() error {
 }
 
 // openPoolFile opens a fresh write handle on its own connection for share/path.
-func (f *Fs) openPoolFile(share, path string) func(context.Context) (*file, error) {
+//
+// The other writers of the file may hold all the connections allowed by
+// --max-connections, so it stops waiting for a new connection when a handle
+// is returned to the pool.
+func (f *Fs) openPoolFile(share, path string, avail func() <-chan struct{}) func(context.Context) (*file, error) {
 	return func(ctx context.Context) (*file, error) {
-		c, err := f.getConnection(ctx, share)
+		c, err := f.getConnectionWake(ctx, share, avail())
+		if errors.Is(err, errConnWoken) {
+			return nil, filepool.ErrRetry
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -612,6 +628,13 @@ func (f *Fs) openPoolFile(share, path string) func(context.Context) (*file, erro
 		}
 		return &file{File: fl, c: c}, nil
 	}
+}
+
+// newPoolFiles returns a pool of write handles for share/path.
+func (f *Fs) newPoolFiles(ctx context.Context, share, path string) *filepool.Pool[*file] {
+	var pool *filepool.Pool[*file]
+	pool = filepool.New(ctx, f.openPoolFile(share, path, func() <-chan struct{} { return pool.Avail() }), f.releasePoolFile)
+	return pool
 }
 
 // releasePoolFile closes a pooled handle and returns its connection.
@@ -674,7 +697,7 @@ func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.Wr
 
 	return &smbWriterAt{
 		fs:   o.fs,
-		pool: filepool.New(ctx, o.fs.openPoolFile(share, smbPath), o.fs.releasePoolFile),
+		pool: o.fs.newPoolFiles(ctx, share, smbPath),
 	}, nil
 }
 
