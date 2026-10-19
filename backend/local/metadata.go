@@ -150,9 +150,15 @@ func (o *Object) writeMetadataToFile(m fs.Metadata) (outErr error) {
 				fileMode := modeFromMetadata(uint32(umode))
 				// fileMode comes from the source, which may be untrusted, so
 				// by default apply only the permission bits and strip the
-				// setuid, setgid and sticky bits.
+				// setuid, setgid and sticky bits - except the setgid bit of
+				// a directory, which only makes new entries inherit the
+				// directory's group.
 				if !o.fs.opt.MetadataRestoreSpecial {
+					setgidDir := fileMode&os.ModeSetgid != 0 && o.isDirectory()
 					fileMode = fileMode.Perm()
+					if setgidDir {
+						fileMode |= os.ModeSetgid
+					}
 				}
 				if o.translatedLink {
 					if haveLChmod {
@@ -215,4 +221,14 @@ func modeFromMetadata(mode uint32) os.FileMode {
 		fileMode |= os.ModeSticky
 	}
 	return fileMode
+}
+
+// isDirectory reports whether the object on disk is a directory, from
+// the file system rather than from the (untrusted) source metadata
+func (o *Object) isDirectory() bool {
+	if o.translatedLink {
+		return false
+	}
+	fi, err := os.Lstat(o.path)
+	return err == nil && fi.IsDir()
 }

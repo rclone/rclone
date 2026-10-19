@@ -37,10 +37,26 @@ func TestMetadataUnixSpecialBits(t *testing.T) {
 		require.NoError(t, obj.(*Object).writeMetadataToFile(fs.Metadata{"mode": mode}))
 	}
 
+	t.Run("SetgidDirectoryKept", func(t *testing.T) {
+		_, err := f.MkdirMetadata(ctx, "shared", fs.Metadata{"mode": "42775"})
+		require.NoError(t, err)
+		mode := statMode("shared")
+		assert.Equal(t, os.FileMode(0o775), mode.Perm())
+		assert.Equal(t, os.ModeSetgid, mode&special, mode.String())
+	})
+
+	t.Run("StickyDirectoryStripped", func(t *testing.T) {
+		_, err := f.MkdirMetadata(ctx, "tmp", fs.Metadata{"mode": "41777"})
+		require.NoError(t, err)
+		assert.Zero(t, statMode("tmp")&special)
+	})
+
 	t.Run("FilesStrippedByDefault", func(t *testing.T) {
 		writeFile("setuid.bin", "104755")
 		writeFile("setgid.bin", "102755")
-		for name, perm := range map[string]os.FileMode{"setuid.bin": 0o755, "setgid.bin": 0o755} {
+		// a source that claims a directory mode for a file gets no setgid
+		writeFile("claims-dir.bin", "42775")
+		for name, perm := range map[string]os.FileMode{"setuid.bin": 0o755, "setgid.bin": 0o755, "claims-dir.bin": 0o775} {
 			mode := statMode(name)
 			assert.Equal(t, perm, mode.Perm(), name)
 			assert.Zero(t, mode&special, name+" "+mode.String())
