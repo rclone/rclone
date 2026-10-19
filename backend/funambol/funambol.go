@@ -1243,7 +1243,8 @@ func (f *Fs) removeFileDestination(ctx context.Context, remote, dirID, leaf, sou
 	return nil
 }
 
-// fileOperationTimeout returns how long a server-side copy or move may wait.
+// fileOperationTimeout returns how long a server-side copy or move, or a
+// download URL lookup, may wait.
 // Large files are processed asynchronously after upload and can take tens of
 // minutes before the server makes them visible.
 func fileOperationTimeout(size int64) time.Duration {
@@ -1476,7 +1477,7 @@ func (o *Object) fetchURL(ctx context.Context) error {
 	if o.id == "" {
 		return errors.New("can't download - no URL")
 	}
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, fileOperationTimeout(o.size))
 	defer cancel()
 	for {
 		items, err := o.fs.getMediaByIDs(ctx, []string{o.id}, []string{"url"})
