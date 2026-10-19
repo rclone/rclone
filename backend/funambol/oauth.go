@@ -204,10 +204,24 @@ func (f *Fs) oauthLogin(ctx context.Context) error {
 	}
 	_, sent := f.oauthHeader()
 	resp, err := f.sapiOAuthLogin(ctx)
-	// The server answers a login with an expired access token with a redirect
-	// that carries the renewed token, so log in again with it.
-	if _, access := f.oauthHeader(); err != nil && access != sent {
-		fs.Debugf(f, "OAuth login renewed the token, logging in again: %v", err)
+	// The server answers a login with an expired access token with a redirect,
+	// usually carrying the renewed token. It can keep redirecting for a few
+	// seconds, so log in again, backing off if the token didn't change.
+	for try := 0; err != nil && resp != nil && resp.StatusCode/100 == 3 && try < 3; try++ {
+		_, access := f.oauthHeader()
+		target := ""
+		if u, lerr := resp.Location(); lerr == nil {
+			target = u.Host + u.Path
+		}
+		fs.Debugf(f, "OAuth login redirected to %q (token renewed %v), logging in again: %v", target, access != sent, err)
+		if access == sent {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(time.Second << try):
+			}
+		}
+		sent = access
 		resp, err = f.sapiOAuthLogin(ctx)
 	}
 	if !isAuthFailure(resp, err) {

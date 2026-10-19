@@ -1140,6 +1140,7 @@ func (f *Fs) saveFolder(ctx context.Context, id, name string, parent *string) er
 
 // waitForFile waits for validation and, after a move/copy, the expected metadata.
 func (f *Fs) waitForFile(ctx context.Context, id, name, folderID string, size int64) (*api.Item, error) {
+	var last *api.Item
 	for {
 		items, err := f.getMediaByIDs(ctx, []string{id}, []string{"name", "size", "url", "folderid", "modificationdate"})
 		if err != nil {
@@ -1152,6 +1153,7 @@ func (f *Fs) waitForFile(ctx context.Context, id, name, folderID string, size in
 			if item.FolderID == "" {
 				item.FolderID = item.Folder
 			}
+			last = &item
 			if item.MediaType != "" && item.MediaType != uploadMediaType {
 				return &item, nil
 			}
@@ -1162,7 +1164,11 @@ func (f *Fs) waitForFile(ctx context.Context, id, name, folderID string, size in
 			}
 		}
 		if err := waitFileOperation(ctx); err != nil {
-			return nil, fmt.Errorf("waiting for file %s validation or metadata: %w", id, err)
+			if last == nil {
+				return nil, fmt.Errorf("waiting for file %s validation or metadata: file not found: %w", id, err)
+			}
+			return nil, fmt.Errorf("waiting for file %s validation or metadata (status %q, media type %q, has URL %v, name %q want %q, folder %q want %q, size %d want %d): %w",
+				id, last.Status, last.MediaType, last.URL != "", last.Name, name, last.FolderID, folderID, last.Size, size, err)
 		}
 	}
 }
@@ -1237,10 +1243,17 @@ func (f *Fs) removeFileDestination(ctx context.Context, remote, dirID, leaf, sou
 	return nil
 }
 
+// fileOperationTimeout returns how long a server-side copy or move may wait.
+// Large files are processed asynchronously after upload and can take tens of
+// minutes before the server makes them visible.
+func fileOperationTimeout(size int64) time.Duration {
+	return 2*time.Minute + time.Duration(max(size, 0)>>30+1)*15*time.Minute
+}
+
 // Copy copies generic files on the same configured remote without transferring their contents.
 // Unsupported sources return fs.ErrorCantCopy.
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, fileOperationTimeout(src.Size()))
 	defer cancel()
 	o, item, err := f.fileOperationSource(ctx, src, fs.ErrorCantCopy)
 	if err != nil {
@@ -1279,7 +1292,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 // Move moves generic files on the same configured remote using metadata only.
 // Extension changes return fs.ErrorCantMove so rclone can use server-side copy/delete.
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, fileOperationTimeout(src.Size()))
 	defer cancel()
 	o, item, err := f.fileOperationSource(ctx, src, fs.ErrorCantMove)
 	if err != nil {
