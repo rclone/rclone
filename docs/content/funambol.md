@@ -86,26 +86,29 @@ your account has two-factor authentication enabled.  The resulting session is
 stored in the config - no browser fingerprint or manual `device_id` is needed.
 
 O2 Spain accounts that sign in via Mi O2 have no password: leave `pass` empty
-and set `user` to the mobile number.  rclone then logs in like the web site,
-through Telefónica's identity provider, with a code sent by SMS.  Such a login
-may not receive the persistent-login cookie, in which case the session lasts a
-day or so before `rclone config reconnect remote:` is needed.
+and set `user` to the mobile number. At the default O2 endpoint, leave
+`client_id`, `client_secret` and `oauth_platform` blank. Rclone supplies the
+O2 Cloud macOS 4.0.0 application's credentials and matching `macos` platform.
+The initial SMS login obtains an OAuth refresh token. Rclone then renews
+sessions and tokens automatically while the provider accepts these credentials.
+The config must be writable so rotated credentials survive a restart.
 
-To keep such an account logged in unattended, set `client_id` (and
-`client_secret`, if it has one) in the advanced config to the OAuth client
-credentials of an O2 Spain desktop app, and `oauth_platform` to that app's
-platform (`windows` by default, or `macos`).  rclone does not include these
-credentials.  The SMS login then runs the OAuth flow itself and saves an OAuth
-refresh token: when the session expires, rclone creates a new one from the
-token, and the server renews the token as it is used, so no new SMS code is
-needed.  If the token itself is revoked, run `rclone config reconnect remote:`.
+These bundled credentials belong to the O2 desktop application, rather than a
+dedicated rclone registration. They apply only to passwordless login at the
+default O2 endpoint. A custom `client_id` does not inherit the bundled secret;
+supply its matching `client_secret` if required, and set `oauth_platform` to
+that application's platform (`windows` by default for custom applications).
 
-From then on the backend runs unattended: it presents the persistent-login
-cookie, mints the rolling `validationkey` SAPI requires, and refreshes it
-automatically as it rotates - **no further verification codes are needed**.
-The persistent login is renewed on every use, so as long as the remote is used
-at least every ~90 days it keeps working.  If it ever lapses, run
-`rclone config reconnect remote:` to log in again (one more code).
+Existing remotes containing only session cookies need one
+`rclone config reconnect remote:` with the OAuth settings above to obtain a
+refresh token. Clear a previously saved `oauth_platform = windows` when using
+the built-in macOS credentials, or set it explicitly to `macos`. Cookies cannot
+be converted into a refresh token. If the provider revokes the saved refresh
+credentials, reconnect again.
+
+Password logins use the persistent-login cookie to obtain fresh validation
+keys. Other passwordless configurations without OAuth application credentials
+use temporary web SMS sessions, which may require another code when they expire.
 
 ### Modification times and hashes
 

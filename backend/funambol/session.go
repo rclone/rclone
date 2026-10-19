@@ -408,6 +408,7 @@ func newSessionFs(ctx context.Context, name string, m configmap.Mapper) (*Fs, er
 		opt.Endpoint = defaultEndpoint
 	}
 	opt.Endpoint = strings.TrimRight(opt.Endpoint, "/")
+	opt.setOAuthDefaults()
 
 	// Generate and persist a device id on first use; a fresh one registers
 	// itself during the login below thanks to the browser-like headers.
@@ -459,7 +460,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, configIn fs.Co
 	switch configIn.State {
 	case "":
 		// Without a password, log in by SMS via Telefónica (O2 Spain),
-		// with OAuth if client_id is set.
+		// with OAuth when application credentials are available.
 		if f.opt.Pass == "" {
 			p, err := f.smsSend(ctx)
 			if err != nil {

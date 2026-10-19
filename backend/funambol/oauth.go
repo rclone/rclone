@@ -1,6 +1,7 @@
 package funambol
 
-// OAuth login for O2 Spain, used when client_id is set and pass is empty.
+// OAuth login for O2 Spain, used when pass is empty and application credentials
+// are configured or supplied by the O2 defaults.
 // It sends the same SMS code as the SMS login (sms.go), but runs the OAuth
 // flow itself with the client credentials of an O2 desktop app instead of
 // letting the server run it.  This gets a refresh token, from which SAPI
@@ -40,11 +41,13 @@ import (
 
 // O2 Spain's OAuth endpoints; vars so tests can point them elsewhere.
 var (
-	o2AuthURL  = "https://apiseg.telefonica.es/openid/connect/auth/oauth/v2/o2/cus/authorize"
-	o2TokenURL = "https://apiseg.telefonica.es/openid/connect/auth/oauth/v2/o2/cus/token"
+	o2AuthURL  = o2OAuthAuthorize
+	o2TokenURL = o2OAuthToken
 )
 
 const (
+	o2OAuthAuthorize     = "https://apiseg.telefonica.es/openid/connect/auth/oauth/v2/o2/cus/authorize"
+	o2OAuthToken         = "https://apiseg.telefonica.es/openid/connect/auth/oauth/v2/o2/cus/token"
 	clientOAuthPath      = "/ui/html/clientoauth.html" // callback the O2 desktop apps are registered with
 	configOAuthCreds     = "oauth_credentials"         // last token envelope the server returned
 	defaultOAuthPlatform = "windows"

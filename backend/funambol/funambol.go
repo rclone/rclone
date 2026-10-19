@@ -67,7 +67,7 @@ func init() {
 			Sensitive: true,
 		}, {
 			Name:       "pass",
-			Help:       "Password for the Funambol / OneMediaHub account.\n\nLeave empty for accounts without one (O2 Spain accounts that sign in\nvia Mi O2): rclone then logs in with an SMS code sent to the mobile\nnumber in user.  Set client_id too to get a session that renews itself.",
+			Help:       "Password for the Funambol / OneMediaHub account.\n\nLeave empty for accounts without one (O2 Spain accounts that sign in\nvia Mi O2): rclone then logs in with an SMS code sent to the mobile\nnumber in user. O2 Spain uses built-in OAuth application credentials\nso the session can renew itself.",
 			IsPassword: true,
 		}, {
 			Name: "cookies",
@@ -85,7 +85,7 @@ two-factor step) so it can be reused.  When it expires, reconnect with
 
 This identifies the rclone "device" to the service and appears in your
 account's device list.  Leave it empty: rclone generates a stable
-"web-<hex>" id ("fol-<base64>" with client_id) on first login and saves it
+"web-<hex>" id ("fol-<base64>" with OAuth) on first login and saves it
 here, registering itself just like the official app.  Set it only to reuse a specific existing id.`,
 			Advanced:  true,
 			Sensitive: true,
@@ -102,21 +102,21 @@ e.g. https://www.cloud.example.com`,
 			Name: "client_id",
 			Help: `OAuth client ID of an O2 Spain desktop app.
 
-Only for O2 Spain accounts without a password.  When set, the SMS login
-gets an OAuth refresh token, so rclone creates new sessions unattended
-and no new SMS code is needed when a session expires.  rclone does not
-include a client ID: you must supply one.`,
+Only for O2 Spain accounts without a password. Leave this and client_secret
+blank to use the built-in O2 Cloud macOS application credentials at the default
+endpoint. The SMS login obtains a refresh token so sessions can renew unattended.
+A custom client ID does not inherit the built-in application's secret.`,
 			Advanced:  true,
 			Sensitive: true,
 		}, {
 			Name:       "client_secret",
-			Help:       "OAuth client secret that goes with client_id, if it has one.",
+			Help:       "OAuth client secret that goes with client_id, if it has one. Leave both blank to use the built-in O2 defaults.",
 			IsPassword: true,
 			Advanced:   true,
 		}, {
 			Name:     "oauth_platform",
-			Help:     "Platform of the app that client_id belongs to, e.g. \"windows\" or \"macos\".",
-			Default:  defaultOAuthPlatform,
+			Help:     "Platform of the OAuth application. Leave blank for macos with the built-in O2 credentials, or windows with custom credentials.",
+			Default:  "",
 			Advanced: true,
 		}, {
 			Name:      config.ConfigToken,
@@ -1850,6 +1850,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		opt.Endpoint = defaultEndpoint
 	}
 	opt.Endpoint = strings.TrimRight(opt.Endpoint, "/")
+	opt.setOAuthDefaults()
 	if opt.DeviceID == "" {
 		opt.DeviceID = newDeviceID(opt.usesOAuth())
 		m.Set("device_id", opt.DeviceID)
