@@ -14,6 +14,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,13 +30,17 @@ const (
 // oauthServer fakes the O2 server, the OAuth authorization server and the T3
 // credential API on one server.
 type oauthServer struct {
-	srv       *httptest.Server
-	state     string       // state of the last authorization request
-	challenge string       // PKCE challenge of the last authorization request
-	refused   string       // access token the SAPI login refuses
-	expired   string       // access token the SAPI login renews with a redirect
-	logins    atomic.Int32 // SAPI logins
-	refreshes atomic.Int32 // refresh token grants
+	srv          *httptest.Server
+	state        string       // state of the last authorization request
+	challenge    string       // PKCE challenge of the last authorization request
+	refused      string       // access token the SAPI login refuses
+	expired      string       // access token the SAPI login renews with a redirect
+	logins       atomic.Int32 // SAPI logins
+	refreshes    atomic.Int32 // refresh token grants
+	clientID     string
+	secret       string
+	platform     string
+	refreshToken string
 }
 
 // oauthHeaderData decodes the token envelope of an Authorization header.
@@ -59,7 +64,7 @@ func renewedHeader(access string) string {
 }
 
 func newOAuthServer(t *testing.T) *oauthServer {
-	s := &oauthServer{}
+	s := &oauthServer{clientID: testClient, platform: defaultOAuthPlatform, refreshToken: "rt1"}
 	mux := http.NewServeMux()
 	s.srv = httptest.NewServer(mux)
 	t.Cleanup(s.srv.Close)
@@ -70,7 +75,7 @@ func newOAuthServer(t *testing.T) *oauthServer {
 
 	mux.HandleFunc("/authorize", func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query()
-		assert.Equal(t, testClient, q.Get("client_id"))
+		assert.Equal(t, s.clientID, q.Get("client_id"))
 		assert.Equal(t, s.srv.URL+clientOAuthPath, q.Get("redirect_uri"))
 		assert.Equal(t, "S256", q.Get("code_challenge_method"))
 		assert.Equal(t, "2", q.Get("acr_values"))
@@ -97,8 +102,12 @@ func newOAuthServer(t *testing.T) *oauthServer {
 
 	mux.HandleFunc("/token", func(w http.ResponseWriter, r *http.Request) {
 		require.NoError(t, r.ParseForm())
-		user, _, _ := r.BasicAuth()
-		assert.Contains(t, []string{user, r.FormValue("client_id")}, testClient)
+		clientID, secret, basic := r.BasicAuth()
+		if !basic {
+			clientID, secret = r.FormValue("client_id"), r.FormValue("client_secret")
+		}
+		assert.Equal(t, s.clientID, clientID)
+		assert.True(t, secret == s.secret, "the token grant must use the application's matching secret")
 		w.Header().Set("Content-Type", "application/json")
 		switch r.FormValue("grant_type") {
 		case "authorization_code":
@@ -108,7 +117,7 @@ func newOAuthServer(t *testing.T) *oauthServer {
 			_, _ = io.WriteString(w, `{"access_token":"at1","refresh_token":"rt1","token_type":"Bearer","expires_in":3600}`)
 		case "refresh_token":
 			s.refreshes.Add(1)
-			assert.Equal(t, "rt1", r.FormValue("refresh_token"))
+			assert.Equal(t, s.refreshToken, r.FormValue("refresh_token"))
 			_, _ = io.WriteString(w, `{"access_token":"at3","refresh_token":"rt3","token_type":"Bearer","expires_in":3600}`)
 		default:
 			w.WriteHeader(http.StatusBadRequest)
@@ -119,7 +128,7 @@ func newOAuthServer(t *testing.T) *oauthServer {
 		assert.Equal(t, "POST", r.Method)
 		assert.Equal(t, "login", r.URL.Query().Get("action"))
 		data := oauthHeaderData(t, r.Header.Get("Authorization"))
-		assert.Equal(t, "windows", data["platform"])
+		assert.Equal(t, s.platform, data["platform"])
 		assert.Equal(t, smsPhone, data["msisdn"])
 		access, _ := data["accesstoken"].(string)
 		if access == s.refused {
@@ -191,6 +200,38 @@ func TestConfigOAuth(t *testing.T) {
 	require.NoError(t, err)
 	f.restoreCookies(m["cookies"])
 	assert.Equal(t, testKey, f.validationKeyFromJar())
+}
+
+func TestConfigOAuthWithBundledCredentials(t *testing.T) {
+	s := newOAuthServer(t)
+	s.clientID, s.platform = o2OAuthClientID, "macos"
+	var err error
+	s.secret, err = obscure.Reveal(o2OAuthEncryptedClientSecret)
+	require.NoError(t, err)
+	m := s.config(t, "")
+	m["client_id"], m["client_secret"], m["oauth_platform"] = s.clientID, o2OAuthEncryptedClientSecret, s.platform
+
+	out, err := Config(context.Background(), "test", m, fs.ConfigIn{})
+	require.NoError(t, err)
+	require.NotNil(t, out)
+	require.Equal(t, "sms", out.State)
+	out, err = Config(context.Background(), "test", m, fs.ConfigIn{State: "sms", Result: smsCode})
+	require.NoError(t, err)
+	require.Nil(t, out)
+	access, refresh := savedToken(t, m)
+	require.NotEmpty(t, refresh)
+
+	// A new process restores the saved credentials after its SAPI session expires.
+	s.refused, s.refreshToken = access, refresh
+	cookies, err := json.Marshal([]cookiePair{{"validationKey", oauthStaleKey}})
+	require.NoError(t, err)
+	m["cookies"] = base64.StdEncoding.EncodeToString(cookies)
+	_, err = NewFs(context.Background(), "test", "", m)
+	require.NoError(t, err)
+	assert.Equal(t, int32(1), s.refreshes.Load())
+	access, refresh = savedToken(t, m)
+	assert.Equal(t, "at3r", access)
+	assert.Equal(t, "rt-renewed", refresh)
 }
 
 // An expired session is created again from the token, without a new code.
