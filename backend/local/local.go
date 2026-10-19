@@ -88,7 +88,8 @@ When restoring metadata with ` + "`--metadata`" + ` rclone applies the
 "mode", "uid" and "gid" from the source. These come from the source
 remote which may not be trusted, so restoring metadata as root from an
 untrusted source can change file ownership and is not recommended. The
-setuid, setgid and sticky bits are not restored by default - see the
+setuid, setgid and sticky bits are not restored by default, apart from
+the setgid bit of directories - see the
 ` + "`--local-metadata-restore-special-bits`" + ` flag.
 `,
 		},
@@ -298,7 +299,9 @@ enabled, rclone will no longer update the modtime after copying a file.`,
 
 When restoring metadata with --metadata rclone applies the "mode" from
 the source. By default rclone applies only the permission bits and
-strips the setuid, setgid and sticky bits.
+strips the setuid, setgid and sticky bits. The setgid bit of a
+directory is kept: it only makes files and directories created in it
+inherit the directory's group, as shared project directories use.
 
 The "mode" comes from the source remote which may not be trusted.
 Restoring a setuid or setgid bit onto freshly written,
