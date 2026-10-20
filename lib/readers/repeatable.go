@@ -41,7 +41,7 @@ func (r *RepeatableReader) Seek(offset int64, whence int) (int64, error) {
 		return 0, errors.New("fs.RepeatableReader.Seek: negative position")
 	}
 	if abs > cacheLen {
-		return offset - (abs - cacheLen), errors.New("fs.RepeatableReader.Seek: offset is unavailable")
+		return cacheLen, errors.New("fs.RepeatableReader.Seek: offset is unavailable")
 	}
 	r.i = abs
 	return abs, nil
