@@ -85,15 +85,23 @@ rclone copy /home/source remote:backup
 
 ### Modification times and hashes
 
-Drime does not support modification times or hashes.
+Drime supports modification times with millisecond precision and the
+SHA-256 hash.
 
-This means that by default syncs will only use the size of the file to determine
-if it needs updating.
+The modification time is stored in the file's `client_last_modified`
+attribute and is set on upload and by `SetModTime`. Drime's directory
+listing doesn't return it, so rclone reads it with one extra API call
+per file when it needs to compare modification times. Using
+`--checksum` or `--size-only` avoids these calls. Files that were
+uploaded without a modification time fall back to the time they were
+last updated on Drime.
 
-You can use the `--update` flag which will use the time the object was uploaded.
-For many operations this is sufficient to determine if it has changed. However
-files created with timestamps in the past will be missed by the sync if using
-`--update`.
+The SHA-256 is only available for files where Drime has a `file_hash`
+recorded. Drime doesn't compute it on upload, so after each upload
+rclone asks Drime to verify the stored data against the source's
+SHA-256 (this makes Drime read the file once). Drime records the hash
+only if it matches, and rclone fails the upload as corrupted if it
+doesn't. Files uploaded by other tools may have no hash.
 
 
 ### Restricted filename characters
