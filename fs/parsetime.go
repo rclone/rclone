@@ -41,23 +41,12 @@ func ParseTime(date string) (t time.Time, err error) {
 		return t, nil
 	}
 
-	// Attempt to parse as a time.Duration offset from now
-	d, err := time.ParseDuration(date)
-	if err == nil {
-		return now.Add(-d), nil
+	// Attempt to parse as a duration offset from now
+	d, err := ParseDuration(date)
+	if err != nil {
+		return t, err
 	}
-
-	d, err = parseDurationSuffixes(date)
-	if err == nil {
-		return now.Add(-d), nil
-	}
-
-	d, err = parseDurationSequence(date)
-	if err == nil {
-		return now.Add(-d), nil
-	}
-
-	return t, err
+	return now.Add(-d), nil
 }
 
 // Set a Time
