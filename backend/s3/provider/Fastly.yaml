@@ -27,8 +27,9 @@ endpoint:
   us-west.object.fastlystorage.app: US West
   us-west-1.object.fastlystorage.app: US West 1
 quirks:
+  might_gzip: false
   force_path_style: true
   use_already_exists: false
   use_multipart_etag: false
-  use_multipart_uploads: false
+  use_multipart_uploads: true
   etag_is_not_md5: true

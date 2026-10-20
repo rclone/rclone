@@ -542,6 +542,11 @@ var ConfigOptionsInfo = Options{{
 	Help:    "Allow server-side operations (e.g. copy) to work across different configs",
 	Groups:  "Copy",
 }, {
+	Name:    "server_side_fetch_url_expire",
+	Default: Duration(24 * time.Hour),
+	Help:    "Requested lifetime of source URLs for server-side URL fetch",
+	Groups:  "Copy",
+}, {
 	Name:    "color",
 	Default: TerminalColorMode(0),
 	Help:    "When to show colors (and other ANSI codes) AUTO|NEVER|ALWAYS",
@@ -688,6 +693,7 @@ type ConfigInfo struct {
 	DisableHTTPKeepAlives      bool              `config:"disable_http_keep_alives"`
 	Metadata                   bool              `config:"metadata"`
 	ServerSideAcrossConfigs    bool              `config:"server_side_across_configs"`
+	ServerSideFetchURLExpire   Duration          `config:"server_side_fetch_url_expire"`
 	TerminalColorMode          TerminalColorMode `config:"color"`
 	DefaultTime                Time              `config:"default_time"` // time that directories with no time should display
 	Inplace                    bool              `config:"inplace"`      // Download directly to destination file instead of atomic download to temp/rename
@@ -724,6 +730,10 @@ func (ci *ConfigInfo) Reload(ctx context.Context) error {
 	// If --dry-run or -i then use NOTICE as minimum log level
 	if (ci.DryRun || ci.Interactive) && ci.StatsLogLevel > LogLevelNotice {
 		ci.StatsLogLevel = LogLevelNotice
+	}
+
+	if ci.ServerSideFetchURLExpire < Duration(time.Second) || ci.ServerSideFetchURLExpire == DurationOff {
+		return fmt.Errorf("--server-side-fetch-url-expire must be a finite duration of at least 1s")
 	}
 
 	// Check --compare-dest and --copy-dest
