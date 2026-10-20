@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"maps"
@@ -40,6 +41,7 @@ type Session struct {
 	mu       sync.Mutex   `json:"-"` // protects session fields during concurrent Request calls
 	srv      *rest.Client `json:"-"`
 	needs2FA bool         `json:"-"` // set when SRP signin returns 409
+	password string       `json:"-"` // needed again for the escrow proof
 }
 
 // srpInitResponse is the server response from /auth/signin/init
@@ -208,6 +210,105 @@ func (s *Session) acceptedDespiteConflict(resp *http.Response) bool {
 	s.extractHeaders(resp)
 	s.mu.Unlock()
 	return true
+}
+
+// escrowRequired reports whether Apple wants the escrow password proof
+// before it will trust the session, signalled by X-Apple-EDP or X-Apple-PDP.
+func escrowRequired(resp *http.Response) bool {
+	if resp == nil {
+		return false
+	}
+	return resp.Header.Get("X-Apple-EDP") != "" || resp.Header.Get("X-Apple-PDP") != ""
+}
+
+// completeEscrow runs Apple's escrow step: a second SRP password proof made
+// with an empty account name, which also sends the SRP session key.
+//
+// Apple asks for it after an accepted 2FA code, and when a sign-in presents
+// a trust token it accepts. Until it is done the trust token is not honoured,
+// so every later sign-in looks as if it needs 2FA again. Completing it issues
+// a new session token, which is absorbed with the other session headers.
+func (s *Session) completeEscrow(ctx context.Context) error {
+	if s.password == "" {
+		return errors.New("escrow: no password available for the escrow proof")
+	}
+	client, err := newSRPClient()
+	if err != nil {
+		return fmt.Errorf("escrow: %w", err)
+	}
+
+	initBody, err := IntoReader(map[string]any{
+		"a":           base64.StdEncoding.EncodeToString(client.getABytes()),
+		"accountName": "",
+		"protocols":   []string{"s2k", "s2k_fo"},
+	})
+	if err != nil {
+		return err
+	}
+	initOpts := rest.Opts{
+		Method:       "POST",
+		Path:         "/escrow/init",
+		ExtraHeaders: s.getSRPAuthHeaders(),
+		RootURL:      authEndpoint,
+		Body:         initBody,
+	}
+	var initResp srpInitResponse
+	resp, err := s.srv.CallJSON(ctx, &initOpts, nil, &initResp)
+	if err != nil {
+		return fmt.Errorf("escrow/init: %w", err)
+	}
+	s.extractHeaders(resp)
+
+	serverB, err := base64.StdEncoding.DecodeString(initResp.B)
+	if err != nil {
+		return fmt.Errorf("escrow: decode B: %w", err)
+	}
+	salt, err := base64.StdEncoding.DecodeString(initResp.Salt)
+	if err != nil {
+		return fmt.Errorf("escrow: decode salt: %w", err)
+	}
+	derivedKey, err := derivePassword(s.password, salt, initResp.Iteration, initResp.Protocol)
+	if err != nil {
+		return fmt.Errorf("escrow: %w", err)
+	}
+	if err := client.processChallenge([]byte(""), derivedKey, salt, serverB); err != nil {
+		return fmt.Errorf("escrow: %w", err)
+	}
+
+	completeBody, err := IntoReader(map[string]any{
+		"m1": base64.StdEncoding.EncodeToString(client.M1),
+		"m2": base64.StdEncoding.EncodeToString(client.M2),
+		"c":  initResp.C,
+		"k":  base64.StdEncoding.EncodeToString(client.K),
+	})
+	if err != nil {
+		return err
+	}
+	completeOpts := rest.Opts{
+		Method:       "POST",
+		Path:         "/escrow/complete",
+		ExtraHeaders: s.getSRPAuthHeaders(),
+		RootURL:      authEndpoint,
+		Body:         completeBody,
+		NoResponse:   true,
+	}
+	resp, err = s.srv.Call(ctx, &completeOpts)
+	if err != nil {
+		return fmt.Errorf("escrow/complete: %w", err)
+	}
+	s.extractHeaders(resp)
+	fs.Debugf(nil, "iclouddrive: escrow completed")
+	return nil
+}
+
+// completeEscrowAfterCode runs the escrow step if the response to an
+// accepted 2FA code asks for it.
+func (s *Session) completeEscrowAfterCode(ctx context.Context, resp *http.Response) error {
+	if !escrowRequired(resp) {
+		return nil
+	}
+	fs.Debugf(nil, "iclouddrive: 2FA code accepted, completing escrow")
+	return s.completeEscrow(ctx)
 }
 
 // Requires2FA returns true if the session requires 2FA
@@ -427,6 +528,15 @@ func (s *Session) authSRPComplete(ctx context.Context, accountName, m1Base64, m2
 		fs.Debugf(nil, "iclouddrive: SRP sign in successful")
 		return nil
 	case http.StatusConflict:
+		// A 409 asking for escrow after a trust token was sent means the token was accepted
+		if s.TrustToken != "" && escrowRequired(resp) {
+			fs.Debugf(nil, "iclouddrive: SRP sign in accepted the trust token, completing escrow")
+			if err := s.completeEscrow(ctx); err != nil {
+				return err
+			}
+			s.needs2FA = false
+			return nil
+		}
 		// 409 = 2FA required
 		fs.Debugf(nil, "iclouddrive: SRP sign in requires 2FA, response: %s", respBody)
 		s.needs2FA = true
@@ -681,6 +791,9 @@ func (s *Session) Validate2FACode(ctx context.Context, code string) error {
 		err = nil
 	}
 	if err == nil {
+		if err := s.completeEscrowAfterCode(ctx, resp); err != nil {
+			return err
+		}
 		if err := s.TrustSession(ctx); err != nil {
 			return err
 		}
@@ -812,6 +925,9 @@ func (s *Session) ValidateSMSCode(ctx context.Context, code string, phoneID int,
 		err = nil
 	}
 	if err == nil {
+		if err := s.completeEscrowAfterCode(ctx, resp); err != nil {
+			return err
+		}
 		if err := s.TrustSession(ctx); err != nil {
 			return err
 		}
