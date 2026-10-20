@@ -342,6 +342,45 @@ This may be due to newer [Apparmor](https://wiki.ubuntu.com/AppArmor) restrictio
 which can be disabled with `sudo aa-disable /usr/bin/fusermount3` (you may need
 to `sudo apt install apparmor-utils` beforehand).
 
+#### SELinux restrictions and --direct-mount
+
+When running `rclone mount2` on systems with SELinux enabled (e.g., RHEL, CentOS,
+Fedora ... or even Debian/Ubuntu with SELinux enabled), you may encounter
+permission errors related to FUSE fd transfer:
+
+```
+# rclone log
+NOTICE: mount helper error: fusermount3: file descriptor 3 is not a socket, can't send fuse fd
+CRITICAL: Fatal error: failed to mount FUSE fs: fusermount: exit status 1
+```
+
+```
+# audit/selinux log
+type=AVC msg=audit(1790865846.583:2881): avc:  denied  { getattr } for
+pid=6571 comm="fusermount3" path="socket:[35448]" dev="sockfs" ino=35448
+scontext=system_u:system_r:mount_t:s0 tcontext=system_u:system_r:initrc_t:s0
+tclass=unix_stream_socket permissive=0
+```
+
+This happens because rclone forks `fusermount3` and passes a FUSE fd via
+`sendmsg()` with `SCM_RIGHTS` on a Unix socketpair, which SELinux may block
+as an inter-process fd transfer.
+
+To avoid this, use the `--direct-mount` flag with `rclone mount2` (not
+supported by `rclone mount`):
+
+```console
+rclone mount2 --direct-mount remote:path /path/to/mountpoint
+```
+
+This flag makes rclone mount the filesystem directly via `syscall.Mount` instead
+of forking `fusermount3`. There is no fd transfer, no socketpair, and no behaviour
+SELinux would treat as a violation.
+
+Note: `--direct-mount` requires appropriate permissions (root, or
+`CAP_SYS_ADMIN` plus proper AppArmor/seccomp configuration) and access to
+`/dev/fuse`.
+
 ### Mounting on OpenBSD
 
 `rclone nfsmount` works on OpenBSD by spinning up the [serve nfs](/commands/rclone_serve_nfs/)
