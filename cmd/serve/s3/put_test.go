@@ -176,6 +176,34 @@ func TestPutObjectMtime(t *testing.T) {
 	}
 }
 
+// TestPutObjectLastModified checks that HeadObject and GetObject report
+// the object's modification time as Last-Modified straight after a PUT.
+// gofakes3 adds the time of the upload to the metadata it passes in, and
+// that must not be cached in place of the object's own time.
+func TestPutObjectLastModified(t *testing.T) {
+	want := fstest.Time("2021-06-06T06:06:06Z")
+	b, _, bucket := newPutTestBackend(t, "", nil)
+	ctx := context.Background()
+	const object = "last-modified.txt"
+
+	contents := []byte(random.String(50))
+	meta := map[string]string{
+		"X-Amz-Meta-Mtime": swift.TimeToFloatString(want),
+		"Last-Modified":    formatHeaderTime(time.Now()),
+	}
+	_, err := b.PutObject(ctx, bucket, object, meta, bytes.NewReader(contents), int64(len(contents)))
+	require.NoError(t, err)
+
+	head, err := b.HeadObject(ctx, bucket, object)
+	require.NoError(t, err)
+	assert.Equal(t, formatHeaderTime(want), head.Metadata["Last-Modified"], "HeadObject")
+
+	get, err := b.GetObject(ctx, bucket, object, nil)
+	require.NoError(t, err)
+	_ = get.Contents.Close()
+	assert.Equal(t, formatHeaderTime(want), get.Metadata["Last-Modified"], "GetObject")
+}
+
 // waitForObject waits for bucket/object to appear on the backing Fs (e.g.
 // after the VFS write-back delay).
 func waitForObject(t *testing.T, f fs.Fs, bucket, object string) {
