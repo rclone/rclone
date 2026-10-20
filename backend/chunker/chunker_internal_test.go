@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	_ "github.com/rclone/rclone/backend/memory"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/fspath"
@@ -877,6 +878,101 @@ func testChunkerServerSideMove(t *testing.T, f *Fs) {
 	_ = operations.Purge(ctx, f.base, dir)
 }
 
+func testChunkerServerSideOverwrite(t *testing.T, moveFs *Fs) {
+	ctx := context.Background()
+	const dir = "serveroverwrite"
+	remote := fmt.Sprintf(":chunker,remote=':memory:%s',chunk_size=3B:", dir)
+	fsResult, err := fs.NewFs(ctx, remote)
+	require.NoError(t, err)
+	copyFs, ok := fsResult.(*Fs)
+	require.True(t, ok)
+	oldMoveChunkSize := moveFs.opt.ChunkSize
+	moveFs.opt.ChunkSize = fs.SizeSuffix(3)
+	defer func() {
+		moveFs.opt.ChunkSize = oldMoveChunkSize
+		_ = operations.Purge(ctx, copyFs.base, "")
+		_ = operations.Purge(ctx, moveFs.base, dir)
+	}()
+
+	type operation struct {
+		name    string
+		fs      *Fs
+		enabled bool
+		do      copyMoveFn
+	}
+	operations := []operation{
+		{name: "Copy", fs: copyFs, enabled: copyFs.Features().Copy != nil, do: copyFs.Copy},
+		{name: "Move", fs: moveFs, enabled: moveFs.Features().Move != nil, do: moveFs.Move},
+	}
+	testCases := []struct {
+		name           string
+		sourceContents string
+		targetContents string
+	}{
+		{name: "SmallOverComposite", sourceContents: "hi", targetContents: "abcdef"},
+		{name: "FewerChunks", sourceContents: "abcd", targetContents: "abcdefghi"},
+	}
+	transactionModes := []struct {
+		name        string
+		useNoRename bool
+	}{
+		{name: "Rename"},
+		{name: "NoRename", useNoRename: true},
+	}
+
+	for _, operation := range operations {
+		t.Run(operation.name, func(t *testing.T) {
+			if !operation.enabled {
+				t.Skipf("wrapped remote does not support server-side %s", strings.ToLower(operation.name))
+			}
+			for _, transactionMode := range transactionModes {
+				t.Run(transactionMode.name, func(t *testing.T) {
+					f := operation.fs
+					oldUseNoRename := f.useNoRename
+					f.useNoRename = transactionMode.useNoRename
+					defer func() { f.useNoRename = oldUseNoRename }()
+					for _, testCase := range testCases {
+						t.Run(testCase.name, func(t *testing.T) {
+							prefix := path.Join(dir, strings.ToLower(operation.name), strings.ToLower(transactionMode.name), strings.ToLower(testCase.name))
+							source := testPutFile(ctx, t, f, prefix+"-source", testCase.sourceContents, "source", true)
+							target := testPutFile(ctx, t, f, prefix+"-target", testCase.targetContents, "target", true)
+							targetObject := target.(*Object)
+							require.NotEmpty(t, targetObject.chunks)
+
+							oldChunks := append([]fs.Object(nil), targetObject.chunks...)
+							result, err := operation.do(ctx, source, target.Remote())
+							require.NoError(t, err)
+
+							reader, err := result.Open(ctx)
+							require.NoError(t, err)
+							contents, err := io.ReadAll(reader)
+							require.NoError(t, err)
+							require.NoError(t, reader.Close())
+							assert.Equal(t, testCase.sourceContents, string(contents))
+
+							resultObject := result.(*Object)
+							currentChunks := make(map[string]struct{}, len(resultObject.chunks))
+							for _, chunk := range resultObject.chunks {
+								currentChunks[chunk.Remote()] = struct{}{}
+							}
+							removed := 0
+							for _, chunk := range oldChunks {
+								if _, found := currentChunks[chunk.Remote()]; found {
+									continue
+								}
+								_, err := f.base.NewObject(ctx, chunk.Remote())
+								assert.Equal(t, fs.ErrorObjectNotFound, err)
+								removed++
+							}
+							assert.Positive(t, removed)
+						})
+					}
+				})
+			}
+		})
+	}
+}
+
 // Test that md5all creates metadata even for small files
 func testMD5AllSlow(t *testing.T, f *Fs) {
 	ctx := context.Background()
@@ -949,6 +1045,9 @@ func (f *Fs) InternalTest(t *testing.T) {
 	})
 	t.Run("ChunkerServerSideMove", func(t *testing.T) {
 		testChunkerServerSideMove(t, f)
+	})
+	t.Run("ChunkerServerSideOverwrite", func(t *testing.T) {
+		testChunkerServerSideOverwrite(t, f)
 	})
 	t.Run("MD5AllSlow", func(t *testing.T) {
 		testMD5AllSlow(t, f)
