@@ -1393,9 +1393,10 @@ To reduce risk of corrupting an existing configuration file, rclone
 will not write directly to it when saving changes. Instead it will
 first write to a new, temporary, file. If a configuration file already
 existed, it will (on Unix systems) try to mirror its permissions to
-the new file. Then it will rename the existing file to a temporary
-name as backup. Next, rclone will rename the new file to the correct name,
-before finally cleaning up by deleting the backup file.
+the new file. Then it will rename the new file over the existing file.
+On Unix the rename is atomic, so the configuration file path always
+names a complete configuration file; on other platforms the rename
+still replaces the file, though that is not guaranteed to be atomic.
 
 If the configuration file path used by rclone is a symbolic link, then
 this will be evaluated and rclone will write to the resolved path, instead
