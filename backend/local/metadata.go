@@ -143,12 +143,18 @@ func (o *Object) writeMetadataToFile(m fs.Metadata) (outErr error) {
 		if mode >= 0 {
 			umode := uint(mode)
 			if umode <= math.MaxUint32 {
-				fileMode := os.FileMode(umode)
+				fileMode := modeFromMetadata(uint32(umode))
 				// fileMode comes from the source, which may be untrusted, so
 				// by default apply only the permission bits and strip the
-				// setuid, setgid and sticky bits.
+				// setuid, setgid and sticky bits - except the setgid bit of
+				// a directory, which only makes new entries inherit the
+				// directory's group.
 				if !o.fs.opt.MetadataRestoreSpecial {
+					setgidDir := fileMode&os.ModeSetgid != 0 && o.isDirectory()
 					fileMode = fileMode.Perm()
+					if setgidDir {
+						fileMode |= os.ModeSetgid
+					}
 				}
 				if o.translatedLink {
 					if haveLChmod {
@@ -168,4 +174,33 @@ func (o *Object) writeMetadataToFile(m fs.Metadata) (outErr error) {
 	}
 	// FIXME not parsing rdev yet
 	return outErr
+}
+
+// modeFromMetadata converts the "mode" metadata to an os.FileMode.
+//
+// On unix the metadata is the st_mode, whose setuid, setgid and sticky
+// bits (0o4000, 0o2000, 0o1000) are not the bits os.FileMode uses for
+// them; elsewhere it is an os.FileMode, which leaves 0o7000 unused.
+func modeFromMetadata(mode uint32) os.FileMode {
+	fileMode := os.FileMode(mode &^ 0o7000)
+	if mode&0o4000 != 0 {
+		fileMode |= os.ModeSetuid
+	}
+	if mode&0o2000 != 0 {
+		fileMode |= os.ModeSetgid
+	}
+	if mode&0o1000 != 0 {
+		fileMode |= os.ModeSticky
+	}
+	return fileMode
+}
+
+// isDirectory reports whether the object on disk is a directory, from
+// the file system rather than from the (untrusted) source metadata
+func (o *Object) isDirectory() bool {
+	if o.translatedLink {
+		return false
+	}
+	fi, err := os.Lstat(o.path)
+	return err == nil && fi.IsDir()
 }
