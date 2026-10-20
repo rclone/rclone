@@ -86,7 +86,7 @@ func globToRegexp(glob string, pathMode bool, addAnchors bool, ignoreCase bool) 
 	braceDepth := 0
 	inBrackets := 0
 	bracketStart := false   // just opened a character class
-	bracketNegated := false // just read the ! of a [! character class
+	bracketNegated := false // just read the ! or ^ of a [! or [^ character class
 	slashed := false
 	inRegexp := false    // inside {{ ... }}
 	inRegexpEnd := false // have received }} waiting for more
@@ -127,10 +127,10 @@ func globToRegexp(glob string, pathMode bool, addAnchors bool, ignoreCase bool) 
 			}
 		}
 		if inBrackets > 0 {
-			if bracketStart && c == '!' {
-				// [!...] is a negated character class in glob
-				// syntax, which is [^...] in a regexp. Like ?, it
-				// does not match the / separator in path mode.
+			if bracketStart && (c == '!' || c == '^') {
+				// [!...] and [^...] are negated character classes
+				// in glob syntax, which is [^...] in a regexp. Like
+				// ?, they do not match the / separator in path mode.
 				bracketStart = false
 				bracketNegated = true
 				_ = re.WriteByte('^')
