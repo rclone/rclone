@@ -2,6 +2,7 @@ package vfs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -428,6 +429,59 @@ func TestFileRename(t *testing.T) {
 	} {
 		t.Run(fmt.Sprintf("%v,forceCache=%v", test.mode, test.forceCache), func(t *testing.T) {
 			testFileRename(t, test.mode, test.inCache, test.forceCache)
+		})
+	}
+}
+
+func TestFileRenameFailureRestoresState(t *testing.T) {
+	for _, deferred := range []bool{false, true} {
+		name := "immediate"
+		if deferred {
+			name = "deferred"
+		}
+		t.Run(name, func(t *testing.T) {
+			r, vfs, file, item := fileCreate(t, vfscommon.CacheModeOff)
+			rootDir, err := vfs.Root()
+			require.NoError(t, err)
+			dir := file.Dir()
+			destNode := newFile(rootDir, rootDir.Path(), nil, "newLeaf")
+			rootDir.addObject(destNode)
+
+			var fd Handle
+			if deferred {
+				fd, err = file.Open(os.O_WRONLY | os.O_TRUNC)
+				require.NoError(t, err)
+				_, err = fd.WriteString("replacement")
+				require.NoError(t, err)
+				require.NoError(t, file.SetModTime(item.ModTime))
+			}
+
+			moveErr := errors.New("move failed")
+			features := r.Fremote.Features()
+			originalMove := features.Move
+			features.Move = func(context.Context, fs.Object, string) (fs.Object, error) {
+				return nil, moveErr
+			}
+			t.Cleanup(func() { features.Move = originalMove })
+
+			err = dir.Rename("file1", "newLeaf", rootDir)
+			if deferred {
+				require.NoError(t, err)
+				require.Equal(t, "newLeaf", file.Path())
+				require.NoError(t, fd.Close())
+				item = fstest.NewItem("dir/file1", "replacement", item.ModTime)
+			} else {
+				require.ErrorIs(t, err, moveErr)
+			}
+
+			source, err := vfs.Stat("dir/file1")
+			require.NoError(t, err)
+			require.Same(t, file, source)
+			require.Equal(t, "dir/file1", file.Path())
+			restoredDest, err := vfs.Stat("newLeaf")
+			require.NoError(t, err)
+			require.Same(t, destNode, restoredDest)
+			r.CheckRemoteItems(t, item)
 		})
 	}
 }
