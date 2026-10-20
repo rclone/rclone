@@ -88,6 +88,47 @@ func TestObjectRangeSuffixLongerThanObject(t *testing.T) {
 	assert.Equal(t, "hello", string(body))
 }
 
+func TestObjectRangeNotSatisfiable(t *testing.T) {
+	for _, rangeHeader := range []string{"bytes=10-", "bytes=10-12", "bytes=-0", "bytes=5-2", "bytes=20-"} {
+		t.Run(rangeHeader, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("GET", "http://example.com/aFile", nil)
+			r.Header.Add("Range", rangeHeader)
+			o := object.NewMemoryObject("aFile", time.Now(), []byte("0123456789"))
+			Object(w, r, o)
+			resp := w.Result()
+			assert.Equal(t, http.StatusRequestedRangeNotSatisfiable, resp.StatusCode)
+			assert.Equal(t, "bytes */10", resp.Header.Get("Content-Range"))
+		})
+	}
+}
+
+func TestObjectRangeEndPastObject(t *testing.T) {
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("GET", "http://example.com/aFile", nil)
+	r.Header.Add("Range", "bytes=8-20")
+	o := object.NewMemoryObject("aFile", time.Now(), []byte("0123456789"))
+	Object(w, r, o)
+	resp := w.Result()
+	assert.Equal(t, http.StatusPartialContent, resp.StatusCode)
+	assert.Equal(t, "2", resp.Header.Get("Content-Length"))
+	assert.Equal(t, "bytes 8-9/10", resp.Header.Get("Content-Range"))
+	body, _ := io.ReadAll(resp.Body)
+	assert.Equal(t, "89", string(body))
+}
+
+func TestObjectRangeEmptyObject(t *testing.T) {
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("GET", "http://example.com/aFile", nil)
+	r.Header.Add("Range", "bytes=0-")
+	o := object.NewMemoryObject("aFile", time.Now(), []byte{})
+	Object(w, r, o)
+	resp := w.Result()
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, "0", resp.Header.Get("Content-Length"))
+	assert.Equal(t, "", resp.Header.Get("Content-Range"))
+}
+
 func TestObjectBadRange(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "http://example.com/aFile", nil)
