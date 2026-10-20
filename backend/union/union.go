@@ -61,6 +61,36 @@ If a remote has less than this much free space then it won't be
 considered for use in lfs or eplfs policies.`,
 			Advanced: true,
 			Default:  fs.Gibi,
+		}, {
+			Name: "usage_by_listing",
+			Help: `Find the usage of upstreams by listing them if they don't report it.
+
+The lno and eplno policies need the number of objects and the lus and
+eplus policies need the used space of each upstream. Most upstreams
+don't report the number of objects and some don't report the used
+space either, in which case it is treated as 0.
+
+If this is set, the number of objects and the used space are found by
+listing all of the upstream instead, like ` + "`rclone size`" + ` does. This
+can take a long time and use a lot of API calls on large upstreams,
+so it is only done when one of these policies needs it, once at the
+start and then in the background every usage_by_listing_cache_time.
+Changes made through the union are accounted for without listing
+again.`,
+			Advanced: true,
+			Default:  false,
+		}, {
+			Name: "usage_by_listing_cache_time",
+			Help: `How long the usage found by usage_by_listing is valid for.
+
+After this time the upstream is listed again in the background while
+the previous usage, adjusted with the changes made through the union,
+is still used.
+
+Set to 0 to use cache_time or to "off" to only list each upstream
+once.`,
+			Advanced: true,
+			Default:  fs.Duration(0),
 		}},
 	}
 	fs.Register(fsi)
@@ -252,6 +282,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	errs := Errors(make([]error, len(upstreams)))
 	multithread(len(upstreams), func(i int) {
 		err := upstreams[i].Features().Purge(ctx, dir)
+		upstreams[i].MarkUsageStale()
 		if errors.Is(err, fs.ErrorDirNotFound) {
 			err = nil
 		}
@@ -298,6 +329,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil || co == nil {
 		return nil, err
 	}
+	du.AddUsage(1, max(co.Size(), 0))
 	wo, err := f.wrapEntries(du.WrapObject(co))
 	return wo.(*Object), err
 }
@@ -544,7 +576,7 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, stream bo
 		var o fs.Object
 		var err error
 		if stream {
-			o, err = u.Features().PutStream(ctx, in, src, options...)
+			o, err = u.PutStream(ctx, in, src, options...)
 		} else {
 			o, err = u.Put(ctx, in, src, options...)
 		}
@@ -563,7 +595,7 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, stream bo
 		var o fs.Object
 		var err error
 		if stream {
-			o, err = u.Features().PutStream(ctx, readers[i], src, options...)
+			o, err = u.PutStream(ctx, readers[i], src, options...)
 		} else {
 			o, err = u.Put(ctx, readers[i], src, options...)
 		}

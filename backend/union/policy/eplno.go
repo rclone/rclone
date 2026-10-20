@@ -19,14 +19,13 @@ type EpLno struct {
 }
 
 func (p *EpLno) lno(upstreams []*upstream.Fs) (*upstream.Fs, error) {
+	numObjs := usages(len(upstreams), func(i int) (int64, error) {
+		return upstreams[i].GetNumObjects()
+	})
 	var minNumObj int64 = math.MaxInt64
 	var lnoUpstream *upstream.Fs
-	for _, u := range upstreams {
-		numObj, err := u.GetNumObjects()
-		if err != nil {
-			fs.LogPrintf(fs.LogLevelNotice, nil,
-				"Number of Objects is not supported for upstream %s, treating as 0", u.Name())
-		}
+	for i, u := range upstreams {
+		numObj := numObjs[i]
 		if minNumObj > numObj {
 			minNumObj = numObj
 			lnoUpstream = u
@@ -39,14 +38,13 @@ func (p *EpLno) lno(upstreams []*upstream.Fs) (*upstream.Fs, error) {
 }
 
 func (p *EpLno) lnoEntries(entries []upstream.Entry) (upstream.Entry, error) {
+	numObjs := usages(len(entries), func(i int) (int64, error) {
+		return entries[i].UpstreamFs().GetNumObjects()
+	})
 	var minNumObj int64 = math.MaxInt64
 	var lnoEntry upstream.Entry
-	for _, e := range entries {
-		numObj, err := e.UpstreamFs().GetNumObjects()
-		if err != nil {
-			fs.LogPrintf(fs.LogLevelNotice, nil,
-				"Number of Objects is not supported for upstream %s, treating as 0", e.UpstreamFs().Name())
-		}
+	for i, e := range entries {
+		numObj := numObjs[i]
 		if minNumObj > numObj {
 			minNumObj = numObj
 			lnoEntry = e
