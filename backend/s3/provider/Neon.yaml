@@ -1,0 +1,12 @@
+name: Neon
+description: Neon Object Storage
+region:
+  us-east-1: US East (N. Virginia)
+  us-east-2: US East (Ohio)
+  eu-central-1: Europe (Frankfurt)
+  ap-southeast-1: Asia Pacific (Singapore)
+endpoint: {}
+quirks:
+  list_version: 2 # ListObjectsV2 is the only list operation supported
+  force_path_style: true # virtual-hosted style requests are not supported
+  object_lock_supported: false # object lock config is stored but enforcement is limited
