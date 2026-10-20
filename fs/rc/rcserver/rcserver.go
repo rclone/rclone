@@ -408,7 +408,9 @@ func (s *Server) serveRemote(w http.ResponseWriter, r *http.Request, path string
 }
 
 // Match URLS of the form [fs]/remote
-var fsMatch = regexp.MustCompile(`^\[(.*?)\](.*)$`)
+// Use a greedy match so that a remote path containing "]" (e.g. [local:[test]]/file)
+// is parsed correctly instead of stopping at the first "]".
+var fsMatch = regexp.MustCompile(`^\[(.*)\](.*)$`)
 
 func (s *Server) handleGet(w http.ResponseWriter, r *http.Request, path string) {
 	// Look to see if this has an fs in the path

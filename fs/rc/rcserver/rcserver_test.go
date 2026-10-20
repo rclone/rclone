@@ -1205,3 +1205,56 @@ func normalizeJSON(t *testing.T, jsonStr string) string {
 	require.NoError(t, err, "JSON marshalling failed")
 	return string(normalizedJSON)
 }
+
+// TestFsMatch ensures the URL regex correctly handles remote paths that
+// contain "]" characters, as reported in #6893.
+func TestFsMatch(t *testing.T) {
+	for _, test := range []struct {
+		name     string
+		path     string
+		wantNil  bool
+		wantFs   string
+		wantPath string
+	}{
+		{
+			name:     "simple remote",
+			path:     "[local:path]/file.txt",
+			wantFs:   "local:path",
+			wantPath: "/file.txt",
+		},
+		{
+			name:     "remote root",
+			path:     "[local:path]",
+			wantFs:   "local:path",
+			wantPath: "",
+		},
+		{
+			name:     "remote path with bracket",
+			path:     "[local:[test]]/file.txt",
+			wantFs:   "local:[test]",
+			wantPath: "/file.txt",
+		},
+		{
+			name:     "remote path with multiple brackets",
+			path:     "[local:sub/[dir]]/file.txt",
+			wantFs:   "local:sub/[dir]",
+			wantPath: "/file.txt",
+		},
+		{
+			name:    "no brackets",
+			path:    "some/path",
+			wantNil: true,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			got := fsMatch.FindStringSubmatch(test.path)
+			if test.wantNil {
+				assert.Nil(t, got)
+				return
+			}
+			require.NotNil(t, got)
+			assert.Equal(t, test.wantFs, got[1], "fs name mismatch")
+			assert.Equal(t, test.wantPath, got[2], "path mismatch")
+		})
+	}
+}
