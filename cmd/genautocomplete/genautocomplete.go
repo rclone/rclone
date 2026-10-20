@@ -14,7 +14,9 @@ var completionDefinition = &cobra.Command{
 	Use:   "completion [shell]",
 	Short: `Output completion script for a given shell.`,
 	Long: `Generates a shell completion script for rclone.
-Run with ` + "`--help`" + ` to list the supported shells.`,
+Run with ` + "`--help`" + ` to list the supported shells.
+Enum-valued flags such as ` + "`--log-level`" + ` and ` + "`--vfs-cache-mode`" + `
+also complete their supported values.`,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.33",
 	},

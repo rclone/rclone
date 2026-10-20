@@ -86,7 +86,8 @@ func verifyHashsumDownloaded(ctx context.Context, sumsBuf []byte, archive string
 		return fmt.Errorf("invalid hashsum signature: %w", err)
 	}
 
-	wantHash, err := findFileHash(sumsBuf, archive)
+	// Only read hashes from the the signed text
+	wantHash, err := findFileHash(block.Bytes, archive)
 	if err != nil {
 		return err
 	}

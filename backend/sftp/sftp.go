@@ -250,7 +250,7 @@ E.g. the second example above should be rewritten as:
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
-			Default:  encoder.Display,
+			Default:  encoder.Base,
 		}, {
 			Name:     "set_modtime",
 			Default:  true,
@@ -1883,8 +1883,7 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 // mkParentDir makes the parent of remote if necessary and any
 // directories above that
 func (f *Fs) mkParentDir(ctx context.Context, remote string) error {
-	parent := path.Dir(remote)
-	return f.mkdir(ctx, f.remotePath(parent))
+	return f.mkdir(ctx, path.Dir(f.remotePath(remote)))
 }
 
 // mkdir makes the directory and parents using native paths
@@ -2547,6 +2546,10 @@ func (f *Fs) remoteShellPath(remote string) string {
 		if f.opt.PathOverride[0] == '@' {
 			shellPath = path.Join(strings.TrimPrefix(f.opt.PathOverride, "@"), f.absRoot, encodedRemote)
 		}
+		// A relative path starting with "-" would be parsed as an option by the hash command
+		if strings.HasPrefix(shellPath, "-") {
+			shellPath = "./" + shellPath
+		}
 		fs.Debugf(f, "Shell path redirected to %q with option path_override", shellPath)
 		return shellPath
 	}
@@ -2832,6 +2835,8 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	_, err = file.ReadFrom(&sizeReader{Reader: in, size: src.Size()})
 	if err != nil {
+		// Close the handle otherwise the server keeps the removed file's space allocated
+		_ = file.Close()
 		o.fs.putSftpConnection(&c, err)
 		remove()
 		return fmt.Errorf("Update ReadFrom failed: %w", err)

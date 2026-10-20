@@ -30,6 +30,7 @@ type CompareOpt = struct {
 
 func (b *bisyncRun) setCompareDefaults(ctx context.Context) (err error) {
 	ci := fs.GetConfig(ctx)
+	renameHash := b.trackRenamesPreflight() && b.trackRenamesStrategy.UsesHash()
 
 	// defaults
 	b.opt.Compare.Size = true
@@ -58,7 +59,16 @@ func (b *bisyncRun) setCompareDefaults(ctx context.Context) (err error) {
 	if b.fs1.Features().SlowHash || b.fs2.Features().SlowHash {
 		b.opt.Compare.SlowHashDetected = true
 	}
-	if b.opt.Compare.Checksum && !b.opt.IgnoreListingChecksum {
+	if renameHash && b.opt.IgnoreListingChecksum {
+		return errors.New("--max-delete-renames-aware with a hash strategy is incompatible with --ignore-listing-checksum")
+	}
+	if renameHash && b.opt.Compare.SlowHashDetected && (b.opt.Compare.NoSlowHash || b.opt.Compare.SlowHashSyncOnly) {
+		return errors.New("--max-delete-renames-aware with a hash strategy is incompatible with the configured slow-hash exclusions")
+	}
+	if renameHash && b.fs1.Hashes().Overlap(b.fs2.Hashes()).GetOne() == hash.None {
+		return errors.New("--max-delete-renames-aware with a hash strategy requires a common hash on both paths")
+	}
+	if (b.opt.Compare.Checksum || renameHash) && !b.opt.IgnoreListingChecksum {
 		b.setHashType(ci)
 	}
 
@@ -86,7 +96,7 @@ func (b *bisyncRun) setCompareDefaults(ctx context.Context) (err error) {
 			// note: --checksum will still affect the internal sync calls
 		}
 	}
-	if !ci.CheckSum && !b.opt.Compare.Checksum && !b.opt.IgnoreListingChecksum {
+	if !ci.CheckSum && !b.opt.Compare.Checksum && !b.opt.IgnoreListingChecksum && !renameHash {
 		fs.Infoc(nil, Color(terminal.Dim, "Setting --ignore-listing-checksum as neither --checksum nor --compare checksum are set."))
 		b.opt.IgnoreListingChecksum = true
 	}

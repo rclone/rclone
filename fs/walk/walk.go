@@ -172,7 +172,7 @@ func listRwalk(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLe
 		if err != nil {
 			listErr = err
 			err = fs.CountError(ctx, err)
-			fs.Errorf(path, "error listing: %v", err)
+			fs.ErrorfCtx(ctx, path, "error listing: %v", err)
 			return nil
 		}
 		listType.Filter(&entries)
@@ -424,7 +424,7 @@ func walk(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel i
 					if err != nil && err != ErrorSkipDir {
 						traversing.Done()
 						err = fs.CountError(ctx, err)
-						fs.Errorf(job.remote, "error listing: %v", err)
+						fs.ErrorfCtx(ctx, job.remote, "error listing: %v", err)
 						closeQuit()
 						// Send error to error channel if space
 						select {
@@ -503,10 +503,12 @@ func walkRDirTree(ctx context.Context, f fs.Fs, startPath string, includeAll boo
 						return err
 					}
 					if inc || includeAll {
-						// If the directory doesn't exist already, create it
-						_, obj := dirs.Find(dirPath)
-						if obj == nil {
-							dirs.AddDir(fs.NewDir(dirPath, time.Now()))
+						// Make sure the directory is in the tree. Its
+						// entry in the parent is added by CheckParents
+						// if not listed, as directories can be listed
+						// after the objects in them.
+						if _, ok := dirs[dirPath]; !ok {
+							dirs[dirPath] = nil
 						}
 					}
 				}

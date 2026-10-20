@@ -325,6 +325,14 @@ func assertHeadersAndMetadata(t *testing.T, props *blob.GetPropertiesResponse, w
 }
 
 // helper to read blob tags for an object
+// skipIfHNS skips the test if the storage account has a hierarchical
+// namespace as these don't support blob tags
+func skipIfHNS(t *testing.T, f *Fs) {
+	if f.hns {
+		t.Skip("blob tags not supported with hierarchical namespace")
+	}
+}
+
 func getTagsMap(ctx context.Context, t *testing.T, o fs.Object) map[string]string {
 	ao := o.(*Object)
 	blb := ao.getBlobSVC()
@@ -410,6 +418,7 @@ func (f *Fs) testMetadataPaths(t *testing.T) {
 
 		// Tags: Singlepart upload
 		t.Run("PutSinglepartTags", func(t *testing.T) {
+			skipIfHNS(t, f)
 			contents := random.String(int(f.opt.ChunkSize / 2))
 			item := fstest.NewItem("tags-single.txt", contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))
 			meta := fs.Metadata{
@@ -425,6 +434,7 @@ func (f *Fs) testMetadataPaths(t *testing.T) {
 
 		// Tags: Multipart upload
 		t.Run("PutMultipartTags", func(t *testing.T) {
+			skipIfHNS(t, f)
 			contents := random.String(int(f.opt.ChunkSize + 2048))
 			item := fstest.NewItem("tags-multipart.txt", contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))
 			meta := fs.Metadata{
@@ -612,6 +622,7 @@ func (f *Fs) testMetadataPaths(t *testing.T) {
 
 	// Tags: Singlepart copy
 	t.Run("CopySinglepartTags", func(t *testing.T) {
+		skipIfHNS(t, f)
 		// create small source
 		contents := random.String(int(f.opt.ChunkSize / 2))
 		srcItem := fstest.NewItem("tags-copy-single-src.txt", contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))
@@ -637,6 +648,7 @@ func (f *Fs) testMetadataPaths(t *testing.T) {
 
 	// Tags: Multipart copy
 	t.Run("CopyMultipartTags", func(t *testing.T) {
+		skipIfHNS(t, f)
 		// create large source to force multipart
 		contents := random.String(int(f.opt.CopyCutoff + 4096))
 		srcItem := fstest.NewItem("tags-copy-multi-src.txt", contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))

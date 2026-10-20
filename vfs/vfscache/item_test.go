@@ -181,6 +181,20 @@ func TestItemTruncateExisting(t *testing.T) {
 	checkObject(t, r, "existing", contents[:40]+zeroes[:20])
 }
 
+func TestItemTruncateShrinkUncached(t *testing.T) {
+	r, c := newItemTestCache(t)
+
+	contents, obj, item := newFile(t, r, c, "existing")
+
+	// Shrink a file which hasn't been read so the downloader has to
+	// fetch the kept part of the file on close.
+	require.NoError(t, item.Open(obj))
+	require.NoError(t, item.Truncate(40))
+	require.NoError(t, item.Close(nil))
+
+	checkObject(t, r, "existing", contents[:40])
+}
+
 func TestItemReadAt(t *testing.T) {
 	r, c := newItemTestCache(t)
 
@@ -822,4 +836,36 @@ func TestItemHandleCachingReopenDuringGraceClose(t *testing.T) {
 		item.graceTimer.Stop()
 	}
 	item.mu.Unlock()
+}
+
+// Reopening in the grace period after a remote modtime change must
+// read the remote data, not zeros from an unfetched recreated file.
+func TestItemHandleCachingStaleReopenReadsRemote(t *testing.T) {
+	r, c := newItemTestCacheHandleCaching(t, 10*time.Second)
+	ctx := context.Background()
+
+	contents, obj, item := newFile(t, r, c, "existing")
+
+	require.NoError(t, item.Open(obj))
+	buf := make([]byte, len(contents))
+	n, err := item.ReadAt(buf, 0)
+	require.NoError(t, err)
+	require.Equal(t, contents, string(buf[:n]))
+	require.NoError(t, item.Close(nil))
+
+	require.NoError(t, obj.SetModTime(ctx, time.Now().Add(time.Hour)))
+	obj, err = r.Fremote.NewObject(ctx, "existing")
+	require.NoError(t, err)
+
+	require.NoError(t, item.Open(obj))
+	defer func() { require.NoError(t, item.Close(nil)) }()
+
+	size, err := item.GetSize()
+	require.NoError(t, err)
+	assert.Equal(t, int64(len(contents)), size)
+
+	buf = make([]byte, len(contents))
+	n, err = item.ReadAt(buf, 0)
+	require.NoError(t, err)
+	assert.Equal(t, contents, string(buf[:n]))
 }
