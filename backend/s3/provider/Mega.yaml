@@ -1,10 +1,20 @@
 name: Mega
 description: MEGA S4 Object Storage
 endpoint:
-  s3.eu-central-1.s4.mega.io: Mega S4 eu-central-1 (Amsterdam)
-  s3.eu-central-2.s4.mega.io: Mega S4 eu-central-2 (Bettembourg)
-  s3.ca-central-1.s4.mega.io: Mega S4 ca-central-1 (Montreal)
-  s3.ca-west-1.s4.mega.io: Mega S4 ca-west-1 (Vancouver)
+  s3.eu-luxembourg-1.megas4.com: Mega S4 Luxembourg 1
+  s3.eu-luxembourg-2.megas4.com: Mega S4 Luxembourg 2
+  s3.eu-amsterdam-1.megas4.com: Mega S4 Amsterdam 1
+  s3.eu-amsterdam-2.megas4.com: Mega S4 Amsterdam 2
+  s3.eu-paris-1.megas4.com: Mega S4 Paris 1
+  s3.eu-paris-2.megas4.com: Mega S4 Paris 2
+  s3.eu-barcelona-1.megas4.com: Mega S4 Barcelona 1
+  s3.eu-barcelona-2.megas4.com: Mega S4 Barcelona 2
+  s3.ca-montreal-1.megas4.com: Mega S4 Montreal 1
+  s3.ca-montreal-2.megas4.com: Mega S4 Montreal 2
+  s3.ca-vancouver-1.megas4.com: Mega S4 Vancouver 1
+  s3.ca-vancouver-2.megas4.com: Mega S4 Vancouver 2
+  s3.ap-tokyo-1.megas4.com: Mega S4 Tokyo 1
+  s3.ap-tokyo-2.megas4.com: Mega S4 Tokyo 2
 bucket_acl: true
 quirks:
   list_version: 2

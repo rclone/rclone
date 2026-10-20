@@ -14,6 +14,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 )
 
@@ -141,6 +142,8 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 // Update updates the object with new data
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	size := src.Size()
+	counter := readers.NewCountingReader(in)
+	in = counter
 
 	if size <= int64(o.fs.opt.UploadCutoff) {
 		err := o.fs.uploadFile(ctx, in, o.remote)
@@ -153,6 +156,15 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		if err != nil {
 			return fmt.Errorf("failed to upload file: %w", err)
 		}
+	}
+
+	// Check the source supplied the number of bytes it declared
+	// otherwise a truncated file would be stored as a good upload
+	if size >= 0 && int64(counter.BytesRead()) != size {
+		if removeErr := o.Remove(ctx); removeErr != nil {
+			fs.Errorf(o, "Failed to remove partially transferred object: %v", removeErr)
+		}
+		return fmt.Errorf("expected %d bytes in input, but got %d: %w", size, counter.BytesRead(), io.ErrUnexpectedEOF)
 	}
 
 	o.size = size

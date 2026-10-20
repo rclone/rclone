@@ -44,17 +44,18 @@ func (d delta) is(cond delta) bool {
 
 // deltaSet
 type deltaSet struct {
-	deltas     map[string]delta
-	size       map[string]int64
-	time       map[string]time.Time
-	hash       map[string]string
-	opt        *Options
-	fs         fs.Fs  // base filesystem
-	msg        string // filesystem name for logging
-	oldCount   int    // original number of files (for "excess deletes" check)
-	deleted    int    // number of deleted files (for "excess deletes" check)
-	foundSame  bool   // true if found at least one unchanged file
-	checkFiles bilib.Names
+	deltas           map[string]delta
+	size             map[string]int64
+	time             map[string]time.Time
+	hash             map[string]string
+	opt              *Options
+	fs               fs.Fs  // base filesystem
+	msg              string // filesystem name for logging
+	oldCount         int    // original number of files (for "excess deletes" check)
+	deleted          int    // number of deleted files (for "excess deletes" check)
+	renameExemptions int    // tracked renames excluded from the max-delete check
+	foundSame        bool   // true if found at least one unchanged file
+	checkFiles       bilib.Names
 }
 
 func (ds *deltaSet) empty() bool {
@@ -181,9 +182,6 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 	for _, file := range old.list {
 		// REMEMBER: this section is only concerned with comparing listings from the same side (not different sides)
 		d := deltaZero
-		s := int64(0)
-		h := ""
-		var t time.Time
 		if !now.has(file) {
 			b.indent(msg, file, Color(terminal.RedFg, "File was deleted"))
 			ds.deleted++
@@ -201,7 +199,6 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 						whatchanged = append(whatchanged, Color(terminal.MagentaFg, "size (smaller)"))
 						d |= deltaSmaller
 					}
-					s = now.getSize(file)
 				}
 			}
 			if b.opt.Compare.Modtime {
@@ -215,7 +212,6 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 						whatchanged = append(whatchanged, Color(terminal.MagentaFg, "time (older)"))
 						d |= deltaOlder
 					}
-					t = now.getTime(file)
 				}
 			}
 			if b.opt.Compare.Checksum {
@@ -223,7 +219,6 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 					fs.Debugf(file, "(old: %v current: %v)", old.getHash(file), now.getHash(file))
 					whatchanged = append(whatchanged, Color(terminal.MagentaFg, "hash"))
 					d |= deltaHash
-					h = now.getHash(file)
 				}
 			}
 			// concat changes and print log
@@ -236,13 +231,13 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 		if d.is(deltaModified) {
 			ds.deltas[file] = d
 			if b.opt.Compare.Size {
-				ds.size[file] = s
+				ds.size[file] = now.getSize(file)
 			}
 			if b.opt.Compare.Modtime {
-				ds.time[file] = t
+				ds.time[file] = now.getTime(file)
 			}
 			if b.opt.Compare.Checksum {
-				ds.hash[file] = h
+				ds.hash[file] = now.getHash(file)
 			}
 		} else if d.is(deltaDeleted) {
 			ds.deltas[file] = d
@@ -295,8 +290,8 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (result
 	handled := bilib.Names{}
 	renameSkipped := bilib.Names{}
 	deletedonboth := bilib.Names{}
-	skippedDirs1 := newFileList()
-	skippedDirs2 := newFileList()
+	skipped1 := newFileList()
+	skipped2 := newFileList()
 	b.renames = renames{}
 
 	ctxMove := b.opt.setDryRun(ctx)
@@ -366,7 +361,7 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (result
 	}
 
 	// if there are potential conflicts to check, check them all here (outside the loop) in one fell swoop
-	matches, err := b.checkconflicts(ctxCheck, filterCheck, b.fs1, b.fs2)
+	matches, matches1, matches2, err := b.checkconflicts(ctxCheck, filterCheck, b.fs1, b.fs2)
 
 	for _, file := range ds1.sort() {
 		alias := b.aliases.Alias(file)
@@ -393,8 +388,8 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (result
 				// if files are identical, leave them alone instead of renaming
 				if (dirs1.has(file) || dirs1.has(alias)) && (dirs2.has(file) || dirs2.has(alias)) {
 					fs.Infof(nil, "This is a directory, not a file. Skipping equality check and will not rename: %s", file)
-					b.march.ls1.getPut(file, skippedDirs1)
-					b.march.ls2.getPut(file, skippedDirs2)
+					b.march.ls1.getPut(file, skipped1)
+					b.march.ls2.getPut(file, skipped2)
 					b.debugFn(file, func() {
 						b.debug(file, fmt.Sprintf("deltas dir: %s, ls1 has name?: %v, ls2 has name?: %v", file, b.march.ls1.has(b.DebugName), b.march.ls2.has(b.DebugName)))
 					})
@@ -420,10 +415,14 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (result
 								b.indent("Path1", p2, "Queue copy to Path2")
 								copy1to2.Add(b.march.ls1.getTryAlias(file, alias))
 							}
-						} else {
+						} else if b.sameCompared(b.march.ls1, matches1, b.march.ls1.getTryAlias(file, alias), b.fs1) &&
+							b.sameCompared(b.march.ls2, matches2, b.march.ls2.getTryAlias(file, alias), b.fs2) {
 							fs.Infof(nil, "Files are equal! Skipping: %s", file)
-							renameSkipped.Add(file)
-							renameSkipped.Add(alias)
+							b.march.ls1.getPut(b.march.ls1.getTryAlias(file, alias), skipped1)
+							b.march.ls2.getPut(b.march.ls2.getTryAlias(file, alias), skipped2)
+						} else {
+							// the snapshot isn't the state we found equal, so leave the prior listing for the next run
+							fs.Infof(nil, "Files are equal but changed after the listing was made, so will check again next run: %s", file)
 						}
 					} else {
 						fs.Debugf(nil, "Files are NOT equal: %s", file)
@@ -535,28 +534,44 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (result
 	queues.copy2to1 = copy2to1
 	queues.renameSkipped = renameSkipped
 	queues.deletedonboth = deletedonboth
-	queues.skippedDirs1 = skippedDirs1
-	queues.skippedDirs2 = skippedDirs2
+	queues.skipped1 = skipped1
+	queues.skipped2 = skipped2
 
 	return
 }
 
-// excessDeletes checks whether number of deletes is within allowed range
-func (ds *deltaSet) excessDeletes() bool {
+func (ds *deltaSet) effectiveDeletes() int {
+	return max(0, ds.deleted-ds.renameExemptions)
+}
+
+func (ds *deltaSet) exceedsDeletes() bool {
 	maxDelete := ds.opt.MaxDelete
 	maxRatio := float64(maxDelete) / 100.0
 	curRatio := 0.0
-	if ds.deleted > 0 && ds.oldCount > 0 {
-		curRatio = float64(ds.deleted) / float64(ds.oldCount)
+	effectiveDeletes := ds.effectiveDeletes()
+	if effectiveDeletes > 0 && ds.oldCount > 0 {
+		curRatio = float64(effectiveDeletes) / float64(ds.oldCount)
 	}
+	return curRatio > maxRatio
+}
 
-	if curRatio <= maxRatio {
+// excessDeletes checks whether number of deletes is within allowed range
+func (ds *deltaSet) excessDeletes() bool {
+	if !ds.exceedsDeletes() {
 		return false
 	}
 
+	maxDelete := ds.opt.MaxDelete
+	effectiveDeletes := ds.effectiveDeletes()
+	if ds.renameExemptions > 0 {
+		fs.Errorf("Safety abort",
+			"too many deletes (>%d%%, %d of %d after excluding %d tracked renames) on %s %s. Run with --force if desired.",
+			maxDelete, effectiveDeletes, ds.oldCount, ds.renameExemptions, ds.msg, quotePath(bilib.FsPath(ds.fs)))
+		return true
+	}
 	fs.Errorf("Safety abort",
 		"too many deletes (>%d%%, %d of %d) on %s %s. Run with --force if desired.",
-		maxDelete, ds.deleted, ds.oldCount, ds.msg, quotePath(bilib.FsPath(ds.fs)))
+		maxDelete, effectiveDeletes, ds.oldCount, ds.msg, quotePath(bilib.FsPath(ds.fs)))
 	return true
 }
 
@@ -620,4 +635,13 @@ func (b *bisyncRun) updateAliases(ctx context.Context, ds1, ds2 *deltaSet) {
 	}
 	addAliases(delMap1, fullMap2)
 	addAliases(delMap2, fullMap1)
+}
+
+// sameCompared reports whether file has the same values in the listing
+// snapshot and in the checked list, in every field bisync compares.
+func (b *bisyncRun) sameCompared(snapshot, checked *fileList, file string, f fs.Info) bool {
+	if !checked.has(file) {
+		return false
+	}
+	return len(b.fileInfoDiffs(file, file, snapshot, checked, f, f, snapshot.hash, snapshot.hash)) == 0
 }

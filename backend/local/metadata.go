@@ -105,7 +105,10 @@ func (o *Object) writeMetadataToFile(m fs.Metadata) (outErr error) {
 	}
 	if haveSetBTime {
 		if btimeOK {
-			if o.translatedLink {
+			// When translating symlinks, never follow the path. A planted symlink must
+			// not redirect the birth-time write out of the root. The NOFOLLOW open is a
+			// no-op on a real file or directory
+			if o.translatedLink || o.fs.opt.TranslateSymlinks {
 				err = lsetBTime(o.path, btime)
 			} else {
 				err = setBTime(o.path, btime)
@@ -128,7 +131,7 @@ func (o *Object) writeMetadataToFile(m fs.Metadata) (outErr error) {
 			if o.translatedLink {
 				err = os.Lchown(o.path, uid, gid)
 			} else {
-				err = os.Chown(o.path, uid, gid)
+				err = o.fs.chown(o.path, uid, gid)
 			}
 			if err != nil {
 				outErr = fmt.Errorf("failed to change ownership: %w", err)
@@ -140,15 +143,22 @@ func (o *Object) writeMetadataToFile(m fs.Metadata) (outErr error) {
 		if mode >= 0 {
 			umode := uint(mode)
 			if umode <= math.MaxUint32 {
+				fileMode := os.FileMode(umode)
+				// fileMode comes from the source, which may be untrusted, so
+				// by default apply only the permission bits and strip the
+				// setuid, setgid and sticky bits.
+				if !o.fs.opt.MetadataRestoreSpecial {
+					fileMode = fileMode.Perm()
+				}
 				if o.translatedLink {
 					if haveLChmod {
-						err = lChmod(o.path, os.FileMode(umode))
+						err = lChmod(o.path, fileMode)
 					} else {
-						fs.Debugf(o, "Unable to set mode %v on a symlink on this OS", os.FileMode(umode))
+						fs.Debugf(o, "Unable to set mode %v on a symlink on this OS", fileMode)
 						err = nil
 					}
 				} else {
-					err = os.Chmod(o.path, os.FileMode(umode))
+					err = o.fs.chmod(o.path, fileMode)
 				}
 				if err != nil {
 					outErr = fmt.Errorf("failed to change permissions: %w", err)

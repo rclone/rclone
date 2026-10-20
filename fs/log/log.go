@@ -291,8 +291,7 @@ func InitLogging() {
 
 	// Windows event logging
 	if Opt.WindowsEventLogLevel != fs.LogLevelOff {
-		err := startWindowsEventLog(Handler)
-		if err != nil {
+		if err := startWindowsEventLog(Handler); err != nil {
 			fs.Fatalf(nil, "Failed to start windows event log: %v", err)
 		}
 	}

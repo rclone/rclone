@@ -58,12 +58,6 @@ func NewLoggedBasicAuthenticator(realm string, secrets goauth.SecretProvider) *L
 func basicAuth(authenticator *LoggedBasicAuth) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// skip auth for CORS preflight
-			if r.Method == "OPTIONS" {
-				next.ServeHTTP(w, r)
-				return
-			}
-
 			username := authenticator.CheckAuth(r)
 			if username == "" {
 				authenticator.RequireAuth(w, r)
@@ -79,11 +73,15 @@ func basicAuth(authenticator *LoggedBasicAuth) func(next http.Handler) http.Hand
 func MiddlewareAuthCertificateUser() Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			for _, cert := range r.TLS.PeerCertificates {
-				if cert.Subject.CommonName != "" {
-					r = r.WithContext(context.WithValue(r.Context(), ctxKeyUser, cert.Subject.CommonName))
-					next.ServeHTTP(w, r)
-					return
+			// r.TLS is nil on a plain HTTP listener (http:// prefix) where
+			// there can be no client certificate
+			if r.TLS != nil {
+				for _, cert := range r.TLS.PeerCertificates {
+					if cert.Subject.CommonName != "" {
+						r = r.WithContext(context.WithValue(r.Context(), ctxKeyUser, cert.Subject.CommonName))
+						next.ServeHTTP(w, r)
+						return
+					}
 				}
 			}
 			code := http.StatusUnauthorized
@@ -119,12 +117,6 @@ func MiddlewareAuthBasic(user, pass, realm, salt string) Middleware {
 func MiddlewareAuthCustom(fn CustomAuthFn, realm string, userFromContext bool) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// skip auth for CORS preflight
-			if r.Method == "OPTIONS" {
-				next.ServeHTTP(w, r)
-				return
-			}
-
 			user, pass, ok := parseAuthorization(r)
 			if !ok && userFromContext {
 				user, ok = CtxGetUser(r.Context())
@@ -138,7 +130,7 @@ func MiddlewareAuthCustom(fn CustomAuthFn, realm string, userFromContext bool) M
 				return
 			}
 
-			value, err := fn(user, pass)
+			value, err := fn(r, user, pass)
 			if err != nil {
 				fs.Infof(r.URL.Path, "%s: Auth failed from %s: %v", r.RemoteAddr, user, err)
 				goauth.NewBasicAuthenticator(realm, func(user, realm string) string { return "" }).RequireAuth(w, r) //Reuse BasicAuth error reporting
@@ -176,7 +168,23 @@ func MiddlewareAuthGetUserFromHeader(header string) Middleware {
 
 var onlyOnceWarningAllowOrigin sync.Once
 
-// MiddlewareCORS instantiates middleware that handles basic CORS protections for rcd
+// isCORSPreflight returns true if r is a browser CORS preflight request
+func isCORSPreflight(r *http.Request) bool {
+	return r.Method == "OPTIONS" && r.Header.Get("Origin") != "" && r.Header.Get("Access-Control-Request-Method") != ""
+}
+
+// MiddlewareCORS instantiates middleware that adds the CORS headers to
+// every response if allowOrigin is set.
+//
+// It also answers CORS preflight requests itself. Browsers never
+// attach credentials to a preflight so it must succeed before any
+// authentication middleware sees it, and the browser only looks at
+// the Access-Control-* headers so it is not passed to the handler
+// whose answer could reveal information about the path to an
+// unauthenticated client.
+//
+// If allowOrigin is empty a preflight is treated like any other
+// request.
 func MiddlewareCORS(allowOrigin string) Middleware {
 	onlyOnceWarningAllowOrigin.Do(func() {
 		if allowOrigin == "*" {
@@ -189,9 +197,13 @@ func MiddlewareCORS(allowOrigin string) Middleware {
 
 			if allowOrigin != "" {
 				w.Header().Add("Access-Control-Allow-Origin", allowOrigin)
-				w.Header().Add("Access-Control-Allow-Headers", "Authorization, Content-Type, Depth, Destination, If, Lock-Token, Overwrite, TimeOut, Translate")
+				w.Header().Add("Access-Control-Allow-Headers", "Authorization, Content-Type, Depth, Destination, If, Lock-Token, Overwrite, Prefer, TimeOut, Translate")
 				w.Header().Add("Access-Control-Allow-Methods", "COPY, DELETE, GET, HEAD, LOCK, MKCOL, MOVE, OPTIONS, POST, PROPFIND, PROPPATCH, PUT, TRACE, UNLOCK")
 				w.Header().Add("Access-Control-Max-Age", "86400")
+				if isCORSPreflight(r) {
+					w.WriteHeader(http.StatusOK)
+					return
+				}
 			}
 
 			next.ServeHTTP(w, r)

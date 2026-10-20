@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -71,6 +72,33 @@ func TestGetCaller(t *testing.T) {
 	// assert.Equal(t, "slog_test.go", match[1])
 }
 
+// Test isLogFrame skips logging-machinery frames, including the
+// standard library log/slog frames whose path is trimmed by -trimpath.
+func TestIsLogFrame(t *testing.T) {
+	tests := []struct {
+		name string
+		file string
+		fn   string
+		want bool
+	}{
+		// rclone's own log packages
+		{"fsLog", "github.com/rclone/rclone/fs/log.go", "github.com/rclone/rclone/fs.Debugf", true},
+		{"fsLogSlog", "github.com/rclone/rclone/fs/log/slog.go", "github.com/rclone/rclone/fs/log.(*OutputHandler).Handle", true},
+		// standard library slog with -trimpath: path is "log/slog/logger.go"
+		{"slogTrimpath", "log/slog/logger.go", "log/slog.(*Logger).log", true},
+		// standard library slog without -trimpath: full path contains "/log/"
+		{"slogFullPath", "/usr/local/go/src/log/slog/logger.go", "log/slog.(*Logger).Log", true},
+		// a real caller must not be skipped
+		{"realCaller", "github.com/rclone/rclone/backend/drive/drive.go", "github.com/rclone/rclone/backend/drive.(*Fs).newObjectWithInfo", false},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := isLogFrame(runtime.Frame{File: tc.file, Function: tc.fn})
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
+
 // Test formatStdLogHeader for various flag combinations.
 func TestFormatStdLogHeader(t *testing.T) {
 	cases := []struct {
@@ -112,6 +140,16 @@ func TestEnabled(t *testing.T) {
 	opts := &slog.HandlerOptions{Level: slog.LevelDebug}
 	h2 := NewOutputHandler(&bytes.Buffer{}, opts, 0)
 	assert.True(t, h2.Enabled(context.Background(), slog.LevelDebug))
+
+	// A log level in the config in the context which differs from
+	// the global one overrides the level of the handler
+	ctx, ci := fs.AddConfig(context.Background())
+	assert.False(t, h.Enabled(ctx, slog.LevelDebug))
+	ci.LogLevel = fs.LogLevelDebug
+	assert.True(t, h.Enabled(ctx, slog.LevelDebug))
+	ci.LogLevel = fs.LogLevelError
+	assert.False(t, h.Enabled(ctx, slog.LevelInfo))
+	assert.True(t, h.Enabled(ctx, slog.LevelError))
 }
 
 // Test clearFormatFlags and setFormatFlags bitwise ops.
@@ -259,76 +297,73 @@ func TestOutputHandlerConcurrency(t *testing.T) {
 	var wg sync.WaitGroup
 
 	// Goroutines calling Handle (text format)
-	for i := 0; i < goroutines; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for j := 0; j < iterations; j++ {
+	for range goroutines {
+		wg.Go(func() {
+			for range iterations {
 				r := slog.NewRecord(t0, slog.LevelInfo, "concurrent text", 0)
 				r.AddAttrs(slog.String("object", "obj"))
 				_ = h.Handle(ctx, r)
 			}
-		}()
+		})
 	}
 
 	// Goroutines calling setFormat (switching between text and JSON)
-	for i := 0; i < 2; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for j := 0; j < iterations; j++ {
+	for range 2 {
+		wg.Go(func() {
+			for j := range iterations {
 				if j%2 == 0 {
 					h.setFormat(logFormatDate | logFormatTime)
 				} else {
 					h.setFormat(logFormatJSON)
 				}
 			}
-		}()
+		})
 	}
 
 	// Goroutines calling setFormatFlags / clearFormatFlags
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for j := 0; j < iterations; j++ {
+	wg.Go(func() {
+		for range iterations {
 			h.setFormatFlags(logFormatPid | logFormatMicroseconds)
 			h.clearFormatFlags(logFormatPid | logFormatMicroseconds)
 		}
-	}()
+	})
 
 	// Goroutines calling SetLevel
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for j := 0; j < iterations; j++ {
+	wg.Go(func() {
+		for j := range iterations {
 			if j%2 == 0 {
 				h.SetLevel(slog.LevelDebug)
 			} else {
 				h.SetLevel(slog.LevelInfo)
 			}
 		}
-	}()
+	})
 
 	// Goroutines calling SetOutput / ResetOutput
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		noop := func(_ slog.Level, _ string) {}
-		for j := 0; j < iterations; j++ {
+		for range iterations {
 			h.SetOutput(noop)
 			h.ResetOutput()
 		}
-	}()
+	})
 
 	// Goroutines calling WithAttrs / WithGroup (reads format)
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for j := 0; j < iterations; j++ {
+	wg.Go(func() {
+		for range iterations {
 			_ = h.WithAttrs(nil)
 			_ = h.WithGroup("g")
 		}
-	}()
+	})
+
+	// Goroutine calling AddOutput alternating JSON and text
+	wg.Go(func() {
+		noop := func(_ slog.Level, _ string) {}
+		for j := range 20 {
+			h.AddOutput(j%2 == 0, noop)
+			time.Sleep(time.Millisecond)
+		}
+	})
 
 	// Use a channel with a timeout to detect deadlocks
 	done := make(chan struct{})

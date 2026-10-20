@@ -133,16 +133,26 @@ func GetVersion(ctx context.Context, beta bool, version string) (newVersion, sit
 		if err != nil {
 			return "", siteURL, fmt.Errorf("failed to get list of releases: %w", err)
 		}
-		reSubver := fmt.Sprintf(`href="\./%s\.\d+/"`, regexp.QuoteMeta(newVersion))
-		allSubvers := regexp.MustCompile(reSubver).FindAllString(string(html), -1)
-		if allSubvers == nil {
-			return "", siteURL, errors.New("could not find the minor release")
+		newVersion, err = latestMicroRelease(html, newVersion)
+		if err != nil {
+			return "", siteURL, err
 		}
-		// Use the fact that releases in the index are sorted by date
-		lastSubver := allSubvers[len(allSubvers)-1]
-		newVersion = lastSubver[8 : len(lastSubver)-2]
 	}
 	return
+}
+
+// latestMicroRelease returns the latest micro release of the
+// major.minor release version linked to from the HTML index of
+// releases.
+func latestMicroRelease(html []byte, version string) (string, error) {
+	// The links may or may not start with ./ depending on what made the index
+	reSubver := fmt.Sprintf(`href="(?:\./)?(%s\.\d+)/"`, regexp.QuoteMeta(version))
+	allSubvers := regexp.MustCompile(reSubver).FindAllSubmatch(html, -1)
+	if allSubvers == nil {
+		return "", errors.New("could not find the minor release")
+	}
+	// Use the fact that releases in the index are sorted by date
+	return string(allSubvers[len(allSubvers)-1][1]), nil
 }
 
 // InstallUpdate performs rclone self-update

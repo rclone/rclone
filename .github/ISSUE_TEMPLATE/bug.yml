@@ -1,0 +1,124 @@
+name: Bug report
+description: Report a reproducible problem with rclone
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        We want to help you with rclone - thank you for taking the time to fill this in!
+
+        **This tracker is for reproducible bugs only.** If you have a question, are
+        not sure whether something is a bug, or want help with a configuration, please
+        use the [rclone forum](https://forum.rclone.org/) instead - you will get a much
+        quicker answer there.
+
+        Before filing, please **test with the [latest beta or stable](https://rclone.org/commands/rclone_selfupdate/)**
+        (downloads at <https://beta.rclone.org/>) as your problem may already be fixed.
+
+        **Do not redact** any information except passwords, keys and personal info.
+  - type: checkboxes
+    id: acknowledgements
+    attributes:
+      label: Before you start
+      description: Please confirm the following. Issues that skip these steps may be closed.
+      options:
+        - label: I have searched the [forum](https://forum.rclone.org/) and the existing issues for this problem.
+          required: true
+        - label: I have tested with the latest beta or stable release and can still reproduce the problem.
+          required: true
+        - label: This is a reproducible bug, not a usage question (questions belong on the forum).
+          required: true
+  - type: input
+    id: forum-url
+    attributes:
+      label: Associated forum post URL
+      description: If you discussed this on the forum first (encouraged), paste the link here.
+      placeholder: https://forum.rclone.org/t/...
+    validations:
+      required: false
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is the problem you are having with rclone?
+      description: Describe the problem and the exact steps to reproduce it.
+    validations:
+      required: true
+  - type: textarea
+    id: version
+    attributes:
+      label: rclone version
+      description: The full output of `rclone version`.
+      placeholder: |
+        rclone v1.75.0
+        - os/version: ubuntu 24.04 (64 bit)
+        - os/kernel: 6.8.0-111-generic (x86_64)
+        - os/type: linux
+        - os/arch: amd64
+        - go/version: go1.26.4
+        - go/linking: dynamic
+        - go/tags: none
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      description: Choose the operating system you are using with rclone.
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - FreeBSD
+        - NetBSD
+        - OpenBSD
+        - Plan 9
+        - Solaris
+        - Android
+        - iOS
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: backend
+    attributes:
+      label: Which cloud storage system are you using?
+      description: e.g. Google Drive, S3, Dropbox, local disk. List all involved.
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Output of `rclone config redacted`
+      description: |
+        Run `rclone config redacted` (or `rclone config redacted <remote>` for a
+        single remote). This command automatically replaces passwords and tokens
+        with `XXX`, so it should be safe to paste but please double-check before posting.
+      render: ini
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: The command you were trying to run
+      description: e.g. `rclone copy /tmp remote:tmp`
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: A log from the command with the `-vv` flag
+      description: |
+        e.g. output from `rclone -vv copy /tmp remote:tmp`. For long logs (> 100 lines) use
+        `-vv --log-file bug.log` and attach it here or send to a service such as
+        <https://gist.github.com/> or <https://pastebin.com/> and link it here.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Anything else that might help us, e.g. a minimal way to replicate the problem.
+    validations:
+      required: false

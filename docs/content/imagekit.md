@@ -227,6 +227,7 @@ Here are the possible system metadata items for the imagekit backend.
 | has-alpha | Whether the image has alpha channel or not | bool |  | **Y** |
 | height | Height of the image or video in pixels | int |  | **Y** |
 | is-private-file | Whether the file is private or not | bool |  | **Y** |
+| mtime | Time of last modification, read from the file's updatedAt field | RFC 3339 | 2006-01-02T15:04:05.999999999Z07:00 | **Y** |
 | size | Size of the object in bytes | int64 |  | **Y** |
 | tags | Tags associated with the file | string | tag1,tag2 | **Y** |
 | width | Width of the image or video in pixels | int |  | **Y** |

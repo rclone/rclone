@@ -75,6 +75,7 @@ func setAttr(node vfs.Node, attr *fuse.Attr) {
 	vfs := node.VFS()
 	attr.Owner.Gid = vfs.Opt.GID
 	attr.Owner.Uid = vfs.Opt.UID
+	attr.Ino = node.Inode()
 	attr.Mode = getMode(node)
 	attr.Size = Size
 	attr.Nlink = 1

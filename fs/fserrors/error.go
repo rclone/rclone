@@ -304,12 +304,12 @@ type wrappedCountableError struct {
 	isCounted bool
 }
 
-// CountableError interface
+// Count marks this error as counted.
 func (err *wrappedCountableError) Count() {
 	err.isCounted = true
 }
 
-// CountableError interface
+// IsCounted reports whether this error has already been counted.
 func (err *wrappedCountableError) IsCounted() bool {
 	return err.isCounted
 }
@@ -386,6 +386,7 @@ var retriableErrorStrings = []string{
 	"server closed idle connection",    // net/http/transport.go
 	"bad record MAC",                   // crypto/tls/alert.go
 	"stream error:",                    // net/http/h2_bundle.go
+	"http2: server sent GOAWAY",        // net/http/h2_bundle.go
 	"tls: use of closed connection",    // crypto/tls/conn.go
 }
 

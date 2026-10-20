@@ -13,5 +13,8 @@ func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: "TestOpenDrive:",
 		NilObject:  (*opendrive.Object)(nil),
+		ChunkedUpload: fstests.ChunkedUploadConfig{
+			MinChunkSize: 1,
+		},
 	})
 }

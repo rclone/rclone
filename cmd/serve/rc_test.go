@@ -178,3 +178,65 @@ func TestRcStopAll(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 0, len(servers))
 }
+
+type mockServeOptions struct {
+	StringOpt string `config:"string_opt"`
+	IntOpt    int    `config:"int_opt"`
+}
+
+func newMockServer(ctx context.Context, f fs.Fs, in rc.Params) (Handle, error) {
+	var opt mockServeOptions
+	err := rc.ParseOptions(in, "serveOpt", &opt)
+	if err != nil {
+		return nil, err
+	}
+	return &dummyServer{
+		addr: &net.TCPAddr{
+			IP:   net.IPv4(127, 0, 0, 1),
+			Port: 8080,
+		},
+		shutdownCh: make(chan struct{}),
+	}, nil
+}
+
+func TestRcStartFlatNestedAndUnknownRejection(t *testing.T) {
+	newTest(t)
+	serveStart := rc.Calls.Get("serve/start")
+	serveStop := rc.Calls.Get("serve/stop")
+
+	AddRc("mockserve", newMockServer)
+
+	t.Run("FlatAndNested", func(t *testing.T) {
+		in := rc.Params{
+			"fs":         ":mockfs:",
+			"type":       "mockserve",
+			"string_opt": "flat",
+			"serveOpt": rc.Params{
+				"IntOpt": 42,
+			},
+		}
+		out, err := serveStart.Fn(context.Background(), in)
+		require.NoError(t, err)
+		id := out["id"].(string)
+
+		// Verify the running server holds a copy of the original parameters
+		s := servers[id]
+		require.NotNil(t, s)
+		assert.Equal(t, "flat", s.Params["string_opt"])
+		assert.Equal(t, rc.Params{"IntOpt": 42}, s.Params["serveOpt"])
+
+		_, err = serveStop.Fn(context.Background(), rc.Params{"id": id})
+		require.NoError(t, err)
+	})
+
+	t.Run("UnknownRejection", func(t *testing.T) {
+		in := rc.Params{
+			"fs":            ":mockfs:",
+			"type":          "mockserve",
+			"unknown_param": "leftover",
+		}
+		_, err := serveStart.Fn(context.Background(), in)
+		assert.Error(t, err)
+		assert.ErrorContains(t, err, "unknown parameters: unknown_param")
+	})
+}

@@ -513,11 +513,14 @@
 
         // Determine what to copy
         var text;
-        var pre = btn.closest("pre");
-        if (pre) {
+        var preWrap = btn.closest(".pre-wrap");
+        if (preWrap) {
             // Code block: copy the code element text (excludes button)
-            var code = pre.querySelector("code");
-            text = (code || pre).textContent;
+            var pre = preWrap.querySelector("pre");
+            if (pre) {
+                var code = pre.querySelector("code");
+                text = (code || pre).textContent;
+            }
         } else {
             // Input field: copy value of the preceding input
             var input = btn.previousElementSibling;

@@ -161,13 +161,13 @@ func (w *objectChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, rea
 		}
 	}
 	req := objectstorage.UploadPartRequest{
-		NamespaceName: common.String(w.f.opt.Namespace),
+		NamespaceName: new(w.f.opt.Namespace),
 		BucketName:    w.bucket,
 		ObjectName:    w.key,
 		UploadId:      w.uploadID,
-		UploadPartNum: common.Int(ossPartNumber),
-		ContentLength: common.Int64(currentChunkSize),
-		ContentMD5:    common.String(md5sum),
+		UploadPartNum: new(ossPartNumber),
+		ContentLength: new(currentChunkSize),
+		ContentMD5:    new(md5sum),
 	}
 	w.o.applyPartUploadOptions(w.ui.req, &req)
 	var resp objectstorage.UploadPartResponse
@@ -213,7 +213,7 @@ func (w *objectChunkWriter) addCompletedPart(partNum *int, eTag *string) {
 
 func (w *objectChunkWriter) Close(ctx context.Context) (err error) {
 	req := objectstorage.CommitMultipartUploadRequest{
-		NamespaceName: common.String(w.f.opt.Namespace),
+		NamespaceName: new(w.f.opt.Namespace),
 		BucketName:    w.bucket,
 		ObjectName:    w.key,
 		UploadId:      w.uploadID,
@@ -290,9 +290,9 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 	bucket, bucketPath := o.split()
 
 	ui.req = &objectstorage.PutObjectRequest{
-		NamespaceName: common.String(o.fs.opt.Namespace),
-		BucketName:    common.String(bucket),
-		ObjectName:    common.String(bucketPath),
+		NamespaceName: new(o.fs.opt.Namespace),
+		BucketName:    new(bucket),
+		ObjectName:    new(bucketPath),
 	}
 
 	// Set the mtime in the metadata
@@ -305,7 +305,7 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 	ui.req.OpcMeta = make(map[string]string, len(meta)+2)
 	// merge metadata into request and user metadata
 	for k, v := range meta {
-		pv := common.String(v)
+		pv := new(v)
 		k = strings.ToLower(k)
 		switch k {
 		case "cache-control":
@@ -366,10 +366,10 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 	}
 	// Set the content type if it isn't set already
 	if ui.req.ContentType == nil {
-		ui.req.ContentType = common.String(fs.MimeType(ctx, src))
+		ui.req.ContentType = new(fs.MimeType(ctx, src))
 	}
 	if size >= 0 {
-		ui.req.ContentLength = common.Int64(size)
+		ui.req.ContentLength = new(size)
 	}
 	if md5sumBase64 != "" {
 		ui.req.ContentMD5 = &md5sumBase64
@@ -420,10 +420,10 @@ func (o *Object) createMultipartUpload(ctx context.Context, putReq *objectstorag
 		}
 	}
 	req := objectstorage.CreateMultipartUploadRequest{
-		NamespaceName: common.String(o.fs.opt.Namespace),
-		BucketName:    common.String(bucketName),
+		NamespaceName: new(o.fs.opt.Namespace),
+		BucketName:    new(bucketName),
 	}
-	req.Object = common.String(bucketPath)
+	req.Object = new(bucketPath)
 	if o.fs.opt.StorageTier != "" {
 		storageTier, ok := objectstorage.GetMappingStorageTierEnum(o.fs.opt.StorageTier)
 		if !ok {

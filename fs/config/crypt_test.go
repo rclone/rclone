@@ -70,6 +70,48 @@ func TestConfigLoadEncryptedWithValidPassCommand(t *testing.T) {
 	assert.Equal(t, expect, keys)
 }
 
+// TestConfigLoadEncryptedWithPassCommandAndDaemon checks the configKey handoff
+// that --daemon relies on: the parent process leaves the obscured key in the
+// temp file named by _RCLONE_CONFIG_KEY_FILE, and the daemon process uses that
+// instead of running --password-command a second time.
+func TestConfigLoadEncryptedWithPassCommandAndDaemon(t *testing.T) {
+	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
+	oldConfigPath := config.GetConfigPath()
+	oldConfig := *ci
+	require.NoError(t, config.SetConfigPath("./testdata/encrypted.conf"))
+	config.PassConfigKeyForDaemonization = true
+	t.Setenv("_RCLONE_CONFIG_KEY_FILE", "")
+	defer func() {
+		assert.NoError(t, config.SetConfigPath(oldConfigPath))
+		config.ClearConfigPassword()
+		config.PassConfigKeyForDaemonization = false
+		*ci = oldConfig
+		ci.PasswordCommand = nil
+	}()
+
+	// The parent reads the password and saves the key for the daemon.
+	ci.PasswordCommand = fs.SpaceSepList{"echo", "asdf"}
+	config.ClearConfigPassword()
+	require.NoError(t, config.Data().Load())
+
+	keyFile := os.Getenv("_RCLONE_CONFIG_KEY_FILE")
+	require.NotEmpty(t, keyFile)
+	_, err := os.Stat(keyFile)
+	require.NoError(t, err, "parent must leave the key file for the daemon")
+
+	// The daemon inherits the environment but not the key. Running
+	// --password-command again would yield this wrong password.
+	config.ClearConfigPassword()
+	ci.PasswordCommand = fs.SpaceSepList{"echo", "not-the-password"}
+	require.NoError(t, config.Data().Load())
+
+	assert.Equal(t, []string{"nounc", "unc"}, config.Data().GetSectionList())
+
+	_, err = os.Stat(keyFile)
+	assert.True(t, os.IsNotExist(err), "daemon must delete the key file once used")
+}
+
 func TestConfigLoadEncryptedWithInvalidPassCommand(t *testing.T) {
 	ctx := context.Background()
 	ci := fs.GetConfig(ctx)

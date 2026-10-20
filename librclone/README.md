@@ -212,7 +212,11 @@ suitable for using with [gomobile](https://pkg.go.dev/golang.org/x/mobile/cmd/go
 using something like this.
 
 ```console
-gomobile bind -v -target=android -javapkg=org.rclone github.com/rclone/rclone/librclone/gomobile
+go install golang.org/x/mobile/cmd/gobind@latest
+go install golang.org/x/mobile/cmd/gomobile@latest
+gomobile init
+# you should have ndk installed and can change the androidapi accordingly
+gomobile bind -v -target=android -androidapi 30 -javapkg=org.rclone github.com/rclone/rclone/librclone/gomobile
 ```
 
 The command generates an Android library (`aar`) that can be imported

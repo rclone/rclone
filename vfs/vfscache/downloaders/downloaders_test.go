@@ -2,6 +2,8 @@ package downloaders
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"sync"
 	"testing"
@@ -125,5 +127,69 @@ func TestDownloaders(t *testing.T) {
 		assert.Eventually(t, func() bool {
 			return item.HasRange(r)
 		}, 10*time.Second, 10*time.Millisecond)
+	})
+
+	// A waiter for a range beyond the item's size but within the source
+	// object's size must still be dispatched. _ensureDownloader will not
+	// start a downloader for it, so nothing else would ever wake it.
+	t.Run("DownloadBeyondItemSize", func(t *testing.T) {
+		item := &testItem{
+			t:    t,
+			size: 1024 * 1024,
+		}
+		opt := vfscommon.Opt
+		dls := New(ctx, item, &opt, remote, src)
+		defer cancel(dls)
+
+		done := make(chan error, 1)
+		go func() {
+			done <- dls.Download(ranges.Range{Pos: 40 * 1024 * 1024, Size: 250})
+		}()
+
+		select {
+		case err := <-done:
+			assert.NoError(t, err)
+		case <-time.After(30 * time.Second):
+			t.Fatal("Download did not return: the waiter was never dispatched")
+		}
+	})
+
+	// A successful write must not be turned into a failure by a stale
+	// error left over from a previous problem (e.g. the cache running
+	// out of space earlier). Regression test: this used to make Write
+	// return dls.lastErr even when the write itself succeeded, which
+	// then got wrapped again by download() and stored back as the new
+	// lastErr - causing the wrapped error message to grow without bound
+	// on every subsequent write.
+	t.Run("WriteDoesNotFailOnStaleError", func(t *testing.T) {
+		item, dls := newTest()
+		defer cancel(dls)
+
+		dls.mu.Lock()
+		dls.errorCount = maxErrorCount + 1
+		dls.lastErr = fmt.Errorf("vfs reader: failed to write to cache file: %w", errors.New("no space left on device"))
+		// A waiter for a range that isn't downloaded yet, so kickWaiters
+		// doesn't dispatch it immediately and reaches the errorCount check.
+		dls.waiters = append(dls.waiters, waiter{
+			r:       ranges.Range{Pos: 10 * 1024 * 1024, Size: 250},
+			errChan: make(chan error, 1),
+		})
+		dls.mu.Unlock()
+
+		dl := &downloader{
+			dls:       dls,
+			quit:      make(chan struct{}),
+			kick:      make(chan struct{}, 1),
+			offset:    0,
+			maxOffset: 1024,
+		}
+
+		p := make([]byte, 16)
+		_, err := io.ReadFull(readers.NewPatternReader(item.size), p)
+		require.NoError(t, err)
+
+		n, err := dl.Write(p)
+		require.NoError(t, err, "a successful write must not fail due to unrelated stale state")
+		assert.Equal(t, len(p), n)
 	})
 }

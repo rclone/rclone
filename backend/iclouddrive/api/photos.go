@@ -8,10 +8,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -510,7 +512,7 @@ func (album *Album) SetTestPhotoCache(cache map[string]*Photo) {
 
 // NewPhotosService creates a new PhotosService instance
 func NewPhotosService(ctx context.Context, client *Client, pacer *fs.Pacer, shouldRetry ShouldRetryFunc) (*PhotosService, error) {
-	service, exists := client.Session.AccountInfo.Webservices["ckdatabasews"]
+	service, exists := client.Session.AccountInfo.Webservices[WsPhotos]
 	if !exists || service.Status != "active" {
 		return nil, fmt.Errorf("ckdatabasews service not available")
 	}
@@ -605,6 +607,13 @@ func (ps *PhotosService) discoverLibraries(ctx context.Context) (*libraryDiscove
 				continue
 			}
 			name := zone.ZoneID.ZoneName
+			// Only PrimarySync and SharedSync-* are photo libraries. Other
+			// zones (e.g. CMM-* shared-album zones) appear in changes/database
+			// but have no CPLAlbumByPositionLive index, so querying their
+			// albums returns BAD_REQUEST / "Index has invalid data".
+			if name != "PrimarySync" && !strings.HasPrefix(name, "SharedSync") {
+				continue
+			}
 			// SharedSync-* found in private takes precedence over shared
 			if _, exists := result.libraries[name]; exists {
 				continue
@@ -1417,11 +1426,8 @@ func (lib *Library) applyPendingDelta(ctx context.Context) bool {
 		// Route new photos to smart albums based on classifySmartAlbums()
 		if isSmart {
 			for _, p := range addedPhotos {
-				for _, sa := range p.SmartAlbums {
-					if sa == album.Name {
-						filtered = append(filtered, p)
-						break
-					}
+				if slices.Contains(p.SmartAlbums, album.Name) {
+					filtered = append(filtered, p)
 				}
 			}
 		}
@@ -1612,9 +1618,7 @@ func (ps *PhotosService) GetLibraryAlbumCounts(ctx context.Context) (map[string]
 		if err := ps.requestForArea(ctx, area, "internal/records/query/batch", map[string]any{"batch": batch}, &response); err != nil {
 			return nil, fmt.Errorf("failed to get library album counts: %w", err)
 		}
-		for k, v := range response.toCounts(order) {
-			counts[k] = v
-		}
+		maps.Copy(counts, response.toCounts(order))
 	}
 	return counts, nil
 }
@@ -1642,6 +1646,29 @@ type ckResourceField struct {
 
 type ckBoolField struct {
 	Value bool `json:"value"`
+}
+
+// UnmarshalJSON parses a CloudKit boolean field, accepting both the
+// boolean (true/false) and numeric (0/1) encodings the server uses
+func (b *ckBoolField) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		Value json.RawMessage `json:"value"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	if len(raw.Value) == 0 {
+		return nil
+	}
+	if err := json.Unmarshal(raw.Value, &b.Value); err == nil {
+		return nil
+	}
+	var n float64
+	if err := json.Unmarshal(raw.Value, &n); err != nil {
+		return fmt.Errorf("cannot unmarshal %q as CloudKit bool", raw.Value)
+	}
+	b.Value = n != 0
+	return nil
 }
 
 type ckReferenceField struct {
@@ -2004,7 +2031,7 @@ func (album *Album) fetchPhotosParallel(ctx context.Context, totalPhotos int64) 
 	sem := make(chan struct{}, workers)
 	var wg sync.WaitGroup
 
-	for i := 0; i < numPartitions; i++ {
+	for i := range numPartitions {
 		wg.Add(1)
 		go func(idx int) {
 			defer wg.Done()
@@ -2313,7 +2340,7 @@ func (ps *PhotosService) requestWithReauth(ctx context.Context, makeOpts func() 
 	reauthDone := false
 	return ps.pacer.Call(func() (bool, error) {
 		resp, err := ps.client.Session.Request(ctx, makeOpts(), data, response)
-		if !reauthDone && err != nil && resp != nil && (resp.StatusCode == 401 || resp.StatusCode == 421) {
+		if !reauthDone && err != nil && resp != nil && (resp.StatusCode == 401 || resp.StatusCode == 421 || resp.StatusCode == 423) {
 			reauthDone = true
 			if authErr := ps.client.Authenticate(ctx); authErr != nil {
 				return false, authErr

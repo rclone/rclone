@@ -167,18 +167,35 @@ func (p Params) GetInt64(key string) (int64, error) {
 	case int64:
 		return x, nil
 	case float64:
-		if x > math.MaxInt64 || x < math.MinInt64 {
+		// float64(math.MaxInt64) rounds up to 2**63 which doesn't fit in an int64
+		if x >= math.MaxInt64 || x < math.MinInt64 {
 			return 0, ErrParamInvalid{fmt.Errorf("key %q (%v) overflows int64 ", key, value)}
 		}
 		return int64(x), nil
 	case string:
-		i, err := strconv.ParseInt(x, 10, 0)
+		i, err := strconv.ParseInt(x, 10, 64)
 		if err != nil {
 			return 0, ErrParamInvalid{fmt.Errorf("couldn't parse key %q (%v) as int64: %w", key, value, err)}
 		}
 		return i, nil
 	}
 	return 0, ErrParamInvalid{fmt.Errorf("expecting int64 value for key %q (was %T)", key, value)}
+}
+
+// GetInt gets an int parameter from the input
+//
+// If the parameter isn't found then error will be of type
+// ErrParamNotFound and the returned value will be 0. If the value
+// doesn't fit in an int then the error will be of type ErrParamInvalid.
+func (p Params) GetInt(key string) (int, error) {
+	i, err := p.GetInt64(key)
+	if err != nil {
+		return 0, err
+	}
+	if i > math.MaxInt || i < math.MinInt {
+		return 0, ErrParamInvalid{fmt.Errorf("key %q (%v) overflows int", key, i)}
+	}
+	return int(i), nil
 }
 
 // GetFloat64 gets a float64 parameter from the input

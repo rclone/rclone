@@ -1,0 +1,78 @@
+# CODEOWNERS for rclone
+#
+# Maps paths to the maintainers auto-requested for review when a pull request
+# touches matching files. Patterns are evaluated top to bottom and the LAST
+# matching pattern wins, so the catch-all below is overridden by the more
+# specific subsystem/backend lines that follow.
+#
+# Every owner listed here has write access to the repo (GitHub ignores owners
+# without it). Assignments are derived from `git log` history per directory:
+# each area lists its dominant contributor(s) alongside @ncw, the project lead
+# and global fallback.
+
+# Global fallback - everything not matched below
+*                               @ncw
+
+# -----------------------------------------------------------------------------
+# Core subsystems
+# -----------------------------------------------------------------------------
+/fs/                            @ncw
+/vfs/                           @ncw
+/lib/                           @ncw
+/cmd/                           @ncw
+/librclone/                     @ncw
+/fstest/                        @ncw
+
+/lib/encoder/                   @ncw @klauspost
+/fs/sync/                       @ncw @nielash
+/fs/operations/                 @ncw @nielash
+/cmd/bisync/                    @nielash @ivandeex @ncw
+/cmd/serve/                     @albertony @ncw
+/cmd/selfupdate/                @ivandeex @ncw
+/cmd/mount2/                    @ncw @darthShadow
+/cmd/gitannex/                  @dmcardle @ncw
+
+# -----------------------------------------------------------------------------
+# Backends - keyed to the dominant / specialist maintainer per `git log`
+# -----------------------------------------------------------------------------
+
+# albertony
+/backend/jottacloud/            @albertony @buengese @ncw
+/backend/local/                 @ncw @albertony @nielash
+/backend/netstorage/            @albertony @ncw
+/backend/hdfs/                  @albertony @ncw
+
+# buengese
+/backend/yandex/                @ncw @buengese
+/backend/zoho/                  @buengese @ncw
+/backend/fichier/               @ncw @buengese
+/backend/compress/              @ncw @buengese
+
+# ivandeex
+/backend/chunker/               @ncw @ivandeex
+/backend/mailru/                @ncw @ivandeex
+/backend/ftp/                   @ncw @ivandeex
+/backend/sia/                   @ncw @ivandeex
+
+# Other maintainer-owned backends (see MAINTAINERS.md)
+/backend/cache/                 @ncw @remusb
+/backend/union/                 @ncw @Max-Sum @albertony
+/backend/filescom/              @ncw @childish-sambino
+
+# Microsoft Azure
+/backend/azureblob/             @ncw @sandeepkru @darthShadow
+
+# Single-maintainer specialist backends
+/backend/onedrive/              @ncw @Cnly @nielash
+/backend/iclouddrive/           @lostb1t @ncw
+/backend/pikpak/                @wiserain @ncw
+/backend/protondrive/           @henrybear327 @ncw
+/backend/seafile/               @ncw @creativeprojects
+/backend/filen/                 @Enduriel @ncw
+/backend/storj/                 @ncw @calebcase
+/backend/combine/               @ncw @nielash
+
+# -----------------------------------------------------------------------------
+# Repo plumbing
+# -----------------------------------------------------------------------------
+/.github/                       @ncw

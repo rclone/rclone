@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/rclone/rclone/backend/overview"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
@@ -45,9 +46,31 @@ var (
 		Name:     "case_insensitive",
 		Default:  false,
 		Value:    true,
+		set:      true, // set as if from a flag
 		Advanced: true,
 	}
-	testOptions = Options{nouncOption, copyLinksOption, caseInsensitiveOption}
+	// setToDefaultOption has been set explicitly to a value which
+	// happens to equal its default - it must still override the config
+	setToDefaultOption = Option{
+		Name:    "set_to_default",
+		Default: "deflt",
+		Value:   "deflt",
+		set:     true,
+	}
+	// envDefaultOption has had a value loaded as a default from the
+	// environment (so set is false). It is only honoured over more
+	// specific sources when it differs from the default.
+	envDefaultOption = Option{
+		Name:    "env_default",
+		Default: "deflt",
+		Value:   "deflt", // equal to default, so must not be surfaced
+	}
+	envDefaultDiffOption = Option{
+		Name:    "env_default_diff",
+		Default: "deflt",
+		Value:   "fromenv", // differs from default, so must be surfaced
+	}
+	testOptions = Options{nouncOption, copyLinksOption, caseInsensitiveOption, setToDefaultOption, envDefaultOption, envDefaultDiffOption}
 )
 
 func TestOptionsSetValues(t *testing.T) {
@@ -232,7 +255,7 @@ func TestOptionGetters(t *testing.T) {
 	// set up getters
 
 	// A configmap.Getter to read from the environment RCLONE_CONFIG_backend_option_name
-	configEnvVarsGetter := configEnvVars("local")
+	configEnvVarsGetter := configEnvVars{configName: "local"}
 
 	// A configmap.Getter to read from the environment RCLONE_option_name
 	optionEnvVarsGetter := optionEnvVars{"local", testOptions}
@@ -266,6 +289,9 @@ func TestOptionGetters(t *testing.T) {
 		{regInfoValuesGetterFalse, "not_found", "", false},
 		{regInfoValuesGetterFalse, "case_insensitive", "true", true},
 		{regInfoValuesGetterFalse, "copy_links", "", false},
+		{regInfoValuesGetterFalse, "set_to_default", "deflt", true},
+		{regInfoValuesGetterFalse, "env_default", "", false},
+		{regInfoValuesGetterFalse, "env_default_diff", "fromenv", true},
 		{regInfoValuesGetterTrue, "not_found", "", false},
 		{regInfoValuesGetterTrue, "case_insensitive", "true", true},
 		{regInfoValuesGetterTrue, "copy_links", "false", true},
@@ -305,4 +331,27 @@ func TestOptionsNonDefaultRCMissingKey(t *testing.T) {
 	opts := Options{{Name: "missing", Default: ""}}
 	_, err := opts.NonDefaultRC(c)
 	assert.ErrorContains(t, err, "not found")
+}
+
+func TestRegisterOverview(t *testing.T) {
+	original := Registry
+	t.Cleanup(func() { Registry = original })
+
+	t.Run("explicit overview", func(t *testing.T) {
+		supplied := &overview.BackendConfig{Backend: "external-test", Name: "External test", IntegrationTests: "not run"}
+		info := &RegInfo{Name: "external-test", Overview: supplied, Aliases: []string{"external-alias"}}
+		Register(info)
+		require.Same(t, supplied, info.Overview)
+		alias, err := Find("external-alias")
+		require.NoError(t, err)
+		require.Same(t, supplied, alias.Overview)
+	})
+
+	t.Run("embedded overview", func(t *testing.T) {
+		info := &RegInfo{Name: "local"}
+		Register(info)
+		expected, err := overview.GetBackendConfig("local")
+		require.NoError(t, err)
+		require.Equal(t, expected, info.Overview)
+	})
 }
