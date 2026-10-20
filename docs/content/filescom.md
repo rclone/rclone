@@ -111,6 +111,34 @@ excess files in the directory.
 rclone sync --interactive /home/local/directory remote:dir
 ```
 
+### Restricted filename characters
+
+In addition to the [default restricted characters set](/overview/#restricted-characters)
+the following characters are also replaced:
+
+| Character | Value | Replacement |
+| --------- |:-----:|:-----------:|
+| \         | 0x5C  | ＼           |
+
+File names can also not end with the following characters.
+These only get replaced if they are the last character in the name:
+
+| Character | Value | Replacement |
+| --------- |:-----:|:-----------:|
+| SP        | 0x20  | ␠           |
+| LF        | 0x0A  | ␊           |
+| CR        | 0x0D  | ␍           |
+| HT        | 0x09  | ␉           |
+| VT        | 0x0B  | ␋           |
+
+Invalid UTF-8 bytes will also be [replaced](/overview/#invalid-utf8).
+
+Files.com treats the replacements `／` and `＼` as if they were `/`
+and `\`, and the names `．` and `．．` as if they were `.` and `..`,
+and rejects them with `Invalid path`. This means that files with `/`
+or `\` in their names, or which are called `.` or `..`, can't be
+stored on Files.com.
+
 ### Hashes
 
 In December 2024 `files.com`  started [supporting more checksums](https://www.files.com/blog/2024/11/01/new-modern-checksum-options-now-available-with-opt).

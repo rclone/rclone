@@ -18,10 +18,10 @@ type BwPair struct {
 // String returns a printable representation of a BwPair
 func (bp *BwPair) String() string {
 	var out strings.Builder
-	out.WriteString(bp.Tx.String())
+	out.WriteString(bp.Tx.stringRoundTrip())
 	if bp.Rx != bp.Tx {
 		out.WriteRune(':')
-		out.WriteString(bp.Rx.String())
+		out.WriteString(bp.Rx.stringRoundTrip())
 	}
 	return out.String()
 }
@@ -237,12 +237,16 @@ func (x BwTimetable) LimitAt(tt time.Time) BwTimeSlot {
 
 	dayOfWeekHHMM := int(tt.Weekday())*10000 + tt.Hour()*100 + tt.Minute()
 
-	// By default, we return the last element in the timetable. This
-	// satisfies two conditions: 1) If there's only one element it
-	// will always be selected, and 2) The last element of the table
-	// will "wrap around" until overridden by an earlier time slot.
-	// there's only one time slot in the timetable.
-	ret := x[len(x)-1]
+	// By default, we return the latest time slot in the week, which
+	// "wraps around" until overridden by an earlier time slot. This is
+	// the only time slot when there is just one, and doesn't depend on
+	// the order the time slots were given in.
+	ret := x[0]
+	for _, ts := range x[1:] {
+		if (ts.DayOfTheWeek*10000)+ts.HHMM >= (ret.DayOfTheWeek*10000)+ret.HHMM {
+			ret = ts
+		}
+	}
 	mindif := 0
 	first := true
 

@@ -9,6 +9,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
+	"net/http/httptest"
 	"path"
 	"strings"
 	"testing"
@@ -305,9 +307,62 @@ func TestMergeDeleteMarkers(t *testing.T) {
 			},
 		},
 	} {
-		got := mergeDeleteMarkers(test.versions, test.markers)
+		got := mergeDeleteMarkers(test.versions, test.markers, false)
 		assert.Equal(t, test.want, got, fmt.Sprintf("%d: %+v", n, test))
 	}
+}
+
+func TestMergeDeleteMarkersWithURLEncodedKeys(t *testing.T) {
+	plainKey := "images/reservations/photo.png"
+	encodedKey := "images/%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82-01.jpg"
+	t1 := fstest.Time("2022-01-21T12:00:00+01:00")
+	t2 := fstest.Time("2022-01-21T12:00:01+01:00")
+	versions := []types.ObjectVersion{
+		{Key: &plainKey, LastModified: &t2},
+		{Key: &encodedKey, LastModified: &t1},
+	}
+	markers := []types.DeleteMarkerEntry{
+		{Key: &encodedKey, LastModified: &t2},
+	}
+
+	got := mergeDeleteMarkers(versions, markers, true)
+	want := []types.ObjectVersion{
+		{Key: &plainKey, LastModified: &t2},
+		{Key: &encodedKey, LastModified: &t2, Size: isDeleteMarker},
+		{Key: &encodedKey, LastModified: &t1},
+	}
+	assert.Equal(t, want, got)
+}
+
+func TestVersionsListStorageClass(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.WriteString(w, `<ListVersionsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <Name>bucket</Name>
+  <IsTruncated>false</IsTruncated>
+  <Version>
+    <Key>archived.bin</Key>
+    <VersionId>v1</VersionId>
+    <IsLatest>true</IsLatest>
+    <LastModified>2026-09-26T12:00:00.000Z</LastModified>
+    <ETag>"d41d8cd98f00b204e9800998ecf8427e"</ETag>
+    <Size>0</Size>
+    <StorageClass>DEEP_ARCHIVE</StorageClass>
+  </Version>
+</ListVersionsResult>`)
+	}))
+	defer srv.Close()
+
+	f := &Fs{c: s3.New(s3.Options{
+		Region:       "us-east-1",
+		BaseEndpoint: aws.String(srv.URL),
+		UsePathStyle: true,
+		Credentials:  aws.AnonymousCredentials{},
+	})}
+	ls := f.newVersionsList(&s3.ListObjectsV2Input{Bucket: aws.String("bucket")}, false, time.Time{})
+	resp, _, err := ls.List(context.Background())
+	require.NoError(t, err)
+	require.Len(t, resp.Contents, 1)
+	assert.Equal(t, types.ObjectStorageClassDeepArchive, resp.Contents[0].StorageClass)
 }
 
 func TestRemoveAWSChunked(t *testing.T) {

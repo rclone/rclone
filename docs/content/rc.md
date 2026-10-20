@@ -47,7 +47,7 @@ Consequently:
   reason to change it.
 - **Do not use `--rc-no-auth` on a non-loopback bind.** It disables
   authentication on the endpoints that access remotes — see
-  [`--rc-no-auth`](#--rc-no-auth).
+  [`--rc-no-auth`](#rc-no-auth).
 - **Use authentication and TLS** (`--rc-user`/`--rc-pass` or `--rc-htpasswd`,
   plus `--rc-cert`/`--rc-key`) whenever the port is reachable by anyone you do
   not fully trust, and raise `--rc-min-tls-version`.
@@ -174,9 +174,20 @@ Default Off.
 
 Set the allowed Access-Control-Allow-Origin for rc requests.
 
-Can be used with --rc-web-gui if the rclone is running on different IP than the web-gui.
+This enables cross-origin (CORS) requests from browsers on the origin
+given, for example `--rc-allow-origin https://app.example.com`. Browser
+CORS preflight OPTIONS requests are answered by rclone without
+authentication as browsers never send credentials with them. All other
+requests, including other OPTIONS requests, must be authenticated when
+authentication is enabled.
 
-Default is IP address on which rc is running.
+The `rclone gui` command sets this automatically to the origin the GUI
+is served from if it is not set explicitly.
+
+Setting this to `*` allows any origin which is a security risk on an
+authenticated server.
+
+Default is off (no CORS).
 
 ### --rc-web-fetch-url
 
@@ -300,6 +311,30 @@ Rather than
 ```console
 rclone rc operations/list --json '{"fs": "/tmp", "remote": "test", "opt": {"showHash": true}}'
 ```
+
+### Paths on Windows
+
+Prefer forward slashes (`/`) in Windows paths passed to the rc API, for
+example `C:/path1/path2`. If you use backslashes (`\`) in a JSON string,
+escape each one as `\\`. These JSON objects contain equivalent Windows
+paths:
+
+```json
+{"remote": "C:/path1/path2"}
+```
+
+```json
+{"remote": "C:\\path1\\path2"}
+```
+
+This applies to JSON request bodies and to JSON-encoded object parameters,
+such as `parameters` in `config/create`, even when that JSON is sent in a
+query string or form data. An unescaped backslash can cause a JSON parsing
+error or be interpreted as an escape sequence, such as `\t` for a tab.
+
+String parameters sent directly in a query string or form data, without
+JSON encoding, do not need JSON escaping. Use your HTTP client's URL
+encoding for query strings and form data.
 
 ## Special parameters
 
@@ -468,6 +503,16 @@ Or flat:
 
 If you wish to check the `_config` assignment has worked properly then
 calling `options/local` will show what the value got set to.
+
+Setting `LogLevel` sets the log level for the logs made by the rc call
+only, for example to debug a single call.
+
+```json
+"_config":{"LogLevel": "DEBUG"}
+```
+
+Note that not all of rclone's logs support this yet. In particular the
+backends log at the global log level.
 
 ### Setting filter flags with _filter
 
@@ -2666,9 +2711,11 @@ The keys in the error response are:
 
 ### CORS
 
-The sever implements basic CORS support and allows all origins for that.
-The response to a preflight OPTIONS request will echo the requested
-"Access-Control-Request-Headers" back.
+The server implements basic CORS support when `--rc-allow-origin` is
+set. Browser CORS preflight OPTIONS requests are then answered by
+rclone without authentication with the `Access-Control-*` headers.
+Without `--rc-allow-origin` no CORS headers are sent and a preflight
+request is authenticated like any other request.
 
 ### Using POST with URL parameters only
 
@@ -2781,7 +2828,7 @@ profiling tools on the same port.
 The profiling endpoints follow the same authentication rules as the
 rest of the rc: they are only served if authentication has been set up
 (`--rc-user`/`--rc-pass` or `--rc-htpasswd`) or the
-[`--rc-no-auth`](#--rc-no-auth) flag is in use. For debugging on the
+[`--rc-no-auth`](#rc-no-auth) flag is in use. For debugging on the
 default localhost port the easiest thing is to use `--rc --rc-no-auth`
 (but see the warning about using `--rc-no-auth` on a non-loopback
 bind).

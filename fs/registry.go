@@ -305,16 +305,7 @@ func (o *Option) String() string {
 		// The default Go encoding can't be decoded uniquely
 		return CommaSepList(x).String()
 	case SizeSuffix:
-		str := x.String()
-		// Suffix bare numbers with "B" unless they are 0
-		//
-		// This makes sure that fs.SizeSuffix roundtrips through string
-		if len(str) > 0 && str != "0" {
-			if lastDigit := str[len(str)-1]; lastDigit >= '0' && lastDigit <= '9' {
-				str += "B"
-			}
-		}
-		return str
+		return x.stringRoundTrip()
 	}
 	return fmt.Sprint(v)
 }

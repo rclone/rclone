@@ -1,12 +1,18 @@
 package ftp
 
 import (
+	"bufio"
 	"context"
+	"errors"
 	"fmt"
+	"net"
+	"net/textproto"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/jlaffaye/ftp"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/object"
@@ -144,3 +150,97 @@ func (f *Fs) InternalTest(t *testing.T) {
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)
+
+// fakeFTPServer is a minimal FTP control-connection server which answers
+// every command with 200 OK.
+type fakeFTPServer struct {
+	ln   net.Listener
+	mu   sync.Mutex
+	conn net.Conn
+}
+
+func startFakeFTPServer(t *testing.T) *fakeFTPServer {
+	t.Helper()
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	s := &fakeFTPServer{ln: ln}
+	go s.serve()
+	t.Cleanup(func() { s.close() })
+	return s
+}
+
+func (s *fakeFTPServer) serve() {
+	conn, err := s.ln.Accept()
+	if err != nil {
+		return
+	}
+	s.mu.Lock()
+	s.conn = conn
+	s.mu.Unlock()
+	defer func() { _ = conn.Close() }()
+	_, _ = fmt.Fprint(conn, "220 fake FTP server\r\n")
+	scanner := bufio.NewScanner(conn)
+	for scanner.Scan() {
+		_, _ = fmt.Fprint(conn, "200 OK\r\n")
+	}
+}
+
+// killConnection closes the server side of the control connection,
+// simulating a server that dropped an idle connection.
+func (s *fakeFTPServer) killConnection() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.conn != nil {
+		_ = s.conn.Close()
+	}
+}
+
+func (s *fakeFTPServer) close() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.conn != nil {
+		_ = s.conn.Close()
+	}
+	_ = s.ln.Close()
+}
+
+// TestPutFtpConnectionDiscardsDeadConnection checks that a connection
+// returned with a raw network error is closed and never re-pooled, while
+// a connection returned with a plain FTP reply-code error is probed with
+// NOOP and pooled while the probe succeeds.
+func TestPutFtpConnectionDiscardsDeadConnection(t *testing.T) {
+	t.Run("network error discards", func(t *testing.T) {
+		server := startFakeFTPServer(t)
+		c, err := ftp.Dial(server.ln.Addr().String())
+		require.NoError(t, err)
+		f := &Fs{opt: Options{}}
+		f.putFtpConnection(&c, errors.New("unexpected EOF"))
+		assert.Nil(t, c)
+		assert.Empty(t, f.pool)
+	})
+
+	t.Run("FTP reply error with live connection pools", func(t *testing.T) {
+		server := startFakeFTPServer(t)
+		c, err := ftp.Dial(server.ln.Addr().String())
+		require.NoError(t, err)
+		f := &Fs{opt: Options{}}
+		f.putFtpConnection(&c, &textproto.Error{Code: 550, Msg: "not found"})
+		assert.Nil(t, c)
+		require.Len(t, f.pool, 1)
+		assert.NoError(t, f.pool[0].NoOp())
+		_ = f.pool[0].Quit()
+	})
+
+	t.Run("FTP reply error with dead connection discards", func(t *testing.T) {
+		server := startFakeFTPServer(t)
+		c, err := ftp.Dial(server.ln.Addr().String())
+		require.NoError(t, err)
+		server.killConnection()
+		// Let the FIN propagate so the NOOP probe observes the dead connection.
+		time.Sleep(100 * time.Millisecond)
+		f := &Fs{opt: Options{}}
+		f.putFtpConnection(&c, &textproto.Error{Code: 550, Msg: "not found"})
+		assert.Nil(t, c)
+		assert.Empty(t, f.pool)
+	})
+}

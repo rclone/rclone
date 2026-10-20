@@ -380,9 +380,11 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	//Need to check if destination exists
 	fullPath := f.buildFullPath(dstRemote)
 	var response api.ListDirResponse
-	res, _ := f.callAPI(ctx, "GET", fmt.Sprintf("/%s/fs/attr?path=%s", f.drive, fullPath), &response)
-
-	if res.StatusCode != http.StatusNotFound {
+	res, err := f.callAPI(ctx, "GET", fmt.Sprintf("/%s/fs/attr?path=%s", f.drive, fullPath), &response)
+	if res == nil || res.StatusCode != http.StatusNotFound {
+		if err != nil {
+			return fmt.Errorf("failed to check destination directory: %w", err)
+		}
 		return fs.ErrorDirExists
 	}
 

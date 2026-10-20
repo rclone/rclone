@@ -182,6 +182,22 @@ func (p Params) GetInt64(key string) (int64, error) {
 	return 0, ErrParamInvalid{fmt.Errorf("expecting int64 value for key %q (was %T)", key, value)}
 }
 
+// GetInt gets an int parameter from the input
+//
+// If the parameter isn't found then error will be of type
+// ErrParamNotFound and the returned value will be 0. If the value
+// doesn't fit in an int then the error will be of type ErrParamInvalid.
+func (p Params) GetInt(key string) (int, error) {
+	i, err := p.GetInt64(key)
+	if err != nil {
+		return 0, err
+	}
+	if i > math.MaxInt || i < math.MinInt {
+		return 0, ErrParamInvalid{fmt.Errorf("key %q (%v) overflows int", key, i)}
+	}
+	return int(i), nil
+}
+
 // GetFloat64 gets a float64 parameter from the input
 //
 // If the parameter isn't found then error will be of type

@@ -2,17 +2,23 @@ package s3
 
 import (
 	"context"
+	"crypto/md5"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/rclone/gofakes3"
+	_ "github.com/rclone/rclone/backend/crypt"
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -179,4 +185,125 @@ func TestBucketDirPath(t *testing.T) {
 			assert.Equal(t, test.want, got, "bucket=%q dir=%q", test.bucket, test.dir)
 		}
 	}
+}
+
+// TestEtagHashAuto checks that --etag-hash auto uses the best hash of
+// the backend of each auth proxy user rather than of the remote the
+// server was started with, which may have none or not exist at all.
+func TestEtagHashAuto(t *testing.T) {
+	fstest.Initialise()
+	ctx := context.Background()
+	opt := Opt
+	opt.EtagHash = "auto"
+	opt.HTTP.ListenAddr = []string{endpoint}
+	proxyOpt := proxy.Opt
+	proxyOpt.AuthProxy = "/path/to/auth/proxy"
+
+	fCrypt, err := fs.NewFs(ctx, ":crypt,remote='"+t.TempDir()+"',password="+obscure.MustObscure("password")+":")
+	require.NoError(t, err)
+	require.Equal(t, hash.None, fCrypt.Hashes().GetOne(), "crypt has no hashes")
+	for _, f := range []fs.Fs{nil, fCrypt} {
+		w, err := newServer(ctx, f, &opt, &vfscommon.Opt, &proxyOpt)
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = w.Shutdown() })
+
+		fUser, err := fs.NewFs(ctx, t.TempDir())
+		require.NoError(t, err)
+		userVFS := vfs.New(ctx, fUser, &vfscommon.Opt)
+		t.Cleanup(userVFS.Shutdown)
+		ctx := context.WithValue(ctx, ctxKeyID, userVFS)
+		require.NoError(t, w.backend.CreateBucket(ctx, "bucket"))
+		_, err = w.backend.PutObject(ctx, "bucket", "object", nil, strings.NewReader("data"), 4)
+		require.NoError(t, err)
+
+		obj, err := w.backend.HeadObject(ctx, "bucket", "object")
+		require.NoError(t, err)
+		want := md5.Sum([]byte("data"))
+		assert.Equal(t, want[:], obj.Hash)
+	}
+}
+
+// TestCopyObjectMissingSource checks that copying an object which
+// doesn't exist fails with NoSuchKey, including a copy onto itself to
+// replace its metadata.
+func TestCopyObjectMissingSource(t *testing.T) {
+	b, _ := newTestBackend(t)
+	ctx := context.Background()
+	for _, dstKey := range []string{"missing.txt", "other.txt"} {
+		_, err := b.CopyObject(ctx, "bucket", "missing.txt", "bucket", dstKey, map[string]string{"X-Amz-Meta-Colour": "red"})
+		assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrNoSuchKey), "copy to %q: %v", dstKey, err)
+	}
+	_, err := b.HeadObject(ctx, "bucket", "other.txt")
+	assert.True(t, gofakes3.HasErrorCode(err, gofakes3.ErrNoSuchKey))
+}
+
+// tenantCtx returns the context of a request authenticated by the auth
+// proxy as accessKeyID.
+func tenantCtx(accessKeyID string) context.Context {
+	return context.WithValue(context.Background(), ctxKeyAccessKeyID, accessKeyID)
+}
+
+// TestMetadataOtherTenant checks that with an auth proxy the metadata
+// one user (access key ID) stores for an object isn't returned for
+// another user's object at the same path.
+func TestMetadataOtherTenant(t *testing.T) {
+	b, _ := newTestBackend(t)
+	ctxA, ctxB := tenantCtx("tenantA"), tenantCtx("tenantB")
+	const secretKey = "X-Amz-Meta-Secret"
+
+	put := func(ctx context.Context, meta map[string]string) {
+		_, err := b.PutObject(ctx, "bucket", "meta.txt", meta, strings.NewReader("data"), 4)
+		require.NoError(t, err)
+	}
+	head := func(ctx context.Context) map[string]string {
+		obj, err := b.HeadObject(ctx, "bucket", "meta.txt")
+		require.NoError(t, err)
+		return obj.Metadata
+	}
+
+	put(ctxB, map[string]string{})
+	put(ctxA, map[string]string{secretKey: "tenantA's"})
+
+	assert.Equal(t, "tenantA's", head(ctxA)[secretKey])
+	assert.NotContains(t, head(ctxB), secretKey)
+
+	obj, err := b.GetObject(ctxB, "bucket", "meta.txt", nil)
+	require.NoError(t, err)
+	require.NoError(t, obj.Contents.Close())
+	assert.NotContains(t, obj.Metadata, secretKey)
+}
+
+// TestMetadataStale checks that the metadata stored for an object isn't
+// returned once the object has been changed by someone else: another
+// auth proxy user sharing the backend or a change to the backend itself.
+func TestMetadataStale(t *testing.T) {
+	b, root := newTestBackend(t)
+	ctxA, ctxB := tenantCtx("tenantA"), tenantCtx("tenantB")
+	const key = "X-Amz-Meta-Colour"
+	objPath := filepath.Join(root, "bucket", "meta.txt")
+
+	put := func(ctx context.Context, meta map[string]string, data string) {
+		_, err := b.PutObject(ctx, "bucket", "meta.txt", meta, strings.NewReader(data), int64(len(data)))
+		require.NoError(t, err)
+	}
+	colour := func(ctx context.Context) string {
+		_vfs, err := b.s.getVFS(ctx)
+		require.NoError(t, err)
+		b.forgetPath(_vfs, "bucket/meta.txt")
+		obj, err := b.HeadObject(ctx, "bucket", "meta.txt")
+		require.NoError(t, err)
+		return obj.Metadata[key]
+	}
+
+	put(ctxA, map[string]string{key: "red"}, "data")
+	assert.Equal(t, "red", colour(ctxA))
+
+	put(ctxB, map[string]string{}, "other data")
+	assert.Equal(t, "", colour(ctxA), "metadata kept after another user replaced the object")
+
+	put(ctxA, map[string]string{key: "blue"}, "data")
+	assert.Equal(t, "blue", colour(ctxA))
+	later := time.Now().Add(time.Hour)
+	require.NoError(t, os.Chtimes(objPath, later, later))
+	assert.Equal(t, "", colour(ctxA), "metadata kept after the object was changed on the backend")
 }

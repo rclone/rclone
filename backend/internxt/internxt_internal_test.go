@@ -165,3 +165,27 @@ func TestFindFile(t *testing.T) {
 		})
 	}
 }
+
+func TestFindFileIgnoresStale(t *testing.T) {
+	ctx := context.Background()
+	server := existenceServer(t, []storedFile{{"uuid-moved", "foo", "txt"}, {"uuid-deleted", "bar", "txt"}, {"uuid-renamed", "baz", "txt"}})
+	defer server.Close()
+	f := testFs(t, server)
+
+	recent.moved("uuid-moved", "other-dir-uuid", "foo.txt.bak")
+	recent.deleted("uuid-deleted")
+	recent.moved("uuid-renamed", "dir-uuid", "baz.txt")
+
+	file, err := f.findFile(ctx, "foo.txt", "dir-uuid")
+	require.NoError(t, err)
+	assert.Nil(t, file, "moved away")
+
+	file, err = f.findFile(ctx, "bar.txt", "dir-uuid")
+	require.NoError(t, err)
+	assert.Nil(t, file, "deleted")
+
+	file, err = f.findFile(ctx, "baz.txt", "dir-uuid")
+	require.NoError(t, err)
+	require.NotNil(t, file, "moved here")
+	assert.Equal(t, "uuid-renamed", file.UUID)
+}

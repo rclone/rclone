@@ -49,6 +49,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
+	"golang.org/x/text/unicode/norm"
 )
 
 // Some times used in the tests
@@ -433,12 +434,13 @@ func TestDeleteFatalError(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
 	ci.Checkers = 2
-	ci.MaxDelete = 1
 	r := fstest.NewRun(t)
 	// More files than the deleters' channel can hold
 	for i := range 20 {
 		r.WriteObject(ctx, fmt.Sprintf("file%d", i), "x", t1)
 	}
+	// Set after writing the files as some backends (eg chunker) delete while uploading
+	ci.MaxDelete = 1
 
 	done := make(chan error, 1)
 	go func() {
@@ -1081,6 +1083,25 @@ func TestMoveFileWithIgnoreExisting(t *testing.T) {
 	r.CheckRemoteItems(t, file1)
 }
 
+func TestMoveFileImmutable(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	defer accounting.GlobalStats().ResetCounters()
+
+	ci.Immutable = true
+
+	file1 := r.WriteObject(ctx, "existing", "potato", t1)
+	r.CheckRemoteItems(t, file1)
+
+	// Should fail with ErrorImmutableModified and leave the source in place
+	file2 := r.WriteFile("existing", "tomatoes", t2)
+	err := operations.MoveFile(ctx, r.Fremote, r.Flocal, file2.Path, file2.Path)
+	assert.ErrorIs(t, err, fs.ErrorImmutableModified)
+	r.CheckLocalItems(t, file2)
+	r.CheckRemoteItems(t, file1)
+}
+
 func TestCaseInsensitiveMoveFile(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
@@ -1114,6 +1135,41 @@ func TestCaseInsensitiveMoveFile(t *testing.T) {
 	require.NoError(t, err)
 	r.CheckLocalItems(t)
 	r.CheckRemoteItems(t, file2Capitalized)
+}
+
+func TestMoveUnicodeEquivalentWithoutServerSideMove(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRunIndividual(t)
+	r.Fremote.Features().Disable("Move")
+
+	nfd := norm.NFD.String("sub/équivalent.txt")
+	nfc := norm.NFC.String("sub/équivalent.txt")
+	file1 := r.WriteObject(ctx, nfd, "file1 contents", t1)
+	src, err := r.Fremote.NewObject(ctx, nfd)
+	require.NoError(t, err)
+
+	_, err = operations.Move(ctx, r.Fremote, nil, nfc, src)
+	require.NoError(t, err)
+	file1.Path = nfc
+	r.CheckRemoteItems(t, file1)
+}
+
+func TestCaseInsensitiveMoveWithoutServerSideMove(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRunIndividual(t)
+	if !r.Fremote.Features().CaseInsensitive {
+		t.Skip("remote is case sensitive")
+	}
+	r.Fremote.Features().Disable("Move")
+
+	file1 := r.WriteObject(ctx, "sub/file1", "file1 contents", t1)
+	src, err := r.Fremote.NewObject(ctx, "sub/file1")
+	require.NoError(t, err)
+
+	_, err = operations.Move(ctx, r.Fremote, nil, "sub/File1", src)
+	require.NoError(t, err)
+	file1.Path = "sub/File1"
+	r.CheckRemoteItems(t, file1)
 }
 
 func TestCaseInsensitiveMoveFileDryRun(t *testing.T) {
@@ -1181,7 +1237,7 @@ func (i *testFsInfo) Precision() time.Duration { return i.precision }
 // Returns the supported hash types of the filesystem
 func (i *testFsInfo) Hashes() hash.Set { return i.hashes }
 
-// Returns the supported hash types of the filesystem
+// Features returns the optional features of this Fs.
 func (i *testFsInfo) Features() *fs.Features { return &i.features }
 
 func TestSameConfig(t *testing.T) {
@@ -1464,6 +1520,11 @@ type noDirMoveFs struct {
 func (f *noDirMoveFs) Features() *fs.Features { return f.features }
 
 func newNoDirMoveFs(t *testing.T, wrapped fs.Fs, failOn string) *noDirMoveFs {
+	// This tests the core DirMove logic, and on other backends the
+	// objects may not belong to wrapped or there may be no Move.
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping test on non local remote")
+	}
 	move := wrapped.Features().Move
 	require.NotNil(t, move, "the test needs a backend with Move")
 	f := &noDirMoveFs{

@@ -1245,3 +1245,48 @@ put them back in again. -->
 - Kalin Stoyanov <kalin.stoyanov@kiteworks.com>
 - NytePlus <nyte_plus@sjtu.edu.cn>
 - Jeremy Schoemaker <jeremy@shoemoney.com>
+- solunolab <solunolab@outlook.com>
+- Mattias Michaux <mattias.michaux@gmail.com>
+- jxj <xinjun.jiang@daocloud.io>
+- Harsh Raj Singhania <40535627+HarshRajSinghania@users.noreply.github.com>
+- Roland <vv22345@163.com>
+- interested.tortoise <interested.tortoise@proton.me>
+- hsdfat <118717478+hsdfat@users.noreply.github.com>
+- Dirk Petersen <dirkpetersen@users.noreply.github.com>
+- TastyHeadphones <76083688+TastyHeadphones@users.noreply.github.com>
+- Neil Cawse <8085959+neilcawse@users.noreply.github.com>
+- Lev Devaev <102860715+Exxxxpo@users.noreply.github.com>
+- GhostCoder6969 <ahmadbannout191999@gmail.com>
+- bounty-agent <bounty@example.com>
+- mygrexit <33792951+mygrexit@users.noreply.github.com>
+- Kaya <firat.kaya@mail.com>
+- somaz <genius5711@gmail.com>
+- xiaozou-wine <243062178+xiaozou-wine@users.noreply.github.com>
+- Roman Butor <rbutor@gmail.com>
+- kaii9 <107882135+kaii9@users.noreply.github.com>
+- Stochastic <138764723+Asthenia0412@users.noreply.github.com>
+- James Truitt <80006053+jtruitt1@users.noreply.github.com>
+- firatkaya <firat@netiket.com.tr>
+- kevin9327 <5299031+kevin9327@users.noreply.github.com>
+- drakeo338 <paranoyouz@gmail.com>
+- Alessio Margelli <alex9446@gmail.com>
+- Ludovic Bondon <ludovic.bondon@360learning.com>
+- fmterrors <fmterrors@outlook.com>
+- GingerAdonis <2751672+GingerAdonis@users.noreply.github.com>
+- Satvik Mishra <Satvikmishra.ipu146183@maims.ac.in>
+- wjc <2821296948@qq.com>
+- Maksym Tymoshyk <maksym.tymoshyk@gmail.com>
+- Aniket <aniketkomailkro@gmail.com>
+- Oshino Penguin <penguin@oshino.moe>
+- Yousef Issa <yousef@u.northwestern.edu>
+- ghwany <9hwany@gmail.com>
+- DEVN <nguyenvanthe994@gmail.com>
+- 47th <161213233+flcrom@users.noreply.github.com>
+- Sash <sash@ela.city>
+- Shreyansh Jain <shreyanshjain646@gmail.com>
+- Biagio Peccerillo <biagio.peccerillo@isti.cnr.it>
+- gomitrah <bala.c@mitrahsoft.in>
+- Jim Counter <jim@autonomys.xyz>
+- Dirk Einecke <dirk.einecke@gmail.com>
+- ASRodrigo1 <45823308+asrodrigo1@users.noreply.github.com>
+- chaogeshuodiannao <chaogeshuodiannao@users.noreply.github.com>

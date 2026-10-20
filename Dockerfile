@@ -42,6 +42,7 @@ RUN echo "**** Install Dependencies ****" && \
     apk add --no-cache \
         ca-certificates \
         fuse3 \
+        mailcap \
         tzdata && \
     echo "Enable user_allow_other in fuse" && \
     echo "user_allow_other" >> /etc/fuse.conf

@@ -17,6 +17,16 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Note each run in a file if asked to
+	if runLog := os.Getenv("RCLONE_TEST_PROXY_RUN_LOG"); runLog != "" {
+		f, err := os.OpenFile(runLog, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+		if err != nil {
+			log.Fatal(err)
+		}
+		_, _ = f.WriteString(in["user"] + "\n")
+		_ = f.Close()
+	}
+
 	// Write the output
 	var out = map[string]string{}
 	for k, v := range in {

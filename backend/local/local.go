@@ -12,6 +12,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -36,6 +37,10 @@ import (
 const (
 	devUnset   = 0xdeadbeefcafebabe                                     // a device id meaning it is unset
 	useReadDir = (runtime.GOOS == "windows" || runtime.GOOS == "plan9") // these OSes read FileInfos directly
+	// maxLinkTargetSize is the largest symlink target accepted when
+	// translating a .rclonelink object, comfortably above any OS path
+	// limit (Windows allows 32767 UTF-16 units).
+	maxLinkTargetSize = 128 * 1024
 )
 
 // timeType allows the user to choose what exactly ModTime() returns
@@ -438,6 +443,9 @@ var (
 	errLinksAndCopyLinks = errors.New("can't use -l/--links with -L/--copy-links")
 	errLinksNeedsSuffix  = errors.New("need \"" + fs.LinkSuffix + "\" suffix to refer to symlink when using -l/--links")
 	errPathEscapes       = errors.New("file name is not a path within the local root - check the encoding")
+	errSymlinkLoop       = errors.New("loop detected: points to a parent directory")
+	errLinkTargetTooLong = errors.New("symlink target is too long to be a path")
+	errLinkNameInvalid   = errors.New("translated link needs a file name before the \"" + fs.LinkSuffix + "\" suffix")
 )
 
 // NewFs constructs an Fs from the path
@@ -565,28 +573,24 @@ func (f *Fs) caseInsensitive() bool {
 	return runtime.GOOS == "windows" || runtime.GOOS == "darwin"
 }
 
-// translateLink checks whether the remote is a translated link
-// and returns a new path, removing the suffix as needed,
-// It also returns whether this is a translated link at all
-//
-// for regular files, localPath is returned unchanged
-func translateLink(remote, localPath string) (newLocalPath string, isTranslatedLink bool) {
-	isTranslatedLink = strings.HasSuffix(remote, fs.LinkSuffix)
-	newLocalPath = strings.TrimSuffix(localPath, fs.LinkSuffix)
-	return newLocalPath, isTranslatedLink
-}
-
 // newObject makes a half completed Object
 func (f *Fs) newObject(remote string) (*Object, error) {
-	translatedLink := false
-	localPath, err := f.localPath(remote)
+	name, translatedLink := remote, false
+	if f.opt.TranslateSymlinks {
+		name, translatedLink = strings.CutSuffix(remote, fs.LinkSuffix)
+	}
+	if translatedLink {
+		// Check this makes a valid native file name
+		native := f.nativePath(name)
+		switch native[strings.LastIndex(native, string(filepath.Separator))+1:] {
+		case "", ".", "..":
+			return nil, fserrors.NoRetryError(fmt.Errorf("%q: %w", remote, errLinkNameInvalid))
+		}
+	}
+	// Check the name after any suffix removal
+	localPath, err := f.localPath(name)
 	if err != nil {
 		return nil, err
-	}
-
-	if f.opt.TranslateSymlinks {
-		// Possibly receive a new name for localPath
-		localPath, translatedLink = translateLink(remote, localPath)
 	}
 
 	return &Object{
@@ -637,15 +641,23 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 }
 
 // Create new directory object from the info passed in
+//
+// Directories are never translated links, so the name is used as is
+// whatever suffix it has.
 func (f *Fs) newDirectory(dir string, fi os.FileInfo) (*Directory, error) {
-	o, err := f.newObject(dir)
+	localPath, err := f.localPath(dir)
 	if err != nil {
 		return nil, err
 	}
-	o.setMetadata(fi)
-	return &Directory{
-		Object: *o,
-	}, nil
+	d := &Directory{
+		Object: Object{
+			fs:     f,
+			remote: dir,
+			path:   localPath,
+		},
+	}
+	d.setMetadata(fi)
+	return d, nil
 }
 
 // List the objects and directories in dir into entries.  The
@@ -668,6 +680,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if err != nil {
 		return nil, fs.ErrorDirNotFound
 	}
+	var parents []os.FileInfo // fsDirPath and its parents, read on first use
 
 	fd, err := os.Open(fsDirPath)
 	if err != nil {
@@ -748,11 +761,28 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			if f.opt.FollowSymlinks && (mode&symlinkFlag) != 0 {
 				localPath := filepath.Join(fsDirPath, name)
 				fi, err = os.Stat(localPath)
+				// A directory symlink pointing to a parent would be followed
+				// until the OS returns ELOOP, which can take a very long time
+				if err == nil && fi.IsDir() {
+					if parents == nil {
+						parents = statParents(fsDirPath)
+					}
+					if slices.ContainsFunc(parents, func(parent os.FileInfo) bool { return os.SameFile(fi, parent) }) {
+						// Quietly skip loops the directory filters exclude as
+						// the layer above wouldn't recurse into them
+						if useFilter {
+							if include, dirErr := filter.IncludeDirectory(ctx, f)(newRemote); dirErr == nil && !include {
+								continue
+							}
+						}
+						err = errSymlinkLoop
+					}
+				}
 				// Quietly skip errors on excluded files and directories
 				if err != nil && useFilter && !filter.IncludeRemote(newRemote) {
 					continue
 				}
-				if os.IsNotExist(err) || isCircularSymlinkError(err) {
+				if os.IsNotExist(err) || isCircularSymlinkError(err) || errors.Is(err, errSymlinkLoop) {
 					// Skip bad symlinks and circular symlinks
 					err = fserrors.NoRetryError(fmt.Errorf("symlink: %w", err))
 					fs.Errorf(newRemote, "Listing error: %v", err)
@@ -785,6 +815,12 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 					continue
 				}
 				fso, err := f.newObjectWithInfo(newRemote, fi)
+				if errors.Is(err, errLinkNameInvalid) {
+					// Skip a badly named ".rclonelink" file
+					fs.Errorf(newRemote, "Listing error: %v", err)
+					_ = accounting.Stats(ctx).Error(err)
+					continue
+				}
 				if err != nil {
 					return nil, err
 				}
@@ -795,6 +831,21 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		}
 	}
 	return entries, nil
+}
+
+// statParents returns the info for dirPath and each of its parents up
+// to the root of the file system, skipping any which can't be read.
+func statParents(dirPath string) (parents []os.FileInfo) {
+	for {
+		if fi, err := os.Stat(dirPath); err == nil {
+			parents = append(parents, fi)
+		}
+		parent := filepath.Dir(dirPath)
+		if parent == dirPath {
+			return parents
+		}
+		dirPath = parent
+	}
 }
 
 func (f *Fs) cleanRemote(dir, filename string) (remote string) {
@@ -814,14 +865,19 @@ func (f *Fs) cleanRemote(dir, filename string) (remote string) {
 	return
 }
 
+// nativePath returns name in the OS encoding with OS path separators,
+// relative to f.root, without cleaning it.
+func (f *Fs) nativePath(name string) string {
+	return filepath.FromSlash(f.opt.Enc.FromStandardPath(name))
+}
+
 // localPath returns the OS path for the object called name, which is
 // always underneath f.root.
 //
 // It returns errPathEscapes if name resolves outside f.root which can
 // happen depending on the encoding.
 func (f *Fs) localPath(name string) (string, error) {
-	native := filepath.FromSlash(f.opt.Enc.FromStandardPath(name))
-	localPath := filepath.Join(f.root, native)
+	localPath := filepath.Join(f.root, f.nativePath(name))
 	rel, err := filepath.Rel(f.root, localPath)
 	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
 		return "", fserrors.NoRetryError(fmt.Errorf("%q: %w", name, errPathEscapes))
@@ -1701,6 +1757,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 		out = f
 	} else {
+		// The target is buffered in memory, so stop reading just past
+		// the longest acceptable one rather than trust the source
+		in = io.LimitReader(in, maxLinkTargetSize+1)
 		out = nopWriterCloser{&symlinkData}
 	}
 
@@ -1717,6 +1776,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	if o.translatedLink {
+		if err == nil && symlinkData.Len() > maxLinkTargetSize {
+			err = fserrors.NoRetryError(errLinkTargetTooLong)
+		}
 		if err == nil {
 			// Use the contents of the copied object to create a symlink,
 			// without following or creating it through a planted symlink

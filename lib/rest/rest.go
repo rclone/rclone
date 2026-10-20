@@ -43,10 +43,24 @@ func NewClient(c *http.Client) *Client {
 	return api
 }
 
+// ErrBodyTooLarge is returned by ReadBody when the response body is
+// bigger than the limit it will read into memory.
+var ErrBodyTooLarge = errors.New("response body too large")
+
 // ReadBody reads resp.Body into result, closing the body
+//
+// It reads at most drainLimit bytes and returns ErrBodyTooLarge if the
+// body is bigger than that, so a misbehaving server can't make rclone
+// buffer an unbounded response in memory. It is intended for small API
+// responses (error bodies, status documents, upload tokens), not for
+// file data.
 func ReadBody(resp *http.Response) (result []byte, err error) {
 	defer fs.CheckClose(resp.Body, &err)
-	return io.ReadAll(resp.Body)
+	result, err = io.ReadAll(io.LimitReader(resp.Body, drainLimit+1))
+	if err == nil && len(result) > drainLimit {
+		return nil, ErrBodyTooLarge
+	}
+	return result, err
 }
 
 // defaultErrorHandler doesn't attempt to parse the http body, just
@@ -164,6 +178,9 @@ func (o *Opts) Copy() *Opts {
 	return &newOpts
 }
 
+// drainLimit is the most of a response body that will be consumed
+// from the network, whether it is being read by ReadBody or discarded
+// by drainAndClose.
 const drainLimit = 10 * 1024 * 1024
 
 // drainAndClose discards up to drainLimit bytes from r and closes
@@ -288,6 +305,60 @@ func RefuseHTTPSDowngradeRedirectFn(req *http.Request, via []*http.Request) erro
 		return ErrHTTPSDowngrade
 	}
 	return nil
+}
+
+// StripHeadersOnCrossHostRedirectFn returns a CheckRedirect function
+// which follows redirects like the default net/http client but refuses
+// an HTTPS to HTTP downgrade with ErrHTTPSDowngrade and removes the
+// named headers from the request once the redirect chain has left the
+// host of the original request.
+//
+// Start a header with "*" to match it without canonicalising, as
+// SetHeader and Opts.ExtraHeaders do.
+//
+// Go strips Authorization on a hostname change but keeps it for a
+// subdomain or a different port, and has no idea which custom headers
+// carry secrets, so a backend which sends credentials in headers to a
+// host it does not control uses this to keep them at home.
+func StripHeadersOnCrossHostRedirectFn(headers ...string) func(req *http.Request, via []*http.Request) error {
+	return func(req *http.Request, via []*http.Request) error {
+		err := RefuseHTTPSDowngradeRedirectFn(req, via)
+		if err != nil {
+			return err
+		}
+		if redirectLeavesHost(req, via) {
+			fs.Debugf(nil, "redirect to %s leaves %s: not sending %s", req.URL.Redacted(), via[0].URL.Redacted(), strings.Join(headers, ", "))
+			for _, header := range headers {
+				if strings.HasPrefix(header, "*") {
+					delete(req.Header, header[1:])
+				} else {
+					req.Header.Del(header)
+				}
+			}
+		}
+		return nil
+	}
+}
+
+// redirectLeavesHost reports whether any hop in the redirect chain
+// via plus the pending request req is to a different host from the
+// original request via[0].
+//
+// net/http copies the headers afresh from the original request for
+// every hop, so once the chain has visited another host the headers
+// must be stripped from every subsequent hop, even one back to the
+// original host, as the other host chose the URL.
+func redirectLeavesHost(req *http.Request, via []*http.Request) bool {
+	if len(via) == 0 {
+		return false
+	}
+	origin := via[0].URL
+	for _, hop := range via[1:] {
+		if !SameHost(hop.URL, origin) {
+			return true
+		}
+	}
+	return !SameHost(req.URL, origin)
 }
 
 // Do calls the internal http.Client.Do method

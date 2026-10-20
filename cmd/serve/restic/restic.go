@@ -209,11 +209,13 @@ with a path of ` + "`/<username>/`" + `.
 					stdout: os.Stdout,
 				}
 
-				httpSrv := &http2.Server{}
-				opts := &http2.ServeConnOpts{
+				// http.Server can't serve a single net.Conn so the
+				// deprecated http2.Server is still needed here.
+				httpSrv := &http2.Server{}    //nolint:staticcheck // see above
+				opts := &http2.ServeConnOpts{ //nolint:staticcheck // see above
 					Handler: s.server.Router(),
 				}
-				httpSrv.ServeConn(conn, opts)
+				httpSrv.ServeConn(conn, opts) //nolint:staticcheck // see above
 				return nil
 			}
 			fs.Logf(s.f, "Serving restic REST API on %s", s.server.URLs())
@@ -411,7 +413,8 @@ func (s *server) Bind(router chi.Router) {
 	}
 }
 
-var matchData = regexp.MustCompile("(?:^|/)data/([^/]{2,})$")
+// Restic pack names are lowercase hexadecimal storage IDs.
+var matchData = regexp.MustCompile("(?:^|/)data/([0-9a-f]{2,})$")
 
 // newObject returns an object with the remote given either from the
 // cache or directly
@@ -506,7 +509,11 @@ func (s *server) deleteObject(w http.ResponseWriter, r *http.Request) {
 	o, err := s.newObject(r.Context(), remote)
 	if err != nil {
 		fs.Debugf(remote, "Delete request error: %v", err)
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		if errors.Is(err, fs.ErrorObjectNotFound) {
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		} else {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
 		return
 	}
 
