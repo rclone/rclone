@@ -194,8 +194,8 @@ type DeleteResponse struct {
 // UploadAuthorization describes one chunk upload target, as returned in
 // _embedded.authorizations from GET /user-uploads/{derivativeID}
 type UploadAuthorization struct {
-	URL           string `json:"url"`
-	Part          int    `json:"part"`
+	URL  string `json:"url"`
+	Part int    `json:"part"`
 }
 
 // UserUploadsResponse is returned from GET /user-uploads/{derivativeID}
