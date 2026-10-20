@@ -223,6 +223,8 @@ func (f *File) applyPendingRename() {
 func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 	f.mu.RLock()
 	d := f.d
+	oldDPath := f.dPath
+	oldLeaf := f.leaf
 	oldPendingRenameFun := f.pendingRenameFun
 	oldPath := f._cachePath()
 	newCacheName := f._fixCachePath(newName)
@@ -236,6 +238,30 @@ func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 
 	// File.mu is unlocked here to call Dir.Path()
 	newPath := path.Join(destDir.Path(), newCacheName)
+	oldDestNode := destDir.cachedNode(newName)
+	if oldDestNode == f {
+		oldDestNode = nil
+	}
+	delayedRename := false
+	rollbackRename := func() {
+		f.mu.Lock()
+		currentDir := f.d
+		currentLeaf := f.leaf
+		wasDelayed := delayedRename
+		f.d = d
+		f.dPath = oldDPath
+		f.leaf = oldLeaf
+		f.pendingRenameFun = nil
+		f.mu.Unlock()
+
+		if wasDelayed {
+			currentDir.delObject(currentLeaf)
+			d.addObject(f)
+			if oldDestNode != nil {
+				destDir.addObject(oldDestNode)
+			}
+		}
+	}
 
 	renameCall := func(ctx context.Context) (err error) {
 		// chain rename calls if any
@@ -261,6 +287,7 @@ func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 			dstOverwritten, _ := d.Fs().NewObject(ctx, newPath)
 			newObject, err = operations.Move(ctx, d.Fs(), dstOverwritten, newPath, o)
 			if err != nil {
+				rollbackRename()
 				fs.Errorf(f.Path(), "File.Rename error: %v", err)
 				return err
 			}
@@ -268,6 +295,7 @@ func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 			// newObject can be nil here for example if --dry-run
 			if newObject == nil {
 				err = errors.New("rename failed: nil object returned")
+				rollbackRename()
 				fs.Errorf(f.Path(), "File.Rename %v", err)
 				return err
 			}
@@ -308,6 +336,7 @@ func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 			(CacheMode == vfscommon.CacheModeMinimal && !destDir.vfs.cache.Exists(oldPath))) {
 		fs.Debugf(oldPath, "File is currently open, delaying rename %p", f)
 		f.mu.Lock()
+		delayedRename = true
 		f.pendingRenameFun = renameCall
 		f.mu.Unlock()
 		return nil
