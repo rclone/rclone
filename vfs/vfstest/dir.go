@@ -2,9 +2,13 @@ package vfstest
 
 import (
 	"context"
+	"errors"
+	"runtime"
+	"syscall"
 	"testing"
 	"time"
 
+	"github.com/rclone/rclone/vfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -220,5 +224,66 @@ func TestDirCacheFlushOnDirRename(t *testing.T) {
 	run.rm(t, "rid/file")
 	run.rmdir(t, "rid/subdir")
 	run.rmdir(t, "rid")
+	run.checkDir(t, "")
+}
+
+func (r *Run) renameDirOver(oldName, newName string) error {
+	if r.useVFS {
+		return r.os.Rename(oldName, newName)
+	}
+	// os.Rename rejects existing directory targets before calling rename(2).
+	return syscall.Rename(oldName, newName)
+}
+
+// TestDirRenameOverEmptyDir tests replacing an empty directory.
+func TestDirRenameOverEmptyDir(t *testing.T) {
+	run.skipIfNoFUSE(t)
+	if !run.useVFS && runtime.GOOS != "linux" {
+		t.Skip("Directory replacement requires Linux mount semantics")
+	}
+	run.mkdir(t, "source")
+	run.mkdir(t, "target")
+	run.createFile(t, "source/file", "potato")
+	err := run.renameDirOver(run.path("source"), run.path("target"))
+	assert.NoError(t, err)
+	if err != nil {
+		run.rm(t, "source/file")
+		run.rmdir(t, "source")
+	} else {
+		run.checkDir(t, "target/|target/file 6")
+		run.rm(t, "target/file")
+	}
+	run.rmdir(t, "target")
+	run.checkDir(t, "")
+}
+
+// TestDirRenameOverFullDir tests preserving a non-empty target directory.
+func TestDirRenameOverFullDir(t *testing.T) {
+	run.skipIfNoFUSE(t)
+	if !run.useVFS && runtime.GOOS != "linux" {
+		t.Skip("Directory replacement requires Linux mount semantics")
+	}
+	run.mkdir(t, "source")
+	run.mkdir(t, "target")
+	run.createFile(t, "source/file", "potato")
+	run.createFile(t, "target/file", "other")
+	err := run.renameDirOver(run.path("source"), run.path("target"))
+	if run.isNFSMount() && errors.Is(err, syscall.EIO) {
+		// The NFS server library (go-nfs) reports every rename error
+		// other than ENOENT and EACCES as NFS3ERR_IO, which the
+		// client returns as EIO, so ENOTEMPTY can't be passed through.
+		//
+		// TODO: remove when go-nfs maps ENOTEMPTY to NFS3ERR_NOTEMPTY
+		t.Logf("NFS mount returned %v for rename over a non-empty directory", err)
+	} else {
+		assert.True(t, errors.Is(err, vfs.ENOTEMPTY) || errors.Is(err, syscall.ENOTEMPTY), "expected ENOTEMPTY, got %v", err)
+	}
+	run.checkDir(t, "source/|source/file 6|target/|target/file 5")
+	assert.Equal(t, "potato", run.readFile(t, "source/file"))
+	assert.Equal(t, "other", run.readFile(t, "target/file"))
+	run.rm(t, "source/file")
+	run.rm(t, "target/file")
+	run.rmdir(t, "source")
+	run.rmdir(t, "target")
 	run.checkDir(t, "")
 }
