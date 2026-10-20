@@ -5,12 +5,12 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"mime"
 	"net/http"
 	"net/url"
-	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -20,13 +20,12 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fs/rc/jobs"
-	"github.com/rclone/rclone/fs/rc/webgui"
 	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/lib/http/serve"
-	"github.com/rclone/rclone/lib/random"
 	"github.com/skratchdot/open-golang/open"
 )
 
@@ -63,41 +62,12 @@ func newServer(ctx context.Context, opt *rc.Options, mux *http.ServeMux) (*Serve
 	_ = mime.AddExtensionType(".wasm", "application/wasm")
 	_ = mime.AddExtensionType(".js", "application/javascript")
 
-	cachePath := filepath.Join(config.GetCacheDir(), "webgui")
-	extractPath := filepath.Join(cachePath, "current/build")
 	// File handling
 	if opt.Files != "" {
-		if opt.WebUI {
-			fs.Logf(nil, "--rc-files overrides --rc-web-gui command\n")
-		}
 		fs.Logf(nil, "Serving files from %q", opt.Files)
 		fileHandler = http.FileServer(http.Dir(opt.Files))
 	} else if opt.WebUI {
-		if err := webgui.CheckAndDownloadWebGUIRelease(opt.WebGUIUpdate, opt.WebGUIForceUpdate, opt.WebGUIFetchURL, config.GetCacheDir()); err != nil {
-			fs.Errorf(nil, "Error while fetching the latest release of Web GUI: %v", err)
-		}
-		if opt.NoAuth {
-			fs.Logf(nil, "It is recommended to use web gui with auth.")
-		} else {
-			if opt.Auth.BasicUser == "" && opt.Auth.HtPasswd == "" {
-				opt.Auth.BasicUser = "gui"
-				fs.Infof(nil, "No username specified. Using default username: %s \n", rc.Opt.Auth.BasicUser)
-			}
-			if opt.Auth.BasicPass == "" && opt.Auth.HtPasswd == "" {
-				randomPass, err := random.Password(128)
-				if err != nil {
-					fs.Fatalf(nil, "Failed to make password: %v", err)
-				}
-				opt.Auth.BasicPass = randomPass
-				fs.Infof(nil, "No password specified. Using random password: %s \n", randomPass)
-			}
-		}
-		opt.Serve = true
-
-		fs.Logf(nil, "Serving Web GUI")
-		fileHandler = http.FileServer(http.Dir(extractPath))
-
-		pluginsHandler = http.FileServer(http.Dir(webgui.PluginsPath))
+		return nil, errors.New("--rc-web-gui has been superseded by the `rclone gui` command")
 	}
 
 	s := &Server{
@@ -124,8 +94,11 @@ func newServer(ctx context.Context, opt *rc.Options, mux *http.ServeMux) (*Serve
 		middleware.SetHeader("Server", "rclone/"+fs.Version),
 	)
 
-	// Add the debug handler which is installed in the default mux
-	router.Handle("/debug/pprof/*", mux)
+	// Add the debug handler which is installed in the default mux.
+	// Only do this if auth is enabled.
+	if s.noAuth || s.server.UsingAuth() {
+		router.Handle("/debug/pprof/*", mux)
+	}
 
 	// FIXME split these up into individual functions
 	router.Get("/*", s.handler)
@@ -165,7 +138,7 @@ func (s *Server) Serve() error {
 				openURL.RawPath = "/#/login"
 			}
 			// Don't open browser if serving in testing environment or required not to do so.
-			if flag.Lookup("test.v") == nil && !s.opt.WebGUINoOpenBrowser {
+			if flag.Lookup("test.v") == nil {
 				if err := open.Start(openURL.String()); err != nil {
 					fs.Errorf(nil, "Failed to open Web GUI in browser: %v. Manually access it at: %s", err, openURL.String())
 				}
@@ -257,6 +230,17 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 			return
 		}
 	}
+
+	// Check for Prefer: respond-async header (RFC 7240)
+	preferAsync := false
+	for pref := range strings.SplitSeq(r.Header.Get("Prefer"), ",") {
+		if strings.EqualFold(strings.TrimSpace(pref), "respond-async") {
+			preferAsync = true
+			in["_async"] = true
+			break
+		}
+	}
+
 	// Find the call
 	call := rc.Calls.Get(path)
 	if call == nil {
@@ -296,6 +280,10 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 
 	fs.Debugf(nil, "rc: %q: reply %+v: %v", path, out, err)
 	w.Header().Set("Content-Type", "application/json")
+	if preferAsync {
+		w.Header().Set("Preference-Applied", "respond-async")
+		w.WriteHeader(http.StatusAccepted)
+	}
 	err = rc.WriteJSON(w, out)
 	if err != nil {
 		// can't return the error at this point - but have a go anyway
@@ -309,6 +297,12 @@ func (s *Server) handleOptions(w http.ResponseWriter, r *http.Request, path stri
 }
 
 func (s *Server) serveRoot(w http.ResponseWriter, r *http.Request) {
+	// Listing the configured remotes discloses their names so
+	// require auth like the rest of the rc endpoints
+	if !s.noAuth && !s.server.UsingAuth() {
+		writeError(r.URL.Path, nil, w, errors.New("listing the remotes requires authentication to be set up on the rc server or the --rc-no-auth flag"), http.StatusForbidden)
+		return
+	}
 	remoteNames := config.GetRemoteNames()
 	sort.Strings(remoteNames)
 	directory := serve.NewDirectory("", s.server.HTMLTemplate())
@@ -325,8 +319,57 @@ func (s *Server) serveRoot(w http.ResponseWriter, r *http.Request) {
 	directory.Serve(w, r)
 }
 
+// checkServeRemote returns an error if fsName must not be instantiated on the
+// file-serving (--rc-serve) path given the current authentication state.
+//
+// Instantiating a backend from request-supplied configuration can execute
+// commands during initialisation (e.g. webdav bearer_token_command, sftp ssh),
+// read arbitrary local files, or mutate process-wide config via global.*
+// options so shouldn't be done without authentication.
+//
+// authenticated must be true if the request has been authenticated (HTTP auth
+// is configured on the server) or --rc-no-auth was passed to explicitly opt in
+// to running without authentication.
+func checkServeRemote(fsName string, authenticated bool) error {
+	parsed, err := fspath.Parse(fsName)
+	if err != nil {
+		return fmt.Errorf("invalid remote %q: %w", fsName, err)
+	}
+
+	// global.* connection string options mutate process-wide rclone config. Never honour these
+	// from a request-derived remote, even when the request is authenticated
+	for k := range parsed.Config {
+		if strings.HasPrefix(k, "global.") {
+			return fmt.Errorf("setting %q on a served remote is not allowed", k)
+		}
+	}
+
+	if authenticated {
+		return nil
+	}
+
+	// On an unauthenticated server only allow access to pre-configured named remotes. Reject
+	// inline backend definitions, connection string option overrides and bare local paths
+	switch {
+	case parsed.Name == "":
+		return errors.New("serving local paths requires authentication to be set up on the rc server or the --rc-no-auth flag")
+	case strings.HasPrefix(parsed.Name, ":"):
+		return errors.New("serving inline remotes requires authentication to be set up on the rc server or the --rc-no-auth flag")
+	case len(parsed.Config) > 0:
+		return errors.New("serving remotes with connection string parameters requires authentication to be set up on the rc server or the --rc-no-auth flag")
+	}
+	return nil
+}
+
 func (s *Server) serveRemote(w http.ResponseWriter, r *http.Request, path string, fsName string) {
-	f, err := cache.Get(s.ctx, fsName)
+	// Check we are allowed to instantiate this remote
+	authenticated := s.noAuth || s.server.UsingAuth()
+	if err := checkServeRemote(fsName, authenticated); err != nil {
+		writeError(path, nil, w, err, http.StatusForbidden)
+		return
+	}
+	// Mark as an rc request e.g. so NewFs can reject global.* config
+	f, err := cache.Get(fs.WithRCRequest(s.ctx), fsName)
 	if err != nil {
 		writeError(path, nil, w, fmt.Errorf("failed to make Fs: %w", err), http.StatusInternalServerError)
 		return
@@ -384,21 +427,6 @@ func (s *Server) handleGet(w http.ResponseWriter, r *http.Request, path string) 
 		s.serveRoot(w, r)
 		return
 	case s.files != nil:
-		if s.opt.WebUI {
-			pluginsMatchResult := webgui.PluginsMatch.FindStringSubmatch(path)
-
-			if len(pluginsMatchResult) > 2 {
-				ok := webgui.ServePluginOK(w, r, pluginsMatchResult)
-				if !ok {
-					r.URL.Path = fmt.Sprintf("/%s/%s/app/build/%s", pluginsMatchResult[1], pluginsMatchResult[2], pluginsMatchResult[3])
-					s.pluginsHandler.ServeHTTP(w, r)
-					return
-				}
-				return
-			} else if webgui.ServePluginWithReferrerOK(w, r, path) {
-				return
-			}
-		}
 		// Serve the files
 		r.URL.Path = "/" + path
 		s.files.ServeHTTP(w, r)

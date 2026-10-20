@@ -26,6 +26,14 @@ func (readClose) Close() (err error) {
 	return io.EOF
 }
 
+type readCloseWriteTo struct {
+	readClose
+}
+
+func (readCloseWriteTo) WriteTo(w io.Writer) (n int64, err error) {
+	return 42, errRead
+}
+
 func TestNoCloser(t *testing.T) {
 	assert.Equal(t, nil, NoCloser(nil))
 
@@ -41,4 +49,56 @@ func TestNoCloser(t *testing.T) {
 
 	_, err := nc.Read(nil)
 	assert.Equal(t, errRead, err)
+
+	_, hasWriteTo := nc.(io.WriterTo)
+	assert.False(t, hasWriteTo)
+
+	rcw := readCloseWriteTo{}
+	ncw := NoCloser(rcw)
+	assert.NotEqual(t, ncw, rcw)
+
+	_, hasClose = ncw.(io.Closer)
+	assert.False(t, hasClose)
+
+	wt, hasWriteTo := ncw.(io.WriterTo)
+	assert.True(t, hasWriteTo)
+	n, err := wt.WriteTo(nil)
+	assert.Equal(t, int64(42), n)
+	assert.Equal(t, errRead, err)
+}
+
+func TestNoCloserNotify(t *testing.T) {
+	assert.Nil(t, NoCloserNotify(nil, func() {}))
+
+	notified := 0
+	notify := func() { notified++ }
+
+	// A reader without Close or WriteTo
+	nc := NoCloserNotify(readOnly{}, notify)
+	_, err := nc.Read(nil)
+	assert.Equal(t, io.EOF, err)
+	_, hasWriteTo := nc.(io.WriterTo)
+	assert.False(t, hasWriteTo)
+
+	// Close doesn't close the underlying reader (whose Close returns
+	// io.EOF) and notifies once only
+	notified = 0
+	nc = NoCloserNotify(readClose{}, notify)
+	_, err = nc.Read(nil)
+	assert.Equal(t, errRead, err)
+	assert.NoError(t, nc.Close())
+	assert.Equal(t, 1, notified)
+	assert.NoError(t, nc.Close())
+	assert.Equal(t, 1, notified)
+
+	// WriteTo is forwarded
+	notified = 0
+	ncw := NoCloserNotify(readCloseWriteTo{}, notify)
+	wt, hasWriteTo := ncw.(io.WriterTo)
+	assert.True(t, hasWriteTo)
+	n, err := wt.WriteTo(nil)
+	assert.Equal(t, int64(42), n)
+	assert.Equal(t, errRead, err)
+	assert.NoError(t, ncw.Close())
+	assert.Equal(t, 1, notified)
 }

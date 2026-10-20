@@ -35,17 +35,21 @@ RUN echo "**** Print Version Binary ****" && \
 # Begin final image
 FROM alpine:latest
 
+ARG RCLONE_UID=1009
+ARG RCLONE_GID=1009
+
 RUN echo "**** Install Dependencies ****" && \
     apk add --no-cache \
         ca-certificates \
         fuse3 \
+        mailcap \
         tzdata && \
     echo "Enable user_allow_other in fuse" && \
     echo "user_allow_other" >> /etc/fuse.conf
 
 COPY --from=builder /go/src/github.com/rclone/rclone/rclone /usr/local/bin/
 
-RUN addgroup -g 1009 rclone && adduser -u 1009 -Ds /bin/sh -G rclone rclone
+RUN addgroup -g "${RCLONE_GID}" rclone && adduser -u "${RCLONE_UID}" -Ds /bin/sh -G rclone rclone
 
 ENTRYPOINT [ "rclone" ]
 

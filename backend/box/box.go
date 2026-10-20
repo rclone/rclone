@@ -27,7 +27,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/rclone/rclone/backend/box/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
@@ -45,6 +45,7 @@ import (
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
+	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 	"github.com/youmark/pkcs8"
 )
@@ -76,7 +77,10 @@ var (
 )
 
 type boxCustomClaims struct {
-	jwt.StandardClaims
+	jwt.RegisteredClaims
+	// Audience overrides RegisteredClaims.Audience so it is sent as
+	// a single string rather than an array of strings
+	Audience   string `json:"aud,omitempty"`
 	BoxSubType string `json:"box_sub_type,omitempty"`
 }
 
@@ -222,7 +226,7 @@ func getBoxConfig(m configmap.Mapper) (boxConfig *api.ConfigJSON, err error) {
 
 	if configFileCredentials == "" {
 		configFile, _ := m.Get("box_config_file")
-		configFileBytes, err = os.ReadFile(configFile)
+		configFileBytes, err = os.ReadFile(env.ShellExpand(configFile))
 		if err != nil {
 			return nil, fmt.Errorf("box: failed to read Box config: %w", err)
 		}
@@ -242,15 +246,13 @@ func getClaims(boxConfig *api.ConfigJSON, boxSubType string) (claims *boxCustomC
 	}
 
 	claims = &boxCustomClaims{
-		//lint:ignore SA1019 since we need to use jwt.StandardClaims even if deprecated in jwt-go v4 until a more permanent solution is ready in time before jwt-go v5 where it is removed entirely
-		//nolint:staticcheck // Don't include staticcheck when running golangci-lint to avoid SA1019
-		StandardClaims: jwt.StandardClaims{
-			Id:        val,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        val,
 			Issuer:    boxConfig.BoxAppSettings.ClientID,
 			Subject:   boxConfig.EnterpriseID,
-			Audience:  tokenURL,
-			ExpiresAt: time.Now().Add(time.Second * 45).Unix(),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Second * 45)),
 		},
+		Audience:   tokenURL,
 		BoxSubType: boxSubType,
 	}
 	return claims, nil
@@ -1460,7 +1462,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 					// Item in the cache has the same or newer SequenceID than
 					// this event. Ignore this event, it must be old.
 					f.itemMetaCacheMu.Unlock()
-					fs.Debugf(f, "%s ignored due to old SequenceID (%q)", eventDetails, itemMeta.SequenceID)
+					fs.Debugf(f, "%s ignored due to old SequenceID (%d)", eventDetails, itemMeta.SequenceID)
 					continue
 				}
 
@@ -1691,7 +1693,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 // upload does a single non-multipart upload
 //
 // This is recommended for less than 50 MiB of content
-func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID string, modTime time.Time, options ...fs.OpenOption) (err error) {
+func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID string, size int64, modTime time.Time, options ...fs.OpenOption) (err error) {
 	upload := api.UploadFile{
 		Name:              o.fs.opt.Enc.FromStandardName(leaf),
 		ContentModifiedAt: api.Time(modTime),
@@ -1703,9 +1705,10 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 
 	var resp *http.Response
 	var result api.FolderItems
+	counter := readers.NewCountingReader(in)
 	opts := rest.Opts{
 		Method:                "POST",
-		Body:                  in,
+		Body:                  counter,
 		MultipartMetadataName: "attributes",
 		MultipartContentName:  "contents",
 		MultipartFileName:     upload.Name,
@@ -1724,6 +1727,11 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 	})
 	if err != nil {
 		return err
+	}
+	// Check the source supplied the number of bytes it declared
+	// otherwise a truncated file would be stored as a good upload.
+	if size >= 0 && int64(counter.BytesRead()) != size {
+		return fmt.Errorf("expected %d bytes in input, but got %d: %w", size, counter.BytesRead(), io.ErrUnexpectedEOF)
 	}
 	if result.TotalCount != 1 || len(result.Entries) != 1 {
 		return fmt.Errorf("failed to upload %v - not sure why", o)
@@ -1754,7 +1762,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// Upload with simple or multipart
 	if size <= int64(o.fs.opt.UploadCutoff) {
-		err = o.upload(ctx, in, leaf, directoryID, modTime, options...)
+		err = o.upload(ctx, in, leaf, directoryID, size, modTime, options...)
 	} else {
 		err = o.uploadMultipart(ctx, in, leaf, directoryID, size, modTime, options...)
 	}

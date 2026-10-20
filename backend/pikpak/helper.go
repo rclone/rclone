@@ -1,7 +1,6 @@
 package pikpak
 
 import (
-	"bytes"
 	"context"
 	"crypto/md5"
 	"crypto/sha1"
@@ -23,6 +22,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/rest"
 )
 
@@ -307,7 +307,9 @@ func readGcid(in io.Reader, size, threshold int64) (gcid string, out io.Reader, 
 	cleanup = func() {}
 
 	// don't cache small files on disk to reduce wear of the disk
-	if size > threshold {
+	//
+	// files of unknown size go to disk as they may not fit in memory
+	if size < 0 || size > threshold {
 		var tempFile *os.File
 
 		// create the cache file
@@ -340,13 +342,16 @@ func readGcid(in io.Reader, size, threshold int64) (gcid string, out io.Reader, 
 		// replace the already read source with a reader of our cached file
 		out = tempFile
 	} else {
-		buf := &bytes.Buffer{}
-		teeReader := io.TeeReader(in, buf)
+		rw := multipart.NewRW()
+		cleanup = func() {
+			_ = rw.Close()
+		}
+		teeReader := io.TeeReader(in, rw)
 
 		if gcid, err = calcGcid(teeReader, size); err != nil {
 			return
 		}
-		out = buf
+		out = rw
 	}
 	return
 }

@@ -1,0 +1,8 @@
+name: Scality
+description: Scality (RING / ARTESCA)
+region: {}
+endpoint: {}
+location_constraint: {}
+acl: {}
+quirks:
+  force_path_style: true # RING and ARTESCA support path-style; virtual-hosted style needs wildcard DNS which on-prem clients often lack

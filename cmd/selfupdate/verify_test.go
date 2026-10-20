@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/hex"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -38,5 +39,23 @@ func TestVerify(t *testing.T) {
 	t.Run("BadName", func(t *testing.T) {
 		err = verifyHashsumDownloaded(ctx, sumsBuf, "archive.zipX", hash)
 		assert.ErrorContains(t, err, "unable to find hash")
+	})
+	t.Run("UnsignedPrefix", func(t *testing.T) {
+		hash[0] ^= 1 // forge an unsigned hash line before the signed block
+		prefixed := append([]byte(hex.EncodeToString(hash)+"  archive.zip\n"), sumsBuf...)
+		err = verifyHashsumDownloaded(ctx, prefixed, "archive.zip", hash)
+		assert.ErrorContains(t, err, "archive hash mismatch")
+		hash[0] ^= 1 // undo the change
+	})
+	t.Run("UnsignedInArmor", func(t *testing.T) {
+		// Dash escaping the signed line doesn't change the signed text but hides
+		// it from a raw scan, and lines after the armor checksum are ignored.
+		badHash := hex.EncodeToString([]byte{0x01})
+		armored := strings.Replace(string(sumsBuf), "b20b", "- b20b", 1)
+		armored = strings.Replace(armored, "=1GTr\n", "=1GTr\n"+badHash+"  archive.zip\n", 1)
+		err = verifyHashsumDownloaded(ctx, []byte(armored), "archive.zip", []byte{0x01})
+		assert.ErrorContains(t, err, "archive hash mismatch")
+		err = verifyHashsumDownloaded(ctx, []byte(armored), "archive.zip", hash)
+		require.NoError(t, err)
 	})
 }

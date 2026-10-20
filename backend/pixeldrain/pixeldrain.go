@@ -459,7 +459,10 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) (err error) {
 	_, err = o.fs.update(ctx, o.base.Path, fs.Metadata{"mtime": modTime.Format(timeFormat)})
 	if err == nil {
-		o.base.Modified = modTime
+		// The server stores modtimes with millisecond precision so
+		// truncate here too to keep the in-memory modtime identical
+		// to the one a fresh listing returns.
+		o.base.Modified = modTime.Truncate(time.Millisecond)
 	}
 	return err
 }
@@ -475,12 +478,19 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 //
 // The new object may have been created if an error is returned.
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
-	// Copy the parameters and update the object
-	o.base.Modified = src.ModTime(ctx)
+	// Copy the parameters and update the object, truncating the
+	// modtime to the millisecond precision the server stores it with
+	o.base.Modified = src.ModTime(ctx).Truncate(time.Millisecond)
 	o.base.FileSize = src.Size()
 	o.base.SHA256Sum, _ = src.Hash(ctx, hash.SHA256)
-	_, err = o.fs.Put(ctx, in, o, options...)
-	return err
+	newObject, err := o.fs.Put(ctx, in, o, options...)
+	if err != nil {
+		return err
+	}
+	// Keep the metadata from the upload response so the object has
+	// the hash the server computed.
+	o.base = newObject.(*Object).base
+	return nil
 }
 
 // Remove an object

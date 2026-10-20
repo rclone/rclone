@@ -15,6 +15,43 @@ or [use HTTP directly](#api-http).
 If you just want to run a remote control then see the [rcd](/commands/rclone_rcd/)
 command.
 
+## Security {#security}
+
+**Access to the rc API is equivalent to shell access as the user running
+rclone.** Treat the rc port as you would an interactive login on the host.
+
+Any caller who can reach the API (and pass authentication, if it is enabled)
+can, among other things:
+
+- **Run OS commands** as the rclone user. `core/command` re-executes the rclone
+  binary with arbitrary arguments, and several backend options shell out to
+  programs, so even creating a remote with `config/create` can lead to command
+  execution.
+- **Read and write any file** reachable by the rclone process, by pointing
+  `operations/*` or `sync/*` at a `local` remote (or via `--rc-files` /
+  `--rc-serve`). Writing arbitrary files as the rclone user is itself a route to
+  code execution.
+- **Read back stored credentials.** rclone configs routinely hold cloud-provider
+  secrets. `config/dump` and friends expose them, so a compromise of the rc
+  reaches every configured backend.
+- **Change rclone's runtime behaviour** with `options/set`, **manage remotes**
+  with `config/*`, and **stop the process** with `core/quit`.
+
+There is currently no per-endpoint capability or scope system: authentication is
+all-or-nothing. Granting any access grants all of the above.
+
+Consequently:
+
+- **Do not bind the rc to a network address you do not control.** The default
+  bind is loopback (`localhost:5572`); keep it there unless you have a specific
+  reason to change it.
+- **Do not use `--rc-no-auth` on a non-loopback bind.** It disables
+  authentication on the endpoints that access remotes — see
+  [`--rc-no-auth`](#rc-no-auth).
+- **Use authentication and TLS** (`--rc-user`/`--rc-pass` or `--rc-htpasswd`,
+  plus `--rc-cert`/`--rc-key`) whenever the port is reachable by anyone you do
+  not fully trust, and raise `--rc-min-tls-version`.
+
 ## Supported parameters
 
 ### --rc
@@ -78,7 +115,25 @@ so you can browse to `http://127.0.0.1:5572/` or `http://127.0.0.1:5572/*`
 to see a listing of the remotes.  Objects may be requested from
 remotes using this syntax `http://127.0.0.1:5572/[remote:path]/path/to/object`
 
+Unless the rc server has authentication configured (`--rc-user`/`--rc-pass`
+or `--rc-htpasswd`) or the `--rc-no-auth` flag is set, only remotes already
+present in the config file may be served this way. Inline remotes (e.g.
+`[:webdav,url=...:]`), connection string parameters and bare local paths are
+rejected, since instantiating them from an unauthenticated request could run
+commands or read arbitrary local files.
+
 Default Off.
+
+### global.* connection string options and the rc
+
+Remotes instantiated by the rc do not let [connection
+string](/docs/#connection-strings) `global.*` options change rclone's
+process-wide configuration. Remotes created directly on the command
+line or defined in the config file are unaffected.
+
+A `global.*` option still takes effect for the individual backend it
+is set on (exactly like an `override.*` option), it just does not leak
+into the global config for the rest of the process.
 
 ### --rc-serve-no-modtime
 
@@ -119,9 +174,20 @@ Default Off.
 
 Set the allowed Access-Control-Allow-Origin for rc requests.
 
-Can be used with --rc-web-gui if the rclone is running on different IP than the web-gui.
+This enables cross-origin (CORS) requests from browsers on the origin
+given, for example `--rc-allow-origin https://app.example.com`. Browser
+CORS preflight OPTIONS requests are answered by rclone without
+authentication as browsers never send credentials with them. All other
+requests, including other OPTIONS requests, must be authenticated when
+authentication is enabled.
 
-Default is IP address on which rc is running.
+The `rclone gui` command sets this automatically to the origin the GUI
+is served from if it is not set explicitly.
+
+Setting this to `*` allows any origin which is a security risk on an
+authenticated server.
+
+Default is off (no CORS).
 
 ### --rc-web-fetch-url
 
@@ -246,6 +312,30 @@ Rather than
 rclone rc operations/list --json '{"fs": "/tmp", "remote": "test", "opt": {"showHash": true}}'
 ```
 
+### Paths on Windows
+
+Prefer forward slashes (`/`) in Windows paths passed to the rc API, for
+example `C:/path1/path2`. If you use backslashes (`\`) in a JSON string,
+escape each one as `\\`. These JSON objects contain equivalent Windows
+paths:
+
+```json
+{"remote": "C:/path1/path2"}
+```
+
+```json
+{"remote": "C:\\path1\\path2"}
+```
+
+This applies to JSON request bodies and to JSON-encoded object parameters,
+such as `parameters` in `config/create`, even when that JSON is sent in a
+query string or form data. An unescaped backslash can cause a JSON parsing
+error or be interpreted as an escape sequence, such as `\t` for a tab.
+
+String parameters sent directly in a query string or form data, without
+JSON encoding, do not need JSON escaping. Use your HTTP client's URL
+encoding for query strings and form data.
+
 ## Special parameters
 
 The rc interface supports some special parameters which apply to
@@ -266,6 +356,13 @@ It is recommended that potentially long running jobs, e.g. `sync/sync`,
 `sync/copy`, `sync/move`, `operations/purge` are run with the `_async`
 flag to avoid any potential problems with the HTTP request and
 response timing out.
+
+As an alternative to `_async`, you can send the HTTP header
+`Prefer: respond-async` (RFC 7240). This has the same effect as
+`_async = true` but additionally returns HTTP status 202 (Accepted)
+instead of 200, and includes a `Preference-Applied: respond-async`
+response header. The 202 status code makes it easy for clients to distinguish
+an async response from a completed one without inspecting the body.
 
 Starting a job with the `_async` flag:
 
@@ -342,6 +439,8 @@ This shows:
 If you wish to set config (the equivalent of the global flags) for the
 duration of an rc call only then pass in the `_config` parameter.
 
+Alternatively, you can pass config options flat at the top level of the parameter map. The option names are the same as their CLI flags without `--` and with `-` replaced by `_` (e.g. `transfers` instead of `Transfers` inside `_config`).
+
 This should be in the same format as the `main` key returned by
 [options/get](#options-get).
 
@@ -363,11 +462,25 @@ parameter, you would pass this parameter in your JSON blob.
 "_config":{"CheckSum": true}
 ```
 
+Or pass it flat at the top level:
+
+```json
+"checksum": true
+```
+
 If using `rclone rc` this could be passed as
 
 ```console
 rclone rc sync/sync ... _config='{"CheckSum": true}'
 ```
+
+Or simply flat:
+
+```console
+rclone rc sync/sync ... checksum=true
+```
+
+If both flat parameters and `_config` are supplied, the parameters in the legacy `_config` block will take precedence.
 
 Any config parameters you don't set will inherit the global defaults
 which were set with command line flags or environment variables.
@@ -381,13 +494,32 @@ setting the equivalent of `--buffer-size` in string or integer format.
 "_config":{"BufferSize": 44040192}
 ```
 
+Or flat:
+
+```json
+"buffer_size": "42M"
+"buffer_size": 44040192
+```
+
 If you wish to check the `_config` assignment has worked properly then
 calling `options/local` will show what the value got set to.
+
+Setting `LogLevel` sets the log level for the logs made by the rc call
+only, for example to debug a single call.
+
+```json
+"_config":{"LogLevel": "DEBUG"}
+```
+
+Note that not all of rclone's logs support this yet. In particular the
+backends log at the global log level.
 
 ### Setting filter flags with _filter
 
 If you wish to set filters for the duration of an rc call only then
 pass in the `_filter` parameter.
+
+Alternatively, you can pass filter options flat at the top level of the parameter map. The option names are the same as their CLI flags without `--` and with `-` replaced by `_` (e.g. `exclude` instead of `Exclude` inside `_filter`).
 
 This should be in the same format as the `filter` key returned by
 [options/get](#options-get).
@@ -415,11 +547,25 @@ you would pass this parameter in your JSON blob.
 "_filter":{"MaxSize":"1M", "IncludeRule":["a","b"], "MaxAge":"42s"}
 ```
 
+Or pass them flat at the top level:
+
+```json
+"max_size":"1M", "include":["a","b"], "max_age":"42s"
+```
+
 If using `rclone rc` this could be passed as
 
 ```console
 rclone rc ... _filter='{"MaxSize":"1M", "IncludeRule":["a","b"], "MaxAge":"42s"}'
 ```
+
+Or simply flat:
+
+```console
+rclone rc ... max_size=1M include="a,b" max_age=42s
+```
+
+If both flat parameters and `_filter` are supplied, the parameters in the legacy `_filter` block will take precedence.
 
 Any filter parameters you don't set will inherit the global defaults
 which were set with command line flags or environment variables.
@@ -431,6 +577,12 @@ setting the equivalent of `--buffer-size` in string or integer format.
 ```json
 "_filter":{"MinSize": "42M"}
 "_filter":{"MinSize": 44040192}
+```
+
+Or flat:
+
+```json
+"min_size": "42M"
 ```
 
 If you wish to check the `_filter` assignment has worked properly then
@@ -740,6 +892,29 @@ Returns
 
 See the [listremotes](/commands/rclone_listremotes/) command for more information on the above.
 
+### config/oauthstatus: Get the status of the OAuth authentication server. {#config-oauthstatus}
+
+Returns the current status of the OAuth authentication server.
+
+Returns a JSON object:
+- status - "running" or "stopped"
+- authUrl - URL for the authorization (only if status is "running")
+
+Eg
+
+    {
+        "status": "running",
+        "authUrl": "http://127.0.0.1:53682/auth?state=..."
+    }
+
+### config/oauthstop: Stop any running OAuth authentication server. {#config-oauthstop}
+
+Stops the OAuth authentication server if one is running.
+
+This can be used to recover from an interrupted OAuth flow without
+restarting rclone. If no OAuth authentication is in progress, an error
+is returned.
+
 ### config/password: password the config for a remote. {#config-password}
 
 This takes the following parameters:
@@ -795,6 +970,19 @@ Parameters:
 - 'configPassword' - password to unlock the config file
 
 A good idea is to disable AskPassword before making this call
+
+### config/unset: Unset keys in a remote in the config file. {#config-unset}
+
+Parameters:
+
+- name - name of remote
+- keys - a list of key names to remove
+
+Returns:
+
+- removed - a list of the keys that were actually removed
+
+See the [config unset](/commands/rclone_config_unset/) command for more information on the above.
 
 ### config/update: update the config for a remote. {#config-update}
 
@@ -1362,6 +1550,10 @@ This takes the following parameters:
 - mountOpt: a JSON object with Mount options in.
 - vfsOpt: a JSON object with VFS options in.
 
+Alternatively, you can pass VFS and Mount options flat at the top level of the parameter map. The option names are the same as their CLI flags without '--' and with '-' replaced by '_' (e.g. 'vfs_cache_mode' instead of 'CacheMode' inside 'vfsOpt', and 'volname' instead of 'VolName' inside 'mountOpt').
+
+If both flat parameters and nested 'vfsOpt'/'mountOpt' blocks are supplied, the parameters in the nested blocks will take precedence.
+
 On Windows mountPoint may be set to "*" to assign the next available
 drive letter automatically, or a network share UNC path (e.g.
 "\\server\share") to mount as a network drive. In these cases the
@@ -1379,6 +1571,7 @@ Example:
 rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint
 rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint mountType=mount
 rclone rc mount/mount fs=TestDrive: mountPoint=/mnt/tmp vfsOpt='{"CacheMode": 2}' mountOpt='{"AllowOther": true}'
+rclone rc mount/mount fs=TestDrive: mountPoint=/mnt/tmp vfs_cache_mode=writes volname=MyTestVolume
 rclone rc mount/mount fs=mydrive: mountPoint=* mountType=cmount
 ```
 
@@ -2112,13 +2305,15 @@ Other parameters are as described in the documentation for the
 relevant [rclone serve](/commands/rclone_serve/) command line options.
 To translate a command line option to an rc parameter, remove the
 leading `--` and replace `-` with `_`, so `--vfs-cache-mode` becomes
-`vfs_cache_mode`. Note that global parameters must be set with
-`_config` and `_filter` as described above.
+`vfs_cache_mode`.
+
+Option parameters (such as VFS, proxy, and protocol-specific options) can be passed flat at the top level of the parameter map or inside nested JSON objects under the `vfsOpt`, `proxyOpt`, and `opt` keys (e.g. `vfsOpt='{"CacheMode": 2}'`, `proxyOpt='{"AuthProxy": "http://127.0.0.1:8080"}'`). If both flat parameters and nested blocks are supplied, the parameters in the nested blocks will take precedence. Note that global parameters must be set with `_config` and `_filter` as described above.
 
 Examples:
 
     rclone rc serve/start type=nfs fs=remote: addr=:4321 vfs_cache_mode=full
     rclone rc serve/start --json '{"type":"nfs","fs":"remote:","addr":":1234","vfs_cache_mode":"full"}'
+    rclone rc serve/start type=webdav fs=remote: vfsOpt='{"CacheMode": 2}' proxyOpt='{"AuthProxy": "http://127.0.0.1:8080"}'
 
 This will give the reply
 
@@ -2516,9 +2711,11 @@ The keys in the error response are:
 
 ### CORS
 
-The sever implements basic CORS support and allows all origins for that.
-The response to a preflight OPTIONS request will echo the requested
-"Access-Control-Request-Headers" back.
+The server implements basic CORS support when `--rc-allow-origin` is
+set. Browser CORS preflight OPTIONS requests are then answered by
+rclone without authentication with the `Access-Control-*` headers.
+Without `--rc-allow-origin` no CORS headers are sent and a preflight
+request is authenticated like any other request.
 
 ### Using POST with URL parameters only
 
@@ -2627,6 +2824,14 @@ curl -H "Content-Type: application/json" -X POST -d '{"potato":2,"sausage":1}' '
 
 If you use the `--rc` flag this will also enable the use of the go
 profiling tools on the same port.
+
+The profiling endpoints follow the same authentication rules as the
+rest of the rc: they are only served if authentication has been set up
+(`--rc-user`/`--rc-pass` or `--rc-htpasswd`) or the
+[`--rc-no-auth`](#rc-no-auth) flag is in use. For debugging on the
+default localhost port the easiest thing is to use `--rc --rc-no-auth`
+(but see the warning about using `--rc-no-auth` on a non-loopback
+bind).
 
 To use these, first [install go](https://golang.org/doc/install).
 

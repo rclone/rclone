@@ -113,6 +113,36 @@ GitHub.
 You may sometimes be asked to [base your changes on the latest master](#basing-your-changes-on-the-latest-master)
 or [squash your commits](#squashing-your-commits).
 
+## AI-assisted contributions
+
+You are welcome to use AI coding assistants (Claude Code, Codex, Cursor, Gemini
+CLI, and similar) to help write your contribution. Rclone has an
+[AGENTS.md](AGENTS.md) file at the top of the repository describing the project's
+conventions; point your tool at it so the code it produces matches rclone's
+style.
+
+However, the same standard applies to every pull request whether or not a tool
+was involved: **you are responsible for the code you submit.** Before you open a
+pull request please make sure that:
+
+- You understand every line of the change and can explain why it is correct. If
+  a reviewer asks a question about it, you should be able to answer without
+  going back to the tool.
+- You have actually built and run it. At a minimum `go build` and
+  `make quicktest` must pass, and for a backend change you should run the
+  [backend tests](#backend-testing) against a real remote where you can.
+- The change is a genuine fix or feature that you have verified solves the
+  problem, not a plausible-looking guess. Unverified, AI-generated pull requests
+  that do not compile, do not pass the tests, invent APIs that do not exist, or
+  do not actually do what the description claims waste maintainer time and are
+  likely to be closed.
+- You have trimmed the comments. AI tools tend to add verbose comments that
+  restate what the code plainly does or narrate the change being made; please
+  cut these down to match the [code commenting style](AGENTS.md#code-commenting-style).
+
+In short: an AI assistant is a tool to help *you* contribute, not a substitute
+for understanding and testing your own work.
+
 ## Using Git and GitHub
 
 ### Committing your changes
@@ -600,10 +630,37 @@ remote or an fs.
 - **Remember** we have >50 backends to maintain so keeping them as similar as
   possible to each other is a high priority!
 
+### Managing memory
+
+Use rclone's memory pool for upload buffers rather than allocating them
+yourself. This will enable `--max-buffer-memory` and `--use-mmap` and will make
+rclone's memory usage smaller.
+
+- If the provider supports multipart or parallel chunk uploads, implement
+  [fs.OpenChunkWriter](https://pkg.go.dev/github.com/rclone/rclone/fs#OpenChunkWriter)
+  and drive it with
+  [multipart.UploadMultipart](https://pkg.go.dev/github.com/rclone/rclone/lib/multipart#UploadMultipart).
+  This gives you pooled chunk buffers, concurrency, retries and
+  `--multi-thread-streams` support for free. See s3/b2 backends for examples.
+- If you must buffer data yourself take the buffer from the global pool with
+  [multipart.NewRW](https://pkg.go.dev/github.com/rclone/rclone/lib/multipart#NewRW)
+  and fill it with `io.CopyN`. The `pool.RW` is seekable so the same buffer can
+  be rewound for a retry.
+- When using a pooled buffer `Close()` it on all paths so its pages go back to
+  the pool, `Seek(0, io.SeekStart)` inside the retry closure before each
+  attempt, set the request's `ContentLength` explicitly, and if the buffer
+  reaches `http.NewRequest` or an SDK without going through `lib/rest`, wrap it
+  in [readers.NoCloser](https://pkg.go.dev/github.com/rclone/rclone/lib/readers#NoCloser)
+  so the transport can't close it and free its pages before the retry.
+
 ### Unit tests
 
 - Create a config entry called `TestRemote` for the unit tests to use
 - Create a `backend/remote/remote_test.go` - copy and adjust your example remote
+- If your backend does chunked uploads, set `ChunkedUpload` in the
+  `fstests.Opt` and implement `SetUploadChunkSize` (and `SetUploadCutoff`)
+  on your `Fs` in the test file so the `FsPutChunked`, `FsPutShortEOF` and
+  `FsPutRetry` tests can run the chunked path with small chunks.
 - Make sure all tests pass with `go test -v`
 
 ### Integration tests
@@ -622,6 +679,15 @@ Or if you want to run the integration tests manually:
   - `go test -v -remote TestRemote:`
 - If your remote defines `ListR` check with this also
   - `go test -v -remote TestRemote: -fast-list`
+
+Before a new or changed backend can be merged we require:
+
+- A clean run of `go run ./fstest/test_all -backends remote` (please include the
+  result in your pull request).
+- A test account for the backend so the maintainers can add it to the
+  [integration test server](https://integration.rclone.org) and keep the backend
+  working as rclone evolves. A backend that we cannot test is likely to break and
+  may be removed.
 
 See the [testing](#testing) section for more information on integration tests.
 

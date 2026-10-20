@@ -125,7 +125,10 @@ func (o *RangeOption) Decode(size int64) (offset, limit int64) {
 		}
 	} else {
 		if o.End >= 0 {
-			offset = size - o.End
+			// RFC 7233 section 2.1: if the suffix-length is
+			// larger than the representation, use the entire
+			// representation.
+			offset = max(size-o.End, 0)
 		} else {
 			offset = 0
 		}
@@ -162,7 +165,11 @@ func FixRangeOption(options []OpenOption, size int64) {
 		case *RangeOption:
 			// If start is < 0 then fetch from the end
 			if x.Start < 0 {
-				x = &RangeOption{Start: size - x.End, End: -1}
+				// RFC 7233 section 2.1: if the suffix-length is
+				// larger than the representation, use the entire
+				// representation (#6310).
+				start := max(size-x.End, 0)
+				x = &RangeOption{Start: start, End: -1}
 				options[i] = x
 			}
 			// If end is too big or undefined, fetch to the end

@@ -42,10 +42,10 @@ func TestRun_CallsCopyURL_WithExplicitFilename_Success(t *testing.T) {
 	tmp := t.TempDir()
 	dstPath := filepath.Join(tmp, "out.txt")
 
-	var called int32
+	var called atomic.Int32
 
 	copyURL = func(_ctx context.Context, _dst fs.Fs, dstFileName, url string, auto, header, noclobber bool) (fs.Object, error) {
-		atomic.AddInt32(&called, 1)
+		called.Add(1)
 		assert.Equal(t, "https://example.com/file", url)
 		assert.Equal(t, "out.txt", dstFileName)
 		assert.False(t, auto)
@@ -56,7 +56,7 @@ func TestRun_CallsCopyURL_WithExplicitFilename_Success(t *testing.T) {
 
 	err := run([]string{"https://example.com/file", dstPath})
 	require.NoError(t, err)
-	assert.Equal(t, int32(1), atomic.LoadInt32(&called))
+	assert.Equal(t, int32(1), called.Load())
 }
 
 func TestRun_CallsCopyURL_WithAutoFilename_AndPropagatesError(t *testing.T) {
@@ -67,10 +67,10 @@ func TestRun_CallsCopyURL_WithAutoFilename_AndPropagatesError(t *testing.T) {
 	autoFilename = true
 
 	want := errors.New("boom")
-	var called int32
+	var called atomic.Int32
 
 	copyURL = func(_ctx context.Context, _dst fs.Fs, dstFileName, url string, auto, header, noclobber bool) (fs.Object, error) {
-		atomic.AddInt32(&called, 1)
+		called.Add(1)
 		assert.Equal(t, "", dstFileName) // auto filename -> empty
 		assert.True(t, auto)
 		return nil, want
@@ -79,7 +79,7 @@ func TestRun_CallsCopyURL_WithAutoFilename_AndPropagatesError(t *testing.T) {
 	err := run([]string{"https://example.com/auto/name", tmp})
 	require.Error(t, err)
 	assert.Equal(t, want, err)
-	assert.Equal(t, int32(1), atomic.LoadInt32(&called))
+	assert.Equal(t, int32(1), called.Load())
 }
 
 func TestRunURLS_ErrorsWithStdoutAndWithPrintFilename(t *testing.T) {
@@ -115,12 +115,12 @@ func TestRunURLS_ProcessesCSV_ParallelCalls_AndAggregatesError(t *testing.T) {
 
 	// mock copyURL: succeed for /a and /b, fail for /c
 
-	var calls int32
+	var calls atomic.Int32
 	var mu sync.Mutex
 	var seen []string
 
 	copyURL = func(_ctx context.Context, _dst fs.Fs, dstFileName, url string, auto, header, noclobber bool) (fs.Object, error) {
-		atomic.AddInt32(&calls, 1)
+		calls.Add(1)
 		mu.Lock()
 		seen = append(seen, url+"|"+dstFileName)
 		mu.Unlock()
@@ -143,7 +143,7 @@ func TestRunURLS_ProcessesCSV_ParallelCalls_AndAggregatesError(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "not all URLs copied successfully")
 	// 3 lines => 3 calls
-	assert.Equal(t, int32(3), atomic.LoadInt32(&calls))
+	assert.Equal(t, int32(3), calls.Load())
 
 	// sanity: all expected URLs were seen
 	assert.ElementsMatch(t,

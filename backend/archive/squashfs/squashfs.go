@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"path"
 	"strings"
 	"time"
@@ -15,6 +16,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/lib/readers"
+	"github.com/rclone/rclone/lib/sanitize"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 )
@@ -40,11 +42,36 @@ type Fs struct {
 	prefix      string   // position for objects
 	prefixSlash string   // position for objects with a slash on
 	root        string   // position to read from within the archive
+	file        string   // remote of the single file root points at, if any
+	links       bool     // read symlinks as .rclonelink files
+}
+
+// recoverParsePanic converts a panic raised while parsing a squashfs image
+// into an error assigned through err.
+func recoverParsePanic(err *error) {
+	if r := recover(); r != nil {
+		*err = fmt.Errorf("invalid or corrupt squashfs image: %v", r)
+	}
+}
+
+// recoveringReadCloser wraps a reader returned by the go-diskfs parser so
+// panics raised while reading become errors.
+//
+// The parser reads file data lazily, so an image which opens cleanly can
+// still panic on the first Read.
+type recoveringReadCloser struct {
+	io.ReadCloser
+}
+
+func (r recoveringReadCloser) Read(p []byte) (n int, err error) {
+	defer recoverParsePanic(&err)
+	return r.ReadCloser.Read(p)
 }
 
 // New constructs an Fs from the (wrappedFs, remote) with the objects
 // prefix with prefix and rooted at root
-func New(ctx context.Context, wrappedFs fs.Fs, remote, prefix, root string) (fs.Fs, error) {
+func New(ctx context.Context, wrappedFs fs.Fs, remote, prefix, root string) (_ fs.Fs, err error) {
+	defer recoverParsePanic(&err)
 	// FIXME vfs cache?
 	// FIXME could factor out ReadFileHandle and just use that rather than the full VFS
 	fs.Debugf(nil, "Squashfs: New: remote=%q, prefix=%q, root=%q", remote, prefix, root)
@@ -73,6 +100,7 @@ func New(ctx context.Context, wrappedFs fs.Fs, remote, prefix, root string) (fs.
 		c:           c,
 		remote:      remote,
 		root:        strings.Trim(root, "/"),
+		links:       fs.GetConfig(ctx).Links,
 		prefix:      prefix,
 		prefixSlash: prefix + "/",
 	}
@@ -90,10 +118,13 @@ func New(ctx context.Context, wrappedFs fs.Fs, remote, prefix, root string) (fs.
 			_, err := f.newObjectNative(native)
 			if err == nil {
 				// If it pointed to a file, find the directory above
+				// and remember the file so that only it is listed
 				f.root = path.Dir(f.root)
 				if f.root == "." || f.root == "/" {
 					f.root = ""
 				}
+				f.file = f.prefixSlash + path.Base(native)
+				singleObject = true
 			}
 		}
 	}
@@ -125,7 +156,9 @@ func (f *Fs) Name() string {
 
 // Root of the remote (as passed into NewFs)
 func (f *Fs) Root() string {
-	return f.root
+	// Include the file so the fs cache can tell this Fs apart from
+	// the one for the directory containing it
+	return path.Join(f.root, f.file)
 }
 
 // Features returns the optional features of this Fs
@@ -156,6 +189,17 @@ func (f *Fs) toNative(remote string) (string, error) {
 	return native, nil
 }
 
+// This turns a native path with a leading / into a path suitable for
+// the squashfs library which requires io/fs.ValidPath paths with no
+// leading / and "." for the root directory.
+func toIOFS(native string) string {
+	native = strings.Trim(native, "/")
+	if native == "" {
+		return "."
+	}
+	return native
+}
+
 // Turn a (nativeDir, leaf) into a remote
 func (f *Fs) fromNative(nativeDir string, leaf string) string {
 	// fs.Debugf(nil, "nativeDir = %q, leaf = %q, root=%q", nativeDir, leaf, f.root)
@@ -169,14 +213,37 @@ func (f *Fs) fromNative(nativeDir string, leaf string) string {
 }
 
 // Convert a FileInfo into an Object from native dir
-func (f *Fs) objectFromFileInfo(nativeDir string, item squashfs.FileStat) *Object {
+func (f *Fs) objectFromFileInfo(nativeDir string, item os.FileInfo) *Object {
 	return &Object{
 		fs:      f,
 		remote:  f.fromNative(nativeDir, item.Name()),
 		size:    item.Size(),
 		modTime: item.ModTime(),
-		item:    item,
 	}
+}
+
+// Convert a symlink entry into an Object holding its target
+func (f *Fs) objectFromLink(nativeDir string, item os.FileInfo, target string) *Object {
+	return &Object{
+		fs:      f,
+		remote:  f.fromNative(nativeDir, item.Name()) + fs.LinkSuffix,
+		size:    int64(len(target)),
+		modTime: item.ModTime(),
+		isLink:  true,
+		link:    target,
+	}
+}
+
+// readlink returns the target of the symlink the info describes.
+//
+// A symlink may carry an empty target, so the caller decides what is a
+// symlink from the mode rather than from the target being set.
+func readlink(info os.FileInfo) (string, error) {
+	st, ok := info.Sys().(*squashfs.StatT)
+	if !ok {
+		return "", fmt.Errorf("squashfs entry %q has no stat information", info.Name())
+	}
+	return st.LinkTarget, nil
 }
 
 // List the objects and directories in dir into entries.  The
@@ -190,40 +257,78 @@ func (f *Fs) objectFromFileInfo(nativeDir string, item squashfs.FileStat) *Objec
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	defer log.Trace(f, "dir=%q", dir)("entries=%v, err=%v", &entries, &err)
+	defer recoverParsePanic(&err)
+
+	if f.file != "" && dir != "" {
+		return nil, fs.ErrorDirNotFound
+	}
 
 	nativeDir, err := f.toNative(dir)
 	if err != nil {
 		return nil, err
 	}
 
-	items, err := f.sqfs.ReadDir(nativeDir)
+	items, err := f.sqfs.ReadDir(toIOFS(nativeDir))
 	if err != nil {
 		return nil, fmt.Errorf("read squashfs: couldn't read directory: %w", err)
 	}
 
 	entries = make(fs.DirEntries, 0, len(items))
-	for _, fi := range items {
-		item, ok := fi.(squashfs.FileStat)
-		if !ok {
-			return nil, fmt.Errorf("internal error: unexpected type for %q: %T", fi.Name(), fi)
-		}
+	skipped := 0
+	skippedLinks := 0
+	for _, item := range items {
 		// fs.Debugf(item.Name(), "entry = %#v", item)
-		var entry fs.DirEntry
-		if err != nil {
-			return nil, fmt.Errorf("error reading item %q: %q", item.Name(), err)
+		// Skip entry names that aren't safe
+		if err := sanitize.Leaf(item.Name()); err != nil {
+			fs.Debugf(f, "Skipping squashfs entry %q which escapes the archive", item.Name())
+			skipped++
+			continue
 		}
+		var entry fs.DirEntry
 		if item.IsDir() {
-			var remote = f.fromNative(nativeDir, item.Name())
-			entry = fs.NewDir(remote, item.ModTime())
-		} else {
-			if item.Mode().IsRegular() {
-				entry = f.objectFromFileInfo(nativeDir, item)
-			} else {
-				fs.Debugf(item.Name(), "FIXME Not regular file - skipping")
+			remote := f.fromNative(nativeDir, item.Name())
+			info, err := item.Info()
+			if err != nil {
+				return nil, fmt.Errorf("error reading item %q: %w", item.Name(), err)
+			}
+			entry = fs.NewDir(remote, info.ModTime())
+		} else if item.Type().IsRegular() {
+			info, err := item.Info()
+			if err != nil {
+				return nil, fmt.Errorf("error reading item %q: %w", item.Name(), err)
+			}
+			entry = f.objectFromFileInfo(nativeDir, info)
+		} else if item.Type()&os.ModeSymlink != 0 {
+			if !f.links {
+				skippedLinks++
 				continue
 			}
+			info, err := item.Info()
+			if err != nil {
+				return nil, fmt.Errorf("error reading item %q: %w", item.Name(), err)
+			}
+			target, err := readlink(info)
+			if err != nil {
+				return nil, err
+			}
+			entry = f.objectFromLink(nativeDir, info, target)
+		} else {
+			fs.Debugf(item.Name(), "FIXME Not regular file - skipping")
+			continue
+		}
+		if f.file != "" && entry.Remote() != f.file {
+			continue
 		}
 		entries = append(entries, entry)
+	}
+
+	// Log once per listing rather than per entry so a crafted image
+	// can't flood the log
+	if skipped > 0 {
+		fs.Logf(f, "Skipped %d squashfs entries in %q whose names escape the archive", skipped, dir)
+	}
+	if skippedLinks > 0 {
+		fs.Logf(f, "Skipped %d symlinks in %q - use -l/--links to read them", skippedLinks, dir)
 	}
 
 	// fs.Debugf(f, "dir=%q, entries=%v", dir, entries)
@@ -232,28 +337,47 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 
 // newObjectNative finds the object at the native path passed in
 func (f *Fs) newObjectNative(nativePath string) (o fs.Object, err error) {
+	defer recoverParsePanic(&err)
 	// get the path and filename
 	dir, leaf := path.Split(nativePath)
 	dir = strings.TrimRight(dir, "/")
 	leaf = strings.Trim(leaf, "/")
 
 	// FIXME need to detect directory not found
-	fis, err := f.sqfs.ReadDir(dir)
+	fis, err := f.sqfs.ReadDir(toIOFS(dir))
 	if err != nil {
 
 		return nil, fs.ErrorObjectNotFound
 	}
 
 	for _, fi := range fis {
-		if fi.Name() == leaf {
+		// Name the entry as List does, so that the two agree on
+		// which names exist
+		isLink := fi.Type()&os.ModeSymlink != 0
+		if isLink && !f.links {
+			continue
+		}
+		name := fi.Name()
+		if isLink {
+			name += fs.LinkSuffix
+		}
+		if name == leaf {
 			if fi.IsDir() {
 				return nil, fs.ErrorNotAFile
 			}
-			item, ok := fi.(squashfs.FileStat)
-			if !ok {
-				return nil, fmt.Errorf("internal error: unexpected type for %q: %T", fi.Name(), fi)
+			info, err := fi.Info()
+			if err != nil {
+				return nil, fmt.Errorf("error reading item %q: %w", fi.Name(), err)
 			}
-			o = f.objectFromFileInfo(dir, item)
+			if isLink {
+				target, err := readlink(info)
+				if err != nil {
+					return nil, err
+				}
+				o = f.objectFromLink(dir, info, target)
+				break
+			}
+			o = f.objectFromFileInfo(dir, info)
 			break
 		}
 	}
@@ -267,6 +391,9 @@ func (f *Fs) newObjectNative(nativePath string) (o fs.Object, err error) {
 func (f *Fs) NewObject(ctx context.Context, remote string) (o fs.Object, err error) {
 	defer log.Trace(f, "remote=%q", remote)("obj=%v, err=%v", &o, &err)
 
+	if f.file != "" && remote != f.file {
+		return nil, fs.ErrorObjectNotFound
+	}
 	nativePath, err := f.toNative(remote)
 	if err != nil {
 		return nil, err
@@ -328,7 +455,8 @@ type Object struct {
 	remote  string
 	size    int64
 	modTime time.Time
-	item    squashfs.FileStat
+	isLink  bool   // whether this is a symlink
+	link    string // target of the symlink
 }
 
 // Fs returns read only access to the Fs that this object is part of
@@ -385,6 +513,7 @@ func (o *Object) Hash(ctx context.Context, ht hash.Type) (string, error) {
 
 // Open opens the file for read.  Call Close() on the returned io.ReadCloser
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.ReadCloser, err error) {
+	defer recoverParsePanic(&err)
 	var offset, limit int64 = 0, -1
 	for _, option := range options {
 		switch x := option.(type) {
@@ -399,14 +528,24 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 		}
 	}
 
+	if o.isLink {
+		// Clamp offset into range to avoid panic
+		if offset < 0 {
+			offset = 0
+		}
+		if offset > int64(len(o.link)) {
+			offset = int64(len(o.link))
+		}
+		return readers.NewLimitedReadCloser(io.NopCloser(strings.NewReader(o.link[offset:])), limit), nil
+	}
+
 	remote, err := o.fs.toNative(o.remote)
 	if err != nil {
 		return nil, err
 	}
 
 	fs.Debugf(o, "Opening %q", remote)
-	//fh, err := o.fs.sqfs.OpenFile(remote, os.O_RDONLY)
-	fh, err := o.item.Open()
+	fh, err := o.fs.sqfs.OpenFile(toIOFS(remote), os.O_RDONLY)
 	if err != nil {
 		return nil, err
 	}
@@ -418,13 +557,15 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 			return nil, err
 		}
 	}
+	rc = recoveringReadCloser{fh}
+
 	// If limited then don't return everything
 	if limit >= 0 {
 		fs.Debugf(nil, "limit=%d, offset=%d, options=%v", limit, offset, options)
-		return readers.NewLimitedReadCloser(fh, limit), nil
+		return readers.NewLimitedReadCloser(rc, limit), nil
 	}
 
-	return fh, nil
+	return rc, nil
 }
 
 // Update in to the object with the modTime given of the given size

@@ -33,6 +33,7 @@ func mountOptions(fsys *FS, f fs.Fs, opt *mountlib.Options) (mountOpts *fuse.Mou
 		MaxReadAhead:       int(fsys.opt.MaxReadAhead),
 		MaxWrite:           1024 * 1024, // Linux v4.20+ caps requests at 1 MiB
 		DisableReadDirPlus: true,
+		IDMappedMount:      opt.AllowIDMap,
 
 		// RememberInodes: true,
 		// SingleThreaded: true,
@@ -240,8 +241,6 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error
 	// }
 
 	umount := func() error {
-		// Shutdown the VFS
-		fsys.VFS.Shutdown()
 		return server.Unmount()
 	}
 

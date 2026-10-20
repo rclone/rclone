@@ -209,6 +209,45 @@ func TestSetAnyFull(t *testing.T) {
 	assert.Equal(t, want, in)
 }
 
+func TestSetAnyWithSlice(t *testing.T) {
+	type ConfWithSlice struct {
+		ExcludeRule []string `config:"exclude"`
+	}
+
+	// 1. Test []any (JSON array of strings)
+	in := &ConfWithSlice{
+		ExcludeRule: []string{"original"},
+	}
+	m := map[string]any{
+		"exclude": []any{"foo", "bar"},
+	}
+	err := configstruct.SetAny(m, in)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"foo", "bar"}, in.ExcludeRule)
+
+	// 2. Test []string directly
+	in2 := &ConfWithSlice{
+		ExcludeRule: []string{"original"},
+	}
+	m2 := map[string]any{
+		"exclude": []string{"hello", "world"},
+	}
+	err = configstruct.SetAny(m2, in2)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"hello", "world"}, in2.ExcludeRule)
+
+	// 3. Test []any with mixed convertible types (e.g. ints/floats/bools)
+	in3 := &ConfWithSlice{
+		ExcludeRule: []string{"original"},
+	}
+	m3 := map[string]any{
+		"exclude": []any{"foo", 123, true, 45.6},
+	}
+	err = configstruct.SetAny(m3, in3)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"foo", "123", "true", "45.6"}, in3.ExcludeRule)
+}
+
 func TestStringToInterface(t *testing.T) {
 	item := struct{ A int }{2}
 	for _, test := range []struct {
@@ -288,6 +327,13 @@ func TestInterfaceToString(t *testing.T) {
 		{[]string{"hello", "world"}, `hello,world`, ""},
 		{[]string{"hello", "", "world"}, `hello,,world`, ""},
 		{[]string{`hello, world`, `goodbye, world!`}, `"hello, world","goodbye, world!"`, ""},
+		{[]any{"hello", "world"}, `hello,world`, ""},
+		{[]any{123, 456}, `123,456`, ""},
+		{[]any{"hello", 45.6, true}, `hello,45.6,true`, ""},
+		{[2]string{"a", "b"}, `a,b`, ""},
+		{[2]any{"x", 12}, `x,12`, ""},
+		{fs.SpaceSepList{"a", "b"}, `a b`, ""},
+		{fs.CommaSepList{"x", "y"}, `x,y`, ""},
 		{time.Second, "1s", ""},
 		{61 * time.Second, "1m1s", ""},
 		{fs.Mebi, "1Mi", ""},

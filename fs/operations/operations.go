@@ -17,6 +17,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -81,7 +82,7 @@ func checkHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object, ht hash.
 			return srcErr
 		}
 		if srcHash == "" {
-			fs.Debugf(src, "Src hash empty - aborting Dst hash check")
+			fs.DebugfCtx(ctx, src, "Src hash empty - aborting Dst hash check")
 			return errNoHash
 		}
 		return nil
@@ -92,7 +93,7 @@ func checkHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object, ht hash.
 			return dstErr
 		}
 		if dstHash == "" {
-			fs.Debugf(dst, "Dst hash empty - aborting Src hash check")
+			fs.DebugfCtx(ctx, dst, "Dst hash empty - aborting Src hash check")
 			return errNoHash
 		}
 		return nil
@@ -103,21 +104,21 @@ func checkHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object, ht hash.
 	}
 	if srcErr != nil {
 		err = fs.CountError(ctx, srcErr)
-		fs.Errorf(src, "Failed to calculate src hash: %v", err)
+		fs.ErrorfCtx(ctx, src, "Failed to calculate src hash: %v", err)
 	}
 	if dstErr != nil {
 		err = fs.CountError(ctx, dstErr)
-		fs.Errorf(dst, "Failed to calculate dst hash: %v", err)
+		fs.ErrorfCtx(ctx, dst, "Failed to calculate dst hash: %v", err)
 	}
 	if err != nil {
 		return false, ht, srcHash, dstHash, err
 	}
 	if srcHash != dstHash {
-		fs.Debugf(src, "%v = %s (%v)", ht, srcHash, src.Fs())
-		fs.Debugf(dst, "%v = %s (%v)", ht, dstHash, dst.Fs())
+		fs.DebugfCtx(ctx, src, "%v = %s (%v)", ht, srcHash, src.Fs())
+		fs.DebugfCtx(ctx, dst, "%v = %s (%v)", ht, dstHash, dst.Fs())
 		return false, ht, srcHash, dstHash, nil
 	}
-	fs.Debugf(src, "%v = %s OK", ht, srcHash)
+	fs.DebugfCtx(ctx, src, "%v = %s OK", ht, srcHash)
 	return true, ht, srcHash, dstHash, nil
 }
 
@@ -167,11 +168,11 @@ func DirsEqual(ctx context.Context, src, dst fs.Directory, opt DirsEqualOpt) (eq
 	}
 	dt := dstModTime.Sub(srcModTime)
 	if dt < opt.ModifyWindow && dt > -opt.ModifyWindow {
-		fs.Debugf(dst, "Directory modification time the same (differ by %s, within tolerance %s)", dt, opt.ModifyWindow)
+		fs.DebugfCtx(ctx, dst, "Directory modification time the same (differ by %s, within tolerance %s)", dt, opt.ModifyWindow)
 		return true
 	}
 	if ci.UpdateOlder && dt >= opt.ModifyWindow {
-		fs.Debugf(dst, "Destination directory is newer than source, skipping")
+		fs.DebugfCtx(ctx, dst, "Destination directory is newer than source, skipping")
 		return true
 	}
 	return false
@@ -185,11 +186,11 @@ func sizeDiffers(ctx context.Context, src, dst fs.ObjectInfo) bool {
 		return false
 	}
 	if src.Size() == dst.Size() {
-		fs.Debugf(dst, "size = %d OK", dst.Size())
+		fs.DebugfCtx(ctx, dst, "size = %d OK", dst.Size())
 		return false
 	}
-	fs.Debugf(src, "size = %d (%v)", src.Size(), src.Fs())
-	fs.Debugf(dst, "size = %d (%v)", dst.Size(), dst.Fs())
+	fs.DebugfCtx(ctx, src, "size = %d (%v)", src.Size(), src.Fs())
+	fs.DebugfCtx(ctx, dst, "size = %d (%v)", dst.Size(), dst.Fs())
 	return true
 }
 
@@ -224,9 +225,9 @@ type DirsEqualOpt struct {
 var modTimeUploadOnce sync.Once
 
 // emit a log if we are about to upload a file to set its modification time
-func logModTimeUpload(dst fs.Object) {
+func logModTimeUpload(ctx context.Context, dst fs.Object) {
 	modTimeUploadOnce.Do(func() {
-		fs.Logf(dst.Fs(), "Forced to upload files to set modification times on this backend.")
+		fs.LogfCtx(ctx, dst.Fs(), "Forced to upload files to set modification times on this backend.")
 	})
 }
 
@@ -247,12 +248,12 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 	ci := fs.GetConfig(ctx)
 	logger, _ := GetLogger(ctx)
 	if sizeDiffers(ctx, src, dst) {
-		fs.Debug(src, "Sizes differ")
+		fs.DebugfCtx(ctx, src, "Sizes differ")
 		logger(ctx, Differ, src, dst, nil)
 		return false
 	}
 	if opt.sizeOnly {
-		fs.Debugf(src, "Sizes identical")
+		fs.DebugfCtx(ctx, src, "Sizes identical")
 		logger(ctx, Match, src, dst, nil)
 		return true
 	}
@@ -264,7 +265,7 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 		// Check the hash
 		same, ht, _ := CheckHashes(ctx, src, dst)
 		if !same {
-			fs.Debugf(src, "%v differ", ht)
+			fs.DebugfCtx(ctx, src, "%v differ", ht)
 			logger(ctx, Differ, src, dst, nil)
 			return false
 		}
@@ -272,12 +273,12 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 			common := src.Fs().Hashes().Overlap(dst.Fs().Hashes())
 			if common.Count() == 0 {
 				checksumWarning.Do(func() {
-					fs.Logf(dst.Fs(), "--checksum is in use but the source and destination have no hashes in common; falling back to --size-only")
+					fs.LogfCtx(ctx, dst.Fs(), "--checksum is in use but the source and destination have no hashes in common; falling back to --size-only")
 				})
 			}
-			fs.Debugf(src, "Size of src and dst objects identical")
+			fs.DebugfCtx(ctx, src, "Size of src and dst objects identical")
 		} else {
-			fs.Debugf(src, "Size and %v of src and dst objects identical", ht)
+			fs.DebugfCtx(ctx, src, "Size and %v of src and dst objects identical", ht)
 		}
 		logger(ctx, Match, src, dst, nil)
 		return true
@@ -288,25 +289,25 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 		// Sizes the same so check the mtime
 		modifyWindow := fs.GetModifyWindow(ctx, src.Fs(), dst.Fs())
 		if modifyWindow == fs.ModTimeNotSupported {
-			fs.Debugf(src, "Sizes identical")
+			fs.DebugfCtx(ctx, src, "Sizes identical")
 			logger(ctx, Match, src, dst, nil)
 			return true
 		}
 		dstModTime := dst.ModTime(ctx)
 		dt := dstModTime.Sub(srcModTime)
 		if dt < modifyWindow && dt > -modifyWindow {
-			fs.Debugf(src, "Size and modification time the same (differ by %s, within tolerance %s)", dt, modifyWindow)
+			fs.DebugfCtx(ctx, src, "Size and modification time the same (differ by %s, within tolerance %s)", dt, modifyWindow)
 			logger(ctx, Match, src, dst, nil)
 			return true
 		}
 
-		fs.Debugf(src, "Modification times differ by %s: %v, %v", dt, srcModTime, dstModTime)
+		fs.DebugfCtx(ctx, src, "Modification times differ by %s: %v, %v", dt, srcModTime, dstModTime)
 	}
 
 	// Check if the hashes are the same
 	same, ht, _ := CheckHashes(ctx, src, dst)
 	if !same {
-		fs.Debugf(src, "%v differ", ht)
+		fs.DebugfCtx(ctx, src, "%v differ", ht)
 		logger(ctx, Differ, src, dst, nil)
 		return false
 	}
@@ -322,35 +323,35 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 			// Size and hash the same but mtime different
 			// Error if objects are treated as immutable
 			if ci.Immutable {
-				fs.Errorf(dst, "Timestamp mismatch between immutable objects")
+				fs.ErrorfCtx(ctx, dst, "Timestamp mismatch between immutable objects")
 				logger(ctx, Differ, src, dst, nil)
 				return false
 			}
 			// Update the mtime of the dst object here
 			err := dst.SetModTime(ctx, srcModTime)
 			if errors.Is(err, fs.ErrorCantSetModTime) {
-				logModTimeUpload(dst)
-				fs.Infof(dst, "src and dst identical but can't set mod time without re-uploading")
+				logModTimeUpload(ctx, dst)
+				fs.InfofCtx(ctx, dst, "src and dst identical but can't set mod time without re-uploading")
 				logger(ctx, Differ, src, dst, nil)
 				return false
 			} else if errors.Is(err, fs.ErrorCantSetModTimeWithoutDelete) {
-				logModTimeUpload(dst)
-				fs.Infof(dst, "src and dst identical but can't set mod time without deleting and re-uploading")
+				logModTimeUpload(ctx, dst)
+				fs.InfofCtx(ctx, dst, "src and dst identical but can't set mod time without deleting and re-uploading")
 				// Remove the file if BackupDir isn't set.  If BackupDir is set we would rather have the old file
 				// put in the BackupDir than deleted which is what will happen if we don't delete it.
 				if ci.BackupDir == "" {
 					err = dst.Remove(ctx)
 					if err != nil {
-						fs.Errorf(dst, "failed to delete before re-upload: %v", err)
+						fs.ErrorfCtx(ctx, dst, "failed to delete before re-upload: %v", err)
 					}
 				}
 				logger(ctx, Differ, src, dst, nil)
 				return false
 			} else if err != nil {
 				err = fs.CountError(ctx, err)
-				fs.Errorf(dst, "Failed to set modification time: %v", err)
+				fs.ErrorfCtx(ctx, dst, "Failed to set modification time: %v", err)
 			} else {
-				fs.Infof(src, "Updated modification time in destination")
+				fs.InfofCtx(ctx, src, "Updated modification time in destination")
 			}
 		}
 	}
@@ -416,7 +417,9 @@ func SameObject(src, dst fs.Object) bool {
 // It returns the destination object if possible.  Note that this may
 // be nil.
 //
-// This is accounted as a check.
+// This is accounted as a check, unless Move falls back to Copy + Delete
+// (on backends without server-side move), in which case the Copy is
+// accounted as a transfer.
 func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
 	return move(ctx, fdst, dst, remote, src, false)
 }
@@ -488,30 +491,33 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 		switch err {
 		case nil:
 			if newDst != nil && src.String() != newDst.String() {
-				fs.Infof(src, "Moved (server-side) to: %s", newDst.String())
+				fs.InfofCtx(ctx, src, "Moved (server-side) to: %s", newDst.String())
 			} else {
-				fs.Infof(src, "Moved (server-side)")
+				fs.InfofCtx(ctx, src, "Moved (server-side)")
 			}
 			in.ServerSideMoveEnd(newDst.Size()) // account the bytes for the server-side transfer
 			_ = in.Close()
 			return newDst, nil
 		case fs.ErrorCantMove:
-			fs.Debugf(src, "Can't move, switching to copy")
+			fs.DebugfCtx(ctx, src, "Can't move, switching to copy")
 			_ = in.Close()
 		default:
 			err = fs.CountError(ctx, err)
-			fs.Errorf(src, "Couldn't move: %v", err)
+			fs.ErrorfCtx(ctx, src, "Couldn't move: %v", err)
 			_ = in.Close()
 			return newDst, err
 		}
 	}
 	// Move not found or didn't work so copy dst <- src
+	if SameConfig(src.Fs(), fdst) && needsMoveCaseInsensitive(fdst, fdst, remote, src.Remote(), false) {
+		return MoveCaseInsensitive(ctx, fdst, fdst, origRemote, src.Remote(), false, src)
+	}
 	if origRemote != remote {
 		dst = nil
 	}
 	newDst, err = Copy(ctx, fdst, dst, origRemote, src)
 	if err != nil {
-		fs.Errorf(src, "Not deleting source as copy failed: %v", err)
+		fs.ErrorfCtx(ctx, src, "Not deleting source as copy failed: %v", err)
 		return newDst, err
 	}
 	// Delete src if no error on copy
@@ -546,7 +552,11 @@ func SuffixName(ctx context.Context, remote string) string {
 // and accumulating stats and errors.
 //
 // If backupDir is set then it moves the file to there instead of
-// deleting
+// deleting.
+//
+// Use BackupDir to find backupDir from --backup-dir. That lookup is
+// relatively expensive, so when deleting many files do it once outside
+// the loop rather than calling it for every object.
 func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs) (err error) {
 	tr := accounting.Stats(ctx).NewCheckingTransfer(dst, "deleting")
 	defer func() {
@@ -569,18 +579,18 @@ func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs
 		err = dst.Remove(ctx)
 	}
 	if err != nil {
-		fs.Errorf(dst, "Couldn't %s: %v", action, err)
+		fs.ErrorfCtx(ctx, dst, "Couldn't %s: %v", action, err)
 		err = fs.CountError(ctx, err)
 	} else if !skip {
-		fs.Infof(dst, "%s", actioned)
+		fs.InfofCtx(ctx, dst, "%s", actioned)
 	}
 	return err
 }
 
 // DeleteFile deletes a single file respecting --dry-run and accumulating stats and errors.
 //
-// If useBackupDir is set and --backup-dir is in effect then it moves
-// the file to there instead of deleting
+// DeleteFile does not honour --backup-dir: it always deletes. Call
+// DeleteFileWithBackupDir instead if --backup-dir support is required.
 func DeleteFile(ctx context.Context, dst fs.Object) (err error) {
 	return DeleteFileWithBackupDir(ctx, dst, nil)
 }
@@ -600,6 +610,8 @@ func DeleteFilesWithBackupDir(ctx context.Context, toBeDeleted fs.ObjectsChan, b
 	for range ci.Checkers {
 		go func() {
 			defer wg.Done()
+			// Every object must be received, even after a fatal error,
+			// otherwise the sender blocks when the channel fills up
 			for dst := range toBeDeleted {
 				err := DeleteFileWithBackupDir(ctx, dst, backupDir)
 				if err != nil {
@@ -607,15 +619,14 @@ func DeleteFilesWithBackupDir(ctx context.Context, toBeDeleted fs.ObjectsChan, b
 					logger, _ := GetLogger(ctx)
 					logger(ctx, TransferError, nil, dst, err)
 					if fserrors.IsFatalError(err) {
-						fs.Errorf(dst, "Got fatal error on delete: %s", err)
+						fs.ErrorfCtx(ctx, dst, "Got fatal error on delete: %s", err)
 						fatalErrorCount.Add(1)
-						return
 					}
 				}
 			}
 		}()
 	}
-	fs.Debugf(nil, "Waiting for deletions to finish")
+	fs.DebugfCtx(ctx, nil, "Waiting for deletions to finish")
 	wg.Wait()
 	if errorCount.Load() > 0 {
 		err := fmt.Errorf("failed to delete %d files", errorCount.Load())
@@ -718,7 +729,7 @@ func filterCheck(ctx context.Context, f fs.Fs, dir string) bool {
 	includeDirectory := fi.IncludeDirectory(ctx, f)
 	include, err := includeDirectory(dir)
 	if err != nil {
-		fs.Errorf(f, "Failed to discover whether directory is included: %v", err)
+		fs.ErrorfCtx(ctx, f, "Failed to discover whether directory is included: %v", err)
 		return true
 	}
 	return include
@@ -735,6 +746,19 @@ func SameDir(fdst, fsrc fs.Info) bool {
 	return fdstRootFolded == fsrcRootFolded
 }
 
+// sleepWithContext sleeps for d returning true, or false if ctx
+// finishes first.
+func sleepWithContext(ctx context.Context, d time.Duration) bool {
+	timer := time.NewTimer(d)
+	defer timer.Stop()
+	select {
+	case <-timer.C:
+		return true
+	case <-ctx.Done():
+		return false
+	}
+}
+
 // Retry runs fn up to maxTries times if it returns a retriable error
 func Retry(ctx context.Context, o any, maxTries int, fn func() error) (err error) {
 	for tries := 1; tries <= maxTries; tries++ {
@@ -749,11 +773,17 @@ func Retry(ctx context.Context, o any, maxTries int, fn func() error) (err error
 		}
 		// Retry if err returned a retry error
 		if fserrors.IsRetryError(err) || fserrors.ShouldRetry(err) {
-			fs.Debugf(o, "Received error: %v - low level retry %d/%d", err, tries, maxTries)
+			fs.DebugfCtx(ctx, o, "Received error: %v - low level retry %d/%d", err, tries, maxTries)
 			continue
 		} else if t, ok := pacer.IsRetryAfter(err); ok {
-			fs.Debugf(o, "Sleeping for %v (as indicated by the server) to obey Retry-After error: %v", t, err)
-			time.Sleep(t)
+			if tries >= maxTries {
+				break
+			}
+			fs.DebugfCtx(ctx, o, "Sleeping for %v (as indicated by the server) to obey Retry-After error: %v", t, err)
+			if !sleepWithContext(ctx, t) {
+				fserrors.ContextError(ctx, &err)
+				break
+			}
 			continue
 		}
 		break
@@ -978,7 +1008,7 @@ func HashLister(ctx context.Context, ht hash.Type, outputBase64 bool, downloadFl
 			}()
 			sum, err := HashSum(ctx, ht, outputBase64, downloadFlag, o)
 			if err != nil {
-				fs.Errorf(o, "%v", fs.CountError(ctx, err))
+				fs.ErrorfCtx(ctx, o, "%v", fs.CountError(ctx, err))
 				return
 			}
 			SyncFprintf(w, "%*s  %s\n", width, sum, o.Remote())
@@ -1050,12 +1080,16 @@ func ListDir(ctx context.Context, f fs.Fs, w io.Writer) error {
 }
 
 // Mkdir makes a destination directory or container
-func Mkdir(ctx context.Context, f fs.Fs, dir string) error {
+func Mkdir(ctx context.Context, f fs.Fs, dir string) (err error) {
+	tr := accounting.Stats(ctx).NewCheckingTransferNoHistory(dirTransferEntry(f, nil, dir), "making directory")
+	defer func() {
+		tr.Done(ctx, err)
+	}()
 	if SkipDestructive(ctx, fs.LogDirName(f, dir), "make directory") {
 		return nil
 	}
-	fs.Infof(fs.LogDirName(f, dir), "Making directory")
-	err := f.Mkdir(ctx, dir)
+	fs.InfofCtx(ctx, fs.LogDirName(f, dir), "Making directory")
+	err = f.Mkdir(ctx, dir)
 	if err != nil {
 		err = fs.CountError(ctx, err)
 		return err
@@ -1072,20 +1106,25 @@ func MkdirMetadata(ctx context.Context, f fs.Fs, dir string, metadata fs.Metadat
 	if do == nil {
 		return nil, Mkdir(ctx, f, dir)
 	}
+	tr := accounting.Stats(ctx).NewCheckingTransferNoHistory(dirTransferEntry(f, nil, dir), "making directory")
+	defer func() {
+		tr.Done(ctx, err)
+	}()
 	logName := fs.LogDirName(f, dir)
 	if SkipDestructive(ctx, logName, "make directory") {
 		return nil, nil
 	}
-	fs.Debugf(fs.LogDirName(f, dir), "Making directory with metadata")
+	fs.DebugfCtx(ctx, fs.LogDirName(f, dir), "Making directory with metadata")
 	newDst, err = do(ctx, dir, metadata)
 	if err != nil {
 		err = fs.CountError(ctx, err)
 		return nil, err
 	}
+	accounting.Stats(ctx).UpdatedDirs(1)
 	if mtime, ok := metadata["mtime"]; ok {
-		fs.Infof(logName, "Made directory with metadata (mtime=%s)", mtime)
+		fs.InfofCtx(ctx, logName, "Made directory with metadata (mtime=%s)", mtime)
 	} else {
-		fs.Infof(logName, "Made directory with metadata")
+		fs.InfofCtx(ctx, logName, "Made directory with metadata")
 	}
 	return newDst, err
 }
@@ -1099,37 +1138,37 @@ func MkdirMetadata(ctx context.Context, f fs.Fs, dir string, metadata fs.Metadat
 // If the directory was created with MkDir then it will attempt to use
 // Fs.DirSetModTime to update the directory modtime if available.
 func MkdirModTime(ctx context.Context, f fs.Fs, dir string, modTime time.Time) (newDst fs.Directory, err error) {
-	logName := fs.LogDirName(f, dir)
-	if SkipDestructive(ctx, logName, "make directory") {
-		return nil, nil
+	if f.Features().MkdirMetadata != nil {
+		// Make the directory with the modtime as metadata
+		metadata := fs.Metadata{
+			"mtime": modTime.Format(time.RFC3339Nano),
+		}
+		return MkdirMetadata(ctx, f, dir, metadata)
 	}
-	metadata := fs.Metadata{
-		"mtime": modTime.Format(time.RFC3339Nano),
-	}
-	newDst, err = MkdirMetadata(ctx, f, dir, metadata)
+	// Otherwise make the directory then set the modtime if possible
+	err = Mkdir(ctx, f, dir)
 	if err != nil {
 		return nil, err
 	}
-	if newDst != nil {
-		// The directory was created and we have logged already
-		return newDst, nil
+	if f.Features().DirSetModTime == nil {
+		return nil, nil
 	}
-	// The directory was created with Mkdir then we should try to set the time
-	if do := f.Features().DirSetModTime; do != nil {
-		err = do(ctx, dir, modTime)
-	}
-	fs.Infof(logName, "Made directory with modification time %v", modTime)
-	return newDst, err
+	return SetDirModTime(ctx, f, nil, dir, modTime)
 }
 
 // TryRmdir removes a container but not if not empty.  It doesn't
 // count errors but may return one.
 func TryRmdir(ctx context.Context, f fs.Fs, dir string) error {
+	tr := accounting.Stats(ctx).NewCheckingTransferNoHistory(dirTransferEntry(f, nil, dir), "removing directory")
+	defer func() {
+		// Pass nil error to Done as TryRmdir doesn't count errors
+		tr.Done(ctx, nil)
+	}()
 	accounting.Stats(ctx).DeletedDirs(1)
 	if SkipDestructive(ctx, fs.LogDirName(f, dir), "remove directory") {
 		return nil
 	}
-	fs.Infof(fs.LogDirName(f, dir), "Removing directory")
+	fs.InfofCtx(ctx, fs.LogDirName(f, dir), "Removing directory")
 	return f.Rmdir(ctx, dir)
 }
 
@@ -1221,23 +1260,23 @@ func RemoveExisting(ctx context.Context, f fs.Fs, remote string, operation strin
 		remoteSaved = remote + suffix
 	}
 
-	fs.Debugf(existingObj, "%s: renaming existing object to %q before starting", operation, remoteSaved)
+	fs.DebugfCtx(ctx, existingObj, "%s: renaming existing object to %q before starting", operation, remoteSaved)
 	existingObj, err = doMove(ctx, existingObj, remoteSaved)
 	if err != nil {
 		return nil, fmt.Errorf("%s: failed to rename existing file: %w", operation, err)
 	}
 	return func(perr *error) {
 		if *perr == nil {
-			fs.Debugf(existingObj, "%s: removing renamed existing file after operation", operation)
+			fs.DebugfCtx(ctx, existingObj, "%s: removing renamed existing file after operation", operation)
 			err := existingObj.Remove(ctx)
 			if err != nil {
 				*perr = fmt.Errorf("%s: failed to remove renamed existing file: %w", operation, err)
 			}
 		} else {
-			fs.Debugf(existingObj, "%s: renaming existing back after failed operation", operation)
+			fs.DebugfCtx(ctx, existingObj, "%s: renaming existing back after failed operation", operation)
 			_, renameErr := doMove(ctx, existingObj, remote)
 			if renameErr != nil {
-				fs.Errorf(existingObj, "%s: failed to restore existing file after failed operation: %v", operation, renameErr)
+				fs.ErrorfCtx(ctx, existingObj, "%s: failed to restore existing file after failed operation: %v", operation, renameErr)
 			}
 		}
 	}, nil
@@ -1263,7 +1302,7 @@ func listToChan(ctx context.Context, f fs.Fs, dir string) fs.ObjectsChan {
 		if err != nil && err != fs.ErrorDirNotFound {
 			err = fmt.Errorf("failed to list: %w", err)
 			err = fs.CountError(ctx, err)
-			fs.Errorf(nil, "%v", err)
+			fs.ErrorfCtx(ctx, nil, "%v", err)
 		}
 	}()
 	return o
@@ -1297,55 +1336,61 @@ type readCloser struct {
 // if count >= 0 then only that many characters will be output
 func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64, sep []byte) error {
 	var mu sync.Mutex
-	ci := fs.GetConfig(ctx)
 	return ListFn(ctx, f, func(o fs.Object) {
-		var err error
-		tr := accounting.Stats(ctx).NewTransfer(o, nil)
-		defer func() {
-			tr.Done(ctx, err)
-		}()
-		opt := fs.RangeOption{Start: offset, End: -1}
-		size := o.Size()
-		if opt.Start < 0 {
-			opt.Start += size
-		}
-		if count >= 0 {
-			opt.End = opt.Start + count - 1
-		}
-		var options []fs.OpenOption
-		if opt.Start > 0 || opt.End >= 0 {
-			options = append(options, &opt)
-		}
-		for _, option := range ci.DownloadHeaders {
-			options = append(options, option)
-		}
-		var in io.ReadCloser
-		in, err = Open(ctx, o, options...)
-		if err != nil {
-			err = fs.CountError(ctx, err)
-			fs.Errorf(o, "Failed to open: %v", err)
-			return
-		}
-		if count >= 0 {
-			in = &readCloser{Reader: &io.LimitedReader{R: in, N: count}, Closer: in}
-		}
-		in = tr.Account(ctx, in).WithBuffer() // account and buffer the transfer
-		// take the lock just before we output stuff, so at the last possible moment
 		mu.Lock()
 		defer mu.Unlock()
-		_, err = io.Copy(w, in)
+		err := catObject(ctx, o, w, offset, count)
 		if err != nil {
-			err = fs.CountError(ctx, err)
-			fs.Errorf(o, "Failed to send to output: %v", err)
+			fs.ErrorfCtx(ctx, o, "Failed to send to output: %v", err)
+			return
 		}
 		if len(sep) > 0 {
-			_, err = w.Write(sep)
-			if err != nil {
+			if _, err := w.Write(sep); err != nil {
 				err = fs.CountError(ctx, err)
-				fs.Errorf(o, "Failed to send separator to output: %v", err)
+				fs.ErrorfCtx(ctx, o, "Failed to send separator to output: %v", err)
 			}
 		}
 	})
+}
+
+// catObject sends an object or a range of it to the io.Writer
+func catObject(ctx context.Context, o fs.Object, w io.Writer, offset, count int64) (err error) {
+	tr := accounting.Stats(ctx).NewTransfer(o, nil)
+	defer func() {
+		tr.Done(ctx, err)
+	}()
+	opt := fs.RangeOption{Start: offset, End: -1}
+	size := o.Size()
+	if opt.Start < 0 && size >= 0 {
+		opt.Start += size
+	}
+	if count >= 0 {
+		opt.End = opt.Start + count - 1
+	}
+	var options []fs.OpenOption
+	if opt.Start > 0 || opt.End >= 0 {
+		options = append(options, &opt)
+	}
+	for _, option := range fs.GetConfig(ctx).DownloadHeaders {
+		options = append(options, option)
+	}
+	var in io.ReadCloser
+	in, err = Open(ctx, o, options...)
+	if err != nil {
+		err = fs.CountError(ctx, err)
+		return fmt.Errorf("failed to open file: %w", err)
+	}
+	if count >= 0 {
+		in = &readCloser{Reader: &io.LimitedReader{R: in, N: count}, Closer: in}
+	}
+	in = tr.Account(ctx, in).WithBuffer() // account and buffer the transfer
+	defer fs.CheckClose(in, &err)
+	_, err = io.Copy(w, in)
+	if err != nil {
+		err = fs.CountError(ctx, err)
+		return err
+	}
+	return nil
 }
 
 // Rcat reads data from the Reader until EOF and uploads it to a file on remote
@@ -1411,6 +1456,8 @@ func rcatSrc(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClos
 	if n, err := io.ReadFull(trackingIn, buf); err == io.EOF || err == io.ErrUnexpectedEOF {
 		fileIsSmall = true
 		buf = buf[:n]
+	} else if err != nil {
+		return nil, fmt.Errorf("failed to read upload input: %w", err)
 	}
 
 	// Read the data we have already read in buf and any further unread
@@ -1422,10 +1469,10 @@ func rcatSrc(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClos
 	if fileIsSmall || doPutStream == nil {
 		var rs io.ReadSeeker
 		if fileIsSmall {
-			fs.Debugf(fdst, "File to upload is small (%d bytes), uploading instead of streaming", len(buf))
+			fs.DebugfCtx(ctx, fdst, "File to upload is small (%d bytes), uploading instead of streaming", len(buf))
 			rs = bytes.NewReader(buf)
 		} else {
-			fs.Debugf(fdst, "Target remote doesn't support streaming uploads, creating temporary local FS to spool file")
+			fs.DebugfCtx(ctx, fdst, "Target remote doesn't support streaming uploads, creating temporary local FS to spool file")
 			spool, err := os.CreateTemp("", "rclone-spool")
 			if err != nil {
 				return nil, fmt.Errorf("failed to create temporary spool file: %v", err)
@@ -1434,11 +1481,11 @@ func rcatSrc(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClos
 			defer func() {
 				err := spool.Close()
 				if err != nil {
-					fs.Errorf(fileName, "Failed to close temporary spool file: %v", err)
+					fs.ErrorfCtx(ctx, fileName, "Failed to close temporary spool file: %v", err)
 				}
 				err = os.Remove(fileName)
 				if err != nil {
-					fs.Errorf(fileName, "Failed to delete temporary spool file: %v", err)
+					fs.ErrorfCtx(ctx, fileName, "Failed to delete temporary spool file: %v", err)
 				}
 			}()
 			_, err = io.Copy(spool, streamIn)
@@ -1479,7 +1526,7 @@ func rcatSrc(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClos
 	if !equal(ctx, src, dst, opt) {
 		err = fmt.Errorf("corrupted on transfer")
 		err = fs.CountError(ctx, err)
-		fs.Errorf(dst, "%v", err)
+		fs.ErrorfCtx(ctx, dst, "%v", err)
 		return dst, err
 	}
 	return dst, nil
@@ -1506,7 +1553,7 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 	err := walk.Walk(ctx, f, dir, false, ci.MaxDepth, func(dirPath string, entries fs.DirEntries, err error) error {
 		if err != nil {
 			err = fs.CountError(ctx, err)
-			fs.Errorf(f, "Failed to list %q: %v", dirPath, err)
+			fs.ErrorfCtx(ctx, f, "Failed to list %q: %v", dirPath, err)
 			return nil
 		}
 		for _, entry := range entries {
@@ -1563,12 +1610,11 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 
 	errCount := errcount.New()
 	// Delete all directories at the same level in parallel
-	for level := len(toDelete) - 1; level >= 0; level-- {
-		dirs := toDelete[level]
+	for level, dirs := range slices.Backward(toDelete) {
 		if len(dirs) == 0 {
 			continue
 		}
-		fs.Debugf(nil, "removing %d level %d directories", len(dirs), level)
+		fs.DebugfCtx(ctx, nil, "removing %d level %d directories", len(dirs), level)
 		sort.Strings(dirs)
 		g, gCtx := errgroup.WithContext(ctx)
 		g.SetLimit(ci.Checkers)
@@ -1582,7 +1628,7 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 				err := TryRmdir(gCtx, f, dir)
 				if err != nil {
 					err = fs.CountError(ctx, err)
-					fs.Errorf(dir, "Failed to rmdir: %v", err)
+					fs.ErrorfCtx(gCtx, dir, "Failed to rmdir: %v", err)
 					errCount.Add(err)
 				}
 				return nil // don't return errors, just count them
@@ -1629,7 +1675,7 @@ func compareDest(ctx context.Context, dst, src fs.Object, CompareDest fs.Fs) (No
 	opt := defaultEqualOpt(ctx)
 	opt.updateModTime = false
 	if equal(ctx, src, CompareDestFile, opt) {
-		fs.Debugf(src, "Destination found in --compare-dest, skipping")
+		fs.DebugfCtx(ctx, src, "Destination found in --compare-dest, skipping")
 		return true, nil
 	}
 	return false, nil
@@ -1678,6 +1724,10 @@ func copyDest(ctx context.Context, fdst fs.Fs, dst, src fs.Object, CopyDest, bac
 	opt.updateModTime = false
 	if equal(ctx, src, CopyDestFile, opt) {
 		if dst == nil || !Equal(ctx, src, dst) {
+			// Leave a different destination for the caller to reject
+			if dst != nil && fs.GetConfig(ctx).Immutable {
+				return false, nil
+			}
 			if dst != nil && backupDir != nil {
 				err = MoveBackupDir(ctx, backupDir, dst)
 				if err != nil {
@@ -1688,16 +1738,16 @@ func copyDest(ctx context.Context, fdst fs.Fs, dst, src fs.Object, CopyDest, bac
 			}
 			_, err := Copy(ctx, fdst, dst, remote, CopyDestFile)
 			if err != nil {
-				fs.Errorf(src, "Destination found in --copy-dest, error copying")
+				fs.ErrorfCtx(ctx, src, "Destination found in --copy-dest, error copying")
 				return false, nil
 			}
-			fs.Debugf(src, "Destination found in --copy-dest, using server-side copy")
+			fs.DebugfCtx(ctx, src, "Destination found in --copy-dest, using server-side copy")
 			return true, nil
 		}
-		fs.Debugf(src, "Unchanged skipping")
+		fs.DebugfCtx(ctx, src, "Unchanged skipping")
 		return true, nil
 	}
-	fs.Debugf(src, "Destination not found in --copy-dest")
+	fs.DebugfCtx(ctx, src, "Destination not found in --copy-dest")
 	return false, nil
 }
 
@@ -1734,19 +1784,19 @@ func NeedTransfer(ctx context.Context, dst, src fs.Object) bool {
 	ci := fs.GetConfig(ctx)
 	logger, _ := GetLogger(ctx)
 	if dst == nil {
-		fs.Debugf(src, "Need to transfer - File not found at Destination")
+		fs.DebugfCtx(ctx, src, "Need to transfer - File not found at Destination")
 		logger(ctx, MissingOnDst, src, nil, nil)
 		return true
 	}
 	// If we should ignore existing files, don't transfer
 	if ci.IgnoreExisting {
-		fs.Debugf(src, "Destination exists, skipping")
+		fs.DebugfCtx(ctx, src, "Destination exists, skipping")
 		logger(ctx, Match, src, dst, nil)
 		return false
 	}
 	// If we should upload unconditionally
 	if ci.IgnoreTimes {
-		fs.Debugf(src, "Transferring unconditionally as --ignore-times is in use")
+		fs.DebugfCtx(ctx, src, "Transferring unconditionally as --ignore-times is in use")
 		logger(ctx, Differ, src, dst, nil)
 		return true
 	}
@@ -1765,7 +1815,7 @@ func NeedTransfer(ctx context.Context, dst, src fs.Object) bool {
 		}
 		switch {
 		case dt >= modifyWindow:
-			fs.Debugf(src, "Destination is newer than source, skipping")
+			fs.DebugfCtx(ctx, src, "Destination is newer than source, skipping")
 			logger(ctx, Match, src, dst, nil)
 			return false
 		case dt <= -modifyWindow:
@@ -1773,7 +1823,7 @@ func NeedTransfer(ctx context.Context, dst, src fs.Object) bool {
 			opt := defaultEqualOpt(ctx)
 			opt.forceModTimeMatch = true
 			if equal(ctx, src, dst, opt) {
-				fs.Debugf(src, "Unchanged skipping")
+				fs.DebugfCtx(ctx, src, "Unchanged skipping")
 				return false
 			}
 		default:
@@ -1781,10 +1831,10 @@ func NeedTransfer(ctx context.Context, dst, src fs.Object) bool {
 			opt := defaultEqualOpt(ctx)
 			opt.sizeOnly = !ci.CheckSum
 			if equal(ctx, src, dst, opt) {
-				fs.Debugf(src, "Destination mod time is within %v of source and files identical, skipping", modifyWindow)
+				fs.DebugfCtx(ctx, src, "Destination mod time is within %v of source and files identical, skipping", modifyWindow)
 				return false
 			}
-			fs.Debugf(src, "Destination mod time is within %v of source but files differ, transferring", modifyWindow)
+			fs.DebugfCtx(ctx, src, "Destination mod time is within %v of source but files differ, transferring", modifyWindow)
 		}
 	} else {
 		// Check to see if changed or not
@@ -1793,7 +1843,7 @@ func NeedTransfer(ctx context.Context, dst, src fs.Object) bool {
 			return !equalFn(ctx, src, dst)
 		}
 		if Equal(ctx, src, dst) && !SameObject(src, dst) {
-			fs.Debugf(src, "Unchanged skipping")
+			fs.DebugfCtx(ctx, src, "Unchanged skipping")
 			return false
 		}
 	}
@@ -1812,8 +1862,20 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 		defer func() {
 			tr.Done(ctx, err)
 		}()
-		body := io.NopCloser(in)    // we let the server close the body
-		in := tr.Account(ctx, body) // account the transfer (no buffering)
+		// The stream can only be read once, so hash it on the way past
+		// and compare with the destination afterwards.
+		hashType, hashOption := CommonHash(ctx, fdst, fdst)
+		var hasher *hash.MultiHasher
+		var streamIn io.Reader = in
+		if hashType != hash.None {
+			hasher, err = hash.NewMultiHasherTypes(hashOption.Hashes)
+			if err != nil {
+				return nil, err
+			}
+			streamIn = io.TeeReader(streamIn, hasher)
+		}
+		body := io.NopCloser(streamIn) // we let the server close the body
+		in := tr.Account(ctx, body)    // account the transfer (no buffering)
 
 		if SkipDestructive(ctx, dstFileName, "upload from pipe") {
 			// prevents "broken pipe" errors
@@ -1821,22 +1883,43 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 			return nil, err
 		}
 
-		var options []fs.OpenOption
+		options := []fs.OpenOption{hashOption}
 		for _, option := range fs.GetConfig(ctx).UploadHeaders {
 			options = append(options, option)
 		}
 		info := object.NewStaticObjectInfo(dstFileName, modTime, size, true, nil, fdst).WithMetadata(meta)
 		obj, err = fdst.Put(ctx, in, info, options...)
 		if err != nil {
-			fs.Errorf(dstFileName, "Post request put error: %v", err)
+			fs.ErrorfCtx(ctx, dstFileName, "Post request put error: %v", err)
 
+			return nil, err
+		}
+
+		// Verify the upload
+		if sizeDiffers(ctx, info, obj) {
+			err = fmt.Errorf("corrupted on transfer: sizes differ src %d vs dst(%s) %d", size, obj.Fs(), obj.Size())
+		} else if hasher != nil {
+			src := object.NewStaticObjectInfo(dstFileName, modTime, size, true, hasher.Sums(), fdst)
+			// checkHashes logs and counts errors
+			same, _, srcHash, dstHash, _ := checkHashes(ctx, src, obj, hashType)
+			if !same {
+				err = fmt.Errorf("corrupted on transfer: %v hashes differ src %q vs dst(%s) %q", hashType, srcHash, obj.Fs(), dstHash)
+			}
+		}
+		if err != nil {
+			err = fs.CountError(ctx, err)
+			fs.ErrorfCtx(ctx, obj, "%v", err)
+			fs.InfofCtx(ctx, obj, "Removing failed copy")
+			if removeErr := obj.Remove(ctx); removeErr != nil {
+				fs.InfofCtx(ctx, obj, "Failed to remove failed copy: %s", removeErr)
+			}
 			return nil, err
 		}
 	} else {
 		// Size unknown use Rcat
 		obj, err = Rcat(ctx, fdst, dstFileName, in, modTime, meta)
 		if err != nil {
-			fs.Errorf(dstFileName, "Post request rcat error: %v", err)
+			fs.ErrorfCtx(ctx, dstFileName, "Post request rcat error: %v", err)
 
 			return nil, err
 		}
@@ -1877,7 +1960,7 @@ func copyURLFn(ctx context.Context, dstFileName string, url string, autoFilename
 			if err != nil || headerFilename == "" {
 				return fmt.Errorf("CopyURL failed: filename not found in the Content-Disposition header")
 			}
-			fs.Debugf(headerFilename, "filename found in Content-Disposition header.")
+			fs.DebugfCtx(ctx, headerFilename, "filename found in Content-Disposition header.")
 			return fn(ctx, headerFilename, resp.Body, resp.ContentLength, modTime)
 		}
 
@@ -1885,7 +1968,7 @@ func copyURLFn(ctx context.Context, dstFileName string, url string, autoFilename
 		if dstFileName == "." || dstFileName == "/" {
 			return fmt.Errorf("CopyURL failed: file name wasn't found in url")
 		}
-		fs.Debugf(dstFileName, "File name found in url")
+		fs.DebugfCtx(ctx, dstFileName, "File name found in url")
 	}
 	return fn(ctx, dstFileName, resp.Body, resp.ContentLength, modTime)
 }
@@ -1999,13 +2082,13 @@ func MoveCaseInsensitive(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileNam
 		logger(ctx, TransferError, nil, tmpObjFail, err)
 		return nil, fmt.Errorf("error while attempting to move file to a temporary location: %w", err)
 	}
-	fs.Debugf(srcObj, "moving to %v", tmpObjName)
+	fs.DebugfCtx(ctx, srcObj, "moving to %v", tmpObjName)
 	tmpObj, err := Op(ctx, fdst, nil, tmpObjName, srcObj)
 	if err != nil {
 		logger(ctx, TransferError, srcObj, tmpObj, err)
 		return nil, fmt.Errorf("error while moving file to temporary location: %w", err)
 	}
-	fs.Debugf(srcObj, "moving to %v", dstFileName)
+	fs.DebugfCtx(ctx, srcObj, "moving to %v", dstFileName)
 	newDst, err = Op(ctx, fdst, nil, dstFileName, tmpObj)
 	logger(ctx, MissingOnDst, tmpObj, nil, err)
 	return newDst, err
@@ -2014,11 +2097,14 @@ func MoveCaseInsensitive(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileNam
 // moveOrCopyFile moves or copies a single file possibly to a new name
 func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFileName string, cp bool, allowOverlap bool) (err error) {
 	ci := fs.GetConfig(ctx)
+	if ci.NoCheckDest && ci.Immutable {
+		return errors.New("can't use --no-check-dest with --immutable")
+	}
 	logger, usingLogger := GetLogger(ctx)
 	dstFilePath := path.Join(fdst.Root(), dstFileName)
 	srcFilePath := path.Join(fsrc.Root(), srcFileName)
 	if fdst.Name() == fsrc.Name() && dstFilePath == srcFilePath && !allowOverlap {
-		fs.Debugf(fdst, "don't need to copy/move %s, it is already at target location", dstFileName)
+		fs.DebugfCtx(ctx, fdst, "don't need to copy/move %s, it is already at target location", dstFileName)
 		if usingLogger {
 			srcObj, _ := fsrc.NewObject(ctx, srcFileName)
 			dstObj, _ := fsrc.NewObject(ctx, dstFileName)
@@ -2095,6 +2181,13 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 		}
 	}
 	if needTransfer {
+		// If files are treated as immutable, fail if destination exists and does not match
+		if ci.Immutable && dstObj != nil {
+			err = fs.CountError(ctx, fserrors.NoRetryError(fs.ErrorImmutableModified))
+			fs.ErrorfCtx(ctx, dstObj, "Source and destination exist but do not match: %v", err)
+			logger(ctx, TransferError, srcObj, dstObj, err)
+			return err
+		}
 		// If destination already exists, then we must move it into --backup-dir if required
 		if dstObj != nil && backupDir != nil {
 			err = MoveBackupDir(ctx, backupDir, dstObj)
@@ -2110,7 +2203,7 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 		_, err = Op(ctx, fdst, dstObj, dstFileName, srcObj)
 	} else if !cp {
 		if ci.IgnoreExisting {
-			fs.Debugf(srcObj, "Not removing source file as destination file exists and --ignore-existing is set")
+			fs.DebugfCtx(ctx, srcObj, "Not removing source file as destination file exists and --ignore-existing is set")
 			logger(ctx, Match, srcObj, dstObj, nil)
 		} else if !SameObject(srcObj, dstObj) {
 			err = DeleteFile(ctx, srcObj)
@@ -2139,12 +2232,12 @@ func SetTier(ctx context.Context, fsrc fs.Fs, tier string) error {
 	return ListFn(ctx, fsrc, func(o fs.Object) {
 		objImpl, ok := o.(fs.SetTierer)
 		if !ok {
-			fs.Errorf(fsrc, "Remote object does not implement SetTier")
+			fs.ErrorfCtx(ctx, fsrc, "Remote object does not implement SetTier")
 			return
 		}
 		err := objImpl.SetTier(tier)
 		if err != nil {
-			fs.Errorf(fsrc, "Failed to do SetTier, %v", err)
+			fs.ErrorfCtx(ctx, fsrc, "Failed to do SetTier, %v", err)
 		}
 	})
 }
@@ -2157,7 +2250,7 @@ func SetTierFile(ctx context.Context, o fs.Object, tier string) error {
 	}
 	err := do.SetTier(tier)
 	if err != nil {
-		fs.Errorf(o, "Failed to do SetTier, %v", err)
+		fs.ErrorfCtx(ctx, o, "Failed to do SetTier, %v", err)
 		return err
 	}
 	return nil
@@ -2172,12 +2265,12 @@ func TouchDir(ctx context.Context, f fs.Fs, remote string, t time.Time, recursiv
 		entries.ForObject(func(o fs.Object) {
 			if !SkipDestructive(ctx, o, "touch") {
 				g.Go(func() error {
-					fs.Debugf(f, "Touching %q", o.Remote())
+					fs.DebugfCtx(ctx, f, "Touching %q", o.Remote())
 					err := o.SetModTime(gCtx, t)
 					if err != nil {
 						err = fmt.Errorf("failed to touch: %w", err)
 						err = fs.CountError(gCtx, err)
-						fs.Errorf(o, "%v", err)
+						fs.ErrorfCtx(ctx, o, "%v", err)
 					}
 					return nil
 				})
@@ -2411,7 +2504,7 @@ func DirMove(ctx context.Context, f fs.Fs, srcRemote, dstRemote string) (err err
 		if err != fs.ErrorCantDirMove && err != fs.ErrorDirExists {
 			return err
 		}
-		fs.Infof(f, "Can't DirMove - falling back to file moves: %v", err)
+		fs.InfofCtx(ctx, f, "Can't DirMove - falling back to file moves: %v", err)
 	}
 
 	// Load the directory tree into memory
@@ -2438,7 +2531,7 @@ func DirMove(ctx context.Context, f fs.Fs, srcRemote, dstRemote string) (err err
 		newPath string
 	}
 	renames := make(chan rename, ci.Checkers)
-	g, gCtx := errgroup.WithContext(context.Background())
+	g, gCtx := errgroup.WithContext(ctx)
 	for range ci.Checkers {
 		g.Go(func() error {
 			for job := range renames {
@@ -2457,11 +2550,17 @@ func DirMove(ctx context.Context, f fs.Fs, srcRemote, dstRemote string) (err err
 			return nil
 		})
 	}
+sending:
 	for dir, entries := range tree {
 		dstPath := dstRemote + dir[len(srcRemote):]
 		for _, entry := range entries {
 			if o, ok := entry.(fs.Object); ok {
-				renames <- rename{o, path.Join(dstPath, path.Base(o.Remote()))}
+				select {
+				case renames <- rename{o, path.Join(dstPath, path.Base(o.Remote()))}:
+				case <-gCtx.Done():
+					// The workers have stopped so stop sending
+					break sending
+				}
 			}
 		}
 	}
@@ -2472,8 +2571,8 @@ func DirMove(ctx context.Context, f fs.Fs, srcRemote, dstRemote string) (err err
 	}
 
 	// Remove the source directories in reverse order
-	for i := len(dirs) - 1; i >= 0; i-- {
-		err := f.Rmdir(ctx, dirs[i])
+	for _, dir := range slices.Backward(dirs) {
+		err := f.Rmdir(ctx, dir)
 		if err != nil {
 			return fmt.Errorf("RenameDir rmdir: %w", err)
 		}
@@ -2571,18 +2670,18 @@ func skipDestructiveChoose(ctx context.Context, subject any, action string) (ski
 	case 's':
 		skip = true
 		skipped[action] = true
-		fs.Logf(nil, "Skipping all %s operations from now on without asking", action)
+		fs.LogfCtx(ctx, nil, "Skipping all %s operations from now on without asking", action)
 	case '!':
 		skip = false
 		skipped[action] = false
-		fs.Logf(nil, "Doing all %s operations from now on without asking", action)
+		fs.LogfCtx(ctx, nil, "Doing all %s operations from now on without asking", action)
 	case 'q':
-		fs.Logf(nil, "Quitting rclone now")
+		fs.LogfCtx(ctx, nil, "Quitting rclone now")
 		atexit.Run()
 		os.Exit(0)
 	default:
 		skip = true
-		fs.Errorf(nil, "Bad choice %c", i)
+		fs.ErrorfCtx(ctx, nil, "Bad choice %c", i)
 	}
 	return skip
 }
@@ -2622,9 +2721,9 @@ func SkipDestructive(ctx context.Context, subject any, action string) (skip bool
 			size = do.Size()
 		}
 		if size >= 0 {
-			fs.Logf(subject, "Skipped %s as %s is set (size %v)", fs.LogValue("skipped", action), flag, fs.LogValue("size", fs.SizeSuffix(size)))
+			fs.LogfCtx(ctx, subject, "Skipped %s as %s is set (size %v)", fs.LogValue("skipped", action), flag, fs.LogValue("size", fs.SizeSuffix(size)))
 		} else {
-			fs.Logf(subject, "Skipped %s as %s is set", fs.LogValue("skipped", action), flag)
+			fs.LogfCtx(ctx, subject, "Skipped %s as %s is set", fs.LogValue("skipped", action), flag)
 		}
 	}
 	return skip
@@ -2646,6 +2745,15 @@ func dirName(f fs.Fs, dst fs.Directory, dir string) any {
 	return f
 }
 
+// Return the best way of describing the directory as a DirEntry for
+// the progress display, describing the root directory as the Fs.
+func dirTransferEntry(f fs.Fs, dst fs.Directory, dir string) fs.DirEntry {
+	if dst != nil && dst.Remote() != "" {
+		return dst
+	}
+	return fs.NewDir(fmt.Sprint(fs.LogDirName(f, dir)), time.Time{})
+}
+
 // CopyDirMetadata copies the src directory to dst or f if nil.  If dst is nil then it uses
 // dir as the name of the new directory.
 //
@@ -2654,6 +2762,12 @@ func dirName(f fs.Fs, dst fs.Directory, dir string) any {
 func CopyDirMetadata(ctx context.Context, f fs.Fs, dst fs.Directory, dir string, src fs.Directory) (newDst fs.Directory, err error) {
 	ci := fs.GetConfig(ctx)
 	logName := dirName(f, dst, dir)
+	tr := accounting.Stats(ctx).NewCheckingTransferNoHistory(dirTransferEntry(f, dst, dir), "updating metadata")
+	defer func() {
+		// Count the error before Done so it is only counted once
+		err = fs.CountError(ctx, err)
+		tr.Done(ctx, err)
+	}()
 	if SkipDestructive(ctx, logName, "update directory metadata") {
 		return nil, nil
 	}
@@ -2696,7 +2810,8 @@ func CopyDirMetadata(ctx context.Context, f fs.Fs, dst fs.Directory, dir string,
 	if err != nil {
 		return nil, err
 	}
-	fs.Infof(logName, "Updated directory metadata")
+	accounting.Stats(ctx).UpdatedDirs(1)
+	fs.InfofCtx(ctx, logName, "Updated directory metadata")
 	return newDst, nil
 }
 
@@ -2712,9 +2827,15 @@ func SetDirModTime(ctx context.Context, f fs.Fs, dst fs.Directory, dir string, m
 	logName := dirName(f, dst, dir)
 	ci := fs.GetConfig(ctx)
 	if ci.NoUpdateDirModTime {
-		fs.Debugf(logName, "Skipping set directory modification time as --no-update-dir-modtime is set")
+		fs.DebugfCtx(ctx, logName, "Skipping set directory modification time as --no-update-dir-modtime is set")
 		return nil, nil
 	}
+	tr := accounting.Stats(ctx).NewCheckingTransferNoHistory(dirTransferEntry(f, dst, dir), "setting modtime")
+	defer func() {
+		// Count the error before Done so it is only counted once
+		err = fs.CountError(ctx, err)
+		tr.Done(ctx, err)
+	}()
 	if SkipDestructive(ctx, logName, "set directory modification time") {
 		return nil, nil
 	}
@@ -2732,7 +2853,8 @@ func SetDirModTime(ctx context.Context, f fs.Fs, dst fs.Directory, dir string, m
 			} else if err != nil {
 				return dst, err
 			} else {
-				fs.Infof(logName, "Set directory modification time (using SetModTime)")
+				accounting.Stats(ctx).UpdatedDirs(1)
+				fs.InfofCtx(ctx, logName, "Set directory modification time (using SetModTime)")
 				return dst, nil
 			}
 		}
@@ -2744,7 +2866,8 @@ func SetDirModTime(ctx context.Context, f fs.Fs, dst fs.Directory, dir string, m
 		if err != nil {
 			return dst, err
 		}
-		fs.Infof(logName, "Set directory modification time (using DirSetModTime)")
+		accounting.Stats(ctx).UpdatedDirs(1)
+		fs.InfofCtx(ctx, logName, "Set directory modification time (using DirSetModTime)")
 		return dst, nil
 	}
 

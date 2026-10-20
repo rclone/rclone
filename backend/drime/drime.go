@@ -15,7 +15,6 @@ should stay under that.
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -148,14 +147,6 @@ this may help to speed up the transfers.`,
 			Default:  4,
 			Advanced: true,
 		}, {
-			Name: "upload_cutoff",
-			Help: `Cutoff for switching to chunked upload.
-
-Any files larger than this will be uploaded in chunks of chunk_size.
-The minimum is 0 and the maximum is 5 GiB.`,
-			Default:  defaultUploadCutoff,
-			Advanced: true,
-		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -200,16 +191,13 @@ type Options struct {
 
 // Fs represents a remote drime
 type Fs struct {
-	name        string             // name of this remote
-	root        string             // the path we are working on
-	opt         Options            // parsed options
-	features    *fs.Features       // optional features
-	srv         *rest.Client       // the connection to the server
-	dirCache    *dircache.DirCache // Map of directory path to directory id
-	pacer       *fs.Pacer          // pacer for API calls
-	absRootOnce *sync.Once         // protects absRoot computation
-	absRoot     string             // absolute path of f.root from drive root
-	absRootErr  error              // error from computing absRoot, if any
+	name     string             // name of this remote
+	root     string             // the path we are working on
+	opt      Options            // parsed options
+	features *fs.Features       // optional features
+	srv      *rest.Client       // the connection to the server
+	dirCache *dircache.DirCache // Map of directory path to directory id
+	pacer    *fs.Pacer          // pacer for API calls
 }
 
 // Object describes a drime object
@@ -282,6 +270,11 @@ var retryErrorCodes = []int{
 	503, // Service Unavailable
 	504, // Gateway Timeout
 	509, // Bandwidth Limit Exceeded
+	520, // Cloudflare: Web server returns an unknown error
+	521, // Cloudflare: Web server is down
+	522, // Cloudflare: Connection timed out
+	523, // Cloudflare: Origin is unreachable
+	524, // Cloudflare: A timeout occurred
 }
 
 // shouldRetry returns a boolean as to whether this resp and err
@@ -328,66 +321,13 @@ func (f *Fs) getItem(ctx context.Context, id string, dirID string, leaf string) 
 		}
 		return false
 	})
+	if err != nil {
+		return nil, err
+	}
 	if !found {
 		return nil, fs.ErrorObjectNotFound
 	}
-	return info, err
-}
-
-// idToAbsolutePath returns the absolute path (from the user's drive root) of
-// the folder with the given ID.
-//
-// Drime exposes GET /folders/{hash}/path which returns the breadcrumb from
-// drive root down to the folder. The hash format is undocumented but
-// observed to be base64("<id>|") - every item drime returns has a `hash`
-// field of that shape (e.g. id 704791396 => "NzA0NzkxMzk2fA"). The docs
-// example "MTExMzQ0fHBhZA" decodes to "111344|pad", so a non-empty suffix
-// after the pipe is also accepted; if drime ever starts requiring a
-// specific suffix this will break.
-//
-// Returns "" for an empty/zero ID (drive root).
-func (f *Fs) idToAbsolutePath(ctx context.Context, id string) (string, error) {
-	if id == "" || id == "0" {
-		return "", nil
-	}
-	hash := base64.StdEncoding.EncodeToString([]byte(id + "|"))
-	opts := rest.Opts{
-		Method:     "GET",
-		Path:       "/folders/" + hash + "/path",
-		Parameters: url.Values{},
-	}
-	if f.opt.WorkspaceID != "" {
-		opts.Parameters.Set("workspaceId", f.opt.WorkspaceID)
-	}
-	var result api.FolderPathResponse
-	var resp *http.Response
-	err := f.pacer.Call(func() (bool, error) {
-		var err error
-		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		return "", fmt.Errorf("failed to get folder path for %q: %w", id, err)
-	}
-	parts := make([]string, 0, len(result.Path))
-	for _, item := range result.Path {
-		parts = append(parts, f.opt.Enc.ToStandardName(item.Name))
-	}
-	return path.Join(parts...), nil
-}
-
-// absoluteRoot returns the absolute path from the drive root to the Fs root.
-// Computed once and cached.
-func (f *Fs) absoluteRoot(ctx context.Context) (string, error) {
-	f.absRootOnce.Do(func() {
-		rootID, err := f.dirCache.RootID(ctx, false)
-		if err != nil {
-			f.absRootErr = err
-			return
-		}
-		f.absRoot, f.absRootErr = f.idToAbsolutePath(ctx, rootID)
-	})
-	return f.absRoot, f.absRootErr
+	return info, nil
 }
 
 // errorHandler parses a non 2xx error response into an error
@@ -430,12 +370,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	client := fshttp.NewClient(ctx)
 
 	f := &Fs{
-		name:        name,
-		root:        root,
-		opt:         *opt,
-		srv:         rest.NewClient(client).SetRoot(rootURL),
-		pacer:       fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
-		absRootOnce: new(sync.Once),
+		name:  name,
+		root:  root,
+		opt:   *opt,
+		srv:   rest.NewClient(client).SetRoot(rootURL),
+		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
@@ -588,7 +527,7 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 		Parameters: url.Values{},
 	}
 	if dirID != "" {
-		opts.Parameters.Add("parentIds", dirID)
+		opts.Parameters.Add("folderId", dirID)
 	}
 	if directoriesOnly {
 		opts.Parameters.Add("type", api.ItemTypeFolder)
@@ -609,6 +548,11 @@ OUTER:
 		})
 		if err != nil {
 			return found, fmt.Errorf("couldn't list files: %w", err)
+		}
+		// Drime won't page past a fixed number of entries (20,000 for
+		// rclone) and serves the last page it allows again instead
+		if result.CurrentPage != page {
+			return found, errors.New("couldn't list files: directory has more entries than drime will list")
 		}
 		for _, item := range result.Data {
 			if item.Type == api.ItemTypeFolder {
@@ -756,13 +700,27 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 
 // deleteObject removes an object by ID
 func (f *Fs) deleteObject(ctx context.Context, id string) error {
+	if f.opt.HardDelete {
+		// Deleting forever doesn't invalidate the server's cache of
+		// the parent folder listing, so the entry keeps being listed
+		// for about a second. Moving to the trash first does.
+		err := f.deleteEntry(ctx, id, false)
+		if err != nil {
+			return err
+		}
+	}
+	return f.deleteEntry(ctx, id, f.opt.HardDelete)
+}
+
+// deleteEntry moves the entry with ID to the trash or deletes it forever
+func (f *Fs) deleteEntry(ctx context.Context, id string, deleteForever bool) error {
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/file-entries/delete",
 	}
 	request := api.DeleteRequest{
 		EntryIDs:      []string{id},
-		DeleteForever: f.opt.HardDelete,
+		DeleteForever: deleteForever,
 	}
 	var result api.DeleteResponse
 	err := f.pacer.Call(func() (bool, error) {
@@ -848,10 +806,16 @@ func (f *Fs) patch(ctx context.Context, id, attribute string, value string) (ite
 		Name: value,
 	}
 	var result api.UpdateItemResponse
+	// The drime origin returns a malformed response (seen by Cloudflare as
+	// a 520) for a literal PUT to this endpoint, so use a POST with Laravel
+	// method spoofing instead - the API routes it to the same handler.
 	opts := rest.Opts{
-		Method:     "PUT",
+		Method:     "POST",
 		Path:       "/file-entries/" + id,
 		Parameters: url.Values{},
+		ExtraHeaders: map[string]string{
+			"X-HTTP-Method-Override": "PUT",
+		},
 	}
 	if f.opt.WorkspaceID != "" {
 		opts.Parameters.Set("workspaceId", f.opt.WorkspaceID)
@@ -985,6 +949,48 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	return dstObj, nil
 }
 
+// countDirChildren returns the number of direct children of dirID.
+func (f *Fs) countDirChildren(ctx context.Context, dirID string) (int, error) {
+	n := 0
+	_, err := f.listAll(ctx, dirID, false, false, "", func(*api.Item) bool {
+		n++
+		return false
+	})
+	return n, err
+}
+
+// waitForDirChildren polls dirID until it lists at least want direct
+// children, or the timeout elapses. Drime's folder rename has visible
+// eventual-consistency on the children listing - the rename returns
+// success immediately but the renamed folder lists as empty for a
+// short window - so callers that rename a folder use this to wait for
+// the listing to settle before returning (see issue #9450).
+func (f *Fs) waitForDirChildren(ctx context.Context, dirID string, want int) error {
+	const timeout = 30 * time.Second
+	deadline := time.Now().Add(timeout)
+	backoff := 100 * time.Millisecond
+	for {
+		got, err := f.countDirChildren(ctx, dirID)
+		if err != nil {
+			return err
+		}
+		if got >= want {
+			return nil
+		}
+		if time.Now().After(deadline) {
+			return fmt.Errorf("timed out waiting for directory listing to settle: got %d, want %d", got, want)
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(backoff):
+		}
+		if backoff < 2*time.Second {
+			backoff *= 2
+		}
+	}
+}
+
 // DirMove moves src, srcRemote to this remote at dstRemote
 // using server-side move operations.
 //
@@ -1005,11 +1011,25 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return err
 	}
 
+	// Count children before the move so we can wait for the server's
+	// children listing to reflect the rename - see waitForDirChildren.
+	preCount, err := f.countDirChildren(ctx, srcID)
+	if err != nil {
+		return fmt.Errorf("DirMove: count source children: %w", err)
+	}
+
 	// Do the move
-	_, err = f.moveTo(ctx, srcID, srcLeaf, dstLeaf, srcDirectoryID, dstDirectoryID)
+	info, err := f.moveTo(ctx, srcID, srcLeaf, dstLeaf, srcDirectoryID, dstDirectoryID)
 	if err != nil {
 		return err
 	}
+
+	if preCount > 0 {
+		if err := f.waitForDirChildren(ctx, info.ID.String(), preCount); err != nil {
+			fs.Logf(f, "DirMove: %v (continuing)", err)
+		}
+	}
+
 	srcFs.dirCache.FlushDir(srcRemote)
 	return nil
 }
@@ -1042,17 +1062,28 @@ func (f *Fs) copy(ctx context.Context, id, newDirID string) (item *api.Item, err
 }
 
 // copy and rename a file or folder to directoryID with leaf
-func (f *Fs) copyTo(ctx context.Context, srcID, srcLeaf, dstLeaf, dstDirectoryID string) (info *api.Item, err error) {
-	// Can have duplicates so don't have to be careful here
-
+//
+// If existing is set it is removed once the copy has succeeded.
+func (f *Fs) copyTo(ctx context.Context, srcID, dstLeaf, dstDirectoryID string, existing fs.Object) (info *api.Item, err error) {
 	// Copy to dstDirectoryID first
 	info, err = f.copy(ctx, srcID, dstDirectoryID)
 	if err != nil {
 		return nil, err
 	}
 
+	// The server names the copy "name (1)" if the destination
+	// directory already has an entry called "name" and refuses to
+	// rename it to "name" until that entry is removed.
+	if existing != nil {
+		fs.Debugf(existing, "Server side copy: removing existing object after successful copy")
+		err = existing.Remove(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// Rename if required
-	if srcLeaf != dstLeaf {
+	if info.Name != f.opt.Enc.FromStandardName(dstLeaf) {
 		info, err = f.rename(ctx, info.ID.String(), dstLeaf)
 		if err != nil {
 			return nil, err
@@ -1076,8 +1107,6 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
-	srcLeaf := path.Base(srcObj.remote)
-
 	srcPath := srcObj.fs.rootSlash() + srcObj.remote
 	dstPath := f.rootSlash() + remote
 	if srcPath == dstPath {
@@ -1086,15 +1115,8 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 
 	// Find existing object
 	existingObj, err := f.NewObject(ctx, remote)
-	if err == nil {
-		defer func() {
-			// Don't remove existing object if returning an error
-			if err != nil {
-				return
-			}
-			fs.Debugf(existingObj, "Server side copy: removing existing object after successful copy")
-			err = existingObj.Remove(ctx)
-		}()
+	if err != nil {
+		existingObj = nil
 	}
 
 	// Create temporary object
@@ -1104,7 +1126,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 	}
 
 	// Copy the object
-	info, err := f.copyTo(ctx, srcObj.id, srcLeaf, dstLeaf, dstDirectoryID)
+	info, err := f.copyTo(ctx, srcObj.id, dstLeaf, dstDirectoryID, existingObj)
 	if err != nil {
 		return nil, err
 	}
@@ -1162,14 +1184,10 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		return info, nil, err
 	}
 
-	// The /s3/multipart/create and /s3/entries endpoints interpret
-	// relativePath as an absolute path from the drive root, not relative to
-	// parent_id. Resolve our root's absolute path so we can build it.
-	absRoot, err := f.absoluteRoot(ctx)
-	if err != nil {
-		return info, nil, fmt.Errorf("failed to resolve absolute path of root: %w", err)
-	}
-	relPath := f.opt.Enc.FromStandardPath(path.Join(absRoot, remote))
+	// Send just the leaf as relativePath, matching the single-part /uploads
+	// convention. The file is placed by parentId; sending an absolute path
+	// here makes the server build folders from it and drop "0" path segments.
+	relPath := f.opt.Enc.FromStandardName(leaf)
 
 	// Temporary Object under construction
 	o := &Object{

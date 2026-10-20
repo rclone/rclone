@@ -45,6 +45,50 @@ func TestGetVersion(t *testing.T) {
 	assert.Equal(t, "v1.52.3", resultVer)
 }
 
+func TestLatestMicroRelease(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		html string
+		want string
+	}{
+		{
+			name: "caddy",
+			html: `<a href="./v1.51.0/">v1.51.0/</a>
+<a href="./v1.52.0/">v1.52.0/</a>
+<a href="./v1.52.3/">v1.52.3/</a>
+<a href="./v1.53.0/">v1.53.0/</a>
+<a href="./v1.52-DEV/">v1.52-DEV/</a>
+<a href="./v1.52.3/rclone-v1.52.3-linux-amd64.zip">rclone</a>`,
+			want: "v1.52.3",
+		},
+		{
+			name: "no prefix",
+			html: `<a href="v1.51.0/">v1.51.0/</a>
+<a href="v1.52.0/">v1.52.0/</a>
+<a href="v1.52.3/">v1.52.3/</a>
+<a href="v1.53.0/">v1.53.0/</a>`,
+			want: "v1.52.3",
+		},
+		{
+			name: "other prefix",
+			html: `<a href="../v1.52.0/">v1.52.0/</a>
+<a href="https://example.com/v1.52.1/">v1.52.1/</a>
+<a href="v1.52.2/index.html">v1.52.2/</a>
+<a href="v1x52.3/">v1x52.3/</a>`,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := latestMicroRelease([]byte(test.html), "v1.52")
+			if test.want == "" {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, test.want, got)
+		})
+	}
+}
+
 func TestInstallOnLinux(t *testing.T) {
 	testy.SkipUnreliable(t)
 	if runtime.GOOS != "linux" {
@@ -55,6 +99,12 @@ func TestInstallOnLinux(t *testing.T) {
 	ctx := context.Background()
 	testDir := t.TempDir()
 	path := filepath.Join(testDir, "rclone")
+
+	// Pin the running version so the checks below do not depend on
+	// whether this build happens to be the latest beta.
+	oldVersion := fs.Version
+	fs.Version = "v1.0.0"
+	t.Cleanup(func() { fs.Version = oldVersion })
 
 	regexVer := regexp.MustCompile(`v[0-9]\S+`)
 
@@ -71,7 +121,7 @@ func TestInstallOnLinux(t *testing.T) {
 		_ = os.Chmod(path, 0644)
 	}()
 	err = (InstallUpdate(ctx, &Options{Beta: true, Output: path}))
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Contains(t, err.Error(), "run self-update as root")
 
 	// Must keep non-standard permissions

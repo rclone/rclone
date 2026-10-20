@@ -25,6 +25,22 @@ var (
 	overriddenConfig   = make(map[string]string)
 )
 
+// rcRequestKey marks a context as created by a remote control (rc) request.
+type rcRequestKeyType struct{}
+
+var rcRequestKey = rcRequestKeyType{}
+
+// WithRCRequest marks ctx as created by a remote control (rc) request.
+func WithRCRequest(ctx context.Context) context.Context {
+	return context.WithValue(ctx, rcRequestKey, true)
+}
+
+// IsRCRequest returns true if ctx was created by a remote control (rc) request.
+func IsRCRequest(ctx context.Context) bool {
+	v, _ := ctx.Value(rcRequestKey).(bool)
+	return v
+}
+
 // NewFs makes a new Fs object from the path
 //
 // The path is of the form remote:path
@@ -115,8 +131,8 @@ func addConfigToContext(ctx context.Context, configName string, config configmap
 		return ctx, fmt.Errorf("failed to set override config variables %q: %w", overrideKeys, err)
 	}
 	Debugf(configName, "Set overridden config %q for backend startup", overrideKeys)
-	// Set the global context only
-	if len(globalConfig) != 0 {
+	// Set the global context unless this Fs is being created for an rc request
+	if len(globalConfig) != 0 && !IsRCRequest(ctx) {
 		globalCI := GetConfig(context.Background())
 		err = configstruct.Set(globalConfig, globalCI)
 		if err != nil {

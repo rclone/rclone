@@ -7,7 +7,6 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -18,37 +17,10 @@ import (
 	"github.com/rclone/rclone/fs/chunksize"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/lib/atexit"
+	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/pacer"
-	"github.com/rclone/rclone/lib/pool"
 	"golang.org/x/sync/errgroup"
 )
-
-const (
-	bufferSize           = 1024 * 1024     // default size of the pages used in the reader
-	bufferCacheSize      = 64              // max number of buffers to keep in cache
-	bufferCacheFlushTime = 5 * time.Second // flush the cached buffers after this long
-)
-
-// bufferPool is a global pool of buffers
-var (
-	bufferPool     *pool.Pool
-	bufferPoolOnce sync.Once
-)
-
-// get a buffer pool
-func getPool() *pool.Pool {
-	bufferPoolOnce.Do(func() {
-		ci := fs.GetConfig(context.Background())
-		// Initialise the buffer pool when used
-		bufferPool = pool.New(bufferCacheFlushTime, bufferSize, bufferCacheSize, ci.UseMmap)
-	})
-	return bufferPool
-}
-
-// NewRW gets a pool.RW using the multipart pool
-func NewRW() *pool.RW {
-	return pool.NewRW(getPool())
-}
 
 // Upload does a multipart upload in parallel
 func (w *pikpakChunkWriter) Upload(ctx context.Context) (err error) {
@@ -80,7 +52,7 @@ func (w *pikpakChunkWriter) Upload(ctx context.Context) (err error) {
 	for partNum := int64(0); !finished; partNum++ {
 		// Get a block of memory from the pool and token which limits concurrency.
 		tokens.Get()
-		rw := NewRW()
+		rw := multipart.NewRW()
 		if acc != nil {
 			rw.SetAccounting(acc.AccountRead)
 		}
@@ -126,6 +98,13 @@ func (w *pikpakChunkWriter) Upload(ctx context.Context) (err error) {
 	err = g.Wait()
 	if err != nil {
 		return err
+	}
+
+	// Check the source supplied the number of bytes it declared before
+	// finalising, otherwise a truncated file would be stored as a good
+	// upload. Returning an error here aborts the upload.
+	if size >= 0 && off != size {
+		return fmt.Errorf("multipart upload: expected %d bytes in input, but got %d: %w", size, off, io.ErrUnexpectedEOF)
 	}
 
 	err = w.Close(ctx)

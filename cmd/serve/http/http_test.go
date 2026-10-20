@@ -1,6 +1,8 @@
 package http
 
 import (
+	"archive/zip"
+	"bytes"
 	"compress/gzip"
 	"context"
 	"flag"
@@ -20,10 +22,16 @@ import (
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/rc"
 	libhttp "github.com/rclone/rclone/lib/http"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+type zipEntry struct {
+	IsDir    bool
+	Contents string
+}
 
 var (
 	updateGolden = flag.Bool("updategolden", false, "update golden files for regression test")
@@ -102,10 +110,37 @@ func checkGolden(t *testing.T, fileName string, got []byte) {
 	} else {
 		want, err := os.ReadFile(fileName)
 		require.NoError(t, err)
+		if strings.HasSuffix(fileName, ".zip") {
+			assert.Equal(t, readZip(t, want), readZip(t, got), fileName)
+			return
+		}
 		wants := strings.Split(string(want), "\n")
 		gots := strings.Split(string(got), "\n")
 		assert.Equal(t, wants, gots, fileName)
 	}
+}
+
+func readZip(t *testing.T, data []byte) map[string]zipEntry {
+	t.Helper()
+	zr, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
+	require.NoError(t, err)
+
+	entries := make(map[string]zipEntry, len(zr.File))
+	for _, f := range zr.File {
+		entry := zipEntry{
+			IsDir: f.FileInfo().IsDir(),
+		}
+		if !entry.IsDir {
+			rc, err := f.Open()
+			require.NoError(t, err)
+			contents, err := io.ReadAll(rc)
+			require.NoError(t, err)
+			require.NoError(t, rc.Close())
+			entry.Contents = string(contents)
+		}
+		entries[f.Name] = entry
+	}
+	return entries
 }
 
 func testGET(t *testing.T, useProxy bool) {
@@ -408,9 +443,157 @@ func TestCompressedTextFile(t *testing.T) {
 	assert.Equal(t, "0123456789\n", string(body))
 }
 
+func TestDisableDirList(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, setAllModTimes("testdata/files", expectedTime))
+	f, err := fs.NewFs(ctx, "testdata/files")
+	require.NoError(t, err)
+
+	do := func(t *testing.T, disableDirList bool, url string) (int, []byte) {
+		t.Helper()
+		opts := Options{
+			HTTP: libhttp.DefaultCfg(),
+			Template: libhttp.TemplateConfig{
+				Path: testTemplate,
+			},
+			DisableDirList: disableDirList,
+		}
+		opts.HTTP.ListenAddr = []string{testBindAddress}
+		opts.Auth.BasicUser = testUser
+		opts.Auth.BasicPass = testPass
+
+		s, err := newServer(ctx, f, &opts, &vfscommon.Opt, &proxy.Opt)
+		require.NoError(t, err)
+		go func() { require.NoError(t, s.Serve()) }()
+		defer func() { assert.NoError(t, s.server.Shutdown()) }()
+
+		urls := s.server.URLs()
+		require.Len(t, urls, 1)
+		testURL := urls[0]
+
+		pause := time.Millisecond
+		for range 10 {
+			resp, err := http.Head(testURL)
+			if err == nil {
+				_ = resp.Body.Close()
+				break
+			}
+			time.Sleep(pause)
+			pause *= 2
+		}
+
+		req, err := http.NewRequest("GET", testURL+url, nil)
+		require.NoError(t, err)
+		req.SetBasicAuth(testUser, testPass)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		defer func() { _ = resp.Body.Close() }()
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		return resp.StatusCode, body
+	}
+
+	t.Run("enabled by default - root dir lists", func(t *testing.T) {
+		status, body := do(t, false, "")
+		assert.Equal(t, http.StatusOK, status)
+		assert.Contains(t, string(body), "Directory listing of /")
+	})
+
+	t.Run("enabled by default - subdir lists", func(t *testing.T) {
+		status, body := do(t, false, "three/")
+		assert.Equal(t, http.StatusOK, status)
+		assert.Contains(t, string(body), "Directory listing of /three")
+	})
+
+	t.Run("disabled - root dir returns not found", func(t *testing.T) {
+		status, _ := do(t, true, "")
+		assert.Equal(t, http.StatusNotFound, status)
+	})
+
+	t.Run("disabled - subdir returns not found", func(t *testing.T) {
+		status, _ := do(t, true, "three/")
+		assert.Equal(t, http.StatusNotFound, status)
+	})
+
+	t.Run("disabled - existing and non-existent dirs return identical response", func(t *testing.T) {
+		// All must return the same status and body to prevent
+		// directory enumeration, with or without a trailing slash
+		for _, dir := range []string{"three/", "doesnotexist/", "three", "doesnotexist"} {
+			status, body := do(t, true, dir)
+			assert.Equal(t, http.StatusNotFound, status, dir)
+			assert.Equal(t, "404 page not found\n", string(body), dir)
+		}
+	})
+
+	t.Run("disabled - files still served", func(t *testing.T) {
+		status, body := do(t, true, "two.txt")
+		assert.Equal(t, http.StatusOK, status)
+		assert.Equal(t, "0123456789\n", string(body))
+	})
+
+	t.Run("disabled - subdir file still served", func(t *testing.T) {
+		status, _ := do(t, true, "three/a.txt")
+		assert.Equal(t, http.StatusOK, status)
+	})
+}
+
 func TestRc(t *testing.T) {
 	servetest.TestRc(t, rc.Params{
 		"type":           "http",
 		"vfs_cache_mode": "off",
 	})
+}
+
+// TestNewServerError checks that a server initialisation failure is
+// returned as an error rather than panicking in the cleanup.
+func TestNewServerError(t *testing.T) {
+	ctx := context.Background()
+	f, err := fs.NewFs(ctx, "testdata/files")
+	require.NoError(t, err)
+
+	opts := Options{
+		HTTP: libhttp.DefaultCfg(),
+	}
+	opts.HTTP.ListenAddr = []string{"localhost:-1"}
+
+	s, err := newServer(ctx, f, &opts, &vfscommon.Opt, &proxy.Opt)
+	require.Error(t, err)
+	assert.Nil(t, s)
+}
+
+// TestAuthProxyDownloadOutlivesCache checks a download in progress
+// carries on working when the auth proxy drops its VFS from its cache,
+// as it does when a download takes longer than the cache expiry time.
+func TestAuthProxyDownloadOutlivesCache(t *testing.T) {
+	root := t.TempDir()
+	contents := random.String(32 * 1024 * 1024)
+	require.NoError(t, os.WriteFile(filepath.Join(root, "download.bin"), []byte(contents), 0666))
+
+	prog, err := filepath.Abs("../servetest/proxy_code.go")
+	require.NoError(t, err)
+	// FIXME this is untidy setting a global variable!
+	proxy.Opt.AuthProxy = "go run " + prog + " " + root
+	defer func() {
+		proxy.Opt.AuthProxy = ""
+	}()
+	s, testURL := start(context.Background(), t, nil)
+	defer func() { assert.NoError(t, s.Shutdown()) }()
+
+	req, err := http.NewRequest("GET", testURL+"download.bin", nil)
+	require.NoError(t, err)
+	req.SetBasicAuth(testUser, testPass)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer func() { _ = resp.Body.Close() }()
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+	start := make([]byte, 1024)
+	_, err = io.ReadFull(resp.Body, start)
+	require.NoError(t, err)
+
+	// Drop everything from the proxy's cache as if it had expired
+	s.provider.Proxy().Shutdown()
+
+	rest, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	assert.True(t, contents == string(start)+string(rest), "download corrupted")
 }
