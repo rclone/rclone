@@ -3,15 +3,20 @@ package s3
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"path"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/rclone/rclone/lib/bucket"
@@ -509,4 +514,160 @@ func TestOpenRestoreFirstError(t *testing.T) {
 			assert.Contains(t, err.Error(), test.want)
 		})
 	}
+}
+
+func TestHashCRC32C(t *testing.T) {
+	const (
+		md5sum = "acbd18db4cc2f85cedef654fccc4a4d8" // of "foo"
+		crc32c = "cfc4ae1d"                         // of "foo", "z8SuHQ==" in base64
+	)
+	objects := []struct {
+		name         string
+		crc32c       string // x-amz-checksum-crc32c
+		checksumType string // x-amz-checksum-type
+		want         string
+	}{
+		{name: "absent", want: ""},
+		{name: "composite", crc32c: "z8SuHQ==-2", checksumType: "COMPOSITE", want: ""},
+		{name: "full", crc32c: "z8SuHQ==", checksumType: "FULL_OBJECT", want: crc32c},
+		{name: "partcount", crc32c: "z8SuHQ==-2", want: ""},
+		{name: "untyped", crc32c: "z8SuHQ==", want: crc32c},
+	} // sorted as ListJSON sorts them
+	sums, err := hash.Stream(strings.NewReader("foo"))
+	require.NoError(t, err)
+	require.Equal(t, crc32c, sums[hash.CRC32C], "the value read from S3 must equal the local crc32c")
+	var (
+		mu    sync.Mutex
+		heads []string // the HEAD requests: "<key> <checksum mode>"
+	)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet && r.URL.Path == "/bucket" {
+			var contents strings.Builder
+			for _, o := range objects {
+				fmt.Fprintf(&contents, `<Contents><Key>%s</Key><LastModified>2026-01-01T00:00:00.000Z</LastModified><ETag>"%s"</ETag><Size>3</Size></Contents>`, o.name, md5sum)
+			}
+			_, _ = fmt.Fprintf(w, `<ListBucketResult><Name>bucket</Name><IsTruncated>false</IsTruncated>%s</ListBucketResult>`, contents.String())
+			return
+		}
+		if r.Method != http.MethodHead {
+			t.Errorf("unexpected request %s %s", r.Method, r.URL)
+			w.WriteHeader(http.StatusNotImplemented)
+			return
+		}
+		mode := r.Header.Get("X-Amz-Checksum-Mode")
+		mu.Lock()
+		heads = append(heads, path.Base(r.URL.Path)+" "+mode)
+		mu.Unlock()
+		for _, o := range objects {
+			if "/bucket/"+o.name != r.URL.Path {
+				continue
+			}
+			w.Header().Set("ETag", `"`+md5sum+`"`)
+			w.Header().Set("Last-Modified", "Thu, 01 Jan 2026 00:00:00 GMT")
+			w.Header().Set("Content-Length", "3")
+			if mode == "ENABLED" && o.crc32c != "" {
+				w.Header().Set("X-Amz-Checksum-Crc32c", o.crc32c)
+				if o.checksumType != "" {
+					w.Header().Set("X-Amz-Checksum-Type", o.checksumType)
+				}
+			}
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer server.Close()
+
+	ctx := context.Background()
+	newFs := func(t *testing.T, opts string) fs.Fs {
+		f, err := fs.NewFs(ctx, fmt.Sprintf(":s3,provider=Other,endpoint='%s',access_key_id=key,secret_access_key=secret,force_path_style,no_check_bucket%s:bucket", server.URL, opts))
+		require.NoError(t, err)
+		return f
+	}
+	resetHeads := func() []string {
+		mu.Lock()
+		defer mu.Unlock()
+		got := heads
+		heads = nil
+		return got
+	}
+
+	t.Run("Hashes", func(t *testing.T) {
+		f := newFs(t, "")
+		assert.Equal(t, hash.NewHashSet(hash.MD5), f.Hashes())
+		assert.False(t, f.Features().SlowHash)
+		f = newFs(t, ",hashes='md5,crc32c'")
+		assert.Equal(t, hash.NewHashSet(hash.MD5, hash.CRC32C), f.Hashes())
+		assert.False(t, f.Features().SlowHash)
+		f = newFs(t, ",hashes=crc32c")
+		assert.Equal(t, hash.NewHashSet(hash.CRC32C), f.Hashes())
+		assert.True(t, f.Features().SlowHash)
+		_, err := fs.NewFs(ctx, fmt.Sprintf(":s3,provider=Other,endpoint='%s',hashes=sha1:bucket", server.URL))
+		assert.ErrorContains(t, err, "not supported")
+	})
+
+	t.Run("Hash", func(t *testing.T) {
+		f := newFs(t, "")
+		entries, err := f.List(ctx, "")
+		require.NoError(t, err)
+		require.Len(t, entries, len(objects))
+		resetHeads()
+		for i, entry := range entries {
+			o := entry.(fs.Object)
+			require.Equal(t, objects[i].name, o.Remote())
+			for range 2 {
+				got, err := o.Hash(ctx, hash.CRC32C)
+				require.NoError(t, err)
+				assert.Equal(t, objects[i].want, got, o.Remote())
+				got, err = o.Hash(ctx, hash.MD5)
+				require.NoError(t, err)
+				assert.Equal(t, md5sum, got)
+			}
+			// one HEAD with the checksum mode, then cached
+			assert.Equal(t, []string{o.Remote() + " ENABLED"}, resetHeads())
+		}
+		_, err = entries[0].(fs.Object).Hash(ctx, hash.SHA1)
+		assert.ErrorIs(t, err, hash.ErrUnsupported)
+	})
+
+	t.Run("ListJSON", func(t *testing.T) {
+		for _, test := range []struct {
+			name      string
+			opts      string
+			noModTime bool
+			heads     string // the checksum mode of the HEAD of each object, "-" for no HEAD
+		}{
+			{name: "MD5", noModTime: true, heads: "-"},
+			{name: "MD5ModTime", heads: ""},
+			{name: "CRC32C", opts: ",hashes='md5,crc32c'", noModTime: true, heads: "ENABLED"},
+			// the HEAD reading the modification time reads the CRC32C too
+			{name: "CRC32CModTime", opts: ",hashes='md5,crc32c'", heads: "ENABLED"},
+		} {
+			t.Run(test.name, func(t *testing.T) {
+				f := newFs(t, test.opts)
+				resetHeads()
+				var items []*operations.ListJSONItem
+				opt := &operations.ListJSONOpt{ShowHash: true, NoModTime: test.noModTime, NoMimeType: true}
+				err := operations.ListJSON(ctx, f, "", opt, func(item *operations.ListJSONItem) error {
+					items = append(items, item)
+					return nil
+				})
+				require.NoError(t, err)
+				require.Len(t, items, len(objects))
+				var wantHeads []string
+				for i, item := range items {
+					require.Equal(t, objects[i].name, item.Path)
+					assert.Equal(t, md5sum, item.Hashes["md5"])
+					wantCRC32C := ""
+					if test.opts != "" {
+						wantCRC32C = objects[i].want
+					}
+					assert.Equal(t, wantCRC32C, item.Hashes["crc32c"], item.Path)
+					if test.heads != "-" {
+						wantHeads = append(wantHeads, item.Path+" "+test.heads)
+					}
+				}
+				assert.ElementsMatch(t, wantHeads, resetHeads())
+			})
+		}
+	})
 }
