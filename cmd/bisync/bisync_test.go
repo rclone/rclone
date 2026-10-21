@@ -19,6 +19,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	mutex "sync" // renamed as "sync" already in use
 	"testing"
 	"time"
 	"unicode/utf8"
@@ -61,6 +62,12 @@ const (
 
 var initDate = time.Date(2000, time.January, 1, 0, 0, 0, 0, bisync.TZ)
 
+// modtimeProbes holds the SetModTime error for each remote already probed by checkPreReqs
+var (
+	modtimeProbesMu mutex.Mutex
+	modtimeProbes   = map[string]error{}
+)
+
 /* Useful Command Shortcuts */
 // go test ./cmd/bisync -remote local -race
 // go test ./cmd/bisync -remote local -golden
@@ -88,7 +95,7 @@ var logReplacements = []string{
 	// ignore SFTP host key messages
 	`^NOTICE: .*?No host key validation is being performed.*$`, dropMe,
 	// ignore dropbox info messages
-	`^NOTICE: too_many_(requests|write_operations)/\.*: Too many requests or write operations.*$`, dropMe,
+	`^NOTICE: .*Too many requests or write operations.*$`, dropMe,
 	`^NOTICE: .*?: Forced to upload files to set modification times on this backend.$`, dropMe,
 	`^INFO  : .*? Committing uploads - please wait...$`, dropMe,
 	`^INFO  : .*? Committing uploads - done$`, dropMe,
@@ -197,6 +204,7 @@ type bisyncTest struct {
 	testTitle   string
 	testCase    string
 	sessionName string
+	hooks       map[string][]string // scenario steps to run once when the named hook fires
 	// test dirs
 	testDir    string
 	dataDir    string
@@ -230,6 +238,7 @@ type bisyncTest struct {
 	TestFn          bisync.TestFunc
 	ignoreModtime   bool // ignore modtimes when comparing final listings, for backends without support
 	ignoreBlankHash bool // ignore blank hashes for backends where we allow them to be blank
+	ignoreChecksum  bool // a step of this test case used --ignore-checksum
 }
 
 var color = bisync.Color
@@ -435,6 +444,7 @@ func (b *bisyncTest) cleanupAll() {
 func (b *bisyncTest) runTestCase(ctx context.Context, t *testing.T, testCase string) {
 	b.t = t
 	b.testCase = testCase
+	b.ignoreChecksum = false
 	var err error
 
 	b.fs1, b.parent1, b.path1, b.canonPath1 = b.makeTempRemote(ctx, b.argRemote1, "path1")
@@ -805,6 +815,19 @@ func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 	case "test-func":
 		b.TestFn = testFunc
 		return
+	case "hook":
+		// hook <when> <step> queues a scenario step to run once, when the next bisync reaches <when>
+		b.checkArgs(args, 2, 0)
+		when := args[1]
+		if when != "before-check" && when != "during-sync" {
+			return fmt.Errorf("unknown hook %q (want before-check or during-sync)", when)
+		}
+		step := strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(strings.TrimPrefix(line, args[0])), when))
+		if b.hooks == nil {
+			b.hooks = map[string][]string{}
+		}
+		b.hooks[when] = append(b.hooks[when], step)
+		return nil
 	case "concurrent-func":
 		b.TestFn = func() {
 			src := filepath.Join(b.dataDir, "file7.txt")
@@ -956,6 +979,10 @@ func splitLine(line string) (args []string) {
 		b := []byte(whitespaceReplacer.Replace(s))
 		b = regexChar.ReplaceAllFunc(b, func(b []byte) []byte {
 			c, _ := strconv.ParseUint(string(b[5:7]), 16, 8)
+			if c <= 0x1f || c == 0x7f {
+				// control characters are spelled with their glyph in rclone names
+				return []byte(encoder.Standard.Encode(string(rune(c))))
+			}
 			return []byte{byte(c)}
 		})
 		args = append(args, string(b))
@@ -965,8 +992,8 @@ func splitLine(line string) (args []string) {
 
 var whitespaceReplacer = strings.NewReplacer(
 	"{spc}", " ",
-	"{tab}", "\t",
-	"{eol}", eol,
+	"{tab}", "␉",
+	"{eol}", "␊",
 )
 var regexChar = regexp.MustCompile(`\{chr:([0-9a-f]{2})\}`)
 
@@ -1039,7 +1066,7 @@ func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (con
 		b.ignoreModtime = true
 	}
 	// test if modtimes are writeable
-	testSetModtime := func(f fs.Fs) {
+	probeSetModtime := func(f fs.Fs) error {
 		ctx := accounting.WithStatsGroup(ctx, random.String(8)) // keep stats separate
 		in := bytes.NewBufferString("modtime_write_test")
 		objinfo := object.NewStaticObjectInfo("modtime_write_test", initDate, int64(len("modtime_write_test")), true, nil, nil)
@@ -1050,7 +1077,7 @@ func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (con
 		}
 		err = obj.SetModTime(ctx, initDate)
 		if err == fs.ErrorCantSetModTime {
-			b.t.Skip("skipping test as at least one remote does not support setting modtime")
+			return err
 		}
 		if err == fs.ErrorCantSetModTimeWithoutDelete { // transfers stats expected to differ on this backend
 			logReplacements = append(logReplacements, `^.*There was nothing to transfer.*$`, dropMe)
@@ -1060,34 +1087,52 @@ func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (con
 		if !f.Features().IsLocal {
 			time.Sleep(time.Second) // avoid GoogleCloudStorage Error 429 rateLimitExceeded
 		}
-		err = obj.Remove(ctx)
-		require.NoError(b.t, err)
+		require.NoError(b.t, obj.Remove(ctx))
+		return err
+	}
+	// probing on every bisync step would sleep for minutes on non-local remotes
+	testSetModtime := func(f fs.Fs) {
+		modtimeProbesMu.Lock()
+		defer modtimeProbesMu.Unlock()
+		err, probed := modtimeProbes[f.Name()]
+		if !probed {
+			err = probeSetModtime(f)
+			modtimeProbes[f.Name()] = err
+		}
+		if err == fs.ErrorCantSetModTime {
+			b.t.Skip("skipping test as at least one remote does not support setting modtime")
+		}
 	}
 	if b.testCase != "nomodtime" {
 		testSetModtime(b.fs1)
 		testSetModtime(b.fs2)
 	}
 
-	if b.testCase == "normalization" || b.testCase == "extended_char_paths" || b.testCase == "extended_filenames" {
+	if b.testCase == "normalization" || b.testCase == "extended_filenames" {
 		// test whether remote is capable of running test
 		const chars = "ě{chr:81}{chr:fe}{spc}áñhࢺ_測試Рускийěáñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éö"
 		testfilename1 := splitLine(norm.NFD.String(norm.NFC.String(chars)))[0]
 		testfilename2 := splitLine(norm.NFC.String(norm.NFD.String(chars)))[0]
 		tempDir, err := cache.Get(ctx, b.tempDir)
 		require.NoError(b.t, err)
+		ctx := accounting.WithStatsGroup(ctx, random.String(8)) // keep stats separate
 		preTest := func(f fs.Fs, testfilename string) string {
+			// the path roots already hold the scenario's files, so probe in a fresh dir
+			dir := "pretest-" + strings.ToLower(random.String(8))
 			in := bytes.NewBufferString(testfilename)
-			objinfo := object.NewStaticObjectInfo(testfilename, initDate, int64(len(testfilename)), true, nil, nil)
+			objinfo := object.NewStaticObjectInfo(path.Join(dir, testfilename), initDate, int64(len(testfilename)), true, nil, nil)
 			obj, err := f.Put(ctx, in, objinfo)
 			if err != nil {
 				b.t.Skipf("Fs is incapable of running test, skipping: %s (expected: \n%s (%s) actual: \n%s (%v))\n (fs: %s) \n", b.testCase, testfilename, detectEncoding(testfilename), "upload failed", err, f)
 			}
-			entries, err := f.List(ctx, "")
-			assert.NoError(b.t, err)
-			if entries.Len() == 1 && entries[0].Remote() != testfilename {
-				diffStr, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{A: []string{testfilename}, B: []string{entries[0].Remote()}})
+			entries, err := f.List(ctx, dir)
+			require.NoError(b.t, err)
+			require.Equal(b.t, 1, entries.Len())
+			got := path.Base(entries[0].Remote())
+			if got != testfilename {
+				diffStr, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{A: []string{testfilename}, B: []string{got}})
 				// we can still deal with this as long as both remotes auto-convert the same way.
-				b.t.Logf("Warning: this remote seems to auto-convert special characters (testcase: %s) (expected: \n%s (%s) actual: \n%s (%s))\n (fs: %s) \n%v", b.testCase, testfilename, detectEncoding(testfilename), entries[0].Remote(), detectEncoding(entries[0].Remote()), f, diffStr)
+				b.t.Logf("Warning: this remote seems to auto-convert special characters (testcase: %s) (expected: \n%s (%s) actual: \n%s (%s))\n (fs: %s) \n%v", b.testCase, testfilename, detectEncoding(testfilename), got, detectEncoding(got), f, diffStr)
 			}
 			// test whether we can fix-case
 			ctxFixCase, ci := fs.AddConfig(ctx)
@@ -1104,7 +1149,12 @@ func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (con
 			if obj != nil {
 				require.NoError(b.t, upperObj.Remove(ctx))
 			}
-			return entries[0].Remote()
+			for _, d := range []fs.Fs{f, tempDir} {
+				if err := d.Rmdir(ctx, dir); err != nil && !errors.Is(err, fs.ErrorDirNotFound) {
+					require.NoError(b.t, err)
+				}
+			}
+			return got
 		}
 		got1 := preTest(b.fs1, testfilename1)
 		got1 += preTest(b.fs1, testfilename2)
@@ -1125,11 +1175,11 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 		Workdir:       b.workDir,
 		NoCleanup:     true,
 		SaveQueues:    true,
-		MaxDelete:     bisync.DefaultMaxDelete,
 		CheckFilename: bisync.DefaultCheckFilename,
 		CheckSync:     bisync.CheckSyncTrue,
-		TestFn:        b.TestFn,
 	}
+	opt.TestFn = b.hookFn(ctx, "during-sync", b.TestFn)
+	opt.TestFnConflictCheck = b.hookFn(ctx, "before-check", nil)
 	ctx, opt = b.checkPreReqs(ctx, opt)
 	octx, ci := fs.AddConfig(ctx)
 	fs1, fs2 := b.fs1, b.fs2
@@ -1170,7 +1220,7 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 		case "filters-file":
 			opt.FiltersFile = val
 		case "max-delete":
-			opt.MaxDelete, err = strconv.Atoi(val)
+			ci.MaxDelete, err = strconv.ParseInt(val, 10, 64)
 			require.NoError(b.t, err, "parsing max-delete=%q", val)
 		case "max-delete-renames-aware":
 			opt.MaxDeleteRenamesAware = true
@@ -1182,6 +1232,9 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 			ci.SizeOnly = true
 		case "ignore-size":
 			ci.IgnoreSize = true
+		case "ignore-checksum":
+			ci.IgnoreChecksum = true
+			b.ignoreChecksum = true
 		case "checksum":
 			ci.CheckSum = true
 			opt.Compare.DownloadHash = true // allows us to test crypt and the like
@@ -1252,7 +1305,13 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 	if err != nil {
 		b.logPrintf("Bisync error: %v", err)
 	}
-	if err == nil && !opt.DryRun && opt.TestFn == nil && opt.FiltersFile == "" {
+	for _, when := range []string{"before-check", "during-sync"} {
+		if len(b.hooks[when]) > 0 {
+			b.logPrintf("hook %s did not run, discarding %d steps", when, len(b.hooks[when]))
+		}
+	}
+	b.hooks = nil
+	if err == nil && !opt.DryRun && opt.TestFn == nil && opt.TestFnConflictCheck == nil && opt.FiltersFile == "" {
 		b.checkListingsMatchRemotes(ctx, fs1, fs2)
 	}
 	return nil
@@ -1292,6 +1351,30 @@ func (b *bisyncTest) checkListingsMatchRemotes(ctx context.Context, fs1, fs2 fs.
 		for _, name := range inListing.ToList() {
 			if !onRemote.Has(name) {
 				b.t.Errorf("invariant: step %q: Path%d listing has %q but the path does not", b.stepName, i+1, name)
+			}
+		}
+	}
+}
+
+// hookFn returns a test hook that calls fn, if set, and then runs the
+// scenario steps queued for the hook named when, the first time it is called.
+func (b *bisyncTest) hookFn(ctx context.Context, when string, fn bisync.TestFunc) bisync.TestFunc {
+	if len(b.hooks[when]) == 0 {
+		return fn
+	}
+	return func() {
+		if fn != nil {
+			fn()
+		}
+		steps := b.hooks[when]
+		b.hooks[when] = nil
+		// log only through the captured bisync output, so hook steps appear once and in order
+		logFile, stepStr := b.logFile, b.stepStr
+		b.logFile, b.stepStr = nil, "hook "+when+":"
+		defer func() { b.logFile, b.stepStr = logFile, stepStr }()
+		for _, step := range steps {
+			if err := b.runTestStep(ctx, step); err != nil {
+				fs.Errorf(nil, "hook %s: %q failed: %v", when, step, err)
 			}
 		}
 	}
@@ -1721,6 +1804,16 @@ func (b *bisyncTest) mangleResult(dir, file string, golden bool) string {
 	}
 	if b.testCase == "dry_run" {
 		rep = append(rep, dryrunReplacements...)
+	}
+	if b.ignoreChecksum && b.fs1.Hashes().Overlap(b.fs2.Hashes()).Count() == 0 {
+		// with no hash in common, --ignore-checksum skips the check for identical files instead of running it
+		rep = append(rep,
+			`^.*Checking potential conflicts\.\.\.$`, dropMe,
+			`^.*: \d+ differences found$`, dropMe,
+			`^.*: \d+ matching files$`, dropMe,
+			`^.*Finished checking the potential conflicts.*$`, dropMe,
+			`^.*Not checking potential conflicts.*$`, dropMe,
+		)
 	}
 	repFrom := make([]*regexp.Regexp, len(rep)/2)
 	repTo := make([]string, len(rep)/2)

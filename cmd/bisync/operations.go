@@ -63,15 +63,20 @@ type bisyncRun struct {
 type queues struct {
 	copy1to2      bilib.Names
 	copy2to1      bilib.Names
-	renameSkipped bilib.Names // not renamed because it was equal
-	skippedDirs1  *fileList
-	skippedDirs2  *fileList
+	renameSkipped bilib.Names // not renamed due to --dry-run
+	skipped1      *fileList   // dirs and equal files not renamed, from the Path1 snapshot
+	skipped2      *fileList   // dirs and equal files not renamed, from the Path2 snapshot
 	deletedonboth bilib.Names
 }
 
 // Bisync handles lock file, performs bisync run and checks exit status
 func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 	opt := *optArg // ensure that input is never changed
+	// applyContext changes the config, so give it a copy
+	ctx, _ = fs.AddConfig(ctx)
+	if err = opt.applyContext(ctx); err != nil {
+		return err
+	}
 	b := &bisyncRun{
 		fs1:       fs1,
 		fs2:       fs2,

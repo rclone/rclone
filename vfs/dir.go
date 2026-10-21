@@ -390,6 +390,9 @@ func (d *Dir) renameTree(dirPath string) {
 //
 // Reset the directory to new state, discarding all the objects and
 // reading everything again
+//
+// The caller must move the entry between the old and the new parent's
+// directory entries itself, holding each parent's lock as it does so.
 func (d *Dir) rename(newParent *Dir, fsDir fs.Directory) {
 	d.ForgetAll()
 
@@ -402,8 +405,6 @@ func (d *Dir) rename(newParent *Dir, fsDir fs.Directory) {
 	d.entry = fsDir
 	d.path = fsDir.Remote()
 	newPath := d.path
-	delete(d.parent.items, name(oldPath))
-	d.parent.items[name(d.path)] = d
 	d.read = time.Time{}
 	d.mu.Unlock()
 
@@ -1141,6 +1142,15 @@ func (d *Dir) Remove() error {
 		fs.Errorf(d, "Dir.Remove failed to remove directory: %v", err)
 		return err
 	}
+	// The directory is gone, so no listing will resolve its virtual
+	// entries, which can only be deletes as it was empty. They must be
+	// removed now, or they will be counted in every parent and
+	// cache forgets blocked as a consequence
+	d.mu.Lock()
+	for leaf := range d.virtual {
+		d._deleteVirtual(leaf)
+	}
+	d.mu.Unlock()
 	// Remove the item from the parent directory listing
 	if d.parent != nil {
 		d.parent.delObject(d.Name())
@@ -1213,6 +1223,8 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 		fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 		return err
 	}
+	// oldName may only match oldNode with case or unicode normalization
+	oldLeaf := oldNode.Name()
 	switch x := oldNode.DirEntry().(type) {
 	case nil:
 		if oldFile, ok := oldNode.(*File); ok {
@@ -1264,7 +1276,7 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 	}
 
 	// Show moved - delete from old dir and add to new
-	d.delObject(oldName)
+	d.delObject(oldLeaf)
 	destDir.addObject(oldNode)
 	if err = d.SetModTime(time.Now()); err != nil {
 		fs.Errorf(d, "Dir.Rename failed to set modtime on parent dir: %v", err)

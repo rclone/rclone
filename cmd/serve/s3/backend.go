@@ -168,7 +168,12 @@ func (t *tenant) getMeta(ctx context.Context, fp string, node vfs.Node) (meta ma
 // If meta has a modification time in "X-Amz-Meta-Mtime" or "mtime" the
 // object's modification time is set to it, returning any error, and
 // both are set to it in meta.
+//
+// Any "Last-Modified" in meta is dropped: gofakes3 sets it to the time
+// of the request, and caching it would make HeadObject and GetObject
+// report that instead of the object's modification time.
 func (t *tenant) storeMeta(_vfs *vfs.VFS, fp string, meta map[string]string) (err error) {
+	delete(meta, "Last-Modified")
 	for _, key := range []string{"X-Amz-Meta-Mtime", "mtime"} {
 		val, ok := meta[key]
 		if !ok {

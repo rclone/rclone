@@ -312,6 +312,30 @@ Rather than
 rclone rc operations/list --json '{"fs": "/tmp", "remote": "test", "opt": {"showHash": true}}'
 ```
 
+### Paths on Windows
+
+Prefer forward slashes (`/`) in Windows paths passed to the rc API, for
+example `C:/path1/path2`. If you use backslashes (`\`) in a JSON string,
+escape each one as `\\`. These JSON objects contain equivalent Windows
+paths:
+
+```json
+{"remote": "C:/path1/path2"}
+```
+
+```json
+{"remote": "C:\\path1\\path2"}
+```
+
+This applies to JSON request bodies and to JSON-encoded object parameters,
+such as `parameters` in `config/create`, even when that JSON is sent in a
+query string or form data. An unescaped backslash can cause a JSON parsing
+error or be interpreted as an escape sequence, such as `\t` for a tab.
+
+String parameters sent directly in a query string or form data, without
+JSON encoding, do not need JSON escaping. Use your HTTP client's URL
+encoding for query strings and form data.
+
 ## Special parameters
 
 The rc interface supports some special parameters which apply to
@@ -479,6 +503,16 @@ Or flat:
 
 If you wish to check the `_config` assignment has worked properly then
 calling `options/local` will show what the value got set to.
+
+Setting `LogLevel` sets the log level for the logs made by the rc call
+only, for example to debug a single call.
+
+```json
+"_config":{"LogLevel": "DEBUG"}
+```
+
+Note that not all of rclone's logs support this yet. In particular the
+backends log at the global log level.
 
 ### Setting filter flags with _filter
 

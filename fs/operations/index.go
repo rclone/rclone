@@ -407,7 +407,7 @@ func forEachIndexLine(name string, fn func(string) error) (err error) {
 // wouldn't walk them either.
 func (ix *index) walkChanged(ctx context.Context, changed []string) error {
 	if len(changed) == 0 {
-		fs.Infof(ix.f, "Nothing changed so nothing to index")
+		fs.InfofCtx(ctx, ix.f, "Nothing changed so nothing to index")
 		return nil
 	}
 	maxDepth := ConfigMaxDepth(ctx, true)
@@ -417,7 +417,7 @@ func (ix *index) walkChanged(ctx context.Context, changed []string) error {
 	var subtrees []string
 	for _, p := range changed {
 		if p == "/" {
-			fs.Infof(ix.f, "Root changed so doing a full index")
+			fs.InfofCtx(ctx, ix.f, "Root changed so doing a full index")
 			return ix.walkAll(ctx)
 		}
 		if strings.HasSuffix(p, "/") {
@@ -446,10 +446,10 @@ func (ix *index) walkChanged(ctx context.Context, changed []string) error {
 		}
 	}
 	if ix.opt.ChangedMaxDirs > 0 && len(list)+len(subtrees) > ix.opt.ChangedMaxDirs {
-		fs.Infof(ix.f, "Partial index would list %d directories, more than %d, so doing a full index", len(list)+len(subtrees), ix.opt.ChangedMaxDirs)
+		fs.InfofCtx(ctx, ix.f, "Partial index would list %d directories, more than %d, so doing a full index", len(list)+len(subtrees), ix.opt.ChangedMaxDirs)
 		return ix.walkAll(ctx)
 	}
-	fs.Infof(ix.f, "Partial index: listing %d directories and walking %d changed directories", len(list), len(subtrees))
+	fs.InfofCtx(ctx, ix.f, "Partial index: listing %d directories and walking %d changed directories", len(list), len(subtrees))
 	walkFn := ix.walkFn(ctx)
 	for dir := range list {
 		err := walk.Walk(ctx, ix.f, dir, true, 1, walkFn)
@@ -520,7 +520,7 @@ func (ix *index) readUnwalkedTime(ctx context.Context, sub fs.Directory) {
 	o, err := ix.f.NewObject(ctx, path.Join(sub.Remote(), ix.outputs[0].name))
 	if err != nil {
 		if !errors.Is(err, fs.ErrorObjectNotFound) {
-			fs.Debugf(sub, "Failed to read listing modtime: %v", err)
+			fs.DebugfCtx(ctx, sub, "Failed to read listing modtime: %v", err)
 		}
 		return
 	}
@@ -669,7 +669,7 @@ func (ix *index) processDir(ctx context.Context, d *indexDir) {
 		err := out.tmpl.Execute(&buf, dir)
 		if err != nil {
 			ix.ec.Add(err)
-			fs.Errorf(d.remote, "Failed to render %s: %v", out.name, fs.CountError(ctx, err))
+			fs.ErrorfCtx(ctx, d.remote, "Failed to render %s: %v", out.name, fs.CountError(ctx, err))
 			continue
 		}
 		remote := path.Join(d.remote, out.name)
@@ -679,11 +679,11 @@ func (ix *index) processDir(ctx context.Context, d *indexDir) {
 			equal, err := ix.equal(ctx, src, dst)
 			if err != nil {
 				ix.ec.Add(err)
-				fs.Errorf(dst, "Failed to check listing: %v", fs.CountError(ctx, err))
+				fs.ErrorfCtx(ctx, dst, "Failed to check listing: %v", fs.CountError(ctx, err))
 				continue
 			}
 			if equal {
-				fs.Debugf(dst, "Unchanged skipping")
+				fs.DebugfCtx(ctx, dst, "Unchanged skipping")
 				continue
 			}
 		}
@@ -691,7 +691,7 @@ func (ix *index) processDir(ctx context.Context, d *indexDir) {
 			_, err := Copy(ctx, ix.f, dst, remote, src)
 			if err != nil {
 				ix.ec.Add(err)
-				fs.Errorf(remote, "Failed to write listing: %v", fs.CountError(ctx, err))
+				fs.ErrorfCtx(ctx, remote, "Failed to write listing: %v", fs.CountError(ctx, err))
 			}
 			return nil
 		})

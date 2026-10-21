@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"runtime"
 	"slices"
@@ -552,6 +553,24 @@ func TestDirRemove(t *testing.T) {
 	assert.Equal(t, EROFS, err)
 }
 
+// Removing a directory leaves no virtual entries counted in its parent, so the
+// parent can still forget its cache.
+func TestDirRemoveVirtuals(t *testing.T) {
+	_, vfs, dir, _ := dirCreate(t)
+	root, err := vfs.Root()
+	require.NoError(t, err)
+
+	// Remove the directory's contents and then the directory, before a
+	// listing has confirmed the contents are gone.
+	require.NoError(t, dir.RemoveName("file1"))
+	require.NoError(t, root.RemoveName("dir"))
+
+	assert.False(t, root.ForgetAll(), "root holds virtual entries after rmdir")
+
+	dir.ForgetAll()
+	assert.False(t, root.ForgetAll(), "root holds virtual entries after the removed dir is forgotten")
+}
+
 func TestDirRemoveAll(t *testing.T) {
 	r, vfs, dir, _ := dirCreate(t)
 
@@ -856,4 +875,30 @@ func TestDirMetadataExtension(t *testing.T) {
 	if !errors.Is(err, fs.ErrorCantUploadEmptyFiles) {
 		require.NoError(t, err)
 	}
+}
+
+// Check that renaming a directory leaves its parent's directory entries alone,
+// so it can't corrupt the parent's map while the parent is iterating it.
+func TestDirRenameParentEntries(t *testing.T) {
+	_, vfs := newTestVFS(t)
+
+	root, err := vfs.Root()
+	require.NoError(t, err)
+	dir, err := root.Mkdir("dir")
+	require.NoError(t, err)
+
+	// Hold the root's read lock, as ForgetAll and ReadDirAll do while they
+	// iterate the root's entries, and rename the directory underneath it.
+	root.mu.RLock()
+	defer root.mu.RUnlock()
+	before := slices.Sorted(maps.Keys(root.items))
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		dir.rename(root, fs.NewDir("dir2", t1))
+	}()
+	<-done
+
+	assert.Equal(t, before, slices.Sorted(maps.Keys(root.items)))
 }

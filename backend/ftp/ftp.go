@@ -584,8 +584,9 @@ func (f *Fs) getFtpConnection(ctx context.Context) (c *ftp.ServerConn, err error
 //
 // It nils the pointed to connection out so it can't be reused
 //
-// if err is not nil then it checks the connection is alive using a
-// NOOP request
+// if err is not nil then it discards the connection unless the error
+// carries an FTP reply code, in which case it checks the connection
+// is alive using a NOOP request
 func (f *Fs) putFtpConnection(pc **ftp.ServerConn, err error) {
 	if f.opt.Concurrency > 0 {
 		defer f.tokens.Put()
@@ -599,14 +600,17 @@ func (f *Fs) putFtpConnection(pc **ftp.ServerConn, err error) {
 	}
 	*pc = nil
 	if err != nil {
-		// If not a regular FTP error code then check the connection
-		if tpErr := textprotoError(err); tpErr != nil {
-			nopErr := c.NoOp()
-			if nopErr != nil {
-				fs.Debugf(f, "Connection failed, closing: %v", nopErr)
-				_ = c.Quit()
-				return
-			}
+		// An error without an FTP reply code means the control
+		// connection can no longer be trusted, so discard it.
+		if textprotoError(err) == nil {
+			fs.Debugf(f, "Discarding connection after non-FTP error: %v", err)
+			_ = c.Quit()
+			return
+		}
+		if nopErr := c.NoOp(); nopErr != nil {
+			fs.Debugf(f, "Connection failed, closing: %v", nopErr)
+			_ = c.Quit()
+			return
 		}
 	}
 	f.poolMu.Lock()
