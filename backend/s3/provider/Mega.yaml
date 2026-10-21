@@ -23,3 +23,4 @@ quirks:
   use_multipart_etag: false
   use_already_exists: false
   copy_cutoff: 9223372036854775807
+  equal_part_sizes: true # all parts but the last must be the same size
