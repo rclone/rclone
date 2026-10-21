@@ -64,6 +64,7 @@ const (
 	maxParts            = 10000
 	maxVersions         = 100 // maximum number of versions we search in --b2-versions mode
 	minChunkSize        = 5 * fs.Mebi
+	maxChunkSize        = fs.SizeSuffix(5 * 1000 * 1000 * 1000) // 5 GB is the biggest part b2 takes
 	defaultChunkSize    = 96 * fs.Mebi
 	defaultUploadCutoff = 200 * fs.Mebi
 	largeFileCopyCutoff = 4 * fs.Gibi // 5E9 is the max
@@ -615,11 +616,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	f.setRoot(root)
 	f.features = (&fs.Features{
-		ReadMimeType:          true,
-		WriteMimeType:         true,
-		BucketBased:           true,
-		BucketBasedRootOK:     true,
-		ChunkWriterDoesntSeek: true,
+		ReadMimeType:            true,
+		WriteMimeType:           true,
+		ChunkWriterVariableSize: true,
+		BucketBased:             true,
+		BucketBasedRootOK:       true,
+		ChunkWriterDoesntSeek:   true,
 	}).Fill(ctx, f)
 	// Set the test flag if required
 	if opt.TestMode != "" {
@@ -2398,8 +2400,10 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	}
 
 	info = fs.ChunkWriterInfo{
-		ChunkSize:   up.chunkSize,
-		Concurrency: o.fs.opt.UploadConcurrency,
+		ChunkSize:    up.chunkSize,
+		Concurrency:  o.fs.opt.UploadConcurrency,
+		MinChunkSize: int64(minChunkSize),
+		MaxChunkSize: int64(maxChunkSize),
 		//LeavePartsOnError: o.fs.opt.LeavePartsOnError,
 	}
 	return info, up, nil

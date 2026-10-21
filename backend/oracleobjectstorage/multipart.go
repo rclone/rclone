@@ -121,6 +121,8 @@ func (f *Fs) OpenChunkWriter(
 		ChunkSize:         int64(chunkSize),
 		Concurrency:       o.fs.opt.UploadConcurrency,
 		LeavePartsOnError: o.fs.opt.LeavePartsOnError,
+		MinChunkSize:      int64(minChunkSize),
+		MaxChunkSize:      int64(maxChunkSize),
 	}
 	fs.Debugf(o, "open chunk writer: started multipart upload: %v", uploadID)
 	return info, chunkWriter, err
