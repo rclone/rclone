@@ -1172,8 +1172,15 @@ func TestMoveUnicodeEquivalentWithoutServerSideMove(t *testing.T) {
 
 	nfd := norm.NFD.String("sub/équivalent.txt")
 	nfc := norm.NFC.String("sub/équivalent.txt")
-	file1 := r.WriteObject(ctx, nfd, "file1 contents", t1)
+	file1 := fstest.NewItem(nfd, "file1 contents", t1)
+	_, err := r.Fremote.Put(ctx, bytes.NewBufferString("file1 contents"), object.NewStaticObjectInfo(nfd, t1, file1.Size, true, nil, nil))
+	if err != nil {
+		t.Skipf("remote can't store an NFD name: %v", err)
+	}
 	src, err := r.Fremote.NewObject(ctx, nfd)
+	if errors.Is(err, fs.ErrorObjectNotFound) {
+		t.Skip("remote doesn't keep an NFD name as written")
+	}
 	require.NoError(t, err)
 
 	_, err = operations.Move(ctx, r.Fremote, nil, nfc, src)
