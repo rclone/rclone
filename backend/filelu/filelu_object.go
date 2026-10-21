@@ -24,6 +24,7 @@ type Object struct {
 	remote  string
 	size    int64
 	modTime time.Time
+	md5     string
 }
 
 // NewObject creates a new Object for the given remote path
@@ -53,6 +54,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		remote:  returnedRemote,
 		size:    size,
 		modTime: time.Now(),
+		md5:     fileInfo.MD5,
 	}, nil
 }
 
@@ -142,6 +144,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 // Update updates the object with new data
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	size := src.Size()
+	o.md5 = "" // content is changing, the old hash is stale
 	counter := readers.NewCountingReader(in)
 	in = counter
 
@@ -190,6 +193,11 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 		return "", hash.ErrUnsupported
 	}
 
+	// The server sends the MD5 with the file listing and the file info
+	if o.md5 != "" {
+		return o.md5, nil
+	}
+
 	var fileCode string
 	if isFileCode(o.fs.root) {
 		fileCode = o.fs.root
@@ -203,7 +211,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 		}
 	}
 	if fileCode == "" {
-		return "", fmt.Errorf("no valid file code found in the remote path")
+		return "", nil // hash unknown, rclone ignores blank hashes
 	}
 
 	opts := rest.Opts{
