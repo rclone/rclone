@@ -32,6 +32,7 @@ import (
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
+	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/walk"
@@ -436,6 +437,10 @@ func MoveTransfer(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string,
 func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.Object, isTransfer bool) (newDst fs.Object, err error) {
 	origRemote := remote // avoid double-transform on fallback to copy
 	remote = transform.Path(ctx, remote, false)
+	if fs.FullPath(src) == fspath.JoinRootPath(fs.ConfigString(fdst), remote) {
+		// nothing to do, and copying an object onto itself then deleting the source would delete it
+		return src, nil
+	}
 	ci := fs.GetConfig(ctx)
 	newDst = dst
 	if ci.DryRun && dst != nil && SameObject(src, dst) && src.Remote() == transform.Path(ctx, dst.Remote(), false) {
