@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"slices"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -15,6 +16,7 @@ import (
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/backend/onedrive/api"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
@@ -769,4 +771,198 @@ func TestListDirectorySize(t *testing.T) {
 	assert.Equal(t, "photos", dir.Remote())
 	assert.Equal(t, int64(2646204760), dir.Size())
 	assert.Equal(t, int64(3), dir.Items())
+}
+
+// Graph ids for the business-shortcut fixture. Admin targets a folder in another drive.
+const (
+	shortcutMyDrive  = "b!mydrive"
+	shortcutLibrary  = "b!library"
+	shortcutRootItem = "rootitem"
+	shortcutAdminID  = "admin-folder"
+	shortcutITID     = "it-folder"
+	shortcutFileID   = "file-item"
+	shortcutFileSize = int64(24)
+)
+
+// shortcutRequest is one Graph call observed by the fake server.
+type shortcutRequest struct {
+	path   string
+	status int
+}
+
+// shortcutGraph is a fake Graph. Directory walks follow the Admin
+// shortcut, and root:/path for the file returns itemNotFound.
+type shortcutGraph struct {
+	mu    sync.Mutex
+	got   []shortcutRequest
+	found bool // when false, file.xlsx itself is itemNotFound
+}
+
+func (s *shortcutGraph) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path
+	status := http.StatusOK
+	var item *api.Item
+	switch {
+	case strings.HasSuffix(path, "/root"):
+		item = &api.Item{
+			ID:     shortcutRootItem,
+			Name:   "root",
+			Folder: &api.FolderFacet{},
+			ParentReference: &api.ItemReference{
+				DriveID:   shortcutMyDrive,
+				DriveType: driveTypeBusiness,
+			},
+		}
+	case strings.Contains(path, "/items/"+shortcutRootItem+":/Admin"):
+		item = &api.Item{
+			ID:   "shortcut-admin",
+			Name: "Admin",
+			ParentReference: &api.ItemReference{
+				DriveID: shortcutMyDrive,
+				ID:      shortcutRootItem,
+			},
+			RemoteItem: &api.RemoteItemFacet{
+				ID:   shortcutAdminID,
+				Name: "Admin",
+				Folder: &api.FolderFacet{
+					ChildCount: 1,
+				},
+				ParentReference: &api.ItemReference{
+					DriveID: shortcutLibrary,
+					ID:      "library-root",
+				},
+			},
+		}
+	case strings.Contains(path, "/items/"+shortcutAdminID+":/IT"):
+		item = &api.Item{
+			ID:     shortcutITID,
+			Name:   "IT",
+			Folder: &api.FolderFacet{ChildCount: 1},
+			ParentReference: &api.ItemReference{
+				DriveID: shortcutLibrary,
+				ID:      shortcutAdminID,
+			},
+		}
+	case strings.Contains(path, "/items/"+shortcutITID+":/file.xlsx"):
+		if s.found {
+			item = shortcutFileItem()
+		} else {
+			status = http.StatusNotFound
+		}
+	default:
+		// root:/path through the shortcut is itemNotFound.
+		status = http.StatusNotFound
+	}
+	s.mu.Lock()
+	s.got = append(s.got, shortcutRequest{path: path, status: status})
+	s.mu.Unlock()
+	if status != http.StatusOK {
+		writeGraphNotFound(w)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(item)
+}
+
+func (s *shortcutGraph) requests() []shortcutRequest {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	out := make([]shortcutRequest, len(s.got))
+	copy(out, s.got)
+	return out
+}
+
+func shortcutFileItem() *api.Item {
+	return &api.Item{
+		ID:   shortcutFileID,
+		Name: "file.xlsx",
+		Size: shortcutFileSize,
+		File: &api.FileFacet{
+			MimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+		},
+		ParentReference: &api.ItemReference{
+			DriveID: shortcutLibrary,
+			ID:      shortcutITID,
+		},
+	}
+}
+
+func writeGraphNotFound(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNotFound)
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"error": map[string]any{
+			"code":    "itemNotFound",
+			"message": "The resource could not be found.",
+		},
+	})
+}
+
+func sawRequest(got []shortcutRequest, fragment string, status int) bool {
+	for _, req := range got {
+		if req.status == status && strings.Contains(req.path, fragment) {
+			return true
+		}
+	}
+	return false
+}
+
+// newShortcutFs builds an Fs with NewFs against graph. err may be
+// fs.ErrorIsFile, which is how a file path is reported.
+func newShortcutFs(t *testing.T, graph http.Handler, root string) (fs.Fs, error) {
+	t.Helper()
+	server := httptest.NewServer(graph)
+	t.Cleanup(server.Close)
+	m := configmap.Simple{
+		"drive_id":   shortcutMyDrive,
+		"drive_type": driveTypeBusiness,
+		"tenant_url": server.URL,
+		"chunk_size": fmt.Sprintf("%d", int64(defaultChunkSize)),
+		"token":      `{"access_token":"test-token","token_type":"Bearer"}`,
+	}
+	f, err := NewFs(context.Background(), "shortcut-test", root, m)
+	if f != nil {
+		if shutdown, ok := f.(fs.Shutdowner); ok {
+			t.Cleanup(func() {
+				_ = shutdown.Shutdown(context.Background())
+			})
+		}
+	}
+	return f, err
+}
+
+// TestBusinessShortcutSingleFile checks that a file under a business
+// shortcut is found by parent item id after root:/path returns itemNotFound.
+func TestBusinessShortcutSingleFile(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("existing file", func(t *testing.T) {
+		graph := &shortcutGraph{found: true}
+		f, err := newShortcutFs(t, graph, "Admin/IT/file.xlsx")
+		require.ErrorIs(t, err, fs.ErrorIsFile)
+		assert.Equal(t, "Admin/IT", f.Root())
+
+		obj, err := f.NewObject(ctx, "file.xlsx")
+		require.NoError(t, err)
+		assert.Equal(t, "file.xlsx", obj.Remote())
+		assert.Equal(t, shortcutFileSize, obj.Size())
+		ider, ok := obj.(fs.IDer)
+		require.True(t, ok)
+		assert.Equal(t, shortcutLibrary+"#"+shortcutFileID, ider.ID())
+
+		got := graph.requests()
+		assert.True(t, sawRequest(got, "root:/Admin/IT/file.xlsx", http.StatusNotFound), "root:/path through the shortcut should 404, got %#v", got)
+		assert.True(t, sawRequest(got, "/items/"+shortcutITID+":/file.xlsx", http.StatusOK), "file should be read relative to the parent id, got %#v", got)
+	})
+
+	t.Run("missing file", func(t *testing.T) {
+		graph := &shortcutGraph{found: false}
+		f, err := newShortcutFs(t, graph, "Admin/IT/file.xlsx")
+		require.NoError(t, err)
+		assert.Equal(t, "Admin/IT/file.xlsx", f.Root())
+		got := graph.requests()
+		assert.True(t, sawRequest(got, "root:/Admin/IT/file.xlsx", http.StatusNotFound), "got %#v", got)
+		assert.True(t, sawRequest(got, "/items/"+shortcutITID+":/file.xlsx", http.StatusNotFound), "the parent-id lookup should also 404, got %#v", got)
+		assert.False(t, sawRequest(got, "/items/"+shortcutITID+":/file.xlsx", http.StatusOK), "a missing file must not be reported as found")
+	})
 }
