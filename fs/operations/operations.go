@@ -1960,11 +1960,20 @@ func copyURLFn(ctx context.Context, dstFileName string, url string, autoFilename
 	}
 	if autoFilename {
 		if dstFileNameFromHeader {
-			_, params, err := mime.ParseMediaType(resp.Header.Get("Content-Disposition"))
-			headerFilename := path.Base(strings.ReplaceAll(params["filename"], "\\", "/"))
-			if err != nil || headerFilename == "" {
+			disposition := resp.Header.Get("Content-Disposition")
+			_, params, err := mime.ParseMediaType(disposition)
+			if err != nil {
+				// Some servers omit the disposition type and send just filename parameters.
+				key, _, found := strings.Cut(disposition, "=")
+				key = strings.TrimSpace(key)
+				if found && (strings.EqualFold(key, "filename") || strings.EqualFold(key, "filename*")) {
+					_, params, err = mime.ParseMediaType("attachment; " + disposition)
+				}
+			}
+			if err != nil || params["filename"] == "" {
 				return fmt.Errorf("CopyURL failed: filename not found in the Content-Disposition header")
 			}
+			headerFilename := path.Base(strings.ReplaceAll(params["filename"], "\\", "/"))
 			fs.DebugfCtx(ctx, headerFilename, "filename found in Content-Disposition header.")
 			return fn(ctx, headerFilename, resp.Body, resp.ContentLength, modTime)
 		}

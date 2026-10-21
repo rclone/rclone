@@ -977,6 +977,63 @@ func TestCopyURL(t *testing.T) {
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1, file2, fstest.NewItem(urlFileName, contents, t1), fstest.NewItem(headerFilename, contents, t1)}, nil, fs.ModTimeNotSupported)
 }
 
+func TestCopyURLHeaderFilename(t *testing.T) {
+	for _, test := range []struct {
+		name   string
+		header string
+		want   string
+	}{
+		{"attachment", `attachment; filename="regular.txt"`, "regular.txt"},
+		{"unknownDisposition", `other; filename="regular.txt"`, "regular.txt"},
+		{"bareFilename", `filename=bare.txt`, "bare.txt"},
+		{"bareQuotedFilename", `filename="space name.txt"`, "space name.txt"},
+		{"bareWhitespace", ` FILENAME = "case.txt"`, "case.txt"},
+		{"bareExtendedFilename", `filename*=UTF-8''caf%C3%A9.txt`, "café.txt"},
+		{"bareAdditionalParameter", `filename="extra.txt"; size=12`, "extra.txt"},
+		{"bareUnixPath", `filename="../../outside.txt"`, "outside.txt"},
+		{"bareWindowsPath", `filename="..\folder\outside.txt"`, "outside.txt"},
+		{"emptyHeader", "", ""},
+		{"emptyFilename", `filename=""`, ""},
+		{"missingFilename", `attachment`, ""},
+		{"emptyAttachmentFilename", `attachment; filename=""`, ""},
+		{"malformedFilename", `filename="unterminated`, ""},
+		{"duplicateFilename", `filename="one.txt"; filename="two.txt"`, ""},
+		{"otherParameter", `other=value; filename="ignored.txt"`, ""},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			ctx := context.Background()
+			r := fstest.NewRun(t)
+			contents := "synthetic download contents\n"
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+				if test.header != "" {
+					w.Header().Set("Content-Disposition", test.header)
+				}
+				_, err := io.WriteString(w, contents)
+				assert.NoError(t, err)
+			}))
+			defer server.Close()
+
+			obj, err := operations.CopyURL(ctx, r.Fremote, "", server.URL, true, true, false)
+			if test.want == "" {
+				require.Error(t, err)
+				assert.Nil(t, obj)
+				fstest.CheckListingWithPrecision(t, r.Fremote, nil, nil, fs.ModTimeNotSupported)
+				return
+			}
+			require.NoError(t, err)
+			require.NotNil(t, obj)
+			assert.Equal(t, test.want, obj.Remote())
+			in, err := obj.Open(ctx)
+			require.NoError(t, err)
+			actual, err := io.ReadAll(in)
+			require.NoError(t, err)
+			require.NoError(t, in.Close())
+			assert.Equal(t, contents, string(actual))
+			fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{fstest.NewItem(test.want, contents, t1)}, nil, fs.ModTimeNotSupported)
+		})
+	}
+}
+
 func TestCopyURLDownloadHeaders(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
