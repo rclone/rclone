@@ -696,6 +696,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.features = (&fs.Features{
 		ReadMimeType:            true,
 		WriteMimeType:           true,
+		ChunkWriterVariableSize: true,
 		ReadMetadata:            true,
 		WriteMetadata:           true,
 		UserMetadata:            true,
@@ -2838,8 +2839,10 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		checker:   newCheckForInvalidBlockOrBlob("upload", o),
 	}
 	info = fs.ChunkWriterInfo{
-		ChunkSize:   int64(partSize),
-		Concurrency: o.fs.opt.UploadConcurrency,
+		ChunkSize:    int64(partSize),
+		Concurrency:  o.fs.opt.UploadConcurrency,
+		MinChunkSize: 1,
+		MaxChunkSize: blockblob.MaxStageBlockBytes,
 		//LeavePartsOnError: o.fs.opt.LeavePartsOnError,
 	}
 	chunkWriter.bic, err = newBlockIDCreator()

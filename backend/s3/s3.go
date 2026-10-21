@@ -974,6 +974,7 @@ const (
 	maxSizeForCopy      = 4768 * 1024 * 1024
 	maxUploadParts      = 10000 // maximum allowed number of parts in a multi-part upload
 	minChunkSize        = fs.SizeSuffix(1024 * 1024 * 5)
+	maxChunkSize        = fs.SizeSuffix(5 * 1024 * 1024 * 1024) // maximum size of a part in a multi-part upload
 	defaultUploadCutoff = fs.SizeSuffix(200 * 1024 * 1024)
 	maxUploadCutoff     = fs.SizeSuffix(5 * 1024 * 1024 * 1024)
 	minSleep            = 10 * time.Millisecond           // In case of error, start at 10ms sleep.
@@ -1167,6 +1168,7 @@ type Fs struct {
 	srv            *http.Client    // a plain http client
 	srvRest        *rest.Client    // the rest connection to the server
 	etagIsNotMD5   bool            // if set ETags are not MD5s
+	minChunkSize   fs.SizeSuffix   // smallest part but the last uploaded to the provider
 	versioningMu   sync.Mutex
 	versioning     fs.Tristate // if set bucket is using versions
 	warnCompressed sync.Once   // warn once about compressed files
@@ -1637,7 +1639,8 @@ func checkUploadChunkSize(cs fs.SizeSuffix) error {
 func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
 	err = checkUploadChunkSize(cs)
 	if err == nil {
-		old, f.opt.ChunkSize = f.opt.ChunkSize, cs
+		// The provider may need bigger chunks, as in NewFs
+		old, f.opt.ChunkSize = f.opt.ChunkSize, max(cs, f.minChunkSize)
 	}
 	return
 }
@@ -1874,6 +1877,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if provider.Quirks.EtagIsNotMD5 != nil && *provider.Quirks.EtagIsNotMD5 {
 		// Provider always returns ETags that are not MD5 (e.g., mandatory encryption)
 		f.etagIsNotMD5 = true
+	}
+	f.minChunkSize = minChunkSize
+	if provider.Quirks.MinChunkSize != nil {
+		f.minChunkSize = max(f.minChunkSize, fs.SizeSuffix(*provider.Quirks.MinChunkSize))
 	}
 	if opt.DirectoryBucket {
 		// Objects uploaded to directory buckets appear to have random ETags
@@ -4658,6 +4665,8 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		ChunkSize:         int64(chunkSize),
 		Concurrency:       o.fs.opt.UploadConcurrency,
 		LeavePartsOnError: o.fs.opt.LeavePartsOnError,
+		MinChunkSize:      int64(f.minChunkSize),
+		MaxChunkSize:      int64(maxChunkSize),
 	}
 	fs.Debugf(o, "open chunk writer: started multipart upload: %v", *mOut.UploadId)
 	return info, chunkWriter, err
