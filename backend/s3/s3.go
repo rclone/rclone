@@ -764,6 +764,23 @@ knows about - please make a bug report if not.
 			Default:  fs.Tristate{},
 			Advanced: true,
 		}, {
+			Name: "equal_part_sizes",
+			Help: `Set if all parts of a multipart upload but the last must be the same size.
+
+The S3 standard allows the parts of a multipart upload to differ in
+size, but some providers (e.g. Cloudflare R2) refuse such uploads. If
+this is set, a backend which wraps this one and can't make all its
+parts the same size, such as crypt, uploads in a single stream.
+
+Set this if crypt uploads of files bigger than --multi-thread-cutoff
+fail with your provider.
+
+This should be automatically set correctly for all providers rclone
+knows about - please make a bug report if not.
+`,
+			Default:  fs.Tristate{},
+			Advanced: true,
+		}, {
 			Name: "use_x_id",
 			Help: `Set if rclone should add x-id URL parameters.
 
@@ -1143,6 +1160,7 @@ type Options struct {
 	IBMInstanceID               string               `config:"ibm_resource_instance_id"`
 	IBMIAMEndpoint              string               `config:"ibm_iam_endpoint"`
 	ListVersionsOldestFirst     fs.Tristate          `config:"list_versions_oldest_first"`
+	EqualPartSizes              fs.Tristate          `config:"equal_part_sizes"`
 	UseXID                      fs.Tristate          `config:"use_x_id"`
 	SignAcceptEncoding          fs.Tristate          `config:"sign_accept_encoding"`
 	ObjectLockMode              string               `config:"object_lock_mode"`
@@ -1801,6 +1819,7 @@ func setQuirks(opt *Options, provider *Provider) {
 	set(&opt.SignAcceptEncoding, true, provider.Quirks.SignAcceptEncoding)
 	set(&opt.ObjectLockSupported, true, provider.Quirks.ObjectLockSupported)
 	set(&opt.ListVersionsOldestFirst, false, provider.Quirks.ListVersionsOldestFirst)
+	set(&opt.EqualPartSizes, false, provider.Quirks.EqualPartSizes)
 }
 
 // setRoot changes the root of the Fs
@@ -1905,16 +1924,17 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	f.setRoot(root)
 	f.features = (&fs.Features{
-		ReadMimeType:      true,
-		WriteMimeType:     true,
-		ReadMetadata:      true,
-		WriteMetadata:     true,
-		UserMetadata:      true,
-		BucketBased:       true,
-		BucketBasedRootOK: true,
-		SetTier:           provider.StorageClass.Len() > 0,
-		GetTier:           provider.StorageClass.Len() > 0,
-		SlowModTime:       true,
+		ReadMimeType:            true,
+		WriteMimeType:           true,
+		ReadMetadata:            true,
+		ChunkWriterVariableSize: !opt.EqualPartSizes.Value,
+		WriteMetadata:           true,
+		UserMetadata:            true,
+		BucketBased:             true,
+		BucketBasedRootOK:       true,
+		SetTier:                 provider.StorageClass.Len() > 0,
+		GetTier:                 provider.StorageClass.Len() > 0,
+		SlowModTime:             true,
 	}).Fill(ctx, f)
 	if opt.Provider == "AWS" {
 		f.features.DoubleSlash = true
