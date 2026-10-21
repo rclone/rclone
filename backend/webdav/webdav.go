@@ -1783,7 +1783,7 @@ func (o *Object) updateSimple(ctx context.Context, body io.Reader, getBody func(
 		GetBody:       getBody,
 		Body:          body,
 		NoResponse:    true,
-		ContentLength: &size, // FIXME this isn't necessary with owncloud - See https://github.com/nextcloud/nextcloud-snap/issues/365
+		ContentLength: &size, // FIXME this isn't necessary with owncloud - See https://github.com/nextcloud-snap/nextcloud-snap/issues/365
 		ContentType:   contentType,
 		Options:       options,
 		ExtraHeaders:  extraHeaders,
