@@ -2,11 +2,13 @@
 package crypt
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
 	"io"
 	"path"
+	"slices"
 	"strings"
 	"time"
 
@@ -16,9 +18,11 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/list"
+	"github.com/rclone/rclone/lib/multipart"
 )
 
 // Globals
@@ -292,12 +296,34 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 		UserDirMetadata:          true,
 		DirModTimeUpdatesOnWrite: true,
 		PartialUploads:           true,
+		ChunkWriterVariableSize:  true,
+		ChunkWriterDoesntSeek:    true,
 	}).Fill(ctx, f).Mask(ctx, wrappedFs).WrapsFs(f, wrappedFs)
 
 	// Enable ListP always
 	f.features.ListP = f.ListP
 
+	restrictChunkWriter(f.features, opt.NoDataEncryption)
+
 	return f, err
+}
+
+// restrictChunkWriter drops the chunk writer of an encrypting crypt
+// unless the wrapped remote takes chunks of a size other than the one
+// it asked for: a chunk of ciphertext can't be exactly that size. The
+// chunks of the encrypting writer must in turn be exactly the size it
+// asks for, and the plaintext of a chunk is read just once, so the
+// copy needn't buffer it either.
+func restrictChunkWriter(ft *fs.Features, noDataEncryption bool) {
+	if ft.OpenChunkWriter == nil || noDataEncryption {
+		return
+	}
+	if !ft.ChunkWriterVariableSize {
+		ft.OpenChunkWriter = nil
+		return
+	}
+	ft.ChunkWriterVariableSize = false
+	ft.ChunkWriterDoesntSeek = true
 }
 
 // Options defines the configuration for this backend
@@ -576,6 +602,174 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	return f.put(ctx, in, src, options, f.Fs.Features().PutStream)
 }
 
+// OpenChunkWriter returns the chunk size and a ChunkWriter
+//
+// Pass in the remote and the src object
+// You can also use options to hint at the desired chunk size
+//
+// The chunks are ranges of the plaintext, a whole number of blocks
+// each. Every chunk is encrypted on its own and handed to the chunk
+// writer of the wrapped remote as ciphertext, so a multi-thread copy
+// encrypts and uploads chunks in parallel.
+func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectInfo, options ...fs.OpenOption) (info fs.ChunkWriterInfo, writer fs.ChunkWriter, err error) {
+	do := f.Fs.Features().OpenChunkWriter
+	if do == nil {
+		return info, nil, fs.ErrorNotImplemented
+	}
+	if src.Remote() != remote {
+		src = fs.NewOverrideRemote(src, remote)
+	}
+	if f.opt.NoDataEncryption {
+		wrappedSrc := f.newObjectInfo(src, nonce{})
+		return do(ctx, wrappedSrc.Remote(), wrappedSrc, options...)
+	}
+	// Every chunk but the last must be full, which can only be checked
+	// against a known size
+	size := src.Size()
+	if size < 0 {
+		return info, nil, errors.New("can't do a chunked encrypted upload of a file of unknown size")
+	}
+	var fileNonce nonce
+	if err = fileNonce.fromReader(f.cipher.cryptoRand); err != nil {
+		return info, nil, err
+	}
+	// A chunk size the caller asks for is plaintext, rounded down to
+	// whole blocks - ask the wrapped remote for the ciphertext size that
+	// goes with it
+	for i, option := range options {
+		if chunkOption, ok := option.(*fs.ChunkOption); ok {
+			hint := max(chunkOption.ChunkSize/blockDataSize, 1) * blockDataSize
+			options = slices.Clone(options)
+			options[i] = &fs.ChunkOption{ChunkSize: encryptedChunkSize(hint, false)}
+		}
+	}
+	// A wrapped remote which puts a checksum on the object asks this for
+	// it before the upload, which encrypts the whole file once in one
+	// thread - with the same nonce, so it matches what the chunks make
+	// unless the source changes in between. The block authenticators are
+	// kept on the way so that each chunk can be checked.
+	wrappedSrc := f.newObjectInfo(src, fileNonce)
+	wrappedSrc.tags = &blockTagRecord{}
+	info, w, err := do(ctx, wrappedSrc.Remote(), wrappedSrc, options...)
+	if err != nil {
+		return info, nil, err
+	}
+	// The chunks follow the size the wrapped remote settled on, in whole
+	// blocks of plaintext and under the biggest part it takes. Its
+	// limits are on ciphertext and don't apply to the chunks of this
+	// writer, which must be exactly the size given.
+	chunkSize := chunkBlocks(info.ChunkSize, info.MaxChunkSize) * blockDataSize
+	// Rounding down to fit the biggest part can take a part which isn't
+	// the last below the smallest part, or leave no room for a block at
+	// all. Only part 0 carries the header, so the size checked is that
+	// of a part without it.
+	if chunkSize == 0 || (info.MinChunkSize > 0 && size > chunkSize && encryptedChunkSize(chunkSize, false) < info.MinChunkSize) {
+		_ = w.Abort(ctx)
+		return fs.ChunkWriterInfo{}, nil, fserrors.NoRetryError(fmt.Errorf("can't fit encrypted chunks between the part sizes %d and %d of the wrapped remote", info.MinChunkSize, info.MaxChunkSize))
+	}
+	// A whole chunk is encrypted into buffers from the pool, which hands
+	// out whole pages and never more than --max-buffer-memory at once.
+	// Smaller chunks would make more parts than the wrapped remote
+	// planned for, which may be more than it takes, so refuse instead.
+	if limit := int64(fs.GetConfig(ctx).MaxBufferMemory); limit > 0 {
+		pages := (encryptedChunkSize(chunkSize, true) + multipart.BufferSize - 1) / multipart.BufferSize
+		if pages*multipart.BufferSize > limit {
+			_ = w.Abort(ctx)
+			return fs.ChunkWriterInfo{}, nil, fserrors.NoRetryError(fmt.Errorf("an encrypted chunk of %v doesn't fit --max-buffer-memory %v: raise it or lower the chunk size of the wrapped remote", fs.SizeSuffix(pages*multipart.BufferSize), fs.SizeSuffix(limit)))
+		}
+	}
+	cw := &chunkWriter{
+		f:         f,
+		w:         w,
+		nonce:     fileNonce,
+		chunkSize: chunkSize,
+		size:      size,
+	}
+	if tags, done, differ := wrappedSrc.tags.get(); done {
+		if differ || int64(len(tags)) != (size+blockDataSize-1)/blockDataSize {
+			_ = w.Abort(ctx)
+			return fs.ChunkWriterInfo{}, nil, errors.New("corrupted on transfer: the source changed while its checksum was worked out")
+		}
+		cw.tags = tags
+	}
+	info = fs.ChunkWriterInfo{
+		ChunkSize:         chunkSize,
+		Concurrency:       info.Concurrency,
+		LeavePartsOnError: info.LeavePartsOnError,
+	}
+	return info, cw, nil
+}
+
+// chunkWriter encrypts the plaintext chunks of one file and passes
+// them on to the chunk writer of the wrapped remote.
+type chunkWriter struct {
+	f         *Fs
+	w         fs.ChunkWriter // writer of the wrapped remote, taking ciphertext
+	nonce     nonce          // nonce of the file, written in the header of chunk 0
+	chunkSize int64          // plaintext bytes per chunk - a whole number of blocks
+	size      int64          // plaintext size of the file
+	tags      []uint64       // authenticators of the blocks the checksum given to the wrapped remote was worked out from, if any
+}
+
+// WriteChunk encrypts chunk chunkNumber read from reader, writes it to
+// the wrapped remote and returns the number of plaintext bytes read.
+//
+// The whole chunk is encrypted into memory first so the wrapped remote
+// can hash it, seek it and retry it as it would any other chunk.
+func (cw *chunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader io.ReadSeeker) (int64, error) {
+	if chunkNumber < 0 {
+		return -1, fmt.Errorf("invalid chunk number provided: %v", chunkNumber)
+	}
+	offset := int64(chunkNumber) * cw.chunkSize
+	// Only an empty file has a chunk starting at its end - the header
+	if offset > cw.size || (offset == cw.size && cw.size > 0) {
+		return -1, fmt.Errorf("chunk %d starts at %d which is beyond the end of the file at %d", chunkNumber, offset, cw.size)
+	}
+	want := min(cw.chunkSize, cw.size-offset)
+	rw := multipart.NewRW().Reserve(encryptedChunkSize(want, chunkNumber == 0))
+	defer func() { _ = rw.Close() }()
+	// A local file read a block at a time is a lot of small reads
+	in := bufio.NewReaderSize(reader, multipart.BufferSize)
+	var out io.Writer = rw
+	var tags *blockTags
+	if cw.tags != nil {
+		tags = newBlockTags(chunkNumber == 0)
+		out = io.MultiWriter(rw, tags)
+	}
+	n, err := cw.f.cipher.encryptChunk(out, in, cw.nonce, offset/blockDataSize, chunkNumber == 0)
+	if err != nil {
+		return -1, fmt.Errorf("failed to encrypt chunk %d: %w", chunkNumber, err)
+	}
+	// A chunk short of its size would leave a short block in the middle
+	// of the file, which the decrypter reads as corruption
+	if n != want {
+		return -1, fmt.Errorf("chunk %d: expected %d bytes of plaintext but read %d", chunkNumber, want, n)
+	}
+	// The chunk must match the data the checksum of the object was
+	// worked out from
+	if tags != nil {
+		first := int(offset / blockDataSize)
+		if first+len(tags.tags) > len(cw.tags) || !slices.Equal(tags.tags, cw.tags[first:first+len(tags.tags)]) {
+			return -1, fmt.Errorf("corrupted on transfer: chunk %d doesn't match the data the checksum of the object was worked out from - did the source change during the upload?", chunkNumber)
+		}
+	}
+	_, err = cw.w.WriteChunk(ctx, chunkNumber, rw)
+	if err != nil {
+		return -1, err
+	}
+	return n, nil
+}
+
+// Close finishes the upload on the wrapped remote.
+func (cw *chunkWriter) Close(ctx context.Context) error {
+	return cw.w.Close(ctx)
+}
+
+// Abort abandons the upload on the wrapped remote.
+func (cw *chunkWriter) Abort(ctx context.Context) error {
+	return cw.w.Abort(ctx)
+}
+
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
 	return hash.Set(hash.None)
@@ -781,7 +975,10 @@ func (f *Fs) DecryptFileName(encryptedFileName string) (string, error) {
 // src with it, and calculates the hash given by HashType on the fly
 //
 // Note that we break lots of encapsulation in this function.
-func (f *Fs) computeHashWithNonce(ctx context.Context, nonce nonce, src fs.Object, hashType hash.Type) (hashStr string, err error) {
+//
+// If tags isn't nil the block authenticators of a finished pass are
+// added to it.
+func (f *Fs) computeHashWithNonce(ctx context.Context, nonce nonce, src fs.Object, hashType hash.Type, tags *blockTagRecord) (hashStr string, err error) {
 	// Open the src for input
 	in, err := src.Open(ctx)
 	if err != nil {
@@ -800,9 +997,18 @@ func (f *Fs) computeHashWithNonce(ctx context.Context, nonce nonce, src fs.Objec
 	if err != nil {
 		return "", fmt.Errorf("failed to make hasher: %w", err)
 	}
-	_, err = io.Copy(m, out)
+	var w io.Writer = m
+	var passTags *blockTags
+	if tags != nil {
+		passTags = newBlockTags(true)
+		w = io.MultiWriter(m, passTags)
+	}
+	_, err = io.Copy(w, out)
 	if err != nil {
 		return "", fmt.Errorf("failed to hash data: %w", err)
+	}
+	if tags != nil {
+		tags.add(passTags.tags)
 	}
 
 	return m.Sums()[hashType], nil
@@ -848,7 +1054,7 @@ func (f *Fs) ComputeHash(ctx context.Context, o *Object, src fs.Object, hashType
 		return "", fmt.Errorf("failed to close nonce read: %w", err)
 	}
 
-	return f.computeHashWithNonce(ctx, nonce, src, hashType)
+	return f.computeHashWithNonce(ctx, nonce, src, hashType, nil)
 }
 
 // MergeDirs merges the contents of all the directories passed
@@ -1144,6 +1350,7 @@ type ObjectInfo struct {
 	fs.ObjectInfo
 	f     *Fs
 	nonce nonce
+	tags  *blockTagRecord // if set, gets the block authenticators when the hash is worked out
 }
 
 func (f *Fs) newObjectInfo(src fs.ObjectInfo, nonce nonce) *ObjectInfo {
@@ -1196,11 +1403,15 @@ func (o *ObjectInfo) Hash(ctx context.Context, hash hash.Type) (string, error) {
 		// Otherwise don't unwrap any further
 		return "", nil
 	}
+	// An OverrideRemote around something which isn't an object has no data to hash
+	if srcObj == nil {
+		return "", nil
+	}
 	// if this is wrapping a local object then we work out the hash
 	if srcObj.Fs().Features().IsLocal {
 		// Read the data and encrypt it to calculate the hash
 		fs.Debugf(o, "Computing %v hash of encrypted source", hash)
-		return o.f.computeHashWithNonce(ctx, o.nonce, srcObj, hash)
+		return o.f.computeHashWithNonce(ctx, o.nonce, srcObj, hash, o.tags)
 	}
 	return "", nil
 }
@@ -1332,6 +1543,8 @@ var (
 	_ fs.UserInfoer      = (*Fs)(nil)
 	_ fs.Disconnecter    = (*Fs)(nil)
 	_ fs.Shutdowner      = (*Fs)(nil)
+	_ fs.OpenChunkWriter = (*Fs)(nil)
+	_ fs.ChunkWriter     = (*chunkWriter)(nil)
 	_ fs.FullObjectInfo  = (*ObjectInfo)(nil)
 	_ fs.FullObject      = (*Object)(nil)
 )
