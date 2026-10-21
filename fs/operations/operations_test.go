@@ -39,6 +39,7 @@ import (
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
+	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
@@ -1137,6 +1138,33 @@ func TestCaseInsensitiveMoveFile(t *testing.T) {
 	r.CheckRemoteItems(t, file2Capitalized)
 }
 
+func TestMoveOntoItself(t *testing.T) {
+	ctx := context.Background()
+	for _, viaSubdir := range []bool{false, true} {
+		for _, disableMove := range []bool{false, true} {
+			t.Run(fmt.Sprintf("viaSubdir=%v,disableMove=%v", viaSubdir, disableMove), func(t *testing.T) {
+				r := fstest.NewRunIndividual(t)
+				file1 := r.WriteObject(ctx, "sub/file1", "file1 contents", t1)
+				src, err := r.Fremote.NewObject(ctx, file1.Path)
+				require.NoError(t, err)
+
+				fdst, remote := r.Fremote, src.Remote()
+				if viaSubdir {
+					fdst, err = fs.NewFs(ctx, fspath.JoinRootPath(fs.ConfigStringFull(r.Fremote), "sub"))
+					require.NoError(t, err)
+					remote = "file1"
+				}
+				if disableMove {
+					fdst.Features().Disable("Move")
+				}
+				_, err = operations.Move(ctx, fdst, nil, remote, src)
+				require.NoError(t, err)
+				r.CheckRemoteItems(t, file1)
+			})
+		}
+	}
+}
+
 func TestMoveUnicodeEquivalentWithoutServerSideMove(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRunIndividual(t)
@@ -1144,8 +1172,15 @@ func TestMoveUnicodeEquivalentWithoutServerSideMove(t *testing.T) {
 
 	nfd := norm.NFD.String("sub/équivalent.txt")
 	nfc := norm.NFC.String("sub/équivalent.txt")
-	file1 := r.WriteObject(ctx, nfd, "file1 contents", t1)
+	file1 := fstest.NewItem(nfd, "file1 contents", t1)
+	_, err := r.Fremote.Put(ctx, bytes.NewBufferString("file1 contents"), object.NewStaticObjectInfo(nfd, t1, file1.Size, true, nil, nil))
+	if err != nil {
+		t.Skipf("remote can't store an NFD name: %v", err)
+	}
 	src, err := r.Fremote.NewObject(ctx, nfd)
+	if errors.Is(err, fs.ErrorObjectNotFound) {
+		t.Skip("remote doesn't keep an NFD name as written")
+	}
 	require.NoError(t, err)
 
 	_, err = operations.Move(ctx, r.Fremote, nil, nfc, src)
