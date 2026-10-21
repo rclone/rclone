@@ -39,6 +39,7 @@ type Features struct {
 	NoMultiThreading         bool // set if can't have multiplethreads on one download open
 	Overlay                  bool // this wraps one or more backends to add functionality
 	ChunkWriterDoesntSeek    bool // set if the chunk writer doesn't need to read the data more than once
+	ChunkWriterVariableSize  bool // set if the chunk writer takes chunks of a size other than ChunkWriterInfo.ChunkSize, within its MinChunkSize and MaxChunkSize
 	DoubleSlash              bool // set if backend supports double slashes in paths
 
 	// Purge all files in the directory specified
@@ -403,6 +404,7 @@ func (ft *Features) Mask(ctx context.Context, f Fs) *Features {
 	ft.NoMultiThreading = ft.NoMultiThreading && mask.NoMultiThreading
 	// ft.Overlay = ft.Overlay && mask.Overlay don't propagate Overlay
 	ft.ChunkWriterDoesntSeek = ft.ChunkWriterDoesntSeek && mask.ChunkWriterDoesntSeek
+	ft.ChunkWriterVariableSize = ft.ChunkWriterVariableSize && mask.ChunkWriterVariableSize
 	ft.DoubleSlash = ft.DoubleSlash && mask.DoubleSlash
 
 	if mask.Purge == nil {
@@ -739,6 +741,8 @@ type ChunkWriterInfo struct {
 	ChunkSize         int64 // preferred chunk size
 	Concurrency       int   // how many chunks to write at once
 	LeavePartsOnError bool  // if set don't delete parts uploaded so far on error
+	MinChunkSize      int64 // smallest chunk but the last the writer takes, 0 if not known
+	MaxChunkSize      int64 // largest chunk the writer takes, 0 if not known
 }
 
 // OpenChunkWriter is an option interface for Fs to implement chunked writing
@@ -747,6 +751,13 @@ type OpenChunkWriter interface {
 	//
 	// Pass in the remote and the src object
 	// You can also use options to hint at the desired chunk size
+	//
+	// The chunk size passed in a ChunkOption is only a hint. Every
+	// chunk but the last written to the ChunkWriter must be exactly
+	// info.ChunkSize bytes, as the writer may work out where a chunk
+	// goes from its number. A writer whose Fs sets
+	// Features.ChunkWriterVariableSize also takes chunks of other
+	// sizes, between info.MinChunkSize and info.MaxChunkSize.
 	OpenChunkWriter(ctx context.Context, remote string, src ObjectInfo, options ...OpenOption) (info ChunkWriterInfo, writer ChunkWriter, err error)
 }
 
