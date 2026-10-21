@@ -667,6 +667,60 @@ func (r *recentChanges) stale(uuid, parentUUID, name string) bool {
 	return loc.parentUUID != parentUUID || loc.name != name
 }
 
+// uploadTracker holds the files this process has uploaded recently, keyed by
+// the directory they are in and their encoded name, including any extension.
+//
+// A lookup made straight after an upload can be served by a read replica
+// which has not yet seen the file, so it reports the file as missing.
+type uploadTracker struct {
+	mu        sync.Mutex
+	items     map[uploadKey]uploadedFile
+	lastPrune time.Time
+}
+
+// uploadKey identifies a file by its directory and encoded name.
+type uploadKey struct {
+	parentUUID string
+	name       string
+}
+
+// uploadedFile is a recently uploaded file and when to forget about it.
+type uploadedFile struct {
+	file    *folders.File
+	expires time.Time
+}
+
+// recentUploads is shared by all the Fs in the process as UUIDs are global.
+var recentUploads = uploadTracker{items: map[uploadKey]uploadedFile{}}
+
+// add records that file was uploaded as name in parentUUID, pruning expired
+// entries.
+func (r *uploadTracker) add(parentUUID, name string, file *folders.File) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	now := time.Now()
+	if now.Sub(r.lastPrune) > staleWindow {
+		for k, v := range r.items {
+			if now.After(v.expires) {
+				delete(r.items, k)
+			}
+		}
+		r.lastPrune = now
+	}
+	r.items[uploadKey{parentUUID, name}] = uploadedFile{file: file, expires: now.Add(staleWindow)}
+}
+
+// find returns the file recently uploaded as name in parentUUID, or nil.
+func (r *uploadTracker) find(parentUUID, name string) *folders.File {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	u, ok := r.items[uploadKey{parentUUID, name}]
+	if !ok || time.Now().After(u.expires) {
+		return nil
+	}
+	return u.file
+}
+
 // findFile looks up a single file by name within directoryID. Returns
 // (nil, nil) when the file does not exist; surfaces transport/API errors.
 func (f *Fs) findFile(ctx context.Context, leaf, directoryID string) (*folders.File, error) {
@@ -708,6 +762,11 @@ func (f *Fs) findFile(ctx context.Context, leaf, directoryID string) (*folders.F
 		}
 	}
 	if uuid == "" {
+		// The service may not have caught up with a file we just uploaded
+		if file := recentUploads.find(directoryID, encodedName); file != nil && !recent.stale(file.UUID, directoryID, encodedName) {
+			fs.Debugf(f, "Using recent upload of %q (UUID: %s) as the lookup found nothing", leaf, file.UUID)
+			return file, nil
+		}
 		return nil, nil
 	}
 
