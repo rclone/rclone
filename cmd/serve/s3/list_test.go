@@ -345,3 +345,58 @@ func TestListETagQuoted(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, `"`+hex.EncodeToString(obj.Hash)+`"`, list.Contents[0].ETag)
 }
+
+// TestListPutDirMarkers checks that the directory marker put for a
+// directory is listed, and kept, while the directory holds other keys,
+// as on S3, but not that of a directory made by putting a key below it.
+func TestListPutDirMarkers(t *testing.T) {
+	b := newListBackend(t, "bucket/implicit/file")
+	ctx := context.Background()
+	put := func(bucket, key string) {
+		_, err := b.PutObject(ctx, bucket, key, nil, strings.NewReader(""), 0)
+		require.NoError(t, err)
+	}
+	del := func(key string) {
+		require.NoError(t, b.deleteObject(ctx, "bucket", key))
+	}
+	all := func() []string {
+		return listPages(t, b, listPrefix("", ""), 1000)
+	}
+
+	put("bucket", "dir/")
+	put("bucket", "dir/a")
+	put("bucket", "dir/sub/b")
+	want := []string{"dir/", "dir/a", "dir/sub/b", "implicit/file"}
+	assert.Equal(t, want, all())
+	assert.Equal(t, want, listPages(t, b, listPrefix("", ""), 1))
+	keys, _ := listOnce(t, b, listPrefix("", "/"), gofakes3.ListBucketPage{})
+	assert.Equal(t, []string{"dir/", "implicit/"}, keys)
+	keys, _ = listOnce(t, b, listPrefix("dir/", "/"), gofakes3.ListBucketPage{})
+	assert.Equal(t, []string{"dir/", "dir/a", "dir/sub/"}, keys)
+	keys, _ = listOnce(t, b, listPrefix("", "r"), gofakes3.ListBucketPage{})
+	assert.Equal(t, []string{"dir", "implicit/file"}, keys)
+
+	// The marker keeps its directory when the keys below it are deleted
+	del("dir/a")
+	del("dir/sub/b")
+	assert.Equal(t, []string{"dir/", "implicit/file"}, all())
+
+	// Deleting the marker leaves the keys below it, and then the
+	// directory goes with the last of them
+	put("bucket", "dir/c")
+	del("dir/")
+	assert.Equal(t, []string{"dir/c", "implicit/file"}, all())
+	del("dir/c")
+	assert.Equal(t, []string{"implicit/file"}, all())
+
+	// The markers of a deleted bucket are forgotten
+	require.NoError(t, b.CreateBucket(ctx, "other"))
+	put("other", "d/")
+	require.NoError(t, b.DeleteBucket(ctx, "other"))
+	require.NoError(t, b.CreateBucket(ctx, "other"))
+	put("other", "d/f")
+	list, err := b.ListBucket(ctx, "other", listPrefix("", ""), gofakes3.ListBucketPage{})
+	require.NoError(t, err)
+	require.Len(t, list.Contents, 1)
+	assert.Equal(t, "d/f", list.Contents[0].Key)
+}

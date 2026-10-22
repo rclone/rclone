@@ -86,7 +86,8 @@ type tenant struct {
 	// set by --multipart-streaming-buffer-total.
 	budget *bufferBudget
 
-	// meta is the stored metadata of objects, by object path.
+	// meta is the stored metadata of objects, by object path, and
+	// the directory markers put, by directory path.
 	meta *lru.Cache[string, objectMeta]
 }
 
@@ -98,6 +99,7 @@ type objectMeta struct {
 	partSizes []int64 // the sizes of the parts of an object made by a multipart upload
 	size      int64
 	modTime   time.Time
+	dirMarker bool // a directory marker was put for the directory at this path
 }
 
 // newMetadataStore makes a store for the metadata of up to maxObjects
@@ -159,7 +161,7 @@ func (t *tenant) context() context.Context {
 // stored, as it has been replaced by something other than this user.
 func (t *tenant) getMeta(ctx context.Context, fp string, node vfs.Node) (om objectMeta, ok bool) {
 	om, ok = t.meta.Get(fp)
-	if !ok || om.size != node.Size() {
+	if !ok || om.dirMarker || om.size != node.Size() {
 		return objectMeta{}, false
 	}
 	window := fs.GetModifyWindow(ctx, node.VFS().Fs())
@@ -237,9 +239,36 @@ func (b *s3Backend) SetObjectTagging(ctx context.Context, bucketName, objectName
 	return t.storeObjectMeta(_vfs, fp, om)
 }
 
-// removeMeta forgets the metadata of the object at fp.
+// removeMeta forgets the metadata of the object at fp, or the
+// directory marker of the directory at fp.
 func (t *tenant) removeMeta(fp string) {
 	t.meta.Remove(fp)
+}
+
+// storeDirMarker records that a directory marker was put for the
+// directory at fp, so it is listed while the directory holds other
+// keys.
+func (t *tenant) storeDirMarker(fp string) {
+	t.meta.Add(fp, objectMeta{dirMarker: true})
+}
+
+// hasDirMarker reports whether a directory marker was put for the
+// directory at fp.
+func (t *tenant) hasDirMarker(fp string) bool {
+	om, ok := t.meta.Get(fp)
+	return ok && om.dirMarker
+}
+
+// removeDirMarkers forgets the directory markers of every user below
+// the directory dir.
+func (b *s3Backend) removeDirMarkers(dir string) {
+	for _, t := range b.allTenants() {
+		for _, fp := range t.meta.Keys() {
+			if strings.HasPrefix(fp, dir+"/") {
+				t.meta.Remove(fp)
+			}
+		}
+	}
 }
 
 // ListBuckets always returns the default bucket.
@@ -561,7 +590,11 @@ func (b *s3Backend) PutObject(
 		if b.s.etagHash(_vfs) != fshash.MD5 {
 			result.ETag = quoteETag(emptyHash(b.s.etagHash(_vfs)))
 		}
-		return result, putDirMarker(_vfs, fp, objectName, input)
+		if err := putDirMarker(_vfs, fp, objectName, input); err != nil {
+			return result, err
+		}
+		b.tenant(ctx).storeDirMarker(fp)
+		return result, nil
 	}
 	fp, err := bucketObjectPath(bucketName, objectName)
 	if err != nil {
@@ -746,6 +779,7 @@ func (b *s3Backend) deleteObject(ctx context.Context, bucketName, objectName str
 	if err != nil {
 		return gofakes3.BucketNotFound(bucketName)
 	}
+	t := b.tenant(ctx)
 
 	if fp, isMarker, err := bucketDirMarkerPath(bucketName, objectName); isMarker {
 		if err != nil {
@@ -753,11 +787,12 @@ func (b *s3Backend) deleteObject(ctx context.Context, bucketName, objectName str
 		}
 		// Deleting a directory marker leaves the objects in its
 		// directory, so the directory is only removed if empty.
+		t.removeMeta(fp)
 		if isEmptyDir(fp, _vfs) {
 			if err := _vfs.Remove(fp); err != nil {
 				return err
 			}
-			rmdirRecursive(fp, _vfs)
+			rmdirRecursive(fp, _vfs, t.hasDirMarker)
 		}
 		return nil
 	}
@@ -770,10 +805,10 @@ func (b *s3Backend) deleteObject(ctx context.Context, bucketName, objectName str
 	if err := _vfs.Remove(fp); err != nil && !os.IsNotExist(err) {
 		return err
 	}
-	b.tenant(ctx).removeMeta(fp)
+	t.removeMeta(fp)
 
 	// FIXME: unsafe operation
-	rmdirRecursive(fp, _vfs)
+	rmdirRecursive(fp, _vfs, t.hasDirMarker)
 	return nil
 }
 
@@ -817,6 +852,7 @@ func (b *s3Backend) DeleteBucket(ctx context.Context, name string) error {
 		}
 		return err
 	}
+	b.removeDirMarkers(name)
 
 	return nil
 }
