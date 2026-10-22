@@ -228,8 +228,8 @@ func removeMadeDirs(dir, made string, VFS *vfs.VFS) {
 }
 
 // rmdirRecursive removes the parent directories of p which are empty,
-// stopping at the bucket.
-func rmdirRecursive(p string, VFS *vfs.VFS) {
+// stopping at the bucket or at a directory for which keep is true.
+func rmdirRecursive(p string, VFS *vfs.VFS, keep func(dir string) bool) {
 	dir := path.Dir(p)
 	if !strings.ContainsAny(dir, "/\\") {
 		// might be bucket(root)
@@ -237,13 +237,13 @@ func rmdirRecursive(p string, VFS *vfs.VFS) {
 	}
 	// Check the directory is empty first as the VFS logs an error
 	// removing one which isn't
-	if !isEmptyDir(dir, VFS) {
+	if keep(dir) || !isEmptyDir(dir, VFS) {
 		return
 	}
 	if err := VFS.Remove(dir); err != nil {
 		return
 	}
-	rmdirRecursive(dir, VFS)
+	rmdirRecursive(dir, VFS, keep)
 }
 
 // pathLocks are locks on paths, made as needed.

@@ -30,6 +30,7 @@ var errPageFull = errors.New("listing page full")
 // the size of the subtree below the prefix.
 type lister struct {
 	vfs       *vfs.VFS
+	t         *tenant                                // the user listing
 	hashType  hash.Type                              // hash used for ETags
 	etag      func(fp string, entry vfs.Node) []byte // returns the ETag of the object at fp
 	bucket    string
@@ -60,6 +61,7 @@ func newLister(ctx context.Context, b *s3Backend, _vfs *vfs.VFS, bucket string, 
 	}
 	return &lister{
 		vfs:       _vfs,
+		t:         b.tenant(ctx),
 		hashType:  b.s.etagHash(_vfs),
 		bucket:    bucket,
 		marker:    page.Marker,
@@ -136,8 +138,8 @@ func (l *lister) addObject(key string, entry vfs.Node) error {
 	return nil
 }
 
-// addDirMarker adds the directory marker key of the empty directory
-// fp to the page, returning errPageFull if the page is now complete.
+// addDirMarker adds the directory marker key of the directory fp to
+// the page, returning errPageFull if the page is now complete.
 func (l *lister) addDirMarker(key, fp string) error {
 	if l.skipKey(key) {
 		return nil
@@ -204,8 +206,8 @@ func (l *lister) hasKeys(fdPath string) bool {
 	if err != nil {
 		return false
 	}
-	if len(dirEntries) == 0 {
-		// An empty directory has its directory marker key
+	if len(dirEntries) == 0 || l.t.hasDirMarker(fp) {
+		// The directory has its directory marker key
 		return true
 	}
 	for _, entry := range dirEntries {
@@ -246,11 +248,14 @@ func (l *lister) list(fdPath, name string, addPrefix bool) error {
 	}
 	l.dirsRead++
 
-	// An empty directory is listed as its directory marker, which is
-	// the only key below it, as S3 would list the marker which made
-	// it. Other directories may have been made implicitly, so aren't.
-	if len(dirEntries) == 0 && name == "" && fdPath != "" {
-		return l.addDirMarker(fdPath+"/", fp)
+	// A directory is listed as its directory marker, which sorts
+	// before the keys below it, if it is empty, as S3 would list the
+	// marker which made it, or if a marker was put for it. Other
+	// directories may have been made implicitly, so aren't.
+	if name == "" && fdPath != "" && (len(dirEntries) == 0 || l.t.hasDirMarker(fp)) {
+		if err := l.addDirMarker(fdPath+"/", fp); err != nil || len(dirEntries) == 0 {
+			return err
+		}
 	}
 
 	// Emit the entries in the order their keys have in a flat keyspace,

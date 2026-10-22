@@ -488,9 +488,14 @@ for the directory `dir`. Putting an empty directory marker creates the
 directory (one with data is rejected with `400 Bad Request`), and
 deleting it removes the directory if it is empty. Directory markers
 are found by `HeadObject`, `GetObject` and `CopyObject` for any
-directory, but only the markers of empty directories are listed as
-objects, as other directories may not have been made by putting a
-marker.
+directory, but only the markers of empty directories, and of the
+directories a marker was put for, are listed as objects, as other
+directories may not have been made by putting a marker. The markers
+put are remembered in memory with the metadata (see
+[Limitations](#limitations)), so after a restart, or once forgotten,
+the marker of a directory holding other keys is no longer listed.
+While a marker is remembered its directory isn't removed when the
+last key below it is deleted.
 
 As keys are file paths, a key can't be both an object and a directory
 holding other objects, for example `a/b` and `a/b/c`. Writing an
@@ -518,6 +523,7 @@ ignored.
 | Authentication | Partial | AWS Signature Version 4, in headers, presigned URLs and browser form (`POST`) uploads. Signature Version 2 isn't supported. |
 | Anonymous access | Partial | All requests are allowed without `--auth-key` or `--auth-proxy`, and none are with them, as buckets and objects can't be made public. |
 | Metadata | Partial | `x-amz-meta-*` and the standard headers such as `Content-Type` are kept in memory only (see [Limitations](#limitations)), except the modification time. |
+| Directory markers | Partial | Keys ending in `/` are stored as directories, so can't hold data. A marker put for a directory holding other keys is only listed while it is remembered in memory (see [Object names](#object-names)). |
 | Checksums | Partial | The `x-amz-checksum-*` of a `PutObject` (CRC32, CRC32C, CRC64NVME, SHA1 or SHA256) is checked and returned with the metadata. The checksums of multipart uploads aren't supported. |
 | `GetObjectAttributes` | Partial | Everything but the checksums of multipart uploads. |
 | Object tagging | Partial | `GetObjectTagging`, `PutObjectTagging` and `DeleteObjectTagging` work, but tags are kept in memory with the metadata. |
