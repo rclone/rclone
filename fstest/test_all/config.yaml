@@ -745,3 +745,12 @@ backends:
    fastlist: false
    extratime: 2.0
    listretries: 5
+ - backend: "kdrive"
+   remote: "TestKdrive:"
+   ignore:
+     # The bisync normalization test fails as the kDrive server normalizes file names to NFC
+     - TestBisyncRemoteRemote/normalization
+     # the dates used in TestIndexChangedDirTime are far away in the future, this isn't handled by kdrive
+     - TestIndexChangedDirTime
+   fastlist: true
+   extratime: 2.0
