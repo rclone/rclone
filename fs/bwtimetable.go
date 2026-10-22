@@ -82,8 +82,14 @@ func (x BwTimetable) String() string {
 
 // Basic hour format checking
 func validateHour(HHMM string) error {
-	if len(HHMM) != 5 {
+	if len(HHMM) != 5 || HHMM[2] != ':' {
 		return fmt.Errorf("invalid time specification (hh:mm): %q", HHMM)
+	}
+	// strconv.Atoi accepts a sign, so check for digits explicitly
+	for _, i := range []int{0, 1, 3, 4} {
+		if HHMM[i] < '0' || HHMM[i] > '9' {
+			return fmt.Errorf("invalid time specification (hh:mm): %q", HHMM)
+		}
 	}
 	hh, err := strconv.Atoi(HHMM[0:2])
 	if err != nil {
