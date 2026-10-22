@@ -284,6 +284,44 @@ func TestUnsetRemote(t *testing.T) {
 	assert.Equal(t, "true", config.GetValue("test", "bool"))
 }
 
+func TestRenameRemoteTo(t *testing.T) {
+	ctx := context.Background()
+	defer testConfigFile(t, simpleOptions, "rename.conf")()
+
+	_, err := config.CreateRemote(ctx, "test", "config_test_remote", rc.Params{
+		"bool": true,
+		"pass": "potato",
+	}, config.UpdateRemoteOpt{})
+	require.NoError(t, err)
+	obscuredPass, found := config.FileGetValue("test", "pass")
+	require.True(t, found)
+	_, err = config.CreateRemote(ctx, "other", "config_test_remote", rc.Params{}, config.UpdateRemoteOpt{})
+	require.NoError(t, err)
+
+	// Renaming a missing remote is an error
+	assert.Error(t, config.RenameRemoteTo("notfound", "new"))
+
+	// Renaming to an existing remote or an invalid name is an error
+	// and leaves the remote in place
+	for _, newName := range []string{"other", "", "bad/name"} {
+		assert.Error(t, config.RenameRemoteTo("test", newName), newName)
+		assert.Equal(t, "config_test_remote", config.GetValue("test", "type"), newName)
+	}
+
+	require.NoError(t, config.RenameRemoteTo("test", "renamed"))
+
+	// The old remote is gone
+	assert.False(t, config.LoadedData().HasSection("test"))
+	// The keys are copied unchanged, without obscuring again
+	assert.Equal(t, "config_test_remote", config.GetValue("renamed", "type"))
+	assert.Equal(t, "true", config.GetValue("renamed", "bool"))
+	pass, found := config.FileGetValue("renamed", "pass")
+	require.True(t, found)
+	assert.Equal(t, obscuredPass, pass)
+	// Other remotes are untouched
+	assert.Equal(t, "config_test_remote", config.GetValue("other", "type"))
+}
+
 func TestDefaultRequired(t *testing.T) {
 	// By default options are optional (sic), regardless if a default value is defined.
 	// Setting Required=true means empty string is no longer allowed, except when

@@ -258,6 +258,37 @@ func rcDelete(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	rc.Add(rc.Call{
+		Path:  "config/rename",
+		Fn:    rcRename,
+		Title: "Rename a remote in the config file.",
+		Help: `
+Parameters:
+
+- name - name of remote to rename
+- newName - new name for the remote
+
+The keys of the remote are kept unchanged.
+
+See the [config rename](/commands/rclone_config_rename/) command for more information on the above.
+`,
+	})
+}
+
+// Rename a remote in the config file
+func rcRename(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	name, err := in.GetString("name")
+	if err != nil {
+		return nil, err
+	}
+	newName, err := in.GetString("newName")
+	if err != nil {
+		return nil, err
+	}
+	return nil, RenameRemoteTo(name, newName)
+}
+
+func init() {
+	rc.Add(rc.Call{
 		Path:  "config/unset",
 		Fn:    rcUnset,
 		Title: "Unset keys in a remote in the config file.",

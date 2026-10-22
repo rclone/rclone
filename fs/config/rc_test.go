@@ -157,6 +157,40 @@ func TestRc(t *testing.T) {
 		assert.False(t, found)
 	})
 
+	t.Run("Rename", func(t *testing.T) {
+		call := rc.Calls.Get("config/rename")
+		assert.NotNil(t, call)
+		newName := testName + "Renamed"
+		testKey := config.GetValue(testName, "test_key")
+		in := rc.Params{
+			"name":    testName,
+			"newName": newName,
+		}
+		out, err := call.Fn(context.Background(), in)
+		require.NoError(t, err)
+		assert.Nil(t, out)
+		assert.Equal(t, "", config.GetValue(testName, "type"))
+		assert.Equal(t, "local", config.GetValue(newName, "type"))
+		assert.Equal(t, testKey, config.GetValue(newName, "test_key"))
+
+		// Rename it back for the following tests
+		in = rc.Params{
+			"name":    newName,
+			"newName": testName,
+		}
+		_, err = call.Fn(context.Background(), in)
+		require.NoError(t, err)
+		assert.Equal(t, "local", config.GetValue(testName, "type"))
+
+		// Renaming a missing remote is an error
+		in = rc.Params{
+			"name":    newName,
+			"newName": testName + "Other",
+		}
+		_, err = call.Fn(context.Background(), in)
+		assert.Error(t, err)
+	})
+
 	// Delete the test remote
 	call = rc.Calls.Get("config/delete")
 	assert.NotNil(t, call)
