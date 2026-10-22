@@ -1204,7 +1204,7 @@ func (su *segmentedUpload) onFail() {
 		return
 	}
 	ctx := context.Background()
-	fs.Debugf(f, "Segment operation failed: bulk deleting failed segments")
+	fs.Debugf(f, "Segment operation failed: deleting failed segments")
 	if len(su.container) == 0 {
 		fs.Debugf(f, "Invalid segments container")
 		return
@@ -1213,9 +1213,9 @@ func (su *segmentedUpload) onFail() {
 		fs.Debugf(f, "No segments to delete")
 		return
 	}
-	_, err := f.c.BulkDelete(ctx, su.container, su.segments)
+	err := f.deleteSegments(ctx, su.container, su.segments)
 	if err != nil {
-		fs.Errorf(f, "Failed to bulk delete failed segments: %v", err)
+		fs.Errorf(f, "Failed to delete failed segments: %v", err)
 	}
 }
 
@@ -1503,11 +1503,41 @@ func (o *Object) removeSegmentsLargeObject(ctx context.Context, container string
 	if len(segments) == 0 {
 		return nil
 	}
-	_, err := o.fs.c.BulkDelete(ctx, container, segments)
+	err := o.fs.deleteSegments(ctx, container, segments)
 	if err != nil {
-		return fmt.Errorf("failed to delete bulk segments: %w", err)
+		return fmt.Errorf("failed to delete segments: %w", err)
 	}
 	return nil
+}
+
+// deleteSegments deletes segments from container with a bulk delete,
+// deleting them one by one if the server doesn't support that.
+//
+// It returns the first error encountered.
+func (f *Fs) deleteSegments(ctx context.Context, container string, segments []string) error {
+	_, err := f.c.BulkDelete(ctx, container, segments)
+	if err != swift.Forbidden {
+		return err
+	}
+	fs.Debugf(f, "Bulk delete not supported, deleting %d segments one by one", len(segments))
+	var firstErr error
+	for _, segment := range segments {
+		err = f.pacer.Call(func() (bool, error) {
+			err = f.c.ObjectDelete(ctx, container, segment)
+			// A bulk delete doesn't fail on missing segments either
+			if err == swift.ObjectNotFound {
+				err = nil
+			}
+			return shouldRetry(ctx, err)
+		})
+		if err != nil {
+			fs.Debugf(f, "Failed to delete segment %q: %v", segment, err)
+			if firstErr == nil {
+				firstErr = err
+			}
+		}
+	}
+	return firstErr
 }
 
 // urlEncode encodes a string so that it is a valid URL
