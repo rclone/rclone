@@ -998,20 +998,34 @@ func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata
 // Rmdir removes the directory
 //
 // If it isn't empty it will return an error
-func (f *Fs) Rmdir(ctx context.Context, dir string) error {
+func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
 	localPath, err := f.localPath(dir)
 	if err != nil {
 		return err
 	}
-	if fi, err := os.Stat(localPath); err != nil {
+	// When translating symlinks go through os.Root so a symlink planted at
+	// any parent can't redirect the removal out of the destination, and
+	// don't follow the leaf as a symlink is a file in this mode. The root
+	// itself is the trusted destination and is removed directly.
+	stat, removeFn, chmod := os.Stat, os.Remove, os.Chmod
+	if f.opt.TranslateSymlinks && localPath != f.root {
+		var root *os.Root
+		root, localPath, err = f.osRoot(localPath)
+		if err != nil {
+			return err
+		}
+		defer fs.CheckClose(root, &err)
+		stat, removeFn, chmod = root.Lstat, root.Remove, root.Chmod
+	}
+	if fi, err := stat(localPath); err != nil {
 		return err
 	} else if !fi.IsDir() {
 		return fs.ErrorIsFile
 	}
-	err = os.Remove(localPath)
+	err = removeFn(localPath)
 	if runtime.GOOS == "windows" && errors.Is(err, iofs.ErrPermission) { // https://github.com/golang/go/issues/26295
-		if os.Chmod(localPath, 0o600) == nil {
-			err = os.Remove(localPath)
+		if chmod(localPath, 0o600) == nil {
+			err = removeFn(localPath)
 		}
 	}
 	return err
@@ -1695,6 +1709,21 @@ func (f *Fs) chtimes(localPath string, atime, mtime time.Time) (err error) {
 	return root.Chtimes(rel, atime, mtime)
 }
 
+// remove removes the file, symlink or empty directory at localPath. When
+// translating symlinks it goes through os.Root so a symlink planted at any
+// parent can't redirect the removal out of the destination.
+func (f *Fs) remove(localPath string) (err error) {
+	if !f.opt.TranslateSymlinks {
+		return remove(localPath, os.Remove)
+	}
+	root, rel, err := f.osRoot(localPath)
+	if err != nil {
+		return err
+	}
+	defer fs.CheckClose(root, &err)
+	return remove(rel, root.Remove)
+}
+
 // mkdirAll makes all the directories needed to store the object
 func (o *Object) mkdirAll() error {
 	return o.fs.mkdirAll(filepath.Dir(o.path))
@@ -1819,7 +1848,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	if err != nil {
 		fs.Logf(o, "Removing partially written file on error: %v", err)
-		if removeErr := os.Remove(o.path); removeErr != nil {
+		if removeErr := o.fs.remove(o.path); removeErr != nil {
 			fs.Errorf(o, "Failed to remove partially written file: %v", removeErr)
 		}
 		return err
@@ -1967,7 +1996,7 @@ func (o *Object) lstat() error {
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
 	o.clearHashCache()
-	return remove(o.path)
+	return o.fs.remove(o.path)
 }
 
 // Metadata returns metadata for an object
