@@ -1,0 +1,34 @@
+test conflict reuse
+# Recreate a conflicted file under its original name on both paths, delete its
+# conflict copies, and make the two versions differ. The next run renames the
+# file to the same conflict names that were just deleted on both paths.
+
+test initial bisync
+bisync resync
+
+test changed on both paths and NOT identical - file1 (file1R, file1L)
+touch-glob 2001-01-02 {datadir/} file1R.txt
+copy-as {datadir/}file1R.txt {path2/} file1.txt
+touch-glob 2001-03-04 {datadir/} file1L.txt
+copy-as {datadir/}file1L.txt {path1/} file1.txt
+
+test bisync run with --conflict-resolve=none --conflict-loser=num
+# result should be "file1.txt.conflict1", "file1.txt.conflict2" on both paths
+bisync conflict-resolve=none conflict-loser=num conflict-suffix=conflict
+
+test restore file1.txt on both paths, NOT identical, and delete the conflict copies
+delete-file {path1/}file1.txt.conflict1
+delete-file {path1/}file1.txt.conflict2
+delete-file {path2/}file1.txt.conflict1
+delete-file {path2/}file1.txt.conflict2
+touch-glob 2002-01-02 {datadir/} file1R.txt
+copy-as {datadir/}file1R.txt {path2/} file1.txt
+touch-glob 2002-03-04 {datadir/} file1L.txt
+copy-as {datadir/}file1L.txt {path1/} file1.txt
+
+test bisync run reuses the deleted conflict names
+# result should again be "file1.txt.conflict1", "file1.txt.conflict2" on both paths
+bisync conflict-resolve=none conflict-loser=num conflict-suffix=conflict
+
+test next bisync run has no changes
+bisync
