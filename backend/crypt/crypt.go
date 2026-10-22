@@ -1197,7 +1197,7 @@ func (o *ObjectInfo) Hash(ctx context.Context, hash hash.Type) (string, error) {
 		return "", nil
 	}
 	// if this is wrapping a local object then we work out the hash
-	if srcObj.Fs().Features().IsLocal {
+	if srcObj != nil && srcObj.Fs().Features().IsLocal {
 		// Read the data and encrypt it to calculate the hash
 		fs.Debugf(o, "Computing %v hash of encrypted source", hash)
 		return o.f.computeHashWithNonce(ctx, o.nonce, srcObj, hash)
