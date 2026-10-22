@@ -560,6 +560,40 @@ func TestDirBTimeThroughPlantedSymlinkBlocked(t *testing.T) {
 	require.Equal(t, before, readBTime(), "btime escaped through planted symlink to %q", evilDir)
 }
 
+// TestMkdirMetadataThroughPlantedSymlinkBlocked checks MkdirMetadata can't
+// be fooled into treating a directory outside the root, reached through a
+// planted symlink, as the directory to apply metadata to.
+func TestMkdirMetadataThroughPlantedSymlinkBlocked(t *testing.T) {
+	skipIfNoSymlinks(t)
+	ctx := context.Background()
+
+	evil := t.TempDir()
+	evilDir := filepath.Join(evil, "secret.d")
+	require.NoError(t, os.Mkdir(evilDir, 0700))
+	require.NoError(t, os.Mkdir(filepath.Join(evilDir, "sub"), 0700))
+
+	r := fstest.NewRun(t)
+	f := r.Flocal.(*Fs)
+	linksMode(f)
+
+	// Control: an existing in-tree directory is found as normal.
+	require.NoError(t, f.Mkdir(ctx, "sub"))
+	_, err := f.MkdirMetadata(ctx, "sub", nil)
+	require.NoError(t, err)
+
+	// The planted symlink dst/pwn -> outside, faithfully reproduced by --links.
+	require.NoError(t, putLink(ctx, f, "pwn", evilDir))
+
+	// "pwn/sub" exists outside the root but must not be found through the
+	// planted symlink, and must not be created there either.
+	_, err = f.MkdirMetadata(ctx, "pwn/sub", nil)
+	require.Error(t, err, "finding a directory through a planted symlink should be refused")
+	_, err = f.MkdirMetadata(ctx, "pwn/new", nil)
+	require.Error(t, err, "making a directory through a planted symlink should be refused")
+	_, err = os.Lstat(filepath.Join(evilDir, "new"))
+	require.True(t, os.IsNotExist(err), "a directory escaped the destination into %q", evilDir)
+}
+
 // TestEncodingEscapeBlocked checks that a name from a malicious source can't
 // be decoded into path syntax which writes outside the destination.
 func TestEncodingEscapeBlocked(t *testing.T) {

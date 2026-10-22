@@ -960,13 +960,13 @@ func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata
 	if err != nil {
 		return nil, err
 	}
-	fi, err := f.lstat(localPath)
+	fi, err := f.lstatRoot(localPath)
 	if errors.Is(err, os.ErrNotExist) {
 		err := f.Mkdir(ctx, dir)
 		if err != nil {
 			return nil, fmt.Errorf("mkdir metadata: failed make directory: %w", err)
 		}
-		fi, err = f.lstat(localPath)
+		fi, err = f.lstatRoot(localPath)
 		if err != nil {
 			return nil, fmt.Errorf("mkdir metadata: failed to read info: %w", err)
 		}
@@ -1605,6 +1605,22 @@ func (f *Fs) mkdirAll(localPath string) (err error) {
 		return nil // the root itself, already created by linkRoot
 	}
 	return root.MkdirAll(rel, 0777)
+}
+
+// lstatRoot returns the info for localPath without following a symlink at
+// the leaf. When translating symlinks it goes through os.Root so a symlink
+// planted at any parent can't make a path outside the destination look like
+// it exists, which would let its metadata be written there.
+func (f *Fs) lstatRoot(localPath string) (fi os.FileInfo, err error) {
+	if !f.opt.TranslateSymlinks {
+		return f.lstat(localPath)
+	}
+	root, rel, err := f.osRoot(localPath)
+	if err != nil {
+		return nil, err
+	}
+	defer fs.CheckClose(root, &err)
+	return root.Lstat(rel)
 }
 
 // openFile opens localPath with the given flags and perm. When translating
