@@ -1202,9 +1202,14 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fs.ErrorDirExists
 	}
 
-	// Create parent of destination
+	// Create parent of destination. The root itself is the trusted
+	// destination so its parent, which lies outside it, is created directly.
 	dstParentPath := filepath.Dir(dstPath)
-	err = file.MkdirAll(dstParentPath, 0777)
+	if dstPath == f.root {
+		err = file.MkdirAll(dstParentPath, 0777)
+	} else {
+		err = f.mkdirAll(dstParentPath)
+	}
 	if err != nil {
 		return err
 	}

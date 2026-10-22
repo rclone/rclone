@@ -636,6 +636,33 @@ func TestRemoveThroughPlantedSymlinkBlocked(t *testing.T) {
 	require.NoError(t, err, "a directory was removed outside the destination at %q", evilDir)
 }
 
+// TestDirMoveThroughPlantedSymlinkBlocked checks DirMove can't move a
+// directory out of the root through a planted symlink.
+func TestDirMoveThroughPlantedSymlinkBlocked(t *testing.T) {
+	skipIfNoSymlinks(t)
+	ctx := context.Background()
+
+	evil := t.TempDir()
+
+	r := fstest.NewRun(t)
+	f := r.Flocal.(*Fs)
+	linksMode(f)
+
+	// Control: an in-tree directory move works as normal.
+	require.NoError(t, f.Mkdir(ctx, "dir"))
+	require.NoError(t, f.DirMove(ctx, f, "dir", "sub/moved"))
+
+	// The planted symlink dst/pwn -> outside, faithfully reproduced by --links.
+	require.NoError(t, putLink(ctx, f, "pwn", evil))
+
+	err := f.DirMove(ctx, f, "sub/moved", "pwn/moved")
+	require.Error(t, err, "moving a directory through a planted symlink should be refused")
+	_, err = os.Lstat(filepath.Join(evil, "moved"))
+	require.True(t, os.IsNotExist(err), "a directory escaped the destination into %q", evil)
+	_, err = os.Lstat(filepath.Join(f.root, "sub", "moved"))
+	require.NoError(t, err, "the directory should still be in the destination")
+}
+
 // TestEncodingEscapeBlocked checks that a name from a malicious source can't
 // be decoded into path syntax which writes outside the destination.
 func TestEncodingEscapeBlocked(t *testing.T) {
