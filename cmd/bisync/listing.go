@@ -581,6 +581,11 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 	// account for "deltaOthers" we handled separately
 	if queues.deletedonboth.NotEmpty() {
 		for file := range queues.deletedonboth {
+			// a conflict rename can reuse the name of a file deleted on
+			// both sides, in which case it was just copied and must stay
+			if queues.copy1to2.Has(file) || queues.copy2to1.Has(file) {
+				continue
+			}
 			srcList.remove(file)
 			dstList.remove(file)
 		}
