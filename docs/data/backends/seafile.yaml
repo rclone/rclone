@@ -3,7 +3,7 @@ name: Seafile
 tier: Tier 3
 maintainers: Core
 features_score: 3
-integration_tests: Failing
+integration_tests: Passing
 data_integrity: Other
 performance: Medium
 adoption: Some use

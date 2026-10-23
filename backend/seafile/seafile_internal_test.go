@@ -10,6 +10,7 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/text/unicode/norm"
 )
 
 type pathData struct {
@@ -100,6 +101,28 @@ func TestSplitPath(t *testing.T) {
 			argumentPath:    path.Join("subpath", "to", "file"),
 			expectedLibrary: "Library",
 			expectedPath:    path.Join("root", "path", "subpath", "to", "file"),
+		},
+		// paths inside a library are returned in NFC, library names are kept as they are
+		{
+			configLibrary:   "Library",
+			configRoot:      "",
+			argumentPath:    norm.NFD.String("path/to/équivalent.txt"),
+			expectedLibrary: "Library",
+			expectedPath:    norm.NFC.String("path/to/équivalent.txt"),
+		},
+		{
+			configLibrary:   "Library",
+			configRoot:      norm.NFD.String("répertoire"),
+			argumentPath:    norm.NFD.String("équivalent.txt"),
+			expectedLibrary: "Library",
+			expectedPath:    norm.NFC.String("répertoire/équivalent.txt"),
+		},
+		{
+			configLibrary:   "",
+			configRoot:      "",
+			argumentPath:    norm.NFD.String("Bibliothèque/équivalent.txt"),
+			expectedLibrary: norm.NFD.String("Bibliothèque"),
+			expectedPath:    norm.NFC.String("équivalent.txt"),
 		},
 	}
 	for _, test := range testData {

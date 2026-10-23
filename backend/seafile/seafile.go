@@ -30,6 +30,7 @@ import (
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/rest"
+	"golang.org/x/text/unicode/norm"
 )
 
 const (
@@ -1169,7 +1170,11 @@ func (f *Fs) mkLibrary(ctx context.Context, libraryName, password string) error 
 	return nil
 }
 
-// splitPath returns the library name and the full path inside the library
+// splitPath returns the library name and the full path inside the library.
+//
+// The path is returned in NFC: Seafile stores names in NFC whatever form it
+// is given but looks them up byte for byte. Library names are stored verbatim
+// so they are left untouched.
 func (f *Fs) splitPath(dir string) (library, folder string) {
 	library = f.libraryName
 	folder = dir
@@ -1180,6 +1185,7 @@ func (f *Fs) splitPath(dir string) (library, folder string) {
 		// Adds the root folder to the path to get a full path
 		folder = path.Join(f.rootDirectory, folder)
 	}
+	folder = norm.NFC.String(folder)
 	return
 }
 

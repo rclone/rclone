@@ -259,6 +259,12 @@ the following characters are also replaced:
 Invalid UTF-8 bytes will also be [replaced](/overview/#invalid-utf8),
 as they can't be used in JSON strings.
 
+Seafile stores file and directory names in Unicode NFC form whatever form
+they are uploaded in, so rclone normalizes names to NFC before sending them.
+Listings therefore always show NFC names, even for files created with
+decomposed (NFD) names as macOS produces them. Library names are not
+normalized as Seafile keeps them exactly as entered.
+
 ### Seafile and rclone link
 
 Rclone supports generating share links for non-encrypted libraries only.
