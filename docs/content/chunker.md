@@ -155,6 +155,10 @@ For example, if name format is `big_*-##.part` and original file name is
 `big_data.txt-00.part`, the 99th chunk will be `big_data.txt-98.part`
 and the 302nd chunk will become `big_data.txt-301.part`.
 
+You can also specify multiple comma-separated formats (e.g. `*.rc=###, *.rclone_chunk.###`).
+In this case, the first format will be used for creating new chunks, while all formats
+will be recognized when reading existing chunks.
+
 Note that `list` assembles composite directory entries only when chunk names
 match the configured format and treats non-conforming file names as normal
 non-chunked files.
@@ -295,12 +299,17 @@ Note that a move implemented using the copy-and-delete method may incur
 double charging with some cloud storage providers.
 
 Chunker will not automatically rename existing chunks when you run
-`rclone config` on a live remote and change the chunk name format.
-Beware that in result of this some files which have been treated as chunks
-before the change can pop up in directory listings as normal files
-and vice versa. The same warning holds for the chunk size.
-If you desperately need to change critical chunking settings, you should
-run data migration as described above.
+`rclone config` on a live remote and change settings.
+Beware that changing `chunk_size` or completely replacing `name_format`
+can cause files that have been treated as chunks before the change to pop up
+in directory listings as normal files and vice versa.
+To safely transition to a new chunk naming scheme without data migration,
+you can configure multiple comma-separated formats
+(e.g. `name_format = *.rc=###, *.rclone_chunk.###`). This ensures that
+previously uploaded chunks remain recognized under the old format while
+new chunks use the new format.
+If you need to change `chunk_size`, you should run data migration as
+described above.
 
 If wrapped remote is case insensitive, the chunker overlay will inherit
 that property (so you can't have a file called "Hello.doc" and "hello.doc"

@@ -15,6 +15,7 @@ import (
 	"math/rand"
 	"path"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -162,13 +163,16 @@ Normally should contain a ':' and a path, e.g. "myremote:path/to/dir",
 			Name:     "name_format",
 			Advanced: true,
 			Hide:     fs.OptionHideCommandLine,
-			Default:  `*.rclone_chunk.###`,
+			Default:  fs.CommaSepList{"*.rclone_chunk.###"},
 			Help: `String format of chunk file names.
 
 The two placeholders are: base file name (*) and chunk number (#...).
 There must be one and only one asterisk and one or more consecutive hash characters.
 If chunk number has less digits than the number of hashes, it is left-padded by zeros.
 If there are more digits in the number, they are left as is.
+Multiple comma-separated formats can be specified (e.g. "*.rc=###, *.rclone_chunk.###").
+In that case, the first format will be used for creating new chunks, and all formats
+will be recognized when reading existing chunks.
 Possible chunk files are ignored if their name does not match given format.`,
 		}, {
 			Name:     "start_from",
@@ -364,14 +368,14 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 
 // Options defines the configuration for this backend
 type Options struct {
-	Remote       string        `config:"remote"`
-	ChunkSize    fs.SizeSuffix `config:"chunk_size"`
-	NameFormat   string        `config:"name_format"`
-	StartFrom    int           `config:"start_from"`
-	MetaFormat   string        `config:"meta_format"`
-	HashType     string        `config:"hash_type"`
-	FailHard     bool          `config:"fail_hard"`
-	Transactions string        `config:"transactions"`
+	Remote       string          `config:"remote"`
+	ChunkSize    fs.SizeSuffix   `config:"chunk_size"`
+	NameFormat   fs.CommaSepList `config:"name_format"`
+	StartFrom    int             `config:"start_from"`
+	MetaFormat   string          `config:"meta_format"`
+	HashType     string          `config:"hash_type"`
+	FailHard     bool            `config:"fail_hard"`
+	Transactions string          `config:"transactions"`
 }
 
 // Fs represents a wrapped fs.Fs
@@ -385,10 +389,10 @@ type Fs struct {
 	useSHA1      bool           // mutually exclusive with useMD5
 	hashFallback bool           // allows fallback from MD5 to SHA1 and vice versa
 	hashAll      bool           // hash all files, mutually exclusive with hashFallback
-	dataNameFmt  string         // name format of data chunks
-	ctrlNameFmt  string         // name format of control chunks
-	nameRegexp   *regexp.Regexp // regular expression to match chunk names
-	xactIDRand   *rand.Rand     // generator of random transaction identifiers
+	dataNameFmt  string           // name format of data chunks
+	ctrlNameFmt  string           // name format of control chunks
+	nameRegexps  []*regexp.Regexp // regular expressions to match chunk names
+	xactIDRand   *rand.Rand       // generator of random transaction identifiers
 	xactIDMutex  sync.Mutex     // mutex for the source of randomness
 	opt          Options        // copy of Options
 	features     *fs.Features   // optional features
@@ -399,7 +403,7 @@ type Fs struct {
 // configure sets up chunker for given name format, meta format and hash type.
 // It also seeds the source of random transaction identifiers.
 // configure must be called only from NewFs or by unit tests.
-func (f *Fs) configure(nameFormat, metaFormat, hashType, transactionMode string) error {
+func (f *Fs) configure(nameFormat any, metaFormat, hashType, transactionMode string) error {
 	if err := f.setChunkNameFormat(nameFormat); err != nil {
 		return fmt.Errorf("invalid name format '%s': %w", nameFormat, err)
 	}
@@ -495,54 +499,89 @@ func (f *Fs) setTransactionMode(transactionMode string) error {
 // setChunkNameFormat converts pattern based chunk name format
 // into Printf format and Regular expressions for data and
 // control chunks.
-func (f *Fs) setChunkNameFormat(pattern string) error {
-	// validate pattern
-	if strings.Count(pattern, "*") != 1 {
-		return errors.New("pattern must have exactly one asterisk (*)")
-	}
-	numDigits := strings.Count(pattern, "#")
-	if numDigits < 1 {
-		return errors.New("pattern must have a hash character (#)")
-	}
-	if strings.Index(pattern, "*") > strings.Index(pattern, "#") {
-		return errors.New("asterisk (*) in pattern must come before hashes (#)")
-	}
-	if ok, _ := regexp.MatchString("^[^#]*[#]+[^#]*$", pattern); !ok {
-		return errors.New("hashes (#) in pattern must be consecutive")
-	}
-	if dir, _ := path.Split(pattern); dir != "" {
-		return errors.New("directory separator prohibited")
-	}
-	if pattern[0] != '*' {
-		return errors.New("pattern must start with asterisk") // to be lifted later
+func (f *Fs) setChunkNameFormat(nameFormat any) error {
+	var patterns []string
+	switch v := nameFormat.(type) {
+	case string:
+		var list fs.CommaSepList
+		if err := list.Set(v); err != nil {
+			return err
+		}
+		patterns = list
+	case fs.CommaSepList:
+		patterns = v
+	case []string:
+		patterns = v
+	default:
+		return fmt.Errorf("unexpected name format type %T", nameFormat)
 	}
 
-	// craft a unified regular expression for all types of chunks
+	if len(patterns) == 0 {
+		return errors.New("name_format cannot be empty")
+	}
+
 	reHashes := regexp.MustCompile("[#]+")
-	reDigits := "[0-9]+"
-	if numDigits > 1 {
-		reDigits = fmt.Sprintf("[0-9]{%d,}", numDigits)
-	}
-	reDataOrCtrl := fmt.Sprintf("(?:(%s)|_(%s))", reDigits, ctrlTypeRegStr)
-
-	// this must be non-greedy or else it could eat up temporary suffix
 	const mainNameRegStr = "(.+?)"
 
-	strRegex := regexp.QuoteMeta(pattern)
-	strRegex = reHashes.ReplaceAllLiteralString(strRegex, reDataOrCtrl)
-	strRegex = strings.ReplaceAll(strRegex, "\\*", mainNameRegStr)
-	strRegex = fmt.Sprintf("^%s(?:%s|%s)?$", strRegex, tempSuffixRegStr, tempSuffixRegOld)
-	f.nameRegexp = regexp.MustCompile(strRegex)
+	var regexps []*regexp.Regexp
+	var dataNameFmt, ctrlNameFmt string
 
-	// craft printf formats for active data/control chunks
-	fmtDigits := "%d"
-	if numDigits > 1 {
-		fmtDigits = fmt.Sprintf("%%0%dd", numDigits)
+	for i, pattern := range patterns {
+		pattern = strings.TrimSpace(pattern)
+		// validate pattern
+		if strings.Count(pattern, "*") != 1 {
+			return errors.New("pattern must have exactly one asterisk (*)")
+		}
+		numDigits := strings.Count(pattern, "#")
+		if numDigits < 1 {
+			return errors.New("pattern must have a hash character (#)")
+		}
+		if strings.Index(pattern, "*") > strings.Index(pattern, "#") {
+			return errors.New("asterisk (*) in pattern must come before hashes (#)")
+		}
+		if ok, _ := regexp.MatchString("^[^#]*[#]+[^#]*$", pattern); !ok {
+			return errors.New("hashes (#) in pattern must be consecutive")
+		}
+		if dir, _ := path.Split(pattern); dir != "" {
+			return errors.New("directory separator prohibited")
+		}
+		if pattern[0] != '*' {
+			return errors.New("pattern must start with asterisk") // to be lifted later
+		}
+
+		// craft a unified regular expression for all types of chunks
+		reDigits := "[0-9]+"
+		if numDigits > 1 {
+			reDigits = fmt.Sprintf("[0-9]{%d,}", numDigits)
+		}
+		reDataOrCtrl := fmt.Sprintf("(?:(%s)|_(%s))", reDigits, ctrlTypeRegStr)
+
+		strRegex := regexp.QuoteMeta(pattern)
+		strRegex = reHashes.ReplaceAllLiteralString(strRegex, reDataOrCtrl)
+		strRegex = strings.ReplaceAll(strRegex, "\\*", mainNameRegStr)
+		strRegex = fmt.Sprintf("^%s(?:%s|%s)?$", strRegex, tempSuffixRegStr, tempSuffixRegOld)
+		re, err := regexp.Compile(strRegex)
+		if err != nil {
+			return err
+		}
+		regexps = append(regexps, re)
+
+		// primary pattern generates formats for new chunks
+		if i == 0 {
+			fmtDigits := "%d"
+			if numDigits > 1 {
+				fmtDigits = fmt.Sprintf("%%0%dd", numDigits)
+			}
+			strFmt := strings.ReplaceAll(pattern, "%", "%%")
+			strFmt = strings.Replace(strFmt, "*", "%s", 1)
+			dataNameFmt = reHashes.ReplaceAllLiteralString(strFmt, fmtDigits)
+			ctrlNameFmt = reHashes.ReplaceAllLiteralString(strFmt, "_%s")
+		}
 	}
-	strFmt := strings.ReplaceAll(pattern, "%", "%%")
-	strFmt = strings.Replace(strFmt, "*", "%s", 1)
-	f.dataNameFmt = reHashes.ReplaceAllLiteralString(strFmt, fmtDigits)
-	f.ctrlNameFmt = reHashes.ReplaceAllLiteralString(strFmt, "_%s")
+
+	f.nameRegexps = regexps
+	f.dataNameFmt = dataNameFmt
+	f.ctrlNameFmt = ctrlNameFmt
 	return nil
 }
 
@@ -594,7 +633,13 @@ func (f *Fs) makeChunkName(filePath string, chunkNo int, ctrlType, xactID string
 // temporary chunk - the xactID is a non-empty string
 func (f *Fs) parseChunkName(filePath string) (parentPath string, chunkNo int, ctrlType, xactID string) {
 	dir, name := path.Split(filePath)
-	match := f.nameRegexp.FindStringSubmatch(name)
+	var match []string
+	for _, re := range f.nameRegexps {
+		match = re.FindStringSubmatch(name)
+		if match != nil && match[1] != "" {
+			break
+		}
+	}
 	if match == nil || match[1] == "" {
 		return "", -1, "", ""
 	}
@@ -1795,7 +1840,7 @@ func (f *Fs) okForServerSide(ctx context.Context, src fs.Object, opName string) 
 		diff = "wrapped remotes"
 	case f.opt.ChunkSize != obj.f.opt.ChunkSize:
 		diff = "chunk sizes"
-	case f.opt.NameFormat != obj.f.opt.NameFormat:
+	case !slices.Equal(f.opt.NameFormat, obj.f.opt.NameFormat):
 		diff = "chunk name formats"
 	case f.opt.StartFrom != obj.f.opt.StartFrom:
 		diff = "chunk numbering"
