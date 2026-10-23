@@ -163,7 +163,7 @@ Normally should contain a ':' and a path, e.g. "myremote:path/to/dir",
 			Name:     "name_format",
 			Advanced: true,
 			Hide:     fs.OptionHideCommandLine,
-			Default:  fs.CommaSepList{"*.rclone_chunk.###"},
+			Default:  fs.CommaSepList{"*.rc=###", "*.rclone_chunk.###"},
 			Help: `String format of chunk file names.
 
 The two placeholders are: base file name (*) and chunk number (#...).
@@ -502,7 +502,7 @@ func (f *Fs) setTransactionMode(transactionMode string) error {
 
 // setChunkNameFormat converts pattern-based chunk name formats
 // into Printf formats and regular expressions for data and
-// control chunks.
+// control chunks. The first pattern is used for formatting new chunks.
 func (f *Fs) setChunkNameFormat(patterns fs.CommaSepList) error {
 	if len(patterns) == 0 {
 		return errors.New("name_format cannot be empty")
