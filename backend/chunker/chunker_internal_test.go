@@ -119,7 +119,8 @@ func testChunkNameFormat(t *testing.T, f *Fs) {
 	assertFormat := func(pattern, wantDataFormat, wantCtrlFormat, wantNameRegexp string) {
 		err := f.setChunkNameFormat(fs.CommaSepList{pattern})
 		assert.NoError(t, err)
-		assert.Equal(t, wantDataFormat, f.dataNameFmt)
+		require.Equal(t, 1, len(f.dataNameFmts))
+		assert.Equal(t, wantDataFormat, f.dataNameFmts[0])
 		assert.Equal(t, wantCtrlFormat, f.ctrlNameFmt)
 		require.Equal(t, 1, len(f.nameRegexps))
 		assert.Equal(t, wantNameRegexp, f.nameRegexps[0].String())
@@ -128,7 +129,8 @@ func testChunkNameFormat(t *testing.T, f *Fs) {
 	assertMultiFormat := func(patterns []string, wantDataFormat, wantCtrlFormat string, wantNameRegexps ...string) {
 		err := f.setChunkNameFormat(fs.CommaSepList(patterns))
 		assert.NoError(t, err)
-		assert.Equal(t, wantDataFormat, f.dataNameFmt)
+		require.Equal(t, len(patterns), len(f.dataNameFmts))
+		assert.Equal(t, wantDataFormat, f.dataNameFmts[0])
 		assert.Equal(t, wantCtrlFormat, f.ctrlNameFmt)
 		require.Equal(t, len(wantNameRegexps), len(f.nameRegexps))
 		for i, want := range wantNameRegexps {
@@ -143,10 +145,10 @@ func testChunkNameFormat(t *testing.T, f *Fs) {
 	}
 
 	assertFormatInvalid := func(patterns ...string) {
-		prevDataFmt, prevCtrlFmt, prevRegexps := f.dataNameFmt, f.ctrlNameFmt, f.nameRegexps
+		prevDataFmts, prevCtrlFmt, prevRegexps := f.dataNameFmts, f.ctrlNameFmt, f.nameRegexps
 		err := f.setChunkNameFormat(fs.CommaSepList(patterns))
 		assert.Error(t, err)
-		assert.Equal(t, prevDataFmt, f.dataNameFmt)
+		assert.Equal(t, prevDataFmts, f.dataNameFmts)
 		assert.Equal(t, prevCtrlFmt, f.ctrlNameFmt)
 		assert.Equal(t, prevRegexps, f.nameRegexps)
 	}

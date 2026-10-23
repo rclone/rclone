@@ -393,8 +393,7 @@ type Fs struct {
 	useSHA1      bool           // mutually exclusive with useMD5
 	hashFallback bool           // allows fallback from MD5 to SHA1 and vice versa
 	hashAll      bool           // hash all files, mutually exclusive with hashFallback
-	dataNameFmt  string           // name format of data chunks
-	dataNameFmts []string         // all name formats of data chunks
+	dataNameFmts []string         // name formats of data chunks
 	ctrlNameFmt  string           // name format of control chunks
 	nameRegexps  []*regexp.Regexp // regular expressions to match chunk names
 	xactIDRand   *rand.Rand       // generator of random transaction identifiers
@@ -510,9 +509,9 @@ func (f *Fs) setChunkNameFormat(patterns fs.CommaSepList) error {
 	}
 
 	var (
-		nameRegexps              []*regexp.Regexp
-		dataNameFmts             []string
-		dataNameFmt, ctrlNameFmt string
+		nameRegexps  []*regexp.Regexp
+		dataNameFmts []string
+		ctrlNameFmt  string
 	)
 	for i, pattern := range patterns {
 		// validate pattern
@@ -560,16 +559,13 @@ func (f *Fs) setChunkNameFormat(patterns fs.CommaSepList) error {
 		}
 		strFmt := strings.ReplaceAll(pattern, "%", "%%")
 		strFmt = strings.Replace(strFmt, "*", "%s", 1)
-		dataFmt := reHashes.ReplaceAllLiteralString(strFmt, fmtDigits)
-		dataNameFmts = append(dataNameFmts, dataFmt)
+		dataNameFmts = append(dataNameFmts, reHashes.ReplaceAllLiteralString(strFmt, fmtDigits))
 		if i == 0 {
-			dataNameFmt = dataFmt
 			ctrlNameFmt = reHashes.ReplaceAllLiteralString(strFmt, "_%s")
 		}
 	}
 	f.nameRegexps = nameRegexps
 	f.dataNameFmts = dataNameFmts
-	f.dataNameFmt = dataNameFmt
 	f.ctrlNameFmt = ctrlNameFmt
 	return nil
 }
@@ -590,7 +586,7 @@ func (f *Fs) makeChunkName(filePath string, chunkNo int, ctrlType, xactID string
 	var name, tempSuffix string
 	switch {
 	case chunkNo >= 0 && ctrlType == "":
-		name = fmt.Sprintf(f.dataNameFmt, parentName, chunkNo+f.opt.StartFrom)
+		name = fmt.Sprintf(f.dataNameFmts[0], parentName, chunkNo+f.opt.StartFrom)
 	case chunkNo < 0 && ctrlTypeRegexp.MatchString(ctrlType):
 		name = fmt.Sprintf(f.ctrlNameFmt, parentName, ctrlType)
 	default:
