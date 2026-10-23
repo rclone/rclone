@@ -324,11 +324,15 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 	// detects a composite file because it finds the first chunk!
 	// (yet can't satisfy fstest.CheckListing, will ignore)
 	if err == nil && !f.useMeta {
-		firstChunkPath := f.makeChunkName(remotePath, 0, "", "")
-		newBase, testErr := cache.Get(ctx, baseName+firstChunkPath)
-		if testErr == fs.ErrorIsFile {
-			f.base = newBase
-			err = testErr
+		dir, parentName := path.Split(remotePath)
+		for _, dataFmt := range f.dataNameFmts {
+			firstChunkPath := dir + fmt.Sprintf(dataFmt, parentName, f.opt.StartFrom)
+			newBase, testErr := cache.Get(ctx, baseName+firstChunkPath)
+			if testErr == fs.ErrorIsFile {
+				f.base = newBase
+				err = testErr
+				break
+			}
 		}
 	}
 	cache.PinUntilFinalized(f.base, f)
@@ -390,6 +394,7 @@ type Fs struct {
 	hashFallback bool           // allows fallback from MD5 to SHA1 and vice versa
 	hashAll      bool           // hash all files, mutually exclusive with hashFallback
 	dataNameFmt  string           // name format of data chunks
+	dataNameFmts []string         // all name formats of data chunks
 	ctrlNameFmt  string           // name format of control chunks
 	nameRegexps  []*regexp.Regexp // regular expressions to match chunk names
 	xactIDRand   *rand.Rand       // generator of random transaction identifiers
@@ -506,6 +511,7 @@ func (f *Fs) setChunkNameFormat(patterns fs.CommaSepList) error {
 
 	var (
 		nameRegexps              []*regexp.Regexp
+		dataNameFmts             []string
 		dataNameFmt, ctrlNameFmt string
 	)
 	for i, pattern := range patterns {
@@ -548,18 +554,21 @@ func (f *Fs) setChunkNameFormat(patterns fs.CommaSepList) error {
 		nameRegexps = append(nameRegexps, regexp.MustCompile(strRegex))
 
 		// craft printf formats for active data/control chunks
+		fmtDigits := "%d"
+		if numDigits > 1 {
+			fmtDigits = fmt.Sprintf("%%0%dd", numDigits)
+		}
+		strFmt := strings.ReplaceAll(pattern, "%", "%%")
+		strFmt = strings.Replace(strFmt, "*", "%s", 1)
+		dataFmt := reHashes.ReplaceAllLiteralString(strFmt, fmtDigits)
+		dataNameFmts = append(dataNameFmts, dataFmt)
 		if i == 0 {
-			fmtDigits := "%d"
-			if numDigits > 1 {
-				fmtDigits = fmt.Sprintf("%%0%dd", numDigits)
-			}
-			strFmt := strings.ReplaceAll(pattern, "%", "%%")
-			strFmt = strings.Replace(strFmt, "*", "%s", 1)
-			dataNameFmt = reHashes.ReplaceAllLiteralString(strFmt, fmtDigits)
+			dataNameFmt = dataFmt
 			ctrlNameFmt = reHashes.ReplaceAllLiteralString(strFmt, "_%s")
 		}
 	}
 	f.nameRegexps = nameRegexps
+	f.dataNameFmts = dataNameFmts
 	f.dataNameFmt = dataNameFmt
 	f.ctrlNameFmt = ctrlNameFmt
 	return nil
