@@ -157,7 +157,7 @@ and the 302nd chunk will become `big_data.txt-301.part`.
 
 You can also specify multiple comma-separated formats (e.g. `*.rc=###,*.rclone_chunk.###`).
 In this case, the first format will be used for creating new chunks, while all formats
-will be recognized when reading existing chunks.
+will be recognized when reading existing chunks (evaluated in the order specified, so more specific formats must precede more general ones if their suffixes overlap).
 
 Note that `list` assembles composite directory entries only when chunk names
 match the configured format and treats non-conforming file names as normal
