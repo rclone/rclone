@@ -611,7 +611,7 @@ func (f *Fs) parseChunkName(filePath string) (parentPath string, chunkNo int, ct
 	var match []string
 	for _, re := range f.nameRegexps {
 		match = re.FindStringSubmatch(name)
-		if match != nil && match[1] != "" {
+		if match != nil {
 			break
 		}
 	}
