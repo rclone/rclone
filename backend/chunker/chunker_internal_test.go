@@ -117,20 +117,20 @@ func testChunkNameFormat(t *testing.T, f *Fs) {
 	}()
 
 	assertFormat := func(pattern, wantDataFormat, wantCtrlFormat, wantNameRegexp string) {
-		err := f.setChunkNameFormat(pattern)
+		err := f.setChunkNameFormat(fs.CommaSepList{pattern})
 		assert.NoError(t, err)
 		assert.Equal(t, wantDataFormat, f.dataNameFmt)
 		assert.Equal(t, wantCtrlFormat, f.ctrlNameFmt)
 		assert.Equal(t, wantNameRegexp, f.nameRegexps[0].String())
 	}
 
-	assertFormatValid := func(pattern string) {
-		err := f.setChunkNameFormat(pattern)
+	assertFormatValid := func(patterns ...string) {
+		err := f.setChunkNameFormat(fs.CommaSepList(patterns))
 		assert.NoError(t, err)
 	}
 
-	assertFormatInvalid := func(pattern string) {
-		err := f.setChunkNameFormat(pattern)
+	assertFormatInvalid := func(patterns ...string) {
+		err := f.setChunkNameFormat(fs.CommaSepList(patterns))
 		assert.Error(t, err)
 	}
 
@@ -405,14 +405,13 @@ func testChunkNameFormat(t *testing.T, f *Fs) {
 	assertMakeNamePanics("fish", 0, "", "_123")
 
 	// multiple name_format patterns
-	assertFormatValid(`*.rc=###, *.rclone_chunk.###`)
-	assertFormatValid(`*.rc=###,*.rclone_chunk.###`)
-	assertFormatValid(`*.rc=###, *.rclone_chunk.###, *___###`)
-	assertFormatInvalid(`*.rc=###, invalid`)
-	assertFormatInvalid(`invalid, *.rc=###`)
-	assertFormatInvalid(`,`)
+	assertFormatValid(`*.rc=###`, `*.rclone_chunk.###`)
+	assertFormatValid(`*.rc=###`, `*.rclone_chunk.###`, `*___###`)
+	assertFormatInvalid(`*.rc=###`, `invalid`)
+	assertFormatInvalid(`invalid`, `*.rc=###`)
+	assertFormatInvalid()
 
-	err := f.setChunkNameFormat(`*.rc=###, *.rclone_chunk.###`)
+	err := f.setChunkNameFormat(fs.CommaSepList{"*.rc=###", "*.rclone_chunk.###"})
 	assert.NoError(t, err)
 	f.opt.StartFrom = 1
 
@@ -436,7 +435,7 @@ func testChunkNameFormat(t *testing.T, f *Fs) {
 	assertParseName(`fish.other.001`, "", -1, "", "")
 
 	// backward compatibility: resetting to single format recognizes only that format
-	err = f.setChunkNameFormat(`*.rclone_chunk.###`)
+	err = f.setChunkNameFormat(fs.CommaSepList{"*.rclone_chunk.###"})
 	assert.NoError(t, err)
 	assertMakeName(`fish.rclone_chunk.001`, "fish", 0, "", "")
 	assertParseName(`fish.rclone_chunk.001`, "fish", 0, "", "")
@@ -934,7 +933,7 @@ func testMultipleNameFormats(t *testing.T, f *Fs) {
 	contents2 := random.String(50)
 
 	// 1. Write legacy file using single pattern
-	require.NoError(t, f.setChunkNameFormat("*.rclone_chunk.###"))
+	require.NoError(t, f.setChunkNameFormat(fs.CommaSepList{"*.rclone_chunk.###"}))
 	file1Name := path.Join(dir, "legacy_file.txt")
 	item1 := fstest.Item{Path: file1Name, ModTime: modTime}
 	obj1 := fstests.PutTestContents(ctx, t, f, &item1, contents1, true)
@@ -953,7 +952,7 @@ func testMultipleNameFormats(t *testing.T, f *Fs) {
 	assert.True(t, hasLegacyChunks, "baseFs must contain .rclone_chunk. files")
 
 	// 2. Switch to multiple formats: primary = *.rc=###, fallback = *.rclone_chunk.###
-	require.NoError(t, f.setChunkNameFormat("*.rc=###, *.rclone_chunk.###"))
+	require.NoError(t, f.setChunkNameFormat(fs.CommaSepList{"*.rc=###", "*.rclone_chunk.###"}))
 
 	// 3. Read back legacy file and verify contents
 	readObj1, err := f.NewObject(ctx, file1Name)

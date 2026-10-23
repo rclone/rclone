@@ -403,7 +403,7 @@ type Fs struct {
 // configure sets up chunker for given name format, meta format and hash type.
 // It also seeds the source of random transaction identifiers.
 // configure must be called only from NewFs or by unit tests.
-func (f *Fs) configure(nameFormat any, metaFormat, hashType, transactionMode string) error {
+func (f *Fs) configure(nameFormat fs.CommaSepList, metaFormat, hashType, transactionMode string) error {
 	if err := f.setChunkNameFormat(nameFormat); err != nil {
 		return fmt.Errorf("invalid name format '%s': %w", nameFormat, err)
 	}
@@ -499,23 +499,7 @@ func (f *Fs) setTransactionMode(transactionMode string) error {
 // setChunkNameFormat converts pattern based chunk name format
 // into Printf format and Regular expressions for data and
 // control chunks.
-func (f *Fs) setChunkNameFormat(nameFormat any) error {
-	var patterns []string
-	switch v := nameFormat.(type) {
-	case string:
-		var list fs.CommaSepList
-		if err := list.Set(v); err != nil {
-			return err
-		}
-		patterns = list
-	case fs.CommaSepList:
-		patterns = v
-	case []string:
-		patterns = v
-	default:
-		return fmt.Errorf("unexpected name format type %T", nameFormat)
-	}
-
+func (f *Fs) setChunkNameFormat(patterns fs.CommaSepList) error {
 	if len(patterns) == 0 {
 		return errors.New("name_format cannot be empty")
 	}
