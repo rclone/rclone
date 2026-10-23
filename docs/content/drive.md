@@ -1722,13 +1722,17 @@ This command copies files by ID.
 Usage examples:
 
 ```console
-rclone backend copyid drive: ID path
-rclone backend copyid drive: ID1 path1 ID2 path2
+rclone backend copyid drive: ID drive:path
+rclone backend copyid drive: ID1 drive:path1 ID2 drive:path2
 ```
 
 It copies the drive file with ID given to the path (an rclone path which
 will be passed internally to rclone copyto). The ID and path pairs can be
 repeated.
+
+A path without a remote name, such as dir/file.txt, is a local path, so the
+file is copied to the local disk. To copy within the drive, include the
+remote, as in drive:dir/file.txt.
 
 The path should end with a / to indicate copy the file as named to
 this directory. If it doesn't end with a / then the last path
@@ -1753,12 +1757,16 @@ This command moves files by ID.
 Usage examples:
 
 ```console
-rclone backend moveid drive: ID path
-rclone backend moveid drive: ID1 path1 ID2 path2
+rclone backend moveid drive: ID drive:path
+rclone backend moveid drive: ID1 drive:path1 ID2 drive:path2
 ```
 
 It moves the drive file with ID given to the path (an rclone path which
 will be passed internally to rclone moveto).
+
+A path without a remote name, such as dir/file.txt, is a local path, so the
+file is moved to the local disk and removed from the drive. To move within
+the drive, include the remote, as in drive:dir/file.txt.
 
 The path should end with a / to indicate move the file as named to
 this directory. If it doesn't end with a / then the last path
