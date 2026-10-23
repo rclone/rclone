@@ -8,10 +8,12 @@ import (
 	"crypto/rand"
 	"encoding/base32"
 	"encoding/base64"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
 	"path"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -798,6 +800,165 @@ func (c *Cipher) encryptData(in io.Reader) (io.Reader, *encrypter, error) {
 func (c *Cipher) EncryptData(in io.Reader) (io.Reader, error) {
 	out, _, err := c.encryptData(in)
 	return out, err
+}
+
+// chunkBlocks returns how many blocks of plaintext go in a chunk when
+// the wrapped remote wants chunks of chunkSize bytes and takes chunks
+// of at most maxChunkSize bytes, 0 meaning no limit is known. It
+// returns 0 if the file header and one block don't fit maxChunkSize.
+//
+// Ciphertext can't come out exactly chunkSize long, so the chunk is
+// rounded up to whole blocks - a part below the remote's minimum part
+// size is rejected, one a block longer is fine - unless the file
+// header and the extra block would take the first chunk over
+// maxChunkSize, when it is rounded down to fit instead.
+func chunkBlocks(chunkSize, maxChunkSize int64) int64 {
+	blocks := max((chunkSize+blockSize-1)/blockSize, 1)
+	if maxChunkSize > 0 && blocks*blockSize+int64(fileHeaderSize) > maxChunkSize {
+		blocks = max((maxChunkSize-int64(fileHeaderSize))/blockSize, 0)
+	}
+	return blocks
+}
+
+// encryptedChunkSize returns the size of the ciphertext of a chunk
+// holding plaintextSize bytes, including the file header if header is
+// set.
+func encryptedChunkSize(plaintextSize int64, header bool) int64 {
+	blocks, residue := plaintextSize/blockDataSize, plaintextSize%blockDataSize
+	size := blocks * blockSize
+	if residue != 0 {
+		size += blockHeaderSize + residue
+	}
+	if header {
+		size += int64(fileHeaderSize)
+	}
+	return size
+}
+
+// encryptChunk writes to w the ciphertext of the plaintext read from
+// in, which starts at block blockIndex of the file, and returns how
+// many bytes of plaintext it read. The file header is written first if
+// header is set, which is right only for blockIndex 0.
+//
+// The nonce of block n is the file nonce plus n whichever chunk the
+// block arrives in, so chunks can be encrypted in any order and in
+// parallel and the bytes are the same as the sequential encrypter
+// produces for the whole file. For the same reason encrypting a chunk
+// again gives identical ciphertext, which is what lets a chunk be
+// retried.
+//
+// Every block but the last of the file must be full, so in must hold a
+// multiple of blockDataSize bytes unless it ends at the end of the file.
+func (c *Cipher) encryptChunk(w io.Writer, in io.Reader, fileNonce nonce, blockIndex int64, header bool) (n int64, err error) {
+	if header {
+		var hdr [fileHeaderSize]byte
+		copy(hdr[:], fileMagicBytes)
+		copy(hdr[fileMagicSize:], fileNonce[:])
+		if _, err = w.Write(hdr[:]); err != nil {
+			return 0, err
+		}
+	}
+	blockNonce := fileNonce
+	blockNonce.add(uint64(blockIndex))
+	buf, readBuf := c.getBlock(), c.getBlock()
+	defer c.putBlock(buf)
+	defer c.putBlock(readBuf)
+	for {
+		nn, readErr := readers.ReadFill(in, (*readBuf)[:blockDataSize])
+		if nn > 0 {
+			out := secretbox.Seal((*buf)[:0], (*readBuf)[:nn], blockNonce.pointer(), &c.dataKey)
+			if _, err = w.Write(out); err != nil {
+				return n, err
+			}
+			n += int64(nn)
+			blockNonce.increment()
+		}
+		if readErr == io.EOF {
+			return n, nil
+		}
+		if readErr != nil {
+			return n, readErr
+		}
+	}
+}
+
+// blockTags keeps the first 8 bytes of the authenticator of each block
+// of encrypted data written to it, 8 bytes per 64 KiB block. With the
+// same key and nonce a block holding different data keeps the same 8
+// bytes only with a chance of about 2^-64, so the tags of two
+// encryptions of a file tell whether they match block by block.
+type blockTags struct {
+	skip int64   // bytes of file header still to skip
+	off  int     // offset into the current block
+	cur  [8]byte // start of the authenticator of the current block
+	tags []uint64
+}
+
+// newBlockTags makes a blockTags for encrypted data which starts with
+// the file header if header is set.
+func newBlockTags(header bool) *blockTags {
+	b := &blockTags{}
+	if header {
+		b.skip = int64(fileHeaderSize)
+	}
+	return b
+}
+
+// Write records the authenticators of the blocks in p.
+func (b *blockTags) Write(p []byte) (int, error) {
+	n := len(p)
+	for len(p) > 0 {
+		switch {
+		case b.skip > 0:
+			k := min(int64(len(p)), b.skip)
+			b.skip -= k
+			p = p[k:]
+		case b.off < len(b.cur):
+			k := copy(b.cur[b.off:], p)
+			b.off += k
+			p = p[k:]
+			if b.off == len(b.cur) {
+				b.tags = append(b.tags, binary.LittleEndian.Uint64(b.cur[:]))
+			}
+		default:
+			k := min(len(p), blockSize-b.off)
+			b.off += k
+			p = p[k:]
+			if b.off == blockSize {
+				b.off = 0
+			}
+		}
+	}
+	return n, nil
+}
+
+// blockTagRecord keeps the block tags of the first pass over a file
+// which worked out its hash, and whether a later pass found different
+// data. It is safe for concurrent use.
+type blockTagRecord struct {
+	mu     sync.Mutex
+	tags   []uint64
+	done   bool // a pass has finished
+	differ bool // a later pass had different tags
+}
+
+// add records the tags of a finished pass.
+func (r *blockTagRecord) add(tags []uint64) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if !r.done {
+		r.tags, r.done = tags, true
+	} else if !slices.Equal(r.tags, tags) {
+		r.differ = true
+	}
+}
+
+// get returns the recorded tags, whether a pass has finished and
+// whether the passes disagreed.
+func (r *blockTagRecord) get() (tags []uint64, done, differ bool) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.tags, r.done, r.differ
 }
 
 // decrypter decrypts an io.ReaderCloser on the fly

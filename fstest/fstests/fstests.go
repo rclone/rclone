@@ -964,6 +964,93 @@ func Run(t *testing.T, opt *Opt) {
 			assert.NoError(t, f.Rmdir(ctx, "writer-at-subdir"))
 		})
 
+		// TestFsOpenChunkWriterVariableSize tests that a chunk writer
+		// which sets ChunkWriterVariableSize takes chunks of sizes other
+		// than the one it asked for, the first a different size from
+		// the rest, as a wrapping backend which adds a header writes them
+		//
+		// go test -v -run 'TestIntegration/FsMkdir/FsOpenChunkWriterVariableSize'
+		t.Run("FsOpenChunkWriterVariableSize", func(t *testing.T) {
+			skipIfNotOk(t)
+			openChunkWriter := f.Features().OpenChunkWriter
+			if openChunkWriter == nil || !f.Features().ChunkWriterVariableSize {
+				t.Skip("FS has no OpenChunkWriter which takes chunks of variable size")
+			}
+			size5MBs := 5 * 1024 * 1024
+			size1MB := 1 * 1024 * 1024
+
+			if setUploadChunkSizer, ok := f.(SetUploadChunkSizer); ok {
+				oldChunkSize, err := setUploadChunkSizer.SetUploadChunkSize(fs.SizeSuffix(size5MBs))
+				if err != nil {
+					t.Logf("Can't set the chunk size to %v: %v", fs.SizeSuffix(size5MBs), err)
+				} else {
+					defer func() {
+						_, err := setUploadChunkSizer.SetUploadChunkSize(oldChunkSize)
+						assert.NoError(t, err)
+					}()
+				}
+			}
+
+			path := "writer-at-subdir/writer-at-variable-file"
+			open := func(size int64) (fs.ChunkWriterInfo, fs.ChunkWriter, error) {
+				objSrc := object.NewStaticObjectInfo(path, file1.ModTime, size, true, nil, nil)
+				return openChunkWriter(ctx, path, objSrc, &fs.ChunkOption{
+					ChunkSize: int64(size5MBs),
+				})
+			}
+			info, out, err := open(int64(3*size5MBs + size1MB))
+			if errors.Is(err, fs.ErrorFileTooSmall) {
+				t.Skipf("file too small for multipart upload: %v", err)
+			}
+			require.NoError(t, err)
+			require.NoError(t, out.Abort(ctx))
+			if info.ChunkSize > int64(128*fs.Mebi) {
+				t.Skipf("chunk size %v too big to hold in memory", fs.SizeSuffix(info.ChunkSize))
+			}
+
+			// The chunks are a little longer than asked for, the first
+			// longer than the rest, or shorter if that would be over the
+			// biggest the writer takes
+			first, middle := info.ChunkSize+48, info.ChunkSize+16
+			if info.MaxChunkSize > 0 && first > info.MaxChunkSize {
+				first, middle = info.ChunkSize-48, info.ChunkSize-16
+			}
+			if first < info.MinChunkSize {
+				t.Skip("no chunk size other than the one asked for fits the limits")
+			}
+			chunkSize := info.ChunkSize
+			sizes := []int64{first, middle, int64(size1MB)}
+			info, out, err = open(first + middle + int64(size1MB))
+			require.NoError(t, err)
+			if info.ChunkSize != chunkSize {
+				require.NoError(t, out.Abort(ctx))
+				t.Skipf("chunk size changed from %v to %v with the file size", fs.SizeSuffix(chunkSize), fs.SizeSuffix(info.ChunkSize))
+			}
+			var contents []string
+			for _, size := range sizes {
+				contents = append(contents, random.String(int(size)))
+			}
+
+			// Write the chunks out of order, chunk 0 last
+			for i := 1; i <= len(contents); i++ {
+				chunkNumber := i % len(contents)
+				n, err := out.WriteChunk(ctx, chunkNumber, strings.NewReader(contents[chunkNumber]))
+				assert.NoError(t, err)
+				assert.Equal(t, int64(len(contents[chunkNumber])), n)
+			}
+
+			assert.NoError(t, out.Close(ctx))
+
+			obj := fstest.NewObject(ctx, t, f, path)
+			originalContents := strings.Join(contents, "")
+			fileContents := ReadObject(ctx, t, obj, -1)
+			isEqual := originalContents == fileContents
+			assert.True(t, isEqual, "contents of file differ")
+
+			assert.NoError(t, obj.Remove(ctx))
+			assert.NoError(t, f.Rmdir(ctx, "writer-at-subdir"))
+		})
+
 		// TestFsChangeNotify tests that changes are properly
 		// propagated
 		//
