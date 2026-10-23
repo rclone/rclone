@@ -504,12 +504,7 @@ func (f *Fs) setChunkNameFormat(patterns fs.CommaSepList) error {
 		return errors.New("name_format cannot be empty")
 	}
 
-	reHashes := regexp.MustCompile("[#]+")
-	const mainNameRegStr = "(.+?)"
-
-	var regexps []*regexp.Regexp
-	var dataNameFmt, ctrlNameFmt string
-
+	f.nameRegexps = nil
 	for i, pattern := range patterns {
 		pattern = strings.TrimSpace(pattern)
 		// validate pattern
@@ -534,23 +529,23 @@ func (f *Fs) setChunkNameFormat(patterns fs.CommaSepList) error {
 		}
 
 		// craft a unified regular expression for all types of chunks
+		reHashes := regexp.MustCompile("[#]+")
 		reDigits := "[0-9]+"
 		if numDigits > 1 {
 			reDigits = fmt.Sprintf("[0-9]{%d,}", numDigits)
 		}
 		reDataOrCtrl := fmt.Sprintf("(?:(%s)|_(%s))", reDigits, ctrlTypeRegStr)
 
+		// this must be non-greedy or else it could eat up temporary suffix
+		const mainNameRegStr = "(.+?)"
+
 		strRegex := regexp.QuoteMeta(pattern)
 		strRegex = reHashes.ReplaceAllLiteralString(strRegex, reDataOrCtrl)
 		strRegex = strings.ReplaceAll(strRegex, "\\*", mainNameRegStr)
 		strRegex = fmt.Sprintf("^%s(?:%s|%s)?$", strRegex, tempSuffixRegStr, tempSuffixRegOld)
-		re, err := regexp.Compile(strRegex)
-		if err != nil {
-			return err
-		}
-		regexps = append(regexps, re)
+		f.nameRegexps = append(f.nameRegexps, regexp.MustCompile(strRegex))
 
-		// primary pattern generates formats for new chunks
+		// craft printf formats for active data/control chunks
 		if i == 0 {
 			fmtDigits := "%d"
 			if numDigits > 1 {
@@ -558,14 +553,10 @@ func (f *Fs) setChunkNameFormat(patterns fs.CommaSepList) error {
 			}
 			strFmt := strings.ReplaceAll(pattern, "%", "%%")
 			strFmt = strings.Replace(strFmt, "*", "%s", 1)
-			dataNameFmt = reHashes.ReplaceAllLiteralString(strFmt, fmtDigits)
-			ctrlNameFmt = reHashes.ReplaceAllLiteralString(strFmt, "_%s")
+			f.dataNameFmt = reHashes.ReplaceAllLiteralString(strFmt, fmtDigits)
+			f.ctrlNameFmt = reHashes.ReplaceAllLiteralString(strFmt, "_%s")
 		}
 	}
-
-	f.nameRegexps = regexps
-	f.dataNameFmt = dataNameFmt
-	f.ctrlNameFmt = ctrlNameFmt
 	return nil
 }
 
