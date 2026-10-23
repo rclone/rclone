@@ -137,9 +137,10 @@ chunker on the remaining files.
 
 #### Chunk names
 
-The default chunk name format is `*.rclone_chunk.###`, hence by default
-chunk names are `BIG_FILE_NAME.rclone_chunk.001`,
-`BIG_FILE_NAME.rclone_chunk.002` etc. You can configure another name format
+The default chunk name format is `*.rc=###,*.rclone_chunk.###`, hence by default
+new chunk names are `BIG_FILE_NAME.rc=001`,
+`BIG_FILE_NAME.rc=002` etc., while existing chunks using `*.rclone_chunk.###`
+are also recognized. You can configure another name format
 using the `name_format` configuration file option. The format uses asterisk
 `*` as a placeholder for the base file name and one or more consecutive
 hash characters `#` as a placeholder for sequential chunk number.
@@ -164,7 +165,7 @@ match the configured format and treats non-conforming file names as normal
 non-chunked files.
 
 When using `norename` transactions, chunk names will additionally have a unique
-file version suffix. For example, `BIG_FILE_NAME.rclone_chunk.001_bp562k`.
+file version suffix. For example, `BIG_FILE_NAME.rc=001_bp562k`.
 
 ### Metadata
 
@@ -287,13 +288,14 @@ Chunker requires wrapped remote to support server-side `move` (or `copy` +
 This is because it internally renames temporary chunk files to their final
 names when an operation completes successfully.
 
-Chunker encodes chunk number in file name, so with default `name_format`
-setting it adds 17 characters. Also chunker adds 7 characters of temporary
-suffix during operations. Many file systems limit base file name without path
-by 255 characters. Using rclone's crypt remote as a base file system limits
-file name by 143 characters. Thus, maximum name length is 231 for most files
-and 119 for chunker-over-crypt. A user in need can change name format to
-e.g. `*.rcc##` and save 10 characters (provided at most 99 chunks per file).
+Chunker encodes chunk number in file name, so with the primary default
+`name_format` (`*.rc=###`) it adds 7 characters for new chunks. Also chunker
+adds 7 characters of temporary suffix during operations. Many file systems
+limit base file name without path by 255 characters. Using rclone's crypt
+remote as a base file system limits file name by 143 characters. Thus,
+maximum name length is 241 for most files and 129 for chunker-over-crypt.
+Legacy chunks created with `*.rclone_chunk.###` (which added 17 characters)
+remain recognized by default.
 
 Note that a move implemented using the copy-and-delete method may incur
 double charging with some cloud storage providers.
@@ -305,9 +307,12 @@ can cause files that have been treated as chunks before the change to pop up
 in directory listings as normal files and vice versa.
 To safely transition to a new chunk naming scheme without data migration,
 you can configure multiple comma-separated formats
-(e.g. `name_format = *.rc=###,*.rclone_chunk.###`). This ensures that
+(as the default `name_format = *.rc=###,*.rclone_chunk.###` does). This ensures that
 previously uploaded chunks remain recognized under the old format while
 new chunks use the new format.
+Beware that chunks created with `*.rc=###` will not be recognized as chunks
+by older rclone versions that only default to `*.rclone_chunk.###` unless
+their `name_format` is explicitly configured to match.
 If you need to change `chunk_size`, you should run data migration as
 described above.
 
