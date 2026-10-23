@@ -1009,11 +1009,27 @@ func testMultipleNameFormats(t *testing.T, f *Fs) {
 	require.NoError(t, err)
 	assert.Equal(t, 2, len(entries))
 
-	// 6. Clean up files
-	_ = obj1.Remove(ctx)
-	_ = obj2.Remove(ctx)
+	// 6. Overwriting legacy file must remove old format chunks and write primary format chunks
+	contents1Updated := random.String(50)
+	obj1Updated := fstests.PutTestContents(ctx, t, f, &item1, contents1Updated, true)
+	require.NotNil(t, obj1Updated)
 
-	// 7. Verify NewFs detects ErrorIsFile for fallback format when meta_format is none
+	baseEntries, err = f.base.List(ctx, dir)
+	require.NoError(t, err)
+	hasLegacyChunks = false
+	for _, entry := range baseEntries {
+		if strings.Contains(entry.Remote(), ".rclone_chunk.") {
+			hasLegacyChunks = true
+			break
+		}
+	}
+	assert.False(t, hasLegacyChunks, "old .rclone_chunk. files must be removed after overwrite")
+
+	// 7. Clean up files
+	require.NoError(t, obj1Updated.Remove(ctx))
+	require.NoError(t, obj2.Remove(ctx))
+
+	// 8. Verify NewFs detects ErrorIsFile for fallback format when meta_format is none
 	noMetaChunk := testPutFile(ctx, t, f.base, path.Join(dir, "nometa_legacy.txt.rclone_chunk.001"), "chunkdata", "nometa chunk", true)
 	m := configmap.Simple{
 		"remote":       f.opt.Remote,
