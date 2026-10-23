@@ -1012,6 +1012,23 @@ func testMultipleNameFormats(t *testing.T, f *Fs) {
 	// 6. Clean up files
 	_ = obj1.Remove(ctx)
 	_ = obj2.Remove(ctx)
+
+	// 7. Verify NewFs detects ErrorIsFile for fallback format when meta_format is none
+	noMetaChunk := testPutFile(ctx, t, f.base, path.Join(dir, "nometa_legacy.txt.rclone_chunk.001"), "chunkdata", "nometa chunk", true)
+	m := configmap.Simple{
+		"remote":       f.opt.Remote,
+		"meta_format":  "none",
+		"hash_type":    "none",
+		"name_format":  "*.rc=###,*.rclone_chunk.###",
+		"start_from":   "1",
+		"transactions": "rename",
+	}
+	noMetaFs, err := NewFs(ctx, f.Name()+"NoMeta", fspath.JoinRootPath(f.Root(), path.Join(dir, "nometa_legacy.txt")), m)
+	assert.ErrorIs(t, err, fs.ErrorIsFile)
+	if noMetaFs != nil {
+		assert.Equal(t, fspath.JoinRootPath(f.Root(), dir), noMetaFs.Root())
+	}
+	_ = noMetaChunk.Remove(ctx)
 }
 
 func testChunkerServerSideMove(t *testing.T, f *Fs) {
