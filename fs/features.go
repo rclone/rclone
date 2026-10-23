@@ -40,6 +40,8 @@ type Features struct {
 	Overlay                  bool // this wraps one or more backends to add functionality
 	ChunkWriterDoesntSeek    bool // set if the chunk writer doesn't need to read the data more than once
 	DoubleSlash              bool // set if backend supports double slashes in paths
+	WritePOSIXProperties     bool // can preserve POSIX properties from local uploads
+	WriteSymlinks            bool // can preserve local symlink names and targets on upload
 
 	// Purge all files in the directory specified
 	//
@@ -404,6 +406,8 @@ func (ft *Features) Mask(ctx context.Context, f Fs) *Features {
 	// ft.Overlay = ft.Overlay && mask.Overlay don't propagate Overlay
 	ft.ChunkWriterDoesntSeek = ft.ChunkWriterDoesntSeek && mask.ChunkWriterDoesntSeek
 	ft.DoubleSlash = ft.DoubleSlash && mask.DoubleSlash
+	ft.WritePOSIXProperties = ft.WritePOSIXProperties && mask.WritePOSIXProperties
+	ft.WriteSymlinks = ft.WriteSymlinks && mask.WriteSymlinks
 
 	if mask.Purge == nil {
 		ft.Purge = nil

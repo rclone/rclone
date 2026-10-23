@@ -110,6 +110,63 @@ func skipIfNoSymlinks(t *testing.T) {
 	}
 }
 
+func TestPreserveSymlinks(t *testing.T) {
+	switch runtime.GOOS {
+	case "linux", "darwin", "freebsd", "netbsd", "openbsd", "solaris":
+	default:
+		t.Skip("POSIX symlinks only")
+	}
+	skipIfNoSymlinks(t)
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.PreserveSymlinks = true
+	root := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(root, "file"+fs.LinkSuffix), []byte("regular"), 0600))
+	require.NoError(t, os.Mkdir(filepath.Join(root, "directory"), 0700))
+	targets := map[string]string{
+		"broken":               "missing",
+		"directory-link":       "directory",
+		"loop":                 "loop",
+		"link" + fs.LinkSuffix: "../relative-target",
+		fs.LinkSuffix:          "missing",
+		"." + fs.LinkSuffix:    "missing",
+		".." + fs.LinkSuffix:   "missing",
+	}
+	for name, target := range targets {
+		require.NoError(t, os.Symlink(target, filepath.Join(root, name)))
+	}
+	f, err := NewFs(ctx, "local", root, configmap.Simple{})
+	require.NoError(t, err)
+	entries, err := f.List(ctx, "")
+	require.NoError(t, err)
+	assert.Len(t, entries, len(targets)+2)
+	for name, target := range targets {
+		o, err := f.NewObject(ctx, name)
+		require.NoError(t, err)
+		assert.Equal(t, name, o.Remote())
+		assert.Equal(t, int64(len(target)), o.Size())
+		in, err := o.Open(ctx)
+		require.NoError(t, err)
+		body, err := io.ReadAll(in)
+		require.NoError(t, err)
+		require.NoError(t, in.Close())
+		assert.Equal(t, target, string(body))
+		meta, err := fs.GetMetadata(ctx, fs.NewOverrideRemote(o, "renamed"))
+		require.NoError(t, err)
+		assert.Equal(t, "120777", meta["mode"])
+	}
+	o, err := f.NewObject(ctx, "file"+fs.LinkSuffix)
+	require.NoError(t, err)
+	assert.False(t, o.(*Object).translatedLink)
+	single, err := NewFs(ctx, "local", filepath.Join(root, "broken"), configmap.Simple{})
+	require.ErrorIs(t, err, fs.ErrorIsFile)
+	assert.Equal(t, f.Root(), single.Root())
+
+	for _, opts := range []configmap.Simple{{"copy_links": "true"}, {"links": "true"}, {"skip_links": "true"}} {
+		_, err := NewFs(ctx, "local", root, opts)
+		assert.ErrorContains(t, err, "--preserve-symlinks")
+	}
+}
+
 func TestSymlink(t *testing.T) {
 	skipIfNoSymlinks(t)
 	ctx := context.Background()

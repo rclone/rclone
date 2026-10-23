@@ -434,6 +434,9 @@ func MoveTransfer(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string,
 
 // move - see Move for help
 func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.Object, isTransfer bool) (newDst fs.Object, err error) {
+	if err := fs.CheckUploadPreservation(ctx, fdst, src.Fs()); err != nil {
+		return nil, err
+	}
 	origRemote := remote // avoid double-transform on fallback to copy
 	remote = transform.Path(ctx, remote, false)
 	ci := fs.GetConfig(ctx)
@@ -2036,6 +2039,14 @@ func BackupDir(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, srcFileName string) 
 
 // MoveBackupDir moves a file to the backup dir
 func MoveBackupDir(ctx context.Context, backupDir fs.Fs, dst fs.Object) (err error) {
+	if ci := fs.GetConfig(ctx); ci.PreservePOSIXProperties || ci.PreserveSymlinks {
+		// Backup copies preserve the existing remote metadata, not local upload properties.
+		var backupConfig *fs.ConfigInfo
+		ctx, backupConfig = fs.AddConfig(ctx)
+		backupConfig.PreservePOSIXProperties = false
+		backupConfig.PreserveSymlinks = false
+		backupConfig.Metadata = true
+	}
 	remoteWithSuffix := SuffixName(ctx, dst.Remote())
 	overwritten, _ := backupDir.NewObject(ctx, remoteWithSuffix)
 	_, err = Move(ctx, backupDir, overwritten, remoteWithSuffix, dst)
@@ -2096,6 +2107,9 @@ func MoveCaseInsensitive(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileNam
 
 // moveOrCopyFile moves or copies a single file possibly to a new name
 func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFileName string, cp bool, allowOverlap bool) (err error) {
+	if err := fs.CheckUploadPreservation(ctx, fdst, fsrc); err != nil {
+		return err
+	}
 	ci := fs.GetConfig(ctx)
 	if ci.NoCheckDest && ci.Immutable {
 		return errors.New("can't use --no-check-dest with --immutable")

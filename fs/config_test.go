@@ -30,6 +30,13 @@ func TestGetConfig(t *testing.T) {
 	assert.Equal(t, config2, config2ctx)
 }
 
+func TestPreserveSymlinksConflictsWithLinks(t *testing.T) {
+	ctx, ci := AddConfig(context.Background())
+	ci.PreserveSymlinks = true
+	ci.Links = true
+	assert.ErrorContains(t, ci.Reload(ctx), "--preserve-symlinks")
+}
+
 // The rc request marker must survive CopyConfig, which is how rclone
 // does detach context but keep config.
 func TestRCRequestContext(t *testing.T) {
