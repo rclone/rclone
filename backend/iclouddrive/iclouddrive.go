@@ -694,6 +694,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		pacer:  fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.features = (&fs.Features{
+		CaseInsensitive:         true, // names are matched with EqualFold, see findLeafItem
 		CanHaveEmptyDirectories: true,
 		PartialUploads:          false,
 	}).Fill(ctx, f)
