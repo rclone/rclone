@@ -496,15 +496,18 @@ func (f *Fs) setTransactionMode(transactionMode string) error {
 	return nil
 }
 
-// setChunkNameFormat converts pattern based chunk name format
-// into Printf format and Regular expressions for data and
+// setChunkNameFormat converts pattern-based chunk name formats
+// into Printf formats and regular expressions for data and
 // control chunks.
 func (f *Fs) setChunkNameFormat(patterns fs.CommaSepList) error {
 	if len(patterns) == 0 {
 		return errors.New("name_format cannot be empty")
 	}
 
-	f.nameRegexps = nil
+	var (
+		nameRegexps              []*regexp.Regexp
+		dataNameFmt, ctrlNameFmt string
+	)
 	for i, pattern := range patterns {
 		// validate pattern
 		if strings.Count(pattern, "*") != 1 {
@@ -542,7 +545,7 @@ func (f *Fs) setChunkNameFormat(patterns fs.CommaSepList) error {
 		strRegex = reHashes.ReplaceAllLiteralString(strRegex, reDataOrCtrl)
 		strRegex = strings.ReplaceAll(strRegex, "\\*", mainNameRegStr)
 		strRegex = fmt.Sprintf("^%s(?:%s|%s)?$", strRegex, tempSuffixRegStr, tempSuffixRegOld)
-		f.nameRegexps = append(f.nameRegexps, regexp.MustCompile(strRegex))
+		nameRegexps = append(nameRegexps, regexp.MustCompile(strRegex))
 
 		// craft printf formats for active data/control chunks
 		if i == 0 {
@@ -552,10 +555,13 @@ func (f *Fs) setChunkNameFormat(patterns fs.CommaSepList) error {
 			}
 			strFmt := strings.ReplaceAll(pattern, "%", "%%")
 			strFmt = strings.Replace(strFmt, "*", "%s", 1)
-			f.dataNameFmt = reHashes.ReplaceAllLiteralString(strFmt, fmtDigits)
-			f.ctrlNameFmt = reHashes.ReplaceAllLiteralString(strFmt, "_%s")
+			dataNameFmt = reHashes.ReplaceAllLiteralString(strFmt, fmtDigits)
+			ctrlNameFmt = reHashes.ReplaceAllLiteralString(strFmt, "_%s")
 		}
 	}
+	f.nameRegexps = nameRegexps
+	f.dataNameFmt = dataNameFmt
+	f.ctrlNameFmt = ctrlNameFmt
 	return nil
 }
 

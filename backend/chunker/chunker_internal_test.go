@@ -143,8 +143,12 @@ func testChunkNameFormat(t *testing.T, f *Fs) {
 	}
 
 	assertFormatInvalid := func(patterns ...string) {
+		prevDataFmt, prevCtrlFmt, prevRegexps := f.dataNameFmt, f.ctrlNameFmt, f.nameRegexps
 		err := f.setChunkNameFormat(fs.CommaSepList(patterns))
 		assert.Error(t, err)
+		assert.Equal(t, prevDataFmt, f.dataNameFmt)
+		assert.Equal(t, prevCtrlFmt, f.ctrlNameFmt)
+		assert.Equal(t, prevRegexps, f.nameRegexps)
 	}
 
 	assertMakeName := func(wantChunkName, mainName string, chunkNo int, ctrlType, xactID string) {
