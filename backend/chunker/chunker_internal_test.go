@@ -120,12 +120,14 @@ func testChunkNameFormat(t *testing.T, f *Fs) {
 		assert.NoError(t, err)
 		assert.Equal(t, wantDataFormat, f.dataNameFmt)
 		assert.Equal(t, wantCtrlFormat, f.ctrlNameFmt)
+		require.Equal(t, 1, len(f.nameRegexps))
 		assert.Equal(t, wantNameRegexp, f.nameRegexps[0].String())
 	}
 
 	assertFormatValid := func(patterns ...string) {
 		err := f.setChunkNameFormat(fs.CommaSepList(patterns))
 		assert.NoError(t, err)
+		assert.Equal(t, len(patterns), len(f.nameRegexps))
 	}
 
 	assertFormatInvalid := func(patterns ...string) {
@@ -412,6 +414,9 @@ func testChunkNameFormat(t *testing.T, f *Fs) {
 
 	err := f.setChunkNameFormat(fs.CommaSepList{"*.rc=###", "*.rclone_chunk.###"})
 	assert.NoError(t, err)
+	require.Equal(t, 2, len(f.nameRegexps))
+	assert.Equal(t, `^(.+?)\.rc=(?:([0-9]{3,})|_([a-z][a-z0-9]{2,6}))(?:_([0-9a-z]{4,9})|\.\.tmp_([0-9]{10,13}))?$`, f.nameRegexps[0].String())
+	assert.Equal(t, `^(.+?)\.rclone_chunk\.(?:([0-9]{3,})|_([a-z][a-z0-9]{2,6}))(?:_([0-9a-z]{4,9})|\.\.tmp_([0-9]{10,13}))?$`, f.nameRegexps[1].String())
 	f.opt.StartFrom = 1
 
 	// writing uses the primary format
@@ -436,6 +441,8 @@ func testChunkNameFormat(t *testing.T, f *Fs) {
 	// backward compatibility: resetting to single format recognizes only that format
 	err = f.setChunkNameFormat(fs.CommaSepList{"*.rclone_chunk.###"})
 	assert.NoError(t, err)
+	require.Equal(t, 1, len(f.nameRegexps))
+	assert.Equal(t, `^(.+?)\.rclone_chunk\.(?:([0-9]{3,})|_([a-z][a-z0-9]{2,6}))(?:_([0-9a-z]{4,9})|\.\.tmp_([0-9]{10,13}))?$`, f.nameRegexps[0].String())
 	assertMakeName(`fish.rclone_chunk.001`, "fish", 0, "", "")
 	assertParseName(`fish.rclone_chunk.001`, "fish", 0, "", "")
 	assertParseName(`fish.rc=001`, "", -1, "", "")
