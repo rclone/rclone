@@ -172,7 +172,7 @@ If chunk number has less digits than the number of hashes, it is left-padded by 
 If there are more digits in the number, they are left as is.
 Multiple comma-separated formats can be specified (e.g. "*.rc=###,*.rclone_chunk.###").
 In that case, the first format will be used for creating new chunks, and all formats
-will be recognized when reading existing chunks.
+will be recognized when reading existing chunks (matched in the order specified, so avoid formats whose suffix is a suffix of a subsequent format).
 Possible chunk files are ignored if their name does not match given format.`,
 		}, {
 			Name:     "start_from",
