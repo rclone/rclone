@@ -155,7 +155,7 @@ For example, if name format is `big_*-##.part` and original file name is
 `big_data.txt-00.part`, the 99th chunk will be `big_data.txt-98.part`
 and the 302nd chunk will become `big_data.txt-301.part`.
 
-You can also specify multiple comma-separated formats (e.g. `*.rc=###, *.rclone_chunk.###`).
+You can also specify multiple comma-separated formats (e.g. `*.rc=###,*.rclone_chunk.###`).
 In this case, the first format will be used for creating new chunks, while all formats
 will be recognized when reading existing chunks.
 
@@ -305,7 +305,7 @@ can cause files that have been treated as chunks before the change to pop up
 in directory listings as normal files and vice versa.
 To safely transition to a new chunk naming scheme without data migration,
 you can configure multiple comma-separated formats
-(e.g. `name_format = *.rc=###, *.rclone_chunk.###`). This ensures that
+(e.g. `name_format = *.rc=###,*.rclone_chunk.###`). This ensures that
 previously uploaded chunks remain recognized under the old format while
 new chunks use the new format.
 If you need to change `chunk_size`, you should run data migration as

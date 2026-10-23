@@ -170,7 +170,7 @@ The two placeholders are: base file name (*) and chunk number (#...).
 There must be one and only one asterisk and one or more consecutive hash characters.
 If chunk number has less digits than the number of hashes, it is left-padded by zeros.
 If there are more digits in the number, they are left as is.
-Multiple comma-separated formats can be specified (e.g. "*.rc=###, *.rclone_chunk.###").
+Multiple comma-separated formats can be specified (e.g. "*.rc=###,*.rclone_chunk.###").
 In that case, the first format will be used for creating new chunks, and all formats
 will be recognized when reading existing chunks.
 Possible chunk files are ignored if their name does not match given format.`,
@@ -506,7 +506,6 @@ func (f *Fs) setChunkNameFormat(patterns fs.CommaSepList) error {
 
 	f.nameRegexps = nil
 	for i, pattern := range patterns {
-		pattern = strings.TrimSpace(pattern)
 		// validate pattern
 		if strings.Count(pattern, "*") != 1 {
 			return errors.New("pattern must have exactly one asterisk (*)")
