@@ -23,6 +23,41 @@ func TestMetadataSet(t *testing.T) {
 	assert.Equal(t, "value2", m["key"])
 }
 
+func TestCheckUploadPreservation(t *testing.T) {
+	for _, tc := range []struct {
+		name                                                                string
+		posix, symlinks, local, writePOSIX, writeSymlinks, overlay, wantErr bool
+	}{
+		{"Disabled", false, false, false, false, false, false, false},
+		{"POSIX", true, false, true, true, false, false, false},
+		{"Symlinks", false, true, true, false, true, false, false},
+		{"Both", true, true, true, true, true, false, false},
+		{"RemoteSource", true, true, false, true, true, false, true},
+		{"UnsupportedPOSIX", true, false, true, false, true, false, true},
+		{"UnsupportedSymlinks", false, true, true, true, false, false, true},
+		{"Wrapper", true, true, true, true, true, true, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx, ci := fs.AddConfig(context.Background())
+			ci.PreservePOSIXProperties, ci.PreserveSymlinks = tc.posix, tc.symlinks
+			src, err := mockfs.NewFs(ctx, "source", "", nil)
+			require.NoError(t, err)
+			dst, err := mockfs.NewFs(ctx, "destination", "", nil)
+			require.NoError(t, err)
+			src.Features().IsLocal = tc.local
+			dst.Features().WritePOSIXProperties = tc.writePOSIX
+			dst.Features().WriteSymlinks = tc.writeSymlinks
+			dst.Features().Overlay = tc.overlay
+			err = fs.CheckUploadPreservation(ctx, dst, src)
+			if tc.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestMetadataMerge(t *testing.T) {
 	for _, test := range []struct {
 		in    fs.Metadata
