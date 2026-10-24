@@ -1791,6 +1791,12 @@ Note that on the local file system if you don't use `--inplace` hard
 links (Unix only) will be broken. And if you do use `--inplace` you
 won't be able to update in use executables.
 
+On macOS, if rclone clones a file (see
+[--local-no-clone](/local/#local-no-clone)) and the destination
+already exists, the existing file is replaced with a new one, even
+with `--inplace`, so hard links to it will be broken. Use
+`--local-no-clone` to keep them.
+
 Note also that versions of rclone prior to v1.63.0 behave as if the
 `--inplace` flag is always supplied.
 

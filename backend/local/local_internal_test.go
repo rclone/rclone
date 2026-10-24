@@ -99,6 +99,31 @@ func TestVerifyCopy(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// Test server-side copy over an existing file
+func TestCopyOverExisting(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	doCopy := r.Flocal.Features().Copy
+	if doCopy == nil {
+		t.Skip("local backend has no server-side copy on this platform")
+	}
+	t1 := fstest.Time("2001-02-03T04:05:06.499999999Z")
+	t2 := fstest.Time("2002-02-03T04:05:06.499999999Z")
+	file1 := r.WriteFile("a.txt", "hello1", t1)
+	file2 := r.WriteFile("b.txt", "HELLO2 longer", t2)
+
+	src, err := r.Flocal.NewObject(ctx, file1.Path)
+	require.NoError(t, err)
+	dst, err := doCopy(ctx, src, file2.Path)
+	require.NoError(t, err)
+	assert.Equal(t, file2.Path, dst.Remote())
+
+	file2.Size = file1.Size
+	file2.Hashes = file1.Hashes
+	file2.ModTime = file1.ModTime
+	r.CheckLocalItems(t, file1, file2)
+}
+
 // skipIfNoSymlinks skips the test if this process can't create symlinks.
 //
 // Windows grants the privilege only to an elevated process or one running with
