@@ -400,3 +400,25 @@ func TestListPutDirMarkers(t *testing.T) {
 	require.Len(t, list.Contents, 1)
 	assert.Equal(t, "d/f", list.Contents[0].Key)
 }
+
+// TestListStorageClass checks the storage class an object was put with
+// is listed.
+func TestListStorageClass(t *testing.T) {
+	b := newListBackend(t, "bucket/existing")
+	ctx := context.Background()
+	_, err := b.PutObject(ctx, "bucket", "ia", map[string]string{"X-Amz-Storage-Class": "STANDARD_IA"}, strings.NewReader("ia"), 2)
+	require.NoError(t, err)
+	_, err = b.PutObject(ctx, "bucket", "plain", nil, strings.NewReader("plain"), 5)
+	require.NoError(t, err)
+
+	_, list := listOnce(t, b, listPrefix("", ""), gofakes3.ListBucketPage{})
+	got := map[string]gofakes3.StorageClass{}
+	for _, c := range list.Contents {
+		got[c.Key] = c.StorageClass
+	}
+	assert.Equal(t, map[string]gofakes3.StorageClass{
+		"existing": gofakes3.StorageStandard,
+		"ia":       "STANDARD_IA",
+		"plain":    gofakes3.StorageStandard,
+	}, got)
+}
