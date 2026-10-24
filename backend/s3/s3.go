@@ -2978,8 +2978,9 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 // Returns an error if it isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	bucket, directory := f.split(dir)
-	// Remove directory marker file
-	if f.opt.DirectoryMarkers && bucket != "" && dir != "" {
+	// Remove directory marker file, including the one of the root
+	// when it is a directory in the bucket
+	if f.opt.DirectoryMarkers && bucket != "" && directory != "" {
 		o := &Object{
 			fs:     f,
 			remote: dir + "/",
