@@ -178,7 +178,8 @@ func (t *tenant) getMeta(ctx context.Context, fp string, node vfs.Node) (om obje
 // If meta has a modification time in the "X-Amz-Meta-Mtime" user
 // metadata, or failing that in "mtime", the object's modification time
 // is set to it, returning any error. "mtime" isn't user metadata so it
-// is removed from meta.
+// is removed from meta, as is "Last-Modified" which is the object's
+// modification time.
 func (t *tenant) storeMeta(_vfs *vfs.VFS, fp string, meta map[string]string) (err error) {
 	return t.storeObjectMeta(_vfs, fp, objectMeta{meta: meta})
 }
@@ -192,6 +193,7 @@ func (t *tenant) storeObjectMeta(_vfs *vfs.VFS, fp string, om objectMeta) (err e
 		mtime = meta["mtime"]
 	}
 	delete(meta, "mtime")
+	delete(meta, "Last-Modified")
 	if ti, parseErr := swift.FloatStringToTime(mtime); mtime != "" && parseErr == nil {
 		err = _vfs.Chtimes(fp, ti, ti)
 	}

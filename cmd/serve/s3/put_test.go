@@ -181,7 +181,8 @@ func TestPutObjectFailureNewDir(t *testing.T) {
 }
 
 // TestPutObjectMtime checks that the object's modtime is set from the
-// "X-Amz-Meta-Mtime" or "mtime" metadata supplied with the PUT.
+// "X-Amz-Meta-Mtime" or "mtime" metadata supplied with the PUT, and is
+// the Last-Modified of HEAD and GET.
 func TestPutObjectMtime(t *testing.T) {
 	want := fstest.Time("2011-12-25T12:59:59.123456789Z")
 	for _, metaKey := range []string{"X-Amz-Meta-Mtime", "mtime"} {
@@ -191,13 +192,25 @@ func TestPutObjectMtime(t *testing.T) {
 			const object = "mtime.txt"
 
 			contents := []byte(random.String(50))
-			meta := map[string]string{metaKey: swift.TimeToFloatString(want)}
+			// gofakes3 passes the time of the PUT as Last-Modified
+			meta := map[string]string{
+				metaKey:         swift.TimeToFloatString(want),
+				"Last-Modified": formatHeaderTime(time.Now()),
+			}
 			_, err := b.PutObject(ctx, bucket, object, meta, bytes.NewReader(contents), int64(len(contents)))
 			require.NoError(t, err)
 
 			o, err := f.NewObject(ctx, path.Join(bucket, object))
 			require.NoError(t, err)
 			fstest.AssertTimeEqualWithPrecision(t, object, want, o.ModTime(ctx), f.Precision())
+
+			head, err := b.HeadObject(ctx, bucket, object)
+			require.NoError(t, err)
+			assert.Equal(t, formatHeaderTime(want), head.Metadata["Last-Modified"], "HEAD")
+			obj, err := b.GetObject(ctx, bucket, object, nil)
+			require.NoError(t, err)
+			require.NoError(t, obj.Contents.Close())
+			assert.Equal(t, formatHeaderTime(want), obj.Metadata["Last-Modified"], "GET")
 		})
 	}
 }
