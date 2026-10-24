@@ -539,6 +539,7 @@ ignored.
 | Checksums | Partial | The `x-amz-checksum-*` of a `PutObject` (CRC32, CRC32C, CRC64NVME, SHA1 or SHA256) is checked and returned with the metadata. The checksums of multipart uploads aren't supported. |
 | `GetObjectAttributes` | Partial | Everything but the checksums of multipart uploads. |
 | Object tagging | Partial | `GetObjectTagging`, `PutObjectTagging` and `DeleteObjectTagging` work, but tags are kept in memory with the metadata. |
+| Bucket owner | No | `serve s3` has no AWS account IDs, so `x-amz-expected-bucket-owner` and `x-amz-source-expected-bucket-owner` are ignored. |
 | ACLs | Partial | `GetBucketAcl` and `GetObjectAcl` give the owner full control. Only the `private` ACL can be set. |
 | CORS | Partial | Preflight (`OPTIONS`) requests are answered, allowing any origin. CORS configuration (`PutBucketCors`) isn't supported. |
 | Server side encryption | No | SSE-S3 (`AES256`) is accepted but the data isn't encrypted. SSE-KMS and SSE-C are refused. |
