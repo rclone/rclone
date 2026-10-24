@@ -239,6 +239,11 @@ remote as if it had completed.
   been streamed, so the whole upload is failed and the client must
   start it again. So is a failure in the stream to the remote itself. (The remote's own upload
   still retries its internal chunks.)
+- A `CompleteMultipartUpload` which fails because the parts it lists
+  don't match those uploaded, or there is a gap in the part numbers,
+  leaves the upload open, as on S3, so the client can upload any
+  missing parts and complete it again. If writing the completed object
+  to the remote fails, the upload is failed and must be started again.
 - Parts are serialised into one stream, so ingest from the client is
   effectively single-threaded. When streaming, the remote's own upload
   runs concurrently with the parts arriving; with the local disk spool

@@ -14,6 +14,7 @@ import (
 	"math"
 	"net/url"
 	"path"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -224,9 +225,10 @@ func TestMultipartOutOfOrder(t *testing.T) {
 }
 
 // TestMultipartNonContiguous checks that a multipart upload with a gap in the
-// part numbers (which the in-order stream can't place) is rejected.
+// part numbers (which the in-order stream can't place) is rejected, and
+// can be completed once the gap is filled.
 func TestMultipartNonContiguous(t *testing.T) {
-	core, _, bucket := newMultipartTestServer(t, false)
+	core, f, bucket := newMultipartTestServer(t, false)
 	ctx := context.Background()
 	const object = "gap.bin"
 
@@ -234,14 +236,29 @@ func TestMultipartNonContiguous(t *testing.T) {
 	require.NoError(t, err)
 
 	var parts []minio.CompletePart
-	for _, pn := range []int{1, 2, 4} { // part 3 missing
-		data := []byte(random.String(40 * 1024))
-		p, err := core.PutObjectPart(ctx, bucket, object, uploadID, pn, bytes.NewReader(data), int64(len(data)), minio.PutObjectPartOptions{})
+	var want []byte
+	data := map[int][]byte{}
+	putPart := func(pn int) {
+		data[pn] = []byte(random.String(40 * 1024))
+		p, err := core.PutObjectPart(ctx, bucket, object, uploadID, pn, bytes.NewReader(data[pn]), int64(len(data[pn])), minio.PutObjectPartOptions{})
 		require.NoError(t, err)
 		parts = append(parts, minio.CompletePart{PartNumber: pn, ETag: p.ETag})
 	}
+	for _, pn := range []int{1, 2, 4} { // part 3 missing
+		putPart(pn)
+	}
 	_, err = core.CompleteMultipartUpload(ctx, bucket, object, uploadID, parts, minio.PutObjectOptions{})
 	require.Error(t, err)
+
+	// The upload is left open, so the missing part can be added
+	putPart(3)
+	slices.SortFunc(parts, func(a, b minio.CompletePart) int { return a.PartNumber - b.PartNumber })
+	_, err = core.CompleteMultipartUpload(ctx, bucket, object, uploadID, parts, minio.PutObjectOptions{})
+	require.NoError(t, err)
+	for pn := 1; pn <= 4; pn++ {
+		want = append(want, data[pn]...)
+	}
+	assert.Equal(t, want, readObject(t, f, bucket, object))
 }
 
 // requireOnly asserts that the bucket contains only the expected
@@ -747,10 +764,10 @@ func TestMultipartReaper(t *testing.T) {
 	requireOnly(t, f, bucket)
 }
 
-// TestMultipartCompleteFailureForgotten checks that a completion which
-// tears the upload down removes it from gofakes3's records too, so it
-// isn't left in listings or memory.
-func TestMultipartCompleteFailureForgotten(t *testing.T) {
+// TestMultipartCompleteFailureRetry checks that a completion which
+// fails with a wrong part list leaves the upload in place, so it can be
+// retried with the right one, as on S3.
+func TestMultipartCompleteFailureRetry(t *testing.T) {
 	core, f, bucket := newMultipartTestServer(t, false)
 	ctx := context.Background()
 	const object = "bad-complete.bin"
@@ -758,17 +775,22 @@ func TestMultipartCompleteFailureForgotten(t *testing.T) {
 	uploadID, err := core.NewMultipartUpload(ctx, bucket, object, minio.PutObjectOptions{})
 	require.NoError(t, err)
 	data := []byte(random.String(50 * 1024))
-	_, err = core.PutObjectPart(ctx, bucket, object, uploadID, 1, bytes.NewReader(data), int64(len(data)), minio.PutObjectPartOptions{})
+	part, err := core.PutObjectPart(ctx, bucket, object, uploadID, 1, bytes.NewReader(data), int64(len(data)), minio.PutObjectPartOptions{})
 	require.NoError(t, err)
 
 	_, err = core.CompleteMultipartUpload(ctx, bucket, object, uploadID, []minio.CompletePart{{PartNumber: 1, ETag: `"00000000000000000000000000000000"`}}, minio.PutObjectOptions{})
 	require.Error(t, err)
+	assert.Contains(t, err.Error(), "InvalidPart")
 
 	// FIXME gofakes3 lists nothing when the delimiter is empty
 	uploads, err := core.ListMultipartUploads(ctx, bucket, "", "", "", "/", 1000)
 	require.NoError(t, err)
-	assert.Empty(t, uploads.Uploads)
-	requireOnly(t, f, bucket)
+	assert.Len(t, uploads.Uploads, 1)
+
+	_, err = core.CompleteMultipartUpload(ctx, bucket, object, uploadID, []minio.CompletePart{{PartNumber: 1, ETag: part.ETag}}, minio.PutObjectOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, data, readObject(t, f, bucket, object))
+	requireOnly(t, f, bucket, object)
 }
 
 // TestMultipartReapExpiredUploads checks the reaper's rules directly: an
