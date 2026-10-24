@@ -444,7 +444,8 @@ folders not in the root.
 
 When using `PutObject` or `DeleteObject`, rclone will automatically
 create or clean up empty folders. If you don't want to clean up empty
-folders automatically, use `--no-cleanup`.
+folders automatically, use `--directory-markers` (see [Object
+names](#object-names)). The deprecated `--no-cleanup` does the same.
 
 When using `ListObjects` with the delimiter `/`, rclone lists the
 directory the prefix is in, showing its subdirectories as common

@@ -470,3 +470,13 @@ func TestListDirectoryMarkers(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, []string{"a/", "implicit/", "implicit/file", "x/", "x/w"}, all())
 }
+
+// TestListNoCleanup checks the deprecated --no-cleanup is
+// --directory-markers.
+func TestListNoCleanup(t *testing.T) {
+	opt := Opt
+	opt.NoCleanup = true
+	b := newListBackendOpt(t, opt, "bucket/a/b")
+	require.NoError(t, b.deleteObject(context.Background(), "bucket", "a/b"))
+	assert.Equal(t, []string{"a/"}, listPages(t, b, listPrefix("", ""), 1000))
+}

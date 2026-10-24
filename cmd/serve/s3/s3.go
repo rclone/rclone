@@ -36,7 +36,7 @@ var OptionsInfo = fs.Options{{
 }, {
 	Name:    "no_cleanup",
 	Default: false,
-	Help:    "Not to cleanup empty folder after object is deleted",
+	Help:    "Deprecated: use --directory-markers instead",
 }, {
 	Name:    "disable_multipart_streaming",
 	Default: false,
