@@ -197,6 +197,18 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 	ctx := r.Context()
 	contentType := r.Header.Get("Content-Type")
 
+	// Find the call and check authorisation before reading the
+	// body so rejected requests can't make the server use memory
+	call := rc.Calls.Get(path)
+	if call == nil {
+		writeError(path, rc.Params{}, w, fmt.Errorf("couldn't find method %q", path), http.StatusNotFound)
+		return
+	}
+	if !s.noAuth && !call.NoAuth && !s.server.UsingAuth() {
+		writeError(path, rc.Params{}, w, fmt.Errorf("authentication must be set up on the rc server to use %q or the --rc-no-auth flag must be in use", path), http.StatusForbidden)
+		return
+	}
+
 	// Without auth anyone who can connect may POST, so bound the
 	// memory a request can make the server use
 	if !s.noAuth && !s.server.UsingAuth() {
@@ -262,19 +274,6 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 			in["_async"] = true
 			break
 		}
-	}
-
-	// Find the call
-	call := rc.Calls.Get(path)
-	if call == nil {
-		writeError(path, in, w, fmt.Errorf("couldn't find method %q", path), http.StatusNotFound)
-		return
-	}
-
-	// Check to see if it requires authorisation
-	if !s.noAuth && !call.NoAuth && !s.server.UsingAuth() {
-		writeError(path, in, w, fmt.Errorf("authentication must be set up on the rc server to use %q or the --rc-no-auth flag must be in use", path), http.StatusForbidden)
-		return
 	}
 
 	inOrig := in.Copy()

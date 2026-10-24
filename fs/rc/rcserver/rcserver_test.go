@@ -922,13 +922,34 @@ func TestBodyLimitWithoutAuth(t *testing.T) {
 		Status:      http.StatusRequestEntityTooLarge,
 		Contains:    tooLarge,
 	}, {
+		// Rejected before the body is read so nothing is echoed
 		Name:        "authCall",
 		URL:         "rc/noopauth",
 		Method:      "POST",
 		Body:        bigBody,
 		ContentType: "application/json",
-		Status:      http.StatusRequestEntityTooLarge,
-		Contains:    tooLarge,
+		Status:      http.StatusForbidden,
+		Expected: `{
+	"error": "authentication must be set up on the rc server to use \"rc/noopauth\" or the --rc-no-auth flag must be in use",
+	"input": {},
+	"path": "rc/noopauth",
+	"status": 403
+}
+`,
+	}, {
+		Name:        "unknownCall",
+		URL:         "rc/potato",
+		Method:      "POST",
+		Body:        `{"potato":1}`,
+		ContentType: "application/json",
+		Status:      http.StatusNotFound,
+		Expected: `{
+	"error": "couldn't find method \"rc/potato\"",
+	"input": {},
+	"path": "rc/potato",
+	"status": 404
+}
+`,
 	}, {
 		Name:        "form",
 		URL:         "rc/noop",
@@ -992,9 +1013,7 @@ func TestJobAuthRequired(t *testing.T) {
 		Status:      http.StatusForbidden,
 		Expected: `{
 	"error": "authentication must be set up on the rc server to use \"job/status\" or the --rc-no-auth flag must be in use",
-	"input": {
-		"jobid": 1
-	},
+	"input": {},
 	"path": "job/status",
 	"status": 403
 }
