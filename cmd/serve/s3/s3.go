@@ -58,6 +58,10 @@ var OptionsInfo = fs.Options{{
 	Default: 100000,
 	Help:    "Maximum number of objects of a user whose metadata is kept in memory, 0 for unlimited",
 }, {
+	Name:    "directory_markers",
+	Default: false,
+	Help:    "List every directory as a directory marker object",
+}, {
 	Name:    "multipart_expiry",
 	Default: fs.Duration(24 * time.Hour),
 	Help:    "Abort incomplete multipart uploads idle for longer than this, 0 to keep forever",
@@ -78,6 +82,7 @@ type Options struct {
 	MultipartMaxUploads           int           `config:"multipart_max_uploads"`
 	MetadataMaxObjects            int           `config:"metadata_max_objects"`
 	MultipartExpiry               fs.Duration   `config:"multipart_expiry"`
+	DirectoryMarkers              bool          `config:"directory_markers"`
 	Auth                          httplib.AuthConfig
 	HTTP                          httplib.Config
 }
