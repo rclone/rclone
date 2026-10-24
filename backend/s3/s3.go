@@ -1913,6 +1913,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.Provider == "Rabata" {
 		f.features.Copy = nil
 	}
+	if opt.Provider == "Autonomys" {
+		// Versions are permanent, so Purge's version deletes are always refused.
+		f.features.Purge = nil
+		// There are no bucket endpoints: CreateBucket would be stored as an object.
+		f.opt.NoCheckBucket = true
+	}
 	if opt.Provider == "TencentCOS" && strings.Contains(opt.Endpoint, "cos.accelerate.myqcloud.com") {
 		// Global Acceleration endpoint does not support bucket creation.
 		f.opt.NoCheckBucket = true

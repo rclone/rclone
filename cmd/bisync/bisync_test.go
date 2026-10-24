@@ -19,6 +19,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	mutex "sync" // renamed as "sync" already in use
 	"testing"
 	"time"
 	"unicode/utf8"
@@ -61,6 +62,12 @@ const (
 
 var initDate = time.Date(2000, time.January, 1, 0, 0, 0, 0, bisync.TZ)
 
+// modtimeProbes holds the SetModTime error for each remote already probed by checkPreReqs
+var (
+	modtimeProbesMu mutex.Mutex
+	modtimeProbes   = map[string]error{}
+)
+
 /* Useful Command Shortcuts */
 // go test ./cmd/bisync -remote local -race
 // go test ./cmd/bisync -remote local -golden
@@ -88,7 +95,7 @@ var logReplacements = []string{
 	// ignore SFTP host key messages
 	`^NOTICE: .*?No host key validation is being performed.*$`, dropMe,
 	// ignore dropbox info messages
-	`^NOTICE: too_many_(requests|write_operations)/\.*: Too many requests or write operations.*$`, dropMe,
+	`^NOTICE: .*Too many requests or write operations.*$`, dropMe,
 	`^NOTICE: .*?: Forced to upload files to set modification times on this backend.$`, dropMe,
 	`^INFO  : .*? Committing uploads - please wait...$`, dropMe,
 	`^INFO  : .*? Committing uploads - done$`, dropMe,
@@ -972,6 +979,10 @@ func splitLine(line string) (args []string) {
 		b := []byte(whitespaceReplacer.Replace(s))
 		b = regexChar.ReplaceAllFunc(b, func(b []byte) []byte {
 			c, _ := strconv.ParseUint(string(b[5:7]), 16, 8)
+			if c <= 0x1f || c == 0x7f {
+				// control characters are spelled with their glyph in rclone names
+				return []byte(encoder.Standard.Encode(string(rune(c))))
+			}
 			return []byte{byte(c)}
 		})
 		args = append(args, string(b))
@@ -981,8 +992,8 @@ func splitLine(line string) (args []string) {
 
 var whitespaceReplacer = strings.NewReplacer(
 	"{spc}", " ",
-	"{tab}", "\t",
-	"{eol}", eol,
+	"{tab}", "␉",
+	"{eol}", "␊",
 )
 var regexChar = regexp.MustCompile(`\{chr:([0-9a-f]{2})\}`)
 
@@ -1055,7 +1066,7 @@ func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (con
 		b.ignoreModtime = true
 	}
 	// test if modtimes are writeable
-	testSetModtime := func(f fs.Fs) {
+	probeSetModtime := func(f fs.Fs) error {
 		ctx := accounting.WithStatsGroup(ctx, random.String(8)) // keep stats separate
 		in := bytes.NewBufferString("modtime_write_test")
 		objinfo := object.NewStaticObjectInfo("modtime_write_test", initDate, int64(len("modtime_write_test")), true, nil, nil)
@@ -1066,7 +1077,7 @@ func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (con
 		}
 		err = obj.SetModTime(ctx, initDate)
 		if err == fs.ErrorCantSetModTime {
-			b.t.Skip("skipping test as at least one remote does not support setting modtime")
+			return err
 		}
 		if err == fs.ErrorCantSetModTimeWithoutDelete { // transfers stats expected to differ on this backend
 			logReplacements = append(logReplacements, `^.*There was nothing to transfer.*$`, dropMe)
@@ -1076,34 +1087,52 @@ func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (con
 		if !f.Features().IsLocal {
 			time.Sleep(time.Second) // avoid GoogleCloudStorage Error 429 rateLimitExceeded
 		}
-		err = obj.Remove(ctx)
-		require.NoError(b.t, err)
+		require.NoError(b.t, obj.Remove(ctx))
+		return err
+	}
+	// probing on every bisync step would sleep for minutes on non-local remotes
+	testSetModtime := func(f fs.Fs) {
+		modtimeProbesMu.Lock()
+		defer modtimeProbesMu.Unlock()
+		err, probed := modtimeProbes[f.Name()]
+		if !probed {
+			err = probeSetModtime(f)
+			modtimeProbes[f.Name()] = err
+		}
+		if err == fs.ErrorCantSetModTime {
+			b.t.Skip("skipping test as at least one remote does not support setting modtime")
+		}
 	}
 	if b.testCase != "nomodtime" {
 		testSetModtime(b.fs1)
 		testSetModtime(b.fs2)
 	}
 
-	if b.testCase == "normalization" || b.testCase == "extended_char_paths" || b.testCase == "extended_filenames" {
+	if b.testCase == "normalization" || b.testCase == "extended_filenames" {
 		// test whether remote is capable of running test
 		const chars = "ě{chr:81}{chr:fe}{spc}áñhࢺ_測試Рускийěáñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éö"
 		testfilename1 := splitLine(norm.NFD.String(norm.NFC.String(chars)))[0]
 		testfilename2 := splitLine(norm.NFC.String(norm.NFD.String(chars)))[0]
 		tempDir, err := cache.Get(ctx, b.tempDir)
 		require.NoError(b.t, err)
+		ctx := accounting.WithStatsGroup(ctx, random.String(8)) // keep stats separate
 		preTest := func(f fs.Fs, testfilename string) string {
+			// the path roots already hold the scenario's files, so probe in a fresh dir
+			dir := "pretest-" + strings.ToLower(random.String(8))
 			in := bytes.NewBufferString(testfilename)
-			objinfo := object.NewStaticObjectInfo(testfilename, initDate, int64(len(testfilename)), true, nil, nil)
+			objinfo := object.NewStaticObjectInfo(path.Join(dir, testfilename), initDate, int64(len(testfilename)), true, nil, nil)
 			obj, err := f.Put(ctx, in, objinfo)
 			if err != nil {
 				b.t.Skipf("Fs is incapable of running test, skipping: %s (expected: \n%s (%s) actual: \n%s (%v))\n (fs: %s) \n", b.testCase, testfilename, detectEncoding(testfilename), "upload failed", err, f)
 			}
-			entries, err := f.List(ctx, "")
-			assert.NoError(b.t, err)
-			if entries.Len() == 1 && entries[0].Remote() != testfilename {
-				diffStr, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{A: []string{testfilename}, B: []string{entries[0].Remote()}})
+			entries, err := f.List(ctx, dir)
+			require.NoError(b.t, err)
+			require.Equal(b.t, 1, entries.Len())
+			got := path.Base(entries[0].Remote())
+			if got != testfilename {
+				diffStr, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{A: []string{testfilename}, B: []string{got}})
 				// we can still deal with this as long as both remotes auto-convert the same way.
-				b.t.Logf("Warning: this remote seems to auto-convert special characters (testcase: %s) (expected: \n%s (%s) actual: \n%s (%s))\n (fs: %s) \n%v", b.testCase, testfilename, detectEncoding(testfilename), entries[0].Remote(), detectEncoding(entries[0].Remote()), f, diffStr)
+				b.t.Logf("Warning: this remote seems to auto-convert special characters (testcase: %s) (expected: \n%s (%s) actual: \n%s (%s))\n (fs: %s) \n%v", b.testCase, testfilename, detectEncoding(testfilename), got, detectEncoding(got), f, diffStr)
 			}
 			// test whether we can fix-case
 			ctxFixCase, ci := fs.AddConfig(ctx)
@@ -1120,7 +1149,12 @@ func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (con
 			if obj != nil {
 				require.NoError(b.t, upperObj.Remove(ctx))
 			}
-			return entries[0].Remote()
+			for _, d := range []fs.Fs{f, tempDir} {
+				if err := d.Rmdir(ctx, dir); err != nil && !errors.Is(err, fs.ErrorDirNotFound) {
+					require.NoError(b.t, err)
+				}
+			}
+			return got
 		}
 		got1 := preTest(b.fs1, testfilename1)
 		got1 += preTest(b.fs1, testfilename2)

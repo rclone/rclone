@@ -3,8 +3,9 @@ test extended-filenames
 # that contain UTF-8 code points or whitespace.
 #
 # Notes:
-# - All rclone backends including local return "\n" aka {eol} in file names
-#   as a pseudographic unicode glyph, thus we don't see `\n` in golden logs.
+# - Names are rclone names, so a control character such as "\n" aka {eol}
+#   is spelled with its glyph (␊) in listings and golden logs. The local
+#   backend decodes it to a real newline on disk.
 # - File names with "\t" aka {tab} pass with local, dropbox, and drive
 #   backends, but fail with FTP. As a workaround, the test currently uses
 #   `name{spc}with{eol}white{spc}space` instead of

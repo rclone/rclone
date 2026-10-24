@@ -27,7 +27,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/rclone/rclone/backend/box/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
@@ -77,7 +77,10 @@ var (
 )
 
 type boxCustomClaims struct {
-	jwt.StandardClaims
+	jwt.RegisteredClaims
+	// Audience overrides RegisteredClaims.Audience so it is sent as
+	// a single string rather than an array of strings
+	Audience   string `json:"aud,omitempty"`
 	BoxSubType string `json:"box_sub_type,omitempty"`
 }
 
@@ -223,7 +226,7 @@ func getBoxConfig(m configmap.Mapper) (boxConfig *api.ConfigJSON, err error) {
 
 	if configFileCredentials == "" {
 		configFile, _ := m.Get("box_config_file")
-		configFileBytes, err = os.ReadFile(configFile)
+		configFileBytes, err = os.ReadFile(env.ShellExpand(configFile))
 		if err != nil {
 			return nil, fmt.Errorf("box: failed to read Box config: %w", err)
 		}
@@ -243,15 +246,13 @@ func getClaims(boxConfig *api.ConfigJSON, boxSubType string) (claims *boxCustomC
 	}
 
 	claims = &boxCustomClaims{
-		//lint:ignore SA1019 since we need to use jwt.StandardClaims even if deprecated in jwt-go v4 until a more permanent solution is ready in time before jwt-go v5 where it is removed entirely
-		//nolint:staticcheck // Don't include staticcheck when running golangci-lint to avoid SA1019
-		StandardClaims: jwt.StandardClaims{
-			Id:        val,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        val,
 			Issuer:    boxConfig.BoxAppSettings.ClientID,
 			Subject:   boxConfig.EnterpriseID,
-			Audience:  tokenURL,
-			ExpiresAt: time.Now().Add(time.Second * 45).Unix(),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Second * 45)),
 		},
+		Audience:   tokenURL,
 		BoxSubType: boxSubType,
 	}
 	return claims, nil

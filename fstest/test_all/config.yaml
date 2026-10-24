@@ -272,7 +272,6 @@ backends:
    remote:   "TestS3Rclone:"
    fastlist: true
    ignoretests:
-     - cmd/bisync
      - cmd/gitannex
  - backend:  "s3"
    remote:   "TestS3Minio:"
