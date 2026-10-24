@@ -429,6 +429,36 @@ The number of connections is not limited, so if the server is open to
 clients you don't trust, use `--auth-key` or `--auth-proxy` and
 consider putting it behind a reverse proxy which limits connections.
 
+### Design goals
+
+These goals explain many of the limitations below.
+
+- **Objects are plain files on the remote.** A bucket is a directory
+  in the root and a key is a path in it, so the remote stays usable by
+  other tools, such as `rclone mount` or `rclone sync`. So keys must
+  be paths (see [Object names](#object-names)).
+- **No database.** `serve s3` stores nothing but the objects. What the
+  remote can't hold, such as user metadata, tags, the MD5 `ETag` of an
+  object on a remote without MD5 and the directory markers put, is
+  kept in memory as a best effort, and lost on restart.
+- **Works with any rclone remote.** What `serve s3` can do depends on
+  what the remote supports, such as the hashes used for `ETag`s and
+  modification times, rather than needing a particular backend.
+- **Bounded memory.** Uploads, including multipart uploads, are
+  streamed to the remote and the memory each request can use is
+  limited (see [Memory use](#memory-use)). Nothing is written to local
+  disk unless the VFS cache is used or the remote can't stream uploads
+  (see [Multipart uploads](#multipart-uploads)).
+- **Refuse rather than ignore.** Unsupported features are refused, or
+  answered as S3 answers when the feature isn't configured, so a
+  client is never told something was done which wasn't (see
+  [Compatibility](#compatibility)).
+- **A storage gateway, not a full S3.** `serve s3` implements the parts
+  of the S3 API clients use to store and fetch objects. Versioning,
+  ACLs, bucket policies, lifecycle rules and the like are out of scope.
+- **Compatible with rclone's s3 backend.** This includes its directory
+  markers, which the tests check.
+
 ### Bugs
 
 For a current list of `serve s3` bugs see the [serve
@@ -439,8 +469,8 @@ on GitHub.
 
 `serve s3` will treat all directories in the root as buckets and
 ignore all files in the root. You can use `CreateBucket` to create
-folders under the root, but you can't create empty folders under other
-folders not in the root.
+folders under the root, and put a directory marker to create an empty
+folder below them (see [Object names](#object-names)).
 
 When using `PutObject` or `DeleteObject`, rclone will automatically
 create or clean up empty folders. If you don't want to clean up empty
@@ -456,7 +486,7 @@ empty directories as their directory markers (see below). Any other
 delimiter is supported too, but needs the whole directory tree below
 the prefix walking, unless the delimiter is in the directory names.
 
-Versioning is not currently supported.
+Versioning is not supported (see [Design goals](#design-goals)).
 
 Conditional writes, `PutObject` and `CompleteMultipartUpload` with
 `If-None-Match` or `If-Match`, are supported. The conditions are
@@ -469,8 +499,9 @@ or above. The second check is atomic against other writes through
 some other way. If the remote doesn't support the `--etag-hash`,
 objects have no `ETag` so `If-Match` with an `ETag` always fails.
 
-Metadata will only be saved in memory other than the rclone `mtime`
-metadata which will be set as the modification time of the file. The
+Metadata will only be saved in memory (see [Design
+goals](#design-goals)) other than the rclone `mtime` metadata which
+will be set as the modification time of the file. The
 metadata of at most `--metadata-max-objects` objects (default `100000`,
 `0` for no limit) of each user (each access key) is kept; after that
 the metadata of the user's least recently used object is forgotten. The metadata of an object is
