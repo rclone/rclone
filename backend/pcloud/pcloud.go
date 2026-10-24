@@ -1537,6 +1537,8 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		if err != nil {
 			return fmt.Errorf("failed to make multipart upload for 0 length file: %w", err)
 		}
+		// Stop the form writer reading in if the request fails before sending it all
+		defer func() { _ = formReader.Close() }()
 
 		contentLength := overhead + size
 

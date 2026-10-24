@@ -693,6 +693,8 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, uploadLink, filePath stri
 	if err != nil {
 		return nil, fmt.Errorf("failed to make multipart upload: %w", err)
 	}
+	// Stop the form writer reading in if the request fails before sending it all
+	defer func() { _ = formReader.Close() }()
 
 	opts := rest.Opts{
 		Method:      "POST",

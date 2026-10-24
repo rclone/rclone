@@ -77,6 +77,8 @@ func (ik *ImageKit) Upload(ctx context.Context, file io.Reader, param UploadPara
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to make multipart upload: %w", err)
 	}
+	// Stop the form writer reading file if the request fails before sending it all
+	defer func() { _ = formReader.Close() }()
 
 	opts := rest.Opts{
 		Method:      "POST",
