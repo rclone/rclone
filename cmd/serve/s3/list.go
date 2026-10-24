@@ -30,9 +30,10 @@ var errPageFull = errors.New("listing page full")
 // the size of the subtree below the prefix.
 type lister struct {
 	vfs       *vfs.VFS
-	t         *tenant                                // the user listing
-	hashType  hash.Type                              // hash used for ETags
-	etag      func(fp string, entry vfs.Node) []byte // returns the ETag of the object at fp
+	t         *tenant                                            // the user listing
+	hashType  hash.Type                                          // hash used for ETags
+	etag      func(fp string, entry vfs.Node) []byte             // returns the ETag of the object at fp
+	meta      func(fp string, entry vfs.Node) (objectMeta, bool) // returns the stored metadata of the object at fp
 	bucket    string
 	marker    string // keys at or before this one have already been returned
 	hasMarker bool
@@ -59,9 +60,10 @@ func newLister(ctx context.Context, b *s3Backend, _vfs *vfs.VFS, bucket string, 
 		// particular page size, so use the S3 maximum.
 		max = 1000
 	}
+	t := b.tenant(ctx)
 	return &lister{
 		vfs:       _vfs,
-		t:         b.tenant(ctx),
+		t:         t,
 		hashType:  b.s.etagHash(_vfs),
 		bucket:    bucket,
 		marker:    page.Marker,
@@ -70,6 +72,9 @@ func newLister(ctx context.Context, b *s3Backend, _vfs *vfs.VFS, bucket string, 
 		response:  response,
 		etag: func(fp string, entry vfs.Node) []byte {
 			return b.objectHash(ctx, _vfs, fp, entry)
+		},
+		meta: func(fp string, entry vfs.Node) (objectMeta, bool) {
+			return t.getMeta(ctx, fp, entry)
 		},
 	}
 }
@@ -126,12 +131,17 @@ func (l *lister) addObject(key string, entry vfs.Node) error {
 	if l.keys >= l.max {
 		return l.truncate()
 	}
+	fp := path.Join(l.bucket, key)
+	storageClass := gofakes3.StorageStandard
+	if om, ok := l.meta(fp, entry); ok && om.meta["X-Amz-Storage-Class"] != "" {
+		storageClass = gofakes3.StorageClass(om.meta["X-Amz-Storage-Class"])
+	}
 	l.response.Add(&gofakes3.Content{
 		Key:          key,
 		LastModified: gofakes3.NewContentTime(entry.ModTime()),
-		ETag:         quoteETag(l.etag(path.Join(l.bucket, key), entry)),
+		ETag:         quoteETag(l.etag(fp, entry)),
 		Size:         entry.Size(),
-		StorageClass: gofakes3.StorageStandard,
+		StorageClass: storageClass,
 	})
 	l.keys++
 	l.lastKey = key

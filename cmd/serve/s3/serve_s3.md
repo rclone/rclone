@@ -527,7 +527,7 @@ ignored.
 | Conditional writes | Partial | `If-Match` and `If-None-Match` on `PutObject` and `CompleteMultipartUpload` are checked, but not atomically against changes made to the remote some other way (see [Limitations](#limitations)). |
 | Authentication | Partial | AWS Signature Version 4, in headers, presigned URLs and browser form (`POST`) uploads. Signature Version 2 isn't supported. |
 | Anonymous access | Partial | All requests are allowed without `--auth-key` or `--auth-proxy`, and none are with them, as buckets and objects can't be made public. |
-| Metadata | Partial | `x-amz-meta-*` and the standard headers such as `Content-Type` are kept in memory only (see [Limitations](#limitations)), except the modification time. |
+| Metadata | Partial | `x-amz-meta-*`, the storage class and the standard headers such as `Content-Type` are kept in memory only (see [Limitations](#limitations)), except the modification time. The storage class is only recorded, so doesn't change how the object is stored. |
 | Directory markers | Partial | Keys ending in `/` are stored as directories, so can't hold data. A marker put for a directory holding other keys is only listed while it is remembered in memory (see [Object names](#object-names)). |
 | Checksums | Partial | The `x-amz-checksum-*` of a `PutObject` (CRC32, CRC32C, CRC64NVME, SHA1 or SHA256) is checked and returned with the metadata. The checksums of multipart uploads aren't supported. |
 | `GetObjectAttributes` | Partial | Everything but the checksums of multipart uploads. |
