@@ -910,6 +910,75 @@ func TestAuthRequired(t *testing.T) {
 	testServer(t, tests, &opt)
 }
 
+func TestBodyLimitWithoutAuth(t *testing.T) {
+	bigBody := `{"payload":"` + strings.Repeat("A", maxUnauthenticatedBodySize) + `"}`
+	tooLarge := regexp.MustCompile(`(?s)"error": "failed to read input JSON: http: request body too large",\s*"input": null,.*"status": 413`)
+	tests := []testRun{{
+		Name:        "noAuthCall",
+		URL:         "rc/noop",
+		Method:      "POST",
+		Body:        bigBody,
+		ContentType: "application/json",
+		Status:      http.StatusRequestEntityTooLarge,
+		Contains:    tooLarge,
+	}, {
+		Name:        "authCall",
+		URL:         "rc/noopauth",
+		Method:      "POST",
+		Body:        bigBody,
+		ContentType: "application/json",
+		Status:      http.StatusRequestEntityTooLarge,
+		Contains:    tooLarge,
+	}, {
+		Name:        "form",
+		URL:         "rc/noop",
+		Method:      "POST",
+		Body:        "payload=" + strings.Repeat("A", maxUnauthenticatedBodySize),
+		ContentType: "application/x-www-form-urlencoded",
+		Status:      http.StatusRequestEntityTooLarge,
+		Contains:    regexp.MustCompile(`"error": "failed to parse form/URL parameters: http: request body too large"`),
+	}, {
+		Name:        "small",
+		URL:         "rc/noop",
+		Method:      "POST",
+		Body:        `{"potato":1}`,
+		ContentType: "application/json",
+		Status:      http.StatusOK,
+		Expected: `{
+	"potato": 1
+}
+`,
+	}}
+	opt := newTestOpt()
+	opt.Serve = false
+	opt.Files = ""
+	opt.NoAuth = false
+	testServer(t, tests, &opt)
+
+	// --rc-no-auth explicitly allows everything so isn't limited
+	bigOK := testRun{
+		Name:        "noAuthFlag",
+		URL:         "rc/noop",
+		Method:      "POST",
+		Body:        bigBody,
+		ContentType: "application/json",
+		Status:      http.StatusOK,
+		Contains:    regexp.MustCompile(`"payload": "AAAA`),
+	}
+	opt.NoAuth = true
+	testServer(t, []testRun{bigOK}, &opt)
+
+	// Authenticated requests aren't limited either
+	opt.NoAuth = false
+	opt.Auth.BasicUser = "user"
+	opt.Auth.BasicPass = "pass"
+	bigOK.Name = "withAuth"
+	bigOK.URL = "rc/noopauth"
+	bigOK.User = "user"
+	bigOK.Pass = "pass"
+	testServer(t, []testRun{bigOK}, &opt)
+}
+
 // job/status returns the output of any job so it must need
 // authentication, e.g. so an unauthenticated user can't read the
 // output of config/dump started with _async by an authenticated one.

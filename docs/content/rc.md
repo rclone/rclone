@@ -232,6 +232,9 @@ If this is set then no authorisation will be required on the server to
 use these methods.  The alternative is to use `--rc-user` and
 `--rc-pass` and use these credentials in the request.
 
+Without authorisation or this flag, POST request bodies are limited to
+64 KiB.
+
 Default Off.
 
 ### --rc-baseurl
