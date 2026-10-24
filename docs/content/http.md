@@ -265,6 +265,32 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --http-use-listing
+
+Use the size and modification time from the directory listing.
+
+Normally rclone does a HEAD request for each file in a directory
+listing to find its size and modification time. If the server shows
+these in its listing, this option uses them instead, which is much
+faster for directories with many files.
+
+This works with the nginx directory listing, which is HTML by default
+(autoindex on) or JSON (autoindex_format json). The HTML listing
+shows times to the minute in UTC unless autoindex_localtime is on, so
+use --modify-window 1m with it. The JSON listing shows times to the
+second.
+
+Files whose size and time are not in the listing still get a HEAD
+request. Files found this way have no Content-Type or other header
+metadata from the server, as with --http-no-head.
+
+Properties:
+
+- Config:      use_listing
+- Env Var:     RCLONE_HTTP_USE_LISTING
+- Type:        bool
+- Default:     false
+
 #### --http-description
 
 Description of the remote.
