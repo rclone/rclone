@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -450,6 +451,21 @@ func TestParseName(t *testing.T) {
 
 // Load HTML from the file given and parse it, checking it against the entries passed in
 func parseHTML(t *testing.T, name string, base string, want []string) {
+	parseHTMLEntries(t, name, base, func(got []listingEntry) {
+		assert.Equal(t, want, entryNames(got))
+	})
+}
+
+// entryNames returns the names of the listing entries
+func entryNames(entries []listingEntry) (names []string) {
+	for _, entry := range entries {
+		names = append(names, entry.name)
+	}
+	return names
+}
+
+// parseHTMLEntries loads HTML from the file given, parses it and passes the entries to check
+func parseHTMLEntries(t *testing.T, name string, base string, check func([]listingEntry)) {
 	in, err := os.Open(filepath.Join(testPath, "index_files", name))
 	require.NoError(t, err)
 	defer func() {
@@ -462,7 +478,7 @@ func parseHTML(t *testing.T, name string, base string, want []string) {
 	require.NoError(t, err)
 	entries, err := parse(u, in)
 	require.NoError(t, err)
-	assert.Equal(t, want, entries)
+	check(entries)
 }
 
 func TestParseEmpty(t *testing.T) {
@@ -512,6 +528,55 @@ func TestParseNginx(t *testing.T) {
 		"config",
 		"summary",
 	})
+}
+
+func TestParseNginxInfo(t *testing.T) {
+	parseHTMLEntries(t, "nginx.html", "", func(entries []listingEntry) {
+		require.Len(t, entries, 6)
+		// directories show a time but no size
+		assert.Equal(t, listingEntry{name: "deltas/", size: -1, modTime: time.Date(2017, 5, 4, 21, 37, 0, 0, time.UTC)}, entries[0])
+		assert.Equal(t, listingEntry{name: "config", size: 118, modTime: time.Date(2017, 5, 4, 20, 42, 0, 0, time.UTC)}, entries[4])
+		assert.Equal(t, listingEntry{name: "summary", size: 806, modTime: time.Date(2017, 5, 4, 21, 36, 0, 0, time.UTC)}, entries[5])
+		assert.True(t, entries[4].hasInfo())
+		assert.False(t, entries[0].hasInfo())
+	})
+}
+
+func TestParseNoInfo(t *testing.T) {
+	// other servers show other things after the link which are not used
+	parseHTMLEntries(t, "caddy.html", "", func(entries []listingEntry) {
+		require.NotEmpty(t, entries)
+		for _, entry := range entries {
+			assert.False(t, entry.hasInfo(), entry.name)
+		}
+	})
+	parseHTMLEntries(t, "apache.html", "http://example.com/nick/pub/", func(entries []listingEntry) {
+		require.NotEmpty(t, entries)
+		for _, entry := range entries {
+			assert.False(t, entry.hasInfo(), entry.name)
+		}
+	})
+}
+
+func TestParseJSON(t *testing.T) {
+	in := `[
+{ "name":"A B.json", "type":"file", "mtime":"Mon, 19 Oct 2026 09:36:12 GMT", "size":7709274 },
+{ "name":"sub", "type":"directory", "mtime":"Mon, 19 Oct 2026 09:36:12 GMT" },
+{ "name":"nosize", "type":"file" },
+{ "name":"bad/name", "type":"file", "mtime":"Mon, 19 Oct 2026 09:36:12 GMT", "size":1 }
+]`
+	u, err := url.Parse("http://example.com/")
+	require.NoError(t, err)
+	entries, err := parseJSON(u, strings.NewReader(in))
+	require.NoError(t, err)
+	assert.Equal(t, []listingEntry{
+		{name: "A B.json", size: 7709274, modTime: time.Date(2026, 10, 19, 9, 36, 12, 0, time.UTC)},
+		{name: "sub/", size: -1},
+		{name: "nosize", size: -1},
+	}, entries)
+
+	_, err = parseJSON(u, strings.NewReader("not json"))
+	assert.Error(t, err)
 }
 
 func TestParseCaddy(t *testing.T) {
@@ -838,4 +903,80 @@ func TestRootCannotChangeHost(t *testing.T) {
 	f, err := NewFs(context.Background(), remoteName, "/", m)
 	require.NoError(t, err)
 	assert.Equal(t, m["url"]+"/", f.String())
+}
+
+// listingServer serves an nginx style listing of two files and counts the HEAD requests
+func listingServer(t *testing.T, contentType, body string) (m configmap.Simple, heads *atomic.Int32) {
+	heads = new(atomic.Int32)
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.URL.Path == "/":
+			w.Header().Set("Content-Type", contentType)
+			_, _ = io.WriteString(w, body)
+		case r.Method == "HEAD":
+			heads.Add(1)
+			w.Header().Set("Last-Modified", "Mon, 02 Jan 2006 15:04:05 GMT")
+			w.Header().Set("Content-Length", "99")
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	t.Cleanup(ts.Close)
+	configfile.Install()
+	return configmap.Simple{"type": "http", "url": ts.URL}, heads
+}
+
+const nginxListing = `<html><body><pre><a href="../">../</a>
+<a href="dir/">dir/</a>                          19-Oct-2026 09:36                   -
+<a href="listed.txt">listed.txt</a>                    19-Oct-2026 09:36             7709274
+<a href="unlisted.txt">unlisted.txt</a>
+</pre></body></html>`
+
+const nginxJSONListing = `[
+{ "name":"dir", "type":"directory", "mtime":"Mon, 19 Oct 2026 09:36:12 GMT" },
+{ "name":"listed.txt", "type":"file", "mtime":"Mon, 19 Oct 2026 09:36:12 GMT", "size":7709274 },
+{ "name":"unlisted.txt", "type":"file" }
+]`
+
+func TestListUseListing(t *testing.T) {
+	for _, test := range []struct {
+		name        string
+		contentType string
+		body        string
+		modTime     time.Time
+	}{
+		{"html", "text/html", nginxListing, time.Date(2026, 10, 19, 9, 36, 0, 0, time.UTC)},
+		{"json", "application/json", nginxJSONListing, time.Date(2026, 10, 19, 9, 36, 12, 0, time.UTC)},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			ctx := context.Background()
+			get := func(useListing bool) (entries fs.DirEntries, heads int32) {
+				m, headCount := listingServer(t, test.contentType, test.body)
+				m["use_listing"] = strconv.FormatBool(useListing)
+				f, err := NewFs(ctx, remoteName, "", m)
+				require.NoError(t, err)
+				entries, err = f.List(ctx, "")
+				require.NoError(t, err)
+				sort.Sort(entries)
+				require.Len(t, entries, 3)
+				return entries, headCount.Load()
+			}
+
+			// without the option every file is stat'd
+			entries, heads := get(false)
+			assert.Equal(t, int32(2), heads)
+			assert.Equal(t, int64(99), entries[1].Size())
+			assert.Equal(t, time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC), entries[1].ModTime(ctx))
+
+			// with it the listed file is not, and the unlisted one still is
+			entries, heads = get(true)
+			assert.Equal(t, int32(1), heads)
+			assert.Equal(t, "dir", entries[0].Remote())
+			assert.Equal(t, "listed.txt", entries[1].Remote())
+			assert.Equal(t, int64(7709274), entries[1].Size())
+			assert.True(t, test.modTime.Equal(entries[1].ModTime(ctx)), entries[1].ModTime(ctx))
+			assert.Equal(t, "unlisted.txt", entries[2].Remote())
+			assert.Equal(t, int64(99), entries[2].Size())
+		})
+	}
 }
