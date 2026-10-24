@@ -257,9 +257,12 @@ func (t *tenant) storeDirMarker(fp string) {
 	t.meta.Add(fp, objectMeta{dirMarker: true})
 }
 
-// hasDirMarker reports whether a directory marker was put for the
-// directory at fp.
+// hasDirMarker reports whether the directory at fp has a directory
+// marker: one was put for it, or --directory-markers is set.
 func (t *tenant) hasDirMarker(fp string) bool {
+	if t.b.s.opt.DirectoryMarkers {
+		return true
+	}
 	om, ok := t.meta.Get(fp)
 	return ok && om.dirMarker
 }

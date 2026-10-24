@@ -24,6 +24,11 @@ import (
 // newListBackend serves a temporary directory populated with the given files,
 // whose paths are relative to the serve root and so start with a bucket name.
 func newListBackend(t *testing.T, files ...string) *s3Backend {
+	return newListBackendOpt(t, Opt, files...)
+}
+
+// newListBackendOpt is newListBackend with the options opt.
+func newListBackendOpt(t *testing.T, opt Options, files ...string) *s3Backend {
 	fstest.Initialise()
 	ctx := context.Background()
 	root := t.TempDir()
@@ -36,7 +41,6 @@ func newListBackend(t *testing.T, files ...string) *s3Backend {
 	f, err := fs.NewFs(ctx, root)
 	require.NoError(t, err)
 
-	opt := Opt
 	opt.HTTP.ListenAddr = []string{endpoint}
 	w, err := newServer(ctx, f, &opt, &vfscommon.Opt, &proxy.Opt)
 	require.NoError(t, err)
@@ -421,4 +425,30 @@ func TestListStorageClass(t *testing.T) {
 		"ia":       "STANDARD_IA",
 		"plain":    gofakes3.StorageStandard,
 	}, got)
+}
+
+// TestListDirectoryMarkers checks every directory is listed as a
+// directory marker with --directory-markers.
+func TestListDirectoryMarkers(t *testing.T) {
+	opt := Opt
+	opt.DirectoryMarkers = true
+	b := newListBackendOpt(t, opt, "bucket/implicit/file", "bucket/a/b/c")
+	ctx := context.Background()
+	all := func() []string {
+		return listPages(t, b, listPrefix("", ""), 1000)
+	}
+
+	want := []string{"a/", "a/b/", "a/b/c", "implicit/", "implicit/file"}
+	assert.Equal(t, want, all())
+	assert.Equal(t, want, listPages(t, b, listPrefix("", ""), 1))
+	keys, _ := listOnce(t, b, listPrefix("a/", "/"), gofakes3.ListBucketPage{})
+	assert.Equal(t, []string{"a/", "a/b/"}, keys)
+	keys, _ = listOnce(t, b, listPrefix("", "b"), gofakes3.ListBucketPage{})
+	assert.Equal(t, []string{"a/", "a/b", "implicit/", "implicit/file"}, keys)
+
+	// The directories are kept when the keys below them are deleted
+	require.NoError(t, b.deleteObject(ctx, "bucket", "a/b/c"))
+	assert.Equal(t, []string{"a/", "a/b/", "implicit/", "implicit/file"}, all())
+	require.NoError(t, b.deleteObject(ctx, "bucket", "a/b/"))
+	assert.Equal(t, []string{"a/", "implicit/", "implicit/file"}, all())
 }
