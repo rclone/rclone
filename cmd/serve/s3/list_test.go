@@ -451,4 +451,22 @@ func TestListDirectoryMarkers(t *testing.T) {
 	assert.Equal(t, []string{"a/", "a/b/", "implicit/", "implicit/file"}, all())
 	require.NoError(t, b.deleteObject(ctx, "bucket", "a/b/"))
 	assert.Equal(t, []string{"a/", "implicit/", "implicit/file"}, all())
+
+	// A marker deleted while its directory holds other keys isn't
+	// listed, and the directory goes with the last key below it, in
+	// whatever order the keys are deleted
+	_, err := b.PutObject(ctx, "bucket", "x/y/z", nil, strings.NewReader("z"), 1)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"a/", "implicit/", "implicit/file", "x/", "x/y/", "x/y/z"}, all())
+	require.NoError(t, b.deleteObject(ctx, "bucket", "x/"))
+	assert.Equal(t, []string{"a/", "implicit/", "implicit/file", "x/y/", "x/y/z"}, all())
+	require.NoError(t, b.deleteObject(ctx, "bucket", "x/y/z"))
+	assert.Equal(t, []string{"a/", "implicit/", "implicit/file", "x/y/"}, all())
+	require.NoError(t, b.deleteObject(ctx, "bucket", "x/y/"))
+	assert.Equal(t, []string{"a/", "implicit/", "implicit/file"}, all())
+
+	// A directory made again has its marker
+	_, err = b.PutObject(ctx, "bucket", "x/w", nil, strings.NewReader("w"), 1)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"a/", "implicit/", "implicit/file", "x/", "x/w"}, all())
 }

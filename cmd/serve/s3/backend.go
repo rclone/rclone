@@ -94,12 +94,13 @@ type tenant struct {
 // objectMeta is the metadata stored for an object, with the size and
 // modification time the object had when it was stored.
 type objectMeta struct {
-	meta      map[string]string
-	hash      []byte  // the ETag of the object, if not its hash
-	partSizes []int64 // the sizes of the parts of an object made by a multipart upload
-	size      int64
-	modTime   time.Time
-	dirMarker bool // a directory marker was put for the directory at this path
+	meta        map[string]string
+	hash        []byte  // the ETag of the object, if not its hash
+	partSizes   []int64 // the sizes of the parts of an object made by a multipart upload
+	size        int64
+	modTime     time.Time
+	dirMarker   bool // a directory marker was put for the directory at this path
+	noDirMarker bool // the directory marker of the directory at this path was deleted, with --directory-markers
 }
 
 // newMetadataStore makes a store for the metadata of up to maxObjects
@@ -161,7 +162,7 @@ func (t *tenant) context() context.Context {
 // stored, as it has been replaced by something other than this user.
 func (t *tenant) getMeta(ctx context.Context, fp string, node vfs.Node) (om objectMeta, ok bool) {
 	om, ok = t.meta.Get(fp)
-	if !ok || om.dirMarker || om.size != node.Size() {
+	if !ok || om.dirMarker || om.noDirMarker || om.size != node.Size() {
 		return objectMeta{}, false
 	}
 	window := fs.GetModifyWindow(ctx, node.VFS().Fs())
@@ -258,12 +259,13 @@ func (t *tenant) storeDirMarker(fp string) {
 }
 
 // hasDirMarker reports whether the directory at fp has a directory
-// marker: one was put for it, or --directory-markers is set.
+// marker: one was put for it, or --directory-markers is set and it
+// hasn't been deleted.
 func (t *tenant) hasDirMarker(fp string) bool {
-	if t.b.s.opt.DirectoryMarkers {
-		return true
-	}
 	om, ok := t.meta.Get(fp)
+	if t.b.s.opt.DirectoryMarkers {
+		return !ok || !om.noDirMarker
+	}
 	return ok && om.dirMarker
 }
 
@@ -800,7 +802,10 @@ func (b *s3Backend) deleteObject(ctx context.Context, bucketName, objectName str
 			if err := _vfs.Remove(fp); err != nil {
 				return err
 			}
-			rmdirRecursive(fp, _vfs, t.hasDirMarker)
+			rmdirRecursive(fp, _vfs, t)
+		} else if b.s.opt.DirectoryMarkers {
+			// Otherwise it is removed with the last key below it
+			t.meta.Add(fp, objectMeta{noDirMarker: true})
 		}
 		return nil
 	}
@@ -816,7 +821,7 @@ func (b *s3Backend) deleteObject(ctx context.Context, bucketName, objectName str
 	t.removeMeta(fp)
 
 	// FIXME: unsafe operation
-	rmdirRecursive(fp, _vfs, t.hasDirMarker)
+	rmdirRecursive(fp, _vfs, t)
 	return nil
 }
 

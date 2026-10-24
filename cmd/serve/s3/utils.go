@@ -228,8 +228,9 @@ func removeMadeDirs(dir, made string, VFS *vfs.VFS) {
 }
 
 // rmdirRecursive removes the parent directories of p which are empty,
-// stopping at the bucket or at a directory for which keep is true.
-func rmdirRecursive(p string, VFS *vfs.VFS, keep func(dir string) bool) {
+// stopping at the bucket or at a directory with a directory marker of
+// the user t, and forgets what t remembers of the directories removed.
+func rmdirRecursive(p string, VFS *vfs.VFS, t *tenant) {
 	dir := path.Dir(p)
 	if !strings.ContainsAny(dir, "/\\") {
 		// might be bucket(root)
@@ -237,13 +238,14 @@ func rmdirRecursive(p string, VFS *vfs.VFS, keep func(dir string) bool) {
 	}
 	// Check the directory is empty first as the VFS logs an error
 	// removing one which isn't
-	if keep(dir) || !isEmptyDir(dir, VFS) {
+	if t.hasDirMarker(dir) || !isEmptyDir(dir, VFS) {
 		return
 	}
 	if err := VFS.Remove(dir); err != nil {
 		return
 	}
-	rmdirRecursive(dir, VFS, keep)
+	t.removeMeta(dir)
+	rmdirRecursive(dir, VFS, t)
 }
 
 // pathLocks are locks on paths, made as needed.

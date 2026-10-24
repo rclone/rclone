@@ -506,8 +506,11 @@ With `--directory-markers` every directory is listed as a directory
 marker, so the markers are listed after a restart too, as needed by
 clients which rely on them, such as rclone's s3 backend with
 `--s3-directory-markers`. As every directory has a marker, a directory
-isn't removed when the last key below it is deleted, and deleting the
-marker of a directory which holds other keys has no effect.
+isn't removed when the last key below it is deleted. Deleting the
+marker of a directory which holds other keys stops it being listed,
+and the directory is then removed with the last key below it, but this
+is only remembered in memory, like the markers put without
+`--directory-markers`.
 
 As keys are file paths, a key can't be both an object and a directory
 holding other objects, for example `a/b` and `a/b/c`. Writing an
