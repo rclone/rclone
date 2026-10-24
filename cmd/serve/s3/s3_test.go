@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -53,9 +54,13 @@ const (
 // which case the credentials are handed to the test proxy via the
 // environment rather than --auth-key.
 func serveS3(t *testing.T, f fs.Fs) (testURL string, keyid string, keysec string, w *Server) {
+	return serveS3Opt(t, f, Opt)
+}
+
+// serveS3Opt is serveS3 with the options opt.
+func serveS3Opt(t *testing.T, f fs.Fs, opt Options) (testURL string, keyid string, keysec string, w *Server) {
 	keyid = random.String(16)
 	keysec = random.String(16)
-	opt := Opt // copy default options
 	if f == nil {
 		t.Setenv("RCLONE_TEST_PROXY_AUTH_KEY", fmt.Sprintf("%s,%s", keyid, keysec))
 	} else {
@@ -74,8 +79,14 @@ func serveS3(t *testing.T, f fs.Fs) (testURL string, keyid string, keysec string
 // startS3 builds the start callback that brings up a serve s3 server
 // wrapping f and returns the client config for connecting to it.
 func startS3(t *testing.T) servetest.StartFn {
+	return startS3Opt(t, Opt, nil)
+}
+
+// startS3Opt is startS3 with the server options opt and the extra
+// backend config extra.
+func startS3Opt(t *testing.T, opt Options, extra configmap.Simple) servetest.StartFn {
 	return func(f fs.Fs) (configmap.Simple, func()) {
-		testURL, keyid, keysec, _ := serveS3(t, f)
+		testURL, keyid, keysec, _ := serveS3Opt(t, f, opt)
 		// Config for the backend we'll use to connect to the server
 		config := configmap.Simple{
 			"type":              "s3",
@@ -84,6 +95,7 @@ func startS3(t *testing.T) servetest.StartFn {
 			"access_key_id":     keyid,
 			"secret_access_key": keysec,
 		}
+		maps.Copy(config, extra)
 		return config, func() {}
 	}
 }
@@ -94,6 +106,14 @@ func startS3(t *testing.T) servetest.StartFn {
 // serve s3.
 func TestS3(t *testing.T) {
 	servetest.Run(t, "s3", startS3(t))
+}
+
+// TestS3DirectoryMarkers runs the s3 backend integration tests with
+// directory markers against the s3 server with --directory-markers.
+func TestS3DirectoryMarkers(t *testing.T) {
+	opt := Opt
+	opt.DirectoryMarkers = true
+	servetest.Run(t, "s3", startS3Opt(t, opt, configmap.Simple{"directory_markers": "true"}))
 }
 
 // TestS3Minio runs the s3 server backed by a minio docker container
