@@ -903,19 +903,22 @@ func (b *s3Backend) CompleteMultipartUpload(ctx context.Context, bucketName, obj
 	}
 	defer up.endActivity()
 
-	// gofakes3 keeps its record of an upload whose completion fails, so
-	// forgetUpload removes that too, as the upload can't be retried.
+	// A completion which fails before the commit leaves the upload as
+	// it was, so the client can upload any missing parts and retry it,
+	// as on S3. gofakes3 keeps its record of the upload too.
 	if err := up.validate(input); err != nil {
-		b.forgetUpload(uploadID, up)
 		return "", "", err
 	}
 
-	// close commits the upload, failing with the upload left open if the
-	// streamed parts don't form the complete object; forgetUpload then
-	// tears it down. (After a successful or failed commit the abort it
-	// does is a no-op.)
+	// close commits the upload, failing with ErrInvalidPart and the
+	// upload left open if the streamed parts don't form the complete
+	// object. Any other failure is of the commit, so the upload can't be
+	// retried and forgetUpload tears it down. (After a failed commit the
+	// abort it does is a no-op.)
 	if err := up.close(); err != nil {
-		b.forgetUpload(uploadID, up)
+		if !errors.Is(err, gofakes3.ErrInvalidPart) {
+			b.forgetUpload(uploadID, up)
+		}
 		return "", "", err
 	}
 
