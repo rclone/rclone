@@ -86,8 +86,8 @@ func getServices() []service {
 		{"jottacloud", "Jottacloud", "id.jottacloud.com", "jottacloud", "desktop", []string{"openid", "jotta-default", "offline_access"}}, // Chose client id "desktop" here, will be identified as "Jottacloud for Desktop" in "My logged in devices", but could have used "jottacli" here as well.
 		{"elgiganten_dk", "Elgiganten Cloud (Denmark)", "cloud.elgiganten.dk", "elgiganten", "desktop", []string{"openid", "jotta-default", "offline_access"}},
 		{"elgiganten_se", "Elgiganten Cloud (Sweden)", "cloud.elgiganten.se", "elgiganten", "desktop", []string{"openid", "jotta-default", "offline_access"}},
-		{"elkjop", "Elkjøp Cloud (Norway)", "cloud.elkjop.no", "elkjop", "desktop", []string{"openid", "jotta-default", "offline_access"}},
-		{"elko", "ELKO Cloud (Iceland)", "cloud.elko.is", "elko", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"elkjop", "Elkjøp Cloud (Norway)", "cloud.elkjop.no", "elkjop", "desktop", []string{"openid", "offline_access"}},
+		{"elko", "ELKO Cloud (Iceland)", "cloud.elko.is", "elko", "desktop", []string{"openid", "offline_access"}},
 		{"gigantti", "Gigantti Cloud (Finland)", "cloud.gigantti.fi", "gigantti", "desktop", []string{"openid", "jotta-default", "offline_access"}},
 		{"letsgo", "Let's Go Cloud (Germany)", "letsgo.jotta.cloud", "letsgo", "desktop-win", []string{"openid", "offline_access"}},
 		{"mediamarkt", "MediaMarkt Cloud (Multiregional)", "mediamarkt.jottacloud.com", "mediamarkt", "desktop", []string{"openid", "jotta-default", "offline_access"}},
