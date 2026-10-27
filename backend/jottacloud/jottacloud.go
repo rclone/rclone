@@ -1500,9 +1500,9 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	info, err := f.copyOrMove(ctx, "cp", srcObj.filePath(), remote)
 
 	if err == nil {
-		var createTime time.Time
+		createTime := srcObj.createTime
 		var createTimeMeta bool
-		var modTime time.Time
+		modTime := srcObj.modTime
 		var modTimeMeta bool
 		if meta != nil {
 			createTime, createTimeMeta = srcObj.parseFsMetadataTime(meta, "btime")
