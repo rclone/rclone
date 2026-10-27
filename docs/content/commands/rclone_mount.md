@@ -988,6 +988,27 @@ This is safe when the object keys in the remote are stored in a canonical form
 (e.g. hex hashes or ASCII-only names) and you do not need case-folding or
 unicode equivalence matching.
 
+**Note:** `--vfs-lazy-dir-read` only avoids a full directory listing for
+single-file `stat` lookups. A genuine directory enumeration (`ls`, `find`, a
+Windows Explorer window, or macOS Spotlight/`mds` indexing a mount) still
+performs a full listing, because that is what those operations require. On
+macOS, if Spotlight indexes a mountpoint despite `mdutil -i off` (its
+exclusion state is re-evaluated on every mount/unmount and NFS loopback
+mounts can lose it across remounts), you can block Spotlight itself by
+exposing a `.metadata_never_index` marker file at the root of the mounted
+volume. Since this is usually a read-only remote, the marker can be overlaid
+with no source changes by wrapping the remote in a `union` remote together
+with a small local, read-only directory containing the marker file:
+
+```ini
+[mybucket-noindex]
+type = union
+upstreams = /path/to/marker-dir:ro mybucket:
+search_policy = ff
+```
+
+then mount `mybucket-noindex:` instead of `mybucket:`.
+
 ## VFS Disk Options
 
 This flag allows you to manually set the statistics about the filing system.
