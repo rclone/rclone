@@ -598,6 +598,8 @@ backends:
      - TestFixCase
      - TestListDirSorted        # Can't upload files starting with . - FIXME fix with encoding
      - TestListDirSortedFn      # Can't upload files starting with . - FIXME fix with encoding
+     - TestTransform/suffix     # Linkbox lower cases file extensions
+     - TestTransform/truncate   # Linkbox renames a file whose name prefixes another to name(1)
      - TestSyncOverlapWithFilter # Can't upload files starting with . - FIXME fix with encoding
    ignoretests:
      - cmd/bisync
