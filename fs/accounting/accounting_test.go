@@ -256,6 +256,35 @@ func TestAccountAccounter(t *testing.T) {
 
 }
 
+func TestAccountServerSideEnd(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		end  func(acc *Account, n int64)
+	}{
+		{"Copy", (*Account).ServerSideCopyEnd},
+		{"Move", (*Account).ServerSideMoveEnd},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			ctx := context.Background()
+			stats := NewStats(ctx)
+			tr := stats.NewTransferRemoteSize("file", 100, nil, nil)
+			acc := tr.Account(ctx, nil)
+			acc.ServerSideTransferStart()
+			test.end(acc, 100)
+
+			bytes, size := acc.progress()
+			assert.Equal(t, int64(100), bytes)
+			assert.Equal(t, int64(100), size)
+			assert.Equal(t, int64(100), stats.GetBytes())
+			// Counted once while the transfer is still in progress
+			assert.Equal(t, int64(100), stats.calculateTransferStats().totalBytes)
+
+			tr.Done(ctx, nil)
+			assert.Equal(t, int64(100), stats.calculateTransferStats().totalBytes)
+		})
+	}
+}
+
 func TestAccountMaxTransfer(t *testing.T) {
 	ctx := context.Background()
 	ci := fs.GetConfig(ctx)
