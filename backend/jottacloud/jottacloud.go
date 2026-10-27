@@ -1518,6 +1518,11 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 			// Workaround necessary when destination was a trashed file, to avoid the copied file also being in trash (bug in api?)
 			fs.Debugf(src, "Server-side copied to trashed destination, restoring")
 			info, err = f.createOrUpdate(ctx, remote, createTime, modTime, info.Size, info.MD5)
+			// The restored file keeps the name it was trashed with, which may differ in case
+			if err == nil && info != nil && info.Name != f.opt.Enc.FromStandardName(path.Base(remote)) {
+				fs.Debugf(src, "Renaming restored %q to %q", info.Name, path.Base(remote))
+				info, err = f.copyOrMove(ctx, "mv", f.filePath(remote), remote)
+			}
 		} else if createTimeMeta || modTimeMeta {
 			info, err = f.createOrUpdate(ctx, remote, createTime, modTime, info.Size, info.MD5)
 		}
