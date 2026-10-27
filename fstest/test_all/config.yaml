@@ -138,6 +138,8 @@ backends:
      - TestFileSetModTime/cache=off,open=false,write=false
      - TestFileSetModTime/cache=off,open=true,write=false
      - TestRWFileHandleWriteNoWrite
+     - TestRWFileTruncateShrinkUncached/writes
+     - TestRWFileTruncateShrinkUncached/full
    ignoretests:
      - cmd/gitannex
  - backend:  "combine"
