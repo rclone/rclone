@@ -20,7 +20,6 @@ require (
 	github.com/a1ex3/zstd-seekable-format-go/pkg v0.10.0
 	github.com/a8m/tree v0.0.0-20240104212747-2c8764a5f17e
 	github.com/aalpar/deheap v1.1.2
-	github.com/abbot/go-http-auth v0.4.0
 	github.com/adrg/xdg v0.5.3
 	github.com/anacrolix/dms v1.8.0
 	github.com/apache/arrow-go/v18 v18.7.0 // indirect
