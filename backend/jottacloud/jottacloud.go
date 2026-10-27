@@ -258,6 +258,7 @@ service, for the official service on https://www.jottacloud.com/web/secure.`)
 		}
 		m.Set("configVersion", fmt.Sprint(configVersion))
 		m.Set(configClientID, service.clientID)
+		m.Set(configClientSecret, "")
 		m.Set(configTokenURL, wellKnown.TokenEndpoint)
 		return oauthutil.ConfigOut("choose_device", &oauthutil.Options{
 			OAuth2Config: &oauthutil.Config{
