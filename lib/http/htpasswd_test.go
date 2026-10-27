@@ -71,6 +71,28 @@ func TestCheckHash(t *testing.T) {
 	}
 }
 
+func TestDecoyHash(t *testing.T) {
+	for _, test := range []struct {
+		secret string
+		prefix string
+	}{
+		{"{SHA}2PRZAyDhNDqRW2OUFwZQqPNdaSY=", "{SHA}"},
+		{"$apr1$s7fogein$IK9ItbnGM14ct0bY4Uyik1", "$apr1$s7fogein$"},
+		{"$2y$05$K/b3mVXUA6X857TOTYIL9.Lbaeg9oBjMQwUX5NefpVUCcYP0Z5KY2", "$2a$05$"},
+		{"plaintext", ""},
+		{"abJnggxhB/yWI", ""},
+		{"$2$05$K/b3mVXUA6X857TOTYIL9.Lbaeg9oBjMQwUX5NefpVUCcYP0Z5KY2", ""},
+	} {
+		decoy := decoyHash(test.secret)
+		if test.prefix == "" {
+			assert.Equal(t, "", decoy, test.secret)
+			continue
+		}
+		assert.True(t, strings.HasPrefix(decoy, test.prefix), "%q: got %q", test.secret, decoy)
+		assert.NotEqual(t, test.secret, decoy)
+	}
+}
+
 func TestParseHtpasswd(t *testing.T) {
 	in := strings.NewReader(`# comment
 user1:{SHA}2PRZAyDhNDqRW2OUFwZQqPNdaSY=
@@ -91,28 +113,38 @@ user1:{SHA}overridden=
 	}, users)
 }
 
-func TestHtpasswdFileUnsupported(t *testing.T) {
+func TestHtpasswdFileDecoy(t *testing.T) {
+	h := &htpasswdFile{path: "./testdata/.htpasswd"}
+	_, decoy := h.lookup("nosuchuser")
+	assert.True(t, strings.HasPrefix(decoy, "$2a$10$"), decoy)
+
+	// Entries which can't be checked must not hide ones which can
 	path := filepath.Join(t.TempDir(), ".htpasswd")
 	require.NoError(t, os.WriteFile(path, []byte("des:abJnggxhB/yWI\nplain:plain\nmd5:$apr1$s7fogein$IK9ItbnGM14ct0bY4Uyik1\n"), 0600))
-	h := &htpasswdFile{path: path}
+	h = &htpasswdFile{path: path}
+	_, decoy = h.lookup("nosuchuser")
+	assert.True(t, strings.HasPrefix(decoy, "$apr1$s7fogein$"), decoy)
 	assert.False(t, h.check("des", "des"))
 	assert.False(t, h.check("plain", "plain"))
 	assert.True(t, h.check("md5", "md5"))
-	assert.False(t, h.check("nosuchuser", "md5"))
 }
 
-// The users must follow changes to the htpasswd file
+// The users and decoy must follow changes to the htpasswd file
 func TestHtpasswdFileReload(t *testing.T) {
 	path := filepath.Join(t.TempDir(), ".htpasswd")
 	require.NoError(t, os.WriteFile(path, []byte("sha:{SHA}2PRZAyDhNDqRW2OUFwZQqPNdaSY=\n"), 0600))
 	h := &htpasswdFile{path: path}
 	assert.True(t, h.check("sha", "sha"))
+	_, decoy := h.lookup("nosuchuser")
+	assert.True(t, strings.HasPrefix(decoy, "{SHA}"))
 
 	require.NoError(t, os.WriteFile(path, []byte("bcrypt:$2y$10$K/b3mVXUA6X857TOTYIL9.Lbaeg9oBjMQwUX5NefpVUCcYP0Z5KY2\n"), 0600))
 	future := time.Now().Add(time.Hour)
 	require.NoError(t, os.Chtimes(path, future, future))
 	assert.False(t, h.check("sha", "sha"))
 	assert.True(t, h.check("bcrypt", "bcrypt"))
+	_, decoy = h.lookup("nosuchuser")
+	assert.True(t, strings.HasPrefix(decoy, "$2a$10$"))
 
 	// A missing file lets nobody in
 	require.NoError(t, os.Remove(path))

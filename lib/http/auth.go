@@ -41,6 +41,10 @@ htpasswd -B htpasswd user
 htpasswd -B htpasswd anotherUser
 ` + "```" + `
 
+Use the same hash format and cost for every entry in the file. If the
+entries differ, the time taken to reject a wrong password can reveal
+which usernames exist.
+
 The password file can be updated while rclone is running.
 
 When authentication is enabled every request must be authenticated,
