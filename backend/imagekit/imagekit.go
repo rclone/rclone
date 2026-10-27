@@ -18,6 +18,7 @@ import (
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
@@ -188,6 +189,7 @@ type Fs struct {
 	features *fs.Features     // optional features
 	ik       *client.ImageKit // ImageKit client
 	pacer    *fs.Pacer        // pacer for API calls
+	srv      *http.Client     // client for downloads from the URL endpoint
 }
 
 // Object describes a ImageKit file
@@ -224,6 +226,7 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (f
 		name:  name,
 		opt:   *opt,
 		ik:    ik,
+		srv:   fshttp.NewClient(ctx),
 		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 
@@ -630,8 +633,10 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		return nil, err
 	}
 
-	client := &http.Client{}
-	req, _ := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
 	if partialContent {
 		if count > 0 {
 			req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", offset, offset+count-1))
@@ -639,10 +644,14 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			req.Header.Set("Range", fmt.Sprintf("bytes=%d-", offset))
 		}
 	}
-	resp, err := client.Do(req)
+	resp, err := o.fs.srv.Do(req)
 
 	if err != nil {
 		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
+		_ = resp.Body.Close()
+		return nil, fmt.Errorf("failed to download %q: %s", o.remote, resp.Status)
 	}
 
 	end := resp.ContentLength
