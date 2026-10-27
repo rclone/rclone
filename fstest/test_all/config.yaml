@@ -581,6 +581,8 @@ backends:
      - TestIndexChanged
      - TestIndexChangedDelete
      - TestIndexChangedFiles
+     # downloading the large zip is refused with FileBlocked
+     - TestZipLargeFiles
  # - backend:  "koofr"
  #   remote:   "TestDigiStorage:"
  #   fastlist: false
