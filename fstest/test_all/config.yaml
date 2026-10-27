@@ -309,7 +309,10 @@ backends:
      - TestIntegration/FsMkdir/FsPutFiles/Internal/Versions/VersionAt/AfterDelete/NewObject
      - TestIntegration/FsMkdir/FsPutFiles/Internal/Versions/VersionAt/AfterTwo/List
      - TestIntegration/FsMkdir/FsPutFiles/Internal/Versions/VersionAt/AfterTwo/NewObject
+     # GCS can't store CR or LF in object names
      - TestBisyncRemoteRemote/extended_filenames
+     - TestBisyncRemoteLocal/extended_filenames
+     - TestBisyncLocalRemote/extended_filenames
  # Disabled due to excessive rate limiting at DO which cause the tests never to pass
  # This hits the rate limit as documented here: https://www.digitalocean.com/docs/spaces/#limits
  # 2 COPYs per 5 minutes on any individual object in a Space
