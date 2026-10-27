@@ -221,7 +221,11 @@ var _ = (fusefs.NodeOpendirer)((*Node)(nil))
 
 type dirStream struct {
 	nodes []os.FileInfo
-	i     int
+	// Inode numbers for the "." and ".." entries, which are not part of
+	// nodes and so have no os.FileInfo to read them from.
+	dirIno    uint64
+	parentIno uint64
+	i         int
 }
 
 // HasNext indicates if there are further entries. HasNext
@@ -240,14 +244,14 @@ func (ds *dirStream) Next() (de fuse.DirEntry, errno syscall.Errno) {
 		return fuse.DirEntry{
 			Mode: fuse.S_IFDIR,
 			Name: ".",
-			Ino:  0, // FIXME
+			Ino:  ds.dirIno,
 		}, 0
 	} else if ds.i == 1 {
 		ds.i++
 		return fuse.DirEntry{
 			Mode: fuse.S_IFDIR,
 			Name: "..",
-			Ino:  0, // FIXME
+			Ino:  ds.parentIno,
 		}, 0
 	}
 	fi := ds.nodes[ds.i-2]
@@ -260,10 +264,19 @@ func (ds *dirStream) Next() (de fuse.DirEntry, errno syscall.Errno) {
 		Name: path.Base(fi.Name()),
 
 		// Ino is the inode number.
-		Ino: 0, // FIXME
+		Ino: dirEntryIno(fi),
 	}
 	ds.i++
 	return de, 0
+}
+
+// dirEntryIno returns the inode number to report for a directory entry.
+// Zero means "unknown", which leaves the kernel to fill one in.
+func dirEntryIno(fi os.FileInfo) uint64 {
+	if node, ok := fi.(interface{ Inode() uint64 }); ok {
+		return node.Inode()
+	}
+	return 0
 }
 
 // Close releases resources related to this directory
@@ -322,8 +335,17 @@ func (n *Node) Readdir(ctx context.Context) (ds fusefs.DirStream, errno syscall.
 	if err != nil {
 		return nil, translateError(err)
 	}
+	// "." is this directory; ".." is its parent, or itself at the root,
+	// following the convention for "/".
+	dirIno := n.node.Inode()
+	parentIno := dirIno
+	if _, parent := n.Parent(); parent != nil {
+		parentIno = parent.StableAttr().Ino
+	}
 	return &dirStream{
-		nodes: items,
+		nodes:     items,
+		dirIno:    dirIno,
+		parentIno: parentIno,
 	}, 0
 }
 
