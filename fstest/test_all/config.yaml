@@ -595,6 +595,7 @@ backends:
      - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
      - TestRWFileHandleWriteNoWrite
      - TestCaseInsensitiveMoveFile
+     - TestCaseInsensitiveMoveWithoutServerSideMove # Linkbox renames "File1" uploaded next to "File1-rclone-move-xxx" to name(1)
      - TestFixCase
      - TestListDirSorted        # Can't upload files starting with . - FIXME fix with encoding
      - TestListDirSortedFn      # Can't upload files starting with . - FIXME fix with encoding
@@ -741,6 +742,10 @@ backends:
    listretries: 5
    ignore:
      - TestRWFileHandleWriteNoWrite
+     # Listings lag behind directory renames and deletes for longer
+     # than the list retries allow.
+     - TestDirRename
+     - TestDirRenameParentEntries
  - backend:  "dosya"
    remote:   "TestDosya:"
    # Every upload is a metadata round trip of several seconds regardless
