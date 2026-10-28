@@ -53,9 +53,9 @@ func (f *Fs) toStandardPath(remote string) string {
 	return f.opt.Enc.ToStandardPath(remote)
 }
 
-// Hashes returns an empty hash set, indicating no hash support
+// Hashes returns the supported hash types (MD5, supplied by the server)
 func (f *Fs) Hashes() hash.Set {
-	return hash.NewHashSet() // Properly creates an empty hash set
+	return hash.NewHashSet(hash.MD5)
 }
 
 // Name returns the remote name

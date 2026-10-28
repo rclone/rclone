@@ -257,6 +257,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 			remote:  remote,
 			size:    file.Size,
 			modTime: time.Now(),
+			md5:     file.MD5,
 		}
 		entries = append(entries, obj)
 	}
