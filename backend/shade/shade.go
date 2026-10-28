@@ -248,6 +248,7 @@ type Fs struct {
 	features     *fs.Features // optional features
 	srv          *rest.Client // REST client for ShadeFS API
 	apiSrv       *rest.Client // REST client for Shade API
+	noRedir      *http.Client // HTTP client which doesn't follow redirects, for downloads
 	endpoint     string       // endpoint for ShadeFS
 	drive        string       // drive ID
 	pacer        *fs.Pacer    // pacer for API calls
@@ -451,6 +452,7 @@ func NewFS(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		m:           m,
 		srv:         rest.NewClient(fshttp.NewClient(ctx)).SetRoot(defaultEndpoint),
 		apiSrv:      rest.NewClient(fshttp.NewClient(ctx)),
+		noRedir:     newNoRedirectClient(ctx),
 		pacer:       fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 		recursive:   true,
 		createdDirs: make(map[string]bool),
@@ -835,6 +837,17 @@ func (o *Object) Storable() bool {
 	return true
 }
 
+// newNoRedirectClient returns a configured HTTP client which doesn't follow
+// redirects. The download endpoint answers with a redirect whose body is a
+// presigned URL, which Open fetches itself.
+func newNoRedirectClient(ctx context.Context) *http.Client {
+	client := *fshttp.NewClient(ctx)
+	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+	return &client
+}
+
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
 
@@ -872,12 +885,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			}
 		}
 
-		client := http.Client{
-			CheckRedirect: func(req *http.Request, via []*http.Request) error {
-				return http.ErrUseLastResponse // Don't follow redirects
-			},
-		}
-		res, err = client.Do(req)
+		res, err = o.fs.noRedir.Do(req)
 		if err != nil {
 			return shouldRetry(ctx, nil, err)
 		}
