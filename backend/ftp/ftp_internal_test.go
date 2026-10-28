@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/textproto"
 	"strings"
@@ -242,5 +243,67 @@ func TestPutFtpConnectionDiscardsDeadConnection(t *testing.T) {
 		f.putFtpConnection(&c, &textproto.Error{Code: 550, Msg: "not found"})
 		assert.Nil(t, c)
 		assert.Empty(t, f.pool)
+	})
+}
+
+// fakeDataReader stands in for the RETR data stream of ftpReadCloser.
+type fakeDataReader struct {
+	data     []byte
+	closeErr error
+}
+
+func (r *fakeDataReader) Read(p []byte) (int, error) {
+	if len(r.data) == 0 {
+		return 0, io.EOF
+	}
+	n := copy(p, r.data)
+	r.data = r.data[n:]
+	return n, nil
+}
+
+func (r *fakeDataReader) Close() error { return r.closeErr }
+
+// TestFtpReadCloserClose checks that an early-closed RETR answered with 425
+// is masked only when nothing was read, that a connection which got QUIT is
+// never pooled, and that a second Close does not touch the pool.
+func TestFtpReadCloserClose(t *testing.T) {
+	err425 := &textproto.Error{Code: ftp.StatusCanNotOpenDataConnection, Msg: "Can't open data connection."}
+	newReader := func(t *testing.T, data []byte, closeErr error) (*ftpReadCloser, *Fs) {
+		server := startFakeFTPServer(t)
+		c, err := ftp.Dial(server.ln.Addr().String())
+		require.NoError(t, err)
+		f := &Fs{opt: Options{}}
+		return &ftpReadCloser{rc: &fakeDataReader{data: data, closeErr: closeErr}, c: c, f: f}, f
+	}
+
+	t.Run("425 before any read is masked and the connection is not pooled", func(t *testing.T) {
+		rc, f := newReader(t, nil, err425)
+		assert.NoError(t, rc.Close())
+		assert.Empty(t, f.pool)
+		assert.NoError(t, rc.Close())
+		assert.Empty(t, f.pool)
+	})
+
+	t.Run("425 after data was read stays an error", func(t *testing.T) {
+		rc, f := newReader(t, []byte("partial"), err425)
+		buf := make([]byte, 4)
+		n, err := rc.Read(buf)
+		require.NoError(t, err)
+		require.Equal(t, 4, n)
+		err = rc.Close()
+		require.Error(t, err)
+		assert.Equal(t, ftp.StatusCanNotOpenDataConnection, textprotoError(err).Code)
+		assert.Empty(t, f.pool)
+	})
+
+	t.Run("clean close pools the connection once", func(t *testing.T) {
+		rc, f := newReader(t, []byte("data"), nil)
+		_, err := io.ReadAll(rc)
+		require.NoError(t, err)
+		assert.NoError(t, rc.Close())
+		require.Len(t, f.pool, 1)
+		assert.NoError(t, rc.Close())
+		assert.Len(t, f.pool, 1)
+		_ = f.pool[0].Quit()
 	})
 }
