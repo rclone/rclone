@@ -1367,7 +1367,7 @@ func catObject(ctx context.Context, o fs.Object, w io.Writer, offset, count int6
 	opt := fs.RangeOption{Start: offset, End: -1}
 	size := o.Size()
 	if opt.Start < 0 && size >= 0 {
-		opt.Start += size
+		opt.Start = max(opt.Start+size, 0)
 	}
 	if count >= 0 {
 		opt.End = opt.Start + count - 1
