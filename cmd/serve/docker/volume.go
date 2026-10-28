@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rclone/rclone/cmd/mountlib"
@@ -24,24 +25,52 @@ var (
 	ErrMountpointExists = errors.New("non-empty mountpoint already exists")
 )
 
+// retryableError marks a volume setup failure which may clear by itself,
+// e.g. ENOTCONN from the mountpoint of a dead FUSE mount, so the volume
+// definition is kept and the setup is retried on the next Mount request.
+type retryableError struct{ err error }
+
+func (e retryableError) Error() string { return e.err.Error() }
+func (e retryableError) Unwrap() error { return e.err }
+
+// isRetryable reports whether err is a setup failure which a later mount
+// attempt may get past.
+func isRetryable(err error) bool {
+	var retryable retryableError
+	return errors.As(err, &retryable)
+}
+
 // Volume keeps volume runtime state
 // Public members get persisted in saved state
 type Volume struct {
-	Name          string    `json:"name"`
-	MountPoint    string    `json:"mountpoint"`
-	CreatedAt     time.Time `json:"created"`
-	Fs            string    `json:"fs"`             // remote[,connectString]:path
-	Type          string    `json:"type,omitempty"` // same as ":backend:"
-	Path          string    `json:"path,omitempty"` // for "remote:path" or ":backend:path"
-	Options       VolOpts   `json:"options"`        // all options together
-	Mounts        []string  `json:"mounts"`         // mountReqs as a string list
+	Name       string    `json:"name"`
+	MountPoint string    `json:"mountpoint"`
+	CreatedAt  time.Time `json:"created"`
+	Fs         string    `json:"fs"`             // remote[,connectString]:path
+	Type       string    `json:"type,omitempty"` // same as ":backend:"
+	Path       string    `json:"path,omitempty"` // for "remote:path" or ":backend:path"
+	Options    VolOpts   `json:"options"`        // all options together
+	Mounts     []string  `json:"mounts"`         // mountReqs as a string list
+
+	// mountMu serialises mounting and unmounting this volume, and guards
+	// the fields of vol.mnt. It is held for the whole of a mount, which
+	// may block indefinitely in the kernel, but never while mu is held.
+	mountMu sync.Mutex
+
+	// mu guards the fields below. It is never held across any I/O, so
+	// reporting or saving a volume never waits for its mount.
+	mu        sync.Mutex
+	setupDone bool // filesystem setup has succeeded
+
 	mountReqs     map[string]any
-	pendingMounts []string // mount IDs to restore after server starts
-	fsString      string   // result of merging Fs, Type and Options
-	persist       bool
-	mountType     string
-	drv           *Driver
-	mnt           *mountlib.MountPoint
+	pendingMounts []string     // mount IDs to restore after server starts
+	errChan       <-chan error // mirror of vol.mnt.ErrChan for the monitor
+
+	fsString  string // result of merging Fs, Type and Options
+	persist   bool
+	mountType string
+	drv       *Driver
+	mnt       *mountlib.MountPoint
 }
 
 // VolOpts keeps volume options
@@ -98,7 +127,9 @@ func newVolume(ctx context.Context, name string, volOpt VolOpts, drv *Driver) (*
 
 // getInfo returns short digest about volume
 func (vol *Volume) getInfo() *VolInfo {
-	vol.prepareState()
+	vol.mu.Lock()
+	defer vol.mu.Unlock()
+	vol.prepareStateLocked()
 	return &VolInfo{
 		Name:       vol.Name,
 		CreatedAt:  vol.CreatedAt.Format(time.RFC3339),
@@ -109,6 +140,15 @@ func (vol *Volume) getInfo() *VolInfo {
 
 // prepareState prepares volume for saving state
 func (vol *Volume) prepareState() {
+	vol.mu.Lock()
+	defer vol.mu.Unlock()
+	vol.prepareStateLocked()
+}
+
+// prepareStateLocked prepares volume for saving state
+//
+// vol.mu must be held.
+func (vol *Volume) prepareStateLocked() {
 	vol.Mounts = []string{}
 	for id := range vol.mountReqs {
 		vol.Mounts = append(vol.Mounts, id)
@@ -158,9 +198,26 @@ func (vol *Volume) restoreState(ctx context.Context, drv *Driver) error {
 // getPendingMounts returns and clears the list of mount IDs that
 // were saved from state and need to be re-mounted.
 func (vol *Volume) getPendingMounts() []string {
+	vol.mu.Lock()
+	defer vol.mu.Unlock()
 	mounts := vol.pendingMounts
 	vol.pendingMounts = nil
 	return mounts
+}
+
+// markSetupDone records that the volume's filesystem is set up
+func (vol *Volume) markSetupDone() {
+	vol.mu.Lock()
+	vol.setupDone = true
+	vol.mu.Unlock()
+}
+
+// getErrChan returns the channel reporting the end of this volume's mount,
+// or nil if it is not mounted.
+func (vol *Volume) getErrChan() <-chan error {
+	vol.mu.Lock()
+	defer vol.mu.Unlock()
+	return vol.errChan
 }
 
 // validate volume
@@ -195,10 +252,12 @@ func (vol *Volume) checkMountpoint() error {
 	_, err := os.Lstat(path)
 	if os.IsNotExist(err) {
 		if err = file.MkdirAll(path, 0700); err != nil {
-			return fmt.Errorf("failed to create mountpoint: %s: %w", path, err)
+			return retryableError{fmt.Errorf("failed to create mountpoint: %s: %w", path, err)}
 		}
 	} else if err != nil {
-		return err
+		// A mountpoint left behind by a dead FUSE mount reports
+		// ENOTCONN here, which may clear without the volume changing.
+		return retryableError{err}
 	}
 	if runtime.GOOS != "windows" {
 		if err := mountlib.CheckMountEmpty(path); err != nil {
@@ -209,6 +268,10 @@ func (vol *Volume) checkMountpoint() error {
 }
 
 // setup volume filesystem
+//
+// vol.mountMu must be held, except while the volume is still being
+// created and not yet reachable by any other goroutine. Failures which may
+// clear on their own are returned as retryableError.
 func (vol *Volume) setup(ctx context.Context) error {
 	fs.Debugf(nil, "Setup volume %q as %q at path %s", vol.Name, vol.fsString, vol.MountPoint)
 
@@ -216,6 +279,7 @@ func (vol *Volume) setup(ctx context.Context) error {
 		return err
 	}
 	if vol.drv.dummy {
+		vol.markSetupDone()
 		return nil
 	}
 
@@ -237,28 +301,37 @@ func (vol *Volume) setup(ctx context.Context) error {
 		updateMode := config.UpdateRemoteOpt{}
 		_, err := config.CreateRemote(ctx, vol.Name, vol.Type, params, updateMode)
 		if err != nil {
-			return err
+			return retryableError{err}
 		}
 	}
 
 	// Use existing remote
 	f, err := fs.NewFs(ctx, vol.fsString)
-	if err == nil {
-		vol.mnt.Fs = f
+	if err != nil {
+		return retryableError{err}
 	}
-	return err
+	vol.mnt.Fs = f
+	vol.markSetupDone()
+	return nil
 }
 
 // remove volume filesystem and mounts
 func (vol *Volume) remove(ctx context.Context) error {
+	vol.mountMu.Lock()
+	defer vol.mountMu.Unlock()
+
+	vol.mu.Lock()
 	count := len(vol.mountReqs)
+	vol.mu.Unlock()
 	fs.Debugf(nil, "Remove volume %q (count %d)", vol.Name, count)
 
 	if count > 0 {
 		return errors.New("volume is in use")
 	}
 
-	if !vol.drv.dummy {
+	// vol.mnt.Fs is nil when the setup of a restored volume is still
+	// deferred, so there is nothing to shut down.
+	if !vol.drv.dummy && vol.mnt.Fs != nil {
 		shutdownFn := vol.mnt.Fs.Features().Shutdown
 		if shutdownFn != nil {
 			if err := shutdownFn(ctx); err != nil {
@@ -276,6 +349,8 @@ func (vol *Volume) remove(ctx context.Context) error {
 
 // clearCache will clear VFS cache for the volume
 func (vol *Volume) clearCache() error {
+	vol.mountMu.Lock()
+	defer vol.mountMu.Unlock()
 	VFS := vol.mnt.VFS
 	if VFS == nil {
 		return nil
@@ -289,23 +364,43 @@ func (vol *Volume) clearCache() error {
 }
 
 // mount volume filesystem
+//
+// vol.mountMu is held throughout, including the blocking filesystem
+// mount, so that mounts and unmounts of this volume stay ordered while
+// other volumes and volume metadata reads are unaffected. Filesystem
+// setup deferred by a failed restore is retried here.
 func (vol *Volume) mount(id string) error {
+	vol.mountMu.Lock()
+	defer vol.mountMu.Unlock()
+
 	drv := vol.drv
+	vol.mu.Lock()
 	count := len(vol.mountReqs)
 	fs.Debugf(nil, "Mount volume %q for id %q at path %s (count %d)",
 		vol.Name, id, vol.MountPoint, count)
 
 	if _, found := vol.mountReqs[id]; found {
+		vol.mu.Unlock()
 		return errors.New("volume is already mounted by this id")
 	}
 
 	if count > 0 { // already mounted
 		vol.mountReqs[id] = nil
+		vol.mu.Unlock()
 		return nil
 	}
 	if drv.dummy {
 		vol.mountReqs[id] = nil
+		vol.mu.Unlock()
 		return nil
+	}
+	setupDone := vol.setupDone
+	vol.mu.Unlock()
+
+	if !setupDone {
+		if err := vol.setup(context.Background()); err != nil {
+			return err
+		}
 	}
 	if vol.mnt.Fs == nil {
 		return errors.New("volume filesystem is not ready")
@@ -314,30 +409,46 @@ func (vol *Volume) mount(id string) error {
 	if _, err := vol.mnt.Mount(); err != nil {
 		return err
 	}
+
+	vol.mu.Lock()
 	vol.mountReqs[id] = nil
-	vol.drv.monChan <- false // ask monitor to refresh channels
+	vol.errChan = vol.mnt.ErrChan
+	vol.mu.Unlock()
+	drv.notifyMonitor()
 	return nil
 }
 
 // unmount volume
+//
+// vol.mountMu is held throughout so that this cannot interleave with a
+// mount or unmount of the same volume.
 func (vol *Volume) unmount(id string) error {
+	vol.mountMu.Lock()
+	defer vol.mountMu.Unlock()
+
+	drv := vol.drv
+	vol.mu.Lock()
 	count := len(vol.mountReqs)
 	fs.Debugf(nil, "Unmount volume %q from id %q at path %s (count %d)",
 		vol.Name, id, vol.MountPoint, count)
 
 	if count == 0 {
+		vol.mu.Unlock()
 		return errors.New("volume is not mounted")
 	}
 	if _, found := vol.mountReqs[id]; !found {
+		vol.mu.Unlock()
 		return errors.New("volume is not mounted by this id")
 	}
 
 	delete(vol.mountReqs, id)
 	if len(vol.mountReqs) > 0 {
+		vol.mu.Unlock()
 		return nil // more mounts left
 	}
+	vol.mu.Unlock()
 
-	if vol.drv.dummy {
+	if drv.dummy {
 		return nil
 	}
 
@@ -350,13 +461,23 @@ func (vol *Volume) unmount(id string) error {
 	mnt.ErrChan = nil
 	mnt.UnmountFn = nil
 	mnt.VFS = nil
-	vol.drv.monChan <- false // ask monitor to refresh channels
+	vol.mu.Lock()
+	vol.errChan = nil
+	vol.mu.Unlock()
+	drv.notifyMonitor()
 	return nil
 }
 
 func (vol *Volume) unmountAll() error {
-	var firstErr error
+	vol.mu.Lock()
+	ids := make([]string, 0, len(vol.mountReqs))
 	for id := range vol.mountReqs {
+		ids = append(ids, id)
+	}
+	vol.mu.Unlock()
+
+	var firstErr error
+	for _, id := range ids {
 		err := vol.unmount(id)
 		if firstErr == nil {
 			firstErr = err
