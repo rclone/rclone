@@ -877,6 +877,147 @@ func testChunkerServerSideMove(t *testing.T, f *Fs) {
 	_ = operations.Purge(ctx, f.base, dir)
 }
 
+// testChunkerFailedChunkRollback verifies that a server-side copy or move
+// that fails partway through a multi-chunk file does not leave a
+// truncated or corrupt object at the destination, and that a failed move
+// does not lose data: chunks that had already moved to the destination
+// before the failure must be moved back to the source, not deleted.
+func testChunkerFailedChunkRollback(t *testing.T, f *Fs) {
+	ctx := context.Background()
+	fsResult := deriveFs(ctx, t, f, "failedchunkrollback", settings{"chunk_size": "3b"})
+	chunkFs, ok := fsResult.(*Fs)
+	require.True(t, ok, "fs must be a chunker remote")
+	if chunkFs.useNoRename {
+		t.Skip("this test assumes rename transactions")
+	}
+	f = chunkFs
+	defer func() {
+		_ = operations.Purge(ctx, f.base, "")
+	}()
+
+	modTime := fstest.Time("2001-02-03T04:05:06.499999999Z")
+	// Long enough for at least 3 chunks at the configured (small) chunk size.
+	contents := random.String(int(f.opt.ChunkSize)*3 + 10)
+
+	for _, opName := range []string{"copy", "move"} {
+		t.Run(opName, func(t *testing.T) {
+			// Copy needs the base remote's own server-side Copy (e.g. not
+			// available for local on Linux, see #10117); Move always works,
+			// falling back to copy+delete via operations.Move if needed.
+			if opName == "copy" && f.base.Features().Copy == nil {
+				t.Skip("base remote does not support server-side copy")
+			}
+			srcPath := opName + "-src"
+			dstPath := opName + "-dst"
+			item := fstest.Item{Path: srcPath, ModTime: modTime}
+			srcObj := fstests.PutTestContents(ctx, t, f, &item, contents, true)
+			require.NotNil(t, srcObj)
+
+			// Block the second chunk's destination with a directory, so the
+			// base remote's Copy/Move fails on it, the way a transient
+			// per-chunk error would on a real backend.
+			blockedChunk := f.makeChunkName(dstPath, 1, "", "")
+			require.NoError(t, f.base.Mkdir(ctx, blockedChunk))
+
+			var err error
+			if opName == "copy" {
+				_, err = f.Copy(ctx, srcObj, dstPath)
+			} else {
+				_, err = f.Move(ctx, srcObj, dstPath)
+			}
+			require.Error(t, err)
+
+			// No object should exist at the destination.
+			_, err = f.NewObject(ctx, dstPath)
+			assert.Error(t, err)
+
+			// The first chunk's destination copy/move must have been
+			// rolled back, not left behind.
+			firstChunkDst := f.makeChunkName(dstPath, 0, "", "")
+			_, err = f.base.NewObject(ctx, firstChunkDst)
+			assert.Error(t, err, "leftover chunk at destination after rollback")
+
+			if opName == "move" {
+				// A failed move must not lose data: the source object
+				// must still be there with all its original content.
+				srcAgain, err := f.NewObject(ctx, srcPath)
+				require.NoError(t, err, "source object lost after failed move")
+				r, err := srcAgain.Open(ctx)
+				require.NoError(t, err)
+				data, err := io.ReadAll(r)
+				require.NoError(t, err)
+				_ = r.Close()
+				assert.Equal(t, contents, string(data))
+				require.NoError(t, srcAgain.Remove(ctx))
+			} else {
+				require.NoError(t, srcObj.Remove(ctx))
+			}
+		})
+	}
+}
+
+// testChunkerFailedChunkRollbackNoMeta verifies that when meta_format is
+// "none" and the very first (and so far only) chunk of a copy or move
+// fails, the operation returns that error instead of going on to call
+// validate() on an object with neither chunks nor a meta object, which
+// panics in mainChunk().
+func testChunkerFailedChunkRollbackNoMeta(t *testing.T, f *Fs) {
+	ctx := context.Background()
+	fsResult := deriveFs(ctx, t, f, "failedchunkrollbacknometa", settings{
+		"chunk_size":  "3b",
+		"meta_format": "none",
+		"hash_type":   "none",
+	})
+	chunkFs, ok := fsResult.(*Fs)
+	require.True(t, ok, "fs must be a chunker remote")
+	if chunkFs.useNoRename {
+		t.Skip("this test assumes rename transactions")
+	}
+	f = chunkFs
+	defer func() {
+		_ = operations.Purge(ctx, f.base, "")
+	}()
+
+	modTime := fstest.Time("2001-02-03T04:05:06.499999999Z")
+	// Long enough for at least 2 chunks at the configured (small) chunk size.
+	contents := random.String(int(f.opt.ChunkSize)*2 + 10)
+
+	for _, opName := range []string{"copy", "move"} {
+		t.Run(opName, func(t *testing.T) {
+			if opName == "copy" && f.base.Features().Copy == nil {
+				t.Skip("base remote does not support server-side copy")
+			}
+			srcPath := opName + "-src"
+			dstPath := opName + "-dst"
+			item := fstest.Item{Path: srcPath, ModTime: modTime}
+			srcObj := fstests.PutTestContents(ctx, t, f, &item, contents, true)
+			require.NotNil(t, srcObj)
+
+			// Block the first chunk's destination, so the operation fails
+			// before any chunk exists at the destination, with meta_format
+			// "none" meaning there's no separate meta object either.
+			blockedChunk := f.makeChunkName(dstPath, 0, "", "")
+			require.NoError(t, f.base.Mkdir(ctx, blockedChunk))
+
+			var err error
+			assert.NotPanics(t, func() {
+				if opName == "copy" {
+					_, err = f.Copy(ctx, srcObj, dstPath)
+				} else {
+					_, err = f.Move(ctx, srcObj, dstPath)
+				}
+			})
+			assert.Error(t, err)
+
+			if opName == "move" {
+				_, err = f.NewObject(ctx, srcPath)
+				assert.NoError(t, err, "source object lost after failed move")
+			}
+			require.NoError(t, srcObj.Remove(ctx))
+		})
+	}
+}
+
 // Test that md5all creates metadata even for small files
 func testMD5AllSlow(t *testing.T, f *Fs) {
 	ctx := context.Background()
@@ -949,6 +1090,12 @@ func (f *Fs) InternalTest(t *testing.T) {
 	})
 	t.Run("ChunkerServerSideMove", func(t *testing.T) {
 		testChunkerServerSideMove(t, f)
+	})
+	t.Run("FailedChunkRollback", func(t *testing.T) {
+		testChunkerFailedChunkRollback(t, f)
+	})
+	t.Run("FailedChunkRollbackNoMeta", func(t *testing.T) {
+		testChunkerFailedChunkRollbackNoMeta(t, f)
 	})
 	t.Run("MD5AllSlow", func(t *testing.T) {
 		testMD5AllSlow(t, f)
