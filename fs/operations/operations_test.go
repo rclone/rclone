@@ -636,6 +636,8 @@ func TestCat(t *testing.T) {
 		{0, 5, "", "ABCDE", "01234"},
 		{-3, -1, "", "HIJ", "678"},
 		{1, 3, "", "BCD", "123"},
+		{-10, 3, "", "ABC", "012"},
+		{-12, 5, "", "ABCDE", "01234"},
 		{0, -1, "\n", "ABCDEFGHIJ", "012345678"},
 	} {
 		var buf bytes.Buffer
