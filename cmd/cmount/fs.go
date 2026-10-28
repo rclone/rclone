@@ -29,6 +29,7 @@ type FS struct {
 	opt       *mountlib.Options
 	ready     chan (struct{})
 	mu        sync.Mutex // to protect the below
+	mkdirMu   sync.Mutex // serialize exclusive directory creation through this mount
 	handles   []vfs.Handle
 	destroyed atomic.Int32
 }
@@ -430,6 +431,16 @@ func (fsys *FS) Mkdir(dirPath string, mode uint32) (errc int) {
 	leaf, parentDir, errc := fsys.lookupParentDir(dirPath)
 	if errc != 0 {
 		return errc
+	}
+	// VFS.Mkdir is intentionally idempotent for internal rclone callers.
+	// The filesystem boundary must reject an existing name. Serialize the
+	// check/create pair so concurrent requests through this mount have one winner.
+	fsys.mkdirMu.Lock()
+	defer fsys.mkdirMu.Unlock()
+	if _, err := parentDir.Stat(leaf); err == nil {
+		return -fuse.EEXIST
+	} else if err != vfs.ENOENT {
+		return translateError(err)
 	}
 	_, err := parentDir.Mkdir(leaf)
 	return translateError(err)
