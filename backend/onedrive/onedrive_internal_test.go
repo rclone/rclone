@@ -15,6 +15,7 @@ import (
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/backend/onedrive/api"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
@@ -769,4 +770,51 @@ func TestListDirectorySize(t *testing.T) {
 	assert.Equal(t, "photos", dir.Remote())
 	assert.Equal(t, int64(2646204760), dir.Size())
 	assert.Equal(t, int64(3), dir.Items())
+}
+
+// TestWaitForJobUsesConfiguredClient checks that the async job monitor is
+// polled with the configured HTTP client and request context rather than
+// http.DefaultClient, so proxy, TLS and timeout options and cancellation apply.
+func TestWaitForJobUsesConfiguredClient(t *testing.T) {
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.UserAgent = "rclone-waitforjob-test"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "rclone-waitforjob-test", r.UserAgent())
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(api.AsyncOperationStatus{Status: "deleteFailed"})
+	}))
+	t.Cleanup(server.Close)
+	f, _ := newChangeNotifyTestFs(t, http.NotFoundHandler())
+	f.unAuth = rest.NewClient(fshttp.NewClient(ctx))
+
+	err := f.waitForJob(ctx, server.URL+"/monitor", &Object{remote: "file.txt"})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "deleteFailed")
+}
+
+// TestWaitForJobCancel checks that cancelling the context stops a poll of
+// the async job monitor which is not answering.
+func TestWaitForJobCancel(t *testing.T) {
+	release := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-r.Context().Done():
+		case <-release:
+		}
+	}))
+	t.Cleanup(server.Close)
+	t.Cleanup(func() { close(release) })
+	f, _ := newChangeNotifyTestFs(t, http.NotFoundHandler())
+	f.unAuth = rest.NewClient(fshttp.NewClient(context.Background()))
+
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+	done := make(chan error, 1)
+	go func() { done <- f.waitForJob(ctx, server.URL+"/monitor", &Object{remote: "file.txt"}) }()
+	select {
+	case err := <-done:
+		assert.ErrorIs(t, err, context.DeadlineExceeded)
+	case <-time.After(5 * time.Second):
+		t.Fatal("waitForJob did not return after the context was cancelled")
+	}
 }
