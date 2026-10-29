@@ -18,10 +18,7 @@ mkdir -p ${SEAFILE_TEST_DATA}/${NAME}
 # docker-compose project directory
 COMPOSE_DIR=$(dirname "$0")/seafile
 
-start() {
-    docker-compose --project-directory ${COMPOSE_DIR} --project-name ${NAME} --file ${COMPOSE_DIR}/docker-compose.yml up -d
-
-    # wait for Seafile server to start
+wait_for_seafile() {
     seafile_endpoint="http://${SEAFILE_IP}:${SEAFILE_PORT}/"
     wait_seconds=1
     echo -n "Waiting for Seafile server to start"
@@ -35,6 +32,35 @@ start() {
       echo -n "."
       sleep $wait_seconds
     done
+}
+
+start() {
+    docker-compose --project-directory ${COMPOSE_DIR} --project-name ${NAME} --file ${COMPOSE_DIR}/docker-compose.yml up -d
+
+    wait_for_seafile
+
+    # Seahub throttles anonymous API calls, which includes logging in,
+    # to 60/minute. Concurrent test runs exceed that so raise it.
+    # seahub_settings.py is only created on first start.
+    settings=/shared/seafile/conf/seahub_settings.py
+    if ! docker exec ${NAME}_seafile_1 grep -q DEFAULT_THROTTLE_RATES $settings; then
+        docker exec -i ${NAME}_seafile_1 sh -c "cat >> $settings" <<'EOF'
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'ping': '3000/minute',
+        'anon': '100000/minute',
+        'user': '100000/minute',
+        'share_link_zip_task': '10/minute'
+    },
+    'UNICODE_JSON': False,
+}
+EOF
+        docker exec ${NAME}_seafile_1 /opt/seafile/seafile-server-latest/seahub.sh restart >/dev/null
+        wait_for_seafile
+    fi
 
     # authentication token answer should be like: {"token":"dbf58423f1632b5b679a13b0929f1d0751d9250c"}
     TOKEN=`curl --silent \
