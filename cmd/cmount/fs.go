@@ -635,6 +635,8 @@ func translateError(err error) (errc int) {
 		return -fuse.EINVAL
 	case vfs.ELOOP:
 		return -fuse.ELOOP
+	case vfs.ENOTDIR:
+		return -fuse.ENOTDIR
 	}
 	fs.Errorf(nil, "IO error: %v", err)
 	return -fuse.EIO

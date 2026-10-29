@@ -705,6 +705,131 @@ func TestDirRename(t *testing.T) {
 	assert.Equal(t, dir, d, `expected renamed dir to match value of dir.parent.items["dir3"]`)
 }
 
+func TestDirRenameOverDir(t *testing.T) {
+	for _, target := range []string{"empty", "full", "file", "self"} {
+		t.Run(target, func(t *testing.T) {
+			r, vfs, dir, file := dirCreate(t)
+			features := r.Fremote.Features()
+			if features.DirMove == nil && features.Move == nil && features.Copy == nil {
+				t.Skip("can't rename directories")
+			}
+			root, err := vfs.Root()
+			require.NoError(t, err)
+			items := []fstest.Item{file}
+			dirs := []string{"dir"}
+			listing := []string{"dir,0,true"}
+			name := "target"
+			var want error
+			switch target {
+			case "empty":
+				_, err = root.Mkdir(name)
+				require.NoError(t, err)
+			case "full":
+				items = append(items, r.WriteObject(context.Background(), "target/file2", "other", t1))
+				root.ForgetAll()
+				dirs = append(dirs, "target")
+				listing = append(listing, "target,0,true")
+				want = ENOTEMPTY
+			case "file":
+				items = append(items, r.WriteObject(context.Background(), "target", "other", t1))
+				root.ForgetAll()
+				listing = append(listing, "target,5,false")
+				want = ENOTDIR
+			case "self":
+				name = "dir"
+			}
+			assert.Equal(t, want, root.Rename("dir", name, root))
+			if target == "empty" {
+				items[0].Path = "target/file1"
+				dirs = []string{"target"}
+				listing = []string{"target,0,true"}
+				_, err = vfs.Stat("dir")
+				assert.Equal(t, ENOENT, err)
+				node, err := vfs.Stat("target")
+				require.NoError(t, err)
+				assert.Same(t, dir, node)
+			}
+			checkListing(t, root, listing)
+			checkListing(t, dir, []string{"file1,14,false"})
+			if target == "full" {
+				node, err := vfs.Stat("target")
+				require.NoError(t, err)
+				checkListing(t, node.(*Dir), []string{"file2,5,false"})
+			}
+			fstest.CheckListingWithPrecision(t, r.Fremote, items, dirs, r.Fremote.Precision())
+		})
+	}
+}
+
+func TestDirRenameAliasesAndDescendants(t *testing.T) {
+	for _, target := range []string{"alias", "empty alias", "descendant", "alias_descendant", "alias_self", "other parent"} {
+		t.Run(target, func(t *testing.T) {
+			r, vfs, dir, file := dirCreate(t)
+			features := r.Fremote.Features()
+			if features.DirMove == nil && features.Move == nil && features.Copy == nil {
+				t.Skip("can't rename directories")
+			}
+			root, err := vfs.Root()
+			require.NoError(t, err)
+			dirs := []string{"dir"}
+			listing := []string{"dir,0,true"}
+			switch target {
+			case "alias":
+				vfs.Opt.CaseInsensitive = true
+				require.NoError(t, root.Rename("dir", "DIR", root))
+				file.Path = "DIR/file1"
+				dirs = []string{"DIR"}
+				listing = []string{"DIR,0,true"}
+			case "empty alias":
+				vfs.Opt.CaseInsensitive = true
+				_, err = root.Mkdir("empty")
+				require.NoError(t, err)
+				require.NoError(t, root.Rename("empty", "EMPTY", root))
+				listing = []string{"EMPTY,0,true", "dir,0,true"}
+				node, err := vfs.Stat("EMPTY")
+				require.NoError(t, err)
+				checkListing(t, node.(*Dir), nil)
+				if features.CanHaveEmptyDirectories {
+					dirs = append(dirs, "EMPTY")
+				}
+			case "alias_self":
+				vfs.Opt.CaseInsensitive = true
+				require.NoError(t, root.Rename("DIR", "dir", root))
+			case "descendant", "alias_descendant":
+				oldName := "dir"
+				if target == "alias_descendant" {
+					vfs.Opt.CaseInsensitive = true
+					oldName = "DIR"
+				}
+				_, err = dir.Mkdir("sub")
+				require.NoError(t, err)
+				require.Equal(t, EINVAL, root.Rename(oldName, "sub", dir))
+				checkListing(t, dir, []string{"file1,14,false", "sub,0,true"})
+				if features.CanHaveEmptyDirectories {
+					dirs = append(dirs, "dir/sub")
+				}
+			case "other parent":
+				other, err := root.Mkdir("other")
+				require.NoError(t, err)
+				_, err = other.Mkdir("target")
+				require.NoError(t, err)
+				require.NoError(t, root.Rename("dir", "target", other))
+				_, err = vfs.Stat("dir")
+				assert.Equal(t, ENOENT, err)
+				checkListing(t, other, []string{"target,0,true"})
+				file.Path = "other/target/file1"
+				dirs = []string{"other", "other/target"}
+				listing = []string{"other,0,true"}
+			}
+			checkListing(t, root, listing)
+			if target != "descendant" && target != "alias_descendant" {
+				checkListing(t, dir, []string{"file1,14,false"})
+			}
+			fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file}, dirs, r.Fremote.Precision())
+		})
+	}
+}
+
 func TestDirStructSize(t *testing.T) {
 	t.Logf("Dir struct has size %d bytes", unsafe.Sizeof(Dir{}))
 }

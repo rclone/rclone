@@ -1684,6 +1684,7 @@ func TestDirMove(t *testing.T) {
 
 	// Disable DirMove
 	features := r.Fremote.Features()
+	origDirMove := features.DirMove
 	features.DirMove = nil
 
 	require.NoError(t, operations.DirMove(ctx, r.Fremote, "A2", "A3"))
@@ -1734,6 +1735,149 @@ func TestDirMove(t *testing.T) {
 		},
 		fs.GetModifyWindow(ctx, r.Fremote),
 	)
+
+	// Dest directory already exists: must return ErrorDirExists, not merge.
+	features.DirMove = origDirMove
+	destFile := r.WriteObject(ctx, "B_exists/keep", "keep", t1)
+	err := operations.DirMove(ctx, r.Fremote, "A4", "B_exists")
+	require.Equal(t, fs.ErrorDirExists, err)
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		append(files, destFile),
+		[]string{
+			"A4",
+			"A4/B1",
+			"A4/B2",
+			"A4/B1/C1",
+			"A4/B1/C2",
+			"A4/B1/C3",
+			"B_exists",
+		},
+		fs.GetModifyWindow(ctx, r.Fremote),
+	)
+}
+
+// testDirMoveDistinct checks DirMove onto a distinct directory whose
+// name only differs in case returns fs.ErrorDirExists without using a
+// temporary name.
+func testDirMoveDistinct(ctx context.Context, t *testing.T, r *fstest.Run, origDirMove func(context.Context, fs.Fs, string, string) error, other fstest.Item) {
+	features := r.Fremote.Features()
+	features.DirMove = func(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
+		if strings.HasPrefix(dstRemote, "rclone-move-") {
+			t.Errorf("unexpected move to temporary name %q", dstRemote)
+		}
+		if srcRemote != dstRemote && strings.EqualFold(srcRemote, dstRemote) {
+			return fs.ErrorDirExists
+		}
+		return origDirMove(ctx, src, srcRemote, dstRemote)
+	}
+	distinct := r.WriteObject(ctx, "Dir/distinct", "distinct", t1)
+	require.Equal(t, fs.ErrorDirExists, operations.DirMove(ctx, r.Fremote, "DIR", "Dir"))
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{other, distinct}, []string{"DIR", "Dir"}, fs.GetModifyWindow(ctx, r.Fremote))
+	require.NoError(t, operations.Purge(ctx, r.Fremote, "Dir"))
+}
+
+// TestDirMoveCaseInsensitive checks a case-only DirMove on a
+// case-insensitive backend, where the destination is the source itself.
+func TestDirMoveCaseInsensitive(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	features := r.Fremote.Features()
+	origDirMove := features.DirMove
+	if origDirMove == nil {
+		t.Skip("Need DirMove")
+	}
+	origCaseInsensitive := features.CaseInsensitive
+	t.Cleanup(func() {
+		features.DirMove = origDirMove
+		features.CaseInsensitive = origCaseInsensitive
+	})
+	// Emulate a case-insensitive backend: the destination already
+	// "exists" when it differs from the source only in case.
+	features.CaseInsensitive = true
+	features.DirMove = func(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
+		if srcRemote != dstRemote && strings.EqualFold(srcRemote, dstRemote) {
+			return fs.ErrorDirExists
+		}
+		return origDirMove(ctx, src, srcRemote, dstRemote)
+	}
+
+	file := r.WriteObject(ctx, "dir/file", "potato", t1)
+	require.NoError(t, operations.DirMove(ctx, r.Fremote, "dir", "DIR"))
+	file.Path = "DIR/file"
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file}, []string{"DIR"}, fs.GetModifyWindow(ctx, r.Fremote))
+
+	// If the second step fails the directory is moved back
+	errSecondStep := errors.New("second step failed")
+	features.DirMove = func(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
+		if strings.HasPrefix(srcRemote, "rclone-move-") && dstRemote == "dir" {
+			return errSecondStep
+		}
+		if srcRemote != dstRemote && strings.EqualFold(srcRemote, dstRemote) {
+			return fs.ErrorDirExists
+		}
+		return origDirMove(ctx, src, srcRemote, dstRemote)
+	}
+	require.Equal(t, errSecondStep, operations.DirMove(ctx, r.Fremote, "DIR", "dir"))
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file}, []string{"DIR"}, fs.GetModifyWindow(ctx, r.Fremote))
+
+	// The rollback still happens if ctx was cancelled during the move
+	cancelCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	features.DirMove = func(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
+		if strings.HasPrefix(srcRemote, "rclone-move-") && dstRemote == "dir" {
+			cancel()
+			return context.Canceled
+		}
+		if srcRemote != dstRemote && strings.EqualFold(srcRemote, dstRemote) {
+			return fs.ErrorDirExists
+		}
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		return origDirMove(ctx, src, srcRemote, dstRemote)
+	}
+	require.Equal(t, context.Canceled, operations.DirMove(cancelCtx, r.Fremote, "DIR", "dir"))
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file}, []string{"DIR"}, fs.GetModifyWindow(ctx, r.Fremote))
+
+	// If the source was recreated meanwhile the rollback won't merge into it
+	var other fstest.Item
+	features.DirMove = func(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
+		if strings.HasPrefix(srcRemote, "rclone-move-") && dstRemote == "dir" {
+			other = r.WriteObject(ctx, "DIR/other", "other", t1)
+			return errSecondStep
+		}
+		if srcRemote != dstRemote && strings.EqualFold(srcRemote, dstRemote) {
+			return fs.ErrorDirExists
+		}
+		return origDirMove(ctx, src, srcRemote, dstRemote)
+	}
+	require.Equal(t, errSecondStep, operations.DirMove(ctx, r.Fremote, "DIR", "dir"))
+	entries, err := r.Fremote.List(ctx, "")
+	require.NoError(t, err)
+	var tmpDir string
+	for _, entry := range entries {
+		if strings.HasPrefix(entry.Remote(), "rclone-move-") {
+			tmpDir = entry.Remote()
+		}
+	}
+	require.NotEmpty(t, tmpDir, "directory should be left under the temporary name")
+	file.Path = tmpDir + "/file"
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file, other}, []string{"DIR", tmpDir}, fs.GetModifyWindow(ctx, r.Fremote))
+	require.NoError(t, operations.Purge(ctx, r.Fremote, tmpDir))
+
+	// A distinct directory under an equivalent name isn't moved through
+	// a temporary name (needs a case-sensitive remote to create it)
+	if !origCaseInsensitive {
+		testDirMoveDistinct(ctx, t, r, origDirMove, other)
+	}
+
+	// Without CaseInsensitive an equivalent name isn't the same directory
+	features.CaseInsensitive = false
+	require.Equal(t, fs.ErrorDirExists, operations.DirMove(ctx, r.Fremote, "DIR", "Dir"))
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{other}, []string{"DIR"}, fs.GetModifyWindow(ctx, r.Fremote))
 }
 
 func TestGetFsInfo(t *testing.T) {
