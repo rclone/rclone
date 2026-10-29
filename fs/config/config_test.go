@@ -69,3 +69,45 @@ func TestCreateRemoteEphemeralConfigKeysReachBackend(t *testing.T) {
 	assert.Equal(t, "", config.GetValue("eph", "config_template_file"))
 	assert.Equal(t, "", config.GetValue("eph", "config_template"))
 }
+
+// TestUpdateRemoteTokenKeepsToken checks that passing a token answers
+// config_refresh_token with false unless the caller answered it (#10208).
+func TestUpdateRemoteTokenKeepsToken(t *testing.T) {
+	defer testConfigFile(t, simpleOptions, "token.conf")()
+	ctx := context.Background()
+
+	var answer string
+	backendName := "config_token_test_remote"
+	if regInfo, _ := fs.Find(backendName); regInfo == nil {
+		fs.Register(&fs.RegInfo{
+			Name: backendName,
+			Config: func(_ context.Context, _ string, _ configmap.Mapper, in fs.ConfigIn) (*fs.ConfigOut, error) {
+				if in.State == "" {
+					return fs.ConfigConfirm("done", true, "config_refresh_token", "Token already configured - replace it?")
+				}
+				answer = in.Result
+				return nil, nil
+			},
+		})
+	}
+	_, err := config.CreateRemote(ctx, "tok", backendName, rc.Params{}, config.UpdateRemoteOpt{NonInteractive: true})
+	require.NoError(t, err)
+
+	for _, test := range []struct {
+		params rc.Params
+		want   string
+	}{
+		{rc.Params{"token": `{"access_token":"AAA"}`}, "false"},
+		{rc.Params{"token": `{"access_token":"AAA"}`, "config_refresh_token": "true"}, "true"},
+		{rc.Params{}, ""},
+	} {
+		answer = ""
+		out, err := config.UpdateRemote(ctx, "tok", test.params, config.UpdateRemoteOpt{NonInteractive: true})
+		require.NoError(t, err)
+		assert.Equal(t, test.want, answer, test.params)
+		if test.want == "" {
+			require.NotNil(t, out)
+			assert.Equal(t, "config_refresh_token", out.Option.Name)
+		}
+	}
+}
