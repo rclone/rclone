@@ -12,7 +12,8 @@ start() {
     docker run --rm -d --name $NAME \
            -e "FTP_USER=rclone" \
            -e "FTP_PASS=$PASS" \
-           fauria/vsftpd
+           fauria/vsftpd \
+           sh -c 'echo max_per_ip=0 >> /etc/vsftpd/vsftpd.conf && exec /usr/sbin/run-vsftpd.sh'
 
     echo type=ftp
     echo host=$(docker_ip)
