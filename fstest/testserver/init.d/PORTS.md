@@ -9,7 +9,6 @@ They should be bound to localhost so they are not accessible externally.
 |    88 | TestHdfs |
 |   750 | TestHdfs |
 |  8020 | TestHdfs |
-|  8086 | TestSeafileV6 |
 |  8087 | TestSeafile |
 |  8088 | TestSeafileEncrypted |
 |  9866 | TestHdfs |
