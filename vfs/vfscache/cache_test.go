@@ -25,6 +25,35 @@ func TestMain(m *testing.M) {
 	fstest.TestMain(m)
 }
 
+func BenchmarkCacheWalk(b *testing.B) {
+	root := b.TempDir()
+	for i := range 100 {
+		dir := filepath.Join(root, fmt.Sprintf("snapshot-%03d", i))
+		require.NoError(b, os.Mkdir(dir, 0700))
+		for j := range 100 {
+			require.NoError(b, os.WriteFile(filepath.Join(dir, fmt.Sprintf("resource-%03d", j)), nil, 0600))
+		}
+	}
+	c := new(Cache)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		files, dirs := 0, 0
+		err := c.walk(root, func(_ string, entry os.DirEntry, _ string) error {
+			if entry.IsDir() {
+				dirs++
+			} else {
+				files++
+			}
+			return nil
+		})
+		require.NoError(b, err)
+		require.Equal(b, 10000, files)
+		require.Equal(b, 101, dirs)
+	}
+	b.StopTimer()
+}
+
 // convert c.item to a string
 func itemAsString(c *Cache) []string {
 	c.mu.Lock()
