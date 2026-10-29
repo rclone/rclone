@@ -265,9 +265,12 @@ func (f *Fs) listDir(ctx context.Context, dir string) (entries fs.DirEntries, er
 	}
 
 	for i, folder := range folders.SubFolders {
-		createDate, err := time.Parse("2006-01-02 15:04:05", folder.CreateDate)
-		if err != nil {
-			return nil, err
+		var createDate time.Time
+		if folder.CreateDate != "" {
+			createDate, err = time.Parse("2006-01-02 15:04:05", folder.CreateDate)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		fullPath := getRemote(dir, folder.Name)
