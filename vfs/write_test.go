@@ -337,10 +337,9 @@ func canSetModTime(t *testing.T, r *fstest.Run) bool {
 	canSetModTimeOnce.Do(func() {
 		mtime1 := time.Date(2008, time.November, 18, 17, 32, 31, 0, time.UTC)
 		_ = r.WriteObject(context.Background(), "time_test", "stuff", mtime1)
-		obj, err := r.Fremote.NewObject(context.Background(), "time_test")
-		require.NoError(t, err)
+		obj := fstest.NewObject(context.Background(), t, r.Fremote, "time_test")
 		mtime2 := time.Date(2009, time.November, 18, 17, 32, 31, 0, time.UTC)
-		err = obj.SetModTime(context.Background(), mtime2)
+		err := obj.SetModTime(context.Background(), mtime2)
 		switch err {
 		case nil:
 			canSetModTimeValue = true
