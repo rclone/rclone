@@ -2,11 +2,13 @@ package s3
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/rclone/gofakes3"
@@ -22,6 +24,11 @@ import (
 // newListBackend serves a temporary directory populated with the given files,
 // whose paths are relative to the serve root and so start with a bucket name.
 func newListBackend(t *testing.T, files ...string) *s3Backend {
+	return newListBackendOpt(t, Opt, files...)
+}
+
+// newListBackendOpt is newListBackend with the options opt.
+func newListBackendOpt(t *testing.T, opt Options, files ...string) *s3Backend {
 	fstest.Initialise()
 	ctx := context.Background()
 	root := t.TempDir()
@@ -34,7 +41,6 @@ func newListBackend(t *testing.T, files ...string) *s3Backend {
 	f, err := fs.NewFs(ctx, root)
 	require.NoError(t, err)
 
-	opt := Opt
 	opt.HTTP.ListenAddr = []string{endpoint}
 	w, err := newServer(ctx, f, &opt, &vfscommon.Opt, &proxy.Opt)
 	require.NoError(t, err)
@@ -168,7 +174,7 @@ func countDirs(t *testing.T, b *s3Backend, page gofakes3.ListBucketPage) (dirsRe
 	_vfs, err := b.s.getVFS(context.Background())
 	require.NoError(t, err)
 	list = gofakes3.NewObjectList()
-	l := newLister(b, _vfs, "bucket", page, list)
+	l := newLister(context.Background(), b, _vfs, "bucket", page, list)
 	err = l.list("", "", false)
 	if err != nil && !errors.Is(err, errPageFull) {
 		require.NoError(t, err)
@@ -260,4 +266,217 @@ func TestListSkipDir(t *testing.T) {
 		l := &lister{marker: test.marker, hasMarker: test.marker != ""}
 		assert.Equal(t, test.want, l.skipDir(test.dir), "marker %q dir %q", test.marker, test.dir)
 	}
+}
+
+// TestListAnyDelimiter checks listings with any delimiter, and with a
+// prefix, against the keys an S3 listing of the same flat keyspace has,
+// whatever the page size.
+func TestListAnyDelimiter(t *testing.T) {
+	files := []string{
+		"a.txt", "a/b/c", "a/bc", "a0",
+		"b%ar", "b ar", "b.ar", "bar", "bazar", "baz/qux", "baz/q ux/x",
+		"cab", "c/a/b/z", "c/ab", "dir/sub/file", "foo",
+	}
+	var paths []string
+	for _, file := range files {
+		paths = append(paths, "bucket/"+file)
+	}
+	// A directory holding only the temporary object of an upload has
+	// no keys
+	paths = append(paths, "bucket/pending/"+putObjectPrefix+"x")
+	b := newListBackend(t, paths...)
+	// An empty directory has its directory marker as its key
+	require.NoError(t, os.MkdirAll(filepath.Join(b.s.f.Root(), "bucket", "empty", "abc"), 0777))
+	files = append(files, "empty/abc/")
+
+	// want returns the keys and common prefixes S3 lists
+	want := func(prefix, delimiter string) (keys []string) {
+		seen := map[string]bool{}
+		keySpace := files
+		if delimiter == "/" && prefix != "pending/" {
+			// Listing directories with "/" shows every directory
+			// as a common prefix, as it always has
+			keySpace = append(slices.Clone(files), "pending/")
+		}
+		for _, key := range keySpace {
+			if !strings.HasPrefix(key, prefix) {
+				continue
+			}
+			if delimiter != "" {
+				if i := strings.Index(key[len(prefix):], delimiter); i >= 0 {
+					key = key[:len(prefix)+i+len(delimiter)]
+				}
+			}
+			if !seen[key] {
+				seen[key] = true
+				keys = append(keys, key)
+			}
+		}
+		slices.Sort(keys)
+		return keys
+	}
+
+	for _, prefix := range []string{"", "b", "ba", "baz/", "c", "c/a", "e", "empty/", "empty/abc", "empty/abc/", "p", "pending/", "x"} {
+		for _, delimiter := range []string{"", "/", "a", "ba", " ", ".", "%", "/a", "b/", "z"} {
+			t.Run(fmt.Sprintf("prefix=%q,delimiter=%q", prefix, delimiter), func(t *testing.T) {
+				expected := want(prefix, delimiter)
+				for _, maxKeys := range []int{1, 2, 3, 1000} {
+					got := listPages(t, b, listPrefix(prefix, delimiter), maxKeys)
+					assert.Equal(t, expected, got, "max-keys %d", maxKeys)
+				}
+			})
+		}
+	}
+}
+
+// TestListPrefixLeadingSlash checks a prefix starting with "/" matches
+// nothing, as no key starts with "/".
+func TestListPrefixLeadingSlash(t *testing.T) {
+	b := newListBackend(t, "bucket/a/b", "bucket/c")
+	keys, _ := listOnce(t, b, listPrefix("/", ""), gofakes3.ListBucketPage{MaxKeys: 1000})
+	assert.Empty(t, keys)
+	keys, _ = listOnce(t, b, listPrefix("/a", "/"), gofakes3.ListBucketPage{MaxKeys: 1000})
+	assert.Empty(t, keys)
+}
+
+// TestListETagQuoted checks the ETags in listings are quoted as on S3
+// and in HEAD responses.
+func TestListETagQuoted(t *testing.T) {
+	b := newListBackend(t, "bucket/a")
+	_, list := listOnce(t, b, listPrefix("", ""), gofakes3.ListBucketPage{MaxKeys: 1000})
+	require.Len(t, list.Contents, 1)
+	obj, err := b.HeadObject(context.Background(), "bucket", "a")
+	require.NoError(t, err)
+	assert.Equal(t, `"`+hex.EncodeToString(obj.Hash)+`"`, list.Contents[0].ETag)
+}
+
+// TestListPutDirMarkers checks that the directory marker put for a
+// directory is listed, and kept, while the directory holds other keys,
+// as on S3, but not that of a directory made by putting a key below it.
+func TestListPutDirMarkers(t *testing.T) {
+	b := newListBackend(t, "bucket/implicit/file")
+	ctx := context.Background()
+	put := func(bucket, key string) {
+		_, err := b.PutObject(ctx, bucket, key, nil, strings.NewReader(""), 0)
+		require.NoError(t, err)
+	}
+	del := func(key string) {
+		require.NoError(t, b.deleteObject(ctx, "bucket", key))
+	}
+	all := func() []string {
+		return listPages(t, b, listPrefix("", ""), 1000)
+	}
+
+	put("bucket", "dir/")
+	put("bucket", "dir/a")
+	put("bucket", "dir/sub/b")
+	want := []string{"dir/", "dir/a", "dir/sub/b", "implicit/file"}
+	assert.Equal(t, want, all())
+	assert.Equal(t, want, listPages(t, b, listPrefix("", ""), 1))
+	keys, _ := listOnce(t, b, listPrefix("", "/"), gofakes3.ListBucketPage{})
+	assert.Equal(t, []string{"dir/", "implicit/"}, keys)
+	keys, _ = listOnce(t, b, listPrefix("dir/", "/"), gofakes3.ListBucketPage{})
+	assert.Equal(t, []string{"dir/", "dir/a", "dir/sub/"}, keys)
+	keys, _ = listOnce(t, b, listPrefix("", "r"), gofakes3.ListBucketPage{})
+	assert.Equal(t, []string{"dir", "implicit/file"}, keys)
+
+	// The marker keeps its directory when the keys below it are deleted
+	del("dir/a")
+	del("dir/sub/b")
+	assert.Equal(t, []string{"dir/", "implicit/file"}, all())
+
+	// Deleting the marker leaves the keys below it, and then the
+	// directory goes with the last of them
+	put("bucket", "dir/c")
+	del("dir/")
+	assert.Equal(t, []string{"dir/c", "implicit/file"}, all())
+	del("dir/c")
+	assert.Equal(t, []string{"implicit/file"}, all())
+
+	// The markers of a deleted bucket are forgotten
+	require.NoError(t, b.CreateBucket(ctx, "other"))
+	put("other", "d/")
+	require.NoError(t, b.DeleteBucket(ctx, "other"))
+	require.NoError(t, b.CreateBucket(ctx, "other"))
+	put("other", "d/f")
+	list, err := b.ListBucket(ctx, "other", listPrefix("", ""), gofakes3.ListBucketPage{})
+	require.NoError(t, err)
+	require.Len(t, list.Contents, 1)
+	assert.Equal(t, "d/f", list.Contents[0].Key)
+}
+
+// TestListStorageClass checks the storage class an object was put with
+// is listed.
+func TestListStorageClass(t *testing.T) {
+	b := newListBackend(t, "bucket/existing")
+	ctx := context.Background()
+	_, err := b.PutObject(ctx, "bucket", "ia", map[string]string{"X-Amz-Storage-Class": "STANDARD_IA"}, strings.NewReader("ia"), 2)
+	require.NoError(t, err)
+	_, err = b.PutObject(ctx, "bucket", "plain", nil, strings.NewReader("plain"), 5)
+	require.NoError(t, err)
+
+	_, list := listOnce(t, b, listPrefix("", ""), gofakes3.ListBucketPage{})
+	got := map[string]gofakes3.StorageClass{}
+	for _, c := range list.Contents {
+		got[c.Key] = c.StorageClass
+	}
+	assert.Equal(t, map[string]gofakes3.StorageClass{
+		"existing": gofakes3.StorageStandard,
+		"ia":       "STANDARD_IA",
+		"plain":    gofakes3.StorageStandard,
+	}, got)
+}
+
+// TestListDirectoryMarkers checks every directory is listed as a
+// directory marker with --directory-markers.
+func TestListDirectoryMarkers(t *testing.T) {
+	opt := Opt
+	opt.DirectoryMarkers = true
+	b := newListBackendOpt(t, opt, "bucket/implicit/file", "bucket/a/b/c")
+	ctx := context.Background()
+	all := func() []string {
+		return listPages(t, b, listPrefix("", ""), 1000)
+	}
+
+	want := []string{"a/", "a/b/", "a/b/c", "implicit/", "implicit/file"}
+	assert.Equal(t, want, all())
+	assert.Equal(t, want, listPages(t, b, listPrefix("", ""), 1))
+	keys, _ := listOnce(t, b, listPrefix("a/", "/"), gofakes3.ListBucketPage{})
+	assert.Equal(t, []string{"a/", "a/b/"}, keys)
+	keys, _ = listOnce(t, b, listPrefix("", "b"), gofakes3.ListBucketPage{})
+	assert.Equal(t, []string{"a/", "a/b", "implicit/", "implicit/file"}, keys)
+
+	// The directories are kept when the keys below them are deleted
+	require.NoError(t, b.deleteObject(ctx, "bucket", "a/b/c"))
+	assert.Equal(t, []string{"a/", "a/b/", "implicit/", "implicit/file"}, all())
+	require.NoError(t, b.deleteObject(ctx, "bucket", "a/b/"))
+	assert.Equal(t, []string{"a/", "implicit/", "implicit/file"}, all())
+
+	// A marker deleted while its directory holds other keys isn't
+	// listed, and the directory goes with the last key below it, in
+	// whatever order the keys are deleted
+	_, err := b.PutObject(ctx, "bucket", "x/y/z", nil, strings.NewReader("z"), 1)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"a/", "implicit/", "implicit/file", "x/", "x/y/", "x/y/z"}, all())
+	require.NoError(t, b.deleteObject(ctx, "bucket", "x/"))
+	assert.Equal(t, []string{"a/", "implicit/", "implicit/file", "x/y/", "x/y/z"}, all())
+	require.NoError(t, b.deleteObject(ctx, "bucket", "x/y/z"))
+	assert.Equal(t, []string{"a/", "implicit/", "implicit/file", "x/y/"}, all())
+	require.NoError(t, b.deleteObject(ctx, "bucket", "x/y/"))
+	assert.Equal(t, []string{"a/", "implicit/", "implicit/file"}, all())
+
+	// A directory made again has its marker
+	_, err = b.PutObject(ctx, "bucket", "x/w", nil, strings.NewReader("w"), 1)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"a/", "implicit/", "implicit/file", "x/", "x/w"}, all())
+}
+
+// TestListNoCleanup checks the deprecated --no-cleanup is
+// --directory-markers.
+func TestListNoCleanup(t *testing.T) {
+	opt := Opt
+	opt.NoCleanup = true
+	b := newListBackendOpt(t, opt, "bucket/a/b")
+	require.NoError(t, b.deleteObject(context.Background(), "bucket", "a/b"))
+	assert.Equal(t, []string{"a/"}, listPages(t, b, listPrefix("", ""), 1000))
 }

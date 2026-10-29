@@ -65,6 +65,12 @@ cause problems for S3 clients which rely on the Etag being the MD5.
 Use `--etag-hash auto` to use the best hash the backend supports - with
 `--auth-proxy` that of each user's backend.
 
+The `ETag` of an object made by a multipart upload is its hash, like
+any other object, rather than the `-N` suffixed `ETag` AWS S3 gives
+these. If the remote doesn't have the MD5 of objects, `HeadObject`
+and listings only return the MD5 of objects uploaded through `serve
+s3` while the object's metadata is kept (see below).
+
 ### Quickstart
 
 For a simple set up, to serve `remote:path` over s3, run the server
@@ -233,6 +239,11 @@ remote as if it had completed.
   been streamed, so the whole upload is failed and the client must
   start it again. So is a failure in the stream to the remote itself. (The remote's own upload
   still retries its internal chunks.)
+- A `CompleteMultipartUpload` which fails because the parts it lists
+  don't match those uploaded, or there is a gap in the part numbers,
+  leaves the upload open, as on S3, so the client can upload any
+  missing parts and complete it again. If writing the completed object
+  to the remote fails, the upload is failed and must be started again.
 - Parts are serialised into one stream, so ingest from the client is
   effectively single-threaded. When streaming, the remote's own upload
   runs concurrently with the parts arriving; with the local disk spool
@@ -418,13 +429,37 @@ The number of connections is not limited, so if the server is open to
 clients you don't trust, use `--auth-key` or `--auth-proxy` and
 consider putting it behind a reverse proxy which limits connections.
 
-### Bugs
+### Design goals
 
-Multipart server side copies do not work (see
-[#7454](https://github.com/rclone/rclone/issues/7454)). These take a
-very long time and eventually fail. The default threshold for
-multipart server side copies is 5G which is the maximum it can be, so
-files above this side will fail to be server side copied.
+These goals explain many of the limitations below.
+
+- **Objects are plain files on the remote.** A bucket is a directory
+  in the root and a key is a path in it, so the remote stays usable by
+  other tools, such as `rclone mount` or `rclone sync`. So keys must
+  be paths (see [Object names](#object-names)).
+- **No database.** `serve s3` stores nothing but the objects. What the
+  remote can't hold, such as user metadata, tags, the MD5 `ETag` of an
+  object on a remote without MD5 and the directory markers put, is
+  kept in memory as a best effort, and lost on restart.
+- **Works with any rclone remote.** What `serve s3` can do depends on
+  what the remote supports, such as the hashes used for `ETag`s and
+  modification times, rather than needing a particular backend.
+- **Bounded memory.** Uploads, including multipart uploads, are
+  streamed to the remote and the memory each request can use is
+  limited (see [Memory use](#memory-use)). Nothing is written to local
+  disk unless the VFS cache is used or the remote can't stream uploads
+  (see [Multipart uploads](#multipart-uploads)).
+- **Refuse rather than ignore.** Unsupported features are refused, or
+  answered as S3 answers when the feature isn't configured, so a
+  client is never told something was done which wasn't (see
+  [Compatibility](#compatibility)).
+- **A storage gateway, not a full S3.** `serve s3` implements the parts
+  of the S3 API clients use to store and fetch objects. Versioning,
+  ACLs, bucket policies, lifecycle rules and the like are out of scope.
+- **Compatible with rclone's s3 backend.** This includes its directory
+  markers, which the tests check.
+
+### Bugs
 
 For a current list of `serve s3` bugs see the [serve
 s3](https://github.com/rclone/rclone/labels/serve%20s3) bug category
@@ -434,58 +469,121 @@ on GitHub.
 
 `serve s3` will treat all directories in the root as buckets and
 ignore all files in the root. You can use `CreateBucket` to create
-folders under the root, but you can't create empty folders under other
-folders not in the root.
+folders under the root, and put a directory marker to create an empty
+folder below them (see [Object names](#object-names)).
 
 When using `PutObject` or `DeleteObject`, rclone will automatically
 create or clean up empty folders. If you don't want to clean up empty
-folders automatically, use `--no-cleanup`.
+folders automatically, use `--directory-markers` (see [Object
+names](#object-names)). The deprecated `--no-cleanup` does the same.
 
-When using `ListObjects`, rclone treats any delimiter as `/`. Without a
-delimiter the listing is recursive: rclone walks the directory tree
-below the prefix, reading only as many directories as it needs to fill
-each page.
+When using `ListObjects` with the delimiter `/`, rclone lists the
+directory the prefix is in, showing its subdirectories as common
+prefixes, including empty ones. Without a delimiter the listing is
+recursive: rclone walks the directory tree below the prefix, reading
+only as many directories as it needs to fill each page, and lists
+empty directories as their directory markers (see below). Any other
+delimiter is supported too, but needs the whole directory tree below
+the prefix walking, unless the delimiter is in the directory names.
 
-Versioning is not currently supported.
+Versioning is not supported (see [Design goals](#design-goals)).
 
-Metadata will only be saved in memory other than the rclone `mtime`
-metadata which will be set as the modification time of the file. The
+Conditional writes, `PutObject` and `CompleteMultipartUpload` with
+`If-None-Match` or `If-Match`, are supported. The conditions are
+checked before the object is written, and again as it is moved into
+place when it is written to a temporary object first. This happens for
+multipart uploads and, for `PutObject`, with remotes which can upload
+partial files (such as local disk) or with `--vfs-cache-mode minimal`
+or above. The second check is atomic against other writes through
+`serve s3`, but neither is atomic against changes made to the remote
+some other way. If the remote doesn't support the `--etag-hash`,
+objects have no `ETag` so `If-Match` with an `ETag` always fails.
+
+Metadata will only be saved in memory (see [Design
+goals](#design-goals)) other than the rclone `mtime` metadata which
+will be set as the modification time of the file. The
 metadata of at most `--metadata-max-objects` objects (default `100000`,
 `0` for no limit) of each user (each access key) is kept; after that
 the metadata of the user's least recently used object is forgotten. The metadata of an object is
 ignored once the object has been changed some other way, for example
-by another `--auth-proxy` user or directly on the backend.
+by another `--auth-proxy` user or directly on the backend. Object tags
+are kept with the metadata in the same way.
 
 ### Object names
 
 `serve s3` stores objects as files in the backend, so object keys are
 mapped to file paths rather than treated as the opaque strings AWS S3
 allows. Keys must be in canonical path form: keys that contain `..` or
-`.` path segments, repeated slashes (`//`), or a leading or trailing
-slash are rejected with a `400 Bad Request` (`InvalidArgument`)
-instead of being normalised, since normalising them could alias two
-distinct keys to the same file or resolve a key outside its bucket.
-This matches the behaviour of other S3 servers such as MinIO.
+`.` path segments, repeated slashes (`//`), or a leading slash are
+rejected with a `400 Bad Request` (`InvalidArgument`) instead of being
+normalised, since normalising them could alias two distinct keys to
+the same file or resolve a key outside its bucket. This matches the
+behaviour of other S3 servers such as MinIO.
 
-### Supported operations
+A key ending in `/`, such as `dir/`, is a directory marker, standing
+for the directory `dir`. Putting an empty directory marker creates the
+directory (one with data is rejected with `400 Bad Request`), and
+deleting it removes the directory if it is empty. Directory markers
+are found by `HeadObject`, `GetObject` and `CopyObject` for any
+directory, but only the markers of empty directories, and of the
+directories a marker was put for, are listed as objects, as other
+directories may not have been made by putting a marker. The markers
+put are remembered in memory with the metadata (see
+[Limitations](#limitations)), so after a restart, or once forgotten,
+the marker of a directory holding other keys is no longer listed.
+While a marker is remembered its directory isn't removed when the
+last key below it is deleted.
 
-`serve s3` currently supports the following operations.
+With `--directory-markers` every directory is listed as a directory
+marker, so the markers are listed after a restart too, as needed by
+clients which rely on them, such as rclone's s3 backend with
+`--s3-directory-markers`. As every directory has a marker, a directory
+isn't removed when the last key below it is deleted. Deleting the
+marker of a directory which holds other keys stops it being listed,
+and the directory is then removed with the last key below it, but this
+is only remembered in memory, like the markers put without
+`--directory-markers`.
 
-- Bucket
-  - `ListBuckets`
-  - `CreateBucket`
-  - `DeleteBucket`
-- Object
-  - `HeadObject`
-  - `ListObjects`
-  - `GetObject`
-  - `PutObject`
-  - `DeleteObject`
-  - `DeleteObjects`
-  - `CreateMultipartUpload`
-  - `CompleteMultipartUpload`
-  - `AbortMultipartUpload`
-  - `CopyObject`
-  - `UploadPart`
+As keys are file paths, a key can't be both an object and a directory
+holding other objects, for example `a/b` and `a/b/c`. Writing an
+object which would need this fails with `400 Bad Request`
+(`InvalidRequest`).
 
-Other operations will return error `Unimplemented`.
+### Compatibility
+
+`serve s3` implements the parts of the S3 API that S3 clients commonly
+use to store and fetch objects. Features it doesn't support are
+refused with `501 NotImplemented`, or answered as AWS S3 answers for a
+bucket without that feature configured, rather than being silently
+ignored.
+
+| Feature | Supported | Notes |
+| ------- | --------- | ----- |
+| `ListBuckets`, `CreateBucket`, `DeleteBucket`, `HeadBucket`, `GetBucketLocation` | Yes | Buckets are the directories in the root of the remote. |
+| `ListObjects`, `ListObjectsV2` | Yes | Prefixes, delimiters, markers, `start-after`, continuation tokens, `fetch-owner` and `encoding-type=url` all work. Delimiters other than `/` need the whole directory tree walking. |
+| `HeadObject`, `GetObject` | Yes | Including `Range`, `partNumber`, the `response-*` header overrides and the `If-Match`, `If-None-Match`, `If-Modified-Since` and `If-Unmodified-Since` conditions. |
+| `PutObject` | Yes | Including `Content-MD5`, `aws-chunked` uploads and uploads with no `Content-Length`. |
+| `CopyObject` | Yes | Including the metadata and tagging directives and the `x-amz-copy-source-if-*` conditions. |
+| `DeleteObject`, `DeleteObjects` | Yes | |
+| Multipart uploads | Yes | `CreateMultipartUpload`, `UploadPart`, `UploadPartCopy`, `CompleteMultipartUpload`, `AbortMultipartUpload`, `ListMultipartUploads` and `ListParts`. The `ETag` of the object is its hash, not the `-N` suffixed one AWS gives. The 5 MiB minimum part size isn't enforced. |
+| Conditional writes | Partial | `If-Match` and `If-None-Match` on `PutObject` and `CompleteMultipartUpload` are checked, but not atomically against changes made to the remote some other way (see [Limitations](#limitations)). |
+| Authentication | Partial | AWS Signature Version 4, in headers, presigned URLs and browser form (`POST`) uploads. Signature Version 2 isn't supported. |
+| Anonymous access | Partial | All requests are allowed without `--auth-key` or `--auth-proxy`, and none are with them, as buckets and objects can't be made public. |
+| Metadata | Partial | `x-amz-meta-*`, the storage class and the standard headers such as `Content-Type` are kept in memory only (see [Limitations](#limitations)), except the modification time. The storage class is only recorded, so doesn't change how the object is stored. |
+| Directory markers | Partial | Keys ending in `/` are stored as directories, so can't hold data. A marker put for a directory holding other keys is only listed while it is remembered in memory, unless `--directory-markers` is set (see [Object names](#object-names)). |
+| Checksums | Partial | The `x-amz-checksum-*` of a `PutObject` (CRC32, CRC32C, CRC64NVME, SHA1 or SHA256) is checked and returned with the metadata. The `Content-MD5` and `x-amz-checksum-*` of the bodies of other requests, such as `DeleteObjects`, are checked. The checksums of multipart uploads aren't supported. |
+| `GetObjectAttributes` | Partial | Everything but the checksums of multipart uploads. |
+| Object tagging | Partial | `GetObjectTagging`, `PutObjectTagging` and `DeleteObjectTagging` work, but tags are kept in memory with the metadata. |
+| Bucket owner | No | `serve s3` has no AWS account IDs, so `x-amz-expected-bucket-owner` and `x-amz-source-expected-bucket-owner` are ignored. |
+| ACLs | Partial | `GetBucketAcl` and `GetObjectAcl` give the owner full control. Only the `private` ACL can be set. |
+| CORS | Partial | Preflight (`OPTIONS`) requests are answered, allowing any origin. CORS configuration (`PutBucketCors`) isn't supported. |
+| Server side encryption | No | SSE-S3 (`AES256`) is accepted but the data isn't encrypted. SSE-KMS and SSE-C are refused. |
+| Versioning | No | Buckets are reported as unversioned and `ListObjectVersions` lists each object as version `null`. Enabling versioning is refused. |
+| Object lock, retention and legal hold | No | |
+| Bucket configuration | No | Bucket policies, tagging, lifecycle, logging, encryption, website, replication, notifications and the like. Getting them fails as for a bucket without them configured. |
+| `SelectObjectContent`, `RestoreObject`, torrents | No | |
+
+The [ceph s3-tests](https://github.com/ceph/s3-tests) can be run
+against `serve s3` to check its compatibility. See
+[cmd/serve/s3/s3tests](https://github.com/rclone/rclone/tree/master/cmd/serve/s3/s3tests)
+for how.

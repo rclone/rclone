@@ -109,6 +109,9 @@ var logReplacements = []string{
 	`^INFO  : .*cache expired.*$`, dropMe,
 	// ignore "Implicitly create directory" messages (TestnStorage:)
 	`^INFO  : .*Implicitly create directory.*$`, dropMe,
+	// ignore bucket creation messages from S3 providers which report success
+	// when creating a bucket which already exists (TestS3Wasabi:)
+	`^INFO  : .*: Bucket ".*" created with ACL ".*"$`, dropMe,
 	// ignore differences in backend features
 	`^.*?"HashType1":.*?$`, dropMe,
 	`^.*?"HashType2":.*?$`, dropMe,

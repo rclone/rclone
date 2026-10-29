@@ -138,3 +138,12 @@ Properties:
 
 Invalid UTF-8 bytes will also be [replaced](https://rclone.org/overview/#invalid-utf8),
 as they can't be used in JSON strings.
+
+Linkbox converts file extensions to lower case on upload, so a file
+uploaded as `file.TXT` is stored as `file.txt`.
+
+Linkbox renames an uploaded file to `name(1)` if its name is the start
+of the name of a file already in the same directory, for example when
+uploading `apple` to a directory containing `applebanana`. rclone then
+can't find the file it uploaded and the upload fails with `object not
+found`.

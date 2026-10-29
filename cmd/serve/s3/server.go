@@ -59,6 +59,11 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		}
 	}()
 
+	if w.opt.NoCleanup {
+		fs.Logf("serve s3", "--no-cleanup is deprecated, use --directory-markers instead")
+		w.opt.DirectoryMarkers = true
+	}
+
 	if w.opt.EtagHash != "" && w.opt.EtagHash != "auto" {
 		err := w.etagHashType.Set(w.opt.EtagHash)
 		if err != nil {

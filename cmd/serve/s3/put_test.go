@@ -12,9 +12,11 @@ import (
 	"fmt"
 	"io"
 	"path"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/minio/minio-go/v7"
 	"github.com/ncw/swift/v2"
 	"github.com/rclone/gofakes3"
 	"github.com/rclone/rclone/cmd/serve/proxy"
@@ -154,8 +156,33 @@ func TestPutObjectFailureNewKey(t *testing.T) {
 	}
 }
 
+// TestPutObjectFailureNewDir checks that a failed PUT to a key in
+// directories which don't exist removes the directories it made, which
+// would otherwise be listed as directory markers.
+func TestPutObjectFailureNewDir(t *testing.T) {
+	for _, tc := range testRemotes {
+		t.Run(tc.name, func(t *testing.T) {
+			b, _, bucket := newPutTestBackend(t, tc.backing, nil)
+			ctx := context.Background()
+			_, err := b.PutObject(ctx, bucket, "existing/file.txt", map[string]string{}, bytes.NewReader([]byte("hello")), 5)
+			require.NoError(t, err)
+
+			failPut(t, b, bucket, "existing/new/dirs/new.txt", errBoom, errBoom)
+
+			list, err := b.ListBucket(ctx, bucket, nil, gofakes3.ListBucketPage{})
+			require.NoError(t, err)
+			var keys []string
+			for _, content := range list.Contents {
+				keys = append(keys, content.Key)
+			}
+			assert.Equal(t, []string{"existing/file.txt"}, keys)
+		})
+	}
+}
+
 // TestPutObjectMtime checks that the object's modtime is set from the
-// "X-Amz-Meta-Mtime" or "mtime" metadata supplied with the PUT.
+// "X-Amz-Meta-Mtime" or "mtime" metadata supplied with the PUT, and is
+// the Last-Modified of HEAD and GET.
 func TestPutObjectMtime(t *testing.T) {
 	want := fstest.Time("2011-12-25T12:59:59.123456789Z")
 	for _, metaKey := range []string{"X-Amz-Meta-Mtime", "mtime"} {
@@ -165,13 +192,25 @@ func TestPutObjectMtime(t *testing.T) {
 			const object = "mtime.txt"
 
 			contents := []byte(random.String(50))
-			meta := map[string]string{metaKey: swift.TimeToFloatString(want)}
+			// gofakes3 passes the time of the PUT as Last-Modified
+			meta := map[string]string{
+				metaKey:         swift.TimeToFloatString(want),
+				"Last-Modified": formatHeaderTime(time.Now()),
+			}
 			_, err := b.PutObject(ctx, bucket, object, meta, bytes.NewReader(contents), int64(len(contents)))
 			require.NoError(t, err)
 
 			o, err := f.NewObject(ctx, path.Join(bucket, object))
 			require.NoError(t, err)
 			fstest.AssertTimeEqualWithPrecision(t, object, want, o.ModTime(ctx), f.Precision())
+
+			head, err := b.HeadObject(ctx, bucket, object)
+			require.NoError(t, err)
+			assert.Equal(t, formatHeaderTime(want), head.Metadata["Last-Modified"], "HEAD")
+			obj, err := b.GetObject(ctx, bucket, object, nil)
+			require.NoError(t, err)
+			require.NoError(t, obj.Contents.Close())
+			assert.Equal(t, formatHeaderTime(want), obj.Metadata["Last-Modified"], "GET")
 		})
 	}
 }
@@ -337,4 +376,44 @@ func TestMetadataAfterWriteback(t *testing.T) {
 	_vfs.WaitForWriters(10 * time.Second)
 	b.forgetPath(_vfs, path.Join(bucket, "key"))
 	assert.Equal(t, "red", colour(), "after writeback")
+}
+
+// TestConditionalPutRace checks that of many concurrent PUTs of a new
+// object with If-None-Match: *, which all find the object missing when
+// they start, only one writes it.
+func TestConditionalPutRace(t *testing.T) {
+	core, f, bucket := newMultipartTestServer(t, false)
+	ctx := context.Background()
+	const object = "race.bin"
+	const n = 20
+	data := []byte(random.String(256 * 1024))
+
+	var wg sync.WaitGroup
+	var start sync.WaitGroup
+	start.Add(1)
+	errs := make([]error, n)
+	for i := range n {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			opts := minio.PutObjectOptions{}
+			opts.SetMatchETagExcept("*")
+			start.Wait()
+			_, errs[i] = core.PutObject(ctx, bucket, object, bytes.NewReader(data), int64(len(data)), "", "", opts)
+		}()
+	}
+	start.Done()
+	wg.Wait()
+
+	succeeded := 0
+	for _, err := range errs {
+		if err == nil {
+			succeeded++
+		} else {
+			assert.Equal(t, "PreconditionFailed", minio.ToErrorResponse(err).Code, "%v", err)
+		}
+	}
+	assert.Equal(t, 1, succeeded)
+	assert.Equal(t, data, readObject(t, f, bucket, object))
+	requireOnly(t, f, bucket, object)
 }
