@@ -361,6 +361,9 @@ require this add an extra parameter thus:
 rclone config update myremote env_auth=true config_refresh_token=false
 |||
 
+This is done for you when you pass a |token|, so the token you pass is
+the one that gets stored.
+
 `, "|", "`") + configPasswordHelp,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.39",
