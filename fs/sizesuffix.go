@@ -78,12 +78,20 @@ func (x SizeSuffix) String() string {
 
 // stringRoundTrip turns SizeSuffix into a string which Set parses back to the
 // same value. A bare number is read by Set as KiB, so values below 1 KiB get a
-// "B" suffix to stop them being scaled up.
+// "B" suffix to stop them being scaled up. The pretty form is rounded to 3
+// decimal places which doesn't always round trip, so it is only used when it
+// parses back to exactly x; otherwise the exact byte count is used.
 func (x SizeSuffix) stringRoundTrip() string {
 	str := x.String()
 	if len(str) > 0 && str != "0" {
 		if lastDigit := str[len(str)-1]; lastDigit >= '0' && lastDigit <= '9' {
 			str += "B"
+		}
+	}
+	if x >= 0 {
+		var y SizeSuffix
+		if err := y.Set(str); err != nil || y != x {
+			return fmt.Sprintf("%dB", int64(x))
 		}
 	}
 	return str
@@ -186,6 +194,20 @@ func (x *SizeSuffix) Set(s string) error {
 		}
 	}
 	s = s[:len(s)-suffixLen]
+	// The multiplier is always a power of two, so an integer input can
+	// be scaled exactly in int64; float64 can't represent every int64
+	// and would silently round large values.
+	if intValue, err := strconv.ParseInt(s, 10, 64); err == nil {
+		if intValue < 0 {
+			return fmt.Errorf("size can't be negative %q", s)
+		}
+		intMultiplier := int64(multiplier)
+		if intValue > math.MaxInt64/intMultiplier || intValue*intMultiplier >= SizeSuffixMaxValue {
+			return fmt.Errorf("value can't be greater than %d", int64(SizeSuffixMaxValue))
+		}
+		*x = SizeSuffix(intValue * intMultiplier)
+		return nil
+	}
 	value, err := strconv.ParseFloat(s, 64)
 	if err != nil {
 		return err
