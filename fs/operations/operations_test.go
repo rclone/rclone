@@ -1145,9 +1145,9 @@ func TestMoveOntoItself(t *testing.T) {
 			t.Run(fmt.Sprintf("viaSubdir=%v,disableMove=%v", viaSubdir, disableMove), func(t *testing.T) {
 				r := fstest.NewRunIndividual(t)
 				file1 := r.WriteObject(ctx, "sub/file1", "file1 contents", t1)
-				src, err := r.Fremote.NewObject(ctx, file1.Path)
-				require.NoError(t, err)
+				src := fstest.NewObject(ctx, t, r.Fremote, file1.Path)
 
+				var err error
 				fdst, remote := r.Fremote, src.Remote()
 				if viaSubdir {
 					fdst, err = fs.NewFs(ctx, fspath.JoinRootPath(fs.ConfigStringFull(r.Fremote), "sub"))

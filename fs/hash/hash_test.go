@@ -81,6 +81,7 @@ var hashTestSet = []hashTest{
 			hash.BLAKE3:    "0a7276a407a3be1b4d31488318ee05a335aad5a3b82c4420e592a8178c9e86bb",
 			hash.XXH3:      "4b83b0c51c543525",
 			hash.XXH128:    "438de241a57d684214f67657f7aad93b",
+			hash.CRC32C:    "4d8ae017",
 		},
 	},
 	// Empty data set
@@ -96,6 +97,7 @@ var hashTestSet = []hashTest{
 			hash.BLAKE3:    "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
 			hash.XXH3:      "2d06800538d394c2",
 			hash.XXH128:    "99aa06d3014798d86001c324468d497f",
+			hash.CRC32C:    "00000000",
 		},
 	},
 }
