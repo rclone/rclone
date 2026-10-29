@@ -50,6 +50,10 @@ const (
 	defaultChunkSize            = 8 * fs.Mebi
 )
 
+// jsonContentType is sent with JSON request bodies as the API doesn't
+// decode non-ASCII file names in them as UTF-8 unless told the charset.
+const jsonContentType = "application/json; charset=UTF-8"
+
 // OAuth2 configuration
 var oauthConfig = &oauthutil.Config{
 	Scopes: []string{
@@ -547,6 +551,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 		Parameters: url.Values{
 			"fields": []string{"*"},
 		},
+		ExtraHeaders: map[string]string{"Content-Type": jsonContentType},
 	}
 
 	var info *api.File
@@ -1015,6 +1020,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		Parameters: url.Values{
 			"fields": []string{"*"},
 		},
+		ExtraHeaders: map[string]string{"Content-Type": jsonContentType},
 	}
 
 	copyReq := api.CopyFileRequest{
@@ -1199,9 +1205,10 @@ func (f *Fs) updateFile(ctx context.Context, fileID string, parameters url.Value
 	}
 	parameters.Set("fields", "*")
 	opts := rest.Opts{
-		Method:     "PATCH",
-		Path:       "/files/" + fileID,
-		Parameters: parameters,
+		Method:       "PATCH",
+		Path:         "/files/" + fileID,
+		Parameters:   parameters,
+		ExtraHeaders: map[string]string{"Content-Type": jsonContentType},
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.CallJSON(ctx, &opts, req, &info)
@@ -1671,6 +1678,7 @@ func (o *Object) uploadEmpty(ctx context.Context, leaf, directoryID string, src 
 		Parameters: url.Values{
 			"fields": []string{"*"},
 		},
+		ExtraHeaders: map[string]string{"Content-Type": jsonContentType},
 	}
 
 	var info *api.File
@@ -1846,6 +1854,7 @@ func (o *Object) uploadResume(ctx context.Context, in io.Reader, leaf, directory
 			"fields":     []string{"*"},
 		},
 		ExtraHeaders: map[string]string{
+			"Content-Type":            jsonContentType,
 			"X-Upload-Content-Length": strconv.FormatInt(size, 10),
 		},
 		RootURL: o.fs.uploadURL,
@@ -2145,6 +2154,7 @@ func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
 		Parameters: url.Values{
 			"fields": []string{"*"},
 		},
+		ExtraHeaders: map[string]string{"Content-Type": jsonContentType},
 	}
 
 	var info *api.File
