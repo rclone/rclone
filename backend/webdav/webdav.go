@@ -1397,7 +1397,7 @@ func (f *Fs) Hashes() hash.Set {
 func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	opts := rest.Opts{
 		Method: "PROPFIND",
-		Path:   "",
+		Path:   f.dirPath(""),
 		ExtraHeaders: map[string]string{
 			"Depth": "0",
 		},
