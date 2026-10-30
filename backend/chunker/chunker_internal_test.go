@@ -14,6 +14,7 @@ import (
 	_ "github.com/rclone/rclone/backend/memory"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
@@ -65,6 +66,47 @@ func testPutFile(ctx context.Context, t *testing.T, f fs.Fs, name, contents, mes
 	return obj
 }
 
+// TestNameFormatConfig verifies that Options unmarshaling supports both legacy single-string
+// and multiple comma-separated name_format values from configuration.
+func TestNameFormatConfig(t *testing.T) {
+	// 1. Legacy single string configuration
+	m := configmap.Simple{
+		"name_format": "*.rclone_chunk.###",
+	}
+	opt := new(Options)
+	err := configstruct.Set(m, opt)
+	require.NoError(t, err)
+	assert.Equal(t, fs.CommaSepList{"*.rclone_chunk.###"}, opt.NameFormat)
+
+	f := &Fs{}
+	err = f.setChunkNameFormat(opt.NameFormat)
+	require.NoError(t, err)
+	f.opt.StartFrom = 1
+	assert.Equal(t, "fish.rclone_chunk.001", f.makeChunkName("fish", 0, "", ""))
+
+	// 2. Multiple comma-separated patterns
+	m = configmap.Simple{
+		"name_format": "*.rc=###,*.rclone_chunk.###",
+	}
+	opt = new(Options)
+	err = configstruct.Set(m, opt)
+	require.NoError(t, err)
+	assert.Equal(t, fs.CommaSepList{"*.rc=###", "*.rclone_chunk.###"}, opt.NameFormat)
+
+	err = f.setChunkNameFormat(opt.NameFormat)
+	require.NoError(t, err)
+	assert.Equal(t, "fish.rc=001", f.makeChunkName("fish", 0, "", ""))
+	gotMain, gotNo, _, _ := f.parseChunkName("fish.rclone_chunk.001")
+	assert.Equal(t, "fish", gotMain)
+	assert.Equal(t, 0, gotNo)
+}
+
+// TestChunkNameFormat runs pure unit tests on chunk name parsing and formatting.
+func TestChunkNameFormat(t *testing.T) {
+	f := &Fs{}
+	testChunkNameFormat(t, f)
+}
+
 // test chunk name parser
 func testChunkNameFormat(t *testing.T, f *Fs) {
 	saveOpt := f.opt
@@ -75,21 +117,40 @@ func testChunkNameFormat(t *testing.T, f *Fs) {
 	}()
 
 	assertFormat := func(pattern, wantDataFormat, wantCtrlFormat, wantNameRegexp string) {
-		err := f.setChunkNameFormat(pattern)
+		err := f.setChunkNameFormat(fs.CommaSepList{pattern})
 		assert.NoError(t, err)
-		assert.Equal(t, wantDataFormat, f.dataNameFmt)
+		require.Equal(t, 1, len(f.dataNameFmts))
+		assert.Equal(t, wantDataFormat, f.dataNameFmts[0])
 		assert.Equal(t, wantCtrlFormat, f.ctrlNameFmt)
-		assert.Equal(t, wantNameRegexp, f.nameRegexp.String())
+		require.Equal(t, 1, len(f.nameRegexps))
+		assert.Equal(t, wantNameRegexp, f.nameRegexps[0].String())
 	}
 
-	assertFormatValid := func(pattern string) {
-		err := f.setChunkNameFormat(pattern)
+	assertMultiFormat := func(patterns []string, wantDataFormat, wantCtrlFormat string, wantNameRegexps ...string) {
+		err := f.setChunkNameFormat(fs.CommaSepList(patterns))
 		assert.NoError(t, err)
+		require.Equal(t, len(patterns), len(f.dataNameFmts))
+		assert.Equal(t, wantDataFormat, f.dataNameFmts[0])
+		assert.Equal(t, wantCtrlFormat, f.ctrlNameFmt)
+		require.Equal(t, len(wantNameRegexps), len(f.nameRegexps))
+		for i, want := range wantNameRegexps {
+			assert.Equal(t, want, f.nameRegexps[i].String())
+		}
 	}
 
-	assertFormatInvalid := func(pattern string) {
-		err := f.setChunkNameFormat(pattern)
+	assertFormatValid := func(patterns ...string) {
+		err := f.setChunkNameFormat(fs.CommaSepList(patterns))
+		assert.NoError(t, err)
+		assert.Equal(t, len(patterns), len(f.nameRegexps))
+	}
+
+	assertFormatInvalid := func(patterns ...string) {
+		prevDataFmts, prevCtrlFmt, prevRegexps := f.dataNameFmts, f.ctrlNameFmt, f.nameRegexps
+		err := f.setChunkNameFormat(fs.CommaSepList(patterns))
 		assert.Error(t, err)
+		assert.Equal(t, prevDataFmts, f.dataNameFmts)
+		assert.Equal(t, prevCtrlFmt, f.ctrlNameFmt)
+		assert.Equal(t, prevRegexps, f.nameRegexps)
 	}
 
 	assertMakeName := func(wantChunkName, mainName string, chunkNo int, ctrlType, xactID string) {
@@ -361,6 +422,46 @@ func testChunkNameFormat(t *testing.T, f *Fs) {
 	assertMakeNamePanics("fish", 0, "", "123F4")      // uppercase not allowed
 	assertMakeNamePanics("fish", 0, "", "123.")       // punctuation not allowed
 	assertMakeNamePanics("fish", 0, "", "_123")
+
+	// multiple name_format patterns
+	assertFormatValid(`*.rc=###`, `*.rclone_chunk.###`)
+	assertFormatValid(`*.rc=###`, `*.rclone_chunk.###`, `*___###`)
+	assertFormatInvalid(`*.rc=###`, `invalid`)
+	assertFormatInvalid(`invalid`, `*.rc=###`)
+	assertFormatInvalid()
+
+	assertMultiFormat([]string{`*.rc=###`, `*.rclone_chunk.###`}, `%s.rc=%03d`, `%s.rc=_%s`,
+		`^(.+?)\.rc=(?:([0-9]{3,})|_([a-z][a-z0-9]{2,6}))(?:_([0-9a-z]{4,9})|\.\.tmp_([0-9]{10,13}))?$`,
+		`^(.+?)\.rclone_chunk\.(?:([0-9]{3,})|_([a-z][a-z0-9]{2,6}))(?:_([0-9a-z]{4,9})|\.\.tmp_([0-9]{10,13}))?$`,
+	)
+	f.opt.StartFrom = 1
+
+	// writing uses the primary format
+	assertMakeName(`fish.rc=001`, "fish", 0, "", "")
+	assertMakeName(`fish.rc=002`, "fish", 1, "", "")
+	assertMakeName(`fish.rc=_info`, "fish", -1, "info", "")
+	assertMakeName(`fish.rc=001_4321`, "fish", 0, "", "4321")
+
+	// reading parses both primary and secondary formats
+	assertParseName(`fish.rc=001`, "fish", 0, "", "")
+	assertParseName(`fish.rc=_info`, "fish", -1, "info", "")
+	assertParseName(`fish.rc=001_4321`, "fish", 0, "", "4321")
+
+	assertParseName(`fish.rclone_chunk.001`, "fish", 0, "", "")
+	assertParseName(`fish.rclone_chunk._info`, "fish", -1, "info", "")
+	assertParseName(`fish.rclone_chunk.001_4321`, "fish", 0, "", "4321")
+
+	// chunks from formats not in the list are rejected
+	assertParseName(`fish.chunk.001`, "", -1, "", "")
+	assertParseName(`fish.other.001`, "", -1, "", "")
+
+	// backward compatibility: resetting to single format recognizes only that format
+	assertFormat(`*.rclone_chunk.###`, `%s.rclone_chunk.%03d`, `%s.rclone_chunk._%s`,
+		`^(.+?)\.rclone_chunk\.(?:([0-9]{3,})|_([a-z][a-z0-9]{2,6}))(?:_([0-9a-z]{4,9})|\.\.tmp_([0-9]{10,13}))?$`,
+	)
+	assertMakeName(`fish.rclone_chunk.001`, "fish", 0, "", "")
+	assertParseName(`fish.rclone_chunk.001`, "fish", 0, "", "")
+	assertParseName(`fish.rc=001`, "", -1, "", "")
 }
 
 func testSmallFileInternals(t *testing.T, f *Fs) {
@@ -835,6 +936,119 @@ func testBackwardsCompatibility(t *testing.T, f *Fs) {
 	_ = file.Remove(ctx)
 }
 
+func testMultipleNameFormats(t *testing.T, f *Fs) {
+	const dir = "multiformat"
+	ctx := context.Background()
+	saveOpt := f.opt
+	defer func() {
+		f.opt.FailHard = false
+		_ = operations.Purge(ctx, f.base, dir)
+		f.opt = saveOpt
+		_ = f.setChunkNameFormat(f.opt.NameFormat)
+	}()
+
+	f.opt.ChunkSize = fs.SizeSuffix(10)
+	f.opt.FailHard = true
+
+	modTime := fstest.Time("2001-02-03T04:05:06.499999999Z")
+	contents1 := random.String(50)
+	contents2 := random.String(50)
+
+	// 1. Write legacy file using single pattern
+	require.NoError(t, f.setChunkNameFormat(fs.CommaSepList{"*.rclone_chunk.###"}))
+	file1Name := path.Join(dir, "legacy_file.txt")
+	item1 := fstest.Item{Path: file1Name, ModTime: modTime}
+	obj1 := fstests.PutTestContents(ctx, t, f, &item1, contents1, true)
+	require.NotNil(t, obj1)
+
+	// Verify chunks exist on baseFs with legacy naming pattern
+	baseEntries, err := f.base.List(ctx, dir)
+	require.NoError(t, err)
+	var hasLegacyChunks bool
+	for _, entry := range baseEntries {
+		if strings.Contains(entry.Remote(), ".rclone_chunk.") {
+			hasLegacyChunks = true
+			break
+		}
+	}
+	assert.True(t, hasLegacyChunks, "baseFs must contain .rclone_chunk. files")
+
+	// 2. Switch to multiple formats: primary = *.rc=###, fallback = *.rclone_chunk.###
+	require.NoError(t, f.setChunkNameFormat(fs.CommaSepList{"*.rc=###", "*.rclone_chunk.###"}))
+
+	// 3. Read back legacy file and verify contents
+	readObj1, err := f.NewObject(ctx, file1Name)
+	require.NoError(t, err)
+	require.Equal(t, int64(len(contents1)), readObj1.Size())
+
+	r, err := readObj1.Open(ctx)
+	require.NoError(t, err)
+	data, err := io.ReadAll(r)
+	require.NoError(t, err)
+	_ = r.Close()
+	assert.Equal(t, contents1, string(data))
+
+	// 4. Write new file using multiple format configuration (should use primary format)
+	file2Name := path.Join(dir, "new_file.txt")
+	item2 := fstest.Item{Path: file2Name, ModTime: modTime}
+	obj2 := fstests.PutTestContents(ctx, t, f, &item2, contents2, true)
+	require.NotNil(t, obj2)
+
+	// Verify chunks for file2 exist on baseFs with new primary naming pattern
+	baseEntries, err = f.base.List(ctx, dir)
+	require.NoError(t, err)
+	var hasNewChunks bool
+	for _, entry := range baseEntries {
+		if strings.Contains(entry.Remote(), ".rc=") {
+			hasNewChunks = true
+			break
+		}
+	}
+	assert.True(t, hasNewChunks, "baseFs must contain .rc= files")
+
+	// 5. Listing directory on chunker must return both composite files
+	entries, err := f.List(ctx, dir)
+	require.NoError(t, err)
+	assert.Equal(t, 2, len(entries))
+
+	// 6. Overwriting legacy file must remove old format chunks and write primary format chunks
+	contents1Updated := random.String(50)
+	obj1Updated := fstests.PutTestContents(ctx, t, f, &item1, contents1Updated, true)
+	require.NotNil(t, obj1Updated)
+
+	baseEntries, err = f.base.List(ctx, dir)
+	require.NoError(t, err)
+	hasLegacyChunks = false
+	for _, entry := range baseEntries {
+		if strings.Contains(entry.Remote(), ".rclone_chunk.") {
+			hasLegacyChunks = true
+			break
+		}
+	}
+	assert.False(t, hasLegacyChunks, "old .rclone_chunk. files must be removed after overwrite")
+
+	// 7. Clean up files
+	require.NoError(t, obj1Updated.Remove(ctx))
+	require.NoError(t, obj2.Remove(ctx))
+
+	// 8. Verify NewFs detects ErrorIsFile for fallback format when meta_format is none
+	noMetaChunk := testPutFile(ctx, t, f.base, path.Join(dir, "nometa_legacy.txt.rclone_chunk.001"), "chunkdata", "nometa chunk", true)
+	m := configmap.Simple{
+		"remote":       f.opt.Remote,
+		"meta_format":  "none",
+		"hash_type":    "none",
+		"name_format":  "*.rc=###,*.rclone_chunk.###",
+		"start_from":   "1",
+		"transactions": "rename",
+	}
+	noMetaFs, err := NewFs(ctx, f.Name()+"NoMeta", fspath.JoinRootPath(f.Root(), path.Join(dir, "nometa_legacy.txt")), m)
+	assert.ErrorIs(t, err, fs.ErrorIsFile)
+	if noMetaFs != nil {
+		assert.Equal(t, fspath.JoinRootPath(f.Root(), dir), noMetaFs.Root())
+	}
+	_ = noMetaChunk.Remove(ctx)
+}
+
 func testChunkerServerSideMove(t *testing.T, f *Fs) {
 	if !f.useMeta {
 		t.Skip("Can't test norename transactions without metadata")
@@ -1039,6 +1253,9 @@ func (f *Fs) InternalTest(t *testing.T) {
 	})
 	t.Run("BackwardsCompatibility", func(t *testing.T) {
 		testBackwardsCompatibility(t, f)
+	})
+	t.Run("MultipleNameFormats", func(t *testing.T) {
+		testMultipleNameFormats(t, f)
 	})
 	t.Run("OrphanTempChunks", func(t *testing.T) {
 		testOrphanTempChunks(t, f)
