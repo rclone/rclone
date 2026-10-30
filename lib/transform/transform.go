@@ -23,7 +23,9 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/lib/encoder"
+	"golang.org/x/text/cases"
 	"golang.org/x/text/encoding/charmap"
+	"golang.org/x/text/language"
 	"golang.org/x/text/unicode/norm"
 )
 
@@ -217,7 +219,8 @@ func transformPathSegment(s string, t transform) (string, error) {
 	case ConvUppercase:
 		return strings.ToUpper(s), nil
 	case ConvTitlecase:
-		return strings.ToTitle(s), nil
+		// A Caser is not safe for concurrent use, so make one per call.
+		return cases.Title(language.Und).String(s), nil
 	case ConvASCII:
 		return toASCII(s), nil
 	case ConvURL:
