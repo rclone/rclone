@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"path"
@@ -16,6 +17,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
+	"golang.org/x/text/unicode/norm"
 )
 
 // Start of the API URLs
@@ -736,6 +738,96 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, uploadLink, filePath stri
 		return &result[0], nil
 	}
 	return nil, nil
+}
+
+// uploadFiles uploads the files into dir of the library in one request,
+// which the server stores as a single commit. It returns the details of
+// the files in the order of items. refused is set if the server answered
+// with a client error other than a permission error.
+func (f *Fs) uploadFiles(ctx context.Context, libraryID, dir string, items []*batchItem) (result []api.FileDetail, refused bool, err error) {
+	// API Documentation
+	// https://download.seafile.com/published/web-api/v2.1/file-upload.md
+	uploadLink, err := f.getUploadLink(ctx, libraryID)
+	if err != nil {
+		return nil, false, err
+	}
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+	for _, field := range [][2]string{
+		{"parent_dir", "/"},
+		{"relative_path", f.opt.Enc.FromStandardPath(dir)},
+		{"need_idx_progress", "true"},
+		{"replace", "1"},
+	} {
+		if err := writer.WriteField(field[0], field[1]); err != nil {
+			return nil, false, err
+		}
+	}
+	for _, item := range items {
+		part, err := rest.CreateFormFile(writer, "file", f.opt.Enc.FromStandardName(path.Base(item.filePath)), "application/octet-stream")
+		if err != nil {
+			return nil, false, err
+		}
+		if _, err := part.Write(item.data); err != nil {
+			return nil, false, err
+		}
+	}
+	if err := writer.Close(); err != nil {
+		return nil, false, err
+	}
+
+	contentLength := int64(body.Len())
+	opts := rest.Opts{
+		Method:        "POST",
+		Body:          &body,
+		ContentType:   writer.FormDataContentType(),
+		ContentLength: &contentLength,
+		Parameters:    url.Values{"ret-json": {"1"}}, // It needs to be on the url, not in the body parameters
+	}
+	parsedURL, err := url.Parse(uploadLink)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to parse upload url: %w", err)
+	}
+	if parsedURL.IsAbs() {
+		opts.RootURL = uploadLink
+	} else {
+		opts.Path = uploadLink
+	}
+	var resp *http.Response
+	// Don't retry with the same upload link, the caller retries with a new one
+	err = f.pacer.CallNoRetry(func() (bool, error) {
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
+		return f.shouldRetryUpload(ctx, resp, err)
+	})
+	if err != nil {
+		if resp != nil {
+			if resp.StatusCode == 401 || resp.StatusCode == 403 {
+				return nil, false, fs.ErrorPermissionDenied
+			}
+			if resp.StatusCode == 500 {
+				return nil, false, fserrors.RetryError(ErrorInternalDuringUpload)
+			}
+			refused = resp.StatusCode >= 400 && resp.StatusCode < 500
+		}
+		return nil, refused, fmt.Errorf("failed to upload files: %w", err)
+	}
+	// Match the results by name: the C fileserver returns them in reverse
+	// order, and the Go fileserver returns the names in Unicode NFC
+	byName := make(map[string]api.FileDetail, len(result))
+	for _, detail := range result {
+		detail.Parent = f.opt.Enc.ToStandardPath(detail.Parent)
+		detail.Name = f.opt.Enc.ToStandardName(detail.Name)
+		byName[norm.NFC.String(detail.Name)] = detail
+	}
+	details := make([]api.FileDetail, len(items))
+	for i, item := range items {
+		detail, found := byName[norm.NFC.String(path.Base(item.filePath))]
+		if !found {
+			return nil, false, fmt.Errorf("failed to upload files: no result for %q", path.Base(item.filePath))
+		}
+		details[i] = detail
+	}
+	return details, false, nil
 }
 
 func (f *Fs) listShareLinks(ctx context.Context, libraryID, remote string) ([]api.SharedLink, error) {

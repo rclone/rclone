@@ -2,6 +2,7 @@ package seafile
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"time"
 
@@ -88,6 +89,9 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 // But for unknown-sized objects (indicated by src.Size() == -1), Upload should either
 // return an error or update the object properly (rather than e.g. calling panic).
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	if size := src.Size(); o.fs.batcher.Batching() && size >= 0 && size <= int64(batchMaxFileSize) {
+		return o.updateBatched(ctx, in, size)
+	}
 	uploadLink, err := o.fs.getUploadLink(ctx, o.libraryID)
 	if err != nil {
 		return err
@@ -103,6 +107,32 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// Set the properties from the upload back to the object
 	o.size = uploaded.Size
 
+	return nil
+}
+
+// updateBatched reads the file into memory and uploads it with the next batch
+func (o *Object) updateBatched(ctx context.Context, in io.Reader, size int64) error {
+	data, err := io.ReadAll(io.LimitReader(in, size+1))
+	if err != nil {
+		return err
+	}
+	if int64(len(data)) != size {
+		return fmt.Errorf("expected %d bytes in input but read %d", size, len(data))
+	}
+	uploaded, err := o.fs.batcher.Commit(ctx, o.remote, &batchItem{
+		libraryID: o.libraryID,
+		filePath:  o.pathInLibrary,
+		data:      data,
+	})
+	if err != nil {
+		return err
+	}
+	// In async mode the result isn't known yet
+	if uploaded == nil {
+		o.size = size
+		return nil
+	}
+	o.size = uploaded.Size
 	return nil
 }
 

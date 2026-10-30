@@ -391,3 +391,29 @@ func TestBatcherShutdownLog(t *testing.T) {
 
 	assert.Regexp(t, `(?s)Committing uploads - please wait\.\.\..*Committed async batch.*Committing uploads - done`, buf.String())
 }
+
+func TestFsOptionsDefaultMode(t *testing.T) {
+	const modes = `
+- off - no batching%s
+- sync - batch uploads and check completion%s
+- async - batch upload and don't check completion%s
+`
+	for _, test := range []struct {
+		defaultMode string
+		want        string
+		marks       [3]string
+	}{
+		{"", "sync", [3]string{"", " (default)", ""}},
+		{"sync", "sync", [3]string{"", " (default)", ""}},
+		{"off", "off", [3]string{" (default)", "", ""}},
+		{"async", "async", [3]string{"", "", " (default)"}},
+	} {
+		t.Run(test.want, func(t *testing.T) {
+			opt := Options{DefaultMode: test.defaultMode}
+			batchMode := opt.FsOptions("")[0]
+			assert.Equal(t, "batch_mode", batchMode.Name)
+			assert.Equal(t, test.want, batchMode.Default)
+			assert.Contains(t, batchMode.Help, fmt.Sprintf(modes, test.marks[0], test.marks[1], test.marks[2]))
+		})
+	}
+}
