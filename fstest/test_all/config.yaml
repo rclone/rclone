@@ -344,13 +344,12 @@ backends:
      - TestIntegration/FsMkdir/FsEncoding/trailing_LF
      - TestIntegration/FsMkdir/FsEncoding/trailing_HT
      - TestIntegration/FsMkdir/FsEncoding/trailing_VT
+     - TestBisyncRemoteRemote/extended_filenames
      # Neon stores the versioning config but doesn't keep old versions
      - TestIntegration/FsMkdir/FsPutFiles/Internal/Versions/Versions/NewObject
      - TestIntegration/FsMkdir/FsPutFiles/Internal/Versions/Versions/NewFs
      - TestIntegration/FsMkdir/FsPutFiles/Internal/Versions/VersionAt/AfterOne/List
      - TestIntegration/FsMkdir/FsPutFiles/Internal/Versions/VersionAt/AfterOne/NewObject
-     # Neon returns 500 InternalError for CopyObject when the source key contains "+"
-     - TestIntegration/FsMkdir/FsPutFiles/FsCopy
  # - backend:  "s3"
  #   remote:   "TestS3FlashBlade:"
  #   fastlist: true
