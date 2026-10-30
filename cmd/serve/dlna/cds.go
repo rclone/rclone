@@ -307,6 +307,10 @@ func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *htt
 		if err := xml.Unmarshal(argsXML, &browse); err != nil {
 			return nil, err
 		}
+		// StartingIndex and RequestedCount are ui4 in the SCPD
+		if browse.StartingIndex < 0 || browse.RequestedCount < 0 {
+			return nil, upnp.Errorf(upnp.ArgumentValueInvalidErrorCode, "negative StartingIndex %d or RequestedCount %d", browse.StartingIndex, browse.RequestedCount)
+		}
 		// Samsung TVs sometimes send empty ObjectID, default to root container
 		if browse.ObjectID == "" {
 			browse.ObjectID = "0"
