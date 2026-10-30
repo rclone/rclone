@@ -2718,6 +2718,19 @@ differently.
 Note that this isn't enabled by default because it isn't easy for
 rclone to tell if it will work between any two configurations.
 
+### --server-side-fetch-url-expire Duration
+
+Set the requested lifetime of temporary source URLs used by Direct Fetch to
+Fastly Object Storage. The default is `24h`. Values must be finite and at
+least `1s`; zero, negative, subsecond, and `off` values are invalid. S3 source
+URL signing is limited to seven days, so longer requests are capped by the
+source provider. Temporary source credentials may expire sooner than the
+requested lifetime.
+
+Use `--disable ServerSideFetchURL` to opt out of Direct Fetch and use the
+ordinary copy path. This option does not enable Direct Fetch for an ineligible
+source.
+
 ### --size-only
 
 Normally rclone will look at modification time and size of files to
