@@ -4,10 +4,15 @@ package file
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
 	"syscall"
+	"unicode/utf16"
+	"unsafe"
+
+	"golang.org/x/sys/windows"
 )
 
 // OpenFile is the generalized open call; most users will use Open or Create
@@ -66,6 +71,83 @@ func OpenFile(path string, mode int, perm os.FileMode) (*os.File, error) {
 		return nil, e
 	}
 	return os.NewFile(uintptr(h), path), nil
+}
+
+// fileRenameInfo is the FILE_RENAME_INFO structure passed to
+// SetFileInformationByHandle with FileRenameInfoEx.
+//
+// It is variable length: FileName holds the new name as UTF-16 and
+// FileNameLength is its length in bytes.
+//
+// https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/ns-ntifs-_file_rename_information
+type fileRenameInfo struct {
+	Flags          uint32
+	RootDirectory  windows.Handle
+	FileNameLength uint32
+	FileName       [1]uint16
+}
+
+// renameEx renames oldpath to newpath using SetFileInformationByHandle
+// with the POSIX semantics flags.
+//
+// Unlike os.Rename (which calls MoveFileEx) this can replace newpath when
+// it has open handles, providing those handles were opened with
+// FILE_SHARE_DELETE, which is how OpenFile opens files.
+func renameEx(oldpath, newpath string) error {
+	oldp, err := windows.UTF16PtrFromString(oldpath)
+	if err != nil {
+		return err
+	}
+	// The file must be opened with DELETE access for
+	// SetFileInformationByHandle to rename it.
+	handle, err := windows.CreateFile(oldp, windows.DELETE,
+		windows.FILE_SHARE_READ|windows.FILE_SHARE_WRITE|windows.FILE_SHARE_DELETE,
+		nil, windows.OPEN_EXISTING,
+		windows.FILE_ATTRIBUTE_NORMAL|windows.FILE_FLAG_BACKUP_SEMANTICS, 0)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = windows.CloseHandle(handle)
+	}()
+
+	// Build the variable length FILE_RENAME_INFO. The struct already
+	// contains one UTF-16 character so account for that when sizing.
+	name := utf16.Encode([]rune(newpath))
+	buffer := make([]byte, int(unsafe.Sizeof(fileRenameInfo{}))-2+len(name)*2)
+	info := (*fileRenameInfo)(unsafe.Pointer(&buffer[0]))
+	info.Flags = windows.FILE_RENAME_REPLACE_IF_EXISTS | windows.FILE_RENAME_POSIX_SEMANTICS
+	info.RootDirectory = 0
+	info.FileNameLength = uint32(len(name) * 2)
+	copy(unsafe.Slice(&info.FileName[0], len(name)), name)
+	return windows.SetFileInformationByHandle(handle, windows.FileRenameInfoEx, &buffer[0], uint32(len(buffer)))
+}
+
+// Rename renames (moves) oldpath to newpath, replacing newpath if it
+// exists.
+//
+// This is the same as os.Rename on Unix. On Windows os.Rename uses
+// MoveFileEx which fails with ERROR_ACCESS_DENIED when either path has
+// open handles, even when those handles were opened with
+// FILE_SHARE_DELETE, and the VFS cache deliberately keeps cache files
+// open (see OpenFile and issue #9943). That makes the common editor
+// pattern of writing a temporary file and renaming it over the target
+// fail.
+//
+// So on Windows this renames with SetFileInformationByHandle and
+// FileRenameInfoEx first, which can replace an open destination, and
+// falls back to os.Rename when that is not supported (eg Windows before
+// 10 1607).
+func Rename(oldpath, newpath string) error {
+	err := renameEx(oldpath, newpath)
+	if err == nil {
+		return nil
+	}
+	errOld := os.Rename(oldpath, newpath)
+	if errOld == nil {
+		return nil
+	}
+	return fmt.Errorf("%w (rename with FileRenameInfoEx failed with: %v)", errOld, err)
 }
 
 // IsReserved checks if path contains a reserved name
