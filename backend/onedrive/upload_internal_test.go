@@ -3,6 +3,7 @@ package onedrive
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rclone/rclone/backend/onedrive/api"
+	"github.com/rclone/rclone/backend/onedrive/quickxorhash"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/lib/pacer"
@@ -24,13 +27,15 @@ import (
 // fragments it receives. fail is called for each PUT before the body is
 // accepted and may write an error response, returning true to reject it.
 type fragmentServer struct {
-	t         *testing.T
-	size      int64
-	mu        sync.Mutex
-	received  []byte // bytes accepted so far
-	fragments int    // number of accepted fragments
-	fail      func(w http.ResponseWriter, attempt int) bool
-	attempts  int
+	t          *testing.T
+	size       int64
+	mu         sync.Mutex
+	received   []byte // bytes accepted so far
+	fragments  int    // number of accepted fragments
+	fail       func(w http.ResponseWriter, attempt int) bool
+	attempts   int
+	stored     bool   // GET /root returns the finished file after a rejected PUT
+	storedHash string // QuickXorHash to report for that file, or empty
 }
 
 func (s *fragmentServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -40,9 +45,24 @@ func (s *fragmentServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case r.Method == "POST" && r.URL.Path == "/root/createUploadSession":
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = fmt.Fprintf(w, `{"uploadUrl":"http://%s/upload","nextExpectedRanges":["0-"]}`, r.Host)
+	case r.Method == "GET" && r.URL.Path == "/root":
+		if !s.stored {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = w.Write([]byte(`{"error":{"code":"itemNotFound","message":"not found"}}`))
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		file := "{}"
+		if s.storedHash != "" {
+			file = fmt.Sprintf(`{"hashes":{"quickXorHash":%q}}`, s.storedHash)
+		}
+		_, _ = fmt.Fprintf(w, `{"id":"fake-id","name":"remote","size":%d,"file":%s}`, s.size, file)
 	case r.Method == "GET" && r.URL.Path == "/upload":
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = fmt.Fprintf(w, `{"nextExpectedRanges":["%d-%d"]}`, len(s.received), s.size-1)
+	case r.Method == "DELETE" && r.URL.Path == "/upload":
+		w.WriteHeader(http.StatusNoContent)
 	case r.Method == "PUT" && r.URL.Path == "/upload":
 		body, err := io.ReadAll(r.Body)
 		require.NoError(s.t, err)
@@ -117,4 +137,63 @@ func TestUploadMultipartSkip(t *testing.T) {
 	assert.Equal(t, content, s.received)
 	assert.Equal(t, 2, s.fragments)
 	assert.Equal(t, 3, s.attempts, "expected one 416, a partial re-send and the final fragment")
+}
+
+func quickXor(content []byte) string {
+	h := quickxorhash.New()
+	_, _ = h.Write(content)
+	return base64.StdEncoding.EncodeToString(h.Sum(nil))
+}
+
+func TestStoredUpload(t *testing.T) {
+	content := []byte("shortcut-upload")
+	sum := quickXor(content)
+	size := int64(len(content))
+	file := func(n int64, qx string) *api.Item {
+		return &api.Item{Size: n, File: &api.FileFacet{Hashes: api.HashesType{QuickXorHash: qx}}}
+	}
+	fresh := &Object{}
+	existing := &Object{hasMetaData: true}
+	assert.True(t, storedUpload(fresh, file(size, sum), size, true, sum))
+	assert.True(t, storedUpload(fresh, file(size, ""), size, true, sum), "a new file can be accepted on size when the hash is not ready")
+	assert.False(t, storedUpload(existing, file(size, ""), size, true, sum), "an existing file is not accepted on size alone")
+	assert.True(t, storedUpload(existing, file(size, sum), size, true, sum))
+	assert.False(t, storedUpload(fresh, file(size, "nope"), size, true, sum))
+	assert.False(t, storedUpload(fresh, file(1, sum), size, true, sum))
+	assert.False(t, storedUpload(fresh, file(size, sum), size, false, sum))
+	assert.False(t, storedUpload(fresh, nil, size, true, sum))
+}
+
+func rejectUploadSession(s *fragmentServer, store bool) {
+	s.fail = func(w http.ResponseWriter, attempt int) bool {
+		s.stored = store
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte(`{"error":{"code":"itemNotFound","message":"The upload session was not found"}}`))
+		return true
+	}
+}
+
+func TestUploadSessionNotFoundFileStored(t *testing.T) {
+	content := []byte("shortcut upload")
+	o, s, _ := newUploadTest(t, content, len(content))
+	s.storedHash = quickXor(content)
+	rejectUploadSession(s, true)
+	src := object.NewStaticObjectInfo("remote", time.Now(), int64(len(content)), true, nil, nil)
+	info, err := o.uploadMultipart(context.Background(), bytes.NewReader(content), src)
+	require.NoError(t, err)
+	require.NotNil(t, info)
+	assert.Equal(t, "fake-id", info.ID)
+	assert.Equal(t, int64(len(content)), info.GetSize())
+	assert.Equal(t, 1, s.attempts)
+	assert.Equal(t, 0, s.fragments)
+}
+
+func TestUploadSessionNotFoundStillMissing(t *testing.T) {
+	content := []byte("shortcut upload")
+	o, s, _ := newUploadTest(t, content, len(content))
+	rejectUploadSession(s, false)
+	src := object.NewStaticObjectInfo("remote", time.Now(), int64(len(content)), true, nil, nil)
+	_, err := o.uploadMultipart(context.Background(), bytes.NewReader(content), src)
+	require.ErrorIs(t, err, errUploadSessionNotFound)
 }
