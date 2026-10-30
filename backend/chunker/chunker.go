@@ -386,22 +386,22 @@ type Options struct {
 type Fs struct {
 	name         string
 	root         string
-	base         fs.Fs          // remote wrapped by chunker overlay
-	wrapper      fs.Fs          // wrapper is used by SetWrapper
-	useMeta      bool           // false if metadata format is 'none'
-	useMD5       bool           // mutually exclusive with useSHA1
-	useSHA1      bool           // mutually exclusive with useMD5
-	hashFallback bool           // allows fallback from MD5 to SHA1 and vice versa
-	hashAll      bool           // hash all files, mutually exclusive with hashFallback
+	base         fs.Fs            // remote wrapped by chunker overlay
+	wrapper      fs.Fs            // wrapper is used by SetWrapper
+	useMeta      bool             // false if metadata format is 'none'
+	useMD5       bool             // mutually exclusive with useSHA1
+	useSHA1      bool             // mutually exclusive with useMD5
+	hashFallback bool             // allows fallback from MD5 to SHA1 and vice versa
+	hashAll      bool             // hash all files, mutually exclusive with hashFallback
 	dataNameFmts []string         // name formats of data chunks
 	ctrlNameFmt  string           // name format of control chunks
 	nameRegexps  []*regexp.Regexp // regular expressions to match chunk names
 	xactIDRand   *rand.Rand       // generator of random transaction identifiers
-	xactIDMutex  sync.Mutex     // mutex for the source of randomness
-	opt          Options        // copy of Options
-	features     *fs.Features   // optional features
-	dirSort      bool           // reserved for future, ignored
-	useNoRename  bool           // can be set with the transactions option
+	xactIDMutex  sync.Mutex       // mutex for the source of randomness
+	opt          Options          // copy of Options
+	features     *fs.Features     // optional features
+	dirSort      bool             // reserved for future, ignored
+	useNoRename  bool             // can be set with the transactions option
 }
 
 // configure sets up chunker for given name format, meta format and hash type.
@@ -509,9 +509,11 @@ func (f *Fs) setChunkNameFormat(patterns fs.CommaSepList) error {
 	}
 
 	var (
-		nameRegexps  []*regexp.Regexp
-		dataNameFmts []string
-		ctrlNameFmt  string
+		nameRegexps         []*regexp.Regexp
+		dataNameFmts        []string
+		ctrlNameFmt         string
+		reConsecutiveHashes = regexp.MustCompile(`^[^#]*[#]+[^#]*$`)
+		reHashes            = regexp.MustCompile(`[#]+`)
 	)
 	for i, pattern := range patterns {
 		// validate pattern
@@ -525,7 +527,7 @@ func (f *Fs) setChunkNameFormat(patterns fs.CommaSepList) error {
 		if strings.Index(pattern, "*") > strings.Index(pattern, "#") {
 			return errors.New("asterisk (*) in pattern must come before hashes (#)")
 		}
-		if ok, _ := regexp.MatchString("^[^#]*[#]+[^#]*$", pattern); !ok {
+		if !reConsecutiveHashes.MatchString(pattern) {
 			return errors.New("hashes (#) in pattern must be consecutive")
 		}
 		if dir, _ := path.Split(pattern); dir != "" {
@@ -536,7 +538,6 @@ func (f *Fs) setChunkNameFormat(patterns fs.CommaSepList) error {
 		}
 
 		// craft a unified regular expression for all types of chunks
-		reHashes := regexp.MustCompile("[#]+")
 		reDigits := "[0-9]+"
 		if numDigits > 1 {
 			reDigits = fmt.Sprintf("[0-9]{%d,}", numDigits)
