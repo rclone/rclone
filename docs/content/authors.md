@@ -1299,3 +1299,6 @@ put them back in again. -->
 - Dirk Petersen <1427719+dirkpetersen@users.noreply.github.com>
 - Codex <noreply@openai.com>
 - bunnysayzz <bunnysayzz@users.noreply.github.com>
+- hahahahahayesyeseys <1145018948@qq.com>
+- qodelicious <162776175+qodelicious@users.noreply.github.com>
+- fixfon <12512757+fixfon@users.noreply.github.com>
