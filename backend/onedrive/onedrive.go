@@ -1006,6 +1006,13 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.It
 			resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
 			return shouldRetry(ctx, resp, err)
 		})
+		if err != nil && firstSlashIndex != -1 && resp != nil && resp.StatusCode == http.StatusNotFound {
+			// root:/path does not follow an "Add shortcut to My files"
+			// shortcut. The directory cache does.
+			if altInfo, altResp, altErr := f.readMetaDataForPathViaParent(ctx, path); altErr == nil {
+				return altInfo, altResp, nil
+			}
+		}
 		return info, resp, err
 	}
 
@@ -1059,6 +1066,32 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.It
 	}
 
 	return f.readMetaDataForPathRelativeToID(ctx, baseNormalizedID, relPath)
+}
+
+// readMetaDataForPathViaParent reads the metadata for path (relative
+// to the absolute root) by finding the ID of its parent directory in
+// the dirCache and reading the leaf relative to that ID.
+//
+// This works for items reached through OneDrive for Business shortcuts
+// where addressing by root:/path fails.
+func (f *Fs) readMetaDataForPathViaParent(ctx context.Context, path string) (info *api.Item, resp *http.Response, err error) {
+	if f.dirCache == nil {
+		return nil, nil, fs.ErrorDirNotFound
+	}
+	relPath, insideRoot := getRelativePathInsideBase(f.root, path)
+	if !insideRoot || relPath == "" {
+		return nil, nil, fs.ErrorDirNotFound
+	}
+	dir, leaf := dircache.SplitPath(relPath)
+	if dir == "" && f.root == "" {
+		// Item is in the absolute root so root:/path is correct
+		return nil, nil, fs.ErrorDirNotFound
+	}
+	dirID, err := f.dirCache.FindDir(ctx, dir, false)
+	if err != nil {
+		return nil, nil, err
+	}
+	return f.readMetaDataForPathRelativeToID(ctx, dirID, leaf)
 }
 
 // errorHandler parses a non 2xx error response into an error
