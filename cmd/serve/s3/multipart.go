@@ -271,7 +271,7 @@ func (b *s3Backend) CreateMultipartUpload(ctx context.Context, bucketName, objec
 		return "", err
 	}
 	if _, err := _vfs.Stat(bucketName); err != nil {
-		return "", gofakes3.BucketNotFound(bucketName)
+		return "", notFound(err, gofakes3.BucketNotFound(bucketName))
 	}
 
 	if b.s.opt.DisableMultipartStreaming && _vfs.Opt.CacheMode < vfscommon.CacheModeMinimal {

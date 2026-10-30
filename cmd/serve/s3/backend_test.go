@@ -381,6 +381,8 @@ func TestStatErrors(t *testing.T) {
 		assert.ErrorContains(t, err, "listing failed", "HeadObject")
 		_, err = b.PutObject(ctx, "bucket", "new.txt", map[string]string{}, strings.NewReader("x"), 1)
 		assert.ErrorContains(t, err, "listing failed", "PutObject")
+		_, err = b.CreateMultipartUpload(ctx, "bucket", "new.txt", map[string]string{})
+		assert.ErrorContains(t, err, "listing failed", "CreateMultipartUpload")
 		err = b.DeleteBucket(ctx, "bucket")
 		assert.ErrorContains(t, err, "listing failed", "DeleteBucket")
 	})
