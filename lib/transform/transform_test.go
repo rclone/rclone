@@ -168,3 +168,20 @@ func TestVarious(t *testing.T) {
 		assert.Equal(t, test.want, got)
 	}
 }
+
+func TestTitlecase(t *testing.T) {
+	for _, test := range []struct {
+		path string
+		want string
+	}{
+		{"hello world.txt", "Hello World.txt"},
+		{"a dir/my report v2.pdf", "A Dir/My Report V2.pdf"},
+		{"ÉCOLE été", "École Été"},
+	} {
+		ctx, err := newOptions("all,titlecase")
+		require.NoError(t, err)
+
+		got := Path(ctx, test.path, false)
+		assert.Equal(t, test.want, got)
+	}
+}
