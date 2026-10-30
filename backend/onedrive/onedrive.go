@@ -2707,8 +2707,9 @@ func (o *Object) uploadFragment(ctx context.Context, url string, start int64, to
 			}
 			return true, fmt.Errorf("retry this chunk skipping %d bytes: %w", skip, err)
 		} else if err != nil && resp != nil && resp.StatusCode == http.StatusNotFound {
+			// A missing session does not appear on a later attempt.
 			fs.Debugf(o, "Received 404 error: upload session not found - not retrying: %v", err)
-			return false, fserrors.NoLowLevelRetryError(err)
+			return false, fserrors.NoLowLevelRetryError(fmt.Errorf("%w: %v", errUploadSessionNotFound, err))
 		}
 		if err != nil {
 			return shouldRetry(ctx, resp, err)
@@ -2743,6 +2744,43 @@ func (o *Object) cancelUploadSession(ctx context.Context, url string) (err error
 	return
 }
 
+// errUploadSessionNotFound is returned by a fragment PUT when the
+// session URL answers itemNotFound. The chunk is not sent again.
+var errUploadSessionNotFound = errors.New("upload session not found")
+
+// statUploadedFile reads the file at this object's path.
+// A missing file returns a nil item and a nil error.
+func (o *Object) statUploadedFile(ctx context.Context) (info *api.Item, err error) {
+	info, resp, err := o.fs.readMetaDataForPath(ctx, o.rootPath())
+	if err != nil {
+		if resp != nil && resp.StatusCode == http.StatusNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	if info == nil || info.GetFile() == nil {
+		return nil, fs.ErrorIsDir
+	}
+	return info, nil
+}
+
+// storedUpload reports whether item is the content just sent.
+// QuickXorHash has to match when the server sent one. A new file with
+// no hash yet is accepted on size: an "Add shortcut to My files"
+// folder can commit the bytes and then answer the session URL with
+// itemNotFound before the hash is filled in. An existing file is not
+// accepted on size alone, because the previous content may still be there.
+func storedUpload(o *Object, item *api.Item, size int64, sentAll bool, sum string) bool {
+	if item == nil || item.GetFile() == nil || item.GetSize() != size || !sentAll {
+		return false
+	}
+	got := item.GetFile().Hashes.QuickXorHash
+	if got != "" {
+		return got == sum
+	}
+	return !o.hasMetaData
+}
+
 // uploadMultipart uploads a file using multipart upload
 // if there is metadata, it will be set at the same time, except for permissions, which must be set after (if present and enabled).
 func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (info *api.Item, err error) {
@@ -2772,12 +2810,13 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 	// Upload the chunks
 	remaining := size
 	position := int64(0)
+	contentHash := quickxorhash.New()
 	for remaining > 0 {
 		n := min(remaining, int64(o.fs.opt.ChunkSize))
 		// Buffer the chunk in memory from the global pool so it can be
 		// re-sent (or partly re-sent after a 416) on retry
 		rw := multipart.NewRW()
-		_, err = io.CopyN(rw, in, n)
+		_, err = io.CopyN(io.MultiWriter(rw, contentHash), in, n)
 		if err != nil {
 			_ = rw.Close()
 			if err == io.EOF {
@@ -2789,7 +2828,21 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 		info, err = o.uploadFragment(ctx, uploadURL, position, size, rw, n, options...)
 		closeErr := rw.Close()
 		if err != nil {
-			return nil, err
+			// The session URL can 404 after the file is already stored,
+			// which happens for a folder reached through a shortcut.
+			if errors.Is(err, errUploadSessionNotFound) {
+				after, statErr := o.statUploadedFile(ctx)
+				sum := base64.StdEncoding.EncodeToString(contentHash.Sum(nil))
+				if statErr == nil && storedUpload(o, after, size, position+n == size, sum) {
+					fs.Debugf(o, "Upload session was not found but the file is stored")
+					info = after
+					err = nil
+					break
+				}
+			}
+			if err != nil {
+				return nil, err
+			}
 		}
 		if closeErr != nil {
 			return nil, closeErr
