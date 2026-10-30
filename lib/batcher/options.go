@@ -2,6 +2,7 @@ package batcher
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -9,6 +10,22 @@ import (
 
 // FsOptions returns the batch mode fs.Options
 func (opt *Options) FsOptions(extra string) []fs.Option {
+	defaultMode := opt.DefaultMode
+	if defaultMode == "" {
+		defaultMode = "sync"
+	}
+	var modes strings.Builder
+	for _, mode := range []struct{ name, help string }{
+		{"off", "no batching"},
+		{"sync", "batch uploads and check completion"},
+		{"async", "batch upload and don't check completion"},
+	} {
+		fmt.Fprintf(&modes, "- %s - %s", mode.name, mode.help)
+		if mode.name == defaultMode {
+			modes.WriteString(" (default)")
+		}
+		modes.WriteString("\n")
+	}
 	return []fs.Option{{
 		Name: "batch_mode",
 		Help: fmt.Sprintf(`Upload file batching sync|async|off.
@@ -17,14 +34,11 @@ This sets the batch mode used by rclone.
 
 %sThis has 3 possible values
 
-- off - no batching
-- sync - batch uploads and check completion (default)
-- async - batch upload and don't check completion
-
+%s
 Rclone will close any outstanding batches when it exits which may make
 a delay on quit.
-`, extra),
-		Default:  "sync",
+`, extra, modes.String()),
+		Default:  defaultMode,
 		Advanced: true,
 	}, {
 		Name: "batch_size",
