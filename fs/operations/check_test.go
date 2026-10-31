@@ -310,6 +310,7 @@ func TestParseSumFile(t *testing.T) {
 		{"18", " ?SHA1*", "file18", true},
 		{"19", " *", "file18", false},
 		{"20", " ?*", "file20", false},
+		{"21", "  ", strings.Repeat("dir/", 1100) + "file21", true},
 	}
 
 	encodings := []struct {
@@ -349,6 +350,13 @@ func TestParseSumFile(t *testing.T) {
 			}
 		}
 	}
+
+	// The last line doesn't need a line ending
+	_ = r.WriteObject(ctx, sumFile, "1  file1\n2  file2", t1)
+	file := fstest.NewObject(ctx, t, r.Fremote, sumFile)
+	sums, err := operations.ParseSumFile(ctx, file, hash.SHA1)
+	require.NoError(t, err)
+	assert.Equal(t, operations.HashSums{"file1": "1", "file2": "2"}, sums)
 }
 
 func testCheckSum(t *testing.T, download bool) {
