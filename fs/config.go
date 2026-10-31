@@ -128,6 +128,16 @@ var ConfigOptionsInfo = Options{{
 	ShortOpt: "l",
 	Groups:   "Copy",
 }, {
+	Name:    "preserve_posix_properties",
+	Default: false,
+	Help:    "Preserve POSIX properties as AzCopy-compatible metadata when uploading local files to Azure Blob Storage",
+	Groups:  "Metadata,Copy",
+}, {
+	Name:    "preserve_symlinks",
+	Default: false,
+	Help:    "Preserve local POSIX symlinks as Azure blobs with their original names and link targets",
+	Groups:  "Copy",
+}, {
 	Name:    "contimeout",
 	Default: 60 * time.Second,
 	Help:    "Connect timeout",
@@ -592,6 +602,8 @@ type ConfigInfo struct {
 	DryRun                     bool              `config:"dry_run"`
 	Interactive                bool              `config:"interactive"`
 	Links                      bool              `config:"links"`
+	PreservePOSIXProperties    bool              `config:"preserve_posix_properties"`
+	PreserveSymlinks           bool              `config:"preserve_symlinks"`
 	CheckSum                   bool              `config:"checksum"`
 	SizeOnly                   bool              `config:"size_only"`
 	IgnoreTimes                bool              `config:"ignore_times"`
@@ -715,6 +727,10 @@ var LogReload = func(*ConfigInfo) error { return nil }
 
 // Reload assumes the config has been edited and does what is necessary to make it live
 func (ci *ConfigInfo) Reload(ctx context.Context) error {
+	if ci.PreserveSymlinks && ci.Links {
+		return errors.New("can't use --preserve-symlinks with -l/--links")
+	}
+
 	// Set -vv if --dump is in use
 	if ci.Dump != 0 && ci.LogLevel != LogLevelDebug {
 		Logf(nil, "Automatically setting -vv as --dump is enabled")

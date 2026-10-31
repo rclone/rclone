@@ -52,5 +52,11 @@ func (o *Object) readMetadataFromFile(m *fs.Metadata) (err error) {
 	setTime("atime", stat.Atimespec)
 	setTime("mtime", stat.Mtimespec)
 	setTime("btime", stat.Birthtimespec)
+	if o.fs.preservePOSIXProperties {
+		m.Set("nlink", fmt.Sprintf("%d", stat.Nlink))
+		m.Set("ino", fmt.Sprintf("%d", stat.Ino))
+		m.Set("dev", fmt.Sprintf("%d", stat.Dev))
+		setTime("ctime", stat.Ctimespec)
+	}
 	return nil
 }

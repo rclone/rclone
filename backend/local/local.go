@@ -422,6 +422,9 @@ type Fs struct {
 	warned         map[string]struct{} // whether we have warned about this string
 	xattrSupported atomic.Int32        // whether xattrs are supported
 
+	preserveSymlinks        bool
+	preservePOSIXProperties bool
+
 	// do os.Lstat or os.Stat
 	lstat        func(name string) (os.FileInfo, error)
 	objectMetaMu sync.RWMutex // global lock for Object metadata
@@ -470,6 +473,24 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if ci.Links {
 		opt.TranslateSymlinks = true
 	}
+	if ci.PreservePOSIXProperties {
+		switch runtime.GOOS {
+		case "linux", "darwin", "freebsd", "netbsd", "openbsd", "solaris":
+		default:
+			return nil, fmt.Errorf("--preserve-posix-properties is not supported on %s", runtime.GOOS)
+		}
+	}
+	if ci.PreserveSymlinks {
+		switch runtime.GOOS {
+		case "linux", "darwin", "freebsd", "netbsd", "openbsd", "solaris":
+		default:
+			return nil, fmt.Errorf("--preserve-symlinks is not supported on %s", runtime.GOOS)
+		}
+		if opt.TranslateSymlinks || opt.FollowSymlinks || opt.SkipSymlinks {
+			return nil, errors.New("can't use --preserve-symlinks with --links, --local-links, --copy-links or --skip-links")
+		}
+		opt.TranslateSymlinks = true
+	}
 	if opt.TranslateSymlinks && opt.FollowSymlinks {
 		return nil, errLinksAndCopyLinks
 	}
@@ -480,6 +501,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		warned: make(map[string]struct{}),
 		dev:    devUnset,
 		lstat:  os.Lstat,
+
+		preserveSymlinks:        ci.PreserveSymlinks,
+		preservePOSIXProperties: ci.PreservePOSIXProperties,
 	}
 	if xattrSupported {
 		f.xattrSupported.Store(1)
@@ -516,12 +540,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	// Check to see if this is a .rclonelink if not found
 	hasLinkSuffix := strings.HasSuffix(f.root, fs.LinkSuffix)
-	if hasLinkSuffix && opt.TranslateSymlinks && os.IsNotExist(err) {
+	if hasLinkSuffix && opt.TranslateSymlinks && !f.preserveSymlinks && os.IsNotExist(err) {
 		fi, err = f.lstat(strings.TrimSuffix(f.root, fs.LinkSuffix))
 	}
 	if err == nil && f.isRegular(fi.Mode()) {
 		// Handle the odd case, that a symlink was specified by name without the link suffix
-		if !hasLinkSuffix && opt.TranslateSymlinks && fi.Mode()&os.ModeSymlink != 0 {
+		if !hasLinkSuffix && opt.TranslateSymlinks && !f.preserveSymlinks && fi.Mode()&os.ModeSymlink != 0 {
 			return nil, errLinksNeedsSuffix
 		}
 		// It is a file, so use the parent as the root
@@ -585,7 +609,7 @@ func (f *Fs) caseInsensitive() bool {
 // newObject makes a half completed Object
 func (f *Fs) newObject(remote string) (*Object, error) {
 	name, translatedLink := remote, false
-	if f.opt.TranslateSymlinks {
+	if f.opt.TranslateSymlinks && !f.preserveSymlinks {
 		name, translatedLink = strings.CutSuffix(remote, fs.LinkSuffix)
 	}
 	if translatedLink {
@@ -618,10 +642,8 @@ func (f *Fs) newObjectWithInfo(remote string, info os.FileInfo) (fs.Object, erro
 	if err != nil {
 		return nil, err
 	}
-	if info != nil {
-		o.setMetadata(info)
-	} else {
-		err := o.lstat()
+	if info == nil {
+		info, err = f.lstat(o.path)
 		if err != nil {
 			if os.IsNotExist(err) {
 				return nil, fs.ErrorObjectNotFound
@@ -631,11 +653,14 @@ func (f *Fs) newObjectWithInfo(remote string, info os.FileInfo) (fs.Object, erro
 			}
 			return nil, err
 		}
-		// Handle the odd case, that a symlink was specified by name without the link suffix
-		if o.fs.opt.TranslateSymlinks && o.mode&os.ModeSymlink != 0 && !o.translatedLink {
-			return nil, fs.ErrorObjectNotFound
-		}
-
+	}
+	if f.preserveSymlinks {
+		o.translatedLink = info.Mode()&os.ModeSymlink != 0
+	}
+	o.setMetadata(info)
+	// A translated symlink must be addressed with its .rclonelink suffix.
+	if o.fs.opt.TranslateSymlinks && o.mode&os.ModeSymlink != 0 && !o.translatedLink {
+		return nil, fs.ErrorObjectNotFound
 	}
 	if o.mode.IsDir() {
 		return nil, fs.ErrorIsDir
@@ -815,7 +840,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				}
 			} else {
 				// Check whether this link should be translated
-				if f.opt.TranslateSymlinks && fi.Mode()&symlinkFlag != 0 {
+				if f.opt.TranslateSymlinks && !f.preserveSymlinks && fi.Mode()&symlinkFlag != 0 {
 					newRemote += fs.LinkSuffix
 				}
 				// Don't include non directory if not included
@@ -1958,9 +1983,16 @@ func (o *Object) Remove(ctx context.Context) error {
 //
 // It should return nil if there is no Metadata
 func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error) {
-	metadata, err = o.getXattr()
-	if err != nil {
-		return nil, err
+	if !o.fs.preservePOSIXProperties || fs.GetConfig(ctx).Metadata {
+		metadata, err = o.getXattr()
+		if err != nil {
+			return nil, err
+		}
+	}
+	if o.fs.preservePOSIXProperties {
+		for _, key := range []string{"nlink", "ino", "dev", "ctime", "statx-mask", "attributes", "attributes-mask"} {
+			delete(metadata, key)
+		}
 	}
 	err = o.readMetadataFromFile(&metadata)
 	if err != nil {
