@@ -3,6 +3,7 @@ package fs
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -142,6 +143,56 @@ func TestSizeSuffixSet(t *testing.T) {
 			require.NoError(t, err, test.in)
 		}
 		assert.Equal(t, test.want, int64(ss))
+	}
+}
+
+func TestSizeSuffixSetExactInteger(t *testing.T) {
+	// Integer inputs must be scaled exactly, even when they aren't
+	// representable as a float64.
+	for _, test := range []struct {
+		in   string
+		want int64
+	}{
+		{"123456789012345678B", 123456789012345678},
+		{"9007199254740993B", 9007199254740993}, // 2^53 + 1
+		{"1152921504606846977B", (1 << 60) + 1},
+	} {
+		ss := SizeSuffix(0)
+		require.NoError(t, ss.Set(test.in), test.in)
+		assert.Equal(t, test.want, int64(ss), test.in)
+	}
+}
+
+func TestSizeSuffixStringRoundTrip(t *testing.T) {
+	// Values whose rounded pretty form doesn't parse back to the same
+	// value, plus boundary values around the suffix steps.
+	for _, in := range []SizeSuffix{
+		0, 1, 1023, 1024, 1025, 1046, 1047,
+		123456789012345678,
+		(1 << 60) + 1,
+		math.MaxInt64 - 1,
+	} {
+		str := in.stringRoundTrip()
+		var out SizeSuffix
+		require.NoError(t, out.Set(str), "in=%d str=%q", int64(in), str)
+		assert.Equal(t, int64(in), int64(out), "in=%d str=%q", int64(in), str)
+	}
+	// Every value in a dense range must round trip exactly.
+	for i := SizeSuffix(0); i <= 100000; i++ {
+		str := i.stringRoundTrip()
+		var out SizeSuffix
+		require.NoError(t, out.Set(str))
+		require.Equal(t, int64(i), int64(out), "str=%q", str)
+	}
+	// As must samples around each power of two.
+	for shift := uint(10); shift < 63; shift += 5 {
+		for _, delta := range []SizeSuffix{-2, -1, 0, 1, 2, 12345} {
+			in := (SizeSuffix(1) << shift) + delta
+			str := in.stringRoundTrip()
+			var out SizeSuffix
+			require.NoError(t, out.Set(str), "in=%d str=%q", int64(in), str)
+			require.Equal(t, int64(in), int64(out), "str=%q", str)
+		}
 	}
 }
 
