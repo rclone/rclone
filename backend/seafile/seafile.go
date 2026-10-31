@@ -150,7 +150,16 @@ type Fs struct {
 	createDirMutex      sync.Mutex   // Protect creation of directories
 	useOldDirectoryAPI  bool         // Use the old API v2 if seafile < 7
 	moveDirNotAvailable bool         // Version < 7.0 don't have an API to move a directory
+	uploadModTime       bool         // Version >= 12.0.4 accepts last_modify when uploading a file
 	renew               *Renew       // Renew an encrypted library token
+}
+
+// minUploadModTimeVersion is the first server version which reads the
+// last_modify field of the upload form
+var minUploadModTimeVersion = *semver.New("12.0.4")
+
+func canUploadModTime(serverVersion *semver.Version) bool {
+	return !serverVersion.LessThan(minUploadModTimeVersion)
 }
 
 // ------------------------------------------------------------
@@ -232,6 +241,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		// It also does no support moving directories
 		f.moveDirNotAvailable = true
 	}
+	f.uploadModTime = canUploadModTime(serverVersion)
 
 	// Take the authentication token from the configuration first
 	token := f.opt.AuthToken
@@ -495,7 +505,10 @@ func (f *Fs) String() string {
 
 // Precision of the ModTimes in this Fs
 func (f *Fs) Precision() time.Duration {
-	// The API doesn't support setting the modified time
+	// The modification time can only be set when uploading, and only from v12.0.4
+	if f.uploadModTime {
+		return time.Second
+	}
 	return fs.ModTimeNotSupported
 }
 
