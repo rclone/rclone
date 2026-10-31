@@ -159,3 +159,26 @@ func TestPolicy3(t *testing.T) {
 		QuickTestOK:                  true,
 	})
 }
+
+func TestPolicy4(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+	dirs := union.MakeTestDirs(t, 3)
+	upstreams := dirs[0] + " " + dirs[1] + " " + dirs[2]
+	name := "TestUnionPolicy4"
+	fstests.Run(t, &fstests.Opt{
+		RemoteName: name + ":",
+		ExtraConfig: []fstests.ExtraConfigItem{
+			{Name: name, Key: "type", Value: "union"},
+			{Name: name, Key: "upstreams", Value: upstreams},
+			{Name: name, Key: "action_policy", Value: "all"},
+			{Name: name, Key: "create_policy", Value: "lno"},
+			{Name: name, Key: "search_policy", Value: "all"},
+			{Name: name, Key: "usage_by_listing", Value: "true"},
+		},
+		UnimplementableFsMethods:     unimplementableFsMethods,
+		UnimplementableObjectMethods: unimplementableObjectMethods,
+		QuickTestOK:                  true,
+	})
+}
