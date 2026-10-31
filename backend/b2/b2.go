@@ -2405,6 +2405,34 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	return info, up, nil
 }
 
+// hardDelete permanently deletes all versions and hide markers of bucketPath.
+func (f *Fs) hardDelete(ctx context.Context, bucket, bucketPath, fallbackID string) error {
+	var (
+		errReturn error
+		found     bool
+	)
+	err := f.list(ctx, bucket, bucketPath, "", false, true, 0, true, true, func(remote string, file *api.File, isDirectory bool) error {
+		if isDirectory || file.Name != bucketPath {
+			return errEndList
+		}
+		if file.Action == "start" {
+			return nil
+		}
+		found = true
+		if delErr := f.deleteByID(ctx, file.ID, bucketPath); delErr != nil && errReturn == nil {
+			errReturn = delErr
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	if !found && fallbackID != "" {
+		return f.deleteByID(ctx, fallbackID, bucketPath)
+	}
+	return errReturn
+}
+
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
 	bucket, bucketPath := o.split()
@@ -2418,7 +2446,7 @@ func (o *Object) Remove(ctx context.Context) error {
 		return errNotWithVersionAt
 	}
 	if o.fs.opt.HardDelete {
-		return o.fs.deleteByID(ctx, o.id, bucketPath)
+		return o.fs.hardDelete(ctx, bucket, bucketPath, o.id)
 	}
 	return o.fs.hide(ctx, bucket, bucketPath)
 }
