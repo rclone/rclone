@@ -302,6 +302,14 @@ func TestParseSumFile(t *testing.T) {
 		{"10", "  ", "ファイル10", true},
 		{"#", "  ", "comment11", false},
 		{";", " *", "comment12", false},
+		{"13", " ?SHA1*", "file13", true},
+		{"14", " ?sha1 ", "file14", true},
+		{"15", " ?MD5*", "file15", false},
+		{"16", " *", "file16", false},
+		{"17", " ?SHA1*", "file16", true},
+		{"18", " ?SHA1*", "file18", true},
+		{"19", " *", "file18", false},
+		{"20", " ?*", "file20", false},
 	}
 
 	encodings := []struct {
@@ -330,7 +338,7 @@ func TestParseSumFile(t *testing.T) {
 
 			_ = r.WriteObject(ctx, sumFile, content, t1)
 			file := fstest.NewObject(ctx, t, r.Fremote, sumFile)
-			sums, err := operations.ParseSumFile(ctx, file)
+			sums, err := operations.ParseSumFile(ctx, file, hash.SHA1)
 			assert.NoError(t, err)
 
 			assert.Equal(t, wantNum, len(sums), "%s %q", e.name, eol)
