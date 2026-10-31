@@ -295,6 +295,28 @@ func TestShortSubsystemRequest(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// Test that an RMDIR request on a file fails and leaves the file alone,
+// rather than deleting it.
+func TestRmdirFile(t *testing.T) {
+	vfsOpt := vfscommon.Opt
+	client := startTestServer(t, &vfsOpt)
+
+	const fileName = "file.txt"
+	require.NoError(t, writeFile(client, fileName, "hello"))
+
+	assert.Error(t, client.RemoveDirectory(fileName))
+
+	fi, err := client.Stat(fileName)
+	require.NoError(t, err, "file deleted by rmdir")
+	assert.Equal(t, int64(5), fi.Size())
+
+	// RMDIR still removes an empty directory
+	require.NoError(t, client.Mkdir("dir"))
+	require.NoError(t, client.RemoveDirectory("dir"))
+	_, err = client.Stat("dir")
+	assert.True(t, os.IsNotExist(err), "directory not removed: %v", err)
+}
+
 // writeFile writes contents to fileName via the client truncating any existing
 // data, the way a normal upload does.
 func writeFile(client *sftp.Client, fileName, contents string) error {
