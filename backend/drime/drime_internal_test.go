@@ -7,12 +7,15 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strconv"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/rclone/rclone/backend/drime/api"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 	"github.com/stretchr/testify/assert"
@@ -155,4 +158,107 @@ func TestGetItemListError(t *testing.T) {
 	require.Error(t, err)
 	assert.NotErrorIs(t, err, fs.ErrorObjectNotFound)
 	assert.Contains(t, err.Error(), "access denied")
+}
+
+// metaServer is a mock Drime server for the modtime and hash tests. It
+// records the requests made as "METHOD path".
+func metaServer(t *testing.T, verify func(w http.ResponseWriter), calls *[]string) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		*calls = append(*calls, r.Method+" "+r.URL.Path)
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case strings.HasSuffix(r.URL.Path, "/model"):
+			_, _ = w.Write([]byte(`{"fileEntry":{"id":7,"client_last_modified":1700000000123}}`))
+		case strings.HasSuffix(r.URL.Path, "/metadata"):
+			var req api.SetMetadataRequest
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&req))
+			assert.Equal(t, int64(1700000000123), req.LastModified)
+			_, _ = w.Write([]byte(`{}`))
+		case strings.HasSuffix(r.URL.Path, "/verify-integrity"):
+			verify(w)
+		default:
+			_, _ = w.Write([]byte(`{}`))
+		}
+	}))
+}
+
+// TestModTime checks ModTime is read lazily, once, from the model
+// endpoint and SetModTime sends milliseconds.
+func TestModTime(t *testing.T) {
+	var calls []string
+	server := metaServer(t, nil, &calls)
+	defer server.Close()
+	o := &Object{fs: testFs(t, server), id: "7", modTime: time.Unix(1, 0)}
+
+	want := time.UnixMilli(1700000000123)
+	assert.True(t, want.Equal(o.ModTime(context.Background())))
+	assert.True(t, want.Equal(o.ModTime(context.Background())))
+	assert.Equal(t, []string{"GET /file-entries/7/model"}, calls)
+
+	calls = nil
+	require.NoError(t, o.SetModTime(context.Background(), want.Add(time.Nanosecond)))
+	assert.Equal(t, []string{"POST /file-entries/7/metadata"}, calls)
+	assert.True(t, want.Equal(o.modTime))
+}
+
+// TestFinishUpload checks the post upload hash verification
+func TestFinishUpload(t *testing.T) {
+	const sum = "82cf91c6f507ac8eb092f9fa036bafa3fe04478716707357c768d6927652b113"
+	src := object.NewStaticObjectInfo("f", time.Now(), 1, true, map[hash.Type]string{hash.SHA256: sum}, nil)
+	ctx := context.Background()
+	mtime := int64(5)
+	info := func() *api.Item {
+		return &api.Item{ID: "7", ClientLastModified: &mtime}
+	}
+
+	t.Run("Verified", func(t *testing.T) {
+		var calls []string
+		server := metaServer(t, func(w http.ResponseWriter) {
+			_, _ = w.Write([]byte(`{"verified":true,"serverHash":"` + sum + `"}`))
+		}, &calls)
+		defer server.Close()
+		o := &Object{fs: testFs(t, server)}
+		require.NoError(t, o.finishUpload(ctx, info(), src))
+		h, err := o.Hash(ctx, hash.SHA256)
+		require.NoError(t, err)
+		assert.Equal(t, sum, h)
+		assert.Equal(t, []string{"POST /file-entries/7/verify-integrity"}, calls)
+	})
+
+	t.Run("MismatchRemovesObject", func(t *testing.T) {
+		var calls []string
+		server := metaServer(t, func(w http.ResponseWriter) {
+			_, _ = w.Write([]byte(`{"verified":false,"serverHash":"bad"}`))
+		}, &calls)
+		defer server.Close()
+		o := &Object{fs: testFs(t, server)}
+		err := o.finishUpload(ctx, info(), src)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "corrupted on transfer")
+		require.Len(t, calls, 2)
+		assert.Equal(t, "POST /file-entries/delete", calls[1])
+		assert.Empty(t, o.sha256)
+	})
+
+	t.Run("ForbiddenIsIgnored", func(t *testing.T) {
+		var calls []string
+		server := metaServer(t, func(w http.ResponseWriter) {
+			http.Error(w, `{"message":"forbidden"}`, http.StatusForbidden)
+		}, &calls)
+		defer server.Close()
+		o := &Object{fs: testFs(t, server)}
+		require.NoError(t, o.finishUpload(ctx, info(), src))
+		assert.Empty(t, o.sha256)
+	})
+
+	t.Run("NoSourceHash", func(t *testing.T) {
+		var calls []string
+		server := metaServer(t, nil, &calls)
+		defer server.Close()
+		o := &Object{fs: testFs(t, server)}
+		nohash := object.NewStaticObjectInfo("f", time.Now(), 1, true, nil, nil)
+		require.NoError(t, o.finishUpload(ctx, info(), nohash))
+		assert.Empty(t, calls)
+	})
 }

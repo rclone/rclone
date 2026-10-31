@@ -68,6 +68,9 @@ type Item struct {
 	Users        []User      `json:"users"`
 	Tags         []any       `json:"tags"`
 	Permissions  Permissions `json:"permissions"`
+
+	// ClientLastModified is the original modification time in Unix milliseconds
+	ClientLastModified *int64 `json:"client_last_modified"`
 }
 
 // Listing response
@@ -138,6 +141,23 @@ type UpdateItemRequest struct {
 type UpdateItemResponse struct {
 	Status    string `json:"status"`
 	FileEntry Item   `json:"fileEntry"`
+}
+
+// SetMetadataRequest is the input to POST /file-entries/{id}/metadata
+type SetMetadataRequest struct {
+	LastModified int64 `json:"lastModified"`
+}
+
+// VerifyIntegrityRequest is the input to POST /file-entries/{id}/verify-integrity
+type VerifyIntegrityRequest struct {
+	SHA256 string `json:"sha256"`
+}
+
+// VerifyIntegrityResponse is returned by POST /file-entries/{id}/verify-integrity
+type VerifyIntegrityResponse struct {
+	Status     string `json:"status"`
+	Verified   bool   `json:"verified"`
+	ServerHash string `json:"serverHash"`
 }
 
 // MoveRequest is the input to /file-entries/move
@@ -224,6 +244,7 @@ type MultiPartEntriesRequest struct {
 	ParentID        json.Number `json:"parentId"`
 	RelativePath    string      `json:"relativePath"`
 	WorkspaceID     string      `json:"workspaceId,omitempty"`
+	LastModified    int64       `json:"lastModified,omitempty"`
 }
 
 // MultiPartEntriesResponse is the result of POST /s3/entries

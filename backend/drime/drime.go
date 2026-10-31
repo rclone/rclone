@@ -208,10 +208,12 @@ type Object struct {
 	remote   string    // The remote path
 	size     int64     // size of the object
 	modTime  time.Time // modification time of the object
+	hasMTime bool      // set once modTime holds the client modification time (or lookup was tried)
 	id       string    // ID of the object
 	dirID    string    // ID of the object's directory
 	mimeType string    // mime type of the object
 	url      string    // where to download this object
+	sha256   string    // SHA-256 of the object if known
 }
 
 // ------------------------------------------------------------
@@ -787,7 +789,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 
 // Precision return the precision of this Fs
 func (f *Fs) Precision() time.Duration {
-	return fs.ModTimeNotSupported
+	return time.Millisecond
 }
 
 // Purge deletes all the files and the container
@@ -1146,7 +1148,7 @@ func (f *Fs) DirCacheFlush() {
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
-	return hash.Set(hash.None)
+	return hash.Set(hash.SHA256)
 }
 
 var warnStreamUpload sync.Once
@@ -1168,6 +1170,7 @@ type drimeChunkWriter struct {
 	extension    string
 	parentID     json.Number
 	relativePath string
+	modTime      time.Time
 
 	completedPartsMu sync.Mutex
 	completedParts   []api.CompletedPart
@@ -1262,6 +1265,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		extension:    ext,
 		parentID:     json.Number(directoryID),
 		relativePath: relPath,
+		modTime:      src.ModTime(ctx),
 	}
 	info = fs.ChunkWriterInfo{
 		ChunkSize:         int64(chunkSize),
@@ -1406,6 +1410,7 @@ func (s *drimeChunkWriter) Close(ctx context.Context) error {
 		ParentID:        s.parentID,
 		RelativePath:    s.relativePath,
 		WorkspaceID:     s.f.opt.WorkspaceID,
+		LastModified:    s.modTime.UnixMilli(),
 	}
 
 	entriesOpts := rest.Opts{
@@ -1506,7 +1511,10 @@ func (o *Object) Remote() string {
 
 // Hash returns the hash of an object returning a lowercase hex string
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
-	return "", hash.ErrUnsupported
+	if t != hash.SHA256 {
+		return "", hash.ErrUnsupported
+	}
+	return o.sha256, nil
 }
 
 // Size returns the size of an object in bytes
@@ -1518,6 +1526,16 @@ func (o *Object) Size() int64 {
 func (o *Object) setMetaDataAny(info *api.Item) {
 	o.size = info.FileSize
 	o.modTime = info.UpdatedAt
+	o.hasMTime = false
+	if info.ClientLastModified != nil {
+		o.modTime = time.UnixMilli(*info.ClientLastModified)
+		o.hasMTime = true
+	}
+	if h, ok := info.FileHash.(string); ok {
+		o.sha256 = strings.ToLower(h)
+	} else {
+		o.sha256 = ""
+	}
 	o.id = info.ID.String()
 	o.dirID = info.ParentID.String()
 	o.mimeType = info.Mime
@@ -1549,15 +1567,56 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 
 // ModTime returns the modification time of the object
 //
-// It attempts to read the objects mtime and if that isn't present the
-// LastModified returned in the http headers
+// The directory listing doesn't return the client modification time so
+// it is read from the entry on demand, falling back to the time the
+// entry was last updated.
 func (o *Object) ModTime(ctx context.Context) time.Time {
+	if !o.hasMTime && o.id != "" {
+		o.hasMTime = true // only try once, whatever the outcome
+		var result api.UploadResponse
+		opts := rest.Opts{
+			Method: "GET",
+			Path:   "/file-entries/" + o.id + "/model",
+		}
+		err := o.fs.pacer.Call(func() (bool, error) {
+			resp, err := o.fs.srv.CallJSON(ctx, &opts, nil, &result)
+			return shouldRetry(ctx, resp, err)
+		})
+		if err != nil {
+			fs.Debugf(o, "Failed to read modification time: %v", err)
+		} else if result.FileEntry.ClientLastModified != nil {
+			o.modTime = time.UnixMilli(*result.FileEntry.ClientLastModified)
+		}
+	}
 	return o.modTime
 }
 
-// SetModTime sets the modification time of the local fs object
+// SetModTime sets the modification time of the object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	return fs.ErrorCantSetModTime
+	if o.id == "" {
+		return errors.New("can't set modtime - no id")
+	}
+	request := api.SetMetadataRequest{
+		LastModified: modTime.UnixMilli(),
+	}
+	opts := rest.Opts{
+		Method:     "POST",
+		Path:       "/file-entries/" + o.id + "/metadata",
+		Parameters: url.Values{},
+	}
+	if o.fs.opt.WorkspaceID != "" {
+		opts.Parameters.Set("workspaceId", o.fs.opt.WorkspaceID)
+	}
+	err := o.fs.pacer.Call(func() (bool, error) {
+		resp, err := o.fs.srv.CallJSON(ctx, &opts, &request, nil)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return fmt.Errorf("failed to set modtime: %w", err)
+	}
+	o.modTime = time.UnixMilli(request.LastModified)
+	o.hasMTime = true
+	return nil
 }
 
 // Storable returns a boolean showing whether this object storable
@@ -1640,21 +1699,23 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 		s := chunkWriter.(*drimeChunkWriter)
 
-		return o.setMetaData(&s.fileEntry)
+		return o.finishUpload(ctx, &s.fileEntry, src)
 	}
 
 	// Do the upload
 	var resp *http.Response
 	var result api.UploadResponse
 	var encodedLeaf = o.fs.opt.Enc.FromStandardName(leaf)
+	params := url.Values{
+		"parentId":     {directoryID},
+		"relativePath": {encodedLeaf},
+		"workspaceId":  {o.fs.opt.WorkspaceID},
+		"lastModified": {strconv.FormatInt(src.ModTime(ctx).UnixMilli(), 10)},
+	}
 	opts := rest.Opts{
-		Method: "POST",
-		Body:   in,
-		MultipartParams: url.Values{
-			"parentId":     {directoryID},
-			"relativePath": {encodedLeaf},
-			"workspaceId":  {o.fs.opt.WorkspaceID},
-		},
+		Method:               "POST",
+		Body:                 in,
+		MultipartParams:      params,
 		MultipartContentName: "file",
 		MultipartFileName:    encodedLeaf,
 		MultipartContentType: fs.MimeType(ctx, src),
@@ -1668,7 +1729,50 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		return fmt.Errorf("failed to upload file: %w", err)
 	}
-	return o.setMetaData(&result.FileEntry)
+	return o.finishUpload(ctx, &result.FileEntry, src)
+}
+
+// finishUpload sets the metadata from the upload response and then asks
+// Drime to verify the stored bytes against the source SHA-256.
+//
+// A hash supplied by the client at upload time is stored without being
+// checked, so it is not sent. Verifying instead makes the server hash
+// the stored data, and only on a match does it record the hash.
+func (o *Object) finishUpload(ctx context.Context, info *api.Item, src fs.ObjectInfo) error {
+	err := o.setMetaData(info)
+	if err != nil {
+		return err
+	}
+	if info.ClientLastModified == nil {
+		o.modTime = src.ModTime(ctx).Truncate(time.Millisecond)
+		o.hasMTime = true
+	}
+	sum, err := src.Hash(ctx, hash.SHA256)
+	if err != nil || sum == "" {
+		return nil
+	}
+	var resp api.VerifyIntegrityResponse
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/file-entries/" + o.id + "/verify-integrity",
+	}
+	err = o.fs.pacer.Call(func() (bool, error) {
+		res, err := o.fs.srv.CallJSON(ctx, &opts, &api.VerifyIntegrityRequest{SHA256: sum}, &resp)
+		return shouldRetry(ctx, res, err)
+	})
+	if err != nil {
+		// e.g. only the owner of a file may verify it
+		fs.Debugf(o, "Failed to verify upload: %v", err)
+		return nil
+	}
+	if !resp.Verified {
+		if rmErr := o.Remove(ctx); rmErr != nil {
+			fs.Errorf(o, "Failed to remove corrupted upload: %v", rmErr)
+		}
+		return fmt.Errorf("corrupted on transfer: SHA-256 differ src %q vs dst %q", sum, resp.ServerHash)
+	}
+	o.sha256 = strings.ToLower(sum)
+	return nil
 }
 
 // Remove an object
