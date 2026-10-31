@@ -589,7 +589,7 @@ func ParseSumFile(ctx context.Context, sumFile fs.Object) (HashSums, error) {
 			return nil, err
 		}
 		line := string(lineBytes)
-		if line == "" {
+		if line == "" || line[0] == '#' || line[0] == ';' {
 			continue
 		}
 

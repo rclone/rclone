@@ -300,6 +300,8 @@ func TestParseSumFile(t *testing.T) {
 		{"", "  ", "file8", false},
 		{"", "", "file9", false},
 		{"10", "  ", "ファイル10", true},
+		{"#", "  ", "comment11", false},
+		{";", " *", "comment12", false},
 	}
 
 	encodings := []struct {
