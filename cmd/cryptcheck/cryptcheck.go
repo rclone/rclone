@@ -84,6 +84,8 @@ func cryptCheck(ctx context.Context, fdst, fsrc fs.Fs) error {
 	}
 	defer close()
 
+	opt.ReportDirs = check.ReportDirs
+
 	// checkIdentical checks to see if dst and src are identical
 	//
 	// it returns true if differences were found
