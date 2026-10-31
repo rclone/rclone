@@ -470,6 +470,9 @@ func walkRDirTree(ctx context.Context, f fs.Fs, startPath string, includeAll boo
 	// Entries can come in arbitrary order. We use toPrune to keep
 	// all directories to exclude later.
 	toPrune := make(map[string]bool)
+	// checkedDirs records the parent directories of excluded objects
+	// that have already been resolved, so each is only looked up once.
+	checkedDirs := make(map[string]bool)
 	includeDirectory := fi.IncludeDirectory(ctx, f)
 	var mu sync.Mutex
 	err := listR(ctx, startPath, func(entries fs.DirEntries) error {
@@ -498,17 +501,20 @@ func walkRDirTree(ctx context.Context, f fs.Fs, startPath string, includeAll boo
 							dirPath = parentDir(dirPath)
 						}
 					}
-					inc, err := includeDirectory(dirPath)
-					if err != nil {
-						return err
-					}
-					if inc || includeAll {
-						// Make sure the directory is in the tree. Its
-						// entry in the parent is added by CheckParents
-						// if not listed, as directories can be listed
-						// after the objects in them.
-						if _, ok := dirs[dirPath]; !ok {
-							dirs[dirPath] = nil
+					if !checkedDirs[dirPath] {
+						checkedDirs[dirPath] = true
+						inc, err := includeDirectory(dirPath)
+						if err != nil {
+							return err
+						}
+						if inc || includeAll {
+							// Make sure the directory is in the tree. Its
+							// entry in the parent is added by CheckParents
+							// if not listed, as directories can be listed
+							// after the objects in them.
+							if _, ok := dirs[dirPath]; !ok {
+								dirs[dirPath] = nil
+							}
 						}
 					}
 				}
