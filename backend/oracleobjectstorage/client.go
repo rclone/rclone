@@ -126,6 +126,10 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 		if ociError.GetCode() == "RequestTimeout" {
 			return true, err
 		}
+		// Parallel part uploads can collide on the same object
+		if ociError.GetHTTPStatusCode() == http.StatusConflict && ociError.GetCode() == "ConcurrentObjectUpdate" {
+			return true, err
+		}
 	}
 	// Ok, not an oci error, check for generic failure conditions
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err

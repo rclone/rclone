@@ -102,3 +102,34 @@ func TestGzipEncoding(t *testing.T) {
 		assert.Equal(t, "", md5sum)
 	})
 }
+
+// serviceError is a minimal common.ServiceError for shouldRetry
+type serviceError struct {
+	status int
+	code   string
+}
+
+func (e serviceError) Error() string           { return e.code }
+func (e serviceError) GetHTTPStatusCode() int  { return e.status }
+func (e serviceError) GetMessage() string      { return e.code }
+func (e serviceError) GetCode() string         { return e.code }
+func (e serviceError) GetOpcRequestID() string { return "" }
+
+func TestShouldRetryServiceError(t *testing.T) {
+	ctx := context.Background()
+	for _, test := range []struct {
+		status int
+		code   string
+		want   bool
+	}{
+		{http.StatusConflict, "ConcurrentObjectUpdate", true},
+		{http.StatusConflict, "BucketAlreadyExists", false},
+		{http.StatusRequestTimeout, "RequestTimeout", true},
+		{http.StatusNotFound, "ObjectNotFound", false},
+	} {
+		err := serviceError{status: test.status, code: test.code}
+		retry, gotErr := shouldRetry(ctx, nil, err)
+		assert.Equal(t, test.want, retry, test.code)
+		assert.Equal(t, error(err), gotErr)
+	}
+}
