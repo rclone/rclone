@@ -634,6 +634,23 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (_ fs.Objec
 		"x-archive-filemeta-rclone-update-track": updateTracker,
 	}
 
+	mdata, err := fs.GetMetadataOptions(ctx, f, src, fs.MetadataAsOpenOptions(ctx))
+	if err != nil {
+		return nil, err
+	}
+	for key, value := range mdata {
+		key = strings.ToLower(key)
+		if key == "mtime" {
+			key = "rclone-mtime"
+		} else if strings.HasPrefix(key, "rclone-") {
+			// Keep the new copy tracker and mapped mtime, not the source internals.
+			continue
+		} else if _, readOnly := roMetadataKey[key]; readOnly {
+			continue
+		}
+		headers["x-archive-filemeta-"+key] = value
+	}
+
 	// make a PUT request at (IAS3)/:item/:path without body
 	var resp *http.Response
 	opts := rest.Opts{
