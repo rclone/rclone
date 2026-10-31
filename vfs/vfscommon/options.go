@@ -136,6 +136,16 @@ var OptionsInfo = fs.Options{{
 	Help:    "Extra read ahead over --buffer-size when using cache-mode full",
 	Groups:  "VFS",
 }, {
+	Name:    "vfs_downloader_idle_time",
+	Default: fs.Duration(5 * time.Second),
+	Help:    "Time a cache downloader can be idle before it stops",
+	Groups:  "VFS",
+}, {
+	Name:    "vfs_downloader_max_errors",
+	Default: 10,
+	Help:    "Number of errors a cache downloader tolerates before giving up",
+	Groups:  "VFS",
+}, {
 	Name:    "vfs_used_is_size",
 	Default: false,
 	Help:    "Use the `rclone size` algorithm for Used size",
@@ -207,12 +217,14 @@ type Options struct {
 	CachePollInterval  fs.Duration   `config:"vfs_cache_poll_interval"`
 	CaseInsensitive    bool          `config:"vfs_case_insensitive"`
 	BlockNormDupes     bool          `config:"vfs_block_norm_dupes"`
-	WriteWait          fs.Duration   `config:"vfs_write_wait"`       // time to wait for in-sequence write
-	ReadWait           fs.Duration   `config:"vfs_read_wait"`        // time to wait for in-sequence read
-	WriteBack          fs.Duration   `config:"vfs_write_back"`       // time to wait before writing back dirty files
-	ReadAhead          fs.SizeSuffix `config:"vfs_read_ahead"`       // bytes to read ahead in cache mode "full"
-	UsedIsSize         bool          `config:"vfs_used_is_size"`     // if true, use the `rclone size` algorithm for Used size
-	FastFingerprint    bool          `config:"vfs_fast_fingerprint"` // if set use fast fingerprints
+	WriteWait          fs.Duration   `config:"vfs_write_wait"`            // time to wait for in-sequence write
+	ReadWait           fs.Duration   `config:"vfs_read_wait"`             // time to wait for in-sequence read
+	WriteBack          fs.Duration   `config:"vfs_write_back"`            // time to wait before writing back dirty files
+	ReadAhead          fs.SizeSuffix `config:"vfs_read_ahead"`            // bytes to read ahead in cache mode "full"
+	DownloaderIdleTime fs.Duration   `config:"vfs_downloader_idle_time"`  // time a downloader can be idle before it stops
+	MaxDownloadErrors  int           `config:"vfs_downloader_max_errors"` // errors a downloader tolerates before giving up
+	UsedIsSize         bool          `config:"vfs_used_is_size"`          // if true, use the `rclone size` algorithm for Used size
+	FastFingerprint    bool          `config:"vfs_fast_fingerprint"`      // if set use fast fingerprints
 	DiskSpaceTotalSize fs.SizeSuffix `config:"vfs_disk_space_total_size"`
 	HandleCaching      fs.Duration   `config:"vfs_handle_caching"`     // time to keep handle alive after last close
 	MetadataExtension  string        `config:"vfs_metadata_extension"` // if set respond to files with this extension with metadata

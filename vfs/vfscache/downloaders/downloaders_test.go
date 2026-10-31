@@ -10,6 +10,7 @@ import (
 	"time"
 
 	_ "github.com/rclone/rclone/backend/local"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/ranges"
@@ -166,7 +167,7 @@ func TestDownloaders(t *testing.T) {
 		defer cancel(dls)
 
 		dls.mu.Lock()
-		dls.errorCount = maxErrorCount + 1
+		dls.errorCount = dls.opt.MaxDownloadErrors + 1
 		dls.lastErr = fmt.Errorf("vfs reader: failed to write to cache file: %w", errors.New("no space left on device"))
 		// A waiter for a range that isn't downloaded yet, so kickWaiters
 		// doesn't dispatch it immediately and reaches the errorCount check.
@@ -191,5 +192,70 @@ func TestDownloaders(t *testing.T) {
 		n, err := dl.Write(p)
 		require.NoError(t, err, "a successful write must not fail due to unrelated stale state")
 		assert.Equal(t, len(p), n)
+	})
+
+	t.Run("DownloaderIdleTime", func(t *testing.T) {
+		item := &testItem{
+			t:    t,
+			size: size,
+		}
+		opt := vfscommon.Opt
+		opt.DownloaderIdleTime = fs.Duration(50 * time.Millisecond)
+		dls := New(ctx, item, &opt, remote, src)
+		defer cancel(dls)
+
+		r := ranges.Range{Pos: 40 * 1024 * 1024, Size: 250}
+		require.NoError(t, dls.EnsureDownloader(r))
+		assert.Eventually(t, func() bool {
+			return item.HasRange(r)
+		}, 10*time.Second, 10*time.Millisecond)
+
+		dls.mu.Lock()
+		dl := dls.dls[0]
+		dls.mu.Unlock()
+		assert.Eventually(t, func() bool {
+			dl.mu.Lock()
+			defer dl.mu.Unlock()
+			return dl.stop
+		}, 2*time.Second, 10*time.Millisecond, "an idle downloader should stop after --vfs-downloader-idle-time")
+	})
+
+	t.Run("MaxDownloadErrors", func(t *testing.T) {
+		for _, test := range []struct {
+			name      string
+			maxErrors int
+			wantErr   bool
+		}{
+			{name: "Exceeded", maxErrors: 2, wantErr: true},
+			{name: "NotExceeded", maxErrors: 10, wantErr: false},
+		} {
+			t.Run(test.name, func(t *testing.T) {
+				item := &testItem{
+					t:    t,
+					size: size,
+				}
+				opt := vfscommon.Opt
+				opt.MaxDownloadErrors = test.maxErrors
+				dls := New(ctx, item, &opt, remote, src)
+				defer cancel(dls)
+
+				boom := errors.New("boom")
+				dls.mu.Lock()
+				dls.errorCount = 3
+				dls.lastErr = boom
+				dls.waiters = append(dls.waiters, waiter{
+					r:       ranges.Range{Pos: 10 * 1024 * 1024, Size: 250},
+					errChan: make(chan error, 1),
+				})
+				dls.mu.Unlock()
+
+				err := dls.kickWaiters()
+				if test.wantErr {
+					assert.ErrorIs(t, err, boom)
+				} else {
+					assert.NoError(t, err)
+				}
+			})
+		}
 	})
 }
