@@ -145,7 +145,7 @@ func (f *Fs) dbImport(ctx context.Context, hashName, sumRemote string, sticky bo
 	if err != nil {
 		return fmt.Errorf("cannot open sum file: %w", err)
 	}
-	hashes, err := operations.ParseSumFile(ctx, sumObj)
+	hashes, err := operations.ParseSumFile(ctx, sumObj, hashType)
 	if err != nil {
 		return fmt.Errorf("failed to parse sum file: %w", err)
 	}
