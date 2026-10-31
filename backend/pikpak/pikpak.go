@@ -1388,6 +1388,8 @@ func (f *Fs) uploadByForm(ctx context.Context, in io.Reader, name string, size i
 	if err != nil {
 		return fmt.Errorf("failed to make multipart upload: %w", err)
 	}
+	// Stop the form writer reading in if the request fails before sending it all
+	defer func() { _ = formReader.Close() }()
 
 	contentLength := overhead + size
 	opts := rest.Opts{
