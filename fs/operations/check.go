@@ -432,7 +432,7 @@ func CheckSum(ctx context.Context, fsrc, fsum fs.Fs, sumFile string, hashType ha
 	if err != nil {
 		return fmt.Errorf("cannot open sum file: %w", err)
 	}
-	hashes, err := ParseSumFile(ctx, sumObj)
+	hashes, err := ParseSumFile(ctx, sumObj, hashType)
 	if err != nil {
 		return fmt.Errorf("failed to parse sum file: %w", err)
 	}
@@ -568,7 +568,7 @@ func (c *checkMarch) matchSum(ctx context.Context, sumHash, objHash string, obj 
 type HashSums map[string]string
 
 // ParseSumFile parses a hash SUM file and returns hashes as a map
-func ParseSumFile(ctx context.Context, sumFile fs.Object) (HashSums, error) {
+func ParseSumFile(ctx context.Context, sumFile fs.Object, hashType hash.Type) (HashSums, error) {
 	rd, err := Open(ctx, sumFile)
 	if err != nil {
 		return nil, err
@@ -578,8 +578,9 @@ func ParseSumFile(ctx context.Context, sumFile fs.Object) (HashSums, error) {
 	const maxWarn = 3
 	numWarn := 0
 
-	re := regexp.MustCompile(`^([^ ]+) [ *](.+)$`)
+	re := regexp.MustCompile(`^([^ ]+) (?:\?([^ *]+))?[ *](.+)$`)
 	hashes := HashSums{}
+	marked := map[string]bool{} // files with a hash from a line marked with hashType
 	for lineNo := 0; true; lineNo++ {
 		lineBytes, _, err := parser.ReadLine()
 		if err == io.EOF {
@@ -602,13 +603,23 @@ func ParseSumFile(ctx context.Context, sumFile fs.Object) (HashSums, error) {
 			continue
 		}
 
-		sum, file := fields[1], fields[2]
-		if hashes[file] != "" {
+		sum, algo, file := fields[1], fields[2], fields[3]
+		if algo != "" && !strings.EqualFold(algo, hashType.String()) {
+			continue
+		}
+		// A marked line replaces an unmarked one, but not the reverse
+		if algo == "" && marked[file] {
+			continue
+		}
+		if hashes[file] != "" && (algo == "" || marked[file]) {
 			numWarn++
 			if numWarn <= maxWarn {
 				fs.LogfCtx(ctx, sumFile, "duplicate file on checksum line %d", lineNo)
 			}
 			continue
+		}
+		if algo != "" {
+			marked[file] = true
 		}
 
 		// We've standardised on lower case checksums in rclone internals.
