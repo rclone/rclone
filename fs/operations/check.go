@@ -20,6 +20,8 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/march"
 	"github.com/rclone/rclone/lib/readers"
+	"golang.org/x/text/encoding/unicode"
+	"golang.org/x/text/transform"
 	"golang.org/x/text/unicode/norm"
 )
 
@@ -571,7 +573,7 @@ func ParseSumFile(ctx context.Context, sumFile fs.Object) (HashSums, error) {
 	if err != nil {
 		return nil, err
 	}
-	parser := bufio.NewReader(rd)
+	parser := bufio.NewReader(transform.NewReader(rd, unicode.BOMOverride(transform.Nop)))
 
 	const maxWarn = 3
 	numWarn := 0

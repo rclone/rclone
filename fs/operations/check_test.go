@@ -23,6 +23,8 @@ import (
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/text/encoding"
+	"golang.org/x/text/encoding/unicode"
 	"golang.org/x/text/unicode/norm"
 )
 
@@ -297,6 +299,17 @@ func TestParseSumFile(t *testing.T) {
 		{"7", " \t", " file7 ", false},
 		{"", "  ", "file8", false},
 		{"", "", "file9", false},
+		{"10", "  ", "ファイル10", true},
+	}
+
+	encodings := []struct {
+		name string
+		enc  encoding.Encoding
+	}{
+		{"UTF-8", encoding.Nop},
+		{"UTF-8 with BOM", unicode.UTF8BOM},
+		{"UTF-16LE with BOM", unicode.UTF16(unicode.LittleEndian, unicode.UseBOM)},
+		{"UTF-16BE with BOM", unicode.UTF16(unicode.BigEndian, unicode.UseBOM)},
 	}
 
 	for _, eol := range []string{"\n", "\r\n"} {
@@ -309,15 +322,20 @@ func TestParseSumFile(t *testing.T) {
 			}
 		}
 
-		_ = r.WriteObject(ctx, sumFile, data.String(), t1)
-		file := fstest.NewObject(ctx, t, r.Fremote, sumFile)
-		sums, err := operations.ParseSumFile(ctx, file)
-		assert.NoError(t, err)
+		for _, e := range encodings {
+			content, err := e.enc.NewEncoder().String(data.String())
+			require.NoError(t, err)
 
-		assert.Equal(t, wantNum, len(sums))
-		for _, s := range samples {
-			if s.ok {
-				assert.Equal(t, s.hash, sums[s.name])
+			_ = r.WriteObject(ctx, sumFile, content, t1)
+			file := fstest.NewObject(ctx, t, r.Fremote, sumFile)
+			sums, err := operations.ParseSumFile(ctx, file)
+			assert.NoError(t, err)
+
+			assert.Equal(t, wantNum, len(sums), "%s %q", e.name, eol)
+			for _, s := range samples {
+				if s.ok {
+					assert.Equal(t, s.hash, sums[s.name], "%s %q", e.name, eol)
+				}
 			}
 		}
 	}
