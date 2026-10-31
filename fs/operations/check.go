@@ -582,14 +582,14 @@ func ParseSumFile(ctx context.Context, sumFile fs.Object, hashType hash.Type) (H
 	hashes := HashSums{}
 	marked := map[string]bool{} // files with a hash from a line marked with hashType
 	for lineNo := 0; true; lineNo++ {
-		lineBytes, _, err := parser.ReadLine()
-		if err == io.EOF {
+		line, err := parser.ReadString('\n')
+		if err == io.EOF && line == "" {
 			break
 		}
-		if err != nil {
+		if err != nil && err != io.EOF {
 			return nil, err
 		}
-		line := string(lineBytes)
+		line = strings.TrimSuffix(strings.TrimSuffix(line, "\n"), "\r")
 		if line == "" || line[0] == '#' || line[0] == ';' {
 			continue
 		}
