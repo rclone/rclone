@@ -73,9 +73,10 @@ func init() {
 			IsPassword: true,
 			Required:   true,
 		}, {
-			Name: "web_token",
-			Help: "Web API login token - set automatically.",
-			Hide: fs.OptionHideBoth,
+			Name:      "web_token",
+			Help:      "Web API login token - set automatically.",
+			Hide:      fs.OptionHideBoth,
+			Sensitive: true,
 		}},
 	}
 	fs.Register(fsi)

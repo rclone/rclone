@@ -55,9 +55,10 @@ var OptionsInfo = fs.Options{{
 	Default: "anonymous",
 	Help:    "User name for authentication",
 }, {
-	Name:    "pass",
-	Default: "",
-	Help:    "Password for authentication (empty value allow every password)",
+	Name:      "pass",
+	Default:   "",
+	Help:      "Password for authentication (empty value allow every password)",
+	Sensitive: true,
 }, {
 	Name:    "cert",
 	Default: "",

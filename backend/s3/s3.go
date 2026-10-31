@@ -839,8 +839,9 @@ use |-vv| to see the debug level logs.
 			Default:  sdkLogMode(0),
 			Advanced: true,
 		}, {
-			Name: "ibm_api_key",
-			Help: "IBM API Key to be used to obtain IAM token",
+			Name:      "ibm_api_key",
+			Help:      "IBM API Key to be used to obtain IAM token",
+			Sensitive: true,
 		}, {
 			Name: "ibm_resource_instance_id",
 			Help: "IBM service instance id",
