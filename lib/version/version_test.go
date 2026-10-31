@@ -70,6 +70,14 @@ func TestVersionMatch(t *testing.T) {
 		{"potato-v2001-02-03-040506-123", true},
 		{"-v2001-02-03-040506-123", true},
 		{"-v9999-99-99-999999-999", true},
+		{".potato-v2001-02-03-040506-123", true},
+		{".potato-v2001-02-03-040506-123.conf", true},
+		{"dir/potato-v2001-02-03-040506-123.txt", true},
+		{"potato-v2001-02-03-040506-123-final.txt", false},
+		{"potato-v2001-02-03-040506-1234.txt", false},
+		{"potato-v2001-02-03-040506-123.tar.gz", false},
+		{"dir-v2001-02-03-040506-123/potato.txt", false},
+		{"dir-v2001-02-03-040506-123/potato", false},
 	} {
 		actual := version.Match(test.in)
 		assert.Equal(t, test.expected, actual, test.in)
