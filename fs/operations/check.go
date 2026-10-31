@@ -593,9 +593,16 @@ func ParseSumFile(ctx context.Context, sumFile fs.Object, hashType hash.Type) (H
 		if line == "" || line[0] == '#' || line[0] == ';' {
 			continue
 		}
+		escaped := line[0] == '\\'
+		if escaped {
+			line = line[1:]
+		}
 
 		fields := re.FindStringSubmatch(ApplyTransforms(ctx, line))
-		if fields == nil {
+		if fields != nil && escaped {
+			fields[3] = unescapeSumFileName(fields[3])
+		}
+		if fields == nil || fields[3] == "" {
 			numWarn++
 			if numWarn <= maxWarn {
 				fs.LogfCtx(ctx, sumFile, "improperly formatted checksum line %d", lineNo)
@@ -633,4 +640,33 @@ func ParseSumFile(ctx context.Context, sumFile fs.Object, hashType hash.Type) (H
 		return nil, err
 	}
 	return hashes, nil
+}
+
+// unescapeSumFileName reverses the escaping GNU md5sum and friends use for
+// file names containing backslash, newline or carriage return. It returns
+// "" if s is not validly escaped.
+func unescapeSumFileName(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if c == '\\' {
+			i++
+			if i == len(s) {
+				return ""
+			}
+			switch s[i] {
+			case '\\':
+				c = '\\'
+			case 'n':
+				c = '\n'
+			case 'r':
+				c = '\r'
+			default:
+				return ""
+			}
+		}
+		b.WriteByte(c)
+	}
+	return b.String()
 }

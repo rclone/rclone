@@ -357,6 +357,19 @@ func TestParseSumFile(t *testing.T) {
 	sums, err := operations.ParseSumFile(ctx, file, hash.SHA1)
 	require.NoError(t, err)
 	assert.Equal(t, operations.HashSums{"file1": "1", "file2": "2"}, sums)
+
+	// A leading backslash marks an escaped file name, as written by GNU md5sum
+	_ = r.WriteObject(ctx, sumFile, strings.Join([]string{
+		`\1  dir\\file1`,
+		`\2 *a\nb\rc`,
+		`3  dir\file3`,
+		`\4  invalid\x`,
+		`\5  invalid\`,
+	}, "\n"), t1)
+	file = fstest.NewObject(ctx, t, r.Fremote, sumFile)
+	sums, err = operations.ParseSumFile(ctx, file, hash.SHA1)
+	require.NoError(t, err)
+	assert.Equal(t, operations.HashSums{`dir\file1`: "1", "a\nb\rc": "2", `dir\file3`: "3"}, sums)
 }
 
 func testCheckSum(t *testing.T, download bool) {
