@@ -41,6 +41,9 @@ const (
 	configClientID   = "client_id"
 	configCookies    = "cookies"
 	configTrustToken = "trust_token"
+	configRegion     = "region"
+	regionGlobal     = "global"
+	regionChina      = "china"
 
 	minSleep      = 10 * time.Millisecond
 	maxSleep      = 2 * time.Second
@@ -52,6 +55,7 @@ type Options struct {
 	AppleID    string               `config:"apple_id"`
 	Password   string               `config:"password"`
 	TrustToken string               `config:"trust_token"`
+	Region     string               `config:"region"`
 	Cookies    string               `config:"cookies"`
 	ClientID   string               `config:"client_id"`
 	Enc        encoder.MultiEncoder `config:"encoding"`
