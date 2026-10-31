@@ -20,7 +20,7 @@ export -f wait_for_sia
 
 start() {
     # use non-production sia port in test
-    SIA_CONN="127.0.0.1:39980"
+    SIA_CONN="127.0.0.1:28640"
     # nebulouslabs/siaantfarm is stale, use up-to-date image
     ANTFARM_IMAGE=ivandeex/sia-antfarm:latest
 

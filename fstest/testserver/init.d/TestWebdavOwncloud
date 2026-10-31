@@ -5,7 +5,7 @@ set -e
 NAME=owncloud
 USER=rclone
 PASS=HarperGrayerFewest5
-PORT=38081
+PORT=28641
 
 . $(dirname "$0")/docker.bash
 
