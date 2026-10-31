@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
@@ -611,6 +613,12 @@ func ParseSumFile(ctx context.Context, sumFile fs.Object, hashType hash.Type) (H
 		}
 
 		sum, algo, file := fields[1], fields[2], fields[3]
+		// Treat the path like a local path, where backslash is a separator
+		// on Windows, unless the escaping says it is a literal backslash
+		if !escaped {
+			file = filepath.ToSlash(file)
+		}
+		file = strings.TrimPrefix(path.Clean(file), "/")
 		if algo != "" && !strings.EqualFold(algo, hashType.String()) {
 			continue
 		}

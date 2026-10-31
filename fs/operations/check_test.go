@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -362,14 +363,31 @@ func TestParseSumFile(t *testing.T) {
 	_ = r.WriteObject(ctx, sumFile, strings.Join([]string{
 		`\1  dir\\file1`,
 		`\2 *a\nb\rc`,
-		`3  dir\file3`,
 		`\4  invalid\x`,
 		`\5  invalid\`,
 	}, "\n"), t1)
 	file = fstest.NewObject(ctx, t, r.Fremote, sumFile)
 	sums, err = operations.ParseSumFile(ctx, file, hash.SHA1)
 	require.NoError(t, err)
-	assert.Equal(t, operations.HashSums{`dir\file1`: "1", "a\nb\rc": "2", `dir\file3`: "3"}, sums)
+	assert.Equal(t, operations.HashSums{`dir\file1`: "1", "a\nb\rc": "2"}, sums)
+
+	// Paths are cleaned, and an unescaped backslash is a path separator on Windows
+	_ = r.WriteObject(ctx, sumFile, strings.Join([]string{
+		`1  ./file1`,
+		`2  /dir/file2`,
+		`3  dir//file3`,
+		`4 *dir\file4`,
+		`\5  dir\\file5`,
+	}, "\n"), t1)
+	file = fstest.NewObject(ctx, t, r.Fremote, sumFile)
+	sums, err = operations.ParseSumFile(ctx, file, hash.SHA1)
+	require.NoError(t, err)
+	want := operations.HashSums{"file1": "1", "dir/file2": "2", "dir/file3": "3", `dir\file4`: "4", `dir\file5`: "5"}
+	if runtime.GOOS == "windows" {
+		delete(want, `dir\file4`)
+		want["dir/file4"] = "4"
+	}
+	assert.Equal(t, want, sums)
 }
 
 func testCheckSum(t *testing.T, download bool) {
