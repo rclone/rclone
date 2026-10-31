@@ -23,6 +23,7 @@ import (
 	"github.com/aws/smithy-go"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
+	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
@@ -972,4 +973,43 @@ func TestBufferForObjectLockMD5(t *testing.T) {
 		cleanup()
 		assert.Equal(t, inUse, pool.Global().InUse(), "pool buffers leaked")
 	})
+}
+
+func TestEqualPartSizes(t *testing.T) {
+	ctx := context.Background()
+	for _, test := range []struct {
+		provider string
+		override string
+		want     bool
+	}{
+		{provider: "AWS", want: true},
+		{provider: "Minio", want: true},
+		{provider: "Other", want: true},
+		{provider: "Cloudflare", want: false},
+		{provider: "Mega", want: false},
+		{provider: "Outscale", want: false},
+		{provider: "Cloudflare", override: "false", want: true},
+		{provider: "Minio", override: "true", want: false},
+	} {
+		name := test.provider
+		if test.override != "" {
+			name += ",equal_part_sizes=" + test.override
+		}
+		t.Run(name, func(t *testing.T) {
+			m := configmap.Simple{
+				"provider":          test.provider,
+				"access_key_id":     "key",
+				"secret_access_key": "secret",
+				"endpoint":          "http://127.0.0.1:9",
+			}
+			if test.override != "" {
+				m["equal_part_sizes"] = test.override
+			}
+			ri, err := fs.Find("s3")
+			require.NoError(t, err)
+			f, err := NewFs(ctx, "test", "", fs.ConfigMap(ri.Prefix, ri.Options, "", m))
+			require.NoError(t, err)
+			assert.Equal(t, test.want, f.Features().ChunkWriterVariableSize)
+		})
+	}
 }

@@ -762,6 +762,23 @@ knows about - please make a bug report if not.
 			Default:  fs.Tristate{},
 			Advanced: true,
 		}, {
+			Name: "equal_part_sizes",
+			Help: `Set if all parts of a multipart upload but the last must be the same size.
+
+The S3 standard allows the parts of a multipart upload to differ in
+size, but some providers (e.g. Cloudflare R2) refuse such uploads. If
+this is set, a backend which wraps this one and can't make all its
+parts the same size, such as crypt, uploads in a single stream.
+
+Set this if crypt uploads of files bigger than --multi-thread-cutoff
+fail with your provider.
+
+This should be automatically set correctly for all providers rclone
+knows about - please make a bug report if not.
+`,
+			Default:  fs.Tristate{},
+			Advanced: true,
+		}, {
 			Name: "use_x_id",
 			Help: `Set if rclone should add x-id URL parameters.
 
@@ -974,6 +991,7 @@ const (
 	maxSizeForCopy      = 4768 * 1024 * 1024
 	maxUploadParts      = 10000 // maximum allowed number of parts in a multi-part upload
 	minChunkSize        = fs.SizeSuffix(1024 * 1024 * 5)
+	maxChunkSize        = fs.SizeSuffix(5 * 1024 * 1024 * 1024) // maximum size of a part in a multi-part upload
 	defaultUploadCutoff = fs.SizeSuffix(200 * 1024 * 1024)
 	maxUploadCutoff     = fs.SizeSuffix(5 * 1024 * 1024 * 1024)
 	minSleep            = 10 * time.Millisecond           // In case of error, start at 10ms sleep.
@@ -1140,6 +1158,7 @@ type Options struct {
 	IBMInstanceID               string               `config:"ibm_resource_instance_id"`
 	IBMIAMEndpoint              string               `config:"ibm_iam_endpoint"`
 	ListVersionsOldestFirst     fs.Tristate          `config:"list_versions_oldest_first"`
+	EqualPartSizes              fs.Tristate          `config:"equal_part_sizes"`
 	UseXID                      fs.Tristate          `config:"use_x_id"`
 	SignAcceptEncoding          fs.Tristate          `config:"sign_accept_encoding"`
 	ObjectLockMode              string               `config:"object_lock_mode"`
@@ -1167,6 +1186,7 @@ type Fs struct {
 	srv            *http.Client    // a plain http client
 	srvRest        *rest.Client    // the rest connection to the server
 	etagIsNotMD5   bool            // if set ETags are not MD5s
+	minChunkSize   fs.SizeSuffix   // smallest part but the last uploaded to the provider
 	versioningMu   sync.Mutex
 	versioning     fs.Tristate // if set bucket is using versions
 	warnCompressed sync.Once   // warn once about compressed files
@@ -1637,7 +1657,8 @@ func checkUploadChunkSize(cs fs.SizeSuffix) error {
 func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
 	err = checkUploadChunkSize(cs)
 	if err == nil {
-		old, f.opt.ChunkSize = f.opt.ChunkSize, cs
+		// The provider may need bigger chunks, as in NewFs
+		old, f.opt.ChunkSize = f.opt.ChunkSize, max(cs, f.minChunkSize)
 	}
 	return
 }
@@ -1785,6 +1806,7 @@ func setQuirks(opt *Options, provider *Provider) {
 	set(&opt.SignAcceptEncoding, true, provider.Quirks.SignAcceptEncoding)
 	set(&opt.ObjectLockSupported, true, provider.Quirks.ObjectLockSupported)
 	set(&opt.ListVersionsOldestFirst, false, provider.Quirks.ListVersionsOldestFirst)
+	set(&opt.EqualPartSizes, false, provider.Quirks.EqualPartSizes)
 }
 
 // setRoot changes the root of the Fs
@@ -1875,6 +1897,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		// Provider always returns ETags that are not MD5 (e.g., mandatory encryption)
 		f.etagIsNotMD5 = true
 	}
+	f.minChunkSize = minChunkSize
+	if provider.Quirks.MinChunkSize != nil {
+		f.minChunkSize = max(f.minChunkSize, fs.SizeSuffix(*provider.Quirks.MinChunkSize))
+	}
 	if opt.DirectoryBucket {
 		// Objects uploaded to directory buckets appear to have random ETags
 		//
@@ -1885,16 +1911,17 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	f.setRoot(root)
 	f.features = (&fs.Features{
-		ReadMimeType:      true,
-		WriteMimeType:     true,
-		ReadMetadata:      true,
-		WriteMetadata:     true,
-		UserMetadata:      true,
-		BucketBased:       true,
-		BucketBasedRootOK: true,
-		SetTier:           provider.StorageClass.Len() > 0,
-		GetTier:           provider.StorageClass.Len() > 0,
-		SlowModTime:       true,
+		ReadMimeType:            true,
+		WriteMimeType:           true,
+		ReadMetadata:            true,
+		ChunkWriterVariableSize: !opt.EqualPartSizes.Value,
+		WriteMetadata:           true,
+		UserMetadata:            true,
+		BucketBased:             true,
+		BucketBasedRootOK:       true,
+		SetTier:                 provider.StorageClass.Len() > 0,
+		GetTier:                 provider.StorageClass.Len() > 0,
+		SlowModTime:             true,
 	}).Fill(ctx, f)
 	if opt.Provider == "AWS" {
 		f.features.DoubleSlash = true
@@ -4659,6 +4686,8 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		ChunkSize:         int64(chunkSize),
 		Concurrency:       o.fs.opt.UploadConcurrency,
 		LeavePartsOnError: o.fs.opt.LeavePartsOnError,
+		MinChunkSize:      int64(f.minChunkSize),
+		MaxChunkSize:      int64(maxChunkSize),
 	}
 	fs.Debugf(o, "open chunk writer: started multipart upload: %v", *mOut.UploadId)
 	return info, chunkWriter, err
