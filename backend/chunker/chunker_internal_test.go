@@ -928,6 +928,9 @@ func testChunkerServerSideOverwrite(t *testing.T, moveFs *Fs) {
 			for _, transactionMode := range transactionModes {
 				t.Run(transactionMode.name, func(t *testing.T) {
 					f := operation.fs
+					if transactionMode.useNoRename && !f.useMeta {
+						t.Skip("Can't test norename transactions without metadata")
+					}
 					oldUseNoRename := f.useNoRename
 					f.useNoRename = transactionMode.useNoRename
 					defer func() { f.useNoRename = oldUseNoRename }()
