@@ -463,6 +463,47 @@ func TestIsDirectChild(t *testing.T) {
 	}
 }
 
+// TestArchivePassthroughMoveOntoItself checks that objects outside an
+// archive report the archive Fs, so moving one onto its own name is a
+// no-op instead of copying it onto itself and deleting it.
+func TestArchivePassthroughMoveOntoItself(t *testing.T) {
+	fstest.Initialise()
+	ctx := context.Background()
+
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "file.txt"), []byte("hello\n"), 0600))
+	f, err := cache.Get(ctx, ":archive:"+dir)
+	require.NoError(t, err)
+
+	entries, err := f.List(ctx, "")
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
+	obj, ok := entries[0].(fs.Object)
+	require.True(t, ok)
+	assert.Equal(t, f, obj.Fs())
+
+	src, err := f.NewObject(ctx, "file.txt")
+	require.NoError(t, err)
+	assert.Equal(t, f, src.Fs())
+
+	_, err = operations.Move(ctx, f, nil, "file.txt", src)
+	require.NoError(t, err)
+	content, err := os.ReadFile(filepath.Join(dir, "file.txt"))
+	require.NoError(t, err)
+	assert.Equal(t, "hello\n", string(content))
+
+	// A real rename must still work through the wrapped remote.
+	src, err = f.NewObject(ctx, "file.txt")
+	require.NoError(t, err)
+	_, err = operations.Move(ctx, f, nil, "renamed.txt", src)
+	require.NoError(t, err)
+	_, err = os.Stat(filepath.Join(dir, "file.txt"))
+	assert.True(t, os.IsNotExist(err))
+	content, err = os.ReadFile(filepath.Join(dir, "renamed.txt"))
+	require.NoError(t, err)
+	assert.Equal(t, "hello\n", string(content))
+}
+
 // A symlink in a squashfs image is skipped unless -l/--links is in use,
 // as it is on the other backends.  With the flag it is exposed under its
 // name with the link suffix and reads back as its target.
