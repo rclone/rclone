@@ -63,26 +63,6 @@ Press Enter for the default (gzip).
    \ (zstd)
 mode> gzip
 
-Option level.
-GZIP (levels -2 to 9):
-- -2 — Huffman encoding only. Only use if you know what you're doing.
-- -1 (default) — recommended; equivalent to level 5.
-- 0 — turns off compression.
-- 1–9 — increase compression at the cost of speed. Going past 6 generally offers very little return.
- 
-ZSTD (levels 0 to 4):
-- 0 — turns off compression entirely.
-- 1 — fastest compression with the lowest ratio.
-- 2 (default) — good balance of speed and compression.
-- 3 — better compression, but uses about 2–3x more CPU than the default.
-- 4 — best possible compression ratio (highest CPU cost).
- 
-Notes:
-- Choose GZIP for wide compatibility; ZSTD for better speed/ratio tradeoffs.
-- Negative gzip levels: -2 = Huffman-only, -1 = default (≈ level 5).
-Enter a value.
-level> -1
-
 Edit advanced config?
 y) Yes
 n) No (default)
@@ -93,7 +73,6 @@ Options:
 - type: compress
 - remote: remote_to_press:subdir
 - mode: gzip
-- level: -1
 Keep this "compress" remote?
 y) Yes this is OK (default)
 e) Edit this remote
@@ -105,7 +84,10 @@ y/e/d> y
 
 - **GZIP** – a well-established and widely adopted algorithm that strikes a solid balance between compression speed and ratio. It supports compression levels from -2 to 9, with the default -1 (roughly equivalent to level 5) offering an effective middle ground for most scenarios.
 
-- **Zstandard (zstd)** – a modern, high-performance algorithm that offers precise control over the trade-off between speed and compression efficiency. Compression levels range from 0 (no compression) to 4 (maximum compression).
+- **Zstandard (zstd)** – a modern, high-performance algorithm that offers precise control over the trade-off between speed and compression efficiency. Compression levels range from 0 (no compression) to 4 (maximum compression), with level 2 as the default.
+
+The compression level of both algorithms can be set with the advanced `level`
+option.
 
 ### File types
 
@@ -155,6 +137,10 @@ Properties:
   - "zstd"
     - Zstandard compression — fast modern algorithm offering adjustable speed-to-compression tradeoffs.
 
+### Advanced options
+
+Here are the Advanced options specific to compress (Compress a remote).
+
 #### --compress-level
 
 GZIP (levels -2 to 9):
@@ -173,17 +159,15 @@ ZSTD (levels 0 to 4):
 Notes:
 - Choose GZIP for wide compatibility; ZSTD for better speed/ratio tradeoffs.
 - Negative gzip levels: -2 = Huffman-only, -1 = default (≈ level 5).
+- The default level is -1 which selects the default level of the
+  compression mode, equivalent to level 5 for gzip and level 2 for zstd.
 
 Properties:
 
 - Config:      level
 - Env Var:     RCLONE_COMPRESS_LEVEL
-- Type:        string
-- Required:    true
-
-### Advanced options
-
-Here are the Advanced options specific to compress (Compress a remote).
+- Type:        int
+- Default:     -1
 
 #### --compress-ram-cache-limit
 
