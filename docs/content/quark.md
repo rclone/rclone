@@ -128,12 +128,16 @@ Here are the Advanced options specific to quark (Quark Drive).
 
 User agent used for Quark Drive API requests.
 
+The default identifies as the Quark desktop client. Quark Drive refuses
+downloads of larger files from web browser user agents with error
+23018 "download file size limit".
+
 Properties:
 
 - Config:      user_agent
 - Env Var:     RCLONE_QUARK_USER_AGENT
 - Type:        string
-- Default:     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36"
+- Default:     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) quark-cloud-drive/2.5.20 Chrome/100.0.4896.160 Electron/18.3.5.4-b478491100 Safari/537.36 Channel/pckk_other_ch"
 
 #### --quark-root-folder-id
 

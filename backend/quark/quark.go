@@ -42,7 +42,7 @@ import (
 
 const (
 	rootID                = "0"
-	defaultUserAgent      = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36"
+	defaultUserAgent      = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) quark-cloud-drive/2.5.20 Chrome/100.0.4896.160 Electron/18.3.5.4-b478491100 Safari/537.36 Channel/pckk_other_ch"
 	defaultListPageSize   = 500
 	defaultUploadPartSize = int64(8 * fs.Mebi)
 	maxUploadParts        = 10_000
@@ -226,7 +226,7 @@ func init() {
 				Hide:       fs.OptionHideConfigurator,
 			}, {
 				Name:     "user_agent",
-				Help:     "User agent used for Quark Drive API requests.",
+				Help:     "User agent used for Quark Drive API requests.\n\nThe default identifies as the Quark desktop client. Quark Drive refuses\ndownloads of larger files from web browser user agents with error\n23018 \"download file size limit\".",
 				Default:  defaultUserAgent,
 				Advanced: true,
 			}, {
