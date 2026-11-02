@@ -169,6 +169,7 @@ func TestSizeSuffixStringRoundTrip(t *testing.T) {
 		123456789012345678,
 		(1 << 60) + 1,
 		math.MaxInt64 - 1,
+		math.MaxInt64,
 	} {
 		str := in.stringRoundTrip()
 		var out SizeSuffix
