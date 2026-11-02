@@ -275,7 +275,7 @@ func TestUploadErrorReleasesSource(t *testing.T) {
 	in, err := asyncreader.New(ctx, io.NopCloser(readers.NewPatternReader(64<<20)), 4)
 	require.NoError(t, err)
 
-	_, err = f.upload(ctx, in, server.URL+"/upload", "/file.bin")
+	_, err = f.upload(ctx, in, server.URL+"/upload", "/file.bin", time.Time{})
 	require.Error(t, err)
 
 	closed := make(chan struct{})
