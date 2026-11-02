@@ -202,7 +202,7 @@ func (x *SizeSuffix) Set(s string) error {
 			return fmt.Errorf("size can't be negative %q", s)
 		}
 		intMultiplier := int64(multiplier)
-		if intValue > math.MaxInt64/intMultiplier || intValue*intMultiplier >= SizeSuffixMaxValue {
+		if intValue > math.MaxInt64/intMultiplier || intValue*intMultiplier > SizeSuffixMaxValue {
 			return fmt.Errorf("value can't be greater than %d", int64(SizeSuffixMaxValue))
 		}
 		*x = SizeSuffix(intValue * intMultiplier)
