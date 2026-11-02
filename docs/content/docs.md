@@ -66,6 +66,7 @@ See the following for detailed instructions for
 - [Internet Archive](/internetarchive/)
 - [Internxt](/internxt/)
 - [Jottacloud](/jottacloud/)
+- [kDrive](/kdrive/)
 - [Koofr](/koofr/)
 - [Linkbox](/linkbox/)
 - [Mail.ru Cloud](/mailru/)
@@ -1439,7 +1440,7 @@ for more information as to what these options mean.
 
 ### --default-time Time
 
-If a file or directory does have a modification time rclone can read
+If a file or directory does not have a modification time rclone can read
 then rclone will display this fixed time instead.
 
 The default is `2000-01-01 00:00:00 UTC`. This can be configured in
@@ -1791,6 +1792,12 @@ existing file if the transfer fails.
 Note that on the local file system if you don't use `--inplace` hard
 links (Unix only) will be broken. And if you do use `--inplace` you
 won't be able to update in use executables.
+
+On macOS, if rclone clones a file (see
+[--local-no-clone](/local/#local-no-clone)) and the destination
+already exists, the existing file is replaced with a new one, even
+with `--inplace`, so hard links to it will be broken. Use
+`--local-no-clone` to keep them.
 
 Note also that versions of rclone prior to v1.63.0 behave as if the
 `--inplace` flag is always supplied.

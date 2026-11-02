@@ -87,8 +87,10 @@ Metadata is supported on files and directories.
 When restoring metadata with ` + "`--metadata`" + ` rclone applies the
 "mode", "uid" and "gid" from the source. These come from the source
 remote which may not be trusted, so restoring metadata as root from an
-untrusted source can change file ownership and is not recommended. The
-setuid, setgid and sticky bits are not restored by default - see the
+untrusted source can change file ownership and is not recommended. A
+user other than root keeps its own uid and sets the gid only to a group
+it is a member of, as rsync does. The setuid, setgid and sticky bits are
+not restored by default - see the
 ` + "`--local-metadata-restore-special-bits`" + ` flag.
 `,
 		},
@@ -251,6 +253,13 @@ Cloning is usually preferable to copying, as it is much faster and is
 deduplicated by default (i.e. having two identical files does not consume more
 storage than having just one.)  However, for use cases where data redundancy is
 preferable, --local-no-clone can be used to disable cloning and force "deep" copies.
+
+Cloning also preserves macOS-specific metadata such as extended attributes,
+which a normal copy does not, so this metadata is lost when cloning is disabled.
+
+If the destination file already exists, cloning replaces it with a new file,
+even with --inplace, so hard links to it are broken. Use --local-no-clone to
+update existing files in place.
 
 Currently, cloning is only supported when using APFS on macOS (support for other
 platforms may be added in the future.)`,

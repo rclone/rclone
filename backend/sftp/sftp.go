@@ -2458,7 +2458,14 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 		return "", hash.ErrUnsupported
 	}
 
-	shellPathArg, err := o.fs.quoteOrEscapeShellPath(o.shellPath())
+	shellPath := o.shellPath()
+	// Some restricted shells, such as rsync.net's, end the command at a
+	// newline even when it is quoted, which would hash a different file.
+	if o.fs.shellType == "unix" && strings.Contains(shellPath, "\n") {
+		fs.Debugf(o, "Can't calculate %v hash of a name containing a newline", r)
+		return "", nil
+	}
+	shellPathArg, err := o.fs.quoteOrEscapeShellPath(shellPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to calculate %v hash: %w", r, err)
 	}

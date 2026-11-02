@@ -1290,3 +1290,15 @@ put them back in again. -->
 - Dirk Einecke <dirk.einecke@gmail.com>
 - ASRodrigo1 <45823308+asrodrigo1@users.noreply.github.com>
 - chaogeshuodiannao <chaogeshuodiannao@users.noreply.github.com>
+- David Legrand <david.legrand@clever.cloud>
+- Azhar <stfuazzo@gmail.com>
+- Daniel Bae <rootdevdb@gmail.com>
+- frodleTian <16165444+tianhaotian@users.noreply.github.com>
+- Cestercian <yashafaid@gmail.com>
+- Ayush Sharma <175855728+DurdensDream@users.noreply.github.com>
+- Dirk Petersen <1427719+dirkpetersen@users.noreply.github.com>
+- Codex <noreply@openai.com>
+- bunnysayzz <bunnysayzz@users.noreply.github.com>
+- hahahahahayesyeseys <1145018948@qq.com>
+- qodelicious <162776175+qodelicious@users.noreply.github.com>
+- fixfon <12512757+fixfon@users.noreply.github.com>

@@ -138,6 +138,8 @@ backends:
      - TestFileSetModTime/cache=off,open=false,write=false
      - TestFileSetModTime/cache=off,open=true,write=false
      - TestRWFileHandleWriteNoWrite
+     - TestRWFileTruncateShrinkUncached/writes
+     - TestRWFileTruncateShrinkUncached/full
    ignoretests:
      - cmd/gitannex
  - backend:  "combine"
@@ -272,7 +274,6 @@ backends:
    remote:   "TestS3Rclone:"
    fastlist: true
    ignoretests:
-     - cmd/bisync
      - cmd/gitannex
  - backend:  "s3"
    remote:   "TestS3Minio:"
@@ -310,7 +311,10 @@ backends:
      - TestIntegration/FsMkdir/FsPutFiles/Internal/Versions/VersionAt/AfterDelete/NewObject
      - TestIntegration/FsMkdir/FsPutFiles/Internal/Versions/VersionAt/AfterTwo/List
      - TestIntegration/FsMkdir/FsPutFiles/Internal/Versions/VersionAt/AfterTwo/NewObject
+     # GCS can't store CR or LF in object names
      - TestBisyncRemoteRemote/extended_filenames
+     - TestBisyncRemoteLocal/extended_filenames
+     - TestBisyncLocalRemote/extended_filenames
  # Disabled due to excessive rate limiting at DO which cause the tests never to pass
  # This hits the rate limit as documented here: https://www.digitalocean.com/docs/spaces/#limits
  # 2 COPYs per 5 minutes on any individual object in a Space
@@ -583,6 +587,8 @@ backends:
      - TestIndexChanged
      - TestIndexChangedDelete
      - TestIndexChangedFiles
+     # downloading the large zip is refused with FileBlocked
+     - TestZipLargeFiles
  # - backend:  "koofr"
  #   remote:   "TestDigiStorage:"
  #   fastlist: false
@@ -593,9 +599,12 @@ backends:
      - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
      - TestRWFileHandleWriteNoWrite
      - TestCaseInsensitiveMoveFile
+     - TestCaseInsensitiveMoveWithoutServerSideMove # Linkbox renames "File1" uploaded next to "File1-rclone-move-xxx" to name(1)
      - TestFixCase
      - TestListDirSorted        # Can't upload files starting with . - FIXME fix with encoding
      - TestListDirSortedFn      # Can't upload files starting with . - FIXME fix with encoding
+     - TestTransform/suffix     # Linkbox lower cases file extensions
+     - TestTransform/truncate   # Linkbox renames a file whose name prefixes another to name(1)
      - TestSyncOverlapWithFilter # Can't upload files starting with . - FIXME fix with encoding
    ignoretests:
      - cmd/bisync
@@ -727,6 +736,9 @@ backends:
      # with the parent backend having a different precision.
      - TestServerSideCopyOverSelf
      - TestServerSideMoveOverSelf
+     # The underlying objects returned aren't recognised as being at the
+     # destination path, so the move copies the file onto itself.
+     - TestMoveOntoItself
  - backend: "internxt"
    remote: "TestInternxt:"
    fastlist: false
@@ -734,6 +746,10 @@ backends:
    listretries: 5
    ignore:
      - TestRWFileHandleWriteNoWrite
+     # Listings lag behind directory renames and deletes for longer
+     # than the list retries allow.
+     - TestDirRename
+     - TestDirRenameParentEntries
  - backend:  "dosya"
    remote:   "TestDosya:"
    # Every upload is a metadata round trip of several seconds regardless
@@ -750,3 +766,12 @@ backends:
    fastlist: false
    extratime: 2.0
    listretries: 5
+ - backend: "kdrive"
+   remote: "TestKdrive:"
+   ignore:
+     # The bisync normalization test fails as the kDrive server normalizes file names to NFC
+     - TestBisyncRemoteRemote/normalization
+     # the dates used in TestIndexChangedDirTime are far away in the future, this isn't handled by kdrive
+     - TestIndexChangedDirTime
+   fastlist: true
+   extratime: 2.0
