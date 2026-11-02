@@ -43,7 +43,7 @@ Rclone matching rules follow a glob style:
 *         matches any sequence of non-separator (/) characters
 **        matches any sequence of characters including / separators
 ?         matches any single non-separator (/) character
-[ [ ! ] { character-range } ]
+[ [ ! | ^ ] { character-range } ]
           character class (must be non-empty)
 { pattern-list }
           pattern alternatives

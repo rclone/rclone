@@ -1726,7 +1726,13 @@ func (f *Fs) waitForJob(ctx context.Context, location string, o *Object) error {
 		var err error
 		var body []byte
 		err = f.pacer.Call(func() (bool, error) {
-			resp, err = http.Get(location)
+			req, err := http.NewRequestWithContext(ctx, http.MethodGet, location, nil)
+			if err != nil {
+				return false, err
+			}
+			// The monitor URL needs no authentication, but it should still
+			// go through the configured transport and honour ctx
+			resp, err = f.unAuth.Do(req)
 			if err != nil {
 				return fserrors.ShouldRetry(err), err
 			}

@@ -66,6 +66,7 @@ docs = [
     "internetarchive.md",
     "internxt.md",
     "jottacloud.md",
+    "kdrive.md",
     "koofr.md",
     "linkbox.md",
     "mailru.md",

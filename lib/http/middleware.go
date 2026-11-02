@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"crypto/subtle"
 	"encoding/base64"
 	"fmt"
 	"net/http"
@@ -9,7 +10,6 @@ import (
 	"strings"
 	"sync"
 
-	goauth "github.com/abbot/go-http-auth"
 	"github.com/rclone/rclone/fs"
 )
 
@@ -34,36 +34,27 @@ func parseAuthorization(r *http.Request) (user, pass string, ok bool) {
 	return
 }
 
-// LoggedBasicAuth simply wraps the goauth.BasicAuth struct
-type LoggedBasicAuth struct {
-	goauth.BasicAuth
+// requireBasicAuth replies to the request asking the client for
+// basic auth credentials.
+func requireBasicAuth(w http.ResponseWriter, realm string) {
+	w.Header().Set("Content-Type", "text/plain")
+	w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
+	w.WriteHeader(http.StatusUnauthorized)
+	_, _ = fmt.Fprintf(w, "%d %s\n", http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized))
 }
 
-// CheckAuth extends BasicAuth.CheckAuth to emit a log entry for unauthorised requests
-func (a *LoggedBasicAuth) CheckAuth(r *http.Request) string {
-	username := a.BasicAuth.CheckAuth(r)
-	if username == "" {
-		user, _, _ := parseAuthorization(r)
-		fs.Infof(r.URL.Path, "%s: Unauthorized request from %s", r.RemoteAddr, user)
-	}
-	return username
-}
-
-// NewLoggedBasicAuthenticator instantiates a new instance of LoggedBasicAuthenticator
-func NewLoggedBasicAuthenticator(realm string, secrets goauth.SecretProvider) *LoggedBasicAuth {
-	return &LoggedBasicAuth{BasicAuth: goauth.BasicAuth{Realm: realm, Secrets: secrets}}
-}
-
-// Helper to generate required interface for middleware
-func basicAuth(authenticator *LoggedBasicAuth) func(next http.Handler) http.Handler {
+// basicAuth returns middleware which authenticates with basic auth,
+// using check to see whether the user and password are valid.
+func basicAuth(realm string, check func(user, pass string) bool) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			username := authenticator.CheckAuth(r)
-			if username == "" {
-				authenticator.RequireAuth(w, r)
+			user, pass, ok := parseAuthorization(r)
+			if !ok || !check(user, pass) {
+				fs.Infof(r.URL.Path, "%s: Unauthorized request from %s", r.RemoteAddr, user)
+				requireBasicAuth(w, realm)
 				return
 			}
-			ctx := context.WithValue(r.Context(), ctxKeyUser, username)
+			ctx := context.WithValue(r.Context(), ctxKeyUser, user)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
@@ -94,23 +85,17 @@ func MiddlewareAuthCertificateUser() Middleware {
 // MiddlewareAuthHtpasswd instantiates middleware that authenticates against the passed htpasswd file
 func MiddlewareAuthHtpasswd(path, realm string) Middleware {
 	fs.Infof(nil, "Using %q as htpasswd storage", path)
-	secretProvider := goauth.HtpasswdFileProvider(path)
-	authenticator := NewLoggedBasicAuthenticator(realm, secretProvider)
-	return basicAuth(authenticator)
+	h := &htpasswdFile{path: path}
+	return basicAuth(realm, h.check)
 }
 
 // MiddlewareAuthBasic instantiates middleware that authenticates for a single user
 func MiddlewareAuthBasic(user, pass, realm, salt string) Middleware {
 	fs.Infof(nil, "Using --user %s --pass XXXX as authenticated user", user)
-	pass = string(goauth.MD5Crypt([]byte(pass), []byte(salt), []byte("$1$")))
-	secretProvider := func(u, r string) string {
-		if user == u {
-			return pass
-		}
-		return ""
-	}
-	authenticator := NewLoggedBasicAuthenticator(realm, secretProvider)
-	return basicAuth(authenticator)
+	pass = md5Crypt(pass, salt, "$1$")
+	return basicAuth(realm, func(u, p string) bool {
+		return u == user && subtle.ConstantTimeCompare([]byte(md5Crypt(p, salt, "$1$")), []byte(pass)) == 1
+	})
 }
 
 // MiddlewareAuthCustom instantiates middleware that authenticates using a custom function
@@ -133,7 +118,7 @@ func MiddlewareAuthCustom(fn CustomAuthFn, realm string, userFromContext bool) M
 			value, err := fn(r, user, pass)
 			if err != nil {
 				fs.Infof(r.URL.Path, "%s: Auth failed from %s: %v", r.RemoteAddr, user, err)
-				goauth.NewBasicAuthenticator(realm, func(user, realm string) string { return "" }).RequireAuth(w, r) //Reuse BasicAuth error reporting
+				requireBasicAuth(w, realm)
 				return
 			}
 

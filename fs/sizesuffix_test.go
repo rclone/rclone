@@ -131,6 +131,8 @@ func TestSizeSuffixSet(t *testing.T) {
 		{"1i", 0, true},
 		{"1iB", 0, true},
 		{"1MB", 0, true},
+		{"nank", 0, true},
+		{"NaNM", 0, true},
 	} {
 		ss := SizeSuffix(0)
 		err := ss.Set(test.in)

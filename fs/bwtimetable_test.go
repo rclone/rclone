@@ -32,6 +32,10 @@ func TestBwTimetableSet(t *testing.T) {
 		{"bad-10:20,666", BwTimetable{}, true, ""},
 		{"Mon-bad,666", BwTimetable{}, true, ""},
 		{"Mon-10:20,bad", BwTimetable{}, true, ""},
+		{"10h20,666", BwTimetable{}, true, ""},
+		{"Mon-10.20,666", BwTimetable{}, true, ""},
+		{"+1:00,666", BwTimetable{}, true, ""},
+		{"Mon-10:+5,666", BwTimetable{}, true, ""},
 		{
 			"0",
 			BwTimetable{

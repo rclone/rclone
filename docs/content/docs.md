@@ -65,6 +65,7 @@ See the following for detailed instructions for
 - [Internet Archive](/internetarchive/)
 - [Internxt](/internxt/)
 - [Jottacloud](/jottacloud/)
+- [kDrive](/kdrive/)
 - [Koofr](/koofr/)
 - [Linkbox](/linkbox/)
 - [Mail.ru Cloud](/mailru/)
@@ -1438,7 +1439,7 @@ for more information as to what these options mean.
 
 ### --default-time Time
 
-If a file or directory does have a modification time rclone can read
+If a file or directory does not have a modification time rclone can read
 then rclone will display this fixed time instead.
 
 The default is `2000-01-01 00:00:00 UTC`. This can be configured in
